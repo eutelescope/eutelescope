@@ -52,9 +52,9 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
 
   <processor name="LoadRefHitDB"     type="ConditionsProcessor">
     <parameter name="DBInit" type="string" value="localhost:lccd_test:align:tel"/>
-    <parameter name="SimpleFileHandler" type="StringVec"> refhit  @DBPath@/@Output@-refhit-db.slcio referenceHit  </parameter>
-    <parameter name="SimpleFileHandler" type="StringVec"> refhit31  @DBPath@/@Output@-refhit-db.slcio referenceHit31  </parameter>
-    <parameter name="SimpleFileHandler" type="StringVec"> refhit32  @DBPath@/@Output@-refhit-db.slcio referenceHit32  </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> refhit    @DBPath@/@Output@-refhit-db.slcio referenceHit  </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> refhit31  @DBPath@/@Output@-refhit-db.slcio referenceHit  </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> refhit32  @DBPath@/@Output@-refhit-db.slcio referenceHit  </parameter>
   </processor>
 
 
@@ -140,15 +140,15 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
 
 
  <processor name="APIXTbTrack" type="EUTelAPIXTbTrackTuple">
-    <parameter name="OutputPath" type ="string" value="@HistoPath@/tbtrack@Output@.root"/>
+    <parameter name="OutputPath" type ="string" value="@HistoPath@/tbtrack@RunNumber@.root"/>
     <!--Name of the input Track collection-->
     <parameter name="InputCollectionName" type="string" lcioInType="Track"> track </parameter>
     <!--Name of the input cluster collections-->
     <parameter name="InputDutPulseCollectionName" type="string" value="cluster_apix"/>
     <parameter name="InputTelPulseCollectionName" type="string" value="cluster_m26"/>
     <!--Name of the zs hit collection-->
-    <parameter name="TelZsColName" type="string" value="zsdata_m26"/>
-    <parameter name="DutZsColName" type="string" value="zsdata_apix"/>
+    <parameter name="TelZsColName" type="string" value="original_zsdata"/>
+    <parameter name="DutZsColName" type="string" value="original_zsdata_apix"/>
     <!-- Alignment constants-->
     <parameter name="AlignmentCollectionNames"> prealign align  </parameter>
     <parameter name="DoScales" type="bool" value="false"/>
