@@ -3119,8 +3119,6 @@ void EUTelMille::end() {
 	  steerFile << *it << " ";
       }
       steerFile << endl;
-      steerFile << "outlierdownweighting 4" << endl;
-      steerFile << endl;
       steerFile << "method inversion 10 0.001" << endl;
       steerFile << endl;
       steerFile << "histprint" << endl;
