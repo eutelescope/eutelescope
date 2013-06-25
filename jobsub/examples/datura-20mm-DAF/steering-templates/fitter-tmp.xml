@@ -29,6 +29,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
       <!-- processor name="DUTHisto"/ -->
       <!-- processor name="NTuple"/-->
       <group name="TelDUTHisto"/>
+      <processor name="MyEUTelUtilityPrintEventNumber"/>
       <processor name="Save"/>
    </execute>
 
@@ -54,19 +55,19 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
 
   <processor name="LoadRefHitDB"     type="ConditionsProcessor">
     <parameter name="DBInit" type="string" value="localhost:lccd_test:align:tel"/>
-    <parameter name="SimpleFileHandler" type="StringVec"> refhit  @DBPath@/@Output@-refhit-db.slcio referenceHit  </parameter>
-    <parameter name="SimpleFileHandler" type="StringVec"> refhit01  @DBPath@/@Output@-refhit-db.slcio referenceHit01  </parameter>
-    <parameter name="SimpleFileHandler" type="StringVec"> refhit02  @DBPath@/@Output@-refhit-db.slcio referenceHit02  </parameter>
-    <parameter name="SimpleFileHandler" type="StringVec"> refhit11  @DBPath@/@Output@-refhit-db.slcio referenceHit11  </parameter>
-    <parameter name="SimpleFileHandler" type="StringVec"> refhit12  @DBPath@/@Output@-refhit-db.slcio referenceHit12  </parameter>
-    <parameter name="SimpleFileHandler" type="StringVec"> refhit21  @DBPath@/@Output@-refhit-db.slcio referenceHit21  </parameter>
-    <parameter name="SimpleFileHandler" type="StringVec"> refhit22  @DBPath@/@Output@-refhit-db.slcio referenceHit22  </parameter>
-    <parameter name="SimpleFileHandler" type="StringVec"> refhit31  @DBPath@/@Output@-refhit-db.slcio referenceHit31  </parameter>
-    <parameter name="SimpleFileHandler" type="StringVec"> refhit32  @DBPath@/@Output@-refhit-db.slcio referenceHit32  </parameter>
-    <parameter name="SimpleFileHandler" type="StringVec"> refhit41  @DBPath@/@Output@-refhit-db.slcio referenceHit41  </parameter>
-    <parameter name="SimpleFileHandler" type="StringVec"> refhit42  @DBPath@/@Output@-refhit-db.slcio referenceHit42  </parameter>
-    <parameter name="SimpleFileHandler" type="StringVec"> refhit51  @DBPath@/@Output@-refhit-db.slcio referenceHit51  </parameter>
-    <parameter name="SimpleFileHandler" type="StringVec"> refhit52  @DBPath@/@Output@-refhit-db.slcio referenceHit52  </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> refhit    @DBPath@/@Output@-refhit-db.slcio referenceHit  </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> refhit01  @DBPath@/@Output@-refhit-db.slcio referenceHit  </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> refhit02  @DBPath@/@Output@-refhit-db.slcio referenceHit  </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> refhit11  @DBPath@/@Output@-refhit-db.slcio referenceHit  </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> refhit12  @DBPath@/@Output@-refhit-db.slcio referenceHit  </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> refhit21  @DBPath@/@Output@-refhit-db.slcio referenceHit  </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> refhit22  @DBPath@/@Output@-refhit-db.slcio referenceHit  </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> refhit31  @DBPath@/@Output@-refhit-db.slcio referenceHit  </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> refhit32  @DBPath@/@Output@-refhit-db.slcio referenceHit  </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> refhit41  @DBPath@/@Output@-refhit-db.slcio referenceHit  </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> refhit42  @DBPath@/@Output@-refhit-db.slcio referenceHit  </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> refhit51  @DBPath@/@Output@-refhit-db.slcio referenceHit  </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> refhit52  @DBPath@/@Output@-refhit-db.slcio referenceHit  </parameter>
   </processor>
 
 
@@ -566,6 +567,16 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
 
   </group>
  
+ <processor name="MyEUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">
+ <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
+  <!--Print event number for every n-th event-->
+  <parameter name="EveryNEvents" type="int" value="1000"/>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string" value=""/-->
+  <!--print the event timestamp as read from LCIO-->
+  <!--parameter name="printTimestamp" type="bool" value="false"/-->
+</processor>
+
 </marlin>
 
 
