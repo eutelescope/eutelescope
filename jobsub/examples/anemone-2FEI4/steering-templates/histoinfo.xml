@@ -25,7 +25,8 @@
     <histo name="CommonDistHisto"   type="H1D" xBin="100"  xMin="-10"     xMax="10" />
 
     <!-- EUTelClusteringProcessor -->
-    <histo name="ClusterSNR"        type="H1D" xBin="20"  xMin="0"     xMax="20" />
+    <histo name="clusterSNR"        type="H1D" xBin="20"  xMin="0"     xMax="20" />
+    <histo name="clusterSignal"     type="H1D" xBin="20"  xMin="0"     xMax="20" />
 
     <!-- EUTelHitMaker -->
     <histo name="HitCloudLocal"     type="C2D" />
