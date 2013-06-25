@@ -348,7 +348,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!--Print out every DebugEnevtCount event-->
   <parameter name="DebugEventCount" type="int" value="100"/>
   <!--Maximum allowed distance between fit and matched DUT hit-->
-  <parameter name="DistMax" type="double" value="0.027"/>
+  <parameter name="DistMax" type="double" value="@DistanceMax@"/>
   <!--Name of the histogram information file-->
   <parameter name="HistoInfoFileName" type="string" value="/scratch/rubinsky/TestBeam/2012/tb-desy-summer/datura//histoinfo.xml"/>
   <!--Id of telescope layer which should be used as DUT-->

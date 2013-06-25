@@ -29,6 +29,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
       <!-- processor name="DUTHisto"/ -->
       <!-- processor name="NTuple"/-->
       <group name="TelDUTHisto"/>
+      <processor name="MyEUTelUtilityPrintEventNumber"/>
       <processor name="Save"/>
    </execute>
 
@@ -54,19 +55,19 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
 
   <processor name="LoadRefHitDB"     type="ConditionsProcessor">
     <parameter name="DBInit" type="string" value="localhost:lccd_test:align:tel"/>
-    <parameter name="SimpleFileHandler" type="StringVec"> refhit  @DBPath@/@Output@-refhit-db.slcio referenceHit  </parameter>
-    <parameter name="SimpleFileHandler" type="StringVec"> refhit01  @DBPath@/@Output@-refhit-db.slcio referenceHit01  </parameter>
-    <parameter name="SimpleFileHandler" type="StringVec"> refhit02  @DBPath@/@Output@-refhit-db.slcio referenceHit02  </parameter>
-    <parameter name="SimpleFileHandler" type="StringVec"> refhit11  @DBPath@/@Output@-refhit-db.slcio referenceHit11  </parameter>
-    <parameter name="SimpleFileHandler" type="StringVec"> refhit12  @DBPath@/@Output@-refhit-db.slcio referenceHit12  </parameter>
-    <parameter name="SimpleFileHandler" type="StringVec"> refhit21  @DBPath@/@Output@-refhit-db.slcio referenceHit21  </parameter>
-    <parameter name="SimpleFileHandler" type="StringVec"> refhit22  @DBPath@/@Output@-refhit-db.slcio referenceHit22  </parameter>
-    <parameter name="SimpleFileHandler" type="StringVec"> refhit31  @DBPath@/@Output@-refhit-db.slcio referenceHit31  </parameter>
-    <parameter name="SimpleFileHandler" type="StringVec"> refhit32  @DBPath@/@Output@-refhit-db.slcio referenceHit32  </parameter>
-    <parameter name="SimpleFileHandler" type="StringVec"> refhit41  @DBPath@/@Output@-refhit-db.slcio referenceHit41  </parameter>
-    <parameter name="SimpleFileHandler" type="StringVec"> refhit42  @DBPath@/@Output@-refhit-db.slcio referenceHit42  </parameter>
-    <parameter name="SimpleFileHandler" type="StringVec"> refhit51  @DBPath@/@Output@-refhit-db.slcio referenceHit51  </parameter>
-    <parameter name="SimpleFileHandler" type="StringVec"> refhit52  @DBPath@/@Output@-refhit-db.slcio referenceHit52  </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> refhit    @DBPath@/@Output@-refhit-db.slcio referenceHit  </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> refhit01  @DBPath@/@Output@-refhit-db.slcio referenceHit  </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> refhit02  @DBPath@/@Output@-refhit-db.slcio referenceHit  </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> refhit11  @DBPath@/@Output@-refhit-db.slcio referenceHit  </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> refhit12  @DBPath@/@Output@-refhit-db.slcio referenceHit  </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> refhit21  @DBPath@/@Output@-refhit-db.slcio referenceHit  </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> refhit22  @DBPath@/@Output@-refhit-db.slcio referenceHit  </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> refhit31  @DBPath@/@Output@-refhit-db.slcio referenceHit  </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> refhit32  @DBPath@/@Output@-refhit-db.slcio referenceHit  </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> refhit41  @DBPath@/@Output@-refhit-db.slcio referenceHit  </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> refhit42  @DBPath@/@Output@-refhit-db.slcio referenceHit  </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> refhit51  @DBPath@/@Output@-refhit-db.slcio referenceHit  </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> refhit52  @DBPath@/@Output@-refhit-db.slcio referenceHit  </parameter>
   </processor>
 
 
@@ -159,7 +160,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!--Allowed number of missing hits in the track-->
   <parameter name="AllowMissingHits" type="int" value="@AllowedMissingHits@"/>
   <!--Allowed number of hits removed from the track-->
-  <parameter name="AllowSkipHits" type="int" value="@AllowedSkipHits@"/>
+  <parameter name="AllowSkipHits" type="int" value="@AllowedSkipHits@ "/>
   <!--Decide now weather you want to rely on the track candidate slope permanence in X and Y, default=true -->
   <parameter name="UseSlope"   type="bool"  value="true"/>
   <!--Set the allowed maximum difference of the slope in X (from plane to plane), default = 0.01 -->
@@ -267,7 +268,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!--Allowed number of missing hits in the track-->
   <parameter name="AllowMissingHits" type="int" value="@AllowedMissingHits@"/>
   <!--Allowed number of hits removed from the track-->
-  <parameter name="AllowSkipHits" type="int" value="@AllowedSkipHits@"/>
+  <parameter name="AllowSkipHits" type="int" value="@AllowedSkipHits@ "/>
   <!--Decide now weather you want to rely on the track candidate slope permanence in X and Y, default=true -->
   <parameter name="UseSlope"   type="bool"  value="true"/>
   <!--Set the allowed maximum difference of the slope in X (from plane to plane), default = 0.01 -->
@@ -313,7 +314,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!--Ids of layers which should NOT be included in the fit-->
   <!--parameter name="SkipLayerIDs" type="IntVec"> </parameter-->
   <!--Flag for using beam direction constraint in the fit-->
-  <parameter name="UseBeamConstraint" type="bool" value="false"/> <!-- DP -->
+  <parameter name="UseBeamConstraint" type="bool" value="false"/>
   <!--Flag for including DUT measurement in the fit-->
   <parameter name="UseDUT" type="bool" value="false"/>
   <!--Flag for using nominal resolution instead of position errors-->
@@ -347,7 +348,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!--Print out every DebugEnevtCount event-->
   <parameter name="DebugEventCount" type="int" value="100"/>
   <!--Maximum allowed distance between fit and matched DUT hit-->
-  <parameter name="DistMax" type="double" value="0.500"/>
+  <parameter name="DistMax" type="double" value="@DistanceMax@"/>
   <!--Name of the histogram information file-->
   <parameter name="HistoInfoFileName" type="string" value="/scratch/rubinsky/TestBeam/2012/tb-desy-summer/datura//histoinfo.xml"/>
   <!--Id of telescope layer which should be used as DUT-->
@@ -566,6 +567,16 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
 
   </group>
  
+ <processor name="MyEUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">
+ <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
+  <!--Print event number for every n-th event-->
+  <parameter name="EveryNEvents" type="int" value="1000"/>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string" value=""/-->
+  <!--print the event timestamp as read from LCIO-->
+  <!--parameter name="printTimestamp" type="bool" value="false"/-->
+</processor>
+
 </marlin>
 
 
