@@ -25,7 +25,7 @@
 
     SET( executable python -tt ${jobsubdir}/jobsub.py )
     # options: use config, use csv, change native path to central AFS location, reduce number of events to 200k
-    SET( jobsubOptions --config=${exampledir}/config.cfg -csv ${exampledir}/runlist.csv -o NativePath=${referencedatadir} -o MaxRecordNumber=200000)
+    SET( jobsubOptions --config=${exampledir}/config.cfg -csv ${exampledir}/runlist.csv -o NativePath=${referencedatadir} -o MaxRecordNumber=10000)
 
 
     # all this regular expressions must be matched for the tests to pass.
@@ -259,7 +259,7 @@
   # STEP 1-5 VARIANTS USED FOR MEMCHECKS ONLY:
     SET( executable python -tt ${jobsubdir}/jobsub.py )
     # options for memcheck runs: reduced run range, plain output for valgrind parsing
-    SET( jobsubMemCheckOptions --config=${exampledir}/config.cfg -csv ${exampledir}/runlist.csv -o NativePath=${referencedatadir} -o MaxRecordNumber=2000 --plain)
+    SET( jobsubMemCheckOptions --config=${exampledir}/config.cfg -csv ${exampledir}/runlist.csv -o NativePath=${referencedatadir} -o MaxRecordNumber=10000 --plain)
 
   # Converter run with reduced run range
     ADD_TEST( NAME TestJobsubExampleAnemone2FEI4ConverterRunMemCheck
