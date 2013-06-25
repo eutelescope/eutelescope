@@ -26,7 +26,7 @@
 
     SET( executable python -tt ${jobsubdir}/jobsub.py )
     # options: use config, use csv, change native path to central AFS location, reduce number of events to 200k
-    SET( jobsubOptions --config=${exampledir}/config.cfg -csv ${exampledir}/runlist.csv -o NativePath=${datadir} -o MaxRecordNumber=200000)
+    SET( jobsubOptions --config=${exampledir}/config.cfg -csv ${exampledir}/runlist.csv -o NativePath=${datadir} -o MaxRecordNumber=100000)
 
 
     # all this regular expressions must be matched for the tests to pass.
