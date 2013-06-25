@@ -248,7 +248,7 @@ The presence of this collection in the event is allowing all the noise based sel
 
 
 <processor name="MyEUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">
- <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
+  <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
   <!--Print event number for every n-th event-->
   <parameter name="EveryNEvents" type="int" value="1000"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
