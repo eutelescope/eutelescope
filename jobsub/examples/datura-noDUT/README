@@ -89,6 +89,9 @@
     
 *** C) General Broken Lines
     Adjust settings in the [tracksearch], [aligngbl] and (optionally) [trackfit] sections
+
+    The material description needed by GBL is taken from the GEAR
+    file. For spaces between devices, the presence of air is assumed.
     
     #+begin_src sh
     jobsub -c ${ANALYSIS_CONF}/config.cfg -csv ${ANALYSIS_CONF}/runlist.csv tracksearch 97
