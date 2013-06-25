@@ -160,7 +160,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!--Allowed number of missing hits in the track-->
   <parameter name="AllowMissingHits" type="int" value="@AllowedMissingHits@"/>
   <!--Allowed number of hits removed from the track-->
-  <parameter name="AllowSkipHits" type="int" value="@AllowedSkipHits@ "/>
+  <parameter name="AllowSkipHits" type="int" value="@AllowedSkipHits@"/>
   <!--Decide now weather you want to rely on the track candidate slope permanence in X and Y, default=true -->
   <parameter name="UseSlope"   type="bool"  value="true"/>
   <!--Set the allowed maximum difference of the slope in X (from plane to plane), default = 0.01 -->
@@ -268,7 +268,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!--Allowed number of missing hits in the track-->
   <parameter name="AllowMissingHits" type="int" value="@AllowedMissingHits@"/>
   <!--Allowed number of hits removed from the track-->
-  <parameter name="AllowSkipHits" type="int" value="@AllowedSkipHits@ "/>
+  <parameter name="AllowSkipHits" type="int" value="@AllowedSkipHits@"/>
   <!--Decide now weather you want to rely on the track candidate slope permanence in X and Y, default=true -->
   <parameter name="UseSlope"   type="bool"  value="true"/>
   <!--Set the allowed maximum difference of the slope in X (from plane to plane), default = 0.01 -->
