@@ -259,7 +259,7 @@
   # STEP 1-5 VARIANTS USED FOR MEMCHECKS ONLY:
     SET( executable python -tt ${jobsubdir}/jobsub.py )
     # options for memcheck runs: reduced run range, plain output for valgrind parsing
-    SET( jobsubMemCheckOptions --config=${exampledir}/config.cfg -csv ${exampledir}/runlist.csv -o NativePath=${referencedatadir} -o MaxRecordNumber=1000 --plain)
+    SET( jobsubMemCheckOptions --config=${exampledir}/config.cfg -csv ${exampledir}/runlist.csv -o NativePath=${referencedatadir} -o MaxRecordNumber=10000 --plain)
 
   # Converter run with reduced run range
     ADD_TEST( NAME TestJobsubExampleAnemone2FEI4ConverterRunMemCheck
