@@ -7,23 +7,10 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6 FATAL_ERROR)
 # project name
 PROJECT( Eutelescope )
 
-# project version
+# project version; before changing this, read README.release_procedure
 SET( ${PROJECT_NAME}_VERSION_MAJOR 0 )
 SET( ${PROJECT_NAME}_VERSION_MINOR 9 )
 SET( ${PROJECT_NAME}_VERSION_PATCH 0 )
-
-# IMPORTANT FOR RELEASES:
-# ======================
-# 0. if new major release: create new dev. branch for this release (e.g. v01-00-dev)
-#    - remove/adjust the lines below that are marked with "!RELEASE": these activate e.g. debugging/extra warnings and electric fence
-# 1. bump release version in this file (if needed)
-# IMPORTANT: if you also bump the trunk version, on euteltesting & co:
-#    - clean-up the old libraries and link eudaq against the new ones (see FAQ)
-# 2. create SVN pre-tag for this release (e.g. v01-00-00-rc1)
-# 3. TEST THIS RELEASE!
-# 4. create SVN tag for this release (e.g. v01-00-00)
-# 5. update web page, update installation documentation (including release-versions-eutel.py)
-# 6. announce! :)
 
 # These switches activate/deactivate compiler switches such as the
 # inclusion of debugging symbols and code optimizations. For actual

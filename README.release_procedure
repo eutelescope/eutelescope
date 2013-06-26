@@ -1,0 +1,44 @@
+# this file uses emacs Org mode formatting -*- mode: Org; -*-
+Notes on the procedure for new EUTelescope releases:
+
+1. write/update changelog & release notes in README.release_notes (in trunk)
+2. if new major release: create new dev. branch for this release (e.g. v01-00-dev)
+   - remove/adjust the lines in the CMakeLists.txt that are marked
+     with "!RELEASE": these activate e.g. debugging/extra warnings
+     and electric fence
+   - set build type in CMakeLists to "Release"
+   - adjust the paths in the examples to point to a fixed reference
+     data path (for stat tests on the root files),
+     e.g. /afspath/to/examples/examplename/release/0.9.X 
+     This makes sure that the test do not start to fail if the reference
+     files need to be adjusted to account for changes on the trunk
+   - remove any unnecessary test cases/examples or temporary files
+     (consider removing them from trunk as well)
+3. bump release version in the CMakeLists.txt file (if needed)
+   IMPORTANT: if you also bump the trunk version:
+   - ON ALL WORKSTATIONS RUNNING NIGHTLY TESTS (euteltesting & co):
+     clean-up the old libraries and link eudaq against the new ones
+     (see FAQ)
+   - write a mail to eutelescope-developers@cern.ch to inform about the required
+     clean-up in ./lib and the recompilation of eudaq mentioned above
+4. create SVN pre-tag for this release (e.g. v01-00-00-rc1)
+5. TEST THIS RELEASE!
+6. fix issues, test again
+7. create SVN tag for this release (e.g. v01-00-00)
+   e.g.:
+   #+begin_src sh
+   svn copy https://svnsrv.desy.de/desy/eutelescope/Eutelescope/branches/v00-08-dev \
+   https://svnsrv.desy.de/desy/eutelescope/Eutelescope/tags/v00-08-01 \
+   -m "Tagging the 0.8.1 (point) release."
+   #+end_src sh
+
+8. change releases/v01-17/release-versions.py in ilcsoft-install and
+   get a new tag for ilcsoft-install
+9. update web pages:
+   - update installation documentation
+   - update release notes/change log (from README.release_notes,
+     e.g. via emacs-org-mode html-export feature)
+10. announce! :)
+    - main page
+    - forum
+    - eutelescope-users@cern.ch
