@@ -134,7 +134,7 @@
     SET_TESTS_PROPERTIES (TestJobsubExampleAnemone2FEI4HitmakerPrealign PROPERTIES DEPENDS TestJobsubExampleAnemone2FEI4HitmakerRun)
 
     # we expect an average hit number of 24 for run 97 (wide geometry) using the example configuration
-    ADD_TEST( TestJobsubExampleAnemone2FEI4HitmakerOutput sh -c "[ -f ${testdir}/output/results/run${PaddedRunNr}-hit.slcio ] && lcio_check_col_elements -a --expelements 38 hit ${testdir}/output/results/run${PaddedRunNr}-hit.slcio" )
+    ADD_TEST( TestJobsubExampleAnemone2FEI4HitmakerOutput sh -c "[ -f ${testdir}/output/results/run${PaddedRunNr}-hit.slcio ] && lcio_check_col_elements -a --expelements 39 hit ${testdir}/output/results/run${PaddedRunNr}-hit.slcio" )
     SET_TESTS_PROPERTIES (TestJobsubExampleAnemone2FEI4HitmakerOutput PROPERTIES DEPENDS TestJobsubExampleAnemone2FEI4HitmakerRun)
 
 
