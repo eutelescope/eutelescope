@@ -102,7 +102,7 @@
     SET_TESTS_PROPERTIES (TestJobsubExampleAnemone2FEI4ClusteringHisto PROPERTIES DEPENDS TestJobsubExampleAnemone2FEI4ClusteringRun)
 
     # we expect an average of 24.4 clusters per event
-    ADD_TEST( TestJobsubExampleAnemone2FEI4ClusteringOutput sh -c "[ -f ${testdir}/output/results/run${PaddedRunNr}-clu.slcio ] && lcio_check_col_elements --average --expelements 35 cluster_m26 ${testdir}/output/results/run${PaddedRunNr}-clu.slcio" )
+    ADD_TEST( TestJobsubExampleAnemone2FEI4ClusteringOutput sh -c "[ -f ${testdir}/output/results/run${PaddedRunNr}-clu.slcio ] && lcio_check_col_elements --average --expelements 38 cluster_m26 ${testdir}/output/results/run${PaddedRunNr}-clu.slcio" )
     SET_TESTS_PROPERTIES (TestJobsubExampleAnemone2FEI4ClusteringOutput PROPERTIES DEPENDS TestJobsubExampleAnemone2FEI4ClusteringRun)
 
 
