@@ -75,10 +75,6 @@ namespace eutelescope {
             return _fittrackvec;
         }
 
-        std::vector<std::vector<gbl::GblPoint> >& GetGblTracksPoints() {
-            return _gblTrackPoints;
-        }
-
         void SetMilleBinary(gbl::MilleBinary* _mille) {
             this->_mille = _mille;
         }
@@ -118,26 +114,33 @@ namespace eutelescope {
         void setMEstimatorType( const std::string& _mEstimatorType );
         
         std::string getMEstimatorType() const;
+        
+        std::map<int, int> getHitId2GblPointLabel() const;
 
     private:
-        TMatrixD PropagatePar(double);
+        TMatrixD propagatePar(double);
 
         //        double* GetTrackOffset( const Utility::HitsPVec& ) const;
         //        double* GetTrackSlope( const Utility::HitsPVec& ) const;
 
-        double InterpolateTrackX(const EVENT::TrackerHitVec&, const double) const;
-        double InterpolateTrackY(const EVENT::TrackerHitVec&, const double) const;
+        double interpolateTrackX(const EVENT::TrackerHitVec&, const double) const;
+        double interpolateTrackY(const EVENT::TrackerHitVec&, const double) const;
         
-        double GetTrackSlopeX(const EVENT::TrackerHitVec&) const;
-        double GetTrackSlopeY(const EVENT::TrackerHitVec&) const;
+        double getTrackSlopeX(const EVENT::TrackerHitVec&) const;
+        double getTrackSlopeY(const EVENT::TrackerHitVec&) const;
 
         void Reset();
 
-        void AddMeasurementsGBL( gbl::GblPoint&, TVectorD&, TVectorD&, const double*, double, double, const EVENT::FloatVec&, TMatrixD& );
+        void addMeasurementsGBL( gbl::GblPoint&, TVectorD&, TVectorD&, const double*, double, double, const EVENT::FloatVec&, TMatrixD& );
         
-        void AddScattererGBL( gbl::GblPoint&, TVectorD&, TVectorD&, int, double );
+        void addScattererGBL( gbl::GblPoint&, TVectorD&, TVectorD&, int, double );
         
-        void AddGlobalParametersGBL( gbl::GblPoint&, TMatrixD&, std::vector<int>&, int, double, double, double, double );
+        void addGlobalParametersGBL( gbl::GblPoint&, TMatrixD&, std::vector<int>&, int, double, double, double, double );
+        
+        void pushBachPoint( std::vector< gbl::GblPoint >&, const gbl::GblPoint&, int );
+        
+        void prepareLCIOTrack( IMPL::TrackImpl*, gbl::GblTrajectory*, const EVENT::TrackerHitVec&,
+                                double, int, double, double, double, double, double );
         
     private:
         std::vector< EVENT::TrackerHitVec > _trackCandidates;
@@ -145,8 +148,6 @@ namespace eutelescope {
         std::map< int, gbl::GblTrajectory* > _gblTrackCandidates;
 
         IMPL::LCCollectionVec *_fittrackvec;
-
-        std::vector< std::vector< gbl::GblPoint > > _gblTrackPoints;
 
     private:
         /** Parameter propagation jacobian */
@@ -157,6 +158,9 @@ namespace eutelescope {
         /** Beam energy in [GeV] */
         double _eBeam;
 
+        /** Hit id to GBL point label lookup table */
+        std::map<int,int> _hitId2GblPointLabel;
+        
         // Alignment 
     private:
         /** Alignment degrees of freedom */
