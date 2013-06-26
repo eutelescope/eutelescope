@@ -1,37 +1,13 @@
 # this file uses emacs Org mode formatting -*- mode: Org; -*-
-RELEASE NOTES FOR EUTelescope
+#+options: num:nil toc:2
+Changelog and Versions 
+
+For reference, all previous releases of EUTelescope are listed
+here. Note that all versions below the section "unmaintained" are
+considered outdated and will no longer be supported.
 * Version 0.9 
-** Notes on updating
-   - changed verbosity: many processors do not print information on
-     every event anymore. This is now done through the
-     PrintEventNumber processer (see "datura-noDUT" example)
-   - some processor options changed. Update through "Marlin -u" command
-** Known Issues
-   - GBL: the processors using GBL are in an early stage and might still be
-     a bit "rough" around the edges; please report any issues you encounter
-     in the forums or file a bug report.
-   - GBL: Applying "6D" alignment (with 6 degrees of freedom) requires
-     usage of EUTelProcessorApplyAlignment (*not*
-     EUTelApplyAlignmentProcessor) for consistent definition of
-     rotation angles. This processor does currently offer no
-     convenient way of going back to the local coordinate system of
-     e.g. the DUT. This functionality will be added soon. The 3D
-     alignment (x,y,xy), however, can be applied using the usual
-     processor.
-   - SPEED: histogram filling is not very efficiently handled in some
-     processors; this issue is already partially addressed in this release.
-     Still, when you are batch processing many files and do not
-     care about the histograms produced in intermediate steps,
-     consider to switch the histogram filling off via processor
-     parameters in the steering files.
-     For details see 
-     http://eutelescope.web.cern.ch/issue/very-inefficient-histogram-handling-processors
-   - SPEED and STORAGE EFFICIENCY: EUTelClusteringProcessor creates
-     "original_zsdata" collections for Mimosa planes which are required by
-     some processors and therefore cannot be easily removed; this leads to 
-     (storage) overhead, for details see
-     http://eutelescope.web.cern.ch/issue/data-duplication-output-eutelclusteringprocessor
 ** New features and change log
+*** General
     - GBL: General Broken Lines can now be used for alignment and
       track fitting. An example with steering files (datura-noDUT) is
       included.
@@ -57,8 +33,81 @@ RELEASE NOTES FOR EUTelescope
       needed for 6D alignment using GBL)
     - Code cleanup: fixed many compiler warnings/errors
     - Code cleanup: removed obsolete code and unused processor parameters
+** Notes on updating
+   - changed verbosity: many processors do not print information on
+     every event anymore. This is now done through the
+     PrintEventNumber processer (see "datura-noDUT" example)
+   - some processor options have changed or have been added.  Update
+     them through "Marlin -u" command and search for any parameter
+     that is prefixed with the comment "<!-- Sorry, this parameter
+     isn't a default parameter for this processor: description and
+     type lost!!  -->". Such parameters are either renamed or have
+     been removed altogether from the processor. In the former case
+     you should search for the parameter under its new name in the
+     updated steering file to adjust its setting. In the latter case
+     you can just safely remove the parameter from your steering file.
+** Known Issues
+   For up-to-date details, check http://eutelescope.web.cern.ch/project/issues
+   - GBL: the processors using GBL are in an early stage and might still be
+     a bit "rough" around the edges; please report any issues you encounter
+     in the forums or file a bug report.
+   - GBL: Applying "6D" alignment (with 6 degrees of freedom) requires
+     usage of EUTelProcessorApplyAlignment (*not*
+     EUTelApplyAlignmentProcessor) for consistent definition of
+     rotation angles. This processor does currently offer no
+     convenient way of going back to the local coordinate system of
+     e.g. the DUT. This functionality will be added soon and the
+     processors will be merged to a single one. The 3D alignment
+     (x,y,xy), however, can be applied using both processors.
+   - SPEED: histogram filling is not very efficiently handled in some
+     processors; this issue is already partially addressed in this release.
+     Still, when you are batch processing many files and do not
+     care about the histograms produced in intermediate steps,
+     consider to switch the histogram filling off via processor
+     parameters in the steering files.
+     For details see 
+     http://eutelescope.web.cern.ch/issue/very-inefficient-histogram-handling-processors
+   - SPEED and STORAGE EFFICIENCY: EUTelClusteringProcessor creates
+     "original_zsdata" collections for Mimosa planes which are required by
+     some processors and therefore cannot be easily removed; this leads to 
+     (storage) overhead, for details see
+     http://eutelescope.web.cern.ch/issue/data-duplication-output-eutelclusteringprocessor
+
 * Version 0.8
+** New features and change log
+*** General
+    - Maintenance and stability release in preparation for version 1.0.
+    - New lean and flexible job submission tool jobsub.
+    - All examples now use CTest framework for automated regression tests.
+    - Includes processors for CMS Pixel chips (PSI46xxx).
+    - Updated and improved documentation including examples.
+*** 0.8.3
+    - New PedeSteeringAdditionalCmds parameter in EUTelMille: allows
+      to add arbitrary parameters to the generated pede steering file
+    - Updated example analysis datura-noDUT
+    - Support for ILCSoft installer > 01-17-02
+    - jobsub now linked to ./bin directory and therefore present in
+      PATH
+    - Fixed name definition of reference hit collection in EUTelHitmaker
+    - Fixed bug in jobsub concerning case-sensitivity for command line
+      supplied options
+*** 0.8.2
+    - Added user-requested concatenation feature to jobsub
+    - Fixed memory leaks in EUTelTestFitter and EUTelHotPixelKiller
+    - Fixed sensor id reporting in EUTelDUTHistograms
+    - Fixed option parameter parsing in jobsub
+    - Reduced CPU load of jobsub during Marlin output parsing
+    - Run ranges passed to jobsub are no longer processed out-of-order
+    - Jobsub uses line buffered output (reduces output delays) if stdbuf tool is available
+*** 0.8.1
+    - Fixed compilation on newer GCC versions.
+    - Improved error handling and documentation of jobsub.
+*** 0.8.0
+    - Removed legacy code, fixed various bugs and improved code quality (e.g. fixed compiler warnings).
+    - Revised producer console output messages and verbosity.
+    - Updated and improved documentation.
 ** Known issues
+   For up-to-date details, check http://eutelescope.web.cern.ch/project/issues
    - EXAMPLE datura-noDUT: this example is based on an analysis in
      progress which uses some features only available in the
      development version (trunk) of EUTelescope. The results produced
@@ -76,143 +125,132 @@ RELEASE NOTES FOR EUTelescope
      some processors and therefore cannot be easily removed; this leads to 
      (storage) overhead, for details see
      http://eutelescope.web.cern.ch/issue/data-duplication-output-eutelclusteringprocessor
-** New features and change log
-    Maintenance and stability release in preparation for version 1.0.
-    New lean and flexible job submission tool jobsub.
-    All examples now use CTest framework for automated regression tests.
-    Includes processors for CMS Pixel chips (PSI46xxx).
-    Updated and improved documentation including examples.
-*** 0.8.3
-    Updated example analysis datura-noDUT
-    Support for ILCSoft installer > 01-17-02
-    jobsub now linked to ./bin directory and therefore present in PATH
-    Fixed name definition of reference hit collection in EUTelHitmaker
-    Fixed bug in jobsub concerning case-sensitivity for command line supplied options
-*** 0.8.2
-    Added user-requested concatenation feature to jobsub
-    Fixed memory leaks in EUTelTestFitter and EUTelHotPixelKiller
-    Fixed sensor id reporting in EUTelDUTHistograms
-    Fixed option parameter parsing in jobsub
-    Reduced CPU load of jobsub during Marlin output parsing
-    Run ranges passed to jobsub are no longer processed out-of-order
-    Jobsub uses line buffered output (reduces output delays) if stdbuf tool is available
-*** 0.8.1
-    Fixed compilation on newer GCC versions.
-    Improved error handling and documentation of jobsub.
-*** 0.8.0
-    Removed legacy code, fixed various bugs and improved code quality (e.g. fixed compiler warnings).
-    Revised producer console output messages and verbosity.
-    Updated and improved documentation.
 * Old and unmaintained versions
-** Version v00-07-01:
-Update for the installation documentation.
-Recommended ilcsoft release v01-14-01.
-Update to the APIXTbTrackTuple dumper.
-The root tuple now contains information about the angles at which tracks enter the DUT plane.
+** List of changes and new features
+*** Version v00-07-01
+- Update for the installation documentation.
+- Recommended ilcsoft release v01-14-01.
+- Update to the APIXTbTrackTuple dumper.
+- The root tuple now contains information about the angles at which
+  tracks enter the DUT plane.
+*** Version v00-07-pre
+- Major update to the EUTelMille processor. Multiple fixes turned out
+  to be a major rewrite of the processor.
+- The 3D shift + 3 angle rotation alignment has been validated in the
+  ATLAS IBL testbeams.
+- Performance tuned for semi-automatic usage, however, one has to be
+  carefull with the alignment level residual cuts and sensor
+  resolution values set in the align-tmp.xml template, the Millepede
+  II module (pede) is very sensitive to both. Major changes to the
+  active plane identification. This was formerly done by a hit
+  z-coordinate proximity to the gear file nominal position of the
+  plane. It does not work well for planes with high tilts realtive to
+  the beam and it does not work at all for sensors sharing the same
+  z-coordinate (due to the specific hardware setup). There are two
+  methods which have been implemented to address this issue. The first
+  one is based on the hit-to-cluster-to-PlaneID lookup (works only for
+  data clusters). The second one is based on linear algebra of finding
+  a shortest distance from a hit to the plane (as it was defined in
+  the gear file). For the track fitted hits only the latter approach
+  is applicable.
+*** Version v00-06-03-pre
+- An obsolete LCIO method set IsReferencePointPCA is commented out for compatibility with new ILCSoft release (v01-12)
+- Minor: 2D histograms added to EUTelDafFitter.
  
-** Version v00-07-pre:
-Major update to the EUTelMille processor. Multiple fixes turned out to be a major rewrite of the processor.
-The 3D shift + 3 angle rotation alignment has been validated in the ATLAS IBL testbeams.
-Performance tuned for semi-automatic usage, however, one has to be carefull with the alignment level residual cuts and sensor resolution values set in the align-tmp.xml template, the Millepede II module (pede) is very sensitive to both. Major changes to the active plane identification. This was formerly done by a hit z-coordinate proximity to the gear file nominal position of the plane. It does not work well for planes with high tilts realtive to the beam and it does not work at all for sensors sharing the same z-coordinate (due to the specific hardware setup). There are two methods which have been implemented to address this issue. The first one is based on the hit-to-cluster-to-PlaneID lookup (works only for data clusters). The second one is based on linear algebra of finding a shortest distance from a hit to the plane (as it was defined in the gear file). For the track fitted hits only the latter approach is applicable.
+*** Version v00-06-02-pre
+- Inconsistency with the GEAR library found! Use only GEAR v01-17, where the sensor (plane) tilts are treated properly. If you are using ilcsoft v01-11, then the GEAR library v01-17 is included.
+- New processor EUTelAPIXHotPixelKiller is introduced which dumps hot pixels into an event-like record. This information is used in PreAlignment (hitmaker step) and alignment steps. The hot pixels are not excluded from any event record, only a mask condition is applied to prevent the hotpixels from entering (pre)-alignment pixel selection. Otherwise the logic of the processors did not change.
  
-** Version v00-06-03-pre:
-An obsolete LCIO method set IsReferencePointPCA is commented out for compatibility with new ILCSoft release (v01-12)
-Minor: 2D histograms added to EUTelDafFitter.
+*** Version v00-06-01-pre
+- Several fixes to the PreAlign processor, increased range of the histogram-arrays to allow larger displacement between the sensors.
+- Installation documentation fixed.
+- Recommended installation path consists of using ilcinstall scripts from version v01-11 and installing all packages for ilcsoft release v01-10. The ilcinstall release v01-11 contains improved CMake scripts assisting with the installation/compilation of EUDAQ and Millepede II. The ilcsoft version v01-10 should be used as much as possible untill there is a crucial bug fix or classes logic upgrade, which is incompatible with other packages in v01-10.
  
-** Version v00-06-02-pre:
-Inconsistency with the GEAR library found! Use only GEAR v01-17, where the sensor (plane) tilts are treated properly. If you are using ilcsoft v01-11, then the GEAR library v01-17 is included.
-New processor EUTelAPIXHotPixelKiller is introduced which dumps hot pixels into an event-like record. This information is used in PreAlignment (hitmaker step) and alignment steps. The hot pixels are not excluded from any event record, only a mask condition is applied to prevent the hotpixels from entering (pre)-alignment pixel selection. Otherwise the logic of the processors did not change.
+*** Version v00-06-00-pre
+- New CMake approach implemented for ilcsoft v01-11 release. It is still backward compatible with ilcsoft v01-10.
+- EUTelTestFitter fixed for a tilted sensor with the true z-coordinate of the fitted hit.
+- Deterministic Annealing Filter (DAF fitter) introduced.
+- Caution: new EUDAQ and Millepede II reference rules in the ilcinstall script.
+- The installation guide page updated accordingly.
  
-** Version v00-06-01-pre:
-Several fixes to the PreAlign processor, increased range of the histogram-arrays to allow larger displacement between the sensors.
-Installation documentation fixed.
-Recommended installation path consists of using ilcinstall scripts from version v01-11 and installing all packages for ilcsoft release v01-10. The ilcinstall release v01-11 contains improved CMake scripts assisting with the installation/compilation of EUDAQ and Millepede II. The ilcsoft version v01-10 should be used as much as possible untill there is a crucial bug fix or classes logic upgrade, which is incompatible with other packages in v01-10.
+*** Version v00-05-03-pre
+- New CMake approach implemented.
+- Bug fix in the clustering (EUTelClusteringProcessor:DFF).
+- Redefine the source of the center of gravity of a cluster (EUTelHitMaker)
  
-** Version v00-06-00-pre:
-New CMake approach implemented for ilcsoft v01-11 release. It is still backward compatible with ilcsoft v01-10.
-EUTelTestFitter fixed for a tilted sensor with the true z-coordinate of the fitted hit.
-Deterministic Annealing Filter (DAF fitter) introduced.
-Caution: new EUDAQ and Millepede II reference rules in the ilcinstall script.
-The installation guide page updated accordingly.
+*** Version v00-05-02-pre
+- Intermediate pre-release
  
-** Version v00-05-03-pre:
-New CMake approach implemented.
-Bug fix in the clustering (EUTelClusteringProcessor:DFF).
-Redefine the source of the center of gravity of a cluster (EUTelHitMaker)
+*** Version v00-05-01-pre
+- Includes (merges) with branch "engels" to adopt new CMake scheme.
+- Small improvements to the full_analysis_chain scripts.
+- Bug fixes in the EUTelDUTHistograms class.
+- Extend the template "template_ibl/fitter-tmp.xml" to have Telescope sensors (6x Mimosa 26) and a set of DUT sensors (APIX as an example).
+- DUTHistograms done in one execution step.
+- New release of the ILCSoft v01-10.
  
-** Version v00-05-02-pre:
-Intermediate pre-release
+*** Version v00-05-00-pre
+- Dependency on the latest GEAR library (!) after 30.11.2010.
+- Three rotation angles added. Can work with tilted sensors now.
  
-** Version v00-05-01-pre:
-Includes (merges) with branch "engels" to adopt new CMake scheme.
-Small improvements to the full_analysis_chain scripts.
-Bug fixes in the EUTelDUTHistograms class.
-Extend the template "template_ibl/fitter-tmp.xml" to have Telescope sensors (6x Mimosa 26) and a set of DUT sensors (APIX as an example).
-DUTHistograms done in one execution step.
-New release of the ILCSoft v01-10.
+*** Version v00-04-04
+- Fix the python scripts to be able to run on GRID.
+- Bug fix in the correlator processor to be able to manage sensors with any pitch size (also different in X and Y) and rotation (this time only in XY plane), also sensor flip.
  
-** Version v00-05-00-pre:
-Dependency on the latest GEAR library (!) after 30.11.2010.
-Three rotation angles added. Can work with tilted sensors now.
+*** Version v00-04-04
+- Intermediate release.
  
-** Version v00-04-04:
-Fix the python scripts to be able to run on GRID.
-Bug fix in the correlator processor to be able to manage sensors with any pitch size (also different in X and Y) and rotation (this time only in XY plane), also sensor flip.
+*** Version v00-04-03
+- Intermediate release.
  
-** Version v00-04-04:
-Intermediate release.
+*** Version v00-04-02
+- Final optimisations to the EUTelTestFitter by Filip Zarnecki, for more details see his talk at the EUDET-JRA1 meeting: EUDET-JRA1 TestFitter analytical fit.
  
-** Version v00-04-03:
-Intermediate release.
+*** Version v00-04-01
+- EUTelTestFitter updates by Filip Zarnecki, fixes are related to the non zero beam slope and the new UseSlope logic, significant performance improvement bug fix in the correlator processor due to sometimes confusing sensor addressing (by ID, by Z position, by order in the gear file).
+- Changed the safety factor in the ApplyAlignment step to 1.0, otherwise the memory allocation fails.
  
-** Version v00-04-02:
-Final optimisations to the EUTelTestFitter by Filip Zarnecki, for more details see his talk at the EUDET-JRA1 meeting: EUDET-JRA1 TestFitter analytical fit.
+*** Version v00-04-00
+- Major update. Introduce a (version of a) correlation band calculator. It is used to get an estimate of the sensors offset. To be applied in the HitMaker in order to have all sensors "preAligned". It makes life for the Millepede II (called in the EUTelMille) easier, since it is supposed to work anyway only with small shift/rotations.
+- Bug fix in EUTelMille: do not implement the estimated Z position (set the difference to = 0), otherwise the alignment constants could (rarely) get very large.
+- Bug fix in the zsFixedFrame: now able to cope with initially empty status collections.
  
-** Version v00-04-01:
-EUTelTestFitter updates by Filip Zarnecki, fixes are related to the non zero beam slope and the new UseSlope logic, significant performance improvement bug fix in the correlator processor due to sometimes confusing sensor addressing (by ID, by Z position, by order in the gear file).
-Changed the safety factor in the ApplyAlignment step to 1.0, otherwise the memory allocation fails.
+*** Version v00-03-02
+- Update DEPFET.
+- A final decoding for S3Bsystem and for test version of DCD readout has been implemented.
  
-** Version v00-04-00:
-Major update. Introduce a (version of a) correlation band calculator. It is used to get an estimate of the sensors offset. To be applied in the HitMaker in order to have all sensors "preAligned". It makes life for the Millepede II (called in the EUTelMille) easier, since it is supposed to work anyway only with small shift/rotations.
-Bug fix in EUTelMille: do not implement the estimated Z position (set the difference to = 0), otherwise the alignment constants could (rarely) get very large.
-Bug fix in the zsFixedFrame: now able to cope with initially empty status collections.
+*** Version v00-03-01
+- Bug fix, uncomment one of the chi2 safety checks in the EUTelTestFitter processor in order to maintain previous functionality.
+- Add few more correlation histograms to the EUTelCorrelator processor.
  
-** Version v00-03-02:
-Update DEPFET.
-A final decoding for S3Bsystem and for test version of DCD readout has been implemented.
+*** Version v00-03-00
+- Few major changes in the data processing flow: Running the HotPixel processor in the converter step: this has to be done on special Off-Beam runs. It dumps the hotpixel collection into a dedicated db file (slcio format), the hitpixel-db.slcio is read at the clustering step of the hot pixel map and reduces the combinatorics by a large fraction (the amount depends on the threshold which defines a pixel being hot or not).
+- Several control cards are added to the fitter processor, they are: UseSlope - turn on the optimisation for the track candidates search. SlopeDistanceMax - defines a tube, which is parallel to axis Z, to reduce the combinatorics of all possible hit combinations when trying to form a new track candidate. SlopeXLimit, SlopeYLimit - define the allowed deviations between the hit pairs constituting a track candidate.
+- Several bug fixes: variable initialisation issues.
  
-** Version v00-03-01:
-Bug fix, uncomment one of the chi2 safety checks in the EUTelTestFitter processor in order to maintain previous functionality.
-Add few more correlation histograms to the EUTelCorrelator processor.
+*** Version v00-02-03
+- Optimisation of the status collection (speedup for the Digital Fixed Frame Clustering). Fix of the cluster center position in the HitMaker, it has no effect on DFF, was buggy for the SparseClustering2 (SP2). The hit coordinates are expected to be identical for small clusters (smaller than defined by the DFF algorithm input settings). In principle the SP2 clustering algorithm could be used in some cases as the default one for M26 sensors.
  
-** Version v00-03-00:
-Few major changes in the data processing flow: Running the HotPixel processor in the converter step: this has to be done on special Off-Beam runs. It dumps the hotpixel collection into a dedicated db file (slcio format), the hitpixel-db.slcio is read at the clustering step of the hot pixel map and reduces the combinatorics by a large fraction (the amount depends on the threshold which defines a pixel being hot or not).
-Several control cards are added to the fitter processor, they are: UseSlope - turn on the optimisation for the track candidates search. SlopeDistanceMax - defines a tube, which is parallel to axis Z, to reduce the combinatorics of all possible hit combinations when trying to form a new track candidate. SlopeXLimit, SlopeYLimit - define the allowed deviations between the hit pairs constituting a track candidate.
-Several bug fixes: variable initialisation issues.
+*** Version v00-02-02
+- Millepede II based alignment processor fix introduced to be compatible with the official Millepede II versions. Backward compatibility is kept.
  
-** Version v00-02-03:
-Optimisation of the status collection (speedup for the Digital Fixed Frame Clustering). Fix of the cluster center position in the HitMaker, it has no effect on DFF, was buggy for the SparseClustering2 (SP2). The hit coordinates are expected to be identical for small clusters (smaller than defined by the DFF algorithm input settings). In principle the SP2 clustering algorithm could be used in some cases as the default one for M26 sensors.
+*** Version v00-02-01a
+- Minor documentation fix.
  
-** Version v00-02-02:
-Millepede II based alignment processor fix introduced to be compatible with the official Millepede II versions. Backward compatibility is kept.
- 
-** Version v00-02-01a:
-Minor documentation fix.
- 
-** Version v00-02-01:
-Millepede II based alignment processor extended to align tilted sensors (full 6D gears, 3 coordinate shifts and 3 angle rotations).
-Added APIX sensors description and clustering.
-Added FORTIS sensors description.
-Several minor updates: GRID submition scripts do not require pedestal runs any more (ERROR downgraded to a WARNING).
-Default configuration file config.cfg updated
-New: an example gear file for a CERN June 2010 APIX/FORTIS hardware setup.
-Several bug fixes.
-Documentation update.
+*** Version v00-02-01
+- Millepede II based alignment processor extended to align tilted sensors (full 6D gears, 3 coordinate shifts and 3 angle rotations).
+- Added APIX sensors description and clustering.
+- Added FORTIS sensors description.
+- Several minor updates: GRID submition scripts do not require pedestal runs any more (ERROR downgraded to a WARNING).
+- Default configuration file config.cfg updated
+- New: an example gear file for a CERN June 2010 APIX/FORTIS hardware setup.
+- Several bug fixes.
+- Documentation update.
 
-** Version v00-02-00:
-Capability to run the same processors on user devices too.
-Python based submission scripts.
-Histogramming package for a better and easier results visualization.
-Several minor updates.
-New: templates for the python scripts to analyse digital sensors (Mimosa 26).
-A gear file for the Mimosa-26 CERN September 2009 setup updated (only 6 M26 sensors).
+*** Version v00-02-00
+- Capability to run the same processors on user devices too.
+- Python based submission scripts.
+- Histogramming package for a better and easier results visualization.
+- Several minor updates.
+- New: templates for the python scripts to analyse digital sensors (Mimosa 26).
+- A gear file for the Mimosa-26 CERN September 2009 setup updated (only 6 M26 sensors).
