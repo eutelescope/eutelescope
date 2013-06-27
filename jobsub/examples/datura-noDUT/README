@@ -66,7 +66,7 @@
    
    #+begin_src sh
    jobsub -c ${ANALYSIS_CONF}/config.cfg -csv ${ANALYSIS_CONF}/runlist.csv converter 97
-   jobsub -c ${ANALYSIS_CONF}/config.cfg -csv ${ANALYSIS_CONF}/runlist.csv clusearch 97
+   jobsub -c ${ANALYSIS_CONF}/config.cfg -csv ${ANALYSIS_CONF}/runlist.csv clustering 97
    jobsub -c ${ANALYSIS_CONF}/config.cfg -csv ${ANALYSIS_CONF}/runlist.csv hitmaker 97
    #+end_src sh
 
