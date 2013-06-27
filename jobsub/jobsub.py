@@ -161,7 +161,7 @@ def loadparamsfromcsv(csvfilename, runs):
         finally:
             csvfile.close()
     except csv.Error, e:
-        log.error("Problem loading the csv file '"+csvfilename+"'({0}): {1}".format(e.errno, e.strerror))
+        log.error("Problem loading the csv file '"+csvfilename+"'(%s): %s"%(e.errno, e.strerror))
         exit(1)
     return parameters_csv
 
@@ -439,7 +439,7 @@ def main(argv=None):
                 log.warning("Config file '%s' is missing a section [%s]!", args.conf_file, args.jobtask)
             log.info("Loaded config file %s", args.conf_file)
         except ConfigParser.InterpolationMissingOptionError, err: # if interpolation during config parsing fails
-            log.error('Bad value substitution in config file '+str(args.conf_file)+ ": missing '{0}' key in section [{1}] for option '{2}'.".format(err.reference, err.section, err.option))
+            log.error('Bad value substitution in config file '+str(args.conf_file)+ ": missing '%s' key in section [%s] for option '%s'."%(err.reference, err.section, err.option))
             if err.reference == "eutelescopepath":
                 log.error('EUTELESCOPE environment variable not set but required in config through "EUTelescopePath" key - please source build_env.sh in EUTelescope top directory or set variable manually.')
             return 1
