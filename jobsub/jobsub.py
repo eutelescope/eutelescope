@@ -345,7 +345,7 @@ def main(argv=None):
         # determine path to subdirectory
         libdir = os.path.join(os.path.dirname(os.path.abspath(os.path.realpath(__file__))),"pymodules","argparse")
         if libdir not in sys.path:
-            sys.path.append(cmd_subfolder)
+            sys.path.append(libdir)
         # try again loading the module
         try:
             import argparse
