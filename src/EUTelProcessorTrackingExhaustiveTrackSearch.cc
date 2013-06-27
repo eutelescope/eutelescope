@@ -75,11 +75,11 @@ _trackFinder(0),
 _maxMissingHitsPerTrackCand(0),
 _maxNTracks(10),
 _finderMode(3),
-_residualsXMin(6, -0.5),
-_residualsYMin(6, -0.5),
-_residualsXMax(6, 0.5),
-_residualsYMax(6, 0.5),
-_residualsRMax(6, 0.5),
+_residualsXMin(6, -0.25),
+_residualsYMin(6, -0.25),
+_residualsXMax(6, 0.25),
+_residualsYMax(6, 0.25),
+_residualsRMax(6, 0.25),
 _histoInfoFileName("histoinfo.xml"),
 _nProcessedRuns(0),
 _nProcessedEvents(0),
@@ -114,37 +114,37 @@ _aidaHistoMap1D() {
     registerOptionalParameter("FinderMode", "Finder mode. Possible values are 1, 2, 3",
             _finderMode, static_cast<int> (3));
 
-    const double defWindowSize = 50.5;
+    const double defWindowSize = 0.25;
     
     const FloatVec MinimalResidualsX(6, -defWindowSize); // assumes there are at most 10 planes. But this doesn't matter.
     registerOptionalParameter("ResidualsXMin",
             "Minimal values of the hit residuals in the X direction for a track. "
             "Note: these numbers are ordered according to the z position of "
-            "the sensors and NOT according to the sensor id.",
+            "the sensors and NOT according to the sensor id. Units are mm.",
             _residualsXMin, MinimalResidualsX);
 
     const FloatVec MinimalResidualsY(6, -defWindowSize); // assumes there are at most 10 planes. But this doesn't matter.
     registerOptionalParameter("ResidualsYMin", "Minimal values of the hit residuals in the Y direction for a track. "
             "Note: these numbers are ordered according to the z position of "
-            "the sensors and NOT according to the sensor id.",
+            "the sensors and NOT according to the sensor id. Units are mm.",
             _residualsYMin, MinimalResidualsY);
 
     const FloatVec MaximalResidualsX(6, defWindowSize); // assumes there are at most 10 planes. But this doesn't matter.
     registerOptionalParameter("ResidualsXMax", "Maximal values of the hit residuals in the X direction for a track. "
             "Note: these numbers are ordered according to the z position of "
-            "the sensors and NOT according to the sensor id.",
+            "the sensors and NOT according to the sensor id. Units are mm.",
             _residualsXMax, MaximalResidualsX);
 
     const FloatVec MaximalResidualsY(6, defWindowSize); // assumes there are at most 10 planes. But this doesn't matter.
     registerOptionalParameter("ResidualsYMax", "Maximal values of the hit residuals in the Y direction for a track. "
             "Note: these numbers are ordered according to the z position of "
-            "the sensors and NOT according to the sensor id.",
+            "the sensors and NOT according to the sensor id. Units are mm.",
             _residualsYMax, MaximalResidualsY);
 
     const FloatVec MaximalResidualsR(6, defWindowSize);
     registerOptionalParameter("ResidualsRMax", "Maximal allowed distance between hits entering the recognition step "
             "per 15 cm space between the planes. One value for each neighbor planes. "
-            "DistanceMax will be used for each pair if this vector is empty.",
+            "DistanceMax will be used for each pair if this vector is empty. Units are mm.",
             _residualsRMax, MaximalResidualsR);
 
     // Histogram information
