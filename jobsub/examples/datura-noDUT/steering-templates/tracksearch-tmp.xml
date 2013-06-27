@@ -28,7 +28,7 @@
 
    <global>
       <parameter name="LCIOInputFiles"> @LcioPath@/@FilePrefix@-hitmaker.slcio </parameter>
-      <parameter name="GearXMLFile" value="@GearFile@"/>
+      <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
       <parameter name="SupressCheck" value="false"/>
@@ -149,7 +149,7 @@
   <!--Maximal number of track candidates to be found in events-->
   <!--parameter name="MaxNTracksPerEvent" type="int" value="10"/-->
   <!--Maximal allowed distance between hits entering the recognition step per 10 cm space between the planes. One value for each neighbor planes. DistanceMax will be used for each pair if this vector is empty.-->
-  <!--parameter name="ResidualsRMax" type="FloatVec"> 300 300 300 300 300 300 </parameter-->
+  <!--parameter name="ResidualsRMax" type="FloatVec"> @ResidualRMax@ </parameter-->
   <!--Maximal values of the hit residuals in the X direction for a track. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
   <!--parameter name="ResidualsXMax" type="FloatVec"> @ResidualXMax@ </parameter-->
   <!--Minimal values of the hit residuals in the X direction for a track. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
