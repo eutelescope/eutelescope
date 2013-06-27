@@ -194,7 +194,7 @@
 	# test depends on earlier steps
 	DEPENDS TestJobsubExampleDaturaNoDUTAlignRun
 	# fitter step sometimes takes a bit longer (in s)
-	TIMEOUT 2000
+	TIMEOUT 2500
 	)
     # now check if the expected output files exist and look ok
     ADD_TEST( TestJobsubExampleDaturaNoDUTFitterLog sh -c "[ -f ${testdir}/output/logs/fitter-${PaddedRunNr}.zip ]" )
