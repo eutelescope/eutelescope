@@ -576,8 +576,6 @@ namespace eutelescope {
             double step = 0.;
             itHit = itTrkCand->begin();
             for (; itHit != itTrkCand->end(); ++itHit) {
-//                fittrack -> addHit(*itHit); // add hit to the output collection
-
                 const double* hitpos = (*itHit)->getPosition();
                 const EVENT::FloatVec hitcov = (*itHit)->getCovMatrix();
                 const int planeID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(*itHit) );

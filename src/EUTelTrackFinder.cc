@@ -18,28 +18,18 @@ namespace eutelescope {
 
     EUTelTrackFinder::EUTelTrackFinder() : _isReady(kIsNotReady),
                                            _searchResult(kFailed),
-                                           _name("DefaultTrackFinder") {
-        _allHits.clear();
-        _trackCandidates.clear();
-
-        return;
-    }
+                                           _name("DefaultTrackFinder"),
+                                           _allHits(),
+                                           _trackCandidates() { }
 
     EUTelTrackFinder::EUTelTrackFinder(
             std::string name ) :
                                             _isReady(kIsNotReady),
                                             _searchResult(kFailed),
-                                            _name(name) {
-        _allHits.clear();
-        _trackCandidates.clear();
+                                            _name(name),
+                                            _allHits(),
+                                            _trackCandidates() { }
 
-        return;
-    }
-
-/*
-    EUTelTrackFinder::EUTelTrackFinder(const EUTelTrackFinder& orig) {
-    }
-*/
     EUTelTrackFinder::~EUTelTrackFinder() {
     }
     
