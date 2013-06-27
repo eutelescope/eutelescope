@@ -343,10 +343,9 @@ def main(argv=None):
         log.debug("No locally installed argparse module found; trying the package provided with jobsub.")
         # argparse is not installed; use (old) version provided with jobsub
         # determine path to subdirectory
-        import inspect
-        cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile( inspect.currentframe() ))[0],"pymodules/argparse")))
-        if cmd_subfolder not in sys.path:
-            sys.path.insert(0, cmd_subfolder)
+        libdir = os.path.join(os.path.dirname(os.path.abspath(os.path.realpath(__file__))),"pymodules","argparse")
+        if libdir not in sys.path:
+            sys.path.append(cmd_subfolder)
         # try again loading the module
         try:
             import argparse
