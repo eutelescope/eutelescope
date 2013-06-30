@@ -22,10 +22,11 @@
    # only needed in the last step to test the results of EUTel against a set of reference files:
     SET( stattestdir "$ENV{EUTELESCOPE}/test/stattest/bin" )
     SET( referencedatadir "/afs/desy.de/group/telescopes/EutelTestData/TestExampleAnemone2FEI4" )
+#    SET( referencedatadir "/home/ilcsoft/EutelTestData/TestExampleAnemone2FEI4" )
 
     SET( executable python -tt ${jobsubdir}/jobsub.py )
     # options: use config, use csv, change native path to central AFS location, reduce number of events to 200k
-    SET( jobsubOptions --config=${exampledir}/config.cfg -csv ${exampledir}/runlist.csv -o NativePath=${referencedatadir} -o MaxRecordNumber=10000)
+    SET( jobsubOptions --config=${exampledir}/config.cfg -csv ${exampledir}/runlist.csv -o NativePath=${referencedatadir} -o MaxRecordNumber=100000)
 
 
     # all this regular expressions must be matched for the tests to pass.
@@ -102,7 +103,7 @@
     SET_TESTS_PROPERTIES (TestJobsubExampleAnemone2FEI4ClusteringHisto PROPERTIES DEPENDS TestJobsubExampleAnemone2FEI4ClusteringRun)
 
     # we expect an average of 24.4 clusters per event
-    ADD_TEST( TestJobsubExampleAnemone2FEI4ClusteringOutput sh -c "[ -f ${testdir}/output/results/run${PaddedRunNr}-clu.slcio ] && lcio_check_col_elements --average --expelements 38 cluster_m26 ${testdir}/output/results/run${PaddedRunNr}-clu.slcio" )
+    ADD_TEST( TestJobsubExampleAnemone2FEI4ClusteringOutput sh -c "[ -f ${testdir}/output/results/run${PaddedRunNr}-clu.slcio ] && lcio_check_col_elements --average --expelements 38 --relelementerror 0.1 cluster_m26 ${testdir}/output/results/run${PaddedRunNr}-clu.slcio" )
     SET_TESTS_PROPERTIES (TestJobsubExampleAnemone2FEI4ClusteringOutput PROPERTIES DEPENDS TestJobsubExampleAnemone2FEI4ClusteringRun)
 
 
@@ -134,7 +135,7 @@
     SET_TESTS_PROPERTIES (TestJobsubExampleAnemone2FEI4HitmakerPrealign PROPERTIES DEPENDS TestJobsubExampleAnemone2FEI4HitmakerRun)
 
     # we expect an average hit number of 24 for run 97 (wide geometry) using the example configuration
-    ADD_TEST( TestJobsubExampleAnemone2FEI4HitmakerOutput sh -c "[ -f ${testdir}/output/results/run${PaddedRunNr}-hit.slcio ] && lcio_check_col_elements -a --expelements 39 hit ${testdir}/output/results/run${PaddedRunNr}-hit.slcio" )
+    ADD_TEST( TestJobsubExampleAnemone2FEI4HitmakerOutput sh -c "[ -f ${testdir}/output/results/run${PaddedRunNr}-hit.slcio ] && lcio_check_col_elements -a --expelements 39 --relelementerror 0.1 hit ${testdir}/output/results/run${PaddedRunNr}-hit.slcio" )
     SET_TESTS_PROPERTIES (TestJobsubExampleAnemone2FEI4HitmakerOutput PROPERTIES DEPENDS TestJobsubExampleAnemone2FEI4HitmakerRun)
 
 
@@ -259,7 +260,7 @@
   # STEP 1-5 VARIANTS USED FOR MEMCHECKS ONLY:
     SET( executable python -tt ${jobsubdir}/jobsub.py )
     # options for memcheck runs: reduced run range, plain output for valgrind parsing
-    SET( jobsubMemCheckOptions --config=${exampledir}/config.cfg -csv ${exampledir}/runlist.csv -o NativePath=${referencedatadir} -o MaxRecordNumber=10000 --plain)
+    SET( jobsubMemCheckOptions --config=${exampledir}/config.cfg -csv ${exampledir}/runlist.csv -o NativePath=${referencedatadir} -o MaxRecordNumber=2000 --plain)
 
   # Converter run with reduced run range
     ADD_TEST( NAME TestJobsubExampleAnemone2FEI4ConverterRunMemCheck
