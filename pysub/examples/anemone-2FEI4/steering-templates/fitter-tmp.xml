@@ -53,8 +53,8 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <processor name="LoadRefHitDB"     type="ConditionsProcessor">
     <parameter name="DBInit" type="string" value="localhost:lccd_test:align:tel"/>
     <parameter name="SimpleFileHandler" type="StringVec"> refhit  @DBPath@/@Output@-refhit-db.slcio referenceHit  </parameter>
-    <parameter name="SimpleFileHandler" type="StringVec"> refhit31  @DBPath@/@Output@-refhit-db.slcio referenceHit31  </parameter>
-    <parameter name="SimpleFileHandler" type="StringVec"> refhit32  @DBPath@/@Output@-refhit-db.slcio referenceHit32  </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> refhit31  @DBPath@/@Output@-refhit-db.slcio referenceHit  </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> refhit32  @DBPath@/@Output@-refhit-db.slcio referenceHit  </parameter>
   </processor>
 
 
