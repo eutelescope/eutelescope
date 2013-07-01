@@ -41,7 +41,7 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
   <!-- compression of output file 0: false >0: true (default) -->
   <parameter name="Compress" type="int" value="1"/>
   <!-- filename without extension-->
-  <parameter name="FileName" type="string" value="@HistoPath@/@Output@-align-histo"/>
+  <parameter name="FileName" type="string" value="@HistoPath@/@Output@-align-histo@MemCheckFlag@"/>
   <!-- type of output file xml (default) or root ( only OpenScientist)-->
   <parameter name="FileType" type="string" value="root"/>
  </processor>
@@ -120,13 +120,13 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
   <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
 
   <!--This is the name of the LCIO file name with the output alignmentconstants (add .slcio)-->
-  <parameter name="AlignmentConstantLCIOFile" type="string" value="@DBPath@/@Output@-align-db.slcio"/>
+  <parameter name="AlignmentConstantLCIOFile" type="string" value="@DBPath@/@Output@-align-db@MemCheckFlag@.slcio"/>
 
   <!--Name of the Millepede binary file.-->
-  <parameter name="BinaryFilename" type="string" value="@ResultsPath@/@Output@-align-mille.bin"/>
+  <parameter name="BinaryFilename" type="string" value="@ResultsPath@/@Output@-align-mille@MemCheckFlag@.bin"/>
 
   <!--Name of the steering file for the pede program.-->
-  <parameter name="PedeSteerfileName" type="string" value="@ResultsPath@/@Output@-pede-steer.txt"/>
+  <parameter name="PedeSteerfileName" type="string" value="@ResultsPath@/@Output@-pede-steer@MemCheckFlag@.txt"/>
 
   <!--Execute the pede program using the generated steering file.-->
   <parameter name="RunPede" type="int" value="@RunPede@"/>
