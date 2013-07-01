@@ -10,7 +10,7 @@
 # ======================================================================
 # ======================================================================
 
-    SET( testdir "${PROJECT_BINARY_DIR}/Testing/test_anemone-2FEI4" )
+    SET( testdir "${PROJECT_BINARY_DIR}/Testing/test_jobsub-anemone-2FEI4" )
     SET( jobsubdir "$ENV{EUTELESCOPE}/jobsub" )
     SET( exampledir "${jobsubdir}/examples/anemone-2FEI4" )
 

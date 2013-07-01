@@ -10,7 +10,7 @@
 # ======================================================================
 # ======================================================================
 
-    SET( testdir "${PROJECT_BINARY_DIR}/Testing/test_anemone-2FEI4" )
+    SET( testdir "${PROJECT_BINARY_DIR}/Testing/test_pysub-anemone-2FEI4" )
     SET( pysubdir "$ENV{EUTELESCOPE}/pysub" )
     SET( exampledir "${pysubdir}/examples/anemone-2FEI4" )
 
