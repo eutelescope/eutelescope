@@ -74,7 +74,7 @@ _hotPixelMap(),
 _trackFinder(0),
 _maxMissingHitsPerTrackCand(0),
 _maxNTracks(10),
-_finderMode(3),
+_finderMode(2),
 _residualsXMin(6, -0.25),
 _residualsYMin(6, -0.25),
 _residualsXMax(6, 0.25),
@@ -111,7 +111,7 @@ _aidaHistoMap1D() {
     registerOptionalParameter("MaxNTracksPerEvent", "Maximal number of track candidates to be found in events",
             _maxNTracks, static_cast<int> (100));
 
-    registerOptionalParameter("FinderMode", "Finder mode. Possible values are 1, 2, 3",
+    registerOptionalParameter("FinderMode", "Finder mode. Possible values are 1 (rectangular search window), 2 (circular search window)",
             _finderMode, static_cast<int> (3));
 
     const double defWindowSize = 0.25;
