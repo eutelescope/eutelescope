@@ -169,6 +169,7 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
     <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
     <parameter name="MinNumberOfCorrelatedHits" type="int" value="7"/>
     <parameter name="Events"  type="int" value="999"/>
+    <parameter name="HotPixelCollectionName"  type="string" value="hotpixel_apix"/>
 
     <!--Residual cuts along both size in microns-->
     <parameter name="ResidualsXMax" type="FloatVec">  2.  2.  2.   10.0  10.0  5.  5.  5.          </parameter>
@@ -187,6 +188,7 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
   <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
   <parameter name="MinNumberOfCorrelatedHits" type="int" value="7"/>
   <parameter name="Events"  type="int" value="999"/>
+  <parameter name="HotPixelCollectionName"  type="string" value="hotpixel_apix"/>
 
   <!--Residual cuts along both size in microns-->
     <parameter name="ResidualsXMax" type="FloatVec">  2.  2.  2.   10.0  10.0    5.  5.  5.          </parameter>
