@@ -62,6 +62,10 @@ namespace eutelescope {
             
             EVENT::DoubleVec siPlanesZPositions() const;
             
+            double siPlaneXPosition( int );
+            
+            double siPlaneYPosition( int );
+            
             double siPlaneZPosition( int );
             
             std::map<double, int> getSensorIDMap() const;
@@ -147,6 +151,12 @@ namespace eutelescope {
             /** @TODO: Add description to this variable */
             std::map< double, int > _sensorIDMap;
 
+            /** @TODO: Add description to this variable */
+            EVENT::DoubleVec _siPlaneXPosition;
+            
+            /** @TODO: Add description to this variable */
+            EVENT::DoubleVec _siPlaneYPosition;
+            
             /** @TODO: Add description to this variable */
             EVENT::DoubleVec _siPlaneZPosition;
 
