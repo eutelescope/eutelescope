@@ -52,13 +52,15 @@ considered outdated and will no longer be supported.
      a bit "rough" around the edges; please report any issues you encounter
      in the forums or file a bug report.
    - GBL: Applying "6D" alignment (with 6 degrees of freedom) requires
-     usage of EUTelProcessorApplyAlignment (*not*
-     EUTelApplyAlignmentProcessor) for consistent definition of
-     rotation angles. This processor does currently offer no
+     usage of the new EUTelProcessorApplyAlignment *or* the previously
+     existing EUTelApplyAlignmentProcessor together with a reference
+     vector collection for consistent treatment of alignment shifts
+     and rotations. This former processor does currently offer no
      convenient way of going back to the local coordinate system of
-     e.g. the DUT. This functionality will be added soon and the
-     processors will be merged to a single one. The 3D alignment
-     (x,y,xy), however, can be applied using both processors.
+     e.g. the DUT. This functionality will be added soon and the two
+     processors for applying alignment constants will be merged to a
+     single one. The 3D alignment (x,y,xy), however, can be applied
+     using both processors.
    - SPEED: histogram filling is not very efficiently handled in some
      processors; this issue is already partially addressed in this release.
      Still, when you are batch processing many files and do not
