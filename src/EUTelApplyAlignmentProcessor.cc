@@ -1242,6 +1242,8 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
           y_refhit =  refhit->getYOffset();
           z_refhit =  refhit->getZOffset();
 
+          // possible source of inconsistency; Apply to reference hit collection flag should be enabled in steering file
+          // otherwise the following three lines (undo alignment shifts) makes no sense !!!
           x_refhit += offsetX;
           y_refhit += offsetY;
           z_refhit += offsetZ;
@@ -1272,6 +1274,7 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
       double inputPosition[3]      = { inputS[0], inputS[1], inputS[2] };
       double inputPosition_orig[3] = { inputS[0], inputS[1], inputS[2] };
 
+      // calculate hit position on a sensor relative to its center (assuming that refhit is still without alignment corrections)
       inputPosition[0] = inputPosition[0] - x_refhit;
       inputPosition[1] = inputPosition[1] - y_refhit;
       inputPosition[2] = inputPosition[2] - z_refhit;
