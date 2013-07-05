@@ -127,8 +127,6 @@ namespace eutelescope {
      */
     virtual void end();
 
-    int guessSensorID( lcio::TrackerHitImpl * hit ) ;
-
   protected:
 
     //! Input collection name.
@@ -174,35 +172,6 @@ namespace eutelescope {
 
     //! Look Up Table for the sensor ID
     std::map< int, int > _lookUpTable;
-
-    //! boolean to mark the first processed event
-    bool fevent;
-
-    //! Silicon planes parameters as described in GEAR
-    /*! This structure actually contains the following:
-     *  @li A reference to the telescope geoemtry and layout
-     *  @li An integer number saying if the telescope is w/ or w/o DUT
-     *  @li An integer number saying the number of planes in the
-     *  telescope.
-     *
-     *  This object is provided by GEAR during the init() phase and
-     *  stored here for local use.
-     */
-    gear::SiPlanesParameters * _siPlanesParameters;
-
-    //! Silicon plane layer layout
-    /*! This is the real geoemetry description. For each layer
-     *  composing the telescope the relevant information are
-     *  available.
-     *
-     *  This object is taken from the _siPlanesParameters during the
-     *  init() phase and stored for local use
-     */
-    gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
-
-    //! An array with the Z position of planes
-    double * _siPlaneZPosition;
-
   };
 
   //! A global instance of the processor
