@@ -1,0 +1,77 @@
+Description of the 'geant2lcio' tool
+====================================
+
+A.F.Zarnecki, University of Warsaw, zarnecki@fuw.edu.pl
+
+
+'geant2lcio' converts ASCII output file from Geant4 simulation into 
+the SLCIO file suitable for track fitting within Eutelescope framework.
+
+Geant data files (prepared by Piotr Niezurawski, University of Warsaw)
+corresponding to the DESY August 2007 telescope tests can be found 
+on the Grid at the location
+
+lfn:/grid/ilc/eudet-jra1/2007/tb-desy-august/geant
+
+Text files (*.txt) contain only particles crossing all telescope planes, 
+and for each plane position of the particle leaving the sensor plane is 
+stored. Planes are perpendicular to the X axis (beam axis) and located 
+at x=-50,-25,0,25 and 50 mm. In simulation, all particles start at position 
+(-250mm,0,0) with the assumed angular spread in momentum direction 
+(1mrad or 0.6mrad, as indicated in the file name). Particles leave 
+the "World" at x=+250mm. Positions of particles at the front-surface 
+of the World and back-surface of the World are also included in the 
+"event record", so each event consists of 7 lines (front surface, 
+5 sensor planes, back surface; (x,y,z) given in each line).
+
+Program 'geant2lcio' writes simulated tracks in LCIO format 
+(SIMTRACKERHIT collection named "simhit"), but additional processing 
+is also possible as described below.
+
+For each simulated hit, gaussian smearing and reconstruction efficiency is
+taken into account. Also nose hits can be added to each plane. 
+Beam axis can be redefined (for Eutelescope we use Z as beam axis) and
+tracks can be moved in direction perpednicular to the beam to simulate 
+the gaussian beam spot (in Geant simulation all particles come from the same
+point). Finally, multiple tracks can be merged into one event (poissonian 
+distribution for the number of additional 'pileup' tracks is used).
+
+Parameters describing this functionality are taken from the first line of the
+geometry description file (default 'geant2lcio.geom'). Currently used
+configuration:
+
+First line:
+   5   1.  1.  3  2.
+
+which is:
+       5   telescope planes
+       1.  additional track per event (i.e. 2 tracks per event on average)
+       1.  additional noise hit per plane per event (Poisson distribution)
+       3   beam direction in output file (Z)
+       2.  sigma of the beam spot size [mm]
+
+Remaining 5 lines:
+
+ -50    -3.84  3.84   -3.84 3.84  3   0.98   Standard plane, 3um resolution
+ -25    -3.84  3.84   -3.84 3.84  3   0.98   Standard plane, 3um resolution
+   0    -3.84  3.84   -3.84 3.84  3   0.98   Standard plane, 3um resolution
+  25    -3.84  3.84   -3.84 3.84  3   0.98   Standard plane, 3um resolution
+  50    -3.84  3.84   -3.84 3.84  3   0.98   Standard plane, 3um resolution
+
+For each sensor plane: pozition along the beam, sensor boundaries
+(xmin xmax ymin ymax) in mm, sensor resolution in um and sensor efficiency.
+
+Measured hits are on output writtedn to TRACKERHIT collection 
+(collection name "meshit").
+
+When running 'geant2lcio' one should specify 3 parameters:
+  input (ASCII) file name,  output (LCIO) file name, geometry file name
+(if not given, default name is used).
+
+The output LCIO files, corresponding to the GEANT input files described above
+are stored in the same Grid location:
+
+lfn:/grid/ilc/eudet-jra1/2007/tb-desy-august/geant
+
+
+
