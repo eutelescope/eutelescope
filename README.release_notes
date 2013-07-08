@@ -11,15 +11,17 @@ considered outdated and will no longer be supported.
     - GBL: General Broken Lines can now be used for alignment and
       track fitting. An example with steering files (datura-noDUT) is
       included.
-    - Improved processor output verbosity: instead of every processor creating
-      arbitrary amounts of console output every X events, you can now
-      easily control the verbosity using the PrintEventNumber processor (see examples).
+    - Improved processor output verbosity: instead of every processor
+      creating arbitrary amounts of console output every X events, you
+      can now easily control the verbosity using the PrintEventNumber
+      processor (see examples).
     - New tool for plotting the histograms produced during your
       analysis: Using "pyroplot" (Python ROOT plotter) you can easily
       generate a single pdf file containing all or a selection of
       histograms from arbitrary root files or even compare histograms
-      between files. See the online documentation for details. 
-      NOTE: requires Python 2.6 or later.
+      between files. See the README and online documentation for details. 
+      NOTE: due to its dependency on rootpy, pyroplot requires Python 2.6 or
+      later.
 *** 0.9.0
     - Optimized code efficiency, especially in histogram filling routines
     - Improved histogram output (binning, description, axis labels)
@@ -41,26 +43,29 @@ considered outdated and will no longer be supported.
      them through "Marlin -u" command and search for any parameter
      that is prefixed with the comment "<!-- Sorry, this parameter
      isn't a default parameter for this processor: description and
-     type lost!!  -->". Such parameters are either renamed or have
-     been removed altogether from the processor. In the former case
-     you should search for the parameter under its new name in the
-     updated steering file to adjust its setting. In the latter case
-     you can just safely remove the parameter from your steering file.
+     type lost!!  -->". Such parameters are either renamed (e.g. for
+     clarity) or have been removed altogether from the processor. In
+     the former case you should search for the parameter under its new
+     name in the updated steering file to adjust its setting. In the
+     latter case you can just safely remove the parameter from your
+     steering file.
 ** Known Issues
    For up-to-date details, check http://eutelescope.web.cern.ch/project/issues
+   - jobsub: running jobsub directly (i.e. using './jobsub' and not
+     'python jobsub') requires the symbolic link 'python2' to be
+     present in the PATH; this is set up on most systems by default
+     and is needed to ensure that the right interpreter is being
+     called on systems with both python 2.X and 3.X installed.
    - GBL: the processors using GBL are in an early stage and might still be
      a bit "rough" around the edges; please report any issues you encounter
      in the forums or file a bug report.
    - GBL: Applying "6D" alignment (with 6 degrees of freedom) requires
-     usage of the new EUTelProcessorApplyAlignment *or* the previously
-     existing EUTelApplyAlignmentProcessor together with a reference
-     vector collection for consistent treatment of alignment shifts
-     and rotations. This former processor does currently offer no
-     convenient way of going back to the local coordinate system of
-     e.g. the DUT. This functionality will be added soon and the two
-     processors for applying alignment constants will be merged to a
-     single one. The 3D alignment (x,y,xy), however, can be applied
-     using both processors.
+     using the EUTelApplyAlignmentProcessor together with a reference
+     vector collection (created through EUTelHitmaker and loaded
+     before applying the alingment) for consistent treatment of
+     alignment shifts and rotations. The 3D alignment (x,y,xy),
+     however, can be applied using with or without reference vector
+     collections.
    - SPEED: histogram filling is not very efficiently handled in some
      processors; this issue is already partially addressed in this release.
      Still, when you are batch processing many files and do not
@@ -74,7 +79,6 @@ considered outdated and will no longer be supported.
      some processors and therefore cannot be easily removed; this leads to 
      (storage) overhead, for details see
      http://eutelescope.web.cern.ch/issue/data-duplication-output-eutelclusteringprocessor
-
 * Version 0.8
 ** New features and change log
 *** General
