@@ -15,6 +15,7 @@ considered outdated and will no longer be supported.
       creating arbitrary amounts of console output every X events, you
       can now easily control the verbosity using the PrintEventNumber
       processor (see examples).
+    - Optimized code efficiency, especially in histogram filling routines
     - New tool for plotting the histograms produced during your
       analysis: Using "pyroplot" (Python ROOT plotter) you can easily
       generate a single pdf file containing all or a selection of
@@ -23,10 +24,10 @@ considered outdated and will no longer be supported.
       NOTE: due to its dependency on rootpy, pyroplot requires Python 2.6 or
       later.
 *** 0.9.0
-    - Optimized code efficiency, especially in histogram filling routines
     - Improved histogram output (binning, description, axis labels)
     - EUTelMille now allows to include custom pede commands into the
       generated pede steering file directly via processor option.
+    - New jobsub example for using ATLAS FEI4 as DUT in Anemone telescope
     - EUTelHitmaker now assigns uncertainties to hits (taken from
       information in GEAR file for now)
     - moved external libraries to ./extern
