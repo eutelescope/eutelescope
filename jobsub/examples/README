@@ -2,6 +2,9 @@
 This subdirectory contains example configurations and steering files
 that can be used as a basis for your own analysis:
 
+* anemone-2FEI4
+     The Anemone telescope (six planes of Mimosa26) and 2 ATLAS-FEI4 pixel
+
 * datura-noDUT
      The Datura telescope with six planes of Mimosa26 without DUT
 
