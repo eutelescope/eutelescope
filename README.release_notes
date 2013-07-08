@@ -88,7 +88,12 @@ considered outdated and will no longer be supported.
     - All examples now use CTest framework for automated regression tests.
     - Includes processors for CMS Pixel chips (PSI46xxx).
     - Updated and improved documentation including examples.
-*** 0.8.3
+*** 0.8.4 (not released yet)
+    - jobsub: fixes loading of the argparse module provided when using
+      Python versions older than 2.7
+    - jobsub: fixes backtrace on certain errors with Python versions < 2.7
+    - fixed some typos
+*** 0.8.3 (released 26.6.2013)
     - New PedeSteeringAdditionalCmds parameter in EUTelMille: allows
       to add arbitrary parameters to the generated pede steering file
     - Updated example analysis datura-noDUT
