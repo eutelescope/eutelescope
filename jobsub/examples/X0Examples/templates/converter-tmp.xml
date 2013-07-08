@@ -1,58 +1,58 @@
 <?xml version="1.0" encoding="us-ascii"?>
-<!-- ?xml-stylesheet type="text/xsl" href="http://ilcsoft.desy.de/marlin/marlin.xsl"? -->
-<!-- ?xml-stylesheet type="text/xsl" href="marlin.xsl"? -->
 
 <!-- 
 
 ==========================================================================================
-                     Steering file template for the pysub framework
+                     Steering file template for the jobsub framework
 
                                ==> converter-tmp.xml <===
 
-Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
 ==========================================================================================
 
 --> 
 
-
 <marlin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ilcsoft.desy.de/marlin/marlin.xsd">
 
    <execute>
-      <processor name="AIDA"/>
-      <processor name="UniversalNativeReader"/>
-      <@RunHotPixelKillerCommentLeft@processor name="Mimosa26EUTelAutoPedestalNoiseProcessor"/@RunHotPixelKillerCommentRight@>
-      <@RunHotPixelKillerCommentLeft@processor name="HotPixelKiller"/@RunHotPixelKillerCommentRight@>
-      <processor name="Save"/>
+     <processor name="AIDA"/>
+     <processor name="UniversalNativeReader"/>
+     <processor name="Mimosa26EUTelAutoPedestalNoiseProcessor"/>
+     <processor name="HotPixelKiller"/>
+     <processor name="Save"/>
+     <processor name="MyEUTelUtilityPrintEventNumber"/>
    </execute>
 
    <global>
       <parameter name="LCIOInputFiles"> </parameter>
-      <parameter name="GearXMLFile" value="@GearPath@/@GearFile@"/>
-      <parameter name="MaxRecordNumber" value="100000"/>
-      <parameter name="SkipNEvents" value="0"/>
+      <parameter name="GearXMLFile" value="@GearFolder@/@GearFile@"/>
+      <!-- Limit the number of events -->
+      <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
+      <parameter name="SkipNEvents" value="@SkipNEvents@"/>
       <parameter name="SupressCheck" value="false"/>
-      <parameter name="Verbosity" value="WARNING"/>
+      <parameter name="Verbosity" value="@Verbosity@"/>
    </global>
 
   <processor name="AIDA" type="AIDAProcessor">
+    <@LocalVerbosityCommentLeft@ parameter name="Verbosity" type="string" value="@AIDAVerbosity@"/@LocalVerbosityCommentRight@>
     <!--Processor that handles AIDA files. Creates on directory per processor.  Processors only need to create and fill the histograms, clouds and tuples. Needs to be the first ActiveProcessor-->
     <!-- compression of output file 0: false >0: true (default) -->
     <parameter name="Compress" type="int" value="1"/>
     <!-- filename without extension-->
-    <parameter name="FileName" type="string" value= "@HistoPath@/run@RunNumber@-converter-histo"/>
+    <parameter name="FileName" type="string" value= "@HistoFolder@/@Output@-converter-histo"/>
     <!-- type of output file xml (default) or root ( only OpenScientist)-->
     <parameter name="FileType" type="string" value="root"/>
   </processor>
 
 
  <processor name="UniversalNativeReader" type="EUTelNativeReader">
+  <@LocalVerbosityCommentLeft@ parameter name="Verbosity" type="string" value="@UniversalNativeReaderVerbosity"/@LocalVerbosityCommentRight@>
   <!--Reads data streams produced by EUDAQ and produced the corresponding LCIO output-->
   <!--This is the depfet produced output collection-->
   <parameter name="DEPFETOutputCollection" type="string" lcioOutType="TrackerData"> rawdata_dep </parameter>
   <!--This is the eudrb producer output collection when read in RAW mode-->
   <parameter name="EUBRDRawModeOutputCollection" type="string" lcioOutType="TrackerRawData"> rawdata </parameter>
-  <!--This si the mimotel output collection when read in ZS mode-->
+  <!--This is the mimotel output collection when read in zero suppressed mode-->
   <parameter name="EUDRBZSModeOutputCollection" type="string" lcioOutType="TrackerData"> zsdata </parameter>
   <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
   <parameter name="DEPFETSensorIDVec" value="8"/>
@@ -65,11 +65,13 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
   <!--This is the input file name-->
   <parameter name="InputFileName" type="string" value="@NativeFolder@/run@RunNumber@.raw  "/>
   <!--Resynchronize the events based on the TLU trigger ID-->
-  <parameter name="SyncTriggerID" type="bool" value="true"/>
+  <parameter name="SyncTriggerID" type="bool" value="false"/>
+  <parameter name="MaxRecordNumber" type="int" value="@MaxRecordNumber@"/>
  </processor>
 
  <processor name="Mimosa26EUTelAutoPedestalNoiseProcessor" type="EUTelAutoPedestalNoiseProcessor">
- <!--EUTelAutoPedestalNoiseProcessor produces initial pedestal / noise / status with user provided values-->
+  <@LocalVerbosityCommentLeft@ parameter name="Verbosity" type="string" value="@Mimosa26EUTelAutoPedestalNoiseProcessorVerbosity"/@LocalVerbosityCommentRight@>
+  <!--EUTelAutoPedestalNoiseProcessor produces initial pedestal / noise / status with user provided values-->
   <!--Noise local collection-->
   <parameter name="NoiseCollectionName" type="string" lcioOutType="TrackerData"> m26_noise </parameter>
   <!--Pedestal local collection-->
@@ -93,12 +95,14 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
  </processor>
 
  <processor name="HotPixelKiller" type="EUTelHotPixelKiller">
- 
-    <!--This is the name of the LCIO file name with the input/output hot pixel collection  (add .slcio)-->
-    <parameter name="HotPixelDBFile" type="string" value="@DBPath@/run@RunNumber@-hotpixel-db.slcio"/>
+  <@LocalVerbosityCommentLeft@ parameter name="Verbosity" type="string" value="@HotPixelKillerVerbosity"/@LocalVerbosityCommentRight@>
+  <!--This is the name of the LCIO file name with the input/output hot pixel collection  (add .slcio)-->
+    <parameter name="HotPixelDBFile" type="string" value="@DBFolder@/@HotPixelRunNumber@-hotpixel-db.slcio"/>
+    <!--write mode for output file:  WRITE_APPEND or WRITE_NEW, default: WRITE_APPEND-->
+    <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
     <parameter name="HotPixelCollectionName" type="string" value="hotpixel_m26" />
 
-    <!--EUTelHotPixelKiller periodically check for pixel singing loud too often and remove them from the analysis-->
+    <!--EUTelHotPixelKiller periodically check for pixel singing loud too often and removes them from the analysis-->
 
     <!--
         INPUT / OUTPUT
@@ -111,13 +115,12 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
     <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData"> m26_status </parameter>
     <!--Input of Zero Suppressed data-->
     <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> zsdata_m26 </parameter>
-   
+    <!--This flag is used to initialise simple data decoding and hot pixel finder (0-no, 1-yes)-->
     <parameter name="BuildHotPixelDatabase" type="int" value="1" />
     
-
     <!--This float number [0,1] represents the maximum allowed firing frequency
         within the selected number of event per cycle-->
-    <parameter name="MaxAllowedFiringFreq" type="float" value="0.0005"/>
+    <parameter name="MaxAllowedFiringFreq" type="float" value="@MaxHotPixelFiringFrequency@"/>
     <!--The number of events to be considered for each update cycle-->
     <parameter name="NoOfEventPerCycle" type="int" value="9999"/>
     <!--The total number of hot pixel cycle-->
@@ -126,6 +129,7 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
 
  
  <processor name="Save" type="EUTelOutputProcessor">
+  <@LocalVerbosityCommentLeft@ parameter name="Verbosity" type="string" value="@SaveVerbosity"/@LocalVerbosityCommentRight@>
  <!--Writes the current event to the specified LCIO outputfile. Eventually it adds a EORE at the of the file if it was missing Needs to be the last ActiveProcessor.-->
   <!--drops the named collections from the event-->
   <parameter name="DropCollectionNames" type="StringVec"> firstFrame secondFrame thirdFrame </parameter>
@@ -136,13 +140,24 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
   <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
   <!--parameter name="KeepCollectionNames" type="StringVec" value="MyPreciousSimTrackerHits"/-->
   <!-- name of output file -->
-  <parameter name="LCIOOutputFile" type="string" value="@LcioRawFolder@/run@RunNumber@.slcio  "/>
+  <parameter name="LCIOOutputFile" type="string" value="@LcioRawFolder@/@RunNumber@.slcio  "/>
   <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
   <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   <!--Set it to true to remove intermediate EORE in merged runs-->
   <parameter name="SkipIntermediateEORE" type="bool" value="true"/>
   <!--will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW-->
   <!--parameter name="SplitFileSizekB" type="int" value="100000"/-->
+</processor>
+
+<processor name="MyEUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">
+ <@LocalVerbosityCommentLeft@ parameter name="Verbosity" type="string" value="@MyEUTelUtilityPrintEventNumberVerbosity"/@LocalVerbosityCommentRight@>
+ <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
+  <!--Print event number for every n-th event-->
+  <parameter name="EveryNEvents" type="int" value="1000"/>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string" value=""/-->
+  <!--print the event timestamp as read from LCIO-->
+  <!--parameter name="printTimestamp" type="bool" value="false"/-->
 </processor>
 
 </marlin>

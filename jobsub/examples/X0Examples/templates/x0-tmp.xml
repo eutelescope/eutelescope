@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="us-ascii"?>
+<!--
+
+==========================================================================================
+                     Steering file template for the pysub framework
+
+                               ==> fitter-tmp.xml <===
+
+Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
+==========================================================================================
+
+-->
+
+<marlin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ilcsoft.desy.de/marlin/marlin.xsd">
+
+ <execute>
+   <processor name="AIDA"/>
+   <processor name="LoadRefHitDB"/>
+   <processor name="X0Processor"/>
+   <processor name="MyEUTelUtilityPrintEventNumber"/>
+ </execute>
+
+ <global>
+   <parameter name="LCIOInputFiles"> @ResultsFolder@/@RunNumber@-track.slcio </parameter>
+   <parameter name="GearXMLFile" value="@GearFolder@/@GearFile@"/>
+   <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
+   <parameter name="SkipNEvents" value="@SkipNEvents@"/>
+   <parameter name="SupressCheck" value="false"/>
+   <parameter name="Verbosity" value="@Verbosity@"/>
+ </global>
+
+ <processor name="AIDA" type="AIDAProcessor">
+  <!--Processor that handles AIDA files. Creates on directory per processor.  Processors only need to create and fill the histograms, clouds and tuples. Needs to be the first ActiveProcessor-->
+  <!--compression of output file 0: false >0: true (default) -->
+  <parameter name="Compress" type="int" value="1"/>
+  <!--filename without extension-->
+  <parameter name="FileName" type="string" value="@HistoFolder@/@Output@-x0-histo"/>
+  <!--type of output file xml (default) or root ( only OpenScientist)-->
+  <parameter name="FileType" type="string" value="root"/>
+ </processor>
+
+ <processor name="LoadRefHitDB"     type="ConditionsProcessor">
+   <parameter name="DBInit" type="string" value="localhost:lccd_test:align:tel"/>
+   <parameter name="SimpleFileHandler" type="StringVec"> refhit  @DBFolder@/@RunNumber@-refhit-db.slcio referenceHit  </parameter>
+ </processor>
+
+ <processor name="X0Processor" type="EUTelX0Processor">
+   <parameter name="InputTrackCollectionName" type="string" lcioInType="Track"> AlignedTrack </parameter>
+   <parameter name="DebugEventCount" type="int" value="100"/>
+   <parameter name="CutValue" type="double" value="500000"/>
+   <parameter name="ReferenceCollection" type="string" > refhit </parameter>
+ </processor>
+
+<processor name="MyEUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">
+ <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
+  <!--Print event number for every n-th event-->
+  <parameter name="EveryNEvents" type="int" value="1000"/>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string" value=""/-->
+  <!--print the event timestamp as read from LCIO-->
+  <!--parameter name="printTimestamp" type="bool" value="false"/-->
+</processor>
+
