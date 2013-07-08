@@ -119,20 +119,15 @@ EUTelMAPSdigi::EUTelMAPSdigi ()
   _siPlanesLayerLayout(NULL),
   _aidaHistoMap(),
   _histogramSwitch(false),
-  _localPosition(NULL),
-  _localMomentum(NULL),
-  _localDirection(NULL),
   _mokkaPath(0.0),
   _mokkaDeposit(0.0),
-  _localSize(NULL),
-  _localPitch(NULL),
   _pixelChargeMap(NULL),
   _pixelChargeMapCollection(),
   _vectorOfPixels(),
   _pixelIterator(),
   _integrationStorage(NULL),
-  _trackerDataMap(),
-  digitizerModulesNames() {
+  _trackerDataMap()
+   {
 
   // modify processor description
   _description =
