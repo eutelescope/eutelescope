@@ -127,7 +127,7 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
   <!--Switch on or off the histogram filling-->
   <!--parameter name="HistogramFilling" type="bool" value="true"/-->
   <!--This is the name of the hot pixel collection that clusters should be checked against (optional). -->
-  <parameter name="HotPixelCollectionName" type="string" value="hotpixel_apix"/>
+  <parameter name="HotPixelCollectionName" type="string" value="hotpixel_m26"/>
   <!--If there are more then this number of correlated hits (planes->track candidate) (default=5)-->
   <parameter name="MinNumberOfCorrelatedHits" type="int" value="5"/>
   <!--reference hit collection name -->
