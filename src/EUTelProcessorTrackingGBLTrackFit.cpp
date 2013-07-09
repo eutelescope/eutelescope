@@ -530,7 +530,6 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
 
 void EUTelProcessorTrackingGBLTrackFit::check(LCEvent * evt) {
     // nothing to check here
-    evt; // suppress unused parameter compiler warning
 }
 
 void EUTelProcessorTrackingGBLTrackFit::end() {
@@ -1273,7 +1272,7 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms() {
         MinX = kinkMinX;
         MaxX = kinkMaxX;
         std::string kinkGblFitHistName;
-        for (int iPlane = 0; iPlane < geo::gGeometry().nPlanes(); iPlane++) {
+        for (size_t iPlane = 0; iPlane < geo::gGeometry().nPlanes(); iPlane++) {
             sstm << _histName::_kinkGblFitHistNameX << geo::gGeometry().sensorIDsVec().at(iPlane);
             kinkGblFitHistName = sstm.str();
             sstm.str(std::string());

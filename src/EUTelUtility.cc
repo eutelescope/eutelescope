@@ -208,14 +208,14 @@ namespace eutelescope {
          * @param hit 
          * @return plane id
          */
-        int GuessSensorID( const IMPL::TrackerHitImpl * hit ) {
+        int GuessSensorID( const EVENT::TrackerHit* hit ) {
             if ( hit == NULL ) {
                 streamlog_out(ERROR) << "An invalid hit pointer supplied! will exit now\n" << std::endl;
                 return -1;
             }
 
             try {
-                EUTelVirtualCluster * cluster = GetClusterFromHit( hit );
+                EUTelVirtualCluster * cluster = GetClusterFromHit( static_cast< const IMPL::TrackerHitImpl*> (hit) );
 
                 if ( cluster != NULL ) {
                     int sensorID = cluster->getDetectorID();
@@ -315,5 +315,21 @@ namespace eutelescope {
             }
             return median;
         }
+        
+        /**
+         * Calculate 2D curvature of the track with given pt and charge q
+         * in solenoidal magnetic field with strength B
+         * @param pt transverse momentum of the track [GeV/c]
+         * @param B  magnetic field strength [T]
+         * @param q  particle charge [e]
+         * @return 1/R 2D curvature of the track [1/m]
+         */
+        double getCurvature( double pt, double B, double q ) {
+            double rho = 0.;
+            if ( pt > 0. ) rho = 0.299792458 * q * B / pt;
+            
+            return rho;
+        }
+        
     }
 }

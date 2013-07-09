@@ -137,10 +137,10 @@ namespace eutelescope {
 
                     // remove planes with assumed missing hits
                     bool isTake;
-                    for ( int i = 0; i < (int)allHitsArray.size(); ++i ) {
+                    for ( size_t i = 0; i < allHitsArray.size(); ++i ) {
                         isTake = true;
-                        for (int j = 0; j < (int)dropedPlanes.size(); ++j) {
-                            if ( i == dropedPlanes[j] ) { isTake = false; break; }
+                        for (size_t j = 0; j < dropedPlanes.size(); ++j) {
+                            if ( static_cast<int>(i) == dropedPlanes[j] ) { isTake = false; break; }
                         }
                         if ( isTake ) RemainigHits.push_back( allHitsArray[i] );
                     }

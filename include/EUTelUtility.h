@@ -191,13 +191,16 @@ namespace eutelescope {
 
         EUTelVirtualCluster* GetClusterFromHit(const IMPL::TrackerHitImpl*);
 
-        int GuessSensorID(const IMPL::TrackerHitImpl * hit);
+        int GuessSensorID(const EVENT::TrackerHit* hit);
 
         /** Highland's formula for multiple scattering */
         double getThetaRMSHighland( double, double );
         
         /** Calculate median */
         double getMedian(std::vector<double>& );
+        
+        /** Calculate track's 2D curvature */
+        double getCurvature( double, double, double );
         
         /** Possible choices of alignment degrees of freedom */
         enum AlignmentMode {

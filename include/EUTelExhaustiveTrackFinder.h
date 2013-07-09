@@ -283,7 +283,7 @@ namespace eutelescope {
 				if ( distance( _currentCombination[itrRev-1], _endsState[itrRev-1] ) <= 1 )  {
                                         int itrTemp = -1;
                                         // find first plane to the right with not the last hit
-					for ( int itrX = itrRev; itrX < _currentCombination.size(); ++itrX )
+					for ( size_t itrX = itrRev; itrX < _currentCombination.size(); ++itrX )
                                                 if ( _currentCombination[itrX] != _endsState[itrX] -1 ) { 
                                                     ++_currentCombination[itrX];
                                                     itrTemp = itrX;
@@ -300,7 +300,7 @@ namespace eutelescope {
                                         // set first hit in the first plane
 					if ( itrRev-1 != 0 ) { _currentCombination[0] = _beginsState[0]; def_begin = true; }
                                         // move to the correct plane for the next round of checks
-                                        itrRev = ( itrTemp == _currentCombination.size()-1 ) ? itrTemp + 1: itrTemp + 2;
+                                        itrRev = ( itrTemp == static_cast<int>(_currentCombination.size()-1)) ? itrTemp + 1: itrTemp + 2;
 				} else {
 					++_currentCombination[itrRev-1];        // increment pointer of the hit on the left
                                         // reset everything to  the left
@@ -318,7 +318,7 @@ namespace eutelescope {
                 // increment current combination
                 {
 			bool incrementNext = false;
-			for ( int itr = 0; itr < _currentCombination.size(); ++itr ) {
+			for ( size_t itr = 0; itr < _currentCombination.size(); ++itr ) {
 				if ( !def_begin && itr == 0 ) _currentCombination[itr] = ++(_currentCombination[itr]);
 				if ( incrementNext ) { _currentCombination[itr] = ++(_currentCombination[itr]); incrementNext = false; }
 				if ( _currentCombination[itr] == _endsState[itr] ) { incrementNext = true; _currentCombination[itr] = _beginsState[itr]; }

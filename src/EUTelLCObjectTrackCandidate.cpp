@@ -6,13 +6,15 @@
 
 using namespace eutelescope;
 
-EUTelLCObjectTrackCandidate::EUTelLCObjectTrackCandidate() {
+EUTelLCObjectTrackCandidate::EUTelLCObjectTrackCandidate() : IMPL::LCGenericObjectImpl(),
+_trackCandidates(){
 }
 
-EUTelLCObjectTrackCandidate::EUTelLCObjectTrackCandidate(const EUTelLCObjectTrackCandidate& orig) {
+EUTelLCObjectTrackCandidate::EUTelLCObjectTrackCandidate(const EUTelLCObjectTrackCandidate& orig) : IMPL::LCGenericObjectImpl(),
+_trackCandidates(){
 }
 
-EUTelLCObjectTrackCandidate::EUTelLCObjectTrackCandidate(const std::vector< EVENT::TrackerHitVec >& cand) :
+EUTelLCObjectTrackCandidate::EUTelLCObjectTrackCandidate(const std::vector< EVENT::TrackerHitVec >& cand) : IMPL::LCGenericObjectImpl(),
 _trackCandidates(cand)
 { }
 
@@ -20,7 +22,6 @@ EUTelLCObjectTrackCandidate::~EUTelLCObjectTrackCandidate() {
 }
 
 void EUTelLCObjectTrackCandidate::setTrackCandates( const std::vector< EVENT::TrackerHitVec >& ) {
-    this->_trackCandidates;
 }
 
 std::vector< EVENT::TrackerHitVec > EUTelLCObjectTrackCandidate::getTrackCandates() const {
