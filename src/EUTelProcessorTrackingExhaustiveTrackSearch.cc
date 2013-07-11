@@ -449,6 +449,8 @@ void EUTelProcessorTrackingExhaustiveTrackSearch::check(LCEvent * evt) {
 
 void EUTelProcessorTrackingExhaustiveTrackSearch::end() {
 
+    delete _trackFinder;
+    
     streamlog_out(MESSAGE) << "EUTelProcessorTrackingExhaustiveTrackSearch::end()  " << name()
             << " processed " << _nProcessedEvents << " events in " << _nProcessedRuns << " runs "
             << std::endl;

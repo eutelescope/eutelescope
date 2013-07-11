@@ -533,6 +533,8 @@ void EUTelProcessorTrackingGBLTrackFit::check(LCEvent * evt) {
 }
 
 void EUTelProcessorTrackingGBLTrackFit::end() {
+    delete _trackFitter;
+    
     delete _milleGBL;
 
     writeMilleSteeringFile();
