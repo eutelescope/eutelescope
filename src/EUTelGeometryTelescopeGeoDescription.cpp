@@ -44,35 +44,44 @@ EVENT::DoubleVec EUTelGeometryTelescopeGeoDescription::siPlanesZPositions( ) con
 }
 
 double EUTelGeometryTelescopeGeoDescription::siPlaneXPosition( int planeID ) {
-    return _siPlaneXPosition[ this->_sensorIDtoZOrderMap[ planeID ] ];
+    std::map<int,int>::iterator it;
+    it = _sensorIDtoZOrderMap.find(planeID);
+    if ( it != _sensorIDtoZOrderMap.end() ) return _siPlaneXPosition[ _sensorIDtoZOrderMap[ planeID ] ];
+    return -999.;
 }
 
 double EUTelGeometryTelescopeGeoDescription::siPlaneYPosition( int planeID ) {
-    return _siPlaneYPosition[ this->_sensorIDtoZOrderMap[ planeID ] ];
+    std::map<int,int>::iterator it;
+    it = _sensorIDtoZOrderMap.find(planeID);
+    if ( it != _sensorIDtoZOrderMap.end() ) return _siPlaneYPosition[ _sensorIDtoZOrderMap[ planeID ] ];
+    return -999.;
 }
 
 double EUTelGeometryTelescopeGeoDescription::siPlaneZPosition( int planeID ) {
-    return _siPlaneZPosition[ this->_sensorIDtoZOrderMap[ planeID ] ];
-}
-
-std::map<double, int> EUTelGeometryTelescopeGeoDescription::getSensorIDMap( ) const {
-    return _sensorIDMap;
+    std::map<int,int>::iterator it;
+    it = _sensorIDtoZOrderMap.find(planeID);
+    if ( it != _sensorIDtoZOrderMap.end() ) return _siPlaneZPosition[ _sensorIDtoZOrderMap[ planeID ] ];
+    return -999.;
 }
 
 std::map<int, int> EUTelGeometryTelescopeGeoDescription::sensorIDstoZOrder( ) const {
     return _sensorIDtoZOrderMap;
 }
 
-int EUTelGeometryTelescopeGeoDescription::sensorIDtoZOrder( int planeID ) {
-    return _sensorIDtoZOrderMap[ planeID ];
+int EUTelGeometryTelescopeGeoDescription::sensorIDtoZOrder( int planeID ) const {
+    std::map<int,int>::const_iterator it;
+    it = _sensorIDtoZOrderMap.find(planeID);
+    if ( it != _sensorIDtoZOrderMap.end() ) return it->second;
+    return -1;
 }
 
-EVENT::IntVec EUTelGeometryTelescopeGeoDescription::sensorIDsVecZOrder( ) const {
-    return _sensorIDVecZOrder;
-}
-
-std::map<int, int> EUTelGeometryTelescopeGeoDescription::sensorIDsVecMap( ) const {
-    return _sensorIDVecMap;
+/** Sensor ID vector ordered according to their position along the Z axis (beam axis)
+ *  Numeration runs from 1 to nPlanes */
+int EUTelGeometryTelescopeGeoDescription::sensorZOrderToID( int znumber ) const {
+    std::map<int,int>::const_iterator it;
+    it = _sensorZOrderToIDMap.find( znumber );
+    if ( it != _sensorZOrderToIDMap.end() ) return it->second;
+    return -1;
 }
 
 EVENT::IntVec EUTelGeometryTelescopeGeoDescription::sensorIDsVec( ) const {
@@ -83,10 +92,8 @@ EUTelGeometryTelescopeGeoDescription::EUTelGeometryTelescopeGeoDescription() :
 _siPlanesParameters(0),
 _siPlanesLayerLayout(0),
 _sensorIDVec(),
-_sensorIDVecMap(),
-_sensorIDVecZOrder(),
+_sensorZOrderToIDMap(),
 _sensorIDtoZOrderMap(),
-_sensorIDMap(),
 _siPlaneXPosition(),
 _siPlaneYPosition(),
 _siPlaneZPosition(),
@@ -110,14 +117,12 @@ _geoManager(0)
         _siPlaneXPosition.push_back(_siPlanesLayerLayout->getLayerPositionX(iPlane));
         _siPlaneYPosition.push_back(_siPlanesLayerLayout->getLayerPositionY(iPlane));
         _siPlaneZPosition.push_back(_siPlanesLayerLayout->getLayerPositionZ(iPlane));
-        _sensorIDMap.insert(std::make_pair(_siPlanesLayerLayout->getLayerPositionZ(iPlane), this->_siPlanesLayerLayout->getID(iPlane)));
     }
 
     if (_siPlanesParameters->getSiPlanesType() == _siPlanesParameters->TelescopeWithDUT) {
         _siPlaneXPosition.push_back(_siPlanesLayerLayout->getDUTPositionX());
         _siPlaneYPosition.push_back(_siPlanesLayerLayout->getDUTPositionY());
         _siPlaneZPosition.push_back(_siPlanesLayerLayout->getDUTPositionZ());
-        _sensorIDMap.insert(std::make_pair(_siPlanesLayerLayout->getDUTPositionZ(), _siPlanesLayerLayout->getDUTID()));
     }
 
     // sort the array with increasing z
@@ -129,9 +134,6 @@ _geoManager(0)
     // clear the sensor ID map
     _sensorIDVecMap.clear();
     _sensorIDtoZOrderMap.clear();
-
-    // clear the sensor ID vector (z-axis order)
-    _sensorIDVecZOrder.clear();
 
     double* keepZPosition = new double[ _siPlanesLayerLayout->getNLayers() ];
 
@@ -146,7 +148,7 @@ _geoManager(0)
         for (int jPlane = 0; jPlane < _siPlanesLayerLayout->getNLayers(); jPlane++)
             if (_siPlanesLayerLayout->getLayerPositionZ(jPlane) + 1e-06 < keepZPosition[ iPlane ]) sensorsToTheLeft++;
 
-        _sensorIDVecZOrder.push_back(sensorsToTheLeft);
+        _sensorZOrderToIDMap.insert(std::make_pair(sensorsToTheLeft, sensorID));        
         _sensorIDtoZOrderMap.insert(std::make_pair(sensorID, sensorsToTheLeft));
     }
 
@@ -175,6 +177,12 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( string tge
     }
 //    _geoManager->CloseGeometry();
 //    #endif //USE_TGEO
+}
+
+void EUTelGeometryTelescopeGeoDescription::local2Master( const double localPos[], double globalPos[] ) {
+    globalPos[0] = 0.;
+    globalPos[1] = 0.;
+    globalPos[2] = 0.;
 }
 
 /** From ROOT's geometry stress test */

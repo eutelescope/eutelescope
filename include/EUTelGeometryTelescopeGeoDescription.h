@@ -58,26 +58,35 @@ namespace eutelescope {
              */
             static EUTelGeometryTelescopeGeoDescription& getInstance();
             
+            /** Number of planes in the setup */
             size_t nPlanes() const;
             
+            /** Z coordinates of centers of planes */
             EVENT::DoubleVec siPlanesZPositions() const;
             
+            /** X coordinate of center of sensor 
+             * with given ID in global coordinate frame */
             double siPlaneXPosition( int );
             
+            /** Y coordinate of center of sensor 
+             * with given ID in global coordinate frame */
             double siPlaneYPosition( int );
             
+            /** Z coordinate of center of sensor 
+             * with given ID in global coordinate frame */
             double siPlaneZPosition( int );
             
-            std::map<double, int> getSensorIDMap() const;
+            /** Map from sensor ID to number along Z */
+            std::map<int, int> sensorZOrdertoIDs() const;
             
+            /** Map from sensor ID to number along Z */
             std::map<int, int> sensorIDstoZOrder() const;
             
-            int sensorIDtoZOrder( int );
+            int sensorIDtoZOrder( int ) const;
             
-            EVENT::IntVec sensorIDsVecZOrder() const;
+            int sensorZOrderToID( int ) const;
             
-            std::map<int, int> sensorIDsVecMap() const;
-            
+            /** Vector of all sensor IDs */
             EVENT::IntVec sensorIDsVec() const;
 
         public:
@@ -99,6 +108,8 @@ namespace eutelescope {
         public:
             void findRad(Double_t x, Double_t y, Double_t z,
                     Double_t theta, Double_t phi, Int_t &nbound, Float_t &length, Float_t &safe, Float_t &rad, Bool_t verbose);
+            
+            void local2Master( const double[], double[] );
 
         public:
             /** Silicon planes parameters as described in GEAR
@@ -125,39 +136,25 @@ namespace eutelescope {
 
 
         private:
-            //    /** Ordered sensor ID
-            //     *  This vector contains sensorID sorted according to their 
-            //     *  position along the Z axis (beam axis)
-            //     */
-            //    EVENT::IntVec _orderedSensorID;
-            //
-            //    /** @TODO: Add description to this variable */
-            //    EVENT::IntVec _orderedSensorID_wo_excluded;
-
             /** Vector of Sensor IDs */
             EVENT::IntVec _sensorIDVec;
 
             /** Sensor ID map (inverse sensorIDVec) */
             std::map< int, int > _sensorIDVecMap;
 
-            /** Sensor ID vector ordered according to their 
-             *  position along the Z axis (beam axis) */
-            EVENT::IntVec _sensorIDVecZOrder;
+            /** Map from number along the Z axis (beam axis) to sensor ID */
+            std::map<int, int> _sensorZOrderToIDMap;
 
             /** Map from sensor ID to number along Z */
             std::map<int, int> _sensorIDtoZOrderMap;
 
-            // an associative map for getting also the sensorID ordered
-            /** @TODO: Add description to this variable */
-            std::map< double, int > _sensorIDMap;
-
-            /** @TODO: Add description to this variable */
+            /** X coordinate of the sensors centers in global coordinate frame */
             EVENT::DoubleVec _siPlaneXPosition;
             
-            /** @TODO: Add description to this variable */
+            /** Y coordinate of the sensors centers in global coordinate frame */
             EVENT::DoubleVec _siPlaneYPosition;
             
-            /** @TODO: Add description to this variable */
+            /** Z coordinate of the sensors centers in global coordinate frame */
             EVENT::DoubleVec _siPlaneZPosition;
 
             /** Number of planes including DUT */
