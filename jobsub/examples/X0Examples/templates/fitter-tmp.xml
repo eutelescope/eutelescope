@@ -26,7 +26,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
    </execute>
 
    <global>
-      <parameter name="LCIOInputFiles"> @ResultsFolder@/@RunNumber@-hit.slcio </parameter>
+      <parameter name="LCIOInputFiles"> @InputFile@ </parameter>
       <parameter name="GearXMLFile" value="@GearFolder@/@GearFile@"/>
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
@@ -47,13 +47,13 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
 
   <processor name="LoadRefHitDB"     type="ConditionsProcessor">
     <parameter name="DBInit" type="string" value="localhost:lccd_test:align:tel"/>
-    <parameter name="SimpleFileHandler" type="StringVec"> refhit  @DBFolder@/@RunNumber@-refhit-db.slcio referenceHit  </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> refhit  @DBFolder@/refhit/@RunNumber@-refhit-db.slcio referenceHit  </parameter>
   </processor>
 
   <processor name="LoadPreAlignment" type="ConditionsProcessor">
   <@LocalVerbosityCommentLeft@parameter name="Verbosity" type="string" value="@LoadPreAlignmentVerbosity@"/@LocalVerbosityCommentRight@>
     <parameter name="DBInit" type="string" value="localhost:lccd_test:align:tel"/>
-    <parameter name="SimpleFileHandler" type="StringVec"> prealign @DBFolder@/@AlignmentRunNumber@-prealign-db.slcio        alignment </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> prealign @DBFolder@/prealign/@AlignmentRunNumber@-prealign-db.slcio        alignment </parameter>
   </processor>
 
   <processor name="ApplyPreAlignment" type="EUTelApplyAlignmentProcessor">
@@ -82,7 +82,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!--Initialization of a data file handler-->
   <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
   <!--Initialization of a simple conditions file handler-->
-  <parameter name="SimpleFileHandler" type="StringVec"> alignment @DBFolder@/@AlignmentRunNumber@-align-db.slcio alignment </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> alignment @DBFolder@/align/@AlignmentRunNumber@-align-db.slcio alignment </parameter>
  </processor>
 
  <processor name="ApplyAlignment" type="EUTelApplyAlignmentProcessor">
@@ -244,7 +244,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
   <!--parameter name="KeepCollectionNames" type="StringVec" value="MyPreciousSimTrackerHits"/-->
   <!--name of output file -->
-  <parameter name="LCIOOutputFile" type="string" value="@ResultsFolder@/@Output@-track.slcio"/>
+  <parameter name="LCIOOutputFile" type="string" value="@OutputFolder@/@Output@-track.slcio"/>
   <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
   <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   <!--Set it to true to remove intermediate EORE in merged runs-->

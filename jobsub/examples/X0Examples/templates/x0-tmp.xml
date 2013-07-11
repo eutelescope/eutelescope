@@ -21,7 +21,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
  </execute>
 
  <global>
-   <parameter name="LCIOInputFiles"> @ResultsFolder@/@RunNumber@-track.slcio </parameter>
+   <parameter name="LCIOInputFiles"> @InputFile@ </parameter>
    <parameter name="GearXMLFile" value="@GearFolder@/@GearFile@"/>
    <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
    <parameter name="SkipNEvents" value="@SkipNEvents@"/>
@@ -41,7 +41,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
 
  <processor name="LoadRefHitDB"     type="ConditionsProcessor">
    <parameter name="DBInit" type="string" value="localhost:lccd_test:align:tel"/>
-   <parameter name="SimpleFileHandler" type="StringVec"> refhit  @DBFolder@/@RunNumber@-refhit-db.slcio referenceHit  </parameter>
+   <parameter name="SimpleFileHandler" type="StringVec"> refhit  @DBFolder@/refhit/@RunNumber@-refhit-db.slcio referenceHit  </parameter>
  </processor>
 
  <processor name="X0Processor" type="EUTelX0Processor">

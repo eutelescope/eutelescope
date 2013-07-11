@@ -874,3 +874,4 @@ RunNumber,BeamEnergy,MaterialThickness,MaxRecordNumber,Threshhold,GearFile
 765,4,Martins DUT,10000000,12,GeometryB.xml
 766,4,Martins DUT,10000000,12,GeometryB.xml
 767,4,Martins DUT,10000000,12,GeometryB.xml
+999001,1,NoDUT,100000,7,

@@ -84,7 +84,7 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
     <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
     <!--Initialization of a simple conditions file handler-->
     <!-- suppress only the Mimosa26 pixels --> 
-    <parameter name="SimpleFileHandler" type="StringVec"> hotpixel_m26  @DBFolder@/@HotPixelRunNumber@-hotpixel-db.slcio hotpixel_m26 </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> hotpixel_m26  @DBFolder@/hotpixel/@HotPixelRunNumber@-hotpixel-db.slcio hotpixel_m26 </parameter>
   </processor>
 
 
@@ -201,7 +201,7 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
     <!-- -->
     <parameter name="Events" type="int" value="@MaxRecordNumber@"/>
     <!-- -->
-    <parameter name="OffsetDBFile" type="string"> @DBFolder@/@RunNumber@-offset-db.slcio </parameter>
+    <parameter name="OffsetDBFile" type="string"> @DBFolder@/offset/@RunNumber@-offset-db.slcio </parameter>
  </processor>
 
 
@@ -219,7 +219,7 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
     <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
     <!--parameter name="KeepCollectionNames" type="StringVec" value="MyPreciousSimTrackerHits"/-->
     <!-- name of output file -->
-    <parameter name="LCIOOutputFile" type="string" value="@ResultsFolder@/@RunNumber@-cluster.slcio"/>
+    <parameter name="LCIOOutputFile" type="string" value="@OutputFolder@/@Output@-cluster.slcio"/>
     <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
     <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
     <!--Set it to true to remove intermediate EORE in merged runs-->

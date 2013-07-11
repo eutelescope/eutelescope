@@ -31,7 +31,7 @@ Version: $Id: hitmaker-tmp.xml,v 1.3 2009-06-04 17:19:01 bulgheroni Exp $
    </execute>
 
    <global>
-      <parameter name="LCIOInputFiles"> @ResultsFolder@/@RunNumber@-cluster.slcio  </parameter>
+      <parameter name="LCIOInputFiles"> @InputFile@  </parameter>
       <parameter name="GearXMLFile" value="@GearFolder@/@GearFile@"/>
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="0"/>
@@ -52,7 +52,7 @@ Version: $Id: hitmaker-tmp.xml,v 1.3 2009-06-04 17:19:01 bulgheroni Exp $
 
   <processor name="LoadRefHitDB"     type="ConditionsProcessor">
     <parameter name="DBInit" type="string" value="localhost:lccd_test:align:tel"/>
-    <parameter name="SimpleFileHandler" type="StringVec"> refhit  @DBFolder@/@RunNumber@-refhit-db.slcio referenceHit  </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> refhit  @DBFolder@/refhit/@RunNumber@-refhit-db.slcio referenceHit  </parameter>
   </processor>
 
   <processor name="LoadHotPixelDB" type="ConditionsProcessor">
@@ -67,7 +67,7 @@ Version: $Id: hitmaker-tmp.xml,v 1.3 2009-06-04 17:19:01 bulgheroni Exp $
     <!--Initialization of a data file handler-->
     <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
     <!--Initialization of a simple conditions file handler-->
-    <parameter name="SimpleFileHandler" type="StringVec"> hotpixel_m26   @DBFolder@/@Output@-hotpixel-db.slcio hotpixel_m26  </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> hotpixel_m26   @DBFolder@/hotpixel/@Output@-hotpixel-db.slcio hotpixel_m26  </parameter>
   </processor>
 
 
@@ -108,7 +108,7 @@ FULL: using the full cluster
 NPixel: using only the first N most significant pixels (set NPixel too)
 NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-->
   <parameter name="CoGAlgorithm" type="string" value="@CoGAlgorithm@"/>
-  <parameter name="ReferenceHitFile" type="string"> @DBFolder@/@RunNumber@-refhit-db.slcio </parameter>
+  <parameter name="ReferenceHitFile" type="string"> @DBFolder@/refhit/@RunNumber@-refhit-db.slcio </parameter>
   <!--If true a 3D histo will be filled. It may require large memory-->
   <parameter name="Enable3DHisto" type="bool" value="@3DHistogram@"/>
   <!--The name of the collections containing the eta function (x and y respectively)-->
@@ -134,7 +134,7 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
   <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
   <!--parameter name="KeepCollectionNames" type="StringVec" value="MyPreciousSimTrackerHits"/-->
   <!-- name of output file -->
-  <parameter name="LCIOOutputFile" type="string" value="@ResultsFolder@/@Output@-hit.slcio "/>
+  <parameter name="LCIOOutputFile" type="string" value="@OutputFolder@/@Output@-hit.slcio "/>
   <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
   <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   <!--Set it to true to remove intermediate EORE in merged runs-->
@@ -218,7 +218,7 @@ The presence of this collection in the event is allowing all the noise based sel
   <processor name="PreAligner" type="EUTelPreAlign">
   <@LocalVerbosityCommentLeft@ parameter name="Verbosity" type="string" value="@PreAlignerVerbosity@"/@LocalVerbosityCommentRight@>
     <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
-    <parameter name="AlignmentConstantLCIOFile" type="string"> @DBFolder@/@Output@-prealign-db.slcio </parameter>
+    <parameter name="AlignmentConstantLCIOFile" type="string"> @DBFolder@/prealign/@Output@-prealign-db.slcio </parameter>
   </processor>
  
 <processor name="Correlator" type="EUTelCorrelator">

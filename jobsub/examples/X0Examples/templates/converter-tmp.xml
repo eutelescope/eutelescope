@@ -46,7 +46,7 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
 
 
  <processor name="UniversalNativeReader" type="EUTelNativeReader">
-  <@LocalVerbosityCommentLeft@ parameter name="Verbosity" type="string" value="@UniversalNativeReaderVerbosity"/@LocalVerbosityCommentRight@>
+  <@LocalVerbosityCommentLeft@ parameter name="Verbosity" type="string" value="@UniversalNativeReaderVerbosity@"/@LocalVerbosityCommentRight@>
   <!--Reads data streams produced by EUDAQ and produced the corresponding LCIO output-->
   <!--This is the depfet produced output collection-->
   <parameter name="DEPFETOutputCollection" type="string" lcioOutType="TrackerData"> rawdata_dep </parameter>
@@ -70,7 +70,7 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
  </processor>
 
  <processor name="Mimosa26EUTelAutoPedestalNoiseProcessor" type="EUTelAutoPedestalNoiseProcessor">
-  <@LocalVerbosityCommentLeft@ parameter name="Verbosity" type="string" value="@Mimosa26EUTelAutoPedestalNoiseProcessorVerbosity"/@LocalVerbosityCommentRight@>
+  <@LocalVerbosityCommentLeft@ parameter name="Verbosity" type="string" value="@Mimosa26EUTelAutoPedestalNoiseProcessorVerbosity@"/@LocalVerbosityCommentRight@>
   <!--EUTelAutoPedestalNoiseProcessor produces initial pedestal / noise / status with user provided values-->
   <!--Noise local collection-->
   <parameter name="NoiseCollectionName" type="string" lcioOutType="TrackerData"> m26_noise </parameter>
@@ -95,9 +95,9 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
  </processor>
 
  <processor name="HotPixelKiller" type="EUTelHotPixelKiller">
-  <@LocalVerbosityCommentLeft@ parameter name="Verbosity" type="string" value="@HotPixelKillerVerbosity"/@LocalVerbosityCommentRight@>
+  <@LocalVerbosityCommentLeft@ parameter name="Verbosity" type="string" value="@HotPixelKillerVerbosity@"/@LocalVerbosityCommentRight@>
   <!--This is the name of the LCIO file name with the input/output hot pixel collection  (add .slcio)-->
-    <parameter name="HotPixelDBFile" type="string" value="@DBFolder@/@HotPixelRunNumber@-hotpixel-db.slcio"/>
+    <parameter name="HotPixelDBFile" type="string" value="@DBFolder@/hotpixel/@HotPixelRunNumber@-hotpixel-db.slcio"/>
     <!--write mode for output file:  WRITE_APPEND or WRITE_NEW, default: WRITE_APPEND-->
     <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
     <parameter name="HotPixelCollectionName" type="string" value="hotpixel_m26" />
@@ -129,7 +129,7 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
 
  
  <processor name="Save" type="EUTelOutputProcessor">
-  <@LocalVerbosityCommentLeft@ parameter name="Verbosity" type="string" value="@SaveVerbosity"/@LocalVerbosityCommentRight@>
+  <@LocalVerbosityCommentLeft@ parameter name="Verbosity" type="string" value="@SaveVerbosity@"/@LocalVerbosityCommentRight@>
  <!--Writes the current event to the specified LCIO outputfile. Eventually it adds a EORE at the of the file if it was missing Needs to be the last ActiveProcessor.-->
   <!--drops the named collections from the event-->
   <parameter name="DropCollectionNames" type="StringVec"> firstFrame secondFrame thirdFrame </parameter>
@@ -140,7 +140,7 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
   <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
   <!--parameter name="KeepCollectionNames" type="StringVec" value="MyPreciousSimTrackerHits"/-->
   <!-- name of output file -->
-  <parameter name="LCIOOutputFile" type="string" value="@LcioRawFolder@/@RunNumber@.slcio  "/>
+  <parameter name="LCIOOutputFile" type="string" value="@LcioRawFolder@/@Output@.slcio"/>
   <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
   <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   <!--Set it to true to remove intermediate EORE in merged runs-->
@@ -150,7 +150,7 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
 </processor>
 
 <processor name="MyEUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">
- <@LocalVerbosityCommentLeft@ parameter name="Verbosity" type="string" value="@MyEUTelUtilityPrintEventNumberVerbosity"/@LocalVerbosityCommentRight@>
+ <@LocalVerbosityCommentLeft@ parameter name="Verbosity" type="string" value="@MyEUTelUtilityPrintEventNumberVerbosity@"/@LocalVerbosityCommentRight@>
  <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
   <!--Print event number for every n-th event-->
   <parameter name="EveryNEvents" type="int" value="1000"/>
