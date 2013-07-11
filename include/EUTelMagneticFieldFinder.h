@@ -91,11 +91,11 @@ namespace eutelescope {
             this->_maxTrackCandidates = maxTrackCandidates;
         }
 
-        inline void setBeamMomentum(const TLorentzVector& beam) {
+        inline void setBeamMomentum(double beam) {
             this->_beamDir = beam;
         }
 
-        inline TLorentzVector getBeamMomentum() const {
+        inline double getBeamMomentum() const {
             return _beamDir;
         }
 
@@ -110,7 +110,7 @@ namespace eutelescope {
         void prepareLCIOTrack();
 
         /** Sort hits according to particles propagation direction */
-        void sortHitsByMeasurementLayers( const EVENT::TrackerHitVec& );
+        bool sortHitsByMeasurementLayers( const EVENT::TrackerHitVec& );
         
 
         // Kalman filter states and tracks
@@ -142,8 +142,8 @@ namespace eutelescope {
         /** Maximum number of track candidates to be stored */
         int _maxTrackCandidates;
 
-        /** Beam momentum vector */
-        TLorentzVector _beamDir;
+        /** Beam momentum [GeV/c] */
+        double _beamDir;
     };
 
 } // namespace eutelescope

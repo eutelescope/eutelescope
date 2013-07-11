@@ -109,7 +109,7 @@ namespace eutelescope {
             void findRad(Double_t x, Double_t y, Double_t z,
                     Double_t theta, Double_t phi, Int_t &nbound, Float_t &length, Float_t &safe, Float_t &rad, Bool_t verbose);
             
-            void local2Master( const double[], double[] );
+            void local2Master( int, const double[], double[] );
 
         public:
             /** Silicon planes parameters as described in GEAR

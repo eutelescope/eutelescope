@@ -92,6 +92,7 @@ EUTelGeometryTelescopeGeoDescription::EUTelGeometryTelescopeGeoDescription() :
 _siPlanesParameters(0),
 _siPlanesLayerLayout(0),
 _sensorIDVec(),
+_sensorIDVecMap(),
 _sensorZOrderToIDMap(),
 _sensorIDtoZOrderMap(),
 _siPlaneXPosition(),
@@ -175,14 +176,17 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( string tge
     if( !_geoManager ) {
         streamlog_out( WARNING ) << "Can't read file " << tgeofilename << endl;
     }
-//    _geoManager->CloseGeometry();
+    _geoManager->CloseGeometry();
 //    #endif //USE_TGEO
 }
 
-void EUTelGeometryTelescopeGeoDescription::local2Master( const double localPos[], double globalPos[] ) {
-    globalPos[0] = 0.;
-    globalPos[1] = 0.;
-    globalPos[2] = 0.;
+void EUTelGeometryTelescopeGeoDescription::local2Master( int sensorID, const double localPos[], double globalPos[] ) {
+    const double sensorCenterX = siPlaneXPosition( sensorID );
+    const double sensorCenterY = siPlaneYPosition( sensorID );
+    const double sensorCenterZ = siPlaneZPosition( sensorID );
+    
+    _geoManager->FindNode( sensorCenterX, sensorCenterY, sensorCenterZ );    
+    _geoManager->LocalToMaster( localPos, globalPos );
 }
 
 /** From ROOT's geometry stress test */
