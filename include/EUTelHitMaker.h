@@ -12,6 +12,7 @@
 // built only if GEAR is available
 #ifdef USE_GEAR
 // eutelescope includes ".h"
+#include "EUTelUtility.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -230,6 +231,9 @@ namespace eutelescope {
 
   class EUTelHitMaker : public marlin::Processor {
 
+  private:
+      DISALLOW_COPY_AND_ASSIGN(EUTelHitMaker)
+      
   public:
 
 
@@ -368,6 +372,9 @@ namespace eutelescope {
 
     //! Switch to enable the filling of the density plot
     bool _3DHistoSwitch;
+    
+    //! Coordinates reference frame switch
+    bool _wantLocalCoordinates;
 
     //! Input offset db file 
     /*!

@@ -85,7 +85,36 @@ std::string EUTelHitMaker::_clusterCenterEtaXHistoName = "ClusterCenterEtaX";
 std::string EUTelHitMaker::_clusterCenterEtaYHistoName = "ClusterCenterEtaY";
 #endif
 
-EUTelHitMaker::EUTelHitMaker () : Processor("EUTelHitMaker") {
+EUTelHitMaker::EUTelHitMaker () : Processor("EUTelHitMaker"),
+_pulseCollectionName(),
+_hitCollectionName(),
+_etaCollectionNames(),
+_preAlignmentCollectionName("preAlignment"),
+_preAlignmentCollectionVec(),
+_referenceHitCollectionName("referenceHit"),
+_referenceHitCollectionVec(),
+_etaCorrection(true),
+_3DHistoSwitch(true),
+_wantLocalCoordinates(false),
+_offsetDBFile("offset-db.slcio"),
+_cogAlgorithm("NxMPixel"),
+_nPixel(9),
+_xyCluSize(),
+_referenceHitLCIOFile("reference.slcio"),
+_iRun(0),
+_iEvt(0),
+_conversionIdMap(),
+_etaMap(),
+_etaVersion(0),
+_alreadyBookedSensorID(),
+_siPlanesParameters(0),
+_siPlanesLayerLayout(0),
+_aidaHistoMap(),
+_histogramSwitch(true),
+_orderedSensorIDVec(),
+_siOffsetXMap(),
+_siOffsetYMap()
+{
 
   // modify processor description
   _description =
@@ -112,6 +141,9 @@ EUTelHitMaker::EUTelHitMaker () : Processor("EUTelHitMaker") {
 
   registerOptionalParameter("Enable3DHisto","If true a 3D histo will be filled. It may require large memory",
                             _3DHistoSwitch, static_cast<bool> ( true ) );
+  
+  registerOptionalParameter("EnableLocalCoordidates","Hit coordinates are calculated in local reference frame of sensor",
+                            _wantLocalCoordinates, static_cast<bool> ( false ) );
 
 
   vector<int > xyCluSizeExample(2,3);
@@ -127,7 +159,7 @@ EUTelHitMaker::EUTelHitMaker () : Processor("EUTelHitMaker") {
                             _etaCollectionNames, etaNames, etaNames.size());
 
   registerOptionalParameter("EtaSwitch","Enable or disable eta correction",
-                            _etaCorrection, static_cast< bool > ( 1 ) );
+                            _etaCorrection, static_cast< bool > ( true ) );
 
   registerOptionalParameter("OffsetDBFile","This is the name of the LCIO file name with the output offset db (add .slcio)",
                             _offsetDBFile, static_cast< string > ( "offset-db.slcio" ) );
@@ -865,60 +897,59 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
       // STILL in the LOCAL coordinate system !!!
       // 
        
-      // now perform the rotation of the frame of references and put the
-      // results already into a 3D array of double to be ready for the
-      // setPosition method of TrackerHit
       double telPos[3];
-      telPos[0] = xPointing[0] * xDet + xPointing[1] * yDet;
-      telPos[1] = yPointing[0] * xDet + yPointing[1] * yDet;
+      if ( _wantLocalCoordinates ) {
+            // now perform the rotation of the frame of references and put the
+            // results already into a 3D array of double to be ready for the
+            // setPosition method of TrackerHit
+            telPos[0] = xPointing[0] * xDet + xPointing[1] * yDet;
+            telPos[1] = yPointing[0] * xDet + yPointing[1] * yDet;
 
-      // now the translation
-      // not sure about the sign. At least it is working for the current
-      // configuration but we need to double check it
-      double sign = 0;
-      if      ( xPointing[0] < -0.7 )       sign = -1 ;
-      else if ( xPointing[0] > 0.7 )       sign =  1 ;
-      else 
-      {
-        if       ( xPointing[1] < -0.7 )    sign = -1 ;
-        else if  ( xPointing[1] > 0.7 )    sign =  1 ;
+            // now the translation
+            // not sure about the sign. At least it is working for the current
+            // configuration but we need to double check it
+            double sign = 0;
+            if      ( xPointing[0] < -0.7 )       sign = -1 ;
+            else if ( xPointing[0] > 0.7 )       sign =  1 ;
+            else {
+                if       ( xPointing[1] < -0.7 )    sign = -1 ;
+                else if  ( xPointing[1] > 0.7 )    sign =  1 ;
+            }
+            //     telPos[0] += xZero - sign * xSize/2;
+            telPos[0] +=  ( -1 ) * sign * xSize / 2;   //apply shifts few lines later
+
+            if      ( yPointing[0] < -0.7 )       sign = -1 ;
+            else if ( yPointing[0] > 0.7 )       sign =  1 ;
+            else {
+                if       ( yPointing[1] < -0.7 )    sign = -1 ;
+                else if  ( yPointing[1] > 0.7 )    sign =  1 ;
+            }
+            //      telPos[1] += yZero - sign * ySize/2;
+            telPos[1] += ( -1 ) * sign * ySize / 2;   // apply shifts few lines later
+
+
+            //    telPos[2] = zZero + 0.5 * zThickness;
+            telPos[2] = 0.0 ;       // apply shifts few lines later 
+      } else {
+            // 
+            // NOW !!
+            // GLOBAL coordinate system !!!
+            // 
+
+            // 
+            // rotate according to gRotation angles:
+            // 
+
+            //      if(  detectorID >= 10 )
+            //     test mode: all planes can be tilted  
+
+            _EulerRotation( telPos, gRotation );
+            //
+            //    finally apply initial shifts:       
+            telPos[0] += xZero;
+            telPos[1] += yZero;
+            telPos[2] += zZero + 0.5 * zThickness;
       }
-//     telPos[0] += xZero - sign * xSize/2;
-      telPos[0] +=  (-1)* sign * xSize/2;   //apply shifts few lines later
-
-      if      ( yPointing[0] < -0.7 )       sign = -1 ;
-      else if ( yPointing[0] > 0.7 )       sign =  1 ;
-      else 
-      {
-        if       ( yPointing[1] < -0.7 )    sign = -1 ;
-        else if  ( yPointing[1] > 0.7 )    sign =  1 ;
-      }
-//      telPos[1] += yZero - sign * ySize/2;
-      telPos[1] += (-1)* sign * ySize/2;   // apply shifts few lines later
-
-
-//    telPos[2] = zZero + 0.5 * zThickness;
-      telPos[2] = 0.0 ;       // apply shifts few lines later 
-
-      // 
-      // NOW !!
-      // GLOBAL coordinate system !!!
-      // 
-
-      // 
-      // rotate according to gRotation angles:
-      // 
-
-//      if(  detectorID >= 10 )
-//     test mode: all planes can be tilted  
-
-      _EulerRotation(telPos, gRotation);
-      //
-//    finally apply initial shifts:       
-      telPos[0] += xZero;
-      telPos[1] += yZero;
-      telPos[2] += zZero + 0.5 * zThickness;
-      
           
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
       if ( _histogramSwitch ) 
