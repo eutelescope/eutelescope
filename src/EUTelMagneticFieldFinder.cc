@@ -7,6 +7,7 @@
 #include "EUTelMagneticFieldFinder.h"
 
 #include "streamlog/streamlog.h"
+#include "EUTelGeometryTelescopeGeoDescription.h"
 
 #include <iostream>
 #include <functional>
@@ -18,6 +19,8 @@ namespace eutelescope {
             _tracks(), 
             _trackStates(), 
             _allHits(),
+            _allMeasurements(),
+            _isHitsOK(false),
             _isReady(false),
             _allowedMissingHits(0),
             _maxTrackCandidates(0),
@@ -27,6 +30,8 @@ namespace eutelescope {
             _tracks(),
             _trackStates(), 
             _allHits(),
+            _allMeasurements(),
+            _isHitsOK(false),
             _isReady(false),
             _allowedMissingHits(0),
             _maxTrackCandidates(0),
@@ -59,7 +64,29 @@ namespace eutelescope {
             return _isReady;
         }
         
+        // Check validity of supplied hits
+        if ( !_isHitsOK ) {
+            streamlog_out(ERROR1) << "Collection of hits is empty. Check supplied hits" << std::endl;
+            _isReady = false;
+            return _isReady;
+        }
+        
         return _isReady;
+    }
+    
+    void EUTelKalmanFilter::reset() {
+        _allMeasurements.clear();
+    }
+    
+    void EUTelKalmanFilter::setHits( EVENT::TrackerHitVec& hits ) {
+        if ( hits.empty() ) {
+            _isHitsOK = false;
+            return;
+        }
+        _allHits = hits;
+        sortHitsByMeasurementLayers(_allHits);
+
+        _isHitsOK = true;
     }
     
     /** Generate seed track states necessary to
@@ -71,14 +98,22 @@ namespace eutelescope {
      */
     void EUTelKalmanFilter::initialiseSeeds() {
 
-        // The object will be owned by LCIO collection. Must not to free.
-        IMPL::TrackStateImpl* state = new IMPL::TrackStateImpl;
-        
-        // Use beam direction as a seed track state
-        state->setLocation( IMPL::TrackStateImpl::AtFirstHit );
-//        state->
-        
-        _trackStates.push_back( state );
+        EVENT::TrackerHitVec& hitFirstLayer = _allMeasurements[0]->getHits();
+        EVENT::TrackerHitVec::const_iterator itHit;
+        for ( itHit = hitFirstLayer.begin(); itHit != hitFirstLayer.end(); ++itHit ) {
+            // The object will be owned by LCIO collection. Must not to free.
+            IMPL::TrackStateImpl* state = new IMPL::TrackStateImpl;
+
+            // Use beam direction as a seed track state
+            const double* uvpos = (*itHit)->getPosition();
+            double xxx[] = {0.,0.,0.};
+            geo::gGeometry().local2Master(uvpos, xxx);
+            float pos[] = {xxx[0],xxx[1],xxx[2]};
+            state->setReferencePoint(pos);
+            state->setLocation( IMPL::TrackStateImpl::AtFirstHit );
+            state->setD0(0.);     
+            _trackStates.push_back( state );
+        }
     }
       
     /**
@@ -102,19 +137,35 @@ namespace eutelescope {
             else measLayers[ sensorID ] = new MeasurementLayer( sensorID );
         }
         
-        // Sort measurement layers such that layers encountered by a track first are
-        // in the front of array
-        
+        // Sort measurement layers such that layers encountered by track first
+        // are in the front of array
+        _allMeasurements = std::vector< MeasurementLayer* >( geo::gGeometry().nPlanes(), 0 );   // flush vector
+        int numberAlongZ = -1;
+        std::vector< int >::const_iterator itSensorID;
+        for ( itSensorID = geo::gGeometry().sensorIDsVec().begin(); itSensorID != geo::gGeometry().sensorIDsVec().end(); ++itSensorID ) {
+            sensorID = *itSensorID;
+            itMeasLayer = measLayers.find( sensorID );
+            if ( itMeasLayer != measLayers.end() ) {
+                numberAlongZ = geo::gGeometry().sensorIDtoZOrder( sensorID );
+                _allMeasurements.at( numberAlongZ ) = itMeasLayer->second;
+            }
+        }
+        // remove elements without MeasurementLayer assigned
+        std::vector< MeasurementLayer* >::iterator itLayer;
+        for ( itLayer = _allMeasurements.begin(); itLayer != _allMeasurements.end(); ++itLayer ) {
+            if ( !(*itLayer) ) itLayer = _allMeasurements.erase(itLayer);
+        }
+
     }
     
     MeasurementLayer::MeasurementLayer() : _id(-1), _allHits() {}
     
     MeasurementLayer::MeasurementLayer( int id ) : _id(id), _allHits() {}
     
-    MeasurementLayer::~MeasurementLayer() {}
+    MeasurementLayer::~MeasurementLayer() { std::cout << "Destroyed" << std::endl; }
     
     void MeasurementLayer::addHit( EVENT::TrackerHit* hit ) {
         _allHits.push_back( hit );
     }
     
-}
+} // namespace eutelescope
