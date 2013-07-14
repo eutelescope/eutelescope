@@ -898,39 +898,38 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
       // 
        
       double telPos[3];
-      if ( _wantLocalCoordinates ) {
-            // now perform the rotation of the frame of references and put the
-            // results already into a 3D array of double to be ready for the
-            // setPosition method of TrackerHit
-            telPos[0] = xPointing[0] * xDet + xPointing[1] * yDet;
-            telPos[1] = yPointing[0] * xDet + yPointing[1] * yDet;
+      // now perform the rotation of the frame of references and put the
+      // results already into a 3D array of double to be ready for the
+      // setPosition method of TrackerHit
+      telPos[0] = xPointing[0] * xDet + xPointing[1] * yDet;
+      telPos[1] = yPointing[0] * xDet + yPointing[1] * yDet;
 
-            // now the translation
-            // not sure about the sign. At least it is working for the current
-            // configuration but we need to double check it
-            double sign = 0;
-            if      ( xPointing[0] < -0.7 )       sign = -1 ;
-            else if ( xPointing[0] > 0.7 )       sign =  1 ;
-            else {
-                if       ( xPointing[1] < -0.7 )    sign = -1 ;
-                else if  ( xPointing[1] > 0.7 )    sign =  1 ;
-            }
-            //     telPos[0] += xZero - sign * xSize/2;
-            telPos[0] +=  ( -1 ) * sign * xSize / 2;   //apply shifts few lines later
+      // now the translation
+      // not sure about the sign. At least it is working for the current
+      // configuration but we need to double check it
+      double sign = 0;
+      if      ( xPointing[0] < -0.7 )       sign = -1 ;
+      else if ( xPointing[0] > 0.7 )       sign =  1 ;
+      else {
+          if       ( xPointing[1] < -0.7 )    sign = -1 ;
+          else if  ( xPointing[1] > 0.7 )    sign =  1 ;
+      }
+      //     telPos[0] += xZero - sign * xSize/2;
+      telPos[0] +=  ( -1 ) * sign * xSize / 2;   //apply shifts few lines later
 
-            if      ( yPointing[0] < -0.7 )       sign = -1 ;
-            else if ( yPointing[0] > 0.7 )       sign =  1 ;
-            else {
-                if       ( yPointing[1] < -0.7 )    sign = -1 ;
-                else if  ( yPointing[1] > 0.7 )    sign =  1 ;
-            }
-            //      telPos[1] += yZero - sign * ySize/2;
-            telPos[1] += ( -1 ) * sign * ySize / 2;   // apply shifts few lines later
+      if      ( yPointing[0] < -0.7 )       sign = -1 ;
+      else if ( yPointing[0] > 0.7 )       sign =  1 ;
+      else {
+          if       ( yPointing[1] < -0.7 )    sign = -1 ;
+          else if  ( yPointing[1] > 0.7 )    sign =  1 ;
+      }
+      //      telPos[1] += yZero - sign * ySize/2;
+      telPos[1] += ( -1 ) * sign * ySize / 2;   // apply shifts few lines later
 
 
-            //    telPos[2] = zZero + 0.5 * zThickness;
-            telPos[2] = 0.0 ;       // apply shifts few lines later 
-      } else {
+      //    telPos[2] = zZero + 0.5 * zThickness;
+      telPos[2] = 0.0 ;       // apply shifts few lines later 
+      if ( !_wantLocalCoordinates ) {
             // 
             // NOW !!
             // GLOBAL coordinate system !!!
