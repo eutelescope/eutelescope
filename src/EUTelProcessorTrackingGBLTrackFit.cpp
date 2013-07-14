@@ -341,7 +341,7 @@ void EUTelProcessorTrackingGBLTrackFit::processRunHeader(LCRunHeader * run) {
     const int runNumber = run->getRunNumber();
     
     const string defaultFileName = "millepede.res";
-    if ( _milleResultFileName.compare(defaultFileName) == 0 ) {
+    if ( _milleResultFileName.compare(0,static_cast<int>(defaultFileName.size()),defaultFileName,0,static_cast<int>(defaultFileName.size())) == 0 ) {
         _milleResultFileName = "millepede-result-";
         _milleResultFileName += to_string(runNumber);
         _milleResultFileName += ".res";
@@ -533,10 +533,10 @@ void EUTelProcessorTrackingGBLTrackFit::check(LCEvent * evt) {
 }
 
 void EUTelProcessorTrackingGBLTrackFit::end() {
-    delete _trackFitter;
     
+    // Free file resource before running pede exe
     delete _milleGBL;
-
+    
     writeMilleSteeringFile();
 
     streamlog_out(DEBUG) << "EUTelProcessorTrackingGBLTrackFit::end()  " << name()
@@ -544,6 +544,8 @@ void EUTelProcessorTrackingGBLTrackFit::end() {
             << std::endl;
     
     if ( _runPede ) runPede();
+
+    delete _trackFitter;
 }
 
 void EUTelProcessorTrackingGBLTrackFit::runPede() {
@@ -738,7 +740,7 @@ void EUTelProcessorTrackingGBLTrackFit::writeMilleSteeringFile() {
     // @TODO assumes that planes have ids 0..._nplanes !generaly wrong
     for (unsigned int help = 0; help < geo::gGeometry().nPlanes(); help++) {
 
-        const int sensorId = geo::gGeometry().sensorZOrderToID(help+1);
+        const int sensorId = geo::gGeometry().sensorZOrderToID(help);
         const bool isPlaneExcluded = std::find(_alignmentPlaneIds.begin(), _alignmentPlaneIds.end(), sensorId) == _alignmentPlaneIds.end();
         
         // check if plane has to be used as fixed

@@ -76,7 +76,7 @@ int EUTelGeometryTelescopeGeoDescription::sensorIDtoZOrder( int planeID ) const 
 }
 
 /** Sensor ID vector ordered according to their position along the Z axis (beam axis)
- *  Numeration runs from 1 to nPlanes */
+ *  Numeration runs from 0 to nPlanes-1 */
 int EUTelGeometryTelescopeGeoDescription::sensorZOrderToID( int znumber ) const {
     std::map<int,int>::const_iterator it;
     it = _sensorZOrderToIDMap.find( znumber );
@@ -112,7 +112,7 @@ _geoManager(0)
     // sensor-planes in geometry navigation:
     _siPlanesParameters = const_cast<gear::SiPlanesParameters*> (&(marlin::Global::GEAR->getSiPlanesParameters()));
     _siPlanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*> (&(_siPlanesParameters->getSiPlanesLayerLayout()));
-
+    
     // create an array with the z positions of each layer
     for (int iPlane = 0; iPlane < _siPlanesLayerLayout->getNLayers(); iPlane++) {
         _siPlaneXPosition.push_back(_siPlanesLayerLayout->getLayerPositionX(iPlane));
@@ -189,6 +189,9 @@ void EUTelGeometryTelescopeGeoDescription::local2Master( int sensorID, const dou
     _geoManager->LocalToMaster( localPos, globalPos );
 }
 
+const gear::BField& EUTelGeometryTelescopeGeoDescription::getMagneticFiled() const {
+    return marlin::Global::GEAR->getBField();
+}
 /** From ROOT's geometry stress test */
 //void EUTelGeometryTelescopeGeoDescription::findRad(Double_t x, Double_t y, Double_t z,
 //        Double_t theta, Double_t phi, Int_t &nbound, Float_t &length, Float_t &safe, Float_t &rad, Bool_t verbose) {

@@ -88,7 +88,6 @@ namespace eutelescope {
     _chi2cut(1000.) {}
 
     EUTelGBLFitter::~EUTelGBLFitter() {
-        if ( _fittrackvec ) delete _fittrackvec;
     }
     
     

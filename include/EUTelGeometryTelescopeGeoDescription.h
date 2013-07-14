@@ -20,6 +20,7 @@
 #include "gear/GearMgr.h"
 #include "gear/SiPlanesLayerLayout.h"
 #include "gear/SiPlanesParameters.h"
+#include "gear/BField.h"
 
 // EUTELESCOPE
 #include "EUTelUtility.h"
@@ -110,6 +111,11 @@ namespace eutelescope {
                     Double_t theta, Double_t phi, Int_t &nbound, Float_t &length, Float_t &safe, Float_t &rad, Bool_t verbose);
             
             void local2Master( int, const double[], double[] );
+            
+            void master2Local( int, const double[], double[] );
+            
+            /** Magnetic field */
+            const gear::BField& getMagneticFiled() const;
 
         public:
             /** Silicon planes parameters as described in GEAR
