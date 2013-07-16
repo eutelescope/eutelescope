@@ -27,7 +27,8 @@
    </execute>
 
    <global>
-      <parameter name="LCIOInputFiles"> @LcioPath@/@FilePrefix@-clustering.slcio </parameter>
+      <parameter name="LCIOInputFiles"> @LcioPath@/@FilePrefix@-clustering-filtered.slcio </parameter>
+      <!--parameter name="LCIOInputFiles"> @LcioPath@/@FilePrefix@-clustering.slcio </parameter-->
       <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
@@ -82,7 +83,7 @@
  <processor name="HitMakerM26" type="EUTelHitMaker">
  <!--EUTelHitMaker is responsible to translate cluster centers from the local frame of reference to the external frame of reference using the GEAR geometry description-->
   <!--Cluster (pulse) collection name-->
-  <parameter name="PulseCollectionName" type="string" lcioInType="TrackerPulse"> cluster_m26 </parameter>
+  <parameter name="PulseCollectionName" type="string" lcioInType="TrackerPulse"> filtered_cluster_m26 </parameter>
   <!--Hit collection name-->
   <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit </parameter>
   <!--Select here how the center of gravity should be calculated.
@@ -127,7 +128,7 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
   <!--Switch on or off the histogram filling-->
   <!--parameter name="HistogramFilling" type="bool" value="true"/-->
   <!--This is the name of the hot pixel collection that clusters should be checked against (optional). -->
-  <parameter name="HotPixelCollectionName" type="string" value="hotpixel_m26"/>
+  <parameter name="HotPixelCollectionName" type="string" value="hotpixel_apix"/>
   <!--If there are more then this number of correlated hits (planes->track candidate) (default=5)-->
   <parameter name="MinNumberOfCorrelatedHits" type="int" value="5"/>
   <!--reference hit collection name -->
@@ -183,7 +184,7 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
  <processor name="Save" type="EUTelOutputProcessor">
  <!--Writes the current event to the specified LCIO outputfile. Eventually it adds a EORE at the of the file if it was missing Needs to be the last ActiveProcessor.-->
   <!--drops the named collections from the event-->
-  <parameter name="DropCollectionNames" type="StringVec"> zsdata_m26 cluster_m26 filteredcluster zsdata refilteredcluster </parameter>
+  <parameter name="DropCollectionNames" type="StringVec"> zsdata_m26 cluster_m26 filteredcluster zsdata refilteredcluster filtered_cluster_m26 </parameter>
   <!--drops all collections of the given type from the event-->
   <!--parameter name="DropCollectionTypes" type="StringVec"> SimTrackerHit SimCalorimeterHit </parameter-->
   <!-- write complete objects in subset collections to the file (i.e. ignore subset flag)-->
