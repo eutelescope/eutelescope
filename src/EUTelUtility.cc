@@ -331,5 +331,47 @@ namespace eutelescope {
             return rho;
         }
         
+        /**
+         *  Solves quadratic equation a*x^2 + b*x + c = 0
+         * @param a 
+         * @param b
+         * @param c
+         * @return vector of solution sorted in descending order
+         */
+        vector< double > solveQuadratic( double a, double b, double c) {
+                //Solutions
+                vector< double > X(2, 0.);              //initialise with two doubles equal 0.
+
+                if( fabs( a ) > 0. )
+                {
+                        //The equation has the form
+                        // a*x^2 + b*x + c = 0
+                        double disc2 =  b*b - 4.*a*c ;
+                        if( disc2 < 0. )
+                        {
+                                cout << "WARNING! disc2 < 0: " << disc2 << endl;
+                                return X;
+                        }
+                        double disc = sqrt( disc2 );
+                        double denom = 2.*a;
+                        double num1 = -b + disc;
+                        double num2 = -b - disc;
+
+                        X[0] = num1 / denom;            //bigger root
+                        X[1] = num2 / denom;            //lower root
+                }
+                else
+                {
+                        //Degenerate case, when a = 0.
+                        //The linear equation has the form
+                        // b*x + c = 0
+
+                        X[0] = -c/b;
+                        X[1] = -c/b;
+                }
+
+                return X;
+        }
+        
     }
 }

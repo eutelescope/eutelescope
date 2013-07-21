@@ -14,13 +14,18 @@
 // EUTELESCOPE
 #include "EUTelUtility.h"
 #include "EUTelTrackFitter.h"
+#include "EUTelTrackStateImpl.h"
+#include "EUTelTrackImpl.h"
+
+// ROOT
+#if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
+#include "TVector3.h"
+#endif
 
 //LCIO
 #include "lcio.h"
-#include "IMPL/TrackStateImpl.h"
 #include "IMPL/TrackerHitImpl.h"
 
-#include "TLorentzVector.h"
 
 class IMPL::TrackImpl;
 class TrackerHit;
@@ -92,11 +97,19 @@ namespace eutelescope {
         }
 
         inline void setBeamMomentum(double beam) {
-            this->_beamDir = beam;
+            this->_beamE = beam;
         }
 
         inline double getBeamMomentum() const {
-            return _beamDir;
+            return _beamE;
+        }
+        
+        inline void setBeamCharge(double q) {
+            this->_beamQ = q;
+        }
+
+        inline double getBeamCharge() const {
+            return _beamQ;
         }
 
     private:
@@ -106,20 +119,33 @@ namespace eutelescope {
         /** Generate seed track candidates */
         void initialiseSeeds();
 
+        /** Find intersection point of a track with geometry planes */
+        std::vector< double > findIntersection( EUTelTrackStateImpl* ts ) const;
+        
         /** Construct LCIO track object from internal track data */
         void prepareLCIOTrack();
 
         /** Sort hits according to particles propagation direction */
         bool sortHitsByMeasurementLayers( const EVENT::TrackerHitVec& );
         
+        // Helper functions
+    private:
+        
+        /** Calculate track momentum from track parameters */
+        TVector3 getPfromCartesianParameters( const EUTelTrackStateImpl* ) const;
+        
+        /** Calculate position of the track in global 
+         * coordinate system for given arc length calculated
+         * from track's ref. point*/
+        TVector3 getXYZfromArcLenght( const EUTelTrackStateImpl*, double );
 
         // Kalman filter states and tracks
     private:
         /** Final set of tracks */
-        std::vector< IMPL::TrackImpl* > _tracks;
+        std::vector< EUTelTrackImpl* > _tracks;
 
         /** Kalman track states */
-        std::vector< IMPL::TrackStateImpl* > _trackStates;
+        std::vector< EUTelTrackStateImpl* > _trackStates;
 
     private:
         /** Vector of hits to be processed */
@@ -143,7 +169,10 @@ namespace eutelescope {
         int _maxTrackCandidates;
 
         /** Beam momentum [GeV/c] */
-        double _beamDir;
+        double _beamE;
+        
+        /** Signed beam charge [e] */
+        double _beamQ;
     };
 
 } // namespace eutelescope

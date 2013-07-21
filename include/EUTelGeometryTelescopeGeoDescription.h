@@ -28,6 +28,7 @@
 //#ifdef USE_TGEO
 // ROOT
 #include "TGeoManager.h"
+#include "TVector3.h"
 
 //#endif //USE_TGEO
 
@@ -76,6 +77,19 @@ namespace eutelescope {
             /** Z coordinate of center of sensor 
              * with given ID in global coordinate frame */
             double siPlaneZPosition( int );
+            
+            /** Rotation around X axis of the global coordinate frame */
+            double siPlaneXRotation( int );
+            
+            /** Rotation around Y axis of global coordinate frame */
+            double siPlaneYRotation( int );
+            
+            /** Rotation around Z axis of global coordinate frame */
+            double siPlaneZRotation( int );
+            
+            /** Plane normal vector (nx,ny,nz) */
+            TVector3 siPlaneNormal( int );
+            
             
             /** Map from sensor ID to number along Z */
             std::map<int, int> sensorZOrdertoIDs() const;
@@ -162,6 +176,15 @@ namespace eutelescope {
             
             /** Z coordinate of the sensors centers in global coordinate frame */
             EVENT::DoubleVec _siPlaneZPosition;
+            
+            /** Rotation around X axis of the global coordinate frame */
+            EVENT::DoubleVec _siPlaneXRotation;
+            
+            /** Rotation around Y axis of global coordinate frame */
+            EVENT::DoubleVec _siPlaneYRotation;
+            
+            /** Rotation around Z axis of global coordinate frame */
+            EVENT::DoubleVec _siPlaneZRotation;
 
             /** Number of planes including DUT */
             size_t _nPlanes;

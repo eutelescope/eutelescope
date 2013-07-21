@@ -24,6 +24,7 @@
 #include "TGeoMaterial.h"
 #include "TGeoBBox.h"
 #include "TVectorD.h"
+#include "TVector3.h"
 #include "TMath.h"
 
 using namespace eutelescope;
@@ -62,6 +63,40 @@ double EUTelGeometryTelescopeGeoDescription::siPlaneZPosition( int planeID ) {
     it = _sensorIDtoZOrderMap.find(planeID);
     if ( it != _sensorIDtoZOrderMap.end() ) return _siPlaneZPosition[ _sensorIDtoZOrderMap[ planeID ] ];
     return -999.;
+}
+
+double EUTelGeometryTelescopeGeoDescription::siPlaneXRotation( int planeID ) {
+    std::map<int,int>::iterator it;
+    it = _sensorIDtoZOrderMap.find(planeID);
+    if ( it != _sensorIDtoZOrderMap.end() ) return _siPlaneXRotation[ _sensorIDtoZOrderMap[ planeID ] ];
+    return -999.;
+}
+
+double EUTelGeometryTelescopeGeoDescription::siPlaneYRotation( int planeID ) {
+    std::map<int,int>::iterator it;
+    it = _sensorIDtoZOrderMap.find(planeID);
+    if ( it != _sensorIDtoZOrderMap.end() ) return _siPlaneYRotation[ _sensorIDtoZOrderMap[ planeID ] ];
+    return -999.;
+}
+
+double EUTelGeometryTelescopeGeoDescription::siPlaneZRotation( int planeID ) {
+    std::map<int,int>::iterator it;
+    it = _sensorIDtoZOrderMap.find(planeID);
+    if ( it != _sensorIDtoZOrderMap.end() ) return _siPlaneZRotation[ _sensorIDtoZOrderMap[ planeID ] ];
+    return -999.;
+}
+
+TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneNormal( int planeID ) {
+    std::map<int,int>::iterator it;
+    it = _sensorIDtoZOrderMap.find(planeID);
+    if ( it != _sensorIDtoZOrderMap.end() ) {
+        TVector3 normVec( 0., 0., 1. );
+        normVec.RotateX( _siPlaneXRotation[ _sensorIDtoZOrderMap[ planeID ] ] );
+        normVec.RotateY( _siPlaneYRotation[ _sensorIDtoZOrderMap[ planeID ] ] );
+        normVec.RotateZ( _siPlaneZRotation[ _sensorIDtoZOrderMap[ planeID ] ] );
+        return normVec;
+    }
+    return TVector3(0.,0.,0.);
 }
 
 std::map<int, int> EUTelGeometryTelescopeGeoDescription::sensorIDstoZOrder( ) const {
@@ -118,12 +153,20 @@ _geoManager(0)
         _siPlaneXPosition.push_back(_siPlanesLayerLayout->getLayerPositionX(iPlane));
         _siPlaneYPosition.push_back(_siPlanesLayerLayout->getLayerPositionY(iPlane));
         _siPlaneZPosition.push_back(_siPlanesLayerLayout->getLayerPositionZ(iPlane));
+        _siPlaneXRotation.push_back(_siPlanesLayerLayout->getLayerRotationZY(iPlane));
+        _siPlaneYRotation.push_back(_siPlanesLayerLayout->getLayerRotationZX(iPlane));
+        _siPlaneZRotation.push_back(_siPlanesLayerLayout->getLayerRotationXY(iPlane));
     }
 
     if (_siPlanesParameters->getSiPlanesType() == _siPlanesParameters->TelescopeWithDUT) {
         _siPlaneXPosition.push_back(_siPlanesLayerLayout->getDUTPositionX());
         _siPlaneYPosition.push_back(_siPlanesLayerLayout->getDUTPositionY());
         _siPlaneZPosition.push_back(_siPlanesLayerLayout->getDUTPositionZ());
+        // WARNING No DUT rotations in GEAR!!!!!!!!!!
+        // TODO: Need this in GEAR
+        _siPlaneXRotation.push_back(0.);
+        _siPlaneYRotation.push_back(0.);
+        _siPlaneZRotation.push_back(0.);
     }
 
     // sort the array with increasing z

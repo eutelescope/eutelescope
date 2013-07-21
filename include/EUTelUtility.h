@@ -202,6 +202,9 @@ namespace eutelescope {
         /** Calculate track's 2D curvature */
         double getCurvature( double, double, double );
         
+        /** Solve quadratic equation a*x^2 + b*x + c = 0 */
+        std::vector< double > solveQuadratic( double, double, double );
+        
         /** Possible choices of alignment degrees of freedom */
         enum AlignmentMode {
             noAlignment, XYShift, XYShiftXYRot, XYZShiftXYRot, XYShiftYZRotXYRot, XYShiftXZRotXYRot, XYShiftXZRotYZRotXYRot, XYZShiftXZRotYZRotXYRot
