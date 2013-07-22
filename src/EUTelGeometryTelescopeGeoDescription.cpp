@@ -232,6 +232,17 @@ void EUTelGeometryTelescopeGeoDescription::local2Master( int sensorID, const dou
     _geoManager->LocalToMaster( localPos, globalPos );
 }
 
+void EUTelGeometryTelescopeGeoDescription::master2Local( const double globalPos[], double localPos[] ) {
+    _geoManager->FindNode( globalPos[0], globalPos[1], globalPos[2] );    
+    _geoManager->MasterToLocal( globalPos, localPos );
+}
+
+TGeoHMatrix* EUTelGeometryTelescopeGeoDescription::getHMatrix( const double globalPos[] ) {
+    _geoManager->FindNode( globalPos[0], globalPos[1], globalPos[2] );    
+    const TGeoHMatrix* globalH = _geoManager->GetCurrentMatrix();
+    return new TGeoHMatrix(*globalH);
+}
+
 const gear::BField& EUTelGeometryTelescopeGeoDescription::getMagneticFiled() const {
     return marlin::Global::GEAR->getBField();
 }

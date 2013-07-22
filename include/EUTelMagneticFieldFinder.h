@@ -20,6 +20,8 @@
 // ROOT
 #if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
 #include "TVector3.h"
+#include "TMatrixD.h"
+#include "TMatrixDSym.h"
 #endif
 
 //LCIO
@@ -104,6 +106,14 @@ namespace eutelescope {
             return _beamE;
         }
         
+        inline void setBeamMomentumUncertainty(double prec) {
+            this->_beamEnergyUncertainty = prec;
+        }
+
+        inline double getBeamMomentumUncertainty() const {
+            return _beamEnergyUncertainty;
+        }
+        
         inline void setBeamCharge(double q) {
             this->_beamQ = q;
         }
@@ -111,6 +121,15 @@ namespace eutelescope {
         inline double getBeamCharge() const {
             return _beamQ;
         }
+        
+        inline void setBeamSpread( const EVENT::FloatVec& sp ) {
+            this->_beamAngularSpread = sp;
+        }
+
+        inline EVENT::FloatVec getBeamSpread() const {
+            return _beamAngularSpread;
+        }
+        
 
     private:
         /** Flush fitter data stored from previous event */
@@ -121,6 +140,18 @@ namespace eutelescope {
 
         /** Find intersection point of a track with geometry planes */
         std::vector< double > findIntersection( EUTelTrackStateImpl* ts ) const;
+        
+        /** Propagate track state by dz */
+	void propagateTrackState( EUTelTrackStateImpl*, double );
+
+        /** Update track propagation matrix for a given step */
+	const TMatrixD& getPropagationJacobianF( const EUTelTrackStateImpl*, double );
+
+        /** Propagate track state */
+        void propagateTrackState( EUTelTrackStateImpl* );
+        
+        /** Filter track state */
+        void filterTrackState( EUTelTrackStateImpl*, TVectorD& );
         
         /** Construct LCIO track object from internal track data */
         void prepareLCIOTrack();
@@ -137,7 +168,23 @@ namespace eutelescope {
         /** Calculate position of the track in global 
          * coordinate system for given arc length calculated
          * from track's ref. point*/
-        TVector3 getXYZfromArcLenght( const EUTelTrackStateImpl*, double );
+        TVector3 getXYZfromArcLenght( const EUTelTrackStateImpl*, double ) const;
+
+	double cosAlpha( const EUTelTrackStateImpl* ) const;
+
+	double cosBeta( const EUTelTrackStateImpl* ) const;
+        
+        TVectorD getTrackStateVec( const EUTelTrackStateImpl* ) const;
+        
+        TMatrixDSym getTrackStateCov( const EUTelTrackStateImpl* ) const;
+        
+        TMatrixD getHitCov( const EVENT::TrackerHit* hit ) const;
+        
+        TVectorD getResidual( const EUTelTrackStateImpl*, const EVENT::TrackerHit* ) const;
+        
+        TMatrixD getResidualCov( const EUTelTrackStateImpl*, const EVENT::TrackerHit* hit ) const;
+        
+        TMatrixD getH( const EUTelTrackStateImpl* ) const;
 
         // Kalman filter states and tracks
     private:
@@ -173,6 +220,28 @@ namespace eutelescope {
         
         /** Signed beam charge [e] */
         double _beamQ;
+
+        /** Beam energy spread [%] */
+        double _beamEnergyUncertainty;
+        
+        /** Beam angular spread (horizontal,vertical) [mr] */
+        EVENT::FloatVec _beamAngularSpread;
+        
+    private:
+	/** Track parameters propagation jacobian matrix */
+	TMatrixD _jacobianF;
+        
+        /** Track parameters covariance C(k,k-1) matrix */
+        TMatrixD _trkParamCovCkkm1;
+        
+        /** Process noise matrix */
+        TMatrixDSym _processNoiseQ;
+        
+        /** Kalman filter gain matrix */
+	TMatrixD _gainK;
+        
+        /** Kalman residual covariance matrix */
+        TMatrixD _residualCovR;
     };
 
 } // namespace eutelescope

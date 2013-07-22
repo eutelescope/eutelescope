@@ -28,6 +28,7 @@
 //#ifdef USE_TGEO
 // ROOT
 #include "TGeoManager.h"
+#include "TGeoMatrix.h"
 #include "TVector3.h"
 
 //#endif //USE_TGEO
@@ -126,7 +127,9 @@ namespace eutelescope {
             
             void local2Master( int, const double[], double[] );
             
-            void master2Local( int, const double[], double[] );
+            void master2Local( const double[], double[] );
+            
+            TGeoHMatrix* getHMatrix( const double globalPos[] );
             
             /** Magnetic field */
             const gear::BField& getMagneticFiled() const;
