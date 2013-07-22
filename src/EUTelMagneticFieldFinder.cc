@@ -501,8 +501,8 @@ namespace eutelescope {
         TVectorD xkkm1 = _jacobianF * xkm1;
         
         _processNoiseQ.Zero();
-        TMatrixDSym Ck = getTrackStateCov( ts );
-        TMatrixDSym Ckkm1 = Ck.Similarity( _jacobianF );        Ckkm1 += _processNoiseQ;
+        TMatrixDSym Ckm1 = getTrackStateCov( ts );
+        TMatrixDSym Ckkm1 = Ckm1.Similarity( _jacobianF );        Ckkm1 += _processNoiseQ;
         
     }
     
@@ -516,17 +516,12 @@ namespace eutelescope {
     }
     
     TVectorD EUTelKalmanFilter::getResidual( const EUTelTrackStateImpl* ts, const EVENT::TrackerHit* hit ) const {
-        const double* uvpos = hit->getPosition();
-        const int sensorID = Utility::GuessSensorID( hit );
-        double temp[] = {0.,0.,0.};
-        geo::gGeometry().local2Master( sensorID, uvpos, temp );
-        float posGlobal[] = { temp[0], temp[1], temp[2] };
-        
-        const TVectorD xkkm1 = getTrackStateVec( ts );
         TVectorD mk(2); 
-        mk[0] = hit->getPosition()[0];          mk[1] = hit->getPosition()[1];
+        const double* uvpos = hit->getPosition();
+        mk[0] = uvpos[0];          mk[1] = uvpos[1];
     
         TMatrixD Hk = getH(ts);
+        const TVectorD xkkm1 = getTrackStateVec( ts );       // track state must be updated to x(k,k-1) not initial xk
         
         TVectorD rk(2);
         rk = mk;        rk -= Hk * xkkm1;
@@ -536,16 +531,57 @@ namespace eutelescope {
     
     TMatrixD EUTelKalmanFilter::getResidualCov( const EUTelTrackStateImpl* ts, const EVENT::TrackerHit* hit ) const {
         TMatrixD Hk = getH(ts);
-        TMatrixDSym Ck = getTrackStateCov( ts );
-        TMatrixDSym Ckkm1 = Ck.Similarity( _jacobianF );        Ckkm1 += _processNoiseQ;
+        _processNoiseQ.Zero();
+        TMatrixDSym Ckm1 = getTrackStateCov( ts );
+        TMatrixDSym Ckkm1 = Ckm1.Similarity( _jacobianF );        Ckkm1 += _processNoiseQ;       
+        TMatrixD Rkkm1 = Ckkm1.Similarity(Hk);
+        Rkkm1 += getHitCov(hit);
         
-        Ckkm1.Similarity(Hk);
-        
-        TMatrixD Rkkm1 = getHitCov(hit);
-        Rkkm1 += Ckkm1;
         return Rkkm1;
     }
     
+    const TMatrixD& EUTelKalmanFilter::updateGainK( const EUTelTrackStateImpl* ts, const EVENT::TrackerHit* hit ) {
+        _processNoiseQ.Zero();
+        TMatrixDSym Ckm1 = getTrackStateCov( ts );
+        TMatrixDSym Ckkm1 = Ckm1.Similarity( _jacobianF );        Ckkm1 += _processNoiseQ;
+        TMatrixD Ht;     Ht = Ht.Transpose( getH(ts) );
+        
+        _gainK = getResidualCov( ts, hit ).Invert();
+        _gainK *= Ht;
+        _gainK *= Ckkm1;
+    }
+    
+    void EUTelKalmanFilter::updateTrackState( EUTelTrackStateImpl* ts, const EVENT::TrackerHit* hit ) {
+        TVectorD xk(5);
+        xk = getTrackStateVec( ts );
+        xk += _gainK * getResidual( ts, hit );
+        
+        _processNoiseQ.Zero();
+        TMatrixDSym Ckm1 = getTrackStateCov( ts );
+        TMatrixDSym Ckkm1 = Ckm1.Similarity( _jacobianF );        Ckkm1 += _processNoiseQ;
+        
+        TMatrixD I(5,5);     I.UnitMatrix();
+        I -= _gainK*getH( ts );
+        
+        TMatrixD Ck(5,5);
+        Ck = I*Ckkm1;
+        
+        ts -> setX( xk[0] );
+        ts -> setY( xk[1] );
+        ts -> setTx( xk[2] );
+        ts -> setTy( xk[3] );
+        ts -> setInvP( xk[4] );
+        
+        float trkCov[15] = { Ck[0][0], Ck[1][0], Ck[1][1], 
+                             Ck[2][0], Ck[2][1], Ck[2][2],
+                             Ck[3][0], Ck[3][1], Ck[3][2],
+                             Ck[3][3], Ck[4][0], Ck[4][1],
+                             Ck[4][2], Ck[4][3], Ck[4][4] };
+
+        ts->setCovMatrix( trkCov );
+        ts->setLocation( EUTelTrackStateImpl::AtOther );
+        
+    }
     
     TMatrixD EUTelKalmanFilter::getH( const EUTelTrackStateImpl* ts ) const {
         TMatrixD H(2,5);
@@ -559,10 +595,10 @@ namespace eutelescope {
         const double* rotation = globalHInv.GetRotationMatrix();
 
         // Fill necessary components
-        H[0][0] = rotation[0]; // x projection
-        H[0][1] = rotation[1]; // y projection
-        H[1][0] = rotation[3]; // x projection
-        H[1][1] = rotation[4]; // y projection
+        H[0][0] = rotation[0]; // x projection, xx
+        H[0][1] = rotation[1]; // y projection, xy
+        H[1][0] = rotation[3]; // x projection, yx
+        H[1][1] = rotation[4]; // y projection, yy
         
         return H;
     }

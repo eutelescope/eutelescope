@@ -143,9 +143,15 @@ namespace eutelescope {
         
         /** Propagate track state by dz */
 	void propagateTrackState( EUTelTrackStateImpl*, double );
+        
+        /** Update track state and it's cov matrix */
+        void updateTrackState( EUTelTrackStateImpl*, const EVENT::TrackerHit* );
 
         /** Update track propagation matrix for a given step */
 	const TMatrixD& getPropagationJacobianF( const EUTelTrackStateImpl*, double );
+        
+        /** Update Kalman gain matrix */
+        const TMatrixD& updateGainK( const EUTelTrackStateImpl*, const EVENT::TrackerHit* );
 
         /** Propagate track state */
         void propagateTrackState( EUTelTrackStateImpl* );
