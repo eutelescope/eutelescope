@@ -27,6 +27,8 @@
 #include "TVector3.h"
 #include "TMath.h"
 
+#include <cstring>
+
 using namespace eutelescope;
 using namespace geo;
 using namespace std;
@@ -133,6 +135,9 @@ _sensorIDtoZOrderMap(),
 _siPlaneXPosition(),
 _siPlaneYPosition(),
 _siPlaneZPosition(),
+_siPlaneXRotation(),
+_siPlaneYRotation(),
+_siPlaneZRotation(),
 _nPlanes(0),
 _geoManager(0)
 {
@@ -153,9 +158,9 @@ _geoManager(0)
         _siPlaneXPosition.push_back(_siPlanesLayerLayout->getLayerPositionX(iPlane));
         _siPlaneYPosition.push_back(_siPlanesLayerLayout->getLayerPositionY(iPlane));
         _siPlaneZPosition.push_back(_siPlanesLayerLayout->getLayerPositionZ(iPlane));
-        _siPlaneXRotation.push_back(_siPlanesLayerLayout->getLayerRotationZY(iPlane));
-        _siPlaneYRotation.push_back(_siPlanesLayerLayout->getLayerRotationZX(iPlane));
-        _siPlaneZRotation.push_back(_siPlanesLayerLayout->getLayerRotationXY(iPlane));
+        _siPlaneXRotation.push_back(_siPlanesLayerLayout->getLayerRotationZY(iPlane)/180.*3.14159265359);
+        _siPlaneYRotation.push_back(_siPlanesLayerLayout->getLayerRotationZX(iPlane)/180.*3.14159265359);
+        _siPlaneZRotation.push_back(_siPlanesLayerLayout->getLayerRotationXY(iPlane)/180.*3.14159265359);
     }
 
     if (_siPlanesParameters->getSiPlanesType() == _siPlanesParameters->TelescopeWithDUT) {
@@ -223,27 +228,78 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( string tge
 //    #endif //USE_TGEO
 }
 
+/** Determine id of the sensor in which point is locate
+ * 
+ * @param globalPos 3D point in global reference frame
+ * @return sensorID or -999 if the point in outside of sensor volume
+ */
+int EUTelGeometryTelescopeGeoDescription::getSensorID( const float globalPos[] ) const {
+    streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::getSensorID() " << std::endl;
+    
+    _geoManager->FindNode( globalPos[0], globalPos[1], globalPos[2] );
+    char* volName = const_cast < char* > ( geo::gGeometry( )._geoManager->GetCurrentVolume( )->GetName( ) );
+    streamlog_out( DEBUG0 ) << "Point (" << globalPos[0] << "," << globalPos[1] << "," << globalPos[2] << ") found in volume: " << volName << std::endl;
+    const char* tok;
+    std::vector< std::string > tokens;
+    // sensor id must be stored in the last token
+    for ( tok = strtok( volName, ":" );  tok;  tok = strtok( NULL, ":" ) ) {
+        streamlog_out( DEBUG0 ) << tok << std::endl;
+        tokens.push_back(string(tok));
+    }
+    
+    int id = -999;
+    std::size_t found = tokens.back().find_first_of("0123456789");
+    if ( found != std::string::npos ) id = atoi( tokens.back().c_str() );
+
+    int sensorID = -999;
+    if ( std::find( _sensorIDVec.begin(), _sensorIDVec.end(), id ) != _sensorIDVec.end() ) sensorID = id;
+    else streamlog_out(WARNING5) << "Point (" << globalPos[0] << "," << globalPos[1] << "," << globalPos[2] << ") was not found inside any sensor!" << std::endl;
+    
+    streamlog_out( DEBUG0 ) << "SensorID: " << sensorID << std::endl;
+    
+    return sensorID;
+}
+
 void EUTelGeometryTelescopeGeoDescription::local2Master( int sensorID, const double localPos[], double globalPos[] ) {
+    streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::local2Master() " << std::endl;
     const double sensorCenterX = siPlaneXPosition( sensorID );
     const double sensorCenterY = siPlaneYPosition( sensorID );
     const double sensorCenterZ = siPlaneZPosition( sensorID );
     
+    streamlog_out(DEBUG0) << "Senosor id: " << sensorID << std::endl;
+    streamlog_out(DEBUG0) << "Senosor center: " << "(" << sensorCenterX << "," << sensorCenterY << "," << sensorCenterZ << ")" << std::endl;
+    
     _geoManager->FindNode( sensorCenterX, sensorCenterY, sensorCenterZ );    
     _geoManager->LocalToMaster( localPos, globalPos );
+    
+    streamlog_out(DEBUG0) << std::fixed;
+    streamlog_out(DEBUG0) << "Local coordinates ( sensorID =  " << sensorID << " ) : " << std::endl;
+    streamlog_out(DEBUG0) << std::setw(10) << std::setprecision(5) << localPos[0] << std::setw(10) << std::setprecision(5) << localPos[1] << std::setw(10) << std::setprecision(5) << localPos[2] << std::endl;
+    streamlog_out(DEBUG0) << "Global coordinates ( sensorID =  " << sensorID << " ) : " << std::endl;
+    streamlog_out(DEBUG0) << std::setw(10) << std::setprecision(5) << globalPos[0] << std::setw(10) << std::setprecision(5) << globalPos[1] << std::setw(10) << std::setprecision(5) << globalPos[2] << std::endl;
 }
 
 void EUTelGeometryTelescopeGeoDescription::master2Local( const double globalPos[], double localPos[] ) {
+    streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::master2Local() " << std::endl;
     _geoManager->FindNode( globalPos[0], globalPos[1], globalPos[2] );    
     _geoManager->MasterToLocal( globalPos, localPos );
+    
+    streamlog_out(DEBUG0) << std::fixed;
+    streamlog_out(DEBUG0) << "Global coordinates:" << std::endl;
+    streamlog_out(DEBUG0) << std::setw(10) << std::setprecision(5) << globalPos[0] << std::setw(10) << std::setprecision(5) << globalPos[1] << std::setw(10) << std::setprecision(5) << globalPos[2] << std::endl;
+    streamlog_out(DEBUG0) << "Local coordinates: " << std::endl;
+    streamlog_out(DEBUG0) << std::setw(10) << std::setprecision(5) << localPos[0] << std::setw(10) << std::setprecision(5) << localPos[1] << std::setw(10) << std::setprecision(5) << localPos[2] << std::endl;
 }
 
-TGeoHMatrix* EUTelGeometryTelescopeGeoDescription::getHMatrix( const double globalPos[] ) {
+const TGeoHMatrix* EUTelGeometryTelescopeGeoDescription::getHMatrix( const double globalPos[] ) {
+    streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::getHMatrix() " << std::endl;
     _geoManager->FindNode( globalPos[0], globalPos[1], globalPos[2] );    
     const TGeoHMatrix* globalH = _geoManager->GetCurrentMatrix();
-    return new TGeoHMatrix(*globalH);
+    return globalH;
 }
 
 const gear::BField& EUTelGeometryTelescopeGeoDescription::getMagneticFiled() const {
+    streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::getMagneticFiled() " << std::endl;
     return marlin::Global::GEAR->getBField();
 }
 /** From ROOT's geometry stress test */

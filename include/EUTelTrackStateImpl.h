@@ -53,8 +53,8 @@ namespace eutelescope {
     virtual float getInvP() const ;
 
     /** Covariance matrix of the track parameters. Stored as lower triangle matrix where
-     * the order of parameters is:   d0, phi, omega, z0, tan(lambda).
-     * So we have cov(d0,d0), cov( phi, d0 ), cov( phi, phi), ...
+     * the order of parameters is:   x, y, tx, ty, q/p.
+     * So we have cov(x,x), cov( y, x ), cov( y, y ), ...
      */
     virtual const EVENT::FloatVec & getCovMatrix() const ;
 

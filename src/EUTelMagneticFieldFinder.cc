@@ -26,6 +26,18 @@
 
 namespace eutelescope {
 
+    namespace {
+
+        struct hasSensorID
+        {
+            int _requiredSensorID;
+
+            bool operator( )( MeasurementLayer* layer ) {
+                return ( layer->sensorID( ) == _requiredSensorID );
+            }
+        } ;
+    }
+    
     EUTelKalmanFilter::EUTelKalmanFilter() : EUTelTrackFitter( "KalmanFilter" ), 
             _tracks(), 
             _trackStates(), 
@@ -42,7 +54,7 @@ namespace eutelescope {
 	    _jacobianF(5,5),
             _trkParamCovCkkm1(5,5),
             _processNoiseQ(5,5),
-            _gainK(5,5),
+            _gainK(5,2),
             _residualCovR(2,2){}
 
     EUTelKalmanFilter::EUTelKalmanFilter( std::string name ) : EUTelTrackFitter( name ),
@@ -61,7 +73,7 @@ namespace eutelescope {
 	    _jacobianF(5,5),
             _trkParamCovCkkm1(5,5),
             _processNoiseQ(5,5),
-            _gainK(5,5),
+            _gainK(5,2),
             _residualCovR(2,2){}
 
     EUTelKalmanFilter::~EUTelKalmanFilter() {}
@@ -81,10 +93,7 @@ namespace eutelescope {
 	// 
 	findIntersection( _trackStates[0] );
 	//
-	propagateTrackState( _trackStates[0], 750. );
-	//
 	getPropagationJacobianF( _trackStates[0], 750. );
-	_jacobianF.Print();
 	//
 	
     }
@@ -149,7 +158,7 @@ namespace eutelescope {
             return;
         }
         
-        const EVENT::TrackerHitVec& hitFirstLayer = _allMeasurements[0]->getHits();
+        const EVENT::TrackerHitVec& hitFirstLayer = _allMeasurements[1]->getHits();
         streamlog_out(DEBUG1) << "N hits in first non-empty layer: " << hitFirstLayer.size() << std::endl;
         EVENT::TrackerHitVec::const_iterator itHit;
         for ( itHit = hitFirstLayer.begin(); itHit != hitFirstLayer.end(); ++itHit ) {
@@ -162,13 +171,7 @@ namespace eutelescope {
             double temp[] = {0.,0.,0.};
             geo::gGeometry().local2Master( sensorID, uvpos, temp);
             float posGlobal[] = { temp[0], temp[1], temp[2] };
-            
-//            std::cout << std::fixed;
-//            std::cout << "Local coordinates ( sensorID =  " << sensorID << " ) : " << std::endl;
-//            std::cout << std::setw(10) << std::setprecision(5) << uvpos[0] << std::setw(10) << std::setprecision(5) << uvpos[1] << std::setw(10) << std::setprecision(5) << uvpos[2] << std::endl;
-//            std::cout << "Global coordinates ( sensorID =  " << sensorID << " ) : " << std::endl;
-//            std::cout << std::setw(10) << std::setprecision(5) << xxx[0] << std::setw(10) << std::setprecision(5) << xxx[1] << std::setw(10) << std::setprecision(5) << xxx[2] << std::endl;
-            
+                        
             gear::Vector3D vectorGlobal( temp[0], temp[1], temp[2] );
             const double q          = _beamQ;      // assume electron beam
             const double invp       = fabs(q)/_beamE;
@@ -216,8 +219,15 @@ namespace eutelescope {
         return TVector3(px,py,pz);
     }
     
-    std::vector< double > EUTelKalmanFilter::findIntersection( EUTelTrackStateImpl* ts ) const {
+    /**
+     * Find closest surface intersected by the track and propagate track to that point
+     * @param ts track state
+     * @return Success flag
+     */
+    bool EUTelKalmanFilter::findIntersection( EUTelTrackStateImpl* ts ) {
         streamlog_out(DEBUG2) << "EUTelKalmanFilter::findIntersection()" << std::endl;
+        
+        bool success = true;
         
         // Get magnetic field vector
         gear::Vector3D vectorGlobal( 0.,0.,0. );        // assuming uniform magnetic field running along X direction
@@ -239,6 +249,13 @@ namespace eutelescope {
         const double z0 = x[2];
         TVector3 trkVec(x0,y0,z0);
         
+        // Determine id of the sensor in which track reference point is located
+        int sensorID = geo::gGeometry().getSensorID( x );
+        int sensorZorder = geo::gGeometry().sensorIDtoZOrder( sensorID );
+        
+        streamlog_out(DEBUG0) << "SensorID:" << sensorID << std::endl;
+        streamlog_out(DEBUG0) << "Sensor Z order:" << sensorZorder << std::endl;
+        
         // Get planes normals in global reference system
         std::map< int, TVector3 > planesNorm;
         EVENT::IntVec sensID = geo::gGeometry().sensorIDsVec();
@@ -253,8 +270,14 @@ namespace eutelescope {
             }
         }
         
+        // Find closest plane downstream
+        const int nextPlaneId = geo::gGeometry().sensorZOrderToID(sensorZorder+1);
+        if ( nextPlaneId > 0 ) itPlaneId = std::find( sensID.begin(), sensID.end(), nextPlaneId );
+        
+        
         // Construct quadratic equation
-        for ( itPlaneId = sensID.begin(); itPlaneId != sensID.end(); ++itPlaneId ) {
+//        for ( itPlaneId = sensID.begin(); itPlaneId != sensID.end(); ++itPlaneId ) {
+        
             TVector3 sensorCenter( geo::gGeometry().siPlaneXPosition( *itPlaneId ),
                                    geo::gGeometry().siPlaneYPosition( *itPlaneId ),
                                    geo::gGeometry().siPlaneZPosition( *itPlaneId ) );
@@ -277,11 +300,13 @@ namespace eutelescope {
             const double b = planesNorm[*itPlaneId].Dot( pVec ) / p;
             const double c = planesNorm[*itPlaneId].Dot( delta );
             
+            // solutions are sorted in descending order
             std::vector< double > sol = Utility::solveQuadratic(a,b,c);
             
             TVector3 newPos1 = getXYZfromArcLenght( ts, sol[0] );
             TVector3 newPos2 = getXYZfromArcLenght( ts, sol[1] );
-	    
+            
+	    streamlog_out (DEBUG0) << "Next intersected volume: " << *itPlaneId << std::endl;
 	    streamlog_out (DEBUG0) << "Plane: " << *itPlaneId << std::endl;
 	    streamlog_out (DEBUG0) << "Solutions for arc length: " << std::setw(15) << sol[0] << std::setw(15) << sol[1] << std::endl;
 	    streamlog_out (DEBUG0) << "First solution (X,Y,Z): " << std::setw(15) << newPos1.X() 
@@ -291,14 +316,41 @@ namespace eutelescope {
 								 << std::setw(15) << newPos2.Y() 
 								 << std::setw(15) << newPos2.Z() << std::endl;
 
-//            TVector3 newPos = ( newPos1.Z() > 0 ) ? newPos1 : newPos2;
+//        } // for ( itPlaneId = sensID.begin(); itPlaneId != sensID.end(); ++itPlaneId ) {
+
+        // Choose solution with minimal positive arc length. It will correspond to the closest point along the helix
+        double dz = ( sol[1] > 0. ) ? sol[1] : ( ( sol[1] < 0. && sol[0] > 0. ) ? sol[0] : 0. );
+
+        if ( dz < 1.E-6 ) {
+            streamlog_out ( MESSAGE0 ) << "Track interseciton was not found" << std::endl;
+            success = false;
+            return success;
         }
-	   std::vector< double > newPos;
-	   newPos.push_back(1.); newPos.push_back(1.); newPos.push_back(1.);
-           return newPos; 
+
+        propagateTrackState( ts, dz );
+        // Calculate track's new position
+        const float* xnew = ts->getReferencePoint( );
+        
+        // Determine id of the sensor in which track reference point is located
+        const int newSensorID = geo::gGeometry().getSensorID( xnew );
+        if ( newSensorID != -999 ) {
+            success = true;
+        } else {
+            streamlog_out ( MESSAGE0 ) << "New point is outside of any sensor volume." << std::endl;
+            success = false;
+            return success;
+        }
+        
+        findClosestHit(ts,newSensorID);
+        
+           return success;
     }
 
-    /** Propagate track state by dz */
+    /** Propagate track state by dz 
+     * 
+     * @param ts track state
+     * @param dz propagation distance
+     */
     void EUTelKalmanFilter::propagateTrackState( EUTelTrackStateImpl* ts, double dz ) {
         streamlog_out(DEBUG2) << "EUTelKalmanFilter::propagateTrackState()" << std::endl;
           // The formulas below are derived from equations of motion of the particle in 
@@ -359,61 +411,107 @@ namespace eutelescope {
 				  << std::setw(15) << ts->getReferencePoint()[1]
 				  << std::setw(15) << ts->getReferencePoint()[2] << std::endl;
     }
-
+    
+    /** Find the hit closest to the intersection of a track with given sensor
+     * 
+     * @param ts track state
+     * @return hit closest to the intersection of the track with the sensor plane
+     * 
+     */
+    const EVENT::TrackerHit* EUTelKalmanFilter::findClosestHit( const EUTelTrackStateImpl* ts, int sensorID ) {
+        streamlog_out(DEBUG2) << "EUTelKalmanFilter::findClosestHit()" << std::endl;
+        hasSensorID needSensorID;
+        needSensorID._requiredSensorID = sensorID;
+        std::vector< MeasurementLayer* >::iterator itLayer = std::find_if (_allMeasurements.begin(), _allMeasurements.end(), needSensorID );
+        
+        EVENT::TrackerHitVec& hitInPlane = (*itLayer)->getHits();
+        
+        double maxDistance = std::numeric_limits<double>::max();
+        EVENT::TrackerHitVec::const_iterator itClosestHit;
+        
+        EVENT::TrackerHitVec::const_iterator itHit;
+        for ( itHit = hitInPlane.begin(); itHit != hitInPlane.end(); ++itHit ) {
+            maxDistance = getResidual( ts, *itHit ).Norm2Sqr();
+            streamlog_out(DEBUG0) << "Distance^2 between hit and track intersection: " << maxDistance << std::endl;
+        }
+    }
+    
+    /** Calculate track parameters propagation jacobian for given track state
+     *  and propagation distance. The expressions were derived in parabolic approximation
+     *  valid for small values of propagation distance |dz| < 10cm. Can be iterated if necessary.
+     * 
+     * @param ts track state
+     * @param dz propagation distance
+     * @return 
+     */
     const TMatrixD& EUTelKalmanFilter::getPropagationJacobianF( const EUTelTrackStateImpl* ts, double dz ) {
-	  // The formulas below are derived from equations of motion of the particle in
-          // magnetic field under assumption |dz| small. Must be valid for |dz| < 10 cm
+        streamlog_out( DEBUG2 ) << "EUTelKalmanFilter::getPropagationJacobianF()" << std::endl;
+	// The formulas below are derived from equations of motion of the particle in
+        // magnetic field under assumption |dz| small. Must be valid for |dz| < 10 cm
 
-          // Get magnetic field vector
-          gear::Vector3D vectorGlobal( 0.,0.,0. );        // assuming uniform magnetic field running along X direction
-          const double Bx = geo::gGeometry().getMagneticFiled().at( vectorGlobal ).x();
-          const double By = geo::gGeometry().getMagneticFiled().at( vectorGlobal ).y();
-          const double Bz = geo::gGeometry().getMagneticFiled().at( vectorGlobal ).z();
-	  const double k = 0.299792458;
+        // Get magnetic field vector
+        gear::Vector3D vectorGlobal( 0.,0.,0. );        // assuming uniform magnetic field running along X direction
+        const double Bx = geo::gGeometry().getMagneticFiled().at( vectorGlobal ).x();
+        const double By = geo::gGeometry().getMagneticFiled().at( vectorGlobal ).y();
+        const double Bz = geo::gGeometry().getMagneticFiled().at( vectorGlobal ).z();
+	const double k = 0.299792458;
 
-	  // Get track parameters
-	  const double invP = ts->getInvP();
-	  //const double x0 = ts->getX();
-          //const double y0 = ts->getY();
-          //const double z0 = ts->getReferencePoint()[2];
-          const double tx0 = ts->getTx();
-          const double ty0 = ts->getTy();
-          const double sqrtFactor = sqrt( 1. + tx0*tx0 + ty0*ty0 );
+	// Get track parameters
+	const double invP = ts->getInvP();
+	//const double x0 = ts->getX();
+        //const double y0 = ts->getY();
+        //const double z0 = ts->getReferencePoint()[2];
+        const double tx0 = ts->getTx();
+        const double ty0 = ts->getTy();
+        const double sqrtFactor = sqrt( 1. + tx0*tx0 + ty0*ty0 );
 
-	  const double Ax = sqrtFactor * (  ty0 * ( tx0 * Bx + Bz ) - ( 1. + tx0*tx0 ) * By );
-	  const double Ay = sqrtFactor * ( -tx0 * ( ty0 * By + Bz ) + ( 1. + ty0*ty0 ) * Bx );
+	const double Ax = sqrtFactor * (  ty0 * ( tx0 * Bx + Bz ) - ( 1. + tx0*tx0 ) * By );
+	const double Ay = sqrtFactor * ( -tx0 * ( ty0 * By + Bz ) + ( 1. + ty0*ty0 ) * Bx );
 
-	  // Partial derivatives
-	  //const double dAxdtx0 = tx0 * Ax / (sqrtFactor*sqrtFactor) + sqrtFactor*( ty0*Bx - 2. * tx0 * By );
-	  const double dAxdty0 = ty0 * Ax / (sqrtFactor*sqrtFactor) + sqrtFactor*( tx0*Bx + Bz );
-	  const double dAydtx0 = tx0 * Ay / (sqrtFactor*sqrtFactor) + sqrtFactor*( -ty0*By - Bz );
-	  //const double dAydty0 = ty0 * Ay / (sqrtFactor*sqrtFactor) + sqrtFactor*( -tx0*By + 2. * ty0 * Bx );
+	// Partial derivatives
+	//const double dAxdtx0 = tx0 * Ax / (sqrtFactor*sqrtFactor) + sqrtFactor*( ty0*Bx - 2. * tx0 * By );
+	const double dAxdty0 = ty0 * Ax / (sqrtFactor*sqrtFactor) + sqrtFactor*( tx0*Bx + Bz );
+	const double dAydtx0 = tx0 * Ay / (sqrtFactor*sqrtFactor) + sqrtFactor*( -ty0*By - Bz );
+	//const double dAydty0 = ty0 * Ay / (sqrtFactor*sqrtFactor) + sqrtFactor*( -tx0*By + 2. * ty0 * Bx );
 
-	  const double dxdtx0 = dz;
-	  const double dxdty0 = 0.5 * invP * k * dz*dz * dAxdty0;
+	const double dxdtx0 = dz;
+	const double dxdty0 = 0.5 * invP * k * dz*dz * dAxdty0;
 
-	  const double dydtx0 = 0.5 * invP * k * dz*dz * dAydtx0;
-	  const double dydty0 = dz;
+	const double dydtx0 = 0.5 * invP * k * dz*dz * dAydtx0;
+	const double dydty0 = dz;
 
-	  const double dtxdty0 = invP * k * dz * dAxdty0;
-	  const double dtydtx0 = invP * k * dz * dAydtx0;
+	const double dtxdty0 = invP * k * dz * dAxdty0;
+	const double dtydtx0 = invP * k * dz * dAydtx0;
 
-	  const double dxdinvP0 = 0.5 * k * dz*dz * Ax;
-	  const double dydinvP0 = 0.5 * k * dz*dz * Ay;
+	const double dxdinvP0 = 0.5 * k * dz*dz * Ax;
+	const double dydinvP0 = 0.5 * k * dz*dz * Ay;
 
-	  const double dtxdinvP0 = k * dz * Ax;
-	  const double dtydinvP0 = k * dz * Ay;
+	const double dtxdinvP0 = k * dz * Ax;
+	const double dtydinvP0 = k * dz * Ay;
 
-	 // Fill-in matrix elements
-	 _jacobianF.UnitMatrix();
-	 _jacobianF[0][2] = dxdtx0;	_jacobianF[0][3] = dxdty0;	_jacobianF[0][4] = dxdinvP0;
-	 _jacobianF[1][2] = dydtx0;	_jacobianF[1][3] = dydty0;	_jacobianF[1][4] = dydinvP0;
-	 _jacobianF[2][3] = dtxdty0;	_jacobianF[2][4] = dtxdinvP0;
-	 _jacobianF[3][2] = dtydtx0;	_jacobianF[3][4] = dtydinvP0;
+	// Fill-in matrix elements
+	_jacobianF.UnitMatrix();
+	_jacobianF[0][2] = dxdtx0;	_jacobianF[0][3] = dxdty0;	_jacobianF[0][4] = dxdinvP0;
+	_jacobianF[1][2] = dydtx0;	_jacobianF[1][3] = dydty0;	_jacobianF[1][4] = dydinvP0;
+	_jacobianF[2][3] = dtxdty0;	_jacobianF[2][4] = dtxdinvP0;
+	_jacobianF[3][2] = dtydtx0;	_jacobianF[3][4] = dtydinvP0;
+        
+        if ( streamlog_level(DEBUG0) ){
+             streamlog_out( DEBUG0 ) << "Propagation jecobian: " << std::endl;
+            _jacobianF.Print();
+        }
 	
 	return _jacobianF;
     }
     
+    /**
+     * Get extrapolated position of the track in global coordinate system
+     * Extrapolation performed along the helix. Formulas are valid for vanishing magnetic field.
+     * 
+     * @param ts track state
+     * @param s arc length
+     * @return 3d vector of coordinates in the global coordinate system
+     */
     TVector3 EUTelKalmanFilter::getXYZfromArcLenght( const EUTelTrackStateImpl* ts, double s ) const {
         streamlog_out(DEBUG2) << "EUTelKalmanFilter::getXYZfromArcLenght()" << std::endl;
         // Get magnetic field vector
@@ -453,19 +551,47 @@ namespace eutelescope {
         return pos;
     }
 
-	double EUTelKalmanFilter::cosAlpha( const EUTelTrackStateImpl* ts) const {
-		const double tx = ts->getTx();
-		const double ty = ts->getTy();
-		return tx / sqrt( 1. + tx*tx + ty*ty );
-	}
+    /** Calculate cos of the angle between Z(beam) and X(solenoid field axis)
+     *  from track parameters
+     * 
+     * @param ts track state
+     * @return cos(alpha)
+     */
+    double EUTelKalmanFilter::cosAlpha( const EUTelTrackStateImpl* ts ) const {
+        streamlog_out( DEBUG2 ) << "EUTelKalmanFilter::cosAlpha()" << std::endl;
+        const double tx = ts->getTx( );
+        const double ty = ts->getTy( );
+        const double cos = tx / sqrt( 1. + tx * tx + ty * ty );
+        
+        streamlog_out( DEBUG0 ) << "cosAlpha= " << cos << std::endl;
+        
+        return cos;
+    }
 
-	double EUTelKalmanFilter::cosBeta( const EUTelTrackStateImpl* ts) const {
-		const double tx = ts->getTx();
-		const double ty = ts->getTy();
-		return ty / sqrt( 1. + tx*tx + ty*ty );
-	}
+    /** Calculate cos of the angle between Z(beam) and Y
+     *  from track parameters
+     * 
+     * @param ts track state
+     * @return cos(beta)
+     */
+    double EUTelKalmanFilter::cosBeta( const EUTelTrackStateImpl* ts ) const {
+        streamlog_out( DEBUG2 ) << "EUTelKalmanFilter::cosBeta()" << std::endl;
+        const double tx = ts->getTx( );
+        const double ty = ts->getTy( );
+        const double cos = ty / sqrt( 1. + tx * tx + ty * ty );
+        
+        streamlog_out( DEBUG0 ) << "cosBeta= " << cos << std::endl;
+        
+        return ty / sqrt( 1. + tx * tx + ty * ty );
+    }
 
+    /** Convert track state to the vector object. Useful for matrix operations
+     * 
+     * @param ts track stare
+     * @return vector of parameters
+     */
     TVectorD EUTelKalmanFilter::getTrackStateVec( const EUTelTrackStateImpl* ts ) const {
+        streamlog_out( DEBUG2 ) << "EUTelKalmanFilter::getTrackStateVec()" << std::endl;
         TVectorD x(5);
         x[0] = ts->getX();
         x[1] = ts->getY();
@@ -473,10 +599,21 @@ namespace eutelescope {
         x[3] = ts->getTy();
         x[4] = ts->getInvP();
         
+        if ( streamlog_level(DEBUG0) ){
+            streamlog_out( DEBUG0 ) << "Track state:" << std::endl;
+            x.Print();
+        }
+        
         return x;
     }
     
+    /** Convert track state parameter covariances to the matrix object. Useful for matrix operations
+     * 
+     * @param ts track state
+     * @return covariance matrix
+     */
     TMatrixDSym EUTelKalmanFilter::getTrackStateCov( const EUTelTrackStateImpl* ts ) const {
+        streamlog_out( DEBUG2 ) << "EUTelKalmanFilter::getTrackStateVec()" << std::endl;
         TMatrixDSym C(5);
         
         const EVENT::FloatVec& trkCov = ts->getCovMatrix();
@@ -489,6 +626,11 @@ namespace eutelescope {
         C[3][0] = trkCov[6];  C[3][1] = trkCov[7];  C[3][2] = trkCov[8];  C[3][3] = trkCov[9]; 
         C[4][0] = trkCov[10]; C[4][1] = trkCov[11]; C[4][2] = trkCov[12]; C[4][3] = trkCov[13]; C[4][4] = trkCov[14]; 
         
+        if ( streamlog_level(DEBUG0) ){
+            streamlog_out( DEBUG0 ) << "Track state covariance matrix:" << std::endl;
+            C.Print();
+        }
+        
         return C;
     }
         
@@ -497,6 +639,7 @@ namespace eutelescope {
      * @param ts track state to update
      */
     void EUTelKalmanFilter::propagateTrackState( EUTelTrackStateImpl* ts ) {
+        streamlog_out( DEBUG2 ) << "EUTelKalmanFilter::propagateTrackState()" << std::endl;
         TVectorD xkm1 = getTrackStateVec( ts );
         TVectorD xkkm1 = _jacobianF * xkm1;
         
@@ -506,42 +649,98 @@ namespace eutelescope {
         
     }
     
-    TMatrixD EUTelKalmanFilter::getHitCov( const EVENT::TrackerHit* hit ) const {
+    /** Retrieve hit covariance matrix from hit object. Useful for matrix operations
+     * 
+     * @param hit
+     * @return hit covariance matrix
+     */
+    TMatrixDSym EUTelKalmanFilter::getHitCov( const EVENT::TrackerHit* hit ) const {
+        streamlog_out( DEBUG2 ) << "EUTelKalmanFilter::getHitCov()" << std::endl;
         const EVENT::FloatVec uvcov = hit->getCovMatrix();
         TMatrixDSym V(2);
         V[0][0] = uvcov[0];                             //cov(x,x)
         V[1][0] = uvcov[1];   V[1][1] = uvcov[2];       //cov(y,x), cov(y,y)
         
+        if ( streamlog_level(DEBUG0) ){
+            streamlog_out( DEBUG0 ) << "Hit covariance matrix:" << std::endl;
+            V.Print();
+        }
+        
         return V;
     }
     
+    /** Calculate residual vector between given track and hit
+     * 
+     * @param ts track state
+     * @param hit hit
+     * @return 
+     */
     TVectorD EUTelKalmanFilter::getResidual( const EUTelTrackStateImpl* ts, const EVENT::TrackerHit* hit ) const {
+        streamlog_out( DEBUG2 ) << "EUTelKalmanFilter::getResidual()" << std::endl;
         TVectorD mk(2); 
         const double* uvpos = hit->getPosition();
         mk[0] = uvpos[0];          mk[1] = uvpos[1];
+        
+        const int sensorID = Utility::GuessSensorID( hit );
+        const double xc = geo::gGeometry().siPlaneXPosition(sensorID);
+        const double yc = geo::gGeometry().siPlaneYPosition(sensorID);
+//        const double zc = geo::gGeometry().siPlaneZPosition(sensorID);
+        
+        streamlog_out( DEBUG0 ) << "Hit (id=" << hit->id() << ") local(u,v) coordinates: (" << uvpos[0] << "," << uvpos[1] << ")" << std::endl;
     
         TMatrixD Hk = getH(ts);
-        const TVectorD xkkm1 = getTrackStateVec( ts );       // track state must be updated to x(k,k-1) not initial xk
+        if ( streamlog_level(DEBUG0) ){
+            streamlog_out( DEBUG0 ) << "Projection Matrix Hk:" << std::endl;
+            Hk.Print();
+        }
+        TVectorD xkkm1 = getTrackStateVec( ts );       // track state must be updated to x(k,k-1) not initial xk        
+        xkkm1[0] -= xc;
+        xkkm1[1] -= yc;
         
         TVectorD rk(2);
         rk = mk;        rk -= Hk * xkkm1;
         
+        if ( streamlog_level(DEBUG0) ){
+            streamlog_out( DEBUG0 ) << "Residual vector rk:" << std::endl;
+            rk.Print();
+        }
+        
         return rk;
     }
     
-    TMatrixD EUTelKalmanFilter::getResidualCov( const EUTelTrackStateImpl* ts, const EVENT::TrackerHit* hit ) {
+    /** Retrieve residuals covariance
+     * 
+     * @param ts track state
+     * @param hit
+     * @return 
+     */
+    TMatrixDSym EUTelKalmanFilter::getResidualCov( const EUTelTrackStateImpl* ts, const EVENT::TrackerHit* hit ) {
+        streamlog_out( DEBUG2 ) << "EUTelKalmanFilter::getResidual()" << std::endl;
         TMatrixD Hk = getH(ts);
         
         _processNoiseQ.Zero();
         TMatrixDSym Ckm1 = getTrackStateCov( ts );
         TMatrixDSym Ckkm1 = Ckm1.Similarity( _jacobianF );        Ckkm1 += _processNoiseQ;       
-        TMatrixD Rkkm1 = Ckkm1.Similarity(Hk);
+        TMatrixDSym Rkkm1 = Ckkm1.Similarity(Hk);
         Rkkm1 += getHitCov(hit);
+        
+        if ( streamlog_level(DEBUG0) ) {
+            streamlog_out( DEBUG0 ) << "Residual covariance matrix:" << std::endl;
+            Rkkm1.Print();
+        }
         
         return Rkkm1;
     }
     
+    /** Retrieve Kalman gain matrix
+     * 
+     * @param ts track state
+     * @param hit
+     * 
+     * @return Gain matrix K
+     */
     const TMatrixD& EUTelKalmanFilter::updateGainK( const EUTelTrackStateImpl* ts, const EVENT::TrackerHit* hit ) {
+        streamlog_out( DEBUG2 ) << "EUTelKalmanFilter::updateGainK()" << std::endl;
         _processNoiseQ.Zero();
         TMatrixDSym Ckm1 = getTrackStateCov( ts );
         TMatrixDSym Ckkm1 = Ckm1.Similarity( _jacobianF );        Ckkm1 += _processNoiseQ;
@@ -550,22 +749,53 @@ namespace eutelescope {
         _gainK = getResidualCov( ts, hit ).Invert();
         _gainK *= Ht;
         _gainK *= Ckkm1;
+        
+        if ( streamlog_level(DEBUG0) ) {
+            streamlog_out( DEBUG0 ) << "Gain matrix:" << std::endl;
+            _gainK.Print();
+        }
     }
     
+    /** Update track state given new hit
+     * 
+     * @param ts track state
+     * @param hit
+     */
     void EUTelKalmanFilter::updateTrackState( EUTelTrackStateImpl* ts, const EVENT::TrackerHit* hit ) {
-        TVectorD xk(5);
-        xk = getTrackStateVec( ts );
-        xk += _gainK * getResidual( ts, hit );
+        streamlog_out( DEBUG2 ) << "EUTelKalmanFilter::updateTrackState()" << std::endl;
+        TVectorD rkkm1(2);      rkkm1 = getResidual( ts, hit );
+        TVectorD xk(5);         xk = getTrackStateVec( ts );
+        
+        TMatrixD Kk = updateGainK( ts, hit );
+        xk += Kk * rkkm1;
+        
+        if ( streamlog_level(DEBUG0) ) {
+            streamlog_out( DEBUG0 ) << "Updated track parameters:" << std::endl;
+            xk.Print();
+        }
+        
+        TMatrixD Hk = getH( ts );
+        TMatrixD I(5,5);     I.UnitMatrix();
+        I -= Kk*Hk;
+
+        if ( streamlog_level(DEBUG0) ) {
+            streamlog_out( DEBUG0 ) << "Track parameters projection matrix Hk:" << std::endl;
+            Hk.Print();
+            streamlog_out( DEBUG0 ) << "Gain matrix Kk:" << std::endl;
+            Kk.Print();
+        }
         
         _processNoiseQ.Zero();
         TMatrixDSym Ckm1 = getTrackStateCov( ts );
         TMatrixDSym Ckkm1 = Ckm1.Similarity( _jacobianF );        Ckkm1 += _processNoiseQ;
         
-        TMatrixD I(5,5);     I.UnitMatrix();
-        I -= _gainK*getH( ts );
-        
         TMatrixD Ck(5,5);
         Ck = I*Ckkm1;
+        
+        if ( streamlog_level(DEBUG0) ) {
+            streamlog_out( DEBUG0 ) << "Updated track covariance matrix:" << std::endl;
+            Ck.Print();
+        }
         
         ts -> setX( xk[0] );
         ts -> setY( xk[1] );
@@ -582,15 +812,58 @@ namespace eutelescope {
         ts->setCovMatrix( trkCov );
         ts->setLocation( EUTelTrackStateImpl::AtOther );
         
+        double chi2 = 0.;
+        
+        TVectorD rk(2);
+        TMatrixD Ir(2,2);        Ir.UnitMatrix();
+        Ir -= Hk * Kk;
+        rk = Ir * rkkm1;
+        
+        if ( streamlog_level(DEBUG0) ) {
+            streamlog_out( DEBUG0 ) << "Residual vector rk:" << std::endl;
+            rk.Print();
+        }
+        
+        TMatrixD Rk(2,2);       Rk = getHitCov( hit );
+        TMatrixD HkT(5,2);      HkT.Transpose( Hk );
+        TMatrixD HkCkHkT(2,2);  HkCkHkT = Hk * Ck * HkT;
+        
+        Rk -= HkCkHkT;
+
+        if ( streamlog_level(DEBUG0) ) {
+            streamlog_out( DEBUG0 ) << "Residual covariance matrix Rk:" << std::endl;
+            Rk.Print();
+        }
+        
+        chi2 = Rk.Invert().Similarity(rk);
+        
+        streamlog_out( DEBUG0 ) << "Chi2 contribution of the hit: " << chi2 << std::endl;
+        
     }
     
+    /** Retrieve track state projection onto measurement space matrix
+     * 
+     * @param ts track state
+     * @return 
+     */
     TMatrixD EUTelKalmanFilter::getH( const EUTelTrackStateImpl* ts ) const {
+        streamlog_out( DEBUG2 ) << "EUTelKalmanFilter::getH()" << std::endl;
         TMatrixD H(2,5);
         H.Zero();
         TVector3 trkPointVec = getXYZfromArcLenght( ts, 0. );
         double trkPoint[] = { trkPointVec.X(), trkPointVec.Y(), trkPointVec.Z() };
-        TGeoHMatrix* globalH = geo::gGeometry().getHMatrix( trkPoint );
+        const TGeoHMatrix* globalH = geo::gGeometry().getHMatrix( trkPoint );
+        
+        if ( streamlog_level(DEBUG0) ) {
+            streamlog_out( DEBUG0 ) << "Local to global transformation matrix:" << std::endl;
+            globalH->Print();
+        }
+        
         const TGeoHMatrix& globalHInv = globalH->Inverse();
+        if ( streamlog_level(DEBUG0) ) {
+            streamlog_out( DEBUG0 ) << "Global to local transformation matrix:" << std::endl;
+            globalHInv.Print();
+        }
         
         const double* shift = globalHInv.GetTranslation();
         const double* rotation = globalHInv.GetRotationMatrix();
@@ -598,9 +871,12 @@ namespace eutelescope {
         // Fill necessary components
         H[0][0] = rotation[0]; // x projection, xx
         H[0][1] = rotation[1]; // y projection, xy
+//        H[0][1] = 0.; // y projection, xy
+//        H[1][0] = 0.; // x projection, yx
         H[1][0] = rotation[3]; // x projection, yx
         H[1][1] = rotation[4]; // y projection, yy
-        
+
+//        const int sensorID = geo::gGeometry().getSensorID(trkPoint);
         return H;
     }
     
@@ -685,6 +961,6 @@ namespace eutelescope {
     
     void MeasurementLayer::addHit( EVENT::TrackerHit* hit ) {
         _allHits.push_back( hit );
-    }
+    }    
     
 } // namespace eutelescope

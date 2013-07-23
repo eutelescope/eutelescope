@@ -53,6 +53,10 @@ namespace eutelescope {
             return _allHits;
         }
         
+        inline int sensorID() const {
+            return _id;
+        }
+        
     private:
         /** Measurement layer id */
         int _id;
@@ -139,7 +143,7 @@ namespace eutelescope {
         void initialiseSeeds();
 
         /** Find intersection point of a track with geometry planes */
-        std::vector< double > findIntersection( EUTelTrackStateImpl* ts ) const;
+        bool findIntersection( EUTelTrackStateImpl* ts );
         
         /** Propagate track state by dz */
 	void propagateTrackState( EUTelTrackStateImpl*, double );
@@ -176,21 +180,32 @@ namespace eutelescope {
          * from track's ref. point*/
         TVector3 getXYZfromArcLenght( const EUTelTrackStateImpl*, double ) const;
 
+        /** Cosine of the angle of the slope of track in XZ plane */
 	double cosAlpha( const EUTelTrackStateImpl* ) const;
 
+        /** Cosine of the angle of the slope of track in YZ plane */
 	double cosBeta( const EUTelTrackStateImpl* ) const;
         
+        /** Get track state vector */
         TVectorD getTrackStateVec( const EUTelTrackStateImpl* ) const;
         
+        /** Get track state covariance matrix */
         TMatrixDSym getTrackStateCov( const EUTelTrackStateImpl* ) const;
         
-        TMatrixD getHitCov( const EVENT::TrackerHit* hit ) const;
+        /** Get hit covariance matrix */
+        TMatrixDSym getHitCov( const EVENT::TrackerHit* hit ) const;
         
+        /** Get residual vector */
         TVectorD getResidual( const EUTelTrackStateImpl*, const EVENT::TrackerHit* ) const;
         
-        TMatrixD getResidualCov( const EUTelTrackStateImpl*, const EVENT::TrackerHit* hit );
+        /** Get residual covariance matrix */
+        TMatrixDSym getResidualCov( const EUTelTrackStateImpl*, const EVENT::TrackerHit* hit );
         
+        /** Get track state projection matrix */
         TMatrixD getH( const EUTelTrackStateImpl* ) const;
+        
+        /** Find hit closest to the track */
+        const EVENT::TrackerHit* findClosestHit( const EUTelTrackStateImpl*, int );
 
         // Kalman filter states and tracks
     private:

@@ -125,11 +125,13 @@ namespace eutelescope {
             void findRad(Double_t x, Double_t y, Double_t z,
                     Double_t theta, Double_t phi, Int_t &nbound, Float_t &length, Float_t &safe, Float_t &rad, Bool_t verbose);
             
+            int getSensorID( const float globalPos[] ) const;
+            
             void local2Master( int, const double[], double[] );
             
             void master2Local( const double[], double[] );
             
-            TGeoHMatrix* getHMatrix( const double globalPos[] );
+            const TGeoHMatrix* getHMatrix( const double globalPos[] );
             
             /** Magnetic field */
             const gear::BField& getMagneticFiled() const;
@@ -171,22 +173,22 @@ namespace eutelescope {
             /** Map from sensor ID to number along Z */
             std::map<int, int> _sensorIDtoZOrderMap;
 
-            /** X coordinate of the sensors centers in global coordinate frame */
+            /** X coordinate of the sensors centers in global coordinate frame [mm]*/
             EVENT::DoubleVec _siPlaneXPosition;
             
-            /** Y coordinate of the sensors centers in global coordinate frame */
+            /** Y coordinate of the sensors centers in global coordinate frame [mm]*/
             EVENT::DoubleVec _siPlaneYPosition;
             
-            /** Z coordinate of the sensors centers in global coordinate frame */
+            /** Z coordinate of the sensors centers in global coordinate frame [mm]*/
             EVENT::DoubleVec _siPlaneZPosition;
             
-            /** Rotation around X axis of the global coordinate frame */
+            /** Rotation around X axis of the global coordinate frame [rad]*/
             EVENT::DoubleVec _siPlaneXRotation;
             
-            /** Rotation around Y axis of global coordinate frame */
+            /** Rotation around Y axis of global coordinate frame [rad]*/
             EVENT::DoubleVec _siPlaneYRotation;
             
-            /** Rotation around Z axis of global coordinate frame */
+            /** Rotation around Z axis of global coordinate frame [rad]*/
             EVENT::DoubleVec _siPlaneZRotation;
 
             /** Number of planes including DUT */
