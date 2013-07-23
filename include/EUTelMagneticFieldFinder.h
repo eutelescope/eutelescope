@@ -188,7 +188,7 @@ namespace eutelescope {
         
         TVectorD getResidual( const EUTelTrackStateImpl*, const EVENT::TrackerHit* ) const;
         
-        TMatrixD getResidualCov( const EUTelTrackStateImpl*, const EVENT::TrackerHit* hit ) const;
+        TMatrixD getResidualCov( const EUTelTrackStateImpl*, const EVENT::TrackerHit* hit );
         
         TMatrixD getH( const EUTelTrackStateImpl* ) const;
 

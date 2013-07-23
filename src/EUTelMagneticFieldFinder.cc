@@ -529,8 +529,9 @@ namespace eutelescope {
         return rk;
     }
     
-    TMatrixD EUTelKalmanFilter::getResidualCov( const EUTelTrackStateImpl* ts, const EVENT::TrackerHit* hit ) const {
+    TMatrixD EUTelKalmanFilter::getResidualCov( const EUTelTrackStateImpl* ts, const EVENT::TrackerHit* hit ) {
         TMatrixD Hk = getH(ts);
+        
         _processNoiseQ.Zero();
         TMatrixDSym Ckm1 = getTrackStateCov( ts );
         TMatrixDSym Ckkm1 = Ckm1.Similarity( _jacobianF );        Ckkm1 += _processNoiseQ;       
