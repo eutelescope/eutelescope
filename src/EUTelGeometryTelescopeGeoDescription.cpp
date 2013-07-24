@@ -237,23 +237,19 @@ int EUTelGeometryTelescopeGeoDescription::getSensorID( const float globalPos[] )
     streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::getSensorID() " << std::endl;
     
     _geoManager->FindNode( globalPos[0], globalPos[1], globalPos[2] );
-    char* volName = const_cast < char* > ( geo::gGeometry( )._geoManager->GetCurrentVolume( )->GetName( ) );
+    const char* volName = const_cast < char* > ( geo::gGeometry( )._geoManager->GetCurrentVolume( )->GetName( ) );
     streamlog_out( DEBUG0 ) << "Point (" << globalPos[0] << "," << globalPos[1] << "," << globalPos[2] << ") found in volume: " << volName << std::endl;
     const char* tok;
-    std::vector< std::string > tokens;
-    // sensor id must be stored in the last token
-    for ( tok = strtok( volName, ":" );  tok;  tok = strtok( NULL, ":" ) ) {
-        streamlog_out( DEBUG0 ) << tok << std::endl;
-        tokens.push_back(string(tok));
-    }
+    std::vector< std::string > tokens = Utility::stringSplit(std::string( volName ), ":", false );
     
+    // sensor id must be stored in the last token
     int id = -999;
     std::size_t found = tokens.back().find_first_of("0123456789");
     if ( found != std::string::npos ) id = atoi( tokens.back().c_str() );
 
     int sensorID = -999;
     if ( std::find( _sensorIDVec.begin(), _sensorIDVec.end(), id ) != _sensorIDVec.end() ) sensorID = id;
-    else streamlog_out(WARNING5) << "Point (" << globalPos[0] << "," << globalPos[1] << "," << globalPos[2] << ") was not found inside any sensor!" << std::endl;
+    else streamlog_out(DEBUG3) << "Point (" << globalPos[0] << "," << globalPos[1] << "," << globalPos[2] << ") was not found inside any sensor!" << std::endl;
     
     streamlog_out( DEBUG0 ) << "SensorID: " << sensorID << std::endl;
     

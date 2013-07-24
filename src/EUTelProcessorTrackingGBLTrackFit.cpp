@@ -848,7 +848,7 @@ void EUTelProcessorTrackingGBLTrackFit::writeMilleSteeringFile() {
             steerFile << *it << " ";
     }
     steerFile << endl;
-    steerFile << "!outlierdownweighting 4" << endl;
+    steerFile << "outlierdownweighting 4" << endl;
     steerFile << "!histprint" << endl;
     steerFile << endl;
     steerFile << "end" << endl;

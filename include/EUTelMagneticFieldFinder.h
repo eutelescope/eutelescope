@@ -84,6 +84,10 @@ namespace eutelescope {
         // Getters and Setters
     public:
 
+        inline std::vector< EUTelTrackImpl* >& getTracks() {
+            return _tracks;
+        }
+                
         void setHits( EVENT::TrackerHitVec& );
 
         inline int getAllowedMissingHits() const {
@@ -143,10 +147,10 @@ namespace eutelescope {
         void initialiseSeeds();
 
         /** Find intersection point of a track with geometry planes */
-        bool findIntersection( EUTelTrackStateImpl* ts );
+        double findIntersection( EUTelTrackStateImpl* ts );
         
         /** Propagate track state by dz */
-	void propagateTrackState( EUTelTrackStateImpl*, double );
+	void propagateTrack( EUTelTrackStateImpl*, double );
         
         /** Update track state and it's cov matrix */
         void updateTrackState( EUTelTrackStateImpl*, const EVENT::TrackerHit* );
@@ -159,9 +163,6 @@ namespace eutelescope {
 
         /** Propagate track state */
         void propagateTrackState( EUTelTrackStateImpl* );
-        
-        /** Filter track state */
-        void filterTrackState( EUTelTrackStateImpl*, TVectorD& );
         
         /** Construct LCIO track object from internal track data */
         void prepareLCIOTrack();
@@ -179,6 +180,8 @@ namespace eutelescope {
          * coordinate system for given arc length calculated
          * from track's ref. point*/
         TVector3 getXYZfromArcLenght( const EUTelTrackStateImpl*, double ) const;
+
+	double getXYPredictionPrecision( const EUTelTrackStateImpl* ts ) const;
 
         /** Cosine of the angle of the slope of track in XZ plane */
 	double cosAlpha( const EUTelTrackStateImpl* ) const;
@@ -208,7 +211,7 @@ namespace eutelescope {
         const EVENT::TrackerHit* findClosestHit( const EUTelTrackStateImpl*, int );
 
         // Kalman filter states and tracks
-    private:
+    private:       
         /** Final set of tracks */
         std::vector< EUTelTrackImpl* > _tracks;
 
