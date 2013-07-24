@@ -39,7 +39,7 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
     <!-- compression of output file 0: false >0: true (default) -->
     <parameter name="Compress" type="int" value="1"/>
     <!-- filename without extension-->
-    <parameter name="FileName" type="string" value= "@HistoFolder@/@Output@-converter-histo"/>
+    <parameter name="FileName" type="string" value= "@HistoFolder@/@RunNumber@-converter-histo"/>
     <!-- type of output file xml (default) or root ( only OpenScientist)-->
     <parameter name="FileType" type="string" value="root"/>
   </processor>
@@ -97,7 +97,7 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
  <processor name="HotPixelKiller" type="EUTelHotPixelKiller">
   <@LocalVerbosityCommentLeft@ parameter name="Verbosity" type="string" value="@HotPixelKillerVerbosity@"/@LocalVerbosityCommentRight@>
   <!--This is the name of the LCIO file name with the input/output hot pixel collection  (add .slcio)-->
-    <parameter name="HotPixelDBFile" type="string" value="@DBFolder@/hotpixel/@HotPixelRunNumber@-hotpixel-db.slcio"/>
+    <parameter name="HotPixelDBFile" type="string" value="@DBFolder@/@HotPixelRunNumber@-hotpixel-db.slcio"/>
     <!--write mode for output file:  WRITE_APPEND or WRITE_NEW, default: WRITE_APPEND-->
     <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
     <parameter name="HotPixelCollectionName" type="string" value="hotpixel_m26" />
@@ -140,7 +140,7 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
   <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
   <!--parameter name="KeepCollectionNames" type="StringVec" value="MyPreciousSimTrackerHits"/-->
   <!-- name of output file -->
-  <parameter name="LCIOOutputFile" type="string" value="@LcioRawFolder@/@Output@.slcio"/>
+  <parameter name="LCIOOutputFile" type="string" value="@LcioRawFolder@/@RunNumber@.slcio"/>
   <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
   <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   <!--Set it to true to remove intermediate EORE in merged runs-->

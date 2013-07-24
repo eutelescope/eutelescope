@@ -34,14 +34,14 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!--compression of output file 0: false >0: true (default) -->
   <parameter name="Compress" type="int" value="1"/>
   <!--filename without extension-->
-  <parameter name="FileName" type="string" value="@HistoFolder@/@Output@-x0-histo"/>
+  <parameter name="FileName" type="string" value="@HistoFolder@/@RunNumber@-x0-histo"/>
   <!--type of output file xml (default) or root ( only OpenScientist)-->
   <parameter name="FileType" type="string" value="root"/>
  </processor>
 
  <processor name="LoadRefHitDB"     type="ConditionsProcessor">
    <parameter name="DBInit" type="string" value="localhost:lccd_test:align:tel"/>
-   <parameter name="SimpleFileHandler" type="StringVec"> refhit  @DBFolder@/refhit/@RunNumber@-refhit-db.slcio referenceHit  </parameter>
+   <parameter name="SimpleFileHandler" type="StringVec"> refhit  @DBFolder@/@RunNumber@-refhit-db.slcio referenceHit  </parameter>
  </processor>
 
  <processor name="X0Processor" type="EUTelX0Processor">
