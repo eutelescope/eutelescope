@@ -719,7 +719,7 @@ void EUTelMille::findtracks2(
  for(size_t j =0; j < _allHitsArray[i].size(); j++)
     {
       int ihit = static_cast< int >(j);
-      streamlog_out(DEBUG9) << "ihit:" << ihit << std::endl;
+      streamlog_out(DEBUG5) << "ihit:" << ihit << std::endl;
 
       //if we are not in the last plane, call this method again
       if(i < _allHitsArray.size()-1)
