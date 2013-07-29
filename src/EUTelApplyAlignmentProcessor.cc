@@ -299,7 +299,7 @@ void EUTelApplyAlignmentProcessor::CheckIOCollections(LCEvent* event)
             }   
             catch(...)
             {
-              streamlog_out ( WARNING2 ) <<  "_referenceHitCollectionName " << _referenceHitCollectionName.c_str() << " could not be retrieved, creating a dummy one (all elements are null) " << endl;
+              if(_iEvt%1000 == 0) streamlog_out ( WARNING2 ) <<  "_referenceHitCollectionName " << _referenceHitCollectionName.c_str() << " could not be retrieved, creating a dummy one (all elements are null) " << endl;
              
               _referenceHitVec = CreateDummyReferenceHitCollection();
               event->addCollection( _referenceHitVec, _referenceHitCollectionName );
