@@ -274,6 +274,8 @@ optional arguments:
   $EUTELESCOPE/jobsub/jobsub.py --config=${ANALYSIS_CONF}/config.cfg \
                     -csv ${ANALYSIS_CONF}/runlist.csv clustering 97
   $EUTELESCOPE/jobsub/jobsub.py --config=${ANALYSIS_CONF}/config.cfg \
+                    -csv ${ANALYSIS_CONF}/runlist.csv filter 97
+  $EUTELESCOPE/jobsub/jobsub.py --config=${ANALYSIS_CONF}/config.cfg \
                     -csv ${ANALYSIS_CONF}/runlist.csv hitmaker 97
   $EUTELESCOPE/jobsub/jobsub.py --config=${ANALYSIS_CONF}/config.cfg \
                     -csv ${ANALYSIS_CONF}/runlist.csv align 97

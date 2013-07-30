@@ -12,6 +12,7 @@ for i in `seq $first $last`; do
 
 jobsub.py -c config.cfg -csv runlist.csv converter  $i
 jobsub.py -c config.cfg -csv runlist.csv clustering $i
+jobsub.py -c config.cfg -csv runlist.csv filter $i
 jobsub.py -c config.cfg -csv runlist.csv hitmaker   $i
 
 if [[ $modus == "straight" ]]; then

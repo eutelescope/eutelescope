@@ -107,6 +107,31 @@
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTClusteringOutput PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTClusteringRun)
 
 
+#
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#  STEP 2B: CLUSTER FILTERING
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#
+    ADD_TEST( NAME TestJobsubExampleDaturaNoDUTFilterRun 
+              WORKING_DIRECTORY ${testdir} 
+	      COMMAND ${executable} ${jobsubOptions} filter ${RunNr} )
+    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTFilterRun PROPERTIES
+        # test will pass if ALL of the following expressions are matched
+        PASS_REGULAR_EXPRESSION "${jobsub_pass_regex_1}.*${marlin_pass_regex_1}.*${jobsub_pass_regex_2}"
+        # test will fail if ANY of the following expressions is matched 
+        FAIL_REGULAR_EXPRESSION "${generic_fail_regex}"
+	# test depends on earlier steps
+	DEPENDS TestJobsubExampleDaturaNoDUTClusteringOutput
+	)
+    # now check if the expected output files exist and look ok
+    ADD_TEST( TestJobsubExampleDaturaNoDUTFilterLog sh -c "[ -f ${testdir}/output/logs/filter-${PaddedRunNr}.zip ]" )
+    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTFilterLog PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTFilterRun)
+
+    # we (still) expect an average of 24.4 clusters per event
+    ADD_TEST( TestJobsubExampleDaturaNoDUTFilterOutput sh -c "[ -f ${testdir}/output/lcio/run${PaddedRunNr}-clustering-filtered.slcio ] && lcio_check_col_elements --average --expelements 24 cluster_m26 ${testdir}/output/lcio/run${PaddedRunNr}-clustering-filtered.slcio" )
+    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTFilterOutput PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTFilterRun)
+
+
 
 #
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

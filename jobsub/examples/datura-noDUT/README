@@ -47,7 +47,7 @@
               && mkdir -p $ANALYSIS/output/lcio
    #+end_src sh
 
-** Conversion, Cluster Search and Hitmaking Steps
+** Conversion, Cluster Search, Filtering and Hitmaking Steps
    The analysis we want to perform is controlled by a config file
    (config.cfg), a csv-table (runlist.csv) and steering file
    templates (*.xml), all located in the examples subdirectory of
@@ -67,6 +67,7 @@
    #+begin_src sh
    jobsub -c ${ANALYSIS_CONF}/config.cfg -csv ${ANALYSIS_CONF}/runlist.csv converter 97
    jobsub -c ${ANALYSIS_CONF}/config.cfg -csv ${ANALYSIS_CONF}/runlist.csv clustering 97
+   jobsub -c ${ANALYSIS_CONF}/config.cfg -csv ${ANALYSIS_CONF}/runlist.csv filter 97
    jobsub -c ${ANALYSIS_CONF}/config.cfg -csv ${ANALYSIS_CONF}/runlist.csv hitmaker 97
    #+end_src sh
 
