@@ -191,6 +191,10 @@ ADD_SHARED_LIBRARY( ${libname} ${library_sources} )
 INSTALL_SHARED_LIBRARY( ${libname} DESTINATION lib )
 #INSTALL_SHARED_LIBRARY( GBL DESTINATION lib )
 
+# Properly add the CMSPixelDecoder external dependency:
+ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}/external/CMSPixelDecoder)
+# ..and link it to libEUTelescope:
+TARGET_LINK_LIBRARIES( ${libname} CMSPixelDecoder )
 
 
 # used for alignment if Eutelescope was build with ROOT support
