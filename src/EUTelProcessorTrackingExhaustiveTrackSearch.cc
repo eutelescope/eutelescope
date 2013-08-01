@@ -370,13 +370,6 @@ int EUTelProcessorTrackingExhaustiveTrackSearch::FillHits(LCEvent * evt,
             }
         }
 
-        if (hit->getType() == kEUTelAPIXClusterImpl) {
-            TrackerDataImpl * clusterFrame = static_cast<TrackerDataImpl*> (clusterVector[0]);
-            EUTelSparseClusterImpl< EUTelAPIXSparsePixel > *apixCluster = new EUTelSparseClusterImpl< EUTelAPIXSparsePixel > (clusterFrame);
-            int sensorID = apixCluster->getDetectorID();
-            bool skipHit = false;
-        }
-
         const int localSensorID = Utility::GuessSensorID( hit );  // localSensorID == -1, if detector ID was not found
         const int numberAlongZ = geo::gGeometry().sensorIDtoZOrder( localSensorID );
         if ( localSensorID >= 0 ) allHitsArray[ numberAlongZ ].push_back( hit );
@@ -443,7 +436,7 @@ void EUTelProcessorTrackingExhaustiveTrackSearch::addTrackCandidateToCollection(
 
 }
 
-void EUTelProcessorTrackingExhaustiveTrackSearch::check(LCEvent * evt) {
+void EUTelProcessorTrackingExhaustiveTrackSearch::check(LCEvent * /*evt*/) {
     // nothing to check here
 }
 

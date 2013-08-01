@@ -82,7 +82,7 @@ void EUTelProcessorFilteringHitFilter::init( ) {
 
 }
 
-void EUTelProcessorFilteringHitFilter::processRunHeader( LCRunHeader* run ) {
+void EUTelProcessorFilteringHitFilter::processRunHeader( LCRunHeader* /*run*/ ) {
 
     _nProcessedRuns++;
 }
@@ -111,7 +111,7 @@ void EUTelProcessorFilteringHitFilter::processEvent( LCEvent * evt ) {
     _nProcessedEvents++;
 }
 
-void EUTelProcessorFilteringHitFilter::check( LCEvent * evt ) {
+void EUTelProcessorFilteringHitFilter::check( LCEvent * /*evt*/ ) {
     // nothing to check here
 }
 
