@@ -239,7 +239,6 @@ int EUTelGeometryTelescopeGeoDescription::getSensorID( const float globalPos[] )
     _geoManager->FindNode( globalPos[0], globalPos[1], globalPos[2] );
     const char* volName = const_cast < char* > ( geo::gGeometry( )._geoManager->GetCurrentVolume( )->GetName( ) );
     streamlog_out( DEBUG0 ) << "Point (" << globalPos[0] << "," << globalPos[1] << "," << globalPos[2] << ") found in volume: " << volName << std::endl;
-    const char* tok;
     std::vector< std::string > tokens = Utility::stringSplit(std::string( volName ), ":", false );
     
     // sensor id must be stored in the last token

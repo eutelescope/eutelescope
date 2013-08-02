@@ -10,7 +10,7 @@ EUTelLCObjectTrackCandidate::EUTelLCObjectTrackCandidate() : IMPL::LCGenericObje
 _trackCandidates(){
 }
 
-EUTelLCObjectTrackCandidate::EUTelLCObjectTrackCandidate(const EUTelLCObjectTrackCandidate& orig) : IMPL::LCGenericObjectImpl(),
+EUTelLCObjectTrackCandidate::EUTelLCObjectTrackCandidate(const EUTelLCObjectTrackCandidate& /*orig*/) : IMPL::LCGenericObjectImpl(),
 _trackCandidates(){
 }
 

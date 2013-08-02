@@ -391,7 +391,7 @@ void EUTelProcessorTrackingHelixTrackSearch::addTrackCandidateToCollection(LCEve
 
 }
 
-void EUTelProcessorTrackingHelixTrackSearch::check(LCEvent * evt) {
+void EUTelProcessorTrackingHelixTrackSearch::check(LCEvent * /*evt*/) {
     // nothing to check here
 }
 

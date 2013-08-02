@@ -371,19 +371,6 @@ void EUTelAPIXHotPixelKiller::processEvent (LCEvent * event)
             << " is of unknown type. Continue considering it as a normal Data Event." << endl;
     }
 
-    /*
-    try 		
-    { 
-      // Currently unused variable:
-      // int numberofelements;		
-      LCCollectionVec * statusCollectionVec = dynamic_cast< LCCollectionVec * > ( event->getCollection( _statusCollectionName ) ); 
-      //numberofelements = statusCollectionVec->getNumberOfElements();
-    } 		
-    catch(...) 		
-    { 		
-      std::cout << "Input collection " << _statusCollectionName.c_str() << " not found in the current event. Skipping..." << std::endl; 		
-    }
-    */
     try 
     {
         LCCollectionVec * statusCollectionVec = dynamic_cast< LCCollectionVec * > ( event->getCollection( _statusCollectionName ) );

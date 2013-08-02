@@ -252,7 +252,7 @@ namespace eutelescope {
             const int sensorID = Utility::GuessSensorID( *itHit );
             double temp[] = {0.,0.,0.};
             geo::gGeometry().local2Master( sensorID, uvpos, temp);
-            float posGlobal[] = { temp[0], temp[1], temp[2] };
+            float posGlobal[] = { (float) temp[0], (float) temp[1], (float) temp[2] };
                         
             gear::Vector3D vectorGlobal( temp[0], temp[1], temp[2] );
             const double q          = _beamQ;      // assume electron beam
@@ -312,12 +312,10 @@ namespace eutelescope {
     /**
      * Find closest surface intersected by the track and propagate track to that point
      * @param ts track state
-     * @return Success flag
+     * @return dz or -999 on failure
      */
     double EUTelKalmanFilter::findIntersection( EUTelTrackStateImpl* ts ) {
         streamlog_out(DEBUG2) << "EUTelKalmanFilter::findIntersection()" << std::endl;
-        
-        bool success = true;
         
         // Get magnetic field vector
         gear::Vector3D vectorGlobal( 0.,0.,0. );        // assuming uniform magnetic field running along X direction
@@ -348,7 +346,6 @@ namespace eutelescope {
         
         if ( sensorID < 0 ) {
             streamlog_out ( DEBUG3 ) << "Track interseciton was not found" << std::endl;
-            success = false;
             return -999.;
         }
         
@@ -420,7 +417,6 @@ namespace eutelescope {
 
         if ( dz < 1.E-6 ) {
             streamlog_out ( DEBUG3 ) << "Track interseciton was not found" << std::endl;
-            success = false;
             return -999;
         }       
         
@@ -475,7 +471,7 @@ namespace eutelescope {
 				  << std::setw(15) << ts->getReferencePoint()[1]
 				  << std::setw(15) << ts->getReferencePoint()[2] << std::endl;
 
-	  const float newPos[] = {x, y, z0+dz};
+	  const float newPos[] = {(float) x, (float) y, (float) (z0+dz)};
 	  ts->setLocation( EUTelTrackStateImpl::AtOther );
 	  ts->setReferencePoint( newPos );
           
@@ -538,7 +534,7 @@ namespace eutelescope {
 	return *itClosestHit;
     }
     
-    double EUTelKalmanFilter::getXYPredictionPrecision( const EUTelTrackStateImpl* ts ) const {
+  double EUTelKalmanFilter::getXYPredictionPrecision( const EUTelTrackStateImpl* /*ts*/ ) const {
 	return 0.2;
     }
 
@@ -937,11 +933,11 @@ namespace eutelescope {
         ts -> setTy( xk[3] );
         ts -> setInvP( xk[4] );
         
-        float trkCov[15] = { Ck[0][0], Ck[1][0], Ck[1][1], 
-                             Ck[2][0], Ck[2][1], Ck[2][2],
-                             Ck[3][0], Ck[3][1], Ck[3][2],
-                             Ck[3][3], Ck[4][0], Ck[4][1],
-                             Ck[4][2], Ck[4][3], Ck[4][4] };
+        float trkCov[15] = { (float) Ck[0][0], (float) Ck[1][0], (float) Ck[1][1], 
+                             (float) Ck[2][0], (float) Ck[2][1], (float) Ck[2][2],
+                             (float) Ck[3][0], (float) Ck[3][1], (float) Ck[3][2],
+                             (float) Ck[3][3], (float) Ck[4][0], (float) Ck[4][1],
+                             (float) Ck[4][2], (float) Ck[4][3], (float) Ck[4][4] };
 
         ts->setCovMatrix( trkCov );
         ts->setLocation( EUTelTrackStateImpl::AtOther );

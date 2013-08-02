@@ -100,11 +100,6 @@ unsigned int number_of_datapoints;
 void fcn_wrapper(int& /*npar*/, double* /*gin*/, double &f, double *par, int /*iflag*/)
 {
   EUTelMille::trackfitter fobj(hitsarray,number_of_datapoints);
-  double p[4];
-  p[0] = 0.0;
-  p[1] = 0.0;
-  p[2] = 0.0;
-  p[3] = 0.0;
   f = fobj.fit(par);
 }
 
@@ -790,7 +785,7 @@ void EUTelMille::findtracks2(
             {
               double residualX  = -999999.;
               double residualY  = -999999.;
-              double residualZ  = -999999.;
+              //double residualZ  = -999999.;
 
               // now loop through all hits on a track candidate "vec"
               // start at the end, stop on the first non-zero hit
@@ -800,10 +795,10 @@ void EUTelMille::findtracks2(
                 {
                   double x = _allHitsArray[ivec][vec[ivec]].measuredX;
                   double y = _allHitsArray[ivec][vec[ivec]].measuredY;
-                  double z = _allHitsArray[ivec][vec[ivec]].measuredZ;
+                  //double z = _allHitsArray[ivec][vec[ivec]].measuredZ;
                   residualX  = abs(x - _allHitsArray[e+1][vec[e+1]].measuredX);
                   residualY  = abs(y - _allHitsArray[e+1][vec[e+1]].measuredY);
-                  residualZ  = abs(z - _allHitsArray[e+1][vec[e+1]].measuredZ);
+                  //residualZ  = abs(z - _allHitsArray[e+1][vec[e+1]].measuredZ);
                   break; 
                 }   
               }
@@ -1707,8 +1702,6 @@ void EUTelMille::processEvent (LCEvent * event) {
   if (_nTracks == 1 || _onlySingleTrackEvents == 0) {
 
     DoubleVec lambda;
-    double par_c0 = 0.0;
-    double par_c1 = 0.0;
     lambda.reserve(_nPlanes);
     bool validminuittrack = false;
 
@@ -1766,7 +1759,7 @@ void EUTelMille::processEvent (LCEvent * event) {
           int index_firsthit=0;
           double x0 = -1.;
           double y0 = -1.;
-          double z0 = -1.;
+          //double z0 = -1.;
           for (unsigned int help = 0; help < _nPlanes; help++) 
           {
             bool excluded = false;
@@ -1789,7 +1782,7 @@ void EUTelMille::processEvent (LCEvent * event) {
               index_firsthit = help; 
               x0 = _xPos[track][help];
               y0 = _yPos[track][help];
-              z0 = _zPos[track][help];
+              //z0 = _zPos[track][help];
             }
             const double xresid = x0 - x;
             const double yresid = y0 - y;
@@ -1950,8 +1943,6 @@ void EUTelMille::processEvent (LCEvent * event) {
               c1 = -1.0*TMath::Cos(psi) * TMath::Sin(delta);
               c2 = TMath::Cos(delta) * TMath::Cos(psi);
 	      //cout << " b0: " << b0 << ", b1: " << b1 << ", c2: " << c2 << endl;
-              par_c0 = c0;
-              par_c1 = c1;
               validminuittrack = true;
               
               for (unsigned int help =0; help < _nPlanes; help++)
@@ -2738,8 +2729,6 @@ bool EUTelMille::hitContainsHotPixels( TrackerHitImpl   * hit)
       try{
 	LCObjectVec clusterVector = hit->getRawHits();
 
-	EUTelVirtualCluster * cluster;
-
 	if ( hit->getType() == kEUTelSparseClusterImpl ) 
 	  {
       
@@ -2782,25 +2771,19 @@ bool EUTelMille::hitContainsHotPixels( TrackerHitImpl   * hit)
 	  // fixed cluster implementation. Remember it
 	  //  can come from
 	  //  both RAW and ZS data
-   
-	  cluster = new EUTelBrickedClusterImpl(static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
-                
+                   
 	} else if ( hit->getType() == kEUTelDFFClusterImpl ) {
               
 	  // fixed cluster implementation. Remember it can come from
 	  // both RAW and ZS data
-	  cluster = new EUTelDFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
 	} else if ( hit->getType() == kEUTelFFClusterImpl ) {
               
 	  // fixed cluster implementation. Remember it can come from
 	  // both RAW and ZS data
-	  cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
 	} 
 	else if ( hit->getType() == kEUTelAPIXClusterImpl ) 
 	  {
 	    TrackerDataImpl * clusterFrame = static_cast<TrackerDataImpl*> ( clusterVector[0] );
-
-	    cluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);
 	      
 	    eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel > *apixCluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);
                 
@@ -2808,13 +2791,8 @@ bool EUTelMille::hitContainsHotPixels( TrackerHitImpl   * hit)
 
 	    for (unsigned int iPixel = 0; iPixel < apixCluster->size(); ++iPixel) 
 	      {
-		int pixelX, pixelY;
 		EUTelAPIXSparsePixel apixPixel;
 		apixCluster->getSparsePixelAt(iPixel, &apixPixel);
-		pixelX = apixPixel.getXCoord();
-		pixelY = apixPixel.getYCoord();
-		//                    cout << "(" << pixelX << "|" << pixelY << ") ";
-		//                    cout << endl;
 
 		  {                       
 		    char ix[100];
@@ -3306,7 +3284,7 @@ void EUTelMille::end() {
           vector<double > tokens;
           stringstream tokenizer;
           string line;
-          double buffer;
+          //double buffer;
 
           // get the first line and throw it away since it is a
           // comment!
@@ -3325,7 +3303,7 @@ void EUTelMille::end() {
             else
               numpars = 6;
 
-            bool _nonzero_tokens = false;
+            //bool _nonzero_tokens = false;
 
             for ( unsigned int iParam = 0 ; iParam < numpars ; ++iParam ) 
             {
@@ -3340,11 +3318,11 @@ void EUTelMille::end() {
               tokenizer.clear();
               tokenizer.str( line );
 
-              // check that all parts of the line are non zero
-              while ( tokenizer >> buffer ) {
-                tokens.push_back( buffer ) ;
-                if(buffer> 1e-12) _nonzero_tokens = true;
-              }
+              // // check that all parts of the line are non zero
+              // while ( tokenizer >> buffer ) {
+              //   tokens.push_back( buffer ) ;
+              //   if(buffer> 1e-12) _nonzero_tokens = true;
+              // }
 
               if ( ( tokens.size() == 3 ) || ( tokens.size() == 6 ) || (tokens.size() == 5) ) {
                 goodLine = true;

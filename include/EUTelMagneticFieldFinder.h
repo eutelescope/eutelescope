@@ -29,7 +29,6 @@
 #include "IMPL/TrackerHitImpl.h"
 
 
-class IMPL::TrackImpl;
 class TrackerHit;
 
 namespace eutelescope {
