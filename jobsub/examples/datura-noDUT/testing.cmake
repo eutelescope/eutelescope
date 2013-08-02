@@ -128,7 +128,7 @@
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTFilterLog PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTFilterRun)
 
     # we (still) expect an average of 24.4 clusters per event
-    ADD_TEST( TestJobsubExampleDaturaNoDUTFilterOutput sh -c "[ -f ${testdir}/output/lcio/run${PaddedRunNr}-clustering-filtered.slcio ] && lcio_check_col_elements --average --expelements 24 cluster_m26 ${testdir}/output/lcio/run${PaddedRunNr}-clustering-filtered.slcio" )
+    ADD_TEST( TestJobsubExampleDaturaNoDUTFilterOutput sh -c "[ -f ${testdir}/output/lcio/run${PaddedRunNr}-clustering-filtered.slcio ] && lcio_check_col_elements --average --expelements 24 filtered_cluster_m26 ${testdir}/output/lcio/run${PaddedRunNr}-clustering-filtered.slcio" )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTFilterOutput PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTFilterRun)
 
 
@@ -160,7 +160,7 @@
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTHitmakerPrealign PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTHitmakerRun)
 
     # we expect an average hit number of 24 for run 97 (wide geometry) using the example configuration
-    ADD_TEST( TestJobsubExampleDaturaNoDUTHitmakerOutput sh -c "[ -f ${testdir}/output/lcio/run${PaddedRunNr}-hitmaker.slcio ] && lcio_check_col_elements -a --expelements 24 hit ${testdir}/output/lcio/run${PaddedRunNr}-hitmaker.slcio" )
+    ADD_TEST( TestJobsubExampleDaturaNoDUTHitmakerOutput sh -c "[ -f ${testdir}/output/lcio/run${PaddedRunNr}-hitmaker.slcio ] && lcio_check_col_elements -a --expelements 23 hit ${testdir}/output/lcio/run${PaddedRunNr}-hitmaker.slcio" )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTHitmakerOutput PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTHitmakerRun)
 
 
