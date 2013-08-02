@@ -23,7 +23,7 @@ considered outdated and will no longer be supported.
       between files. See the README and online documentation for details. 
       NOTE: due to its dependency on rootpy, pyroplot requires Python 2.6 or
       later.
-*** 0.9.0
+*** 0.9.0 (not yet released)
     - Improved histogram output (binning, description, axis labels)
     - EUTelMille now allows to include custom pede commands into the
       generated pede steering file directly via processor option.
@@ -88,11 +88,11 @@ considered outdated and will no longer be supported.
     - All examples now use CTest framework for automated regression tests.
     - Includes processors for CMS Pixel chips (PSI46xxx).
     - Updated and improved documentation including examples.
-*** 0.8.4 (not released yet)
+*** 0.8.4 (released 1.8.2013)
     - jobsub: fixes loading of the argparse module provided when using
       Python versions older than 2.7
     - jobsub: fixes backtrace on certain errors with Python versions < 2.7
-    - fixed some typos
+    - fixed some typos in documentation
 *** 0.8.3 (released 26.6.2013)
     - New PedeSteeringAdditionalCmds parameter in EUTelMille: allows
       to add arbitrary parameters to the generated pede steering file
