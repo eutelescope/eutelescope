@@ -66,6 +66,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
     <parameter name="HistogramSwitch" type="bool" value="true"/>
     <parameter name="DEBUG" type="bool" value="false"/>
     <parameter name="PrintEvents" type="int" value="0"/>
+    <parameter name="ApplyToReferenceCollection" type="bool" value="false"/>
   </processor>
 
 
@@ -104,10 +105,12 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <parameter name="HistogramSwitch" type="bool" value="false"/>
   <parameter name="DEBUG" type="bool" value="false"/>
   <parameter name="PrintEvents" type="int" value="0"/>
+  <parameter name="ApplyToReferenceCollection" type="bool" value="false"/>
  </processor>
 
  <processor name="Fitter" type="EUTelTestFitter">
   <!--Analytical track fitting processor for EUDET telescope--> 
+  <parameter name="UseReferenceCollection" type="bool" value="false"/>
   <parameter name="alignmentCollectionNames" type="vec" >   alignment </parameter>
   <!--Name of the input TrackerHit collection-->
   <parameter name="InputCollectionName" type="string" lcioInType="TrackerHit"> alignedHit </parameter>

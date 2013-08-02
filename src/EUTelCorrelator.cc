@@ -125,7 +125,7 @@ EUTelCorrelator::EUTelCorrelator () : Processor("EUTelCorrelator") {
 
   registerOptionalParameter("ReferenceCollection","reference hit collection name ", _referenceHitCollectionName, static_cast <string> ("referenceHit") );
  
-  registerOptionalParameter("ApplyToReferenceCollection","Do you want the reference hit collection to be corrected by the shifts and tilts from the alignment collection? (default - false )",  _applyToReferenceHitCollection, static_cast< bool   > ( false ));
+  registerOptionalParameter("UseReferenceCollection","Do you want the reference hit collection to be used for coordinate transformations?",  _useReferenceHitCollection, static_cast< bool   > ( true ));
  
   registerOptionalParameter("ResidualsXMin","Minimal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_residualsXMin, std::vector<float > (6, -10.) );
 
@@ -400,7 +400,7 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 
       bookHistos();
      
-      if ( _applyToReferenceHitCollection ) 
+      if ( _useReferenceHitCollection ) 
       {
        try{
        _referenceHitVec = dynamic_cast < LCCollectionVec * > (event->getCollection( _referenceHitCollectionName));
@@ -408,7 +408,7 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
        catch(...)
        {
          _referenceHitVec = 0;
-         _applyToReferenceHitCollection = 0;
+         _useReferenceHitCollection = 0;
        }
       }
  
@@ -1468,7 +1468,7 @@ int EUTelCorrelator::guessSensorID(const double * hit )
   int sensorID = -1;
   double minDistance =  numeric_limits< double >::max() ;
 
-  if( _referenceHitVec == 0 || _applyToReferenceHitCollection == false ){
+  if( _referenceHitVec == 0 || _useReferenceHitCollection == false ){
     // use z information of planes instead of reference vector
     for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); ++iPlane ) {
       double distance = std::abs( hit[2] - _siPlaneZPosition[ iPlane ] );

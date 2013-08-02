@@ -370,7 +370,7 @@ namespace eutelescope {
     /*!
      */
     std::string      _referenceHitCollectionName;
-    bool             _applyToReferenceHitCollection;
+    bool             _useReferenceHitCollection;
     LCCollectionVec* _referenceHitVec;    
  
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)

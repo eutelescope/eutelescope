@@ -78,9 +78,9 @@ EUTelPreAlign::EUTelPreAlign () :Processor("EUTelPreAlign") {
                               "How many events should be used for an approximation to the X,Y shifts (pre-alignment)? (default=50000)",
                               _events, static_cast <int> (50000) );
 
-  registerOptionalParameter("ReferenceCollection","reference hit collection name ", _referenceHitCollectionName, static_cast <string> ("reference") );
+  registerOptionalParameter("ReferenceCollection","reference hit collection name ", _referenceHitCollectionName, static_cast <string> ("referenceHit") );
  
-  registerOptionalParameter("ApplyToReferenceCollection","Do you want the reference hit collection to be corrected by the shifts and tilts from the alignment collection? (default - false )",  _applyToReferenceHitCollection, static_cast< bool   > ( false ));
+  registerOptionalParameter("UseReferenceCollection","Do you want the reference hit collection to be used for coordinate transformations?",  _useReferenceHitCollection, static_cast< bool   > ( true ));
  
   registerOptionalParameter("ResidualsXMin","Minimal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_residualsXMin, std::vector<float > (6, -10.) );
 
@@ -285,7 +285,7 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
 
     FillHotPixelMap(event);
 
-   if ( _applyToReferenceHitCollection ) 
+   if ( _useReferenceHitCollection ) 
     {
        try{
 
@@ -294,7 +294,7 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
        catch(...)
        {
          _referenceHitVec = 0;
-         _applyToReferenceHitCollection = false;
+         _useReferenceHitCollection = false;
        }
     }
   }
@@ -531,7 +531,7 @@ int EUTelPreAlign::guessSensorID(const double * hit )
   int sensorID = -1;
   double minDistance =  numeric_limits< double >::max() ;
 
-  if( _referenceHitVec == 0 || _applyToReferenceHitCollection == false )
+  if( _referenceHitVec == 0 || _useReferenceHitCollection == false )
   {
     // use z information of planes instead of reference vector
     for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); ++iPlane ) {

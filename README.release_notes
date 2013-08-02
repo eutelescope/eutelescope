@@ -34,9 +34,18 @@ considered outdated and will no longer be supported.
     - updated and added examples (using jobsub framework)
     - New ApplyAlignment processor (EUTelProcessorApplyAlignment,
       needed for 6D alignment using GBL)
+    - use reference vectors for coordinate transformations by default
+      to ensure consistency between processors
     - Code cleanup: fixed many compiler warnings/errors
     - Code cleanup: removed obsolete code and unused processor parameters
 ** Notes on updating
+   - the reference vector collection initialized in the hitmaker step
+     is now used for coordinate transformation calculations by default
+     in all processors (options "UseReferenceCollection" and
+     "ApplyToReferenceCollection"); if, for some reason, you disabled
+     this feature explicitly, plese make sure that this is done
+     consistently throughout your analysis. This should not affect you
+     if e.g. you based your analysis on any recent examples.
    - changed verbosity: many processors do not print information on
      every event anymore. This is now done through the
      PrintEventNumber processer (see "datura-noDUT" example)

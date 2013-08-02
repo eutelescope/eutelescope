@@ -516,7 +516,7 @@ namespace eutelescope {
     /*!
      */
     std::string      _referenceHitCollectionName;
-    bool             _applyToReferenceHitCollection;
+    bool             _useReferenceHitCollection;
     LCCollectionVec* _referenceHitVec;    
  
 

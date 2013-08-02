@@ -205,6 +205,7 @@ The presence of this collection in the event is allowing all the noise based sel
   <processor name="PreAligner" type="EUTelPreAlign">
     <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
     <parameter name="AlignmentConstantLCIOFile" type="string"> @DBPath@/@Output@-prealign-db.slcio </parameter>
+    <parameter name="UseReferenceCollection" type="bool" value="false"/>
   </processor>
  
 <processor name="Correlator" type="EUTelCorrelator">
@@ -213,6 +214,7 @@ The presence of this collection in the event is allowing all the noise based sel
   <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
   <!-- -->
   <parameter name="DumpOffset" type="bool" > false </parameter>
+  <parameter name="UseReferenceCollection" type="bool" value="false"/>
 </processor>
 
 <processor name="MyEUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">

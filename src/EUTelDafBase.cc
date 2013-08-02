@@ -135,8 +135,8 @@ EUTelDafBase::EUTelDafBase(std::string name) : marlin::Processor(name) {
   registerOptionalParameter("NominalDydz", "dy/dz assumed by track finder", _nYdz, static_cast<float>(0.0f));
   
   // 
-  registerOptionalParameter("ReferenceCollection","reference hit collection name ", _referenceHitCollectionName, static_cast <string> ("reference") );
-  registerOptionalParameter("ApplyToReferenceCollection","Do you want the reference hit collection to be corrected by the shifts and tilts from the alignment collection? (default - false )",  _applyToReferenceHitCollection, static_cast< bool   > ( false ));
+  registerOptionalParameter("ReferenceCollection","reference hit collection name ", _referenceHitCollectionName, static_cast <string> ("referenceHit") );
+  registerOptionalParameter("UseReferenceCollection","Do you want the reference hit collection to be used for coordinate transformations?",  _useReferenceHitCollection, static_cast< bool   > ( true ));
 
   //Track quality parameters
   registerOptionalParameter("MaxChi2OverNdof", "Maximum allowed global chi2/ndof", _maxChi2, static_cast<float> ( 9999.0));
@@ -647,7 +647,7 @@ void EUTelDafBase::processEvent(LCEvent * event){
 //printf("aligncollection %5d \n", ii);
       alignRotate(_alignColNames.at(ii), event);
     }
-    if ( _applyToReferenceHitCollection ) 
+    if ( _useReferenceHitCollection ) 
     {
       _referenceHitVec = dynamic_cast < LCCollectionVec * > (event->getCollection( _referenceHitCollectionName));
     }

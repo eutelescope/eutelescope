@@ -125,7 +125,7 @@ EUTelTestFitter::EUTelTestFitter()
   _resolutionY(),
   _resolutionZ(),
   _referenceHitCollectionName(""),
-  _applyToReferenceHitCollection(false),
+  _useReferenceHitCollection(false),
   _referenceHitVec(NULL),
   _allowMissingHits(0),
   _allowSkipHits(0),
@@ -292,8 +292,9 @@ EUTelTestFitter::EUTelTestFitter()
   // optional parameters
 
   registerOptionalParameter("ReferenceCollection","reference hit collection name ", _referenceHitCollectionName, static_cast <string> ("referenceHit") );
+
+  registerOptionalParameter("UseReferenceCollection","Do you want the reference hit collection to be used for coordinate transformations?",  _useReferenceHitCollection, static_cast< bool   > ( true ));
  
-  registerOptionalParameter("ApplyToReferenceCollection","Do you want the reference hit collection to be corrected by the shifts and tilts from the alignment collection? (default - false )",  _applyToReferenceHitCollection, static_cast< bool   > ( false ));
  
   // ------- Parameters added to allow correlation band info 02 August 2010 libov@mail.desy.de -------
   registerOptionalParameter("UseSlope","Use expected track direction to constraint number of considered hit combinations (track preselection).", _UseSlope, true );
@@ -906,7 +907,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
   if(_isFirstEvent)
   {
-       if ( _applyToReferenceHitCollection ) 
+       if ( _useReferenceHitCollection ) 
        {
          _referenceHitVec = dynamic_cast < LCCollectionVec * > (event->getCollection( _referenceHitCollectionName));
        }
@@ -3158,7 +3159,7 @@ int EUTelTestFitter::guessSensorID( double * hit )
   int sensorID = -1;
   double minDistance =  numeric_limits< double >::max() ;
 
-  if( _referenceHitVec == 0 || _applyToReferenceHitCollection == false) {
+  if( _referenceHitVec == 0 || _useReferenceHitCollection == false) {
       // use z information of planes instead of reference vector
       for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); ++iPlane ) {
 	double distance = std::abs( hit[2] - _siPlanesLayerLayout->getLayerPositionZ(iPlane) );

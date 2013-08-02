@@ -168,7 +168,7 @@ EUTelAPIXTbTrackTuple::EUTelAPIXTbTrackTuple()
   registerOptionalParameter("ReadInClusterBased","Do not readin collection by collection but with the correct mapping between clusters, zsdata and hits", _clusterBased, true);
 
   registerOptionalParameter("ReferenceCollection","This is the name of the reference it collection (init at 0,0,0)",
-                           _referenceHitCollectionName, static_cast< string > ( "reference" ) );
+                           _referenceHitCollectionName, static_cast< string > ( "referenceHit" ) );
  
   // other processor parameters:
   registerProcessorParameter ("OutputPath",

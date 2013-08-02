@@ -169,7 +169,7 @@ protected:
     /*!
      */
     std::string      _referenceHitCollectionName;
-    bool             _applyToReferenceHitCollection;
+    bool             _useReferenceHitCollection;
     LCCollectionVec* _referenceHitVec;    
 
     //! Silicon planes parameters as described in GEAR

@@ -266,8 +266,7 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
 
   registerOptionalParameter("ReferenceCollection","reference hit collection name ", _referenceHitCollectionName, static_cast <string> ("referenceHit") );
  
-  registerOptionalParameter("ApplyToReferenceCollection","Do you want the reference hit collection to be corrected by the shifts and tilts from the alignment collection?",  _applyToReferenceHitCollection, static_cast< bool   > ( false ));
- 
+  registerOptionalParameter("UseReferenceCollection","Do you want the reference hit collection to be used for coordinate transformations?",  _useReferenceHitCollection, static_cast< bool   > ( true ));
 
   registerOptionalParameter("FixParameter","Fixes the given alignment parameters in the fit if alignMode==3 is used. For each sensor an integer must be specified (If no value is given, then all parameters will be free). bit 0 = x shift, bit 1 = y shift, bit 2 = z shift, bit 3 = alpha, bit 4 = beta, bit 5 = gamma. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_FixParameter, IntVec (static_cast <int> (6), 24));
 
@@ -1155,7 +1154,7 @@ void EUTelMille::processEvent (LCEvent * event) {
   {
     FillHotPixelMap(event);
 
-    if ( _applyToReferenceHitCollection ) 
+    if ( _useReferenceHitCollection ) 
     {
        _referenceHitVec = dynamic_cast < LCCollectionVec * > (event->getCollection( _referenceHitCollectionName));
     }
@@ -2651,7 +2650,7 @@ int EUTelMille::guessSensorID( double * hit )
   int sensorID = -1;
   double minDistance =  numeric_limits< double >::max() ;
 
-  if( _referenceHitVec == 0 || _applyToReferenceHitCollection == false)
+  if( _referenceHitVec == 0 || _useReferenceHitCollection == false)
   {
     // use z information of planes instead of reference vector
     for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); ++iPlane ) {
