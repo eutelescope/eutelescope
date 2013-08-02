@@ -121,7 +121,7 @@ One floating number for each detector. Write a negative number to disable the cu
   <parameter name="MaxClusterNoise" type="FloatVec"> -1 -1 -1 -1 -1 -1 </parameter>
   <!--This is the maximum allowed number of cluster per plane.
  One integer number for each detector. Write a negative number to disable the cut-->
-  <parameter name="MaxClusterPerPlane" type="IntVec"> -1 100 100 100 100 100 100 </parameter>
+  <parameter name="MaxClusterPerPlane" type="IntVec"> 100 100 100 100 100 100 </parameter>
   <!--This is the minimum required number of cluster per plane.
 One integer number for each detector. Write 0 to disable the cut-->
   <parameter name="MinClusterPerPlane" type="IntVec"> 0 0 0 0 0 0 </parameter>
