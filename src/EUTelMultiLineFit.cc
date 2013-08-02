@@ -742,11 +742,13 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
       _clusterCharge[help] = new double[_nPlanes];
     }
 
-    int fitplane[6] = {0, 0, 0, 0, 0, 0};
+    // Currently unused variable:
+    /* int fitplane[6] = {0, 0, 0, 0, 0, 0};
 
     for (int help = 0; help < _nPlanes; help++) {
       fitplane[help] = 1;
     }
+    */
 
     int _nTracks = 0;
 

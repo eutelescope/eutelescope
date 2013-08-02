@@ -528,7 +528,7 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
     if (isFirstEvent()) _isFirstEvent = false;
 }
 
-void EUTelProcessorTrackingGBLTrackFit::check(LCEvent * evt) {
+void EUTelProcessorTrackingGBLTrackFit::check(LCEvent * /* evt */) {
     // nothing to check here
 }
 
@@ -565,7 +565,9 @@ void EUTelProcessorTrackingGBLTrackFit::runPede() {
         streamlog_out( ERROR5 ) << "Pede cannot be executed: command not found in the path" << endl;
     } else {
 
-        bool encounteredError = false;
+        // Currently unused variable:
+        //bool encounteredError = false;
+
         // output multiplexing: parse pede output in both stdout and stderr and echo messages accordingly
         char buf[1024];
         std::streamsize n;
@@ -578,7 +580,7 @@ void EUTelProcessorTrackingGBLTrackFit::runPede() {
                     streamlog_out( ERROR5 ).write( buf, n ).flush( );
                     string error ( buf, n );
                     pedeerrors << error;
-                    encounteredError = true;
+                    //encounteredError = true;
                 }
                 if ( pede.eof( ) ) {
                     finished[0] = true;
@@ -630,8 +632,8 @@ bool EUTelProcessorTrackingGBLTrackFit::parseMilleOutput( const string& milleRes
     if ( !parsepede.is_open( ) ) {
         streamlog_out( ERROR5 ) << "Pede cannot be executed: command not found in the path" << endl;
     } else {
-
-        bool encounteredError = false;
+        // Currently unused variable:
+        // bool encounteredError = false;
         // output multiplexing: parse parsepede output in both stdout and stderr and echo messages accordingly
         char buf[1024];
         std::streamsize n;
@@ -644,7 +646,7 @@ bool EUTelProcessorTrackingGBLTrackFit::parseMilleOutput( const string& milleRes
                     streamlog_out( ERROR5 ).write( buf, n ).flush( );
                     string error ( buf, n );
                     parsepedeerrors << error;
-                    encounteredError = true;
+                    //encounteredError = true;
                 }
                 if ( parsepede.eof( ) ) {
                     finished[0] = true;
@@ -695,10 +697,12 @@ void EUTelProcessorTrackingGBLTrackFit::moveMilleResultFile( const string& oldMi
     
     // If file was found in current folder rename it
     const int result = rename( oldMilleResultFileName.c_str() , newMilleResultFileName.c_str() );
-    if ( result == 0 )
+    if ( result == 0 ) {
         streamlog_out( MESSAGE4 ) << "File " << oldMilleResultFileName << " was renamed to " << newMilleResultFileName << endl;
-    else
+    }
+    else {
         streamlog_out( ERROR1 ) << "Error renaming file " << oldMilleResultFileName << endl;
+    }
     
 }
 
