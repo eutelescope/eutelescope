@@ -57,11 +57,11 @@ EUTelX0Processor::EUTelX0Processor()
   minbinalpha(0),
   maxbinalpha(0),
   binsx(0),
-  minbinsx(0),//(mm)
-  maxbinsx(0),
+  minx(0.0),//(mm)
+  maxx(0.0),
   binsy(0),
-  minbinsy(0),
-  maxbinsy(0),
+  miny(0.0),
+  maxy(0.0),
   X0ProcessorDirectory(NULL),
   SinglePointResidualXPlane0(NULL),
   SinglePointResidualXPlane1(NULL),
@@ -136,6 +136,12 @@ EUTelX0Processor::EUTelX0Processor()
   registerProcessorParameter("ResidualCutValue","Used to determine cuts in the system, measured in XXX", _residualCut, static_cast< double > (50000.0));
   registerProcessorParameter("MaxRecords","Will be used to determine the final event if the final event must come before EOF", _maxRecords, static_cast< int > (0));
   registerProcessorParameter("HistoFile","Will be used to add the gaussian to the kink angle at the end of the run", _histoFile, static_cast< std::string > (""));
+  registerProcessorParameter("RadiationLengthMapMinX","Used to determine the minimum X for the radiation length map, measured in XXX", minx, static_cast< double > (-11.0));
+  registerProcessorParameter("RadiationLengthMapMaxX","Used to determine the maximum X for the radiation length map, measured in XXX", maxx, static_cast< double > (11.0));
+  registerProcessorParameter("RadiationLengthMapMinY","Used to determine the minimum Y for the radiation length map, measured in XXX", miny, static_cast< double > (-6.0));
+  registerProcessorParameter("RadiationLengthMapMaxY","Used to determine the maximum Y for the radiation length map, measured in XXX", maxy, static_cast< double > (6.0));
+  registerProcessorParameter("RadiationLengthMapBinSizeX","Used to determine the spatial resolution in X for the radiation length map, measured in XXX", binsizex, static_cast< double > (1.0));
+  registerProcessorParameter("RadiationLengthMapBinSizeY","Used to determine the spatial resolution in Y for the radiation length map, measured in XXX", binsizey, static_cast< double > (1.0));
 }
 
 void EUTelX0Processor::init()
@@ -151,280 +157,271 @@ void EUTelX0Processor::init()
   maxbinalpha = 0.01;
   std::vector<double> empty;  
   binsx = 22;
-  minbinsx = -11;//(mm)
-  maxbinsx = 11;
   binsy = 12;
-  minbinsy = -6;
-  maxbinsy = 6;
-  double binsizex = (maxbinsx-minbinsx)/binsx;
-  double binsizey = (maxbinsy-minbinsy)/binsy;
 
-  X0ProcessorDirectory = new TDirectory("X0Processor","X0Processor");
-  X0ProcessorDirectory->cd();
-
-  SinglePointResidualXPlane1 = new TH1D("SinglePointResidualXPlane1",
+  SinglePointResidualXPlane1 = new TH1D("X0Processor/SinglePointResidualXPlane1",
                                          "Single Point Residual in X on Plane 1;\\Delta X (mm);Count",
 					 nobins,minbin,maxbin);
   _histoThing["SinglePointResidualXPlane1"] = SinglePointResidualXPlane1;
  
-  SinglePointResidualXPlane2 = new TH1D("SinglePointResidualXPlane2",
+  SinglePointResidualXPlane2 = new TH1D("X0Processor/SinglePointResidualXPlane2",
                                          "Single Point Residual in X on Plane 2;\\Delta X (mm);Count",
 					 nobins,minbin,maxbin);
   _histoThing["SinglePointResidualXPlane2"] = SinglePointResidualXPlane2;
   
-  SinglePointResidualXPlane3 = new TH1D("SinglePointResidualXPlane3",
+  SinglePointResidualXPlane3 = new TH1D("X0Processor/SinglePointResidualXPlane3",
                                          "Single Point Residual in X on Plane 3;\\Delta X (mm);Count",
 					 nobins,minbin,maxbin);
   _histoThing["SinglePointResidualXPlane3"] = SinglePointResidualXPlane3;
   
-  SinglePointResidualXPlane4 = new TH1D("SinglePointResidualXPlane4",
+  SinglePointResidualXPlane4 = new TH1D("X0Processor/SinglePointResidualXPlane4",
                                          "Single Point Residual in X on Plane 4;\\Delta X (mm);Count",
 					 nobins,minbin,maxbin);
   _histoThing["SinglePointResidualXPlane4"] = SinglePointResidualXPlane4;
   
-  SinglePointResidualXPlane5 = new TH1D("SinglePointResidualXPlane5",
+  SinglePointResidualXPlane5 = new TH1D("X0Processor/SinglePointResidualXPlane5",
                                          "Single Point Residual in X on Plane 5;\\Delta X (mm);Count",
 					 nobins,minbin,maxbin);
   _histoThing["SinglePointResidualXPlane5"] = SinglePointResidualXPlane5;
  
-  SinglePointResidualYPlane0 = new TH1D("SinglePointResidualYPlane0",
+  SinglePointResidualYPlane0 = new TH1D("X0Processor/SinglePointResidualYPlane0",
                                          "Single Point Residual in Y on Plane 0;\\Delta Y (mm);Count",
 					 nobins,minbin,maxbin);
   _histoThing["SinglePointResidualYPlane0"] = SinglePointResidualYPlane0;
   
-  SinglePointResidualYPlane1 = new TH1D("SinglePointResidualYPlane1",
+  SinglePointResidualYPlane1 = new TH1D("X0Processor/SinglePointResidualYPlane1",
                                          "Single Point Residual in Y on Plane 1;\\Delta Y (mm);Count",
 					 nobins,minbin,maxbin);
   _histoThing["SinglePointResidualYPlane1"] = SinglePointResidualYPlane1;
   
-  SinglePointResidualYPlane2 = new TH1D("SinglePointResidualYPlane2",
+  SinglePointResidualYPlane2 = new TH1D("X0Processor/SinglePointResidualYPlane2",
                                          "Single Point Residual in Y on Plane 2;\\Delta Y (mm);Count",
 					 nobins,minbin,maxbin);
   _histoThing["SinglePointResidualYPlane2"] = SinglePointResidualYPlane2;
   
-  SinglePointResidualYPlane3 = new TH1D("SinglePointResidualYPlane3",
+  SinglePointResidualYPlane3 = new TH1D("X0Processor/SinglePointResidualYPlane3",
                                          "Single Point Residual in Y on Plane 3;\\Delta Y (mm);Count",
 					 nobins,minbin,maxbin);
   _histoThing["SinglePointResidualYPlane3"] = SinglePointResidualYPlane3;
   
-  SinglePointResidualYPlane4 = new TH1D("SinglePointResidualYPlane4",
+  SinglePointResidualYPlane4 = new TH1D("X0Processor/SinglePointResidualYPlane4",
                                          "Single Point Residual in Y on Plane 4;\\Delta Y (mm);Count",
 					 nobins,minbin,maxbin);
   _histoThing["SinglePointResidualYPlane4"] = SinglePointResidualYPlane4;
   
-  SinglePointResidualYPlane5 = new TH1D("SinglePointResidualYPlane5",
+  SinglePointResidualYPlane5 = new TH1D("X0Processor/SinglePointResidualYPlane5",
                                          "Single Point Residual in Y on Plane 5;\\Delta Y (mm);Count",
 					 nobins,minbin,maxbin);
   _histoThing["SinglePointResidualYPlane5"] = SinglePointResidualYPlane5;
  
-  ThreePointResidualXPlane1 = new TH1D("ThreePointResidualXPlane1",
+  ThreePointResidualXPlane1 = new TH1D("X0Processor/ThreePointResidualXPlane1",
                                          "Three Point Residual in X on Plane 1;\\Delta X (mm);Count",
 					 nobins,minbin,maxbin);
   _histoThing["ThreePointResidualXPlane1"] = ThreePointResidualXPlane1;
   
-  ThreePointResidualXPlane2 = new TH1D("ThreePointResidualXPlane2",
+  ThreePointResidualXPlane2 = new TH1D("X0Processor/ThreePointResidualXPlane2",
                                          "Three Point Residual in X on Plane 2;\\Delta X (mm);Count",
 					 nobins,minbin,maxbin);
   _histoThing["ThreePointResidualXPlane2"] = ThreePointResidualXPlane2;
   
-  ThreePointResidualXPlane3 = new TH1D("ThreePointResidualXPlane3",
+  ThreePointResidualXPlane3 = new TH1D("X0Processor/ThreePointResidualXPlane3",
                                          "Three Point Residual in X on Plane 3;\\Delta X (mm);Count",
 					 nobins,minbin,maxbin);
   _histoThing["ThreePointResidualXPlane3"] = ThreePointResidualXPlane3;
   
-  ThreePointResidualXPlane4 = new TH1D("ThreePointResidualXPlane4",
+  ThreePointResidualXPlane4 = new TH1D("X0Processor/ThreePointResidualXPlane4",
                                          "Three Point Residual in X on Plane 4;\\Delta X (mm);Count",
 					 nobins,minbin,maxbin);
   _histoThing["ThreePointResidualXPlane4"] = ThreePointResidualXPlane4;
   
-  ThreePointResidualYPlane1 = new TH1D("ThreePointResidualYPlane1",
+  ThreePointResidualYPlane1 = new TH1D("X0Processor/ThreePointResidualYPlane1",
                                          "Three Point Residual in Y on Plane 1;\\Delta Y (mm);Count",
 					 nobins,minbin,maxbin);
   _histoThing["ThreePointResidualYPlane1"] = ThreePointResidualYPlane1;
   
-  ThreePointResidualYPlane2 = new TH1D("ThreePointResidualYPlane2",
+  ThreePointResidualYPlane2 = new TH1D("X0Processor/ThreePointResidualYPlane2",
                                          "Three Point Residual in Y on Plane 2;\\Delta Y (mm);Count",
 					 nobins,minbin,maxbin);
   _histoThing["ThreePointResidualYPlane2"] = ThreePointResidualYPlane2;
   
-  ThreePointResidualYPlane3 = new TH1D("ThreePointResidualYPlane3",
+  ThreePointResidualYPlane3 = new TH1D("X0Processor/ThreePointResidualYPlane3",
                                          "Three Point Residual in Y on Plane 3;\\Delta Y (mm);Count",
 					 nobins,minbin,maxbin);
   _histoThing["ThreePointResidualYPlane3"] = ThreePointResidualYPlane3;
   
-  ThreePointResidualYPlane4 = new TH1D("ThreePointResidualYPlane4",
+  ThreePointResidualYPlane4 = new TH1D("X0Processor/ThreePointResidualYPlane4",
                                          "Three Point Residual in Y on Plane 4;\\Delta Y (mm);Count",
 					 nobins,minbin,maxbin);
   _histoThing["ThreePointResidualYPlane4"] = ThreePointResidualYPlane4;
   
-  AngleXForwardPlane0 = new TH1D("AngleXForwardPlane0",
+  AngleXForwardPlane0 = new TH1D("X0Processor/AngleXForwardPlane0",
                                  "Angle of Tracks in X Direction Relative to the Z Axis on Plane 0;\\theta_x (rads);Count",
 				 nobinsangle,minbinangle,maxbinangle);
   _histoThing["AngleXForwardPlane0"] = AngleXForwardPlane0;
  
-  AngleXForwardPlane1 = new TH1D("AngleXForwardPlane1",
+  AngleXForwardPlane1 = new TH1D("X0Processor/AngleXForwardPlane1",
                                  "Angle of Tracks in X Direction Relative to the Z Axis on Plane 1;\\theta_x (rads);Count",
 				 nobinsangle,minbinangle,maxbinangle);
   _histoThing["AngleXForwardPlane1"] = AngleXForwardPlane1;
  
-  AngleXForwardPlane2 = new TH1D("AngleXForwardPlane2",
+  AngleXForwardPlane2 = new TH1D("X0Processor/AngleXForwardPlane2",
                                  "Angle of Tracks in X Direction Relative to the Z Axis on Plane 2;\\theta_x (rads);Count",
 				 nobinsangle,minbinangle,maxbinangle);
   _histoThing["AngleXForwardPlane2"] = AngleXForwardPlane2;
  
-  AngleXForwardPlane3 = new TH1D("AngleXForwardPlane3",
+  AngleXForwardPlane3 = new TH1D("X0Processor/AngleXForwardPlane3",
                                  "Angle of Tracks in X Direction Relative to the Z Axis on Plane 3;\\theta_x (rads);Count",
 				 nobinsangle,minbinangle,maxbinangle);
   _histoThing["AngleXForwardPlane3"] = AngleXForwardPlane3;
  
-  AngleXForwardPlane4 = new TH1D("AngleXForwardPlane4",
+  AngleXForwardPlane4 = new TH1D("X0Processor/AngleXForwardPlane4",
                                  "Angle of Tracks in X Direction Relative to the Z Axis on Plane 4;\\theta_x (rads);Count",
 				 nobinsangle,minbinangle,maxbinangle);
   _histoThing["AngleXForwardPlane4"] = AngleXForwardPlane4;
   
-  AngleYForwardPlane0 = new TH1D("AngleYForwardPlane0",
+  AngleYForwardPlane0 = new TH1D("X0Processor/AngleYForwardPlane0",
                                  "Angle of Tracks in Y Direction Relative to the Z Axis on Plane 0;\\theta_x (rads);Count",
 				 nobinsangle,minbinangle,maxbinangle);
   _histoThing["AngleYForwardPlane0"] = AngleYForwardPlane0;
  
-  AngleYForwardPlane1 = new TH1D("AngleYForwardPlane1",
+  AngleYForwardPlane1 = new TH1D("X0Processor/AngleYForwardPlane1",
                                  "Angle of Tracks in Y Direction Relative to the Z Axis on Plane 1;\\theta_x (rads);Count",
 				 nobinsangle,minbinangle,maxbinangle);
   _histoThing["AngleYForwardPlane1"] = AngleYForwardPlane1;
  
-  AngleYForwardPlane2 = new TH1D("AngleYForwardPlane2",
+  AngleYForwardPlane2 = new TH1D("X0Processor/AngleYForwardPlane2",
                                  "Angle of Tracks in Y Direction Relative to the Z Axis on Plane 2;\\theta_x (rads);Count",
 				 nobinsangle,minbinangle,maxbinangle);
   _histoThing["AngleYForwardPlane2"] = AngleYForwardPlane2;
  
-  AngleYForwardPlane3 = new TH1D("AngleYForwardPlane3",
+  AngleYForwardPlane3 = new TH1D("X0Processor/AngleYForwardPlane3",
                                  "Angle of Tracks in Y Direction Relative to the Z Axis on Plane 3;\\theta_x (rads);Count",
 				 nobinsangle,minbinangle,maxbinangle);
   _histoThing["AngleYForwardPlane3"] = AngleYForwardPlane3;
  
-  AngleYForwardPlane4 = new TH1D("AngleYForwardPlane4",
+  AngleYForwardPlane4 = new TH1D("X0Processor/AngleYForwardPlane4",
                                  "Angle of Tracks in Y Direction Relative to the Z Axis on Plane 4;\\theta_x (rads);Count",
 				 nobinsangle,minbinangle,maxbinangle);
   _histoThing["AngleYForwardPlane4"] = AngleYForwardPlane4;
   
-  ScatteringAngleXPlane1 = new TH1D("ScatteringAngleXPlane1",
+  ScatteringAngleXPlane1 = new TH1D("X0Processor/ScatteringAngleXPlane1",
                                     "Scattering Angle in X Direction Relative to the Z Axis on Plane 1;\\theta_x (rads);Count",
 				 nobinsangle,minbinangle,maxbinangle);
   _histoThing["ScatteringAngleXPlane1"] = ScatteringAngleXPlane1;
  
-  ScatteringAngleXPlane2 = new TH1D("ScatteringAngleXPlane2",
+  ScatteringAngleXPlane2 = new TH1D("X0Processor/ScatteringAngleXPlane2",
                                     "Scattering Angle in X Direction Relative to the Z Axis on Plane 2;\\theta_x (rads);Count",
 				 nobinsangle,minbinangle,maxbinangle);
   _histoThing["ScatteringAngleXPlane2"] = ScatteringAngleXPlane2;
  
-  ScatteringAngleXPlane3 = new TH1D("ScatteringAngleXPlane3",
+  ScatteringAngleXPlane3 = new TH1D("X0Processor/ScatteringAngleXPlane3",
                                     "Scattering Angle in X Direction Relative to the Z Axis on Plane 3;\\theta_x (rads);Count",
 				 nobinsangle,minbinangle,maxbinangle);
   _histoThing["ScatteringAngleXPlane3"] = ScatteringAngleXPlane3;
  
-  ScatteringAngleXPlane4 = new TH1D("ScatteringAngleXPlane4",
+  ScatteringAngleXPlane4 = new TH1D("X0Processor/ScatteringAngleXPlane4",
                                     "Scattering Angle in X Direction Relative to the Z Axis on Plane 4;\\theta_x (rads);Count",
 				 nobinsangle,minbinangle,maxbinangle);
   _histoThing["ScatteringAngleXPlane4"] = ScatteringAngleXPlane4;
   
-  ScatteringAngleYPlane1 = new TH1D("ScatteringAngleYPlane1",
+  ScatteringAngleYPlane1 = new TH1D("X0Processor/ScatteringAngleYPlane1",
                                     "Scattering Angle in Y Direction Relative to the Z Axis on Plane 1;\\theta_x (rads);Count",
 				 nobinsangle,minbinangle,maxbinangle);
   _histoThing["ScatteringAngleYPlane1"] = ScatteringAngleYPlane1;
  
-  ScatteringAngleYPlane2 = new TH1D("ScatteringAngleYPlane2",
+  ScatteringAngleYPlane2 = new TH1D("X0Processor/ScatteringAngleYPlane2",
                                     "Scattering Angle in Y Direction Relative to the Z Axis on Plane 2;\\theta_x (rads);Count",
 				 nobinsangle,minbinangle,maxbinangle);
   _histoThing["ScatteringAngleYPlane2"] = ScatteringAngleYPlane2;
  
-  ScatteringAngleYPlane3 = new TH1D("ScatteringAngleYPlane3",
+  ScatteringAngleYPlane3 = new TH1D("X0Processor/ScatteringAngleYPlane3",
                                     "Scattering Angle in Y Direction Relative to the Z Axis on Plane 3;\\theta_x (rads);Count",
 				 nobinsangle,minbinangle,maxbinangle);
   _histoThing["ScatteringAngleYPlane3"] = ScatteringAngleYPlane3;
  
-  ScatteringAngleYPlane4 = new TH1D("ScatteringAngleYPlane4",
+  ScatteringAngleYPlane4 = new TH1D("X0Processor/ScatteringAngleYPlane4",
                                     "Scattering Angle in Y Direction Relative to the Z Axis on Plane 4;\\theta_x (rads);Count",
 				 nobinsangle,minbinangle,maxbinangle);
   _histoThing["ScatteringAngleYPlane4"] = ScatteringAngleYPlane4;
      
-  KinkAnglePlane1 = new TH2D("KinkAnglePlane1",
+  KinkAnglePlane1 = new TH2D("X0Processor/KinkAnglePlane1",
                              "Kink Angle on Plane 1;\\theta_x (rads);\\theta_y (rads)",
 			     nobinsangle,minbinalpha,maxbinalpha,nobinsangle,minbinalpha,maxbinalpha);
   _histoThing["KinkAnglePlane1"] = KinkAnglePlane1;
   
-  KinkAnglePlane2 = new TH2D("KinkAnglePlane2",
+  KinkAnglePlane2 = new TH2D("X0Processor/KinkAnglePlane2",
                              "Kink Angle on Plane 2;\\theta_x (rads);\\theta_y (rads)",
 			     nobinsangle,minbinalpha,maxbinalpha,nobinsangle,minbinalpha,maxbinalpha);
   _histoThing["KinkAnglePlane2"] = KinkAnglePlane2;
   
-  KinkAnglePlane3 = new TH2D("KinkAnglePlane3",
+  KinkAnglePlane3 = new TH2D("X0Processor/KinkAnglePlane3",
                              "Kink Angle on Plane 3;\\theta_x (rads);\\theta_y (rads)",
 			     nobinsangle,minbinalpha,maxbinalpha,nobinsangle,minbinalpha,maxbinalpha);
   _histoThing["KinkAnglePlane3"] = KinkAnglePlane3;
   
-  KinkAnglePlane4 = new TH2D("KinkAnglePlane4",
+  KinkAnglePlane4 = new TH2D("X0Processor/KinkAnglePlane4",
                              "Kink Angle on Plane 4;\\theta_x (rads);\\theta_y (rads)",
 			     nobinsangle,minbinalpha,maxbinalpha,nobinsangle,minbinalpha,maxbinalpha);
   _histoThing["KinkAnglePlane4"] = KinkAnglePlane4;
   
-  ScatteringAngleXPlane1Map = new TH2D("ScatteringAngleXPlane1Map",
+  ScatteringAngleXPlane1Map = new TH2D("X0Processor/ScatteringAngleXPlane1Map",
                                        "Scattering Angle in X on Plane 1;x (mm);y(mm)"
-				       ,binsx,minbinsx,maxbinsx,binsy,minbinsy,maxbinsy);
+				       ,binsx,minx,maxx,binsy,miny,maxy);
   _histoThing["ScatteringAngleXPlane1Map"] = ScatteringAngleXPlane1Map;
   
-  ScatteringAngleXPlane2Map = new TH2D("ScatteringAngleXPlane2Map",
+  ScatteringAngleXPlane2Map = new TH2D("X0Processor/ScatteringAngleXPlane2Map",
                                        "Scattering Angle in X on Plane 2;x (mm);y(mm)"
-				       ,binsx,minbinsx,maxbinsx,binsy,minbinsy,maxbinsy);
+				       ,binsx,minx,maxx,binsy,miny,maxy);
   _histoThing["ScatteringAngleXPlane2Map"] = ScatteringAngleXPlane2Map;
   
-  ScatteringAngleXPlane3Map = new TH2D("ScatteringAngleXPlane3Map",
+  ScatteringAngleXPlane3Map = new TH2D("X0Processor/ScatteringAngleXPlane3Map",
                                        "Scattering Angle in X on Plane 3;x (mm);y(mm)"
-				       ,binsx,minbinsx,maxbinsx,binsy,minbinsy,maxbinsy);
+				       ,binsx,minx,maxx,binsy,miny,maxy);
   _histoThing["ScatteringAngleXPlane3Map"] = ScatteringAngleXPlane3Map;
   
-  ScatteringAngleXPlane4Map = new TH2D("ScatteringAngleXPlane4Map",
+  ScatteringAngleXPlane4Map = new TH2D("X0Processor/ScatteringAngleXPlane4Map",
                                        "Scattering Angle in X on Plane 4;x (mm);y(mm)"
-				       ,binsx,minbinsx,maxbinsx,binsy,minbinsy,maxbinsy);
+				       ,binsx,minx,maxx,binsy,miny,maxy);
   _histoThing["ScatteringAngleXPlane4Map"] = ScatteringAngleXPlane4Map;
   
-  ScatteringAngleYPlane1Map = new TH2D("ScatteringAngleYPlane1Map",
+  ScatteringAngleYPlane1Map = new TH2D("X0Processor/ScatteringAngleYPlane1Map",
                                        "Scattering Angle in Y on Plane 1;x (mm);y(mm)"
-				       ,binsx,minbinsx,maxbinsx,binsy,minbinsy,maxbinsy);
+				       ,binsx,minx,maxx,binsy,miny,maxy);
   _histoThing["ScatteringAngleYPlane1Map"] = ScatteringAngleYPlane1Map;
   
-  ScatteringAngleYPlane2Map = new TH2D("ScatteringAngleYPlane2Map",
+  ScatteringAngleYPlane2Map = new TH2D("X0Processor/ScatteringAngleYPlane2Map",
                                        "Scattering Angle in Y on Plane 2;x (mm);y(mm)"
-				       ,binsx,minbinsx,maxbinsx,binsy,minbinsy,maxbinsy);
+				       ,binsx,minx,maxx,binsy,miny,maxy);
   _histoThing["ScatteringAngleYPlane2Map"] = ScatteringAngleYPlane2Map;
   
-  ScatteringAngleYPlane3Map = new TH2D("ScatteringAngleYPlane3Map",
+  ScatteringAngleYPlane3Map = new TH2D("X0Processor/ScatteringAngleYPlane3Map",
                                        "Scattering Angle in Y on Plane 3;x (mm);y(mm)"
-				       ,binsx,minbinsx,maxbinsx,binsy,minbinsy,maxbinsy);
+				       ,binsx,minx,maxx,binsy,miny,maxy);
   _histoThing["ScatteringAngleYPlane3Map"] = ScatteringAngleYPlane3Map;
   
-  ScatteringAngleYPlane4Map = new TH2D("ScatteringAngleYPlane4Map",
+  ScatteringAngleYPlane4Map = new TH2D("X0Processor/ScatteringAngleYPlane4Map",
                                        "Scattering Angle in Y on Plane 4;x (mm);y(mm)"
-				       ,binsx,minbinsx,maxbinsx,binsy,minbinsy,maxbinsy);
+				       ,binsx,minx,maxx,binsy,miny,maxy);
   _histoThing["ScatteringAngleYPlane4Map"] = ScatteringAngleYPlane4Map;
   
-  RadiationLengthPlane1Map = new TH2D("RadiationLengthPlane1Map",
+  RadiationLengthPlane1Map = new TH2D("X0Processor/RadiationLengthPlane1Map",
                                        "Radiation Length on Plane 1;x (mm);y(mm)"
-				       ,binsx,minbinsx,maxbinsx,binsy,minbinsy,maxbinsy);
+				       ,binsx,minx,maxx,binsy,miny,maxy);
   _histoThing["RadiationLengthPlane1Map"] = RadiationLengthPlane1Map;
   
-  RadiationLengthPlane2Map = new TH2D("RadiationLengthPlane2Map",
+  RadiationLengthPlane2Map = new TH2D("X0Processor/RadiationLengthPlane2Map",
                                        "Radiation Length on Plane 2;x (mm);y(mm)"
-				       ,binsx,minbinsx,maxbinsx,binsy,minbinsy,maxbinsy);
+				       ,binsx,minx,maxx,binsy,miny,maxy);
   _histoThing["RadiationLengthPlane2Map"] = RadiationLengthPlane2Map;
   
-  RadiationLengthPlane3Map = new TH2D("RadiationLengthPlane3Map",
+  RadiationLengthPlane3Map = new TH2D("X0Processor/RadiationLengthPlane3Map",
                                        "Radiation Length on Plane 3;x (mm);y(mm)"
-				       ,binsx,minbinsx,maxbinsx,binsy,minbinsy,maxbinsy);
+				       ,binsx,minx,maxx,binsy,miny,maxy);
   _histoThing["RadiationLengthPlane3Map"] = RadiationLengthPlane3Map;
   
-  RadiationLengthPlane4Map = new TH2D("RadiationLengthPlane4Map",
+  RadiationLengthPlane4Map = new TH2D("X0Processor/RadiationLengthPlane4Map",
                                        "Radiation Length on Plane 4;x (mm);y(mm)"
-				       ,binsx,minbinsx,maxbinsx,binsy,minbinsy,maxbinsy);
+				       ,binsx,minx,maxx,binsy,miny,maxy);
   _histoThing["RadiationLengthPlane4Map"] = RadiationLengthPlane4Map;
 }
 
@@ -509,8 +506,7 @@ void EUTelX0Processor::kinkEstimate(Track* track){
   }
   std::vector< double > scatterx, scattery;
   streamlog_out(DEBUG3) << "hitsize = " << hitsize << std::endl;
-  for(size_t i = 0; i < hitsize-1; ++i){
-    streamlog_out(DEBUG3) << "Running now in the first for loop in element " << i << std::endl;
+  for(size_t i = 0; i < hitsize-1; ++i){ //Fill histograms with the angles of the track at each plane and push back those angles into a vector
     const double x0 = hits[i]->x();
     const double y0 = hits[i]->y();
     const double z0 = hits[i]->z();
@@ -521,11 +517,17 @@ void EUTelX0Processor::kinkEstimate(Track* track){
     streamlog_out(DEBUG3) << x0 << endl << y0 << endl << z0 << endl << x1 << endl << y1 << endl << z1 << endl;
     const double frontanglex = atan2(x1-x0,deltaz);
     const double frontangley = atan2(y1-y0,deltaz);
+
+    //Push back angles into a vector
     scatterx.push_back(frontanglex);
     scattery.push_back(frontangley);
+
+    //Name the histograms
     std::stringstream xforward,yforward,xbackward,ybackward;
     xforward << "AngleXForwardPlane" << i;
     yforward << "AngleYForwardPlane" << i;
+
+    //Fill the histograms with the XZ and YZ angles
     try{
       dynamic_cast< TH1D* >(_histoThing[xforward.str().c_str()])->Fill(frontanglex);
     } catch(std::bad_cast &bc){
@@ -540,41 +542,96 @@ void EUTelX0Processor::kinkEstimate(Track* track){
  
   const size_t scatterxsize = scatterx.size();
   streamlog_out(DEBUG3) << "scatterxsize = " << scatterxsize << std::endl;
-  for(size_t i = 0; i < scatterxsize-1; ++i){
-    streamlog_out(DEBUG3) << "Running now in the second for loop in element " << i << std::endl;
+  for(size_t i = 0; i < scatterxsize-1; ++i){ //This fills the scattering angle histograms plane by plane
+    //Scattering angle is the forward angle between planes i to i+1 and plane i+1 to i+2
     const double scatteringanglex = scatterx[i+1] - scatterx[i];
     const double scatteringangley = scattery[i+1] - scattery[i];
+
+    //Name the histograms
     std::stringstream ssscatterx,ssscattery,ssscatterxy;
     ssscatterx << "ScatteringAngleXPlane" << i+1;
     ssscattery << "ScatteringAngleYPlane" << i+1;
     ssscatterxy << "KinkAnglePlane" << i+1;
-    if(i == 1)
+    if(i == 1) //If we are looking at the angle between planes 1 to 2 and planes 2 to 3 (So this includes the DUT)
     {
-      double binsizex = (maxbinsx - minbinsx)/binsx;
-      double binsizey = (maxbinsx - minbinsx)/binsx;
       double x = hits[i+1]->x();
       double y = hits[i+1]->y();
-      double newminbinx(minbinsx);
-      double newminbiny(minbinsy);
-      int actualbinx(0);
-      int actualbiny(0);
-      bool notfoundx = true;
-      while(notfoundx)
+
+      pair< int, int > position(ConversionHitmapToX0map(x,y));
+      ScatteringAngleXMapData[position].push_back(scatteringanglex);
+      ScatteringAngleYMapData[position].push_back(scatteringangley);
+
+/*      
+      while(notfoundx){ //Begin search for which bin of the radiation length map the track is going through
+        if(x > maxx){
+	  string xistoobig = "The x coordinate of the hit is larger than the size of the sensor. Skipping this track";
+          throw xistoobig;
+	} //end of: if(x > maxx)
+	else if(x < newminbinx){
+          string xistoosmall = "The x coordinate of the hit is either smaller than the size of the sensor, or should have been caught in the previous bin. Skipping this track";
+          throw xistoosmall;
+	} //end of: else if(x < newminbinx)
+	else if(x < newminbinx + binsizex){
+	  notfoundx = false;
+ 
+          while(notfoundy){ //Begin search for which bin of the radiation length map the track is going through
+          if(y > maxy){
+            string yistoobig = "The y coordinate of the hit is larger than the size of the sensor. Skipping this track";
+            throw yistoobig;
+          } //end of: if(y > mayy)
+          else if(y < newminbiny){
+            string yistoosmall = "The y coordinate of the hit is either smaller than the size of the sensor, or should have been caught in the previous bin. Skipping this track";
+            throw yistoosmall;
+          } //end of: else if(y < newminbiny)
+          else if(y < newminbiny + binsizey){
+            notfoundy = false;
+	    pair< int, int > position(newminbinx,newminbiny);
+            ScatteringAngleXMapData[position].push_back(scatteringanglex); //pair of ints and a vector of doubles
+            ScatteringAngleYMapData[position].push_back(scatteringangley); 
+	  } //end of: else if(y < newminbiny + binsizey)
+          else{
+            newminbiny += binsizey;
+          } //end of: else [else if(y < newminbiny + binsizey)]
+        } // end of: while(notfoundy)
+
+	} //end of: else if(x < newminbinx + binsizex)
+	else{
+          newminbinx += binsizex;
+	} //end of: else [else if(x < newminbinx + binsizex)]
+      } // end of: while(notfoundx)
+
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+
+      while(notfoundx)//This checks which bin the track is going through in x the DUT and stores the variable for making a radiation map later
       {
         if(x >= newminbinx && x < newminbinx + binsizex)
         {
           notfoundx = false;
           bool notfoundy = true;
-          while(notfoundy)
+          while(notfoundy)//This checks which bin the track is going through in y
           {
             if(y >= newminbiny && y < newminbiny + binsizey)
-	    {
-	      //track is in bin actualbinx, actualbiny
+	    { //track is in bin actualbinx, actualbiny
 	      notfoundy = false;
-              pair< int, int > position(actualbinx,actualbiny);
+              pair< int, int > position(actualbinx,actualbiny); //Puts the bin numbers into a pair
               ScatteringAngleXMapData[position].push_back(scatteringanglex);
-	    } else if(newminbiny <= maxbinsy)
-    	    {
+	    } //end of if(y >= newminbiny && y < newminbiny + binsizey)
+            else if(newminbiny <= maxbinsy){
 	      newminbiny += binsizey;
 	      ++actualbiny;
 	    } else
@@ -592,6 +649,9 @@ void EUTelX0Processor::kinkEstimate(Track* track){
 	  streamlog_out(ERROR5) << "Somehow there is a hit beyond the scope of the sensor" << endl;
 	}
       }
+
+*/
+
     }
     try{
       dynamic_cast< TH1D* >(_histoThing[ssscatterx.str().c_str()])->Fill(scatteringanglex);
@@ -731,15 +791,25 @@ void EUTelX0Processor::end()
   //Set all values to zero or NULL
   //
   //calculateX0();
-  double binsizex = (maxbinsx-minbinsx)/binsx;
-  double binsizey = (maxbinsy-minbinsy)/binsy;
 
-  for(double i = minbinsx; i <= maxbinsx; i += binsizex)
+  for(double i = minx; i <= maxx; i += binsizex)
   {
-    for(double j = minbinsy; j <= maxbinsy; j += binsizey)
+    for(double j = miny; j <= maxy; j += binsizey)
     {
+      pair< int, int > position(ConversionHitmapToX0map(i,j));
+      double mean(0);
+      for(vector< double >::iterator it = ScatteringAngleXMapData[position].begin(); it != ScatteringAngleXMapData[position].end(); ++it){
+        mean += *it;
+      }
+      double sigma(0);
+      for(vector< double >::iterator it = ScatteringAngleXMapData[position].begin(); it != ScatteringAngleXMapData[position].end(); ++it){
+        sigma += (mean - *it)*(mean - *it);
+      }
+      sigma /= static_cast<double>(ScatteringAngleXMapData[position].size());
+      sigma = sqrt(sigma);
+      ScatteringAngleXPlane2Map->Fill(i,j,sigma);
       
-      //cout << "x = " << i->first.first << ", y = " << i->first.second << ", angle = " << i->second << endl;
+      cout << "x = " << i << ", y = " << j << endl;
     }
   }
   _hitInfo.clear();
@@ -751,6 +821,61 @@ void EUTelX0Processor::end()
   _inputHitCollectionVec = NULL;
   _inputTrackCollectionVec = NULL; 
   _referenceHitVec = NULL;  
+}
+
+pair< double, double > EUTelX0Processor::ConversionX0mapToHitmap(int x, int y){
+  double newx = minx + binsizex*x;
+  double newy = miny + binsizey*y;
+  pair< double, double > position(newx,newy);
+  return position;
+}
+
+pair< int, int > EUTelX0Processor::ConversionHitmapToX0map(double x, double y){
+  pair< int, int > position;
+  double newminbinx(minx);
+  double newminbiny(miny);
+  int actualbinx(0);
+  int actualbiny(0);
+  bool notfoundx = true;
+  bool notfoundy = true;
+  
+  while(notfoundx){ //Begin search for which bin of the radiation length map the track is going through
+    if(x > maxx){
+      string xistoobig = "The x coordinate of the hit is larger than the size of the sensor. Skipping this track";
+      throw xistoobig;
+    } //end of: if(x > maxx)
+    else if(x < newminbinx){
+      string xistoosmall = "The x coordinate of the hit is either smaller than the size of the sensor, or should have been caught in the previous bin. Skipping this track";
+      throw xistoosmall;
+    } //end of: else if(x < newminbinx)
+    else if(x < newminbinx + binsizex){
+      notfoundx = false;
+ 
+      while(notfoundy){ //Begin search for which bin of the radiation length map the track is going through
+        if(y > maxy){
+          string yistoobig = "The y coordinate of the hit is larger than the size of the sensor. Skipping this track";
+          throw yistoobig;
+        } //end of: if(y > mayy)
+        else if(y < newminbiny){
+          string yistoosmall = "The y coordinate of the hit is either smaller than the size of the sensor, or should have been caught in the previous bin. Skipping this track";
+          throw yistoosmall;
+        } //end of: else if(y < newminbiny)
+        else if(y < newminbiny + binsizey){
+          notfoundy = false;
+          position = pair<int, int>(actualbinx,actualbiny);
+        } //end of: else if(y < newminbiny + binsizey)
+        else{
+          newminbiny += binsizey;
+          actualbiny++;
+        } //end of: else [else if(y < newminbiny + binsizey)]
+      } // end of: while(notfoundy)
+    } //end of: else if(x < newminbinx + binsizex)
+    else{
+      newminbinx += binsizex;
+      actualbinx++;
+    } //end of: else [else if(x < newminbinx + binsizex)]
+  } // end of: while(notfoundx)
+  return position;
 }
 
 double EUTelX0Processor::calculateX0()

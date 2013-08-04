@@ -191,6 +191,8 @@ private:
   void threePointResolution(EVENT::Track *track);
   void kinkEstimate(EVENT::Track *track);
   void kinkGaussian();
+  std::pair< double, double > ConversionX0mapToHitmap(int x, int y);
+  std::pair< int, int > ConversionHitmapToX0map(double x, double y);
 
   //Private member values
   std::string _trackColName;
@@ -241,11 +243,13 @@ private:
   double minbinalpha;
   double maxbinalpha;
   int binsx;
-  int minbinsx;//(mm)
-  int maxbinsx;
+  double minx;//(mm)
+  double maxx;
   int binsy;
-  int minbinsy;
-  int maxbinsy;
+  double miny;
+  double maxy;
+  double binsizex;
+  double binsizey;
   TDirectory *X0ProcessorDirectory;
   TH1D *SinglePointResidualXPlane0;
   TH1D *SinglePointResidualXPlane1;
