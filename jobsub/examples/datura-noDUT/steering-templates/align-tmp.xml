@@ -56,7 +56,7 @@
   <!--Initialization of a data file handler-->
   <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
   <!--Initialization of a simple conditions file handler-->
-  <parameter name="SimpleFileHandler" type="StringVec"> refhit @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> referenceHit @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
@@ -87,11 +87,11 @@
   <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> PreAlignedHit </parameter>
   <!--Rotation Angle around X axis-->
   <!--parameter name="Alpha" type="double" value="0"/-->
-  <!--Available directinos are:
+  <!--Available directions are:
  0 -> direct  
  1 -> reverse -->
   <parameter name="ApplyAlignmentDirection" type="int" value="0"/>
-  <!--Do you want the reference hit collection to be corrected by the shifts and tilts from the alignment collection? (default - false )-->
+  <!--Do you want the reference hit collection to be corrected by the shifts and tilts from the alignment collection?-->
   <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
   <!--Rotation Angle around Y axis-->
   <!--parameter name="Beta" type="double" value="0"/-->
@@ -117,7 +117,7 @@
   <!--Events number to have DEBUG1 printed outs (default=10)-->
   <parameter name="PrintEvents" type="int" value="0"/>
   <!--This is the name of the reference hit collection-->
-  <parameter name="ReferenceCollection" type="string" value="refhit"/>
+  <!--parameter name="ReferenceCollection" type="string" value="referenceHit"/-->
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
   <!--List of alignment collections that were applied to the DUT-->
