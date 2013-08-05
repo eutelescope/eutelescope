@@ -93,6 +93,11 @@ EUTelX0Processor::EUTelX0Processor()
   AngleYForwardPlane2(NULL),
   AngleYForwardPlane3(NULL),
   AngleYForwardPlane4(NULL),
+  AngleXYForwardPlane0(NULL),
+  AngleXYForwardPlane1(NULL),
+  AngleXYForwardPlane2(NULL),
+  AngleXYForwardPlane3(NULL),
+  AngleXYForwardPlane4(NULL),
   ScatteringAngleXPlane1(NULL),
   ScatteringAngleXPlane2(NULL),
   ScatteringAngleXPlane3(NULL),
@@ -156,8 +161,8 @@ void EUTelX0Processor::init()
   minbinalpha = -0.01;
   maxbinalpha = 0.01;
   std::vector<double> empty;  
-  binsx = 22;
-  binsy = 12;
+  binsx = static_cast< int >((maxx-minx)/binsizex);
+  binsy = static_cast< int >((maxy-miny)/binsizey);
 
   SinglePointResidualXPlane1 = new TH1D("X0Processor/SinglePointResidualXPlane1",
                                          "Single Point Residual in X on Plane 1;\\Delta X (mm);Count",
@@ -303,6 +308,31 @@ void EUTelX0Processor::init()
                                  "Angle of Tracks in Y Direction Relative to the Z Axis on Plane 4;\\theta_x (rads);Count",
 				 nobinsangle,minbinangle,maxbinangle);
   _histoThing["AngleYForwardPlane4"] = AngleYForwardPlane4;
+  
+  AngleXYForwardPlane0 = new TH2D("X0Processor/AngleXYForwardPlane0",
+                                 "Angle of Tracks in XY Direction Relative to the Z Axis on Plane 0;\\theta_x (rads);\\theta_y (rads)",
+				 nobinsangle,minbinangle,maxbinangle,nobinsangle,minbinangle,maxbinangle);
+  _histoThing["AngleXYForwardPlane0"] = AngleXYForwardPlane0;
+  
+  AngleXYForwardPlane1 = new TH2D("X0Processor/AngleXYForwardPlane1",
+                                 "Angle of Tracks in XY Direction Relative to the Z Axis on Plane 1;\\theta_x (rads);\\theta_y (rads)",
+				 nobinsangle,minbinangle,maxbinangle,nobinsangle,minbinangle,maxbinangle);
+  _histoThing["AngleXYForwardPlane1"] = AngleXYForwardPlane1;
+  
+  AngleXYForwardPlane2 = new TH2D("X0Processor/AngleXYForwardPlane2",
+                                 "Angle of Tracks in XY Direction Relative to the Z Axis on Plane 2;\\theta_x (rads);\\theta_y (rads)",
+				 nobinsangle,minbinangle,maxbinangle,nobinsangle,minbinangle,maxbinangle);
+  _histoThing["AngleXYForwardPlane2"] = AngleXYForwardPlane2;
+  
+  AngleXYForwardPlane3 = new TH2D("X0Processor/AngleXYForwardPlane3",
+                                 "Angle of Tracks in XY Direction Relative to the Z Axis on Plane 3;\\theta_x (rads);\\theta_y (rads)",
+				 nobinsangle,minbinangle,maxbinangle,nobinsangle,minbinangle,maxbinangle);
+  _histoThing["AngleXYForwardPlane3"] = AngleXYForwardPlane3;
+  
+  AngleXYForwardPlane4 = new TH2D("X0Processor/AngleXYForwardPlane4",
+                                 "Angle of Tracks in XY Direction Relative to the Z Axis on Plane 4;\\theta_x (rads);\\theta_y (rads)",
+				 nobinsangle,minbinangle,maxbinangle,nobinsangle,minbinangle,maxbinangle);
+  _histoThing["AngleXYForwardPlane4"] = AngleXYForwardPlane4;
   
   ScatteringAngleXPlane1 = new TH1D("X0Processor/ScatteringAngleXPlane1",
                                     "Scattering Angle in X Direction Relative to the Z Axis on Plane 1;\\theta_x (rads);Count",
@@ -477,22 +507,8 @@ void EUTelX0Processor::printHitParameters( TrackerHit* trackhit ){
                         << hitcov[3] << ", " << hitcov[4] << ", " << hitcov[5] << std::endl << std::endl;
 }
 
-void EUTelX0Processor::kinkEstimate(Track* track){
-  //This function works out an angle based on a straight line fitted from plane 0 to 2 and plane 5 to 3
-  //It will also store all other angles in histograms too
-  streamlog_out(DEBUG0) << "Running function kinkEstimate(Track* " << &track << ")" << std::endl;
-  
-  //First we extract the relevant hits from the track
-  try{
-    std::vector< TVector3* > hits = getHitsFromTrack(track);
-  } catch(...)
-  { 
-    streamlog_out(ERROR3) << "Could not get hits from track" << endl;
-    return;
-  }
-  std::vector< TVector3* > hits = getHitsFromTrack(track);
-
-  streamlog_out(DEBUG3) << "Successfully got hits from track" << std::endl;
+pair< vector< double >, vector< double > > EUTelX0Processor::GetTrackAngles(vector< TVector3* > hits){
+  streamlog_out(DEBUG1) << "Begin pair< vector< double >, vector< double > > EUTelX0Processor::GetTrackAngles(vector< TVector3* > hits)" << endl;
   //Then we find the position where those lines would have hit the DUT
   //THIS IS TO BE DECIDED IF IT IS NEEDED LATER
   const double dutposition(hits[2]->z());
@@ -502,8 +518,9 @@ void EUTelX0Processor::kinkEstimate(Track* track){
   if(hitsize <= 1)
   {
     streamlog_out(DEBUG5) << "This track has only one hit, aborting track" << endl;
-    return;
+    throw;
   }
+
   std::vector< double > scatterx, scattery;
   streamlog_out(DEBUG3) << "hitsize = " << hitsize << std::endl;
   for(size_t i = 0; i < hitsize-1; ++i){ //Fill histograms with the angles of the track at each plane and push back those angles into a vector
@@ -523,10 +540,10 @@ void EUTelX0Processor::kinkEstimate(Track* track){
     scattery.push_back(frontangley);
 
     //Name the histograms
-    std::stringstream xforward,yforward,xbackward,ybackward;
+    std::stringstream xforward,yforward,xyforward;
     xforward << "AngleXForwardPlane" << i;
     yforward << "AngleYForwardPlane" << i;
-
+    xyforward << "AngleXYForwardPlane" << i;
     //Fill the histograms with the XZ and YZ angles
     try{
       dynamic_cast< TH1D* >(_histoThing[xforward.str().c_str()])->Fill(frontanglex);
@@ -538,136 +555,74 @@ void EUTelX0Processor::kinkEstimate(Track* track){
     } catch(std::bad_cast &bc){
       streamlog_out(ERROR3) << "Unable to fill histogram: " << yforward.str().c_str() << endl;
     }
+    try{
+      dynamic_cast< TH2D* >(_histoThing[xyforward.str().c_str()])->Fill(frontanglex,frontangley);
+    } catch(std::bad_cast &bc){
+      streamlog_out(ERROR3) << "Unable to fill histogram: " << xyforward.str().c_str() << endl;
+    }
   }
- 
-  const size_t scatterxsize = scatterx.size();
-  streamlog_out(DEBUG3) << "scatterxsize = " << scatterxsize << std::endl;
-  for(size_t i = 0; i < scatterxsize-1; ++i){ //This fills the scattering angle histograms plane by plane
-    //Scattering angle is the forward angle between planes i to i+1 and plane i+1 to i+2
-    const double scatteringanglex = scatterx[i+1] - scatterx[i];
-    const double scatteringangley = scattery[i+1] - scattery[i];
+  pair< vector< double >, vector< double > > bothangles(scatterx,scattery);
+  return bothangles;
+}
 
-    //Name the histograms
-    std::stringstream ssscatterx,ssscattery,ssscatterxy;
-    ssscatterx << "ScatteringAngleXPlane" << i+1;
-    ssscattery << "ScatteringAngleYPlane" << i+1;
-    ssscatterxy << "KinkAnglePlane" << i+1;
-    if(i == 1) //If we are looking at the angle between planes 1 to 2 and planes 2 to 3 (So this includes the DUT)
-    {
-      double x = hits[i+1]->x();
-      double y = hits[i+1]->y();
+void EUTelX0Processor::kinkEstimate(Track* track){
+  //This function works out an angle based on a straight line fitted from plane 0 to 2 and plane 5 to 3
+  //It will also store all other angles in histograms too
+  streamlog_out(DEBUG0) << "Running function kinkEstimate(Track* " << &track << ")" << std::endl;
+  
+  //First we extract the relevant hits from the track
+  try{
+    std::vector< TVector3* > hits = getHitsFromTrack(track);
+  } catch(...)
+  { 
+    streamlog_out(ERROR3) << "Could not get hits from track" << endl;
+    return;
+  }
+  std::vector< TVector3* > hits = getHitsFromTrack(track);
 
-      pair< int, int > position(ConversionHitmapToX0map(x,y));
-      ScatteringAngleXMapData[position].push_back(scatteringanglex);
-      ScatteringAngleYMapData[position].push_back(scatteringangley);
-
-/*      
-      while(notfoundx){ //Begin search for which bin of the radiation length map the track is going through
-        if(x > maxx){
-	  string xistoobig = "The x coordinate of the hit is larger than the size of the sensor. Skipping this track";
-          throw xistoobig;
-	} //end of: if(x > maxx)
-	else if(x < newminbinx){
-          string xistoosmall = "The x coordinate of the hit is either smaller than the size of the sensor, or should have been caught in the previous bin. Skipping this track";
-          throw xistoosmall;
-	} //end of: else if(x < newminbinx)
-	else if(x < newminbinx + binsizex){
-	  notfoundx = false;
- 
-          while(notfoundy){ //Begin search for which bin of the radiation length map the track is going through
-          if(y > maxy){
-            string yistoobig = "The y coordinate of the hit is larger than the size of the sensor. Skipping this track";
-            throw yistoobig;
-          } //end of: if(y > mayy)
-          else if(y < newminbiny){
-            string yistoosmall = "The y coordinate of the hit is either smaller than the size of the sensor, or should have been caught in the previous bin. Skipping this track";
-            throw yistoosmall;
-          } //end of: else if(y < newminbiny)
-          else if(y < newminbiny + binsizey){
-            notfoundy = false;
-	    pair< int, int > position(newminbinx,newminbiny);
-            ScatteringAngleXMapData[position].push_back(scatteringanglex); //pair of ints and a vector of doubles
-            ScatteringAngleYMapData[position].push_back(scatteringangley); 
-	  } //end of: else if(y < newminbiny + binsizey)
-          else{
-            newminbiny += binsizey;
-          } //end of: else [else if(y < newminbiny + binsizey)]
-        } // end of: while(notfoundy)
-
-	} //end of: else if(x < newminbinx + binsizex)
-	else{
-          newminbinx += binsizex;
-	} //end of: else [else if(x < newminbinx + binsizex)]
-      } // end of: while(notfoundx)
-
-*/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-
-      while(notfoundx)//This checks which bin the track is going through in x the DUT and stores the variable for making a radiation map later
+  streamlog_out(DEBUG3) << "Successfully got hits from track" << std::endl;
+  try{
+    pair< vector< double >, vector< double > > scatterpair(GetTrackAngles(hits));
+    std::vector< double > scatterx = scatterpair.first, scattery = scatterpair.second;
+    const size_t scatterxsize = scatterx.size();
+    streamlog_out(DEBUG3) << "scatterxsize = " << scatterxsize << std::endl;
+    for(size_t i = 0; i < scatterxsize-1; ++i){ //This fills the scattering angle histograms plane by plane
+      //Scattering angle is the forward angle between planes i to i+1 and plane i+1 to i+2
+      const double scatteringanglex = scatterx[i+1] - scatterx[i];
+      const double scatteringangley = scattery[i+1] - scattery[i];
+  
+      //Name the histograms
+      std::stringstream ssscatterx,ssscattery,ssscatterxy;
+      ssscatterx << "ScatteringAngleXPlane" << i+1;
+      ssscattery << "ScatteringAngleYPlane" << i+1;
+      ssscatterxy << "KinkAnglePlane" << i+1;
+      if(i == 1) //If we are looking at the angle between planes 1 to 2 and planes 2 to 3 (So this includes the DUT)
       {
-        if(x >= newminbinx && x < newminbinx + binsizex)
-        {
-          notfoundx = false;
-          bool notfoundy = true;
-          while(notfoundy)//This checks which bin the track is going through in y
-          {
-            if(y >= newminbiny && y < newminbiny + binsizey)
-	    { //track is in bin actualbinx, actualbiny
-	      notfoundy = false;
-              pair< int, int > position(actualbinx,actualbiny); //Puts the bin numbers into a pair
-              ScatteringAngleXMapData[position].push_back(scatteringanglex);
-	    } //end of if(y >= newminbiny && y < newminbiny + binsizey)
-            else if(newminbiny <= maxbinsy){
-	      newminbiny += binsizey;
-	      ++actualbiny;
-	    } else
-	    {
-	      streamlog_out(ERROR5) << "Somehow there is a hit beyond the scope of the sensor" << endl;
-	    }
-	  }
-        }
-        else if(newminbinx <= maxbinsx)
-        {
-          newminbinx += binsizex;
-	  ++actualbinx;
-        } else
-	{
-	  streamlog_out(ERROR5) << "Somehow there is a hit beyond the scope of the sensor" << endl;
-	}
+        double x = hits[i+1]->x();
+        double y = hits[i+1]->y();
+  
+        pair< int, int > position(ConversionHitmapToX0map(x,y));
+        ScatteringAngleXMapData[position].push_back(scatteringanglex);
+        ScatteringAngleYMapData[position].push_back(scatteringangley);
       }
-
-*/
-
+      try{
+        dynamic_cast< TH1D* >(_histoThing[ssscatterx.str().c_str()])->Fill(scatteringanglex);
+      } catch(std::bad_cast &bc){
+        streamlog_out(ERROR3) << "Unable to fill histogram: " << ssscatterx.str().c_str() << endl;
+      }
+      try{
+        dynamic_cast< TH1D* >(_histoThing[ssscattery.str().c_str()])->Fill(scatteringangley);
+      } catch(std::bad_cast &bc){
+        streamlog_out(ERROR3) << "Unable to fill histogram: " << ssscattery.str().c_str() << endl;
+      }
+      try{
+        dynamic_cast< TH2D* >(_histoThing[ssscatterxy.str().c_str()])->Fill(scatteringanglex,scatteringangley);
+      } catch(std::bad_cast &bc){
+        streamlog_out(ERROR3) << "Unable to fill histogram: " << ssscatterxy.str().c_str() << endl;
+      }
     }
-    try{
-      dynamic_cast< TH1D* >(_histoThing[ssscatterx.str().c_str()])->Fill(scatteringanglex);
-    } catch(std::bad_cast &bc){
-      streamlog_out(ERROR3) << "Unable to fill histogram: " << ssscatterx.str().c_str() << endl;
-    }
-    try{
-      dynamic_cast< TH1D* >(_histoThing[ssscattery.str().c_str()])->Fill(scatteringangley);
-    } catch(std::bad_cast &bc){
-      streamlog_out(ERROR3) << "Unable to fill histogram: " << ssscattery.str().c_str() << endl;
-    }
-    try{
-      dynamic_cast< TH2D* >(_histoThing[ssscatterxy.str().c_str()])->Fill(scatteringanglex,scatteringangley);
-    } catch(std::bad_cast &bc){
-      streamlog_out(ERROR3) << "Unable to fill histogram: " << ssscatterxy.str().c_str() << endl;
-    }
+  } catch(...){
+    return;
   }
   streamlog_out(DEBUG3) << "Made it to the end of kinkEstimate()" << endl;
 }
@@ -712,7 +667,7 @@ void EUTelX0Processor::processEvent(LCEvent *evt)
       for(int i = 0; i < elementnumber; ++i){
         Track* eventtrack = dynamic_cast< Track* >(trackcollection->getElementAt(i));
         streamlog_out(DEBUG0) << "Here is all the information about the track in run " << _runNumber << ", event " << _eventNumber << ", element " << i << std::endl << std::endl;
-        printTrackParameters( eventtrack );
+//        printTrackParameters( eventtrack );
         kinkEstimate( eventtrack );
 //        singlePointResolution( eventtrack );
 //        threePointResolution( eventtrack );

@@ -189,6 +189,7 @@ private:
   void printHitParameters(EVENT::TrackerHit *hit);
   void singlePointResolution(EVENT::Track *track);
   void threePointResolution(EVENT::Track *track);
+  std::pair< std::vector< double >, std::vector< double > > GetTrackAngles(std::vector< TVector3* > hits);
   void kinkEstimate(EVENT::Track *track);
   void kinkGaussian();
   std::pair< double, double > ConversionX0mapToHitmap(int x, int y);
@@ -281,6 +282,11 @@ private:
   TH1D *AngleYForwardPlane2;
   TH1D *AngleYForwardPlane3;
   TH1D *AngleYForwardPlane4;
+  TH2D *AngleXYForwardPlane0;
+  TH2D *AngleXYForwardPlane1;
+  TH2D *AngleXYForwardPlane2;
+  TH2D *AngleXYForwardPlane3;
+  TH2D *AngleXYForwardPlane4;
   TH1D *ScatteringAngleXPlane1;
   TH1D *ScatteringAngleXPlane2;
   TH1D *ScatteringAngleXPlane3;
