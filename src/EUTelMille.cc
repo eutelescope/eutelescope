@@ -1353,9 +1353,9 @@ void EUTelMille::processEvent (LCEvent * event) {
 
             // Getting positions of the hits.
             // ------------------------------
-            hitsInPlane.measuredX = 1000 * hit->getPosition()[0];
-            hitsInPlane.measuredY = 1000 * hit->getPosition()[1];
-            hitsInPlane.measuredZ = 1000 * hit->getPosition()[2];
+            hitsInPlane.measuredX = 1000. * hit->getPosition()[0];
+            hitsInPlane.measuredY = 1000. * hit->getPosition()[1];
+            hitsInPlane.measuredZ = 1000. * hit->getPosition()[2];
 
             _allHitsArray[layerIndex].push_back(hitsInPlane);
             delete cluster; // <--- destroying the cluster
@@ -1623,9 +1623,9 @@ void EUTelMille::processEvent (LCEvent * event) {
 
                   hitsplane.push_back(
                           EUTelMille::HitsInPlane(
-                              1000 * hit->getPosition()[0],
-                              1000 * hit->getPosition()[1],
-                              1000 * hit->getPosition()[2]
+                              1000. * hit->getPosition()[0],
+                              1000. * hit->getPosition()[1],
+                              1000. * hit->getPosition()[2]
                               )
                           );
  
@@ -1652,9 +1652,9 @@ void EUTelMille::processEvent (LCEvent * event) {
                             {
                               hitsplane.push_back(
                                       EUTelMille::HitsInPlane(
-                                          PositionsHere[0] * 1000,
-                                          PositionsHere[1] * 1000,
-                                          PositionsHere[2] * 1000
+                                          PositionsHere[0] * 1000.,
+                                          PositionsHere[1] * 1000.,
+                                          PositionsHere[2] * 1000.
                                           )
                                       );
                             } // end assume fitted hits have type 32
@@ -3283,7 +3283,6 @@ void EUTelMille::end() {
           vector<double > tokens;
           stringstream tokenizer;
           string line;
-          //double buffer;
 
           // get the first line and throw it away since it is a
           // comment!
@@ -3302,8 +3301,6 @@ void EUTelMille::end() {
             else
               numpars = 6;
 
-            //bool _nonzero_tokens = false;
-
             for ( unsigned int iParam = 0 ; iParam < numpars ; ++iParam ) 
             {
               getline( millepede, line );
@@ -3317,11 +3314,11 @@ void EUTelMille::end() {
               tokenizer.clear();
               tokenizer.str( line );
 
+	      double buffer;
               // // check that all parts of the line are non zero
-              // while ( tokenizer >> buffer ) {
-              //   tokens.push_back( buffer ) ;
-              //   if(buffer> 1e-12) _nonzero_tokens = true;
-              // }
+              while ( tokenizer >> buffer ) {
+                tokens.push_back( buffer ) ;
+              }
 
               if ( ( tokens.size() == 3 ) || ( tokens.size() == 6 ) || (tokens.size() == 5) ) {
                 goodLine = true;
@@ -3331,12 +3328,12 @@ void EUTelMille::end() {
               if(_alignMode != 3)
                 {
                  if ( iParam == 0 ) {
-                    constant->setXOffset( tokens[1] / 1000 );
-                    if ( ! isFixed ) constant->setXOffsetError( tokens[4] / 1000 ) ;
+                    constant->setXOffset( tokens[1] / 1000. );
+                    if ( ! isFixed ) constant->setXOffsetError( tokens[4] / 1000. ) ;
                   }
                   if ( iParam == 1 ) {
-                    constant->setYOffset( tokens[1] / 1000 ) ;
-                    if ( ! isFixed ) constant->setYOffsetError( tokens[4] / 1000 ) ;
+                    constant->setYOffset( tokens[1] / 1000. ) ;
+                    if ( ! isFixed ) constant->setYOffsetError( tokens[4] / 1000. ) ;
                   }
                   if ( iParam == 2 ) {
                     constant->setGamma( tokens[1]  ) ;
@@ -3346,16 +3343,16 @@ void EUTelMille::end() {
               else
                 {
                  if ( iParam == 0 ) {
-                    constant->setXOffset( tokens[1] / 1000 );
-                    if ( ! isFixed ) constant->setXOffsetError( tokens[4] / 1000 ) ;                    
+                    constant->setXOffset( tokens[1] / 1000. );
+                    if ( ! isFixed ) constant->setXOffsetError( tokens[4] / 1000. ) ;                    
                   }
                   if ( iParam == 1 ) {
-                    constant->setYOffset( tokens[1] / 1000 ) ;
-                    if ( ! isFixed ) constant->setYOffsetError( tokens[4] / 1000 ) ;
+                    constant->setYOffset( tokens[1] / 1000. ) ;
+                    if ( ! isFixed ) constant->setYOffsetError( tokens[4] / 1000. ) ;
                   }
                   if ( iParam == 2 ) {
-                    constant->setZOffset( tokens[1] / 1000 ) ;
-                    if ( ! isFixed ) constant->setZOffsetError( tokens[4] / 1000 ) ;
+                    constant->setZOffset( tokens[1] / 1000. ) ;
+                    if ( ! isFixed ) constant->setZOffsetError( tokens[4] / 1000. ) ;
                   }
                   if ( iParam == 3 ) {
                     constant->setAlpha( tokens[1]  ) ;
