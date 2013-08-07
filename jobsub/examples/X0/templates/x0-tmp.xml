@@ -49,12 +49,12 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
    <parameter name="DebugEventCount" type="int" value="100"/>
    <parameter name="CutValue" type="double" value="500000"/>
    <parameter name="ReferenceCollection" type="string" > refhit </parameter>
-   <parameter name="RadiationLengthMapMinX" type="double" value="-11.0"/>
-   <parameter name="RadiationLengthMapMaxX" type="double" value="11.0"/>
-   <parameter name="RadiationLengthMapMinY" type="double" value="-6.0"/>
-   <parameter name="RadiationLengthMapMaxY" type="double" value="6.0"/>
-   <parameter name="RadiationLengthMapBinSizeX" type="double" value="0.5"/>
-   <parameter name="RadiationLengthMapBinSizeY" type="double" value="2.0"/>
+   <parameter name="RadiationLengthMapMinX" type="double" value="@RadiationLengthMapMinX@"/>
+   <parameter name="RadiationLengthMapMaxX" type="double" value="@RadiationLengthMapMaxX@"/>
+   <parameter name="RadiationLengthMapMinY" type="double" value="@RadiationLengthMapMinY@"/>
+   <parameter name="RadiationLengthMapMaxY" type="double" value="@RadiationLengthMapMaxY@"/>
+   <parameter name="RadiationLengthMapBinSizeX" type="double" value="@RadiationLengthMapBinSizeX@"/>
+   <parameter name="RadiationLengthMapBinSizeY" type="double" value="@RadiationLengthMapBinSizeY@"/>
  </processor>
 
 <processor name="MyEUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">

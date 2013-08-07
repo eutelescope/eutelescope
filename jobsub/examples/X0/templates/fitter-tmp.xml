@@ -106,7 +106,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!--Implement geometry shifts and rotations as described in alignmentCollectionName -->
   <parameter name="DoAlignCollection" type="bool" value="true"/>
   <!--Enable or disable histograms-->
-  <parameter name="HistogramSwitch" type="bool" value="false"/>
+  <parameter name="HistogramSwitch" type="bool" value="true"/>
   <parameter name="DEBUG" type="bool" value="false"/>
   <parameter name="PrintEvents" type="int" value="0"/>
  </processor>

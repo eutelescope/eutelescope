@@ -122,7 +122,7 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
         within the selected number of event per cycle-->
     <parameter name="MaxAllowedFiringFreq" type="float" value="@MaxHotPixelFiringFrequency@"/>
     <!--The number of events to be considered for each update cycle-->
-    <parameter name="NoOfEventPerCycle" type="int" value="9999"/>
+    <parameter name="NoOfEventPerCycle" type="int" value="@NoOfEventPerCycle@"/>
     <!--The total number of hot pixel cycle-->
     <parameter name="TotalNoOfCycle" type="int" value="0"/>
  </processor>
