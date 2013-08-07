@@ -128,7 +128,7 @@
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTFilterLog PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTFilterRun)
 
     # we (still) expect an average of 24.4 clusters per event
-    ADD_TEST( TestJobsubExampleDaturaNoDUTFilterOutput sh -c "[ -f ${testdir}/output/lcio/run${PaddedRunNr}-clustering-filtered.slcio ] && lcio_check_col_elements --average --expelements 24 filtered_cluster_m26 ${testdir}/output/lcio/run${PaddedRunNr}-clustering-filtered.slcio" )
+    ADD_TEST( TestJobsubExampleDaturaNoDUTFilterOutput sh -c "[ -f ${testdir}/output/lcio/run${PaddedRunNr}-clustering-filtered.slcio ] && lcio_check_col_elements --average --expelements 23 filtered_cluster_m26 ${testdir}/output/lcio/run${PaddedRunNr}-clustering-filtered.slcio" )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTFilterOutput PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTFilterRun)
 
 
