@@ -23,7 +23,7 @@ considered outdated and will no longer be supported.
       between files. See the README and online documentation for details. 
       NOTE: due to its dependency on rootpy, pyroplot requires Python 2.6 or
       later.
-*** 0.9.0 (not yet released)
+*** 0.9.0 (8.8.13)
     - Improved histogram output (binning, description, axis labels)
     - EUTelMille now allows to include custom pede commands into the
       generated pede steering file directly via processor option.
