@@ -332,7 +332,6 @@ endif()
   INCLUDE(jobsub/examples/datura-noDUT/testing.cmake)
   INCLUDE(jobsub/examples/datura-alone/testing.cmake)
   INCLUDE(jobsub/examples/anemone-2FEI4/testing.cmake)
-  INCLUDE(pysub/examples/anemone-2FEI4/testing.cmake)
 
   configure_file (
 	       ./CTestCustom.cmake.in   # set custom settings (e.g. tests to be skipped for valgrind)

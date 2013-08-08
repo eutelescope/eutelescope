@@ -23,32 +23,38 @@ considered outdated and will no longer be supported.
       between files. See the README and online documentation for details. 
       NOTE: due to its dependency on rootpy, pyroplot requires Python 2.6 or
       later.
-*** 0.9.0 (8.8.13)
+*** 0.9.0 (08.08.2013)
     - Improved histogram output (binning, description, axis labels)
     - EUTelMille now allows to include custom pede commands into the
       generated pede steering file directly via processor option.
     - New jobsub example for using ATLAS FEI4 as DUT in Anemone telescope
     - EUTelHitmaker now assigns uncertainties to hits (taken from
       information in GEAR file for now)
-    - moved external libraries to ./extern
+    - moved external libraries to ./external
     - updated and added examples (using jobsub framework)
     - New ApplyAlignment processor (EUTelProcessorApplyAlignment,
       needed for 6D alignment using GBL)
     - use reference vectors for coordinate transformations by default
       to ensure consistency between processors
+    - removed obsolete pysub scripts (see notes on updating)
     - Code cleanup: fixed many compiler warnings/errors
     - Code cleanup: removed obsolete code and unused processor parameters
 ** Notes on updating
+   - pysub (a job submission script collection used as default in
+     EUTelescope versions prior to 0.8) has been removed for being
+     obsolete: its functionality was replaced by the more flexible and
+     user-friendlier jobsub script. See the jobsub README file for
+     information on how to transfer your analysis templates to jobsub.
    - the reference vector collection initialized in the hitmaker step
      is now used for coordinate transformation calculations by default
      in all processors (options "UseReferenceCollection" and
      "ApplyToReferenceCollection"); if, for some reason, you disabled
-     this feature explicitly, plese make sure that this is done
+     this feature explicitly, please make sure that this is done
      consistently throughout your analysis. This should not affect you
      if e.g. you based your analysis on any recent examples.
    - changed verbosity: many processors do not print information on
      every event anymore. This is now done through the
-     PrintEventNumber processer (see "datura-noDUT" example)
+     PrintEventNumber processor (see "datura-noDUT" example)
    - some processor options have changed or have been added.  Update
      them through "Marlin -u" command and search for any parameter
      that is prefixed with the comment "<!-- Sorry, this parameter
@@ -72,7 +78,7 @@ considered outdated and will no longer be supported.
    - GBL: Applying "6D" alignment (with 6 degrees of freedom) requires
      using the EUTelApplyAlignmentProcessor together with a reference
      vector collection (created through EUTelHitmaker and loaded
-     before applying the alingment) for consistent treatment of
+     before applying the alignment) for consistent treatment of
      alignment shifts and rotations. The 3D alignment (x,y,xy),
      however, can be applied using with or without reference vector
      collections.
@@ -97,12 +103,12 @@ considered outdated and will no longer be supported.
     - All examples now use CTest framework for automated regression tests.
     - Includes processors for CMS Pixel chips (PSI46xxx).
     - Updated and improved documentation including examples.
-*** 0.8.4 (released 1.8.2013)
+*** 0.8.4 (released 01.08.2013)
     - jobsub: fixes loading of the argparse module provided when using
       Python versions older than 2.7
     - jobsub: fixes backtrace on certain errors with Python versions < 2.7
     - fixed some typos in documentation
-*** 0.8.3 (released 26.6.2013)
+*** 0.8.3 (released 26.06.2013)
     - New PedeSteeringAdditionalCmds parameter in EUTelMille: allows
       to add arbitrary parameters to the generated pede steering file
     - Updated example analysis datura-noDUT
