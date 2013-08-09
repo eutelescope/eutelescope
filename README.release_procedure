@@ -37,7 +37,9 @@ Notes on the procedure for new EUTelescope releases:
 9. update web pages:
    - update installation documentation
    - update release notes/change log (from README.release_notes,
-     e.g. via emacs-org-mode html-export feature)
+     e.g. via emacs-org-mode html-export feature, use regex
+     'id=\(.*\)>\(.*\)</h\([234]\)>' -> '><a name=\1>\2</a></h\3>' to
+     set anchors in a drupal-compatible manner)
 10. announce! :)
     - main page
     - forum

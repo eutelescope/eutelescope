@@ -17,12 +17,12 @@ considered outdated and will no longer be supported.
       processor (see examples).
     - Optimized code efficiency, especially in histogram filling routines
     - New tool for plotting the histograms produced during your
-      analysis: Using "pyroplot" (Python ROOT plotter) you can easily
-      generate a single pdf file containing all or a selection of
-      histograms from arbitrary root files or even compare histograms
-      between files. See the README and online documentation for details. 
-      NOTE: due to its dependency on rootpy, pyroplot requires Python 2.6 or
-      later.
+      analysis: Using "pyroplot" (Python ROOT plotter, located in
+      tools/pyroplot) you can easily generate a single pdf file
+      containing all or a selection of histograms from arbitrary root
+      files or even compare histograms between files. See the tools/pyroplot/README
+      and online documentation for details.  NOTE: due to its
+      dependency on rootpy, pyroplot requires Python 2.6 or later.
 *** 0.9.0 (08.08.2013)
     - Improved histogram output (binning, description, axis labels)
     - EUTelMille now allows to include custom pede commands into the

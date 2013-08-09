@@ -1,5 +1,7 @@
 # this file uses emacs Org mode formatting -*- mode: Org; -*-
-Python ROOT plotter - A tool for selecting and assembling histogram
+#+options: num:nil toc:2
+pyroplot - Python ROOT plotter
+A tool for selecting and generating histogram
 plots and comparision plots from multiple ROOT files at once
 * Requirements
 ** Python
