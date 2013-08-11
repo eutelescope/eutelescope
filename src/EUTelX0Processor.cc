@@ -565,6 +565,46 @@ pair< vector< double >, vector< double > > EUTelX0Processor::GetTrackAngles(vect
   return bothangles;
 }
 
+void EUTelX0Processor::SinglePlaneTrackScatteringAngles(vector< double > scatterx, vector< double > scattery, std::vector< TVector3* > hits){
+  const size_t scatterxsize = scatterx.size();
+  streamlog_out(DEBUG3) << "scatterxsize = " << scatterxsize << std::endl;
+  for(size_t i = 0; i < scatterxsize-1; ++i){ //This fills the scattering angle histograms plane by plane
+    //Scattering angle is the forward angle between planes i to i+1 and plane i+1 to i+2
+    const double scatteringanglex = scatterx[i+1] - scatterx[i];
+    const double scatteringangley = scattery[i+1] - scattery[i];
+
+    //Name the histograms
+    std::stringstream ssscatterx,ssscattery,ssscatterxy;
+    ssscatterx << "ScatteringAngleXPlane" << i+1;
+    ssscattery << "ScatteringAngleYPlane" << i+1;
+    ssscatterxy << "KinkAnglePlane" << i+1;
+    if(i == 1) //If we are looking at the angle between planes 1 to 2 and planes 2 to 3 (So this includes the DUT)
+    {
+      double x = hits[i+1]->x();
+      double y = hits[i+1]->y();
+
+      pair< int, int > position(ConversionHitmapToX0map(x,y));
+      ScatteringAngleXMapData[position].push_back(scatteringanglex);
+      ScatteringAngleYMapData[position].push_back(scatteringangley);
+    }
+    try{
+      dynamic_cast< TH1D* >(_histoThing[ssscatterx.str().c_str()])->Fill(scatteringanglex);
+    } catch(std::bad_cast &bc){
+      streamlog_out(ERROR3) << "Unable to fill histogram: " << ssscatterx.str().c_str() << endl;
+    }
+    try{
+      dynamic_cast< TH1D* >(_histoThing[ssscattery.str().c_str()])->Fill(scatteringangley);
+    } catch(std::bad_cast &bc){
+      streamlog_out(ERROR3) << "Unable to fill histogram: " << ssscattery.str().c_str() << endl;
+    }
+    try{
+      dynamic_cast< TH2D* >(_histoThing[ssscatterxy.str().c_str()])->Fill(scatteringanglex,scatteringangley);
+    } catch(std::bad_cast &bc){
+      streamlog_out(ERROR3) << "Unable to fill histogram: " << ssscatterxy.str().c_str() << endl;
+    }
+  }
+}
+
 void EUTelX0Processor::kinkEstimate(Track* track){
   //This function works out an angle based on a straight line fitted from plane 0 to 2 and plane 5 to 3
   //It will also store all other angles in histograms too
@@ -584,43 +624,7 @@ void EUTelX0Processor::kinkEstimate(Track* track){
   try{
     pair< vector< double >, vector< double > > scatterpair(GetTrackAngles(hits));
     std::vector< double > scatterx = scatterpair.first, scattery = scatterpair.second;
-    const size_t scatterxsize = scatterx.size();
-    streamlog_out(DEBUG3) << "scatterxsize = " << scatterxsize << std::endl;
-    for(size_t i = 0; i < scatterxsize-1; ++i){ //This fills the scattering angle histograms plane by plane
-      //Scattering angle is the forward angle between planes i to i+1 and plane i+1 to i+2
-      const double scatteringanglex = scatterx[i+1] - scatterx[i];
-      const double scatteringangley = scattery[i+1] - scattery[i];
-  
-      //Name the histograms
-      std::stringstream ssscatterx,ssscattery,ssscatterxy;
-      ssscatterx << "ScatteringAngleXPlane" << i+1;
-      ssscattery << "ScatteringAngleYPlane" << i+1;
-      ssscatterxy << "KinkAnglePlane" << i+1;
-      if(i == 1) //If we are looking at the angle between planes 1 to 2 and planes 2 to 3 (So this includes the DUT)
-      {
-        double x = hits[i+1]->x();
-        double y = hits[i+1]->y();
-  
-        pair< int, int > position(ConversionHitmapToX0map(x,y));
-        ScatteringAngleXMapData[position].push_back(scatteringanglex);
-        ScatteringAngleYMapData[position].push_back(scatteringangley);
-      }
-      try{
-        dynamic_cast< TH1D* >(_histoThing[ssscatterx.str().c_str()])->Fill(scatteringanglex);
-      } catch(std::bad_cast &bc){
-        streamlog_out(ERROR3) << "Unable to fill histogram: " << ssscatterx.str().c_str() << endl;
-      }
-      try{
-        dynamic_cast< TH1D* >(_histoThing[ssscattery.str().c_str()])->Fill(scatteringangley);
-      } catch(std::bad_cast &bc){
-        streamlog_out(ERROR3) << "Unable to fill histogram: " << ssscattery.str().c_str() << endl;
-      }
-      try{
-        dynamic_cast< TH2D* >(_histoThing[ssscatterxy.str().c_str()])->Fill(scatteringanglex,scatteringangley);
-      } catch(std::bad_cast &bc){
-        streamlog_out(ERROR3) << "Unable to fill histogram: " << ssscatterxy.str().c_str() << endl;
-      }
-    }
+    SinglePlaneTrackScatteringAngles(scatterx, scattery, hits);
   } catch(...){
     return;
   }
@@ -628,20 +632,6 @@ void EUTelX0Processor::kinkEstimate(Track* track){
 }
 
 void EUTelX0Processor::kinkGaussian(){
-/*
-  gStyle->SetOptFit(111);
-  std::string _histoFile = "/scratch/hamnett/TestBeam/2013/data_X0MeasurementsOneWeek20012013/histo/000001-track-histo.root";
-  TFile *file = new TFile(_histoFile.c_str(),"UPDATE");
-  TDirectory *directory = (TDirectory*)file->GetDirectory("X0Scanner");
-  directory->ls();
-  TH1D *histogram = (TH1D*)directory->Get("KinkAngle");
-  histogram->Draw();
-  TF1 *fit = new TF1("fit","gaus",0,5);
-  histogram->Fit("fit","R");
-  file->Write();
-*/
-  
-//  AIDA::IFitter * fit = AIDAProcessor::getIAnalysisFactory(this)->createFitFactory()->createFitter("Chi2")->fit(_histoThing["Kink Angle"],fitfunction);
 
 }
 

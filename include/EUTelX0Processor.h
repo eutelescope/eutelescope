@@ -190,6 +190,7 @@ private:
   void singlePointResolution(EVENT::Track *track);
   void threePointResolution(EVENT::Track *track);
   std::pair< std::vector< double >, std::vector< double > > GetTrackAngles(std::vector< TVector3* > hits);
+  void SinglePlaneTrackScatteringAngles(std::vector< double > scatterx, std::vector< double > scattery, std::vector< TVector3* > hits);
   void kinkEstimate(EVENT::Track *track);
   void kinkGaussian();
   std::pair< double, double > ConversionX0mapToHitmap(int x, int y);
