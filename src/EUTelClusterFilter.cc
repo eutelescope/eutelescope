@@ -1092,7 +1092,7 @@ void EUTelClusterFilter::processEvent (LCEvent * event) {
     }
     catch (DataNotAvailableException& e )
     {
-        streamlog_out ( WARNING2 )  << "Input collection not found in the current event." << endl;
+        streamlog_out ( MESSAGE2 )  << "Input collection not found in the current event." << endl;
         return;
     }
 }
