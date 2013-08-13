@@ -722,7 +722,7 @@ if( static_cast< int >(iplane_unique.size()) > _minNumberOfCorrelatedHits && tra
     }
   } catch (DataNotAvailableException& e  ) {
 
-    streamlog_out  ( WARNING2 ) <<  "No input collection found on event " << event->getEventNumber()
+    streamlog_out  ( MESSAGE2 ) <<  "No input collection found on event " << event->getEventNumber()
                                 << " in run " << event->getRunNumber() << endl;
   }
 
