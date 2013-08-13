@@ -465,7 +465,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
     }
     catch (DataNotAvailableException& e  ) 
     {
-      streamlog_out  ( WARNING9 ) <<  "No input collection " << _pulseCollectionName << " found on event " << event->getEventNumber()
+      streamlog_out  ( MESSAGE2 ) <<  "No input collection " << _pulseCollectionName << " found on event " << event->getEventNumber()
                                   << " in run " << event->getRunNumber() << endl;
       return ;
     }
