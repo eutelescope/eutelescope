@@ -67,6 +67,7 @@
 #include "TH2F.h"
 #include "TH2D.h"
 #include "TFile.h"
+#include "TGraph.h"
 #include "TLine.h"
 #include "TMinuit.h"
 #include "TProfile.h"
@@ -189,8 +190,10 @@ private:
   void printHitParameters(EVENT::TrackerHit *hit);
   void singlePointResolution(EVENT::Track *track);
   void threePointResolution(EVENT::Track *track);
-  std::pair< std::vector< double >, std::vector< double > > GetTrackAngles(std::vector< TVector3* > hits);
+  std::pair< std::vector< double >, std::vector< double > > GetSingleTrackAngles(std::vector< TVector3* > hits);
+  std::pair< std::vector< double >, std::vector< double > > GetTripleTrackAngles(std::vector< TVector3* > hits);
   void SinglePlaneTrackScatteringAngles(std::vector< double > scatterx, std::vector< double > scattery, std::vector< TVector3* > hits);
+  void TriplePlaneTrackScatteringAngles(std::vector< double > scatterx, std::vector< double > scattery, std::vector< TVector3* > hits);
   void kinkEstimate(EVENT::Track *track);
   void kinkGaussian();
   std::pair< double, double > ConversionX0mapToHitmap(int x, int y);
@@ -206,19 +209,6 @@ private:
   std::map< std::string , std::vector< double > > _histoData;
   std::string _histoFile;
   std::map< std::string , TH1* > _histoThing;  //This map contains all the histograms that are going to be plotted in this processor
-  static std::string _histoResidualX;
-  static std::string _histoResidualXPlane1;
-  static std::string _histoResidualXPlane2;
-  static std::string _histoResidualXPlane3;
-  static std::string _histoResidualXPlane4;
-  static std::string _histoResidualY;
-  static std::string _histoResidualYPlane1;
-  static std::string _histoResidualYPlane2;
-  static std::string _histoResidualYPlane3;
-  static std::string _histoResidualYPlane4;
-  static std::string _histoResidualXY;
-  static std::string _histoResidualXZ;
-  static std::string _histoResidualYZ;
   std::map< int, std::vector< TVector3 > > _hitInfo;  //This stores the hit position in a TVector3. If there are multiple hits then they are all stored in the vector of TVector3's. The int key refers to the layer number
   IMPL::LCCollectionVec* _inputHitCollectionVec;  //Stores the information being brought in from the Marlin process which contains information about post-aligned hits
   IMPL::LCCollectionVec* _inputTrackCollectionVec;  //Stores the information being brought in from the Marlin process which contains information about post-aligned hits
@@ -253,6 +243,18 @@ private:
   double binsizex;
   double binsizey;
   TDirectory *X0ProcessorDirectory;
+  TH1D *AngleXForwardTripleFirstThreePlanes;
+  TH1D *AngleXForwardTripleLastThreePlanes;
+  TH1D *AngleYForwardTripleFirstThreePlanes;
+  TH1D *AngleYForwardTripleLastThreePlanes;
+  TH2D *AngleXYForwardTripleFirstThreePlanes;
+  TH2D *AngleXYForwardTripleLastThreePlanes;
+  TH1D *ScatteringAngleXTriple;
+  TH1D *ScatteringAngleYTriple;
+  TH2D *ScatteringAngleXYTriple;
+  TH2D *ScatteringAngleXTripleMap;
+  TH2D *ScatteringAngleYTripleMap;
+  TH2D *RadiationLengthTripleMap;
   TH1D *SinglePointResidualXPlane0;
   TH1D *SinglePointResidualXPlane1;
   TH1D *SinglePointResidualXPlane2;
@@ -312,8 +314,16 @@ private:
   TH2D *RadiationLengthPlane2Map;
   TH2D *RadiationLengthPlane3Map;
   TH2D *RadiationLengthPlane4Map;
-  std::map< std::pair< int, int >, std::vector< double > > ScatteringAngleXMapData; //Pair gives the x and y bins of the track at the point of the DUT and the value of the double is the scattering angle
-  std::map< std::pair< int, int >, std::vector< double > > ScatteringAngleYMapData; //Pair gives the x and y bins of the track at the point of the DUT and the value of the double is the scattering angle
+  std::map< std::pair< int, int >, std::vector< double > > ScatteringAngleXTripleMapData; //Pair gives the x and y bins of the track at the point of the DUT and the value of the double is the scattering angle
+  std::map< std::pair< int, int >, std::vector< double > > ScatteringAngleYTripleMapData; //Pair gives the x and y bins of the track at the point of the DUT and the value of the double is the scattering angle
+  std::map< std::pair< int, int >, std::vector< double > > ScatteringAngleXPlane1MapData; //Pair gives the x and y bins of the track at the point of the DUT and the value of the double is the scattering angle
+  std::map< std::pair< int, int >, std::vector< double > > ScatteringAngleXPlane2MapData; //Pair gives the x and y bins of the track at the point of the DUT and the value of the double is the scattering angle
+  std::map< std::pair< int, int >, std::vector< double > > ScatteringAngleXPlane3MapData; //Pair gives the x and y bins of the track at the point of the DUT and the value of the double is the scattering angle
+  std::map< std::pair< int, int >, std::vector< double > > ScatteringAngleXPlane4MapData; //Pair gives the x and y bins of the track at the point of the DUT and the value of the double is the scattering angle
+  std::map< std::pair< int, int >, std::vector< double > > ScatteringAngleYPlane1MapData; //Pair gives the x and y bins of the track at the point of the DUT and the value of the double is the scattering angle
+  std::map< std::pair< int, int >, std::vector< double > > ScatteringAngleYPlane2MapData; //Pair gives the x and y bins of the track at the point of the DUT and the value of the double is the scattering angle
+  std::map< std::pair< int, int >, std::vector< double > > ScatteringAngleYPlane3MapData; //Pair gives the x and y bins of the track at the point of the DUT and the value of the double is the scattering angle
+  std::map< std::pair< int, int >, std::vector< double > > ScatteringAngleYPlane4MapData; //Pair gives the x and y bins of the track at the point of the DUT and the value of the double is the scattering angle
 };
 //! A global instance of the processor
 EUTelX0Processor gEUTelX0Processor;
