@@ -842,8 +842,6 @@ void EUTelProcessorTrackingGBLTrackFit::writeMilleSteeringFile() {
     } // end loop over all planes
 
     steerFile << endl;
-    steerFile << "method inversion 5 0.001" << endl;
-    steerFile << "chiscut 50.0 10." << endl;
     for ( StringVec::iterator it = _pedeSteerAddCmds.begin( ); it != _pedeSteerAddCmds.end( ); ++it ) {
         // two backslashes will be interpreted as newline
         if ( *it == "\\\\" )
@@ -851,9 +849,6 @@ void EUTelProcessorTrackingGBLTrackFit::writeMilleSteeringFile() {
         else
             steerFile << *it << " ";
     }
-    steerFile << endl;
-    steerFile << "outlierdownweighting 4" << endl;
-    steerFile << "!histprint" << endl;
     steerFile << endl;
     steerFile << "end" << endl;
 
