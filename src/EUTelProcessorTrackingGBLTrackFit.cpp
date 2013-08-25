@@ -405,7 +405,8 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
         TVectorD downWeight(200);
         const int nTracks = trackCandidates.size();
         streamlog_out(DEBUG1) << "N tracks found " << nTracks << endl;
-        if (nTracks == 1) {     //! ACHTUNG!!!!!!!!
+
+        if ( _alignmentMode ? nTracks == 1 : nTracks >0 ) {     // bug fix of a bug fix: for alignment nTracks == 1, for tracking nTracks>0
             _trackFitter->SetTrackCandidates(trackCandidates);
             _trackFitter->FitTracks();
             //
