@@ -17,7 +17,7 @@
 
    <execute>
       <processor name="AIDA"/>
-      <processor name="LoadAlignment"/>
+      <processor name="LoadDB"/>
       <processor name="ApplyAlignment"/>
       <processor name="TrackSearch"/>
       <processor name="GBLTrackFit"/>
@@ -46,72 +46,48 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="LoadAlignment" type="ConditionsProcessor">
+ <processor name="LoadDB" type="ConditionsProcessor">
  <!--ConditionsProcessor provides access to conditions data  transparently from LCIO files or a databases, using LCCD-->
   <!--Initialization of a conditions database handler-->
   <!--parameter name="DBCondHandler" type="StringVec"> conditionsName /lccd/myfolder HEAD </parameter-->
   <!--Initialization of a conditions db file handler-->
   <!--parameter name="DBFileHandler" type="StringVec"> conditionsName conditions.slcio collectionName </parameter-->
   <!--Initialization string for conditions database-->
-  <parameter name="DBInit" type="string" value="localhost:lccd_test:calvin:hobbes"/>
+  <parameter name="DBInit" type="string" value="localhost:lccd_test:align:tel"/>
   <!--Initialization of a data file handler-->
   <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
   <!--Initialization of a simple conditions file handler-->
-  <parameter name="SimpleFileHandler" type="StringVec"> alignment @AlignmentFile@ alignment </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> refhit ./output/database/run000097-referencehit.slcio referenceHit </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> refhitPre ./output/database/run000097-referencehit.slcio referenceHit </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> refhitFinal ./output/database/run000097-referencehit.slcio referenceHit </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> prealign ./output/database/run000097-prealignment.slcio alignment </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> alignment ./output/database/run000097-alignment.slcio alignment </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="ApplyAlignment" type="EUTelApplyAlignmentProcessor">
- <!--Apply to the input hit the alignment corrections-->
-  <!--Alignment constant from the condition file-->
-  <parameter name="AlignmentConstantName" type="string" lcioInType="LCGenericObject"> alignment </parameter>
-  <!--The name of the input hit collection-->
-  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
-  <!--The name of the output hit collection-->
-  <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> aligned_hit </parameter>
-  <!--Rotation Angle around X axis-->
-  <!--parameter name="Alpha" type="double" value="0"/-->
-  <!--Available directinos are:
- 0 -> direct  
- 1 -> reverse -->
-  <parameter name="ApplyAlignmentDirection" type="int" value="0"/>
-  <!--Do you want the reference hit collection to be corrected by the shifts and tilts from the alignment collection?-->
-  <!--parameter name="ApplyToReferenceCollection" type="bool" value="true"/-->
-  <!--Rotation Angle around Y axis-->
-  <!--parameter name="Beta" type="double" value="0"/-->
-  <!--Available methods are:
- 0 -> shift only 
- 1 -> rotation first 
- 2 -> shift first -->
-  <parameter name="CorrectionMethod" type="int" value="1"/>
-  <!--Enable or disable DEBUG mode -->
-  <parameter name="DEBUG" type="bool" value="false"/>
-  <!--Implement geometry shifts and rotations as described in alignmentCollectionName -->
-  <parameter name="DoAlignCollection" type="bool" value="true"/>
-  <!--Apply alignment steps in one go. Is supposed to be used for reversealignment in reverse order, like: undoAlignment, undoPreAlignment, undoGear -->
-  <!--parameter name="DoAlignmentInOneGo" type="bool" value="false"/-->
-  <!--Implement geometry shifts and rotations as described in GEAR steering file -->
-  <!--parameter name="DoGear" type="bool" value="false"/-->
-  <!--Rotation Angle around Z axis-->
-  <!--parameter name="Gamma" type="double" value="0"/-->
-  <!--Enable or disable histograms-->
-  <parameter name="HistogramSwitch" type="bool" value="false"/>
-  <!--This is the name of the modified output reference hit collection-->
-  <!--parameter name="OutputReferenceCollection" type="string" value="output_refhit"/-->
-  <!--Events number to have DEBUG1 printed outs (default=10)-->
-  <parameter name="PrintEvents" type="int" value="0"/>
-  <!--This is the name of the reference hit collection-->
-  <!--parameter name="ReferenceCollection" type="string" value="referenceHit"/-->
-  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <!--parameter name="Verbosity" type="string" value=""/-->
-  <!--List of alignment collections that were applied to the DUT-->
-  <parameter name="alignmentCollectionNames" type="StringVec" value="alignment"/>
-  <!--List of hit collections. First one is INPUT collection, every subsequent corresponds to applying alignment collection-->
-  <parameter name="hitCollectionNames" type="StringVec" value="hitCollectionNames"/>
-  <!--List of refhit collections. First one is INPUT collection, every subsequent corresponds to applying alignment collection-->
-  <parameter name="refhitCollectionNames" type="StringVec" value="hitCollectionNames"/>
-</processor>
+
+
+  <processor name="ApplyAlignment" type="EUTelApplyAlignmentProcessor">
+    <!-- starting point -->
+    <parameter name="InputHitCollectionName"  type="string" lcioInType="TrackerHit"> hit </parameter>
+    <parameter name="ReferenceCollection" type="string" > refhit </parameter>
+
+    <!-- alignment steps -->
+    <parameter name="alignmentCollectionNames"> alignment   prealign        </parameter>
+    <parameter name="hitCollectionNames">       aligned_hit  PreAlignedHit   </parameter>
+    <parameter name="refhitCollectionNames">    refhitFinal refhitPre       </parameter>
+ 
+    <!-- parameters -->
+    <parameter name="CorrectionMethod" type="int" value="1"/>
+    <parameter name="DoAlignCollection" type="bool" value="true"/>
+    <parameter name="HistogramSwitch" type="bool" value="true"/>
+    <parameter name="DEBUG" type="bool" value="false"/>
+    <parameter name="PrintEvents" type="int" value="10"/>
+    <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
+    <parameter name="Verbosity" type="string" value="@VERBOSITY@"/>
+ </processor>
+
 
  <processor name="TrackSearch" type="EUTelProcessorTrackingExhaustiveTrackSearch">
  <!--EUTelProcessorTrackingExhaustiveTrackSearch preforms track pattern recognition.-->
@@ -130,7 +106,7 @@
   <!--Maximal number of track candidates to be found in events-->
   <parameter name="MaxNTracksPerEvent" type="int" value="@MaxNTracksPerEvent@"/>
   <!--Maximal allowed distance between hits entering the recognition step per 15 cm space between the planes. One value for each neighbor planes. DistanceMax will be used for each pair if this vector is empty. Units are mm.-->
-  <!--parameter name="ResidualsRMax" type="FloatVec"> 0.25 0.25 0.25 0.25 0.25 0.25 </parameter-->
+  <parameter name="ResidualsRMax" type="FloatVec"> @ResidualsRMax@ </parameter>
   <!--Maximal values of the hit residuals in the X direction for a track. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id. Units are mm.-->
   <!--parameter name="ResidualsXMax" type="FloatVec"> 0.25 0.25 0.25 0.25 0.25 0.25 </parameter-->
   <!--Minimal values of the hit residuals in the X direction for a track. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id. Units are mm.-->
