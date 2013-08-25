@@ -91,7 +91,31 @@
   <!--Name of the Millepede steering file to be created-->
   <parameter name="MilleSteeringFilename" type="string" value="@DatabasePath@/@FilePrefix@-pede-steer.txt"/>
   <!--FOR EXPERTS: List of commands that should be included in the pede steering file. Use '\' to seperate options and introduce a line break.-->
-  <!--parameter name="PedeSteeringAdditionalCmds" type="StringVec"> </parameter-->
+  <parameter name="PedeSteeringAdditionalCmds" type="StringVec">
+method inversion 5 0.001 \\
+outlierdownweighting 10. \\
+Constraint 0. \\
+7	1 \\
+8	1 \\
+9	1 \\
+10      1 \\
+11	1 \\
+12	1 \\
+Constraint 0. \\
+1	1 \\
+2	1 \\
+3	1 \\
+4	1 \\
+5	1 \\
+6	1 \\
+Constraint 0. \\
+31	1 \\
+32	1 \\
+33	1 \\
+34	1 \\
+35	1 \\
+36	1 \\
+ </parameter>
   <!--Execute the pede at the end of processing using the generated steering file.-->
   <parameter name="RunPede" type="bool" value="@RunPede@"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
