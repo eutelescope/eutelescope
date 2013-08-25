@@ -116,7 +116,7 @@ EUTelApplyAlignmentProcessor::EUTelApplyAlignmentProcessor ()
   _alignmentCollectionVec(NULL),
   _outputHitCollectionName(""),
   _outputCollectionVec(NULL),
-  _applyToReferenceHitCollection(false),
+  _applyToReferenceHitCollection(true),
   _referenceHitCollectionName(""),
   _referenceHitVec(NULL),
   _outputReferenceHitCollectionName(""),
