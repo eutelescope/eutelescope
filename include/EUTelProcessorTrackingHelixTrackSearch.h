@@ -24,10 +24,13 @@
 #include "EUTelTrackFitter.h"
 #include "EUTelGeometryTelescopeGeoDescription.h"
 #include "EUTelUtility.h"
+#include "EUTelTrackImpl.h"
 
 using namespace lcio;
 using namespace marlin;
 using namespace std;
+
+class EUTelTrackImpl;
 
 namespace eutelescope {
 
@@ -91,12 +94,16 @@ namespace eutelescope {
     public:
         /** Fills hits data structure for track finder */
         void FillHits(LCEvent*, LCCollection*, EVENT::TrackerHitVec&) const;
+        
+        /** Prepare LCIO data structure for dumping track
+         * candidate hits into LCIO files
+         */
+        void addTrackCandidateToCollection(LCEvent*, const std::vector< EVENT::TrackerHitVec >&);
 
         /** Prepare LCIO data structure for dumping track
          * candidate hits into LCIO files
          */
-        void addTrackCandidateToCollection(LCEvent*, const vector< EVENT::TrackerHitVec >&);
-
+        void addTrackCandidateToCollection1(LCEvent* evt, std::vector< IMPL::TrackImpl* >&);
 
     protected:
 

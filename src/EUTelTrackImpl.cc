@@ -121,6 +121,10 @@ namespace eutelescope {
         return NULL ;
     } 
 
+    void  EUTelTrackImpl::setTypeBit( int  index, bool val){
+        checkAccess("TrackImpl::setTypeBit") ;
+        _type.set( index, val  )  ;
+    }
 
     void  EUTelTrackImpl::setTx( float tx ){
 

@@ -237,48 +237,49 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
         EVENT::TrackerHitVec allHitsVec;
         FillHits(evt, col, allHitsVec);
 
+	streamlog_out(MESSAGE0) << "All hits in event start:==============" << std::endl;
+	EVENT::TrackerHitVec::const_iterator itHits;
+	for ( itHits = allHitsVec.begin() ; itHits != allHitsVec.end(); ++itHits ) {
+		const double* uvpos = (*itHits)->getPosition();
+		streamlog_out(MESSAGE0) << "Hit (id=" << Utility::GuessSensorID(*itHits) << ") local(u,v) coordinates: (" << uvpos[0] << "," << uvpos[1] << ")" << std::endl;
+	}
+	streamlog_out(MESSAGE0) << "All hits in event end:==============" << std::endl;
+
         // Search tracks
         streamlog_out(DEBUG1) << "Event #" << _nProcessedEvents << std::endl;
         streamlog_out(DEBUG1) << "Initialising hits for _theFinder..." << std::endl;
-        
+
         static_cast<EUTelKalmanFilter*>(_trackFitter)->setHits(allHitsVec);
         static_cast<EUTelKalmanFilter*>(_trackFitter)->initialise();
         streamlog_out(DEBUG1) << "Trying to find tracks..." << endl;
-        _trackFitter->FitTracks();
+        _trackFitter->FitTracks();        
         streamlog_out(DEBUG1) << "Retrieving track candidates..." << endl;
-        vector< EUTelTrackImpl* >& trackCandidates = static_cast<EUTelKalmanFilter*>(_trackFitter)->getTracks();
-       
+        vector< IMPL::TrackImpl* >& trackCandidates = static_cast<EUTelKalmanFilter*>(_trackFitter)->getTracks();
+
         const int nTracks = trackCandidates.size();
         static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ _histName::_numberTracksCandidatesHistName ]) -> fill(nTracks);
-        streamlog_out(DEBUG1) << "Event #" << _nProcessedEvents << endl;
-        streamlog_out(DEBUG1) << "Track finder " << _trackFitter->GetName() << " found  " << nTracks << endl;
+        streamlog_out(MESSAGE1) << "Event #" << _nProcessedEvents << endl;
+        streamlog_out(MESSAGE1) << "Track finder " << _trackFitter->GetName() << " found  " << nTracks << endl;
         
         int nHitsOnTrack = 0;
-        vector< EUTelTrackImpl* >::const_iterator itrk;
+        vector< IMPL::TrackImpl* >::const_iterator itrk;
         for ( itrk = trackCandidates.begin() ; itrk != trackCandidates.end(); ++itrk ) {
             const EVENT::TrackerHitVec& trkHits = (*itrk)->getTrackerHits();
             nHitsOnTrack = trkHits.size();
             EVENT::TrackerHitVec::const_iterator itTrkHits;
-            streamlog_out(MESSAGE0) << "Track hits start:==============" << std::endl;
+            streamlog_out(DEBUG1) << "Track hits start:==============" << std::endl;
             for ( itTrkHits = trkHits.begin() ; itTrkHits != trkHits.end(); ++itTrkHits ) {
                 const double* uvpos = (*itTrkHits)->getPosition();
-                streamlog_out(MESSAGE0) << "Hit (id=" << (*itrk)->id() << ") local(u,v) coordinates: (" << uvpos[0] << "," << uvpos[1] << ")" << std::endl;
+                streamlog_out(DEBUG1) << "Hit (id=" << (*itrk)->id() << ") local(u,v) coordinates: (" << uvpos[0] << "," << uvpos[1] << ")" << std::endl;
             }
-            streamlog_out(MESSAGE0) << "Track hits end:==============" << std::endl;
+            streamlog_out(DEBUG1) << "Track hits end:==============" << std::endl;
             static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ _histName::_numberOfHitOnTrackCandidateHistName ]) -> fill(nHitsOnTrack);
         }
-        
-//        std::vector< EVENT::TrackerHitVec >& trkHits = static_cast<EUTelKalmanFilter*>(_trackFitter)->getTrackCandidates();
-//        int nHitsOnTrack = 0;
-//        std::vector< EVENT::TrackerHitVec >::const_iterator itrk;
-//        for ( itrk = trkHits.begin() ; itrk != trkHits.end(); ++itrk ) {
-//            nHitsOnTrack = (*itrk).size();
-//            static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ _histName::_numberOfHitOnTrackCandidateHistName ]) -> fill(nHitsOnTrack);
-//        }
-        
-        // Write output collection
-//        addTrackCandidateToCollection(evt, trackCandidates);
 
+        // Write output collection
+        {
+            if ( nTracks > 0 ) addTrackCandidateToCollection1( evt, trackCandidates );
+        }
 //        _trackFitter->Reset();
 
         _nProcessedEvents++;
@@ -348,6 +349,43 @@ void EUTelProcessorTrackingHelixTrackSearch::FillHits(LCEvent * evt,
 }
 
 /**
+ * Dump track candidate into lcio collection.
+ * 
+ * @param evt event pointer
+ * @param trackCandidates  vectors of hits assigned to track candidates
+ */
+void EUTelProcessorTrackingHelixTrackSearch::addTrackCandidateToCollection1(LCEvent* evt, std::vector< IMPL::TrackImpl* >& trackCandidates ) {
+    // Prepare output collection
+    LCCollectionVec * trkCandCollection = 0;
+    try {
+        trkCandCollection = new LCCollectionVec(LCIO::TRACK);
+        LCFlagImpl flag(trkCandCollection->getFlag());
+        flag.setBit( LCIO::TRBIT_HITS );
+        trkCandCollection->setFlag( flag.getFlag( ) );
+    } catch (...) {
+        streamlog_out(WARNING2) << "Can't allocate output collection" << endl;
+    }
+
+    // Fill track parameters with nonsense except of hits
+    std::vector< IMPL::TrackImpl* >::iterator itrk;
+    for ( itrk = trackCandidates.begin(); itrk != trackCandidates.end(); ++itrk ) {
+        streamlog_out( DEBUG1 ) << "Track has " << (*itrk)->getTrackerHits().size() << " hits" << endl;
+        trkCandCollection->push_back( (*itrk) );
+
+    } // for (size_t itrk = 0; itrk < trackCandidates.size(); itrk++) 
+
+    // Write track candidates collection
+    try {
+        streamlog_out(DEBUG1) << "Getting collection " << _trackCandidateHitsOutputCollectionName << endl;
+        evt->getCollection(_trackCandidateHitsOutputCollectionName);
+    } catch (...) {
+        streamlog_out(DEBUG1) << "Adding collection " << _trackCandidateHitsOutputCollectionName << endl;
+        evt->addCollection(trkCandCollection, _trackCandidateHitsOutputCollectionName);
+    }
+
+}
+
+/**
  * Dumpt track candidate into lcio collection.
  * 
  * @param evt event pointer
@@ -367,7 +405,7 @@ void EUTelProcessorTrackingHelixTrackSearch::addTrackCandidateToCollection(LCEve
 
     // Fill track parameters with nonsense except of hits
     for (size_t itrk = 0; itrk < trackCandidates.size(); itrk++) {
-        TrackImpl* trackcand = new TrackImpl;           // Don't free it manually, because it is owned by trkCandCollection
+        IMPL::TrackImpl* trackcand = new IMPL::TrackImpl;           // Don't free it manually, because it is owned by trkCandCollection
 
         // Assign hits to LCIO TRACK
         EVENT::TrackerHitVec trkcandhits = trackCandidates[itrk];

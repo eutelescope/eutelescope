@@ -167,6 +167,9 @@ namespace eutelescope {
         /** Alignment Z rotation plane ids to be fixed */
         IntVec _fixedAlignmentZRotationPlaneIds;
         
+        /** Planes ids to be excluded from refit */
+        IntVec _excludePlanesFromFit;
+        
         /** Automatic pede run flag*/
         bool _runPede;
         

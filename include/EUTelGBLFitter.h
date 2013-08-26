@@ -116,8 +116,14 @@ namespace eutelescope {
         std::string getMEstimatorType() const;
         
         std::map<int, int> getHitId2GblPointLabel() const;
+        
+        void setExcludeFromFitPlanes(const std::vector<int>&);
+        
+        std::vector<int> getExcludeFromFitPlanes() const;
 
     private:
+        TMatrixD PropagatePar(  double, double, double, double, double, double, double );
+        
         TMatrixD propagatePar(double);
 
         //        double* GetTrackOffset( const Utility::HitsPVec& ) const;
@@ -189,6 +195,9 @@ namespace eutelescope {
         
         /** Parameter ids */
         std::map<int,int> _paramterIdZRotationsMap;
+        
+        /** Planes ids to be excluded from refit */
+        std::vector< int > _excludeFromFit;
         
         // Track requirements for alignment step
         

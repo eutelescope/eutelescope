@@ -332,10 +332,12 @@ namespace eutelescope {
          * @return vector of solution sorted in descending order
          */
         vector< double > solveQuadratic( double a, double b, double c) {
+		streamlog_out( DEBUG1 ) << "Solving quadratic equation with coefficients:\na: " 
+		<< a << "\nb: " << b << "\nc:" << c << std::endl;
                 //Solutions
                 vector< double > X;              //initialise with two doubles equal 0.
 
-                if( fabs( a ) > 1.E-6 )
+                if( fabs( a ) > 1.E-10 )
                 {
                         //The equation has the form
                         // a*x^2 + b*x + c = 0

@@ -29,9 +29,11 @@
 //LCIO
 #include "lcio.h"
 #include "IMPL/TrackerHitImpl.h"
+#include "IMPL/TrackImpl.h"
 
 
 class TrackerHit;
+class TrackImpl;
 
 namespace {
         /** 
@@ -107,7 +109,7 @@ namespace {
                const double Ax = sqrtFactor * (  ty * ( tx * Bx + Bz ) - ( 1. + tx*tx ) * By );
                const double Ay = sqrtFactor * ( -tx * ( ty * By + Bz ) + ( 1. + ty*ty ) * Bx );
                
-               return TVector2(Ax,Ay);
+               return TVector2( Ax, Ay );
             }
             
             /** Magnetic field vector */
@@ -167,7 +169,7 @@ namespace eutelescope {
         // Getters and Setters
     public:
 
-        inline std::vector< EUTelTrackImpl* >& getTracks() {
+        inline std::vector< IMPL::TrackImpl* >& getTracks() {
             return _tracks;
         }
                 
@@ -233,10 +235,10 @@ namespace eutelescope {
         double findIntersection( EUTelTrackStateImpl* ts );
         
         /** Propagate track state by dz */
-	void propagateTrack( EUTelTrackStateImpl*, double );
+	void propagateTrackRefPoint( EUTelTrackStateImpl*, double );
         
         /** Update track state and it's cov matrix */
-        void updateTrackState( EUTelTrackStateImpl*, const EVENT::TrackerHit* );
+        double updateTrackState( EUTelTrackStateImpl*, const EVENT::TrackerHit* );
 
         /** Update track propagation matrix for a given step */
 	const TMatrixD& getPropagationJacobianF( const EUTelTrackStateImpl*, double );
@@ -262,7 +264,8 @@ namespace eutelescope {
         /** Calculate position of the track in global 
          * coordinate system for given arc length starting
          * from track's ref. point*/
-        TVector3 getXYZfromArcLenght( const EUTelTrackStateImpl*, double ) const;
+        TVector3 getXYZfromArcLength( const EUTelTrackStateImpl*, double ) const;
+        TVector3 getXYZfromArcLength1( const EUTelTrackStateImpl*, double ) const;
         
         /** Calculate position of the track in global 
          * coordinate system for given arc length starting
@@ -295,13 +298,19 @@ namespace eutelescope {
         /** Get track state projection matrix */
         TMatrixD getH( const EUTelTrackStateImpl* ) const;
         
+        /** Convert EUTelTrackImpl to TrackImpl */
+        IMPL::TrackImpl* cartesian2LCIOTrack( EUTelTrackImpl* ) const;
+        
         /** Find hit closest to the track */
         const EVENT::TrackerHit* findClosestHit( const EUTelTrackStateImpl*, int );
 
         // Kalman filter states and tracks
     private:       
-        /** Final set of tracks */
-        std::vector< EUTelTrackImpl* > _tracks;
+        /** Final set of tracks for LCIO */
+        std::vector< IMPL::TrackImpl* > _tracks;
+        
+        /** Final set of tracks in cartesian parameterisation */
+        std::vector< EUTelTrackImpl* > _tracksCartesian;
 
         /** Kalman track states */
         std::vector< EUTelTrackStateImpl* > _trackStates;

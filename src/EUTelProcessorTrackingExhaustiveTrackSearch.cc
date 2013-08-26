@@ -301,6 +301,13 @@ void EUTelProcessorTrackingExhaustiveTrackSearch::processEvent(LCEvent * evt) {
         int nHitsOnTrack = 0;
         vector< EVENT::TrackerHitVec >::const_iterator itrk = trackCandidates.begin();
         for ( ; itrk != trackCandidates.end(); ++itrk ) {
+		streamlog_out(MESSAGE0) << "Track hits start:==============" << std::endl;
+		EVENT::TrackerHitVec::const_iterator itTrkHits;
+		for ( itTrkHits = itrk->begin() ; itTrkHits != itrk->end(); ++itTrkHits ) {
+			const double* uvpos = (*itTrkHits)->getPosition();
+			streamlog_out(MESSAGE0) << "Hit (id="  ") global(x,y) coordinates: (" << uvpos[0] << "," << uvpos[1] << ")" << std::endl;
+		}
+            streamlog_out(MESSAGE0) << "Track hits end:==============" << std::endl;
             nHitsOnTrack = itrk->size();
             static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ _histName::_numberOfHitOnTrackCandidateHistName ]) -> fill(nHitsOnTrack);
         }

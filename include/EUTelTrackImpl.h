@@ -6,8 +6,7 @@
 
 #include "LCIOSTLTypes.h"
 
-#include <map>
-
+#include <bitset>
 
 
 namespace eutelescope {
@@ -20,7 +19,7 @@ namespace eutelescope {
   /**Vector of (pointers to) TrackStates.*/
   typedef std::vector<EUTelTrackStateImpl*> EUTelTrackStateVec ;
   
-  class EUTelTrackImpl : public IMPL::AccessChecked {
+  class EUTelTrackImpl : public EVENT::LCObject, public IMPL::AccessChecked {
     
   public: 
     
@@ -108,6 +107,7 @@ namespace eutelescope {
     
 
     // setters 
+    virtual void  setTypeBit( int index , bool val=true) ;
 
     virtual void  setTx( float ) ;                          // stored in TrackState
     virtual void  setTy( float ) ;                          // stored in TrackState
@@ -132,6 +132,8 @@ namespace eutelescope {
 
 
   protected:
+      
+      std::bitset<32> _type ;
 
     float _chi2 ;
     int   _ndf ; 

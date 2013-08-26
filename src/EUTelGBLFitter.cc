@@ -67,6 +67,7 @@ namespace eutelescope {
     _paramterIdXRotationsMap(),
     _paramterIdYRotationsMap(),
     _paramterIdZRotationsMap(),
+    _excludeFromFit(),
     _chi2cut(1000.) {}
 
     EUTelGBLFitter::EUTelGBLFitter(std::string name) : EUTelTrackFitter(name),
@@ -85,6 +86,7 @@ namespace eutelescope {
     _paramterIdXRotationsMap(),
     _paramterIdYRotationsMap(),
     _paramterIdZRotationsMap(),
+    _excludeFromFit(),
     _chi2cut(1000.) {}
 
     EUTelGBLFitter::~EUTelGBLFitter() {
@@ -164,6 +166,14 @@ namespace eutelescope {
 
     std::map<int, int> EUTelGBLFitter::getHitId2GblPointLabel( ) const {
         return _hitId2GblPointLabel;
+    }
+
+    void EUTelGBLFitter::setExcludeFromFitPlanes( const std::vector<int>& excludedPlanes ) {
+        this->_excludeFromFit = excludedPlanes;
+    }
+
+    std::vector<int> EUTelGBLFitter::getExcludeFromFitPlanes( ) const {
+        return _excludeFromFit;
     }
 
     TMatrixD EUTelGBLFitter::propagatePar(double ds) {
@@ -253,6 +263,76 @@ namespace eutelescope {
         return _parPropJac;
     }
         */
+    
+    /** Propagation jacobian in inhomogeneous magnetic field
+     * 
+     * 
+     * @param ds        Z - Z0 propagation distance
+     * 
+     * @return          transport matrix
+     */
+    
+    TMatrixD EUTelGBLFitter::PropagatePar( double ds, double invP, double tx0, double ty0, double x0, double y0, double z0 ) {
+        // for GBL:
+        //   Jacobian for helical track
+        //   track = q/p, x'  y'  x  y
+        //            0,   1,  2, 3, 4
+        //
+        
+        streamlog_out( DEBUG2 ) << "EUTelGBLFitter::PropagatePar()" << std::endl;
+	// The formulas below are derived from equations of motion of the particle in
+        // magnetic field under assumption |dz| small. Must be valid for |dz| < 20-30 cm
+
+        // Get magnetic field vector
+        gear::Vector3D vectorGlobal( x0, y0, z0 );        // assuming uniform magnetic field
+	const gear::BField&   B = geo::gGeometry().getMagneticFiled();
+        const double Bx         = B.at( vectorGlobal ).x();
+        const double By         = B.at( vectorGlobal ).y();
+        const double Bz         = B.at( vectorGlobal ).z();
+	const double mm = 1000.;
+	const double k = 0.299792458/mm;
+
+        const double sqrtFactor = sqrt( 1. + tx0*tx0 + ty0*ty0 );
+
+	const double Ax = sqrtFactor * (  ty0 * ( tx0 * Bx + Bz ) - ( 1. + tx0*tx0 ) * By );
+	const double Ay = sqrtFactor * ( -tx0 * ( ty0 * By + Bz ) + ( 1. + ty0*ty0 ) * Bx );
+
+	// Partial derivatives
+	const double dAxdty0 = ty0 * Ax / (sqrtFactor*sqrtFactor) + sqrtFactor*( tx0*Bx + Bz );
+	const double dAydtx0 = tx0 * Ay / (sqrtFactor*sqrtFactor) + sqrtFactor*( -ty0*By - Bz );
+
+	const double dxdtx0 = ds;
+	const double dxdty0 = 0.5 * invP * k * ds*ds * dAxdty0;
+
+	const double dydtx0 = 0.5 * invP * k * ds*ds * dAydtx0;
+	const double dydty0 = ds;
+
+	const double dtxdty0 = invP * k * ds * dAxdty0;
+	const double dtydtx0 = invP * k * ds * dAydtx0;
+
+	const double dxdinvP0 = 0.5 * k * ds*ds * Ax;
+	const double dydinvP0 = 0.5 * k * ds*ds * Ay;
+
+	const double dtxdinvP0 = k * ds * Ax;
+	const double dtydinvP0 = k * ds * Ay;
+
+	// Fill-in matrix elements
+	_parPropJac.UnitMatrix();
+	_parPropJac[1][0] = dtxdinvP0;  _parPropJac[1][2] = dtxdty0;	
+	_parPropJac[2][0] = dtydinvP0;  _parPropJac[2][1] = dtydtx0;	
+	_parPropJac[3][0] = dxdinvP0;   _parPropJac[3][1] = dxdtx0;	_parPropJac[3][2] = dxdty0;	
+	_parPropJac[4][0] = dydinvP0;   _parPropJac[4][1] = dydtx0;	_parPropJac[4][2] = dydty0;	
+        
+        if ( streamlog_level(DEBUG0) ){
+             streamlog_out( DEBUG0 ) << "Propagation jacobian: " << std::endl;
+            _parPropJac.Print();
+        }
+	
+        streamlog_out( DEBUG2 ) << "-----------------------------EUTelGBLFitter::PropagatePar()-------------------------------" << std::endl;   
+
+        return _parPropJac;
+    }
+        
     void EUTelGBLFitter::SetTrackCandidates(const std::vector< EVENT::TrackerHitVec >& trackCandidates) {
         this->_trackCandidates = trackCandidates;
         return;
@@ -588,10 +668,12 @@ namespace eutelescope {
                 gbl::GblPoint point(jacPointToPoint);
                 TMatrixD proL2m(2, 2);
                 proL2m.UnitMatrix();
-                addMeasurementsGBL(point, meas, measPrec, hitpos, xPred, yPred, hitcov, proL2m);
+                bool excludeFromFit = false;
+                if ( std::find( _excludeFromFit.begin(), _excludeFromFit.end(), planeID ) != _excludeFromFit.end() ) excludeFromFit = true;
+                if ( !excludeFromFit ) addMeasurementsGBL(point, meas, measPrec, hitpos, xPred, yPred, hitcov, proL2m);
                 addScattererGBL(point, scat, scatPrecSensor, planeID, p);
                 if (_alignmentMode != Utility::noAlignment) {
-                    addGlobalParametersGBL( point, alDer, globalLabels, planeID, xPred, yPred, xSlope, ySlope );
+                    if ( !excludeFromFit ) addGlobalParametersGBL( point, alDer, globalLabels, planeID, xPred, yPred, xSlope, ySlope );
                 }
                 pushBachPoint( pointList, point, (*itHit)->id() );
 
@@ -641,8 +723,16 @@ namespace eutelescope {
             int ndf = 0;
             // perform GBL fit
             {
-                gbl::GblTrajectory* traj = new gbl::GblTrajectory( pointList, false );
-
+                // check magnetic field at (0,0,0)
+                const gear::BField&   B = geo::gGeometry().getMagneticFiled();
+                const double Bmag       = B.at( TVector3(0.,0.,0.) ).r2();
+                
+                gbl::GblTrajectory* traj;
+                if ( Bmag < 1.E-6 ) {
+                   traj = new gbl::GblTrajectory( pointList, false );
+                } else {
+                   traj = new gbl::GblTrajectory( pointList, true );
+                }
                 int ierr = 0;
                 if ( !_mEstimatorType.empty( ) ) ierr = traj->fit( chi2, ndf, loss, _mEstimatorType );
                 else ierr = traj->fit( chi2, ndf, loss );
