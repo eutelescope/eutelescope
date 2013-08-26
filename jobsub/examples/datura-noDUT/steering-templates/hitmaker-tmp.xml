@@ -121,27 +121,29 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
   <!--Name of LCIO db file where alignment constantds will be stored-->
   <parameter name="AlignmentConstantLCIOFile" type="string" value="@DatabasePath@/@FilePrefix@-prealignment.slcio"/>
   <!--How many events should be used for an approximation to the X,Y shifts (pre-alignment)? (default=50000)-->
-  <parameter name="Events" type="int" value="4999"/>
+  <parameter name="Events" type="int" value="9999"/>
   <!--SensorID of fixed plane-->
   <!--parameter name="FixedPlane" type="int" value="0"/-->
   <!--Switch on or off the histogram filling-->
   <!--parameter name="HistogramFilling" type="bool" value="true"/-->
   <!--This is the name of the hot pixel collection that clusters should be checked against (optional). -->
-  <parameter name="HotPixelCollectionName" type="string" value="hotpixel_apix"/>
+  <parameter name="HotPixelCollectionName" type="string" value="hotpixel"/>
   <!--If there are more then this number of correlated hits (planes->track candidate) (default=5)-->
   <parameter name="MinNumberOfCorrelatedHits" type="int" value="5"/>
   <!--reference hit collection name -->
   <parameter name="ReferenceCollection" type="string" value="refhit"/>
   <!--Maximal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResidualsXMax" type="FloatVec"> 5. 5. 5. 5. 5. 5. </parameter>
+  <parameter name="ResidualsXMax" type="FloatVec"> 2. 2. 2. 2. 2. 2. </parameter>
   <!--Minimal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResidualsXMin" type="FloatVec"> -5. -5. -5. -5. -5. -5. </parameter>
+  <parameter name="ResidualsXMin" type="FloatVec"> -2. -2. -2. -2. -2. -2. </parameter>
   <!--Maximal values of the hit residuals in the Y direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResidualsYMax" type="FloatVec"> 5. 5. 5. 5. 5. 5. </parameter>
+  <parameter name="ResidualsYMax" type="FloatVec"> 2. 2. 2. 2. 2. 2. </parameter>
   <!--Minimal values of the hit residuals in the Y direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResidualsYMin" type="FloatVec"> -5. -5. -5. -5. -5. -5. </parameter>
+  <parameter name="ResidualsYMin" type="FloatVec"> -2. -2. -2. -2. -2. -2. </parameter>
   <!--Do you want the reference hit collection to be used for coordinate transformations?-->
   <!--parameter name="UseReferenceCollection" type="bool" value="true"/-->
+    <parameter name="ReferenceCollection" type="string" > refhit </parameter>
+    <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
@@ -155,7 +157,7 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
   <!--Dump the offset X and Y values calculated from the correlation bands (default = true)-->
   <parameter name="DumpOffset" type="bool" value="false"/>
   <!--How many events are needed to get reasonable correlation plots (and Offset DB)? (default=1000)-->
-  <parameter name="Events" type="int" value="4999"/>
+  <parameter name="Events" type="int" value="9999"/>
   <!--SensorID of fixed plane-->
   <!--parameter name="FixedPlane" type="int" value="0"/-->
   <!--This is the name of the hot pixel collection to be saved into the output slcio file-->
@@ -169,15 +171,17 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
   <!--reference hit collection name -->
   <parameter name="ReferenceCollection" type="string" value="refhit"/>
   <!--Maximal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResidualsXMax" type="FloatVec"> 5. 5. 5. 5. 5. 5. </parameter>
+  <parameter name="ResidualsXMax" type="FloatVec"> 2. 2. 2. 2. 2. 2. </parameter>
   <!--Minimal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResidualsXMin" type="FloatVec"> -5. -5. -5. -5. -5. -5. </parameter>
+  <parameter name="ResidualsXMin" type="FloatVec"> -2. -2. -2. -2. -2. -2. </parameter>
   <!--Maximal values of the hit residuals in the Y direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResidualsYMax" type="FloatVec"> 5. 5. 5. 5. 5. 5. </parameter>
+  <parameter name="ResidualsYMax" type="FloatVec"> 2. 2. 2. 2. 2. 2. </parameter>
   <!--Minimal values of the hit residuals in the Y direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResidualsYMin" type="FloatVec"> -5. -5. -5. -5. -5. -5. </parameter>
+  <parameter name="ResidualsYMin" type="FloatVec"> -2. -2. -2. -2. -2. -2. </parameter>
   <!--Do you want the reference hit collection to be used for coordinate transformations?-->
   <!--parameter name="UseReferenceCollection" type="bool" value="true"/-->
+    <parameter name="ReferenceCollection" type="string" > refhit </parameter>
+    <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
