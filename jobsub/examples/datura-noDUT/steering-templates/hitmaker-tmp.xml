@@ -142,8 +142,7 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
   <parameter name="ResidualsYMin" type="FloatVec"> -2. -2. -2. -2. -2. -2. </parameter>
   <!--Do you want the reference hit collection to be used for coordinate transformations?-->
   <!--parameter name="UseReferenceCollection" type="bool" value="true"/-->
-    <parameter name="ReferenceCollection" type="string" > refhit </parameter>
-    <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
+  <parameter name="ReferenceCollection" type="string" > refhit </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
@@ -180,8 +179,7 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
   <parameter name="ResidualsYMin" type="FloatVec"> -2. -2. -2. -2. -2. -2. </parameter>
   <!--Do you want the reference hit collection to be used for coordinate transformations?-->
   <!--parameter name="UseReferenceCollection" type="bool" value="true"/-->
-    <parameter name="ReferenceCollection" type="string" > refhit </parameter>
-    <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
+  <parameter name="ReferenceCollection" type="string" > refhit </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
