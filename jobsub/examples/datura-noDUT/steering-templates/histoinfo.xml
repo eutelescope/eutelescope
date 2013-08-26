@@ -90,6 +90,22 @@
             <histo name="DUTshiftY"     type="H1D" xBin="300" xMin="-0.15" xMax="0.15"/>
             <histo name="DUTshiftX"     type="H1D" xBin="300" xMin="-0.15" xMax="0.15"/>
 
+    <!-- EUTelProcessorTrackingGBLTrackFit -->
+    <histo name="chi2GblFit"     type="H1D" xBin="500" xMin="0." xMax="1000."/>
+    <histo name="probGblFit"     type="H1D" xBin="500" xMin="0." xMax="1."/>
+    <histo name="ResidualsGblFit_x0"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
+    <histo name="ResidualsGblFit_y1"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
+    <histo name="ResidualsGblFit_x1"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
+    <histo name="ResidualsGblFit_y2"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
+    <histo name="ResidualsGblFit_x2"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
+    <histo name="ResidualsGblFit_y3"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
+    <histo name="ResidualsGblFit_x3"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
+    <histo name="ResidualsGblFit_y3"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
+    <histo name="ResidualsGblFit_x4"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
+    <histo name="ResidualsGblFit_y4"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
+    <histo name="ResidualsGblFit_x5"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
+    <histo name="ResidualsGblFit_y5"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
+
 
   </histos>
 </HistogramManager>
