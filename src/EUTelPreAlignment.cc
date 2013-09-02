@@ -389,7 +389,7 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
     }
   }
   catch (DataNotAvailableException& e) { 
-    streamlog_out  ( WARNING2 ) <<  "No input collection " << _inputHitCollectionName << " found on event " << event->getEventNumber()
+    streamlog_out  ( MESSAGE2 ) <<  "No input collection " << _inputHitCollectionName << " found on event " << event->getEventNumber()
                                 << " in run " << event->getRunNumber() << endl;
   }
 

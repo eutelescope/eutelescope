@@ -1,6 +1,7 @@
 // Version: $Id$
 #include "EUTelX0Processor.h"
 #include <cmath>
+#include "TCanvas.h"
 #include "TStyle.h"
 #include <cstdlib>
 using namespace marlin;
@@ -164,10 +165,10 @@ void EUTelX0Processor::init()
   nobinsangle = 1000;//Number of bins in the histograms
   minbin = -0.1;
   maxbin = 0.1;//Maximum and minimum bin values
-  minbinangle = -3.14;
-  maxbinangle = 3.14;
-  minbinalpha = -3.14;
-  maxbinalpha = 3.14;
+  minbinangle = -0.14;
+  maxbinangle = 0.14;
+  minbinalpha = -0.14;
+  maxbinalpha = 0.14;
   std::vector<double> empty;  
   binsx = static_cast< int >((maxx-minx)/binsizex);
   binsy = static_cast< int >((maxy-miny)/binsizey);
@@ -177,7 +178,7 @@ void EUTelX0Processor::init()
 				 nobinsangle,minbinangle,maxbinangle);
   _histoThing["AngleXForwardTripleFirstThreePlanes"] = AngleXForwardTripleFirstThreePlanes;
  
-  AngleXForwardTripleFirstThreePlanes = new TH1D("AngleXForwardTripleLastThreePlanes",
+  AngleXForwardTripleLastThreePlanes = new TH1D("AngleXForwardTripleLastThreePlanes",
                                  "Angle of Tracks in X Direction Relative to the Z Axis for Last Three Planes;\\theta_x (rads);Count",
 				 nobinsangle,minbinangle,maxbinangle);
   _histoThing["AngleXForwardTripleLastThreePlanes"] = AngleXForwardTripleLastThreePlanes;
@@ -187,7 +188,7 @@ void EUTelX0Processor::init()
 				 nobinsangle,minbinangle,maxbinangle);
   _histoThing["AngleYForwardTripleFirstThreePlanes"] = AngleYForwardTripleFirstThreePlanes;
  
-  AngleYForwardTripleFirstThreePlanes = new TH1D("AngleYForwardTripleLastThreePlanes",
+  AngleYForwardTripleLastThreePlanes = new TH1D("AngleYForwardTripleLastThreePlanes",
                                  "Angle of Tracks in Y Direction Relative to the Z Axis for Last Three Planes;\\theta_y (rads);Count",
 				 nobinsangle,minbinangle,maxbinangle);
   _histoThing["AngleYForwardTripleLastThreePlanes"] = AngleYForwardTripleLastThreePlanes;
@@ -197,7 +198,7 @@ void EUTelX0Processor::init()
 				 nobinsangle,minbinangle,maxbinangle,nobinsangle,minbinangle,maxbinangle);
   _histoThing["AngleXYForwardTripleFirstThreePlanes"] = AngleXYForwardTripleFirstThreePlanes;
  
-  AngleXYForwardTripleFirstThreePlanes = new TH2D("AngleXYForwardTripleLastThreePlanes",
+  AngleXYForwardTripleLastThreePlanes = new TH2D("AngleXYForwardTripleLastThreePlanes",
                                  "Angle of Tracks in XY Direction Relative to the Z Axis for Last Three Planes;\\theta_y (rads);Count",
 				 nobinsangle,minbinangle,maxbinangle,nobinsangle,minbinangle,maxbinangle);
   _histoThing["AngleXYForwardTripleLastThreePlanes"] = AngleXYForwardTripleLastThreePlanes;
@@ -637,24 +638,25 @@ pair< vector< double >, vector< double > > EUTelX0Processor::GetSingleTrackAngle
 }
 
 pair< vector< double >, vector< double > > EUTelX0Processor::GetTripleTrackAngles(vector< TVector3* > hits){
-  gStyle->SetOptStat("neMRuo");
   streamlog_out(DEBUG1) << "Begin pair< vector< double >, vector< double > > EUTelX0Processor::GetTripleTrackAngles(vector< TVector3* > hits)" << endl;
   //Then we find the position where those lines would have hit the DUT
   //THIS IS TO BE DECIDED IF IT IS NEEDED LATER
-  const double dutposition(hits[2]->z());
-  streamlog_out(DEBUG3) << "For now DUT position is set to the position of the 2nd plane, that is at " << dutposition << endl;
   //Then we work out the angles of these lines with respect to XZ and YZ, plot results in histograms
   const size_t hitsize = hits.size();
-  if(hitsize <= 1)
+  if(hitsize < 6)
   {
-    streamlog_out(DEBUG5) << "This track has only one hit, aborting track" << endl;
-    throw;
+    streamlog_out(DEBUG5) << "This track has missing hits, aborting track" << endl;
+    string error("In function: EUTelX0Processor::GetTripleTrackAngles(vector< TVector3* > hits), a track has missing hits, move on to the next track");
+    throw error;
   }
+  const double dutposition(hits[2]->z());
+  streamlog_out(DEBUG3) << "For now DUT position is set to the position of the 2nd plane, that is at " << dutposition << endl;
 
   std::vector< double > scatterx, scattery;
   streamlog_out(DEBUG3) << "hitsize = " << hitsize << std::endl;
-  for(size_t i = 0; i < 1; ++i){ //Fill histograms with the angles of the track at the front and back three planes and put those angles into a vector
+  for(size_t i = 0; i < 2; ++i){ //Fill histograms with the angles of the track at the front and back three planes and put those angles into a vector
     if(i != 0) i = 3;//Move to the next set of planes
+    streamlog_out(DEBUG0) << "i = " << i << endl;
     const double x0 = hits[i]->x();
     const double y0 = hits[i]->y();
     const double z0 = hits[i]->z();
@@ -670,8 +672,8 @@ pair< vector< double >, vector< double > > EUTelX0Processor::GetTripleTrackAngle
     double arrayy[3] = {y0,y1,y2};
     double arrayz[3] = {z0,z1,z2};
     streamlog_out(DEBUG3) << "Successfully filled the arrays for the track fitting" << endl;
-    TGraph *gx = new TGraph(n,arrayx,arrayz);
-    TGraph *gy = new TGraph(n,arrayy,arrayz);
+    TGraph *gx = new TGraph(n,arrayz,arrayx);
+    TGraph *gy = new TGraph(n,arrayz,arrayy);
     streamlog_out(DEBUG2) << "Successfully created the TGraphs" << endl;
     TF1 *fx = new TF1("fx","[0]*x + [1]",0.0,z2);
     TF1 *fy = new TF1("fy","[0]*x + [1]",0.0,z2);
@@ -679,11 +681,9 @@ pair< vector< double >, vector< double > > EUTelX0Processor::GetTripleTrackAngle
     gx->Fit(fx,"Q");
     gy->Fit(fy,"Q");
     streamlog_out(DEBUG2) << "Successfully applied the TF1s to the TGraphs" << endl;
-    const double frontanglex = fx->GetParameter(0);
-    const double frontangley = fy->GetParameter(0);
+    const double frontanglex = atan(fx->GetParameter(0));
+    const double frontangley = atan(fy->GetParameter(0));
     streamlog_out(DEBUG2) << "Successfully extracted the paratemers from the Fits:" << endl;
-    streamlog_out(ERROR9) << "frontanglex = " << frontanglex << endl;
-    streamlog_out(ERROR9) << "frontangley = " << frontangley << endl;
     //Push back angles into a vector
     scatterx.push_back(frontanglex);
     scattery.push_back(frontangley);
@@ -694,9 +694,18 @@ pair< vector< double >, vector< double > > EUTelX0Processor::GetTripleTrackAngle
     delete gy;
     //Name the histograms
     std::stringstream xforward,yforward,xyforward;
-    xforward << "AngleXForwardTripleFirstThreePlanes";
-    yforward << "AngleYForwardTripleFirstThreePlanes";
-    xyforward << "AngleXYForwardTripleFirstThreePlanes";
+    streamlog_out(DEBUG2) << "Successfully pushed back the scatterx and y vectors and deleted the TGraphs and TFits:" << endl;
+
+    if(i == 0){
+      xforward << "AngleXForwardTripleFirstThreePlanes";
+      yforward << "AngleYForwardTripleFirstThreePlanes";
+      xyforward << "AngleXYForwardTripleFirstThreePlanes";
+    } else{
+      xforward << "AngleXForwardTripleLastThreePlanes";
+      yforward << "AngleYForwardTripleLastThreePlanes";
+      xyforward << "AngleXYForwardTripleLastThreePlanes";
+    }
+    streamlog_out(DEBUG2) << "Successfully named the histograms:" << endl;
     //Fill the histograms with the XZ and YZ angles
     try{
       dynamic_cast< TH1D* >(_histoThing[xforward.str().c_str()])->Fill(frontanglex);
@@ -717,6 +726,7 @@ pair< vector< double >, vector< double > > EUTelX0Processor::GetTripleTrackAngle
     } catch(std::bad_cast &bc){
       streamlog_out(ERROR3) << "Unable to fill histogram: " << xyforward.str().c_str() << ". Due to bad cast." << endl;
     }
+    streamlog_out(DEBUG2) << "Successfully filled the histograms:" << endl;
   }
   pair< vector< double >, vector< double > > bothangles(scatterx,scattery);
   return bothangles;
@@ -954,8 +964,6 @@ void EUTelX0Processor::end()
       sigma /= static_cast<double>(ScatteringAngleXPlane1MapData[position].size());
       sigma = sqrt(sigma);
       ScatteringAngleXPlane2Map->Fill(i,j,sigma);
-      
-      cout << "x = " << i << ", y = " << j << endl;
     }
   }
   _hitInfo.clear();
