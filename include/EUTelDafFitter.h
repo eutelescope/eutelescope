@@ -68,6 +68,7 @@ namespace eutelescope {
     void addToLCIO(daffitter::TrackCandidate* track);
     //! LCIO switch
     bool _addToLCIO, _fitDuts;
+
   };
   //! A global instance of the processor
   EUTelDafFitter gEUTelDafFitter;

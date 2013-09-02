@@ -72,6 +72,9 @@
 #include <UTIL/LCTime.h>
 #include <EVENT/LCCollection.h>
 #include <EVENT/LCEvent.h>
+#include <EVENT/LCObject.h>
+#include <EVENT/TrackerPulse.h>
+#include <EVENT/TrackerData.h>
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/TrackerHitImpl.h>
 #include <IMPL/SimTrackerHitImpl.h>
@@ -92,6 +95,8 @@
 #include <fstream>
 
 #include <TVector3.h>
+#include <TH1D.h>
+#include <TF1.h>
 #include <Eigen/Geometry> 
 
 using namespace std;
@@ -101,8 +106,16 @@ using namespace eutelescope;
 
 
 EUTelDafBase::EUTelDafBase(std::string name) : marlin::Processor(name) {
+
+  MAXCLUSTERSIZE = -1;
   //Universal DAF params
-  
+  minx = -10.75;
+  maxx = 10.75;
+  miny = -6.85;
+  maxy = 6.85;
+  binsizex = 0.1;
+  binsizey = 0.05;
+
   // input collection
   std::vector<std::string > HitCollectionNameVecExample;
   HitCollectionNameVecExample.push_back("hit");
@@ -136,6 +149,7 @@ EUTelDafBase::EUTelDafBase(std::string name) : marlin::Processor(name) {
   
   // 
   registerOptionalParameter("ReferenceCollection","reference hit collection name ", _referenceHitCollectionName, static_cast <string> ("referenceHit") );
+  registerOptionalParameter("ClusterCollection","cluster collection name ", _clusterCollectionName, static_cast <string> ("cluster_m26") );
   registerOptionalParameter("UseReferenceCollection","Do you want the reference hit collection to be used for coordinate transformations?",  _useReferenceHitCollection, static_cast< bool   > ( true ));
 
   //Track quality parameters
@@ -637,6 +651,14 @@ int EUTelDafBase::checkInTime(){
 }
 
 void EUTelDafBase::processEvent(LCEvent * event){
+
+  try{
+    _clusterVec = dynamic_cast < LCCollectionVec * > (event->getCollection( _clusterCollectionName));
+  } catch(...){
+    streamlog_out(MESSAGE2) << "No cluster in this event" << endl;
+  }
+
+
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
   if ( evt->getEventType() == kEORE ) {
     streamlog_out ( DEBUG2 ) << "EORE found: nothing else to do." << endl;
@@ -655,6 +677,7 @@ void EUTelDafBase::processEvent(LCEvent * event){
   //Prepare tracker system for new data, new tracks
   _system.clear();
 
+  //EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
   //get MC collections if exists
   if( _mcCollectionStr.size() > 0 )
   {
@@ -682,7 +705,7 @@ void EUTelDafBase::processEvent(LCEvent * event){
   _system.clusterTracker();
   
   //Child specific actions
-  dafEvent(event);
+  dafEvent(event); // Riccard: what does this do?
 
   if(event->getEventNumber() % 1000 == 0){
     streamlog_out ( MESSAGE5 ) << "Accepted " << _nTracks <<" tracks at event " << event->getEventNumber() << endl;
@@ -731,6 +754,7 @@ void EUTelDafBase::fillPlots(daffitter::TrackCandidate *track){
     string bname = static_cast< string >("pl") + iden + "_";
     //Plot resids, angles for all hits with > 50% includion in track.
     //This should be one measurement per track
+
     daffitter::TrackEstimate* estim = track->estimates.at(ii);
     for(size_t w = 0; w < plane.meas.size(); w++){
       if( plane.weights(w) < 0.5f ) {  continue; }
@@ -738,6 +762,8 @@ void EUTelDafBase::fillPlots(daffitter::TrackCandidate *track){
       //Resids 
       _aidaHistoMap[bname + "residualX"]->fill( (estim->getX() - meas.getX())*1e-3 );
       _aidaHistoMap[bname + "residualY"]->fill( (estim->getY() - meas.getY())*1e-3 );
+
+
       // mc ?? 
 /*      if( _mcCollection != 0 )
       {
@@ -905,6 +931,48 @@ void EUTelDafBase::bookHistos(){
     _aidaHistoMap[bname + "dydz"] = AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "dydz", 10, -0.1, 0.1);
     //Zpositions
   }
+  //This histogram will plot the sizes of the clusters that were part of tracks, hard coded min and max bins
+  _aidaHistoMap["ClusterSize"] = AIDAProcessor::histogramFactory(this)->createHistogram1D("ClusterSize", 120, 0, 120); 
+  _aidaHistoMap["ClusterSize"]->setTitle("Cluster Size;Total Cluster Size; Events");
+//Cluster Size vs locations in X and Y of the clusters. And average cluster size for the same.
+  _aidaHistoMap2D["ClusterSizeVsXPosition"] = AIDAProcessor::histogramFactory(this)->createHistogram2D("ClusterSizeVsXPosition", 1152, (-1152.0/2.0)*0.0182, (1152.0/2.0)*0.0182, 120, 0, 120); 
+  _aidaHistoMap2D["ClusterSizeVsXPosition"]->setTitle("Cluster Size Vs X Position;Position In X (mm);Total Cluster Size");
+  _aidaHistoMap2D["ClusterSizeVsYPosition"] = AIDAProcessor::histogramFactory(this)->createHistogram2D("ClusterSizeVsYPosition", 576, (-576.0/2.0)*0.0182, (576.0/2.0)*0.0182, 120, 0, 120); 
+  _aidaHistoMap2D["ClusterSizeVsYPosition"]->setTitle("Cluster Size Vs Y Position;Position In Y (mm);Total Cluster Size");
+  _aidaHistoMap["AverageClusterSizeVsXPosition"] = AIDAProcessor::histogramFactory(this)->createHistogram1D("AverageClusterSizeVsXPosition", static_cast<int>((maxx-minx)/binsizex), minx, maxx); 
+  _aidaHistoMap["AverageClusterSizeVsXPosition"]->setTitle("Average Cluster Size Vs X Position;Position In X (mm);Average Cluster Size");
+  _aidaHistoMap["AverageClusterSizeVsYPosition"] = AIDAProcessor::histogramFactory(this)->createHistogram1D("AverageClusterSizeVsYPosition", static_cast<int>((maxy-miny)/binsizey), miny, maxy); 
+  _aidaHistoMap["AverageClusterSizeVsYPosition"]->setTitle("Average Cluster Size Vs Y Position;Position In Y (mm);Average Cluster Size");
+
+int _maxAngle = 12; //Temporary
+
+//How the Chi2 of the tracks is affected by the cluster sizes of the hits in those tracks
+  _aidaHistoMap["ClusterSizeVsAverageChi2"] = AIDAProcessor::histogramFactory(this)->createHistogram1D("ClusterSizeVsAverageChi2", static_cast<int>(_maxChi2)*100, 0, static_cast<double>(_maxChi2)); 
+  _aidaHistoMap["ClusterSizeVsAverageChi2"]->setTitle("Cluster Size Vs Average Chi2;Average Chi^2 / Ndof;Cluster Size");
+  _aidaHistoMap2D["ClusterSizeVsChi2"] = AIDAProcessor::histogramFactory(this)->createHistogram2D("ClusterSizeVsChi2", static_cast<int>(_maxChi2)*100, 0, static_cast<double>(_maxChi2), 120, 0, 120); 
+  _aidaHistoMap2D["ClusterSizeVsChi2"]->setTitle("Cluster Size Vs Chi2;Chi^2 / Ndof;Cluster Size");
+
+//How the residual of the tracks is effected by the cluster sizes of the hits in those tracks
+  _aidaHistoMap2D["ResidualXVsClusterSize"] = AIDAProcessor::histogramFactory(this)->createHistogram2D("ResidualXVsClusterSize", 120, 0, 120, 100, -0.04, 0.04); 
+  _aidaHistoMap2D["ResidualXVsClusterSize"]->setTitle("Residual X Vs Cluster Size;Cluster Size;Residuals In X (mm)");
+  _aidaHistoMap2D["ResidualYVsClusterSize"] = AIDAProcessor::histogramFactory(this)->createHistogram2D("ResidualYVsClusterSize", 120, 0, 120, 100, -0.04, 0.04); 
+  _aidaHistoMap2D["ResidualYVsClusterSize"]->setTitle("Residual Y Vs Cluster Size;Cluster Size;Residuals In Y (mm)");
+  
+//How the resolution is affected by the cluster size 
+  _aidaHistoMap["ResolutionXVsClusterSize"] = AIDAProcessor::histogramFactory(this)->createHistogram1D("ResolutionXVsClusterSize", 120, 0, 120); 
+  _aidaHistoMap["ResolutionXVsClusterSize"]->setTitle("Resolution X Vs Cluster Size;Cluster Size;Resolution In X (mm)");
+  _aidaHistoMap["ResolutionYVsClusterSize"] = AIDAProcessor::histogramFactory(this)->createHistogram1D("ResolutionYVsClusterSize", 120, 0, 120); 
+  _aidaHistoMap["ResolutionYVsClusterSize"]->setTitle("Resolution Y Vs Cluster Size;ClusterSize; Resolution In Y (mm)");
+
+//Cluster size vs. the angle of the formed tracks
+  _aidaHistoMap2D["ClusterSizeXVsAngleX"] = AIDAProcessor::histogramFactory(this)->createHistogram2D("ClusterSizeXVsAngleX;Angle in X (degrees);Cluster Size In X", 120, 0, 120, static_cast<int>(_maxAngle)*100, 0, static_cast<double>(_maxAngle)); 
+//  _aidaHistoMap2D["ClusterSize"]->setTitle("Average Cluster Size Vs Y Position;Position In Y (mm);Average Cluster Size");
+  _aidaHistoMap2D["ClusterSizeXVsAngleY"] = AIDAProcessor::histogramFactory(this)->createHistogram2D("ClusterSizeXVsAngleY;Angle in Y (degrees);Cluster Size In X", 120, 0, 120, static_cast<int>(_maxAngle)*100, 0,static_cast<double>(_maxAngle)); 
+//  _aidaHistoMap2D["ClusterSize"]->setTitle("Average Cluster Size Vs Y Position;Position In Y (mm);Average Cluster Size");
+  _aidaHistoMap2D["ClusterSizeYVsAngleX"] = AIDAProcessor::histogramFactory(this)->createHistogram2D("ClusterSizeYVsAngleX;Angle in X (degrees);Cluster Size In Y", 120, 0, 120, static_cast<int>(_maxAngle)*100, 0,static_cast<double>(_maxAngle)); 
+//  _aidaHistoMap2D["ClusterSize"]->setTitle("Average Cluster Size Vs Y Position;Position In Y (mm);Average Cluster Size");
+  _aidaHistoMap2D["ClusterSizeYVsAngleY"] = AIDAProcessor::histogramFactory(this)->createHistogram2D("ClusterSizeYVsAngleY;Angle in Y (degrees);Cluster Size In Y", 120, 0, 120, static_cast<int>(_maxAngle)*100, 0,static_cast<double>(_maxAngle)); 
+//  _aidaHistoMap2D["ClusterSize"]->setTitle("Average Cluster Size Vs Y Position;Position In Y (mm);Average Cluster Size");
 }
 
 void EUTelDafBase::bookDetailedHistos(){
@@ -923,10 +991,73 @@ void EUTelDafBase::bookDetailedHistos(){
   }
 }
 
+double GetAverageClusterSize(std::vector< double > z){
+  double mean(0);  
+  for(vector< double >::iterator it = z.begin(); it != z.end(); ++it){
+    mean += *it;
+  }
+  mean /= static_cast<double>(z.size());
+  return mean;
+}
+
+// === For average Chi2 vs cluster size ===
+double GetAverageChi2(std::vector< double > avgchi2){
+  double mean(0);  
+  for(vector< double >::iterator i = avgchi2.begin(); i != avgchi2.end(); ++i){
+    mean += *i;
+  }
+  mean /= static_cast<double>(avgchi2.size());
+  return mean;
+}//========================================
+
+double GetAverageResolution(std::vector< double > averageresidual){
+  TH1D *histogram = new TH1D("histogram","histogram",100,-0.04,0.04);
+  for(vector< double >::iterator i = averageresidual.begin(); i != averageresidual.end(); ++i){
+    histogram->Fill(*i);
+  }
+  TF1 *fit = new TF1("fit","gaus");
+  histogram->Fit(fit,"Q");
+  return fit->GetParameter(2);
+}
+
 void EUTelDafBase::end() {
+
+  for(std::map< int, std::vector < double > >::iterator it = _xPositionForClustering.begin(); it != _xPositionForClustering.end(); ++it){
+    double newx = minx + binsizex*it->first;
+    double averageclustersize = GetAverageClusterSize(it->second);
+    _aidaHistoMap["AverageClusterSizeVsXPosition"]->fill(newx,averageclustersize);
+  }
+
+  for(std::map< int, std::vector < double > >::iterator it = _yPositionForClustering.begin(); it != _yPositionForClustering.end(); ++it){
+    double newy = miny + binsizey*it->first;
+    double averageclustersize = GetAverageClusterSize(it->second);
+    _aidaHistoMap["AverageClusterSizeVsYPosition"]->fill(newy,averageclustersize);
+  }
+
+// === For average Chi2 vs cluster size ===
+  for(std::map< int, std::vector < double > >::iterator i = _Chi2sForAverage.begin(); i != _Chi2sForAverage.end(); ++i){
+    double clustersizechi2 = i->first;
+    double averagechi2 = GetAverageChi2(i->second);
+    _aidaHistoMap["ClusterSizeVsAverageChi2"]->fill(averagechi2,clustersizechi2);
+  }//=======================================
+
+// === Resolution histograms in X and Y ===
+  for(std::map< int, std::vector < double > >::iterator i = _resolutionXForClustering.begin(); i != _resolutionXForClustering.end(); ++i){
+    double clustersize = i->first;
+    double averageresolutionX = GetAverageResolution(i->second);
+    _aidaHistoMap["ResolutionXVsClusterSize"]->fill(clustersize,averageresolutionX);
+  }
+  for(std::map< int, std::vector < double > >::iterator i = _resolutionYForClustering.begin(); i != _resolutionYForClustering.end(); ++i){
+    double clustersize = i->first;
+    double averageresolutionY = GetAverageResolution(i->second);
+    _aidaHistoMap["ResolutionYVsClusterSize"]->fill(clustersize,averageresolutionY);
+  }//========================================
+
+//  _aidaHistoMap["AverageClusterSizeVsYPosition"]->fill(newy,averageclustersize);
+
   cout << "Trying to close " << _asciiName << endl;
   trackstream.close();
-
+  cout << "MAX CLUSTER SIZE = " << MAXCLUSTERSIZE << endl;
   dafEnd();
   
   streamlog_out ( MESSAGE5 ) << endl;
