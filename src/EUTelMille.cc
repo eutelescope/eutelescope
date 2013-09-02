@@ -1153,10 +1153,14 @@ void EUTelMille::processEvent (LCEvent * event) {
   if ( isFirstEvent() )
   {
     FillHotPixelMap(event);
+  }
 
-    if ( _useReferenceHitCollection ) 
-    {
-       _referenceHitVec = dynamic_cast < LCCollectionVec * > (event->getCollection( _referenceHitCollectionName));
+  if ( _useReferenceHitCollection ){
+    try {
+    _referenceHitVec = dynamic_cast < LCCollectionVec * > (event->getCollection( _referenceHitCollectionName));
+    }
+    catch (...){
+      streamlog_out ( ERROR5 ) <<  "Reference Hit Collection " << _referenceHitCollectionName.c_str() << " could not be retrieved for event " << event->getEventNumber()<< "! Please check your steering files! " << endl;
     }
   }
   
