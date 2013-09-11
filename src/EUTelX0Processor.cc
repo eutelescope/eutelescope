@@ -10,30 +10,12 @@ using namespace std;
 
 EUTelX0Processor::EUTelX0Processor()
   :Processor("EUTelX0Processor"),
-  _trackColName(""),
-  _cutValue1(0.0),
-  _cutValue2(0.0),
-  _debug(false),
-  _debugCount(0),
+  _beamEnergy(0.0), 
   _eventNumber(0),
-  _finalEvent(false),
-  _histoData(),
-  _histoFile(""),
   _histoThing(),
-  _hitInfo(),
-  _inputHitCollectionVec(NULL), 
+  _histoThing2D(),
   _inputTrackCollectionVec(NULL), 
-  _inputHitColName(""),
-  _inputHitCollectionName(""),
   _inputTrackColName(""),
-  _maxRecords(0),
-  _projectedHits(),
-  _referenceHitCollectionName(""),
-  _referenceHitVec(NULL),
-  _residual(),
-  _residualAngle(),
-  _residualCut(0.0),
-  _residualProfile(),
   _runNumber(0),
   _trackCollectionName(""),
   nobins(0),
@@ -42,8 +24,6 @@ EUTelX0Processor::EUTelX0Processor()
   maxbin(0),
   minbinangle(0),
   maxbinangle(0),
-  minbinalpha(0),
-  maxbinalpha(0),
   binsx(0),
   minx(0.0),//(mm)
   maxx(0.0),
@@ -110,45 +90,42 @@ EUTelX0Processor::EUTelX0Processor()
   KinkAnglePlane2(NULL),
   KinkAnglePlane3(NULL),
   KinkAnglePlane4(NULL),
-  ScatteringAngleXPlane1Map(NULL),
-  ScatteringAngleXPlane2Map(NULL),
-  ScatteringAngleXPlane3Map(NULL),
-  ScatteringAngleXPlane4Map(NULL),
-  ScatteringAngleYPlane1Map(NULL),
-  ScatteringAngleYPlane2Map(NULL),
-  ScatteringAngleYPlane3Map(NULL),
-  ScatteringAngleYPlane4Map(NULL),
-  RadiationLengthPlane1Map(NULL),
-  RadiationLengthPlane2Map(NULL),
-  RadiationLengthPlane3Map(NULL),
-  RadiationLengthPlane4Map(NULL),
-  ScatteringAngleXTripleMapData(),
-  ScatteringAngleYTripleMapData(),
-  ScatteringAngleXPlane1MapData(),
-  ScatteringAngleXPlane2MapData(),
-  ScatteringAngleXPlane3MapData(),
-  ScatteringAngleXPlane4MapData(),
-  ScatteringAngleYPlane1MapData(),
-  ScatteringAngleYPlane2MapData(),
-  ScatteringAngleYPlane3MapData(),
-  ScatteringAngleYPlane4MapData()
+  ScatteringAngleXSingleMap(),
+  ScatteringAngleYSingleMap(),
+  RadiationLengthSingleMap(),
+  ScatteringAngleXSingleMapData(),
+  ScatteringAngleYSingleMapData()
+//  ScatteringAngleXPlane1Map(NULL),
+//  ScatteringAngleXPlane2Map(NULL),
+//  ScatteringAngleXPlane3Map(NULL),
+//  ScatteringAngleXPlane4Map(NULL),
+//  ScatteringAngleYPlane1Map(NULL),
+//  ScatteringAngleYPlane2Map(NULL),
+//  ScatteringAngleYPlane3Map(NULL),
+//  ScatteringAngleYPlane4Map(NULL),
+//  RadiationLengthPlane1Map(NULL),
+//  RadiationLengthPlane2Map(NULL),
+//  RadiationLengthPlane3Map(NULL),
+//  RadiationLengthPlane4Map(NULL),
+//  ScatteringAngleXTripleMapData(),
+//  ScatteringAngleYTripleMapData(),
+//  ScatteringAngleXPlane1MapData(),
+//  ScatteringAngleXPlane2MapData(),
+//  ScatteringAngleXPlane3MapData(),
+//  ScatteringAngleXPlane4MapData(),
+//  ScatteringAngleYPlane1MapData(),
+//  ScatteringAngleYPlane2MapData(),
+//  ScatteringAngleYPlane3MapData(),
+//  ScatteringAngleYPlane4MapData()
 {
   streamlog_out(DEBUG1) << "Constructing the EUTelX0Processor, setting all values to zero or NULL" << std::endl;
-  _inputHitCollectionVec = new LCCollectionVec(LCIO::TRACKERHIT);//Used to store the values of the hit events
   _inputTrackCollectionVec = new LCCollectionVec(LCIO::TRACK);//Used to store the values of the hit events
-  registerInputCollection(LCIO::TRACKERHIT,"InputTrackCollectionName",
-                           "Collection name for corrected particle positions",
-                           _trackColName, string ("alignedHit"));
-
   
   registerInputCollection(LCIO::TRACK,"OutputTrackCollectionName",
                            "Collection name for fitted tracks",
                            _trackCollectionName, string ("AlignedTrack"));
 
-  registerOptionalParameter("ReferenceCollection","This is the name of the reference it collection (init at 0,0,0)", _referenceHitCollectionName, static_cast< string > ( "referenceHit" ) );//Necessary for working out which layer the particle is detected in
-  registerProcessorParameter("ResidualCutValue","Used to determine cuts in the system, measured in XXX", _residualCut, static_cast< double > (50000.0));
-  registerProcessorParameter("MaxRecords","Will be used to determine the final event if the final event must come before EOF", _maxRecords, static_cast< int > (0));
-  registerProcessorParameter("HistoFile","Will be used to add the gaussian to the kink angle at the end of the run", _histoFile, static_cast< std::string > (""));
+  registerProcessorParameter("BeamEnergy","Works out the energy of the beam for radiation lengths", _beamEnergy, static_cast< double > (0.0));
   registerProcessorParameter("RadiationLengthMapMinX","Used to determine the minimum X for the radiation length map, measured in XXX", minx, static_cast< double > (-11.0));
   registerProcessorParameter("RadiationLengthMapMaxX","Used to determine the maximum X for the radiation length map, measured in XXX", maxx, static_cast< double > (11.0));
   registerProcessorParameter("RadiationLengthMapMinY","Used to determine the minimum Y for the radiation length map, measured in XXX", miny, static_cast< double > (-6.0));
@@ -167,8 +144,6 @@ void EUTelX0Processor::init()
   maxbin = 0.1;//Maximum and minimum bin values
   minbinangle = -0.14;
   maxbinangle = 0.14;
-  minbinalpha = -0.14;
-  maxbinalpha = 0.14;
   std::vector<double> empty;  
   binsx = static_cast< int >((maxx-minx)/binsizex);
   binsy = static_cast< int >((maxy-miny)/binsizey);
@@ -196,12 +171,12 @@ void EUTelX0Processor::init()
   AngleXYForwardTripleFirstThreePlanes = new TH2D("AngleXYForwardTripleFirstThreePlanes",
                                  "Angle of Tracks in XY Direction Relative to the Z Axis for First Three Planes;\\theta_x (rads);\\theta_y (rads);Count",
 				 nobinsangle,minbinangle,maxbinangle,nobinsangle,minbinangle,maxbinangle);
-  _histoThing["AngleXYForwardTripleFirstThreePlanes"] = AngleXYForwardTripleFirstThreePlanes;
+  _histoThing2D["AngleXYForwardTripleFirstThreePlanes"] = AngleXYForwardTripleFirstThreePlanes;
  
   AngleXYForwardTripleLastThreePlanes = new TH2D("AngleXYForwardTripleLastThreePlanes",
                                  "Angle of Tracks in XY Direction Relative to the Z Axis for Last Three Planes;\\theta_y (rads);Count",
 				 nobinsangle,minbinangle,maxbinangle,nobinsangle,minbinangle,maxbinangle);
-  _histoThing["AngleXYForwardTripleLastThreePlanes"] = AngleXYForwardTripleLastThreePlanes;
+  _histoThing2D["AngleXYForwardTripleLastThreePlanes"] = AngleXYForwardTripleLastThreePlanes;
  
   ScatteringAngleXTriple = new TH1D("ScatteringAngleXTriple",
                                     "Scattering Angle in X Direction Relative to the Z Axis for Triplet Tracks;\\theta_x (rads);Count",
@@ -216,22 +191,22 @@ void EUTelX0Processor::init()
   ScatteringAngleXYTriple = new TH2D("ScatteringAngleXYTriple",
                                     "Scattering Angle in XY Direction Relative to the Z Axis for Triplet Tracks;\\theta_x (rads);\\theta_y (rads);Count",
                                     nobinsangle,minbinangle,maxbinangle,nobinsangle,minbinangle,maxbinangle);
-  _histoThing["ScatteringAngleXYTriple"] = ScatteringAngleXYTriple;
+  _histoThing2D["ScatteringAngleXYTriple"] = ScatteringAngleXYTriple;
   
   ScatteringAngleXTripleMap = new TH2D("ScatteringAngleXTripleMap",
                                        "Scattering Angle Map in X on DUT;x (mm);y (mm); \\theta_x (rads)"
 				       ,binsx,minx,maxx,binsy,miny,maxy);
-  _histoThing["ScatteringAngleXTripleMap"] = ScatteringAngleXTripleMap;
+  _histoThing2D["ScatteringAngleXTripleMap"] = ScatteringAngleXTripleMap;
  
   ScatteringAngleYTripleMap = new TH2D("ScatteringAngleYTripleMap",
                                        "Scattering Angle Map in Y on DUT;x (mm);y (mm); \\theta_y (rads)"
 				       ,binsx,minx,maxx,binsy,miny,maxy);
-  _histoThing["ScatteringAngleYTripleMap"] = ScatteringAngleYTripleMap;
+  _histoThing2D["ScatteringAngleYTripleMap"] = ScatteringAngleYTripleMap;
  
   RadiationLengthTripleMap = new TH2D("RadiationLengthTripleMap",
                                        "Radiation Length Map on DUT;x (mm);y (mm); \\X_0 (Percent)"
 				       ,binsx,minx,maxx,binsy,miny,maxy);
-  _histoThing["RadiationLengthTripleMap"] = RadiationLengthTripleMap;
+  _histoThing2D["RadiationLengthTripleMap"] = RadiationLengthTripleMap;
  
   SinglePointResidualXPlane1 = new TH1D("SinglePointResidualXPlane1",
                                          "Single Point Residual in X on Plane 1;\\Delta X (mm);Count",
@@ -381,27 +356,27 @@ void EUTelX0Processor::init()
   AngleXYForwardPlane0 = new TH2D("AngleXYForwardPlane0",
                                  "Angle of Tracks in XY Direction Relative to the Z Axis on Plane 0;\\theta_x (rads);\\theta_y (rads)",
 				 nobinsangle,minbinangle,maxbinangle,nobinsangle,minbinangle,maxbinangle);
-  _histoThing["AngleXYForwardPlane0"] = AngleXYForwardPlane0;
+  _histoThing2D["AngleXYForwardPlane0"] = AngleXYForwardPlane0;
   
   AngleXYForwardPlane1 = new TH2D("AngleXYForwardPlane1",
                                  "Angle of Tracks in XY Direction Relative to the Z Axis on Plane 1;\\theta_x (rads);\\theta_y (rads)",
 				 nobinsangle,minbinangle,maxbinangle,nobinsangle,minbinangle,maxbinangle);
-  _histoThing["AngleXYForwardPlane1"] = AngleXYForwardPlane1;
+  _histoThing2D["AngleXYForwardPlane1"] = AngleXYForwardPlane1;
   
   AngleXYForwardPlane2 = new TH2D("AngleXYForwardPlane2",
                                  "Angle of Tracks in XY Direction Relative to the Z Axis on Plane 2;\\theta_x (rads);\\theta_y (rads)",
 				 nobinsangle,minbinangle,maxbinangle,nobinsangle,minbinangle,maxbinangle);
-  _histoThing["AngleXYForwardPlane2"] = AngleXYForwardPlane2;
+  _histoThing2D["AngleXYForwardPlane2"] = AngleXYForwardPlane2;
   
   AngleXYForwardPlane3 = new TH2D("AngleXYForwardPlane3",
                                  "Angle of Tracks in XY Direction Relative to the Z Axis on Plane 3;\\theta_x (rads);\\theta_y (rads)",
 				 nobinsangle,minbinangle,maxbinangle,nobinsangle,minbinangle,maxbinangle);
-  _histoThing["AngleXYForwardPlane3"] = AngleXYForwardPlane3;
+  _histoThing2D["AngleXYForwardPlane3"] = AngleXYForwardPlane3;
   
   AngleXYForwardPlane4 = new TH2D("AngleXYForwardPlane4",
                                  "Angle of Tracks in XY Direction Relative to the Z Axis on Plane 4;\\theta_x (rads);\\theta_y (rads)",
 				 nobinsangle,minbinangle,maxbinangle,nobinsangle,minbinangle,maxbinangle);
-  _histoThing["AngleXYForwardPlane4"] = AngleXYForwardPlane4;
+  _histoThing2D["AngleXYForwardPlane4"] = AngleXYForwardPlane4;
   
   ScatteringAngleXPlane1 = new TH1D("ScatteringAngleXPlane1",
                                     "Scattering Angle in X Direction Relative to the Z Axis on Plane 1;\\theta_x (rads);Count",
@@ -445,84 +420,49 @@ void EUTelX0Processor::init()
      
   KinkAnglePlane1 = new TH2D("KinkAnglePlane1",
                              "Kink Angle on Plane 1;\\theta_x (rads);\\theta_y (rads)",
-			     nobinsangle,minbinalpha,maxbinalpha,nobinsangle,minbinalpha,maxbinalpha);
-  _histoThing["KinkAnglePlane1"] = KinkAnglePlane1;
+			     nobinsangle,minbinangle,maxbinangle,nobinsangle,minbinangle,maxbinangle);
+  _histoThing2D["KinkAnglePlane1"] = KinkAnglePlane1;
   
   KinkAnglePlane2 = new TH2D("KinkAnglePlane2",
                              "Kink Angle on Plane 2;\\theta_x (rads);\\theta_y (rads)",
-			     nobinsangle,minbinalpha,maxbinalpha,nobinsangle,minbinalpha,maxbinalpha);
-  _histoThing["KinkAnglePlane2"] = KinkAnglePlane2;
+			     nobinsangle,minbinangle,maxbinangle,nobinsangle,minbinangle,maxbinangle);
+  _histoThing2D["KinkAnglePlane2"] = KinkAnglePlane2;
   
   KinkAnglePlane3 = new TH2D("KinkAnglePlane3",
                              "Kink Angle on Plane 3;\\theta_x (rads);\\theta_y (rads)",
-			     nobinsangle,minbinalpha,maxbinalpha,nobinsangle,minbinalpha,maxbinalpha);
-  _histoThing["KinkAnglePlane3"] = KinkAnglePlane3;
+			     nobinsangle,minbinangle,maxbinangle,nobinsangle,minbinangle,maxbinangle);
+  _histoThing2D["KinkAnglePlane3"] = KinkAnglePlane3;
   
   KinkAnglePlane4 = new TH2D("KinkAnglePlane4",
                              "Kink Angle on Plane 4;\\theta_x (rads);\\theta_y (rads)",
-			     nobinsangle,minbinalpha,maxbinalpha,nobinsangle,minbinalpha,maxbinalpha);
-  _histoThing["KinkAnglePlane4"] = KinkAnglePlane4;
-  
-  ScatteringAngleXPlane1Map = new TH2D("ScatteringAngleXPlane1Map",
-                                       "Scattering Angle in X on Plane 1;x (mm);y(mm)"
-				       ,binsx,minx,maxx,binsy,miny,maxy);
-  _histoThing["ScatteringAngleXPlane1Map"] = ScatteringAngleXPlane1Map;
-  
-  ScatteringAngleXPlane2Map = new TH2D("ScatteringAngleXPlane2Map",
-                                       "Scattering Angle in X on Plane 2;x (mm);y(mm)"
-				       ,binsx,minx,maxx,binsy,miny,maxy);
-  _histoThing["ScatteringAngleXPlane2Map"] = ScatteringAngleXPlane2Map;
-  
-  ScatteringAngleXPlane3Map = new TH2D("ScatteringAngleXPlane3Map",
-                                       "Scattering Angle in X on Plane 3;x (mm);y(mm)"
-				       ,binsx,minx,maxx,binsy,miny,maxy);
-  _histoThing["ScatteringAngleXPlane3Map"] = ScatteringAngleXPlane3Map;
-  
-  ScatteringAngleXPlane4Map = new TH2D("ScatteringAngleXPlane4Map",
-                                       "Scattering Angle in X on Plane 4;x (mm);y(mm)"
-				       ,binsx,minx,maxx,binsy,miny,maxy);
-  _histoThing["ScatteringAngleXPlane4Map"] = ScatteringAngleXPlane4Map;
-  
-  ScatteringAngleYPlane1Map = new TH2D("ScatteringAngleYPlane1Map",
-                                       "Scattering Angle in Y on Plane 1;x (mm);y(mm)"
-				       ,binsx,minx,maxx,binsy,miny,maxy);
-  _histoThing["ScatteringAngleYPlane1Map"] = ScatteringAngleYPlane1Map;
-  
-  ScatteringAngleYPlane2Map = new TH2D("ScatteringAngleYPlane2Map",
-                                       "Scattering Angle in Y on Plane 2;x (mm);y(mm)"
-				       ,binsx,minx,maxx,binsy,miny,maxy);
-  _histoThing["ScatteringAngleYPlane2Map"] = ScatteringAngleYPlane2Map;
-  
-  ScatteringAngleYPlane3Map = new TH2D("ScatteringAngleYPlane3Map",
-                                       "Scattering Angle in Y on Plane 3;x (mm);y(mm)"
-				       ,binsx,minx,maxx,binsy,miny,maxy);
-  _histoThing["ScatteringAngleYPlane3Map"] = ScatteringAngleYPlane3Map;
-  
-  ScatteringAngleYPlane4Map = new TH2D("ScatteringAngleYPlane4Map",
-                                       "Scattering Angle in Y on Plane 4;x (mm);y(mm)"
-				       ,binsx,minx,maxx,binsy,miny,maxy);
-  _histoThing["ScatteringAngleYPlane4Map"] = ScatteringAngleYPlane4Map;
-  
-  RadiationLengthPlane1Map = new TH2D("RadiationLengthPlane1Map",
-                                       "Radiation Length on Plane 1;x (mm);y(mm)"
-				       ,binsx,minx,maxx,binsy,miny,maxy);
-  _histoThing["RadiationLengthPlane1Map"] = RadiationLengthPlane1Map;
-  
-  RadiationLengthPlane2Map = new TH2D("RadiationLengthPlane2Map",
-                                       "Radiation Length on Plane 2;x (mm);y(mm)"
-				       ,binsx,minx,maxx,binsy,miny,maxy);
-  _histoThing["RadiationLengthPlane2Map"] = RadiationLengthPlane2Map;
-  
-  RadiationLengthPlane3Map = new TH2D("RadiationLengthPlane3Map",
-                                       "Radiation Length on Plane 3;x (mm);y(mm)"
-				       ,binsx,minx,maxx,binsy,miny,maxy);
-  _histoThing["RadiationLengthPlane3Map"] = RadiationLengthPlane3Map;
-  
-  RadiationLengthPlane4Map = new TH2D("RadiationLengthPlane4Map",
-                                       "Radiation Length on Plane 4;x (mm);y(mm)"
-				       ,binsx,minx,maxx,binsy,miny,maxy);
-  _histoThing["RadiationLengthPlane4Map"] = RadiationLengthPlane4Map;
-  
+			     nobinsangle,minbinangle,maxbinangle,nobinsangle,minbinangle,maxbinangle);
+  _histoThing2D["KinkAnglePlane4"] = KinkAnglePlane4;
+
+  for(int i = 1; i < 5; ++i){ //This covers the inner 4 planes
+    stringstream inttostring;
+    inttostring << i;
+    string titlex = "ScatteringAngleXPlane";
+    string titlexdetail = "Scattering Angle in X on Plane";
+    string titley = "ScatteringAngleYPlane";
+    string titleydetail = "Scattering Angle in Y on Plane";
+    string titlerad = "RadiationLengthPlane";
+    string titleraddetail = "Radiation Length on Plane";
+    string map = "Map";
+    string axis = ";x (mm);y(mm)";
+    string plane = inttostring.str();
+    ScatteringAngleXSingleMap[i] = new TH2D((titlex + plane + map).c_str(),
+                                       (titlexdetail + plane + axis).c_str()
+                                       ,binsx,minx,maxx,binsy,miny,maxy);
+    _histoThing2D[(titlex + plane + map).c_str()] = ScatteringAngleXSingleMap[i];
+    ScatteringAngleYSingleMap[i] = new TH2D((titley + plane + map).c_str(),
+                                       (titleydetail + plane + axis).c_str()
+                                       ,binsy,miny,maxy,binsy,miny,maxy);
+    _histoThing2D[(titley + plane + map).c_str()] = ScatteringAngleYSingleMap[i];
+    RadiationLengthSingleMap[i] = new TH2D((titlerad + plane + map).c_str(),
+                                       (titleraddetail + plane + axis).c_str()
+                                       ,binsy,miny,maxy,binsy,miny,maxy);
+    _histoThing2D[(titlerad + plane + map).c_str()] = RadiationLengthSingleMap[i];
+  }
   gStyle->SetOptStat("neMRuo");
 }
 
@@ -628,7 +568,7 @@ pair< vector< double >, vector< double > > EUTelX0Processor::GetSingleTrackAngle
       streamlog_out(ERROR3) << "Unable to fill histogram: " << yforward.str().c_str() << endl;
     }
     try{
-      dynamic_cast< TH2D* >(_histoThing[xyforward.str().c_str()])->Fill(frontanglex,frontangley);
+      dynamic_cast< TH2D* >(_histoThing2D[xyforward.str().c_str()])->Fill(frontanglex,frontangley);
     } catch(std::bad_cast &bc){
       streamlog_out(ERROR3) << "Unable to fill histogram: " << xyforward.str().c_str() << endl;
     }
@@ -722,7 +662,7 @@ pair< vector< double >, vector< double > > EUTelX0Processor::GetTripleTrackAngle
       streamlog_out(ERROR3) << "Unable to fill histogram: " << yforward.str().c_str() << ". Unknown Error" << endl;
     }
     try{
-      dynamic_cast< TH2D* >(_histoThing[xyforward.str().c_str()])->Fill(frontanglex,frontangley);
+      dynamic_cast< TH2D* >(_histoThing2D[xyforward.str().c_str()])->Fill(frontanglex,frontangley);
     } catch(std::bad_cast &bc){
       streamlog_out(ERROR3) << "Unable to fill histogram: " << xyforward.str().c_str() << ". Due to bad cast." << endl;
     }
@@ -736,40 +676,35 @@ void EUTelX0Processor::TriplePlaneTrackScatteringAngles(vector< double > scatter
   gStyle->SetOptStat("neMRuo");
   const size_t scatterxsize = scatterx.size();
   streamlog_out(DEBUG3) << "scatterxsize = " << scatterxsize << std::endl;
-  for(size_t i = 0; i < 1; ++i){ //This fills the scattering angle histograms plane by plane
-    //Scattering angle is the forward angle between planes i to i+1 and plane i+1 to i+2
-    const double scatteringanglex = scatterx[i+1] - scatterx[i];
-    const double scatteringangley = scattery[i+1] - scattery[i];
+  //Scattering angle is the forward angle between planes i to i+1 and plane i+1 to i+2
+  const double scatteringanglex = scatterx[1] - scatterx[0];
+  const double scatteringangley = scattery[1] - scattery[0];
 
-    //Name the histograms
-    std::stringstream ssscatterx,ssscattery,ssscatterxy;
-    ssscatterx << "ScatteringAngleXTriple";
-    ssscattery << "ScatteringAngleYTriple";
-    ssscatterxy << "ScatteringAngleXYTriple";
-    if(i == 1) //If we are looking at the angle between planes 1 to 2 and planes 2 to 3 (So this includes the DUT)
-    {
-      double x = hits[i+1]->x();
-      double y = hits[i+1]->y();
+  //Name the histograms
+  std::stringstream ssscatterx,ssscattery,ssscatterxy;
+  ssscatterx << "ScatteringAngleXTriple";
+  ssscattery << "ScatteringAngleYTriple";
+  ssscatterxy << "ScatteringAngleXYTriple";
+  double x = hits[2]->x();
+  double y = hits[2]->y();
 
-      pair< int, int > position(ConversionHitmapToX0map(x,y));
-      ScatteringAngleXPlane1MapData[position].push_back(scatteringanglex);
-      ScatteringAngleYPlane1MapData[position].push_back(scatteringangley);
-    }
-    try{
-      dynamic_cast< TH1D* >(_histoThing[ssscatterx.str().c_str()])->Fill(scatteringanglex);
-    } catch(std::bad_cast &bc){
-      streamlog_out(ERROR3) << "Unable to fill histogram: " << ssscatterx.str().c_str() << endl;
-    }
-    try{
-      dynamic_cast< TH1D* >(_histoThing[ssscattery.str().c_str()])->Fill(scatteringangley);
-    } catch(std::bad_cast &bc){
-      streamlog_out(ERROR3) << "Unable to fill histogram: " << ssscattery.str().c_str() << endl;
-    }
-    try{
-      dynamic_cast< TH2D* >(_histoThing[ssscatterxy.str().c_str()])->Fill(scatteringanglex,scatteringangley);
-    } catch(std::bad_cast &bc){
-      streamlog_out(ERROR3) << "Unable to fill histogram: " << ssscatterxy.str().c_str() << endl;
-    }
+  pair< int, int > position(ConversionHitmapToX0map(x,y));
+  ScatteringAngleXTripleMapData[position].push_back(scatteringanglex);
+  ScatteringAngleYTripleMapData[position].push_back(scatteringangley);
+  try{
+    dynamic_cast< TH1D* >(_histoThing[ssscatterx.str().c_str()])->Fill(scatteringanglex);
+  } catch(std::bad_cast &bc){
+    streamlog_out(ERROR3) << "Unable to fill histogram: " << ssscatterx.str().c_str() << endl;
+  }
+  try{
+    dynamic_cast< TH1D* >(_histoThing[ssscattery.str().c_str()])->Fill(scatteringangley);
+  } catch(std::bad_cast &bc){
+    streamlog_out(ERROR3) << "Unable to fill histogram: " << ssscattery.str().c_str() << endl;
+  }
+  try{
+    dynamic_cast< TH2D* >(_histoThing2D[ssscatterxy.str().c_str()])->Fill(scatteringanglex,scatteringangley);
+  } catch(std::bad_cast &bc){
+    streamlog_out(ERROR3) << "Unable to fill histogram: " << ssscatterxy.str().c_str() << endl;
   }
 }
 
@@ -787,6 +722,7 @@ void EUTelX0Processor::SinglePlaneTrackScatteringAngles(vector< double > scatter
     ssscatterx << "ScatteringAngleXPlane" << i+1;
     ssscattery << "ScatteringAngleYPlane" << i+1;
     ssscatterxy << "KinkAnglePlane" << i+1;
+/*
     if(i == 1) //If we are looking at the angle between planes 1 to 2 and planes 2 to 3 (So this includes the DUT)
     {
       double x = hits[i+1]->x();
@@ -796,6 +732,12 @@ void EUTelX0Processor::SinglePlaneTrackScatteringAngles(vector< double > scatter
       ScatteringAngleXPlane1MapData[position].push_back(scatteringanglex);
       ScatteringAngleYPlane1MapData[position].push_back(scatteringangley);
     }
+*/
+    double x = hits[i+1]->x();
+    double y = hits[i+1]->y();
+    pair< int, int > position(ConversionHitmapToX0map(x,y));
+    ScatteringAngleXSingleMapData[i+1][position].push_back(scatteringanglex);
+    ScatteringAngleYSingleMapData[i+1][position].push_back(scatteringangley);
     try{
       dynamic_cast< TH1D* >(_histoThing[ssscatterx.str().c_str()])->Fill(scatteringanglex);
     } catch(std::bad_cast &bc){
@@ -807,7 +749,7 @@ void EUTelX0Processor::SinglePlaneTrackScatteringAngles(vector< double > scatter
       streamlog_out(ERROR3) << "Unable to fill histogram: " << ssscattery.str().c_str() << endl;
     }
     try{
-      dynamic_cast< TH2D* >(_histoThing[ssscatterxy.str().c_str()])->Fill(scatteringanglex,scatteringangley);
+      dynamic_cast< TH2D* >(_histoThing2D[ssscatterxy.str().c_str()])->Fill(scatteringanglex,scatteringangley);
     } catch(std::bad_cast &bc){
       streamlog_out(ERROR3) << "Unable to fill histogram: " << ssscatterxy.str().c_str() << endl;
     }
@@ -843,10 +785,6 @@ void EUTelX0Processor::kinkEstimate(Track* track){
   streamlog_out(DEBUG3) << "Made it to the end of kinkEstimate()" << endl;
 }
 
-void EUTelX0Processor::kinkGaussian(){
-
-}
-
 void EUTelX0Processor::processEvent(LCEvent *evt)
 {
   streamlog_out(DEBUG0) << "Running EUTelX0Processor::processEvent(LCEvent *evt) with evt = " << evt << std::endl;
@@ -858,21 +796,16 @@ void EUTelX0Processor::processEvent(LCEvent *evt)
     //Extract sigma value from histogram
 
   try{
-    if(_eventNumber == _maxRecords - 2){ //Not sure about the -2
-      _finalEvent = true;
-      kinkGaussian();
-    } else{
-      //_referenceHitVec = evt->getCollection(_referenceHitCollectionName);
-      LCCollection* trackcollection = evt->getCollection(_trackCollectionName);
-      int elementnumber = trackcollection->getNumberOfElements();
-      for(int i = 0; i < elementnumber; ++i){
-        Track* eventtrack = dynamic_cast< Track* >(trackcollection->getElementAt(i));
-        streamlog_out(DEBUG0) << "Here is all the information about the track in run " << _runNumber << ", event " << _eventNumber << ", element " << i << std::endl << std::endl;
-        printTrackParameters( eventtrack );
-        kinkEstimate( eventtrack );
-//        singlePointResolution( eventtrack );
-//        threePointResolution( eventtrack );
-      }
+    //_referenceHitVec = evt->getCollection(_referenceHitCollectionName);
+    LCCollection* trackcollection = evt->getCollection(_trackCollectionName);
+    int elementnumber = trackcollection->getNumberOfElements();
+    for(int i = 0; i < elementnumber; ++i){
+      Track* eventtrack = dynamic_cast< Track* >(trackcollection->getElementAt(i));
+      streamlog_out(DEBUG0) << "Here is all the information about the track in run " << _runNumber << ", event " << _eventNumber << ", element " << i << std::endl << std::endl;
+      printTrackParameters( eventtrack );
+      kinkEstimate( eventtrack );
+//      singlePointResolution( eventtrack );
+//      threePointResolution( eventtrack );
     }
   } catch(DataNotAvailableException &datanotavailable){
     streamlog_out(DEBUG4) << "Exception occured: " << datanotavailable.what() << std::endl
@@ -888,93 +821,57 @@ void EUTelX0Processor::processEvent(LCEvent *evt)
   _eventNumber++;
 }
 
-int EUTelX0Processor::guessSensorID(const double * hit )
-{
-  int sensorID = -1;
-  double minDistance = numeric_limits< double >::max() ;
-  streamlog_out( DEBUG5 ) << "referencehit collection: " << _referenceHitCollectionName << " at "<< _referenceHitVec << std::endl;
-  if( _referenceHitVec == 0)
-  {
-    streamlog_out( DEBUG5 ) << "_referenceHitVec is empty" << std::endl;
+double getSigma(vector<double> vec){
+  double mean(0);
+  for(vector< double >::iterator it = vec.begin(); it != vec.end(); ++it){
+    mean += *it;
+  }
+  double sigma(0);
+  for(vector< double >::iterator it = vec.begin(); it != vec.end(); ++it){
+    sigma += (mean - *it)*(mean - *it);
+  }
+  sigma /= static_cast<double>(vec.size());
+  sigma = sqrt(sigma);
+  if(sigma != sigma){
     return 0;
+  } else{
+    return sigma;
   }
-
-  if( isFirstEvent() )
-  {
-    // message<DEBUG > ( log() << "number of elements : " << _referenceHitVec->getNumberOfElements() << std::endl );
-  }
-
-  for(int ii = 0 ; ii < _referenceHitVec->getNumberOfElements(); ii++)
-  {
-    EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
-    if(refhit == 0 ) continue;
-     TVector3 hit3d( hit[0], hit[1], hit[2] );
-    TVector3 hitInPlane( refhit->getXOffset(), refhit->getYOffset(), refhit->getZOffset());
-    TVector3 norm2Plane( refhit->getAlpha(), refhit->getBeta(), refhit->getGamma() );
-    double distance = abs( norm2Plane.Dot(hit3d-hitInPlane) );
-    streamlog_out( DEBUG5 ) << " hit " << hit[0] << " "<< hit[1] << " " << hit[2] << std::endl;
-    streamlog_out( DEBUG5 ) << " " << refhit->getXOffset() << " " << refhit->getYOffset() << " " << refhit->getZOffset() << std::endl;
-    streamlog_out( DEBUG5 ) << " " << refhit->getAlpha() << " " << refhit->getBeta() << " " << refhit->getGamma() << std::endl;
-    streamlog_out( DEBUG5 ) << " distance " << distance << std::endl;
-    if ( distance < minDistance )
-    {
-      minDistance = distance;
-      sensorID = refhit->getSensorID();
-    }
-  }
-  //Some useful debug printouts:
-  bool debug = ( _debugCount>0 );
-
-  if(debug)
-  {
-    for(int ii = 0 ; ii < _referenceHitVec->getNumberOfElements(); ii++)
-    {
-      EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
-      if(refhit == 0 ) continue;
-      // if( sensorID != refhit->getSensorID() ) continue;
-      // streamlog_out( DEBUG5 ) << " _referenceHitVec " << _referenceHitVec << " " << _referenceHitCollectionName.c_str() << " " << refhit << " at "
-      // << refhit->getXOffset() << " " << refhit->getYOffset() << " " << refhit->getZOffset() << " "
-      //<< refhit->getAlpha() << " " << refhit->getBeta() << " " << refhit->getGamma() << std::endl ;
-      //message<DEBUG5> ( log() << "iPlane " << refhit->getSensorID() << " hitPos: [" << hit[0] << " " << hit[1] << " " << hit[2] << "] distance: " << minDistance << std::endl );
-    }
-  }
-  return sensorID;
 }
- 
+
 void EUTelX0Processor::end()
 {
   //Clean up memory
   //Set all values to zero or NULL
   //
   //calculateX0();
-
+  int numberofplanes = 6;
   for(double i = minx; i <= maxx; i += binsizex)
   {
     for(double j = miny; j <= maxy; j += binsizey)
     {
       pair< int, int > position(ConversionHitmapToX0map(i,j));
-      double mean(0);
-      for(vector< double >::iterator it = ScatteringAngleXPlane1MapData[position].begin(); it != ScatteringAngleXPlane1MapData[position].end(); ++it){
-        mean += *it;
+      for(int k = 1; k < numberofplanes - 1; ++k){
+        double sigmasinglex = getSigma(ScatteringAngleXSingleMapData[k][position]);
+        ScatteringAngleXSingleMap[k]->Fill(i,j,sigmasinglex);
+        double sigmasingley = getSigma(ScatteringAngleYSingleMapData[k][position]);;
+        ScatteringAngleYSingleMap[k]->Fill(i,j,sigmasingley);
+
+        double x0single = pow((((sigmasinglex+sigmasingley)/2.0)/sqrt(2))*1000.0*_beamEnergy/13.6,1.0/0.555);
+        RadiationLengthSingleMap[k]->Fill(i,j,x0single);
+
       }
-      double sigma(0);
-      for(vector< double >::iterator it = ScatteringAngleXPlane1MapData[position].begin(); it != ScatteringAngleXPlane1MapData[position].end(); ++it){
-        sigma += (mean - *it)*(mean - *it);
-      }
-      sigma /= static_cast<double>(ScatteringAngleXPlane1MapData[position].size());
-      sigma = sqrt(sigma);
-      ScatteringAngleXPlane2Map->Fill(i,j,sigma);
+      double sigmatriplex = getSigma(ScatteringAngleXTripleMapData[position]);
+      ScatteringAngleXTripleMap->Fill(i,j,sigmatriplex);
+      double sigmatripley = getSigma(ScatteringAngleYTripleMapData[position]);
+      ScatteringAngleYTripleMap->Fill(i,j,sigmatripley);
+      
+      double x0triple = pow((((sigmatriplex+sigmatripley)/2.0)/sqrt(2))*1000.0*_beamEnergy/13.6,1.0/0.555);
+      RadiationLengthTripleMap->Fill(i,j,x0triple);
     }
   }
-  _hitInfo.clear();
-  _projectedHits.clear();
   _histoThing.clear(); 
-  _residual.clear(); 
-  _residualAngle.clear();
-  _residualProfile.clear();
-  _inputHitCollectionVec = NULL;
   _inputTrackCollectionVec = NULL; 
-  _referenceHitVec = NULL;  
 }
 
 pair< double, double > EUTelX0Processor::ConversionX0mapToHitmap(int x, int y){
@@ -1030,68 +927,6 @@ pair< int, int > EUTelX0Processor::ConversionHitmapToX0map(double x, double y){
     } //end of: else [else if(x < newminbinx + binsizex)]
   } // end of: while(notfoundx)
   return position;
-}
-
-double EUTelX0Processor::calculateX0()
-{
-  double X0(0);
-  //Two methods for figuring out the material budget, X0, are used. The loss of energy and the scattering angle due to multiple scattering.
-  //Potentially might use both a Forward-backward Kalmin filter and a Global Linear Estimator to work out the two above values, might give a more accurate meaurement of X0.
-  double sigma_msi(0);  //Highland formula
-  double sigma_measi(0);  //Sum of the variance of histogram alpha012 and alpha432
-  double E = 5;  //The total particle energy (GeV) TODO: (Phillip Hamnett) is there some way to make this information (and the mass) into the steering file?
-  double m = 0.000511;  //Electron Mass (GeV)
-  double p = sqrt(E*E - m*m);  //The particle momentum (GeV)
-  double theta012(0);  //The polar angle between the momentum vector and the z-axis
-  double beta012(0);  //The difference between the azimuthal angle of the momentum vector and the azimuthal angle of a point on the track
-  double theta432(0);
-  double beta432(0);
-  X0 = 100;  //An estimate of X0
-  double thickness = 0.00005;  //Thickness of mimosa layer is 50 micrometers
-  double X = X0/thickness;
-  double BetterX = DBL_MAX;
-  double currentlikelihood = DBL_MIN;
-  double lastX0 = DBL_MIN;
-  while(X0 != BetterX){
-    sigma_measi = 5;  //HACK - This is actually the sum of the variances of theta in the forward and backward direction. 
-    size_t size = _histoData["Theta012"].size();
-    double loglikelihoodX0(0);
-    for(size_t i = 0; i < size; ++i){
-      theta012 = _histoData["Theta012"][i]*3.1415/180.0;
-      theta432 = _histoData["Theta432"][i]*3.1415/180.0;
-      beta012 = _histoData["Phi012"][i]*3.1415/180.0;
-      beta432 = _histoData["Phi432"][i]*3.1415/180.0;
-      double deltatheta = sqrt((theta432 - theta012)*(theta432 - theta012));  //Take the positive difference between the two angles in theta and beta
-      double deltabeta = sqrt((beta432 - beta012)*(beta432 - beta012));
-      sigma_msi = (0.015*E/(p*p))*sqrt(X/(sin(deltatheta)*cos(deltabeta)))*(1 + 0.038*std::log(X/(sin(deltatheta)*cos(deltabeta))));
-      if(sigma_msi != sigma_msi){
-        streamlog_out( ERROR5 ) << "Code failed with following values: " << std::endl << "E = " << E << std::endl << "p = " << p << std::endl << "X = " << X << std::endl << "theta012 = " << theta012 << std::endl << "beta012 = " << beta012 << std::endl << "theta432 = " << theta432 << std::endl << "beta432 = " << beta432 << std::endl << "deltatheta = " << deltatheta << std::endl << "deltabeta = " << deltabeta << std::endl << "sigma_msi = " << sigma_msi << std::endl << "sigma_measi = " << sigma_measi << std::endl << "loglikelihoodX0 = " << loglikelihoodX0 << std::endl << std::endl;
-      }
-      //Maximum log-likelihood:
-      loglikelihoodX0 += -std::log(sigma_msi*sigma_msi + sigma_measi*sigma_measi) - (theta012*theta012)/(sigma_msi*sigma_msi + sigma_measi*sigma_measi); 
-    }
-    if(loglikelihoodX0 > currentlikelihood){
-      BetterX = X0;
-      currentlikelihood = loglikelihoodX0;
-      if(lastX0 < X0){
-        X++;
-      }
-      else{
-        X--;
-      }
-    }
-    else{
-      if(lastX0 < X0){
-        X--;
-      }
-      else{
-        X++;
-      }
-    }
-    X = X0/thickness;
-    loglikelihoodX0 = 0;
-  }
-  return X0;
 }
 
 std::vector< TVector3* > EUTelX0Processor::getHitsFromTrack(Track *track){

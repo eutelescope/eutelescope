@@ -23,23 +23,6 @@
 #include "marlin/Processor.h"
 //  AIDA includes
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-#include <AIDA/IAnalysisFactory.h>
-#include <AIDA/IAxis.h>
-#include <AIDA/IBaseHistogram.h>
-#include <AIDA/IFitResult.h>
-#include <AIDA/IFitter.h>
-#include <AIDA/IHistogram1D.h>
-#include <AIDA/IHistogram2D.h>
-#include <AIDA/IHistogramFactory.h>
-#include <AIDA/IPlotter.h>
-#include <AIDA/IPlotterFactory.h>
-#include <AIDA/IPlotterRegion.h>
-#include <AIDA/IProfile2D.h>
-#include <AIDA/IProfile1D.h>
-#include <AIDA/ITree.h>
-#include <RAIDA/IAnalysisFactoryROOT.h>
-#include <RAIDA/IPlotterFactoryROOT.h>
-#include <RAIDA/IPlotterROOT.h>
 #endif
 //  LCIO includes
 #include <EVENT/LCEvent.h>
@@ -75,12 +58,6 @@
 #include "TVector3.h"
 
 //  Forward Declarations
-class AIDA::IAnalysisFactory;
-class AIDA::IFitter;
-class AIDA::IFitResult;
-class AIDA::IPlotter;
-class AIDA::IPlotterFactory;
-class AIDA::IPlotterRegion;
 class EVENT::TrackerHit;
 class IMPL::LCCollectionVec;
 class TMinuit;
@@ -96,7 +73,6 @@ namespace eutelescope {
 *-processEvent(LCEvent *evt) is called for every event in a run, and this currently deduces a track (if one exists) and records this tracks residual. This is used later to work out a kink angle which is necessary for the calculation of a radiation length.
 *-end() is called after all the events are finished running, and this cleans up all the variables, before calculating the value of the material budget (X0) from all the events.
 *-booksHistos() fills all the relevant histograms each event.
-*-guessSensorID(const double *pos) is used to deduce which layer of the pixel telescope each hit was in, and it uses the GEAR file provided to do this (as well as the parameter refhit)
 *Private functions (Should be accessed only from within this class):
 *-basicFitter(LCCollection *alignedHitCollection) fits tracks based on relative X and Y position between two layers, if they are within a radius of each other determined by _cutValue1 then they are considered a track
 *-calculateX0() is called in end() and is used to work out the value for the average radiation length in the material, this is the most important function in this processor
@@ -156,93 +132,135 @@ public:
   */
   virtual void end();
 
-  //! Histogram booking
-  /*! Some control histograms are filled during this procedure in
-  *   order to be able to perform easy check on the quality of the
-  *   output hits and also to understand if the frame of reference
-  *   conversion has been properly done. Of course this method is
-  *   effectively doing something only in the case MARLIN_USE_AIDA.
-  *   Currently this is not used, but that may change later.
-  */
-  void bookHistos();
-
-  //!Guess Sensor ID
-  /*!Works out which layer of the telescope the current element is in based on its position*/ 
-  int guessSensorID(const double * hit );
-
 private:
   #ifndef DISALLOW_COPY_AND_ASSIGN
   //Following #define stops the accidental creation of a copy or assignment operator by causing a link error. Copy and Assignment operators not allowed because they are unnecessary and the cause of many bugs
   #define DISALLOW_COPY_AND_ASSIGN(EUTelX0Processor) \
   EUTelX0Processor(const EUTelX0Processor&); \
   void operator=(const EUTelX0Processor&);
-  
-  //Private Functions
   DISALLOW_COPY_AND_ASSIGN(EUTelX0Processor)//See #define just above
   #endif
   
- //!Caculate X0
-  /*!This function calculates the value of the material budget.
-  */
-  double calculateX0();
+  //!Get the hits from the tracks
+  /*!We need to get the hit positions from each track in order to form our own 'subtracks' between each plane and arm of the telescope. This will return a vector of TVector3's with each element of the vector being a hit*/
   std::vector< TVector3* > getHitsFromTrack(Track *track);
+
+  //!Print Track Parameters
+  /*!This simply prints out all the LCIO information available about each track*/
   void printTrackParameters(EVENT::Track *track);
+
+  //!Print Hit Parameters
+  /*!This prints out the information about each hit from each track*/
   void printHitParameters(EVENT::TrackerHit *hit);
+
+  //!Fills the Single Point Residual Plots
+  /*!This fills plots with the residuals based on a straight line extrapolation between two planes, i.e. a straight line is drawn between planes 0 and 1, and then a histogram is filled with the difference between where that straight line hits plane 2 and where the actual hit is on plane 2*/
   void singlePointResolution(EVENT::Track *track);
+
+  //!Fills the Triple Point Residual Plots
+  /*!A straight line of best fit is drawn between the front three planes and the back three planes, and the difference between the track position at those points on the plane and the actual hits at those points is plotted as a residual*/
   void threePointResolution(EVENT::Track *track);
+
+  //!Get Single Track Angles
+  /*!This works out the angles of the tracks as they pass from plane to plane, in the pair of vectors which is returned from this you get the angles of the track in x and y respectively. The element of each vector is the plane that the angle passes between, e.g. element 0 contains the angle between plane 0 and 1*/
   std::pair< std::vector< double >, std::vector< double > > GetSingleTrackAngles(std::vector< TVector3* > hits);
+
+  //!Get Triple Track Angles
+  /*!This works out the angles of the tracks for the first three planes combined and the last three planes combined and stores them in a pair. With the first element of the pair being XZ angle and the second element being YZ angle. Each element of the vector is a different triplet, so each vector should just contain 2 elements, the first being the front three planes and the 2nd being the last three planes*/
   std::pair< std::vector< double >, std::vector< double > > GetTripleTrackAngles(std::vector< TVector3* > hits);
+
+  //!Single Plane Track Scattering Angles
+  /*!This works out the scattering angle between each plane, fills a histogram with this value and also stores data for use in a radiation length map later*/
   void SinglePlaneTrackScatteringAngles(std::vector< double > scatterx, std::vector< double > scattery, std::vector< TVector3* > hits);
+
+  //!Triple Plane Track Scattering Angles
+  /*!This works out the scattering angle between the front three planes and the back three planes and fills a histogram with the result. This also stores the data for use in a radiation length map later*/
   void TriplePlaneTrackScatteringAngles(std::vector< double > scatterx, std::vector< double > scattery, std::vector< TVector3* > hits);
+
+  //!Kink Estimate
+  /*!This is the funciton which calls most of the other relevant functions in order to fill angle-related histograms*/
   void kinkEstimate(EVENT::Track *track);
-  void kinkGaussian();
+
+  //!Conversion from X0 Map to Hitmap
+  /*!This converts the integer values used for the binning of the radiation length map into global coordinates*/
   std::pair< double, double > ConversionX0mapToHitmap(int x, int y);
+
+  //!Conversion from Hitmap to X0 Map
+  /*!This converts the global coordinates into integer bins for use when filling the radiation length maps*/
   std::pair< int, int > ConversionHitmapToX0map(double x, double y);
 
-  //Private member values
-  std::string _trackColName;
-  double _cutValue1,_cutValue2;
-  bool _debug;
-  int _debugCount;  //TODO(Phillip Hamnett): Can this be deleted?
+  /***********************
+  //Private member values*
+  ***********************/
+
+  //Beam energy
+  double _beamEnergy;
+
+  //Current event number
   int _eventNumber;
-  bool _finalEvent;
-  std::map< std::string , std::vector< double > > _histoData;
-  std::string _histoFile;
-  std::map< std::string , TH1* > _histoThing;  //This map contains all the histograms that are going to be plotted in this processor
-  std::map< int, std::vector< TVector3 > > _hitInfo;  //This stores the hit position in a TVector3. If there are multiple hits then they are all stored in the vector of TVector3's. The int key refers to the layer number
-  IMPL::LCCollectionVec* _inputHitCollectionVec;  //Stores the information being brought in from the Marlin process which contains information about post-aligned hits
-  IMPL::LCCollectionVec* _inputTrackCollectionVec;  //Stores the information being brought in from the Marlin process which contains information about post-aligned hits
-  std::string _inputHitColName;
-  std::string _inputHitCollectionName;  //Stores the name of the parameter to bring in from the Marlin steering file
+
+  //These two maps associate a name with a histogram for easy filling later
+  std::map< std::string , TH1* > _histoThing;
+  std::map< std::string , TH2* > _histoThing2D;
+  
+  //Stores the information being brought in from the Marlin process which contains information about post-aligned tracks
+  IMPL::LCCollectionVec* _inputTrackCollectionVec;
+
+  //The track collection name, as input from the steering file
   std::string _inputTrackColName;
-  int _maxRecords;
-  static const int _noLayers = 6;  //TODO(Phillip Hamnett): This is a hack just so that the computer knows how many layers there are, is this stored somewhere else or should it be made as a non-const variable in case at some future date more layers are added to the telescope?
-  std::map< int, std::vector< TVector3 > > _projectedHits;  //int refers to 1 or 2, with 1 being the projection from the 01 plane and 2 being the projection from the 43 plane
-  std::string _referenceHitCollectionName;  //Stores the name of the file to be brought in by the Marlin steering file that is used to determine layer number
-  IMPL::LCCollectionVec* _referenceHitVec;   //Stores the information being brought in from the Marlin process containing information about the geometry of the setup for working out the layer number
-  std::map<std::pair< Double_t, Double_t > , std::vector< TVector3 > > _residual;  //The pair of doubles refers to the x and y coordinates in layer 2. The vector of TVector3's refers to the positions of the projected hits
-  std::map<std::pair< Double_t, Double_t > , std::vector< TVector3 > > _residualAngle;  //As above but the TVector3 doesn't contain xyz but instead theta, phi and alpha
-  double _residualCut;  //This is the cut which determines the acceptable tracks
-  std::map<std::pair< Double_t, Double_t > , std::vector< TVector3 > > _residualProfile; //TODO(Phillip Hamnett): Can this be joined with _residual? //Used as above but for created a profile histogram
+
+  //The current run number
   int _runNumber;
+
+  //The name of the track collection to use, the is input in the steering file
   std::string _trackCollectionName;
+
+  //This is the number of bins to use in the residual plots
   int nobins;
-  int nobinsangle;//Number of bins in the histograms
+  
+  //This is the number of bins to use in the angle plots
+  int nobinsangle;
+
+  //The minimum bin in the residual plots
   double minbin;
-  double  maxbin;//Maximum and minimum bin values
+  
+  //The maximum bin in the residual plots
+  double  maxbin;
+
+  //The minimum bin in the angular plots
   double minbinangle;
+
+  //The maximum bin in the angular plots
   double maxbinangle;
-  double minbinalpha;
-  double maxbinalpha;
+
+  //The number of bins in the radiation length map plots in the x direction
   int binsx;
-  double minx;//(mm)
+
+  //The minimum on the spatial range of the radiation length map plots in x, this is measured in mm and anything below -11 is beyond the telescope sensor
+  double minx;
+  
+  //The maximum on the spatial range of the radiation length map plots in x, this is measured in mm and anything above 11 is beyond the telescope sensor
   double maxx;
+
+  //The number of bins in the radiation length map plots in the y direction
   int binsy;
+
+  //The minimum on the spatial range of the radiation length map plots in y, this is measured in mm and anything below -6 is beyond the telescope sensor
   double miny;
+  
+  //The maximum on the spatial range of the radiation length map plots in y, this is measured in mm and anything above 6 is beyond the telescope sensor
   double maxy;
+
+  //The granularity of the radiation length maps in x, measured in mm
   double binsizex;
+  
+  //The granularity of the radiation length maps in y, measured in mm
   double binsizey;
+
+  //An attempt to make a folder for the histograms to live in
   TDirectory *X0ProcessorDirectory;
+
+  
   TH1D *AngleXForwardTripleFirstThreePlanes;
   TH1D *AngleXForwardTripleLastThreePlanes;
   TH1D *AngleYForwardTripleFirstThreePlanes;
@@ -302,28 +320,33 @@ private:
   TH2D *KinkAnglePlane2;
   TH2D *KinkAnglePlane3;
   TH2D *KinkAnglePlane4;
-  TH2D *ScatteringAngleXPlane1Map;
-  TH2D *ScatteringAngleXPlane2Map;
-  TH2D *ScatteringAngleXPlane3Map;
-  TH2D *ScatteringAngleXPlane4Map;
-  TH2D *ScatteringAngleYPlane1Map;
-  TH2D *ScatteringAngleYPlane2Map;
-  TH2D *ScatteringAngleYPlane3Map;
-  TH2D *ScatteringAngleYPlane4Map;
-  TH2D *RadiationLengthPlane1Map;
-  TH2D *RadiationLengthPlane2Map;
-  TH2D *RadiationLengthPlane3Map;
-  TH2D *RadiationLengthPlane4Map;
+  std::map< int, TH2D* > ScatteringAngleXSingleMap;
+  std::map< int, TH2D* > ScatteringAngleYSingleMap;
+  std::map< int, TH2D* > RadiationLengthSingleMap;
+//  TH2D *ScatteringAngleXPlane1Map;
+//  TH2D *ScatteringAngleXPlane2Map;
+//  TH2D *ScatteringAngleXPlane3Map;
+//  TH2D *ScatteringAngleXPlane4Map;
+//  TH2D *ScatteringAngleYPlane1Map;
+//  TH2D *ScatteringAngleYPlane2Map;
+//  TH2D *ScatteringAngleYPlane3Map;
+//  TH2D *ScatteringAngleYPlane4Map;
+//  TH2D *RadiationLengthPlane1Map;
+//  TH2D *RadiationLengthPlane2Map;
+//  TH2D *RadiationLengthPlane3Map;
+//  TH2D *RadiationLengthPlane4Map;
+  std::map< int, std::map< std::pair< int, int >, std::vector< double > > > ScatteringAngleXSingleMapData;
+  std::map< int, std::map< std::pair< int, int >, std::vector< double > > > ScatteringAngleYSingleMapData;
   std::map< std::pair< int, int >, std::vector< double > > ScatteringAngleXTripleMapData; //Pair gives the x and y bins of the track at the point of the DUT and the value of the double is the scattering angle
   std::map< std::pair< int, int >, std::vector< double > > ScatteringAngleYTripleMapData; //Pair gives the x and y bins of the track at the point of the DUT and the value of the double is the scattering angle
-  std::map< std::pair< int, int >, std::vector< double > > ScatteringAngleXPlane1MapData; //Pair gives the x and y bins of the track at the point of the DUT and the value of the double is the scattering angle
-  std::map< std::pair< int, int >, std::vector< double > > ScatteringAngleXPlane2MapData; //Pair gives the x and y bins of the track at the point of the DUT and the value of the double is the scattering angle
-  std::map< std::pair< int, int >, std::vector< double > > ScatteringAngleXPlane3MapData; //Pair gives the x and y bins of the track at the point of the DUT and the value of the double is the scattering angle
-  std::map< std::pair< int, int >, std::vector< double > > ScatteringAngleXPlane4MapData; //Pair gives the x and y bins of the track at the point of the DUT and the value of the double is the scattering angle
-  std::map< std::pair< int, int >, std::vector< double > > ScatteringAngleYPlane1MapData; //Pair gives the x and y bins of the track at the point of the DUT and the value of the double is the scattering angle
-  std::map< std::pair< int, int >, std::vector< double > > ScatteringAngleYPlane2MapData; //Pair gives the x and y bins of the track at the point of the DUT and the value of the double is the scattering angle
-  std::map< std::pair< int, int >, std::vector< double > > ScatteringAngleYPlane3MapData; //Pair gives the x and y bins of the track at the point of the DUT and the value of the double is the scattering angle
-  std::map< std::pair< int, int >, std::vector< double > > ScatteringAngleYPlane4MapData; //Pair gives the x and y bins of the track at the point of the DUT and the value of the double is the scattering angle
+//  std::map< std::pair< int, int >, std::vector< double > > ScatteringAngleXPlane1MapData; //Pair gives the x and y bins of the track at the point of the DUT and the value of the double is the scattering angle
+//  std::map< std::pair< int, int >, std::vector< double > > ScatteringAngleXPlane2MapData; //Pair gives the x and y bins of the track at the point of the DUT and the value of the double is the scattering angle
+//  std::map< std::pair< int, int >, std::vector< double > > ScatteringAngleXPlane3MapData; //Pair gives the x and y bins of the track at the point of the DUT and the value of the double is the scattering angle
+//  std::map< std::pair< int, int >, std::vector< double > > ScatteringAngleXPlane4MapData; //Pair gives the x and y bins of the track at the point of the DUT and the value of the double is the scattering angle
+//  std::map< std::pair< int, int >, std::vector< double > > ScatteringAngleYPlane1MapData; //Pair gives the x and y bins of the track at the point of the DUT and the value of the double is the scattering angle
+//  std::map< std::pair< int, int >, std::vector< double > > ScatteringAngleYPlane2MapData; //Pair gives the x and y bins of the track at the point of the DUT and the value of the double is the scattering angle
+//  std::map< std::pair< int, int >, std::vector< double > > ScatteringAngleYPlane3MapData; //Pair gives the x and y bins of the track at the point of the DUT and the value of the double is the scattering angle
+//  std::map< std::pair< int, int >, std::vector< double > > ScatteringAngleYPlane4MapData; //Pair gives the x and y bins of the track at the point of the DUT and the value of the double is the scattering angle
 };
 //! A global instance of the processor
 EUTelX0Processor gEUTelX0Processor;
