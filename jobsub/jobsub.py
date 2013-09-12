@@ -483,12 +483,12 @@ def main(argv=None):
                 if args.concatenate and parameters[key].lower().find("@runrange@")>-1:
                     log.info("Concatenation: Option '" + key + "' contains string '@RunRange@', will fill for all runs of specified range")
                     runiter = iter(runs)
-                    firstrun = next(runiter) # skip first run to leave one instance of @RunNumber@ in the file for main loop
+                    firstrun = runiter.next() # skip first run to leave one instance of @RunNumber@ in the file for main loop
                     log.debug("Concatenation: doing substitution for first run: "+str(firstrun))
                     runkey = ireplace("@runrange@","@RunNumber@",parameters[key]) # insert run placeholder into first key, will be later replaced in main loop
                     # replace key and add the same key again for next run-through
                     steeringStringBase = ireplace("@" + key + "@", runkey+" "+"@"+key+"@", steeringStringBase) 
-                    thisrun=next(runiter) 
+                    thisrun=runiter.next() 
                     for nextrun in runiter:
                         runkey = ireplace("@runrange@",str(thisrun).zfill(6),parameters[key]) # insert run number into key
                         log.debug("Concatenation: doing substitution for run "+str(thisrun)+" using " + runkey)
