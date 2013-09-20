@@ -146,7 +146,7 @@ namespace eutelescope {
     std::vector<float> _radLength;
 
     //! Counters
-    int _iRun, _iEvt, _nTracks, _nClusters, n_passedNdof, n_passedChi2OverNdof, n_passedIsnan;
+    int _iRun, _iEvt, _nTracks, _nClusters, n_failedNdof, n_failedChi2OverNdof, n_failedIsnan, n_passedNdof, n_passedChi2OverNdof, n_passedIsnan;
 
     //! reference HitCollection name 
     /*!

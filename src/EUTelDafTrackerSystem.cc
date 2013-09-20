@@ -94,7 +94,7 @@ void TrackerSystem::getChi2Kf(TrackCandidate *candidate){
   Eigen::Vector2f chi2v;
   for(int plane = 0; plane < static_cast< int >(planes.size()); plane++){
     FitPlane& p = planes.at(plane);
-    if(p.isExcluded()) { continue; }
+    if(p.isExcluded()) {continue; }
     if(candidate->indexes.at(plane) < 0) { continue; }
     Measurement& m = p.meas.at( candidate->indexes.at(plane));
     ndof += 1.0;
@@ -110,7 +110,7 @@ void TrackerSystem::getChi2Daf(TrackCandidate *candidate){
   Vector2f chi2v;
   for(int plane = 0; plane <static_cast< int >(planes.size()); plane++){
     FitPlane& p = planes.at(plane);
-    if(p.isExcluded()){continue;}
+    if(p.isExcluded()){ continue;}
     for(size_t meas = 0; meas < p.meas.size(); meas++){
       Measurement& m = p.meas.at(meas);
       chi2v = (m.getM() - m_fitter->smoothed.at(plane)->params.start<2>()).cwise() / p.getSigmas();
@@ -288,7 +288,6 @@ void TrackerSystem::fitPlanesInfoDaf(TrackCandidate *candidate){
 //printf("TrackerSystem::fitPlanesInfoDaf\n");
   for(int plane = 0; plane < static_cast< int >(planes.size()); plane++ ){
     //Copy weights from candidate, get tot weight per plane
-
     planes.at(plane).weights.resize( candidate->weights.at(plane).size() );
     planes.at(plane).weights = candidate->weights.at(plane);
     if ( planes.at(plane).weights.size() > 0 ){
@@ -304,7 +303,7 @@ void TrackerSystem::fitPlanesInfoDaf(TrackCandidate *candidate){
 //printf("plane %5d ndof:%8.3f  weight=%5.2f \n", plane, ndof, planes.at(plane).getTotWeight() );
   }
 //printf("in mid of TrackerSystem::fitPlanesInfoDaf \n");
-  if(ndof > 0.0f){ fitPlanesInfoDafInner();}
+  if(ndof > 0.0f){  fitPlanesInfoDafInner();}
   // Temperatures should be given from top level. This should be fixed.
   // if(ndof > 0.0f) { ndof = runTweight(15.0); }
   // if(ndof > 0.0f) { ndof = runTweight(10.0); }
@@ -350,8 +349,7 @@ void TrackerSystem::checkNan(TrackEstimate* e){
 
 float TrackerSystem::fitPlanesInfoDafInner(){
 //printf("fitPlanesInfodafInner \n");
-
-  size_t nPlanes = planes.size();
+  size_t nPlanes = planes.size();// usually 6
   TrackEstimate* e = new TrackEstimate();
   e->cov.setZero();
   e->params.setZero();
@@ -372,7 +370,8 @@ float TrackerSystem::fitPlanesInfoDafInner(){
   }
 //printf("ndof %5.2f <? 2.5 [return?]\n", ndof);
   //No reason to complete
-  if(ndof < 2.5) { delete e; return(ndof);}
+  //if(ndof < 2.5) { delete e; return(ndof);}
+  if(ndof < 1.5) { delete e; return(ndof);} //Changed the magic number 2.5 to 1.5, because this lets you have tracks on only 3 planes. I have no idea why this works and tbh this should be made better
   
   //Backward fitter, never bias
   e->cov.setZero();

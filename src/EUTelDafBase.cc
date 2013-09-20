@@ -355,6 +355,7 @@ void EUTelDafBase::init() {
 
   _iRun = 0; _iEvt = 0; _nTracks = 0; _nClusters =0;
   n_passedNdof =0; n_passedChi2OverNdof = 0; n_passedIsnan = 0;
+  n_failedNdof =0; n_failedChi2OverNdof = 0; n_failedIsnan = 0;
   _initializedSystem = false;
 
   //Geometry description
@@ -722,11 +723,11 @@ bool EUTelDafBase::checkTrack(daffitter::TrackCandidate * track){
 
 //printf("EUTelDafBase::checkTrack %7.3f %8.3f \n", track->ndof, track->chi2 );
 //track->print();
-  if( track->ndof < _ndofMin) { return(false); }
+  if( track->ndof < _ndofMin) {n_failedNdof++; return(false); }
   n_passedNdof++;
-  if( (track->chi2 / track->ndof) > _maxChi2 ) { return(false); }
+  if( (track->chi2 / track->ndof) > _maxChi2 ) {n_failedChi2OverNdof++; return(false); }
   n_passedChi2OverNdof++;
-  if( isnan(track->ndof)) { return(false); }
+  if( isnan(track->ndof)) {n_failedIsnan++; return(false); }
   n_passedIsnan++;
 
 //printf("EUTelDafBase::checkTrack %7.3f %8.3f ;; return true;\n", track->ndof, track->chi2 );
@@ -1069,8 +1070,11 @@ void EUTelDafBase::end() {
   streamlog_out ( MESSAGE5 ) << endl;
   streamlog_out ( MESSAGE5 ) << "Number of found hit clusters: " << _nClusters << endl;
   streamlog_out ( MESSAGE5 ) << "Tracks with ok ndof: " << n_passedNdof << endl;
+  streamlog_out ( MESSAGE5 ) << "Tracks with BAD ndof: " << n_failedNdof << endl;
   streamlog_out ( MESSAGE5 ) << "Tracks with ok chi2/ndof: " << n_passedChi2OverNdof << endl;
+  streamlog_out ( MESSAGE5 ) << "Tracks with BAD chi2/ndof: " << n_failedChi2OverNdof << endl;
   streamlog_out ( MESSAGE5 ) << "Tracks with no NaNs: " << n_passedIsnan<< endl;
+  streamlog_out ( MESSAGE5 ) << "Tracks with NaNs: " << n_failedIsnan<< endl;
   streamlog_out ( MESSAGE5 ) << "Number of fitted tracks: " << _nTracks << endl;
   streamlog_out ( MESSAGE5 ) << "Successfully finished" << endl;
   for( size_t ii = 0; ii < _system.planes.size() ; ii++){
