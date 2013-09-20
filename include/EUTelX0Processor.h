@@ -145,6 +145,10 @@ private:
   /*!We need to get the hit positions from each track in order to form our own 'subtracks' between each plane and arm of the telescope. This will return a vector of TVector3's with each element of the vector being a hit*/
   std::vector< TVector3* > getHitsFromTrack(Track *track);
 
+  //!Get Sigma
+  /*!Works out the sigma value from a vector which contains scattering angles*/
+  double getSigma(std::vector< double > angles);
+
   //!Print Track Parameters
   /*!This simply prints out all the LCIO information available about each track*/
   void printTrackParameters(EVENT::Track *track);
@@ -167,7 +171,8 @@ private:
 
   //!Get Triple Track Angles
   /*!This works out the angles of the tracks for the first three planes combined and the last three planes combined and stores them in a pair. With the first element of the pair being XZ angle and the second element being YZ angle. Each element of the vector is a different triplet, so each vector should just contain 2 elements, the first being the front three planes and the 2nd being the last three planes*/
-  std::pair< std::vector< double >, std::vector< double > > GetTripleTrackAngles(std::vector< TVector3* > hits);
+  std::pair< std::vector< double >, std::vector< double > > GetTripleTrackAnglesStraightLines(std::vector< TVector3* > hits);
+  std::pair< std::vector< double >, std::vector< double > > GetTripleTrackAnglesDoubleDafFitted(Track *frontthree, Track *backthree);
 
   //!Single Plane Track Scattering Angles
   /*!This works out the scattering angle between each plane, fills a histogram with this value and also stores data for use in a radiation length map later*/
@@ -175,7 +180,7 @@ private:
 
   //!Triple Plane Track Scattering Angles
   /*!This works out the scattering angle between the front three planes and the back three planes and fills a histogram with the result. This also stores the data for use in a radiation length map later*/
-  void TriplePlaneTrackScatteringAngles(std::vector< double > scatterx, std::vector< double > scattery, std::vector< TVector3* > hits);
+  void TriplePlaneTrackScatteringAngles(std::vector< double > scatterx, std::vector< double > scattery, std::vector< TVector3 *> hits, bool doubledaf);
 
   //!Kink Estimate
   /*!This is the funciton which calls most of the other relevant functions in order to fill angle-related histograms*/
@@ -196,6 +201,15 @@ private:
   //Beam energy
   double _beamEnergy;
 
+  //Cut
+  double _cut;
+
+  //Double Daf Fitted
+  bool _doubleDafFitted;
+
+  //DUT position
+  double _dutPosition;
+
   //Current event number
   int _eventNumber;
 
@@ -214,6 +228,7 @@ private:
 
   //The name of the track collection to use, the is input in the steering file
   std::string _trackCollectionName;
+  std::string _trackCollectionName2;
 
   //This is the number of bins to use in the residual plots
   int nobins;
@@ -260,7 +275,18 @@ private:
   //An attempt to make a folder for the histograms to live in
   TDirectory *X0ProcessorDirectory;
 
-  
+  TH1D *AngleXFrontThreePlanesDoubleDaf;
+  TH1D *AngleYFrontThreePlanesDoubleDaf;
+  TH1D *AngleXBackThreePlanesDoubleDaf;
+  TH1D *AngleYBackThreePlanesDoubleDaf;
+  TH2D *AngleXYFrontThreePlanesDoubleDaf;
+  TH2D *AngleXYBackThreePlanesDoubleDaf;
+  TH1D *ScatteringAngleXDoubleDaf;
+  TH1D *ScatteringAngleYDoubleDaf;
+  TH2D *ScatteringAngleXYDoubleDaf;
+  TH2D *ScatteringAngleXTripleMapDoubleDaf;
+  TH2D *ScatteringAngleYTripleMapDoubleDaf;
+  TH2D *RadiationLengthMapDoubleDaf;
   TH1D *AngleXForwardTripleFirstThreePlanes;
   TH1D *AngleXForwardTripleLastThreePlanes;
   TH1D *AngleYForwardTripleFirstThreePlanes;
@@ -339,6 +365,8 @@ private:
   std::map< int, std::map< std::pair< int, int >, std::vector< double > > > ScatteringAngleYSingleMapData;
   std::map< std::pair< int, int >, std::vector< double > > ScatteringAngleXTripleMapData; //Pair gives the x and y bins of the track at the point of the DUT and the value of the double is the scattering angle
   std::map< std::pair< int, int >, std::vector< double > > ScatteringAngleYTripleMapData; //Pair gives the x and y bins of the track at the point of the DUT and the value of the double is the scattering angle
+  std::map< std::pair< int, int >, std::vector< double > > ScatteringAngleXTripleMapDataDaf; //Pair gives the x and y bins of the track at the point of the DUT and the value of the double is the scattering angle
+  std::map< std::pair< int, int >, std::vector< double > > ScatteringAngleYTripleMapDataDaf; //Pair gives the x and y bins of the track at the point of the DUT and the value of the double is the scattering angle
 //  std::map< std::pair< int, int >, std::vector< double > > ScatteringAngleXPlane1MapData; //Pair gives the x and y bins of the track at the point of the DUT and the value of the double is the scattering angle
 //  std::map< std::pair< int, int >, std::vector< double > > ScatteringAngleXPlane2MapData; //Pair gives the x and y bins of the track at the point of the DUT and the value of the double is the scattering angle
 //  std::map< std::pair< int, int >, std::vector< double > > ScatteringAngleXPlane3MapData; //Pair gives the x and y bins of the track at the point of the DUT and the value of the double is the scattering angle

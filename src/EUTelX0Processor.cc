@@ -11,6 +11,7 @@ using namespace std;
 EUTelX0Processor::EUTelX0Processor()
   :Processor("EUTelX0Processor"),
   _beamEnergy(0.0), 
+  _dutPosition(0.0),
   _eventNumber(0),
   _histoThing(),
   _histoThing2D(),
@@ -121,17 +122,24 @@ EUTelX0Processor::EUTelX0Processor()
   streamlog_out(DEBUG1) << "Constructing the EUTelX0Processor, setting all values to zero or NULL" << std::endl;
   _inputTrackCollectionVec = new LCCollectionVec(LCIO::TRACK);//Used to store the values of the hit events
   
-  registerInputCollection(LCIO::TRACK,"OutputTrackCollectionName",
+  registerInputCollection(LCIO::TRACK,"InputTrackCollectionName",
                            "Collection name for fitted tracks",
                            _trackCollectionName, string ("AlignedTrack"));
 
+  registerInputCollection(LCIO::TRACK,"InputTrackCollectionName2",
+                           "Collection name for fitted tracks",
+                           _trackCollectionName2, string ("AlignedTrack"));
+
   registerProcessorParameter("BeamEnergy","Works out the energy of the beam for radiation lengths", _beamEnergy, static_cast< double > (0.0));
+  registerProcessorParameter("DoubleDafFitted","Are two tracks from seperate daf fitters being used (front and back three planes only) to make a scattering angle? If yes then this should be true", _doubleDafFitted, static_cast< bool > (false));
+  registerProcessorParameter("DUTPosition","The exact position of the DUT in the z direction relative to Plane 2 of the telescope", _dutPosition, static_cast< double > (0.0));
   registerProcessorParameter("RadiationLengthMapMinX","Used to determine the minimum X for the radiation length map, measured in XXX", minx, static_cast< double > (-11.0));
   registerProcessorParameter("RadiationLengthMapMaxX","Used to determine the maximum X for the radiation length map, measured in XXX", maxx, static_cast< double > (11.0));
   registerProcessorParameter("RadiationLengthMapMinY","Used to determine the minimum Y for the radiation length map, measured in XXX", miny, static_cast< double > (-6.0));
   registerProcessorParameter("RadiationLengthMapMaxY","Used to determine the maximum Y for the radiation length map, measured in XXX", maxy, static_cast< double > (6.0));
   registerProcessorParameter("RadiationLengthMapBinSizeX","Used to determine the spatial resolution in X for the radiation length map, measured in XXX", binsizex, static_cast< double > (1.0));
   registerProcessorParameter("RadiationLengthMapBinSizeY","Used to determine the spatial resolution in Y for the radiation length map, measured in XXX", binsizey, static_cast< double > (1.0));
+  registerProcessorParameter("Cut","This is the maximum allowed distance in X and y between two tracks and where they meet on the DUT", _cut, static_cast< double > (0.0));
 }
 
 void EUTelX0Processor::init()
@@ -147,6 +155,49 @@ void EUTelX0Processor::init()
   std::vector<double> empty;  
   binsx = static_cast< int >((maxx-minx)/binsizex);
   binsy = static_cast< int >((maxy-miny)/binsizey);
+
+  AngleXFrontThreePlanesDoubleDaf = new TH1D("AngleXFrontThreePlanesDoubleDaf", "Angles of Tracks in X Direction relative to the Z Axis for  Three Planes from Double Daf Fitting; \\theta_{x} (rads); Count", nobinsangle,minbinangle,maxbinangle);
+  _histoThing["AngleXFrontThreePlanesDoubleDaf"] = AngleXFrontThreePlanesDoubleDaf;
+
+  AngleYFrontThreePlanesDoubleDaf = new TH1D("AngleYFrontThreePlanesDoubleDaf", "Angles of Tracks in Y Direction relative to the Z Axis for  Three Planes from Double Daf Fitting; \\theta_{x} (rads); Count", nobinsangle,minbinangle,maxbinangle);
+  _histoThing["AngleYFrontThreePlanesDoubleDaf"] = AngleYFrontThreePlanesDoubleDaf;
+
+  AngleXBackThreePlanesDoubleDaf = new TH1D("AngleXBackThreePlanesDoubleDaf", "Angles of Tracks in X Direction relative to the Z Axis for  Three Planes from Double Daf Fitting; \\theta_{x} (rads); Count", nobinsangle,minbinangle,maxbinangle);
+  _histoThing["AngleXBackThreePlanesDoubleDaf"] = AngleXBackThreePlanesDoubleDaf;
+
+  AngleYBackThreePlanesDoubleDaf = new TH1D("AngleYBackThreePlanesDoubleDaf", "Angles of Tracks in Y Direction relative to the Z Axis for  Three Planes from Double Daf Fitting; \\theta_{x} (rads); Count", nobinsangle,minbinangle,maxbinangle);
+  _histoThing["AngleYBackThreePlanesDoubleDaf"] = AngleYBackThreePlanesDoubleDaf;
+
+  AngleXYFrontThreePlanesDoubleDaf = new TH2D("AngleYFrontThreePlanesDoubleDaf", "Angles of Tracks in Y Direction relative to the Z Axis for  Three Planes from Double Daf Fitting; \\theta_{x} (rads); \\theta_{y} (rads)", nobinsangle,minbinangle,maxbinangle,nobinsangle,minbinangle,maxbinangle);
+  _histoThing2D["AngleXYFrontThreePlanesDoubleDaf"] = AngleXYFrontThreePlanesDoubleDaf;
+
+  AngleXYBackThreePlanesDoubleDaf = new TH2D("AngleYBackThreePlanesDoubleDaf", "Angles of Tracks in Y Direction relative to the Z Axis for  Three Planes from Double Daf Fitting; \\theta_{x} (rads); \\theta_{y} (rads)", nobinsangle,minbinangle,maxbinangle,nobinsangle,minbinangle,maxbinangle);
+  _histoThing2D["AngleXYBackThreePlanesDoubleDaf"] = AngleXYBackThreePlanesDoubleDaf;
+
+  ScatteringAngleXDoubleDaf = new TH1D("ScatteringAngleXDoubleDaf", "Scattering Angles of Tracks in X Direction relative to the Z Axis from Double Daf Fitting; \\theta_{x} (rads); Count", nobinsangle,minbinangle,maxbinangle);
+  _histoThing["ScatteringAngleXDoubleDaf"] = ScatteringAngleXDoubleDaf;
+
+  ScatteringAngleYDoubleDaf = new TH1D("ScatteringAngleYDoubleDaf", "Scattering Angles of Tracks in Y Direction relative to the Z Axis from Double Daf Fitting; \\theta_{x} (rads); Count", nobinsangle,minbinangle,maxbinangle);
+  _histoThing["ScatteringAngleYDoubleDaf"] = ScatteringAngleYDoubleDaf;
+
+  ScatteringAngleXYDoubleDaf = new TH2D("ScatteringAngleXYDoubleDaf", "Scattering Angles of Tracks in X and Y Direction relative to the Z Axis from Double Daf Fitting; \\theta_{x} (rads); \\theta_{y} (rads)", nobinsangle,minbinangle,maxbinangle,nobinsangle,minbinangle,maxbinangle);
+  _histoThing2D["ScatteringAngleXYDoubleDaf"] = ScatteringAngleXYDoubleDaf;
+
+  ScatteringAngleXTripleMapDoubleDaf = new TH2D("ScatteringAngleXTripleMapDoubleDaf",
+                                       "Scattering Angle Map in X on DUT;x (mm);y (mm); \\theta_x (rads)"
+				       ,binsx,minx,maxx,binsy,miny,maxy);
+  _histoThing2D["ScatteringAngleXTripleMapDoubleDaf"] = ScatteringAngleXTripleMapDoubleDaf;
+ 
+  ScatteringAngleYTripleMapDoubleDaf = new TH2D("ScatteringAngleYTripleMapDoubleDaf",
+                                       "Scattering Angle Map in Y on DUT;x (mm);y (mm); \\theta_x (rads)"
+				       ,binsx,minx,maxx,binsy,miny,maxy);
+  _histoThing2D["ScatteringAngleYTripleMapDoubleDaf"] = ScatteringAngleYTripleMapDoubleDaf;
+ 
+  RadiationLengthMapDoubleDaf = new TH2D("RadiationLengthMapDoubleDaf",
+                                       "Radiation Length Map on DUT;x (mm);y (mm); \\X_{0} (Percent)"
+				       ,binsx,minx,maxx,binsy,miny,maxy);
+  _histoThing2D["RadiationLengthMapDoubleDaf"] = RadiationLengthMapDoubleDaf;
+ 
 
   AngleXForwardTripleFirstThreePlanes = new TH1D("AngleXForwardTripleFirstThreePlanes",
                                  "Angle of Tracks in X Direction Relative to the Z Axis for First Three Planes;\\theta_x (rads);Count",
@@ -483,11 +534,11 @@ void EUTelX0Processor::printTrackParameters( Track* eventtrack ){
     << "Tan Lambda: " << eventtrack->getTanLambda() << std::endl 
     << "Covariance Matrix of Track Parameters: (This is a square matrix with parameter order: D0, Phi, Omega, Z0, TanLambda)" << std::endl;
     std::vector< float > covmatrix = eventtrack->getCovMatrix();
-    streamlog_out(DEBUG0) << covmatrix[0] << ", " << covmatrix[1] << ", " << covmatrix[3] << ", " << covmatrix[6] << ", " << covmatrix[10] << std::endl
-                          << covmatrix[1] << ", " << covmatrix[2] << ", " << covmatrix[4] << ", " << covmatrix[7] << ", " << covmatrix[11] << std::endl
-                          << covmatrix[3] << ", " << covmatrix[4] << ", " << covmatrix[5] << ", " << covmatrix[8] << ", " << covmatrix[12] << std::endl
-                          << covmatrix[6] << ", " << covmatrix[7] << ", " << covmatrix[8] << ", " << covmatrix[9] << ", " << covmatrix[13] << std::endl
-                          << covmatrix[10] << ", " << covmatrix[11] << ", " << covmatrix[12] << ", " << covmatrix[13] << ", " << covmatrix[14] << std::endl;    
+    streamlog_out(DEBUG0) << covmatrix.at(0) << ", " << covmatrix.at(1) << ", " << covmatrix.at(3) << ", " << covmatrix.at(6) << ", " << covmatrix.at(10) << std::endl
+                          << covmatrix.at(1) << ", " << covmatrix.at(2) << ", " << covmatrix.at(4) << ", " << covmatrix.at(7) << ", " << covmatrix.at(11) << std::endl
+                          << covmatrix.at(3) << ", " << covmatrix.at(4) << ", " << covmatrix.at(5) << ", " << covmatrix.at(8) << ", " << covmatrix.at(12) << std::endl
+                          << covmatrix.at(6) << ", " << covmatrix.at(7) << ", " << covmatrix.at(8) << ", " << covmatrix.at(9) << ", " << covmatrix.at(13) << std::endl
+                          << covmatrix.at(10) << ", " << covmatrix.at(11) << ", " << covmatrix.at(12) << ", " << covmatrix.at(13) << ", " << covmatrix.at(14) << std::endl;    
     streamlog_out(DEBUG0) << std::endl
     << "***ADDITIONAL INFORMATION***" << std::endl
     << "Reference Point: " << eventtrack->getReferencePoint()[0] << ", " <<  eventtrack->getReferencePoint()[1] << ", " << eventtrack->getReferencePoint()[2] << std::endl
@@ -577,7 +628,112 @@ pair< vector< double >, vector< double > > EUTelX0Processor::GetSingleTrackAngle
   return bothangles;
 }
 
-pair< vector< double >, vector< double > > EUTelX0Processor::GetTripleTrackAngles(vector< TVector3* > hits){
+pair< vector< double >, vector< double > > EUTelX0Processor::GetTripleTrackAnglesDoubleDafFitted(Track *frontthree, Track *backthree){
+  streamlog_out(DEBUG1) << "Begin pair< vector< double >, vector< double > > EUTelX0Processor::GetTripleTrackAngles(vector< TVector3* > hits)" << endl;
+  //Then we find the position where those lines would have hit the DUT
+  //THIS IS TO BE DECIDED IF IT IS NEEDED LATER
+  //Then we work out the angles of these lines with respect to XZ and YZ, plot results in histograms
+  std::vector< TrackerHit* > trackhitsfront = frontthree->getTrackerHits();
+  std::vector< TVector3* > hitsfront;
+  for(std::vector< TrackerHit* >::iterator it = trackhitsfront.begin(); it != trackhitsfront.end(); ++it){
+    if((*it)->getType() == 32){  //Check if the hit type is the aligned hits or the fitted points (we want fitted points)
+      Double_t x = (*it)->getPosition()[0];
+      Double_t y = (*it)->getPosition()[1];
+      Double_t z = (*it)->getPosition()[2];
+      TVector3 *tempvec = new TVector3(x,y,z);
+      hitsfront.push_back(tempvec);
+    } //End of if query for type check
+  } //End of for loop running through trackhits
+  std::vector< TrackerHit* > trackhitsback = backthree->getTrackerHits();
+  std::vector< TVector3* > hitsback;
+  for(std::vector< TrackerHit* >::iterator it = trackhitsback.begin(); it != trackhitsback.end(); ++it){
+    if((*it)->getType() == 32){  //Check if the hit type is the aligned hits or the fitted points (we want fitted points)
+      Double_t x = (*it)->getPosition()[0];
+      Double_t y = (*it)->getPosition()[1];
+      Double_t z = (*it)->getPosition()[2];
+      TVector3 *tempvec = new TVector3(x,y,z);
+      hitsback.push_back(tempvec);
+    } //End of if query for type check
+  } //End of for loop running through trackhits
+
+  std::vector< double > scatterx, scattery;
+  const double x1 = hitsfront.at(1)->x();
+  const double y1 = hitsfront.at(1)->y();
+  const double z1 = hitsfront.at(1)->z();
+  const double x2 = hitsfront.at(2)->x();
+  const double y2 = hitsfront.at(2)->y();
+  const double z2 = hitsfront.at(2)->z();
+  const double x3 = hitsback.at(0)->x();
+  const double y3 = hitsback.at(0)->y();
+  const double z3 = hitsback.at(0)->z();
+  const double x4 = hitsback.at(1)->x();
+  const double y4 = hitsback.at(1)->y();
+  const double z4 = hitsback.at(1)->z();
+  const double frontanglex = atan2((x2-x1),(z2-z1));
+  const double frontangley = atan2((y2-y1),(z2-z1));
+  const double backanglex = atan2((x4-x3),(z4-z3));
+  const double backangley = atan2((y4-y3),(z4-z3));
+  //Push back angles into a vector
+  scatterx.push_back(frontanglex);
+  scattery.push_back(frontangley);
+  scatterx.push_back(backanglex);
+  scattery.push_back(backangley);
+  //Name the histograms
+  std::stringstream xforward,yforward,xyforward;
+  streamlog_out(DEBUG2) << "Successfully pushed back the scatterx and y vectors and deleted the TGraphs and TFits:" << endl;
+  stringstream xfront,yfront,xback,yback,xyfront,xyback;
+  xfront << "AngleXFrontThreePlanesDoubleDaf";
+  yfront << "AngleYFrontThreePlanesDoubleDaf";
+  xback << "AngleXBackThreePlanesDoubleDaf";
+  yback << "AngleYBackThreePlanesDoubleDaf";
+  xyfront << "AngleXYFrontThreePlanesDoubleDaf";
+  xyback << "AngleXYBackThreePlanesDoubleDaf";
+  streamlog_out(DEBUG2) << "Successfully named the histograms:" << endl;
+  //Fill the histograms with the XZ and YZ angles
+  try{
+    dynamic_cast< TH1D* >(_histoThing[xfront.str().c_str()])->Fill(frontanglex);
+  } catch(std::bad_cast &bc){
+    streamlog_out(ERROR3) << "Unable to fill histogram: " << xfront.str().c_str() << endl;
+  } catch(...){
+    streamlog_out(ERROR3) << "Unable to fill histogram: " << xfront.str().c_str() << ". Unknown Error" << endl;
+  }
+  try{
+    dynamic_cast< TH1D* >(_histoThing[yfront.str().c_str()])->Fill(frontangley);
+  } catch(std::bad_cast &bc){
+    streamlog_out(ERROR3) << "Unable to fill histogram: " << yfront.str().c_str() << endl;
+  } catch(...){
+    streamlog_out(ERROR3) << "Unable to fill histogram: " << yfront.str().c_str() << ". Unknown Error" << endl;
+  }
+  try{
+    dynamic_cast< TH2D* >(_histoThing2D[xyfront.str().c_str()])->Fill(frontanglex,frontangley);
+  } catch(std::bad_cast &bc){
+    streamlog_out(ERROR3) << "Unable to fill histogram: " << xyfront.str().c_str() << ". Due to bad cast." << endl;
+  }
+ try{
+    dynamic_cast< TH1D* >(_histoThing[xback.str().c_str()])->Fill(backanglex);
+  } catch(std::bad_cast &bc){
+    streamlog_out(ERROR3) << "Unable to fill histogram: " << xback.str().c_str() << endl;
+  } catch(...){
+    streamlog_out(ERROR3) << "Unable to fill histogram: " << xback.str().c_str() << ". Unknown Error" << endl;
+  }
+  try{
+    dynamic_cast< TH1D* >(_histoThing[yback.str().c_str()])->Fill(backangley);
+  } catch(std::bad_cast &bc){
+    streamlog_out(ERROR3) << "Unable to fill histogram: " << yback.str().c_str() << endl;
+  } catch(...){
+    streamlog_out(ERROR3) << "Unable to fill histogram: " << yback.str().c_str() << ". Unknown Error" << endl;
+  }
+  try{
+    dynamic_cast< TH2D* >(_histoThing2D[xyback.str().c_str()])->Fill(backanglex,backangley);
+  } catch(std::bad_cast &bc){
+    streamlog_out(ERROR3) << "Unable to fill histogram: " << xyback.str().c_str() << ". Due to bad cast." << endl;
+  }
+  streamlog_out(DEBUG2) << "Successfully filled the histograms:" << endl;
+  pair< vector< double >, vector< double > > bothangles(scatterx,scattery);
+  return bothangles;
+}
+
+pair< vector< double >, vector< double > > EUTelX0Processor::GetTripleTrackAnglesStraightLines(vector< TVector3* > hits){
   streamlog_out(DEBUG1) << "Begin pair< vector< double >, vector< double > > EUTelX0Processor::GetTripleTrackAngles(vector< TVector3* > hits)" << endl;
   //Then we find the position where those lines would have hit the DUT
   //THIS IS TO BE DECIDED IF IT IS NEEDED LATER
@@ -589,23 +745,21 @@ pair< vector< double >, vector< double > > EUTelX0Processor::GetTripleTrackAngle
     string error("In function: EUTelX0Processor::GetTripleTrackAngles(vector< TVector3* > hits), a track has missing hits, move on to the next track");
     throw error;
   }
-  const double dutposition(hits[2]->z());
-  streamlog_out(DEBUG3) << "For now DUT position is set to the position of the 2nd plane, that is at " << dutposition << endl;
 
   std::vector< double > scatterx, scattery;
   streamlog_out(DEBUG3) << "hitsize = " << hitsize << std::endl;
   for(size_t i = 0; i < 2; ++i){ //Fill histograms with the angles of the track at the front and back three planes and put those angles into a vector
     if(i != 0) i = 3;//Move to the next set of planes
     streamlog_out(DEBUG0) << "i = " << i << endl;
-    const double x0 = hits[i]->x();
-    const double y0 = hits[i]->y();
-    const double z0 = hits[i]->z();
-    const double x1 = hits[i+1]->x();
-    const double y1 = hits[i+1]->y();
-    const double z1 = hits[i+1]->z();
-    const double x2 = hits[i+2]->x();
-    const double y2 = hits[i+2]->y();
-    const double z2 = hits[i+2]->z();
+    const double x0 = hits.at(i)->x();
+    const double y0 = hits.at(i)->y();
+    const double z0 = hits.at(i)->z();
+    const double x1 = hits.at(i+1)->x();
+    const double y1 = hits.at(i+1)->y();
+    const double z1 = hits.at(i+1)->z();
+    const double x2 = hits.at(i+2)->x();
+    const double y2 = hits.at(i+2)->y();
+    const double z2 = hits.at(i+2)->z();
     streamlog_out(DEBUG9) << "x0 = " << x0 << endl << "y0 = " << y0 << endl << "z0 = " << z0 << endl << "x2 = " << x2 << endl << "y1 = " << y1 << endl << "z1 = " << z1 << endl << "x2 = " << x2 << endl << "y2 = " << y2 << endl << "z2 = " << z2 << endl;
     int n = 3;
     double arrayx[3] = {x0,x1,x2};
@@ -615,6 +769,7 @@ pair< vector< double >, vector< double > > EUTelX0Processor::GetTripleTrackAngle
     TGraph *gx = new TGraph(n,arrayz,arrayx);
     TGraph *gy = new TGraph(n,arrayz,arrayy);
     streamlog_out(DEBUG2) << "Successfully created the TGraphs" << endl;
+    gErrorIgnoreLevel=kError;
     TF1 *fx = new TF1("fx","[0]*x + [1]",0.0,z2);
     TF1 *fy = new TF1("fy","[0]*x + [1]",0.0,z2);
     streamlog_out(DEBUG2) << "Successfully created the TF1s" << endl;
@@ -672,25 +827,43 @@ pair< vector< double >, vector< double > > EUTelX0Processor::GetTripleTrackAngle
   return bothangles;
 }
 
-void EUTelX0Processor::TriplePlaneTrackScatteringAngles(vector< double > scatterx, vector< double > scattery, std::vector< TVector3* > hits){
+void EUTelX0Processor::TriplePlaneTrackScatteringAngles(vector< double > scatterx, vector< double > scattery, vector< TVector3* > hits,  bool doubledaf){
   gStyle->SetOptStat("neMRuo");
   const size_t scatterxsize = scatterx.size();
   streamlog_out(DEBUG3) << "scatterxsize = " << scatterxsize << std::endl;
   //Scattering angle is the forward angle between planes i to i+1 and plane i+1 to i+2
-  const double scatteringanglex = scatterx[1] - scatterx[0];
-  const double scatteringangley = scattery[1] - scattery[0];
+  const double scatteringanglex = scatterx.at(1) - scatterx.at(0);
+  const double scatteringangley = scattery.at(1) - scattery.at(0);
 
+  double x1 = hits.at(2)->x() + (_dutPosition - hits.at(2)->z())*tan(scatterx.at(0));
+  double y1 = hits.at(2)->y() + (_dutPosition - hits.at(2)->z())*tan(scattery.at(0));
   //Name the histograms
   std::stringstream ssscatterx,ssscattery,ssscatterxy;
-  ssscatterx << "ScatteringAngleXTriple";
-  ssscattery << "ScatteringAngleYTriple";
-  ssscatterxy << "ScatteringAngleXYTriple";
-  double x = hits[2]->x();
-  double y = hits[2]->y();
+  if(doubledaf == true){
+    ssscatterx << "ScatteringAngleXDoubleDaf";
+    ssscattery << "ScatteringAngleYDoubleDaf";
+    ssscatterxy << "ScatteringAngleXYDoubleDaf";
+    _dutPosition = hits.at(2)->z() + 5.1; //TODO HACK just put in the value for now from run 8876 whilst I test, need to add this variable to my runs.csv list
+    double x2 = hits.at(9)->x() + (_dutPosition - hits.at(9)->z())*tan(scatterx.at(1));
+    double y2 = hits.at(9)->y() + (_dutPosition - hits.at(9)->z())*tan(scattery.at(1));
+    if(!(x1 < x2 + _cut && x1 > x2 - _cut && y1 < y2 + _cut && y1 > y2 - _cut)){
+      //These two tracks don't come from the same real track
+      return;
+    }
+  } else{
+    ssscatterx << "ScatteringAngleXTriple";
+    ssscattery << "ScatteringAngleYTriple";
+    ssscatterxy << "ScatteringAngleXYTriple";
+  }
 
-  pair< int, int > position(ConversionHitmapToX0map(x,y));
-  ScatteringAngleXTripleMapData[position].push_back(scatteringanglex);
-  ScatteringAngleYTripleMapData[position].push_back(scatteringangley);
+  pair< int, int > position(ConversionHitmapToX0map(x1,y1));
+  if(doubledaf == true){
+    ScatteringAngleXTripleMapDataDaf[position].push_back(scatteringanglex);
+    ScatteringAngleYTripleMapDataDaf[position].push_back(scatteringangley);
+  } else{
+    ScatteringAngleXTripleMapData[position].push_back(scatteringanglex);
+    ScatteringAngleYTripleMapData[position].push_back(scatteringangley);
+  }
   try{
     dynamic_cast< TH1D* >(_histoThing[ssscatterx.str().c_str()])->Fill(scatteringanglex);
   } catch(std::bad_cast &bc){
@@ -722,17 +895,7 @@ void EUTelX0Processor::SinglePlaneTrackScatteringAngles(vector< double > scatter
     ssscatterx << "ScatteringAngleXPlane" << i+1;
     ssscattery << "ScatteringAngleYPlane" << i+1;
     ssscatterxy << "KinkAnglePlane" << i+1;
-/*
-    if(i == 1) //If we are looking at the angle between planes 1 to 2 and planes 2 to 3 (So this includes the DUT)
-    {
-      double x = hits[i+1]->x();
-      double y = hits[i+1]->y();
-
-      pair< int, int > position(ConversionHitmapToX0map(x,y));
-      ScatteringAngleXPlane1MapData[position].push_back(scatteringanglex);
-      ScatteringAngleYPlane1MapData[position].push_back(scatteringangley);
-    }
-*/
+    
     double x = hits[i+1]->x();
     double y = hits[i+1]->y();
     pair< int, int > position(ConversionHitmapToX0map(x,y));
@@ -774,11 +937,11 @@ void EUTelX0Processor::kinkEstimate(Track* track){
   streamlog_out(DEBUG3) << "Successfully got hits from track" << std::endl;
   try{
     pair< vector< double >, vector< double > > scatterpairsingle(GetSingleTrackAngles(hits));
-    pair< vector< double >, vector< double > > scatterpairtriple(GetTripleTrackAngles(hits));
+    pair< vector< double >, vector< double > > scatterpairtriple(GetTripleTrackAnglesStraightLines(hits));
     std::vector< double > scatterxsingle = scatterpairsingle.first, scatterysingle = scatterpairsingle.second;
     std::vector< double > scatterxtriple = scatterpairtriple.first, scatterytriple = scatterpairtriple.second;
     SinglePlaneTrackScatteringAngles(scatterxsingle, scatterysingle, hits);
-    TriplePlaneTrackScatteringAngles(scatterxtriple, scatterytriple, hits);
+    TriplePlaneTrackScatteringAngles(scatterxtriple, scatterytriple, hits, false);
   } catch(...){
     return;
   }
@@ -794,48 +957,115 @@ void EUTelX0Processor::processEvent(LCEvent *evt)
   //Check for last event
     //Fit gaussian to histogram
     //Extract sigma value from histogram
+  _doubleDafFitted = true;
+  if(_doubleDafFitted){
+    try{
+      LCCollection* trackcollection1 = evt->getCollection(_trackCollectionName);
+      int elementnumber1 = trackcollection1->getNumberOfElements();
+      streamlog_out(DEBUG2) << "Created trackcollection1, it has " << elementnumber1 << " elements" << endl;
+      LCCollection* trackcollection2 = evt->getCollection(_trackCollectionName2);
+      int elementnumber2 = trackcollection2->getNumberOfElements();
+      streamlog_out(DEBUG2) << "Created trackcollection2, it has " << elementnumber2 << " elements" << endl;
+      for(int i = 0; i < elementnumber1; ++i){
+        for(int j = 0; j < elementnumber2; ++j){
+          streamlog_out(DEBUG0) << "i = " << i << ", j = " << j << endl;
+          Track *eventtrack1 = dynamic_cast< Track* >(trackcollection1->getElementAt(i));
+          Track *eventtrack2 = dynamic_cast< Track* >(trackcollection2->getElementAt(j));
+          streamlog_out(DEBUG0) << "Dynamically casted tracks: " << &eventtrack1 << " and " << &eventtrack2 << endl;
+          std::vector< TrackerHit* > trackhits1 = eventtrack1->getTrackerHits();
+          streamlog_out(DEBUG0) << "Got the tracker hit 1" << endl;
+          std::vector< TrackerHit* > trackhits2 = eventtrack2->getTrackerHits();
+          streamlog_out(DEBUG0) << "Got the tracker hit 2" << endl;
+          std::vector< TVector3* > hits;
+          int k(0);
+          for(std::vector< TrackerHit* >::iterator it = trackhits1.begin(); it != trackhits1.end(); ++it){
+            if((*it)->getType() == 32){  //Check if the hit type is the aligned hits or the fitted points (we want fitted points)
+              streamlog_out(DEBUG0) << "k = " << k << endl;
+              Double_t x = (*it)->getPosition()[0];
+              Double_t y = (*it)->getPosition()[1];
+              Double_t z = (*it)->getPosition()[2];
+              k++;
+              TVector3 *tempvec = new TVector3(x,y,z);
+              hits.push_back(tempvec);
+            } //End of if query for type check
+          } //End of for loop running through trackhits
+          streamlog_out(DEBUG0) << "Filled hits from first track" << endl;
+          for(std::vector< TrackerHit* >::iterator it = trackhits2.begin(); it != trackhits2.end(); ++it){
+            if((*it)->getType() == 32){  //Check if the hit type is the aligned hits or the fitted points (we want fitted points)
+              streamlog_out(DEBUG0) << "k = " << k << endl;
+              Double_t x = (*it)->getPosition()[0];
+              Double_t y = (*it)->getPosition()[1];
+              Double_t z = (*it)->getPosition()[2];
+              k++;
+              TVector3 *tempvec = new TVector3(x,y,z);
+              hits.push_back(tempvec);
+            } //End of if query for type check
+          } //End of for loop running through trackhits
+          streamlog_out(DEBUG0) << "Filled hits from second track" << endl;
 
-  try{
-    //_referenceHitVec = evt->getCollection(_referenceHitCollectionName);
-    LCCollection* trackcollection = evt->getCollection(_trackCollectionName);
-    int elementnumber = trackcollection->getNumberOfElements();
-    for(int i = 0; i < elementnumber; ++i){
-      Track* eventtrack = dynamic_cast< Track* >(trackcollection->getElementAt(i));
-      streamlog_out(DEBUG0) << "Here is all the information about the track in run " << _runNumber << ", event " << _eventNumber << ", element " << i << std::endl << std::endl;
-      printTrackParameters( eventtrack );
-      kinkEstimate( eventtrack );
-//      singlePointResolution( eventtrack );
-//      threePointResolution( eventtrack );
+          pair< vector< double >, vector< double > > scatterpairtripledaf(GetTripleTrackAnglesDoubleDafFitted(eventtrack1, eventtrack2));
+          streamlog_out(DEBUG0) << "Worked out track angles" << endl;
+          TriplePlaneTrackScatteringAngles(scatterpairtripledaf.first, scatterpairtripledaf.second, hits, true);
+          streamlog_out(DEBUG0) << "Worked out scattering angles" << endl;
+        }
+      }
+    } catch(...){
+      streamlog_out(ERROR3) << "Double Daf fitting didn't work..." << endl;
     }
-  } catch(DataNotAvailableException &datanotavailable){
-    streamlog_out(DEBUG4) << "Exception occured: " << datanotavailable.what() << std::endl
-      << "Could not get collection '" << _trackCollectionName << "' from event " << _eventNumber << ", Skipping Event" << std::endl;
-  } catch(...){
-    streamlog_out(ERROR9) << "Unknown exception occured in EUTelX0Processor, here is some information which might help:" << std::endl
-    << "Run Number: " << _runNumber << std::endl
-    << "Event Number: " << _eventNumber << std::endl
-    << "Throw occured somewhere within the try block which starts with the line: 'LCCollection* trackcollection = evt->getCollection(_trackCollectionName);'" << std::endl
-    << "I hope that helps, if not then please submit a bug report or add more exception handling as appropriate, program will now exit" << std::endl;
-    exit(1);
+  } else{
+    try{
+      //_referenceHitVec = evt->getCollection(_referenceHitCollectionName);
+      LCCollection* trackcollection = evt->getCollection(_trackCollectionName);
+      int elementnumber = trackcollection->getNumberOfElements();
+      for(int i = 0; i < elementnumber; ++i){
+        Track* eventtrack = dynamic_cast< Track* >(trackcollection->getElementAt(i));
+        streamlog_out(DEBUG0) << "Here is all the information about the track in run " << _runNumber << ", event " << _eventNumber << ", element " << i << std::endl << std::endl;
+        printTrackParameters( eventtrack );
+        kinkEstimate( eventtrack );
+  //      pair< vector< double >, vector< double > > scatterpairtripledaf(GetTripleTrackAnglesDoubleDafFitted(track1, track2));
+  //      TriplePlaneTrackScatteringAngles(scatterxtripledaf, scatterytripledaf, hits, true);
+  //      singlePointResolution( eventtrack );
+  //      threePointResolution( eventtrack );
+      }
+    } catch(DataNotAvailableException &datanotavailable){
+      streamlog_out(DEBUG4) << "Exception occured: " << datanotavailable.what() << std::endl
+        << "Could not get collection '" << _trackCollectionName << "' from event " << _eventNumber << ", Skipping Event" << std::endl;
+    } catch(...){
+      streamlog_out(ERROR9) << "Unknown exception occured in EUTelX0Processor, here is some information which might help:" << std::endl
+      << "Run Number: " << _runNumber << std::endl
+      << "Event Number: " << _eventNumber << std::endl
+      << "Throw occured somewhere within the try block which starts with the line: 'LCCollection* trackcollection = evt->getCollection(_trackCollectionName);'" << std::endl
+      << "I hope that helps, if not then please submit a bug report or add more exception handling as appropriate, program will now exit" << std::endl;
+      exit(1);
+    }
   }
   _eventNumber++;
 }
 
-double getSigma(vector<double> vec){
+double EUTelX0Processor::getSigma(vector<double> vec){
   double mean(0);
+  TH1D *temphisto = new TH1D("temphisto","temphisto",nobinsangle,minbinangle,maxbinangle);
   for(vector< double >::iterator it = vec.begin(); it != vec.end(); ++it){
+    temphisto->Fill(*it);
     mean += *it;
   }
+  mean /= vec.size();
   double sigma(0);
   for(vector< double >::iterator it = vec.begin(); it != vec.end(); ++it){
     sigma += (mean - *it)*(mean - *it);
   }
   sigma /= static_cast<double>(vec.size());
   sigma = sqrt(sigma);
+  gErrorIgnoreLevel=kError;
+  TF1 *fit = new TF1("fit","gaus");
+  temphisto->Fit(fit, "Q");
+  double sigmafit = fit->GetParameter(2);
+  delete fit;
+  delete temphisto;
   if(sigma != sigma){
     return 0;
   } else{
-    return sigma;
+    return sigmafit;
   }
 }
 
@@ -846,8 +1076,10 @@ void EUTelX0Processor::end()
   //
   //calculateX0();
   int numberofplanes = 6;
+  gErrorIgnoreLevel=kError;
   for(double i = minx; i <= maxx; i += binsizex)
   {
+    streamlog_out(MESSAGE6) << "The Radiation Length Map has made it to " << i << endl;
     for(double j = miny; j <= maxy; j += binsizey)
     {
       pair< int, int > position(ConversionHitmapToX0map(i,j));
@@ -857,7 +1089,7 @@ void EUTelX0Processor::end()
         double sigmasingley = getSigma(ScatteringAngleYSingleMapData[k][position]);;
         ScatteringAngleYSingleMap[k]->Fill(i,j,sigmasingley);
 
-        double x0single = pow((((sigmasinglex+sigmasingley)/2.0)/sqrt(2))*1000.0*_beamEnergy/13.6,1.0/0.555);
+        double x0single = pow(sqrt(pow(sigmasinglex,2)+pow(sigmasingley,2))*1000.0*_beamEnergy/13.6,1.0/0.555);
         RadiationLengthSingleMap[k]->Fill(i,j,x0single);
 
       }
@@ -866,8 +1098,18 @@ void EUTelX0Processor::end()
       double sigmatripley = getSigma(ScatteringAngleYTripleMapData[position]);
       ScatteringAngleYTripleMap->Fill(i,j,sigmatripley);
       
-      double x0triple = pow((((sigmatriplex+sigmatripley)/2.0)/sqrt(2))*1000.0*_beamEnergy/13.6,1.0/0.555);
+      double x0triple = pow(sqrt(pow(sigmatriplex,2)+pow(sigmatripley,2))*1000.0*_beamEnergy/13.6,1.0/0.555);
       RadiationLengthTripleMap->Fill(i,j,x0triple);
+
+      if(_doubleDafFitted){
+        double sigmatriplexdaf = getSigma(ScatteringAngleXTripleMapDataDaf[position]);
+        ScatteringAngleXTripleMapDoubleDaf->Fill(i,j,sigmatriplexdaf);
+        double sigmatripleydaf = getSigma(ScatteringAngleYTripleMapDataDaf[position]);
+        ScatteringAngleYTripleMapDoubleDaf->Fill(i,j,sigmatripleydaf);
+  
+        double x0tripledaf = pow(sqrt(pow(sigmatriplexdaf,2)+pow(sigmatripleydaf,2))*1000.0*_beamEnergy/13.6,1.0/0.555);
+        RadiationLengthMapDoubleDaf->Fill(i,j,x0tripledaf);
+      }
     }
   }
   _histoThing.clear(); 
@@ -933,7 +1175,7 @@ std::vector< TVector3* > EUTelX0Processor::getHitsFromTrack(Track *track){
  std::vector< TrackerHit* > trackhits = track->getTrackerHits();
  std::vector< TVector3* > hits;
  for(std::vector< TrackerHit* >::iterator it = trackhits.begin(); it != trackhits.end(); ++it){
-    if((*it)->getType() < 32){  //Check if the hit type is appropriate
+    if((*it)->getType() < 32){  //Check if the hit type is the aligned hits or the fitted points (we want aligned hits)
       Double_t x = (*it)->getPosition()[0];
       Double_t y = (*it)->getPosition()[1];
       Double_t z = (*it)->getPosition()[2];
