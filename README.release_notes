@@ -23,6 +23,16 @@ considered outdated and will no longer be supported.
       files or even compare histograms between files. See the tools/pyroplot/README
       and online documentation for details.  NOTE: due to its
       dependency on rootpy, pyroplot requires Python 2.6 or later.
+*** 0.9.1 (27.09.2013)
+    - GBL tracking bugfix
+    - Change CMSPixelDecoder external reference to the new github
+      repository.
+    - fix crash due to non-existing reference hit vector in EUTelMille
+    - fix for concatenation function for Python versions < 2.6; fixes
+      issue
+      https://eutelescope.web.cern.ch/issue/concatenation-older-python
+      reported by C. Nellist
+    - minor modifications and updates to some READMEs
 *** 0.9.0 (08.08.2013)
     - Improved histogram output (binning, description, axis labels)
     - EUTelMille now allows to include custom pede commands into the
