@@ -60,6 +60,8 @@
         FAIL_REGULAR_EXPRESSION "${generic_fail_regex}"
 	# test depends on earlier steps
 	DEPENDS TestJobsubExampleDaturaNoDUTSetup
+	# converter step sometimes takes a bit longer (in s)
+	TIMEOUT 2500
     )
 
 

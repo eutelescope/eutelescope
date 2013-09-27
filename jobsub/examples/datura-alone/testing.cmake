@@ -58,6 +58,8 @@
         FAIL_REGULAR_EXPRESSION "${converter_fail_regex}"
 	# test depends on earlier steps
 	DEPENDS TestJobsubExampleDaturaAloneSetup
+	# converter step sometimes takes a bit longer (in s)
+	TIMEOUT 2500
     )
 
     # now check if the expected output files exist and look ok
