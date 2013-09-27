@@ -231,8 +231,6 @@
   <parameter name="AllowMissingHits" type="int" value="@AllowedMissingHits@"/>
   <!--Allowed number of hits removed from the track-->
   <parameter name="AllowSkipHits" type="int" value="@AllowedSkipHits@"/>
-  <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
-  <parameter name="ApplyToReferenceCollection" value="1"/>
   <!--Beam direction tilt in X-Z plane [rad] (for beam constraint)-->
   <!--parameter name="BeamSlopeX" type="double" value="0"/-->
   <!--Beam direction tilt in Y-Z plane [rad] (for beam constraint)-->
