@@ -289,7 +289,7 @@ void EUTelApplyAlignmentProcessor::CheckIOCollections(LCEvent* event)
 
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
 
-//        if ( _fevent && _applyToReferenceHitCollection ) 
+  if ( _applyToReferenceHitCollection ) 
         {
             try{
             _referenceHitVec       = dynamic_cast < LCCollectionVec * > (event->getCollection( _referenceHitCollectionName));
