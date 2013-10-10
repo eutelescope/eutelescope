@@ -98,7 +98,7 @@ CMSPixelCalibrateEventProcessor::CMSPixelCalibrateEventProcessor () :Processor("
                              _pixelType , static_cast<int> ( 1 ) );
 
     registerProcessorParameter ("calibrationFile", "Calibration file prefix containing the p0-p3 parameters for the Tanh fit. Use %i for the ROC number.",
-                              _calibrationFile, std::string ("phCalibrationFit60_C.dat"));
+                              _calibrationFile, std::string ("phCalibrationFit60_C%i.dat"));
     registerProcessorParameter ("calibrationType", "Switch between calibration input data types phCalibration (0)  and Gaintanh calibration (1).",
                               _phCalibration, static_cast< bool > ( 1 ) );
 	registerProcessorParameter("HistogramFilling","Switch on or off the histogram filling", _fillHistos, static_cast< bool > ( false ) );
@@ -143,21 +143,73 @@ void CMSPixelCalibrateEventProcessor::initializeGeometry() {
 
 void CMSPixelCalibrateEventProcessor::initializeCalibration() throw ( marlin::StopProcessingException ) {
 
+    streamlog_out( MESSAGE5 ) << "Read RAL phTanH Calibration Data for ROC ";
+    
+    for(unsigned int i = 0; i < _noOfROC; i++) {
+
+        std::vector< cal_param > cal_roc;
+        char calibrationFile[100];
+
+	sprintf(calibrationFile,_calibrationFile.c_str(), i);
+	streamlog_out( DEBUG5 ) << "ROC" << i << " File: " << calibrationFile << endl;
+
+        std::ifstream* file = new std::ifstream(calibrationFile);
+
+        if ( *file == 0 ){
+	  streamlog_out( WARNING ) << "Unable to initialize calibration for ROC" << i << " - could not open file " << calibrationFile <<"!" << endl;
+            throw StopProcessingException( this ) ;
+        }
+
+        // Skip first 4 lines:
+        char dummyString[100];
+        //for(int iskip = 0; iskip < 4; iskip++ ) *file >> dummyString;
+
+        // Write calibration parameters into the struct:
+        while(!file->eof()) {
+            cal_param dummycal;
+            *file >> dummyString >> dummyString >> dummyString >> dummyString
+		  >> dummycal.par0 >> dummycal.par1 >> dummycal.par2 >> dummycal.par3;
+            // Push back into ROC vector:
+            cal_roc.push_back(dummycal);            
+        }
+
+        streamlog_out( MESSAGE5 ) << i << " ";
+        streamlog_out( DEBUG5 ) << endl << "First pixel: " << cal_roc[0].par0 << " " << cal_roc[0].par1 << " " << cal_roc[0].par2 << " " << cal_roc[0].par3 << endl;
+
+        streamlog_out( DEBUG5 ) << endl << "Last pixel: " << cal_roc[4159].par0 << " " << cal_roc[4159].par1 << " " << cal_roc[4159].par2 << " " << cal_roc[4159].par3 << endl;
+
+        delete file;  
+
+        // Check size of vector:
+        if(cal_roc.size() < _noOfXPixel * _noOfYPixel) {
+            streamlog_out( WARNING ) << "Unable to initialize calibration for ROC" << i << " - wrong number of pixel calibration data" << endl;
+            throw StopProcessingException( this ) ;
+        }
+        
+        calibration.push_back(cal_roc);
+        
+    } // end looping over noOfROC
+    
+    streamlog_out( MESSAGE5 ) << endl;
+  
+}
+
+/*void CMSPixelCalibrateEventProcessor::initializeCalibration() throw ( marlin::StopProcessingException ) {
+
     streamlog_out( MESSAGE5 ) << "Read Calibration Data for ROC ";
     
     for(unsigned int i = 0; i < _noOfROC; i++) {
 
         std::vector< cal_param > cal_roc;
         char calibrationFile[100];
-        std::stringstream cf;
-        cf << _calibrationFile << i;
-        strcpy(calibrationFile,cf.str().c_str());
-        streamlog_out( DEBUG5 ) << "ROC" << i << " File: " << calibrationFile << endl;
+
+	sprintf(calibrationFile,_calibrationFile.c_str(), i);
+	streamlog_out( DEBUG5 ) << "ROC" << i << " File: " << calibrationFile << endl;
 
         std::ifstream* file = new std::ifstream(calibrationFile);
 
         if ( *file == 0 ){
-            streamlog_out( WARNING ) << "Unable to initialize calibration for ROC" << i << " - could not open file!" << endl;
+	  streamlog_out( WARNING ) << "Unable to initialize calibration for ROC" << i << " - could not open file " << calibrationFile <<"!" << endl;
             throw StopProcessingException( this ) ;
         }
 
@@ -190,11 +242,12 @@ void CMSPixelCalibrateEventProcessor::initializeCalibration() throw ( marlin::St
     
     streamlog_out( MESSAGE5 ) << endl;
   
-}
+    }*/
+
 
 void CMSPixelCalibrateEventProcessor::initializeGaintanhCalibration() throw ( marlin::StopProcessingException ) {
 
-    streamlog_out( MESSAGE5 ) << "Read calibration data for ROC ";
+    streamlog_out( MESSAGE5 ) << "Read GainTanH calibration data for ROC ";
     
     int icol;
     int irow;
@@ -208,15 +261,14 @@ void CMSPixelCalibrateEventProcessor::initializeGaintanhCalibration() throw ( ma
 
         std::vector< cal_param > cal_roc;
         char calibrationFile[100];
-        std::stringstream cf;
-	cf << _calibrationFile << i;
-	strcpy(calibrationFile,cf.str().c_str());
+
+	sprintf(calibrationFile,_calibrationFile.c_str(), i);
 	streamlog_out( DEBUG5 ) << "ROC" << i << " File: " << calibrationFile << endl;
 
         std::ifstream* file = new std::ifstream(calibrationFile);
 
         if ( *file == 0 ){
-            streamlog_out( WARNING ) << "Unable to initialize calibration for ROC" << i << " - could not open file!" << endl;
+	  streamlog_out( WARNING ) << "Unable to initialize calibration for ROC" << i << " - could not open file " << calibrationFile << "!" << endl;
             throw StopProcessingException( this ) ;
         }
 
