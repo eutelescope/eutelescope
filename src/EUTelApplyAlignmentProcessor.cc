@@ -914,10 +914,10 @@ void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event)
       double y_refhit = 0.; 
       double z_refhit = 0.; 
       
-      if( _referenceHitVec == 0 )
+      if( !_applyToReferenceHitCollection || _referenceHitVec == 0 )
       {
 	// todo: is this case (no reference vector) treated correctly?
-	  //streamlog_out( MESSAGE5 ) << "_referenceHitVec is empty" << endl;
+	  streamlog_out( MESSAGE5 ) << "_referenceHitVec is empty" << endl;
       }
       else
       {
@@ -1215,7 +1215,7 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
       double y_refhit = 0.; 
       double z_refhit = 0.; 
       
-      if( _referenceHitVec == 0 )
+      if( !_applyToReferenceHitCollection || _referenceHitVec == 0 )
       {
 	// todo: is this case (no reference vector) treated correctly?
         streamlog_out( DEBUG5 ) << "DIRECT:-----:-----: _referenceHitVec is empty" << endl;
@@ -1579,7 +1579,7 @@ void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
       double y_refhit = 0.; 
       double z_refhit = 0.; 
 
-      if( _referenceHitVec == 0 )
+      if( !_applyToReferenceHitCollection || _referenceHitVec == 0 )
       {
 	// todo: is this case (no reference vector) treated correctly?
         // streamlog_out( MESSAGE5 ) << "_referenceHitVec is empty" << endl;
