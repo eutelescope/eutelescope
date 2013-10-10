@@ -23,6 +23,10 @@ considered outdated and will no longer be supported.
       files or even compare histograms between files. See the tools/pyroplot/README
       and online documentation for details.  NOTE: due to its
       dependency on rootpy, pyroplot requires Python 2.6 or later.
+*** 0.9.2 (not yet released)
+    - ApplyAlignment: fixed bug with 'missing' reference vector
+      collection when use of refvec was explicitly disabled; this also
+      removes any warnings of missing reference vectors for this case.
 *** 0.9.1 (27.09.2013)
     - GBL tracking bugfix
     - Change CMSPixelDecoder external reference to the new github
@@ -77,6 +81,14 @@ considered outdated and will no longer be supported.
      steering file.
 ** Known Issues
    For up-to-date details, check http://eutelescope.web.cern.ch/project/issues
+   - EUTelMille: AlignMode = 1 does not allow to use the
+     ExcludedPlanes parameter; for details see
+     http://eutelescope.web.cern.ch/issue/excluding-planes-alignment-does-not-work
+   - Clustering: with MessageLevel set to DEBUG, the clustering step
+     crashes; for details see
+     http://eutelescope.web.cern.ch/issue/seg-fault-clustering-step-message-level-debug
+   - DafFitter: known issues with excluding planes, see
+     http://eutelescope.web.cern.ch/issue/daffitter-excluding-planes
    - jobsub: running jobsub directly (i.e. using './jobsub' and not
      'python jobsub') requires the symbolic link 'python2' to be
      present in the PATH; this is set up on most systems by default
