@@ -593,6 +593,7 @@ void EUTelFitTuple::processEvent( LCEvent * event ) {
       _FitTuple->fill(icol++,dutY);
       _FitTuple->fill(icol++,dutR);
       _FitTuple->fill(icol++,dutQ);
+      _FitTuple->fill(icol++,nTrack);
 
       _FitTuple->addRow();
 
@@ -697,6 +698,8 @@ void EUTelFitTuple::bookHistos()
   _columnNames.push_back("dutQ");
   _columnType.push_back("double");
 
+  _columnNames.push_back("nTrack");
+  _columnType.push_back("int");
 
   _FitTuple=AIDAProcessor::tupleFactory(this)->create(_FitTupleName, _FitTupleName, _columnNames, _columnType, "");
 
