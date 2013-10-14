@@ -89,6 +89,10 @@ considered outdated and will no longer be supported.
      http://eutelescope.web.cern.ch/issue/seg-fault-clustering-step-message-level-debug
    - DafFitter: known issues with excluding planes, see
      http://eutelescope.web.cern.ch/issue/daffitter-excluding-planes
+   - The fitter/analysis step of the datura-noDUT example requires
+     more than 3GB of memory to be available to the Marlin process;
+     sufficient physical RAM and a 64bit kernel are therefore
+     required to run the full analysis chain as provided.
    - jobsub: running jobsub directly (i.e. using './jobsub' and not
      'python jobsub') requires the symbolic link 'python2' to be
      present in the PATH; this is set up on most systems by default
