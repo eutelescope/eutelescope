@@ -109,6 +109,10 @@ EUTelFitTuple::EUTelFitTuple() : Processor("EUTelFitTuple") {
                               "Maximum allowed distance between fit and matched DUT hit",
                               _distMax,  static_cast < double > (0.1));
 
+  registerProcessorParameter ("MaxZDistance",
+                              "Maximum allowed distance between hit Z coordinate and the plane's Z coordinate",
+                              _maxZDistance,  static_cast < double > (1.));
+
 
   std::vector<float > initAlign;
   initAlign.push_back(0.);
@@ -456,8 +460,9 @@ void EUTelFitTuple::processEvent( LCEvent * event ) {
           // We find plane number of the hit
           // by looking at the Z position
 
-          double distMin = 1.;
           int hitPlane = -1 ;
+	  // Initialise variable for comparing distance to planes:
+	  double distMin = _maxZDistance;
 
           for(int ipl=0;ipl<_nTelPlanes;ipl++)
             {

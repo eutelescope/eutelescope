@@ -210,6 +210,7 @@ namespace eutelescope {
     int _iDUT;
     double _zDUT;
     double _distMax;
+    double _maxZDistance;
     std::vector<float > _DUTalign;
 
     // Internal processor variables
