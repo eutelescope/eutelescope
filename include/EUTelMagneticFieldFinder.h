@@ -62,8 +62,6 @@ namespace {
                 const double mm = 1000.;
                 const double k = 0.299792458/mm;
                 
-                const double x  = point[ 0 ];
-                const double y  = point[ 1 ];
                 const double tx = point[ 2 ];
                 const double ty = point[ 3 ];
                 const double q  = point[ 4 ];

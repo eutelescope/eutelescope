@@ -339,26 +339,142 @@ namespace eutelescope {
     }
 
     double EUTelGBLFitter::interpolateTrackX(const EVENT::TrackerHitVec& trackCand, const double z) const {
-        double x0 = trackCand.front()->getPosition()[0];
-        double z0 = trackCand.front()->getPosition()[2];
+        const int planeIDStart = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(trackCand.front()) );
+        const double* hitPointLocalStart = trackCand.front()->getPosition();
+        double hitposStart[] = {hitPointLocalStart[0],hitPointLocalStart[1],hitPointLocalStart[2]};
+        double hitPointGlobalStart[] = {0.,0.,0.};
+        geo::gGeometry().local2Master(planeIDStart,hitposStart,hitPointGlobalStart);
+        
+        double x0 = hitPointGlobalStart[0];
+        double z0 = hitPointGlobalStart[2];
 
         double x = x0 - getTrackSlopeX(trackCand) * (z0 - z);
 
         return x;
     }
+    
+//    double EUTelGBLFitter::interpolateTrackX1(const EVENT::TrackerHitVec& trackCand, const double z) const {
+//        streamlog_out(DEBUG2) << "EUTelGBLFitter::interpolateTrackX()" << std::endl;
+//        
+//        // Get starting track position
+//        const float* x = ts->getReferencePoint();
+//        const double x0 = x[0];
+//        const double y0 = x[1];
+//        const double z0 = x[2];
+//        
+//        // Get magnetic field vector
+//        gear::Vector3D vectorGlobal( x0, y0, z0 );        // assuming uniform magnetic field running along X direction
+//	const gear::BField&   B = geo::gGeometry().getMagneticFiled();
+//        const double bx         = B.at( vectorGlobal ).x();
+//        const double by         = B.at( vectorGlobal ).y();
+//        const double bz         = B.at( vectorGlobal ).z();
+//        TVector3 hVec(bx,by,bz);
+//               
+//        TVector3 pVec = getPfromCartesianParameters( ts );
+//
+//	const double H = hVec.Mag();
+//        const double p = pVec.Mag();
+//	const double mm = 1000.;
+//        const double k = -0.299792458/mm*_beamQ*H;
+//        const double rho = k/p;
+//        
+//        // Calculate end track position
+//	TVector3 pos( x0, y0, z0 );
+//	if ( fabs( k ) > 1.E-6  ) {
+//		// Non-zero magnetic field case
+//		TVector3 pCrossH = pVec.Cross(hVec.Unit());
+//		TVector3 pCrossHCrossH = pCrossH.Cross(hVec.Unit());
+//		const double pDotH = pVec.Dot(hVec.Unit());
+//		TVector3 temp1 = pCrossHCrossH;	temp1 *= ( -1./k * sin( rho * s ) );
+//		TVector3 temp2 = pCrossH;       temp2 *= ( -1./k * ( 1. - cos( rho * s ) ) );
+//		TVector3 temp3 = hVec;          temp3 *= ( pDotH / p * s );
+//		pos += temp1;
+//		pos += temp2;
+//		pos += temp3;
+//        } else {
+//		// Vanishing magnetic field case
+//		const double cosA = cosAlpha( ts );
+//		const double cosB = cosBeta( ts );
+//		pos.SetX( x0 + cosA * s );
+//		pos.SetY( y0 + cosB * s );
+//		pos.SetZ( z0 + 1./p * pVec.Z() * s );
+//	}
+//        
+//        streamlog_out(DEBUG2) << "---------------------------------EUTelGBLFitter::interpolateTrackX()------------------------------------" << std::endl;
+//        
+//        return pos;
+//    }
 
     //! Predict track hit in Y direction using simplified model
 
     double EUTelGBLFitter::interpolateTrackY(const EVENT::TrackerHitVec& trackCand, const double z) const {
-        double y0 = trackCand.front()->getPosition()[1];
-        double z0 = trackCand.front()->getPosition()[2];
+        const int planeIDStart = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(trackCand.front()) );
+        const double* hitPointLocalStart = trackCand.front()->getPosition();
+        double hitposStart[] = {hitPointLocalStart[0],hitPointLocalStart[1],hitPointLocalStart[2]};
+        double hitPointGlobalStart[] = {0.,0.,0.};
+        geo::gGeometry().local2Master(planeIDStart,hitposStart,hitPointGlobalStart);
+        
+        double y0 = hitPointGlobalStart[1];
+        double z0 = hitPointGlobalStart[2];
 
         double y = y0 - getTrackSlopeY(trackCand) * (z0 - z);
 
         return y;
     }
+    
+//    double EUTelGBLFitter::interpolateTrackY1(const EVENT::TrackerHitVec& trackCand, const double z) const {
+//        streamlog_out(DEBUG2) << "EUTelGBLFitter::interpolateTrackY()" << std::endl;
+//        
+//        // Get starting track position
+//        const float* x = ts->getReferencePoint();
+//        const double x0 = x[0];
+//        const double y0 = x[1];
+//        const double z0 = x[2];
+//        
+//        // Get magnetic field vector
+//        gear::Vector3D vectorGlobal( x0, y0, z0 );        // assuming uniform magnetic field running along X direction
+//	const gear::BField&   B = geo::gGeometry().getMagneticFiled();
+//        const double bx         = B.at( vectorGlobal ).x();
+//        const double by         = B.at( vectorGlobal ).y();
+//        const double bz         = B.at( vectorGlobal ).z();
+//        TVector3 hVec(bx,by,bz);
+//               
+//        TVector3 pVec = getPfromCartesianParameters( ts );
+//
+//	const double H = hVec.Mag();
+//        const double p = pVec.Mag();
+//	const double mm = 1000.;
+//        const double k = -0.299792458/mm*_beamQ*H;
+//        const double rho = k/p;
+//        
+//        // Calculate end track position
+//	TVector3 pos( x0, y0, z0 );
+//	if ( fabs( k ) > 1.E-6  ) {
+//		// Non-zero magnetic field case
+//		TVector3 pCrossH = pVec.Cross(hVec.Unit());
+//		TVector3 pCrossHCrossH = pCrossH.Cross(hVec.Unit());
+//		const double pDotH = pVec.Dot(hVec.Unit());
+//		TVector3 temp1 = pCrossHCrossH;	temp1 *= ( -1./k * sin( rho * s ) );
+//		TVector3 temp2 = pCrossH;       temp2 *= ( -1./k * ( 1. - cos( rho * s ) ) );
+//		TVector3 temp3 = hVec;          temp3 *= ( pDotH / p * s );
+//		pos += temp1;
+//		pos += temp2;
+//		pos += temp3;
+//        } else {
+//		// Vanishing magnetic field case
+//		const double cosA = cosAlpha( ts );
+//		const double cosB = cosBeta( ts );
+//		pos.SetX( x0 + cosA * s );
+//		pos.SetY( y0 + cosB * s );
+//		pos.SetZ( z0 + 1./p * pVec.Z() * s );
+//	}
+//        
+//        streamlog_out(DEBUG2) << "---------------------------------EUTelGBLFitter::interpolateTrackY()------------------------------------" << std::endl;
+//        
+//        return pos;
+//    }
 
-    double EUTelGBLFitter::getTrackSlopeX(const EVENT::TrackerHitVec& trackCand) const {
+    double EUTelGBLFitter::getTrackSlopeX1(const EVENT::TrackerHitVec& trackCand) const {
         double x0 = trackCand.front()->getPosition()[0];
         double z0 = trackCand.front()->getPosition()[2];
 
@@ -369,13 +485,61 @@ namespace eutelescope {
 
         return kx;
     }
+    
+    double EUTelGBLFitter::getTrackSlopeX(const EVENT::TrackerHitVec& trackCand) const {
+        const int planeIDStart = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(trackCand.front()) );
+        const double* hitPointLocalStart = trackCand.front()->getPosition();
+        double hitposStart[] = {hitPointLocalStart[0],hitPointLocalStart[1],hitPointLocalStart[2]};
+        double hitPointGlobalStart[] = {0.,0.,0.};
+        geo::gGeometry().local2Master(planeIDStart,hitposStart,hitPointGlobalStart);
+        
+        double x0 = hitPointGlobalStart[0];
+        double z0 = hitPointGlobalStart[2];
 
-    double EUTelGBLFitter::getTrackSlopeY(const EVENT::TrackerHitVec& trackCand) const {
+        const int planeIDFinish = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(trackCand.back()) );
+        const double* hitPointLocalFinish = trackCand.back()->getPosition();
+        double hitposFinish[] = {hitPointLocalFinish[0],hitPointLocalFinish[1],hitPointLocalFinish[2]};
+        double hitPointGlobalFinish[] = {0.,0.,0.};
+        geo::gGeometry().local2Master(planeIDFinish,hitposFinish,hitPointGlobalFinish);
+        
+        double xLast = hitPointGlobalFinish[0];
+        double zLast = hitPointGlobalFinish[2];
+
+        double kx = (x0 - xLast) / (z0 - zLast);
+
+        return kx;
+    }
+
+    double EUTelGBLFitter::getTrackSlopeY1(const EVENT::TrackerHitVec& trackCand) const {
         double y0 = trackCand.front()->getPosition()[1];
         double z0 = trackCand.front()->getPosition()[2];
 
         double yLast = trackCand.back()->getPosition()[1];
         double zLast = trackCand.back()->getPosition()[2];
+
+        double ky = (y0 - yLast) / (z0 - zLast);
+
+        return ky;
+    }
+    
+    double EUTelGBLFitter::getTrackSlopeY(const EVENT::TrackerHitVec& trackCand) const {
+        const int planeIDStart = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(trackCand.front()) );
+        const double* hitPointLocalStart = trackCand.front()->getPosition();
+        double hitposStart[] = {hitPointLocalStart[0],hitPointLocalStart[1],hitPointLocalStart[2]};
+        double hitPointGlobalStart[] = {0.,0.,0.};
+        geo::gGeometry().local2Master(planeIDStart,hitposStart,hitPointGlobalStart);
+        
+        double y0 = hitPointGlobalStart[1];
+        double z0 = hitPointGlobalStart[2];
+
+        const int planeIDFinish = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(trackCand.back()) );
+        const double* hitPointLocalFinish = trackCand.back()->getPosition();
+        double hitposFinish[] = {hitPointLocalFinish[0],hitPointLocalFinish[1],hitPointLocalFinish[2]};
+        double hitPointGlobalFinish[] = {0.,0.,0.};
+        geo::gGeometry().local2Master(planeIDFinish,hitposFinish,hitPointGlobalFinish);
+        
+        double yLast = hitPointGlobalFinish[1];
+        double zLast = hitPointGlobalFinish[2];
 
         double ky = (y0 - yLast) / (z0 - zLast);
 
@@ -655,12 +819,16 @@ namespace eutelescope {
             double step = 0.;
             itHit = itTrkCand->begin();
             for (; itHit != itTrkCand->end(); ++itHit) {
-                const double* hitpos = (*itHit)->getPosition();
-                const EVENT::FloatVec hitcov = (*itHit)->getCovMatrix();
                 const int planeID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(*itHit) );
+//                const double* hitPointGlobal = (*itHit)->getPosition();
+                const double* hitPointXXX = (*itHit)->getPosition();
+                double hitpos[] = {hitPointXXX[0],hitPointXXX[1],0.};       //delete immediately
+                double hitPointGlobal[] = {0.,0.,0.};
+                geo::gGeometry().local2Master(planeID,hitpos,hitPointGlobal);
+                const EVENT::FloatVec hitcov = (*itHit)->getCovMatrix();
 
-                double xPred = interpolateTrackX(*itTrkCand, hitpos[2]);
-                double yPred = interpolateTrackY(*itTrkCand, hitpos[2]);
+                double xPred = interpolateTrackX(*itTrkCand, hitPointGlobal[2]);
+                double yPred = interpolateTrackY(*itTrkCand, hitPointGlobal[2]);
 
                 double xSlope = getTrackSlopeX(*itTrkCand);
                 double ySlope = getTrackSlopeY(*itTrkCand);
@@ -670,7 +838,7 @@ namespace eutelescope {
                 proL2m.UnitMatrix();
                 bool excludeFromFit = false;
                 if ( std::find( _excludeFromFit.begin(), _excludeFromFit.end(), planeID ) != _excludeFromFit.end() ) excludeFromFit = true;
-                if ( !excludeFromFit ) addMeasurementsGBL(point, meas, measPrec, hitpos, xPred, yPred, hitcov, proL2m);
+                if ( !excludeFromFit ) addMeasurementsGBL(point, meas, measPrec, hitPointGlobal, xPred, yPred, hitcov, proL2m);
                 addScattererGBL(point, scat, scatPrecSensor, planeID, p);
                 if (_alignmentMode != Utility::noAlignment) {
                     if ( !excludeFromFit ) addGlobalParametersGBL( point, alDer, globalLabels, planeID, xPred, yPred, xSlope, ySlope );
@@ -680,9 +848,14 @@ namespace eutelescope {
                 // construct effective scatterers for air
                 // the scatters must be at (Z(plane i) + Z(plane i+1))/2. +/- (Z(plane i) - Z(plane i+1))/sqrt(12)
                 if ( itHit != (itTrkCand->end() - 1) ) {
-                    const TVector3 startPoint( hitpos[0], hitpos[1], hitpos[2] );
-                    const double* nexthitpos = (*(itHit + 1))->getPosition();
-                    const TVector3 endPoint( nexthitpos[0], nexthitpos[1], nexthitpos[2] );
+                    const TVector3 startPoint( hitPointGlobal[0], hitPointGlobal[1], hitPointGlobal[2] );
+                    const int nextPlaneID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(*(itHit + 1)) );
+//                    const double* nextHitPointGlobal = (*(itHit + 1))->getPosition();
+                    const double* nexthitPointXXX = (*(itHit + 1))->getPosition();
+                    double nexthitpos[] = {nexthitPointXXX[0],nexthitPointXXX[1],0.};       //delete immediately
+                    double nextHitPointGlobal[] = {0.,0.,0.};
+                    geo::gGeometry().local2Master(nextPlaneID,nexthitpos,nextHitPointGlobal);
+                    const TVector3 endPoint( nextHitPointGlobal[0], nextHitPointGlobal[1], nextHitPointGlobal[2] );
                     const TVector3 distBeteenHits = endPoint - startPoint;
                     const double hitSpacing = distBeteenHits.Mag(); 
 //                    const double hitSpacing = fabs( hitpos[2] - (*(itHit + 1))->getPosition()[2] ); 

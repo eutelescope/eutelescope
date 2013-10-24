@@ -248,7 +248,6 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
         // Search tracks
         streamlog_out(DEBUG1) << "Event #" << _nProcessedEvents << std::endl;
         streamlog_out(DEBUG1) << "Initialising hits for _theFinder..." << std::endl;
-
         static_cast<EUTelKalmanFilter*>(_trackFitter)->setHits(allHitsVec);
         static_cast<EUTelKalmanFilter*>(_trackFitter)->initialise();
         streamlog_out(DEBUG1) << "Trying to find tracks..." << endl;
@@ -280,8 +279,6 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
         {
             if ( nTracks > 0 ) addTrackCandidateToCollection1( evt, trackCandidates );
         }
-//        _trackFitter->Reset();
-
         _nProcessedEvents++;
 
         if (isFirstEvent()) _isFirstEvent = false;
@@ -331,19 +328,21 @@ void EUTelProcessorTrackingHelixTrackSearch::FillHits(LCEvent * evt,
             // now we know the pixel type. So we can properly create a new
             // instance of the sparse cluster
             if (pixelType == kEUTelSimpleSparsePixel) {
+                if ( cluster != NULL ) delete cluster;
                 cluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel > (static_cast<TrackerDataImpl *> (clusterVector[ 0 ]));
             } else if (pixelType == kEUTelAPIXSparsePixel) {
+                if ( cluster != NULL ) delete cluster;
                 cluster = new EUTelSparseClusterImpl<EUTelAPIXSparsePixel > (static_cast<TrackerDataImpl *> (clusterVector[ 0 ]));
             } else {
                 streamlog_out(ERROR4) << "Unknown pixel type.  Sorry for quitting." << std::endl;
                 throw UnknownDataTypeException("Pixel type unknown");
             }
+            delete cluster; // <--- destroying the cluster
         }
 
         const int localSensorID = Utility::GuessSensorID( hit );  // localSensorID == -1, if detector ID was not found
         if ( localSensorID >= 0 ) allHitsVec.push_back( hit );
         
-        delete cluster; // <--- destroying the cluster
     } // end loop over all hits in collection
     
 }

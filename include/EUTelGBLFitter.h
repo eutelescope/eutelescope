@@ -129,9 +129,13 @@ namespace eutelescope {
         //        double* GetTrackOffset( const Utility::HitsPVec& ) const;
         //        double* GetTrackSlope( const Utility::HitsPVec& ) const;
 
+        double interpolateTrackX1(const EVENT::TrackerHitVec&, const double) const;
+        double interpolateTrackY1(const EVENT::TrackerHitVec&, const double) const;
         double interpolateTrackX(const EVENT::TrackerHitVec&, const double) const;
         double interpolateTrackY(const EVENT::TrackerHitVec&, const double) const;
         
+        double getTrackSlopeX1(const EVENT::TrackerHitVec&) const;
+        double getTrackSlopeY1(const EVENT::TrackerHitVec&) const;
         double getTrackSlopeX(const EVENT::TrackerHitVec&) const;
         double getTrackSlopeY(const EVENT::TrackerHitVec&) const;
 

@@ -40,14 +40,14 @@ public:
 
     virtual void init( ) {};
     
-    virtual void init( const TMatrixD& rk, const TVectorD& nodes, const TVectorD& weightsHO ) {
+    virtual void setMethodConstants( const TMatrixD& rk, const TVectorD& nodes, const TVectorD& weightsHO ) {
         this->_isEmbedded = false;
         this->_rungeKutta = rk;
         this->_nodes = nodes;
         this->_weightsHigherOrder = weightsHO;
     }
     
-    virtual void init( const TMatrixD& rk, const TVectorD& nodes, const TVectorD& weightsHO, const TVectorD& weightsLO ) {
+    virtual void setMethodConstants( const TMatrixD& rk, const TVectorD& nodes, const TVectorD& weightsHO, const TVectorD& weightsLO ) {
         this->_isEmbedded = true;
         this->_rungeKutta = rk;
         this->_nodes = nodes;
@@ -141,7 +141,7 @@ public:
         weights4[0] = 2825./27648.; weights4[1] = 0.; weights4[2] = 18575./48384.; weights4[3] = 13525./55296.; weights4[4] = 277./14336.; weights4[5] = 1./4.; 
         
         // Initialise tableau
-        ButcherTableau::init( rk, nodes, weights5, weights4 );
+        ButcherTableau::setMethodConstants( rk, nodes, weights5, weights4 );
     }
 };
 
@@ -195,7 +195,7 @@ public:
         weights4[0] = 5179./57600.; weights4[1] = 0.; weights4[2] = 7571./16695.; weights4[3] = 393./640.; weights4[4] = -92097./339200.; weights4[5] = 187./2100.; weights4[6] = 1./40.;
         
         // Initialise tableau
-        ButcherTableau::init( rk, nodes, weights5, weights4 );
+        ButcherTableau::setMethodConstants( rk, nodes, weights5, weights4 );
     }
 };
 

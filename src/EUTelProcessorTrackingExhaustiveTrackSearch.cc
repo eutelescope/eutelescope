@@ -375,6 +375,7 @@ int EUTelProcessorTrackingExhaustiveTrackSearch::FillHits(LCEvent * evt,
                 streamlog_out(ERROR4) << "Unknown pixel type.  Sorry for quitting." << std::endl;
                 throw UnknownDataTypeException("Pixel type unknown");
             }
+            delete cluster; // <--- destroying the cluster
         }
 
         const int localSensorID = Utility::GuessSensorID( hit );  // localSensorID == -1, if detector ID was not found
@@ -382,7 +383,6 @@ int EUTelProcessorTrackingExhaustiveTrackSearch::FillHits(LCEvent * evt,
         if ( localSensorID >= 0 ) allHitsArray[ numberAlongZ ].push_back( hit );
         if ( localSensorID >= 0 ) allHitsVec[ numberAlongZ ].push_back( hit );
         
-        delete cluster; // <--- destroying the cluster
     } // end loop over all hits in collection
     
     

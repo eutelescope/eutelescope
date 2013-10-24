@@ -82,7 +82,7 @@ namespace eutelescope {
                 try {
                     LCObjectVec clusterVector = hit->getRawHits();
 
-                    EUTelVirtualCluster * cluster;
+                    EUTelVirtualCluster * cluster = NULL;
 
                     if (hit->getType() == kEUTelSparseClusterImpl) {
 
@@ -105,13 +105,15 @@ namespace eutelescope {
                                 if (z != hotPixelMap.end() && hotPixelMap.at(ix) == true) {
                                     skipHit = true;
                                     streamlog_out(DEBUG3) << "Skipping hit as it was found in the hot pixel map." << std::endl;
-                                    return true; // if TRUE  this hit will be skipped
+                                    break;
+//                                    delete cluster;
+//                                    return true; // if TRUE  this hit will be skipped
                                 } else {
                                     skipHit = false;
                                 }
                             }
                         }
-
+                        delete cluster;
                     } else if (hit->getType() == kEUTelBrickedClusterImpl) {
 
                         // fixed cluster implementation. Remember it
@@ -119,17 +121,19 @@ namespace eutelescope {
                         //  both RAW and ZS data
 
                         cluster = new EUTelBrickedClusterImpl(static_cast<TrackerDataImpl *> (clusterVector[0]));
-
+                        delete cluster;
                     } else if (hit->getType() == kEUTelDFFClusterImpl) {
 
                         // fixed cluster implementation. Remember it can come from
                         // both RAW and ZS data
                         cluster = new EUTelDFFClusterImpl(static_cast<TrackerDataImpl *> (clusterVector[0]));
+                        delete cluster;
                     } else if (hit->getType() == kEUTelFFClusterImpl) {
 
                         // fixed cluster implementation. Remember it can come from
                         // both RAW and ZS data
                         cluster = new EUTelFFClusterImpl(static_cast<TrackerDataImpl *> (clusterVector[0]));
+                        delete cluster;
                     }
                     else if (hit->getType() == kEUTelAPIXClusterImpl) {
                         TrackerDataImpl * clusterFrame = static_cast<TrackerDataImpl*> (clusterVector[0]);
@@ -150,17 +154,18 @@ namespace eutelescope {
                                 if (z != hotPixelMap.end() && hotPixelMap.at(ix) == true) {
                                     skipHit = true;
                                     streamlog_out(DEBUG3) << "Skipping hit as it was found in the hot pixel map." << std::endl;
-                                    return true; // if TRUE  this hit will be skipped
+                                    break;
+//                                    delete cluster;
+//                                    return true; // if TRUE  this hit will be skipped
                                 } else {
                                     skipHit = false;
                                 }
                             }
                         }
-
-                        return skipHit; // if TRUE  this hit will be skipped
+                        delete cluster;
                     }
-
-//                    delete cluster;
+                    
+                if ( cluster != NULL ) delete cluster;
                     
                 } catch (lcio::Exception e) {
                     // catch specific exceptions
@@ -172,7 +177,7 @@ namespace eutelescope {
             }
 
             // if none of the above worked return FALSE, meaning do not skip this hit
-            return 0;
+            return skipHit;
 
         }
         

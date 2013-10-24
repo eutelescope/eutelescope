@@ -19,7 +19,7 @@ namespace eutelescope {
         }
 
   // copy constructor
-  EUTelTrackImpl::EUTelTrackImpl(const EUTelTrackImpl& o) : AccessChecked(),
+  EUTelTrackImpl::EUTelTrackImpl(const EUTelTrackImpl& o) : EVENT::LCObject(), AccessChecked(),
   _chi2(o.getChi2()),
   _ndf(o.getNdf()),
   _dEdx(o.getdEdx()),

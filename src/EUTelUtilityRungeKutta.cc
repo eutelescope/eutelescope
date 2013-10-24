@@ -124,11 +124,11 @@ TVectorD EUTelUtilityRungeKutta::integrate( double h ) const {
     
     if ( _butcherTableau->isEmbedded() ) {
         
-        unsigned int nStages = _butcherTableau->getNStages();
+        int nStages = _butcherTableau->getNStages();
 
         TVectorD *pm = new TVectorD[ nStages ];
         TVectorD *km = new TVectorD[ nStages ];
-        for ( unsigned int m = 0; m < nStages; ++m ) { 
+        for ( int m = 0; m < nStages; ++m ) { 
             pm[m].ResizeTo( 0, nComponents-1 );
             km[m].ResizeTo( 0, nComponents-1 ); 
         }
@@ -156,7 +156,7 @@ TVectorD EUTelUtilityRungeKutta::integrate( double h ) const {
                 streamlog_message( DEBUG0, km[ m ].Print();, std::endl; );
             }
             
-            for ( unsigned int m = 0; m < nStages; ++m ) {
+            for ( int m = 0; m < nStages; ++m ) {
                 temp.Zero();
                 const double cHO = _butcherTableau->_weightsHigherOrder[ m ];
                 temp = km[ m ]; temp *= cHO;
@@ -173,7 +173,7 @@ TVectorD EUTelUtilityRungeKutta::integrate( double h ) const {
         TVectorD delta( nComponents );
         delta.Zero();
         {
-            for ( unsigned int m = 0; m < nStages; ++m ) {
+            for ( int m = 0; m < nStages; ++m ) {
                 temp.Zero();
                 const double cHO = _butcherTableau->_weightsHigherOrder[ m ];
                 const double cLO = _butcherTableau->_weightsLowerOrder[ m ];

@@ -146,6 +146,8 @@ _aidaHistoMap2D()
             _tracksOutputCollectionName,
             std::string("TrackCollection"));
 
+    // Geometry definition
+    registerOptionalParameter("GeometryFilename", "Name of the TGeo geometry definition file", _tgeoFileName, std::string("TELESCOPE.root"));
 
     // Necessary processor parameters that define fitter settings
     registerProcessorParameter("BeamEnergy", "Beam energy [GeV]", _eBeam, static_cast<double> (4.0));
@@ -224,7 +226,7 @@ void EUTelProcessorTrackingGBLTrackFit::init() {
 
 
     // Getting access to geometry description
-//    geo::gGeometry().initializeTGeoDescription(_tgeoFileName);
+    geo::gGeometry().initializeTGeoDescription(_tgeoFileName);
 
     // Instantiate millepede output. 
     {
@@ -375,7 +377,7 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
     try {
         col = evt->getCollection(_trackCandidateHitsInputCollectionName);
     } catch (DataNotAvailableException e) {
-        streamlog_out(WARNING) << _trackCandidateHitsInputCollectionName << " collection not available" << std::endl;
+        streamlog_out(MESSAGE0) << _trackCandidateHitsInputCollectionName << " collection not available" << std::endl;
         throw marlin::SkipEventException(this);
     }
 
@@ -388,7 +390,7 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
             TrackImpl* track = static_cast<TrackImpl*> (col->getElementAt(iCol));
 
             if (!col) {
-                streamlog_out(WARNING) << "EUTelLCObjectTrackCandidate collection not found found for event " << _nProcessedEvents <<
+                streamlog_out(WARNING2) << "EUTelLCObjectTrackCandidate collection not found found for event " << _nProcessedEvents <<
                         " in run " << _nProcessedRuns << endl;
                 throw SkipEventException(this);
             }

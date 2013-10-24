@@ -302,7 +302,7 @@ namespace eutelescope {
             const int sensorID = Utility::GuessSensorID( *itHit );
             double temp[] = {0.,0.,0.};
             geo::gGeometry().local2Master( sensorID, uvpos, temp);
-            float posGlobal[] = { (float) temp[0], (float) temp[1], (float) temp[2] };
+            float posGlobal[] = { static_cast<float>(temp[0]), static_cast<float>(temp[1]), static_cast<float>(temp[2]) };
                         
             gear::Vector3D vectorGlobal( temp[0], temp[1], temp[2] );
             const double q          = _beamQ;      // assume electron beam
@@ -535,7 +535,7 @@ namespace eutelescope {
 				  << std::setw(15) << ts->getReferencePoint()[1]
 				  << std::setw(15) << ts->getReferencePoint()[2] << std::endl;
 
-	  const float newPos[] = {(float) x, (float) y, (float) (z0+dz)};
+	  const float newPos[] = {static_cast<float>(x), static_cast<float>(y), static_cast<float>(z0+dz)};
 	  ts->setLocation( EUTelTrackStateImpl::AtOther );
 	  ts->setReferencePoint( newPos );
           
@@ -590,7 +590,7 @@ namespace eutelescope {
       streamlog_out(DEBUG2) << "EUTelKalmanFilter::getXYPredictionPrecision()" << std::endl;
       
       TMatrixDSym Ckkm1 = getTrackStateCov(ts);
-      double xyPrec = 0.5;//sqrt( Ckkm1[0][0]*Ckkm1[0][0] + Ckkm1[1][1]*Ckkm1[1][1] );
+      double xyPrec = 0.2;//sqrt( Ckkm1[0][0]*Ckkm1[0][0] + Ckkm1[1][1]*Ckkm1[1][1] );
       
       streamlog_out(DEBUG0) << "Minimal combined UV resolution : " << xyPrec << std::endl;
       streamlog_out(DEBUG2) << "----------------------EUTelKalmanFilter::getXYPredictionPrecision()------------------------" << std::endl;
@@ -822,10 +822,14 @@ namespace eutelescope {
         // Integrate
         TVectorD result = _eomIntegrator->integrate( dz );
         
+        TVector3 pos(result[0],result[0],z0+dz);
+        
         streamlog_out(DEBUG0) << "Result of the integration:" << std::endl;
         streamlog_message( DEBUG0, result.Print();, std::endl; );
         
         streamlog_out(DEBUG2) << "---------------------------------EUTelKalmanFilter::getXYZfromDzNum()------------------------------------" << std::endl;
+        
+        return pos;
     }
 
     /** Calculate cos of the angle between Z(beam) and X(solenoid field axis)
@@ -1107,16 +1111,16 @@ namespace eutelescope {
         ts -> setTy( xk[3] );
         ts -> setInvP( xk[4] );
         
-        float trkCov[15] = { (float) Ck[0][0], (float) Ck[1][0], (float) Ck[1][1], 
-                             (float) Ck[2][0], (float) Ck[2][1], (float) Ck[2][2],
-                             (float) Ck[3][0], (float) Ck[3][1], (float) Ck[3][2],
-                             (float) Ck[3][3], (float) Ck[4][0], (float) Ck[4][1],
-                             (float) Ck[4][2], (float) Ck[4][3], (float) Ck[4][4] };
+        float trkCov[15] = { static_cast<float>(Ck[0][0]), static_cast<float>(Ck[1][0]), static_cast<float>(Ck[1][1]), 
+                             static_cast<float>(Ck[2][0]), static_cast<float>(Ck[2][1]), static_cast<float>(Ck[2][2]),
+                             static_cast<float>(Ck[3][0]), static_cast<float>(Ck[3][1]), static_cast<float>(Ck[3][2]),
+                             static_cast<float>(Ck[3][3]), static_cast<float>(Ck[4][0]), static_cast<float>(Ck[4][1]),
+                             static_cast<float>(Ck[4][2]), static_cast<float>(Ck[4][3]), static_cast<float>(Ck[4][4]) };
 
         ts->setCovMatrix( trkCov );
         ts->setLocation( EUTelTrackStateImpl::AtOther );
 
-        const float newPos[] = {(float) xk[0], (float) xk[1], (float) ts->getReferencePoint()[2]};
+        const float newPos[] = {static_cast<float>(xk[0]), static_cast<float>(xk[1]), static_cast<float>(ts->getReferencePoint()[2])};
         ts->setReferencePoint( newPos );
         
         double chi2 = 0.;
@@ -1215,13 +1219,7 @@ namespace eutelescope {
         for ( itrHit = trkcandhits.begin(); itrHit != trkcandhits.end(); ++itrHit ) {
              LCIOtrack->addHit( *itrHit );
         }
-        
-        const double tx =   track->getTx();
-        const double ty =   track->getTy();
-        const double x =    track->getX();
-        const double y =    track->getY();
-        const double invP = track->getY();
-        
+                
         // Get magnetic field vector
         gear::Vector3D vectorGlobal( rx, ry, rz );        // assuming uniform magnetic field running along X direction
 	const gear::BField&   B = geo::gGeometry().getMagneticFiled();

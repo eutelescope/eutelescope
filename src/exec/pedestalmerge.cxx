@@ -68,7 +68,7 @@ int main( int argc, char ** argv ) {
 
   // the input files may be using wildcards
   glob_t globbuf;
-  for ( size_t iArg = 0 ; iArg < (size_t ) option->getArgc(); ++iArg ) {
+  for ( size_t iArg = 0 ; iArg < static_cast<size_t>(option->getArgc()); ++iArg ) {
     if ( iArg == 0 ) glob( option->getArgv( iArg ), 0, NULL, &globbuf);
     else  glob( option->getArgv( iArg ), GLOB_APPEND, NULL, &globbuf);
   }
