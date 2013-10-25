@@ -65,7 +65,7 @@ namespace eutelescope {
             size_t nPlanes() const;
             
             /** Z coordinates of centers of planes */
-            EVENT::DoubleVec siPlanesZPositions() const;
+            const EVENT::DoubleVec& siPlanesZPositions() const;
             
             /** X coordinate of center of sensor 
              * with given ID in global coordinate frame */
@@ -93,17 +93,17 @@ namespace eutelescope {
             
             
             /** Map from sensor ID to number along Z */
-            std::map<int, int> sensorZOrdertoIDs() const;
+            const std::map<int, int>& sensorZOrdertoIDs() const;
             
             /** Map from sensor ID to number along Z */
-            std::map<int, int> sensorIDstoZOrder() const;
+            const std::map<int, int>& sensorIDstoZOrder() const;
             
             int sensorIDtoZOrder( int ) const;
             
             int sensorZOrderToID( int ) const;
             
             /** Vector of all sensor IDs */
-            EVENT::IntVec sensorIDsVec() const;
+            const EVENT::IntVec& sensorIDsVec() const;
 
         public:
             virtual ~EUTelGeometryTelescopeGeoDescription();

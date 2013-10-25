@@ -42,7 +42,7 @@ size_t EUTelGeometryTelescopeGeoDescription::nPlanes( ) const {
     return _nPlanes;
 }
 
-EVENT::DoubleVec EUTelGeometryTelescopeGeoDescription::siPlanesZPositions( ) const {
+const EVENT::DoubleVec& EUTelGeometryTelescopeGeoDescription::siPlanesZPositions( ) const {
     return _siPlaneZPosition;
 }
 
@@ -101,7 +101,7 @@ TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneNormal( int planeID ) {
     return TVector3(0.,0.,0.);
 }
 
-std::map<int, int> EUTelGeometryTelescopeGeoDescription::sensorIDstoZOrder( ) const {
+const std::map<int, int>& EUTelGeometryTelescopeGeoDescription::sensorIDstoZOrder( ) const {
     return _sensorIDtoZOrderMap;
 }
 
@@ -121,7 +121,7 @@ int EUTelGeometryTelescopeGeoDescription::sensorZOrderToID( int znumber ) const 
     return -1;
 }
 
-EVENT::IntVec EUTelGeometryTelescopeGeoDescription::sensorIDsVec( ) const {
+const EVENT::IntVec& EUTelGeometryTelescopeGeoDescription::sensorIDsVec( ) const {
     return _sensorIDVec;
 }
 
