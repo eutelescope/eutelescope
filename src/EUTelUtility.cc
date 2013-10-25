@@ -181,6 +181,13 @@ namespace eutelescope {
 
         }
         
+        /**
+         * Provides access to raw cluster information for given hit
+         * Constructed object is owned by caller. Cluster must be destroyed by caller.
+         * 
+         * @param hit 
+         * @return raw data cluster information
+         */
         EUTelVirtualCluster* GetClusterFromHit( const IMPL::TrackerHitImpl* hit ) {
             
             LCObjectVec clusterVector = hit->getRawHits();

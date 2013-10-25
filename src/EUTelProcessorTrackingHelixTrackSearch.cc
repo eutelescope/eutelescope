@@ -313,7 +313,6 @@ void EUTelProcessorTrackingHelixTrackSearch::FillHits(LCEvent * evt,
         LCObjectVec clusterVector = hit->getRawHits();
 
         EUTelVirtualCluster * cluster;
-        cluster = Utility::GetClusterFromHit(hit);
 
         if (hit->getType() == kEUTelSparseClusterImpl) {
             // ok the cluster is of sparse type, but we also need to know
@@ -328,10 +327,8 @@ void EUTelProcessorTrackingHelixTrackSearch::FillHits(LCEvent * evt,
             // now we know the pixel type. So we can properly create a new
             // instance of the sparse cluster
             if (pixelType == kEUTelSimpleSparsePixel) {
-                if ( cluster != NULL ) delete cluster;
                 cluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel > (static_cast<TrackerDataImpl *> (clusterVector[ 0 ]));
             } else if (pixelType == kEUTelAPIXSparsePixel) {
-                if ( cluster != NULL ) delete cluster;
                 cluster = new EUTelSparseClusterImpl<EUTelAPIXSparsePixel > (static_cast<TrackerDataImpl *> (clusterVector[ 0 ]));
             } else {
                 streamlog_out(ERROR4) << "Unknown pixel type.  Sorry for quitting." << std::endl;

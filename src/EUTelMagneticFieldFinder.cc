@@ -144,6 +144,7 @@ namespace eutelescope {
 	    double dz = findIntersection( state );
             if ( dz < 0 ) {
                 isGoodTrack = false;
+                delete (*itTrk);
                 itTrk = _tracksCartesian.erase( itTrk );
             }
                         
@@ -162,6 +163,7 @@ namespace eutelescope {
                 } else {
                     streamlog_out ( MESSAGE0 ) << "New point is outside of any sensor volume." << std::endl;
                     streamlog_out ( MESSAGE0 ) << "Removing this track candidate from further consideration." << std::endl;
+                    delete (*itTrk);
                     itTrk = _tracksCartesian.erase( itTrk );
                     findhit = false;
                     isGoodTrack = false;
@@ -210,6 +212,7 @@ namespace eutelescope {
             if ( isGoodTrack && ( *itTrk )->getTrackerHits( ).size( ) < geo::gGeometry( ).nPlanes( ) - _allowedMissingHits ) {
                 streamlog_out ( DEBUG1 ) << "Track candidate has to many missing hits." << std::endl;
                 streamlog_out ( DEBUG1 ) << "Removing this track candidate from further consideration." << std::endl;
+                delete (*itTrk);
                 itTrk = _tracksCartesian.erase( itTrk );
                 isGoodTrack = false;
             }
@@ -217,6 +220,7 @@ namespace eutelescope {
             if ( isGoodTrack ) {
                 state->setLocation( EUTelTrackStateImpl::AtLastHit );
                 _tracks.push_back( cartesian2LCIOTrack( *itTrk ) );
+                delete (*itTrk);
                 ++itTrk;
             }
 
@@ -1301,8 +1305,7 @@ namespace eutelescope {
         _allMeasurements = std::vector< MeasurementLayer* >( geo::gGeometry().nPlanes(), NULL );   // flush vector
         int numberAlongZ = -1;
         std::vector< int >::const_iterator itSensorID;
-        EVENT::IntVec idPlanesVec = geo::gGeometry().sensorIDsVec();
-        for ( itSensorID = idPlanesVec.begin(); itSensorID != idPlanesVec.end(); ++itSensorID ) {
+        for ( itSensorID = geo::gGeometry().sensorIDsVec().begin(); itSensorID != geo::gGeometry().sensorIDsVec().end(); ++itSensorID ) {
             sensorID = (*itSensorID);
             itMeasLayer = measLayers.find( sensorID );
             if ( itMeasLayer != measLayers.end() ) {
