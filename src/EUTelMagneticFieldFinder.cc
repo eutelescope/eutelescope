@@ -1298,11 +1298,12 @@ namespace eutelescope {
         
         // Sort measurement layers such that layers encountered by track first
         // are in the front of array
-        _allMeasurements = std::vector< MeasurementLayer* >( geo::gGeometry().nPlanes(), 0 );   // flush vector
+        _allMeasurements = std::vector< MeasurementLayer* >( geo::gGeometry().nPlanes(), NULL );   // flush vector
         int numberAlongZ = -1;
         std::vector< int >::const_iterator itSensorID;
-        for ( itSensorID = geo::gGeometry().sensorIDsVec().begin(); itSensorID != geo::gGeometry().sensorIDsVec().end(); ++itSensorID ) {
-            sensorID = *itSensorID;
+        EVENT::IntVec idPlanesVec = geo::gGeometry().sensorIDsVec();
+        for ( itSensorID = idPlanesVec.begin(); itSensorID != idPlanesVec.end(); ++itSensorID ) {
+            sensorID = (*itSensorID);
             itMeasLayer = measLayers.find( sensorID );
             if ( itMeasLayer != measLayers.end() ) {
                 numberAlongZ = geo::gGeometry().sensorIDtoZOrder( sensorID );
@@ -1312,7 +1313,7 @@ namespace eutelescope {
         
         // remove elements without MeasurementLayer assigned
         for ( itLayer = _allMeasurements.begin(); itLayer != _allMeasurements.end(); ) {
-            if ( !(*itLayer) ) itLayer = _allMeasurements.erase(itLayer);
+            if ( (*itLayer) == NULL ) itLayer = _allMeasurements.erase(itLayer);
             else ++itLayer;
         }
         
