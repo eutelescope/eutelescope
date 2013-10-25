@@ -353,7 +353,6 @@ int EUTelProcessorTrackingExhaustiveTrackSearch::FillHits(LCEvent * evt,
         LCObjectVec clusterVector = hit->getRawHits();
 
         EUTelVirtualCluster * cluster;
-        cluster = Utility::GetClusterFromHit(hit);
 
         if (hit->getType() == kEUTelSparseClusterImpl) {
             // ok the cluster is of sparse type, but we also need to know
