@@ -424,9 +424,12 @@ namespace eutelescope {
         
         // Find closest plane downstream
         const int nextPlaneId = geo::gGeometry().sensorZOrderToID(sensorZorder+1);
-        if ( nextPlaneId > 0 ) itPlaneId = std::find( sensID.begin(), sensID.end(), nextPlaneId );
-        
-        
+        if ( nextPlaneId > 0 ) {
+            itPlaneId = std::find( sensID.begin(), sensID.end(), nextPlaneId ); 
+        } else {
+            streamlog_out ( DEBUG3 ) << "Track intersection was not found" << std::endl;
+            return -999.;
+        }
         // Construct quadratic equation
 //        for ( itPlaneId = sensID.begin(); itPlaneId != sensID.end(); ++itPlaneId ) {
         
@@ -478,7 +481,7 @@ namespace eutelescope {
 
         if ( dz < 1.E-6 ) {
             streamlog_out ( DEBUG3 ) << "Track intersection was not found" << std::endl;
-            return -999;
+            return -999.;
         }       
         
 //          getXYZfromDzNum( ts, dz );
