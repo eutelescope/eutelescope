@@ -81,20 +81,15 @@ EUTelFitTuple::EUTelFitTuple() : Processor("EUTelFitTuple") {
                            "InputCollectionName" ,
                            "Name of the input Track collection"  ,
                            _inputColName ,
-                           std::string("testfittracks") ) ;
+                           std::string("telescopetracks") ) ;
 
   registerInputCollection( LCIO::TRACKERHIT,
                            "InputDUTCollectionName" ,
                            "Name of the input DUT hit collection"  ,
                            _inputDUTColName ,
-                           std::string("hit") ) ;
+                           std::string("duthit") ) ;
 
   // other processor parameters:
-
-
-  registerProcessorParameter ("DebugEventCount",
-                              "Print out every DebugEnevtCount event",
-                              _debugCount,  static_cast < int > (100));
 
   registerProcessorParameter ("MissingValue",
                               "Value used for missing measurements",
@@ -106,7 +101,7 @@ EUTelFitTuple::EUTelFitTuple() : Processor("EUTelFitTuple") {
                               _useManualDUT,  static_cast < bool > (false));
 
   registerProcessorParameter ("ManualDUTid",
-                              "Id of telescope layer which should be used as DUT",
+                              "Id of sensor layer which should be used as DUT",
                               _manualDUTid,  static_cast < int > (0));
 
   registerProcessorParameter ("DistMax",
@@ -341,13 +336,8 @@ void EUTelFitTuple::processEvent( LCEvent * event ) {
     return;
   }
 
-  bool debug = ( _debugCount>0 && _nEvt%_debugCount == 0);
-
   _nEvt ++ ;
   _evtNr = event->getEventNumber();
-
-
-  if(debug)message<DEBUG5> ( log() << "Processing record " << _nEvt << " == event " << _evtNr );
 
   LCCollection* col;
   try {
@@ -376,12 +366,12 @@ void EUTelFitTuple::processEvent( LCEvent * event ) {
 
   int nTrack = col->getNumberOfElements()  ;
 
-  if(debug)message<DEBUG5> ( log() << "Total of " << nTrack << " tracks in input collection " );
+  message<DEBUG5> ( log() << "Total of " << nTrack << " tracks in input collection " );
 
   int nDUT = 0;
   if(_DUTok) nDUT = hitcol->getNumberOfElements()  ;
 
-  if(debug)message<DEBUG5> ( log() << "Total of " << nDUT << " hits in input collection " );
+  message<DEBUG5> ( log() << "Total of " << nDUT << " hits in input collection " );
 
 
   for(int itrack=0; itrack< nTrack ; itrack++)
@@ -398,7 +388,7 @@ void EUTelFitTuple::processEvent( LCEvent * event ) {
 
       int nHit =   trackhits.size();
 
-      if(debug)message<DEBUG5> ( log() << "Track " << itrack << " with " << nHit << " hits, Chi2 = "
+      message<DEBUG5> ( log() << "Track " << itrack << " with " << nHit << " hits, Chi2 = "
                                 << fittrack->getChi2() << "/" << fittrack->getNdf());
 
 
@@ -478,7 +468,7 @@ void EUTelFitTuple::processEvent( LCEvent * event ) {
                   _measuredQ[hitPlane]=cluster->getTotalCharge();
                 }
 
-              if(debug)message<DEBUG5> ( log() << "Measured hit in plane " << hitPlane << " at  X = "
+              message<DEBUG5> ( log() << "Measured hit in plane " << hitPlane << " at  X = "
                                         << pos[0] << ", Y = " << pos[1] << ", Q = " << _measuredQ[hitPlane] );
 
             }
@@ -491,7 +481,7 @@ void EUTelFitTuple::processEvent( LCEvent * event ) {
               _fittedX[hitPlane]=pos[0];
               _fittedY[hitPlane]=pos[1];
 
-              if(debug)message<DEBUG5> ( log() << "Fitted  hit  in plane " << hitPlane << " at  X = "
+              message<DEBUG5> ( log() << "Fitted  hit  in plane " << hitPlane << " at  X = "
                                         << pos[0] << ", Y = " << pos[1] );
 
             }
@@ -584,11 +574,11 @@ void EUTelFitTuple::processEvent( LCEvent * event ) {
 
               dutR=sqrt(distmin);
 
-              if(debug)message<DEBUG5> ( log() << "Matched DUT hit at X = " << dutX << "   Y = " << dutY
+              message<DEBUG5> ( log() << "Matched DUT hit at X = " << dutX << "   Y = " << dutY
                                         << "   Dxy = " << dutR << "   Q = " << dutQ );
             }
           else
-            if(debug)message<DEBUG5> ( log() << "DUT hit not matched !" );
+            message<DEBUG5> ( log() << "DUT hit not matched !" );
 
 
           // End of if(_DUTok)

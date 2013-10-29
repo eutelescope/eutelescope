@@ -72,10 +72,7 @@ namespace eutelescope {
    * \param MissingValue Value (double) which is used for missing
    *        measurements.
    *
-   * \param DebugEventCount      Print out debug and information
-   *        messages only for one out of given number of events. If
-   *        zero, no debug information is printed.
-   *
+
    * \author A.F.Zarnecki, University of Warsaw
    * @version $Id$
    * \date 2007.09.10
@@ -183,9 +180,6 @@ namespace eutelescope {
     //! Id of telescope layer which should be used as DUT
 
     int _manualDUTid;
-
-    //!  Debug print out for one out of given number of events.
-    int _debugCount ;
 
     //!  Value to be used for missing measurements
     double _missingValue;
