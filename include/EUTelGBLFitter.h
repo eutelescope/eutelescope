@@ -99,23 +99,23 @@ namespace eutelescope {
         
         void setParamterIdXShiftsMap(const std::map<int, int>& );
         
-        std::map<int, int> getParamterIdXRotationsMap() const;
+        const std::map<int, int>& getParamterIdXRotationsMap() const;
         
-        std::map<int, int> getParamterIdYRotationsMap() const;
+        const std::map<int, int>& getParamterIdYRotationsMap() const;
         
-        std::map<int, int> getParamterIdZRotationsMap() const;
+        const std::map<int, int>& getParamterIdZRotationsMap() const;
         
-        std::map<int, int> getParamterIdZShiftsMap() const;
+        const std::map<int, int>& getParamterIdZShiftsMap() const;
         
-        std::map<int, int> getParamterIdYShiftsMap() const;
+        const std::map<int, int>& getParamterIdYShiftsMap() const;
         
-        std::map<int, int> getParamterIdXShiftsMap() const;
+        const std::map<int, int>& getParamterIdXShiftsMap() const;
         
         void setMEstimatorType( const std::string& _mEstimatorType );
         
         std::string getMEstimatorType() const;
         
-        std::map<int, int> getHitId2GblPointLabel() const;
+        const std::map<long, int>& getHitId2GblPointLabel() const;
         
         void setExcludeFromFitPlanes(const std::vector<int>&);
         
@@ -143,11 +143,11 @@ namespace eutelescope {
 
         void addMeasurementsGBL( gbl::GblPoint&, TVectorD&, TVectorD&, const double*, double, double, const EVENT::FloatVec&, TMatrixD& );
         
-        void addScattererGBL( gbl::GblPoint&, TVectorD&, TVectorD&, int, double );
+        void addSiPlaneScattererGBL( gbl::GblPoint&, TVectorD&, TVectorD&, int, double );
         
         void addGlobalParametersGBL( gbl::GblPoint&, TMatrixD&, std::vector<int>&, int, double, double, double, double );
         
-        void pushBachPoint( std::vector< gbl::GblPoint >&, const gbl::GblPoint&, int );
+        void pushBackPoint( std::vector< gbl::GblPoint >&, const gbl::GblPoint&, int );
         
         void prepareLCIOTrack( IMPL::TrackImpl*, gbl::GblTrajectory*, const EVENT::TrackerHitVec&,
                                 double, int, double, double, double, double, double );
@@ -169,7 +169,7 @@ namespace eutelescope {
         double _eBeam;
 
         /** Hit id to GBL point label lookup table */
-        std::map<int,int> _hitId2GblPointLabel;
+        std::map<long,int> _hitId2GblPointLabel;
         
         // Alignment 
     private:

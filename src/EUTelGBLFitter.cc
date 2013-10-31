@@ -117,27 +117,27 @@ namespace eutelescope {
         _paramterIdXShiftsMap = map;
     }
     
-    std::map<int, int> EUTelGBLFitter::getParamterIdXRotationsMap() const {
+    const std::map<int, int>& EUTelGBLFitter::getParamterIdXRotationsMap() const {
         return _paramterIdXRotationsMap;
     }
     
-    std::map<int, int> EUTelGBLFitter::getParamterIdYRotationsMap() const {
+    const std::map<int, int>& EUTelGBLFitter::getParamterIdYRotationsMap() const {
         return _paramterIdYRotationsMap;
     }
     
-    std::map<int, int> EUTelGBLFitter::getParamterIdZRotationsMap() const {
+    const std::map<int, int>& EUTelGBLFitter::getParamterIdZRotationsMap() const {
         return _paramterIdZRotationsMap;
     }
 
-    std::map<int, int> EUTelGBLFitter::getParamterIdZShiftsMap() const {
+    const std::map<int, int>& EUTelGBLFitter::getParamterIdZShiftsMap() const {
         return _paramterIdZShiftsMap;
     }
 
-    std::map<int, int> EUTelGBLFitter::getParamterIdYShiftsMap() const {
+    const std::map<int, int>& EUTelGBLFitter::getParamterIdYShiftsMap() const {
         return _paramterIdYShiftsMap;
     }
 
-    std::map<int, int> EUTelGBLFitter::getParamterIdXShiftsMap() const {
+    const std::map<int, int>& EUTelGBLFitter::getParamterIdXShiftsMap() const {
         return _paramterIdXShiftsMap;
     }
 
@@ -164,7 +164,7 @@ namespace eutelescope {
         return _mEstimatorType;
     }
 
-    std::map<int, int> EUTelGBLFitter::getHitId2GblPointLabel( ) const {
+    const std::map<long, int>& EUTelGBLFitter::getHitId2GblPointLabel( ) const {
         return _hitId2GblPointLabel;
     }
 
@@ -590,7 +590,7 @@ namespace eutelescope {
      * @param iPlane plane id
      * @param p momentum of the particle
      */
-    void EUTelGBLFitter::addScattererGBL(gbl::GblPoint& point, TVectorD& scat, TVectorD& scatPrecSensor, int planeID, double p) {
+    void EUTelGBLFitter::addSiPlaneScattererGBL(gbl::GblPoint& point, TVectorD& scat, TVectorD& scatPrecSensor, int planeID, double p) {
         const int iPlane = geo::gGeometry().sensorIDtoZOrder(planeID);
         const double radlenSi           = geo::gGeometry()._siPlanesLayerLayout->getSensitiveRadLength(iPlane);
         const double radlenKap          = geo::gGeometry()._siPlanesLayerLayout->getLayerRadLength(iPlane);
@@ -684,7 +684,7 @@ namespace eutelescope {
         point.addGlobals(globalLabels, alDer);
     }
 
-    void EUTelGBLFitter::pushBachPoint( std::vector< gbl::GblPoint >& pointList, const gbl::GblPoint& point, int hitid ) {
+    void EUTelGBLFitter::pushBackPoint( std::vector< gbl::GblPoint >& pointList, const gbl::GblPoint& point, int hitid ) {
         pointList.push_back(point);
         
         // store point's GBL label for future reference
@@ -772,7 +772,7 @@ namespace eutelescope {
         scat.Zero();
 
         TVectorD scatPrecSensor(2);
-        TVectorD scatPrecAir(2);
+        TVectorD scatPrec(2);
 
         TMatrixD alDer; // alignment derivatives
         std::vector<int> globalLabels;
@@ -802,9 +802,9 @@ namespace eutelescope {
 
         double p = _eBeam; // beam momentum
        
-        std::vector< EVENT::TrackerHitVec >::const_iterator itTrkCand = _trackCandidates.begin();
+        std::vector< EVENT::TrackerHitVec >::const_iterator itTrkCand;
         EVENT::TrackerHitVec::const_iterator itHit;
-        for (; itTrkCand != _trackCandidates.end(); ++itTrkCand) {
+        for ( itTrkCand = _trackCandidates.begin(); itTrkCand != _trackCandidates.end(); ++itTrkCand) {
 
             // sanity check. Mustn't happen in principle.
             if (itTrkCand->size() > geo::gGeometry().nPlanes()) continue;
@@ -817,14 +817,14 @@ namespace eutelescope {
             TMatrixD jacPointToPoint(5, 5);
             jacPointToPoint.UnitMatrix();
             double step = 0.;
-            itHit = itTrkCand->begin();
-            for (; itHit != itTrkCand->end(); ++itHit) {
+            
+            for ( itHit = itTrkCand->begin(); itHit != itTrkCand->end(); ++itHit) {
                 const int planeID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(*itHit) );
-//                const double* hitPointGlobal = (*itHit)->getPosition();
-                const double* hitPointXXX = (*itHit)->getPosition();
-                double hitpos[] = {hitPointXXX[0],hitPointXXX[1],0.};       //delete immediately
+
+                // Go to global coordinates
+                const double* hitPointLocal = (*itHit)->getPosition();
                 double hitPointGlobal[] = {0.,0.,0.};
-                geo::gGeometry().local2Master(planeID,hitpos,hitPointGlobal);
+                geo::gGeometry().local2Master(planeID,hitPointLocal,hitPointGlobal);
                 const EVENT::FloatVec hitcov = (*itHit)->getCovMatrix();
 
                 double xPred = interpolateTrackX(*itTrkCand, hitPointGlobal[2]);
@@ -839,31 +839,32 @@ namespace eutelescope {
                 bool excludeFromFit = false;
                 if ( std::find( _excludeFromFit.begin(), _excludeFromFit.end(), planeID ) != _excludeFromFit.end() ) excludeFromFit = true;
                 if ( !excludeFromFit ) addMeasurementsGBL(point, meas, measPrec, hitPointGlobal, xPred, yPred, hitcov, proL2m);
-                addScattererGBL(point, scat, scatPrecSensor, planeID, p);
+                addSiPlaneScattererGBL(point, scat, scatPrecSensor, planeID, p);
                 if (_alignmentMode != Utility::noAlignment) {
                     if ( !excludeFromFit ) addGlobalParametersGBL( point, alDer, globalLabels, planeID, xPred, yPred, xSlope, ySlope );
                 }
-                pushBachPoint( pointList, point, (*itHit)->id() );
+                pushBackPoint( pointList, point, (*itHit)->id() );
 
-                // construct effective scatterers for air
+                // construct effective scatters for air
                 // the scatters must be at (Z(plane i) + Z(plane i+1))/2. +/- (Z(plane i) - Z(plane i+1))/sqrt(12)
                 if ( itHit != (itTrkCand->end() - 1) ) {
-                    const TVector3 startPoint( hitPointGlobal[0], hitPointGlobal[1], hitPointGlobal[2] );
-                    const int nextPlaneID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(*(itHit + 1)) );
-//                    const double* nextHitPointGlobal = (*(itHit + 1))->getPosition();
-                    const double* nexthitPointXXX = (*(itHit + 1))->getPosition();
-                    double nexthitpos[] = {nexthitPointXXX[0],nexthitPointXXX[1],0.};       //delete immediately
-                    double nextHitPointGlobal[] = {0.,0.,0.};
-                    geo::gGeometry().local2Master(nextPlaneID,nexthitpos,nextHitPointGlobal);
-                    const TVector3 endPoint( nextHitPointGlobal[0], nextHitPointGlobal[1], nextHitPointGlobal[2] );
-                    const TVector3 distBeteenHits = endPoint - startPoint;
-                    const double hitSpacing = distBeteenHits.Mag(); 
-//                    const double hitSpacing = fabs( hitpos[2] - (*(itHit + 1))->getPosition()[2] ); 
 
-                    double X0Air =  hitSpacing / 304e3; // Air
-                    double tetAir = Utility::getThetaRMSHighland(p, X0Air);
-                    scatPrecAir[0] = 1.0 / (tetAir * tetAir);
-                    scatPrecAir[1] = 1.0 / (tetAir * tetAir);
+                    // Go to global coordinates
+                    const int nextPlaneID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(*(itHit + 1)) );
+                    const double* nextHitPoint = (*(itHit + 1))->getPosition();
+                    double nextHitPointGlobal[] = { 0., 0., 0. };
+                    geo::gGeometry().local2Master(nextPlaneID,nextHitPoint,nextHitPointGlobal);
+                    
+                    const double hitSpacing = sqrt( (nextHitPointGlobal[0]-hitPointGlobal[0])*(nextHitPointGlobal[0]-hitPointGlobal[0])+
+                                                           (nextHitPointGlobal[1]-hitPointGlobal[1])*(nextHitPointGlobal[1]-hitPointGlobal[1])+
+                                                           (nextHitPointGlobal[2]-hitPointGlobal[2])*(nextHitPointGlobal[2]-hitPointGlobal[2]) ); 
+                    
+		    double rad = geo::gGeometry().findRadLengthIntegral( hitPointGlobal, nextHitPointGlobal, true );
+                    streamlog_out(DEBUG0) << "Rad length( " << planeID << "-" << nextPlaneID << "): " << rad << std::endl;
+                    
+                    double sigmaTheta = Utility::getThetaRMSHighland(p, rad);
+                    scatPrec[0] = 1.0 / (sigmaTheta * sigmaTheta);
+                    scatPrec[1] = 1.0 / (sigmaTheta * sigmaTheta);
 
                     // propagate parameters into the air gap between consecutive planes 
 
@@ -871,7 +872,7 @@ namespace eutelescope {
                         step = hitSpacing / 2. - hitSpacing / sqrt(12.);
                         jacPointToPoint = propagatePar(step);
                         gbl::GblPoint pointInAir1(jacPointToPoint);
-                        pointInAir1.addScatterer(scat, scatPrecAir);
+                        pointInAir1.addScatterer(scat, scatPrec);
                         pointList.push_back(pointInAir1);
                     }
                     
@@ -879,7 +880,7 @@ namespace eutelescope {
                         step = 2. * hitSpacing / sqrt( 12. );
                         jacPointToPoint = propagatePar( step );
                         gbl::GblPoint pointInAir2( jacPointToPoint );
-                        pointInAir2.addScatterer( scat, scatPrecAir );
+                        pointInAir2.addScatterer( scat, scatPrec );
                         pointList.push_back( pointInAir2 );
                     }
                     

@@ -441,7 +441,7 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
             gbl::GblTrajectory* gblTraj = gblTracks[ iCounter ];
             //                gblTraj->printTrajectory(1);
             //                gblTraj->printPoints(1);
-            std::map<int, int> gblPointLabel = static_cast < EUTelGBLFitter* > ( _trackFitter )->getHitId2GblPointLabel( );
+            const std::map<long, int> gblPointLabel = static_cast < EUTelGBLFitter* > ( _trackFitter )->getHitId2GblPointLabel( );
 
             EVENT::TrackerHitVec track = trackCandidates.front( );
 
@@ -449,7 +449,7 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
             EVENT::TrackerHitVec::const_iterator itrHit;
             for ( itrHit = track.begin( ); itrHit != track.end( ); ++itrHit ) {
                 const double* hitpos = ( *itrHit )->getPosition( );
-                int hitGblLabel = gblPointLabel[ ( *itrHit )->id( ) ];
+                int hitGblLabel = gblPointLabel.at( ( *itrHit )->id( ) );
                 //                    cout << "Hit label: " << hitGblLabel << endl;
                 //                    hitGblLabel = ( itrHit == ( track.end() - 1 ) ) ? -hitGblLabel : hitGblLabel;     // change sign of label if this is the last hit of the track (gbl convention)
                 const int planeID = Utility::GuessSensorID( static_cast < IMPL::TrackerHitImpl* > ( *itrHit ) );
