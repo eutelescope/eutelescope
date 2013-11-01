@@ -203,7 +203,8 @@ namespace eutelescope {
                     } else if (hit->getType() == kEUTelSparseClusterImpl) {
 			return new EUTelSparseClusterImpl< EUTelSimpleSparsePixel > (static_cast<TrackerDataImpl *> (clusterVector[0]));
                     } else {
-                        throw UnknownDataTypeException("Unknown cluster type");
+                        streamlog_out(WARNING2) << "Unknown cluster type: " << hit->getType() << std::endl;
+                        return NULL;
                     }
             
         }
@@ -225,6 +226,9 @@ namespace eutelescope {
                 if ( cluster != NULL ) {
                     int sensorID = cluster->getDetectorID();
 		    delete cluster;
+                    return sensorID;
+                } else {
+                    int sensorID = hit->getCellID0();
                     return sensorID;
                 }
             } catch (...) {
