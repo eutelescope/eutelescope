@@ -130,6 +130,9 @@ namespace eutelescope {
 
 
     private:
+        
+        /** TGeo geometry file name */
+        string _tgeoFileName;
 
         // Exhaustive finder state definition
 

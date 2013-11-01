@@ -154,8 +154,6 @@ namespace eutelescope {
         
     private:
         void FindTracks( int, std::vector< EVENT::TrackerHitVec >&, std::vector< EVENT::TrackerHitVec>& );
-        void FindTracks1(int&, std::vector< EVENT::TrackerHitVec >&, EVENT::TrackerHitVec&, std::map< int, EVENT::TrackerHitVec> &, int, EVENT::TrackerHit*);
-        void FindTracks2(int&, std::vector< EVENT::TrackerHitVec >&, EVENT::TrackerHitVec&, std::map< int, EVENT::TrackerHitVec> &, int, EVENT::TrackerHit*);
         
         void PruneTrackCandidates( std::vector< EVENT::TrackerHitVec >& );
         
@@ -351,37 +349,53 @@ namespace eutelescope {
             * @return true if two hits satisfy the requirements
             */
             bool IsBadCandidate( EVENT::TrackerHit* hit1, EVENT::TrackerHit* hit2 ) {
-                bool isBad = true;
 
                 const double zSpacing = 150.;   // [mm]
-                const double* posHit1     = hit1->getPosition();
-                const double* posHit2     = hit2->getPosition();
-                const double resX = posHit1[ 0 ] - posHit2[ 0 ];
-                const double resY = posHit1[ 1 ] - posHit2[ 1 ];
-                const double resZ = fabs(posHit1[ 2 ] - posHit2[ 2 ]);
+                
+                // previous hit
+                const int sensorIDPrev = Utility::GuessSensorID(  hit2 );
+                const double* posPrevHit = hit2->getPosition();
+//                double posPrevHitGlob[] = {0.,0.,0.};
+//                geo::gGeometry().local2Master( sensorIDPrev, posPrevHit, posPrevHitGlob);
+                
+                // current hit
+                const int sensorID = Utility::GuessSensorID( hit1 );
+                const double* posHit     = hit1->getPosition();
+//                double posHitGlob[] = {0.,0.,0.};
+//                geo::gGeometry().local2Master( sensorID, posHit, posHitGlob );
+                
+                const double resX = posHit[ 0 ] - posPrevHit[ 0 ];
+                const double resY = posHit[ 1 ] - posPrevHit[ 1 ];
+                const double resZ = posHit[ 2 ] - posPrevHit[ 2 ];
+                
+//                const double resX = posHitGlob[ 0 ] - posPrevHitGlob[ 0 ];
+//                const double resY = posHitGlob[ 1 ] - posPrevHitGlob[ 1 ];
+//                const double resZ = posHitGlob[ 2 ] - posPrevHitGlob[ 2 ];
                 const double resR = resX*resX + resY*resY;
-                const int sensorID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(hit2) );
+                
                 const int numberAlongZ = geo::gGeometry().sensorIDtoZOrder( sensorID );
+                if ( numberAlongZ < 0) return true;
+                
                 if( _trackFinder->_mode == 1 ) {
-                    if( resX > _trackFinder->_residualsXMin[ numberAlongZ ] * resZ / zSpacing ) {
-                        isBad = false;
+                    if( resX > _trackFinder->_residualsXMax[ numberAlongZ ] * resZ / zSpacing ) {
+                        return true;
                     }
-                    if( resX < _trackFinder->_residualsXMax[ numberAlongZ ] * resZ / zSpacing ) {
-                        isBad = false;
+                    if( resX < _trackFinder->_residualsXMin[ numberAlongZ ] * resZ / zSpacing ) {
+                        return true;
                     }
-                    if( resY > _trackFinder->_residualsYMin[ numberAlongZ ] * resZ / zSpacing ) {
-                        isBad = false;
+                    if( resY > _trackFinder->_residualsYMax[ numberAlongZ ] * resZ / zSpacing ) {
+                        return true;
                     }
-                    if( resY < _trackFinder->_residualsYMax[ numberAlongZ ] * resZ / zSpacing ) {
-                        isBad = false;
+                    if( resY < _trackFinder->_residualsYMin[ numberAlongZ ] * resZ / zSpacing ) {
+                        return true;
                     }
                 } else {
-                    if ( sqrt( resR ) < _trackFinder->_distanceMaxVec [ numberAlongZ ] * resZ / zSpacing  ) {
-                        isBad = false;
+                    if ( sqrt( resR ) > _trackFinder->_distanceMaxVec [ numberAlongZ ] * resZ / zSpacing  ) {
+                        return true;
                     }
                 }
             
-            return isBad;
+            return false;
         }
             
         private:

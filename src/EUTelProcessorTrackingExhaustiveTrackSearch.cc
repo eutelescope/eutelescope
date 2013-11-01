@@ -102,6 +102,9 @@ _aidaHistoMap1D() {
             _trackCandidateHitsOutputCollectionName,
             std::string("TrackCandidateHitCollection"));
 
+    // Geometry definition
+    
+    registerOptionalParameter("GeometryFilename", "Name of the TGeo geometry definition file", _tgeoFileName, std::string("TELESCOPE.root"));
 
     // Optional processor parameters that define track finder settings
 
@@ -112,7 +115,7 @@ _aidaHistoMap1D() {
             _maxNTracks, static_cast<int> (100));
 
     registerOptionalParameter("FinderMode", "Finder mode. Possible values are 1 (rectangular search window), 2 (circular search window)",
-            _finderMode, static_cast<int> (3));
+            _finderMode, static_cast<int> (1));
 
     const double defWindowSize = 0.25;
     
@@ -170,6 +173,9 @@ void EUTelProcessorTrackingExhaustiveTrackSearch::init() {
     _nProcessedRuns = 0;
     _nProcessedEvents = 0;
 
+    // Getting access to geometry description
+    geo::gGeometry().initializeTGeoDescription(_tgeoFileName);
+    
     // Check if the window size was properly initilised
     {
         const double defWindowSize = 1.;
@@ -205,6 +211,7 @@ void EUTelProcessorTrackingExhaustiveTrackSearch::init() {
             throw UnknownDataTypeException("Track finder was not created");
         }
         Finder->SetMode(getFinderMode());
+        Finder->SetMaxTrackCandidates(_maxNTracks);
         Finder->SetDistanceMaxVec(_residualsRMax);
         Finder->SetResidualsYMax(_residualsYMax);
         Finder->SetResidualsYMin(_residualsYMin);
@@ -281,6 +288,17 @@ void EUTelProcessorTrackingExhaustiveTrackSearch::processEvent(LCEvent * evt) {
         vector< EVENT::TrackerHitVec > allHitsVec;
         const int nEmptyPlanes = FillHits(evt, col, allHitsArray, allHitsVec);
 
+        streamlog_out(MESSAGE0) << "All hits in event start:==============" << std::endl;
+       vector< EVENT::TrackerHitVec >::const_iterator itPlane;
+	for ( itPlane = allHitsVec.begin() ; itPlane != allHitsVec.end(); ++itPlane ) {
+            EVENT::TrackerHitVec::const_iterator itHits;
+            for ( itHits = (*itPlane).begin(); itHits != (*itPlane).end(); ++itHits ) {
+                const double* uvpos = (*itHits)->getPosition();
+		streamlog_out(MESSAGE0) << "Hit (id=" << Utility::GuessSensorID(*itHits) << ") local(u,v) coordinates: (" << uvpos[0] << "," << uvpos[1] << ")" << std::endl;
+            }
+	}
+	streamlog_out(MESSAGE0) << "All hits in event end:==============" << std::endl;
+        
         // Search tracks
         streamlog_out(DEBUG1) << "Event #" << _nProcessedEvents << std::endl;
         streamlog_out(DEBUG1) << "Initialising hits for _theFinder..." << std::endl;
@@ -295,8 +313,8 @@ void EUTelProcessorTrackingExhaustiveTrackSearch::processEvent(LCEvent * evt) {
        
         const int nTracks = trackCandidates.size();
         static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ _histName::_numberTracksCandidatesHistName ]) -> fill(nTracks);
-        streamlog_out(DEBUG1) << "Event #" << _nProcessedEvents << endl;
-        streamlog_out(DEBUG1) << "Track finder " << _trackFinder->GetName() << " found  " << nTracks << endl;
+        streamlog_out(MESSAGE1) << "Event #" << _nProcessedEvents << endl;
+        streamlog_out(MESSAGE1) << "Track finder " << _trackFinder->GetName() << " found  " << nTracks << endl;
         
         int nHitsOnTrack = 0;
         vector< EVENT::TrackerHitVec >::const_iterator itrk = trackCandidates.begin();
@@ -450,7 +468,7 @@ void EUTelProcessorTrackingExhaustiveTrackSearch::end() {
 
     delete _trackFinder;
     
-    streamlog_out(MESSAGE) << "EUTelProcessorTrackingExhaustiveTrackSearch::end()  " << name()
+    streamlog_out(DEBUG2) << "EUTelProcessorTrackingExhaustiveTrackSearch::end()  " << name()
             << " processed " << _nProcessedEvents << " events in " << _nProcessedRuns << " runs "
             << std::endl;
 
@@ -460,7 +478,7 @@ void EUTelProcessorTrackingExhaustiveTrackSearch::bookHistograms() {
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
     try {
-        streamlog_out(DEBUG) << "Booking histograms..." << std::endl;
+        streamlog_out(DEBUG2) << "Booking histograms..." << std::endl;
 
         auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
         EUTelHistogramInfo    * histoInfo;

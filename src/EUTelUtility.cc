@@ -263,13 +263,13 @@ namespace eutelescope {
                     for (unsigned int iPixel = 0; iPixel < apixData->size(); iPixel++) {
                         std::vector<int> apixColVec();
                         apixData->getSparsePixelAt(iPixel, &apixPixel);
-                        streamlog_out(MESSAGE) << iPixel << " of " << apixData->size() << " HotPixelInfo:  " << apixPixel.getXCoord() << " " << apixPixel.getYCoord() << " " << apixPixel.getSignal() << std::endl;
+                        streamlog_out(DEBUG0) << iPixel << " of " << apixData->size() << " HotPixelInfo:  " << apixPixel.getXCoord() << " " << apixPixel.getYCoord() << " " << apixPixel.getSignal() << std::endl;
                         try {
                             char ix[100];
                             sprintf(ix, "%d,%d,%d", sensorID, apixPixel.getXCoord(), apixPixel.getYCoord());
                             hotPixelMap[ix] = true;
                         } catch (...) {
-                            streamlog_out(ERROR) << "problem adding pixel to hotpixel map! " << std::endl;
+                            streamlog_out(ERROR2) << "problem adding pixel to hotpixel map! " << std::endl;
                         }
                     }
 
@@ -282,7 +282,7 @@ namespace eutelescope {
                     for (unsigned int iPixel = 0; iPixel < m26Data->size(); iPixel++) {
                         std::vector<int> m26ColVec();
                         m26Data->getSparsePixelAt(iPixel, &m26Pixel);
-                        streamlog_out(MESSAGE) << iPixel << " of " << m26Data->size() << " HotPixelInfo:  " << m26Pixel.getXCoord() << " " << m26Pixel.getYCoord() << " " << m26Pixel.getSignal() << std::endl;
+                        streamlog_out(DEBUG0) << iPixel << " of " << m26Data->size() << " HotPixelInfo:  " << m26Pixel.getXCoord() << " " << m26Pixel.getYCoord() << " " << m26Pixel.getSignal() << std::endl;
                         try {
                             char ix[100];
                             sprintf(ix, "%d,%d,%d", sensorID, m26Pixel.getXCoord(), m26Pixel.getYCoord());

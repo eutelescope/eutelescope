@@ -46,22 +46,39 @@ namespace eutelescope {
          */
         bool EUTelExhaustiveTrackFinder::IsGoodCandidate( const EVENT::TrackerHitVec& trackCandidate ) {
             bool isGood = true;
-            
+
             // iterate over candidate's hits
             EVENT::TrackerHitVec::const_iterator itrPrevHit = trackCandidate.begin();
             EVENT::TrackerHitVec::const_iterator itrHit;
             for ( itrHit = trackCandidate.begin(); itrHit != trackCandidate.end(); ++itrHit ) {
+                
                 const double zSpacing = 150.;   // [mm]
+                
+                // previous hit
+                const int sensorIDPrev = Utility::GuessSensorID(  static_cast< IMPL::TrackerHitImpl* >(*itrPrevHit) );
                 const double* posPrevHit = (*itrPrevHit)->getPosition();
+//                double posPrevHitGlob[] = {0.,0.,0.};
+//                geo::gGeometry().local2Master( sensorIDPrev, posPrevHit, posPrevHitGlob);
+//                
+                // current hit
+                const int sensorID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(*itrHit) );
                 const double* posHit     = (*itrHit)->getPosition();
+//                double posHitGlob[] = {0.,0.,0.};
+//                geo::gGeometry().local2Master( sensorID, posHit, posHitGlob );
+                
                 const double resX = posHit[ 0 ] - posPrevHit[ 0 ];
                 const double resY = posHit[ 1 ] - posPrevHit[ 1 ];
                 const double resZ = posHit[ 2 ] - posPrevHit[ 2 ];
+                
+//                const double resX = posHitGlob[ 0 ] - posPrevHitGlob[ 0 ];
+//                const double resY = posHitGlob[ 1 ] - posPrevHitGlob[ 1 ];
+//                const double resZ = posHitGlob[ 2 ] - posPrevHitGlob[ 2 ];
                 const double resR = resX*resX + resY*resY;
-                const int sensorID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(*itrHit) );
+                
                 const int numberAlongZ = geo::gGeometry().sensorIDtoZOrder( sensorID );
+                if ( numberAlongZ < 0 ) return false;
                 if( _mode == 1 ) {
-                    if( resX > _residualsXMin[ numberAlongZ ] * resZ / zSpacing ) {
+                    if( resX > _residualsXMax[ numberAlongZ ] * resZ / zSpacing ) {
                         isGood = false;
                         break;
                     }
