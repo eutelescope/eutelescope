@@ -1001,6 +1001,10 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 
       // add the clusterVec to the hit
       hit->rawHits() = clusterVec;
+      
+      // Determine sensorID from raw data.
+      int sensorID = Utility::GuessSensorID( hit );
+      hit->setCellID0( sensorID );
 
       // add the new hit to the hit collection
       hitCollection->push_back( hit );
