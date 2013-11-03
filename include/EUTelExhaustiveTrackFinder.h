@@ -353,7 +353,7 @@ namespace eutelescope {
                 const double zSpacing = 150.;   // [mm]
                 
                 // previous hit
-                const int sensorIDPrev = Utility::GuessSensorID(  hit2 );
+//                const int sensorIDPrev = Utility::GuessSensorID(  hit2 );
                 const double* posPrevHit = hit2->getPosition();
 //                double posPrevHitGlob[] = {0.,0.,0.};
 //                geo::gGeometry().local2Master( sensorIDPrev, posPrevHit, posPrevHitGlob);

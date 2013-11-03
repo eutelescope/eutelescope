@@ -55,7 +55,7 @@ namespace eutelescope {
                 const double zSpacing = 150.;   // [mm]
                 
                 // previous hit
-                const int sensorIDPrev = Utility::GuessSensorID(  static_cast< IMPL::TrackerHitImpl* >(*itrPrevHit) );
+//                const int sensorIDPrev = Utility::GuessSensorID(  static_cast< IMPL::TrackerHitImpl* >(*itrPrevHit) );
                 const double* posPrevHit = (*itrPrevHit)->getPosition();
 //                double posPrevHitGlob[] = {0.,0.,0.};
 //                geo::gGeometry().local2Master( sensorIDPrev, posPrevHit, posPrevHitGlob);
