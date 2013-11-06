@@ -126,9 +126,13 @@ EUTelX0Processor::EUTelX0Processor()
                            "Collection name for fitted tracks",
                            _trackCollectionName, string ("AlignedTrack"));
 
+  registerInputCollection(LCIO::TRACK,"InputTrackCollectionName1",
+                           "Collection name for fitted tracks",
+                           _trackCollectionName1, string ("AlignedTrack1"));
+
   registerInputCollection(LCIO::TRACK,"InputTrackCollectionName2",
                            "Collection name for fitted tracks",
-                           _trackCollectionName2, string ("AlignedTrack"));
+                           _trackCollectionName2, string ("AlignedTrack2"));
 
   registerProcessorParameter("BeamEnergy","Works out the energy of the beam for radiation lengths", _beamEnergy, static_cast< double > (0.0));
   registerProcessorParameter("DoubleDafFitted","Are two tracks from seperate daf fitters being used (front and back three planes only) to make a scattering angle? If yes then this should be true", _doubleDafFitted, static_cast< bool > (false));
@@ -168,10 +172,10 @@ void EUTelX0Processor::init()
   AngleYBackThreePlanesDoubleDaf = new TH1D("AngleYBackThreePlanesDoubleDaf", "Angles of Tracks in Y Direction relative to the Z Axis for  Three Planes from Double Daf Fitting; \\theta_{x} (rads); Count", nobinsangle,minbinangle,maxbinangle);
   _histoThing["AngleYBackThreePlanesDoubleDaf"] = AngleYBackThreePlanesDoubleDaf;
 
-  AngleXYFrontThreePlanesDoubleDaf = new TH2D("AngleYFrontThreePlanesDoubleDaf", "Angles of Tracks in Y Direction relative to the Z Axis for  Three Planes from Double Daf Fitting; \\theta_{x} (rads); \\theta_{y} (rads)", nobinsangle,minbinangle,maxbinangle,nobinsangle,minbinangle,maxbinangle);
+  AngleXYFrontThreePlanesDoubleDaf = new TH2D("AngleXYFrontThreePlanesDoubleDaf", "Angles of Tracks in Y Direction relative to the Z Axis for  Three Planes from Double Daf Fitting; \\theta_{x} (rads); \\theta_{y} (rads)", nobinsangle,minbinangle,maxbinangle,nobinsangle,minbinangle,maxbinangle);
   _histoThing2D["AngleXYFrontThreePlanesDoubleDaf"] = AngleXYFrontThreePlanesDoubleDaf;
 
-  AngleXYBackThreePlanesDoubleDaf = new TH2D("AngleYBackThreePlanesDoubleDaf", "Angles of Tracks in Y Direction relative to the Z Axis for  Three Planes from Double Daf Fitting; \\theta_{x} (rads); \\theta_{y} (rads)", nobinsangle,minbinangle,maxbinangle,nobinsangle,minbinangle,maxbinangle);
+  AngleXYBackThreePlanesDoubleDaf = new TH2D("AngleXYBackThreePlanesDoubleDaf", "Angles of Tracks in Y Direction relative to the Z Axis for  Three Planes from Double Daf Fitting; \\theta_{x} (rads); \\theta_{y} (rads)", nobinsangle,minbinangle,maxbinangle,nobinsangle,minbinangle,maxbinangle);
   _histoThing2D["AngleXYBackThreePlanesDoubleDaf"] = AngleXYBackThreePlanesDoubleDaf;
 
   ScatteringAngleXDoubleDaf = new TH1D("ScatteringAngleXDoubleDaf", "Scattering Angles of Tracks in X Direction relative to the Z Axis from Double Daf Fitting; \\theta_{x} (rads); Count", nobinsangle,minbinangle,maxbinangle);
@@ -957,10 +961,8 @@ void EUTelX0Processor::processEvent(LCEvent *evt)
   //Check for last event
     //Fit gaussian to histogram
     //Extract sigma value from histogram
-  _doubleDafFitted = true;
-  if(_doubleDafFitted){
     try{
-      LCCollection* trackcollection1 = evt->getCollection(_trackCollectionName);
+      LCCollection* trackcollection1 = evt->getCollection(_trackCollectionName1);
       int elementnumber1 = trackcollection1->getNumberOfElements();
       streamlog_out(DEBUG2) << "Created trackcollection1, it has " << elementnumber1 << " elements" << endl;
       LCCollection* trackcollection2 = evt->getCollection(_trackCollectionName2);
@@ -1012,7 +1014,6 @@ void EUTelX0Processor::processEvent(LCEvent *evt)
     } catch(...){
       streamlog_out(ERROR3) << "Double Daf fitting didn't work..." << endl;
     }
-  } else{
     try{
       //_referenceHitVec = evt->getCollection(_referenceHitCollectionName);
       LCCollection* trackcollection = evt->getCollection(_trackCollectionName);
@@ -1038,7 +1039,6 @@ void EUTelX0Processor::processEvent(LCEvent *evt)
       << "I hope that helps, if not then please submit a bug report or add more exception handling as appropriate, program will now exit" << std::endl;
       exit(1);
     }
-  }
   _eventNumber++;
 }
 

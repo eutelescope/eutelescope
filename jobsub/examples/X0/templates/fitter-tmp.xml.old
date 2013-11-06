@@ -23,8 +23,10 @@
       <processor name="LoadAlignment"/>
       <processor name="ApplyAlignment"/>
       <processor name="DafFitter"/>
-      <processor name="DafFitter1"/>
-      <processor name="DafFitter2"/>
+      <!--processor name="FittedClusters"/-->
+      <!--group name="TelDUTFitter"/>
+      <group name="TelDUTTransferToLocalCoordinates"/>
+      <group name="TelDUTHistos"/-->
       <processor name="MyEUTelUtilityPrintEventNumber"/>
       <processor name="Save"/>
    </execute>
@@ -50,11 +52,11 @@
   </processor>
 
   <processor name="DafFitter" type="EUTelDafFitter">
-    <parameter name="TelescopePlanes" type="IntVec"> 0 1 2 3 4 5 </parameter>
+    <parameter name="TelescopePlanes" type="IntVec"> @IncludePlanes@ </parameter>
     <parameter name="DutPlanes" type="IntVec">  </parameter>
     <parameter name="FitDuts" type="bool" value="false"/>
     <parameter name="MakePlots" type="bool" value="true"/>
-    <parameter name="RequireNTelPlanes" type="float" value="6"/>
+    <parameter name="RequireNTelPlanes" type="float" value="@RequireNPlanes@"/>
     <parameter name="HitCollectionName" type="string" lcioInType="TrackerHit"> alignedHit </parameter>
     <parameter name="TrackCollectionName" type="string" lcioOutType="Track"> AlignedTrack </parameter>
     <parameter name="AlignmentCollectionNames"> prealign alignment </parameter>
@@ -69,58 +71,9 @@
     <parameter name="NominalDydz" type="float" value="0.0"/>
     <parameter name="FinderRadius" type="float" value="1000" />
     <parameter name="Chi2Cutoff" type="float" value="100000000"/>
-    <parameter name="MaxChi2OverNdof" type="float" value="@Chi2NDof@"/>
+    <parameter name="MaxChi2OverNdof" type="float" value="1000"/>
     <parameter name="NDutHits" type="int" value="0"/>
   </processor>
-  <processor name="DafFitter1" type="EUTelDafFitter">
-    <!--parameter name="TelescopePlanes" type="IntVec"> 0 1 2 3 4 5 </parameter-->
-    <parameter name="TelescopePlanes" type="IntVec"> 0 1 2 </parameter>
-    <parameter name="DutPlanes" type="IntVec">  </parameter>
-    <parameter name="FitDuts" type="bool" value="false"/>
-    <parameter name="MakePlots" type="bool" value="true"/>
-    <parameter name="RequireNTelPlanes" type="float" value="3"/>
-    <parameter name="HitCollectionName" type="string" lcioInType="TrackerHit"> alignedHit </parameter>
-    <parameter name="TrackCollectionName" type="string" lcioOutType="Track"> AlignedTrack1 </parameter>
-    <parameter name="AlignmentCollectionNames"> prealign alignment </parameter>
-    <parameter name="ReferenceCollection" type="string" > refhit </parameter>
-    <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
-    <parameter name="Ebeam" type="float" value="@BeamEnergy@"/>
-    <parameter name="TelResolutionX" type="float" value="@TelResolutionX@"/>
-    <parameter name="TelResolutionY" type="float" value="@TelResolutionY@"/>
-    <parameter name="DutResolutionX" type="float" value="2500" />
-    <parameter name="DutResolutionY" type="float" value="500"/>
-    <parameter name="NominalDxdz" type="float" value="0.0"/>
-    <parameter name="NominalDydz" type="float" value="0.0"/>
-    <parameter name="FinderRadius" type="float" value="1000" />
-    <parameter name="Chi2Cutoff" type="float" value="100000000"/>
-    <parameter name="MaxChi2OverNdof" type="float" value="@Chi2NDof@"/>
-    <parameter name="NDutHits" type="int" value="0"/>
-  </processor>
-  <processor name="DafFitter2" type="EUTelDafFitter">
-    <!--parameter name="TelescopePlanes" type="IntVec"> 0 1 2 3 4 5 </parameter-->
-    <parameter name="TelescopePlanes" type="IntVec"> 3 4 5 </parameter>
-    <parameter name="DutPlanes" type="IntVec">  </parameter>
-    <parameter name="FitDuts" type="bool" value="false"/>
-    <parameter name="MakePlots" type="bool" value="true"/>
-    <parameter name="RequireNTelPlanes" type="float" value="3"/>
-    <parameter name="HitCollectionName" type="string" lcioInType="TrackerHit"> alignedHit </parameter>
-    <parameter name="TrackCollectionName" type="string" lcioOutType="Track"> AlignedTrack2 </parameter>
-    <parameter name="AlignmentCollectionNames"> prealign alignment </parameter>
-    <parameter name="ReferenceCollection" type="string" > refhit </parameter>
-    <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
-    <parameter name="Ebeam" type="float" value="@BeamEnergy@"/>
-    <parameter name="TelResolutionX" type="float" value="@TelResolutionX@"/>
-    <parameter name="TelResolutionY" type="float" value="@TelResolutionY@"/>
-    <parameter name="DutResolutionX" type="float" value="2500" />
-    <parameter name="DutResolutionY" type="float" value="500"/>
-    <parameter name="NominalDxdz" type="float" value="0.0"/>
-    <parameter name="NominalDydz" type="float" value="0.0"/>
-    <parameter name="FinderRadius" type="float" value="1000" />
-    <parameter name="Chi2Cutoff" type="float" value="100000000"/>
-    <parameter name="MaxChi2OverNdof" type="float" value="@Chi2NDof@"/>
-    <parameter name="NDutHits" type="int" value="0"/>
-  </processor>
-
 
 
  <processor name="AIDA" type="AIDAProcessor">
@@ -128,7 +81,7 @@
   <!-- compression of output file 0: false >0: true (default) -->
   <parameter name="Compress" type="int" value="1"/>
   <!-- filename without extension-->
-  <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-fitter1"/>
+  <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-fitter"/>
   <!-- type of output file root (default) or xml )-->
   <parameter name="FileType" type="string" value="root"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
@@ -319,7 +272,7 @@
   <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
   <!--parameter name="KeepCollectionNames" type="StringVec" value="MyPreciousSimTrackerHits"/-->
   <!-- name of output file -->
-  <parameter name="LCIOOutputFile" type="string" value="@LcioPath@/@FilePrefix@-track1.slcio"/>
+  <parameter name="LCIOOutputFile" type="string" value="@LcioPath@/@FilePrefix@-track.slcio"/>
   <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
   <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   <!--Set it to true to remove intermediate EORE in merged runs-->

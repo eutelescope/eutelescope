@@ -148,7 +148,7 @@ EUTelApplyAlignmentProcessor::EUTelApplyAlignmentProcessor ()
   _orderedSensorIDVec(),
   _histogramSwitch(false)
 {
-
+  //cout << "1" << endl;
   // modify processor description
   _description =
     "Apply to the input hit the alignment corrections";
@@ -241,10 +241,12 @@ EUTelApplyAlignmentProcessor::EUTelApplyAlignmentProcessor ()
   registerOptionalParameter("PrintEvents", "Events number to have DEBUG1 printed outs (default=10)",
                             _printEvents, static_cast<int> (10) );
 
+  //cout << "2" << endl;
 }
 
 
 void EUTelApplyAlignmentProcessor::init() {
+  //cout << "3" << endl;
   // this method is called only once even when the rewind is active
   // usually a good idea to
   printParameters ();
@@ -281,11 +283,13 @@ void EUTelApplyAlignmentProcessor::init() {
   }
 
   _lookUpTable.clear();
+  //cout << "4" << endl;
 }
 
 //..................................................................................
 void EUTelApplyAlignmentProcessor::CheckIOCollections(LCEvent* event)
 {
+  //cout << "5" << endl;
 
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
 
@@ -366,11 +370,13 @@ void EUTelApplyAlignmentProcessor::CheckIOCollections(LCEvent* event)
   // ------------------------------------------------------------------------- //
 
 
+  //cout << "6" << endl;
 }
 
 //..................................................................................
 void EUTelApplyAlignmentProcessor::processRunHeader (LCRunHeader * runHeader)
 {
+  //cout << "7" << endl;
   auto_ptr<EUTelRunHeaderImpl> eutelHeader( new EUTelRunHeaderImpl ( runHeader ) );
   eutelHeader->addProcessor( type() );
 // increment the run counter
@@ -472,10 +478,12 @@ void EUTelApplyAlignmentProcessor::processRunHeader (LCRunHeader * runHeader)
      }
    }
 
+  //cout << "8" << endl;
 }
 
 //........................................................................................................................
 void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
+  //cout << "9" << endl;
 
     if( _alignmentCollectionNames.size() <= 0 )
     {
@@ -615,10 +623,12 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
        }
      }
     }
+  //cout << "10" << endl;
 }
 
 void EUTelApplyAlignmentProcessor::ApplyGear6D( LCEvent *event) 
 {
+  //cout << "11" << endl;
  
 
   if ( _iEvt % 1000 == 0 ){
@@ -807,11 +817,13 @@ void EUTelApplyAlignmentProcessor::ApplyGear6D( LCEvent *event)
       _outputCollectionVec->push_back( outputHit );
     }
 
+  //cout << "12" << endl;
 }
 
 
 void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event) 
 {
+  //cout << "13" << endl;
  
   if ( _iEvt % 1000 == 0 ){
     streamlog_out ( MESSAGE5 ) << "Processing event  (RevertGear6D) "
@@ -1077,9 +1089,11 @@ void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event)
       TransformToLocalFrame(outputHit); 
     }
 
+  //cout << "14" << endl;
 }
 
 void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
+  //cout << "15" << endl;
 
   if ( _iEvt % 1000 == 0 ){
     streamlog_out ( DEBUG5 ) << "Processing event  (ApplyAlignment Direct) "
@@ -1293,7 +1307,7 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
 
 #if ( defined(USE_AIDA) || defined(MARLIN_USE_AIDA) )
         string tempHistoName;
-        AIDA::IHistogram3D *histo3D; 
+//        AIDA::IHistogram3D *histo3D; 
         if ( _histogramSwitch ) {
           {
             stringstream ss;
@@ -1309,13 +1323,13 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
                                         << ".\nDisabling histogramming from now on " << endl;
               _histogramSwitch = false;
             }
-          histo3D = dynamic_cast<AIDA::IHistogram3D*> (_aidaHistoMap[ _densityPlotBeforeAlignName ] );
-          if ( histo3D ) histo3D->fill( inputPosition[0], inputPosition[1], inputPosition[2] );
-          else {
-            streamlog_out ( ERROR1 )  << "DIRECT:-----:-----: Not able to retrieve histogram pointer for " << _densityPlotBeforeAlignName
-                                      << ".\nDisabling histogramming from now on " << endl;
-            _histogramSwitch = false;
-          }
+//          histo3D = dynamic_cast<AIDA::IHistogram3D*> (_aidaHistoMap[ _densityPlotBeforeAlignName ] );
+//          if ( histo3D ) histo3D->fill( inputPosition[0], inputPosition[1], inputPosition[2] );
+//          else {
+//            streamlog_out ( ERROR1 )  << "DIRECT:-----:-----: Not able to retrieve histogram pointer for " << _densityPlotBeforeAlignName
+//                                      << ".\nDisabling histogramming from now on " << endl;
+//            _histogramSwitch = false;
+//          }
         }
 #endif
 
@@ -1394,13 +1408,13 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
                                       << ".\nDisabling histogramming from now on " << endl;
             _histogramSwitch = false;
           }
-          histo3D = dynamic_cast<AIDA::IHistogram3D*> (_aidaHistoMap[ _densityPlotAfterAlignName ] );
-          if ( histo3D ) histo3D->fill( outputPosition[0], outputPosition[1], outputPosition[2] );
-          else {
-            streamlog_out ( ERROR1 )  << "DIRECT:-----:-----: Not able to retrieve histogram pointer for " << _densityPlotAfterAlignName
-                                      << ".\nDisabling histogramming from now on " << endl;
-            _histogramSwitch = false;
-          }
+//          histo3D = dynamic_cast<AIDA::IHistogram3D*> (_aidaHistoMap[ _densityPlotAfterAlignName ] );
+//          if ( histo3D ) histo3D->fill( outputPosition[0], outputPosition[1], outputPosition[2] );
+//          else {
+//            streamlog_out ( ERROR1 )  << "DIRECT:-----:-----: Not able to retrieve histogram pointer for " << _densityPlotAfterAlignName
+//                                      << ".\nDisabling histogramming from now on " << endl;
+//            _histogramSwitch = false;
+//          }
         }
 #endif
 
@@ -1434,9 +1448,11 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
       outputHit->setPosition( outputPosition ) ;
       _outputCollectionVec->push_back( outputHit );
     }
+  //cout << "16" << endl;
 }
 
 void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
+  //cout << "17" << endl;
  
   if ( _iEvt % 1000 == 0 ){
         streamlog_out ( DEBUG5 ) << "Processing event (ApplyAlignment Reverse) "
@@ -1650,7 +1666,7 @@ void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
 
 #if ( defined(USE_AIDA) || defined(MARLIN_USE_AIDA) )
                 string tempHistoName;
-                AIDA::IHistogram3D *histo3D; 
+//                AIDA::IHistogram3D *histo3D; 
                 if ( _histogramSwitch ) 
                 {
                     {
@@ -1669,17 +1685,17 @@ void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
                         _histogramSwitch = false;
                     }
                     
-                    histo3D = dynamic_cast<AIDA::IHistogram3D*> (_aidaHistoMap[ _densityPlotBeforeAlignName ] );
-                    if ( histo3D ) 
-                    {
-                        histo3D->fill( inputPosition[0], inputPosition[1], inputPosition[2] );
-                    }
-                    else 
-                    {
-                        streamlog_out ( ERROR1 )  << "Not able to retrieve histogram pointer for " << _densityPlotBeforeAlignName
-                                                  << ".\nDisabling histogramming from now on " << endl;
-                        _histogramSwitch = false;
-                    }
+//                    histo3D = dynamic_cast<AIDA::IHistogram3D*> (_aidaHistoMap[ _densityPlotBeforeAlignName ] );
+//                    if ( histo3D ) 
+//                    {
+//                        histo3D->fill( inputPosition[0], inputPosition[1], inputPosition[2] );
+//                    }
+//                    else 
+//                    {
+//                        streamlog_out ( ERROR1 )  << "Not able to retrieve histogram pointer for " << _densityPlotBeforeAlignName
+//                                                  << ".\nDisabling histogramming from now on " << endl;
+//                       _histogramSwitch = false;
+//                    }
                 }
 #endif
 
@@ -1769,17 +1785,17 @@ void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
                         _histogramSwitch = false;
                     }
                     
-                    histo3D = dynamic_cast<AIDA::IHistogram3D*> (_aidaHistoMap[ _densityPlotAfterAlignName ] );
-                    if ( histo3D )
-                    {
-                        histo3D->fill( outputPosition[0], outputPosition[1], outputPosition[2] );
-                    }
-                    else 
-                    {
-                        streamlog_out ( ERROR1 )  << "Not able to retrieve histogram pointer for " << _densityPlotAfterAlignName
-                                                  << ".\nDisabling histogramming from now on " << endl;
-                        _histogramSwitch = false;
-                    }
+//                    histo3D = dynamic_cast<AIDA::IHistogram3D*> (_aidaHistoMap[ _densityPlotAfterAlignName ] );
+//                    if ( histo3D )
+//                    {
+//                        histo3D->fill( outputPosition[0], outputPosition[1], outputPosition[2] );
+//                    }
+//                    else 
+//                    {
+//                        streamlog_out ( ERROR1 )  << "Not able to retrieve histogram pointer for " << _densityPlotAfterAlignName
+//                                                  << ".\nDisabling histogramming from now on " << endl;
+//                        _histogramSwitch = false;
+//                    }
                 }
 #endif
 /*
@@ -1813,9 +1829,11 @@ void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
         }
 
     
+  //cout << "18" << endl;
 }
 
 void EUTelApplyAlignmentProcessor::bookHistos() {
+  //cout << "19" << endl;
 
 #if ( defined(USE_AIDA) || defined(MARLIN_USE_AIDA) )
 
@@ -1966,7 +1984,7 @@ void EUTelApplyAlignmentProcessor::bookHistos() {
     }
 
 
-    AIDA::IHistogram3D * densityPlot = AIDAProcessor::histogramFactory(this)->createHistogram3D( _densityPlotBeforeAlignName ,
+/*    AIDA::IHistogram3D * densityPlot = AIDAProcessor::histogramFactory(this)->createHistogram3D( _densityPlotBeforeAlignName ,
                                                                                                  "Hit position in the telescope frame of reference before align",
                                                                                                  xAxis, yAxis, zAxis, "");
 
@@ -1990,7 +2008,7 @@ void EUTelApplyAlignmentProcessor::bookHistos() {
                                 << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
       _histogramSwitch = false;
     }
-
+*/
     streamlog_out ( MESSAGE4 ) <<  "Booking histograms DONE" << endl;
 
   } catch (lcio::Exception& e ) {
@@ -2009,21 +2027,26 @@ void EUTelApplyAlignmentProcessor::bookHistos() {
     }
   }
 #endif // AIDA && GEAR
+  //cout << "20" << endl;
 }
 
 
 void EUTelApplyAlignmentProcessor::check (LCEvent * /* evt */ ) {
+  //cout << "21" << endl;
   // nothing to check here - could be used to fill check plots in reconstruction processor
 }
 
 
 void EUTelApplyAlignmentProcessor::end() {
+  //cout << "22" << endl;
   streamlog_out ( MESSAGE9 ) <<  "Successfully finished" << endl;
   delete [] _siPlaneZPosition;
 
+  //cout << "23" << endl;
 }
 
 int EUTelApplyAlignmentProcessor::guessSensorID( TrackerHitImpl * hit ) {
+  //cout << "24" << endl;
 
   int sensorID = -1;
   double minDistance =  numeric_limits< double >::max() ;
@@ -2106,6 +2129,7 @@ int EUTelApplyAlignmentProcessor::guessSensorID( TrackerHitImpl * hit ) {
           {
             streamlog_out(ERROR4) << "guess SensorID crashed" << endl;
           }
+  //cout << "25" << endl;
   return sensorID;
 
 }
@@ -2113,6 +2137,7 @@ int EUTelApplyAlignmentProcessor::guessSensorID( TrackerHitImpl * hit ) {
 
 void EUTelApplyAlignmentProcessor::TransformToLocalFrame(TrackerHitImpl* outputHit) 
 {
+  //cout << "26" << endl;
 
         double *outputPosition = const_cast< double * > ( outputHit->getPosition() ) ;
 
@@ -2269,10 +2294,12 @@ void EUTelApplyAlignmentProcessor::TransformToLocalFrame(TrackerHitImpl* outputH
           streamlog_out ( DEBUG0 ) << endl;
         }
 
+  //cout << "27" << endl;
 }
 
 void EUTelApplyAlignmentProcessor::revertAlignment(double & x, double & y, double & z) 
 {
+  //cout << "28" << endl;
 
     EUTelAlignmentConstant * c = NULL;
     
@@ -2287,7 +2314,7 @@ void EUTelApplyAlignmentProcessor::revertAlignment(double & x, double & y, doubl
 	}
 
 	if ( c == NULL ) {
-		cout << "Was not possible to found alignment constant, terminating" << endl;
+		//cout << "Was not possible to found alignment constant, terminating" << endl;
 		abort();
 	}
 
@@ -2330,11 +2357,13 @@ void EUTelApplyAlignmentProcessor::revertAlignment(double & x, double & y, doubl
 	x = x / det;
 	y = y / det;
 	z = z / det;
+  //cout << "29" << endl;
 }
 
 
 
 void EUTelApplyAlignmentProcessor::_EulerRotation(double* _telPos, double* _gRotation) {
+  //cout << "30" << endl;
 
     TVector3 _RotatedSensorHit( _telPos[0], _telPos[1], _telPos[2] );
 
@@ -2346,10 +2375,12 @@ void EUTelApplyAlignmentProcessor::_EulerRotation(double* _telPos, double* _gRot
     _telPos[1] = _RotatedSensorHit.Y();
     _telPos[2] = _RotatedSensorHit.Z();
  
+  //cout << "31" << endl;
 }
 
 
 void EUTelApplyAlignmentProcessor::_EulerRotationInverse(double* _telPos, double* _gRotation) {
+  //cout << "32" << endl;
    
 
     TVector3 _RotatedSensorHit( _telPos[0], _telPos[1], _telPos[2] );
@@ -2363,10 +2394,12 @@ void EUTelApplyAlignmentProcessor::_EulerRotationInverse(double* _telPos, double
     _telPos[1] = _RotatedSensorHit.Y();
     _telPos[2] = _RotatedSensorHit.Z();
  
+  //cout << "33" << endl;
 }
 
 void EUTelApplyAlignmentProcessor::AlignReferenceHit(EUTelEventImpl * evt, EUTelAlignmentConstant * alignment )
 {
+  //cout << "34" << endl;
     int iPlane = alignment->getSensorID();
     streamlog_out( DEBUG5 )<< "AlignReferenceHit for sensor ID:" <<  alignment->getSensorID() << endl;
     double            alpha   = alignment->getAlpha();
@@ -2478,10 +2511,12 @@ void EUTelApplyAlignmentProcessor::AlignReferenceHit(EUTelEventImpl * evt, EUTel
      
     }
 
+  //cout << "35" << endl;
 }
 
 LCCollectionVec* EUTelApplyAlignmentProcessor::CreateDummyReferenceHitCollection()
 {
+  //cout << "36" << endl;
 
   LCCollectionVec * referenceHitCollection = new LCCollectionVec( LCIO::LCGENERICOBJECT );
 
@@ -2501,11 +2536,13 @@ LCCollectionVec* EUTelApplyAlignmentProcessor::CreateDummyReferenceHitCollection
     referenceHitCollection->push_back( refhit );
   }
 
+  //cout << "37" << endl;
   return referenceHitCollection;
 }
 
 int EUTelApplyAlignmentProcessor::guessSensorID(const double * hit ) 
 {
+  //cout << "38" << endl;
 
   int sensorID = -1;
   double minDistance =  numeric_limits< double >::max() ;
@@ -2547,6 +2584,7 @@ int EUTelApplyAlignmentProcessor::guessSensorID(const double * hit )
 
       }
   
+  //cout << "39" << endl;
   return sensorID;
 }
 

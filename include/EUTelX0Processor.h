@@ -228,6 +228,7 @@ private:
 
   //The name of the track collection to use, the is input in the steering file
   std::string _trackCollectionName;
+  std::string _trackCollectionName1;
   std::string _trackCollectionName2;
 
   //This is the number of bins to use in the residual plots

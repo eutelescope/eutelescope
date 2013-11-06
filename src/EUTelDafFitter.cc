@@ -96,11 +96,14 @@ using namespace eutelescope;
 
 
 EUTelDafFitter::EUTelDafFitter () : EUTelDafBase("EUTelDafFitter"){
+  //cout << "DafFitter " << "51" << endl;
     //Child spesific params and description
   dafParams();
+  //cout << "DafFitter " << "52" << endl;
 }
 
 void EUTelDafFitter::dafParams(){
+  //cout << "DafFitter " << "53" << endl;
   _description = "This processor preforms track reconstruction. The tracks are as final track fit for analysis.";
 
   //Tracker system options
@@ -108,9 +111,11 @@ void EUTelDafFitter::dafParams(){
   registerOptionalParameter("FitDuts","Set this to true if you want DUTs to be included in the track fit", _fitDuts, static_cast<bool>(false)); 
   //Track fitter options
   registerOutputCollection(LCIO::TRACK,"TrackCollectionName", "Collection name for fitted tracks", _trackCollectionName, string ("fittracks"));
+  //cout << "DafFitter " << "54" << endl;
 }
 
 void EUTelDafFitter::dafInit() {
+  //cout << "DafFitter " << "55" << endl;
 //printf("EUTelDafFitter::dafInit()\n"); 
   if(_fitDuts){
     for( size_t ii = 0; ii< _system.planes.size(); ii++){
@@ -122,10 +127,12 @@ void EUTelDafFitter::dafInit() {
 
 //  _isFirstEvent = true; 
 
+  //cout << "DafFitter " << "56" << endl;
 }
 
 
 void EUTelDafFitter::dafEvent (LCEvent * event) {
+  //cout << "DafFitter " << "57" << endl;
 // printf("EUTelDafFitter::dafEvent()\n"); 
 /*
   if( _isFirstEvent )
@@ -204,9 +211,11 @@ void EUTelDafFitter::dafEvent (LCEvent * event) {
 //     _isFirstEvent = false;
 //   }
 
+  //cout << "DafFitter " << "58" << endl;
 }
 
 void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate* track){
+  //cout << "DafFitter " << "59" << endl;
   TrackImpl * fittrack = new TrackImpl();
   // Impact parameters are useless and set to 0
   fittrack->setD0(0.);        // impact paramter of the track in (r-phi)
@@ -411,9 +420,11 @@ void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate* track){
   }
   fittrack->setReferencePoint(refpoint);
   _fittrackvec->addElement(fittrack);
+  //cout << "DafFitter " << "60" << endl;
 }
 
 double EUTelDafFitter::getZfromRefHit(int plane, double *pos){
+  //cout << "DafFitter " << "61" << endl;
 //rintf("plane %5d estim X:%5.2f Y:%5.2f Z:%5.2f \n", plane,  pos[0], pos[1], pos[2] );      
 
  try
@@ -449,10 +460,12 @@ double EUTelDafFitter::getZfromRefHit(int plane, double *pos){
 
 //  printf("plane %5d estim X:%5.2f Y:%5.2f Z:%5.2f -> (%5.2f, %5.2f, %5.2f)\n", plane,  pos[0], pos[1], pos[2], point(0), point(1), point(2) );      
 
+  //cout << "DafFitter " << "62" << endl;
 return point(2);
 }
 
 void EUTelDafFitter::dafEnd() {
+  //cout << "DafFitter " << "63" << endl;
 
 
 }
