@@ -33,7 +33,7 @@ optional arguments:
   --concatenate         Modifies run range treatment: concatenate all runs
                         into first run (e.g. to combine runs for alignment) by
                         combining every options that includes the string
-                        '@RunRange multiple times, once for each run of the
+                        '@RunRange@ multiple times, once for each run of the
                         range specified.
   -csv FILE, --csv-file FILE
                         Load additional run-specific variables from table
@@ -205,10 +205,10 @@ optional arguments:
    fill with several runs in one steering file, you can use a command
    line switch to activate concatenation. This replaces any steering
    file placeholder whose corresponding option contains the string
-   "@RunRange" multiple times, once for every run specified.
+   "@RunRange@" multiple times, once for every run specified.
 
    #+begin_src shell-script
-   jobsub.py --concatenate --option LCIOInputFiles=/my/path/to/data/@RunRange.lcio align 1234 1235-1237
+   jobsub.py --concatenate --option LCIOInputFiles=/my/path/to/data/@RunRange@.lcio align 1234 1235-1237
    #+end_src
 
    This will create *one* steering file (for run 1234) in which the placeholder
