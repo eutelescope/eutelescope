@@ -154,8 +154,8 @@ void EUTelX0Processor::init()
   nobinsangle = 1000;//Number of bins in the histograms
   minbin = -0.1;
   maxbin = 0.1;//Maximum and minimum bin values
-  minbinangle = -0.14;
-  maxbinangle = 0.14;
+  minbinangle = -0.02;
+  maxbinangle = 0.02;
   std::vector<double> empty;  
   binsx = static_cast< int >((maxx-minx)/binsizex);
   binsy = static_cast< int >((maxy-miny)/binsizey);
@@ -632,6 +632,120 @@ pair< vector< double >, vector< double > > EUTelX0Processor::GetSingleTrackAngle
   return bothangles;
 }
 
+void EUTelX0Processor::PlotTripleTrackAngleDoubleDafFitted(Track *track, bool front){
+  streamlog_out(DEBUG1) << "Begin pair< vector< double >, vector< double > > EUTelX0Processor::GetTripleTrackAngles(vector< TVector3* > hits)" << endl;
+  //Then we find the position where those lines would have hit the DUT
+  //THIS IS TO BE DECIDED IF IT IS NEEDED LATER
+  //Then we work out the angles of these lines with respect to XZ and YZ, plot results in histograms
+  std::vector< TrackerHit* > trackhitsfront = track->getTrackerHits();
+  std::vector< TVector3* > hitsfront;
+  std::vector< TrackerHit* > trackhitsback = track->getTrackerHits();
+  std::vector< TVector3* > hitsback;
+  if(front == true){
+    for(std::vector< TrackerHit* >::iterator it = trackhitsfront.begin(); it != trackhitsfront.end(); ++it){
+      if((*it)->getType() == 32){  //Check if the hit type is the aligned hits or the fitted points (we want fitted points)
+        Double_t x = (*it)->getPosition()[0];
+        Double_t y = (*it)->getPosition()[1];
+        Double_t z = (*it)->getPosition()[2];
+        TVector3 *tempvec = new TVector3(x,y,z);
+        hitsfront.push_back(tempvec);
+      } //End of if query for type check
+    } //End of for loop running through trackhits
+  } else{
+    for(std::vector< TrackerHit* >::iterator it = trackhitsback.begin(); it != trackhitsback.end(); ++it){
+      if((*it)->getType() == 32){  //Check if the hit type is the aligned hits or the fitted points (we want fitted points)
+        Double_t x = (*it)->getPosition()[0];
+        Double_t y = (*it)->getPosition()[1];
+        Double_t z = (*it)->getPosition()[2];
+        TVector3 *tempvec = new TVector3(x,y,z);
+        hitsback.push_back(tempvec);
+      } //End of if query for type check
+    } //End of for loop running through trackhits
+  }
+  std::vector< double > scatterx, scattery;
+  double x1;
+  double y1;
+  double z1;
+  double x2;
+  double y2;
+  double z2;
+  double x3;
+  double y3;
+  double z3;
+  double x4;
+  double y4;
+  double z4;
+  double frontanglex;
+  double frontangley;
+  double backanglex;
+  double backangley;
+  if(front == true){
+    x1 = hitsfront.at(1)->x();
+    y1 = hitsfront.at(1)->y();
+    z1 = hitsfront.at(1)->z();
+    x2 = hitsfront.at(2)->x();
+    y2 = hitsfront.at(2)->y();
+    z2 = hitsfront.at(2)->z();
+    frontanglex = atan2((x2-x1),(z2-z1));
+    frontangley = atan2((y2-y1),(z2-z1));
+  } else{
+    x3 = hitsback.at(0)->x();
+    y3 = hitsback.at(0)->y();
+    z3 = hitsback.at(0)->z();
+    x4 = hitsback.at(1)->x();
+    y4 = hitsback.at(1)->y();
+    z4 = hitsback.at(1)->z();
+    backanglex = atan2((x4-x3),(z4-z3));
+    backangley = atan2((y4-y3),(z4-z3));
+  }
+  //Name the histograms
+  std::stringstream xforward,yforward,xyforward;
+  streamlog_out(DEBUG2) << "Successfully pushed back the scatterx and y vectors and deleted the TGraphs and TFits:" << endl;
+  stringstream xfront,yfront,xback,yback,xyfront,xyback;
+  if(front == true){
+    xfront << "AngleXFrontThreePlanesDoubleDaf";
+    yfront << "AngleYFrontThreePlanesDoubleDaf";
+  } else{
+    xback << "AngleXBackThreePlanesDoubleDaf";
+    yback << "AngleYBackThreePlanesDoubleDaf";
+  }
+  streamlog_out(DEBUG2) << "Successfully named the histograms:" << endl;
+  //Fill the histograms with the XZ and YZ angles
+  if(front == true){
+    try{
+      dynamic_cast< TH1D* >(_histoThing[xfront.str().c_str()])->Fill(frontanglex);
+    } catch(std::bad_cast &bc){
+      streamlog_out(ERROR3) << "Unable to fill histogram: " << xfront.str().c_str() << endl;
+    } catch(...){
+      streamlog_out(ERROR3) << "Unable to fill histogram: " << xfront.str().c_str() << ". Unknown Error" << endl;
+    }
+    try{
+      dynamic_cast< TH1D* >(_histoThing[yfront.str().c_str()])->Fill(frontangley);
+    } catch(std::bad_cast &bc){
+      streamlog_out(ERROR3) << "Unable to fill histogram: " << yfront.str().c_str() << endl;
+    } catch(...){
+      streamlog_out(ERROR3) << "Unable to fill histogram: " << yfront.str().c_str() << ". Unknown Error" << endl;
+    }
+  } else{
+    try{
+     dynamic_cast< TH1D* >(_histoThing[xback.str().c_str()])->Fill(backanglex);
+    } catch(std::bad_cast &bc){
+    streamlog_out(ERROR3) << "Unable to fill histogram: " << xback.str().c_str() << endl;
+    } catch(...){
+      streamlog_out(ERROR3) << "Unable to fill histogram: " << xback.str().c_str() << ". Unknown Error" << endl;
+    }
+    try{
+      dynamic_cast< TH1D* >(_histoThing[yback.str().c_str()])->Fill(backangley);
+    } catch(std::bad_cast &bc){
+      streamlog_out(ERROR3) << "Unable to fill histogram: " << yback.str().c_str() << endl;
+    } catch(...){
+      streamlog_out(ERROR3) << "Unable to fill histogram: " << yback.str().c_str() << ". Unknown Error" << endl;
+    }
+  }
+  streamlog_out(DEBUG2) << "Successfully filled the histograms:" << endl;
+ 
+}
+
 pair< vector< double >, vector< double > > EUTelX0Processor::GetTripleTrackAnglesDoubleDafFitted(Track *frontthree, Track *backthree){
   streamlog_out(DEBUG1) << "Begin pair< vector< double >, vector< double > > EUTelX0Processor::GetTripleTrackAngles(vector< TVector3* > hits)" << endl;
   //Then we find the position where those lines would have hit the DUT
@@ -694,6 +808,7 @@ pair< vector< double >, vector< double > > EUTelX0Processor::GetTripleTrackAngle
   xyback << "AngleXYBackThreePlanesDoubleDaf";
   streamlog_out(DEBUG2) << "Successfully named the histograms:" << endl;
   //Fill the histograms with the XZ and YZ angles
+/*
   try{
     dynamic_cast< TH1D* >(_histoThing[xfront.str().c_str()])->Fill(frontanglex);
   } catch(std::bad_cast &bc){
@@ -708,12 +823,14 @@ pair< vector< double >, vector< double > > EUTelX0Processor::GetTripleTrackAngle
   } catch(...){
     streamlog_out(ERROR3) << "Unable to fill histogram: " << yfront.str().c_str() << ". Unknown Error" << endl;
   }
+*/
   try{
     dynamic_cast< TH2D* >(_histoThing2D[xyfront.str().c_str()])->Fill(frontanglex,frontangley);
   } catch(std::bad_cast &bc){
     streamlog_out(ERROR3) << "Unable to fill histogram: " << xyfront.str().c_str() << ". Due to bad cast." << endl;
   }
- try{
+/*
+  try{
     dynamic_cast< TH1D* >(_histoThing[xback.str().c_str()])->Fill(backanglex);
   } catch(std::bad_cast &bc){
     streamlog_out(ERROR3) << "Unable to fill histogram: " << xback.str().c_str() << endl;
@@ -727,6 +844,7 @@ pair< vector< double >, vector< double > > EUTelX0Processor::GetTripleTrackAngle
   } catch(...){
     streamlog_out(ERROR3) << "Unable to fill histogram: " << yback.str().c_str() << ". Unknown Error" << endl;
   }
+*/
   try{
     dynamic_cast< TH2D* >(_histoThing2D[xyback.str().c_str()])->Fill(backanglex,backangley);
   } catch(std::bad_cast &bc){
@@ -1011,8 +1129,16 @@ void EUTelX0Processor::processEvent(LCEvent *evt)
           streamlog_out(DEBUG0) << "Worked out scattering angles" << endl;
         }
       }
+      for(int i = 0; i < elementnumber1; ++i){
+        Track *eventtrack1 = dynamic_cast< Track* >(trackcollection1->getElementAt(i));
+        PlotTripleTrackAngleDoubleDafFitted(eventtrack1,true);
+      }
+      for(int j = 0; j < elementnumber2; ++j){
+        Track *eventtrack2 = dynamic_cast< Track* >(trackcollection2->getElementAt(j));
+        PlotTripleTrackAngleDoubleDafFitted(eventtrack2,false);
+      }
     } catch(...){
-      streamlog_out(ERROR3) << "Double Daf fitting didn't work..." << endl;
+      streamlog_out(MESSAGE3) << "Double Daf fitting didn't work..." << endl;
     }
     try{
       //_referenceHitVec = evt->getCollection(_referenceHitCollectionName);

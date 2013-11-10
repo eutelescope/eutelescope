@@ -175,7 +175,7 @@
   <!--Names of alignment collections, should be in same order as application-->
   <parameter name="AlignmentCollectionNames" type="StringVec" value="prealign"/>
   <!--DAF fitter: The cutoff value for a measurement to be included in the fit.-->
-  <parameter name="Chi2Cutoff" type="float" value="1000"/>
+  <parameter name="Chi2Cutoff" type="float" value="10000"/>
   <!--List of sensor IDs for the DUT planes. Used to make the decision on whether ro accept the track or not. These planes are not used in track finder, and not in the track fitter unless option 'useDutsInFit' is set.-->
   <!--parameter name="DutPlanes" type="IntVec"> </parameter-->
   <!--Sigma of telescope resolution in the global X plane,-->
@@ -193,7 +193,7 @@
   <!--Should plots be made and filled?-->
   <parameter name="MakePlots" type="bool" value="true"/>
   <!--Maximum allowed global chi2/ndof-->
-  <parameter name="MaxChi2OverNdof" type="float" value="100"/>
+  <parameter name="MaxChi2OverNdof" type="float" value="10000"/>
   <!--How many DUT hits do we need in order to accept track?-->
   <parameter name="NDutHits" type="int" value="0"/>
   <!--dx/dz assumed by track finder-->
@@ -209,9 +209,9 @@
   <!--Scale thickness of DUT planes-->
   <!--parameter name="ScaleScattering" type="float" value="1"/-->
   <!--Sigma of telescope resolution in the global X plane,-->
-  <parameter name="TelResolutionX" type="float" value="140"/>
+  <parameter name="TelResolutionX" type="float" value="@TelResolutionX@"/>
   <!--Sigma of telescope resolution in the global Y plane,-->
-  <parameter name="TelResolutionY" type="float" value="140"/>
+  <parameter name="TelResolutionY" type="float" value="@TelResolutionY@"/>
   <!--List of sensor IDs for the telescope planes. These planes are used for the track finder, and track fitter.-->
   <parameter name="TelescopePlanes" type="IntVec"> 0 1 2 3 4 5 </parameter>
   <!--Filename for fitted tracks-->

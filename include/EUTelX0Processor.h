@@ -173,6 +173,7 @@ private:
   /*!This works out the angles of the tracks for the first three planes combined and the last three planes combined and stores them in a pair. With the first element of the pair being XZ angle and the second element being YZ angle. Each element of the vector is a different triplet, so each vector should just contain 2 elements, the first being the front three planes and the 2nd being the last three planes*/
   std::pair< std::vector< double >, std::vector< double > > GetTripleTrackAnglesStraightLines(std::vector< TVector3* > hits);
   std::pair< std::vector< double >, std::vector< double > > GetTripleTrackAnglesDoubleDafFitted(Track *frontthree, Track *backthree);
+  void PlotTripleTrackAngleDoubleDafFitted(Track *track, bool front);
 
   //!Single Plane Track Scattering Angles
   /*!This works out the scattering angle between each plane, fills a histogram with this value and also stores data for use in a radiation length map later*/
