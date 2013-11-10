@@ -8,3 +8,4 @@ cd Jobs
 g++ CreateJobScripts.cc -O3 -o WriteJobFiles
 cd ../JobSubmission
 g++ CodeToCreateSubmitJobs.cc -O3 -o CreateSubmitJobs
+cd ..

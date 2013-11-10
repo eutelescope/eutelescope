@@ -9,3 +9,4 @@
 ./WriteJobFiles x0 1-10
 ./WriteJobFiles FullChain 1-10
 ./WriteJobFiles FullChainGBL 1-10
+chmod +x *
