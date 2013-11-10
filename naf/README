@@ -1,0 +1,88 @@
+Instructions on how to use EUTelescope with the NAF
+
+There is a script in this folder called nafsetup.sh, please copy this to
+whereever you intend to run your NAF jobs, and then type "source nafsetup.sh"
+This will create a series of folders and files within those folders, as follows:
+
+Your Folder
+--ErrorLogs
+----Empty for now
+--Jobs
+----CreateJobScripts.cc
+----MakeAllJobs.sh
+----WriteJobFiles
+--JobSubmission
+----CLEANUP
+----CodeToCreateSubmitJobs.cc
+----CreateSubmitJobs
+--OutputLogs
+----Empty for now
+--XmlFiles
+----MakeXmlFiles
+
+ErrorLogs
+  If your code spits out any errors, these will be found in this folder
+
+Jobs
+  This folder is used to create small job scripts which can then be run on the NAF. This folder will contain lots of files which should not be touched after initial set up unless you need to add a step to the analysis which isn't already there.
+
+  CreateJobScripts
+    This is a standalone c++ file that will be compiled by the setup script to create the WriteJobFiles program
+
+  MakeAllJobs.sh
+    This file contains a small script which will go through and create every conceivable step for your analysis, including a full chain analysis. The only thing you have to change in this folder is the run numbers, which are currently set to 1-10. Change this to cover the whole range of runs over which you could possible go. For example, if you took data on runs from 1000-1356, and 2133-2167, then add the following instead of runs 1-10: 1000-1356,2133-2167
+    The final line of this makes all of the jobs executable, which is important.
+
+    ADDITIONAL NOTES: The name of the analysis step here is important, it must be lower case, if you add a new step it must match the appropriate template file name.
+    ADDITIONAL NOTES: For the alignment and fitting, the DafFitter is assumed, unless the job step includes the term GBL in which case a General Broken Lines fitting is assumed. For other fitting methods you will have to modify the script yourself (shouldn't be too hard I hope)
+
+  WriteJobFiles
+    This creates a job file
+
+JobSubmission
+  This is the folder from which you should do all the work, after you have set up the jobs in the Jobs folder and the XmlFiles in the XmlFiles folder
+
+  CLEANUP
+    When you run many jobs you will get a lot of output files being produed, this is just a quick script which will go through and delete all of the appropriate output files. Use with caution.
+  
+  CodeToCreateSubmitJobs.cc
+    This code is compiled to make the CreateSubmitJobs script
+
+  CreateSubmitJobs
+    This script is the penultimate step to making NAF submissions, this script takes 2 arguments with an optional 3rd argument:
+    Argument 1: This is the analysis type, e.g. converter, clustering, hitmaker, aligndaf, fitter... NOTE It is important that these are lower case
+    Argument 2: This is the run range you wish to go over, e.g. 1000-1356,2133-2167
+    Optional Argument 3: This is the NAF queue you wish to enter, options are "short", "long". Use "short" if you think your job will last longer than 3 hours but less than 1 day, use "long" if you think it will last longer than a day and less than a week. Do not specify this option if your job will take less than 3 hours.
+    Example:
+      ./CreateSubmitJobs converter 1000-1356,2133-2167 short
+
+OutputLogs
+  The output from the jobs that have been submitted will be put in this folder
+
+XmlFiles
+  This folder is for the creation of the XmlFiles from dry-running jobsub
+
+  MakeXmlFiles
+    For the submission to NAF to be successful, the appropriate XML files have to be available, this script will do a jobsub dry run to produce the appropriate xml files, fill this script as you would with jobsub.
+
+
+Now that all of the files are explained, I will run through the steps involved again to be clear:
+
+1. Make a folder where you want to run NAF jobs from
+2. Copy the nafsetup.sh script to this folder
+3. Type "source nafsetup.sh"
+4. Go to folder "Jobs"
+5. Edit the "MakeAllJobs.sh" file, changing the run numbers to match your run numbers
+6. Type "source MakeAllJobs.sh"
+7. Go to "XmlFiles"
+8. Open "MakeXmlFiles" and choose the appropriate analysis step and run numbers that you want to run over with your NAF submission
+9. Go to JobSubmission folder
+10. Type "./CreateSubmitJobs ANALYSISTYPE RUNRANGE QUEUE", replacing the caps words with the appropriate analysis step and run numbers, and where QUEUE is optional
+11. Then type "./SubmitJobs"
+12. After this has happened, you will see all your jobs being submitted, and once that is completed a table will appear showing the current status of your jobs.
+13. Press CTRL+C to get out of watching your jobs (this won't effect the running of the jobs)
+14. After all jobs are complete, you can look at the output for each individual job in the OutputLogs folder
+15. If any job failed or had error messages, these will be visible in the ErrorLogs folder. Be aware, if your code seg faults the error could be in either the output or the error files. Check both.
+
+For more information on how to use grid, please see bird.desy.de
+For more information on the scripts provided or if you get stuck, please post on the forum at eutelescope.desy.de

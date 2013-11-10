@@ -1,0 +1,11 @@
+./WriteJobFiles converter 1-10
+./WriteJobFiles clustering 1-10
+./WriteJobFiles filter 1-10
+./WriteJobFiles hitmaker 1-10
+./WriteJobFiles aligngbl 1-10
+./WriteJobFiles aligndaf 1-10
+./WriteJobFiles fitter 1-10
+./WriteJobFiles fittergbl 1-10
+./WriteJobFiles x0 1-10
+./WriteJobFiles FullChain 1-10
+./WriteJobFiles FullChainGBL 1-10

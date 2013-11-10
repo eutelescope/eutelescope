@@ -1,0 +1,6 @@
+rm *.zip* *.log* *.txt* *.his* *.res*
+rm ../ErrorLogs/*
+rm ../OutputLogs/*
+rm Run*.o*
+rm Run*.e*
+rm ../XmlFiles/*.xml
