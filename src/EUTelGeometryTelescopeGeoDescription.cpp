@@ -88,6 +88,34 @@ double EUTelGeometryTelescopeGeoDescription::siPlaneZRotation( int planeID ) {
     return -999.;
 }
 
+double EUTelGeometryTelescopeGeoDescription::siPlaneXSize( int planeID ) {
+    std::map<int,int>::iterator it;
+    it = _sensorIDtoZOrderMap.find(planeID);
+    if ( it != _sensorIDtoZOrderMap.end() ) return _siPlaneSizeX[ _sensorIDtoZOrderMap[ planeID ] ];
+    return -999.;
+}
+
+double EUTelGeometryTelescopeGeoDescription::siPlaneYSize( int planeID ) {
+    std::map<int,int>::iterator it;
+    it = _sensorIDtoZOrderMap.find(planeID);
+    if ( it != _sensorIDtoZOrderMap.end() ) return _siPlaneSizeY[ _sensorIDtoZOrderMap[ planeID ] ];
+    return -999.;
+}
+
+double EUTelGeometryTelescopeGeoDescription::siPlaneZSize( int planeID ) {
+    std::map<int,int>::iterator it;
+    it = _sensorIDtoZOrderMap.find(planeID);
+    if ( it != _sensorIDtoZOrderMap.end() ) return _siPlaneSizeZ[ _sensorIDtoZOrderMap[ planeID ] ];
+    return -999.;
+}
+
+double EUTelGeometryTelescopeGeoDescription::siPlaneMediumRadLen( int planeID ) {
+    std::map<int,int>::iterator it;
+    it = _sensorIDtoZOrderMap.find(planeID);
+    if ( it != _sensorIDtoZOrderMap.end() ) return _siPlaneRadLength[ _sensorIDtoZOrderMap[ planeID ] ];
+    return -999.;
+}
+
 TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneNormal( int planeID ) {
     std::map<int,int>::iterator it;
     it = _sensorIDtoZOrderMap.find(planeID);
@@ -161,6 +189,12 @@ _geoManager(0)
         _siPlaneXRotation.push_back(_siPlanesLayerLayout->getLayerRotationZY(iPlane)/180.*3.14159265359);
         _siPlaneYRotation.push_back(_siPlanesLayerLayout->getLayerRotationZX(iPlane)/180.*3.14159265359);
         _siPlaneZRotation.push_back(_siPlanesLayerLayout->getLayerRotationXY(iPlane)/180.*3.14159265359);
+        
+        _siPlaneSizeX.push_back(_siPlanesLayerLayout->getLayerSizeX(iPlane));
+        _siPlaneSizeY.push_back(_siPlanesLayerLayout->getLayerSizeY(iPlane));
+        _siPlaneSizeZ.push_back(_siPlanesLayerLayout->getLayerThickness(iPlane));
+        
+        _siPlaneRadLength.push_back(_siPlanesLayerLayout->getLayerRadLength(iPlane));
     }
 
     if (_siPlanesParameters->getSiPlanesType() == _siPlanesParameters->TelescopeWithDUT) {
@@ -216,6 +250,10 @@ EUTelGeometryTelescopeGeoDescription::~EUTelGeometryTelescopeGeoDescription() {
     delete _geoManager;
 }
 
+/**
+ * Initialise ROOT geometry objects from external .root file
+ * @param tgeofilename name of .root file
+ */
 void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( string tgeofilename ) {
 //    #ifdef USE_TGEO
     // get access to ROOT's geometry manager
@@ -226,6 +264,163 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( string tge
     }
     _geoManager->CloseGeometry();
 //    #endif //USE_TGEO
+}
+
+/**
+ * Initialise ROOT geometry objects from GEAR objects
+ * 
+ * @param geomName name of ROOT geometry object
+ * @param dumpRoot dump automatically generated ROOT geometry file for further inspection
+ */
+void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::string& geomName, bool dumpRoot = false ) {
+//    #ifdef USE_TGEO
+    // get access to ROOT's geometry manager
+    
+    _geoManager = new TGeoManager("Telescope", "v0.1");;
+    if( !_geoManager ) {
+        streamlog_out( ERROR3 ) << "Can't instantiate ROOT TGeoManager " << std::endl;
+        return;
+    }
+   
+    
+    // Create top world volume containing telescope/DUT geometry
+    
+    
+    // Create air mixture
+    // see http://pdg.lbl.gov/2013/AtomicNuclearProperties/HTML_PAGES/104.html
+    double air_density = 1.2e-3;         // g/cm^3
+    double air_radlen  = 36.62;          // g/cm^2
+    TGeoMixture* pMatAir = new TGeoMixture("AIR",3,air_density);
+    pMatAir->DefineElement(0, 14.007, 7.,  0.755267 );     //Nitrogen
+    pMatAir->DefineElement(1, 15.999, 8.,  0.231781 );     //Oxygen
+    pMatAir->DefineElement(2, 39.948, 18., 0.012827 );     //Argon
+    pMatAir->DefineElement(3, 12.011, 6.,  0.000124 );     //Carbon
+    pMatAir->SetRadLen( air_radlen );
+    // Medium: medium_World_AIR
+    TGeoMedium* pMedAir = new TGeoMedium("medium_World_AIR", 3, pMatAir );
+    
+    // The World is the 10 x 10m x 10m box filled with air mixture
+    Double_t dx,dy,dz;
+    dx = 5000.000000; // [mm]
+    dy = 5000.000000; // [mm]
+    dz = 5000.000000; // [mm]
+    TGeoShape *pBoxWorld = new TGeoBBox("Box_World", dx,dy,dz);
+    // Volume: volume_World
+    TGeoVolume* pvolumeWorld = new TGeoVolume("volume_World",pBoxWorld, pMedAir);
+    pvolumeWorld->SetLineColor(4);
+    pvolumeWorld->SetLineWidth(3);
+    pvolumeWorld->SetVisLeaves(kTRUE);
+
+   // Set top volume of geometry
+   gGeoManager->SetTopVolume( pvolumeWorld );
+   
+ 
+   
+   // Iterate over registered GEAR objects and construct their TGeo representation
+   
+   const Double_t PI = 3.141592653589793;
+   const Double_t DEG = 180./PI;
+   
+   double xc, yc, zc;   // volume center position 
+   double alpha, beta, gamma;
+   
+   IntVec::const_iterator itrPlaneId;
+   for ( itrPlaneId = _sensorIDVec.begin(); itrPlaneId != _sensorIDVec.end(); ++itrPlaneId ) {
+       
+       std::stringstream strId;
+       strId << *itrPlaneId;
+       
+       // Get sensor center position
+       xc = siPlaneXPosition( *itrPlaneId );
+       yc = siPlaneYPosition( *itrPlaneId );
+       zc = siPlaneZPosition( *itrPlaneId );
+       
+       // Get sensor orientation
+       alpha = siPlaneXRotation( *itrPlaneId ); // [rad]
+       beta  = siPlaneYRotation( *itrPlaneId ); // [rad]
+       gamma = siPlaneZRotation( *itrPlaneId ); // [rad]
+       
+       streamlog_out(WARNING3) << "WARNING: Not all angles are correctly set in ROOT object!" << std::endl;
+       
+       // Spatial translations of the sensor center
+       string stTranslationName = "matrixTranslationSensor";
+       stTranslationName.append( strId.str() );
+       TGeoTranslation* pMatrixTrans = new TGeoTranslation( stTranslationName.c_str(), xc, yc, zc );
+       
+       // Spatial rotation around sensor center
+       // TGeoRotation requires Euler angles in degrees
+       string stRotationName = "matrixRotationSensorX";
+       stRotationName.append( strId.str() );
+       TGeoRotation* pMatrixRotX = new TGeoRotation( stRotationName.c_str(), 0.,  alpha*DEG, 0.);                // around X axis
+       stRotationName = "matrixRotationSensorY";
+       stRotationName.append( strId.str() );
+       TGeoRotation* pMatrixRotY = new TGeoRotation( stRotationName.c_str(), 90., beta*DEG,  0.);                // around Y axis
+       stRotationName = "matrixRotationSensorZ";
+       stRotationName.append( strId.str() );
+       TGeoRotation* pMatrixRotZ = new TGeoRotation( stRotationName.c_str(), 0. , 0.,        gamma*DEG);         // around Z axis
+       
+       // Combined rotation in several steps
+       TGeoRotation* pMatrixRot = new TGeoRotation( *pMatrixRotX );
+       pMatrixRot->MultiplyBy( pMatrixRotY );
+       pMatrixRot->MultiplyBy( pMatrixRotZ );
+       
+       // Combined translation and orientation
+       TGeoCombiTrans* combi = new TGeoCombiTrans( *pMatrixTrans, *pMatrixRot );
+       
+       // Construction of sensor objects
+       
+       // Construct object medium. Required for radiation length determination
+
+       // assume SILICON, though all information except of radiation length is ignored
+       double a       = 28.085500;     
+       double z       = 14.000000;
+       double density = 2.330000;
+       double radl    = siPlaneMediumRadLen( *itrPlaneId );
+       double absl    = 45.753206;
+       string stMatName = "materialSensor";
+       stMatName.append( strId.str() );
+       TGeoMaterial* pMat = new TGeoMaterial( stMatName.c_str(), a, z, density, radl, absl );
+       pMat->SetIndex( 1 );
+       // Medium: medium_Sensor_SILICON
+       int numed   = 0;  // medium number
+       double par[8];
+       par[0]  = 0.000000; // isvol
+       par[1]  = 0.000000; // ifield
+       par[2]  = 0.000000; // fieldm
+       par[3]  = 0.000000; // tmaxfd
+       par[4]  = 0.000000; // stemax
+       par[5]  = 0.000000; // deemax
+       par[6]  = 0.000000; // epsil
+       par[7]  = 0.000000; // stmin
+       string stMedName = "mediumSensor";
+       stMedName.append( strId.str() );
+       TGeoMedium* pMed = new TGeoMedium( stMedName.c_str(), numed, pMat, par );
+       
+       // Construct object shape
+       // Shape: Box type: TGeoBBox
+       // TGeo requires half-width of box side
+       dx = siPlaneXSize( *itrPlaneId );
+       dy = siPlaneYSize( *itrPlaneId );
+       dz = siPlaneZSize( *itrPlaneId );
+       TGeoShape *pBoxSensor = new TGeoBBox( "BoxSensor", dx, dy, dz );
+       // Volume: volume_Sensor1
+       
+       // Geometry navigation package requires following names for objects that have an ID
+       // name:ID
+       string stVolName = "volume_SensorID:";
+       stVolName.append( strId.str() );
+       TGeoVolume* pvolumeSensor = new TGeoVolume( stVolName.c_str(), pBoxSensor, pMed );
+       pvolumeSensor->SetVisLeaves( kTRUE );
+       pvolumeWorld->AddNode(pvolumeSensor, (*itrPlaneId), combi);
+   } // loop over sensorID
+   
+   
+    _geoManager->CloseGeometry();
+    
+    // Dump ROOT TGeo object into file
+    if ( dumpRoot ) _geoManager->Export( geomName.c_str() );
+//    #endif //USE_TGEO
+    return;
 }
 
 /** Determine id of the sensor in which point is locate

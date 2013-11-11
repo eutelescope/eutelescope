@@ -88,6 +88,18 @@ namespace eutelescope {
             /** Rotation around Z axis of global coordinate frame */
             double siPlaneZRotation( int );
             
+            /** Sensor X side size */
+            double siPlaneXSize( int );
+            
+            /** Sensor Y side size */
+            double siPlaneYSize( int );
+            
+            /** Sensor Z side size */
+            double siPlaneZSize( int );
+            
+            /** Sensor medium radiation length */
+            double siPlaneMediumRadLen( int );
+            
             /** Plane normal vector (nx,ny,nz) */
             TVector3 siPlaneNormal( int );
             
@@ -119,6 +131,8 @@ namespace eutelescope {
              * @see ROOT TGeoManager::Import
              */
             void initializeTGeoDescription(std::string tgeofilename);
+            
+            void initializeTGeoDescription( std::string& geomName, bool dumpRoot );
 
             // Geometry operations
         public:
@@ -189,6 +203,18 @@ namespace eutelescope {
             
             /** Rotation around Z axis of global coordinate frame [rad]*/
             EVENT::DoubleVec _siPlaneZRotation;
+            
+            /** Sensor X side length [mm]*/
+            EVENT::DoubleVec _siPlaneSizeX;
+            
+            /** Sensor Y side length [mm]*/
+            EVENT::DoubleVec _siPlaneSizeY;
+            
+            /** Sensor Z side length [mm]*/
+            EVENT::DoubleVec _siPlaneSizeZ;
+            
+            /** Radiation length of the sensor [mm]*/
+            EVENT::DoubleVec _siPlaneRadLength;
 
             /** Number of planes including DUT */
             size_t _nPlanes;
