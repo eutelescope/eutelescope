@@ -4,14 +4,16 @@
 #########
 #########    Millipede output to lcio conversion 
 #########
-#########    Last change: 28.05.2013   Denys Lontkovskyi
+#########    change: 28.05.2013   Denys Lontkovskyi
 #########		 Introduce basic functionality
+#########    Last change: 11.10.2013   Denys Lontkovskyi
+#########		 Intoduce possibility to generate gear file
 ###################################################################
 #
 #	The script takes milipede steering files produced by 
 #	EUTelProcessorGBLTracking during alignment step and output
 #	of pede (mille.res) and converts alignment constants 
-#	into LCIO collection.
+#	into LCIO and/or GEAR collection.
 #
 #	NOTE: Steeting file must have comments in special format
 #	understood by pede2lcio executable. Be carefull with 
@@ -19,13 +21,12 @@
 #
 ###################################################################
 # Program constants 
-EXPECTED_ARGS=3
 E_BADARGS=65
 E_BADFILE=66
 
 # 
 function usage {
-  echo "Usage: $0 mille-steer.txt mille.res alignment.slcio"
+  echo "Usage: $0 mille-steer.txt mille.res alignment.slcio oldGear.xml newGear.xml"
   exit $E_BADARGS
 }
 
@@ -44,6 +45,12 @@ function is_file_milleout {
 	local file="$1"
 	[[ $file == *.res ]] && return 1 || return 0
 }
+
+function is_file_gear {
+        local file="$1"
+        [[ $file == *.xml ]] && return 1 || return 0
+}
+
 readonly -f usage
 
 ##################################################################
@@ -51,29 +58,31 @@ readonly -f usage
 ##################################################################
 
 # Check number of arguments supplied
-if [ $# -ne $EXPECTED_ARGS ]; then
+if !( [ $# -eq 3 ] || [ $# -eq 5 ] ); then
   usage
 fi
 
 steering_file=$1
 outres_file=$2
 lcio_file=$3
+oldgear_file=$4
+newgear_file=$5
 
-# Chech if supplied files exist
+# Check if supplied files exist
 if ( is_file_bad "$steering_file" )
 then
  echo "File $steering_file not found. Terminate..."
  exit $E_BADFILE
 fi
 
-# Chech extension of the first supplied file (require mille steering)
+# Check extension of the first supplied file (require mille steering)
 if ( is_file_millesteer "$steering_file" )
 then
  echo "File $steering_file in not a millepede steering file. Terminate..."
  exit $E_BADFILE
 fi
 
-# Chech extension of the first supplied file (require mille steering)
+# Check extension of the first supplied file (require mille steering)
 if ( is_file_milleout "$outres_file" )
 then
  echo "File $outres_file in not a millepede output file. Terminate..."
@@ -87,14 +96,31 @@ then
 fi
 
 # Merge MILLIPEDE steering and output files
-sort -g $steering_file > file1
-sort -g $outres_file   > file2
+sort -n $steering_file | grep '^[[:blank:]]*[[:digit:]]' > file1
+sort -n $outres_file   | grep '^[[:blank:]]*[[:digit:]]'   > file2
 join file1 file2 | grep '^[0-9]' | awk '{ printf "%-10s%-4s%-20s%-15s%-15s%-15s\n",$1,$5,$6,$7,$8,$11}' | tee out.pede2lcio
 
 # Convert to lcio collection file
-pede2lcio out.pede2lcio $lcio_file
-rm -f out.pede2lcio
-rm -f file1 file2
+if [ $# == 3 ]; then 
+ pede2lcio out.pede2lcio $lcio_file
+ rm -f out.pede2lcio
+ rm -f file1 file2
+fi
+
+# Convert to lcio collection file and new GEAR file
+if [ $# == 5 ]; then 
+
+ # Check extension of supplied old GEAR file
+ if ( is_file_gear "$oldgear_file" )
+ then
+  echo "File $oldgear_file in not a gear file. Terminate..."
+  exit $E_BADFILE
+ fi
+
+ pede2lcio -g out.pede2lcio $lcio_file $oldgear_file $newgear_file
+ rm -f out.pede2lcio
+ rm -f file1 file2
+fi
 
 # WARNING
 echo ""
