@@ -11,6 +11,13 @@
 #include <UTIL/LCTime.h>
 #include <IMPL/LCCollectionVec.h>
 
+// GEAR
+#include "gear/GearMgr.h"
+#include "gear/gearxml/GearXML.h"
+#include "gearimpl/Util.h"
+#include "gear/SiPlanesLayerLayout.h"
+#include "gear/SiPlanesParameters.h"
+
 // system includes
 #include <iostream>
 #include <fstream>
@@ -30,8 +37,50 @@ struct CollectionWriter {
         }
 } colWriter;
 
+void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, const map< int, eutelescope::EUTelAlignmentConstant* >& alignmentConstants ) {
+    
+    cout << "Reading " << oldGearfileName << endl;
+    cout << "GEAR file " << newGearfileName << " will be generated." << endl;
+    
+    gear::GearXML gearXML( oldGearfileName ) ;
+
+    gear::GearMgr* gearManager = gearXML.createGearMgr() ;
+    
+    if (!gearManager) {
+        cerr << "Cannot instantiate GEAR manager" << std::endl;
+        return;
+    }
+
+    // sensor-planes in geometry navigation:
+    gear::SiPlanesParameters* siPlanesParameters = const_cast<gear::SiPlanesParameters*> (&(gearManager->getSiPlanesParameters()));
+    gear::SiPlanesLayerLayout* siPlanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*> (&(siPlanesParameters->getSiPlanesLayerLayout()));
+
+    // update positions and orientations of the planes
+    // TODO: set appropriate new values for new GEAR file
+    
+    map< int, eutelescope::EUTelAlignmentConstant* >::const_iterator itrAlignmentConstant;
+    for (int iPlane = 0; iPlane < siPlanesLayerLayout->getNLayers(); iPlane++) {
+        int sensorID = siPlanesLayerLayout->getSensitiveID(iPlane);
+        if( ( itrAlignmentConstant = alignmentConstants.find( sensorID ) ) != alignmentConstants.end() ) {
+            cout << siPlanesLayerLayout->getLayerPositionX(iPlane) - (*itrAlignmentConstant).second->getXOffset() << endl;
+            cout << siPlanesLayerLayout->getLayerPositionY(iPlane) - (*itrAlignmentConstant).second->getYOffset() << endl;
+            cout << siPlanesLayerLayout->getLayerPositionZ(iPlane) - (*itrAlignmentConstant).second->getZOffset() << endl;
+            cout << ( siPlanesLayerLayout->getLayerRotationZY(iPlane) - (*itrAlignmentConstant).second->getAlpha() ) *180./3.14159265359 << endl;
+            cout << ( siPlanesLayerLayout->getLayerRotationZX(iPlane) - (*itrAlignmentConstant).second->getBeta()  ) *180./3.14159265359 << endl;
+            cout << ( siPlanesLayerLayout->getLayerRotationXY(iPlane) - (*itrAlignmentConstant).second->getGamma() ) *180./3.14159265359 << endl;
+        }
+    }
+
+    
+    cout << "Not implemented" << std::endl;
+//    gear::GearXML::createXMLFile( gearManager, newGearfileName );
+    
+    return;
+}
+
 int main( int argc, char ** argv ) {
 
+    
   auto_ptr< AnyOption > option( new AnyOption );
 
   string usageString = 
@@ -39,14 +88,16 @@ int main( int argc, char ** argv ) {
     "Eutelescope alignment constant converter\n"
     "\n"
     "This program is used to convert the output of pede into\n"
-    "a LCIO file containing alignment constants.\n"
+    "a LCIO and/or GEAR file containing alignment constants.\n"
     "\n"
-    "Usage: pede2lcio [options] conversion_file lciofile.slcio\n\n"
+    "Usage: pede2lcio [options] conversion_file lciofile.slcio [old GEAR file] [new GEAR file]\n\n"
     "-h --help       To print this help\n"
+    "-g --gear       To generate GEAR file"
     "\n";
 
   option->addUsage( usageString.c_str() );
   option->setFlag( "help", 'h');
+  option->setFlag( "gear", 'g');
 
   // process the command line arguments
   option->processCommandArgs( argc, argv );
@@ -56,12 +107,10 @@ int main( int argc, char ** argv ) {
     return 0;
   }
 
-  if ( ( option->getArgc() == 0 ) || 
-       ( option->getArgc() != 2 ) ) {
+  if ( !( ( option->getArgc() == 2 ) || ( option->getArgc() == 4 ) ) ) {
     option->printUsage();
     return 0;
   }
-
 
   string pedeFileName, lcioFileName;
   pedeFileName = option->getArgv(0);
@@ -72,11 +121,33 @@ int main( int argc, char ** argv ) {
     lcioFileName.append( ".slcio" );
   }
 
+  // check GEAR flag
+  string oldGearFileName, newGearFileName;
+  bool wantGEAR = false;
+  if ( option->getFlag('g') || option->getFlag( "gear" ) ) {
+      
+      cout << "Requested generation of GEAR" << endl;
+      
+    wantGEAR = true;
+    oldGearFileName = option->getArgv(2);
+    if ( oldGearFileName.rfind( ".xml", string::npos ) == string::npos ) {
+         oldGearFileName.append( ".xml" );
+    }
+    newGearFileName = option->getArgv(3);
+    if ( lcioFileName.rfind( ".xml", string::npos ) == string::npos ) {
+         lcioFileName.append( ".xml" );
+    }
+    
+    cout << oldGearFileName << " " << lcioFileName << endl;
+  }
+  
   cout << "Converting " << pedeFileName << " in " << lcioFileName << endl;
 
   // try to open the input file. This should be a text file
   ifstream pedeFile( pedeFileName.c_str(), ios::in );
 
+  map< int, eutelescope::EUTelAlignmentConstant* > constants_map;
+  
   if ( pedeFile.fail() ) {
 
     cerr << "Error opening the " << pedeFileName << endl;
@@ -110,8 +181,6 @@ int main( int argc, char ** argv ) {
     delete now;
 
     lcio::LCCollectionVec * constantsCollection = new lcio::LCCollectionVec( lcio::LCIO::LCGENERICOBJECT );
-
-    map< int, eutelescope::EUTelAlignmentConstant* > constants_map;
 
     vector< string > tokens;
     istringstream tokenizer;
@@ -185,6 +254,9 @@ int main( int argc, char ** argv ) {
 
     }
 
+    // Process GEAR output if requested
+    if ( wantGEAR ) prepareGEAR(oldGearFileName, newGearFileName, constants_map);
+    
     colWriter._constantsCollection = constantsCollection;
     for_each( constants_map.begin(), constants_map.end(), colWriter );
 
