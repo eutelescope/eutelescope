@@ -115,22 +115,22 @@ void WriteFile(vector< int > runs, string analysistype){
     file << "if [ -z \"$EUTELESCOPE\" ]; then source /nfs/dust/atlas/user/hamnett/ilcsoft/v01-17-02/Eutelescope/v00-08-03/build_env.sh; fi" << endl;
     if(analysistype == "FullChain"){
 //      file << "jobsub -c $EUTELESCOPE/jobsub/examples/X0/configNoDUTNEW.cfg -csv $EUTELESCOPE/jobsub/examples/X0/runs.csv converter  " << *i << endl;
-      file << "Marlin converter-" << numberextension.c_str() << *i << ".xml" << endl;
+      file << "Marlin ../XmlFiles/converter-" << numberextension.c_str() << *i << ".xml" << endl;
 //      file << "jobsub -c $EUTELESCOPE/jobsub/examples/X0/configNoDUTNEW.cfg -csv $EUTELESCOPE/jobsub/examples/X0/runs.csv clustering  " << *i << endl;
-      file << "Marlin clustering-" << numberextension.c_str() << *i << ".xml" << endl;
+      file << "Marlin ../XmlFiles/clustering-" << numberextension.c_str() << *i << ".xml" << endl;
 //      file << "jobsub -c $EUTELESCOPE/jobsub/examples/X0/configNoDUTNEW.cfg -csv $EUTELESCOPE/jobsub/examples/X0/runs.csv filter  " << *i << endl;
-      file << "Marlin filter-" << numberextension.c_str() << *i << ".xml" << endl;
+      file << "Marlin ../XmlFiles/filter-" << numberextension.c_str() << *i << ".xml" << endl;
 //      file << "jobsub -c $EUTELESCOPE/jobsub/examples/X0/configNoDUTNEW.cfg -csv $EUTELESCOPE/jobsub/examples/X0/runs.csv hitmaker  " << *i << endl;
-      file << "Marlin hitmaker-" << numberextension.c_str() << *i << ".xml" << endl;
+      file << "Marlin ../XmlFiles/hitmaker-" << numberextension.c_str() << *i << ".xml" << endl;
 //      file << "jobsub -c $EUTELESCOPE/jobsub/examples/X0/configNoDUTNEW.cfg -csv $EUTELESCOPE/jobsub/examples/X0/runs.csv aligndaf  " << *i << endl;
-      file << "Marlin aligndaf-" << numberextension.c_str() << *i << ".xml" << endl;
+      file << "Marlin ../XmlFiles/aligndaf-" << numberextension.c_str() << *i << ".xml" << endl;
 //      file << "jobsub -c $EUTELESCOPE/jobsub/examples/X0/configNoDUTNEW.cfg -csv $EUTELESCOPE/jobsub/examples/X0/runs.csv fitter  " << *i << endl;
-      file << "Marlin fitter-" << numberextension.c_str() << *i << ".xml" << endl;
+      file << "Marlin ../XmlFiles/fitter-" << numberextension.c_str() << *i << ".xml" << endl;
 //      file << "jobsub -c $EUTELESCOPE/jobsub/examples/X0/configNoDUTNEW.cfg -csv $EUTELESCOPE/jobsub/examples/X0/runs.csv x0  " << *i << endl;
-      file << "Marlin x0-" << numberextension.c_str() << *i << ".xml" << endl;
+      file << "Marlin ../XmlFiles/x0-" << numberextension.c_str() << *i << ".xml" << endl;
     } else{
 //      file << "jobsub -c $EUTELESCOPE/jobsub/examples/X0/configNoDUTNEW.cfg -csv $EUTELESCOPE/jobsub/examples/X0/runs.csv  " << analysistype.c_str() << " " << *i << endl;
-      file << "Marlin " << analysistype.c_str() << "-" << numberextension.c_str() << *i << ".xml" << endl;
+      file << "Marlin ../XmlFiles/" << analysistype.c_str() << "-" << numberextension.c_str() << *i << ".xml" << endl;
     }
     file.close();
   }   
