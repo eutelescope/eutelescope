@@ -29,6 +29,9 @@
 
 // aida includes <.h>
 #include <marlin/AIDAProcessor.h>
+#include <AIDA/IAnalysisFactory.h>
+#include <AIDA/ITreeFactory.h>
+#include <AIDA/ITree.h>
 #include <AIDA/ITupleFactory.h>
 
 // marlin includes ".h"
@@ -68,7 +71,7 @@ using namespace marlin ;
 using namespace eutelescope;
 
 // definition of static members mainly used to name histograms
-std::string CMSPixelClusterTuple::_ClusterTupleName  = "EUCluster";
+std::string CMSPixelClusterTuple::_ClusterTupleName  = "CMSCluster";
 
 
 CMSPixelClusterTuple::CMSPixelClusterTuple() : Processor("CMSPixelClusterTuple") {
@@ -249,7 +252,6 @@ void CMSPixelClusterTuple::processEvent( LCEvent * event ) {
   _nEvt ++ ;
   _evtNr = event->getEventNumber();
 
-
   if(debug)message<DEBUG5> ( log() << "Processing record " << _nEvt << " == event " << _evtNr );
 
   LCCollectionVec* col;
@@ -271,62 +273,80 @@ void CMSPixelClusterTuple::processEvent( LCEvent * event ) {
 
   if(debug)message<DEBUG5> ( log() << "Total of " << nCluster << " clusters in input collection " );
 
+  // _ClusterTuple->fill(0,_runNr);
+  // _ClusterTuple->fill(1,_evtNr);
+  // _ClusterTuple->fill(2,nCluster);
+
+  // AIDA::ITuple *aCluster = _ClusterTuple->getTuple(3);
   for(int iclu=0; iclu< nCluster ; iclu++) {//loop over clusters
-      TrackerPulseImpl * pulse = dynamic_cast<TrackerPulseImpl*>( col->getElementAt(iclu) );
-      TrackerDataImpl * cluster = dynamic_cast<TrackerDataImpl*>( pulse->getTrackerData() );
+     TrackerPulseImpl * pulse = dynamic_cast<TrackerPulseImpl*>( col->getElementAt(iclu) );
+     TrackerDataImpl * cluster = dynamic_cast<TrackerDataImpl*>( pulse->getTrackerData() );
+     
+     int sensorID = ( static_cast<int> ( cellDecoder(pulse)["sensorID"] ));
+     if(debug)message<DEBUG5> ( log() << "SensorID " << sensorID );
+     ClusterType type = static_cast<ClusterType> ( static_cast<int> (cellDecoder( pulse )["type"]) );
+     eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelSimpleSparsePixel > *pixelCluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelSimpleSparsePixel >(cluster);	
 
-      int sensorID = ( static_cast<int> ( cellDecoder(pulse)["sensorID"] ));
-      if(debug)message<DEBUG5> ( log() << "SensorID " << sensorID );
-      ClusterType type = static_cast<ClusterType> ( static_cast<int> (cellDecoder( pulse )["type"]) );
-      eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelSimpleSparsePixel > *pixelCluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelSimpleSparsePixel >(cluster);	
-
-
-
-      int size = pixelCluster->size();
-      eventCounterVec[ sensorID ] += size;
-      noOfClusters[ sensorID ]++;
+     int size = pixelCluster->size();
+     eventCounterVec[ sensorID ] += size;
+     noOfClusters[ sensorID ]++;
       
-      int xSize, ySize;
-      pixelCluster->getClusterSize(xSize,ySize);
+     int xSize, ySize;
+     pixelCluster->getClusterSize(xSize,ySize);
 
-      if(debug)message<DEBUG5> ( log() << "Cluster size (x,y) " << size << " (" << xSize << "," << ySize << ")" );
+     if(debug)message<DEBUG5> ( log() << "Cluster size (x,y) " << size << " (" << xSize << "," << ySize << ")" );
 
-  // Fill n-tuple
+     // Fill n-tuple
+     // aCluster->fill(0,sensorID);
 
-      _ClusterTuple->fill(0,_nEvt);
-      _ClusterTuple->fill(1,_runNr);
-      _ClusterTuple->fill(2,_evtNr);
+     // aCluster->fill(1,size);
+     // aCluster->fill(2,xSize);
+     // aCluster->fill(3,ySize);
 
-      _ClusterTuple->fill(3,sensorID);
+     int xSeed, ySeed;
+     pixelCluster->getCenterCoord(xSeed, ySeed);
+     // aCluster->fill(4,xSeed);
+     // aCluster->fill(5,ySeed);
+     
+     // aCluster->fill(6,pixelCluster->getTotalCharge());
 
-      _ClusterTuple->fill(4,size);
-      _ClusterTuple->fill(5,xSize);
-      _ClusterTuple->fill(6,ySize);
-      _ClusterTuple->fill(7,pixelCluster->getTotalCharge());
+     // AIDA::ITuple *aPixel = aCluster->getTuple(7);
+     for(int iPix=0; iPix<size; iPix++) {
+        EUTelSimpleSparsePixel Pixel;
+        pixelCluster->getSparsePixelAt(iPix, &Pixel);
 
-      int xSeed, ySeed;
-      pixelCluster->getCenterCoord(xSeed, ySeed);
-      _ClusterTuple->fill(8,xSeed);
-      _ClusterTuple->fill(9,ySeed);
+        int icol = 0;
+        _ClusterTuple->fill(icol++,_nEvt);
+        _ClusterTuple->fill(icol++,_runNr);
+        _ClusterTuple->fill(icol++,_evtNr);
 
-      // for(int iPix=0; iPix<size; iPix++) {
-      //    EUTelSimpleSparsePixel Pixel;
-      //    pixelCluster->getSparsePixelAt(iPix, &Pixel);
-      //    icol=11+sensorID*11;
-      //    if(debug)message<DEBUG5> ( log() << "  icol = " << icol );
-      //    _ClusterTuple->fill(icol++,Pixel.getXCoord());
-      //    _ClusterTuple->fill(icol++,Pixel.getYCoord());
-      // }
+        _ClusterTuple->fill(icol++,iclu);
+        _ClusterTuple->fill(icol++,sensorID);
 
+        _ClusterTuple->fill(icol++,size);
+        _ClusterTuple->fill(icol++,xSize);
+        _ClusterTuple->fill(icol++,ySize);
 
-      if(debug)message<DEBUG5> ( log() << "nEvt, runNr, evtNr " << _nEvt << ", " << _runNr << ", " << _evtNr );
-      
-      _ClusterTuple->addRow();
+        _ClusterTuple->fill(icol++,xSeed);
+        _ClusterTuple->fill(icol++,ySeed);
+        _ClusterTuple->fill(icol++,pixelCluster->getTotalCharge());
 
+        _ClusterTuple->fill(icol++,iPix);
+        _ClusterTuple->fill(icol++,Pixel.getXCoord());
+        _ClusterTuple->fill(icol++,Pixel.getYCoord());
+        _ClusterTuple->fill(icol++,Pixel.getSignal());
 
+        _ClusterTuple->addRow();
+        // aPixel->fill(0,Pixel.getXCoord());
+        // aPixel->fill(1,Pixel.getYCoord());
+        // aPixel->fill(2,Pixel.getSignal());
+        // aPixel->addRow();
+     }
+     
+     // aCluster->addRow();
 
   }//loop over clusters
-
+  // _ClusterTuple->addRow();
 
   return;
 }
@@ -371,6 +391,8 @@ void CMSPixelClusterTuple::bookHistos()
   _columnNames.push_back("EvtNr");
   _columnType.push_back("int");
 
+  _columnNames.push_back("clusterID");
+  _columnType.push_back("int");
   _columnNames.push_back("sensorID");
   _columnType.push_back("int");
   _columnNames.push_back("clusterSize");
@@ -379,47 +401,26 @@ void CMSPixelClusterTuple::bookHistos()
   _columnType.push_back("int");
   _columnNames.push_back("clusterSizeY");
   _columnType.push_back("int");
-  _columnNames.push_back("clusterCharge");
-  _columnType.push_back("double");
   _columnNames.push_back("cPosX");
-  _columnType.push_back("double");
+  _columnType.push_back("int");
   _columnNames.push_back("cPosY");
-  _columnType.push_back("double");
+  _columnType.push_back("int");
+  _columnNames.push_back("clusterCharge");
+  _columnType.push_back("float");
+  _columnNames.push_back("pixelID");
+  _columnType.push_back("int");
+  _columnNames.push_back("pPosX");
+  _columnType.push_back("int");
+  _columnNames.push_back("pPosY");
+  _columnType.push_back("int");
+  _columnNames.push_back("pixelCharge");
+  _columnType.push_back("float");
 
-  // std::vector<std::string> _cluVarName;
-  // std::vector<std::string> _cluVarType;
-  // _cluVarName.push_back("nClusters");     _cluVarType.push_back("int");
-  // _cluVarName.push_back("clusterSize");   _cluVarType.push_back("int");
-  // _cluVarName.push_back("clusterSizeX");  _cluVarType.push_back("int");
-  // _cluVarName.push_back("clusterSizeY");  _cluVarType.push_back("int");
-  // _cluVarName.push_back("clusterCharge"); _cluVarType.push_back("double");
-  // _cluVarName.push_back("cPosX");         _cluVarType.push_back("double");
-  // _cluVarName.push_back("cPosY");         _cluVarType.push_back("double");
-
-  // std::vector<std::string> _pixVarName;
-  // std::vector<std::string> _pixVarType;
-  // _pixVarName.push_back("nPixelsHit");    _pixVarType.push_back("int");
-  // _pixVarName.push_back("pPosX");         _pixVarType.push_back("int");
-  // _pixVarName.push_back("pPosY");         _pixVarType.push_back("int");
-  // _pixVarName.push_back("pixelCharge");   _pixVarType.push_back("double");
-
-
-  // for(int ipl=0; ipl<_nTelPlanes;ipl++) {
-  //    for(unsigned ivar=0; ivar<_cluVarName.size();ivar++) {
-  //       stringstream ss;
-  //       ss << _cluVarName[ivar] << "_" << ipl;
-  //       _columnNames.push_back(ss.str());
-  //       _columnType.push_back(_cluVarType[ivar]);
-  //     }
-  //    for(unsigned ivar=0; ivar<_pixVarName.size();ivar++) {
-  //       stringstream ss;
-  //       ss << _pixVarName[ivar] << "_" << ipl;
-  //       _columnNames.push_back(ss.str());
-  //       _columnType.push_back(_pixVarType[ivar]);
-  //     }
-  // }
 
   _ClusterTuple=AIDAProcessor::tupleFactory(this)->create(_ClusterTupleName, _ClusterTupleName, _columnNames, _columnType, "");
+
+  //string columnString = "int RunNr = -1, EvtNr = -1; ITuple cluster = {int sensorID=-1, size=-1, widthX=-1, widthY=-1; double posX=-1., posY=-1, charge=-1.; ITuple pixel = {int pixelX, pixelY; double pixelCharge=-1.}";
+  //_ClusterTuple= AIDAProcessor::tupleFactory(this)->create(_ClusterTupleName, _ClusterTupleName, columnString, "");
 
 
   message<DEBUG5> ( log() << "Booking completed \n\n");
