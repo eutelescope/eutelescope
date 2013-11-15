@@ -410,9 +410,9 @@ void CMSPixelClusterTuple::bookHistos()
   _columnNames.push_back("pixelID");
   _columnType.push_back("int");
   _columnNames.push_back("pPosX");
-  _columnType.push_back("int");
+  _columnType.push_back("short");
   _columnNames.push_back("pPosY");
-  _columnType.push_back("int");
+  _columnType.push_back("short");
   _columnNames.push_back("pixelCharge");
   _columnType.push_back("float");
 
