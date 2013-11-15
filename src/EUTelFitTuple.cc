@@ -341,8 +341,6 @@ void EUTelFitTuple::processEvent( LCEvent * event ) {
   _evtNr        = event->getEventNumber();
   _tluTimeStamp = static_cast<long int> (event->getTimeStamp());
 
-  if(debug)message<DEBUG5> ( log() << "Processing record " << _nEvt << " == event " << _evtNr );
-
   LCCollection* col;
   try {
     col = event->getCollection( _inputColName ) ;
