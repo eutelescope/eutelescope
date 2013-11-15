@@ -215,6 +215,7 @@ namespace eutelescope {
     int _nEvt ;
     int _runNr;
     int _evtNr;
+    long int  _tluTimeStamp;
 
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)

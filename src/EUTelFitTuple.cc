@@ -128,6 +128,7 @@ void EUTelFitTuple::init() {
 
   _nRun = 0 ;
   _nEvt = 0 ;
+  _tluTimeStamp = 0 ;
 
 
   // check if the GEAR manager pointer is not null!
@@ -337,7 +338,10 @@ void EUTelFitTuple::processEvent( LCEvent * event ) {
   }
 
   _nEvt ++ ;
-  _evtNr = event->getEventNumber();
+  _evtNr        = event->getEventNumber();
+  _tluTimeStamp = static_cast<long int> (event->getTimeStamp());
+
+  if(debug)message<DEBUG5> ( log() << "Processing record " << _nEvt << " == event " << _evtNr );
 
   LCCollection* col;
   try {
@@ -490,13 +494,15 @@ void EUTelFitTuple::processEvent( LCEvent * event ) {
 
       // Fill n-tuple
 
-      _FitTuple->fill(0,_nEvt);
-      _FitTuple->fill(1,_runNr);
-      _FitTuple->fill(2,_evtNr);
-      _FitTuple->fill(3,fittrack->getNdf());
-      _FitTuple->fill(4,fittrack->getChi2());
+      int icol=0;
+      _FitTuple->fill(icol++,_nEvt);
+      _FitTuple->fill(icol++,_runNr);
+      _FitTuple->fill(icol++,_evtNr);
+      _FitTuple->fill(icol++,_tluTimeStamp); // new! TLU timestamp
+      _FitTuple->fill(icol++,nTrack); // new! TLU timestamp
+      _FitTuple->fill(icol++,fittrack->getNdf());
+      _FitTuple->fill(icol++,fittrack->getChi2());
 
-      int icol=5;
       for(int ipl=0; ipl<_nTelPlanes;ipl++)
         {
           _FitTuple->fill(icol++,_measuredX[ipl]);
@@ -654,6 +660,12 @@ void EUTelFitTuple::bookHistos()
   _columnType.push_back("int");
 
   _columnNames.push_back("EvtNr");
+  _columnType.push_back("int");
+
+  _columnNames.push_back("TLUtime");
+  _columnType.push_back("long int");
+
+  _columnNames.push_back("Track");
   _columnType.push_back("int");
 
   _columnNames.push_back("Ndf");
