@@ -1,4 +1,4 @@
-mkdir Errorlogs OutputLogs XmlFiles Jobs JobSubmission
+mkdir ErrorLogs OutputLogs XmlFiles Jobs JobSubmission
 cp $EUTELESCOPE/naf/.setupfiles/MakeAllJobs.sh Jobs/
 cp $EUTELESCOPE/naf/.setupfiles/CreateJobScripts.cc Jobs/
 cp $EUTELESCOPE/naf/.setupfiles/CLEANUP JobSubmission/
