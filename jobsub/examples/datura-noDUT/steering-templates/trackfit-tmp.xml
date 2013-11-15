@@ -57,11 +57,11 @@
   <!--Initialization of a data file handler-->
   <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
   <!--Initialization of a simple conditions file handler-->
-  <parameter name="SimpleFileHandler" type="StringVec"> refhit ./output/database/run000097-referencehit.slcio referenceHit </parameter>
-  <parameter name="SimpleFileHandler" type="StringVec"> refhitPre ./output/database/run000097-referencehit.slcio referenceHit </parameter>
-  <parameter name="SimpleFileHandler" type="StringVec"> refhitFinal ./output/database/run000097-referencehit.slcio referenceHit </parameter>
-  <parameter name="SimpleFileHandler" type="StringVec"> prealign ./output/database/run000097-prealignment.slcio alignment </parameter>
-  <parameter name="SimpleFileHandler" type="StringVec"> alignment ./output/database/run000097-alignment.slcio alignment </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> refhit @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> refhitPre @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> refhitFinal @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> prealign @DatabasePath@/@FilePrefix@-prealignment.slcio alignment </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> alignment @DatabasePath@/@FilePrefix@-alignment.slcio alignment </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
