@@ -261,10 +261,10 @@ void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate* track){
     _fitpointvec->push_back(fitpoint);
     fittrack->addHit(fitpoint);
 
-/* this code causes seg fault ....
+/* this code causes seg fault .... perhaps the whole fragment should be removed ... ? 
     //At this point, we have a fitted hit position called fitpoint, here we will add the clustering information
     streamlog_out(DEBUG0) << "Track hit is at position " << fitpoint->getPosition()[0] << ", " << fitpoint->getPosition()[1] << ", " << fitpoint->getPosition()[2] << endl;
-/*    streamlog_out(DEBUG0) << "_clusterVec contains: " << _clusterVec->getNumberOfElements() << endl;
+    streamlog_out(DEBUG0) << "_clusterVec contains: " << _clusterVec->getNumberOfElements() << endl;
     for(int i = 0; i < _clusterVec->getNumberOfElements(); ++i){
       TrackerPulse * cluster = dynamic_cast< TrackerPulse* >(_clusterVec->getElementAt(i));
       streamlog_out(DEBUG0) << "Element " << i << " has CellID1: " << cluster->getCellID1() << endl;
