@@ -21,8 +21,11 @@
  
    # only needed in the last step to test the results of EUTel against a set of reference files:
     SET( stattestdir "$ENV{EUTELESCOPE}/test/stattest/bin" )
-    SET( datadir "/afs/desy.de/group/telescopes/EutelTestData/TestExampleDaturaNoDUT" )
-    SET( referencedatadir "/afs/desy.de/group/telescopes/EutelTestData/TestExampleDaturaNoDUT" )
+#    SET( datadir "/afs/desy.de/group/telescopes/EutelTestData/TestExampleDaturaNoDUT" )
+#    SET( referencedatadir "/afs/desy.de/group/telescopes/EutelTestData/TestExampleDaturaNoDUT" )
+    SET( datadir "/home/ilcsoft/EutelTestData/TestExampleDaturaNoDUT" )
+    SET( referencedatadir "/home/ilcsoft/EutelTestData/TestExampleDaturaNoDUT" )
+
 
     SET( executable python -tt ${jobsubdir}/jobsub.py )
     # options: use config, use csv, change native path to central AFS location, reduce number of events to 200k
@@ -237,6 +240,37 @@
 
 #
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#  STEP 3b: HITLOCAL : hitmaker where hits stay in the sensor local frame system
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#
+    ADD_TEST( NAME TestJobsubExampleDaturaNoDUTHitlocalRun 
+              WORKING_DIRECTORY ${testdir} 
+	      COMMAND ${executable} ${jobsubOptions} hitlocal ${RunNr} )
+    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTHitlocalRun PROPERTIES
+        # test will pass if ALL of the following expressions are matched
+        PASS_REGULAR_EXPRESSION "${jobsub_pass_regex_1}.*${marlin_pass_regex_1}.*${jobsub_pass_regex_2}"
+        # test will fail if ANY of the following expressions is matched 
+        FAIL_REGULAR_EXPRESSION "${generic_fail_regex}"
+	# test depends on earlier steps
+	DEPENDS TestJobsubExampleDaturaNoDUTClusteringOutput
+	)
+    # now check if the expected output files exist and look ok
+    ADD_TEST( TestJobsubExampleDaturaNoDUTHitlocalLog sh -c "[ -f ${testdir}/output/logs/hitlocal-${PaddedRunNr}.zip ]" )
+    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTHitlocalLog PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTHitlocalRun)
+
+    ADD_TEST( TestJobsubExampleDaturaNoDUTHitlocalHisto sh -c "[ -f ${testdir}/output/histograms/run${PaddedRunNr}-hitlocal.root ]" )
+    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTHitlocalHisto PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTHitlocalRun)
+
+    ADD_TEST( TestJobsubExampleDaturaNoDUTHitlocalPrealign sh -c "[ -f ${testdir}/output/database/run${PaddedRunNr}-prealignment.slcio ] && lcio_check_col_elements --expelements 6  alignment  ${testdir}/output/database/run${PaddedRunNr}-prealignment.slcio" )
+    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTHitlocalPrealign PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTHitlocalRun)
+
+    # we expect an average hit number of 23 for run 97 (wide geometry) using the example configuration
+    ADD_TEST( TestJobsubExampleDaturaNoDUTHitlocalOutput sh -c "[ -f ${testdir}/output/lcio/run${PaddedRunNr}-hitlocal.slcio ] && lcio_check_col_elements -a --expelements 23 hit ${testdir}/output/lcio/run${PaddedRunNr}-hitlocal.slcio" )
+    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTHitlocalOutput PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTHitlocalRun)
+
+
+#
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #  STEP 6: GBL TRACKSEARCH
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #
@@ -249,7 +283,7 @@
          # test will fail if ANY of the following expressions is matched 
          FAIL_REGULAR_EXPRESSION "${generic_fail_regex}"
 	# test depends on earlier steps
-	DEPENDS TestJobsubExampleDaturaNoDUTHitmakerRun
+	DEPENDS TestJobsubExampleDaturaNoDUTHitlocalRun
 	)
     # now check if the expected output files exist and look ok
     ADD_TEST( TestJobsubExampleDaturaNoDUTGblTrkSrchLog sh -c "[ -f ${testdir}/output/logs/tracksearchHelix-${PaddedRunNr}.zip ]" )
@@ -278,7 +312,7 @@
         # test will fail if ANY of the following expressions is matched 
         FAIL_REGULAR_EXPRESSION "${generic_fail_regex}"
 	# test depends on earlier steps
-	DEPENDS TestJobsubExampleDaturaNoDUTHitmakerRun
+	DEPENDS TestJobsubExampleDaturaNoDUTHitlocalRun
 	)
     # now check if the expected output files exist and look ok
     ADD_TEST( TestJobsubExampleDaturaNoDUTGblAlignLog sh -c "[ -f ${testdir}/output/logs/aligngbl-${PaddedRunNr}.zip ]" )
@@ -308,7 +342,7 @@
         # test will fail if ANY of the following expressions is matched 
         FAIL_REGULAR_EXPRESSION "${generic_fail_regex}"
 	# test depends on earlier steps
-	DEPENDS TestJobsubExampleDaturaNoDUTHitmakerRun
+	DEPENDS TestJobsubExampleDaturaNoDUTHitlocalRun
 	)
     # now check if the expected output files exist and look ok
     ADD_TEST( TestJobsubExampleDaturaNoDUTGblFitLog sh -c "[ -f ${testdir}/output/logs/trackgbl-${PaddedRunNr}.zip ]" )
@@ -449,6 +483,14 @@
               WORKING_DIRECTORY ${testdir} 
 	      COMMAND ${executable} ${jobsubMemCheckOptions} fitter ${RunNr} )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTFitterRunMemCheck PROPERTIES
+        PASS_REGULAR_EXPRESSION "${jobsub_pass_regex_1}.*${marlin_pass_regex_1}.*${jobsub_pass_regex_2}"
+        FAIL_REGULAR_EXPRESSION "${generic_fail_regex}"
+	)
+
+    ADD_TEST( NAME TestJobsubExampleDaturaNoDUTHitlocalRunMemCheck
+              WORKING_DIRECTORY ${testdir} 
+	      COMMAND ${executable} ${jobsubMemCheckOptions} hitlocal ${RunNr} )
+    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTHitlocalRunMemCheck PROPERTIES
         PASS_REGULAR_EXPRESSION "${jobsub_pass_regex_1}.*${marlin_pass_regex_1}.*${jobsub_pass_regex_2}"
         FAIL_REGULAR_EXPRESSION "${generic_fail_regex}"
 	)
