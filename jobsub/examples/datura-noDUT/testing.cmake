@@ -242,7 +242,7 @@
 #
     ADD_TEST( NAME TestJobsubExampleDaturaNoDUTGblTrkSrchRun 
               WORKING_DIRECTORY ${testdir} 
-	      COMMAND ${executable} ${jobsubOptions} tracksearch ${RunNr} )
+	      COMMAND ${executable} ${jobsubOptions} tracksearchHelix ${RunNr} )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTGblTrkSrchRun PROPERTIES
         # test will pass if ALL of the following expressions are matched
         PASS_REGULAR_EXPRESSION "${jobsub_pass_regex_1}.*${marlin_pass_regex_1}.*${jobsub_pass_regex_2}"
@@ -252,10 +252,10 @@
 	DEPENDS TestJobsubExampleDaturaNoDUTHitmakerRun
 	)
     # now check if the expected output files exist and look ok
-    ADD_TEST( TestJobsubExampleDaturaNoDUTGblTrkSrchLog sh -c "[ -f ${testdir}/output/logs/tracksearch-${PaddedRunNr}.zip ]" )
+    ADD_TEST( TestJobsubExampleDaturaNoDUTGblTrkSrchLog sh -c "[ -f ${testdir}/output/logs/tracksearchHelix-${PaddedRunNr}.zip ]" )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTGblTrkSrchLog PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTGblTrkSrchRun)
 
-    ADD_TEST( TestJobsubExampleDaturaNoDUTGblTrkSrchHisto sh -c "[ -f ${testdir}/output/histograms/run${PaddedRunNr}-tracksearch.root ]" )
+    ADD_TEST( TestJobsubExampleDaturaNoDUTGblTrkSrchHisto sh -c "[ -f ${testdir}/output/histograms/run${PaddedRunNr}-tracksearchHelix.root ]" )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTGblTrkSrchHisto PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTGblTrkSrchRun)
 
     # we expect to see between 1 and 3 tracks in every event 
@@ -369,7 +369,7 @@
 	DEPENDS TestJobsubExampleDaturaNoDUTFitterRun
 	)
 
-    ADD_TEST( TestJobsubExampleDaturaNoDUTStatTestGblTrkSrch sh -c "PYTHONPATH=$ROOTSYS/lib:$PYTHONPATH ${executable} --cdash  -g${testdir}/output/stattest_report_tracksearch.pdf ${referencedatadir}/StatTestConf_DaturaNoDUTGblTrkSrch.qa ${testdir}/output/histograms/run${PaddedRunNr}-tracksearch.root ${referencedatadir}/run${PaddedRunNr}-tracksearch.root" )
+    ADD_TEST( TestJobsubExampleDaturaNoDUTStatTestGblTrkSrch sh -c "PYTHONPATH=$ROOTSYS/lib:$PYTHONPATH ${executable} --cdash  -g${testdir}/output/stattest_report_tracksearchHelix.pdf ${referencedatadir}/StatTestConf_DaturaNoDUTGblTrkSrch.qa ${testdir}/output/histograms/run${PaddedRunNr}-tracksearchHelix.root ${referencedatadir}/run${PaddedRunNr}-tracksearchHelix.root" )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTStatTestGblTrkSrch PROPERTIES
         # test will pass if ALL of the following expressions are matched
         PASS_REGULAR_EXPRESSION "${fit_pass_regex_1}"
@@ -455,7 +455,7 @@
 
     ADD_TEST( NAME TestJobsubExampleDaturaNoDUTGblTrkSrchRunMemCheck
               WORKING_DIRECTORY ${testdir} 
-	      COMMAND ${executable} ${jobsubMemCheckOptions} tracksearch ${RunNr} )
+	      COMMAND ${executable} ${jobsubMemCheckOptions} tracksearchHelix ${RunNr} )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTGblTrkSrchRunMemCheck PROPERTIES
         PASS_REGULAR_EXPRESSION "${jobsub_pass_regex_1}.*${marlin_pass_regex_1}.*${jobsub_pass_regex_2}"
         FAIL_REGULAR_EXPRESSION "${generic_fail_regex}"
