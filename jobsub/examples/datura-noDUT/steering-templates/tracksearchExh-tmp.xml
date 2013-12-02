@@ -18,7 +18,7 @@
    <execute>
       <processor name="AIDA"/>
       <processor name="PrintEventNumber"/>
-      <processor name="TrackSearch"/-->
+      <processor name="TrackSearch"/>
       <!-- processor name="GBLTrackFit"/ -->
       <processor name="Save"/>
    </execute>
