@@ -47,36 +47,52 @@ namespace eutelescope {
         bool EUTelExhaustiveTrackFinder::IsGoodCandidate( const EVENT::TrackerHitVec& trackCandidate ) {
             bool isGood = true;
 
+  
             // iterate over candidate's hits
             EVENT::TrackerHitVec::const_iterator itrPrevHit = trackCandidate.begin();
+            // previous hit
+                const int sensorIDPrev = Utility::GuessSensorID(  static_cast< IMPL::TrackerHitImpl* >(*itrPrevHit) );
+                const double* posPrevHit = (*itrPrevHit)->getPosition();
+                double posPrevHitGlob[] = {0.,0.,0.};
+                geo::gGeometry().local2Master( sensorIDPrev, posPrevHit, posPrevHitGlob);
+
+            const double zSpacing =  10.;   // [mm] rubinskiy 30-11-2013
+
             EVENT::TrackerHitVec::const_iterator itrHit;
             for ( itrHit = trackCandidate.begin(); itrHit != trackCandidate.end(); ++itrHit ) {
                 
-                const double zSpacing = 150.;   // [mm]
-                
-                // previous hit
-//                const int sensorIDPrev = Utility::GuessSensorID(  static_cast< IMPL::TrackerHitImpl* >(*itrPrevHit) );
-                const double* posPrevHit = (*itrPrevHit)->getPosition();
-//                double posPrevHitGlob[] = {0.,0.,0.};
-//                geo::gGeometry().local2Master( sensorIDPrev, posPrevHit, posPrevHitGlob);
-//                
+               
                 // current hit
                 const int sensorID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(*itrHit) );
                 const double* posHit     = (*itrHit)->getPosition();
-//                double posHitGlob[] = {0.,0.,0.};
-//                geo::gGeometry().local2Master( sensorID, posHit, posHitGlob );
+                double posHitGlob[] = {0.,0.,0.};
+                geo::gGeometry().local2Master( sensorID, posHit, posHitGlob );
                 
-                const double resX = posHit[ 0 ] - posPrevHit[ 0 ];
-                const double resY = posHit[ 1 ] - posPrevHit[ 1 ];
-                const double resZ = posHit[ 2 ] - posPrevHit[ 2 ];
+ //               const double resX = posHit[ 0 ] - posPrevHit[ 0 ];
+//                const double resY = posHit[ 1 ] - posPrevHit[ 1 ];
+//                const double resZ = posHit[ 2 ] - posPrevHit[ 2 ];
                 
-//                const double resX = posHitGlob[ 0 ] - posPrevHitGlob[ 0 ];
-//                const double resY = posHitGlob[ 1 ] - posPrevHitGlob[ 1 ];
-//                const double resZ = posHitGlob[ 2 ] - posPrevHitGlob[ 2 ];
+                const double resX = posHitGlob[ 0 ] - posPrevHitGlob[ 0 ];
+                const double resY = posHitGlob[ 1 ] - posPrevHitGlob[ 1 ];
+                const double resZ = posHitGlob[ 2 ] - posPrevHitGlob[ 2 ];
                 const double resR = resX*resX + resY*resY;
-                
+ 
                 const int numberAlongZ = geo::gGeometry().sensorIDtoZOrder( sensorID );
-                if ( numberAlongZ < 0 ) return false;
+              
+                streamlog_out(DEBUG1) <<  sensorIDPrev << " to " << sensorID << " resX: " << resX << 
+                  "  _residualsXMax[ "<< numberAlongZ << "]= "<< _residualsXMax[ numberAlongZ ] 
+                 << " resZ : " << resZ << " zSpacing : " << zSpacing <<std::endl;
+
+                streamlog_out(DEBUG1) <<  sensorIDPrev << " to " << sensorID << " resY: " << resY << 
+                  "  _residualsYMax[ "<< numberAlongZ << "]= "<< _residualsYMax[ numberAlongZ ] 
+                 << " resZ : " << resZ << " zSpacing : " << zSpacing <<std::endl;
+
+                streamlog_out(DEBUG1) <<  sensorIDPrev << " to " << sensorID << " resR: " << resR << 
+                  "  _distanceMaxVec[ "<< numberAlongZ << "]= "<< _distanceMaxVec[ numberAlongZ ] 
+                 << " resZ : " << resZ << " zSpacing : " << zSpacing <<std::endl;
+
+
+                if(  numberAlongZ < 0 ) return false;
                 if( _mode == 1 ) {
                     if( resX > _residualsXMax[ numberAlongZ ] * resZ / zSpacing ) {
                         isGood = false;
@@ -118,8 +134,11 @@ namespace eutelescope {
         }
         
         void EUTelExhaustiveTrackFinder::FindTracks( int allowedmissinghits,
-                                                     std::vector< EVENT::TrackerHitVec >& trackCandidates,
-                                                     std::vector< EVENT::TrackerHitVec>& allHitsArray ) {
+//                                                     EVENT::TrackVec& trackCandidates,
+//                                                     EVENT::TrackVec& allHitsArray ) {
+            
+                                                    std::vector< EVENT::TrackerHitVec >& trackCandidates,
+                                                    std::vector< EVENT::TrackerHitVec>& allHitsArray ) {
             
             const int nPlanes = geo::gGeometry().nPlanes();
             
@@ -133,8 +152,11 @@ namespace eutelescope {
                     comb = st.getCurrentCombination();
                     if( IsGoodCandidate( comb ) ) 
                         trackCandidates.push_back(comb);
+//                 std::cout << " comb size: " << comb.size() << " ";
+//for(int i=0;i<comb.size();i++) { std::cout<< comb[i] << " ";}
+//std::cout << " trackCandidates size: " << trackCandidates.size() << std::endl;
                 } while (st.incrementCurrentCombination());
-            }
+           }
             // if missing hits were allowed
             // sample possible combinations of planes with missing hits
             for( int missinghits = _nEmptyPlanes + 1; missinghits <= allowedmissinghits; ++missinghits ) {

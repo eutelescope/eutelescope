@@ -24,7 +24,8 @@ namespace eutelescope {
     EUTelTrackFitter::~EUTelTrackFitter() {
     }
 
-    void EUTelTrackFitter::SetTrackCandidates( const std::vector< EVENT::TrackerHitVec >& ) {
+    void EUTelTrackFitter::SetTrackCandidates( std::vector< EVENT::TrackerHitVec>& trackCandidates ) {
+//    void EUTelTrackFitter::SetTrackCandidates( const EVENT::TrackVec& ) {
 	return;
     }
 

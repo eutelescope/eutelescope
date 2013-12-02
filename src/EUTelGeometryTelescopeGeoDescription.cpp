@@ -340,8 +340,6 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::strin
        beta  = siPlaneYRotation( *itrPlaneId ); // [rad]
        gamma = siPlaneZRotation( *itrPlaneId ); // [rad]
        
-       streamlog_out(WARNING3) << "WARNING: Not all angles are correctly set in ROOT object!" << std::endl;
-       
        // Spatial translations of the sensor center
        string stTranslationName = "matrixTranslationSensor";
        stTranslationName.append( strId.str() );
@@ -399,9 +397,9 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::strin
        // Construct object shape
        // Shape: Box type: TGeoBBox
        // TGeo requires half-width of box side
-       dx = siPlaneXSize( *itrPlaneId );
-       dy = siPlaneYSize( *itrPlaneId );
-       dz = siPlaneZSize( *itrPlaneId );
+       dx = siPlaneXSize( *itrPlaneId ) / 2.;
+       dy = siPlaneYSize( *itrPlaneId ) / 2.;
+       dz = siPlaneZSize( *itrPlaneId ) / 2.;
        TGeoShape *pBoxSensor = new TGeoBBox( "BoxSensor", dx, dy, dz );
        // Volume: volume_Sensor1
        

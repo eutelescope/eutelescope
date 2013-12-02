@@ -10,6 +10,8 @@
 
 #include "EUTelGeometryTelescopeGeoDescription.h"
 
+#include "EUTelUtilityRungeKutta.h"
+
 #include "gear/gearimpl/Vector3D.h"
 
 // ROOT
@@ -18,7 +20,6 @@
 #include "TVectorD.h"
 #include "TMatrixD.h"
 #include "TMatrixDSym.h"
-#include "EUTelUtilityRungeKutta.h"
 #endif
 
 //LCIO
@@ -68,7 +69,7 @@ namespace eutelescope {
             _jacobianODE( 0 ){
                 // Initialise ODE integrators for eom and jacobian       
                 {
-                    _eomODE = new EOMODE(5);
+                    _eomODE = new eom::EOMODE(5);
                     _eomIntegrator->setRhs( _eomODE );
                     _eomIntegrator->setButcherTableau( new ButcherTableauDormandPrince );
                 }
@@ -102,7 +103,7 @@ namespace eutelescope {
             _jacobianODE( 0 ){
                 // Initialise ODE integrators for eom and jacobian       
                 {
-                    _eomODE = new EOMODE(5);
+                    _eomODE = new eom::EOMODE(5);
                     // _eomIntegrator integrator becomes the owner of _eomODE and ButcherTableauDormandPrince
                     _eomIntegrator->setRhs( _eomODE );
                     _eomIntegrator->setButcherTableau( new ButcherTableauDormandPrince );
@@ -176,7 +177,7 @@ namespace eutelescope {
                 EVENT::TrackerHit* closestHit = const_cast< EVENT::TrackerHit* > ( findClosestHit( state, newSensorID ) );
                 if ( closestHit ) {
                     const double distance = getResidual( state, closestHit ).Norm2Sqr( );
-                    const double distanceCut = getXYPredictionPrecision( state );
+                    const double distanceCut = dz/100.*getXYPredictionPrecision( state );
                     if ( distance > distanceCut ) {
                         streamlog_out ( DEBUG1 ) << "Closest hit is outside of search window." << std::endl;
                         streamlog_out ( DEBUG1 ) << "Skipping current plane." << std::endl;
@@ -250,7 +251,7 @@ namespace eutelescope {
         
         // Check validity of supplied hits
         if ( !_isHitsOK ) {
-            streamlog_out(ERROR1) << "Collection of hits is empty. Check supplied hits" << std::endl;
+            streamlog_out(WARNING1) << "Collection of hits is empty. Check supplied hits" << std::endl;
             _isReady = false;
             return _isReady;
         }
@@ -597,7 +598,7 @@ namespace eutelescope {
       streamlog_out(DEBUG2) << "EUTelKalmanFilter::getXYPredictionPrecision()" << std::endl;
       
       TMatrixDSym Ckkm1 = getTrackStateCov(ts);
-      double xyPrec = 0.2;//sqrt( Ckkm1[0][0]*Ckkm1[0][0] + Ckkm1[1][1]*Ckkm1[1][1] );
+      double xyPrec = _residualsRMax;//sqrt( Ckkm1[0][0]*Ckkm1[0][0] + Ckkm1[1][1]*Ckkm1[1][1] );
       
       streamlog_out(DEBUG0) << "Minimal combined UV resolution : " << xyPrec << std::endl;
       streamlog_out(DEBUG2) << "----------------------EUTelKalmanFilter::getXYPredictionPrecision()------------------------" << std::endl;
@@ -794,11 +795,11 @@ namespace eutelescope {
     
     /**
      * Get extrapolated position of the track in global coordinate system
-     * Extrapolation performed along the helix. Formulas are also valid for vanishing magnetic field.
+     * Formulas are also valid for vanishing magnetic field.
      * Calculation is based on numerical integration of equations of motion
      * 
      * @param ts track state
-     * @param s arc length
+     * @param dz propagation distance along z
      * @return 3d vector of coordinates in the global coordinate system
      */
     TVector3 EUTelKalmanFilter::getXYZfromDzNum( const EUTelTrackStateImpl* ts, double dz ) const {
@@ -823,8 +824,8 @@ namespace eutelescope {
         // Setup the equation
 	trackStateVec[0] = x0;
 	trackStateVec[1] = y0;
-        static_cast< EOMODE* >(_eomODE)->setInitValue( trackStateVec );
-        static_cast< EOMODE* >(_eomODE)->setBField( hVec );
+        static_cast< eom::EOMODE* >(_eomODE)->setInitValue( trackStateVec );
+        static_cast< eom::EOMODE* >(_eomODE)->setBField( hVec );
         
         // Integrate
         TVectorD result = _eomIntegrator->integrate( dz );
@@ -1241,13 +1242,13 @@ namespace eutelescope {
 	const double mm = 1000.;
         const double k = -0.299792458/mm*_beamQ*H;
         
-        const double pt  = p.Y()*p.Y() + p.Z()*p.Z();
+        const double pt  = sqrt(p.Y()*p.Y() + p.Z()*p.Z());
         
         const double om  =    _beamQ/( pt );
         const double d0  =    0.;               // d0 in the plane transverse to magnetic field vector
         const double z0  =    0.;               // z0 along the magnetic field
-        const double phi =    atan2( p.Z(), p.Y() );
-        const double tanlam = 0.;
+        const double phi =    atan2( p.Y(), p.Z() );
+        const double tanlam = p.X()/pt;
         
         const double chi2 = track->getChi2();
         LCIOtrack->setChi2( chi2 );

@@ -104,6 +104,9 @@ namespace eutelescope {
 
         // Necessary parameters
 
+        /** Beam charge in [e] */
+        double _qBeam;
+
         /** Beam energy in [GeV] */
         double _eBeam;
 
@@ -149,6 +152,15 @@ namespace eutelescope {
         /** Alignment plane ids*/
         IntVec _alignmentPlaneIds;
         
+        /** plane ids*/
+        IntVec _planeIds;
+ 
+        /** x Resolution of planes in AlignmentPlaneIds */
+        FloatVec _SteeringxResolutions;
+ 
+        /** y Resolution of planes in AlignmentPlaneIds */
+        FloatVec _SteeringyResolutions;
+
         /** Alignment X shift plane ids to be fixed */
         IntVec _fixedAlignmentXShfitPlaneIds;
         
@@ -248,6 +260,7 @@ namespace eutelescope {
         struct _histName {
             static string _chi2GblFitHistName;
             static string _probGblFitHistName;
+            static string _momentumGblFitHistName;
             static string _residGblFitHistName;
             static string _normResidGblFitHistName;
             static string _residGblFitHistNameX;

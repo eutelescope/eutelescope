@@ -144,6 +144,9 @@ namespace eutelescope {
         /** Maximal amount of tracks per event */
         int _maxNTracks;
         
+        /** Maximal distance in XY plane */
+        double _residualsRMax;
+        
         /** Beam energy in [GeV] */
         double _eBeam;
 

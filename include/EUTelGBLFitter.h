@@ -13,6 +13,8 @@
 // eutelescope includes ".h"
 #include "EUTelTrackFitter.h"
 #include "EUTelUtility.h"
+#include "EUTelUtilityRungeKutta.h"
+#include "EUTelEquationsOfMotion.h"
 
 // LCIO
 #include <IMPL/LCCollectionVec.h>
@@ -46,7 +48,9 @@ namespace eutelescope {
         explicit EUTelGBLFitter(std::string name);
         virtual ~EUTelGBLFitter();
 
-        void SetTrackCandidates(const std::vector< EVENT::TrackerHitVec >&);
+//        void SetTrackCandidates(const EVENT::TrackVec&);
+        void SetTrackCandidates( std::vector< EVENT::TrackerHitVec>& );
+
 
         /** Fit tracks */
         void FitTracks();
@@ -57,6 +61,14 @@ namespace eutelescope {
 
         inline Utility::AlignmentMode GetAlignmentMode() const {
             return _alignmentMode;
+        }
+
+        inline void SetBeamCharge(double beamQ) {
+            this->_beamQ = beamQ;
+        }
+
+        inline double GetBeamCharge() const {
+            return _beamQ;
         }
 
         inline void SetBeamEnergy(double beamE) {
@@ -86,7 +98,13 @@ namespace eutelescope {
         inline double GetChi2Cut() const {
             return _chi2cut;
         }
-        
+ 
+        void setParamterIdPlaneVec( const std::vector<int>& );
+ 
+        void setParamterIdXResolutionVec( const std::vector<float>& );
+
+        void setParamterIdYResolutionVec( const std::vector<float>& );
+       
         void setParamterIdXRotationsMap( const std::map<int, int>& );
         
         void setParamterIdYRotationsMap( const std::map<int, int>& );
@@ -99,6 +117,12 @@ namespace eutelescope {
         
         void setParamterIdXShiftsMap(const std::map<int, int>& );
         
+        const std::vector<  int>& getParamterIdPlaneVec() const;
+
+        const std::vector<  float>& getParamterIdXResolutionVec() const;
+
+        const std::vector<  float>& getParamterIdYResolutionVec() const;
+
         const std::map<int, int>& getParamterIdXRotationsMap() const;
         
         const std::map<int, int>& getParamterIdYRotationsMap() const;
@@ -123,6 +147,8 @@ namespace eutelescope {
 
     private:
         TMatrixD PropagatePar(  double, double, double, double, double, double, double );
+
+	TVectorD getXYZfromDzNum( double, double, double, double, double, double, double ) const;
         
         TMatrixD propagatePar(double);
 
@@ -153,8 +179,9 @@ namespace eutelescope {
                                 double, int, double, double, double, double, double );
         
     private:
-        std::vector< EVENT::TrackerHitVec > _trackCandidates;
-
+//        EVENT::TrackVec _trackCandidates;
+        std::vector< EVENT::TrackerHitVec> _trackCandidates;
+ 
         std::map< int, gbl::GblTrajectory* > _gblTrackCandidates;
 
         IMPL::LCCollectionVec *_fittrackvec;
@@ -165,6 +192,9 @@ namespace eutelescope {
 
 
     private:
+        /** Beam charge in [e] */
+        double _beamQ;
+
         /** Beam energy in [GeV] */
         double _eBeam;
 
@@ -182,6 +212,15 @@ namespace eutelescope {
         /** Milipede binary file handle */
         gbl::MilleBinary* _mille;
         
+        /** Parameter resolutions */
+        std::vector<int> _paramterIdPlaneVec;
+ 
+        /** Parameter resolutions */
+        std::vector< float> _paramterIdXResolutionVec;
+ 
+        /** Parameter resolutions */
+        std::vector< float> _paramterIdYResolutionVec;
+
         /** Parameter ids */
         std::map<int,int> _paramterIdXShiftsMap;
         
@@ -207,6 +246,12 @@ namespace eutelescope {
         
         /** Maximum allowed track 2hi2 value*/
         double _chi2cut;
+
+	/** ODE integrator for equations of motion */
+        EUTelUtilityRungeKutta* _eomIntegrator;
+
+	/** ODE for equations of motion */
+        ODE* _eomODE;
         
     };
 

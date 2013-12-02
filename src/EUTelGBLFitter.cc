@@ -92,7 +92,22 @@ namespace eutelescope {
     EUTelGBLFitter::~EUTelGBLFitter() {
     }
     
-    
+    void EUTelGBLFitter::setParamterIdPlaneVec( const std::vector<int>& vector)
+    {
+      _paramterIdPlaneVec = vector;
+    }
+ 
+    void EUTelGBLFitter::setParamterIdXResolutionVec( const std::vector<float>& vector)
+    {
+      _paramterIdXResolutionVec = vector;
+    }
+ 
+    void EUTelGBLFitter::setParamterIdYResolutionVec( const std::vector<float>& vector)
+    {
+      _paramterIdYResolutionVec = vector;
+    }
+       
+
     void EUTelGBLFitter::setParamterIdXRotationsMap( const std::map<int, int>& map ) {
         _paramterIdXRotationsMap = map;
     }
@@ -333,7 +348,7 @@ namespace eutelescope {
         return _parPropJac;
     }
         
-    void EUTelGBLFitter::SetTrackCandidates(const std::vector< EVENT::TrackerHitVec >& trackCandidates) {
+    void EUTelGBLFitter::SetTrackCandidates( std::vector< EVENT::TrackerHitVec>& trackCandidates ) {
         this->_trackCandidates = trackCandidates;
         return;
     }
@@ -802,6 +817,7 @@ namespace eutelescope {
 
         double p = _eBeam; // beam momentum
        
+//        EVENT::TrackVec::const_iterator itTrkCand;
         std::vector< EVENT::TrackerHitVec >::const_iterator itTrkCand;
         EVENT::TrackerHitVec::const_iterator itHit;
         for ( itTrkCand = _trackCandidates.begin(); itTrkCand != _trackCandidates.end(); ++itTrkCand) {

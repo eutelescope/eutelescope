@@ -13,6 +13,14 @@
 
 // lcio includes <.h>
 #include <IMPL/TrackerHitImpl.h>
+#include <IMPL/TrackImpl.h>
+
+
+// LCIO
+#include <IMPL/LCCollectionVec.h>
+#include <EVENT/LCCollection.h>
+
+
 
 // system includes <>
 #include <map>
@@ -68,6 +76,8 @@ namespace eutelescope {
         
         std::vector< EVENT::TrackerHitVec > _allHits;
         std::vector< EVENT::TrackerHitVec > _trackCandidates;
+//        EVENT::TrackVec  _trackCandidates;
+
 
     };
 

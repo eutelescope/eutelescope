@@ -174,7 +174,9 @@ void EUTelProcessorTrackingExhaustiveTrackSearch::init() {
     _nProcessedEvents = 0;
 
     // Getting access to geometry description
-    geo::gGeometry().initializeTGeoDescription(_tgeoFileName);
+//    geo::gGeometry().initializeTGeoDescription(_tgeoFileName);
+    std::string name("test.root");
+    geo::gGeometry().initializeTGeoDescription(name,false);
     
     // Check if the window size was properly initilised
     {

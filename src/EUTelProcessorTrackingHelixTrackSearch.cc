@@ -116,6 +116,11 @@ _aidaHistoMap1D() {
     registerOptionalParameter("MaxNTracksPerEvent", "Maximal number of track candidates to be found in events",
             _maxNTracks, static_cast<int> (100));
     
+    registerOptionalParameter("ResidualsRMax", "Maximal allowed distance between hits entering the recognition step "
+            "per 10 cm space between the planes. One value for each neighbor planes. "
+            "DistanceMax will be used for each pair if this vector is empty. Units are mm.",
+            _residualsRMax, static_cast<double> (0.4));
+    
     registerOptionalParameter("BeamEnergy", "Beam energy [GeV]", _eBeam, static_cast<double> (4.0));
 
     registerOptionalParameter("BeamCharge", "Beam charge [e]", _qBeam, static_cast<double> (-1));
@@ -150,8 +155,9 @@ void EUTelProcessorTrackingHelixTrackSearch::init() {
     _nProcessedEvents = 0;
 
     // Getting access to geometry description
-    geo::gGeometry().initializeTGeoDescription(_tgeoFileName);
-    
+//    geo::gGeometry().initializeTGeoDescription(_tgeoFileName);
+    std::string name("test.root");
+    geo::gGeometry().initializeTGeoDescription(name,false);
     // Instantiate track finder. This is a working horse of the processor.
     {
         streamlog_out(DEBUG) << "Initialisation of track finder" << std::endl;
@@ -163,6 +169,7 @@ void EUTelProcessorTrackingHelixTrackSearch::init() {
         }
 
         Finder->setAllowedMissingHits( _maxMissingHitsPerTrackCand );
+        Finder->setWindowSize( _residualsRMax );
         Finder->setBeamMomentum( _eBeam );
         Finder->setBeamCharge( _qBeam );
         Finder->setBeamMomentumUncertainty( _eBeamUncertatinty );
@@ -249,35 +256,37 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
         streamlog_out(DEBUG1) << "Event #" << _nProcessedEvents << std::endl;
         streamlog_out(DEBUG1) << "Initialising hits for _theFinder..." << std::endl;
         static_cast<EUTelKalmanFilter*>(_trackFitter)->setHits(allHitsVec);
-        static_cast<EUTelKalmanFilter*>(_trackFitter)->initialise();
-        streamlog_out(DEBUG1) << "Trying to find tracks..." << endl;
-        _trackFitter->FitTracks();        
-        streamlog_out(DEBUG1) << "Retrieving track candidates..." << endl;
-        vector< IMPL::TrackImpl* >& trackCandidates = static_cast<EUTelKalmanFilter*>(_trackFitter)->getTracks();
+        bool isReady = static_cast<EUTelKalmanFilter*>(_trackFitter)->initialise();
+        if ( isReady )  {
+            streamlog_out( DEBUG1 ) << "Trying to find tracks..." << endl;
+            _trackFitter->FitTracks( );
+            streamlog_out( DEBUG1 ) << "Retrieving track candidates..." << endl;
+            vector< IMPL::TrackImpl* >& trackCandidates = static_cast < EUTelKalmanFilter* > ( _trackFitter )->getTracks( );
 
-        const int nTracks = trackCandidates.size();
-        static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ _histName::_numberTracksCandidatesHistName ]) -> fill(nTracks);
-        streamlog_out(MESSAGE1) << "Event #" << _nProcessedEvents << endl;
-        streamlog_out(MESSAGE1) << "Track finder " << _trackFitter->GetName() << " found  " << nTracks << endl;
-        
-        int nHitsOnTrack = 0;
-        vector< IMPL::TrackImpl* >::const_iterator itrk;
-        for ( itrk = trackCandidates.begin() ; itrk != trackCandidates.end(); ++itrk ) {
-            const EVENT::TrackerHitVec& trkHits = (*itrk)->getTrackerHits();
-            nHitsOnTrack = trkHits.size();
-            EVENT::TrackerHitVec::const_iterator itTrkHits;
-            streamlog_out(DEBUG1) << "Track hits start:==============" << std::endl;
-            for ( itTrkHits = trkHits.begin() ; itTrkHits != trkHits.end(); ++itTrkHits ) {
-                const double* uvpos = (*itTrkHits)->getPosition();
-                streamlog_out(DEBUG1) << "Hit (id=" << (*itrk)->id() << ") local(u,v) coordinates: (" << uvpos[0] << "," << uvpos[1] << ")" << std::endl;
+            const int nTracks = trackCandidates.size( );
+            static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_numberTracksCandidatesHistName ] ) -> fill( nTracks );
+            streamlog_out( MESSAGE1 ) << "Event #" << _nProcessedEvents << endl;
+            streamlog_out( MESSAGE1 ) << "Track finder " << _trackFitter->GetName( ) << " found  " << nTracks << endl;
+
+            int nHitsOnTrack = 0;
+            vector< IMPL::TrackImpl* >::const_iterator itrk;
+            for ( itrk = trackCandidates.begin( ) ; itrk != trackCandidates.end( ); ++itrk ) {
+                const EVENT::TrackerHitVec& trkHits = ( *itrk )->getTrackerHits( );
+                nHitsOnTrack = trkHits.size( );
+                EVENT::TrackerHitVec::const_iterator itTrkHits;
+                streamlog_out( MESSAGE0 ) << "Track hits start:==============" << std::endl;
+                for ( itTrkHits = trkHits.begin( ) ; itTrkHits != trkHits.end( ); ++itTrkHits ) {
+                    const double* uvpos = ( *itTrkHits )->getPosition( );
+                    streamlog_out( MESSAGE0 ) << "Hit (id=" << ( *itrk )->id( ) << ") local(u,v) coordinates: (" << uvpos[0] << "," << uvpos[1] << ")" << std::endl;
+                }
+                streamlog_out( MESSAGE0 ) << "Track hits end:==============" << std::endl;
+                static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_numberOfHitOnTrackCandidateHistName ] ) -> fill( nHitsOnTrack );
             }
-            streamlog_out(DEBUG1) << "Track hits end:==============" << std::endl;
-            static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ _histName::_numberOfHitOnTrackCandidateHistName ]) -> fill(nHitsOnTrack);
-        }
 
-        // Write output collection
-        {
-            if ( nTracks > 0 ) addTrackCandidateToCollection1( evt, trackCandidates );
+            // Write output collection
+            {
+                if ( nTracks > 0 ) addTrackCandidateToCollection1( evt, trackCandidates );
+            }
         }
         _nProcessedEvents++;
 

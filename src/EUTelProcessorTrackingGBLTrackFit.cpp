@@ -69,6 +69,7 @@ using namespace eutelescope;
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 std::string EUTelProcessorTrackingGBLTrackFit::_histName::_chi2GblFitHistName = "chi2GblFit";
 std::string EUTelProcessorTrackingGBLTrackFit::_histName::_probGblFitHistName = "probGblFit";
+std::string EUTelProcessorTrackingGBLTrackFit::_histName::_momentumGblFitHistName = "momentumGblFit";
 std::string EUTelProcessorTrackingGBLTrackFit::_histName::_residGblFitHistName = "ResidualsGblFit";
 std::string EUTelProcessorTrackingGBLTrackFit::_histName::_normResidGblFitHistName = "NormResidualsGblFit";
 std::string EUTelProcessorTrackingGBLTrackFit::_histName::_residGblFitHistNameX = "ResidualsGblFit_x";
@@ -90,6 +91,7 @@ std::string EUTelProcessorTrackingGBLTrackFit::_histName::_kinkGblFitHistNameY =
 /** Default constructor */
 EUTelProcessorTrackingGBLTrackFit::EUTelProcessorTrackingGBLTrackFit() :
 Processor("EUTelProcessorTrackingGBLTrackFit"),
+_qBeam(-1),
 _eBeam(-1.),
 _alignmentMode(0),
 _mEstimatorType(),
@@ -104,6 +106,9 @@ _milleSteeringFilename("pede-steer.txt"),
 _milleResultFileName("millepede.res"),
 _pedeSteerAddCmds(),
 _alignmentPlaneIds(),
+_planeIds(),
+_SteeringxResolutions(),
+_SteeringyResolutions(),
 _fixedAlignmentXShfitPlaneIds(),
 _fixedAlignmentYShfitPlaneIds(),
 _fixedAlignmentZShfitPlaneIds(),
@@ -152,6 +157,8 @@ _aidaHistoMap2D()
     // Necessary processor parameters that define fitter settings
     registerProcessorParameter("BeamEnergy", "Beam energy [GeV]", _eBeam, static_cast<double> (4.0));
 
+    registerOptionalParameter("BeamCharge", "Beam charge [e]", _qBeam, static_cast<double> (-1));
+
     // Optional processor parameters that define finder settings
 
     // MILLEPEDE specific parameters
@@ -179,7 +186,12 @@ _aidaHistoMap2D()
     registerOptionalParameter("MilleMaxChi2Cut", "Maximum chi2 of a track candidate that goes into millepede", _maxChi2Cut, double(1000.));
 
     registerOptionalParameter("AlignmentPlanes", "Ids of planes to be used in alignment", _alignmentPlaneIds, IntVec());
-    
+ 
+    //
+    registerOptionalParameter("Planes", "Ids of planes to be used in alignment", _planeIds, IntVec());
+    registerOptionalParameter("xResolutionPlane", "x resolution of planes given in AlignmentPlanes", _SteeringxResolutions, FloatVec());
+    registerOptionalParameter("yResolutionPlane", "y resolution of planes given in AlignmentPlanes", _SteeringyResolutions, FloatVec());
+   
     // Fixed planes parameters
     
     registerOptionalParameter("FixedAlignmentPlanesXshift", "Ids of planes for which X shift will be fixed during millepede call", _fixedAlignmentXShfitPlaneIds, IntVec());
@@ -226,7 +238,9 @@ void EUTelProcessorTrackingGBLTrackFit::init() {
 
 
     // Getting access to geometry description
-    geo::gGeometry().initializeTGeoDescription(_tgeoFileName);
+//    geo::gGeometry().initializeTGeoDescription(_tgeoFileName);
+    std::string name("test.root");
+    geo::gGeometry().initializeTGeoDescription(name,false);
 
     // Instantiate millepede output. 
     {
@@ -274,6 +288,10 @@ void EUTelProcessorTrackingGBLTrackFit::init() {
         // Initialize GBL fitter
         EUTelGBLFitter* Fitter = new EUTelGBLFitter("GBLFitter");
         Fitter->SetAlignmentMode(alignmentMode);
+        Fitter->setParamterIdPlaneVec(_planeIds);
+        Fitter->setParamterIdXResolutionVec(_SteeringxResolutions);
+        Fitter->setParamterIdYResolutionVec(_SteeringyResolutions);
+
         Fitter->setParamterIdXShiftsMap(_xShiftsMap);
         Fitter->setParamterIdYShiftsMap(_yShiftsMap);
         Fitter->setParamterIdZShiftsMap(_zShiftsMap);
@@ -282,6 +300,7 @@ void EUTelProcessorTrackingGBLTrackFit::init() {
         Fitter->setParamterIdZRotationsMap(_zRotationsMap);
         Fitter->SetMilleBinary(_milleGBL);
         Fitter->SetBeamEnergy(_eBeam);
+        Fitter->SetBeamCharge(_qBeam);
         Fitter->SetChi2Cut(_maxChi2Cut);
         if (!_mEstimatorType.empty() ) Fitter->setMEstimatorType(_mEstimatorType);
         _trackFitter = Fitter;
@@ -384,7 +403,8 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
     // this will only be entered if the collection is available
     if (col != NULL) {
         streamlog_out(DEBUG2) << "EUTelProcessorTrackingGBLTrackFit" << endl;
-
+// trackCanidadtes type !!! rubinskiy 30-11-2013
+//        EVENT::TrackVec trackCandidates;
         vector < EVENT::TrackerHitVec > trackCandidates;
         for (int iCol = 0; iCol < col->getNumberOfElements(); iCol++) {
             TrackImpl* track = static_cast<TrackImpl*> (col->getElementAt(iCol));
@@ -396,6 +416,7 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
             }
 
             streamlog_out(DEBUG1) << "Track " << iCol << " nhits " << track->getTrackerHits().size() << endl;
+//            trackCandidates.push_back( track );
             trackCandidates.push_back(track->getTrackerHits());
         } //for ( int iCol = 0; iCol < col->getNumberOfElements() ; iCol++ )
 
@@ -412,12 +433,14 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
         streamlog_out(DEBUG1) << "N tracks found " << nTracks << endl;
 
         // for alignment nTracks == 1, for tracking nTracks>0
-        if ( _alignmentMode ? nTracks == 1 : nTracks >0 ) {
+        if ( nTracks >0 ) {
+//        if ( _alignmentMode ? nTracks == 1 : nTracks >0 ) {
             _trackFitter->SetTrackCandidates(trackCandidates);
             _trackFitter->FitTracks();
             //
             double chi2Trk = 0.;
             int ndfTrk = 0;
+            double p = 0.;
 
             IMPL::LCCollectionVec* fittrackvec;
             fittrackvec = static_cast<EUTelGBLFitter*> (_trackFitter)->GetFitTrackVec();
@@ -427,12 +450,14 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
             for (itFitTrack = fittrackvec->begin(); itFitTrack != fittrackvec->end(); ++itFitTrack) {
                 chi2Trk = static_cast<TrackImpl*> (*itFitTrack)->getChi2();
                 ndfTrk = static_cast<TrackImpl*> (*itFitTrack)->getNdf();
-
+                p = _qBeam * ( 1./static_cast<TrackImpl*> (*itFitTrack)->getOmega() );
                 static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ _histName::_chi2GblFitHistName ]) -> fill(chi2Trk);
-                static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ _histName::_probGblFitHistName ]) -> fill(TMath::Prob(chi2Trk, ndfTrk));
-
+                static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ _histName::_probGblFitHistName ]) -> fill( TMath::Prob(chi2Trk, ndfTrk) );
+//                std::cout  << "P= " << p << std::endl;
+                static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ _histName::_momentumGblFitHistName ]) -> fill(p);
             }
 
+		if ( chi2Trk < _maxChi2Cut ) {
             std::map< int, gbl::GblTrajectory* > gblTracks = static_cast < EUTelGBLFitter* > ( _trackFitter )->GetGblTrackCandidates( );
 
             const double um = 1000.;
@@ -443,7 +468,12 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
             //                gblTraj->printPoints(1);
             const std::map<long, int> gblPointLabel = static_cast < EUTelGBLFitter* > ( _trackFitter )->getHitId2GblPointLabel( );
 
-            EVENT::TrackerHitVec track = trackCandidates.front( );
+//front track ?? rubinskiy 30-11-2013 
+ //         const EVENT::TrackerHitVec& track = trackCandidates.front( )->getTrackerHits();
+
+           for(int itrack=0;itrack<nTracks;itrack++)
+           {
+           const EVENT::TrackerHitVec& track = trackCandidates[itrack]; // loop condition to have exactly one track !! ??
 
             // Fill histograms
             EVENT::TrackerHitVec::const_iterator itrHit;
@@ -468,7 +498,7 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
                 sstrNorm.str( std::string( ) );
                 sstr << _histName::_residGblFitHistNameY << planeID;
                 sstrNorm << _histName::_normResidGblFitHistNameY << planeID;
-                if ( planeID == 5 ) streamlog_out( DEBUG0 ) << planeID << " " << std::setw( 15 ) << std::setprecision( 5 ) << residual[1] << std::setw( 15 ) << std::setprecision( 5 ) << residualErr[1] << std::endl;
+                if ( planeID == 5 ) streamlog_out( DEBUG0 ) << "planeID5:"<<planeID << " " << std::setw( 15 ) << std::setprecision( 5 ) << residual[1] << std::setw( 15 ) << std::setprecision( 5 ) << residualErr[1] << std::endl;
                 static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstr.str( ) ] ) -> fill( residual[1] * um, downWeight[1] );
                 static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstrNorm.str( ) ] ) -> fill( residual[1] / residualErr[1], downWeight[1] );
                 _seedAlignmentConstants._yResiduals[planeID] += ( residual[1] );
@@ -512,8 +542,8 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
                 static_cast < AIDA::IHistogram2D* > ( _aidaHistoMap2D[ sstrNorm.str( ) ] ) -> fill( hitpos[1], residual[1] / residualErr[1], downWeight[1] );
                 sstr.str( std::string( ) );
                 sstrNorm.str( std::string( ) );
-            }
-
+            } // loop over hits in a track
+            } // loop over tracks
             iCounter++;
 
             delete gblTraj;
@@ -526,6 +556,7 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
                 streamlog_out( DEBUG1 ) << "Adding collection " << _tracksOutputCollectionName << endl;
                 evt->addCollection( static_cast<EUTelGBLFitter*> (_trackFitter)->GetFitTrackVec(), _tracksOutputCollectionName );
             }            
+		}
         } //if( _ntracks != 0 && _ntracks == 1)
 
     } //if( col != NULL )
@@ -765,47 +796,47 @@ void EUTelProcessorTrackingGBLTrackFit::writeMilleSteeringFile() {
         // if plane not excluded
         if ( !isPlaneExcluded ) {
 
-            const string initUncertaintyXShift = (isFixedXShift) ? "-1." : "0.01";
-            const string initUncertaintyYShift = (isFixedYShift) ? "-1." : "0.01";
-            const string initUncertaintyZShift = (isFixedZShift) ? "-1." : "0.01";
-            const string initUncertaintyXRotation = (isFixedXRotation) ? "-1." : "0.01";
-            const string initUncertaintyYRotation = (isFixedYRotation) ? "-1." : "0.01";
-            const string initUncertaintyZRotation = (isFixedZRotation) ? "-1." : "0.01";
+            const string initUncertaintyXShift = (isFixedXShift) ? "-1." : "0.1";
+            const string initUncertaintyYShift = (isFixedYShift) ? "-1." : "0.1";
+            const string initUncertaintyZShift = (isFixedZShift) ? "-1." : "0.1";
+            const string initUncertaintyXRotation = (isFixedXRotation) ? "-1." : "0.1";
+            const string initUncertaintyYRotation = (isFixedYRotation) ? "-1." : "0.1";
+            const string initUncertaintyZRotation = (isFixedZRotation) ? "-1." : "0.1";
             
             const double initXshift = (isFixedXShift) ? 0. : _seedAlignmentConstants._xResiduals[sensorId]/_seedAlignmentConstants._nxResiduals[sensorId];
             const double initYshift = (isFixedYShift) ? 0. : _seedAlignmentConstants._yResiduals[sensorId]/_seedAlignmentConstants._nyResiduals[sensorId];
             
             if( fitter->GetAlignmentMode()==Utility::XYZShiftXYRot ) {
-                steerFile << left << setw(25) << XShiftsMap[sensorId] << setw(25) << initXshift << setw(25) << initUncertaintyXShift
+                steerFile << left << setw(25) << XShiftsMap[sensorId] << setw(25) << -initXshift << setw(25) << initUncertaintyXShift
                            << setw(25) << " ! X shift " << setw(25) << sensorId << endl;
-                steerFile << left << setw(25) << YShiftsMap[sensorId] << setw(25) << initYshift << setw(25) << initUncertaintyYShift
+                steerFile << left << setw(25) << YShiftsMap[sensorId] << setw(25) << -initYshift << setw(25) << initUncertaintyYShift
                            << setw(25) << " ! Y shift " << setw(25) << sensorId << endl;
                 steerFile << left << setw(25) << ZShiftsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyZShift
                            << setw(25) << " ! Z shift " << setw(25) << sensorId << endl;
                 steerFile << left << setw(25) << ZRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyZRotation
                           << setw(25) << " ! XY rotation " << sensorId << endl;
             } else if( fitter->GetAlignmentMode()==Utility::XYShiftYZRotXYRot ) {
-                steerFile << left << setw(25) << XShiftsMap[sensorId] << setw(25) << initXshift << setw(25) << initUncertaintyXShift
+                steerFile << left << setw(25) << XShiftsMap[sensorId] << setw(25) << -initXshift << setw(25) << initUncertaintyXShift
                           << setw(25) << " ! X shift " << sensorId << endl;
-                steerFile << left << setw(25) << YShiftsMap[sensorId] << setw(25)  << initYshift << setw(25) << initUncertaintyYShift
+                steerFile << left << setw(25) << YShiftsMap[sensorId] << setw(25)  << -initYshift << setw(25) << initUncertaintyYShift
                           << setw(25) << " ! Y shift " << sensorId << endl;
                 steerFile << left << setw(25) << XRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyXRotation
                           << setw(25) << " ! YZ rotation " << sensorId << endl;
                 steerFile << left << setw(25) << ZRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyZRotation
                           << setw(25) << " ! XY rotation " << sensorId << endl;
             } else if( fitter->GetAlignmentMode()==Utility::XYShiftXZRotXYRot ) {
-                steerFile << left << setw(25) << XShiftsMap[sensorId] << setw(25) << initXshift << setw(25) << initUncertaintyXShift
+                steerFile << left << setw(25) << XShiftsMap[sensorId] << setw(25) << -initXshift << setw(25) << initUncertaintyXShift
                           << setw(25) << " ! X shift " << sensorId << endl;
-                steerFile << left << setw(25) << YShiftsMap[sensorId] << setw(25) << initYshift << setw(25) << initUncertaintyYShift
+                steerFile << left << setw(25) << YShiftsMap[sensorId] << setw(25) << -initYshift << setw(25) << initUncertaintyYShift
                           << setw(25) << " ! Y shift " << sensorId << endl;
                 steerFile << left << setw(25) << YRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyYRotation
                           << setw(25) << " ! XZ rotation " << sensorId << endl;
                 steerFile << left << setw(25) << ZRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyZRotation
                          << setw(25)  << " ! XY rotation " << sensorId << endl;
             } else if( fitter->GetAlignmentMode()==Utility::XYShiftXZRotYZRotXYRot ) {
-                steerFile << left << setw(25) << XShiftsMap[sensorId] << setw(25) << initXshift << setw(25) << initUncertaintyXShift
+                steerFile << left << setw(25) << XShiftsMap[sensorId] << setw(25) << -initXshift << setw(25) << initUncertaintyXShift
                           << setw(25) << " ! X shift " << sensorId << endl;
-                steerFile << left << setw(25) << YShiftsMap[sensorId] << setw(25) << initYshift << setw(25) << initUncertaintyYShift
+                steerFile << left << setw(25) << YShiftsMap[sensorId] << setw(25) << -initYshift << setw(25) << initUncertaintyYShift
                           << setw(25) << " ! Y shift " << sensorId << endl;
                 steerFile << left << setw(25) << YRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyYRotation
                           << setw(25) << " ! XZ rotation " << sensorId << endl;
@@ -814,9 +845,9 @@ void EUTelProcessorTrackingGBLTrackFit::writeMilleSteeringFile() {
                 steerFile << left << setw(25) << ZRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyZRotation
                          << setw(25)  << " ! XY rotation " << sensorId << endl;
             } else if( fitter->GetAlignmentMode()==Utility::XYZShiftXZRotYZRotXYRot ) {
-                steerFile << left << setw(25) << XShiftsMap[sensorId] << setw(25) << initXshift << setw(25) << initUncertaintyXShift
+                steerFile << left << setw(25) << XShiftsMap[sensorId] << setw(25) << -initXshift << setw(25) << initUncertaintyXShift
                           << setw(25) << " ! X shift " << sensorId << endl;
-                steerFile << left << setw(25) << YShiftsMap[sensorId] << setw(25) << initYshift << setw(25) << initUncertaintyYShift
+                steerFile << left << setw(25) << YShiftsMap[sensorId] << setw(25) << -initYshift << setw(25) << initUncertaintyYShift
                           << setw(25) << " ! Y shift " << sensorId << endl;
                 steerFile << left << setw(25) << ZShiftsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyZShift
                           << setw(25) << " ! Z shift " << sensorId << endl;
@@ -827,16 +858,16 @@ void EUTelProcessorTrackingGBLTrackFit::writeMilleSteeringFile() {
                 steerFile << left << setw(25) << ZRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyZRotation
                          << setw(25)  << " ! XY rotation " << sensorId << endl;
             } else if ( fitter->GetAlignmentMode()==Utility::XYShiftXYRot ) {
-                steerFile << left << setw(25) << XShiftsMap[sensorId] << setw(25) << initXshift << setw(25) << initUncertaintyXShift
+                steerFile << left << setw(25) << XShiftsMap[sensorId] << setw(25) << -initXshift << setw(25) << initUncertaintyXShift
                           << setw(25) << " ! X shift " << sensorId << endl;
-                steerFile << left << setw(25) << YShiftsMap[sensorId] << setw(25) << initYshift << setw(25) << initUncertaintyYShift
+                steerFile << left << setw(25) << YShiftsMap[sensorId] << setw(25) << -initYshift << setw(25) << initUncertaintyYShift
                           << setw(25) << " ! Y shift " << sensorId << endl;
                 steerFile << left << setw(25) << ZRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyZRotation
                           << setw(25) << " ! XY rotation " << sensorId << endl;
             } else if ( fitter->GetAlignmentMode()==Utility::XYShift ) {
-                steerFile << left << setw(25) << XShiftsMap[sensorId] << setw(25) << initXshift << setw(25) << initUncertaintyXShift
+                steerFile << left << setw(25) << XShiftsMap[sensorId] << setw(25) << -initXshift << setw(25) << initUncertaintyXShift
                           << setw(25) << " ! X shift " << sensorId << endl;
-                steerFile << left << setw(25) << YShiftsMap[sensorId] << setw(25) << initYshift << setw(25) << initUncertaintyYShift
+                steerFile << left << setw(25) << YShiftsMap[sensorId] << setw(25) << -initYshift << setw(25) << initUncertaintyYShift
                           << setw(25) << " ! Y shift " << sensorId << endl;
                 steerFile << left << setw(25) << ZRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << "-1.0"
                           << setw(25) << " ! XY rotation fixed" << sensorId << endl;
@@ -847,6 +878,12 @@ void EUTelProcessorTrackingGBLTrackFit::writeMilleSteeringFile() {
         } // end if plane not excluded
 
     } // end loop over all planes
+
+    steerFile << "method diagonalization 5 0.1" << endl;
+    steerFile << "chiscut 50. 25." << endl;
+    steerFile << "!hugecut 50." << endl;
+    steerFile << "!outlierdownweighting 4" << endl;
+    steerFile << "!dwfractioncut 0.2" << endl;
 
     steerFile << endl;
     for ( StringVec::iterator it = _pedeSteerAddCmds.begin( ); it != _pedeSteerAddCmds.end( ); ++it ) {
@@ -918,11 +955,6 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms() {
         double chi2Min =        ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : 0.;
         double chi2Max =        ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 5000.;
 
-        histoInfo = histoMgr->getHistogramInfo(_histName::_probGblFitHistName);
-        int probNBin =          ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 1000;
-        double probMin =        ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : 0.;
-        double probMax =        ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 1.;
-
         // GBL fits
         AIDA::IHistogram1D * chi2GblFit =
                 marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_chi2GblFitHistName, chi2NBin, chi2Min, chi2Max);
@@ -933,6 +965,11 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms() {
             streamlog_out(ERROR2) << "Problem booking the " << (_histName::_chi2GblFitHistName) << std::endl;
             streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << std::endl;
         }
+        
+        histoInfo = histoMgr->getHistogramInfo(_histName::_probGblFitHistName);
+        int probNBin =          ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 1000;
+        double probMin =        ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : 0.;
+        double probMax =        ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 1.;
 
         AIDA::IHistogram1D * probGblFit =
                 marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_probGblFitHistName, probNBin, probMin, probMax);
@@ -941,6 +978,21 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms() {
             _aidaHistoMap1D.insert(std::make_pair(_histName::_probGblFitHistName, probGblFit));
         } else {
             streamlog_out(ERROR2) << "Problem booking the " << (_histName::_probGblFitHistName) << std::endl;
+            streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << std::endl;
+        }
+        
+        histoInfo = histoMgr->getHistogramInfo(_histName::_momentumGblFitHistName);
+        int momNBin =          ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 1000;
+        double momMin =        ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : 0.;
+        double momMax =        ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 10.;
+        
+        AIDA::IHistogram1D * momentumGblFit =
+                marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_momentumGblFitHistName, momNBin, momMin, momMax);
+        if (momentumGblFit) {
+            momentumGblFit->setTitle("Momentum of track; P [GeV/c];N Tracks");
+            _aidaHistoMap1D.insert(std::make_pair(_histName::_momentumGblFitHistName, momentumGblFit));
+        } else {
+            streamlog_out(ERROR2) << "Problem booking the " << (_histName::_momentumGblFitHistName) << std::endl;
             streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << std::endl;
         }
 

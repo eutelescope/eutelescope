@@ -154,6 +154,7 @@ namespace eutelescope {
         
     private:
         void FindTracks( int, std::vector< EVENT::TrackerHitVec >&, std::vector< EVENT::TrackerHitVec>& );
+//        void FindTracks( int, EVENT::TrackVec&, EVENT::TrackVec& );
         
         void PruneTrackCandidates( std::vector< EVENT::TrackerHitVec >& );
         
@@ -353,24 +354,24 @@ namespace eutelescope {
                 const double zSpacing = 150.;   // [mm]
                 
                 // previous hit
-//                const int sensorIDPrev = Utility::GuessSensorID(  hit2 );
+                const int sensorIDPrev = Utility::GuessSensorID(  hit2 );
                 const double* posPrevHit = hit2->getPosition();
-//                double posPrevHitGlob[] = {0.,0.,0.};
-//                geo::gGeometry().local2Master( sensorIDPrev, posPrevHit, posPrevHitGlob);
+                double posPrevHitGlob[] = {0.,0.,0.};
+                geo::gGeometry().local2Master( sensorIDPrev, posPrevHit, posPrevHitGlob);
                 
                 // current hit
                 const int sensorID = Utility::GuessSensorID( hit1 );
                 const double* posHit     = hit1->getPosition();
-//                double posHitGlob[] = {0.,0.,0.};
-//                geo::gGeometry().local2Master( sensorID, posHit, posHitGlob );
+                double posHitGlob[] = {0.,0.,0.};
+                geo::gGeometry().local2Master( sensorID, posHit, posHitGlob );
                 
-                const double resX = posHit[ 0 ] - posPrevHit[ 0 ];
-                const double resY = posHit[ 1 ] - posPrevHit[ 1 ];
-                const double resZ = posHit[ 2 ] - posPrevHit[ 2 ];
+//                const double resX = posHit[ 0 ] - posPrevHit[ 0 ];
+//                const double resY = posHit[ 1 ] - posPrevHit[ 1 ];
+//                const double resZ = posHit[ 2 ] - posPrevHit[ 2 ];
                 
-//                const double resX = posHitGlob[ 0 ] - posPrevHitGlob[ 0 ];
-//                const double resY = posHitGlob[ 1 ] - posPrevHitGlob[ 1 ];
-//                const double resZ = posHitGlob[ 2 ] - posPrevHitGlob[ 2 ];
+                const double resX = posHitGlob[ 0 ] - posPrevHitGlob[ 0 ];
+                const double resY = posHitGlob[ 1 ] - posPrevHitGlob[ 1 ];
+                const double resZ = posHitGlob[ 2 ] - posPrevHitGlob[ 2 ];
                 const double resR = resX*resX + resY*resY;
                 
                 const int numberAlongZ = geo::gGeometry().sensorIDtoZOrder( sensorID );
