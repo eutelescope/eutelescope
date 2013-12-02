@@ -1,20 +1,20 @@
 #!/bin/sh
 
-first="36"
-last="36"
+first="97"
+last="97"
 
 #modus="straight"
 #modus="daf"
 modus="gbl"
 
-DRY=--dry-run
-RUNLIST="runlist-20.csv"
+#DRY=--dry-run
+RUNLIST="runlist-150.csv"
 
 for i in `seq $first $last`; do
 
-#jobsub.py $DRY -c config.cfg -csv $RUNLIST converter  $i
-#jobsub.py  $DRY -c config.cfg -csv $RUNLIST clustering $i
-#jobsub.py  $DRY -c config.cfg -csv $RUNLIST filter $i
+jobsub.py $DRY -c config.cfg -csv $RUNLIST converter  $i
+jobsub.py  $DRY -c config.cfg -csv $RUNLIST clustering $i
+jobsub.py  $DRY -c config.cfg -csv $RUNLIST filter $i
 
 if [[ $modus == "straight" ]]; then
  jobsub.py  $DRY -c config.cfg -csv $RUNLIST hitmaker   $i
