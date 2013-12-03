@@ -841,7 +841,34 @@ namespace eutelescope {
                 const double* hitPointLocal = (*itHit)->getPosition();
                 double hitPointGlobal[] = {0.,0.,0.};
                 geo::gGeometry().local2Master(planeID,hitPointLocal,hitPointGlobal);
-                const EVENT::FloatVec hitcov = (*itHit)->getCovMatrix();
+
+//                const EVENT::FloatVec hitcov = (*itHit)->getCovMatrix();
+                EVENT::FloatVec hitcov;
+                hitcov.push_back(4.);
+                hitcov.push_back(0.);
+                hitcov.push_back(0.);
+                hitcov.push_back(4.);
+                // check Processor Parameters for plane resolution // Denys
+                if( _paramterIdXResolutionVec.size() > 0 && _paramterIdYResolutionVec.size() > 0 )
+                {
+                  for(int izPlane=0;izPlane<_paramterIdPlaneVec.size();izPlane++)
+                  {
+                    if( _paramterIdPlaneVec[izPlane] == planeID )
+                    {  
+                      hitcov[0] =  _paramterIdXResolutionVec[izPlane];
+                      hitcov[2] =  _paramterIdYResolutionVec[izPlane];
+ 
+                      hitcov[0] *= hitcov[0]; // squared !
+                      hitcov[2] *= hitcov[2]; // squared !
+                      break;
+                    } 
+                  }
+                }
+                else
+                {  
+                  hitcov = (*itHit)->getCovMatrix();            
+                }
+
 
                 double xPred = interpolateTrackX(*itTrkCand, hitPointGlobal[2]);
                 double yPred = interpolateTrackY(*itTrkCand, hitPointGlobal[2]);
