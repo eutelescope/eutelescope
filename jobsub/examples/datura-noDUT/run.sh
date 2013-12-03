@@ -17,16 +17,16 @@ jobsub.py  $DRY -c config.cfg -csv $RUNLIST clustering $i
 jobsub.py  $DRY -c config.cfg -csv $RUNLIST filter $i
 
 if [[ $modus == "straight" ]]; then
- jobsub.py  $DRY -c config.cfg -csv $RUNLIST hitmaker   $i
+ jobsub.py $DRY -c config.cfg -csv $RUNLIST hitmaker   $i
 # alignment using straight line assumption
  jobsub.py $DRY -c config.cfg -csv $RUNLIST align      $i
 # fitter using broken line implementation by F.Zarnezki
- jobsub.py $DRY -c config.cfg -csv $RUNLIST fitter     $i
+ jobsub.py $DRY -c config.cfg -csv $RUNLIST trackTestFitter $i
 
 elif [[ $modus == "daf" ]]; then
  jobsub.py $DRY -c config.cfg -csv $RUNLIST hitmaker   $i
  jobsub.py $DRY -c config.cfg -csv $RUNLIST aligndaf   $i
- jobsub.py $DRY -c config.cfg -csv $RUNLIST trackdaf  $i
+ jobsub.py $DRY -c config.cfg -csv $RUNLIST trackdaf   $i
 
 elif [[ $modus == "gbl" ]]; then
 # FOR NEW gbl ONE NEEDS TO GET HITS IN LOCAL COORDINATE SYSTEM:
