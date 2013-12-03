@@ -17,7 +17,7 @@
 
    <execute>
       <processor name="AIDA"/>
-      <!--processor name="Correlator"/ -- useless now? -->
+      <!--processor name="Correlator"/  useless now? -->
       <processor name="GBLTrackFit"/>
       <processor name="Save"/>
       <processor name="PrintEventNumber"/>
