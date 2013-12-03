@@ -104,6 +104,9 @@
   <parameter name="AlignmentMode" type="int" value="@AlignmentMode@"/>
   <!--Ids of planes to be used in alignment-->
   <parameter name="AlignmentPlanes" type="IntVec" value="@AlignPlaneIds@"/>
+  <parameter name="Planes" type="IntVec"> @Planes@ </parameter>
+  <parameter name="xResolutionPlane" type="FloatVec"> @xResolutionPlane@ </parameter>
+  <parameter name="yResolutionPlane" type="FloatVec"> @yResolutionPlane@ </parameter>
   <!--Beam energy [GeV]-->
   <parameter name="BeamEnergy" type="double" value="@BeamEnergy@"/>
   <!--Ids of planes for which rotation around X will be fixed during millepede call-->
