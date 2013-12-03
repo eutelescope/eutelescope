@@ -95,7 +95,7 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
   <parameter name="AlignmentMode" type="int" value="@AlignmentMode@"/>
   <!--Ids of planes to be used in alignment-->
   <parameter name="AlignmentPlanes" type="IntVec" value="@AlignPlaneIds@"/>
-   <parameter name="Planes" type="IntVec"> @Planes@ </parameter>
+  <parameter name="Planes" type="IntVec"> @Planes@ </parameter>
   <parameter name="xResolutionPlane" type="FloatVec"> @xResolutionPlane@ </parameter>
   <parameter name="yResolutionPlane" type="FloatVec"> @yResolutionPlane@ </parameter>
   <!--Beam charge [e]-->
