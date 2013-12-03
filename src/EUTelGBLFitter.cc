@@ -843,11 +843,12 @@ namespace eutelescope {
                 geo::gGeometry().local2Master(planeID,hitPointLocal,hitPointGlobal);
 
 //                const EVENT::FloatVec hitcov = (*itHit)->getCovMatrix();
-                EVENT::FloatVec hitcov;
-                hitcov.push_back(4.);
-                hitcov.push_back(0.);
-                hitcov.push_back(0.);
-                hitcov.push_back(4.);
+                EVENT::FloatVec hitcov(4);
+                hitcov[0]=0.01;
+                hitcov[1]=0.00;
+                hitcov[2]=0.01;
+                hitcov[3]=0.00;
+
                 // check Processor Parameters for plane resolution // Denys
                 if( _paramterIdXResolutionVec.size() > 0 && _paramterIdYResolutionVec.size() > 0 )
                 {
@@ -867,8 +868,10 @@ namespace eutelescope {
                 else
                 {  
                   hitcov = (*itHit)->getCovMatrix();            
+                  
                 }
 
+                streamlog_out(DEBUG0) << "Hit covariance matrix: [0: "  << hitcov[0] << "] [1: "  << hitcov[1] << "] [2: "  << hitcov[2] << "] [3: " << hitcov[3]  << std::endl;
 
                 double xPred = interpolateTrackX(*itTrkCand, hitPointGlobal[2]);
                 double yPred = interpolateTrackY(*itTrkCand, hitPointGlobal[2]);
