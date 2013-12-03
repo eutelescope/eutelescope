@@ -27,7 +27,7 @@
 
    <global>
       <parameter name="LCIOInputFiles"> @LcioPath@/@FilePrefix@-hitmaker.slcio </parameter>
-      <parameter name="GearXMLFile" value="@GearFile@"/>
+      <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
       <parameter name="SupressCheck" value="false"/>
@@ -139,7 +139,7 @@
 -->
   <!--parameter name="AlignmentMode" type="int" value="0"/-->
   <!--Ids of planes to be used in alignment-->
-  <!--parameter name="AlignmentPlanes" type="IntVec"> </parameter-->
+  <!--parameter name="AlignmentPlanes" type="IntVec"> @AlignPlaneIds@ </parameter-->
   <!--Beam energy [GeV]-->
   <parameter name="BeamEnergy" type="double" value="@BeamEnergy@"/>
   <!--Ids of planes for which rotation around X will be fixed during millepede call-->
