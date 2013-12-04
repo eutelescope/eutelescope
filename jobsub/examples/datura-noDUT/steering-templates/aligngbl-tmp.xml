@@ -84,7 +84,7 @@
 
 
  <processor name="GBLTrackFit" type="EUTelProcessorTrackingGBLTrackFit">
- <!--EUTelProcessorTrackingGBLTrackFit performs track fits using GBL optionally writing data files for MILLEPEDE II.-->
+  <!--EUTelProcessorTrackingGBLTrackFit performs track fits using GBL optionally writing data files for MILLEPEDE II.-->
   <!--Input track candidates hits collection name-->
   <parameter name="TrackCandHitInputCollectionName" type="string" lcioInType="Track"> track_candidates </parameter>
   <!--Output tracks collection name-->
@@ -104,8 +104,11 @@
   <parameter name="AlignmentMode" type="int" value="@AlignmentMode@"/>
   <!--Ids of planes to be used in alignment-->
   <parameter name="AlignmentPlanes" type="IntVec" value="@AlignPlaneIds@"/>
+  <!--Ids of planes to have intrinsic resolution modified /-->
   <parameter name="Planes" type="IntVec"> @Planes@ </parameter>
+  <!-- on the order of appearing of the plane Ids (Planes param.) list X resolution of every plane /-->
   <parameter name="xResolutionPlane" type="FloatVec"> @xResolutionPlane@ </parameter>
+  <!-- on the order of appearing of the plane Ids (Planes param.) list Y resolution of every plane /-->
   <parameter name="yResolutionPlane" type="FloatVec"> @yResolutionPlane@ </parameter>
   <!--Beam energy [GeV]-->
   <parameter name="BeamEnergy" type="double" value="@BeamEnergy@"/>
@@ -133,10 +136,16 @@
   <!--parameter name="MilleResultFilename" type="string" value="millepede.res"/-->
   <!--Name of the Millepede steering file to be created-->
   <parameter name="MilleSteeringFilename" type="string" value="@DatabasePath@/@FilePrefix@-pede-steer.txt"/>
-  <!--FOR EXPERTS: List of commands that should be included in the pede steering file. Use '\' to seperate options and introduce a line break.-->
+  <!--FOR EXPERTS: List of commands that should be included in the pede steering file. Use '\\' to seperate options and introduce a line break.-->
   <parameter name="PedeSteeringAdditionalCmds" type="StringVec">
-method inversion 5 0.001 \\
-outlierdownweighting 10. \\
+method inversion 5 0.001 \\ 
+outlierdownweighting 10. \\ 
+Constraint 0. \\
+1	1 \\
+Constraint 0. \\
+7	1 \\
+Constraint 0. \\
+31	1 \\
 Constraint 0. \\
 7	1 \\
 8	1 \\
@@ -157,7 +166,7 @@ Constraint 0. \\
 33	1 \\
 34	1 \\
 35	1 \\
-36	1 \\
+36	1 \\ 
  </parameter>
   <!--Execute the pede at the end of processing using the generated steering file.-->
   <parameter name="RunPede" type="bool" value="@RunPede@"/>
