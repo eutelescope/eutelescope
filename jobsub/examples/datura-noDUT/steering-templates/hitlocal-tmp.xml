@@ -17,7 +17,6 @@
 
    <execute>
       <processor name="AIDA"/>
-      <processor name="LoadHotPixelDB"/>
       <processor name="HitMakerM26"/>
       <processor name="Correlator"/>
       <processor name="Save"/>
@@ -41,22 +40,6 @@
   <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-hitlocal"/>
   <!-- type of output file root (default) or xml )-->
   <parameter name="FileType" type="string" value="root"/>
-  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <!--parameter name="Verbosity" type="string" value=""/-->
-</processor>
-
- <processor name="LoadHotPixelDB" type="ConditionsProcessor">
- <!--ConditionsProcessor provides access to conditions data  transparently from LCIO files or a databases, using LCCD-->
-  <!--Initialization of a conditions database handler-->
-  <!--parameter name="DBCondHandler" type="StringVec"> conditionsName /lccd/myfolder HEAD </parameter-->
-  <!--Initialization of a conditions db file handler-->
-  <!--parameter name="DBFileHandler" type="StringVec"> conditionsName conditions.slcio collectionName </parameter-->
-  <!--Initialization string for conditions database-->
-  <parameter name="DBInit" type="string" value="localhost:lccd_test:calvin:hobbes"/>
-  <!--Initialization of a data file handler-->
-  <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
-  <!--Initialization of a simple conditions file handler-->
-  <parameter name="SimpleFileHandler" type="StringVec"> hotpixel_m26 @DatabasePath@/@FilePrefix@-hotpixel.slcio hotpixel_m26 </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
