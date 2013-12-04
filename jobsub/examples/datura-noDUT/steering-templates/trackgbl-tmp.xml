@@ -73,37 +73,6 @@
   <parameter name="Verbosity" type="string">MESSAGE4 </parameter>
  </processor>
 
-
- <processor name="TrackSearch" type="EUTelProcessorTrackingExhaustiveTrackSearch">
-  <!--EUTelProcessorTrackingExhaustiveTrackSearch preforms track pattern recognition.-->
-  <!--Input hits collection name-->
-  <parameter name="HitInputCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
-  <!--Output track candidates hits collection name-->
-  <parameter name="TrackCandHitOutputCollectionName" type="string" lcioOutType="Track"> track_candidates </parameter>
-  <!--Finder mode. Possible values are 1 (rectangular search window), 2 (circular search window)-->
-  <-parameter name="FinderMode" type="int" value="2"/>
-  <!--Name of histogram info xml file-->
-  <!--parameter name="HistogramInfoFilename" type="string" value="histoinfo.xml"/-->
-  <!--Name of the hot pixel collection -->
-  <!--parameter name="HotPixelCollectionName" type="string" value="hotpixel"/-->
-  <!--Maximal number of missing hits on a track candidate-->
-  <parameter name="MaxMissingHitsPerTrack" type="int" value="@MaxMissingHitsPerTrack@"/>
-  <!--Maximal number of track candidates to be found in events-->
-  <parameter name="MaxNTracksPerEvent" type="int" value="@MaxNTracksPerEvent@"/>
-  <!--Maximal allowed distance between hits entering the recognition step per 15 cm space between the planes. One value for each neighbor planes. DistanceMax will be used for each pair if this vector is empty. Units are mm.-->
-  <parameter name="ResidualsRMax" type="FloatVec"> @ResidualsRMax@ </parameter>
-  <!--Maximal values of the hit residuals in the X direction for a track. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id. Units are mm.-->
-  <!--parameter name="ResidualsXMax" type="FloatVec"> 0.25 0.25 0.25 0.25 0.25 0.25 </parameter-->
-  <!--Minimal values of the hit residuals in the X direction for a track. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id. Units are mm.-->
-  <!--parameter name="ResidualsXMin" type="FloatVec"> -0.25 -0.25 -0.25 -0.25 -0.25 -0.25 </parameter-->
-  <!--Maximal values of the hit residuals in the Y direction for a track. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id. Units are mm.-->
-  <!--parameter name="ResidualsYMax" type="FloatVec"> 0.25 0.25 0.25 0.25 0.25 0.25 </parameter-->
-  <!--Minimal values of the hit residuals in the Y direction for a track. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id. Units are mm.-->
-  <!--parameter name="ResidualsYMin" type="FloatVec"> -0.25 -0.25 -0.25 -0.25 -0.25 -0.25 </parameter-->
-  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <!--parameter name="Verbosity" type="string" value=""/-->
-</processor>
-
  <processor name="GBLTrackFit" type="EUTelProcessorTrackingGBLTrackFit">
  <!--EUTelProcessorTrackingGBLTrackFit performs track fits using GBL optionally writing data files for MILLEPEDE II.-->
   <!--Input track candidates hits collection name-->
