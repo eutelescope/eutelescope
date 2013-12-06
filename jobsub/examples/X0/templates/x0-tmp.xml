@@ -21,6 +21,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
 
  <global>
    <parameter name="LCIOInputFiles"> @InputFile@ </parameter>
+   <!--parameter name="LCIOInputFiles"> LCIOInputFiles </parameter-->
    <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
    <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
    <parameter name="SkipNEvents" value="@SkipNEvents@"/>

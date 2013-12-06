@@ -143,11 +143,12 @@ private:
   
   //!Get the hits from the tracks
   /*!We need to get the hit positions from each track in order to form our own 'subtracks' between each plane and arm of the telescope. This will return a vector of TVector3's with each element of the vector being a hit*/
-  std::vector< TVector3* > getHitsFromTrack(Track *track);
+  std::vector< TVector3 > getHitsFromTrack(Track *track);
 
   //!Get Sigma
   /*!Works out the sigma value from a vector which contains scattering angles*/
   double getSigma(std::vector< double > angles);
+  std::pair<double,double> GetLowerAndUpperBounds(TH1D *temphisto);
 
   //!Print Track Parameters
   /*!This simply prints out all the LCIO information available about each track*/
@@ -167,21 +168,21 @@ private:
 
   //!Get Single Track Angles
   /*!This works out the angles of the tracks as they pass from plane to plane, in the pair of vectors which is returned from this you get the angles of the track in x and y respectively. The element of each vector is the plane that the angle passes between, e.g. element 0 contains the angle between plane 0 and 1*/
-  std::pair< std::vector< double >, std::vector< double > > GetSingleTrackAngles(std::vector< TVector3* > hits);
+  std::pair< std::vector< double >, std::vector< double > > GetSingleTrackAngles(std::vector< TVector3 > hits);
 
   //!Get Triple Track Angles
   /*!This works out the angles of the tracks for the first three planes combined and the last three planes combined and stores them in a pair. With the first element of the pair being XZ angle and the second element being YZ angle. Each element of the vector is a different triplet, so each vector should just contain 2 elements, the first being the front three planes and the 2nd being the last three planes*/
-  std::pair< std::vector< double >, std::vector< double > > GetTripleTrackAnglesStraightLines(std::vector< TVector3* > hits);
+  std::pair< std::vector< double >, std::vector< double > > GetTripleTrackAnglesStraightLines(std::vector< TVector3 > hits);
   std::pair< std::vector< double >, std::vector< double > > GetTripleTrackAnglesDoubleDafFitted(Track *frontthree, Track *backthree);
   void PlotTripleTrackAngleDoubleDafFitted(Track *track, bool front);
 
   //!Single Plane Track Scattering Angles
   /*!This works out the scattering angle between each plane, fills a histogram with this value and also stores data for use in a radiation length map later*/
-  void SinglePlaneTrackScatteringAngles(std::vector< double > scatterx, std::vector< double > scattery, std::vector< TVector3* > hits);
+  void SinglePlaneTrackScatteringAngles(std::vector< double > scatterx, std::vector< double > scattery, std::vector< TVector3 > hits);
 
   //!Triple Plane Track Scattering Angles
   /*!This works out the scattering angle between the front three planes and the back three planes and fills a histogram with the result. This also stores the data for use in a radiation length map later*/
-  void TriplePlaneTrackScatteringAngles(std::vector< double > scatterx, std::vector< double > scattery, std::vector< TVector3 *> hits, bool doubledaf);
+  void TriplePlaneTrackScatteringAngles(std::vector< double > scatterx, std::vector< double > scattery, std::vector< TVector3 > hits, bool doubledaf);
 
   //!Kink Estimate
   /*!This is the funciton which calls most of the other relevant functions in order to fill angle-related histograms*/
@@ -377,6 +378,12 @@ private:
 //  std::map< std::pair< int, int >, std::vector< double > > ScatteringAngleYPlane2MapData; //Pair gives the x and y bins of the track at the point of the DUT and the value of the double is the scattering angle
 //  std::map< std::pair< int, int >, std::vector< double > > ScatteringAngleYPlane3MapData; //Pair gives the x and y bins of the track at the point of the DUT and the value of the double is the scattering angle
 //  std::map< std::pair< int, int >, std::vector< double > > ScatteringAngleYPlane4MapData; //Pair gives the x and y bins of the track at the point of the DUT and the value of the double is the scattering angle
+
+  int totaleventnumber;
+  int totaltracknumber;
+  int totaltracknumberdoubledaf;
+
+
 };
 //! A global instance of the processor
 EUTelX0Processor gEUTelX0Processor;
