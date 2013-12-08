@@ -57,23 +57,40 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
 
     // update positions and orientations of the planes
     // TODO: set appropriate new values for new GEAR file
-    
+ 
     map< int, eutelescope::EUTelAlignmentConstant* >::const_iterator itrAlignmentConstant;
     for (int iPlane = 0; iPlane < siPlanesLayerLayout->getNLayers(); iPlane++) {
         int sensorID = siPlanesLayerLayout->getSensitiveID(iPlane);
         if( ( itrAlignmentConstant = alignmentConstants.find( sensorID ) ) != alignmentConstants.end() ) {
-            cout << siPlanesLayerLayout->getLayerPositionX(iPlane) - (*itrAlignmentConstant).second->getXOffset() << endl;
-            cout << siPlanesLayerLayout->getLayerPositionY(iPlane) - (*itrAlignmentConstant).second->getYOffset() << endl;
-            cout << siPlanesLayerLayout->getLayerPositionZ(iPlane) - (*itrAlignmentConstant).second->getZOffset() << endl;
-            cout << ( siPlanesLayerLayout->getLayerRotationZY(iPlane) - (*itrAlignmentConstant).second->getAlpha() ) *180./3.14159265359 << endl;
-            cout << ( siPlanesLayerLayout->getLayerRotationZX(iPlane) - (*itrAlignmentConstant).second->getBeta()  ) *180./3.14159265359 << endl;
-            cout << ( siPlanesLayerLayout->getLayerRotationXY(iPlane) - (*itrAlignmentConstant).second->getGamma() ) *180./3.14159265359 << endl;
+
+#ifdef GEAR_MAJOR_VERSION 
+#if GEAR_VERSION_GE( 17,4)  
+// ZY and ZX rotations are calculated wrongly yet, do not implement:
+// XYZ shifts and XY rotation seems to be correct
+//
+            siPlanesLayerLayout-> setLayerPositionX(iPlane, siPlanesLayerLayout->getLayerPositionX(iPlane) - (*itrAlignmentConstant).second->getXOffset() ) ;
+            siPlanesLayerLayout-> setLayerPositionY(iPlane, siPlanesLayerLayout->getLayerPositionY(iPlane) - (*itrAlignmentConstant).second->getYOffset() ) ;
+            siPlanesLayerLayout-> setLayerPositionZ(iPlane, siPlanesLayerLayout->getLayerPositionZ(iPlane) - (*itrAlignmentConstant).second->getZOffset() ) ;
+//          siPlanesLayerLayout->setLayerRotationZY(iPlane,
+//                               siPlanesLayerLayout->getLayerRotationZY(iPlane) - ((*itrAlignmentConstant).second->getAlpha() ) *180./3.14159265359 );
+//          siPlanesLayerLayout->setLayerRotationZX(iPlane,
+//                               siPlanesLayerLayout->getLayerRotationZX(iPlane) - ((*itrAlignmentConstant).second->getBeta()  ) *180./3.14159265359 );
+            siPlanesLayerLayout->setLayerRotationXY(iPlane,
+                                 siPlanesLayerLayout->getLayerRotationXY(iPlane) - ((*itrAlignmentConstant).second->getGamma() ) *180./3.14159265359 );
+#endif
+#endif       
+            cout << siPlanesLayerLayout->getLayerPositionX(iPlane)  << endl;
+            cout << siPlanesLayerLayout->getLayerPositionY(iPlane)  << endl;
+            cout << siPlanesLayerLayout->getLayerPositionZ(iPlane)  << endl;
+            cout << siPlanesLayerLayout->getLayerRotationZY(iPlane)  << endl;
+            cout << siPlanesLayerLayout->getLayerRotationZX(iPlane)  << endl;
+            cout << siPlanesLayerLayout->getLayerRotationXY(iPlane)  << endl;
         }
     }
 
     
     cout << "Not implemented" << std::endl;
-//    gear::GearXML::createXMLFile( gearManager, newGearfileName );
+    gear::GearXML::createXMLFile( gearManager, newGearfileName );
     
     return;
 }
@@ -196,7 +213,7 @@ int main( int argc, char ** argv ) {
       bool goodLine = false;
 
         if ( !line.empty() ) goodLine = true;
-      
+     
         if( !goodLine ) continue;
 
         tokens.clear();
