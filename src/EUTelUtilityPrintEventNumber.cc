@@ -84,7 +84,7 @@ void EUTelUtilityPrintEventNumber::processEvent( LCEvent * evt ) {
     streamlog_out(MESSAGE5) << "Processing event " 
 			    << std::setw(7) << evt->getEventNumber() 
 			    << " in run " << std::setw(6) << std::setfill('0') << evt->getRunNumber() << std::setfill(' ');
-    if(totalruns > 1) streamlog_out(MESSAGE5) << " (" << totalevents << " events in total)"
+    if(totalruns > 1) streamlog_out(MESSAGE5) << " (" << totalevents << " events in total)";
     if(_printTimestamp) streamlog_out(MESSAGE5) << ", timestamp " << evt->getTimeStamp();
     streamlog_out(MESSAGE5) << std::endl;
   }
