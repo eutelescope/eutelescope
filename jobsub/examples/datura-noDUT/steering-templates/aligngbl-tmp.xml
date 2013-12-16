@@ -136,6 +136,7 @@
   <!--parameter name="MilleResultFilename" type="string" value="millepede.res"/-->
   <!--Name of the Millepede steering file to be created-->
   <parameter name="MilleSteeringFilename" type="string" value="@DatabasePath@/@FilePrefix@-pede-steer.txt"/>
+  <parameter name="GearFilenameSuffix" type="string" value="@GearSuffix@"/>
   <!--FOR EXPERTS: List of commands that should be included in the pede steering file. Use '\\' to seperate options and introduce a line break.-->
   <parameter name="PedeSteeringAdditionalCmds" type="StringVec">
 method inversion 5 0.001 \\ 
