@@ -69,8 +69,8 @@ EUTelProcessorTrackingHelixTrackSearch::EUTelProcessorTrackingHelixTrackSearch()
 Processor("EUTelProcessorTrackingHelixTrackSearch"),
 _hitInputCollectionName("HitCollection"),
 _trackCandidateHitsOutputCollectionName("TrackCandidatesCollection"),
-_hotPixelCollectionName("hotpixel"),
-_hotPixelMap(),
+//_hotPixelCollectionName("hotpixel"),
+//_hotPixelMap(),
 _trackFitter(0),
 _tgeoFileName("TELESCOPE.root"),
 _maxMissingHitsPerTrackCand(0),
@@ -103,10 +103,6 @@ _aidaHistoMap1D() {
 
 
     // Optional processor parameters that define track finder settings
-
-    // Geometry definition
-    
-    registerOptionalParameter("GeometryFilename", "Name of the TGeo geometry definition file", _tgeoFileName, std::string("TELESCOPE.root"));
     
     // Fitter settings
     
@@ -138,8 +134,8 @@ _aidaHistoMap1D() {
     /**    @TODO must be a part of a separate data structure 
      *     Do we need this at all
      */
-    registerOptionalParameter("HotPixelCollectionName", "Name of the hot pixel collection ",
-            _hotPixelCollectionName, static_cast<std::string> ("hotpixel"));
+//    registerOptionalParameter("HotPixelCollectionName", "Name of the hot pixel collection ",
+//            _hotPixelCollectionName, static_cast<std::string> ("hotpixel"));
 
 }
 
@@ -211,7 +207,7 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
 
     if (isFirstEvent()) {
         // Fill hot pixel map   
-        _hotPixelMap = Utility::FillHotPixelMap(evt, _hotPixelCollectionName);
+//        _hotPixelMap = Utility::FillHotPixelMap(evt, _hotPixelCollectionName);
     }
 
     EUTelEventImpl * event = static_cast<EUTelEventImpl*> (evt);
@@ -232,7 +228,7 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
     try {
         col = evt->getCollection(_hitInputCollectionName);
     } catch (DataNotAvailableException e) {
-        streamlog_out(WARNING) << _hitInputCollectionName << " collection not available" << std::endl;
+        streamlog_out(WARNING2) << _hitInputCollectionName << " collection not available" << std::endl;
         throw marlin::SkipEventException(this);
     }
 
@@ -314,10 +310,10 @@ void EUTelProcessorTrackingHelixTrackSearch::FillHits(LCEvent * evt,
     for (int iHit = 0; iHit < collection->getNumberOfElements(); iHit++) {
 
         TrackerHitImpl * hit = static_cast<TrackerHitImpl*> (collection->getElementAt(iHit));
-        if (Utility::HitContainsHotPixels(hit, _hotPixelMap)) {
-            streamlog_out(DEBUG3) << "Hit " << iHit << " contains hot pixels; skip this one. " << std::endl;
-            continue;
-        }
+//        if (Utility::HitContainsHotPixels(hit, _hotPixelMap)) {
+//            streamlog_out(DEBUG3) << "Hit " << iHit << " contains hot pixels; skip this one. " << std::endl;
+//            continue;
+//        }
 
         LCObjectVec clusterVector = hit->getRawHits();
 
