@@ -187,7 +187,7 @@ _aidaProfileMap2D()
     
     registerOptionalParameter("MilleResultFilename", "Name of the Millepede result file", _milleResultFileName, std::string("millepede.res"));
     
-    registerOptionalParameter("GearFilenameSuffix", "Suffix to add to the new Gear with alignment corrections", _gear_suffix, std::string("-00001.xml"));
+    registerOptionalParameter("GearAlignedFile", "Suffix to add to the new Gear with alignment corrections", _gear_aligned_file, std::string("gear-00001-aligned.xml"));
 
     registerOptionalParameter("PedeSteeringAdditionalCmds","FOR EXPERTS: List of commands that should be included in the pede steering file. Use '\\' to seperate options and introduce a line break.",_pedeSteerAddCmds, StringVec());
 
@@ -717,12 +717,9 @@ bool EUTelProcessorTrackingGBLTrackFit::parseMilleOutput( const string& milleRes
         return isOK;
     }
  
-    string _outputGearFile = Global::parameters->getStringVal("GearXMLFile" ) ;
-    _outputGearFile.replace( _outputGearFile.end()-4, _outputGearFile.end(), _gear_suffix );
-    _outputGearFile += ".xml";
    
     const string command = "parsemilleout.sh " + _milleSteeringFilename + " " + milleResultFileName + " " + _alignmentConstantLCIOFile + 
-                           " " + Global::parameters->getStringVal("GearXMLFile" ) + " " + _outputGearFile;
+                           " " + Global::parameters->getStringVal("GearXMLFile" ) + " " + _gear_aligned_file;
     streamlog_out ( MESSAGE5 ) << "Convering millepede results to LCIO collections... " << endl;
     streamlog_out ( MESSAGE5 ) << command << endl;
 

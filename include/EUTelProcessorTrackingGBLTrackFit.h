@@ -147,7 +147,7 @@ namespace eutelescope {
         string _milleResultFileName;
         
         /** GEAR new filename */
-        string _gear_suffix;
+        string _gear_aligned_file;
 
 
         /** Allows user-added commands in the pede steering file */
