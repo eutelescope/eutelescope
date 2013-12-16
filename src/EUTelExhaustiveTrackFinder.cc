@@ -50,31 +50,33 @@ namespace eutelescope {
   
             // iterate over candidate's hits
             EVENT::TrackerHitVec::const_iterator itrPrevHit = trackCandidate.begin();
-            // previous hit
-                const int sensorIDPrev = Utility::GuessSensorID(  static_cast< IMPL::TrackerHitImpl* >(*itrPrevHit) );
-                const double* posPrevHit = (*itrPrevHit)->getPosition();
-                double posPrevHitGlob[] = {0.,0.,0.};
-                geo::gGeometry().local2Master( sensorIDPrev, posPrevHit, posPrevHitGlob);
 
             const double zSpacing =  10.;   // [mm] rubinskiy 30-11-2013
 
             EVENT::TrackerHitVec::const_iterator itrHit;
             for ( itrHit = trackCandidate.begin(); itrHit != trackCandidate.end(); ++itrHit ) {
                 
-               
+                // previous hit
+                const int sensorIDPrev = Utility::GuessSensorID(  static_cast< IMPL::TrackerHitImpl* >(*itrPrevHit) );
+                const double* posPrevHit = (*itrPrevHit)->getPosition();
+                double posPrevHitGlob[] = {0.,0.,0.};
+                geo::gGeometry().local2Master( sensorIDPrev, posPrevHit, posPrevHitGlob);
+                
                 // current hit
                 const int sensorID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(*itrHit) );
                 const double* posHit     = (*itrHit)->getPosition();
+
                 double posHitGlob[] = {0.,0.,0.};
                 geo::gGeometry().local2Master( sensorID, posHit, posHitGlob );
-                
- //               const double resX = posHit[ 0 ] - posPrevHit[ 0 ];
+//                
+//                const double resX = posHit[ 0 ] - posPrevHit[ 0 ];
 //                const double resY = posHit[ 1 ] - posPrevHit[ 1 ];
 //                const double resZ = posHit[ 2 ] - posPrevHit[ 2 ];
-                
+//                
                 const double resX = posHitGlob[ 0 ] - posPrevHitGlob[ 0 ];
                 const double resY = posHitGlob[ 1 ] - posPrevHitGlob[ 1 ];
                 const double resZ = posHitGlob[ 2 ] - posPrevHitGlob[ 2 ];
+
                 const double resR = resX*resX + resY*resY;
  
                 const int numberAlongZ = geo::gGeometry().sensorIDtoZOrder( sensorID );
