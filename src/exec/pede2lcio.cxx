@@ -1,3 +1,6 @@
+//
+#include "marlin/VerbosityLevels.h"
+
 // eutelescope includes
 #include "EUTelAlignmentConstant.h"
 #include "anyoption.h"
@@ -20,12 +23,16 @@
 
 // system includes
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include <string>
 #include <sstream>
 #include <functional>
 #include <algorithm>
 #include <memory>
+
+#include "TRotation.h"
+#include "TVector3.h"
 
 using namespace std;
 
@@ -39,8 +46,8 @@ struct CollectionWriter {
 
 void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, const map< int, eutelescope::EUTelAlignmentConstant* >& alignmentConstants ) {
     
-    cout << "Reading " << oldGearfileName << endl;
-    cout << "GEAR file " << newGearfileName << " will be generated." << endl;
+    streamlog_out(MESSAGE4) << "Reading " << oldGearfileName << std::endl;
+    streamlog_out(MESSAGE4) << "GEAR file " << newGearfileName << " will be generated." << std::endl;
     
     gear::GearXML gearXML( oldGearfileName ) ;
 
@@ -57,39 +64,104 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
 
     // update positions and orientations of the planes
     // TODO: set appropriate new values for new GEAR file
- 
+
+    streamlog_out(MESSAGE4) << "Combined alignment (current GEAR + MILLE corrections below):" << std::endl;    
+
     map< int, eutelescope::EUTelAlignmentConstant* >::const_iterator itrAlignmentConstant;
+
+    streamlog_out(MESSAGE4) << "Plane ID" << setw(20) << "X shift" << setw(20) << "Y shift" << setw(20) << "Z shift" << setw(20)
+                     << "X ROTATION" << setw(20) << "Y ROTATION" << setw(20) << "Z ROTATION" << std::endl;
+    
     for (int iPlane = 0; iPlane < siPlanesLayerLayout->getNLayers(); iPlane++) {
         int sensorID = siPlanesLayerLayout->getSensitiveID(iPlane);
         if( ( itrAlignmentConstant = alignmentConstants.find( sensorID ) ) != alignmentConstants.end() ) {
 
-#ifdef GEAR_MAJOR_VERSION 
-#if GEAR_VERSION_GE( 17,4)  
+
+ 	    const double alpha = siPlanesLayerLayout->getLayerRotationZY(iPlane);
+	    const double beta  = siPlanesLayerLayout->getLayerRotationZX(iPlane);
+	    const double gamma = siPlanesLayerLayout->getLayerRotationXY(iPlane);
+
+            streamlog_out(MESSAGE4) << "former " << sensorID << setw(20) << siPlanesLayerLayout->getLayerPositionX(iPlane)  << 
+			 	 setw(20) << siPlanesLayerLayout->getLayerPositionY(iPlane)  <<
+				 setw(20) << siPlanesLayerLayout->getLayerPositionZ(iPlane)  <<
+                 		 setw(20) << alpha  <<
+                                 setw(20) << beta   <<
+                                 setw(20) << gamma  << std::endl;
+
+	    TRotation invR;
+	    invR.RotateX(alpha);
+	    invR.RotateY(beta);
+	    invR.RotateZ(gamma);
+	    invR.Invert();
+	
+	    const double dalpha = (*itrAlignmentConstant).second->getAlpha();
+            const double dbeta  = (*itrAlignmentConstant).second->getBeta();
+            const double dgamma = (*itrAlignmentConstant).second->getGamma();
+
+	    TRotation invDeltaR;
+	    invDeltaR.RotateX((*itrAlignmentConstant).second->getAlpha());
+            invDeltaR.RotateY((*itrAlignmentConstant).second->getBeta());
+            invDeltaR.RotateZ((*itrAlignmentConstant).second->getGamma());
+	    invDeltaR.Invert();
+
+	    const double dr0x = (*itrAlignmentConstant).second->getXOffset();
+	    const double dr0y = (*itrAlignmentConstant).second->getYOffset();
+	    const double dr0z = (*itrAlignmentConstant).second->getZOffset();
+
+	    TVector3 delta_r0( dr0x, dr0y, dr0z );
+//	    delta_r0 *= invDeltaR;
+//	    delta_r0 *= invR;
+//	    delta_r0 = invR*(invDeltaR*delta_r0);
+            delta_r0 = invR*delta_r0;
+ 
+             streamlog_out(MESSAGE4) << "invR:"<< std::endl;
+             streamlog_out(MESSAGE4) << " X: " << setw(20) << invR[0][0] << " " << invR[0][1] << " " << invR[0][2]  << std::endl;
+             streamlog_out(MESSAGE4) << " Y: " << setw(20) << invR[1][0] << " " << invR[1][1] << " " << invR[1][2]  << std::endl;
+             streamlog_out(MESSAGE4) << " Z: " << setw(20) << invR[2][0] << " " << invR[2][1] << " " << invR[2][2]  << std::endl;
+             streamlog_out(MESSAGE4) << ""<< std::endl;
+ 
+           
+//	    delta_r0 *= invR;
+
+//ifdef GEAR_MAJOR_VERSION 
+//#if GEAR_VERSION_GE( 17,4)  
 // ZY and ZX rotations are calculated wrongly yet, do not implement:
 // XYZ shifts and XY rotation seems to be correct
 //
-            siPlanesLayerLayout-> setLayerPositionX(iPlane, siPlanesLayerLayout->getLayerPositionX(iPlane) - (*itrAlignmentConstant).second->getXOffset() ) ;
-            siPlanesLayerLayout-> setLayerPositionY(iPlane, siPlanesLayerLayout->getLayerPositionY(iPlane) - (*itrAlignmentConstant).second->getYOffset() ) ;
-            siPlanesLayerLayout-> setLayerPositionZ(iPlane, siPlanesLayerLayout->getLayerPositionZ(iPlane) - (*itrAlignmentConstant).second->getZOffset() ) ;
-//          siPlanesLayerLayout->setLayerRotationZY(iPlane,
-//                               siPlanesLayerLayout->getLayerRotationZY(iPlane) - ((*itrAlignmentConstant).second->getAlpha() ) *180./3.14159265359 );
-//          siPlanesLayerLayout->setLayerRotationZX(iPlane,
-//                               siPlanesLayerLayout->getLayerRotationZX(iPlane) - ((*itrAlignmentConstant).second->getBeta()  ) *180./3.14159265359 );
-            siPlanesLayerLayout->setLayerRotationXY(iPlane,
-                                 siPlanesLayerLayout->getLayerRotationXY(iPlane) - ((*itrAlignmentConstant).second->getGamma() ) *180./3.14159265359 );
-#endif
-#endif       
-            cout << siPlanesLayerLayout->getLayerPositionX(iPlane)  << endl;
-            cout << siPlanesLayerLayout->getLayerPositionY(iPlane)  << endl;
-            cout << siPlanesLayerLayout->getLayerPositionZ(iPlane)  << endl;
-            cout << siPlanesLayerLayout->getLayerRotationZY(iPlane)  << endl;
-            cout << siPlanesLayerLayout->getLayerRotationZX(iPlane)  << endl;
-            cout << siPlanesLayerLayout->getLayerRotationXY(iPlane)  << endl;
+            siPlanesLayerLayout-> setLayerPositionX(iPlane, siPlanesLayerLayout->getLayerPositionX(iPlane) +  delta_r0.X() ) ;
+            siPlanesLayerLayout-> setLayerPositionY(iPlane, siPlanesLayerLayout->getLayerPositionY(iPlane) +  delta_r0.Y() ) ;
+            siPlanesLayerLayout-> setLayerPositionZ(iPlane, siPlanesLayerLayout->getLayerPositionZ(iPlane) +  delta_r0.Z() ) ;
+            siPlanesLayerLayout->setLayerRotationZY(iPlane, alpha - dalpha );
+            siPlanesLayerLayout->setLayerRotationZX(iPlane, beta  - dbeta  );
+            siPlanesLayerLayout->setLayerRotationXY(iPlane, gamma - dgamma );
+//#endif
+//#endif       
+            streamlog_out(MESSAGE4) << "align by shifts (in local frame) " << std::endl;
+            streamlog_out(MESSAGE4) << " by: X' " << setw(20) << dr0x;
+            streamlog_out(MESSAGE4) << " by: Y' " << setw(20) << dr0y;
+            streamlog_out(MESSAGE4) << " by: Z' " << setw(20) << dr0z << std::endl;
+
+            streamlog_out(MESSAGE4) << "align by rotations (in local frame) " << std::endl;
+            streamlog_out(MESSAGE4) << " by: al " << setw(20) << dalpha;
+            streamlog_out(MESSAGE4) << " by: be " << setw(20) << dbeta;
+            streamlog_out(MESSAGE4) << " by: ga " << setw(20) << dgamma << std::endl;
+
+            streamlog_out(MESSAGE4) << "rotated from local to global: " << std::endl;
+            streamlog_out(MESSAGE4) << " by: X" << setw(20) <<  delta_r0.X() ;
+            streamlog_out(MESSAGE4) << " by: Y" << setw(20) <<  delta_r0.Y();
+            streamlog_out(MESSAGE4) << " by: Z" << setw(20) <<  delta_r0.Z() << std::endl;
+
+            streamlog_out(MESSAGE4) << "new : " << sensorID << setw(20) << siPlanesLayerLayout->getLayerPositionX(iPlane)  << 
+				setw(20) << siPlanesLayerLayout->getLayerPositionY(iPlane)  <<
+				setw(20) << siPlanesLayerLayout->getLayerPositionZ(iPlane)  <<
+		               	setw(20) << siPlanesLayerLayout->getLayerRotationZY(iPlane)  <<
+                 	  	setw(20) << siPlanesLayerLayout->getLayerRotationZX(iPlane)  <<
+                  		setw(20) << siPlanesLayerLayout->getLayerRotationXY(iPlane)  << std::endl;
         }
     }
 
     
-    cout << "Not implemented" << std::endl;
+    streamlog_out(MESSAGE4) << "Not implemented" << std::endl;
     gear::GearXML::createXMLFile( gearManager, newGearfileName );
     
     return;
@@ -143,7 +215,7 @@ int main( int argc, char ** argv ) {
   bool wantGEAR = false;
   if ( option->getFlag('g') || option->getFlag( "gear" ) ) {
       
-      cout << "Requested generation of GEAR" << endl;
+      streamlog_out(MESSAGE4) << "Requested generation of GEAR" << std::endl;
       
     wantGEAR = true;
     oldGearFileName = option->getArgv(2);
@@ -155,10 +227,10 @@ int main( int argc, char ** argv ) {
          lcioFileName.append( ".xml" );
     }
     
-    cout << oldGearFileName << " " << lcioFileName << endl;
+    streamlog_out(MESSAGE4) << oldGearFileName << " " << lcioFileName << std::endl;
   }
   
-  cout << "Converting " << pedeFileName << " in " << lcioFileName << endl;
+  streamlog_out(MESSAGE4) << "Converting " << pedeFileName << " in " << lcioFileName << std::endl;
 
   // try to open the input file. This should be a text file
   ifstream pedeFile( pedeFileName.c_str(), ios::in );
@@ -167,7 +239,7 @@ int main( int argc, char ** argv ) {
   
   if ( pedeFile.fail() ) {
 
-    cerr << "Error opening the " << pedeFileName << endl;
+    cerr << "Error opening the " << pedeFileName << std::endl;
     return -1;
 
   } else {
@@ -178,7 +250,7 @@ int main( int argc, char ** argv ) {
     try {
       lcWriter->open( lcioFileName.c_str() , lcio::LCIO::WRITE_NEW );
     } catch ( lcio::IOException& e ) {
-      cerr << e.what() << endl;
+      cerr << e.what() << std::endl;
       return -2;
     }
 
@@ -273,6 +345,8 @@ int main( int argc, char ** argv ) {
 
     // Process GEAR output if requested
     if ( wantGEAR ) prepareGEAR(oldGearFileName, newGearFileName, constants_map);
+    
+    streamlog_out(MESSAGE4) << "Alignment corrections:" << std::endl;
     
     colWriter._constantsCollection = constantsCollection;
     for_each( constants_map.begin(), constants_map.end(), colWriter );
