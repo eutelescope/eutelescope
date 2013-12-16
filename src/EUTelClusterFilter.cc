@@ -710,12 +710,6 @@ void EUTelClusterFilter::processRunHeader (LCRunHeader * rdr) {
 
 void EUTelClusterFilter::processEvent (LCEvent * event) {
 
-    if (_iEvt % 10 == 0)
-        streamlog_out ( MESSAGE4 )  << "Processing event "
-                                    << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
-                                    << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
-                                    << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
-
     ++_iEvt;
 
     if ( isFirstEvent() )
