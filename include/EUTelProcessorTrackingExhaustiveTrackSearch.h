@@ -118,10 +118,10 @@ namespace eutelescope {
         /** Hot pixel collection name 
          *  @TODO must be a part of a separate data structure
          */
-        string _hotPixelCollectionName;
+//        string _hotPixelCollectionName;
 
         /** Map of hot pixels */
-        map<string, bool > _hotPixelMap;
+//        map<string, bool > _hotPixelMap;
 
     protected:
 
