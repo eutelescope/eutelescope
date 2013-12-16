@@ -17,7 +17,6 @@
 
    <execute>
       <processor name="AIDA"/>
-      <!--processor name="Correlator"/  useless now? -->
       <processor name="GBLTrackFit"/>
       <processor name="Save"/>
       <processor name="PrintEventNumber"/>
@@ -44,43 +43,6 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="Correlator" type="EUTelCorrelator">
- <!--EUTelCorrelator fills histograms with correlation plots-->
-  <!--Hit collection name-->
-  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> PreAlignedHit </parameter>
-  <!--Minimum allowed cluster charge to be taken into account for the correlation plots (default = 2)-->
-  <parameter name="ClusterChargeMinimum" type="int" value="2"/>
-  <!--Dump the offset X and Y values calculated from the correlation bands (default = true)-->
-  <parameter name="DumpOffset" type="bool" value="false"/>
-  <!--How many events are needed to get reasonable correlation plots (and Offset DB)? (default=1000)-->
-  <parameter name="Events" type="int" value="9999"/>
-  <!--SensorID of fixed plane-->
-  <!--parameter name="FixedPlane" type="int" value="0"/-->
-  <!--This is the name of the hot pixel collection to be saved into the output slcio file-->
-  <!--parameter name="HotPixelCollectionName" type="string" value="hotpixel"/-->
-  <!--List of cluster collections-->
-  <parameter name="InputClusterCollections" type="StringVec"> </parameter>
-  <!--If there are more then this number of correlated hits (planes->track candidate) (default=5)-->
-  <parameter name="MinNumberOfCorrelatedHits" type="int" value="5"/>
-  <!--This is the name of the LCIO file name with the output offset db (add .slcio)-->
-  <!--parameter name="OffsetDBFile" type="string" value="offset-db.slcio"/-->
-  <!--reference hit collection name -->
-  <parameter name="ReferenceCollection" type="string" value="refhit"/>
-  <!--Maximal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResidualsXMax" type="FloatVec"> 2. 2. 2. 2. 2. 2. </parameter>
-  <!--Minimal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResidualsXMin" type="FloatVec"> -2. -2. -2. -2. -2. -2. </parameter>
-  <!--Maximal values of the hit residuals in the Y direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResidualsYMax" type="FloatVec"> 2. 2. 2. 2. 2. 2. </parameter>
-  <!--Minimal values of the hit residuals in the Y direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResidualsYMin" type="FloatVec"> -2. -2. -2. -2. -2. -2. </parameter>
-  <!--Do you want the reference hit collection to be used for coordinate transformations?-->
-  <!--parameter name="UseReferenceCollection" type="bool" value="true"/-->
-    <parameter name="ReferenceCollection" type="string" > refhit </parameter>
-    <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
-  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <!--parameter name="Verbosity" type="string" value=""/-->
-</processor>
 
 
  <processor name="GBLTrackFit" type="EUTelProcessorTrackingGBLTrackFit">
