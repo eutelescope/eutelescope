@@ -69,8 +69,8 @@ EUTelProcessorTrackingExhaustiveTrackSearch::EUTelProcessorTrackingExhaustiveTra
 Processor("EUTelProcessorTrackingExhaustiveTrackSearch"),
 _hitInputCollectionName("HitCollection"),
 _trackCandidateHitsOutputCollectionName("TrackCandidatesCollection"),
-_hotPixelCollectionName("hotpixel"),
-_hotPixelMap(),
+//_hotPixelCollectionName("hotpixel"),
+//_hotPixelMap(),
 _trackFinder(0),
 _maxMissingHitsPerTrackCand(0),
 _maxNTracks(10),
@@ -102,9 +102,6 @@ _aidaHistoMap1D() {
             _trackCandidateHitsOutputCollectionName,
             std::string("TrackCandidateHitCollection"));
 
-    // Geometry definition
-    
-    registerOptionalParameter("GeometryFilename", "Name of the TGeo geometry definition file", _tgeoFileName, std::string("TELESCOPE.root"));
 
     // Optional processor parameters that define track finder settings
 
@@ -157,8 +154,8 @@ _aidaHistoMap1D() {
     /**    @TODO must be a part of a separate data structure 
      *     Do we need this at all
      */
-    registerOptionalParameter("HotPixelCollectionName", "Name of the hot pixel collection ",
-            _hotPixelCollectionName, static_cast<std::string> ("hotpixel"));
+//    registerOptionalParameter("HotPixelCollectionName", "Name of the hot pixel collection ",
+//            _hotPixelCollectionName, static_cast<std::string> ("hotpixel"));
 
 }
 
@@ -176,7 +173,7 @@ void EUTelProcessorTrackingExhaustiveTrackSearch::init() {
     // Getting access to geometry description
 //    geo::gGeometry().initializeTGeoDescription(_tgeoFileName);
     std::string name("test.root");
-    geo::gGeometry().initializeTGeoDescription(name,false);
+    geo::gGeometry().initializeTGeoDescription(name,true);
     
     // Check if the window size was properly initilised
     {
@@ -256,7 +253,7 @@ void EUTelProcessorTrackingExhaustiveTrackSearch::processEvent(LCEvent * evt) {
 
     if (isFirstEvent()) {
         // Fill hot pixel map   
-        _hotPixelMap = Utility::FillHotPixelMap(evt, _hotPixelCollectionName);
+//        _hotPixelMap = Utility::FillHotPixelMap(evt, _hotPixelCollectionName);
     }
 
     EUTelEventImpl * event = static_cast<EUTelEventImpl*> (evt);
@@ -365,10 +362,10 @@ int EUTelProcessorTrackingExhaustiveTrackSearch::FillHits(LCEvent * evt,
     for (int iHit = 0; iHit < collection->getNumberOfElements(); iHit++) {
 
         TrackerHitImpl * hit = static_cast<TrackerHitImpl*> (collection->getElementAt(iHit));
-        if (Utility::HitContainsHotPixels(hit, _hotPixelMap)) {
-            streamlog_out(DEBUG3) << "Hit " << iHit << " contains hot pixels; skip this one. " << std::endl;
-            continue;
-        }
+//        if (Utility::HitContainsHotPixels(hit, _hotPixelMap)) {
+//            streamlog_out(DEBUG3) << "Hit " << iHit << " contains hot pixels; skip this one. " << std::endl;
+//            continue;
+//        }
 
         LCObjectVec clusterVector = hit->getRawHits();
 
