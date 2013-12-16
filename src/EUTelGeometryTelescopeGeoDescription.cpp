@@ -186,9 +186,9 @@ _geoManager(0)
         _siPlaneXPosition.push_back(_siPlanesLayerLayout->getLayerPositionX(iPlane));
         _siPlaneYPosition.push_back(_siPlanesLayerLayout->getLayerPositionY(iPlane));
         _siPlaneZPosition.push_back(_siPlanesLayerLayout->getLayerPositionZ(iPlane));
-        _siPlaneXRotation.push_back(_siPlanesLayerLayout->getLayerRotationZY(iPlane)/180.*3.14159265359);
-        _siPlaneYRotation.push_back(_siPlanesLayerLayout->getLayerRotationZX(iPlane)/180.*3.14159265359);
-        _siPlaneZRotation.push_back(_siPlanesLayerLayout->getLayerRotationXY(iPlane)/180.*3.14159265359);
+        _siPlaneXRotation.push_back(_siPlanesLayerLayout->getLayerRotationZY(iPlane));
+        _siPlaneYRotation.push_back(_siPlanesLayerLayout->getLayerRotationZX(iPlane));
+        _siPlaneZRotation.push_back(_siPlanesLayerLayout->getLayerRotationXY(iPlane));
         
         _siPlaneSizeX.push_back(_siPlanesLayerLayout->getLayerSizeX(iPlane));
         _siPlaneSizeY.push_back(_siPlanesLayerLayout->getLayerSizeY(iPlane));
@@ -352,7 +352,10 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::strin
        TGeoRotation* pMatrixRotX = new TGeoRotation( stRotationName.c_str(), 0.,  alpha*DEG, 0.);                // around X axis
        stRotationName = "matrixRotationSensorY";
        stRotationName.append( strId.str() );
-       TGeoRotation* pMatrixRotY = new TGeoRotation( stRotationName.c_str(), 90., beta*DEG,  0.);                // around Y axis
+       TGeoRotation* pMatrixRotY = new TGeoRotation( stRotationName.c_str(), 90., beta*DEG,  0.);                // around Y axis (combination of rotation around Z axis and new X axis)
+       stRotationName = "matrixRotationSensorBackY";
+       stRotationName.append( strId.str() );
+       TGeoRotation* pMatrixRotY1 = new TGeoRotation( stRotationName.c_str(), -90., 0.,  0.);                    // restoration of original orientation (valid in small angle approximataion ~< 15 deg)
        stRotationName = "matrixRotationSensorZ";
        stRotationName.append( strId.str() );
        TGeoRotation* pMatrixRotZ = new TGeoRotation( stRotationName.c_str(), 0. , 0.,        gamma*DEG);         // around Z axis
@@ -360,6 +363,7 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::strin
        // Combined rotation in several steps
        TGeoRotation* pMatrixRot = new TGeoRotation( *pMatrixRotX );
        pMatrixRot->MultiplyBy( pMatrixRotY );
+       pMatrixRot->MultiplyBy( pMatrixRotY1 );
        pMatrixRot->MultiplyBy( pMatrixRotZ );
        
        // Combined translation and orientation
@@ -495,6 +499,59 @@ void EUTelGeometryTelescopeGeoDescription::master2Local( const double globalPos[
 }
 
 /**
+ * Vector coordinate transformation from global reference frame to local reference frame.
+ * Corresponding volume is determined automatically.
+ * 
+ * @param globalVec (x,y,z) in global coordinate system
+ * @param localVec (x,y,z) in local coordinate system
+ */
+void EUTelGeometryTelescopeGeoDescription::local2MasterVec( int sensorID, const double localVec[], double globalVec[] ) {
+    streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::master2LocalVec() " << std::endl;
+    const double sensorCenterX = siPlaneXPosition( sensorID );
+    const double sensorCenterY = siPlaneYPosition( sensorID );
+    const double sensorCenterZ = siPlaneZPosition( sensorID );
+    
+    streamlog_out(DEBUG0) << "Senosor id: " << sensorID << std::endl;
+    streamlog_out(DEBUG0) << "Senosor center: " << "(" << sensorCenterX << "," << sensorCenterY << "," << sensorCenterZ << ")" << std::endl;
+    
+    _geoManager->FindNode( sensorCenterX, sensorCenterY, sensorCenterZ );    
+    _geoManager->LocalToMasterVect( localVec, globalVec );
+    
+    streamlog_out(DEBUG0) << std::fixed;
+    streamlog_out(DEBUG0) << "Global coordinates:" << std::endl;
+    streamlog_out(DEBUG0) << std::setw(10) << std::setprecision(5) << globalVec[0] << std::setw(10) << std::setprecision(5) << globalVec[1] << std::setw(10) << std::setprecision(5) << globalVec[2] << std::endl;
+    streamlog_out(DEBUG0) << "Local coordinates: " << std::endl;
+    streamlog_out(DEBUG0) << std::setw(10) << std::setprecision(5) << localVec[0] << std::setw(10) << std::setprecision(5) << localVec[1] << std::setw(10) << std::setprecision(5) << localVec[2] << std::endl;
+}
+
+
+/**
+ * Vector coordinate transformation from global reference frame to local reference frame.
+ * Corresponding volume is determined automatically.
+ * 
+ * @param globalVec (x,y,z) in global coordinate system
+ * @param localVec (x,y,z) in local coordinate system
+ */
+void EUTelGeometryTelescopeGeoDescription::master2LocalVec( int sensorID, const double globalVec[], double localVec[] ) {
+    streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::master2LocalVec() " << std::endl;
+    const double sensorCenterX = siPlaneXPosition( sensorID );
+    const double sensorCenterY = siPlaneYPosition( sensorID );
+    const double sensorCenterZ = siPlaneZPosition( sensorID );
+    
+    streamlog_out(DEBUG0) << "Senosor id: " << sensorID << std::endl;
+    streamlog_out(DEBUG0) << "Senosor center: " << "(" << sensorCenterX << "," << sensorCenterY << "," << sensorCenterZ << ")" << std::endl;
+    
+    _geoManager->FindNode( sensorCenterX, sensorCenterY, sensorCenterZ );    
+    _geoManager->MasterToLocalVect( globalVec, localVec );
+    
+    streamlog_out(DEBUG0) << std::fixed;
+    streamlog_out(DEBUG0) << "Global coordinates:" << std::endl;
+    streamlog_out(DEBUG0) << std::setw(10) << std::setprecision(5) << globalVec[0] << std::setw(10) << std::setprecision(5) << globalVec[1] << std::setw(10) << std::setprecision(5) << globalVec[2] << std::endl;
+    streamlog_out(DEBUG0) << "Local coordinates: " << std::endl;
+    streamlog_out(DEBUG0) << std::setw(10) << std::setprecision(5) << localVec[0] << std::setw(10) << std::setprecision(5) << localVec[1] << std::setw(10) << std::setprecision(5) << localVec[2] << std::endl;
+}
+
+/**
  * Global-to-local coordinate transformation matrix.
  * Corresponding volume is determined automatically.
  * 
@@ -576,6 +633,7 @@ float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double 
     while ( nextnode ) {
         med = NULL;
         
+	// Check if current point is inside silicon sensor. Radiation length of silicon sensors is accounted in thin scatterers of GBL.
         bool isBoundaryVolume = false;
         if ( gGeoManager->IsSameLocation( globalPosStart[0], globalPosStart[1], globalPosStart[2] ) ||
              gGeoManager->IsSameLocation( globalPosFinish[0], globalPosFinish[1], globalPosFinish[2] ) ) isBoundaryVolume = true;
@@ -635,7 +693,7 @@ float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double 
         currentStep -= snext;
         if ( med ) {
             double radlen = med->GetMaterial()->GetRadLen() /*cm*/;
-            if ( radlen > 1.e-5 && radlen < 1.e10 ) {
+            if ( radlen > 1.e-9 && radlen < 1.e10 ) {
                 
                 lastrad = 1. / radlen * mm2cm;
                 
@@ -652,7 +710,8 @@ float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double 
             streamlog_out( DEBUG0 ) << "STEP #" << nbound << std::endl;
             streamlog_out( DEBUG0 ) << "   step[mm]=" << snext << "   length[mm]=" << length
                     << " rad[X0]=" << snext * mm2cm / radlen << " " << med->GetName( ) 
-                    << " rho[g/cm^3]=" << med->GetMaterial()->GetDensity() <<" radlen[cm]=" << radlen << std::endl;
+                    << " rho[g/cm^3]=" << med->GetMaterial()->GetDensity() <<" radlen[cm]=" << radlen << " Boundary:" << (isBoundaryVolume?"yes":"no")
+		    << std::endl;
         }
     }
     

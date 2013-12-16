@@ -143,6 +143,10 @@ namespace eutelescope {
             void local2Master( int, const double[], double[] );
             
             void master2Local( const double[], double[] );
+
+	    void local2MasterVec( int, const double[], double[] );
+ 
+	    void master2LocalVec( int, const double[], double[] );
             
             const TGeoHMatrix* getHMatrix( const double globalPos[] );
             
