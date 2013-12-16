@@ -22,6 +22,7 @@
 #include <marlin/AIDAProcessor.h>
 #include <AIDA/IHistogramFactory.h>
 #include <AIDA/IHistogram1D.h>
+#include <AIDA/IProfile2D.h>
 #endif // MARLIN_USE_AIDA
 
 // ROOT
@@ -67,13 +68,20 @@ using namespace eutelescope;
 
 // definition of static members mainly used to name histograms
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+
+std::string EUTelProcessorTrackingGBLTrackFit::_histName::_orchi2GblFitHistName    = "orchi2GblFit";
+std::string EUTelProcessorTrackingGBLTrackFit::_histName::_orchi2ndfGblFitHistName = "orchi2ndfGblFit";
+std::string EUTelProcessorTrackingGBLTrackFit::_histName::_orprobGblFitHistName    = "orprobGblFit";
 std::string EUTelProcessorTrackingGBLTrackFit::_histName::_chi2GblFitHistName = "chi2GblFit";
+std::string EUTelProcessorTrackingGBLTrackFit::_histName::_chi2ndfGblFitHistName = "chi2ndfGblFit";
 std::string EUTelProcessorTrackingGBLTrackFit::_histName::_probGblFitHistName = "probGblFit";
 std::string EUTelProcessorTrackingGBLTrackFit::_histName::_momentumGblFitHistName = "momentumGblFit";
 std::string EUTelProcessorTrackingGBLTrackFit::_histName::_residGblFitHistName = "ResidualsGblFit";
 std::string EUTelProcessorTrackingGBLTrackFit::_histName::_normResidGblFitHistName = "NormResidualsGblFit";
 std::string EUTelProcessorTrackingGBLTrackFit::_histName::_residGblFitHistNameX = "ResidualsGblFit_x";
 std::string EUTelProcessorTrackingGBLTrackFit::_histName::_residGblFitHistNameY = "ResidualsGblFit_y";
+std::string EUTelProcessorTrackingGBLTrackFit::_histName::_resid2DGblFitHistNameX = "ResidualsGblFitXY_x";
+std::string EUTelProcessorTrackingGBLTrackFit::_histName::_resid2DGblFitHistNameY = "ResidualsGblFitXY_y";
 std::string EUTelProcessorTrackingGBLTrackFit::_histName::_normResidGblFitHistNameX = "NormResidualsGblFit_x";
 std::string EUTelProcessorTrackingGBLTrackFit::_histName::_normResidGblFitHistNameY = "NormResidualsGblFit_y";
 std::string EUTelProcessorTrackingGBLTrackFit::_histName::_resid2DGblFitHistNameXvsX = "Residuals2DGblFit_xVSx";
@@ -118,7 +126,7 @@ _fixedAlignmentZRotationPlaneIds(),
 _excludePlanesFromFit(),
 _runPede(false),
 _alignmentConstantLCIOFile("alignment.slcio"),
-_maxChi2Cut(1000.),
+_maxMilleChi2Cut(1000.),
 _tgeoFileName("TELESCOPE.root"),
 _histoInfoFileName("histoinfo.xml"),
 _trackCandidateHitsInputCollectionName("TrackCandidateHitCollection"),
@@ -130,7 +138,8 @@ _nProcessedRuns(0),
 _nProcessedEvents(0),
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 _aidaHistoMap1D(),
-_aidaHistoMap2D()
+_aidaHistoMap2D(),
+_aidaProfileMap2D()
 #endif // defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 {
 
@@ -150,9 +159,6 @@ _aidaHistoMap2D()
             "Output tracks collection name",
             _tracksOutputCollectionName,
             std::string("TrackCollection"));
-
-    // Geometry definition
-    registerOptionalParameter("GeometryFilename", "Name of the TGeo geometry definition file", _tgeoFileName, std::string("TELESCOPE.root"));
 
     // Necessary processor parameters that define fitter settings
     registerProcessorParameter("BeamEnergy", "Beam energy [GeV]", _eBeam, static_cast<double> (4.0));
@@ -181,9 +187,11 @@ _aidaHistoMap2D()
     
     registerOptionalParameter("MilleResultFilename", "Name of the Millepede result file", _milleResultFileName, std::string("millepede.res"));
     
+    registerOptionalParameter("GearFilenameSuffix", "Suffix to add to the new Gear with alignment corrections", _gear_suffix, std::string("-00001.xml"));
+
     registerOptionalParameter("PedeSteeringAdditionalCmds","FOR EXPERTS: List of commands that should be included in the pede steering file. Use '\\' to seperate options and introduce a line break.",_pedeSteerAddCmds, StringVec());
 
-    registerOptionalParameter("MilleMaxChi2Cut", "Maximum chi2 of a track candidate that goes into millepede", _maxChi2Cut, double(1000.));
+    registerOptionalParameter("MilleMaxChi2Cut", "Maximum chi2 of a track candidate that goes into millepede", _maxMilleChi2Cut, double(1000.));
 
     registerOptionalParameter("AlignmentPlanes", "Ids of planes to be used in alignment", _alignmentPlaneIds, IntVec());
  
@@ -238,7 +246,6 @@ void EUTelProcessorTrackingGBLTrackFit::init() {
 
 
     // Getting access to geometry description
-//    geo::gGeometry().initializeTGeoDescription(_tgeoFileName);
     std::string name("test.root");
     geo::gGeometry().initializeTGeoDescription(name,false);
 
@@ -292,6 +299,8 @@ void EUTelProcessorTrackingGBLTrackFit::init() {
         Fitter->setParamterIdXResolutionVec(_SteeringxResolutions);
         Fitter->setParamterIdYResolutionVec(_SteeringyResolutions);
 
+        Fitter->setExcludeFromFitPlanes( _excludePlanesFromFit );
+
         Fitter->setParamterIdXShiftsMap(_xShiftsMap);
         Fitter->setParamterIdYShiftsMap(_yShiftsMap);
         Fitter->setParamterIdZShiftsMap(_zShiftsMap);
@@ -301,7 +310,7 @@ void EUTelProcessorTrackingGBLTrackFit::init() {
         Fitter->SetMilleBinary(_milleGBL);
         Fitter->SetBeamEnergy(_eBeam);
         Fitter->SetBeamCharge(_qBeam);
-        Fitter->SetChi2Cut(_maxChi2Cut);
+        Fitter->SetChi2Cut(_maxMilleChi2Cut);
         if (!_mEstimatorType.empty() ) Fitter->setMEstimatorType(_mEstimatorType);
         _trackFitter = Fitter;
 
@@ -405,7 +414,8 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
         streamlog_out(DEBUG2) << "EUTelProcessorTrackingGBLTrackFit" << endl;
 // trackCanidadtes type !!! rubinskiy 30-11-2013
 //        EVENT::TrackVec trackCandidates;
-        vector < EVENT::TrackerHitVec > trackCandidates;
+        EVENT::TrackVec trackCandidates;
+//        vector < EVENT::TrackerHitVec > trackCandidates;
         for (int iCol = 0; iCol < col->getNumberOfElements(); iCol++) {
             TrackImpl* track = static_cast<TrackImpl*> (col->getElementAt(iCol));
 
@@ -416,25 +426,28 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
             }
 
             streamlog_out(DEBUG1) << "Track " << iCol << " nhits " << track->getTrackerHits().size() << endl;
-//            trackCandidates.push_back( track );
-            trackCandidates.push_back(track->getTrackerHits());
+            trackCandidates.push_back( track );
+//            trackCandidates.push_back(track->getTrackerHits());
         } //for ( int iCol = 0; iCol < col->getNumberOfElements() ; iCol++ )
 
         //        return;
 
         // Perform fit for all found track candidates
         // ------------------------------------------
+        TVectorD residual(2);
+        TVectorD residualErr(2);
+        
         unsigned int numData;
-        TVectorD residual(200);
-        TVectorD measErr(200);
-        TVectorD residualErr(200);
-        TVectorD downWeight(200);
+        TVectorD residualGBL(2);
+        TVectorD measErrGBL(2);
+        TVectorD residualErrGBL(2);
+        TVectorD downWeightGBL(2);
         const int nTracks = trackCandidates.size();
         streamlog_out(DEBUG1) << "N tracks found " << nTracks << endl;
 
         // for alignment nTracks == 1, for tracking nTracks>0
-        if ( nTracks >0 ) {
-//        if ( _alignmentMode ? nTracks == 1 : nTracks >0 ) {
+//        if (  nTracks > 0 ) {
+       if ( _alignmentMode ? nTracks == 1 : nTracks > 0 ) {
             _trackFitter->SetTrackCandidates(trackCandidates);
             _trackFitter->FitTracks();
             //
@@ -446,119 +459,163 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
             fittrackvec = static_cast<EUTelGBLFitter*> (_trackFitter)->GetFitTrackVec();
             IMPL::LCCollectionVec::const_iterator itFitTrack;
 
-            int iCounter = 0;
+            // Loop over fitted tracks
             for (itFitTrack = fittrackvec->begin(); itFitTrack != fittrackvec->end(); ++itFitTrack) {
+                
                 chi2Trk = static_cast<TrackImpl*> (*itFitTrack)->getChi2();
                 ndfTrk = static_cast<TrackImpl*> (*itFitTrack)->getNdf();
+                static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ _histName::_orchi2GblFitHistName ]) -> fill(chi2Trk);
+                if(ndfTrk>0) static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ _histName::_orchi2ndfGblFitHistName ]) -> fill(chi2Trk/ndfTrk);
+                static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ _histName::_orprobGblFitHistName ]) -> fill( TMath::Prob(chi2Trk, ndfTrk) );
+                
                 p = _qBeam * ( 1./static_cast<TrackImpl*> (*itFitTrack)->getOmega() );
-                static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ _histName::_chi2GblFitHistName ]) -> fill(chi2Trk);
-                static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ _histName::_probGblFitHistName ]) -> fill( TMath::Prob(chi2Trk, ndfTrk) );
-//                std::cout  << "P= " << p << std::endl;
                 static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ _histName::_momentumGblFitHistName ]) -> fill(p);
+
+                // Retrieve original GBL information
+                std::map< int, gbl::GblTrajectory* > gblTracks = static_cast < EUTelGBLFitter* > ( _trackFitter )->GetGblTrackCandidates( );
+                IMPL::LCCollectionVec::const_iterator begin = fittrackvec->begin( );
+                int iCounter = std::distance( begin, itFitTrack );
+                gbl::GblTrajectory* gblTraj = ( *gblTracks.find( iCounter ) ).second;
+                if ( gblTraj == NULL ) {
+                    streamlog_out( WARNING1 ) << "Can't find GBL trajectory object. Skipping track" << std::endl;
+                    continue;
+                }
+
+                const std::map<long, int> gblPointLabel = static_cast < EUTelGBLFitter* > ( _trackFitter )->getHitId2GblPointLabel( );
+                const EVENT::TrackerHitVec& trackHits = static_cast < TrackImpl* > ( *itFitTrack )->getTrackerHits( );
+
+                // If this is an alignment run plot residuals for Millepede selected tracks. Plot everything otherwise.
+//                if ( ( _alignmentMode > 0 && chi2Trk < _maxMilleChi2Cut ) || ( _alignmentMode == 0 ) ) {
+                if ( chi2Trk < _maxMilleChi2Cut   ) {
+ 
+                    static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ _histName::_chi2GblFitHistName ]) -> fill(chi2Trk);
+                    if(ndfTrk>0) static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ _histName::_chi2ndfGblFitHistName ]) -> fill(chi2Trk/ndfTrk);
+                    static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ _histName::_probGblFitHistName ]) -> fill( TMath::Prob(chi2Trk, ndfTrk) );
+                  
+                    // Loop over fitted hit positions
+                    EVENT::TrackerHitVec::const_iterator itrHit;
+                    for ( itrHit = trackHits.begin( ); itrHit != trackHits.end( ); ++itrHit ) {
+
+                        // Get input hit information
+                        IMPL::TrackerHitImpl* originalHit =  static_cast < IMPL::TrackerHitImpl* > ( ( *itrHit )->getRawHits( ).front( ) );
+                        const double* originalhitpos = originalHit->getPosition( );
+
+                        // Get fitted hit information
+                        const double* hitpos = ( *itrHit )->getPosition( );
+                        const int planeID = Utility::GuessSensorID( static_cast < IMPL::TrackerHitImpl* > ( *itrHit ) );
+                        if ( planeID < 0 ) continue;
+
+                        // Calculate residuals between original and fitted hits
+                        residual[0] = hitpos[0] - originalhitpos[0];
+                        residual[1] = hitpos[1] - originalhitpos[1];
+
+                        // Covariance includes correlations from fit parameters
+                        residualErr[0] = sqrt( ( *itrHit )->getCovMatrix( )[0] );
+                        residualErr[1] = sqrt( ( *itrHit )->getCovMatrix( )[2] );
+
+                        // Spatial GBL residuals. residualGBL is the as residual and residualErrGBL is the same as residualErr.
+                        int hitGblLabel = gblPointLabel.at( originalHit->id( ) );
+                        gblTraj->getMeasResults( hitGblLabel, numData, residualGBL, measErrGBL, residualErrGBL, downWeightGBL );
+                        //                            
+                        std::stringstream sstr;
+                        std::stringstream sstrNorm;
+
+                        // 1D histograms
+                        // SPATIAL RESIDUALS
+                        const double um = 1000.;
+                        sstr << _histName::_residGblFitHistNameX << planeID;
+                        sstrNorm << _histName::_normResidGblFitHistNameX << planeID;
+                        if ( planeID == 5 ) streamlog_out( DEBUG0 ) << planeID << " " << std::setw( 15 ) << std::setprecision( 5 ) << residual[0] << std::setw( 15 ) << std::setprecision( 5 ) << residualErr[0] << std::endl;
+                        static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstr.str( ) ] ) -> fill( residualGBL[0] * um, downWeightGBL[0] );
+                        static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstrNorm.str( ) ] ) -> fill( residual[0] / residualErr[0], downWeightGBL[0] );
+
+if( event->getEventNumber()/999*999   == event->getEventNumber() )
+{
+  streamlog_out(MESSAGE3) <<  sstr.str( ) 
+            << " " << hitpos[0] << " " << hitpos[1] << " " << hitpos[2] 
+            << " " <<  static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstr.str( ) ] ) -> mean()  
+            << " " <<  static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstr.str( ) ] ) -> rms() << endl;
+}
+
+
+
+                        _seedAlignmentConstants._xResiduals[planeID] += ( residual[0] );
+                        _seedAlignmentConstants._nxResiduals[planeID]++;
+                        sstr.str( std::string( ) );
+                        sstrNorm.str( std::string( ) );
+                        sstr << _histName::_residGblFitHistNameY << planeID;
+                        sstrNorm << _histName::_normResidGblFitHistNameY << planeID;
+                        if ( planeID == 5 ) streamlog_out( DEBUG0 ) << planeID << " " << std::setw( 15 ) << std::setprecision( 5 ) << residual[1] << std::setw( 15 ) << std::setprecision( 5 ) << residualErr[1] << std::endl;
+                        static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstr.str( ) ] ) -> fill( residual[1] * um, downWeightGBL[1] );
+                        static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstrNorm.str( ) ] ) -> fill( residual[1] / residualErr[1], downWeightGBL[1] );
+                        _seedAlignmentConstants._yResiduals[planeID] += ( residual[1] );
+                        _seedAlignmentConstants._nyResiduals[planeID]++;
+                        sstr.str( std::string( ) );
+                        sstrNorm.str( std::string( ) );
+
+                        // 2D histograms
+                        // SPATIAL RESIDUALS
+                        sstr << _histName::_resid2DGblFitHistNameX << planeID;
+                        static_cast < AIDA::IProfile2D* > ( _aidaProfileMap2D[ sstr.str( ) ] ) -> fill( hitpos[0], hitpos[1], residual[0] * um, downWeightGBL[0] );
+                        sstr.str( std::string( ) );
+
+                        sstr << _histName::_resid2DGblFitHistNameY << planeID;
+                        static_cast < AIDA::IProfile2D* > ( _aidaProfileMap2D[ sstr.str( ) ] ) -> fill( hitpos[0], hitpos[1], residual[1] * um, downWeightGBL[1] );
+                        sstr.str( std::string( ) );
+
+                        sstr << _histName::_resid2DGblFitHistNameXvsX << planeID;
+                        sstrNorm << _histName::_normResid2DGblFitHistNameXvsX << planeID;
+                        static_cast < AIDA::IHistogram2D* > ( _aidaHistoMap2D[ sstr.str( ) ] ) -> fill( hitpos[0], residual[0] * um, downWeightGBL[0] );
+                        static_cast < AIDA::IHistogram2D* > ( _aidaHistoMap2D[ sstrNorm.str( ) ] ) -> fill( hitpos[0], residual[0] / residualErr[0], downWeightGBL[0] );
+                        sstr.str( std::string( ) );
+                        sstrNorm.str( std::string( ) );
+                        sstr << _histName::_resid2DGblFitHistNameXvsY << planeID;
+                        sstrNorm << _histName::_normResid2DGblFitHistNameXvsY << planeID;
+                        static_cast < AIDA::IHistogram2D* > ( _aidaHistoMap2D[ sstr.str( ) ] ) -> fill( hitpos[1], residual[0] * um, downWeightGBL[0] );
+                        static_cast < AIDA::IHistogram2D* > ( _aidaHistoMap2D[ sstrNorm.str( ) ] ) -> fill( hitpos[1], residual[0] / residualErr[0], downWeightGBL[0] );
+                        sstr.str( std::string( ) );
+                        sstrNorm.str( std::string( ) );
+                        sstr << _histName::_resid2DGblFitHistNameYvsX << planeID;
+                        sstrNorm << _histName::_normResid2DGblFitHistNameYvsX << planeID;
+                        static_cast < AIDA::IHistogram2D* > ( _aidaHistoMap2D[ sstr.str( ) ] ) -> fill( hitpos[0], residual[1] * um, downWeightGBL[1] );
+                        static_cast < AIDA::IHistogram2D* > ( _aidaHistoMap2D[ sstrNorm.str( ) ] ) -> fill( hitpos[0], residual[1] / residualErr[1], downWeightGBL[1] );
+                        sstr.str( std::string( ) );
+                        sstrNorm.str( std::string( ) );
+                        sstr << _histName::_resid2DGblFitHistNameYvsY << planeID;
+                        sstrNorm << _histName::_normResid2DGblFitHistNameYvsY << planeID;
+                        static_cast < AIDA::IHistogram2D* > ( _aidaHistoMap2D[ sstr.str( ) ] ) -> fill( hitpos[1], residual[1] * um, downWeightGBL[1] );
+                        static_cast < AIDA::IHistogram2D* > ( _aidaHistoMap2D[ sstrNorm.str( ) ] ) -> fill( hitpos[1], residual[1] / residualErr[1], downWeightGBL[1] );
+                        sstr.str( std::string( ) );
+                        sstrNorm.str( std::string( ) );
+
+                        // 1D histograms
+                        // KINKS
+                        gblTraj->getScatResults( hitGblLabel, numData, residualGBL, measErrGBL, residualErrGBL, downWeightGBL );
+                        sstr << _histName::_kinkGblFitHistNameX << planeID;
+                        streamlog_out( DEBUG0 ) << std::setw( 15 ) << std::setprecision( 5 ) << residualGBL[0] << std::setw( 15 ) << std::setprecision( 5 ) << residualErr[0] << std::endl;
+                        static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstr.str( ) ] ) -> fill( residualGBL[0], downWeightGBL[0] );
+                        sstr.str( std::string( ) );
+                        sstr << _histName::_kinkGblFitHistNameY << planeID;
+                        streamlog_out( DEBUG0 ) << std::setw( 15 ) << std::setprecision( 5 ) << residualGBL[1] << std::setw( 15 ) << std::setprecision( 5 ) << residualErr[1] << std::endl;
+                        static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstr.str( ) ] ) -> fill( residualGBL[1], downWeightGBL[1] );
+                        sstr.str( std::string( ) );
+                        sstrNorm.str( std::string( ) );
+
+                    }
+                } // if ( (_alignmentMode > 0 && chi2Trk < _maxMilleChi2Cut) || ( _alignmentMode == 0 ) )
+                 
             }
-
-		if ( chi2Trk < _maxChi2Cut ) {
-            std::map< int, gbl::GblTrajectory* > gblTracks = static_cast < EUTelGBLFitter* > ( _trackFitter )->GetGblTrackCandidates( );
-
-            const double um = 1000.;
-            std::stringstream sstr;
-            std::stringstream sstrNorm;
-            gbl::GblTrajectory* gblTraj = gblTracks[ iCounter ];
-            //                gblTraj->printTrajectory(1);
-            //                gblTraj->printPoints(1);
-            const std::map<long, int> gblPointLabel = static_cast < EUTelGBLFitter* > ( _trackFitter )->getHitId2GblPointLabel( );
-
-//front track ?? rubinskiy 30-11-2013 
- //         const EVENT::TrackerHitVec& track = trackCandidates.front( )->getTrackerHits();
-
-           for(int itrack=0;itrack<nTracks;itrack++)
-           {
-           const EVENT::TrackerHitVec& track = trackCandidates[itrack]; // loop condition to have exactly one track !! ??
-
-            // Fill histograms
-            EVENT::TrackerHitVec::const_iterator itrHit;
-            for ( itrHit = track.begin( ); itrHit != track.end( ); ++itrHit ) {
-                const double* hitpos = ( *itrHit )->getPosition( );
-                int hitGblLabel = gblPointLabel.at( ( *itrHit )->id( ) );
-                //                    cout << "Hit label: " << hitGblLabel << endl;
-                //                    hitGblLabel = ( itrHit == ( track.end() - 1 ) ) ? -hitGblLabel : hitGblLabel;     // change sign of label if this is the last hit of the track (gbl convention)
-                const int planeID = Utility::GuessSensorID( static_cast < IMPL::TrackerHitImpl* > ( *itrHit ) );
-                if ( planeID < 0 ) continue;
-
-                // spatial residuals
-                gblTraj->getMeasResults( hitGblLabel, numData, residual, measErr, residualErr, downWeight );
-                sstr << _histName::_residGblFitHistNameX << planeID;
-                sstrNorm << _histName::_normResidGblFitHistNameX << planeID;
-                if ( planeID == 5 ) streamlog_out( DEBUG0 ) << planeID << " " << std::setw( 15 ) << std::setprecision( 5 ) << residual[0] << std::setw( 15 ) << std::setprecision( 5 ) << residualErr[0] << std::endl;
-                static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstr.str( ) ] ) -> fill( residual[0] * um, downWeight[0] );
-                static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstrNorm.str( ) ] ) -> fill( residual[0] / residualErr[0], downWeight[0] );
-                _seedAlignmentConstants._xResiduals[planeID] += ( residual[0] );
-                _seedAlignmentConstants._nxResiduals[planeID]++;
-                sstr.str( std::string( ) );
-                sstrNorm.str( std::string( ) );
-                sstr << _histName::_residGblFitHistNameY << planeID;
-                sstrNorm << _histName::_normResidGblFitHistNameY << planeID;
-                if ( planeID == 5 ) streamlog_out( DEBUG0 ) << "planeID5:"<<planeID << " " << std::setw( 15 ) << std::setprecision( 5 ) << residual[1] << std::setw( 15 ) << std::setprecision( 5 ) << residualErr[1] << std::endl;
-                static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstr.str( ) ] ) -> fill( residual[1] * um, downWeight[1] );
-                static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstrNorm.str( ) ] ) -> fill( residual[1] / residualErr[1], downWeight[1] );
-                _seedAlignmentConstants._yResiduals[planeID] += ( residual[1] );
-                _seedAlignmentConstants._nyResiduals[planeID]++;
-                sstr.str( std::string( ) );
-                sstrNorm.str( std::string( ) );
-                // kinks
-                gblTraj->getScatResults( hitGblLabel, numData, residual, measErr, residualErr, downWeight );
-                sstr << _histName::_kinkGblFitHistNameX << planeID;
-                streamlog_out( DEBUG0 ) << std::setw( 15 ) << std::setprecision( 5 ) << residual[0] << std::setw( 15 ) << std::setprecision( 5 ) << residualErr[0] << std::endl;
-                static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstr.str( ) ] ) -> fill( residual[0], downWeight[0] );
-                sstr.str( std::string( ) );
-                sstr << _histName::_kinkGblFitHistNameY << planeID;
-                streamlog_out( DEBUG0 ) << std::setw( 15 ) << std::setprecision( 5 ) << residual[1] << std::setw( 15 ) << std::setprecision( 5 ) << residualErr[1] << std::endl;
-                static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstr.str( ) ] ) -> fill( residual[1], downWeight[1] );
-                sstr.str( std::string( ) );
-                sstrNorm.str( std::string( ) );
-
-                // 2D histograms
-                sstr << _histName::_resid2DGblFitHistNameXvsX << planeID;
-                sstrNorm << _histName::_normResid2DGblFitHistNameXvsX << planeID;
-                static_cast < AIDA::IHistogram2D* > ( _aidaHistoMap2D[ sstr.str( ) ] ) -> fill( hitpos[0], residual[0] * um, downWeight[0] );
-                static_cast < AIDA::IHistogram2D* > ( _aidaHistoMap2D[ sstrNorm.str( ) ] ) -> fill( hitpos[0], residual[0] / residualErr[0], downWeight[0] );
-                sstr.str( std::string( ) );
-                sstrNorm.str( std::string( ) );
-                sstr << _histName::_resid2DGblFitHistNameXvsY << planeID;
-                sstrNorm << _histName::_normResid2DGblFitHistNameXvsY << planeID;
-                static_cast < AIDA::IHistogram2D* > ( _aidaHistoMap2D[ sstr.str( ) ] ) -> fill( hitpos[1], residual[0] * um, downWeight[0] );
-                static_cast < AIDA::IHistogram2D* > ( _aidaHistoMap2D[ sstrNorm.str( ) ] ) -> fill( hitpos[1], residual[0] / residualErr[0], downWeight[0] );
-                sstr.str( std::string( ) );
-                sstrNorm.str( std::string( ) );
-                sstr << _histName::_resid2DGblFitHistNameYvsX << planeID;
-                sstrNorm << _histName::_normResid2DGblFitHistNameYvsX << planeID;
-                static_cast < AIDA::IHistogram2D* > ( _aidaHistoMap2D[ sstr.str( ) ] ) -> fill( hitpos[0], residual[1] * um, downWeight[1] );
-                static_cast < AIDA::IHistogram2D* > ( _aidaHistoMap2D[ sstrNorm.str( ) ] ) -> fill( hitpos[0], residual[1] / residualErr[1], downWeight[1] );
-                sstr.str( std::string( ) );
-                sstrNorm.str( std::string( ) );
-                sstr << _histName::_resid2DGblFitHistNameYvsY << planeID;
-                sstrNorm << _histName::_normResid2DGblFitHistNameYvsY << planeID;
-                static_cast < AIDA::IHistogram2D* > ( _aidaHistoMap2D[ sstr.str( ) ] ) -> fill( hitpos[1], residual[1] * um, downWeight[1] );
-                static_cast < AIDA::IHistogram2D* > ( _aidaHistoMap2D[ sstrNorm.str( ) ] ) -> fill( hitpos[1], residual[1] / residualErr[1], downWeight[1] );
-                sstr.str( std::string( ) );
-                sstrNorm.str( std::string( ) );
-            } // loop over hits in a track
-            } // loop over tracks
-            iCounter++;
-
-            delete gblTraj;
-
             // Write track candidates collection
             try {
                 streamlog_out( DEBUG1 ) << "Getting collection " << _tracksOutputCollectionName << endl;
                 evt->getCollection( _tracksOutputCollectionName );
             } catch ( ... ) {
                 streamlog_out( DEBUG1 ) << "Adding collection " << _tracksOutputCollectionName << endl;
-                evt->addCollection( static_cast<EUTelGBLFitter*> (_trackFitter)->GetFitTrackVec(), _tracksOutputCollectionName );
-            }            
-		}
-        } //if( _ntracks != 0 && _ntracks == 1)
-
+                evt->addCollection( static_cast < EUTelGBLFitter* > ( _trackFitter )->GetFitTrackVec( ), _tracksOutputCollectionName );
+            }   
+            
+        } //if( _alignmentMode ? nTracks == 1 : nTracks > 0 )
+        
     } //if( col != NULL )
 
     _nProcessedEvents++;
@@ -659,8 +716,13 @@ bool EUTelProcessorTrackingGBLTrackFit::parseMilleOutput( const string& milleRes
         isOK = false;
         return isOK;
     }
-    
-    const string command = "parsemilleout.sh " + _milleSteeringFilename + " " + milleResultFileName + " " + _alignmentConstantLCIOFile;
+ 
+    string _outputGearFile = Global::parameters->getStringVal("GearXMLFile" ) ;
+    _outputGearFile.replace( _outputGearFile.end()-4, _outputGearFile.end(), _gear_suffix );
+    _outputGearFile += ".xml";
+   
+    const string command = "parsemilleout.sh " + _milleSteeringFilename + " " + milleResultFileName + " " + _alignmentConstantLCIOFile + 
+                           " " + Global::parameters->getStringVal("GearXMLFile" ) + " " + _outputGearFile;
     streamlog_out ( MESSAGE5 ) << "Convering millepede results to LCIO collections... " << endl;
     streamlog_out ( MESSAGE5 ) << command << endl;
 
@@ -879,11 +941,11 @@ void EUTelProcessorTrackingGBLTrackFit::writeMilleSteeringFile() {
 
     } // end loop over all planes
 
-    steerFile << "method diagonalization 5 0.1" << endl;
-    steerFile << "chiscut 50. 25." << endl;
-    steerFile << "!hugecut 50." << endl;
-    steerFile << "!outlierdownweighting 4" << endl;
-    steerFile << "!dwfractioncut 0.2" << endl;
+//    steerFile << "method diagonalization 15 0.1" << endl;
+//    steerFile << "hugecut 500." << endl;
+//    steerFile << "!chiscut 50. 25." << endl;
+//    steerFile << "outlierdownweighting 4" << endl;
+//    steerFile << "dwfractioncut 0.2" << endl;
 
     steerFile << endl;
     for ( StringVec::iterator it = _pedeSteerAddCmds.begin( ); it != _pedeSteerAddCmds.end( ); ++it ) {
@@ -949,7 +1011,57 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms() {
                     << "Continuing without histogram manager using default settings" << endl;
             isHistoManagerAvailable = false;
         }
+//
+        histoInfo = histoMgr->getHistogramInfo(_histName::_orchi2GblFitHistName);
+        int    orchi2NBin =          ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 1000;    
+        double orchi2Min =        ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : 0.;
+        double orchi2Max =        ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 5000.;
+
+        // GBL fits
+        AIDA::IHistogram1D * orchi2GblFit =
+                marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_orchi2GblFitHistName, orchi2NBin, orchi2Min, orchi2Max);
+        if (orchi2GblFit) {
+            orchi2GblFit->setTitle("#chi^{2} of track candidates; #chi^{2};N Tracks");
+            _aidaHistoMap1D.insert(std::make_pair(_histName::_orchi2GblFitHistName, orchi2GblFit));
+        } else {
+            streamlog_out(ERROR2) << "Problem booking the " << (_histName::_orchi2GblFitHistName) << std::endl;
+            streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << std::endl;
+        }
+ 
+        histoInfo = histoMgr->getHistogramInfo(_histName::_orchi2ndfGblFitHistName);
+
+        int    orchi2ndfNBin =       ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 1000;    
+        double orchi2ndfMin =        ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : 0.;
+        double orchi2ndfMax =        ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 5000.;
+
+        // GBL fits
+        AIDA::IHistogram1D * orchi2ndfGblFit =
+                marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_orchi2ndfGblFitHistName, orchi2ndfNBin, orchi2ndfMin, orchi2ndfMax);
+        if (orchi2ndfGblFit) {
+            orchi2ndfGblFit->setTitle("Normilised #chi^{2} of track candidates; #chi^{2}/ndf;N Tracks");
+            _aidaHistoMap1D.insert(std::make_pair(_histName::_orchi2ndfGblFitHistName, orchi2ndfGblFit));
+        } else {
+            streamlog_out(ERROR2) << "Problem booking the " << (_histName::_orchi2ndfGblFitHistName) << std::endl;
+            streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << std::endl;
+        }
         
+        histoInfo = histoMgr->getHistogramInfo(_histName::_orprobGblFitHistName);
+        int    orprobNBin =          ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 1000;
+        double orprobMin =        ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : 0.;
+        double orprobMax =        ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 1.;
+
+        AIDA::IHistogram1D * orprobGblFit =
+                marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_orprobGblFitHistName, orprobNBin, orprobMin, orprobMax);
+        if (orprobGblFit) {
+            orprobGblFit->setTitle("Probability of track fit; Prob;N Tracks");
+            _aidaHistoMap1D.insert(std::make_pair(_histName::_orprobGblFitHistName, orprobGblFit));
+        } else {
+            streamlog_out(ERROR2) << "Problem booking the " << (_histName::_orprobGblFitHistName) << std::endl;
+            streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << std::endl;
+        }
+
+
+//
         histoInfo = histoMgr->getHistogramInfo(_histName::_chi2GblFitHistName);
         int chi2NBin =          ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 1000;    
         double chi2Min =        ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : 0.;
@@ -965,9 +1077,26 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms() {
             streamlog_out(ERROR2) << "Problem booking the " << (_histName::_chi2GblFitHistName) << std::endl;
             streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << std::endl;
         }
+ 
+        histoInfo = histoMgr->getHistogramInfo(_histName::_chi2ndfGblFitHistName);
+
+        int    chi2ndfNBin =       ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 1000;    
+        double chi2ndfMin =        ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : 0.;
+        double chi2ndfMax =        ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 5000.;
+
+        // GBL fits
+        AIDA::IHistogram1D * chi2ndfGblFit =
+                marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_chi2ndfGblFitHistName, chi2ndfNBin, chi2ndfMin, chi2ndfMax);
+        if (chi2ndfGblFit) {
+            chi2ndfGblFit->setTitle("Normilised #chi^{2} of track candidates; #chi^{2}/ndf;N Tracks");
+            _aidaHistoMap1D.insert(std::make_pair(_histName::_chi2ndfGblFitHistName, chi2ndfGblFit));
+        } else {
+            streamlog_out(ERROR2) << "Problem booking the " << (_histName::_chi2ndfGblFitHistName) << std::endl;
+            streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << std::endl;
+        }
         
         histoInfo = histoMgr->getHistogramInfo(_histName::_probGblFitHistName);
-        int probNBin =          ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 1000;
+        int    probNBin =          ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 1000;
         double probMin =        ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : 0.;
         double probMax =        ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 1.;
 
@@ -980,7 +1109,8 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms() {
             streamlog_out(ERROR2) << "Problem booking the " << (_histName::_probGblFitHistName) << std::endl;
             streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << std::endl;
         }
-        
+
+//        
         histoInfo = histoMgr->getHistogramInfo(_histName::_momentumGblFitHistName);
         int momNBin =          ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 1000;
         double momMin =        ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : 0.;
@@ -1006,6 +1136,8 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms() {
         int NBinY;
         double MinY;
         double MaxY;
+        double MinZ;
+        double MaxZ;
         // Residuals after fit
         std::stringstream sstm;
         std::string residGblFitHistName;
@@ -1109,10 +1241,14 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms() {
         // 2D histograms
         const int residNBinY = 100;
         const int residNBinX = 100;
-        const double hitposMinX = -15.;
-        const double hitposMaxX = 15.;
-        const double residMinY = -20.;
-        const double residMaxY = 20.;
+        const double hitposMinX = -10.;
+        const double hitposMaxX =  10.;
+        const double hitposMinY =  -5.;
+        const double hitposMaxY =   5.;
+        const double residMinY = -200.;
+        const double residMaxY =  200.;
+        const double residMinZ = -1000.;
+        const double residMaxZ =  1000.;
         
         NBinY = residNBinY;
         NBinX = residNBinX;
@@ -1120,6 +1256,8 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms() {
         MaxX = hitposMaxX;
         MinY = residMinY;
         MaxY = residMaxY;
+        MinZ = residMinZ;
+        MaxZ = residMaxZ;
         std::string resid2DGblFitHistName;
         
         // normalised residuals x
@@ -1325,6 +1463,66 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms() {
             }
             sstm.str(std::string(""));
         }
+
+        // 2D profile residuals x
+        for (size_t iPlane = 0; iPlane < geo::gGeometry().nPlanes(); iPlane++) {
+            sstm << _histName::_resid2DGblFitHistNameX << geo::gGeometry().sensorIDsVec().at(iPlane);
+            residGblFitHistName = sstm.str();
+            sstm.str(std::string());
+            sstm << "Residuals. Plane " << geo::gGeometry().sensorIDsVec().at(iPlane) << ";X direction; Y direction";
+            histTitle = sstm.str();
+            sstm.str(std::string(""));
+            histoInfo = histoMgr->getHistogramInfo(residGblFitHistName);
+            NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : residNBinY;
+            MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : hitposMinX;
+            MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : hitposMaxX;
+            NBinY = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yBin : residNBinY;
+            MinY =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMin : hitposMinY;
+            MaxY =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMax : hitposMaxY;
+            MinZ =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_zMin : residMinZ;
+            MaxZ =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_zMax : residMaxZ;
+            AIDA::IProfile2D *  residGblFit =
+                    marlin::AIDAProcessor::histogramFactory(this)->createProfile2D(residGblFitHistName,  NBinX, MinX, MaxX, NBinY, MinY, MaxY, MinZ,MaxZ);
+            if (residGblFit) {
+                residGblFit->setTitle(histTitle);
+                _aidaProfileMap2D.insert(std::make_pair(residGblFitHistName, residGblFit));
+            } else {
+                streamlog_out(ERROR2) << "Problem booking the " << (residGblFitHistName) << std::endl;
+                streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << std::endl;
+            }
+            sstm.str(std::string(""));
+        }
+
+
+        // 2D profile residuals y
+        for (size_t iPlane = 0; iPlane < geo::gGeometry().nPlanes(); iPlane++) {
+            sstm << _histName::_resid2DGblFitHistNameY << geo::gGeometry().sensorIDsVec().at(iPlane);
+            residGblFitHistName = sstm.str();
+            sstm.str(std::string());
+            sstm << "Residuals. Plane " << geo::gGeometry().sensorIDsVec().at(iPlane) << ";X direction; Y direction";
+            histTitle = sstm.str();
+            sstm.str(std::string(""));
+            histoInfo = histoMgr->getHistogramInfo(residGblFitHistName);
+            NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : residNBinY;
+            MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : hitposMinX;
+            MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : hitposMaxX;
+            NBinY = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yBin : residNBinY;
+            MinY =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMin : hitposMinY;
+            MaxY =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMax : hitposMaxY;
+            MinZ =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_zMin : residMinZ;
+            MaxZ =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_zMax : residMaxZ;
+            AIDA::IProfile2D *  residGblFit =
+                    marlin::AIDAProcessor::histogramFactory(this)->createProfile2D(residGblFitHistName,  NBinX, MinX, MaxX, NBinY, MinY, MaxY, MinZ,MaxZ);
+            if (residGblFit) {
+                residGblFit->setTitle(histTitle);
+                _aidaProfileMap2D.insert(std::make_pair(residGblFitHistName, residGblFit));
+            } else {
+                streamlog_out(ERROR2) << "Problem booking the " << (residGblFitHistName) << std::endl;
+                streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << std::endl;
+            }
+            sstm.str(std::string(""));
+        }
+
 
         // Kink angles after fit
         const int    kinkNBinX = 100;

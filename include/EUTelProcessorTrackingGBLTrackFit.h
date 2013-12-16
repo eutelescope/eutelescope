@@ -146,6 +146,10 @@ namespace eutelescope {
         /** Mille result filename */
         string _milleResultFileName;
         
+        /** GEAR new filename */
+        string _gear_suffix;
+
+
         /** Allows user-added commands in the pede steering file */
         StringVec _pedeSteerAddCmds;
         
@@ -189,7 +193,7 @@ namespace eutelescope {
         string _alignmentConstantLCIOFile;
         
         /** Maximum value of track chi2 for millipede */
-        double _maxChi2Cut;
+        double _maxMilleChi2Cut;
 
         /** TGeo geometry file name */
         string _tgeoFileName;
@@ -255,16 +259,23 @@ namespace eutelescope {
 
         map< string, AIDA::IHistogram1D* > _aidaHistoMap1D;
         map< string, AIDA::IHistogram2D* > _aidaHistoMap2D;
+        map< string, AIDA::IProfile2D* >   _aidaProfileMap2D;
 
         /** Names of histograms */
         struct _histName {
+            static string _orchi2GblFitHistName;
+            static string _orchi2ndfGblFitHistName;
+            static string _orprobGblFitHistName;
             static string _chi2GblFitHistName;
+            static string _chi2ndfGblFitHistName;
             static string _probGblFitHistName;
             static string _momentumGblFitHistName;
             static string _residGblFitHistName;
             static string _normResidGblFitHistName;
             static string _residGblFitHistNameX;
             static string _residGblFitHistNameY;
+            static string _resid2DGblFitHistNameX;
+            static string _resid2DGblFitHistNameY;
             static string _normResidGblFitHistNameX;
             static string _normResidGblFitHistNameY;
             static string _resid2DGblFitHistNameXvsX;
