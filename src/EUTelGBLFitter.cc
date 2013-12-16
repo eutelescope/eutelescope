@@ -477,7 +477,7 @@ namespace eutelescope {
     void EUTelGBLFitter::addMeasurementsGBL(gbl::GblPoint& point, TVectorD& meas, TVectorD& measPrec, const double* hitpos,
             const double* predpos, const EVENT::FloatVec& hitcov, TMatrixD& proL2m) {
      
-        streamlog_out(MESSAGE1) << " addMeasurementsGBL " << std::endl;
+        streamlog_out(DEBUG3) << " addMeasurementsGBL " << std::endl;
  
         meas[0] = hitpos[0] - predpos[0];
         meas[1] = hitpos[1] - predpos[1];
@@ -659,7 +659,7 @@ namespace eutelescope {
             if ( std::find( _excludeFromFit.begin(), _excludeFromFit.end(), planeID ) != _excludeFromFit.end() ) excludeFromFit = true;
             if(excludeFromFit)
             {
-               streamlog_out(MESSAGE3) << "this plane is marked as the one to be skipped -> ID: " << planeID << std::endl;
+               streamlog_out(DEBUG3) << "this plane is marked as the one to be skipped -> ID: " << planeID << std::endl;
 //               continue;
             }  
 
@@ -668,8 +668,8 @@ namespace eutelescope {
                   
             gblTraj->getResults( hitGblLabel, corrections, correctionsCov );
             
-            streamlog_out(MESSAGE3) << "Corrections: " << std::endl;
-            streamlog_message( MESSAGE3, corrections.Print();, std::endl; );
+            streamlog_out(DEBUG2) << "Corrections: " << std::endl;
+            streamlog_message( DEBUG2, corrections.Print();, std::endl; );
 /// get measured hit position:
 // in local:
             const double* hitPointLocal = (*itrHit)->getPosition();
@@ -682,7 +682,7 @@ namespace eutelescope {
             // retrieve original hit coordinates
 //            double pos[3] = { (*itrHit)->getPosition()[0], (*itrHit)->getPosition()[1], (*itrHit)->getPosition()[2] };
  
-            streamlog_out(MESSAGE3) << "hit " << hitGblLabel  << " at " << hitPointGlobal[0] << " " << hitPointGlobal[1] << " " << hitPointGlobal[2] << std::endl;
+            streamlog_out(DEBUG2) << "hit " << hitGblLabel  << " at " << hitPointGlobal[0] << " " << hitPointGlobal[1] << " " << hitPointGlobal[2] << std::endl;
  
             double trackPointLocal[] = { hitPointLocal[0], hitPointLocal[1], hitPointLocal[2] };
             double trackPointGlobal[] = { 0., 0., 0. };
@@ -702,7 +702,7 @@ namespace eutelescope {
 
 
 
-            streamlog_out(MESSAGE3) << "fit " << hitGblLabel  << " at " << trackPointGlobal[0] << " " << trackPointGlobal[1] << " " << trackPointGlobal[2] << std::endl;
+            streamlog_out(DEBUG2) << "fit " << hitGblLabel  << " at " << trackPointGlobal[0] << " " << trackPointGlobal[1] << " " << trackPointGlobal[2] << std::endl;
 
 // check if it s not the last one, to get distance to the next one and propagate from the track measurement.
             if ( itrHit != (trackCandidate.end() - 1) ) {
@@ -719,25 +719,25 @@ namespace eutelescope {
                                                            (nextHitPointGlobal[2]-trackPointGlobal[2])*(nextHitPointGlobal[2]-trackPointGlobal[2]) ); 
                     const double hitSpacingDz = -nextHitPointGlobal[2] +trackPointGlobal[2];
  
-	            double trackDirLocal[] = { corrections[3], corrections[4], 0. };
+	            double trackDirLocal[] = { corrections[1], corrections[2], 0. };
 		    double trackDirGlobal[] = { 0., 0., 0. };
 	            geo::gGeometry().local2MasterVec( planeID, trackDirLocal, trackDirGlobal);
 
                     prevState = getXYZfromDzNum( invP, trackDirGlobal[0], trackDirGlobal[1], trackPointGlobal[0], trackPointGlobal[1], trackPointGlobal[2], hitSpacingDz );
-                    streamlog_out(MESSAGE3) << "forward "  << prevState[0] << " "  << prevState[1] << " " << trackPointGlobal[2] << " " << hitSpacingDz << std::endl;
+                    streamlog_out(DEBUG2) << "forward "  << prevState[0] << " "  << prevState[1] << " " << trackPointGlobal[2] << " " << hitSpacingDz << std::endl;
 
 //          jacPointToPoint = PropagatePar( step, invP, corrections[3], corrections[4], corrections[1], corrections[2], hitPointGlobal[2] );
             }
            
             if ( itrHit == trackCandidate.begin() ) {
-                double hitPosGlobal[] = {0.,0.,0.};
+//              double hitPosGlobal[] = {0.,0.,0.};
 //                geo::gGeometry().local2Master( Utility::GuessSensorID(*itrHit), pos, hitPosGlobal);
 //                geo::gGeometry().local2Master( planeID, pos, hitPosGlobal);
                 trackRefPoint[0] = hitPointGlobal[0];     trackRefPoint[1] = hitPointGlobal[1];     trackRefPoint[2] = hitPointGlobal[2];
                 omega +=  corrections[0];
             }
             
-            hit -> setPosition(hitPointLocal);
+            hit -> setPosition( trackPointLocal );
             EVENT::LCObjectVec originalHit;
             originalHit.push_back( *itrHit );
             hit -> rawHits() = originalHit;
