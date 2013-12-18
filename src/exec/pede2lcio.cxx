@@ -123,8 +123,8 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
            
 //	    delta_r0 *= invR;
 
-//ifdef GEAR_MAJOR_VERSION 
-//#if GEAR_VERSION_GE( 17,4)  
+#ifdef GEAR_MAJOR_VERSION 
+#if GEAR_VERSION_GE( 17,4)  
 // ZY and ZX rotations are calculated wrongly yet, do not implement:
 // XYZ shifts and XY rotation seems to be correct
 //
@@ -134,8 +134,8 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
             siPlanesLayerLayout->setLayerRotationZY(iPlane, alpha - dalpha );
             siPlanesLayerLayout->setLayerRotationZX(iPlane, beta  - dbeta  );
             siPlanesLayerLayout->setLayerRotationXY(iPlane, gamma - dgamma );
-//#endif
-//#endif       
+#endif
+#endif       
             streamlog_out(MESSAGE4) << "align by shifts (in local frame) " << std::endl;
             streamlog_out(MESSAGE4) << " by: X' " << setw(20) << dr0x;
             streamlog_out(MESSAGE4) << " by: Y' " << setw(20) << dr0y;
