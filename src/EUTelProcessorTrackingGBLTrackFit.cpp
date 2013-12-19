@@ -446,8 +446,8 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
         streamlog_out(DEBUG1) << "N tracks found " << nTracks << endl;
 
         // for alignment nTracks == 1, for tracking nTracks>0
-//        if (  nTracks > 0 ) {
-       if ( _alignmentMode ? nTracks == 1 : nTracks > 0 ) {
+        if (  nTracks > 0 ) {
+//       if ( _alignmentMode ? nTracks == 1 : nTracks > 0 ) {
             _trackFitter->SetTrackCandidates(trackCandidates);
             _trackFitter->FitTracks();
             //
