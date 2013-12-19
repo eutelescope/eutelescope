@@ -96,15 +96,16 @@ then
 fi
 
 # Merge MILLIPEDE steering and output files
-sort -n $steering_file | grep '^[[:blank:]]*[[:digit:]]' > file1
-sort -n $outres_file   | grep '^[[:blank:]]*[[:digit:]]'   > file2
-join file1 file2 | grep '^[0-9]' | awk '{ printf "%-10s%-4s%-20s%-15s%-15s%-15s\n",$1,$5,$6,$7,$8,$11}' | tee out.pede2lcio
+sort -n -u $steering_file | grep '^[[:blank:]]*[[:digit:]]' > file1
+sort -n -u $outres_file   | grep '^[[:blank:]]*[[:digit:]]'   > file2
+join file1 file2 | grep '^[0-9]' | awk '{ printf "%-15s%-15s%-25s%-15s%-15s%-15s\n",$1,$5,$6,$7,$8,$11}' | tee out.pede2lcio
+
 
 # Convert to lcio collection file
 if [ $# == 3 ]; then 
  pede2lcio out.pede2lcio $lcio_file
- rm -f out.pede2lcio
- rm -f file1 file2
+# rm -f out.pede2lcio
+# rm -f file1 file2
 fi
 
 # Convert to lcio collection file and new GEAR file
@@ -118,8 +119,8 @@ if [ $# == 5 ]; then
  fi
 
  pede2lcio -g out.pede2lcio $lcio_file $oldgear_file $newgear_file
- rm -f out.pede2lcio
- rm -f file1 file2
+# rm -f out.pede2lcio
+# rm -f file1 file2
 fi
 
 # WARNING
