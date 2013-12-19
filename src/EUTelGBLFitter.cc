@@ -901,7 +901,7 @@ namespace eutelescope {
 //                double yPred = interpolateTrackY(hits, hitPointGlobal[2]);
 
 		const double dz = hitPointGlobal[2] - prevZ;
-                prevZ = hitPointGlobal[2];
+//                prevZ = hitPointGlobal[2];
 
 
 //		double hitPointLocal2[] = {0.,0.,0.};
@@ -917,6 +917,11 @@ namespace eutelescope {
 // rubinskiy		TVectorD trackParamPrediction = getXYZfromDzNum( invP, prevState[2], prevState[3], prevState[0], prevState[1], refPoint[2], dz );
                 TVectorD trackParamPrediction = getXYZfromDzNum( invP, prevState[2], prevState[3], prevState[0], prevState[1], prevZ, dz );
 //		trackParamPrediction.Print();
+                prevZ = hitPointGlobal[2];
+
+                prevState[0] =   trackParamPrediction[0];
+                prevState[1] =   trackParamPrediction[1];
+                prevState[2] =   trackParamPrediction[2];
 
 		// Perform transformation to the sensor local coordinates
 		double trackPointGlobal[] = { trackParamPrediction[0], trackParamPrediction[1], hitPointGlobal[2] };
@@ -950,7 +955,7 @@ namespace eutelescope {
 		proL2m[1][0] = rotation[3]; // x projection, yx
 		proL2m[1][1] = rotation[4]; // y projection, yy
 
-		proL2m.UnitMatrix();
+//		proL2m.UnitMatrix();
 //		proL2m.Print();
                 
                 bool excludeFromFit = false;
@@ -1034,11 +1039,14 @@ namespace eutelescope {
 
                     {   // downstream air scatterer
                         step = hitSpacingDz / 2. - hitSpacingDz / sqrt(12.);
-                        prevZ += step;
-                        jacPointToPoint = PropagatePar( step, invP, trackParamPrediction[2], trackParamPrediction[3], trackParamPrediction[0], trackParamPrediction[1], hitPointGlobal[2] );
+// rubinsky                        prevZ += step;
+                        jacPointToPoint = PropagatePar( step, invP, prevState[2], prevState[3], prevState[0], prevState[1], prevZ );
+//rubinsky                       jacPointToPoint = PropagatePar( step, invP, trackParamPrediction[2], trackParamPrediction[3], trackParamPrediction[0], trackParamPrediction[1], hitPointGlobal[2] );
 //                        jacPointToPoint.Print();
 // rubinskiy           prevState = getXYZfromDzNum( invP, trackParamPrediction[2], trackParamPrediction[3], trackParamPrediction[0], trackParamPrediction[1], hitPointGlobal[2], step );
                        prevState = getXYZfromDzNum( invP, trackParamPrediction[2], trackParamPrediction[3], trackParamPrediction[0], trackParamPrediction[1], prevZ, step );
+                       prevZ += step;
+
                         gbl::GblPoint pointInAir1(jacPointToPoint);
                         pointInAir1.addScatterer(scat, scatPrec);
                         pointList.push_back(pointInAir1);
@@ -1046,11 +1054,13 @@ namespace eutelescope {
                     
                     {   // upstream air scatterer
                         step = 2*hitSpacingDz / sqrt( 12. ); // rubinskiy
-                        prevZ += step;
-                        jacPointToPoint = PropagatePar( step, invP, prevState[2], prevState[3], prevState[0], prevState[1], hitPointGlobal[2] );
+// rubinsky                        prevZ += step;
+// rubinsky                         jacPointToPoint = PropagatePar( step, invP, prevState[2], prevState[3], prevState[0], prevState[1], hitPointGlobal[2] );
+                        jacPointToPoint = PropagatePar( step, invP, prevState[2], prevState[3], prevState[0], prevState[1], prevZ );
 //                        jacPointToPoint.Print();
 //rubinskiy             prevState = getXYZfromDzNum( invP, prevState[2], prevState[3], prevState[0], prevState[1], hitPointGlobal[2], step );
                         prevState = getXYZfromDzNum( invP, prevState[2], prevState[3], prevState[0], prevState[1], prevZ, step );
+                        prevZ += step;
                         gbl::GblPoint pointInAir2( jacPointToPoint );
                         pointInAir2.addScatterer( scat, scatPrec );
                         pointList.push_back( pointInAir2 );
@@ -1297,7 +1307,7 @@ namespace eutelescope {
 
  		// Calculate projection matrix
                 TMatrixD proL2m(2, 2);
-/*
+
 		const TGeoHMatrix* globalH = geo::gGeometry().getHMatrix( hitPointGlobal );
 		const TGeoHMatrix& globalHInv = globalH->Inverse();
 		const double* rotation = globalHInv.GetRotationMatrix();
@@ -1306,8 +1316,8 @@ namespace eutelescope {
 		proL2m[0][1] = rotation[1]; // y projection, xy
 		proL2m[1][0] = rotation[3]; // x projection, yx
 		proL2m[1][1] = rotation[4]; // y projection, yy
-*/
-		proL2m.UnitMatrix();
+
+//		proL2m.UnitMatrix();
 //	               
                 addMeasurementsGBL( point, residual, measErr, hitPointLocal, trackPointLocal, hitcov, proL2m);
 //                addMeasurementsGBL( point, residual, measErr, hitPointGlobal,trackPointGlobal,hitcov, proL2m);
