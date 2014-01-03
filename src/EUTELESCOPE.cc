@@ -131,42 +131,22 @@ namespace eutelescope {
 
   std::string ucase( const std::string & inputString ) {
 
-#ifdef USE_EUDAQ
-
-    return eudaq::ucase( inputString );
-
-#else
-
     std::string result( inputString );
     transform( result.begin(), result.end(), result.begin(), ::toupper);
     return result;
 
-#endif
   }
 
   std::string lcase( const std::string & inputString ) {
-
-#ifdef USE_EUDAQ
-
-    return eudaq::lcase( inputString );
-
-#else
 
     std::string result( inputString );
     transform( result.begin(), result.end(), result.begin(), ::tolower);
     return result;
 
-#endif
   }
 
 
   std::string trim( const std::string & inputString ) {
-
-#ifdef USE_EUDAQ
-
-    return eudaq::trim( inputString );
-
-#else
 
     // define all possible space types you want to remove
     static const std::string spaces = "\t\n\r\v";
@@ -179,17 +159,9 @@ namespace eutelescope {
       return "";
     }
     return std::string(inputString, b, e - b + 1 );
-
-#endif
   }
 
   std::string escape( const std::string & inputString ) {
-
-#ifdef USE_EUDAQ
-
-    return eudaq::escape( inputString );
-
-#else
 
     std::ostringstream ret;
     ret << std::setfill('0') << std::hex;
@@ -200,32 +172,16 @@ namespace eutelescope {
     }
     return ret.str();
 
-#endif
   }
 
   std::string firstline( const std::string & inputString ) {
 
-#ifdef USE_EUDAQ
-
-    return eudaq::firstline( inputString );
-
-#else
-
     size_t iPos = inputString.find( '\n' );
     return inputString.substr( 0, iPos );
-
-#endif
 
   }
 
   std::vector<std::string > split( const std::string & inputString, const std::string & delim ) {
-
-#ifdef USE_EUDAQ
-
-    return eudaq::split( inputString, delim );
-
-#else
-
     std::string copy( inputString );
     std::vector<std::string > result;
     size_t iPos;
@@ -235,7 +191,5 @@ namespace eutelescope {
     }
     result.push_back( copy );
     return result;
-
-#endif
   }
 }

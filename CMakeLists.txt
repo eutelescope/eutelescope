@@ -21,7 +21,7 @@ SET( ${PROJECT_NAME}_VERSION_PATCH 0 )
 # !RELEASE: comment out the following line and comment in either one of the release ones
 # SET(CMAKE_BUILD_TYPE Debug) # use for debugging with e.g. gdb: add. warnings, no optimizations, debug symbols
 SET(CMAKE_BUILD_TYPE RelWithDebInfo) # useful for normal development, runs faster but compilation takes longer: gcc optimizations (-O2) with debug symbols and add. warnings
-# SET(CMAKE_BUILD_TYPE Release) # for production: full gcc optimization (-O3), no debug symbols, no debug messages
+#SET(CMAKE_BUILD_TYPE Release) # for production: full gcc optimization (-O3), no debug symbols, no debug messages
 
 
 ### DEPENDENCIES ############################################################
@@ -31,7 +31,7 @@ FIND_PACKAGE( ILCUTIL COMPONENTS ILCSOFT_CMAKE_MODULES REQUIRED ILCTEST)
 # load default settings from ILCSOFT_CMAKE_MODULES
 INCLUDE( ilcsoft_default_settings )
 
-# in order to find FindEUDAQ.cmake
+# additional packages to be searched for by cmake
 LIST( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
 
 
@@ -39,7 +39,6 @@ FIND_PACKAGE( Marlin 1.0 REQUIRED )
 FIND_PACKAGE( MarlinUtil 1.2 REQUIRED )
 FIND_PACKAGE( GSL )
 FIND_PACKAGE( AIDA )
-FIND_PACKAGE( EUDAQ )
 FIND_PACKAGE( ROOT COMPONENTS Minuit Geom )
 FIND_PACKAGE( LCCD  REQUIRED )               
 # Uncomment as soon as we have Eigen from system library or elsewhere
@@ -47,11 +46,6 @@ FIND_PACKAGE( LCCD  REQUIRED )
 
 # development mode:
 
-
-# these need global environment vars:
-# alike to 
-# export EUDAQ="/home/ilcsoft/v01-16-02/Eutelescope/HEAD/external/eudaq/trunk"
-#
 # the Geant4 be compiled with SoXt and Coin3D and Xerces-C libraries
 # Geant4 environment loaded as 
 # $ILCSOFT/geant4/build-9.5.p02/geant4make.sh
@@ -70,9 +64,7 @@ FIND_PACKAGE( LCCD  REQUIRED )
 # General Broken Line track fitter as shared lib:
  FIND_PACKAGE( GBL )
 
-
-
-FOREACH( pkg Marlin MarlinUtil GSL AIDA EUDAQ ROOT LCCD GBL XERCESC G4 ALLPIX EIGEN )
+FOREACH( pkg Marlin MarlinUtil GSL AIDA ROOT LCCD GBL XERCESC G4 ALLPIX EIGEN )
     IF( ${pkg}_FOUND )
         # include as "system" libraries: gcc will be less verbose w.r.t. warnings
         INCLUDE_DIRECTORIES(SYSTEM ${${pkg}_INCLUDE_DIRS} )
@@ -87,19 +79,7 @@ ENDFOREACH()
 #MESSAGE (STATUS "${XERCESC_INCLUDE_DIRS}" )
 
 
-
 ### LIBRARY #################################################################
-
-
-
-# ------ add preprocessor flags ---------------------------------------------
-IF( EUDAQ_FOUND )
-    ADD_DEFINITIONS( "-DUSE_EUDAQ -DEUDAQ_PLATFORM=PF_LINUX -DEUDAQ_FUNC=__PRETTY_FUNCTION__" )
-    GET_FILENAME_COMPONENT( EUDAQ_LIBRARY_FULL_PATH ${EUDAQ_EUDAQ_LIBRARY} REALPATH )
-    INSTALL( FILES ${EUDAQ_LIBRARY_FULL_PATH} DESTINATION lib ) # PROGRAMS is like FILES but sets executable permissions
-ELSE()
-    MESSAGE( STATUS "WARNING: failed to configure Eutelescope with EUDAQ!!" )
-ENDIF()
 
 IF( GBL_FOUND )
     ADD_DEFINITIONS( "-DUSE_GBL " )
@@ -172,8 +152,6 @@ ADD_DEFINITIONS("-DDO_TESTING")
 # include directories
 INCLUDE_DIRECTORIES( ./include )
 INCLUDE_DIRECTORIES( ./external )
-
-#INSTALL_DIRECTORY( ./include DESTINATION . FILES_MATCHING PATTERN "*.h" )
 
 # definitions to pass to the compiler
 ADD_DEFINITIONS( "-Wall -ansi -pedantic -Wextra" )
@@ -332,7 +310,6 @@ endif()
   INCLUDE(jobsub/examples/datura-noDUT/testing.cmake)
   INCLUDE(jobsub/examples/datura-alone/testing.cmake)
   INCLUDE(jobsub/examples/anemone-2FEI4/testing.cmake)
-  INCLUDE(jobsub/examples/X0/testing.cmake)
 
   configure_file (
 	       ./CTestCustom.cmake.in   # set custom settings (e.g. tests to be skipped for valgrind)

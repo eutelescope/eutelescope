@@ -26,14 +26,10 @@ namespace eutelescope {}
 #ifndef EUTELESCOPE_H
 #define EUTELESCOPE_H
 
-#ifdef USE_EUDAQ
-# include <eudaq/Utils.hh>
-#else
 # include <iomanip>
 # include <sstream>
 # include <exception>
 # include <stdexcept>
-#endif
 
 #ifdef USE_MARLIN
 // streamlog include
@@ -614,8 +610,7 @@ namespace eutelescope
 
 
   // From here down a list of interesing utilities. Those are mainly
-  // copied from the eudaq library and in case Eutelescope is built
-  // w/o eudaq, than they are reimplemented here
+  // copied from the eudaq library
 
   //! Convert to upper case
   /*! This function converts the input string into a full capital
@@ -688,17 +683,9 @@ namespace eutelescope
   template <typename T>
   std::string to_string( const T & x, int digits = 0 ) {
 
-#ifdef USE_EUDAQ
-
-    return eudaq::to_string( x, digits );
-
-#else
-
     std::ostringstream s;
     s << std::setfill('0') << std::setw( digits ) << x;
     return s.str();
-
-#endif
   }
 
 
@@ -713,62 +700,30 @@ namespace eutelescope
    */
   template< typename T>
   inline std::string to_hex( const T & x, int digits = 0 ) {
-
-#ifdef USE_EUDAQ
-
-    return eudaq::to_hex( x, digits );
-
-#else
     std::ostringstream s;
     s << std::hex << std::setfill('0') << std::setw( digits ) << x;
     return s.str();
-
-#endif
   }
 
   //! Template specialization for T = const unsigned char
   template <>
   inline std::string to_hex( const unsigned char & x, int digits ) {
 
-#ifdef USE_EUDAQ
-
-    return eudaq::to_hex( x, digits );
-
-#else
-
     return to_hex( static_cast< int >(x), digits );
-
-#endif
   }
 
   //! Template specialization for T = const signed char
   template <>
   inline std::string to_hex( const signed char & x, int digits ) {
 
-#ifdef USE_EUDAQ
-
-    return eudaq::to_hex( x, digits );
-
-#else
-
     return to_hex( static_cast< int >(x), digits );
-
-#endif
   }
 
   //! Template specialization for T = const char
   template <>
   inline std::string to_hex( const char & x, int digits ) {
 
-#ifdef USE_EUDAQ
-
-    return eudaq::to_hex( x, digits );
-
-#else
-
     return to_hex( static_cast< unsigned char >(x), digits );
-
-#endif
   }
 
   //! Converts a string to any type
@@ -786,12 +741,6 @@ namespace eutelescope
   template <typename T>
   inline T from_string( const std::string & x, const T & def = 0 ) {
 
-#ifdef USE_EUDAQ
-
-    return eudaq::from_string(x, def);
-
-#else
-
     if (x == "") return def;
     T ret = def;
     std::istringstream s(x);
@@ -800,22 +749,13 @@ namespace eutelescope
     s >> remain;
     if (remain) throw std::invalid_argument("Invalid argument: " + x);
     return ret;
-#endif
   }
 
   //! Template specialization if T is a string
   template <>
   inline std::string from_string( const std::string & x, const std::string & def ) {
 
-#ifdef USE_EUDAQ
-
-    return eudaq::from_string( x, def );
-
-#else
-
     return x == "" ? def : x;
-
-#endif
   }
 
 }
