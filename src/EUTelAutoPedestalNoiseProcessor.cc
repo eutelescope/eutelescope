@@ -176,8 +176,8 @@ void EUTelAutoPedestalNoiseProcessor::processEvent (LCEvent * event) {
       statusEncoder["xMax"]     = _maxX[iDetector];
       statusEncoder["yMax"]     = _maxY[iDetector];
       statusEncoder.setCellID(status);
-      ShortVec statusVec(0, EUTELESCOPE::GOODPIXEL);
-//      ShortVec statusVec(nPixel, EUTELESCOPE::GOODPIXEL);
+//      ShortVec statusVec(0, EUTELESCOPE::GOODPIXEL);
+      ShortVec statusVec(nPixel, EUTELESCOPE::GOODPIXEL);
       status->setADCValues(statusVec);
       _statusCollectionVec->push_back(status);
 

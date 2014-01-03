@@ -2640,7 +2640,7 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
 
 
       if ( ( noise->chargeValues().size() != status->adcValues().size() ) ||
-           ( noise->chargeValues().size() != nzsData->chargeValues().size() ) ) {
+           ( noise->chargeValues().size() != nzsData->getChargeValues().size() ) ) {
         throw IncompatibleDataSetException("NZS data and noise/status size mismatch");
       }
     }

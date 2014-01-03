@@ -113,9 +113,8 @@ namespace eutelescope {
         _xMin(0),
         _yMin(0)
     {
-  
-      _xNoOfPixel = decoder(rawData)["xMax"] - decoder(rawData)["xMin"] + 1;
-      _yNoOfPixel = decoder(rawData)["yMax"] - decoder(rawData)["yMin"] + 1;
+      _xNoOfPixel = decoder(rawData)["xMax"] - decoder(rawData)["xMin"];
+      _yNoOfPixel = decoder(rawData)["yMax"] - decoder(rawData)["yMin"];
       _xMin       = decoder(rawData)["xMin"];
       _yMin       = decoder(rawData)["yMin"];
 

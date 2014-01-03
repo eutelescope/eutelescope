@@ -180,7 +180,7 @@ namespace eutelescope {
 
       {
 	// first parameter block
-	int rhs = 13;
+	int rhs = 17;
 	lcio::long64 mask = (0xFFF << rhs);
 	xSeed = static_cast<int>  ( ( cell0 & mask ) >> rhs ) ;
       }
@@ -189,10 +189,10 @@ namespace eutelescope {
 	// second parameter block
 	// being on the field edge, two masks are required
 
-	int          rhs0  =  25;
-	int          lhs1  =   7;
-	lcio::long64 mask0 = 0xFE000000;
-	lcio::long64 mask1 = 0x1F;
+	int          rhs0  =  29;
+	int          lhs1  =   3;
+	lcio::long64 mask0 = (static_cast<lcio::long64> (0x7)) << rhs0;
+	lcio::long64 mask1 = 0x1FF;
 
 	ySeed = static_cast<int> (( (cell0 & mask0) >> rhs0 ) | ( (cell1 & mask1)  << lhs1 ));
       }
@@ -211,7 +211,7 @@ namespace eutelescope {
       
       { 
 	// first parameter block
-	int rhs = 5;
+	int rhs = 9;
 	lcio::long64 mask = ( 0x1F << rhs );
 	
 	xSize = static_cast<int> ( ( cell1 & mask ) >> rhs );
@@ -219,7 +219,7 @@ namespace eutelescope {
 
       {
 	// second parameter block
-	int rhs = 10;
+	int rhs = 14;
 	lcio::long64 mask = ( 0x1F << rhs );
 	
 	ySize = static_cast<int> ( ( cell1 & mask ) >> rhs );
@@ -236,7 +236,7 @@ namespace eutelescope {
     inline ClusterQuality getClusterQuality() const {
       lcio::long64 cell1 = static_cast<lcio::long64> (_trackerData->getCellID1());
 
-      int rhs = 15;
+      int rhs = 19;
       lcio::long64 mask = ( 0x1F << rhs );
       
       return static_cast<ClusterQuality> ( (cell1 & mask) >> rhs ) ;
