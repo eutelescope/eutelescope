@@ -2479,12 +2479,11 @@ void EUTelClusteringProcessor::sparseClustering2(LCEvent * evt, LCCollectionVec 
           // now remove HotPixels
           // 
           int index = matrixDecoder.getIndexFromXY( pixel->getXCoord(), pixel->getYCoord() );
-          if(static_cast<int>(_hitIndexMapVec.size()) > sensorID )
-              if( _hitIndexMapVec[sensorID].find( index ) != _hitIndexMapVec[sensorID].end() )
-              {
-                  ++listIter;
-                  continue;
-              }
+	  if( _hitIndexMapVec[idetector].find( index ) != _hitIndexMapVec[idetector].end() )
+	    {
+	      ++listIter;
+	      continue;
+	    }
 
 
           // 
