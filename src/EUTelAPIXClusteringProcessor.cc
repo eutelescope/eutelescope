@@ -551,7 +551,7 @@ void EUTelAPIXClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * c
 			    apixCluster->getCenterOfGravity(x,y);
 			    apixCluster->getClusterSize(xsize,ysize);
 			
-                            if (x > 0 && x < 10000 && y > 0 && y < 10000) 
+                            if (x >= 0 && x < 10000 && y >= 0 && y < 10000) 
                             {
                               // increment global cluster counter (per plane)
                               _totClusterMap[ sensorID ] += 1;
