@@ -23,6 +23,12 @@ considered outdated and will no longer be supported.
       files or even compare histograms between files. See the tools/pyroplot/README
       and online documentation for details.  NOTE: due to its
       dependency on rootpy, pyroplot requires Python 2.6 or later.
+*** 0.9.3 (03.01.2014)
+    - includes fixes for treatment of non-zero suppressed data, provided by M. Kofarago (see issue https://eutelescope.web.cern.ch/issue/parts-code-treating-non-zero-suppressed-data-have-bugs)
+    - includes fix for hotpixel removal in clustering step, provided by M. Kofarago (see issue https://eutelescope.web.cern.ch/issue/hotpixel-killer-doesnt-work-if-called-dut)
+    - fixes edge issue in APIX clustering processor as suggested by J. Lange (see https://eutelescope.web.cern.ch/forum/missing-hits-row-0-dut-after-offline-reco)
+    - fixes bug in ExhaustiveTrackFinde affecting number of reconstructed tracks.
+    - EUTelPreAlignment: Fix bug, FixedPlane parameter didn't accept anything else than zero.
 *** 0.9.2 (10.10.2013)
     - ApplyAlignment: fixed bug with 'missing' reference vector
       collection when use of refvec was explicitly disabled; this also
