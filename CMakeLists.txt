@@ -41,8 +41,10 @@ FIND_PACKAGE( GSL )
 FIND_PACKAGE( AIDA )
 FIND_PACKAGE( ROOT COMPONENTS Minuit Geom )
 FIND_PACKAGE( LCCD  REQUIRED )               
-# Uncomment as soon as we have Eigen from system library or elsewhere
-#FIND_PACKAGE( Eigen )
+
+# search for Eigen (linear algebra) library
+FIND_PACKAGE( Eigen2 REQUIRED)
+INCLUDE_DIRECTORIES( ${EIGEN2_INCLUDE_DIR} )
 
 # development mode:
 
@@ -64,7 +66,7 @@ FIND_PACKAGE( LCCD  REQUIRED )
 # General Broken Line track fitter as shared lib:
  FIND_PACKAGE( GBL )
 
-FOREACH( pkg Marlin MarlinUtil GSL AIDA ROOT LCCD GBL XERCESC G4 ALLPIX EIGEN )
+FOREACH( pkg Marlin MarlinUtil GSL AIDA ROOT LCCD GBL XERCESC G4 ALLPIX )
     IF( ${pkg}_FOUND )
         # include as "system" libraries: gcc will be less verbose w.r.t. warnings
         INCLUDE_DIRECTORIES(SYSTEM ${${pkg}_INCLUDE_DIRS} )
@@ -151,7 +153,6 @@ ADD_DEFINITIONS("-DDO_TESTING")
 
 # include directories
 INCLUDE_DIRECTORIES( ./include )
-INCLUDE_DIRECTORIES( ./external )
 
 # definitions to pass to the compiler
 ADD_DEFINITIONS( "-Wall -ansi -pedantic -Wextra" )
@@ -259,7 +260,7 @@ IF( NOT DEFINED ENV{EUTELESCOPE} OR NOT DEFINED ENV{MARLIN})
       MESSAGE( "trying to load build and run environment for EUTelescope" )
 
   IF( DEFINED ENV{ILCSOFT})
-        EXECUTE_PROCESS( COMMAND sh -c " [ -f $ILCSOFT/Eutelscope/HEAD/build_env.sh ] && . $ILCSOFT/Eutelescope/HEAD/build_env.sh" )
+        EXECUTE_PROCESS( COMMAND sh -c " [ -f $ILCSOFT/Eutelscope/trunk/build_env.sh ] && . $ILCSOFT/Eutelescope/trunk/build_env.sh" )
 
 	IF( NOT DEFINED ENV{EUTELESCOPE} OR NOT DEFINED ENV{MARLIN} )
         # try to load build_env.sh environment - if running 'make' from 'build' directory, it should be located in '../'
