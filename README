@@ -2,20 +2,16 @@ This is the EUTelescope package, a generic pixel telescope data
 analysis framework.
 
 You can find all documentation online: http://eutelescope.web.cern.ch
+and the source code at https://github.com/eutelescope/eutelescope
 
 Should you have any questions regarding EUTelescope, please check our
 online support pages, especially the forums and the FAQ or contact us
 via mail: eutelescope-coordinators@desy.de
 
+For feature requests or bug reports please open a new issue on the issue tracker on GitHub.
+
 Maybe you would also like to get involved in the development - all
 contributions are highly welcomed!
 
-Have you found a bug in EUTelescope? Please report it on our bug
-tracker! (or just mail us the patch :)
-
-If you are interested in becoming a regular contributor and developer
-of EUTelescope, please request an SVN account and commit your changes
-directly into the main development branch (trunk). If you are planing
-on performing major changes to many producers, which could be
-disruptive to the ongoing work of other developers, please consider to
-create your own branch and merge as soon as your code is matured.
+Have you fixed the bug already or want to contribute your own processor into the main repository? Then please fork the 
+project and issue a pull request.
