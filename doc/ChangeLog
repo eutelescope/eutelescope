@@ -1,0 +1,5520 @@
+2009-05-15 19:51  bulgheroni
+
+	* pysub/pysub/submitbase.py: Fixed a typo.
+
+2009-05-15 19:50  bulgheroni
+
+	* pysub/pysub/submitfilter.py: Implemented the generateOnlyMerge
+	  and partially the executeMergeAllLocal.  It looks promising...
+
+2009-05-15 19:49  bulgheroni
+
+	* pysub/template/filter-tmp.xml: Added @Base@ to control the output
+	  file names.
+
+2009-05-15 19:17  bulgheroni
+
+	* pysub/grid/runjob-filter-tmp.sh: Fixed a mistake in the script.
+
+2009-05-15 18:08  bulgheroni
+
+	* pysub/grid/runjob-filter-tmp.sh: Added the run job for filtering.
+	  This is a bit more complicated because it allows also multiple
+	  input files.
+
+2009-05-15 18:08  bulgheroni
+
+	* pysub/pysub/submitfilter.py: This is the first version able to do
+	  also single job grid submission.
+
+2009-05-15 17:19  bulgheroni
+
+	* pysub/config/config.cfg: Added filter related templates.
+
+2009-05-15 17:10  bulgheroni
+
+	* pysub/pysub/submitfilter.py: This version should work also in
+	  cpu-local non merge. Let me try...
+
+2009-05-15 16:42  bulgheroni
+
+	* pysub/: submit-filter.py, pysub/__init__.py,
+	  pysub/submitfilter.py, template/filter-tmp.xml: Added the first
+	  version of the submit-filter.py. This will be the first one able
+	  to operate in merge mode as well. It means that it can take
+	  several input runs and produce one output file only.
+
+	  For the time being tested the generate only and the all-local
+	  mode in non merging mode
+
+2009-05-15 16:37  bulgheroni
+
+	* pysub/pysub/submitclusearch.py: Hopefully finex a bug again with
+	  the prepareTarball.
+
+2009-05-15 16:03  bulgheroni
+
+	* pysub/pysub/submitclusearch.py: Fixed a bug when doing the
+	  cleaning up.
+
+2009-05-15 15:10  bulgheroni
+
+	* pysub/pysub/submitclusearch.py: Fixed a typo in an error message.
+
+2009-05-15 14:45  bulgheroni
+
+	* pysub/pysub/submitpedestal.py: Fixed the same problem with the
+	  histogram in the tarball.
+
+2009-05-15 14:38  bulgheroni
+
+	* pysub/pysub/submitclusearch.py: Fixed a problem with the
+	  preparation of the tarball. The histogram file can be added to
+	  the tarball only if the execution was local or cpu-local.
+
+2009-05-15 14:37  bulgheroni
+
+	* pysub/pysub/: submitconverter.py, submitpedestal.py: Fixed a
+	  problem when writing the JID file and one run was skipped.
+
+2009-05-15 13:30  bulgheroni
+
+	* pysub/pysub/submitclusearch.py: Fixed a couple of bugs in the
+	  all-grid submission. Still under test.
+
+2009-05-15 13:29  bulgheroni
+
+	* pysub/: grid/jdl-tmp.jdl, pysub/submitconverter.py,
+	  pysub/submitpedestal.py: Moved the generateJDLFile from here to
+	  the base class. Added the histoinfo.xml file to the job.
+
+2009-05-15 13:27  bulgheroni
+
+	* pysub/pysub/submitbase.py: Moved the generateJDLFile method in
+	  the base class instead of having it in the specific submitter.
+
+2009-05-15 12:17  bulgheroni
+
+	* pysub/pysub/submitclusearch.py: Ok, it is working in cpu-local!
+	  Trying the all-grid, now
+
+2009-05-15 12:10  bulgheroni
+
+	* pysub/: grid/runjob-clusearch-tmp.sh, pysub/submitclusearch.py:
+	  First version with all-grid submission. Still under test the
+	  cpu-local.
+
+2009-05-15 10:28  bulgheroni
+
+	* pysub/pysub/submitclusearch.py: Adapted the cpu-local. Now under
+	  test.
+
+2009-05-15 10:27  bulgheroni
+
+	* pysub/pysub/submitpedestal.py: Modified the GRIDFolderDB in
+	  GRIDFolderDBPede
+
+2009-05-15 10:04  bulgheroni
+
+	* pysub/: grid/runjob-pedestal-tmp.sh, pysub/submitclusearch.py:
+	  Changed the pedestal folder name
+
+2009-05-15 10:02  bulgheroni
+
+	* pysub/config/config.cfg: it is GRIDFolderDBPede and not
+	  GRIDFolderPedeDB
+
+2009-05-15 09:59  bulgheroni
+
+	* pysub/config/config.cfg: Modified the GRID and local folder DB
+	  for pedestal to something like GRIDFolderPedeDB and
+	  LocalFolderPedeDB.
+
+2009-05-15 09:31  bulgheroni
+
+	* pysub/pysub/submitclusearch.py: Fixed a wrong formatting.
+
+2009-05-14 20:54  bulgheroni
+
+	* pysub/: submit-clusearch.py, pysub/__init__.py, pysub/error.py,
+	  pysub/submitclusearch.py: Now working with submit-clusearch. This
+	  has a better name wrt its predecessor submit-analysis that was
+	  too vague.  For the time being only the -s and -l options are
+	  implemented, but just -s is tested.
+
+2009-05-14 20:37  bulgheroni
+
+	* pysub/template/clusearch-tmp.xml: Fixed a bug in the result
+	  folder.
+
+2009-05-14 20:25  bulgheroni
+
+	* pysub/template/converter-tmp.xml: Added the header.
+
+2009-05-14 20:23  bulgheroni
+
+	* pysub/template/pedestal-tmp.xml: Added header.
+
+2009-05-14 20:21  bulgheroni
+
+	* pysub/template/clusearch-tmp.xml: Added the header.  Added the
+	  histoinfo variable as well.
+
+2009-05-14 20:19  bulgheroni
+
+	* pysub/config/config.cfg: Updated with the clusearch parameters.
+
+2009-05-14 20:07  bulgheroni
+
+	* pysub/template/: analysis-tmp.xml, clusearch-tmp.xml: Renamed the
+	  analysis template in clusearch according to the new naming
+	  convention.
+
+2009-05-14 20:04  bulgheroni
+
+	* pysub/grid/runjob-pedestal-tmp.sh: Fixed a typo
+
+2009-05-14 18:46  bulgheroni
+
+	* pysub/grid/: runjob-converter-tmp.sh, runjob-pedestal-tmp.sh:
+	  Beautified.
+
+2009-05-14 18:45  bulgheroni
+
+	* pysub/pysub/submitpedestal.py: Fixed a small bug.
+
+2009-05-14 17:23  bulgheroni
+
+	* pysub/pysub/submitnativecopy.py: Adapted to the %(name)s
+	  variable.
+
+2009-05-14 17:18  bulgheroni
+
+	* pysub/: grid/runjob-pedestal-tmp.sh, pysub/submitpedestal.py:
+	  Adapted to work with the %(name)s variable.
+
+2009-05-14 17:11  bulgheroni
+
+	* pysub/pysub/submitconverter.py: Moved the verification of the
+	  output folder on GRID after the verification of the presence of
+	  the input file!
+
+2009-05-14 17:09  bulgheroni
+
+	* pysub/pysub/submitbase.py: Replaced a popen2 command with a
+	  simple os.system because it looks more reliable.
+
+2009-05-14 16:27  bulgheroni
+
+	* pysub/: grid/runjob-converter-tmp.sh, pysub/submitbase.py,
+	  pysub/submitconverter.py: Impletemented the self.name variable.
+	  This should speed up even more the development of other
+	  submitter.
+
+2009-05-14 16:20  bulgheroni
+
+	* pysub/config/config.cfg: Changed the converter steering template
+	  default name.
+
+2009-05-14 16:19  bulgheroni
+
+	* pysub/template/: converter-tmp.xml, universal-tmp.xml: Renamed
+	  universal-tmp in converter-tmp that is more meaningful.
+
+2009-05-14 15:55  bulgheroni
+
+	* pysub/pysub/submitpedestal.py: Fixed the only two small things
+	  were not working with all GRID submission.  I would like to say
+	  that now also pedestal is working locally, cpu-locally and grid.
+
+2009-05-14 12:16  bulgheroni
+
+	* pysub/config/config.cfg: Adapted to full GRID submission of
+	  pedestal.
+
+2009-05-14 12:12  bulgheroni
+
+	* pysub/pysub/submitpedestal.py: First version able to do full GRID
+	  submission (under test).
+
+2009-05-14 12:11  bulgheroni
+
+	* pysub/grid/runjob-pedestal-tmp.sh: Added the template of the run
+	  job pedestal script.
+
+2009-05-14 11:42  bulgheroni
+
+	* pysub/pysub/: submitbase.py, submitpedestal.py: Fixed some minor
+	  bugs in the checkGRIDFolder. Now it is perfectly working.
+
+2009-05-14 11:30  bulgheroni
+
+	* pysub/pysub/: submitconverter.py, submitpedestal.py: Implemented
+	  the checkGRIDFolder in the doPreliminaryTest method.
+
+2009-05-14 11:29  bulgheroni
+
+	* pysub/pysub/submitbase.py: Added a checkGRIDFolder method. It is
+	  a good idea to make a test on the existence of the grid folder in
+	  the doPreliminaryTest.
+
+2009-05-14 11:18  bulgheroni
+
+	* pysub/pysub/error.py: Added  MissingGRIDFolderError
+
+2009-05-13 18:56  bulgheroni
+
+	* ChangeLog: Updated.
+
+2009-05-13 18:53  bulgheroni
+
+	* pysub/pysub/submitconverter.py: Also here using the better error
+	  for GRID related processing.
+
+2009-05-13 18:46  bulgheroni
+
+	* pysub/pysub/submitpedestal.py: Tested the cpu-local mode and it
+	  is working.
+
+2009-05-13 18:43  bulgheroni
+
+	* pysub/pysub/submitconverter.py: Now doing the preliminary test
+	  also for cpu-local submission. Quite clever indeed!
+
+2009-05-13 18:42  bulgheroni
+
+	* pysub/pysub/error.py: Added a couple of other different errors
+	  for better execution flow.
+
+2009-05-13 18:12  bulgheroni
+
+	* ChangeLog: Updated.
+
+2009-05-13 17:20  bulgheroni
+
+	* pysub/pysub/submitpedestal.py: Implementing the cpu-local mode.
+
+2009-05-13 17:19  bulgheroni
+
+	* pysub/submit-pedestal.py: Added the -v verbose options for the
+	  grid command.
+
+2009-05-13 17:17  bulgheroni
+
+	* pysub/: submit-converter.py, pysub/submitconverter.py: Added the
+	  -v verbose option for making the grid command verbose.
+
+2009-05-13 16:47  bulgheroni
+
+	* pysub/template/pedestal-tmp.xml: Adapted to different path.
+
+2009-05-13 16:47  bulgheroni
+
+	* pysub/: submit-pedestal.py, pysub/submitpedestal.py: First
+	  version of the submit-pedestal submitter. For the time being
+	  implemented and test only the all-local mode.
+
+2009-05-13 16:46  bulgheroni
+
+	* pysub/pysub/submitconverter.py: Fixed a typo.
+
+2009-05-13 16:45  bulgheroni
+
+	* pysub/pysub/error.py: Added the MissingHistogramFileError error.
+
+2009-05-13 16:44  bulgheroni
+
+	* pysub/pysub/__init__.py: Added the submitpedestal class to the
+	  package.
+
+2009-05-13 16:44  bulgheroni
+
+	* pysub/config/config.cfg: Adapted the config/config.cfg
+
+2009-05-13 14:49  bulgheroni
+
+	* pysub/pysub/error.py: Added a line of documentation.
+
+2009-05-13 14:42  bulgheroni
+
+	* pysub/pysub/submitnativecopy.py: Fixed the print out of the
+	  summary.  Fixed a problem in the execution flow.
+
+2009-05-13 14:41  bulgheroni
+
+	* pysub/submit-native-copy.py: Added the verbose option.  Fixed a
+	  problem with the execution flow when the file was found already
+	  on the GRID.
+
+2009-05-13 13:20  bulgheroni
+
+	* pysub/pysub/__init__.py: Removed the import * from grid.
+
+2009-05-13 13:19  bulgheroni
+
+	* pysub/pysub/submitnativecopy.py: Working copy.
+
+2009-05-13 13:19  bulgheroni
+
+	* pysub/pysub/error.py: Added the VerificationError.
+
+2009-05-13 13:18  bulgheroni
+
+	* pysub/pysub/submitconverter.py: Replaced a sys.exit with the
+	  proper exception.  Fixed a few typo.
+
+2009-05-13 11:47  bulgheroni
+
+	* pysub/: submit-converter.py, submit-native-copy.py: Finally fixed
+	  the story of the versions
+
+2009-05-13 11:39  bulgheroni
+
+	* pysub/pysub/submitbase.py: Added the cvs version also for this
+	  class.
+
+2009-05-13 11:35  bulgheroni
+
+	* pysub/pysub/: error.py, submitbase.py: Added the
+	  MissingConfigurationFileError to the error.py.  Added a proper
+	  handling of the MissingConfigurationFileError in the __init__
+	  method of the SubmitBase.
+
+2009-05-13 11:22  bulgheroni
+
+	* pysub/submit-native-copy.py: First executable version.
+
+2009-05-13 11:21  bulgheroni
+
+	* pysub/submit-converter.py: Moved a line in a better position
+
+2009-05-13 11:21  bulgheroni
+
+	* pysub/pysub/: submitbase.py, submitconverter.py,
+	  submitnativecopy.py: Moved some general methods from the
+	  SubmitConverter to SubmitBase to avoid writing the same things
+	  several times! Finished the configuring part of the
+	  SubmitNativeCopy.
+
+2009-05-13 11:19  bulgheroni
+
+	* pysub/pysub/__init__.py: Moved the documentation from SubmitBase
+	  to here.
+
+2009-05-13 11:15  bulgheroni
+
+	* pysub/pysub/__init__.py: Added the SubmitNativeCopy to the
+	  package
+
+2009-05-13 10:55  bulgheroni
+
+	* pysub/grid/runjob-converter-tmp.sh: Now it is perfect, nicely
+	  looking and functional!
+
+2009-05-13 10:31  bulgheroni
+
+	* pysub/pysub/submitnativecopy.py: First (empty) version of this
+	  submitter class.
+
+2009-05-13 10:30  bulgheroni
+
+	* pysub/submit-native-copy.py: Preparing the submit job for copying
+	  the native file to the GRID SE.
+
+2009-05-13 10:27  bulgheroni
+
+	* pysub/submit-converter.py: Improved the version message. Now
+	  printing the executable and the class version as well.
+
+2009-05-13 10:25  bulgheroni
+
+	* pysub/pysub/submitconverter.py: Included a static member for the
+	  cvs version of the class.
+
+2009-05-12 22:34  bulgheroni
+
+	* pysub/grid/runjob-converter-tmp.sh: Fixed a bug with the lcg-cr
+	  of the joboutput tarball.  Improved the error coding.
+
+	  First version really successfully running jobs on GRID!
+
+2009-05-12 18:50  bulgheroni
+
+	* pysub/pysub/submitconverter.py: Cleaned up the executeAllGRID
+	  methods.  Added the print grid job id in the end method.  Saving
+	  a JID file with a unique identification for each submission.
+
+2009-05-12 18:48  bulgheroni
+
+	* pysub/grid/runjob-converter-tmp.sh: Defined three functions: ->
+	  doCommand to print the command line on the stdout before really
+	  doing it -> getFromGRID to replace the get_from_grid external
+	  script -> putOnGRID as above
+
+2009-05-12 18:46  bulgheroni
+
+	* pysub/pysub/submitbase.py: Moved the print gridNTuple from this
+	  end to the daughter class end.
+
+2009-05-12 15:02  bulgheroni
+
+	* pysub/pysub/submitconverter.py: Work in progress.
+
+2009-05-11 19:16  bulgheroni
+
+	* pysub/: config/config.cfg, grid/jdl-tmp.jdl,
+	  grid/runjob-converter-tmp.sh, pysub/error.py,
+	  pysub/submitbase.py, pysub/submitconverter.py,
+	  template/universal-tmp.xml: First version of submitter able to do
+	  also all-grid submission! Under testing...
+
+2009-05-11 14:47  bulgheroni
+
+	* pysub/pysub/submitconverter.py: Should be the first stable
+	  version w/o full GRID.  From now on working on this kind of
+	  submission.
+
+2009-05-11 12:19  bulgheroni
+
+	* pysub/pysub/submitconverter.py: Another small bug fixed.
+
+2009-05-11 12:07  bulgheroni
+
+	* pysub/pysub/submitconverter.py: Adapted to local paths from the
+	  configuration file
+
+2009-05-11 12:06  bulgheroni
+
+	* pysub/pysub/submitbase.py: Added a smart AskYerNo function
+
+2009-05-11 10:47  bulgheroni
+
+	* pysub/template/universal-tmp.xml: Added variable paths
+
+2009-05-11 10:41  bulgheroni
+
+	* pysub/pysub/submitconverter.py: Made the paths configurable.
+	  Still testing
+
+2009-05-11 10:40  bulgheroni
+
+	* pysub/config/config.cfg: Added the local folder section
+
+2009-05-10 22:09  bulgheroni
+
+	* pysub/pysub/submitconverter.py: Fixed a problem with a typo. This
+	  is the issue with not compiled code!
+
+2009-05-10 20:15  bulgheroni
+
+	* pysub/pysub/submitconverter.py: Modified the process flow.  If we
+	  fail to lcg-cr the first file to the GRID, try anyway to copy
+	  also the second.
+
+2009-05-10 19:47  bulgheroni
+
+	* pysub/pysub/submitconverter.py: Wrong format of a string
+
+2009-05-10 19:46  bulgheroni
+
+	* pysub/pysub/submitconverter.py: As above
+
+2009-05-10 19:43  bulgheroni
+
+	* pysub/pysub/: error.py, submitconverter.py: Fixed a typo
+
+2009-05-10 19:42  bulgheroni
+
+	* pysub/pysub/error.py: Added MissingJoboutputError
+
+2009-05-10 19:32  bulgheroni
+
+	* pysub/: submit-converter.py, pysub/submitconverter.py: Modified
+	  the process flow in order to fully exploit the power of
+	  exception.  The process is always going head and it is
+	  interrupted in case of problem by exceptions.  These can cause
+	  the skipping of a run or the full execute() to stop depending on
+	  the severity.
+
+2009-05-10 19:31  bulgheroni
+
+	* pysub/pysub/submitbase.py: Added the print summary table in the
+	  end() callback
+
+2009-05-10 19:30  bulgheroni
+
+	* pysub/pysub/__init__.py: Added the error.py file to the pysub
+	  package
+
+2009-05-10 19:29  bulgheroni
+
+	* pysub/pysub/error.py: Added a set of errors (exceptions) for a
+	  better processing flow
+
+2009-05-10 14:30  bulgheroni
+
+	* pysub/: submit-converter.py, pysub/submitconverter.py: Added a
+	  new option --verify-output that only works in cpu-local mode. It
+	  is checking if the files copied on the GRID have the same md5sum
+	  as the local one before deleting. Not yet implemented.
+
+	  Added the logRunList method to log the input run list.
+
+2009-05-09 22:05  bulgheroni
+
+	* pysub/: submit-converter.py, pysub/submitconverter.py: Fixed the
+	  problem of the mutual exclusive keep and remove inout / output
+
+2009-05-09 22:04  bulgheroni
+
+	* pysub/pysub/submittest.py: Added a check for options
+
+2009-05-09 22:03  bulgheroni
+
+	* pysub/submit-test.py: Added two test options
+
+2009-05-09 21:09  bulgheroni
+
+	* pysub/pysub/submitconverter.py: Added a protection against the
+	  wrong path of the log file
+
+2009-05-09 20:46  bulgheroni
+
+	* pysub/pysub/submitconverter.py: Beautified Renamed some methods
+	  to a more clever naming convention.  Cleaned the log.
+
+2009-05-09 20:44  bulgheroni
+
+	* pysub/pysub/submittest.py: Added fake call back for testing.
+
+2009-05-09 20:08  bulgheroni
+
+	* pysub/pysub/submitbase.py: Renamed the logger from Logger to
+	  Base.  Added the time stamp at the beginning of the submission
+	  Printed the execution time in the end().
+
+2009-05-09 20:07  bulgheroni
+
+	* pysub/config/config.cfg: Adjusted the logging level ALL
+
+2009-05-09 20:06  bulgheroni
+
+	* pysub/submit-test.py: Added a fake execute and end.
+
+2009-05-09 20:06  bulgheroni
+
+	* pysub/submit-converter.py: Beautified.  Added some documentation.
+	  Added the end() call back.
+
+2009-05-09 08:54  bulgheroni
+
+	* doc/Doxyfile: Modified to parse all pysub.
+
+2009-05-09 08:53  bulgheroni
+
+	* pysub/pysub/: submitbase.py, submitconverter.py, submittest.py:
+	  Added a test documentation.
+
+2009-05-08 19:38  bulgheroni
+
+	* pysub/: submit-converter.py, submit-test.py, config/config.cfg,
+	  pysub/__init__.py, pysub/submitbase.py, pysub/submitconverter.py,
+	  pysub/submittest.py, template/anafilter-tmp.xml,
+	  template/analysis-tmp.xml, template/chain-tmp.xml,
+	  template/eta-tmp.xml, template/filter-tmp.xml,
+	  template/hitmaker-tmp.xml, template/pedestal-tmp.xml,
+	  template/universal-tmp.xml: Finally a version of pysub The
+	  EUTelescope Python submitter that I like.  Completely refurbished
+	  the previous version because it was too messy to handle.  Now it
+	  is object oriented, well defined into a package and using as many
+	  python libraries as possible.
+
+	  I'm starting moving from the old test/pysub folder all the
+	  submitters to this folder because this is the right place. I'm
+	  also trying to have them documented with the same Doxygen file.
+	  This would be beautiful.
+
+	  Interesting new features: --> Added optparse to simplify
+	  arguments and options --> Added ConfigParse to simplify the
+	  handling of different configuration --> Added logging to have
+	  everything logged into a rotate file --> All the commands (but
+	  the GRID ones) are taken from libraries and not     using
+	  external commands
+
+	  While porting the old submitters to the style I'll also add full
+	  GRID submission.
+
+	  This has to be considered still a work in progress commit for the
+	  submit-converter.py
+
+2009-05-08 10:23  bulgheroni
+
+	* test/pysub/submit-conversion.py: work in progress.
+
+2009-05-07 19:49  bulgheroni
+
+	* test/pysub/: submit-conversion.py, template/config.py: Added a
+	  configuration file. This is mainly used for GRID submission.
+
+	  Started a revision of the existing submission scripts in order to
+	  be more friendly and easy to change.
+
+	  For the time being, making modification to the
+	  submit-conversion.py only.
+
+2009-05-07 15:45  bulgheroni
+
+	* steering-examples/gear_telescope.xml: Fixed the mimotel sensitive
+	  surface.
+
+2009-04-30 18:03  jbehr
+
+	* include/EUTelMille.h, src/EUTelMille.cc: It is now possible to
+	  use several hit collections and an additional inputmode was
+	  implemented. Inputmode 3 can be used to align a hit collection
+	  (of one layer) with a track collection from the telescope. The
+	  guessing of the number of planes could be more sophisticated and
+	  should be improved if required. One could think of an optional
+	  steering file parameter, that overwrites the automatic guessing
+	  if it is set.
+
+2009-04-30 12:05  bulgheroni
+
+	* test/pysub/submit-hitmaker.py: Fixed to typos
+
+2009-04-30 10:25  bulgheroni
+
+	* test/pysub/submit-hitmaker.py: Fixed another small bug, the
+	  output file is different from the histofile!
+
+2009-04-30 10:04  bulgheroni
+
+	* test/pysub/submit-hitmaker.py: Fixed a bug in the removal of the
+	  log and steering files
+
+2009-04-29 19:24  bulgheroni
+
+	* test/pysub/: submit-hitmaker.py, template/hitmaker-tmp.xml: First
+	  version of the hitmaker submission script. Now in testing...
+
+2009-04-29 17:49  bulgheroni
+
+	* ChangeLog: Updated.
+
+2009-04-29 17:44  bulgheroni
+
+	* test/pysub/submit-chain.py: Added the missing definition of
+	  optionKeepInput and optionKeepOutput
+
+2009-04-29 17:24  jbehr
+
+	* src/EUTelMille.cc: bug fix
+
+2009-04-29 17:14  jbehr
+
+	* include/EUTelMille.h, src/EUTelMille.cc: The possibility to use
+	  multiple input hit collections was added to the alignment
+	  processor.
+
+2009-04-28 14:18  bulgheroni
+
+	* ChangeLog: Updated.
+
+2009-04-28 14:18  bulgheroni
+
+	* doc/introduction.html: Fixed a couple of broken or missing links
+
+2009-04-28 14:10  bulgheroni
+
+	* doc/introduction.html: Added the missing sections.
+
+2009-04-28 13:47  bulgheroni
+
+	* doc/introduction.html: Working on the documentation overview.
+
+2009-04-28 10:58  bulgheroni
+
+	* ChangeLog: Updated.
+
+2009-04-28 10:41  bulgheroni
+
+	* include/EUTelDUTHistograms.h, src/EUTelDUTHistograms.cc: Added
+	  other 2D histograms and profiles to have the rotation along the X
+	  and Y axes as well.
+
+2009-04-27 14:46  bulgheroni
+
+	* include/EUTelXCorrelator.h: Improved the documentation.
+
+2009-04-27 14:39  bulgheroni
+
+	* include/EUTelXCorrelator.h, src/EUTelXCorrelator.cc: Of course
+	  being the first version wasn't working, but now it does!
+
+	  Tested with the first merged analysis with DEPFET hits. The
+	  correlation is clearly visible on the X axis and not on Y but I
+	  think it is a problem of the hits and not of the processor.
+
+2009-04-27 11:43  bulgheroni
+
+	* include/EUTelXCorrelator.h, src/EUTelXCorrelator.cc: Added this
+	  new processor to make correlation between the telescope planes
+	  and the DUT.	It requires two input hit collection (one from the
+	  telescope and one from the DUT) and also needs the DUT to be
+	  properly described in GEAR.
+
+	  This is a preliminary still to be test version. Not use for
+	  production please...
+
+2009-04-27 11:41  bulgheroni
+
+	* include/EUTelExceptions.h: Added a new exception to deal with
+	  invalid geometry description from GEAR.
+
+2009-04-23 08:39  bulgheroni
+
+	* test/pysub/: submit-anafilter.py, submit-analysis.py,
+	  submit-conversion.py, submit-filter.py, submit-pedestal.py: Fixed
+	  another bug with the keep-input keep-output option
+
+2009-04-23 08:39  bulgheroni
+
+	* src/EUTelNativeReader.cc: Modified the autodetection of detector
+	  types. In 2007 data this tag was missing in the native format but
+	  we only took MimoTel data.  So, we are assuming that if a file
+	  doens't have the detector type tag was containing MimoTels only.
+
+2009-04-22 16:56  jbehr
+
+	* test/histograms/eutelescopeHistos.C: The number of contours of
+	  the 2d plots for the pedestal part of the macro was increased.
+
+2009-04-21 23:59  bulgheroni
+
+	* test/pysub/: submit-eta.py, template/eta-tmp.xml: First version
+	  of the submit-eta.py
+
+2009-04-21 23:04  bulgheroni
+
+	* test/pysub/: submit-anafilter.py, submit-analysis.py,
+	  submit-chain.py, submit-conversion.py, submit-filter.py,
+	  submit-pedestal.py: Modified the --keep-input and --keep-output
+	  options. Now they are stronger and it doesn't depend on the order
+	  you specified them
+
+2009-04-21 22:49  bulgheroni
+
+	* CMakeLists.txt: Fixed the issue of the pede2lcio building. Thanks
+	  to Jan Engels for helping
+
+2009-04-21 00:02  bulgheroni
+
+	* src/EUTelFitTuple.cc: Removed the warning message when the DUT
+	  hit collection is not found because this can be done on purpose.
+
+2009-04-21 00:01  bulgheroni
+
+	* include/EUTelTestFitter.h: Fixed a problem with Doxygen
+
+2009-04-20 23:09  bulgheroni
+
+	* steering-examples/gear_telescope.xml: Added a generic
+	  gear_telescope file. It doesn't have anything special but it can
+	  be used for starting up a new one.
+
+2009-04-20 23:07  bulgheroni
+
+	* test/pysub/submit-conversion.py: Removed an extra space that was
+	  misinterpreted by python.
+
+2009-04-18 10:46  bulgheroni
+
+	* test/pysub/submit-chain.py: Updated version with keep input and
+	  output options
+
+2009-04-18 09:32  bulgheroni
+
+	* test/pysub/: submit-chain.py, template/chain-tmp.xml: First
+	  version of the chain submitter. This is very user friendly and
+	  can be used to submit any kind of merging between LCIO files.
+	  Input and output files can be either local or remote.
+
+	  Well done!
+
+2009-04-17 14:51  bulgheroni
+
+	* test/pysub/: submit-anafilter.py, submit-analysis.py,
+	  submit-conversion.py, submit-pedestal.py: Fixed typos and minor
+	  problems.
+
+2009-04-17 14:51  bulgheroni
+
+	* test/pysub/: submit-filter.py, template/filter-tmp.xml: Added the
+	  submission script for filtering input clusters.
+
+2009-04-16 16:03  bulgheroni
+
+	* test/pysub/: submit-anafilter.py, submit-analysis.py,
+	  submit-conversion.py, submit-pedestal.py,
+	  template/anafilter-tmp.xml: Updated.
+
+2009-04-15 18:12  bulgheroni
+
+	* include/EUTelFitTuple.h, src/EUTelFitTuple.cc: Added to the
+	  ntuple also the measZ variable. This is to make the future ROOT
+	  analysis completely independent from any geometry description.
+
+2009-04-15 11:40  bulgheroni
+
+	* test/histograms/eutelescopeHistos.C: Add a canvas in the
+	  showClusterHistogram to show also the event multiplicity.
+
+2009-04-15 11:18  bulgheroni
+
+	* test/pysub/: submit-anafilter.py, template/anafilter-tmp.xml:
+	  First version of the anafilter. Still work in progress.
+
+2009-04-15 11:17  bulgheroni
+
+	* test/pysub/submit-analysis.py: Fixed an issue with the generate
+	  only flag.  Fixed a mistyping in a message Fixed a mistyping in a
+	  file name on the GRID.
+
+2009-04-15 11:14  bulgheroni
+
+	* CMakeLists.txt, src/EUTelAlign.cc: Obsoleted the old EUTelAlign
+	  because it has a reference to libMinuit that is not always built
+	  with ROOT.
+
+	  Added the binary target pede2lcio to produce a align-db.slcio out
+	  from the milleped.res
+
+2009-04-14 17:42  bulgheroni
+
+	* test/pysub/submit-pedestal.py: Fixed a small bug and a couple of
+	  typos
+
+2009-04-14 17:40  bulgheroni
+
+	* test/pysub/template/universal-tmp.xml: updated!
+
+2009-04-14 17:39  bulgheroni
+
+	* test/pysub/: submit-analysis.py, template/analysis-tmp.xml:
+	  Analysis submitter... Now the translation from bash to python is
+	  getting very fast!
+
+2009-04-14 16:29  bulgheroni
+
+	* test/pysub/: submit-pedestal.py, template/pedestal-tmp.xml: Added
+	  the pedestal submitter.
+
+2009-04-14 16:29  bulgheroni
+
+	* test/pysub/submit-conversion.py: As usual corrected some leftover
+	  bugs
+
+2009-04-14 12:12  bulgheroni
+
+	* test/pysub/: submit-conversion.py, template/universal-tmp.xml:
+	  First attempt to move to a python submission system. This is
+	  doing the conversion from native to lcio-raw files.
+
+	  Now I'm porting all the other bash script to python, hopefully
+	  making them a bit better.
+
+2009-04-09 10:47  bulgheroni
+
+	* src/EUTelNativeReader.cc: Fixed an instability with RAW2 EUDRB
+	  data.
+
+2009-04-08 13:31  bulgheroni
+
+	* src/: EUTelAlign.cc, EUTelCorrelator.cc, EUTelHitMaker.cc,
+	  EUTelMille.cc: Removed the question concerning the GeoID
+	  mismatch. This feature can be activated at compile time using
+	  -DEUTEL_INTERACTIVE.
+
+2009-04-08 13:29  bulgheroni
+
+	* test/histograms/eutelescopeHistos.C: The tracker histograms are
+	  saved in a folder with the name of the original incoming folder.
+	  This allows to have plots coming from different Fitter
+	  processors.
+
+2009-04-07 12:11  bulgheroni
+
+	* test/histograms/eutelescopeHistos.C: Fixed a problem with the
+	  display of tracker histograms.
+
+2009-04-07 11:32  bulgheroni
+
+	* test/histograms/eutelescopeHistos.C: Minor
+
+2009-03-04 18:35  bulgheroni
+
+	* test/histograms/eutelescopeHistos.C: Fixed a mistyping.
+
+2009-02-27 10:31  jbehr
+
+	* src/EUTelMille.cc: bug fix in constructor. _nPlanes was
+	  uninitialized. This bug should only cause a memory allocation
+	  problem and the default values.
+
+2009-02-04 10:37  jbehr
+
+	* src/EUTelMille.cc: very tiny change
+
+2009-02-03 16:09  jbehr
+
+	* include/EUTelMille.h, src/EUTelMille.cc: The alignment processor
+	  was made independent of the number of input sensors. No
+	  deviations from previous alignment results observed so far.
+	  Further tests are still needed!
+
+2009-01-22 13:17  zarnecki
+
+	* src/: EUTelHitMaker.cc, EUTelMAPSdigi.cc (v00-00-08-toto):
+	  Changes to allow for small rotations in GEAR file
+
+2009-01-01 21:39  zarnecki
+
+	* include/TDSIntegrationStorage.h, include/TDSPixel.h,
+	  include/TDSPixelsChargeMap.h, include/TDSPrecluster.h,
+	  include/TDSStep.h, src/TDSPixelsChargeMap.cc (v00-00-08-toto):
+	  New version of TrackDetailedSimulation
+
+2009-01-01 21:37  zarnecki
+
+	* src/EUTelMAPSdigi.cc (v00-00-08-toto): Modified for new TDS
+	  version
+
+2008-12-30 19:56  zarnecki
+
+	* include/EUTelMAPSdigi.h, src/EUTelMAPSdigi.cc (v00-00-08-toto):
+	  Digitization parameters defined for each plane separately
+
+2008-12-16 14:53  bulgheroni
+
+	* steering-examples/pedestal-steer.xml (v00-00-08-toto): Updated.
+
+2008-12-16 14:53  bulgheroni
+
+	* include/EUTelPedestalNoiseProcessor.h,
+	  src/EUTelPedestalNoiseProcessor.cc (v00-00-08-toto): Tested that
+	  the old algorithms are still working in the same way.  Updated
+	  the documentation explanining the new features.
+
+2008-12-08 11:16  bulgheroni
+
+	* src/EUTelPedestalNoiseProcessor.cc (v00-00-08-toto): Checked that
+	  when working in with the FullFrame common mode algorithm the
+	  output is the same as in the previous version.
+
+	  When working in the RowWise the output is reasonable, but further
+	  testing is required by experts (Julia). Moreover we have to
+	  decide if we want to have some control histograms for the RowWise
+	  common mode.
+
+2008-12-06 13:46  zarnecki
+
+	* include/TDSPixel.h (v00-00-08-toto): Temporary fix of pixel
+	  numbering problem
+
+2008-12-05 18:09  bulgheroni
+
+	* include/EUTELESCOPE.h, include/EUTelPedestalNoiseProcessor.h,
+	  src/EUTELESCOPE.cc, src/EUTelPedestalNoiseProcessor.cc
+	  (v00-00-08-toto): Implemented the RowWise common mode. But NOT
+	  TESTED at ALL.
+
+		 *** PLZ DON'T USE IT ***
+
+2008-12-05 16:47  bulgheroni
+
+	* include/EUTELESCOPE.h, include/EUTelPedestalNoiseProcessor.h,
+	  src/EUTELESCOPE.cc, src/EUTelPedestalNoiseProcessor.cc
+	  (v00-00-08-toto): Added a new pixel masking algorithm. Pixels
+	  having a too high or a too low pedestal value can be masked out
+	  from the remaining analysis part.
+
+	  To do so, the user has to add the AbsolutePedeValue label to the
+	  masking algorithm and properly tune the upper and lower
+	  threshold.
+
+2008-12-05 15:56  bulgheroni
+
+	* include/EUTelHitMaker.h, src/EUTelHitMaker.cc (v00-00-08-toto):
+	  Adopted the new convention for plane numbering in histograms.
+	  Replaced all the stringstreams with to_string.
+
+2008-12-05 14:54  bulgheroni
+
+	* src/EUTelMAPSdigi.cc (v00-00-08-toto): Fixed a serious bug. In
+	  case the very first event is not leaving any hit on the first
+	  event, then the procedure of plaining counting is failing.  Now
+	  fixed!
+
+2008-12-04 22:43  zarnecki
+
+	* src/: DEPFETReader.cc, EUTelApplyAlignmentProcessor.cc,
+	  EUTelPedestalNoiseProcessor.cc, EUTelTestFitter.cc
+	  (v00-00-08-toto): system header files added, for compatibility
+	  with new gcc compiler
+
+2008-12-04 22:40  zarnecki
+
+	* include/TDSPixel.h (v00-00-08-toto): less operator added for
+	  pixel sorting, needed by EUTelMAPSdigi
+
+2008-12-04 22:39  zarnecki
+
+	* src/EUTelMAPSdigi.cc, include/EUTelMAPSdigi.h (v00-00-08-toto):
+	  Histograms for model tuning added, charge processing corrected
+
+2008-12-02 12:41  bulgheroni
+
+	* steering-examples/pedestal-steer.xml (v00-00-08-toto): Uploaded
+	  the new steering file for pedestal calculation.
+
+2008-12-02 12:35  bulgheroni
+
+	* include/EUTELESCOPE.h, include/EUTelPedestalNoiseProcessor.h,
+	  src/EUTELESCOPE.cc, src/EUTelPedestalNoiseProcessor.cc
+	  (v00-00-08-toto): Implemented the possibility to have multiple
+	  algorithms for the bad pixel masking to move forward to the
+	  DEPFET approach.
+
+	  Reimplemented the NoiseDistribution, the AbsoluteNoiseValue and
+	  the DeadPixel algos.
+
+	  Now all of these have their own user-selectable threshold.
+
+	  The new pedestal and noise processor has been compared against
+	  the old one (v00-00-08) using the lcio compare utility.
+
+2008-11-28 10:36  bulgheroni
+
+	* include/EUTelNativeReader.h, src/EUTelNativeReader.cc
+	  (v00-00-08-toto): Improved the DEPFET decoding.
+
+2008-11-27 17:20  zarnecki
+
+	* src/: DEPFETReader.cc, EUTelApplyAlignmentProcessor.cc,
+	  EUTelPedestalNoiseProcessor.cc, EUTelTestFitter.cc: System header
+	  files added for compatibility with new gcc compiler
+
+2008-11-27 10:13  bulgheroni
+
+	* src/: EUTelAlignmentConstant.cc, EUTelHitMaker.cc,
+	  EUTelNativeReader.cc (v00-00-08-toto): Very minor.
+
+2008-11-20 19:28  bulgheroni
+
+	* src/EUTelHitMaker.cc (v00-00-08-toto): Since we are not using the
+	  number of detectors in the run header, I've removed the check.
+
+2008-11-20 18:05  bulgheroni
+
+	* include/EUTelClusterFilter.h, src/EUTelClusterFilter.cc
+	  (v00-00-08-toto): In order to properly deal with sensorID
+	  different from the sensor position in the input collection, a
+	  mutable ancillaryIndexMap has been added. This is filled with the
+	  sensor ID and position taken from the noise collection. It is
+	  mutable because it is used also in constant method and the
+	  operator[] is only non-const.
+
+	  Still under-test but it seems to be working, at least non
+	  crashing!
+
+2008-11-20 18:02  bulgheroni
+
+	* src/EUTelMAPSdigi.cc (v00-00-08-toto): Marked all the events as
+	  data event (kDE). In this way all the following EUTelescope
+	  processor will not complain because of unknown event type.
+
+2008-11-20 15:51  bulgheroni
+
+	* src/EUTelClusterFilter.cc (v00-00-08-toto): Fixed a bug with the
+	  status collection. It was labeled as a TrackerData while it is a
+	  TrackerRawData.
+
+2008-11-20 15:26  bulgheroni
+
+	* include/EUTelClusterFilter.h, src/EUTelClusterFilter.cc
+	  (v00-00-08-toto): Making it independent from the geo information
+	  in the run header. The big issue here is the number of detectors
+	  that is used in several places thourgh the code, especially when
+	  applying the selection criteria.
+
+	  Getting this information from the GEAR is not a good idea since
+	  the number of detectors in the GEAR file can be (if there a real
+	  DUT) greater than the number of detectors.
+
+	  The only safe way is to get this number from the noise collection
+	  but this was optional.  To easily fix this issue, the presence of
+	  the noise collection has been made compulsory.  In case the user
+	  has not a proper noise collection, (s)he can generate it using
+	  the EUTelAutoPedestalNoiseProcessor.
+
+2008-11-20 11:09  bulgheroni
+
+	* src/EUTelClusteringProcessor.cc (v00-00-08-toto): Remove the
+	  second warning in case of event of unknown type.  Asked Filip to
+	  add the event type in the simulator code.
+
+2008-11-20 09:24  bulgheroni
+
+	* test/histograms/eutelescopeHistos.C (v00-00-08-toto): Trying to
+	  fixing the display of the correct histograms using the new
+	  numbering convention. Still on going...
+
+2008-11-19 22:36  bulgheroni
+
+	* src/EUTelPedestalNoiseProcessor.cc (v00-00-08-toto): Fixed a
+	  problem with all the histogram booking.
+
+	  Testing again...
+
+2008-11-19 22:31  bulgheroni
+
+	* src/EUTelPedestalNoiseProcessor.cc (v00-00-08-toto): Fixed an
+	  issue with the name of the common mode histogram.
+
+	  Still to be tested! But tomorrow... now I go to sleep!
+
+2008-11-19 22:03  bulgheroni
+
+	* include/EUTelPedestalNoiseProcessor.h,
+	  src/EUTelPedestalNoiseProcessor.cc (v00-00-08-toto): Fixed a
+	  couple of remaining "-d".
+
+	  Introduced the _orderedSensorIDVec that is filled in the
+	  initializeGeometry.
+
+	  Fixed a mistake in the output db collections. The sensorID of
+	  these collections is now copied from the input one.
+
+	  First attempt to have the output histogram numbered according to
+	  sensorID and no more the position in the input collection
+	  (remember that this is the new convention).
+
+2008-11-19 21:33  bulgheroni
+
+	* src/EUTelPedestalNoiseProcessor.cc (v00-00-08-toto): On the way
+	  to have a PedestalNoiseProcessor that is totally based on
+	  sensorID.  First of all replaced in all histo names the "-" with
+	  "_".	Replaced all the stringstream structure with to_string for
+	  histo names.
+
+2008-11-19 18:54  bulgheroni
+
+	* src/EUTelNativeReader.cc (v00-00-08-toto): Testing the new
+	  sensorIDVec feature.
+
+	  Fixed a bug concerning the case when we have a sensorID greater
+	  than the number of sensors in the system.
+
+	  On going the testing of a full procedure with ZS data.
+
+2008-11-19 17:51  bulgheroni
+
+	* src/EUTelNativeReader.cc (v00-00-08-toto): To improve the
+	  stability, both the sensorID vectors have been made compulsory.
+
+2008-11-19 15:06  bulgheroni
+
+	* src/EUTelCalibrateEventProcessor.cc (v00-00-08-toto): Fixed a
+	  problem a parameter name. This was probably changed by mistake
+	  and it wasn't recognized. Reverted to the previous name.
+
+2008-11-19 14:29  bulgheroni
+
+	* include/EUTelNativeReader.h, src/EUTelNativeReader.cc
+	  (v00-00-08-toto): Modified the code in order to allow the user to
+	  choose the sensorID.	Once this decision is made, the rest of the
+	  analysis process is relying only on these sensorID numbers and to
+	  the GEAR file description.
+
+2008-11-19 11:59  bulgheroni
+
+	* include/EUTelCalibrateEventProcessor.h,
+	  src/EUTelCalibrateEventProcessor.cc (v00-00-08-toto): Fixed a
+	  couple of remaining issues with the geometry initialization.
+
+	  As for the clustering, we have an _ancillaryIndexMap relating the
+	  sensorID with the position of the objects in the ancillary
+	  collections.
+
+	  Removed all the stringstream blocks to build the histogram names
+	  and replace with the to_string function.
+
+	  Replaced all the "-d" with "_d" in histogram names. The number
+	  following the "_d" in histogram names are now sensorID according
+	  with the new convention.
+
+2008-11-19 09:48  bulgheroni
+
+	* include/EUTelClusteringProcessor.h,
+	  src/EUTelClusteringProcessor.cc (v00-00-08-toto): Removed the
+	  _iDetector from the data member. It was there but was totally
+	  meaningless.
+
+	  In many places of the code, replaced the iDetector with sensorID.
+	  It is just a matter of naming but this is clearer and easier to
+	  understand.
+
+	  Continue testing...
+
+2008-11-18 19:40  bulgheroni
+
+	* src/EUTelClusteringProcessor.cc,
+	  include/EUTelClusteringProcessor.h (v00-00-08-toto): Fixed a
+	  couple of bugs in the new implementation. Mainly due to histogram
+	  filling.  Verified that the output (slcio) is the same for the
+	  new and the old version for all the modalities ZS, NZS and mixed.
+
+	  Still to be verified that the histogram output is the same. Tests
+	  are on going.
+
+2008-11-18 13:29  bulgheroni
+
+	* include/EUTelClusteringProcessor.h,
+	  src/EUTelClusteringProcessor.cc (v00-00-08-toto): On the way to
+	  getting rid from the geometry information contained in the run
+	  header.  The number of detector is assumed to the be sum of the
+	  elements contained into the ZS and the NZS collections.  The
+	  number of pixels along X and Y are now taken from GEAR.
+
+	  Added two maps to correlate the layer index and the sensor ID in
+	  the GEAR description and the position in the ancillary
+	  collections with the sensorID.
+
+	  TO BE TESTED.  This is the testing plan:
+
+	  --> Compare the output of this new version with the old one for
+	  three sets	 of data: full NZS, full ZS and MIXED.	--> Try to
+	  run the simulation output because now we should have all the
+	  pieces (up to clustering) already independent from the geo
+	  information	  in the run header.
+
+2008-11-18 12:05  bulgheroni
+
+	* include/EUTelRawDataSparsifier.h, src/EUTelRawDataSparsifier.cc
+	  (v00-00-08-toto): Fixed a small bug. We were still assuming that
+	  the sensor ID is a number ranging from 0 to the total number of
+	  detectors - 1.
+
+	  Added a warning message in the documentation: this processor is
+	  implicitly assuming that the input rawdata collection and the
+	  ancillary ones (pedestal, noise, status) are aligned according to
+	  the sensorID. In other words, we are assuming that the i-th
+	  element of all the collection has the same sensor ID. This is
+	  very likely to be the case, because this processor was developed
+	  mainly to test the ZS clustering procedure.
+
+	  A todo entry has been also added because this limitation can be
+	  easily overcome.
+
+2008-11-18 11:47  bulgheroni
+
+	* include/EUTelRawDataSparsifier.h, src/EUTelRawDataSparsifier.cc
+	  (v00-00-08-toto): The total number of detector is no more taken
+	  from the run header but it is assumed to be equal to the total
+	  number of elements in the input collection.
+
+2008-11-18 10:38  bulgheroni
+
+	* src/EUTelClusteringProcessor.cc (v00-00-08-toto): Forgot a couple
+	  of stringstream.  Removed the #include <sstream> because it is no
+	  more directly used in this processor.
+
+2008-11-18 10:31  bulgheroni
+
+	* src/EUTelClusteringProcessor.cc (v00-00-08-toto): Removed all the
+	  streamstring structure and replaced them with the new to_string
+	  template function.
+
+	  IMPORTANT: replaced in all the histogram names the "-" with "_".
+	  The reason for this change is that "-" cannot be contained into a
+	  valid C/C++ name while "_" can. This is offering the possibility
+	  to directly call the histogram from the ROOT command line.
+
+2008-11-17 19:23  bulgheroni
+
+	* include/EUTelAutoPedestalNoiseProcessor.h,
+	  src/EUTelAutoPedestalNoiseProcessor.cc (v00-00-08-toto): Modified
+	  in order not to use the geometry information in the run header.
+	  The way the geometry is guessed is well described in the new
+	  documentation.
+
+2008-11-17 17:43  bulgheroni
+
+	* include/EUTelPedestalNoiseProcessor.h,
+	  src/EUTelPedestalNoiseProcessor.cc (v00-00-08-toto): Getting rid
+	  from the geometry in the run header. The info are still there but
+	  not used.  In the PedestalNoise processor there are two
+	  information concerning the geometry: --> _noOfDetector. This was
+	  taken from the run header and now it is taken as the number
+	  elements of the input collection.  --> min, max X and Y. These
+	  were taken from the run header and now they are taken from
+	  the input collection decoder.  This new version has been tested
+	  calculating pedestal and noise with this new and the old version
+	  and diff-ing the output ASCII file.
+
+2008-11-17 17:26  bulgheroni
+
+	* CMakeLists.txt (v00-00-08-toto): Added the required dependency
+	  from GEAR
+
+2008-11-17 13:55  bulgheroni
+
+	* CMakeLists.txt (v00-00-08-toto): Set the version number to 0-0-9
+
+2008-11-17 11:49  bulgheroni
+
+	* CMakeLists.txt (tags: v00-00-08): Fixed a typo.
+
+2008-11-17 11:42  bulgheroni
+
+	* CMakeLists.txt: Added a IF condition to make the building on
+	  Apple easier
+
+2008-11-17 10:08  bulgheroni
+
+	* src/EUTelMAPSdigi.cc (tags: v00-00-08): Fixed an error with the
+	  output collection type.
+
+2008-11-14 10:09  bulgheroni
+
+	* src/EUTelMultiLineFit.cc (tags: v00-00-08): Something wrong with
+	  the previous commit.
+
+2008-11-13 19:27  bulgheroni
+
+	* doc/Doxyfile (tags: v00-00-08): Updated the version number
+
+2008-11-13 19:12  bulgheroni
+
+	* ChangeLog (tags: v00-00-08): Updated.
+
+2008-11-13 17:34  bulgheroni
+
+	* CMakeLists.txt: Updated the version number
+
+2008-11-13 14:34  bulgheroni
+
+	* include/EUTelNativeReader.h, src/EUTelNativeReader.cc (utags:
+	  v00-00-08): Under test!
+
+2008-11-13 12:15  bulgheroni
+
+	* src/TDSPixelsChargeMap.cc (tags: v00-00-08): Removed the #WARNING
+	  directives that is not standard.
+
+2008-11-13 11:43  bulgheroni
+
+	* include/DEPFET_FR.h, include/Mod_DEPF.h, src/DEPFETReader.cc,
+	  src/DEPFET_FR.cc (utags: v00-00-08): Wrapped the DEPFET_FR and
+	  the Mod_DEPF.h into the DEPFET namespace.  Modified the
+	  depfet_hits array in order to be compatible with the non constant
+	  definition (forbidden in ISO C++). This was breaking the nightly
+	  build.
+
+2008-11-12 19:36  bulgheroni
+
+	* include/EUTelMAPSdigi.h (tags: v00-00-08), src/EUTelMAPSdigi.cc:
+	  Almost done with the production of a ZS data collection.
+
+	  Implemented: - A TrackerDataMap to correlate every detectorID
+	  with a pointer to a TrackerDataImpl	object. This is because we
+	  are looping over the input pixel and maybe not all   planes are
+	  having at least one hit.  - Each element of the _vectorOfPixels
+	  is firstly moved to a EUTelSimpleSparsePixel and   later on this
+	  EUTelSimpleSparsePixel is added to a EUTelSparseDataImpl that is
+	  actually   linked with the TrackerDataImpl.	 Not sure this is
+	  the best approach. Probably it is better to have a map linking
+	  directly    detectorID to a EUTelSparseDataImpl. I'll think on
+	  that over night!  - At the end of the event cycle all the
+	  TrackerDataImpl objects are added to the output   collection and
+	  finally to the event itself.
+
+	  Still missing: - The procedure is actually applied only in case
+	  _singleHitOutput is false. If I got it right,   this means that
+	  I'm adding pixels to the output collection only at the end of the
+	  pixel generation.    Honestly I like this case much more because
+	  it is more similar to the have it happens also during    the
+	  conversion of real data.  - Testing, TESTING, T E S T I N G. The
+	  code just compiles but never even tried to run it. So   it is
+	  completely untested.	- Along with testing we also need to create
+	  a new SparsePixelType. The EUTelSimpleSparsePixel is	 foreseen
+	  to have a "short int" value for the charge, because this is what
+	  is coming out from   the ADC in the real like. Need to talk with
+	  the simulation experts to understand if they	 want to provide a
+	  real "double" value or if they are happy enough with the approx
+	  of it   to a "short int".
+
+2008-11-12 15:36  bulgheroni
+
+	* include/EUTelMAPSdigi.h, include/TDSIntegrationStorage.h (tags:
+	  v00-00-08), include/TDSPixel.h (tags: v00-00-08),
+	  include/TDSPixelsChargeMap.h (tags: v00-00-08),
+	  include/TDSPrecluster.h (tags: v00-00-08), include/TDSStep.h
+	  (tags: v00-00-08), src/EUTelMAPSdigi.cc,
+	  src/TDSPixelsChargeMap.cc: - Included all the TDS classes into a
+	  TDS namespace - Removed a very dangerous using namespace std from
+	  an include file - Enclosed all the pieces of code depending from
+	  external packages (GSL and CLHEP)   in preprocessor #ifdef
+
+2008-11-12 15:24  bulgheroni
+
+	* include/EUTelNativeReader.h, src/EUTelNativeReader.cc: - Changed
+	  the debug printf into streamlog_out( DEBUG ) - Added a parameter
+	  for the name of the DEPFET output collection - Enclosed the
+	  DEPFET relevant close into a #ifdef UNDERDEV because there is
+	  still a piace of eudaq   missing (DEPFETDecoder). When this will
+	  be ready, this #define can be removed.
+
+2008-11-12 13:03  furletova
+
+	* include/DEPFETReader.h (tags: v00-00-08), include/DEPFET_FR.h,
+	  include/EUTelDEPFETDetector.h (tags: v00-00-08),
+	  include/Mod_DEPF.h, src/DEPFET_FR.cc, src/EUTelDEPFETDetector.cc
+	  (tags: v00-00-08): DEPFET version1
+
+2008-11-12 13:01  furletova
+
+	* include/EUTelCalibrateEventProcessor.h (tags: v00-00-08),
+	  include/EUTelNativeReader.h, src/EUTelMultiLineFit.cc,
+	  src/EUTelNativeReader.cc: DEPFET version
+
+2008-11-12 13:00  furletova
+
+	* src/DEPFETReader.cc: DEPFET standalone reader
+
+2008-11-11 20:12  zarnecki
+
+	* src/EUTelMAPSdigi.cc, include/EUTelMAPSdigi.h: MAPS digitization
+	  using TDS tools, work in progress
+
+2008-11-11 20:10  zarnecki
+
+	* include/TDSIntegrationStorage.h, include/TDSPixel.h,
+	  include/TDSPixelsChargeMap.h, include/TDSPrecluster.h,
+	  include/TDSStep.h, src/TDSPixelsChargeMap.cc: Tools for Track
+	  Detailed Simulation
+
+2008-11-11 10:18  bulgheroni
+
+	* include/EUTelMAPSdigi.h, src/EUTelMAPSdigi.cc: Added the
+	  digitization processor coded by F. Zarnecki as it is.  Now
+	  working on making it compatible with the rest of the analysis
+	  chain.
+
+2008-10-24 09:31  bulgheroni
+
+	* test/histograms/: eutelescopeHistos.C, eutelescopeHistos.h
+	  (utags: v00-00-07, v00-00-08): Added some more features...
+
+2008-10-16 09:44  bulgheroni
+
+	* test/histograms/: eutelescopeHistos.C, eutelescopeHistos.h: Added
+	  some tracker histograms as well.
+
+2008-10-15 12:52  bulgheroni
+
+	* ChangeLog, ChangeLog (tags: v00-00-07): Updated.
+
+2008-10-15 12:51  bulgheroni
+
+	* doc/: Doxyfile, introduction.html (tags: v00-00-08) (utags:
+	  v00-00-07): Added the eutelescopeHisto to the documentation.
+
+2008-10-15 12:50  bulgheroni
+
+	* test/histograms/: eutelescopeHistos.C, eutelescopeHistos.h:
+	  Improved the documentation.
+
+2008-10-14 22:10  bulgheroni
+
+	* doc/Doxyfile: Added few lines to extract the documentation from
+	  the histogram macros.
+
+2008-10-14 22:10  bulgheroni
+
+	* test/histograms/: eutelescopeHistos.C, eutelescopeHistos.h,
+	  rootlogon.C (tags: v00-00-08, v00-00-07): Added the macro to
+	  produce nice plots. Copy these three files in your data folder
+	  and start ROOT, rootlogon.C will do the rest.
+
+2008-10-08 13:25  bulgheroni
+
+	* include/EUTelEventViewer.h (tags: v00-00-08, v00-00-07): Added a
+	  picture of an event with a full track.
+
+2008-10-08 13:22  bulgheroni
+
+	* doc/images/CEDTrack.png (tags: v00-00-08, v00-00-07): Added a new
+	  picture for the event display showing also the track.
+
+2008-10-08 12:47  bulgheroni
+
+	* ChangeLog: Updated.
+
+2008-10-08 12:47  bulgheroni
+
+	* include/EUTelEventViewer.h: Improved the docu
+
+2008-10-08 12:46  bulgheroni
+
+	* src/EUTelEventViewer.cc (tags: v00-00-08, v00-00-07): Removed the
+	  useless ApplyAlignment switch. Tested the model -1 is really
+	  drawn with corrections.  Improved the explanation of the DetModel
+	  parameter in the steering file.
+
+2008-10-07 20:03  bulgheroni
+
+	* src/EUTelEventViewer.cc: Added a missing include.
+
+2008-10-07 19:51  bulgheroni
+
+	* src/EUTelDUTHistograms.cc (tags: v00-00-08, v00-00-07): Added the
+	  standard message every 10 events.
+
+2008-10-07 19:50  bulgheroni
+
+	* src/EUTelTestFitter.cc (tags: v00-00-08, v00-00-07): Fixed a
+	  wrong message
+
+2008-10-05 00:08  bulgheroni
+
+	* src/EUTelCorrelator.cc (tags: v00-00-08, v00-00-07): Fixed a but
+	  with the correlation of clusters. The problem was there since the
+	  beginning and never discovered because we have always tested
+	  telescope setup with detector of the same kind.
+
+	  After a test with a mixed setup (5 MimoTel and 1 Mimosa18), it
+	  becames clear that during the booking and the filling of the
+	  histograms the meaning of the X and Y axes were exchanged.
+
+	  Even if this bug was present since the beginning, it didn't
+	  affect any calculation or any result.
+
+2008-10-04 23:09  bulgheroni
+
+	* ChangeLog: Updated.
+
+2008-10-04 23:08  bulgheroni
+
+	* src/EUTelTestFitter.cc: On the way to make a nice summary of the
+	  fitting performance at the end, but still not yet working as it
+	  should.
+
+2008-10-04 23:07  bulgheroni
+
+	* src/EUTelFitHistograms.cc (tags: v00-00-08, v00-00-07): Changed a
+	  message from ERROR to TESTFITTERMESSAGE
+
+2008-10-04 19:11  bulgheroni
+
+	* steering-examples/histoinfo.xml (tags: v00-00-08, v00-00-07):
+	  Updated with some other histos
+
+2008-10-04 17:54  bulgheroni
+
+	* include/EUTELESCOPE.h (tags: v00-00-08, v00-00-07),
+	  include/EUTelMille.h (tags: v00-00-08, v00-00-07),
+	  include/EUTelTestFitter.h (tags: v00-00-08, v00-00-07),
+	  src/EUTelFitHistograms.cc, src/EUTelTestFitter.cc,
+	  steering-examples/histoinfo.xml: Almost done with the verbosity
+	  improvement.	Moved the new verbosity level to EUTELESCOPE.h
+
+	  Added a summary at the end of the TestFitter.
+
+2008-10-04 16:34  bulgheroni
+
+	* src/EUTelTestFitter.cc: Added at the end a summary of the fitter.
+
+2008-10-04 15:38  bulgheroni
+
+	* src/EUTelTestFitter.cc: Fixed a problem with verbosity. Nothing
+	  serious.
+
+2008-10-04 15:38  bulgheroni
+
+	* src/EUTelFitHistograms.cc: Working on verbosity
+
+2008-10-04 15:37  bulgheroni
+
+	* src/EUTelEventViewer.cc: Fixed another problem with verbosity.
+	  Nothing serious.
+
+2008-10-04 14:49  bulgheroni
+
+	* src/EUTelEventViewer.cc: Fixed the event counter.
+
+2008-10-04 14:44  bulgheroni
+
+	* src/: EUTelMille.cc (tags: v00-00-08, v00-00-07),
+	  EUTelEventViewer.cc: Minor.
+
+2008-10-04 14:28  bulgheroni
+
+	* include/EUTelTestFitter.h, src/EUTelTestFitter.cc: Improved the
+	  output verbosity. Like for the EUTelMille processor, I've created
+	  a specific verbosity level TESTFITTERMESSAGE that can be
+	  activated by experts to understand if the fitter is well
+	  performing or not.
+
+2008-10-03 18:28  bulgheroni
+
+	* include/EUTelMultiLineFit.h (tags: v00-00-08, v00-00-07),
+	  src/EUTelMultiLineFit.cc (tags: v00-00-07),
+	  src/EUTelTestFitter.cc: Improving the output verobisity.
+
+2008-10-03 18:09  bulgheroni
+
+	* include/EUTelMille.h, src/EUTelMille.cc: Improved the verbosity.
+	  To reduce it, I've created a special verbosity level called
+	  MILLEMESSAGE that is in between DEBUG4 and MESSAGE0. It looks
+	  like a very good and smart solution that should be adopted also
+	  for the fitters.
+
+2008-10-03 12:27  bulgheroni
+
+	* ChangeLog: Updated.
+
+2008-10-03 12:27  bulgheroni
+
+	* include/EUTelEventViewer.h, src/EUTelEventViewer.cc: Finally the
+	  viewer is able to display aligned planes and even TRACKS! The
+	  next step is having a different scale on the xy axes compared to
+	  the z one.
+
+2008-10-03 12:26  bulgheroni
+
+	* src/EUTelMultiLineFit.cc: The hit positions of fit points are now
+	  stored in mm and not in micron according to the standard policy.
+
+2008-10-03 09:55  bulgheroni
+
+	* include/EUTelApplyAlignmentProcessor.h,
+	  src/EUTelApplyAlignmentProcessor.cc (utags: v00-00-07,
+	  v00-00-08): To make it compatible with mixed data (RAW and ZS) as
+	  well I'm now guessing the sensorID number the same way is done in
+	  the EUTelCorrelator. This is requiring GEAR to be available, so
+	  from now on this Processor will be built if and only if GEAR is
+	  available.
+
+	  This is not so important because if one wants to apply alignment
+	  correction it is very likely he will want to make fit and so GEAR
+	  is surely required.
+
+2008-10-03 09:20  bulgheroni
+
+	* include/EUTelCorrelator.h (tags: v00-00-08, v00-00-07),
+	  src/EUTelCorrelator.cc: Slightly modified the guessSensorID in
+	  order to issue a warning message if the hit is found at a
+	  distance greater than 5 mm from the nearest plane. Still don't
+	  know if this is a reasonable number or not.
+
+	  Fixed a minimal memory leak.
+
+2008-10-01 21:08  bulgheroni
+
+	* src/EUTelMille.cc: Fixed a problem with the alignment constant
+	  file when the are excluded planes.
+
+2008-10-01 17:02  bulgheroni
+
+	* src/EUTelApplyAlignmentProcessor.cc: Fixed a bug in the filling
+	  of after align histos
+
+2008-10-01 16:54  bulgheroni
+
+	* include/EUTelApplyAlignmentProcessor.h,
+	  src/EUTelApplyAlignmentProcessor.cc: Added the possibility to
+	  fill in control histograms.
+
+2008-10-01 12:21  bulgheroni
+
+	* ChangeLog: Updated.
+
+2008-10-01 12:21  bulgheroni
+
+	* include/EUTelHitMaker.h, src/EUTelHitMaker.cc (utags: v00-00-07,
+	  v00-00-08): Put a switch to enable / disable the booking and
+	  filling of the 3D histo to save some memory.
+
+2008-10-01 12:16  bulgheroni
+
+	* CMakeLists.txt (tags: v00-00-07): Once again problem with the ^M.
+	  Hopefully fixed now.
+
+2008-09-30 17:09  bulgheroni
+
+	* CMakeLists.txt: Fixed a typo
+
+2008-09-30 09:48  bulgheroni
+
+	* CMakeLists.txt: Removed the ^M introduced by the Mac.
+
+2008-09-29 10:38  bulgheroni
+
+	* CMakeLists.txt, EutelescopeConfig.cmake.in (tags: v00-00-08,
+	  v00-00-07): Commit in the changes by Jan
+
+2008-09-28 20:10  bulgheroni
+
+	* CMakeLists.txt: Don't know why but the building procedure of
+	  pede2lcio is not working.  Removed.
+
+2008-09-28 19:33  bulgheroni
+
+	* src/EUTelEventViewer.cc: Still working in progress.
+
+2008-09-28 19:19  bulgheroni
+
+	* CMakeLists.txt: Added the pede2lcio executable among the targets.
+
+2008-09-28 19:15  bulgheroni
+
+	* src/pede2lcio.cc (tags: v00-00-08, v00-00-07): Added a small
+	  executable to be used to convert the output of pede
+	  (millepede.res) into a LCIO file containing a collection of
+	  alignment constants.
+
+	  This is very useful when pede is not executed automatically by
+	  EUTelMilleProcessor and consequently the alignment database is
+	  not created.
+
+2008-09-28 15:57  roloff
+
+	* src/EUTelMille.cc:
+	  The parameters "outlierdownweighting" and "chiscut" are now
+	  written commented to the pede steering file. In difficult cases
+	  the fit converges better without these parameters. They can be
+	  added easily by the user to improve the result if needed.
+
+2008-09-28 14:47  bulgheroni
+
+	* src/EUTelMille.cc: Changed the output verbosity. The all
+	  printouts are available selecting MESSAGE0 level.
+
+2008-09-28 00:11  bulgheroni
+
+	* ChangeLog: Updated.
+
+2008-09-28 00:10  bulgheroni
+
+	* src/EUTelHitMaker.cc: Completely remove the use of Clouds that
+	  where making the binning unpredictable and very often too corse.
+	  Wherever possible they have been replaced with histograms with
+	  fixed witdh binning, but in the 2D density plot where the total
+	  number of bins would have been exploded.
+
+	  Now it works in a way I like.
+
+2008-09-27 19:17  bulgheroni
+
+	* include/EUTelHitMaker.h, src/EUTelHitMaker.cc: On the way of
+	  getting rid completely of clouds.
+
+2008-09-27 18:20  bulgheroni
+
+	* src/EUTelCorrelator.cc: Fixed a minor bug, but now with
+	  histograms instead of clouds is much better.
+
+2008-09-27 18:03  bulgheroni
+
+	* include/EUTelCorrelator.h, src/EUTelCorrelator.cc: Replaced
+	  clouds with histograms2D. If it works, I'll remove clouds from
+	  the HitMaker as well.
+
+2008-09-27 00:50  bulgheroni
+
+	* include/EUTelCorrelator.h, src/EUTelCorrelator.cc: Fixed the
+	  annoying problem requiring a rebuild everytime one switch from zs
+	  data to nzs. Still to be tested.
+
+2008-09-22 11:54  roloff
+
+	* src/EUTelMille.cc:
+	  Fixed description of the parameter "OnlySingleTrackEvents".
+
+2008-09-11 13:44  bulgheroni
+
+	* ChangeLog: Updated.
+
+2008-09-10 17:52  bulgheroni
+
+	* src/EUTelPedestalNoiseProcessor.cc (tags: v00-00-08, v00-00-07):
+	  A very strange phenomenum was first observed in run 3770. In two
+	  events, instead of having six boards there were only 5 of them.
+
+	  Of course this was messing up everything in the noise
+	  calculation. To avoid this, I've added a check to compare the
+	  actual number of boards with the expected one. If this is false,
+	  then the event is skipped.
+
+2008-09-09 13:29  bulgheroni
+
+	* ChangeLog: Updated.
+
+2008-09-09 10:46  bulgheroni
+
+	* src/EUTelNativeReader.cc (tags: v00-00-07): Now adding in the
+	  first data event a collection of generic object with the eudrb
+	  setup.
+
+	  In principle one could do the same for every other data producer
+	  in the eudaq setup (like TLUProducer, DEPFETProducer ... )
+
+2008-09-09 10:44  bulgheroni
+
+	* src/EUTelSetupDescription.cc (tags: v00-00-08, v00-00-07): Forgot
+	  to add ZS in the readout mode :-p
+
+2008-09-09 10:15  bulgheroni
+
+	* include/EUTELESCOPE.h, include/EUTelSetupDescription.h (tags:
+	  v00-00-08, v00-00-07), src/EUTelSetupDescription.cc: Added a
+	  class deriving from LCGenericObject to store the detector
+	  information also in the output LCIO file.
+
+2008-09-08 15:25  bulgheroni
+
+	* doc/Doxyfile: Improved the documentation. Now all the external
+	  (LCIO, GEAR, MARLIN) classes having relation with EUTelescope are
+	  referenced into the documentation and can be accessed directly.
+
+2008-09-08 15:24  bulgheroni
+
+	* doc/introduction.html: Added also the ChangeLog.
+
+2008-09-08 15:23  bulgheroni
+
+	* include/EUTelNativeReader.h (tags: v00-00-07): Finished the
+	  debugging phase. The data quality check has been carried out
+	  using the output of the EUTelMimoTelReader as reference result.
+
+	  Both current supported sensors (MimoTel and Mimosa18) and both
+	  readout modalities have been tested and EUTelNativeReader is
+	  perfectly working.
+
+2008-09-08 15:21  bulgheroni
+
+	* include/EUTelMimoTelReader.h (tags: v00-00-08, v00-00-07):
+	  Flagged as deprecated.
+
+2008-09-08 15:20  bulgheroni
+
+	* src/EUTelMimoTelReader.cc (tags: v00-00-08, v00-00-07):
+	  Implementing the marker stripping also with Mimosa18. Marked this
+	  class as obsolete because the newer and better EUTelNativeReader
+	  is ready to be used.
+
+2008-09-08 12:20  bulgheroni
+
+	* ChangeLog: Updated.
+
+2008-09-05 10:02  bulgheroni
+
+	* ChangeLog: Updated.
+
+2008-09-04 21:57  bulgheroni
+
+	* include/: EUTelNativeReader.h, EUTelPStream.h (tags: v00-00-08,
+	  v00-00-07): Fixed documentation.
+
+2008-09-04 19:52  bulgheroni
+
+	* steering-examples/: complete.cfg, minimal.cfg (utags: v00-00-07,
+	  v00-00-08): Added two files with the minimal and the complete
+	  configuration for the ilcinstall script
+
+2008-09-04 19:51  bulgheroni
+
+	* doc/: Doxyfile, introduction.html: Improved the documentation.
+
+2008-09-04 19:34  bulgheroni
+
+	* doc/: Doxyfile, introduction.html: Documentation
+
+2008-09-04 19:18  bulgheroni
+
+	* src/EUTelNativeReader.cc: The bug with the ZS marker stripping
+	  was two fold. Hopefully now everything should be fixed.
+
+2008-09-04 18:22  bulgheroni
+
+	* src/EUTelNativeReader.cc: Fixed a bug with the conversion of ZS
+	  data.
+
+2008-09-04 17:33  bulgheroni
+
+	* src/: EUTelDUTHistograms.cc, EUTelFitHistograms.cc,
+	  EUTelFitTuple.cc (tags: v00-00-08, v00-00-07),
+	  EUTelTestFitter.cc: Modified in order to be compatible with
+	  building with GEAR and without AIDA.
+
+2008-09-04 16:51  bulgheroni
+
+	* ChangeLog: Updated.
+
+2008-09-04 13:02  bulgheroni
+
+	* src/EUTelUpdatePedestalNoiseProcessor.cc (tags: v00-00-08,
+	  v00-00-07): Removed a warning message in the building phase
+	  appearing only when built w/o AIDA.
+
+2008-09-04 12:13  bulgheroni
+
+	* CMakeLists.txt, src/EUTelEventViewer.cc, src/EUTelMille.cc: On
+	  the way to remove unneccesary dependency.
+
+	  - Added to the CMakeLists.txt a couple of sections to have more
+	  preprocessor defines in case CED, GLS and MarlinUtil are found
+	  and used.
+
+2008-09-03 14:30  bulgheroni
+
+	* ChangeLog: Updated.
+
+2008-09-02 11:38  bulgheroni
+
+	* include/EUTelEventViewer.h, src/EUTelEventViewer.cc: Modified in
+	  order to draw the planes with shift correction retrieved from the
+	  alignment collection.
+
+	  * * * *	  NOT TESTED	   * * * *
+
+2008-09-02 09:52  bulgheroni
+
+	* ChangeLog: Updated.
+
+2008-09-01 17:37  bulgheroni
+
+	* include/EUTelCalibrateEventProcessor.h (tags: v00-00-07):
+	  minor
+
+2008-09-01 17:26  bulgheroni
+
+	* include/EUTelCorrelator.h, src/EUTelCorrelator.cc: Made the
+	  dependency from GEAR softer. Now the processor is built even if
+	  GEAR is not available, but only cluster collections are used even
+	  if hits are available.
+
+2008-09-01 10:50  bulgheroni
+
+	* src/EUTelMille.cc: Fixed a problem with the nightly build.
+
+2008-08-28 12:19  roloff
+
+	* src/EUTelMille.cc:
+	  Minor bugfix (only affects chi2 histograms which are not used for
+	  anything).
+
+2008-08-23 21:16  roloff
+
+	* src/EUTelMultiLineFit.cc:
+	  Bugfix: Now Chiquare set to 0 in the loop where track candidates
+	  are fitted.
+
+2008-08-23 20:46  bulgheroni
+
+	* src/EUTelEventViewer.cc: Working in progress to make the drawing
+	  of the telescope with the proper sensor alignment. I'll continue
+	  once back from the seaside.
+
+2008-08-23 14:30  bulgheroni
+
+	* include/EUTELESCOPE.h, include/EUTelAlign.h (tags: v00-00-08,
+	  v00-00-07), include/EUTelCalculateEtaProcessor.h (tags:
+	  v00-00-08, v00-00-07), include/EUTelCalibrateEventProcessor.h,
+	  include/EUTelClusteringProcessor.h (tags: v00-00-08, v00-00-07),
+	  include/EUTelCorrelator.h, include/EUTelDUTHistograms.h (tags:
+	  v00-00-08, v00-00-07), include/EUTelFitHistograms.h (tags:
+	  v00-00-08, v00-00-07), include/EUTelFitTuple.h (tags: v00-00-08,
+	  v00-00-07), include/EUTelHistogramMaker.h (tags: v00-00-08,
+	  v00-00-07), include/EUTelHitMaker.h,
+	  include/EUTelHotPixelKiller.h (tags: v00-00-08, v00-00-07),
+	  include/EUTelLineFit.h (tags: v00-00-08, v00-00-07),
+	  include/EUTelMille.h, include/EUTelMultiLineFit.h,
+	  include/EUTelPedestalNoiseProcessor.h (tags: v00-00-08,
+	  v00-00-07), include/EUTelTestFitter.h,
+	  include/EUTelUpdatePedestalNoiseProcessor.h (tags: v00-00-08,
+	  v00-00-07), include/ROOTProcessor.h (tags: v00-00-08, v00-00-07),
+	  src/EUTelAlign.cc (tags: v00-00-08, v00-00-07),
+	  src/EUTelApplyAlignmentProcessor.cc,
+	  src/EUTelCalculateEtaProcessor.cc (tags: v00-00-08, v00-00-07),
+	  src/EUTelCalibrateEventProcessor.cc (tags: v00-00-08, v00-00-07),
+	  src/EUTelClusteringProcessor.cc (tags: v00-00-08, v00-00-07),
+	  src/EUTelCorrelator.cc, src/EUTelDUTHistograms.cc,
+	  src/EUTelEventViewer.cc, src/EUTelFitHistograms.cc,
+	  src/EUTelFitTuple.cc, src/EUTelHistogramMaker.cc (tags:
+	  v00-00-08, v00-00-07), src/EUTelHitMaker.cc,
+	  src/EUTelHotPixelKiller.cc (tags: v00-00-08, v00-00-07),
+	  src/EUTelLineFit.cc (tags: v00-00-08, v00-00-07),
+	  src/EUTelMille.cc, src/EUTelMultiLineFit.cc,
+	  src/EUTelPedestalNoiseProcessor.cc, src/EUTelTestFitter.cc,
+	  src/EUTelUpdatePedestalNoiseProcessor.cc, src/ROOTProcessor.cc
+	  (tags: v00-00-08, v00-00-07): Adopted the new #define style for
+	  ILCSoft packages. We should replace any MARLIN_USE_AIDA with a
+	  simpler USE_AIDA. To maintain backward compatibility I've
+	  replaced all the
+
+	  #ifdef MARLIN_USE_AIDA
+
+	  with
+
+	  #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+
+	  In the near future, when the adoption of the new define style
+	  will be completed we can simply remove the
+
+	  || defined(MARLIN_USE_AIDA).
+
+2008-08-23 14:25  bulgheroni
+
+	* include/EUTelExceptions.h (tags: v00-00-08, v00-00-07): Added a
+	  new exception to be thrown when a optional dependency is missing.
+
+2008-08-23 12:12  bulgheroni
+
+	* ChangeLog: Updated.
+
+2008-08-22 17:11  bulgheroni
+
+	* test/correlation/: correlationAnalysis.C, rootlogon.C (utags:
+	  v00-00-07, v00-00-08): Added a simple ROOT macro to display the
+	  correlation plots resulting from the EUTelCorrelator processor.
+
+2008-08-22 10:24  bulgheroni
+
+	* ChangeLog: Updated.
+
+2008-08-21 14:31  bulgheroni
+
+	* src/EUTelNativeReader.cc: Added also the EUTelTLUDetector
+	  decoding in the BORE
+
+2008-08-21 14:30  bulgheroni
+
+	* include/EUTELESCOPE.h: minor
+
+2008-08-21 14:29  bulgheroni
+
+	* include/EUTelTLUDetector.h, src/EUTelTLUDetector.cc (utags:
+	  v00-00-07, v00-00-08): Add a new class to describe the TLU
+	  detector. It contains only the Tags set by the EUDAQ like the
+	  And, Or, Veto, DUT mask...
+
+2008-08-21 14:27  bulgheroni
+
+	* include/EUTELESCOPE.h: Added a few more utilities copied from the
+	  eudalib. This time I've verified that compiles also without
+	  USE_EUDAQ
+
+2008-08-21 10:53  bulgheroni
+
+	* include/EUTelPedestalNoiseProcessor.h,
+	  src/EUTelPedestalNoiseProcessor.cc: Major improvment in the hit
+	  rejection for the pedestal calculation.  See the documentation
+	  for more information.
+
+2008-08-21 10:51  bulgheroni
+
+	* ChangeLog: Updated.
+
+2008-08-20 15:51  bulgheroni
+
+	* src/EUTelPedestalNoiseProcessor.cc: Another small improvements in
+	  the hit rejection. If we have particles into a pedestal run it is
+	  possible that a few pixels will be marked as bad because their
+	  noise is inflated by the signal particle.
+
+	  If the masking is done in the first loop, then it is impossible
+	  to apply any hit rejection.  This issue deservers a bit more of
+	  study.
+
+2008-08-20 15:20  bulgheroni
+
+	* include/EUTelPixelDetector.h (tags: v00-00-08, v00-00-07): Forgot
+	  to add the new intermediate layer.
+
+2008-08-20 15:15  bulgheroni
+
+	* src/EUTelPedestalNoiseProcessor.cc: Enforced the hit rejection
+	  algorithm.
+
+2008-08-20 14:51  bulgheroni
+
+	* include/EUTelNativeReader.h, src/EUTelNativeReader.cc: Made
+	  compatible with the new inheritance scheme of EUTelBaseDetector
+	  and EUTelPixelDetector
+
+2008-08-20 14:50  bulgheroni
+
+	* include/EUTelBaseDetector.h, include/EUTelMimoTelDetector.h,
+	  include/EUTelMimosa18Detector.h, src/EUTelMimoTelDetector.cc,
+	  src/EUTelMimosa18Detector.cc (utags: v00-00-07, v00-00-08):
+	  Changed the inheritance scheme. I've inserted an intermediate
+	  layer called EUTelPixelDetector in between the base detector
+	  class and the real implementation (e.g. EUTelMimoTelDetector).
+	  This should make the creation of other detector type (like the
+	  TLU) much easier.
+
+2008-08-20 13:25  bulgheroni
+
+	* src/EUTelNativeReader.cc: Fixed a small bug in the Mimotel RAW
+	  conversion. The yMax field in the cell encoder was set to a wrong
+	  number.
+
+2008-08-20 11:26  bulgheroni
+
+	* ChangeLog: Updated.
+
+2008-08-19 21:38  bulgheroni
+
+	* src/EUTelNativeReader.cc: Conversion validation: Tested with ZS
+	  MimoTel data. More tests to come, but seems to be working.
+
+2008-08-19 21:37  bulgheroni
+
+	* src/: EUTelMimoTelDetector.cc, EUTelMimosa18Detector.cc: Fixed a
+	  couple of issues with the printout. Now it is nicely working!
+
+2008-08-19 17:48  bulgheroni
+
+	* src/EUTelMimoTelReader.cc: minor
+
+2008-08-19 17:42  bulgheroni
+
+	* include/EUTelROI.h (tags: v00-00-08, v00-00-07),
+	  include/EUTelMimoTelDetector.h, src/EUTelClusterFilter.cc (tags:
+	  v00-00-08, v00-00-07): minor
+
+2008-08-19 17:39  bulgheroni
+
+	* src/: EUTelMimosa18Detector.cc, EUTelNativeReader.cc: First
+	  working version. Working means that doesn't crash, not producing
+	  reasonable results.
+
+2008-08-19 15:26  bulgheroni
+
+	* src/EUTelNativeReader.cc: Fixed a problem with the display of out
+	  of sync events
+
+2008-08-19 14:45  bulgheroni
+
+	* src/EUTelMimosa18Detector.cc: As above...
+
+2008-08-19 14:34  bulgheroni
+
+	* src/EUTelMimosa18Detector.cc: Debugging the EUTelNativeReader
+
+2008-08-19 14:02  bulgheroni
+
+	* ChangeLog: Updated.
+
+2008-08-19 13:49  bulgheroni
+
+	* include/EUTelNativeReader.h, src/EUTelNativeReader.cc:
+	  Approaching to something usable. About to try it with real data.
+
+2008-08-19 13:48  bulgheroni
+
+	* src/EUTELESCOPE.cc (tags: v00-00-08, v00-00-07): minor
+
+2008-08-19 12:23  bulgheroni
+
+	* include/EUTELESCOPE.h, src/EUTELESCOPE.cc: Fixed a couple of
+	  issues were breaking the nightly build and present only when
+	  USE_EUDAQ was not defined.
+
+2008-08-19 10:14  bulgheroni
+
+	* include/EUTelNativeReader.h, src/EUTelNativeReader.cc: Another
+	  step forward toward the universal native reader. Still not
+	  usable!
+
+2008-08-18 17:04  bulgheroni
+
+	* include/EUTelNativeReader.h, src/EUTelNativeReader.cc: On the way
+	  to have an universal native reader. Still not usable, but at
+	  least it builds!
+
+2008-08-18 17:03  bulgheroni
+
+	* src/: EUTelMimoTelDetector.cc, EUTelMimosa18Detector.cc: Minor
+
+2008-08-18 17:02  bulgheroni
+
+	* include/: EUTelBaseDetector.h, EUTelMimoTelDetector.h,
+	  EUTelMimosa18Detector.h: Fixed a mistyping in the getY* methods
+
+2008-08-18 11:09  bulgheroni
+
+	* src/: EUTelDUTHistograms.cc, EUTelFitTuple.cc: Removed the
+	  annoying warning message showing up everytime Eutelescope is
+	  built.
+
+2008-08-18 11:07  bulgheroni
+
+	* include/EUTELESCOPE.h, src/EUTELESCOPE.cc: Added the same
+	  utilities available in eudaq for string manipulation. This should
+	  make the handling of strings much simpler.  In case the user is
+	  building Eutelescope using USE_EUDAQ then the same implementation
+	  of these functions is used. Otherwise, functions with the same
+	  name are implemented.
+
+2008-08-12 10:38  bulgheroni
+
+	* test/noise/advancedNoiseAnalysis.C (tags: v00-00-08, v00-00-07):
+	  Small changes in the color wheel
+
+2008-08-11 09:56  bulgheroni
+
+	* test/noise/: Style_AdvNoise.C (tags: v00-00-08, v00-00-07),
+	  advancedNoiseAnalysis.C, rootlogon.C (tags: v00-00-08,
+	  v00-00-07): Added a ROOT macro to make advanced analysis on noise
+	  figures.  To run it copy the files contained into this folder
+	  into the data one and just start ROOT.
+
+2008-08-10 14:14  bulgheroni
+
+	* include/EUTelBaseDetector.h, include/EUTelMimoTelDetector.h,
+	  include/EUTelMimosa18Detector.h, src/EUTelMimoTelDetector.cc,
+	  src/EUTelMimosa18Detector.cc, src/EUTelSparseCluster2Impl.cc
+	  (tags: v00-00-08, v00-00-07): Implemented the subchannel division
+	  using EUTelROI.
+
+2008-08-06 22:37  bulgheroni
+
+	* include/EUTelBaseDetector.h, include/EUTelMimoTelDetector.h,
+	  include/EUTelMimosa18Detector.h, include/EUTelNativeReader.h,
+	  src/EUTelMimoTelDetector.cc, src/EUTelMimosa18Detector.cc,
+	  src/EUTelNativeReader.cc: On the way of a better and more general
+	  native decoder.
+
+2008-07-31 09:57  bulgheroni
+
+	* src/EUTelCorrelator.cc: Modified the histogram names: replaced
+	  the "-d" with "_d" to make the handle of such histos easier once
+	  opened in ROOT. This should be done on all processors having
+	  histos.
+
+2008-07-30 15:43  bulgheroni
+
+	* src/EUTelApplyAlignmentProcessor.cc: Fixed a small issue occuring
+	  when the alignment conditions contains less planes than the input
+	  file. The matching between the hit and the set of alignment
+	  constants is done on the basis of the sensorID.  In the case the
+	  alignment condition contains less planes than the input file
+	  (e.g. only some planes have been aligned), then only the hit
+	  belonging to the planes having the alignment constants are
+	  corrected, the other are left as in input.
+
+2008-07-29 23:48  roloff
+
+	* include/EUTelMultiLineFit.h, src/EUTelMultiLineFit.cc:
+	  Added second set of hits in output. One with corrected hit
+	  positions used in the track fit and one with the hit positions in
+	  the sensors. This is work in progress: IT COMPILES, BUT IS NOT
+	  TESTED YET!!!
+
+2008-07-29 19:11  bulgheroni
+
+	* include/EUTelEventViewer.h, src/EUTelEventViewer.cc: First
+	  attempt to draw also tracks. Still to be tested.  In principle we
+	  would like to shift and rotate the planes according to the
+	  alignment constants but this seems to be undoable for the time
+	  being.
+
+2008-07-29 17:13  bulgheroni
+
+	* include/EUTelCorrelator.h, src/EUTelCorrelator.cc: Added the
+	  correlation of hits along Y.	Improved the docu.  Added few
+	  comments.
+
+2008-07-29 15:38  bulgheroni
+
+	* src/: EUTelAlign.cc, EUTelCalculateEtaProcessor.cc,
+	  EUTelClusterFilter.cc, EUTelClusterSeparationProcessor.cc (tags:
+	  v00-00-08, v00-00-07), EUTelClusteringProcessor.cc,
+	  EUTelCorrelator.cc, EUTelHitMaker.cc, EUTelLineFit.cc,
+	  EUTelMille.cc, EUTelMultiLineFit.cc, EUTelTestFitter.cc: Add the
+	  possibility to recognize also EUTelSparseClusterImpl along with
+	  the more standard EUTelFFClusterImpl.
+
+2008-07-28 19:51  bulgheroni
+
+	* src/EUTelMille.cc: Fixed a problem with the error on the
+	  alignment constants.
+
+2008-07-28 18:38  bulgheroni
+
+	* src/EUTelApplyAlignmentProcessor.cc: This version seems to be
+	  working on Mixed data as well but still to be checked by the
+	  experts.
+
+2008-07-28 18:13  bulgheroni
+
+	* src/EUTelApplyAlignmentProcessor.cc: Fixed a problem. For the
+	  time being it doens't work with mixed data.
+
+2008-07-28 15:42  bulgheroni
+
+	* include/EUTelApplyAlignmentProcessor.h,
+	  src/EUTelApplyAlignmentProcessor.cc: On the way to fix the
+	  misbehvior when running with ZS data. Still under development.
+
+2008-07-28 12:05  bulgheroni
+
+	* src/: EUTelAlign.cc, EUTelMultiLineFit.cc: Changed uint into
+	  size_t in order to make the code portable.
+
+2008-07-28 10:43  bulgheroni
+
+	* include/: EUTELESCOPE.h, eutelescope.h: Actually it was not so
+	  smart to have two file named with the same spelling.	This is
+	  making the installation on a case-insensitive file system nearly
+	  impossible.  Since eutelescope.h contains just the definition of
+	  the namespace, I've move it to to EUTELESCOPE.h
+
+2008-07-21 19:04  bulgheroni
+
+	* include/EUTelCorrelator.h, src/EUTelCorrelator.cc: Work in
+	  progress. First trial to have correlation plots for hit
+	  collections as well.
+
+	  Still under development.
+
+2008-07-18 17:43  roloff
+
+	* src/EUTelMille.cc:
+	  Changed default of parameter AlignMode to 1.
+
+2008-07-11 20:01  roloff
+
+	* include/EUTelMille.h, src/EUTelMille.cc:
+	  Also added the possibility to specify start values for the angle
+	  gamma.
+
+2008-07-11 19:27  roloff
+
+	* include/EUTelMille.h, src/EUTelMille.cc:
+	  Added new optional paramter "UsePedeUserStartValues". This uses
+	  start values for the alignment given by the user instead of the
+	  values calculated automatically from the residuals. The start
+	  values are specified in the parameters "PedeUserStartValuesX" and
+	  "PedeUserStartValuesY".
+
+2008-07-11 17:53  bulgheroni
+
+	* src/EUTelCorrelator.cc: Grouped histograms into folder.  Probably
+	  found a bug of RAIDA
+
+2008-07-11 17:35  bulgheroni
+
+	* include/EUTelCorrelator.h, src/EUTelCorrelator.cc: Added the
+	  first version of the cluster correlator. This is a test commit.
+	  Don't use it!
+
+	  Work in progress....
+
+2008-07-11 15:30  roloff
+
+	* src/EUTelMille.cc:
+	  Fixed typo.
+
+2008-07-11 12:02  bulgheroni
+
+	* src/EUTelPedestalNoiseProcessor.cc: Fixed a bug in the case the
+	  user selected the AbsoluteNoiseValue as bad pixel masking
+	  algorithm.
+
+	  This is not affecting any previously done analyses.
+
+2008-07-11 12:01  bulgheroni
+
+	* src/EUTelMimoTelReader.cc: Added a debug line to print out the
+	  pivot pixel misalignment.
+
+2008-07-11 11:05  bulgheroni
+
+	* src/EUTelPedestalNoiseProcessor.cc: Modified the documentation.
+
+2008-07-10 19:00  bulgheroni
+
+	* include/EUTelApplyAlignmentProcessor.h,
+	  src/EUTelApplyAlignmentProcessor.cc: The preliminary
+	  functionality tests are successfull. Still waiting the opinion of
+	  the experts.
+
+	  Small change in the way the alignment constant is retrieved from
+	  the collection.  Instead of getting the element at position
+	  sensorID, it is building a lookup table containing the sensorID
+	  and the position in the collection.  This should solve problem
+	  using this processor with DUT sensors that are numbered
+	  > 100.
+
+2008-07-10 18:09  bulgheroni
+
+	* include/EUTelApplyAlignmentProcessor.h,
+	  src/EUTelApplyAlignmentProcessor.cc: Added this new processor to
+	  apply the alignment corrections. Still to be deeply tested.
+
+2008-07-10 18:06  bulgheroni
+
+	* include/EUTelAlignmentConstant.h (tags: v00-00-08, v00-00-07),
+	  src/EUTelAlignmentConstant.cc (tags: v00-00-08, v00-00-07),
+	  src/EUTelMille.cc: Modified the notation, replaced the xTheta,
+	  yTheta and zTheta with more understandable alpha, beta and gamma.
+
+2008-07-10 15:11  bulgheroni
+
+	* src/EUTelMimoTelReader.cc: When printing the out of synch
+	  warning, it is also printing the jitter in clock pulses
+
+2008-07-09 16:35  bulgheroni
+
+	* doc/Doxyfile, include/EUTELESCOPE.h,
+	  include/EUTelAlignmentConstant.h, include/EUTelBaseSparsePixel.h
+	  (tags: v00-00-08, v00-00-07), include/EUTelEUDRBReader.h (tags:
+	  v00-00-08, v00-00-07), include/EUTelEtaFunctionImpl.h (tags:
+	  v00-00-08, v00-00-07), include/EUTelEventImpl.h (tags: v00-00-08,
+	  v00-00-07), include/EUTelFFClusterImpl.h (tags: v00-00-08,
+	  v00-00-07), include/EUTelHistogramManager.h (tags: v00-00-08,
+	  v00-00-07), include/EUTelPStream.h, include/EUTelRunHeaderImpl.h
+	  (tags: v00-00-08, v00-00-07), include/EUTelSimpleSparsePixel.h
+	  (tags: v00-00-08, v00-00-07), include/EUTelSparseCluster2Impl.hcc
+	  (tags: v00-00-08, v00-00-07), include/EUTelSparseClusterImpl.hcc
+	  (tags: v00-00-08, v00-00-07), include/EUTelSparseData2Impl.hcc
+	  (tags: v00-00-08, v00-00-07), include/EUTelSparseDataImpl.hcc
+	  (tags: v00-00-08, v00-00-07), include/EUTelVirtualCluster.h
+	  (tags: v00-00-08, v00-00-07), include/eutelescope.h,
+	  src/EUTelMille.cc: Fixed few typos in the documentation.
+
+2008-07-09 15:02  bulgheroni
+
+	* include/EUTelMille.h, src/EUTelMille.cc: First version of the
+	  Mille processor able to save a LCIO (db) file from the ASCII
+	  output file generated by pede execution.
+
+2008-07-09 15:01  bulgheroni
+
+	* include/EUTelAlignmentConstant.h, src/EUTelAlignmentConstant.cc:
+	  Added a class inheriting from LCGenericObject to store the
+	  alignment constants obtained from the execution of pede.
+
+2008-07-07 19:13  bulgheroni
+
+	* src/EUTelMille.cc: Before executing pede, the processor will
+	  check if pede is in the path.  When executing pede, the output is
+	  rerouted through the streamlog_out() so that the verbosity can be
+	  controlled.
+
+2008-07-07 19:08  bulgheroni
+
+	* include/EUTelUtil.h, src/EUTelUtil.cc: Replaced by a better and
+	  simpler implementation in EUTelPStream
+
+2008-07-07 11:38  bulgheroni
+
+	* include/EUTelPStream.h: Added another file for the handling of
+	  std input / output / error when calling external programs.
+	  Probably this will replace the previous attempt.
+
+2008-07-04 12:02  bulgheroni
+
+	* include/EUTelUtil.h, src/EUTelUtil.cc: Added a pair of files with
+	  general utility class. For the time being I've implemented just a
+	  simple class to execute external commands and collect from the
+	  execution thread both the stdout and stderr.
+
+	  Still not tested and work in progress.
+
+2008-07-04 12:00  bulgheroni
+
+	* include/EUTelRunHeaderImpl.h: Fixed a typo.
+
+2008-07-02 18:21  bulgheroni
+
+	* src/EUTelMille.cc: Now the use can force the consistency check
+	  for the number of planes.  Mainly for debug purposes.
+
+2008-06-17 16:19  roloff
+
+	* include/EUTelMille.h, src/EUTelMille.cc:
+	  Cleanup: Removed obsolete parameters and code.
+
+2008-06-17 15:46  roloff
+
+	* include/EUTelMille.h, src/EUTelMille.cc:
+	  Added new parameter "RunPede". This allows directly to run the
+	  pede program from the EUTelMille processor if a steering file has
+	  been created. Requires that pede is included in the $PATH
+	  environment variable.  Now it is possible to align the telescope
+	  typing one single command!
+
+2008-06-16 22:04  roloff
+
+	* src/EUTelMille.cc:
+	  Bugfix.
+
+2008-06-16 20:46  roloff
+
+	* include/EUTelMille.h, src/EUTelMille.cc:
+	  Now steering files for the pede program can be generated.
+
+2008-06-12 19:24  roloff
+
+	* src/EUTelMille.cc:
+	  Important bugfix.
+
+2008-06-11 19:27  roloff
+
+	* include/EUTelMille.h, src/EUTelMille.cc:
+	  Added new optional paramter "ExcludePlanes": This allows to
+	  specify a list of sensors which are not considered for the
+	  alignment fit. The new feature is needed by Julia for the DEPFET
+	  analysis and neccessary to study runs 2949-51.
+
+2008-06-11 10:53  bulgheroni
+
+	* src/EUTelPedestalNoiseProcessor.cc: Fixed the bug that wasn't
+	  allowing to activate the AdditionalBadPixelMasking loop. Now it
+	  looks like working.  Anyway this bug wasn't affecting the data
+	  integrity.
+
+2008-06-11 10:48  bulgheroni
+
+	* src/EUTelMimoTelReader.cc: Fixed the sign in the CDS calculation
+	  for RAW2 mode
+
+2008-06-07 14:12  bulgheroni
+
+	* src/EUTelClusterFilter.cc: Improved the output when skipping
+	  events
+
+2008-06-05 15:30  bulgheroni
+
+	* CMakeLists.txt: Changed the location of libeudaq.so
+
+2008-06-04 16:00  bulgheroni
+
+	* src/EUTelMimoTelReader.cc: Still debugging the RAW2 mode. Code
+	  maturity level: critically low...
+
+2008-06-03 15:24  roloff
+
+	* src/EUTelMille.cc:
+	  Added output for residual cuts.
+
+2008-06-03 12:04  roloff
+
+	* src/EUTelMille.cc:
+	  Fixed memory leak which occurs when cuts on residuals are used
+	  before the tracks are passed to Millepede. This does not affect
+	  any previous result.
+
+2008-05-30 15:42  bulgheroni
+
+	* src/EUTelMimoTelReader.cc: Implemented the marker removal for
+	  RAW2 mode as well. The overall structure of the converter needs a
+	  major revision because it is becoming more and more clusmy.  We
+	  should consider to hard core the detectors configuration in the
+	  code.
+
+2008-05-22 17:24  bulgheroni
+
+	* src/: EUTelDUTHistograms.cc, EUTelFitHistograms.cc,
+	  EUTelFitTuple.cc, EUTelTestFitter.cc: Added a #ifdef USE_GEAR /
+	  #endif block around all the code to avoid the dependece from GEAR
+
+2008-05-21 22:28  zarnecki
+
+	* include/EUTelTestFitter.h: More documentation added
+
+2008-05-21 22:26  zarnecki
+
+	* src/EUTelTestFitter.cc: Shift sign changed for consistency with
+	  alignment processor
+
+2008-05-20 15:07  bulgheroni
+
+	* include/EUTELESCOPE.h, include/EUTelRunHeaderImpl.h,
+	  src/EUTELESCOPE.cc, src/EUTelMimoTelReader.cc,
+	  src/EUTelRunHeaderImpl.cc (tags: v00-00-08, v00-00-07):
+	  Implemented in the EUTelMimoTelReader the possibility to readout
+	  also Mimosa18 sensors and the capability to decode RAW2 data.
+	  I've just debugged the reader with data comining from a MimoTel,
+	  so it looks like it is still working as it was, but nothing can
+	  said about the new features since I still don't have any
+	  realistic data to play with.
+
+	  ======================================================== VERY
+	  IMPORTANT
+
+	  Verify that the CDS calculation in RAW2 is properly done
+	  ========================================================
+
+2008-05-20 15:03  bulgheroni
+
+	* src/EUTelClusteringProcessor.cc: Fixed a typo
+
+2008-05-19 15:54  bulgheroni
+
+	* src/EUTelFitTuple.cc: Fixed an issue with GCC 4.3.0
+
+2008-05-19 14:59  roloff
+
+	* src/EUTelMille.cc:
+	  Fixed problem occured in nightly build (I hope).
+
+2008-05-19 14:32  bulgheroni
+
+	* src/: EUTelCalculateEtaProcessor.cc, EUTelDUTHistograms.cc,
+	  EUTelFFClusterImpl.cc (tags: v00-00-08, v00-00-07),
+	  EUTelFitHistograms.cc, EUTelPedestalNoiseProcessor.cc,
+	  EUTelPseudo1DHistogram.cc (tags: v00-00-08, v00-00-07),
+	  EUTelSucimaImagerReader.cc (tags: v00-00-08, v00-00-07),
+	  EUTelTestFitter.cc, EUTelUpdatePedestalNoiseProcessor.cc: Added
+	  some includes in order to be compatible with GNU GCC 4.3.4.
+	  Hopefully this should be backward compatible as well.
+
+2008-05-19 14:17  bulgheroni
+
+	* include/EUTelClusteringProcessor.h: Fixed a problem was bombing
+	  the nightly build. Hopefully should be fine now.
+
+2008-05-15 16:39  roloff
+
+	* include/EUTelMille.h, src/EUTelMille.cc:
+	  Alignment processor: it generates binary files which are read by
+	  the PEDE program. Needs MarlinUtil >= v00-05.
+
+2008-05-14 23:12  zarnecki
+
+	* include/EUTelFitTuple.h, src/EUTelFitTuple.cc: DUT variables
+	  added
+
+2008-05-14 23:11  zarnecki
+
+	* src/EUTelDUTHistograms.cc: Fill histograms also when DUT hit
+	  collection empty
+
+2008-05-14 11:29  roloff
+
+	* src/EUTelMultiLineFit.cc:
+	  Bugfix.
+
+2008-05-13 00:26  roloff
+
+	* include/EUTelMultiLineFit.h, src/EUTelMultiLineFit.cc:
+	  Added calculation of DUT efficiency for different distances.
+
+2008-05-12 23:26  zarnecki
+
+	* include/EUTelDUTHistograms.h, src/EUTelDUTHistograms.cc:
+	  Parameters for manual DUT selection added
+
+2008-05-12 18:59  zarnecki
+
+	* include/EUTelFitTuple.h, src/EUTelFitTuple.cc: Initial version
+	  for building n-tuples with fit results
+
+2008-05-12 18:56  zarnecki
+
+	* src/EUTelTestFitter.cc, include/EUTelTestFitter.h: Option for
+	  excluding layer from fit added
+
+2008-05-09 10:24  bulgheroni
+
+	* include/EUTelMimoTelReader.h, src/EUTelMimoTelReader.cc: Added
+	  the possibility to remove from the converted file all events
+	  having the pivot pixel out of synchronization.
+
+2008-04-24 13:55  roloff
+
+	* include/EUTelMultiLineFit.h, src/EUTelMultiLineFit.cc:
+	  Replaced snr by charge.
+
+2008-04-22 22:55  roloff
+
+	* src/EUTelMultiLineFit.cc:
+	  Updated geometry consistency check to read simulated events.
+
+2008-04-16 09:35  bulgheroni
+
+	* CMakeLists.txt: Modified according to Jan specifications
+
+2008-03-14 20:20  roloff
+
+	* src/EUTelMultiLineFit.cc:
+	  Fixed memory leak.
+
+2008-02-28 21:58  roloff
+
+	* include/EUTelMultiLineFit.h, src/EUTelMultiLineFit.cc:
+	  Work in progress: added some histograms.
+
+2008-02-27 19:47  roloff
+
+	* include/EUTelMultiLineFit.h:
+	  Added cut on maximal number of hits per plane.
+
+2008-02-27 19:40  roloff
+
+	* src/EUTelMultiLineFit.cc:
+	  Added cut on maximal number of hits per plane.
+
+2008-01-28 12:38  zarnecki
+
+	* include/EUTelDUTHistograms.h, src/EUTelDUTHistograms.cc:
+	  Histograms for Eta function check added
+
+2008-01-27 23:57  zarnecki
+
+	* include/EUTelDUTHistograms.h, src/EUTelDUTHistograms.cc:
+	  Background histograms added
+
+2008-01-27 23:55  zarnecki
+
+	* src/EUTelTestFitter.cc, include/EUTelTestFitter.h: New track
+	  selection option implemented
+
+2008-01-27 23:53  zarnecki
+
+	* src/EUTelFitHistograms.cc: Small fix for use with MC
+
+2008-01-23 11:15  bulgheroni
+
+	* EutelescopeConfig.cmake.in: Applied Jan's patch for compatibility
+	  with all other projects.
+
+2008-01-18 18:52  roloff
+
+	* src/EUTelMultiLineFit.cc:
+	  Now there are two modes to enter the alignment constants: 1 for
+	  EUTelAlign ("simple alignment"), 2 for the new Millepede II based
+	  alignment procedure.
+
+2008-01-16 22:34  roloff
+
+	* include/EUTelMultiLineFit.h, src/EUTelMultiLineFit.cc:
+	  Work in progress.
+
+2007-12-21 18:33  roloff
+
+	* src/EUTelAlign.cc:
+	  Calling MINOS after MINUIT now.
+
+2007-12-21 17:40  roloff
+
+	* src/EUTelAlign.cc:
+	  Increased maximal number of iterations for MINUIT.
+
+2007-12-19 21:28  roloff
+
+	* include/EUTelAlign.h, src/EUTelAlign.cc:
+	  Added new parameter to allow less than 3 planes in first box
+	  (needed for BeamCAl data).
+
+2007-12-13 16:14  roloff
+
+	* src/EUTelMultiLineFit.cc:
+	  Added output to LCIO file (like EUTelLineFit or EUTelTestFitter).
+	  Compiles, but putput still needs to be verified.
+
+2007-11-20 18:47  roloff
+
+	* src/EUTelMultiLineFit.cc:
+	  - Changed definition of distance cut.  - Fixed memory leak.
+
+2007-11-08 18:59  bulgheroni
+
+	* CMakeLists.txt: Updated the version number for the new HEAD.
+
+2007-11-08 18:58  bulgheroni
+
+	* ChangeLog (tags: v00-00-06): Updated.
+
+2007-11-07 21:54  zarnecki
+
+	* src/EUTelTestFitter.cc (tags: v00-00-06): Accepted hit number
+	  histogram added
+
+2007-11-07 21:54  zarnecki
+
+	* include/EUTelTestFitter.h (tags: v00-00-06): Acceoted hit number
+	  histogram added
+
+2007-11-07 08:30  zarnecki
+
+	* src/EUTelTestFitter.cc, include/EUTelTestFitter.h: Hit position
+	  cuts added
+
+2007-10-23 23:29  zarnecki
+
+	* include/EUTelDUTHistograms.h, src/EUTelDUTHistograms.cc (utags:
+	  v00-00-06): More histograms added
+
+2007-10-23 23:28  zarnecki
+
+	* include/EUTelFitHistograms.h, src/EUTelFitHistograms.cc (utags:
+	  v00-00-06): Updated alignment histograms
+
+2007-10-23 23:24  zarnecki
+
+	* src/EUTelTestFitter.cc, include/EUTelTestFitter.h: Minor updates
+	  and fixes
+
+2007-10-15 17:33  roloff
+
+	* src/EUTelLineFit.cc (tags: v00-00-06):
+	  Updated alignment formulas. Now they are the same as in the
+	  recent EUTelAlign and EUTelMultiLineFit.
+
+2007-10-12 18:29  roloff
+
+	* include/EUTelMultiLineFit.h, src/EUTelMultiLineFit.cc (utags:
+	  v00-00-06):
+	  - Now the fit also works for the high multiplicity data.  -
+	  Cleanup.
+
+2007-10-06 23:56  roloff
+
+	* include/EUTelMultiLineFit.h, src/EUTelMultiLineFit.cc:
+	  Added "DUT" mode.
+
+2007-10-05 20:05  roloff
+
+	* include/EUTelMultiLineFit.h, src/EUTelMultiLineFit.cc:
+	  Added histogram containing the number of tracks per event.
+
+2007-10-05 11:09  bulgheroni
+
+	* src/EUTelCalculateEtaProcessor.cc (tags: v00-00-06): Fixed a bug
+	  introduced when updating to streamlog
+
+2007-10-04 22:46  roloff
+
+	* include/EUTelAlign.h, src/EUTelAlign.cc (utags: v00-00-06):
+	  First version producing reasonable results for more than one hit
+	  per plane.
+
+2007-10-04 00:31  roloff
+
+	* include/EUTelAlign.h, src/EUTelAlign.cc,
+	  src/EUTelMultiLineFit.cc:
+	  First working version for more than one track per event.
+
+2007-10-03 18:30  roloff
+
+	* include/EUTelAlign.h, include/EUTelMultiLineFit.h,
+	  src/EUTelAlign.cc, src/EUTelMultiLineFit.cc:
+	  Work in progress.
+
+2007-10-01 17:51  bulgheroni
+
+	* CMakeLists.txt (tags: v00-00-06): Updated version number.
+
+2007-10-01 13:19  bulgheroni
+
+	* include/EUTelHotPixelKiller.h, src/EUTelHotPixelKiller.cc (utags:
+	  v00-00-05, v00-00-06): Added a limit for the maximum number of
+	  cycles.
+
+2007-09-30 23:18  roloff
+
+	* include/EUTelMultiLineFit.h, src/EUTelMultiLineFit.cc (utags:
+	  v00-00-05):
+	  Work still in progress.
+
+2007-09-29 20:47  zarnecki
+
+	* include/EUTelFitHistograms.h, src/EUTelFitHistograms.cc (utags:
+	  v00-00-05): Cluster signal histograms added
+
+2007-09-29 20:40  roloff
+
+	* include/EUTelAlign.h, src/EUTelAlign.cc (utags: v00-00-05):
+	  Work in progress.
+
+2007-09-29 20:37  roloff
+
+	* src/EUTelMultiLineFit.cc, include/EUTelMultiLineFit.h:
+	  Copy of EUTelLineFit to implement fitting for several tracks per
+	  event.
+
+2007-09-28 23:16  roloff
+
+	* include/EUTelAlign.h: [no log message]
+
+2007-09-28 23:15  roloff
+
+	* src/EUTelAlign.cc:
+	  Work in progress.
+
+2007-09-27 12:04  bulgheroni
+
+	* src/EUTelHotPixelKiller.cc: Work in progress.
+
+2007-09-27 08:14  bulgheroni
+
+	* include/EUTELESCOPE.h, src/EUTELESCOPE.cc (utags: v00-00-05,
+	  v00-00-06): Added FIRINGPIXEL.
+
+2007-09-26 20:31  bulgheroni
+
+	* include/EUTelHotPixelKiller.h, src/EUTelHotPixelKiller.cc: Added
+	  a new processor to flag as bad all pixels singing loud too oftern
+
+2007-09-26 19:11  bulgheroni
+
+	* CMakeLists.txt (tags: v00-00-05): Updated the version number for
+	  the HEAD.
+
+2007-09-26 19:09  bulgheroni
+
+	* CMakeLists.txt (tags: v00-00-04): Updated the version number.
+
+2007-09-26 18:54  roloff
+
+	* include/EUTelAlign.h (tags: v00-00-04): [no log message]
+
+2007-09-26 18:53  roloff
+
+	* src/EUTelAlign.cc (tags: v00-00-04):
+	  Work in progres.
+
+2007-09-26 17:15  bulgheroni
+
+	* include/EUTelPedestalNoiseProcessor.h,
+	  src/EUTelPedestalNoiseProcessor.cc (utags: v00-00-04, v00-00-05,
+	  v00-00-06): Implemented the possibility to flag as bad pixels
+	  firing too often. It requires an additional loop on events.
+
+2007-09-26 11:11  bulgheroni
+
+	* src/EUTelPedestalNoiseProcessor.cc: Fixed a bug introduced by the
+	  streamlog_out modifications preventing the loop rewind.
+
+2007-09-24 03:20  bulgheroni
+
+	* include/EUTelEventViewer.h (tags: v00-00-06, v00-00-05,
+	  v00-00-04): Added a global event counter as class data member.
+
+2007-09-24 03:20  bulgheroni
+
+	* src/: EUTelAutoPedestalNoiseProcessor.cc (tags: v00-00-08,
+	  v00-00-07, v00-00-06, v00-00-05, v00-00-04),
+	  EUTelCalculateEtaProcessor.cc (tags: v00-00-05, v00-00-04),
+	  EUTelCalibrateEventProcessor.cc (tags: v00-00-06, v00-00-05,
+	  v00-00-04), EUTelClusterSeparationProcessor.cc (tags: v00-00-06,
+	  v00-00-05, v00-00-04), EUTelCopyPedestalProcessor.cc (tags:
+	  v00-00-08, v00-00-07, v00-00-06, v00-00-05, v00-00-04),
+	  EUTelEventViewer.cc (tags: v00-00-06, v00-00-05, v00-00-04),
+	  EUTelHitMaker.cc (tags: v00-00-06, v00-00-05, v00-00-04),
+	  EUTelPedestalNoiseProcessor.cc: Updated to streamlog
+
+2007-09-22 20:05  zarnecki
+
+	* include/EUTelTestFitter.h (tags: v00-00-05, v00-00-04): Track
+	  search optimization implemented.
+
+2007-09-22 20:05  zarnecki
+
+	* src/EUTelTestFitter.cc (tags: v00-00-05, v00-00-04): Track search
+	  optimization implemented. Beam constraint bug fixed
+
+2007-09-22 19:07  bulgheroni
+
+	* src/EUTelClusteringProcessor.cc (tags: v00-00-06, v00-00-05,
+	  v00-00-04): Fixed a small bug again in the the zsFixedClustering
+	  method.
+
+2007-09-21 18:05  bulgheroni
+
+	* src/EUTelClusteringProcessor.cc: Fixed a bug with the FixedFrame
+	  clustering for ZS data.  Fixed a bug with the FixedFrame
+	  clustering debug output for NZS data.
+
+2007-09-21 00:09  zarnecki
+
+	* include/EUTelFitHistograms.h, src/EUTelFitHistograms.cc (utags:
+	  v00-00-04): Few more histograms added
+
+2007-09-20 13:42  bulgheroni
+
+	* src/EUTelLineFit.cc (tags: v00-00-05, v00-00-04): Add a try/catch
+	  block to around the getCollection
+
+2007-09-20 13:41  bulgheroni
+
+	* src/EUTelHitMaker.cc: Fixed a small problem with sign.
+
+2007-09-20 13:28  bulgheroni
+
+	* src/EUTelHitMaker.cc: Replaced message with streamlog_out.
+	  Improved the roto-shift. Hoping this is the most general case.
+
+2007-09-20 09:34  bulgheroni
+
+	* src/: EUTelCalibrateEventProcessor.cc,
+	  EUTelClusteringProcessor.cc: Fixed a couple of mistaken
+	  streamlog.
+
+2007-09-18 15:03  bulgheroni
+
+	* src/EUTelClusteringProcessor.cc: Changed the summary print out
+	  from DEBUG to MESSAGE.  Improved the reset status method.
+
+2007-09-18 00:27  zarnecki
+
+	* include/EUTelDUTHistograms.h, src/EUTelDUTHistograms.cc (utags:
+	  v00-00-04, v00-00-05): DUT histograms based on fit results
+
+2007-09-18 00:24  zarnecki
+
+	* include/EUTelFitHistograms.h, src/EUTelFitHistograms.cc: More
+	  histograms added
+
+2007-09-17 14:34  bulgheroni
+
+	* include/EUTELESCOPE.h (tags: v00-00-04), src/EUTELESCOPE.cc
+	  (tags: v00-00-04), src/EUTelClusteringProcessor.cc: Modified the
+	  FixedFrame clustering for zs data in order to suitably flag
+	  missing pixels.
+
+2007-09-16 19:45  bulgheroni
+
+	* include/: EUTelSparseDataImpl.hcc, EUTelSparseDataImpl.tcc (tags:
+	  v00-00-08, v00-00-07) (utags: v00-00-04, v00-00-05, v00-00-06):
+	  Replaced chargeValues with getChargeValues to be compliant with
+	  readonly collection.
+
+2007-09-16 13:13  bulgheroni
+
+	* include/EUTelClusteringProcessor.h (tags: v00-00-06, v00-00-05,
+	  v00-00-04), src/EUTelClusteringProcessor.cc: Implemented a fixed
+	  frame clustering also for the zs data
+
+2007-09-15 16:39  bulgheroni
+
+	* src/EUTelHistogramMaker.cc (tags: v00-00-06, v00-00-05,
+	  v00-00-04): Removed some useless debug output.  Changed a
+	  forgotten message<> with streamlog_out
+
+2007-09-15 16:36  bulgheroni
+
+	* include/EUTelSparseClusterImpl.tcc (tags: v00-00-08, v00-00-07,
+	  v00-00-06, v00-00-05, v00-00-04): Fixed two bugs with the CoG
+	  calculation.	Replaced map with multimap to accept pixels having
+	  the same signal.
+
+2007-09-15 16:34  bulgheroni
+
+	* include/: EUTelSparseData2Impl.hcc, EUTelSparseData2Impl.tcc
+	  (tags: v00-00-08, v00-00-07) (utags: v00-00-04, v00-00-05,
+	  v00-00-06): Updated to use streamlog instead of message<>.
+	  Changed the behavior of the parameter of the findNeighborPixel
+	  method. This is now setting a minimum signal threshold for the
+	  pixel to be added to the cluster.
+
+2007-09-14 21:42  roloff
+
+	* src/EUTelAlign.cc:
+	  Work still in progress.
+
+2007-09-14 21:37  roloff
+
+	* src/EUTelAlign.cc:
+	  Work in progress.
+
+2007-09-13 19:31  bulgheroni
+
+	* ChangeLog (tags: v00-00-05, v00-00-04): Updated.
+
+2007-09-13 19:30  bulgheroni
+
+	* src/EUTelHistogramMaker.cc: Adapted to handle also sparse
+	  clusters.  Updated to streamlog
+
+2007-09-13 19:29  bulgheroni
+
+	* src/EUTelClusterFilter.cc (tags: v00-00-06, v00-00-05,
+	  v00-00-04): Fixed a type
+
+2007-09-13 19:29  bulgheroni
+
+	* src/EUTelCalibrateEventProcessor.cc: Fixed a typo
+
+2007-09-13 19:28  bulgheroni
+
+	* include/: EUTelSparseClusterImpl.hcc (tags: v00-00-06, v00-00-05,
+	  v00-00-04), EUTelSparseClusterImpl.tcc: Modified in order to
+	  accept also readonly tracker data.
+
+2007-09-13 19:10  zarnecki
+
+	* src/EUTelFitHistograms.cc, include/EUTelFitHistograms.h: Beam
+	  profile and residua histograms added
+
+2007-09-13 19:09  zarnecki
+
+	* src/EUTelTestFitter.cc, include/EUTelTestFitter.h: Hits with
+	  corrected positions attached to the track output
+
+2007-09-13 19:07  zarnecki
+
+	* steering-examples/testfit_5pl_steer.xml (tags: v00-00-08,
+	  v00-00-07, v00-00-06, v00-00-05, v00-00-04): Steering file
+	  example for EUTelTestFitter with alignment for August'07 setup
+
+2007-09-13 19:05  zarnecki
+
+	* steering-examples/histoinfo.xml (tags: v00-00-06, v00-00-05,
+	  v00-00-04): Descriptions added for EUTelTestFitter and
+	  EUTelFitHistograms
+
+2007-09-13 14:53  bulgheroni
+
+	* src/EUTelClusterFilter.cc: Implemented the support for
+	  EUTelSparseClusterImpl.  Changed all message<> to streamlog_out
+	  ()
+
+2007-09-12 15:29  bulgheroni
+
+	* include/: EUTelSparseData2Impl.hcc, EUTelSparseData2Impl.tcc:
+	  Replaced streamlog_out with streamlog_out_T. This define
+	  specialized for template class is fixing the problem with
+	  building on SL3. Hopefully it will work also on newer versions.
+
+2007-09-11 22:36  zarnecki
+
+	* include/EUTelTestFitter.h, src/EUTelTestFitter.cc: Corrections
+	  for plane rotations added
+
+2007-09-10 23:31  zarnecki
+
+	* src/EUTelFitHistograms.cc, include/EUTelFitHistograms.h:
+	  Processor for fit results analysis. First alignment check
+	  histograms. Work in progress
+
+2007-09-10 23:28  zarnecki
+
+	* src/EUTelTestFitter.cc: Small corrections
+
+2007-09-10 21:26  bulgheroni
+
+	* include/EUTelSparseData2Impl.tcc: Improved the debug print out.
+	  Replaced all the chargeValues() with getChargeValues() to be
+	  compatible also with read-only input collection.
+
+2007-09-10 21:24  bulgheroni
+
+	* include/EUTelSparseData2Impl.hcc: Added another method to get the
+	  sparse pixel at a certain position. During the pre-clustering the
+	  sparse pixels are sorted using the sortingByPosition method. The
+	  index stored in the listOfList are given according to the sorted
+	  order so another method getSparsePixelSortedAt has been
+	  intoduced.
+
+2007-09-10 21:20  bulgheroni
+
+	* src/EUTelClusteringProcessor.cc: Added some usefull print out for
+	  debugging.  Fixed a couple of problems deriving from
+	  getSparsePixelAt. Now replaced with getSparsePixelSortedAt.
+
+2007-09-10 21:11  bulgheroni
+
+	* src/EUTelUpdatePedestalNoiseProcessor.cc (tags: v00-00-06,
+	  v00-00-05, v00-00-04): Changed the processEvent in order to get
+	  the right corresponding noise and pedestal matrix also when
+	  working in ZS or in Mixed mode.
+
+2007-09-10 21:09  bulgheroni
+
+	* src/EUTelMimoTelReader.cc (tags: v00-00-06, v00-00-05,
+	  v00-00-04): Fixed a small problem with streamlog_out when it is
+	  on the same line of another if-statement.  Changed the "Found
+	  pixel on a marker col" from WARNING to DEBUG, because it looks
+	  like that all markers are in any case passing the thresholds.
+
+2007-09-10 11:47  bulgheroni
+
+	* src/EUTelClusterFilter.cc: Added a warning message when skipping
+	  empty events.
+
+2007-09-10 11:21  bulgheroni
+
+	* include/EUTelSparseData2Impl.tcc: Another small improvment.
+
+2007-09-07 12:25  zarnecki
+
+	* src/EUTelTestFitter.cc, include/EUTelTestFitter.h: More
+	  histograms added with Histogram Manager support. Input hits added
+	  to output track (option)
+
+2007-09-06 16:07  bulgheroni
+
+	* ChangeLog: Updated.
+
+2007-09-06 16:04  bulgheroni
+
+	* doc/images/clusteringPerfomance.png (tags: v00-00-08, v00-00-07,
+	  v00-00-06, v00-00-05, v00-00-04), include/EUTELESCOPE.h,
+	  include/EUTelBaseSparsePixel.h (tags: v00-00-06, v00-00-05,
+	  v00-00-04), include/EUTelClusteringProcessor.h,
+	  include/EUTelSparseCluster2Impl.h (tags: v00-00-08, v00-00-07,
+	  v00-00-06, v00-00-05, v00-00-04),
+	  include/EUTelSparseCluster2Impl.hcc (tags: v00-00-06, v00-00-05,
+	  v00-00-04), include/EUTelSparseCluster2Impl.tcc (tags: v00-00-08,
+	  v00-00-07, v00-00-06, v00-00-05, v00-00-04),
+	  include/EUTelSparseData2Impl.h (tags: v00-00-08, v00-00-07,
+	  v00-00-06, v00-00-05, v00-00-04),
+	  include/EUTelSparseData2Impl.hcc,
+	  include/EUTelSparseData2Impl.tcc, src/EUTELESCOPE.cc,
+	  src/EUTelClusteringProcessor.cc, src/EUTelSparseCluster2Impl.cc
+	  (tags: v00-00-06, v00-00-05, v00-00-04),
+	  src/EUTelSparseData2Impl.cc (tags: v00-00-08, v00-00-07,
+	  v00-00-06, v00-00-05, v00-00-04): Implemented a new container for
+	  sparse data and sparse clusters. This was driven by the need for
+	  speed when performing the preliminary proximity re-clusterization
+	  of sparsified data. The new EUTelSparseData2Impl is copying the
+	  pixel information also into a local vector and perforiming the
+	  re-clusterization on the local copy after suitable resorting.
+	  This implementation is at least 5 times faster than the previous.
+
+2007-09-04 19:49  zarnecki
+
+	* src/EUTelTestFitter.cc, include/EUTelTestFitter.h: Extended
+	  interface to GEAR, log(Chi2) histogram added.
+
+2007-09-03 18:40  bulgheroni
+
+	* src/EUTelCalculateEtaProcessor.cc: Fixed a problem in the case
+	  the event doesn't contain the needed input collection.
+
+2007-08-31 09:48  bulgheroni
+
+	* include/EUTelSparseClusterImpl.hcc,
+	  include/EUTelSparseClusterImpl.tcc,
+	  include/EUTelSparseDataImpl.tcc, src/EUTelClusteringProcessor.cc:
+	  Still working on ZS reclustering. Now it is working but with
+	  severe performance penalties still to be understood and removed.
+
+2007-08-30 19:46  bulgheroni
+
+	* ChangeLog: Updated.
+
+2007-08-30 19:35  bulgheroni
+
+	* include/EUTelSparseClusterImpl.tcc,
+	  include/EUTelSparseDataImpl.tcc,
+	  src/EUTelClusterSeparationProcessor.cc,
+	  src/EUTelClusteringProcessor.cc: Still working on reclustering of
+	  ZS data. Fixed a couple of bugs but still not working as it
+	  should.  At least the NZS clustering is still working!
+
+2007-08-30 17:21  bulgheroni
+
+	* include/EUTelClusteringProcessor.h,
+	  src/EUTelClusteringProcessor.cc: On the way of having also ZS
+	  pixel clustering.
+
+2007-08-30 17:20  bulgheroni
+
+	* include/: EUTelSparseDataImpl.hcc, EUTelSparseDataImpl.tcc:
+	  Modified the constructor.
+
+2007-08-30 17:17  bulgheroni
+
+	* include/: EUTelSparseClusterImpl.hcc, EUTelSparseClusterImpl.tcc:
+	  Modified the constructor and added the addSparsePixel method.
+
+2007-08-30 17:15  bulgheroni
+
+	* include/EUTELESCOPE.h, src/EUTELESCOPE.cc: Added the
+	  SPARSECLUSTER constant.
+
+2007-08-30 16:04  zarnecki
+
+	* src/EUTelTestFitter.cc, include/EUTelTestFitter.h: Interface to
+	  GEAR geometry included. Work in progress...
+
+2007-08-30 11:03  bulgheroni
+
+	* src/EUTelRawDataSparsifier.cc (tags: v00-00-08, v00-00-07,
+	  v00-00-06, v00-00-05, v00-00-04): Now using the new decorator
+	  pattern for the run header.  Now using the new streamlog_out
+	  instead of message<>.
+
+2007-08-30 11:02  bulgheroni
+
+	* include/: EUTelSparseClusterImpl.h (tags: v00-00-08, v00-00-07,
+	  v00-00-06, v00-00-05, v00-00-04), EUTelSparseClusterImpl.hcc,
+	  EUTelSparseClusterImpl.tcc, EUTelSparseDataImpl.h (tags:
+	  v00-00-08, v00-00-07, v00-00-06, v00-00-05, v00-00-04),
+	  EUTelSparseDataImpl.hcc, EUTelSparseDataImpl.tcc: 99% of the
+	  implementation of the template decorator pattern to store zs data
+	  and clusters into a TrackerData object.  The user has always to
+	  include the .h files while the .hcc and the .tcc are the template
+	  implementations.
+
+2007-08-30 11:00  bulgheroni
+
+	* include/EUTelMimoTelReader.h (tags: v00-00-06, v00-00-05,
+	  v00-00-04), src/EUTelMimoTelReader.cc: First version of the
+	  reader able to handle EUDRB mode different from RAW3.
+
+2007-08-30 10:59  bulgheroni
+
+	* include/EUTelClusteringProcessor.h,
+	  src/EUTelClusteringProcessor.cc: Working on a more general
+	  clustering processor able to handle both full frame and zs data.
+
+2007-08-30 10:57  bulgheroni
+
+	* src/: EUTelAlign.cc, EUTelAutoPedestalNoiseProcessor.cc,
+	  EUTelCalculateEtaProcessor.cc,
+	  EUTelClusterSeparationProcessor.cc,
+	  EUTelCopyPedestalProcessor.cc, EUTelEUDRBReader.cc (tags:
+	  v00-00-08, v00-00-07, v00-00-06, v00-00-05, v00-00-04),
+	  EUTelLineFit.cc, EUTelPedestalNoiseProcessor.cc,
+	  EUTelStrasMimoTelReader.cc (tags: v00-00-08, v00-00-07,
+	  v00-00-06, v00-00-05, v00-00-04), EUTelSucimaImagerReader.cc
+	  (tags: v00-00-06, v00-00-05, v00-00-04), EUTelTestFitter.cc,
+	  EUTelUpdatePedestalNoiseProcessor.cc: Now using the new decorator
+	  pattern for the run header
+
+2007-08-30 10:55  bulgheroni
+
+	* src/EUTelClusterFilter.cc: Now using the new decorator pattern
+	  for the run header.  Replaced the getSeedCoord with the
+	  getCenterCoord.
+
+2007-08-30 10:54  bulgheroni
+
+	* src/EUTelFFClusterImpl.cc (tags: v00-00-06, v00-00-05,
+	  v00-00-04): Even if getSeedCoord and getCenterCoord have the same
+	  meaning for the a FFCluster I replaced getSeedCoord with
+	  getCenterCoord in all places where the center and not the seed is
+	  needed.
+
+2007-08-30 10:52  bulgheroni
+
+	* src/EUTelHistogramMaker.cc: Now using the new decorator pattern
+	  for the run header.  Replace the getSeedCoord with the
+	  getCenterCoord.
+
+2007-08-30 10:51  bulgheroni
+
+	* src/EUTelHitMaker.cc: Now using the new decorator pattern for the
+	  run header.  Changed the getSeedCoord with getCenterCoord. For
+	  the FFCluster is fully equivalent.
+
+2007-08-30 10:49  bulgheroni
+
+	* src/EUTelOutputProcessor.cc (tags: v00-00-08, v00-00-07,
+	  v00-00-06, v00-00-05, v00-00-04): Now using the new decorator
+	  pattern for the run header.  Added a legacy support for older
+	  Marlin version.
+
+2007-08-30 10:34  bulgheroni
+
+	* include/EUTelFFClusterImpl.h (tags: v00-00-06, v00-00-05,
+	  v00-00-04): Implementend the getCenterCoord(int, int) inline as
+	  getSeedCoord(int, int). For a fixed frame cluster the two
+	  definitions are exactly the same.
+
+2007-08-30 10:34  bulgheroni
+
+	* include/EUTelVirtualCluster.h (tags: v00-00-06, v00-00-05,
+	  v00-00-04): Added a getCenterCoord(int, int) to the abstract
+	  interface. This is needed because not in all cluster
+	  implementations the seed and center pixel are the same.
+
+2007-08-30 10:32  bulgheroni
+
+	* include/EUTelEventViewer.h, src/EUTelEventViewer.cc: Now using
+	  the new decorator pattern for the run header.  Moved the
+	  processor global instance from the .cc to the .h file.
+
+2007-08-30 10:30  bulgheroni
+
+	* include/EUTelRunHeaderImpl.h, src/EUTelRunHeaderImpl.cc (utags:
+	  v00-00-04, v00-00-05, v00-00-06): Implemented also for the
+	  EUTelRunHeader the decorator pattern the same way is done for the
+	  EUTelVirtualCluster. This allows all processors to modify the
+	  content of the run header using the Eutelescope utilities.
+
+2007-08-30 10:28  bulgheroni
+
+	* src/EUTelCalibrateEventProcessor.cc: Now using the new decorator
+	  patter for the EUTelRunHeader.  Changed the old message<> with
+	  streamlog_out.  No more complaining if the input data are mixed
+	  or zero suppressed.
+
+2007-08-30 10:26  bulgheroni
+
+	* include/EUTelCalibrateEventProcessor.h (tags: v00-00-06,
+	  v00-00-05, v00-00-04): Added as a data member the eudrb global
+	  mode.
+
+2007-08-30 10:25  bulgheroni
+
+	* include/EUTelBaseSparsePixel.h: Typo corrected
+
+2007-08-30 10:24  bulgheroni
+
+	* include/EUTELESCOPE.h, src/EUTELESCOPE.cc: Added the EUBRDMode
+	  static constant string
+
+2007-08-30 10:23  bulgheroni
+
+	* doc/Doxyfile (tags: v00-00-06, v00-00-05, v00-00-04): Added also
+	  hcc to the list of files for building the documentation
+
+2007-08-29 17:14  bulgheroni
+
+	* src/EUTelHistogramMaker.cc: Fixed a bug that was causing a crash
+	  if the first event didn't contain the input collection.  This bug
+	  is affecting the binaries loaded on the GRID corresponding to
+	  binaries-tb-aug5.tar.gz.
+
+2007-08-27 15:08  roloff
+
+	* src/EUTelAlign.cc:
+	  - Bug fix in Chi2 function.  - Removed Chi2-cut for the moment.
+	  - Now fit in tow steps: First only for offsets and then use
+	  result in full fit.
+
+2007-08-22 22:45  bulgheroni
+
+	* doc/Doxyfile (tags: v00-00-03): Updated the version number.
+
+2007-08-22 22:44  bulgheroni
+
+	* ChangeLog (tags: v00-00-03): Updated.
+
+2007-08-22 22:40  tklimk
+
+	* include/EUTelLineFit.h (tags: v00-00-06, v00-00-05, v00-00-04):
+	  [no log message]
+
+2007-08-22 22:40  tklimk
+
+	* src/EUTelLineFit.cc: Some improvement for histogramming. Plot for
+	  track slope is inserted.
+
+2007-08-22 21:59  bulgheroni
+
+	* CMakeLists.txt (tags: v00-00-03): Updated the version number.
+
+2007-08-21 20:26  roloff
+
+	* include/EUTelAlign.h (tags: v00-00-03):
+	  Big cleanup.
+
+2007-08-21 20:26  roloff
+
+	* src/EUTelAlign.cc (tags: v00-00-03):
+	  Big cleanup. Still some checks needed.
+
+2007-08-21 15:19  bulgheroni
+
+	* include/EUTelSparseDataImpl.h (tags: v00-00-03, v00-00-02):
+	  Commented out the findCluster method because, as it is, is
+	  useless.
+
+2007-08-21 15:18  bulgheroni
+
+	* include/EUTelSparseClusterImpl.h (tags: v00-00-03, v00-00-02):
+	  Added all the missing method but not implemented. Just to avoid
+	  building break.
+
+2007-08-21 14:29  bulgheroni
+
+	* src/EUTelBaseSparsePixel.cc (tags: v00-00-08, v00-00-07,
+	  v00-00-06, v00-00-05, v00-00-04, v00-00-03): A small changes to
+	  fix the nitghly build breacking.
+
+2007-08-20 20:22  bulgheroni
+
+	* src/EUTelSimpleSparsePixel.cc (tags: v00-00-08, v00-00-07,
+	  v00-00-06, v00-00-05, v00-00-04, v00-00-03, v00-00-02): Adjusted
+	  the print() method.
+
+2007-08-20 18:48  bulgheroni
+
+	* src/EUTelRawDataSparsifier.cc (tags: v00-00-03, v00-00-02): Added
+	  a debug message printing the sparse pixel
+
+2007-08-20 18:47  bulgheroni
+
+	* include/EUTelBaseSparsePixel.h (tags: v00-00-03, v00-00-02):
+	  Updated the documentation.
+
+2007-08-19 17:39  bulgheroni
+
+	* ChangeLog (tags: v00-00-02): Updated.
+
+2007-08-19 17:38  bulgheroni
+
+	* include/EUTelRawDataSparsifier.h (tags: v00-00-08, v00-00-07,
+	  v00-00-06, v00-00-05, v00-00-04, v00-00-03, v00-00-02),
+	  include/EUTelSparseClusterImpl.h, include/EUTelSparseDataImpl.h,
+	  src/EUTelRawDataSparsifier.cc, src/EUTelSparseClusterImpl.cc
+	  (tags: v00-00-08, v00-00-07, v00-00-06, v00-00-05, v00-00-04,
+	  v00-00-03, v00-00-02): On the way of having sparsification. Added
+	  a "sparsificator".
+
+2007-08-19 17:15  bulgheroni
+
+	* include/EUTELESCOPE.h (tags: v00-00-03, v00-00-02): Added
+	  kEUTelSparseClusterImpl to the list of known cluster type
+
+2007-08-18 23:49  bulgheroni
+
+	* include/EUTELESCOPE.h, include/EUTelBaseSparsePixel.h,
+	  include/EUTelSimpleSparsePixel.h (tags: v00-00-06, v00-00-05,
+	  v00-00-04, v00-00-03, v00-00-02),
+	  include/EUTelSparseClusterImpl.h, include/EUTelSparseDataImpl.h,
+	  src/EUTELESCOPE.cc (tags: v00-00-03, v00-00-02),
+	  src/EUTelBaseSparsePixel.cc (tags: v00-00-02),
+	  src/EUTelSimpleSparsePixel.cc, src/EUTelSparseClusterImpl.cc,
+	  src/EUTelSparseDataImpl.cc (tags: v00-00-08, v00-00-07,
+	  v00-00-06, v00-00-05, v00-00-04, v00-00-03, v00-00-02): First
+	  attempt to manage ZS data with LCIO classes. Really work in
+	  progress!!!!
+
+2007-08-18 23:47  bulgheroni
+
+	* include/EUTelFFClusterImpl.h (tags: v00-00-03, v00-00-02): Fixed
+	  a type
+
+2007-08-18 17:02  bulgheroni
+
+	* src/EUTelMimoTelReader.cc (tags: v00-00-03, v00-00-02): On the
+	  way of converting also ZS data. Please update eudaq to the last
+	  version in svn. (svn up)
+
+2007-08-18 12:09  bulgheroni
+
+	* src/EUTelLineFit.cc (tags: v00-00-03, v00-00-02): Removed the
+	  unused variable the makefile was complaining
+
+2007-08-18 10:37  bulgheroni
+
+	* src/EUTelMimoTelReader.cc: Fixed the problem with the max number
+	  of records. Now it is really stopping when the limit is reached.
+	  Added a try/catch block around the EUDRB event decoding. In this
+	  way if something goes wrong with the event decoding, the full
+	  event is skipped.  To avoid memory leaks, auto_ptr is used. Still
+	  not sure that the ownership release of the event is really needed
+	  before the ProcessorMgr::processEvent, but it crashes otherwise.
+
+2007-08-18 08:51  bulgheroni
+
+	* ChangeLog: Updated.
+
+2007-08-18 00:41  roloff
+
+	* src/EUTelAlign.cc (tags: v00-00-02):
+	  Now seems to be working everywhere.
+
+2007-08-18 00:16  bulgheroni
+
+	* src/EUTelAlign.cc: Work in progress....
+
+2007-08-17 19:41  roloff
+
+	* src/EUTelAlign.cc:
+	  - included #ifdef #MARLIN_USE_ROOT for everything - removed
+	  dependency on TMath - use gSystem to load libMinuit (does this
+	  work?)
+
+2007-08-17 18:26  roloff
+
+	* src/EUTelLineFit.cc:
+	  Removed dependency in ROOT.
+
+2007-08-17 17:48  roloff
+
+	* BuildSetup.cmake (tags: v00-00-08, v00-00-07, v00-00-06,
+	  v00-00-05, v00-00-04, v00-00-03, v00-00-02), include/EUTelAlign.h
+	  (tags: v00-00-02), src/EUTelAlign.cc:
+	  First try for alignment. For details on the formulas see thesis
+	  of Devis Contarato.
+
+2007-08-17 17:14  roloff
+
+	* include/EUTelLineFit.h (tags: v00-00-03, v00-00-02):
+	  - Added optional parameters for alignment.
+
+2007-08-17 17:11  roloff
+
+	* src/EUTelLineFit.cc:
+	  - Added optional parameters for alignment.  - Corrected error
+	  messages for histogram booking.
+
+2007-08-16 23:40  bulgheroni
+
+	* include/EUTelPedestalNoiseProcessor.h,
+	  src/EUTelPedestalNoiseProcessor.cc (utags: v00-00-02, v00-00-03):
+	  Added the possibility to save the pedestal/noise/status files in
+	  ASCII format, to be loaded back in the EUDRB when running in ZS
+	  mode
+
+2007-07-31 16:45  bulgheroni
+
+	* include/EUTelClusterFilter.h (tags: v00-00-08, v00-00-07,
+	  v00-00-06, v00-00-05, v00-00-04), src/EUTelClusterFilter.cc
+	  (utags: v00-00-02, v00-00-03): Added the "same" number of hits
+	  selection criterion
+
+2007-07-30 17:17  bulgheroni
+
+	* src/EUTelCalculateEtaProcessor.cc (tags: v00-00-03, v00-00-02):
+	  Added support for run calculation over multiple runs.
+
+2007-07-30 17:15  bulgheroni
+
+	* src/EUTelClusterFilter.cc: Added try/catch in order to not die in
+	  case the input collection is empty of even not there.
+
+2007-07-30 16:06  bulgheroni
+
+	* BuildSetup.cmake, CMakeLists.txt (tags: v00-00-02): Updated
+	  according to Jan suggestions.
+
+2007-07-27 18:40  bulgheroni
+
+	* EutelescopeConfig.cmake.in (tags: v00-00-06, v00-00-05,
+	  v00-00-04, v00-00-03, v00-00-02), src/EUTelLineFit.cc: Modified
+	  to build using cmake.
+
+2007-07-26 08:50  bulgheroni
+
+	* ChangeLog: Updated.
+
+2007-07-26 08:49  bulgheroni
+
+	* include/EUTelHitMaker.h (tags: v00-00-06, v00-00-05, v00-00-04,
+	  v00-00-03, v00-00-02), include/EUTelLineFit.h,
+	  src/EUTelClusteringProcessor.cc (tags: v00-00-03, v00-00-02),
+	  src/EUTelHistogramMaker.cc (tags: v00-00-03, v00-00-02): Fixed
+	  some building issues in the case MARLIN_USE_AIDA is not set.
+
+2007-07-25 17:22  tklimk
+
+	* include/EUTelLineFit.h, src/EUTelLineFit.cc: Some changes for
+	  output collections.
+
+2007-07-25 10:34  bulgheroni
+
+	* BuildSetup.cmake, CMakeLists.txt, EutelescopeConfig.cmake.in,
+	  cmake_uninstall.cmake.in (tags: v00-00-08, v00-00-07, v00-00-06,
+	  v00-00-05, v00-00-04, v00-00-03, v00-00-02): Added the CMake
+	  files, first attempt in order to cope with the current ilcinstall
+	  release.
+
+2007-07-25 09:22  bulgheroni
+
+	* doc/introduction.html (tags: v00-00-06, v00-00-05, v00-00-04,
+	  v00-00-03, v00-00-02): Updating the documentation.
+
+2007-07-24 16:25  bulgheroni
+
+	* ChangeLog: Updated.
+
+2007-07-24 16:25  bulgheroni
+
+	* src/: EUTelCalculateEtaProcessor.cc, EUTelEventViewer.cc (tags:
+	  v00-00-03, v00-00-02), EUTelFFClusterImpl.cc (tags: v00-00-03,
+	  v00-00-02), EUTelHistogramMaker.cc, EUTelHitMaker.cc (tags:
+	  v00-00-03, v00-00-02): Removed some warining messages during the
+	  building procedure when not in debug mode
+
+2007-07-24 16:24  bulgheroni
+
+	* src/EUTelClusteringProcessor.cc: Improved the clustering
+	  processor
+
+2007-07-23 14:12  bulgheroni
+
+	* src/EUTelHistogramMaker.cc: Fixed annoying warning message in
+	  case the noise and status collections were not available.
+
+2007-07-19 17:38  tklimk
+
+	* steering-examples/linefit-steer.xml (tags: v00-00-08, v00-00-07,
+	  v00-00-06, v00-00-05, v00-00-04, v00-00-03, v00-00-02): Some
+	  corrections for output slcio file
+
+2007-07-19 17:15  tklimk
+
+	* steering-examples/linefit-steer.xml: Steering file for straight
+	  line fitter.
+
+2007-07-19 17:08  tklimk
+
+	* include/EUTelLineFit.h: [no log message]
+
+2007-07-19 17:07  tklimk
+
+	* src/EUTelLineFit.cc: First iteration for straight line fit
+	  implementation. At the moment without taking anto account
+	  alignment coefficients.
+
+2007-07-18 15:36  bulgheroni
+
+	* src/EUTelUpdatePedestalNoiseProcessor.cc (tags: v00-00-03,
+	  v00-00-02): Improved the behavior in the case a collection is
+	  missing in the current event.
+
+2007-07-18 09:22  bulgheroni
+
+	* src/EUTelHitMaker.cc: Fixed a problem with empty events.
+
+2007-07-15 18:46  bulgheroni
+
+	* ChangeLog: Updated.
+
+2007-07-15 18:44  bulgheroni
+
+	* steering-examples/histoinfo.xml (tags: v00-00-03, v00-00-02):
+	  Added noise related histograms
+
+2007-07-15 18:43  bulgheroni
+
+	* include/EUTelMatrixDecoder.h (tags: v00-00-08, v00-00-07,
+	  v00-00-06, v00-00-05, v00-00-04, v00-00-03, v00-00-02): Added
+	  some utility methods.
+
+2007-07-15 18:42  bulgheroni
+
+	* include/EUTelClusterFilter.h, src/EUTelClusterFilter.cc: Added
+	  the possibility to cut also on noise related figure of merits.
+
+2007-07-15 18:40  bulgheroni
+
+	* src/EUTelHistogramMaker.cc: Added support for noise related
+	  histograms. Fixed some minor mistakes with the
+	  EUTelHistogramManager.
+
+2007-07-15 18:37  bulgheroni
+
+	* src/EUTelClusteringProcessor.cc: Fixed minor mistakes with the
+	  EUTelHistogramManager
+
+2007-07-15 18:36  bulgheroni
+
+	* doc/introduction.html, include/EUTelFFClusterImpl.h,
+	  include/EUTelPedestalNoiseProcessor.h,
+	  include/EUTelRunHeaderImpl.h (tags: v00-00-03, v00-00-02):
+	  Updated the documentation in view of the next tagged release.
+
+2007-07-13 10:15  bulgheroni
+
+	* include/EUTelHistogramMaker.h (tags: v00-00-06, v00-00-05,
+	  v00-00-04, v00-00-03, v00-00-02), src/EUTelHistogramMaker.cc:
+	  Added all the new histograms concerning noise and SNR figures of
+	  merit and the event mulipliticity distribution.
+
+2007-07-13 10:13  bulgheroni
+
+	* src/EUTelClusteringProcessor.cc,
+	  include/EUTelClusteringProcessor.h (tags: v00-00-03, v00-00-02):
+	  Added the event multiplicity histogram. This is plotting the
+	  number of clusters the selection criteria for each plane.
+
+2007-07-12 16:45  bulgheroni
+
+	* include/EUTelClusteringProcessor.h,
+	  src/EUTelClusteringProcessor.cc: Added some histograms concerning
+	  cluster noise and SNR
+
+2007-07-12 16:44  bulgheroni
+
+	* include/EUTelFFClusterImpl.h, include/EUTelVirtualCluster.h
+	  (tags: v00-00-03, v00-00-02), src/EUTelFFClusterImpl.cc: Added a
+	  few methods for the cluster noise. In the case of the
+	  EUTelFFClusterImpl, noise values are not stored in the
+	  TrackerData object and need to be set on purpose before any
+	  "noise" related operation can be executed.
+
+2007-07-12 16:42  bulgheroni
+
+	* src/EUTelCopyPedestalProcessor.cc (tags: v00-00-03, v00-00-02):
+	  Fixed a bug in copying the CellID from the condition collections
+	  to the local ones.
+
+2007-07-12 16:41  bulgheroni
+
+	* include/EUTelMatrixDecoder.h, src/EUTelMatrixDecoder.cc (tags:
+	  v00-00-08, v00-00-07, v00-00-06, v00-00-05, v00-00-04, v00-00-03,
+	  v00-00-02): Added a stream (operator<<) for this class mainly for
+	  debug purposes
+
+2007-07-11 10:35  bulgheroni
+
+	* src/EUTelFFClusterImpl.cc: Still another bug in the CoGShift with
+	  N pixels. The problem was with numeric_limits<float >::min() that
+	  is not the smallest possible floating point number, but it is the
+	  smallest positive floating number. To get the real minimum you
+	  have to use something like -1 * numeric_limits<float >::max().
+
+2007-07-11 09:00  bulgheroni
+
+	* ChangeLog: Updated.
+
+2007-07-11 08:59  bulgheroni
+
+	* include/EUTelMatrixDecoder.h, src/EUTelMatrixDecoder.cc: Moved
+	  the templated constructor from the implementation to the
+	  declaration file.
+
+2007-07-11 08:55  bulgheroni
+
+	* src/EUTelFFClusterImpl.cc: Fixed a bug in the way the charge
+	  center of gravity was calculated on the first N pixel. Now it is
+	  working. Slightly modified the output streamer.
+
+2007-07-11 08:54  bulgheroni
+
+	* src/EUTelCalibrateEventProcessor.cc (tags: v00-00-03, v00-00-02):
+	  Fixed a typo.
+
+2007-07-11 08:53  bulgheroni
+
+	* src/EUTELESCOPE.cc: Fixed a bug in the output streamer of the
+	  ClusterQuality enumeration
+
+2007-07-11 08:52  bulgheroni
+
+	* include/EUTelClusteringProcessor.h,
+	  src/EUTelClusteringProcessor.cc: Removed the getXFromIndex()...
+	  methods because now it is using the EUTelMatrixDecoder, that is
+	  more elegant and practical.
+
+2007-07-10 17:07  bulgheroni
+
+	* src/EUTelEtaFunctionImpl.cc (tags: v00-00-08, v00-00-07,
+	  v00-00-06, v00-00-05, v00-00-04, v00-00-03, v00-00-02): Fixed a
+	  bug in the lower_bound algorithm thanks to Chiara Cappellini.
+
+2007-07-10 16:31  bulgheroni
+
+	* include/EUTelClusterFilter.h, src/EUTelClusterFilter.cc: Added
+	  another selection criteria based upon the cluster charge with a
+	  NxN frame.
+
+2007-07-10 09:49  bulgheroni
+
+	* include/EUTelMatrixDecoder.h, src/EUTelMatrixDecoder.cc: Added
+	  the EUTelMatrixDecoder class. This is a very lightweight class
+	  used to decode the index position of a pixel into its x and y
+	  coordinates. This class is going to replace the getXFromIndex
+	  getYFromIndex getIndexFromXY methods implemented in the
+	  EUTelClusteringProcessor. The main reason is that this tool can
+	  be used also in another context different from the clustering.
+
+2007-07-10 09:46  bulgheroni
+
+	* src/EUTelHitMaker.cc: Avoiding double displaying of anomalous
+	  clusters.
+
+2007-07-10 09:45  bulgheroni
+
+	* src/EUTelFFClusterImpl.cc: Fixed a mis-printing of the cluster
+	  coordinates in the print() method.
+
+2007-07-10 09:45  bulgheroni
+
+	* src/EUTelClusteringProcessor.cc: Modified the behavior of quality
+	  flagging. Now clusters that are touching with other clusters are
+	  immediately flagged as kMergedCluster and kIncompleteCluster.
+	  Remeber that to have all merged clusters really flagged the
+	  EUTelClusterSeparation should be run soon after the clustering
+	  processor.
+
+2007-07-10 09:42  bulgheroni
+
+	* include/EUTelClusteringProcessor.h: Fixed a bug with the
+	  getYFromIndex function in the case of non null origin offset.
+	  This part of code should be soon replaced by the
+	  EUTelMatrixDecoder.
+
+2007-07-09 17:26  bulgheroni
+
+	* include/EUTelClusterSeparationProcessor.h (tags: v00-00-08,
+	  v00-00-07, v00-00-06, v00-00-05, v00-00-04),
+	  src/EUTelClusterSeparationProcessor.cc (utags: v00-00-02,
+	  v00-00-03): Modified the processor behavior in order to have an
+	  input collection and an output collection instead of modifying
+	  the input only. This in fact was failing everytime the processor
+	  was applied on data already on disk.
+
+2007-07-09 15:59  bulgheroni
+
+	* ChangeLog: Updated.
+
+2007-07-09 15:58  bulgheroni
+
+	* src/EUTelFFClusterImpl.cc: Improved the print method with
+	  formatted streams
+
+2007-07-09 15:57  bulgheroni
+
+	* src/EUTelEUDRBReader.cc (tags: v00-00-03, v00-00-02): Added
+	  #include "marlin/Processor.h" to include also the
+	  VerbosityLevel.h
+
+2007-07-09 15:56  bulgheroni
+
+	* src/EUTelClusterSeparationProcessor.cc: Fixed a problem with
+	  MARLINDEBUG Printing out clusters using operator<<
+
+2007-07-09 15:44  bulgheroni
+
+	* src/EUTelOutputProcessor.cc (tags: v00-00-03, v00-00-02):
+	  Implemented the intermediate EORE skip.  Commented from the
+	  processor constructor the part of code setting
+	  LCIOOutputProcessor specific paramters. Those will be set in the
+	  LCIOOutputProcessor (requires current HEAD version of Marlin).
+
+2007-07-09 15:42  bulgheroni
+
+	* include/EUTelOutputProcessor.h (tags: v00-00-08, v00-00-07,
+	  v00-00-06, v00-00-05, v00-00-04, v00-00-03, v00-00-02): Added a
+	  new steering parameter to remove intermediate EORE. This can be
+	  very useful for all processors are using the EORE to finalize the
+	  calculation. Setting this parameter to true will leave just one
+	  EORE at the end of the output file also in the case several input
+	  files are merged.
+
+2007-07-09 15:40  bulgheroni
+
+	* include/EUTelHitMaker.h, src/EUTelHitMaker.cc: Added some
+	  processor parameters in order to change the number of pixels and
+	  the shape of the cluster for the center of gravity calculation.
+	  Added a bunch of histograms filled in the case the Eta function
+	  correction is applied to show if the correction was successful or
+	  not.
+
+2007-07-09 15:38  bulgheroni
+
+	* src/: EUTelMimoTelReader.cc, EUTelStrasMimoTelReader.cc (tags:
+	  v00-00-03, v00-00-02), EUTelSucimaImagerReader.cc (tags:
+	  v00-00-03, v00-00-02), EUTelTestFitter.cc (tags: v00-00-03,
+	  v00-00-02): Added #include "Processor.h" to include also the
+	  VerbosityLevels.h available in Marlin current HEAD
+
+2007-07-09 15:35  bulgheroni
+
+	* src/EUTelCalculateEtaProcessor.cc: Fixed a small problem with the
+	  binning boundaries
+
+2007-07-09 12:24  bulgheroni
+
+	* src/GNUmakefile (tags: v00-00-08, v00-00-07, v00-00-06,
+	  v00-00-05, v00-00-04, v00-00-03, v00-00-02): Fixed a problem with
+	  the MARLINDEBUG flag. Now working properly also the
+	  message<DEBUG>
+
+2007-07-09 12:23  bulgheroni
+
+	* include/EUTelVirtualCluster.h: Added the definition of the
+	  print(ostream) method and of the operator<< friend function.
+
+2007-07-09 12:22  bulgheroni
+
+	* src/EUTelFFClusterImpl.cc: Implemented the print(ostream) method
+	  for the implementation of the operator<<. The operator<< is
+	  defined in the virtual base class via the virtual print and,
+	  consequently reimplemented for each inheriting class.
+
+2007-07-09 12:20  bulgheroni
+
+	* include/EUTelFFClusterImpl.h: Added the print method for the
+	  operator<< implementation
+
+2007-07-09 12:19  bulgheroni
+
+	* src/EUTelEtaFunctionImpl.cc: Implemented the getNoOfBin method.
+
+2007-07-09 12:17  bulgheroni
+
+	* include/EUTelEtaFunctionImpl.h (tags: v00-00-06, v00-00-05,
+	  v00-00-04, v00-00-03, v00-00-02): Added the getNoOfBin method to
+	  get the nummber of bins used for the Eta function storage
+
+2007-07-09 12:16  bulgheroni
+
+	* src/EUTELESCOPE.cc: Implemented the operator<< for the
+	  ClusterQuality enumeration. Mainly for debug purposes.
+
+2007-07-09 12:15  bulgheroni
+
+	* include/EUTELESCOPE.h: Added the operator<< for the
+	  ClusterQuality enumeration
+
+2007-07-06 17:23  bulgheroni
+
+	* src/EUTelHitMaker.cc: Added some messages
+
+2007-07-04 15:01  bulgheroni
+
+	* src/EUTelMimoTelReader.cc: Fixed the wrong CDS calculation
+	  "millennium" bug!
+
+2007-07-04 15:00  bulgheroni
+
+	* src/EUTelHitMaker.cc: Corrected a small mistake when it is
+	  crosschecking the GeoID
+
+2007-07-04 09:38  bulgheroni
+
+	* doc/introduction.html, include/EUTelMimoTelReader.h (tags:
+	  v00-00-03, v00-00-02): Modified the documentation explaining the
+	  CDS calculation.
+
+2007-07-04 09:37  bulgheroni
+
+	* doc/images/cdsraw3.png (tags: v00-00-08, v00-00-07, v00-00-06,
+	  v00-00-05, v00-00-04, v00-00-03, v00-00-02): Added a picture to
+	  describe the CDS calculation when in raw3 mode
+
+2007-07-04 09:34  bulgheroni
+
+	* steering-examples/histoinfo.xml: Modified the position of the CVS
+	  tag because it was conflicting with the XML parsing.
+
+2007-07-03 16:18  bulgheroni
+
+	* src/EUTelMimoTelReader.cc: Added support for marker stripping.
+	  Still to be verified, but probably fixed a terrible bug in the
+	  CDS calculation.
+
+2007-07-03 16:16  bulgheroni
+
+	* include/EUTelMimoTelReader.h: Added support for marker stripping.
+	  Still in the debug phase
+
+2007-06-30 17:26  zarnecki
+
+	* src/EUTelTestFitter.cc: Debug output extended (for algorithm
+	  tests).
+
+2007-06-29 17:24  bulgheroni
+
+	* doc/images/CEDEvent.png (tags: v00-00-08, v00-00-07, v00-00-06,
+	  v00-00-05, v00-00-04, v00-00-03, v00-00-02),
+	  include/EUTelAutoPedestalNoiseProcessor.h (tags: v00-00-08,
+	  v00-00-07, v00-00-06, v00-00-05, v00-00-04, v00-00-03,
+	  v00-00-02), include/EUTelCalculateEtaProcessor.h (tags:
+	  v00-00-06, v00-00-05, v00-00-04, v00-00-03, v00-00-02),
+	  include/EUTelCalibrateEventProcessor.h (tags: v00-00-03,
+	  v00-00-02), include/EUTelClusterFilter.h,
+	  include/EUTelClusterSeparationProcessor.h,
+	  include/EUTelClusteringProcessor.h,
+	  include/EUTelCopyPedestalProcessor.h (tags: v00-00-08, v00-00-07,
+	  v00-00-06, v00-00-05, v00-00-04, v00-00-03, v00-00-02),
+	  include/EUTelEventViewer.h (tags: v00-00-03, v00-00-02),
+	  include/EUTelFFClusterImpl.h, include/EUTelHistogramMaker.h,
+	  include/EUTelHitMaker.h, include/EUTelMimoTelReader.h,
+	  include/EUTelPedestalNoiseProcessor.h,
+	  include/EUTelPseudo1DHistogram.h (tags: v00-00-08, v00-00-07,
+	  v00-00-06, v00-00-05, v00-00-04, v00-00-03, v00-00-02),
+	  include/EUTelRunHeaderImpl.h, include/EUTelStrasMimoTelReader.h
+	  (tags: v00-00-08, v00-00-07, v00-00-06, v00-00-05, v00-00-04,
+	  v00-00-03, v00-00-02),
+	  include/EUTelUpdatePedestalNoiseProcessor.h (tags: v00-00-06,
+	  v00-00-05, v00-00-04, v00-00-03, v00-00-02),
+	  src/EUTelCalibrateEventProcessor.cc, src/EUTelEventViewer.cc,
+	  src/EUTelHitMaker.cc, src/EUTelMimoTelReader.cc: Updated the
+	  documentation.
+
+2007-06-29 17:07  bulgheroni
+
+	* include/EUTelROI.h, src/EUTelROI.cc (tags: v00-00-08, v00-00-07)
+	  (utags: v00-00-02, v00-00-03, v00-00-04, v00-00-05, v00-00-06):
+	  Added a helper class to allow geographical cut within the
+	  EUTelClusterFilter.
+
+2007-06-29 14:01  bulgheroni
+
+	* include/EUTelClusterFilter.h, src/EUTelClusterFilter.cc: Added
+	  another filtering option: ROIs Improved the documentation
+
+2007-06-29 11:19  bulgheroni
+
+	* src/EUTelClusteringProcessor.cc: Added a missing dependency
+
+2007-06-29 11:18  bulgheroni
+
+	* src/EUTelCalculateEtaProcessor.cc: Added a comment explaning why
+	  there is no EUTelHistogramManager here.
+
+2007-06-29 11:17  bulgheroni
+
+	* include/EUTelCalibrateEventProcessor.h,
+	  src/EUTelCalibrateEventProcessor.cc: Added support for the new
+	  EUTelHistogramManager.  Improved the protection against missing
+	  collection in the event catching exceptions.
+
+2007-06-29 11:16  bulgheroni
+
+	* steering-examples/histoinfo.xml: Added some comments to make the
+	  file more human readable.  Added an "empty" section for the
+	  EUTelCalculateEtaProcessor since there is no need to have dynamic
+	  booking there.
+
+2007-06-29 11:14  bulgheroni
+
+	* src/EUTelHitMaker.cc: Uncommented the part of code crossckecing
+	  against the geometry ID, since now this is available in the GEAR
+	  description.	For the time being we are using GeoID == 0, since
+	  we didn't save any value in the run header. Consider adding this
+	  number as a parameter of the EUTelMimoTelReader
+
+2007-06-28 10:35  bulgheroni
+
+	* include/EUTelEventViewer.h, include/EUTelHistogramManager.h
+	  (tags: v00-00-06, v00-00-05, v00-00-04, v00-00-03, v00-00-02),
+	  src/EUTelClusterFilter.cc, src/EUTelFFClusterImpl.cc,
+	  src/EUTelHistogramManager.cc (tags: v00-00-08, v00-00-07,
+	  v00-00-06, v00-00-05, v00-00-04, v00-00-03, v00-00-02): Fixed
+	  warning with Doxygen documentation
+
+2007-06-28 09:33  bulgheroni
+
+	* ChangeLog: Updated.
+
+2007-06-28 09:32  bulgheroni
+
+	* steering-examples/histoinfo.xml: Added an example of histogram
+	  information file
+
+2007-06-28 09:31  bulgheroni
+
+	* src/EUTelHistogramManager.cc: Fixed a problem with comments in
+	  the <histos> block.  Removed useless debug output.
+
+2007-06-28 09:30  bulgheroni
+
+	* src/EUTelHitMaker.cc: Moved the clouds conversion from the End Of
+	  Run Event to the end().
+
+2007-06-28 09:29  bulgheroni
+
+	* include/EUTelPedestalNoiseProcessor.h,
+	  src/EUTelPedestalNoiseProcessor.cc: Added the support for
+	  EUTelHistogramManager for dynamic histogram booking.	Improved
+	  the protection against bad histogram handling.
+
+2007-06-28 09:27  bulgheroni
+
+	* include/EUTelHistogramMaker.h, src/EUTelHistogramMaker.cc:
+	  Removed the eventBrowser part, since it is useless now that we
+	  have the real event browser.	Add the support for
+	  EUTelHistogramManager for dynamic histogram booking.
+
+2007-06-28 09:25  bulgheroni
+
+	* include/EUTelClusteringProcessor.h,
+	  src/EUTelClusteringProcessor.cc: Added support to
+	  EUTelHistogramManager for dynamic histogram booking.
+
+2007-06-27 18:58  bulgheroni
+
+	* ChangeLog: Updated.
+
+2007-06-27 18:58  bulgheroni
+
+	* include/EUTelHistogramManager.h, src/EUTelHistogramManager.cc:
+	  Finally the EUTelHistogramManager is taking off. This class is
+	  supposed to parse an XML file looking for histogram booking
+	  information, in order to make the proper histo booking easier and
+	  not requiring any re-build. Still to be tested into real
+	  processor.
+
+2007-06-26 18:19  zarnecki
+
+	* EUTelTestFitter.geom (tags: v00-00-08, v00-00-07, v00-00-06,
+	  v00-00-05, v00-00-04, v00-00-03, v00-00-02),
+	  include/EUTelTestFitter.h (tags: v00-00-03, v00-00-02),
+	  src/EUTelTestFitter.cc: Geometry description for EUTelTestFitter
+	  was extended to take into account possible plane missalignment.
+	  New geometry description file includes approximate corrections
+	  for telescope alignment for June 2007 tests.
+
+2007-06-25 18:17  bulgheroni
+
+	* ChangeLog: Updated.
+
+2007-06-25 18:14  bulgheroni
+
+	* doc/introduction.html: Updating the documentation
+
+2007-06-25 18:14  bulgheroni
+
+	* include/EUTelEventViewer.h, src/EUTelEventViewer.cc: Added a new
+	  processor to display event using MarlinCED interface to CED.
+	  Still to be deeply debugged.
+
+2007-06-21 20:28  bulgheroni
+
+	* src/EUTelTestFitter.cc: Added the SkipEventException when the
+	  event doesn't contain a track fullfilling all the pre-requisities
+	  Improved the memory management, but still to verify with valgrind
+
+2007-06-21 19:37  bulgheroni
+
+	* ChangeLog: Updated.
+
+2007-06-21 19:06  bulgheroni
+
+	* src/EUTelTestFitter.cc: Fixed some issues with memory management.
+	  Now it doesn't crashes anymore, but still we need to verify the
+	  output of the quality collections.
+
+2007-06-21 19:00  bulgheroni
+
+	* src/EUTelHitMaker.cc: Improved the protection against not booked
+	  histograms
+
+2007-06-21 18:59  bulgheroni
+
+	* include/EUTelStrasMimoTelReader.h,
+	  src/EUTelStrasMimoTelReader.cc: Added as parameters the number of
+	  pixels along x and y and the name of the input / output
+	  collections.
+
+2007-06-21 18:58  bulgheroni
+
+	* include/EUTelHitMaker.h: Updated documentation
+
+2007-06-21 18:55  bulgheroni
+
+	* doc/introduction.html: Added instruction on how to access dCache
+	  from DESY
+
+2007-06-21 17:24  tklimk
+
+	* src/EUTelTestFitter.cc: Added the support for EORE.  Having
+	  problem with the memory management in the end().
+
+2007-06-19 23:05  bulgheroni
+
+	* include/EUTelHitMaker.h, src/EUTelHitMaker.cc: Almost there,
+	  there are still few thing to verify, but hits seems to be
+	  properly produced now.
+
+2007-06-19 15:50  bulgheroni
+
+	* src/EUTelHistogramMaker.cc: Fixed the annoying bug was mispelling
+	  the histogram titles.
+
+2007-06-19 12:29  bulgheroni
+
+	* src/EUTelCalibrateEventProcessor.cc: When skipping event because
+	  of common mode limit exceeded, it is also printing the number of
+	  pixel above the hit rejection threshold.
+
+2007-06-18 23:40  bulgheroni
+
+	* include/EUTelStrasMimoTelReader.h,
+	  src/EUTelStrasMimoTelReader.cc: Finished the Strasbourg converter
+	  phase 0. This is only good to analyse the data they took at DESY
+	  just before our test beam. The three planes are actually just one
+	  quarter each of a MimoTel and so few tricks were required to get
+	  out the data. Still the signal polarity has to be investigated.
+
+2007-06-18 00:43  bulgheroni
+
+	* ChangeLog: Updated.
+
+2007-06-18 00:42  bulgheroni
+
+	* include/EUTelStrasMimoTelReader.h,
+	  src/EUTelStrasMimoTelReader.cc: Added a data reader for the
+	  Strasbourg DAQ. For the time being it is very specific to the
+	  test beam data we have. It may become more general in the future.
+
+2007-06-18 00:41  bulgheroni
+
+	* include/EUTelHistogramManager.h, src/EUTelHistogramManager.cc:
+	  First attempt to define a class for a better histogram handling
+	  allowing histograms rebinning and renaming without recompiling
+	  the source code. For the time being there is only the structure.
+	  It is enclosed into a #ifdef EXPERIMENTAL / #endif block because
+	  it shouldn't be used.
+
+2007-06-18 00:39  bulgheroni
+
+	* src/EUTelMimoTelReader.cc: Fixed a problem with MaxRecord
+
+2007-06-16 12:58  bulgheroni
+
+	* include/EUTelVirtualCluster.h: Added a method that was only on
+	  the implementation and not in the abstract interface
+
+2007-06-16 12:57  bulgheroni
+
+	* include/EUTelHistogramMaker.h, src/EUTelHistogramMaker.cc: Tried
+	  to implement histogram filling on a event by event basis. But I'm
+	  not convinced that this is the right solution.
+
+2007-06-16 00:48  bulgheroni
+
+	* ChangeLog: Updated.
+
+2007-06-16 00:47  bulgheroni
+
+	* include/EUTelClusterFilter.h, src/EUTelClusterFilter.cc: Added
+	  other three selection criteria. The cluster quality. The minimum
+	  and the maximum number of cluster per detector. The last two can
+	  also be used to request that there should be at least one hit per
+	  plane.
+
+2007-06-15 21:59  bulgheroni
+
+	* src/EUTelHistogramMaker.cc: Moved the histo booking within a
+	  isFirstEvent() if block to avoid rebooking after the first run is
+	  over
+
+2007-06-15 19:31  bulgheroni
+
+	* src/EUTelHistogramMaker.cc: Fixed the same problem with histogram
+	  title for the N pixel cluster. I really need to move the
+	  histogram factory into a single class and then use it in all
+	  other processor.
+
+2007-06-15 17:04  bulgheroni
+
+	* src/EUTelHistogramMaker.cc: Fixed a problem with the optional
+	  parameters
+
+2007-06-15 17:04  bulgheroni
+
+	* include/EUTelClusterFilter.h, src/EUTelClusterFilter.cc: First
+	  attempt to have something filtering clusters. To be continue...
+
+2007-06-15 00:21  bulgheroni
+
+	* src/EUTelClusteringProcessor.cc: Fixed a minor issue in the
+	  histogram title for the ClusterN family. Replaced the stupid
+	  operator+ with the standard stringstream block.
+
+2007-06-15 00:19  bulgheroni
+
+	* include/EUTelClusterFilter.h, src/EUTelClusterFilter.cc: Another
+	  nightly build. This processor has the important task to perform a
+	  filtering on the current TrackerPulse collection. It allows to
+	  remove unwanted clusters according to a fairly long list of
+	  criteria. But for the time being there is just the structure of
+	  the processor and nothing more. It has to be finished, if not
+	  tomorrow, the day after at latest.
+
+2007-06-14 22:54  bulgheroni
+
+	* ChangeLog: Updated.
+
+2007-06-14 21:49  bulgheroni
+
+	* src/EUTelPedestalNoiseProcessor.cc: Now masking as bad also the
+	  dead pixels (i.e. pixels with noise below a certain fraction of
+	  an ADC). This may be used also for marking as bad all the
+	  markers.
+
+2007-06-14 14:36  bulgheroni
+
+	* src/EUTelClusteringProcessor.cc: Moved the histoBooking in the
+	  processEvent in order not to reset histograms when processing
+	  more than one file at a time
+
+2007-06-13 20:02  bulgheroni
+
+	* include/EUTelFFClusterImpl.h, include/EUTelVirtualCluster.h,
+	  src/EUTelClusteringProcessor.cc, src/EUTelFFClusterImpl.cc:
+	  Modified the getClusterCharge(int) in order to improve the
+	  performance.
+
+2007-06-13 16:30  bulgheroni
+
+	* src/EUTelFFClusterImpl.cc: Fixed another nasty bug with the
+	  cluster charge. This time was 3x3 cluster problem
+
+2007-06-13 13:47  bulgheroni
+
+	* src/EUTelHistogramMaker.cc: Minor. The major changes is that,
+	  this processor will soon disapper. As soon as I'll be sure that
+	  the histograms now produced by the EUTelClusteringProcessor are
+	  exactly the same as the one make by this.
+
+2007-06-13 13:45  bulgheroni
+
+	* include/EUTelClusteringProcessor.h,
+	  src/EUTelClusteringProcessor.cc: Moved here the histogram filling
+	  facility. It is actually useless to have a specific processor
+	  (namely the EUTelHistogramMaker) to fill in clusters, when they
+	  are already available here in the clustering processor. Moreover,
+	  the user will found the cluster related histograms into the
+	  Clustering folder in the output file. This makes a lot of sense.
+
+2007-06-13 00:47  bulgheroni
+
+	* ChangeLog: Updated.
+
+2007-06-13 00:45  bulgheroni
+
+	* src/EUTelFFClusterImpl.cc: Fixed a very nasty bug in the
+	  getClusterCharge(int) method. Mistyped a "=" instead of a "+=".
+	  Try to implement a better and more efficient method to get the
+	  same result. I have something in mind...
+
+2007-06-13 00:43  bulgheroni
+
+	* src/EUTelClusteringProcessor.cc: Moved the message<DEBUG>
+	  directed to the std out from the #ifdef MARLINDEBUG #endif
+	  otherwise they are not working with the global message level from
+	  the steering file.  The maximum allowed number of cluster per
+	  detector is 256 and it is too low for source run. Introduced a
+	  workaroud and instead of quitting the processor is complaining
+	  with the user but still adding clusters with clusterID = 256.
+	  This may introduce some problems for the tracking, but since it
+	  is a source run, there will be no tracking at all.  Todo: Ask
+	  Filip if is using the clusterID, otherwise I can also remove it.
+
+2007-06-13 00:39  bulgheroni
+
+	* src/EUTelCalibrateEventProcessor.cc: Change the binning of the
+	  debug histograms. Once again they reveal themselft very useful,
+	  but at the same time we need to find a way to work with
+	  autobinning!
+
+2007-06-12 16:39  bulgheroni
+
+	* include/EUTelHistogramMaker.h: Fixed a mistake with the
+	  documentation and one with cvs tag
+
+2007-06-12 16:33  bulgheroni
+
+	* ChangeLog: Updated.
+
+2007-06-12 16:32  bulgheroni
+
+	* src/: EUTelClusteringProcessor.cc, EUTelHistogramMaker.cc: Fixed
+	  a memory leak problem with valgrind. Actually discovered some
+	  leaks in Marlin.
+
+2007-06-12 15:56  bulgheroni
+
+	* include/EUTelHistogramMaker.h, src/EUTelHistogramMaker.cc: Added
+	  a new processor in order to fill in detector characterization
+	  histograms. For the time being only cluster related histograms
+	  are filled.
+
+2007-06-12 15:52  bulgheroni
+
+	* src/EUTelPedestalNoiseProcessor.cc: Fixed a nasty bug with the
+	  bad pixel masking. I was actually using a single threshold for
+	  all the sensors and this is a bad idea. Now replaced the "double
+	  theshold" with a "vector<double > thresholdVec".
+
+2007-06-12 15:49  bulgheroni
+
+	* include/EUTelMimoTelReader.h, src/EUTelMimoTelReader.cc: Added
+	  the signal polarity as a processor parameter. It looks like that
+	  the correct polarity is negative. Still to be verified.
+
+2007-06-12 15:47  bulgheroni
+
+	* src/EUTelClusterSeparationProcessor.cc: Minor changes
+
+2007-06-12 15:46  bulgheroni
+
+	* include/EUTelFFClusterImpl.h, include/EUTelVirtualCluster.h,
+	  src/EUTelFFClusterImpl.cc: Added some useful methods to the
+	  cluster class in order to obtain the seed pixel charge and the
+	  total charge when only a certain number of pixel is considered
+
+2007-06-12 00:22  bulgheroni
+
+	* src/EUTelSucimaImagerReader.cc: Removed a useless setEventType.
+
+2007-06-12 00:21  bulgheroni
+
+	* include/EUTelEUDRBReader.h (tags: v00-00-06, v00-00-05,
+	  v00-00-04, v00-00-03, v00-00-02), src/EUTelEUDRBReader.cc:
+	  Included the class into a #ifdef EXPERIMENTAL / #endif block in
+	  order to avoid confusion with the new EUTelMimoTelReader. Both
+	  those readers are going to disapper soon.
+
+2007-06-12 00:20  bulgheroni
+
+	* doc/Doxyfile (tags: v00-00-02): Added the USE_EUDAQ in the
+	  preprocessor directives.
+
+2007-06-12 00:19  bulgheroni
+
+	* include/EUTelMimoTelReader.h, src/EUTelMimoTelReader.cc: Added a
+	  DataReader class to read the output of the EUDRB when connected
+	  to a MimoTel sensor. This requires to link agaist the libeudaq
+	  library.
+
+2007-06-12 00:18  bulgheroni
+
+	* include/EUTelSparseDataImpl.h, src/EUTelSparseDataImpl.cc:
+	  Started working on the sparse data container. Still not usuable
+	  and enclosed within a #ifdef EXPERIMENTAL #endif block
+
+2007-06-04 08:45  bulgheroni
+
+	* EUTelTestFitter.geom, include/EUTelTestFitter.h,
+	  src/EUTelTestFitter.cc: Added the Fitter processor provided by
+	  Filip, with only very few changes in order to fit within the
+	  EUTelescope framework.
+
+2007-05-31 17:27  bulgheroni
+
+	* ChangeLog: Updated. Very close to the next tagged release.
+
+2007-05-31 17:26  bulgheroni
+
+	* src/EUTelUpdatePedestalNoiseProcessor.cc: Enforce the protection
+	  mechanism against possible crashes due to no events to be used
+	  for update.
+
+2007-05-31 17:25  bulgheroni
+
+	* src/EUTelCalculateEtaProcessor.cc: Fixed an error with the
+	  registerInputCollection method.
+
+2007-05-31 17:24  bulgheroni
+
+	* include/EUTelVirtualCluster.h: Added the documentation of the
+	  _trackerData member.
+
+2007-05-31 17:24  bulgheroni
+
+	* include/EUTelPedestalNoiseProcessor.h: Added an example of
+	  steering file in the documentation.
+
+2007-05-31 17:23  bulgheroni
+
+	* doc/introduction.html: Added this file with the new
+	  documentation.
+
+2007-05-31 17:23  bulgheroni
+
+	* doc/Doxyfile: Added the introduction file.
+
+2007-05-30 18:33  bulgheroni
+
+	* doc/images/: frameOfReference.png, orientation.png,
+	  orientation1.png (utags: v00-00-02, v00-00-03, v00-00-04,
+	  v00-00-05, v00-00-06, v00-00-07, v00-00-08): Added some pictures
+	  to the documentation.
+
+2007-05-29 17:55  bulgheroni
+
+	* ChangeLog: Updated.
+
+2007-05-29 17:54  bulgheroni
+
+	* src/: EUTelCalculateEtaProcessor.cc,
+	  EUTelCalibrateEventProcessor.cc,
+	  EUTelClusterSeparationProcessor.cc, EUTelClusteringProcessor.cc,
+	  EUTelHitMaker.cc: Modified in order to work with the new
+	  decorator pattern of the EUTelVirtualCluster.
+
+2007-05-29 17:48  bulgheroni
+
+	* include/EUTelFFClusterImpl.h, include/EUTelVirtualCluster.h,
+	  src/EUTelFFClusterImpl.cc: Modified in order to implement a real
+	  decorator pattern. Now EUTelVirtualCluster does NOT inherit
+	  anyfrom from TrackerDataImpl, but it has a data member of type
+	  TrackerDataImpl. In this way we can manage both TrackerData
+	  coming from the memory or from disk.
+
+2007-05-29 10:55  bulgheroni
+
+	* ChangeLog: [no log message]
+
+2007-05-29 10:54  bulgheroni
+
+	* steering-examples/analysis-steer.xml (tags: v00-00-08, v00-00-07,
+	  v00-00-06, v00-00-05, v00-00-04, v00-00-03, v00-00-02): Added the
+	  EUTelHitMaker processor. This is principle should be the first
+	  one of he tracking-steer file, but because of a problem with
+	  LCIO, for the time being it has to be the last one of the
+	  analysis-steer.
+
+2007-05-29 10:51  bulgheroni
+
+	* src/EUTelCalibrateEventProcessor.cc: Modified a mkdir into a
+	  mkdirs, during the debug phase. As reported in bug
+	  https://jira.slac.stanford.edu/browse/MAR-25 RAIDA and AIDAJNI
+	  behave differently when dealing with subfolder. For the time
+	  being, all the processors producing histograms are working
+	  according to RAIDA behavior.
+
+2007-05-29 10:48  bulgheroni
+
+	* include/EUTelHitMaker.h, src/EUTelHitMaker.cc: Again a work in
+	  progress commit. From a very technical point of view, it looks
+	  like there some sort of bug in the way tracker pulse are written
+	  to disk. In fact this processor works perfectly when the input
+	  collections are already in the memory, but crashes when those are
+	  read from the disk. Already sent an email to Frank asking for
+	  help.  From a lesser technical point of view, there are still
+	  many things to be verified against the actual final geometry
+	  description, especially the GeoID and the "orientation".  Again
+	  still to be tested is the output in the control histograms,
+	  because of some problems with RAIDA and with AIDAJNI as well.
+	  When all these things will be fixed/checked, we will be ready for
+	  v00-00-02!
+
+2007-05-28 13:52  bulgheroni
+
+	* include/EUTelHitMaker.h, src/EUTelHitMaker.cc: In the middle of
+	  the debug phase.
+
+2007-05-28 13:52  bulgheroni
+
+	* src/EUTelClusterSeparationProcessor.cc: Fixed a problem with the
+	  otherCluster object casting.
+
+2007-05-28 13:51  bulgheroni
+
+	* doc/Doxyfile: Added the path for the image folder.  Added the tag
+	  file generation.  Added the USE_GEAR preprocessor define
+
+2007-05-25 07:20  bulgheroni
+
+	* ChangeLog: Updated.
+
+2007-05-25 07:19  bulgheroni
+
+	* steering-examples/: analysis-steer.xml, pedestal-steer.xml (tags:
+	  v00-00-08, v00-00-07, v00-00-06, v00-00-05, v00-00-04, v00-00-03,
+	  v00-00-02), tracking-steer.xml (tags: v00-00-08, v00-00-07,
+	  v00-00-06, v00-00-05, v00-00-04, v00-00-03, v00-00-02): Added
+	  steering file examples.
+
+2007-05-25 07:16  bulgheroni
+
+	* include/EUTelHitMaker.h, src/EUTelHitMaker.cc: Added a new
+	  processor to transform the TrackerPulse in TrackerHit accessing
+	  GEAR geometry. Work in progress.
+
+2007-05-25 07:15  bulgheroni
+
+	* src/EUTelClusterSeparationProcessor.cc: Replaced an exit() with
+	  an exception throw
+
+2007-05-25 07:14  bulgheroni
+
+	* include/EUTelExceptions.h (tags: v00-00-06, v00-00-05, v00-00-04,
+	  v00-00-03, v00-00-02): Added an UnknownDataTypeException.
+
+2007-05-25 07:14  bulgheroni
+
+	* src/EUTelCalculateEtaProcessor.cc: Modified in order to deal with
+	  EUTelVirtualCluster.
+
+2007-05-25 07:13  bulgheroni
+
+	* include/: EUTelCalculateEtaProcessor.h,
+	  EUTelClusterSeparationProcessor.h: Updated the documentation.
+
+2007-05-25 07:12  bulgheroni
+
+	* test/cluster/clustertest.cc (tags: v00-00-08, v00-00-07,
+	  v00-00-06, v00-00-05, v00-00-04, v00-00-03, v00-00-02): Modified
+	  the default number of detector to 6.
+
+2007-05-23 16:17  bulgheroni
+
+	* ChangeLog: Updated.
+
+2007-05-23 16:10  bulgheroni
+
+	* include/EUTelOutputProcessor.h, src/EUTelOutputProcessor.cc:
+	  Subclass of LCIOOutputProcessor able to append an EORE at the of
+	  a file in case it was missing. It requires LCIOOutputProcessor to
+	  be patched.
+
+2007-05-23 16:08  bulgheroni
+
+	* include/: EUTelCalculateEtaProcessor.h,
+	  EUTelCalibrateEventProcessor.h,
+	  EUTelClusterSeparationProcessor.h, EUTelClusteringProcessor.h,
+	  EUTelPedestalNoiseProcessor.h: Due to a bug in doxygen the
+	  forward declarations have been replaced with includes.
+
+2007-05-23 16:08  bulgheroni
+
+	* include/EUTelAutoPedestalNoiseProcessor.h: Fixed typos in the
+	  documentation.
+
+2007-05-23 16:06  bulgheroni
+
+	* src/EUTelClusteringProcessor.cc: Change the includes order.
+	  Minor.
+
+2007-05-23 16:05  bulgheroni
+
+	* doc/Doxyfile: Modified using the doxywizard
+
+2007-05-22 18:44  bulgheroni
+
+	* src/EUTelClusterSeparationProcessor.cc: Modified the behavior in
+	  order to get the TrackerPulse collection containing the clusters.
+	  The TrackerData referred by the TrackerPulse is then recasted to
+	  a cluster implementation inheriting from EUTelVirtualCluster. The
+	  cluster implementation is chosen according to the value of
+	  ClusterType stored in the TrackerPulse.
+
+2007-05-22 18:41  bulgheroni
+
+	* src/EUTelFFClusterImpl.cc: Change the inheritance tree.
+
+2007-05-22 18:41  bulgheroni
+
+	* src/EUTELESCOPE.cc: Added the default pulse encoding string.
+
+2007-05-22 18:39  bulgheroni
+
+	* include/EUTelClusteringProcessor.h,
+	  src/EUTelClusteringProcessor.cc: Modified the behavior in order
+	  to work with a specific implementation of a cluster type while
+	  performing the cluster search, but before saving all the
+	  information are moved to a TrackerPulse to preserve the
+	  consistency.	Added some documentation.
+
+2007-05-22 18:37  bulgheroni
+
+	* include/EUTELESCOPE.h: Added the ClusterType enum.  Added the
+	  default pulse encoding string.
+
+2007-05-22 18:36  bulgheroni
+
+	* include/EUTelFFClusterImpl.h: Change the inheritance tree.
+
+2007-05-22 18:35  bulgheroni
+
+	* include/EUTelVirtualCluster.h: This is a pure abstract class used
+	  to define a generic cluster within the Eutelescope framework. It
+	  inherits from the TrackerData in order to be eventually referred
+	  by the TrackerPulse.
+
+2007-05-22 18:33  bulgheroni
+
+	* doc/Doxyfile: Modified the version number.
+
+2007-05-21 16:16  bulgheroni
+
+	* src/EUTelCalculateEtaProcessor.cc (tags: v00-00-01): Avoid
+	  multiple calculation of eta.
+
+2007-05-21 13:53  bulgheroni
+
+	* ChangeLog (tags: v00-00-01): Updated.
+
+2007-05-21 13:46  bulgheroni
+
+	* src/: EUTelAutoPedestalNoiseProcessor.cc (tags: v00-00-03,
+	  v00-00-02, v00-00-01), EUTelCalculateEtaProcessor.cc,
+	  EUTelCalibrateEventProcessor.cc (tags: v00-00-01),
+	  EUTelClusterSeparationProcessor.cc (tags: v00-00-01),
+	  EUTelClusteringProcessor.cc (tags: v00-00-01),
+	  EUTelCopyPedestalProcessor.cc (tags: v00-00-01),
+	  EUTelEUDRBReader.cc (tags: v00-00-01), EUTelSucimaImagerReader.cc
+	  (tags: v00-00-01), EUTelUpdatePedestalNoiseProcessor.cc (tags:
+	  v00-00-01): Added a smarter -*- line for Emacs editing.  Adapted
+	  to work with EORE.  Introduced the new messaging system.
+
+2007-05-21 13:43  bulgheroni
+
+	* src/EUTelPedestalNoiseProcessor.cc (tags: v00-00-01): Added a
+	  debug message.
+
+2007-05-21 13:42  bulgheroni
+
+	* src/: EUTelEtaFunctionImpl.cc, EUTelFFClusterImpl.cc,
+	  EUTelRunHeaderImpl.cc (tags: v00-00-03, v00-00-02),
+	  ROOTProcessor.cc (tags: v00-00-06, v00-00-05, v00-00-04,
+	  v00-00-03, v00-00-02), EUTelPseudo1DHistogram.cc (tags:
+	  v00-00-06, v00-00-05, v00-00-04, v00-00-03, v00-00-02) (utags:
+	  v00-00-01): Added a smarter -*- line for Emacs editing
+
+2007-05-21 13:37  bulgheroni
+
+	* include/: EUTelAutoPedestalNoiseProcessor.h,
+	  EUTelCalibrateEventProcessor.h,
+	  EUTelClusterSeparationProcessor.h, EUTelClusteringProcessor.h,
+	  EUTelCopyPedestalProcessor.h, EUTelEUDRBReader.h,
+	  EUTelEtaFunctionImpl.h, EUTelExceptions.h, EUTelFFClusterImpl.h,
+	  EUTelPseudo1DHistogram.h, EUTelRunHeaderImpl.h,
+	  EUTelSucimaImagerReader.h (tags: v00-00-08, v00-00-07, v00-00-06,
+	  v00-00-05, v00-00-04, v00-00-03, v00-00-02),
+	  EUTelUpdatePedestalNoiseProcessor.h, ROOTProcessor.h (tags:
+	  v00-00-06, v00-00-05, v00-00-04, v00-00-03, v00-00-02),
+	  eutelescope.h (tags: v00-00-06, v00-00-05, v00-00-04, v00-00-03,
+	  v00-00-02) (utags: v00-00-01): Added a smarter -*- line for Emacs
+	  editing.
+
+2007-05-21 13:32  bulgheroni
+
+	* include/EUTelCalculateEtaProcessor.h (tags: v00-00-01): Added a
+	  smarter -*- line for Emacs editing Change the finishCalculation
+	  method with finalizeProcessor.
+
+2007-05-19 11:55  bulgheroni
+
+	* test/: autopede/autopedetest.cc (tags: v00-00-08, v00-00-07,
+	  v00-00-06, v00-00-05, v00-00-04, v00-00-03, v00-00-02),
+	  cluster/clustertest.cc, pedestal/pedetest.cc (tags: v00-00-08,
+	  v00-00-07, v00-00-06, v00-00-05, v00-00-04, v00-00-03, v00-00-02)
+	  (utags: v00-00-01): Added a smarter -*- line for emacs editing.
+	  Added the EORE at the end of the file.
+
+2007-05-19 11:54  bulgheroni
+
+	* test/autopede/GNUmakefile (tags: v00-00-08, v00-00-07, v00-00-06,
+	  v00-00-05, v00-00-04, v00-00-03, v00-00-02, v00-00-01): Fixed a
+	  problem with the libEutelescope.a path.
+
+2007-05-19 11:53  bulgheroni
+
+	* src/EUTelPedestalNoiseProcessor.cc: Added a smarter -*- line for
+	  emacs editing.  Move to an EORE approach instead of relying on
+	  the number of events saved in the runHeader.	Changed all "cout"
+	  with the new messaging system avalaible in Marlin   (message()).
+
+2007-05-19 11:51  bulgheroni
+
+	* include/EUTelPedestalNoiseProcessor.h (tags: v00-00-01): Added a
+	  smarter -*- line for emacs editing.  Update the documentation of
+	  the end() call back.
+
+2007-05-18 16:55  bulgheroni
+
+	* test/cluster/clustertest.cc: Modified in order to generate
+	  properly EORE.
+
+2007-05-18 10:01  bulgheroni
+
+	* include/EUTelEventImpl.h, src/EUTelEventImpl.cc (tags: v00-00-08,
+	  v00-00-07) (utags: v00-00-01, v00-00-02, v00-00-03, v00-00-04,
+	  v00-00-05, v00-00-06): Added the EUTelEventImpl class. This is
+	  very similar, in the concept, to the EUTelRunHeaderImpl, in the
+	  meaning it offers an easier access to specific EUTELESCOPE
+	  parameters. For the time being only the event type parameter has
+	  been added to the LCEventImpl  class.
+
+2007-05-18 09:58  bulgheroni
+
+	* src/EUTELESCOPE.cc (tags: v00-00-01): Added the EVENTTYPE static
+	  constant.  Added a smarter -*- line for emacs editing.
+
+2007-05-18 09:57  bulgheroni
+
+	* include/EUTELESCOPE.h (tags: v00-00-01): Added the EventType enum
+	  and the EVENTTYPE constant.  Added a smarter -*- line for emacs
+	  editing.
+
+2007-05-17 15:44  bulgheroni
+
+	* test/: autopede/GNUmakefile, cluster/GNUmakefile (tags:
+	  v00-00-08, v00-00-07, v00-00-06, v00-00-05, v00-00-04, v00-00-03,
+	  v00-00-02, v00-00-01), eudrbtest/GNUmakefile (tags: v00-00-08,
+	  v00-00-07, v00-00-06, v00-00-05, v00-00-04, v00-00-03, v00-00-02,
+	  v00-00-01), pedestal/GNUmakefile (tags: v00-00-08, v00-00-07,
+	  v00-00-06, v00-00-05, v00-00-04, v00-00-03, v00-00-02,
+	  v00-00-01): Modified the definition of the EUTELESCOPELIBS in
+	  order to cope with the new position of the libEutelescope.a
+
+2007-05-17 15:43  bulgheroni
+
+	* include/EUTELESCOPE.h, include/EUTelRunHeaderImpl.h,
+	  src/EUTELESCOPE.cc, src/EUTelRunHeaderImpl.cc: Modified according
+	  to the advise coming from Geneva guys.
+
+2007-05-11 12:46  bulgheroni
+
+	* src/GNUmakefile (tags: v00-00-01): The libEutelescope.a file is
+	  now created into the just added lib folder in order to be
+	  compatible with the general Marlin package structure.
+
+2007-04-02 16:25  bulgheroni
+
+	* src/EUTelEtaFunctionImpl.cc: Improved the STL vector / iterator
+	  handling.
+
+2007-04-02 16:23  bulgheroni
+
+	* src/ROOTProcessor.cc: Changed the way sub folders are managed.
+
+2007-04-02 16:22  bulgheroni
+
+	* src/GNUmakefile: Removed the dependency on MarlinUtil.  Added the
+	  MARLIN_USE_ROOT definition.  Fixed some problem with Doxygen.
+
+2007-04-02 16:19  bulgheroni
+
+	* include/EUTelCopyPedestalProcessor.h, include/EUTelEUDRBReader.h,
+	  include/EUTelEtaFunctionImpl.h,
+	  include/EUTelPedestalNoiseProcessor.h,
+	  include/EUTelUpdatePedestalNoiseProcessor.h,
+	  include/ROOTProcessor.h, src/EUTelClusterSeparationProcessor.cc,
+	  src/EUTelClusteringProcessor.cc: Corrected some docu typos.
+
+2007-04-02 16:18  bulgheroni
+
+	* include/EUTelCalculateEtaProcessor.h,
+	  src/EUTelCalculateEtaProcessor.cc: Replace the PseudoHistogram
+	  with the EUTelPseudo1DHistogram.
+
+2007-04-02 16:17  bulgheroni
+
+	* include/EUTelPseudo1DHistogram.h, src/EUTelPseudo1DHistogram.cc:
+	  Added a new class to improve the features of the PseudoHistogram
+	  available in the MarlinUtil package.
+
+2007-04-02 16:15  bulgheroni
+
+	* doc/Doxyfile (tags: v00-00-01): Modified in order to work with
+	  the general top level makefile as well.
+
+2007-03-04 19:41  bulgheroni
+
+	* ChangeLog: Updated.
+
+2007-03-04 19:39  bulgheroni
+
+	* test/eudrbtest/: GNUmakefile, README (tags: v00-00-08, v00-00-07,
+	  v00-00-06, v00-00-05, v00-00-04, v00-00-03, v00-00-02,
+	  v00-00-01), eudrb.cc (tags: v00-00-08, v00-00-07, v00-00-06,
+	  v00-00-05, v00-00-04, v00-00-03, v00-00-02, v00-00-01): Added a
+	  test program to generate data samples with the same structure as
+	  the one coming out the VME bus of the EUDRB board. It is used to
+	  debug the EUTelEUDRBReader processor.
+
+2007-03-04 19:23  bulgheroni
+
+	* include/EUTelEUDRBReader.h, src/EUTelEUDRBReader.cc: Added a new
+	  DataSourceProcessor for processing data as coming from the VME
+	  block transfer of the EUDRB. This is not to replace the final
+	  data format, but just to make the hardware debug easier.
+
+2007-03-03 17:37  bulgheroni
+
+	* include/EUTelAutoPedestalNoiseProcessor.h: Fixed a typo in the
+	  documentation.
+
+2007-03-03 17:37  bulgheroni
+
+	* src/EUTelEtaFunctionImpl.cc: Modified the getEtaFromCoG method in
+	  order to return a suitable value also for CoG values outside the
+	  standard range (-0.5 * pitch, +0.5 * pitch).
+
+2007-03-03 09:57  bulgheroni
+
+	* ChangeLog: Updated.
+
+2007-03-03 09:56  bulgheroni
+
+	* src/EUTelEtaFunctionImpl.cc: Implemented convenience methods to
+	  get the CoG and Eta vectors and begin/end iterators.	Implemented
+	  the most important method used to get the Eta value corresponding
+	  to a given CoG value.
+
+2007-03-03 09:54  bulgheroni
+
+	* include/EUTelEtaFunctionImpl.h: Improved the documentation.
+	  Added convenience methods to get the CoG and Eta vectors and
+	  begin/end iterators.	Added the most important method used to get
+	  the Eta value corresponding to a given CoG value.
+
+2007-03-03 09:51  bulgheroni
+
+	* include/EUTelCalculateEtaProcessor.h,
+	  src/EUTelCalculateEtaProcessor.cc: Added the data members (and
+	  steering file parameters) to save the eta functions as
+	  EUTelEtaFunctionImpl into a condition slcio file.
+
+2007-03-03 09:50  bulgheroni
+
+	* include/EUTelCopyPedestalProcessor.h: Improved the documentation.
+
+2007-03-03 09:49  bulgheroni
+
+	* src/EUTelPedestalNoiseProcessor.cc: Fixed a mistake with the
+	  Global "MaxRecordNumber".  Fixed a memory leak with the
+	  runHeader.
+
+2007-02-28 15:57  bulgheroni
+
+	* test/pedestal/pedetest.cc: Added the <cmath> include that was
+	  missing.
+
+2007-02-28 09:31  bulgheroni
+
+	* ChangeLog: Updated.
+
+2007-02-28 09:19  bulgheroni
+
+	* include/EUTelEtaFunctionImpl.h, src/EUTelEtaFunctionImpl.cc:
+	  First attempt to define a LCGenericObject for storing the eta
+	  function as calculated by the EUTelCalculateEtaProcessor
+
+2007-02-28 09:18  bulgheroni
+
+	* src/EUTelPedestalNoiseProcessor.cc: Fixed the bug concerning the
+	  total number of events limited by the user in the Global section
+	  of the steering file.
+
+2007-02-28 09:17  bulgheroni
+
+	* src/EUTelFFClusterImpl.cc: Implemented a method to set the
+	  cluster quality directly without using the
+	  CellIDEncoder/CellIDDecoder.
+
+2007-02-28 09:17  bulgheroni
+
+	* src/EUTelClusterSeparationProcessor.cc: Clean up debug issues.
+	  Introduced the applySeparationAlgorithm method, in which for the
+	  time being only the FLAGONLY algorithm is implemented.
+
+2007-02-28 09:15  bulgheroni
+
+	* src/EUTelCalculateEtaProcessor.cc: Fixed the bug concerning the
+	  total number of events limited by the user in the Global section
+	  of the steering file. Still working on the implementation of a
+	  way of saving the Eta function result.
+
+2007-02-28 09:14  bulgheroni
+
+	* include/EUTelFFClusterImpl.h: Defined a method to set the cluster
+	  quality directly without using the CellIDEncoder/CellIDDecoder.
+
+2007-02-28 09:13  bulgheroni
+
+	* include/EUTelClusterSeparationProcessor.h: Improved the
+	  documentation and defined the latest introduced methods.
+
+2007-02-28 09:12  bulgheroni
+
+	* include/EUTelCalculateEtaProcessor.h: Improved the documentation.
+
+2007-02-28 09:12  bulgheroni
+
+	* src/EUTelCalibrateEventProcessor.cc: Fixed a bug in the case
+	  MARLIN_USE_AIDA is not defined.
+
+2007-02-26 10:32  bulgheroni
+
+	* include/EUTelClusterSeparationProcessor.h,
+	  src/EUTelClusterSeparationProcessor.cc: A first attempt to have a
+	  Marlin processor dealing with possible cluster merging. For the
+	  time being the only thing this processor is able to due is to
+	  flag clusters that are touching as kMergedCluster. But other
+	  separation algorithm can be implemented.
+
+2007-02-26 10:30  bulgheroni
+
+	* include/EUTelCalculateEtaProcessor.h,
+	  src/EUTelCalculateEtaProcessor.cc: A first attempt to have a
+	  Marlin processor for the calculation of eta functions. This
+	  processor is still very experimental and the use of the
+	  RewindDataFilesException is not completely debugged.
+
+2007-02-26 10:28  bulgheroni
+
+	* include/ROOTProcessor.h, src/ROOTProcessor.cc: Added a
+	  ROOTProcessor. This is aimed to behave in a very similar to
+	  AIDAProcessor, offering the capability to allocate any TObject
+	  and save them into a ROOT file. Still under developement. Use it
+	  at your own risk. It requires to define MARLIN_USE_ROOT=1 and
+	  some little changes in the Marlin top level GNUmakefile.
+
+2007-02-26 10:26  bulgheroni
+
+	* src/GNUmakefile: Added MarlinUtil to the $USERINCLUDES. This is
+	  because I'm currently using the PseudoHistogram class for eta
+	  function calculation. Not sure it will stay like this.
+
+2007-02-26 10:24  bulgheroni
+
+	* src/EUTelCopyPedestalProcessor.cc: Fixed a bug. The copied
+	  collections didn't have the correct CellIDEncoder. Now it is
+	  fixed.
+
+2007-02-26 10:24  bulgheroni
+
+	* include/EUTelUpdatePedestalNoiseProcessor.h: Minor changes in the
+	  documentation.
+
+2007-02-26 10:23  bulgheroni
+
+	* include/EUTelFFClusterImpl.h, src/EUTelClusteringProcessor.cc,
+	  src/EUTelFFClusterImpl.cc: Added some convenience methods to
+	  access different way to calculate the CoG.  Added a method to
+	  directly access the cluster quality.	Added a method to calculate
+	  the radius of the circumscribed circle (to be used for cluster
+	  separation).
+
+2007-02-26 10:21  bulgheroni
+
+	* include/EUTELESCOPE.h, src/EUTELESCOPE.cc: Modified the cluster
+	  default encoding adding a 5 bit quality flag. Added a enum type
+	  to deal with cluster quality.  Overloaded bit wise operator for
+	  ClusterQuality enum, but not working the |= operator. Have a look
+	  on the web.
+
+2007-02-23 12:24  bulgheroni
+
+	* include/: EUTelCalibrateEventProcessor.h,
+	  EUTelPedestalNoiseProcessor.h: Moved the AIDA include to a simple
+	  forward declaration since we don't need to have the full class
+	  definition here.
+
+2007-02-22 14:23  bulgheroni
+
+	* include/EUTelUpdatePedestalNoiseProcessor.h,
+	  src/EUTelUpdatePedestalNoiseProcessor.cc: Added the possibility
+	  to monitor some pixels pedestal and noise time evolution. Still
+	  to fix the possibility to store the results inside an AIDA file.
+
+2007-02-22 09:11  bulgheroni
+
+	* include/EUTelUpdatePedestalNoiseProcessor.h,
+	  src/EUTelUpdatePedestalNoiseProcessor.cc: Added a first version
+	  of the processor doing the pedestal and noise update during the
+	  analysis process. It looks like being working, but still I have
+	  to add check plots to verify the validity of the algorithm.
+
+2007-02-22 09:09  bulgheroni
+
+	* include/EUTELESCOPE.h, include/EUTelAutoPedestalNoiseProcessor.h,
+	  include/EUTelCalibrateEventProcessor.h,
+	  include/EUTelClusteringProcessor.h, include/EUTelExceptions.h,
+	  include/EUTelFFClusterImpl.h,
+	  include/EUTelPedestalNoiseProcessor.h,
+	  include/EUTelRunHeaderImpl.h, include/EUTelSucimaImagerReader.h,
+	  src/EUTELESCOPE.cc, src/EUTelCalibrateEventProcessor.cc,
+	  src/EUTelClusteringProcessor.cc, src/EUTelFFClusterImpl.cc,
+	  src/EUTelPedestalNoiseProcessor.cc, src/EUTelRunHeaderImpl.cc,
+	  src/EUTelSucimaImagerReader.cc: Mainly fixed typos in comments
+	  and strings (using M-x ispell-comments-and-strings feature of
+	  Emacs).
+
+2007-02-21 17:44  bulgheroni
+
+	* ChangeLog: Updated.
+
+2007-02-21 15:18  bulgheroni
+
+	* test/autopede/: GNUmakefile, README (tags: v00-00-08, v00-00-07,
+	  v00-00-06, v00-00-05, v00-00-04, v00-00-03, v00-00-02,
+	  v00-00-01), autopedetest.cc: Added a test program to produce a
+	  sample of data to characterize the autopedestal functionalities.
+	  I think it can be also used for the pedestal update processor I'm
+	  going to prepare.
+
+2007-02-21 15:08  bulgheroni
+
+	* include/EUTelAutoPedestalNoiseProcessor.h,
+	  src/EUTelAutoPedestalNoiseProcessor.cc: Added a processor to be
+	  used with detectors having a flat pedestal and noise
+	  distribution. In this way there is no need to make a real
+	  pedestal calculation and probably a simple pedestal update
+	  procedure will be needed.
+
+2007-02-21 14:58  bulgheroni
+
+	* src/GNUmakefile: Fixed a problem with the selection of test
+	  modules.  Modified the clean target in order to clean recursively
+	  also test folders.
+
+2007-02-21 14:55  bulgheroni
+
+	* src/EUTelCalibrateEventProcessor.cc: Added a message to user when
+	  events are skipped because of common mode.
+
+2007-02-21 12:02  bulgheroni
+
+	* test/pedestal/pedetest.cc: Added CVS tag.
+
+2007-02-21 11:55  bulgheroni
+
+	* test/cluster/clustertest.cc: Fixed a couple of mistakes and added
+	  CVS tag.
+
+2007-02-21 09:32  bulgheroni
+
+	* src/EUTelClusteringProcessor.cc: Removed the hitStatus vector and
+	  now using the status object.	Implemented the resetStatus method
+	  and called before the cluster search.  Added the _totCluster
+	  IntVec to store the total number of clusters found in each
+	  detector.
+
+2007-02-21 09:30  bulgheroni
+
+	* include/EUTelClusteringProcessor.h: Replaced un-used includes
+	  with forward declarations.  Added the clusterCollectionName as a
+	  processor parameter.	Added the_totCluster IntVec to store the
+	  number of clusters found on each detector.  Added the resetStatus
+	  method to reset the pixel status object before starting the
+	  cluster search
+
+2007-02-20 17:08  bulgheroni
+
+	* ChangeLog: Updated.
+
+2007-02-20 17:07  bulgheroni
+
+	* include/EUTelPedestalNoiseProcessor.h: Removed some @todo already
+	  done!
+
+2007-02-20 17:06  bulgheroni
+
+	* include/EUTelCopyPedestalProcessor.h,
+	  src/EUTelCopyPedestalProcessor.cc: Added a new processor to copy
+	  the pedestal/noise/status conditions to local, writable
+	  collections.
+
+2007-02-20 16:58  bulgheroni
+
+	* src/EUTelPedestalNoiseProcessor.cc: Changed the default value for
+	  the pedestal/noise/status conditions.
+
+2007-02-20 12:35  bulgheroni
+
+	* include/EUTelFFClusterImpl.h, src/EUTelFFClusterImpl.cc: Added
+	  the EUTelescope implementation of the Fixed Frame cluster. This
+	  is just inheriting from the TrackerDataImpl class and provides
+	  some tools to allow direct access to cluster information. Still
+	  to be tested the charge center of mass method.
+
+2007-02-19 12:17  bulgheroni
+
+	* include/EUTELESCOPE.h: Fixed a mistake in the documentation.
+
+2007-02-19 12:16  bulgheroni
+
+	* src/EUTelClusteringProcessor.cc: Moved the clustering procedure
+	  into a protected method named fixedFrameClustering called by the
+	  processEvent if the user selects the FIXEDFRAME algorithm.
+
+2007-02-19 12:16  bulgheroni
+
+	* include/EUTelClusteringProcessor.h: Improved the documentation.
+	  Moved the clustering procedure into a protected method named
+	  fixedFrameClustering called by the processEvent if the user
+	  selects the FIXEDFRAME algorithm.
+
+2007-02-18 12:14  bulgheroni
+
+	* ChangeLog: Updated.
+
+2007-02-18 12:13  bulgheroni
+
+	* src/GNUmakefile: Added the test target to build all test
+	  utilities.
+
+2007-02-18 12:12  bulgheroni
+
+	* test/cluster/: GNUmakefile, README (tags: v00-00-08, v00-00-07,
+	  v00-00-06, v00-00-05, v00-00-04, v00-00-03, v00-00-02,
+	  v00-00-01), clustertest.cc: This simple test program is used to
+	  generate both a pedestal slcio file and another slcio file in
+	  which on the pedestal values a random number of clusters is
+	  injected. This utility is providing a powerfull way to test the
+	  cluster reconstruction capabilities of the
+	  EUTelClusteringProcessor.  In particular this tool is also saving
+	  a text log file listing on an event basis, the position of each
+	  injected cluster.
+
+2007-02-18 11:47  bulgheroni
+
+	* test/pedestal/: GNUmakefile, README (tags: v00-00-08, v00-00-07,
+	  v00-00-06, v00-00-05, v00-00-04, v00-00-03, v00-00-02,
+	  v00-00-01), pedetest.cc: Added a test utility for the
+	  EUTelPedestalNoiseProcessor. This small example program is used
+	  to generate a known pedestal pattern to test the pedestal
+	  processor functionalities. Have a look at the code of pedetest.cc
+	  and eventually adapt it to your testing conditions. To make the
+	  binary file, type make at the command prompt. Running ./pedetest
+	  will produce both a file.root file containing the histograms and
+	  profiles describing the produced pedestal and a slcio file that
+	  can be used as input for the EUTelPedestalNoiseProcessor. The
+	  obtained processor results can be compared with the one included
+	  into file.root
+
+2007-02-17 14:47  bulgheroni
+
+	* ChangeLog: Updated.
+
+2007-02-17 14:37  bulgheroni
+
+	* include/EUTELESCOPE.h, include/EUTelCalibrateEventProcessor.h,
+	  include/EUTelClusteringProcessor.h, include/EUTelExceptions.h,
+	  include/EUTelPedestalNoiseProcessor.h, src/EUTELESCOPE.cc,
+	  src/EUTelCalibrateEventProcessor.cc,
+	  src/EUTelClusteringProcessor.cc,
+	  src/EUTelPedestalNoiseProcessor.cc,
+	  src/EUTelSucimaImagerReader.cc: A lot of work (offline). Almost
+	  ready for the first release.	Added the CalibrateEventProcessor.
+	  This is used to remove the pedestal value from each raw data and
+	  to eventually suppress the common mode.  Added the
+	  ClusteringProcessor able to look for clusters into data.
+
+2007-02-11 09:46  bulgheroni
+
+	* include/EUTelPedestalNoiseProcessor.h,
+	  include/EUTelSucimaImagerReader.h,
+	  src/EUTelPedestalNoiseProcessor.cc,
+	  src/EUTelSucimaImagerReader.cc: Moved the global processor
+	  instance from the implementation to the include file within the
+	  eutelescope namespace.
+
+2007-02-10 09:30  bulgheroni
+
+	* ChangeLog: Updated.
+
+2007-02-10 09:27  bulgheroni
+
+	* src/EUTelPedestalNoiseProcessor.cc: Fixed last errors. Now it is
+	  ready to start the real "physics" debug phase.
+
+2007-02-10 09:03  bulgheroni
+
+	* src/EUTelPedestalNoiseProcessor.cc: Added a missing ";".
+	  Restored the CellIDEncoder since now working with LCIO
+	  v01-08-01-p03 thanks to the precious help of Frank.
+
+2007-02-09 22:14  bulgheroni
+
+	* ChangeLog: Updated.
+
+2007-02-09 21:36  bulgheroni
+
+	* include/EUTelPedestalNoiseProcessor.h,
+	  src/EUTelPedestalNoiseProcessor.cc: A better version but still
+	  not optimized.
+
+2007-02-09 21:34  bulgheroni
+
+	* include/EUTELESCOPE.h, include/EUTelRunHeaderImpl.h,
+	  src/EUTelRunHeaderImpl.cc, src/EUTelSucimaImagerReader.cc,
+	  src/EUTELESCOPE.cc: Added NOOFEVENT as a parameter in the run
+	  header. Still to be improved in the EUTelSucimaImagerReader.
+
+2007-02-09 11:34  bulgheroni
+
+	* ChangeLog: Updated.
+
+2007-02-09 11:33  bulgheroni
+
+	* src/EUTelPedestalNoiseProcessor.cc: Added a new calculation
+	  algorithm (AIDAPROFILE) that requires an AIDA implementation;
+	  still to be verified because of many bugs in RAIDA.  Added a new
+	  masking algorithm (ABSOLUTENOISEVALUE) based on an absolute noise
+	  threshold.  Fixed some problems with histogram filling.  Added an
+	  experimental block to save into an external LCIO file the
+	  pedestal, noise and status collection.  Still not working the
+	  rewind.  There is a problem with the CellIDEncoder class to be
+	  fixed.
+
+2007-02-09 11:29  bulgheroni
+
+	* src/EUTELESCOPE.cc: Added the static definition all newly
+	  introduced constant. Changed BADPIXEL from -1 to 1 because it is
+	  easier to be displayed into the Status Map histogram.
+
+2007-02-09 11:28  bulgheroni
+
+	* include/EUTelPedestalNoiseProcessor.h: Improved the documentation
+	  describing the newly introduced calculation algorithm.  Replaced
+	  DoubleVec with FloatVec and IntVec with ShortVec because in this
+	  way the can be easily assigned to the Tracker(Raw)Data final
+	  results.
+
+2007-02-09 11:24  bulgheroni
+
+	* include/EUTelExceptions.h: Added a file containing all possible
+	  exceptions we can need within the Eutelescope package. All
+	  exceptions are sub-classes of lcio::Exception.
+
+2007-02-09 11:22  bulgheroni
+
+	* include/EUTELESCOPE.h: Added some doc info.  Added some other
+	  constant for algorithm identifications.
+
+2007-02-08 10:44  bulgheroni
+
+	* ChangeLog: Added the ChangeLog generated with cvs2cl.pl tool
+
+2007-02-08 10:40  bulgheroni
+
+	* include/EUTelPedestalNoiseProcessor.h: Improved the
+	  documentation.
+
+2007-02-08 10:39  bulgheroni
+
+	* src/EUTelPedestalNoiseProcessor.cc: Improved the AIDA histogram
+	  generation, but still working on that.
+
+2007-02-07 17:25  bulgheroni
+
+	* include/EUTelPedestalNoiseProcessor.h: Debug up to the end of the
+	  first loop and things seem to be reasonable.	Added (but not yet
+	  finished) some control histograms using AIDAProcessor. So far
+	  tested only with RAIDA implementation.
+
+2007-02-07 17:25  bulgheroni
+
+	* src/EUTelPedestalNoiseProcessor.cc: Commented the throw
+	  RewindDataFilesException in the end() method because otherwise
+	  the execution crashes. Waiting the Frank reply on this on the
+	  linear collider forum.  Debug up to the end of the first loop and
+	  things seem to be reasonable.  Added (but not yet finished) some
+	  control histograms using AIDAProcessor. So far tested only with
+	  RAIDA implementation.
+
+2007-02-07 17:21  bulgheroni
+
+	* src/EUTelSucimaImagerReader.cc: Modified the parameters set in
+	  the run header.
+
+2007-02-07 11:53  bulgheroni
+
+	* README, doc/Doxyfile, include/EUTELESCOPE.h,
+	  include/EUTelPedestalNoiseProcessor.h,
+	  include/EUTelRunHeaderImpl.h, include/EUTelSucimaImagerReader.h,
+	  include/eutelescope.h, src/EUTELESCOPE.cc,
+	  src/EUTelPedestalNoiseProcessor.cc, src/EUTelRunHeaderImpl.cc,
+	  src/EUTelSucimaImagerReader.cc, src/GNUmakefile: Initial revision
+
+2007-02-07 11:53  bulgheroni
+
+	* README (tags: v00-00-08, v00-00-07, v00-00-06, v00-00-05,
+	  v00-00-04, v00-00-03, v00-00-02, v00-00-01), doc/Doxyfile,
+	  include/EUTELESCOPE.h, include/EUTelPedestalNoiseProcessor.h,
+	  include/EUTelRunHeaderImpl.h, include/EUTelSucimaImagerReader.h,
+	  include/eutelescope.h, src/EUTELESCOPE.cc,
+	  src/EUTelPedestalNoiseProcessor.cc, src/EUTelRunHeaderImpl.cc,
+	  src/EUTelSucimaImagerReader.cc, src/GNUmakefile (utags: start):
+	  Initial version
+
