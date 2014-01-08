@@ -1178,44 +1178,12 @@ namespace eutelescope {
         TVectorD measErr(2);
         TVectorD residualErr(2);
         TVectorD downWeight(2);
-       
-//        float *refPoint = 0;
-//        EVENT::TrackVec::const_iterator itTrkCand;
-//        for ( itTrkCand = _trackCandidates.begin(); itTrkCand != _trackCandidates.end(); ++itTrkCand) 
-//        {
-//          refPoint = (*itTrkCand)->getReferencePoint();
-//          break;
-//        }
-	    // Reference point is the last hit on a track
 
-//	    TVectorD prevState = getXYZfromDzNum( invP, tx, ty, refPoint[0], refPoint[1], refPoint[2], 0. );
-//	    double prevZ = refPoint[2];
-/*
-            double step = 0.;
+        TVectorD scat(2);
+        scat.Zero();
+        TVectorD scatPrecSensor(2);
 
-	    // Z axis points along beam direction.
-	    double pt = ( 1./(*itTrkCand)->getOmega() ) * _beamQ;
-	    double px = (*itTrkCand)->getTanLambda() * pt;
-	    double py = pt * sin( (*itTrkCand)->getPhi() );
-	    double pz = pt * cos( (*itTrkCand)->getPhi() );
-
-	    double tx   = px / pz;
-	    double ty   = py / pz;
-	    double invP = _beamQ / sqrt( px*px + pt*pt );
- 
-        streamlog_out(DEBUG4) << "FitTracks   ";
-        streamlog_out(DEBUG4) << " omega: " << std::setw(8) << (*itTrkCand)->getOmega()  ;
-        streamlog_out(DEBUG4) << " Q: " << std::setw(8) << _beamQ ;
-        streamlog_out(DEBUG4) << " px: " << std::setw(8) << px ;
-        streamlog_out(DEBUG4) << " py: " << std::setw(8) << py ;
-        streamlog_out(DEBUG4) << " pz: " << std::setw(8) << pt << std::endl;
- 
-	    // Reference point is the last hit on a track
-	    const float *refPoint = (*itTrkCand)->getReferencePoint();
-
-	    TVectorD prevState = getXYZfromDzNum( invP, tx, ty, refPoint[0], refPoint[1], refPoint[2], 0. );
-	    double prevZ = refPoint[2];
- */
+        double p = _eBeam; // beam momentum 
  
         if( abs(_eBeam)<1e-12) streamlog_out(WARNING) << " provided beam energy is too low, _eBeam = " << _eBeam << " check inputs!" << std::endl;
         double invP = 1./_eBeam;
@@ -1316,12 +1284,14 @@ namespace eutelescope {
 		proL2m[1][0] = rotation[3]; // x projection, yx
 		proL2m[1][1] = rotation[4]; // y projection, yy
 
-//		proL2m.UnitMatrix();
-//	               
+// add measurment (residuals) in the measurement system (module 2D coordinates)
                 addMeasurementsGBL( point, residual, measErr, hitPointLocal, trackPointLocal, hitcov, proL2m);
-//                addMeasurementsGBL( point, residual, measErr, hitPointGlobal,trackPointGlobal,hitcov, proL2m);
+
+// add global derivatives derived from the track parameters after the track fit (coordinate system?)
                 addGlobalParametersGBL( point, alDer, globalLabels, planeID, trackPointLocal, trackDirLocal[0], trackDirLocal[1] );
-//                point.printPoint(1);
+
+// add scatterrers
+                addSiPlaneScattererGBL(point, scat, scatPrecSensor, planeID, p);
  
                 if ( itrHit != ( trackCandidate.end() -1) )
                 {
