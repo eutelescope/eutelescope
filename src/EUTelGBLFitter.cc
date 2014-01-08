@@ -1106,8 +1106,7 @@ namespace eutelescope {
 
               if ( chi2 < _chi2cut ) 
                 {
-                    if ( !ierr ) traj->milleOut( *_mille );
-		    else 
+                    if ( ierr )
                     {
 			traj->printTrajectory(1);
 			traj->printData();
