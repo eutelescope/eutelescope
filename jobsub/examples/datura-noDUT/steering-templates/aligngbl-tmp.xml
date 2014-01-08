@@ -77,13 +77,13 @@
   <!--Ids of planes for which rotation around X will be fixed during millepede call-->
   <!--parameter name="FixedAlignmentPlanesXrotation" type="IntVec"> </parameter-->
   <!--Ids of planes for which X shift will be fixed during millepede call-->
-  <!--parameter name="FixedAlignmentPlanesXshift" type="IntVec"> </parameter-->
+  <parameter name="FixedAlignmentPlanesXshift" type="IntVec">0 5 </parameter>
   <!--Ids of planes for which rotation around Y will be fixed during millepede call-->
   <!--parameter name="FixedAlignmentPlanesYrotation" type="IntVec"> </parameter-->
   <!--Ids of planes for which Y shift will be fixed during millepede call-->
-  <!--parameter name="FixedAlignmentPlanesYshift" type="IntVec"> </parameter-->
+  <parameter name="FixedAlignmentPlanesYshift" type="IntVec">0 5 </parameter>
   <!--Ids of planes for which rotation around Z will be fixed during millepede call-->
-  <!--parameter name="FixedAlignmentPlanesZrotation" type="IntVec"> </parameter-->
+  <parameter name="FixedAlignmentPlanesZrotation" type="IntVec">0 </parameter>
   <!--Ids of planes for which Z shift will be fixed during millepede call-->
   <!--parameter name="FixedAlignmentPlanesZshift" type="IntVec"> </parameter-->
   <!--GBL outlier down-weighting option (t,h,c)-->
@@ -101,35 +101,8 @@
   <parameter name="GearAlignedFile" type="string" value="@GearFilePath@/@GearAlignedFile@"/>
   <!--FOR EXPERTS: List of commands that should be included in the pede steering file. Use '\\' to seperate options and introduce a line break.-->
   <parameter name="PedeSteeringAdditionalCmds" type="StringVec">
-method inversion 5 0.001 \\ 
-outlierdownweighting 10. \\ 
-Constraint 0. \\
-1	1 \\
-Constraint 0. \\
-7	1 \\
-Constraint 0. \\
-31	1 \\
-Constraint 0. \\
-7	1 \\
-8	1 \\
-9	1 \\
-10      1 \\
-11	1 \\
-12	1 \\
-Constraint 0. \\
-1	1 \\
-2	1 \\
-3	1 \\
-4	1 \\
-5	1 \\
-6	1 \\
-Constraint 0. \\
-31	1 \\
-32	1 \\
-33	1 \\
-34	1 \\
-35	1 \\
-36	1 \\ 
+method diagonalization 15 0.001 \\ 
+!outlierdownweighting 10. \\ 
  </parameter>
   <!--Execute the pede at the end of processing using the generated steering file.-->
   <parameter name="RunPede" type="bool" value="@RunPede@"/>
