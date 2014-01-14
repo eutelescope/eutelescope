@@ -85,7 +85,7 @@ res="$r $r $r $r $r $r";
 #########################
 
 # do rotations:
-pede="chi2cut  5. 1.";
+pede="chiscut  5. 1.";
 
 Fxr="0         5"
 Fxs="0 1 2 3 4 5"
