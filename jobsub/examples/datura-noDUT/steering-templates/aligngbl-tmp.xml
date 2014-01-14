@@ -69,23 +69,23 @@
   <!--Ids of planes to have intrinsic resolution modified /-->
   <parameter name="Planes" type="IntVec"> @Planes@ </parameter>
   <!-- on the order of appearing of the plane Ids (Planes param.) list X resolution of every plane /-->
-  <parameter name="xResolutionPlane" type="FloatVec"> @xResolutionPlane@ </parameter>
+  <parameter name="xResolutionPlane" type="FloatVec"> @ResolutionPlane@ </parameter>
   <!-- on the order of appearing of the plane Ids (Planes param.) list Y resolution of every plane /-->
-  <parameter name="yResolutionPlane" type="FloatVec"> @yResolutionPlane@ </parameter>
+  <parameter name="yResolutionPlane" type="FloatVec"> @ResolutionPlane@ </parameter>
   <!--Beam energy [GeV]-->
   <parameter name="BeamEnergy" type="double" value="@BeamEnergy@"/>
   <!--Ids of planes for which rotation around X will be fixed during millepede call-->
-  <!--parameter name="FixedAlignmentPlanesXrotation" type="IntVec"> </parameter-->
+  <parameter name="FixedAlignmentPlanesXrotation" type="IntVec">@FixXrot@ </parameter>
   <!--Ids of planes for which X shift will be fixed during millepede call-->
-  <parameter name="FixedAlignmentPlanesXshift" type="IntVec">0 5 </parameter>
+  <parameter name="FixedAlignmentPlanesXshift" type="IntVec">@FixXshifts@ </parameter>
   <!--Ids of planes for which rotation around Y will be fixed during millepede call-->
-  <!--parameter name="FixedAlignmentPlanesYrotation" type="IntVec"> </parameter-->
+  <parameter name="FixedAlignmentPlanesYrotation" type="IntVec">@FixYrot@ </parameter>
   <!--Ids of planes for which Y shift will be fixed during millepede call-->
-  <parameter name="FixedAlignmentPlanesYshift" type="IntVec">0 5 </parameter>
+  <parameter name="FixedAlignmentPlanesYshift" type="IntVec">@FixYshifts@</parameter>
   <!--Ids of planes for which rotation around Z will be fixed during millepede call-->
-  <parameter name="FixedAlignmentPlanesZrotation" type="IntVec">0 </parameter>
+  <parameter name="FixedAlignmentPlanesZrotation" type="IntVec">@FixZrot@ </parameter>
   <!--Ids of planes for which Z shift will be fixed during millepede call-->
-  <!--parameter name="FixedAlignmentPlanesZshift" type="IntVec"> </parameter-->
+  <parameter name="FixedAlignmentPlanesZshift" type="IntVec">@FixZshifts@ </parameter>
   <!--GBL outlier down-weighting option (t,h,c)-->
   <!--parameter name="GBLMEstimatorType" type="string" value=""/-->
   <!--Name of histogram info xml file-->
@@ -101,8 +101,10 @@
   <parameter name="GearAlignedFile" type="string" value="@GearFilePath@/@GearAlignedFile@"/>
   <!--FOR EXPERTS: List of commands that should be included in the pede steering file. Use '\\' to seperate options and introduce a line break.-->
   <parameter name="PedeSteeringAdditionalCmds" type="StringVec">
-method diagonalization 15 0.001 \\ 
+method inversion 15 0.001 \\
+!method diagonalization 15 0.001 \\ 
 !outlierdownweighting 10. \\ 
+@pede@
  </parameter>
   <!--Execute the pede at the end of processing using the generated steering file.-->
   <parameter name="RunPede" type="bool" value="@RunPede@"/>
