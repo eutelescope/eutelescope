@@ -2,14 +2,17 @@
 
 first="97"
 last="97"
+RUNLIST="runlist-150.csv"
+
+first="33"
+last="33"
+RUNLIST="runlist-20.csv"
 
 #modus="straight"
 #modus="daf"
 modus="gbl"
 
 #DRY=--dry-run
-RUNLIST="runlist-150.csv"
-#RUNLIST="runlist-20.csv"
 
 for i in `seq $first $last`; do
 
