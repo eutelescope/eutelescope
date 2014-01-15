@@ -4,9 +4,9 @@ first="97"
 last="97"
 RUNLIST="runlist-150.csv"
 
-first="33"
-last="33"
-RUNLIST="runlist-20.csv"
+#first="33"
+#last="33"
+#RUNLIST="runlist-20.csv"
 
 #modus="straight"
 #modus="daf"
@@ -44,10 +44,11 @@ Fzs="0 1 2 3 4 5"
 
 r="0.100";res="$r $r $r $r $r $r";
 
+file="output/logs/aligngbl-0000${i}.zip"
 #########################
 $do jobsub.py  $DRY -c config.cfg -csv $RUNLIST                      -o GearAlignedFile="$gear1" -o ResolutionPlane="$res" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o Chi2Cut="5000"  -o pede="$pede" aligngbl $i
 ####
-multi=`unzip  -p  output/logs/aligngbl-000033.zip |grep "multiply all input standard deviations" |cut -d 'r' -f4`; 
+multi=`unzip  -p  $file |grep "multiply all input standard deviations" |cut -d 'r' -f4`; 
 echo "multi:" $multi; 
 r=$(echo "$r*$multi"|bc); 
 res="$r $r $r $r $r $r";
@@ -58,7 +59,7 @@ res="$r $r $r $r $r $r";
 #########################
 $do jobsub.py  $DRY -c config.cfg -csv $RUNLIST                      -o GearAlignedFile="$gear1" -o ResolutionPlane="$res" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o Chi2Cut="5000"  -o pede="$pede" aligngbl $i
 ####
-multi=`unzip  -p  output/logs/aligngbl-000033.zip |grep "multiply all input standard deviations" |cut -d 'r' -f4`; 
+multi=`unzip  -p  $file |grep "multiply all input standard deviations" |cut -d 'r' -f4`; 
 echo "multi:" $multi; 
 r=$(echo "$r*$multi"|bc); 
 res="$r $r $r $r $r $r";
@@ -67,7 +68,7 @@ res="$r $r $r $r $r $r";
 #########################
 $do jobsub.py  $DRY -c config.cfg -csv $RUNLIST -o GearFile="$gear1" -o GearAlignedFile="$gear2" -o ResolutionPlane="$res" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o Chi2Cut="5000"  -o pede="$pede" aligngbl $i
 ####
-multi=`unzip  -p  output/logs/aligngbl-000033.zip |grep "multiply all input standard deviations" |cut -d 'r' -f4`; 
+multi=`unzip  -p  $file |grep "multiply all input standard deviations" |cut -d 'r' -f4`; 
 echo "multi:" $multi; 
 r=$(echo "$r*$multi"|bc); 
 res="$r $r $r $r $r $r";
@@ -78,14 +79,14 @@ res="$r $r $r $r $r $r";
 #########################
 $do jobsub.py  $DRY -c config.cfg -csv $RUNLIST -o GearFile="$gear2" -o GearAlignedFile="$gear3" -o ResolutionPlane="$res" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o Chi2Cut="5000"  -o pede="$pede" aligngbl $i
 ####
-multi=`unzip  -p  output/logs/aligngbl-000033.zip |grep "multiply all input standard deviations" |cut -d 'r' -f4`; 
+multi=`unzip  -p  $file |grep "multiply all input standard deviations" |cut -d 'r' -f4`; 
 echo "multi:" $multi; 
 r=$(echo "$r*$multi"|bc); 
 res="$r $r $r $r $r $r";
 #########################
 
 # do rotations:
-pede="chiscut  5. 1.";
+pede="chiscut  50. 10.";
 
 Fxr="0         5"
 Fxs="0 1 2 3 4 5"
@@ -97,7 +98,7 @@ Fzs="0 1 2 3 4 5"
 #########################
 $do jobsub.py  $DRY -c config.cfg -csv $RUNLIST -o GearFile="$gear3" -o GearAlignedFile="$gear4" -o ResolutionPlane="$res" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}"  -o Chi2Cut="5000" -o pede="$pede" 	aligngbl $i
 ####
-multi=`unzip  -p  output/logs/aligngbl-000033.zip |grep "multiply all input standard deviations" |cut -d 'r' -f4`; 
+multi=`unzip  -p  $file |grep "multiply all input standard deviations" |cut -d 'r' -f4`; 
 echo "multi:" $multi; 
 r=$(echo "$r*$multi"|bc); 
 res="$r $r $r $r $r $r";
@@ -107,7 +108,7 @@ res="$r $r $r $r $r $r";
 #########################
 $do jobsub.py  $DRY -c config.cfg -csv $RUNLIST -o GearFile="$gear4" -o GearAlignedFile="$gear5" -o ResolutionPlane="$res" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}"  -o Chi2Cut="5000" -o pede="$pede"	aligngbl $i
 ####
-multi=`unzip  -p  output/logs/aligngbl-000033.zip |grep "multiply all input standard deviations" |cut -d 'r' -f4`; 
+multi=`unzip  -p  $file |grep "multiply all input standard deviations" |cut -d 'r' -f4`; 
 echo "multi:" $multi; 
 r=$(echo "$r*$multi"|bc); 
 res="$r $r $r $r $r $r";
@@ -116,7 +117,7 @@ res="$r $r $r $r $r $r";
 #########################
 $do jobsub.py  $DRY -c config.cfg -csv $RUNLIST -o GearFile="$gear5" -o GearAlignedFile="$gear6" -o ResolutionPlane="$res" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}"  -o Chi2Cut="5000" -o pede="$pede"	aligngbl $i
 ####
-multi=`unzip  -p  output/logs/aligngbl-000033.zip |grep "multiply all input standard deviations" |cut -d 'r' -f4`; 
+multi=`unzip  -p  $file |grep "multiply all input standard deviations" |cut -d 'r' -f4`; 
 echo "multi:" $multi; 
 r=$(echo "$r*$multi"|bc); 
 res="$r $r $r $r $r $r";
@@ -133,7 +134,7 @@ Fzs="0          "
 #########################
 $do jobsub.py  $DRY -c config.cfg -csv $RUNLIST -o GearFile="$gear6" -o GearAlignedFile="$gear7" -o ResolutionPlane="$res" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}"  -o Chi2Cut="5000" -o pede="$pede"	aligngbl $i
 ####
-multi=`unzip  -p  output/logs/aligngbl-000033.zip |grep "multiply all input standard deviations" |cut -d 'r' -f4`; 
+multi=`unzip  -p  $file |grep "multiply all input standard deviations" |cut -d 'r' -f4`; 
 echo "multi:" $multi; 
 r=$(echo "$r*$multi"|bc); 
 res="$r $r $r $r $r $r";
@@ -142,7 +143,7 @@ res="$r $r $r $r $r $r";
 #########################
 $do jobsub.py  $DRY -c config.cfg -csv $RUNLIST -o GearFile="$gear7" -o GearAlignedFile="$gear8" -o ResolutionPlane="$res" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}"  -o Chi2Cut="5000" -o pede="$pede"	aligngbl $i
 ####
-multi=`unzip  -p  output/logs/aligngbl-000033.zip |grep "multiply all input standard deviations" |cut -d 'r' -f4`; 
+multi=`unzip  -p  $file |grep "multiply all input standard deviations" |cut -d 'r' -f4`; 
 echo "multi:" $multi; 
 r=$(echo "$r*$multi"|bc); 
 res="$r $r $r $r $r $r";
@@ -151,7 +152,7 @@ res="$r $r $r $r $r $r";
 #########################
 $do jobsub.py  $DRY -c config.cfg -csv $RUNLIST -o GearFile="$gear8" -o GearAlignedFile="$gear9" -o ResolutionPlane="$res" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}"  -o Chi2Cut="5000" -o pede="$pede"	aligngbl $i
 ####
-multi=`unzip  -p  output/logs/aligngbl-000033.zip |grep "multiply all input standard deviations" |cut -d 'r' -f4`; 
+multi=`unzip  -p  $file |grep "multiply all input standard deviations" |cut -d 'r' -f4`; 
 echo "multi:" $multi; 
 r=$(echo "$r*$multi"|bc); 
 res="$r $r $r $r $r $r";
@@ -160,7 +161,7 @@ res="$r $r $r $r $r $r";
 #########################
 $do jobsub.py  $DRY -c config.cfg -csv $RUNLIST -o GearFile="$gear9" -o GearAlignedFile="$gear10" -o ResolutionPlane="$res" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}"  -o Chi2Cut="5000" -o pede="$pede"	aligngbl $i
 ####
-multi=`unzip  -p  output/logs/aligngbl-000033.zip |grep "multiply all input standard deviations" |cut -d 'r' -f4`; 
+multi=`unzip  -p  $file |grep "multiply all input standard deviations" |cut -d 'r' -f4`; 
 echo "multi:" $multi; 
 r=$(echo "$r*$multi"|bc); 
 res="$r $r $r $r $r $r";
