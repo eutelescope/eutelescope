@@ -559,8 +559,8 @@ namespace eutelescope {
 
         if (_alignmentMode == Utility::XYZShiftXYRot
                 || _alignmentMode == Utility::XYZShiftXZRotYZRotXYRot) {
-            alDer[0][3] =   xSlope; // dx/dz
-            alDer[1][3] =   ySlope; // dy/dz
+            alDer[0][3] =   -xSlope; // dx/dz
+            alDer[1][3] =   -ySlope; // dy/dz
             globalLabels[3] = _paramterIdZShiftsMap[iPlane]; // dz
         }
 
@@ -568,8 +568,8 @@ namespace eutelescope {
             alDer[0][4] =   predpos[0]*xSlope; // dx/rot y
             alDer[1][4] =   predpos[0]*ySlope; // dy/rot y
             globalLabels[4] = _paramterIdYRotationsMap[iPlane]; // drot y  - actually X?
-            alDer[0][5] =  -predpos[1]*xSlope; // dx/rot x
-            alDer[1][5] =  -predpos[1]*ySlope; // dy/rot x
+            alDer[0][5] =  -predpos[1]*xSlope; // dx/rot x          
+            alDer[1][5] =  -predpos[1]*ySlope; // dy/rot x         
             globalLabels[5] = _paramterIdXRotationsMap[iPlane]; // drot x  - actually Y?
         }
 
