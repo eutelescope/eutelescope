@@ -4,9 +4,9 @@ first="97"
 last="97"
 RUNLIST="runlist-150.csv"
 
-first="33"
-last="33"
-RUNLIST="runlist-20.csv"
+#first="33"
+#last="33"
+#RUNLIST="runlist-20.csv"
 
 #modus="straight"
 #modus="daf"
@@ -39,8 +39,12 @@ elif [[ $modus == "gbl" ]]; then
 # jobsub.py  $DRY -c config.cfg -csv $RUNLIST tracksearchExh $i
  jobsub.py  $DRY -c config.cfg -csv $RUNLIST tracksearchHelix $i
 # echo jobsub.py  $DRY -c config.cfg -csv $RUNLIST aligngbl $i
- jobsub.py  $DRY -c config.cfg -csv $RUNLIST aligngbl $i
- jobsub.py  $DRY -c config.cfg -csv $RUNLIST trackgbl $i
+#
+ bash alignment.sh -r ${i} -l ${RUNLIST}
+#### jobsub.py  $DRY -c config.cfg -csv $RUNLIST aligngbl $i
+#
+# 10 iterations to aligne 6 planes (6D)
+ jobsub.py  $DRY -c config.cfg -o GearAlignedFile="gear-${i}-010.xml" -csv $RUNLIST trackgbl $i
 
 fi
 done
