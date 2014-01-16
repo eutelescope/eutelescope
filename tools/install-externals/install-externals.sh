@@ -35,7 +35,7 @@ rootpyversion="f4600dfd30073a0702c39d4db2c7f307eff953f9" # this is after 0.7.1; 
 wget --output-document="$tempdir/${rootpyversion}.tar.gz" 'https://github.com/rootpy/rootpy/archive/'${rootpyversion}.tar.gz
 if [ ! -d "$pypath/rootpy-dev" ]; then mkdir "$pypath/rootpy-dev"; fi;
 echo "Extracting tar archive..."
-tar --strip-components 1 -C "$pypath/rootpy" -xzf "$tempdir/${rootpyversion}.tar.gz" 
+tar --strip-components 1 -C "$pypath/rootpy-dev" -xzf "$tempdir/${rootpyversion}.tar.gz" 
 echo "... done with rootpy python module"
 
 # Eigen -- linear algebra package
