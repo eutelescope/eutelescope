@@ -1128,7 +1128,7 @@ namespace eutelescope {
 //                     prepareMilleOut( traj, (*itTrkCand)->getTrackerHits(), chi2, ndf, invP, 0., 0., 0., 0. );
                    prepareMilleOut( traj, itTrkCand, chi2, ndf, invP, 0., 0., 0., 0. );
                 }
-                if(traj != 0) delete traj;
+//                if(traj != 0) delete traj;
             }
         } // loop over supplied track candidates
 
@@ -1340,8 +1340,8 @@ namespace eutelescope {
                 addMeasurementsGBL( point, residual, measErr, hitPointLocal, trackPointLocal, hitcov, proL2m);
 
 // add global derivatives derived from the track parameters after the track fit (coordinate system?)
-                 addGlobalParametersGBL( point, alDer, globalLabels, planeID, trackPointLocal, trackDirLocal[0], trackDirLocal[1] );
-//               addGlobalParametersGBL( point, alDer, globalLabels, planeID, trackPointLocal, trackDirGlobal[0], trackDirGlobal[1] );
+                addGlobalParametersGBL( point, alDer, globalLabels, planeID, trackPointLocal, trackDirLocal[0], trackDirLocal[1] );
+//              addGlobalParametersGBL( point, alDer, globalLabels, planeID, trackPointLocal, trackDirGlobal[0], trackDirGlobal[1] );
 
 // add scatterrers
                 addSiPlaneScattererGBL(point, scat, scatPrecSensor, planeID, p);
