@@ -120,7 +120,7 @@
   <!--Name of the Millepede binary file-->
   <!--parameter name="MilleBinaryFilename" type="string" value="mille.bin"/-->
   <!--Maximum chi2 of a track candidate that goes into millepede-->
-  <!--parameter name="MilleMaxChi2Cut" type="double" value="1000"/-->
+  <parameter name="MilleMaxChi2Cut" type="double" value="@Chi2Cut@"/>
   <!--Name of the Millepede result file-->
   <!--parameter name="MilleResultFilename" type="string" value="millepede.res"/-->
   <!--Name of the Millepede steering file to be created-->
