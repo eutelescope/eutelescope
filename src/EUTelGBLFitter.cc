@@ -1086,7 +1086,7 @@ namespace eutelescope {
                 const gear::BField&   B = geo::gGeometry().getMagneticFiled();
                 const double Bmag       = B.at( TVector3(0.,0.,0.) ).r2();
                 
-                gbl::GblTrajectory* traj;
+                gbl::GblTrajectory* traj = 0;
                 if ( Bmag < 1.E-6 ) {
                    traj = new gbl::GblTrajectory( pointList, false );
                 } else {
@@ -1128,6 +1128,7 @@ namespace eutelescope {
 //                     prepareMilleOut( traj, (*itTrkCand)->getTrackerHits(), chi2, ndf, invP, 0., 0., 0., 0. );
                    prepareMilleOut( traj, itTrkCand, chi2, ndf, invP, 0., 0., 0., 0. );
                 }
+                if(traj != 0) delete traj;
             }
         } // loop over supplied track candidates
 
@@ -1170,13 +1171,7 @@ namespace eutelescope {
  
           streamlog_out(DEBUG3) << "refPoint "  << refPoint[0] << " "  << refPoint[1] << " " << refPoint[2]  << std::endl;
 
-//        EVENT::TrackerHitVec::const_reverse_iterator itrHit;
-
-//      for ( itrHit = trackCandidate.rbegin(); itrHit != trackCandidate.rend(); ++itrHit ) {
-//          const int planeID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(*itrHit) );
-//
-
-        std::vector< gbl::GblPoint > pointList;
+          std::vector< gbl::GblPoint > pointList;
 
 //        TMatrixD jacPointToPoint(5, 5);
 //        jacPointToPoint.UnitMatrix();
@@ -1368,16 +1363,15 @@ namespace eutelescope {
          
         } // loop over track hits
 
-                gbl::GblTrajectory* traj;
-//                if ( Bmag < 1.E-6 ) {
-                   traj = new gbl::GblTrajectory( pointList, false );
-//                } else {
-//                   traj = new gbl::GblTrajectory( pointList, true );
-//                }
+        gbl::GblTrajectory* traj;
+        traj = new gbl::GblTrajectory( pointList, false );
  
-                if ( chi2 < _chi2cut ) {
-                    traj->milleOut( *_mille );
-                } 
+        if ( chi2 < _chi2cut ) 
+        {
+             traj->milleOut( *_mille );
+        }
+        
+        delete traj; 
  
    }// Method end prepareMilleOut
 
