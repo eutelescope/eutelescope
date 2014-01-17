@@ -1,0 +1,9 @@
+# files created by ILCSoft install
+.dependencies
+build_env.sh
+
+# files/directories created by CMake
+bin/*
+build/*
+lib/*
+
