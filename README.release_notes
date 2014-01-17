@@ -23,7 +23,7 @@ considered outdated and will no longer be supported.
       files or even compare histograms between files. See the tools/pyroplot/README
       and online documentation for details.  NOTE: due to its
       dependency on rootpy, pyroplot requires Python 2.6 or later.
-*** 0.9.3 (03.01.2014)
+*** 0.9.3 (17.01.2014)
     - includes fixes for treatment of non-zero suppressed data, provided by M. Kofarago (see issue https://eutelescope.web.cern.ch/issue/parts-code-treating-non-zero-suppressed-data-have-bugs)
     - includes fix for hotpixel removal in clustering step, provided by M. Kofarago (see issue https://eutelescope.web.cern.ch/issue/hotpixel-killer-doesnt-work-if-called-dut)
     - fixes edge issue in APIX clustering processor as suggested by J. Lange (see https://eutelescope.web.cern.ch/forum/missing-hits-row-0-dut-after-offline-reco)
