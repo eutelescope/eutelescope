@@ -559,17 +559,17 @@ namespace eutelescope {
 
         if (_alignmentMode == Utility::XYZShiftXYRot
                 || _alignmentMode == Utility::XYZShiftXZRotYZRotXYRot) {
-            alDer[0][3] =   xSlope; // dx/dz
-            alDer[1][3] =   ySlope; // dy/dz
+            alDer[0][3] =   -xSlope; // dx/dz
+            alDer[1][3] =   -ySlope; // dy/dz
             globalLabels[3] = _paramterIdZShiftsMap[iPlane]; // dz
         }
 
         if (_alignmentMode == Utility::XYZShiftXZRotYZRotXYRot) {
-            alDer[0][4] =  predpos[0]*xSlope; // dx/rot y
-            alDer[1][4] =  predpos[0]*ySlope; // dy/rot y
+            alDer[0][4] =   predpos[0]*xSlope; // dx/rot y
+            alDer[1][4] =   predpos[0]*ySlope; // dy/rot y
             globalLabels[4] = _paramterIdYRotationsMap[iPlane]; // drot y  - actually X?
-            alDer[0][5] =  predpos[1]*xSlope; // dx/rot x
-            alDer[1][5] =  predpos[1]*ySlope; // dy/rot x
+            alDer[0][5] =  -predpos[1]*xSlope; // dx/rot x          
+            alDer[1][5] =  -predpos[1]*ySlope; // dy/rot x         
             globalLabels[5] = _paramterIdXRotationsMap[iPlane]; // drot x  - actually Y?
         }
 
@@ -1086,7 +1086,7 @@ namespace eutelescope {
                 const gear::BField&   B = geo::gGeometry().getMagneticFiled();
                 const double Bmag       = B.at( TVector3(0.,0.,0.) ).r2();
                 
-                gbl::GblTrajectory* traj;
+                gbl::GblTrajectory* traj = 0;
                 if ( Bmag < 1.E-6 ) {
                    traj = new gbl::GblTrajectory( pointList, false );
                 } else {
@@ -1106,8 +1106,7 @@ namespace eutelescope {
 
               if ( chi2 < _chi2cut ) 
                 {
-                    if ( !ierr ) traj->milleOut( *_mille );
-		    else 
+                    if ( ierr )
                     {
 			traj->printTrajectory(1);
 			traj->printData();
@@ -1126,8 +1125,10 @@ namespace eutelescope {
                 // Prepare and write Mille Out
                 if (_alignmentMode != Utility::noAlignment) 
                 {
-                    prepareMilleOut( traj, (*itTrkCand)->getTrackerHits(), chi2, ndf, invP, 0., 0., 0., 0. );
+//                     prepareMilleOut( traj, (*itTrkCand)->getTrackerHits(), chi2, ndf, invP, 0., 0., 0., 0. );
+                   prepareMilleOut( traj, itTrkCand, chi2, ndf, invP, 0., 0., 0., 0. );
                 }
+//                if(traj != 0) delete traj;
             }
         } // loop over supplied track candidates
 
@@ -1135,13 +1136,45 @@ namespace eutelescope {
     } // EUTelGBLFitter::FitTracks()
 
 
-    void EUTelGBLFitter::prepareMilleOut( gbl::GblTrajectory* gblTraj, const EVENT::TrackerHitVec& trackCandidate, 
+    void EUTelGBLFitter::prepareMilleOut( gbl::GblTrajectory* gblTraj, const EVENT::TrackVec::const_iterator& itTrkCand, 
                                           double chi2, int ndf, double omega, double d0, double z0, double phi, double tanlam ) {
-        
-            std::vector< gbl::GblPoint > pointList;
 
-            TMatrixD jacPointToPoint(5, 5);
-            jacPointToPoint.UnitMatrix();
+        const EVENT::TrackerHitVec trackCandidate = (*itTrkCand)->getTrackerHits();
+
+// now get starting point:
+          TMatrixD jacPointToPoint(5, 5);
+          jacPointToPoint.UnitMatrix();
+
+          double step = 0.;
+
+          // Z axis points along beam direction.
+          double pt = ( 1./(*itTrkCand)->getOmega() ) * _beamQ;
+          double px = (*itTrkCand)->getTanLambda() * pt;
+	  double py = pt * sin( (*itTrkCand)->getPhi() );
+	  double pz = pt * cos( (*itTrkCand)->getPhi() );
+
+	  double tx   = px / pz;
+	  double ty   = py / pz;
+	  double invP = _beamQ / sqrt( px*px + pt*pt );
+ 
+          const float *refPoint = (*itTrkCand)->getReferencePoint();
+
+          TVectorD prevState = getXYZfromDzNum( invP, tx, ty, refPoint[0], refPoint[1], refPoint[2], 0. );
+          double prevZ = refPoint[2];
+
+          streamlog_out(DEBUG4) << "FitTracks   ";
+          streamlog_out(DEBUG4) << " omega: " << std::setw(8) << (*itTrkCand)->getOmega()  ;
+          streamlog_out(DEBUG4) << " Q: " << std::setw(8) << _beamQ ;
+          streamlog_out(DEBUG4) << " px: " << std::setw(8) << px ;
+          streamlog_out(DEBUG4) << " py: " << std::setw(8) << py ;
+          streamlog_out(DEBUG4) << " pz: " << std::setw(8) << pt << std::endl;
+ 
+          streamlog_out(DEBUG3) << "refPoint "  << refPoint[0] << " "  << refPoint[1] << " " << refPoint[2]  << std::endl;
+
+          std::vector< gbl::GblPoint > pointList;
+
+//        TMatrixD jacPointToPoint(5, 5);
+//        jacPointToPoint.UnitMatrix();
 
         TMatrixD alDer; // alignment derivatives
         std::vector<int> globalLabels;
@@ -1179,52 +1212,19 @@ namespace eutelescope {
         TVectorD measErr(2);
         TVectorD residualErr(2);
         TVectorD downWeight(2);
-       
-//        float *refPoint = 0;
-//        EVENT::TrackVec::const_iterator itTrkCand;
-//        for ( itTrkCand = _trackCandidates.begin(); itTrkCand != _trackCandidates.end(); ++itTrkCand) 
-//        {
-//          refPoint = (*itTrkCand)->getReferencePoint();
-//          break;
-//        }
-	    // Reference point is the last hit on a track
 
-//	    TVectorD prevState = getXYZfromDzNum( invP, tx, ty, refPoint[0], refPoint[1], refPoint[2], 0. );
-//	    double prevZ = refPoint[2];
-/*
-            double step = 0.;
+        TVectorD scat(2);
+        scat.Zero();
+        TVectorD scatPrecSensor(2);
 
-	    // Z axis points along beam direction.
-	    double pt = ( 1./(*itTrkCand)->getOmega() ) * _beamQ;
-	    double px = (*itTrkCand)->getTanLambda() * pt;
-	    double py = pt * sin( (*itTrkCand)->getPhi() );
-	    double pz = pt * cos( (*itTrkCand)->getPhi() );
-
-	    double tx   = px / pz;
-	    double ty   = py / pz;
-	    double invP = _beamQ / sqrt( px*px + pt*pt );
- 
-        streamlog_out(DEBUG4) << "FitTracks   ";
-        streamlog_out(DEBUG4) << " omega: " << std::setw(8) << (*itTrkCand)->getOmega()  ;
-        streamlog_out(DEBUG4) << " Q: " << std::setw(8) << _beamQ ;
-        streamlog_out(DEBUG4) << " px: " << std::setw(8) << px ;
-        streamlog_out(DEBUG4) << " py: " << std::setw(8) << py ;
-        streamlog_out(DEBUG4) << " pz: " << std::setw(8) << pt << std::endl;
- 
-	    // Reference point is the last hit on a track
-	    const float *refPoint = (*itTrkCand)->getReferencePoint();
-
-	    TVectorD prevState = getXYZfromDzNum( invP, tx, ty, refPoint[0], refPoint[1], refPoint[2], 0. );
-	    double prevZ = refPoint[2];
- */
+        double p = _eBeam; // beam momentum 
  
         if( abs(_eBeam)<1e-12) streamlog_out(WARNING) << " provided beam energy is too low, _eBeam = " << _eBeam << " check inputs!" << std::endl;
-        double invP = 1./_eBeam;
+//        double invP = 1./_eBeam;
 
-        EVENT::TrackerHitVec::const_iterator itrHit;
-        for ( itrHit = trackCandidate.begin(); itrHit != trackCandidate.end(); ++itrHit ) {
-
-
+        EVENT::TrackerHitVec::const_reverse_iterator itrHit;
+        for ( itrHit = trackCandidate.rbegin(); itrHit != trackCandidate.rend(); ++itrHit ) 
+        {
             const int planeID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(*itrHit) );
 
             const int hitGblLabel = _hitId2GblPointLabel[ (*itrHit)->id() ];
@@ -1255,13 +1255,32 @@ namespace eutelescope {
             pos[1] -= residual[1] ;
 
 
-	        double trackPointLocal[] = { pos[0], pos[1], pos[2] };
-		double trackPointGlobal[] = { 0., 0., 0. };
-                geo::gGeometry().local2Master( planeID, trackPointLocal, trackPointGlobal );
+	    double trackPointLocal[] = { pos[0], pos[1], pos[2] };
+	    double trackPointGlobal[] = { 0., 0., 0. };
+            geo::gGeometry().local2Master( planeID, trackPointLocal, trackPointGlobal );
 
-		double trackDirLocal[] = { corrections[1], corrections[2], 1. };
-		double trackDirGlobal[] = { 0., 0., 0. };
-		geo::gGeometry().local2MasterVec( planeID, trackDirLocal, trackDirGlobal );
+//--------------- get the track slope...
+            const double dz = trackPointGlobal[2] - prevZ;
+//                step = dz; 
+//                prevZ = hitPointGlobal[2];
+
+//                TVectorD trackParamPrediction = getXYZfromDzNum( invP, prevState[2], prevState[3], prevState[0], prevState[1], prevZ, dz );
+//                TVectorD trackParamPrediction = getXYZfromDzNum( invP, prevState[2], prevState[3], prevState[0], prevState[1], refPoint[2], dz );
+                TVectorD trackParamPrediction = getXYZfromDzNum( invP, prevState[2], prevState[3], prevState[0], prevState[1], prevZ, dz );
+                streamlog_message( DEBUG2,                trackParamPrediction.Print();, std::endl; );
+                prevZ = trackPointGlobal[2];
+
+                prevState[0] =   trackParamPrediction[0];
+                prevState[1] =   trackParamPrediction[1];
+                prevState[2] =   trackParamPrediction[2];
+//---------------
+
+	    double trackDirGlobal[] = { trackParamPrediction[2], trackParamPrediction[3], 1.};
+            double trackDirLocal[] = { 0., 0., 0. };
+//           double trackDirLocal[] = { corrections[1], corrections[2], 1. };
+
+//	    geo::gGeometry().local2MasterVec( planeID, trackDirLocal, trackDirGlobal );
+	    geo::gGeometry().master2LocalVec( planeID, trackDirGlobal, trackDirLocal );
 
             streamlog_out(MESSAGE1) << "fitg2= " << trackPointGlobal[0] << " " << trackPointGlobal[1] << " " << trackPointGlobal[2] << std::endl;
             streamlog_out(MESSAGE1) << "fitl2= " << trackPointLocal[0] << " " << trackPointLocal[1] << " " << trackPointLocal[2] << std::endl;
@@ -1317,14 +1336,17 @@ namespace eutelescope {
 		proL2m[1][0] = rotation[3]; // x projection, yx
 		proL2m[1][1] = rotation[4]; // y projection, yy
 
-//		proL2m.UnitMatrix();
-//	               
+// add measurment (residuals) in the measurement system (module 2D coordinates)
                 addMeasurementsGBL( point, residual, measErr, hitPointLocal, trackPointLocal, hitcov, proL2m);
-//                addMeasurementsGBL( point, residual, measErr, hitPointGlobal,trackPointGlobal,hitcov, proL2m);
+
+// add global derivatives derived from the track parameters after the track fit (coordinate system?)
                 addGlobalParametersGBL( point, alDer, globalLabels, planeID, trackPointLocal, trackDirLocal[0], trackDirLocal[1] );
-//                point.printPoint(1);
+//              addGlobalParametersGBL( point, alDer, globalLabels, planeID, trackPointLocal, trackDirGlobal[0], trackDirGlobal[1] );
+
+// add scatterrers
+                addSiPlaneScattererGBL(point, scat, scatPrecSensor, planeID, p);
  
-                if ( itrHit != ( trackCandidate.end() -1) )
+                if ( itrHit != ( trackCandidate.rend() -1) )
                 {
                     // Go to global coordinates
                     const int nextPlaneID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(*(itrHit + 1)) );
@@ -1341,16 +1363,15 @@ namespace eutelescope {
          
         } // loop over track hits
 
-                gbl::GblTrajectory* traj;
-//                if ( Bmag < 1.E-6 ) {
-                   traj = new gbl::GblTrajectory( pointList, false );
-//                } else {
-//                   traj = new gbl::GblTrajectory( pointList, true );
-//                }
+        gbl::GblTrajectory* traj;
+        traj = new gbl::GblTrajectory( pointList, false );
  
-                if ( chi2 < _chi2cut ) {
-                    traj->milleOut( *_mille );
-                } 
+        if ( chi2 < _chi2cut ) 
+        {
+             traj->milleOut( *_mille );
+        }
+        
+        delete traj; 
  
    }// Method end prepareMilleOut
 

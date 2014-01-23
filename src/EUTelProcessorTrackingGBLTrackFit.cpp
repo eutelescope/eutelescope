@@ -855,12 +855,12 @@ void EUTelProcessorTrackingGBLTrackFit::writeMilleSteeringFile() {
         // if plane not excluded
         if ( !isPlaneExcluded ) {
 
-            const string initUncertaintyXShift = (isFixedXShift) ? "-1." : "0.1";
-            const string initUncertaintyYShift = (isFixedYShift) ? "-1." : "0.1";
-            const string initUncertaintyZShift = (isFixedZShift) ? "-1." : "0.1";
-            const string initUncertaintyXRotation = (isFixedXRotation) ? "-1." : "0.1";
-            const string initUncertaintyYRotation = (isFixedYRotation) ? "-1." : "0.1";
-            const string initUncertaintyZRotation = (isFixedZRotation) ? "-1." : "0.1";
+            const string initUncertaintyXShift = (isFixedXShift) ? "-1." : "0.01";
+            const string initUncertaintyYShift = (isFixedYShift) ? "-1." : "0.01";
+            const string initUncertaintyZShift = (isFixedZShift) ? "-1." : "0.01";
+            const string initUncertaintyXRotation = (isFixedXRotation) ? "-1." : "0.01";
+            const string initUncertaintyYRotation = (isFixedYRotation) ? "-1." : "0.01";
+            const string initUncertaintyZRotation = (isFixedZRotation) ? "-1." : "0.01";
             
             const double initXshift = (isFixedXShift) ? 0. : _seedAlignmentConstants._xResiduals[sensorId]/_seedAlignmentConstants._nxResiduals[sensorId];
             const double initYshift = (isFixedYShift) ? 0. : _seedAlignmentConstants._yResiduals[sensorId]/_seedAlignmentConstants._nyResiduals[sensorId];
