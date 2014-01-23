@@ -42,7 +42,7 @@ then
  exit
 fi
 
-do="echo"
+#do="echo"
 #########################
 $do jobsub.py  $DRY -c config.cfg -csv $RUNLIST                      -o GearAlignedFile="$gear1" -o ResolutionPlane="$res" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o Chi2Cut="5000"  -o pede="$pede" aligngbl $RUN
 ####
