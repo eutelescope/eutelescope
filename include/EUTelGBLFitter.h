@@ -48,6 +48,10 @@ namespace eutelescope {
         explicit EUTelGBLFitter(std::string name);
         virtual ~EUTelGBLFitter();
 
+      // do some clean up of internal data structures
+      // will be automatically run when calling EUTelGBLFitter::FitTracks()
+        void Clear();
+
         void SetTrackCandidates(const EVENT::TrackVec&);
 
 
@@ -162,8 +166,6 @@ namespace eutelescope {
  
         double getTrackSlopeX(const EVENT::TrackerHitVec&) const;
         double getTrackSlopeY(const EVENT::TrackerHitVec&) const;
-
-        void Reset();
 
         void addMeasurementsGBL( gbl::GblPoint&, TVectorD&, TVectorD&, const double*, const double*, const EVENT::FloatVec&, TMatrixD& );
         

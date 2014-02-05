@@ -619,6 +619,8 @@ if( event->getEventNumber()/999*999   == event->getEventNumber() )
         
     } //if( col != NULL )
 
+    _trackFitter->Clear();
+
     _nProcessedEvents++;
 
     if (isFirstEvent()) _isFirstEvent = false;

@@ -457,14 +457,16 @@ namespace eutelescope {
         return ky;
     }
 
-    void EUTelGBLFitter::Reset() {
+
+    void EUTelGBLFitter::Clear() {
         std::map< int, gbl::GblTrajectory* >::iterator it;
         for (it = _gblTrackCandidates.begin(); it != _gblTrackCandidates.end(); ++it) delete it->second;
         _gblTrackCandidates.clear();
         
         _hitId2GblPointLabel.clear();
-        _hitId2GblPointLabelMille.clear();       
+        _hitId2GblPointLabelMille.clear();
     }
+
 
     /** Add a measurement to GBL point
      * 
@@ -765,7 +767,7 @@ namespace eutelescope {
     }
     
     void EUTelGBLFitter::FitTracks() {
-        Reset(); // 
+        Clear(); // 
 
         // prepare output collection
         try {

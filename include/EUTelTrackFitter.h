@@ -43,6 +43,9 @@ namespace eutelescope {
 
         virtual void SetTrackCandidates( const EVENT::TrackVec& );
 
+      // do some clean up of internal data structures
+        virtual void Clear();
+
 
         virtual void FitTracks();
     protected:
