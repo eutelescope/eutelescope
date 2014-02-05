@@ -1228,7 +1228,6 @@ namespace eutelescope {
             const int planeID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(*itrHit) );
 
             const int hitGblLabel = _hitId2GblPointLabel[ (*itrHit)->id() ];
-            IMPL::TrackerHitImpl* hit = new IMPL::TrackerHitImpl();
                   
             gblTraj->getResults( hitGblLabel, corrections, correctionsCov );
             
