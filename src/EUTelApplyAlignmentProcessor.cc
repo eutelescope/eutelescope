@@ -631,15 +631,6 @@ void EUTelApplyAlignmentProcessor::ApplyGear6D( LCEvent *event)
   //cout << "11" << endl;
  
 
-  if ( _iEvt % 1000 == 0 ){
-    streamlog_out ( DEBUG5 ) << "Processing event  (ApplyGear6D) "
-                               << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
-                               << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber()
-                               << setfill(' ')
-                               << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
-  }
-
-
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
 
   if ( evt->getEventType() == kEORE ) 
@@ -825,15 +816,6 @@ void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event)
 {
   //cout << "13" << endl;
  
-  if ( _iEvt % 1000 == 0 ){
-    streamlog_out ( MESSAGE5 ) << "Processing event  (RevertGear6D) "
-                               << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
-                               << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber()
-                               << setfill(' ')
-                               << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
-  }
-
-
 
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
 
@@ -1095,13 +1077,6 @@ void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event)
 void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
   //cout << "15" << endl;
 
-  if ( _iEvt % 1000 == 0 ){
-    streamlog_out ( DEBUG5 ) << "Processing event  (ApplyAlignment Direct) "
-                               << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
-                               << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber()
-                               << setfill(' ')
-                               << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
-  }
 
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
 
@@ -1454,15 +1429,6 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
 void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
   //cout << "17" << endl;
  
-  if ( _iEvt % 1000 == 0 ){
-        streamlog_out ( DEBUG5 ) << "Processing event (ApplyAlignment Reverse) "
-                               << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
-                               << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber()
-                               << setfill(' ')
-                               << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
-  }
-
-
     EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
 
     if ( evt->getEventType() == kEORE ) 

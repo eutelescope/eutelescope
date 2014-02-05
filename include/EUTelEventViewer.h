@@ -225,10 +225,6 @@ namespace eutelescope {
     //! The detector model
     int _detModel;
 
-    //! Total event number
-    int _iEvt;
-
-
   } ;
 
   //! A global instance of the processor.

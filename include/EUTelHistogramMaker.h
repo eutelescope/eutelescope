@@ -328,11 +328,6 @@ namespace eutelescope {
     static std::string _clusterNumberOfHitPixelName;
 #endif
 
-    //! Event counter
-    /*! This is used to count the processed events
-     */
-    int _iEvt;
-
     //! Run counter
     /*! This is used to count the processed run header
      */

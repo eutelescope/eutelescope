@@ -531,13 +531,6 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
   int  debug = ( _debugCount>0 && _iEvt%_debugCount == 0);
 
   debug = 0;
-
-  if (_iEvt % _debugCount == 0  || debug)
-    streamlog_out( MESSAGE4 ) << "Processing event "
-                              << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
-                              << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
-                              << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
-
   ++_iEvt;
 
   event->parameters().setValue( "EventType",2);

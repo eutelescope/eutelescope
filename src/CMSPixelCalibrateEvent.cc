@@ -263,7 +263,6 @@ void CMSPixelCalibrateEventProcessor::init () {
 
     // Set the run and event counters to zero:
     _iRun = 0;
-    _iEvt = 0;
     
     // Initialize geometry:
     initializeGeometry();
@@ -292,15 +291,6 @@ void CMSPixelCalibrateEventProcessor::processRunHeader (LCRunHeader * rdr) {
 
 
 void CMSPixelCalibrateEventProcessor::processEvent (LCEvent * event) {
-
-
-    if ( _iEvt % 1000 == 0 )
-    streamlog_out ( MESSAGE5 ) << "Processing event "
-                               << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
-                               << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
-                               << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
-    ++_iEvt;
-
 
     EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
 

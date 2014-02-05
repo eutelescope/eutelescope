@@ -751,14 +751,6 @@ void EUTelPedestalNoiseProcessor::preLoop( LCEvent * event ) {
     throw SkipEventException(this);
   }
 
-  // tell the user where we are
-  if (_iEvt % 10 == 0)
-    streamlog_out( MESSAGE4 ) << "Processing event "
-                              << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
-                              << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
-                              << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left)
-                              << " - preloop "  <<  endl;
-
   // make some initialization (only in the first event
   if ( isFirstEvent() ) {
 
@@ -866,13 +858,6 @@ void EUTelPedestalNoiseProcessor::firstLoop(LCEvent * event) {
     ++_iEvt;
     throw SkipEventException(this);
   }
-
-  if (_iEvt % 10 == 0)
-    streamlog_out( MESSAGE4 ) << "Processing event "
-                              << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
-                              << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
-                              << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left)
-                              << " - loop " << _iLoop <<  endl;
 
   if ( isFirstEvent() ) {
 
@@ -1072,14 +1057,6 @@ void EUTelPedestalNoiseProcessor::otherLoop(LCEvent * event) {
     ++_iEvt;
     throw SkipEventException(this);
   }
-
-  // keep the user updated
-  if ( _iEvt % 10 == 0 )
-    streamlog_out( MESSAGE4 ) << "Processing event "
-                              << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
-                              << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
-                              << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left)
-                              << " - loop " << _iLoop <<  endl;
 
 
   for ( size_t iCol = 0 ; iCol < _rawDataCollectionNameVec.size() ; ++iCol ) {
@@ -1854,14 +1831,6 @@ void EUTelPedestalNoiseProcessor::additionalMaskingLoop(LCEvent * event) {
     ++_iEvt;
     throw SkipEventException(this);
   }
-
-  // keep the user updated
-  if ( _iEvt % 10 == 0 )
-    streamlog_out( MESSAGE4 ) << "Processing event "
-                              << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
-                              << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
-                              << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left)
-                              << " - loop " << _iLoop <<  endl;
 
   if ( *_nextEventToSkip == _iEvt ) {
     streamlog_out( MESSAGE4 ) << "Event " << _iEvt << " is skipped because labelled bad by the common mode procedure." << endl;

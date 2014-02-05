@@ -83,9 +83,8 @@ void EUTelXCorrelator::init() {
   // usually a good idea to
   printParameters ();
 
-  // set to zero the run and event counters
+  // set to zero the run counter
   _iRun = 0;
-  _iEvt = 0;
 
   // check if the GEAR manager pointer is not null!
   if ( Global::GEAR == 0x0 ) {
@@ -157,15 +156,6 @@ void EUTelXCorrelator::processRunHeader (LCRunHeader * rdr) {
 void EUTelXCorrelator::processEvent (LCEvent * event) {
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-
-  if (_iEvt % 10 == 0)
-    streamlog_out( MESSAGE4 ) << "Processing event "
-                              << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
-                              << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber()
-                              << setfill(' ') << " (Total = " << setw(10) << _iEvt << ")"
-                              << resetiosflags(ios::left) << endl;
-  ++_iEvt;
-
 
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event) ;
 

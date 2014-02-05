@@ -126,9 +126,8 @@ void EUTelCalibrateEventProcessor::init () {
     streamlog_out( WARNING2 ) << "Filling debug histograms is slowing down the procedure" << endl;
   }
 
-  // set to zero the run and event counters
+  // set to zero the run counter
   _iRun = 0;
-  _iEvt = 0;
 
   _isGeometryReady = false;
 
@@ -188,14 +187,6 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
   if ( !_isGeometryReady ) {
     initializeGeometry( event ) ;
   }
-
-  if ( _iEvt % 10 == 0 )
-    streamlog_out ( MESSAGE4 ) << "Processing event "
-                               << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
-                               << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
-                               << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
-  ++_iEvt;
-
 
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
 

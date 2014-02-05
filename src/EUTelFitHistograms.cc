@@ -367,12 +367,6 @@ void EUTelFitHistograms::processEvent( LCEvent * event ) {
 
   bool debug = ( _debugCount>0 && _nEvt%_debugCount == 0);
 
-  if ( _nEvt % 100  == 0 ) {
-    streamlog_out( MESSAGE2 ) << "Processing event "
-                              << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
-                              << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
-                              << " (Total = " << setw(10) << _nEvt << ")" << resetiosflags(ios::left) << endl;
-  }
   _nEvt ++ ;
 
   LCCollection* col;
