@@ -56,6 +56,7 @@ namespace eutelescope {
     _trackCandidates(),
     _gblTrackCandidates(),
     _fittrackvec(0),
+    _fithitsvec(0),
     _parPropJac(5, 5),
     _beamQ(-1),
     _eBeam(-1.),
@@ -87,6 +88,7 @@ namespace eutelescope {
     _trackCandidates(),
     _gblTrackCandidates(),
     _fittrackvec(0),
+    _fithitsvec(0),
     _parPropJac(5, 5),
     _beamQ(-1),
     _eBeam(-1.),
@@ -664,7 +666,6 @@ namespace eutelescope {
             }  
 
             const int hitGblLabel = _hitId2GblPointLabel[ (*itrHit)->id() ];
-            IMPL::TrackerHitImpl* hit = new IMPL::TrackerHitImpl();
                   
             gblTraj->getResults( hitGblLabel, corrections, correctionsCov );
             
@@ -736,7 +737,8 @@ namespace eutelescope {
                 trackRefPoint[0] = hitPointGlobal[0];     trackRefPoint[1] = hitPointGlobal[1];     trackRefPoint[2] = hitPointGlobal[2];
                 omega +=  corrections[0];
             }
-            
+
+            IMPL::TrackerHitImpl* hit = new IMPL::TrackerHitImpl();            
             hit -> setPosition( trackPointLocal );
             EVENT::LCObjectVec originalHit;
             originalHit.push_back( *itrHit );
@@ -745,6 +747,7 @@ namespace eutelescope {
             hit -> setCovMatrix(cov);
             
             fittrack->addHit( hit );
+	    _fithitsvec->addElement( hit ); // fitted hit needs to be stored in a collection separately
         } // loop over track hits
 
         // prepare track
@@ -758,7 +761,7 @@ namespace eutelescope {
         fittrack->setTanLambda( tanlam );   // dip angle of the track at reference point
         
         // add track to LCIO collection vector
-        _fittrackvec->push_back( fittrack );
+        _fittrackvec->addElement( fittrack );
     }
     
     void EUTelGBLFitter::FitTracks() {
@@ -767,11 +770,12 @@ namespace eutelescope {
         // prepare output collection
         try {
             _fittrackvec = new IMPL::LCCollectionVec( EVENT::LCIO::TRACK );
+            _fithitsvec = new IMPL::LCCollectionVec( EVENT::LCIO::TRACKERHIT );
             IMPL::LCFlagImpl flag( _fittrackvec->getFlag( ) );
             flag.setBit( lcio::LCIO::TRBIT_HITS );
             _fittrackvec->setFlag( flag.getFlag( ) );
         } catch ( ... ) {
-            streamlog_out( WARNING2 ) << "Can't allocate output collection" << std::endl;
+            streamlog_out( ERROR2 ) << "Can't allocate output collection" << std::endl;
         }
         
         streamlog_out(DEBUG2) << " EUTelGBLFitter::FitTracks() " << std::endl;
@@ -1128,7 +1132,6 @@ namespace eutelescope {
 //                     prepareMilleOut( traj, (*itTrkCand)->getTrackerHits(), chi2, ndf, invP, 0., 0., 0., 0. );
                    prepareMilleOut( traj, itTrkCand, chi2, ndf, invP, 0., 0., 0., 0. );
                 }
-//                if(traj != 0) delete traj;
             }
         } // loop over supplied track candidates
 

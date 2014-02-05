@@ -82,8 +82,14 @@ namespace eutelescope {
             return _gblTrackCandidates;
         }
 
+      // return the fitted tracks
         IMPL::LCCollectionVec* GetFitTrackVec() const {
             return _fittrackvec;
+        }
+
+      // return the hits belonging to the fitted tracks
+        IMPL::LCCollectionVec* GetFitHitsVec() const {
+            return _fithitsvec;
         }
 
         void SetMilleBinary(gbl::MilleBinary* _mille) {
@@ -180,7 +186,10 @@ namespace eutelescope {
 
         std::map< int, gbl::GblTrajectory* > _gblTrackCandidates;
 
+      // contains the fitted tracks, accessible through class methods
         IMPL::LCCollectionVec *_fittrackvec;
+      // contains the fitted hits, accessible through class methods
+        IMPL::LCCollectionVec *_fithitsvec;
 
     private:
         /** Parameter propagation jacobian */
