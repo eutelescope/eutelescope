@@ -52,7 +52,7 @@ multi=${multi/[eE]+/*10^+};
 multi=${multi/[eE]-/*10^-};
 
 echo "multi:$multi  prev: $prev"; 
-if [[ -n $multi && -n $prev ]];then
+if [[ -n $multi && -n $prev && $(echo "$prev > 0.004"|bc) -eq 1 ]];then
 r=$(echo "scale=4;$prev*$multi"|bc);
 prev=$r; 
 res="$r $r $r $r $r $r"
@@ -71,7 +71,7 @@ multi=`unzip  -p  $file |grep "multiply all input standard deviations" |cut -d '
 multi=${multi/[eE]-/*10^-};
 
 echo "multi:$multi  prev: $prev"; 
-if [[ -n $multi && -n $prev ]];then
+if [[ -n $multi && -n $prev && $(echo "$prev > 0.004"|bc) -eq 1 ]];then
 r=$(echo "scale=4;$prev*$multi"|bc);
 prev=$r; 
 res="$r $r $r $r $r $r"
@@ -90,7 +90,7 @@ multi=`unzip  -p  $file |grep "multiply all input standard deviations" |cut -d '
 multi=${multi/[eE]-/*10^-};
 
 echo "multi:$multi  prev: $prev"; 
-if [[ -n $multi && -n $prev ]];then
+if [[ -n $multi && -n $prev && $(echo "$prev > 0.004"|bc) -eq 1 ]];then
 r=$(echo "scale=4;$prev*$multi"|bc);
 prev=$r; 
 res="$r $r $r $r $r $r"
@@ -110,7 +110,7 @@ multi=`unzip  -p  $file |grep "multiply all input standard deviations" |cut -d '
 multi=${multi/[eE]-/*10^-};
 
 echo "multi:$multi  prev: $prev"; 
-if [[ -n $multi && -n $prev ]];then
+if [[ -n $multi && -n $prev && $(echo "$prev > 0.004"|bc) -eq 1 ]];then
 r=$(echo "scale=4;$prev*$multi"|bc);
 prev=$r; 
 res="$r $r $r $r $r $r"
@@ -136,7 +136,7 @@ multi=`unzip  -p  $file |grep "multiply all input standard deviations" |cut -d '
 multi=${multi/[eE]-/*10^-};
 
 echo "multi:$multi  prev: $prev"; 
-if [[ -n $multi && -n $prev ]];then
+if [[ -n $multi && -n $prev && $(echo "$prev > 0.004"|bc) -eq 1 ]];then
 r=$(echo "scale=4;$prev*$multi"|bc);
 prev=$r; 
 res="$r $r $r $r $r $r"
@@ -154,7 +154,7 @@ multi=`unzip  -p  $file |grep "multiply all input standard deviations" |cut -d '
 multi=${multi/[eE]-/*10^-};
 
 echo "multi:$multi  prev: $prev"; 
-if [[ -n $multi && -n $prev ]];then
+if [[ -n $multi && -n $prev && $(echo "$prev > 0.004"|bc) -eq 1 ]];then
 r=$(echo "scale=4;$prev*$multi"|bc);
 prev=$r; 
 res="$r $r $r $r $r $r"
@@ -171,7 +171,7 @@ multi=`unzip  -p  $file |grep "multiply all input standard deviations" |cut -d '
 multi=${multi/[eE]-/*10^-};
 
 echo "multi:$multi  prev: $prev"; 
-if [[ -n $multi && -n $prev ]];then
+if [[ -n $multi && -n $prev && $(echo "$prev > 0.004"|bc) -eq 1 ]];then
 r=$(echo "scale=4;$prev*$multi"|bc);
 prev=$r; 
 res="$r $r $r $r $r $r"
@@ -197,7 +197,7 @@ multi=`unzip  -p  $file |grep "multiply all input standard deviations" |cut -d '
 multi=${multi/[eE]-/*10^-};
 
 echo "multi:$multi  prev: $prev"; 
-if [[ -n $multi && -n $prev ]];then
+if [[ -n $multi && -n $prev && $(echo "$prev > 0.004"|bc) -eq 1 ]];then
 r=$(echo "scale=4;$prev*$multi"|bc);
 prev=$r; 
 res="$r $r $r $r $r $r"
@@ -214,7 +214,7 @@ multi=`unzip  -p  $file |grep "multiply all input standard deviations" |cut -d '
 multi=${multi/[eE]-/*10^-};
 
 echo "multi:$multi  prev: $prev"; 
-if [[ -n $multi && -n $prev ]];then
+if [[ -n $multi && -n $prev && $(echo "$prev > 0.004"|bc) -eq 1 ]];then
 r=$(echo "scale=4;$prev*$multi"|bc);
 prev=$r; 
 res="$r $r $r $r $r $r"
@@ -231,7 +231,7 @@ multi=`unzip  -p  $file |grep "multiply all input standard deviations" |cut -d '
 multi=${multi/[eE]-/*10^-};
 
 echo "multi:$multi  prev: $prev"; 
-if [[ -n $multi && -n $prev ]];then
+if [[ -n $multi && -n $prev && $(echo "$prev > 0.004"|bc) -eq 1 ]];then
 r=$(echo "scale=4;$prev*$multi"|bc);
 prev=$r; 
 res="$r $r $r $r $r $r"
@@ -248,7 +248,7 @@ multi=`unzip  -p  $file |grep "multiply all input standard deviations" |cut -d '
 multi=${multi/[eE]-/*10^-};
 
 echo "multi:$multi  prev: $prev"; 
-if [[ -n $multi && -n $prev ]];then
+if [[ -n $multi && -n $prev && $(echo "$prev > 0.004"|bc) -eq 1 ]];then
 r=$(echo "scale=4;$prev*$multi"|bc);
 prev=$r; 
 res="$r $r $r $r $r $r"
