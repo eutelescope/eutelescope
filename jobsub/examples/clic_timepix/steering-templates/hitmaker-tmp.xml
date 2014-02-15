@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="us-ascii"?>
+<!-- ?xml-stylesheet type="text/xsl" href="http://ilcsoft.desy.de/marlin/marlin.xsl"? -->
+<!-- ?xml-stylesheet type="text/xsl" href="marlin.xsl"? -->
+
+<!-- 
+
+==========================================================================================
+                     Steering file template for the pysub framework
+
+                               ==> hitmaker-tmp.xml <===
+
+Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+Version: $Id: hitmaker-tmp.xml,v 1.3 2009-06-04 17:19:01 bulgheroni Exp $
+==========================================================================================
+
+--> 
+
+<marlin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ilcsoft.desy.de/marlin/marlin.xsd">
+
+   <execute>
+      <processor name="AIDA"/>
+      <processor name="LoadHotPixelDB"/>
+      <--processor name="TPLoadHotPixelDB"/>      
+      <!--processor name="Mimosa26EUTelAutoPedestalNoiseProcessor"-->
+      <!-- processor name="GeoSelection"/ -->
+      <--processor name="LoadRefHitDB"/-->
+      <processor name="HitMakerM26"/>
+      <processor name="HitMakerTP"/>
+      <--processor name="PreAligner"/> 
+      <--processor name="Correlator"/> 
+      <processor name="MyEUTelUtilityPrintEventNumber"/>
+
+      <processor name="Save"/>
+   </execute>
+
+   <global>
+      <parameter name="LCIOInputFiles"> @InputFile@  </parameter>
+      <parameter name="GearXMLFile" value="@GearPath@/@GearFile@"/>
+      <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
+      <parameter name="SkipNEvents" value="0"/>
+      <parameter name="SupressCheck" value="false"/>
+      <parameter name="Verbosity" value="@Verbosity@"/>
+   </global>
+
+ <processor name="AIDA" type="AIDAProcessor">
+ <!--Processor that handles AIDA files. Creates on directory per processor.  Processors only need to create and fill the histograms, clouds and tuples. Needs to be the first ActiveProcessor-->
+  <!-- compression of output file 0: false >0: true (default) -->
+  <parameter name="Compress" type="int" value="1"/>
+  <!-- filename without extension-->
+  <parameter name="FileName" type="string" value="@HistoPath@/@Output@-hit-histo"/>
+  <!-- type of output file xml (default) or root ( only OpenScientist)-->
+  <parameter name="FileType" type="string" value="root"/>
+ </processor>
+
+  
+   <processor name="LoadRefHitDB"     type="ConditionsProcessor">
+    <parameter name="DBInit" type="string" value="localhost:lccd_test:align:tel"/>
+    <parameter name="SimpleFileHandler" type="StringVec"> refhit  @DBPath@/@Output@-refhit-db.slcio referenceHit  </parameter>
+  </processor>
+
+  
+  
+  
+  
+  <processor name="LoadHotPixelDB" type="ConditionsProcessor">
+    <!--ConditionsProcessor provides access to conditions data  transparently from LCIO files or a databases, using LCCD-->
+    <!--Initialization of a conditions database handler-->
+    <!--parameter name="DBCondHandler" type="StringVec"> conditionsName /lccd/myfolder HEAD </parameter-->
+    <!--Initialization of a conditions db file handler-->
+    <!--parameter name="DBFileHandler" type="StringVec"> conditionsName conditions.slcio collectionName </parameter-->
+    <!--Initialization string for conditions database-->
+    <parameter name="DBInit" type="string" value="localhost:lccd_test:calvin:hobbes"/>
+    <!--Initialization of a data file handler-->
+    <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
+    <!--Initialization of a simple conditions file handler-->
+    <parameter name="SimpleFileHandler" type="StringVec"> hotpixel_m26   @DBPath@/@Output@-hotpixel-db.slcio hotpixel_m26  </parameter>
+  </processor>
+ 
+  <processor name="TPLoadHotPixelDB" type="ConditionsProcessor">
+    <!--ConditionsProcessor provides access to conditions data  transparently from LCIO files or a databases, using LCCD-->
+    <!--Initialization of a conditions database handler-->
+    <!--parameter name="DBCondHandler" type="StringVec"> conditionsName /lccd/myfolder HEAD </parameter-->
+    <!--Initialization of a conditions db file handler-->
+    <!--parameter name="DBFileHandler" type="StringVec"> conditionsName conditions.slcio collectionName </parameter-->
+    <!--Initialization string for conditions database-->
+    <parameter name="DBInit" type="string" value="localhost:lccd_test:calvin:hobbes"/>
+    <!--Initialization of a data file handler-->
+    <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
+    <!--Initialization of a simple conditions file handler-->
+    <parameter name="SimpleFileHandler" type="StringVec"> hotpixel_tp  @DBPath@/run@RunNumber@-hotpixel-db.slcio hotpixel_tp  </parameter>
+  </processor>
+
+ <processor name="Mimosa26EUTelAutoPedestalNoiseProcessor" type="EUTelAutoPedestalNoiseProcessor">
+ <!--EUTelAutoPedestalNoiseProcessor produces initial pedestal / noise / status with user provided values-->
+  <!--Noise local collection-->
+  <parameter name="NoiseCollectionName" type="string" lcioOutType="TrackerData"> noiseDB </parameter>
+  <!--Pedestal local collection-->
+  <parameter name="PedestalCollectionName" type="string"  lcioOutType="TrackerData"> pedestalDB </parameter>
+  <!--Pixel status collection-->
+  <parameter name="StatusCollectionName" type="string" lcioOutType="TrackerRawData"> statusDB   </parameter>
+  <!--The initial value of noise (one value for detector)-->
+  <parameter name="InitNoiseValue" type="FloatVec"> 1 1 1 1 1 1     </parameter>
+  <!--The initial value of pedestal (one value for detector)-->
+  <parameter name="InitPedestalValue" type="FloatVec"> 0 0 0 0 0 0   </parameter>
+  <!--The maximum pixel along x (default 255, one value per detector)-->
+  <parameter name="MaxXVector" type="IntVec"> 1151 1151 1151 1151 1151 1151 </parameter>
+  <!--The maximum pixel along y (default 255, one value per detector)-->
+  <parameter name="MaxYVector" type="IntVec"> 575 575 575 575 575 575     </parameter>
+  <!--The minimum pixel along x (default 0, one value per detector)-->
+  <parameter name="MinXVector" type="IntVec"> 0 0 0 0 0 0   </parameter>
+  <!--The minimum pixel along y (default 0, one value per detector)-->
+  <parameter name="MinYVector" type="IntVec"> 0 0 0 0 0 0   </parameter>
+  <!--The sensorID for the generated collection (one per detector)-->
+  <parameter name="SensorIDVec" type="IntVec"> 0 1 2 3 4 5  </parameter>
+</processor>
+
+
+
+
+ <processor name="HitMakerM26" type="EUTelHitMaker">
+ <!--EUTelHitMaker is responsible to translate cluster centers from the local frame of reference to the external frame of reference using the GEAR geometry description-->
+  <!--Cluster (pulse) collection name-->
+  <parameter name="PulseCollectionName" type="string" lcioInType="TrackerPulse"> cluster_m26 </parameter>
+  <!--Hit collection name-->
+  <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit </parameter>
+  <!--Select here how the center of gravity should be calculated.
+FULL: using the full cluster
+NPixel: using only the first N most significant pixels (set NPixel too)
+NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-->
+  <parameter name="CoGAlgorithm" type="string" value="FULL"/>
+  <!--If true a 3D histo will be filled. It may require large memory-->
+  <parameter name="Enable3DHisto" type="bool" value="false"/>
+  <!--The name of the collections containing the eta function (x and y respectively)-->
+  <!--parameter name="EtaCollectionName" type="StringVec"> xEta yEta </parameter-->
+  <!--Enable or disable eta correction-->
+  <parameter name="EtaSwitch" type="bool" value="false"/>
+  <!--The number of most significant pixels to be used if CoGAlgorithm is "NPixel"-->
+  <!--parameter name="NPixel" type="int" value="9"/-->
+  <!--The submatrix size to be used for CoGAlgorithm = "NxMPixel"-->
+  <parameter name="NxMPixel" type="IntVec"> 3 3 </parameter>
+  <parameter name="ReferenceHitFile" type="string"> @DBPath@/@Output@-refhit-db.slcio </parameter>
+  
+</processor>
+
+
+ <processor name="HitMakerTP" type="EUTelHitMaker">
+ <!--EUTelHitMaker is responsible to translate cluster centers from the local frame of reference to the external frame of reference using the GEAR geometry description-->
+  <!--Cluster (pulse) collection name-->
+  <parameter name="PulseCollectionName" type="string" lcioInType="TrackerPulse"> cluster_timepix </parameter>
+  <!--Hit collection name-->
+  <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit </parameter>
+  <!--Select here how the center of gravity should be calculated.
+FULL: using the full cluster
+NPixel: using only the first N most significant pixels (set NPixel too)
+NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-->
+  <parameter name="CoGAlgorithm" type="string" value="FULL"/>
+  <!--If true a 3D histo will be filled. It may require large memory-->
+  <parameter name="Enable3DHisto" type="bool" value="false"/>
+  <!--The name of the collections containing the eta function (x and y respectively)-->
+  <!--parameter name="EtaCollectionName" type="StringVec"> xEta yEta </parameter-->
+  <!--Enable or disable eta correction-->
+  <parameter name="EtaSwitch" type="bool" value="false"/>
+  <!--The number of most significant pixels to be used if CoGAlgorithm is "NPixel"-->
+  <!--parameter name="NPixel" type="int" value="9"/-->
+  <!--The submatrix size to be used for CoGAlgorithm = "NxMPixel"-->
+  <parameter name="NxMPixel" type="IntVec"> 3 3 </parameter>
+  <parameter name="ReferenceHitFile" type="string"> @DBPath@/@Output@-refhit-db.slcio </parameter>
+</processor>
+
+
+
+ <processor name="Save" type="EUTelOutputProcessor">
+ <!--Writes the current event to the specified LCIO outputfile. Eventually it adds a EORE at the of the file if it was missing Needs to be the last ActiveProcessor.-->
+  <!--drops the named collections from the event-->
+  <parameter name="DropCollectionNames" type="StringVec"> filteredcluster zsdata refilteredcluster </parameter>
+  <!--drops all collections of the given type from the event-->
+  <!--parameter name="DropCollectionTypes" type="StringVec"> SimTrackerHit SimCalorimeterHit </parameter-->
+  <!-- write complete objects in subset collections to the file (i.e. ignore subset flag)-->
+  <!--parameter name="FullSubsetCollections" type="StringVec" value="MCParticlesSkimmed"/-->
+  <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
+  <!--parameter name="KeepCollectionNames" type="StringVec" value="MyPreciousSimTrackerHits"/-->
+  <!-- name of output file -->
+  <parameter name="LCIOOutputFile" type="string" value="@ResultsPath@/@Output@-hit.slcio "/>
+  <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
+  <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
+  <!--Set it to true to remove intermediate EORE in merged runs-->
+  <parameter name="SkipIntermediateEORE" type="bool" value="true"/>
+  <!--will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW-->
+  <!-- <parameter name="SplitFileSizekB" type="int" value="1000000"/> DP -->
+</processor>
+
+<processor name="MyEUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">
+ <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
+  <!--Print event number for every n-th event-->
+  <parameter name="EveryNEvents" type="int" value="1000"/>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string" value=""/-->
+  <!--print the event timestamp as read from LCIO-->
+  <!--parameter name="printTimestamp" type="bool" value="false"/-->
+</processor>
+
+<processor name="PreAligner" type="EUTelPreAlign">
+    <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
+    <parameter name="AlignmentConstantLCIOFile" type="string"> @DBPath@/@Output@-prealign-db.slcio </parameter>
+    <parameter name="MinNumberOfCorrelatedHits" type="int" value="7"/>
+
+    </processor>
+  
+ 
+ 
+<processor name="Correlator" type="EUTelCorrelator">
+ <!--EUTelCorrelator fills histograms with correlation plots-->
+  <!--Hit collection name-->
+  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
+  <parameter name="Events" type="int" value="1000000"/>
+  <parameter name="DumpOffset" type="bool" > false </parameter>
+</processor>
+
+</marlin>

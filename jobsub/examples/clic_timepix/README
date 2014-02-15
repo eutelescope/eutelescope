@@ -1,0 +1,36 @@
+******* PLEASE NOTE *******
+This example mainly demonstrates how to set up a test case for
+EUTelescope development. The steering-templates are based on older
+pysub-templates and have not been optimized.
+******* PLEASE NOTE *******
+
+This directory contains an example configuration for the Datura
+telescope with six planes of Mimosa26 without DUT.
+
+This example is based on a test beam campaign done in May 2012 at DESY
+by the DESY CMS pixel group.
+
+The corresponding data can be found at:
+/afs/desy.de/group/telescopes/EutelTestData/TestExampleDaturaAlone
+
+If you are interested in the data but cannot access the above path,
+please contact the EUTelescope software coordinators.
+
+
+Features of this configuration:
+------------------------------
+
+- telescope alone, no DUT data
+- "passive material" (CMS pixel sensor+ROC, socket, and PCB) in between telescope arms
+
+
+Known issues:
+------------
+
+- does not use the reference vector framework for identifying a sensor
+  plane corresponding to a hit; therefore, planes are identified by
+  their z-coordinate which could lead to problems if this
+  configuration is used in geometries with overlapping sensor layers
+  (in z)
+
+- no actual data analysis is performed in this example
