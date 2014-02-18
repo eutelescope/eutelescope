@@ -11,6 +11,9 @@ lib/*
 *.raw
 *.slcio
 
+# Ignore ROOT files:
+*.root
+
 # Ignore logs:
 *.zip
 *.log
