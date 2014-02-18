@@ -90,9 +90,8 @@ void EUTelMimosa26Generator::init () {
   // usually a good idea to
   printParameters ();
 
-  // set to zero the run and event counters
+  // set to zero the run counter
   _iRun = 0;
-  _iEvt = 0;
 
 }
 
@@ -120,19 +119,6 @@ void EUTelMimosa26Generator::processRunHeader (LCRunHeader * rdr) {
 
 void EUTelMimosa26Generator::processEvent (LCEvent * event) {
 
-
-  
-
-  if (_iEvt % 10 == 0) 
-    streamlog_out( MESSAGE4 ) << "Processing event " 
-			      << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
-			      << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
-			      << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
-
-  // right place to increment the event counter
-  ++_iEvt;   
-
- 
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
 
   if ( evt->getEventType() == kEORE ) {

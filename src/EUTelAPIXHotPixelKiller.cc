@@ -351,13 +351,6 @@ void EUTelAPIXHotPixelKiller::processEvent (LCEvent * event)
     }
     
     if ( _iCycle > static_cast< unsigned short >( _totalNoOfCycle ) ) return;
-
-    if (_iEvt % 1000 == 0)
-        streamlog_out( MESSAGE4 ) << "Processing event "
-            << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
-            << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
-            << " (Total = " << setw(10) << (_iCycle * _noOfEventPerCycle) + _iEvt << ")"
-            << resetiosflags(ios::left) << endl;
     
     EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
     if ( evt->getEventType() == kEORE ) 

@@ -130,7 +130,6 @@ void EUTelAPIXClusteringProcessor::init () {
 	streamlog_out( MESSAGE4 ) << "Initing" << endl;
 	streamlog_out(MESSAGE4) << "Histofile is: " << _histoInfoFileName << endl;
 	_iRun = 0;
-	_iEvt = 0;
   // this method is called only once even when the rewind is active
   // usually a good idea to
 
@@ -220,12 +219,6 @@ void EUTelAPIXClusteringProcessor::modifyEvent( LCEvent * /* event */ ){
 }
 
 void EUTelAPIXClusteringProcessor::processEvent (LCEvent * event) {
-	if (_iEvt % 50 == 0)
-	streamlog_out( MESSAGE4 ) << "Processing event "
-		<< setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
-		<< setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
-		<< " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
-	++_iEvt;
 	
 	/* -------------- */
 
@@ -244,7 +237,7 @@ void EUTelAPIXClusteringProcessor::processEvent (LCEvent * event) {
 	try {
 		event->getCollection( _zsDataCollectionName ) ;
 	} catch (lcio::DataNotAvailableException& e ) {
-		streamlog_out ( DEBUG4 ) << "No ZS data found in the event " << _iEvt << endl;
+		streamlog_out ( DEBUG4 ) << "No ZS data found in the event " << endl;
           return;
 	}
 	

@@ -449,14 +449,6 @@ void EUTelMultiLineFit::FitTrack(int nPlanesFitter, double xPosFitter[], double 
 
 void EUTelMultiLineFit::processEvent (LCEvent * event) {
   
-  if ( _iEvt % 10  == 0 ) {
-    streamlog_out( MESSAGE2 ) << "Processing event " 	 
-                              << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run " 	 
-                              << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ') 	 
-                              << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl; 	 
-    
- }
-
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event) ;
 
   if ( evt->getEventType() == kEORE ) {

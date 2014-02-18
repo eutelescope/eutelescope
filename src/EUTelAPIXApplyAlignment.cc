@@ -77,7 +77,6 @@ void EUTelAPIXApplyAlign::init () {
 
   // set to zero the run and event counters
   _iRun = 0;
-  _iEvt = 0;
 
   // check if the GEAR manager pointer is not null!
   if ( Global::GEAR == NULL ) {
@@ -104,13 +103,6 @@ void EUTelAPIXApplyAlign::processRunHeader (LCRunHeader * rdr) {
 }
 
 void EUTelAPIXApplyAlign::processEvent (LCEvent * event) {
-  ++_iEvt;
-  if ( _iEvt % 10000 == 0 )
-    streamlog_out ( MESSAGE4 ) << "Processing event "
-                               << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
-                               << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber()
-                               << setfill(' ')
-                               << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
 
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
 

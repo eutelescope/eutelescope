@@ -89,8 +89,6 @@ void EUTelRawDataSparsifier::init () {
 
   // set to zero the run and event counters
   _iRun = 0;
-  _iEvt = 0;
-
 }
 
 void EUTelRawDataSparsifier::processRunHeader (LCRunHeader * rdr) {
@@ -105,16 +103,6 @@ void EUTelRawDataSparsifier::processRunHeader (LCRunHeader * rdr) {
 
 
 void EUTelRawDataSparsifier::processEvent (LCEvent * event) {
-
-  if (_iEvt % 10 == 0)
-    streamlog_out( MESSAGE4 ) << "Processing event "
-                              << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
-                              << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
-                              << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
-
-  // right place to increment the event counter
-  ++_iEvt;
-
 
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
 

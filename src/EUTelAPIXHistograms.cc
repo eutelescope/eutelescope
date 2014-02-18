@@ -451,6 +451,7 @@ void EUTelAPIXHistograms::processRunHeader( LCRunHeader* runHeader) {
 
 void EUTelAPIXHistograms::processEvent( LCEvent * event ) {
 
+  _nEvt++;
 
   EUTelEventImpl * euEvent = static_cast<EUTelEventImpl*> ( event );
   if ( euEvent->getEventType() == kEORE ) {
@@ -460,18 +461,7 @@ void EUTelAPIXHistograms::processEvent( LCEvent * event ) {
 
   bool debug = ( _debugCount>0 && _nEvt%_debugCount == 0);
 
-  if ( _nEvt % 1000 == 0 ) {
-    streamlog_out( MESSAGE2 ) << "Processing event "
-                              << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
-                              << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
-                              << " (Total = " << setw(10) << _nEvt << ")" << resetiosflags(ios::left) << endl;
-  }
-
-  _nEvt ++ ;
   int evtNr = event->getEventNumber();
-
-
-  if(debug)message<MESSAGE5> ( log() << "Processing record " << _nEvt << " == event " << evtNr );
 
   //
   // Get input collections

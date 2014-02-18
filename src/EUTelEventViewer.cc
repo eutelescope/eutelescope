@@ -64,8 +64,7 @@ EUTelEventViewer::EUTelEventViewer()
    _layerTrack(-1),
    _waitForKeyboard(true),
    _autoForwardDelay(4.0),
-   _detModel(99999),
-   _iEvt(0)
+   _detModel(99999)
 {
 
   _description = "Event display" ;
@@ -125,8 +124,6 @@ void EUTelEventViewer::init() {
 
   MarlinCED::init(this) ;
 
-  _iEvt = 0;;
-
 }
 
 
@@ -139,12 +136,6 @@ void EUTelEventViewer::processRunHeader( LCRunHeader * rdr ) {
 
 void EUTelEventViewer::processEvent( LCEvent * evt ) {
 
-  if ( _iEvt % 10 == 0 ) {
-    streamlog_out( MESSAGE4 ) << "Processing event "
-                              << setw(6) << setiosflags(ios::right) << evt->getEventNumber() << " in run "
-                              << setw(6) << setiosflags(ios::right) << setfill('0')  << evt->getRunNumber() << setfill(' ')
-                              << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
-  }
 
   EUTelEventImpl * event = static_cast<EUTelEventImpl *> ( evt );
 
@@ -305,8 +296,6 @@ void EUTelEventViewer::processEvent( LCEvent * evt ) {
   // _autoForwardDelay second before continue
   if ( ! _waitForKeyboard ) usleep( static_cast< int > (_autoForwardDelay * 1000000) );
 
-  // increment the event number
-  ++_iEvt;
 }
 
 

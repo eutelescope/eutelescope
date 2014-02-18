@@ -74,9 +74,8 @@ void EUTelClusterSeparationProcessor::init () {
   // usually a good idea to
   printParameters ();
 
-  // set to zero the run and event counters
+  // set to zero the run counter
   _iRun = 0;
-  _iEvt = 0;
 
 }
 
@@ -92,14 +91,6 @@ void EUTelClusterSeparationProcessor::processRunHeader (LCRunHeader * rdr) {
 
 
 void EUTelClusterSeparationProcessor::processEvent (LCEvent * event) {
-
-  if (_iEvt % 10 == 0)
-    streamlog_out( MESSAGE4 ) << "Processing event "
-                              << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
-                              << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
-                              << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
-  ++_iEvt;
-
 
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> ( event );
 
@@ -263,7 +254,7 @@ bool EUTelClusterSeparationProcessor::applySeparationAlgorithm(std::vector<std::
 
   //  message<DEBUG5> ( log() << "Applying cluster separation algorithm
   //  " << _separationAlgo );
-  streamlog_out ( DEBUG0 ) <<  "Found "  << setVector.size() << " group(s) of merging clusters on event " << _iEvt << endl;
+  streamlog_out ( DEBUG0 ) <<  "Found "  << setVector.size() << " group(s) of merging clusters " << endl;
 
   if ( _separationAlgo == EUTELESCOPE::FLAGONLY ) {
 

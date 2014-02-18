@@ -124,7 +124,6 @@ void EUTelHistogramMaker::init () {
   printParameters ();
 
   _iRun = 0;
-  _iEvt = 0;
 
   // set to false the geometry ready flag, i.e. force a geometry
   // initialization as soon as possible.
@@ -193,13 +192,6 @@ void EUTelHistogramMaker::initializeGeometry( LCEvent * event ) {
 void EUTelHistogramMaker::processEvent (LCEvent * evt) {
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-
-  if (_iEvt % 10 == 0)
-    streamlog_out( MESSAGE4 ) << "Processing event "
-                              << setw(6) << setiosflags(ios::right) << evt->getEventNumber() << " in run "
-                              << setw(6) << setiosflags(ios::right) << setfill('0')  << evt->getRunNumber() << setfill(' ')
-                              << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
-  ++_iEvt;
 
   if ( !_isGeometryReady ) {
     initializeGeometry(evt);

@@ -85,7 +85,6 @@ namespace eutelescope {
             std::string _calibrationFile;
             int _pixelType;
             int _iRun;
-            int _iEvt;
             bool _fillHistos;
             bool _phCalibration;
             

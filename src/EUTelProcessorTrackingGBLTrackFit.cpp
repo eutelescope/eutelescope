@@ -611,12 +611,15 @@ if( event->getEventNumber()/999*999   == event->getEventNumber() )
                 evt->getCollection( _tracksOutputCollectionName );
             } catch ( ... ) {
                 streamlog_out( DEBUG1 ) << "Adding collection " << _tracksOutputCollectionName << endl;
+                evt->addCollection( static_cast < EUTelGBLFitter* > ( _trackFitter )->GetFitHitsVec( ), _tracksOutputCollectionName+"_fittedhits" );
                 evt->addCollection( static_cast < EUTelGBLFitter* > ( _trackFitter )->GetFitTrackVec( ), _tracksOutputCollectionName );
             }   
             
         } //if( _alignmentMode ? nTracks == 1 : nTracks > 0 )
         
     } //if( col != NULL )
+
+    _trackFitter->Clear();
 
     _nProcessedEvents++;
 

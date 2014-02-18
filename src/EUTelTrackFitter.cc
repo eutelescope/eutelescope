@@ -28,6 +28,10 @@ namespace eutelescope {
 	return;
     }
 
+    void EUTelTrackFitter::Clear() {
+	return;
+    }
+
     void EUTelTrackFitter::FitTracks() {
 	return;
     }
