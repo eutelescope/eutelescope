@@ -12,7 +12,7 @@
 #ifdef USE_GEAR
 
 // eutelescope includes ".h"
-#include "EUTelXCorrelator.h"
+#include "EUTelExampleProcessorCorrelator.h"
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelEventImpl.h"
 #include "EUTELESCOPE.h"
@@ -57,15 +57,15 @@ using namespace eutelescope;
 
 // definition of static members mainly used to name histograms
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-std::string EUTelXCorrelator::_hitXCorrelationHistoName       = "HitXCorrelatioHisto";
-std::string EUTelXCorrelator::_hitYCorrelationHistoName       = "HitYCorrelationHisto";
+std::string EUTelExampleProcessorCorrelator::_hitXCorrelationHistoName       = "HitXCorrelatioHisto";
+std::string EUTelExampleProcessorCorrelator::_hitYCorrelationHistoName       = "HitYCorrelationHisto";
 #endif
 
-EUTelXCorrelator::EUTelXCorrelator () : Processor("EUTelXCorrelator") {
+EUTelExampleProcessorCorrelator::EUTelExampleProcessorCorrelator () : Processor("EUTelExampleProcessorCorrelator") {
 
   // modify processor description
   _description =
-    "EUTelXCorrelator fills histograms with correlation plots between the telescope hits and the DUT ones";
+    "EUTelExampleProcessorCorrelator fills histograms with correlation plots between the telescope hits and the DUT ones";
 
   registerInputCollection(LCIO::TRACKERHIT,"TelescopeHitCollection",
                           "Telescope hit collection name",
@@ -78,7 +78,7 @@ EUTelXCorrelator::EUTelXCorrelator () : Processor("EUTelXCorrelator") {
 }
 
 
-void EUTelXCorrelator::init() {
+void EUTelExampleProcessorCorrelator::init() {
   // this method is called only once even when the rewind is active
   // usually a good idea to
   printParameters ();
@@ -107,7 +107,7 @@ void EUTelXCorrelator::init() {
 
 }
 
-void EUTelXCorrelator::processRunHeader (LCRunHeader * rdr) {
+void EUTelExampleProcessorCorrelator::processRunHeader (LCRunHeader * rdr) {
 
 
   EUTelRunHeaderImpl * runHeader = new EUTelRunHeaderImpl( rdr ) ;
@@ -153,7 +153,7 @@ void EUTelXCorrelator::processRunHeader (LCRunHeader * rdr) {
 }
 
 
-void EUTelXCorrelator::processEvent (LCEvent * event) {
+void EUTelExampleProcessorCorrelator::processEvent (LCEvent * event) {
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
@@ -227,14 +227,14 @@ void EUTelXCorrelator::processEvent (LCEvent * event) {
 
 }
 
-void EUTelXCorrelator::end() {
+void EUTelExampleProcessorCorrelator::end() {
 
   streamlog_out ( MESSAGE4 )  << "Successfully finished" << endl;
   delete [] _siPlaneZPosition;
 
 }
 
-void EUTelXCorrelator::bookHistos() {
+void EUTelExampleProcessorCorrelator::bookHistos() {
 
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -343,7 +343,7 @@ void EUTelXCorrelator::bookHistos() {
 #endif
 }
 
-int EUTelXCorrelator::guessSensorID( TrackerHitImpl * hit ) {
+int EUTelExampleProcessorCorrelator::guessSensorID( TrackerHitImpl * hit ) {
 
   int sensorID = -1;
   double minDistance =  numeric_limits< double >::max() ;
