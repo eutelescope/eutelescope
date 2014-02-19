@@ -136,6 +136,8 @@ bool EUTelHistogramManager::init() throw( std::exception, marlin::ParseException
     throw ParseException( ss.str() );
   }
 
+  if(doc!=0)delete doc;
+
   return true;
 
 }
