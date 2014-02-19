@@ -89,13 +89,16 @@ void EUTelFFClusterImpl::getCenterOfGravityShift(float& xCoG, float& yCoG) const
   float tempY = 0.;
 
   unsigned int iPixel = 0;
-  for (int yPixel = -1 * (ySize / 2); yPixel <= (ySize / 2); yPixel++) {
-    for (int xPixel = -1 * (xSize / 2); xPixel <= (xSize / 2); xPixel++) {
+  int ii=0;
+  for (int yPixel = -1 * (ySize-1) / 2; yPixel <= (ySize-1) / 2; yPixel++) {
+    for (int xPixel = -1 * (xSize-1) / 2; xPixel <= (xSize-1) / 2; xPixel++) {
         if( _trackerData->getChargeValues().size()<= iPixel) break;
         normalization += _trackerData->getChargeValues()[iPixel];
         if( _trackerData->getChargeValues()[iPixel] > 0 ){
-            tempX         += xPixel * _trackerData->getChargeValues()[iPixel];
-            tempY         += yPixel * _trackerData->getChargeValues()[iPixel];
+	  tempX         += xPixel * _trackerData->getChargeValues()[iPixel];
+	  tempY         += yPixel * _trackerData->getChargeValues()[iPixel];
+// 	  printf("x/y/adc,  %d, %d, %.0f\n", xPixel, yPixel,  _trackerData->getChargeValues()[iPixel]);
+	  ii++;
         }      
         iPixel++;    
     }
@@ -109,8 +112,8 @@ void EUTelFFClusterImpl::getCenterOfGravityShift(float& xCoG, float& yCoG) const
     xCoG = 0.;
     yCoG = 0.;
   }
-  
-//  printf("%5.2f %5.2f  %5.2f %5.2f  norm=%5.2f\n", xCoG, yCoG, tempX,tempY, normalization);
+//   printf("size %d %d, nPixel %d  \n", xSize, ySize, ii);
+//   printf("%5.2f %5.2f  %5.2f %5.2f  norm=%5.2f\n", xCoG, yCoG, tempX,tempY, normalization);
 
 }
 
@@ -129,10 +132,10 @@ void EUTelFFClusterImpl::getCenterOfGravityShift(float& xCoG, float& yCoG, int x
   float tempY         = 0;
   int   iPixel        = 0;
 
-  for (int yPixel = -1 * (yCluSize / 2); yPixel <= (yCluSize / 2); yPixel++) {
-    for (int xPixel = -1 * (xCluSize / 2); xPixel <= (xCluSize / 2); xPixel++) {
-      if ( ( xPixel >= -1 * (xSize / 2) ) &&  ( xPixel <= (xSize / 2) ) &&
-           ( yPixel >= -1 * (ySize / 2) ) &&  ( yPixel <= (ySize / 2) ) ) {
+  for (int yPixel = -1 * (yCluSize-1) / 2; yPixel <= (yCluSize-1) / 2; yPixel++) {
+    for (int xPixel = -1 * (xCluSize-1) / 2; xPixel <= (xCluSize-1) / 2; xPixel++) {
+      if ( ( xPixel >= -1 * (xSize-1) / 2 ) &&  ( xPixel <= (xSize-1) / 2 ) &&
+	   ( yPixel >= -1 * (ySize-1) / 2 )  &&  ( yPixel <= (ySize-1) / 2 ) ) {
         normalization += _trackerData->getChargeValues()[iPixel];
         tempX         += xPixel * _trackerData->getChargeValues()[iPixel];
         tempY         += yPixel * _trackerData->getChargeValues()[iPixel];
@@ -190,8 +193,8 @@ void EUTelFFClusterImpl::getCenterOfGravityShift(float& xCoG, float& yCoG, int n
   float tempX         = 0;
   float tempY         = 0;
   map<int , float>::iterator mapIter;
-  for (int yPixel = -1 * (ySize / 2); yPixel <= (ySize / 2); yPixel++) {
-    for (int xPixel = -1 * (xSize / 2); xPixel <= (xSize / 2); xPixel++) {
+  for (int yPixel = -1 * (ySize-1) / 2 ; yPixel <= (ySize-1) / 2 ; yPixel++) {
+    for (int xPixel = -1 * (xSize-1) / 2 ; xPixel <= (xSize-1) / 2 ; xPixel++) {
       mapIter = highSignalPixel.find( iPixel );
       if ( mapIter != highSignalPixel.end() ) {
         normalization += mapIter->second;
@@ -453,10 +456,10 @@ float EUTelFFClusterImpl::getClusterSNR(int xSize, int ySize) const {
   int   iPixel = 0;
   float signal = 0, noise2 = 0;
 
-  for ( int yPixel = -1 * ( yCluSize / 2 ); yPixel <= (yCluSize / 2); yPixel++ ) {
-    for ( int xPixel = -1 * ( xCluSize / 2 ); xPixel <= (xCluSize / 2); xPixel++ ) {
-      if ( ( xPixel >= -1 * (xSize / 2) ) &&  ( xPixel <= (xSize / 2) ) &&
-           ( yPixel >= -1 * (ySize / 2) ) &&  ( yPixel <= (ySize / 2) ) ) {
+  for ( int yPixel = -1 * (yCluSize-1) / 2 ; yPixel <= (yCluSize-1) / 2 ; yPixel++ ) {
+    for ( int xPixel = -1 * (xCluSize-1) / 2 ; xPixel <= (xCluSize-1) / 2 ; xPixel++ ) {
+      if ( ( xPixel >= -1 * (xSize-1) / 2  ) &&  ( xPixel <= (xSize-1) / 2  ) &&
+           ( yPixel >= -1 * (ySize-1) / 2  ) &&  ( yPixel <= (ySize-1) / 2  ) ) {
         signal += _trackerData->getChargeValues()[iPixel];
         noise2 += pow( _noiseValues[iPixel] , 2 );
       }
@@ -480,10 +483,10 @@ float EUTelFFClusterImpl::getClusterCharge(int xSize, int ySize) const {
   int iPixel = 0;
   float charge = 0;
 
-  for (int yPixel = -1 * (yCluSize / 2); yPixel <= (yCluSize / 2); yPixel++) {
-    for (int xPixel = -1 * (xCluSize / 2); xPixel <= (xCluSize / 2); xPixel++) {
-      if ( ( xPixel >= -1 * (xSize / 2) ) &&  ( xPixel <= (xSize / 2) ) &&
-           ( yPixel >= -1 * (ySize / 2) ) &&  ( yPixel <= (ySize / 2) ) ) {
+  for (int yPixel = -1 * (yCluSize-1) / 2; yPixel <= (yCluSize-1) / 2; yPixel++) {
+    for (int xPixel = -1 * (xCluSize-1) / 2 ; xPixel <= (xCluSize-1) / 2 ; xPixel++) {
+      if ( ( xPixel >= -1 * (xSize-1) / 2  ) &&  ( xPixel <= (xSize-1) / 2  ) &&
+           ( yPixel >= -1 * (ySize-1) / 2  ) &&  ( yPixel <= (ySize-1) / 2  ) ) {
         charge += _trackerData->getChargeValues()[iPixel];
       }
       ++iPixel;
@@ -539,7 +542,7 @@ void EUTelFFClusterImpl::print(std::ostream& os ) const {
     os << "-";
   }
 
-  for (int xPixel = -1 * (xSize / 2); xPixel <= (xSize / 2); xPixel++) {
+  for (int xPixel = -1 * (xSize-1) / 2 ; xPixel <= (xSize-1) / 2 ; xPixel++) {
     os << "|";
     for ( int i = 0; i < spacer - 1; i++ ) {
       os << "-";
@@ -547,7 +550,7 @@ void EUTelFFClusterImpl::print(std::ostream& os ) const {
   }
   os <<"|\n"
      << "|" << setw(spacer - 1) << " x / y ";
-  for (int xPixel = -1 * (xSize / 2); xPixel <= (xSize / 2); xPixel++) {
+  for (int xPixel = -1 * (xSize-1) / 2 ; xPixel <= (xSize-1) / 2 ; xPixel++) {
     os << "|" << setw(spacer - 1 ) << xSeed - ( -1 * xPixel );
   }
   os << "|\n";
@@ -555,7 +558,7 @@ void EUTelFFClusterImpl::print(std::ostream& os ) const {
   for ( int i = 0; i < spacer - 1; i++ ) {
     os << "-";
   }
-  for (int xPixel = -1 * (xSize / 2); xPixel <= (xSize / 2); xPixel++) {
+  for (int xPixel = -1 * (xSize-1) / 2 ; xPixel <= (xSize-1) / 2 ; xPixel++) {
     os << "|";
     for ( int i = 0; i < spacer - 1; i++ ) {
       os << "-";
@@ -563,9 +566,9 @@ void EUTelFFClusterImpl::print(std::ostream& os ) const {
   }
   os <<"|\n";
   int iPixel = 0;
-  for (int yPixel = -1 * (ySize / 2); yPixel <= (ySize / 2); yPixel++) {
+  for (int yPixel = -1 * (ySize-1) / 2 ; yPixel <= (ySize-1) / 2 ; yPixel++) {
     os << "|" << setw(spacer - 1) << ySeed - ( -1 * yPixel ) << "|";
-    for (int xPixel = -1 * (xSize / 2); xPixel <= (xSize / 2); xPixel++) {
+    for (int xPixel = -1 * (xSize-1) / 2 ; xPixel <= (xSize-1) / 2 ; xPixel++) {
       os <<  setw(spacer - 1) << _trackerData->getChargeValues()[iPixel] << "|" ;
       ++iPixel;
     }
@@ -574,13 +577,13 @@ void EUTelFFClusterImpl::print(std::ostream& os ) const {
     for ( int i = 0; i < spacer - 1; i++ ) {
       os << "-";
     }
-    for (int xPixel = -1 * (xSize / 2); xPixel <= (xSize / 2); xPixel++) {
+    for (int xPixel = -1 * (xSize-1) / 2 ; xPixel <= (xSize-1) / 2 ; xPixel++) {
       os << "|";
       for ( int i = 0; i < spacer - 1; i++ ) {
         os << "-";
       }
     }
-    if ( yPixel == (ySize / 2) ) os << "|";
+    if ( yPixel == (ySize-1) / 2  ) os << "|";
     else os << "|\n";
   }
 }
