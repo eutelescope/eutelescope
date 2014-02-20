@@ -20,14 +20,17 @@ echo ${gear[x]}
     done    
 
 
-MaxRecordNumber="1000"
+MaxRecordNumber="10000"
 AlignPlaneIds="0 1 2 20 3 4 5"
 Planes="0 1 2 20 3 4 5"
 
 #
 amode="7";
 
-r="0.100";res="$r $r $r $r $r $r $r";prev="$r";
+r="0.0500";
+rfei4="10.001";
+res="$r $r $r $rfei4 $r $r $r";
+prev="$r";
 echo "prev:$prev and r:$r"
 file="output/logs/aligngbl-00${RUN}.zip"
 
@@ -46,6 +49,8 @@ Fyr="0 1 2 20 3 4 5"
 Fys="0     20     5"
 Fzr="0     20      "
 Fzs="0 1 2 20 3 4 5"
+
+
 
 Chi2Cut="5000"
 
@@ -73,10 +78,10 @@ multi=${multi/[eE]+/*10^+};
 multi=${multi/[eE]-/*10^-};
 
 echo "multi:$multi  prev: $prev"; 
-if [[ -n $multi && -n $prev && $(echo "$prev > 0.004"|bc) -eq 1 ]];then
+if [[ -n $multi && -n $prev && $(echo "$prev > 0.010"|bc) -eq 1 ]];then
 r=$(echo "scale=4;$prev*$multi"|bc);
 prev=$r; 
-res="$r $r $r 0.100 $r $r $r"
+res="$r $r $r 10.000 $r $r $r"
 else
 echo "multi:$multi  prev: $prev";
 fi
