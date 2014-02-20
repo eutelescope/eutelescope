@@ -20,7 +20,7 @@ echo ${gear[x]}
     done    
 
 
-MaxRecordNumber="10000"
+MaxRecordNumber="1000"
 AlignPlaneIds="0 1 2 20 3 4 5"
 Planes="0 1 2 20 3 4 5"
 
@@ -65,7 +65,7 @@ Chi2Cut="30"
 
 echo "starting XY shifts/rotations"
 #do=""
- for x in {1..10}; do
+ for x in {1..6}; do
 gear1=${gear[x]}
 gear2=${gear[x+1]}
 echo $gear1" to "$gear2
@@ -78,7 +78,7 @@ multi=${multi/[eE]+/*10^+};
 multi=${multi/[eE]-/*10^-};
 
 echo "multi:$multi  prev: $prev"; 
-if [[ -n $multi && -n $prev && $(echo "$prev > 0.010"|bc) -eq 1 ]];then
+if [[ -n $multi && -n $prev && $(echo "$prev > 0.001"|bc) -eq 1 ]];then
 r=$(echo "scale=4;$prev*$multi"|bc);
 prev=$r; 
 res="$r $r $r 10.000 $r $r $r"
@@ -101,7 +101,7 @@ Fys="0 1 2 20 3 4 5"
 Fzr="0 1 2 20 3 4 5"
 Fzs="0 1 2 20 3 4 5"
 
-for x in {11..20}; do
+for x in {7..10}; do
 
 gear1=${gear[x]}
 gear2=${gear[x+1]}
