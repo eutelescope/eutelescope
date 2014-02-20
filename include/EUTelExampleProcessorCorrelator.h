@@ -67,24 +67,24 @@ namespace eutelescope {
    *  @version $Id$
    *
    */
-  class EUTelXCorrelator : public marlin::Processor {
+  class EUTelExampleProcessorCorrelator : public marlin::Processor {
 
   public:
 
 
-    //! Returns a new instance of EUTelXCorrelator
+    //! Returns a new instance of EUTelExampleProcessorCorrelator
     /*! This method returns a new instance of this processor.  It is
      *  called by Marlin execution framework and it shouldn't be
      *  called/used by the final user.
      *
-     *  @return a new EUTelXCorrelator.
+     *  @return a new EUTelExampleProcessorCorrelator.
      */
     virtual Processor * newProcessor() {
-      return new EUTelXCorrelator;
+      return new EUTelExampleProcessorCorrelator;
     }
 
     //! Default constructor
-    EUTelXCorrelator ();
+    EUTelExampleProcessorCorrelator ();
 
     //! Called at the job beginning.
     /*! This is executed only once in the whole execution. It prints
@@ -201,7 +201,7 @@ namespace eutelescope {
   };
 
   //! A global instance of the processor
-  EUTelXCorrelator gEUTelXCorrelator;
+  EUTelExampleProcessorCorrelator gEUTelExampleProcessorCorrelator;
 
 
 }
