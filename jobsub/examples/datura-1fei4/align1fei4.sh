@@ -23,11 +23,13 @@ AlignPlaneIds="0 1 2 20 3 4 5"
 Planes="0 1 2 20 3 4 5"
 MaxRecordNumber="10000"
 
-r="0.035"
-rfei4="0.10"
-ResolutionPlane="$r $r $r $rfei4 $r $r $r"
+r="0.0035"
+rfei4="0.50"
+res="$r $r $r $rfei4 $r $r $r"
+prev="$rfei4"
 #
 amode="7"; 
+file="output/logs/aligngbl-00${RUN}.zip"
 
 
 if [ $# -ne 4 ]
@@ -48,7 +50,7 @@ Fzr="0 1 2    3 4 5"
 Fzs="0 1 2 20 3 4 5"
 #DRY="--dry-run"
 
-$do jobsub.py  $DRY -c config.cfg -csv $RUNLIST -o MaxRecordNumber="$MaxRecordNumber" -o AlignPlaneIds="$AlignPlaneIds" -o Planes="$Planes" -o GearFile="gear-${RUN}-20.xml"   -o GearAlignedFile="${gear[1]}" -o ResolutionPlane="$ResolutionPlane" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o Chi2Cut="$Chi2Cut"  -o pede="$pede" aligngbl $RUN
+$do jobsub.py  $DRY -c config.cfg -csv $RUNLIST -o MaxRecordNumber="$MaxRecordNumber" -o AlignPlaneIds="$AlignPlaneIds" -o Planes="$Planes" -o GearFile="gear-${RUN}-11.xml"   -o GearAlignedFile="${gear[1]}" -o ResolutionPlane="$res" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o Chi2Cut="$Chi2Cut"  -o pede="$pede" aligngbl $RUN
 # reduce Chi2Cut
 Chi2Cut="30"
 ####
@@ -64,14 +66,29 @@ Fzs="0 1 2 20 3 4 5"
 
 echo "starting XY shifts/rotations"
 #do=""
- for x in {1..10}; do
+ for x in {1..5}; do
 gear1=${gear[x]}
 gear2=${gear[x+1]}
 echo $gear1" to "$gear2
 #########################
-$do jobsub.py  $DRY -c config.cfg -csv $RUNLIST -o MaxRecordNumber="$MaxRecordNumber" -o AlignPlaneIds="$AlignPlaneIds" -o Planes="$Planes" -o GearFile="${gear1}"  -o GearAlignedFile="${gear2}" -o ResolutionPlane="$ResolutionPlane" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o Chi2Cut="$Chi2Cut"  -o pede="$pede" aligngbl $RUN
+$do jobsub.py  $DRY -c config.cfg -csv $RUNLIST -o MaxRecordNumber="$MaxRecordNumber" -o AlignPlaneIds="$AlignPlaneIds" -o Planes="$Planes" -o GearFile="${gear1}"  -o GearAlignedFile="${gear2}" -o ResolutionPlane="$res" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o Chi2Cut="$Chi2Cut"  -o pede="$pede" aligngbl $RUN
 #########################
-   done
+ echo "file: $file"
+multi=`unzip  -p  $file |grep "multiply all input standard deviations" |cut -d 'r' -f4`; 
+multi=${multi/[eE]+/*10^+};
+multi=${multi/[eE]-/*10^-};
+
+echo "multi:$multi  prev: $prev"; 
+if [[ -n $multi && -n $prev && $(echo "$prev > 0.071"|bc) -eq 1 ]];then
+rfei4=$(echo "scale=4;$prev*$multi"|bc);
+prev=$rfei4; 
+res="$r $r $r $rfei4 $r $r $r"
+else
+echo "multi:$multi  prev: $prev";
+fi
+#echo "resolution $res"
+#########################
+  done
 
 
 #
@@ -84,12 +101,12 @@ Fys="0 1 2 20 3 4 5"
 Fzr="0 1 2 20 3 4 5"
 Fzs="0 1 2 20 3 4 5"
 
- for x in {11..20}; do
+ for x in {6..10}; do
 gear1=${gear[x]}
 gear2=${gear[x+1]}
 echo $gear1" to "$gear2
 #########################
-$do jobsub.py  $DRY -c config.cfg -csv $RUNLIST -o MaxRecordNumber="$MaxRecordNumber" -o AlignPlaneIds="$AlignPlaneIds" -o Planes="$Planes" -o GearFile="${gear1}"  -o GearAlignedFile="${gear2}" -o ResolutionPlane="$ResolutionPlane" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o Chi2Cut="$Chi2Cut"  -o pede="$pede" aligngbl $RUN
+$do jobsub.py  $DRY -c config.cfg -csv $RUNLIST -o MaxRecordNumber="$MaxRecordNumber" -o AlignPlaneIds="$AlignPlaneIds" -o Planes="$Planes" -o GearFile="${gear1}"  -o GearAlignedFile="${gear2}" -o ResolutionPlane="$res" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o Chi2Cut="$Chi2Cut"  -o pede="$pede" aligngbl $RUN
 #########################
    done
 
