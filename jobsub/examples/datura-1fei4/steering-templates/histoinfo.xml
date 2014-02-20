@@ -121,18 +121,18 @@
     <histo name="Residuals2DGblFit_xVSy4"     type="H2D"  xBin="100" xMin="-05." xMax="05." yBin="100" yMin="-10." yMax="10."/>
     <histo name="Residuals2DGblFit_xVSx5"     type="H2D"  xBin="100" xMin="-10." xMax="10." yBin="100" yMin="-10." yMax="10."/>
     <histo name="Residuals2DGblFit_xVSy5"     type="H2D"  xBin="100" xMin="-05." xMax="05." yBin="100" yMin="-10." yMax="10."/>
-    <histo name="ResidualsGblFit_x0"     type="H1D" xBin="500" xMin="-200." xMax="200."/>
-    <histo name="ResidualsGblFit_y1"     type="H1D" xBin="500" xMin="-200." xMax="200."/>
-    <histo name="ResidualsGblFit_x1"     type="H1D" xBin="500" xMin="-200." xMax="200."/>
-    <histo name="ResidualsGblFit_y2"     type="H1D" xBin="500" xMin="-200." xMax="200."/>
-    <histo name="ResidualsGblFit_x2"     type="H1D" xBin="500" xMin="-200." xMax="200."/>
-    <histo name="ResidualsGblFit_y3"     type="H1D" xBin="500" xMin="-200." xMax="200."/>
-    <histo name="ResidualsGblFit_x3"     type="H1D" xBin="500" xMin="-200." xMax="200."/>
-    <histo name="ResidualsGblFit_y3"     type="H1D" xBin="500" xMin="-200." xMax="200."/>
-    <histo name="ResidualsGblFit_x4"     type="H1D" xBin="500" xMin="-200." xMax="200."/>
-    <histo name="ResidualsGblFit_y4"     type="H1D" xBin="500" xMin="-200." xMax="200."/>
-    <histo name="ResidualsGblFit_x5"     type="H1D" xBin="500" xMin="-200." xMax="200."/>
-    <histo name="ResidualsGblFit_y5"     type="H1D" xBin="500" xMin="-200." xMax="200."/>
+    <histo name="ResidualsGblFit_x0"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
+    <histo name="ResidualsGblFit_y1"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
+    <histo name="ResidualsGblFit_x1"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
+    <histo name="ResidualsGblFit_y2"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
+    <histo name="ResidualsGblFit_x2"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
+    <histo name="ResidualsGblFit_y3"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
+    <histo name="ResidualsGblFit_x3"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
+    <histo name="ResidualsGblFit_y3"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
+    <histo name="ResidualsGblFit_x4"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
+    <histo name="ResidualsGblFit_y4"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
+    <histo name="ResidualsGblFit_x5"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
+    <histo name="ResidualsGblFit_y5"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
     <histo name="ResidualsGblFit_x20"     type="H1D" xBin="500" xMin="-200." xMax="200."/>
     <histo name="ResidualsGblFit_y20"     type="H1D" xBin="500" xMin="-200." xMax="200."/>
 
