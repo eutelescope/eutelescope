@@ -20,7 +20,7 @@ echo ${gear[x]}
     done    
 
 
-MaxRecordNumber="1000"
+MaxRecordNumber="10000"
 AlignPlaneIds="0 1 2 20 3 4 5"
 Planes="0 1 2 20 3 4 5"
 
