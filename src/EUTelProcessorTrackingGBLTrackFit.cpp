@@ -502,7 +502,8 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
 
                         // Get fitted hit information
                         const double* hitpos = ( *itrHit )->getPosition( );
-                        const int planeID = Utility::GuessSensorID( static_cast < IMPL::TrackerHitImpl* > ( *itrHit ) );
+//                         const int planeID = Utility::GuessSensorID( static_cast < IMPL::TrackerHitImpl* > ( *itrHit ) );
+                        const int planeID = (*itrHit)->getCellID0();
                         if ( planeID < 0 ) continue;
 
                         // Calculate residuals between original and fitted hits
@@ -515,8 +516,11 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
 
                         // Spatial GBL residuals. residualGBL is the as residual and residualErrGBL is the same as residualErr.
                         int hitGblLabel = gblPointLabel.at( originalHit->id( ) );
+//cout<<"     hitGblLabel: " << hitGblLabel << " : " << numData << " " << " gblTraj : " << gblTraj << endl;
+//                        gblTraj->printTrajectory(1);  
                         gblTraj->getMeasResults( hitGblLabel, numData, residualGBL, measErrGBL, residualErrGBL, downWeightGBL );
-                        //                            
+//cout<<"nach hitGblLabel: " << hitGblLabel << " : " << numData << endl;
+                       //                            
                         std::stringstream sstr;
                         std::stringstream sstrNorm;
 
