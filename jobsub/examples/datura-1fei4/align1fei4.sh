@@ -38,7 +38,7 @@ fi
 
 Chi2Cut="5000"
 
-do="echo "
+#do="echo "
 
 Fxr="0 1 2 20 3 4 5"
 Fxs="0 1 2    3 4 5"
@@ -46,7 +46,7 @@ Fyr="0 1 2 20 3 4 5"
 Fys="0 1 2    3 4 5"
 Fzr="0 1 2    3 4 5"
 Fzs="0 1 2 20 3 4 5"
-DRY="--dry-run"
+#DRY="--dry-run"
 
 $do jobsub.py  $DRY -c config.cfg -csv $RUNLIST -o MaxRecordNumber="$MaxRecordNumber" -o AlignPlaneIds="$AlignPlaneIds" -o Planes="$Planes" -o GearFile="gear-${RUN}-20.xml"   -o GearAlignedFile="${gear[1]}" -o ResolutionPlane="$ResolutionPlane" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o Chi2Cut="$Chi2Cut"  -o pede="$pede" aligngbl $RUN
 # reduce Chi2Cut
