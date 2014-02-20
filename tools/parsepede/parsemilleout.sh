@@ -104,8 +104,8 @@ join file1 file2 | grep '^[0-9]' | awk '{ printf "%-15s%-15s%-25s%-15s%-15s%-15s
 # Convert to lcio collection file
 if [ $# == 3 ]; then 
  pede2lcio out.pede2lcio $lcio_file
-# rm -f out.pede2lcio
-# rm -f file1 file2
+ rm -f out.pede2lcio
+ rm -f file1 file2
 fi
 
 # Convert to lcio collection file and new GEAR file
@@ -119,8 +119,8 @@ if [ $# == 5 ]; then
  fi
 
  pede2lcio -g out.pede2lcio $lcio_file $oldgear_file $newgear_file
-# rm -f out.pede2lcio
-# rm -f file1 file2
+ rm -f out.pede2lcio
+ rm -f file1 file2
 fi
 
 # WARNING
