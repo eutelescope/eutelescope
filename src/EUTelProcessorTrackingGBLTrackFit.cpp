@@ -136,6 +136,7 @@ _milleGBL(0),
 _seedAlignmentConstants(),
 _nProcessedRuns(0),
 _nProcessedEvents(0),
+_flag_nohistos(false),
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 _aidaHistoMap1D(),
 _aidaHistoMap2D(),
@@ -226,7 +227,7 @@ _aidaProfileMap2D()
     //@TODO Implement geometry description
     // Geometry definition
     
-//    registerOptionalParameter("GeometryFilename", "Name of the TGeo geometry definition file", _tgeoFileName, std::string("TELESCOPE.root"));
+    //registerOptionalParameter("GeometryFilename", "Name of the TGeo geometry definition file", _tgeoFileName, std::string("TELESCOPE.root"));
     
     // Histogram information
 
@@ -450,6 +451,12 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
 //       if ( _alignmentMode ? nTracks == 1 : nTracks > 0 ) {
             _trackFitter->SetTrackCandidates(trackCandidates);
             _trackFitter->FitTracks();
+ 
+            //
+            if( !_flag_nohistos ) {
+
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+            // build plots: // makes sense to put into a separate method, aah ?
             //
             double chi2Trk = 0.;
             int ndfTrk = 0;
@@ -461,8 +468,8 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
 
             // Loop over fitted tracks
             for (itFitTrack = fittrackvec->begin(); itFitTrack != fittrackvec->end(); ++itFitTrack) {
-                
-                chi2Trk = static_cast<TrackImpl*> (*itFitTrack)->getChi2();
+
+                chi2Trk =static_cast<TrackImpl*> (*itFitTrack)->getChi2();
                 ndfTrk = static_cast<TrackImpl*> (*itFitTrack)->getNdf();
                 static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ _histName::_orchi2GblFitHistName ]) -> fill(chi2Trk);
                 if(ndfTrk>0) static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ _histName::_orchi2ndfGblFitHistName ]) -> fill(chi2Trk/ndfTrk);
@@ -470,6 +477,7 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
                 
                 p = _qBeam * ( 1./static_cast<TrackImpl*> (*itFitTrack)->getOmega() );
                 static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ _histName::_momentumGblFitHistName ]) -> fill(p);
+
 
                 // Retrieve original GBL information
                 std::map< int, gbl::GblTrajectory* > gblTracks = static_cast < EUTelGBLFitter* > ( _trackFitter )->GetGblTrackCandidates( );
@@ -491,19 +499,25 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
                     static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ _histName::_chi2GblFitHistName ]) -> fill(chi2Trk);
                     if(ndfTrk>0) static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ _histName::_chi2ndfGblFitHistName ]) -> fill(chi2Trk/ndfTrk);
                     static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ _histName::_probGblFitHistName ]) -> fill( TMath::Prob(chi2Trk, ndfTrk) );
-                  
+
+ 
+                    streamlog_out(DEBUG1) << "Event number " << event->getEventNumber() << " in run " << event->getRunNumber()
+                     << "event: " 
+                     << "fittrack: " << (static_cast<TrackImpl*> (*itFitTrack))->id() 
+                     << " fittrackvec->end(): " << fittrackvec->size()
+                     << " trackHits.end(): " << trackHits.size() << endl ; 
+
                     // Loop over fitted hit positions
                     EVENT::TrackerHitVec::const_iterator itrHit;
                     for ( itrHit = trackHits.begin( ); itrHit != trackHits.end( ); ++itrHit ) {
 
-                        // Get input hit information
+                       // Get input hit information
                         IMPL::TrackerHitImpl* originalHit =  static_cast < IMPL::TrackerHitImpl* > ( ( *itrHit )->getRawHits( ).front( ) );
                         const double* originalhitpos = originalHit->getPosition( );
 
                         // Get fitted hit information
                         const double* hitpos = ( *itrHit )->getPosition( );
-//                         const int planeID = Utility::GuessSensorID( static_cast < IMPL::TrackerHitImpl* > ( *itrHit ) );
-                        const int planeID = (*itrHit)->getCellID0();
+                        const int planeID = Utility::GuessSensorID( static_cast < IMPL::TrackerHitImpl* > ( *itrHit ) );
                         if ( planeID < 0 ) continue;
 
                         // Calculate residuals between original and fitted hits
@@ -520,7 +534,7 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
 //                        gblTraj->printTrajectory(1);  
                         gblTraj->getMeasResults( hitGblLabel, numData, residualGBL, measErrGBL, residualErrGBL, downWeightGBL );
 //cout<<"nach hitGblLabel: " << hitGblLabel << " : " << numData << endl;
-                       //                            
+                      
                         std::stringstream sstr;
                         std::stringstream sstrNorm;
 
@@ -605,9 +619,9 @@ if( event->getEventNumber()/999*999   == event->getEventNumber() )
                         sstr.str( std::string( ) );
                         sstrNorm.str( std::string( ) );
 
-                    }
-                } // if ( (_alignmentMode > 0 && chi2Trk < _maxMilleChi2Cut) || ( _alignmentMode == 0 ) )
-                 
+                   }
+               } // if ( (_alignmentMode > 0 && chi2Trk < _maxMilleChi2Cut) || ( _alignmentMode == 0 ) )
+
             }
             // Write track candidates collection
             try {
@@ -618,9 +632,14 @@ if( event->getEventNumber()/999*999   == event->getEventNumber() )
                 evt->addCollection( static_cast < EUTelGBLFitter* > ( _trackFitter )->GetFitHitsVec( ), _tracksOutputCollectionName+"_fittedhits" );
                 evt->addCollection( static_cast < EUTelGBLFitter* > ( _trackFitter )->GetFitTrackVec( ), _tracksOutputCollectionName );
             }   
-            
-        } //if( _alignmentMode ? nTracks == 1 : nTracks > 0 )
         
+    
+        } //if( _alignmentMode ? nTracks == 1 : nTracks > 0 )
+
+// building histograms done.
+#endif // defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+        }
+ 
     } //if( col != NULL )
 
     _trackFitter->Clear();
@@ -1581,8 +1600,10 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms() {
             }
             sstm.str(std::string(""));
         }
-    } catch (lcio::Exception& e) {
-        streamlog_out(WARNING2) << "Can't allocate histgrams. Continue without histogramming" << endl;
+        _flag_nohistos = false; 
+   } catch (lcio::Exception& e) {
+        streamlog_out(WARNING2) << "Can't allocate histograms. Continue without histogramming; exception: " << e.what() << endl;
+        _flag_nohistos = true; 
     }
 #endif // defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 }
