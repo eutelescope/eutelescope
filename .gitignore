@@ -28,6 +28,8 @@ lib/*
 # Millepede output files:
 *.res
 *.pede2lcio
+*.his
+*.bin
 
 # Ignore emacs backup and autosaves:
 \#*#
