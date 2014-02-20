@@ -53,9 +53,6 @@ $do jobsub.py  $DRY -c config.cfg -csv $RUNLIST -o MaxRecordNumber="$MaxRecordNu
 Chi2Cut="30"
 ####
 
-
-exit 0;
-
 #  for x in `seq 10 30 2`; do
 #echo $x
 Fxr="0 1 2 20 3 4 5"
