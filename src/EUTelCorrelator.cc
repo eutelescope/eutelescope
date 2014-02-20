@@ -14,6 +14,8 @@
 #if defined(USE_GEAR)
 
 // eutelescope includes ".h"
+#include "EUTelGeometryTelescopeGeoDescription.h"
+
 #include "EUTelCorrelator.h"
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelEventImpl.h"
@@ -149,6 +151,11 @@ void EUTelCorrelator::init() {
   // this method is called only once even when the rewind is active
   // usually a good idea to
   printParameters ();
+
+    // Getting access to geometry description
+    std::string name("test.root");
+    geo::gGeometry().initializeTGeoDescription(name,false);
+
 
   // clear the sensor ID vector
   _sensorIDVec.clear();
@@ -653,25 +660,34 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
         TrackerHitImpl * externalHit = static_cast< TrackerHitImpl * > ( inputHitCollection->
                                                                          getElementAt( iExt ) );
 
-        double * externalPosition;
-        externalPosition = const_cast< double* >( externalHit->getPosition() );
+        double* externalPosition =  const_cast<double*> ( externalHit->getPosition() );
 
-        int externalSensorID = guessSensorID( externalPosition );
+//rubinsky 18-02-14        int externalSensorID = guessSensorID( externalPosition );
+//         trackX.push_back(externalPosition[0]);
+//         trackY.push_back(externalPosition[1]);
 
+        int externalSensorID = externalHit->getCellID0();
+        double etrackPointLocal[]  = { externalPosition[0], externalPosition[1], 0. };
+        double etrackPointGlobal[] = { 0., 0., 0. };
+        geo::gGeometry().local2Master( externalSensorID, etrackPointLocal, etrackPointGlobal );
 
-        trackX.push_back(externalPosition[0]);
-        trackY.push_back(externalPosition[1]);
-        iplane.push_back(externalSensorID);
+        trackX.push_back( etrackPointGlobal[0]);
+        trackY.push_back( etrackPointGlobal[1]);
+
+        iplane.push_back( externalSensorID);
+
 
         for ( size_t iInt = 0; iInt < inputHitCollection->size(); ++iInt ) 
         {
 
           TrackerHitImpl  * internalHit = static_cast< TrackerHitImpl * > ( inputHitCollection->
                                                                             getElementAt( iInt ) );
-          double * internalPosition;
-          internalPosition = const_cast< double* >( internalHit->getPosition() );
+          double * internalPosition = const_cast<double* >( internalHit->getPosition() );
 
-          int internalSensorID = guessSensorID( internalPosition );
+//rubinsky 18-02-14         int internalSensorID = guessSensorID( internalPosition );
+//          int internalSensorID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(internalHit) );
+          int internalSensorID = internalHit->getCellID0();
+
           bool ishot = hitContainsHotPixels(internalHit); 
 
           if( ishot ) continue;
@@ -691,9 +707,26 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
                ((externalPosition[1]-internalPosition[1] ) < _residualsYMax[iz]) && (_residualsYMin[iz] < (externalPosition[1]-internalPosition[1] ))
               )
                {
-                trackX.push_back(internalPosition[0]);
-                trackY.push_back(internalPosition[1]);
-                iplane.push_back(internalSensorID);
+//                trackX.push_back(internalPosition[0]);
+//                trackY.push_back(internalPosition[1]);
+//                iplane.push_back(internalSensorID);
+// rubinsky 18-02-14: implementing reading out of the local Hit collection information
+// - define plane ID via Utility::
+// - define hit global telescope frame [3] coord via EUTelGeometry:::
+//
+        double itrackPointLocal[] = { internalPosition[0], internalPosition[1], 0. };
+        double itrackPointGlobal[] = { 0., 0., 0. };
+        geo::gGeometry().local2Master( internalSensorID, itrackPointLocal, itrackPointGlobal );
+
+        trackX.push_back(itrackPointGlobal[0]);
+        trackY.push_back(itrackPointGlobal[1]);
+        iplane.push_back(internalSensorID);
+
+//        std::cout<< "eplane:"  << externalSensorID << " loc: "  << etrackPointLocal[0]  << " "<< etrackPointLocal[1]  << " "
+//                                                   << " glo: "  << etrackPointGlobal[0] << " "<< etrackPointGlobal[1] << " " << endl;
+//        std::cout<< "iplane:"  << internalSensorID << " loc: "  << itrackPointLocal[0]  << " "<< itrackPointLocal[1]  << " "
+//                                                   << " glo: "  << itrackPointGlobal[0] << " "<< itrackPointGlobal[1] << " " << endl;
+
 
                }
             }
