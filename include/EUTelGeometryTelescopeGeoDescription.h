@@ -139,7 +139,9 @@ namespace eutelescope {
             float findRadLengthIntegral( const double[], const double[], bool );
             
             int getSensorID( const float globalPos[] ) const;
-            
+           
+            int getSensorID( const IMPL::TrackerHitImpl* ) const;
+ 
             void local2Master( int, const double[], double[] );
             
             void master2Local( const double[], double[] );

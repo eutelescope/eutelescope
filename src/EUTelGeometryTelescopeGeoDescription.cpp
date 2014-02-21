@@ -427,6 +427,21 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::strin
 
 /** Determine id of the sensor in which point is locate
  * 
+ * @param input TrackerHitImpl* hit pointer 
+ * @return sensorID or -999 if the point in outside of sensor volume
+ */
+int EUTelGeometryTelescopeGeoDescription::getSensorID( const IMPL::TrackerHitImpl* hit ) const {
+    streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::getSensorID() " << std::endl;
+
+    int sensorID = -999;
+
+    sensorID =  hit->getCellID0(); // using a field in the TrackerHitImpl class;
+
+    return sensorID; 
+}
+
+/** Determine id of the sensor in which point is locate
+ * 
  * @param globalPos 3D point in global reference frame
  * @return sensorID or -999 if the point in outside of sensor volume
  */
