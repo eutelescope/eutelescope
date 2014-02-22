@@ -175,10 +175,14 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
   </processor>
 
  
-   <processor name="APIXClustering" type="EUTelAPIXClusteringProcessor">
+  <processor name="APIXClustering" type="EUTelAPIXClusteringProcessor">
 	<!--This is the name of the histogram information file-->
     <!--parameter name="ClusterCollectionName" type="string" value="cluster_apix"/-->
     <parameter name="HistoInfoFileName" type="string" value="@HistoInfoFile@"/>
+    <parameter name="ClusterLimits" type="IntVec">20 @xclumin@ @xclumax@ @yclumin@ @yclumax@</parameter>
+    <parameter name="MinLVL1Difference" type="Int">0</parameter>
+    <parameter name="MinLVL1" type="Int">5</parameter>
+    <parameter name="MaxLVL1" type="Int">7</parameter>
   </processor>
 
   <processor name="Correlator" type="EUTelCorrelator">
