@@ -66,7 +66,7 @@ Fzs="0 1 2 20 3 4 5"
 
 echo "starting XY shifts/rotations"
 #do=""
- for x in {1..5}; do
+ for x in {1..10}; do
 gear1=${gear[x]}
 gear2=${gear[x+1]}
 echo $gear1" to "$gear2
@@ -101,7 +101,7 @@ Fys="0 1 2 20 3 4 5"
 Fzr="0 1 2 20 3 4 5"
 Fzs="0 1 2 20 3 4 5"
 
- for x in {6..10}; do
+ for x in {11..20}; do
 gear1=${gear[x]}
 gear2=${gear[x+1]}
 echo $gear1" to "$gear2
