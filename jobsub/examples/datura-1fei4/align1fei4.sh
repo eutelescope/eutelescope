@@ -24,9 +24,15 @@ Planes="0 1 2 20 3 4 5"
 MaxRecordNumber="10000"
 
 r="0.0035"
-rfei4="0.50"
-res="$r $r $r $rfei4 $r $r $r"
-prev="$rfei4"
+xrfei4="0.514"
+yrfei4="0.571"
+
+xres="$r $r $r $xrfei4 $r $r $r"
+yres="$r $r $r $yrfei4 $r $r $r"
+
+xprev="$xrfei4"
+yprev="$yrfei4"
+
 #
 amode="7"; 
 file="output/logs/aligngbl-00${RUN}.zip"
@@ -50,7 +56,7 @@ Fzr="0 1 2    3 4 5"
 Fzs="0 1 2 20 3 4 5"
 #DRY="--dry-run"
 
-$do jobsub.py  $DRY -c config.cfg -csv $RUNLIST -o MaxRecordNumber="$MaxRecordNumber" -o AlignPlaneIds="$AlignPlaneIds" -o Planes="$Planes" -o GearFile="gear-${RUN}-11.xml"   -o GearAlignedFile="${gear[1]}" -o ResolutionPlane="$res" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o Chi2Cut="$Chi2Cut"  -o pede="$pede" aligngbl $RUN
+$do jobsub.py  $DRY -c config.cfg -csv $RUNLIST -o MaxRecordNumber="$MaxRecordNumber" -o AlignPlaneIds="$AlignPlaneIds" -o Planes="$Planes" -o GearFile="gear-${RUN}-11.xml"   -o GearAlignedFile="${gear[1]}"  -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o Chi2Cut="$Chi2Cut"  -o pede="$pede" aligngbl $RUN
 # reduce Chi2Cut
 Chi2Cut="30"
 ####
@@ -71,7 +77,7 @@ gear1=${gear[x]}
 gear2=${gear[x+1]}
 echo $gear1" to "$gear2
 #########################
-$do jobsub.py  $DRY -c config.cfg -csv $RUNLIST -o MaxRecordNumber="$MaxRecordNumber" -o AlignPlaneIds="$AlignPlaneIds" -o Planes="$Planes" -o GearFile="${gear1}"  -o GearAlignedFile="${gear2}" -o ResolutionPlane="$res" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o Chi2Cut="$Chi2Cut"  -o pede="$pede" aligngbl $RUN
+$do jobsub.py  $DRY -c config.cfg -csv $RUNLIST -o MaxRecordNumber="$MaxRecordNumber" -o AlignPlaneIds="$AlignPlaneIds" -o Planes="$Planes" -o GearFile="${gear1}"  -o GearAlignedFile="${gear2}"  -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o Chi2Cut="$Chi2Cut"  -o pede="$pede" aligngbl $RUN
 #########################
  echo "file: $file"
 multi=`unzip  -p  $file |grep "multiply all input standard deviations" |cut -d 'r' -f4`; 
@@ -79,10 +85,19 @@ multi=${multi/[eE]+/*10^+};
 multi=${multi/[eE]-/*10^-};
 
 echo "multi:$multi  prev: $prev"; 
-if [[ -n $multi && -n $prev && $(echo "$prev > 0.071"|bc) -eq 1 ]];then
-rfei4=$(echo "scale=4;$prev*$multi"|bc);
-prev=$rfei4; 
-res="$r $r $r $rfei4 $r $r $r"
+if [[ -n $multi && -n $prev && $(echo "$prev > 0.014"|bc) -eq 1 ]];then
+
+xrfei4=$(echo "scale=4;$xprev*$multi"|bc);
+xprev=$xrfei4; 
+
+yrfei4=$(echo "scale=4;$yprev*$multi"|bc);
+yprev=$yrfei4; 
+
+xres="$r $r $r $xrfei4 $r $r $r"
+yres="$r $r $r $yrfei4 $r $r $r"
+
+echo $xres
+echo $yres
 else
 echo "multi:$multi  prev: $prev";
 fi
@@ -106,7 +121,7 @@ gear1=${gear[x]}
 gear2=${gear[x+1]}
 echo $gear1" to "$gear2
 #########################
-$do jobsub.py  $DRY -c config.cfg -csv $RUNLIST -o MaxRecordNumber="$MaxRecordNumber" -o AlignPlaneIds="$AlignPlaneIds" -o Planes="$Planes" -o GearFile="${gear1}"  -o GearAlignedFile="${gear2}" -o ResolutionPlane="$res" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o Chi2Cut="$Chi2Cut"  -o pede="$pede" aligngbl $RUN
+$do jobsub.py  $DRY -c config.cfg -csv $RUNLIST -o MaxRecordNumber="$MaxRecordNumber" -o AlignPlaneIds="$AlignPlaneIds" -o Planes="$Planes" -o GearFile="${gear1}"  -o GearAlignedFile="${gear2}"  -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o Chi2Cut="$Chi2Cut"  -o pede="$pede" aligngbl $RUN
 #########################
    done
 

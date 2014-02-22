@@ -28,8 +28,12 @@ Planes="0 1 2 20 3 4 5"
 amode="7";
 
 r="0.0500";
-rfei4="10.001";
-res="$r $r $r $rfei4 $r $r $r";
+xrfei4="10.014";
+yrfei4="10.071";
+
+xres="$r $r $r $xrfei4 $r $r $r";
+yres="$r $r $r $yrfei4 $r $r $r";
+
 prev="$r";
 echo "prev:$prev and r:$r"
 file="output/logs/aligngbl-00${RUN}.zip"
@@ -58,7 +62,7 @@ Chi2Cut="5000"
 #DRY="--dry-run"
 
 
-$do jobsub.py  $DRY -c config.cfg -csv $RUNLIST -o MaxRecordNumber="$MaxRecordNumber" -o AlignPlaneIds="$AlignPlaneIds" -o Planes="$Planes"                         -o GearAlignedFile="${gear[1]}" -o ResolutionPlane="$res" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o Chi2Cut="$Chi2Cut"  -o pede="$pede" aligngbl $RUN
+$do jobsub.py  $DRY -c config.cfg -csv $RUNLIST -o MaxRecordNumber="$MaxRecordNumber" -o AlignPlaneIds="$AlignPlaneIds" -o Planes="$Planes"                         -o GearAlignedFile="${gear[1]}"  -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o Chi2Cut="$Chi2Cut"  -o pede="$pede" aligngbl $RUN
 # reduce Chi2Cut
 Chi2Cut="30"
 ####
@@ -70,7 +74,7 @@ gear1=${gear[x]}
 gear2=${gear[x+1]}
 echo $gear1" to "$gear2
 #########################
-$do jobsub.py  $DRY -c config.cfg -csv $RUNLIST -o MaxRecordNumber="$MaxRecordNumber" -o AlignPlaneIds="$AlignPlaneIds" -o Planes="$Planes" -o GearFile="${gear1}"  -o GearAlignedFile="${gear2}" -o ResolutionPlane="$res" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o Chi2Cut="$Chi2Cut"  -o pede="$pede" aligngbl $RUN
+$do jobsub.py  $DRY -c config.cfg -csv $RUNLIST -o MaxRecordNumber="$MaxRecordNumber" -o AlignPlaneIds="$AlignPlaneIds" -o Planes="$Planes" -o GearFile="${gear1}"  -o GearAlignedFile="${gear2}"  -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o Chi2Cut="$Chi2Cut"  -o pede="$pede" aligngbl $RUN
 ####
 echo "file: $file"
 multi=`unzip  -p  $file |grep "multiply all input standard deviations" |cut -d 'r' -f4`; 
@@ -81,7 +85,8 @@ echo "multi:$multi  prev: $prev";
 if [[ -n $multi && -n $prev && $(echo "$prev > 0.001"|bc) -eq 1 ]];then
 r=$(echo "scale=4;$prev*$multi"|bc);
 prev=$r; 
-res="$r $r $r 10.000 $r $r $r"
+xres="$r $r $r 10.014 $r $r $r"
+yres="$r $r $r 10.071 $r $r $r"
 else
 echo "multi:$multi  prev: $prev";
 fi
@@ -90,7 +95,7 @@ fi
    done
 
 #
-MaxRecordNumber="1000"
+MaxRecordNumber="10000"
 #
 #do=" "
 #
@@ -108,7 +113,7 @@ gear2=${gear[x+1]}
 echo ${gear1}" to "$gear2
 
 #########################
-$do jobsub.py  $DRY -c config.cfg -csv $RUNLIST -o MaxRecordNumber="$MaxRecordNumber"  -o AlignPlaneIds="$AlignPlaneIds" -o Planes="$Planes" -o GearFile="$gear1"  -o GearAlignedFile="$gear2" -o ResolutionPlane="$res" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o Chi2Cut="$Chi2Cut"  -o pede="$pede" aligngbl $RUN
+$do jobsub.py  $DRY -c config.cfg -csv $RUNLIST -o MaxRecordNumber="$MaxRecordNumber"  -o AlignPlaneIds="$AlignPlaneIds" -o Planes="$Planes" -o GearFile="$gear1"  -o GearAlignedFile="$gear2"  -o xResolutionPlane="$xres" -o yResolutionPlane="$yres"  -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o Chi2Cut="$Chi2Cut"  -o pede="$pede" aligngbl $RUN
 ####
 
 done
