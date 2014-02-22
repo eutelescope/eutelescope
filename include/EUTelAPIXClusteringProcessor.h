@@ -90,6 +90,8 @@ namespace eutelescope {
 	int _minDiagDistance;
 	int _minCharge;
 	int _minLVL1;
+	int _LVL1min;
+	int _LVL1max;
 	int _maxXsize;
 	int _maxYsize;
 	int _minXsize;

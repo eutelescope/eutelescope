@@ -103,6 +103,8 @@ EUTelAPIXClusteringProcessor::EUTelAPIXClusteringProcessor () : Processor("EUTel
 	registerProcessorParameter ("MinYDistance", "Minimum distance in Y that pixels should have to build a cluster", _minYDistance, 1);
 	registerProcessorParameter ("MinDiagonalDistance", "Minimum diagonal distance that pixels should have to build a cluster", _minDiagDistance, 1);
 	registerProcessorParameter ("MinCharge", "Minimum Charge (TOT) that clusters should have to build a cluster", _minCharge, 1);
+	registerProcessorParameter ("MinLVL1", "Minimim Level 1  building one cluster", _LVL1min, -1);
+	registerProcessorParameter ("MaxLVL1", "Maximim Level 1  building one cluster", _LVL1max, -1);
 	registerProcessorParameter ("MinLVL1Difference", "Minimim Level 1 difference of pixels building one cluster", _minLVL1, -1);
         registerProcessorParameter ("MaxXSize","Maximim size along X direction", _maxXsize, 1000 );
         registerProcessorParameter ("MaxYSize","Maximim size along Y direction", _maxYsize, 1000 );
@@ -121,6 +123,8 @@ EUTelAPIXClusteringProcessor::EUTelAPIXClusteringProcessor () : Processor("EUTel
 	if (_minDiagDistance < 1) _minDiagDistance = -1;
 	if (_minCharge < 1) _minCharge = 0;
 	if (_minLVL1 > 15) _minLVL1 = -1;
+	if (_LVL1min < 0 ) _LVL1min = -1;
+	if (_LVL1max < 0 ) _LVL1max = 16;
 
 
 }
@@ -392,7 +396,16 @@ void EUTelAPIXClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * c
 								float LVL1Diff = abs(aPix->getTime() - bPix->getTime() );
 								if (LVL1Diff > _minLVL1) skipPixel = true;
  							}
-							
+
+
+							if (_LVL1max <  aPix->getTime() || _LVL1max <  bPix->getTime() ||
+							    _LVL1min >  aPix->getTime() || _LVL1min >  bPix->getTime() )
+                                                        {
+							   skipPixel = true;
+ 							}
+	cout<< " " << _LVL1min <<" " << aPix->getTime() << " " << bPix->getTime() <<  " " << _LVL1max << " " << skipPixel  << endl;
+
+						
 							if (skipPixel == false) 
                                                         {
 								
