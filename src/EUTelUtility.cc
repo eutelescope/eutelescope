@@ -16,7 +16,6 @@
 #include "EUTelFFClusterImpl.h"
 
 // lcio includes <.h>
-#include "IMPL/TrackerHitImpl.h"
 
 #include <EVENT/LCEvent.h>
 
@@ -387,6 +386,25 @@ namespace eutelescope {
 
                 return X;
         }
-        
-    }
+
+        /** get cluster size in X and Y for TrackerHit derived hits:
+         *  includes only certain type of data
+         *  to-do: replace with generic hit and cluster structure not requiring explicit declaration of data types
+         */
+
+        void getClusterSize(const IMPL::TrackerHitImpl * hit, int& sizeX, int& sizeY ) {
+        // rewrite from EUTelAXPITbTrackTuple:
+  
+	  if(hit==0)
+	  {
+	    streamlog_out( ERROR5 ) << "An invalid hit pointer supplied! will exit now\n" << endl;
+	    return ;
+	  }
+               EUTelVirtualCluster* cluster = GetClusterFromHit( hit ) ;
+
+	       cluster->getClusterSize(sizeX, sizeY);
+ 
+        }
+  
+  }
 }
