@@ -517,8 +517,19 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
 
                         // Get fitted hit information
                         const double* hitpos = ( *itrHit )->getPosition( );
-                        const int planeID = Utility::GuessSensorID( static_cast < IMPL::TrackerHitImpl* > ( *itrHit ) );
+                        const int planeID = geo::gGeometry().getSensorID( originalHit );
+
+                        int xSize = -1; 
+                        int ySize = -1; 
+                        Utility::getClusterSize(originalHit, xSize, ySize);
+                        
+                        std::cout << "plane:" << planeID << " hittype: " << originalHit->getType()  <<  " x: " << xSize << " y: " << ySize << " " << std::endl;
+                
+
                         if ( planeID < 0 ) continue;
+
+                        // extract hit - cluster information - along X and Y   
+                        
 
                         // Calculate residuals between original and fitted hits
                         residual[0] = hitpos[0] - originalhitpos[0];
