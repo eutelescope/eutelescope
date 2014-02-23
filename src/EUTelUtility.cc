@@ -164,7 +164,7 @@ namespace eutelescope {
                         delete cluster;
                     }
                     
-                if ( cluster != NULL ) delete cluster;
+//                if ( cluster != 0 ) delete cluster;
                     
                 } catch (lcio::Exception e) {
                     // catch specific exceptions
