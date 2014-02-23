@@ -17,8 +17,11 @@
 
    <execute>
       <processor name="AIDA"/>
+      <processor name="LoadHotPixelDB"/>
       <processor name="HitMakerM26"/>
       <processor name="HitMakerAPIX"/>
+      <processor name="HitFilter1"/> 
+      <processor name="HitFilter2"/> 
       <processor name="Correlator"/>
       <processor name="Save"/>
       <processor name="MyEUTelUtilityPrintEventNumber"/>
@@ -44,6 +47,11 @@
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
+
+ <processor name="LoadHotPixelDB" type="ConditionsProcessor">
+   <parameter name="SimpleFileHandler" type="StringVec"> hotpixel_m26 @DatabasePath@/@FilePrefix@-hotpixel.slcio hotpixel_m26 </parameter>
+   <parameter name="SimpleFileHandler" type="StringVec"> hotpixel_apix @DatabasePath@/@FilePrefix@-hotpixel.slcio hotpixel_apix </parameter>
+ </processor>
 
 
  <processor name="HitMakerM26" type="EUTelHitMaker">
@@ -103,8 +111,19 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
   <!--parameter name="NPixel" type="int" value="9"/-->
   <!--The submatrix size to be used for CoGAlgorithm = "NxMPixel"-->
   <parameter name="NxMPixel" type="IntVec"> 3 3 </parameter>
-</processor>
+ </processor>
 
+ <processor name="HitFilter1" type="EUTelProcessorFilteringHitFilter">
+    <parameter name="HitInputCollectionName" type="string" lcioOutType="TrackerHit"> hit </parameter>
+    <parameter name="HitOutputCollectionName" type="string" lcioOutType="TrackerHit"> hit1 </parameter>
+    <parameter name="HotPixelCollectionName" type="string" lcioOutType="TrackerHit"> hotpixel_m26 </parameter>
+ </processor>
+
+ <processor name="HitFilter2" type="EUTelProcessorFilteringHitFilter">
+    <parameter name="HitInputCollectionName" type="string" lcioOutType="TrackerHit"> hit1 </parameter>
+    <parameter name="HitOutputCollectionName" type="string" lcioOutType="TrackerHit"> hit2 </parameter>
+    <parameter name="HotPixelCollectionName" type="string" lcioOutType="TrackerHit"> hotpixel_apix </parameter>
+ </processor>
 
 
  <processor name="Correlator" type="EUTelCorrelator">
@@ -120,7 +139,7 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
   <!--SensorID of fixed plane-->
   <!--parameter name="FixedPlane" type="int" value="0"/-->
   <!--This is the name of the hot pixel collection to be saved into the output slcio file-->
-  <!--parameter name="HotPixelCollectionName" type="string" value="hotpixel"/-->
+  <parameter name="HotPixelCollectionName" type="string" value="hotpixel_apix"/>
   <!--List of cluster collections-->
   <parameter name="InputClusterCollections" type="StringVec"> </parameter>
   <!--If there are more then this number of correlated hits (planes->track candidate) (default=5)-->
