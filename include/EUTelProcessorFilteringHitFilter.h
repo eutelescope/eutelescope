@@ -8,6 +8,8 @@
 #include "marlin/Processor.h"
 
 #include "IMPL/TrackerHitImpl.h"
+#include <IMPL/LCCollectionVec.h>
+#include <IMPL/TrackImpl.h>
 
 // C++
 #include <string>
@@ -55,11 +57,17 @@ namespace eutelescope {
         //! Output TrackerHit collection name
         std::string _hitOutputCollectionName;
 
+        //! Input HotPixel collection name
+        std::string _hotpixelCollectionName;
+
         IntVec _wantPlaneID;
         
         int _nProcessedRuns;
         int _nProcessedEvents;
 
+        // treat hits with hotpixels
+        std::map<std::string, bool > _hotPixelMap;
+ 
     };
 
     //! A global instance of the processor

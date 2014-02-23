@@ -61,7 +61,10 @@ EUTelProcessorFilteringHitFilter::EUTelProcessorFilteringHitFilter( ) :
     
     // Filtered hits output collection
     registerOutputCollection( LCIO::TRACKERHIT, "HitOutputCollectionName", "Output hits collection name", _hitOutputCollectionName, "FilteredHitCollection" );
-    
+
+    // HotPixel colelction: how the hits can be sorted out (first example) 
+    registerOutputCollection( LCIO::TRACKERHIT, "HotPixelCollectionName", "Output hits collection name", _hotpixelCollectionName, "HotPixelCollection" );
+
     //--------------------------------------------------------------------------------------------------------------------------------------------------------//
     
     // Optional parameters definition
@@ -79,6 +82,7 @@ void EUTelProcessorFilteringHitFilter::init( ) {
 
     _nProcessedRuns = 0;
     _nProcessedEvents = 0;
+    
 
 }
 
@@ -87,31 +91,75 @@ void EUTelProcessorFilteringHitFilter::processRunHeader( LCRunHeader* /*run*/ ) 
     _nProcessedRuns++;
 }
 
-void EUTelProcessorFilteringHitFilter::processEvent( LCEvent * evt ) {
+void EUTelProcessorFilteringHitFilter::processEvent( LCEvent * event ) {
+
+
+//cout << " processEvent : " << endl;
+
+     if ( isFirstEvent() )
+    {
+      _hotPixelMap = Utility::FillHotPixelMap(event, _hotpixelCollectionName );
+    }
+
+//cout << " processEvent continue: " << endl;
+
 
     // Try to access the collection
-    
-    LCCollection* col = NULL;
-    try{
-        col = evt->getCollection( _hitInputCollectionName );
+    LCCollectionVec* hitInputCollection = NULL;
+    LCCollectionVec* hitOutputCollection = NULL;
+
+
+    bool bHitOutputCollectionExists = false;
+    try
+    {
+       bHitOutputCollectionExists = true; 
+       hitOutputCollection  = static_cast<LCCollectionVec*> (event->getCollection( _hitOutputCollectionName ));
     }
+    catch(...)
+    {
+       bHitOutputCollectionExists = false;
+       hitOutputCollection = new LCCollectionVec(LCIO::TRACKERHIT);
+    }
+//cout << " processEvent continue: OutputCollection  " << hitOutputCollection << endl;
+
+
+    try{
+        hitInputCollection =  static_cast<LCCollectionVec*> (event->getCollection( _hitInputCollectionName ));
+ 
+    } 
     catch( lcio::DataNotAvailableException e )
     {
         streamlog_out( WARNING ) << _hitInputCollectionName << " collection not available" << std::endl;
-        col = NULL;
+        hitInputCollection = 0;
     }
+//cout << " processEvent continue: " << hitInputCollection << endl;
+
 
     // this will only be entered if the collection is available
-    if ( col != NULL ) {
-
+    if ( hitInputCollection != 0 && hitOutputCollection != 0 ) {
+          for ( int iHit = 0; iHit < hitInputCollection->getNumberOfElements(); iHit++ ) 
+          {
+            TrackerHitImpl * hit = static_cast<TrackerHitImpl*> ( hitInputCollection->getElementAt(iHit) );
+             
+    //        cout << " ihit: " << iHit << endl;
+            if( Utility::HitContainsHotPixels(  hit,  _hotPixelMap )  ) 
+            {
+              streamlog_out ( MESSAGE3 ) << "Hit " << iHit << " contains hot pixels; skip this one. " << endl;
+              continue;
+            }
+            TrackerHitImpl * hit_filtered = new TrackerHitImpl(*hit); 
+            hitOutputCollection->push_back( hit_filtered );
+          } 
+          if( !bHitOutputCollectionExists ) event->addCollection( hitOutputCollection, _hitOutputCollectionName );
+ 
     }
 
-    
+//cout << " processEvent done:" << endl;    
 
     _nProcessedEvents++;
 }
 
-void EUTelProcessorFilteringHitFilter::check( LCEvent * /*evt*/ ) {
+void EUTelProcessorFilteringHitFilter::check( LCEvent * /*event*/ ) {
     // nothing to check here
 }
 
