@@ -403,7 +403,6 @@ void EUTelAPIXClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * c
                                                         {
 							   skipPixel = true;
  							}
-	cout<< " " << _LVL1min <<" " << aPix->getTime() << " " << bPix->getTime() <<  " " << _LVL1max << " " << skipPixel  << endl;
 
 						
 							if (skipPixel == false) 
