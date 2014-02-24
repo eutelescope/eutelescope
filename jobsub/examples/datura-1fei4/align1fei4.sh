@@ -10,22 +10,22 @@ do
         in
                 r) RUN=${OPTARG};;
                 l) RUNLIST=${OPTARG};;
-        esac
+                c) Chi2Cut=${OPTARG};;
+       esac
 done
 
-    for x in {1..40}; do
-
-gear[x]="gear-$RUN-20-$x.xml"
-echo ${gear[x]}
-    done    
+for x in {1..40}; do
+  gear[x]="gear-$RUN-20-$x.xml"
+  echo ${gear[x]}
+done    
 
 AlignPlaneIds="0 1 2 20 3 4 5"
 Planes="0 1 2 20 3 4 5"
-MaxRecordNumber="10000"
+MaxRecordNumber="1000"
 
 r="0.0035"
-xrfei4="0.514"
-yrfei4="0.571"
+xrfei4="0.250"
+yrfei4="1.000"
 
 xres="$r $r $r $xrfei4 $r $r $r"
 yres="$r $r $r $yrfei4 $r $r $r"
@@ -44,7 +44,6 @@ then
  exit
 fi
 
-Chi2Cut="5000"
 
 #do="echo "
 
@@ -58,7 +57,7 @@ Fzs="0 1 2 20 3 4 5"
 
 $do jobsub.py  $DRY -c config.cfg -csv $RUNLIST -o MaxRecordNumber="$MaxRecordNumber" -o AlignPlaneIds="$AlignPlaneIds" -o Planes="$Planes" -o GearFile="gear-${RUN}-11.xml"   -o GearAlignedFile="${gear[1]}"  -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o Chi2Cut="$Chi2Cut"  -o pede="$pede" aligngbl $RUN
 # reduce Chi2Cut
-Chi2Cut="30"
+#Chi2Cut="30"
 ####
 
 #  for x in `seq 10 30 2`; do
@@ -84,8 +83,8 @@ multi=`unzip  -p  $file |grep "multiply all input standard deviations" |cut -d '
 multi=${multi/[eE]+/*10^+};
 multi=${multi/[eE]-/*10^-};
 
-echo "multi:$multi  prev: $prev"; 
-if [[ -n $multi && -n $prev && $(echo "$prev > 0.014"|bc) -eq 1 ]];then
+echo "multi:$multi  prev: $xprev"; 
+if [[ -n $multi && -n $xprev && $(echo "$xprev > 0.001"|bc) -eq 1 ]];then
 
 xrfei4=$(echo "scale=4;$xprev*$multi"|bc);
 xprev=$xrfei4; 
@@ -96,14 +95,14 @@ yprev=$yrfei4;
 xres="$r $r $r $xrfei4 $r $r $r"
 yres="$r $r $r $yrfei4 $r $r $r"
 
-echo $xres
-echo $yres
+echo "xres: "$xres
+echo "yres: "$yres
 else
-echo "multi:$multi  prev: $prev";
+echo "multi:$multi   xprev: $xprev   yprev: $yprev";
 fi
 #echo "resolution $res"
 #########################
-  done
+ done
 
 
 #
