@@ -523,7 +523,7 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
                         int ySize = -1; 
                         Utility::getClusterSize(originalHit, xSize, ySize);
                         
-                        std::cout << "plane:" << planeID << " hittype: " << originalHit->getType()  <<  " x: " << xSize << " y: " << ySize << " " << std::endl;
+//                        std::cout << "plane:" << planeID << " hittype: " << originalHit->getType()  <<  " x: " << xSize << " y: " << ySize << " " << std::endl;
                 
 
                         if ( planeID < 0 ) continue;
