@@ -67,7 +67,7 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
   <!--Name of histogram info xml file-->
   <parameter name="HistogramInfoFilename" type="string" value="@HistoInfoFile@"/>
   <!--Input hits collection name-->
-  <parameter name="HitInputCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
+  <parameter name="HitInputCollectionName" type="string" lcioInType="TrackerHit"> hit_filtered </parameter>
   <!--Name of the hot pixel collection -->
   <parameter name="HotPixelCollectionName" type="string">hotpixel_m26 </parameter>
   <!--Maximal number of missing hits on a track candidate-->
