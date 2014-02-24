@@ -21,7 +21,6 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
     <processor name="AIDA"/>
     <processor name="PrintEventNumber"/>
     <processor name="TrackSearch"/>
-    <!-- processor name="GBLTrackFit"/ -->
     <processor name="Save"/>
   </execute>
 
@@ -81,72 +80,6 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
   <parameter name="Verbosity" type="string">MESSAGE4 </parameter>
  </processor>
 
-<processor name="GBLTrackFit" type="EUTelProcessorTrackingGBLTrackFit">
- <!--EUTelProcessorTrackingGBLTrackFit performs track fits using GBL optionally writing data files for MILLEPEDE II.-->
-  <!--Alignment mode specifies alignment degrees of freedom to be considered
-0 - No alignment at all. Simply fit tracks assuming that alignment is correct
-1 - Alignment of XY shifts
-2 - Alignment of XY shifts + rotations around Z
-3 - Alignment of XYZ shifts + rotations around Z
-4 - Alignment of XY shifts + rotations around X and Z
-5 - Alignment of XY shifts + rotations around Y and Z
-6 - Alignment of XY shifts + rotations around X,Y and Z
--->
-  <parameter name="AlignmentMode" type="int" value="@AlignmentMode@"/>
-  <!--Ids of planes to be used in alignment-->
-  <parameter name="AlignmentPlanes" type="IntVec" value="@AlignPlaneIds@"/>
-  <parameter name="Planes" type="IntVec"> @Planes@ </parameter>
-  <parameter name="xResolutionPlane" type="FloatVec"> @xResolutionPlane@ </parameter>
-  <parameter name="yResolutionPlane" type="FloatVec"> @yResolutionPlane@ </parameter>
-  <!--Beam charge [e]-->
-  <parameter name="BeamCharge" type="double"> 1.</parameter>
-  <!--Beam energy [GeV]-->
-  <parameter name="BeamEnergy" type="double"> @BeamEnergy@ </parameter>
-  <!--Name of histogram info xml file-->
-  <parameter name="HistogramInfoFilename" type="string" value="@HistoInfoFile@"/>
-  <!--Name of the Millepede binary file-->
-  <xparameter name="MilleBinaryFilename" type="string" value="@LcioPath@/@FilePrefix@-mille.bin" />
-  <xparameter name="MilleResultFilename" type="string" value="@LcioPath@/@FilePrefix@-mille.res"/>
-  <!--Maximum chi2 of a track candidate that goes into millepede-->
-  <parameter name="MilleMaxChi2Cut" type="double"> 1000000 </parameter>
-
-  <parameter name="PedeSteeringAdditionalCmds" type="StringVec">
-Constraint 0. \\
-1     1 \\
-2     1 \\
-3     1 \\
-4     1 \\
-5     1 \\
-6     1 \\
-Constraint 0. \\
-7     1 \\
-8     1 \\
-9     1 \\
-10    1 \\
-11    1 \\
-12    1 \\
-Constraint 0. \\
-31    1 \\
-32    1 \\
-33    1 \\
-34    1 \\
-35    1 \\
-36    1 \\
-  </parameter>
-
-  <!--Name of the Millepede steering file to be created-->
-  <parameter name="MilleSteeringFilename" type="string"> @FilePrefix@-pede-steer.txt </parameter>
-  <!--Execute the pede at the end of processing using the generated steering file.-->
-  <parameter name="RunPede" type="bool" value="true" />
-  <xparameter name="RunPede" type="bool" value="false" />
-  <!--Input track candidates hits collection name-->
-  <zparameter name="TrackCandHitInputCollectionName" type="string" lcioInType="Track"> aligned_track_candidates </zparameter>
-  <parameter name="TrackCandHitInputCollectionName" type="string" lcioInType="Track">track_candidates </parameter>
-  <!--Output tracks collection name-->
-  <parameter name="TracksOutputCollectionName" type="string" lcioOutType="Track">TrackCollection </parameter>
-  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <parameter name="Verbosity" type="string" value="DEBUG4"  />
- </processor>
 
  <processor name="Save" type="EUTelOutputProcessor">
  <!--Writes the current event to the specified LCIO outputfile. Eventually it adds a EORE at the of the file if it was missing Needs to be the last ActiveProcessor.-->
