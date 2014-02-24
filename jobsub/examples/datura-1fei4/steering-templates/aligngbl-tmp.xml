@@ -17,6 +17,7 @@
 
    <execute>
       <processor name="AIDA"/>
+      <processor name="Correlator"/>
       <processor name="GBLTrackFit"/>
       <processor name="Save"/>
       <processor name="PrintEventNumber"/>
@@ -44,6 +45,25 @@
 </processor>
 
 
+  <processor name="Correlator" type="EUTelCorrelator">
+    <!--EUTelCorrelator fills histograms with correlation plots-->
+    <!--Cluster (pulse) collection name-->
+    <parameter name="InputHitCollections" type="StringVec" > hit_filtered </parameter>
+    <!-- -->
+    <parameter name="ClusterChargeMinimum" type="int" value="1"/>
+    <!-- -->
+    <parameter name="MinNumberOfCorrelatedHits" type="int" value="7"/>
+    <parameter name="Events"  type="int" value="999"/>
+
+    <!--Residual cuts along both size in microns-->
+    <parameter name="ResidualsXMax" type="FloatVec">  20.  20.  20.        20.0    20.0  20.0  20.0          </parameter>
+    <parameter name="ResidualsXMin" type="FloatVec"> -20. -20. -20.       -20.0   -20.0 -20.0 -20.0          </parameter>
+    <parameter name="ResidualsYMax" type="FloatVec">  20.  20.  20.        20.0    20.0  20.0  20.0          </parameter>
+    <parameter name="ResidualsYMin" type="FloatVec"> -20. -20. -20.       -20.0   -20.0 -20.0 -20.0          </parameter>
+
+  </processor>
+
+
 
  <processor name="GBLTrackFit" type="EUTelProcessorTrackingGBLTrackFit">
   <!--EUTelProcessorTrackingGBLTrackFit performs track fits using GBL optionally writing data files for MILLEPEDE II.-->
@@ -69,9 +89,9 @@
   <!--Ids of planes to have intrinsic resolution modified /-->
   <parameter name="Planes" type="IntVec"> @Planes@ </parameter>
   <!-- on the order of appearing of the plane Ids (Planes param.) list X resolution of every plane /-->
-  <parameter name="xResolutionPlane" type="FloatVec"> @ResolutionPlane@ </parameter>
+  <parameter name="xResolutionPlane" type="FloatVec"> @xResolutionPlane@ </parameter>
   <!-- on the order of appearing of the plane Ids (Planes param.) list Y resolution of every plane /-->
-  <parameter name="yResolutionPlane" type="FloatVec"> @ResolutionPlane@ </parameter>
+  <parameter name="yResolutionPlane" type="FloatVec"> @yResolutionPlane@ </parameter>
   <!--Beam energy [GeV]-->
   <parameter name="BeamEnergy" type="double" value="@BeamEnergy@"/>
   <!--Ids of planes for which rotation around X will be fixed during millepede call-->
