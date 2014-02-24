@@ -10,8 +10,10 @@ do
         in
                 r) RUN=${OPTARG};;
                 l) RUNLIST=${OPTARG};;
-        esac
+                c) Chi2Cut=${OPTARG};;
+       esac
 done
+
 
     for x in {1..40}; do
 
@@ -20,25 +22,23 @@ echo ${gear[x]}
     done    
 
 
-MaxRecordNumber="10000"
-AlignPlaneIds="0 1 2 20 3 4 5"
-Planes="0 1 2 20 3 4 5"
+MaxRecordNumber="1000"
+AlignPlaneIds="0 1 2  3 4 5"
+Planes="0 1 2  3 4 5"
 
 #
 amode="7";
 
-r="0.0500";
-xrfei4="10.014";
-yrfei4="10.071";
+r="0.1000";
 
-xres="$r $r $r $xrfei4 $r $r $r";
-yres="$r $r $r $yrfei4 $r $r $r";
+xres="$r $r $r  $r $r $r";
+yres="$r $r $r  $r $r $r";
 
 prev="$r";
 echo "prev:$prev and r:$r"
 file="output/logs/aligngbl-00${RUN}.zip"
 
-if [ $# -ne 4 ]
+if [ $# -ne 6 ]
 then
  echo "$# parameters: $RUN $RUNLIST $file $gear10"
  exit
@@ -47,16 +47,15 @@ fi
 
 #  for x in `seq 10 30 2`; do
 #echo $x
-Fxr="0 1 2 20 3 4 5"
-Fxs="0     20     5"
-Fyr="0 1 2 20 3 4 5"
-Fys="0     20     5"
-Fzr="0     20      "
-Fzs="0 1 2 20 3 4 5"
+Fxr="0 1 2  3 4 5"
+Fxs="0          5"
+Fyr="0 1 2  3 4 5"
+Fys="0          5"
+Fzr="0           "
+Fzs="0 1 2  3 4 5"
 
 
 
-Chi2Cut="5000"
 
 #do="echo "
 #DRY="--dry-run"
@@ -64,12 +63,12 @@ Chi2Cut="5000"
 
 $do jobsub.py  $DRY -c config.cfg -csv $RUNLIST -o MaxRecordNumber="$MaxRecordNumber" -o AlignPlaneIds="$AlignPlaneIds" -o Planes="$Planes"                         -o GearAlignedFile="${gear[1]}"  -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o Chi2Cut="$Chi2Cut"  -o pede="$pede" aligngbl $RUN
 # reduce Chi2Cut
-Chi2Cut="30"
+#Chi2Cut="5000"
 ####
 
 echo "starting XY shifts/rotations"
 #do=""
- for x in {1..6}; do
+ for x in {1..10}; do
 gear1=${gear[x]}
 gear2=${gear[x+1]}
 echo $gear1" to "$gear2
@@ -85,8 +84,8 @@ echo "multi:$multi  prev: $prev";
 if [[ -n $multi && -n $prev && $(echo "$prev > 0.001"|bc) -eq 1 ]];then
 r=$(echo "scale=4;$prev*$multi"|bc);
 prev=$r; 
-xres="$r $r $r 10.014 $r $r $r"
-yres="$r $r $r 10.071 $r $r $r"
+xres="$r $r $r  $r $r $r"
+yres="$r $r $r  $r $r $r"
 else
 echo "multi:$multi  prev: $prev";
 fi
@@ -95,18 +94,18 @@ fi
    done
 
 #
-MaxRecordNumber="10000"
+#MaxRecordNumber="10000"
 #
 #do=" "
 #
-Fxr="0     20     5"
-Fxs="0 1 2 20 3 4 5"
-Fyr="0     20     5"
-Fys="0 1 2 20 3 4 5"
-Fzr="0 1 2 20 3 4 5"
-Fzs="0 1 2 20 3 4 5"
+Fxr="0          5"
+Fxs="0 1 2  3 4 5"
+Fyr="0          5"
+Fys="0 1 2  3 4 5"
+Fzr="0 1 2  3 4 5"
+Fzs="0 1 2  3 4 5"
 
-for x in {7..10}; do
+for x in {11..20}; do
 
 gear1=${gear[x]}
 gear2=${gear[x+1]}
