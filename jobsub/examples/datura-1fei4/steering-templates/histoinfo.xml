@@ -35,7 +35,11 @@
     <histo name="CommonMode"        type="H1D" xBin="100"  xMin="-2"      xMax="2" />
 
     <!-- EUTelHistogramMaker and EUTelClusteringProcessor -->
-    <histo name="clusterSignal"     type="H1D" xBin="500" xMin="0"        xMax="1000"/>
+    <histo name="clusterSignal"     type="H1D" xBin="90" xMin="0.5"        xMax="90.5"/>
+    <histo name="Xclusterwidth"    type="H1D" xBin="20" xMin="0.5"        xMax="20.5"/>
+    <histo name="Yclusterwidth"    type="H1D" xBin="20" xMin="0.5"        xMax="20.5"/>
+    <histo name="clusterSizeX"     type="H1D" xBin="20" xMin="0.5"        xMax="20.5"/>
+    <histo name="clusterSizeY"     type="H1D" xBin="20" xMin="0.5"        xMax="20.5"/>
     <histo name="clusterNoise"      type="H1D" xBin="70"  xMin="0"        xMax="50"/>
     <histo name="seedSignal"        type="H1D" xBin="500" xMin="0"        xMax="300"/>
     <histo name="seedSNR"           type="H1D" xBin="150" xMin="0"        xMax="100"/>
@@ -91,12 +95,12 @@
             <histo name="DUTshiftX"     type="H1D" xBin="300" xMin="-0.15" xMax="0.15"/>
 
     <!-- EUTelProcessorTrackingGBLTrackFit -->
-    <histo name="orchi2GblFit"    type="H1D" xBin="500" xMin="0." xMax="100."/>
-    <histo name="orchi2ndfGblFit" type="H1D" xBin="500" xMin="0." xMax="10."/>
-    <histo name="orprobGblFit"    type="H1D" xBin="500" xMin="0." xMax="1."/>
-    <histo name="chi2GblFit"      type="H1D" xBin="500" xMin="0." xMax="100."/>
-    <histo name="chi2ndfGblFit"   type="H1D" xBin="500" xMin="0." xMax="10."/>
-    <histo name="probGblFit"      type="H1D" xBin="500" xMin="0." xMax="1."/>
+    <histo name="orchi2GblFit"    type="H1D" xBin="500" xMin="0." xMax="5000."/>
+    <histo name="orchi2ndfGblFit" type="H1D" xBin="500" xMin="0." xMax="100."/>
+    <histo name="orprobGblFit"    type="H1D" xBin="100" xMin="0." xMax="1."/>
+    <histo name="chi2GblFit"      type="H1D" xBin="500" xMin="0." xMax="5000."/>
+    <histo name="chi2ndfGblFit"   type="H1D" xBin="500" xMin="0." xMax="100."/>
+    <histo name="probGblFit"      type="H1D" xBin="100" xMin="0." xMax="1."/>
     <histo name="Residuals2DGblFit_yVSx0"     type="H2D"  xBin="100" xMin="-10." xMax="10." yBin="100" yMin="-10." yMax="10."/>
     <histo name="Residuals2DGblFit_yVSy0"     type="H2D"  xBin="100" xMin="-05." xMax="05." yBin="100" yMin="-10." yMax="10."/>
     <histo name="Residuals2DGblFit_yVSx1"     type="H2D"  xBin="100" xMin="-10." xMax="10." yBin="100" yMin="-10." yMax="10."/>
