@@ -33,12 +33,15 @@ yres="$r $r $r $yrfei4 $r $r $r"
 xprev="$xrfei4"
 yprev="$yrfei4"
 
+MaxMissingHitsPerTrack="0"
+ResidualsRMax="3.0 3.0 3.0 3.0 3.0 3.0 3.0"
+
 #
 amode="7"; 
 file="output/logs/aligngbl-00${RUN}.zip"
 
 
-if [ $# -ne 4 ]
+if [ $# -ne 6 ]
 then
  echo "$# parameters: $RUN $RUNLIST $file $gear10"
  exit
@@ -55,7 +58,7 @@ Fzr="0 1 2    3 4 5"
 Fzs="0 1 2 20 3 4 5"
 #DRY="--dry-run"
 
-$do jobsub.py  $DRY -c config.cfg -csv $RUNLIST -o MaxRecordNumber="$MaxRecordNumber" -o AlignPlaneIds="$AlignPlaneIds" -o Planes="$Planes" -o GearFile="gear-${RUN}-11.xml"   -o GearAlignedFile="${gear[1]}"  -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o Chi2Cut="$Chi2Cut"  -o pede="$pede" aligngbl $RUN
+$do jobsub.py  $DRY -c config.cfg -csv $RUNLIST -o MaxRecordNumber="$MaxRecordNumber" -o AlignPlaneIds="$AlignPlaneIds" -o Planes="$Planes" -o GearFile="gear-${RUN}-16.xml"   -o GearAlignedFile="${gear[1]}"  -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o Chi2Cut="$Chi2Cut"  -o pede="$pede" -o MaxMissingHitsPerTrack="$MaxMissingHitsPerTrack" -o ResidualsRMax="$ResidualsRMax" -o suffix="-XY-0" aligngbl $RUN
 # reduce Chi2Cut
 #Chi2Cut="30"
 ####
@@ -71,12 +74,12 @@ Fzs="0 1 2 20 3 4 5"
 
 echo "starting XY shifts/rotations"
 #do=""
- for x in {1..10}; do
+ for x in {1..5}; do
 gear1=${gear[x]}
 gear2=${gear[x+1]}
 echo $gear1" to "$gear2
 #########################
-$do jobsub.py  $DRY -c config.cfg -csv $RUNLIST -o MaxRecordNumber="$MaxRecordNumber" -o AlignPlaneIds="$AlignPlaneIds" -o Planes="$Planes" -o GearFile="${gear1}"  -o GearAlignedFile="${gear2}"  -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o Chi2Cut="$Chi2Cut"  -o pede="$pede" aligngbl $RUN
+$do jobsub.py  $DRY -c config.cfg -csv $RUNLIST -o MaxRecordNumber="$MaxRecordNumber" -o AlignPlaneIds="$AlignPlaneIds" -o Planes="$Planes" -o GearFile="${gear1}"  -o GearAlignedFile="${gear2}"  -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o Chi2Cut="$Chi2Cut"  -o pede="$pede" -o MaxMissingHitsPerTrack="$MaxMissingHitsPerTrack"  -o ResidualsRMax="$ResidualsRMax"  -o suffix="-XY-$x" aligngbl $RUN
 #########################
  echo "file: $file"
 multi=`unzip  -p  $file |grep "multiply all input standard deviations" |cut -d 'r' -f4`; 
@@ -115,12 +118,12 @@ Fys="0 1 2 20 3 4 5"
 Fzr="0 1 2 20 3 4 5"
 Fzs="0 1 2 20 3 4 5"
 
- for x in {11..20}; do
+ for x in {6..10}; do
 gear1=${gear[x]}
 gear2=${gear[x+1]}
 echo $gear1" to "$gear2
 #########################
-$do jobsub.py  $DRY -c config.cfg -csv $RUNLIST -o MaxRecordNumber="$MaxRecordNumber" -o AlignPlaneIds="$AlignPlaneIds" -o Planes="$Planes" -o GearFile="${gear1}"  -o GearAlignedFile="${gear2}"  -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o Chi2Cut="$Chi2Cut"  -o pede="$pede" aligngbl $RUN
+$do jobsub.py  $DRY -c config.cfg -csv $RUNLIST -o MaxRecordNumber="$MaxRecordNumber" -o AlignPlaneIds="$AlignPlaneIds" -o Planes="$Planes" -o GearFile="${gear1}"  -o GearAlignedFile="${gear2}"  -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o Chi2Cut="$Chi2Cut"  -o pede="$pede" -o MaxMissingHitsPerTrack="$MaxMissingHitsPerTrack"  -o ResidualsRMax="$ResidualsRMax"  -o suffix="-tilts-$x" aligngbl $RUN
 #########################
    done
 
