@@ -65,7 +65,7 @@
   <!--Name of the hot pixel collection -->
   <!-- parameter name="HotPixelCollectionName" type="string">hotpixel_m26 </parameter-->
   <!--Maximal number of missing hits on a track candidate-->
-  <parameter name="MaxMissingHitsPerTrack" type="int"> @MissingHitsPerTrack@ </parameter>
+  <parameter name="MaxMissingHitsPerTrack" type="int"> @MaxMissingHitsPerTrack@ </parameter>
   <!--Maximal number of track candidates to be found in events-->
   <!--parameter name="MaxNTracksPerEvent" type="int">100 </parameter-->
   <!--Output track candidates hits collection name-->
@@ -196,11 +196,11 @@
  <processor name="PrintEventNumber" type="EUTelUtilityPrintEventNumber">
  <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
   <!--Print event number for every n-th event-->
-  <parameter name="EveryNEvents" type="int" value="1000"/>
+  <parameter name="EveryNEvents" type="int" value="100"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <parameter name="Verbosity" type="string" value="MESSAGE3"/>
   <!--print the event timestamp as read from LCIO-->
-  <parameter name="printTimestamp" type="bool" value="false"/>
+  <parameter name="printTimestamp" type="bool" value="true"/>
 </processor>
 
 </marlin>
