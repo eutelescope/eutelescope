@@ -349,16 +349,16 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::strin
        // TGeoRotation requires Euler angles in degrees
        string stRotationName = "matrixRotationSensorX";
        stRotationName.append( strId.str() );
-       TGeoRotation* pMatrixRotX = new TGeoRotation( stRotationName.c_str(), 0.,  alpha*DEG, 0.);                // around X axis
+       TGeoRotation* pMatrixRotX = new TGeoRotation( stRotationName.c_str(), 0.,  alpha, 0.);                // around X axis
        stRotationName = "matrixRotationSensorY";
        stRotationName.append( strId.str() );
-       TGeoRotation* pMatrixRotY = new TGeoRotation( stRotationName.c_str(), 90., beta*DEG,  0.);                // around Y axis (combination of rotation around Z axis and new X axis)
+       TGeoRotation* pMatrixRotY = new TGeoRotation( stRotationName.c_str(), 90., beta,  0.);                // around Y axis (combination of rotation around Z axis and new X axis)
        stRotationName = "matrixRotationSensorBackY";
        stRotationName.append( strId.str() );
        TGeoRotation* pMatrixRotY1 = new TGeoRotation( stRotationName.c_str(), -90., 0.,  0.);                    // restoration of original orientation (valid in small angle approximataion ~< 15 deg)
        stRotationName = "matrixRotationSensorZ";
        stRotationName.append( strId.str() );
-       TGeoRotation* pMatrixRotZ = new TGeoRotation( stRotationName.c_str(), 0. , 0.,        gamma*DEG);         // around Z axis
+       TGeoRotation* pMatrixRotZ = new TGeoRotation( stRotationName.c_str(), 0. , 0.,        gamma);         // around Z axis
        
        // Combined rotation in several steps
        TGeoRotation* pMatrixRot = new TGeoRotation( *pMatrixRotX );
