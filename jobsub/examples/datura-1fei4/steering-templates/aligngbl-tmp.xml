@@ -17,6 +17,7 @@
 
    <execute>
       <processor name="AIDA"/>
+      <processor name="PatternRecog"/>
       <processor name="Correlator"/>
       <processor name="GBLTrackFit"/>
       <processor name="Save"/>
@@ -24,7 +25,8 @@
    </execute>
 
    <global>
-      <parameter name="LCIOInputFiles"> @LcioPath@/@FilePrefix@-trackcand.slcio </parameter>
+      <!-- parameter name="LCIOInputFiles"> @LcioPath@/@FilePrefix@-trackcand.slcio </parameter -->
+      <parameter name="LCIOInputFiles"> @LcioPath@/@FilePrefix@-hitlocal.slcio </parameter>
       <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
@@ -32,17 +34,17 @@
       <parameter name="Verbosity" value="@Verbosity@"/>
    </global>
 
- <processor name="AIDA" type="AIDAProcessor">
- <!--Processor that handles AIDA files. Creates on directory per processor.  Processors only need to create and fill the histograms, clouds and tuples. Needs to be the first ActiveProcessor-->
-  <!-- compression of output file 0: false >0: true (default) -->
-  <parameter name="Compress" type="int" value="1"/>
-  <!-- filename without extension-->
-  <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-alignmentgbl"/>
-  <!-- type of output file root (default) or xml )-->
-  <parameter name="FileType" type="string" value="root"/>
-  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <!--parameter name="Verbosity" type="string" value=""/-->
-</processor>
+   <processor name="AIDA" type="AIDAProcessor">
+      <!--Processor that handles AIDA files. Creates on directory per processor.  Processors only need to create and fill the histograms, clouds and tuples. Needs to be the first ActiveProcessor-->
+      <!-- compression of output file 0: false >0: true (default) -->
+      <parameter name="Compress" type="int" value="1"/>
+      <!-- filename without extension-->
+      <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-alignmentgbl@suffix@"/>
+      <!-- type of output file root (default) or xml )-->
+      <parameter name="FileType" type="string" value="root"/>
+      <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+      <!--parameter name="Verbosity" type="string" value=""/-->
+   </processor>
 
 
   <processor name="Correlator" type="EUTelCorrelator">
@@ -50,19 +52,46 @@
     <!--Cluster (pulse) collection name-->
     <parameter name="InputHitCollections" type="StringVec" > hit_filtered </parameter>
     <!-- -->
-    <parameter name="ClusterChargeMinimum" type="int" value="1"/>
+    <parameter name="ClusterChargeMinimum" type="int" value="0"/>
     <!-- -->
-    <parameter name="MinNumberOfCorrelatedHits" type="int" value="7"/>
+    <parameter name="MinNumberOfCorrelatedHits" type="int" value="6"/>
     <parameter name="Events"  type="int" value="999"/>
 
     <!--Residual cuts along both size in microns-->
-    <parameter name="ResidualsXMax" type="FloatVec">  20.  20.  20.        20.0    20.0  20.0  20.0          </parameter>
-    <parameter name="ResidualsXMin" type="FloatVec"> -20. -20. -20.       -20.0   -20.0 -20.0 -20.0          </parameter>
-    <parameter name="ResidualsYMax" type="FloatVec">  20.  20.  20.        20.0    20.0  20.0  20.0          </parameter>
-    <parameter name="ResidualsYMin" type="FloatVec"> -20. -20. -20.       -20.0   -20.0 -20.0 -20.0          </parameter>
+    <parameter name="ResidualsXMax" type="FloatVec">  2.0  2.0  2.0     2.0    2.0  2.0  2.0          </parameter>
+    <parameter name="ResidualsXMin" type="FloatVec"> -2.0 -2.0 -2.0    -2.0   -2.0 -2.0 -2.0          </parameter>
+    <parameter name="ResidualsYMax" type="FloatVec">  2.0  2.0  2.0     2.0    2.0  2.0  2.0          </parameter>
+    <parameter name="ResidualsYMin" type="FloatVec"> -2.0 -2.0 -2.0    -2.0   -2.0 -2.0 -2.0          </parameter>
 
   </processor>
 
+
+
+ <processor name="PatternRecog" type="EUTelProcessorTrackingHelixTrackSearch">
+ <!--EUTelProcessorTrackingHelixTrackSearch preforms track pattern recognition.-->
+  <!--Beam charge [e]-->
+  <parameter name="BeamCharge" type="double">-1. </parameter>
+  <!--Maximal allowed distance between hits entering the recognition step
+            per 10 cm space between the planes. One value for each neighbor planes.
+            DistanceMax will be used for each pair if this vector is empty. Units are mm.-->
+  <parameter name="ResidualsRMax" type="FloatVec" value="@ResidualsRMax@" />
+  <!--parameter name="ResidualsRMax" type="double"> 2.0 </parameter-->
+  <!--Beam charge [GeV]-->
+  <parameter name="BeamEnergy" type="double"> @BeamEnergy@ </parameter>
+  <!--Name of histogram info xml file-->
+  <parameter name="HistogramInfoFilename" type="string" value="@HistoInfoFile@"/>
+  <!--Input hits collection name-->
+  <parameter name="HitInputCollectionName" type="string" lcioInType="TrackerHit"> hit_filtered </parameter>
+  <!--Maximal number of missing hits on a track candidate-->
+  <parameter name="MaxMissingHitsPerTrack" type="int"> @MaxMissingHitsPerTrack@ </parameter>
+  <!--Maximal number of track candidates to be found in events-->
+  <!--parameter name="MaxNTracksPerEvent" type="int">100 </parameter-->
+  <!--Output track candidates hits collection name-->
+  <parameter name="TrackCandHitOutputCollectionName" type="string" lcioOutType="Track"> track_candidates </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <zparameter name="Verbosity" type="string">DEBUG0 </zparameter>
+  <parameter name="Verbosity" type="string">MESSAGE4 </parameter>
+ </processor>
 
 
  <processor name="GBLTrackFit" type="EUTelProcessorTrackingGBLTrackFit">
