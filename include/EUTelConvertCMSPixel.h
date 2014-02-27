@@ -11,7 +11,7 @@
 #define EUTELCMSPIXELREADER_H 1
 
 //Include the Decoder:
-#include "CMSPixelDecoder/CMSPixelDecoder.h"
+#include "CMSPixelDecoder.h"
 
 // EUTelescope includes
 #include "EUTELESCOPE.h"
