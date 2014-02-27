@@ -607,44 +607,52 @@ void EUTelPreAlign::end() {
   LCCollectionVec * constantsCollection = new LCCollectionVec( LCIO::LCGENERICOBJECT );
 
 
-  for(size_t ii=0; ii<_sensorIDVec.size(); ii++)
-    {
-      bool ifound = false;
-      for(size_t jj=0; jj< _preAligners.size(); jj++)
-	{
-	  int sensorID = _preAligners.at(jj).getIden();
-	  if( _sensorIDVec[ii] == sensorID ) { ifound = true; break; }
-	}
-      if( ifound == false)
-	{
-	  EUTelAlignmentConstant* constant = new EUTelAlignmentConstant();
-	  constant->setXOffset( 0.0 );
-	  constant->setYOffset( 0.0 );
-	  constant->setSensorID( _sensorIDVec[ii] );
-	  constantsCollection->push_back( constant );
-	  streamlog_out ( MESSAGE5 ) << (*constant) << endl;
-	  continue; 
-	}
-    }
 
-
-  for(size_t ii = 0 ; ii < _preAligners.size(); ii++){
+  // Loop over all available sensor IDs:
+  for(size_t ii=0; ii<_sensorIDVec.size(); ii++) {
+  
     EUTelAlignmentConstant* constant = new EUTelAlignmentConstant();
 
-    if( abs( _preAligners.at(ii).getPeakX() ) < 1000. )
-      constant->setXOffset( -1.0 * _preAligners.at(ii).getPeakX() );
-    else
-      constant->setXOffset( -1.0 * 0.0                           );
- 
-    if( abs( _preAligners.at(ii).getPeakY() ) < 1000. )
-      constant->setYOffset( -1.0 * _preAligners.at(ii).getPeakY() );
-    else
-      constant->setYOffset( -1.0 * 0.0                           );
- 
-    int sensorID = _preAligners.at(ii).getIden();
-    constant->setSensorID( sensorID );
-    constantsCollection->push_back( constant );
-    streamlog_out ( MESSAGE5 ) << (*constant) << endl;
+    bool ifound = false;
+    // Loop over prealigners to check if the current sensor ID is contained:
+    for(size_t jj=0; jj< _preAligners.size(); jj++) {
+      
+      int sensorID = _preAligners.at(jj).getIden();
+      
+      // Check if this is the sensor we are looking at currently:
+      if( _sensorIDVec[ii] == sensorID ) { 
+	
+	// Write the stuff out:
+	ifound = true; 
+	
+	
+	if( abs( _preAligners.at(jj).getPeakX() ) < 1000. )
+	  constant->setXOffset( -1.0 * _preAligners.at(jj).getPeakX() );
+	else
+	  constant->setXOffset( -1.0 * 0.0);
+	
+	if( abs( _preAligners.at(jj).getPeakY() ) < 1000. )
+	  constant->setYOffset( -1.0 * _preAligners.at(jj).getPeakY() );
+	else
+	  constant->setYOffset( -1.0 * 0.0);
+	
+	constant->setSensorID( sensorID );
+	constantsCollection->push_back( constant );
+	streamlog_out ( MESSAGE5 ) << (*constant) << endl;
+	
+	break; 
+      }
+    }
+    // That sensor ID was not part of the prealigners, so it's fixed:
+    if(ifound == false) {
+      
+      constant->setXOffset( 0.0 );
+      constant->setYOffset( 0.0 );
+      constant->setSensorID( _sensorIDVec[ii] );
+      constantsCollection->push_back( constant );
+      streamlog_out ( MESSAGE5 ) << (*constant) << endl;
+      continue; 
+    }
   }
 
   streamlog_out( DEBUG5 ) << " adding Collection " << "alignment " << endl;
