@@ -126,18 +126,22 @@ void EUTelPreAlign::init () {
   _siPlanesParameters  = const_cast<SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
   _siPlanesLayerLayout = const_cast<SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
 
+  _fixedZ = _siPlanesLayerLayout->getSensitivePositionZ(_fixedID);
+
   for( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); iPlane++ ) {
 
-    if(_siPlanesLayerLayout->getID(iPlane) == _fixedID ) { 
-      //Get Zpos of ref plane
-      _fixedZ = _siPlanesLayerLayout->getSensitivePositionZ(iPlane); 
-    } else {
-      //Get 
-      _preAligners.push_back( PreAligner( _siPlanesLayerLayout->getSensitivePitchX(iPlane),
-					  _siPlanesLayerLayout->getSensitivePitchY(iPlane),
-					  _siPlanesLayerLayout->getSensitivePositionZ(iPlane),
-					  _siPlanesLayerLayout->getID(iPlane)) );
-    }
+    if(_siPlanesLayerLayout->getID(iPlane) == _fixedID ) { continue; }
+
+    // This approach for histogram binning takes the beam divergence into account:
+    float ourZ = _siPlanesLayerLayout->getSensitivePositionZ(iPlane);
+    float spread = 0.001 * abs( ourZ - _fixedZ ); // beam divergence
+
+    streamlog_out(MESSAGE5) << "Booking for plane" << iPlane << ": bin size " << spread << endl;
+    
+    _preAligners.push_back( PreAligner( spread, // bin width x
+					spread, // bin width y
+					_siPlanesLayerLayout->getSensitivePositionZ(iPlane),
+					_siPlanesLayerLayout->getID(iPlane) ) );
   }
 
 
