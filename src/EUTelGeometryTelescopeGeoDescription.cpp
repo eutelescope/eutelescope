@@ -121,9 +121,9 @@ TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneNormal( int planeID ) {
     it = _sensorIDtoZOrderMap.find(planeID);
     if ( it != _sensorIDtoZOrderMap.end() ) {
         TVector3 normVec( 0., 0., 1. );
-        normVec.RotateX( _siPlaneXRotation[ _sensorIDtoZOrderMap[ planeID ] ] );
-        normVec.RotateY( _siPlaneYRotation[ _sensorIDtoZOrderMap[ planeID ] ] );
-        normVec.RotateZ( _siPlaneZRotation[ _sensorIDtoZOrderMap[ planeID ] ] );
+        normVec.RotateX( siPlaneXRotation( planeID)/DEG );
+        normVec.RotateY( siPlaneYRotation( planeID)/DEG );
+        normVec.RotateZ( siPlaneZRotation( planeID)/DEG );
         return normVec;
     }
     return TVector3(0.,0.,0.);
@@ -262,6 +262,7 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( string tge
     if( !_geoManager ) {
         streamlog_out( WARNING ) << "Can't read file " << tgeofilename << endl;
     }
+
     _geoManager->CloseGeometry();
 //    #endif //USE_TGEO
 }
@@ -318,9 +319,7 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::strin
    
    // Iterate over registered GEAR objects and construct their TGeo representation
    
-   const Double_t PI = 3.141592653589793;
-   const Double_t DEG = 180./PI;
-   
+  
    double xc, yc, zc;   // volume center position 
    double alpha, beta, gamma;
    
@@ -416,8 +415,8 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::strin
        pvolumeWorld->AddNode(pvolumeSensor, (*itrPlaneId), combi);
    } // loop over sensorID
    
-   
-    _geoManager->CloseGeometry();
+  
+     _geoManager->CloseGeometry();
     
     // Dump ROOT TGeo object into file
     if ( dumpRoot ) _geoManager->Export( geomName.c_str() );
@@ -734,3 +733,5 @@ float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double 
     
     return rad;
 }
+
+
