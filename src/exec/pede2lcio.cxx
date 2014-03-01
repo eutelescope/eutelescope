@@ -4,6 +4,7 @@
 // eutelescope includes
 #include "EUTelAlignmentConstant.h"
 #include "anyoption.h"
+#include "EUTelGeometryTelescopeGeoDescription.h"
 
 // lcio includes
 #include <IO/LCWriter.h>
@@ -31,11 +32,15 @@
 #include <algorithm>
 #include <memory>
 
+
 #include "TRotation.h"
 #include "TVector3.h"
 
 using namespace std;
 
+        const Double_t PI = 3.141592653589793;
+        const Double_t DEG = 180./PI;
+ 
 struct CollectionWriter {
     lcio::LCCollectionVec* _constantsCollection;
         void operator()( std::pair<const int, eutelescope::EUTelAlignmentConstant*>& pair ) {
@@ -131,9 +136,9 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
             siPlanesLayerLayout-> setLayerPositionX(iPlane, siPlanesLayerLayout->getLayerPositionX(iPlane) +  delta_r0.X() ) ;
             siPlanesLayerLayout-> setLayerPositionY(iPlane, siPlanesLayerLayout->getLayerPositionY(iPlane) +  delta_r0.Y() ) ;
             siPlanesLayerLayout-> setLayerPositionZ(iPlane, siPlanesLayerLayout->getLayerPositionZ(iPlane) +  delta_r0.Z() ) ;
-            siPlanesLayerLayout->setLayerRotationZY(iPlane, alpha - dalpha );
-            siPlanesLayerLayout->setLayerRotationZX(iPlane, beta  - dbeta  );
-            siPlanesLayerLayout->setLayerRotationXY(iPlane, gamma - dgamma );
+            siPlanesLayerLayout->setLayerRotationZY(iPlane, (alpha - dalpha)*DEG );
+            siPlanesLayerLayout->setLayerRotationZX(iPlane, (beta  - dbeta )*DEG );
+            siPlanesLayerLayout->setLayerRotationXY(iPlane, (gamma - dgamma)*DEG );
 //#endif
 //#endif       
             streamlog_out(MESSAGE4) << "align by shifts (in local frame) " << std::endl;
