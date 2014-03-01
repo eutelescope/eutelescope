@@ -47,6 +47,9 @@ namespace eutelescope {
 
     namespace geo {
 
+        const Double_t PI = 3.141592653589793;
+        const Double_t DEG = 180./PI;
+ 
         class EUTelGeometryTelescopeGeoDescription {
             
         private:
