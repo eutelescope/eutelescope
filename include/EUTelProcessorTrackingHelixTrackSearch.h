@@ -187,6 +187,7 @@ namespace eutelescope {
         struct _histName {
             static string _numberTracksCandidatesHistName;
             static string _numberOfHitOnTrackCandidateHistName;
+            static string _HitOnTrackCandidateHistName;
         };
 
 #endif // defined(USE_AIDA) || defined(MARLIN_USE_AIDA)

@@ -62,6 +62,7 @@ using namespace eutelescope;
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 std::string EUTelProcessorTrackingHelixTrackSearch::_histName::_numberTracksCandidatesHistName = "NumberTracksCandidates";
 std::string EUTelProcessorTrackingHelixTrackSearch::_histName::_numberOfHitOnTrackCandidateHistName = "NumberOfHitsOnTrackCandidate";
+std::string EUTelProcessorTrackingHelixTrackSearch::_histName::_HitOnTrackCandidateHistName = "HitsOnTrackCandidate";
 #endif // defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
 /** Default constructor */
@@ -123,7 +124,7 @@ _aidaHistoMap1D() {
     
     registerOptionalParameter("BeamSpread", "Angular spread of the beam (horizontal,vertical) [mrad] (for beam constraint). "
                                             "No beam constraints if negative values are supplied.",
-                               _beamSpread, EVENT::FloatVec(2,0.) );
+                               _beamSpread, EVENT::FloatVec(2,100.) );
     
     registerOptionalParameter("BeamEnergyUncertainty", "Uncertainty of beam energy [%]", _eBeamUncertatinty, static_cast<double> (0.) );
 
@@ -273,7 +274,9 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
                 streamlog_out( MESSAGE0 ) << "Track hits start:==============" << std::endl;
                 for ( itTrkHits = trkHits.begin( ) ; itTrkHits != trkHits.end( ); ++itTrkHits ) {
                     const double* uvpos = ( *itTrkHits )->getPosition( );
+                    const int sensorID = geo::gGeometry().getSensorID( static_cast<IMPL::TrackerHitImpl*> (*itTrkHits) );
                     streamlog_out( MESSAGE0 ) << "Hit (id=" << ( *itrk )->id( ) << ") local(u,v) coordinates: (" << uvpos[0] << "," << uvpos[1] << ")" << std::endl;
+                    static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_HitOnTrackCandidateHistName ] ) -> fill( sensorID );
                 }
                 streamlog_out( MESSAGE0 ) << "Track hits end:==============" << std::endl;
                 static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_numberOfHitOnTrackCandidateHistName ] ) -> fill( nHitsOnTrack );
@@ -438,10 +441,11 @@ void EUTelProcessorTrackingHelixTrackSearch::end() {
 
     delete _trackFitter;
     
-    streamlog_out(MESSAGE) << "EUTelProcessorTrackingHelixTrackSearch::end()  " << name()
+    streamlog_out(MESSAGE4) << "EUTelProcessorTrackingHelixTrackSearch::end()  " << name()
             << " processed " << _nProcessedEvents << " events in " << _nProcessedRuns << " runs "
+            << " av.tracks : " << static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_numberTracksCandidatesHistName ] ) -> mean()
+            << " track candidates : " << static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_numberOfHitOnTrackCandidateHistName ] ) -> allEntries()
             << std::endl;
-
 }
 
 void EUTelProcessorTrackingHelixTrackSearch::bookHistograms() {
@@ -487,7 +491,7 @@ void EUTelProcessorTrackingHelixTrackSearch::bookHistograms() {
             streamlog_out(ERROR2) << "Problem booking the " << (_histName::_numberTracksCandidatesHistName) << endl;
             streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
         }
-        
+         
         const int hitsNBin = 10;
         const double hitsMin = -0.5;
         const double hitsMax = 9.5;
@@ -507,6 +511,28 @@ void EUTelProcessorTrackingHelixTrackSearch::bookHistograms() {
             _aidaHistoMap1D.insert(make_pair(_histName::_numberOfHitOnTrackCandidateHistName, numberHitsOnTrackCandidates));
         } else {
             streamlog_out(ERROR2) << "Problem booking the " << (_histName::_numberOfHitOnTrackCandidateHistName) << endl;
+            streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+        }
+
+        const int    nhitsNBin = 40;
+        const double nhitsMin = -0.5;
+        const double nhitsMax =39.5;
+        
+        histoInfo = histoMgr->getHistogramInfo(_histName::_HitOnTrackCandidateHistName);        
+        NBin = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : nhitsNBin;
+        XMin = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : nhitsMin;
+        XMax = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : nhitsMax;
+        
+        // Number of hit per track candidate
+        AIDA::IHistogram1D * HitsOnTrackCandidates =
+                marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_HitOnTrackCandidateHistName, NBin,
+                XMin, XMax);
+
+        if (HitsOnTrackCandidates) {
+            HitsOnTrackCandidates->setTitle("hits on track candidates;N hits;N tracks");
+            _aidaHistoMap1D.insert(make_pair(_histName::_HitOnTrackCandidateHistName, HitsOnTrackCandidates));
+        } else {
+            streamlog_out(ERROR2) << "Problem booking the " << (_histName::_HitOnTrackCandidateHistName) << endl;
             streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
         }
         
