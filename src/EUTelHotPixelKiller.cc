@@ -299,10 +299,6 @@ void EUTelHotPixelKiller::HotPixelFinder(EUTelEventImpl  *evt)
         }
         if(foundexcludedsensor)  continue;
 
-        // next 2 lines are obsolete? //rubinsky 26-09-12 //
-        // reset the cluster counter for the clusterID
-        // clusterID = 0;
-
         // get the noise and the status matrix with the right detectorID
         TrackerRawDataImpl * status = 0;
 
