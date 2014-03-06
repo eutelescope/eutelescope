@@ -136,9 +136,9 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
             siPlanesLayerLayout-> setLayerPositionX(iPlane, siPlanesLayerLayout->getLayerPositionX(iPlane) +  delta_r0.X() ) ;
             siPlanesLayerLayout-> setLayerPositionY(iPlane, siPlanesLayerLayout->getLayerPositionY(iPlane) +  delta_r0.Y() ) ;
             siPlanesLayerLayout-> setLayerPositionZ(iPlane, siPlanesLayerLayout->getLayerPositionZ(iPlane) +  delta_r0.Z() ) ;
-            siPlanesLayerLayout->setLayerRotationZY(iPlane, (alpha - dalpha)*DEG );
-            siPlanesLayerLayout->setLayerRotationZX(iPlane, (beta  - dbeta )*DEG );
-            siPlanesLayerLayout->setLayerRotationXY(iPlane, (gamma - dgamma)*DEG );
+            siPlanesLayerLayout->setLayerRotationZY(iPlane, (alpha - dalpha) );
+            siPlanesLayerLayout->setLayerRotationZX(iPlane, (beta  - dbeta ) );
+            siPlanesLayerLayout->setLayerRotationXY(iPlane, (gamma - dgamma) );
 //#endif
 //#endif       
             streamlog_out(MESSAGE4) << "align by shifts (in local frame) " << std::endl;
