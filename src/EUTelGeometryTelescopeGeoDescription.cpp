@@ -121,9 +121,9 @@ TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneNormal( int planeID ) {
     it = _sensorIDtoZOrderMap.find(planeID);
     if ( it != _sensorIDtoZOrderMap.end() ) {
         TVector3 normVec( 0., 0., 1. );
-        normVec.RotateX( siPlaneXRotation( planeID)/DEG );
-        normVec.RotateY( siPlaneYRotation( planeID)/DEG );
-        normVec.RotateZ( siPlaneZRotation( planeID)/DEG );
+        normVec.RotateX( siPlaneXRotation( planeID) ); // rad
+        normVec.RotateY( siPlaneYRotation( planeID) ); // rad
+        normVec.RotateZ( siPlaneZRotation( planeID) ); // rad
         return normVec;
     }
     return TVector3(0.,0.,0.);
@@ -335,9 +335,9 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::strin
        zc = siPlaneZPosition( *itrPlaneId );
        
        // Get sensor orientation
-       alpha = siPlaneXRotation( *itrPlaneId ); // [rad]
-       beta  = siPlaneYRotation( *itrPlaneId ); // [rad]
-       gamma = siPlaneZRotation( *itrPlaneId ); // [rad]
+       alpha = siPlaneXRotation( *itrPlaneId )*DEG; // [rad]
+       beta  = siPlaneYRotation( *itrPlaneId )*DEG; // [rad]
+       gamma = siPlaneZRotation( *itrPlaneId )*DEG; // [rad]
        
        // Spatial translations of the sensor center
        string stTranslationName = "matrixTranslationSensor";
@@ -732,6 +732,54 @@ float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double 
     streamlog_out(DEBUG1) << "--------EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral()--------" << std::endl;
     
     return rad;
+}
+
+int EUTelGeometryTelescopeGeoDescription::findNextPlaneEntrance(  double* lpoint,  double* ldir, int nextSensorID, float* newpoint )
+{
+   if(newpoint==0)
+   {
+      streamlog_out ( ERROR0 ) << " newpoint array is void, can not continue..."<<endl;
+      return -100;
+   }
+   
+   _geoManager->InitTrack( lpoint, ldir );
+ 
+   TGeoNode *node = _geoManager->GetCurrentNode( );
+   Int_t inode =  node->GetIndex();
+   Int_t i=0;
+
+   streamlog_out ( DEBUG0 ) << " node: " << node << " id: " << inode << endl;
+ 
+   while( node = _geoManager->FindNextBoundaryAndStep( ) )
+   {
+       inode = node->GetIndex();
+       const double* point = _geoManager->GetCurrentPoint();
+       const double* dir   = _geoManager->GetCurrentDirection();
+       double ipoint[3] ;
+       double idir[3]   ;
+
+       for(int ip=0;ip<3;ip++) 
+       {
+         ipoint[ip] = point[ip];
+         idir[ip]   = dir[ip];
+         if(ip==2) ipoint[ip]+=0.001 ; // assumption !!! step by one um into the new volume // new volume is thicker than 1 um
+         newpoint[ip] = static_cast<float> (ipoint[ip]);
+       }  
+       int sensorID = getSensorID(newpoint); 
+       i++;     
+      
+       _geoManager->SetCurrentPoint( ipoint);
+       _geoManager->SetCurrentDirection( idir);
+ 
+       streamlog_out ( DEBUG0 ) << "i=" << i  << " " << inode << " " << ipoint[0]  << " " << ipoint[1] << " " << ipoint[2]  << " sensorID:" << sensorID << " " << nextSensorID << endl;
+       //if( sensorID <0 ) continue;  
+       if( sensorID == nextSensorID ) return sensorID;
+   }
+ 
+   streamlog_out ( DEBUG0 ) << " node: " << node << " id: " << inode << " sensorID= " << nextSensorID << " not found" << " returning: 0" << endl;
+ 
+   return -100;
+
 }
 
 
