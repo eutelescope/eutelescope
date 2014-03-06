@@ -29,6 +29,14 @@
     <histo name="HitCloudTelescope" type="C2D" />
     <histo name="DensityPlot"       type="C3D" />
 
+    <!-- EUTelCorrelator -->
+    <histo name="HitXCorrShiftProjection"     type="H1D" xBin="100"  xMin="-25."     xMax="25."  />
+    <histo name="HitYCorrShiftProjection"     type="H1D" xBin="100"  xMin="-25."     xMax="25."  />
+    <histo name="HitXCorrShift"     type="H2D" xBin="200" xMin="-25." xMax="25."  
+                                               yBin="200" yMin="-25." yMax="25."/>
+    <histo name="HitYCorrShift"     type="H2D" xBin="200" xMin="-25." xMax="25."  
+                                               yBin="200" yMin="-25." yMax="25."/>
+
     <!-- EUTelPedestalNoiseProcessor -->
     <histo name="PedeDist"          type="H1D" xBin="100"  xMin="-20"     xMax="29"/>
     <histo name="NoiseDist"         type="H1D" xBin="100"  xMin="-5"      xMax="15"/>
@@ -95,48 +103,48 @@
             <histo name="DUTshiftX"     type="H1D" xBin="300" xMin="-0.15" xMax="0.15"/>
 
     <!-- EUTelProcessorTrackingGBLTrackFit -->
-    <histo name="orchi2GblFit"    type="H1D" xBin="500" xMin="0." xMax="5000."/>
-    <histo name="orchi2ndfGblFit" type="H1D" xBin="500" xMin="0." xMax="100."/>
+    <histo name="orchi2GblFit"    type="H1D" xBin="500" xMin="0." xMax="500."/>
+    <histo name="orchi2ndfGblFit" type="H1D" xBin="500" xMin="0." xMax="10."/>
     <histo name="orprobGblFit"    type="H1D" xBin="100" xMin="0." xMax="1."/>
-    <histo name="chi2GblFit"      type="H1D" xBin="500" xMin="0." xMax="5000."/>
-    <histo name="chi2ndfGblFit"   type="H1D" xBin="500" xMin="0." xMax="100."/>
+    <histo name="chi2GblFit"      type="H1D" xBin="500" xMin="0." xMax="500."/>
+    <histo name="chi2ndfGblFit"   type="H1D" xBin="500" xMin="0." xMax="10."/>
     <histo name="probGblFit"      type="H1D" xBin="100" xMin="0." xMax="1."/>
-    <histo name="Residuals2DGblFit_yVSx0"     type="H2D"  xBin="100" xMin="-10." xMax="10." yBin="100" yMin="-10." yMax="10."/>
-    <histo name="Residuals2DGblFit_yVSy0"     type="H2D"  xBin="100" xMin="-05." xMax="05." yBin="100" yMin="-10." yMax="10."/>
-    <histo name="Residuals2DGblFit_yVSx1"     type="H2D"  xBin="100" xMin="-10." xMax="10." yBin="100" yMin="-10." yMax="10."/>
-    <histo name="Residuals2DGblFit_yVSy1"     type="H2D"  xBin="100" xMin="-05." xMax="05." yBin="100" yMin="-10." yMax="10."/>
-    <histo name="Residuals2DGblFit_yVSx2"     type="H2D"  xBin="100" xMin="-10." xMax="10." yBin="100" yMin="-10." yMax="10."/>
-    <histo name="Residuals2DGblFit_yVSy2"     type="H2D"  xBin="100" xMin="-05." xMax="05." yBin="100" yMin="-10." yMax="10."/>
-    <histo name="Residuals2DGblFit_yVSx3"     type="H2D"  xBin="100" xMin="-10." xMax="10." yBin="100" yMin="-10." yMax="10."/>
-    <histo name="Residuals2DGblFit_yVSy3"     type="H2D"  xBin="100" xMin="-05." xMax="05." yBin="100" yMin="-10." yMax="10."/>
-    <histo name="Residuals2DGblFit_yVSx4"     type="H2D"  xBin="100" xMin="-10." xMax="10." yBin="100" yMin="-10." yMax="10."/>
-    <histo name="Residuals2DGblFit_yVSy4"     type="H2D"  xBin="100" xMin="-05." xMax="05." yBin="100" yMin="-10." yMax="10."/>
-    <histo name="Residuals2DGblFit_yVSx5"     type="H2D"  xBin="100" xMin="-10." xMax="10." yBin="100" yMin="-10." yMax="10."/>
-    <histo name="Residuals2DGblFit_yVSy5"     type="H2D"  xBin="100" xMin="-05." xMax="05." yBin="100" yMin="-10." yMax="10."/>
-    <histo name="Residuals2DGblFit_xVSx0"     type="H2D"  xBin="100" xMin="-10." xMax="10." yBin="100" yMin="-10." yMax="10."/>
-    <histo name="Residuals2DGblFit_xVSy0"     type="H2D"  xBin="100" xMin="-05." xMax="05." yBin="100" yMin="-10." yMax="10."/>
-    <histo name="Residuals2DGblFit_xVSx1"     type="H2D"  xBin="100" xMin="-10." xMax="10." yBin="100" yMin="-10." yMax="10."/>
-    <histo name="Residuals2DGblFit_xVSy1"     type="H2D"  xBin="100" xMin="-05." xMax="05." yBin="100" yMin="-10." yMax="10."/>
-    <histo name="Residuals2DGblFit_xVSx2"     type="H2D"  xBin="100" xMin="-10." xMax="10." yBin="100" yMin="-10." yMax="10."/>
-    <histo name="Residuals2DGblFit_xVSy2"     type="H2D"  xBin="100" xMin="-05." xMax="05." yBin="100" yMin="-10." yMax="10."/>
-    <histo name="Residuals2DGblFit_xVSx3"     type="H2D"  xBin="100" xMin="-10." xMax="10." yBin="100" yMin="-10." yMax="10."/>
-    <histo name="Residuals2DGblFit_xVSy3"     type="H2D"  xBin="100" xMin="-05." xMax="05." yBin="100" yMin="-10." yMax="10."/>
-    <histo name="Residuals2DGblFit_xVSx4"     type="H2D"  xBin="100" xMin="-10." xMax="10." yBin="100" yMin="-10." yMax="10."/>
-    <histo name="Residuals2DGblFit_xVSy4"     type="H2D"  xBin="100" xMin="-05." xMax="05." yBin="100" yMin="-10." yMax="10."/>
-    <histo name="Residuals2DGblFit_xVSx5"     type="H2D"  xBin="100" xMin="-10." xMax="10." yBin="100" yMin="-10." yMax="10."/>
-    <histo name="Residuals2DGblFit_xVSy5"     type="H2D"  xBin="100" xMin="-05." xMax="05." yBin="100" yMin="-10." yMax="10."/>
-    <histo name="ResidualsGblFit_x0"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
-    <histo name="ResidualsGblFit_y1"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
-    <histo name="ResidualsGblFit_x1"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
-    <histo name="ResidualsGblFit_y2"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
-    <histo name="ResidualsGblFit_x2"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
-    <histo name="ResidualsGblFit_y3"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
-    <histo name="ResidualsGblFit_x3"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
-    <histo name="ResidualsGblFit_y3"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
-    <histo name="ResidualsGblFit_x4"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
-    <histo name="ResidualsGblFit_y4"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
-    <histo name="ResidualsGblFit_x5"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
-    <histo name="ResidualsGblFit_y5"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
+    <histo name="Residuals2DGblFit_yVSx0"     type="H2D"  xBin="100" xMin="-10." xMax="10." yBin="100" yMin="-200." yMax="200."/>
+    <histo name="Residuals2DGblFit_yVSy0"     type="H2D"  xBin="100" xMin="-05." xMax="05." yBin="100" yMin="-200." yMax="200."/>
+    <histo name="Residuals2DGblFit_yVSx1"     type="H2D"  xBin="100" xMin="-10." xMax="10." yBin="100" yMin="-200." yMax="200."/>
+    <histo name="Residuals2DGblFit_yVSy1"     type="H2D"  xBin="100" xMin="-05." xMax="05." yBin="100" yMin="-200." yMax="200."/>
+    <histo name="Residuals2DGblFit_yVSx2"     type="H2D"  xBin="100" xMin="-10." xMax="10." yBin="100" yMin="-200." yMax="200."/>
+    <histo name="Residuals2DGblFit_yVSy2"     type="H2D"  xBin="100" xMin="-05." xMax="05." yBin="100" yMin="-200." yMax="200."/>
+    <histo name="Residuals2DGblFit_yVSx3"     type="H2D"  xBin="100" xMin="-10." xMax="10." yBin="100" yMin="-200." yMax="200."/>
+    <histo name="Residuals2DGblFit_yVSy3"     type="H2D"  xBin="100" xMin="-05." xMax="05." yBin="100" yMin="-200." yMax="200."/>
+    <histo name="Residuals2DGblFit_yVSx4"     type="H2D"  xBin="100" xMin="-10." xMax="10." yBin="100" yMin="-200." yMax="200."/>
+    <histo name="Residuals2DGblFit_yVSy4"     type="H2D"  xBin="100" xMin="-05." xMax="05." yBin="100" yMin="-200." yMax="200."/>
+    <histo name="Residuals2DGblFit_yVSx5"     type="H2D"  xBin="100" xMin="-10." xMax="10." yBin="100" yMin="-200." yMax="200."/>
+    <histo name="Residuals2DGblFit_yVSy5"     type="H2D"  xBin="100" xMin="-05." xMax="05." yBin="100" yMin="-200." yMax="200."/>
+    <histo name="Residuals2DGblFit_xVSx0"     type="H2D"  xBin="100" xMin="-10." xMax="10." yBin="100" yMin="-200." yMax="200."/>
+    <histo name="Residuals2DGblFit_xVSy0"     type="H2D"  xBin="100" xMin="-05." xMax="05." yBin="100" yMin="-200." yMax="200."/>
+    <histo name="Residuals2DGblFit_xVSx1"     type="H2D"  xBin="100" xMin="-10." xMax="10." yBin="100" yMin="-200." yMax="200."/>
+    <histo name="Residuals2DGblFit_xVSy1"     type="H2D"  xBin="100" xMin="-05." xMax="05." yBin="100" yMin="-200." yMax="200."/>
+    <histo name="Residuals2DGblFit_xVSx2"     type="H2D"  xBin="100" xMin="-10." xMax="10." yBin="100" yMin="-200." yMax="200."/>
+    <histo name="Residuals2DGblFit_xVSy2"     type="H2D"  xBin="100" xMin="-05." xMax="05." yBin="100" yMin="-200." yMax="200."/>
+    <histo name="Residuals2DGblFit_xVSx3"     type="H2D"  xBin="100" xMin="-10." xMax="10." yBin="100" yMin="-200." yMax="200."/>
+    <histo name="Residuals2DGblFit_xVSy3"     type="H2D"  xBin="100" xMin="-05." xMax="05." yBin="100" yMin="-200." yMax="200."/>
+    <histo name="Residuals2DGblFit_xVSx4"     type="H2D"  xBin="100" xMin="-10." xMax="10." yBin="100" yMin="-200." yMax="200."/>
+    <histo name="Residuals2DGblFit_xVSy4"     type="H2D"  xBin="100" xMin="-05." xMax="05." yBin="100" yMin="-200." yMax="200."/>
+    <histo name="Residuals2DGblFit_xVSx5"     type="H2D"  xBin="100" xMin="-10." xMax="10." yBin="100" yMin="-200." yMax="200."/>
+    <histo name="Residuals2DGblFit_xVSy5"     type="H2D"  xBin="100" xMin="-05." xMax="05." yBin="100" yMin="-200." yMax="200."/>
+    <histo name="ResidualsGblFit_x0"     type="H1D" xBin="500" xMin="-200." xMax="200."/>
+    <histo name="ResidualsGblFit_y1"     type="H1D" xBin="500" xMin="-200." xMax="200."/>
+    <histo name="ResidualsGblFit_x1"     type="H1D" xBin="500" xMin="-200." xMax="200."/>
+    <histo name="ResidualsGblFit_y2"     type="H1D" xBin="500" xMin="-200." xMax="200."/>
+    <histo name="ResidualsGblFit_x2"     type="H1D" xBin="500" xMin="-200." xMax="200."/>
+    <histo name="ResidualsGblFit_y3"     type="H1D" xBin="500" xMin="-200." xMax="200."/>
+    <histo name="ResidualsGblFit_x3"     type="H1D" xBin="500" xMin="-200." xMax="200."/>
+    <histo name="ResidualsGblFit_y3"     type="H1D" xBin="500" xMin="-200." xMax="200."/>
+    <histo name="ResidualsGblFit_x4"     type="H1D" xBin="500" xMin="-200." xMax="200."/>
+    <histo name="ResidualsGblFit_y4"     type="H1D" xBin="500" xMin="-200." xMax="200."/>
+    <histo name="ResidualsGblFit_x5"     type="H1D" xBin="500" xMin="-200." xMax="200."/>
+    <histo name="ResidualsGblFit_y5"     type="H1D" xBin="500" xMin="-200." xMax="200."/>
     <histo name="ResidualsGblFit_x20"     type="H1D" xBin="500" xMin="-200." xMax="200."/>
     <histo name="ResidualsGblFit_y20"     type="H1D" xBin="500" xMin="-200." xMax="200."/>
 
