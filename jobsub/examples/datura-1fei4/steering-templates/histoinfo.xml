@@ -29,13 +29,6 @@
     <histo name="HitCloudTelescope" type="C2D" />
     <histo name="DensityPlot"       type="C3D" />
 
-    <!-- EUTelCorrelator -->
-    <histo name="HitXCorrShiftProjection"     type="H1D" xBin="100"  xMin="-25."     xMax="25."  />
-    <histo name="HitYCorrShiftProjection"     type="H1D" xBin="100"  xMin="-25."     xMax="25."  />
-    <histo name="HitXCorrShift"     type="H2D" xBin="200" xMin="-25." xMax="25."  
-                                               yBin="200" yMin="-25." yMax="25."/>
-    <histo name="HitYCorrShift"     type="H2D" xBin="200" xMin="-25." xMax="25."  
-                                               yBin="200" yMin="-25." yMax="25."/>
 
     <!-- EUTelPedestalNoiseProcessor -->
     <histo name="PedeDist"          type="H1D" xBin="100"  xMin="-20"     xMax="29"/>

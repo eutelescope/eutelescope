@@ -59,7 +59,7 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
   <!--Maximal allowed distance between hits entering the recognition step
             per 10 cm space between the planes. One value for each neighbor planes.
             DistanceMax will be used for each pair if this vector is empty. Units are mm.-->
-  <parameter name="ResidualsRMax" type="FloatVec" value="@ResidualsRMax@" />
+  <parameter name="ResidualsRMax" type="Float" value="@ResidualsRMax@" />
   <!--parameter name="ResidualsRMax" type="double"> 2.0 </parameter-->
   <!--Beam charge [GeV]-->
   <parameter name="BeamEnergy" type="double"> @BeamEnergy@ </parameter>

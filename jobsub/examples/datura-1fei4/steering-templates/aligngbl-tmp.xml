@@ -58,10 +58,13 @@
     <parameter name="Events"  type="int" value="999"/>
 
     <!--Residual cuts along both size in microns-->
-    <parameter name="ResidualsXMax" type="FloatVec">  2.0  2.0  2.0     2.0    2.0  2.0  2.0          </parameter>
-    <parameter name="ResidualsXMin" type="FloatVec"> -2.0 -2.0 -2.0    -2.0   -2.0 -2.0 -2.0          </parameter>
-    <parameter name="ResidualsYMax" type="FloatVec">  2.0  2.0  2.0     2.0    2.0  2.0  2.0          </parameter>
-    <parameter name="ResidualsYMin" type="FloatVec"> -2.0 -2.0 -2.0    -2.0   -2.0 -2.0 -2.0          </parameter>
+    <parameter name="ResidualsXMax" type="FloatVec">  3.0  3.0  3.0     3.0    3.0  3.0  3.0          </parameter>
+    <parameter name="ResidualsXMin" type="FloatVec"> -3.0 -3.0 -3.0    -3.0   -3.0 -3.0 -3.0          </parameter>
+    <parameter name="ResidualsYMax" type="FloatVec">  3.0  3.0  3.0     3.0    3.0  3.0  3.0          </parameter>
+    <parameter name="ResidualsYMin" type="FloatVec"> -3.0 -3.0 -3.0    -3.0   -3.0 -3.0 -3.0          </parameter>
+
+    <!--Name of histogram info xml file-->
+    <parameter name="HistogramInfoFilename" type="string" value="@HistoInfoFile@"/>
 
   </processor>
 
@@ -74,7 +77,7 @@
   <!--Maximal allowed distance between hits entering the recognition step
             per 10 cm space between the planes. One value for each neighbor planes.
             DistanceMax will be used for each pair if this vector is empty. Units are mm.-->
-  <parameter name="ResidualsRMax" type="FloatVec" value="@ResidualsRMax@" />
+  <parameter name="ResidualsRMax" type="Float" value="@ResidualsRMax@" />
   <!--parameter name="ResidualsRMax" type="double"> 2.0 </parameter-->
   <!--Beam charge [GeV]-->
   <parameter name="BeamEnergy" type="double"> @BeamEnergy@ </parameter>
@@ -89,8 +92,7 @@
   <!--Output track candidates hits collection name-->
   <parameter name="TrackCandHitOutputCollectionName" type="string" lcioOutType="Track"> track_candidates </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <zparameter name="Verbosity" type="string">DEBUG0 </zparameter>
-  <parameter name="Verbosity" type="string">MESSAGE4 </parameter>
+  <parameter name="Verbosity" type="string"> @Verbosity@ </parameter>
  </processor>
 
 
