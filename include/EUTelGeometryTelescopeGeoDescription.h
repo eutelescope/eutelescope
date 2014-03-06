@@ -241,6 +241,9 @@ namespace eutelescope {
             TGeoManager* _geoManager;
             //#endif // USE_TGEO
 
+            int findNextPlaneEntrance(  double* ,  double *, int, float*  );
+
+
         };
         
         inline EUTelGeometryTelescopeGeoDescription& gGeometry() {
