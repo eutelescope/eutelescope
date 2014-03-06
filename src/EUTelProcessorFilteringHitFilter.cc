@@ -132,8 +132,6 @@ void EUTelProcessorFilteringHitFilter::processEvent( LCEvent * event ) {
         streamlog_out( WARNING ) << _hitInputCollectionName << " collection not available" << std::endl;
         hitInputCollection = 0;
     }
-//cout << " processEvent continue: " << hitInputCollection << endl;
-
 
     // this will only be entered if the collection is available
     if ( hitInputCollection != 0 && hitOutputCollection != 0 ) {
@@ -141,7 +139,6 @@ void EUTelProcessorFilteringHitFilter::processEvent( LCEvent * event ) {
           {
             TrackerHitImpl * hit = static_cast<TrackerHitImpl*> ( hitInputCollection->getElementAt(iHit) );
              
-    //        cout << " ihit: " << iHit << endl;
             if( Utility::HitContainsHotPixels(  hit,  _hotPixelMap )  ) 
             {
               streamlog_out ( MESSAGE3 ) << "Hit " << iHit << " contains hot pixels; skip this one. " << endl;
@@ -153,8 +150,6 @@ void EUTelProcessorFilteringHitFilter::processEvent( LCEvent * event ) {
           if( !bHitOutputCollectionExists ) event->addCollection( hitOutputCollection, _hitOutputCollectionName );
  
     }
-
-//cout << " processEvent done:" << endl;    
 
     _nProcessedEvents++;
 }
