@@ -15,7 +15,8 @@
 
 // eutelescope includes ".h"
 #include "EUTelGeometryTelescopeGeoDescription.h"
-
+#include "EUTelHistogramManager.h"
+ 
 #include "EUTelCorrelator.h"
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelEventImpl.h"
@@ -75,24 +76,26 @@ using namespace eutelescope;
 
 // definition of static members mainly used to name histograms
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-std::string EUTelCorrelator::_clusterXCorrelationHistoName   = "ClusterXCorrelationHisto";
-std::string EUTelCorrelator::_clusterYCorrelationHistoName   = "ClusterYCorrelationHisto";
-std::string EUTelCorrelator::_hitXCorrelationHistoName       = "HitXCorrelationHisto";
-std::string EUTelCorrelator::_hitYCorrelationHistoName       = "HitYCorrelationHisto";
+std::string EUTelCorrelator::_clusterXCorrelationHistoName   = "ClusterXCorrelation";
+std::string EUTelCorrelator::_clusterYCorrelationHistoName   = "ClusterYCorrelation";
+std::string EUTelCorrelator::_hitXCorrelationHistoName       = "HitXCorrelation";
+std::string EUTelCorrelator::_hitYCorrelationHistoName       = "HitYCorrelation";
 
-std::string EUTelCorrelator::_clusterXCorrShiftHistoName             = "ClusterXCorrShiftHisto";
-std::string EUTelCorrelator::_clusterYCorrShiftHistoName             = "ClusterYCorrShiftHisto";
-std::string EUTelCorrelator::_clusterXCorrShiftProjectionHistoName   = "ClusterXCorrShiftProjectionHisto";
-std::string EUTelCorrelator::_clusterYCorrShiftProjectionHistoName   = "ClusterYCorrShiftProjectionHisto";
+std::string EUTelCorrelator::_clusterXCorrShiftHistoName             = "ClusterXCorrShift";
+std::string EUTelCorrelator::_clusterYCorrShiftHistoName             = "ClusterYCorrShift";
+std::string EUTelCorrelator::_clusterXCorrShiftProjectionHistoName   = "ClusterXCorrShiftProjection";
+std::string EUTelCorrelator::_clusterYCorrShiftProjectionHistoName   = "ClusterYCorrShiftProjection";
 
-std::string EUTelCorrelator::_hitXCorrShiftHistoName             = "HitXCorrShiftHisto";
-std::string EUTelCorrelator::_hitYCorrShiftHistoName             = "HitYCorrShiftHisto";
-std::string EUTelCorrelator::_hitXCorrShiftProjectionHistoName   = "HitXCorrShiftProjectionHisto";
-std::string EUTelCorrelator::_hitYCorrShiftProjectionHistoName   = "HitYCorrShiftProjectionHisto";
+std::string EUTelCorrelator::_hitXCorrShiftHistoName             = "HitXCorrShift";
+std::string EUTelCorrelator::_hitYCorrShiftHistoName             = "HitYCorrShift";
+std::string EUTelCorrelator::_hitXCorrShiftProjectionHistoName   = "HitXCorrShiftProjection";
+std::string EUTelCorrelator::_hitYCorrShiftProjectionHistoName   = "HitYCorrShiftProjection";
 
 #endif
 
-EUTelCorrelator::EUTelCorrelator () : Processor("EUTelCorrelator") {
+EUTelCorrelator::EUTelCorrelator () : Processor("EUTelCorrelator"), 
+_histoInfoFileName("histoinfo.xml")
+{
 
   // modify processor description
   _description =
@@ -105,8 +108,8 @@ EUTelCorrelator::EUTelCorrelator () : Processor("EUTelCorrelator") {
                             _clusterCollectionVec, _clusterCollectionVecExample);
 
   registerInputCollection(LCIO::TRACKERHIT,"InputHitCollectionName",
-                          "Hit collection name",
-                          _inputHitCollectionName, string ( "hit" ) );
+                              "Hit collection name",
+                              _inputHitCollectionName, string ( "hit" ) );
 
   registerProcessorParameter ("ClusterChargeMinimum",
                               "Minimum allowed cluster charge to be taken into account for the correlation plots (default = 2)",
@@ -125,9 +128,6 @@ EUTelCorrelator::EUTelCorrelator () : Processor("EUTelCorrelator") {
   registerOptionalParameter("OffsetDBFile","This is the name of the LCIO file name with the output offset db (add .slcio)",
                               _offsetDBFile, static_cast< string > ( "offset-db.slcio" ) );
 
-  registerOptionalParameter("ReferenceCollection","reference hit collection name ", _referenceHitCollectionName, static_cast <string> ("referenceHit") );
- 
-  registerOptionalParameter("UseReferenceCollection","Do you want the reference hit collection to be used for coordinate transformations?",  _useReferenceHitCollection, static_cast< bool   > ( true ));
  
   registerOptionalParameter("ResidualsXMin","Minimal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_residualsXMin, std::vector<float > (6, -10.) );
 
@@ -138,11 +138,13 @@ EUTelCorrelator::EUTelCorrelator () : Processor("EUTelCorrelator") {
   registerOptionalParameter("ResidualsYMax","Maximal values of the hit residuals in the Y direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_residualsYMax, std::vector<float > (6,  10.) );
 
   registerOptionalParameter ("MinNumberOfCorrelatedHits",
-                              "If there are more then this number of correlated hits (planes->track candidate) (default=5)",
-                              _minNumberOfCorrelatedHits, static_cast <int> (5) );
+                             "If there are more then this number of correlated hits (planes->track candidate) (default=5)",
+                             _minNumberOfCorrelatedHits, static_cast <int> (5) );
 
   registerOptionalParameter("HotPixelCollectionName", "This is the name of the hot pixel collection to be saved into the output slcio file",
                              _hotPixelCollectionName, static_cast< string > ( "hotpixel" ));
+
+  registerOptionalParameter("HistogramInfoFilename", "Name of histogram info xml file", _histoInfoFileName, string("histoinfo.xml"));
 
 }
 
@@ -152,9 +154,9 @@ void EUTelCorrelator::init() {
   // usually a good idea to
   printParameters ();
 
-    // Getting access to geometry description
-    std::string name("test.root");
-    geo::gGeometry().initializeTGeoDescription(name,false);
+  // Getting access to geometry description
+  std::string name("test.root");
+  geo::gGeometry().initializeTGeoDescription(name,false);
 
 
   // clear the sensor ID vector
@@ -164,7 +166,6 @@ void EUTelCorrelator::init() {
   _sensorIDVecMap.clear();
   _sensorIDtoZOrderMap.clear();
 
-  _referenceHitVec = 0;
 
   // clear the sensor ID vector (z-axis order)
   _sensorIDVecZOrder.clear();
@@ -339,7 +340,7 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
-    
+ 
   if(_iEvt > _events) return;
       ++_iEvt;
 
@@ -403,28 +404,13 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 
     } else {
     
-      FillHotPixelMap(event);
-
       bookHistos();
      
-      if ( _useReferenceHitCollection ) 
-      {
-       try{
-       _referenceHitVec = dynamic_cast < LCCollectionVec * > (event->getCollection( _referenceHitCollectionName));
-       }
-       catch(...)
-       {
-         _referenceHitVec = 0;
-         _useReferenceHitCollection = 0;
-       }
-      }
- 
+
       _isInitialize = true;
     }
 
   }
-
-
 
 
   try {
@@ -646,6 +632,9 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 
       LCCollectionVec * inputHitCollection = static_cast< LCCollectionVec *>
         ( event->getCollection( _inputHitCollectionName )) ;
+
+      streamlog_out  ( MESSAGE2 ) << "inputHitCollection " << _inputHitCollectionName.c_str() << endl;
+
       for ( size_t iExt = 0 ; iExt < inputHitCollection->size(); ++iExt ) {
         std::vector<double> trackX;
         std::vector<double> trackY;
@@ -662,20 +651,24 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 
         double* externalPosition =  const_cast<double*> ( externalHit->getPosition() );
 
-//rubinsky 18-02-14        int externalSensorID = guessSensorID( externalPosition );
-//         trackX.push_back(externalPosition[0]);
-//         trackY.push_back(externalPosition[1]);
+        int externalSensorID  = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >( externalHit ) );
 
-        int externalSensorID = externalHit->getCellID0();
-        double etrackPointLocal[]  = { externalPosition[0], externalPosition[1], 0. };
-        double etrackPointGlobal[] = { 0., 0., 0. };
+        double etrackPointLocal[]  = { externalPosition[0], externalPosition[1], externalPosition[2] };
+        double etrackPointGlobal[] = { externalPosition[0], externalPosition[1], externalPosition[2] };
+
+// do local2Master only if the externalHit is defined in the local frame of the module:  
+// skip if already in global 
+// steer by a processor flag ?
         geo::gGeometry().local2Master( externalSensorID, etrackPointLocal, etrackPointGlobal );
+//
 
         trackX.push_back( etrackPointGlobal[0]);
         trackY.push_back( etrackPointGlobal[1]);
 
         iplane.push_back( externalSensorID);
 
+        streamlog_out  ( MESSAGE2 ) << "eplane:"  << externalSensorID << " loc: "  << etrackPointLocal[0]  << " "<< etrackPointLocal[1]  << " "
+                                                                      << " glo: "  << etrackPointGlobal[0] << " "<< etrackPointGlobal[1] << " " << endl;
 
         for ( size_t iInt = 0; iInt < inputHitCollection->size(); ++iInt ) 
         {
@@ -684,14 +677,19 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
                                                                             getElementAt( iInt ) );
           double * internalPosition = const_cast<double* >( internalHit->getPosition() );
 
-//rubinsky 18-02-14         int internalSensorID = guessSensorID( internalPosition );
-//          int internalSensorID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(internalHit) );
-          int internalSensorID = internalHit->getCellID0();
+          int internalSensorID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >( internalHit ) );
 
-          bool ishot = hitContainsHotPixels(internalHit); 
-
-          if( ishot ) continue;
-
+// rubinsky 18-02-14: implementing reading out of the local Hit collection information
+// - define plane ID via Utility::
+// - define hit global telescope frame [3] coord via EUTelGeometry:::
+//
+          double itrackPointLocal[]  = { internalPosition[0], internalPosition[1], internalPosition[2] };
+          double itrackPointGlobal[] = { internalPosition[0], internalPosition[1], internalPosition[2] };
+// do local2Master only if the externalHit is defined in the local frame of the module:  
+// skip if already in global 
+// steer by a processor flag ?
+          geo::gGeometry().local2Master( internalSensorID, itrackPointLocal, itrackPointGlobal );
+ 
           if ( 
                   ( internalSensorID != getFixedPlaneID() && externalSensorID == getFixedPlaneID() )
                    ||
@@ -702,31 +700,18 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
             int iz = _sensorIDtoZOrderMap[internalSensorID]; 
 
             if(
-               ((externalPosition[0]-internalPosition[0] ) < _residualsXMax[iz]) && (_residualsXMin[iz] < (externalPosition[0]-internalPosition[0] ))   
+               ((etrackPointGlobal[0]-itrackPointGlobal[0] ) < _residualsXMax[iz]) && (_residualsXMin[iz] < (etrackPointGlobal[0]-itrackPointGlobal[0] ))   
                &&
-               ((externalPosition[1]-internalPosition[1] ) < _residualsYMax[iz]) && (_residualsYMin[iz] < (externalPosition[1]-internalPosition[1] ))
+               ((etrackPointGlobal[1]-itrackPointGlobal[1] ) < _residualsYMax[iz]) && (_residualsYMin[iz] < (etrackPointGlobal[1]-itrackPointGlobal[1] ))
               )
                {
-//                trackX.push_back(internalPosition[0]);
-//                trackY.push_back(internalPosition[1]);
-//                iplane.push_back(internalSensorID);
-// rubinsky 18-02-14: implementing reading out of the local Hit collection information
-// - define plane ID via Utility::
-// - define hit global telescope frame [3] coord via EUTelGeometry:::
-//
-        double itrackPointLocal[] = { internalPosition[0], internalPosition[1], 0. };
-        double itrackPointGlobal[] = { 0., 0., 0. };
-        geo::gGeometry().local2Master( internalSensorID, itrackPointLocal, itrackPointGlobal );
 
         trackX.push_back(itrackPointGlobal[0]);
         trackY.push_back(itrackPointGlobal[1]);
         iplane.push_back(internalSensorID);
 
-//        std::cout<< "eplane:"  << externalSensorID << " loc: "  << etrackPointLocal[0]  << " "<< etrackPointLocal[1]  << " "
-//                                                   << " glo: "  << etrackPointGlobal[0] << " "<< etrackPointGlobal[1] << " " << endl;
-//        std::cout<< "iplane:"  << internalSensorID << " loc: "  << itrackPointLocal[0]  << " "<< itrackPointLocal[1]  << " "
-//                                                   << " glo: "  << itrackPointGlobal[0] << " "<< itrackPointGlobal[1] << " " << endl;
-
+        streamlog_out  ( MESSAGE2 ) << "iplane:"  << internalSensorID << " loc: "  << itrackPointLocal[0]  << " "<< itrackPointLocal[1]  << " "
+                                                                      << " glo: "  << itrackPointGlobal[0] << " "<< itrackPointGlobal[1] << " " << endl;
 
                }
             }
@@ -764,6 +749,7 @@ if( static_cast< int >(iplane_unique.size()) > _minNumberOfCorrelatedHits && tra
 }
 
 void EUTelCorrelator::end() {
+
 
     if( _hasClusterCollection && !_hasHitCollection)
     {
@@ -1047,6 +1033,41 @@ void EUTelCorrelator::bookHistos() {
 
     streamlog_out ( DEBUG5 ) <<  "Booking histograms" << endl;
 
+        auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
+        EUTelHistogramInfo    * histoInfo;
+        bool                    isHistoManagerAvailable;
+
+        try {
+            isHistoManagerAvailable = histoMgr->init( );
+        } catch ( ios::failure& e ) {
+            streamlog_out( ERROR5 ) << "I/O problem with " << _histoInfoFileName << "\n"
+                    << "Continuing without histogram manager using default settings"    << endl;
+            isHistoManagerAvailable = false;
+        } catch ( ParseException& e ) {
+            streamlog_out( ERROR5 ) << e.what( ) << "\n"
+                    << "Continuing without histogram manager using default settings" << endl;
+            isHistoManagerAvailable = false;
+        }
+
+// declare.initialize:
+
+        int    xBin  =  10 ;    
+        double xMin  = -10.;
+        double xMax  =  10.;
+
+        int    yBin  =  10 ;    
+        double yMin  = -10.;  
+        double yMax  =  10.;
+
+        int colNBin   =  64 ;
+        double colMin =   0.;
+        double colMax =  64.;
+
+        int rowNBin   =  64 ;
+        double rowMin =   0.;
+        double rowMax =  64.;
+
+
     // create all the directories first
     vector< string > dirNames;
 
@@ -1071,8 +1092,8 @@ void EUTelCorrelator::bookHistos() {
     }
 
 
-    string tempHistoName;
-    string tempHistoTitle ;
+    string tempHistoName  = "";
+    string tempHistoTitle = "";
 
 
     for ( size_t r = 0 ; r < _sensorIDVec.size(); ++r ) 
@@ -1121,18 +1142,15 @@ void EUTelCorrelator::bookHistos() {
             /////////////////////////////////////////////////
             // book X
             tempHistoName = "ClusterX/" + _clusterXCorrelationHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
-
             streamlog_out( DEBUG5 ) << "Booking histo " << tempHistoName << endl;
 
-            int     xBin = _maxX[ row ] - _minX[ row ] + 1;
-            double  xMin = static_cast<double >(_minX[ row ]) - 0.5;
-            double  xMax = static_cast<double >(_maxX[ row ]) + 0.5;
-            int     yBin = _maxX[ col ] - _minX[ col ] + 1;
-            double  yMin = static_cast<double >(_minX[ col ]) - 0.5;
-            double  yMax = static_cast<double >(_maxX[ col ]) + 0.5;
-
-if(xBin>100) xBin=xBin/4;
-if(yBin>100) yBin=yBin/4;
+            histoInfo = histoMgr->getHistogramInfo(_clusterXCorrelationHistoName);
+            xBin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin :  100  ;    
+            xMin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : -1000.;
+            xMax  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax :  1000.;
+            yBin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yBin :  100  ;    
+            yMin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMin : -1000.;
+            yMax  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMax :  1000.;
 
             AIDA::IHistogram2D * histo2D =
               AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(),
@@ -1145,18 +1163,15 @@ if(yBin>100) yBin=yBin/4;
             /////////////////////////////////////////////////
             // book Y
             tempHistoName =  "ClusterY/" +  _clusterYCorrelationHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
-
             streamlog_out( DEBUG5 ) << "Booking histo " << tempHistoName << endl;
 
-            xBin = _maxY[ row ] - _minY[ row ] + 1;
-            xMin = static_cast<double >(_minY[ row ]) - 0.5;
-            xMax = static_cast<double >(_maxY[ row ]) + 0.5;
-            yBin = _maxY[ col ] - _minY[ col ] + 1;
-            yMin = static_cast<double >(_minY[ col ]) - 0.5;
-            yMax = static_cast<double >(_maxY[ col ]) + 0.5;
-
-if(xBin>100) xBin=xBin/4;
-if(yBin>100) yBin=yBin/4;
+            histoInfo = histoMgr->getHistogramInfo(_clusterYCorrelationHistoName);
+            xBin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 100  ;    
+            xMin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : -1000.;
+            xMax  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax :  1000.;
+            yBin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yBin : 100  ;    
+            yMin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMin : -1000.;
+            yMax  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMax :  1000.;
 
             histo2D =
               AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(),
@@ -1170,20 +1185,15 @@ if(yBin>100) yBin=yBin/4;
             // book special histos to calculate sensors initial offsets in X and Y
             // book X
             tempHistoName =  "ClusterXShift/" +  _clusterXCorrShiftHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
-
             streamlog_out( DEBUG5 ) << "Booking histo " << tempHistoName << endl;
 
-            xBin = _maxX[row] ;
-            yBin = _maxX[row] + _maxX[row] ;
-    
-            xMin = safetyFactor * ( _hitMinX[row] );
-            xMax = safetyFactor * ( _hitMaxX[row] );
-            
-            yMin = safetyFactor * ( _hitMinX[row] - _hitMaxX[row]);
-            yMax = safetyFactor * ( _hitMaxX[row] - _hitMinX[row]);
-
-if(xBin>100) xBin=xBin/4;
-if(yBin>100) yBin=yBin/4;
+            histoInfo = histoMgr->getHistogramInfo(_clusterXCorrShiftHistoName);
+            xBin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 100   ;    
+            xMin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : -1000.;
+            xMax  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax :  1000.;
+            yBin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yBin : 100   ;    
+            yMin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMin : -1000.;
+            yMax  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMax :  1000.;
 
             histo2D =
               AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(),
@@ -1196,20 +1206,15 @@ if(yBin>100) yBin=yBin/4;
                /////////////////////////////////////////////////
             // book Y
             tempHistoName =  "ClusterYShift/" +  _clusterYCorrShiftHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
-
             streamlog_out( DEBUG5 ) << "Booking histo " << tempHistoName << endl;
 
-            xBin = _maxY[row]  ;
-            yBin = _maxY[row] + _maxY[row] ;
-    
-            xMin = safetyFactor * ( _hitMinY[row] );
-            xMax = safetyFactor * ( _hitMaxY[row] );
-            
-            yMin = safetyFactor * ( _hitMinY[row] - _hitMaxY[row]);
-            yMax = safetyFactor * ( _hitMaxY[row] - _hitMinY[row]);
-
-if(xBin>100) xBin=xBin/4;
-if(yBin>100) yBin=yBin/4;
+            histoInfo = histoMgr->getHistogramInfo(_clusterYCorrShiftHistoName);
+            xBin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 100   ;    
+            xMin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : -1000.;
+            xMax  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax :  1000.;
+            yBin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yBin : 100   ;    
+            yMin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMin : -1000.;
+            yMax  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMax :  1000.;
 
             histo2D =
               AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(),
@@ -1235,31 +1240,19 @@ if(yBin>100) yBin=yBin/4;
             // means that the sensor is wrong
             // by all its size.
 
-            double rowMin = 0.;
-            double rowMax = 0.;
-            double colMin = 0.;
-            double colMax = 0.;
-            int colNBin   = 0;
-            int rowNBin   = 0;
-            
-
-            colNBin = _maxX[col];
-            rowNBin = _maxX[row];
-    
-            rowMin = safetyFactor * ( _hitMinX[row]);
-            rowMax = safetyFactor * ( _hitMaxX[row]);
-            colMin = safetyFactor * ( _hitMinX[col]);
-            colMax = safetyFactor * ( _hitMaxX[col]);
-        
+          
             tempHistoName  =  "HitX/" +  _hitXCorrelationHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
-
             streamlog_out( DEBUG5 ) << "Booking histo " << tempHistoName << endl;
-
-            string 
             tempHistoTitle =  "HitX/" +  _hitXCorrelationHistoName + "_d" + to_string( row ) + "_d" +  to_string( col );
 
-if(colNBin>100) colNBin=colNBin/4;
-if(rowNBin>100) rowNBin=rowNBin/4;
+            histoInfo = histoMgr->getHistogramInfo(_hitXCorrelationHistoName);
+            colNBin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 100   ;    
+            colMin   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : -10.;
+            colMax   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax :  10.;
+            rowNBin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yBin : 100   ;    
+            rowMin   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMin : -10.;
+            rowMax   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMax :  10.;
+
 
             AIDA::IHistogram2D * histo2D =
               AIDAProcessor::histogramFactory( this )->createHistogram2D( tempHistoName.c_str(), 
@@ -1283,8 +1276,13 @@ if(rowNBin>100) rowNBin=rowNBin/4;
             streamlog_out( DEBUG5 ) << "Booking cloud " << tempHistoName << endl;
             tempHistoTitle = "HitY/" + _hitYCorrelationHistoName + "_d" + to_string( row ) + "_d" + to_string( col ) ;
  
-if(colNBin>100) colNBin=colNBin/4;
-if(rowNBin>100) rowNBin=rowNBin/4;
+            histoInfo = histoMgr->getHistogramInfo(_hitYCorrelationHistoName);
+            colNBin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 100   ;    
+            colMin   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : -10.;
+            colMax   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax :  10.;
+            rowNBin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yBin : 100   ;    
+            rowMin   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMin : -10.;
+            rowMax   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMax :  10.;
 
             histo2D =
               AIDAProcessor::histogramFactory( this )->createHistogram2D( tempHistoName.c_str(), 
@@ -1301,18 +1299,15 @@ if(rowNBin>100) rowNBin=rowNBin/4;
 
             streamlog_out( DEBUG5 ) << "Booking histo " << tempHistoName << endl;
 
-            rowNBin = _maxX[row];
-            colNBin = _maxX[row] + _maxX[row] ;
-   
-            rowMin = safetyFactor * ( _hitMinX[row] );
-            rowMax = safetyFactor * ( _hitMaxX[row] );
-            
-            colMin = safetyFactor * ( _hitMinX[row] - _hitMaxX[row]);
-            colMax = safetyFactor * ( _hitMaxX[row] - _hitMinX[row]);
+            histoInfo = histoMgr->getHistogramInfo(_hitXCorrShiftHistoName);
+            colNBin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 100   ;    
+            colMin   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : -10.;
+            colMax   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax :  10.;
+            rowNBin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yBin : 100   ;    
+            rowMin   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMin : -10.;
+            rowMax   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMax :  10.;
 
-if(colNBin>100) colNBin=colNBin/4;
-if(rowNBin>100) rowNBin=rowNBin/4;
-           histo2D = AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(), rowNBin, rowMin, rowMax, colNBin, colMin, colMax );
+            histo2D = AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(), rowNBin, rowMin, rowMax, colNBin, colMin, colMax );
 
             tempHistoTitle =  "HitXShift/" +  _hitXCorrShiftHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
             histo2D->setTitle( tempHistoTitle.c_str()) ;
@@ -1324,20 +1319,15 @@ if(rowNBin>100) rowNBin=rowNBin/4;
 
             streamlog_out( DEBUG5 ) << "Booking histo " << tempHistoName << endl;
 
-            rowNBin = _maxY[row];
-            colNBin = _maxY[row] + _maxY[row] ;
-   
-            rowMin = safetyFactor * ( _hitMinY[row] );
-            rowMax = safetyFactor * ( _hitMaxY[row] );
-            
-            colMin = safetyFactor * ( _hitMinY[row] - _hitMaxY[row]);
-            colMax = safetyFactor * ( _hitMaxY[row] - _hitMinY[row]);
+            histoInfo = histoMgr->getHistogramInfo(_hitYCorrShiftHistoName);
+            colNBin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 100   ;    
+            colMin   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : -10.;
+            colMax   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax :  10.;
+            rowNBin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yBin : 100   ;    
+            rowMin   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMin : -10.;
+            rowMax   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMax :  10.;
 
-            
-if(colNBin>100) colNBin=colNBin/4;
-if(rowNBin>100) rowNBin=rowNBin/4;
-
-           histo2D = AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(), rowNBin, rowMin, rowMax, colNBin, colMin, colMax );
+            histo2D = AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(), rowNBin, rowMin, rowMax, colNBin, colMin, colMax );
            
             tempHistoTitle =  "HitYShift/" +  _hitYCorrShiftHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
             histo2D->setTitle( tempHistoTitle.c_str()) ;
@@ -1370,6 +1360,8 @@ if(rowNBin>100) rowNBin=rowNBin/4;
  
       }
 
+
+
       if ( _hasClusterCollection && !_hasHitCollection) 
       {
         _clusterXCorrelationMatrix[ row ] = innerMapXCluster  ;
@@ -1387,21 +1379,13 @@ if(rowNBin>100) rowNBin=rowNBin/4;
             // means that the sensor is wrong
             // by all its size.
  
-            double   xMin  = 0.;
-            double   xMax  = 0.;
-            int      xBin  = 0 ;
-
-            double   yMin  = 0.;
-            double   yMax  = 0.;
-            int      yBin  = 0 ;
-
-
-
-            int refRow =  getFixedPlaneID() ; // reference row id
-            xBin       = _maxX[refRow] + _maxX[ refRow ] ;    
-            xMin = safetyFactor * ( _hitMinX[refRow] - _hitMaxX[refRow]);
-            xMax = safetyFactor * ( _hitMaxX[refRow] - _hitMinX[refRow]);
-if(xBin>100) xBin=xBin/4;
+            histoInfo = histoMgr->getHistogramInfo(_clusterXCorrShiftProjectionHistoName);
+            xBin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 100   ;    
+            xMin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : -1000.;
+            xMax  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax :  1000.;
+            yBin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yBin : 100   ;    
+            yMin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMin : -1000.;
+            yMax  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMax :  1000.;
 
             AIDA::IHistogram1D *
                  histo1D = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(), xBin, xMin, xMax );
@@ -1415,10 +1399,14 @@ if(xBin>100) xBin=xBin/4;
             tempHistoName =  "ClusterYShift/" +  _clusterYCorrShiftProjectionHistoName + "_d" + to_string( row ) ;
             streamlog_out( DEBUG5 ) << "Booking histo " << tempHistoName << endl;
 
-            yBin        = _maxY[refRow] + _maxY[ refRow ] ;    
-            yMin = safetyFactor * ( _hitMinY[refRow] - _hitMaxY[refRow]);
-            yMax = safetyFactor * ( _hitMaxY[refRow] - _hitMinY[refRow]);
-if(yBin>100) yBin=yBin/4;
+            histoInfo = histoMgr->getHistogramInfo(_clusterYCorrShiftProjectionHistoName);
+            xBin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 100   ;    
+            xMin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : -1000.;
+            xMax  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax :  1000.;
+            yBin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yBin : 100   ;    
+            yMin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMin : -1000.;
+            yMax  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMax :  1000.;
+
 
             histo1D = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(), yBin, yMin, yMax );
             tempHistoTitle =  "ClusterYShift/" +  _clusterYCorrShiftProjectionHistoName + "_d" + to_string( row ) ;
@@ -1447,19 +1435,14 @@ if(yBin>100) yBin=yBin/4;
             double safetyFactor = 1.0; // 2 should be enough because it
             // means that the sensor is wrong
             // by all its size.
-            double rowMin  = 0.;
-            double rowMax  = 0.;
-            int    rowNBin = 0 ;
 
-            int refRow =   getFixedPlaneID();
-            rowNBin        = _maxX[refRow] + _maxX[refRow] ;
-    
-            rowMin = safetyFactor * ( _hitMinX[refRow] - _hitMaxX[refRow]);
-            rowMax = safetyFactor * ( _hitMaxX[refRow] - _hitMinX[refRow]);
-if(rowNBin>100) rowNBin=rowNBin/4;
+            histoInfo = histoMgr->getHistogramInfo(_hitXCorrShiftProjectionHistoName);
+            xBin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin :  100 ;    
+            xMin   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : -10.;
+            xMax   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax :  10.;
 
-            AIDA::IHistogram1D *
-                 histo1D = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(), rowNBin, rowMin, rowMax );
+            AIDA::IHistogram1D * histo1D = 0;
+            histo1D = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(), xBin, xMin, xMax );
             tempHistoTitle =  "HitXShift/" +  _hitXCorrShiftProjectionHistoName + "_d" + to_string( row );
             histo1D->setTitle( tempHistoTitle.c_str()) ;
 
@@ -1471,16 +1454,15 @@ if(rowNBin>100) rowNBin=rowNBin/4;
 
             streamlog_out( DEBUG5 ) << "Booking histo " << tempHistoName << endl;
 
-            rowNBin        = _maxY[refRow] + _maxY[refRow] ;
-    
-            rowMin = safetyFactor * ( _hitMinY[refRow] - _hitMaxY[refRow]);
-            rowMax = safetyFactor * ( _hitMaxY[refRow] - _hitMinY[refRow]);
-if(rowNBin>100) rowNBin=rowNBin/4;
-           histo1D = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(), rowNBin, rowMin, rowMax );
+            histoInfo = histoMgr->getHistogramInfo(_hitXCorrShiftProjectionHistoName);
+            xBin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 100  ;    
+            xMin   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : -10.;
+            xMax   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax :  10.;
+
+            histo1D = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(), xBin, xMin, xMax );
             tempHistoTitle =  "HitYShift/" +  _hitYCorrShiftProjectionHistoName + "_d" + to_string( row ) ;
             histo1D->setTitle( tempHistoTitle.c_str()) ;
 
-//            innerMapYCluShiftProjection[ row  ] =  histo1D ;
             _hitYCorrShiftProjection[ row ]  = histo1D  ;        
      }
       
@@ -1493,53 +1475,6 @@ if(rowNBin>100) rowNBin=rowNBin/4;
 
   }
 #endif
-}
-
-int EUTelCorrelator::guessSensorID(const double * hit ) 
-{
-
-  int sensorID = -1;
-  double minDistance =  numeric_limits< double >::max() ;
-
-  if( _referenceHitVec == 0 || _useReferenceHitCollection == false ){
-    // use z information of planes instead of reference vector
-    for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); ++iPlane ) {
-      double distance = std::abs( hit[2] - _siPlaneZPosition[ iPlane ] );
-      if ( distance < minDistance ) {
-	minDistance = distance;
-	sensorID = _siPlanesLayerLayout->getID( iPlane );
-      }
-    }
-    if ( minDistance > 30  ) {
-      // advice the user that the guessing wasn't successful 
-      streamlog_out( WARNING3 ) << "A hit was found " << minDistance << " mm far from the nearest plane\n"
-	"Please check the consistency of the data with the GEAR file: hitPosition[2]=" << hit[2] <<       endl;
-    }
-    
-    return sensorID;
-  }
-
-     streamlog_out( DEBUG5 ) << " _referenceHitVec " << _referenceHitVec << " " << _referenceHitCollectionName.c_str() << endl;
-     for(int ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
-      {
-
-       EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
-       streamlog_out( DEBUG5 ) << " _referenceHitVec " << _referenceHitVec << " refhit " << refhit << endl;
-       
-        TVector3 hit3d( hit[0], hit[1], hit[2] );
-        TVector3 hitInPlane( refhit->getXOffset(), refhit->getYOffset(), refhit->getZOffset());
-        TVector3 norm2Plane( refhit->getAlpha(), refhit->getBeta(), refhit->getGamma() );
- 
-        double distance = abs( norm2Plane.Dot(hit3d-hitInPlane) );
-        if ( distance < minDistance ) 
-        {
-           minDistance = distance;
-           sensorID = refhit->getSensorID();
-        }    
-
-      }
-
-  return sensorID;
 }
 
 
@@ -1634,138 +1569,8 @@ std::vector<double> EUTelCorrelator::guessSensorOffset(int internalSensorID, int
       return cluster_offset;
 }
 
-void  EUTelCorrelator::FillHotPixelMap(LCEvent *event)
-{
-    LCCollectionVec *hotPixelCollectionVec = 0;
-    try 
-    {
-      hotPixelCollectionVec = static_cast< LCCollectionVec* > ( event->getCollection( _hotPixelCollectionName  ) );
-      streamlog_out ( DEBUG5 ) << "Hotpixel collection " << _hotPixelCollectionName.c_str() << " found" << endl; 
-    }
-    catch (...)
-    {
-      streamlog_out ( MESSAGE5 ) << "Hotpixel collection " << _hotPixelCollectionName.c_str() << " not found" << endl; 
-      return;
-    }
-
-        CellIDDecoder<TrackerDataImpl> cellDecoder( hotPixelCollectionVec );
-	
-        for(int i=0; i<  hotPixelCollectionVec->getNumberOfElements(); i++)
-        {
-           TrackerDataImpl* hotPixelData = dynamic_cast< TrackerDataImpl *> ( hotPixelCollectionVec->getElementAt( i ) );
-	   SparsePixelType  type         = static_cast<SparsePixelType> (static_cast<int> (cellDecoder( hotPixelData )["sparsePixelType"]));
-
-	   int sensorID              = static_cast<int > ( cellDecoder( hotPixelData )["sensorID"] );
-
-           if( type  == kEUTelAPIXSparsePixel)
-           {  
-           auto_ptr<EUTelSparseDataImpl<EUTelAPIXSparsePixel > > apixData(new EUTelSparseDataImpl<EUTelAPIXSparsePixel> ( hotPixelData ));
-	   std::vector<EUTelAPIXSparsePixel*> apixPixelVec;
-	     //auto_ptr<EUTelAPIXSparsePixel> apixPixel( new EUTelAPIXSparsePixel );
-	   EUTelAPIXSparsePixel apixPixel;
-	     //Push all single Pixels of one plane in the apixPixelVec
-
-           for ( unsigned int iPixel = 0; iPixel < apixData->size(); iPixel++ ) 
-           {
-              std::vector<int> apixColVec();
-              apixData->getSparsePixelAt( iPixel, &apixPixel);
-              try
-              {
-                 char ix[100];
-                 sprintf(ix, "%d,%d,%d", sensorID, apixPixel.getXCoord(), apixPixel.getYCoord() ); 
-                 _hotPixelMap[ix] = true;             
-              }
-              catch(...)
-              {
-		streamlog_out ( ERROR5 ) <<  "Cannot add pixel" << endl;
-              }
-           }
-
-
-           }  	
-       }
-
-}
  
 
-bool EUTelCorrelator::hitContainsHotPixels( TrackerHitImpl   * hit) 
-{
-
-        try
-        {
-            LCObjectVec clusterVector = hit->getRawHits();
- 
-//            EUTelVirtualCluster * cluster;
-            if ( hit->getType() == kEUTelBrickedClusterImpl ) {
-
-               // fixed cluster implementation. Remember it
-               //  can come from
-               //  both RAW and ZS data
-   
-//              cluster = new EUTelBrickedClusterImpl(static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
-                
-            } else if ( hit->getType() == kEUTelDFFClusterImpl ) {
-              
-              // fixed cluster implementation. Remember it can come from
-              // both RAW and ZS data
-//              cluster = new EUTelDFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
-            } else if ( hit->getType() == kEUTelFFClusterImpl ) {
-              
-              // fixed cluster implementation. Remember it can come from
-              // both RAW and ZS data
-//              cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
-            } 
-            else if ( hit->getType() == kEUTelAPIXClusterImpl ) 
-            {
-                TrackerDataImpl * clusterFrame = static_cast<TrackerDataImpl*> ( clusterVector[0] );
-                eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel > 
-                              *apixCluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);
-                
-		if(apixCluster == 0 ) throw UnknownDataTypeException(" problem accessing cluster ");
-                int sensorID = apixCluster->getDetectorID();
-                bool skipHit = 0;
-                for (size_t iPixel = 0; iPixel < apixCluster->size(); ++iPixel) 
-                {
-                    EUTelAPIXSparsePixel apixPixel;
-                    apixCluster->getSparsePixelAt(iPixel, &apixPixel);
-
-                    try
-                    {                       
-                       char ix[100];
-                       sprintf(ix, "%d,%d,%d", sensorID, apixPixel.getXCoord(), apixPixel.getYCoord() ); 
-                       if( _hotPixelMap[ix]  )
-                       { 
-                          skipHit = true; 	      
-                          delete apixCluster;
-                          return true; // if TRUE  this hit will be skipped
-                       }
-                       else
-                       { 
-                          skipHit = false; 	      
-                       } 
-                    } 
-                    catch (...)
-                    {
-                    }
-           
-                }
-
-                delete apixCluster;
-                return skipHit; // if TRUE  this hit will be skipped
-            } 
-            
-       }
-       catch(...)
-       { 
-          printf("something went wrong in EUTelCorrelator::hitContainsHotPixels \n");
-          // if anything went wrong in the above return FALSE, meaning do not skip this hit
-          return 0;
-       }
- 
-       // if none of the above worked return FALSE, meaning do not skip this hit
-       return 0;
-
-}
 
 
 #endif // USE_GEAR
