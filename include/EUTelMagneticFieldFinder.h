@@ -115,7 +115,7 @@ namespace eutelescope {
             this->_residualsRMax = window;
         }
 
-        inline double setWindowSize() const {
+        inline double getWindowSize() const {
             return _residualsRMax;
         }
         

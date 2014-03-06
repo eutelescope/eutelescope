@@ -159,6 +159,9 @@ namespace eutelescope {
                 // Determine id of the sensor in which track reference point is located
                 bool findhit = true;
                 const int newSensorID = geo::gGeometry( ).getSensorID( xnew );
+ 
+                streamlog_out ( MESSAGE0 ) << "New intersection after step dz=" << dz << " with newSensorID : " << newSensorID << std::endl;
+                
                 if ( newSensorID != -999 ) {
                     findhit = true;
                 } else {
@@ -177,17 +180,21 @@ namespace eutelescope {
                 EVENT::TrackerHit* closestHit = const_cast< EVENT::TrackerHit* > ( findClosestHit( state, newSensorID ) );
                 if ( closestHit ) {
                     const double distance = getResidual( state, closestHit ).Norm2Sqr( );
-                    const double distanceCut = dz/100.*getXYPredictionPrecision( state );
+                    const double XYPrediction = getXYPredictionPrecision( state ); 
+                    const double distanceCut = dz/100.* XYPrediction ;
                     if ( distance > distanceCut ) {
-                        streamlog_out ( DEBUG1 ) << "Closest hit is outside of search window." << std::endl;
+                        streamlog_out ( DEBUG1 ) << "Closest hit is outside of search window. " << std::endl;
+                        streamlog_out ( DEBUG1 ) << "distanceCut = "<< distanceCut << " = dz/100. ( " << dz/100. << ") *precision(" << XYPrediction  << ")" << std::endl;
                         streamlog_out ( DEBUG1 ) << "Skipping current plane." << std::endl;
 //                        itTrk = _tracks.erase( itTrk );
                         findhit = false;
 //                        isGoodTrack = false;
 //                        break;
-                    }
+                    } else {
+                        streamlog_out ( DEBUG1 ) << "closestHit found on newSensorID : " << newSensorID  << std::endl;                
+                    }   
                 } else {
-                    streamlog_out ( DEBUG1 ) << "There are no hits in the closest plane." << std::endl;
+                    streamlog_out ( DEBUG1 ) << "There are no hits in the closest plane, newSensorID : " << newSensorID  << std::endl;
 //                    streamlog_out ( DEBUG1 ) << "Removing this track candidate from further consideration." << std::endl;
 //                    itTrk = _tracks.erase( itTrk );
                     findhit = false;
@@ -405,7 +412,7 @@ namespace eutelescope {
         streamlog_out(DEBUG0) << "Sensor Z order:" << sensorZorder << std::endl;
         
         if ( sensorID < 0 ) {
-            streamlog_out ( DEBUG3 ) << "Track interseciton was not found" << std::endl;
+            streamlog_out ( DEBUG3 ) << "Track interseciton was not found: sensorID : " << sensorID  << std::endl;
             return -999.;
         }
         
@@ -428,7 +435,7 @@ namespace eutelescope {
         if ( nextPlaneId > 0 ) {
             itPlaneId = std::find( sensID.begin(), sensID.end(), nextPlaneId ); 
         } else {
-            streamlog_out ( DEBUG3 ) << "Track intersection was not found" << std::endl;
+            streamlog_out ( DEBUG3 ) << "Track intersection was not found: nextPlaneId " << nextPlaneId << std::endl;
             return -999.;
         }
         // Construct quadratic equation
@@ -481,7 +488,7 @@ namespace eutelescope {
 	double dz = ( solution > 0. ) ? newPos[ solutionNum ].Z() - trkVec.Z() : -1.;
 
         if ( dz < 1.E-6 ) {
-            streamlog_out ( DEBUG3 ) << "Track intersection was not found" << std::endl;
+            streamlog_out ( DEBUG3 ) << "Track intersection was not found; dz= " << dz << std::endl;
             return -999.;
         }       
         
