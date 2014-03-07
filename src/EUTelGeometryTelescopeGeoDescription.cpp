@@ -121,9 +121,9 @@ TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneNormal( int planeID ) {
     it = _sensorIDtoZOrderMap.find(planeID);
     if ( it != _sensorIDtoZOrderMap.end() ) {
         TVector3 normVec( 0., 0., 1. );
-        normVec.RotateX( siPlaneXRotation( planeID) ); // rad
-        normVec.RotateY( siPlaneYRotation( planeID) ); // rad
-        normVec.RotateZ( siPlaneZRotation( planeID) ); // rad
+        normVec.RotateX( siPlaneXRotation( planeID) ); // to be in rad
+        normVec.RotateY( siPlaneYRotation( planeID) ); // to be in rad
+        normVec.RotateZ( siPlaneZRotation( planeID) ); // to be in rad
         return normVec;
     }
     return TVector3(0.,0.,0.);
@@ -335,7 +335,7 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::strin
        zc = siPlaneZPosition( *itrPlaneId );
        
        // Get sensor orientation
-       alpha = siPlaneXRotation( *itrPlaneId )*DEG; // [rad]
+       alpha = siPlaneXRotation( *itrPlaneId )*DEG; // [rad] in degrees !
        beta  = siPlaneYRotation( *itrPlaneId )*DEG; // [rad]
        gamma = siPlaneZRotation( *itrPlaneId )*DEG; // [rad]
        

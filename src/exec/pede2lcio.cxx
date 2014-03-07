@@ -82,9 +82,9 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
         if( ( itrAlignmentConstant = alignmentConstants.find( sensorID ) ) != alignmentConstants.end() ) {
 
 
- 	    const double alpha = siPlanesLayerLayout->getLayerRotationZY(iPlane);
-	    const double beta  = siPlanesLayerLayout->getLayerRotationZX(iPlane);
-	    const double gamma = siPlanesLayerLayout->getLayerRotationXY(iPlane);
+ 	    const double alpha = siPlanesLayerLayout->getLayerRotationZY(iPlane);// /DEG;
+	    const double beta  = siPlanesLayerLayout->getLayerRotationZX(iPlane);// /DEG;
+	    const double gamma = siPlanesLayerLayout->getLayerRotationXY(iPlane);// /DEG;
 
             streamlog_out(MESSAGE4) << "former " << sensorID << setw(20) << siPlanesLayerLayout->getLayerPositionX(iPlane)  << 
 			 	 setw(20) << siPlanesLayerLayout->getLayerPositionY(iPlane)  <<
