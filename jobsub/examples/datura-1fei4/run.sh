@@ -1,13 +1,13 @@
 #!/bin/sh
 
-first="3546"
+#first="3546"
 #last="3546"
 
 #first="3552"
-first="3568"
-last="3568"
-#last="3569"
-#last="3552"
+#first="3568"
+#last="3568"
+first="3569"
+last="3569"
 RUNLIST="runlist-1fei4.csv"
 
 #first="33"
@@ -47,14 +47,14 @@ elif [[ $modus == "gbl" ]]; then
 # jobsub.py  $DR -o MaxMissingHitsPerTrack="1"  -c config.cfg -csv $RUNLIST tracksearchHelix $i
 # echo jobsub.py  $DRY -c config.cfg -csv $RUNLIST aligngbl $i
 #
-# bash alignm26.sh -r ${i} -l ${RUNLIST} -c 5000
+ bash alignm26.sh -r ${i} -l ${RUNLIST} -c 1000
 # bash align1fei4.sh -r ${i} -l ${RUNLIST} 
 
 #### jobsub.py  $DRY -c config.cfg -csv $RUNLIST aligngbl $i
 #
 # 10 iterations to aligne 6 planes (6D)
 #   jobsub.py  $DRY -c config.cfg -o GearAlignedFile="gear-${i}-20-21.xml" -csv $RUNLIST trackgbl $i
- jobsub.py  $DRY -c config.cfg -o GearAlignedFile="gear-${i}-16.xml" -o Chi2Cut="5000" -csv $RUNLIST trackgbl $i
+# jobsub.py  $DRY -c config.cfg -o GearAlignedFile="gear-${i}-16.xml" -o Chi2Cut="5000" -csv $RUNLIST trackgbl $i
 
 fi
 done
