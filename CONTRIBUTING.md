@@ -62,7 +62,10 @@ git push origin my_feature_branch
 
 # Additional Resources
 [Using GitHub Pull Requests](https://help.github.com/articles/using-pull-requests)
+
 [Using mark-down e.g. in issues, comments or the wiki](https://help.github.com/articles/markdown-basics)
+
 [Some GitHub mark-down specialties](https://help.github.com/articles/github-flavored-markdown)
+
 [General help on GitHub](https://help.github.com/)
 
