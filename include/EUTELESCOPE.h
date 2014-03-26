@@ -472,36 +472,11 @@ namespace eutelescope
   };
 
 
-  //! hit properties enum
-  /*! This enum can be attached to a LCIO class describing a hit or it
-   *  can be inserted into the CellID describing the hit
-   *  collection. It is a seven bit flag (defined in
-   *  EUTELESCOPE::HITENCODING), that can be used to discriminate
-   *  among different hit types and properties.
-   *
-   *  Here a description of all allowed value of hit properties and
-   *  their meaning:
-   *
-   *  \li <b>kHitInGlobalCoord</b>: if set, the hit x/y/z coordinates
-   *  are given in the global coordinate system
-   *
-   *  \li <b>kFittedHit</b>: if set, the hit comes from a fitted track
-   *
-   *  There are "not assigned" bits that can be used in the
-   *  future to mark other different kind of hit flags.
-   */
-
-  enum HitProperties {
-    kHitInGlobalCoord  = 1L << 0,
-    kFittedHit         = 1L << 1
-  };
-
 
   //! Cluster quality enum
   /*! This enum can be attached to a LCIO class describing a cluster
    *  or it can be inserted into the CellID describing the cluster
-   *  collection. It is a seven bit flag (defined in
-   *  EUTELESCOPE::CLUSTERDEFAULTENCODING), that can be used to
+   *  collection. It is a five bit flag, that can be used to
    *  discriminate among different cluster qualities. This is because
    *  not all clusters passing the required cuts can be considered to
    *  be at the same quality levels. For example there are clusters
@@ -533,6 +508,8 @@ namespace eutelescope
    *  There are still two "not assigned" bits that can be used in the
    *  future to mark other different kind of bad quality clusters.
    *
+   *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+   *  @version $Id$
    */
 
   enum ClusterQuality {
