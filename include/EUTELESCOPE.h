@@ -402,7 +402,7 @@ namespace eutelescope
      *
      *  @see HitProperties
      */
-    static const char * EUTELESCOPE::HITENCODING;
+    static const char * HITENCODING;
 
   };
 
