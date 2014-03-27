@@ -16,8 +16,6 @@
  *  classes defined by the EUDET JRA1 collaboration in order to
  *  develop both their DAQ and analysis/reconstruction software.
  *
- *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
- *  @version $Id$
  */
 
 namespace eutelescope {}
@@ -52,8 +50,6 @@ namespace eutelescope
    * is to define name of collection to be retrieved/saved from/to
    * files.
    *
-   * @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   * @version $Id$
    */
 
   class EUTELESCOPE
@@ -415,8 +411,6 @@ namespace eutelescope
   /*! This enumeration type is used to identify a specific detector
    *  type.
    *
-   *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id$
    */
   enum EUTelDetectorType {
     kTLU               =   0,
@@ -433,8 +427,6 @@ namespace eutelescope
   //! Readout mode
   /*! This enumeration type is used to identify a readout mode
    *
-   *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id$
    */
   enum EUTelReadoutMode {
     kRAW2             =   0,
@@ -469,8 +461,6 @@ namespace eutelescope
    *  EUTelEventImpl event. In such case, in fact, asking for a not
    *  existing parameter will return 0.
    *
-   *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id$
    */
   enum EventType {
     kUNKNOWN  = 0,
@@ -597,8 +587,6 @@ namespace eutelescope
    *  which was the underlying class used for the description of the
    *  cluster during the clusterization process itself.
    *
-   *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id$
    */
   enum ClusterType {
     kEUTelFFClusterImpl       = 0,
@@ -615,8 +603,6 @@ namespace eutelescope
   //! Sparse pixel type enum
   /*! This enumerator is used to define the sparsified pixel type.
    *
-   *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id$
    */
   enum SparsePixelType {
     kEUTelBaseSparsePixel   = 0,
