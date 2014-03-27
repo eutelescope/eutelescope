@@ -332,7 +332,6 @@ namespace eutelescope
      *  default encoding used for describe cells into a
      *  Tracker(Raw)Data object
      *
-     *  "sensorID:5,xMin:12,xMax:12,yMin:12,yMax:12"
      */
     static const char * MATRIXDEFAULTENCODING;
 
@@ -341,12 +340,13 @@ namespace eutelescope
      *  encoding used for describe cells in a TrackerData object
      *  containing sparsified pixel.
      *
+     *  "sensorID:7,xMin:12,xMax:12,yMin:12,yMax:12"
+     *
      *  The sparse pixel type is defined using the SparsePixelType
      *  enumeration.
      *
      *  @see SparsePixelType
      *
-     *  "sensorID:5,sparsePixelType:5"
      */
     static const char * ZSDATADEFAULTENCODING;
 
@@ -355,7 +355,7 @@ namespace eutelescope
      *  default encoding used for describe cells into a clusters. This
      *  encoding is different from the one for complete matrices.
      *
-     *  "sensorID:5,clusterID:8,xSeed:12,ySeed:12,xCluSize:5,yCluSize:5:quality:5"
+     *  "sensorID:7,xSeed:12,ySeed:12,xCluSize:5,yCluSize:5,quality:7"
      *
      *  Note about cluster quality: this is a three bit flag to be
      *  used with the cluster quality enum.
@@ -371,7 +371,7 @@ namespace eutelescope
      *  but instead of the quality it has a 5 bit fields to identify
      *  the cluster reimplementation class.
      *
-     *  "sensorID:5,clusterID:8,xSeed:12,ySeed:12,xCluSize:5,yCluSize:5:type:5"
+     *  "sensorID:7,xSeed:12,ySeed:12,xCluSize:5,yCluSize:5,type:5"
      *
      *  @see ClusterType
      */
@@ -381,7 +381,7 @@ namespace eutelescope
     /*! This encoding string is used for the TrackerData containing
      *  clusters made by sparsified pixels
      *
-     *  "sensorID:5,clusterID:8,sparsePixelType:5,quality:5"
+     *  "sensorID:7,sparsePixelType:5,quality:5"
      *
      *  @see SparsePixelType
      *  @see ClusterQuality
@@ -392,13 +392,21 @@ namespace eutelescope
     /*! This encoding string is used for the TrackerData containing
      *  clusters made by ATLAS PIXEL pixels
      *
-     *  "sensorID:17,clusterID:8,sparsePixelType:5"
+     *  "sensorID:7,sparsePixelType:5,type:6"
      *
      *  @see SparsePixelType
      *  @see ClusterQuality
      */
     static const char * ZSAPIXCLUSTERENCODING;
 
+    //! SensorID and properties encoding for hits
+    /*! This encoding string is used for the TrackerHit* classes
+     *
+     *  "sensorID:7,properties:7"
+     *
+     *  @see HitProperties
+     */
+    static const char * EUTELESCOPE::HITENCODING;
 
   };
 
@@ -490,7 +498,6 @@ namespace eutelescope
    *  There are "not assigned" bits that can be used in the
    *  future to mark other different kind of hit flags.
    */
-
   enum HitProperties {
     kHitInGlobalCoord  = 1L << 0,
     kFittedHit         = 1L << 1
