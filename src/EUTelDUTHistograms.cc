@@ -261,11 +261,6 @@ void EUTelDUTHistograms::init() {
   _referenceHitVec = 0;
 
   _maptrackid = 0;
-//  _cluSizeXCut = -1;
-//  _cluSizeYCut = -1;
-
-//  _trackNCluXCut = 0;
-//  _trackNCluYCut = 0;
 
   // check if Marlin was built with GEAR support or not
 #ifndef USE_GEAR
@@ -361,8 +356,6 @@ void EUTelDUTHistograms::processRunHeader( LCRunHeader* runHeader) {
 
   const std::string detectorName = runHeader->getDetectorName();
   const std::string detectorDescription = runHeader->getDescription();
-  //  const std::vector<std::string> * subDets = runHeader->getActiveSubdetectors();
-
   message<DEBUG5> ( log() << detectorName << " : " << detectorDescription ) ;
 
 
@@ -372,7 +365,6 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
   streamlog_out( DEBUG5 ) << "EUTelDUTHistograms::processEvent " << endl;
 
-//  if ( isFirstEvent() )
   {
     if ( _useReferenceHitCollection ) 
     {
@@ -408,7 +400,6 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
      message<DEBUG5> ( log() << "inputFitHitColName = " << _inputFitHitColName << " (not dummy)" << endl); 
      if( read_track_from_collections( event ) > 0 ) 
      {
-//       message<MESSAGE5> ( log() << "no tracks existing!" << endl); 
        return;
      }
    } 
@@ -417,7 +408,6 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
      message<DEBUG5> ( log() << "inputFitHitColName = " << _inputFitHitColName << " (should be called dummy)" << endl); 
      if( read_track( event ) > 0 ) 
      {
-//       message<MESSAGE5> ( log() << "no tracks existing!" << endl); 
        return;
      }
    }
@@ -430,7 +420,6 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
       message<DEBUG5> ( log() <<" track " << itrack << " has " << _fittedX[itrack].size()  << " fitted positions at DUT " );
     }
   } 
-//return;
 
   message<DEBUG5> ( log() << _measuredX.size() << " hits at DUT " );
 
@@ -476,13 +465,8 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
   int nMatch=0;
   double distmin;
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-//
-//
-//
   for(int itrack=0; itrack< _maptrackid; itrack++)
   {
-//  do{
     int bestfit=-1;
     int besthit=-1;
 
@@ -684,12 +668,6 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
     }
   #endif
 }
-//
-//
-//
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
 
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -1828,10 +1806,9 @@ int EUTelDUTHistograms::guessSensorID(const double * hit )
 
   int sensorID = -1;
   double minDistance =  numeric_limits< double >::max() ;
-//  double * hitPosition = const_cast<double * > (hit->getPosition());
 
   message<DEBUG5> ( log() <<  "referencehit collection: " << _referenceHitCollectionName << " at "<< _referenceHitVec << endl);
-//  LCCollectionVec * referenceHitVec     = dynamic_cast < LCCollectionVec * > (evt->getCollection( _referenceHitCollectionName));
+
   if( _referenceHitVec == 0)
   {
     streamlog_out( DEBUG5 ) << "_referenceHitVec is empty" << endl;
@@ -1849,7 +1826,6 @@ int EUTelDUTHistograms::guessSensorID(const double * hit )
      }
     }
 
-    //return 0;
     return sensorID;
   }
 
@@ -1896,7 +1872,6 @@ int EUTelDUTHistograms::guessSensorID(const double * hit )
       {
         EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
         if(refhit == 0 ) continue;
-//        if( sensorID != refhit->getSensorID() )  continue;
 	if(streamlog_level(DEBUG5)){
 	  streamlog_out( DEBUG5 ) << " _referenceHitVec " <<  _referenceHitVec << " " <<  _referenceHitCollectionName.c_str()  << "  " << refhit << " at "  
 				  << refhit->getXOffset() << " " << refhit->getYOffset() << " " <<  refhit->getZOffset() << " "  
@@ -1912,7 +1887,6 @@ int EUTelDUTHistograms::guessSensorID(const double * hit )
 
 
 
-// --------------------------------------------------------------------------------------------------------------------------------
 
 int EUTelDUTHistograms::getClusterSize(int sensorID, TrackerHit * hit, int& sizeX, int& sizeY, int& subMatrix ) {
 
@@ -2002,7 +1976,6 @@ int EUTelDUTHistograms::read_track_from_collections(LCEvent *event)
   } catch (lcio::DataNotAvailableException& e) {
     streamlog_out( DEBUG5 ) << "Not able to get collection " << _inputTrackColName << " from event " << event->getEventNumber() << " in run " << event->getRunNumber() <<  endl;
     return 1;
-//    throw SkipEventException(this);
   }
   
   // Loop over tracks in input track collection
@@ -2036,7 +2009,6 @@ int EUTelDUTHistograms::read_track_from_collections(LCEvent *event)
   } catch (lcio::DataNotAvailableException& e) {
     streamlog_out( DEBUG5 ) << "Not able to get collection " << _inputFitHitColName << " from event " << event->getEventNumber() << " in run " << event->getRunNumber() <<  endl;
     return 1;
-//    throw SkipEventException(this);
   }
 
   LCCollection* rec__col;
@@ -2045,7 +2017,6 @@ int EUTelDUTHistograms::read_track_from_collections(LCEvent *event)
   } catch (lcio::DataNotAvailableException& e) {
     streamlog_out( DEBUG5 ) << "Not able to get collection " << _inputRecHitColName << " from event " << event->getEventNumber() << " in run " << event->getRunNumber() <<  endl;
     return 2;
-//    throw SkipEventException(this);
   }
 
 
@@ -2067,8 +2038,8 @@ int EUTelDUTHistograms::read_track_from_collections(LCEvent *event)
   for(int itrack=0; itrack< nTracks ; itrack++)
     {
 
-      const double * pos = 0;//fithit->getPosition();
-      int hsensorID      = 0;//guessSensorID(pos);
+      const double * pos = 0;
+      int hsensorID      = 0;
 
      
       TrackerHit* fithit = dynamic_cast<TrackerHit*>( fit__col->getElementAt(itrack) ) ;
@@ -2092,28 +2063,7 @@ int EUTelDUTHistograms::read_track_from_collections(LCEvent *event)
       // skip if for some reason the track collection is at NULL address
       if( fithit == 0 && fithit0 == 0 ) continue;
 
-// Does track PoR match DUT position?
-//obsolete get id by z:      double dist = por[2] - _zDUT ;
-//      int fsensorID = guessSensorID( (double*)(por));
-       
-        // Look at hits assigned to track
-        //  std::vector<EVENT::TrackerHit*>  trackhits = fittrack->getNumberOfElements();
-
-//          int nHit = fittrack->getNumberOfElements();
-
-//          for(int ihit=0; ihit< nHit ; ihit++)
             {
- //             TrackerHit * meshit = dynamic_cast<TrackerHit*> (fittrack->getElementAt(ihit)) ;
-
-              // Hit position
-
-//              const double * pos = fithit->getPosition();
-//              int hsensorID = guessSensorID(pos);
-
-//              streamlog_out ( MESSAGE5 ) << " pos " << pos[0]<< " " << pos[1] << " " << pos[2]  << " " << hsensorID << endl;
-//              dist =  pos[2] - _zDUT ;
-
-              // Look at fitted hits only!
 
               if( hsensorID == _iDUT  )  // get all fitted hits on board
                 {
@@ -2149,11 +2099,9 @@ int EUTelDUTHistograms::read_track_from_collections(LCEvent *event)
 	  if(streamlog_level(DEBUG5)){
 	    message<DEBUG5> ( log() << "_fittedX element [" << _fittedX[_maptrackid].size()-1 <<  "]" << _fittedX[_maptrackid][ _fittedX.size()-1] << " " << _fittedY[_maptrackid][ _fittedX.size()-1] << " for DUT " << hsensorID << endl);
 	  }
-//                  break;
+
                 }
             }
-
-       
 
       // End of loop over fitted tracks
       _maptrackid++; 
@@ -2188,13 +2136,11 @@ int EUTelDUTHistograms::read_track_from_collections(LCEvent *event)
           // hits that belong to track "_maptrackid"
           for(int ihit=0; ihit< nRecHits ; ihit++)
             {
-              const double * pos = 0;//meshit->getPosition();
-              int hsensorID      = 0;//guessSensorID(pos);
+              const double * pos = 0;
+              int hsensorID      = 0;
 
               TrackerHit * meshit = dynamic_cast<TrackerHit*>( rec__col->getElementAt(ihit) ) ;
               SimTrackerHitImpl * meshit0 = dynamic_cast<SimTrackerHitImpl*>( rec__col->getElementAt(ihit) ) ;
- 
-//              TrackerHit * meshit = trackhits.at(ihit);
  
       if(meshit != 0 ) 
       { 
@@ -2214,11 +2160,8 @@ int EUTelDUTHistograms::read_track_from_collections(LCEvent *event)
       // skip if for some reason the track collection is at NULL address
       if( meshit == 0 && meshit0 == 0 ) continue;
 
-              // Hit position
-//            const double * pos = meshit->getPosition();
-//            int hsensorID = guessSensorID(pos);
 
-              if(hsensorID == _iDUT   ) //&& hsensorID != _iDUT  ) // get all 
+              if(hsensorID == _iDUT   ) 
                 {
                   int sizeX = -1;
                   int sizeY = -1;
@@ -2288,7 +2231,6 @@ int EUTelDUTHistograms::read_track(LCEvent *event)
   } catch (lcio::DataNotAvailableException& e) {
     streamlog_out( DEBUG5 ) << "Not able to get collection " << _inputTrackColName << " from event " << event->getEventNumber() << " in run " << event->getRunNumber() <<  endl;
     return 1;
-//    throw SkipEventException(this);
   }
 
   // Loop over tracks in input track collection
@@ -2323,8 +2265,6 @@ int EUTelDUTHistograms::read_track(LCEvent *event)
 
               const double * pos = meshit->getPosition();
               int hsensorID = guessSensorID(pos);
-
-//              dist =  pos[2] - _zDUT ;
 
               // Look at fitted hits only!
 
@@ -2373,7 +2313,7 @@ int EUTelDUTHistograms::read_track(LCEvent *event)
               const double * pos = meshit->getPosition();
               int hsensorID = guessSensorID(pos);
 
-              if( meshit->getType() < 32  ) //&& hsensorID != _iDUT  ) // get all 
+              if( meshit->getType() < 32  )
                 {
                   int sizeX = -1;
                   int sizeY = -1;
@@ -2410,11 +2350,6 @@ int EUTelDUTHistograms::read_track(LCEvent *event)
     hitcol = event->getCollection( _inputHitColName ) ;
   } catch (lcio::DataNotAvailableException& e) {
     streamlog_out( DEBUG5 ) << "Not able to get collection " << _inputHitColName << " from event " << event->getEventNumber() << " in run " << event->getRunNumber() <<  endl;
-    //
-    // Do not skip event if DUT hits missing - efficiency and
-    //   background calculations still have to be done!
-    //
-    //   throw SkipEventException(this);
   }
 
   int nHit = 0;
@@ -2433,9 +2368,6 @@ int EUTelDUTHistograms::read_track(LCEvent *event)
       const double * pos = meshit->getPosition();
 
       int   sensorID = guessSensorID( pos );
-
-// obsolete get id by z:      double dist = pos[2] - _zDUT;
-// if ( dist*dist < -1 )
 
      if( sensorID ==_iDUT ) // measured info only for DUT plane
         {
