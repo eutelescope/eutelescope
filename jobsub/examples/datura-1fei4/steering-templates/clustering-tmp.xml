@@ -179,7 +179,7 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
 	<!--This is the name of the histogram information file-->
     <!--parameter name="ClusterCollectionName" type="string" value="cluster_apix"/-->
     <parameter name="HistoInfoFileName" type="string" value="@HistoInfoFile@"/>
-    <parameter name="ClusterLimits" type="IntVec">20 @xclumin@ @xclumax@ @yclumin@ @yclumax@</parameter>
+    <parameter name="ClusterLimits" type="IntVec"> @ClusterLimits@</parameter>
     <parameter name="MinLVL1Difference" type="Int">0</parameter>
     <parameter name="MinLVL1" type="Int">5</parameter>
     <parameter name="MaxLVL1" type="Int">7</parameter>
@@ -192,14 +192,14 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
     <!-- -->
     <parameter name="ClusterChargeMinimum" type="int" value="1"/>
     <!-- -->
-    <parameter name="MinNumberOfCorrelatedHits" type="int" value="7"/>
+    <parameter name="MinNumberOfCorrelatedHits" type="int" value="6"/>
     <parameter name="Events"  type="int" value="999"/>
 
     <!--Residual cuts along both size in microns-->
-    <parameter name="ResidualsXMax" type="FloatVec">  20.  20.  20.        20.0    20.0  20.0  20.0          </parameter>
-    <parameter name="ResidualsXMin" type="FloatVec"> -20. -20. -20.       -20.0   -20.0 -20.0 -20.0          </parameter>
-    <parameter name="ResidualsYMax" type="FloatVec">  20.  20.  20.        20.0    20.0  20.0  20.0          </parameter>
-    <parameter name="ResidualsYMin" type="FloatVec"> -20. -20. -20.       -20.0   -20.0 -20.0 -20.0          </parameter>
+    <parameter name="ResidualsXMax" type="FloatVec">  @ResidualsXMax@         </parameter>
+    <parameter name="ResidualsXMin" type="FloatVec">  @ResidualsXMin@         </parameter>
+    <parameter name="ResidualsYMax" type="FloatVec">  @ResidualsYMax@         </parameter>
+    <parameter name="ResidualsYMin" type="FloatVec">  @ResidualsYMin@         </parameter>
 
   </processor>
 

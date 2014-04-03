@@ -117,11 +117,11 @@
   <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   <!--This float number [0,1] represents the maximum allowed firing frequency
 within the selected number of event per cycle-->
-  <parameter name="MaxAllowedFiringFreq" type="float" value="0.001"/>
+  <parameter name="MaxAllowedFiringFreq" type="float" value="0.002"/>
   <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
   <parameter name="NZSDataCollectionName" value="data"/>
   <!--The number of events to be considered for each update cycle-->
-  <parameter name="NoOfEventPerCycle" type="int" value="9999"/>
+  <parameter name="NoOfEventPerCycle" type="int" value="999"/>
   <!--The total number of hot pixel cycle-->
   <parameter name="TotalNoOfCycle" type="int" value="0"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
@@ -138,19 +138,19 @@ within the selected number of event per cycle-->
   <!--Pixel status collection-->
   <parameter name="StatusCollectionName" type="string" lcioOutType="TrackerRawData"> apix_status </parameter>
   <!--The initial value of noise (one value for detector)-->
-  <parameter name="InitNoiseValue" type="FloatVec">  0    </parameter>
+  <parameter name="InitNoiseValue" type="FloatVec">  @InitNoiserValue@    </parameter>
   <!--The initial value of pedestal (one value for detector)-->
-  <parameter name="InitPedestalValue" type="FloatVec">   0 </parameter>
+  <parameter name="InitPedestalValue" type="FloatVec"> @InitPedestalValue@ </parameter>
   <!--The maximum pixel along x (default 255, one value per detector)-->
-  <parameter name="MaxXVector" type="IntVec">   80    </parameter>
+  <parameter name="MaxXVector" type="IntVec"> @MaxXVector@  </parameter>
   <!--The maximum pixel along y (default 255, one value per detector)-->
-  <parameter name="MaxYVector" type="IntVec">   336    </parameter>
+  <parameter name="MaxYVector" type="IntVec"> @MaxYVector@  </parameter>
   <!--The minimum pixel along x (default 0, one value per detector)-->
-  <parameter name="MinXVector" type="IntVec"> 0     </parameter>
+  <parameter name="MinXVector" type="IntVec"> @MinXVector@  </parameter>
   <!--The minimum pixel along y (default 0, one value per detector)-->
-  <parameter name="MinYVector" type="IntVec"> 0   </parameter>
+  <parameter name="MinYVector" type="IntVec"> @MinYVector@  </parameter>
   <!--The sensorID for the generated collection (one per detector)-->
-  <parameter name="SensorIDVec" type="IntVec"> 20      </parameter>
+  <parameter name="SensorIDVec" type="IntVec"> @SensorIDVec@    </parameter>
 </processor>
 
  <processor name="APIXHotPixelKiller" type="EUTelAPIXHotPixelKiller">
@@ -178,9 +178,9 @@ within the selected number of event per cycle-->
 
     <!--This float number [0,1] represents the maximum allowed firing frequency
         within the selected number of event per cycle-->
-    <parameter name="MaxAllowedFiringFreq" type="float" value="0.001"/>
+    <parameter name="MaxAllowedFiringFreq" type="float" value="0.002"/>
     <!--The number of events to be considered for each update cycle-->
-    <parameter name="NoOfEventPerCycle" type="int" value="9999"/>
+    <parameter name="NoOfEventPerCycle" type="int" value="999"/>
     <!--The total number of hot pixel cycle-->
     <parameter name="TotalNoOfCycle" type="int" value="0"/>
  </processor>
