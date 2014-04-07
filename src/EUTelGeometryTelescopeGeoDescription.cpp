@@ -33,9 +33,10 @@ using namespace eutelescope;
 using namespace geo;
 using namespace std;
 
+
 EUTelGeometryTelescopeGeoDescription& EUTelGeometryTelescopeGeoDescription::getInstance() {
-    static EUTelGeometryTelescopeGeoDescription instance;
-    return instance;
+      static  EUTelGeometryTelescopeGeoDescription instance;
+      return instance;
 }
 
 size_t EUTelGeometryTelescopeGeoDescription::nPlanes( ) const {
@@ -148,6 +149,14 @@ int EUTelGeometryTelescopeGeoDescription::sensorZOrderToID( int znumber ) const 
     if ( it != _sensorZOrderToIDMap.end() ) return it->second;
     return -1;
 }
+
+ 
+            /** Map from sensor ID to number along Z */
+const std::map<int, int>& EUTelGeometryTelescopeGeoDescription::sensorZOrdertoIDs() const {
+
+return _sensorZOrderToIDMap;
+}
+            
 
 const EVENT::IntVec& EUTelGeometryTelescopeGeoDescription::sensorIDsVec( ) const {
     return _sensorIDVec;
@@ -734,11 +743,75 @@ float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double 
     return rad;
 }
 
+//
+// straight line - shashlyk plane assembler
+//
+int EUTelGeometryTelescopeGeoDescription::findNextPlane(  double* lpoint,  double* ldir, float* newpoint )
+{
+// 
+   if(newpoint==0)
+   {
+      streamlog_out ( ERROR0 ) << "::findNextPlane;  newpoint array is void, can not continue..."<<endl;
+      return -100;
+   }
+
+   double normdir = TMath::Sqrt(ldir[0]*ldir[0]+ldir[1]*ldir[1]+ldir[2]*ldir[2]); 
+   streamlog_out ( DEBUG0 ) << "::findNextPlane lpoint: "  << lpoint[0] << " " << lpoint[1] << " "<< lpoint[2] << " " << endl;
+   ldir[0] = ldir[0]/normdir; 
+   ldir[1] = ldir[1]/normdir; 
+   ldir[2] = ldir[2]/normdir;
+   streamlog_out ( DEBUG0 ) << "::findNextPlane ldir  : "  << ldir  [0] << " " << ldir  [1] << " "<< ldir  [2] << " " << endl;
+ 
+   for(int ip=0;ip<3;ip++) 
+   {
+     newpoint[ip] = static_cast<float> (lpoint[ip]);
+   }  
+   int currentSensorID = getSensorID(newpoint); 
+   
+   gGeoManager->InitTrack( lpoint, ldir );
+   TGeoNode *node = gGeoManager->GetCurrentNode( );
+
+   Int_t inode    = node->GetIndex();
+   Int_t i        = 0;
+
+   streamlog_out ( DEBUG0 ) << "::findNextPlane look for next node, starting at node: " << node << " id: " << inode  << " currentSensorID: " << currentSensorID << endl;
+ 
+//   double kStep = 1e-03;
+   while(  node = gGeoManager->FindNextBoundaryAndStep(  ) )
+   {
+       inode = node->GetIndex();
+       streamlog_out ( DEBUG0 ) << "::findNextPlane found next node: " << node << " id: " << inode << endl;
+       const double* point = gGeoManager->GetCurrentPoint();
+       const double* dir   = gGeoManager->GetCurrentDirection();
+       double ipoint[3] ;
+       double idir[3]   ;
+
+       for(int ip=0;ip<3;ip++) 
+       {
+         ipoint[ip] = point[ip];
+         idir[ip]   = dir[ip];
+         if(ip==2) ipoint[ip]+=0.01 ; // assumption !!! step by one um into the new volume // new volume is thicker than 1 um
+         newpoint[ip] = static_cast<float> (ipoint[ip]);
+       }  
+       int sensorID = getSensorID(newpoint); 
+       i++;     
+      
+       gGeoManager->SetCurrentPoint( ipoint);
+       gGeoManager->SetCurrentDirection( idir);
+ 
+       streamlog_out ( DEBUG0 ) << "::findNextPlane i=" << i  << " " << inode << " " << ipoint[0]  << " " << ipoint[1] << " " << ipoint[2]  << " sensorID:" << sensorID <<  endl;
+       if(sensorID >= 0 && sensorID != currentSensorID ) return sensorID;
+   }
+
+ 
+   return -100;
+}
+ 
 int EUTelGeometryTelescopeGeoDescription::findNextPlaneEntrance(  double* lpoint,  double* ldir, int nextSensorID, float* newpoint )
 {
    if(newpoint==0)
    {
-      streamlog_out ( ERROR0 ) << " newpoint array is void, can not continue..."<<endl;
+      streamlog_out ( ERROR0 ) << "::findNextPlaneEntrance newpoint array is void, can not continue..."<<endl;
       return -100;
    }
    
@@ -748,7 +821,7 @@ int EUTelGeometryTelescopeGeoDescription::findNextPlaneEntrance(  double* lpoint
    Int_t inode =  node->GetIndex();
    Int_t i=0;
 
-   streamlog_out ( DEBUG0 ) << " node: " << node << " id: " << inode << endl;
+   streamlog_out ( DEBUG0 ) << "::findNextPlaneEntrance node: " << node << " id: " << inode << endl;
  
    while( node = _geoManager->FindNextBoundaryAndStep( ) )
    {
@@ -771,12 +844,12 @@ int EUTelGeometryTelescopeGeoDescription::findNextPlaneEntrance(  double* lpoint
        _geoManager->SetCurrentPoint( ipoint);
        _geoManager->SetCurrentDirection( idir);
  
-       streamlog_out ( DEBUG0 ) << "i=" << i  << " " << inode << " " << ipoint[0]  << " " << ipoint[1] << " " << ipoint[2]  << " sensorID:" << sensorID << " " << nextSensorID << endl;
+       streamlog_out ( DEBUG0 ) << "::findNextPlaneEntrance i=" << i  << " " << inode << " " << ipoint[0]  << " " << ipoint[1] << " " << ipoint[2]  << " sensorID:" << sensorID << " " << nextSensorID << endl;
        //if( sensorID <0 ) continue;  
        if( sensorID == nextSensorID ) return sensorID;
    }
  
-   streamlog_out ( DEBUG0 ) << " node: " << node << " id: " << inode << " sensorID= " << nextSensorID << " not found" << " returning: 0" << endl;
+   streamlog_out ( DEBUG0 ) << "::findNextPlaneEntrance node: " << node << " id: " << inode << " sensorID= " << nextSensorID << " not found" << " returning: 0" << endl;
  
    return -100;
 

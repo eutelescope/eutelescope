@@ -451,9 +451,11 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
 //       if ( _alignmentMode ? nTracks == 1 : nTracks > 0 ) {
             _trackFitter->SetTrackCandidates(trackCandidates);
             _trackFitter->FitTracks();
- 
+//             _trackFitter->FitSingleTrackCandidate();
+
+
             //
-            if( !_flag_nohistos ) {
+            if( !_flag_nohistos && 0==1 ) {
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
             // build plots: // makes sense to put into a separate method, aah ?

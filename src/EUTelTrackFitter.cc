@@ -36,4 +36,9 @@ namespace eutelescope {
 	return;
     }
 
+    void EUTelTrackFitter::FitSingleTrackCandidate() {
+	return;
+    }
+
+
 }

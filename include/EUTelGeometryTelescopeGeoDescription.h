@@ -57,13 +57,15 @@ namespace eutelescope {
 
             DISALLOW_COPY_AND_ASSIGN(EUTelGeometryTelescopeGeoDescription)      // prevent users from making (default) copies of processors
 
+
         public:
             /** Retrieves the instanstance of geometry.
              * Performs lazy intialization if necessary.
              * @TODO this routine has to be considered to be constant
              */
             static EUTelGeometryTelescopeGeoDescription& getInstance();
-            
+ 
+           
             /** Number of planes in the setup */
             size_t nPlanes() const;
             
@@ -242,13 +244,14 @@ namespace eutelescope {
             //#endif // USE_TGEO
 
             int findNextPlaneEntrance(  double* ,  double *, int, float*  );
-
+            int findNextPlane(  double* lpoint,  double* ldir,  float* newpoint );
 
         };
         
         inline EUTelGeometryTelescopeGeoDescription& gGeometry() {
                 return EUTelGeometryTelescopeGeoDescription::getInstance(); 
         }
+
         
     } // namespace geo
 } // namespace eutelescope

@@ -48,6 +48,8 @@ namespace eutelescope {
 
 
         virtual void FitTracks();
+        virtual void FitSingleTrackCandidate();
+
     protected:
         std::string _name;
 

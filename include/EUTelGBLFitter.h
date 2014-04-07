@@ -43,6 +43,7 @@ namespace eutelescope {
     private:
         DISALLOW_COPY_AND_ASSIGN(EUTelGBLFitter)        // prevent users from making (default) copies of processors
       
+
     public:
         EUTelGBLFitter();
         explicit EUTelGBLFitter(std::string name);
@@ -57,7 +58,8 @@ namespace eutelescope {
 
         /** Fit tracks */
         void FitTracks();
-
+        void FitSingleTrackCandidate(EVENT::TrackVec::const_iterator& itTrkCand);
+ 
         inline void SetAlignmentMode( Utility::AlignmentMode alignmentMode) {
             this->_alignmentMode = alignmentMode;
         }
@@ -155,6 +157,8 @@ namespace eutelescope {
         std::vector<int> getExcludeFromFitPlanes() const;
 
     private:
+        void CalculateProjMatrix(TMatrixD&, double*);
+
         TMatrixD PropagatePar(  double, double, double, double, double, double, double );
 
 	TVectorD getXYZfromDzNum( double, double, double, double, double, double, double ) const;
