@@ -18,8 +18,8 @@
    <execute>
       <processor name="AIDA"/>
       <processor name="PatternRecog"/>
-      <processor name="Correlator"/>
-      <xprocessor name="GBLTrackFit"/>
+      <xprocessor name="Correlator"/>
+      <processor name="GBLTrackFit"/>
       <processor name="Save"/>
       <processor name="PrintEventNumber"/>
    </execute>
