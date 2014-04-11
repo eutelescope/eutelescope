@@ -936,7 +936,7 @@ namespace eutelescope {
         int trackcounter = 0;
         for ( itTrkCand = _trackCandidates.begin(); itTrkCand != _trackCandidates.end(); ++itTrkCand) {
             streamlog_out(MESSAGE) << " track candidate # " << trackcounter << endl; 
-            FitSingleTrackCandidate( itTrkCand );
+//            FitSingleTrackCandidate( itTrkCand );
 //            continue;
 
             // sanity check. Mustn't happen in principle.
@@ -972,10 +972,27 @@ namespace eutelescope {
 
 	    TVectorD prevState = getXYZfromDzNum( invP, tx, ty, refPoint[0], refPoint[1], refPoint[2], 0. );
 	    double prevZ = refPoint[2];
-            
-            // Loop over hits on a track candidate
+ 
             const EVENT::TrackerHitVec& hits = (*itTrkCand)->getTrackerHits();
             EVENT::TrackerHitVec::const_reverse_iterator itHit;
+            int imatch=0;
+            for ( itHit = hits.rbegin(); itHit != hits.rend(); ++itHit) {
+              const int planeID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(*itHit) );
+              for(int izPlane=0;izPlane<_paramterIdPlaneVec.size();izPlane++) {
+                if( _paramterIdPlaneVec[izPlane] == planeID )
+                {  
+                  imatch++;
+                  break;
+                }
+              }            
+            }
+            streamlog_out( MESSAGE1 ) << "from the list of requrested planes and available hit on a track candidate: " << imatch << "/" <<_paramterIdPlaneVec.size() << " found" << std::endl;
+
+            if( imatch != _paramterIdPlaneVec.size() ) continue;
+
+            // Loop over hits on a track candidate
+//            const EVENT::TrackerHitVec& hits = (*itTrkCand)->getTrackerHits();
+//            EVENT::TrackerHitVec::const_reverse_iterator itHit;
             for ( itHit = hits.rbegin(); itHit != hits.rend(); ++itHit) {
                 const int planeID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(*itHit) );
      	 	if ( planeID < 0 ) streamlog_out( WARNING2 ) << "Can't guess sensor ID. Check supplied hits." << std::endl;
