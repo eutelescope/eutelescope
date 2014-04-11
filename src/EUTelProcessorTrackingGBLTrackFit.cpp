@@ -455,7 +455,7 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
 
 
             //
-            if( !_flag_nohistos && 0==1 ) {
+            if( !_flag_nohistos && 1==1 ) {
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
             // build plots: // makes sense to put into a separate method, aah ?
@@ -468,8 +468,10 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
             fittrackvec = static_cast<EUTelGBLFitter*> (_trackFitter)->GetFitTrackVec();
             IMPL::LCCollectionVec::const_iterator itFitTrack;
 
+
             // Loop over fitted tracks
             for (itFitTrack = fittrackvec->begin(); itFitTrack != fittrackvec->end(); ++itFitTrack) {
+
 
                 chi2Trk =static_cast<TrackImpl*> (*itFitTrack)->getChi2();
                 ndfTrk = static_cast<TrackImpl*> (*itFitTrack)->getNdf();
@@ -521,6 +523,9 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
                         const double* hitpos = ( *itrHit )->getPosition( );
                         const int planeID = geo::gGeometry().getSensorID( originalHit );
 
+                        bool excludeFromFit = false;
+                        if ( std::find( _excludePlanesFromFit.begin(), _excludePlanesFromFit.end(), planeID ) != _excludePlanesFromFit.end() ) excludeFromFit = true;
+ 
                         int xSize = -1; 
                         int ySize = -1; 
                         Utility::getClusterSize(originalHit, xSize, ySize);
@@ -543,11 +548,13 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
 
                         // Spatial GBL residuals. residualGBL is the as residual and residualErrGBL is the same as residualErr.
                         int hitGblLabel = gblPointLabel.at( originalHit->id( ) );
-//cout<<"     hitGblLabel: " << hitGblLabel << " : " << numData << " " << " gblTraj : " << gblTraj << endl;
+//                        cout<<"     hitGblLabel: " << hitGblLabel << " : " << numData << " " << " gblTraj : " << gblTraj << endl;
+           if( !excludeFromFit)
+            {
 //                        gblTraj->printTrajectory(1);  
                         gblTraj->getMeasResults( hitGblLabel, numData, residualGBL, measErrGBL, residualErrGBL, downWeightGBL );
 //cout<<"nach hitGblLabel: " << hitGblLabel << " : " << numData << endl;
-                      
+            }
                         std::stringstream sstr;
                         std::stringstream sstrNorm;
 
@@ -894,12 +901,12 @@ void EUTelProcessorTrackingGBLTrackFit::writeMilleSteeringFile() {
         // if plane not excluded
         if ( !isPlaneExcluded ) {
 
-            const string initUncertaintyXShift = (isFixedXShift) ? "-1." : "0.01";
-            const string initUncertaintyYShift = (isFixedYShift) ? "-1." : "0.01";
-            const string initUncertaintyZShift = (isFixedZShift) ? "-1." : "0.01";
-            const string initUncertaintyXRotation = (isFixedXRotation) ? "-1." : "0.01";
-            const string initUncertaintyYRotation = (isFixedYRotation) ? "-1." : "0.01";
-            const string initUncertaintyZRotation = (isFixedZRotation) ? "-1." : "0.01";
+            const string initUncertaintyXShift = (isFixedXShift) ? "-1." : "0.001";
+            const string initUncertaintyYShift = (isFixedYShift) ? "-1." : "0.001";
+            const string initUncertaintyZShift = (isFixedZShift) ? "-1." : "1.00";
+            const string initUncertaintyXRotation = (isFixedXRotation) ? "-1." : "0.001";
+            const string initUncertaintyYRotation = (isFixedYRotation) ? "-1." : "0.001";
+            const string initUncertaintyZRotation = (isFixedZRotation) ? "-1." : "0.00001";
             
             const double initXshift = (isFixedXShift) ? 0. : _seedAlignmentConstants._xResiduals[sensorId]/_seedAlignmentConstants._nxResiduals[sensorId];
             const double initYshift = (isFixedYShift) ? 0. : _seedAlignmentConstants._yResiduals[sensorId]/_seedAlignmentConstants._nyResiduals[sensorId];
