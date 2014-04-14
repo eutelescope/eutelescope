@@ -331,8 +331,6 @@ namespace eutelescope
     /*! This constant string is used with CellIDEncoder to define the
      *  default encoding used for describe cells into a
      *  Tracker(Raw)Data object
-     *
-     *  "sensorID:5,xMin:12,xMax:12,yMin:12,yMax:12"
      */
     static const char * MATRIXDEFAULTENCODING;
 
@@ -346,7 +344,6 @@ namespace eutelescope
      *
      *  @see SparsePixelType
      *
-     *  "sensorID:5,sparsePixelType:5"
      */
     static const char * ZSDATADEFAULTENCODING;
 
@@ -354,8 +351,6 @@ namespace eutelescope
     /*! This constant string is used with CellIDEncoder to define the
      *  default encoding used for describe cells into a clusters. This
      *  encoding is different from the one for complete matrices.
-     *
-     *  "sensorID:5,clusterID:8,xSeed:12,ySeed:12,xCluSize:5,yCluSize:5:quality:5"
      *
      *  Note about cluster quality: this is a three bit flag to be
      *  used with the cluster quality enum.
@@ -371,8 +366,6 @@ namespace eutelescope
      *  but instead of the quality it has a 5 bit fields to identify
      *  the cluster reimplementation class.
      *
-     *  "sensorID:5,clusterID:8,xSeed:12,ySeed:12,xCluSize:5,yCluSize:5:type:5"
-     *
      *  @see ClusterType
      */
     static const char * PULSEDEFAULTENCODING;
@@ -380,8 +373,6 @@ namespace eutelescope
     //! Zero suppress cluster default encoding
     /*! This encoding string is used for the TrackerData containing
      *  clusters made by sparsified pixels
-     *
-     *  "sensorID:5,clusterID:8,sparsePixelType:5,quality:5"
      *
      *  @see SparsePixelType
      *  @see ClusterQuality
@@ -392,14 +383,13 @@ namespace eutelescope
     /*! This encoding string is used for the TrackerData containing
      *  clusters made by ATLAS PIXEL pixels
      *
-     *  "sensorID:17,clusterID:8,sparsePixelType:5"
-     *
      *  @see SparsePixelType
      *  @see ClusterQuality
      */
     static const char * ZSAPIXCLUSTERENCODING;
 
-
+    //! Encoding for hits
+    static const char * HITENCODING;
   };
 
 
