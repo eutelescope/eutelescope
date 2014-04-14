@@ -393,7 +393,7 @@ int EUTelAPIXTbTrackTuple::readClusters( std::string colName, LCEvent* event ){
       charge = static_cast< int >(apixCluster->getTotalCharge());
       apixCluster->getClusterSize(sizeX, sizeY);
       apixCluster->getCenterCoord(posX, posY);
-      clusterID = apixCluster->getClusterID();
+      //TODO: FIXME clusterID = apixCluster->getClusterID();
       delete apixCluster;
     } else if (  type == kEUTelSparseClusterImpl or type == kEUTelDFFClusterImpl){
       eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelSimpleSparsePixel > * telCluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelSimpleSparsePixel >(clusterFrame);
@@ -401,7 +401,7 @@ int EUTelAPIXTbTrackTuple::readClusters( std::string colName, LCEvent* event ){
       charge = static_cast< int >(telCluster->getTotalCharge());
       telCluster->getClusterSize(sizeX, sizeY);
       telCluster->getCenterCoord(posX, posY);
-      clusterID = telCluster->getClusterID();
+      //TODO: FIXMEclusterID = telCluster->getClusterID();
       delete telCluster;
     } else {
       message<WARNING> ( log() << "Unknown cluster type: " << static_cast< int >(type) );
