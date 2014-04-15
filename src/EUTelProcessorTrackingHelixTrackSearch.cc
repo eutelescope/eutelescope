@@ -245,7 +245,10 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
 	EVENT::TrackerHitVec::const_iterator itHits;
 	for ( itHits = allHitsVec.begin() ; itHits != allHitsVec.end(); ++itHits ) {
 		const double* uvpos = (*itHits)->getPosition();
-		streamlog_out(MESSAGE0) << "Hit (id=" << Utility::GuessSensorID(*itHits) << ") local(u,v) coordinates: (" << uvpos[0] << "," << uvpos[1] << ")" << std::endl;
+                    const int sensorID = geo::gGeometry().getSensorID( static_cast<IMPL::TrackerHitImpl*> (*itHits) );
+                    const int usensorID = Utility::GuessSensorID( static_cast<EVENT::TrackerHit*> (*itHits) );
+
+		streamlog_out(MESSAGE0) << "Hit (id=" << sensorID << " " << usensorID << ") local(u,v) coordinates: (" << uvpos[0] << "," << uvpos[1] << ")" << std::endl;
 	}
 	streamlog_out(MESSAGE0) << "All hits in event end:==============" << std::endl;
 
@@ -256,7 +259,11 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
         bool isReady = static_cast<EUTelKalmanFilter*>(_trackFitter)->initialise();
         if ( isReady )  {
             streamlog_out( DEBUG1 ) << "Trying to find tracks..." << endl;
-            _trackFitter->FitTracks( );
+ //            _trackFitter->FitTracks( );
+            _trackFitter->SearchTrackCandidates( );
+            return ;
+
+
             streamlog_out( DEBUG1 ) << "Retrieving track candidates..." << endl;
             vector< IMPL::TrackImpl* >& trackCandidates = static_cast < EUTelKalmanFilter* > ( _trackFitter )->getTracks( );
 
@@ -275,7 +282,8 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
                 for ( itTrkHits = trkHits.begin( ) ; itTrkHits != trkHits.end( ); ++itTrkHits ) {
                     const double* uvpos = ( *itTrkHits )->getPosition( );
                     const int sensorID = geo::gGeometry().getSensorID( static_cast<IMPL::TrackerHitImpl*> (*itTrkHits) );
-                    streamlog_out( MESSAGE0 ) << "Hit (id=" << ( *itrk )->id( ) << ") local(u,v) coordinates: (" << uvpos[0] << "," << uvpos[1] << ")" << std::endl;
+                    const int usensorID = Utility::GuessSensorID( static_cast<EVENT::TrackerHit*> (*itTrkHits) );
+                    streamlog_out( MESSAGE0 ) << "Hit (id=" << sensorID << " " << usensorID << ") local(u,v) coordinates: (" << uvpos[0] << "," << uvpos[1] << ")" << std::endl;
                     static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_HitOnTrackCandidateHistName ] ) -> fill( sensorID );
                 }
                 streamlog_out( MESSAGE0 ) << "Track hits end:==============" << std::endl;
