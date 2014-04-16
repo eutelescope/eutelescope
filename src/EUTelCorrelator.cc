@@ -650,13 +650,15 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 
 
         // this is the external hit
-        TrackerHitImpl * externalHit = static_cast< TrackerHitImpl * > ( inputHitCollection->
-                                                                         getElementAt( iExt ) );
+        TrackerHitImpl* externalHit = static_cast<TrackerHitImpl*>( inputHitCollection->getElementAt(iExt) );
+        
+	double* externalPosition = const_cast<double*>( externalHit->getPosition() );
 
-        double * externalPosition;
-        externalPosition = const_cast< double* >( externalHit->getPosition() );
+	UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
+        int externalSensorID = hitDecoder( externalHit )["sensorID"]; 
 
-        int externalSensorID = guessSensorID( externalPosition );
+	//TODO: Verify (remove afterwards)
+	if( externalSensorID != guessSensorID( externalPosition )) std::cout << "Hit misid" << std::endl;
 
 
         trackX.push_back(externalPosition[0]);
@@ -666,12 +668,14 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
         for ( size_t iInt = 0; iInt < inputHitCollection->size(); ++iInt ) 
         {
 
-          TrackerHitImpl  * internalHit = static_cast< TrackerHitImpl * > ( inputHitCollection->
-                                                                            getElementAt( iInt ) );
-          double * internalPosition;
-          internalPosition = const_cast< double* >( internalHit->getPosition() );
+          TrackerHitImpl* internalHit = static_cast<TrackerHitImpl*>( inputHitCollection->getElementAt(iInt) );
 
-          int internalSensorID = guessSensorID( internalPosition );
+          double* internalPosition = const_cast<double*>( internalHit->getPosition() );
+
+          int internalSensorID = hitDecoder( internalHit )["sensorID"]; 
+
+	  //TODO: Verify (remove afterwards)
+	  if(internalSensorID != guessSensorID( internalPosition )) std::cout << "Hitint misid" << std::endl;
           bool ishot = hitContainsHotPixels(internalHit); 
 
           if( ishot ) continue;
