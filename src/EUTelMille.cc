@@ -1150,6 +1150,7 @@ void  EUTelMille::FillHotPixelMap(LCEvent *event)
  
 void EUTelMille::processEvent (LCEvent * event) {
 
+	UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder( EUTELESCOPE::HITENCODING );
   if ( isFirstEvent() )
   {
     FillHotPixelMap(event);
@@ -1349,10 +1350,11 @@ void EUTelMille::processEvent (LCEvent * event) {
  
             double * hitPosition = const_cast<double * > (hit->getPosition());
 
-            unsigned int localSensorID   = guessSensorID( hitPosition );
-            localSensorID   = guessSensorID( hit );
+	    int localSensorID = hitDecoder(hit)["sensorID"]; 
+            
+	    //TODO: VERIFICATION (remove later)
+	    if(localSensorID != guessSensorID( hit) ) std::cout << "guessSensorID missmatch!!!" << std::endl; 
 
-              
             layerIndex = _sensorIDVecMap[localSensorID] ;
 
             // Getting positions of the hits.
