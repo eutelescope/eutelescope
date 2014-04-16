@@ -47,6 +47,8 @@ namespace eutelescope {
         virtual void Clear();
 
 
+        virtual void SearchTrackCandidates(){}
+
         virtual void FitTracks();
         virtual void FitSingleTrackCandidate();
 

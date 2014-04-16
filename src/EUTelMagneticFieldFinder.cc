@@ -66,7 +66,9 @@ namespace eutelescope {
             _eomIntegrator( new EUTelUtilityRungeKutta() ),
             _jacobianIntegrator( new EUTelUtilityRungeKutta() ),
             _eomODE( 0 ),
-            _jacobianODE( 0 ){
+            _jacobianODE( 0 ),
+            _planesForPR(1) 
+            {
                 // Initialise ODE integrators for eom and jacobian       
                 {
                     _eomODE = new eom::EOMODE(5);
@@ -100,7 +102,9 @@ namespace eutelescope {
             _eomIntegrator( new EUTelUtilityRungeKutta() ),
             _jacobianIntegrator( new EUTelUtilityRungeKutta() ),
             _eomODE( 0 ),
-            _jacobianODE( 0 ){
+            _jacobianODE( 0 ),
+            _planesForPR( 1 ) 
+            {
                 // Initialise ODE integrators for eom and jacobian       
                 {
                     _eomODE = new eom::EOMODE(5);
@@ -115,9 +119,151 @@ namespace eutelescope {
                 }
             }
 
-    EUTelKalmanFilter::~EUTelKalmanFilter() { 
+        EUTelKalmanFilter::~EUTelKalmanFilter() { 
         delete _eomIntegrator;
         delete _jacobianIntegrator;
+    }
+ 
+    /** */
+    int EUTelKalmanFilter::findNextPlaneEntrance(  EUTelTrackStateImpl* ts , int sensorID  ){
+
+      const double x0 = ts->getReferencePoint()[0];
+      const double y0 = ts->getReferencePoint()[1];
+      const double z0 = ts->getReferencePoint()[2];
+	
+      // get the very first sensor : why?
+      // remember last hit-point from the track candidate below
+      double start[3] = { x0, y0, z0}; // 
+ 
+      double dir[3]   = {0.,0.,1.};  // as good as any other value along z axis.
+      float dpoint[3] = {0.,0.,0.};  // initialise output point-vector
+ 
+            int newSensorID = geo::gGeometry( ).findNextPlaneEntrance(  start,  dir, sensorID, dpoint ) ;
+            if( newSensorID < 0 ) 
+            {
+              streamlog_out ( DEBUG4 ) << "no Entrance: " <<  dpoint[0] << " " <<  dpoint[1] << " " << dpoint[2] << " err:"<< newSensorID << endl;
+            } else {     
+              streamlog_out ( DEBUG0 ) << "identified NextPlane Entrance: " <<  dpoint[0] << " " <<  dpoint[1] << " " << dpoint[2] <<  " err:"<< newSensorID << endl;
+              const float opoint[3] = { dpoint[0], dpoint[1], dpoint[2] };
+              ts->setReferencePoint( opoint );  
+           }
+      return newSensorID;
+    }
+
+    /** */
+    void EUTelKalmanFilter::propagateFromRefPoint( 	std::vector< EUTelTrackImpl* >::iterator &itTrk    ){
+
+      EUTelTrackStateImpl* ts = const_cast<EUTelTrackStateImpl*>((*itTrk)->getTrackState( EUTelTrackStateImpl::AtFirstHit ));
+ 
+      if( ts == 0 )
+      {
+        streamlog_out ( WARNING0 ) << "track _tracksCartesian return a NULL state, skip this one " << endl; 
+        return ;
+      }
+
+      const double x0 = ts->getReferencePoint()[0];
+      const double y0 = ts->getReferencePoint()[1];
+      const double z0 = ts->getReferencePoint()[2];
+	
+      // get the very first sensor : why?
+      // remember last hit-point from the track candidate below
+      double start[3] = { x0, y0, z0}; // 
+ 
+      // Loop over hits on a track candidate
+
+      const map< int, int > sensorMap = geo::gGeometry().sensorZOrdertoIDs();
+      int planeID     = sensorMap.at(0); // the first first plane in the array of the planes according to z direction. // assume not tilted plane. 
+      const int    iPlane             = geo::gGeometry().sensorIDtoZOrder(planeID);
+      const double thicknessSen       = geo::gGeometry()._siPlanesLayerLayout->getSensitiveThickness(iPlane );
+      const double thicknessLay       = geo::gGeometry()._siPlanesLayerLayout->getLayerThickness(iPlane );
+//
+// ATTENTION: manual manipulation of the z-coordinate of a ref point
+// should be rather done by a swim function to a will defined "initial" coordinate
+// could be critical for B-field/high spread/high rate beam
+//
+      start[2]    = geo::gGeometry().siPlaneZPosition(planeID) - thicknessSen - thicknessLay; //initial z position to the most-first plane
+
+      // as good as any other value along z axis.
+      double dir[3]   = {0.,0.,1.};  
+      
+      // updated starting RefPoint:
+      const float opoint[3] = {start[0], start[1], start[2]};  
+      ts->setReferencePoint( opoint );  
+
+
+      // loop through all known sensors (local, defined above):
+      map< int, int >::const_iterator iter = sensorMap.begin();
+      while ( iter != sensorMap.end() ) {
+        bool found = false;
+        if( iter->first > -999 )
+          {
+            // EUTelGeometry TGeo track swim 
+            // straight line at this point
+            // how to get helix ? 
+            int newSensorID = findNextPlaneEntrance( ts, iter->second ) ;
+
+            const float* dpoint = ts->getReferencePoint();
+            streamlog_out ( DEBUG4 ) << "Entrance: " <<  dpoint[0] << " " <<  dpoint[1] << " " << dpoint[2]  << " sensorID: " << newSensorID << endl;
+
+            bool findhit = true;
+            EVENT::TrackerHit* closestHit = const_cast< EVENT::TrackerHit* > ( findClosestHit( ts, newSensorID ) );
+                if ( closestHit ) {
+                    const double* uvpos = closestHit->getPosition();
+                    const double distance = getResidual( ts, closestHit ).Norm2Sqr( );
+                    const double DCA = getXYPredictionPrecision( ts ); // basically RMax cut at the moment
+                    streamlog_out ( DEBUG4 ) << "NextPlane " << newSensorID << " " << uvpos[0] << " " << uvpos[1] << " " << uvpos[2] << " resid:" << distance << " DCA:" << DCA << endl;
+                    if ( distance > DCA ) {
+                        streamlog_out ( DEBUG1 ) << "Closest hit is outside of search window." << std::endl;
+                        streamlog_out ( DEBUG1 ) << "Skipping current plane." << std::endl;
+                        findhit = false;
+                    }else{
+                        streamlog_out (MESSAGE1 ) << "NextPlane MATCHED " <<  uvpos[0] << " " <<  uvpos[1] << " " << uvpos[2] <<  " err:"<< newSensorID << endl;
+                    }
+                } else {
+                    streamlog_out ( DEBUG4 ) << "There are no hits in the closest plane." << std::endl;
+                    findhit = false;
+                }
+
+
+                if( findhit ) { 
+                    double chi2 = (*itTrk)->getChi2() + updateTrackState( ts, closestHit );
+                    (*itTrk)->setChi2( chi2 );
+                    (*itTrk)->addHit( closestHit );
+                }
+            
+          }
+        ++iter;
+      } 
+ 
+    }
+
+
+
+    /** Perform Kalman filter track search and track fit */
+    void EUTelKalmanFilter::SearchTrackCandidates() {
+
+      streamlog_out(DEBUG2) << "EUTelKalmanFilter::SearchTrackCandidates()" << std::endl;
+
+      // Check if the fitter was configured correctly
+        if ( !_isReady ) {
+            streamlog_out(ERROR1) << _name << ": Can't fit. The fitter is not initialised!" << std::endl;
+            return;
+        }
+        
+        // Flush data from previous event
+        reset();
+        
+        // Initialise Kalman filter states
+        initialiseSeeds();
+        
+	// Start Kalman filter
+	std::vector< EUTelTrackImpl* >::iterator itTrk;
+	for ( itTrk = _tracksCartesian.begin(); itTrk != _tracksCartesian.end(); itTrk++ ) {
+            bool isGoodTrack = true; 
+           
+            propagateFromRefPoint(itTrk);
+        }
+  
     }
     
     /** Perform Kalman filter track search and track fit */
@@ -137,7 +283,7 @@ namespace eutelescope {
         
 	// Start Kalman filter
 	std::vector< EUTelTrackImpl* >::iterator itTrk;
-	for ( itTrk = _tracksCartesian.begin(); itTrk != _tracksCartesian.end(); ) {
+	for ( itTrk = _tracksCartesian.begin(); itTrk != _tracksCartesian.end();  ) {
             bool isGoodTrack = true;
             
             EUTelTrackStateImpl* state = const_cast<EUTelTrackStateImpl*>((*itTrk)->getTrackState( EUTelTrackStateImpl::AtFirstHit ));
@@ -148,7 +294,9 @@ namespace eutelescope {
                 delete (*itTrk);
                 itTrk = _tracksCartesian.erase( itTrk );
             }
-                        
+
+            int newSensorID = -999;
+
             // iterate until the particle flies out of the detector volume
             while ( dz > 0 ) {
 
@@ -286,7 +434,46 @@ namespace eutelescope {
         _isHitsOK = sortHitsByMeasurementLayers(_allHits);
         streamlog_out(DEBUG2) << "-------------------------------EUTelKalmanFilter::setHits()------------------------------------" << std::endl;
     }
-    
+ 
+    /** check that the seeds are identical
+     * 
+     * 
+     */
+    bool identicalSeeds(const EUTelTrackStateImpl* ts1,  const EUTelTrackStateImpl* ts2 ){
+      
+ 
+    }
+
+
+    /** Prune seed track states necessary to
+     * start Kalman filter
+     * 
+     * 
+     */
+    void EUTelKalmanFilter::pruneSeeds() {
+        streamlog_out(DEBUG2) << "EUTelKalmanFilter::pruneSeeds()" << std::endl;
+
+        if ( _allMeasurements.empty() ) {
+            streamlog_out(WARNING1) << "Can't initialise track seeds for the finder. No hits in this event." << std::endl;
+            return;
+        }
+
+
+	// Start Kalman filter
+	std::vector< EUTelTrackImpl* >::iterator itTrk;
+	for ( itTrk = _tracksCartesian.begin(); itTrk != _tracksCartesian.end(); itTrk++ ) {
+            bool isDuplTrack = false; 
+             
+            std::vector< EUTelTrackImpl* >::iterator itTrk_in;
+	    for ( itTrk_in = _tracksCartesian.begin(); itTrk_in != _tracksCartesian.end(); itTrk_in++ ) {
+              bool isDuplTrack = false; 
+
+            }
+            
+        }
+ 
+    }
+   
     /** Generate seed track states necessary to
      * start Kalman filter
      * 
@@ -301,8 +488,17 @@ namespace eutelescope {
             streamlog_out(WARNING1) << "Can't initialise track seeds for the finder. No hits in this event." << std::endl;
             return;
         }
-        
-        const EVENT::TrackerHitVec& hitFirstLayer = _allMeasurements[0]->getHits();
+
+//
+// loop over the first 2 planes assuming the numbering to go 0,1,2,3,.. etc.
+// building track seeds from every hit found in the planes. could do from all planes, but perhaps an overkill - parameter control?
+//          
+        int maxPlanes =  std::min( static_cast<int> (_allMeasurements.size()) , static_cast<int> (_planesForPR) );
+        for( int iplane = 0; iplane < maxPlanes ; iplane++) {
+
+          streamlog_out(MESSAGE1) << "_allMeasurments plane : " << iplane << " of " << maxPlanes  << std::endl;
+      
+        const EVENT::TrackerHitVec& hitFirstLayer = _allMeasurements[iplane]->getHits();
         streamlog_out(DEBUG1) << "N hits in first non-empty layer: " << hitFirstLayer.size() << std::endl;
         EVENT::TrackerHitVec::const_iterator itHit;
         for ( itHit = hitFirstLayer.begin(); itHit != hitFirstLayer.end(); ++itHit ) {
@@ -349,8 +545,11 @@ namespace eutelescope {
             track->addHit( (*itHit) );
             track->addTrackState( state );
             _tracksCartesian.push_back( track );
-        }
-        
+
+          }// loop over for the iplane
+
+        }// loop over for the planes to extract seed hits
+
         streamlog_out(DEBUG2) << "--------------------------------EUTelKalmanFilter::initialiseSeeds()---------------------------" << std::endl;
     }
     
@@ -605,7 +804,7 @@ namespace eutelescope {
       streamlog_out(DEBUG2) << "EUTelKalmanFilter::getXYPredictionPrecision()" << std::endl;
       
       TMatrixDSym Ckkm1 = getTrackStateCov(ts);
-      double xyPrec = _residualsRMax;//sqrt( Ckkm1[0][0]*Ckkm1[0][0] + Ckkm1[1][1]*Ckkm1[1][1] );
+      double xyPrec = getWindowSize();   //sqrt( Ckkm1[0][0]*Ckkm1[0][0] + Ckkm1[1][1]*Ckkm1[1][1] );
       
       streamlog_out(DEBUG0) << "Minimal combined UV resolution : " << xyPrec << std::endl;
       streamlog_out(DEBUG2) << "----------------------EUTelKalmanFilter::getXYPredictionPrecision()------------------------" << std::endl;

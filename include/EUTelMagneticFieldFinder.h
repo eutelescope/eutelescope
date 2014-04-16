@@ -80,6 +80,10 @@ namespace eutelescope {
 
         virtual ~EUTelKalmanFilter();
 
+        /** search for hit along track direction 
+         *  using TGeo derived functions         */  
+        void SearchTrackCandidates();
+
         /** Fit supplied hits */
         virtual void FitTracks();
 
@@ -156,8 +160,18 @@ namespace eutelescope {
         /** Flush fitter data stored from previous event */
         void reset();
         
+        /** prune seed track candidates */
+        void pruneSeeds();
+
         /** Generate seed track candidates */
         void initialiseSeeds();
+
+        /** update EUTelTrackState object at a new plane ID*/
+        int findNextPlaneEntrance(  EUTelTrackStateImpl* , int  );
+
+        /** do the EUTelTrackState search through all known volumes */
+        void propagateFromRefPoint( std::vector< EUTelTrackImpl* >::iterator &);
+
 
         /** Find intersection point of a track with geometry planes */
         double findIntersection( EUTelTrackStateImpl* ts );
@@ -257,6 +271,9 @@ namespace eutelescope {
         
         /** Validity of user input flag */
         bool _isReady;
+
+        /** Maximum number of sensitive planes to be considered for initial seed hits */
+        int _planesForPR;
 
         /** Maximum number of missing on a track candidate */
         int _allowedMissingHits;
