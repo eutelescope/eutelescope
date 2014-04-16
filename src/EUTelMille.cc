@@ -1347,8 +1347,6 @@ void EUTelMille::processEvent (LCEvent * event) {
 		  continue;
                 }
             }
- 
-            double * hitPosition = const_cast<double * > (hit->getPosition());
 
 	    int localSensorID = hitDecoder(hit)["sensorID"]; 
             
