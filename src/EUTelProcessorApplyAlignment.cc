@@ -144,7 +144,11 @@ void EUTelProcessorApplyAlign::processEvent (LCEvent * event) {
     for (size_t iHit = 0; iHit < inputCollectionVec->size(); iHit++) {
       TrackerHitImpl   * inputHit   = dynamic_cast< TrackerHitImpl * >  ( inputCollectionVec->getElementAt( iHit ) ) ;
       // now we have to understand which layer this hit belongs to.
-      int sensorID = Utility::GuessSensorID(inputHit);
+
+      UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder( EUTELESCOPE::HITENCODING );      
+      int sensorID = hitDecoder(inputHit)["sensorID"];
+
+	if( sensorID != Utility::GuessSensorID(inputHit) ) std::cout << "Hit misid" << std::endl;
 
       // copy the input to the output, at least for the common part
       TrackerHitImpl   * outputHit  = new TrackerHitImpl;
