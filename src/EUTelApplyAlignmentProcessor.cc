@@ -483,7 +483,6 @@ void EUTelApplyAlignmentProcessor::processRunHeader (LCRunHeader * runHeader)
 
 //........................................................................................................................
 void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
-  //cout << "9" << endl;
 
     if( _alignmentCollectionNames.size() <= 0 )
     {
@@ -495,8 +494,6 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
  
   // ----------------------------------------------------------------------- //
   // check input / output collections
-
-  //
   //......................................................................  //
 
         for (int i = static_cast<int>(_alignmentCollectionNames.size()) -1 ; i >= 0; i-- ) 
@@ -628,8 +625,7 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
 
 void EUTelApplyAlignmentProcessor::ApplyGear6D( LCEvent *event) 
 {
-  //cout << "11" << endl;
- 
+  UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
 
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
 
@@ -669,10 +665,13 @@ void EUTelApplyAlignmentProcessor::ApplyGear6D( LCEvent *event)
     for (size_t iHit = 0; iHit < _inputCollectionVec->size(); iHit++) 
     {
 
-      TrackerHitImpl   * inputHit   = dynamic_cast< TrackerHitImpl * >  ( _inputCollectionVec->getElementAt( iHit ) ) ;
+      TrackerHitImpl* inputHit  = dynamic_cast<TrackerHitImpl*>( _inputCollectionVec->getElementAt(iHit) );
 
       // now we have to understand which layer this hit belongs to.
-      int sensorID = guessSensorID( inputHit );
+      int sensorID = hitDecoder(inputHit)["sensorID"];
+
+      //TODO: VERIFY (remove afterwards)
+      if( sensorID !=  guessSensorID( inputHit )) std::cout << "detectorID missident 1!" << std::endl;
 
       if ( _conversionIdMap.size() != static_cast< unsigned >( _siPlanesParameters->getSiPlanesNumber()) ) 
       {
@@ -815,9 +814,8 @@ void EUTelApplyAlignmentProcessor::ApplyGear6D( LCEvent *event)
 
 void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event) 
 {
-  //cout << "13" << endl;
- 
-
+  UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
+  
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
 
   if ( evt->getEventType() == kEORE ) 
@@ -865,10 +863,13 @@ void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event)
     for (size_t iHit = 0; iHit < _inputCollectionVec->size(); iHit++) 
     {
 
-      TrackerHitImpl   * inputHit   = dynamic_cast< TrackerHitImpl * >  ( _inputCollectionVec->getElementAt( iHit ) ) ;
+      TrackerHitImpl* inputHit  = dynamic_cast<TrackerHitImpl*>( _inputCollectionVec->getElementAt(iHit) );
 
       // now we have to understand which layer this hit belongs to.
-      int sensorID = guessSensorID( inputHit );
+      int sensorID = hitDecoder(inputHit)["sensorID"];
+
+      //TODO: VERIFY (remove afterwards)
+      if( sensorID !=  guessSensorID( inputHit )) std::cout << "detectorID missident 2!" << std::endl;
 
       if ( _conversionIdMap.size() != static_cast< unsigned >( _siPlanesParameters->getSiPlanesNumber()) ) 
       {
@@ -1077,8 +1078,7 @@ void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event)
 }
 
 void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
-  //cout << "15" << endl;
-
+  UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
 
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
 
@@ -1162,12 +1162,13 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
 
       streamlog_out ( DEBUG5 ) << "DIRECT:-----:-----: hit " << iHit << " of  " <<  _inputCollectionVec->size() << " hits " << endl;
 
-      TrackerHitImpl   * inputHit   = dynamic_cast< TrackerHitImpl * >  ( _inputCollectionVec->getElementAt( iHit ) ) ;
-//if(inputHit==0)continue;
+      TrackerHitImpl* inputHit = dynamic_cast<TrackerHitImpl*>( _inputCollectionVec->getElementAt(iHit) );
+
       // now we have to understand which layer this hit belongs to.
-//obs.      int sensorID = guessSensorID( inputHit );
-      const double * pos = inputHit->getPosition();
-      int sensorID = guessSensorID(pos);
+      int sensorID = hitDecoder(inputHit)["sensorID"];
+
+      //TODO: VERIFY (remove afterwards)
+      if( sensorID !=  guessSensorID( inputHit )) std::cout << "detectorID missident 3!" << std::endl;
 
       //find proper alignment colleciton:
             double alpha = 0.;
@@ -1431,8 +1432,9 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
 }
 
 void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
-  //cout << "17" << endl;
- 
+
+    UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING ); 
+    
     EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
 
     if ( evt->getEventType() == kEORE ) 
@@ -1510,26 +1512,14 @@ void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
         for (size_t iHit = 0; iHit < _inputCollectionVec->size(); iHit++) 
         {
 
-            TrackerHitImpl   * inputHit   = dynamic_cast< TrackerHitImpl * >  ( _inputCollectionVec->getElementAt( iHit ) ) ;
+	TrackerHitImpl* inputHit  = dynamic_cast<TrackerHitImpl*>( _inputCollectionVec->getElementAt(iHit) );
 
-            // now we have to understand which layer this hit belongs to.
-//            int sensorID = guessSensorID( inputHit );
-            const double * pos = inputHit->getPosition();
-            int sensorID = guessSensorID(pos);
+	// now we have to understand which layer this hit belongs to.
+	int sensorID = hitDecoder(inputHit)["sensorID"];
 
-            // determine z position of the plane
-            // 20 December 2010 @libov
+	//TODO: VERIFY (remove afterwards)
+	if( sensorID !=  guessSensorID( inputHit )) std::cout << "detectorID missident 1!" << std::endl;
 
-/*            float	z_sensor = 0;
-            for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); ++iPlane ) 
-            {
-                if (sensorID == _siPlanesLayerLayout->getID( iPlane ) ) 
-                {
-                    z_sensor = _siPlanesLayerLayout -> getSensitivePositionZ( iPlane ) + 0.5 * _siPlanesLayerLayout->getSensitiveThickness( iPlane );
-                    break;
-                }
-            }
-*/
       //find proper alignment colleciton:
       double alpha = 0.;
       double beta  = 0.;
@@ -2109,12 +2099,16 @@ int EUTelApplyAlignmentProcessor::guessSensorID( TrackerHitImpl * hit ) {
 
 void EUTelApplyAlignmentProcessor::TransformToLocalFrame(TrackerHitImpl* outputHit) 
 {
-  //cout << "26" << endl;
+
+	UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder( EUTELESCOPE::HITENCODING );
 
         double *outputPosition = const_cast< double * > ( outputHit->getPosition() ) ;
 
         // now we have to understand which layer this hit belongs to.
-        int sensorID = guessSensorID( outputHit );
+        int sensorID = hitDecoder(outputHit)["sensorID"];
+
+        //TODO: VERIFY (remove afterwards)
+        if( sensorID !=  guessSensorID( outputHit )) std::cout << "detectorID missident 4!" << std::endl;
 
         if ( _conversionIdMap.size() != static_cast< unsigned >( _siPlanesParameters->getSiPlanesNumber()) ) 
         {
