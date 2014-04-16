@@ -334,8 +334,14 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
       TrackerHitImpl * refHit = dynamic_cast< TrackerHitImpl * >  ( inputCollectionVec->getElementAt( ref ) ) ;
       const double * refPos = refHit->getPosition();
 
+      UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
+      int sensorID = hitDecoder(refHit)["sensorID"];
+
+	//TODO: Verification (remove afterwards)
+	if( sensorID != guessSensorID(refPos) )  std::cout << "Hit misid1" << std::endl;
+      
       // identify fixed plane
-      if( guessSensorID(refPos) != _fixedID ) continue;
+      if( sensorID != _fixedID ) continue;
 
       residX.clear();
       residY.clear();
@@ -347,7 +353,11 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
         if( hitContainsHotPixels(hit) ) continue;
         
         const double * pos = hit->getPosition();
-        int iHitID = guessSensorID(pos);
+        int iHitID = hitDecoder(hit)["sensorID"]; 
+
+	//TODO: verify, remove later
+	if ( iHitID != guessSensorID(pos) ) std::cout << "hit misid2" << std::endl;
+
         if( iHitID == _fixedID ) continue;
         bool gotIt(false);
 
