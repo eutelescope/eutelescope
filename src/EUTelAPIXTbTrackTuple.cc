@@ -331,26 +331,18 @@ int EUTelAPIXTbTrackTuple::readHits( std::string hitColName, LCEvent* event ) {
  
 //  streamlog_out( MESSAGE5 )<< "readHits(mes)"<<endl;    
   for(int ihit=0; ihit< nHit ; ihit++) {
-    TrackerHit * meshit = dynamic_cast<TrackerHitImpl*>( hitCollection->getElementAt(ihit) ) ;
+    TrackerHitImpl* meshit = dynamic_cast<TrackerHitImpl*>( hitCollection->getElementAt(ihit) ) ;
     const double * pos = meshit->getPosition();	
     LCObjectVec clusterVec = (meshit->getRawHits());
     TrackerDataImpl * trackerData = dynamic_cast < TrackerDataImpl * > ( clusterVec[0] );
 
-    int iden = guessSensorID(meshit);
-//    for(int plane = 0; plane < _siPlanesLayerLayout->getNLayers(); plane++){
-//      if( fabs( pos[2] - _siPlanesLayerLayout->getSensitivePositionZ( plane ) ) < 2.0){
-//	iden = _siPlanesLayerLayout->getID( plane );
-//      }
-//    }
-    if(iden == -1){ continue; }
+    UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
+    int iden = hitDecoder(meshit)["sensorID"];
+
+   //TODO: Verification (remove later)
+    if( iden != guessSensorID(meshit)) std::cout << "Hit misid!1" << std::endl;
+    
     double nominalZpos(0.0);
-//    for(int plane = 0; plane < _siPlanesLayerLayout->getNLayers(); plane++){
-//      if( fabs( pos[2] - _siPlanesLayerLayout->getSensitivePositionZ( plane ) ) < 2.0){
-//	iden = _siPlanesLayerLayout->getID( plane );
-//	nominalZpos = _siPlanesLayerLayout->getSensitivePositionZ(plane)
-//	  + 0.5 * _siPlanesLayerLayout->getSensitiveThickness(plane);
-//     }
-//    }
 
     double x = pos[0];
     double y = pos[1];
@@ -443,25 +435,19 @@ int EUTelAPIXTbTrackTuple::readTracks(LCEvent* event){
 //    streamlog_out( MESSAGE5 )<< "readTracks(fit)"<<endl;    
  
     for(unsigned int ihit=0; ihit< trackhits.size(); ihit++) {
-      TrackerHit* fittedHit = trackhits.at(ihit);
+      TrackerHitImpl* fittedHit = dynamic_cast<TrackerHitImpl*>( trackhits.at(ihit) );
       const double * pos = fittedHit->getPosition();
       //Type >= 32 for fitted hits
       if( fittedHit->getType() < 32) { continue; }
 
+      UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
+      int iden = hitDecoder(fittedHit)["sensorID"];
 
-      int iden = guessSensorID(fittedHit);
+	//TODO: Verify (remove afterwards)
+	if(  iden != guessSensorID(fittedHit)) std::cout << "Hit misid2" << std::endl;
+      
       double nominalZpos(0.0);
-       
-/*
-      for(int plane = 0; plane < _siPlanesLayerLayout->getNLayers(); plane++){
-	if( fabs( pos[2] - _siPlanesLayerLayout->getSensitivePositionZ( plane ) ) < 2.0){
-	  iden = _siPlanesLayerLayout->getID( plane );
-	  nominalZpos = _siPlanesLayerLayout->getSensitivePositionZ(plane)
-	    + 0.5 * _siPlanesLayerLayout->getSensitiveThickness(plane);
-	}
-      }
-*/
-      if(iden == -1){ continue; }
+      
       nTrackParams++;
       double x = pos[0];
       double y = pos[1];
