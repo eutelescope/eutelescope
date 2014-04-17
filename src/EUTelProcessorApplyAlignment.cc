@@ -154,10 +154,11 @@ void EUTelProcessorApplyAlign::processEvent (LCEvent * event) {
       TrackerHitImpl   * outputHit  = new TrackerHitImpl;
       outputHit->setType( inputHit->getType() );
       outputHit->rawHits() = inputHit->getRawHits();
-      FloatVec cov;
-      cov = inputHit->getCovMatrix();
+      FloatVec cov = inputHit->getCovMatrix();
       outputHit->setCovMatrix( cov );
-
+      outputHit->setCellID0( inputHit->getCellID0() );
+      outputHit->setCellID1( inputHit->getCellID1() );
+      
       // now that we know at which sensor the hit belongs to, we can
       // get the corresponding alignment constants
       map< int , int >::iterator  positionIter = _lookUpTable.find( sensorID );
