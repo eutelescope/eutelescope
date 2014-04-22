@@ -70,6 +70,7 @@
 // lcio includes <.h>
 #include <IO/LCWriter.h>
 #include <UTIL/LCTime.h>
+#include <UTIL/CellIDDecoder.h>
 #include <EVENT/LCCollection.h>
 #include <EVENT/LCEvent.h>
 #include <EVENT/LCObject.h>
@@ -609,7 +610,12 @@ void EUTelDafBase::readHitCollection(LCEvent* event)
        pos[0]=hitpos[0];
        pos[1]=hitpos[1];
        pos[2]=hitpos[2];
-       planeIndex = guessSensorID( pos );
+	UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
+       planeIndex = hitDecoder(hit)["sensorID"];
+
+	//TODO: verify & remove
+	if( planeIndex != guessSensorID( pos )) std::cout << "Hitmisid" << std::endl;
+
        streamlog_out ( DEBUG5 ) << " REAL: add point [" << planeIndex << "] "<< 
                       static_cast< float >(pos[0]) * 1000.0f << " " << static_cast< float >(pos[1]) * 1000.0f << " " <<  static_cast< float >(pos[2]) * 1000.0f << endl;
        region = checkClusterRegion( hit, _system.planes.at(planeIndex).getSensorID() );
