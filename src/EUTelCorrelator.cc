@@ -637,8 +637,8 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 
     if ( _hasHitCollection ) {
 
-      LCCollectionVec * inputHitCollection = static_cast< LCCollectionVec *>
-        ( event->getCollection( _inputHitCollectionName )) ;
+      LCCollectionVec* inputHitCollection = static_cast<LCCollectionVec*>( event->getCollection(_inputHitCollectionName) );
+      UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
       for ( size_t iExt = 0 ; iExt < inputHitCollection->size(); ++iExt ) {
         std::vector<double> trackX;
         std::vector<double> trackY;
@@ -648,13 +648,11 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
        trackY.clear();
        iplane.clear();
 
-
         // this is the external hit
         TrackerHitImpl* externalHit = static_cast<TrackerHitImpl*>( inputHitCollection->getElementAt(iExt) );
         
 	double* externalPosition = const_cast<double*>( externalHit->getPosition() );
 
-	UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
         int externalSensorID = hitDecoder( externalHit )["sensorID"]; 
 
 	//TODO: Verify (remove afterwards)
