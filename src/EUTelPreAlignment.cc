@@ -322,7 +322,8 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
 
   try {
     LCCollectionVec * inputCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection(_inputHitCollectionName));
-
+    UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
+    
     std::vector<float> residX;
     std::vector<float> residY;
     std::vector<PreAligner*> prealign;
@@ -334,7 +335,6 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
       TrackerHitImpl * refHit = dynamic_cast< TrackerHitImpl * >  ( inputCollectionVec->getElementAt( ref ) ) ;
       const double * refPos = refHit->getPosition();
 
-      UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
       int sensorID = hitDecoder(refHit)["sensorID"];
 
 	//TODO: Verification (remove afterwards)
