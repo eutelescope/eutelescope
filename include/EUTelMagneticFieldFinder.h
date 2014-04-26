@@ -97,6 +97,10 @@ namespace eutelescope {
             return _tracks;
         }
                 
+        void setPlanesProject( int value){
+          _planesForPR = value;
+        }
+
         void setHits( EVENT::TrackerHitVec& );
 
         inline int getAllowedMissingHits() const {

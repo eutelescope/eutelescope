@@ -143,6 +143,9 @@ namespace eutelescope {
 
         /** Maximal amount of tracks per event */
         int _maxNTracks;
+ 
+        /** Number of Planes to project starting with the first most upstream */
+        int _planesProject;
         
         /** Maximal distance in XY plane */
         double _residualsRMax;

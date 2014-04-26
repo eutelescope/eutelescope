@@ -227,7 +227,7 @@ namespace eutelescope {
 
                 if( findhit ) { 
                     double chi2 = (*itTrk)->getChi2() + updateTrackState( state, closestHit );
-                    state->Print(); 
+//                    state->Print(); 
                     (*itTrk)->setChi2( chi2 );
                     (*itTrk)->addHit( closestHit );
                     const double* uvpos = closestHit->getPosition();
@@ -269,7 +269,7 @@ namespace eutelescope {
          
    //       if( (*itTrk) == NULL ) continue;
  
-            (const_cast<EUTelTrackImpl*>(*itTrk)) ->Print();
+//            (const_cast<EUTelTrackImpl*>(*itTrk)) ->Print();
 
             EUTelTrackStateImpl* state = const_cast<EUTelTrackStateImpl*>((*itTrk)->getTrackState( EUTelTrackStateImpl::AtFirstHit ));
             
@@ -283,7 +283,6 @@ namespace eutelescope {
             }
  
             propagateFromRefPoint(itTrk);
-            streamlog_out(MESSAGE0) << local_itTrk << " of " << size_itTrk << " hits on track " <<  ( *itTrk )->getTrackerHits( ).size( ) << " expecting at least " << geo::gGeometry( ).nPlanes( ) - _allowedMissingHits << endl;
  
             if ( isGoodTrack && ( *itTrk )->getTrackerHits( ).size( ) < geo::gGeometry( ).nPlanes( ) - _allowedMissingHits ) {
                 streamlog_out ( DEBUG1 ) << "Track candidate has to many missing hits." << std::endl;
@@ -294,7 +293,8 @@ namespace eutelescope {
             }
 
             if ( isGoodTrack ) {
-                state->setLocation( EUTelTrackStateImpl::AtLastHit );
+               streamlog_out(MESSAGE2) << local_itTrk << " of " << size_itTrk << " hits on track " <<  ( *itTrk )->getTrackerHits( ).size( ) << " expecting at least " << geo::gGeometry( ).nPlanes( ) - _allowedMissingHits << endl;
+               state->setLocation( EUTelTrackStateImpl::AtLastHit );
                 _tracks.push_back( cartesian2LCIOTrack( *itTrk ) );
                 delete (*itTrk);
               //  ++itTrk;  
@@ -585,7 +585,7 @@ namespace eutelescope {
             EUTelTrackImpl* track = new EUTelTrackImpl;
 //            track->addHit( (*itHit) );
             track->addTrackState( state );
-            track->Print();
+//            track->Print();
             _tracksCartesian.push_back( track );
 
           }// loop over for the iplane
