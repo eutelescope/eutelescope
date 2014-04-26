@@ -1,6 +1,9 @@
 #ifndef IMPL_EUTELTRACKIMPL_H
 #define IMPL_EUTELTRACKIMPL_H 1
 
+#include "streamlog/streamlog.h"
+#include <iostream>
+
 #include "IMPL/AccessChecked.h"
 #include "EVENT/TrackerHit.h"
 
@@ -8,6 +11,7 @@
 
 #include <bitset>
 
+#include "EUTelTrackStateImpl.h"
 
 namespace eutelescope {
 
@@ -15,7 +19,7 @@ namespace eutelescope {
   /**Vector of (pointers to) Tracks.*/
   typedef std::vector<EUTelTrackImpl*> EUTelTrackVec;
 
-  class EUTelTrackStateImpl ;
+//  class EUTelTrackStateImpl ;
   /**Vector of (pointers to) TrackStates.*/
   typedef std::vector<EUTelTrackStateImpl*> EUTelTrackStateVec ;
   
@@ -38,7 +42,11 @@ namespace eutelescope {
     virtual ~EUTelTrackImpl() ; 
     
     virtual int id() const { return simpleUID() ; }
-
+ 
+    virtual void Print(){
+       streamlog_out(MESSAGE0) << "track " << id() <<  " at Tx:" << getTx() << " at Ty:" << getTy() << " getX() " << getX() << " getY() " << getY() << std::endl;
+       PrintTrackStates();   
+    }
 
     virtual float getTx() const ;
 
@@ -87,7 +95,19 @@ namespace eutelescope {
     /** Returns track states associated with this track. @see TrackState.
      */
     virtual const EUTelTrackStateVec & getTrackStates() const ;
-
+  
+    virtual void PrintTrackStates(){
+      streamlog_out(MESSAGE0) << " printing track states " << _trackStates.size();
+//      for(unsigned int i=0; i<states.size(); i++){
+//        EUTelTrackStateImpl* state = static_cast<EUTelTrackStateImpl*> (states.at(i));
+//        streamlog_out(MESSAGE0) << state->getLocation() << " ";
+//      } 
+       for( unsigned int i=0 ; i < _trackStates.size() ; i++ ){
+          streamlog_out(MESSAGE0)<<     _trackStates[i]->getLocation() << " " ;
+        }
+      streamlog_out(MESSAGE0) << std::endl;
+  
+    }
 
     /** Returns track state closest to the given point. @see TrackState.
      */

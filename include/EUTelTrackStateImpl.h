@@ -1,6 +1,10 @@
 #ifndef EUTELTRACKSTATEIMPL_H
 #define EUTELTRACKSTATEIMPL_H 1
 
+#include "streamlog/streamlog.h"
+#include <iostream>
+
+
 #include "IMPL/AccessChecked.h"
 
 #include "LCIOSTLTypes.h"
@@ -63,6 +67,8 @@ namespace eutelescope {
      */
     virtual const float* getReferencePoint() const ;
    
+
+    virtual void Print();
 
     // setters 
     virtual void  setLocation( int location ) ;
