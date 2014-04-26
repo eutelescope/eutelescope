@@ -94,6 +94,9 @@ namespace eutelescope {
     const EVENT::FloatVec& EUTelTrackStateImpl::getCovMatrix() const { return _covMatrix ; }
     const float* EUTelTrackStateImpl::getReferencePoint() const { return _reference ; }
 
+    void EUTelTrackStateImpl::Print(){
+      streamlog_out(MESSAGE0) << "location " << getLocation() << " Tx:"<<getTx() << " Ty:"<<getTy() << " X:"<<getX() << " Y:"<<getY() << " InvP:"<<getInvP() << std::endl;  
+    }
 
     void  EUTelTrackStateImpl::setLocation( int location ){
         checkAccess("EUTelTrackStateImpl::setLocation") ;

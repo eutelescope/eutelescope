@@ -112,7 +112,6 @@ namespace eutelescope {
     } 
 
     const EUTelTrackStateImpl* EUTelTrackImpl::getTrackState( int location ) const {
-
         for( unsigned int i=0 ; i < _trackStates.size() ; i++ ){
             if( _trackStates[i]->getLocation() == location ){
                 return _trackStates[i] ;  
