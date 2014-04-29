@@ -84,6 +84,11 @@ namespace eutelescope {
          *  using TGeo derived functions         */  
         void SearchTrackCandidates();
 
+        /** Prune track candidates
+         *  supposed to be removing track candidates which have n% hits in common      */  
+        void PruneTrackCandidates();
+
+
         /** Fit supplied hits */
         virtual void FitTracks();
 

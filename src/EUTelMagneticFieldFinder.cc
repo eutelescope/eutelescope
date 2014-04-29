@@ -306,6 +306,30 @@ namespace eutelescope {
        streamlog_out(MESSAGE0) << "------------------------------EUTelKalmanFilter::SearchTrackCandidates()---------------------------------" << std::endl;
 
     }
+ 
+
+    /** Perform track pruning */
+    void EUTelKalmanFilter::PruneTrackCandidates() {
+
+      streamlog_out(MESSAGE0) << "EUTelKalmanFilter::PruneTrackCandidates()" << std::endl;
+ 
+      std::vector< IMPL::TrackImpl* >::iterator itTrk;
+      std::vector< IMPL::TrackImpl* >::iterator jtTrk;
+      for ( itTrk = _tracks.begin(); itTrk != _tracks.end(); itTrk++ ) {
+        const EVENT::TrackerHitVec ihits = (*itTrk)->getTrackerHits();
+        for ( jtTrk = _tracks.begin(); jtTrk != _tracks.end(); jtTrk++ ) {
+          const EVENT::TrackerHitVec jhits = (*jtTrk)->getTrackerHits();
+          for(int i=0;i<ihits.size();i++)
+            EVENT::TrackerHit* ihit = ihits[i];
+            int ic = ihit->id();
+            for(int j=0;j<jhits.size();j++){ 
+//               std::cout << "i=" << i << " " << ihits.at(i).id() << " j=" << j << " " << jhits.at(j).id() << endl; 
+            }      
+        }
+      }
+ 
+      streamlog_out(MESSAGE0) << "------------------------------EUTelKalmanFilter::SearchTrackCandidates()---------------------------------" << std::endl;
+    }
     
     /** Perform Kalman filter track search and track fit */
     void EUTelKalmanFilter::FitTracks() {
