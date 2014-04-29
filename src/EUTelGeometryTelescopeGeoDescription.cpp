@@ -206,12 +206,6 @@ _geoManager(0)
         _siPlaneRadLength.push_back(_siPlanesLayerLayout->getLayerRadLength(iPlane));
     }
 
-    lcio::StringVec processorVec = _siPlanesParameters->getStringVals("SimulatorName");
-
-    for(int i=0;i<processorVec.size();i++)
-    {
-      std:cout << i << " " << processorVec[i].c_str() << std::endl;
-    }
 
     if (_siPlanesParameters->getSiPlanesType() == _siPlanesParameters->TelescopeWithDUT) {
         _siPlaneXPosition.push_back(_siPlanesLayerLayout->getDUTPositionX());
