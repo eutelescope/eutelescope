@@ -21,10 +21,8 @@
  
    # only needed in the last step to test the results of EUTel against a set of reference files:
     SET( stattestdir "$ENV{EUTELESCOPE}/test/stattest/bin" )
-#    SET( datadir "/afs/desy.de/group/telescopes/EutelTestData/TestExampleDaturaNoDUT" )
-#    SET( referencedatadir "/afs/desy.de/group/telescopes/EutelTestData/TestExampleDaturaNoDUT" )
-    SET( datadir "/home/ilcsoft/EutelTestData/TestExampleDaturaNoDUT" )
-    SET( referencedatadir "/home/ilcsoft/EutelTestData/TestExampleDaturaNoDUT" )
+    SET( datadir "/afs/desy.de/group/telescopes/EutelTestData/TestExampleDaturaNoDUT" )
+    SET( referencedatadir "/afs/desy.de/group/telescopes/EutelTestData/TestExampleDaturaNoDUT" )
 
 
     SET( executable python -tt ${jobsubdir}/jobsub.py )
