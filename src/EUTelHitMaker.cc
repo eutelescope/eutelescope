@@ -384,6 +384,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 
    ++_iEvt;
 
+
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event) ;
 
   if ( evt->getEventType() == kEORE ) {
@@ -480,10 +481,8 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 //                                << " in run " << event->getRunNumber() << " creating new one  " << endl;
        hitCollection = new LCCollectionVec(LCIO::TRACKERHIT);
     }
-  
-    // prepare an encoder for the hit collection
-    CellIDEncoder<TrackerHitImpl> idHitEncoder(EUTELESCOPE::HITENCODING, hitCollection);
-
+ 
+    CellIDEncoder<TrackerHitImpl> idHitEncoder(EUTELESCOPE::HITENCODING, hitCollection); 
     CellIDDecoder<TrackerPulseImpl>  pulseCellDecoder(pulseCollection);
 
     int detectorID    = -99; // it's a non sense
