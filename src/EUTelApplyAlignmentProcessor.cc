@@ -670,9 +670,6 @@ void EUTelApplyAlignmentProcessor::ApplyGear6D( LCEvent *event)
       // now we have to understand which layer this hit belongs to.
       int sensorID = hitDecoder(inputHit)["sensorID"];
 
-      //TODO: VERIFY (remove afterwards)
-      if( sensorID !=  guessSensorID( inputHit )) std::cout << "detectorID missident 1!" << std::endl;
-
       if ( _conversionIdMap.size() != static_cast< unsigned >( _siPlanesParameters->getSiPlanesNumber()) ) 
       {
           // first of all try to see if this sensorID already belong to
@@ -867,9 +864,6 @@ void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event)
 
       // now we have to understand which layer this hit belongs to.
       int sensorID = hitDecoder(inputHit)["sensorID"];
-
-      //TODO: VERIFY (remove afterwards)
-      if( sensorID !=  guessSensorID( inputHit )) std::cout << "detectorID missident 2!" << std::endl;
 
       if ( _conversionIdMap.size() != static_cast< unsigned >( _siPlanesParameters->getSiPlanesNumber()) ) 
       {
@@ -1166,9 +1160,6 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
 
       // now we have to understand which layer this hit belongs to.
       int sensorID = hitDecoder(inputHit)["sensorID"];
-
-      //TODO: VERIFY (remove afterwards)
-      if( sensorID !=  guessSensorID( inputHit )) std::cout << "detectorID missident 3!" << std::endl;
 
       //find proper alignment colleciton:
             double alpha = 0.;
@@ -1516,9 +1507,6 @@ void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
 
 	// now we have to understand which layer this hit belongs to.
 	int sensorID = hitDecoder(inputHit)["sensorID"];
-
-	//TODO: VERIFY (remove afterwards)
-	if( sensorID !=  guessSensorID( inputHit )) std::cout << "detectorID missident 1!" << std::endl;
 
       //find proper alignment colleciton:
       double alpha = 0.;
@@ -2106,9 +2094,6 @@ void EUTelApplyAlignmentProcessor::TransformToLocalFrame(TrackerHitImpl* outputH
 
         // now we have to understand which layer this hit belongs to.
         int sensorID = hitDecoder(outputHit)["sensorID"];
-
-        //TODO: VERIFY (remove afterwards)
-        if( sensorID !=  guessSensorID( outputHit )) std::cout << "detectorID missident 4!" << std::endl;
 
         if ( _conversionIdMap.size() != static_cast< unsigned >( _siPlanesParameters->getSiPlanesNumber()) ) 
         {

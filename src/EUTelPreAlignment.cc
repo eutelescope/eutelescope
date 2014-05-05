@@ -337,9 +337,6 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
 
       int sensorID = hitDecoder(refHit)["sensorID"];
 
-	//TODO: Verification (remove afterwards)
-	if( sensorID != guessSensorID(refPos) )  std::cout << "Hit misid1" << std::endl;
-      
       // identify fixed plane
       if( sensorID != _fixedID ) continue;
 
@@ -354,9 +351,6 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
         
         const double * pos = hit->getPosition();
         int iHitID = hitDecoder(hit)["sensorID"]; 
-
-	//TODO: verify, remove later
-	if ( iHitID != guessSensorID(pos) ) std::cout << "hit misid2" << std::endl;
 
         if( iHitID == _fixedID ) continue;
         bool gotIt(false);

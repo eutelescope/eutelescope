@@ -1350,9 +1350,6 @@ void EUTelMille::processEvent (LCEvent * event) {
 
 	    int localSensorID = hitDecoder(hit)["sensorID"]; 
             
-	    //TODO: VERIFICATION (remove later)
-	    if(localSensorID != guessSensorID( hit) ) std::cout << "guessSensorID missmatch!!!" << std::endl; 
-
             layerIndex = _sensorIDVecMap[localSensorID] ;
 
             // Getting positions of the hits.

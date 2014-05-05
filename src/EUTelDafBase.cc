@@ -613,9 +613,6 @@ void EUTelDafBase::readHitCollection(LCEvent* event)
 	UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
        planeIndex = hitDecoder(hit)["sensorID"];
 
-	//TODO: verify & remove
-	if( planeIndex != guessSensorID( pos )) std::cout << "Hitmisid" << std::endl;
-
        streamlog_out ( DEBUG5 ) << " REAL: add point [" << planeIndex << "] "<< 
                       static_cast< float >(pos[0]) * 1000.0f << " " << static_cast< float >(pos[1]) * 1000.0f << " " <<  static_cast< float >(pos[2]) * 1000.0f << endl;
        region = checkClusterRegion( hit, _system.planes.at(planeIndex).getSensorID() );

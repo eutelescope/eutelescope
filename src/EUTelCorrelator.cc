@@ -655,10 +655,6 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 
         int externalSensorID = hitDecoder( externalHit )["sensorID"]; 
 
-	//TODO: Verify (remove afterwards)
-	if( externalSensorID != guessSensorID( externalPosition )) std::cout << "Hit misid" << std::endl;
-
-
         trackX.push_back(externalPosition[0]);
         trackY.push_back(externalPosition[1]);
         iplane.push_back(externalSensorID);
@@ -672,8 +668,6 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 
           int internalSensorID = hitDecoder( internalHit )["sensorID"]; 
 
-	  //TODO: Verify (remove afterwards)
-	  if(internalSensorID != guessSensorID( internalPosition )) std::cout << "Hitint misid" << std::endl;
           bool ishot = hitContainsHotPixels(internalHit); 
 
           if( ishot ) continue;
