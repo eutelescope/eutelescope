@@ -384,7 +384,6 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 
    ++_iEvt;
 
-
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event) ;
 
   if ( evt->getEventType() == kEORE ) {
@@ -481,8 +480,9 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 //                                << " in run " << event->getRunNumber() << " creating new one  " << endl;
        hitCollection = new LCCollectionVec(LCIO::TRACKERHIT);
     }
- 
-    CellIDEncoder<TrackerHitImpl> idHitEncoder(EUTELESCOPE::HITENCODING, hitCollection); 
+    // prepare an encoder for the hit collection
+    CellIDEncoder<TrackerHitImpl> idHitEncoder(EUTELESCOPE::HITENCODING, hitCollection);
+
     CellIDDecoder<TrackerPulseImpl>  pulseCellDecoder(pulseCollection);
 
     int detectorID    = -99; // it's a non sense
@@ -1004,11 +1004,11 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
       hit->rawHits() = clusterVec;
       
       // Determine sensorID from the cluster data.
-      idHitEncoder["sensorID"] = static_cast<int>(pulseCellDecoder(pulse)["sensorID"]);
+      idHitEncoder["sensorID"] =  static_cast<int> (pulseCellDecoder(pulse)["sensorID"]);
 
       // set the local/global bit flag property for the hit
       idHitEncoder["properties"] = 0; // init
-      if (!_wantLocalCoordinates) idHitEncoder["properties"] = static_cast<int>(kHitInGlobalCoord);
+      if (!_wantLocalCoordinates) idHitEncoder["properties"] = kHitInGlobalCoord;
 
       // store values
       idHitEncoder.setCellID( hit );
