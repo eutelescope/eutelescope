@@ -380,8 +380,6 @@ void EUTelMille::init() {
 
   _referenceHitVec = 0;
 
-
-
   //lets guess the number of planes
   if(_inputMode == 0 || _inputMode == 2) 
     {
@@ -2584,112 +2582,6 @@ void EUTelMille::processEvent (LCEvent * event) {
   if ( isFirstEvent() ) _isFirstEvent = false;
 
 }
-
-
-int EUTelMille::guessSensorID( TrackerHitImpl * hit ) {
-  if(hit==0)
-{
-    streamlog_out( ERROR5 ) << "An invalid hit pointer supplied! will exit now\n" << endl;
-    return -1;
-}
-
-        try
-        {
-            LCObjectVec clusterVector = hit->getRawHits();
-
-            EUTelVirtualCluster * cluster=0;
-
-            if ( hit->getType() == kEUTelBrickedClusterImpl ) {
-
-               // fixed cluster implementation. Remember it
-               //  can come from
-               //  both RAW and ZS data
-   
-                cluster = new EUTelBrickedClusterImpl(static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
-                
-            } else if ( hit->getType() == kEUTelDFFClusterImpl ) {
-              
-              // fixed cluster implementation. Remember it can come from
-              // both RAW and ZS data
-              cluster = new EUTelDFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
-            } else if ( hit->getType() == kEUTelFFClusterImpl ) {
-              
-              // fixed cluster implementation. Remember it can come from
-              // both RAW and ZS data
-              cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
-            } 
-            else if ( hit->getType() == kEUTelAPIXClusterImpl ) 
-            {
-              
-                TrackerDataImpl * clusterFrame = static_cast<TrackerDataImpl*> ( clusterVector[0] );
-
-                cluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);
-	      
-            }
-            else if ( hit->getType() == kEUTelSparseClusterImpl ) 
-            {
-               cluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel > ( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
-            }
-
-            if(cluster != 0)
-            {
-              int sensorID = cluster->getDetectorID();
-              return sensorID;
-            }
-          }
-          catch(...)
-          {
-	    streamlog_out( ERROR5 ) << "guessSensorID() produced an exception!" << endl;
-          }
-
-return -1;
-}
-
-int EUTelMille::guessSensorID( double * hit ) 
-{
-
-  int sensorID = -1;
-  double minDistance =  numeric_limits< double >::max() ;
-
-  if( _referenceHitVec == 0 || _useReferenceHitCollection == false)
-  {
-    // use z information of planes instead of reference vector
-    for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); ++iPlane ) {
-      double distance = std::abs( hit[2] - _siPlaneZPosition[ iPlane ] );
-      if ( distance < minDistance ) {
-	minDistance = distance;
-	sensorID = _siPlanesLayerLayout->getID( iPlane );
-      }
-    }
-    if ( minDistance > 30  ) {
-      // advice the user that the guessing wasn't successful 
-      streamlog_out( WARNING3 ) << "A hit was found " << minDistance << " mm far from the nearest plane\n"
-	"Please check the consistency of the data with the GEAR file: hitPosition[2]=" << hit[2] <<       endl;
-    }
-    
-    return sensorID;
-  }
-
-      for(size_t ii = 0 ; ii < static_cast< unsigned int >(_referenceHitVec->getNumberOfElements()); ii++)
-      {
-        EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
-        
-        TVector3 hit3d( hit[0], hit[1], hit[2] );
-        TVector3 hitInPlane( refhit->getXOffset(), refhit->getYOffset(), refhit->getZOffset());
-        TVector3 norm2Plane( refhit->getAlpha(), refhit->getBeta(), refhit->getGamma() );
- 
-        double distance = abs( norm2Plane.Dot(hit3d-hitInPlane) );
-        if ( distance < minDistance ) 
-        {
-           minDistance = distance;
-           sensorID = refhit->getSensorID();
-        }    
-
-      }
-
-  return sensorID;
-}
-
 
 TVector3 EUTelMille::Line2Plane(int iplane, const TVector3& lpoint, const TVector3& lvector ) 
 {
