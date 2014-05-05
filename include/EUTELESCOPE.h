@@ -16,8 +16,6 @@
  *  classes defined by the EUDET JRA1 collaboration in order to
  *  develop both their DAQ and analysis/reconstruction software.
  *
- *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
- *  @version $Id$
  */
 
 namespace eutelescope {}
@@ -52,8 +50,6 @@ namespace eutelescope
    * is to define name of collection to be retrieved/saved from/to
    * files.
    *
-   * @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   * @version $Id$
    */
 
   class EUTELESCOPE
@@ -339,6 +335,8 @@ namespace eutelescope
      *  encoding used for describe cells in a TrackerData object
      *  containing sparsified pixel.
      *
+     *  "sensorID:7,xMin:12,xMax:12,yMin:12,yMax:12"
+     *
      *  The sparse pixel type is defined using the SparsePixelType
      *  enumeration.
      *
@@ -388,8 +386,13 @@ namespace eutelescope
      */
     static const char * ZSAPIXCLUSTERENCODING;
 
-    //! Encoding for hits
+    //! SensorID and properties encoding for hits
+    /*! This encoding string is used for the TrackerHit* classes
+     *
+     *  @see HitProperties
+     */
     static const char * HITENCODING;
+
   };
 
 
@@ -397,8 +400,6 @@ namespace eutelescope
   /*! This enumeration type is used to identify a specific detector
    *  type.
    *
-   *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id$
    */
   enum EUTelDetectorType {
     kTLU               =   0,
@@ -415,8 +416,6 @@ namespace eutelescope
   //! Readout mode
   /*! This enumeration type is used to identify a readout mode
    *
-   *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id$
    */
   enum EUTelReadoutMode {
     kRAW2             =   0,
@@ -451,8 +450,6 @@ namespace eutelescope
    *  EUTelEventImpl event. In such case, in fact, asking for a not
    *  existing parameter will return 0.
    *
-   *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id$
    */
   enum EventType {
     kUNKNOWN  = 0,
@@ -480,10 +477,10 @@ namespace eutelescope
    *  There are "not assigned" bits that can be used in the
    *  future to mark other different kind of hit flags.
    */
-
   enum HitProperties {
     kHitInGlobalCoord  = 1L << 0,
-    kFittedHit         = 1L << 1
+    kFittedHit         = 1L << 1,
+    kSimulatedHit      = 1L << 2
   };
 
 
@@ -580,8 +577,6 @@ namespace eutelescope
    *  which was the underlying class used for the description of the
    *  cluster during the clusterization process itself.
    *
-   *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id$
    */
   enum ClusterType {
     kEUTelFFClusterImpl       = 0,
@@ -598,8 +593,6 @@ namespace eutelescope
   //! Sparse pixel type enum
   /*! This enumerator is used to define the sparsified pixel type.
    *
-   *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id$
    */
   enum SparsePixelType {
     kEUTelBaseSparsePixel   = 0,

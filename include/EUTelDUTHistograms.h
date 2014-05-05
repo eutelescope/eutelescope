@@ -144,7 +144,6 @@ namespace eutelescope {
      */
     void bookHistos();
 
-    virtual int guessSensorID( const double* hit);
     virtual int getClusterSize(int sensorID, TrackerHit * hit, int& sizeX, int& sizeY, int& subMatrix );
     virtual int getSubMatrix(int sensorID, float xlocal);
 
