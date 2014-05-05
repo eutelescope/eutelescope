@@ -63,6 +63,7 @@
 #include <IMPL/LCFlagImpl.h>
 #include <Exceptions.h>
 #include <IMPL/SimTrackerHitImpl.h>
+#include <UTIL/CellIDDecoder.h>
 
 
 #include <iostream>
@@ -1801,92 +1802,6 @@ void EUTelDUTHistograms::bookHistos()
   return;
 }
 
-int EUTelDUTHistograms::guessSensorID(const double * hit ) 
-{
-
-  int sensorID = -1;
-  double minDistance =  numeric_limits< double >::max() ;
-
-  message<DEBUG5> ( log() <<  "referencehit collection: " << _referenceHitCollectionName << " at "<< _referenceHitVec << endl);
-
-  if( _referenceHitVec == 0)
-  {
-    streamlog_out( DEBUG5 ) << "_referenceHitVec is empty" << endl;
-
-// anyway try to guess SensorID by GEAR description:
-   if(sensorID < 0 )
-    {
-     double minDist =  numeric_limits< double >::max() ;
-     for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); ++iPlane ) {
-      double dist = std::abs( hit[2] -  _siPlanesLayerLayout->getLayerPositionZ(iPlane) ) ;
-      if ( dist < minDist ) {
-        minDist = dist;
-        sensorID = _siPlanesLayerLayout->getID( iPlane );
-      }
-     }
-    }
-
-    return sensorID;
-  }
-
-
-
-  if(  isFirstEvent() )
-  {
-    message<DEBUG > ( log() <<  "number of elements : " << _referenceHitVec->getNumberOfElements() << endl );
-  }
-
-  for(size_t ii = 0 ; ii <  static_cast<size_t>(_referenceHitVec->getNumberOfElements()); ii++)
-      {
-        EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
-        if(refhit == 0 ) continue;
-        
-        TVector3 hit3d( hit[0], hit[1], hit[2] );
-        TVector3 hitInPlane( refhit->getXOffset(), refhit->getYOffset(), refhit->getZOffset());
-        TVector3 norm2Plane( refhit->getAlpha(), refhit->getBeta(), refhit->getGamma() );
- 
-        double distance = abs( norm2Plane.Dot(hit3d-hitInPlane) );
-	if(streamlog_level(DEBUG5)){
-	  streamlog_out( DEBUG5 ) << " hit " << hit[0] << " "<< hit[1] << " " << hit[2] << endl;
-	  streamlog_out( DEBUG5 ) << " " << refhit->getXOffset() << " " << refhit->getYOffset() << " " << refhit->getZOffset() << endl;
-	  streamlog_out( DEBUG5 ) << " " << refhit->getAlpha() << " " << refhit->getBeta() << " " << refhit->getGamma() << endl;
-	  streamlog_out( DEBUG5 ) << " distance " << distance  << endl;
-	}
- 
-        if ( distance < minDistance ) 
-        {
-           minDistance = distance;
-           sensorID = refhit->getSensorID();
-        }    
-
-      }
-
-
-
-
-
-// some usefull debug printouts:
-   if(streamlog_level(DEBUG5))
-   {
-      for(size_t ii = 0 ; ii <  static_cast<size_t>(_referenceHitVec->getNumberOfElements()); ii++)
-      {
-        EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
-        if(refhit == 0 ) continue;
-	if(streamlog_level(DEBUG5)){
-	  streamlog_out( DEBUG5 ) << " _referenceHitVec " <<  _referenceHitVec << " " <<  _referenceHitCollectionName.c_str()  << "  " << refhit << " at "  
-				  << refhit->getXOffset() << " " << refhit->getYOffset() << " " <<  refhit->getZOffset() << " "  
-				  << refhit->getAlpha()   << " " <<  refhit->getBeta()   << " " <<  refhit->getGamma()   << endl ;
-	  message<DEBUG5> ( log() << "iPlane " << refhit->getSensorID() << " hitPos:  [" << hit[0] << " " << hit[1] << " " <<  hit[2] << "]  distance: " <<  minDistance  << endl );
-	  message<DEBUG5> ( log() << "sensorID: " <<  sensorID << endl ); 
-	}
-      }
-   } 
-
-   return sensorID;
-}
-
-
-
 
 int EUTelDUTHistograms::getClusterSize(int sensorID, TrackerHit * hit, int& sizeX, int& sizeY, int& subMatrix ) {
 
@@ -1978,6 +1893,11 @@ int EUTelDUTHistograms::read_track_from_collections(LCEvent *event)
     return 1;
   }
   
+  // setup cellIdDecoder to decode the sensor ID from the hits
+  CellIDDecoder<TrackerHit>  hitCellDecoder(EUTELESCOPE::HITENCODING);
+  CellIDDecoder<SimTrackerHitImpl>  simhitCellDecoder(EUTELESCOPE::HITENCODING);
+
+
   // Loop over tracks in input track collection
   // Read fitted positions at DUT
 
@@ -2048,7 +1968,7 @@ int EUTelDUTHistograms::read_track_from_collections(LCEvent *event)
       if(fithit != 0 ) 
       { 
         pos       = fithit->getPosition();
-        hsensorID = guessSensorID(pos);
+        hsensorID = hitCellDecoder(fithit)["sensorID"];
       } 
       else 
       if(fithit == 0 )
@@ -2056,7 +1976,7 @@ int EUTelDUTHistograms::read_track_from_collections(LCEvent *event)
         if(fithit0 != 0 ) 
         { 
           pos       = fithit0->getPosition();
-          hsensorID = guessSensorID(pos);
+          hsensorID = simhitCellDecoder(fithit0)["sensorID"];
         } 
       }
   
@@ -2145,7 +2065,7 @@ int EUTelDUTHistograms::read_track_from_collections(LCEvent *event)
       if(meshit != 0 ) 
       { 
         pos       = meshit->getPosition();
-        hsensorID = guessSensorID(pos);
+        hsensorID = hitCellDecoder(meshit)["sensorID"];
       } 
       else 
       if(meshit == 0 )
@@ -2153,7 +2073,7 @@ int EUTelDUTHistograms::read_track_from_collections(LCEvent *event)
         if(meshit0 != 0 ) 
         { 
           pos       = meshit0->getPosition();
-          hsensorID = guessSensorID(pos);
+          hsensorID = simhitCellDecoder(meshit0)["sensorID"];
         } 
       }
   
@@ -2233,6 +2153,10 @@ int EUTelDUTHistograms::read_track(LCEvent *event)
     return 1;
   }
 
+  // setup cellIdDecoder to decode the sensor ID from the hits
+  CellIDDecoder<TrackerHit>  hitCellDecoder(EUTELESCOPE::HITENCODING);
+
+
   // Loop over tracks in input track collection
   // Read fitted positions at DUT
 
@@ -2264,7 +2188,7 @@ int EUTelDUTHistograms::read_track(LCEvent *event)
               // Hit position
 
               const double * pos = meshit->getPosition();
-              int hsensorID = guessSensorID(pos);
+              int hsensorID = hitCellDecoder(meshit)["sensorID"];
 
               // Look at fitted hits only!
 
@@ -2311,7 +2235,7 @@ int EUTelDUTHistograms::read_track(LCEvent *event)
 
               // Hit position
               const double * pos = meshit->getPosition();
-              int hsensorID = guessSensorID(pos);
+              int hsensorID = hitCellDecoder(meshit)["sensorID"];
 
               if( meshit->getType() < 32  )
                 {
@@ -2367,7 +2291,7 @@ int EUTelDUTHistograms::read_track(LCEvent *event)
 
       const double * pos = meshit->getPosition();
 
-      int   sensorID = guessSensorID( pos );
+      int   sensorID = hitCellDecoder(meshit)["sensorID"];
 
      if( sensorID ==_iDUT ) // measured info only for DUT plane
         {
