@@ -327,7 +327,6 @@ namespace eutelescope
     /*! This constant string is used with CellIDEncoder to define the
      *  default encoding used for describe cells into a
      *  Tracker(Raw)Data object
-     *
      */
     static const char * MATRIXDEFAULTENCODING;
 
@@ -351,8 +350,6 @@ namespace eutelescope
      *  default encoding used for describe cells into a clusters. This
      *  encoding is different from the one for complete matrices.
      *
-     *  "sensorID:7,xSeed:12,ySeed:12,xCluSize:5,yCluSize:5,quality:7"
-     *
      *  Note about cluster quality: this is a three bit flag to be
      *  used with the cluster quality enum.
      *
@@ -367,8 +364,6 @@ namespace eutelescope
      *  but instead of the quality it has a 5 bit fields to identify
      *  the cluster reimplementation class.
      *
-     *  "sensorID:7,xSeed:12,ySeed:12,xCluSize:5,yCluSize:5,type:5"
-     *
      *  @see ClusterType
      */
     static const char * PULSEDEFAULTENCODING;
@@ -376,8 +371,6 @@ namespace eutelescope
     //! Zero suppress cluster default encoding
     /*! This encoding string is used for the TrackerData containing
      *  clusters made by sparsified pixels
-     *
-     *  "sensorID:7,sparsePixelType:5,quality:5"
      *
      *  @see SparsePixelType
      *  @see ClusterQuality
@@ -388,8 +381,6 @@ namespace eutelescope
     /*! This encoding string is used for the TrackerData containing
      *  clusters made by ATLAS PIXEL pixels
      *
-     *  "sensorID:7,sparsePixelType:5,type:6"
-     *
      *  @see SparsePixelType
      *  @see ClusterQuality
      */
@@ -397,8 +388,6 @@ namespace eutelescope
 
     //! SensorID and properties encoding for hits
     /*! This encoding string is used for the TrackerHit* classes
-     *
-     *  "sensorID:7,properties:7"
      *
      *  @see HitProperties
      */

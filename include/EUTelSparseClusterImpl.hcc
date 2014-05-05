@@ -10,6 +10,9 @@
 #ifndef EUTELSPARSECLUSTERIMPL_HCC
 #define EUTELSPARSECLUSTERIMPL_HCC
 
+#include <UTIL/CellIDDecoder.h>
+#include "EUTELESCOPE.h"
+
 namespace eutelescope {
 
   //! Implementation of a cluster made of sparsified pixels
@@ -65,23 +68,10 @@ namespace eutelescope {
      *  @return the detector ID 
      */
     inline int getDetectorID()  const {
-      int   rhs = 0;
-      lcio::long64 mask  = 0x1F;
-      lcio::long64 cell0 = static_cast<lcio::long64> (_trackerData->getCellID0());
-      return static_cast<int> ( ( cell0 & mask ) >> rhs );
-    }
+        UTIL::CellIDDecoder<TrackerDataImpl>cellDecoder( EUTELESCOPE::ZSCLUSTERDEFAULTENCODING );
+        return cellDecoder(_trackerData)["sensorID"];
+	}
 
-    //! Get the cluster identification number
-    /*! This method is used to return the cluster identification number
-     *  @return the clusterID
-     */
-    inline int getClusterID() const {
-      int rhs = 5;
-      lcio::long64 mask = 0x1FE0;
-      lcio::long64 cell0 = static_cast<lcio::long64> (_trackerData->getCellID0());
-      return static_cast<int> ( ( cell0  & mask ) >> rhs );
-    }
-    
     //! Get the seed pixel coordinate in the local FoR
     /*! Regardless the kind of cluster in use, it is always possible
      *  to define the seed pixel as the one with the highest signal. 
@@ -122,11 +112,9 @@ namespace eutelescope {
      *  @see ClusterQuality
      */
     ClusterQuality getClusterQuality() const {
-      int rhs = 18;
-      lcio::long64 mask   = 0x7C0000;
-      lcio::long64 cell0  = static_cast<lcio::long64> (_trackerData->getCellID0());
-      return static_cast<ClusterQuality> ( ( cell0 & mask ) >> rhs );
-    }
+        UTIL::CellIDDecoder<TrackerDataImpl>cellDecoder( EUTELESCOPE::ZSCLUSTERDEFAULTENCODING );
+        return static_cast<ClusterQuality>( static_cast<lcio::long64>(cellDecoder(_trackerData)["quality"]) );
+	}
 
     //! Return the distance from another 
     /*! This method return the distance between this and another
@@ -252,7 +240,7 @@ namespace eutelescope {
     //! Get the cluster noise
     /*! This method is used to calculate the cluster noise.
      *  See the implementation for the way the cluster noise is
-     *  calculated. 
+     *  calculated.
      *
      *  @return A float value representing the cluster noise.
      */
@@ -350,11 +338,9 @@ namespace eutelescope {
      *  @see SparsePixelType
      */
     SparsePixelType getSparsePixelType() const {
-      int rhs = 13;
-      lcio::long64 mask   = 0x3E000;
-      lcio::long64 cell0  = static_cast<lcio::long64> (_trackerData->getCellID0());
-      return static_cast<SparsePixelType> ( ( cell0 & mask ) >> rhs );
-    }
+        UTIL::CellIDDecoder<TrackerDataImpl>cellDecoder( EUTELESCOPE::ZSCLUSTERDEFAULTENCODING );
+        return static_cast<SparsePixelType>( static_cast<lcio::long64>(cellDecoder(_trackerData)["sparsePixelType"]) );
+	}
 
     //! Get one of the sparse pixel
     /*! This method is used to get one of the sparse pixel contained

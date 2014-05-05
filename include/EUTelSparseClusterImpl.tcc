@@ -645,7 +645,6 @@ namespace eutelescope {
   
     os   <<  std::setw(bigspacer) << std::setiosflags(std::ios::left) << "Sparse cluster made of " << type << " pixels" << std::endl
 	 <<  std::setw(bigspacer) << "Number of pixel " << size() << std::endl
-	 <<  std::setw(bigspacer) << "Cluster ID " << getClusterID() << " on detector " << getDetectorID() << std::endl
 	 <<  std::setw(bigspacer) << "Cluster size " << "(" << xSize << ", " << ySize << ")" << std::endl
 	 <<  std::setw(bigspacer) << "Cluster quality " << quality << std::endl
 	 <<  std::setw(bigspacer) << "Cluster total charge " << getTotalCharge() << std::endl

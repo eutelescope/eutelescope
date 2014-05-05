@@ -480,7 +480,6 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 //                                << " in run " << event->getRunNumber() << " creating new one  " << endl;
        hitCollection = new LCCollectionVec(LCIO::TRACKERHIT);
     }
-  
     // prepare an encoder for the hit collection
     CellIDEncoder<TrackerHitImpl> idHitEncoder(EUTELESCOPE::HITENCODING, hitCollection);
 
