@@ -512,47 +512,6 @@ size_t EUTelDafBase::getPlaneIndex(float zPos){
   return(index);
 }
 
-int EUTelDafBase::guessSensorID( double * hit ) 
-{
-  //cout << "DafBase " << "21" << endl;
-
-  int sensorID = -1;
-  double minDistance =  numeric_limits< double >::max() ;
-//  double * hitPosition = const_cast<double * > (hit->getPosition());
-
-//  LCCollectionVec * referenceHitVec     = dynamic_cast < LCCollectionVec * > (evt->getCollection( _referenceHitCollectionName));
-  if( ReferenceHitVecIsSet() )
-  {
-    streamlog_out( MESSAGE5 ) << "_referenceHitVec is empty" << endl;
-    return 0;
-  }
-
-      for(size_t ii = 0 ; ii <  static_cast< unsigned int >(_referenceHitVec->getNumberOfElements()); ii++)
-      {
-        EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
-//        printf(" _referenceHitVec %p refhit %p \n", _referenceHitVec, refhit);
-        
-        TVector3 hit3d( hit[0], hit[1], hit[2] );
-        TVector3 hitInPlane( refhit->getXOffset(), refhit->getYOffset(), refhit->getZOffset());
-        TVector3 norm2Plane( refhit->getAlpha(), refhit->getBeta(), refhit->getGamma() );
- 
-        double distance = abs( norm2Plane.Dot(hit3d-hitInPlane) );
-//        printf("iPlane %5d   hitPos:  [%8.3f;%8.3f%8.3f]  distance: %8.3f \n", refhit->getSensorID(), hitPosition[0],hitPosition[1],hitPosition[2], distance  );
-        if ( distance < minDistance ) 
-        {
-           minDistance = distance;
-//           sensorID = refhit->getSensorID(); // proper ID
-           sensorID = ii;                    // number in the GEAR file z ordered
-//           printf("sensorID: %5d \n", sensorID );
-        }    
-
-      }
-
-  //cout << "DafBase " << "22" << endl;
-  return sensorID;
-}
-
-
 void EUTelDafBase::readHitCollection(LCEvent* event)
 {
   //cout << "DafBase " << "23" << endl;
