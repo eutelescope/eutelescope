@@ -63,13 +63,6 @@ namespace eutelescope {
      */ 
     virtual int  getDetectorID() const = 0;
 
-    //! Return the cluster ID
-    /*! This number is used to enumerate clusters.
-     *
-     *  @return The cluster ID.
-     */ 
-    virtual int  getClusterID() const = 0;
-
     //! Get the seed pixel coordinate in the local FoR
     /*! Regardless the kind of cluster in use, it is always possible
      *  to define the seed pixel as the one with the highest signal. 

@@ -481,7 +481,8 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 //                                << " in run " << event->getRunNumber() << " creating new one  " << endl;
        hitCollection = new LCCollectionVec(LCIO::TRACKERHIT);
     }
-  
+ 
+    CellIDEncoder<TrackerHitImpl> idHitEncoder(EUTELESCOPE::HITENCODING, hitCollection); 
     CellIDDecoder<TrackerPulseImpl>  pulseCellDecoder(pulseCollection);
 
     int detectorID    = -99; // it's a non sense
@@ -1002,9 +1003,15 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
       // add the clusterVec to the hit
       hit->rawHits() = clusterVec;
       
-      // Determine sensorID from raw data.
-      int sensorID = Utility::GuessSensorID( hit );
-      hit->setCellID0( sensorID );
+      // Determine sensorID from the cluster data.
+      idHitEncoder["sensorID"] = static_cast<int>(pulseCellDecoder(pulse)["sensorID"]);
+
+      // set the local/global bit flag property for the hit
+      idHitEncoder["properties"] = 0; // init
+      if (!_wantLocalCoordinates) idHitEncoder["properties"] = static_cast<int>(kHitInGlobalCoord);
+
+      // store values
+      idHitEncoder.setCellID( hit );
 
       // add the new hit to the hit collection
       hitCollection->push_back( hit );

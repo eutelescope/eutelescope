@@ -331,8 +331,6 @@ namespace eutelescope
     /*! This constant string is used with CellIDEncoder to define the
      *  default encoding used for describe cells into a
      *  Tracker(Raw)Data object
-     *
-     *  "sensorID:5,xMin:12,xMax:12,yMin:12,yMax:12"
      */
     static const char * MATRIXDEFAULTENCODING;
 
@@ -346,7 +344,6 @@ namespace eutelescope
      *
      *  @see SparsePixelType
      *
-     *  "sensorID:5,sparsePixelType:5"
      */
     static const char * ZSDATADEFAULTENCODING;
 
@@ -354,8 +351,6 @@ namespace eutelescope
     /*! This constant string is used with CellIDEncoder to define the
      *  default encoding used for describe cells into a clusters. This
      *  encoding is different from the one for complete matrices.
-     *
-     *  "sensorID:5,clusterID:8,xSeed:12,ySeed:12,xCluSize:5,yCluSize:5:quality:5"
      *
      *  Note about cluster quality: this is a three bit flag to be
      *  used with the cluster quality enum.
@@ -371,8 +366,6 @@ namespace eutelescope
      *  but instead of the quality it has a 5 bit fields to identify
      *  the cluster reimplementation class.
      *
-     *  "sensorID:5,clusterID:8,xSeed:12,ySeed:12,xCluSize:5,yCluSize:5:type:5"
-     *
      *  @see ClusterType
      */
     static const char * PULSEDEFAULTENCODING;
@@ -380,8 +373,6 @@ namespace eutelescope
     //! Zero suppress cluster default encoding
     /*! This encoding string is used for the TrackerData containing
      *  clusters made by sparsified pixels
-     *
-     *  "sensorID:5,clusterID:8,sparsePixelType:5,quality:5"
      *
      *  @see SparsePixelType
      *  @see ClusterQuality
@@ -392,14 +383,13 @@ namespace eutelescope
     /*! This encoding string is used for the TrackerData containing
      *  clusters made by ATLAS PIXEL pixels
      *
-     *  "sensorID:17,clusterID:8,sparsePixelType:5"
-     *
      *  @see SparsePixelType
      *  @see ClusterQuality
      */
     static const char * ZSAPIXCLUSTERENCODING;
 
-
+    //! Encoding for hits
+    static const char * HITENCODING;
   };
 
 
@@ -472,11 +462,36 @@ namespace eutelescope
   };
 
 
+  //! hit properties enum
+  /*! This enum can be attached to a LCIO class describing a hit or it
+   *  can be inserted into the CellID describing the hit
+   *  collection. It is a seven bit flag (defined in
+   *  EUTELESCOPE::HITENCODING), that can be used to discriminate
+   *  among different hit types and properties.
+   *
+   *  Here a description of all allowed value of hit properties and
+   *  their meaning:
+   *
+   *  \li <b>kHitInGlobalCoord</b>: if set, the hit x/y/z coordinates
+   *  are given in the global coordinate system
+   *
+   *  \li <b>kFittedHit</b>: if set, the hit comes from a fitted track
+   *
+   *  There are "not assigned" bits that can be used in the
+   *  future to mark other different kind of hit flags.
+   */
+
+  enum HitProperties {
+    kHitInGlobalCoord  = 1L << 0,
+    kFittedHit         = 1L << 1
+  };
+
 
   //! Cluster quality enum
   /*! This enum can be attached to a LCIO class describing a cluster
    *  or it can be inserted into the CellID describing the cluster
-   *  collection. It is a five bit flag, that can be used to
+   *  collection. It is a seven bit flag (defined in
+   *  EUTELESCOPE::CLUSTERDEFAULTENCODING), that can be used to
    *  discriminate among different cluster qualities. This is because
    *  not all clusters passing the required cuts can be considered to
    *  be at the same quality levels. For example there are clusters
@@ -508,8 +523,6 @@ namespace eutelescope
    *  There are still two "not assigned" bits that can be used in the
    *  future to mark other different kind of bad quality clusters.
    *
-   *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id$
    */
 
   enum ClusterQuality {
