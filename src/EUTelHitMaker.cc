@@ -481,7 +481,8 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 //                                << " in run " << event->getRunNumber() << " creating new one  " << endl;
        hitCollection = new LCCollectionVec(LCIO::TRACKERHIT);
     }
-  
+ 
+    CellIDEncoder<TrackerHitImpl> idHitEncoder(EUTELESCOPE::HITENCODING, hitCollection); 
     CellIDDecoder<TrackerPulseImpl>  pulseCellDecoder(pulseCollection);
 
     int detectorID    = -99; // it's a non sense
