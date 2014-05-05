@@ -490,7 +490,8 @@ namespace eutelescope
    */
   enum HitProperties {
     kHitInGlobalCoord  = 1L << 0,
-    kFittedHit         = 1L << 1
+    kFittedHit         = 1L << 1,
+    kSimulatedHit      = 1L << 2
   };
 
 
