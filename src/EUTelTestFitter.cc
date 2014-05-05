@@ -1891,10 +1891,9 @@ if(jhit>=0){
         TrackerHitImpl * fitpoint = new TrackerHitImpl;
 
 	// set sensorID
-	fitHitEncoder["sensorID"] =  ipl;
+	fitHitEncoder["sensorID"] =  _planeID[ipl];
 
 	// set the local/global and "fittedhit" bit flag properties for the hit
-	fitHitEncoder["properties"] = 0; // init
 	fitHitEncoder["properties"] = kHitInGlobalCoord+kFittedHit;
 
 	// store values
@@ -1964,7 +1963,7 @@ if(jhit>=0){
 	      corrhit->setCellID1(simhit->getCellID1());
             } else {
 	      // set sensorID
-	      corrHitEncoder["sensorID"] =  ipl;
+	      corrHitEncoder["sensorID"] =  _planeID[ipl];
 	    
 	      // set the local/global and "fittedhit" bit flag properties for the hit
 	      corrHitEncoder["properties"] = 0; // init
