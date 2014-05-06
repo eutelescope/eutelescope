@@ -612,19 +612,20 @@ namespace eutelescope {
         streamlog_out(MESSAGE1) << " addGlobalPArametersGBL over " << std::endl;
    }
 
-    void EUTelGBLFitter::pushBackPoint( std::vector< gbl::GblPoint >& pointList, const gbl::GblPoint& point, int hitid ) {
-        pointList.push_back(point);
+    void EUTelGBLFitter::pushBackPoint( std::vector< gbl::GblPoint >& pointListTrack, const gbl::GblPoint& pointTrack, int hitid ) {
+        pointListTrack.push_back(pointTrack);
        
-        streamlog_out(DEBUG3) << "pushBackPoint " << hitid << std::endl;
+        streamlog_out(MESSAGE0) << "pushBackPoint     :: pushBackPoint " << hitid << std::endl;
         // store point's GBL label for future reference
-        _hitId2GblPointLabel[ hitid ] = static_cast<int>(pointList.size());
+        _hitId2GblPointLabel[ hitid ] = static_cast<int>(pointListTrack.size());
     }
 
-    void EUTelGBLFitter::pushBackPointMille( std::vector< gbl::GblPoint >& pointList, const gbl::GblPoint& point, int hitid ) {
-        pointList.push_back(point);
+    void EUTelGBLFitter::pushBackPointMille( std::vector< gbl::GblPoint >& pointListMille, const gbl::GblPoint& pointMille, int hitid ) {
+        pointListMille.push_back(pointMille);
         
+        streamlog_out(MESSAGE0) << "pushBackPointMille:: pushBackPoint " << hitid << std::endl;
         // store point's GBL label for future reference
-        _hitId2GblPointLabelMille[ hitid ] = static_cast<int>(pointList.size());
+        _hitId2GblPointLabelMille[ hitid ] = static_cast<int>(pointListMille.size());
     }
     /**
      * Set track omega, D0, Z0, Phi, tan(Lambda), Chi2, NDF parameters
