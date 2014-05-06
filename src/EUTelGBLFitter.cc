@@ -905,27 +905,35 @@ namespace eutelescope {
 
         TMatrixD alDer; // alignment derivatives
         std::vector<int> globalLabels;
+        std::string amode;
         if (_alignmentMode == Utility::XYShift) {
             globalLabels.resize(2);
             alDer.ResizeTo(2, 2);
+            amode = "Xs Ys";
         } else if (_alignmentMode == Utility::XYShiftXYRot) {
             globalLabels.resize(3);
             alDer.ResizeTo(2, 3);
+             amode = "Xs Ys    XYr";
         } else if (_alignmentMode == Utility::XYZShiftXYRot) {
             globalLabels.resize(4);
             alDer.ResizeTo(2, 4);
+             amode = "Xs Ys Zs XYr";
         } else if (_alignmentMode == Utility::XYShiftYZRotXYRot) {
             globalLabels.resize(4);
             alDer.ResizeTo(2, 4);
+             amode = "Xs Ys    XYr YZr";
         } else if (_alignmentMode == Utility::XYShiftXZRotXYRot) {
             globalLabels.resize(4);
             alDer.ResizeTo(2, 4);
+             amode = "Xs Ys    XZr XYr";
         } else if (_alignmentMode == Utility::XYShiftXZRotYZRotXYRot) {
             globalLabels.resize(5);
             alDer.ResizeTo(2, 5);
+             amode = "Xs Ys    XZr YZr ZYr";
         } else if (_alignmentMode == Utility::XYZShiftXZRotYZRotXYRot) {
             globalLabels.resize(6);
             alDer.ResizeTo(2, 6);
+             amode = "Xs Ys Zs XZr YZr XYr";
         }
         alDer.Zero();
 
@@ -935,12 +943,16 @@ namespace eutelescope {
         EVENT::TrackVec::const_iterator itTrkCand;
         int trackcounter = 0;
         for ( itTrkCand = _trackCandidates.begin(); itTrkCand != _trackCandidates.end(); ++itTrkCand) {
-            streamlog_out(MESSAGE) << " track candidate # " << trackcounter << endl; 
+            streamlog_out(MESSAGE) << " track candidate # " << trackcounter << " of " << _trackCandidates.size() << " with alignment mode: " << amode.c_str() << endl; 
 //            FitSingleTrackCandidate( itTrkCand );
 //            continue;
 
             // sanity check. Mustn't happen in principle.
-            if ((*itTrkCand)->getTrackerHits().size() > geo::gGeometry().nPlanes()) continue;
+            if ((*itTrkCand)->getTrackerHits().size() > geo::gGeometry().nPlanes())
+            {
+              streamlog_out(ERROR) << "Sanity check. This should not happen in principle. Number of hits is greater then number of planes" << std::endl;
+              continue;
+            }
 
             //GBL trajectory construction
             std::vector< gbl::GblPoint > pointList;
@@ -986,10 +998,13 @@ namespace eutelescope {
                 }
               }            
             }
-            streamlog_out( MESSAGE1 ) << "from the list of requrested planes and available hit on a track candidate: " << imatch << "/" <<_paramterIdPlaneVec.size() << " found" << std::endl;
+            streamlog_out( MESSAGE1 ) << "from the list of requested planes and available hit on a track candidate: " << imatch << "/" <<_paramterIdPlaneVec.size() << " found" << std::endl;
 
-            if( imatch != _paramterIdPlaneVec.size() ) continue;
-
+            if( imatch != _paramterIdPlaneVec.size() ) 
+            { 
+              streamlog_out(MESSAGE1) << " Number of hits does not correspond to the number of planes selected for tracking" << std::endl;
+              continue;
+            }
             // Loop over hits on a track candidate
 //            const EVENT::TrackerHitVec& hits = (*itTrkCand)->getTrackerHits();
 //            EVENT::TrackerHitVec::const_reverse_iterator itHit;
@@ -1001,7 +1016,6 @@ namespace eutelescope {
                 const double* hitPointLocal = (*itHit)->getPosition();
                 double hitPointGlobal[] = {0.,0.,0.};
                 geo::gGeometry().local2Master(planeID,hitPointLocal,hitPointGlobal);
-
 
 //                const EVENT::FloatVec hitcov = (*itHit)->getCovMatrix();
                 EVENT::FloatVec hitcov(4);
@@ -1226,7 +1240,7 @@ namespace eutelescope {
                 if ( !_mEstimatorType.empty( ) ) ierr = traj->fit( chi2, ndf, loss, _mEstimatorType );
                 else ierr = traj->fit( chi2, ndf, loss );
 
-              if ( chi2 < _chi2cut ) 
+                if ( chi2 < _chi2cut ) 
                 {
                     if ( ierr )
                     {
@@ -1234,23 +1248,24 @@ namespace eutelescope {
 			traj->printData();
 			traj->printPoints(1);
 		    }
+  
+                    EVENT::TrackVec::const_iterator begin = _trackCandidates.begin();
+                    _gblTrackCandidates.insert( std::make_pair( std::distance( begin, itTrkCand ), traj ) );
+                
+                    // Write fit result
+                    {
+                      prepareLCIOTrack( traj, (*itTrkCand)->getTrackerHits(), chi2, ndf, invP, 0., 0., 0., 0. );
+                    }
+
+                    // Prepare and write Mille Out
+                    if (_alignmentMode != Utility::noAlignment) 
+                    {
+//                     prepareMilleOut( traj, (*itTrkCand)->getTrackerHits(), chi2, ndf, invP, 0., 0., 0., 0. );
+                       prepareMilleOut( traj, itTrkCand, chi2, ndf, invP, 0., 0., 0., 0. );
+                    }
                 } 
                 
-                 EVENT::TrackVec::const_iterator begin = _trackCandidates.begin();
-                _gblTrackCandidates.insert( std::make_pair( std::distance( begin, itTrkCand ), traj ) );
-                
-                // Write fit result
-                {
-                    prepareLCIOTrack( traj, (*itTrkCand)->getTrackerHits(), chi2, ndf, invP, 0., 0., 0., 0. );
-                }
-
-                // Prepare and write Mille Out
-                if (_alignmentMode != Utility::noAlignment) 
-                {
-//                     prepareMilleOut( traj, (*itTrkCand)->getTrackerHits(), chi2, ndf, invP, 0., 0., 0., 0. );
-                   prepareMilleOut( traj, itTrkCand, chi2, ndf, invP, 0., 0., 0., 0. );
-                }
-            }
+           }
         } // loop over supplied track candidates
 
         return;
