@@ -80,6 +80,12 @@ namespace eutelescope {
 
         virtual ~EUTelKalmanFilter();
 
+        /** just print the list of tracks */
+        void Print( std::string Name, std::vector< IMPL::TrackImpl*> &_tracks );
+
+        /** fomr the list of _tracks remove _tracks_to_delete */
+        void Prune(  std::vector< IMPL::TrackImpl*> &_tracks , std::vector< IMPL::TrackImpl*> &_tracks_to_delete );
+
         /** search for hit along track direction 
          *  using TGeo derived functions         */  
         void SearchTrackCandidates();

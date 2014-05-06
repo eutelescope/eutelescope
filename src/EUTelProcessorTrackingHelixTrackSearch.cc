@@ -265,7 +265,8 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
             streamlog_out( DEBUG1 ) << "Trying to find tracks..." << endl;
  //            _trackFitter->FitTracks( );
             _trackFitter->SearchTrackCandidates( );
-//            return ;
+            _trackFitter->PruneTrackCandidates( );
+            return ;
 
 
             streamlog_out( DEBUG1 ) << "Retrieving track candidates..." << endl;

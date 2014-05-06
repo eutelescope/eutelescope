@@ -47,7 +47,11 @@ namespace eutelescope {
         virtual void Clear();
 
 
-        virtual void SearchTrackCandidates(){}
+        virtual void SearchTrackCandidates(){};
+        /** Prune track candidates
+         *  supposed to be removing track candidates which have n% hits in common      */  
+        virtual void PruneTrackCandidates(){};
+
 
         virtual void FitTracks();
         virtual void FitSingleTrackCandidate();

@@ -217,7 +217,7 @@ namespace eutelescope {
                         streamlog_out ( DEBUG1 ) << "Skipping current plane." << std::endl;
                         findhit = false;
                     }else{
-                        streamlog_out (MESSAGE1 ) << "NextPlane MATCHED " <<  uvpos[0] << " " <<  uvpos[1] << " " << uvpos[2] <<  " err:"<< newSensorID << endl;
+                        streamlog_out (MESSAGE0 ) << "NextPlane MATCHED " <<  uvpos[0] << " " <<  uvpos[1] << " " << uvpos[2] <<  " err:"<< newSensorID << endl;
                     }
                 } else {
                     streamlog_out ( DEBUG4 ) << "There are no hits in the closest plane." << std::endl;
@@ -240,12 +240,62 @@ namespace eutelescope {
  
     }
 
+    /** Perform Kalman filter track search and track fit */
+    void EUTelKalmanFilter::Print( std::string Name, std::vector< IMPL::TrackImpl*> &_collection) 
+    {
+      int itrk = 0; 
+      int size_itTrk  = _collection.size();
+
+      std::vector< IMPL::TrackImpl* >::iterator itTrk;
+ 
+      for ( itTrk = _collection.begin(); itTrk != _collection.end(); itTrk++, itrk++ ) 
+      {
+        if( (*itTrk) == 0 ) 
+        {
+           streamlog_out(MESSAGE1) <<  Name.c_str() << " itrk = " << itrk << " is not found ? " << std::endl;
+           continue; 
+        }
+        IMPL::TrackImpl* track = static_cast< IMPL::TrackImpl*> (*itTrk);
+        const EVENT::TrackerHitVec& ihits = track->getTrackerHits();
+        int nhits =  ihits.size( ) ;
+        int expec =  geo::gGeometry( ).nPlanes( ) - _allowedMissingHits;
+        streamlog_out(MESSAGE1) << Name.c_str() << " track itrk:" <<  itrk << " of " << size_itTrk << " at  " << (*itTrk) << " with " << nhits << " at least " << expec ;//std::endl;
+        for (int i = 0; i< ihits.size(); i++ ) 
+        { 
+            EVENT::TrackerHit* ihit = ihits[i];
+            int ic = ihit->id();
+            streamlog_out(MESSAGE0) <<  ic << " ";
+        }
+        streamlog_out(MESSAGE1) << std::endl;
+      }
+    }
+ 
+    void EUTelKalmanFilter::Prune( std::vector< IMPL::TrackImpl*> &_collection, std::vector< IMPL::TrackImpl*> &_collection_to_delete ) 
+    {
+      int itrk = 0 ;
+      std::vector< IMPL::TrackImpl* >::iterator itTrk;
+
+      for (  itTrk = _collection.begin(); itTrk != _collection.end();  itrk++ ) 
+      {
+         
+         bool iend = std::find( _collection_to_delete.begin(), _collection_to_delete.end(), (*itTrk) ) == _collection_to_delete.end(); 
+         if( iend )
+         {
+           streamlog_out(DEBUG3) << " track " << itrk << " at " << (*itTrk) << " NOT found  in _collection_to_delete " << std::endl;
+itTrk++;
+         } else {
+           streamlog_out(DEBUG3) << " track " << itrk << " at " << (*itTrk) << "     found  in _collection_to_delete, deleting ... " << std::endl;
+           delete (*itTrk);
+           itTrk = _collection.erase(itTrk);
+         } 
+      }
+    }
 
 
     /** Perform Kalman filter track search and track fit */
     void EUTelKalmanFilter::SearchTrackCandidates() {
 
-      streamlog_out(MESSAGE0) << "EUTelKalmanFilter::SearchTrackCandidates()" << std::endl;
+      streamlog_out(MESSAGE1) << "EUTelKalmanFilter::SearchTrackCandidates()" << std::endl;
 
       // Check if the fitter was configured correctly
         if ( !_isReady ) {
@@ -275,35 +325,35 @@ namespace eutelescope {
             
             if( state == 0 )
             {
-              streamlog_out ( WARNING0 ) << "track _tracksCartesian return a NULL state, skip this one " << endl; 
-              isGoodTrack = false;
-              delete (*itTrk);
-              itTrk = _tracksCartesian.erase( itTrk );
-              continue;
+               streamlog_out ( WARNING0 ) << "track _tracksCartesian return a NULL state, skip this one " << endl; 
+               isGoodTrack = false;
+               delete (*itTrk);
+               itTrk = _tracksCartesian.erase( itTrk );
+               continue;
             }
  
             propagateFromRefPoint(itTrk);
  
             if ( isGoodTrack && ( *itTrk )->getTrackerHits( ).size( ) < geo::gGeometry( ).nPlanes( ) - _allowedMissingHits ) {
-                streamlog_out ( DEBUG1 ) << "Track candidate has to many missing hits." << std::endl;
-                streamlog_out ( DEBUG1 ) << "Removing this track candidate from further consideration." << std::endl;
-                delete (*itTrk);
-//                itTrk = _tracksCartesian.erase( itTrk ); // comment for this line ???
-                isGoodTrack = false;
+               streamlog_out ( DEBUG1 ) << "Track candidate has to many missing hits." << std::endl;
+               streamlog_out ( DEBUG1 ) << "Removing this track candidate from further consideration." << std::endl;
+               delete (*itTrk);
+//               itTrk = _tracksCartesian.erase( itTrk ); // comment for this line ???
+               isGoodTrack = false;
             }
 
             if ( isGoodTrack ) {
-               streamlog_out(MESSAGE2) << local_itTrk << " of " << size_itTrk << " hits on track " <<  ( *itTrk )->getTrackerHits( ).size( ) << " expecting at least " << geo::gGeometry( ).nPlanes( ) - _allowedMissingHits << endl;
+               streamlog_out(MESSAGE0) << local_itTrk << " of " << size_itTrk << " hits on track " << *itTrk << " with " <<  ( *itTrk )->getTrackerHits( ).size( ) << " expecting at least " << geo::gGeometry( ).nPlanes( ) - _allowedMissingHits << endl;
                state->setLocation( EUTelTrackStateImpl::AtLastHit );
                 _tracks.push_back( cartesian2LCIOTrack( *itTrk ) );
-                delete (*itTrk);
-              //  ++itTrk;  
+               delete (*itTrk);
+               //  ++itTrk;  
             }
             streamlog_out(MESSAGE0) << "finished : " << local_itTrk << " of " << size_itTrk << endl;
             local_itTrk++;
         }
   
-       streamlog_out(MESSAGE0) << "------------------------------EUTelKalmanFilter::SearchTrackCandidates()---------------------------------" << std::endl;
+       streamlog_out(MESSAGE1) << "------------------------------EUTelKalmanFilter::SearchTrackCandidates()---------------------------------" << std::endl;
 
     }
  
@@ -311,24 +361,63 @@ namespace eutelescope {
     /** Perform track pruning */
     void EUTelKalmanFilter::PruneTrackCandidates() {
 
-      streamlog_out(MESSAGE0) << "EUTelKalmanFilter::PruneTrackCandidates()" << std::endl;
+      streamlog_out(MESSAGE1) << "EUTelKalmanFilter::PruneTrackCandidates()" << std::endl;
  
       std::vector< IMPL::TrackImpl* >::iterator itTrk;
       std::vector< IMPL::TrackImpl* >::iterator jtTrk;
-      for ( itTrk = _tracks.begin(); itTrk != _tracks.end(); itTrk++ ) {
+      std::vector< IMPL::TrackImpl* >           _tracks_to_delete;
+
+      int itrk = 0;
+      int jtrk = 0;
+
+      for ( itTrk = _tracks.begin(); itTrk != _tracks.end(); itTrk++, itrk++ ) 
+      {
+        streamlog_out(MESSAGE1) <<  "track itrk:" <<  itrk << " at  " << ( *itTrk) << std::endl;
+   
         const EVENT::TrackerHitVec ihits = (*itTrk)->getTrackerHits();
-        for ( jtTrk = _tracks.begin(); jtTrk != _tracks.end(); jtTrk++ ) {
-          const EVENT::TrackerHitVec jhits = (*jtTrk)->getTrackerHits();
+      
+        for ( jtrk = itrk+1; jtrk < _tracks.size(); jtrk++ ) 
+        {
+          int hitscount=0;
+ 
+          IMPL::TrackImpl* jtTrack = _tracks[jtrk];
+          const EVENT::TrackerHitVec jhits = jtTrack->getTrackerHits();
+// cross check every track to all following ones in the _track collection
           for(int i=0;i<ihits.size();i++)
+          { // loop through hits in itTrk candidate
             EVENT::TrackerHit* ihit = ihits[i];
             int ic = ihit->id();
-            for(int j=0;j<jhits.size();j++){ 
-//               std::cout << "i=" << i << " " << ihits.at(i).id() << " j=" << j << " " << jhits.at(j).id() << endl; 
-            }      
+            for(int j=0;j<jhits.size();j++)
+            { // loop through hits in jtTrk candidate 
+               EVENT::TrackerHit* jhit = jhits[j];
+               int jc = jhit->id();
+               if(ic == jc ){
+                 hitscount++; 
+                 streamlog_out(MESSAGE0) <<  "i=" << i << " " << ic << " j=" << j << " " << jc << " number of common hits: " << hitscount << std::endl; 
+               }
+            }
+          } 
+          if(hitscount>5) { 
+            if( std::find(_tracks_to_delete.begin(), _tracks_to_delete.end(), *itTrk ) == _tracks_to_delete.end() || _tracks_to_delete.size() == 0 )
+            {
+               streamlog_out(MESSAGE1) <<  "is duped " << itrk << " & " << jtrk << std::endl;
+              _tracks_to_delete.push_back( *itTrk );
+            }
+            continue;
+          }
         }
+
       }
+
+      Print( "_tracks", _tracks);   
+
+      Print( "_tracks_to_delete", _tracks_to_delete);   
  
-      streamlog_out(MESSAGE0) << "------------------------------EUTelKalmanFilter::SearchTrackCandidates()---------------------------------" << std::endl;
+      Prune( _tracks, _tracks_to_delete);   
+
+      Print( "_tracks", _tracks);   
+ 
+      streamlog_out(MESSAGE1) << "------------------------------EUTelKalmanFilter::PruneTrackCandidates()---------------------------------" << std::endl;
     }
     
     /** Perform Kalman filter track search and track fit */
