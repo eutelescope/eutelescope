@@ -1413,15 +1413,13 @@ namespace eutelescope {
             streamlog_out(MESSAGE1) << "fitDIRg2= " << trackDirGlobal[0] << " " << trackDirGlobal[1] << " " << trackDirGlobal[2] << std::endl;
             streamlog_out(MESSAGE1) << "fitDIRl2= " << trackDirLocal[0] << " " << trackDirLocal[1] << " " << trackDirLocal[2] << std::endl;
    
-
-
-                EVENT::FloatVec hitcov(4);
+            EVENT::FloatVec hitcov(4);
                 hitcov[0]=0.01;
                 hitcov[1]=0.00;
                 hitcov[2]=0.01;
                 hitcov[3]=0.00;
 
-                // check Processor Parameters for plane resolution // Denys
+            // check Processor Parameters for plane resolution // Denys
                 if( _paramterIdXResolutionVec.size() > 0 && _paramterIdYResolutionVec.size() > 0 )
                 {
                   for(int izPlane=0;izPlane<_paramterIdPlaneVec.size();izPlane++)
@@ -1460,9 +1458,9 @@ namespace eutelescope {
 // add scatterrers
                 addSiPlaneScattererGBL(point, scat, scatPrecSensor, planeID, p);
 
-// add global derivatives derived from the track parameters after the track fit (coordinate system?)
+// add global derivatives derived from the track parameters after the track fit (coordinate system?) 
+// this one needed only for alignment with millepede
                 addGlobalParametersGBL( point, alDer, globalLabels, planeID, trackPointLocal, trackDirLocal[0], trackDirLocal[1] );
-
  
                 if ( itrHit != ( trackCandidate.rend() -1) )
                 {
@@ -1484,6 +1482,10 @@ namespace eutelescope {
         gbl::GblTrajectory* traj;
         traj = new gbl::GblTrajectory( pointList, false );
  
+        if ( streamlog_level(DEBUG0) ){
+          traj->Print();
+        }
+
         traj->milleOut( *_mille );
         
         delete traj; 
