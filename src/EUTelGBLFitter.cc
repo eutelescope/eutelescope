@@ -974,7 +974,7 @@ namespace eutelescope {
  
             streamlog_out(DEBUG4) << "FitTracks   ";
             streamlog_out(DEBUG4) << " omega: " << std::setw(8) << (*itTrkCand)->getOmega()  ;
-            streamlog_out(DEBUG4) << " Q: " << std::setw(8) << _beamQ ;
+            streamlog_out(DEBUG4) << " Q:  " << std::setw(8) << _beamQ ;
             streamlog_out(DEBUG4) << " px: " << std::setw(8) << px ;
             streamlog_out(DEBUG4) << " py: " << std::setw(8) << py ;
             streamlog_out(DEBUG4) << " pz: " << std::setw(8) << pt << std::endl;
@@ -1006,8 +1006,8 @@ namespace eutelescope {
               continue;
             }
             // Loop over hits on a track candidate
-//            const EVENT::TrackerHitVec& hits = (*itTrkCand)->getTrackerHits();
-//            EVENT::TrackerHitVec::const_reverse_iterator itHit;
+            // const EVENT::TrackerHitVec& hits = (*itTrkCand)->getTrackerHits();
+            // EVENT::TrackerHitVec::const_reverse_iterator itHit;
             for ( itHit = hits.rbegin(); itHit != hits.rend(); ++itHit) {
                 const int planeID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(*itHit) );
      	 	if ( planeID < 0 ) streamlog_out( WARNING2 ) << "Can't guess sensor ID. Check supplied hits." << std::endl;
@@ -1017,7 +1017,6 @@ namespace eutelescope {
                 double hitPointGlobal[] = {0.,0.,0.};
                 geo::gGeometry().local2Master(planeID,hitPointLocal,hitPointGlobal);
 
-//                const EVENT::FloatVec hitcov = (*itHit)->getCovMatrix();
                 EVENT::FloatVec hitcov(4);
                 hitcov[0]=0.01;
                 hitcov[1]=0.00;
@@ -1042,33 +1041,20 @@ namespace eutelescope {
                 }
                 else
                 {  
-                  hitcov = (*itHit)->getCovMatrix();            
-                  
+                  hitcov = (*itHit)->getCovMatrix();  
                 }
 
                 streamlog_out(DEBUG0) << "Hit covariance matrix: [0: "  << hitcov[0] << "] [1: "  << hitcov[1] << "] [2: "  << hitcov[2] << "] [3: " << hitcov[3]  << std::endl;
 
-//                double xPred = interpolateTrackX(hits, hitPointGlobal[2]);
-//                double yPred = interpolateTrackY(hits, hitPointGlobal[2]);
-
 		const double dz = hitPointGlobal[2] - prevZ;
-//                prevZ = hitPointGlobal[2];
-
-
-//		double hitPointLocal2[] = {0.,0.,0.};
-//                geo::gGeometry().master2Local( hitPointGlobal, hitPointLocal2 );
-//		streamlog_out(MESSAGE4) << "hitl2= " << hitPointLocal2[0] << " " << hitPointLocal2[1] << " " << hitPointLocal2[2] << std::endl;
 
 		streamlog_out(DEBUG4) << "planeID= " << planeID << std::endl;
 		streamlog_out(DEBUG4) << "hitl= " << hitPointLocal[0] << " " << hitPointLocal[1] << " " << hitPointLocal[2] << std::endl;
 		streamlog_out(DEBUG4) << "hitm= " << hitPointGlobal[0] << " " << hitPointGlobal[1] << " " << hitPointGlobal[2] << std::endl;
 		streamlog_out(DEBUG4) << "dz= " << dz << std::endl;
-//		prevState.Print();
 		
 		// Propagate track parameters to the next hit
-// rubinskiy		TVectorD trackParamPrediction = getXYZfromDzNum( invP, prevState[2], prevState[3], prevState[0], prevState[1], refPoint[2], dz );
                 TVectorD trackParamPrediction = getXYZfromDzNum( invP, prevState[2], prevState[3], prevState[0], prevState[1], prevZ, dz );
-//		trackParamPrediction.Print();
                 prevZ = hitPointGlobal[2];
 
                 prevState[0] =   trackParamPrediction[0];
@@ -1242,11 +1228,14 @@ namespace eutelescope {
 
                 if ( chi2 < _chi2cut ) 
                 {
-                    if ( ierr )
+                    if ( 1==1 || ierr )
                     {
-			traj->printTrajectory(1);
-			traj->printData();
-			traj->printPoints(1);
+		        if ( streamlog_level(MESSAGE0) ){
+	        	  std::cout << "FitTrack - trajectory: " << std::endl;
+		 	  traj->printTrajectory(1);
+			  traj->printData();
+	 		  traj->printPoints(1);
+		        }
 		    }
   
                     EVENT::TrackVec::const_iterator begin = _trackCandidates.begin();
@@ -1482,8 +1471,11 @@ namespace eutelescope {
         gbl::GblTrajectory* traj;
         traj = new gbl::GblTrajectory( pointList, false );
  
-        if ( streamlog_level(DEBUG0) ){
-          traj->Print();
+        if ( streamlog_level(MESSAGE0) ){
+          std::cout << "MilleOut - trajectory: " << std::endl;
+ 	  traj->printTrajectory(1);
+	  traj->printData();
+ 	  traj->printPoints(1);
         }
 
         traj->milleOut( *_mille );
