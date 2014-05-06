@@ -58,8 +58,6 @@
 #include "TVector3.h"
 
 //  Forward Declarations
-class EVENT::TrackerHit;
-class IMPL::LCCollectionVec;
 class TMinuit;
 
 namespace eutelescope {
