@@ -672,7 +672,7 @@ namespace eutelescope {
                   
             gblTraj->getResults( hitGblLabel, corrections, correctionsCov );
             
-            streamlog_out(DEBUG2) << "Corrections: " << std::endl;
+            streamlog_out(DEBUG2) << "LCIO - Corrections: " << std::endl;
             streamlog_message( DEBUG2, corrections.Print();, std::endl; );
 /// get measured hit position:
 // in local:
@@ -1257,7 +1257,7 @@ namespace eutelescope {
                       prepareLCIOTrack( traj, (*itTrkCand)->getTrackerHits(), chi2, ndf, invP, 0., 0., 0., 0. );
                     }
 
-                    // Prepare and write Mille Out
+                    // Prepare and write Mille Out only when enabled (and chi2 is below _chi2cut)
                     if (_alignmentMode != Utility::noAlignment) 
                     {
 //                     prepareMilleOut( traj, (*itTrkCand)->getTrackerHits(), chi2, ndf, invP, 0., 0., 0., 0. );
@@ -1365,7 +1365,7 @@ namespace eutelescope {
                   
             gblTraj->getResults( hitGblLabel, corrections, correctionsCov );
             
-            streamlog_out(MESSAGE0) << "Corrections: " << std::endl;
+            streamlog_out(MESSAGE0) << "MilleOut - Corrections: " << std::endl;
             streamlog_message( MESSAGE0, corrections.Print();, std::endl; );
             
             gblTraj->getMeasResults( hitGblLabel, numData, residual, measErr, residualErr, downWeight);
@@ -1376,17 +1376,15 @@ namespace eutelescope {
             streamlog_out(DEBUG1) << "meas point : " << hitGblLabel << std::endl;
 	    streamlog_out(DEBUG1) << "p0 : " << pos[0] << " p1: " << pos[1] << " p2: " << pos[2] << std::endl;
 
-	    double hitPointLocal[] = {pos[0], pos[1], pos[2]};
+	    double hitPointLocal[]  = {pos[0], pos[1], pos[2]};
             double hitPointGlobal[] = {0.,0.,0.};
             geo::gGeometry().local2Master( planeID, hitPointLocal , hitPointGlobal);
             streamlog_out(MESSAGE1) << "hitg2= " << hitPointGlobal[0] << " " << hitPointGlobal[1] << " " << hitPointGlobal[2] << std::endl;
             streamlog_out(MESSAGE1) << "hitl2= " << hitPointLocal[0] << " " << hitPointLocal[1] << " " << hitPointLocal[2] << std::endl;
 
-           
             // correct original values to the fitted ones
             pos[0] -= residual[0] ; // residual = meas - fitted -> to get fitted from measured;
             pos[1] -= residual[1] ;
-
 
 	    double trackPointLocal[] = { pos[0], pos[1], pos[2] };
 	    double trackPointGlobal[] = { 0., 0., 0. };
@@ -1394,25 +1392,19 @@ namespace eutelescope {
 
 //--------------- get the track slope...
             const double dz = trackPointGlobal[2] - prevZ;
-//                step = dz; 
-//                prevZ = hitPointGlobal[2];
 
-//                TVectorD trackParamPrediction = getXYZfromDzNum( invP, prevState[2], prevState[3], prevState[0], prevState[1], prevZ, dz );
-//                TVectorD trackParamPrediction = getXYZfromDzNum( invP, prevState[2], prevState[3], prevState[0], prevState[1], refPoint[2], dz );
-                TVectorD trackParamPrediction = getXYZfromDzNum( invP, prevState[2], prevState[3], prevState[0], prevState[1], prevZ, dz );
-                streamlog_message( DEBUG2,                trackParamPrediction.Print();, std::endl; );
-                prevZ = trackPointGlobal[2];
+            TVectorD trackParamPrediction = getXYZfromDzNum( invP, prevState[2], prevState[3], prevState[0], prevState[1], prevZ, dz );
+            streamlog_message( DEBUG2,                trackParamPrediction.Print();, std::endl; );
+            prevZ = trackPointGlobal[2];
 
-                prevState[0] =   trackParamPrediction[0];
-                prevState[1] =   trackParamPrediction[1];
-                prevState[2] =   trackParamPrediction[2];
+            prevState[0] =   trackParamPrediction[0];
+            prevState[1] =   trackParamPrediction[1];
+            prevState[2] =   trackParamPrediction[2];
 //---------------
 
 	    double trackDirGlobal[] = { trackParamPrediction[2], trackParamPrediction[3], 1.};
             double trackDirLocal[] = { 0., 0., 0. };
-//           double trackDirLocal[] = { corrections[1], corrections[2], 1. };
 
-//	    geo::gGeometry().local2MasterVec( planeID, trackDirLocal, trackDirGlobal );
 	    geo::gGeometry().master2LocalVec( planeID, trackDirGlobal, trackDirLocal );
 
             streamlog_out(MESSAGE1) << "fitg2= " << trackPointGlobal[0] << " " << trackPointGlobal[1] << " " << trackPointGlobal[2] << std::endl;
