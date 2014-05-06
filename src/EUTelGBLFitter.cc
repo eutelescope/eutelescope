@@ -1453,10 +1453,8 @@ namespace eutelescope {
                   
                 }
 
+                gbl::GblPoint point(jacPointToPoint);
 
-
-
-            gbl::GblPoint point(jacPointToPoint);
 		// Calculate projection matrix
                 TMatrixD proL2m(2, 2);
                 CalculateProjMatrix(proL2m, hitPointGlobal);
@@ -1468,7 +1466,7 @@ namespace eutelescope {
                 {
 // add measurment (residuals) in the measurement system (module 2D coordinates)
                     addMeasurementsGBL( point, residual, measErr, hitPointLocal, trackPointLocal, hitcov, proL2m);
-               }
+                }
 // add scatterrers
                 addSiPlaneScattererGBL(point, scat, scatPrecSensor, planeID, p);
 
