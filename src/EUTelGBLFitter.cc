@@ -1337,9 +1337,7 @@ namespace eutelescope {
             alDer.ResizeTo(2, 6);
         }
         alDer.Zero();
-
-
-         
+ 
         unsigned int numData;
         TVectorD corrections(5);
         TMatrixDSym correctionsCov(5);
@@ -1494,10 +1492,7 @@ namespace eutelescope {
         gbl::GblTrajectory* traj;
         traj = new gbl::GblTrajectory( pointList, false );
  
-        if ( chi2 < _chi2cut ) 
-        {
-             traj->milleOut( *_mille );
-        }
+        traj->milleOut( *_mille );
         
         delete traj; 
  
