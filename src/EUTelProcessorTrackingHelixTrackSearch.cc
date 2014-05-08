@@ -210,10 +210,6 @@ void EUTelProcessorTrackingHelixTrackSearch::processRunHeader(LCRunHeader* run) 
 
 void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
 
-    if (isFirstEvent()) {
-        // Fill hot pixel map   
-//        _hotPixelMap = Utility::FillHotPixelMap(evt, _hotPixelCollectionName);
-    }
 
     EUTelEventImpl * event = static_cast<EUTelEventImpl*> (evt);
 
@@ -263,10 +259,11 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
         bool isReady = static_cast<EUTelKalmanFilter*>(_trackFitter)->initialise();
         if ( isReady )  {
             streamlog_out( DEBUG1 ) << "Trying to find tracks..." << endl;
- //            _trackFitter->FitTracks( );
+//replace this one
+//            _trackFitter->FitTracks( );
+// with two new ones:
             _trackFitter->SearchTrackCandidates( );
             _trackFitter->PruneTrackCandidates( );
-            return ;
 
 
             streamlog_out( DEBUG1 ) << "Retrieving track candidates..." << endl;
