@@ -1240,8 +1240,7 @@ namespace eutelescope {
 		        }
 		    }
   
- //                    EVENT::TrackVec::const_iterator begin = _trackCandidates.begin();
-                    EVENT::TrackVec::iterator begin = _trackCandidates.begin();
+                    EVENT::TrackVec::const_iterator begin = _trackCandidates.begin();
                     _gblTrackCandidates.insert( std::make_pair( std::distance( begin, itTrkCand ), traj ) );
                 
                     // Write fit result
