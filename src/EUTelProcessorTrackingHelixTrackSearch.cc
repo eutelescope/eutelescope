@@ -210,7 +210,6 @@ void EUTelProcessorTrackingHelixTrackSearch::processRunHeader(LCRunHeader* run) 
 
 void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
 
-
     EUTelEventImpl * event = static_cast<EUTelEventImpl*> (evt);
 
     // Do not process last or unknown events
@@ -228,6 +227,7 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
     LCCollection* col = NULL;
     try {
         col = evt->getCollection(_hitInputCollectionName);
+        streamlog_out(DEBUG1) << "collection : " <<_hitInputCollectionName << " retrieved" << std::endl;
     } catch (DataNotAvailableException e) {
         streamlog_out(WARNING2) << _hitInputCollectionName << " collection not available" << std::endl;
         throw marlin::SkipEventException(this);
