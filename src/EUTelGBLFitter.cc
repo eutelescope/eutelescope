@@ -467,7 +467,6 @@ namespace eutelescope {
         _hitId2GblPointLabelMille.clear();
     }
 
-
     /** Add a measurement to GBL point
      * 
      * @param point
@@ -481,16 +480,16 @@ namespace eutelescope {
     void EUTelGBLFitter::addMeasurementsGBL(gbl::GblPoint& point, TVectorD& meas, TVectorD& measPrec, const double* hitpos,
             const double* predpos, const EVENT::FloatVec& hitcov, TMatrixD& proL2m) {
      
-        streamlog_out(DEBUG3) << " addMeasurementsGBL " << std::endl;
+        streamlog_out(DEBUG4) << " addMeasurementsGBL " << std::endl;
  
         meas[0] = hitpos[0] - predpos[0];
         meas[1] = hitpos[1] - predpos[1];
         measPrec[0] = 1. / hitcov[0];	// cov(x,x)
         measPrec[1] = 1. / hitcov[2];	// cov(y,y)
 
-        streamlog_out(DEBUG0) << "Residuals:" << std::endl;
-        streamlog_out(DEBUG0) << "X:" << std::setw(20) << meas[0] << std::setw(20) << measPrec[0] << std::endl;
-        streamlog_out(DEBUG0) << "Y:" << std::setw(20) << meas[1] << std::setw(20) << measPrec[1] << std::endl;
+        streamlog_out(DEBUG4) << "Residuals:" << std::endl;
+        streamlog_out(DEBUG4) << "X:" << std::setw(20) << meas[0] << std::setw(20) << measPrec[0] << std::endl;
+        streamlog_out(DEBUG4) << "Y:" << std::setw(20) << meas[1] << std::setw(20) << measPrec[1] << std::endl;
 
         point.addMeasurement(proL2m, meas, measPrec);
     }
@@ -511,10 +510,10 @@ namespace eutelescope {
         const double thicknessSi        = geo::gGeometry()._siPlanesLayerLayout->getSensitiveThickness(iPlane);
         const double thicknessKap       = geo::gGeometry()._siPlanesLayerLayout->getLayerThickness(iPlane);
 
-        const double X0Si = thicknessSi / radlenSi; // Si 
+        const double X0Si  = thicknessSi / radlenSi; // Si 
         const double X0Kap = thicknessKap / radlenKap; // Kapton                
 
-        const double tetSi = Utility::getThetaRMSHighland(p, X0Si);
+        const double tetSi  = Utility::getThetaRMSHighland(p, X0Si);
         const double tetKap = Utility::getThetaRMSHighland(p, X0Kap);
 
         scatPrecSensor[0] = 1.0 / (tetSi * tetSi + tetKap * tetKap);
@@ -539,7 +538,7 @@ namespace eutelescope {
     void EUTelGBLFitter::addGlobalParametersGBL(gbl::GblPoint& point, TMatrixD& alDer, std::vector<int>& globalLabels, int iPlane,
             const double* predpos, double xSlope, double ySlope) {
 
-        streamlog_out(MESSAGE1) << " addGlobalPArametersGBL " << std::endl;
+        streamlog_out(MESSAGE1) << " addGlobalParametersGBL " << std::endl;
 
         alDer[0][0] = -1.0; // dx/dx
         alDer[0][1] =  0.0; // dx/dy
@@ -1004,6 +1003,8 @@ namespace eutelescope {
             if( imatch != _paramterIdPlaneVec.size() ) 
             { 
               streamlog_out(MESSAGE1) << " Number of hits does not correspond to the number of planes selected for tracking" << std::endl;
+//              delete ( *itTrkCand );
+//              itTrkCand = _trackCandidates.erase( itTrkCand ); itTrkCand--;
               continue;
             }
             // Loop over hits on a track candidate
@@ -1229,7 +1230,7 @@ namespace eutelescope {
 
                 if ( chi2 < _chi2cut ) 
                 {
-                    if ( 1==1 || ierr )
+                    if ( ierr )
                     {
 		        if ( streamlog_level(MESSAGE0) ){
 	        	  std::cout << "FitTrack - trajectory: " << std::endl;
@@ -1239,7 +1240,8 @@ namespace eutelescope {
 		        }
 		    }
   
-                    EVENT::TrackVec::const_iterator begin = _trackCandidates.begin();
+ //                    EVENT::TrackVec::const_iterator begin = _trackCandidates.begin();
+                    EVENT::TrackVec::iterator begin = _trackCandidates.begin();
                     _gblTrackCandidates.insert( std::make_pair( std::distance( begin, itTrkCand ), traj ) );
                 
                     // Write fit result
