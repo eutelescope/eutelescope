@@ -597,7 +597,8 @@ namespace eutelescope
   enum SparsePixelType {
     kEUTelBaseSparsePixel   = 0,
     kEUTelSimpleSparsePixel = 1,
-    kEUTelAPIXSparsePixel   = 2,
+    kEUTelGenericSparsePixel = 2,
+    kEUTelGeometricPixel = 3,
     // add here your implementation
     kUnknownPixelType       = 31
   };
