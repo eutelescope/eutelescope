@@ -581,10 +581,8 @@ namespace eutelescope
   enum ClusterType {
     kEUTelFFClusterImpl       = 0,
     kEUTelSparseClusterImpl   = 1,
-    kEUTelSparseCluster2Impl  = 2,
-    kEUTelDFFClusterImpl      = 3,
-    kEUTelBrickedClusterImpl  = 4,
-    kEUTelAPIXClusterImpl     = 5, 
+    kEUTelDFFClusterImpl      = 2,
+    kEUTelBrickedClusterImpl  = 3,
     // add here all the other cluster type numbering them in between 0
     // and 31 unknown
     kUnknown                  = 31
