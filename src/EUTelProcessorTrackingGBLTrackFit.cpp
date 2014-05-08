@@ -385,10 +385,6 @@ void EUTelProcessorTrackingGBLTrackFit::processRunHeader(LCRunHeader * run) {
 
 void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
 
-    if (isFirstEvent()) {
-        ;
-    }
-
     EUTelEventImpl * event = static_cast<EUTelEventImpl*> (evt);
 
     // Do not process last events
@@ -405,6 +401,7 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
     LCCollection* col = NULL;
     try {
         col = evt->getCollection(_trackCandidateHitsInputCollectionName);
+        streamlog_out(DEBUG1) << "collection : " << _trackCandidateHitsInputCollectionName << " retrieved" << std::endl;
     } catch (DataNotAvailableException e) {
         streamlog_out(MESSAGE0) << _trackCandidateHitsInputCollectionName << " collection not available" << std::endl;
         throw marlin::SkipEventException(this);
@@ -453,6 +450,18 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
             _trackFitter->FitTracks();
 //             _trackFitter->FitSingleTrackCandidate();
 
+            IMPL::LCCollectionVec* fittrackvec;
+            fittrackvec = static_cast<EUTelGBLFitter*> (_trackFitter)->GetFitTrackVec();
+            
+            if( fittrackvec == 0 )  {
+              streamlog_out( MESSAGE0 ) << " fittrackvec is null " << std::endl;  
+              return;
+            }
+
+            if( fittrackvec->size() == 0 )  {
+              streamlog_out( MESSAGE0 ) << " fittrackvec is empty " << std::endl;  
+              return;
+            }
 
             //
             if( !_flag_nohistos && 1==1 ) {
@@ -464,14 +473,11 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
             int ndfTrk = 0;
             double p = 0.;
 
-            IMPL::LCCollectionVec* fittrackvec;
-            fittrackvec = static_cast<EUTelGBLFitter*> (_trackFitter)->GetFitTrackVec();
-            IMPL::LCCollectionVec::const_iterator itFitTrack;
+           IMPL::LCCollectionVec::const_iterator itFitTrack;
 
 
             // Loop over fitted tracks
             for (itFitTrack = fittrackvec->begin(); itFitTrack != fittrackvec->end(); ++itFitTrack) {
-
 
                 chi2Trk =static_cast<TrackImpl*> (*itFitTrack)->getChi2();
                 ndfTrk = static_cast<TrackImpl*> (*itFitTrack)->getNdf();
@@ -489,9 +495,12 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
                 int iCounter = std::distance( begin, itFitTrack );
                 gbl::GblTrajectory* gblTraj = ( *gblTracks.find( iCounter ) ).second;
                 if ( gblTraj == NULL ) {
-                    streamlog_out( WARNING1 ) << "Can't find GBL trajectory object. Skipping track" << std::endl;
+                    streamlog_out( WARNING1 ) << "Can't find GBL trajectory object #"<< iCounter << " of " << fittrackvec->size() <<". Skipping track" << std::endl;
                     continue;
+                }else{
+                    streamlog_out( MESSAGE1 ) << "found GBL trajectory object #"<< iCounter << " of " << fittrackvec->size() <<". chi2:" << chi2Trk << " max:" << _maxMilleChi2Cut << std::endl;
                 }
+ 
 
                 const std::map<long, int> gblPointLabel = static_cast < EUTelGBLFitter* > ( _trackFitter )->getHitId2GblPointLabel( );
                 const EVENT::TrackerHitVec& trackHits = static_cast < TrackImpl* > ( *itFitTrack )->getTrackerHits( );
@@ -901,12 +910,12 @@ void EUTelProcessorTrackingGBLTrackFit::writeMilleSteeringFile() {
         // if plane not excluded
         if ( !isPlaneExcluded ) {
 
-            const string initUncertaintyXShift = (isFixedXShift) ? "-1." : "0.001";
-            const string initUncertaintyYShift = (isFixedYShift) ? "-1." : "0.001";
-            const string initUncertaintyZShift = (isFixedZShift) ? "-1." : "1.00";
-            const string initUncertaintyXRotation = (isFixedXRotation) ? "-1." : "0.001";
-            const string initUncertaintyYRotation = (isFixedYRotation) ? "-1." : "0.001";
-            const string initUncertaintyZRotation = (isFixedZRotation) ? "-1." : "0.00001";
+            const string initUncertaintyXShift = (isFixedXShift) ? "-1." : "0.01";
+            const string initUncertaintyYShift = (isFixedYShift) ? "-1." : "0.01";
+            const string initUncertaintyZShift = (isFixedZShift) ? "-1." : "0.01";
+            const string initUncertaintyXRotation = (isFixedXRotation) ? "-1." : "0.01";
+            const string initUncertaintyYRotation = (isFixedYRotation) ? "-1." : "0.01";
+            const string initUncertaintyZRotation = (isFixedZRotation) ? "-1." : "0.01";
             
             const double initXshift = (isFixedXShift) ? 0. : _seedAlignmentConstants._xResiduals[sensorId]/_seedAlignmentConstants._nxResiduals[sensorId];
             const double initYshift = (isFixedYShift) ? 0. : _seedAlignmentConstants._yResiduals[sensorId]/_seedAlignmentConstants._nyResiduals[sensorId];
