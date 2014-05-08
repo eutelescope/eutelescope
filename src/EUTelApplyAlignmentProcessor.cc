@@ -23,8 +23,7 @@
 #include "EUTelDFFClusterImpl.h"
 #include "EUTelBrickedClusterImpl.h"
 #include "EUTelSparseClusterImpl.h"
-#include "EUTelSparseCluster2Impl.h"
-#
+
 // ROOT includes:
 #include "TVector3.h"
 #include "TVector2.h"

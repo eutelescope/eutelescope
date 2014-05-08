@@ -33,7 +33,6 @@
 #include "EUTelExhaustiveTrackFinder.h"
 #include "EUTelGeometryTelescopeGeoDescription.h"
 // Cluster types
-#include "EUTelSparseCluster2Impl.h"
 #include "EUTelSparseClusterImpl.h"
 #include "EUTelBrickedClusterImpl.h"
 #include "EUTelDFFClusterImpl.h"

@@ -26,8 +26,7 @@
 #include "EUTelDFFClusterImpl.h"
 #include "EUTelBrickedClusterImpl.h"
 #include "EUTelSparseClusterImpl.h"
-#include "EUTelSparseCluster2Impl.h"
-#
+
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <marlin/AIDAProcessor.h>
 #include <AIDA/IHistogramFactory.h>

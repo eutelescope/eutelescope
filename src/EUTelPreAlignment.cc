@@ -10,7 +10,6 @@
 #include "EUTelDFFClusterImpl.h"
 #include "EUTelBrickedClusterImpl.h"
 #include "EUTelSparseClusterImpl.h"
-#include "EUTelSparseCluster2Impl.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"

@@ -22,7 +22,6 @@
 #include "EUTelDFFClusterImpl.h"
 #include "EUTelBrickedClusterImpl.h"
 #include "EUTelSparseClusterImpl.h"
-#include "EUTelSparseCluster2Impl.h"
 #include "EUTelExceptions.h"
 #include "EUTelPStream.h"
 #include "EUTelAlignmentConstant.h"

@@ -43,7 +43,6 @@
 #include "EUTelGeometryTelescopeGeoDescription.h"
 
 // Cluster types
-class EUTelSparseCluster2Impl;
 class EUTelSparseClusterImpl;
 class EUTelBrickedClusterImpl;
 class EUTelDFFClusterImpl;

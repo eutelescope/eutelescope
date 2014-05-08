@@ -20,7 +20,6 @@
 #include "EUTelVirtualCluster.h"
 #include "EUTelFFClusterImpl.h"
 #include "EUTelSparseClusterImpl.h"
-#include "EUTelSparseCluster2Impl.h"
 #include "EUTelExceptions.h"
 
 // marlin includes ".h"

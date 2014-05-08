@@ -37,8 +37,6 @@
 #include "EUTelSparseDataImpl.h"
 #include "EUTelSparseClusterImpl.h"
 #include "EUTelSparseData2Impl.h"
-#include "EUTelSparseCluster2Impl.h"
-
 
 // gear includes <.h>
 #include <gear/GearMgr.h>
