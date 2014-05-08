@@ -234,27 +234,7 @@ void  EUTelPreAlign::FillHotPixelMap(LCEvent *event)
 
       int sensorID              = static_cast<int > ( cellDecoder( hotPixelData )["sensorID"] );
 
-      if( type  == kEUTelAPIXSparsePixel)
-	{  
-	  auto_ptr<EUTelSparseDataImpl<EUTelAPIXSparsePixel > > apixData(new EUTelSparseDataImpl<EUTelAPIXSparsePixel> ( hotPixelData ));
-	  EUTelAPIXSparsePixel apixPixel;
-	  //Push all single Pixels of one plane in the apixPixelVec
-	  for(  unsigned int iPixel = 0; iPixel < apixData->size(); iPixel++ ) 
-	    {
-	      std::vector<int> apixColVec();
-	      apixData->getSparsePixelAt( iPixel, &apixPixel);
-
-	      try
-		{
-		  _hotPixelMap[sensorID].push_back(std::make_pair(apixPixel.getXCoord(), apixPixel.getYCoord()));
-		}
-	      catch(...)
-		{
-		  streamlog_out ( ERROR5 ) << " cannot add pixel to hotpixel map!"  << endl; 
-		}
-	    }
-	}
-      else if( type  ==  kEUTelSimpleSparsePixel )
+      if( type  ==  kEUTelSimpleSparsePixel )
 	{  
 	  auto_ptr<EUTelSparseClusterImpl< EUTelSimpleSparsePixel > > m26Data( new EUTelSparseClusterImpl< EUTelSimpleSparsePixel >   ( hotPixelData ) );
 
@@ -471,42 +451,6 @@ bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit)
 	  // fixed cluster implementation. Remember it can come from
 	  // both RAW and ZS data
 	  streamlog_out ( WARNING5 ) << " Hit type kEUTelFFClusterImpl is not implemented in hotPixel finder method, all pixels are considered for PreAlignment." <<  endl;
-	} 
-      else if ( hit->getType() == kEUTelAPIXClusterImpl ) 
-	{
-
-	  TrackerDataImpl * clusterFrame = static_cast<TrackerDataImpl*> ( clusterVector[0] );
-	  eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel > *apixCluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);
-          
-	  int sensorID = apixCluster->getDetectorID();
-	  for (unsigned int iPixel = 0; iPixel < apixCluster->size(); ++iPixel) 
-	    {
-	      EUTelAPIXSparsePixel apixPixel;
-	      apixCluster->getSparsePixelAt(iPixel, &apixPixel);
-	      {
-		try{
-		  if( std::find(_hotPixelMap.at(sensorID).begin(), 
-				_hotPixelMap.at(sensorID).end(),
-				std::make_pair(apixPixel.getXCoord(), apixPixel.getYCoord()))
-		      != _hotPixelMap.at(sensorID).end() ) {
-		    skipHit = true; 	      
-		    delete apixCluster;                        
-		    return true; // if TRUE  this hit will be skipped
-		  }
-		  else
-		    { 
-		      skipHit = false;
-		    }
-		}
-		catch(const std::out_of_range& oor){
-		  streamlog_out(DEBUG0) << " Could not find hot pixel map for sensor ID " 
-					<< sensorID << ": " << oor.what() << endl;
-		}
-      
-	      }
-	    }                
-	  delete apixCluster;
-	  return skipHit; // if TRUE  this hit will be skipped
 	} 
       else
 	{

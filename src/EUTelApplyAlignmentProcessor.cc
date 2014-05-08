@@ -17,9 +17,7 @@
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelHistogramManager.h"
 #include "EUTelExceptions.h"
-#include "EUTelAPIXSparsePixel.h"
 #include "EUTelSparseDataImpl.h"
-#include "EUTelAPIXSparseClusterImpl.h"
 #include "EUTelVirtualCluster.h"
 #include "EUTelFFClusterImpl.h"
 #include "EUTelDFFClusterImpl.h"
@@ -2081,11 +2079,6 @@ int EUTelApplyAlignmentProcessor::guessSensorID( TrackerHitImpl * hit ) {
               // both RAW and ZS data
               cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
             } 
-            else if ( hit->getType() == kEUTelAPIXClusterImpl ) 
-            {
-                TrackerDataImpl * clusterFrame = static_cast<TrackerDataImpl*> ( clusterVector[0] );
-                cluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);
-            }
             else if ( hit->getType() == kEUTelSparseClusterImpl ) 
             {
                cluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel > ( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
@@ -2215,10 +2208,6 @@ void EUTelApplyAlignmentProcessor::TransformToLocalFrame(TrackerHitImpl* outputH
           {
             cluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel > ( static_cast<TrackerDataImpl *> ( clusterVec[i]  ) );
           } 
-          else if ( type == kEUTelAPIXClusterImpl ) 
-          {
-            cluster = new EUTelSparseClusterImpl< EUTelAPIXSparsePixel > ( static_cast<TrackerDataImpl *> ( clusterVec[i]  ) );
-          }
           else 
           {
             streamlog_out ( ERROR4 ) <<  "Unknown cluster type. Sorry for quitting" << endl;

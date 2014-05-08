@@ -433,35 +433,7 @@ namespace eutelescope {
     _trackerData->chargeValues().push_back( static_cast<float> (pixel->getXCoord()) );
     _trackerData->chargeValues().push_back( static_cast<float> (pixel->getYCoord()) );
     _trackerData->chargeValues().push_back( static_cast<float> (pixel->getSignal()) );
-
-    
   } 
-
-  /* APIX specialization
-   * Includes data on timing/lv1
-   */
-  template<>
-  inline EUTelAPIXSparsePixel *  EUTelSparseClusterImpl<EUTelAPIXSparsePixel>::getSparsePixelAt(unsigned int index, 
-											     EUTelAPIXSparsePixel * pixel ) const {
-    if ( index * _nElement + 4 > _trackerData->getChargeValues().size() ) return 0x0;
-    pixel->setXCoord( static_cast<int> ( _trackerData->getChargeValues()[index * _nElement]     ) );
-    pixel->setYCoord( static_cast<int> ( _trackerData->getChargeValues()[index * _nElement + 1] ) );
-    pixel->setSignal( static_cast<int> ( _trackerData->getChargeValues()[index * _nElement + 2] ) );
-    pixel->setChip( static_cast<int> ( _trackerData->getChargeValues()[index * _nElement + 3] ) );
-    pixel->setTime( static_cast<int> ( _trackerData->getChargeValues()[index * _nElement + 4] ) );
-    return pixel;
-  }
-
-  template<>
-  inline void EUTelSparseClusterImpl< EUTelAPIXSparsePixel>::addSparsePixel(EUTelAPIXSparsePixel * pixel) {
-    
-    _trackerData->chargeValues().push_back( static_cast<float> (pixel->getXCoord()) );
-    _trackerData->chargeValues().push_back( static_cast<float> (pixel->getYCoord()) );
-    _trackerData->chargeValues().push_back( static_cast<float> (pixel->getSignal()) );
-    _trackerData->chargeValues().push_back( static_cast<float> (pixel->getChip()) );
-    _trackerData->chargeValues().push_back( static_cast<float> (pixel->getTime()) );
-  }    
-
 
 }
 

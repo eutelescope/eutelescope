@@ -631,9 +631,9 @@ void EUTelDafBase::readHitCollection(LCEvent* event)
 }
 
 bool EUTelDafBase::checkClusterRegion(lcio::TrackerHitImpl* hit, int iden){
-  //cout << "DafBase " << "25" << endl;
-  bool goodRegion(true);
-  if( hit->getType() == kEUTelAPIXClusterImpl ){
+  	//TODO: APIX was removed
+	bool goodRegion(true);
+  /*if( hit->getType() == kEUTelAPIXClusterImpl ){
     auto_ptr<EUTelVirtualCluster> cluster( new EUTelSparseClusterImpl< EUTelAPIXSparsePixel >
   					   ( static_cast<TrackerDataImpl *> ( hit->getRawHits()[0] )));
     // float xPos(0), yPos(0);
@@ -649,7 +649,7 @@ bool EUTelDafBase::checkClusterRegion(lcio::TrackerHitImpl* hit, int iden){
     std::pair<int, int> &rowMinMax = _rowMinMax[iden]; 
     if( (ySeed - ySize / 2) < rowMinMax.first ) { goodRegion = false;}
     if( (ySeed + ySize / 2) > rowMinMax.second ) { goodRegion = false;}
-  }
+  }*/
   //cout << "DafBase " << "26" << endl;
   return(goodRegion);
 }

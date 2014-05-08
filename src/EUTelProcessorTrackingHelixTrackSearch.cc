@@ -333,9 +333,8 @@ void EUTelProcessorTrackingHelixTrackSearch::FillHits(LCEvent * evt,
             // instance of the sparse cluster
             if (pixelType == kEUTelSimpleSparsePixel) {
                 cluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel > (static_cast<TrackerDataImpl *> (clusterVector[ 0 ]));
-            } else if (pixelType == kEUTelAPIXSparsePixel) {
-                cluster = new EUTelSparseClusterImpl<EUTelAPIXSparsePixel > (static_cast<TrackerDataImpl *> (clusterVector[ 0 ]));
-            } else {
+            }
+	    else {
                 streamlog_out(ERROR4) << "Unknown pixel type.  Sorry for quitting." << std::endl;
                 throw UnknownDataTypeException("Pixel type unknown");
             }
