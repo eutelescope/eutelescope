@@ -1094,7 +1094,7 @@ void  EUTelMille::FillHotPixelMap(LCEvent *event)
 
 	   int sensorID              = static_cast<int > ( cellDecoder( hotPixelData )["sensorID"] );
 
-           else if( type  ==  kEUTelSimpleSparsePixel )
+           if( type  ==  kEUTelSimpleSparsePixel )
            {  
               auto_ptr<EUTelSparseClusterImpl< EUTelSimpleSparsePixel > > m26Data( new EUTelSparseClusterImpl< EUTelSimpleSparsePixel >   ( hotPixelData ) );
 

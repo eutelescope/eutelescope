@@ -268,5 +268,16 @@ namespace eutelescope {
 
   }
 
-}
+	// !Template specialization fo the fillPixelVec method
+	template<>
+	inline void EUTelSparseData2Impl< EUTelSimpleSparsePixel>::fillPixelVec()
+	{
+		for ( unsigned int index = 0 ; index < _trackerData->getChargeValues().size() ; index += 3 )
+		{
+       			_pixelVec.push_back( EUTelSimpleSparsePixel( static_cast< short >(_trackerData->getChargeValues()[ index ]),
+			static_cast< short >(_trackerData->getChargeValues()[ index + 1 ]),
+			static_cast< short >(_trackerData->getChargeValues()[ index + 2 ]) ) );
+    		}
+	}
+}	
 #endif
