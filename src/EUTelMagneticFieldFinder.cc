@@ -275,7 +275,7 @@ namespace eutelescope {
       int itrk = 0 ;
       std::vector< IMPL::TrackImpl* >::iterator itTrk;
 
-      for (  itTrk = _collection.begin(); itTrk != _collection.end();  itrk++ ) 
+      for (  itTrk = _collection.begin(); itTrk != _collection.end();) 
       {
          
          bool iend = std::find( _collection_to_delete.begin(), _collection_to_delete.end(), (*itTrk) ) == _collection_to_delete.end(); 
@@ -283,6 +283,7 @@ namespace eutelescope {
          {
            streamlog_out(DEBUG3) << " track " << itrk << " at " << (*itTrk) << " NOT found  in _collection_to_delete " << std::endl;
 itTrk++;
+	   itrk++ ;
          } else {
            streamlog_out(DEBUG3) << " track " << itrk << " at " << (*itTrk) << "     found  in _collection_to_delete, deleting ... " << std::endl;
            delete (*itTrk);
@@ -328,7 +329,7 @@ itTrk++;
                streamlog_out ( WARNING0 ) << "track _tracksCartesian return a NULL state, skip this one " << endl; 
                isGoodTrack = false;
                delete (*itTrk);
-               itTrk = _tracksCartesian.erase( itTrk );
+               itTrk = _tracksCartesian.erase( itTrk ); itTrk--;
                continue;
             }
  
@@ -338,17 +339,17 @@ itTrk++;
                streamlog_out ( DEBUG1 ) << "Track candidate has to many missing hits." << std::endl;
                streamlog_out ( DEBUG1 ) << "Removing this track candidate from further consideration." << std::endl;
                delete (*itTrk);
-//               itTrk = _tracksCartesian.erase( itTrk ); // comment for this line ???
                isGoodTrack = false;
-            }
+               itTrk = _tracksCartesian.erase( itTrk ); itTrk--; // rubinsky 08-05-14
+           }
 
             if ( isGoodTrack ) {
                streamlog_out(MESSAGE0) << local_itTrk << " of " << size_itTrk << " hits on track " << *itTrk << " with " <<  ( *itTrk )->getTrackerHits( ).size( ) << " expecting at least " << geo::gGeometry( ).nPlanes( ) - _allowedMissingHits << endl;
                state->setLocation( EUTelTrackStateImpl::AtLastHit );
                 _tracks.push_back( cartesian2LCIOTrack( *itTrk ) );
                delete (*itTrk);
-               //  ++itTrk;  
-            }
+               itTrk = _tracksCartesian.erase( itTrk ); itTrk--; // rubinsky 08-05-14
+           }
             streamlog_out(MESSAGE0) << "finished : " << local_itTrk << " of " << size_itTrk << endl;
             local_itTrk++;
         }
