@@ -1,0 +1,32 @@
+/*
+* This source code is part of the Eutelescope package of Marlin.
+* You are free to use this source files for your own development as
+* long as it stays in a public research context. You are not
+* allowed to use it for commercial purpose. You must put this
+* header with author names in all development based on this file.
+*
+*/
+#ifndef EUTELTRACKERDATAINTERFACER_TCC
+#define EUTELTRACKERDATAINTERFACER_TCC
+
+namespace eutelescope {
+
+	//default constructor
+	template<class PixelType>
+	EUTelTrackerDataInterfacer<PixelType>::EUTelGenericSparseDataImpl(IMPL::TrackerDataImpl* data): _trackerData(data), _nElement(), _type(), _pixelVec()
+	{
+		std::auto_ptr<PixelType> pixel ( new PixelType );
+		_nElement = pixel->getNoOfElements();
+		_type = pixel->getSparsePixelType();
+		_pixelVec.clear();
+		fillPixelVec();
+	}
+
+	template<class PixelType>
+	unsigned int EUTelTrackerDataInterfacer<PixelType>::size() const
+	{
+		return _pixelVec.size();
+	}
+	
+} //namespace
+#endif
