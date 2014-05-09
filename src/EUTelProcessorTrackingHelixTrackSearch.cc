@@ -265,11 +265,30 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
             _trackFitter->SearchTrackCandidates( );
             _trackFitter->PruneTrackCandidates( );
 
-
             streamlog_out( DEBUG1 ) << "Retrieving track candidates..." << endl;
             vector< IMPL::TrackImpl* >& trackCandidates = static_cast < EUTelKalmanFilter* > ( _trackFitter )->getTracks( );
 
+            plotHistos( trackCandidates );
+
+            // Write output collection
+            addTrackCandidateToCollection1( evt, trackCandidates );
+
+        }
+        _nProcessedEvents++;
+
+        if (isFirstEvent()) _isFirstEvent = false;
+    } // if (col != NULL)
+}
+
+
+/** 
+ * Plot few histos.
+ * 
+ */
+void EUTelProcessorTrackingHelixTrackSearch::plotHistos( vector< IMPL::TrackImpl* >& trackCandidates )  {
+
             const int nTracks = trackCandidates.size( );
+ 
             static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_numberTracksCandidatesHistName ] ) -> fill( nTracks );
             streamlog_out( MESSAGE2 ) << "Event #" << _nProcessedEvents << endl;
             streamlog_out( MESSAGE2 ) << "Track finder " << _trackFitter->GetName( ) << " found  " << nTracks << endl;
@@ -291,16 +310,6 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
                 streamlog_out( MESSAGE1 ) << "Track hits end:==============" << std::endl;
                 static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_numberOfHitOnTrackCandidateHistName ] ) -> fill( nHitsOnTrack );
             }
-
-            // Write output collection
-            {
-                if ( nTracks > 0 ) addTrackCandidateToCollection1( evt, trackCandidates );
-            }
-        }
-        _nProcessedEvents++;
-
-        if (isFirstEvent()) _isFirstEvent = false;
-    } // if (col != NULL)
 }
 
 /** 

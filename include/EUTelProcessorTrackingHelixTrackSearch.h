@@ -80,6 +80,7 @@ namespace eutelescope {
         /** Histogram booking */
         void bookHistograms();
 
+        void plotHistos( vector< IMPL::TrackImpl* >& trackCandidates ) ;
 
         // Processor parameters        
 
