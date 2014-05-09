@@ -22,6 +22,7 @@ namespace eutelescope {
   template<class PixelType>
   EUTelSparseClusterImpl<PixelType>::EUTelSparseClusterImpl(IMPL::TrackerDataImpl * data) : 
     EUTelVirtualCluster(data),
+    _rawDataInterfacer(data),
     _nElement(0),
     _type(kUnknownPixelType),
     _noiseValues(),

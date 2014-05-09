@@ -12,6 +12,7 @@
 
 #include <UTIL/CellIDDecoder.h>
 #include "EUTELESCOPE.h"
+#include "EUTelTrackerDataInterfacer.h"
 
 namespace eutelescope {
 
@@ -282,7 +283,7 @@ namespace eutelescope {
      *  @param ySize Odd number to define the y size of the subframe
      *  @return The SNR of the cluster subframe
      */
-    virtual float getClusterSNR(int xSize, int ySize) const ; 
+    virtual float getClusterSNR(int xSize, int ySize) const; 
 
     //! Calculate the cluster SNR with different number of pixels
     /*! This method is a better and faster replacement of the
@@ -292,7 +293,7 @@ namespace eutelescope {
      *  @param nPixels The list of number of pixels
      *  @return The SNRs for each number of pixels
      */ 
-    virtual std::vector<float > getClusterSNR(std::vector<int > nPixels) const  ;
+    virtual std::vector<float > getClusterSNR(std::vector<int > nPixels) const;
 
     //! Return a pointer to the TrackerDataImpl
     /*! This method is used to expose to the public the
@@ -350,17 +351,20 @@ namespace eutelescope {
      *  @param pixel A pointer to the retrieved pixel.
      *  @return A pointer to the retrieved pixel same as @c pixel
      */ 
-    PixelType * getSparsePixelAt(unsigned int index, PixelType * pixel) const ;
+    PixelType * getSparsePixelAt(unsigned int index, PixelType* pixel) const ;
 
 
     //! Add a sparse pixel
     /*! This method is used to add to the current TrackerDataImpl a
      *  new sparse pixel with all the pieces of information.
      */
-    void addSparsePixel(PixelType * pixel);
+    void addSparsePixel(PixelType* pixel);
 
   protected:
-
+    
+    //! The interfacer to the raw data
+    EUTelTrackerDataInterfacer<PixelType> _rawDataInterfacer;
+     
     //! The number of elements in the data structure
     unsigned int _nElement;
 
@@ -391,7 +395,6 @@ namespace eutelescope {
      *  crosschecks have been passed.
      */
     bool _noiseSetSwitch;
-
   };
 
   ////////////////////////////////////////////////////////
