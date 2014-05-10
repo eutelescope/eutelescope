@@ -473,7 +473,7 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
             int ndfTrk = 0;
             double p = 0.;
 
-           IMPL::LCCollectionVec::const_iterator itFitTrack;
+            IMPL::LCCollectionVec::const_iterator itFitTrack;
 
 
             // Loop over fitted tracks

@@ -39,6 +39,7 @@ class TrackImpl;
 
 namespace eutelescope {
     
+
     class MeasurementLayer {
     private:
         DISALLOW_COPY_AND_ASSIGN(MeasurementLayer)
@@ -170,6 +171,17 @@ namespace eutelescope {
             return _beamAngularSpread;
         }
         
+	/* type conversion:
+	*
+	**/
+        double* toDouble(int n, const float * x){
+          double *y = new double[n];
+          for(int i=0;i<n;i++){
+            y[i] = static_cast<double> (x[i]);
+          }
+          return y; 
+        }
+
 
     private:
         /** Flush fitter data stored from previous event */
@@ -184,6 +196,20 @@ namespace eutelescope {
         /** update EUTelTrackState object at a new plane ID*/
         int findNextPlaneEntrance(  EUTelTrackStateImpl* , int  );
 
+        /** a vector of hits found while swimming through the detector planes 
+        * write down and dump into a collection in EUTelProcessorTrackerHelixSearch
+        */
+        EVENT::TrackerHitVec hitFittedVec;
+
+    public:
+        /* need a method to get hitFittedVec
+         * to be consistent with the other methods - passing the object by reference
+         */     
+        EVENT::TrackerHitVec& getHitFittedVec() { 
+          return hitFittedVec;
+        }
+ 
+    private:
         /** do the EUTelTrackState search through all known volumes */
         void propagateFromRefPoint( std::vector< EUTelTrackImpl* >::iterator &);
 

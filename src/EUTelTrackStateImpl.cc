@@ -4,11 +4,11 @@ namespace eutelescope {
 
   // the standard requires static const ints to be defined outside the class declaration
   // so we do this here :
-  const int EUTelTrackStateImpl::AtOther  ; 
+  const int EUTelTrackStateImpl::AtOther     ; 
   const int EUTelTrackStateImpl::AtFirstHit  ; 							    
-  const int EUTelTrackStateImpl::AtLastHit  ;							    
+  const int EUTelTrackStateImpl::AtLastHit   ;							    
     
-    EUTelTrackStateImpl::EUTelTrackStateImpl() :
+    EUTelTrackStateImpl::EUTelTrackStateImpl() : TrackStateImpl(),
         _location(0),
         _tx(0),
         _ty(0),
@@ -64,7 +64,8 @@ namespace eutelescope {
     }
 
     EUTelTrackStateImpl::EUTelTrackStateImpl( const EUTelTrackStateImpl &p ) :
-        AccessChecked(),
+//        AccessChecked(),
+         TrackStateImpl(),
         _location(0),
         _tx(p.getTx()),
         _ty(p.getTy()),
@@ -99,7 +100,7 @@ namespace eutelescope {
     }
 
     void  EUTelTrackStateImpl::setLocation( int location ){
-        checkAccess("EUTelTrackStateImpl::setLocation") ;
+//        checkAccess("EUTelTrackStateImpl::setLocation") ;
 
         // if( location < 0 || location >= EUTelTrackState::Location::size() ){
         //     throw( Exception( " EUTelTrackStateImpl::setLocation called with an undefined Location" )) ;
@@ -108,40 +109,40 @@ namespace eutelescope {
         _location = location  ;
     } 
     void  EUTelTrackStateImpl::setTx( float tx ){
-        checkAccess("EUTelTrackStateImpl::setTx") ;
+//        checkAccess("EUTelTrackStateImpl::setTx") ;
         _tx = tx  ;
     } 
     void  EUTelTrackStateImpl::setTy( float ty ){ 
-        checkAccess("EUTelTrackStateImpl::setTy") ;
+//      checkAccess("EUTelTrackStateImpl::setTy") ;
         _ty = ty ; 
     } 
     void  EUTelTrackStateImpl::setX( float x ) { 
-        checkAccess("EUTelTrackStateImpl::setX") ;
+//      checkAccess("EUTelTrackStateImpl::setX") ;
         _x = x ;
     } 
     void  EUTelTrackStateImpl::setY( float y ){
-        checkAccess("EUTelTrackStateImpl::setY") ;
+//      checkAccess("EUTelTrackStateImpl::setY") ;
         _y = y ; 
     } 
     void  EUTelTrackStateImpl::setInvP( float invp ){
-        checkAccess("EUTelTrackStateImpl::setInvP") ;
+//        checkAccess("EUTelTrackStateImpl::setInvP") ;
         _invp = invp ; 
     } 
     void  EUTelTrackStateImpl::setCovMatrix( const float* cov ){ 
-        checkAccess("EUTelTrackStateImpl::setCovMatrix") ;
+//        checkAccess("EUTelTrackStateImpl::setCovMatrix") ;
         for( int i=0 ; i<TRKSTATENCOVMATRIX ; i++ ){
             _covMatrix[i] = cov[i]  ; 
         }
     } 
     void  EUTelTrackStateImpl::setCovMatrix( const EVENT::FloatVec& cov ){ 
-        checkAccess("EUTelTrackStateImpl::setCovMatrix") ;
+//        checkAccess("EUTelTrackStateImpl::setCovMatrix") ;
         for( int i=0 ; i<TRKSTATENCOVMATRIX ; i++ ){
             _covMatrix[i] = cov[i]  ; 
         }
     } 
 
     void  EUTelTrackStateImpl::setReferencePoint( const float* rPnt ){ 
-        checkAccess("EUTelTrackStateImpl::setReferencePoint") ;
+//        checkAccess("EUTelTrackStateImpl::setReferencePoint") ;
         for( int i=0 ; i<TRKSTATENREFSIZE ; i++ ){
             _reference[i] = rPnt[i]  ; 
         }

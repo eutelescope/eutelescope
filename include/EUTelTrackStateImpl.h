@@ -7,6 +7,9 @@
 
 #include "IMPL/AccessChecked.h"
 
+#include "IMPL/TrackStateImpl.h"
+
+
 #include "LCIOSTLTypes.h"
 
 #include <map>
@@ -17,7 +20,7 @@
 
 namespace eutelescope {
 
-  class EUTelTrackStateImpl : public IMPL::AccessChecked {
+  class EUTelTrackStateImpl : public IMPL::TrackStateImpl { //, IMPL::AccessChecked {
 
   public: 
 
@@ -34,9 +37,9 @@ namespace eutelescope {
     /// Destructor.
     virtual ~EUTelTrackStateImpl() ; 
     
-    static const int AtOther = 0 ; // any location other than the ones defined below	     
-    static const int AtFirstHit = 1 ; 							    
-    static const int AtLastHit = 2 ;							        
+    static const int AtOther    =  0 ; // any location other than the ones defined below	     
+    static const int AtFirstHit = -1 ; 							    
+    static const int AtLastHit  = -2 ;							        
 
     virtual int id() const { return simpleUID() ; }
 

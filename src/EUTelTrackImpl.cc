@@ -61,12 +61,20 @@ namespace eutelescope {
         }
 
     } 
-
+/*
     float EUTelTrackImpl::getTx() const {               return ( _trackStates.size()>0 ? _trackStates[0]->getTx()             : 0 ) ;  }
     float EUTelTrackImpl::getTy() const {               return ( _trackStates.size()>0 ? _trackStates[0]->getTy()            : 0 ) ;  }
     float EUTelTrackImpl::getX() const {                return ( _trackStates.size()>0 ? _trackStates[0]->getX()          : 0 ) ;  }
     float EUTelTrackImpl::getY() const {                return ( _trackStates.size()>0 ? _trackStates[0]->getY()             : 0 ) ;  }
     float EUTelTrackImpl::getInvP() const {             return ( _trackStates.size()>0 ? _trackStates[0]->getInvP()      : 0 ) ;  }
+*/
+    float EUTelTrackImpl::getTx(int i) const {               return ( _trackStates.size()>i ? _trackStates[i]->getTx()        : 0 ) ;  }
+    float EUTelTrackImpl::getTy(int i) const {               return ( _trackStates.size()>i ? _trackStates[i]->getTy()        : 0 ) ;  }
+    float EUTelTrackImpl::getX(int i) const {                return ( _trackStates.size()>i ? _trackStates[i]->getX()         : 0 ) ;  }
+    float EUTelTrackImpl::getY(int i) const {                return ( _trackStates.size()>i ? _trackStates[i]->getY()         : 0 ) ;  }
+    float EUTelTrackImpl::getInvP(int i) const {             return ( _trackStates.size()>i ? _trackStates[i]->getInvP()      : 0 ) ;  }
+
+
     const EVENT::FloatVec& EUTelTrackImpl::getCovMatrix() const {   
       static const EUTelTrackStateImpl dummy ;
       return ( _trackStates.size()>0 ? _trackStates[0]->getCovMatrix()      : dummy.getCovMatrix() ) ;  
@@ -268,13 +276,15 @@ namespace eutelescope {
 
     void  EUTelTrackImpl::addTrackState( EUTelTrackStateImpl* trkstate ) {
         checkAccess("EUTelTrackImpl::addTrackState") ;
-        if( trkstate->getLocation() != EUTelTrackStateImpl::AtOther &&
+        Print();
+        std::cout << " addTrackState  " << trkstate << " of " << _trackStates.size() << std::endl;
+/*        if( trkstate->getLocation() != EUTelTrackStateImpl::AtOther &&
             getTrackState( trkstate->getLocation() ) != NULL )
         {
             std::stringstream ss;
             ss << "another TrackState already exists with Location set to: " << trkstate->getLocation() ;
             throw( lcio::Exception( ss.str() )) ;
-        }
+        }*/
         _trackStates.push_back( trkstate ) ;
     }
 

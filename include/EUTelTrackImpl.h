@@ -44,19 +44,21 @@ namespace eutelescope {
     virtual int id() const { return simpleUID() ; }
  
     virtual void Print(){
-       streamlog_out(MESSAGE0) << "track " << id() <<  " at Tx:" << getTx() << " at Ty:" << getTy() << " getX() " << getX() << " getY() " << getY() << std::endl;
-       PrintTrackStates();   
+//      PrintTrackStates();   
+      for(int i=0; i < this->getTrackStates().size() ; i++) {    
+        streamlog_out(MESSAGE0) << "track " << id() << " state:" << i  << " id: " << (getTrackStates().at(i))->id() << " location: " << (getTrackStates().at(i))->getLocation() << " at "<< getTrackStates().at(i) << " at Tx:" << getTx(i) << " at Ty:" << getTy(i) << " getX() " << getX(i) << " getY() " << getY(i) << std::endl;
+      }
     }
 
-    virtual float getTx() const ;
+    virtual float getTx(int i=0) const ;
 
-    virtual float getTy() const ;
+    virtual float getTy(int i=0) const ;
 
-    virtual float getX() const ;
+    virtual float getX(int i=0) const ;
 
-    virtual float getY() const ;
+    virtual float getY(int i=0) const ;
 
-    virtual float getInvP() const ;
+    virtual float getInvP(int i=0) const ;
 
     /** Covariance matrix of the track parameters. Stored as lower triangle matrix where
      *  the order of parameters is:   d0, phi, omega, z0, tan(lambda).
@@ -97,13 +99,13 @@ namespace eutelescope {
     virtual const EUTelTrackStateVec & getTrackStates() const ;
   
     virtual void PrintTrackStates(){
-      streamlog_out(MESSAGE0) << " printing track states " << _trackStates.size();
+      streamlog_out(MESSAGE0) << " printing track states " << _trackStates.size() << std::endl;
 //      for(unsigned int i=0; i<states.size(); i++){
 //        EUTelTrackStateImpl* state = static_cast<EUTelTrackStateImpl*> (states.at(i));
 //        streamlog_out(MESSAGE0) << state->getLocation() << " ";
 //      } 
        for( unsigned int i=0 ; i < _trackStates.size() ; i++ ){
-          streamlog_out(MESSAGE0)<<     _trackStates[i]->getLocation() << " " ;
+          streamlog_out(MESSAGE0) << i << " of " <<  _trackStates.size() << " location: " <<    _trackStates[i]->getLocation() << std::endl ;
         }
       streamlog_out(MESSAGE0) << std::endl;
   

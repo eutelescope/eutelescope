@@ -95,6 +95,13 @@ _aidaHistoMap1D() {
             _hitInputCollectionName,
             std::string("HitCollection"));
 
+    // TrackerHit output collection
+    registerInputCollection(LCIO::TRACKERHIT,
+            "TrackerHitOutputCollectionName",
+            "Pattern recognition track - output hits collection name",
+            _hitFittedOutputCollectionName,
+            std::string("HitFittedCollection"));
+
     // Track candidate hits output collection
     registerOutputCollection(LCIO::TRACK,
             "TrackCandHitOutputCollectionName",
@@ -102,17 +109,16 @@ _aidaHistoMap1D() {
             _trackCandidateHitsOutputCollectionName,
             std::string("TrackCandidateHitCollection"));
 
-
     // Optional processor parameters that define track finder settings
-    
+     
     // Fitter settings
     
     registerOptionalParameter("MaxMissingHitsPerTrack", "Maximal number of missing hits on a track candidate",
             _maxMissingHitsPerTrackCand, static_cast<int> (0)); // Search full-length tracks by default
-
+    
     registerOptionalParameter("MaxNTracksPerEvent", "Maximal number of track candidates to be found in events",
             _maxNTracks, static_cast<int> (100));
- 
+    
     registerOptionalParameter("NumberOfPlanesToProject", "Maximal number of track candidates to be found in events",
             _planesProject, static_cast<int> (1));
     
@@ -222,11 +228,10 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
                 << " is of unknown type. Continue considering it as a normal Data Event." << std::endl;
     }
 
-    // Try to access collection
-
-    LCCollection* col = NULL;
+    // Try to access Input collection
+    LCCollection* hitMeasuredCollection = NULL;
     try {
-        col = evt->getCollection(_hitInputCollectionName);
+        hitMeasuredCollection = evt->getCollection(_hitInputCollectionName);
         streamlog_out(DEBUG1) << "collection : " <<_hitInputCollectionName << " retrieved" << std::endl;
     } catch (DataNotAvailableException e) {
         streamlog_out(WARNING2) << _hitInputCollectionName << " collection not available" << std::endl;
@@ -234,21 +239,23 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
     }
 
     // this will only be entered if the collection is available
-    if (col != NULL) {
+    if ( hitMeasuredCollection == NULL) {
+        streamlog_out(DEBUG2) << "EUTelProcessorTrackingHelixTrackSearch :: processEvent() hitMeasuredCollection is void" << std::endl;
+    }
+    else if ( hitMeasuredCollection != NULL) {
         streamlog_out(DEBUG2) << "EUTelProcessorTrackingHelixTrackSearch::processEvent()" << std::endl;
 
         // Prepare hits for track finder
         EVENT::TrackerHitVec allHitsVec;
-        FillHits(evt, col, allHitsVec);
+        FillHits(evt, hitMeasuredCollection, allHitsVec);
 
 	streamlog_out(MESSAGE0) << "All hits in event start:==============" << std::endl;
 	EVENT::TrackerHitVec::const_iterator itHits;
 	for ( itHits = allHitsVec.begin() ; itHits != allHitsVec.end(); ++itHits ) {
 		const double* uvpos = (*itHits)->getPosition();
                     const int sensorID = geo::gGeometry().getSensorID( static_cast<IMPL::TrackerHitImpl*> (*itHits) );
-                    const int usensorID = Utility::GuessSensorID( static_cast<EVENT::TrackerHit*> (*itHits) );
-
-		streamlog_out(MESSAGE0) << "Hit (id=" << sensorID << " " << usensorID << ") local(u,v) coordinates: (" << uvpos[0] << "," << uvpos[1] << ")" << std::endl;
+//                    const int usensorID = Utility::GuessSensorID( static_cast<EVENT::TrackerHit*> (*itHits) );
+		streamlog_out(MESSAGE0) << "Hit (id=" << sensorID << " " << sensorID << ") local(u,v) coordinates: (" << uvpos[0] << "," << uvpos[1] << ")" << std::endl;
 	}
 	streamlog_out(MESSAGE0) << "All hits in event end:==============" << std::endl;
 
@@ -266,18 +273,22 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
             _trackFitter->PruneTrackCandidates( );
 
             streamlog_out( DEBUG1 ) << "Retrieving track candidates..." << endl;
-            vector< IMPL::TrackImpl* >& trackCandidates = static_cast < EUTelKalmanFilter* > ( _trackFitter )->getTracks( );
+            vector< IMPL::TrackImpl* >& trackCandidates    = static_cast < EUTelKalmanFilter* > ( _trackFitter )->getTracks( );
+            EVENT::TrackerHitVec trackCandidateHitFitted = static_cast < EUTelKalmanFilter* > ( _trackFitter )->getHitFittedVec( );
 
             plotHistos( trackCandidates );
 
             // Write output collection
+//            addTrackCandidateHitFittedToCollection( evt, trackCandidateHitFitted );
+ 
+           // Write output collection
             addTrackCandidateToCollection1( evt, trackCandidates );
 
         }
         _nProcessedEvents++;
 
         if (isFirstEvent()) _isFirstEvent = false;
-    } // if (col != NULL)
+    } // if ( hitMeasuredCollection != NULL)
 }
 
 
@@ -303,8 +314,8 @@ void EUTelProcessorTrackingHelixTrackSearch::plotHistos( vector< IMPL::TrackImpl
                 for ( itTrkHits = trkHits.begin( ) ; itTrkHits != trkHits.end( ); ++itTrkHits ) {
                     const double* uvpos = ( *itTrkHits )->getPosition( );
                     const int sensorID = geo::gGeometry().getSensorID( static_cast<IMPL::TrackerHitImpl*> (*itTrkHits) );
-                    const int usensorID = Utility::GuessSensorID( static_cast<EVENT::TrackerHit*> (*itTrkHits) );
-                    streamlog_out( MESSAGE1 ) << "Hit (id=" << sensorID << " " << usensorID << ") local(u,v) coordinates: (" << uvpos[0] << "," << uvpos[1] << ")" << std::endl;
+//                    const int usensorID = Utility::GuessSensorID( static_cast<EVENT::TrackerHit*> (*itTrkHits) );
+                    streamlog_out( MESSAGE1 ) << "Hit (id=" << sensorID << " " << sensorID << ") local(u,v) coordinates: (" << uvpos[0] << "," << uvpos[1] << ")" << std::endl;
                     static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_HitOnTrackCandidateHistName ] ) -> fill( sensorID );
                 }
                 streamlog_out( MESSAGE1 ) << "Track hits end:==============" << std::endl;
@@ -337,6 +348,8 @@ void EUTelProcessorTrackingHelixTrackSearch::FillHits(LCEvent * evt,
 //            continue;
 //        }
 
+        if( hit->getType() > 31 ) continue; // how do we mark measurement hits ? those that contain cluster information ??
+
         LCObjectVec clusterVector = hit->getRawHits();
 
         EUTelVirtualCluster * cluster;
@@ -364,12 +377,53 @@ void EUTelProcessorTrackingHelixTrackSearch::FillHits(LCEvent * evt,
             delete cluster; // <--- destroying the cluster
         }
 
-        const int localSensorID = Utility::GuessSensorID( hit );  // localSensorID == -1, if detector ID was not found
+        const int localSensorID = geo::gGeometry().getSensorID( static_cast<IMPL::TrackerHitImpl*> (hit) );
+//       const int localSensorID = Utility::GuessSensorID( hit );  // localSensorID == -1, if detector ID was not found
         if ( localSensorID >= 0 ) allHitsVec.push_back( hit );
         
     } // end loop over all hits in collection
     
 }
+
+/**
+ * Dump track candidate fitted hits into lcio collection.
+ * 
+ * @param evt event pointer
+ * @param trackCandidateHitFirred  vector of hits from Pattern recognition
+ */
+void EUTelProcessorTrackingHelixTrackSearch::addTrackCandidateHitFittedToCollection(LCEvent* evt, EVENT::TrackerHitVec& trackCandidateHitFitted ) {
+    // Prepare output collection
+
+    // Try to access Output collection
+    LCCollectionVec* hitFittedCollection = NULL;
+    try {
+        hitFittedCollection =  static_cast<LCCollectionVec*> ( evt->getCollection(_hitFittedOutputCollectionName) ) ;
+        streamlog_out(DEBUG1) << "collection : " <<_hitFittedOutputCollectionName << " retrieved" << std::endl;
+    } catch (DataNotAvailableException e) {
+        streamlog_out(WARNING2) << _hitFittedOutputCollectionName << " collection not available, creating one ... " << std::endl;
+        hitFittedCollection = new LCCollectionVec(LCIO::TRACKERHIT);
+    }
+
+    // Fill 
+    EVENT::TrackerHitVec::iterator ihit;
+    for ( ihit = trackCandidateHitFitted.begin(); ihit != trackCandidateHitFitted.end(); ++ihit ) {
+        streamlog_out( MESSAGE1 ) << "hit " << (*ihit)->getType() << " hits" << endl;
+        hitFittedCollection->push_back( (*ihit) );
+
+    } // for (size_t itrk = 0; itrk < trackCandidates.size(); itrk++) 
+
+
+    // Write track candidates collection
+    try {
+        streamlog_out(MESSAGE1) << "Getting collection " << _hitFittedOutputCollectionName << endl;
+        evt->getCollection(_trackCandidateHitsOutputCollectionName);
+    } catch (...) {
+        streamlog_out(MESSAGE1) << "Adding collection " << _hitFittedOutputCollectionName << endl;
+        evt->addCollection( hitFittedCollection, _hitFittedOutputCollectionName);
+    }
+
+}
+
 
 /**
  * Dump track candidate into lcio collection.
