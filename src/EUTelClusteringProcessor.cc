@@ -28,6 +28,7 @@
 #include "EUTelHistogramManager.h"
 #include "EUTelMatrixDecoder.h"
 #include "EUTelSparseDataImpl.h"
+#include "EUTelTrackerDataInterfacer.h"
 #include "EUTelSparseClusterImpl.h"
 #include "EUTelSparseData2Impl.h"
 
@@ -485,7 +486,7 @@ void EUTelClusteringProcessor::initializeHotPixelMapVec(  )
         EUTelMatrixDecoder matrixDecoder( noiseDecoder , noise );
 
         // now prepare the EUTelescope interface to sparsified data.  
-        auto_ptr<EUTelSparseDataImpl<EUTelSimpleSparsePixel > >  sparseData(new EUTelSparseDataImpl<EUTelSimpleSparsePixel> ( hotData ));
+        auto_ptr<EUTelTrackerDataInterfacer<EUTelSimpleSparsePixel > >  sparseData(new EUTelTrackerDataInterfacer<EUTelSimpleSparsePixel> ( hotData ));
 
         streamlog_out ( DEBUG1 ) << "Processing sparse data on detector " << sensorID << " with "
                                  << sparseData->size() << " pixels " << endl;
@@ -572,7 +573,7 @@ void EUTelClusteringProcessor::initializeStatusCollection(  )
         EUTelMatrixDecoder matrixDecoder( noiseDecoder , noise );
 
         // now prepare the EUTelescope interface to sparsified data.  
-        auto_ptr<EUTelSparseDataImpl<EUTelSimpleSparsePixel > >  sparseData(new EUTelSparseDataImpl<EUTelSimpleSparsePixel> ( zsData ));
+        auto_ptr<EUTelTrackerDataInterfacer<EUTelSimpleSparsePixel > >  sparseData(new EUTelTrackerDataInterfacer<EUTelSimpleSparsePixel> ( zsData ));
 
         streamlog_out ( DEBUG1 ) << "Processing sparse data on detector " << sensorID << " with "
                                  << sparseData->size() << " pixels " << endl;
@@ -971,8 +972,7 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
     if ( type == kEUTelSimpleSparsePixel ) 
     {
       // now prepare the EUTelescope interface to sparsified data.
-      auto_ptr<EUTelSparseDataImpl<EUTelSimpleSparsePixel > >
-        sparseData(new EUTelSparseDataImpl<EUTelSimpleSparsePixel> ( zsData ));
+      auto_ptr<EUTelTrackerDataInterfacer<EUTelSimpleSparsePixel> > sparseData(new EUTelTrackerDataInterfacer<EUTelSimpleSparsePixel>( zsData ));
 
       streamlog_out ( DEBUG1 ) << "Processing sparse data on detector " << _sensorID << " with "
                                << sparseData->size() << " pixels " << endl;
@@ -1468,8 +1468,7 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
     if ( type == kEUTelSimpleSparsePixel ) {
 
       // now prepare the EUTelescope interface to sparsified data.
-      auto_ptr<EUTelSparseDataImpl<EUTelSimpleSparsePixel > >
-        sparseData(new EUTelSparseDataImpl<EUTelSimpleSparsePixel> ( zsData ));
+      auto_ptr<EUTelTrackerDataInterfacer<EUTelSimpleSparsePixel> > sparseData(new EUTelTrackerDataInterfacer<EUTelSimpleSparsePixel>( zsData ));
 
       streamlog_out ( DEBUG1 ) << "Processing sparse data on detector " << sensorID << " with "
                                << sparseData->size() << " pixels " << endl;
@@ -1769,8 +1768,7 @@ void EUTelClusteringProcessor::zsBrickedClustering(LCEvent * evt, LCCollectionVe
         {
 
           // now prepare the EUTelescope interface to sparsified data.
-          auto_ptr<EUTelSparseDataImpl<EUTelSimpleSparsePixel > >
-            sparseData(new EUTelSparseDataImpl<EUTelSimpleSparsePixel> ( zsData ));
+	  auto_ptr<EUTelTrackerDataInterfacer<EUTelSimpleSparsePixel> > sparseData(new EUTelTrackerDataInterfacer<EUTelSimpleSparsePixel>( zsData ));
 
           streamlog_out ( DEBUG1 ) << "Processing sparse data on detector " << sensorID << " with "
                                    << sparseData->size() << " pixels " << endl;
