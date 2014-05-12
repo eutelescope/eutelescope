@@ -526,7 +526,8 @@ namespace eutelescope
     kGoodCluster       = 0,
     kIncompleteCluster = 1L << 0,
     kBorderCluster     = 1L << 1,
-    kMergedCluster     = 1L << 2
+    kMergedCluster     = 1L << 2,
+    kNoisyCluster      = 1L << 3
   };
 
   //! Cluster quality bit-wise AND operator
