@@ -718,7 +718,9 @@ itTrk++;
 //            // Use beam direction as a seed track state
             const double* uvpos = (*itHit)->getPosition();
             float posLocal[] =  { static_cast<float>(uvpos[0]), static_cast<float>(uvpos[1]), static_cast<float>(uvpos[2]) };
-            const int sensorID = Utility::GuessSensorID( *itHit );
+
+						UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
+						const int sensorID = hitDecoder(static_cast< IMPL::TrackerHitImpl* >(*itHit))["sensorID"];
             double temp[] = {0.,0.,0.};
             geo::gGeometry().local2Master( sensorID, uvpos, temp);
             float posGlobal[] = { static_cast<float>(temp[0]), static_cast<float>(temp[1]), static_cast<float>(temp[2]) };
@@ -1716,7 +1718,8 @@ itTrk++;
         int sensorID = -1;
         EVENT::TrackerHitVec::const_iterator itr;
         for( itr = hits.begin(); itr != hits.end(); ++itr ) {
-            sensorID = Utility::GuessSensorID( *itr );
+						UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
+						const int sensorID = hitDecoder(static_cast< IMPL::TrackerHitImpl* >(*itr))["sensorID"];
             itMeasLayer = measLayers.find( sensorID );
             if ( itMeasLayer != measLayers.end() ) itMeasLayer->second->addHit( *itr );
             else {
