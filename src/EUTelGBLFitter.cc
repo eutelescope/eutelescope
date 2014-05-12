@@ -385,7 +385,8 @@ namespace eutelescope {
     }
 
     double EUTelGBLFitter::interpolateTrackX(const EVENT::TrackerHitVec& trackCand, const double z) const {
-         const int planeIDStart = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(trackCand.front()) );
+				UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
+				const int planeIDStart = hitDecoder(static_cast< IMPL::TrackerHitImpl* >(trackCand.front()))["sensorID"];
         const double* hitPointLocalStart = trackCand.front()->getPosition();
         double hitposStart[] = {hitPointLocalStart[0],hitPointLocalStart[1],hitPointLocalStart[2]};
         double hitPointGlobalStart[] = {0.,0.,0.};
@@ -401,7 +402,8 @@ namespace eutelescope {
     
 
     double EUTelGBLFitter::interpolateTrackY(const EVENT::TrackerHitVec& trackCand, const double z) const {
-        const int planeIDStart = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(trackCand.front()) );
+				UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
+				const int planeIDStart = hitDecoder(static_cast< IMPL::TrackerHitImpl* >(trackCand.front()))["sensorID"];
         const double* hitPointLocalStart = trackCand.front()->getPosition();
         double hitposStart[] = {hitPointLocalStart[0],hitPointLocalStart[1],hitPointLocalStart[2]};
         double hitPointGlobalStart[] = {0.,0.,0.};
@@ -416,7 +418,8 @@ namespace eutelescope {
     }
     
     double EUTelGBLFitter::getTrackSlopeX(const EVENT::TrackerHitVec& trackCand) const {
-        const int planeIDStart = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(trackCand.front()) );
+				UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
+				const int planeIDStart = hitDecoder(static_cast< IMPL::TrackerHitImpl* >(trackCand.front()))["sensorID"];
         const double* hitPointLocalStart = trackCand.front()->getPosition();
         double hitposStart[] = {hitPointLocalStart[0],hitPointLocalStart[1],hitPointLocalStart[2]};
         double hitPointGlobalStart[] = {0.,0.,0.};
@@ -425,7 +428,7 @@ namespace eutelescope {
         double x0 = hitPointGlobalStart[0];
         double z0 = hitPointGlobalStart[2];
 
-        const int planeIDFinish = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(trackCand.back()) );
+				const int planeIDFinish = hitDecoder(static_cast< IMPL::TrackerHitImpl* >(trackCand.back()))["sensorID"];
         const double* hitPointLocalFinish = trackCand.back()->getPosition();
         double hitposFinish[] = {hitPointLocalFinish[0],hitPointLocalFinish[1],hitPointLocalFinish[2]};
         double hitPointGlobalFinish[] = {0.,0.,0.};
@@ -440,7 +443,8 @@ namespace eutelescope {
     }
     
     double EUTelGBLFitter::getTrackSlopeY(const EVENT::TrackerHitVec& trackCand) const {
-        const int planeIDStart = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(trackCand.front()) );
+				UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
+				const int planeIDStart = hitDecoder(static_cast< IMPL::TrackerHitImpl* >(trackCand.front()))["sensorID"];
         const double* hitPointLocalStart = trackCand.front()->getPosition();
         double hitposStart[] = {hitPointLocalStart[0],hitPointLocalStart[1],hitPointLocalStart[2]};
         double hitPointGlobalStart[] = {0.,0.,0.};
@@ -449,7 +453,7 @@ namespace eutelescope {
         double y0 = hitPointGlobalStart[1];
         double z0 = hitPointGlobalStart[2];
 
-        const int planeIDFinish = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(trackCand.back()) );
+				const int planeIDFinish = hitDecoder(static_cast< IMPL::TrackerHitImpl* >(trackCand.back()))["sensorID"];
         const double* hitPointLocalFinish = trackCand.back()->getPosition();
         double hitposFinish[] = {hitPointLocalFinish[0],hitPointLocalFinish[1],hitPointLocalFinish[2]};
         double hitPointGlobalFinish[] = {0.,0.,0.};
@@ -826,7 +830,8 @@ namespace eutelescope {
         EVENT::TrackerHitVec::const_iterator itrHit;
         for ( itrHit = trackCandidate.begin(); itrHit != trackCandidate.end(); ++itrHit ) {
 
-            const int planeID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(*itrHit) );
+						UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
+						const int planeID = hitDecoder(static_cast< IMPL::TrackerHitImpl* >(*itrHit))["sensorID"];
 
             bool excludeFromFit = false;
             if ( std::find( _excludeFromFit.begin(), _excludeFromFit.end(), planeID ) != _excludeFromFit.end() ) excludeFromFit = true;
@@ -880,7 +885,7 @@ namespace eutelescope {
             if ( itrHit != (trackCandidate.end() - 1) ) {
             
 // here we assume that trackCandidate does not contain hits from same plane ! should be checked explicitely somewhere ...
-                    const int nextPlaneID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(*(itrHit + 1)) );
+										const int nextPlaneID = hitDecoder(static_cast< IMPL::TrackerHitImpl* >(*(itrHit+1)))["sensorID"];
                     const double* nextHitPoint = (*(itrHit + 1))->getPosition();
                     double nextHitPointGlobal[] = { 0., 0., 0. };
                     geo::gGeometry().local2Master(nextPlaneID,nextHitPoint,nextHitPointGlobal);
@@ -1013,7 +1018,8 @@ namespace eutelescope {
               start[1] = dpoint[1];
               start[2] = dpoint[2];
               for ( itHit = hits.rbegin(); itHit != hits.rend(); ++itHit) {
-                 const int planeID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(*itHit) );
+								 UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
+								 const int planeID = hitDecoder(static_cast< IMPL::TrackerHitImpl* >(*itHit))["sensorID"];
                  if(planeID == getErrorID)
                  {
                    streamlog_out ( DEBUG4 ) << "match sensor found: extrapl@ " <<  dpoint[0] << " " <<  dpoint[1] << " " << dpoint[2] <<  " @"<< getErrorID << endl;
@@ -1342,8 +1348,9 @@ namespace eutelescope {
 
 // FitTrack analytics:
     void EUTelGBLFitter::FitTracks() {
-        Clear(); // 
-
+        Clear(); //
+				//Decoder created here but used later to determine plane ID from cell ID 
+				UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
         // prepare output collection
         try {
             _fittrackvec = new IMPL::LCCollectionVec( EVENT::LCIO::TRACK );
@@ -1452,7 +1459,7 @@ namespace eutelescope {
             EVENT::TrackerHitVec::const_reverse_iterator itHit;
             int imatch=0;
             for ( itHit = hits.rbegin(); itHit != hits.rend(); ++itHit) {
-              const int planeID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(*itHit) );
+						const int planeID = hitDecoder(static_cast< IMPL::TrackerHitImpl* >(*itHit))["sensorID"];
               for(int izPlane=0;izPlane<_paramterIdPlaneVec.size();izPlane++) {
                 if( _paramterIdPlaneVec[izPlane] == planeID )
                 {  
@@ -1474,7 +1481,7 @@ namespace eutelescope {
             // const EVENT::TrackerHitVec& hits = (*itTrkCand)->getTrackerHits();
             // EVENT::TrackerHitVec::const_reverse_iterator itHit;
             for ( itHit = hits.rbegin(); itHit != hits.rend(); ++itHit) {
-                const int planeID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(*itHit) );
+								const int planeID = hitDecoder(static_cast< IMPL::TrackerHitImpl* >(*(itHit)))["sensorID"];
      	 	if ( planeID < 0 ) streamlog_out( WARNING2 ) << "Can't guess sensor ID. Check supplied hits." << std::endl;
 
 // introduce calculateHitCov function:
@@ -1573,7 +1580,7 @@ namespace eutelescope {
                 if ( itHit != (hits.rend() - 1) ) {
 
                     // Go to global coordinates
-                    const int nextPlaneID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(*(itHit + 1)) );
+										const int nextPlaneID = hitDecoder(static_cast< IMPL::TrackerHitImpl* >(*(itHit+1)))["sensorID"];
                     const double* nextHitPoint = (*(itHit + 1))->getPosition();
                     double nextHitPointGlobal[] = { 0., 0., 0. };
                     geo::gGeometry().local2Master(nextPlaneID,nextHitPoint,nextHitPointGlobal);
@@ -1699,6 +1706,8 @@ namespace eutelescope {
                                           double chi2, int ndf, double omega, double d0, double z0, double phi, double tanlam ) {
 
         const EVENT::TrackerHitVec trackCandidate = (*itTrkCand)->getTrackerHits();
+				//Create instance of Decoder for use later to determine Plane ID
+				UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
 
 // now get starting point:
           TMatrixD jacPointToPoint(5, 5);
@@ -1782,7 +1791,7 @@ namespace eutelescope {
         EVENT::TrackerHitVec::const_reverse_iterator itrHit;
         for ( itrHit = trackCandidate.rbegin(); itrHit != trackCandidate.rend(); ++itrHit ) 
         {
-            const int planeID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(*itrHit) );
+						const int planeID = hitDecoder(static_cast< IMPL::TrackerHitImpl* >(*itrHit))["sensorID"];
 
             const int hitGblLabel = _hitId2GblPointLabel[ (*itrHit)->id() ];
                   
@@ -1888,7 +1897,7 @@ namespace eutelescope {
                 if ( itrHit != ( trackCandidate.rend() -1) )
                 {
                     // Go to global coordinates
-                    const int nextPlaneID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(*(itrHit + 1)) );
+										const int nextPlaneID = hitDecoder(static_cast< IMPL::TrackerHitImpl* >(*(itrHit+1)))["sensorID"];
                     const double* nextHitPoint = (*(itrHit + 1))->getPosition();
                     double nextHitPointGlobal[] = { 0., 0., 0. };
                     geo::gGeometry().local2Master(nextPlaneID,nextHitPoint,nextHitPointGlobal);
