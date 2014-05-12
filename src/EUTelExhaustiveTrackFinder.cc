@@ -52,20 +52,21 @@ namespace eutelescope {
             EVENT::TrackerHitVec::const_iterator itrPrevHit = trackCandidate.begin();
 
             const double zSpacing =  10.;   // [mm] rubinskiy 30-11-2013
-
+						
+						//Create decoder to decode the SensorIDs
+						UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
             EVENT::TrackerHitVec::const_iterator itrHit;
             for ( itrHit = trackCandidate.begin(); itrHit != trackCandidate.end(); ++itrHit ) {
                 
                 // previous hit
-                const int sensorIDPrev = Utility::GuessSensorID(  static_cast< IMPL::TrackerHitImpl* >(*itrPrevHit) );
+ 								const int sensorIDPrev = hitDecoder(static_cast< IMPL::TrackerHitImpl* >(*itrPrevHit))["sensorID"];
                 const double* posPrevHit = (*itrPrevHit)->getPosition();
                 double posPrevHitGlob[] = {0.,0.,0.};
                 geo::gGeometry().local2Master( sensorIDPrev, posPrevHit, posPrevHitGlob);
                 
                 // current hit
-                const int sensorID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(*itrHit) );
+ 								const int sensorID = hitDecoder(static_cast< IMPL::TrackerHitImpl* >(*itrHit))["sensorID"];
                 const double* posHit     = (*itrHit)->getPosition();
-
                 double posHitGlob[] = {0.,0.,0.};
                 geo::gGeometry().local2Master( sensorID, posHit, posHitGlob );
 //                
