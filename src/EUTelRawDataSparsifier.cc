@@ -12,7 +12,7 @@
 // eutelescope includes ".h"
 #include "EUTELESCOPE.h"
 #include "EUTelMatrixDecoder.h"
-#include "EUTelSparseDataImpl.h"
+#include "EUTelTrackerDataInterfacer.h"
 #include "EUTelBaseSparsePixel.h"
 #include "EUTelSimpleSparsePixel.h"
 #include "EUTelExceptions.h"
@@ -207,7 +207,7 @@ void EUTelRawDataSparsifier::processEvent (LCEvent * event) {
 
       if ( _pixelType == kEUTelSimpleSparsePixel ) {
 
-        EUTelSparseDataImpl<EUTelSimpleSparsePixel>  sparseData( sparsified ) ;
+        EUTelTrackerDataInterfacer<EUTelSimpleSparsePixel>  sparseData( sparsified ) ;
         while ( rawIter != rawData->getADCValues().end() ) {
           if (  (*statusIter) == EUTELESCOPE::GOODPIXEL ) {
             float data      = (*rawIter) - (*pedIter);

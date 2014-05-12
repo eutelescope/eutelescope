@@ -17,7 +17,6 @@
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelHistogramManager.h"
 #include "EUTelExceptions.h"
-#include "EUTelSparseDataImpl.h"
 #include "EUTelVirtualCluster.h"
 #include "EUTelFFClusterImpl.h"
 #include "EUTelDFFClusterImpl.h"

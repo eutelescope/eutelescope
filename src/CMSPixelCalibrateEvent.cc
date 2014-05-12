@@ -27,7 +27,7 @@
 #include "EUTelExceptions.h"
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelEventImpl.h"
-#include "EUTelSparseDataImpl.h"
+#include "EUTelTrackerDataInterfacer.h"
 #include "EUTelBaseSparsePixel.h"
 #include "EUTelSimpleSparsePixel.h"
 
@@ -319,9 +319,9 @@ void CMSPixelCalibrateEventProcessor::processEvent (LCEvent * event) {
             idDataEncoder["sparsePixelType"] = static_cast<int> (cellDecoder( sparseData )["sparsePixelType"]);
             idDataEncoder.setCellID(corrected);
 
-            EUTelSparseDataImpl<EUTelSimpleSparsePixel>  correctedData( corrected ) ;
+            EUTelTrackerDataInterfacer<EUTelSimpleSparsePixel>  correctedData( corrected ) ;
 
-            auto_ptr<EUTelSparseDataImpl<EUTelSimpleSparsePixel > > pixelData(new EUTelSparseDataImpl<EUTelSimpleSparsePixel> ( sparseData ));
+            auto_ptr<EUTelTrackerDataInterfacer<EUTelSimpleSparsePixel> > pixelData( new EUTelTrackerDataInterfacer<EUTelSimpleSparsePixel>( sparseData ));
 
             // Loop over all pixels in the sparseData object.
             EUTelSimpleSparsePixel Pixel;
