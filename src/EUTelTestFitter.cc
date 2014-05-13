@@ -43,7 +43,8 @@
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/TrackerHitImpl.h>
 #include <IMPL/SimTrackerHitImpl.h>
-
+#include <UTIL/CellIDDecoder.h>
+#include <UTIL/CellIDEncoder.h>
 
 #include <IMPL/TrackImpl.h>
 #include <IMPL/LCFlagImpl.h>
@@ -2892,19 +2893,20 @@ void EUTelTestFitter::getTrackImpactPoint(double & x, double & y, double & z, Tr
   bool	foundHitDUT = false;
   bool	foundHitNeighbour = false;
 
+  // setup cellIdDecoder to decode the hit properties
+  CellIDDecoder<TrackerHit>  hitCellDecoder(EUTELESCOPE::HITENCODING);
    
   double	dist;
   for(int ihit=0; ihit< nHit ; ihit++)
     {
       TrackerHit * meshit = trackhits.at(ihit);
-      int itype = 0;
-      if( meshit != 0 )
-	{
-	  itype = meshit->getType();
-	} 
  
       // Look at fitted hits only!
-      if ( itype < 32) continue;
+      if (meshit != 0){
+	if ( (hitCellDecoder(meshit)["properties"] & kFittedHit) == 0 ){
+	  continue;
+	}
+      }
 
       // Hit position
       //
