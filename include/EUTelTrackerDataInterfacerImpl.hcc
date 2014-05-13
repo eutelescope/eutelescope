@@ -21,14 +21,14 @@ namespace eutelescope {
    *  TODO: sample. This allows sorting and vector operations resulting in a
    */
   template<class PixelType>
-  class EUTelTrackerDataInterfacer{
+  class EUTelTrackerDataInterfacerImpl{
 
   public:
     //! Default constructor
-    EUTelTrackerDataInterfacer(IMPL::TrackerDataImpl* data);
+    EUTelTrackerDataInterfacerImpl(IMPL::TrackerDataImpl* data);
 	
     //! Destructor
-    virtual ~EUTelTrackerDataInterfacer() {}
+    virtual ~EUTelTrackerDataInterfacerImpl() {}
 
     //! Add a pixel
     /*! This method is used to add to the current TrackerDataImpl a
@@ -104,7 +104,7 @@ namespace eutelescope {
  
    
 	template<>
-	inline EUTelSimpleSparsePixel* EUTelTrackerDataInterfacer<EUTelSimpleSparsePixel>::getSparsePixelAt(unsigned int index, EUTelSimpleSparsePixel * pixel ) const 
+	inline EUTelSimpleSparsePixel* EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel>::getSparsePixelAt(unsigned int index, EUTelSimpleSparsePixel * pixel ) const 
 	{
 		if ( index * _nElement + 2 > _trackerData->getChargeValues().size() ) return 0x0;
 		pixel->setXCoord( static_cast<int> ( _trackerData->getChargeValues()[index * _nElement] ) );
@@ -115,7 +115,7 @@ namespace eutelescope {
 	}
   
 	template<>
-	inline EUTelGenericSparsePixel* EUTelTrackerDataInterfacer<EUTelGenericSparsePixel>::getSparsePixelAt(unsigned int index, EUTelGenericSparsePixel* pixel ) const
+	inline EUTelGenericSparsePixel* EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>::getSparsePixelAt(unsigned int index, EUTelGenericSparsePixel* pixel ) const
 	{
 		if ( index * _nElement + 3 > _trackerData->getChargeValues().size() ) return 0x0;
 		pixel->setXCoord( static_cast<int> ( _trackerData->getChargeValues()[index * _nElement] ) );
@@ -127,7 +127,7 @@ namespace eutelescope {
 	}
 
 	template<>
-	inline EUTelGeometricPixel* EUTelTrackerDataInterfacer<EUTelGeometricPixel>::getSparsePixelAt(unsigned int index, EUTelGeometricPixel* pixel ) const
+	inline EUTelGeometricPixel* EUTelTrackerDataInterfacerImpl<EUTelGeometricPixel>::getSparsePixelAt(unsigned int index, EUTelGeometricPixel* pixel ) const
 	{
 		if ( index * _nElement + 7 > _trackerData->getChargeValues().size() ) return 0x0;
 		pixel->setXCoord( static_cast<int>( _trackerData->getChargeValues()[index * _nElement] ) );
@@ -145,7 +145,7 @@ namespace eutelescope {
 
 	//! Template specialization for the addSparsePixel method
 	template<>
-	inline void EUTelTrackerDataInterfacer<EUTelSimpleSparsePixel>::addSparsePixel(EUTelSimpleSparsePixel* pixel)
+	inline void EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel>::addSparsePixel(EUTelSimpleSparsePixel* pixel)
 	{
 
 		_trackerData->chargeValues().push_back( static_cast<float> (pixel->getXCoord()) );
@@ -159,7 +159,7 @@ namespace eutelescope {
 	}
   
 	template<>
-	inline void EUTelTrackerDataInterfacer<EUTelGenericSparsePixel>::addSparsePixel(EUTelGenericSparsePixel* pixel)
+	inline void EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>::addSparsePixel(EUTelGenericSparsePixel* pixel)
 	{
 		//add values to lcio charge vector
 		_trackerData->chargeValues().push_back( static_cast<float>(pixel->getXCoord()) );
@@ -175,7 +175,7 @@ namespace eutelescope {
 	}
 	
 	template<>
-	inline void EUTelTrackerDataInterfacer<EUTelGeometricPixel>::addSparsePixel(EUTelGeometricPixel* pixel)
+	inline void EUTelTrackerDataInterfacerImpl<EUTelGeometricPixel>::addSparsePixel(EUTelGeometricPixel* pixel)
 	{
 		//add values to lcio charge vector
 		_trackerData->chargeValues().push_back( static_cast<float>(pixel->getXCoord()) );
@@ -202,7 +202,7 @@ namespace eutelescope {
 
 	//! Template specialization for the fillPixelVec method
 	template<>
-	inline void EUTelTrackerDataInterfacer<EUTelSimpleSparsePixel>::fillPixelVec() 
+	inline void EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel>::fillPixelVec() 
 	{
 		for ( unsigned int index = 0 ; index < _trackerData->getChargeValues().size() ; index += 3 )
 		{
@@ -214,7 +214,7 @@ namespace eutelescope {
 	}
   
 	template<>
-	inline void EUTelTrackerDataInterfacer< EUTelGenericSparsePixel>::fillPixelVec()
+	inline void EUTelTrackerDataInterfacerImpl< EUTelGenericSparsePixel>::fillPixelVec()
 	{
 		for( unsigned int index = 0 ; index < _trackerData->getChargeValues().size() ; index += 4 )
 		{
@@ -227,7 +227,7 @@ namespace eutelescope {
 	}
 	
 	template<>
-	inline void EUTelTrackerDataInterfacer< EUTelGeometricPixel>::fillPixelVec()
+	inline void EUTelTrackerDataInterfacerImpl< EUTelGeometricPixel>::fillPixelVec()
 	{
 		for( unsigned int index = 0 ; index < _trackerData->getChargeValues().size() ; index += 8 )
 		{

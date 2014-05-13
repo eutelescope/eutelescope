@@ -12,7 +12,7 @@
 
 #include <UTIL/CellIDDecoder.h>
 #include "EUTELESCOPE.h"
-#include "EUTelTrackerDataInterfacer.h"
+#include "EUTelTrackerDataInterfacerImpl.h"
 
 namespace eutelescope {
 
@@ -363,7 +363,7 @@ namespace eutelescope {
   protected:
     
     //! The interfacer to the raw data
-    EUTelTrackerDataInterfacer<PixelType> _rawDataInterfacer;
+    EUTelTrackerDataInterfacerImpl<PixelType> _rawDataInterfacer;
      
     //! The number of elements in the data structure
     unsigned int _nElement;

@@ -14,7 +14,7 @@
 #include "EUTELESCOPE.h"
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelMatrixDecoder.h"
-#include "EUTelTrackerDataInterfacer.h"
+#include "EUTelTrackerDataInterfacerImpl.h"
 #include "EUTelSparseClusterImpl.h"
 
 // marlin includes ".h"
@@ -315,7 +315,7 @@ void EUTelHotPixelKiller::HotPixelFinder(EUTelEventImpl  *evt)
         EUTelMatrixDecoder matrixDecoder( noiseDecoder , noise );
 
         // now prepare the EUTelescope interface to sparsified data.  
-        auto_ptr<EUTelTrackerDataInterfacer<EUTelSimpleSparsePixel> > sparseData(new EUTelTrackerDataInterfacer<EUTelSimpleSparsePixel>( zsData ));
+        auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel> > sparseData(new EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel>( zsData ));
 
         streamlog_out ( DEBUG1 ) << "Processing sparse data on detector " << _sensorID << " with "
                                  << sparseData->size() << " pixels " << endl;
@@ -746,7 +746,7 @@ void EUTelHotPixelKiller::HotPixelDBWriter(LCEvent *input_event)
         hotPixelEncoder.setCellID( currentFrame.get() );
 
         // this is the structure that will host the sparse pixel  
-        std::auto_ptr<EUTelTrackerDataInterfacer<eutelescope::EUTelSimpleSparsePixel> > sparseFrame( new EUTelTrackerDataInterfacer<eutelescope::EUTelSimpleSparsePixel>( currentFrame.get() ));
+        std::auto_ptr<EUTelTrackerDataInterfacerImpl<eutelescope::EUTelSimpleSparsePixel> > sparseFrame( new EUTelTrackerDataInterfacerImpl<eutelescope::EUTelSimpleSparsePixel>( currentFrame.get() ));
 
         for ( unsigned int iPixel = 0; iPixel < _firingFreqVec[iDetector].size(); iPixel++ ) 
         {

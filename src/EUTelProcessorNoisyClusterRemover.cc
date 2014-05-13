@@ -18,7 +18,7 @@
 #include "EUTelProcessorNoisyClusterRemover.h"
 #include "EUTELESCOPE.h"
 #include "EUTelRunHeaderImpl.h"
-#include "EUTelTrackerDataInterfacer.h"
+#include "EUTelTrackerDataInterfacerImpl.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"

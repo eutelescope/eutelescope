@@ -12,7 +12,7 @@
 // eutelescope includes ".h" 
 #include "EUTELESCOPE.h"
 #include "EUTelMatrixDecoder.h"
-#include "EUTelTrackerDataInterfacer.h"
+#include "EUTelTrackerDataInterfacerImpl.h"
 #include "EUTelBaseSparsePixel.h"
 #include "EUTelSimpleSparsePixel.h"
 #include "EUTelExceptions.h"
@@ -176,9 +176,9 @@ void EUTelMimosa26Generator::processEvent (LCEvent * event) {
 
       if ( _pixelType == kEUTelSimpleSparsePixel ) {
 
-	EUTelTrackerDataInterfacer<EUTelSimpleSparsePixel> sparseData( sparsified ) ;
+	EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel> sparseData( sparsified ) ;
     
-        auto_ptr<EUTelTrackerDataInterfacer<EUTelSimpleSparsePixel> > sparseinputData( new EUTelTrackerDataInterfacer<EUTelSimpleSparsePixel>( zsData ));
+        auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel> > sparseinputData( new EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel>( zsData ));
         auto_ptr<EUTelSimpleSparsePixel> sparseinputPixel( new EUTelSimpleSparsePixel );
         
         for ( unsigned int iPixel = 0; iPixel < sparseinputData->size(); iPixel++ ) {

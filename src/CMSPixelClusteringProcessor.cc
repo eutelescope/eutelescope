@@ -34,7 +34,7 @@
 #include "EUTelExceptions.h"
 #include "EUTelHistogramManager.h"
 #include "EUTelMatrixDecoder.h"
-#include "EUTelTrackerDataInterfacer.h"
+#include "EUTelTrackerDataInterfacerImpl.h"
 #include "EUTelSparseClusterImpl.h"
 
 // gear includes <.h>
@@ -233,7 +233,7 @@ void CMSPixelClusteringProcessor::initializeHotPixelMapVec(  )
         EUTelMatrixDecoder matrixDecoder( _siPlanesLayerLayout , iDetector );
 
         // now prepare the EUTelescope interface to sparsified data.  
-        auto_ptr<EUTelTrackerDataInterfacer<EUTelSimpleSparsePixel> > sparseData(new EUTelTrackerDataInterfacer<EUTelSimpleSparsePixel>( hotData ));
+        auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel> > sparseData(new EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel>( hotData ));
 
         streamlog_out ( MESSAGE1 ) << "Processing hotpixel data on detector " << sensorID << " with "
                                  << sparseData->size() << " pixels " << endl;
@@ -379,7 +379,7 @@ void CMSPixelClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * cl
         EUTelMatrixDecoder matrixDecoder( _siPlanesLayerLayout , sensorID );
 		
 		if (type == kEUTelSimpleSparsePixel  ) {
-		    auto_ptr<EUTelTrackerDataInterfacer<EUTelSimpleSparsePixel> > pixelData( new EUTelTrackerDataInterfacer<EUTelSimpleSparsePixel>( zsData ));
+		    auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel> > pixelData( new EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel>( zsData ));
 			streamlog_out ( DEBUG5 ) << "Processing data on detector " << sensorID << ", " << pixelData->size() << " pixels " << endl;
 
 			// Loop over all pixels in the sparseData object.

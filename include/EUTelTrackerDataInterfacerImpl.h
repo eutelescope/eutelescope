@@ -38,8 +38,8 @@
 #include <iomanip>
 
 // template implementation
-#include "EUTelTrackerDataInterfacer.hcc"
-#include "EUTelTrackerDataInterfacer.tcc"
+#include "EUTelTrackerDataInterfacerImpl.hcc"
+#include "EUTelTrackerDataInterfacerImpl.tcc"
 
 #endif
 
