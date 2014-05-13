@@ -49,6 +49,11 @@ namespace eutelescope {
    
     EUTelBaseSparsePixel* getSparsePixelAt(unsigned int index, EUTelBaseSparsePixel* pixel) const
 	{
+		if(!pixel)
+		{
+			pixel = new PixelType();
+		}
+		std::cout << "muh1" << std::endl;
 		EUTelBaseSparsePixel* result =  static_cast<EUTelBaseSparsePixel*>( getSparsePixelAt(index, dynamic_cast<PixelType*>(pixel)) );
 		pixel = result;
 		return result;
