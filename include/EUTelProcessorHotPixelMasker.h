@@ -120,7 +120,7 @@ class EUTelProcessorHotPixelMasker : public marlin::Processor {
 	/*! Used to monitor if anything changed and the collection needs
 	 *! to be updated 
          */
-	unsigned int _initialzsGenericDataCollectionSize;
+	unsigned int _initialoutputPulseCollectionSize;
 
 	//! Current run number.
 	/*! This number is used to store the current run number */
