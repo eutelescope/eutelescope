@@ -112,6 +112,11 @@ void EUTelProcessorHotPixelMasker::processEvent(LCEvent * event)
 	// prepare decoder for input data
 	CellIDDecoder<TrackerPulseImpl> cellDecoder( pulseInputCollectionVec );
 	
+	//read the encoding string from the input collection
+	std::string encodingString = pulseInputCollectionVec->getParameters().getStringVal( LCIO::CellIDEncoding );
+	//and the encoder for the output data
+	CellIDEncoder<TrackerPulseImpl> cellEncoder( encodingString , pulseInputCollectionVec);
+
 	//now prepare output collection
 /*	LCCollectionVec* zsGenericDataCollection;
 	bool zsGenericDataCollectionExists = false;
@@ -155,16 +160,26 @@ void EUTelProcessorHotPixelMasker::processEvent(LCEvent * event)
 			sparseData =  auto_ptr<EUTelTrackerDataInterfacer>( new EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel>(trackerData) );
 		}
 
+		bool noisy = false;
+
 		//Loop over all hits!
 		for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
        		{
-			//sparsePixel to get hit info!
 		        sparseData->getSparsePixelAt( iPixel, pixel );
-
+			if(std::binary_search( noiseVector->begin(), noiseVector->end(), encode(pixel->getXCoord(), pixel->getYCoord()) ))
+			{
+				noisy=true;
+				break;
+			}
 		}
 
-		delete pixel;
-
+		if(noisy)
+		{
+			int quality = cellDecoder(pulseData)["quality"];
+			quality = quality || kNoisyCluster;
+			cellEncoder["quality"] = quality;
+			cellEncoder.setCellID(pulseData);
+		}
         }// loop over detectors
 
 	//add the collection if necessary
