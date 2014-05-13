@@ -67,6 +67,7 @@
 // lcio includes <.h>
 #include <IO/LCWriter.h>
 #include <UTIL/LCTime.h>
+#include <UTIL/CellIDEncoder.h>
 #include <EVENT/LCCollection.h>
 #include <EVENT/LCEvent.h>
 #include <EVENT/TrackerPulse.h>
@@ -180,7 +181,7 @@ void EUTelDafFitter::dafEvent (LCEvent * event) {
       fillDetailPlots( _system.tracks.at(ii) ); 
     }
     //Dump to LCIO
-    if( _addToLCIO) { addToLCIO(_system.tracks.at(ii)); }
+    if( _addToLCIO) { addToLCIO(_system.tracks.at(ii), _fitpointvec); }
     _nTracks++;
   }
 
@@ -214,7 +215,7 @@ void EUTelDafFitter::dafEvent (LCEvent * event) {
   //cout << "DafFitter " << "58" << endl;
 }
 
-void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate* track){
+void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate* track, LCCollectionVec *lcvec){
   //cout << "DafFitter " << "59" << endl;
   TrackImpl * fittrack = new TrackImpl();
   // Impact parameters are useless and set to 0
@@ -230,7 +231,9 @@ void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate* track){
 
   fittrack->setChi2(track->chi2);
   fittrack->setNdf(int(track->ndof + 0.2f) );
-  
+  // prepare an encoder for the hit collection to store properties
+  CellIDEncoder<TrackerHitImpl> idHitEncoder(EUTELESCOPE::HITENCODING, lcvec);
+
 //  fittrack->setIsReferencePointPCA(false);
   float refpoint[3];
   
@@ -238,8 +241,10 @@ void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate* track){
     daffitter::FitPlane& pl = _system.planes.at(plane);
     daffitter::TrackEstimate* estim = track->estimates.at( plane );
     TrackerHitImpl * fitpoint = new TrackerHitImpl();
-    // Hit type 32 means a fitted hit
-    fitpoint->setType(32);
+    // encode and store sensorID
+    idHitEncoder["sensorID"] = _system.planes.at(plane).getSensorID();
+    // set the local/global bit flag property AND the FittedHit property for the hit
+    idHitEncoder["properties"] = kHitInGlobalCoord || kFittedHit;
     double pos[3];
     pos[0]= estim->getX() / 1000.0;
     pos[1]= estim->getY() / 1000.0;
@@ -258,6 +263,8 @@ void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate* track){
     //error. Set to 0 along with all covariances.
     cov[3]=cov[4]=cov[5]=0.;
     fitpoint->setCovMatrix(cov);
+    // store values
+    idHitEncoder.setCellID( fitpoint );
     _fitpointvec->push_back(fitpoint);
     fittrack->addHit(fitpoint);
 
