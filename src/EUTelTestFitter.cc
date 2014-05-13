@@ -905,6 +905,10 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
     return;
   }
 
+  // setup cellIdDecoder to decode the sensor ID from the hits
+  CellIDDecoder<TrackerHit>  hitCellDecoder(EUTELESCOPE::HITENCODING);
+
+
   if(_isFirstEvent)
   {
        if ( _useReferenceHitCollection ) 
@@ -1267,6 +1271,11 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
   LCCollectionVec     *fittrackvec = new LCCollectionVec(LCIO::TRACK);
   LCCollectionVec     *fitpointvec = new LCCollectionVec(LCIO::TRACKERHIT);
   LCCollectionVec     *corrpointvec = new LCCollectionVec(LCIO::TRACKERHIT);
+
+  // prepare an encoder for the hit collection
+  CellIDEncoder<TrackerHitImpl> fitHitEncoder(EUTELESCOPE::HITENCODING, fitpointvec);
+  CellIDEncoder<TrackerHitImpl> corrHitEncoder(EUTELESCOPE::HITENCODING, corrpointvec);
+
 
   // Set flag for storing track hits in track collection
 
@@ -1881,13 +1890,16 @@ if(jhit>=0){
       {
         TrackerHitImpl * fitpoint = new TrackerHitImpl;
 
-        // Hit type is set to 32, to distinguish from measured
-        // hits (hit type = cluster type = 0 ... 31)
+	// set sensorID
+	fitHitEncoder["sensorID"] =  _planeID[ipl];
 
-        fitpoint->setType(32);
+	// set the local/global and "fittedhit" bit flag properties for the hit
+	fitHitEncoder["properties"] = kHitInGlobalCoord+kFittedHit;
+
+	// store values
+	fitHitEncoder.setCellID( fitpoint );
 
         // fitted position in a plane
-
         double pos[3];
 
         pos[0]=fittedX[_nTelPlanes*ifit+ipl];
@@ -1929,6 +1941,7 @@ if(jhit>=0){
             TrackerHitImpl    * meshit  = dynamic_cast<TrackerHitImpl*>( col->getElementAt(jhit) ) ;
             SimTrackerHitImpl * simhit  = dynamic_cast<SimTrackerHitImpl*>( col->getElementAt(jhit) ) ;
             TrackerHitImpl    * corrhit = new TrackerHitImpl;
+
             //
             // Copy input hit data
             //
@@ -1938,15 +1951,27 @@ if(jhit>=0){
               corrhit->setTime(meshit->getTime());
               corrhit->setEDep(meshit->getEDep());
               corrhit->rawHits()=meshit->getRawHits();
+	      corrhit->setCellID0(meshit->getCellID0());
+	      corrhit->setCellID1(meshit->getCellID1());
             }
             else if( simhit != 0 )
             {
-              corrhit->setType( 0 );
+              corrhit->setType(0);
               corrhit->setTime(simhit->getTime());
- //           corrhit->setdEdx(simhit->getdEdx());  ! OBSOLETE 
               corrhit->setEDep(simhit->getEDep());
-//              corrhit->rawHits()=simhit->getRawHits();
-            }
+	      corrhit->setCellID0(simhit->getCellID0());
+	      corrhit->setCellID1(simhit->getCellID1());
+            } else {
+	      // set sensorID
+	      corrHitEncoder["sensorID"] =  _planeID[ipl];
+	    
+	      // set the local/global and "fittedhit" bit flag properties for the hit
+	      corrHitEncoder["properties"] = 0; // init
+	      corrHitEncoder["properties"] = kHitInGlobalCoord;
+	    
+	      // store values
+	      corrHitEncoder.setCellID( corrhit );
+	    }
             //
             // Use corrected position
             //

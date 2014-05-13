@@ -711,7 +711,8 @@ void EUTelApplyAlignmentProcessor::ApplyGear6D( LCEvent *event)
       TrackerHitImpl   * outputHit  = new TrackerHitImpl;
       outputHit->setType( inputHit->getType() );
       outputHit->rawHits() = inputHit->getRawHits();
-
+      outputHit->setCellID0( inputHit->getCellID0() );
+      outputHit->setCellID1( inputHit->getCellID1() );
 
       double * inputPosition      = const_cast< double * > ( inputHit->getPosition() ) ;
       double   outputPosition[3]  = { 0., 0., 0. };
@@ -723,7 +724,7 @@ void EUTelApplyAlignmentProcessor::ApplyGear6D( LCEvent *event)
           double gRotation[3] = { 0., 0., 0.}; // not rotated
 
           if ( _debugSwitch )
-          {
+         {
               telPos[0] = 0.;
               telPos[1] = 0.;
               telPos[2] = 0.; 
@@ -947,7 +948,8 @@ void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event)
       TrackerHitImpl   * outputHit  = new TrackerHitImpl;
       outputHit->setType( inputHit->getType() );
       outputHit->rawHits() = inputHit->getRawHits();
-
+      outputHit->setCellID0( inputHit->getCellID0() );
+      outputHit->setCellID1( inputHit->getCellID1() );
 
       const double * inputPosition      = const_cast< const double * > ( inputHit->getPosition() ) ;
       double   outputPosition[3]  = { 0., 0., 0. };
@@ -1253,6 +1255,8 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
       outputHit->setType( inputHit->getType() );
       outputHit->rawHits() = inputHit->getRawHits();
       outputHit->setCovMatrix( inputHit->getCovMatrix() );
+      outputHit->setCellID0( inputHit->getCellID0() );
+      outputHit->setCellID1( inputHit->getCellID1() );
 
       // hit coordinates in the center-of-the sensor frame (axis coincide with the global frame)
       const double *inputS = static_cast<const double*> ( inputHit->getPosition() ) ;
@@ -1602,6 +1606,8 @@ void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
       TrackerHitImpl   * outputHit  = new TrackerHitImpl;
       outputHit->setType( inputHit->getType() );
       outputHit->rawHits() = inputHit->getRawHits();
+      outputHit->setCellID0( inputHit->getCellID0() );
+      outputHit->setCellID1( inputHit->getCellID1() );
 
       // now that we know at which sensor the hit belongs to, we can
       // get the corresponding alignment constants
