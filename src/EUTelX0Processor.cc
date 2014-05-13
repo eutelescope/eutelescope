@@ -4,6 +4,8 @@
 #include "TCanvas.h"
 #include "TStyle.h"
 #include <cstdlib>
+#include <UTIL/CellIDDecoder.h>
+#include <EUTELESCOPE.h>
 using namespace marlin;
 using namespace eutelescope;
 using namespace std;
@@ -669,10 +671,12 @@ void EUTelX0Processor::PlotTripleTrackAngleDoubleDafFitted(Track *track, bool fr
   std::vector< TVector3 > hitsfront;
   std::vector< TrackerHit* > trackhitsback = track->getTrackerHits();
   std::vector< TVector3 > hitsback;
+  // setup cellIdDecoder to decode the hit properties
+  CellIDDecoder<TrackerHit>  hitCellDecoder(EUTELESCOPE::HITENCODING);
   if(front == true){
     TVector3 *tempvec = new TVector3();
     for(std::vector< TrackerHit* >::iterator it = trackhitsfront.begin(); it != trackhitsfront.end(); ++it){
-      if((*it)->getType() == 32){  //Check if the hit type is the aligned hits or the fitted points (we want fitted points)
+      if((hitCellDecoder((*it))["properties"] & kFittedHit) > 0){  //Check if the hit type is the aligned hits or the fitted points (we want fitted points)
         Double_t x = (*it)->getPosition()[0];
         Double_t y = (*it)->getPosition()[1];
         Double_t z = (*it)->getPosition()[2];
@@ -684,7 +688,7 @@ void EUTelX0Processor::PlotTripleTrackAngleDoubleDafFitted(Track *track, bool fr
   } else{
     TVector3 *tempvec = new TVector3();
     for(std::vector< TrackerHit* >::iterator it = trackhitsback.begin(); it != trackhitsback.end(); ++it){
-      if((*it)->getType() == 32){  //Check if the hit type is the aligned hits or the fitted points (we want fitted points)
+      if((hitCellDecoder((*it))["properties"] & kFittedHit) > 0){  //Check if the hit type is the aligned hits or the fitted points (we want fitted points)
         Double_t x = (*it)->getPosition()[0];
         Double_t y = (*it)->getPosition()[1];
         Double_t z = (*it)->getPosition()[2];
@@ -780,8 +784,10 @@ pair< vector< double >, vector< double > > EUTelX0Processor::GetTripleTrackAngle
   std::vector< TrackerHit* > trackhitsfront = frontthree->getTrackerHits();
   std::vector< TVector3 > hitsfront;
   TVector3 *tempvec = new TVector3();
+  // setup cellIdDecoder to decode the hit properties
+  CellIDDecoder<TrackerHit>  hitCellDecoder(EUTELESCOPE::HITENCODING);
   for(std::vector< TrackerHit* >::iterator it = trackhitsfront.begin(); it != trackhitsfront.end(); ++it){
-    if((*it)->getType() == 32){  //Check if the hit type is the aligned hits or the fitted points (we want fitted points)
+    if((hitCellDecoder((*it))["properties"] & kFittedHit) > 0){  //Check if the hit type is the aligned hits or the fitted points (we want fitted points)
       Double_t x = (*it)->getPosition()[0];
       Double_t y = (*it)->getPosition()[1];
       Double_t z = (*it)->getPosition()[2];
@@ -792,7 +798,7 @@ pair< vector< double >, vector< double > > EUTelX0Processor::GetTripleTrackAngle
   std::vector< TrackerHit* > trackhitsback = backthree->getTrackerHits();
   std::vector< TVector3 > hitsback;
   for(std::vector< TrackerHit* >::iterator it = trackhitsback.begin(); it != trackhitsback.end(); ++it){
-    if((*it)->getType() == 32){  //Check if the hit type is the aligned hits or the fitted points (we want fitted points)
+    if((hitCellDecoder((*it))["properties"] & kFittedHit) > 0){  //Check if the hit type is the aligned hits or the fitted points (we want fitted points)
       Double_t x = (*it)->getPosition()[0];
       Double_t y = (*it)->getPosition()[1];
       Double_t z = (*it)->getPosition()[2];
@@ -1133,6 +1139,8 @@ void EUTelX0Processor::processEvent(LCEvent *evt)
       LCCollection* trackcollection2 = evt->getCollection(_trackCollectionName2);
       int elementnumber2 = trackcollection2->getNumberOfElements();
       streamlog_out(DEBUG2) << "Created trackcollection2, it has " << elementnumber2 << " elements" << endl;
+      // setup cellIdDecoder to decode the hit properties
+      CellIDDecoder<TrackerHit>  hitCellDecoder(EUTELESCOPE::HITENCODING);
       for(int i = 0; i < elementnumber1; ++i){
         for(int j = 0; j < elementnumber2; ++j){
           streamlog_out(DEBUG0) << "i = " << i << ", j = " << j << endl;
@@ -1145,9 +1153,9 @@ void EUTelX0Processor::processEvent(LCEvent *evt)
           streamlog_out(DEBUG0) << "Got the tracker hit 2" << endl;
           std::vector< TVector3 > hits;
           int k(0);
-          TVector3 *tempvec = new TVector3();
+          TVector3 *tempvec = new TVector3();	  
           for(std::vector< TrackerHit* >::iterator it = trackhits1.begin(); it != trackhits1.end(); ++it){
-            if((*it)->getType() == 32){  //Check if the hit type is the aligned hits or the fitted points (we want fitted points)
+            if((hitCellDecoder((*it))["properties"] & kFittedHit) > 0){  //Check if the hit type is the aligned hits or the fitted points (we want fitted points)
               streamlog_out(DEBUG0) << "k = " << k << endl;
               Double_t x = (*it)->getPosition()[0];
               Double_t y = (*it)->getPosition()[1];
@@ -1159,7 +1167,7 @@ void EUTelX0Processor::processEvent(LCEvent *evt)
           } //End of for loop running through trackhits
           streamlog_out(DEBUG0) << "Filled hits from first track" << endl;
           for(std::vector< TrackerHit* >::iterator it = trackhits2.begin(); it != trackhits2.end(); ++it){
-            if((*it)->getType() == 32){  //Check if the hit type is the aligned hits or the fitted points (we want fitted points)
+            if((hitCellDecoder((*it))["properties"] & kFittedHit) > 0){  //Check if the hit type is the aligned hits or the fitted points (we want fitted points)
               streamlog_out(DEBUG0) << "k = " << k << endl;
               Double_t x = (*it)->getPosition()[0];
               Double_t y = (*it)->getPosition()[1];
@@ -1388,9 +1396,11 @@ std::vector< TVector3 > EUTelX0Processor::getHitsFromTrack(Track *track){
  std::vector< TrackerHit* > trackhits = track->getTrackerHits();
  std::vector< TVector3 > hits;
  TVector3 *tempvec = new TVector3();
+ // setup cellIdDecoder to decode the hit properties
+ CellIDDecoder<TrackerHit>  hitCellDecoder(EUTELESCOPE::HITENCODING);
  for(std::vector< TrackerHit* >::iterator it = trackhits.begin(); it != trackhits.end(); ++it){
    streamlog_out(DEBUG0) << "Getting the hits" << endl;
-    if((*it)->getType() < 32){  //Check if the hit type is the aligned hits or the fitted points (we want aligned hits)
+    if((hitCellDecoder((*it))["properties"] & kFittedHit) == 0){  //Check if the hit type is the aligned hits or the fitted points (we want aligned hits)
       Double_t x = (*it)->getPosition()[0];
       streamlog_out(DEBUG0) << "x=" << x << endl;
       Double_t y = (*it)->getPosition()[1];
