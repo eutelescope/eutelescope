@@ -8,15 +8,15 @@
  *
  */
 
-#ifndef EUTELTRACKERDATAINTERFACER_H
-#define EUTELTRACKERDATAINTERFACER_H
+#ifndef EUTELTRACKERDATAINTERFACERIMPL_H
+#define EUTELTRACKERDATAINTERFACERIMPL_H
 
 // personal includes ".h"
 #include "EUTELESCOPE.h"
 #include "EUTelSimpleSparsePixel.h"
 #include "EUTelGenericSparsePixel.h"
 #include "EUTelGeometricPixel.h"
-
+#include "EUTelTrackerDataInterfacer.h"
 
 #ifdef USE_MARLIN
 // marling includes ".h"

@@ -6,8 +6,8 @@
 * header with author names in all development based on this file.
 *
 */
-#ifndef EUTELTRACKERDATAINTERFACER_TCC
-#define EUTELTRACKERDATAINTERFACER_TCC
+#ifndef EUTELTRACKERDATAINTERFACERIMPL_TCC
+#define EUTELTRACKERDATAINTERFACERIMPL_TCC
 
 namespace eutelescope {
 
