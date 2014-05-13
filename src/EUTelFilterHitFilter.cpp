@@ -12,6 +12,9 @@
 // MARLIN
 #include "marlin/VerbosityLevels.h"
 
+using namespace std;
+using namespace lcio;
+
 namespace eutelescope {
 
     EUTelFilterHitFilter::EUTelFilterHitFilter( ) : 

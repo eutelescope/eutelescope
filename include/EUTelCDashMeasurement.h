@@ -40,13 +40,11 @@
 #include <iostream>
 #include <sstream>
 
-using namespace std;
-
 class CDashMeasurement
 {
-  stringstream mymeasurement;
-  stringstream mtype;
-  stringstream mname;
+  std::stringstream mymeasurement;
+  std::stringstream mtype;
+  std::stringstream mname;
   bool isImage;
   
   void init(){
@@ -68,10 +66,10 @@ class CDashMeasurement
     mtype << "numeric/double";
   }
 
-  void setString( string m ){
+  void setString( std::string m ){
     init();
     mymeasurement << m;
-    string ending=".png";
+    std::string ending=".png";
     // check if string is path to png image
     if (m.length() > ending.length())
       if (m.compare (m.length() - ending.length(), ending.length(), ending))
@@ -83,11 +81,11 @@ class CDashMeasurement
   }
 
 public:
-  CDashMeasurement( string name, int value ) : mymeasurement(), mtype(), mname(), isImage()
+ CDashMeasurement( std::string name, int value ) : mymeasurement(), mtype(), mname(), isImage()
     { mname << name; setInteger(value); }
-  CDashMeasurement( string name, double value ) : mymeasurement(), mtype(), mname(), isImage()
+ CDashMeasurement( std::string name, double value ) : mymeasurement(), mtype(), mname(), isImage()
     { mname << name; setDouble(value); }
-  CDashMeasurement( string name, string value ) : mymeasurement(), mtype(), mname(), isImage()
+ CDashMeasurement( std::string name, std::string value ) : mymeasurement(), mtype(), mname(), isImage()
     { mname << name; setString(value); }
 
   // only show output when precompiler flag is set
@@ -101,7 +99,7 @@ public:
     if (cdm.isImage) os << "File";
     os << " name=\"" << cdm.mname.str() << "\" type=\"" << cdm.mtype.str() << "\">" << cdm.mymeasurement.str()<< "</DartMeasurement";
     if (cdm.isImage) os << "File";
-    os << ">" << endl;
+    os << ">" << std::endl;
 
     return os;
   }

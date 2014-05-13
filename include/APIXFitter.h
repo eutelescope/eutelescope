@@ -11,7 +11,6 @@
 #include <vector>
 #include <utility>
 #include <iostream>
-using namespace std;
 
 namespace APIXFitter{
 
@@ -34,14 +33,14 @@ namespace APIXFitter{
       this->hitPosX = 0.0; this->hitPosY = 0.0;
     };
     void print(){
-      if(excluded){ cout << "Excluded plane" ; }
-      else { cout << "Active plane"; }
-      cout << " with Index: " << index
+      if(excluded){ std::cout << "Excluded plane" ; }
+      else { std::cout << "Active plane"; }
+      std::cout << " with Index: " << index
 	   << " sensorID: " << sensorID
 	   << " posZ: " << posZ 
 	   << " hitX: " << hitPosX << " hitY: " << hitPosY
 	   << " errX: " << errX  << " errY: " << errY 
-	   << " scatter: " << scatterVariance << endl;
+		<< " scatter: " << scatterVariance << std::endl;
     };
     void setHitpos(double x, double y){ hitPosX = x; hitPosY = y; };
   };
@@ -81,8 +80,8 @@ namespace APIXFitter{
     void getSmoothGain(FitPlane* cur, FitPlane* next);
     void getSmoothState(FitPlane* cur, FitPlane* next);
   public:
-    vector<TrackEstimate*> estimates;
-    map<int, FitPlane* > indexToPlane;
+    std::vector<TrackEstimate*> estimates;
+    std::map<int, FitPlane* > indexToPlane;
     APIXKalman();
 
     void addPlane(int index, FitPlane* plane);

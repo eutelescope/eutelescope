@@ -184,8 +184,8 @@ namespace eutelescope {
     void finalizeTrack();
     void addToMille();
     void plotResiduals(double chi2, int ndof);
-    void tryFill(string name, double value);
-    void tryBook(string name, string title, int bins, double min, double max);
+    void tryFill(std::string name, double value);
+    void tryBook(std::string name, std::string title, int bins, double min, double max);
     void readHitCollection(LCEvent* event);
     std::vector<double> initAlignParams();
     bool generatePedeSteeringFile(std::vector<double> &params, bool shifts, bool rotate, bool scale);

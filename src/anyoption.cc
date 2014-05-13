@@ -62,6 +62,8 @@
 
 #include "anyoption.h"
 
+using namespace std;
+
 AnyOption::AnyOption()
 {
 	init();

@@ -2,6 +2,7 @@
 // See R.Fruhwirt: Application of Kalman Filtering to track and vertex fitting
 #include "APIXFitter.h"
 using namespace APIXFitter;
+using namespace std;
 
 void TrackEstimate::printParams(bool parvec, bool covmat){
   if(parvec){
