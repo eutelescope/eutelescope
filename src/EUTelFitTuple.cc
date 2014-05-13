@@ -411,6 +411,8 @@ void EUTelFitTuple::processEvent( LCEvent * event ) {
 
         }
 
+      // setup cellIdDecoder to decode the hit properties
+      CellIDDecoder<TrackerHit>  hitCellDecoder(EUTELESCOPE::HITENCODING);
 
       // Loop over hits and fill hit tables
 
@@ -448,7 +450,7 @@ void EUTelFitTuple::processEvent( LCEvent * event ) {
             }
 
 
-          if( meshit->getType() < 32 )
+          if( (hitCellDecoder(meshit)["properties"] & kFittedHit) == 0 )
             {
               // Measured hits
 

@@ -38,6 +38,7 @@
 // lcio includes <.h>
 #include <lcio.h>
 #include <IMPL/LCEventImpl.h>
+#include <UTIL/CellIDDecoder.h>
 #include <IMPL/TrackerHitImpl.h>
 #include <IMPL/TrackImpl.h>
 #include <IMPL/LCCollectionVec.h>
@@ -223,6 +224,8 @@ void EUTelEventViewer::processEvent( LCEvent * evt ) {
     }
   }
 
+  // setup cellIdDecoder to decode the hit properties
+  CellIDDecoder<TrackerHit>  hitCellDecoder(EUTELESCOPE::HITENCODING);
 
   // Drawing  Tracks
   if (_layerTrack >= 0) {
@@ -236,8 +239,8 @@ void EUTelEventViewer::processEvent( LCEvent * evt ) {
           unsigned int color =  returnColor(iCollection);
 
           // ok now I have everything I'm interested in. The idea
-          // behing is that for each hit in the hitvec having the type
-          // set to 32 I will draw a hit and a line to the next plane.
+          // behing is that for each fitted hit I will draw a hit and
+          // a line to the next plane.
           float xPrev = 0, yPrev = 0, zPrev = 0;
           float xNext, yNext, zNext;
 
@@ -249,8 +252,8 @@ void EUTelEventViewer::processEvent( LCEvent * evt ) {
             if ( (hit = dynamic_cast<TrackerHitImpl*> ( hitvec[ iHit ] )) != 0x0 ) {
 
 
-              // show only hit resulting from fit (type == 32)
-              if ( hit->getType() == 32 ) {
+              // show only hit resulting from fit
+              if ( (hitCellDecoder(hit)["properties"] & kFittedHit) > 0 ) {
                 if ( first ) {
 
                   first = false;
