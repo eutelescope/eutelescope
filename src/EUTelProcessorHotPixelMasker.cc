@@ -19,6 +19,7 @@
 #include "EUTELESCOPE.h"
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelTrackerDataInterfacerImpl.h"
+#include "CellIDReencoder.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -114,9 +115,9 @@ void EUTelProcessorHotPixelMasker::processEvent(LCEvent * event)
 	
 	//read the encoding string from the input collection
 	std::string encodingString = pulseInputCollectionVec->getParameters().getStringVal( LCIO::CellIDEncoding );
-	//and the encoder for the output data
-	CellIDEncoder<TrackerPulseImpl> cellEncoder( encodingString , pulseInputCollectionVec);
-
+	//and the encoder for the data
+	lcio::UTIL::CellIDReencoder<TrackerPulseImpl> cellEncoder( encodingString , pulseInputCollectionVec);
+/*
 	//now prepare output collection
 	LCCollectionVec* outputPulseCollection;
 	bool outputPulseCollectionExists = false;
@@ -135,7 +136,7 @@ void EUTelProcessorHotPixelMasker::processEvent(LCEvent * event)
 
 	//and the decoder for output data
 	CellIDEncoder<TrackerPulseImpl> outputEncoder(encodingString,  outputPulseCollection);
-	
+*/	
 	//loop over all the pulses
 	for ( size_t iPulse = 0 ; iPulse < pulseInputCollectionVec->size(); iPulse++ ) 
 	{
@@ -176,14 +177,15 @@ void EUTelProcessorHotPixelMasker::processEvent(LCEvent * event)
 			}
 		}
 
-		/*if(noisy)
+		if(noisy)
 		{
 			int quality = cellDecoder(pulseData)["quality"];
-			quality = quality || kNoisyCluster;
+			quality = quality | kNoisyCluster;
+			cellEncoder.readValues(pulseData);
 			cellEncoder["quality"] = quality;
 			cellEncoder.setCellID(pulseData);
-		}*/
-                
+		}
+        /*        
 		//TrackerPulseImpl for the output collection
 		auto_ptr<TrackerPulseImpl> outputPulse ( new TrackerPulseImpl );
 		//copy the information which is the same
@@ -204,10 +206,10 @@ void EUTelProcessorHotPixelMasker::processEvent(LCEvent * event)
 		//outputPulse->setTrackerData( pulseData->getTrackerData() );
 		
 		outputPulseCollection->push_back( outputPulse.release()  );
-		
+	*/	
 		delete pixel;
         }// loop over detectors
-
+/*
 	//add the collection if necessary
 	if ( !outputPulseCollectionExists && ( outputPulseCollection->size() != _initialoutputPulseCollectionSize )) 
 	{
@@ -217,7 +219,7 @@ void EUTelProcessorHotPixelMasker::processEvent(LCEvent * event)
 	if ( !outputPulseCollectionExists && ( outputPulseCollection->size() == _initialoutputPulseCollectionSize ) ) 
 	{
 		delete outputPulseCollection;
-	}	
+	}*/	
 //rest of memory cleaned up by auto_ptrs
 }
 
