@@ -27,7 +27,7 @@ _step(0.)
  * @param rtol relative tolerance
  * @param safety safety factor
  */
-EUTelUtilityRungeKutta::EUTelUtilityRungeKutta( double atol = 1E-6, double rtol = 1E-6, double safety = 0.95 ) : 
+EUTelUtilityRungeKutta::EUTelUtilityRungeKutta( double atol, double rtol, double safety ) : 
 _safetyFactor(safety),
 _nIterations(0),
 _absTolerance(atol),

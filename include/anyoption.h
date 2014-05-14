@@ -29,8 +29,6 @@
 
 #define TRUE_FLAG "true"
 
-using namespace std;
-
 class AnyOption
 {
 

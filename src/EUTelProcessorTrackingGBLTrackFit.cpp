@@ -49,6 +49,7 @@ class EUTelDFFClusterImpl;
 class EUTelFFClusterImpl;
 
 using namespace lcio;
+using namespace std;
 using namespace marlin;
 using namespace eutelescope;
 

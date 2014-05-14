@@ -32,7 +32,7 @@ namespace eutelescope {
   }
 
   template<class PixelType> 
-  EUTelSparseDataImpl<PixelType>::EUTelSparseDataImpl(const EUTelSparseDataImpl &z) : _trackerData(NULL), _nElement(0), _type(0) {
+  EUTelSparseDataImpl<PixelType>::EUTelSparseDataImpl(const EUTelSparseDataImpl &z) : _trackerData(NULL), _nElement(0), _type(kUnknownPixelType) {
     _trackerData->setCellID0(z->trackerData()->getCellID0());
     _trackerData->setCellID1(z->trackerData()->getCellID1());
     _trackerData->setTime(z->trackerData()->getTime());

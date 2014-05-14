@@ -40,6 +40,7 @@
 
 
 using namespace lcio;
+using namespace std;
 using namespace marlin;
 using namespace eutelescope;
 

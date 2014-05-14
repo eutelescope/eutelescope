@@ -32,24 +32,20 @@
 #include "EUTelGeometryTelescopeGeoDescription.h"
 #include "EUTelUtility.h"
 
-using namespace lcio;
-using namespace marlin;
-using namespace std;
-
 namespace eutelescope {
 
     /** @class EUTelProcessorTrackingGBLTrackFit 
      * 
      *  @see EUTelTrackFitter
      */
-    class EUTelProcessorTrackingGBLTrackFit : public Processor {
+  class EUTelProcessorTrackingGBLTrackFit : public marlin::Processor {
 
     private:
         DISALLOW_COPY_AND_ASSIGN(EUTelProcessorTrackingGBLTrackFit)     // prevent users from making (default) copies of processors
         
     public:
 
-        virtual Processor* newProcessor() {
+    virtual marlin::Processor* newProcessor() {
             return new EUTelProcessorTrackingGBLTrackFit;
         }
 
@@ -63,13 +59,13 @@ namespace eutelescope {
 
         /** Called for every run.
          */
-        virtual void processRunHeader(LCRunHeader* run);
+        virtual void processRunHeader(lcio::LCRunHeader* run);
 
         /** Called for every event - the working horse.
          */
-        virtual void processEvent(LCEvent * evt);
+        virtual void processEvent(lcio::LCEvent * evt);
 
-        virtual void check(LCEvent * evt);
+        virtual void check(lcio::LCEvent * evt);
 
         /** Called after data processing for clean up.
          */
@@ -80,12 +76,12 @@ namespace eutelescope {
         void writeMilleSteeringFile();
 
         /** Rename MILLEPEDE result file */
-        void moveMilleResultFile( const string&, const string& );
+        void moveMilleResultFile( const std::string&, const std::string& );
         
         /** Parse MILLEPEDE result file
          * and create output collection
          */
-        bool parseMilleOutput( const string& );
+        bool parseMilleOutput( const std::string& );
         
         /** Run pede executable to solve alignment problem */
         void runPede();
@@ -117,99 +113,99 @@ namespace eutelescope {
         int _alignmentMode;
       
         /** GBL M-estimator option */
-        string _mEstimatorType;
+	std::string _mEstimatorType;
         
         /** Parameter ids */
-        map<int,int> _xShiftsMap;
+	std::map<int,int> _xShiftsMap;
         
         /** Parameter ids */
-        map<int,int> _yShiftsMap;
+	std::map<int,int> _yShiftsMap;
         
         /** Parameter ids */
-        map<int,int> _zShiftsMap;
+	std::map<int,int> _zShiftsMap;
         
         /** Parameter ids */
-        map<int,int> _xRotationsMap;
+	std::map<int,int> _xRotationsMap;
         
         /** Parameter ids */
-        map<int,int> _yRotationsMap;
+	std::map<int,int> _yRotationsMap;
         
         /** Parameter ids */
-        map<int,int> _zRotationsMap;
+	std::map<int,int> _zRotationsMap;
         
         /** Mille binary filename */
-        string _milleBinaryFilename;
+	std::string _milleBinaryFilename;
 
         /** Mille steering filename */
-        string _milleSteeringFilename;
+	std::string _milleSteeringFilename;
 
         /** Mille result filename */
-        string _milleResultFileName;
+	std::string _milleResultFileName;
         
         /** GEAR new filename */
-        string _gear_aligned_file;
+	std::string _gear_aligned_file;
 
 
         /** Allows user-added commands in the pede steering file */
-        StringVec _pedeSteerAddCmds;
+	lcio::StringVec _pedeSteerAddCmds;
         
         /** Alignment plane ids*/
-        IntVec _alignmentPlaneIds;
+	lcio::IntVec _alignmentPlaneIds;
         
         /** plane ids*/
-        IntVec _planeIds;
+	lcio::IntVec _planeIds;
  
         /** x Resolution of planes in AlignmentPlaneIds */
-        FloatVec _SteeringxResolutions;
+	lcio::FloatVec _SteeringxResolutions;
  
         /** y Resolution of planes in AlignmentPlaneIds */
-        FloatVec _SteeringyResolutions;
+	lcio::FloatVec _SteeringyResolutions;
 
         /** Alignment X shift plane ids to be fixed */
-        IntVec _fixedAlignmentXShfitPlaneIds;
+	lcio::IntVec _fixedAlignmentXShfitPlaneIds;
         
         /** Alignment Y shift plane ids to be fixed */
-        IntVec _fixedAlignmentYShfitPlaneIds;
+	lcio::IntVec _fixedAlignmentYShfitPlaneIds;
         
         /** Alignment Z shift plane ids to be fixed */
-        IntVec _fixedAlignmentZShfitPlaneIds;
+	lcio::IntVec _fixedAlignmentZShfitPlaneIds;
         
         /** Alignment X rotation plane ids to be fixed */
-        IntVec _fixedAlignmentXRotationPlaneIds;
+	lcio::IntVec _fixedAlignmentXRotationPlaneIds;
         
         /** Alignment Y rotation plane ids to be fixed */
-        IntVec _fixedAlignmentYRotationPlaneIds;
+	lcio::IntVec _fixedAlignmentYRotationPlaneIds;
         
         /** Alignment Z rotation plane ids to be fixed */
-        IntVec _fixedAlignmentZRotationPlaneIds;
+	lcio::IntVec _fixedAlignmentZRotationPlaneIds;
         
         /** Planes ids to be excluded from refit */
-        IntVec _excludePlanesFromFit;
+	lcio::IntVec _excludePlanesFromFit;
         
         /** Automatic pede run flag*/
         bool _runPede;
         
         /** Alignment constants file name */
-        string _alignmentConstantLCIOFile;
+	std::string _alignmentConstantLCIOFile;
         
         /** Maximum value of track chi2 for millipede */
         double _maxMilleChi2Cut;
 
         /** TGeo geometry file name */
-        string _tgeoFileName;
+	std::string _tgeoFileName;
         
         /** Histogram info file name */
-        string _histoInfoFileName;
+	std::string _histoInfoFileName;
 
     protected:
 
         // Input/Output collections of the processor
 
         /** Input TrackerHit collection name */
-        string _trackCandidateHitsInputCollectionName;
+	std::string _trackCandidateHitsInputCollectionName;
 
         /** Output Tracks collection name */
-        string _tracksOutputCollectionName;
+	std::string _tracksOutputCollectionName;
 
     protected:
 
@@ -257,37 +253,37 @@ namespace eutelescope {
          *  its name
          */
 
-        map< string, AIDA::IHistogram1D* > _aidaHistoMap1D;
-        map< string, AIDA::IHistogram2D* > _aidaHistoMap2D;
-        map< string, AIDA::IProfile2D* >   _aidaProfileMap2D;
+        std::map< std::string, AIDA::IHistogram1D* > _aidaHistoMap1D;
+        std::map< std::string, AIDA::IHistogram2D* > _aidaHistoMap2D;
+        std::map< std::string, AIDA::IProfile2D* >   _aidaProfileMap2D;
 
         /** Names of histograms */
         struct _histName {
-            static string _orchi2GblFitHistName;
-            static string _orchi2ndfGblFitHistName;
-            static string _orprobGblFitHistName;
-            static string _chi2GblFitHistName;
-            static string _chi2ndfGblFitHistName;
-            static string _probGblFitHistName;
-            static string _momentumGblFitHistName;
-            static string _residGblFitHistName;
-            static string _normResidGblFitHistName;
-            static string _residGblFitHistNameX;
-            static string _residGblFitHistNameY;
-            static string _resid2DGblFitHistNameX;
-            static string _resid2DGblFitHistNameY;
-            static string _normResidGblFitHistNameX;
-            static string _normResidGblFitHistNameY;
-            static string _resid2DGblFitHistNameXvsX;
-            static string _resid2DGblFitHistNameXvsY;
-            static string _resid2DGblFitHistNameYvsX;
-            static string _resid2DGblFitHistNameYvsY;
-            static string _normResid2DGblFitHistNameXvsX;
-            static string _normResid2DGblFitHistNameXvsY;
-            static string _normResid2DGblFitHistNameYvsX;
-            static string _normResid2DGblFitHistNameYvsY;
-            static string _kinkGblFitHistNameX;
-            static string _kinkGblFitHistNameY;
+            static std::string _orchi2GblFitHistName;
+            static std::string _orchi2ndfGblFitHistName;
+            static std::string _orprobGblFitHistName;
+            static std::string _chi2GblFitHistName;
+            static std::string _chi2ndfGblFitHistName;
+            static std::string _probGblFitHistName;
+            static std::string _momentumGblFitHistName;
+            static std::string _residGblFitHistName;
+            static std::string _normResidGblFitHistName;
+            static std::string _residGblFitHistNameX;
+            static std::string _residGblFitHistNameY;
+            static std::string _resid2DGblFitHistNameX;
+            static std::string _resid2DGblFitHistNameY;
+            static std::string _normResidGblFitHistNameX;
+            static std::string _normResidGblFitHistNameY;
+            static std::string _resid2DGblFitHistNameXvsX;
+            static std::string _resid2DGblFitHistNameXvsY;
+            static std::string _resid2DGblFitHistNameYvsX;
+            static std::string _resid2DGblFitHistNameYvsY;
+            static std::string _normResid2DGblFitHistNameXvsX;
+            static std::string _normResid2DGblFitHistNameXvsY;
+            static std::string _normResid2DGblFitHistNameYvsX;
+            static std::string _normResid2DGblFitHistNameYvsY;
+            static std::string _kinkGblFitHistNameX;
+            static std::string _kinkGblFitHistNameY;
         };
 
 #endif // defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
