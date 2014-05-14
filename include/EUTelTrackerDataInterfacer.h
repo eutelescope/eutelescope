@@ -35,7 +35,7 @@ namespace eutelescope {
    // EUTelTrackerDataInterfacer(IMPL::TrackerDataImpl* data);
 	
     //! Destructor
-   // virtual ~EUTelTrackerDataInterfacer() {}
+     virtual ~EUTelTrackerDataInterfacer() {}
 
     //! Get one of the sparse pixel
     /*! This method is used to get one of the sparse pixel contained
