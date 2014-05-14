@@ -11,7 +11,6 @@
 
 // eutelescope includes ".h"
 #include "EUTelEventImpl.h"
-#include "EUTelSimpleSparsePixel.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -30,18 +29,10 @@
 
 namespace eutelescope {
 
-  //! Processor to convert data to be compliant with EUTelGenericSparsePixel
-  /*! EUTelescope stores data either in EUTelSimpleSparsePixel with 
-   *  information (X,Y,signal) per hit or EUTelAPIXSparsePixel with
-   *  (X,Y,signal, chip, time). 
-   *  New processors should not have to deal with those different types,
-   *  therefore there is the EUTelGenericSparsePixel which stores information
-   *  (X,Y,signal,time).
-   *  This processor takes zsdata in either of the above pixels and 
-   *  stores them compliant to be interfaced with EUTelGenericSparsePixel
-   *  in a TrackerDataImpl collection.
-   *  If the original collection should be dumped, specify so in the 
-   *  EUTelOutputProcessor ("Save")
+  //! Processor to remove noisy clusters from a TrackerPulse collection
+  /*! This processor clones the input TrackerPulse collection, but checks
+   *  for any clusters if their quality flag: kNoisyCluster is set.
+   *  If so, they are removed from the output collection. 
    */
 
 class EUTelProcessorNoisyClusterRemover : public marlin::Processor {
@@ -53,9 +44,9 @@ class EUTelProcessorNoisyClusterRemover : public marlin::Processor {
      *  is called by Marlin execution framework and it shouldn't be
      *  called/used by the final user.
      *
-     *  @return a new EUTelHotPixelKiller.
+     *  @return a new EUTelProcessorNoisyClusterRemover.
      */
-    virtual Processor * newProcessor() {
+    virtual Processor* newProcessor() {
       return new EUTelProcessorNoisyClusterRemover;
     }
 
@@ -100,10 +91,10 @@ class EUTelProcessorNoisyClusterRemover : public marlin::Processor {
 
 
   protected:
-	//! Input collection name for data	
+	//! Input collection name of the TrackerPulse collection	
 	std::string _inputCollectionName;
 
-	//! Output collection name for noise free data
+	//! Output collection name for noise free pulses
 	std::string _outputCollectionName; 
 	
 	//! Integer to track the collection size
@@ -121,6 +112,11 @@ class EUTelProcessorNoisyClusterRemover : public marlin::Processor {
 	 * events are counted from 0 and on a run base
          */
 	int _iEvt;
+
+	//! Map storing the amount of removed pulses
+	/*! Key is the sensorID, value the removed pulses from that plane*/
+	std::map<int,int> _removedNoisyPulses;
+
 };
 
 //! A global instance of the processor

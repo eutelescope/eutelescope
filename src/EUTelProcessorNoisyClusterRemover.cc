@@ -1,5 +1,3 @@
-// Author Tobias Bisanz,  <tobias.bisanz@phys.uni-goettingen.de>
-// Version $Id$
 /*
  *   This processor removes hot pixels as specified by the hot pixel
  *   collection and removes them from any given other tracker collection.
@@ -17,11 +15,11 @@
 // eutelescope includes ".h"
 #include "EUTelProcessorNoisyClusterRemover.h"
 #include "EUTELESCOPE.h"
-#include "EUTelRunHeaderImpl.h"
 #include "EUTelTrackerDataInterfacerImpl.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
+#include "EUTelRunHeaderImpl.h"
 
 // lcio includes <.h>
 #include <LCIOTypes.h>
@@ -29,14 +27,11 @@
 
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/TrackerPulseImpl.h>
-#include <IMPL/LCFlagImpl.h>
 #include <UTIL/CellIDEncoder.h>
 #include <UTIL/CellIDDecoder.h>
-#include <UTIL/LCTime.h>
 
 #include <EVENT/LCCollection.h>
 #include <EVENT/LCEvent.h>
-#include <Exceptions.h>
 
 // system includes
 #include <memory>
@@ -54,7 +49,7 @@ EUTelProcessorNoisyClusterRemover::EUTelProcessorNoisyClusterRemover():
   _iRun(0),
   _iEvt(0)
 {
-  _description ="EUTelProcessorNoisyClusterRemover removes hot pixels from a tracker data collection, it reads in a hot pixel collection and an input collection. If any of the hits in the input collection is a hot pixel it gets removed.";
+  _description ="EUTelProcessorNoisyClusterRemover removes masked noisy clusters (TrackerPulses) from a collection, please note that the clusters have to be masked previously. This processor does not read in a hot pixel collection, it simply removes previusly masked TrackerPulses.";
 
   registerInputCollection (LCIO::TRACKERPULSE, "InputCollectionName", "Input collection containing noise masked tracker pulse objects", _inputCollectionName, string ("noisy_cluster") );
 
@@ -123,14 +118,15 @@ void EUTelProcessorNoisyClusterRemover::processEvent(LCEvent * event)
 	//loop over all pulses
 	for( size_t iPulse = 0 ; iPulse < pulseInputCollectionVec->size(); iPulse++ ) 
 	{
-        	TrackerPulseImpl* inputPulse = dynamic_cast<TrackerPulseImpl*> ( pulseInputCollectionVec->getElementAt( iPulse ) );
-	
-		//get the quality
+		//get the tracker pulse
+        	TrackerPulseImpl* inputPulse = dynamic_cast<TrackerPulseImpl*> ( pulseInputCollectionVec->getElementAt(iPulse) );
+		//and its quality
 		int quality = cellDecoder(inputPulse)["quality"];
+		int sensorID  = cellDecoder(inputPulse)["sensorID"];
 		
+		//if the kNoisyCluster flag is NOT set, we add the pulse to the output collection
 		if(!(quality & kNoisyCluster))
 		{
-			
 			//TrackerPulseImpl for the output collection
 			auto_ptr<TrackerPulseImpl> outputPulse ( new TrackerPulseImpl );
 
@@ -144,7 +140,12 @@ void EUTelProcessorNoisyClusterRemover::processEvent(LCEvent * event)
 			outputPulse->setTrackerData( inputPulse->getTrackerData() );
 			
 			outputCollection->push_back( outputPulse.release() );
-		}		
+		}
+		//if the cluster is noisy, thus removed, we count that for nice user output
+		else
+		{
+			_removedNoisyPulses[sensorID]++;
+		}
         }// loop over all pulses
 
 	//add the collection if necessary
@@ -162,6 +163,13 @@ void EUTelProcessorNoisyClusterRemover::processEvent(LCEvent * event)
 
 void EUTelProcessorNoisyClusterRemover::end() 
 {
-	//maybe print some info for the user
+	//Print out some stats for the user
+	streamlog_out ( MESSAGE4 ) << "Noisy cluster remover successfully finished" << endl;
+	streamlog_out ( MESSAGE4 ) << "Printing summary:" << endl;
+	for(std::map<int,int>::iterator it = _removedNoisyPulses.begin(); it != _removedNoisyPulses.end(); ++it)
+	{
+		streamlog_out ( MESSAGE4 ) << "Removed " << (*it).second << " noisy pulses from plane " << (*it).first << "." << endl;
+	}
+	
 }
 
