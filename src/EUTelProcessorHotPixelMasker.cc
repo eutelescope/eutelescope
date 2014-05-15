@@ -1,5 +1,3 @@
-// Author Tobias Bisanz,  <tobias.bisanz@phys.uni-goettingen.de>
-// Version $Id$
 /*
  *   This processor removes hot pixels as specified by the hot pixel
  *   collection and removes them from any given other tracker collection.
@@ -58,13 +56,11 @@ EUTelProcessorHotPixelMasker::EUTelProcessorHotPixelMasker():
   _dataFormatChecked(false),
   _wrongDataFormat(false)
 {
-  _description ="EUTelProcessorHotPixelMasker removes hot pixels from a tracker data collection, it reads in a hot pixel collection and an input collection. If any of the hits in the input collection is a hot pixel it gets removed.";
+  _description ="EUTelProcessorHotPixelMasker masks pulses which contain hot pixels. For this, the quality field of pulses is used to encode the kNoisyCluster enum provided by EUTelescope.";
 
-  registerInputCollection (LCIO::TRACKERDATA, "InputCollectionName", "Input of zero suppressed data, still containing hot pixels", _inputCollectionName, string ("zsdata") );
+  registerInputCollection (LCIO::TRACKERDATA, "InputCollectionName", "Input of zero suppressed data, still containing hot pixels", _inputCollectionName, string ("cluster") );
 
-  registerOutputCollection(LCIO::TRACKERDATA, "OutputCollectionName", "Hot Pixel free output collection name", _outputCollectionName, string("zsdatafree"));
-
-  registerOptionalParameter("HotPixelCollectionName", "Name of the hot pixel collection.",  _hotPixelCollectionName, static_cast< string > ("hotpixel"));
+  registerOptionalParameter("HotPixelCollectionName", "Name of the hot pixel collection.",  _hotPixelCollectionName, static_cast<string> ("hotpixel"));
 
 }
 
@@ -114,48 +110,29 @@ void EUTelProcessorHotPixelMasker::processEvent(LCEvent * event)
 	CellIDDecoder<TrackerPulseImpl> cellDecoder( pulseInputCollectionVec );
 	
 	//read the encoding string from the input collection
-	std::string encodingString = pulseInputCollectionVec->getParameters().getStringVal( LCIO::CellIDEncoding );
+	std::string encoding = pulseInputCollectionVec->getParameters().getStringVal( LCIO::CellIDEncoding );
 	//and the encoder for the data
-	lcio::UTIL::CellIDReencoder<TrackerPulseImpl> cellEncoder( encodingString , pulseInputCollectionVec);
-/*
-	//now prepare output collection
-	LCCollectionVec* outputPulseCollection;
-	bool outputPulseCollectionExists = false;
-  	_initialoutputPulseCollectionSize = 0;
-
-  	try 
-  	{
-   		outputPulseCollection = dynamic_cast< LCCollectionVec* > ( event->getCollection( _outputCollectionName ) );
-    		outputPulseCollectionExists = true;
-    		_initialoutputPulseCollectionSize = outputPulseCollection->size();
-  	} 
-  	catch ( lcio::DataNotAvailableException& e ) 
-  	{
-    		outputPulseCollection = new LCCollectionVec(LCIO::TRACKERPULSE);
-  	}
-
-	//and the decoder for output data
-	CellIDEncoder<TrackerPulseImpl> outputEncoder(encodingString,  outputPulseCollection);
-*/	
+	lcio::UTIL::CellIDReencoder<TrackerPulseImpl> cellReencoder( pulseInputCollectionVec );
+	
 	//loop over all the pulses
 	for ( size_t iPulse = 0 ; iPulse < pulseInputCollectionVec->size(); iPulse++ ) 
 	{
+		//the vector contains tracker pulses
         	TrackerPulseImpl* pulseData = dynamic_cast<TrackerPulseImpl*> ( pulseInputCollectionVec->getElementAt( iPulse ) );
 		int sensorID = cellDecoder(pulseData)["sensorID"];		
 	
 	        //get the noise vector for the given plane
 		std::vector<int>* noiseVector = &(_hotPixelMap[sensorID]);
 		
-		//get the tracker data from the pulse
+		//each pulse has the tracker data attached to it
 		TrackerDataImpl* trackerData = dynamic_cast<TrackerDataImpl*>( pulseData->getTrackerData() );
 		//decoder for tracker data
 		CellIDDecoder<TrackerDataImpl> trackerDecoder ( EUTELESCOPE::ZSCLUSTERDEFAULTENCODING );
 		int pixelType = trackerDecoder(trackerData)["sparsePixelType"];
 
-		//Interface to sparsified data
+		//interface to sparsified data
                 auto_ptr<EUTelTrackerDataInterfacer> sparseData = auto_ptr<EUTelTrackerDataInterfacer>();
 
-		EUTelBaseSparsePixel* pixel = NULL;
 		if( pixelType == kEUTelSimpleSparsePixel )
 		{
 			sparseData =  auto_ptr<EUTelTrackerDataInterfacer>( new EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel>(trackerData) );
@@ -166,9 +143,14 @@ void EUTelProcessorHotPixelMasker::processEvent(LCEvent * event)
 
 		bool noisy = false;
 
+		//IMPORTANT: if we pass a nullptr to EUTelBaseSparsePixel* getSparsePixelAt( int index, EUTelBaseSparsePixel* pixel)
+		//where pixel=NULL, this method will return a pointer to a new pixel of derived type. YOU have to delete it!
+		EUTelBaseSparsePixel* pixel = NULL;
+
 		//Loop over all hits!
 		for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
        		{
+			//IF pixel=NULL this yields a new pixel
 		        pixel = sparseData->getSparsePixelAt( iPixel, pixel );
 			if(std::binary_search( noiseVector->begin(), noiseVector->end(), encode(pixel->getXCoord(), pixel->getYCoord()) ))
 			{
@@ -181,45 +163,16 @@ void EUTelProcessorHotPixelMasker::processEvent(LCEvent * event)
 		{
 			int quality = cellDecoder(pulseData)["quality"];
 			quality = quality | kNoisyCluster;
-			cellEncoder.readValues(pulseData);
-			cellEncoder["quality"] = quality;
-			cellEncoder.setCellID(pulseData);
+			//next line actually copies the old values
+			cellReencoder.readValues(pulseData);
+			//then we overwrite the "quality" one
+			cellReencoder["quality"] = quality;
+			//and apply the changes
+			cellReencoder.setCellID(pulseData);
 		}
-        /*        
-		//TrackerPulseImpl for the output collection
-		auto_ptr<TrackerPulseImpl> outputPulse ( new TrackerPulseImpl );
-		//copy the information which is the same
-		outputPulse->setCellID0( pulseData->getCellID0() );
-		outputPulse->setCellID1( pulseData->getCellID1() );
-		if(noisy)
-		{
-			//int quality = cellDecoder(outputPulse)["quality"];
-			int quality = 8;
-			outputEncoder["quality"] = quality;
-			outputEncoder.setCellID(outputPulse.get());
-		}
-		outputPulse->setTime( pulseData->getTime() );
-		outputPulse->setCharge( pulseData->getCharge() );
-		outputPulse->setCovMatrix( pulseData->getCovMatrix() );
-		
-		outputPulse->setQuality( pulseData->getQuality() );
-		//outputPulse->setTrackerData( pulseData->getTrackerData() );
-		
-		outputPulseCollection->push_back( outputPulse.release()  );
-	*/	
+	
 		delete pixel;
-        }// loop over detectors
-/*
-	//add the collection if necessary
-	if ( !outputPulseCollectionExists && ( outputPulseCollection->size() != _initialoutputPulseCollectionSize )) 
-	{
-		event->addCollection( outputPulseCollection, _outputCollectionName );
-	}
-
-	if ( !outputPulseCollectionExists && ( outputPulseCollection->size() == _initialoutputPulseCollectionSize ) ) 
-	{
-		delete outputPulseCollection;
-	}*/	
+        }
 //rest of memory cleaned up by auto_ptrs
 }
 

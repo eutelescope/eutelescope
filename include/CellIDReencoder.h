@@ -10,7 +10,9 @@ template <class T>
 class CellIDReencoder : public CellIDEncoder<T>{
 
 public:
-	CellIDReencoder( const std::string& cellIDEncoding ,  EVENT::LCCollection* col) : CellIDEncoder<T>( cellIDEncoding, col ){}
+	CellIDReencoder( /* std::string encoding,*/ EVENT::LCCollection* col ): CellIDEncoder<T>( col->getParameters().getStringVal( LCIO::CellIDEncoding ) /*encoding*/, col )
+	{
+	}
 	
 	void readValues(T* hit)
 	{
