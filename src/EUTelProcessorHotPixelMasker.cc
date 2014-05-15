@@ -112,7 +112,7 @@ void EUTelProcessorHotPixelMasker::processEvent(LCEvent * event)
 	//read the encoding string from the input collection
 	std::string encoding = pulseInputCollectionVec->getParameters().getStringVal( LCIO::CellIDEncoding );
 	//and the encoder for the data
-	lcio::UTIL::CellIDReencoder<TrackerPulseImpl> cellReencoder( pulseInputCollectionVec );
+	lcio::UTIL::CellIDReencoder<TrackerPulseImpl> cellReencoder( encoding, pulseInputCollectionVec );
 	
 	//loop over all the pulses
 	for ( size_t iPulse = 0 ; iPulse < pulseInputCollectionVec->size(); iPulse++ ) 
