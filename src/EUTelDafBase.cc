@@ -70,6 +70,7 @@
 // lcio includes <.h>
 #include <IO/LCWriter.h>
 #include <UTIL/LCTime.h>
+#include <UTIL/CellIDDecoder.h>
 #include <EVENT/LCCollection.h>
 #include <EVENT/LCEvent.h>
 #include <EVENT/LCObject.h>
@@ -106,7 +107,6 @@ using namespace eutelescope;
 
 
 EUTelDafBase::EUTelDafBase(std::string name) : marlin::Processor(name) {
-  //cout << "DafBase " << "1" << endl;
   MAXCLUSTERSIZE = -1;
   //Universal DAF params
   minx = -10.75;
@@ -157,12 +157,10 @@ EUTelDafBase::EUTelDafBase(std::string name) : marlin::Processor(name) {
   registerOptionalParameter("TrackAsciiName", "Filename for fitted tracks", _asciiName, string ("tracks.txt"));
   registerOptionalParameter("NDutHits", "How many DUT hits do we need in order to accept track?", _nDutHits, static_cast <int>(0));
   registerOptionalParameter("AlignmentCollectionNames", "Names of alignment collections, should be in same order as application", _alignColNames, std::vector<std::string>());
-  //cout << "DafBase " << "2" << endl;
 }
 
 bool EUTelDafBase::defineSystemFromData()
 {
-  //cout << "DafBase " << "3" << endl;
   bool gotIt = true;
   bool gotPlane = false;
   for(size_t plane = 0; plane < _system.planes.size(); plane++)
@@ -208,12 +206,10 @@ bool EUTelDafBase::defineSystemFromData()
 //   printf("gotPlane  %5d  gotIt %5d \n",gotPlane, gotIt);
 
 }
-  //cout << "DafBase " << "4" << endl;
   return(gotIt);
 }
 
 void EUTelDafBase::gearRotate(size_t index, size_t gearIndex){
-  //cout << "DafBase " << "5" << endl;
   daffitter::FitPlane& pl = _system.planes.at(index);
 
   double gRotation[3] = { 0., 0., 0.};
@@ -264,7 +260,6 @@ void EUTelDafBase::gearRotate(size_t index, size_t gearIndex){
   //Errors not corrected for xy rotation
   pl.scaleErrors( std::fabs(std::cos(gRotation[1])), std::fabs(std::cos(gRotation[0])));
   getPlaneNorm(pl);
-  //cout << "DafBase " << "6" << endl;
 } 
 /*
 Vector3f EUTelDafBase::applyAlignment(EUTelAlignmentConstant* alignment, Vector3f point){
@@ -284,7 +279,6 @@ Vector3f EUTelDafBase::applyAlignment(EUTelAlignmentConstant* alignment, Vector3
 }*/
 
 Vector3f EUTelDafBase::applyAlignment(EUTelAlignmentConstant* alignment, Vector3f point){
-  //cout << "DafBase " << "7" << endl;
   Vector3f outpoint;
   double alpha = alignment->getAlpha();
   double beta  = alignment->getBeta();  
@@ -307,12 +301,10 @@ Vector3f EUTelDafBase::applyAlignment(EUTelAlignmentConstant* alignment, Vector3
 //printf("input %5.3f %5.3f %5.3f   %5.3f %5.3f %5.3f \n", point(0), point(1), point(2),  alpha, beta, gamma );
 //printf("outut %5.3f %5.3f %5.3f \n", outpoint(0), outpoint(1), outpoint(2) );
 
-  //cout << "DafBase " << "8" << endl;
   return(outpoint);
 }
 
 void EUTelDafBase::alignRotate(std::string collectionName, LCEvent* event) {
-  //cout << "DafBase " << "9" << endl;
   LCCollectionVec * alignmentCollectionVec;
   try {
     alignmentCollectionVec     = dynamic_cast < LCCollectionVec * > (event->getCollection(collectionName));
@@ -342,24 +334,15 @@ void EUTelDafBase::alignRotate(std::string collectionName, LCEvent* event) {
       }
     }
   }
-  //cout << "DafBase " << "10" << endl;
 }
 void EUTelDafBase::getPlaneNorm(daffitter::FitPlane& pl){
-  //cout << "DafBase " << "11" << endl;
   Vector3f l1 = pl.getRef1() - pl.getRef0();
   Vector3f l2 = pl.getRef2() - pl.getRef0();
   //Calculate plane normal vector from ref points
   pl.setPlaneNorm( l2.cross(l1));
-  // //cout << "DafBase " << "Ref0 " << endl << pl.getRef0() << endl;
-  // //cout << "DafBase " << "Norm vec " << endl << pl.getPlaneNorm() << endl;
-  // //cout << "DafBase " << "Norm dot r0 - r1 " << pl.getPlaneNorm().dot(pl .getRef1() - pl.getRef0()) << endl;
-  // //cout << "DafBase " << "Norm dot r2 - r0 " << pl.getPlaneNorm().dot(pl.getRef2() - pl.getRef0()) << endl;
-  //cout << "DafBase " << "12" << endl;
 }
 
 void EUTelDafBase::init() {
-  //cout << "DafBase " << "13" << endl;
-  ////cout << "DafBase " << "Trying to open " << _asciiName << endl;
   trackstream.open(_asciiName.c_str());
   
   printParameters ();
@@ -469,28 +452,22 @@ void EUTelDafBase::init() {
     _colMinMax[iden] = make_pair(xMin, xMax);
     _rowMinMax[iden] = make_pair(yMin, yMax);
   }
-  //cout << "DafBase " << "14" << endl;
 }
 
 void EUTelDafBase::processRunHeader (LCRunHeader * rdr) {
-  //cout << "DafBase " << "15" << endl;
   auto_ptr<EUTelRunHeaderImpl> header ( new EUTelRunHeaderImpl (rdr) );
   header->addProcessor( type() ) ;
   ++_iRun;
-  //cout << "DafBase " << "16" << endl;
 }
 
 
 float EUTelDafBase::getScatterThetaVar( float radLength ){
-  //cout << "DafBase " << "17" << endl;
   //From pdg live
   float scatterTheta = 0.0136f/_eBeam * sqrt( radLength ) *  (1.0f + 0.038f * std::log(radLength) );
-  //cout << "DafBase " << "18" << endl;
   return(scatterTheta * scatterTheta);
 }
 
 size_t EUTelDafBase::getPlaneIndex(float zPos){
-  //cout << "DafBase " << "19" << endl;
   //Get plane index from z-position of hit
   map<float,int>::iterator it = _zSort.begin();
   size_t index(0);
@@ -506,55 +483,12 @@ size_t EUTelDafBase::getPlaneIndex(float zPos){
   }else{
 //    streamlog_out ( MESSAGE5 ) << "Found hit at z=" << zPos << " , assign index = " << index << endl;     
   }
-  //cout << "DafBase " << "20" << endl;
 
   return(index);
 }
 
-int EUTelDafBase::guessSensorID( double * hit ) 
-{
-  //cout << "DafBase " << "21" << endl;
-
-  int sensorID = -1;
-  double minDistance =  numeric_limits< double >::max() ;
-//  double * hitPosition = const_cast<double * > (hit->getPosition());
-
-//  LCCollectionVec * referenceHitVec     = dynamic_cast < LCCollectionVec * > (evt->getCollection( _referenceHitCollectionName));
-  if( ReferenceHitVecIsSet() )
-  {
-    streamlog_out( MESSAGE5 ) << "_referenceHitVec is empty" << endl;
-    return 0;
-  }
-
-      for(size_t ii = 0 ; ii <  static_cast< unsigned int >(_referenceHitVec->getNumberOfElements()); ii++)
-      {
-        EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
-//        printf(" _referenceHitVec %p refhit %p \n", _referenceHitVec, refhit);
-        
-        TVector3 hit3d( hit[0], hit[1], hit[2] );
-        TVector3 hitInPlane( refhit->getXOffset(), refhit->getYOffset(), refhit->getZOffset());
-        TVector3 norm2Plane( refhit->getAlpha(), refhit->getBeta(), refhit->getGamma() );
- 
-        double distance = abs( norm2Plane.Dot(hit3d-hitInPlane) );
-//        printf("iPlane %5d   hitPos:  [%8.3f;%8.3f%8.3f]  distance: %8.3f \n", refhit->getSensorID(), hitPosition[0],hitPosition[1],hitPosition[2], distance  );
-        if ( distance < minDistance ) 
-        {
-           minDistance = distance;
-//           sensorID = refhit->getSensorID(); // proper ID
-           sensorID = ii;                    // number in the GEAR file z ordered
-//           printf("sensorID: %5d \n", sensorID );
-        }    
-
-      }
-
-  //cout << "DafBase " << "22" << endl;
-  return sensorID;
-}
-
-
 void EUTelDafBase::readHitCollection(LCEvent* event)
 {
-  //cout << "DafBase " << "23" << endl;
   //Dump LCIO hit collection to tracker system
   //Extract hits from collection, add to tracker system
 //printf("EUTelDafBase::readHitCollection \n");
@@ -590,26 +524,17 @@ void EUTelDafBase::readHitCollection(LCEvent* event)
        if(_mcCollection != 0 ) simhit = static_cast<SimTrackerHitImpl*> ( _mcCollection->getElementAt(iHit) );
        if(simhit != 0 )
        {
-       const double * simpos = simhit->getPosition();
-       pos[0]=simpos[0];
-       pos[1]=simpos[1];
-       pos[2]=simpos[2];
-//      int planeIndex = getPlaneIndex( pos[2]  * 1000.0f);
-       planeIndex = guessSensorID( pos );
+	  UTIL::CellIDDecoder<SimTrackerHitImpl> simHitDecoder (_mcCollection);
+	  planeIndex = simHitDecoder(simhit)["sensorID"];
        }
        streamlog_out ( DEBUG5 ) << " SIM: simhit="<< ( simhit != 0 ) <<" add point [" << planeIndex << "] "<< 
                       static_cast< float >(pos[0]) * 1000.0f << " " << static_cast< float >(pos[1]) * 1000.0f << " " <<  static_cast< float >(pos[2]) * 1000.0f << endl;
-//      printf("planeIndex %5d of %5d \n", planeIndex, _system.planes.size() ); 
-//       region = checkClusterRegion( simhit, _system.planes.at(planeIndex).getSensorID() );
      }else
       if(hit != 0 )
       {
-//      printf("2 %s hit = %2d  and simhit = %2d \n",_hitCollectionName[i].c_str(), hit, simhit);
-       const double * hitpos = hit->getPosition();
-       pos[0]=hitpos[0];
-       pos[1]=hitpos[1];
-       pos[2]=hitpos[2];
-       planeIndex = guessSensorID( pos );
+	UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
+       planeIndex = hitDecoder(hit)["sensorID"];
+
        streamlog_out ( DEBUG5 ) << " REAL: add point [" << planeIndex << "] "<< 
                       static_cast< float >(pos[0]) * 1000.0f << " " << static_cast< float >(pos[1]) * 1000.0f << " " <<  static_cast< float >(pos[2]) * 1000.0f << endl;
        region = checkClusterRegion( hit, _system.planes.at(planeIndex).getSensorID() );
@@ -623,11 +548,7 @@ void EUTelDafBase::readHitCollection(LCEvent* event)
         _system.addMeasurement( planeIndex, static_cast< float >(pos[0]) * 1000.0f, static_cast< float >(pos[1]) * 1000.0f, static_cast< float >(pos[2]) * 1000.0f,  region, iHit);
       }
     }
-// printf("EUTelDafBase::readHitCollection add all hits from collection %5d DONE \n",i);
   }
-// printf("EUTelDafBase::readHitCollection -- DONE \n");
- 
-  //cout << "DafBase " << "24" << endl;
 }
 
 bool EUTelDafBase::checkClusterRegion(lcio::TrackerHitImpl* hit, int iden){
@@ -642,7 +563,6 @@ bool EUTelDafBase::checkClusterRegion(lcio::TrackerHitImpl* hit, int iden){
     cluster->getCenterCoord(xSeed, ySeed);
     int xSize(0), ySize(0);
     cluster->getClusterSize(xSize, ySize);
-    //if( iden == 10) std:://cout << "DafBase " << iden << " c: " << xSeed << " r: " << ySeed << std::endl;
     std::pair<int, int> &colMinMax = _colMinMax[iden]; 
     if( (xSeed - xSize / 2 ) < colMinMax.first ) { goodRegion = false;}
     if( (xSeed + xSeed / 2) > colMinMax.second ) { goodRegion = false;}
@@ -650,12 +570,10 @@ bool EUTelDafBase::checkClusterRegion(lcio::TrackerHitImpl* hit, int iden){
     if( (ySeed - ySize / 2) < rowMinMax.first ) { goodRegion = false;}
     if( (ySeed + ySize / 2) > rowMinMax.second ) { goodRegion = false;}
   }*/
-  //cout << "DafBase " << "26" << endl;
   return(goodRegion);
 }
 
 int EUTelDafBase::checkInTime(){
-  //cout << "DafBase " << "27" << endl;
   size_t nMatches(0);
   for( size_t ii = 0; ii < _system.planes.size() ; ii++){
     daffitter::FitPlane& plane = _system.planes.at(ii);
@@ -673,12 +591,10 @@ int EUTelDafBase::checkInTime(){
       break;
     }
   }
-  //cout << "DafBase " << "28" << endl;
   return(nMatches);
 }
 
 void EUTelDafBase::processEvent(LCEvent * event){
-  //cout << "DafBase " << "29" << endl;
   try{
     _clusterVec = dynamic_cast < LCCollectionVec * > (event->getCollection( _clusterCollectionName));
   } catch(...){
@@ -729,9 +645,6 @@ void EUTelDafBase::processEvent(LCEvent * event){
   readHitCollection(event);
 
   if( not _initializedSystem ){ 
-//    _initializedSystem = defineSystemFromData();
-//    if(not _initializedSystem) { return; }
-//    //cout << "DafBase " << "Initialized system at event " << event->getEventNumber() << endl;
   }
 //printf("EUTelDafBase::processEvent \n");
   //Run track finder
@@ -743,11 +656,9 @@ void EUTelDafBase::processEvent(LCEvent * event){
   if(event->getEventNumber() % 1000 == 0){
     streamlog_out ( MESSAGE5 ) << "Accepted " << _nTracks <<" tracks at event " << event->getEventNumber() << endl;
   }
-  //cout << "DafBase " << "30" << endl;
 }
 
 bool EUTelDafBase::checkTrack(daffitter::TrackCandidate * track){
-  //cout << "DafBase " << "31" << endl;
 
 //printf("EUTelDafBase::checkTrack %7.3f %8.3f \n", track->ndof, track->chi2 );
 //track->print();
@@ -759,12 +670,10 @@ bool EUTelDafBase::checkTrack(daffitter::TrackCandidate * track){
   n_passedIsnan++;
 
 //printf("EUTelDafBase::checkTrack %7.3f %8.3f ;; return true;\n", track->ndof, track->chi2 );
-  //cout << "DafBase " << "32" << endl;
   return(true);
 }
 
 void EUTelDafBase::dumpToAscii(){
-  //cout << "DafBase " << "33" << endl;
   trackstream << _nTracks << endl;
   for( size_t ii = 0; ii < _system.planes.size() ; ii++){
     daffitter::FitPlane& plane = _system.planes.at(ii);
@@ -776,11 +685,9 @@ void EUTelDafBase::dumpToAscii(){
     }
   }
   trackstream << endl;
-  //cout << "DafBase " << "34" << endl;
 }
 
 void EUTelDafBase::fillPlots(daffitter::TrackCandidate *track){
-  //cout << "DafBase " << "35" << endl;
   _aidaHistoMap["chi2"]->fill( track->chi2);
   _aidaHistoMap["logchi2"]->fill( std::log10(track->chi2));
   _aidaHistoMap["ndof"]->fill( track->ndof);
@@ -802,35 +709,6 @@ void EUTelDafBase::fillPlots(daffitter::TrackCandidate *track){
       _aidaHistoMap[bname + "residualX"]->fill( (estim->getX() - meas.getX())*1e-3 );
       _aidaHistoMap[bname + "residualY"]->fill( (estim->getY() - meas.getY())*1e-3 );
 
-
-      // mc ?? 
-/*      if( _mcCollection != 0 )
-      {
-         double dca = 99999.;
-         double dcax = 99999.;
-         double dcay = 99999.;
-         printf("mcCollection not null \n");
-         for ( int iHit = 0; iHit < _mcCollection->getNumberOfElements(); iHit++ ) 
-         {
-          SimTrackerHitImpl * simhit   = static_cast<SimTrackerHitImpl*> ( _mcCollection->getElementAt(iHit) );
-           int detectorID = simhit->getCellID0();
-           if( detectorID == plane.getSensorID() )
-           {
-//             printf("element %d of %d  \n",  iHit, _mcCollection->getNumberOfElements()  );
-             const double * pos = simhit->getPosition();
-             double temp_dca=  sqrt( ( estim->getX() - pos[0] )*( estim->getX() - pos[0] ) + ( estim->getY() - pos[1] )* ( estim->getY() - pos[1]  ) );
-             if( temp_dca < dca )
-             {
-               dca  = temp_dca;
-               dcax =  estim->getX() - pos[0];
-               dcay =  estim->getY() - pos[1];
-             }
-//             printf("%5d %5d :: %5d get %f %f %f \n", ii, w, detectorID, pos[0], pos[1], pos[2] );
-           }
-         }
-             _aidaHistoMap[bname + "mcresidualX"]->fill( dcax *1e-3 );
-             _aidaHistoMap[bname + "mcresidualY"]->fill( dcay *1e-3);
-      }*/
       //Resids 
       _aidaHistoMapProf1D[bname + "residualdXvsX"]->fill(estim->getX(), estim->getX() - meas.getX() );
       _aidaHistoMapProf1D[bname + "residualdYvsX"]->fill(estim->getX(), estim->getY() - meas.getY() );
@@ -839,13 +717,6 @@ void EUTelDafBase::fillPlots(daffitter::TrackCandidate *track){
       _aidaHistoMapProf1D[bname + "residualdZvsX"]->fill(estim->getX(), plane.getMeasZ() - meas.getZ()  );
       _aidaHistoMapProf1D[bname + "residualdZvsY"]->fill(estim->getY(), plane.getMeasZ() - meas.getZ()  );
 
-/*
-      _aidaHistoMap2D[bname + "residualXdX"]->fill(estim->getX(), estim->getX() - meas.getX() );
-      _aidaHistoMap2D[bname + "residualYdX"]->fill(estim->getX(), estim->getY() - meas.getY() );
-      _aidaHistoMap2D[bname + "residualXdY"]->fill(estim->getY(), estim->getX() - meas.getX() );
-      _aidaHistoMap2D[bname + "residualYdY"]->fill(estim->getY(), estim->getY() - meas.getY() );
-      _aidaHistoMap2D[bname + "residualdZvsY"]->fill(estim->getY(), plane.getMeasZ() - meas.getZ()  );
-*/
       _aidaHistoMap2D[bname + "residualmeasZvsmeasX"]->fill(  meas.getZ()/1000., meas.getX()  );
       _aidaHistoMap2D[bname + "residualmeasZvsmeasY"]->fill(  meas.getZ()/1000., meas.getY()  );
       _aidaHistoMap2D[bname + "residualfitZvsmeasX"]->fill( plane.getMeasZ()/1000., meas.getX() );
@@ -859,7 +730,6 @@ void EUTelDafBase::fillPlots(daffitter::TrackCandidate *track){
       _aidaHistoMap[bname + "dxdz"]->fill( estim->getXdz() );
       _aidaHistoMap[bname + "dydz"]->fill( estim->getYdz() );
       if( ii != 4) { continue; }
-     //plane.setMeasZ( plane.getMeasZ() - 175.0);
       _aidaZvHitX->fill(estim->getX(), meas.getZ() - plane.getZpos());
       _aidaZvFitX->fill(estim->getX(), (plane.getMeasZ() - plane.getZpos()) - (meas.getZ() - plane.getZpos()));
       _aidaZvHitY->fill(estim->getY(), meas.getZ() - plane.getZpos());
@@ -867,11 +737,9 @@ void EUTelDafBase::fillPlots(daffitter::TrackCandidate *track){
       _aidaZvFitY->fill(estim->getY(), (plane.getMeasZ() - plane.getZpos()) - (meas.getZ() - plane.getZpos()));
     }
   }
-  //cout << "DafBase " << "36" << endl;
 }
 
 void EUTelDafBase::fillDetailPlots(daffitter::TrackCandidate *track){
-  //cout << "DafBase " << "37" << endl;
   for( size_t ii = 0; ii < _system.planes.size() ; ii++){
     daffitter::FitPlane& plane = _system.planes.at(ii);
 
@@ -904,11 +772,9 @@ void EUTelDafBase::fillDetailPlots(daffitter::TrackCandidate *track){
       _aidaHistoMap[bname + "pullY"]->fill( pullY );
     }
   }
-  //cout << "DafBase " << "38" << endl;
 }
 
 void EUTelDafBase::bookHistos(){
-  //cout << "DafBase " << "39" << endl;
 
   int maxNdof = -4 + _system.planes.size() * 2 + 1;
   _aidaHistoMap["chi2"] = AIDAProcessor::histogramFactory(this)->createHistogram1D("chi2", 100, 0, maxNdof * _maxChi2);
@@ -1016,11 +882,9 @@ int _maxAngle = 12; //Temporary
 //  _aidaHistoMap2D["ClusterSize"]->setTitle("Average Cluster Size Vs Y Position;Position In Y (mm);Average Cluster Size");
   _aidaHistoMap2D["ClusterSizeYVsAngleY"] = AIDAProcessor::histogramFactory(this)->createHistogram2D("ClusterSizeYVsAngleY;Angle in Y (degrees);Cluster Size In Y", 120, 0, 120, static_cast<int>(_maxAngle)*100, 0,static_cast<double>(_maxAngle)); 
 //  _aidaHistoMap2D["ClusterSize"]->setTitle("Average Cluster Size Vs Y Position;Position In Y (mm);Average Cluster Size");
-  //cout << "DafBase " << "40" << endl;
 }
 
 void EUTelDafBase::bookDetailedHistos(){
-  //cout << "DafBase " << "41" << endl;
 
   for( size_t ii = 0; ii < _system.planes.size() ; ii++)
   {
@@ -1034,46 +898,38 @@ void EUTelDafBase::bookDetailedHistos(){
     _aidaHistoMap[bname + "pullX"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "pullX", 10, -2, 2);
     _aidaHistoMap[bname + "pullY"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "pullY", 10, -2, 2);
   }
-  //cout << "DafBase " << "42" << endl;
 }
 
 double GetAverageClusterSize(std::vector< double > z){
-  //cout << "DafBase " << "43" << endl;
   double mean(0);  
   for(vector< double >::iterator it = z.begin(); it != z.end(); ++it){
     mean += *it;
   }
   mean /= static_cast<double>(z.size());
-  //cout << "DafBase " << "44" << endl;
   return mean;
 }
 
 // === For average Chi2 vs cluster size ===
 double GetAverageChi2(std::vector< double > avgchi2){
-  //cout << "DafBase " << "45" << endl;
   double mean(0);  
   for(vector< double >::iterator i = avgchi2.begin(); i != avgchi2.end(); ++i){
     mean += *i;
   }
   mean /= static_cast<double>(avgchi2.size());
-  //cout << "DafBase " << "46" << endl;
   return mean;
 }//========================================
 
 double GetAverageResolution(std::vector< double > averageresidual){
-  //cout << "DafBase " << "47" << endl;
   TH1D *histogram = new TH1D("histogram","histogram",100,-0.04,0.04);
   for(vector< double >::iterator i = averageresidual.begin(); i != averageresidual.end(); ++i){
     histogram->Fill(*i);
   }
   TF1 *fit = new TF1("fit","gaus");
   histogram->Fit(fit,"Q");
-  //cout << "DafBase " << "48" << endl;
   return fit->GetParameter(2);
 }
 
 void EUTelDafBase::end() {
-  //cout << "DafBase " << "49" << endl;
 
   for(std::map< int, std::vector < double > >::iterator it = _xPositionForClustering.begin(); it != _xPositionForClustering.end(); ++it){
     double newx = minx + binsizex*it->first;
@@ -1108,9 +964,7 @@ void EUTelDafBase::end() {
 
 //  _aidaHistoMap["AverageClusterSizeVsYPosition"]->fill(newy,averageclustersize);
 
-  //cout << "DafBase " << "Trying to close " << _asciiName << endl;
   trackstream.close();
-  //cout << "DafBase " << "MAX CLUSTER SIZE = " << MAXCLUSTERSIZE << endl;
   dafEnd();
   
   streamlog_out ( MESSAGE5 ) << endl;
@@ -1139,6 +993,5 @@ void EUTelDafBase::end() {
   }
 
 
-  //cout << "DafBase " << "50" << endl;
 }
 #endif // USE_GEAR

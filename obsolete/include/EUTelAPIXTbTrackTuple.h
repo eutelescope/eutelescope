@@ -57,7 +57,6 @@ namespace eutelescope {
     void invertAlignment(EUTelAlignmentConstant * alignment);
     void invertGear();
     void reverseAlign(double& x, double& y, double& z, int iden, double nomZPos);
-    int  guessSensorID( TrackerHit *hit);
     void clear();
     gsl_matrix* invertLU(int dim, gsl_matrix* m);
     int readZsHits(std::string colName, LCEvent* event);

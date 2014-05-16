@@ -174,9 +174,6 @@ namespace eutelescope {
      */   
     bool _UsefullHotPixelCollectionFound;
 
-//    virtual int guessSensorID(TrackerHitImpl* hit);
-    virtual int guessSensorID(const double* hit);
-
 // maps and vectors to navigate along the geometry of the setup:
     //! vector of Rotation Matrix elements
     std::vector< std::map<int,double> > _siPlanesRotations;

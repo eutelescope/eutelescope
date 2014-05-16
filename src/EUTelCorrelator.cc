@@ -631,8 +631,8 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 
     if ( _hasHitCollection ) {
 
-      LCCollectionVec * inputHitCollection = static_cast< LCCollectionVec *>
-        ( event->getCollection( _inputHitCollectionName )) ;
+      LCCollectionVec* inputHitCollection = static_cast<LCCollectionVec*>( event->getCollection(_inputHitCollectionName) );
+      UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
       for ( size_t iExt = 0 ; iExt < inputHitCollection->size(); ++iExt ) {
         std::vector<double> trackX;
         std::vector<double> trackY;
@@ -642,16 +642,12 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
        trackY.clear();
        iplane.clear();
 
-
         // this is the external hit
-        TrackerHitImpl * externalHit = static_cast< TrackerHitImpl * > ( inputHitCollection->
-                                                                         getElementAt( iExt ) );
+        TrackerHitImpl* externalHit = static_cast<TrackerHitImpl*>( inputHitCollection->getElementAt(iExt) );
+        
+	double* externalPosition = const_cast<double*>( externalHit->getPosition() );
 
-        double * externalPosition;
-        externalPosition = const_cast< double* >( externalHit->getPosition() );
-
-        int externalSensorID = guessSensorID( externalPosition );
-
+        int externalSensorID = hitDecoder( externalHit )["sensorID"]; 
 
         trackX.push_back(externalPosition[0]);
         trackY.push_back(externalPosition[1]);
@@ -660,12 +656,12 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
         for ( size_t iInt = 0; iInt < inputHitCollection->size(); ++iInt ) 
         {
 
-          TrackerHitImpl  * internalHit = static_cast< TrackerHitImpl * > ( inputHitCollection->
-                                                                            getElementAt( iInt ) );
-          double * internalPosition;
-          internalPosition = const_cast< double* >( internalHit->getPosition() );
+          TrackerHitImpl* internalHit = static_cast<TrackerHitImpl*>( inputHitCollection->getElementAt(iInt) );
 
-          int internalSensorID = guessSensorID( internalPosition );
+          double* internalPosition = const_cast<double*>( internalHit->getPosition() );
+
+          int internalSensorID = hitDecoder( internalHit )["sensorID"]; 
+
           bool ishot = hitContainsHotPixels(internalHit); 
 
           if( ishot ) continue;
@@ -1455,54 +1451,6 @@ if(rowNBin>100) rowNBin=rowNBin/4;
   }
 #endif
 }
-
-int EUTelCorrelator::guessSensorID(const double * hit ) 
-{
-
-  int sensorID = -1;
-  double minDistance =  numeric_limits< double >::max() ;
-
-  if( _referenceHitVec == 0 || _useReferenceHitCollection == false ){
-    // use z information of planes instead of reference vector
-    for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); ++iPlane ) {
-      double distance = std::abs( hit[2] - _siPlaneZPosition[ iPlane ] );
-      if ( distance < minDistance ) {
-	minDistance = distance;
-	sensorID = _siPlanesLayerLayout->getID( iPlane );
-      }
-    }
-    if ( minDistance > 30  ) {
-      // advice the user that the guessing wasn't successful 
-      streamlog_out( WARNING3 ) << "A hit was found " << minDistance << " mm far from the nearest plane\n"
-	"Please check the consistency of the data with the GEAR file: hitPosition[2]=" << hit[2] <<       endl;
-    }
-    
-    return sensorID;
-  }
-
-     streamlog_out( DEBUG5 ) << " _referenceHitVec " << _referenceHitVec << " " << _referenceHitCollectionName.c_str() << endl;
-     for(int ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
-      {
-
-       EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
-       streamlog_out( DEBUG5 ) << " _referenceHitVec " << _referenceHitVec << " refhit " << refhit << endl;
-       
-        TVector3 hit3d( hit[0], hit[1], hit[2] );
-        TVector3 hitInPlane( refhit->getXOffset(), refhit->getYOffset(), refhit->getZOffset());
-        TVector3 norm2Plane( refhit->getAlpha(), refhit->getBeta(), refhit->getGamma() );
- 
-        double distance = abs( norm2Plane.Dot(hit3d-hitInPlane) );
-        if ( distance < minDistance ) 
-        {
-           minDistance = distance;
-           sensorID = refhit->getSensorID();
-        }    
-
-      }
-
-  return sensorID;
-}
-
 
 std::vector<double> EUTelCorrelator::guessSensorOffset(int internalSensorID, int externalSensorID, std::vector<double> cluCenter)
 
