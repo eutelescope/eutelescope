@@ -16,15 +16,13 @@
 #include <algorithm>
 #include <vector>
 
-using namespace std;
-
 namespace eutelescope {
 
     template < class T >
     class EUTelFilter {
         /** \typedef Member function object functor
          */
-        typedef binder1st < const_mem_fun1_t< bool, EUTelFilter, T > > Binder;
+      typedef std::binder1st < std::const_mem_fun1_t< bool, EUTelFilter, T > > Binder;
 
     public:
         EUTelFilter() :
@@ -35,7 +33,7 @@ namespace eutelescope {
         _name( orig.GetName() ),
         _description( orig.GetDescription() ),
         _tester( &orig ) {} ;
-        EUTelFilter( const string& name, const string& description ) :
+        EUTelFilter( const std::string& name, const std::string& description ) :
         _name(name),
         _description(description),
         _tester( this ) {} ;
@@ -54,11 +52,11 @@ namespace eutelescope {
          */
         virtual bool Take(const T obj) const = 0;
 
-        virtual vector< T > operator()(vector< T >& obj) const {
-            vector< T > result;
-            remove_copy_if(obj.begin(), obj.end(), back_inserter(result), _tester);
+        virtual std::vector< T > operator()(std::vector< T >& obj) const {
+	  std::vector< T > result;
+	  remove_copy_if(obj.begin(), obj.end(), back_inserter(result), _tester);
 
-            return result;
+	  return result;
         }
 
         /** Composition operator (logic <b> OR <b>)
@@ -82,7 +80,7 @@ namespace eutelescope {
          * @param addedfilter One of the operands of the composition
          */
         virtual void operator+=(const EUTelFilter* addedfilter) {
-            _tester._logicoperand = bind1st(mem_fun(&EUTelFilter::Take), addedfilter);
+	  _tester._logicoperand = std::bind1st(std::mem_fun(&EUTelFilter::Take), addedfilter);
             _tester._logic = Tester::OR;
         }
         
@@ -97,7 +95,7 @@ namespace eutelescope {
          * @param addedfilter One of the operands of the composition
          */
         virtual void operator*=( const EUTelFilter* addedfilter) {
-            _tester._logicoperand = bind1st(mem_fun(&EUTelFilter::Take), addedfilter);
+	  _tester._logicoperand = std::bind1st(std::mem_fun(&EUTelFilter::Take), addedfilter);
             _tester._logic = Tester::AND;
         }
         //	  virtual EUTelFilter operator!( const EUTelFilter& ) = 0;
@@ -106,7 +104,7 @@ namespace eutelescope {
          * 
          * @param name
          */
-        void SetName(string& name) {
+        void SetName(std::string& name) {
             this->_name = name;
         }
 
@@ -114,7 +112,7 @@ namespace eutelescope {
          * 
          * @return name of the filter
          */
-        string GetName() const {
+        std::string GetName() const {
             return _name;
         }
 
@@ -125,7 +123,7 @@ namespace eutelescope {
          * 
          * @param description
          */
-        void SetDescription(string description) {
+        void SetDescription(std::string description) {
             this->_description = description;
         }
 
@@ -133,7 +131,7 @@ namespace eutelescope {
          * 
          * @return description info
          */
-        string GetDescription() const {
+        std::string GetDescription() const {
             return _description;
         }
 
@@ -155,8 +153,8 @@ namespace eutelescope {
             /** Constructor */
             Tester( EUTelFilter* parent) : 
                 _logic( IDENTITY ),
-                _logicoperand( bind1st(mem_fun(&EUTelFilter::Take), parent) ),
-                _worker( bind1st(mem_fun(&EUTelFilter::Take), parent) ) { }
+		  _logicoperand( std::bind1st(std::mem_fun(&EUTelFilter::Take), parent) ),
+		  _worker( std::bind1st(std::mem_fun(&EUTelFilter::Take), parent) ) { }
 
             bool operator()(const T obj) {
                 bool result = true;
@@ -199,8 +197,8 @@ namespace eutelescope {
         };
 
     private:
-        string _name;                   //! Name of the filter
-        string _description;            //! Description info of the filter
+        std::string _name;                   //! Name of the filter
+        std::string _description;            //! Description info of the filter
 
         Tester _tester;                 // Selection working horse
     };

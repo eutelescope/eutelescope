@@ -13,9 +13,6 @@
 #define EUTELSPARSECLUSTERIMPL_TCC
 
 #include <iostream>
-using namespace std;
-
-using namespace EVENT;
 
 namespace eutelescope {
 

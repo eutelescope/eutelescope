@@ -22,6 +22,8 @@
 
 #include <cstdio>
 
+using namespace std;
+
 namespace eutelescope {
 
     namespace Utility {
