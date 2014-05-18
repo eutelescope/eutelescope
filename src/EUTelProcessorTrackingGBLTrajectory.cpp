@@ -183,6 +183,7 @@ void EUTelProcessorTrackingGBLTrajectory::init() {
 
     // Getting access to geometry description
     std::string name("test.root");
+    geo::gGeometry().initializeTGeoDescription(name,false);
 
     // Instantiate track fitter. This is a working horse of the processor.
     {
@@ -199,7 +200,7 @@ void EUTelProcessorTrackingGBLTrajectory::init() {
 
         Fitter->setExcludeFromFitPlanes( _excludePlanesFromFit );
 
-       Fitter->SetBeamEnergy(_eBeam);
+        Fitter->SetBeamEnergy(_eBeam);
         Fitter->SetBeamCharge(_qBeam);
         Fitter->SetChi2Cut(_maxChi2Cut);
         if (!_mEstimatorType.empty() ) Fitter->setMEstimatorType(_mEstimatorType);
