@@ -15,6 +15,8 @@
 #include "EUTelUtility.h"
 #include "EUTelUtilityRungeKutta.h"
 #include "EUTelEquationsOfMotion.h"
+#include "EUTelTrackStateImpl.h"
+#include "EUTelTrackImpl.h"
 
 // LCIO
 #include <IMPL/LCCollectionVec.h>
