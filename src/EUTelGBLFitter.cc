@@ -965,6 +965,19 @@ namespace eutelescope {
             }
 
 
+
+        TVectorD meas(2);
+        TVectorD measPrec(2); // precision = 1/resolution^2
+
+        TVectorD scat(2);
+        scat.Zero();
+
+        TVectorD scatPrecSensor(2);
+        //TMatrixDSym scatPrec(2,2);
+        TVectorD scatPrec(2);
+
+
+
             // loop through scattering planes (including measurement planes) ::
             int nstates = (*itTrkCand)->getTrackStates().size();
             for(int i=0;i < nstates; i++) 
@@ -976,6 +989,9 @@ namespace eutelescope {
                 fitPointGlobal[0] = trk->getReferencePoint()[0] ;
                 fitPointGlobal[1] = trk->getReferencePoint()[1] ;
                 fitPointGlobal[2] = trk->getReferencePoint()[2] ;
+
+                double fitPointLocal[] = {0.,0.,0.};
+                geo::gGeometry().master2Local( fitPointGlobal, fitPointLocal);
 
 /*
                 cout << noshowpos <<  " [" << setfill('0') << setw(8) << dec<< trk->id() << "] ";
@@ -1009,10 +1025,37 @@ namespace eutelescope {
                   const int planeID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(*itHit) );
                   if( trk->getLocation() == planeID )
                   { 
+                    EVENT::FloatVec hitcov(4);
+                    hitcov[0]=0.01;
+                    hitcov[1]=0.00;
+                    hitcov[2]=0.01;
+                    hitcov[3]=0.00;
+
+                    // check Processor Parameters for plane resolution // Denys
+                    if( _paramterIdXResolutionVec.size() > 0 && _paramterIdYResolutionVec.size() > 0 )
+                    {
+                      for(int izPlane=0;izPlane<_paramterIdPlaneVec.size();izPlane++)
+                      {
+                        if( _paramterIdPlaneVec[izPlane] == planeID )
+                        {  
+                          hitcov[0] =  _paramterIdXResolutionVec[izPlane];
+                          hitcov[2] =  _paramterIdYResolutionVec[izPlane];
+                          hitcov[0] *= hitcov[0]; // squared !
+                          hitcov[2] *= hitcov[2]; // squared !
+                          break;
+                        } 
+                      }
+                    }
+                    else
+                    {  
+                      hitcov = (*itHit)->getCovMatrix();            
+                    }
+
+ 
                      const double* hitPointLocal = (*itHit)->getPosition();
                      double hitPointGlobal[] = {0.,0.,0.};
                      geo::gGeometry().local2Master(planeID,hitPointLocal,hitPointGlobal);
-
+/*
                      streamlog_out(MESSAGE0) << " | " <<  setw(3)  << right 
                                                <<   planeID  << " " << fixed << setw(11) << setprecision (3) << noshowpos << setw(7) << " " <<
                                                                       hitPointGlobal[0] << " : " <<  fitPointGlobal[0] 
@@ -1020,9 +1063,29 @@ namespace eutelescope {
                                                                       hitPointGlobal[1] << " : " <<  fitPointGlobal[1] 
                                                              << " " <<  noshowpos << setw(7) << " " <<
                                                                       hitPointGlobal[2] << " : " <<  fitPointGlobal[2] ;
+*/
+                     streamlog_out(MESSAGE0) << " | " <<  setw(3)  << right 
+                                               <<   planeID  << " " << fixed << setw(11) << setprecision (3) << noshowpos << setw(7) << " " <<
+                                                                      hitPointLocal[0] << " : " <<  fitPointLocal[0] 
+                                                             << " " <<  noshowpos << setw(7) << " " <<
+                                                                      hitPointLocal[1] << " : " <<  fitPointLocal[1] 
+                                                             << " " <<  noshowpos << setw(7) << " " <<
+                                                                      hitPointLocal[2] << " : " <<  fitPointLocal[2] ;
 
                      // fill next GBL point:
-//                    gbl::GblPoint point(jacPointToPoint);
+                     gbl::GblPoint point(jacPointToPoint);
+                 
+                     // Calculate projection matrix
+                     TMatrixD proL2m(2, 2);
+                     CalculateProjMatrix(proL2m, hitPointGlobal);
+                
+                     bool excludeFromFit = false;
+                     if ( std::find( _excludeFromFit.begin(), _excludeFromFit.end(), planeID ) != _excludeFromFit.end() ) excludeFromFit = true;
+ 
+                     if ( !excludeFromFit )
+                     {
+                       addMeasurementsGBL(point, meas, measPrec, hitPointLocal, fitPointLocal, hitcov, proL2m);
+                     }
 
                   }                          
                  }
