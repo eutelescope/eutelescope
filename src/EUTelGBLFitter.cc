@@ -926,12 +926,12 @@ namespace eutelescope {
 
 // convert input TrackCandidates and TrackStates into a GBL Trajectory
     void EUTelGBLFitter::TrackCandidatesToGBLTrajectory( vector<IMPL::TrackImpl*>::const_iterator& itTrkCand) {
-/*
+
             // sanity check. Mustn't happen in principle.
             if ((*itTrkCand)->getTrackerHits().size() > geo::gGeometry().nPlanes())
             {
               streamlog_out(ERROR) << "Sanity check. This should not happen in principle. Number of hits is greater then number of planes" << std::endl;
-              continue;
+              return;
             }
 
             // introduce new jacobian from point to point 
@@ -961,9 +961,81 @@ namespace eutelescope {
             if( imatch != _paramterIdPlaneVec.size() ) 
             { 
               streamlog_out(MESSAGE1) << " Number of hits does not correspond to the number of planes selected for tracking" << std::endl;
-              continue;
+              return;
             }
 
+
+            // loop through scattering planes (including measurement planes) ::
+            int nstates = (*itTrkCand)->getTrackStates().size();
+            for(int i=0;i < nstates; i++) 
+            {
+                streamlog_out(MESSAGE0) << "state: at " << i << " of " << nstates ;
+                IMPL::TrackStateImpl* trk = static_cast < IMPL::TrackStateImpl*> ( (*itTrkCand)->getTrackStates().at(i) ) ;
+
+                double fitPointGlobal[] = {0.,0.,0.};
+                fitPointGlobal[0] = trk->getReferencePoint()[0] ;
+                fitPointGlobal[1] = trk->getReferencePoint()[1] ;
+                fitPointGlobal[2] = trk->getReferencePoint()[2] ;
+
+/*
+                cout << noshowpos <<  " [" << setfill('0') << setw(8) << dec<< trk->id() << "] ";
+                cout << "| " << dec << setw(8) << " ";
+                cout << scientific << setprecision (2) << showpos << dec << setfill(' ');
+                cout << " |" << trk->getD0();
+                cout << " |" << trk->getPhi();
+                cout << " |" << trk->getOmega();
+                cout << " |" <<setprecision (3) << trk->getZ0();
+                cout << " |" << trk->getTanLambda();
+                cout << " |(" << setprecision(2) << trk->getReferencePoint()[0] << ", " << trk->getReferencePoint()[1] << ", " <<trk->getReferencePoint()[2];
+                cout << " |" << noshowpos << setw(7) << " " ; 
+                cout << " | " << noshowpos << setw(5) << trk->getLocation() << std::endl; 
+*/
+
+                if(  trk->getLocation() == -1 )
+                {
+                  // begining of the track - does not exist normally
+                }
+                else if(  trk->getLocation() == -2 )
+                {
+                  // end of the track - can ignore
+                }
+                if(  trk->getLocation() >= 0 )
+                {
+
+                 // look for the measurement point corresponding to the TrackState Location (fitted hit on the volume surface)
+                 EVENT::TrackerHitVec::const_iterator itHit;
+                 int imatch=0;
+                 for ( itHit = hits.begin(); itHit != hits.end(); itHit++) {
+                  const int planeID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(*itHit) );
+                  if( trk->getLocation() == planeID )
+                  { 
+                     const double* hitPointLocal = (*itHit)->getPosition();
+                     double hitPointGlobal[] = {0.,0.,0.};
+                     geo::gGeometry().local2Master(planeID,hitPointLocal,hitPointGlobal);
+
+                     streamlog_out(MESSAGE0) << " | " <<  setw(3)  << right 
+                                               <<   planeID  << " " << fixed << setw(11) << setprecision (3) << noshowpos << setw(7) << " " <<
+                                                                      hitPointGlobal[0] << " : " <<  fitPointGlobal[0] 
+                                                             << " " <<  noshowpos << setw(7) << " " <<
+                                                                      hitPointGlobal[1] << " : " <<  fitPointGlobal[1] 
+                                                             << " " <<  noshowpos << setw(7) << " " <<
+                                                                      hitPointGlobal[2] << " : " <<  fitPointGlobal[2] ;
+
+                     // fill next GBL point:
+//                    gbl::GblPoint point(jacPointToPoint);
+
+                  }                          
+                 }
+                } 
+                streamlog_out(MESSAGE0) << std::endl;
+
+//              streamlog_out(MESSAGE0) << "state: " << eutelstate->id() << " location: " << eutelstate->getLocation() << " X:" << eutelstate->getX() << " Y:" << eutelstate->getY() << std::endl;
+            }
+
+
+
+
+/*
             // loop through volume surfaces now (track candidate states) :
  
                 const double* hitPointLocal = (*itHit)->getPosition();
