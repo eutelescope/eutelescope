@@ -277,7 +277,7 @@ namespace eutelescope {
     void  EUTelTrackImpl::addTrackState( EUTelTrackStateImpl* trkstate ) {
         checkAccess("EUTelTrackImpl::addTrackState") ;
         Print();
-        std::cout << " addTrackState  " << trkstate << " of " << _trackStates.size() << std::endl;
+//        std::cout << " addTrackState  " << trkstate << " of " << _trackStates.size() << std::endl;
 /*        if( trkstate->getLocation() != EUTelTrackStateImpl::AtOther &&
             getTrackState( trkstate->getLocation() ) != NULL )
         {
