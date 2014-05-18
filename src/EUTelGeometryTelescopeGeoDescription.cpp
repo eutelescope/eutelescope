@@ -489,7 +489,9 @@ void EUTelGeometryTelescopeGeoDescription::local2Master( int sensorID, const dou
     const double sensorCenterX = siPlaneXPosition( sensorID );
     const double sensorCenterY = siPlaneYPosition( sensorID );
     const double sensorCenterZ = siPlaneZPosition( sensorID );
-    
+ 
+    streamlog_out(DEBUG0) << "_geoManager defined: " << _geoManager << std::endl;
+   
     streamlog_out(DEBUG0) << "Senosor id: " << sensorID << std::endl;
     streamlog_out(DEBUG0) << "Senosor center: " << "(" << sensorCenterX << "," << sensorCenterY << "," << sensorCenterZ << ")" << std::endl;
     
