@@ -53,11 +53,22 @@ namespace eutelescope {
       // will be automatically run when calling EUTelGBLFitter::FitTracks()
         void Clear();
 
-        void SetTrackCandidates(const EVENT::TrackVec&);
+        void SetTrackCandidates( const vector<IMPL::TrackImpl*> &);
+
+        void SetTrackCandidates( const EVENT::TrackVec&);
 
 
         /** Fit tracks */
+        // public: 
         void FitTracks();
+
+        void TrackCandidatesToGBLTrajectories();
+        void PerformFitGBLTrajectories();
+
+        // private:
+        void TrackCandidatesToGBLTrajectory( vector<IMPL::TrackImpl*>::const_iterator& itTrkCand );
+        void PerformFitGBLTrajectory( gbl::GblTrajectory* traj , EVENT::TrackVec::const_iterator& itTrkCand, double invP );
+
         void FitSingleTrackCandidate(EVENT::TrackVec::const_iterator& itTrkCand);
  
         inline void SetAlignmentMode( Utility::AlignmentMode alignmentMode) {
@@ -188,6 +199,8 @@ namespace eutelescope {
                                 double, int, double, double, double, double, double );
  
     private:
+        vector<IMPL::TrackImpl*> _trackCandidatesVec;
+
         EVENT::TrackVec _trackCandidates;
 
         std::map< int, gbl::GblTrajectory* > _gblTrackCandidates;

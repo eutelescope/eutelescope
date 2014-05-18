@@ -43,6 +43,8 @@ namespace eutelescope {
 
         virtual void SetTrackCandidates( const EVENT::TrackVec& );
 
+        virtual void SetTrackCandidates( const vector<IMPL::TrackImpl*> & );
+
       // do some clean up of internal data structures
         virtual void Clear();
 
@@ -52,8 +54,9 @@ namespace eutelescope {
          *  supposed to be removing track candidates which have n% hits in common      */  
         virtual void PruneTrackCandidates(){};
 
-
         virtual void FitTracks();
+        virtual void TrackCandidatesToGBLTrajectories();
+        virtual void PerformFitGBLTrajectories();
         virtual void FitSingleTrackCandidate();
 
     protected:

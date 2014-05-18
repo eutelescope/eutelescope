@@ -28,12 +28,27 @@ namespace eutelescope {
 	return;
     }
 
+    void EUTelTrackFitter::SetTrackCandidates( const vector<IMPL::TrackImpl*>& ) {
+        return;
+    }
+    void SetTrackCandidates( const vector<IMPL::TrackImpl*> & ) {
+        return;
+    }
+
     void EUTelTrackFitter::Clear() {
 	return;
     }
 
     void EUTelTrackFitter::FitTracks() {
 	return;
+    }
+
+    void EUTelTrackFitter::TrackCandidatesToGBLTrajectories() {
+	return;
+    }
+
+    void EUTelTrackFitter:: PerformFitGBLTrajectories() {
+        return;
     }
 
     void EUTelTrackFitter::FitSingleTrackCandidate() {
