@@ -208,20 +208,10 @@ namespace eutelescope {
             double lpoint[] = {0.,0.,0.};
             geo::gGeometry().master2Local( dpoint, lpoint );
             
-            state->setX(  state->getX() + 0.01 ); 
+            state->setX(  state->getX() ); 
 
-//            EUTelTrackImpl* fitterHit = new EUTelTrackImpl;
-             (*itTrk)->addTrackState( new EUTelTrackStateImpl( *state) );
-//            (*itTrk)->addTrack( fitterHit );
-/*
-            TrackerHitImpl* fitterHit = new TrackerHitImpl;
-            fitterHit->setPosition( &lpoint[0] );
-            fitterHit->setType( 32 );               // to be fixed
-            fitterHit->setCellID0( newSensorID );   // to be fixed
-            hitFittedVec.push_back(fitterHit);
+            (*itTrk)->addTrackState( new EUTelTrackStateImpl( *state) );
 
-            (*itTrk)->addHit( static_cast< EVENT::TrackerHit*> (fitterHit) ); // adding right away fitted track hit
-*/
  
             streamlog_out ( DEBUG4 ) << "Entrance: " <<  dpoint[0] << " " <<  dpoint[1] << " " << dpoint[2]  << " sensorID: " << newSensorID ;
             streamlog_out ( DEBUG4 ) << " in local " <<  lpoint[0] << " " <<  lpoint[1] << " " << lpoint[2]  <<  endl;
