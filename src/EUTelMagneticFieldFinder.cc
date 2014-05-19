@@ -422,7 +422,9 @@ itTrk++;
                }
             }
           } 
-          if(hitscount>5) { 
+    
+          // rubinskiy 19-05-2014 // fix-me !!! hardcoded value for common hits between two track candidates set to 0 (should be a parameter)
+          if(hitscount > 0) {   
             if( std::find(_tracks_to_delete.begin(), _tracks_to_delete.end(), *itTrk ) == _tracks_to_delete.end() || _tracks_to_delete.size() == 0 )
             {
                streamlog_out(MESSAGE1) <<  "is duped " << itrk << " & " << jtrk << std::endl;
