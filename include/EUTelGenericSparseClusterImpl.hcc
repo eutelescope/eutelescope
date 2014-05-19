@@ -1,0 +1,272 @@
+/*
+ *   This source code is part of the Eutelescope package of Marlin.
+ *   You are free to use this source files for your own development as
+ *   long as it stays in a public research context. You are not
+ *   allowed to use it for commercial purpose. You must put this
+ *   header with author names in all development based on this file.
+ *
+ */
+
+#include <UTIL/CellIDDecoder.h>
+#include "EUTELESCOPE.h"
+
+#ifndef EUTELGENERICSPARSECLUSTERIMPL_HCC
+#define EUTELGENERICSPARSECLUSTERIMPL_HCC
+
+namespace eutelescope {
+
+//! Implementation of a cluster made of sparsified pixels
+/*! This is a group of sparsified pixels having fulfilling the
+ *  proximity requirement.
+ *
+ *  The shape and the size of the cluster is a priori undefined.
+ *
+ *  The sparse pixel information are stored in the TrackerData using
+ *  one of the sparse pixel implementation, via the addPixel()
+ *  method.
+ */
+template<class PixelType> 
+class EUTelGenericSparseClusterImpl : public EUTelSimpleVirtualCluster {
+  
+public:
+    //! Default constructor
+    EUTelGenericSparseClusterImpl(IMPL::TrackerDataImpl* data);
+
+    //! Destructor
+    virtual ~EUTelGenericSparseClusterImpl() {}
+    
+    //! Get the detector ID
+    /*! This method is used to get from the CellID the detector
+     *  identification number
+     *
+     *  @return the detector ID 
+     */
+    inline int getDetectorID()  const 
+	{
+		UTIL::CellIDDecoder<TrackerDataImpl > cellDecoder( EUTELESCOPE::ZSCLUSTERDEFAULTENCODING );
+		return cellDecoder(_trackerData)["sensorID"];
+	}
+    
+    //! Get the cluster dimensions
+    /*! For each cluster type is always possible to define the
+     *  external sizes. 
+     *
+     *  @param xSize The size along x
+     *  @param ySize The size along y
+     */ 
+    virtual void getClusterSize(int& xSize, int& ySize) const ;
+
+    //! Get the cluster dimensions via a box around it
+    /*! A rectangle is put around the cluster and the
+	 *  size as well as the centre are returnd
+     *
+     *  @param xPos The position along x
+     *  @param yPos The position along y
+     *  @param xSize The size along x
+     *  @param ySize The size along y
+     */ 
+ 	virtual void getClusterInfo(int& xPos, int& yPos, int& xSize, int& ySize) const;
+
+    //! Get the cluster centre of gravity
+    /*! Computes the centre of gravity by weighting
+     *  pixel via their charge, results returned via
+     *  reference (same for y):
+     *
+     *  x_pos = sum((x_pos)_i*signal_i)/sum(signal_i)
+     *
+     *  @param xCoG The cog along x
+     *  @param yCoG The cog along y
+     */ 
+	virtual void getCoG(float& xCoG, float& yCoG) const;
+
+     //!TODO: Tobias: write docu here
+     virtual void getClusterGeomInfo(float& xPos, float& yPos, float& xSize, float& ySize) const;
+
+    //! Return the total charge
+    /*!
+     *  @return The total integrated charge
+     */
+    float getTotalCharge() const ;
+
+    //! Return a pointer to the TrackerDataImpl
+    /*! This method is used to expose to the public the
+     *  TrackerDataImpl member.
+     *
+     *  @return The pointer of _trackerData
+     */
+    virtual IMPL::TrackerDataImpl* trackerData()  { return _trackerData; } 
+    
+    //! Print
+    /*! This method is used to print out the content of the clusters
+     * 
+     *  @param os The input output stream
+     */
+    virtual void print(std::ostream& os) const ;
+
+////////////////////////////////////////////////////////
+//                                                    //
+//                IMPLEMENTATION                      //
+//                  SPECIFIC                          //
+//                                                    //
+////////////////////////////////////////////////////////
+
+    //! Get the number of sparse pixels in the collection
+    /*! This utility can be used to know how many pixels are contained
+     *  in the TrackerData.
+     *
+     *  @return the size of TrackerData measured in sparse
+     *  pixels. 
+     */ 
+    unsigned int size() const ;
+
+    //! Check if there are any sparse pixels in the collection
+    /*! 
+     *  @return TrackerData.empty()
+     */ 
+    bool empty() const ;
+
+    //! Get the type of sparsified pixel
+    /*! This method is used to get the type of sparsified pixel
+     *  contained in the cluster. 
+     *
+     *  It is implementation specific and it is not available in the
+     *  virtual interface since not all kind of clusters are made by
+     *  sparsified pixels
+     *
+     *  @return The sparse pixel type using the SparsePixelType enum
+     *
+     *  @see SparsePixelType
+     */
+    SparsePixelType getSparsePixelType() const 
+    {
+	UTIL::CellIDDecoder<TrackerDataImpl > cellDecoder( EUTELESCOPE::ZSCLUSTERDEFAULTENCODING );
+	return static_cast<SparsePixelType>(static_cast<lcio::long64>(cellDecoder(_trackerData)["sparsePixelType"]));
+    }
+
+    //! Get one of the sparse pixel
+    /*! This method is used to get one of the sparse pixel contained
+     *  into the TrackerData. Not mutant version.
+     *
+     *  @param index Index of the sparse pixel within the collection
+     *  @param pixel A pointer to the retrieved pixel.
+     *  @return A pointer to the retrieved pixel same as @c pixel
+     */ 
+    PixelType* getSparsePixelAt(unsigned int index, PixelType * pixel) const ;
+
+    //! Add a sparse pixel via a pointer to the pixel
+    /*! This method is used to add to the current TrackerDataImpl a
+     *  new sparse pixel with all the pieces of information.
+     */
+    void addSparsePixel(PixelType* pixel);
+
+    //! Add a sparse pixel via a reference to that pixel
+    /*! This method is used to add to the current TrackerDataImpl a
+     *  new sparse pixel with all the pieces of information.
+     */
+    void addSparsePixel(PixelType& pixel);
+
+protected: 
+    //! The number of elements in the data structure
+    unsigned int _nElement;
+
+    //! The sparse pixel type enumerator
+    SparsePixelType _type;
+
+private:
+	#ifndef DISALLOW_COPY_AND_ASSIGN
+	//Following #define stops the accidental creation of a copy or assignment operator by causing a link error. 
+	//Copy and Assignment operators not allowed because they are unnecessary and the cause of many bugs
+	#define DISALLOW_COPY_AND_ASSIGN(EUTelGenericSparseClusterImpl) \
+	EUTelGenericSparseClusterImpl(const EUTelGenericSparseClusterImpl&); \
+	void operator=(const EUTelGenericSparseClusterImpl&);
+	//Private Functions
+	DISALLOW_COPY_AND_ASSIGN(EUTelGenericSparseClusterImpl)//See #define just above
+	#endif
+};
+
+////////////////////////////////////////////////////////
+//                                                    //
+//                     TEMPLATE                       //
+//                  SPECIALIZATION                    //
+//                                                    //
+////////////////////////////////////////////////////////
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//! Template specialization - EUTelGenericSparsePixel
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  //! Template specialization for the getSparsePixelAt method
+  /*! The same considerations about EUTelGenericSparseClusterImpl apply here as
+   *  well. This method has to specialized for every type of
+   *  sparsified pixel
+   *  
+   *  @param index The pixel index the user wants to retrieve.
+   *  @param pixel A pointer to the output pixel
+   *  @return A pointer to the output pixel same as @c pixel
+   */ 
+	template<> inline EUTelGenericSparsePixel* EUTelGenericSparseClusterImpl<EUTelGenericSparsePixel>::getSparsePixelAt(unsigned int index, EUTelGenericSparsePixel* pixel) const
+	{
+		pixel->setXCoord( static_cast<int> ( _trackerData->getChargeValues()[index * _nElement]     ) );
+		pixel->setYCoord( static_cast<int> ( _trackerData->getChargeValues()[index * _nElement + 1] ) );
+		pixel->setSignal( static_cast<int> ( _trackerData->getChargeValues()[index * _nElement + 2] ) );
+		pixel->setTime( static_cast<int> ( _trackerData->getChargeValues()[index * _nElement + 3] ) );
+	
+    	return pixel;
+	}
+
+	//! Template specialization for the addSparsePixel method
+	/*! The same consideration about getSparsePixelAt. Adding and
+     *  retrieving pixel information are sensitive to the pixel
+	 *  definition.
+	 */
+	template<> inline void EUTelGenericSparseClusterImpl<EUTelGenericSparsePixel>::addSparsePixel(EUTelGenericSparsePixel* pixel) 
+	{
+		_trackerData->chargeValues().push_back( static_cast<float> (pixel->getXCoord()) );
+		_trackerData->chargeValues().push_back( static_cast<float> (pixel->getYCoord()) );
+		_trackerData->chargeValues().push_back( static_cast<float> (pixel->getSignal()) );
+		_trackerData->chargeValues().push_back( static_cast<float> (pixel->getTime()) );
+  	} 
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//! Template specialization - EUTelGenericSparsePixel
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	template<> inline EUTelGeometricPixel* EUTelGenericSparseClusterImpl<EUTelGeometricPixel>::getSparsePixelAt(unsigned int index, EUTelGeometricPixel* pixel) const
+	{
+		pixel->setXCoord( static_cast<int> ( _trackerData->getChargeValues()[index * _nElement]     ) );
+		pixel->setYCoord( static_cast<int> ( _trackerData->getChargeValues()[index * _nElement + 1] ) );
+		pixel->setSignal( static_cast<int> ( _trackerData->getChargeValues()[index * _nElement + 2] ) );
+		pixel->setTime( static_cast<int> ( _trackerData->getChargeValues()[index * _nElement + 3] ) );
+		pixel->setPosX( _trackerData->getChargeValues()[index * _nElement + 4] );
+		pixel->setPosY( _trackerData->getChargeValues()[index * _nElement + 5] );
+		pixel->setBoundaryX( _trackerData->getChargeValues()[index * _nElement + 6] );
+		pixel->setBoundaryY( _trackerData->getChargeValues()[index * _nElement + 7] );	
+
+    	return pixel;
+	}
+
+	template<> inline void EUTelGenericSparseClusterImpl<EUTelGeometricPixel>::addSparsePixel(EUTelGeometricPixel* pixel) 
+	{
+		_trackerData->chargeValues().push_back( static_cast<float> (pixel->getXCoord()) );
+		_trackerData->chargeValues().push_back( static_cast<float> (pixel->getYCoord()) );
+		_trackerData->chargeValues().push_back( static_cast<float> (pixel->getSignal()) );
+		_trackerData->chargeValues().push_back( static_cast<float> (pixel->getTime()) );
+		_trackerData->chargeValues().push_back( pixel->getPosX() );
+		_trackerData->chargeValues().push_back( pixel->getPosY() );
+		_trackerData->chargeValues().push_back( pixel->getBoundaryX() );
+		_trackerData->chargeValues().push_back( pixel->getBoundaryY() );
+  	} 
+
+	template<> inline void EUTelGenericSparseClusterImpl<EUTelGeometricPixel>::addSparsePixel(EUTelGeometricPixel& pixel) 
+	{
+		_trackerData->chargeValues().push_back( static_cast<float> (pixel.getXCoord()) );
+		_trackerData->chargeValues().push_back( static_cast<float> (pixel.getYCoord()) );
+		_trackerData->chargeValues().push_back( static_cast<float> (pixel.getSignal()) );
+		_trackerData->chargeValues().push_back( static_cast<float> (pixel.getTime()) );
+		_trackerData->chargeValues().push_back( pixel.getPosX() );
+		_trackerData->chargeValues().push_back( pixel.getPosY() );
+		_trackerData->chargeValues().push_back( pixel.getBoundaryX() );
+		_trackerData->chargeValues().push_back( pixel.getBoundaryY() );
+  	} 
+}
+
+#endif
