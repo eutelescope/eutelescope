@@ -13,7 +13,7 @@
  */
 
 // eutelescope includes ".h"
-#include "EUTelProcessorHotPixelMasker.h"
+#include "EUTelProcessorNoisyClusterMasker.h"
 #include "EUTELESCOPE.h"
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelTrackerDataInterfacerImpl.h"
@@ -47,8 +47,8 @@ using namespace marlin;
 using namespace eutelescope;
 
 
-EUTelProcessorHotPixelMasker::EUTelProcessorHotPixelMasker():
-  Processor("EUTelProcessorHotPixelMasker"),
+EUTelProcessorNoisyClusterMasker::EUTelProcessorNoisyClusterMasker():
+  Processor("EUTelProcessorNoisyClusterMasker"),
   _inputCollectionName(""),
   _iRun(0),
   _iEvt(0),
@@ -56,7 +56,7 @@ EUTelProcessorHotPixelMasker::EUTelProcessorHotPixelMasker():
   _dataFormatChecked(false),
   _wrongDataFormat(false)
 {
-  _description ="EUTelProcessorHotPixelMasker masks pulses which contain hot pixels. For this, the quality field of pulses is used to encode the kNoisyCluster enum provided by EUTelescope.";
+  _description ="EUTelProcessorNoisyClusterMasker masks pulses which contain hot pixels. For this, the quality field of pulses is used to encode the kNoisyCluster enum provided by EUTelescope.";
 
   registerInputCollection (LCIO::TRACKERDATA, "InputCollectionName", "Input of zero suppressed data, still containing hot pixels", _inputCollectionName, string ("cluster") );
 
@@ -64,7 +64,7 @@ EUTelProcessorHotPixelMasker::EUTelProcessorHotPixelMasker():
 
 }
 
-void EUTelProcessorHotPixelMasker::init () 
+void EUTelProcessorNoisyClusterMasker::init () 
 {
   // this method is called only once even when the rewind is active
   // usually a good idea to
@@ -74,7 +74,7 @@ void EUTelProcessorHotPixelMasker::init ()
   _iEvt = 0;
 }
 
-void EUTelProcessorHotPixelMasker::processRunHeader(LCRunHeader* rdr){
+void EUTelProcessorNoisyClusterMasker::processRunHeader(LCRunHeader* rdr){
 
   auto_ptr<EUTelRunHeaderImpl> runHeader ( new EUTelRunHeaderImpl(rdr) );
   runHeader->addProcessor(type()) ;
@@ -84,7 +84,7 @@ void EUTelProcessorHotPixelMasker::processRunHeader(LCRunHeader* rdr){
   _iEvt = 0;
 }
 
-void EUTelProcessorHotPixelMasker::processEvent(LCEvent * event) 
+void EUTelProcessorNoisyClusterMasker::processEvent(LCEvent * event) 
 {
 	if(_firstEvent)
 	{
@@ -169,6 +169,7 @@ void EUTelProcessorHotPixelMasker::processEvent(LCEvent * event)
 			cellReencoder["quality"] = quality;
 			//and apply the changes
 			cellReencoder.setCellID(pulseData);
+			_maskedNoisyClusters[sensorID]++;
 		}
 	
 		delete pixel;
@@ -176,24 +177,24 @@ void EUTelProcessorHotPixelMasker::processEvent(LCEvent * event)
 //rest of memory cleaned up by auto_ptrs
 }
 
-void EUTelProcessorHotPixelMasker::end() 
+void EUTelProcessorNoisyClusterMasker::end() 
 {
 	//Print out some stats for the user
-	streamlog_out ( MESSAGE4 ) << "Hot pixel remover successfully finished" << endl;
+	streamlog_out ( MESSAGE4 ) << "Noisy cluster masker successfully finished" << endl;
 	streamlog_out ( MESSAGE4 ) << "Printing summary:" << endl;
-	for(std::map<int,int>::iterator it = _removedHotPixels.begin(); it != _removedHotPixels.end(); ++it)
+	for(std::map<int,int>::iterator it = _maskedNoisyClusters.begin(); it != _maskedNoisyClusters.end(); ++it)
 	{
-  		streamlog_out ( MESSAGE4 ) << "Removed " << (*it).second << " hot pixels from plane " << (*it).first << "." << endl;
+  		streamlog_out ( MESSAGE4 ) << "Masked " << (*it).second << " noisy clusters on plane " << (*it).first << "." << endl;
 	}
 }
 
-int EUTelProcessorHotPixelMasker::encode(int X, int Y)
+int EUTelProcessorNoisyClusterMasker::encode(int X, int Y)
 {
 	//Cantor pairing function
 	return static_cast<int>( 0.5*(X+Y)*(X+Y+1)+Y );
 } 
 
-void EUTelProcessorHotPixelMasker::readHotPixelList(LCEvent* event)
+void EUTelProcessorNoisyClusterMasker::readHotPixelList(LCEvent* event)
 {
 	//Preapare pointer to hot pixel collection
 	LCCollectionVec* hotPixelCollectionVec = NULL;

@@ -6,8 +6,8 @@
  *   header with author names in all development based on this file.
  *
  */
-#ifndef EUTelProcessorHotPixelMasker_H
-#define EUTelProcessorHotPixelMasker_H
+#ifndef EUTelProcessorNoisyClusterMasker_H
+#define EUTelProcessorNoisyClusterMasker_H
 
 // eutelescope includes ".h"
 #include "EUTelEventImpl.h"
@@ -44,11 +44,11 @@ namespace eutelescope {
    *  EUTelOutputProcessor ("Save")
    */
 
-class EUTelProcessorHotPixelMasker : public marlin::Processor {
+class EUTelProcessorNoisyClusterMasker : public marlin::Processor {
 
   public:
 
-    //! Returns a new instance of EUTelProcessorHotPixelMasker
+    //! Returns a new instance of EUTelProcessorNoisyClusterMasker
     /*! This method returns an new instance of the this processor.  It
      *  is called by Marlin execution framework and it shouldn't be
      *  called/used by the final user.
@@ -56,11 +56,11 @@ class EUTelProcessorHotPixelMasker : public marlin::Processor {
      *  @return a new EUTelHotPixelKiller.
      */
     virtual Processor * newProcessor() {
-      return new EUTelProcessorHotPixelMasker;
+      return new EUTelProcessorNoisyClusterMasker;
     }
 
     //! Default constructor
-    EUTelProcessorHotPixelMasker();
+    EUTelProcessorNoisyClusterMasker();
 
     //! Called at the job beginning.
     /*! This is executed only once in the whole execution. It prints
@@ -147,12 +147,12 @@ class EUTelProcessorHotPixelMasker : public marlin::Processor {
 	std::map<int, std::vector<int> > _hotPixelMap;
 
 	//! Map counting the removed hot pixels per plane
-	std::map<int, int> _removedHotPixels;
+	std::map<int, int> _maskedNoisyClusters;
 };
 
 //! A global instance of the processor
-EUTelProcessorHotPixelMasker gEUTelProcessorHotPixelMasker;
+EUTelProcessorNoisyClusterMasker gEUTelProcessorNoisyClusterMasker;
 
 }//namespace eutelescope
 
-#endif //EUTelProcessorHotPixelMasker_H
+#endif //EUTelProcessorNoisyClusterMasker_H
