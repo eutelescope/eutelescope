@@ -20,22 +20,28 @@
 namespace eutelescope {
 
 
-  //! TODO: Implementation of the EUTelescope sparse data structure.
-  /*!  TODO: Within the EUTelescope framework input data can be provided both
-   *  TODO: in non zero suppressed mode, i.e. one ADC signal for each pixel
-   *  TODO: in the detector irrespectively of the signal amplitude; or in
-   *  TODO: This sparse data container differs from EUTelSparseDataImpl
-   *  TODO: because it stores a local copy of all the pixels in the data
-   *  TODO: sample. This allows sorting and vector operations resulting in a
-   */
-  class EUTelTrackerDataInterfacer{
+//! Implementation of the EUTelescope raw tracker data structure.
+/*! This is the interface class for the raw data access class.
+ *  It is used to interface the data stored in a LCIO::TrackerData
+ *  via the pixel classes introduced in EUTelescope.
+ *  For the implementation see: EUTelTrackerDataInterfacerImpl
+ *  Given that different pixel types store a different amount of 
+ *  information, the implemantations have to be templated in the pixel type.
+ *  Different specializations for various pixel typed have to be 
+ *  introduced. EUTelescope cliuster classes are intended to make use of 
+ *  this interfacing class, thus it being the centrally managed piece
+ *  of code, determined to interfacer LCIO::TrackerData.
+ *  This abstract class was introduced to allow for polymorphic usage 
+ *  of EUTelTrackerDataInterfacerImpl. It allows to retrieve 
+ *  EUTelBaseSparsePixel without actually knowing the pixel type 
+ *  (obviously the correct EUTelTrackerDataImpl hast to be 
+ *  instantiated somehow)
+ */
+class EUTelTrackerDataInterfacer{
 
   public:
-    //! Default constructor
-   // EUTelTrackerDataInterfacer(IMPL::TrackerDataImpl* data);
-	
     //! Destructor
-     virtual ~EUTelTrackerDataInterfacer() {}
+    virtual ~EUTelTrackerDataInterfacer() {}
 
     //! Get one of the sparse pixel
     /*! This method is used to get one of the sparse pixel contained
@@ -64,30 +70,6 @@ namespace eutelescope {
      * @return The TrackerDataImpl with all the sparse data.
      */
     //IMPL::TrackerDataImpl* trackerData() = 0;
-
-
-  private:
-    //! This is the TrackerDataImpl
-    /*! This is the object where the sparse data information are
-     * collected all together.
-     */
-   // IMPL::TrackerDataImpl* _trackerData;
-
-    //! Number of elements in the sparse pixel
-    /*! This value is initialized in the constructor and taken from
-     * the template class.
-     */
-    //unsigned int _nElement;
-
-    //! Sparse pixel type
-    /*! This enumerator value is set in the constructor and taken from
-     * the template class.
-     */
-   // SparsePixelType _type;
-
-    //! Local copy of the pixels
-   // mutable std::vector<PixelType > _pixelVec; 
   };
-
 } //namespace
 #endif

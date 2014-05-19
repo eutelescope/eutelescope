@@ -1,4 +1,3 @@
-// Version: $Id$
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -7,7 +6,6 @@
  *   header with author names in all development based on this file.
  *
  */
-
 #ifndef EUTELTRACKERDATAINTERFACERIMPL_H
 #define EUTELTRACKERDATAINTERFACERIMPL_H
 
@@ -27,15 +25,8 @@
 #include <LCIOTypes.h>
 #include <IMPL/TrackerDataImpl.h>
 
-// system includes <>
-#include <iostream>
-#include <limits>
+//system includes
 #include <memory>
-#include <vector>
-#include <cmath>
-#include <algorithm>
-#include <map>
-#include <iomanip>
 
 // template implementation
 #include "EUTelTrackerDataInterfacerImpl.hcc"

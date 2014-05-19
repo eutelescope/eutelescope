@@ -12,14 +12,8 @@
 namespace eutelescope {
 
 
-  //! TODO: Implementation of the EUTelescope sparse data structure.
-  /*!  TODO: Within the EUTelescope framework input data can be provided both
-   *  TODO: in non zero suppressed mode, i.e. one ADC signal for each pixel
-   *  TODO: in the detector irrespectively of the signal amplitude; or in
-   *  TODO: This sparse data container differs from EUTelSparseDataImpl
-   *  TODO: because it stores a local copy of all the pixels in the data
-   *  TODO: sample. This allows sorting and vector operations resulting in a
-   */
+  //! The implementation of EUTelTrackerDataInterfacer. 
+  /*! Contains all the implementations as well as the template specific code */
   template<class PixelType>
   class EUTelTrackerDataInterfacerImpl : public EUTelTrackerDataInterfacer {
 
@@ -36,7 +30,6 @@ namespace eutelescope {
      */
     void addSparsePixel(PixelType* pixel);
 
-
     //! Get one of the sparse pixel
     /*! This method is used to get one of the sparse pixel contained
      * into the TrackerData.
@@ -46,7 +39,13 @@ namespace eutelescope {
      * @return A pointer to the output pixel same as @c pixel
      */
     PixelType* getSparsePixelAt(unsigned int index, PixelType* pixel) const;
-   
+  
+    //*! Overloaded getSparsePixelAt method
+     /*! Used for polymorphic usage of EUTelTrackerDataInterfacer 
+      *  If a nullptr is passed as a EUTelBaseSparsePixel ptr, then
+      *  a new pixel is created on the heap. Returning this pixel's
+      *  address. IMPORTANT: Memory has to be cleaned up by the caller!
+      */ 
     EUTelBaseSparsePixel* getSparsePixelAt(unsigned int index, EUTelBaseSparsePixel* pixel) const
 	{
 		if(!pixel)
@@ -57,6 +56,7 @@ namespace eutelescope {
 		pixel = result;
 		return result;
 	} 
+
     //! Get the number of sparse pixels in the collection
     /*! This utility can be used to know how many pixels are contained
      * in the TrackerData.
@@ -75,6 +75,9 @@ namespace eutelescope {
      */
     IMPL::TrackerDataImpl* trackerData();
 
+  protected:
+    //! Internal method to fill the local copy of all the pixels
+    /*! Only to be used in this class */
     void fillPixelVec();
 
   private:
@@ -112,7 +115,6 @@ namespace eutelescope {
    * @return A pointer to the output pixel same as @c pixel.
    */
  
-   
 	template<>
 	inline EUTelSimpleSparsePixel* EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel>::getSparsePixelAt(unsigned int index, EUTelSimpleSparsePixel * pixel ) const 
 	{
@@ -163,9 +165,9 @@ namespace eutelescope {
 		_trackerData->chargeValues().push_back( static_cast<float> (pixel->getSignal()) );
 
 		_pixelVec.push_back (EUTelSimpleSparsePixel(	static_cast< short >(pixel->getXCoord()), 
-														static_cast< short >(pixel->getYCoord()), 
-														static_cast< short >(pixel->getSignal()) 
-													));
+								static_cast< short >(pixel->getYCoord()), 
+								static_cast< short >(pixel->getSignal()) 
+								));
 	}
   
 	template<>
@@ -178,10 +180,10 @@ namespace eutelescope {
 		_trackerData->chargeValues().push_back( static_cast<float>(pixel->getTime()) );
 		//add pixel to local pixel vector
 		_pixelVec.push_back(EUTelGenericSparsePixel(	static_cast<short>(pixel->getXCoord()),
-														static_cast<short>(pixel->getYCoord()),
-														static_cast<short>(pixel->getSignal()),
-														static_cast<short>(pixel->getTime() )
-													));
+								static_cast<short>(pixel->getYCoord()),
+								static_cast<short>(pixel->getSignal()),
+								static_cast<short>(pixel->getTime() )
+								));
 	}
 	
 	template<>
@@ -200,14 +202,14 @@ namespace eutelescope {
 
 		//add pixel to local pixel vector
 		_pixelVec.push_back(EUTelGeometricPixel(	static_cast<short>(pixel->getXCoord()),
-													static_cast<short>(pixel->getYCoord()),
-													static_cast<short>(pixel->getSignal()),
-													static_cast<short>(pixel->getTime() ),
-													pixel->getPosX(),
-													pixel->getPosY(),
-													pixel->getBoundaryX(),
-													pixel->getBoundaryY()
-												));
+								static_cast<short>(pixel->getYCoord()),
+								static_cast<short>(pixel->getSignal()),
+								static_cast<short>(pixel->getTime() ),
+								pixel->getPosX(),
+								pixel->getPosY(),
+								pixel->getBoundaryX(),
+								pixel->getBoundaryY()
+								));
 	}
 
 	//! Template specialization for the fillPixelVec method
@@ -216,10 +218,10 @@ namespace eutelescope {
 	{
 		for ( unsigned int index = 0 ; index < _trackerData->getChargeValues().size() ; index += 3 )
 		{
-			_pixelVec.push_back( EUTelSimpleSparsePixel	(	static_cast< short >(_trackerData->getChargeValues()[ index ]),
-															static_cast< short >(_trackerData->getChargeValues()[ index + 1 ]),
-															static_cast< short >(_trackerData->getChargeValues()[ index + 2 ]) 
-														));
+			_pixelVec.push_back( EUTelSimpleSparsePixel(	static_cast< short >(_trackerData->getChargeValues()[ index ]),
+									static_cast< short >(_trackerData->getChargeValues()[ index + 1 ]),
+									static_cast< short >(_trackerData->getChargeValues()[ index + 2 ]) 
+									));
 		}
 	}
   
@@ -229,10 +231,10 @@ namespace eutelescope {
 		for( unsigned int index = 0 ; index < _trackerData->getChargeValues().size() ; index += 4 )
 		{
 			_pixelVec.push_back(EUTelGenericSparsePixel(	static_cast<short>(_trackerData->getChargeValues()[ index ] ),
-															static_cast<short>(_trackerData->getChargeValues()[ index + 1 ]),
-															static_cast<short>(_trackerData->getChargeValues()[ index + 2 ]),
-															static_cast<short>(_trackerData->getChargeValues()[ index + 3 ])
-														));
+									static_cast<short>(_trackerData->getChargeValues()[ index + 1 ]),
+									static_cast<short>(_trackerData->getChargeValues()[ index + 2 ]),
+									static_cast<short>(_trackerData->getChargeValues()[ index + 3 ])
+									));
 		}
 	}
 	
@@ -241,15 +243,15 @@ namespace eutelescope {
 	{
 		for( unsigned int index = 0 ; index < _trackerData->getChargeValues().size() ; index += 8 )
 		{
-		_pixelVec.push_back(EUTelGeometricPixel(	static_cast<short>(_trackerData->getChargeValues()[ index ] ),
-													static_cast<short>(_trackerData->getChargeValues()[ index + 1 ]),
-													static_cast<short>(_trackerData->getChargeValues()[ index + 2 ]),
-													static_cast<short>(_trackerData->getChargeValues()[ index + 3 ]),
-													_trackerData->getChargeValues()[ index + 4 ],
-													_trackerData->getChargeValues()[ index + 5 ],
-													_trackerData->getChargeValues()[ index + 6 ],
-													_trackerData->getChargeValues()[ index + 7 ]
-												));
+			_pixelVec.push_back(EUTelGeometricPixel(	static_cast<short>(_trackerData->getChargeValues()[ index ] ),
+									static_cast<short>(_trackerData->getChargeValues()[ index + 1 ]),
+									static_cast<short>(_trackerData->getChargeValues()[ index + 2 ]),
+									static_cast<short>(_trackerData->getChargeValues()[ index + 3 ]),
+									_trackerData->getChargeValues()[ index + 4 ],
+									_trackerData->getChargeValues()[ index + 5 ],
+									_trackerData->getChargeValues()[ index + 6 ],
+									_trackerData->getChargeValues()[ index + 7 ]
+									));
 	}
 }
 

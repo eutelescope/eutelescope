@@ -22,6 +22,7 @@ namespace eutelescope {
 		fillPixelVec();
 	}
 
+	//the amount of pixels is the same as the ones stored in the local copy, the _pixelVec
 	template<class PixelType>
 	unsigned int EUTelTrackerDataInterfacerImpl<PixelType>::size() const
 	{
