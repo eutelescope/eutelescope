@@ -16,7 +16,6 @@
 #include "EUTelDFFClusterImpl.h"
 #include "EUTelBrickedClusterImpl.h"
 #include "EUTelSparseClusterImpl.h"
-#include "EUTelSparseCluster2Impl.h"
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelEventImpl.h"
 #include "EUTelClusterFilter.h"
@@ -968,12 +967,7 @@ void EUTelClusterFilter::processEvent (LCEvent * event) {
                   streamlog_out ( ERROR4 ) << "Unknown pixel type. Sorry for quitting" << endl;
                   throw UnknownDataTypeException("Pixel type unknown");
                 }
-
- 
-            } else if ( type == kEUTelAPIXClusterImpl ) {
-                cluster = new EUTelSparseClusterImpl< EUTelAPIXSparsePixel >
-                ( static_cast<TrackerDataImpl *> ( pulse->getTrackerData()  ) );
-            }
+		}
             else
             {
                 streamlog_out ( ERROR4 ) << "Unknown cluster type. Sorry for quitting" << endl;

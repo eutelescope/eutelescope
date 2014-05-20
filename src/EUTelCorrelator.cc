@@ -486,11 +486,8 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
               continue;
           }
 
-       } else if ( type == kEUTelAPIXClusterImpl ) {
-            externalCluster = new EUTelSparseClusterImpl< EUTelAPIXSparsePixel >
-              ( static_cast<TrackerDataImpl *> ( externalPulse->getTrackerData()  ) );
- 
-        } else  continue;
+       }
+	else  continue;
 
         int externalSensorID = pulseCellDecoder( externalPulse ) [ "sensorID" ] ;
  
@@ -563,11 +560,8 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
                 continue;
             }
  
-          } else if ( type == kEUTelAPIXClusterImpl ) {
-            internalCluster = new EUTelSparseClusterImpl< EUTelAPIXSparsePixel >
-              ( static_cast<TrackerDataImpl *> ( internalPulse->getTrackerData()  ) );
- 
-          } else  continue;
+          }
+	   else  continue;
 
           if( internalCluster->getTotalCharge() < _clusterChargeMin )
           {
@@ -1569,35 +1563,7 @@ void  EUTelCorrelator::FillHotPixelMap(LCEvent *event)
         {
            TrackerDataImpl* hotPixelData = dynamic_cast< TrackerDataImpl *> ( hotPixelCollectionVec->getElementAt( i ) );
 	   SparsePixelType  type         = static_cast<SparsePixelType> (static_cast<int> (cellDecoder( hotPixelData )["sparsePixelType"]));
-
 	   int sensorID              = static_cast<int > ( cellDecoder( hotPixelData )["sensorID"] );
-
-           if( type  == kEUTelAPIXSparsePixel)
-           {  
-           auto_ptr<EUTelSparseDataImpl<EUTelAPIXSparsePixel > > apixData(new EUTelSparseDataImpl<EUTelAPIXSparsePixel> ( hotPixelData ));
-	   std::vector<EUTelAPIXSparsePixel*> apixPixelVec;
-	     //auto_ptr<EUTelAPIXSparsePixel> apixPixel( new EUTelAPIXSparsePixel );
-	   EUTelAPIXSparsePixel apixPixel;
-	     //Push all single Pixels of one plane in the apixPixelVec
-
-           for ( unsigned int iPixel = 0; iPixel < apixData->size(); iPixel++ ) 
-           {
-              std::vector<int> apixColVec();
-              apixData->getSparsePixelAt( iPixel, &apixPixel);
-              try
-              {
-                 char ix[100];
-                 sprintf(ix, "%d,%d,%d", sensorID, apixPixel.getXCoord(), apixPixel.getYCoord() ); 
-                 _hotPixelMap[ix] = true;             
-              }
-              catch(...)
-              {
-		streamlog_out ( ERROR5 ) <<  "Cannot add pixel" << endl;
-              }
-           }
-
-
-           }  	
        }
 
 }
@@ -1630,45 +1596,6 @@ bool EUTelCorrelator::hitContainsHotPixels( TrackerHitImpl   * hit)
               // both RAW and ZS data
 //              cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
             } 
-            else if ( hit->getType() == kEUTelAPIXClusterImpl ) 
-            {
-                TrackerDataImpl * clusterFrame = static_cast<TrackerDataImpl*> ( clusterVector[0] );
-                eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel > 
-                              *apixCluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);
-                
-		if(apixCluster == 0 ) throw UnknownDataTypeException(" problem accessing cluster ");
-                int sensorID = apixCluster->getDetectorID();
-                bool skipHit = 0;
-                for (size_t iPixel = 0; iPixel < apixCluster->size(); ++iPixel) 
-                {
-                    EUTelAPIXSparsePixel apixPixel;
-                    apixCluster->getSparsePixelAt(iPixel, &apixPixel);
-
-                    try
-                    {                       
-                       char ix[100];
-                       sprintf(ix, "%d,%d,%d", sensorID, apixPixel.getXCoord(), apixPixel.getYCoord() ); 
-                       if( _hotPixelMap[ix]  )
-                       { 
-                          skipHit = true; 	      
-                          delete apixCluster;
-                          return true; // if TRUE  this hit will be skipped
-                       }
-                       else
-                       { 
-                          skipHit = false; 	      
-                       } 
-                    } 
-                    catch (...)
-                    {
-                    }
-           
-                }
-
-                delete apixCluster;
-                return skipHit; // if TRUE  this hit will be skipped
-            } 
-            
        }
        catch(...)
        { 

@@ -18,7 +18,6 @@
 #include "EUTelSimpleSparsePixel.h"
 #include "EUTelSparseDataImpl.h"
 #include "EUTelExceptions.h"
-#include "EUTelAPIXSparsePixel.h"
 
 #ifdef USE_MARLIN
 // marling includes ".h"

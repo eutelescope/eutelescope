@@ -38,7 +38,7 @@ namespace eutelescope {
 
   public:
     //! Default constructor
-    EUTelVirtualCluster(IMPL::TrackerDataImpl *) : _trackerData(NULL) { } 
+    EUTelVirtualCluster(IMPL::TrackerDataImpl* data) : _trackerData(data) { } 
 
     //! Default destructor
     virtual ~EUTelVirtualCluster() {;}

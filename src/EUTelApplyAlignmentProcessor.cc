@@ -17,16 +17,12 @@
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelHistogramManager.h"
 #include "EUTelExceptions.h"
-#include "EUTelAPIXSparsePixel.h"
-#include "EUTelSparseDataImpl.h"
-#include "EUTelAPIXSparseClusterImpl.h"
 #include "EUTelVirtualCluster.h"
 #include "EUTelFFClusterImpl.h"
 #include "EUTelDFFClusterImpl.h"
 #include "EUTelBrickedClusterImpl.h"
 #include "EUTelSparseClusterImpl.h"
-#include "EUTelSparseCluster2Impl.h"
-#
+
 // ROOT includes:
 #include "TVector3.h"
 #include "TVector2.h"
@@ -1964,7 +1960,6 @@ void EUTelApplyAlignmentProcessor::end() {
   streamlog_out ( MESSAGE9 ) <<  "Successfully finished" << endl;
   delete [] _siPlaneZPosition;
 }
-
 void EUTelApplyAlignmentProcessor::TransformToLocalFrame(TrackerHitImpl* outputHit) 
 {
 
@@ -2074,10 +2069,6 @@ void EUTelApplyAlignmentProcessor::TransformToLocalFrame(TrackerHitImpl* outputH
           {
             cluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel > ( static_cast<TrackerDataImpl *> ( clusterVec[i]  ) );
           } 
-          else if ( type == kEUTelAPIXClusterImpl ) 
-          {
-            cluster = new EUTelSparseClusterImpl< EUTelAPIXSparsePixel > ( static_cast<TrackerDataImpl *> ( clusterVec[i]  ) );
-          }
           else 
           {
             streamlog_out ( ERROR4 ) <<  "Unknown cluster type. Sorry for quitting" << endl;
