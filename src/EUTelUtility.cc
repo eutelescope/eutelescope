@@ -10,7 +10,6 @@
 #include "EUTELESCOPE.h"
 #include "EUTelVirtualCluster.h"
 #include "EUTelSparseClusterImpl.h"
-#include "EUTelAPIXSparsePixel.h"
 #include "EUTelBrickedClusterImpl.h"
 #include "EUTelDFFClusterImpl.h"
 #include "EUTelFFClusterImpl.h"
@@ -21,6 +20,8 @@
 #include <EVENT/LCEvent.h>
 
 #include <cstdio>
+
+using namespace std;
 
 namespace eutelescope {
 
@@ -135,35 +136,6 @@ namespace eutelescope {
                         cluster = new EUTelFFClusterImpl(static_cast<TrackerDataImpl *> (clusterVector[0]));
                         delete cluster;
                     }
-                    else if (hit->getType() == kEUTelAPIXClusterImpl) {
-                        TrackerDataImpl * clusterFrame = static_cast<TrackerDataImpl*> (clusterVector[0]);
-
-                        cluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel > (clusterFrame);
-
-                        eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel > *apixCluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel > (clusterFrame);
-
-                        int sensorID = apixCluster->getDetectorID();
-
-                        for (unsigned int iPixel = 0; iPixel < apixCluster->size(); ++iPixel) {
-                            EUTelAPIXSparsePixel apixPixel;
-                            apixCluster->getSparsePixelAt(iPixel, &apixPixel);
-                            {
-                                char ix[100];
-                                sprintf(ix, "%d,%d,%d", sensorID, apixPixel.getXCoord(), apixPixel.getYCoord());
-                                std::map < std::string, bool >::const_iterator z = hotPixelMap.find(ix);
-                                if (z != hotPixelMap.end() && hotPixelMap.at(ix) == true) {
-                                    skipHit = true;
-                                    streamlog_out(DEBUG3) << "Skipping hit as it was found in the hot pixel map." << std::endl;
-                                    break;
-//                                    delete cluster;
-//                                    return true; // if TRUE  this hit will be skipped
-                                } else {
-                                    skipHit = false;
-                                }
-                            }
-                        }
-                        delete cluster;
-                    }
                     
                 if ( cluster != NULL ) delete cluster;
                     
@@ -198,8 +170,6 @@ namespace eutelescope {
                         return new EUTelDFFClusterImpl(static_cast<TrackerDataImpl *> (clusterVector[0]));
                     } else if (hit->getType() == kEUTelFFClusterImpl) {
                         return new EUTelFFClusterImpl(static_cast<TrackerDataImpl *> (clusterVector[0]));
-                    } else if (hit->getType() == kEUTelAPIXClusterImpl) {
-                        return new EUTelSparseClusterImpl< EUTelAPIXSparsePixel >(static_cast<TrackerDataImpl *> (clusterVector[0]));
                     } else if (hit->getType() == kEUTelSparseClusterImpl) {
 			return new EUTelSparseClusterImpl< EUTelSimpleSparsePixel > (static_cast<TrackerDataImpl *> (clusterVector[0]));
                     } else {
@@ -258,26 +228,7 @@ namespace eutelescope {
 
                 int sensorID = static_cast<int> (cellDecoder(hotPixelData)["sensorID"]);
 
-                if (type == kEUTelAPIXSparsePixel) {
-                    std::auto_ptr< EUTelSparseDataImpl< EUTelAPIXSparsePixel > > apixData(new EUTelSparseDataImpl< EUTelAPIXSparsePixel > (hotPixelData));
-                    std::vector< EUTelAPIXSparsePixel* > apixPixelVec;
-                    EUTelAPIXSparsePixel apixPixel;
-
-                    //Push all single Pixels of one plane in the apixPixelVec
-                    for (unsigned int iPixel = 0; iPixel < apixData->size(); iPixel++) {
-                        std::vector<int> apixColVec();
-                        apixData->getSparsePixelAt(iPixel, &apixPixel);
-                        streamlog_out(DEBUG0) << iPixel << " of " << apixData->size() << " HotPixelInfo:  " << apixPixel.getXCoord() << " " << apixPixel.getYCoord() << " " << apixPixel.getSignal() << std::endl;
-                        try {
-                            char ix[100];
-                            sprintf(ix, "%d,%d,%d", sensorID, apixPixel.getXCoord(), apixPixel.getYCoord());
-                            hotPixelMap[ix] = true;
-                        } catch (...) {
-                            streamlog_out(ERROR2) << "problem adding pixel to hotpixel map! " << std::endl;
-                        }
-                    }
-
-                } else if (type == kEUTelSimpleSparsePixel) {
+                if (type == kEUTelSimpleSparsePixel) {
                     std::auto_ptr< EUTelSparseClusterImpl< EUTelSimpleSparsePixel > > m26Data(new EUTelSparseClusterImpl< EUTelSimpleSparsePixel > (hotPixelData));
                     std::vector< EUTelSimpleSparsePixel* > m26PixelVec;
                     EUTelSimpleSparsePixel m26Pixel;

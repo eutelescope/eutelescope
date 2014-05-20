@@ -25,10 +25,6 @@
 #include "EUTelGeometryTelescopeGeoDescription.h"
 #include "EUTelUtility.h"
 
-using namespace lcio;
-using namespace marlin;
-using namespace std;
-
 namespace eutelescope {
 
     /** @class EUTelProcessorTrackingExhaustiveTrackSearch Pattern recognition processor
@@ -40,13 +36,13 @@ namespace eutelescope {
      * 
      *  @see EUTelTrackFinder
      */
-    class EUTelProcessorTrackingExhaustiveTrackSearch : public Processor {
+  class EUTelProcessorTrackingExhaustiveTrackSearch : public marlin::Processor {
     private:
         DISALLOW_COPY_AND_ASSIGN(EUTelProcessorTrackingExhaustiveTrackSearch)   // prevent users from making (default) copies of processors
         
     public:
 
-        virtual Processor* newProcessor() {
+    virtual marlin::Processor* newProcessor() {
             return new EUTelProcessorTrackingExhaustiveTrackSearch;
         }
 
@@ -59,13 +55,13 @@ namespace eutelescope {
 
         /** Called for every run.
          */
-        virtual void processRunHeader(LCRunHeader* run);
+        virtual void processRunHeader(lcio::LCRunHeader* run);
 
         /** Called for every event - the working horse.
          */
-        virtual void processEvent(LCEvent * evt);
+        virtual void processEvent(lcio::LCEvent * evt);
 
-        virtual void check(LCEvent * evt);
+        virtual void check(lcio::LCEvent * evt);
 
         /** Called after data processing for clean up.
          */
@@ -94,13 +90,13 @@ namespace eutelescope {
 
     public:
         /** Fills hits data structure for track finder */
-        int FillHits(LCEvent*, LCCollection*,
-                map< int, EVENT::TrackerHitVec >&, vector< EVENT::TrackerHitVec >&) const;
+        int FillHits(lcio::LCEvent*, lcio::LCCollection*,
+		     std::map< int, EVENT::TrackerHitVec >&, std::vector< EVENT::TrackerHitVec >&) const;
 
         /** Prepare LCIO data structure for dumping track
          * candidate hits into LCIO files
          */
-        void addTrackCandidateToCollection(LCEvent*, const vector< EVENT::TrackerHitVec >&);
+        void addTrackCandidateToCollection(lcio::LCEvent*, const std::vector< EVENT::TrackerHitVec >&);
 
 
     protected:
@@ -108,10 +104,10 @@ namespace eutelescope {
         // Input/Output collections of the processor
 
         /** Input TrackerHit collection name */
-        string _hitInputCollectionName;
+	std::string _hitInputCollectionName;
 
         /** Output TrackerHit collection name */
-        string _trackCandidateHitsOutputCollectionName;
+	std::string _trackCandidateHitsOutputCollectionName;
 
 
     protected:
@@ -132,7 +128,7 @@ namespace eutelescope {
     private:
         
         /** TGeo geometry file name */
-        string _tgeoFileName;
+	std::string _tgeoFileName;
 
         // Exhaustive finder state definition
 
@@ -145,15 +141,15 @@ namespace eutelescope {
         /** Finder mode. Defines search algorithm */
         int _finderMode;
 
-        FloatVec _residualsXMin; /** Maximal negative deviation in X direction */
-        FloatVec _residualsYMin; /** Maximal negative deviation in Y direction */
-        FloatVec _residualsXMax; /** Maximal positive deviation in X direction */
-        FloatVec _residualsYMax; /** Maximal positive deviation in Y direction */
-        FloatVec _residualsRMax; /** Maximal distance in XY plane */
+        lcio::FloatVec _residualsXMin; /** Maximal negative deviation in X direction */
+        lcio::FloatVec _residualsYMin; /** Maximal negative deviation in Y direction */
+        lcio::FloatVec _residualsXMax; /** Maximal positive deviation in X direction */
+        lcio::FloatVec _residualsYMax; /** Maximal positive deviation in Y direction */
+        lcio::FloatVec _residualsRMax; /** Maximal distance in XY plane */
 
 
         /** Histogram info file name */
-        string _histoInfoFileName;
+	std::string _histoInfoFileName;
 
     protected:
 
@@ -174,12 +170,12 @@ namespace eutelescope {
          *  The histogram filling can proceed recalling an object through
          *  its name
          */
-        map< string, AIDA::IHistogram1D* > _aidaHistoMap1D;
+	std::map< std::string, AIDA::IHistogram1D* > _aidaHistoMap1D;
 
         /** Names of histograms */
         struct _histName {
-            static string _numberTracksCandidatesHistName;
-            static string _numberOfHitOnTrackCandidateHistName;
+	  static std::string _numberTracksCandidatesHistName;
+	  static std::string _numberOfHitOnTrackCandidateHistName;
         };
 
 #endif // defined(USE_AIDA) || defined(MARLIN_USE_AIDA)

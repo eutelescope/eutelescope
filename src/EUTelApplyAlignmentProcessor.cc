@@ -17,16 +17,12 @@
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelHistogramManager.h"
 #include "EUTelExceptions.h"
-#include "EUTelAPIXSparsePixel.h"
-#include "EUTelSparseDataImpl.h"
-#include "EUTelAPIXSparseClusterImpl.h"
 #include "EUTelVirtualCluster.h"
 #include "EUTelFFClusterImpl.h"
 #include "EUTelDFFClusterImpl.h"
 #include "EUTelBrickedClusterImpl.h"
 #include "EUTelSparseClusterImpl.h"
-#include "EUTelSparseCluster2Impl.h"
-#
+
 // ROOT includes:
 #include "TVector3.h"
 #include "TVector2.h"
@@ -148,7 +144,6 @@ EUTelApplyAlignmentProcessor::EUTelApplyAlignmentProcessor ()
   _orderedSensorIDVec(),
   _histogramSwitch(false)
 {
-  //cout << "1" << endl;
   // modify processor description
   _description =
     "Apply to the input hit the alignment corrections";
@@ -240,13 +235,10 @@ EUTelApplyAlignmentProcessor::EUTelApplyAlignmentProcessor ()
                             _gamma, static_cast< double > ( 0.00 ) );
   registerOptionalParameter("PrintEvents", "Events number to have DEBUG1 printed outs (default=10)",
                             _printEvents, static_cast<int> (10) );
-
-  //cout << "2" << endl;
 }
 
 
 void EUTelApplyAlignmentProcessor::init() {
-  //cout << "3" << endl;
   // this method is called only once even when the rewind is active
   // usually a good idea to
   printParameters ();
@@ -281,16 +273,12 @@ void EUTelApplyAlignmentProcessor::init() {
   for ( int iPlane = 0 ; iPlane < _siPlanesParameters->getSiPlanesNumber() ; ++iPlane ) {
     _orderedSensorIDVec.push_back( _siPlanesLayerLayout->getID( iPlane ) );
   }
-
   _lookUpTable.clear();
-  //cout << "4" << endl;
 }
 
 //..................................................................................
 void EUTelApplyAlignmentProcessor::CheckIOCollections(LCEvent* event)
 {
-  //cout << "5" << endl;
-
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
 
   if ( _applyToReferenceHitCollection ) 
@@ -367,16 +355,10 @@ void EUTelApplyAlignmentProcessor::CheckIOCollections(LCEvent* event)
       evt->addCollection( _outputCollectionVec, _outputHitCollectionName );
       streamlog_out  ( DEBUG2 ) <<  " try catch. nevertheless created new " <<  _outputHitCollectionName  << endl;
   }
-  // ------------------------------------------------------------------------- //
-
-
-  //cout << "6" << endl;
 }
 
-//..................................................................................
 void EUTelApplyAlignmentProcessor::processRunHeader (LCRunHeader * runHeader)
 {
-  //cout << "7" << endl;
   auto_ptr<EUTelRunHeaderImpl> eutelHeader( new EUTelRunHeaderImpl ( runHeader ) );
   eutelHeader->addProcessor( type() );
 // increment the run counter
@@ -477,13 +459,10 @@ void EUTelApplyAlignmentProcessor::processRunHeader (LCRunHeader * runHeader)
        _refhitCollectionNames.push_back(reftemp);
      }
    }
-
-  //cout << "8" << endl;
 }
 
 //........................................................................................................................
 void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
-  //cout << "9" << endl;
 
     if( _alignmentCollectionNames.size() <= 0 )
     {
@@ -495,8 +474,6 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
  
   // ----------------------------------------------------------------------- //
   // check input / output collections
-
-  //
   //......................................................................  //
 
         for (int i = static_cast<int>(_alignmentCollectionNames.size()) -1 ; i >= 0; i-- ) 
@@ -623,13 +600,11 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
        }
      }
     }
-  //cout << "10" << endl;
 }
 
 void EUTelApplyAlignmentProcessor::ApplyGear6D( LCEvent *event) 
 {
-  //cout << "11" << endl;
- 
+  UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
 
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
 
@@ -669,10 +644,10 @@ void EUTelApplyAlignmentProcessor::ApplyGear6D( LCEvent *event)
     for (size_t iHit = 0; iHit < _inputCollectionVec->size(); iHit++) 
     {
 
-      TrackerHitImpl   * inputHit   = dynamic_cast< TrackerHitImpl * >  ( _inputCollectionVec->getElementAt( iHit ) ) ;
+      TrackerHitImpl* inputHit  = dynamic_cast<TrackerHitImpl*>( _inputCollectionVec->getElementAt(iHit) );
 
       // now we have to understand which layer this hit belongs to.
-      int sensorID = guessSensorID( inputHit );
+      int sensorID = hitDecoder(inputHit)["sensorID"];
 
       if ( _conversionIdMap.size() != static_cast< unsigned >( _siPlanesParameters->getSiPlanesNumber()) ) 
       {
@@ -808,16 +783,13 @@ void EUTelApplyAlignmentProcessor::ApplyGear6D( LCEvent *event)
        outputHit->setPosition( outputPosition ) ;
       _outputCollectionVec->push_back( outputHit );
     }
-
-  //cout << "12" << endl;
 }
 
 
 void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event) 
 {
-  //cout << "13" << endl;
- 
-
+  UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
+  
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
 
   if ( evt->getEventType() == kEORE ) 
@@ -865,10 +837,10 @@ void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event)
     for (size_t iHit = 0; iHit < _inputCollectionVec->size(); iHit++) 
     {
 
-      TrackerHitImpl   * inputHit   = dynamic_cast< TrackerHitImpl * >  ( _inputCollectionVec->getElementAt( iHit ) ) ;
+      TrackerHitImpl* inputHit  = dynamic_cast<TrackerHitImpl*>( _inputCollectionVec->getElementAt(iHit) );
 
       // now we have to understand which layer this hit belongs to.
-      int sensorID = guessSensorID( inputHit );
+      int sensorID = hitDecoder(inputHit)["sensorID"];
 
       if ( _conversionIdMap.size() != static_cast< unsigned >( _siPlanesParameters->getSiPlanesNumber()) ) 
       {
@@ -1072,13 +1044,10 @@ void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event)
  
       TransformToLocalFrame(outputHit); 
     }
-
-  //cout << "14" << endl;
 }
 
 void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
-  //cout << "15" << endl;
-
+  UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
 
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
 
@@ -1162,12 +1131,10 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
 
       streamlog_out ( DEBUG5 ) << "DIRECT:-----:-----: hit " << iHit << " of  " <<  _inputCollectionVec->size() << " hits " << endl;
 
-      TrackerHitImpl   * inputHit   = dynamic_cast< TrackerHitImpl * >  ( _inputCollectionVec->getElementAt( iHit ) ) ;
-//if(inputHit==0)continue;
+      TrackerHitImpl* inputHit = dynamic_cast<TrackerHitImpl*>( _inputCollectionVec->getElementAt(iHit) );
+
       // now we have to understand which layer this hit belongs to.
-//obs.      int sensorID = guessSensorID( inputHit );
-      const double * pos = inputHit->getPosition();
-      int sensorID = guessSensorID(pos);
+      int sensorID = hitDecoder(inputHit)["sensorID"];
 
       //find proper alignment colleciton:
             double alpha = 0.;
@@ -1427,12 +1394,12 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
       outputHit->setPosition( outputPosition ) ;
       _outputCollectionVec->push_back( outputHit );
     }
-  //cout << "16" << endl;
 }
 
 void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
-  //cout << "17" << endl;
- 
+
+    UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING ); 
+    
     EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
 
     if ( evt->getEventType() == kEORE ) 
@@ -1510,26 +1477,11 @@ void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
         for (size_t iHit = 0; iHit < _inputCollectionVec->size(); iHit++) 
         {
 
-            TrackerHitImpl   * inputHit   = dynamic_cast< TrackerHitImpl * >  ( _inputCollectionVec->getElementAt( iHit ) ) ;
+	TrackerHitImpl* inputHit  = dynamic_cast<TrackerHitImpl*>( _inputCollectionVec->getElementAt(iHit) );
 
-            // now we have to understand which layer this hit belongs to.
-//            int sensorID = guessSensorID( inputHit );
-            const double * pos = inputHit->getPosition();
-            int sensorID = guessSensorID(pos);
+	// now we have to understand which layer this hit belongs to.
+	int sensorID = hitDecoder(inputHit)["sensorID"];
 
-            // determine z position of the plane
-            // 20 December 2010 @libov
-
-/*            float	z_sensor = 0;
-            for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); ++iPlane ) 
-            {
-                if (sensorID == _siPlanesLayerLayout->getID( iPlane ) ) 
-                {
-                    z_sensor = _siPlanesLayerLayout -> getSensitivePositionZ( iPlane ) + 0.5 * _siPlanesLayerLayout->getSensitiveThickness( iPlane );
-                    break;
-                }
-            }
-*/
       //find proper alignment colleciton:
       double alpha = 0.;
       double beta  = 0.;
@@ -1799,9 +1751,6 @@ void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
             outputHit->setPosition( outputPosition ) ;
             _outputCollectionVec->push_back( outputHit );
         }
-
-    
-  //cout << "18" << endl;
 }
 
 void EUTelApplyAlignmentProcessor::bookHistos() {
@@ -1999,122 +1948,27 @@ void EUTelApplyAlignmentProcessor::bookHistos() {
     }
   }
 #endif // AIDA && GEAR
-  //cout << "20" << endl;
 }
 
 
 void EUTelApplyAlignmentProcessor::check (LCEvent * /* evt */ ) {
-  //cout << "21" << endl;
   // nothing to check here - could be used to fill check plots in reconstruction processor
 }
 
 
 void EUTelApplyAlignmentProcessor::end() {
-  //cout << "22" << endl;
   streamlog_out ( MESSAGE9 ) <<  "Successfully finished" << endl;
   delete [] _siPlaneZPosition;
-
-  //cout << "23" << endl;
 }
-
-int EUTelApplyAlignmentProcessor::guessSensorID( TrackerHitImpl * hit ) {
-  //cout << "24" << endl;
-
-  int sensorID = -1;
-  double minDistance =  numeric_limits< double >::max() ;
-
-  if( _referenceHitVec == 0 || _applyToReferenceHitCollection == false )
-    {
-      // use z information of planes instead of reference vector
-
-      double * hitPosition = const_cast<double * > (hit->getPosition());
-
-      for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); ++iPlane ) 
-	{
-	  double distance = std::abs( hitPosition[2] - _siPlaneZPosition[ iPlane ] );
-	  if ( distance < minDistance ) 
-	    {
-	      minDistance = distance;
-	      sensorID = _siPlanesLayerLayout->getID( iPlane );
-	    }
-	}
-      if  ( _siPlanesParameters->getSiPlanesType() == _siPlanesParameters->TelescopeWithDUT ) 
-	{
-	  double distance = std::abs( hitPosition[2] - _siPlanesLayerLayout->getDUTPositionZ() );
-	  if( distance < minDistance )
-	    {
-	      minDistance = distance;
-	      sensorID = _siPlanesLayerLayout->getDUTID();
-	    }
-	}
-      if ( minDistance > 10  ) //mm 
-	{
-	  // advice the user that the guessing wasn't successful 
-	  streamlog_out( WARNING3 ) << "A hit was found " << minDistance << " mm far from the nearest plane\n"
-	    "Please check the consistency of the data with the GEAR file " << endl;
-	  throw SkipEventException(this);
-	}
-
-      return sensorID;
-    } // if not using ref vec
-        try
-        {
-            LCObjectVec clusterVector = hit->getRawHits();
-
-            EUTelVirtualCluster *cluster = 0;
-            if ( hit->getType() == kEUTelBrickedClusterImpl ) {
-
-               // fixed cluster implementation. Remember it
-               //  can come from
-               //  both RAW and ZS data
-   
-               cluster = new EUTelBrickedClusterImpl(static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
-                
-            } else if ( hit->getType() == kEUTelDFFClusterImpl ) {
-              
-              // fixed cluster implementation. Remember it can come from
-              // both RAW and ZS data
-              cluster = new EUTelDFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
-            } else if ( hit->getType() == kEUTelFFClusterImpl ) {
-              
-              // fixed cluster implementation. Remember it can come from
-              // both RAW and ZS data
-              cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
-            } 
-            else if ( hit->getType() == kEUTelAPIXClusterImpl ) 
-            {
-                TrackerDataImpl * clusterFrame = static_cast<TrackerDataImpl*> ( clusterVector[0] );
-                cluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);
-            }
-            else if ( hit->getType() == kEUTelSparseClusterImpl ) 
-            {
-               cluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel > ( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
-            }
-
-            if(cluster != 0)
-            {
-            int sensorID = cluster->getDetectorID();
-            return sensorID;
-            }
-          }
-          catch(...)
-          {
-            streamlog_out(ERROR4) << "guess SensorID crashed" << endl;
-          }
-  //cout << "25" << endl;
-  return sensorID;
-
-}
-
-
 void EUTelApplyAlignmentProcessor::TransformToLocalFrame(TrackerHitImpl* outputHit) 
 {
-  //cout << "26" << endl;
+
+	UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder( EUTELESCOPE::HITENCODING );
 
         double *outputPosition = const_cast< double * > ( outputHit->getPosition() ) ;
 
         // now we have to understand which layer this hit belongs to.
-        int sensorID = guessSensorID( outputHit );
+        int sensorID = hitDecoder(outputHit)["sensorID"];
 
         if ( _conversionIdMap.size() != static_cast< unsigned >( _siPlanesParameters->getSiPlanesNumber()) ) 
         {
@@ -2215,10 +2069,6 @@ void EUTelApplyAlignmentProcessor::TransformToLocalFrame(TrackerHitImpl* outputH
           {
             cluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel > ( static_cast<TrackerDataImpl *> ( clusterVec[i]  ) );
           } 
-          else if ( type == kEUTelAPIXClusterImpl ) 
-          {
-            cluster = new EUTelSparseClusterImpl< EUTelAPIXSparsePixel > ( static_cast<TrackerDataImpl *> ( clusterVec[i]  ) );
-          }
           else 
           {
             streamlog_out ( ERROR4 ) <<  "Unknown cluster type. Sorry for quitting" << endl;
@@ -2265,14 +2115,10 @@ void EUTelApplyAlignmentProcessor::TransformToLocalFrame(TrackerHitImpl* outputH
         { 
           streamlog_out ( DEBUG0 ) << endl;
         }
-
-  //cout << "27" << endl;
 }
 
 void EUTelApplyAlignmentProcessor::revertAlignment(double & x, double & y, double & z) 
 {
-  //cout << "28" << endl;
-
     EUTelAlignmentConstant * c = NULL;
     
     int _manualDUTid = 10;
@@ -2286,7 +2132,6 @@ void EUTelApplyAlignmentProcessor::revertAlignment(double & x, double & y, doubl
 	}
 
 	if ( c == NULL ) {
-		//cout << "Was not possible to found alignment constant, terminating" << endl;
 		abort();
 	}
 
@@ -2329,13 +2174,11 @@ void EUTelApplyAlignmentProcessor::revertAlignment(double & x, double & y, doubl
 	x = x / det;
 	y = y / det;
 	z = z / det;
-  //cout << "29" << endl;
 }
 
 
 
 void EUTelApplyAlignmentProcessor::_EulerRotation(double* _telPos, double* _gRotation) {
-  //cout << "30" << endl;
 
     TVector3 _RotatedSensorHit( _telPos[0], _telPos[1], _telPos[2] );
 
@@ -2346,14 +2189,10 @@ void EUTelApplyAlignmentProcessor::_EulerRotation(double* _telPos, double* _gRot
     _telPos[0] = _RotatedSensorHit.X();
     _telPos[1] = _RotatedSensorHit.Y();
     _telPos[2] = _RotatedSensorHit.Z();
- 
-  //cout << "31" << endl;
 }
 
 
 void EUTelApplyAlignmentProcessor::_EulerRotationInverse(double* _telPos, double* _gRotation) {
-  //cout << "32" << endl;
-   
 
     TVector3 _RotatedSensorHit( _telPos[0], _telPos[1], _telPos[2] );
 
@@ -2365,13 +2204,10 @@ void EUTelApplyAlignmentProcessor::_EulerRotationInverse(double* _telPos, double
     _telPos[0] = _RotatedSensorHit.X();
     _telPos[1] = _RotatedSensorHit.Y();
     _telPos[2] = _RotatedSensorHit.Z();
- 
-  //cout << "33" << endl;
 }
 
 void EUTelApplyAlignmentProcessor::AlignReferenceHit(EUTelEventImpl * evt, EUTelAlignmentConstant * alignment )
 {
-  //cout << "34" << endl;
     int iPlane = alignment->getSensorID();
     streamlog_out( DEBUG5 )<< "AlignReferenceHit for sensor ID:" <<  alignment->getSensorID() << endl;
     double            alpha   = alignment->getAlpha();
@@ -2480,16 +2316,11 @@ void EUTelApplyAlignmentProcessor::AlignReferenceHit(EUTelEventImpl * evt, EUTel
                               << " gamma:" <<        output_refhit->getGamma()        << endl ;
    
       //  _referenceHitVecAligned->push_back( refhit );
-     
     }
-
-  //cout << "35" << endl;
 }
 
 LCCollectionVec* EUTelApplyAlignmentProcessor::CreateDummyReferenceHitCollection()
 {
-  //cout << "36" << endl;
-
   LCCollectionVec * referenceHitCollection = new LCCollectionVec( LCIO::LCGENERICOBJECT );
 
   for(size_t ii = 0 ; ii <  _orderedSensorIDVec.size(); ii++)
@@ -2507,57 +2338,6 @@ LCCollectionVec* EUTelApplyAlignmentProcessor::CreateDummyReferenceHitCollection
 
     referenceHitCollection->push_back( refhit );
   }
-
-  //cout << "37" << endl;
   return referenceHitCollection;
 }
-
-int EUTelApplyAlignmentProcessor::guessSensorID(const double * hit ) 
-{
-  //cout << "38" << endl;
-
-  int sensorID = -1;
-  double minDistance =  numeric_limits< double >::max() ;
-
-  if( _referenceHitVec == 0 || _applyToReferenceHitCollection == false)
-  {
-    // use z information of planes instead of reference vector
-    for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); ++iPlane ) {
-      double distance = std::abs( hit[2] - _siPlaneZPosition[ iPlane ] );
-      if ( distance < minDistance ) {
-	minDistance = distance;
-	sensorID = _siPlanesLayerLayout->getID( iPlane );
-      }
-    }
-    if ( minDistance > 30  ) {
-      // advice the user that the guessing wasn't successful 
-      streamlog_out( WARNING3 ) << "A hit was found " << minDistance << " mm far from the nearest plane\n"
-	"Please check the consistency of the data with the GEAR file: hitPosition[2]=" << hit[2] <<       endl;
-    }
-    
-    return sensorID;
-  }
-
-      for(size_t ii = 0 ; ii <  static_cast< size_t >(_referenceHitVec->getNumberOfElements()); ii++)
-      {
-        EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
-        if(refhit == 0 ) continue;
-       
-        TVector3 hit3d( hit[0], hit[1], hit[2] );
-        TVector3 hitInPlane( refhit->getXOffset(), refhit->getYOffset(), refhit->getZOffset());
-        TVector3 norm2Plane( refhit->getAlpha(), refhit->getBeta(), refhit->getGamma() );
- 
-        double distance = abs( norm2Plane.Dot(hit3d-hitInPlane) );
-        if ( distance < minDistance ) 
-        {
-           minDistance = distance;
-           sensorID = refhit->getSensorID();
-        }    
-
-      }
-  
-  //cout << "39" << endl;
-  return sensorID;
-}
-
 #endif

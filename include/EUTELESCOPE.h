@@ -526,7 +526,8 @@ namespace eutelescope
     kGoodCluster       = 0,
     kIncompleteCluster = 1L << 0,
     kBorderCluster     = 1L << 1,
-    kMergedCluster     = 1L << 2
+    kMergedCluster     = 1L << 2,
+    kNoisyCluster      = 1L << 3
   };
 
   //! Cluster quality bit-wise AND operator
@@ -581,10 +582,8 @@ namespace eutelescope
   enum ClusterType {
     kEUTelFFClusterImpl       = 0,
     kEUTelSparseClusterImpl   = 1,
-    kEUTelSparseCluster2Impl  = 2,
-    kEUTelDFFClusterImpl      = 3,
-    kEUTelBrickedClusterImpl  = 4,
-    kEUTelAPIXClusterImpl     = 5, 
+    kEUTelDFFClusterImpl      = 2,
+    kEUTelBrickedClusterImpl  = 3,
     // add here all the other cluster type numbering them in between 0
     // and 31 unknown
     kUnknown                  = 31
@@ -597,7 +596,8 @@ namespace eutelescope
   enum SparsePixelType {
     kEUTelBaseSparsePixel   = 0,
     kEUTelSimpleSparsePixel = 1,
-    kEUTelAPIXSparsePixel   = 2,
+    kEUTelGenericSparsePixel = 2,
+    kEUTelGeometricPixel = 3,
     // add here your implementation
     kUnknownPixelType       = 31
   };

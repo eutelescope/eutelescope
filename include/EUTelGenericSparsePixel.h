@@ -7,46 +7,40 @@
  *
  */
 
-#ifndef EUTELAPIXPARSEPIXEL_H
-#define EUTELAPIXPARSEPIXEL_H
+#ifndef EUTELGENERICSPARSEPIXEL_H
+#define EUTELGENERICSPARSEPIXEL_H
 
 // personal includes ".h"
 #include "EUTelBaseSparsePixel.h"
 #include "EUTELESCOPE.h"
 
-// marlin includes ".h"
-
-// lcio includes <.h>
-
-// system includes <>
-
 namespace eutelescope {
 
   //! Helper class for simple sparsified pixel
-  /*! This class contains only the pixel coordinates and signal as
-   *  integer numbers.
+  /*! This class contains the pixel coordinates, signal and
+   *  time as integer numbers.
    *
-   *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id$
+   *  Based on the EUTelSimpeSparsePixel class by Antonio Bulgheroni
    */ 
-  
-  class EUTelAPIXSparsePixel  :  public EUTelBaseSparsePixel  {
-        
-  public:
-    
+
+class EUTelGenericSparsePixel : public EUTelBaseSparsePixel  {
+
+public:
     //! Default constructor with all arguments
-    EUTelAPIXSparsePixel(short xCoord, short yCoord, short signal, short chip, short time); 
+    EUTelGenericSparsePixel(short xCoord, short yCoord, short signal, short time); 
+
+    //! Default constructor with time argument omitted
+    /*! Time will be set to zero */
+    EUTelGenericSparsePixel(short xCoord, short yCoord, short signal); 
 
     //! Default constructor with no args
-    EUTelAPIXSparsePixel(); 
-  
-    //! Copy constructor
-    EUTelAPIXSparsePixel(const EUTelAPIXSparsePixel &orig);
+    /*! Every value will be set to zero */
+    EUTelGenericSparsePixel(); 
     
-    //! Default destructor
-    virtual ~EUTelAPIXSparsePixel() { ; } 
+    //! Destructor
+    virtual ~EUTelGenericSparsePixel() { ; } 
 
-        //! Get the number of elements in the data structure
+    //! Get the number of elements in the data structure
     /*! This method returns the number of elements the sparse pixel
      *  contains. 
      *
@@ -54,7 +48,7 @@ namespace eutelescope {
      */
     virtual unsigned int getNoOfElements() const;
 
-  //! Get the sparse pixel type using the enumerator
+    //! Get the sparse pixel type using the enumerator
     /*! This methods returns the sparse pixel type using the
      *  enumerator defined in EUTELESCOPE.h
      *
@@ -79,30 +73,22 @@ namespace eutelescope {
     //! Setter for the signal
     void setSignal(short signal) { _signal = signal ; }
 
-    //! Setter for the chipide
-    void setChip(short chip) { _chip = chip; }
-
     //! Setter for the time
     void setTime(short time) { _time = time ; }
 
     //! Getter for the x coordinate
-    short getXCoord() const { return _xCoord ; } 
+    inline short getXCoord() const { return _xCoord ; } 
 
     //! Getter for the y coordinate
-    short getYCoord() const { return _yCoord ; } 
+    inline short getYCoord() const { return _yCoord ; } 
 
     //! Getter for the signal
-    //should be short, kept equal to SimpleSparsePixel for compatibility
-    float getSignal() const { return static_cast<float> (_signal) ; } 
+    inline float getSignal() const { return static_cast<float> (_signal); } 
 
-    //! Getter for the chip
-    short getChip() const { return _chip ; }
+    //! Getter for the time
+    inline float getTime() const { return static_cast<float> (_time); } 
 
-    //! Getter for the Time
-    float getTime() const { return static_cast<float> (_time) ; } 
-
-  private:
-  
+protected:
     //! The x coordinate
     short _xCoord;
     
@@ -111,14 +97,10 @@ namespace eutelescope {
 
     //! The signal
     short _signal;
-    
-    //! The chip
-    short _chip;
 
-    //! The time
+	//! The time
     short _time;
+};
 
-  };
-}
-
+} //namespace eutelescope
 #endif

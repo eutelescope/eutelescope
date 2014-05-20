@@ -24,24 +24,21 @@
 // EUTELESCOPE
 #include "EUTelFilter.h"
 
-using namespace std;
-using namespace lcio;
-
 namespace eutelescope {
 
-    class EUTelFilterHitFilter : public EUTelFilter < TrackerHit* > {
+  class EUTelFilterHitFilter : public EUTelFilter < EVENT::TrackerHit* > {
     public:
         EUTelFilterHitFilter();
 //        EUTelHitFilter(const EUTelHitFilter& orig);
         virtual ~EUTelFilterHitFilter();
 
-        void SetWantPlaneIDs(const IntVec& _wantPlaneIDs);
-        IntVec GetWantPlaneIDs() const;
+        void SetWantPlaneIDs(const lcio::IntVec& _wantPlaneIDs);
+	lcio::IntVec GetWantPlaneIDs() const;
 
-        virtual bool Take( const TrackerHit* ) const;
+        virtual bool Take( const EVENT::TrackerHit* ) const;
 
     private:
-        IntVec _wantPlaneIDs;
+	lcio::IntVec _wantPlaneIDs;
 
 
     };

@@ -25,7 +25,6 @@
 #include "EUTelDFFClusterImpl.h"
 #include "EUTelBrickedClusterImpl.h"
 #include "EUTelSparseClusterImpl.h"
-#include "EUTelSparseCluster2Impl.h"
 #include "EUTelExceptions.h"
 #include "EUTelEtaFunctionImpl.h"
 #include "EUTelAlignmentConstant.h"
@@ -555,13 +554,6 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
             cluster = new EUTelBrickedClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData()) ); //!HACK TAKI
 
         } 
-        else if ( type == kEUTelAPIXClusterImpl ) 
-        {
-        
-            cluster = new EUTelSparseClusterImpl< EUTelAPIXSparsePixel > ( static_cast<TrackerDataImpl *> ( pulse->getTrackerData()  ) );
-            int xsize0,ysize0;
-            cluster->getClusterSize(xsize0,ysize0);
-        }
         else 
         {
             streamlog_out ( ERROR4 ) <<  "Unknown cluster type. Sorry for quitting" << endl;
@@ -853,21 +845,6 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 // check the hack from Havard:
       float xCoG(0.0f), yCoG(0.0f);
       cluster->getCenterOfGravity(xCoG, yCoG);
-// SIMON: LIKELY TO BE REMOVED:
-/*      if( detectorID == 22 )
-      {
-        xCoG =-999999.9;
-//        yCoG = 999999.9;
-        EUTelSparseClusterImpl< EUTelAPIXSparsePixel > *apixCluster = static_cast<EUTelSparseClusterImpl<EUTelAPIXSparsePixel>*> (cluster);
-        for (int iPixel=0; iPixel <  apixCluster->size(); iPixel++) 
-        {
-	   EUTelAPIXSparsePixel apixPixel;
-	   apixCluster->getSparsePixelAt(iPixel, &apixPixel);
-          if( xCoG < apixPixel.getXCoord() ) xCoG = apixPixel.getXCoord() ;
-//          if( yCoG > apixPixel.getYCoord() ) yCoG = apixPixel.getYCoord() ;
-        }
-      }
-  */
       xDet = (xCoG + 0.5) * xPitch;
       yDet = (yCoG + 0.5) * yPitch;
 

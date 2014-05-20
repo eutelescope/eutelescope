@@ -216,14 +216,6 @@ namespace eutelescope {
      */
     void bookHistos();
 
-    //! A function to guess the sensorID of a hit
-    /*! It is checking against the distance of each plane assuming
-     *  that this hit is belonging to the plane at the closest distant.
-     */
-    int guessSensorID( TrackerHitImpl * hit ) ;
-//    int guessSensorID( TrackerHitImpl2 * hit ) ;
-    int guessSensorID(const double * hit ) ;
-
     virtual    LCCollectionVec* CreateDummyReferenceHitCollection();
     virtual void CheckIOCollections(LCEvent* event);
 

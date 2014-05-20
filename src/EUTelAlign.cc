@@ -361,7 +361,8 @@ void EUTelAlign::processEvent (LCEvent * event) {
 
   try {
 
-    LCCollectionVec * measHitCollection = static_cast<LCCollectionVec*> (event->getCollection( _measHitCollectionName ));
+    LCCollectionVec* measHitCollection = static_cast<LCCollectionVec*>(event->getCollection( _measHitCollectionName ));
+    UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder(measHitCollection);
 
     int detectorID    = -99; 
     int oldDetectorID = -100;
@@ -391,58 +392,9 @@ void EUTelAlign::processEvent (LCEvent * event) {
     // Loop over all hits
     for ( int iHit = 0; iHit < measHitCollection->getNumberOfElements(); iHit++ ) {
 
-      TrackerHitImpl * measHit = static_cast<TrackerHitImpl*> ( measHitCollection->getElementAt(iHit) );
-
-      LCObjectVec clusterVector = measHit->getRawHits();
-
-      EUTelVirtualCluster * cluster;
-
-      if ( measHit->getType() == kEUTelDFFClusterImpl ) {
-
-        // fixed cluster implementation. Remember it can come from
-        // both RAW and ZS data
-        cluster = new EUTelDFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
-
-      }
-      if ( measHit->getType() == kEUTelBrickedClusterImpl ) {
-
-        // fixed cluster implementation. Remember it can come from
-        // both RAW and ZS data
-        cluster = new EUTelBrickedClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
-
-      }
-      else if ( measHit->getType() == kEUTelFFClusterImpl ) {
-
-        // fixed cluster implementation. Remember it can come from
-        // both RAW and ZS data
-        cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
-
-      } else if ( measHit->getType() == kEUTelSparseClusterImpl ) {
-
-        // ok the cluster is of sparse type, but we also need to know
-        // the kind of pixel description used. This information is
-        // stored in the corresponding original data collection.
-
-        LCCollectionVec * sparseClusterCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection("original_zsdata"));
-        TrackerDataImpl * oneCluster = dynamic_cast<TrackerDataImpl*> (sparseClusterCollectionVec->getElementAt( 0 ));
-        CellIDDecoder<TrackerDataImpl > anotherDecoder(sparseClusterCollectionVec);
-        SparsePixelType pixelType = static_cast<SparsePixelType> ( static_cast<int> ( anotherDecoder( oneCluster )["sparsePixelType"] ));
-
-        // now we know the pixel type. So we can properly create a new
-        // instance of the sparse cluster
-        if ( pixelType == kEUTelSimpleSparsePixel ) {
-          cluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel >
-            ( static_cast<TrackerDataImpl *> ( clusterVector[ 0 ]  ) );
-        } else {
-          streamlog_out ( ERROR4 ) << "Unknown pixel type.  Sorry for quitting." << endl;
-          throw UnknownDataTypeException("Pixel type unknown");
-        }
-
-      } else {
-        throw UnknownDataTypeException("Unknown cluster type");
-      }
-
-      detectorID = cluster->getDetectorID();
+      TrackerHitImpl* measHit = static_cast<TrackerHitImpl*> ( measHitCollection->getElementAt(iHit) );
+      
+      detectorID = hitDecoder(measHit)["sensorID"];
 
       if ( detectorID != oldDetectorID ) {
         oldDetectorID = detectorID;

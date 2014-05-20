@@ -43,13 +43,13 @@
 #include "EUTelGeometryTelescopeGeoDescription.h"
 
 // Cluster types
-class EUTelSparseCluster2Impl;
 class EUTelSparseClusterImpl;
 class EUTelBrickedClusterImpl;
 class EUTelDFFClusterImpl;
 class EUTelFFClusterImpl;
 
 using namespace lcio;
+using namespace std;
 using namespace marlin;
 using namespace eutelescope;
 

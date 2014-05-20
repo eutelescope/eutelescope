@@ -62,8 +62,6 @@ namespace eutelescope {
     virtual void end();
     bool defineSystemFromData();
     
-    virtual int guessSensorID( double* hit);
-
     virtual inline bool ReferenceHitVecIsSet(){ return _referenceHitVec==0; }    
 
   protected:

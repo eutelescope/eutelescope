@@ -486,11 +486,8 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
               continue;
           }
 
-       } else if ( type == kEUTelAPIXClusterImpl ) {
-            externalCluster = new EUTelSparseClusterImpl< EUTelAPIXSparsePixel >
-              ( static_cast<TrackerDataImpl *> ( externalPulse->getTrackerData()  ) );
- 
-        } else  continue;
+       }
+	else  continue;
 
         int externalSensorID = pulseCellDecoder( externalPulse ) [ "sensorID" ] ;
  
@@ -563,11 +560,8 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
                 continue;
             }
  
-          } else if ( type == kEUTelAPIXClusterImpl ) {
-            internalCluster = new EUTelSparseClusterImpl< EUTelAPIXSparsePixel >
-              ( static_cast<TrackerDataImpl *> ( internalPulse->getTrackerData()  ) );
- 
-          } else  continue;
+          }
+	   else  continue;
 
           if( internalCluster->getTotalCharge() < _clusterChargeMin )
           {
@@ -637,8 +631,8 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 
     if ( _hasHitCollection ) {
 
-      LCCollectionVec * inputHitCollection = static_cast< LCCollectionVec *>
-        ( event->getCollection( _inputHitCollectionName )) ;
+      LCCollectionVec* inputHitCollection = static_cast<LCCollectionVec*>( event->getCollection(_inputHitCollectionName) );
+      UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
       for ( size_t iExt = 0 ; iExt < inputHitCollection->size(); ++iExt ) {
         std::vector<double> trackX;
         std::vector<double> trackY;
@@ -648,16 +642,12 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
        trackY.clear();
        iplane.clear();
 
-
         // this is the external hit
-        TrackerHitImpl * externalHit = static_cast< TrackerHitImpl * > ( inputHitCollection->
-                                                                         getElementAt( iExt ) );
+        TrackerHitImpl* externalHit = static_cast<TrackerHitImpl*>( inputHitCollection->getElementAt(iExt) );
+        
+	double* externalPosition = const_cast<double*>( externalHit->getPosition() );
 
-        double * externalPosition;
-        externalPosition = const_cast< double* >( externalHit->getPosition() );
-
-        int externalSensorID = guessSensorID( externalPosition );
-
+        int externalSensorID = hitDecoder( externalHit )["sensorID"]; 
 
         trackX.push_back(externalPosition[0]);
         trackY.push_back(externalPosition[1]);
@@ -666,12 +656,12 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
         for ( size_t iInt = 0; iInt < inputHitCollection->size(); ++iInt ) 
         {
 
-          TrackerHitImpl  * internalHit = static_cast< TrackerHitImpl * > ( inputHitCollection->
-                                                                            getElementAt( iInt ) );
-          double * internalPosition;
-          internalPosition = const_cast< double* >( internalHit->getPosition() );
+          TrackerHitImpl* internalHit = static_cast<TrackerHitImpl*>( inputHitCollection->getElementAt(iInt) );
 
-          int internalSensorID = guessSensorID( internalPosition );
+          double* internalPosition = const_cast<double*>( internalHit->getPosition() );
+
+          int internalSensorID = hitDecoder( internalHit )["sensorID"]; 
+
           bool ishot = hitContainsHotPixels(internalHit); 
 
           if( ishot ) continue;
@@ -1462,54 +1452,6 @@ if(rowNBin>100) rowNBin=rowNBin/4;
 #endif
 }
 
-int EUTelCorrelator::guessSensorID(const double * hit ) 
-{
-
-  int sensorID = -1;
-  double minDistance =  numeric_limits< double >::max() ;
-
-  if( _referenceHitVec == 0 || _useReferenceHitCollection == false ){
-    // use z information of planes instead of reference vector
-    for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); ++iPlane ) {
-      double distance = std::abs( hit[2] - _siPlaneZPosition[ iPlane ] );
-      if ( distance < minDistance ) {
-	minDistance = distance;
-	sensorID = _siPlanesLayerLayout->getID( iPlane );
-      }
-    }
-    if ( minDistance > 30  ) {
-      // advice the user that the guessing wasn't successful 
-      streamlog_out( WARNING3 ) << "A hit was found " << minDistance << " mm far from the nearest plane\n"
-	"Please check the consistency of the data with the GEAR file: hitPosition[2]=" << hit[2] <<       endl;
-    }
-    
-    return sensorID;
-  }
-
-     streamlog_out( DEBUG5 ) << " _referenceHitVec " << _referenceHitVec << " " << _referenceHitCollectionName.c_str() << endl;
-     for(int ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
-      {
-
-       EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
-       streamlog_out( DEBUG5 ) << " _referenceHitVec " << _referenceHitVec << " refhit " << refhit << endl;
-       
-        TVector3 hit3d( hit[0], hit[1], hit[2] );
-        TVector3 hitInPlane( refhit->getXOffset(), refhit->getYOffset(), refhit->getZOffset());
-        TVector3 norm2Plane( refhit->getAlpha(), refhit->getBeta(), refhit->getGamma() );
- 
-        double distance = abs( norm2Plane.Dot(hit3d-hitInPlane) );
-        if ( distance < minDistance ) 
-        {
-           minDistance = distance;
-           sensorID = refhit->getSensorID();
-        }    
-
-      }
-
-  return sensorID;
-}
-
-
 std::vector<double> EUTelCorrelator::guessSensorOffset(int internalSensorID, int externalSensorID, std::vector<double> cluCenter)
 
 {
@@ -1621,35 +1563,7 @@ void  EUTelCorrelator::FillHotPixelMap(LCEvent *event)
         {
            TrackerDataImpl* hotPixelData = dynamic_cast< TrackerDataImpl *> ( hotPixelCollectionVec->getElementAt( i ) );
 	   SparsePixelType  type         = static_cast<SparsePixelType> (static_cast<int> (cellDecoder( hotPixelData )["sparsePixelType"]));
-
 	   int sensorID              = static_cast<int > ( cellDecoder( hotPixelData )["sensorID"] );
-
-           if( type  == kEUTelAPIXSparsePixel)
-           {  
-           auto_ptr<EUTelSparseDataImpl<EUTelAPIXSparsePixel > > apixData(new EUTelSparseDataImpl<EUTelAPIXSparsePixel> ( hotPixelData ));
-	   std::vector<EUTelAPIXSparsePixel*> apixPixelVec;
-	     //auto_ptr<EUTelAPIXSparsePixel> apixPixel( new EUTelAPIXSparsePixel );
-	   EUTelAPIXSparsePixel apixPixel;
-	     //Push all single Pixels of one plane in the apixPixelVec
-
-           for ( unsigned int iPixel = 0; iPixel < apixData->size(); iPixel++ ) 
-           {
-              std::vector<int> apixColVec();
-              apixData->getSparsePixelAt( iPixel, &apixPixel);
-              try
-              {
-                 char ix[100];
-                 sprintf(ix, "%d,%d,%d", sensorID, apixPixel.getXCoord(), apixPixel.getYCoord() ); 
-                 _hotPixelMap[ix] = true;             
-              }
-              catch(...)
-              {
-		streamlog_out ( ERROR5 ) <<  "Cannot add pixel" << endl;
-              }
-           }
-
-
-           }  	
        }
 
 }
@@ -1682,45 +1596,6 @@ bool EUTelCorrelator::hitContainsHotPixels( TrackerHitImpl   * hit)
               // both RAW and ZS data
 //              cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
             } 
-            else if ( hit->getType() == kEUTelAPIXClusterImpl ) 
-            {
-                TrackerDataImpl * clusterFrame = static_cast<TrackerDataImpl*> ( clusterVector[0] );
-                eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel > 
-                              *apixCluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);
-                
-		if(apixCluster == 0 ) throw UnknownDataTypeException(" problem accessing cluster ");
-                int sensorID = apixCluster->getDetectorID();
-                bool skipHit = 0;
-                for (size_t iPixel = 0; iPixel < apixCluster->size(); ++iPixel) 
-                {
-                    EUTelAPIXSparsePixel apixPixel;
-                    apixCluster->getSparsePixelAt(iPixel, &apixPixel);
-
-                    try
-                    {                       
-                       char ix[100];
-                       sprintf(ix, "%d,%d,%d", sensorID, apixPixel.getXCoord(), apixPixel.getYCoord() ); 
-                       if( _hotPixelMap[ix]  )
-                       { 
-                          skipHit = true; 	      
-                          delete apixCluster;
-                          return true; // if TRUE  this hit will be skipped
-                       }
-                       else
-                       { 
-                          skipHit = false; 	      
-                       } 
-                    } 
-                    catch (...)
-                    {
-                    }
-           
-                }
-
-                delete apixCluster;
-                return skipHit; // if TRUE  this hit will be skipped
-            } 
-            
        }
        catch(...)
        { 

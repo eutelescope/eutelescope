@@ -70,6 +70,7 @@
 // lcio includes <.h>
 #include <IO/LCWriter.h>
 #include <UTIL/LCTime.h>
+#include <UTIL/CellIDDecoder.h>
 #include <EVENT/LCCollection.h>
 #include <EVENT/LCEvent.h>
 #include <EVENT/LCObject.h>
@@ -156,12 +157,10 @@ EUTelDafBase::EUTelDafBase(std::string name) : marlin::Processor(name) {
   registerOptionalParameter("TrackAsciiName", "Filename for fitted tracks", _asciiName, string ("tracks.txt"));
   registerOptionalParameter("NDutHits", "How many DUT hits do we need in order to accept track?", _nDutHits, static_cast <int>(0));
   registerOptionalParameter("AlignmentCollectionNames", "Names of alignment collections, should be in same order as application", _alignColNames, std::vector<std::string>());
-  //cout << "DafBase " << "2" << endl;
 }
 
 bool EUTelDafBase::defineSystemFromData()
 {
-  //cout << "DafBase " << "3" << endl;
   bool gotIt = true;
   bool gotPlane = false;
   for(size_t plane = 0; plane < _system.planes.size(); plane++)
@@ -449,41 +448,8 @@ size_t EUTelDafBase::getPlaneIndex(float zPos){
     streamlog_out ( ERROR5 ) << "Found hit at z=" << zPos << " , not able to assign to any plane!" << endl; 
     return(-1);
   }
+
   return(index);
-}
-
-int EUTelDafBase::guessSensorID( double * hit ) 
-{
-
-  int sensorID = -1;
-  double minDistance =  numeric_limits< double >::max() ;
-
-  if( ReferenceHitVecIsSet() )
-  {
-    streamlog_out( MESSAGE5 ) << "_referenceHitVec is empty" << endl;
-    return 0;
-  }
-
-      for(size_t ii = 0 ; ii <  static_cast< unsigned int >(_referenceHitVec->getNumberOfElements()); ii++)
-      {
-        EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
-        
-        TVector3 hit3d( hit[0], hit[1], hit[2] );
-        TVector3 hitInPlane( refhit->getXOffset(), refhit->getYOffset(), refhit->getZOffset());
-        TVector3 norm2Plane( refhit->getAlpha(), refhit->getBeta(), refhit->getGamma() );
- 
-        double distance = abs( norm2Plane.Dot(hit3d-hitInPlane) );
-
-        if ( distance < minDistance ) 
-        {
-           minDistance = distance;
-
-           sensorID = ii;                    // number in the GEAR file z ordered
-        }    
-
-      }
-
-  return sensorID;
 }
 
 
@@ -521,22 +487,16 @@ void EUTelDafBase::readHitCollection(LCEvent* event)
        if(_mcCollection != 0 ) simhit = static_cast<SimTrackerHitImpl*> ( _mcCollection->getElementAt(iHit) );
        if(simhit != 0 )
        {
-       const double * simpos = simhit->getPosition();
-       pos[0]=simpos[0];
-       pos[1]=simpos[1];
-       pos[2]=simpos[2];
-       planeIndex = guessSensorID( pos );
+	 UTIL::CellIDDecoder<SimTrackerHitImpl> simHitDecoder (_mcCollection);
+	 planeIndex = simHitDecoder(simhit)["sensorID"];
        }
        streamlog_out ( DEBUG5 ) << " SIM: simhit="<< ( simhit != 0 ) <<" add point [" << planeIndex << "] "<< 
                       static_cast< float >(pos[0]) * 1000.0f << " " << static_cast< float >(pos[1]) * 1000.0f << " " <<  static_cast< float >(pos[2]) * 1000.0f << endl;
      }else
       if(hit != 0 )
       {
-       const double * hitpos = hit->getPosition();
-       pos[0]=hitpos[0];
-       pos[1]=hitpos[1];
-       pos[2]=hitpos[2];
-       planeIndex = guessSensorID( pos );
+	UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
+	planeIndex = hitDecoder(hit)["sensorID"];
        streamlog_out ( DEBUG5 ) << " REAL: add point [" << planeIndex << "] "<< 
                       static_cast< float >(pos[0]) * 1000.0f << " " << static_cast< float >(pos[1]) * 1000.0f << " " <<  static_cast< float >(pos[2]) * 1000.0f << endl;
        region = checkClusterRegion( hit, _system.planes.at(planeIndex).getSensorID() );
@@ -553,8 +513,9 @@ void EUTelDafBase::readHitCollection(LCEvent* event)
 }
 
 bool EUTelDafBase::checkClusterRegion(lcio::TrackerHitImpl* hit, int iden){
-  bool goodRegion(true);
-  if( hit->getType() == kEUTelAPIXClusterImpl ){
+  	//TODO: APIX was removed
+	bool goodRegion(true);
+  /*if( hit->getType() == kEUTelAPIXClusterImpl ){
     auto_ptr<EUTelVirtualCluster> cluster( new EUTelSparseClusterImpl< EUTelAPIXSparsePixel >
   					   ( static_cast<TrackerDataImpl *> ( hit->getRawHits()[0] )));
     int xSeed(0), ySeed(0);
@@ -567,7 +528,7 @@ bool EUTelDafBase::checkClusterRegion(lcio::TrackerHitImpl* hit, int iden){
     std::pair<int, int> &rowMinMax = _rowMinMax[iden]; 
     if( (ySeed - ySize / 2) < rowMinMax.first ) { goodRegion = false;}
     if( (ySeed + ySize / 2) > rowMinMax.second ) { goodRegion = false;}
-  }
+  }*/
   return(goodRegion);
 }
 
