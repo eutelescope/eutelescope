@@ -1,3 +1,4 @@
+//TODO: DOCUMENTATION
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -33,14 +34,6 @@ public:
 
     //! Default destructor
     virtual ~EUTelSimpleVirtualCluster() {;}
-
-    //! Return the detector ID
-    /*! This number is used to link the detector which this cluster
-     *  belongs to the geometry description in the GEAR description.
-     *
-     *  @return The detector ID.
-     */ 
-    virtual int getDetectorID() const = 0;
 
     //! Get the cluster dimensions
     /*! For each cluster type is always possible to define the
