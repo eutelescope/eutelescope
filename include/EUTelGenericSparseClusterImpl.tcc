@@ -6,7 +6,7 @@
  *   header with author names in all development based on this file.
  *
  */
-
+//TODO: Documentation
 #ifndef EUTELGENERICSPARSECLUSTERIMPL_TCC
 #define EUTELGENERICSPARSECLUSTERIMPL_TCC
 
@@ -23,7 +23,8 @@ template<class PixelType>
 EUTelGenericSparseClusterImpl<PixelType>::EUTelGenericSparseClusterImpl(IMPL::TrackerDataImpl * data) : 
 	EUTelSimpleVirtualCluster(data),
 	_nElement(0),
-	_type(kUnknownPixelType)
+	_type(kUnknownPixelType),
+	_rawDataInterfacer<PixelType>
 {
 	std::auto_ptr<PixelType> pixel( new PixelType);
 	_nElement = pixel->getNoOfElements();
