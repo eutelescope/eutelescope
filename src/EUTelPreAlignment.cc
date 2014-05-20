@@ -322,7 +322,8 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
 
   try {
     LCCollectionVec * inputCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection(_inputHitCollectionName));
-
+    UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
+    
     std::vector<float> residX;
     std::vector<float> residY;
     std::vector<PreAligner*> prealign;
@@ -334,8 +335,10 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
       TrackerHitImpl * refHit = dynamic_cast< TrackerHitImpl * >  ( inputCollectionVec->getElementAt( ref ) ) ;
       const double * refPos = refHit->getPosition();
 
+      int sensorID = hitDecoder(refHit)["sensorID"];
+
       // identify fixed plane
-      if( guessSensorID(refPos) != _fixedID ) continue;
+      if( sensorID != _fixedID ) continue;
 
       residX.clear();
       residY.clear();
@@ -347,7 +350,8 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
         if( hitContainsHotPixels(hit) ) continue;
         
         const double * pos = hit->getPosition();
-        int iHitID = guessSensorID(pos);
+        int iHitID = hitDecoder(hit)["sensorID"]; 
+
         if( iHitID == _fixedID ) continue;
         bool gotIt(false);
 
@@ -528,55 +532,6 @@ bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit)
   // if none of the above worked return FALSE, meaning do not skip this hit
   return 0;
 }
-
-
-int EUTelPreAlign::guessSensorID(const double * hit ) 
-{
-
-  int sensorID = -1;
-  double minDistance =  numeric_limits< double >::max() ;
-
-  if( _referenceHitVec == 0 || _useReferenceHitCollection == false )
-    {
-      // use z information of planes instead of reference vector
-      for(  int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); ++iPlane ) {
-	double distance = std::abs( hit[2] - _siPlaneZPosition[ iPlane ] );
-	if(  distance < minDistance ) {
-	  minDistance = distance;
-	  sensorID = _siPlanesLayerLayout->getID( iPlane );
-	}
-      }
-      if(  minDistance > 30  ) {
-	// advice the user that the guessing wasn't successful 
-	streamlog_out( WARNING3 ) << "A hit was found " << minDistance << " mm far from the nearest plane\n"
-	  "Please check the consistency of the data with the GEAR file: hitPosition[2]=" << hit[2] <<       endl;
-      }
-    
-      return sensorID;
-    }
-
-  for(size_t ii = 0 ; ii < static_cast< unsigned int >(_referenceHitVec->getNumberOfElements()); ii++)
-    {
-      EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
-        
-      TVector3 hit3d( hit[0], hit[1], hit[2] );
-      TVector3 hitInPlane( refhit->getXOffset(), refhit->getYOffset(), refhit->getZOffset());
-      TVector3 norm2Plane( refhit->getAlpha(), refhit->getBeta(), refhit->getGamma() );
- 
-      double distance = abs( norm2Plane.Dot(hit3d-hitInPlane) );
-      if ( distance < minDistance ) 
-        {
-	  minDistance = distance;
-	  sensorID = refhit->getSensorID();
-	}    
-
-    }
-
-  return sensorID;
-}
-
-
-
       
 void EUTelPreAlign::end() {
   LCWriter * lcWriter = LCFactory::getInstance()->createLCWriter();
