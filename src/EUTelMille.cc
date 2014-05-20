@@ -1407,6 +1407,9 @@ void EUTelMille::processEvent (LCEvent * event) {
         // assume hits are ordered in z! start counting from 0
         int nPlaneHere = 0;
 
+	// setup cellIdDecoder to decode the hit properties
+	CellIDDecoder<TrackerHit>  hitCellDecoder(EUTELESCOPE::HITENCODING);
+
         // loop over all hits and fill arrays
         for (int nHits = 0; nHits < int(TrackHitsHere.size()); nHits++) {
 
@@ -1415,9 +1418,8 @@ void EUTelMille::processEvent (LCEvent * event) {
           // hit positions
           const double *PositionsHere = HitHere->getPosition();
 
-          // assume fitted hits have type 32
-          if ( HitHere->getType() < 32 ) 
-{
+          // check if this is a measured hit or a fitted hit, want measured hit
+          if ( (hitCellDecoder(HitHere)["properties"] & kFittedHit) == 0 ){
 
             // fill hits to arrays
             _xPos[nTracksEvent][nPlaneHere] = PositionsHere[0] * 1000.;
@@ -1432,7 +1434,7 @@ void EUTelMille::processEvent (LCEvent * event) {
 
             nPlaneHere++;
 
-          } // end assume fitted hits have type 32
+          } // measured hits
 
         } // end loop over all hits and fill arrays
 
@@ -1569,6 +1571,10 @@ void EUTelMille::processEvent (LCEvent * event) {
                   double measuredz = hit->getPosition()[2];
 
                   delete cluster; // <--- destroying the cluster
+
+		  // setup cellIdDecoder to decode the hit properties
+		  CellIDDecoder<TrackerHit>  hitCellDecoder(EUTELESCOPE::HITENCODING);
+
                   for (int nHits = 0; nHits < int(TrackHitsHere.size()); nHits++)  // end loop over all hits and fill arrays
                   {
                       TrackerHit *HitHere = TrackHitsHere.at(nHits);
@@ -1576,7 +1582,7 @@ void EUTelMille::processEvent (LCEvent * event) {
                       // hit positions
                       const double *PositionsHere = HitHere->getPosition();
  
-                      //assume that fitted hits have type 32.
+
                       //the tracker hit will be excluded if the
                       //distance to the hit from the hit collection
                       //is larger than 5 mm. this requirement should reject
@@ -1585,7 +1591,8 @@ void EUTelMille::processEvent (LCEvent * event) {
 
                       if( std::abs( measuredz - PositionsHere[2] ) > 5.0 /* mm */)
                         {
-                          if ( HitHere->getType()  == 32 )
+			  // test if this is a fitted hit
+                          if ( (hitCellDecoder(HitHere)["properties"] & kFittedHit) > 0 )
                             {
                               hitsplane.push_back(
                                       EUTelMille::HitsInPlane(
@@ -1594,7 +1601,7 @@ void EUTelMille::processEvent (LCEvent * event) {
                                           PositionsHere[2] * 1000.
                                           )
                                       );
-                            } // end assume fitted hits have type 32
+                            } //fitted hit
                         }
                     }
                   //sort the array such that the hits are ordered
