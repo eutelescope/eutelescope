@@ -567,6 +567,7 @@ namespace eutelescope {
      *  clusters.
      */
     void sparseClustering2(LCEvent * evt, LCCollectionVec * pulse);
+    void sparseClustering3(LCEvent * evt, LCCollectionVec * pulse);
 
 
     //! Input collection name for NZS data
