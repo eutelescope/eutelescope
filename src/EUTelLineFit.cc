@@ -260,41 +260,9 @@ void EUTelLineFit::processEvent (LCEvent * event) {
 
     for ( int iHit = 0; iHit < hitCollection->getNumberOfElements(); iHit++ ) {
 
-      TrackerHitImpl * hit = static_cast<TrackerHitImpl*> ( hitCollection->getElementAt(iHit) );
-
-      LCObjectVec clusterVector = hit->getRawHits();
-
-      EUTelVirtualCluster * cluster;
-      if ( hit->getType() == kEUTelFFClusterImpl ) {
-        cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
-
-      } else if ( hit->getType() == kEUTelSparseClusterImpl ) {
-
-        // ok the cluster is of sparse type, but we also need to know
-        // the kind of pixel description used. This information is
-        // stored in the corresponding original data collection.
-
-        LCCollectionVec * sparseClusterCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection("original_zsdata"));
-        TrackerDataImpl * oneCluster = dynamic_cast<TrackerDataImpl*> (sparseClusterCollectionVec->getElementAt( 0 ));
-        CellIDDecoder<TrackerDataImpl > anotherDecoder(sparseClusterCollectionVec);
-        SparsePixelType pixelType = static_cast<SparsePixelType> ( static_cast<int> ( anotherDecoder( oneCluster )["sparsePixelType"] ));
-
-        // now we know the pixel type. So we can properly create a new
-        // instance of the sparse cluster
-        if ( pixelType == kEUTelGenericSparsePixel ) {
-          cluster = new EUTelSparseClusterImpl< EUTelGenericSparsePixel >
-            ( static_cast<TrackerDataImpl *> ( clusterVector[ 0 ]  ) );
-        } else {
-          streamlog_out ( ERROR4 ) << "Unknown pixel type.  Sorry for quitting." << endl;
-          throw UnknownDataTypeException("Pixel type unknown");
-        }
-
-
-      } else {
-        throw UnknownDataTypeException("Unknown cluster type");
-      }
-
-      detectorID = cluster->getDetectorID();
+      TrackerHitImpl* hit = static_cast<TrackerHitImpl*> ( hitCollection->getElementAt(iHit) );
+      UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder (hitCollection);
+      detectorID = hitDecoder(hit)["sensorID"];
 
       if ( detectorID != oldDetectorID ) {
         oldDetectorID = detectorID;
@@ -320,12 +288,6 @@ void EUTelLineFit::processEvent (LCEvent * event) {
         _intrResolY[layerIndex] = 1000*_siPlanesLayerLayout->getSensitiveResolution(layerIndex); //um
 
       }
-
-      // Old code. Should be removed soon.
-
-      //       _xPos[iHit] = 1000 * hit->getPosition()[0]; // in um
-      //       _yPos[iHit] = 1000 * hit->getPosition()[1]; // in um
-      //       _zPos[iHit] = 1000 * hit->getPosition()[2]; // in um
 
       // Getting positions of the hits.
       // Here the alignment constants are used to correct the positions.
@@ -401,9 +363,6 @@ void EUTelLineFit::processEvent (LCEvent * event) {
         _zPos[iHit] = 1000 * hit->getPosition()[2];
 
       }
-
-      delete cluster; // <--- destroying the cluster  
-
     }
 
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++
