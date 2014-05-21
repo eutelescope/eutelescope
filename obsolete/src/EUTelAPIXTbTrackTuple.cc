@@ -420,6 +420,9 @@ int EUTelAPIXTbTrackTuple::readTracks(LCEvent* event){
     return(1);
   }
 
+  // setup cellIdDecoder to decode the hit properties
+  CellIDDecoder<TrackerHit>  hitCellDecoder(EUTELESCOPE::HITENCODING);
+
   int nTrackParams=0;
   for(int itrack=0; itrack< trackCol->getNumberOfElements(); itrack++) {
     lcio::Track* fittrack = dynamic_cast<lcio::Track*>( trackCol->getElementAt(itrack) ) ;
@@ -434,8 +437,7 @@ int EUTelAPIXTbTrackTuple::readTracks(LCEvent* event){
     for(unsigned int ihit=0; ihit< trackhits.size(); ihit++) {
       TrackerHitImpl* fittedHit = dynamic_cast<TrackerHitImpl*>( trackhits.at(ihit) );
       const double * pos = fittedHit->getPosition();
-      //Type >= 32 for fitted hits
-      if( fittedHit->getType() < 32) { continue; }
+      if( (hitCellDecoder(fittedHit)["properties"] & kFittedHit) == 0) { continue; }
 
       UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
       int iden = hitDecoder(fittedHit)["sensorID"];

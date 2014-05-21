@@ -65,7 +65,7 @@ namespace eutelescope {
     //! Output track collection
     LCCollectionVec     * _fittrackvec;
     LCCollectionVec     * _fitpointvec;
-    void addToLCIO(daffitter::TrackCandidate* track);
+    void addToLCIO(daffitter::TrackCandidate* track, LCCollectionVec *lcvec);
     //! LCIO switch
     bool _addToLCIO, _fitDuts;
 
