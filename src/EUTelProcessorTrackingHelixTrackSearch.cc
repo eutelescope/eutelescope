@@ -255,7 +255,8 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
 		const double* uvpos = (*itHits)->getPosition();
                     const int sensorID = geo::gGeometry().getSensorID( static_cast<IMPL::TrackerHitImpl*> (*itHits) );
 //                    const int usensorID = Utility::GuessSensorID( static_cast<EVENT::TrackerHit*> (*itHits) );
-		streamlog_out(MESSAGE0) << "Hit (id=" << sensorID << " " << sensorID << ") local(u,v) coordinates: (" << uvpos[0] << "," << uvpos[1] << ")" << std::endl;
+		streamlog_out(MESSAGE0) << "Hit (id=" << setw(3) << sensorID << ") local(u,v) coordinates: (" 
+                       << setw(7) << setprecision(4) << uvpos[0] << "," << setw(7) << setprecision(4) << uvpos[1] << ")" << std::endl;
 	}
 	streamlog_out(MESSAGE0) << "All hits in event end:==============" << std::endl;
 
@@ -273,9 +274,14 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
             _trackFitter->PruneTrackCandidates( );
 
             streamlog_out( DEBUG1 ) << "Retrieving track candidates..." << endl;
+
+            // retrieve the result of the PR :: track candidates ::
             vector< IMPL::TrackImpl* >& trackCandidates    = static_cast < EUTelKalmanFilter* > ( _trackFitter )->getTracks( );
+
+            // not needed any more ? ::
             EVENT::TrackerHitVec trackCandidateHitFitted = static_cast < EUTelKalmanFilter* > ( _trackFitter )->getHitFittedVec( );
 
+            // plot only :
             plotHistos( trackCandidates );
 
             // Write output collection
@@ -315,7 +321,12 @@ void EUTelProcessorTrackingHelixTrackSearch::plotHistos( vector< IMPL::TrackImpl
                     const double* uvpos = ( *itTrkHits )->getPosition( );
                     const int sensorID = geo::gGeometry().getSensorID( static_cast<IMPL::TrackerHitImpl*> (*itTrkHits) );
 //                    const int usensorID = Utility::GuessSensorID( static_cast<EVENT::TrackerHit*> (*itTrkHits) );
-                    streamlog_out( MESSAGE1 ) << "Hit (id=" << sensorID << " " << sensorID << ") local(u,v) coordinates: (" << uvpos[0] << "," << uvpos[1] << ")" << std::endl;
+                    streamlog_out( MESSAGE1 ) << "Hit (id=" << setw(3) << sensorID << ") local(u,v) coordinates: (" 
+                             << setw(7) << setprecision(4) << uvpos[0] << "," <<  setw(7) << setprecision(4) << uvpos[1] << ")";
+                    double globalHit[] = {0.,0.,0.};
+                    geo::gGeometry().local2Master( sensorID, uvpos, globalHit);
+                    streamlog_out( MESSAGE1 ) << " WorldC: " << setw(7) << globalHit[0] << setw(7) << globalHit[1] << setw(7) << globalHit[2] ;
+                    streamlog_out( MESSAGE1 )  << std::endl;
                     static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_HitOnTrackCandidateHistName ] ) -> fill( sensorID );
                 }
                 streamlog_out( MESSAGE1 ) << "Track hits end:==============" << std::endl;
