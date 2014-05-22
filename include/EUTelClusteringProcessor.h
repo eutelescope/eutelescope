@@ -746,6 +746,8 @@ namespace eutelescope {
      */
     float _sparseClusterCut;
 
+    int _sparse3MinDistance;
+
     //! Minimum distance of neighbor pixels in SparseCluster
     /*! ZS pixel reclustering may need a minimum distance parameter to
      *  identify "close" pixels. Used only with
