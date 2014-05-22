@@ -96,6 +96,7 @@ EUTelClusteringProcessor::EUTelClusteringProcessor ()
   _sparseSeedCut(0.0),
   _ffClusterCut(0.0),
   _sparseClusterCut(0.0),
+  _sparse3MinDistance(2),
   _sparseMinDistance(0.0),
   _iEvt(0),
   _fillHistos(false),
@@ -223,6 +224,9 @@ EUTelClusteringProcessor::EUTelClusteringProcessor ()
   registerProcessorParameter("SparseClusterCut","Threshold in SNR for clusters contained in ZS data",
                              _sparseClusterCut, static_cast<float > (3.0) );
 
+  registerProcessorParameter("Sparse3MinDistance","Minimum distance squared between sparsified pixel ( touching == 2) ",
+                             _sparse3MinDistance, static_cast<int>(2) );
+  
   registerProcessorParameter("SparseMinDistance","Minimum distance between sparsified pixel ( touching == sqrt(2)) ",
                              _sparseMinDistance, static_cast<float > (0.0 ) );
 
@@ -2387,7 +2391,7 @@ void EUTelClusteringProcessor::sparseClustering3(LCEvent* evt, LCCollectionVec* 
 				// prepare a TrackerData to store the cluster candidate
 				auto_ptr< TrackerDataImpl > zsCluster ( new TrackerDataImpl );
 				// prepare a reimplementation of sparsified cluster
-				auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel > > sparseCluster ( new EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel>( zsCluster.get() ) );
+				auto_ptr<EUTelSparseClusterImpl<EUTelSimpleSparsePixel > > sparseCluster ( new EUTelSparseClusterImpl<EUTelSimpleSparsePixel>( zsCluster.get() ) );
 
 				std::vector<EUTelSimpleSparsePixel> cluCandidate;
 
@@ -2419,9 +2423,9 @@ void EUTelClusteringProcessor::sparseClustering3(LCEvent* evt, LCCollectionVec* 
 
 						dX = x1 - x2;
 						dY = y1 - y2;
-
+						int distance = dX*dX+dY*dY;
 						//if they pass the spatial and temporal cuts, we add them
-						if( (dX*dX <= 1) && (dY*dY <= 1) )
+						if( distance <= _sparse3MinDistance )
 						{
 							//add them to the cluster as well as to the newly added ones
 							newlyAdded.push_back( *hitVec );
@@ -2445,6 +2449,9 @@ void EUTelClusteringProcessor::sparseClustering3(LCEvent* evt, LCCollectionVec* 
 				TrackerDataImpl* noise  = dynamic_cast<TrackerDataImpl*>   (noiseCollectionVec->getElementAt( _ancillaryIndexMap[ sensorID ] ));
 				// prepare the matrix decoder
 				EUTelMatrixDecoder matrixDecoder( noiseDecoder , noise );
+				// prepare a vector to store the noise values
+				vector<float> noiseValueVec;
+
 				//Hot pixel removement:
 				while(!cluCandidate.empty())
 				{
@@ -2454,16 +2461,19 @@ void EUTelClusteringProcessor::sparseClustering3(LCEvent* evt, LCCollectionVec* 
           				int index = matrixDecoder.getIndexFromXY( pixel.getXCoord(), pixel.getYCoord() );
 	  				if( _hitIndexMapVec[idetector].find( index ) != _hitIndexMapVec[idetector].end() )
 					{
-					//	++listIter;
+						// do nothing
 					}
 					else
 					{
 						sparseCluster->addSparsePixel( &pixel );
+						noiseValueVec.push_back(noise->getChargeValues()[ index ]);
 					}
 				}
 
+				sparseCluster->setNoiseValues( noiseValueVec );
+
 				//Now we need to process the found cluster
-				if ( sparseCluster->size() > 0 )
+				if ( (sparseCluster->size() > 0) && (sparseCluster->getSeedSNR() >= _sparseSeedCut) && (sparseCluster->getClusterSNR() >= _sparseClusterCut) )
 				{
 					// set the ID for this zsCluster
 					idZSClusterEncoder["sensorID"] = sensorID;
