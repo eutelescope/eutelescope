@@ -127,27 +127,43 @@ namespace eutelescope {
     /** */
     int EUTelKalmanFilter::findNextPlaneEntrance(  EUTelTrackStateImpl* ts , int sensorID  ){
 
+// how to make sure that ts is in localframe system??
+
       const double x0 = ts->getReferencePoint()[0];
       const double y0 = ts->getReferencePoint()[1];
       const double z0 = ts->getReferencePoint()[2];
+      int tsPlaneID   = ts->getLocation();
 	
       // get the very first sensor : why?
       // remember last hit-point from the track candidate below
-      double start[3] = { x0, y0, z0}; // 
- 
-      double dir[3]   = {0.,0.,1.};  // as good as any other value along z axis.
-      float fpoint[3] = {0.,0.,0.};  // initialise output point-vector
- 
-            int newSensorID = geo::gGeometry( ).findNextPlaneEntrance(  start,  dir, sensorID, fpoint ) ;
+      double lpoint[3]   = { x0, y0, z0}; // 
+      double gpoint[3]   = {0.,0.,0.};  // initialise output point-vector global frame (World)
+
+      geo::gGeometry().local2Master( tsPlaneID, lpoint, gpoint );
+
+//      float start[3]     = {static_cast<float> (gpoint[0]),static_cast<float> (gpoint[1]),static_cast<float> (gpoint[2]) };  
+
+      double dir[3]      = {0.,0.,1.};  // as good as any other value along z axis.
+
+      float nextPoint[3] = {0.,0.,0.};  // initialise output point-vector local frame (sensor)
+
+            int newSensorID   = geo::gGeometry( ).findNextPlaneEntrance( gpoint,  dir, sensorID, nextPoint ) ;
+
+// get to local frame for sensor newSensorID:
+            double dGpoint[3] = {static_cast<double> (nextPoint[0]),static_cast<double> (nextPoint[1]),static_cast<double> (nextPoint[2]) };
+            double dLpoint[3] = {0.,0.,0.};  // initialise output point-vector local frame (sensor)
+            geo::gGeometry().master2Local( dGpoint, dLpoint);
+
             if( newSensorID < 0 ) 
             {
-              streamlog_out ( DEBUG4 ) << "no Entrance: " <<  fpoint[0] << " " <<  fpoint[1] << " " << fpoint[2] << " err:"<< newSensorID << endl;
+              streamlog_out ( DEBUG4 ) << "no Entrance: " <<  lpoint[0] << " " <<  lpoint[1] << " " << lpoint[2] << " err:"<< newSensorID << endl;
             } else {     
-              streamlog_out ( DEBUG0 ) << "identified NextPlane Entrance: " <<  fpoint[0] << " " <<  fpoint[1] << " " << fpoint[2] <<  " err:"<< newSensorID << endl;
-              const float opoint[3] = { fpoint[0], fpoint[1], fpoint[2] };
+              streamlog_out ( DEBUG0 ) << "identified NextPlane Entrance: " <<  lpoint[0] << " " <<  lpoint[1] << " " << lpoint[2] <<  " err:"<< newSensorID << endl;
+              const float opoint[3] = { lpoint[0], lpoint[1], lpoint[2] };
               ts->setReferencePoint( opoint );  
               ts->setLocation(sensorID);
            }
+
       return newSensorID;
     }
 
@@ -162,6 +178,7 @@ namespace eutelescope {
         return ;
       }
 
+// assumes state to be in some FRAME 
       const double x0 = state->getReferencePoint()[0];
       const double y0 = state->getReferencePoint()[1];
       const double z0 = state->getReferencePoint()[2];
@@ -183,13 +200,15 @@ namespace eutelescope {
 // could be critical for B-field/high spread/high rate beam
 //
 // todo: replace with a method going backwards along z axis based on TGeo navigation 
-      start[2]    = geo::gGeometry().siPlaneZPosition(planeID) - thicknessSen - thicknessLay; //initial z position to the most-first plane
+ 
+// assumes FRAME:
+     start[2]    = geo::gGeometry().siPlaneZPosition(planeID) - thicknessSen - thicknessLay; //initial z position to the most-first plane
 
       // as good as any other value along z axis.
       double dir[3]   = {0.,0.,1.};  
       
       // updated starting RefPoint:
-      const float opoint[3] = {start[0], start[1], start[2]};  
+      const float opoint[3] = {start[0], start[1], start[2]}; // correct start[2] position 
       state->setReferencePoint( opoint );
 
       // loop through all known sensors (local, defined above):
@@ -201,6 +220,7 @@ namespace eutelescope {
             // EUTelGeometry TGeo track swim 
             // straight line at this point
             // how to get helix ? 
+            // propagator :: 
             int newSensorID = findNextPlaneEntrance( state, iter->second ) ;
 
             const float* fpoint = state->getReferencePoint();
@@ -208,8 +228,7 @@ namespace eutelescope {
             double lpoint[] = {0.,0.,0.};
             geo::gGeometry().master2Local( dpoint, lpoint );
             
-            state->setX(  state->getX() ); 
-
+            // collect propagator state ::
             (*itTrk)->addTrackState( new EUTelTrackStateImpl( *state) );
 
  
@@ -361,14 +380,14 @@ itTrk++;
                state->setLocation( EUTelTrackStateImpl::AtLastHit );
                IMPL::TrackImpl *trackimpl = cartesian2LCIOTrack( *itTrk );
                _tracks.push_back( trackimpl );
-               int nstates = trackimpl->getTrackStates().size();
-               for(int i = 0;i< nstates; i++) {
-                 IMPL::TrackStateImpl* implstate = static_cast< IMPL::TrackStateImpl*> (trackimpl->getTrackStates().at(i)) ;
-                 EUTelTrackStateImpl* istate = static_cast<EUTelTrackStateImpl* > (implstate);   
+                int nstates = trackimpl->getTrackStates().size();
+  //             for(int i = 0;i< nstates; i++) {
+  //               IMPL::TrackStateImpl* implstate = static_cast< IMPL::TrackStateImpl*> (trackimpl->getTrackStates().at(i)) ;
+  //               EUTelTrackStateImpl* istate = static_cast<EUTelTrackStateImpl* > (implstate);   
 //                IMPL::TrackStateImpl* implstate = new IMPL::TrackStateImpl( *nexttrackstate );
  //                 EUTelTrackStateImpl *istate =  (trackimpl->getTrackStates().at(i));
-                 streamlog_out(MESSAGE0) << "state: " << istate->id() << " location: " << istate->getLocation() << " X:" << istate->getX() << " Y:" << istate->getY() << std::endl;
-               } 
+  //               streamlog_out(MESSAGE0) << "state: " << istate->id() << " location: " << istate->getLocation() << " X:" << istate->getX() << " Y:" << istate->getY() << std::endl;
+  //             } 
                streamlog_out(MESSAGE0) << local_itTrk << " of " << size_itTrk << " hits on track " << *itTrk << " with " <<  ( *itTrk )->getTrackerHits( ).size( ) << " expecting at least " << geo::gGeometry( ).nPlanes( ) - _allowedMissingHits << " states: "<< nstates << std::endl;
  
                delete (*itTrk);
@@ -693,12 +712,13 @@ itTrk++;
 //
 //            // Use beam direction as a seed track state
             const double* uvpos = (*itHit)->getPosition();
+            float posLocal[] =  { static_cast<float>(uvpos[0]), static_cast<float>(uvpos[1]), static_cast<float>(uvpos[2]) };
             const int sensorID = Utility::GuessSensorID( *itHit );
             double temp[] = {0.,0.,0.};
             geo::gGeometry().local2Master( sensorID, uvpos, temp);
             float posGlobal[] = { static_cast<float>(temp[0]), static_cast<float>(temp[1]), static_cast<float>(temp[2]) };
                         
-            gear::Vector3D vectorGlobal( temp[0], temp[1], temp[2] );
+//            gear::Vector3D vectorGlobal( temp[0], temp[1], temp[2] );
             const double q          = _beamQ;      // assume electron beam
             //const double invp       = fabs(q)/_beamE;
             const double invp       = q/_beamE;
@@ -718,9 +738,9 @@ itTrk++;
             else trkCov[9] = 1.E5;
             trkCov[14] = ( _beamEnergyUncertainty * _beamE ) * ( _beamEnergyUncertainty * _beamE );               //cov(q/p,x)=0, cov(q/p,y)=0, cov(q/p,tx)=0, cov(q/p,ty)=0, cov(q/p,q/p)
             
-            state->setCovMatrix(trkCov);          
-            state->setReferencePoint( posGlobal );
-            state->setLocation( EUTelTrackStateImpl::AtFirstHit );
+            state->setCovMatrix( trkCov );          
+            state->setReferencePoint( posLocal ); // was posGlobal before // now switching all states to LOCAL !!
+            state->setLocation(  EUTelTrackStateImpl::AtFirstHit );
             state->setTx(0.);         // seed with 0 at first hit. Given by beam direction.
             state->setTy(0.);         // seed with 0 at first hit. Given by beam direction.
             state->setX(posGlobal[0]);          // 0. at first hit

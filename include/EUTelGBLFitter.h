@@ -68,8 +68,8 @@ namespace eutelescope {
         void PerformFitGBLTrajectories();
 
         // private:
-        void TrackCandidatesToGBLTrajectory( vector<IMPL::TrackImpl*>::const_iterator& itTrkCand );
-        void PerformFitGBLTrajectory( gbl::GblTrajectory* traj , EVENT::TrackVec::const_iterator& itTrkCand, double invP );
+        void TrackCandidatesToGBLTrajectory( vector<IMPL::TrackImpl*>::const_iterator&  );
+        void PerformFitGBLTrajectory( gbl::GblTrajectory* ,  vector<IMPL::TrackImpl*>::const_iterator&, double );
 
         void FitSingleTrackCandidate(EVENT::TrackVec::const_iterator& itTrkCand);
  
@@ -192,7 +192,10 @@ namespace eutelescope {
         
         void pushBackPoint( std::vector< gbl::GblPoint >&, const gbl::GblPoint&, int );
         void pushBackPointMille( std::vector< gbl::GblPoint >&, const gbl::GblPoint&, int );
-       
+ 
+        void prepareLCIOTrack( gbl::GblTrajectory*, const vector<IMPL::TrackImpl*>::const_iterator&,
+                                double, int, double, double, double, double, double );
+      
         void prepareLCIOTrack( gbl::GblTrajectory*, const EVENT::TrackerHitVec&,
                                 double, int, double, double, double, double, double );
 

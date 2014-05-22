@@ -229,7 +229,7 @@ namespace eutelescope {
         _parPropJac[4][2] = ds; // y = y0 + yp * ds
         return _parPropJac;
     }
-        
+     
     /** Propagation jacobian in inhomogeneous magnetic field
      * 
      * 
@@ -544,7 +544,7 @@ namespace eutelescope {
     void EUTelGBLFitter::addGlobalParametersGBL(gbl::GblPoint& point, TMatrixD& alDer, std::vector<int>& globalLabels, int iPlane,
             const double* predpos, double xSlope, double ySlope) {
 
-        streamlog_out(MESSAGE1) << " addGlobalParametersGBL " << std::endl;
+        streamlog_out(MESSAGE0) << " addGlobalParametersGBL " << std::endl;
 
         alDer[0][0] = -1.0; // dx/dx
         alDer[0][1] =  0.0; // dx/dy
@@ -614,13 +614,13 @@ namespace eutelescope {
 
         point.addGlobals(globalLabels, alDer);
  
-        streamlog_out(MESSAGE1) << " addGlobalPArametersGBL over " << std::endl;
+        streamlog_out(MESSAGE0) << " addGlobalPArametersGBL over " << std::endl;
    }
 
     void EUTelGBLFitter::pushBackPoint( std::vector< gbl::GblPoint >& pointListTrack, const gbl::GblPoint& pointTrack, int hitid ) {
         pointListTrack.push_back(pointTrack);
        
-        streamlog_out(MESSAGE0) << "pushBackPoint     :: pushBackPoint " << hitid << std::endl;
+        streamlog_out(MESSAGE0) << endl << "pushBackPoint: " << hitid << std::endl;
         // store point's GBL label for future reference
         _hitId2GblPointLabel[ hitid ] = static_cast<int>(pointListTrack.size());
     }
@@ -628,10 +628,88 @@ namespace eutelescope {
     void EUTelGBLFitter::pushBackPointMille( std::vector< gbl::GblPoint >& pointListMille, const gbl::GblPoint& pointMille, int hitid ) {
         pointListMille.push_back(pointMille);
         
-        streamlog_out(MESSAGE0) << "pushBackPointMille:: pushBackPoint " << hitid << std::endl;
+        streamlog_out(MESSAGE0) << endl << "pushBackPointMille: " << hitid << std::endl;
         // store point's GBL label for future reference
         _hitId2GblPointLabelMille[ hitid ] = static_cast<int>(pointListMille.size());
     }
+
+    /**
+     * Set track omega, D0, Z0, Phi, tan(Lambda), Chi2, NDF parameters
+     * and add it to the LCIO collection of fitted tracks
+     * 
+     * @param fittrack pointer to track object to be stored
+     * @param chi2     Chi2 of the track fit
+     * @param ndf      NDF of the track fit
+     */
+    void EUTelGBLFitter::prepareLCIOTrack( gbl::GblTrajectory* gblTraj, const vector<IMPL::TrackImpl*>::const_iterator& itTrkCand, 
+                                          double chi2, int ndf, double omega, double d0, double z0, double phi, double tanlam ) {
+ 
+        unsigned int numData;
+        TVectorD corrections(5);
+        TMatrixDSym correctionsCov(5);
+ 
+        TVectorD residual(2);
+        TVectorD measErr(2);
+        TVectorD residualErr(2);
+        TVectorD downWeight(2);
+ 
+          int nstates = (*itTrkCand)->getTrackStates().size();
+          streamlog_out(MESSAGE1) << "states " << nstates << "    " << endl;
+
+          for(int i=0;i < nstates; i++) 
+            {
+                IMPL::TrackStateImpl* trk = static_cast < IMPL::TrackStateImpl*> ( (*itTrkCand)->getTrackStates().at(i) ) ;
+
+                double fitPointLocal[] = {0.,0.,0.};
+                fitPointLocal[0] = trk->getReferencePoint()[0] ;
+                fitPointLocal[1] = trk->getReferencePoint()[1] ;
+                fitPointLocal[2] = trk->getReferencePoint()[2] ;
+
+                double bd0        = trk->getD0() ;
+ 	        double bphi       = trk->getPhi() ;
+                double bomega     = trk->getOmega() ;
+	        double btanlambda = trk->getTanLambda() ;
+	        double bz0        = trk->getZ0() ;
+
+                trk->setD0(        trk->getD0() + corrections[0] ) ;
+ 	        trk->setPhi(       trk->getPhi() + corrections[1] ) ;
+                trk->setOmega(     trk->getOmega() + corrections[2] ) ;
+	        trk->setTanLambda( trk->getTanLambda() + corrections[3] ) ;
+	        trk->setZ0(        trk->getZ0() + corrections[4] ) ;
+
+                double ed0        = trk->getD0() ;
+ 	        double ephi       = trk->getPhi()  ;
+                double eomega     = trk->getOmega()  ;
+	        double etanlambda = trk->getTanLambda()  ;
+	        double ez0        = trk->getZ0()  ;
+
+
+                const int hitGblLabel = _hitId2GblPointLabel[ trk->id() ];
+
+                gblTraj->getResults( hitGblLabel, corrections, correctionsCov );
+
+                streamlog_out(MESSAGE1) << hitGblLabel << " corr: " << trk->id() 
+                                        << " [d0]  " << std::setw(6) << bd0 << ":" << ed0 
+                                        << " [phi] " << std::setw(6) << bphi << ":" << ephi
+                                        << " [ome] " << std::setw(6) << bomega << ":" << eomega
+                                        << " [tanl]" << std::setw(6) << btanlambda << ":" << etanlambda
+                                        << " [z0]  " << std::setw(6) << bz0 << ":" << ez0  ;      
+        
+                if( trk->getLocation() >= 0 ) {
+                  gblTraj->getMeasResults( hitGblLabel, numData, residual, measErr, residualErr, downWeight);
+                  // correct original values to the fitted ones
+
+                  streamlog_out(MESSAGE1) << "  res[0]: "  << std::setw(5) << residual[0] << " res[1]: "  << std::setw(5) << residual[1] ;
+                }
+
+                streamlog_out(MESSAGE1) << endl;      
+
+            }
+            streamlog_out(MESSAGE1) << std::endl;
+
+    }
+
+
     /**
      * Set track omega, D0, Z0, Phi, tan(Lambda), Chi2, NDF parameters
      * and add it to the LCIO collection of fitted tracks
@@ -827,8 +905,9 @@ namespace eutelescope {
       const double thicknessLay       = geo::gGeometry()._siPlanesLayerLayout->getLayerThickness(iPlane );
       start[2]    = geo::gGeometry().siPlaneZPosition(planeID) - thicknessSen - thicknessLay; //initial z position to the most-first plane
       double dir[3]   = {0.,0.,1.};  // as good as any other value along z axis.
-      float dpoint[3] = {0.,0.,0.};  // initialise output point-vector
- 
+      float dpoint[3] = {0.,0.,0.};  // initialise output point-vector (World frame)
+      float lpoint[3] = {0.,0.,0.};  // initialise output point-vector (sensor frame)
+
       streamlog_out ( DEBUG0 ) << "::FitSingleTrackCandidate starting point: "  <<  start[0] << " "  << start[1] << " " << start[2] << " dir:"<< dir[0]<<" "<<dir[1]<<" "<<dir[2] << endl;
  
       map< int, int >::const_iterator iter = sensorMap.begin();
@@ -837,6 +916,11 @@ namespace eutelescope {
         if( iter->first > -999 )
           {
             int getErrorID = geo::gGeometry( ).findNextPlaneEntrance(  start,  dir, iter->second, dpoint ) ;
+
+            // get to local frame for sensor newSensorID:
+//            geo::gGeometry().master2Local(dpoint, lpoint);
+
+
             if( getErrorID < 0 ) 
             {
               streamlog_out ( DEBUG4 ) << "no Entrance: " <<  dpoint[0] << " " <<  dpoint[1] << " " << dpoint[2] << " err:"<< getErrorID << endl;
@@ -889,7 +973,7 @@ namespace eutelescope {
     }
 
 // GBL Trajectory treatment ::  Fit and dump into LCIO
-    void EUTelGBLFitter::PerformFitGBLTrajectory( gbl::GblTrajectory* traj, EVENT::TrackVec::const_iterator& itTrkCand, double invP  ) {
+    void EUTelGBLFitter::PerformFitGBLTrajectory( gbl::GblTrajectory* traj, vector<IMPL::TrackImpl*>::const_iterator& itTrkCand, double invP  ) {
                 
             double loss = 0.;
             double chi2 = 0.;
@@ -898,27 +982,39 @@ namespace eutelescope {
 
                 int ierr = 0;
 
+		        if ( streamlog_level(MESSAGE0) ){
+	        	  std::cout << "pre fit FitTrack - trajectory: " << std::endl;
+//		 	  traj->printTrajectory(1);
+//			  traj->printData();
+//	 		  traj->printPoints(1);
+	        	  std::cout << "pre fit FitTrack - trajectory: end;" << std::endl;
+
+		        }
+	
                 if ( !_mEstimatorType.empty( ) ) ierr = traj->fit( chi2, ndf, loss, _mEstimatorType );
                 else ierr = traj->fit( chi2, ndf, loss );
 
-                if ( chi2 < _chi2cut ) 
+                std::cout << "ierr : "<< ierr << " and chi2: " << chi2 << std::endl;
+
+                if (  1==1 || chi2 < _chi2cut ) 
                 {
-                    if ( ierr )
+                    if ( 1==1 || ierr  )
                     {
 		        if ( streamlog_level(MESSAGE0) ){
-	        	  std::cout << "FitTrack - trajectory: " << std::endl;
-		 	  traj->printTrajectory(1);
-			  traj->printData();
-	 		  traj->printPoints(1);
-		        }
+	        	  std::cout << "after fit FitTrack - trajectory: " << std::endl;
+//		 	  traj->printTrajectory(1);
+//			  traj->printData();
+//	 		  traj->printPoints(1);
+	        	  std::cout << "after fit FitTrack - trajectory: " << std::endl;
+  		        }
 		    }
   
                     // for some reason (??) need to keep the same numbering for trajectories as for the Track Candidates
-                    EVENT::TrackVec::const_iterator begin = _trackCandidates.begin();
+                    vector<IMPL::TrackImpl*>::const_iterator begin = _trackCandidatesVec.begin();
                     _gblTrackCandidates.insert( std::make_pair( std::distance( begin, itTrkCand ), traj ) );
                 
                     // Write fit result
-                    prepareLCIOTrack( traj, (*itTrkCand)->getTrackerHits(), chi2, ndf, invP, 0., 0., 0., 0. );
+                    prepareLCIOTrack( traj, itTrkCand, chi2, ndf, invP, 0., 0., 0., 0. );
 
                 } 
                 
@@ -934,13 +1030,27 @@ namespace eutelescope {
               return;
             }
 
-            // introduce new jacobian from point to point 
+            // Z axis points along beam direction.
+            double pt = ( 1./(*itTrkCand)->getOmega() ) * _beamQ;
+            double px = (*itTrkCand)->getTanLambda() * pt;
+   	    double py = pt * sin( (*itTrkCand)->getPhi() );
+	    double pz = pt * cos( (*itTrkCand)->getPhi() );
+
+	    double tx   = px / pz;
+	    double ty   = py / pz;
+//	    double invP = _beamQ / sqrt( px*px + pt*pt );
+ 
+            double p = _eBeam; // beam momentum
+            double invP = 1./p;
+
+            //GBL trajectory construction
+            // lsit of GBL points that goes eventually into the trajectory
+            std::vector< gbl::GblPoint > pointList;
+
+            // introduce new jacobian from point to point // not sure why we need it here ? 
             //
             TMatrixD jacPointToPoint(5, 5);
             jacPointToPoint.UnitMatrix();
-
-            //GBL trajectory construction
-            std::vector< gbl::GblPoint > pointList;
 
             // get measurement points:
             const EVENT::TrackerHitVec& hits = (*itTrkCand)->getTrackerHits();
@@ -966,64 +1076,56 @@ namespace eutelescope {
 
 
 
-        TVectorD meas(2);
-        TVectorD measPrec(2); // precision = 1/resolution^2
+            TVectorD meas(2);
+            TVectorD measPrec(2); // precision = 1/resolution^2
 
-        TVectorD scat(2);
-        scat.Zero();
+            TVectorD scat(2);
+            scat.Zero();
 
-        TVectorD scatPrecSensor(2);
-        //TMatrixDSym scatPrec(2,2);
-        TVectorD scatPrec(2);
-
-
+            TVectorD scatPrecSensor(2);
+            TVectorD scatPrec(2);
+ 
 
             // loop through scattering planes (including measurement planes) ::
             int nstates = (*itTrkCand)->getTrackStates().size();
             for(int i=0;i < nstates; i++) 
             {
-                streamlog_out(MESSAGE0) << "state: at " << i << " of " << nstates ;
+                streamlog_out(MESSAGE1) << "state: at " << i << " of " << nstates ;
                 IMPL::TrackStateImpl* trk = static_cast < IMPL::TrackStateImpl*> ( (*itTrkCand)->getTrackStates().at(i) ) ;
+                int trkVolumeID =  trk->getLocation();
+                streamlog_out(MESSAGE1) << "  [ " << trk->id() << " ] " ;
+ 
+                double fitPointLocal[] = {0.,0.,0.};
+                fitPointLocal [0] = trk->getReferencePoint()[0] ;
+                fitPointLocal [1] = trk->getReferencePoint()[1] ;
+                fitPointLocal [2] = trk->getReferencePoint()[2] ;
 
                 double fitPointGlobal[] = {0.,0.,0.};
-                fitPointGlobal[0] = trk->getReferencePoint()[0] ;
-                fitPointGlobal[1] = trk->getReferencePoint()[1] ;
-                fitPointGlobal[2] = trk->getReferencePoint()[2] ;
+                geo::gGeometry().local2Master( trkVolumeID, fitPointLocal, fitPointGlobal);
 
-                double fitPointLocal[] = {0.,0.,0.};
-                geo::gGeometry().master2Local( fitPointGlobal, fitPointLocal);
+                // fill next GBL point:
+                gbl::GblPoint point(jacPointToPoint);
 
-/*
-                cout << noshowpos <<  " [" << setfill('0') << setw(8) << dec<< trk->id() << "] ";
-                cout << "| " << dec << setw(8) << " ";
-                cout << scientific << setprecision (2) << showpos << dec << setfill(' ');
-                cout << " |" << trk->getD0();
-                cout << " |" << trk->getPhi();
-                cout << " |" << trk->getOmega();
-                cout << " |" <<setprecision (3) << trk->getZ0();
-                cout << " |" << trk->getTanLambda();
-                cout << " |(" << setprecision(2) << trk->getReferencePoint()[0] << ", " << trk->getReferencePoint()[1] << ", " <<trk->getReferencePoint()[2];
-                cout << " |" << noshowpos << setw(7) << " " ; 
-                cout << " | " << noshowpos << setw(5) << trk->getLocation() << std::endl; 
-*/
 
-                if(  trk->getLocation() == -1 )
+                if(  trkVolumeID == -1 )
                 {
-                  // begining of the track - does not exist normally
+                   // begining of the track - does not exist normally
                 }
-                else if(  trk->getLocation() == -2 )
+                else if(  trkVolumeID == -2 )
                 {
-                  // end of the track - can ignore
+                   // end of the track - can ignore
+                   streamlog_out(MESSAGE1) << std::endl;
                 }
-                if(  trk->getLocation() >= 0 )
+                if(  trkVolumeID >= 0 )
                 {
+
 
                  // look for the measurement point corresponding to the TrackState Location (fitted hit on the volume surface)
                  EVENT::TrackerHitVec::const_iterator itHit;
                  int imatch=0;
                  for ( itHit = hits.begin(); itHit != hits.end(); itHit++) {
                   const int planeID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(*itHit) );
-                  if( trk->getLocation() == planeID )
+                  if( trkVolumeID == planeID )
                   { 
                     EVENT::FloatVec hitcov(4);
                     hitcov[0]=0.01;
@@ -1052,9 +1154,9 @@ namespace eutelescope {
                     }
 
  
-                     const double* hitPointLocal = (*itHit)->getPosition();
-                     double hitPointGlobal[] = {0.,0.,0.};
-                     geo::gGeometry().local2Master(planeID,hitPointLocal,hitPointGlobal);
+                    const double* hitPointLocal = (*itHit)->getPosition();
+                    double hitPointGlobal[] = {0.,0.,0.};
+                    geo::gGeometry().local2Master(planeID,hitPointLocal,hitPointGlobal);
 /*
                      streamlog_out(MESSAGE0) << " | " <<  setw(3)  << right 
                                                <<   planeID  << " " << fixed << setw(11) << setprecision (3) << noshowpos << setw(7) << " " <<
@@ -1064,16 +1166,14 @@ namespace eutelescope {
                                                              << " " <<  noshowpos << setw(7) << " " <<
                                                                       hitPointGlobal[2] << " : " <<  fitPointGlobal[2] ;
 */
-                     streamlog_out(MESSAGE0) << " | " <<  setw(3)  << right 
+                     streamlog_out(MESSAGE1) << " | " <<  setw(3)  << right 
                                                <<   planeID  << " " << fixed << setw(11) << setprecision (3) << noshowpos << setw(7) << " " <<
                                                                       hitPointLocal[0] << " : " <<  fitPointLocal[0] 
                                                              << " " <<  noshowpos << setw(7) << " " <<
                                                                       hitPointLocal[1] << " : " <<  fitPointLocal[1] 
                                                              << " " <<  noshowpos << setw(7) << " " <<
-                                                                      hitPointLocal[2] << " : " <<  fitPointLocal[2] ;
+                                                                      hitPointLocal[2] << " : " <<  fitPointLocal[2] << " glo " << setw(8) << fitPointGlobal[2] ;
 
-                     // fill next GBL point:
-                     gbl::GblPoint point(jacPointToPoint);
                  
                      // Calculate projection matrix
                      TMatrixD proL2m(2, 2);
@@ -1089,43 +1189,44 @@ namespace eutelescope {
 
                   }                          
                  }
-                } 
-                streamlog_out(MESSAGE0) << std::endl;
 
-//              streamlog_out(MESSAGE0) << "state: " << eutelstate->id() << " location: " << eutelstate->getLocation() << " X:" << eutelstate->getX() << " Y:" << eutelstate->getY() << std::endl;
-            }
-
-
-
-
-/*
-            // loop through volume surfaces now (track candidate states) :
+                 addSiPlaneScattererGBL(point, scat, scatPrecSensor, trkVolumeID, p);
+                 pushBackPoint( pointList, point, trk->id() );
  
-                const double* hitPointLocal = (*itHit)->getPosition();
-                double hitPointGlobal[] = {0.,0.,0.};
-                geo::gGeometry().local2Master(planeID,hitPointLocal,hitPointGlobal);
+// get jacobian to arrive to next point (if not at last point already):: 
+                 if( i < nstates-1 ){
+                   // get next point
+                   IMPL::TrackStateImpl* trk = static_cast < IMPL::TrackStateImpl*> ( (*itTrkCand)->getTrackStates().at(i+1) ) ;
+                   const float *fitPoint  = trk->getReferencePoint();
+                   const int nextVolumeID = trk->getLocation();
+                   double hitPointLocal[] = {static_cast<double>(fitPoint[0]), static_cast<double>(fitPoint[1]), static_cast<double>(fitPoint[2]) };
+                   double hitPointGlobal[] = {0.,0.,0.};
+                   geo::gGeometry().local2Master( nextVolumeID, hitPointLocal, hitPointGlobal);
 
-// loop through scattering planes (including measurement planes) ::
-// fill next GBL point:
-                gbl::GblPoint point(jacPointToPoint);
+                   double ds = hitPointGlobal[2] - fitPointGlobal[2]; // actually it should be a method which returns Jacobian matrix (from state1 to state2)
+                   jacPointToPoint = propagatePar(ds);
+                   streamlog_out(MESSAGE1) << " step[" << i << "] = " << ds << std::endl;
+                 } else {
+                   streamlog_out(MESSAGE1) << std::endl;
+                 }
 
-		// Calculate projection matrix
-                TMatrixD proL2m(2, 2);
-                CalculateProjMatrix(proL2m, hitPointGlobal);
-                
-                bool excludeFromFit = false;
-                if ( std::find( _excludeFromFit.begin(), _excludeFromFit.end(), planeID ) != _excludeFromFit.end() ) excludeFromFit = true;
- 
-                if ( !excludeFromFit )
-                {
-                     addMeasurementsGBL(point, meas, measPrec, hitPointLocal, trackPointLocal, hitcov, proL2m);
                 }
 
-                addSiPlaneScattererGBL(point, scat, scatPrecSensor, planeID, p);
-   
-                pushBackPoint( pointList, point, (*itHit)->id() );
-// done filling GBL point
-*/
+           }
+
+            // check magnetic field at (0,0,0)
+            const gear::BField&   B = geo::gGeometry().getMagneticFiled();
+            const double Bmag       = B.at( TVector3(0.,0.,0.) ).r2();
+                
+            gbl::GblTrajectory* traj = 0;
+            if ( Bmag < 1.E-6 ) {
+                traj = new gbl::GblTrajectory( pointList, false );
+            } else {
+                traj = new gbl::GblTrajectory( pointList, true );
+            }
+ 
+            PerformFitGBLTrajectory( traj, itTrkCand, invP  );
+
     }
 
 // convert input TrackCandidates and TrackStates into a GBL Trajectory
@@ -1259,7 +1360,7 @@ namespace eutelescope {
             streamlog_out(DEBUG4) << " pz: " << std::setw(8) << pt << std::endl;
  
 	    // Reference point is the last hit on a track
-	    const float *refPoint = (*itTrkCand)->getReferencePoint();
+	    const float *refPoint = (*itTrkCand)->getReferencePoint();  // will fail miserably now with state in LOCAL frame
 
 	    TVectorD prevState = getXYZfromDzNum( invP, tx, ty, refPoint[0], refPoint[1], refPoint[2], 0. );
 	    double prevZ = refPoint[2];
@@ -1532,7 +1633,7 @@ namespace eutelescope {
 	  double ty   = py / pz;
 	  double invP = _beamQ / sqrt( px*px + pt*pt );
  
-          const float *refPoint = (*itTrkCand)->getReferencePoint();
+          const float *refPoint = (*itTrkCand)->getReferencePoint(); // will fail miserably now with state in LOCAL frame
 
           TVectorD prevState = getXYZfromDzNum( invP, tx, ty, refPoint[0], refPoint[1], refPoint[2], 0. );
           double prevZ = refPoint[2];
