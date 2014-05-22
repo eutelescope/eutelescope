@@ -119,6 +119,14 @@ namespace eutelescope {
         return closest ;
     } 
 
+    const EUTelTrackStateImpl* EUTelTrackImpl::getFirstTrackState(  ) const {
+        if( _trackStates.size() > 0 ) {
+           int firstElement = 0; 
+           return _trackStates[ firstElement ] ;  
+        }
+        return NULL ;
+    } 
+
     const EUTelTrackStateImpl* EUTelTrackImpl::getTrackState( int location ) const {
         for( unsigned int i=0 ; i < _trackStates.size() ; i++ ){
             if( _trackStates[i]->getLocation() == location ){

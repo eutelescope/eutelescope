@@ -3,6 +3,7 @@
 
 #include "streamlog/streamlog.h"
 #include <iostream>
+#include <iomanip>      // std::setw
 
 #include "IMPL/AccessChecked.h"
 #include "EVENT/TrackerHit.h"
@@ -23,6 +24,8 @@ namespace eutelescope {
   /**Vector of (pointers to) TrackStates.*/
   typedef std::vector<EUTelTrackStateImpl*> EUTelTrackStateVec ;
   
+  using namespace std;
+
   class EUTelTrackImpl : public EVENT::LCObject, public IMPL::AccessChecked {
     
   public: 
@@ -46,7 +49,10 @@ namespace eutelescope {
     virtual void Print(){
 //      PrintTrackStates();   
       for(int i=0; i < this->getTrackStates().size() ; i++) {    
-        streamlog_out(MESSAGE0) << "track " << id() << " state:" << i  << " id: " << (getTrackStates().at(i))->id() << " location: " << (getTrackStates().at(i))->getLocation() << " at "<< getTrackStates().at(i) << " at Tx:" << getTx(i) << " at Ty:" << getTy(i) << " getX() " << getX(i) << " getY() " << getY(i) << std::endl;
+        streamlog_out(MESSAGE0) << "track " << id() << " state:" << i  << " id: " << (getTrackStates().at(i))->id() << " location: " << (getTrackStates().at(i))->getLocation() << " at "<< getTrackStates().at(i) << " at Tx:" << getTx(i) << " at Ty:" << getTy(i) << " getX() " << getX(i) << " getY() " << getY(i) ;
+        const float*   point = (getTrackStates().at(i))->getReferencePoint();
+        streamlog_out(MESSAGE0) << std::setw(7) << point[0] << std::setw(7) << point[1] << std::setw(7) << point[2] ;
+        streamlog_out(MESSAGE0) << std::endl;
       }
     }
 
@@ -93,6 +99,9 @@ namespace eutelescope {
      */
     virtual const EUTelTrackVec & getTracks() const ;
 
+    /** Returns very first track state associated with this track. @see TrackState.
+     */
+    virtual const EUTelTrackStateImpl* getFirstTrackState(  ) const ;
 
     /** Returns track states associated with this track. @see TrackState.
      */
