@@ -300,9 +300,9 @@ void EUTelProcessorTrackingGBLTrajectory::processEvent(LCEvent * evt) {
             _trackFitter->TrackCandidatesToGBLTrajectories();
             _trackFitter->PerformFitGBLTrajectories();
 
-            IMPL::LCCollectionVec* fittrackvec;
-            fittrackvec = static_cast<EUTelGBLFitter*> (_trackFitter)->GetFitTrackVec();
-            
+            IMPL::LCCollectionVec* fittrackvec = static_cast< EUTelGBLFitter* > (_trackFitter)->GetFitTrackVec();
+//            vector<IMPL::TrackImpl *> *fittrackvec = static_cast<vector<IMPL::TrackImpl *> *> (collection);
+
             if( fittrackvec == 0 )  {
               streamlog_out( MESSAGE0 ) << " fittrackvec is null " << std::endl;  
               return;
@@ -323,8 +323,9 @@ void EUTelProcessorTrackingGBLTrajectory::processEvent(LCEvent * evt) {
             int ndfTrk = 0;
             double p = 0.;
 
-            IMPL::LCCollectionVec::const_iterator itFitTrack;
+//            vector<IMPL::TrackImpl*>::const_iterator itFitTrack;
 
+            IMPL::LCCollectionVec::const_iterator itFitTrack;
 
             // Loop over fitted tracks
             for (itFitTrack = fittrackvec->begin(); itFitTrack != fittrackvec->end(); ++itFitTrack) {
@@ -374,8 +375,12 @@ void EUTelProcessorTrackingGBLTrajectory::processEvent(LCEvent * evt) {
                     for ( itrHit = trackHits.begin( ); itrHit != trackHits.end( ); ++itrHit ) {
 
                        // Get input hit information
-                        IMPL::TrackerHitImpl* originalHit =  static_cast < IMPL::TrackerHitImpl* > ( ( *itrHit )->getRawHits( ).front( ) );
+// wtf?                       IMPL::TrackerHitImpl* originalHit =  static_cast < IMPL::TrackerHitImpl* > ( ( *itrHit )->getRawHits( ).front( ) );
+                        IMPL::TrackerHitImpl* originalHit =  static_cast < IMPL::TrackerHitImpl* > ( *itrHit  );
                         const double* originalhitpos = originalHit->getPosition( );
+                        int originalID = originalHit->id();
+
+                        streamlog_out(DEBUG4) << " hit " << originalID  << " " << originalhitpos[0] << " " << originalhitpos[1]<< " " << originalhitpos[2] << endl;
 
                         // Get fitted hit information
                         const double* hitpos = ( *itrHit )->getPosition( );
@@ -388,7 +393,7 @@ void EUTelProcessorTrackingGBLTrajectory::processEvent(LCEvent * evt) {
                         int ySize = -1; 
                         Utility::getClusterSize(originalHit, xSize, ySize);
                         
-//                        std::cout << "plane:" << planeID << " hittype: " << originalHit->getType()  <<  " x: " << xSize << " y: " << ySize << " " << std::endl;
+                        streamlog_out(DEBUG4) << "plane:" << planeID << " hittype: " << originalHit->getType()  <<  " xSize: " << xSize << " ySize: " << ySize << " " << std::endl;
                 
 
                         if ( planeID < 0 ) continue;
@@ -405,8 +410,36 @@ void EUTelProcessorTrackingGBLTrajectory::processEvent(LCEvent * evt) {
                         residualErr[1] = sqrt( ( *itrHit )->getCovMatrix( )[2] );
 
                         // Spatial GBL residuals. residualGBL is the as residual and residualErrGBL is the same as residualErr.
-                        int hitGblLabel = gblPointLabel.at( originalHit->id( ) );
-//                        cout<<"     hitGblLabel: " << hitGblLabel << " : " << numData << " " << " gblTraj : " << gblTraj << endl;
+                        // gblPointLabel s are now given in track state Id ... and why?
+                        int hitGblLabel = -1;
+
+           TrackImpl* trackimpl =  static_cast< TrackImpl*> (*itFitTrack);  
+           int nstates = trackimpl->getTrackStates().size();
+           streamlog_out(DEBUG3) << "on this Track we have " << nstates << " states   " << endl;
+
+           for(int i=0;i < nstates; i++) 
+            {
+                const IMPL::TrackStateImpl* const_trkState = static_cast <const IMPL::TrackStateImpl*> ( trackimpl->getTrackStates().at(i) ) ;
+                long fittedHit = static_cast<long> (const_trkState->id() );
+                if( const_trkState->getLocation() != planeID) continue;
+                streamlog_out(DEBUG2) << " plane: " << planeID <<  " id: " << fittedHit << " map size: " << gblPointLabel.size() << endl;
+                std::map<long, int>::const_iterator it;
+                for( it = gblPointLabel.begin(); it != gblPointLabel.end(); it++ ) {
+                   streamlog_out(DEBUG1) << " " << it->first << " " << it->second << " " << fittedHit << endl ;
+                   if( it->first == fittedHit ) {
+                     hitGblLabel = it->second;
+                     streamlog_out(DEBUG0) << " hitGblLabel: " << hitGblLabel << " : " << numData << " " << " gblTraj : " << gblTraj << endl;
+                     break;
+                   }
+                }
+            }
+
+           if( hitGblLabel < 0 ) 
+            {
+               streamlog_out(ERROR) << " hitGblLabel is not found - should not happen in principle. Can not continue with Residual plots " << std::endl;
+               continue; 
+            }
+
            if( !excludeFromFit)
             {
 //                        gblTraj->printTrajectory(1);  
@@ -414,32 +447,37 @@ void EUTelProcessorTrackingGBLTrajectory::processEvent(LCEvent * evt) {
 //cout<<"nach hitGblLabel: " << hitGblLabel << " : " << numData << endl;
             }
                         std::stringstream sstr;
+                        std::stringstream sstrY;
                         std::stringstream sstrNorm;
 
                         // 1D histograms
                         // SPATIAL RESIDUALS
                         const double um = 1000.;
                         sstr << _histName::_residGblFitHistNameX << planeID;
+                        sstrY << _histName::_residGblFitHistNameY << planeID;  // used oly once in the printout below
                         sstrNorm << _histName::_normResidGblFitHistNameX << planeID;
-                        if ( planeID == 5 ) streamlog_out( DEBUG0 ) << planeID << " " << std::setw( 15 ) << std::setprecision( 5 ) << residual[0] << std::setw( 15 ) << std::setprecision( 5 ) << residualErr[0] << std::endl;
+                        if ( planeID == 5 ) streamlog_out( DEBUG0 ) << planeID << " res[0]:" << std::setw( 15 ) << std::setprecision( 5 ) << residual[0] << " +- " << std::setw( 15 ) << std::setprecision( 5 ) << residualErr[0] << std::endl;
                         static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstr.str( ) ] ) -> fill( residualGBL[0] * um, downWeightGBL[0] );
                         static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstrNorm.str( ) ] ) -> fill( residual[0] / residualErr[0], downWeightGBL[0] );
 
 if( event->getEventNumber()/999*999   == event->getEventNumber() )
 {
-  streamlog_out(MESSAGE3) <<  sstr.str( ) 
-            << " " << hitpos[0] << " " << hitpos[1] << " " << hitpos[2] 
-            << " " <<  static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstr.str( ) ] ) -> mean()  
-            << " " <<  static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstr.str( ) ] ) -> rms() << endl;
-}
+  streamlog_out(MESSAGE3) << left <<  setw(20) << sstr.str( ) 
+            << " hitpos: " << setw(8) << right  << hitpos[0]  << setw(8)<< hitpos[1]  << setw(8)<< hitpos[2] << "      "
+            << " X: mean:" << setw(8) << right << static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstr.str( ) ] ) -> mean()  
+            << " rms:" <<  setw(8) << right << static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstr.str( ) ] ) -> rms() ;
 
+  streamlog_out(MESSAGE3)  << "      "
+            << " Y: mean:" << setw(8) << right << static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstrY.str( ) ] ) -> mean()  
+            << " rms:" <<  setw(8) << right << static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstrY.str( ) ] ) -> rms() << endl;
 
+} 
 
                         sstr.str( std::string( ) );
                         sstrNorm.str( std::string( ) );
                         sstr << _histName::_residGblFitHistNameY << planeID;
                         sstrNorm << _histName::_normResidGblFitHistNameY << planeID;
-                        if ( planeID == 5 ) streamlog_out( DEBUG0 ) << planeID << " " << std::setw( 15 ) << std::setprecision( 5 ) << residual[1] << std::setw( 15 ) << std::setprecision( 5 ) << residualErr[1] << std::endl;
+                        if ( planeID == 5 ) streamlog_out( DEBUG0 ) << planeID << " res[1]:" << std::setw( 15 ) << std::setprecision( 5 ) << residual[1] << " +- " << std::setw( 15 ) << std::setprecision( 5 ) << residualErr[1] << std::endl;
                         static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstr.str( ) ] ) -> fill( residual[1] * um, downWeightGBL[1] );
                         static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstrNorm.str( ) ] ) -> fill( residual[1] / residualErr[1], downWeightGBL[1] );
                         sstr.str( std::string( ) );
@@ -484,11 +522,11 @@ if( event->getEventNumber()/999*999   == event->getEventNumber() )
                         // KINKS
                         gblTraj->getScatResults( hitGblLabel, numData, residualGBL, measErrGBL, residualErrGBL, downWeightGBL );
                         sstr << _histName::_kinkGblFitHistNameX << planeID;
-                        streamlog_out( DEBUG0 ) << std::setw( 15 ) << std::setprecision( 5 ) << residualGBL[0] << std::setw( 15 ) << std::setprecision( 5 ) << residualErr[0] << std::endl;
+                        streamlog_out( DEBUG0 ) << " resGBL[0]:" << std::setw( 15 ) << std::setprecision( 5 ) << residualGBL[0] << std::setw( 15 ) << std::setprecision( 5 ) << residualErr[0] << std::endl;
                         static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstr.str( ) ] ) -> fill( residualGBL[0], downWeightGBL[0] );
                         sstr.str( std::string( ) );
                         sstr << _histName::_kinkGblFitHistNameY << planeID;
-                        streamlog_out( DEBUG0 ) << std::setw( 15 ) << std::setprecision( 5 ) << residualGBL[1] << std::setw( 15 ) << std::setprecision( 5 ) << residualErr[1] << std::endl;
+                        streamlog_out( DEBUG0 ) << " resGBL[1]:" << std::setw( 15 ) << std::setprecision( 5 ) << residualGBL[1] << std::setw( 15 ) << std::setprecision( 5 ) << residualErr[1] << std::endl;
                         static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstr.str( ) ] ) -> fill( residualGBL[1], downWeightGBL[1] );
                         sstr.str( std::string( ) );
                         sstrNorm.str( std::string( ) );

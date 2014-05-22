@@ -634,15 +634,18 @@ namespace eutelescope {
     }
 
     /**
-     * Set track omega, D0, Z0, Phi, tan(Lambda), Chi2, NDF parameters
-     * and add it to the LCIO collection of fitted tracks
+     * merging too sources of information: a copy of a Track Candidate (*itTrkCand) gets updated with gblTraj
      * 
      * @param fittrack pointer to track object to be stored
      * @param chi2     Chi2 of the track fit
      * @param ndf      NDF of the track fit
      */
-    void EUTelGBLFitter::prepareLCIOTrack( gbl::GblTrajectory* gblTraj, const vector<IMPL::TrackImpl*>::const_iterator& itTrkCand, 
+     IMPL::TrackImpl* EUTelGBLFitter::prepareLCIOTrack( gbl::GblTrajectory* gblTraj, const vector<IMPL::TrackImpl*>::const_iterator& itTrkCand, 
                                           double chi2, int ndf, double omega, double d0, double z0, double phi, double tanlam ) {
+ 
+// output  track
+
+        IMPL::TrackImpl * fittrack = new IMPL::TrackImpl( **itTrkCand); 
  
         unsigned int numData;
         TVectorD corrections(5);
@@ -653,53 +656,112 @@ namespace eutelescope {
         TVectorD residualErr(2);
         TVectorD downWeight(2);
  
-          int nstates = (*itTrkCand)->getTrackStates().size();
+          streamlog_out(MESSAGE1) << endl; 
+ 
+          int nstates = fittrack->getTrackStates().size();
           streamlog_out(MESSAGE1) << "states " << nstates << "    " << endl;
 
           for(int i=0;i < nstates; i++) 
             {
-                IMPL::TrackStateImpl* trk = static_cast < IMPL::TrackStateImpl*> ( (*itTrkCand)->getTrackStates().at(i) ) ;
+                const IMPL::TrackStateImpl* const_trkState = static_cast <const IMPL::TrackStateImpl*> ( (*itTrkCand)->getTrackStates().at(i) ) ;
 
                 double fitPointLocal[] = {0.,0.,0.};
-                fitPointLocal[0] = trk->getReferencePoint()[0] ;
-                fitPointLocal[1] = trk->getReferencePoint()[1] ;
-                fitPointLocal[2] = trk->getReferencePoint()[2] ;
+                fitPointLocal[0] = const_trkState->getReferencePoint()[0] ;
+                fitPointLocal[1] = const_trkState->getReferencePoint()[1] ;
+                fitPointLocal[2] = const_trkState->getReferencePoint()[2] ;
 
-                double bd0        = trk->getD0() ;
- 	        double bphi       = trk->getPhi() ;
-                double bomega     = trk->getOmega() ;
-	        double btanlambda = trk->getTanLambda() ;
-	        double bz0        = trk->getZ0() ;
+                double bd0        = const_trkState->getD0() ;
+ 	        double bphi       = const_trkState->getPhi() ;
+                double bomega     = const_trkState->getOmega() ;
+	        double btanlambda = const_trkState->getTanLambda() ;
+	        double bz0        = const_trkState->getZ0() ;
 
-                trk->setD0(        trk->getD0() + corrections[0] ) ;
- 	        trk->setPhi(       trk->getPhi() + corrections[1] ) ;
-                trk->setOmega(     trk->getOmega() + corrections[2] ) ;
-	        trk->setTanLambda( trk->getTanLambda() + corrections[3] ) ;
-	        trk->setZ0(        trk->getZ0() + corrections[4] ) ;
+                const int hitGblLabel = _hitId2GblPointLabel[ const_trkState->id() ];
 
-                double ed0        = trk->getD0() ;
- 	        double ephi       = trk->getPhi()  ;
-                double eomega     = trk->getOmega()  ;
-	        double etanlambda = trk->getTanLambda()  ;
-	        double ez0        = trk->getZ0()  ;
+                streamlog_out(MESSAGE1) << hitGblLabel << " corr: " << const_trkState->id() 
+                                        << " [d0]" << std::setw(6) << bd0 << ":" 
+                                        << " [phi]" << std::setw(6) << bphi << ":" 
+                                        << " [ome]" << std::setw(6) << bomega << ":" 
+                                        << " [tanl]" << std::setw(6) << btanlambda << ":" 
+                                        << " [z0]" << std::setw(6) << bz0 << ":" << " ["<< setw(3) << const_trkState->getLocation() <<"]" 
+                                        << " points:"  << setw(8) << fitPointLocal[0] << setw(8) << fitPointLocal[1] << setw(8) << fitPointLocal[2] << " "  ;   
+
+               streamlog_out(MESSAGE1) << endl; 
+            }
+ 
+          streamlog_out(MESSAGE1) << endl; 
+  
+        const EVENT::TrackerHitVec& ihits = (*itTrkCand)->getTrackerHits();
+        int itrk = (*itTrkCand)->id();
+        int nhits =  ihits.size( ) ;
+        int expec = _paramterIdPlaneVec.size();
+        streamlog_out(MESSAGE1) <<  " track itrk:" <<  itrk  << " with " << nhits << " at least " << expec << "       " ;//std::endl;
+        for (int i = 0; i< ihits.size(); i++ ) 
+        { 
+            EVENT::TrackerHit* ihit = ihits[i];
+            int ic = ihit->id();
+            streamlog_out(MESSAGE0) <<  ic << " ";
+        }
+        streamlog_out(MESSAGE1) << std::endl;
+ 
+          for(int i=0;i < nstates; i++) 
+            {
+                const IMPL::TrackStateImpl* const_trkState = static_cast <const IMPL::TrackStateImpl*> ( (*itTrkCand)->getTrackStates().at(i) ) ;
+                      IMPL::TrackStateImpl* trkState = static_cast <      IMPL::TrackStateImpl*> ( fittrack->getTrackStates().at(i) ) ;
 
 
-                const int hitGblLabel = _hitId2GblPointLabel[ trk->id() ];
+                float fitPointLocal[] = {0.,0.,0.};
+                fitPointLocal[0] = const_trkState->getReferencePoint()[0] ;
+                fitPointLocal[1] = const_trkState->getReferencePoint()[1] ;
+                fitPointLocal[2] = const_trkState->getReferencePoint()[2] ;
+
+                double bd0        = const_trkState->getD0() ;
+ 	        double bphi       = const_trkState->getPhi() ;
+                double bomega     = const_trkState->getOmega() ;
+	        double btanlambda = const_trkState->getTanLambda() ;
+	        double bz0        = const_trkState->getZ0() ;
+
+                trkState->setD0(        const_trkState->getD0() + corrections[0] ) ;
+ 	        trkState->setPhi(       const_trkState->getPhi() + corrections[1] ) ;
+                trkState->setOmega(     const_trkState->getOmega() + corrections[2] ) ;
+	        trkState->setTanLambda( const_trkState->getTanLambda() + corrections[3] ) ;
+	        trkState->setZ0(        const_trkState->getZ0() + corrections[4] ) ;
+
+                double ed0        = trkState->getD0() ;
+ 	        double ephi       = trkState->getPhi()  ;
+                double eomega     = trkState->getOmega()  ;
+	        double etanlambda = trkState->getTanLambda()  ;
+	        double ez0        = trkState->getZ0()  ;
+
+
+                const int hitGblLabel = _hitId2GblPointLabel[ const_trkState->id() ];
+
+                _hitId2GblPointLabel.insert( std::make_pair(   trkState->id() , hitGblLabel  ) );
 
                 gblTraj->getResults( hitGblLabel, corrections, correctionsCov );
 
-                streamlog_out(MESSAGE1) << hitGblLabel << " corr: " << trk->id() 
-                                        << " [d0]  " << std::setw(6) << bd0 << ":" << ed0 
-                                        << " [phi] " << std::setw(6) << bphi << ":" << ephi
-                                        << " [ome] " << std::setw(6) << bomega << ":" << eomega
-                                        << " [tanl]" << std::setw(6) << btanlambda << ":" << etanlambda
-                                        << " [z0]  " << std::setw(6) << bz0 << ":" << ez0  ;      
-        
-                if( trk->getLocation() >= 0 ) {
+                streamlog_out(MESSAGE1) << hitGblLabel << " corr: " << trkState->id() 
+                                        << " [d0]" << std::setw(6)  << ed0 <<  ":"
+                                        << " [phi]" << std::setw(6)  << ephi<<  ":"
+                                        << " [ome]" << std::setw(6)  << eomega<<  ":"
+                                        << " [tanl]" << std::setw(6)  << etanlambda<<  ":"
+                                        << " [z0]" << std::setw(6)  << ez0 <<  ":" << " ["<< setw(3) << trkState->getLocation() <<"]" ;      
+
+                if( trkState->getLocation() >= 0 ) {
                   gblTraj->getMeasResults( hitGblLabel, numData, residual, measErr, residualErr, downWeight);
                   // correct original values to the fitted ones
 
-                  streamlog_out(MESSAGE1) << "  res[0]: "  << std::setw(5) << residual[0] << " res[1]: "  << std::setw(5) << residual[1] ;
+                  fitPointLocal[0] += residual[0];
+                  fitPointLocal[1] += residual[1];
+                  trkState->setReferencePoint(fitPointLocal);
+
+                  double PointLocal[] = {0.,0.,0.};
+                  PointLocal[0] = trkState->getReferencePoint()[0] ;
+                  PointLocal[1] = trkState->getReferencePoint()[1] ;
+                  PointLocal[2] = trkState->getReferencePoint()[2] ;
+
+                  streamlog_out(MESSAGE1) << " points:"  << setw(8) << PointLocal[0] << setw(8)  << PointLocal[1] << setw(8) << PointLocal[2] << " "  ;   
+                  streamlog_out(MESSAGE1) << "  re[0]:"  << std::setw(7) << residual[0] << " re[1]:"  << std::setw(7) << residual[1] ;
                 }
 
                 streamlog_out(MESSAGE1) << endl;      
@@ -707,6 +769,27 @@ namespace eutelescope {
             }
             streamlog_out(MESSAGE1) << std::endl;
 
+
+        const EVENT::TrackerHitVec& chits = fittrack->getTrackerHits();
+         itrk = fittrack->id();
+         nhits =  chits.size( ) ;
+         expec =  _paramterIdPlaneVec.size();
+		streamlog_out(MESSAGE1) <<  " track itrk:" <<  itrk  << " with " << nhits << " at least " << expec  << "       ";//std::endl;
+        for (int i = 0; i< chits.size(); i++ ) 
+        { 
+            EVENT::TrackerHit* ihit = chits[i];
+            int ic = ihit->id();
+            streamlog_out(MESSAGE0) <<  ic << " ";
+        }
+        streamlog_out(MESSAGE1) << std::endl;
+ 
+         // prepare track
+        fittrack->setChi2 ( chi2 );      // Chi2 of the fit (including penalties)
+        fittrack->setNdf  ( ndf );        // Number of planes fired (!)
+        
+        // add track to LCIO collection vector
+        _fittrackvec->addElement( fittrack );
+ 
     }
 
 

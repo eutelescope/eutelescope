@@ -193,7 +193,7 @@ namespace eutelescope {
         void pushBackPoint( std::vector< gbl::GblPoint >&, const gbl::GblPoint&, int );
         void pushBackPointMille( std::vector< gbl::GblPoint >&, const gbl::GblPoint&, int );
  
-        void prepareLCIOTrack( gbl::GblTrajectory*, const vector<IMPL::TrackImpl*>::const_iterator&,
+        IMPL::TrackImpl* prepareLCIOTrack( gbl::GblTrajectory*, const vector<IMPL::TrackImpl*>::const_iterator&,
                                 double, int, double, double, double, double, double );
       
         void prepareLCIOTrack( gbl::GblTrajectory*, const EVENT::TrackerHitVec&,
@@ -211,9 +211,9 @@ namespace eutelescope {
         std::map< int, gbl::GblTrajectory* > _gblTrackCandidates;
 
       // contains the fitted tracks, accessible through class methods
-        IMPL::LCCollectionVec *_fittrackvec;
+        IMPL::LCCollectionVec * _fittrackvec;
       // contains the fitted hits, accessible through class methods
-        IMPL::LCCollectionVec *_fithitsvec;
+        IMPL::LCCollectionVec * _fithitsvec;
 
     private:
         /** Parameter propagation jacobian */
