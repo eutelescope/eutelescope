@@ -96,7 +96,7 @@ EUTelClusteringProcessor::EUTelClusteringProcessor ()
   _sparseSeedCut(0.0),
   _ffClusterCut(0.0),
   _sparseClusterCut(0.0),
-  _sparse3MinDistance(2),
+  _sparseMinDistanceSquared(2),
   _sparseMinDistance(0.0),
   _iEvt(0),
   _fillHistos(false),
@@ -225,7 +225,7 @@ EUTelClusteringProcessor::EUTelClusteringProcessor ()
                              _sparseClusterCut, static_cast<float > (3.0) );
 
   registerProcessorParameter("Sparse3MinDistance","Minimum distance squared between sparsified pixel ( touching == 2) ",
-                             _sparse3MinDistance, static_cast<int>(2) );
+                             _sparseMinDistanceSquared, static_cast<int>(2) );
   
   registerProcessorParameter("SparseMinDistance","Minimum distance between sparsified pixel ( touching == sqrt(2)) ",
                              _sparseMinDistance, static_cast<float > (0.0 ) );
@@ -2424,7 +2424,7 @@ void EUTelClusteringProcessor::sparseClustering3(LCEvent* evt, LCCollectionVec* 
 						dY = y1 - y2;
 						int distance = dX*dX+dY*dY;
 						//if they pass the spatial and temporal cuts, we add them
-						if( distance <= _sparse3MinDistance )
+						if( distance <= _sparseMinDistanceSquared )
 						{
 							//add them to the cluster as well as to the newly added ones
 							newlyAdded.push_back( *hitVec );
