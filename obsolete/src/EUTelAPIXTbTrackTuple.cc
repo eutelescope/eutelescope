@@ -331,26 +331,15 @@ int EUTelAPIXTbTrackTuple::readHits( std::string hitColName, LCEvent* event ) {
  
 //  streamlog_out( MESSAGE5 )<< "readHits(mes)"<<endl;    
   for(int ihit=0; ihit< nHit ; ihit++) {
-    TrackerHit * meshit = dynamic_cast<TrackerHitImpl*>( hitCollection->getElementAt(ihit) ) ;
+    TrackerHitImpl* meshit = dynamic_cast<TrackerHitImpl*>( hitCollection->getElementAt(ihit) ) ;
     const double * pos = meshit->getPosition();	
     LCObjectVec clusterVec = (meshit->getRawHits());
     TrackerDataImpl * trackerData = dynamic_cast < TrackerDataImpl * > ( clusterVec[0] );
 
-    int iden = guessSensorID(meshit);
-//    for(int plane = 0; plane < _siPlanesLayerLayout->getNLayers(); plane++){
-//      if( fabs( pos[2] - _siPlanesLayerLayout->getSensitivePositionZ( plane ) ) < 2.0){
-//	iden = _siPlanesLayerLayout->getID( plane );
-//      }
-//    }
-    if(iden == -1){ continue; }
+    UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
+    int iden = hitDecoder(meshit)["sensorID"];
+
     double nominalZpos(0.0);
-//    for(int plane = 0; plane < _siPlanesLayerLayout->getNLayers(); plane++){
-//      if( fabs( pos[2] - _siPlanesLayerLayout->getSensitivePositionZ( plane ) ) < 2.0){
-//	iden = _siPlanesLayerLayout->getID( plane );
-//	nominalZpos = _siPlanesLayerLayout->getSensitivePositionZ(plane)
-//	  + 0.5 * _siPlanesLayerLayout->getSensitiveThickness(plane);
-//     }
-//    }
 
     double x = pos[0];
     double y = pos[1];
@@ -431,6 +420,9 @@ int EUTelAPIXTbTrackTuple::readTracks(LCEvent* event){
     return(1);
   }
 
+  // setup cellIdDecoder to decode the hit properties
+  CellIDDecoder<TrackerHit>  hitCellDecoder(EUTELESCOPE::HITENCODING);
+
   int nTrackParams=0;
   for(int itrack=0; itrack< trackCol->getNumberOfElements(); itrack++) {
     lcio::Track* fittrack = dynamic_cast<lcio::Track*>( trackCol->getElementAt(itrack) ) ;
@@ -443,25 +435,15 @@ int EUTelAPIXTbTrackTuple::readTracks(LCEvent* event){
 //    streamlog_out( MESSAGE5 )<< "readTracks(fit)"<<endl;    
  
     for(unsigned int ihit=0; ihit< trackhits.size(); ihit++) {
-      TrackerHit* fittedHit = trackhits.at(ihit);
+      TrackerHitImpl* fittedHit = dynamic_cast<TrackerHitImpl*>( trackhits.at(ihit) );
       const double * pos = fittedHit->getPosition();
-      //Type >= 32 for fitted hits
-      if( fittedHit->getType() < 32) { continue; }
+      if( (hitCellDecoder(fittedHit)["properties"] & kFittedHit) == 0) { continue; }
 
+      UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
+      int iden = hitDecoder(fittedHit)["sensorID"];
 
-      int iden = guessSensorID(fittedHit);
       double nominalZpos(0.0);
-       
-/*
-      for(int plane = 0; plane < _siPlanesLayerLayout->getNLayers(); plane++){
-	if( fabs( pos[2] - _siPlanesLayerLayout->getSensitivePositionZ( plane ) ) < 2.0){
-	  iden = _siPlanesLayerLayout->getID( plane );
-	  nominalZpos = _siPlanesLayerLayout->getSensitivePositionZ(plane)
-	    + 0.5 * _siPlanesLayerLayout->getSensitiveThickness(plane);
-	}
-      }
-*/
-      if(iden == -1){ continue; }
+      
       nTrackParams++;
       double x = pos[0];
       double y = pos[1];
@@ -480,44 +462,6 @@ int EUTelAPIXTbTrackTuple::readTracks(LCEvent* event){
   }
   _nTrackParams = nTrackParams;
   return(0);
-}
-
-
-int EUTelAPIXTbTrackTuple::guessSensorID( TrackerHit *hit ) {
-
-  int sensorID = -1;
-  double minDistance =  numeric_limits< double >::max() ;
-  double * hitPosition = const_cast<double * > (hit->getPosition());
-
-//  LCCollectionVec * referenceHitVec     = dynamic_cast < LCCollectionVec * > (evt->getCollection( _referenceHitCollectionName));
-  if( _referenceHitVec == 0)
-  {
-    streamlog_out( MESSAGE5 ) << "_referenceHitVec is empty" << endl;
-    return 0;
-  }
-
-
-      for(int ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
-      {
-        EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
-//        printf(" _referenceHitVec %p refhit %p \n", _referenceHitVec, refhit);
-        
-        TVector3 hit3d( hitPosition[0], hitPosition[1], hitPosition[2] );
-        TVector3 hitInPlane( refhit->getXOffset(), refhit->getYOffset(), refhit->getZOffset());
-        TVector3 norm2Plane( refhit->getAlpha(), refhit->getBeta(), refhit->getGamma() );
- 
-        double distance = abs( norm2Plane.Dot(hit3d-hitInPlane) );
-//        printf("iPlane %5d   hitPos:  [%8.3f;%8.3f%8.3f]  distance: %8.3f \n", refhit->getSensorID(), hitPosition[0],hitPosition[1],hitPosition[2], distance  );
-        if ( distance < minDistance ) 
-        {
-           minDistance = distance;
-           sensorID = refhit->getSensorID();
-//           printf("sensorID: %5d \n", sensorID );
-        }    
-
-      }
-// streamlog_out( MESSAGE5 ) << "guessSensorID for hit at X:"<<hitPosition[0]<<" Y:"<<hitPosition[1]<<" Z:"<<hitPosition[2]<<" ID="<< sensorID<<" minD:"<<minDistance<<endl;
- return sensorID;
 }
 
 int EUTelAPIXTbTrackTuple::readZsHitsFromClusters( std::string colName, LCEvent* event){

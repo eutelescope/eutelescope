@@ -341,10 +341,6 @@ namespace eutelescope {
      */
     void bookHistos();
 
-    virtual int guessSensorID( double* hit);
-    virtual int guessSensorID( TrackerHitImpl* hit);
-
-
     TVector3 Line2Plane(int iplane, const TVector3& lpoint, const TVector3& lvector ); 
 
     virtual inline int getAllowedMissingHits(){return _allowedMissingHits;}

@@ -268,82 +268,16 @@ namespace eutelescope {
 
   }
 
- //! Template specialization - APIX
-  /*! A template specialization is definitely needed for the
-   *  getSparsePixelAt method, because depending on how the sparsified
-   *  pixel data are organized in the TrackerData a re-arrangement is
-   *  needed.
-   *
-   *  @param index The pixel index the user wants to retrieve.
-   *  @param pixel A pointer to the output pixel
-   *  @return A pointer to the output pixel same as @c pixel.
-   */ 
-  template<>
-  inline EUTelAPIXSparsePixel *  EUTelSparseData2Impl<EUTelAPIXSparsePixel>::getSparsePixelAt(unsigned int index,
-												  EUTelAPIXSparsePixel * pixel ) const {
-
-    if ( index * _nElement + 4 > _trackerData->getChargeValues().size() ) return 0x0;
-    pixel->setXCoord( static_cast<int> ( _trackerData->getChargeValues()[index * _nElement]     ) );
-    pixel->setYCoord( static_cast<int> ( _trackerData->getChargeValues()[index * _nElement + 1] ) );
-    pixel->setSignal( static_cast<int> ( _trackerData->getChargeValues()[index * _nElement + 2] ) );
-    pixel->setChip( static_cast<int> ( _trackerData->getChargeValues()[index * _nElement + 3] ) );
-    pixel->setTime( static_cast<int> ( _trackerData->getChargeValues()[index * _nElement + 4] ) );
-
-    return pixel;
-  }
-
-  template<>
-  inline EUTelAPIXSparsePixel *
-  EUTelSparseData2Impl<EUTelAPIXSparsePixel>::getSparsePixelSortedAt(unsigned int index,  EUTelAPIXSparsePixel * pixel ) const {
-
-    if ( ! _isPositionSorted ) sortByPosition();
-    if ( index >= _pixelVec.size() ) return 0x0;
-    pixel->setXCoord( static_cast<int> ( _pixelVec[index].getXCoord() ));
-    pixel->setYCoord( static_cast<int> ( _pixelVec[index].getYCoord() ));
-    pixel->setSignal( static_cast<int> ( _pixelVec[index].getSignal() ));
-    pixel->setChip( static_cast<int> ( _pixelVec[index].getChip() ));
-    pixel->setTime( static_cast<int> ( _pixelVec[index].getTime() ));
-    return pixel;
-
-  }
-
-  //! Template specialization for the addSparsePixel method
-  /*! The same consideration about getSparsePixelAt. Adding and
-   *  retrieving pixel information are sensitive to the pixel
-   *  definition.
-   */
-  template<>
-  inline void EUTelSparseData2Impl< EUTelAPIXSparsePixel>::addSparsePixel(EUTelAPIXSparsePixel * pixel) {
-
-    _trackerData->chargeValues().push_back( static_cast<float> (pixel->getXCoord()) );
-    _trackerData->chargeValues().push_back( static_cast<float> (pixel->getYCoord()) );
-    _trackerData->chargeValues().push_back( static_cast<float> (pixel->getSignal()) );
-    _trackerData->chargeValues().push_back( static_cast<float> (pixel->getChip()) );
-    _trackerData->chargeValues().push_back( static_cast<float> (pixel->getTime()) );
-
-    _pixelVec.push_back ( EUTelAPIXSparsePixel( static_cast< short >(pixel->getXCoord()), static_cast< short >(pixel->getYCoord()), static_cast< short >(pixel->getSignal()),  static_cast< short >(pixel->getChip()), static_cast< short >(pixel->getTime())) );
-
-  }
-
-	// fillPixelVec
+	// !Template specialization fo the fillPixelVec method
 	template<>
-	inline void EUTelSparseData2Impl< EUTelSimpleSparsePixel>::fillPixelVec(){
-		for ( unsigned int index = 0 ; index <  _trackerData->getChargeValues().size() ; index += 3 ) {
-      	_pixelVec.push_back( EUTelSimpleSparsePixel( static_cast< short >(_trackerData->getChargeValues()[ index ]),
-				      static_cast< short >(_trackerData->getChargeValues()[ index + 1 ]),
-				      static_cast< short >(_trackerData->getChargeValues()[ index + 2 ]) ) );
-    }
+	inline void EUTelSparseData2Impl< EUTelSimpleSparsePixel>::fillPixelVec()
+	{
+		for ( unsigned int index = 0 ; index < _trackerData->getChargeValues().size() ; index += 3 )
+		{
+       			_pixelVec.push_back( EUTelSimpleSparsePixel( static_cast< short >(_trackerData->getChargeValues()[ index ]),
+			static_cast< short >(_trackerData->getChargeValues()[ index + 1 ]),
+			static_cast< short >(_trackerData->getChargeValues()[ index + 2 ]) ) );
+    		}
 	}
-	template<>
-	inline void EUTelSparseData2Impl< EUTelAPIXSparsePixel>::fillPixelVec(){
-		for ( unsigned int index = 0 ; index <  _trackerData->getChargeValues().size() ; index += 5 ) {
-      	_pixelVec.push_back( EUTelAPIXSparsePixel( static_cast< short >(_trackerData->getChargeValues()[ index ]),
-				      static_cast< short >(_trackerData->getChargeValues()[ index + 1 ]),
-				      static_cast< short >(_trackerData->getChargeValues()[ index + 2 ]),
-						static_cast< short >(_trackerData->getChargeValues()[ index + 3 ]),
-						static_cast< short >(_trackerData->getChargeValues()[ index + 4 ])) );
-    }
-	}
-
-}
+}	
 #endif

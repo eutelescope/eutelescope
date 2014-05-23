@@ -26,8 +26,7 @@
 #include "EUTelDFFClusterImpl.h"
 #include "EUTelBrickedClusterImpl.h"
 #include "EUTelSparseClusterImpl.h"
-#include "EUTelSparseCluster2Impl.h"
-#
+
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <marlin/AIDAProcessor.h>
 #include <AIDA/IHistogramFactory.h>
@@ -2192,7 +2191,7 @@ int EUTelDUTHistograms::read_track(LCEvent *event)
 
               // Look at fitted hits only!
 
-              if( meshit->getType() >= 32  && hsensorID == _iDUT  )  // get all fitted hits on board
+              if( ((hitCellDecoder(meshit)["properties"] & kFittedHit) > 0)  && hsensorID == _iDUT  )  // get all fitted hits on board
                 {
 
                   _fittedX[_maptrackid].push_back(pos[0]);
@@ -2237,7 +2236,7 @@ int EUTelDUTHistograms::read_track(LCEvent *event)
               const double * pos = meshit->getPosition();
               int hsensorID = hitCellDecoder(meshit)["sensorID"];
 
-              if( meshit->getType() < 32  )
+              if( (hitCellDecoder(meshit)["properties"] & kFittedHit) == 0  )
                 {
                   int sizeX = -1;
                   int sizeY = -1;

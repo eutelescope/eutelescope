@@ -279,11 +279,8 @@ void EUTelHistogramMaker::processEvent (LCEvent * evt) {
         }
 
         
-      } else if ( type == kEUTelAPIXClusterImpl ) {
-                cluster = new EUTelSparseClusterImpl< EUTelAPIXSparsePixel >
-                ( static_cast<TrackerDataImpl *> ( pulse->getTrackerData()  ) );
- 
-      }  else {
+      }
+        else {
 
         streamlog_out ( ERROR4) << "Unknown cluster type. Sorry for quitting" << endl;
         throw UnknownDataTypeException("Cluster type unknown");

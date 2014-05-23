@@ -420,6 +420,9 @@ void EUTelFitHistograms::processEvent( LCEvent * event ) {
 
       // Loop over hits and fill hit tables
 
+      // setup cellIdDecoder to decode the hit properties
+      CellIDDecoder<TrackerHit>  hitCellDecoder(EUTELESCOPE::HITENCODING);
+
       for(int ihit=0; ihit< nHit ; ihit++)
         {
           TrackerHit * meshit = trackhits.at(ihit);
@@ -454,7 +457,7 @@ void EUTelFitHistograms::processEvent( LCEvent * event ) {
             }
 
 
-          if( meshit->getType() < 32 )
+          if( (hitCellDecoder(meshit)["properties"] & kFittedHit) == 0 )
             {
               // Measured hits
 

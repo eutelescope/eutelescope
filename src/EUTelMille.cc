@@ -22,7 +22,6 @@
 #include "EUTelDFFClusterImpl.h"
 #include "EUTelBrickedClusterImpl.h"
 #include "EUTelSparseClusterImpl.h"
-#include "EUTelSparseCluster2Impl.h"
 #include "EUTelExceptions.h"
 #include "EUTelPStream.h"
 #include "EUTelAlignmentConstant.h"
@@ -379,8 +378,6 @@ void EUTelMille::init() {
   _histogramSwitch = true;
 
   _referenceHitVec = 0;
-
-
 
   //lets guess the number of planes
   if(_inputMode == 0 || _inputMode == 2) 
@@ -1094,31 +1091,7 @@ void  EUTelMille::FillHotPixelMap(LCEvent *event)
 
 	   int sensorID              = static_cast<int > ( cellDecoder( hotPixelData )["sensorID"] );
 
-           if( type  == kEUTelAPIXSparsePixel)
-           {  
-             auto_ptr<EUTelSparseDataImpl<EUTelAPIXSparsePixel > > apixData(new EUTelSparseDataImpl<EUTelAPIXSparsePixel> ( hotPixelData ));
-             std::vector<EUTelAPIXSparsePixel*> apixPixelVec;
- 	     EUTelAPIXSparsePixel apixPixel;
-	     //Push all single Pixels of one plane in the apixPixelVec
-
-             for ( unsigned int iPixel = 0; iPixel < apixData->size(); iPixel++ ) 
-             {
-              IntVec apixColVec();
-              apixData->getSparsePixelAt( iPixel, &apixPixel);
-              try
-              {
-                 char ix[100];
-                 sprintf(ix, "%d,%d,%d", sensorID, apixPixel.getXCoord(), apixPixel.getYCoord() ); 
-                 _hotPixelMap[ix] = true;             
-              }
-              catch(...)
-              {
-                 streamlog_out ( ERROR5 ) << "problem adding pixel to hotpixel map! " << endl;
-              }
-             }
-
-           }  	
-           else if( type  ==  kEUTelSimpleSparsePixel )
+           if( type  ==  kEUTelSimpleSparsePixel )
            {  
               auto_ptr<EUTelSparseClusterImpl< EUTelSimpleSparsePixel > > m26Data( new EUTelSparseClusterImpl< EUTelSimpleSparsePixel >   ( hotPixelData ) );
 
@@ -1150,6 +1123,7 @@ void  EUTelMille::FillHotPixelMap(LCEvent *event)
  
 void EUTelMille::processEvent (LCEvent * event) {
 
+	UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder( EUTELESCOPE::HITENCODING );
   if ( isFirstEvent() )
   {
     FillHotPixelMap(event);
@@ -1270,33 +1244,6 @@ void EUTelMille::processEvent (LCEvent * event) {
               // fixed cluster implementation. Remember it can come from
               // both RAW and ZS data
               cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
-            } else if ( hit->getType() == kEUTelAPIXClusterImpl ) {
-
-                TrackerDataImpl * clusterFrame = static_cast<TrackerDataImpl*> ( clusterVector[0] );
-                cluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);
-	      
-                eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel > *apixCluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);
-                
-                int sensorID = apixCluster->getDetectorID();
-
-                bool skipHit = false;
-                for (size_t iPixel = 0; iPixel < apixCluster->size(); ++iPixel) 
-                {
-                    int pixelX, pixelY;
-                    EUTelAPIXSparsePixel apixPixel;
-                    apixCluster->getSparsePixelAt(iPixel, &apixPixel);
-                    pixelX = apixPixel.getXCoord();
-                    pixelY = apixPixel.getYCoord();
-		     
-                    skipHit = !_rect.isInside(sensorID, pixelX, pixelY); 	      
-                }
-
-                if (skipHit) 
-                {
-                    streamlog_out(MESSAGE4) << "Skipping cluster due to rectangular cut!" << endl;
-                    continue;
-                }
-
             } else if ( hit->getType() == kEUTelSparseClusterImpl ) {
 
               // ok the cluster is of sparse type, but we also need to know
@@ -1314,11 +1261,6 @@ void EUTelMille::processEvent (LCEvent * event) {
               if ( pixelType == kEUTelSimpleSparsePixel ) {
 
                 cluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel >
-                  ( static_cast<TrackerDataImpl *> ( clusterVector[ 0 ]  ) );
-
-              } else if ( pixelType == kEUTelAPIXSparsePixel ) {
-
-                cluster = new EUTelSparseClusterImpl<EUTelAPIXSparsePixel >
                   ( static_cast<TrackerDataImpl *> ( clusterVector[ 0 ]  ) );
 
               } else {
@@ -1346,13 +1288,9 @@ void EUTelMille::processEvent (LCEvent * event) {
 		  continue;
                 }
             }
- 
-            double * hitPosition = const_cast<double * > (hit->getPosition());
 
-            unsigned int localSensorID   = guessSensorID( hitPosition );
-            localSensorID   = guessSensorID( hit );
-
-              
+	    int localSensorID = hitDecoder(hit)["sensorID"]; 
+            
             layerIndex = _sensorIDVecMap[localSensorID] ;
 
             // Getting positions of the hits.
@@ -1469,6 +1407,9 @@ void EUTelMille::processEvent (LCEvent * event) {
         // assume hits are ordered in z! start counting from 0
         int nPlaneHere = 0;
 
+	// setup cellIdDecoder to decode the hit properties
+	CellIDDecoder<TrackerHit>  hitCellDecoder(EUTELESCOPE::HITENCODING);
+
         // loop over all hits and fill arrays
         for (int nHits = 0; nHits < int(TrackHitsHere.size()); nHits++) {
 
@@ -1477,9 +1418,8 @@ void EUTelMille::processEvent (LCEvent * event) {
           // hit positions
           const double *PositionsHere = HitHere->getPosition();
 
-          // assume fitted hits have type 32
-          if ( HitHere->getType() < 32 ) 
-{
+          // check if this is a measured hit or a fitted hit, want measured hit
+          if ( (hitCellDecoder(HitHere)["properties"] & kFittedHit) == 0 ){
 
             // fill hits to arrays
             _xPos[nTracksEvent][nPlaneHere] = PositionsHere[0] * 1000.;
@@ -1494,7 +1434,7 @@ void EUTelMille::processEvent (LCEvent * event) {
 
             nPlaneHere++;
 
-          } // end assume fitted hits have type 32
+          } // measured hits
 
         } // end loop over all hits and fill arrays
 
@@ -1598,11 +1538,6 @@ void EUTelMille::processEvent (LCEvent * event) {
                       throw UnknownDataTypeException("Pixel type unknown");
                     }
 
-                  } else if ( hit->getType() == kEUTelAPIXClusterImpl ) {
-              
-                      cluster = new EUTelSparseClusterImpl< EUTelAPIXSparsePixel >
-                          ( static_cast<TrackerDataImpl *> ( clusterVector[ 0 ]  ) );
- 
                   } else {
                     throw UnknownDataTypeException("Unknown cluster type");
                   }
@@ -1636,6 +1571,10 @@ void EUTelMille::processEvent (LCEvent * event) {
                   double measuredz = hit->getPosition()[2];
 
                   delete cluster; // <--- destroying the cluster
+
+		  // setup cellIdDecoder to decode the hit properties
+		  CellIDDecoder<TrackerHit>  hitCellDecoder(EUTELESCOPE::HITENCODING);
+
                   for (int nHits = 0; nHits < int(TrackHitsHere.size()); nHits++)  // end loop over all hits and fill arrays
                   {
                       TrackerHit *HitHere = TrackHitsHere.at(nHits);
@@ -1643,7 +1582,7 @@ void EUTelMille::processEvent (LCEvent * event) {
                       // hit positions
                       const double *PositionsHere = HitHere->getPosition();
  
-                      //assume that fitted hits have type 32.
+
                       //the tracker hit will be excluded if the
                       //distance to the hit from the hit collection
                       //is larger than 5 mm. this requirement should reject
@@ -1652,7 +1591,8 @@ void EUTelMille::processEvent (LCEvent * event) {
 
                       if( std::abs( measuredz - PositionsHere[2] ) > 5.0 /* mm */)
                         {
-                          if ( HitHere->getType()  == 32 )
+			  // test if this is a fitted hit
+                          if ( (hitCellDecoder(HitHere)["properties"] & kFittedHit) > 0 )
                             {
                               hitsplane.push_back(
                                       EUTelMille::HitsInPlane(
@@ -1661,7 +1601,7 @@ void EUTelMille::processEvent (LCEvent * event) {
                                           PositionsHere[2] * 1000.
                                           )
                                       );
-                            } // end assume fitted hits have type 32
+                            } //fitted hit
                         }
                     }
                   //sort the array such that the hits are ordered
@@ -2588,112 +2528,6 @@ void EUTelMille::processEvent (LCEvent * event) {
 
 }
 
-
-int EUTelMille::guessSensorID( TrackerHitImpl * hit ) {
-  if(hit==0)
-{
-    streamlog_out( ERROR5 ) << "An invalid hit pointer supplied! will exit now\n" << endl;
-    return -1;
-}
-
-        try
-        {
-            LCObjectVec clusterVector = hit->getRawHits();
-
-            EUTelVirtualCluster * cluster=0;
-
-            if ( hit->getType() == kEUTelBrickedClusterImpl ) {
-
-               // fixed cluster implementation. Remember it
-               //  can come from
-               //  both RAW and ZS data
-   
-                cluster = new EUTelBrickedClusterImpl(static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
-                
-            } else if ( hit->getType() == kEUTelDFFClusterImpl ) {
-              
-              // fixed cluster implementation. Remember it can come from
-              // both RAW and ZS data
-              cluster = new EUTelDFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
-            } else if ( hit->getType() == kEUTelFFClusterImpl ) {
-              
-              // fixed cluster implementation. Remember it can come from
-              // both RAW and ZS data
-              cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
-            } 
-            else if ( hit->getType() == kEUTelAPIXClusterImpl ) 
-            {
-              
-                TrackerDataImpl * clusterFrame = static_cast<TrackerDataImpl*> ( clusterVector[0] );
-
-                cluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);
-	      
-            }
-            else if ( hit->getType() == kEUTelSparseClusterImpl ) 
-            {
-               cluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel > ( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
-            }
-
-            if(cluster != 0)
-            {
-              int sensorID = cluster->getDetectorID();
-              return sensorID;
-            }
-          }
-          catch(...)
-          {
-	    streamlog_out( ERROR5 ) << "guessSensorID() produced an exception!" << endl;
-          }
-
-return -1;
-}
-
-int EUTelMille::guessSensorID( double * hit ) 
-{
-
-  int sensorID = -1;
-  double minDistance =  numeric_limits< double >::max() ;
-
-  if( _referenceHitVec == 0 || _useReferenceHitCollection == false)
-  {
-    // use z information of planes instead of reference vector
-    for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); ++iPlane ) {
-      double distance = std::abs( hit[2] - _siPlaneZPosition[ iPlane ] );
-      if ( distance < minDistance ) {
-	minDistance = distance;
-	sensorID = _siPlanesLayerLayout->getID( iPlane );
-      }
-    }
-    if ( minDistance > 30  ) {
-      // advice the user that the guessing wasn't successful 
-      streamlog_out( WARNING3 ) << "A hit was found " << minDistance << " mm far from the nearest plane\n"
-	"Please check the consistency of the data with the GEAR file: hitPosition[2]=" << hit[2] <<       endl;
-    }
-    
-    return sensorID;
-  }
-
-      for(size_t ii = 0 ; ii < static_cast< unsigned int >(_referenceHitVec->getNumberOfElements()); ii++)
-      {
-        EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
-        
-        TVector3 hit3d( hit[0], hit[1], hit[2] );
-        TVector3 hitInPlane( refhit->getXOffset(), refhit->getYOffset(), refhit->getZOffset());
-        TVector3 norm2Plane( refhit->getAlpha(), refhit->getBeta(), refhit->getGamma() );
- 
-        double distance = abs( norm2Plane.Dot(hit3d-hitInPlane) );
-        if ( distance < minDistance ) 
-        {
-           minDistance = distance;
-           sensorID = refhit->getSensorID();
-        }    
-
-      }
-
-  return sensorID;
-}
-
-
 TVector3 EUTelMille::Line2Plane(int iplane, const TVector3& lpoint, const TVector3& lvector ) 
 {
 
@@ -2784,39 +2618,6 @@ bool EUTelMille::hitContainsHotPixels( TrackerHitImpl   * hit)
 	  // fixed cluster implementation. Remember it can come from
 	  // both RAW and ZS data
 	} 
-	else if ( hit->getType() == kEUTelAPIXClusterImpl ) 
-	  {
-	    TrackerDataImpl * clusterFrame = static_cast<TrackerDataImpl*> ( clusterVector[0] );
-	      
-	    eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel > *apixCluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);
-                
-	    int sensorID = apixCluster->getDetectorID();
-
-	    for (unsigned int iPixel = 0; iPixel < apixCluster->size(); ++iPixel) 
-	      {
-		EUTelAPIXSparsePixel apixPixel;
-		apixCluster->getSparsePixelAt(iPixel, &apixPixel);
-
-		  {                       
-		    char ix[100];
-		    sprintf(ix, "%d,%d,%d", sensorID, apixPixel.getXCoord(), apixPixel.getYCoord() ); 
-		    std::map<std::string, bool >::const_iterator z = _hotPixelMap.find(ix);
-		    if(z!=_hotPixelMap.end() && _hotPixelMap[ix] == true  )
-		      { 
-			skipHit = true; 	      
-			streamlog_out(DEBUG3) << "Skipping hit as it was found in the hot pixel map." << endl;
-			return true; // if TRUE  this hit will be skipped
-		      }
-		    else
-		      { 
-			skipHit = false; 	      
-		      } 
-		  }
-	      }
-
-	    return skipHit; // if TRUE  this hit will be skipped
-	  } 
-            
       }
       catch(lcio::Exception e){
 	// catch specific exceptions

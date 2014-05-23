@@ -10,7 +10,6 @@
 #include "EUTelDFFClusterImpl.h"
 #include "EUTelBrickedClusterImpl.h"
 #include "EUTelSparseClusterImpl.h"
-#include "EUTelSparseCluster2Impl.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -234,27 +233,7 @@ void  EUTelPreAlign::FillHotPixelMap(LCEvent *event)
 
       int sensorID              = static_cast<int > ( cellDecoder( hotPixelData )["sensorID"] );
 
-      if( type  == kEUTelAPIXSparsePixel)
-	{  
-	  auto_ptr<EUTelSparseDataImpl<EUTelAPIXSparsePixel > > apixData(new EUTelSparseDataImpl<EUTelAPIXSparsePixel> ( hotPixelData ));
-	  EUTelAPIXSparsePixel apixPixel;
-	  //Push all single Pixels of one plane in the apixPixelVec
-	  for(  unsigned int iPixel = 0; iPixel < apixData->size(); iPixel++ ) 
-	    {
-	      std::vector<int> apixColVec();
-	      apixData->getSparsePixelAt( iPixel, &apixPixel);
-
-	      try
-		{
-		  _hotPixelMap[sensorID].push_back(std::make_pair(apixPixel.getXCoord(), apixPixel.getYCoord()));
-		}
-	      catch(...)
-		{
-		  streamlog_out ( ERROR5 ) << " cannot add pixel to hotpixel map!"  << endl; 
-		}
-	    }
-	}
-      else if( type  ==  kEUTelSimpleSparsePixel )
+      if( type  ==  kEUTelSimpleSparsePixel )
 	{  
 	  auto_ptr<EUTelSparseClusterImpl< EUTelSimpleSparsePixel > > m26Data( new EUTelSparseClusterImpl< EUTelSimpleSparsePixel >   ( hotPixelData ) );
 
@@ -322,7 +301,8 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
 
   try {
     LCCollectionVec * inputCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection(_inputHitCollectionName));
-
+    UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
+    
     std::vector<float> residX;
     std::vector<float> residY;
     std::vector<PreAligner*> prealign;
@@ -334,8 +314,10 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
       TrackerHitImpl * refHit = dynamic_cast< TrackerHitImpl * >  ( inputCollectionVec->getElementAt( ref ) ) ;
       const double * refPos = refHit->getPosition();
 
+      int sensorID = hitDecoder(refHit)["sensorID"];
+
       // identify fixed plane
-      if( guessSensorID(refPos) != _fixedID ) continue;
+      if( sensorID != _fixedID ) continue;
 
       residX.clear();
       residY.clear();
@@ -347,7 +329,8 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
         if( hitContainsHotPixels(hit) ) continue;
         
         const double * pos = hit->getPosition();
-        int iHitID = guessSensorID(pos);
+        int iHitID = hitDecoder(hit)["sensorID"]; 
+
         if( iHitID == _fixedID ) continue;
         bool gotIt(false);
 
@@ -472,42 +455,6 @@ bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit)
 	  // both RAW and ZS data
 	  streamlog_out ( WARNING5 ) << " Hit type kEUTelFFClusterImpl is not implemented in hotPixel finder method, all pixels are considered for PreAlignment." <<  endl;
 	} 
-      else if ( hit->getType() == kEUTelAPIXClusterImpl ) 
-	{
-
-	  TrackerDataImpl * clusterFrame = static_cast<TrackerDataImpl*> ( clusterVector[0] );
-	  eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel > *apixCluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);
-          
-	  int sensorID = apixCluster->getDetectorID();
-	  for (unsigned int iPixel = 0; iPixel < apixCluster->size(); ++iPixel) 
-	    {
-	      EUTelAPIXSparsePixel apixPixel;
-	      apixCluster->getSparsePixelAt(iPixel, &apixPixel);
-	      {
-		try{
-		  if( std::find(_hotPixelMap.at(sensorID).begin(), 
-				_hotPixelMap.at(sensorID).end(),
-				std::make_pair(apixPixel.getXCoord(), apixPixel.getYCoord()))
-		      != _hotPixelMap.at(sensorID).end() ) {
-		    skipHit = true; 	      
-		    delete apixCluster;                        
-		    return true; // if TRUE  this hit will be skipped
-		  }
-		  else
-		    { 
-		      skipHit = false;
-		    }
-		}
-		catch(const std::out_of_range& oor){
-		  streamlog_out(DEBUG0) << " Could not find hot pixel map for sensor ID " 
-					<< sensorID << ": " << oor.what() << endl;
-		}
-      
-	      }
-	    }                
-	  delete apixCluster;
-	  return skipHit; // if TRUE  this hit will be skipped
-	} 
       else
 	{
 	  streamlog_out ( WARNING5 ) << " Hit type is not known and is not implemented in hotPixel finder method, all pixels are considered for PreAlignment." <<  endl;
@@ -528,55 +475,6 @@ bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit)
   // if none of the above worked return FALSE, meaning do not skip this hit
   return 0;
 }
-
-
-int EUTelPreAlign::guessSensorID(const double * hit ) 
-{
-
-  int sensorID = -1;
-  double minDistance =  numeric_limits< double >::max() ;
-
-  if( _referenceHitVec == 0 || _useReferenceHitCollection == false )
-    {
-      // use z information of planes instead of reference vector
-      for(  int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); ++iPlane ) {
-	double distance = std::abs( hit[2] - _siPlaneZPosition[ iPlane ] );
-	if(  distance < minDistance ) {
-	  minDistance = distance;
-	  sensorID = _siPlanesLayerLayout->getID( iPlane );
-	}
-      }
-      if(  minDistance > 30  ) {
-	// advice the user that the guessing wasn't successful 
-	streamlog_out( WARNING3 ) << "A hit was found " << minDistance << " mm far from the nearest plane\n"
-	  "Please check the consistency of the data with the GEAR file: hitPosition[2]=" << hit[2] <<       endl;
-      }
-    
-      return sensorID;
-    }
-
-  for(size_t ii = 0 ; ii < static_cast< unsigned int >(_referenceHitVec->getNumberOfElements()); ii++)
-    {
-      EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
-        
-      TVector3 hit3d( hit[0], hit[1], hit[2] );
-      TVector3 hitInPlane( refhit->getXOffset(), refhit->getYOffset(), refhit->getZOffset());
-      TVector3 norm2Plane( refhit->getAlpha(), refhit->getBeta(), refhit->getGamma() );
- 
-      double distance = abs( norm2Plane.Dot(hit3d-hitInPlane) );
-      if ( distance < minDistance ) 
-        {
-	  minDistance = distance;
-	  sensorID = refhit->getSensorID();
-	}    
-
-    }
-
-  return sensorID;
-}
-
-
-
       
 void EUTelPreAlign::end() {
   LCWriter * lcWriter = LCFactory::getInstance()->createLCWriter();

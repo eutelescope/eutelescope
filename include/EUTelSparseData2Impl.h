@@ -15,7 +15,6 @@
 #include "EUTelSparseClusterImpl.h"
 #include "EUTelBaseSparsePixel.h"
 #include "EUTelSimpleSparsePixel.h"
-#include "EUTelAPIXSparsePixel.h"
 #include "EUTelExceptions.h"
 #include "EUTELESCOPE.h"
 
