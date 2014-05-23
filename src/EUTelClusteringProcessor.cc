@@ -224,7 +224,7 @@ EUTelClusteringProcessor::EUTelClusteringProcessor ()
   registerProcessorParameter("SparseClusterCut","Threshold in SNR for clusters contained in ZS data",
                              _sparseClusterCut, static_cast<float > (3.0) );
 
-  registerProcessorParameter("Sparse3MinDistance","Minimum distance squared between sparsified pixel ( touching == 2) ",
+  registerProcessorParameter("SparseMinDistanceSquared","Minimum distance squared between sparsified pixel ( touching == 2) ",
                              _sparseMinDistanceSquared, static_cast<int>(2) );
   
   registerProcessorParameter("SparseMinDistance","Minimum distance between sparsified pixel ( touching == sqrt(2)) ",
