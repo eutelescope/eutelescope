@@ -218,7 +218,7 @@ namespace eutelescope {
         double findIntersection( EUTelTrackStateImpl* ts );
         
         /** Propagate track state by dz */
-	void propagateTrackRefPoint( EUTelTrackStateImpl*, double );
+				int propagateTrackRefPoint( EUTelTrackStateImpl* ts, int nextPlaneId );
         
         /** Update track state and it's cov matrix */
         double updateTrackState( EUTelTrackStateImpl*, const EVENT::TrackerHit* );

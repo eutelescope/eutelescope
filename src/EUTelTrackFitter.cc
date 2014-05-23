@@ -28,10 +28,10 @@ namespace eutelescope {
 	return;
     }
 
-    void EUTelTrackFitter::SetTrackCandidates( const vector<IMPL::TrackImpl*>& ) {
+    void EUTelTrackFitter::SetTrackCandidates( const std::vector<IMPL::TrackImpl*>& ) {
         return;
     }
-    void SetTrackCandidates( const vector<IMPL::TrackImpl*> & ) {
+    void SetTrackCandidates( const std::vector<IMPL::TrackImpl*> & ) {
         return;
     }
 

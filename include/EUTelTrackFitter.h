@@ -43,7 +43,7 @@ namespace eutelescope {
 
         virtual void SetTrackCandidates( const EVENT::TrackVec& );
 
-        virtual void SetTrackCandidates( const vector<IMPL::TrackImpl*> & );
+        virtual void SetTrackCandidates( const std::vector<IMPL::TrackImpl*> & );
 
       // do some clean up of internal data structures
         virtual void Clear();
