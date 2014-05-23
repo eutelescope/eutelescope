@@ -1601,9 +1601,8 @@ bool EUTelCorrelator::hitContainsHotPixels( TrackerHitImpl   * hit)
         {
             LCObjectVec clusterVector = hit->getRawHits();
 
- 
-
-
+						 // EUTelVirtualCluster * cluster;
+            if ( hit->getType() == kEUTelBrickedClusterImpl ) {
                // fixed cluster implementation. Remember it
                //  can come from
                //  both RAW and ZS data
