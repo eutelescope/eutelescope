@@ -13,9 +13,7 @@
 // eutelescope includes ".h"
 #include "EUTELESCOPE.h"
 #include "EUTelVirtualCluster.h"
-#include "EUTelAPIXSparsePixel.h"
 #include "EUTelSparseDataImpl.h"
-#include "EUTelAPIXSparseClusterImpl.h"
 
 // lcio includes <.h>
 #include "IMPL/TrackerHitImpl.h"

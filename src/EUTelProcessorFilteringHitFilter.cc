@@ -141,7 +141,7 @@ void EUTelProcessorFilteringHitFilter::processEvent( LCEvent * event ) {
              
             if( Utility::HitContainsHotPixels(  hit,  _hotPixelMap )  ) 
             {
-              streamlog_out ( MESSAGE3 ) << "Hit " << iHit << " contains hot pixels; skip this one. " << endl;
+              streamlog_out ( MESSAGE3 ) << "Hit " << iHit << " contains hot pixels; skip this one. " << std::endl;
               continue;
             }
             TrackerHitImpl * hit_filtered = new TrackerHitImpl(*hit); 
