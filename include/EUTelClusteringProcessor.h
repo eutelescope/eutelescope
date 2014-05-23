@@ -525,49 +525,8 @@ namespace eutelescope {
     //! nzs Bricked Clustering
     void nzsBrickedClustering(LCEvent * evt, LCCollectionVec * pulse);
 
-
-    //! Method for sparse pixel re-clustering
-    //! Original idea implementation
-    /*! This algorithm is based on the built-in proximity clustering
-     *  implemented in the EUTelSparseDataImpl class.
-     *
-     *  The output of EUTelSparseDataImpl::findNeighbor is a list of
-     *  list. Each of them is containing the indexes of pixels
-     *  fulfilling the proximity requirement. Those pixels are then
-     *  put together into a EUTelSparseClusterImpl object and
-     *  afterward the SNR cuts are applied.
-     *
-     *  This clustering algorithm is affected by performance penalties
-     *  because EUTelSparseDataImpl::findNeighbor is based on a brute
-     *  force algorithm.
-     *
-     *  @param evt The LCIO event has passed by processEvent(LCEvent*)
-     *  @param pulse The collection of pulses to append the found
-     *  clusters.
-     */
+    //! TODO: Documentation
     void sparseClustering(LCEvent * evt, LCCollectionVec * pulse);
-
-    //! Method for sparse pixel re-clustering with better performance
-    //! Improved implementation 
-    /*! This algorithm is based on the built-in proximity clustering
-     *  implemented in the EUTelSparseDataImpl class.
-     *
-     *  The output of EUTelSparseDataImpl::findNeighbor is a list of
-     *  list. Each of them is containing the indexes of pixels
-     *  fulfilling the proximity requirement. Those pixels are then
-     *  put together into a EUTelSparseClusterImpl object and
-     *  afterward the SNR cuts are applied.
-     *
-     *  This clustering algorithm is affected by performance penalties
-     *  because EUTelSparseDataImpl::findNeighbor is based on a brute
-     *  force algorithm.
-     *
-     *  @param evt The LCIO event has passed by processEvent(LCEvent*)
-     *  @param pulse The collection of pulses to append the found
-     *  clusters.
-     */
-    void sparseClustering2(LCEvent * evt, LCCollectionVec * pulse);
-    void sparseClustering3(LCEvent * evt, LCCollectionVec * pulse);
 
 
     //! Input collection name for NZS data
