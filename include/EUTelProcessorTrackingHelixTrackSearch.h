@@ -76,6 +76,7 @@ namespace eutelescope {
         /** Histogram booking */
         void bookHistograms();
 
+        void plotHistos( vector< IMPL::TrackImpl* >& trackCandidates ) ;
 
         // Processor parameters        
 
@@ -96,6 +97,12 @@ namespace eutelescope {
          */
         void addTrackCandidateToCollection(lcio::LCEvent*, const std::vector< EVENT::TrackerHitVec >&);
 
+        /** Prepare LCIO data structure for dumping track hits from PR search
+         *  into LCIO files
+         */
+        void addTrackCandidateHitFittedToCollection(LCEvent*,  EVENT::TrackerHitVec& );
+
+
         /** Prepare LCIO data structure for dumping track
          * candidate hits into LCIO files
          */
@@ -109,7 +116,12 @@ namespace eutelescope {
 	std::string _hitInputCollectionName;
 
         /** Output TrackerHit collection name */
-	std::string _trackCandidateHitsOutputCollectionName;
+
+        string _hitFittedOutputCollectionName;
+
+        /** Output TrackerHit collection name */
+        string _trackCandidateHitsOutputCollectionName;
+
 
 
     protected:
@@ -139,6 +151,9 @@ namespace eutelescope {
 
         /** Maximal amount of tracks per event */
         int _maxNTracks;
+ 
+        /** Number of Planes to project starting with the first most upstream */
+        int _planesProject;
         
         /** Maximal distance in XY plane */
         double _residualsRMax;
@@ -181,8 +196,10 @@ namespace eutelescope {
 
         /** Names of histograms */
         struct _histName {
-	  static std::string _numberTracksCandidatesHistName;
-	  static std::string _numberOfHitOnTrackCandidateHistName;
+            static string _numberTracksCandidatesHistName;
+            static string _numberOfHitOnTrackCandidateHistName;
+            static string _HitOnTrackCandidateHistName;
+
         };
 
 #endif // defined(USE_AIDA) || defined(MARLIN_USE_AIDA)

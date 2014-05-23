@@ -289,11 +289,13 @@ void EUTelProcessorTrackingExhaustiveTrackSearch::processEvent(LCEvent * evt) {
 
         streamlog_out(MESSAGE0) << "All hits in event start:==============" << std::endl;
        vector< EVENT::TrackerHitVec >::const_iterator itPlane;
+				UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
 	for ( itPlane = allHitsVec.begin() ; itPlane != allHitsVec.end(); ++itPlane ) {
             EVENT::TrackerHitVec::const_iterator itHits;
             for ( itHits = (*itPlane).begin(); itHits != (*itPlane).end(); ++itHits ) {
                 const double* uvpos = (*itHits)->getPosition();
-		streamlog_out(MESSAGE0) << "Hit (id=" << Utility::GuessSensorID(*itHits) << ") local(u,v) coordinates: (" << uvpos[0] << "," << uvpos[1] << ")" << std::endl;
+						const int sensorID = hitDecoder(static_cast< IMPL::TrackerHitImpl* >((*itHits)))["sensorID"];
+		streamlog_out(MESSAGE0) << "Hit (id=" << sensorID << ") local(u,v) coordinates: (" << uvpos[0] << "," << uvpos[1] << ")" << std::endl;
             }
 	}
 	streamlog_out(MESSAGE0) << "All hits in event end:==============" << std::endl;
@@ -393,7 +395,8 @@ int EUTelProcessorTrackingExhaustiveTrackSearch::FillHits(LCEvent * evt,
             delete cluster; // <--- destroying the cluster
         }
 
-        const int localSensorID = Utility::GuessSensorID( hit );  // localSensorID == -1, if detector ID was not found
+				UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
+				const int localSensorID = hitDecoder(hit)["sensorID"];
         const int numberAlongZ = geo::gGeometry().sensorIDtoZOrder( localSensorID );
         if ( localSensorID >= 0 ) allHitsArray[ numberAlongZ ].push_back( hit );
         if ( localSensorID >= 0 ) allHitsVec[ numberAlongZ ].push_back( hit );

@@ -62,6 +62,7 @@ using namespace eutelescope;
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 std::string EUTelProcessorTrackingHelixTrackSearch::_histName::_numberTracksCandidatesHistName = "NumberTracksCandidates";
 std::string EUTelProcessorTrackingHelixTrackSearch::_histName::_numberOfHitOnTrackCandidateHistName = "NumberOfHitsOnTrackCandidate";
+std::string EUTelProcessorTrackingHelixTrackSearch::_histName::_HitOnTrackCandidateHistName = "HitsOnTrackCandidate";
 #endif // defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
 /** Default constructor */
@@ -94,6 +95,13 @@ _aidaHistoMap1D() {
             _hitInputCollectionName,
             std::string("HitCollection"));
 
+    // TrackerHit output collection
+    registerInputCollection(LCIO::TRACKERHIT,
+            "TrackerHitOutputCollectionName",
+            "Pattern recognition track - output hits collection name",
+            _hitFittedOutputCollectionName,
+            std::string("HitFittedCollection"));
+
     // Track candidate hits output collection
     registerOutputCollection(LCIO::TRACK,
             "TrackCandHitOutputCollectionName",
@@ -101,16 +109,18 @@ _aidaHistoMap1D() {
             _trackCandidateHitsOutputCollectionName,
             std::string("TrackCandidateHitCollection"));
 
-
     // Optional processor parameters that define track finder settings
-    
+     
     // Fitter settings
     
     registerOptionalParameter("MaxMissingHitsPerTrack", "Maximal number of missing hits on a track candidate",
             _maxMissingHitsPerTrackCand, static_cast<int> (0)); // Search full-length tracks by default
-
+    
     registerOptionalParameter("MaxNTracksPerEvent", "Maximal number of track candidates to be found in events",
             _maxNTracks, static_cast<int> (100));
+    
+    registerOptionalParameter("NumberOfPlanesToProject", "Maximal number of track candidates to be found in events",
+            _planesProject, static_cast<int> (1));
     
     registerOptionalParameter("ResidualsRMax", "Maximal allowed distance between hits entering the recognition step "
             "per 10 cm space between the planes. One value for each neighbor planes. "
@@ -123,7 +133,7 @@ _aidaHistoMap1D() {
     
     registerOptionalParameter("BeamSpread", "Angular spread of the beam (horizontal,vertical) [mrad] (for beam constraint). "
                                             "No beam constraints if negative values are supplied.",
-                               _beamSpread, EVENT::FloatVec(2,0.) );
+                               _beamSpread, EVENT::FloatVec(2,100.) );
     
     registerOptionalParameter("BeamEnergyUncertainty", "Uncertainty of beam energy [%]", _eBeamUncertatinty, static_cast<double> (0.) );
 
@@ -168,6 +178,7 @@ void EUTelProcessorTrackingHelixTrackSearch::init() {
         Finder->setWindowSize( _residualsRMax );
         Finder->setBeamMomentum( _eBeam );
         Finder->setBeamCharge( _qBeam );
+        Finder->setPlanesProject( _planesProject );
         Finder->setBeamMomentumUncertainty( _eBeamUncertatinty );
         Finder->setBeamSpread( _beamSpread );
         
@@ -205,11 +216,6 @@ void EUTelProcessorTrackingHelixTrackSearch::processRunHeader(LCRunHeader* run) 
 
 void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
 
-    if (isFirstEvent()) {
-        // Fill hot pixel map   
-//        _hotPixelMap = Utility::FillHotPixelMap(evt, _hotPixelCollectionName);
-    }
-
     EUTelEventImpl * event = static_cast<EUTelEventImpl*> (evt);
 
     // Do not process last or unknown events
@@ -222,29 +228,35 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
                 << " is of unknown type. Continue considering it as a normal Data Event." << std::endl;
     }
 
-    // Try to access collection
-
-    LCCollection* col = NULL;
+    // Try to access Input collection
+    LCCollection* hitMeasuredCollection = NULL;
     try {
-        col = evt->getCollection(_hitInputCollectionName);
+        hitMeasuredCollection = evt->getCollection(_hitInputCollectionName);
+        streamlog_out(DEBUG1) << "collection : " <<_hitInputCollectionName << " retrieved" << std::endl;
     } catch (DataNotAvailableException e) {
         streamlog_out(WARNING2) << _hitInputCollectionName << " collection not available" << std::endl;
         throw marlin::SkipEventException(this);
     }
 
     // this will only be entered if the collection is available
-    if (col != NULL) {
+    if ( hitMeasuredCollection == NULL) {
+        streamlog_out(DEBUG2) << "EUTelProcessorTrackingHelixTrackSearch :: processEvent() hitMeasuredCollection is void" << std::endl;
+    }
+    else if ( hitMeasuredCollection != NULL) {
         streamlog_out(DEBUG2) << "EUTelProcessorTrackingHelixTrackSearch::processEvent()" << std::endl;
 
         // Prepare hits for track finder
         EVENT::TrackerHitVec allHitsVec;
-        FillHits(evt, col, allHitsVec);
+        FillHits(evt, hitMeasuredCollection, allHitsVec);
 
 	streamlog_out(MESSAGE0) << "All hits in event start:==============" << std::endl;
 	EVENT::TrackerHitVec::const_iterator itHits;
 	for ( itHits = allHitsVec.begin() ; itHits != allHitsVec.end(); ++itHits ) {
 		const double* uvpos = (*itHits)->getPosition();
-		streamlog_out(MESSAGE0) << "Hit (id=" << Utility::GuessSensorID(*itHits) << ") local(u,v) coordinates: (" << uvpos[0] << "," << uvpos[1] << ")" << std::endl;
+                    const int sensorID = geo::gGeometry().getSensorID( static_cast<IMPL::TrackerHitImpl*> (*itHits) );
+//                    const int usensorID = Utility::GuessSensorID( static_cast<EVENT::TrackerHit*> (*itHits) );
+		streamlog_out(MESSAGE0) << "Hit (id=" << setw(3) << sensorID << ") local(u,v) coordinates: (" 
+                       << setw(7) << setprecision(4) << uvpos[0] << "," << setw(7) << setprecision(4) << uvpos[1] << ")" << std::endl;
 	}
 	streamlog_out(MESSAGE0) << "All hits in event end:==============" << std::endl;
 
@@ -255,14 +267,48 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
         bool isReady = static_cast<EUTelKalmanFilter*>(_trackFitter)->initialise();
         if ( isReady )  {
             streamlog_out( DEBUG1 ) << "Trying to find tracks..." << endl;
-            _trackFitter->FitTracks( );
+//replace this one
+//            _trackFitter->FitTracks( );
+// with two new ones:
+            _trackFitter->SearchTrackCandidates( );
+            _trackFitter->PruneTrackCandidates( );
+
             streamlog_out( DEBUG1 ) << "Retrieving track candidates..." << endl;
-            vector< IMPL::TrackImpl* >& trackCandidates = static_cast < EUTelKalmanFilter* > ( _trackFitter )->getTracks( );
+
+            // retrieve the result of the PR :: track candidates ::
+            vector< IMPL::TrackImpl* >& trackCandidates    = static_cast < EUTelKalmanFilter* > ( _trackFitter )->getTracks( );
+
+            // not needed any more ? ::
+            EVENT::TrackerHitVec trackCandidateHitFitted = static_cast < EUTelKalmanFilter* > ( _trackFitter )->getHitFittedVec( );
+
+            // plot only :
+            plotHistos( trackCandidates );
+
+            // Write output collection
+//            addTrackCandidateHitFittedToCollection( evt, trackCandidateHitFitted );
+ 
+           // Write output collection
+            addTrackCandidateToCollection1( evt, trackCandidates );
+
+        }
+        _nProcessedEvents++;
+
+        if (isFirstEvent()) _isFirstEvent = false;
+    } // if ( hitMeasuredCollection != NULL)
+}
+
+
+/** 
+ * Plot few histos.
+ * 
+ */
+void EUTelProcessorTrackingHelixTrackSearch::plotHistos( vector< IMPL::TrackImpl* >& trackCandidates )  {
 
             const int nTracks = trackCandidates.size( );
+ 
             static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_numberTracksCandidatesHistName ] ) -> fill( nTracks );
-            streamlog_out( MESSAGE1 ) << "Event #" << _nProcessedEvents << endl;
-            streamlog_out( MESSAGE1 ) << "Track finder " << _trackFitter->GetName( ) << " found  " << nTracks << endl;
+            streamlog_out( MESSAGE2 ) << "Event #" << _nProcessedEvents << endl;
+            streamlog_out( MESSAGE2 ) << "Track finder " << _trackFitter->GetName( ) << " found  " << nTracks << endl;
 
             int nHitsOnTrack = 0;
             vector< IMPL::TrackImpl* >::const_iterator itrk;
@@ -270,24 +316,22 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
                 const EVENT::TrackerHitVec& trkHits = ( *itrk )->getTrackerHits( );
                 nHitsOnTrack = trkHits.size( );
                 EVENT::TrackerHitVec::const_iterator itTrkHits;
-                streamlog_out( MESSAGE0 ) << "Track hits start:==============" << std::endl;
+                streamlog_out( MESSAGE1 ) << "Track hits start:==============" << std::endl;
                 for ( itTrkHits = trkHits.begin( ) ; itTrkHits != trkHits.end( ); ++itTrkHits ) {
                     const double* uvpos = ( *itTrkHits )->getPosition( );
-                    streamlog_out( MESSAGE0 ) << "Hit (id=" << ( *itrk )->id( ) << ") local(u,v) coordinates: (" << uvpos[0] << "," << uvpos[1] << ")" << std::endl;
+                    const int sensorID = geo::gGeometry().getSensorID( static_cast<IMPL::TrackerHitImpl*> (*itTrkHits) );
+//                    const int usensorID = Utility::GuessSensorID( static_cast<EVENT::TrackerHit*> (*itTrkHits) );
+                    streamlog_out( MESSAGE1 ) << "Hit (id=" << setw(3) << sensorID << ") local(u,v) coordinates: (" 
+                             << setw(7) << setprecision(4) << uvpos[0] << "," <<  setw(7) << setprecision(4) << uvpos[1] << ")";
+                    double globalHit[] = {0.,0.,0.};
+                    geo::gGeometry().local2Master( sensorID, uvpos, globalHit);
+                    streamlog_out( MESSAGE1 ) << " WorldC: " << setw(7) << globalHit[0] << setw(7) << globalHit[1] << setw(7) << globalHit[2] ;
+                    streamlog_out( MESSAGE1 )  << std::endl;
+                    static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_HitOnTrackCandidateHistName ] ) -> fill( sensorID );
                 }
-                streamlog_out( MESSAGE0 ) << "Track hits end:==============" << std::endl;
+                streamlog_out( MESSAGE1 ) << "Track hits end:==============" << std::endl;
                 static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_numberOfHitOnTrackCandidateHistName ] ) -> fill( nHitsOnTrack );
             }
-
-            // Write output collection
-            {
-                if ( nTracks > 0 ) addTrackCandidateToCollection1( evt, trackCandidates );
-            }
-        }
-        _nProcessedEvents++;
-
-        if (isFirstEvent()) _isFirstEvent = false;
-    } // if (col != NULL)
 }
 
 /** 
@@ -315,6 +359,8 @@ void EUTelProcessorTrackingHelixTrackSearch::FillHits(LCEvent * evt,
 //            continue;
 //        }
 
+        if( hit->getType() > 31 ) continue; // how do we mark measurement hits ? those that contain cluster information ??
+
         LCObjectVec clusterVector = hit->getRawHits();
 
         EUTelVirtualCluster * cluster;
@@ -341,12 +387,53 @@ void EUTelProcessorTrackingHelixTrackSearch::FillHits(LCEvent * evt,
             delete cluster; // <--- destroying the cluster
         }
 
-        const int localSensorID = Utility::GuessSensorID( hit );  // localSensorID == -1, if detector ID was not found
+        const int localSensorID = geo::gGeometry().getSensorID( static_cast<IMPL::TrackerHitImpl*> (hit) );
+//       const int localSensorID = Utility::GuessSensorID( hit );  // localSensorID == -1, if detector ID was not found
         if ( localSensorID >= 0 ) allHitsVec.push_back( hit );
         
     } // end loop over all hits in collection
     
 }
+
+/**
+ * Dump track candidate fitted hits into lcio collection.
+ * 
+ * @param evt event pointer
+ * @param trackCandidateHitFirred  vector of hits from Pattern recognition
+ */
+void EUTelProcessorTrackingHelixTrackSearch::addTrackCandidateHitFittedToCollection(LCEvent* evt, EVENT::TrackerHitVec& trackCandidateHitFitted ) {
+    // Prepare output collection
+
+    // Try to access Output collection
+    LCCollectionVec* hitFittedCollection = NULL;
+    try {
+        hitFittedCollection =  static_cast<LCCollectionVec*> ( evt->getCollection(_hitFittedOutputCollectionName) ) ;
+        streamlog_out(DEBUG1) << "collection : " <<_hitFittedOutputCollectionName << " retrieved" << std::endl;
+    } catch (DataNotAvailableException e) {
+        streamlog_out(WARNING2) << _hitFittedOutputCollectionName << " collection not available, creating one ... " << std::endl;
+        hitFittedCollection = new LCCollectionVec(LCIO::TRACKERHIT);
+    }
+
+    // Fill 
+    EVENT::TrackerHitVec::iterator ihit;
+    for ( ihit = trackCandidateHitFitted.begin(); ihit != trackCandidateHitFitted.end(); ++ihit ) {
+        streamlog_out( MESSAGE1 ) << "hit " << (*ihit)->getType() << " hits" << endl;
+        hitFittedCollection->push_back( (*ihit) );
+
+    } // for (size_t itrk = 0; itrk < trackCandidates.size(); itrk++) 
+
+
+    // Write track candidates collection
+    try {
+        streamlog_out(MESSAGE1) << "Getting collection " << _hitFittedOutputCollectionName << endl;
+        evt->getCollection(_trackCandidateHitsOutputCollectionName);
+    } catch (...) {
+        streamlog_out(MESSAGE1) << "Adding collection " << _hitFittedOutputCollectionName << endl;
+        evt->addCollection( hitFittedCollection, _hitFittedOutputCollectionName);
+    }
+
+}
+
 
 /**
  * Dump track candidate into lcio collection.
@@ -369,17 +456,17 @@ void EUTelProcessorTrackingHelixTrackSearch::addTrackCandidateToCollection1(LCEv
     // Fill track parameters with nonsense except of hits
     std::vector< IMPL::TrackImpl* >::iterator itrk;
     for ( itrk = trackCandidates.begin(); itrk != trackCandidates.end(); ++itrk ) {
-        streamlog_out( DEBUG1 ) << "Track has " << (*itrk)->getTrackerHits().size() << " hits" << endl;
+        streamlog_out( MESSAGE1 ) << "Track has " << (*itrk)->getTrackerHits().size() << " hits" << endl;
         trkCandCollection->push_back( (*itrk) );
 
     } // for (size_t itrk = 0; itrk < trackCandidates.size(); itrk++) 
 
     // Write track candidates collection
     try {
-        streamlog_out(DEBUG1) << "Getting collection " << _trackCandidateHitsOutputCollectionName << endl;
+        streamlog_out(MESSAGE1) << "Getting collection " << _trackCandidateHitsOutputCollectionName << endl;
         evt->getCollection(_trackCandidateHitsOutputCollectionName);
     } catch (...) {
-        streamlog_out(DEBUG1) << "Adding collection " << _trackCandidateHitsOutputCollectionName << endl;
+        streamlog_out(MESSAGE1) << "Adding collection " << _trackCandidateHitsOutputCollectionName << endl;
         evt->addCollection(trkCandCollection, _trackCandidateHitsOutputCollectionName);
     }
 
@@ -437,10 +524,11 @@ void EUTelProcessorTrackingHelixTrackSearch::end() {
 
     delete _trackFitter;
     
-    streamlog_out(MESSAGE) << "EUTelProcessorTrackingHelixTrackSearch::end()  " << name()
+    streamlog_out(MESSAGE4) << "EUTelProcessorTrackingHelixTrackSearch::end()  " << name()
             << " processed " << _nProcessedEvents << " events in " << _nProcessedRuns << " runs "
+            << " av.tracks : " << static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_numberTracksCandidatesHistName ] ) -> mean()
+            << " track candidates : " << static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_numberOfHitOnTrackCandidateHistName ] ) -> allEntries()
             << std::endl;
-
 }
 
 void EUTelProcessorTrackingHelixTrackSearch::bookHistograms() {
@@ -486,7 +574,7 @@ void EUTelProcessorTrackingHelixTrackSearch::bookHistograms() {
             streamlog_out(ERROR2) << "Problem booking the " << (_histName::_numberTracksCandidatesHistName) << endl;
             streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
         }
-        
+         
         const int hitsNBin = 10;
         const double hitsMin = -0.5;
         const double hitsMax = 9.5;
@@ -506,6 +594,28 @@ void EUTelProcessorTrackingHelixTrackSearch::bookHistograms() {
             _aidaHistoMap1D.insert(make_pair(_histName::_numberOfHitOnTrackCandidateHistName, numberHitsOnTrackCandidates));
         } else {
             streamlog_out(ERROR2) << "Problem booking the " << (_histName::_numberOfHitOnTrackCandidateHistName) << endl;
+            streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+        }
+
+        const int    nhitsNBin = 40;
+        const double nhitsMin = -0.5;
+        const double nhitsMax =39.5;
+        
+        histoInfo = histoMgr->getHistogramInfo(_histName::_HitOnTrackCandidateHistName);        
+        NBin = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : nhitsNBin;
+        XMin = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : nhitsMin;
+        XMax = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : nhitsMax;
+        
+        // Number of hit per track candidate
+        AIDA::IHistogram1D * HitsOnTrackCandidates =
+                marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_HitOnTrackCandidateHistName, NBin,
+                XMin, XMax);
+
+        if (HitsOnTrackCandidates) {
+            HitsOnTrackCandidates->setTitle("hits on track candidates;N hits;N tracks");
+            _aidaHistoMap1D.insert(make_pair(_histName::_HitOnTrackCandidateHistName, HitsOnTrackCandidates));
+        } else {
+            streamlog_out(ERROR2) << "Problem booking the " << (_histName::_HitOnTrackCandidateHistName) << endl;
             streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
         }
         
