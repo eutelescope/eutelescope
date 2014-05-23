@@ -2121,10 +2121,10 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent * evt, LCCollectionVec *
   // in the zsInputDataCollectionVec we should have one TrackerData for
   // each detector working in ZS mode. We need to loop over all of
   // them
-  for ( unsigned int i = 0 ; i < zsInputDataCollectionVec->size(); i++ ) {
+  for ( unsigned int iDetector = 0 ; iDetector < zsInputDataCollectionVec->size(); iDetector++ ) {
     // get the TrackerData and guess which kind of sparsified data it
     // contains.
-    TrackerDataImpl * zsData = dynamic_cast< TrackerDataImpl * > ( zsInputDataCollectionVec->getElementAt( i ) );
+    TrackerDataImpl * zsData = dynamic_cast< TrackerDataImpl * > ( zsInputDataCollectionVec->getElementAt( iDetector ) );
     SparsePixelType   type   = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( zsData )["sparsePixelType"]) );
     int sensorID             = static_cast<int > ( cellDecoder( zsData )["sensorID"] );
     //if this is an excluded sensor go to the next element
@@ -2194,7 +2194,7 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent * evt, LCCollectionVec *
           // now remove HotPixels
           // 
          int index = matrixDecoder.getIndexFromXY( pixel->getXCoord(), pixel->getYCoord() );
-          if( _hitIndexMapVec[sensorID].find( index ) != _hitIndexMapVec[sensorID].end() )
+          if( _hitIndexMapVec[iDetector].find( index ) != _hitIndexMapVec[iDetector].end() )
           {
                ++listIter;
                continue;
@@ -2205,7 +2205,6 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent * evt, LCCollectionVec *
           // pixel is considered OK 
           // 
           sparseCluster->addSparsePixel( pixel );
-
 
           noiseValueVec.push_back(noise->getChargeValues()[ index ]);
 
@@ -2260,7 +2259,7 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent * evt, LCCollectionVec *
 
 
           // last but not least increment the clusterID
-          _totClusterMap[ sensorID ] += 1;
+          _totClusterMap[ sensorID ]++;
           ++clusterID;
           if ( clusterID > MAXCLUSTERSIZE ) {
             --clusterID;

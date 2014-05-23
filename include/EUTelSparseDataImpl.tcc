@@ -91,9 +91,10 @@ namespace eutelescope {
 	  // it. A part from the first, we have to check if the other
 	  // are close enough to other pixels
 	  std::list<unsigned int>::iterator firstIter = groupedPixel.begin();
-	  ++firstIter;
+	  //++firstIter;
 	  while ( firstIter != groupedPixel.end() ) {
-	    for ( unsigned int iPixel2 = (*firstIter) + 1 ; iPixel2 < size(); iPixel2++ ) {
+	   for ( unsigned int iPixel2 = 0 ; iPixel2 < size(); iPixel2++ ) {  
+	   //for ( unsigned int iPixel2 = (*firstIter) + 1 ; iPixel2 < size(); iPixel2++ ) {
 	      if ( status[iPixel2] == 0 ) {
 		if ( distance( getSparsePixelAt(*firstIter, pixel) , getSparsePixelAt(iPixel2, otherPixel) ) <= minDistance ) {
 		  groupedPixel.push_back(iPixel2);
