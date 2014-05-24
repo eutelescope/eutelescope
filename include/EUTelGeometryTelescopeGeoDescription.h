@@ -148,6 +148,8 @@ namespace eutelescope {
             int getSensorID( const IMPL::TrackerHitImpl* ) const;
  
             void local2Master( int, const double[], double[] );
+
+						void local2masterHit(EVENT::TrackerHit* hit_input, IMPL::TrackerHitImpl*, LCCollection *);
             
             void master2Local( const double[], double[] );
 

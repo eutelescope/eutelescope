@@ -29,6 +29,10 @@
 
 #include <cstring>
 
+// lcio includes <.h>
+#include <UTIL/CellIDEncoder.h>
+#include <UTIL/CellIDDecoder.h>
+
 using namespace eutelescope;
 using namespace geo;
 using namespace std;
@@ -522,6 +526,31 @@ void EUTelGeometryTelescopeGeoDescription::master2Local( const double globalPos[
     streamlog_out(DEBUG0) << std::setw(10) << std::setprecision(5) << globalPos[0] << std::setw(10) << std::setprecision(5) << globalPos[1] << std::setw(10) << std::setprecision(5) << globalPos[2] << std::endl;
     streamlog_out(DEBUG0) << "Local coordinates: " << std::endl;
     streamlog_out(DEBUG0) << std::setw(10) << std::setprecision(5) << localPos[0] << std::setw(10) << std::setprecision(5) << localPos[1] << std::setw(10) << std::setprecision(5) << localPos[2] << std::endl;
+}
+
+
+void EUTelGeometryTelescopeGeoDescription::local2masterHit(EVENT::TrackerHit* hit_input, IMPL::TrackerHitImpl* hit_output, LCCollection * hitCollectionOutput){
+    streamlog_out(DEBUG2) << "START------------------EUTelGeometryTelescopeGeoDescription::local2MasterHit()-------------------------------------- " << std::endl;
+		UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
+		int sensorID = hitDecoder(static_cast< IMPL::TrackerHitImpl* >(hit_input))["sensorID"];
+		int properties = hitDecoder(static_cast< IMPL::TrackerHitImpl* >(hit_input))["properties"];
+		const double * localPos =  hit_input->getPosition();
+		double globalPos[3];
+		local2Master(sensorID, localPos, globalPos);
+		hit_output->setPosition(globalPos);
+		hit_output->setCovMatrix( hit_input->getCovMatrix());
+  	hit_output->setType( hit_input->getType() );
+		//Now this create the decoder we need of type: EUTELESCOPE::HITENCODING for the collection: hitCollectionOutput.
+		UTIL::CellIDEncoder<TrackerHitImpl> idHitEncoder(EUTELESCOPE::HITENCODING, hitCollectionOutput);
+
+  	idHitEncoder["sensorID"] =  sensorID;
+		if(properties != kHitInGlobalCoord) idHitEncoder["properties"] = kHitInGlobalCoord; //Change the properties to Global
+		else idHitEncoder["properties"] = 0;
+
+  	// This is part were we store the encoded information on the hit
+  	idHitEncoder.setCellID( hit_output );
+
+    streamlog_out(DEBUG2) << "END------------------EUTelGeometryTelescopeGeoDescription::local2MasterHit()-------------------------------------------------------- " << std::endl;
 }
 
 /**
