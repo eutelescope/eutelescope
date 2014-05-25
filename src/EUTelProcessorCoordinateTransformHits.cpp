@@ -11,7 +11,7 @@
 // built only if GEAR is available
 #ifdef USE_GEAR
 
-#include "EUTelLocaltoGlobalHitMaker.h"
+#include "EUTelProcessorCoordinateTransformHits.h"
 
 // eutelescope includes ".h"
 #include "EUTelRunHeaderImpl.h"
@@ -37,6 +37,10 @@
 
 //Standard C++ libraries 
 #include <vector>
+
+// lcio includes <.h>
+#include <UTIL/CellIDEncoder.h>
+#include <UTIL/CellIDDecoder.h>
 
 
 using namespace std;
@@ -154,13 +158,22 @@ void EUTelLocaltoGlobalHitMaker::processEvent (LCEvent * event) {
 	streamlog_out(DEBUG1) << "collection : " << _hitCollectionNameInput << " retrieved" << std::endl;
 	//Create two pointers to the input and output hit
 	TrackerHit* hit_input;
-	TrackerHitImpl* hit_output_total = new IMPL::TrackerHitImpl[collection->getNumberOfElements()];    
+	TrackerHitImpl* hit_output_total = new IMPL::TrackerHitImpl[collection->getNumberOfElements()]; 
+	UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );   
 	//Now get each individual hit LOOP OVER!
 	for (int iHit = 0; iHit < collection->getNumberOfElements(); ++iHit) {  
 		hit_input = static_cast<TrackerHit*>(collection->getElementAt(iHit)); //This wll return a LCObject. Must Cast to specify which object
 		TrackerHitImpl* hit_output = hit_output_total+iHit;
 		//Call the local2masterHit function defined int EUTelGeometryTelescopeDescription
-		geo::gGeometry().local2masterHit(hit_input, hit_output, hitCollectionOutput);
+		int properties = hitDecoder(static_cast< IMPL::TrackerHitImpl* >(hit_input))["properties"];
+	if(properties == kHitInGlobalCoord){
+			streamlog_out(MESSAGE5) << " The properties cell ID is global. So will now change to local" << std::endl;
+			geo::gGeometry().master2localHit(hit_input, hit_output, hitCollectionOutput);
+		}
+		else{
+			streamlog_out(MESSAGE5) << " The properties cell ID is not set so assume local. So will change to global now" << std::endl;
+			geo::gGeometry().local2masterHit(hit_input, hit_output, hitCollectionOutput);
+		}
 		streamlog_out ( DEBUG5 )  << "New hit "<< iHit << " for event  "<< evt->getEventNumber() <<" created" << endl;
 	
 		try{

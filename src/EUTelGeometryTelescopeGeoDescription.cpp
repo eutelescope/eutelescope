@@ -544,13 +544,50 @@ void EUTelGeometryTelescopeGeoDescription::local2masterHit(EVENT::TrackerHit* hi
 		UTIL::CellIDEncoder<TrackerHitImpl> idHitEncoder(EUTELESCOPE::HITENCODING, hitCollectionOutput);
 
   	idHitEncoder["sensorID"] =  sensorID;
-		if(properties != kHitInGlobalCoord) idHitEncoder["properties"] = kHitInGlobalCoord; //Change the properties to Global
-		else idHitEncoder["properties"] = 0;
+		if(properties != kHitInGlobalCoord){
+			streamlog_out(DEBUG5) << " The properties cell ID is not global as expected!  " << std::endl;
+		}
+		else{
+			streamlog_out(DEBUG5) << "The properties cell ID is global. Are you sure this hit is in local coordinates?" << std::endl;
+		}
+			
+		idHitEncoder["properties"] = kHitInGlobalCoord;
 
   	// This is part were we store the encoded information on the hit
   	idHitEncoder.setCellID( hit_output );
 
     streamlog_out(DEBUG2) << "END------------------EUTelGeometryTelescopeGeoDescription::local2MasterHit()-------------------------------------------------------- " << std::endl;
+}
+
+void EUTelGeometryTelescopeGeoDescription::master2localHit(EVENT::TrackerHit* hit_input, IMPL::TrackerHitImpl* hit_output, LCCollection * hitCollectionOutput){
+    streamlog_out(DEBUG2) << "START------------------EUTelGeometryTelescopeGeoDescription::master2localHit()-------------------------------------- " << std::endl;
+		UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
+		int sensorID = hitDecoder(static_cast< IMPL::TrackerHitImpl* >(hit_input))["sensorID"];
+		int properties = hitDecoder(static_cast< IMPL::TrackerHitImpl* >(hit_input))["properties"];
+		const double * globalPos =  hit_input->getPosition();
+		double localPos[3];
+		master2Local(globalPos, localPos);
+		hit_output->setPosition(localPos);
+		hit_output->setCovMatrix( hit_input->getCovMatrix());
+  	hit_output->setType( hit_input->getType() );
+		//Now this create the decoder we need of type: EUTELESCOPE::HITENCODING for the collection: hitCollectionOutput.
+		UTIL::CellIDEncoder<TrackerHitImpl> idHitEncoder(EUTELESCOPE::HITENCODING, hitCollectionOutput);
+
+  	idHitEncoder["sensorID"] =  sensorID;
+		
+		if(properties == kHitInGlobalCoord){
+			streamlog_out(DEBUG5) << " The properties cell ID is global as expected!  " << std::endl;
+		}
+		else{
+			streamlog_out(DEBUG5) << "The properties cell ID is not global. Are you sure this hit is in local coordinates?" << std::endl;
+		}
+		
+		idHitEncoder["properties"] = 0;
+
+  	// This is part were we store the encoded information on the hit
+  	idHitEncoder.setCellID( hit_output );
+
+    streamlog_out(DEBUG2) << "END------------------EUTelGeometryTelescopeGeoDescription::master2localHit()-------------------------------------------------------- " << std::endl;
 }
 
 /**
