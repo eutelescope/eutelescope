@@ -24,7 +24,7 @@ EUTelGenericSparseClusterImpl<PixelType>::EUTelGenericSparseClusterImpl(IMPL::Tr
 	EUTelSimpleVirtualCluster(data),
 	_nElement(0),
 	_type(kUnknownPixelType),
-	_rawDataInterfacer<PixelType>
+	_rawDataInterfacer(data)
 {
 	std::auto_ptr<PixelType> pixel( new PixelType);
 	_nElement = pixel->getNoOfElements();
