@@ -49,7 +49,7 @@ using namespace gear;
 using namespace eutelescope;
 
 //Define constructor. This will take collection name as input 
-EUTelLocaltoGlobalHitMaker::EUTelLocaltoGlobalHitMaker () : Processor("EUTelLocaltoGlobalHitMaker"),
+EUTelProcessorCoordinateTransformHits::EUTelProcessorCoordinateTransformHits () : Processor("EUTelProcessorCoordinateTransformHits"),
 _hitCollectionNameInput(), //Variables here initialized with the constructor of this class
 _hitCollectionNameOutput() //This variable is the output of this processor
 {
@@ -67,14 +67,14 @@ _hitCollectionNameOutput() //This variable is the output of this processor
 }
 
 //This function is run at the start of the job
-void EUTelLocaltoGlobalHitMaker::init() {
+void EUTelProcessorCoordinateTransformHits::init() {
 		//geo::gGeometry automatically calls the constructor of the class and then initializeTGeoDescription will create the TGeo object
     std::string name("test.C");
     geo::gGeometry().initializeTGeoDescription(name,false);
 }
 
 
-void EUTelLocaltoGlobalHitMaker::processRunHeader (LCRunHeader * rdr) {
+void EUTelProcessorCoordinateTransformHits::processRunHeader (LCRunHeader * rdr) {
 
   streamlog_out ( MESSAGE5 ) << "Initialize gear" << endl;
 
@@ -117,13 +117,13 @@ void EUTelLocaltoGlobalHitMaker::processRunHeader (LCRunHeader * rdr) {
 
 }//end of processRunHeader
 
-void EUTelLocaltoGlobalHitMaker::check(LCEvent *event){
+void EUTelProcessorCoordinateTransformHits::check(LCEvent *event){
 	cout << "Checking event!!!!!!!   "<<event->getEventNumber() << endl;
 }
 
 
 
-void EUTelLocaltoGlobalHitMaker::processEvent (LCEvent * event) {
+void EUTelProcessorCoordinateTransformHits::processEvent (LCEvent * event) {
 	streamlog_out ( DEBUG5 ) << "Beginning event number " << event->getEventNumber() << " in run " << event->getRunNumber() <<std::endl;
 	//Check if the event is the last or if the event is of a unknown type
 	EUTelEventImpl * evt	= static_cast<EUTelEventImpl*> (event) ;				
@@ -158,12 +158,11 @@ void EUTelLocaltoGlobalHitMaker::processEvent (LCEvent * event) {
 	streamlog_out(DEBUG1) << "collection : " << _hitCollectionNameInput << " retrieved" << std::endl;
 	//Create two pointers to the input and output hit
 	TrackerHit* hit_input;
-	TrackerHitImpl* hit_output_total = new IMPL::TrackerHitImpl[collection->getNumberOfElements()]; 
 	UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );   
 	//Now get each individual hit LOOP OVER!
 	for (int iHit = 0; iHit < collection->getNumberOfElements(); ++iHit) {  
 		hit_input = static_cast<TrackerHit*>(collection->getElementAt(iHit)); //This wll return a LCObject. Must Cast to specify which object
-		TrackerHitImpl* hit_output = hit_output_total+iHit;
+	TrackerHitImpl* hit_output = new IMPL::TrackerHitImpl; 
 		//Call the local2masterHit function defined int EUTelGeometryTelescopeDescription
 		int properties = hitDecoder(static_cast< IMPL::TrackerHitImpl* >(hit_input))["properties"];
 	if(properties == kHitInGlobalCoord){
@@ -202,14 +201,10 @@ void EUTelLocaltoGlobalHitMaker::processEvent (LCEvent * event) {
 	catch(...){
 		streamlog_out ( MESSAGE5 )  << "Problem with pushing collection onto event"<<endl;
 	}
-	streamlog_out ( DEBUG5 )  << "Push Successful"<<endl;
-	delete [] hit_output_total;
-//	delete hitCollectionOutput;
-	streamlog_out(DEBUG5) << "Delete successful" << endl;
 
 }
 
-void EUTelLocaltoGlobalHitMaker::end(){
+void EUTelProcessorCoordinateTransformHits::end(){
 
 	streamlog_out ( MESSAGE4 )  << "Successfully finished" << endl;
 
