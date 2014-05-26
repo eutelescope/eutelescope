@@ -57,6 +57,8 @@ namespace eutelescope {
         virtual void FitTracks();
         virtual void TrackCandidatesToGBLTrajectories();
         virtual void PerformFitGBLTrajectories();
+        virtual void PerformMille();
+
         virtual void FitSingleTrackCandidate();
 
     protected:

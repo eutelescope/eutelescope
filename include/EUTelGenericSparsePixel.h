@@ -27,6 +27,9 @@ class EUTelGenericSparsePixel : public EUTelBaseSparsePixel  {
 
 public:
     //! Default constructor with all arguments
+//    EUTelGenericSparsePixel(short xCoord, short yCoord, short signal, short chip, short time); 
+
+    //! Default constructor with all arguments
     EUTelGenericSparsePixel(short xCoord, short yCoord, short signal, short time); 
 
     //! Default constructor with time argument omitted
@@ -64,6 +67,9 @@ public:
      */
     virtual void print(std::ostream& os) const ;
 
+//    //! Setter for the chipide
+//    void setChip(short chip) { _chip = chip; }
+
     //! Setter for x coordinate
     void setXCoord(short xCoord) { _xCoord = xCoord ; }
 
@@ -76,6 +82,9 @@ public:
     //! Setter for the time
     void setTime(short time) { _time = time ; }
 
+//    //! Getter for the chip
+//    short getChip() const { return _chip ; }
+
     //! Getter for the x coordinate
     inline short getXCoord() const { return _xCoord ; } 
 
@@ -86,9 +95,14 @@ public:
     inline float getSignal() const { return static_cast<float> (_signal); } 
 
     //! Getter for the time
+    // should it not be a double ?!
     inline float getTime() const { return static_cast<float> (_time); } 
 
 protected:
+     
+//    //! The chip
+//    short _chip;
+
     //! The x coordinate
     short _xCoord;
     

@@ -486,7 +486,7 @@ void EUTelClusteringProcessor::initializeHotPixelMapVec(  )
         EUTelMatrixDecoder matrixDecoder( noiseDecoder , noise );
 
         // now prepare the EUTelescope interface to sparsified data.  
-        auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel > >  sparseData(new EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel> ( hotData ));
+        auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel > >  sparseData(new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> ( hotData ));
 
         streamlog_out ( DEBUG1 ) << "Processing sparse data on detector " << sensorID << " with "
                                  << sparseData->size() << " pixels " << endl;
@@ -494,7 +494,7 @@ void EUTelClusteringProcessor::initializeHotPixelMapVec(  )
         for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ ) 
         {
             // loop over all pixels in the sparseData object.      
-            EUTelSimpleSparsePixel *sparsePixel =  new EUTelSimpleSparsePixel() ;
+            EUTelGenericSparsePixel *sparsePixel =  new EUTelGenericSparsePixel() ;
 
             sparseData->getSparsePixelAt( iPixel, sparsePixel );
             int decoded_XY_index = matrixDecoder.getIndexFromXY( sparsePixel->getXCoord(), sparsePixel->getYCoord() ); // unique pixel index !!
@@ -573,7 +573,7 @@ void EUTelClusteringProcessor::initializeStatusCollection(  )
         EUTelMatrixDecoder matrixDecoder( noiseDecoder , noise );
 
         // now prepare the EUTelescope interface to sparsified data.  
-        auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel > >  sparseData(new EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel> ( zsData ));
+        auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel > >  sparseData(new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> ( zsData ));
 
         streamlog_out ( DEBUG1 ) << "Processing sparse data on detector " << sensorID << " with "
                                  << sparseData->size() << " pixels " << endl;
@@ -581,7 +581,7 @@ void EUTelClusteringProcessor::initializeStatusCollection(  )
         for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ ) 
         {
             // loop over all pixels in the sparseData object.      
-            EUTelSimpleSparsePixel *sparsePixel =  new EUTelSimpleSparsePixel() ;
+            EUTelGenericSparsePixel *sparsePixel =  new EUTelGenericSparsePixel() ;
 
             sparseData->getSparsePixelAt( iPixel, sparsePixel );
             int decoded_XY_index = matrixDecoder.getIndexFromXY( sparsePixel->getXCoord(), sparsePixel->getYCoord() ); // unique pixel index !!
@@ -969,16 +969,16 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
 
     //    bool firstfoundhitpixel = true;
 
-    if ( type == kEUTelSimpleSparsePixel ) 
+    if ( type == kEUTelGenericSparsePixel ) 
     {
       // now prepare the EUTelescope interface to sparsified data.
-      auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel> > sparseData(new EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel>( zsData ));
+      auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> > sparseData(new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>( zsData ));
 
       streamlog_out ( DEBUG1 ) << "Processing sparse data on detector " << _sensorID << " with "
                                << sparseData->size() << " pixels " << endl;
 
       // loop over all pixels in the sparseData object.
-      auto_ptr<EUTelSimpleSparsePixel > sparsePixel( new EUTelSimpleSparsePixel );
+      auto_ptr<EUTelGenericSparsePixel > sparsePixel( new EUTelGenericSparsePixel );
       for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ ) 
       {
 
@@ -1465,16 +1465,16 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
     // prepare a multimap for the seed candidates
     multimap<float , int > seedCandidateMap;
 
-    if ( type == kEUTelSimpleSparsePixel ) {
+    if ( type == kEUTelGenericSparsePixel ) {
 
       // now prepare the EUTelescope interface to sparsified data.
-      auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel> > sparseData(new EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel>( zsData ));
+      auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> > sparseData(new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>( zsData ));
 
       streamlog_out ( DEBUG1 ) << "Processing sparse data on detector " << sensorID << " with "
                                << sparseData->size() << " pixels " << endl;
 
       // loop over all pixels in the sparseData object.
-      auto_ptr<EUTelSimpleSparsePixel > sparsePixel( new EUTelSimpleSparsePixel );
+      auto_ptr<EUTelGenericSparsePixel > sparsePixel( new EUTelGenericSparsePixel );
       for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ ) {
         sparseData->getSparsePixelAt( iPixel, sparsePixel.get() );
         int   index  = matrixDecoder.getIndexFromXY( sparsePixel->getXCoord(), sparsePixel->getYCoord() );
@@ -1764,17 +1764,17 @@ void EUTelClusteringProcessor::zsBrickedClustering(LCEvent * evt, LCCollectionVe
       // prepare a multimap for the seed candidates
       multimap<float , int > seedCandidateMap;
 
-      if ( type == kEUTelSimpleSparsePixel )
+      if ( type == kEUTelGenericSparsePixel )
         {
 
           // now prepare the EUTelescope interface to sparsified data.
-	  auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel> > sparseData(new EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel>( zsData ));
+	  auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> > sparseData(new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>( zsData ));
 
           streamlog_out ( DEBUG1 ) << "Processing sparse data on detector " << sensorID << " with "
                                    << sparseData->size() << " pixels " << endl;
 
           // loop over all pixels in the sparseData object.
-          auto_ptr<EUTelSimpleSparsePixel > sparsePixel( new EUTelSimpleSparsePixel );
+          auto_ptr<EUTelGenericSparsePixel > sparsePixel( new EUTelGenericSparsePixel );
           for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
             {
               sparseData->getSparsePixelAt( iPixel, sparsePixel.get() );
@@ -2142,11 +2142,11 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent * evt, LCCollectionVec *
     // prepare the matrix decoder
     EUTelMatrixDecoder matrixDecoder( noiseDecoder , noise );
 
-    if ( type == kEUTelSimpleSparsePixel ) {
+    if ( type == kEUTelGenericSparsePixel ) {
 
       // now prepare the EUTelescope interface to sparsified data.
-      auto_ptr<EUTelSparseDataImpl<EUTelSimpleSparsePixel > >
-        sparseData(new EUTelSparseDataImpl<EUTelSimpleSparsePixel> ( zsData ));
+      auto_ptr<EUTelSparseDataImpl<EUTelGenericSparsePixel > >
+        sparseData(new EUTelSparseDataImpl<EUTelGenericSparsePixel> ( zsData ));
 
       streamlog_out ( DEBUG1 ) << "Processing sparse data on detector " << sensorID << " with "
                                << sparseData->size() << " pixels " << endl;
@@ -2158,7 +2158,7 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent * evt, LCCollectionVec *
       vector<float > noiseValueVec;
 
       // prepare a generic pixel to store the values
-      EUTelSimpleSparsePixel * pixel = new EUTelSimpleSparsePixel;
+      EUTelGenericSparsePixel * pixel = new EUTelGenericSparsePixel;
 
       // now loop over all the lists
       list<list< unsigned int> >::iterator listOfListIter = listOfList.begin();
@@ -2170,8 +2170,9 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent * evt, LCCollectionVec *
         auto_ptr< TrackerDataImpl > zsCluster ( new TrackerDataImpl );
 
         // prepare a reimplementation of sparsified cluster
-        auto_ptr<EUTelSparseClusterImpl<EUTelSimpleSparsePixel > >
-          sparseCluster ( new EUTelSparseClusterImpl<EUTelSimpleSparsePixel > ( zsCluster.get()  ) );
+        auto_ptr<EUTelSparseClusterImpl<EUTelGenericSparsePixel > >
+          sparseCluster ( new EUTelSparseClusterImpl<EUTelGenericSparsePixel > ( zsCluster.get()  ) );
+//          sparseCluster ( new EUTelSparseClusterImpl<EUTelGenericSparsePixel > ( zsCluster.get()  ) );
 
         // clear the noise vector
         noiseValueVec.clear();
@@ -2400,11 +2401,11 @@ void EUTelClusteringProcessor::sparseClustering2(LCEvent * evt, LCCollectionVec 
     // prepare the matrix decoder
     EUTelMatrixDecoder matrixDecoder( noiseDecoder , noise );
 
-    if ( type == kEUTelSimpleSparsePixel ) {
+    if ( type == kEUTelGenericSparsePixel ) {
 
       // now prepare the EUTelescope interface to sparsified data.
-      auto_ptr<EUTelSparseData2Impl<EUTelSimpleSparsePixel > >
-        sparseData(new EUTelSparseData2Impl<EUTelSimpleSparsePixel> ( zsData ));
+      auto_ptr<EUTelSparseData2Impl<EUTelGenericSparsePixel > >
+        sparseData(new EUTelSparseData2Impl<EUTelGenericSparsePixel> ( zsData ));
 
       streamlog_out ( DEBUG2 ) << "Processing sparse data on detector " << sensorID << " with "
                                << sparseData->size() << " pixels " << endl;
@@ -2416,7 +2417,7 @@ void EUTelClusteringProcessor::sparseClustering2(LCEvent * evt, LCCollectionVec 
       vector<float > noiseValueVec;
 
       // prepare a generic pixel to store the values
-      EUTelSimpleSparsePixel * pixel = new EUTelSimpleSparsePixel;
+      EUTelGenericSparsePixel * pixel = new EUTelGenericSparsePixel;
 
       // check if the pixel coordinate is valid otherwise skip
       
@@ -2432,7 +2433,7 @@ void EUTelClusteringProcessor::sparseClustering2(LCEvent * evt, LCCollectionVec 
         auto_ptr< TrackerDataImpl > zsCluster ( new TrackerDataImpl );
 
         // prepare a reimplementation of sparsified cluster
-        auto_ptr<EUTelSparseClusterImpl<EUTelSimpleSparsePixel > >   sparseCluster ( new EUTelSparseClusterImpl<EUTelSimpleSparsePixel >  ( zsCluster.get() ) );
+        auto_ptr<EUTelSparseClusterImpl<EUTelGenericSparsePixel > >   sparseCluster ( new EUTelSparseClusterImpl<EUTelGenericSparsePixel >  ( zsCluster.get() ) );
 
         // clear the noise vector
         noiseValueVec.clear();
@@ -3355,8 +3356,8 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
         TrackerDataImpl * oneCluster = dynamic_cast<TrackerDataImpl*> (sparseClusterCollectionVec->getElementAt( 0 ));
         CellIDDecoder<TrackerDataImpl > anotherDecoder(sparseClusterCollectionVec);
         pixelType = static_cast<SparsePixelType> ( static_cast<int> ( anotherDecoder( oneCluster )["sparsePixelType"] ));
-        if ( pixelType == kEUTelSimpleSparsePixel ) {
-          cluster = new EUTelSparseClusterImpl<EUTelSimpleSparsePixel > ( static_cast<TrackerDataImpl*> ( pulse->getTrackerData() ) );
+        if ( pixelType == kEUTelGenericSparsePixel ) {
+          cluster = new EUTelSparseClusterImpl<EUTelGenericSparsePixel > ( static_cast<TrackerDataImpl*> ( pulse->getTrackerData() ) );
         } else {
           streamlog_out ( ERROR4 ) <<  "Unknown sparse cluster type. Sorry for quitting" << endl;
           throw UnknownDataTypeException("Cluster type unknown");
@@ -3467,12 +3468,12 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
           }
         }
       } else if ( type == kEUTelSparseClusterImpl ) {
-        if ( pixelType == kEUTelSimpleSparsePixel ) {
-          auto_ptr<EUTelSimpleSparsePixel> pixel ( new EUTelSimpleSparsePixel );
+        if ( pixelType == kEUTelGenericSparsePixel ) {
+          auto_ptr<EUTelGenericSparsePixel> pixel ( new EUTelGenericSparsePixel );
           // this recasting is due to have access to sparse cluster
           // specific methods.
-          EUTelSparseClusterImpl<EUTelSimpleSparsePixel>* recasted =
-            dynamic_cast<EUTelSparseClusterImpl<EUTelSimpleSparsePixel>* > (cluster);
+          EUTelSparseClusterImpl<EUTelGenericSparsePixel>* recasted =
+            dynamic_cast<EUTelSparseClusterImpl<EUTelGenericSparsePixel>* > (cluster);
           for ( unsigned int iPixel = 0 ; iPixel < recasted->size() ; iPixel++ ) {
             recasted->getSparsePixelAt( iPixel , pixel.get() );
             int index = noiseMatrixDecoder.getIndexFromXY( pixel->getXCoord(), pixel->getYCoord() );

@@ -351,14 +351,30 @@ namespace eutelescope {
      *  @param pixel A pointer to the retrieved pixel.
      *  @return A pointer to the retrieved pixel same as @c pixel
      */ 
-    PixelType * getSparsePixelAt(unsigned int index, PixelType* pixel) const ;
+    PixelType *  getSparsePixelAt(unsigned int index, PixelType * pixel) const {
+
+      if ( index * _nElement + 2 > _trackerData->getChargeValues().size() ) return 0x0;
+      pixel->setXCoord( static_cast<int> ( _trackerData->getChargeValues()[index * _nElement + 0] ) );
+      pixel->setYCoord( static_cast<int> ( _trackerData->getChargeValues()[index * _nElement + 1] ) );
+      pixel->setSignal( static_cast<int> ( _trackerData->getChargeValues()[index * _nElement + 2] ) );
+      pixel->setTime(   static_cast<int> ( _trackerData->getChargeValues()[index * _nElement + 3] ) );
+      return pixel;
+    }
+
 
 
     //! Add a sparse pixel
     /*! This method is used to add to the current TrackerDataImpl a
      *  new sparse pixel with all the pieces of information.
      */
-    void addSparsePixel(PixelType* pixel);
+    void addSparsePixel(PixelType * pixel){
+    
+      _trackerData->chargeValues().push_back( static_cast<float> (pixel->getXCoord()) );
+      _trackerData->chargeValues().push_back( static_cast<float> (pixel->getYCoord()) );
+      _trackerData->chargeValues().push_back( static_cast<float> (pixel->getSignal()) );
+      _trackerData->chargeValues().push_back( static_cast<float> (pixel->getTime()) );
+    }  
+
 
   protected:
     
@@ -405,38 +421,6 @@ namespace eutelescope {
   ////////////////////////////////////////////////////////
 
   
-
-  //! Template specialization for the getSparsePixelAt method
-  /*! The same considerations about EUTelSparseClusterImpl apply here as
-   *  well. This method has to specialized for every type of
-   *  sparsified pixel
-   *  
-   *  @param index The pixel index the user wants to retrieve.
-   *  @param pixel A pointer to the output pixel
-   *  @return A pointer to the output pixel same as @c pixel
-   */ 
-  template<>
-  inline EUTelSimpleSparsePixel * EUTelSparseClusterImpl<EUTelSimpleSparsePixel>::getSparsePixelAt(unsigned int index,
-												   EUTelSimpleSparsePixel * pixel) const  {
-    pixel->setXCoord( static_cast<int> ( _trackerData->getChargeValues()[index * _nElement]     ) );
-    pixel->setYCoord( static_cast<int> ( _trackerData->getChargeValues()[index * _nElement + 1] ) );
-    pixel->setSignal( static_cast<int> ( _trackerData->getChargeValues()[index * _nElement + 2] ) );
-    return pixel;
-  }
-
-
-  //! Template specialization for the addSparsePixel method
-  /*! The same consideration about getSparsePixelAt. Adding and
-   *  retrieving pixel information are sensitive to the pixel
-   *  definition.
-   */
-  template<>
-  inline void EUTelSparseClusterImpl<EUTelSimpleSparsePixel>::addSparsePixel(EUTelSimpleSparsePixel * pixel) {
-    
-    _trackerData->chargeValues().push_back( static_cast<float> (pixel->getXCoord()) );
-    _trackerData->chargeValues().push_back( static_cast<float> (pixel->getYCoord()) );
-    _trackerData->chargeValues().push_back( static_cast<float> (pixel->getSignal()) );
-  } 
 
 }
 

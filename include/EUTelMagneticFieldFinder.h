@@ -215,11 +215,14 @@ namespace eutelescope {
 
 
         /** Find intersection point of a track with geometry planes */
-        double findIntersection( EUTelTrackStateImpl* ts );
-        
+        double findIntersection( EUTelTrackStateImpl* ts, int& nextPlane); 
+
         /** Propagate track state by dz */
-				int propagateTrackRefPoint( EUTelTrackStateImpl* ts, int nextPlaneId );
-        
+	void propagateTrackRefPoint( EUTelTrackStateImpl*, int, double );
+
+        /** Propagate track state by dz */
+	int propagateTrackRefPoint( EUTelTrackStateImpl* ts, int nextPlaneId ) ;
+
         /** Update track state and it's cov matrix */
         double updateTrackState( EUTelTrackStateImpl*, const EVENT::TrackerHit* );
 
