@@ -1,8 +1,6 @@
 /*
- *   This processor removes hot pixels as specified by the hot pixel
- *   collection and removes them from any given other tracker collection.
- *   It is only campatible with the EUTelGenerisSparsePixel type, the
- *   hot pixel as well as the input collections must use it.
+ *   This processor removes noisy clusters, i.e. clusters which have
+ *   been masked as noisy by the EUTelProcessorNoisyClusterMasker
  *
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
