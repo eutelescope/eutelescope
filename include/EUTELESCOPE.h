@@ -282,6 +282,7 @@ namespace eutelescope
      *  It is based on two numbers: the seed SNR and the cluster SNR.
      */
     static const char * SPARSECLUSTER2;
+    static const char * SPARSECLUSTER3;
 
     //! Bricked cluster fixed frame algorithm
     /*! For a detailed description @see

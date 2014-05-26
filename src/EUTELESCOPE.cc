@@ -66,6 +66,7 @@ const char *   EUTELESCOPE::FIXEDFRAME          = "FixedFrame";
 const char *   EUTELESCOPE::DFIXEDFRAME         = "DFixedFrame";
 const char *   EUTELESCOPE::SPARSECLUSTER       = "SparseCluster";
 const char *   EUTELESCOPE::SPARSECLUSTER2      = "SparseCluster2";
+const char *   EUTELESCOPE::SPARSECLUSTER3      = "SparseCluster3";
 const char *   EUTELESCOPE::BRICKEDCLUSTER      = "BrickedCluster";
 const char *   EUTELESCOPE::ANALOG              = "Analog";
 const char *   EUTELESCOPE::DIGITAL             = "Digital";
