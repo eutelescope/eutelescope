@@ -472,8 +472,8 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 
           // now we know the pixel type. So we can properly create a new
           // instance of the sparse cluster
-          if ( pixelType == kEUTelSimpleSparsePixel ) {
-            externalCluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel >
+          if ( pixelType == kEUTelGenericSparsePixel ) {
+            externalCluster = new EUTelSparseClusterImpl< EUTelGenericSparsePixel >
               ( static_cast<TrackerDataImpl *> ( externalPulse->getTrackerData()  ) );
           } else {
             streamlog_out ( ERROR4 ) << "Unknown pixel type.  Sorry for quitting." << endl;
@@ -546,8 +546,8 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 
             // now we know the pixel type. So we can properly create a new
             // instance of the sparse cluster
-            if ( pixelType == kEUTelSimpleSparsePixel ) {
-              internalCluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel >
+            if ( pixelType == kEUTelGenericSparsePixel ) {
+              internalCluster = new EUTelSparseClusterImpl< EUTelGenericSparsePixel >
                 ( static_cast<TrackerDataImpl *> ( internalPulse->getTrackerData()  ) );
             } else {
               streamlog_out ( ERROR4 ) << "Unknown pixel type.  Sorry for quitting." << endl;
