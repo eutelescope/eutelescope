@@ -8,7 +8,7 @@
  *
  */
 
-//If header not already defined then define now
+
 #ifndef EUTELCOORDINATETRANSFORMHITS_H
 #define EUTELCOORDINATETRANSFORMHITS_H
 
@@ -60,7 +60,7 @@ namespace eutelescope {
 
   	public:
 
-    // Returns a new instance of EUTelLocaltoGlobalHitMaker
+    // Returns a new instance of EUTelProcessorCoordinateTransformHits
     virtual Processor * newProcessor() {
       return new EUTelProcessorCoordinateTransformHits;
     }
@@ -69,12 +69,12 @@ namespace eutelescope {
 		//Called only at the begining of a job
   	virtual void init ();
 
-		//Called every run so here we check the geometry in the gear file and run header in teh lcio file is the same
+		//Called every run 
   	virtual void processRunHeader (LCRunHeader * run);
 	
 		//Called every event.
   	virtual void processEvent (LCEvent * event);
-		//This runs every event
+		//Called every event
 		virtual void check(LCEvent *event);
 		//Called at the end of the job
   	virtual void end();
@@ -84,7 +84,7 @@ namespace eutelescope {
 		private:
     
 		//Only names wit _(name) come from the steering file.
-		//Collection name
+		//Collection names
 		std::string _hitCollectionNameInput;
 		std::string _hitCollectionNameOutput;
 
