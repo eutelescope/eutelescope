@@ -39,6 +39,7 @@ class TrackImpl;
 
 namespace eutelescope {
     
+
     class MeasurementLayer {
     private:
         DISALLOW_COPY_AND_ASSIGN(MeasurementLayer)
@@ -80,6 +81,21 @@ namespace eutelescope {
 
         virtual ~EUTelKalmanFilter();
 
+        /** just print the list of tracks */
+        void Print( std::string Name, std::vector< IMPL::TrackImpl*> &_tracks );
+
+        /** fomr the list of _tracks remove _tracks_to_delete */
+        void Prune(  std::vector< IMPL::TrackImpl*> &_tracks , std::vector< IMPL::TrackImpl*> &_tracks_to_delete );
+
+        /** search for hit along track direction 
+         *  using TGeo derived functions         */  
+        void SearchTrackCandidates();
+
+        /** Prune track candidates
+         *  supposed to be removing track candidates which have n% hits in common      */  
+        void PruneTrackCandidates();
+
+
         /** Fit supplied hits */
         virtual void FitTracks();
 
@@ -93,6 +109,10 @@ namespace eutelescope {
             return _tracks;
         }
                 
+        void setPlanesProject( int value){
+          _planesForPR = value;
+        }
+
         void setHits( EVENT::TrackerHitVec& );
 
         inline int getAllowedMissingHits() const {
@@ -115,7 +135,7 @@ namespace eutelescope {
             this->_residualsRMax = window;
         }
 
-        inline double setWindowSize() const {
+        inline double getWindowSize() const {
             return _residualsRMax;
         }
         
@@ -151,19 +171,54 @@ namespace eutelescope {
             return _beamAngularSpread;
         }
         
+	/* type conversion:
+	*
+	**/
+        double* toDouble(int n, const float * x){
+          double *y = new double[n];
+          for(int i=0;i<n;i++){
+            y[i] = static_cast<double> (x[i]);
+          }
+          return y; 
+        }
+
 
     private:
         /** Flush fitter data stored from previous event */
         void reset();
         
+        /** prune seed track candidates */
+        void pruneSeeds();
+
         /** Generate seed track candidates */
         void initialiseSeeds();
+
+        /** update EUTelTrackState object at a new plane ID*/
+        int findNextPlaneEntrance(  EUTelTrackStateImpl* , int  );
+
+        /** a vector of hits found while swimming through the detector planes 
+        * write down and dump into a collection in EUTelProcessorTrackerHelixSearch
+        */
+        EVENT::TrackerHitVec hitFittedVec;
+
+    public:
+        /* need a method to get hitFittedVec
+         * to be consistent with the other methods - passing the object by reference
+         */     
+        EVENT::TrackerHitVec& getHitFittedVec() { 
+          return hitFittedVec;
+        }
+ 
+    private:
+        /** do the EUTelTrackState search through all known volumes */
+        void propagateFromRefPoint( std::vector< EUTelTrackImpl* >::iterator &);
+
 
         /** Find intersection point of a track with geometry planes */
         double findIntersection( EUTelTrackStateImpl* ts );
         
         /** Propagate track state by dz */
-	void propagateTrackRefPoint( EUTelTrackStateImpl*, double );
+				int propagateTrackRefPoint( EUTelTrackStateImpl* ts, int nextPlaneId );
         
         /** Update track state and it's cov matrix */
         double updateTrackState( EUTelTrackStateImpl*, const EVENT::TrackerHit* );
@@ -257,6 +312,9 @@ namespace eutelescope {
         
         /** Validity of user input flag */
         bool _isReady;
+
+        /** Maximum number of sensitive planes to be considered for initial seed hits */
+        int _planesForPR;
 
         /** Maximum number of missing on a track candidate */
         int _allowedMissingHits;

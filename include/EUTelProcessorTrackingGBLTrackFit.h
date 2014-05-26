@@ -241,6 +241,9 @@ namespace eutelescope {
         /** Number of runs processed */
         int _nProcessedEvents;
 
+    private:
+        bool _flag_nohistos;
+
     public:
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 

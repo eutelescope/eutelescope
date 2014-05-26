@@ -34,7 +34,7 @@ namespace eom {
             
             virtual TVectorD evalRHS( const TVectorD& point ) {
                 
-                streamlog_out( DEBUG2 ) << "EOMODE::evalRHS()" << std::endl;
+                streamlog_out( DEBUG0 ) << "EOMODE::evalRHS()" << std::endl;
                 
                 streamlog_out( DEBUG0 ) << "Input vector" << std::endl;
                 streamlog_message( DEBUG0, point.Print();, std::endl; );
@@ -63,7 +63,7 @@ namespace eom {
                 streamlog_out( DEBUG0 ) << "Result vector" << std::endl;
                 streamlog_message( DEBUG0, result.Print();, std::endl; );
                 
-                streamlog_out( DEBUG2 ) << "-----------------------------EOMODE::evalRHS()------------------------------" << std::endl;
+                streamlog_out( DEBUG0 ) << "-----------------------------EOMODE::evalRHS()------------------------------" << std::endl;
                 
                 return result;
             }

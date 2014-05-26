@@ -11,7 +11,6 @@
 #if defined(USE_GEAR)
 
 // eutelescope includes ".h"
-#include "EUTelReferenceHit.h"
 
 //ROOT includes
 #include "TVector3.h"
@@ -138,15 +137,6 @@ namespace eutelescope {
      */
     void bookHistos();
 
-    //! Called for first event per run
-    /*! Reads hotpixel information from hotPixelCollection into hotPixelMap
-     * to be used in the sensor exclusion area logic 
-     */
-    virtual void  FillHotPixelMap(LCEvent *event);
-
-    //! check whether the hit given as argument contains at least one hit which belongs to the hot pixel map 
-    virtual bool hitContainsHotPixels( TrackerHitImpl   * hit) ;
-
     //! internal functtion: return the ID of a plane selected as a reference plane for correlation plots
 
     virtual int getFixedPlaneID(){return _fixedPlaneID;} 
@@ -213,6 +203,9 @@ namespace eutelescope {
     std::vector<double> guessSensorOffset(int internalSensorID, int externalSensorID, std::vector<double> cluCenter );
 
   private:
+
+	 void  FillHotPixelMap(LCEvent *event);
+	 bool  hitContainsHotPixels( TrackerHitImpl   * hit);
 
     //! Initialization flag
     bool _isInitialize;
@@ -357,14 +350,11 @@ namespace eutelescope {
     
     std::map<std::string, bool > _hotPixelMap;
 
-    //! reference HitCollection name 
-    /*!
-     */
-    std::string      _referenceHitCollectionName;
-    bool             _useReferenceHitCollection;
-    LCCollectionVec* _referenceHitVec;    
- 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+
+    /** Histogram info file name */
+    std::string _histoInfoFileName;
+
 
     //! AIDA histogram map
     /*! Instead of putting several pointers to AIDA histograms as

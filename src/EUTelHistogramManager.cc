@@ -136,8 +136,9 @@ bool EUTelHistogramManager::init() throw( std::exception, marlin::ParseException
     throw ParseException( ss.str() );
   }
 
-  return true;
+  delete doc;
 
+  return true;
 }
 
 EUTelHistogramInfo * EUTelHistogramManager::getHistogramInfo(std::string histoName) const {

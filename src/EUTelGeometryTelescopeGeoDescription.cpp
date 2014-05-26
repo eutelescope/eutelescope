@@ -29,13 +29,18 @@
 
 #include <cstring>
 
+// lcio includes <.h>
+#include <UTIL/CellIDEncoder.h>
+#include <UTIL/CellIDDecoder.h>
+
 using namespace eutelescope;
 using namespace geo;
 using namespace std;
 
+
 EUTelGeometryTelescopeGeoDescription& EUTelGeometryTelescopeGeoDescription::getInstance() {
-    static EUTelGeometryTelescopeGeoDescription instance;
-    return instance;
+      static  EUTelGeometryTelescopeGeoDescription instance;
+      return instance;
 }
 
 size_t EUTelGeometryTelescopeGeoDescription::nPlanes( ) const {
@@ -121,9 +126,9 @@ TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneNormal( int planeID ) {
     it = _sensorIDtoZOrderMap.find(planeID);
     if ( it != _sensorIDtoZOrderMap.end() ) {
         TVector3 normVec( 0., 0., 1. );
-        normVec.RotateX( _siPlaneXRotation[ _sensorIDtoZOrderMap[ planeID ] ] );
-        normVec.RotateY( _siPlaneYRotation[ _sensorIDtoZOrderMap[ planeID ] ] );
-        normVec.RotateZ( _siPlaneZRotation[ _sensorIDtoZOrderMap[ planeID ] ] );
+        normVec.RotateX( siPlaneXRotation( planeID) ); // to be in rad
+        normVec.RotateY( siPlaneYRotation( planeID) ); // to be in rad
+        normVec.RotateZ( siPlaneZRotation( planeID) ); // to be in rad
         return normVec;
     }
     return TVector3(0.,0.,0.);
@@ -148,6 +153,14 @@ int EUTelGeometryTelescopeGeoDescription::sensorZOrderToID( int znumber ) const 
     if ( it != _sensorZOrderToIDMap.end() ) return it->second;
     return -1;
 }
+
+ 
+            /** Map from sensor ID to number along Z */
+const std::map<int, int>& EUTelGeometryTelescopeGeoDescription::sensorZOrdertoIDs() const {
+
+return _sensorZOrderToIDMap;
+}
+            
 
 const EVENT::IntVec& EUTelGeometryTelescopeGeoDescription::sensorIDsVec( ) const {
     return _sensorIDVec;
@@ -196,6 +209,7 @@ _geoManager(0)
         
         _siPlaneRadLength.push_back(_siPlanesLayerLayout->getLayerRadLength(iPlane));
     }
+
 
     if (_siPlanesParameters->getSiPlanesType() == _siPlanesParameters->TelescopeWithDUT) {
         _siPlaneXPosition.push_back(_siPlanesLayerLayout->getDUTPositionX());
@@ -262,6 +276,7 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( string tge
     if( !_geoManager ) {
         streamlog_out( WARNING ) << "Can't read file " << tgeofilename << endl;
     }
+
     _geoManager->CloseGeometry();
 //    #endif //USE_TGEO
 }
@@ -318,9 +333,7 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::strin
    
    // Iterate over registered GEAR objects and construct their TGeo representation
    
-   const Double_t PI = 3.141592653589793;
-   const Double_t DEG = 180./PI;
-   
+  
    double xc, yc, zc;   // volume center position 
    double alpha, beta, gamma;
    
@@ -336,9 +349,9 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::strin
        zc = siPlaneZPosition( *itrPlaneId );
        
        // Get sensor orientation
-       alpha = siPlaneXRotation( *itrPlaneId ); // [rad]
-       beta  = siPlaneYRotation( *itrPlaneId ); // [rad]
-       gamma = siPlaneZRotation( *itrPlaneId ); // [rad]
+       alpha = siPlaneXRotation( *itrPlaneId )*DEG; // [rad] in degrees !
+       beta  = siPlaneYRotation( *itrPlaneId )*DEG; // [rad]
+       gamma = siPlaneZRotation( *itrPlaneId )*DEG; // [rad]
        
        // Spatial translations of the sensor center
        string stTranslationName = "matrixTranslationSensor";
@@ -349,16 +362,16 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::strin
        // TGeoRotation requires Euler angles in degrees
        string stRotationName = "matrixRotationSensorX";
        stRotationName.append( strId.str() );
-       TGeoRotation* pMatrixRotX = new TGeoRotation( stRotationName.c_str(), 0.,  alpha*DEG, 0.);                // around X axis
+       TGeoRotation* pMatrixRotX = new TGeoRotation( stRotationName.c_str(), 0.,  alpha, 0.);                // around X axis
        stRotationName = "matrixRotationSensorY";
        stRotationName.append( strId.str() );
-       TGeoRotation* pMatrixRotY = new TGeoRotation( stRotationName.c_str(), 90., beta*DEG,  0.);                // around Y axis (combination of rotation around Z axis and new X axis)
+       TGeoRotation* pMatrixRotY = new TGeoRotation( stRotationName.c_str(), 90., beta,  0.);                // around Y axis (combination of rotation around Z axis and new X axis)
        stRotationName = "matrixRotationSensorBackY";
        stRotationName.append( strId.str() );
        TGeoRotation* pMatrixRotY1 = new TGeoRotation( stRotationName.c_str(), -90., 0.,  0.);                    // restoration of original orientation (valid in small angle approximataion ~< 15 deg)
        stRotationName = "matrixRotationSensorZ";
        stRotationName.append( strId.str() );
-       TGeoRotation* pMatrixRotZ = new TGeoRotation( stRotationName.c_str(), 0. , 0.,        gamma*DEG);         // around Z axis
+       TGeoRotation* pMatrixRotZ = new TGeoRotation( stRotationName.c_str(), 0. , 0.,        gamma);         // around Z axis
        
        // Combined rotation in several steps
        TGeoRotation* pMatrixRot = new TGeoRotation( *pMatrixRotX );
@@ -416,13 +429,28 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::strin
        pvolumeWorld->AddNode(pvolumeSensor, (*itrPlaneId), combi);
    } // loop over sensorID
    
-   
-    _geoManager->CloseGeometry();
+  
+     _geoManager->CloseGeometry();
     
     // Dump ROOT TGeo object into file
     if ( dumpRoot ) _geoManager->Export( geomName.c_str() );
 //    #endif //USE_TGEO
     return;
+}
+
+/** Determine id of the sensor in which point is locate
+ * 
+ * @param input TrackerHitImpl* hit pointer 
+ * @return sensorID or -999 if the point in outside of sensor volume
+ */
+int EUTelGeometryTelescopeGeoDescription::getSensorID( const IMPL::TrackerHitImpl* hit ) const {
+    streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::getSensorID() " << std::endl;
+
+    int sensorID = -999;
+
+    sensorID =  hit->getCellID0(); // using a field in the TrackerHitImpl class;
+
+    return sensorID; 
 }
 
 /** Determine id of the sensor in which point is locate
@@ -465,7 +493,9 @@ void EUTelGeometryTelescopeGeoDescription::local2Master( int sensorID, const dou
     const double sensorCenterX = siPlaneXPosition( sensorID );
     const double sensorCenterY = siPlaneYPosition( sensorID );
     const double sensorCenterZ = siPlaneZPosition( sensorID );
-    
+ 
+    streamlog_out(DEBUG0) << "_geoManager defined: " << _geoManager << std::endl;
+   
     streamlog_out(DEBUG0) << "Senosor id: " << sensorID << std::endl;
     streamlog_out(DEBUG0) << "Senosor center: " << "(" << sensorCenterX << "," << sensorCenterY << "," << sensorCenterZ << ")" << std::endl;
     
@@ -496,6 +526,31 @@ void EUTelGeometryTelescopeGeoDescription::master2Local( const double globalPos[
     streamlog_out(DEBUG0) << std::setw(10) << std::setprecision(5) << globalPos[0] << std::setw(10) << std::setprecision(5) << globalPos[1] << std::setw(10) << std::setprecision(5) << globalPos[2] << std::endl;
     streamlog_out(DEBUG0) << "Local coordinates: " << std::endl;
     streamlog_out(DEBUG0) << std::setw(10) << std::setprecision(5) << localPos[0] << std::setw(10) << std::setprecision(5) << localPos[1] << std::setw(10) << std::setprecision(5) << localPos[2] << std::endl;
+}
+
+
+void EUTelGeometryTelescopeGeoDescription::local2masterHit(EVENT::TrackerHit* hit_input, IMPL::TrackerHitImpl* hit_output, LCCollection * hitCollectionOutput){
+    streamlog_out(DEBUG2) << "START------------------EUTelGeometryTelescopeGeoDescription::local2MasterHit()-------------------------------------- " << std::endl;
+		UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
+		int sensorID = hitDecoder(static_cast< IMPL::TrackerHitImpl* >(hit_input))["sensorID"];
+		int properties = hitDecoder(static_cast< IMPL::TrackerHitImpl* >(hit_input))["properties"];
+		const double * localPos =  hit_input->getPosition();
+		double globalPos[3];
+		local2Master(sensorID, localPos, globalPos);
+		hit_output->setPosition(globalPos);
+		hit_output->setCovMatrix( hit_input->getCovMatrix());
+  	hit_output->setType( hit_input->getType() );
+		//Now this create the decoder we need of type: EUTELESCOPE::HITENCODING for the collection: hitCollectionOutput.
+		UTIL::CellIDEncoder<TrackerHitImpl> idHitEncoder(EUTELESCOPE::HITENCODING, hitCollectionOutput);
+
+  	idHitEncoder["sensorID"] =  sensorID;
+		if(properties != kHitInGlobalCoord) idHitEncoder["properties"] = kHitInGlobalCoord; //Change the properties to Global
+		else idHitEncoder["properties"] = 0;
+
+  	// This is part were we store the encoded information on the hit
+  	idHitEncoder.setCellID( hit_output );
+
+    streamlog_out(DEBUG2) << "END------------------EUTelGeometryTelescopeGeoDescription::local2MasterHit()-------------------------------------------------------- " << std::endl;
 }
 
 /**
@@ -719,3 +774,117 @@ float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double 
     
     return rad;
 }
+
+//
+// straight line - shashlyk plane assembler
+//
+int EUTelGeometryTelescopeGeoDescription::findNextPlane(  double* lpoint,  double* ldir, float* newpoint )
+{
+// 
+   if(newpoint==0)
+   {
+      streamlog_out ( ERROR0 ) << "::findNextPlane;  newpoint array is void, can not continue..."<<endl;
+      return -100;
+   }
+
+   double normdir = TMath::Sqrt(ldir[0]*ldir[0]+ldir[1]*ldir[1]+ldir[2]*ldir[2]); 
+   streamlog_out ( DEBUG0 ) << "::findNextPlane lpoint: "  << lpoint[0] << " " << lpoint[1] << " "<< lpoint[2] << " " << endl;
+   ldir[0] = ldir[0]/normdir; 
+   ldir[1] = ldir[1]/normdir; 
+   ldir[2] = ldir[2]/normdir;
+   streamlog_out ( DEBUG0 ) << "::findNextPlane ldir  : "  << ldir  [0] << " " << ldir  [1] << " "<< ldir  [2] << " " << endl;
+ 
+   for(int ip=0;ip<3;ip++) 
+   {
+     newpoint[ip] = static_cast<float> (lpoint[ip]);
+   }  
+   int currentSensorID = getSensorID(newpoint); 
+   
+   gGeoManager->InitTrack( lpoint, ldir );
+   TGeoNode *node = gGeoManager->GetCurrentNode( );
+
+   Int_t inode    = node->GetIndex();
+   Int_t i        = 0;
+
+   streamlog_out ( DEBUG0 ) << "::findNextPlane look for next node, starting at node: " << node << " id: " << inode  << " currentSensorID: " << currentSensorID << endl;
+ 
+//   double kStep = 1e-03;
+   while(  node = gGeoManager->FindNextBoundaryAndStep(  ) )
+   {
+       inode = node->GetIndex();
+       streamlog_out ( DEBUG0 ) << "::findNextPlane found next node: " << node << " id: " << inode << endl;
+       const double* point = gGeoManager->GetCurrentPoint();
+       const double* dir   = gGeoManager->GetCurrentDirection();
+       double ipoint[3] ;
+       double idir[3]   ;
+
+       for(int ip=0;ip<3;ip++) 
+       {
+         ipoint[ip] = point[ip];
+         idir[ip]   = dir[ip];
+         if(ip==2) ipoint[ip]+=0.01 ; // assumption !!! step by one um into the new volume // new volume is thicker than 1 um
+         newpoint[ip] = static_cast<float> (ipoint[ip]);
+       }  
+       int sensorID = getSensorID(newpoint); 
+       i++;     
+      
+       gGeoManager->SetCurrentPoint( ipoint);
+       gGeoManager->SetCurrentDirection( idir);
+ 
+       streamlog_out ( DEBUG0 ) << "::findNextPlane i=" << i  << " " << inode << " " << ipoint[0]  << " " << ipoint[1] << " " << ipoint[2]  << " sensorID:" << sensorID <<  endl;
+       if(sensorID >= 0 && sensorID != currentSensorID ) return sensorID;
+   }
+
+ 
+   return -100;
+}
+ 
+int EUTelGeometryTelescopeGeoDescription::findNextPlaneEntrance(  double* lpoint,  double* ldir, int nextSensorID, float* newpoint )
+{
+   if(newpoint==0)
+   {
+      streamlog_out ( ERROR0 ) << "::findNextPlaneEntrance newpoint array is void, can not continue..."<<endl;
+      return -100;
+   }
+   
+   _geoManager->InitTrack( lpoint, ldir );
+ 
+   TGeoNode *node = _geoManager->GetCurrentNode( );
+   Int_t inode =  node->GetIndex();
+   Int_t i=0;
+
+   streamlog_out ( DEBUG0 ) << "::findNextPlaneEntrance node: " << node << " id: " << inode << endl;
+ 
+   while( node = _geoManager->FindNextBoundaryAndStep( ) )
+   {
+       inode = node->GetIndex();
+       const double* point = _geoManager->GetCurrentPoint();
+       const double* dir   = _geoManager->GetCurrentDirection();
+       double ipoint[3] ;
+       double idir[3]   ;
+
+       for(int ip=0;ip<3;ip++) 
+       {
+         ipoint[ip] = point[ip];
+         idir[ip]   = dir[ip];
+         if(ip==2) ipoint[ip]+=0.001 ; // assumption !!! step by one um into the new volume // new volume is thicker than 1 um
+         newpoint[ip] = static_cast<float> (ipoint[ip]);
+       }  
+       int sensorID = getSensorID(newpoint); 
+       i++;     
+      
+       _geoManager->SetCurrentPoint( ipoint);
+       _geoManager->SetCurrentDirection( idir);
+ 
+       streamlog_out ( DEBUG0 ) << "::findNextPlaneEntrance i=" << i  << " " << inode << " " << ipoint[0]  << " " << ipoint[1] << " " << ipoint[2]  << " sensorID:" << sensorID << " " << nextSensorID << endl;
+       //if( sensorID <0 ) continue;  
+       if( sensorID == nextSensorID ) return sensorID;
+   }
+ 
+   streamlog_out ( DEBUG0 ) << "::findNextPlaneEntrance node: " << node << " id: " << inode << " sensorID= " << nextSensorID << " not found" << " returning: 0" << endl;
+ 
+   return -100;
+
+}
+
+

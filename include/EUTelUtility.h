@@ -13,6 +13,7 @@
 // eutelescope includes ".h"
 #include "EUTELESCOPE.h"
 #include "EUTelVirtualCluster.h"
+#include "EUTelSparseDataImpl.h"
 
 // lcio includes <.h>
 #include "IMPL/TrackerHitImpl.h"
@@ -204,7 +205,10 @@ namespace eutelescope {
         
         /** Solve quadratic equation a*x^2 + b*x + c = 0 */
         std::vector< double > solveQuadratic( double, double, double );
-        
+ 
+        /** getClusterSize method from TrackerHit object:: assumes known cluster types */
+        void getClusterSize(const IMPL::TrackerHitImpl * hit, int& sizeX, int& sizeY ) ;
+
         /** Tokenize string */
                 /**
          * String tokenizer
