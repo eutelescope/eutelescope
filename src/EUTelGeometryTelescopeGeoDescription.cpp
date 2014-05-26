@@ -15,7 +15,7 @@
 
 // EUTELESCOPE
 #include "EUTelExceptions.h"
-
+#include "EUTelGenericPixGeoMgr.h"
 // ROOT
 #include "TGeoManager.h"
 #include "TGeoMatrix.h"
@@ -32,6 +32,7 @@
 using namespace eutelescope;
 using namespace geo;
 using namespace std;
+
 
 EUTelGeometryTelescopeGeoDescription& EUTelGeometryTelescopeGeoDescription::getInstance() {
     static EUTelGeometryTelescopeGeoDescription instance;
@@ -116,6 +117,15 @@ double EUTelGeometryTelescopeGeoDescription::siPlaneMediumRadLen( int planeID ) 
     return -999.;
 }
 
+std::string EUTelGeometryTelescopeGeoDescription::geoLibName( int planeID ) {
+    std::map<int,int>::iterator it;
+    it = _sensorIDtoZOrderMap.find(planeID);
+    if ( it != _sensorIDtoZOrderMap.end() ) return _geoLibName[ _sensorIDtoZOrderMap[ planeID ] ];
+    return "failed";
+}
+
+
+
 TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneNormal( int planeID ) {
     std::map<int,int>::iterator it;
     it = _sensorIDtoZOrderMap.find(planeID);
@@ -167,9 +177,9 @@ _siPlaneXRotation(),
 _siPlaneYRotation(),
 _siPlaneZRotation(),
 _nPlanes(0),
+_isGeoInitialized(false),
 _geoManager(0)
 {
-
     // Check if the GEAR manager is not corrupted, otherwise stop
 
     if (!marlin::Global::GEAR) {
@@ -180,6 +190,9 @@ _geoManager(0)
     // sensor-planes in geometry navigation:
     _siPlanesParameters = const_cast<gear::SiPlanesParameters*> (&(marlin::Global::GEAR->getSiPlanesParameters()));
     _siPlanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*> (&(_siPlanesParameters->getSiPlanesLayerLayout()));
+    
+    //read the geoemtry names from the "Geometry" StringVec section of the gear file
+    lcio::StringVec geometryNameParameters =  _siPlanesParameters->getStringVals("Geometry");
     
     // create an array with the z positions of each layer
     for (int iPlane = 0; iPlane < _siPlanesLayerLayout->getNLayers(); iPlane++) {
@@ -195,6 +208,7 @@ _geoManager(0)
         _siPlaneSizeZ.push_back(_siPlanesLayerLayout->getLayerThickness(iPlane));
         
         _siPlaneRadLength.push_back(_siPlanesLayerLayout->getLayerRadLength(iPlane));
+	_geoLibName.push_back(geometryNameParameters[iPlane]);
     }
 
     if (_siPlanesParameters->getSiPlanesType() == _siPlanesParameters->TelescopeWithDUT) {
@@ -244,10 +258,13 @@ _geoManager(0)
     
     // TGeo manager initialisation
     
+	//Pixel Geometry manager creation
+	_pixGeoMgr = new EUTelGenericPixGeoMgr();
 }
 
 EUTelGeometryTelescopeGeoDescription::~EUTelGeometryTelescopeGeoDescription() {
-    delete _geoManager;
+	delete _geoManager;
+	delete _pixGeoMgr;
 }
 
 /**
@@ -276,11 +293,21 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::strin
 //    #ifdef USE_TGEO
     // get access to ROOT's geometry manager
     
-    _geoManager = new TGeoManager("Telescope", "v0.1");;
-    if( !_geoManager ) {
-        streamlog_out( ERROR3 ) << "Can't instantiate ROOT TGeoManager " << std::endl;
-        return;
-    }
+	if( _isGeoInitialized )
+	{
+		streamlog_out( WARNING3 ) << "EUTelGeometryTelescopeGeoDescription: Geometry already initialized, using old initialization" << std::endl;
+		return;
+	}
+	else
+	{
+    		_geoManager = new TGeoManager("Telescope", "v0.1");
+	}
+
+	if( !_geoManager )
+	{
+		streamlog_out( ERROR3 ) << "Can't instantiate ROOT TGeoManager " << std::endl;
+		return;
+	}
    
     
     // Create top world volume containing telescope/DUT geometry
@@ -298,7 +325,7 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::strin
     pMatAir->SetRadLen( air_radlen );
     // Medium: medium_World_AIR
     TGeoMedium* pMedAir = new TGeoMedium("medium_World_AIR", 3, pMatAir );
-    
+
     // The World is the 10 x 10m x 10m box filled with air mixture
     Double_t dx,dy,dz;
     dx = 5000.000000; // [mm]
@@ -344,6 +371,9 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::strin
        string stTranslationName = "matrixTranslationSensor";
        stTranslationName.append( strId.str() );
        TGeoTranslation* pMatrixTrans = new TGeoTranslation( stTranslationName.c_str(), xc, yc, zc );
+       //ALL clsses deriving from TGeoMatrix are not owned by the ROOT geometry manager, invoking RegisterYourself() transfers
+       //ownership and thus ROOT will clean up
+       pMatrixTrans->RegisterYourself();      
        
        // Spatial rotation around sensor center
        // TGeoRotation requires Euler angles in degrees
@@ -365,10 +395,17 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::strin
        pMatrixRot->MultiplyBy( pMatrixRotY );
        pMatrixRot->MultiplyBy( pMatrixRotY1 );
        pMatrixRot->MultiplyBy( pMatrixRotZ );
-       
+       pMatrixRot->RegisterYourself();      
+      
+       pMatrixRotX->RegisterYourself();
+       pMatrixRotY->RegisterYourself();
+       pMatrixRotY1->RegisterYourself(); 
+       pMatrixRotZ->RegisterYourself();
+ 
        // Combined translation and orientation
        TGeoCombiTrans* combi = new TGeoCombiTrans( *pMatrixTrans, *pMatrixRot );
-       
+       combi->RegisterYourself();   
+ 
        // Construction of sensor objects
        
        // Construct object medium. Required for radiation length determination
@@ -411,16 +448,22 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::strin
        // name:ID
        string stVolName = "volume_SensorID:";
        stVolName.append( strId.str() );
+
+		_planePath.insert( std::make_pair(*itrPlaneId, "/volume_World_1/"+stVolName+"_1") );
+
        TGeoVolume* pvolumeSensor = new TGeoVolume( stVolName.c_str(), pBoxSensor, pMed );
        pvolumeSensor->SetVisLeaves( kTRUE );
-       pvolumeWorld->AddNode(pvolumeSensor, (*itrPlaneId), combi);
+       pvolumeWorld->AddNode(pvolumeSensor, 1/*(*itrPlaneId)*/, combi);
+	
+	//this line tells the pixel geometry manager to load the pixel geometry into the plane			
+        _pixGeoMgr->addPlane( *itrPlaneId, geoLibName( *itrPlaneId), stVolName);
    } // loop over sensorID
-   
-   
+
     _geoManager->CloseGeometry();
-    
+    _isGeoInitialized = true;
     // Dump ROOT TGeo object into file
     if ( dumpRoot ) _geoManager->Export( geomName.c_str() );
+
 //    #endif //USE_TGEO
     return;
 }
@@ -434,22 +477,37 @@ int EUTelGeometryTelescopeGeoDescription::getSensorID( const float globalPos[] )
     streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::getSensorID() " << std::endl;
     
     _geoManager->FindNode( globalPos[0], globalPos[1], globalPos[2] );
+
     const char* volName = const_cast < char* > ( geo::gGeometry( )._geoManager->GetCurrentVolume( )->GetName( ) );
+
     streamlog_out( DEBUG0 ) << "Point (" << globalPos[0] << "," << globalPos[1] << "," << globalPos[2] << ") found in volume: " << volName << std::endl;
-    std::vector< std::string > tokens = Utility::stringSplit(std::string( volName ), ":", false );
     
+	/*std::vector< std::string > tokens = Utility::stringSplit(std::string( volName ), ":", false );
     // sensor id must be stored in the last token
     int id = -999;
     std::size_t found = tokens.back().find_first_of("0123456789");
     if ( found != std::string::npos ) id = atoi( tokens.back().c_str() );
-
     int sensorID = -999;
     if ( std::find( _sensorIDVec.begin(), _sensorIDVec.end(), id ) != _sensorIDVec.end() ) sensorID = id;
-    else streamlog_out(DEBUG3) << "Point (" << globalPos[0] << "," << globalPos[1] << "," << globalPos[2] << ") was not found inside any sensor!" << std::endl;
-    
+    else streamlog_out(DEBUG3) << "Point (" << globalPos[0] << "," << globalPos[1] << "," << globalPos[2] << ") was not found inside any sensor!" << std::endl; 
     streamlog_out( DEBUG0 ) << "SensorID: " << sensorID << std::endl;
-    
-    return sensorID;
+    return sensorID;*/
+
+	std::vector<std::string> split = Utility::stringSplit( std::string( volName ), "/", false);
+	//std::string sensor =  split.at(1);
+
+	int sensorID = -999;
+	//since we check bounds, no need for vector.at() but use [], it saves cycles :-)
+	if ( (split.size() > 1) && (split[1].substr(0,16) == "volume_SensorID:") )
+	{
+		sensorID = strtol( (split[1].substr(16, split[1].length() - 18)).c_str(), NULL, 10 );
+	}
+	else
+	{
+		streamlog_out(DEBUG3) << "Point (" << globalPos[0] << "," << globalPos[1] << "," << globalPos[2] << ") was not found inside any sensor!" << std::endl;
+		//Maybe exception??
+	}
+	return sensorID;
 }
 
 /**
@@ -574,6 +632,24 @@ const gear::BField& EUTelGeometryTelescopeGeoDescription::getMagneticFiled() con
     streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::getMagneticFiled() " << std::endl;
     return marlin::Global::GEAR->getBField();
 }
+
+
+
+/**
+ * @return EUTelGenericPixGeoDescr const * for given plane
+ * ID, essential for user interfacing pixel data!
+ */
+EUTelGenericPixGeoDescr* EUTelGeometryTelescopeGeoDescription::getPixGeoDescr( int planeID ){
+    return _pixGeoMgr->getPixGeoDescr(planeID);
+}
+
+/**
+ * @return path of the plane as a std::string
+ */
+std::string EUTelGeometryTelescopeGeoDescription::getPlanePath( int planeID ){
+    return _planePath.find(planeID)->second;
+}
+
 
 /**
  * Calculate effective radiation length traversed by particle traveling between two points

@@ -24,12 +24,15 @@
 
 // EUTELESCOPE
 #include "EUTelUtility.h"
+#include "EUTelGenericPixGeoMgr.h"
+//#include "EUTelGenericPixGeoDescr.h"
 
 //#ifdef USE_TGEO
 // ROOT
 #include "TGeoManager.h"
 #include "TGeoMatrix.h"
 #include "TVector3.h"
+
 
 //#endif //USE_TGEO
 
@@ -43,9 +46,11 @@
  * It is based on singleton design pattern and furnishes
  * a facade for GEAR description
  */
+
 namespace eutelescope {
 
     namespace geo {
+
 
         class EUTelGeometryTelescopeGeoDescription {
             
@@ -100,7 +105,10 @@ namespace eutelescope {
             /** Sensor medium radiation length */
             double siPlaneMediumRadLen( int );
             
-            /** Plane normal vector (nx,ny,nz) */
+	    /** Name of pixel geometry library */
+	    std::string geoLibName( int );
+            
+	    /** Plane normal vector (nx,ny,nz) */
             TVector3 siPlaneNormal( int );
             
             
@@ -144,14 +152,20 @@ namespace eutelescope {
             
             void master2Local( const double[], double[] );
 
-	    void local2MasterVec( int, const double[], double[] );
+			void local2MasterVec( int, const double[], double[] );
  
-	    void master2LocalVec( int, const double[], double[] );
+			void master2LocalVec( int, const double[], double[] );
             
             const TGeoHMatrix* getHMatrix( const double globalPos[] );
             
             /** Magnetic field */
             const gear::BField& getMagneticFiled() const;
+
+			/** Returns a pointer to the EUTelGenericPixGeoDescr of given plane */
+			EUTelGenericPixGeoDescr* getPixGeoDescr( int );
+
+			/** Returns the TGeo path of given plane */
+			std::string  getPlanePath( int  );
 
         public:
             /** Silicon planes parameters as described in GEAR
@@ -220,11 +234,22 @@ namespace eutelescope {
             /** Radiation length of the sensor [mm]*/
             EVENT::DoubleVec _siPlaneRadLength;
 
+	    /** Name of the pixel geometry library for each plane*/
+	    EVENT::StringVec _geoLibName;
+
             /** Number of planes including DUT */
             size_t _nPlanes;
 
-
+            /** Pointer to the pixel geometry manager */
+			EUTelGenericPixGeoMgr* _pixGeoMgr;
             //#ifdef  USE_TGEO
+
+			/** Flag if geoemtry is already initialized */
+			bool _isGeoInitialized;
+
+			/** Map containing plane path (string) and corresponding planeID */
+			std::map<int, std::string> _planePath;
+
         public:
             // TGeo stuff
             /** @TODO this must be coupled with GEAR

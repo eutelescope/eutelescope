@@ -585,6 +585,7 @@ namespace eutelescope
     kEUTelSparseClusterImpl   = 1,
     kEUTelDFFClusterImpl      = 2,
     kEUTelBrickedClusterImpl  = 3,
+    kEUTelGenericSparseClusterImpl = 4,
     // add here all the other cluster type numbering them in between 0
     // and 31 unknown
     kUnknown                  = 31
