@@ -567,6 +567,7 @@ namespace eutelescope {
      *  clusters.
      */
     void sparseClustering2(LCEvent * evt, LCCollectionVec * pulse);
+    void sparseClustering3(LCEvent * evt, LCCollectionVec * pulse);
 
 
     //! Input collection name for NZS data
@@ -744,6 +745,8 @@ namespace eutelescope {
      *  EUTELESCOPE::SPARSECLUSTER2.
      */
     float _sparseClusterCut;
+
+    int _sparseMinDistanceSquared;
 
     //! Minimum distance of neighbor pixels in SparseCluster
     /*! ZS pixel reclustering may need a minimum distance parameter to
