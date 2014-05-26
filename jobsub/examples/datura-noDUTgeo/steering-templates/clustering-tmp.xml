@@ -84,7 +84,7 @@
   <!--Input collection containing noise masked tracker pulse objects-->
   <parameter name="InputCollectionName" type="string" lcioInType="TrackerPulse">cluster_m26 </parameter>
   <!--Output collection where noisy clusters have been removed-->
-  <parameter name="OutputCollectionName" type="string" lcioOutType="TrackerPulse"> clusters_m26_free </parameter>
+  <parameter name="OutputCollectionName" type="string" lcioOutType="TrackerPulse"> cluster_m26_free </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
  </processor>
