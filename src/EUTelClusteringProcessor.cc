@@ -2132,39 +2132,39 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent* evt, LCCollectionVec* p
 		}
 
 
-		if ( type == kEUTelSimpleSparsePixel )
+		if ( type == kEUTelGenericSparsePixel )
 		{
 
 			// now prepare the EUTelescope interface to sparsified data.
-			auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel > > sparseData( new EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel> ( zsData ) );
+			auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel > > sparseData( new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> ( zsData ) );
 
 			streamlog_out ( DEBUG2 ) << "Processing sparse data on detector " << sensorID << " with " << sparseData->size() << " pixels " << endl;
 
 			int hitPixelsInEvent = sparseData->size();
-			std::vector<EUTelSimpleSparsePixel> hitPixelVec;
-			EUTelSimpleSparsePixel* pixel = new EUTelSimpleSparsePixel;
+			std::vector<EUTelGenericSparsePixel> hitPixelVec;
+			EUTelGenericSparsePixel* pixel = new EUTelGenericSparsePixel;
 
 			//This for-loop loads all the hits of the given event and detector plane and stores them
 			for(int i = 0; i < hitPixelsInEvent; ++i )
 			{
 				//Load the information of the hit pixel into genericPixel
 				sparseData->getSparsePixelAt( i, pixel );
-				EUTelSimpleSparsePixel hitPixel( *pixel );
+				EUTelGenericSparsePixel hitPixel( *pixel );
 
 				//and push this pixel back
 				hitPixelVec.push_back( hitPixel );
 			}	
 
-			std::vector<EUTelSimpleSparsePixel> newlyAdded;
+			std::vector<EUTelGenericSparsePixel> newlyAdded;
 			//We now cluster those hits together
 			while( !hitPixelVec.empty() )
 			{
 				// prepare a TrackerData to store the cluster candidate
 				auto_ptr< TrackerDataImpl > zsCluster ( new TrackerDataImpl );
 				// prepare a reimplementation of sparsified cluster
-				auto_ptr<EUTelSparseClusterImpl<EUTelSimpleSparsePixel > > sparseCluster ( new EUTelSparseClusterImpl<EUTelSimpleSparsePixel>( zsCluster.get() ) );
+				auto_ptr<EUTelSparseClusterImpl<EUTelGenericSparsePixel > > sparseCluster ( new EUTelSparseClusterImpl<EUTelGenericSparsePixel>( zsCluster.get() ) );
 
-				std::vector<EUTelSimpleSparsePixel> cluCandidate;
+				std::vector<EUTelGenericSparsePixel> cluCandidate;
 
 				//First we need to take any pixel, so let's take the first one
 				//Add it to the cluster as well as the newly added pixels
@@ -2182,7 +2182,7 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent* evt, LCCollectionVec* p
 					int  x1, x2, y1, y2, dX, dY;
 
 					//check against all pixels in the hitPixelVec
-					for( std::vector<EUTelSimpleSparsePixel>::iterator hitVec = hitPixelVec.begin(); hitVec != hitPixelVec.end(); ++hitVec )
+					for( std::vector<EUTelGenericSparsePixel>::iterator hitVec = hitPixelVec.begin(); hitVec != hitPixelVec.end(); ++hitVec )
 					{
 						//get the relevant infos from the newly added pixel
 						x1 = newlyAdded.front().getXCoord();
@@ -2226,7 +2226,7 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent* evt, LCCollectionVec* p
 				//Hot pixel removement:
 				while(!cluCandidate.empty())
 				{
-					EUTelSimpleSparsePixel pixel = cluCandidate.front();
+					EUTelGenericSparsePixel pixel = cluCandidate.front();
 					cluCandidate.erase( cluCandidate.begin() );
 
           				int index = matrixDecoder.getIndexFromXY( pixel.getXCoord(), pixel.getYCoord() );
