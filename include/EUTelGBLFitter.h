@@ -62,15 +62,12 @@ namespace eutelescope {
 
         /** Fit tracks */
         // public: 
-        void FitTracks();
 
         void TrackCandidatesToGBLTrajectories();
-//        void PerformFitGBLTrajectories();
 
         // private:
         void TrackCandidatesToGBLTrajectory( vector<IMPL::TrackImpl*>::const_iterator&  );
         void PerformFitGBLTrajectory( gbl::GblTrajectory* ,  vector<IMPL::TrackImpl*>::const_iterator&, double );
-//        void PerformMille();
 
         void FitSingleTrackCandidate(EVENT::TrackVec::const_iterator& itTrkCand);
  
@@ -178,12 +175,6 @@ namespace eutelescope {
 	TVectorD getXYZfromDzNum( double, double, double, double, double, double, double ) const;
         
         TMatrixD propagatePar(double);
-
-        double interpolateTrackX(const EVENT::TrackerHitVec&, const double) const;
-        double interpolateTrackY(const EVENT::TrackerHitVec&, const double) const;
- 
-        double getTrackSlopeX(const EVENT::TrackerHitVec&) const;
-        double getTrackSlopeY(const EVENT::TrackerHitVec&) const;
 
         void addMeasurementsGBL( gbl::GblPoint&, TVectorD&, TVectorD&, const double*, const double*, const EVENT::FloatVec&, TMatrixD& );
         
