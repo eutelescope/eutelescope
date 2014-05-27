@@ -16,8 +16,7 @@
 #include <AIDA/IHistogram1D.h>
 #endif // MARLIN_USE_AIDA
 
-// EUTELESCOPE
-#include "EUTelExhaustiveTrackFinder.h"
+#include "EUTelUtility.h"
 
 using namespace lcio;
 using namespace marlin;
@@ -160,7 +159,7 @@ void EUTelProcessorFilteringHitFilter::check( LCEvent * /*event*/ ) {
 
 void EUTelProcessorFilteringHitFilter::end( ) {
 
-       streamlog_out( MESSAGE )  << "EUTelProcessorTrackingExhaustiveTrackSearch::end()  " << name() 
+       streamlog_out( MESSAGE )  << "EUTelProcessorFilteringHitFilter::end()  " << name() 
                                  << " processed " << _nProcessedEvents << " events in " << _nProcessedRuns << " runs "
                                  << std::endl;
 
