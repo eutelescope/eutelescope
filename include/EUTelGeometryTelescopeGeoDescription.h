@@ -51,6 +51,7 @@ namespace eutelescope {
 
     namespace geo {
 
+
         class EUTelGeometryTelescopeGeoDescription {
             
         private:

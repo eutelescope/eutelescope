@@ -124,8 +124,8 @@ namespace eutelescope {
   std::ostream& operator<<(std::ostream& os, const SparsePixelType& type) {
     if ( type == kEUTelBaseSparsePixel ) os << "kEUTelBaseSparsePixel" ;
     else if ( type == kEUTelSimpleSparsePixel ) os << "kEUTelSimpleSparsePixel";
-    else if ( type == kEUTelGenericSparsePixel ) os << "kEUTelSimpleSparsePixel";
-    else if ( type == kEUTelGeometricPixel ) os << "kEUTelSimpleSparsePixel";
+    else if ( type == kEUTelGenericSparsePixel ) os << "kEUTelGenericSparsePixel";
+    else if ( type == kEUTelGeometricPixel ) os << "kEUTelGeometricPixel";
     // add here your type
     else if ( type == kUnknownPixelType ) os << "kUnknownPixelType";
     os << " (" << static_cast<int> (type ) << ")";

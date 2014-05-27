@@ -469,11 +469,9 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::strin
 	//this line tells the pixel geometry manager to load the pixel geometry into the plane			
         _pixGeoMgr->addPlane( *itrPlaneId, geoLibName( *itrPlaneId), stVolName);
    } // loop over sensorID
-  
-    
+
     _geoManager->CloseGeometry();
     _isGeoInitialized = true;
-
     // Dump ROOT TGeo object into file
     if ( dumpRoot ) _geoManager->Export( geomName.c_str() );
 

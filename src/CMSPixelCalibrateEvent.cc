@@ -29,7 +29,7 @@
 #include "EUTelEventImpl.h"
 #include "EUTelTrackerDataInterfacerImpl.h"
 #include "EUTelBaseSparsePixel.h"
-#include "EUTelSimpleSparsePixel.h"
+#include "EUTelGenericSparsePixel.h"
 
 // Marlin includes
 #include "marlin/Processor.h"
@@ -319,13 +319,13 @@ void CMSPixelCalibrateEventProcessor::processEvent (LCEvent * event) {
             idDataEncoder["sparsePixelType"] = static_cast<int> (cellDecoder( sparseData )["sparsePixelType"]);
             idDataEncoder.setCellID(corrected);
 
-            EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel>  correctedData( corrected ) ;
+            EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>  correctedData( corrected ) ;
 
-            auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel> > pixelData( new EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel>( sparseData ));
+            auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> > pixelData( new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>( sparseData ));
 
             // Loop over all pixels in the sparseData object.
-            EUTelSimpleSparsePixel Pixel;
-            auto_ptr<EUTelSimpleSparsePixel> correctedPixel( new EUTelSimpleSparsePixel );
+            EUTelGenericSparsePixel Pixel;
+            auto_ptr<EUTelGenericSparsePixel> correctedPixel( new EUTelGenericSparsePixel );
 
             for ( unsigned int iPixel = 0; iPixel < pixelData->size(); iPixel++ ) {
                 pixelData->getSparsePixelAt( iPixel, &Pixel);

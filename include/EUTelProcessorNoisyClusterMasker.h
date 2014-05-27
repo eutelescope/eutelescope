@@ -11,7 +11,7 @@
 
 // eutelescope includes ".h"
 #include "EUTelEventImpl.h"
-#include "EUTelSimpleSparsePixel.h"
+#include "EUTelGenericSparsePixel.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -31,7 +31,7 @@
 namespace eutelescope {
 
   //! Processor to convert data to be compliant with EUTelGenericSparsePixel
-  /*! EUTelescope stores data either in EUTelSimpleSparsePixel with 
+  /*! EUTelescope stores data either in EUTelGenericSparsePixel with 
    *  information (X,Y,signal) per hit or EUTelAPIXSparsePixel with
    *  (X,Y,signal, chip, time). 
    *  New processors should not have to deal with those different types,
