@@ -2067,7 +2067,7 @@ void EUTelApplyAlignmentProcessor::TransformToLocalFrame(TrackerHitImpl* outputH
           }
           if ( type == kEUTelSparseClusterImpl ) 
           {
-            cluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel > ( static_cast<TrackerDataImpl *> ( clusterVec[i]  ) );
+            cluster = new EUTelSparseClusterImpl< EUTelGenericSparsePixel > ( static_cast<TrackerDataImpl *> ( clusterVec[i]  ) );
           } 
           else 
           {

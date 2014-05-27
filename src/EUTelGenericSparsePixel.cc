@@ -28,6 +28,8 @@ EUTelGenericSparsePixel::EUTelGenericSparsePixel():
 	_type = kEUTelGenericSparsePixel;
 }
 
+
+
 //Constructor with all four parameters
 EUTelGenericSparsePixel::EUTelGenericSparsePixel(short xCoord, short yCoord, short signal, short time):
 	_xCoord(xCoord),
@@ -76,7 +78,7 @@ void EUTelGenericSparsePixel::print(std::ostream& os) const
      	<< std::setw(width) << "x coord: "  << _xCoord << std::endl
      	<< std::setw(width) << "y coord: "  << _yCoord << std::endl
      	<< std::setw(width) << "signal: "  << _signal << std::endl
-	 	<< std::setw(width) << "time: "  << _time << std::endl;
+ 	<< std::setw(width) << "time: "  << _time << std::endl;
  	for ( int i = 0 ; i < bigWidth ; ++i ) 
 	{
 		os << "-";

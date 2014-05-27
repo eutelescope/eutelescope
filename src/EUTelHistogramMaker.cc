@@ -17,7 +17,7 @@
 #include "EUTelDFFClusterImpl.h"
 #include "EUTelBrickedClusterImpl.h"
 #include "EUTelSparseClusterImpl.h"
-#include "EUTelSimpleSparsePixel.h"
+#include "EUTelGenericSparsePixel.h"
 #include "EUTELESCOPE.h"
 #include "EUTelExceptions.h"
 #include "EUTelHistogramManager.h"
@@ -270,8 +270,8 @@ void EUTelHistogramMaker::processEvent (LCEvent * evt) {
         CellIDDecoder<TrackerDataImpl > anotherDecoder(sparseClusterCollectionVec);
         pixelType = static_cast<SparsePixelType> ( static_cast<int> ( anotherDecoder( oneCluster )["sparsePixelType"] ));
 
-        if ( pixelType == kEUTelSimpleSparsePixel ) {
-          cluster = new EUTelSparseClusterImpl<EUTelSimpleSparsePixel >
+        if ( pixelType == kEUTelGenericSparsePixel ) {
+          cluster = new EUTelSparseClusterImpl<EUTelGenericSparsePixel >
             ( static_cast<TrackerDataImpl *> ( pulse->getTrackerData() ) );
         } else {
           streamlog_out ( ERROR4 ) << "Unknown pixel type. Sorry for quitting." << endl;
@@ -432,12 +432,12 @@ void EUTelHistogramMaker::processEvent (LCEvent * evt) {
               }
             } else if ( type == kEUTelSparseClusterImpl ) {
               
-              if ( pixelType == kEUTelSimpleSparsePixel ) {
+              if ( pixelType == kEUTelGenericSparsePixel ) {
                 
-                EUTelSparseClusterImpl<EUTelSimpleSparsePixel > * recasted =
-                  dynamic_cast< EUTelSparseClusterImpl<EUTelSimpleSparsePixel > * > ( cluster );
+                EUTelSparseClusterImpl<EUTelGenericSparsePixel > * recasted =
+                  dynamic_cast< EUTelSparseClusterImpl<EUTelGenericSparsePixel > * > ( cluster );
                 
-                auto_ptr<EUTelSimpleSparsePixel> sparsePixel( new EUTelSimpleSparsePixel );
+                auto_ptr<EUTelGenericSparsePixel> sparsePixel( new EUTelGenericSparsePixel );
                 for ( unsigned int iPixel = 0; iPixel < recasted->size() ; iPixel++ ) {
                   recasted->getSparsePixelAt( iPixel, sparsePixel.get() ) ;
                   int index = noiseMatrixDecoder.getIndexFromXY( sparsePixel->getXCoord(), sparsePixel->getYCoord() );

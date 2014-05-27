@@ -493,39 +493,52 @@ itTrk++;
             
             EUTelTrackStateImpl* state = const_cast<EUTelTrackStateImpl*>((*itTrk)->getTrackState( EUTelTrackStateImpl::AtFirstHit ));
             
-	    double dz = findIntersection( state );
-            if ( dz < 0 ) {
-                isGoodTrack = false;
-                delete (*itTrk);
-                itTrk = _tracksCartesian.erase( itTrk );
+            if( state == 0 )
+            {
+              streamlog_out ( WARNING0 ) << "track _tracksCartesian return a NULL state, skip this one " << endl; 
+              isGoodTrack = false;
+              delete (*itTrk);
+              itTrk = _tracksCartesian.erase( itTrk );
+              continue;
             }
 
             int newSensorID = -999;
 
             // iterate until the particle flies out of the detector volume
-            while ( dz > 0 ) {
+            // replaceing with loop over sensor IDs ::            while ( dz > 0 ) {
+            EVENT::IntVec sensID = geo::gGeometry().sensorIDsVec();
 
-                propagateTrackRefPoint( state, dz );
+            // Calculate track's new position
+            const float* startingPoint =  state->getReferencePoint( );
+            double dz = startingPoint[2];
+
+            int isensorID = 0;             
+            while( isensorID < sensID.size() - 1 ) 
+            {
+                isensorID++;
+                // looping by Z order  in the range of sensID (Vec) which should have same length // ASSUMPTION !!!
+                int SensorID = geo::gGeometry().sensorZOrderToID(isensorID); 
+
+                streamlog_out ( DEBUG0 ) << "expecting sensor: " << isensorID << " ID:"<< SensorID << endl;
+                int newSensorID = propagateTrackRefPoint( state, SensorID );
+
                 // Calculate track's new position
-                const float* xnew = ( state )->getReferencePoint( );
+                const float* xnew =  state->getReferencePoint( );
+                dz = xnew[2]-dz;
 
                 // Determine id of the sensor in which track reference point is located
                 bool findhit = true;
-                const int newSensorID = geo::gGeometry( ).getSensorID( xnew );
- 
-                streamlog_out ( MESSAGE0 ) << "New intersection after step dz=" << dz << " with newSensorID : " << newSensorID << std::endl;
-                
+                streamlog_out ( MESSAGE0 ) << "New point: " << xnew[0] << " " << xnew[1] << " " << xnew[2] << " matches sensor: " << newSensorID <<  std::endl;
                 if ( newSensorID != -999 ) {
                     findhit = true;
                 } else {
                     streamlog_out ( MESSAGE0 ) << "New point is outside of any sensor volume." << std::endl;
                     streamlog_out ( MESSAGE0 ) << "Removing this track candidate from further consideration." << std::endl;
-                    delete (*itTrk);
-                    itTrk = _tracksCartesian.erase( itTrk );
-                    findhit = false;
-                    isGoodTrack = false;
-                    break;
+                    continue;
                 }
+
+                // ASSUMPTION that xnew has at least 3 elements ....
+                double dz = xnew[2];
 
                 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 // @TODO Allow missing hits
@@ -533,26 +546,15 @@ itTrk++;
                 EVENT::TrackerHit* closestHit = const_cast< EVENT::TrackerHit* > ( findClosestHit( state, newSensorID ) );
                 if ( closestHit ) {
                     const double distance = getResidual( state, closestHit ).Norm2Sqr( );
-                    const double XYPrediction = getXYPredictionPrecision( state ); 
-                    const double distanceCut = dz/100.* XYPrediction ;
+                    const double distanceCut = dz/100.*getXYPredictionPrecision( state );
                     if ( distance > distanceCut ) {
-                        streamlog_out ( DEBUG1 ) << "Closest hit is outside of search window. " << std::endl;
-                        streamlog_out ( DEBUG1 ) << "distanceCut = "<< distanceCut << " = dz/100. ( " << dz/100. << ") *precision(" << XYPrediction  << ")" << std::endl;
+                        streamlog_out ( DEBUG1 ) << "Closest hit is outside of search window." << std::endl;
                         streamlog_out ( DEBUG1 ) << "Skipping current plane." << std::endl;
-//                        itTrk = _tracks.erase( itTrk );
                         findhit = false;
-//                        isGoodTrack = false;
-//                        break;
-                    } else {
-                        streamlog_out ( DEBUG1 ) << "closestHit found on newSensorID : " << newSensorID  << std::endl;                
-                    }   
+                    }
                 } else {
-                    streamlog_out ( DEBUG1 ) << "There are no hits in the closest plane, newSensorID : " << newSensorID  << std::endl;
-//                    streamlog_out ( DEBUG1 ) << "Removing this track candidate from further consideration." << std::endl;
-//                    itTrk = _tracks.erase( itTrk );
+                    streamlog_out ( DEBUG1 ) << "There are no hits in the closest plane." << std::endl;
                     findhit = false;
-//                    isGoodTrack = false;
-//                    break;
                 }
                 
                 if ( findhit ) {
@@ -561,13 +563,11 @@ itTrk++;
                     double chi2 = (*itTrk)->getChi2() + updateTrackState( state, closestHit );
                     (*itTrk)->setChi2( chi2 );
                     (*itTrk)->addHit( closestHit );
-               } else {
+                } else {
                     getPropagationJacobianF( state, dz );
                     propagateTrackState( state );
                 }
 
-                // find next intersection
-                dz = findIntersection( state );
             }
  
             if ( isGoodTrack && ( *itTrk )->getTrackerHits( ).size( ) < geo::gGeometry( ).nPlanes( ) - _allowedMissingHits ) {
@@ -719,8 +719,8 @@ itTrk++;
             const double* uvpos = (*itHit)->getPosition();
             float posLocal[] =  { static_cast<float>(uvpos[0]), static_cast<float>(uvpos[1]), static_cast<float>(uvpos[2]) };
 
-						UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
-						const int sensorID = hitDecoder(static_cast< IMPL::TrackerHitImpl* >(*itHit))["sensorID"];
+            const int sensorID = Utility::GuessSensorID( *itHit );
+
             double temp[] = {0.,0.,0.};
             geo::gGeometry().local2Master( sensorID, uvpos, temp);
             float posGlobal[] = { static_cast<float>(temp[0]), static_cast<float>(temp[1]), static_cast<float>(temp[2]) };
@@ -792,10 +792,11 @@ itTrk++;
     
     /**
      * Find closest surface intersected by the track and propagate track to that point
-     * @param ts track state
+     * @param input: ts track state
+     * @param output: nextPlane - SensorID derived from the next geo::Volume intersection    
      * @return dz or -999 on failure
      */
-    double EUTelKalmanFilter::findIntersection( EUTelTrackStateImpl* ts ) {
+    double EUTelKalmanFilter::findIntersection( EUTelTrackStateImpl* ts, int& nextPlane ) {
         streamlog_out(DEBUG2) << "EUTelKalmanFilter::findIntersection()" << std::endl;
         
         // Get track position
@@ -829,7 +830,7 @@ itTrk++;
         streamlog_out(DEBUG0) << "Sensor Z order:" << sensorZorder << std::endl;
         
         if ( sensorID < 0 ) {
-            streamlog_out ( DEBUG3 ) << "Track interseciton was not found: sensorID : " << sensorID  << std::endl;
+            streamlog_out ( DEBUG3 ) << "Track interseciton was not found" << std::endl;
             return -999.;
         }
         
@@ -849,10 +850,12 @@ itTrk++;
         
         // Find closest plane downstream
         const int nextPlaneId = geo::gGeometry().sensorZOrderToID(sensorZorder+1);
+        nextPlane = nextPlaneId;
+
         if ( nextPlaneId > 0 ) {
             itPlaneId = std::find( sensID.begin(), sensID.end(), nextPlaneId ); 
         } else {
-            streamlog_out ( DEBUG3 ) << "Track intersection was not found: nextPlaneId " << nextPlaneId << std::endl;
+            streamlog_out ( DEBUG3 ) << "Track intersection was not found" << std::endl;
             return -999.;
         }
         // Construct quadratic equation
@@ -905,7 +908,7 @@ itTrk++;
 	double dz = ( solution > 0. ) ? newPos[ solutionNum ].Z() - trkVec.Z() : -1.;
 
         if ( dz < 1.E-6 ) {
-            streamlog_out ( DEBUG3 ) << "Track intersection was not found; dz= " << dz << std::endl;
+            streamlog_out ( DEBUG3 ) << "Track intersection was not found" << std::endl;
             return -999.;
         }       
         
@@ -960,6 +963,96 @@ itTrk++;
           return nextPlaneId;
     }
 
+
+    /** Propagate track state by dz 
+     * 
+     * @param ts track state
+     * @param dz propagation distance
+     */
+    void EUTelKalmanFilter::propagateTrackRefPoint( EUTelTrackStateImpl* ts, const int nextPlaneId,  double dz ) {
+        streamlog_out(DEBUG2) << "EUTelKalmanFilter::propagateTrackRefPoint()" << std::endl;
+          // The formulas below are derived from equations of motion of the particle in 
+          // magnetic field under assumption |dz| small. Must be valid for |dz| < 10 cm
+
+
+	  // Get track parameters
+	  const double invP = ts->getInvP();
+	  const double x0 = ts->getX();
+	  const double y0 = ts->getY();
+//	  const double z0 = ts->getZ();
+//	  const double x0 = ts->getReferencePoint()[0];
+//	  const double y0 = ts->getReferencePoint()[1];
+	  const double z0 = ts->getReferencePoint()[2];
+	  const double tx0 = ts->getTx();
+	  const double ty0 = ts->getTy();
+//
+          TVector3 vectorRefPoint( x0, y0, z0 );        
+
+
+//
+          EVENT::IntVec sensID = geo::gGeometry().sensorIDsVec();
+          EVENT::IntVec::const_iterator itPlaneId;
+          if ( nextPlaneId > 0 ) {
+            itPlaneId = std::find( sensID.begin(), sensID.end(), nextPlaneId ); 
+          } else {
+            streamlog_out ( DEBUG3 ) << "Track intersection was not found" << std::endl;
+          }
+          TVector3 norm = geo::gGeometry().siPlaneNormal( *itPlaneId ).Unit();
+          TVector3 sensorCenter( geo::gGeometry().siPlaneXPosition( *itPlaneId ),
+                                 geo::gGeometry().siPlaneYPosition( *itPlaneId ),
+                                 geo::gGeometry().siPlaneZPosition( *itPlaneId ) );
+          TVector3 delta = vectorRefPoint - sensorCenter;
+          const double positionRefPoint = delta.Dot( norm.Unit() );
+ 
+          streamlog_out ( DEBUG3 ) << "refpoint: " << x0 << " " << y0 << " " << z0 << std::endl;
+          streamlog_out ( DEBUG3 ) << "next sensor " << nextPlaneId << " c:" << sensorCenter[0] << " "  << sensorCenter[1] << " " << sensorCenter[2] << " "  << std::endl;
+          streamlog_out ( DEBUG3 ) << "next sensor " << nextPlaneId << " n:" << norm[0] << " "  << norm[1] << " " << norm[2] << " "  << std::endl;
+          if ( positionRefPoint > 0 ) {
+            streamlog_out ( DEBUG3 ) << "positionRefPoint: " << positionRefPoint << std::endl;
+          } else {
+            streamlog_out ( DEBUG3 ) << "positionRefPoint: " << positionRefPoint << std::endl;
+          }
+           
+//
+
+          // Get magnetic field vector
+          gear::Vector3D vectorGlobal( x0, y0, z0 );        // assuming uniform magnetic field
+	  const gear::BField&   B = geo::gGeometry().getMagneticFiled();
+	  const double Bx         = B.at( vectorGlobal ).x();
+	  const double By         = B.at( vectorGlobal ).y();
+	  const double Bz         = B.at( vectorGlobal ).z();
+	  const double mm = 1000.;
+	  const double k = 0.299792458/mm;
+          
+	  const double sqrtFactor = sqrt( 1. + tx0*tx0 + ty0*ty0 );
+
+	  const double Ax = sqrtFactor * (  ty0 * ( tx0 * Bx + Bz ) - ( 1. + tx0*tx0 ) * By );
+	  const double Ay = sqrtFactor * ( -tx0 * ( ty0 * By + Bz ) + ( 1. + ty0*ty0 ) * Bx );
+
+	  double x = x0 + tx0 * dz + 0.5 * k * invP * Ax * dz*dz;
+	  double y = y0 + ty0 * dz + 0.5 * k * invP * Ay * dz*dz;
+          
+//	  const double tx = tx0 + invP * k * Ax * dz;
+//	  const double ty = ty0 + invP * k * Ay * dz;
+
+	  streamlog_out( DEBUG0 ) << "Old track state (x,y,tx,ty,invP):" << std::endl;
+	  streamlog_out( DEBUG0 ) << std::setw(15) << x0
+				  << std::setw(15) << y0
+				  << std::setw(15) << tx0
+				  << std::setw(15) << ty0
+				  << std::setw(15) << invP << std::endl;
+	  streamlog_out( DEBUG0 ) << "Old track ref point (x,y,z):" << std::endl;
+	  streamlog_out( DEBUG0 ) << std::setw(15) << ts->getReferencePoint()[0]
+				  << std::setw(15) << ts->getReferencePoint()[1]
+				  << std::setw(15) << ts->getReferencePoint()[2] << std::endl;
+
+	  const float newPos[] = {static_cast<float>(x), static_cast<float>(y), static_cast<float>(z0+dz)};
+	  ts->setLocation( EUTelTrackStateImpl::AtOther );
+	  ts->setReferencePoint( newPos );
+        
+          streamlog_out(DEBUG2) << "EUTelKalmanFilter::propagateTrackRefPoint() finish" << std::endl;
+    }
+
     
     /** Find the hit closest to the intersection of a track with given sensor
      * 
@@ -1000,7 +1093,7 @@ itTrk++;
 	return *itClosestHit;
     }
     
-  double EUTelKalmanFilter::getXYPredictionPrecision( const EUTelTrackStateImpl* ts ) const {
+    double EUTelKalmanFilter::getXYPredictionPrecision( const EUTelTrackStateImpl* ts ) const {
       streamlog_out(DEBUG2) << "EUTelKalmanFilter::getXYPredictionPrecision()" << std::endl;
       
       TMatrixDSym Ckkm1 = getTrackStateCov(ts);

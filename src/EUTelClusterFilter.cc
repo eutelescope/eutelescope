@@ -922,16 +922,16 @@ void EUTelClusterFilter::processEvent (LCEvent * event) {
                 CellIDDecoder<TrackerDataImpl > anotherDecoder(sparseClusterCollectionVec);
                 pixelType = static_cast<SparsePixelType> ( static_cast<int> ( anotherDecoder( oneCluster )["sparsePixelType"] ));
 
-                if ( pixelType == kEUTelSimpleSparsePixel )
+                if ( pixelType == kEUTelGenericSparsePixel )
                 {
-                    cluster = new EUTelSparseClusterImpl<EUTelSimpleSparsePixel > ( static_cast<TrackerDataImpl* > (pulse->getTrackerData() ));
+                    cluster = new EUTelSparseClusterImpl<EUTelGenericSparsePixel > ( static_cast<TrackerDataImpl* > (pulse->getTrackerData() ));
 
-                    EUTelSparseClusterImpl<EUTelSimpleSparsePixel > * recasted =
-                    dynamic_cast<EUTelSparseClusterImpl<EUTelSimpleSparsePixel > *> ( cluster );
+                    EUTelSparseClusterImpl<EUTelGenericSparsePixel > * recasted =
+                    dynamic_cast<EUTelSparseClusterImpl<EUTelGenericSparsePixel > *> ( cluster );
 
                     if ( _noiseRelatedCuts )
                     {
-                        // the EUTelSparseClusterImpl<EUTelSimpleSparsePixel>
+                        // the EUTelSparseClusterImpl<EUTelGenericSparsePixel>
                         // doesn't contain any intrinsic noise information. So we
                         // need to get them from the input noise collection.
                         try
@@ -944,7 +944,7 @@ void EUTelClusterFilter::processEvent (LCEvent * event) {
                             TrackerDataImpl    * noiseMatrix = dynamic_cast<TrackerDataImpl *> ( noiseCollectionVec->getElementAt( detectorPos ));
                             EUTelMatrixDecoder   noiseMatrixDecoder( noiseDecoder, noiseMatrix ) ;
 
-                            auto_ptr<EUTelSimpleSparsePixel>  sparsePixel(new EUTelSimpleSparsePixel);
+                            auto_ptr<EUTelGenericSparsePixel>  sparsePixel(new EUTelGenericSparsePixel);
                             vector<float > noiseValues;
                             for ( unsigned int iPixel = 0 ; iPixel < recasted->size() ; iPixel++ )
                             {

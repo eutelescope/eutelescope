@@ -97,6 +97,7 @@ namespace eutelescope {
          */
         void addTrackCandidateToCollection(lcio::LCEvent*, const std::vector< EVENT::TrackerHitVec >&);
 
+
         /** Prepare LCIO data structure for dumping track hits from PR search
          *  into LCIO files
          */
@@ -112,11 +113,13 @@ namespace eutelescope {
 
         // Input/Output collections of the processor
 
+        /** Input ZS Data collection name */
+	std::string _zsDataCollectionName;
+
         /** Input TrackerHit collection name */
 	std::string _hitInputCollectionName;
 
         /** Output TrackerHit collection name */
-
         string _hitFittedOutputCollectionName;
 
         /** Output TrackerHit collection name */

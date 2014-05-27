@@ -192,7 +192,7 @@ namespace eutelescope {
 
         EUTelVirtualCluster* GetClusterFromHit(const IMPL::TrackerHitImpl*);
 
-        int GuessSensorID(const EVENT::TrackerHit* hit);
+        int GuessSensorID( EVENT::TrackerHit* hit);
 
         /** Highland's formula for multiple scattering */
         double getThetaRMSHighland( double, double );

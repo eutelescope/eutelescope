@@ -16,7 +16,7 @@
 #include "TVector3.h"
 
 // eutelescope includes ".h"
-#include "EUTelHitMaker.h"
+#include "EUTelProcessorHitMaker.h"
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelEventImpl.h"
 #include "EUTELESCOPE.h"
@@ -73,18 +73,19 @@ using namespace eutelescope;
 
 // definition of static members mainly used to name histograms
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-std::string EUTelHitMaker::_hitHistoLocalName          = "HitHistoLocal";
-std::string EUTelHitMaker::_hitHistoTelescopeName      = "HitHistoTelescope";
-std::string EUTelHitMaker::_densityPlotName            = "DensityPlot";
-std::string EUTelHitMaker::_clusterCenterHistoName     = "ClusterCenter";
-std::string EUTelHitMaker::_clusterCenterXHistoName    = "ClusterCenterX";
-std::string EUTelHitMaker::_clusterCenterYHistoName    = "ClusterCenterY";
-std::string EUTelHitMaker::_clusterCenterEtaHistoName  = "ClusterCenterEta";
-std::string EUTelHitMaker::_clusterCenterEtaXHistoName = "ClusterCenterEtaX";
-std::string EUTelHitMaker::_clusterCenterEtaYHistoName = "ClusterCenterEtaY";
+std::string EUTelProcessorHitMaker::_hitHistoLocalName          = "HitHistoLocal";
+std::string EUTelProcessorHitMaker::_hitHistoTelescopeName      = "HitHistoTelescope";
+std::string EUTelProcessorHitMaker::_densityPlotName            = "DensityPlot";
+std::string EUTelProcessorHitMaker::_clusterCenterHistoName     = "ClusterCenter";
+std::string EUTelProcessorHitMaker::_clusterCenterXHistoName    = "ClusterCenterX";
+std::string EUTelProcessorHitMaker::_clusterCenterYHistoName    = "ClusterCenterY";
+std::string EUTelProcessorHitMaker::_clusterCenterEtaHistoName  = "ClusterCenterEta";
+std::string EUTelProcessorHitMaker::_clusterCenterEtaXHistoName = "ClusterCenterEtaX";
+std::string EUTelProcessorHitMaker::_clusterCenterEtaYHistoName = "ClusterCenterEtaY";
 #endif
 
-EUTelHitMaker::EUTelHitMaker () : Processor("EUTelHitMaker"),
+EUTelProcessorHitMaker::EUTelProcessorHitMaker () : Processor("EUTelProcessorHitMaker"),
+_zsDataCollectionName(),
 _pulseCollectionName(),
 _hitCollectionName(),
 _etaCollectionNames(),
@@ -117,8 +118,13 @@ _siOffsetYMap()
 
   // modify processor description
   _description =
-    "EUTelHitMaker is responsible to translate cluster centers from the local frame of reference"
+    "EUTelProcessorHitMaker is responsible to translate cluster centers from the local frame of reference"
     " to the external frame of reference using the GEAR geometry description";
+
+  registerInputCollection (LCIO::TRACKERDATA, "ZSDataCollectionName", 
+                          "LCIO converted data files", 
+                          _zsDataCollectionName, string("original_zsdata"));
+
 
   registerInputCollection(LCIO::TRACKERPULSE,"PulseCollectionName",
                           "Cluster (pulse) collection name",
@@ -175,7 +181,7 @@ _siOffsetYMap()
 }
 
 
-void EUTelHitMaker::init() {
+void EUTelProcessorHitMaker::init() {
   // this method is called only once even when the rewind is active
   // usually a good idea to
   printParameters ();
@@ -226,7 +232,7 @@ void EUTelHitMaker::init() {
 
 }
 
-void EUTelHitMaker::DumpReferenceHitDB()
+void EUTelProcessorHitMaker::DumpReferenceHitDB()
 {
 // create a reference hit collection file (DB)
 
@@ -310,7 +316,7 @@ void EUTelHitMaker::DumpReferenceHitDB()
   lcWriter->close();
 }
 
-void EUTelHitMaker::addReferenceHitCollection(LCEvent *event, std::string referenceHitName="referenceHit")
+void EUTelProcessorHitMaker::addReferenceHitCollection(LCEvent *event, std::string referenceHitName="referenceHit")
 { 
 
   LCCollectionVec * referenceHitCollection = new LCCollectionVec( LCIO::LCGENERICOBJECT );
@@ -333,7 +339,7 @@ void EUTelHitMaker::addReferenceHitCollection(LCEvent *event, std::string refere
 }
 
 
-void EUTelHitMaker::processRunHeader (LCRunHeader * rdr) {
+void EUTelProcessorHitMaker::processRunHeader (LCRunHeader * rdr) {
 
 
   auto_ptr<EUTelRunHeaderImpl> header ( new EUTelRunHeaderImpl (rdr) );
@@ -379,7 +385,7 @@ void EUTelHitMaker::processRunHeader (LCRunHeader * rdr) {
 }
 
 
-void EUTelHitMaker::processEvent (LCEvent * event) {
+void EUTelProcessorHitMaker::processEvent (LCEvent * event) {
 
    ++_iEvt;
 
@@ -482,7 +488,8 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
     // prepare an encoder for the hit collection
     CellIDEncoder<TrackerHitImpl> idHitEncoder(EUTELESCOPE::HITENCODING, hitCollection);
 
-    CellIDDecoder<TrackerPulseImpl>  pulseCellDecoder(pulseCollection);
+    CellIDDecoder<TrackerPulseImpl>  clusterCellDecoder(pulseCollection);
+    CellIDDecoder<TrackerDataImpl>   cellDecoder( pulseCollection );
 
     int detectorID    = -99; // it's a non sense
     int oldDetectorID = -100;
@@ -497,73 +504,29 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 
     double gRotation[3] = { 0., 0., 0.}; // not rotated
 
-    for ( int iPulse = 0; iPulse < pulseCollection->getNumberOfElements(); iPulse++ ) 
+    for ( int iCluster = 0; iCluster < pulseCollection->getNumberOfElements(); iCluster++ ) 
     {
-        TrackerPulseImpl     * pulse   = static_cast<TrackerPulseImpl*> ( pulseCollection->getElementAt(iPulse) );
-        EUTelVirtualCluster  * cluster;
-        ClusterType type = static_cast<ClusterType>(static_cast<int>((pulseCellDecoder(pulse)["type"])));
+ 	TrackerPulseImpl * clusterFrame = dynamic_cast<TrackerPulseImpl*> ( pulseCollection->getElementAt( iCluster ) ); // actual cluster
+    
+			int sensorID    = clusterCellDecoder(clusterFrame)["sensorID"];
+			int clusterID   = clusterCellDecoder(clusterFrame)["clusterID"];
+			int clusterType = clusterCellDecoder(clusterFrame)["type"];
 
-        
-        if ( type == kEUTelDFFClusterImpl ) 
-        {
+       streamlog_out(DEBUG1) << "cluster[" << setw(4) << iCluster << "] on sensor[" << setw(3) << sensorID << "]"
+                                                                  << " clusterType : " << setw(3) << clusterType << endl;
+	
+        TrackerDataImpl  * channelList  = dynamic_cast<TrackerDataImpl*> ( clusterFrame->getTrackerData() ); // list of pixels ?
+		
+	int		    detectorID  = ( static_cast<int> ( clusterCellDecoder(clusterFrame)["sensorID"] ));
+	SparsePixelType          type   = static_cast<SparsePixelType> ( static_cast<int> ( clusterCellDecoder( clusterFrame )["type"]) );
 
-        // digital fixed cluster implementation. Remember it can come from
-        // both RAW and ZS data        
-            cluster = new EUTelDFFClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData()) );
-        }
-        else if ( type == kEUTelFFClusterImpl ) 
-        {
-           
-        // fixed cluster implementation. Remember it can come from
-        // both RAW and ZS data
-            cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData()) );
-
-        }
-        else if ( type == kEUTelSparseClusterImpl ) 
-        {
-
-            // ok the cluster is of sparse type, but we also need to know
-            // the kind of pixel description used. This information is
-            // stored in the corresponding original data collection.
-
-            LCCollectionVec * sparseClusterCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection("original_zsdata"));
-            TrackerDataImpl * oneCluster = dynamic_cast<TrackerDataImpl*> (sparseClusterCollectionVec->getElementAt( 0 ));
-            CellIDDecoder<TrackerDataImpl > anotherDecoder(sparseClusterCollectionVec);
-            SparsePixelType pixelType = static_cast<SparsePixelType> ( static_cast<int> ( anotherDecoder( oneCluster )["sparsePixelType"] ));
-
-            // now we know the pixel type. So we can properly create a new
-            // instance of the sparse cluster
-        
-            if ( pixelType == kEUTelSimpleSparsePixel ) 
-            {
-                cluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel >
-                    ( static_cast<TrackerDataImpl *> ( pulse->getTrackerData()  ) );
-            } 
-            else 
-            {
-                streamlog_out ( ERROR4 ) << "Unknown pixel type.  Sorry for quitting." << endl;
-                throw UnknownDataTypeException("Pixel type unknown");
-            }
-            
-        }
-        else if ( type == kEUTelBrickedClusterImpl ) 
-        { 
-            //!HACK TAKI
-
-            //  bricked cluster implementation.      
-            cluster = new EUTelBrickedClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData()) ); //!HACK TAKI
-
-        } 
-        else 
-        {
-            streamlog_out ( ERROR4 ) <<  "Unknown cluster type. Sorry for quitting" << endl;
-            throw UnknownDataTypeException("Cluster type unknown");
-        }
+        EUTelVirtualCluster * cluster = 
+                                       new EUTelSparseClusterImpl< EUTelGenericSparsePixel > (static_cast<TrackerDataImpl *> ( channelList ));
 
       // there could be several clusters belonging to the same
       // detector. So update the geometry information only if this new
       // cluster belongs to a different detector.
-      detectorID = cluster->getDetectorID();
+      // superseeded with above ;; detectorID = cluster->getDetectorID();
 
       if ( detectorID != oldDetectorID ) 
       {
@@ -850,6 +813,10 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 
  
 
+      streamlog_out(DEBUG1) << "cluster[" << setw(4) << iCluster << "] on sensor[" << setw(3) << sensorID 
+                            << "] at [" << setw(8) << setprecision(3) << xCoG << ":" << setw(8) << setprecision(3) << yCoG << "]"
+                            << " ->  [" << setw(8) << setprecision(3) << xDet << ":" << setw(8) << setprecision(3) << yDet << "]"
+                            << endl;
 
       
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -971,17 +938,17 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
       cov[0] = resx * resx; // cov(x,x)
       cov[2] = resy * resy; // cov(y,y)
       hit->setCovMatrix( cov );
-      hit->setType( pulseCellDecoder(pulse)["type"] );
+      hit->setType( clusterCellDecoder(clusterFrame)["type"] );
 
       // prepare a LCObjectVec to store the current cluster
       LCObjectVec clusterVec;
-      clusterVec.push_back( pulse->getTrackerData() );
+       clusterVec.push_back( channelList );
 
       // add the clusterVec to the hit
       hit->rawHits() = clusterVec;
       
       // Determine sensorID from the cluster data.
-      idHitEncoder["sensorID"] =  static_cast<int> (pulseCellDecoder(pulse)["sensorID"]);
+      idHitEncoder["sensorID"] =  detectorID ;
 
       // set the local/global bit flag property for the hit
       idHitEncoder["properties"] = 0; // init
@@ -1009,12 +976,12 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
     if ( isFirstEvent() ) _isFirstEvent = false;
 }
 
-void EUTelHitMaker::end() 
+void EUTelProcessorHitMaker::end() 
 {
   streamlog_out ( MESSAGE4 )  << "Successfully finished" << endl;
 }
 
-void EUTelHitMaker::bookHistos(int sensorID, bool isDUT, LCCollection * xEtaCollection, LCCollection * yEtaCollection) {
+void EUTelProcessorHitMaker::bookHistos(int sensorID, bool isDUT, LCCollection * xEtaCollection, LCCollection * yEtaCollection) {
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
@@ -1195,7 +1162,7 @@ void EUTelHitMaker::bookHistos(int sensorID, bool isDUT, LCCollection * xEtaColl
 
 }
 
-void EUTelHitMaker::book3DHisto() {
+void EUTelProcessorHitMaker::book3DHisto() {
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     // we have to found the boundaries of this histograms. Let's take
@@ -1305,7 +1272,7 @@ void EUTelHitMaker::book3DHisto() {
 #endif // AIDA
 }
 
-void EUTelHitMaker::_EulerRotation(double* _telPos, double* _gRotation) {
+void EUTelProcessorHitMaker::_EulerRotation(double* _telPos, double* _gRotation) {
   
     TVector3 _UnrotatedSensorHit( _telPos[0], _telPos[1], 0. );
     TVector3 _RotatedSensorHit( _telPos[0], _telPos[1], 0. );
