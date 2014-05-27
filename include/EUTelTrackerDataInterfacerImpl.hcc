@@ -116,7 +116,7 @@ namespace eutelescope {
    */
  
 	template<>
-	inline EUTelSimpleSparsePixel* EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel>::getSparsePixelAt(unsigned int index, EUTelSimpleSparsePixel * pixel ) const 
+	inline EUTelGenericSparsePixel* EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>::getSparsePixelAt(unsigned int index, EUTelGenericSparsePixel * pixel ) const 
 	{
 		if ( index * _nElement + 2 > _trackerData->getChargeValues().size() ) return 0x0;
 		pixel->setXCoord( static_cast<int> ( _trackerData->getChargeValues()[index * _nElement] ) );
@@ -157,14 +157,14 @@ namespace eutelescope {
 
 	//! Template specialization for the addSparsePixel method
 	template<>
-	inline void EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel>::addSparsePixel(EUTelSimpleSparsePixel* pixel)
+	inline void EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>::addSparsePixel(EUTelGenericSparsePixel* pixel)
 	{
 
 		_trackerData->chargeValues().push_back( static_cast<float> (pixel->getXCoord()) );
 		_trackerData->chargeValues().push_back( static_cast<float> (pixel->getYCoord()) );
 		_trackerData->chargeValues().push_back( static_cast<float> (pixel->getSignal()) );
 
-		_pixelVec.push_back (EUTelSimpleSparsePixel(	static_cast< short >(pixel->getXCoord()), 
+		_pixelVec.push_back (EUTelGenericSparsePixel(	static_cast< short >(pixel->getXCoord()), 
 								static_cast< short >(pixel->getYCoord()), 
 								static_cast< short >(pixel->getSignal()) 
 								));
@@ -214,11 +214,11 @@ namespace eutelescope {
 
 	//! Template specialization for the fillPixelVec method
 	template<>
-	inline void EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel>::fillPixelVec() 
+	inline void EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>::fillPixelVec() 
 	{
 		for ( unsigned int index = 0 ; index < _trackerData->getChargeValues().size() ; index += 3 )
 		{
-			_pixelVec.push_back( EUTelSimpleSparsePixel(	static_cast< short >(_trackerData->getChargeValues()[ index ]),
+			_pixelVec.push_back( EUTelGenericSparsePixel(	static_cast< short >(_trackerData->getChargeValues()[ index ]),
 									static_cast< short >(_trackerData->getChargeValues()[ index + 1 ]),
 									static_cast< short >(_trackerData->getChargeValues()[ index + 2 ]) 
 									));

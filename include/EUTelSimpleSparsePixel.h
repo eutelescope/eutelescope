@@ -30,18 +30,18 @@ namespace eutelescope {
    *  @version $Id$
    */ 
 
-  class EUTelSimpleSparsePixel  :  public EUTelBaseSparsePixel  {
+  class EUTelGenericSparsePixel  :  public EUTelBaseSparsePixel  {
 
   public:
     
     //! Default constructor with all arguments
-    EUTelSimpleSparsePixel(short xCoord, short yCoord, short signal); 
+    EUTelGenericSparsePixel(short xCoord, short yCoord, short signal); 
 
     //! Default constructor with no args
-    EUTelSimpleSparsePixel(); 
+    EUTelGenericSparsePixel(); 
     
     //! Default destructor
-    virtual ~EUTelSimpleSparsePixel() { ; } 
+    virtual ~EUTelGenericSparsePixel() { ; } 
 
         //! Get the number of elements in the data structure
     /*! This method returns the number of elements the sparse pixel

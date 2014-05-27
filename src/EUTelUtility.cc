@@ -93,11 +93,11 @@ namespace eutelescope {
                             throw UnknownDataTypeException("Invalid hit found in method hitContainsHotPixels()");
                         }
 
-                        eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelSimpleSparsePixel > *cluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelSimpleSparsePixel > (clusterFrame);
+                        eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelGenericSparsePixel > *cluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelGenericSparsePixel > (clusterFrame);
                         int sensorID = cluster->getDetectorID();
 
                         for (unsigned int iPixel = 0; iPixel < cluster->size(); iPixel++) {
-                            EUTelSimpleSparsePixel m26Pixel;
+                            EUTelGenericSparsePixel m26Pixel;
                             cluster->getSparsePixelAt(iPixel, &m26Pixel);
                             {
                                 char ix[100];
@@ -171,7 +171,7 @@ namespace eutelescope {
                     } else if (hit->getType() == kEUTelFFClusterImpl) {
                         return new EUTelFFClusterImpl(static_cast<TrackerDataImpl *> (clusterVector[0]));
                     } else if (hit->getType() == kEUTelSparseClusterImpl) {
-			return new EUTelSparseClusterImpl< EUTelSimpleSparsePixel > (static_cast<TrackerDataImpl *> (clusterVector[0]));
+			return new EUTelSparseClusterImpl< EUTelGenericSparsePixel > (static_cast<TrackerDataImpl *> (clusterVector[0]));
                     } else {
                         streamlog_out(WARNING2) << "Unknown cluster type: " << hit->getType() << std::endl;
                         return NULL;
@@ -228,10 +228,10 @@ namespace eutelescope {
 
                 int sensorID = static_cast<int> (cellDecoder(hotPixelData)["sensorID"]);
 
-                if (type == kEUTelSimpleSparsePixel) {
-                    std::auto_ptr< EUTelSparseClusterImpl< EUTelSimpleSparsePixel > > m26Data(new EUTelSparseClusterImpl< EUTelSimpleSparsePixel > (hotPixelData));
-                    std::vector< EUTelSimpleSparsePixel* > m26PixelVec;
-                    EUTelSimpleSparsePixel m26Pixel;
+                if (type == kEUTelGenericSparsePixel) {
+                    std::auto_ptr< EUTelSparseClusterImpl< EUTelGenericSparsePixel > > m26Data(new EUTelSparseClusterImpl< EUTelGenericSparsePixel > (hotPixelData));
+                    std::vector< EUTelGenericSparsePixel* > m26PixelVec;
+                    EUTelGenericSparsePixel m26Pixel;
 
                     //Push all single Pixels of one plane in the m26PixelVec
                     for (unsigned int iPixel = 0; iPixel < m26Data->size(); iPixel++) {

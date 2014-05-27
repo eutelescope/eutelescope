@@ -15,7 +15,7 @@
 #include "EUTELESCOPE.h"
 #include "EUTelVirtualCluster.h"
 #include "EUTelBaseSparsePixel.h"
-#include "EUTelSimpleSparsePixel.h"
+#include "EUTelGenericSparsePixel.h"
 #include "EUTelExceptions.h"
 
 #ifdef USE_MARLIN

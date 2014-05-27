@@ -11,7 +11,7 @@
 
 // personal includes ".h"
 #include "EUTELESCOPE.h"
-#include "EUTelSimpleSparsePixel.h"
+#include "EUTelGenericSparsePixel.h"
 #include "EUTelGenericSparsePixel.h"
 #include "EUTelGeometricPixel.h"
 #include "EUTelTrackerDataInterfacer.h"

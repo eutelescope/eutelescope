@@ -534,9 +534,9 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
             // now we know the pixel type. So we can properly create a new
             // instance of the sparse cluster
         
-            if ( pixelType == kEUTelSimpleSparsePixel ) 
+            if ( pixelType == kEUTelGenericSparsePixel ) 
             {
-                cluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel >
+                cluster = new EUTelSparseClusterImpl< EUTelGenericSparsePixel >
                     ( static_cast<TrackerDataImpl *> ( pulse->getTrackerData()  ) );
             } 
             else 
