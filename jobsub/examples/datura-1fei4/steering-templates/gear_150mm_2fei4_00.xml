@@ -10,6 +10,9 @@
 			<siplanesID ID="225"/>
 			<siplanesType type="TelescopeWithoutDUT"/>
 			<siplanesNumber number="8"/>
+                        <parameter name="Geometry" 
+                                   type="StringVec" 
+                                   value="FEI4Single.so  Mimosa26.so Mimosa26.so Mimosa26.so Mimosa26.so Mimosa26.so Mimosa26.so FEI4Single.so"/>
 			<layers>
 			<!--APIX-Plane 1 - FE-I4 3D  -->
 					<layer>
