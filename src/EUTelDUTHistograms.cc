@@ -1837,7 +1837,7 @@ int EUTelDUTHistograms::getClusterSize(int sensorID, TrackerHit * hit, int& size
             }
             else if ( hit->getType() == kEUTelSparseClusterImpl ) 
             {
-               cluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel > ( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
+               cluster = new EUTelSparseClusterImpl< EUTelGenericSparsePixel > ( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
             }
 
             if(cluster != 0)

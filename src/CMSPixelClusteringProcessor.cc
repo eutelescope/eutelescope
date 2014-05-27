@@ -233,7 +233,7 @@ void CMSPixelClusteringProcessor::initializeHotPixelMapVec(  )
         EUTelMatrixDecoder matrixDecoder( _siPlanesLayerLayout , iDetector );
 
         // now prepare the EUTelescope interface to sparsified data.  
-        auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel> > sparseData(new EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel>( hotData ));
+        auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> > sparseData(new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>( hotData ));
 
         streamlog_out ( MESSAGE1 ) << "Processing hotpixel data on detector " << sensorID << " with "
                                  << sparseData->size() << " pixels " << endl;
@@ -241,7 +241,7 @@ void CMSPixelClusteringProcessor::initializeHotPixelMapVec(  )
         for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ ) 
         {
             // loop over all pixels in the sparseData object.      
-            EUTelSimpleSparsePixel *sparsePixel =  new EUTelSimpleSparsePixel() ;
+            EUTelGenericSparsePixel *sparsePixel =  new EUTelGenericSparsePixel() ;
 
             sparseData->getSparsePixelAt( iPixel, sparsePixel );
             int decoded_XY_index = matrixDecoder.getIndexFromXY( sparsePixel->getXCoord(), sparsePixel->getYCoord() ); // unique pixel index !!
@@ -378,13 +378,13 @@ void CMSPixelClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * cl
         // prepare the matrix decoder
         EUTelMatrixDecoder matrixDecoder( _siPlanesLayerLayout , sensorID );
 		
-		if (type == kEUTelSimpleSparsePixel  ) {
-		    auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel> > pixelData( new EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel>( zsData ));
+		if (type == kEUTelGenericSparsePixel  ) {
+		    auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> > pixelData( new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>( zsData ));
 			streamlog_out ( DEBUG5 ) << "Processing data on detector " << sensorID << ", " << pixelData->size() << " pixels " << endl;
 
 			// Loop over all pixels in the sparseData object.
-			std::vector<EUTelSimpleSparsePixel*> PixelVec;
-			EUTelSimpleSparsePixel Pixel;
+			std::vector<EUTelGenericSparsePixel*> PixelVec;
+			EUTelGenericSparsePixel Pixel;
 
 			 //Push all single Pixels of one plane in the PixelVec
 			for ( unsigned int iPixel = 0; iPixel < pixelData->size(); iPixel++ ) {
@@ -401,7 +401,7 @@ void CMSPixelClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * cl
                     }
                 }
 
-				PixelVec.push_back(new EUTelSimpleSparsePixel(Pixel));
+				PixelVec.push_back(new EUTelGenericSparsePixel(Pixel));
 			}
 			
 			streamlog_out ( DEBUG5 ) << "Hit Pixels: " << PixelVec.size() << endl;
@@ -418,8 +418,8 @@ void CMSPixelClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * cl
 				//Now compare all pixel in one plane with each other
 				for ( unsigned int aPixel=0;aPixel < PixelVec.size();++aPixel) {
 					for ( unsigned int bPixel=aPixel+1; bPixel < PixelVec.size(); ++bPixel) {
-						EUTelSimpleSparsePixel *aPix = PixelVec.at(aPixel);
-						EUTelSimpleSparsePixel *bPix = PixelVec.at(bPixel);
+						EUTelGenericSparsePixel *aPix = PixelVec.at(aPixel);
+						EUTelGenericSparsePixel *bPix = PixelVec.at(bPixel);
 						int xDist = abs( aPix->getXCoord() - bPix->getXCoord() );
 						int yDist = abs( aPix->getYCoord() - bPix->getYCoord() );
 						
@@ -495,7 +495,7 @@ void CMSPixelClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * cl
 			for (it = clusterSet.begin(); it != clusterSet.end(); ++it) {
 				lcio::TrackerPulseImpl * pulseFrame = new lcio::TrackerPulseImpl();
 				lcio::TrackerDataImpl * clusterFrame = new lcio::TrackerDataImpl();
-				eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelSimpleSparsePixel > *pixelCluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelSimpleSparsePixel >(clusterFrame);	
+				eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelGenericSparsePixel > *pixelCluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelGenericSparsePixel >(clusterFrame);	
 				for (unsigned int i=0;i< PixelVec.size();i++) {
 					if(clusterNumber.at(i)== *it) { 
 					    // Put only these pixels in that ClusterCollection that belong to that cluster
@@ -592,7 +592,7 @@ void CMSPixelClusteringProcessor::fillHistos (LCEvent * evt) {
 			// FIXME: check if correctly working with "ClusterType":
 			// SparsePixelType type = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( pulseFrame )["type"]) );
 			ClusterType type = static_cast<ClusterType> ( static_cast<int> (cellDecoder( pulseFrame )["type"]) );
-			eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelSimpleSparsePixel > *pixelCluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelSimpleSparsePixel >(clusterFrame);	
+			eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelGenericSparsePixel > *pixelCluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelGenericSparsePixel >(clusterFrame);	
 			
 			if (type == kEUTelSparseClusterImpl  ) {
 			
@@ -648,7 +648,7 @@ void CMSPixelClusteringProcessor::fillHistos (LCEvent * evt) {
 				
 				
 				for (int iPixel=0; iPixel < size; iPixel++) {
-					EUTelSimpleSparsePixel Pixel;
+					EUTelGenericSparsePixel Pixel;
 					pixelCluster->getSparsePixelAt(iPixel, &Pixel);
 					tempHistoName = _pixelSignalHistoName + "_d" + to_string( sensorID );
 					(dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]))->fill(Pixel.getSignal());

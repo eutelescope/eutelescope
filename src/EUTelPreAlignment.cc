@@ -233,12 +233,12 @@ void  EUTelPreAlign::FillHotPixelMap(LCEvent *event)
 
       int sensorID              = static_cast<int > ( cellDecoder( hotPixelData )["sensorID"] );
 
-      if( type  ==  kEUTelSimpleSparsePixel )
+      if( type  ==  kEUTelGenericSparsePixel )
 	{  
-	  auto_ptr<EUTelSparseClusterImpl< EUTelSimpleSparsePixel > > m26Data( new EUTelSparseClusterImpl< EUTelSimpleSparsePixel >   ( hotPixelData ) );
+	  auto_ptr<EUTelSparseClusterImpl< EUTelGenericSparsePixel > > m26Data( new EUTelSparseClusterImpl< EUTelGenericSparsePixel >   ( hotPixelData ) );
 
-	  std::vector<EUTelSimpleSparsePixel*> m26PixelVec;
-	  EUTelSimpleSparsePixel m26Pixel;
+	  std::vector<EUTelGenericSparsePixel*> m26PixelVec;
+	  EUTelGenericSparsePixel m26Pixel;
 	  //Push all single Pixels of one plane in the m26PixelVec
 
 	  for(  unsigned int iPixel = 0; iPixel < m26Data->size(); iPixel++ ) 
@@ -402,13 +402,13 @@ bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit)
       if ( hit->getType() == kEUTelSparseClusterImpl ) 
 	{
 	  TrackerDataImpl * clusterFrame = static_cast<TrackerDataImpl*> ( clusterVector[0] );
-	  eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelSimpleSparsePixel > *cluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelSimpleSparsePixel >(clusterFrame);
+	  eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelGenericSparsePixel > *cluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelGenericSparsePixel >(clusterFrame);
 
 	  int sensorID = cluster->getDetectorID();
 
 	  for ( unsigned int iPixel = 0; iPixel < cluster->size(); iPixel++ ) 
 	    {
-	      EUTelSimpleSparsePixel m26Pixel;
+	      EUTelGenericSparsePixel m26Pixel;
 	      cluster->getSparsePixelAt( iPixel, &m26Pixel);
 	      {
 		try{

@@ -11,7 +11,7 @@
 
 // eutelescope includes ".h"
 #include "EUTelEventImpl.h"
-#include "EUTelSimpleSparsePixel.h"
+#include "EUTelGenericSparsePixel.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -231,10 +231,10 @@ namespace eutelescope {
      *  For each Detector unique ID element a map of pixels is created. 
      *  Key is a (sensor) unique pixel Id (to be addressed via
      *  _inverse_hitIndexMapVec)
-     *  Value - EUTelSimpleSparsePixel pointer.
+     *  Value - EUTelGenericSparsePixel pointer.
      */
     
-    std::vector< std::map< int, EUTelSimpleSparsePixel* > > _pixelMapVec;
+    std::vector< std::map< int, EUTelGenericSparsePixel* > > _pixelMapVec;
 
 
 
