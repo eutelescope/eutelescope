@@ -11,7 +11,7 @@
  */
 // personal includes ".h"
 #include "EUTELESCOPE.h"
-#include "EUTelGenericSparsePixel.h"
+#include "EUTelSimpleSparsePixel.h"
 
 // system includes <>
 #include <iostream>
@@ -21,7 +21,7 @@ using namespace std;
 using namespace eutelescope;
 
 
-EUTelGenericSparsePixel::EUTelGenericSparsePixel()\
+EUTelSimpleSparsePixel::EUTelSimpleSparsePixel()\
   : _xCoord(0),
     _yCoord(0),
     _signal(0)
@@ -30,10 +30,10 @@ EUTelGenericSparsePixel::EUTelGenericSparsePixel()\
   _yCoord = 0;
   _signal = 0;
   _noOfElements = 3;
-  _type = kEUTelGenericSparsePixel;
+  _type = kEUTelSimpleSparsePixel;
 }
 
-EUTelGenericSparsePixel::EUTelGenericSparsePixel(short xCoord, short yCoord, short signal)
+EUTelSimpleSparsePixel::EUTelSimpleSparsePixel(short xCoord, short yCoord, short signal)
   : _xCoord(0),
     _yCoord(0),
     _signal(0)
@@ -42,19 +42,19 @@ EUTelGenericSparsePixel::EUTelGenericSparsePixel(short xCoord, short yCoord, sho
   _yCoord = yCoord;
   _signal = signal;
   _noOfElements = 3;
-  _type = kEUTelGenericSparsePixel;
+  _type = kEUTelSimpleSparsePixel;
 }
 
 
-unsigned int EUTelGenericSparsePixel::getNoOfElements() const {
+unsigned int EUTelSimpleSparsePixel::getNoOfElements() const {
   return _noOfElements;
 }
 
-SparsePixelType EUTelGenericSparsePixel::getSparsePixelType() const {
+SparsePixelType EUTelSimpleSparsePixel::getSparsePixelType() const {
   return _type;
 }
 
-void EUTelGenericSparsePixel::print(std::ostream& os) const {
+void EUTelSimpleSparsePixel::print(std::ostream& os) const {
   int bigWidth = 50;
   for ( int i = 0 ; i < bigWidth ; ++i ) {
     os << "-";
