@@ -550,8 +550,8 @@ void EUTelGeometryTelescopeGeoDescription::local2Master( int sensorID, const dou
  
     streamlog_out(DEBUG0) << "_geoManager defined: " << _geoManager << std::endl;
    
-    streamlog_out(DEBUG0) << "Senosor id: " << sensorID << std::endl;
-    streamlog_out(DEBUG0) << "Senosor center: " << "(" << sensorCenterX << "," << sensorCenterY << "," << sensorCenterZ << ")" << std::endl;
+    streamlog_out(DEBUG0) << "Sensor id: " << sensorID << std::endl;
+    streamlog_out(DEBUG0) << "Sensor center: " << "(" << sensorCenterX << "," << sensorCenterY << "," << sensorCenterZ << ")" << std::endl;
     
     _geoManager->FindNode( sensorCenterX, sensorCenterY, sensorCenterZ );    
     _geoManager->LocalToMaster( localPos, globalPos );
@@ -662,8 +662,8 @@ void EUTelGeometryTelescopeGeoDescription::local2MasterVec( int sensorID, const 
     const double sensorCenterY = siPlaneYPosition( sensorID );
     const double sensorCenterZ = siPlaneZPosition( sensorID );
     
-    streamlog_out(DEBUG0) << "Senosor id: " << sensorID << std::endl;
-    streamlog_out(DEBUG0) << "Senosor center: " << "(" << sensorCenterX << "," << sensorCenterY << "," << sensorCenterZ << ")" << std::endl;
+    streamlog_out(DEBUG0) << "Sensor id: " << sensorID << std::endl;
+    streamlog_out(DEBUG0) << "Sensor center: " << "(" << sensorCenterX << "," << sensorCenterY << "," << sensorCenterZ << ")" << std::endl;
     
     _geoManager->FindNode( sensorCenterX, sensorCenterY, sensorCenterZ );    
     _geoManager->LocalToMasterVect( localVec, globalVec );
@@ -689,8 +689,8 @@ void EUTelGeometryTelescopeGeoDescription::master2LocalVec( int sensorID, const 
     const double sensorCenterY = siPlaneYPosition( sensorID );
     const double sensorCenterZ = siPlaneZPosition( sensorID );
     
-    streamlog_out(DEBUG0) << "Senosor id: " << sensorID << std::endl;
-    streamlog_out(DEBUG0) << "Senosor center: " << "(" << sensorCenterX << "," << sensorCenterY << "," << sensorCenterZ << ")" << std::endl;
+    streamlog_out(DEBUG0) << "Sensor id: " << sensorID << std::endl;
+    streamlog_out(DEBUG0) << "Sensor center: " << "(" << sensorCenterX << "," << sensorCenterY << "," << sensorCenterZ << ")" << std::endl;
     
     _geoManager->FindNode( sensorCenterX, sensorCenterY, sensorCenterZ );    
     _geoManager->MasterToLocalVect( globalVec, localVec );
