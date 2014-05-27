@@ -1811,8 +1811,9 @@ itTrk++;
         int sensorID = -1;
         EVENT::TrackerHitVec::const_iterator itr;
         for( itr = hits.begin(); itr != hits.end(); ++itr ) {
-						UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
-						const int sensorID = hitDecoder(static_cast< IMPL::TrackerHitImpl* >(*itr))["sensorID"];
+
+            const int sensorID = Utility::GuessSensorID( *itr );
+
             itMeasLayer = measLayers.find( sensorID );
             if ( itMeasLayer != measLayers.end() ) itMeasLayer->second->addHit( *itr );
             else {

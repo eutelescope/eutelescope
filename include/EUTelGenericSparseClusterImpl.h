@@ -1,4 +1,3 @@
-// Version: $Id$
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -8,14 +7,16 @@
  *
  */
 
-#ifndef EUTELSPARSECLUSTERIMPL_H
-#define EUTELSPARSECLUSTERIMPL_H
+#ifndef EUTELGENERICSPARSECLUSTERIMPL_H
+#define EUTELGENERICSPARSECLUSTERIMPL_H
 
 // personal includes ".h"
 #include "EUTELESCOPE.h"
-#include "EUTelVirtualCluster.h"
+#include "EUTelSimpleVirtualCluster.h"
 #include "EUTelBaseSparsePixel.h"
-#include "EUTelSimpleSparsePixel.h"
+#include "EUTelGenericSparsePixel.h"
+#include "EUTelGeometricPixel.h"
+#include "EUTelTrackerDataInterfacerImpl.h"
 #include "EUTelExceptions.h"
 
 #ifdef USE_MARLIN
@@ -38,8 +39,8 @@
 #include <iomanip>
 
 // template implementation
-#include "EUTelSparseClusterImpl.hcc"
-#include "EUTelSparseClusterImpl.tcc"
+#include "EUTelGenericSparseClusterImpl.hcc"
+#include "EUTelGenericSparseClusterImpl.tcc"
 
 #endif
 

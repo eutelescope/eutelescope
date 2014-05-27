@@ -10,7 +10,6 @@
  *
  */
 // personal includes ".h"
-#include "EUTelSparseDataImpl.h"
 #include "EUTelSparseClusterImpl.h"
 #include "EUTelVirtualCluster.h"
 
