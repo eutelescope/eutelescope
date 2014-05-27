@@ -17,13 +17,13 @@
 
    <execute>
       <processor name="AIDA"/>
+      <processor name="MyEUTelUtilityPrintEventNumber"/>
       <processor name="UniversalNativeReader"/>
       <processor name="Mimosa26EUTelAutoPedestalNoiseProcessor"/>
       <processor name="HotPixelKiller"/>
       <processor name="APIXNoiseProcessor"/>
       <processor name="APIXHotPixelKiller"/>
       <processor name="Save"/>
-      <processor name="MyEUTelUtilityPrintEventNumber"/>
    </execute>
 
    <global>
@@ -49,10 +49,6 @@
 
  <processor name="UniversalNativeReader" type="EUTelNativeReader">
  <!--Reads data streams produced by EUDAQ and produced the corresponding LCIO output-->
-  <!--This is the depfet produced output collection-->
-  <parameter name="DEPFETOutputCollection" type="string" lcioOutType="TrackerData"> rawdata_dep </parameter>
-  <!--This is the eudrb producer output collection when read in RAW mode-->
-  <parameter name="EUBRDRawModeOutputCollection" type="string" lcioOutType="TrackerRawData"> rawdata </parameter>
   <!--This si the mimotel output collection when read in ZS mode-->
   <parameter name="EUDRBZSModeOutputCollection" type="string" lcioOutType="TrackerData"> zsdata </parameter>
   <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
@@ -97,7 +93,7 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="HotPixelKiller" type="EUTelHotPixelKiller">
+ <processor name="HotPixelKiller" type="EUTelProcessorHotPixelFinder">
  <!--EUTelHotPixelKiller periodically check for pixel singing loud too often and remove them from the analysis-->
   <!--Noise (input) collection name-->
   <parameter name="NoiseCollectionName" type="string" lcioInType="TrackerData"> m26_noise </parameter>
@@ -153,7 +149,7 @@ within the selected number of event per cycle-->
   <parameter name="SensorIDVec" type="IntVec"> @SensorIDVec@    </parameter>
 </processor>
 
- <processor name="APIXHotPixelKiller" type="EUTelAPIXHotPixelKiller">
+ <processor name="APIXHotPixelKiller" type="EUTelProcessorHotPixelFinder">
  
     <!--This is the name of the LCIO file name with the input/output hot pixel collection  (add .slcio)-->
     <parameter name="HotPixelDBFile" type="string" value="@DatabasePath@/run@HotPixelRunNumber@-hotpixel.slcio"/>
@@ -175,7 +171,6 @@ within the selected number of event per cycle-->
    
     <parameter name="BuildHotPixelDatabase" type="int" value="1" />
     
-
     <!--This float number [0,1] represents the maximum allowed firing frequency
         within the selected number of event per cycle-->
     <parameter name="MaxAllowedFiringFreq" type="float" value="0.002"/>

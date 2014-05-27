@@ -17,16 +17,13 @@
 
    <execute>
       <processor name="AIDA"/>
-      <xprocessor name="PatternRecog"/>
-      <xprocessor name="Correlator"/>
       <processor name="GBLTrackFit"/>
       <processor name="Save"/>
       <processor name="PrintEventNumber"/>
    </execute>
 
    <global>
-      <parameter name="LCIOInputFiles"> @LcioPath@/@FilePrefix@-trackcand.slcio </parameter>
-      <!--parameter name="LCIOInputFiles"> @LcioPath@/@FilePrefix@-hitlocal.slcio </parameter-->
+      <parameter name="LCIOInputFiles"> @LcioPath@/@FilePrefix@-trackgbl.slcio </parameter>
       <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
@@ -46,78 +43,11 @@
       <!--parameter name="Verbosity" type="string" value=""/-->
    </processor>
 
- <processor name="Correlator" type="EUTelCorrelator">
- <!--EUTelCorrelator fills histograms with correlation plots-->
-  <!--Hit collection name-->
-  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit_filtered </parameter>
-  <!--Minimum allowed cluster charge to be taken into account for the correlation plots (default = 2)-->
-  <parameter name="ClusterChargeMinimum" type="int" value="0"/>
-  <!--Dump the offset X and Y values calculated from the correlation bands (default = true)-->
-  <parameter name="DumpOffset" type="bool" value="false"/>
-  <!--How many events are needed to get reasonable correlation plots (and Offset DB)? (default=1000)-->
-  <parameter name="Events" type="int" value="9999"/>
-  <!--SensorID of fixed plane-->
-  <!--parameter name="FixedPlane" type="int" value="0"/-->
-  <!--This is the name of the hot pixel collection to be saved into the output slcio file-->
-  <parameter name="HotPixelCollectionName" type="string" value="hotpixel_apix"/>
-  <!--List of cluster collections-->
-  <parameter name="InputClusterCollections" type="StringVec"> </parameter>
-  <!--If there are more then this number of correlated hits (planes->track candidate) (default=5)-->
-  <parameter name="MinNumberOfCorrelatedHits" type="int" value="5"/>
-  <!--This is the name of the LCIO file name with the output offset db (add .slcio)-->
-  <!--parameter name="OffsetDBFile" type="string" value="offset-db.slcio"/-->
-  <!--reference hit collection name -->
-  <parameter name="ReferenceCollection" type="string" value="refhit"/>
-  <!--Maximal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResidualsXMax" type="FloatVec"> @ResidualsXMax@  </parameter>
-  <!--Minimal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResidualsXMin" type="FloatVec"> @ResidualsXMin@ </parameter>
-  <!--Maximal values of the hit residuals in the Y direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResidualsYMax" type="FloatVec"> @ResidualsYMax@ </parameter>
-  <!--Minimal values of the hit residuals in the Y direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResidualsYMin" type="FloatVec"> @ResidualsYMin@ </parameter>
-  <!--Do you want the reference hit collection to be used for coordinate transformations?-->
-  <!--parameter name="UseReferenceCollection" type="bool" value="true"/-->
-  <!-- parameter name="ReferenceCollection" type="string" > refhit </parameter -->
-  <!--Name of histogram info xml file-->
-  <parameter name="HistogramInfoFilename" type="string" value="@HistoInfoFile@"/>
-  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <!--parameter name="Verbosity" type="string" value=""/-->
-</processor>
-
-
- <processor name="PatternRecog" type="EUTelProcessorTrackingHelixTrackSearch">
- <!--EUTelProcessorTrackingHelixTrackSearch preforms track pattern recognition.-->
-  <!--Beam charge [e]-->
-  <parameter name="BeamCharge" type="double">-1. </parameter>
-  <!--Maximal allowed distance between hits entering the recognition step
-            per 10 cm space between the planes. One value for each neighbor planes.
-            DistanceMax will be used for each pair if this vector is empty. Units are mm.-->
-  <parameter name="ResidualsRMax" type="Float" value="@ResidualsRMax@" />
-  <!--parameter name="ResidualsRMax" type="double"> 2.0 </parameter-->
-  <!--Beam charge [GeV]-->
-  <parameter name="BeamEnergy" type="double"> @BeamEnergy@ </parameter>
-  <!--Name of histogram info xml file-->
-  <parameter name="HistogramInfoFilename" type="string" value="@HistoInfoFile@"/>
-  <!--Input hits collection name-->
-  <parameter name="HitInputCollectionName" type="string" lcioInType="TrackerHit"> hit_filtered </parameter>
-  <!--Maximal number of missing hits on a track candidate-->
-  <parameter name="MaxMissingHitsPerTrack" type="int"> @MaxMissingHitsPerTrack@ </parameter>
-  <!--Maximal number of track candidates to be found in events-->
-  <!--parameter name="MaxNTracksPerEvent" type="int">100 </parameter-->
-  <!--Output track candidates hits collection name-->
-  <parameter name="TrackCandHitOutputCollectionName" type="string" lcioOutType="Track"> track_candidates </parameter>
-  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <parameter name="Verbosity" type="string"> @Verbosity@ </parameter>
- </processor>
-
-
- <processor name="GBLTrackFit" type="EUTelProcessorTrackingGBLTrackFit">
+ <processor name="GBLTrackFit" type="EUTelProcessorTrackingGBLTrajectory">
   <!--EUTelProcessorTrackingGBLTrackFit performs track fits using GBL optionally writing data files for MILLEPEDE II.-->
-  <!--Input track candidates hits collection name-->
-  <parameter name="TrackCandHitInputCollectionName" type="string" lcioInType="Track"> track_candidates </parameter>
   <!--Output tracks collection name-->
-  <parameter name="TracksOutputCollectionName" type="string" lcioOutType="Track"> TrackCollection </parameter>
+  <parameter name="TrackCandidatesInputCollectionName" type="string" lcioInType="Track"> TrackCollection  </parameter>
+  <parameter name="TracksOutputCollectionName" type="string" lcioOutType="Track"> TrackCollection2 </parameter>
   <!--This is the name of the LCIO file name with the output alignmentconstants (add .slcio)-->
   <parameter name="AlignmentConstantLCIOFile" type="string" value="@DatabasePath@/@FilePrefix@-alignment.slcio"/>
   <!--Alignment mode specifies alignment degrees of freedom to be considered
@@ -176,7 +106,7 @@ outlierdownweighting 10. \\
   <!--Execute the pede at the end of processing using the generated steering file.-->
   <parameter name="RunPede" type="bool" value="@RunPede@"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <!--parameter name="Verbosity" type="string" value=""/-->
+  <parameter name="Verbosity" type="string" value="DEBUG4"/>
 </processor>
 
  <processor name="Save" type="EUTelOutputProcessor">
@@ -190,7 +120,7 @@ outlierdownweighting 10. \\
   <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
   <!--parameter name="KeepCollectionNames" type="StringVec" value="MyPreciousSimTrackerHits"/-->
   <!-- name of output file -->
-  <parameter name="LCIOOutputFile" type="string" value="@LcioPath@/@FilePrefix@-trackgbl.slcio"/>
+  <parameter name="LCIOOutputFile" type="string" value="@LcioPath@/@FilePrefix@-trackgblmille.slcio"/>
   <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
   <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   <!--Set it to true to remove intermediate EORE in merged runs-->
