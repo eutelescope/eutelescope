@@ -263,7 +263,7 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
 	EVENT::TrackerHitVec::const_iterator itHits;
 	for ( itHits = allHitsVec.begin() ; itHits != allHitsVec.end(); ++itHits ) {
 		const double* uvpos = (*itHits)->getPosition();
-                    const int sensorID = geo::gGeometry().getSensorID( static_cast<IMPL::TrackerHitImpl*> (*itHits) );
+                    const int sensorID = Utility::GuessSensorID( static_cast<IMPL::TrackerHitImpl*> (*itHits) );
 //                    const int usensorID = Utility::GuessSensorID( static_cast<EVENT::TrackerHit*> (*itHits) );
 		streamlog_out(MESSAGE0) << "Hit (id=" << setw(3) << sensorID << ") local(u,v) coordinates: (" 
                        << setw(7) << setprecision(4) << uvpos[0] << "," << setw(7) << setprecision(4) << uvpos[1] << ")" << std::endl;
@@ -329,7 +329,7 @@ void EUTelProcessorTrackingHelixTrackSearch::plotHistos( vector< IMPL::TrackImpl
                 streamlog_out( MESSAGE1 ) << "Track hits start:==============" << std::endl;
                 for ( itTrkHits = trkHits.begin( ) ; itTrkHits != trkHits.end( ); ++itTrkHits ) {
                     const double* uvpos = ( *itTrkHits )->getPosition( );
-                    const int sensorID = geo::gGeometry().getSensorID( static_cast<IMPL::TrackerHitImpl*> (*itTrkHits) );
+                    const int sensorID = Utility::GuessSensorID( static_cast<IMPL::TrackerHitImpl*> (*itTrkHits) );
 //                    const int usensorID = Utility::GuessSensorID( static_cast<EVENT::TrackerHit*> (*itTrkHits) );
                     streamlog_out( MESSAGE1 ) << "Hit (id=" << setw(3) << sensorID << ") local(u,v) coordinates: (" 
                              << setw(7) << setprecision(4) << uvpos[0] << "," <<  setw(7) << setprecision(4) << uvpos[1] << ")";
@@ -397,7 +397,7 @@ void EUTelProcessorTrackingHelixTrackSearch::FillHits(LCEvent * evt,
             delete cluster; // <--- destroying the cluster
         }
 
-        const int localSensorID = geo::gGeometry().getSensorID( static_cast<IMPL::TrackerHitImpl*> (hit) );
+        const int localSensorID = Utility::GuessSensorID( static_cast<IMPL::TrackerHitImpl*> (hit) );
 //       const int localSensorID = Utility::GuessSensorID( hit );  // localSensorID == -1, if detector ID was not found
         if ( localSensorID >= 0 ) allHitsVec.push_back( hit );
         

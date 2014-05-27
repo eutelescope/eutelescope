@@ -530,7 +530,7 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
 
                         // Get fitted hit information
                         const double* hitpos = ( *itrHit )->getPosition( );
-                        const int planeID = geo::gGeometry().getSensorID( originalHit );
+                        const int planeID = Utility::GuessSensorID( originalHit );
 
                         bool excludeFromFit = false;
                         if ( std::find( _excludePlanesFromFit.begin(), _excludePlanesFromFit.end(), planeID ) != _excludePlanesFromFit.end() ) excludeFromFit = true;
