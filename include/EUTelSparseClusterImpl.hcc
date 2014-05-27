@@ -351,6 +351,7 @@ namespace eutelescope {
      *  @param pixel A pointer to the retrieved pixel.
      *  @return A pointer to the retrieved pixel same as @c pixel
      */ 
+
     PixelType* getSparsePixelAt(unsigned int index, PixelType* pixel) const
     {
 	return _rawDataInterfacer.getSparsePixelAt(index, pixel);

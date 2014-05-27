@@ -13,6 +13,7 @@
 // eutelescope includes ".h"
 #include "EUTELESCOPE.h"
 #include "EUTelVirtualCluster.h"
+#include "EUTelTrackerDataInterfacerImpl.h"
 
 // lcio includes <.h>
 #include "IMPL/TrackerHitImpl.h"
@@ -191,7 +192,7 @@ namespace eutelescope {
 
         EUTelVirtualCluster* GetClusterFromHit(const IMPL::TrackerHitImpl*);
 
-        int GuessSensorID(const EVENT::TrackerHit* hit);
+        int GuessSensorID( EVENT::TrackerHit* hit);
 
         /** Highland's formula for multiple scattering */
         double getThetaRMSHighland( double, double );
@@ -204,7 +205,10 @@ namespace eutelescope {
         
         /** Solve quadratic equation a*x^2 + b*x + c = 0 */
         std::vector< double > solveQuadratic( double, double, double );
-        
+ 
+        /** getClusterSize method from TrackerHit object:: assumes known cluster types */
+        void getClusterSize(const IMPL::TrackerHitImpl * hit, int& sizeX, int& sizeY ) ;
+
         /** Tokenize string */
                 /**
          * String tokenizer

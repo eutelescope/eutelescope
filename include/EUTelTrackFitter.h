@@ -43,11 +43,24 @@ namespace eutelescope {
 
         virtual void SetTrackCandidates( const EVENT::TrackVec& );
 
+        virtual void SetTrackCandidates( const std::vector<IMPL::TrackImpl*> & );
+
       // do some clean up of internal data structures
         virtual void Clear();
 
 
+        virtual void SearchTrackCandidates(){};
+        /** Prune track candidates
+         *  supposed to be removing track candidates which have n% hits in common      */  
+        virtual void PruneTrackCandidates(){};
+
         virtual void FitTracks();
+        virtual void TrackCandidatesToGBLTrajectories();
+        virtual void PerformFitGBLTrajectories();
+        virtual void PerformMille();
+
+        virtual void FitSingleTrackCandidate();
+
     protected:
         std::string _name;
 

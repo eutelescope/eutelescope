@@ -59,13 +59,15 @@ namespace eutelescope {
 
             DISALLOW_COPY_AND_ASSIGN(EUTelGeometryTelescopeGeoDescription)      // prevent users from making (default) copies of processors
 
+
         public:
             /** Retrieves the instanstance of geometry.
              * Performs lazy intialization if necessary.
              * @TODO this routine has to be considered to be constant
              */
             static EUTelGeometryTelescopeGeoDescription& getInstance();
-            
+ 
+           
             /** Number of planes in the setup */
             size_t nPlanes() const;
             
@@ -147,8 +149,14 @@ namespace eutelescope {
             float findRadLengthIntegral( const double[], const double[], bool );
             
             int getSensorID( const float globalPos[] ) const;
-            
+           
+            int getSensorID( const IMPL::TrackerHitImpl* ) const;
+ 
             void local2Master( int, const double[], double[] );
+
+						void local2masterHit(EVENT::TrackerHit* hit_input, IMPL::TrackerHitImpl* hit_output, LCCollection * hitCollectionOutput);
+
+						void master2localHit(EVENT::TrackerHit* hit_input, IMPL::TrackerHitImpl* hit_output, LCCollection * hitCollectionOutput);
             
             void master2Local( const double[], double[] );
 
@@ -261,11 +269,15 @@ namespace eutelescope {
             TGeoManager* _geoManager;
             //#endif // USE_TGEO
 
+            int findNextPlaneEntrance(  double* ,  double *, int, float*  );
+            int findNextPlane(  double* lpoint,  double* ldir,  float* newpoint );
+
         };
         
         inline EUTelGeometryTelescopeGeoDescription& gGeometry() {
                 return EUTelGeometryTelescopeGeoDescription::getInstance(); 
         }
+
         
     } // namespace geo
 } // namespace eutelescope

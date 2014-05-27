@@ -6,8 +6,8 @@
  *   header with author names in all development based on this file.
  *
  */
-#ifndef EUTELHITMAKER_H
-#define EUTELHITMAKER_H
+#ifndef EUTELPROCESSORHITMAKER_H
+#define EUTELPROCESSORHITMAKER_H
 
 // built only if GEAR is available
 #ifdef USE_GEAR
@@ -229,27 +229,27 @@ namespace eutelescope {
    *
    */
 
-  class EUTelHitMaker : public marlin::Processor {
+  class EUTelProcessorHitMaker : public marlin::Processor {
 
   private:
-      DISALLOW_COPY_AND_ASSIGN(EUTelHitMaker)
+      DISALLOW_COPY_AND_ASSIGN(EUTelProcessorHitMaker)
       
   public:
 
 
-    //! Returns a new instance of EUTelHitMaker
+    //! Returns a new instance of EUTelProcessorHitMaker
     /*! This method returns a new instance of this processor.  It is
      *  called by Marlin execution framework and it shouldn't be
      *  called/used by the final user.
      *
-     *  @return a new EUTelHitMaker.
+     *  @return a new EUTelProcessorHitMaker.
      */
     virtual Processor * newProcessor() {
-      return new EUTelHitMaker;
+      return new EUTelProcessorHitMaker;
     }
 
     //! Default constructor
-    EUTelHitMaker ();
+    EUTelProcessorHitMaker ();
 
     //! Called at the job beginning.
     /*! This is executed only once in the whole execution. It prints
@@ -317,6 +317,11 @@ namespace eutelescope {
     void addReferenceHitCollection(LCEvent *event, std::string referenceHitName);
 
   protected:
+
+    //! original zsData collection name
+    /*! This is the name of the collection holding original data
+     */  
+    std::string _zsDataCollectionName;
 
     //! TrackerPulse collection name
     /*! This is the name of the collection holding the pulse
@@ -568,7 +573,7 @@ namespace eutelescope {
   };
 
   //! A global instance of the processor
-  EUTelHitMaker gEUTelHitMaker;
+  EUTelProcessorHitMaker gEUTelProcessorHitMaker;
 
 }
 #endif

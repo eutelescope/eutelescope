@@ -188,7 +188,6 @@ protected:
      *  For each Detector unique ID element a map of pixels is created. 
      *  Key is a (sensor) unique pixel Id (to be addressed via
      *  _inverse_hitIndexMapVec)
-     *  Value - EUTelGenericSparsePixel pointer.
      */
     std::map<int, sensor> _sensorMap;
 
