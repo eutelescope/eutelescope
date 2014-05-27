@@ -143,6 +143,7 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
 
     <!--Name of histogram info xml file-->
     <parameter name="HistogramInfoFilename" type="string" value="@HistoInfoFile@"/>
+    <parameter name="Verbosity" value="@Verbosity@"/>
   </processor>
 
   <processor name="HotPixelKiller" type="EUTelHotPixelKiller">
