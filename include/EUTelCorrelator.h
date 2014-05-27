@@ -204,9 +204,6 @@ namespace eutelescope {
 
   private:
 
-	 void  FillHotPixelMap(LCEvent *event);
-	 bool  hitContainsHotPixels( TrackerHitImpl   * hit);
-
     //! Initialization flag
     bool _isInitialize;
 
