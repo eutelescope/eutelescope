@@ -103,6 +103,7 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
     -->
     <!--This is the name of the histogram information file-->
     <parameter name="HistoInfoFileName" type="string" value="@HistoInfoFile@"/>
+    <parameter name="Verbosity" value="@Verbosity@"/>
 
   </processor>
 
@@ -121,7 +122,8 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
     <parameter name="MinLVL1" type="Int">5</parameter>
     <parameter name="MaxLVL1" type="Int">7</parameter>
          -->
-  </processor>
+    <parameter name="Verbosity" value="@Verbosity@"/>
+ </processor>
 
   <processor name="Correlator" type="EUTelCorrelator">
     <!--EUTelCorrelator fills histograms with correlation plots-->
