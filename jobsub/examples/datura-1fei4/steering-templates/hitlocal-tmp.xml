@@ -17,6 +17,7 @@
 
    <execute>
       <processor name="AIDA"/>
+      <processor name="MyEUTelUtilityPrintEventNumber"/>
       <processor name="LoadHotPixelDB"/>
       <processor name="HitMakerM26"/>
       <processor name="HitMakerAPIX"/>
@@ -24,7 +25,6 @@
       <processor name="HitFilter_apix"/> 
       <processor name="Correlator"/>
       <processor name="Save"/>
-      <processor name="MyEUTelUtilityPrintEventNumber"/>
    </execute>
 
    <global>
@@ -54,12 +54,18 @@
  </processor>
 
 
- <processor name="HitMakerM26" type="EUTelHitMaker">
+ <processor name="HitMakerM26" type="EUTelProcessorHitMaker">
  <!--EUTelHitMaker is responsible to translate cluster centers from the local frame of reference to the external frame of reference using the GEAR geometry description-->
+
+  <!--Input of Zero Suppressed data-->
+  <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> original_zsdata_m26 </parameter>
+
   <!--Cluster (pulse) collection name-->
   <parameter name="PulseCollectionName" type="string" lcioInType="TrackerPulse"> cluster_m26 </parameter>
+
   <!--Hit collection name-->
   <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit </parameter>
+
   <!--Select here how the center of gravity should be calculated.
 FULL: using the full cluster
 NPixel: using only the first N most significant pixels (set NPixel too)
@@ -86,15 +92,21 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
   <!--This is the file where the reference hit collection is stored-->
   <parameter name="ReferenceHitFile" type="string" value="@DatabasePath@/@FilePrefix@-referencehit.slcio"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <!--parameter name="Verbosity" type="string" value=""/-->
+  <parameter name="Verbosity" type="string" value="@Verbosity@"/>
 </processor>
 
- <processor name="HitMakerAPIX" type="EUTelHitMaker">
+ <processor name="HitMakerAPIX" type="EUTelProcessorHitMaker">
  <!--EUTelHitMaker is responsible to translate cluster centers from the local frame of reference to the external frame of reference using the GEAR geometry description-->
+ 
+  <!--Input of Zero Suppressed data-->
+  <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> original_zsdata_apix </parameter>
+
   <!--Cluster (pulse) collection name-->
   <parameter name="PulseCollectionName" type="string" lcioInType="TrackerPulse"> cluster_apix </parameter>
+
   <!--Hit collection name-->
   <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit </parameter>
+
   <!--Select here how the center of gravity should be calculated.
 FULL: using the full cluster
 NPixel: using only the first N most significant pixels (set NPixel too)
@@ -111,6 +123,7 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
   <!--parameter name="NPixel" type="int" value="9"/-->
   <!--The submatrix size to be used for CoGAlgorithm = "NxMPixel"-->
   <parameter name="NxMPixel" type="IntVec"> 3 3 </parameter>
+  <parameter name="Verbosity" type="string" value="@Verbosity@"/>
  </processor>
 
  <processor name="HitFilter_m26" type="EUTelProcessorFilteringHitFilter">
@@ -159,7 +172,10 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
   <!--Do you want the reference hit collection to be used for coordinate transformations?-->
   <!--parameter name="UseReferenceCollection" type="bool" value="true"/-->
   <!-- parameter name="ReferenceCollection" type="string" > refhit </parameter -->
-  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+    <!--Name of histogram info xml file-->
+    <parameter name="HistogramInfoFilename" type="string" value="@HistoInfoFile@"/>
+
+ <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
