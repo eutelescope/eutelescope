@@ -145,12 +145,15 @@ namespace eutelescope {
     private:
 
         /** TGeo geometry file name */
-	std::string _tgeoFileName;
+				std::string _tgeoFileName;
         
         // Exhaustive finder state definition
 
         /** Maximal amount of missing hits per track candidate */
         int _maxMissingHitsPerTrackCand;
+
+				//The number of allowed similar hits on track candidates of a single event
+				int _AllowedSharedHitsOnTrackCandidate;
 
         /** Maximal amount of tracks per event */
         int _maxNTracks;

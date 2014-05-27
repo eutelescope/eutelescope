@@ -119,6 +119,10 @@ namespace eutelescope {
             return _allowedMissingHits;
         };
 
+        inline void setAllowedSharedHitsOnTrackCandidate( int AllowedSharedHitsOnTrackCandidate) {
+            this->_AllowedSharedHitsOnTrackCandidate = AllowedSharedHitsOnTrackCandidate;
+        };
+
         inline void setAllowedMissingHits(unsigned int allowedMissingHits) {
             this->_allowedMissingHits = allowedMissingHits;
         }
@@ -321,6 +325,8 @@ namespace eutelescope {
 
         /** Maximum number of missing on a track candidate */
         int _allowedMissingHits;
+				/**Allowed # of common hits on a track for a single event.*/
+				int _AllowedSharedHitsOnTrackCandidate;
 
         /** Maximum number of track candidates to be stored */
         int _maxTrackCandidates;

@@ -75,6 +75,7 @@ _trackCandidateHitsOutputCollectionName("TrackCandidatesCollection"),
 _trackFitter(0),
 _tgeoFileName("TELESCOPE.root"),
 _maxMissingHitsPerTrackCand(0),
+_AllowedSharedHitsOnTrackCandidate(0),
 _maxNTracks(10),
 _eBeam(-1.),
 _qBeam(-1.),
@@ -120,6 +121,9 @@ _aidaHistoMap1D() {
     
     registerOptionalParameter("MaxMissingHitsPerTrack", "Maximal number of missing hits on a track candidate",
             _maxMissingHitsPerTrackCand, static_cast<int> (0)); // Search full-length tracks by default
+
+    registerOptionalParameter("AllowedSharedHitsOnTrackCandidate", "The number of similar hit a track candidate can have to another track candidate, within the same event.",
+            _AllowedSharedHitsOnTrackCandidate, static_cast<int> (0));
     
     registerOptionalParameter("MaxNTracksPerEvent", "Maximal number of track candidates to be found in events",
             _maxNTracks, static_cast<int> (100));
@@ -180,6 +184,7 @@ void EUTelProcessorTrackingHelixTrackSearch::init() {
         }
 
         Finder->setAllowedMissingHits( _maxMissingHitsPerTrackCand );
+        Finder->setAllowedSharedHitsOnTrackCandidate( _AllowedSharedHitsOnTrackCandidate );
         Finder->setWindowSize( _residualsRMax );
         Finder->setBeamMomentum( _eBeam );
         Finder->setBeamCharge( _qBeam );
