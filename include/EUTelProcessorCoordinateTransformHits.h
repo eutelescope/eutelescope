@@ -8,9 +8,9 @@
  *
  */
 
-//If header not already defined then define now
-#ifndef EUTELLOCALTOGLOBAL_H
-#define EUTELLOCALTOGLOBAL_H
+
+#ifndef EUTELCOORDINATETRANSFORMHITS_H
+#define EUTELCOORDINATETRANSFORMHITS_H
 
 
 // built only if GEAR is available
@@ -53,28 +53,28 @@
 
 namespace eutelescope {
 
-  class EUTelLocaltoGlobalHitMaker : public marlin::Processor {
+  class EUTelProcessorCoordinateTransformHits : public marlin::Processor {
 
   	private:
-    DISALLOW_COPY_AND_ASSIGN(EUTelLocaltoGlobalHitMaker) //This makes ensures that no other with this name can be created
+    DISALLOW_COPY_AND_ASSIGN(EUTelProcessorCoordinateTransformHits) //This makes ensures that no other with this name can be created
 
   	public:
 
-    // Returns a new instance of EUTelLocaltoGlobalHitMaker
+    // Returns a new instance of EUTelProcessorCoordinateTransformHits
     virtual Processor * newProcessor() {
-      return new EUTelLocaltoGlobalHitMaker;
+      return new EUTelProcessorCoordinateTransformHits;
     }
 
-		EUTelLocaltoGlobalHitMaker(); //Default constructor 
+		EUTelProcessorCoordinateTransformHits(); //Default constructor 
 		//Called only at the begining of a job
   	virtual void init ();
 
-		//Called every run so here we check the geometry in the gear file and run header in teh lcio file is the same
+		//Called every run 
   	virtual void processRunHeader (LCRunHeader * run);
 	
 		//Called every event.
   	virtual void processEvent (LCEvent * event);
-		//This runs every event
+		//Called every event
 		virtual void check(LCEvent *event);
 		//Called at the end of the job
   	virtual void end();
@@ -84,14 +84,14 @@ namespace eutelescope {
 		private:
     
 		//Only names wit _(name) come from the steering file.
-		//Collection name
+		//Collection names
 		std::string _hitCollectionNameInput;
 		std::string _hitCollectionNameOutput;
 
 	};//close class declaration
 
   //! A global instance of the processor
- 	EUTelLocaltoGlobalHitMaker gEUTelLocaltoGlobalHitMaker;
+ 	EUTelProcessorCoordinateTransformHits gEUTelLocaltoGlobalHitMaker;
 
 
 }//close eutelescope namespace scope
