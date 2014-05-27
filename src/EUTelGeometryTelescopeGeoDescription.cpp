@@ -460,7 +460,7 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::strin
        string stVolName = "volume_SensorID:";
        stVolName.append( strId.str() );
 
-		_planePath.insert( std::make_pair(*itrPlaneId, "/volume_World_1/"+stVolName+"_1") );
+       _planePath.insert( std::make_pair(*itrPlaneId, "/volume_World_1/"+stVolName+"_1") );
 
        TGeoVolume* pvolumeSensor = new TGeoVolume( stVolName.c_str(), pBoxSensor, pMed );
        pvolumeSensor->SetVisLeaves( kTRUE );
@@ -508,17 +508,29 @@ int EUTelGeometryTelescopeGeoDescription::getSensorID( const float globalPos[] )
 	//std::string sensor =  split.at(1);
 
 	int sensorID = -999;
-	//since we check bounds, no need for vector.at() but use [], it saves cycles :-)
-	if ( (split.size() > 1) && (split[1].substr(0,16) == "volume_SensorID:") )
-	{
-		sensorID = strtol( (split[1].substr(16, split[1].length() - 18)).c_str(), NULL, 10 );
+	streamlog_out(DEBUG3) << "init sensorID  : " << sensorID  <<  " " << volName << std::endl;
+
+        if( split.size() == 1 && split[0].length() > 16 ) {
+
+          streamlog_out(DEBUG3) << "split[0] " << split[0] << std::endl;
+          streamlog_out(DEBUG3) << "split[0].substr(0,16) " << split[0].substr(0,16) << std::endl;
+          int strLength = split[0].length(); 
+          streamlog_out(DEBUG3) << "split[0].substr(16, strLength ) " << split[0].substr(16, strLength ) << std::endl;
+
+          //since we check bounds, no need for vector.at() but use [], it saves cycles :-)
+	  if (  (split[0].substr(0,16) == "volume_SensorID:") )
+	  {
+                sensorID = strtol( (split[0].substr(16, strLength )).c_str(), NULL, 10 );
 		streamlog_out(DEBUG3) << "Point (" << globalPos[0] << "," << globalPos[1] << "," << globalPos[2] << ") was found at :" << sensorID << std::endl;
-}
-	else
-	{
+          }
+	  else
+	  {
 		streamlog_out(DEBUG3) << "Point (" << globalPos[0] << "," << globalPos[1] << "," << globalPos[2] << ") was not found inside any sensor!" << std::endl;
 		//Maybe exception??
-	}
+	  }
+        }
+        streamlog_out(DEBUG3) << "sensorID  : " << sensorID  << std::endl;
+
 	return sensorID;
 }
 
