@@ -629,10 +629,10 @@ void EUTelGeometryTelescopeGeoDescription::master2localHit(EVENT::TrackerHit* hi
 		//Fill information on the new local hit
 		hit_output->setPosition(localPos);
 		hit_output->setCovMatrix( hit_input->getCovMatrix());
-  	hit_output->setType( hit_input->getType() );
+	  	hit_output->setType( hit_input->getType() );
 		UTIL::CellIDEncoder<TrackerHitImpl> idHitEncoder(EUTELESCOPE::HITENCODING, hitCollectionOutput);
 
-  	idHitEncoder["sensorID"] =  sensorID;
+	  	idHitEncoder["sensorID"] =  sensorID;
 		///Warn the user if the global coordinate flag has been set correctly
 		if(properties == kHitInGlobalCoord){
 			streamlog_out(WARNING5) << " The properties cell ID is global as expected!  " << std::endl;
