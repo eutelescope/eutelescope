@@ -1187,6 +1187,8 @@ namespace eutelescope {
 
                  
                      // Calculate projection matrix
+                     // GBL language "Local" -> our language "Telescope"="global" system
+                     // GLB language "measurement" -> our language "measurement"="detector" system
                      TMatrixD proL2m(2, 2);
                      CalculateProjMatrix(proL2m, hitPointGlobal);
                 
