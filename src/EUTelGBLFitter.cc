@@ -961,6 +961,8 @@ namespace eutelescope {
 // GBL Trajectory treatment ::  Fit and dump into LCIO
     void EUTelGBLFitter::PerformFitGBLTrajectory( gbl::GblTrajectory* traj, vector<IMPL::TrackImpl*>::const_iterator& itTrkCand, double invP  ) {
                 
+            streamlog_out ( DEBUG4 ) << " EUTelGBLFitter::PerformFitGBLTrajectory -- starting " << endl;
+
             double loss = 0.;
             double chi2 = 0.;
             int ndf = 0;
@@ -1006,7 +1008,8 @@ namespace eutelescope {
                        prepareMilleOut( traj, itTrkCand) ;//, chi2, ndf, invP, 0., 0., 0., 0. );
                     }
  
-                
+           streamlog_out ( DEBUG4 ) << " EUTelGBLFitter::PerformFitGBLTrajectory -- finished " << endl;
+           
     }
 
 // convert input TrackCandidates and TrackStates into a GBL Trajectory
