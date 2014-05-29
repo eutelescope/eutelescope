@@ -554,6 +554,10 @@ void EUTelGeometryTelescopeGeoDescription::local2Master( int sensorID, const dou
     streamlog_out(DEBUG0) << "Sensor center: " << "(" << sensorCenterX << "," << sensorCenterY << "," << sensorCenterZ << ")" << std::endl;
     
     _geoManager->FindNode( sensorCenterX, sensorCenterY, sensorCenterZ );    
+
+    const char* volName = const_cast < char* > ( geo::gGeometry( )._geoManager->GetCurrentVolume( )->GetName( ) );
+    streamlog_out( DEBUG0 ) << "sensorCenter (" << sensorCenterX << "," << sensorCenterY << "," << sensorCenterZ << ") found in volume: " << volName << std::endl;
+
     _geoManager->LocalToMaster( localPos, globalPos );
     
     streamlog_out(DEBUG0) << std::fixed;
@@ -572,7 +576,8 @@ void EUTelGeometryTelescopeGeoDescription::local2Master( int sensorID, const dou
  */
 void EUTelGeometryTelescopeGeoDescription::master2Local( const double globalPos[], double localPos[] ) {
     streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::master2Local() " << std::endl;
-    _geoManager->FindNode( globalPos[0], globalPos[1], globalPos[2] );    
+    TGeoNode *node =   _geoManager->FindNode( globalPos[0], globalPos[1], globalPos[2] );    
+
     _geoManager->MasterToLocal( globalPos, localPos );
     
     streamlog_out(DEBUG0) << std::fixed;
@@ -666,6 +671,7 @@ void EUTelGeometryTelescopeGeoDescription::local2MasterVec( int sensorID, const 
     streamlog_out(DEBUG0) << "Sensor center: " << "(" << sensorCenterX << "," << sensorCenterY << "," << sensorCenterZ << ")" << std::endl;
     
     _geoManager->FindNode( sensorCenterX, sensorCenterY, sensorCenterZ );    
+ 
     _geoManager->LocalToMasterVect( localVec, globalVec );
     
     streamlog_out(DEBUG0) << std::fixed;
