@@ -886,21 +886,6 @@ namespace eutelescope {
             // Loop over hits on a track candidate
             const EVENT::TrackerHitVec& hits = (*itTrkCand)->getTrackerHits();
             EVENT::TrackerHitVec::const_reverse_iterator itHit;
-/*            for ( itHit = hits.rbegin(); itHit != hits.rend(); ++itHit) {
-                const int planeID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(*itHit) );
-     	 	if ( planeID < 0 ) streamlog_out( WARNING2 ) << "::FitSingleTrackCandidate Can't guess sensor ID. Check supplied hits." << std::endl;
-                 // Go to global coordinates
-                const double* hitPointLocal = (*itHit)->getPosition();
-                double hitPointGlobal[] = {0.,0.,0.};
-                geo::gGeometry().local2Master(planeID,hitPointLocal,hitPointGlobal);
-		streamlog_out(DEBUG4) << "::FitSingleTrackCandidate planeID= " << planeID << std::endl;
-		streamlog_out(DEBUG4) << "hitl= " << hitPointLocal[0] << " " << hitPointLocal[1] << " " << hitPointLocal[2] << std::endl;
-		streamlog_out(DEBUG4) << "hitm= " << hitPointGlobal[0] << " " << hitPointGlobal[1] << " " << hitPointGlobal[2] << std::endl;
-                start[0]  = hitPointGlobal[0];
-                start[1]  = hitPointGlobal[1];
-                start[2]  = hitPointGlobal[2];
-            }
-*/
 
       const map< int, int > sensorMap = geo::gGeometry().sensorZOrdertoIDs();
       int planeID     = sensorMap.at(0); // the first first plane in the array of the planes according to z direction. // assume not tilted plane. 
