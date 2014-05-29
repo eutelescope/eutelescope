@@ -163,7 +163,7 @@ namespace eutelescope {
             {
               streamlog_out ( DEBUG4 ) << "no Entrance: " <<  lpoint[0] << " " <<  lpoint[1] << " " << lpoint[2] << " err:"<< newSensorID << endl;
             } else {     
-              streamlog_out ( DEBUG2 ) << "identified NextPlane Entrance: " <<  lpoint[0] << " " <<  lpoint[1] << " " << lpoint[2] <<  " err:"<< newSensorID << endl;
+              streamlog_out ( DEBUG2 ) << "identified NextPlane Entrance: " <<  lpoint[0] << " " <<  lpoint[1] << " " << lpoint[2] <<  " at : "<< newSensorID << endl;
               const float opoint[3] = { lpoint[0], lpoint[1], lpoint[2] };
               ts->setReferencePoint( opoint );  
               ts->setLocation(sensorID);
@@ -230,9 +230,10 @@ namespace eutelescope {
             int newSensorID = findNextPlaneEntrance( state, iter->second ) ;
 
             const float* fpoint = state->getReferencePoint();
-            double *dpoint = toDouble(3, fpoint);
-            double lpoint[] = {0.,0.,0.};
-            geo::gGeometry().master2Local( dpoint, lpoint );
+            const int sensorID  = state->getLocation();
+            double *lpoint = toDouble(3, fpoint);
+            double dpoint[] = {0.,0.,0.};
+            geo::gGeometry().local2Master( sensorID, lpoint, dpoint );
             
             // collect propagator state ::
             (*itTrk)->addTrackState( new EUTelTrackStateImpl( *state) );
@@ -1191,13 +1192,18 @@ itTrk++;
         streamlog_out(DEBUG2) << "EUTelKalmanFilter::getXYZfromArcLength()" << std::endl;
         
         // Get starting track position
-        const float* x = ts->getReferencePoint();
+        const float* x = ts->getReferencePoint(); // this is in measurment system already
         const double x0 = x[0];
         const double y0 = x[1];
-        const double z0 = x[2];
-        
+        const double z0 = x[2]; // redundant (always zero)
+        const int sensorID = ts->getLocation();
+
+       	double trkPointLocal[]  = {x0, y0, z0};
+       	double trkPointGlobal[] = {0.,0.,0.};
+	geo::gGeometry().local2Master( sensorID, trkPointLocal, trkPointGlobal );
+
         // Get magnetic field vector
-        gear::Vector3D vectorGlobal( x0, y0, z0 );        // assuming uniform magnetic field running along X direction
+        gear::Vector3D vectorGlobal(  trkPointGlobal[0], trkPointGlobal[1], trkPointGlobal[2]  );        // assuming uniform magnetic field running along X direction
 	const gear::BField&   B = geo::gGeometry().getMagneticFiled();
         const double bx         = B.at( vectorGlobal ).x();
         const double by         = B.at( vectorGlobal ).y();
@@ -1215,16 +1221,16 @@ itTrk++;
 	TVector3 pos;
 	if ( fabs( k ) > 1.E-6  ) {
 		// Non-zero magnetic field case
-        	pos.SetX( x0 + 1./p * pVec.X() * s );
-		pos.SetY( y0 + 1./k * pVec.Y() * sin( rho*s ) + 1./k * pVec.Z() * ( 1. - cos( rho*s ) ) );
-                pos.SetZ( z0 + 1./k * pVec.Z() * sin( rho*s ) - 1./k * pVec.Y() * ( 1. - cos( rho*s ) ) );
+        	pos.SetX( trkPointGlobal[0] + 1./p * pVec.X() * s );
+		pos.SetY( trkPointGlobal[1] + 1./k * pVec.Y() * sin( rho*s ) + 1./k * pVec.Z() * ( 1. - cos( rho*s ) ) );
+                pos.SetZ( trkPointGlobal[2] + 1./k * pVec.Z() * sin( rho*s ) - 1./k * pVec.Y() * ( 1. - cos( rho*s ) ) );
         } else {
 		// Vanishing magnetic field case
 		const double cosA = cosAlpha( ts );
 		const double cosB = cosBeta( ts );
-		pos.SetX( x0 + cosA * s );
-		pos.SetY( y0 + cosB * s );
-		pos.SetZ( z0 + 1./p * pVec.Z() * s );
+		pos.SetX( trkPointGlobal[0] + cosA * s );
+		pos.SetY( trkPointGlobal[1] + cosB * s );
+		pos.SetZ( trkPointGlobal[2] + 1./p * pVec.Z() * s );
 	}
         
         streamlog_out(DEBUG2) << "---------------------------------EUTelKalmanFilter::getXYZfromArcLength()------------------------------------" << std::endl;
@@ -1478,9 +1484,7 @@ itTrk++;
         mk[0] = uvpos[0];          mk[1] = uvpos[1];
         
 	TVector3 trkPointVec = getXYZfromArcLength( ts, 0. );
-        double trkPoint[] = { trkPointVec.X(), trkPointVec.Y(), trkPointVec.Z() };
-	double trkPointLocal[] = {0.,0.,0.};
-	geo::gGeometry().master2Local(trkPoint,trkPointLocal);
+        double trkPointLocal[] = { trkPointVec.X(), trkPointVec.Y(), trkPointVec.Z() };
         
 	TVectorD prediction(2);
 	prediction[0] = trkPointLocal[0];	prediction[1] = trkPointLocal[1];    
