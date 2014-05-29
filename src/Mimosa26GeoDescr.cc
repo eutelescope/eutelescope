@@ -31,11 +31,8 @@ void  Mimosa26GeoDescr::createRootDescr(char const * planeVolume)
 	//Get the plane as provided by the EUTelGeometryTelescopeGeoDescription
 	TGeoVolume* topplane =_tGeoManager->GetVolume(planeVolume);
 	//Add the sensitive area to the plane
-//	topplane->AddNode(plane, 1);
-     
-        float xoffset = 18.4/2.;
-        float yoffset = 18.4/2.;
-        topplane->AddNode(plane, 1, new TGeoTranslation( 0.00 + xoffset, 0 + yoffset, 0) );
+	topplane->AddNode(plane, 1);
+    
 }
 
 std::string Mimosa26GeoDescr::getPixName(int x , int y)
