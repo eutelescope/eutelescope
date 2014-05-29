@@ -646,15 +646,6 @@ itTrk++;
         streamlog_out(DEBUG2) << "-------------------------------EUTelKalmanFilter::setHits()------------------------------------" << std::endl;
     }
  
-    /** check that the seeds are identical
-     * 
-     * 
-     */
-    bool identicalSeeds(const EUTelTrackStateImpl* ts1,  const EUTelTrackStateImpl* ts2 ){
-      
-      return 0; 
-    }
-
 
     /** Prune seed track states necessary to
      * start Kalman filter
