@@ -277,10 +277,10 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
         bool isReady = static_cast<EUTelKalmanFilter*>(_trackFitter)->initialise();
         if ( isReady )  {
             streamlog_out( DEBUG1 ) << "Trying to find tracks..." << endl;
-//replace this one
-//            _trackFitter->FitTracks( );
-// with two new ones:
+
+// searching for hits along the expected track direction 
             _trackFitter->SearchTrackCandidates( );
+// remove possible duplicates (the amount of commont hits on the split tracks is controled via the processor paraemter)
             _trackFitter->PruneTrackCandidates( );
 
             streamlog_out( DEBUG1 ) << "Retrieving track candidates..." << endl;
