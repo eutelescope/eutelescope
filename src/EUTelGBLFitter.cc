@@ -1265,6 +1265,7 @@ namespace eutelescope {
 
            // take care of a track candidate
            TrackCandidatesToGBLTrajectory( itTrkCand  );         
+           trackcounter++;
         }
  
     }
