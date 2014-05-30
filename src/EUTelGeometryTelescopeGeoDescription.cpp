@@ -460,7 +460,7 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::strin
        string stVolName = "volume_SensorID:";
        stVolName.append( strId.str() );
 
-		_planePath.insert( std::make_pair(*itrPlaneId, "/volume_World_1/"+stVolName+"_1") );
+       _planePath.insert( std::make_pair(*itrPlaneId, "/volume_World_1/"+stVolName+"_1") );
 
        TGeoVolume* pvolumeSensor = new TGeoVolume( stVolName.c_str(), pBoxSensor, pMed );
        pvolumeSensor->SetVisLeaves( kTRUE );
@@ -477,21 +477,6 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::strin
 
 //    #endif //USE_TGEO
     return;
-}
-
-/** Determine id of the sensor in which point is locate
- * 
- * @param input TrackerHitImpl* hit pointer 
- * @return sensorID or -999 if the point in outside of sensor volume
- */
-int EUTelGeometryTelescopeGeoDescription::getSensorID( const IMPL::TrackerHitImpl* hit ) const {
-    streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::getSensorID() " << std::endl;
-
-    int sensorID = -999;
-
-    sensorID =  hit->getCellID0(); // using a field in the TrackerHitImpl class;
-
-    return sensorID; 
 }
 
 /** Determine id of the sensor in which point is locate
@@ -523,16 +508,29 @@ int EUTelGeometryTelescopeGeoDescription::getSensorID( const float globalPos[] )
 	//std::string sensor =  split.at(1);
 
 	int sensorID = -999;
-	//since we check bounds, no need for vector.at() but use [], it saves cycles :-)
-	if ( (split.size() > 1) && (split[1].substr(0,16) == "volume_SensorID:") )
-	{
-		sensorID = strtol( (split[1].substr(16, split[1].length() - 18)).c_str(), NULL, 10 );
-	}
-	else
-	{
+	streamlog_out(DEBUG3) << "init sensorID  : " << sensorID  <<  " " << volName << std::endl;
+
+        if( split.size() == 1 && split[0].length() > 16 ) {
+
+          streamlog_out(DEBUG3) << "split[0] " << split[0] << std::endl;
+          streamlog_out(DEBUG3) << "split[0].substr(0,16) " << split[0].substr(0,16) << std::endl;
+          int strLength = split[0].length(); 
+          streamlog_out(DEBUG3) << "split[0].substr(16, strLength ) " << split[0].substr(16, strLength ) << std::endl;
+
+          //since we check bounds, no need for vector.at() but use [], it saves cycles :-)
+	  if (  (split[0].substr(0,16) == "volume_SensorID:") )
+	  {
+                sensorID = strtol( (split[0].substr(16, strLength )).c_str(), NULL, 10 );
+		streamlog_out(DEBUG3) << "Point (" << globalPos[0] << "," << globalPos[1] << "," << globalPos[2] << ") was found at :" << sensorID << std::endl;
+          }
+	  else
+	  {
 		streamlog_out(DEBUG3) << "Point (" << globalPos[0] << "," << globalPos[1] << "," << globalPos[2] << ") was not found inside any sensor!" << std::endl;
 		//Maybe exception??
-	}
+	  }
+        }
+        streamlog_out(DEBUG3) << "sensorID  : " << sensorID  << std::endl;
+
 	return sensorID;
 }
 
@@ -549,15 +547,16 @@ void EUTelGeometryTelescopeGeoDescription::local2Master( int sensorID, const dou
     const double sensorCenterX = siPlaneXPosition( sensorID );
     const double sensorCenterY = siPlaneYPosition( sensorID );
     const double sensorCenterZ = siPlaneZPosition( sensorID );
- 
-    streamlog_out(DEBUG0) << "_geoManager defined: " << _geoManager << std::endl;
    
-    streamlog_out(DEBUG0) << "Senosor id: " << sensorID << std::endl;
-    streamlog_out(DEBUG0) << "Senosor center: " << "(" << sensorCenterX << "," << sensorCenterY << "," << sensorCenterZ << ")" << std::endl;
-    
-    _geoManager->FindNode( sensorCenterX, sensorCenterY, sensorCenterZ );    
-    _geoManager->LocalToMaster( localPos, globalPos );
-    
+    streamlog_out(DEBUG0) << "Sensor id: " << sensorID << std::endl;
+    streamlog_out(DEBUG0) << "Sensor center: " << "(" << sensorCenterX << "," << sensorCenterY << "," << sensorCenterZ << ")" << std::endl;
+
+    _geoManager->cd( _planePath[sensorID].c_str() );
+    _geoManager->GetCurrentNode()->LocalToMaster( localPos, globalPos );
+ 
+    const char* volName = const_cast < char* > ( geo::gGeometry( )._geoManager->GetCurrentVolume( )->GetName( ) );
+    streamlog_out( DEBUG0 ) << "sensorCenter (" << sensorCenterX << "," << sensorCenterY << "," << sensorCenterZ << ") found in volume: " << volName << std::endl;
+
     streamlog_out(DEBUG0) << std::fixed;
     streamlog_out(DEBUG0) << "Local coordinates ( sensorID =  " << sensorID << " ) : " << std::endl;
     streamlog_out(DEBUG0) << std::setw(10) << std::setprecision(5) << localPos[0] << std::setw(10) << std::setprecision(5) << localPos[1] << std::setw(10) << std::setprecision(5) << localPos[2] << std::endl;
@@ -574,8 +573,8 @@ void EUTelGeometryTelescopeGeoDescription::local2Master( int sensorID, const dou
  */
 void EUTelGeometryTelescopeGeoDescription::master2Local( const double globalPos[], double localPos[] ) {
     streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::master2Local() " << std::endl;
-    _geoManager->FindNode( globalPos[0], globalPos[1], globalPos[2] );    
-    _geoManager->MasterToLocal( globalPos, localPos );
+
+    _geoManager->GetCurrentNode()->MasterToLocal( globalPos, localPos );
     
     streamlog_out(DEBUG0) << std::fixed;
     streamlog_out(DEBUG0) << "Global coordinates:" << std::endl;
@@ -599,9 +598,9 @@ void EUTelGeometryTelescopeGeoDescription::local2masterHit(EVENT::TrackerHit* hi
 		//Fill the new hit_output with information
 		hit_output->setPosition(globalPos);
 		hit_output->setCovMatrix( hit_input->getCovMatrix());
-  	hit_output->setType( hit_input->getType() );
+	  	hit_output->setType( hit_input->getType() );
 		UTIL::CellIDEncoder<TrackerHitImpl> idHitEncoder(EUTELESCOPE::HITENCODING, hitCollectionOutput);
-  	idHitEncoder["sensorID"] =  sensorID;
+  		idHitEncoder["sensorID"] =  sensorID;
 		//This warns the user if global flag has not been set
 		if(properties != kHitInGlobalCoord){
 			streamlog_out(WARNING5) << " The properties cell ID is not global as expected!  " << std::endl;
@@ -631,10 +630,10 @@ void EUTelGeometryTelescopeGeoDescription::master2localHit(EVENT::TrackerHit* hi
 		//Fill information on the new local hit
 		hit_output->setPosition(localPos);
 		hit_output->setCovMatrix( hit_input->getCovMatrix());
-  	hit_output->setType( hit_input->getType() );
+	  	hit_output->setType( hit_input->getType() );
 		UTIL::CellIDEncoder<TrackerHitImpl> idHitEncoder(EUTELESCOPE::HITENCODING, hitCollectionOutput);
 
-  	idHitEncoder["sensorID"] =  sensorID;
+	  	idHitEncoder["sensorID"] =  sensorID;
 		///Warn the user if the global coordinate flag has been set correctly
 		if(properties == kHitInGlobalCoord){
 			streamlog_out(WARNING5) << " The properties cell ID is global as expected!  " << std::endl;
@@ -664,12 +663,12 @@ void EUTelGeometryTelescopeGeoDescription::local2MasterVec( int sensorID, const 
     const double sensorCenterY = siPlaneYPosition( sensorID );
     const double sensorCenterZ = siPlaneZPosition( sensorID );
     
-    streamlog_out(DEBUG0) << "Senosor id: " << sensorID << std::endl;
-    streamlog_out(DEBUG0) << "Senosor center: " << "(" << sensorCenterX << "," << sensorCenterY << "," << sensorCenterZ << ")" << std::endl;
+    streamlog_out(DEBUG0) << "Sensor id: " << sensorID << std::endl;
+    streamlog_out(DEBUG0) << "Sensor center: " << "(" << sensorCenterX << "," << sensorCenterY << "," << sensorCenterZ << ")" << std::endl;
     
-    _geoManager->FindNode( sensorCenterX, sensorCenterY, sensorCenterZ );    
-    _geoManager->LocalToMasterVect( localVec, globalVec );
-    
+    _geoManager->cd( _planePath[sensorID].c_str() );
+    _geoManager->GetCurrentNode()->LocalToMasterVect( localVec, globalVec );
+
     streamlog_out(DEBUG0) << std::fixed;
     streamlog_out(DEBUG0) << "Global coordinates:" << std::endl;
     streamlog_out(DEBUG0) << std::setw(10) << std::setprecision(5) << globalVec[0] << std::setw(10) << std::setprecision(5) << globalVec[1] << std::setw(10) << std::setprecision(5) << globalVec[2] << std::endl;
@@ -691,11 +690,14 @@ void EUTelGeometryTelescopeGeoDescription::master2LocalVec( int sensorID, const 
     const double sensorCenterY = siPlaneYPosition( sensorID );
     const double sensorCenterZ = siPlaneZPosition( sensorID );
     
-    streamlog_out(DEBUG0) << "Senosor id: " << sensorID << std::endl;
-    streamlog_out(DEBUG0) << "Senosor center: " << "(" << sensorCenterX << "," << sensorCenterY << "," << sensorCenterZ << ")" << std::endl;
+    streamlog_out(DEBUG0) << "Sensor id: " << sensorID << std::endl;
+    streamlog_out(DEBUG0) << "Sensor center: " << "(" << sensorCenterX << "," << sensorCenterY << "," << sensorCenterZ << ")" << std::endl;
     
-    _geoManager->FindNode( sensorCenterX, sensorCenterY, sensorCenterZ );    
-    _geoManager->MasterToLocalVect( globalVec, localVec );
+    _geoManager->cd( _planePath[sensorID].c_str() );
+    _geoManager->GetCurrentNode()->MasterToLocalVect( globalVec, localVec );
+
+//    _geoManager->FindNode( sensorCenterX, sensorCenterY, sensorCenterZ );    
+//    _geoManager->MasterToLocalVect( globalVec, localVec );
     
     streamlog_out(DEBUG0) << std::fixed;
     streamlog_out(DEBUG0) << "Global coordinates:" << std::endl;

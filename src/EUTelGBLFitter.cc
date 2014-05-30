@@ -561,7 +561,7 @@ namespace eutelescope {
      * @param chi2     Chi2 of the track fit
      * @param ndf      NDF of the track fit
      */
-     IMPL::TrackImpl* EUTelGBLFitter::prepareLCIOTrack( gbl::GblTrajectory* gblTraj, const vector<IMPL::TrackImpl*>::const_iterator& itTrkCand, 
+     void EUTelGBLFitter::prepareLCIOTrack( gbl::GblTrajectory* gblTraj, const vector<IMPL::TrackImpl*>::const_iterator& itTrkCand, 
                                           double chi2, int ndf, double omega, double d0, double z0, double phi, double tanlam ) {
  
 // output  track
@@ -886,21 +886,6 @@ namespace eutelescope {
             // Loop over hits on a track candidate
             const EVENT::TrackerHitVec& hits = (*itTrkCand)->getTrackerHits();
             EVENT::TrackerHitVec::const_reverse_iterator itHit;
-/*            for ( itHit = hits.rbegin(); itHit != hits.rend(); ++itHit) {
-                const int planeID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(*itHit) );
-     	 	if ( planeID < 0 ) streamlog_out( WARNING2 ) << "::FitSingleTrackCandidate Can't guess sensor ID. Check supplied hits." << std::endl;
-                 // Go to global coordinates
-                const double* hitPointLocal = (*itHit)->getPosition();
-                double hitPointGlobal[] = {0.,0.,0.};
-                geo::gGeometry().local2Master(planeID,hitPointLocal,hitPointGlobal);
-		streamlog_out(DEBUG4) << "::FitSingleTrackCandidate planeID= " << planeID << std::endl;
-		streamlog_out(DEBUG4) << "hitl= " << hitPointLocal[0] << " " << hitPointLocal[1] << " " << hitPointLocal[2] << std::endl;
-		streamlog_out(DEBUG4) << "hitm= " << hitPointGlobal[0] << " " << hitPointGlobal[1] << " " << hitPointGlobal[2] << std::endl;
-                start[0]  = hitPointGlobal[0];
-                start[1]  = hitPointGlobal[1];
-                start[2]  = hitPointGlobal[2];
-            }
-*/
 
       const map< int, int > sensorMap = geo::gGeometry().sensorZOrdertoIDs();
       int planeID     = sensorMap.at(0); // the first first plane in the array of the planes according to z direction. // assume not tilted plane. 
@@ -976,6 +961,8 @@ namespace eutelescope {
 // GBL Trajectory treatment ::  Fit and dump into LCIO
     void EUTelGBLFitter::PerformFitGBLTrajectory( gbl::GblTrajectory* traj, vector<IMPL::TrackImpl*>::const_iterator& itTrkCand, double invP  ) {
                 
+            streamlog_out ( DEBUG4 ) << " EUTelGBLFitter::PerformFitGBLTrajectory -- starting " << endl;
+
             double loss = 0.;
             double chi2 = 0.;
             int ndf = 0;
@@ -1021,18 +1008,21 @@ namespace eutelescope {
                        prepareMilleOut( traj, itTrkCand) ;//, chi2, ndf, invP, 0., 0., 0., 0. );
                     }
  
-                
+           streamlog_out ( DEBUG4 ) << " EUTelGBLFitter::PerformFitGBLTrajectory -- finished " << endl;
+           
     }
 
 // convert input TrackCandidates and TrackStates into a GBL Trajectory
     void EUTelGBLFitter::TrackCandidatesToGBLTrajectory( vector<IMPL::TrackImpl*>::const_iterator& itTrkCand) {
 
             // sanity check. Mustn't happen in principle.
-            if ((*itTrkCand)->getTrackerHits().size() > geo::gGeometry().nPlanes())
+            if ( (*itTrkCand)->getTrackerHits().size() > geo::gGeometry().nPlanes() )
             {
               streamlog_out(ERROR) << "Sanity check. This should not happen in principle. Number of hits is greater then number of planes" << std::endl;
               return;
             }
+
+
 
             // Z axis points along beam direction.
             double pt = ( 1./(*itTrkCand)->getOmega() ) * _beamQ;
@@ -1061,17 +1051,21 @@ namespace eutelescope {
             EVENT::TrackerHitVec::const_reverse_iterator itHit;
             int imatch=0;
             streamlog_out( MESSAGE0 ) << "list requested planes: " ;
-            for ( itHit = hits.rbegin(); itHit != hits.rend(); ++itHit) {
+            for(int izPlane=0; izPlane<_parameterIdPlaneVec.size(); izPlane++) {
+              int kPlaneID =  _parameterIdPlaneVec[izPlane];
+              streamlog_out( MESSAGE0 ) << " [" << imatch << ":" << kPlaneID ;
+              bool ifound = false;
+              for ( itHit = hits.rbegin(); itHit != hits.rend(); ++itHit) {
               const int planeID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(*itHit) );
-              streamlog_out( MESSAGE0 ) << " [" << imatch << ":" << planeID ;
-             for(int izPlane=0;izPlane<_parameterIdPlaneVec.size();izPlane++) {
-                if( _parameterIdPlaneVec[izPlane] == planeID )
+               if( kPlaneID == planeID )
                 {  
                   imatch++;
                   streamlog_out( MESSAGE0 ) << " yes "   ;
-                 break;
+                  ifound = true;
+                  break;
                 }
-              }            
+              }     
+              if( !ifound)  streamlog_out( MESSAGE0 ) << " not "   ;      
               streamlog_out( MESSAGE0 ) << "] "   ;
             }
             streamlog_out( MESSAGE0 ) << std::endl;
@@ -1100,9 +1094,18 @@ namespace eutelescope {
             int nstates = (*itTrkCand)->getTrackStates().size();
             for(int i=0;i < nstates; i++) 
             {
+
                 streamlog_out(MESSAGE1) << "state: at " << i << " of " << nstates ;
                 IMPL::TrackStateImpl* trk = static_cast < IMPL::TrackStateImpl*> ( (*itTrkCand)->getTrackStates().at(i) ) ;
                 int trkVolumeID =  trk->getLocation();
+
+                if ( trkVolumeID < 0 )
+                {
+                   streamlog_out(DEBUG0) << "Sanity check. SensorID can not be negative. Negative TrackStates are kept for the beginning and end of the TrackStates on Pattern Recognition. skip this one.";
+                   streamlog_out(MESSAGE1) << std::endl; // to be consistent with the MESSAGE1 level printouts in the for-loop
+                   continue;
+                } 
+
                 streamlog_out(MESSAGE1) << "  [ " << trk->id() << " ] " ;
  
                 double fitPointLocal[] = {0.,0.,0.};
@@ -1187,6 +1190,8 @@ namespace eutelescope {
 
                  
                      // Calculate projection matrix
+                     // GBL language "Local" -> our language "Telescope"="global" system
+                     // GLB language "measurement" -> our language "measurement"="detector" system
                      TMatrixD proL2m(2, 2);
                      CalculateProjMatrix(proL2m, hitPointGlobal);
                 
@@ -1263,6 +1268,7 @@ namespace eutelescope {
 
            // take care of a track candidate
            TrackCandidatesToGBLTrajectory( itTrkCand  );         
+           trackcounter++;
         }
  
     }

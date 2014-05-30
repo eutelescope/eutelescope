@@ -410,6 +410,10 @@ void EUTelProcessorTrackingGBLTrajectory::processEvent(LCEvent * evt) {
             // Loop over fitted tracks
             for (itFitTrack = fittrackvec->begin(); itFitTrack != fittrackvec->end(); ++itFitTrack) {
 
+                TrackImpl* trackimpl =  static_cast< TrackImpl*> (*itFitTrack);  
+                int nstates = trackimpl->getTrackStates().size();
+                streamlog_out(DEBUG3) << " on this track we have " << nstates << " TrackState states   " << endl;
+
                 chi2Trk =static_cast<TrackImpl*> (*itFitTrack)->getChi2();
                 ndfTrk = static_cast<TrackImpl*> (*itFitTrack)->getNdf();
                 static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ _histName::_orchi2GblFitHistName ]) -> fill(chi2Trk);
@@ -425,19 +429,28 @@ void EUTelProcessorTrackingGBLTrajectory::processEvent(LCEvent * evt) {
                 IMPL::LCCollectionVec::const_iterator begin = fittrackvec->begin( );
                 int iCounter = std::distance( begin, itFitTrack );
                 gbl::GblTrajectory* gblTraj = ( *gblTracks.find( iCounter ) ).second;
+                
                 if ( gblTraj == NULL ) {
                     streamlog_out( WARNING1 ) << "Can't find GBL trajectory object #"<< iCounter << " of " << fittrackvec->size() <<". Skipping track" << std::endl;
                     continue;
                 }else{
                     streamlog_out( MESSAGE1 ) << "found GBL trajectory object #"<< iCounter << " of " << fittrackvec->size() <<". chi2:" << chi2Trk << " max:" << _maxChi2Cut << std::endl;
                 }
- 
+               
+                int numberOfGblPoints = gblTraj->getNumPoints();
+                if( numberOfGblPoints <= 0 || numberOfGblPoints > nstates ) {
+                  streamlog_out( WARNING1 ) << "warn: Run " << event->getRunNumber() << " Event " << event->getEventNumber() << " ";
+                  streamlog_out( WARNING1 ) << "Although the GBLTrajectory is non void (pointer="<< gblTraj<<") it contains invalid number of points numberOfGblPoints = " << numberOfGblPoints << std::endl;
+                  streamlog_out( WARNING1 ) << "skip this Track Candidate" << std::endl;
+                  continue;
+                }
+
 
                 const std::map<long, int> gblPointLabel = static_cast < EUTelGBLFitter* > ( _trackFitter )->getHitId2GblPointLabel( );
                 const EVENT::TrackerHitVec& trackHits = static_cast < TrackImpl* > ( *itFitTrack )->getTrackerHits( );
 
                 // If this is an run plot residuals for selected tracks. Plot everything otherwise.
-                if ( chi2Trk < _maxChi2Cut   ) {
+                if ( chi2Trk < _maxChi2Cut ) {
  
                     static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ _histName::_chi2GblFitHistName ]) -> fill(chi2Trk);
                     if(ndfTrk>0) static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ _histName::_chi2ndfGblFitHistName ]) -> fill(chi2Trk/ndfTrk);
@@ -445,8 +458,8 @@ void EUTelProcessorTrackingGBLTrajectory::processEvent(LCEvent * evt) {
 
  
                     streamlog_out(MESSAGE1) << "Event number " << event->getEventNumber() << " in run " << event->getRunNumber()
-                     << "event: " 
-                     << "fittrack: " << (static_cast<TrackImpl*> (*itFitTrack))->id() 
+                     << " event: " 
+                     << " fittrack: " << (static_cast<TrackImpl*> (*itFitTrack))->id() 
                      << " fittrackvec->end(): " << fittrackvec->size()
                      << " trackHits.end(): " << trackHits.size() << endl ; 
 
@@ -464,7 +477,7 @@ void EUTelProcessorTrackingGBLTrajectory::processEvent(LCEvent * evt) {
 
                         // Get fitted hit information
                         const double* hitpos = ( *itrHit )->getPosition( );
-                        const int planeID = geo::gGeometry().getSensorID( originalHit );
+                        const int planeID = Utility::GuessSensorID( originalHit );
 
                         bool excludeFromFit = false;
                         if ( std::find( _excludePlanesFromFit.begin(), _excludePlanesFromFit.end(), planeID ) != _excludePlanesFromFit.end() ) excludeFromFit = true;
@@ -493,9 +506,6 @@ void EUTelProcessorTrackingGBLTrajectory::processEvent(LCEvent * evt) {
                         // gblPointLabel s are now given in track state Id ... and why?
                         int hitGblLabel = -1;
 
-           TrackImpl* trackimpl =  static_cast< TrackImpl*> (*itFitTrack);  
-           int nstates = trackimpl->getTrackStates().size();
-           streamlog_out(DEBUG3) << "on this Track we have " << nstates << " states   " << endl;
 
            for(int i=0;i < nstates; i++) 
             {
@@ -508,7 +518,7 @@ void EUTelProcessorTrackingGBLTrajectory::processEvent(LCEvent * evt) {
                    streamlog_out(DEBUG0) << " " << it->first << " " << it->second << " " << fittedHit << endl ;
                    if( it->first == fittedHit ) {
                      hitGblLabel = it->second;
-                     streamlog_out(DEBUG1) << " hitGblLabel: " << hitGblLabel << " : " << numData << " " << " gblTraj : " << gblTraj << endl;
+                     streamlog_out(DEBUG1) << " hitGblLabel= " << hitGblLabel <<  " fittedHit= " << fittedHit << " numData= " << numData << " " << " gblTraj : " << gblTraj << std::endl;
                      break;
                    }
                 }
@@ -520,12 +530,20 @@ void EUTelProcessorTrackingGBLTrajectory::processEvent(LCEvent * evt) {
                continue; 
             }
 
+           numberOfGblPoints = gblTraj->getNumPoints();
+           streamlog_out( DEBUG1 ) << " " << gblTraj<<" contains " << numberOfGblPoints << " number of points numberOfGblPoints " << std::endl;
+ 
            if( !excludeFromFit)
             {
-//                        gblTraj->printTrajectory(1);  
+                   if ( streamlog_level(DEBUG0) ){
+                        gblTraj->printTrajectory(1);  
+    			gblTraj->printData();
+		  	gblTraj->printPoints(1);
+                   }
+
                         gblTraj->getMeasResults( hitGblLabel, numData, residualGBL, measErrGBL, residualGBLErr, downWeightGBL );
-//cout<<"nach hitGblLabel: " << hitGblLabel << " : " << numData << endl;
-            }
+                   streamlog_out( DEBUG1 ) <<   "nach hitGblLabel: " << hitGblLabel << " and numData = " << numData << std::endl;
+           }
                         std::stringstream sstr;
                         std::stringstream sstrNorm;
 
