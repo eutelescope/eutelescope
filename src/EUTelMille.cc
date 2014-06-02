@@ -1216,13 +1216,13 @@ void EUTelMille::processEvent (LCEvent * event) {
 
             TrackerHitImpl * hit = static_cast<TrackerHitImpl*> ( collection->getElementAt(iHit) );
              
-            if( hitContainsHotPixels(hit) )
+            /*if( hitContainsHotPixels(hit) )
             {
               streamlog_out ( DEBUG3 ) << "Hit " << i << " contains hot pixels; skip this one. " << endl;
               continue;
             }
-
-            LCObjectVec clusterVector = hit->getRawHits();
+		*/
+            /*LCObjectVec clusterVector = hit->getRawHits();
 
             EUTelVirtualCluster * cluster;
 
@@ -1287,7 +1287,7 @@ void EUTelMille::processEvent (LCEvent * event) {
 		  delete cluster; 
 		  continue;
                 }
-            }
+            }*/
 
 	    int localSensorID = hitDecoder(hit)["sensorID"]; 
             
@@ -1300,7 +1300,7 @@ void EUTelMille::processEvent (LCEvent * event) {
             hitsInPlane.measuredZ = 1000. * hit->getPosition()[2];
 
             _allHitsArray[layerIndex].push_back(hitsInPlane);
-            delete cluster; // <--- destroying the cluster
+            //delete cluster; // <--- destroying the cluster
           } // end loop over all hits in collection
 
         } else if (_inputMode == 2) {
@@ -1492,7 +1492,7 @@ void EUTelMille::processEvent (LCEvent * event) {
                 {
                   TrackerHitImpl *hit = static_cast<TrackerHitImpl*> ( collection->getElementAt(iHit) );
 
-                  LCObjectVec clusterVector = hit->getRawHits();
+                  /*LCObjectVec clusterVector = hit->getRawHits();
                   EUTelVirtualCluster *cluster;
 
                   if ( hit->getType() == kEUTelBrickedClusterImpl ) {
@@ -1542,7 +1542,6 @@ void EUTelMille::processEvent (LCEvent * event) {
                     throw UnknownDataTypeException("Unknown cluster type");
                   }
 
-                  std::vector<EUTelMille::HitsInPlane> hitsplane;
 
                   if ( 
                     hit->getType() == kEUTelDFFClusterImpl 
@@ -1557,10 +1556,12 @@ void EUTelMille::processEvent (LCEvent * event) {
                           delete cluster; 
                           continue;
                       }
-                  }
+                  }*/
 
 
-                  hitsplane.push_back(
+                  std::vector<EUTelMille::HitsInPlane> hitsplane;
+                  
+		  hitsplane.push_back(
                           EUTelMille::HitsInPlane(
                               1000. * hit->getPosition()[0],
                               1000. * hit->getPosition()[1],
@@ -1570,7 +1571,7 @@ void EUTelMille::processEvent (LCEvent * event) {
  
                   double measuredz = hit->getPosition()[2];
 
-                  delete cluster; // <--- destroying the cluster
+                  //delete cluster; // <--- destroying the cluster
 
 		  // setup cellIdDecoder to decode the hit properties
 		  CellIDDecoder<TrackerHit>  hitCellDecoder(EUTELESCOPE::HITENCODING);
