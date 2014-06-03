@@ -354,53 +354,49 @@ itTrk++;
 	std::vector< EUTelTrackImpl* >::iterator itTrk;
         int local_itTrk = 0;
         int size_itTrk = _tracksCartesian.size();
+				//LOOP over list of all tracks. At this point they are only the hits on the first and second plane as track objects.
         for ( itTrk = _tracksCartesian.begin(); itTrk != _tracksCartesian.end(); itTrk++ ) {
             streamlog_out(MESSAGE0) << "beginning now at : " << local_itTrk << " of " << size_itTrk << " itTrk: " << (*itTrk) << endl;
             bool isGoodTrack = true; 
          
-   //       if( (*itTrk) == NULL ) continue;
- 
-            (const_cast<EUTelTrackImpl*>(*itTrk)) ->Print();
+             streamlog_out ( DEBUG5 ) << "The track seed before propagation to find other states and hit on other surfaces. " << endl; 
+            (const_cast<EUTelTrackImpl*>(*itTrk))->Print();
 
+						//Get the first state of the track. Remember at this point we only have single hits on a track
             EUTelTrackStateImpl* state = const_cast<EUTelTrackStateImpl*>((*itTrk)->getFirstTrackState( ));
             
+						//Check is the state of the hit on the track exists
             if( state == 0 )
             {
                streamlog_out ( WARNING0 ) << "track _tracksCartesian return a NULL state, skip this one " << endl; 
                isGoodTrack = false;
-               delete (*itTrk);
-               itTrk = _tracksCartesian.erase( itTrk ); itTrk--;
+               delete (*itTrk); //Is this really needed?
+               itTrk = _tracksCartesian.erase( itTrk ); itTrk--; //Must itTrk-- since the erase will take us to the next hit automatically 
                continue;
             }
- 
+ 						//This will take the initial track seeds. I.e the hits on the first and second plane and determine this states "The angle, position and momentum" after that on any surface. Also will add a hit if there is one within certain range. This will be added to the track object itTrk. 
             propagateFromRefPoint(itTrk);
  
+						//Check the number of hit on the track after propagation and collecting hits is over the minimum
             if ( isGoodTrack && ( *itTrk )->getTrackerHits( ).size( ) < geo::gGeometry( ).nPlanes( ) - _allowedMissingHits ) {
                streamlog_out ( DEBUG1 ) << "Track candidate has to many missing hits." << std::endl;
                streamlog_out ( DEBUG1 ) << "Removing this track candidate from further consideration." << std::endl;
-               delete (*itTrk);
+               delete (*itTrk);  //Is this really needed?
                isGoodTrack = false;
-               itTrk = _tracksCartesian.erase( itTrk ); itTrk--; // rubinsky 08-05-14
+               itTrk = _tracksCartesian.erase( itTrk ); itTrk--; 
             }
 
             if ( isGoodTrack ) {
                state->setLocation( EUTelTrackStateImpl::AtLastHit );
-               IMPL::TrackImpl *trackimpl = cartesian2LCIOTrack( *itTrk );
-               _tracks.push_back( trackimpl );
-                int nstates = trackimpl->getTrackStates().size();
-  //             for(int i = 0;i< nstates; i++) {
-  //               IMPL::TrackStateImpl* implstate = static_cast< IMPL::TrackStateImpl*> (trackimpl->getTrackStates().at(i)) ;
-  //               EUTelTrackStateImpl* istate = static_cast<EUTelTrackStateImpl* > (implstate);   
-//                IMPL::TrackStateImpl* implstate = new IMPL::TrackStateImpl( *nexttrackstate );
- //                 EUTelTrackStateImpl *istate =  (trackimpl->getTrackStates().at(i));
-  //               streamlog_out(MESSAGE0) << "state: " << istate->id() << " location: " << istate->getLocation() << " X:" << istate->getX() << " Y:" << istate->getY() << std::endl;
-  //             } 
-               streamlog_out(MESSAGE0) << local_itTrk << " of " << size_itTrk << " hits on track " << *itTrk << " with " <<  ( *itTrk )->getTrackerHits( ).size( ) << " expecting at least " << geo::gGeometry( ).nPlanes( ) - _allowedMissingHits << " states: "<< nstates << std::endl;
+                int nstates = _tracksCartesian->getTrackStates().size();
+
+               streamlog_out(DEBUG5) <<"'Tracks' looped through. I.e initial hit seed as a track. (Ignore states with no hits): "  << local_itTrk << ". Number of seeds: " << size_itTrk << ". At seed: " << *itTrk << "after propagation with: " << ( *itTrk )->getTrackerHits( ).size( ) << " hits collected on track.  Expecting at least " << geo::gGeometry( ).nPlanes( ) - _allowedMissingHits << " The states. I.e Including planes with not hits: "<< nstates << std::endl<< std::endl<< std::endl<< std::endl;
+
+             streamlog_out ( DEBUG5 ) << "Successful track state after propagation: " << endl; 
+            (const_cast<EUTelTrackImpl*>(*itTrk))->Print();
  
-               delete (*itTrk);
-               itTrk = _tracksCartesian.erase( itTrk ); itTrk--; // rubinsky 08-05-14
             }
-            streamlog_out(MESSAGE0) << "finished : " << local_itTrk << " of " << size_itTrk << endl;
+            streamlog_out(MESSAGE0) << "Finished looping through all seeds! Looped at total of : " << local_itTrk << " after seeds with no state are deduced. Total seeds were: " << size_itTrk << endl;
             local_itTrk++;
         }
   
@@ -751,9 +747,7 @@ itTrk++;
             state->setInvP(invp);            // independent of reference point
             
             EUTelTrackImpl* track = new EUTelTrackImpl;
-//            track->addHit( (*itHit) );
             track->addTrackState( state );
-//            track->Print();
             _tracksCartesian.push_back( track );
 
           }// loop over for the iplane

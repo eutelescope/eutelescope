@@ -296,8 +296,6 @@ namespace eutelescope {
 
         // Kalman filter states and tracks
     private:       
-        /** Final set of tracks for LCIO */
-        std::vector< IMPL::TrackImpl* > _tracks;
         
         /** Final set of tracks in cartesian parameterisation */
         std::vector< EUTelTrackImpl* > _tracksCartesian;
