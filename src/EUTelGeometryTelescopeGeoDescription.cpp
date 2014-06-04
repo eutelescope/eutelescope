@@ -956,7 +956,7 @@ int EUTelGeometryTelescopeGeoDescription::findNextPlane(  double* lpoint,  doubl
  
    return -100;
 }
- 
+//This will take in a global coordinate and direction and output the new global point on the next sensor. Also it outputs the sesnorID if it matches output or -100 if not.
 int EUTelGeometryTelescopeGeoDescription::findNextPlaneEntrance(  double* lpoint,  double* ldir, int nextSensorID, float* newpoint )
 {
    if(newpoint==0)
@@ -965,19 +965,21 @@ int EUTelGeometryTelescopeGeoDescription::findNextPlaneEntrance(  double* lpoint
       return -100;
    }
    
+	//initialise direction and location in global telescope coordinates
    _geoManager->InitTrack( lpoint, ldir );
  
-   TGeoNode *node = _geoManager->GetCurrentNode( );
+   TGeoNode *node = _geoManager->GetCurrentNode( ); //Return the volume i.e 'node' that contains that point.
    Int_t inode =  node->GetIndex();
    Int_t i=0;
 
    streamlog_out ( DEBUG0 ) << "::findNextPlaneEntrance node: " << node << " id: " << inode << endl;
  
+	//Keep looping until you have left this plane volume and are at another. Note FindNextBoundaryAndStep will only take you to the next volume 'node' it will not enter it.
    while( node = _geoManager->FindNextBoundaryAndStep( ) )
    {
        inode = node->GetIndex();
-       const double* point = _geoManager->GetCurrentPoint();
-       const double* dir   = _geoManager->GetCurrentDirection();
+       const double* point = _geoManager->GetCurrentPoint(); //This will be the new global coordinates after the move
+       const double* dir   = _geoManager->GetCurrentDirection(); //This will be the same direction. If there was magnetic field then this would change automatically. However may need Geant4 for this to work. ???
        double ipoint[3] ;
        double idir[3]   ;
 
@@ -994,7 +996,7 @@ int EUTelGeometryTelescopeGeoDescription::findNextPlaneEntrance(  double* lpoint
        _geoManager->SetCurrentPoint( ipoint);
        _geoManager->SetCurrentDirection( idir);
  
-       streamlog_out ( DEBUG0 ) << "::findNextPlaneEntrance i=" << i  << " " << inode << " " << ipoint[0]  << " " << ipoint[1] << " " << ipoint[2]  << " sensorID:" << sensorID << " " << nextSensorID << endl;
+       streamlog_out ( DEBUG0 ) << "Loop number" << i  << ". Index: " << inode << ". Current global point: " << ipoint[0]  << " " << ipoint[1] << " " << ipoint[2]  << " sensorID: " << sensorID << ". Input of expect next sensor: " << nextSensorID << endl;
        //if( sensorID <0 ) continue;  
        if( sensorID == nextSensorID ) return sensorID;
    }

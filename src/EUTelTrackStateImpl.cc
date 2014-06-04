@@ -15,7 +15,8 @@ namespace eutelescope {
         _x(0),
         _y(0),
         _invp(0),
-        _covMatrix()
+        _covMatrix(),
+				_zparameter(0)
     {
 
         for(int i=0 ; i < TRKSTATENCOVMATRIX ; i++ ) {
@@ -35,7 +36,8 @@ namespace eutelescope {
         _x(x),
         _y(y),
         _invp(invp),
-        _covMatrix()
+        _covMatrix(),
+				_zparameter(0)
     {
 
         setLocation( location );
@@ -55,7 +57,8 @@ namespace eutelescope {
         _x(x),
         _y(y),
         _invp(invp),
-        _covMatrix(covMatrix)
+        _covMatrix(covMatrix),
+				_zparameter(0)
     {
 
         setLocation( location );
@@ -72,7 +75,8 @@ namespace eutelescope {
         _x(p.getX()),
         _y(p.getY()),
         _invp(p.getInvP()),
-        _covMatrix(p.getCovMatrix())
+        _covMatrix(p.getCovMatrix()),
+				_zparameter(0)
     {
 
         setLocation( p.getLocation() );
@@ -91,6 +95,7 @@ namespace eutelescope {
     float EUTelTrackStateImpl::getX() const { return _x ; }
     float EUTelTrackStateImpl::getY() const { return _y ;}
     float EUTelTrackStateImpl::getInvP() const { return _invp ;}
+		float EUTelTrackStateImpl::getZParameter() const { return _zparameter; }
 
     const EVENT::FloatVec& EUTelTrackStateImpl::getCovMatrix() const { return _covMatrix ; }
     const float* EUTelTrackStateImpl::getReferencePoint() const { return _reference ; }
@@ -146,7 +151,11 @@ namespace eutelescope {
         for( int i=0 ; i<TRKSTATENREFSIZE ; i++ ){
             _reference[i] = rPnt[i]  ; 
         }
-    } 
+    }
+	
+		void EUTelTrackStateImpl::setZParameter(float z){
+        _zparameter = z ;
+    } 			 
 
 } // namespace eutelescope
 

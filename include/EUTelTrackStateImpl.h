@@ -59,6 +59,8 @@ namespace eutelescope {
 
     virtual float getInvP() const ;
 
+		virtual float getZParameter() const ;
+
     /** Covariance matrix of the track parameters. Stored as lower triangle matrix where
      * the order of parameters is:   x, y, tx, ty, q/p.
      * So we have cov(x,x), cov( y, x ), cov( y, y ), ...
@@ -86,6 +88,8 @@ namespace eutelescope {
 
     virtual void  setReferencePoint( const float* ) ;
 
+		virtual void setZParameter(float);
+
 
   protected:
 
@@ -98,6 +102,8 @@ namespace eutelescope {
 
     EVENT::FloatVec _covMatrix ;
     float  _reference[TRKSTATENREFSIZE] ;
+
+		float _zparameter;
 
 }; // class
 

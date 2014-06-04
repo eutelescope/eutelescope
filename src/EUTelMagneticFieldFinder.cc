@@ -174,6 +174,15 @@ namespace eutelescope {
 
     /** */
     void EUTelKalmanFilter::propagateFromRefPoint( 	std::vector< EUTelTrackImpl* >::iterator &itTrk    ){
+			
+			//Set up the geometry//////////////////////////////////////////////////////////////////////// 
+      const map< int, int > sensorMap = geo::gGeometry().sensorZOrdertoIDs();
+      int planeID     = sensorMap.at(0); // the first first plane in the array of the planes according to z direction. // assume not tilted plane. 
+      const int    iPlane             = geo::gGeometry().sensorIDtoZOrder(planeID);
+      const double thicknessSen       = geo::gGeometry()._siPlanesLayerLayout->getSensitiveThickness(iPlane );
+      const double thicknessLay       = geo::gGeometry()._siPlanesLayerLayout->getLayerThickness(iPlane );
+			////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
       EUTelTrackStateImpl* state = const_cast<EUTelTrackStateImpl*>((*itTrk)->getFirstTrackState( ));
 
@@ -183,50 +192,20 @@ namespace eutelescope {
         return ;
       }
 
-// assumes state to be in some FRAME 
-      const double x0 = state->getReferencePoint()[0];
-      const double y0 = state->getReferencePoint()[1];
-      const double z0 = state->getReferencePoint()[2];
+		//Get global position from state.
+		  const double x0 = state->getX();
+	 		const double y0 = state->getY();
+			const double z0 = state->getZParameter();
+      const float opoint[3] = { x0, y0, z0};
 	
-      // get the very first sensor : why?
-      // remember last hit-point from the track candidate below
-      double start[3] = { x0, y0, z0}; // 
- 
-      // Loop over hits on a track candidate
-
-      const map< int, int > sensorMap = geo::gGeometry().sensorZOrdertoIDs();
-      int planeID     = sensorMap.at(0); // the first first plane in the array of the planes according to z direction. // assume not tilted plane. 
-      const int    iPlane             = geo::gGeometry().sensorIDtoZOrder(planeID);
-      const double thicknessSen       = geo::gGeometry()._siPlanesLayerLayout->getSensitiveThickness(iPlane );
-      const double thicknessLay       = geo::gGeometry()._siPlanesLayerLayout->getLayerThickness(iPlane );
-//
-// ATTENTION: manual manipulation of the z-coordinate of a ref point
-// should be rather done by a swim function to a will defined "initial" coordinate
-// could be critical for B-field/high spread/high rate beam
-//
-// todo: replace with a method going backwards along z axis based on TGeo navigation 
- 
-// assumes FRAME:
-//       start[2]    = geo::gGeometry().siPlaneZPosition(planeID) - thicknessSen - thicknessLay; //initial z position to the most-first plane
-//      start[2]    =  - thicknessSen - thicknessLay; //initial z position to the most-first plane
-
-      // as good as any other value along z axis.
       double dir[3]   = {0.,0.,1.};  
       
-      // updated starting RefPoint:
-      const float opoint[3] = {start[0], start[1], start[2]}; // correct start[2] position 
-      state->setReferencePoint( opoint );
-
       // loop through all known sensors (local, defined above):
       map< int, int >::const_iterator iter = sensorMap.begin();
       while ( iter != sensorMap.end() ) {
         bool found = false;
         if( iter->first > -999 )
           {
-            // EUTelGeometry TGeo track swim 
-            // straight line at this point
-            // how to get helix ? 
-            // propagator :: 
             int newSensorID = findNextPlaneEntrance( state, iter->second ) ;
 
             const float* fpoint = state->getReferencePoint();
@@ -373,7 +352,7 @@ itTrk++;
                itTrk = _tracksCartesian.erase( itTrk ); itTrk--; //Must itTrk-- since the erase will take us to the next hit automatically 
                continue;
             }
- 						//This will take the initial track seeds. I.e the hits on the first and second plane and determine this states "The angle, position and momentum" after that on any surface. Also will add a hit if there is one within certain range. This will be added to the track object itTrk. 
+						//This will propagate the initial seed to the other planes. On the new plane it will add hits and change the state depending on relation to hit.
             propagateFromRefPoint(itTrk);
  
 						//Check the number of hit on the track after propagation and collecting hits is over the minimum
@@ -389,7 +368,7 @@ itTrk++;
                state->setLocation( EUTelTrackStateImpl::AtLastHit );
                 int nstates = (*itTrk)->getTrackStates().size();
 
-               streamlog_out(DEBUG5) <<"'Tracks' looped through. I.e initial hit seed as a track. (Ignore states with no hits): "  << local_itTrk << ". Number of seeds: " << size_itTrk << ". At seed: " << itTrk << " after propagation with: " << ( *itTrk )->getTrackerHits( ).size( ) << " hits collected on track.  Expecting at least " << geo::gGeometry( ).nPlanes( ) - _allowedMissingHits << " The states. I.e Including planes with no hits: "<< nstates << std::endl<< std::endl<< std::endl<< std::endl;
+               streamlog_out(DEBUG5) << "'Tracks' looped through. I.e initial hit seed as a track. (Ignore states with no hits): "  << local_itTrk << ". Number of seeds: " << size_itTrk << ". At seed: " << *itTrk << " after propagation with: " << ( *itTrk )->getTrackerHits( ).size( ) << " hits collected on track.  Expecting at least " << geo::gGeometry( ).nPlanes( ) - _allowedMissingHits << " The states. I.e Including planes with no hits: "<< nstates << std::endl << std::endl << std::endl << std::endl;
 
              streamlog_out ( DEBUG5 ) << "Successful track state after propagation: " << endl; 
             (*itTrk)->Print();
@@ -459,13 +438,13 @@ itTrk++;
 
       }
 
-//      Print( "_tracksCartesian ", _tracksCartesian);   
+      Print( "_tracksCartesian ", _tracksCartesian);   
 
-  //    Print( "Tracks that are to be deleted: ", _tracks_to_delete);   
+      Print( "Tracks that are to be deleted: ", _tracks_to_delete);   
  
       Prune( _tracksCartesian, _tracks_to_delete);   
 
-    //  Print( "After deletion the tracks left: ", _tracksCartesian);   
+      Print( "After deletion the tracks left: ", _tracksCartesian);   
  
       streamlog_out(MESSAGE1) << "------------------------------EUTelKalmanFilter::PruneTrackCandidates()---------------------------------" << std::endl;
     }
@@ -738,14 +717,18 @@ itTrk++;
             else trkCov[9] = 1.E5;
             trkCov[14] = ( _beamEnergyUncertainty * _beamE ) * ( _beamEnergyUncertainty * _beamE );               //cov(q/p,x)=0, cov(q/p,y)=0, cov(q/p,tx)=0, cov(q/p,ty)=0, cov(q/p,q/p)
             
+						//NOTE THESE PARAMETERS ARE WHAT DEFINE THE MOVEMENT OF A PARTICLE THROUGH A SURFACE. 
+						//NOTE THIS IS GLOBAL TELESCOPE FRAME. Also note that there is no SetZ. Since this state will be moved along the z axis by the jacobian calculated later. So it is only a parameter
             state->setCovMatrix( trkCov );          
-            state->setReferencePoint( posLocal ); // was posGlobal before // now switching all states to LOCAL !!
+            state->setReferencePoint( posLocal ); //Is this needed if we store the global position of the hit?
             state->setLocation( sensorID ) ; //  EUTelTrackStateImpl::AtFirstHit );
             state->setTx(0.);         // seed with 0 at first hit. Given by beam direction.
             state->setTy(0.);         // seed with 0 at first hit. Given by beam direction.
             state->setX(posGlobal[0]);          // 0. at first hit
             state->setY(posGlobal[1]);          // 0. at first hit
             state->setInvP(invp);            // independent of reference point
+						////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+						state->setZParameter(posGlobal[2]);
             
             EUTelTrackImpl* track = new EUTelTrackImpl;
             track->addTrackState( state );
@@ -915,34 +898,25 @@ itTrk++;
         streamlog_out(DEBUG2) << "EUTelKalmanFilter::propagateTrackRefPoint()" << std::endl;
  
 	  const double invP = ts->getInvP();
-//	  const double x0 = ts->getX();
-//	  const double y0 = ts->getY();
-//	  const double z0 = ts->getZ();
-	  const double x0 = ts->getReferencePoint()[0];
-	  const double y0 = ts->getReferencePoint()[1];
-	  const double z0 = ts->getReferencePoint()[2];
+	  const double x0 = ts->getX();
+	  const double y0 = ts->getY();
+		const double z0 = ts->getZParameter();
 	  const double tx0 = ts->getTx();
 	  const double ty0 = ts->getTy();
           const int tsPlaneID = ts->getLocation();
 //
-          double lpoint[3]   = { x0, y0, z0}; // 
-          double gpoint[3]   = {0.,0.,0.};  // initialise output point-vector global frame (World)
+          double gpoint[3]   = { x0, y0, z0};  
 
-          geo::gGeometry().local2Master( tsPlaneID, lpoint, gpoint );
-
-          double dir[3]   = {0.,0.,1.};  
+          double dir[3]   = {0.,0.,1.};  //This needs to be fixed to take into account magnetic field and inital state trajectory. 
           float fpoint[3] = {0.,0.,0.};
-          int getErrorID = geo::gGeometry( ).findNextPlaneEntrance( gpoint,  dir, nextPlaneId, fpoint ) ;
+          int getErrorID = geo::gGeometry( ).findNextPlaneEntrance( gpoint,  dir, nextPlaneId, fpoint );//ErrorID is just a check that some volume has been entered. The output is fpoint!
           if(getErrorID < 0 ) 
           {
-            streamlog_out ( DEBUG2 ) << "no Entrance: " <<  fpoint[0] << " " <<  fpoint[1] << " " << fpoint[2] << " at plane : " << nextPlaneId << " err:"<< getErrorID << endl;
+            streamlog_out ( DEBUG2 ) << "No Entrance into! The last point moved to was: " <<  fpoint[0] << " " <<  fpoint[1] << " " << fpoint[2] << " at plane : " << nextPlaneId << " err:"<< getErrorID << endl;
            return -999;
           }            
 
-          streamlog_out ( DEBUG2 ) << "identified NextPlane Entrance: " <<  fpoint[0] << " " <<  fpoint[1] << " " << fpoint[2] << " at plane : " << nextPlaneId << " err:"<< getErrorID << endl;
-//	  const float newPos[] = {fpoint[0], fpoint[1], fpoint[2]};
-//	  const float newPos[] = {static_cast<float>(x), static_cast<float>(y), static_cast<float>(z0+dz)};
-	
+          streamlog_out ( DEBUG2 ) << "Identified NextPlane Entrance: " <<  fpoint[0] << " " <<  fpoint[1] << " " << fpoint[2] << " at plane : " << nextPlaneId << " err:"<< getErrorID << endl;
 	  ts->setLocation( EUTelTrackStateImpl::AtOther );
 	  ts->setReferencePoint( fpoint );
         
