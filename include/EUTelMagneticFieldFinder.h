@@ -219,7 +219,7 @@ namespace eutelescope {
 
 
         /** Find intersection point of a track with geometry planes */
-        double findIntersection( EUTelTrackStateImpl* ts, int& nextPlane); 
+        int findIntersection( EUTelTrackStateImpl* ts, int nextPlaneID, float* output ); 
 
         /** Propagate track state by dz */
 	void propagateTrackRefPoint( EUTelTrackStateImpl*, int, double );

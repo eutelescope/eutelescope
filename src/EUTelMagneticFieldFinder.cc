@@ -197,29 +197,22 @@ namespace eutelescope {
 	 		const double y0 = state->getY();
 			const double z0 = state->getZParameter();
       const float opoint[3] = { x0, y0, z0};
-	
-      double dir[3]   = {0.,0.,1.};  
-      
+	    
       // loop through all known sensors (local, defined above):
       map< int, int >::const_iterator iter = sensorMap.begin();
       while ( iter != sensorMap.end() ) {
         bool found = false;
         if( iter->first > -999 )
           {
-            int newSensorID = findNextPlaneEntrance( state, iter->second ) ;
+            float dpoint[3];
+            int newSensorID = findIntersection( state, (iter->second+1), dpoint ) ;
 
-            const float* fpoint = state->getReferencePoint();
-            const int sensorID  = state->getLocation();
-            double *lpoint = toDouble(3, fpoint);
-            double dpoint[] = {0.,0.,0.};
-            geo::gGeometry().local2Master( sensorID, lpoint, dpoint );
             
             // collect propagator state ::
             (*itTrk)->addTrackState( new EUTelTrackStateImpl( *state) );
 
  
             streamlog_out ( DEBUG4 ) << "aqu: Entrance: " <<  dpoint[0] << " " <<  dpoint[1] << " " << dpoint[2]  << " sensorID: " << newSensorID ;
-            streamlog_out ( DEBUG4 ) << " in local " <<  lpoint[0] << " " <<  lpoint[1] << " " << lpoint[2]  <<  endl;
 
 
             bool findhit = true;
@@ -763,130 +756,88 @@ itTrk++;
     /**
      * Find closest surface intersected by the track and propagate track to that point
      * @param input: ts track state
-     * @param output: nextPlane - SensorID derived from the next geo::Volume intersection    
-     * @return dz or -999 on failure
+     * @param input: The plane you want to find the intersection.
+		 * @param input: Pointer to fill with the new global coordinates   
+     * @return planeID. If there was a problem return -999.
      */
-    double EUTelKalmanFilter::findIntersection( EUTelTrackStateImpl* ts, int& nextPlane ) {
-        streamlog_out(DEBUG2) << "EUTelKalmanFilter::findIntersection()" << std::endl;
+    int EUTelKalmanFilter::findIntersection( EUTelTrackStateImpl* ts, int nextPlaneID, float* output ) {
+        streamlog_out(DEBUG5) << "EUTelKalmanFilter::findIntersection()" << std::endl;
         
-        // Get track position
-        const float* x = ts->getReferencePoint();
-        const double x0 = x[0];
-        const double y0 = x[1];
-        const double z0 = x[2];
+        // Get track position and location//////////////////////////////////
+			  const double x0 = ts->getX();
+	 			const double y0 = ts->getY();
+				const double z0 = ts->getZParameter();
+        int sensorID = ts->getLocation();
         TVector3 trkVec(x0,y0,z0);
-        
-        // Get magnetic field vector
-        gear::Vector3D vectorGlobal( x0, y0, z0 );        // assuming uniform magnetic field running along X direction
+
+	      streamlog_out(DEBUG5) << "SensorID: " << sensorID << "  Global positions: "<< x0 <<"  "<< y0 <<"  "<< z0 << std::endl;
+     		/////////////////////////////////////////////////////////////////////////////////////////  
+
+ 
+        // Find magnetic field at that point and then the components/////////////////////////////////// 
+        gear::Vector3D vectorGlobal( x0, y0, z0 );        // assuming uniform magnetic field running along X direction. Why do we need this assumption. Equations of motion do not seem to dictate this.
         const gear::BField&   B = geo::gGeometry().getMagneticFiled();
-	const double bx         = B.at( vectorGlobal ).x();
-	const double by         = B.at( vectorGlobal ).y();
-	const double bz         = B.at( vectorGlobal ).z();
+				const double bx         = B.at( vectorGlobal ).x();
+				const double by         = B.at( vectorGlobal ).y();
+				const double bz         = B.at( vectorGlobal ).z();
         TVector3 hVec(bx,by,bz);
-	const double H = hVec.Mag();
-        
-        // Calculate track momentum from track parameters
-        TVector3 pVec = getPfromCartesianParameters( ts );
+				const double H = hVec.Mag();
+        //////////////////////////////////////////////////////////////////////////////////////////////
+
+        // Calculate track momentum from track parameters and fill some useful variables///////////////////////////////////////////////////////////
+        TVector3 pVec = getPfromCartesianParameters( ts ); //This return the components of momentum from track state.
         const double p = pVec.Mag();
-	const double mm = 1000.;
+				const double mm = 1000.;
         const double k = -0.299792458/mm*_beamQ*H;
         const double rho = k/p; 
-        
-        // Determine id of the sensor in which track reference point is located
-        int sensorID = geo::gGeometry().getSensorID( x );
-        int sensorZorder = geo::gGeometry().sensorIDtoZOrder( sensorID );
-        
-        streamlog_out(DEBUG0) << "SensorID:" << sensorID << std::endl;
-        streamlog_out(DEBUG0) << "Sensor Z order:" << sensorZorder << std::endl;
-        
-        if ( sensorID < 0 ) {
-            streamlog_out ( DEBUG3 ) << "Track interseciton was not found" << std::endl;
-            return -999.;
-        }
-        
-        // Get planes normals in global reference system
-        std::map< int, TVector3 > planesNorm;
-        EVENT::IntVec sensID = geo::gGeometry().sensorIDsVec();
-        EVENT::IntVec::const_iterator itPlaneId;
-        for ( itPlaneId = sensID.begin(); itPlaneId != sensID.end(); ++itPlaneId ) {
-            TVector3 norm = geo::gGeometry().siPlaneNormal( *itPlaneId );
-            if ( norm.Mag2() > 1e-6 ) planesNorm[ *itPlaneId ] = norm;
-            else {
-                streamlog_out( ERROR0 ) << "Wrong sensor normal vector:\n";
-                streamlog_out( ERROR0 ) << "ID: " << *itPlaneId << "\n";
-                streamlog_out( ERROR0 ) << "x: " << norm.X() << " y: " << norm.Y() << " z: " << norm.Z()<< std::endl;
-            }
-        }
-        
-        // Find closest plane downstream
-        const int nextPlaneId = geo::gGeometry().sensorZOrderToID(sensorZorder+1);
-        nextPlane = nextPlaneId;
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////       
+				      
+				//Determine geometry of sensor to be used to determine the point of intersection.//////////////////////////////////////
+        TVector3 norm = geo::gGeometry().siPlaneNormal( nextPlaneID  );       
+        TVector3 sensorCenter( geo::gGeometry().siPlaneXPosition( nextPlaneID  ), geo::gGeometry().siPlaneYPosition( nextPlaneID  ), geo::gGeometry().siPlaneZPosition( nextPlaneID  ) );
+        TVector3 delta = trkVec - sensorCenter;
+        TVector3 pVecCrosH = pVec.Cross( hVec.Unit() );
+				////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        if ( nextPlaneId > 0 ) {
-            itPlaneId = std::find( sensID.begin(), sensID.end(), nextPlaneId ); 
-        } else {
-            streamlog_out ( DEBUG3 ) << "Track intersection was not found" << std::endl;
-            return -999.;
-        }
-        // Construct quadratic equation
-//        for ( itPlaneId = sensID.begin(); itPlaneId != sensID.end(); ++itPlaneId ) {
-        
-            TVector3 sensorCenter( geo::gGeometry().siPlaneXPosition( *itPlaneId ),
-                                   geo::gGeometry().siPlaneYPosition( *itPlaneId ),
-                                   geo::gGeometry().siPlaneZPosition( *itPlaneId ) );
-            TVector3 delta = trkVec - sensorCenter;
-            TVector3 pVecCrosH = pVec.Cross( hVec.Unit() );
 
-            if ( streamlog_level(DEBUG0) ) {
-	     streamlog_out (DEBUG0) << "-------------------------------------------" << std::endl;
-	     streamlog_out (DEBUG0) << "Current point (X,Y,Z): " << std::setw(15) << x0 
-								 << std::setw(15) << y0 
-								 << std::setw(15) << z0 << std::endl;
-	     streamlog_out (DEBUG0) << "PlaneID: " << *itPlaneId << std::endl;
-	     streamlog_out (DEBUG0) << "Normal vector" << std::endl;
-	     planesNorm[*itPlaneId].Print();
-	     streamlog_out (DEBUG0) << "P x H vector" << std::endl;
+        if ( streamlog_level(DEBUG0) ) {
+	     streamlog_out (DEBUG5) << "-------------------------------------------" << std::endl;
+	     streamlog_out (DEBUG5) << "Current point (X,Y,Z): " << std::setw(15) << x0  << std::setw(15) << y0 << std::setw(15) << z0 << std::endl;
+	     streamlog_out (DEBUG5) << "Next PlaneID : " << nextPlaneID << std::endl;
+	     streamlog_out (DEBUG5) << "Normal vector" << std::endl;
+	     norm.Print();
+	     streamlog_out (DEBUG5) << "P x H vector" << std::endl;
 	     pVecCrosH.Print();
-	     streamlog_out (DEBUG0) << "Rho: " << rho << std::endl;
-	     streamlog_out (DEBUG0) << "P: " << p << std::endl;
-            }
-            const double a = -0.5 * rho * ( planesNorm[*itPlaneId].Dot( pVecCrosH ) ) / p;
-            const double b = planesNorm[*itPlaneId].Dot( pVec ) / p;
-            const double c = planesNorm[*itPlaneId].Dot( delta );
-            
-            // solutions are sorted in ascending order
-            std::vector< double > sol = Utility::solveQuadratic(a,b,c);
-            
-            TVector3 newPos[2];
-	    newPos[0] = getXYZfromArcLength( ts, sol[0] );
-	    newPos[1] = getXYZfromArcLength( ts, sol[1] );
+	     streamlog_out (DEBUG5) << "Rho: " << rho << std::endl;
+	     streamlog_out (DEBUG5) << "P: " << p << std::endl;
+       }
 
-	    streamlog_out (DEBUG0) << "Next intersected volume can be: " << *itPlaneId << std::endl;
-	    streamlog_out (DEBUG0) << "Plane: " << *itPlaneId << std::endl;
-	    streamlog_out (DEBUG0) << "Solutions for arc length: " << std::setw(15) << sol[0] << std::setw(15) << sol[1] << std::endl;
-	    streamlog_out (DEBUG0) << "First solution (X,Y,Z): " << std::setw(15) << newPos[0].X() 
-								 << std::setw(15) << newPos[0].Y() 
-								 << std::setw(15) << newPos[0].Z() << std::endl;
-	    streamlog_out (DEBUG0) << "Second solution (X,Y,Z): " << std::setw(15) << newPos[1].X() 
-								 << std::setw(15) << newPos[1].Y() 
-								 << std::setw(15) << newPos[1].Z() << std::endl;
-//        } // for ( itPlaneId = sensID.begin(); itPlaneId != sensID.end(); ++itPlaneId ) {
 
-        // Choose solution with minimal positive arc length. It will correspond to the closest point along the helix
-	double solution = ( sol[0] > 0. ) ? sol[0] : ( ( sol[0] < 0. && sol[1] > 0. ) ? sol[1] : -1. );
-        int solutionNum = ( sol[0] > 0. ) ? 0 : ( ( sol[0] < 0. && sol[1] > 0. ) ? 1 : -1 );
-	double dz = ( solution > 0. ) ? newPos[ solutionNum ].Z() - trkVec.Z() : -1.;
+				//Solution to the plane equation and the curved line intersection will be an quadratic with the coefficients. The solution is the arc length along the curve
+       const double a = -0.5 * rho * ( norm.Dot( pVecCrosH ) ) / p;
+       const double b = norm.Dot( pVec ) / p;
+       const double c = norm.Dot( delta );
+				///////////////////////////////////////////////////////////////////////////////////////////////////////// 
+   
+        std::vector< double > sol = Utility::solveQuadratic(a,b,c); // solutions are sorted in ascending order. This is a vector of arc length
+				double solution = ( sol[0] > 0. ) ? sol[0] : ( ( sol[0] < 0. && sol[1] > 0. ) ? sol[1] : -1. ); //choose solution with minimum arc length
+				if(solution < 0){
+					streamlog_out ( DEBUG3 ) << "Track intersection was not found" << std::endl;
+				return -999;
+				}
+			
+				//Determine the global position from arc length.             
+        TVector3 newPos;
+	    	newPos = getXYZfromArcLength( ts, solution );
+				output[0]=newPos[0]; 				output[1]=newPos[1]; 				output[2]=newPos[2];
+				
+	    	streamlog_out (DEBUG5) << "Solutions for arc length: " << std::setw(15) << sol[0] << std::setw(15) << sol[1] << std::endl;
+	    	streamlog_out (DEBUG5) << "Final solution (X,Y,Z): " << std::setw(15) << output[0]  << std::setw(15) << output[1]  << std::setw(15) << output[2] << std::endl;
 
-        if ( dz < 1.E-6 ) {
-            streamlog_out ( DEBUG3 ) << "Track intersection was not found" << std::endl;
-            return -999.;
-        }       
-        
-//          getXYZfromDzNum( ts, dz );
         
         streamlog_out(DEBUG2) << "-------------------------EUTelKalmanFilter::findIntersection()--------------------------" << std::endl;
         
-           return dz;
+        return nextPlaneID;
     }
 
     /** Propagate track state by dz 
@@ -1278,9 +1229,9 @@ itTrk++;
         const double y0 = x[1];
         const double z0 = x[2];
         
-        // Get magnetic field vector
+        // Get magnetic field at that location. Then determine the components. 
         gear::Vector3D vectorGlobal( x0, y0, z0 );        // assuming uniform magnetic field running along X direction
-	const gear::BField&   B = geo::gGeometry().getMagneticFiled();
+	const gear::BField&   B = geo::gGeometry().getMagneticFiled();   //The way this is dealt with in Geometry could be improved. Could use ROOT object.
         const double bx         = B.at( vectorGlobal ).x();
         const double by         = B.at( vectorGlobal ).y();
         const double bz         = B.at( vectorGlobal ).z();
