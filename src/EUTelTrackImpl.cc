@@ -301,6 +301,11 @@ namespace eutelescope {
     return _trackStates ;
   } 
 
+	//int EUTelTrackImpl::getType(){
+//		return  _type;
+//	}
+
+
 } // namespace eutelescope
 
 

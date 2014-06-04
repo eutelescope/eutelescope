@@ -278,45 +278,44 @@ namespace eutelescope {
  
     }
 
-    /** Perform Kalman filter track search and track fit */
-    void EUTelKalmanFilter::Print( std::string Name, std::vector< IMPL::TrackImpl*> &_collection) 
+    //Print the list of tracks given in _collection
+    void EUTelKalmanFilter::Print( std::string Name, std::vector< EUTelTrackImpl*> & _collection) 
     {
       int itrk = 0; 
       int size_itTrk  = _collection.size();
 
-      std::vector< IMPL::TrackImpl* >::iterator itTrk;
+      std::vector< EUTelTrackImpl* >::iterator itTrk;
  
       for ( itTrk = _collection.begin(); itTrk != _collection.end(); itTrk++, itrk++ ) 
       {
         if( (*itTrk) == 0 ) 
         {
-           streamlog_out(MESSAGE1) <<  Name.c_str() << " itrk = " << itrk << " is not found ? " << std::endl;
+           streamlog_out(WARNING1) << "Track vector: " << Name.c_str() << " contains no information at track = " << itrk << "." << std::endl;
            continue; 
         }
-        IMPL::TrackImpl* track = static_cast< IMPL::TrackImpl*> (*itTrk);
-        const EVENT::TrackerHitVec& ihits = track->getTrackerHits();
+        //IMPL::TrackImpl* track = static_cast< IMPL::TrackImpl*> (*itTrk);
+        const EVENT::TrackerHitVec& ihits = (*itTrk)->getTrackerHits();
         int nhits =  ihits.size( ) ;
         int expec =  geo::gGeometry( ).nPlanes( ) - _allowedMissingHits;
-        streamlog_out(MESSAGE1) << Name.c_str() << " track itrk:" <<  itrk << " of " << size_itTrk << " at  " << (*itTrk) << " with " << nhits << " at least " << expec ;//std::endl;
+        streamlog_out(DEBUG5) <<"Track vector " << Name.c_str() << " at track number " <<  itrk << " of size " << size_itTrk << " with " << nhits << " at least " << expec ;//std::endl;
         for (int i = 0; i< ihits.size(); i++ ) 
         { 
             EVENT::TrackerHit* ihit = ihits[i];
             int ic = ihit->id();
-            streamlog_out(MESSAGE0) <<  ic << " ";
+            streamlog_out(DEBUG5) <<  ic << " Is the hit IDs ";
         }
-        streamlog_out(MESSAGE1) << std::endl;
       }
     }
  
-    void EUTelKalmanFilter::Prune( std::vector< IMPL::TrackImpl*> &_collection, std::vector< IMPL::TrackImpl*> &_collection_to_delete ) 
+    void EUTelKalmanFilter::Prune( std::vector< EUTelTrackImpl*> &_collection, std::vector< EUTelTrackImpl*> &_collection_to_delete ) 
     {
       int itrk = 0 ;
-      std::vector< IMPL::TrackImpl* >::iterator itTrk;
+      std::vector< EUTelTrackImpl* >::iterator itTrk;
 
       for (  itTrk = _collection.begin(); itTrk != _collection.end();) 
       {
          // check that it's not a fitted hit (type =32)
-         if( (*itTrk)->getType() > 31 ) continue;
+    //     if( (*itTrk)->getType() > 31 ) continue;            Is this the best way to deal with type? Should it no be in LCIO bit field?
  
          bool iend = std::find( _collection_to_delete.begin(), _collection_to_delete.end(), (*itTrk) ) == _collection_to_delete.end(); 
          if( iend )
@@ -359,8 +358,8 @@ itTrk++;
             streamlog_out(MESSAGE0) << "beginning now at : " << local_itTrk << " of " << size_itTrk << " itTrk: " << (*itTrk) << endl;
             bool isGoodTrack = true; 
          
-             streamlog_out ( DEBUG5 ) << "The track seed before propagation to find other states and hit on other surfaces. " << endl; 
-            (const_cast<EUTelTrackImpl*>(*itTrk))->Print();
+             streamlog_out ( DEBUG5 ) << "The track seed before propagation to find other states and hits on other surfaces. " << endl; 
+            (*itTrk)->Print();
 
 						//Get the first state of the track. Remember at this point we only have single hits on a track
             EUTelTrackStateImpl* state = const_cast<EUTelTrackStateImpl*>((*itTrk)->getFirstTrackState( ));
@@ -388,12 +387,12 @@ itTrk++;
 
             if ( isGoodTrack ) {
                state->setLocation( EUTelTrackStateImpl::AtLastHit );
-                int nstates = _tracksCartesian->getTrackStates().size();
+                int nstates = (*itTrk)->getTrackStates().size();
 
-               streamlog_out(DEBUG5) <<"'Tracks' looped through. I.e initial hit seed as a track. (Ignore states with no hits): "  << local_itTrk << ". Number of seeds: " << size_itTrk << ". At seed: " << *itTrk << "after propagation with: " << ( *itTrk )->getTrackerHits( ).size( ) << " hits collected on track.  Expecting at least " << geo::gGeometry( ).nPlanes( ) - _allowedMissingHits << " The states. I.e Including planes with not hits: "<< nstates << std::endl<< std::endl<< std::endl<< std::endl;
+               streamlog_out(DEBUG5) <<"'Tracks' looped through. I.e initial hit seed as a track. (Ignore states with no hits): "  << local_itTrk << ". Number of seeds: " << size_itTrk << ". At seed: " << itTrk << " after propagation with: " << ( *itTrk )->getTrackerHits( ).size( ) << " hits collected on track.  Expecting at least " << geo::gGeometry( ).nPlanes( ) - _allowedMissingHits << " The states. I.e Including planes with no hits: "<< nstates << std::endl<< std::endl<< std::endl<< std::endl;
 
              streamlog_out ( DEBUG5 ) << "Successful track state after propagation: " << endl; 
-            (const_cast<EUTelTrackImpl*>(*itTrk))->Print();
+            (*itTrk)->Print();
  
             }
             streamlog_out(MESSAGE0) << "Finished looping through all seeds! Looped at total of : " << local_itTrk << " after seeds with no state are deduced. Total seeds were: " << size_itTrk << endl;
@@ -405,29 +404,32 @@ itTrk++;
     }
  
 
-    /** Perform track pruning */
+    // Perform track pruning this removes tracks that have the same hits used to create the track on some planes
     void EUTelKalmanFilter::PruneTrackCandidates() {
 
       streamlog_out(MESSAGE1) << "EUTelKalmanFilter::PruneTrackCandidates()" << std::endl;
  
-      std::vector< IMPL::TrackImpl* >::iterator itTrk;
+   //   std::vector< IMPL::TrackImpl* >::iterator itTrk;
+			std::vector< EUTelTrackImpl* >::iterator itTrk;
       std::vector< IMPL::TrackImpl* >::iterator jtTrk;
-      std::vector< IMPL::TrackImpl* >           _tracks_to_delete;
+      std::vector< EUTelTrackImpl* >           _tracks_to_delete;
 
       int itrk = 0;
       int jtrk = 0;
 
-      for ( itTrk = _tracks.begin(); itTrk != _tracks.end(); itTrk++, itrk++ ) 
+			//Loop over all tracks 
+      for ( itTrk = _tracksCartesian.begin(); itTrk != _tracksCartesian.end(); itTrk++, itrk++ ) 
       {
-        streamlog_out(MESSAGE1) <<  "track itrk:" <<  itrk << " at  " << ( *itTrk) << std::endl;
+        streamlog_out(MESSAGE1) <<  "Loop at track number:" <<  itrk << " at  " << ( *itTrk) << std::endl;
    
-        const EVENT::TrackerHitVec ihits = (*itTrk)->getTrackerHits();
-      
-        for ( jtrk = itrk+1; jtrk < _tracks.size(); jtrk++ ) 
+        const EVENT::TrackerHitVec ihits = (*itTrk)->getTrackerHits(); //get the hits contained within this track object
+ 
+				//Now loop through all tracks one ahead of the original track itTrk. This is done since we want to compare all the track to each other to if they have similar hits     
+        for ( jtrk = itrk+1; jtrk < _tracksCartesian.size(); jtrk++ ) 
         {
           int hitscount=0;
  
-          IMPL::TrackImpl* jtTrack = _tracks[jtrk];
+          EUTelTrackImpl* jtTrack = _tracksCartesian[jtrk];
           const EVENT::TrackerHitVec jhits = jtTrack->getTrackerHits();
 // cross check every track to all following ones in the _track collection
           for(int i=0;i<ihits.size();i++)
@@ -440,11 +442,11 @@ itTrk++;
                int jc = jhit->id();
                if(ic == jc ){
                  hitscount++; 
-                 streamlog_out(MESSAGE0) <<  "i=" << i << " " << ic << " j=" << j << " " << jc << " number of common hits: " << hitscount << std::endl; 
+                 streamlog_out(MESSAGE0) <<  "Hit number on track you are comparing all other to :" << i << ". Hit ID of this track : " << ic << ". Hit number of comparison track : " << j << ". Hit ID of this track : " << jc << ". Number of common hits: " << hitscount << std::endl; 
                }
             }
           } 
-    
+    			//Here we fill up a vector with tracks we want to delete.
           if(hitscount > _AllowedSharedHitsOnTrackCandidate) {   
             if( std::find(_tracks_to_delete.begin(), _tracks_to_delete.end(), *itTrk ) == _tracks_to_delete.end() || _tracks_to_delete.size() == 0 )
             {
@@ -457,13 +459,13 @@ itTrk++;
 
       }
 
-      Print( "_tracks", _tracks);   
+//      Print( "_tracksCartesian ", _tracksCartesian);   
 
-      Print( "_tracks_to_delete", _tracks_to_delete);   
+  //    Print( "Tracks that are to be deleted: ", _tracks_to_delete);   
  
-      Prune( _tracks, _tracks_to_delete);   
+      Prune( _tracksCartesian, _tracks_to_delete);   
 
-      Print( "_tracks", _tracks);   
+    //  Print( "After deletion the tracks left: ", _tracksCartesian);   
  
       streamlog_out(MESSAGE1) << "------------------------------EUTelKalmanFilter::PruneTrackCandidates()---------------------------------" << std::endl;
     }
@@ -577,7 +579,7 @@ itTrk++;
  
             if ( isGoodTrack ) {
 //                state->setLocation( EUTelTrackStateImpl::AtLastHit );
-                _tracks.push_back( cartesian2LCIOTrack( *itTrk ) );
+              //  _tracks.push_back( cartesian2LCIOTrack( *itTrk ) );   This will changed latter.
                 delete (*itTrk);
                 ++itTrk;
             }
@@ -625,7 +627,6 @@ itTrk++;
     
     void EUTelKalmanFilter::reset() {
         streamlog_out(DEBUG2) << "EUTelKalmanFilter::reset()" << std::endl;
-        _tracks.clear();
         _tracksCartesian.clear();
         _trackStates.clear();
         streamlog_out(DEBUG2) << "-------------------------------EUTelKalmanFilter::reset()-----------------------------------" << std::endl;

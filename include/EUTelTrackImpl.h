@@ -137,6 +137,8 @@ namespace eutelescope {
      *  to create this track.
      */
     virtual const EVENT::TrackerHitVec & getTrackerHits() const ;
+
+	//	int getType();
     
 
     // setters 

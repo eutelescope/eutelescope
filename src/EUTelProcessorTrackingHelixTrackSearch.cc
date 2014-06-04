@@ -286,19 +286,19 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
             streamlog_out( DEBUG1 ) << "Retrieving track candidates..." << endl;
 
             // retrieve the result of the PR :: track candidates ::
-            vector< IMPL::TrackImpl* >& trackCandidates    = static_cast < EUTelKalmanFilter* > ( _trackFitter )->getTracks( );
+          //  vector< IMPL::TrackImpl* >& trackCandidates    = static_cast < EUTelKalmanFilter* > ( _trackFitter )->getTracks( ); //Why does this work?
 
             // not needed any more ? ::
-            EVENT::TrackerHitVec trackCandidateHitFitted = static_cast < EUTelKalmanFilter* > ( _trackFitter )->getHitFittedVec( );
+           // EVENT::TrackerHitVec trackCandidateHitFitted = static_cast < EUTelKalmanFilter* > ( _trackFitter )->getHitFittedVec( );
 
             // plot only :
-            plotHistos( trackCandidates );
+          //  plotHistos( trackCandidates );
 
             // Write output collection
 //            addTrackCandidateHitFittedToCollection( evt, trackCandidateHitFitted );
  
            // Write output collection
-            addTrackCandidateToCollection1( evt, trackCandidates );
+         //   addTrackCandidateToCollection1( evt, trackCandidates );
 
         }
         _nProcessedEvents++;

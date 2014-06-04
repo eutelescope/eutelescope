@@ -82,10 +82,10 @@ namespace eutelescope {
         virtual ~EUTelKalmanFilter();
 
         /** just print the list of tracks */
-        void Print( std::string Name, std::vector< IMPL::TrackImpl*> &_tracks );
+        void Print( std::string Name, std::vector< EUTelTrackImpl*> &_collection );
 
         /** fomr the list of _tracks remove _tracks_to_delete */
-        void Prune(  std::vector< IMPL::TrackImpl*> &_tracks , std::vector< IMPL::TrackImpl*> &_tracks_to_delete );
+        void Prune(  std::vector< EUTelTrackImpl*> &_tracks , std::vector< EUTelTrackImpl*> &_tracks_to_delete );
 
         /** search for hit along track direction 
          *  using TGeo derived functions         */  
@@ -105,8 +105,8 @@ namespace eutelescope {
         // Getters and Setters
     public:
 
-        inline std::vector< IMPL::TrackImpl* >& getTracks() {
-            return _tracks;
+        inline std::vector< EUTelTrackImpl* >& getTracks() {
+            return _tracksCartesian;
         }
                 
         void setPlanesProject( int value){
