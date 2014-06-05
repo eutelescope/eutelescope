@@ -212,7 +212,7 @@ namespace eutelescope {
             (*itTrk)->addTrackState( new EUTelTrackStateImpl( *state) );
 
  
-            streamlog_out ( DEBUG5 ) << "aqu: Entrance: " <<  dpoint[0] << " " <<  dpoint[1] << " " << dpoint[2]  << " sensorID: " << newSensorID ;
+            streamlog_out ( DEBUG5 ) << "aqu: Entrance: " <<  dpoint[0] << " " <<  dpoint[1] << " " << dpoint[2]  << " sensorID: " << newSensorID <<std::endl; ;
 
 
             bool findhit = true;
@@ -1390,25 +1390,35 @@ itTrk++;
     TVectorD EUTelKalmanFilter::getResidual( const EUTelTrackStateImpl* ts, const EVENT::TrackerHit* hit ) const {
         streamlog_out( DEBUG2 ) << "EUTelKalmanFilter::getResidual()" << std::endl;
 
+				//Determined hit on plane ins local coordinates 
         const double* uvpos = hit->getPosition();
-        TVectorD mk(2); 
+        TVectorD mk(3); 
         mk[0] = uvpos[0];          mk[1] = uvpos[1];
+				////////////////////////////////////////////////////
+
+				//Determine local coordinates of state prediction//////////////////////////////////
+				TVectorD prediction(3);
+				double localState[3];
+				const double input[3] = {ts->getX(),ts->getY(),ts->getZParameter()};
+
+        streamlog_out( DEBUG5 ) << "Global(u,v,z) coordinates before transform to local  (" << input[0] << "," << input[1] << "," << input[2] << ")" << std::endl;
+
+				geo::gGeometry().master2Local( input, localState );
+				prediction[0] = localState[0];	prediction[1] = localState[1]; prediction[2] = localState[2];
+				//////////////////////////////////////////////////////////////////////////
+
         
-	TVector3 trkPointVec = getXYZfromArcLength( ts, 0. );
-        double trkPointLocal[] = { trkPointVec.X(), trkPointVec.Y(), trkPointVec.Z() };
-        
-	TVectorD prediction(2);
-	prediction[0] = trkPointLocal[0];	prediction[1] = trkPointLocal[1];    
-        
-        streamlog_out( DEBUG0 ) << "Hit (id=" << hit->id() << ") local(u,v) coordinates: (" << uvpos[0] << "," << uvpos[1] << ")" << std::endl;
-        streamlog_out( DEBUG0 ) << "Prediction for hit (id=" << hit->id() << ") local(u,v) coordinates: (" 
-				<< trkPointLocal[0] << "," << trkPointLocal[1] << ")" << std::endl;
+        streamlog_out( DEBUG5 ) << "Hit (id=" << hit->id() << ") local(u,v) coordinates of hit: (" << mk[0] << "," << mk[1] <<","<<mk[2] << ")" << std::endl;
+        streamlog_out( DEBUG5 ) << "Prediction for hit (id=" << hit->id() << ") local(u,v) coordinates of state: ("  << prediction[0] << "," << prediction[1] <<","<<prediction[2] << ")" << std::endl;
       
         TVectorD rk(2);
-        rk = mk - prediction;
+        rk[0] = mk[0] - prediction[0];
+        rk[1] = mk[1] - prediction[1];
+				
+				
         
-        if ( streamlog_level(DEBUG0) ){
-            streamlog_out( DEBUG0 ) << "Residual vector rk:" << std::endl;
+        if ( streamlog_level(DEBUG5) ){
+            streamlog_out( DEBUG5 ) << "Residual vector rk: (" <<rk[0] <<","<<rk[1]<<")"<< std::endl;
             rk.Print();
         }
         
