@@ -574,7 +574,8 @@ void EUTelGeometryTelescopeGeoDescription::local2Master( int sensorID, const dou
 void EUTelGeometryTelescopeGeoDescription::master2Local( const double globalPos[], double localPos[] ) {
     streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::master2Local() " << std::endl;
 
-    _geoManager->GetCurrentNode()->MasterToLocal( globalPos, localPos );
+		_geoManager->GetMother(1);
+		_geoManager->GetCurrentNode()->MasterToLocal( globalPos, localPos );
     
     streamlog_out(DEBUG0) << std::fixed;
     streamlog_out(DEBUG0) << "Global coordinates:" << std::endl;

@@ -212,7 +212,7 @@ namespace eutelescope {
             (*itTrk)->addTrackState( new EUTelTrackStateImpl( *state) );
 
  
-            streamlog_out ( DEBUG4 ) << "aqu: Entrance: " <<  dpoint[0] << " " <<  dpoint[1] << " " << dpoint[2]  << " sensorID: " << newSensorID ;
+            streamlog_out ( DEBUG5 ) << "aqu: Entrance: " <<  dpoint[0] << " " <<  dpoint[1] << " " << dpoint[2]  << " sensorID: " << newSensorID ;
 
 
             bool findhit = true;
@@ -1403,22 +1403,7 @@ itTrk++;
         streamlog_out( DEBUG0 ) << "Hit (id=" << hit->id() << ") local(u,v) coordinates: (" << uvpos[0] << "," << uvpos[1] << ")" << std::endl;
         streamlog_out( DEBUG0 ) << "Prediction for hit (id=" << hit->id() << ") local(u,v) coordinates: (" 
 				<< trkPointLocal[0] << "," << trkPointLocal[1] << ")" << std::endl;
-
-/*
-        TMatrixD Hk = getH(ts);
-        if ( streamlog_level(DEBUG0) ){
-            streamlog_out( DEBUG0 ) << "Projection Matrix Hk:" << std::endl;
-            Hk.Print();
-        }
-
-        TVectorD xkkm1 = getTrackStateVec( ts );       // track state must be updated to x(k,k-1) not initial xk        
-        xkkm1[0] -= xc;
-        xkkm1[1] -= yc;
-
-        TVectorD rk(2);
-        rk = mk;        rk -= Hk * xkkm1;
-*/        
-
+      
         TVectorD rk(2);
         rk = mk - prediction;
         
