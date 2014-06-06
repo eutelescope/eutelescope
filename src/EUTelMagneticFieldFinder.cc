@@ -711,7 +711,7 @@ itTrk++;
             const double* uvpos = (*itHit)->getPosition();
             float posLocal[] =  { static_cast<float>(uvpos[0]), static_cast<float>(uvpos[1]), static_cast<float>(uvpos[2]) };
 
-            const int sensorID = Utility::GuessSensorID( *itHit );
+            const int sensorID = Utility::getSensorIDfromHit( *itHit );
 
             double temp[] = {0.,0.,0.};
             geo::gGeometry().local2Master( sensorID, uvpos, temp);
@@ -1807,7 +1807,7 @@ itTrk++;
         EVENT::TrackerHitVec::const_iterator itr;
         for( itr = hits.begin(); itr != hits.end(); ++itr ) {
 
-            const int sensorID = Utility::GuessSensorID( *itr );
+            const int sensorID = Utility::getSensorIDfromHit( *itr );
 
             itMeasLayer = measLayers.find( sensorID );
             if ( itMeasLayer != measLayers.end() ) itMeasLayer->second->addHit( *itr );
