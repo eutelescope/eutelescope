@@ -256,6 +256,12 @@ namespace eutelescope {
          * from track's ref. point*/
         TVector3 getXYZfromArcLength( const EUTelTrackStateImpl*, double ) const;
         TVector3 getXYZfromArcLength1( const EUTelTrackStateImpl*, double ) const;
+
+				void nextStateUsingJacobianFinder(EUTelTrackStateImpl* input, EUTelTrackStateImpl* output, const  TMatrixD& jacobian);
+
+				void UpdateStateUsingHitInformation(EUTelTrackStateImpl*,const EVENT::TrackerHit* , const TMatrixD&, TMatrixD &, TMatrixD &);
+
+				void UpdateTrackUsingHitInformation( EUTelTrackStateImpl* input,const EVENT::TrackerHit* hit, EUTelTrackImpl* track, const TMatrixD& jacobian, TMatrixD & KGain, TMatrixD & HMatrix);
         
         /** Calculate position of the track in global 
          * coordinate system for given arc length starting
