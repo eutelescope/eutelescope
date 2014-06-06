@@ -215,6 +215,7 @@ namespace eutelescope {
 							//Here we fill the state with its new approximate new hit position. Nothing else is filled yet since this will depend on if hit information is there.
 							const TMatrixD jacobian = getPropagationJacobianF( state, dpoint[2] ); //Find all the relations between state variables at a particular z parameter dpoint[2] 
 							nextStateUsingJacobianFinder(state, state_new, jacobian); //Here we determine the new state position and CovMatrix using the jacobian. This might not need to be done now but would involve changing closestHit()????
+							state_new->setZParameter( dpoint[2] ); //Set this here since it is not a state variable but a parameter
 							
 							streamlog_out ( DEBUG5 ) << "Both FindIntersection and Jacobian should be the same" << std::endl;
 							streamlog_out ( DEBUG5 ) << "Point (" <<  dpoint[0] << ", " <<  dpoint[1] << ") from findIntersection" << std::endl;
@@ -222,11 +223,11 @@ namespace eutelescope {
 							
 							
 							////////////Find next closest hit and determine if it is within window. If both fill new state with information about hit. Otherwise fill without it/////////////////////////////// 
-          		EVENT::TrackerHit* closestHit = const_cast< EVENT::TrackerHit* > ( findClosestHit( state, newSensorID ) ); //This will look for the closest hit but not if it is within the excepted range		
+          		EVENT::TrackerHit* closestHit = const_cast< EVENT::TrackerHit* > ( findClosestHit( state_new, newSensorID ) ); //This will look for the closest hit but not if it is within the excepted range		
  							if ( closestHit ){ //Just check if the closestHit exist 
           			const double* uvpos = closestHit->getPosition(); //Get that hits position
-            		const double distance = getResidual( state, closestHit ).Norm2Sqr( ); //Determine the residual to it
-            		const double DCA = getXYPredictionPrecision( state ); // basically RMax cut at the moment
+            		const double distance = getResidual( state_new, closestHit ).Norm2Sqr( ); //Determine the residual to it
+            		const double DCA = getXYPredictionPrecision( state_new ); // basically RMax cut at the moment
             		streamlog_out ( DEBUG4 ) << "NextPlane " << newSensorID << " " << uvpos[0] << " " << uvpos[1] << " " << uvpos[2] << " resid:" << distance << " ResidualCut: " << DCA << endl;
             		if ( distance > DCA ) {
               		streamlog_out ( DEBUG1 ) << "Closest hit is outside of search window." << std::endl;
@@ -1441,7 +1442,7 @@ itTrk++;
 
         streamlog_out( DEBUG5 ) << "Global(u,v,z) coordinates before transform to local  (" << input[0] << "," << input[1] << "," << input[2] << ")" << std::endl;
 
-				geo::gGeometry().master2Local( input, localState );
+				geo::gGeometry().master2Localtwo( ts->getLocation(), input, localState );
 				prediction[0] = localState[0];	prediction[1] = localState[1]; prediction[2] = localState[2];
 				//////////////////////////////////////////////////////////////////////////
 

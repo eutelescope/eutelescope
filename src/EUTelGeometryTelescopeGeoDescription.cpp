@@ -572,6 +572,20 @@ void EUTelGeometryTelescopeGeoDescription::master2Local( const double globalPos[
 }
 
 
+void EUTelGeometryTelescopeGeoDescription::master2Localtwo(int sensorID, const double globalPos[], double localPos[] ) {
+    streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::master2Local() " << std::endl;
+
+    _geoManager->cd( _planePath[sensorID].c_str() );
+		_geoManager->GetCurrentNode()->MasterToLocal( globalPos, localPos );
+    
+    streamlog_out(DEBUG0) << std::fixed;
+    streamlog_out(DEBUG0) << "Global coordinates:" << std::endl;
+    streamlog_out(DEBUG0) << std::setw(10) << std::setprecision(5) << globalPos[0] << std::setw(10) << std::setprecision(5) << globalPos[1] << std::setw(10) << std::setprecision(5) << globalPos[2] << std::endl;
+    streamlog_out(DEBUG0) << "Local coordinates: " << std::endl;
+    streamlog_out(DEBUG0) << std::setw(10) << std::setprecision(5) << localPos[0] << std::setw(10) << std::setprecision(5) << localPos[1] << std::setw(10) << std::setprecision(5) << localPos[2] << std::endl;
+}
+
+
 void EUTelGeometryTelescopeGeoDescription::local2masterHit(EVENT::TrackerHit* hit_input, IMPL::TrackerHitImpl* hit_output, LCCollection * hitCollectionOutput){
     streamlog_out(DEBUG2) << "START------------------EUTelGeometryTelescopeGeoDescription::local2MasterHit()-------------------------------------- " << std::endl;
 		//Get input sensor ID and properties
