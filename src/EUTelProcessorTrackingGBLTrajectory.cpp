@@ -315,71 +315,17 @@ void EUTelProcessorTrackingGBLTrajectory::processRunHeader(LCRunHeader * run) {
     _nProcessedRuns++;
 }
 
-void EUTelProcessorTrackingGBLTrajectory::processEvent(LCEvent * evt) {
+void EUTelProcessorTrackingGBLTrajectory::plotTracks(LCEvent *event){
 
-    EUTelEventImpl * event = static_cast<EUTelEventImpl*> (evt);
-
-    // Do not process last events
-    if (event->getEventType() == kEORE) {
-        streamlog_out(DEBUG4) << "EORE found: nothing else to do." << endl;
-        return;
-    } else if (event->getEventType() == kUNKNOWN) {
-        streamlog_out(WARNING2) << "Event number " << event->getEventNumber() << " in run " << event->getRunNumber()
-                << " is of unknown type. Continue considering it as a normal Data Event." << endl;
-    }
-
-    // Try to access collection
-
-    LCCollection* col = NULL;
-    try {
-        col = evt->getCollection(_trackCandidatesInputCollectionName);
-        streamlog_out(DEBUG1) << "collection : " << _trackCandidatesInputCollectionName << " retrieved" << std::endl;
-    } catch (DataNotAvailableException e) {
-        streamlog_out(MESSAGE0) << _trackCandidatesInputCollectionName << " collection not available" << std::endl;
-        throw marlin::SkipEventException(this);
-    }
-
-    // this will only be entered if the collection is available
-    if (col != NULL) {
-        streamlog_out(DEBUG2) << "EUTelProcessorTrackingGBLTrajectory" << endl;
-
-        vector< IMPL::TrackImpl* > trackCandidates;
-        for (int iCol = 0; iCol < col->getNumberOfElements(); iCol++) {
-            IMPL::TrackImpl* trackimpl = static_cast<IMPL::TrackImpl*> (col->getElementAt(iCol));
-
-            if (!col) {
-                streamlog_out(WARNING2) << "EUTelLCObjectTrackCandidate collection not found found for event " << _nProcessedEvents <<
-                        " in run " << _nProcessedRuns << endl;
-                throw SkipEventException(this);
-            }
-
-            streamlog_out(DEBUG1) << "Track " << iCol << " nhits " << trackimpl->getTrackerHits().size() << endl;
-            trackCandidates.push_back( trackimpl );
-        } //for ( int iCol = 0; iCol < col->getNumberOfElements() ; iCol++ )
-
-        // Perform fit for all found track candidates
-        // ------------------------------------------
         TVectorD residual(2);
         TVectorD residualErr(2);
-        
+ 
         unsigned int numData;
         TVectorD residualGBL(2);
         TVectorD measErrGBL(2);
         TVectorD residualGBLErr(2);
         TVectorD downWeightGBL(2);
-        const int nTracks = trackCandidates.size();
-        streamlog_out(DEBUG1) << "N tracks found " << nTracks << endl;
-
-        if (  nTracks > 0 ) {
-            _trackFitter->SetTrackCandidates(trackCandidates);
-            _trackFitter->TrackCandidatesToGBLTrajectories();
-            _trackFitter->PerformFitGBLTrajectories();
-
-            if( _alignmentMode > 0 )
-            {
-             _trackFitter->PerformMille();
-            }
-
+ 
             IMPL::LCCollectionVec* fittrackvec = static_cast< EUTelGBLFitter* > (_trackFitter)->GetFitTrackVec();
 //            vector<IMPL::TrackImpl *> *fittrackvec = static_cast<vector<IMPL::TrackImpl *> *> (collection);
 
@@ -393,8 +339,6 @@ void EUTelProcessorTrackingGBLTrajectory::processEvent(LCEvent * evt) {
               return;
             }
 
-            // histogramming now !
-            if( !_flag_nohistos && 1==1 ) {
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
             // build plots: // makes sense to put into a separate method, aah ?
@@ -477,7 +421,7 @@ void EUTelProcessorTrackingGBLTrajectory::processEvent(LCEvent * evt) {
 
                         // Get fitted hit information
                         const double* hitpos = ( *itrHit )->getPosition( );
-                        const int planeID = Utility::GuessSensorID( originalHit );
+                        const int planeID = Utility::getSensorIDfromHit( originalHit );
 
                         bool excludeFromFit = false;
                         if ( std::find( _excludePlanesFromFit.begin(), _excludePlanesFromFit.end(), planeID ) != _excludePlanesFromFit.end() ) excludeFromFit = true;
@@ -664,7 +608,75 @@ continue;
                    }
                } 
 
+           }
+// building histograms done.
+#endif // defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+
+
+}
+
+
+void EUTelProcessorTrackingGBLTrajectory::processEvent(LCEvent * evt) {
+
+    EUTelEventImpl * event = static_cast<EUTelEventImpl*> (evt);
+
+    // Do not process last events
+    if (event->getEventType() == kEORE) {
+        streamlog_out(DEBUG4) << "EORE found: nothing else to do." << endl;
+        return;
+    } else if (event->getEventType() == kUNKNOWN) {
+        streamlog_out(WARNING2) << "Event number " << event->getEventNumber() << " in run " << event->getRunNumber()
+                << " is of unknown type. Continue considering it as a normal Data Event." << endl;
+    }
+
+    // Try to access collection
+
+    LCCollection* col = NULL;
+    try {
+        col = evt->getCollection(_trackCandidatesInputCollectionName);
+        streamlog_out(DEBUG1) << "collection : " << _trackCandidatesInputCollectionName << " retrieved" << std::endl;
+    } catch (DataNotAvailableException e) {
+        streamlog_out(MESSAGE0) << _trackCandidatesInputCollectionName << " collection not available" << std::endl;
+        throw marlin::SkipEventException(this);
+    }
+
+    // this will only be entered if the collection is available
+    if (col != NULL) {
+        streamlog_out(DEBUG2) << "EUTelProcessorTrackingGBLTrajectory" << endl;
+
+        vector< const IMPL::TrackImpl* > trackCandidates;
+        for (int iCol = 0; iCol < col->getNumberOfElements(); iCol++) {
+            const IMPL::TrackImpl* trackimpl = static_cast<const IMPL::TrackImpl*> (col->getElementAt(iCol));
+
+            if (!col) {
+                streamlog_out(WARNING2) << "EUTelLCObjectTrackCandidate collection not found found for event " << _nProcessedEvents <<
+                        " in run " << _nProcessedRuns << endl;
+                throw SkipEventException(this);
             }
+
+            streamlog_out(DEBUG1) << "Track " << iCol << " nhits " << trackimpl->getTrackerHits().size() << endl;
+            trackCandidates.push_back( trackimpl );
+        } //for ( int iCol = 0; iCol < col->getNumberOfElements() ; iCol++ )
+
+        // Perform fit for all found track candidates
+        // ------------------------------------------
+       
+        const int nTracks = trackCandidates.size();
+        streamlog_out(DEBUG1) << "N tracks found " << nTracks << endl;
+
+        if (  nTracks > 0 ) {
+            _trackFitter->SetTrackCandidates(trackCandidates);
+            _trackFitter->TrackCandidatesToGBLTrajectories();
+            _trackFitter->PerformFitGBLTrajectories();
+
+            if( _alignmentMode > 0 )
+            {
+             _trackFitter->PerformMille();
+            }
+
+//            plotTracks(event);
+
+          
             // Write track candidates collection
             try {
                 streamlog_out( DEBUG1 ) << "Getting collection " << _tracksOutputCollectionName << endl;
@@ -674,13 +686,9 @@ continue;
                 evt->addCollection( static_cast < EUTelGBLFitter* > ( _trackFitter )->GetFitHitsVec( ), _tracksOutputCollectionName+"_fittedhits" );
                 evt->addCollection( static_cast < EUTelGBLFitter* > ( _trackFitter )->GetFitTrackVec( ), _tracksOutputCollectionName );
             }   
-        
-    
+
         } 
 
-// building histograms done.
-#endif // defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-        }
  
     } //if( col != NULL )
 

@@ -79,7 +79,8 @@ namespace eutelescope {
         /** Histogram booking */
         void bookHistograms();
 
-        
+        void plotTracks(LCEvent *event);
+
         // Processor parameters
 
     public:
