@@ -55,7 +55,7 @@ namespace eutelescope {
       // will be automatically run when calling EUTelGBLFitter::FitTracks()
         void Clear();
 
-        void SetTrackCandidates( const vector<IMPL::TrackImpl*> &);
+        void SetTrackCandidates( vector <const IMPL::TrackImpl*> &);
 
         void SetTrackCandidates( const EVENT::TrackVec&);
 
@@ -66,8 +66,18 @@ namespace eutelescope {
         void TrackCandidatesToGBLTrajectories();
 
         // private:
-        void TrackCandidatesToGBLTrajectory( vector<IMPL::TrackImpl*>::const_iterator&  );
-        void PerformFitGBLTrajectory( gbl::GblTrajectory* ,  vector<IMPL::TrackImpl*>::const_iterator&, double );
+        /*
+         */  
+        void TrackCandidatesToGBLTrajectory( vector<const IMPL::TrackImpl*>::const_iterator&  );
+
+        /*
+         */
+        void PerformFitGBLTrajectory( gbl::GblTrajectory* ,  vector<const IMPL::TrackImpl*>::const_iterator&, double );
+     
+        /* check that all trajectories are valid for Millepede
+         * and dumpe the mille binary file
+         */   
+        bool PerformMille();
 
         void FitSingleTrackCandidate(EVENT::TrackVec::const_iterator& itTrkCand);
  
@@ -185,11 +195,11 @@ namespace eutelescope {
         void pushBackPoint( std::vector< gbl::GblPoint >&, const gbl::GblPoint&, int );
         void pushBackPointMille( std::vector< gbl::GblPoint >&, const gbl::GblPoint&, int );
  
-        void prepareLCIOTrack( gbl::GblTrajectory*, const vector<IMPL::TrackImpl*>::const_iterator&,
+        void prepareLCIOTrack( gbl::GblTrajectory*, vector<const IMPL::TrackImpl*>::const_iterator&,
                                 double, int, double, double, double, double, double );
       
 
-        void prepareMilleOut( gbl::GblTrajectory*, const vector<IMPL::TrackImpl*>::const_iterator& );
+        void prepareMilleOut( gbl::GblTrajectory*, vector<const IMPL::TrackImpl*>::const_iterator& );
 
 // to be obsolete:
             void prepareLCIOTrack( gbl::GblTrajectory*, const EVENT::TrackerHitVec&,
@@ -198,7 +208,7 @@ namespace eutelescope {
 //
 
     private:
-        vector<IMPL::TrackImpl*> _trackCandidatesVec;
+        vector<const IMPL::TrackImpl*> _trackCandidatesVec;
 
         EVENT::TrackVec _trackCandidates;
 

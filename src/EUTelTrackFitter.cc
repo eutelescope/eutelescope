@@ -28,7 +28,7 @@ namespace eutelescope {
 	return;
     }
 
-    void EUTelTrackFitter::SetTrackCandidates( const std::vector<IMPL::TrackImpl*> & ) {
+    void EUTelTrackFitter::SetTrackCandidates( std::vector<const IMPL::TrackImpl*> & ) {
         return;
     }
 
@@ -44,8 +44,8 @@ namespace eutelescope {
 	return;
     }
 
-    void EUTelTrackFitter:: PerformMille() {
-        return;
+    bool EUTelTrackFitter:: PerformMille() {
+        return false;
     }
 
     void EUTelTrackFitter:: PerformFitGBLTrajectories() {
