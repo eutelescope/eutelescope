@@ -199,7 +199,7 @@ namespace eutelescope {
                                 double, int, double, double, double, double, double );
       
 
-        void prepareMilleOut( gbl::GblTrajectory*, vector<const IMPL::TrackImpl*>::const_iterator& );
+        void prepareMilleOut( const IMPL::TrackImpl & );
 
 // to be obsolete:
             void prepareLCIOTrack( gbl::GblTrajectory*, const EVENT::TrackerHitVec&,
