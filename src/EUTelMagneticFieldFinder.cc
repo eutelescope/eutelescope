@@ -173,6 +173,9 @@ namespace eutelescope {
     }
 
     /** */
+
+
+
     void EUTelKalmanFilter::propagateFromRefPoint( 	std::vector< EUTelTrackImpl* >::iterator &itTrk    ){
 			
 			//Set up the geometry//////////////////////////////////////////////////////////////////////// 
@@ -185,6 +188,7 @@ namespace eutelescope {
 
 
       EUTelTrackStateImpl* state = const_cast<EUTelTrackStateImpl*>((*itTrk)->getFirstTrackState( ));
+			streamlog_out ( DEBUG5 ) << "Memory location of initial state: " << state << endl; 
 
       if( state == 0 )
       {
@@ -192,15 +196,10 @@ namespace eutelescope {
         return ;
       }
 
-		//Get global position from state.
-		  const double x0 = state->getX();
-	 		const double y0 = state->getY();
-			const double z0 = state->getZParameter();
-      const float opoint[3] = { x0, y0, z0};
 	    
       // loop through all known sensors (local, defined above):
       map< int, int >::const_iterator iter = sensorMap.begin();
-      while ( iter != sensorMap.end() ) {
+      while ( iter != sensorMap.end() ) { ////////////////////////////NEED TO FIX FOR SOME REASON LOOPS 1 EXTRA TIME
         if( iter->first > -999 ){
             float dpoint[3];
             int newSensorID = findIntersection( state, (iter->second+1), dpoint ) ;
@@ -213,7 +212,7 @@ namespace eutelescope {
 							EUTelTrackStateImpl* state_new =  new EUTelTrackStateImpl(); //This creates a new state object
         			state_new->setLocation( (iter->second+1) );
 							//Here we fill the state with its new approximate new hit position. Nothing else is filled yet since this will depend on if hit information is there.
-							const TMatrixD jacobian = getPropagationJacobianF( state, dpoint[2] ); //Find all the relations between state variables at a particular z parameter dpoint[2] 
+							const TMatrixD jacobian = getPropagationJacobianF( state,  (dpoint[2] - state_new->getZParameter())  ); //Find all the relations between state variables at a particular z parameter dpoint[2] 
 							nextStateUsingJacobianFinder(state, state_new, jacobian); //Here we determine the new state position and CovMatrix using the jacobian. This might not need to be done now but would involve changing closestHit()????
 							state_new->setZParameter( dpoint[2] ); //Set this here since it is not a state variable but a parameter
 							
@@ -227,15 +226,16 @@ namespace eutelescope {
  							if ( closestHit ){ //Just check if the closestHit exist 
           			const double* uvpos = closestHit->getPosition(); //Get that hits position
             		const double distance = getResidual( state_new, closestHit ).Norm2Sqr( ); //Determine the residual to it
-            		const double DCA = getXYPredictionPrecision( state_new ); // basically RMax cut at the moment
-            		streamlog_out ( DEBUG4 ) << "NextPlane " << newSensorID << " " << uvpos[0] << " " << uvpos[1] << " " << uvpos[2] << " resid:" << distance << " ResidualCut: " << DCA << endl;
+            		const double DCA = 10;                             //getXYPredictionPrecision( state_new ); // basically RMax cut at the moment. MUST FIX!!!! HOW SHOULD THIS BE TREAT?;;
+            		streamlog_out ( DEBUG5 ) << "NextPlane " << newSensorID << " " << uvpos[0] << " " << uvpos[1] << " " << uvpos[2] << " resid:" << distance << " ResidualCut: " << DCA << endl;
             		if ( distance > DCA ) {
               		streamlog_out ( DEBUG1 ) << "Closest hit is outside of search window." << std::endl;
               		streamlog_out ( DEBUG1 ) << "Skipping current plane. Covariant Matrix and position already updated to this point " << std::endl;
+	streamlog_out (MESSAGE5 ) << " Distance between them: "<< distance << endl;
             		}
 								else{
-            			streamlog_out (MESSAGE0 ) << "NextPlane MATCHED " <<  uvpos[0] << " " <<  uvpos[1] << " " << uvpos[2] <<  " err:"<< newSensorID << endl;\
-              		streamlog_out ( DEBUG1 ) << "Will now alter Cov matrix and state variables using hit information " << std::endl;
+            			streamlog_out (MESSAGE5 ) << "NextPlane MATCHED. Position of Hit (Local) " <<  uvpos[0] << " " <<  uvpos[1] << " " << uvpos[2] <<" Position of state (Global) " << state_new->getX() << "," << state_new->getY()<<","<< state_new->getZParameter() <<" Distance between them: "<< distance << " Sensor ID:"<< state_new->getLocation() << " Seed we began at: " << (*itTrk) << endl;
+              		streamlog_out ( DEBUG5 ) << "Will now alter Cov matrix and state variables using hit information " << std::endl;
 									TMatrixD HMatrix = getH( state_new ); //We need to be able to move from the measurement to the state space
        						TMatrixD GainMatrix = updateGainK( state_new, closestHit ); //This is a matrix that tells you
 									UpdateStateUsingHitInformation(state_new ,closestHit, jacobian, GainMatrix, HMatrix); //Update the state on the track
@@ -243,7 +243,13 @@ namespace eutelescope {
             		}
 
 							}
-						state = state_new; //This will only be done if there was an intersection. Otherwise state will remain the same and the plane will change 
+							(*itTrk)->addTrackState( new EUTelTrackStateImpl(*state_new) ); //New memory allocation here should be deleted by LCIO memory management. I think...
+							streamlog_out ( DEBUG5 ) << "Memory location of initial state after all allocation (Should be the same): " << state << endl; 
+							streamlog_out ( DEBUG5 ) << "Memory location of state_new: " << state_new << endl; 
+								
+						 	state = state_new; //MUST DOUBLE CHECK THIS MEMORY MANAGEMENT DOES NOT LOOK RIGHT TO ME
+							streamlog_out ( DEBUG5 ) << "Memory location of initial state after it was made equal to state_new: " << state << endl; 		
+
           }
         ++iter;	
       } 
@@ -351,8 +357,10 @@ itTrk++;
  
 						//Check the number of hit on the track after propagation and collecting hits is over the minimum
             if ( isGoodTrack && ( *itTrk )->getTrackerHits( ).size( ) < geo::gGeometry( ).nPlanes( ) - _allowedMissingHits ) {
-               streamlog_out ( DEBUG1 ) << "Track candidate has to many missing hits." << std::endl;
-               streamlog_out ( DEBUG1 ) << "Removing this track candidate from further consideration." << std::endl;
+							 streamlog_out ( MESSAGE5 ) << "Number of hit on the track: " << ( *itTrk )->getTrackerHits( ).size( ) <<" Number needed: " << geo::gGeometry( ).nPlanes( ) - _allowedMissingHits << std::endl;
+               streamlog_out ( DEBUG5 ) << "Track candidate has to many missing hits." << std::endl;
+               streamlog_out ( DEBUG5 ) << "Removing this track candidate from further consideration." << std::endl;
+            	 (*itTrk)->Print();
                delete (*itTrk);  //Is this really needed?
                isGoodTrack = false;
                itTrk = _tracksCartesian.erase( itTrk ); itTrk--; 
@@ -368,9 +376,10 @@ itTrk++;
             (*itTrk)->Print();
  
             }
-            streamlog_out(MESSAGE0) << "Finished looping through all seeds! Looped at total of : " << local_itTrk << " after seeds with no state are deduced. Total seeds were: " << size_itTrk << endl;
             local_itTrk++;
         }
+
+        streamlog_out(MESSAGE0) << "Finished looping through all seeds! Looped at total of : " << local_itTrk << " after seeds with no state are deduced. Total seeds were: " << size_itTrk << endl;
   
        streamlog_out(MESSAGE1) << "------------------------------EUTelKalmanFilter::SearchTrackCandidates()---------------------------------" << std::endl;
 
@@ -384,8 +393,8 @@ itTrk++;
  
    //   std::vector< IMPL::TrackImpl* >::iterator itTrk;
 			std::vector< EUTelTrackImpl* >::iterator itTrk;
-      std::vector< IMPL::TrackImpl* >::iterator jtTrk;
-      std::vector< EUTelTrackImpl* >           _tracks_to_delete;
+      std::vector< EUTelTrackImpl* >::iterator jtTrk;
+      std::vector< EUTelTrackImpl* >  _tracks_to_delete;
 
       int itrk = 0;
       int jtrk = 0;
@@ -405,17 +414,24 @@ itTrk++;
           EUTelTrackImpl* jtTrack = _tracksCartesian[jtrk];
           const EVENT::TrackerHitVec jhits = jtTrack->getTrackerHits();
 // cross check every track to all following ones in the _track collection
+					int outer_loop = 0;
+					int inner_loop = 0;
           for(int i=0;i<ihits.size();i++)
           { // loop through hits in itTrk candidate
+						streamlog_out(MESSAGE1) <<  "The number of hits to loop through (outer) :" << ihits.size()<< " Beginning loop (outer) : " <<outer_loop<< std::endl;
+						outer_loop++; 
             EVENT::TrackerHit* ihit = ihits[i];
             int ic = ihit->id();
+						inner_loop = 0;
             for(int j=0;j<jhits.size();j++)
             { // loop through hits in jtTrk candidate 
+							 streamlog_out(MESSAGE1) <<  "The number of hits to loop through (compare, inner)  :" << jhits.size()<< " Beginning loop (inner) : " <<inner_loop<< std::endl; 
+							 inner_loop++;
                EVENT::TrackerHit* jhit = jhits[j];
                int jc = jhit->id();
                if(ic == jc ){
                  hitscount++; 
-                 streamlog_out(MESSAGE0) <<  "Hit number on track you are comparing all other to :" << i << ". Hit ID of this track : " << ic << ". Hit number of comparison track : " << j << ". Hit ID of this track : " << jc << ". Number of common hits: " << hitscount << std::endl; 
+                 streamlog_out(MESSAGE1) <<  "Hit number on track you are comparing all other to :" << i << ". Hit ID: " << ic << ". Hit number of comparison: " << j << ". Hit ID of this comparison : " << jc << ". Number of common hits: " << hitscount << std::endl; 
                }
             }
           } 
@@ -423,7 +439,7 @@ itTrk++;
           if(hitscount > _AllowedSharedHitsOnTrackCandidate) {   
             if( std::find(_tracks_to_delete.begin(), _tracks_to_delete.end(), *itTrk ) == _tracks_to_delete.end() || _tracks_to_delete.size() == 0 )
             {
-               streamlog_out(MESSAGE1) <<  "is duped " << itrk << " & " << jtrk << std::endl;
+               streamlog_out(MESSAGE5) <<  "Track " << itrk << " and " << jtrk <<"Have similar hits. Remove track " <<*itTrk << std::endl;
               _tracks_to_delete.push_back( *itTrk );
             }
             continue;
@@ -726,6 +742,7 @@ itTrk++;
             
             EUTelTrackImpl* track = new EUTelTrackImpl;
             track->addTrackState( state );
+        		track->addHit( const_cast< EVENT::TrackerHit* > (*itHit) );
             _tracksCartesian.push_back( track );
 
           }// loop over for the iplane
@@ -1162,10 +1179,9 @@ itTrk++;
         streamlog_out(DEBUG2) << "EUTelKalmanFilter::getXYZfromArcLength()" << std::endl;
         
         // Get starting track position
-        const float* x = ts->getReferencePoint();
-        const double x0 = x[0];
-        const double y0 = x[1];
-        const double z0 = x[2];
+	  const double x0 = ts->getX();
+	  const double y0 = ts->getY();
+		const double z0 = ts->getZParameter();
         
         // Get magnetic field vector
         gear::Vector3D vectorGlobal( x0, y0, z0 );        // assuming uniform magnetic field running along X direction
@@ -1361,18 +1377,19 @@ itTrk++;
     }
 
 		void EUTelKalmanFilter::nextStateUsingJacobianFinder(EUTelTrackStateImpl* input, EUTelTrackStateImpl* output, const TMatrixD& jacobian){
-        streamlog_out( DEBUG2 ) << "EUTelKalmanFilter::nextStateUsingJacobianFinder()" << std::endl;
+        streamlog_out( DEBUG5 ) << "EUTelKalmanFilter::nextStateUsingJacobianFinder()" << std::endl;
 				/////////////////////////////////////////////////////////////////////////////////////////////////////Here we update the new global position of the track
 				TVectorD xkm1 = getTrackStateVec( input );
         TVectorD xkkm1 = jacobian * xkm1; 
 
-        streamlog_message( DEBUG0, xkkm1.Print();, std::endl; );
+        streamlog_message( DEBUG5, xkkm1.Print();, std::endl; );
         
         output->setX( xkkm1[0] );
         output->setY( xkkm1[1] );
         output->setTx( xkkm1[2] );
         output->setTy( xkkm1[3] );
         output->setInvP( xkkm1[4] );
+			
 
 				///////////////////////////////////////////////////////////Here we update the Covariant matrix
         TMatrixDSym TrackCovInput = getTrackStateCov( input );
@@ -1387,7 +1404,7 @@ itTrk++;
         input->setCovMatrix( trkCov );    
 				
         
-        streamlog_out( DEBUG2 ) << "-----------------------------------EUTelKalmanFilter::nextStateUsingJacobianFinder()----------------------------------" << std::endl;
+        streamlog_out( DEBUG5 ) << "-----------------------------------EUTelKalmanFilter::nextStateUsingJacobianFinder()----------------------------------" << std::endl;
 		}
 				
 			 
@@ -1528,10 +1545,10 @@ itTrk++;
 
 
 		void EUTelKalmanFilter::UpdateStateUsingHitInformation(EUTelTrackStateImpl* input,const EVENT::TrackerHit* hit, const TMatrixD& jacobian, TMatrixD & KGain, TMatrixD & HMatrix){
-        streamlog_out( DEBUG2 ) << "-----------------------EUTelKalmanFilter::UpdateStateUsingHitInformation()-------------------------------START" << std::endl;
+       streamlog_out( DEBUG2 ) << "-----------------------EUTelKalmanFilter::UpdateStateUsingHitInformation()-------------------------------START" << std::endl;
 				//Get the residual of the hit and the track and the state vector/////////
-        TVectorD residual(2);      residual = getResidual( input, hit ); //This is just the components of distance in x and y
-        TVectorD state(5);         state = getTrackStateVec( input );       
+        TVectorD residual = getResidual( input, hit ); //This is just the components of distance in x and y
+        TVectorD state = getTrackStateVec( input );       
 				///////////////////////////////////////////////////////////////////////
 
 				///////////////////////////////////////////////////////First the state. Note that if the hit is accurate you want to change the state to that position
@@ -1545,12 +1562,11 @@ itTrk++;
 				
 				/////////////////////////////////////////////////////////////////Now the Cov Matrix. Note that if the hit is very accurate it will reduce the Cov matrix
 				TMatrixDSym CovMatrix = getTrackStateCov( input );
-				TMatrixD I;
+				TMatrixD I(5,5);
 				I.UnitMatrix();
 				I -= KGain*HMatrix;  //If we have low uncertainty in the hit then I will be 0. So the covariant will be 0 at this state 
 
-        TMatrixD newCovMatrix(5,5);
-        newCovMatrix = I*CovMatrix;
+        TMatrixD newCovMatrix = I*CovMatrix;
 
         float trkCov[15] = { static_cast<float>(newCovMatrix[0][0]), static_cast<float>(newCovMatrix[1][0]), static_cast<float>(newCovMatrix[1][1]), 
                              static_cast<float>(newCovMatrix[2][0]), static_cast<float>(newCovMatrix[2][1]), static_cast<float>(newCovMatrix[2][2]),
@@ -1568,22 +1584,22 @@ itTrk++;
 	void EUTelKalmanFilter::UpdateTrackUsingHitInformation( EUTelTrackStateImpl* input,const EVENT::TrackerHit* hit, EUTelTrackImpl* track, const TMatrixD& jacobian, TMatrixD & KGain, TMatrixD & HMatrix){			
 				//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Now determine the chi2 of the track.
 				TMatrixDSym newCovMatrix = getTrackStateCov( input );
-        TVectorD residual(2);      residual = getResidual( input, hit ); //This is just the components of distance in x and y
-				TMatrixD I;
-				I.UnitMatrix();
+        TVectorD residual(2);   residual = getResidual( input, hit ); //This is just the components of distance in x and y
+
         TMatrixD HMatrixTranspose(5,2);      HMatrixTranspose.Transpose( HMatrix );
         TMatrixD newCovMatrixMeas(2,2);  newCovMatrixMeas = HMatrix * newCovMatrix * HMatrixTranspose; //This is the new state covariant matrix in measurements space.
 				TMatrixD hitCov(2,2);       hitCov = getHitCov( hit );
 				hitCov -= newCovMatrixMeas;
-
+				TMatrixD I(2,2);
 				I.UnitMatrix();
 				I -= HMatrix*KGain;
-				TVectorD change_residual =  I*residual;
+				TVectorD change_residual(2); change_residual =  I*residual;
 
 				double chi2 = hitCov.Invert().Similarity(change_residual);
         track->setChi2( chi2 );
 				///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         track->addHit( const_cast< EVENT::TrackerHit* > (hit) );
+	
 	}
 
 

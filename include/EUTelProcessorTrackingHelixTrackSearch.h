@@ -76,7 +76,9 @@ namespace eutelescope {
         /** Histogram booking */
         void bookHistograms();
 
-        void plotHistos( vector< IMPL::TrackImpl* >& trackCandidates ) ;
+        void plotHistos( vector< EUTelTrackImpl* >&  trackCandidates );
+
+				void outputLCIO(LCEvent* evt,std::vector< EUTelTrackImpl* >&);
 
         // Processor parameters        
 

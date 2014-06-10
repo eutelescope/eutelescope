@@ -285,8 +285,14 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
 
             streamlog_out( DEBUG1 ) << "Retrieving track candidates..." << endl;
 
-            // retrieve the result of the PR :: track candidates ::
-          //  vector< IMPL::TrackImpl* >& trackCandidates    = static_cast < EUTelKalmanFilter* > ( _trackFitter )->getTracks( ); //Why does this work?
+						std::vector< EUTelTrackImpl* >& trackCartesian = static_cast < EUTelKalmanFilter* > (_trackFitter)->getTracks(); //Need to cast this since error: ‘class eutelescope::EUTelTrackFitter’ otherwise Why??
+						
+						plotHistos(trackCartesian);
+
+						outputLCIO(evt,trackCartesian);
+
+
+
 
             // not needed any more ? ::
            // EVENT::TrackerHitVec trackCandidateHitFitted = static_cast < EUTelKalmanFilter* > ( _trackFitter )->getHitFittedVec( );
@@ -307,12 +313,56 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
     } // if ( hitMeasuredCollection != NULL)
 }
 
+void EUTelProcessorTrackingHelixTrackSearch::outputLCIO(LCEvent* evt, std::vector< EUTelTrackImpl* >& trackCartesian){
+/*
+  //  IMPL::TrackImpl* LCIOtrack = new IMPL::TrackImpl;
+
+  ////////////////////////////////////////////////////////// Prepare output collection
+    LCCollectionVec * trkCandCollection = 0;
+    try {
+        trkCandCollection = new LCCollectionVec(LCIO::TRACK);
+        LCFlagImpl flag(trkCandCollection->getFlag());
+        flag.setBit( LCIO::TRBIT_HITS );
+        trkCandCollection->setFlag( flag.getFlag( ) );
+    } catch (...) {
+        streamlog_out(WARNING2) << "Can't allocate output collection" << endl;
+    }
+		//////////////////////////////////////////////////////////////////////////////////////////////////
+
+    // Fill track parameters with nonsense except of hits
+    std::vector< EUTelTrackImpl* >::iterator itrk;
+    for ( itrk = trackCartesian.begin(); itrk != trackCartesian.end(); ++itrk ) {
+        streamlog_out( MESSAGE1 ) << "Track has " << (*itrk)->getTrackerHits().size() << " hits" << endl;
+        trkCandCollection->push_back( static_cast<IMPL::TrackImpl*>(*itrk) );
+
+    } // for (size_t itrk = 0; itrk < trackCandidates.size(); itrk++) 
+
+    // Write track candidates collection
+    try {
+        streamlog_out(MESSAGE1) << "Getting collection " << _trackCandidateHitsOutputCollectionName << endl;
+        evt->getCollection(_trackCandidateHitsOutputCollectionName);
+    } catch (...) {
+        streamlog_out(MESSAGE1) << "Adding collection " << _trackCandidateHitsOutputCollectionName << endl;
+        evt->addCollection(trkCandCollection, _trackCandidateHitsOutputCollectionName);
+    }
+
+*/
+}
+
+
+
+
+
+
+
+
+
 
 /** 
  * Plot few histos.
  * 
  */
-void EUTelProcessorTrackingHelixTrackSearch::plotHistos( vector< IMPL::TrackImpl* >& trackCandidates )  {
+void EUTelProcessorTrackingHelixTrackSearch::plotHistos( vector< EUTelTrackImpl* >& trackCandidates)  {
 
             const int nTracks = trackCandidates.size( );
  
@@ -321,7 +371,7 @@ void EUTelProcessorTrackingHelixTrackSearch::plotHistos( vector< IMPL::TrackImpl
             streamlog_out( MESSAGE2 ) << "Track finder " << _trackFitter->GetName( ) << " found  " << nTracks << endl;
 
             int nHitsOnTrack = 0;
-            vector< IMPL::TrackImpl* >::const_iterator itrk;
+            vector< EUTelTrackImpl* >::const_iterator itrk;
             for ( itrk = trackCandidates.begin( ) ; itrk != trackCandidates.end( ); ++itrk ) {
                 const EVENT::TrackerHitVec& trkHits = ( *itrk )->getTrackerHits( );
                 nHitsOnTrack = trkHits.size( );
