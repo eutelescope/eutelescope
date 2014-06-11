@@ -630,6 +630,12 @@ namespace eutelescope {
                 const IMPL::TrackStateImpl* const_trkState = static_cast <const IMPL::TrackStateImpl*> ( (*itTrkCand)->getTrackStates().at(i) ) ;
                       IMPL::TrackStateImpl* trkState = static_cast <      IMPL::TrackStateImpl*> ( fittrack->getTrackStates().at(i) ) ;
 
+                // first get the GBL trajectory fit results:
+                const int hitGblLabel = _hitId2GblPointLabel[ const_trkState->id() ];
+
+                _hitId2GblPointLabel.insert( std::make_pair(   trkState->id() , hitGblLabel  ) );
+
+                gblTraj->getResults( hitGblLabel, corrections, correctionsCov );
 
                 float fitPointLocal[] = {0.,0.,0.};
                 fitPointLocal[0] = const_trkState->getReferencePoint()[0] ;
@@ -642,6 +648,7 @@ namespace eutelescope {
 	        double btanlambda = const_trkState->getTanLambda() ;
 	        double bz0        = const_trkState->getZ0() ;
 
+                // apply GBL fit results:
                 trkState->setD0(        const_trkState->getD0() + corrections[0] ) ;
  	        trkState->setPhi(       const_trkState->getPhi() + corrections[1] ) ;
                 trkState->setOmega(     const_trkState->getOmega() + corrections[2] ) ;
@@ -655,11 +662,6 @@ namespace eutelescope {
 	        double ez0        = trkState->getZ0()  ;
 
 
-                const int hitGblLabel = _hitId2GblPointLabel[ const_trkState->id() ];
-
-                _hitId2GblPointLabel.insert( std::make_pair(   trkState->id() , hitGblLabel  ) );
-
-                gblTraj->getResults( hitGblLabel, corrections, correctionsCov );
 
                 streamlog_out(MESSAGE1) << hitGblLabel << " corr: " << trkState->id() 
                                         << " [d0]" << std::setw(6)  << ed0 <<  ":"
@@ -672,9 +674,23 @@ namespace eutelescope {
                   gblTraj->getMeasResults( hitGblLabel, numData, residual, measErr, residualErr, downWeight);
                   // correct original values to the fitted ones
 
-                  fitPointLocal[0] += residual[0];
-                  fitPointLocal[1] += residual[1];
-                  trkState->setReferencePoint(fitPointLocal);
+                  bool foundAhit = false; 
+                  for (unsigned int i = 0; i< ihits.size(); i++ ) 
+                  { 
+                      EVENT::TrackerHit* ihit = ihits[i];
+                      const int planeID = Utility::getSensorIDfromHit( static_cast< IMPL::TrackerHitImpl* >(ihit) );
+                      if( planeID == trkState->getLocation()) {
+                         foundAhit = true;   
+                         double* hitPointLocal = const_cast <double *> (ihit->getPosition());                   
+                         hitPointLocal[0] -= residual[0]; // why minus?
+                         hitPointLocal[1] -= residual[1];
+
+                         // need a float
+                         const float opoint[3] = { hitPointLocal[0], hitPointLocal[1], hitPointLocal[2] };
+                         trkState->setReferencePoint( opoint );                        
+                      } 
+                  }
+ 
 
                   double PointLocal[] = {0.,0.,0.};
                   PointLocal[0] = trkState->getReferencePoint()[0] ;
