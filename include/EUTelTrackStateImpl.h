@@ -83,6 +83,8 @@ namespace eutelescope {
 
     virtual TMatrixD getH() const;
 
+		virtual TMatrix  getPropagationJacobianF( float dz );
+
     /** Covariance matrix of the track parameters. Stored as lower triangle matrix where
      * the order of parameters is:   x, y, tx, ty, q/p.
      * So we have cov(x,x), cov( y, x ), cov( y, y ), ...

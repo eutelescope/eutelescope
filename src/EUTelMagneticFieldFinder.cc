@@ -213,7 +213,9 @@ namespace eutelescope {
 							state_new->setbeamQ(_beamQ); //Set the beam charge here. This is not perfect I think. Since we could set it as a static variable. However how this should be used in other processor I am unsure???????/
         			state_new->setLocation( (iter->second+1) );
 							//Here we fill the state with its new approximate new hit position. Nothing else is filled yet since this will depend on if hit information is there.
-							const TMatrixD jacobian = getPropagationJacobianF( state,  (dpoint[2] - state->getZParameter())  ); //Find all the relations between state variables at a particular z parameter dpoint[2] 
+							TMatrixD jacobian;
+							jacobian.Zero();
+							jacobian = state->getPropagationJacobianF((dpoint[2] - state->getZParameter())); //Find all the relations between state variables at a particular z parameter dpoint[2] 
 							nextStateUsingJacobianFinder(state, state_new, jacobian); //Here we determine the new state position and CovMatrix using the jacobian. This might not need to be done now but would involve changing closestHit()????
 							state_new->setZParameter( dpoint[2] ); //Set this here since it is not a state variable but a parameter
 							
@@ -694,79 +696,6 @@ itTrk++;
       return xyPrec;
     }
 
-    /** Calculate track parameters propagation jacobian for given track state
-     *  and propagation distance. The expressions were derived in parabolic approximation
-     *  valid for small values of propagation distance |dz| < 10cm. Can be iterated if necessary.
-     * 
-     * @param ts track state
-     * @param dz propagation distance
-     * @return 
-     */
-    const TMatrixD& EUTelKalmanFilter::getPropagationJacobianF( const EUTelTrackStateImpl* ts, double dz ) {
-        streamlog_out( DEBUG2 ) << "EUTelKalmanFilter::getPropagationJacobianF()" << std::endl;
-	// The formulas below are derived from equations of motion of the particle in
-        // magnetic field under assumption |dz| small. Must be valid for |dz| < 10 cm
-
-	const double mm = 1000.;
-	const double k = 0.299792458/mm;
-
-	// Get track parameters
-	const double invP = ts->getInvP();
-	const double x0 = ts->getX();
-        const double y0 = ts->getY();
-        const double z0 = ts->getReferencePoint()[2];
-        const double tx0 = ts->getTx();
-        const double ty0 = ts->getTy();
-
-        // Get magnetic field vector
-        gear::Vector3D vectorGlobal( x0, y0, z0 );        // assuming uniform magnetic field
-	const gear::BField&   B = geo::gGeometry().getMagneticFiled();
-        const double Bx         = B.at( vectorGlobal ).x();
-        const double By         = B.at( vectorGlobal ).y();
-        const double Bz         = B.at( vectorGlobal ).z();
-        
-        const double sqrtFactor = sqrt( 1. + tx0*tx0 + ty0*ty0 );
-
-	const double Ax = sqrtFactor * (  ty0 * ( tx0 * Bx + Bz ) - ( 1. + tx0*tx0 ) * By );
-	const double Ay = sqrtFactor * ( -tx0 * ( ty0 * By + Bz ) + ( 1. + ty0*ty0 ) * Bx );
-
-	// Partial derivatives
-	//const double dAxdtx0 = tx0 * Ax / (sqrtFactor*sqrtFactor) + sqrtFactor*( ty0*Bx - 2. * tx0 * By );
-	const double dAxdty0 = ty0 * Ax / (sqrtFactor*sqrtFactor) + sqrtFactor*( tx0*Bx + Bz );
-	const double dAydtx0 = tx0 * Ay / (sqrtFactor*sqrtFactor) + sqrtFactor*( -ty0*By - Bz );
-	//const double dAydty0 = ty0 * Ay / (sqrtFactor*sqrtFactor) + sqrtFactor*( -tx0*By + 2. * ty0 * Bx );
-
-	const double dxdtx0 = dz;
-	const double dxdty0 = 0.5 * invP * k * dz*dz * dAxdty0;
-
-	const double dydtx0 = 0.5 * invP * k * dz*dz * dAydtx0;
-	const double dydty0 = dz;
-
-	const double dtxdty0 = invP * k * dz * dAxdty0;
-	const double dtydtx0 = invP * k * dz * dAydtx0;
-
-	const double dxdinvP0 = 0.5 * k * dz*dz * Ax;
-	const double dydinvP0 = 0.5 * k * dz*dz * Ay;
-
-	const double dtxdinvP0 = k * dz * Ax;
-	const double dtydinvP0 = k * dz * Ay;
-
-	// Fill-in matrix elements
-	_jacobianF.UnitMatrix();
-	_jacobianF[0][2] = dxdtx0;	_jacobianF[0][3] = dxdty0;	_jacobianF[0][4] = dxdinvP0;
-	_jacobianF[1][2] = dydtx0;	_jacobianF[1][3] = dydty0;	_jacobianF[1][4] = dydinvP0;
-	_jacobianF[2][3] = dtxdty0;	_jacobianF[2][4] = dtxdinvP0;
-	_jacobianF[3][2] = dtydtx0;	_jacobianF[3][4] = dtydinvP0;
-        
-        if ( streamlog_level(DEBUG0) ){
-             streamlog_out( DEBUG0 ) << "Propagation jacobian: " << std::endl;
-            _jacobianF.Print();
-        }
-	
-        streamlog_out( DEBUG2 ) << "-----------------------------EUTelKalmanFilter::getPropagationJacobianF()-------------------------------" << std::endl;
-        
-	return _jacobianF;
-    }
         
     /**
      * Propagate track state k-1 -> k

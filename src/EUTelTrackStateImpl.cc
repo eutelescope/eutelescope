@@ -288,6 +288,20 @@ TMatrixDSym EUTelTrackStateImpl::getTrackStateCov() const {
 }
 
 
+TMatrix EUTelTrackStateImpl::getPropagationJacobianF( float dz ){
+
+
+	TVector3 pVec = getPfromCartesianParameters();
+	TMatrix jacobian;
+	jacobian.UnitMatrix();
+
+	jacobian = geo::gGeometry().getPropagationJacobianF(  _x, _y, _zparameter, pVec[0],pVec[1],pVec[2], _beamQ, dz);
+
+	return jacobian;
+
+}
+
+
 
  			 
 

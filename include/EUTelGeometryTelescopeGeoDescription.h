@@ -168,6 +168,8 @@ namespace eutelescope {
 
 			TVector3 getXYZfromArcLength( float x0, float y0, float z0, float px, float py, float pz, float _beamQ, float s) const;
 
+			TMatrix getPropagationJacobianF( float x0, float y0, float z0, float px, float py, float pz, float _beamQ, float dz );
+
 			
             
             const TGeoHMatrix* getHMatrix( const double globalPos[] );
