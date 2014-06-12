@@ -467,8 +467,7 @@ itTrk++;
  
       streamlog_out(MESSAGE1) << "------------------------------EUTelKalmanFilter::PruneTrackCandidates()---------------------------------" << std::endl;
     }
-    
-    
+        
     /** Check validity of the user input */
     bool EUTelKalmanFilter::initialise() {
         streamlog_out(DEBUG2) << "EUTelKalmanFilter::initialise()" << std::endl;
@@ -643,95 +642,6 @@ itTrk++;
         streamlog_out(DEBUG2) << "--------------------------------EUTelKalmanFilter::initialiseSeeds()---------------------------" << std::endl;
     }
     
-    /** Propagate track state by dz 
-     * 
-     * @param ts track state
-     * @param dz propagation distance
-     */
-    void EUTelKalmanFilter::propagateTrackRefPoint( EUTelTrackStateImpl* ts, const int nextPlaneId,  double dz ) {
-        streamlog_out(DEBUG2) << "EUTelKalmanFilter::propagateTrackRefPoint()" << std::endl;
-          // The formulas below are derived from equations of motion of the particle in 
-          // magnetic field under assumption |dz| small. Must be valid for |dz| < 10 cm
-
-
-	  // Get track parameters
-	  const double invP = ts->getInvP();
-	  const double x0 = ts->getX();
-	  const double y0 = ts->getY();
-//	  const double z0 = ts->getZ();
-//	  const double x0 = ts->getReferencePoint()[0];
-//	  const double y0 = ts->getReferencePoint()[1];
-	  const double z0 = ts->getReferencePoint()[2];
-	  const double tx0 = ts->getTx();
-	  const double ty0 = ts->getTy();
-//
-          TVector3 vectorRefPoint( x0, y0, z0 );        
-
-
-//
-          EVENT::IntVec sensID = geo::gGeometry().sensorIDsVec();
-          EVENT::IntVec::const_iterator itPlaneId;
-          if ( nextPlaneId > 0 ) {
-            itPlaneId = std::find( sensID.begin(), sensID.end(), nextPlaneId ); 
-          } else {
-            streamlog_out ( DEBUG3 ) << "Track intersection was not found" << std::endl;
-          }
-          TVector3 norm = geo::gGeometry().siPlaneNormal( *itPlaneId ).Unit();
-          TVector3 sensorCenter( geo::gGeometry().siPlaneXPosition( *itPlaneId ),
-                                 geo::gGeometry().siPlaneYPosition( *itPlaneId ),
-                                 geo::gGeometry().siPlaneZPosition( *itPlaneId ) );
-          TVector3 delta = vectorRefPoint - sensorCenter;
-          const double positionRefPoint = delta.Dot( norm.Unit() );
- 
-          streamlog_out ( DEBUG3 ) << "refpoint: " << x0 << " " << y0 << " " << z0 << std::endl;
-          streamlog_out ( DEBUG3 ) << "next sensor " << nextPlaneId << " c:" << sensorCenter[0] << " "  << sensorCenter[1] << " " << sensorCenter[2] << " "  << std::endl;
-          streamlog_out ( DEBUG3 ) << "next sensor " << nextPlaneId << " n:" << norm[0] << " "  << norm[1] << " " << norm[2] << " "  << std::endl;
-          if ( positionRefPoint > 0 ) {
-            streamlog_out ( DEBUG3 ) << "positionRefPoint: " << positionRefPoint << std::endl;
-          } else {
-            streamlog_out ( DEBUG3 ) << "positionRefPoint: " << positionRefPoint << std::endl;
-          }
-           
-//
-
-          // Get magnetic field vector
-          gear::Vector3D vectorGlobal( x0, y0, z0 );        // assuming uniform magnetic field
-	  const gear::BField&   B = geo::gGeometry().getMagneticFiled();
-	  const double Bx         = B.at( vectorGlobal ).x();
-	  const double By         = B.at( vectorGlobal ).y();
-	  const double Bz         = B.at( vectorGlobal ).z();
-	  const double mm = 1000.;
-	  const double k = 0.299792458/mm;
-          
-	  const double sqrtFactor = sqrt( 1. + tx0*tx0 + ty0*ty0 );
-
-	  const double Ax = sqrtFactor * (  ty0 * ( tx0 * Bx + Bz ) - ( 1. + tx0*tx0 ) * By );
-	  const double Ay = sqrtFactor * ( -tx0 * ( ty0 * By + Bz ) + ( 1. + ty0*ty0 ) * Bx );
-
-	  double x = x0 + tx0 * dz + 0.5 * k * invP * Ax * dz*dz;
-	  double y = y0 + ty0 * dz + 0.5 * k * invP * Ay * dz*dz;
-          
-//	  const double tx = tx0 + invP * k * Ax * dz;
-//	  const double ty = ty0 + invP * k * Ay * dz;
-
-	  streamlog_out( DEBUG0 ) << "Old track state (x,y,tx,ty,invP):" << std::endl;
-	  streamlog_out( DEBUG0 ) << std::setw(15) << x0
-				  << std::setw(15) << y0
-				  << std::setw(15) << tx0
-				  << std::setw(15) << ty0
-				  << std::setw(15) << invP << std::endl;
-	  streamlog_out( DEBUG0 ) << "Old track ref point (x,y,z):" << std::endl;
-	  streamlog_out( DEBUG0 ) << std::setw(15) << ts->getReferencePoint()[0]
-				  << std::setw(15) << ts->getReferencePoint()[1]
-				  << std::setw(15) << ts->getReferencePoint()[2] << std::endl;
-
-	  const float newPos[] = {static_cast<float>(x), static_cast<float>(y), static_cast<float>(z0+dz)};
-	  ts->setLocation( EUTelTrackStateImpl::AtOther );
-	  ts->setReferencePoint( newPos );
-        
-          streamlog_out(DEBUG2) << "EUTelKalmanFilter::propagateTrackRefPoint() finish" << std::endl;
-    }
-
     
     /** Find the hit closest to the intersection of a track with given sensor
      * 
