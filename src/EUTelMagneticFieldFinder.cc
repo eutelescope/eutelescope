@@ -767,66 +767,6 @@ itTrk++;
 	return _jacobianF;
     }
     
-
-    /**
-     * Get extrapolated position of the track in global coordinate system
-     * Extrapolation performed along the helix. Formulas are also valid for vanishing magnetic field.
-     * 
-     * @param ts track state
-     * @param s arc length
-     * @return 3d vector of coordinates in the global coordinate system
-     */
-    TVector3 EUTelKalmanFilter::getXYZfromArcLength( const EUTelTrackStateImpl* ts, double s ) const {
-        streamlog_out(DEBUG2) << "EUTelKalmanFilter::getXYZfromArcLength()" << std::endl;
-        
-        // Get starting track position
-	  const double x0 = ts->getX();
-	  const double y0 = ts->getY();
-		const double z0 = ts->getZParameter();
-        
-        // Get magnetic field vector
-        gear::Vector3D vectorGlobal( x0, y0, z0 );        // assuming uniform magnetic field running along X direction
-	const gear::BField&   B = geo::gGeometry().getMagneticFiled();
-        const double bx         = B.at( vectorGlobal ).x();
-        const double by         = B.at( vectorGlobal ).y();
-        const double bz         = B.at( vectorGlobal ).z();
-        TVector3 hVec(bx,by,bz);
-               
-        TVector3 pVec = ts->getPfromCartesianParameters();
-
-	const double H = hVec.Mag();
-        const double p = pVec.Mag();
-	const double mm = 1000.;
-        const double k = -0.299792458/mm*_beamQ*H;
-        const double rho = k/p;
-        
-        // Calculate end track position
-	TVector3 pos( x0, y0, z0 );
-	if ( fabs( k ) > 1.E-6  ) {
-		// Non-zero magnetic field case
-		TVector3 pCrossH = pVec.Cross(hVec.Unit());
-		TVector3 pCrossHCrossH = pCrossH.Cross(hVec.Unit());
-		const double pDotH = pVec.Dot(hVec.Unit());
-		TVector3 temp1 = pCrossHCrossH;	temp1 *= ( -1./k * sin( rho * s ) );
-		TVector3 temp2 = pCrossH;       temp2 *= ( -1./k * ( 1. - cos( rho * s ) ) );
-		TVector3 temp3 = hVec;          temp3 *= ( pDotH / p * s );
-		pos += temp1;
-		pos += temp2;
-		pos += temp3;
-        } else {
-		// Vanishing magnetic field case
-		const double cosA = cosAlpha( ts );
-		const double cosB = cosBeta( ts );
-		pos.SetX( x0 + cosA * s );
-		pos.SetY( y0 + cosB * s );
-		pos.SetZ( z0 + 1./p * pVec.Z() * s );
-	}
-        
-        streamlog_out(DEBUG2) << "---------------------------------EUTelKalmanFilter::getXYZfromArcLength()------------------------------------" << std::endl;
-        
-        return pos;
-    }
-    
     /**
      * Get extrapolated position of the track in global coordinate system
      * Formulas are also valid for vanishing magnetic field.
