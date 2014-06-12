@@ -325,7 +325,7 @@ void EUTelProcessorTrackingHelixTrackSearch::outputLCIO(LCEvent* evt, std::vecto
 
 
 }
-*/
+
 
 }
 	
@@ -379,12 +379,12 @@ void EUTelProcessorTrackingHelixTrackSearch::cartesian2LCIOTrack( EUTelTrackImpl
 	int nstates =  track->getTrackStates().size();
 	for(int i=0;i < nstates; i++) 
 	{
-    EUTelTrackStateImpl& nexttrackstate = EUTelTrackStateImpl( *(track->getTrackStates().at(i)) );
-    IMPL::TrackStateImpl* implstate     = static_cast <IMPL::TrackStateImpl*> (nexttrackstate ); //how does this work?
+  //  EUTelTrackStateImpl& nexttrackstate = EUTelTrackStateImpl( *(track->getTrackStates().at(i)) );
+ //   IMPL::TrackStateImpl* implstate     = static_cast <IMPL::TrackStateImpl*> (nexttrackstate ); //how does this work?
 		
 		
 		
-    LCIOtrack->addTrackState( implstate );
+//    LCIOtrack->addTrackState( implstate );
    }
 
    	// Assign hits to LCIO TRACK

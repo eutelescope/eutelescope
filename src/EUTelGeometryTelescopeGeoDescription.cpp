@@ -792,7 +792,7 @@ float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double 
     streamlog_out(DEBUG0) << "Direction (nx,ny,nz):" << xp << "," << yp << "," << zp << std::endl;
     
     double snext;
-    double pt[3]=0, loc[3]=0;
+    double pt[3], loc[3];
     double epsil = 1.E-7;
     double lastrad = 0.;
     int ismall       = 0;
@@ -1011,6 +1011,6 @@ int EUTelGeometryTelescopeGeoDescription::findNextPlaneEntrance(  double* lpoint
 
 }
 
-//This 
+//This function will intake position 
 
 
