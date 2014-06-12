@@ -96,9 +96,6 @@ namespace eutelescope {
         void PruneTrackCandidates();
 
 
-        /** Fit supplied hits */
-        virtual void FitTracks();
-
         /** Initialise Fitter */
         bool initialise();
 
@@ -200,6 +197,8 @@ namespace eutelescope {
         /** update EUTelTrackState object at a new plane ID*/
         int findNextPlaneEntrance(  EUTelTrackStateImpl* , int  );
 
+    		void propagateFromRefPoint( 	std::vector< EUTelTrackImpl* >::iterator &itTrk    );
+
         /** a vector of hits found while swimming through the detector planes 
         * write down and dump into a collection in EUTelProcessorTrackerHelixSearch
         */
@@ -214,18 +213,7 @@ namespace eutelescope {
         }
  
     private:
-        /** do the EUTelTrackState search through all known volumes */
-        void propagateFromRefPoint( std::vector< EUTelTrackImpl* >::iterator &);
 
-
-        /** Find intersection point of a track with geometry planes */
-        int findIntersection( EUTelTrackStateImpl* ts, int nextPlaneID, float* output ); 
-
-        /** Propagate track state by dz */
-	void propagateTrackRefPoint( EUTelTrackStateImpl*, int, double );
-
-        /** Propagate track state by dz */
-	int propagateTrackRefPoint( EUTelTrackStateImpl* ts, int nextPlaneId ) ;
 
         /** Update track state and it's cov matrix */
         double updateTrackState( EUTelTrackStateImpl*, const EVENT::TrackerHit* );
@@ -269,18 +257,7 @@ namespace eutelescope {
         TVector3 getXYZfromDzNum( const EUTelTrackStateImpl*, double ) const;
 
 	double getXYPredictionPrecision( const EUTelTrackStateImpl* ts ) const;
-
-        /** Cosine of the angle of the slope of track in XZ plane */
-	double cosAlpha( const EUTelTrackStateImpl* ) const;
-
-        /** Cosine of the angle of the slope of track in YZ plane */
-	double cosBeta( const EUTelTrackStateImpl* ) const;
         
-        /** Get track state vector */
-        TVectorD getTrackStateVec( const EUTelTrackStateImpl* ) const;
-        
-        /** Get track state covariance matrix */
-        TMatrixDSym getTrackStateCov( const EUTelTrackStateImpl* ) const;
         
         /** Get hit covariance matrix */
         TMatrixDSym getHitCov( const EVENT::TrackerHit* hit ) const;
@@ -291,8 +268,6 @@ namespace eutelescope {
         /** Get residual covariance matrix */
         TMatrixDSym getResidualCov( const EUTelTrackStateImpl*, const EVENT::TrackerHit* hit );
         
-        /** Get track state projection matrix */
-        TMatrixD getH( const EUTelTrackStateImpl* ) const;
         
         /** Convert EUTelTrackImpl to TrackImpl */
         IMPL::TrackImpl* cartesian2LCIOTrack( EUTelTrackImpl* ) const;

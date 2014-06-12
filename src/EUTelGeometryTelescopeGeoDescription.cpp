@@ -1018,7 +1018,7 @@ int EUTelGeometryTelescopeGeoDescription::findNextPlaneEntrance(  double* lpoint
 * @param input: Pointer to fill with the new global coordinates   
 * @return planeID. If there was a problem return -999.
 */
-int EUTelGeometryTelescopeGeoDescription::findIntersectionWithCertainID( double x0, double y0, double z0, double px, double py, double pz, double _beamQ, int nextPlaneID, double* output) {
+int EUTelGeometryTelescopeGeoDescription::findIntersectionWithCertainID( float x0, float y0, float z0, float px, float py, float pz, float _beamQ, int nextPlaneID, float* output) {
 streamlog_out(DEBUG5) << "EUTelKalmanFilter::findIntersection()" << std::endl;
  
 	// Set position and momentum vector//////////////////////////////////
@@ -1083,7 +1083,7 @@ streamlog_out(DEBUG5) << "EUTelKalmanFilter::findIntersection()" << std::endl;
 			
 	//Determine the global position from arc length.             
   TVector3 newPos;
-	newPos = getXYZfromArcLength(x0, y0,z0,px,py,pz,_beamQ,s);
+	newPos = getXYZfromArcLength(x0, y0,z0,px,py,pz,_beamQ,solution);
 	output[0]=newPos[0]; 				output[1]=newPos[1]; 				output[2]=newPos[2];
 				
 	streamlog_out (DEBUG5) << "Solutions for arc length: " << std::setw(15) << sol[0] << std::setw(15) << sol[1] << std::endl;
@@ -1095,12 +1095,13 @@ streamlog_out(DEBUG5) << "EUTelKalmanFilter::findIntersection()" << std::endl;
   return nextPlaneID;
 }
 //This function determined the xyz position in global coordinates using the state and arc length of the track s.
-TVector3 EUTelKalmanFilter::getXYZfromArcLength( double x0, double y0, double z0, double px, double py, double pz, double _beamQ, double s) const {
+TVector3 EUTelGeometryTelescopeGeoDescription::getXYZfromArcLength( float x0, float y0, float z0, float px, float py, float pz, float _beamQ, float s) const {
 	streamlog_out(DEBUG2) << "EUTelKalmanFilter::getXYZfromArcLength()" << std::endl;
 
   // Fill the postion and momentun into vector
 	TVector3 pos( x0, y0, z0 );
-	TVector3 pVec(px, py, pz );
+	TVector3 pVec(px, py, pz );	
+	//////////////////////////////////////////////////////
                 
   // Get magnetic field vector
   gear::Vector3D vectorGlobal( x0, y0, z0 );        // assuming uniform magnetic field running along X direction
@@ -1129,8 +1130,10 @@ TVector3 EUTelKalmanFilter::getXYZfromArcLength( double x0, double y0, double z0
 		pos += temp3;
         } else {
 		// Vanishing magnetic field case
-		const double cosA =  tx / sqrt( 1. + tx * tx + ty * ty );       // Calculate cos of the angle between Z(beam) and X(solenoid field axis)
-		const double cosB = ty / sqrt( 1. + tx * tx + ty * ty );         // Calculate cos of the angle between Z(beam) and Y
+
+		
+		const double cosA =  px/p;      // Calculate cos of the angle between Z(beam) and X(solenoid field axis)
+		const double cosB = py/p ;        // Calculate cos of the angle between Z(beam) and Y
 		pos.SetX( x0 + cosA * s );
 		pos.SetY( y0 + cosB * s );
 		pos.SetZ( z0 + 1./p * pVec.Z() * s );

@@ -158,6 +158,10 @@ namespace eutelescope {
         _zparameter = z ;
     }
 
+		void EUTelTrackStateImpl::setbeamQ(int beamQ){ //This really should be a static I think but then exactly how to use this I dont know. MUST FIX
+			_beamQ=beamQ;
+		}
+
 
 //This function will output the momentum of the track in cartesian coordinates into a TVector structure
     /** Calculate track momentum from track parameters 
@@ -177,20 +181,20 @@ TVector3 EUTelTrackStateImpl::getPfromCartesianParameters() const {
   return TVector3(px,py,pz);
 }
 	//This function uses the class member findIntersectionWithCertainID. This find the point on the sensor specified by nextPlaneID and returns the global position in output.
-	int EUTelTrackStateImpl::findIntersectionWithCertainID(int nextPlaneID, double* output ) const {
+	int EUTelTrackStateImpl::findIntersectionWithCertainID(int nextPlaneID, float* output ) const {
 	TVector3 pVec = getPfromCartesianParameters();
-	geo::gGeometry().findIntersectionWithCertainID( _x, _y, _zparameter, pVec[0],pVec[1],pVec[2], _beamQ, nextPlaneID, output ); //Input global positions and momentum in cartesian
-	return 
+	int sensorID = geo::gGeometry().findIntersectionWithCertainID( _x, _y, _zparameter, pVec[0],pVec[1],pVec[2], _beamQ, nextPlaneID, output ); //Input global positions and momentum in cartesian
+	return sensorID;
 }
 
-TVector3 EUTelTrackStateImpl::getXYZfromArcLength( double s ) const {
+TVector3 EUTelTrackStateImpl::getXYZfromArcLength( float s ) const {
 		streamlog_out(DEBUG2) << "EUTelTrackStateImpl::getXYZfromArcLength----------------------------BEGIN" << std::endl;
 
 	TVector3 pVec = getPfromCartesianParameters();
 	TVector3 pos = geo::gGeometry().getXYZfromArcLength( _x, _y, _zparameter, pVec[0], pVec[1], pVec[2], _beamQ, s);
 
 		streamlog_out(DEBUG2) << "EUTelTrackStateImpl::getXYZfromArcLength----------------------------END" << std::endl;	
-	return pos
+	return pos;
 
 }	
 
@@ -233,6 +237,54 @@ TMatrixD EUTelTrackStateImpl::getH() const {
   }
  	streamlog_out( DEBUG2 ) << "EUTelTrackStateImpl::getH()---------------------------------------END" << std::endl;       
 	return H;
+}
+
+    /** Convert track state to the vector object. Useful for matrix operations
+     * 
+     * @param ts track stare
+     * @return vector of parameters
+     */
+TVectorD EUTelTrackStateImpl::getTrackStateVec() const {
+	streamlog_out( DEBUG2 ) << "EUTelTrackStateImpl::getTrackStateVec()------------------------BEGIN" << std::endl;
+  TVectorD x(5);
+  x[0] = _x;
+  x[1] = _y;
+  x[2] = _tx;
+  x[3] = _ty;
+  x[4] = _invp;
+        
+	if ( streamlog_level(DEBUG0) ){
+		streamlog_out( DEBUG0 ) << "Track state:" << std::endl;
+    x.Print();
+	}
+  	streamlog_out( DEBUG2 ) << "EUTelTrackStateImpl::getTrackStateVec()------------------------END" << std::endl;
+ 		return x;
+}
+    
+/** Convert track state parameter covariances to the matrix object. Useful for matrix operations
+* 
+* @param ts track state
+* @return covariance matrix
+*/
+TMatrixDSym EUTelTrackStateImpl::getTrackStateCov() const {
+	streamlog_out( DEBUG2 ) << "EUTelTrackStateImpl::getTrackStateCov()----------------------------BEGIN" << std::endl;
+  TMatrixDSym C(5);        
+  const EVENT::FloatVec& trkCov = getCovMatrix();        
+  C.Zero();
+            
+	C[0][0] = trkCov[0]; 
+  C[1][0] = trkCov[1];  C[1][1] = trkCov[2]; 
+  C[2][0] = trkCov[3];  C[2][1] = trkCov[4];  C[2][2] = trkCov[5]; 
+  C[3][0] = trkCov[6];  C[3][1] = trkCov[7];  C[3][2] = trkCov[8];  C[3][3] = trkCov[9]; 
+  C[4][0] = trkCov[10]; C[4][1] = trkCov[11]; C[4][2] = trkCov[12]; C[4][3] = trkCov[13]; C[4][4] = trkCov[14]; 
+        
+	if ( streamlog_level(DEBUG0) ){
+  	streamlog_out( DEBUG0 ) << "Track state covariance matrix:" << std::endl;
+    C.Print();
+  }
+        
+	return C;
+	streamlog_out( DEBUG2 ) << "EUTelTrackStateImpl::getTrackStateCov()----------------------------END" << std::endl;
 }
 
 

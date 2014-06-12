@@ -71,13 +71,17 @@ namespace eutelescope {
 
 		virtual float getZParameter() const ;
 
+    TVectorD getTrackStateVec() const ;
+
+		TMatrixDSym getTrackStateCov() const;
+
 		virtual TVector3 getPfromCartesianParameters() const;
 
-		virtual int findIntersectionWithCertainID(int , double*) const; 
+		virtual int findIntersectionWithCertainID(int , float*) const; 
 
-		virtual TVector3 getXYZfromArcLength( double s ) const;
+		virtual TVector3 getXYZfromArcLength( float s ) const;
 
-    virtual TMatrixD EUTelTrackStateImpl::getH() const
+    virtual TMatrixD getH() const;
 
     /** Covariance matrix of the track parameters. Stored as lower triangle matrix where
      * the order of parameters is:   x, y, tx, ty, q/p.
@@ -108,11 +112,13 @@ namespace eutelescope {
 
 		virtual void setZParameter(float);
 
+		virtual void setbeamQ(int);
+
 
   protected:
 
 		//Static since there is not point in using more memory than needed. Since the particle change will always be the same for a single run
-		static int _beamQ; //This seems a strange parameter to store here. However to state variable _invp is q/p. Therefore to determine p here you need Q. _invp should be renamed or changed?
+		int _beamQ; //This seems a strange parameter to store here. However to state variable _invp is q/p. Therefore to determine p here you need Q. _invp should be renamed or changed? 
 
     int _location ; // location defined by EUTelTrackStateLocationEnum
     float _tx ;

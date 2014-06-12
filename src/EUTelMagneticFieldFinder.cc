@@ -210,6 +210,7 @@ namespace eutelescope {
 						else{ //So we found a intersection so we need to determine that new state.
 							streamlog_out ( DEBUG5 ) << "Intersection on a plane!" << std::endl;
 							EUTelTrackStateImpl* state_new =  new EUTelTrackStateImpl(); //This creates a new state object
+							state_new->setbeamQ(_beamQ); //Set the beam charge here. This is not perfect I think. Since we could set it as a static variable. However how this should be used in other processor I am unsure???????/
         			state_new->setLocation( (iter->second+1) );
 							//Here we fill the state with its new approximate new hit position. Nothing else is filled yet since this will depend on if hit information is there.
 							const TMatrixD jacobian = getPropagationJacobianF( state,  (dpoint[2] - state->getZParameter())  ); //Find all the relations between state variables at a particular z parameter dpoint[2] 
@@ -684,7 +685,7 @@ itTrk++;
     double EUTelKalmanFilter::getXYPredictionPrecision( const EUTelTrackStateImpl* ts ) const {
       streamlog_out(DEBUG2) << "EUTelKalmanFilter::getXYPredictionPrecision()" << std::endl;
       
-      TMatrixDSym Ckkm1 = getTrackStateCov(ts);
+      TMatrixDSym Ckkm1 = ts->getTrackStateCov();
       double xyPrec = getWindowSize();   //sqrt( Ckkm1[0][0]*Ckkm1[0][0] + Ckkm1[1][1]*Ckkm1[1][1] );
       
       streamlog_out(DEBUG0) << "Minimal combined UV resolution : " << xyPrec << std::endl;
@@ -766,56 +767,6 @@ itTrk++;
         
 	return _jacobianF;
     }
-    
-
-    /** Convert track state to the vector object. Useful for matrix operations
-     * 
-     * @param ts track stare
-     * @return vector of parameters
-     */
-    TVectorD EUTelKalmanFilter::getTrackStateVec( const EUTelTrackStateImpl* ts ) const {
-        streamlog_out( DEBUG2 ) << "EUTelKalmanFilter::getTrackStateVec()" << std::endl;
-        TVectorD x(5);
-        x[0] = ts->getX();
-        x[1] = ts->getY();
-        x[2] = ts->getTx();
-        x[3] = ts->getTy();
-        x[4] = ts->getInvP();
-        
-        if ( streamlog_level(DEBUG0) ){
-            streamlog_out( DEBUG0 ) << "Track state:" << std::endl;
-            x.Print();
-        }
-        
-        return x;
-    }
-    
-    /** Convert track state parameter covariances to the matrix object. Useful for matrix operations
-     * 
-     * @param ts track state
-     * @return covariance matrix
-     */
-    TMatrixDSym EUTelKalmanFilter::getTrackStateCov( const EUTelTrackStateImpl* ts ) const {
-        streamlog_out( DEBUG2 ) << "EUTelKalmanFilter::getTrackStateVec()" << std::endl;
-        TMatrixDSym C(5);
-        
-        const EVENT::FloatVec& trkCov = ts->getCovMatrix();
-        
-        C.Zero();
-            
-        C[0][0] = trkCov[0]; 
-        C[1][0] = trkCov[1];  C[1][1] = trkCov[2]; 
-        C[2][0] = trkCov[3];  C[2][1] = trkCov[4];  C[2][2] = trkCov[5]; 
-        C[3][0] = trkCov[6];  C[3][1] = trkCov[7];  C[3][2] = trkCov[8];  C[3][3] = trkCov[9]; 
-        C[4][0] = trkCov[10]; C[4][1] = trkCov[11]; C[4][2] = trkCov[12]; C[4][3] = trkCov[13]; C[4][4] = trkCov[14]; 
-        
-        if ( streamlog_level(DEBUG0) ){
-            streamlog_out( DEBUG0 ) << "Track state covariance matrix:" << std::endl;
-            C.Print();
-        }
-        
-        return C;
-    }
         
     /**
      * Propagate track state k-1 -> k
@@ -823,7 +774,7 @@ itTrk++;
      */
     void EUTelKalmanFilter::propagateTrackState( EUTelTrackStateImpl* ts ) {
         streamlog_out( DEBUG2 ) << "EUTelKalmanFilter::propagateTrackState()" << std::endl;
-        TVectorD xkm1 = getTrackStateVec( ts );
+        TVectorD xkm1 = ts->getTrackStateVec();
         TVectorD xkkm1 = _jacobianF * xkm1;
         
         streamlog_message( DEBUG0, xkkm1.Print();, std::endl; );
@@ -840,7 +791,7 @@ itTrk++;
 		void EUTelKalmanFilter::nextStateUsingJacobianFinder(EUTelTrackStateImpl* input, EUTelTrackStateImpl* output, const TMatrixD& jacobian){
         streamlog_out( DEBUG5 ) << "EUTelKalmanFilter::nextStateUsingJacobianFinder()" << std::endl;
 				/////////////////////////////////////////////////////////////////////////////////////////////////////Here we update the new global position of the track
-				TVectorD xkm1 = getTrackStateVec( input );
+				TVectorD xkm1 = input->getTrackStateVec();
         TVectorD xkkm1 = jacobian * xkm1; 
 
         streamlog_message( DEBUG5, xkkm1.Print();, std::endl; );
@@ -853,7 +804,7 @@ itTrk++;
 			
 
 				///////////////////////////////////////////////////////////Here we update the Covariant matrix
-        TMatrixDSym TrackCovInput = getTrackStateCov( input );
+        TMatrixDSym TrackCovInput = input->getTrackStateCov();
         TMatrixDSym TrackCovOutput  = TrackCovInput.Similarity( jacobian ); 
 
         float trkCov[15] = { static_cast<float>(TrackCovOutput[0][0]), static_cast<float>(TrackCovOutput[1][0]), static_cast<float>(TrackCovOutput[1][1]), 
@@ -867,15 +818,7 @@ itTrk++;
         
         streamlog_out( DEBUG5 ) << "-----------------------------------EUTelKalmanFilter::nextStateUsingJacobianFinder()----------------------------------" << std::endl;
 		}
-				
-			 
-
-	
-
-
-
-
-    
+				    
     /** Retrieve hit covariance matrix from hit object. Useful for matrix operations
      * 
      * @param hit
@@ -955,7 +898,7 @@ itTrk++;
         TMatrixD Hk = ts->getH();
         
         _processNoiseQ.Zero();
-        TMatrixDSym Ckm1 = getTrackStateCov( ts );
+        TMatrixDSym Ckm1 = ts->getTrackStateCov( );
         TMatrixDSym Ckkm1 = Ckm1.Similarity( _jacobianF );        //Ckkm1 += _processNoiseQ;       
         TMatrixDSym Rkkm1 = Ckkm1.Similarity(Hk);
         Rkkm1 += getHitCov(hit);
@@ -980,7 +923,7 @@ itTrk++;
     const TMatrixD& EUTelKalmanFilter::updateGainK( const EUTelTrackStateImpl* ts, const EVENT::TrackerHit* hit ) {
         streamlog_out( DEBUG2 ) << "EUTelKalmanFilter::updateGainK()" << std::endl;
         _processNoiseQ.Zero();
-        TMatrixDSym Ckm1 = getTrackStateCov( ts );
+        TMatrixDSym Ckm1 = ts->getTrackStateCov( );
         TMatrixDSym Ckkm1 = Ckm1.Similarity( _jacobianF );        //Ckkm1 += _processNoiseQ;
         TMatrixD Ht(5,2);     Ht = Ht.Transpose( ts->getH() );
         
@@ -1009,7 +952,7 @@ itTrk++;
        streamlog_out( DEBUG2 ) << "-----------------------EUTelKalmanFilter::UpdateStateUsingHitInformation()-------------------------------START" << std::endl;
 				//Get the residual of the hit and the track and the state vector/////////
         TVectorD residual = getResidual( input, hit ); //This is just the components of distance in x and y
-        TVectorD state = getTrackStateVec( input );       
+        TVectorD state = input->getTrackStateVec( );       
 				///////////////////////////////////////////////////////////////////////
 
 				///////////////////////////////////////////////////////First the state. Note that if the hit is accurate you want to change the state to that position
@@ -1022,7 +965,7 @@ itTrk++;
 				///////////////////////////////////////////////////////////////////////////
 				
 				/////////////////////////////////////////////////////////////////Now the Cov Matrix. Note that if the hit is very accurate it will reduce the Cov matrix
-				TMatrixDSym CovMatrix = getTrackStateCov( input );
+				TMatrixDSym CovMatrix = input->getTrackStateCov();
 				TMatrixD I(5,5);
 				I.UnitMatrix();
 				I -= KGain*HMatrix;  //If we have low uncertainty in the hit then I will be 0. So the covariant will be 0 at this state 
@@ -1044,7 +987,7 @@ itTrk++;
 	
 	void EUTelKalmanFilter::UpdateTrackUsingHitInformation( EUTelTrackStateImpl* input,const EVENT::TrackerHit* hit, EUTelTrackImpl* track, const TMatrixD& jacobian, TMatrixD & KGain, TMatrixD & HMatrix){			
 				//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Now determine the chi2 of the track.
-				TMatrixDSym newCovMatrix = getTrackStateCov( input );
+				TMatrixDSym newCovMatrix = input->getTrackStateCov( );
         TVectorD residual(2);   residual = getResidual( input, hit ); //This is just the components of distance in x and y
 
         TMatrixD HMatrixTranspose(5,2);      HMatrixTranspose.Transpose( HMatrix );
@@ -1068,7 +1011,7 @@ itTrk++;
     double EUTelKalmanFilter::updateTrackState( EUTelTrackStateImpl* ts, const EVENT::TrackerHit* hit ) {
         streamlog_out( DEBUG2 ) << "EUTelKalmanFilter::updateTrackState()" << std::endl;
         TVectorD rkkm1(2);      rkkm1 = getResidual( ts, hit );
-        TVectorD xk(5);         xk = getTrackStateVec( ts );
+        TVectorD xk(5);         xk = ts->getTrackStateVec( );
         
         TMatrixD Kk = updateGainK( ts, hit );
         xk += Kk * rkkm1;
@@ -1090,7 +1033,7 @@ itTrk++;
         }
         
         _processNoiseQ.Zero();
-        TMatrixDSym Ckm1 = getTrackStateCov( ts );
+        TMatrixDSym Ckm1 = ts->getTrackStateCov( );
         TMatrixDSym Ckkm1 = Ckm1.Similarity( _jacobianF );        //Ckkm1 += _processNoiseQ;
         
         TMatrixD Ck(5,5);
