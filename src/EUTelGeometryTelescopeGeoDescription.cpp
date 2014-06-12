@@ -767,20 +767,22 @@ float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double 
 
     streamlog_out(DEBUG1) << "EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral()" << std::endl;
     
-    float rad = 0.;        // integral of radiation length in units of X0
+    float rad = 0.;        // integral of radiation length in units of X0. Set to 0 at the start.
     
     const double mm2cm = 0.1;
     
     /* TGeo uses cm and grams as internal units e.g. in radiation length and density. Telescope/LCIO uses mm. Therefore this routine is full of 
      annoying conversion factors */    
     
+		//Calcuate the distance^2 of start and final position
     const double stepLenght2 = ( globalPosFinish[0] - globalPosStart[0] )*( globalPosFinish[0] - globalPosStart[0] ) +
                                ( globalPosFinish[1] - globalPosStart[1] )*( globalPosFinish[1] - globalPosStart[1] ) +
                                ( globalPosFinish[2] - globalPosStart[2] )*( globalPosFinish[2] - globalPosStart[2] );
     
+		//This is the distance between the start and final position
     const double stepLenght  = TMath::Sqrt( stepLenght2 );
 
-    // don't need conversion factor to for calculation of directions
+    // don't need conversion factor to for calculation of directions. This is just the direction of the track.  WE ASSUME A LINEAR MOTION! This should be ok for a approximate solution
     const double xp  = ( globalPosFinish[0] - globalPosStart[0] )/stepLenght;
     const double yp  = ( globalPosFinish[1] - globalPosStart[1] )/stepLenght;
     const double zp  = ( globalPosFinish[2] - globalPosStart[2] )/stepLenght;
@@ -790,7 +792,7 @@ float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double 
     streamlog_out(DEBUG0) << "Direction (nx,ny,nz):" << xp << "," << yp << "," << zp << std::endl;
     
     double snext;
-    double pt[3], loc[3];
+    double pt[3]=0, loc[3]=0;
     double epsil = 1.E-7;
     double lastrad = 0.;
     int ismall       = 0;
@@ -800,10 +802,10 @@ float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double 
     TGeoShape *shape;
     
     // Get starting node
-    gGeoManager->InitTrack( globalPosStart[0]/*mm*/, globalPosStart[1]/*mm*/, globalPosStart[2]/*mm*/, xp, yp, zp );
+    gGeoManager->InitTrack( globalPosStart[0]/*mm*/, globalPosStart[1]/*mm*/, globalPosStart[2]/*mm*/, xp, yp, zp ); //This the start point and direction
     TGeoNode *nextnode = gGeoManager->GetCurrentNode( );
     
-    double currentStep = stepLenght /*mm*/;
+    double currentStep = stepLenght /*mm*/;  //This is total distance we are going to travel
     // Loop over all, encountered during the propagation, volumes 
     while ( nextnode ) {
         med = NULL;
@@ -811,18 +813,18 @@ float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double 
 	// Check if current point is inside silicon sensor. Radiation length of silicon sensors is accounted in thin scatterers of GBL.
         bool isBoundaryVolume = false;
         if ( gGeoManager->IsSameLocation( globalPosStart[0], globalPosStart[1], globalPosStart[2] ) ||
-             gGeoManager->IsSameLocation( globalPosFinish[0], globalPosFinish[1], globalPosFinish[2] ) ) isBoundaryVolume = true;
+             gGeoManager->IsSameLocation( globalPosFinish[0], globalPosFinish[1], globalPosFinish[2] ) ) isBoundaryVolume = true; //This used to ignore the first and last boundary. Why I get the last bu why ignore the first?
         
-        if ( nextnode ) med = nextnode->GetVolume()->GetMedium();
+        if ( nextnode ) med = nextnode->GetVolume()->GetMedium();  //We begin in the current node. Which includes the 'worldvolume' of air. If for some reason you are not in the world at all then return 0
         else return 0.;
         
         shape = nextnode->GetVolume()->GetShape();
         
         // make a step to the next intersection point
-        if ( currentStep > 1.e-9 /*mm*/ ) nextnode = gGeoManager->FindNextBoundaryAndStep( currentStep /*mm*/ );
+        if ( currentStep > 1.e-9 /*mm*/ ) nextnode = gGeoManager->FindNextBoundaryAndStep( currentStep /*mm*/ ); //Now move to the next volume if the step is above 0. If not then return the already calculated rad to that point 
         else return rad;
         
-        snext  = gGeoManager->GetStep() /*mm*/;
+        snext  = gGeoManager->GetStep() /*mm*/; //This will output the distance traveled by FindNextBoundaryAndStep
         
         // Small steps treatment
         if ( snext < 1.e-8 /*mm*/ ) {
@@ -837,46 +839,46 @@ float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double 
             // increase step size (epsilon) and advance along the particle direction
             memcpy( pt, gGeoManager->GetCurrentPoint(), 3 * sizeof (double) );
             const double *dir = gGeoManager->GetCurrentDirection();
-            for ( Int_t i = 0; i < 3; i++ ) pt[i] += epsil * dir[i];
-            snext = epsil;
-            length += snext;
+            for ( Int_t i = 0; i < 3; i++ ) pt[i] += epsil * dir[i]; //Move the current point slightly in the direction of motion. 
+            snext = epsil; //Now set the change in distance to the epsil. This is done since snext is used to calculate the total raditaion length. NOTE epsil is just a small number since we assume we are within a substance
+            length += snext; //Change the length traveled not by epsil.
             
             // Ignore start and finish volumes if required
-            if ( skipBoundaryPonitsVolumes && isBoundaryVolume ) {
+            if ( skipBoundaryPonitsVolumes && isBoundaryVolume ) {//Now if it is not the last of first boundary
                 rad += 0.;
             } else {
-                rad += lastrad*snext;
+                rad += lastrad*snext; //This is the calculated (rad per distance x distance)
             }
             
-            gGeoManager->CdTop( );
-            nextnode = gGeoManager->FindNode( pt[0], pt[1], pt[2] );    // Check if particle is crossed the boundary
-            if ( gGeoManager->IsOutside() ) return rad;                 // leave if not
-            TGeoMatrix *mat = gGeoManager->GetCurrentMatrix();          
-            mat->MasterToLocal( pt, loc );
-            if ( !gGeoManager->GetCurrentVolume()->Contains( loc ) ) {
+            gGeoManager->CdTop( ); //This moves the current node to the top one. Which should be the world_volume
+            nextnode = gGeoManager->FindNode( pt[0], pt[1], pt[2] );    // Check if particle is crossed the boundary with the new incrementally moved position
+            if ( gGeoManager->IsOutside() ) return rad;                 // This checks if the particle is still with the geometry. If not then just return the current calculated radiation length
+            TGeoMatrix *mat = gGeoManager->GetCurrentMatrix(); //This matrix is the transform from global to local coordinates              
+            mat->MasterToLocal( pt, loc );                     //Now transform the global coordinates of pt to local coordinates loc.
+            if ( !gGeoManager->GetCurrentVolume()->Contains( loc ) ) { //If then point is not in the volume then we must not be at the top so move up again and then set that to the current node
                 gGeoManager->CdUp();
                 nextnode = gGeoManager->GetCurrentNode();               // move to new volume
             }
-            continue;
+            continue; //We continue since we dont need to calculate radiation length again since it is the same as before
         } else {
             ismall = 0;
-        }
+        }//END OF SMALL STEP TREATMENT
         
         // Normal steps case
         nbound++;
         length += snext;
         currentStep -= snext;
-        if ( med ) {
+        if ( med ) { //If medium is not NULL
             double radlen = med->GetMaterial()->GetRadLen() /*cm*/;
             if ( radlen > 1.e-9 && radlen < 1.e10 ) {
                 
-                lastrad = 1. / radlen * mm2cm;
+                lastrad = 1. / radlen * mm2cm; //calculate 1/radiationlength per cm
                 
                 // Ignore start and finish volumes if required
-                if ( skipBoundaryPonitsVolumes && isBoundaryVolume ) {
+                if ( skipBoundaryPonitsVolumes && isBoundaryVolume ) { //Do the same which is done in small volume approximation. Add the radiation length if it is not the first or last volume
                     rad += 0.;
                 } else {
-                    rad += lastrad*snext;
+                    rad += lastrad*snext; 
                 }
                 
             } else {
@@ -887,7 +889,7 @@ float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double 
                     << " rad[X0]=" << snext * mm2cm / radlen << " " << med->GetName( ) 
                     << " rho[g/cm^3]=" << med->GetMaterial()->GetDensity() <<" radlen[cm]=" << radlen << " Boundary:" << (isBoundaryVolume?"yes":"no")
 		    << std::endl;
-        }
+        }//END OF IF MEDIUM NOT NULL
     }
     
     streamlog_out(DEBUG1) << "--------EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral()--------" << std::endl;
@@ -1008,5 +1010,7 @@ int EUTelGeometryTelescopeGeoDescription::findNextPlaneEntrance(  double* lpoint
    return -100;
 
 }
+
+//This 
 
 

@@ -80,6 +80,8 @@ namespace eutelescope {
 
 				void outputLCIO(LCEvent* evt,std::vector< EUTelTrackImpl* >&);
 
+				void cartesian2LCIOTrack( EUTelTrackImpl* track, IMPL::TrackImpl*) const ;
+
         // Processor parameters        
 
     public:

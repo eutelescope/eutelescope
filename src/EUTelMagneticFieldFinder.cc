@@ -212,7 +212,7 @@ namespace eutelescope {
 							EUTelTrackStateImpl* state_new =  new EUTelTrackStateImpl(); //This creates a new state object
         			state_new->setLocation( (iter->second+1) );
 							//Here we fill the state with its new approximate new hit position. Nothing else is filled yet since this will depend on if hit information is there.
-							const TMatrixD jacobian = getPropagationJacobianF( state,  (dpoint[2] - state_new->getZParameter())  ); //Find all the relations between state variables at a particular z parameter dpoint[2] 
+							const TMatrixD jacobian = getPropagationJacobianF( state,  (dpoint[2] - state->getZParameter())  ); //Find all the relations between state variables at a particular z parameter dpoint[2] 
 							nextStateUsingJacobianFinder(state, state_new, jacobian); //Here we determine the new state position and CovMatrix using the jacobian. This might not need to be done now but would involve changing closestHit()????
 							state_new->setZParameter( dpoint[2] ); //Set this here since it is not a state variable but a parameter
 							
@@ -255,6 +255,15 @@ namespace eutelescope {
       } 
  
     }
+							streamlog_out ( MESSAGE5 ) << "Test LCIO container " << state << endl; 
+							IMPL::TrackImpl* test = cartesian2LCIOTrack( *itTrk );
+							const EVENT::TrackerHitVec& hit_test = test->getTrackerHits();
+							const  EVENT::TrackStateVec track_test = test->getTrackStates();
+							streamlog_out ( MESSAGE5 ) << "Test LCIO container output position: " << *((*hit_test.begin())->getPosition()) << "," << *((*hit_test.begin())->getPosition()+1) << endl;
+						//	streamlog_out ( MESSAGE5 ) << "Test LCIO container output position: " << *((*track_test.begin())->getPosition()) << "," << *((*track_test.begin())->getPosition()+1) << endl;
+ 
+
+
 }
 
     //Print the list of tracks given in _collection
@@ -805,7 +814,7 @@ itTrk++;
         // Calculate track momentum from track parameters and fill some useful variables///////////////////////////////////////////////////////////
         TVector3 pVec = getPfromCartesianParameters( ts ); //This return the components of momentum from track state.
         const double p = pVec.Mag();
-				const double mm = 1000.;
+	const double mm = 1000.;
         const double k = -0.299792458/mm*_beamQ*H;
         const double rho = k/p; 
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////       
@@ -828,13 +837,13 @@ itTrk++;
 	     pVecCrosH.Print();
 	     streamlog_out (DEBUG5) << "Rho: " << rho << std::endl;
 	     streamlog_out (DEBUG5) << "P: " << p << std::endl;
-       }
+        }
 
 
 				//Solution to the plane equation and the curved line intersection will be an quadratic with the coefficients. The solution is the arc length along the curve
-       const double a = -0.5 * rho * ( norm.Dot( pVecCrosH ) ) / p;
-       const double b = norm.Dot( pVec ) / p;
-       const double c = norm.Dot( delta );
+        const double a = -0.5 * rho * ( norm.Dot( pVecCrosH ) ) / p;
+        const double b = norm.Dot( pVec ) / p;
+        const double c = norm.Dot( delta );
 				///////////////////////////////////////////////////////////////////////////////////////////////////////// 
    
         std::vector< double > sol = Utility::solveQuadratic(a,b,c); // solutions are sorted in ascending order. This is a vector of arc length
@@ -1731,30 +1740,12 @@ itTrk++;
         return H;
     }
 
-    /**
-     * Convert EUTelTrackImpl representation to LCIO's TrackImpl class
-     * 
-     * @param track track to be converted
-     * 
-     * @return converted track object
-     */
+
     IMPL::TrackImpl* EUTelKalmanFilter::cartesian2LCIOTrack( EUTelTrackImpl* track ) const {
 
         IMPL::TrackImpl* LCIOtrack = new IMPL::TrackImpl;
 
-/*
-        const EUTelTrackStateImpl* state = track->getTrackState( EUTelTrackStateImpl::AtLastHit );
-        if(state == 0) {
-          streamlog_out(MESSAGE0) << "TrackState is NULL, means no LastHit marked on the track - odd " << endl;
-          return 0;
-        } 
-        const float* r = state->getReferencePoint();
-        const double rx = r[0];
-        const double ry = r[1];
-        const double rz = r[2];
-        
-        LCIOtrack->setReferencePoint( r );
-*/
+
         int nstates =  track->getTrackStates().size();
         for(int i=0;i < nstates; i++) 
         {
@@ -1770,40 +1761,7 @@ itTrk++;
         for ( itrHit = trkcandhits.begin(); itrHit != trkcandhits.end(); ++itrHit ) {
              LCIOtrack->addHit( *itrHit );
         }
-/*                
-        // Get magnetic field vector
-        gear::Vector3D vectorGlobal( rx, ry, rz );        // assuming uniform magnetic field running along X direction
-	const gear::BField&   B = geo::gGeometry().getMagneticFiled();
-        const double bx         = B.at( vectorGlobal ).x();
-        const double by         = B.at( vectorGlobal ).y();
-        const double bz         = B.at( vectorGlobal ).z();
-        TVector3 h(bx,by,bz);
-               
-        TVector3 p = getPfromCartesianParameters( state );
 
-	const double H = h.Mag();
-	const double mm = 1000.;
-        const double k = -0.299792458/mm*_beamQ*H;
-        
-        const double pt  = sqrt(p.Y()*p.Y() + p.Z()*p.Z());
-        
-        const double om  =    _beamQ/( pt );
-        const double d0  =    0.;               // d0 in the plane transverse to magnetic field vector
-        const double z0  =    0.;               // z0 along the magnetic field
-        const double phi =    atan2( p.Y(), p.Z() );
-        const double tanlam = p.X()/pt;
-        
-        const double chi2 = track->getChi2();
-        LCIOtrack->setChi2( chi2 );
-        LCIOtrack->setNdf( trkcandhits.size() ); // NDF contains number of hits used for the fit
-*/
-       /* 
-        LCIOtrack->setOmega( om );
-        LCIOtrack->setD0( d0 );
-        LCIOtrack->setZ0( z0 );
-        LCIOtrack->setPhi( phi );
-        LCIOtrack->setTanLambda( tanlam );
-*/
         return LCIOtrack;
 
     }

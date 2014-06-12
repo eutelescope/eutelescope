@@ -315,6 +315,31 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
 
 void EUTelProcessorTrackingHelixTrackSearch::outputLCIO(LCEvent* evt, std::vector< EUTelTrackImpl* >& trackCartesian){
 /*
+	//Loop through all tracks
+	vector< EUTelTrackImpl* >::const_iterator itTrackCartesian;
+  for ( itTrackCartesian = trackCartesian.begin(); itTrackCartesian != trackCartesian.end(); itTrackCartesian++){
+		IMPL::TrackImpl* LCIOtrack = new IMPL::TrackImpl; //Create container of type IMPL::TrackImpl //Will be deleted automatically latter by LCIO object
+		int nstates =  (*itTrackCartesian)->getTrackStates().size(); //* to dereference the pointer to the pointer trackCartesian
+		for(int i=0;i < nstates; i++){
+		cartesian2LCIOTrack((*itTrackCartesian), LCIOtrack);
+
+
+}
+*/
+
+}
+	
+
+
+
+
+
+
+
+
+
+
+/*
   //  IMPL::TrackImpl* LCIOtrack = new IMPL::TrackImpl;
 
   ////////////////////////////////////////////////////////// Prepare output collection
@@ -347,6 +372,28 @@ void EUTelProcessorTrackingHelixTrackSearch::outputLCIO(LCEvent* evt, std::vecto
     }
 
 */
+}
+
+void EUTelProcessorTrackingHelixTrackSearch::cartesian2LCIOTrack( EUTelTrackImpl* track, IMPL::TrackImpl* LCIOtrack ) const { 
+
+	int nstates =  track->getTrackStates().size();
+	for(int i=0;i < nstates; i++) 
+	{
+    EUTelTrackStateImpl& nexttrackstate = EUTelTrackStateImpl( *(track->getTrackStates().at(i)) );
+    IMPL::TrackStateImpl* implstate     = static_cast <IMPL::TrackStateImpl*> (nexttrackstate ); //how does this work?
+		
+		
+		
+    LCIOtrack->addTrackState( implstate );
+   }
+
+   	// Assign hits to LCIO TRACK
+    const EVENT::TrackerHitVec& trkcandhits = track->getTrackerHits();
+    EVENT::TrackerHitVec::const_iterator itrHit;
+    for ( itrHit = trkcandhits.begin(); itrHit != trkcandhits.end(); ++itrHit ) {
+    	LCIOtrack->addHit( *itrHit );
+    }
+
 }
 
 
