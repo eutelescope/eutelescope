@@ -767,52 +767,6 @@ itTrk++;
 	return _jacobianF;
     }
     
-    /**
-     * Get extrapolated position of the track in global coordinate system
-     * Formulas are also valid for vanishing magnetic field.
-     * Calculation is based on numerical integration of equations of motion
-     * 
-     * @param ts track state
-     * @param dz propagation distance along z
-     * @return 3d vector of coordinates in the global coordinate system
-     */
-    TVector3 EUTelKalmanFilter::getXYZfromDzNum( const EUTelTrackStateImpl* ts, double dz ) const {
-        streamlog_out(DEBUG2) << "EUTelKalmanFilter::getXYZfromDzNum()" << std::endl;
-        
-        // Get starting track position
-        
-        TVectorD trackStateVec = getTrackStateVec( ts );
-	const float* x = ts->getReferencePoint();
-        const double x0 = x[0];
-        const double y0 = x[1];
-        const double z0 = x[2];
-        
-        // Get magnetic field at that location. Then determine the components. 
-        gear::Vector3D vectorGlobal( x0, y0, z0 );        // assuming uniform magnetic field running along X direction
-	const gear::BField&   B = geo::gGeometry().getMagneticFiled();   //The way this is dealt with in Geometry could be improved. Could use ROOT object.
-        const double bx         = B.at( vectorGlobal ).x();
-        const double by         = B.at( vectorGlobal ).y();
-        const double bz         = B.at( vectorGlobal ).z();
-        TVector3 hVec(bx,by,bz);
-        
-        // Setup the equation
-	trackStateVec[0] = x0;
-	trackStateVec[1] = y0;
-        static_cast< eom::EOMODE* >(_eomODE)->setInitValue( trackStateVec );
-        static_cast< eom::EOMODE* >(_eomODE)->setBField( hVec );
-        
-        // Integrate
-        TVectorD result = _eomIntegrator->integrate( dz );
-        
-        TVector3 pos(result[0],result[0],z0+dz);
-        
-        streamlog_out(DEBUG0) << "Result of the integration:" << std::endl;
-        streamlog_message( DEBUG0, result.Print();, std::endl; );
-        
-        streamlog_out(DEBUG2) << "---------------------------------EUTelKalmanFilter::getXYZfromDzNum()------------------------------------" << std::endl;
-        
-        return pos;
-    }
 
     /** Convert track state to the vector object. Useful for matrix operations
      * 
