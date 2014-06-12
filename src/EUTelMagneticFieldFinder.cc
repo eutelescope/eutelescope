@@ -641,8 +641,7 @@ itTrk++;
 
         streamlog_out(DEBUG2) << "--------------------------------EUTelKalmanFilter::initialiseSeeds()---------------------------" << std::endl;
     }
-    
-    
+        
     /** Find the hit closest to the intersection of a track with given sensor
      * 
      * @param ts track state
@@ -768,63 +767,6 @@ itTrk++;
 	return _jacobianF;
     }
     
-    /**
-     * Get extrapolated position of the track in global coordinate system
-     * Extrapolation performed along the helix. Formulas are also valid for vanishing magnetic field.
-     * 
-     * @param ts track state
-     * @param s arc length
-     * @return 3d vector of coordinates in the global coordinate system
-     */
-    TVector3 EUTelKalmanFilter::getXYZfromArcLength1( const EUTelTrackStateImpl* ts, double s ) const {
-        streamlog_out(DEBUG2) << "EUTelKalmanFilter::getXYZfromArcLength()" << std::endl;
-        
-        // Get starting track position
-        const float* x = ts->getReferencePoint(); // this is in measurment system already
-        const double x0 = x[0];
-        const double y0 = x[1];
-        const double z0 = x[2]; // redundant (always zero)
-        const int sensorID = ts->getLocation();
-
-       	double trkPointLocal[]  = {x0, y0, z0};
-       	double trkPointGlobal[] = {0.,0.,0.};
-	geo::gGeometry().local2Master( sensorID, trkPointLocal, trkPointGlobal );
-
-        // Get magnetic field vector
-        gear::Vector3D vectorGlobal(  trkPointGlobal[0], trkPointGlobal[1], trkPointGlobal[2]  );        // assuming uniform magnetic field running along X direction
-	const gear::BField&   B = geo::gGeometry().getMagneticFiled();
-        const double bx         = B.at( vectorGlobal ).x();
-        const double by         = B.at( vectorGlobal ).y();
-        const double bz         = B.at( vectorGlobal ).z();
-        TVector3 hVec(bx,by,bz);
-               
-        TVector3 pVec = ts->getPfromCartesianParameters();
-
-        const double p = pVec.Mag();
-	const double mm = 1000.;
-        const double k = -0.299792458/mm*_beamQ*hVec.Mag();
-        const double rho = k/p;
-               
-        // Calculate end track position
-	TVector3 pos;
-	if ( fabs( k ) > 1.E-6  ) {
-		// Non-zero magnetic field case
-        	pos.SetX( trkPointGlobal[0] + 1./p * pVec.X() * s );
-		pos.SetY( trkPointGlobal[1] + 1./k * pVec.Y() * sin( rho*s ) + 1./k * pVec.Z() * ( 1. - cos( rho*s ) ) );
-                pos.SetZ( trkPointGlobal[2] + 1./k * pVec.Z() * sin( rho*s ) - 1./k * pVec.Y() * ( 1. - cos( rho*s ) ) );
-        } else {
-		// Vanishing magnetic field case
-		const double cosA = cosAlpha( ts );
-		const double cosB = cosBeta( ts );
-		pos.SetX( trkPointGlobal[0] + cosA * s );
-		pos.SetY( trkPointGlobal[1] + cosB * s );
-		pos.SetZ( trkPointGlobal[2] + 1./p * pVec.Z() * s );
-	}
-        
-        streamlog_out(DEBUG2) << "---------------------------------EUTelKalmanFilter::getXYZfromArcLength()------------------------------------" << std::endl;
-        
-        return pos;
-    }
 
     /**
      * Get extrapolated position of the track in global coordinate system
