@@ -202,7 +202,7 @@ namespace eutelescope {
       while ( iter != sensorMap.end() ) { ////////////////////////////NEED TO FIX FOR SOME REASON LOOPS 1 EXTRA TIME
         if( iter->first > -999 ){
             float dpoint[3];
-            int newSensorID = findIntersection( state, (iter->second+1), dpoint ) ;
+            int newSensorID = state->findIntersectionWithCertainID((iter->second+1), dpoint );
 						int sensorIntersection = geo::gGeometry( ).getSensorID(dpoint);
 						if(newSensorID < 0){ //If there was no intersection of infinite plane or if the intersection is not in the sensor. NEED TO FIX SENSORID GEOMETRY. Should be ok for now since distance will be too great if outside to matter
 							streamlog_out ( MESSAGE5 ) << "Point (" <<  dpoint[0] << ", " <<  dpoint[1] << ", " << dpoint[2]  << ")" << "found on no sensor. New sensor ID (Was there intersection?):"  << newSensorID <<"SensorID (Was the intersection on the plane?)"<< sensorIntersection  << std::endl;
@@ -236,7 +236,7 @@ namespace eutelescope {
 								else{
             			streamlog_out (MESSAGE5 ) << "NextPlane MATCHED. Position of Hit (Local) " <<  uvpos[0] << " " <<  uvpos[1] << " " << uvpos[2] <<" Position of state (Global) " << state_new->getX() << "," << state_new->getY()<<","<< state_new->getZParameter() <<" Distance between them: "<< distance << " Sensor ID:"<< state_new->getLocation() << " Seed we began at: " << (*itTrk) << endl;
               		streamlog_out ( DEBUG5 ) << "Will now alter Cov matrix and state variables using hit information " << std::endl;
-									TMatrixD HMatrix = getH( state_new ); //We need to be able to move from the measurement to the state space
+									TMatrixD HMatrix = state_new->getH(); //We need to be able to move from the measurement to the state space
        						TMatrixD GainMatrix = updateGainK( state_new, closestHit ); //This is a matrix that tells you
 									UpdateStateUsingHitInformation(state_new ,closestHit, jacobian, GainMatrix, HMatrix); //Update the state on the track
 									UpdateTrackUsingHitInformation( state_new , closestHit, (*itTrk), jacobian, GainMatrix,HMatrix); //Update the track itself.									
@@ -761,112 +761,7 @@ itTrk++;
         streamlog_out(DEBUG2) << "--------------------------------EUTelKalmanFilter::initialiseSeeds()---------------------------" << std::endl;
     }
     
-    /** Calculate track momentum from track parameters 
-     * @param ts track state with specified tx,ty,x,y,invP
-     * @return 3-vector of momentum
-     */
-    TVector3 EUTelKalmanFilter::getPfromCartesianParameters( const EUTelTrackStateImpl* ts ) const {
-        streamlog_out(DEBUG2) << "EUTelKalmanFilter::getPfromCartesianParameters()" << std::endl;
-        //const double p  = 1. / state->getInvP() * fabs( _beamQ );
-        const double p  = 1. / ts->getInvP() * _beamQ;
-        const double tx = ts->getTx();
-        const double ty = ts->getTy();
-        const double px = p*tx / sqrt( 1. + tx*tx + ty*ty );
-        const double py = p*ty / sqrt( 1. + tx*tx + ty*ty );
-        const double pz = p    / sqrt( 1. + tx*tx + ty*ty );
-        
-        streamlog_out(DEBUG2) << "-------------------------------EUTelKalmanFilter::getPfromCartesianParameters()-------------------------" << std::endl;
-        
-        return TVector3(px,py,pz);
-    }
     
-    /**
-     * Find closest surface intersected by the track and propagate track to that point
-     * @param input: ts track state
-     * @param input: The plane you want to find the intersection.
-		 * @param input: Pointer to fill with the new global coordinates   
-     * @return planeID. If there was a problem return -999.
-     */
-    int EUTelKalmanFilter::findIntersection( EUTelTrackStateImpl* ts, int nextPlaneID, float* output ) {
-        streamlog_out(DEBUG5) << "EUTelKalmanFilter::findIntersection()" << std::endl;
-        
-        // Get track position and location//////////////////////////////////
-			  const double x0 = ts->getX();
-	 			const double y0 = ts->getY();
-				const double z0 = ts->getZParameter();
-        int sensorID = ts->getLocation();
-        TVector3 trkVec(x0,y0,z0);
-
-	      streamlog_out(DEBUG5) << "SensorID: " << sensorID << "  Global positions: "<< x0 <<"  "<< y0 <<"  "<< z0 << std::endl;
-     		/////////////////////////////////////////////////////////////////////////////////////////  
-
- 
-        // Find magnetic field at that point and then the components/////////////////////////////////// 
-        gear::Vector3D vectorGlobal( x0, y0, z0 );        // assuming uniform magnetic field running along X direction. Why do we need this assumption. Equations of motion do not seem to dictate this.
-        const gear::BField&   B = geo::gGeometry().getMagneticFiled();
-				const double bx         = B.at( vectorGlobal ).x();
-				const double by         = B.at( vectorGlobal ).y();
-				const double bz         = B.at( vectorGlobal ).z();
-        TVector3 hVec(bx,by,bz);
-				const double H = hVec.Mag();
-        //////////////////////////////////////////////////////////////////////////////////////////////
-
-        // Calculate track momentum from track parameters and fill some useful variables///////////////////////////////////////////////////////////
-        TVector3 pVec = getPfromCartesianParameters( ts ); //This return the components of momentum from track state.
-        const double p = pVec.Mag();
-	const double mm = 1000.;
-        const double k = -0.299792458/mm*_beamQ*H;
-        const double rho = k/p; 
-        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////       
-				      
-				//Determine geometry of sensor to be used to determine the point of intersection.//////////////////////////////////////
-        TVector3 norm = geo::gGeometry().siPlaneNormal( nextPlaneID  );       
-        TVector3 sensorCenter( geo::gGeometry().siPlaneXPosition( nextPlaneID  ), geo::gGeometry().siPlaneYPosition( nextPlaneID  ), geo::gGeometry().siPlaneZPosition( nextPlaneID  ) );
-        TVector3 delta = trkVec - sensorCenter;
-        TVector3 pVecCrosH = pVec.Cross( hVec.Unit() );
-				////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-        if ( streamlog_level(DEBUG0) ) {
-	     streamlog_out (DEBUG5) << "-------------------------------------------" << std::endl;
-	     streamlog_out (DEBUG5) << "Current point (X,Y,Z): " << std::setw(15) << x0  << std::setw(15) << y0 << std::setw(15) << z0 << std::endl;
-	     streamlog_out (DEBUG5) << "Next PlaneID : " << nextPlaneID << std::endl;
-	     streamlog_out (DEBUG5) << "Normal vector" << std::endl;
-	     norm.Print();
-	     streamlog_out (DEBUG5) << "P x H vector" << std::endl;
-	     pVecCrosH.Print();
-	     streamlog_out (DEBUG5) << "Rho: " << rho << std::endl;
-	     streamlog_out (DEBUG5) << "P: " << p << std::endl;
-        }
-
-
-				//Solution to the plane equation and the curved line intersection will be an quadratic with the coefficients. The solution is the arc length along the curve
-        const double a = -0.5 * rho * ( norm.Dot( pVecCrosH ) ) / p;
-        const double b = norm.Dot( pVec ) / p;
-        const double c = norm.Dot( delta );
-				///////////////////////////////////////////////////////////////////////////////////////////////////////// 
-   
-        std::vector< double > sol = Utility::solveQuadratic(a,b,c); // solutions are sorted in ascending order. This is a vector of arc length
-				double solution = ( sol[0] > 0. ) ? sol[0] : ( ( sol[0] < 0. && sol[1] > 0. ) ? sol[1] : -1. ); //choose solution with minimum arc length
-				if(solution < 0){
-					streamlog_out ( DEBUG3 ) << "Track intersection was not found" << std::endl;
-				return -999;
-				}
-			
-				//Determine the global position from arc length.             
-        TVector3 newPos;
-	    	newPos = getXYZfromArcLength( ts, solution );
-				output[0]=newPos[0]; 				output[1]=newPos[1]; 				output[2]=newPos[2];
-				
-	    	streamlog_out (DEBUG5) << "Solutions for arc length: " << std::setw(15) << sol[0] << std::setw(15) << sol[1] << std::endl;
-	    	streamlog_out (DEBUG5) << "Final solution (X,Y,Z): " << std::setw(15) << output[0]  << std::setw(15) << output[1]  << std::setw(15) << output[2] << std::endl;
-
-        
-        streamlog_out(DEBUG2) << "-------------------------EUTelKalmanFilter::findIntersection()--------------------------" << std::endl;
-        
-        return nextPlaneID;
-    }
-
     /** Propagate track state by dz 
      * 
      * @param ts track state
@@ -1148,7 +1043,7 @@ itTrk++;
         const double bz         = B.at( vectorGlobal ).z();
         TVector3 hVec(bx,by,bz);
                
-        TVector3 pVec = getPfromCartesianParameters( ts );
+        TVector3 pVec = ts->getPfromCartesianParameters();
 
         const double p = pVec.Mag();
 	const double mm = 1000.;
@@ -1200,7 +1095,7 @@ itTrk++;
         const double bz         = B.at( vectorGlobal ).z();
         TVector3 hVec(bx,by,bz);
                
-        TVector3 pVec = getPfromCartesianParameters( ts );
+        TVector3 pVec = ts->getPfromCartesianParameters();
 
 	const double H = hVec.Mag();
         const double p = pVec.Mag();
@@ -1280,40 +1175,6 @@ itTrk++;
         streamlog_out(DEBUG2) << "---------------------------------EUTelKalmanFilter::getXYZfromDzNum()------------------------------------" << std::endl;
         
         return pos;
-    }
-
-    /** Calculate cos of the angle between Z(beam) and X(solenoid field axis)
-     *  from track parameters
-     * 
-     * @param ts track state
-     * @return cos(alpha)
-     */
-    double EUTelKalmanFilter::cosAlpha( const EUTelTrackStateImpl* ts ) const {
-        streamlog_out( DEBUG2 ) << "EUTelKalmanFilter::cosAlpha()" << std::endl;
-        const double tx = ts->getTx( );
-        const double ty = ts->getTy( );
-        const double cos = tx / sqrt( 1. + tx * tx + ty * ty );
-        
-        streamlog_out( DEBUG0 ) << "cosAlpha= " << cos << std::endl;
-        
-        return cos;
-    }
-
-    /** Calculate cos of the angle between Z(beam) and Y
-     *  from track parameters
-     * 
-     * @param ts track state
-     * @return cos(beta)
-     */
-    double EUTelKalmanFilter::cosBeta( const EUTelTrackStateImpl* ts ) const {
-        streamlog_out( DEBUG2 ) << "EUTelKalmanFilter::cosBeta()" << std::endl;
-        const double tx = ts->getTx( );
-        const double ty = ts->getTy( );
-        const double cos = ty / sqrt( 1. + tx * tx + ty * ty );
-        
-        streamlog_out( DEBUG0 ) << "cosBeta= " << cos << std::endl;
-        
-        return ty / sqrt( 1. + tx * tx + ty * ty );
     }
 
     /** Convert track state to the vector object. Useful for matrix operations
@@ -1500,7 +1361,7 @@ itTrk++;
      */
     TMatrixDSym EUTelKalmanFilter::getResidualCov( const EUTelTrackStateImpl* ts, const EVENT::TrackerHit* hit ) {
         streamlog_out( DEBUG2 ) << "EUTelKalmanFilter::getResidualCov()" << std::endl;
-        TMatrixD Hk = getH(ts);
+        TMatrixD Hk = ts->getH();
         
         _processNoiseQ.Zero();
         TMatrixDSym Ckm1 = getTrackStateCov( ts );
@@ -1530,7 +1391,7 @@ itTrk++;
         _processNoiseQ.Zero();
         TMatrixDSym Ckm1 = getTrackStateCov( ts );
         TMatrixDSym Ckkm1 = Ckm1.Similarity( _jacobianF );        //Ckkm1 += _processNoiseQ;
-        TMatrixD Ht(5,2);     Ht = Ht.Transpose( getH(ts) );
+        TMatrixD Ht(5,2);     Ht = Ht.Transpose( ts->getH() );
         
         _gainK = Ckkm1 * Ht * getResidualCov( ts, hit ).Invert();
 //        _gainK *= Ht;
@@ -1626,7 +1487,7 @@ itTrk++;
             xk.Print();
         }
         
-        TMatrixD Hk = getH( ts );
+        TMatrixD Hk = ts->getH();
         TMatrixD I(5,5);     I.UnitMatrix();
         I -= Kk*Hk;
 
@@ -1699,48 +1560,6 @@ itTrk++;
         return chi2;
     }
     
-    /** Retrieve track state projection onto measurement space matrix
-     * 
-     * @param ts track state
-     * @return 
-     */
-    TMatrixD EUTelKalmanFilter::getH( const EUTelTrackStateImpl* ts ) const {
-        streamlog_out( DEBUG2 ) << "EUTelKalmanFilter::getH()" << std::endl;
-        TMatrixD H(2,5);
-        H.Zero();
-        TVector3 trkPointVec = getXYZfromArcLength( ts, 0. );
-        double trkPoint[] = { trkPointVec.X(), trkPointVec.Y(), trkPointVec.Z() };
-        const TGeoHMatrix* globalH = geo::gGeometry().getHMatrix( trkPoint );
-        
-        if ( streamlog_level(DEBUG0) ) {
-            streamlog_out( DEBUG0 ) << "Local to global transformation matrix:" << std::endl;
-            globalH->Print();
-        }
-        
-        const TGeoHMatrix& globalHInv = globalH->Inverse();
-        if ( streamlog_level(DEBUG0) ) {
-            streamlog_out( DEBUG0 ) << "Global to local transformation matrix:" << std::endl;
-            globalHInv.Print();
-        }
-        
-//        const double* shift = globalHInv.GetTranslation();
-        const double* rotation = globalHInv.GetRotationMatrix();
-
-        // Fill necessary components
-        H[0][0] = rotation[0]; // x projection, xx
-        H[0][1] = rotation[1]; // y projection, xy
-        H[1][0] = rotation[3]; // x projection, yx
-        H[1][1] = rotation[4]; // y projection, yy
-
-        if ( streamlog_level(DEBUG0) ) {
-            streamlog_out( DEBUG0 ) << "Matrix H:" << std::endl;
-            H.Print();
-        }
-        
-        return H;
-    }
-
-
     IMPL::TrackImpl* EUTelKalmanFilter::cartesian2LCIOTrack( EUTelTrackImpl* track ) const {
 
         IMPL::TrackImpl* LCIOtrack = new IMPL::TrackImpl;

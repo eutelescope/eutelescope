@@ -16,7 +16,7 @@ namespace eutelescope {
         _y(0),
         _invp(0),
         _covMatrix(),
-				_zparameter(0)
+				_zparameter(0)   
     {
 
         for(int i=0 ; i < TRKSTATENCOVMATRIX ; i++ ) {
@@ -144,7 +144,8 @@ namespace eutelescope {
         for( int i=0 ; i<TRKSTATENCOVMATRIX ; i++ ){
             _covMatrix[i] = cov[i]  ; 
         }
-    } 
+    }
+
 
     void  EUTelTrackStateImpl::setReferencePoint( const float* rPnt ){ 
 //        checkAccess("EUTelTrackStateImpl::setReferencePoint") ;
@@ -155,7 +156,88 @@ namespace eutelescope {
 	
 		void EUTelTrackStateImpl::setZParameter(float z){
         _zparameter = z ;
-    } 			 
+    }
+
+
+//This function will output the momentum of the track in cartesian coordinates into a TVector structure
+    /** Calculate track momentum from track parameters 
+     * @param ts track state with specified tx,ty,x,y,invP
+     * @return 3-vector of momentum
+     */
+TVector3 EUTelTrackStateImpl::getPfromCartesianParameters() const {
+	streamlog_out(DEBUG2) << "EUTelTrackStateImpl::getPfromCartesianParameters()--------------------------BEGIN" << std::endl;
+	//const double p  = 1. / state->getInvP() * fabs( _beamQ );
+	const double p  = 1. / (_invp * _beamQ);
+  const double px = p*_tx / sqrt( 1. + _tx*_tx + _ty*_ty );
+  const double py = p*_ty / sqrt( 1. + _tx*_tx + _ty*_ty );
+  const double pz = p    / sqrt( 1. + _tx*_tx + _ty*_ty );
+        
+  streamlog_out(DEBUG2) << "-------------------------------EUTelTrackStateImpl::getPfromCartesianParameters()-------------------------END" << std::endl;
+        
+  return TVector3(px,py,pz);
+}
+	//This function uses the class member findIntersectionWithCertainID. This find the point on the sensor specified by nextPlaneID and returns the global position in output.
+	int EUTelTrackStateImpl::findIntersectionWithCertainID(int nextPlaneID, double* output ) const {
+	TVector3 pVec = getPfromCartesianParameters();
+	geo::gGeometry().findIntersectionWithCertainID( _x, _y, _zparameter, pVec[0],pVec[1],pVec[2], _beamQ, nextPlaneID, output ); //Input global positions and momentum in cartesian
+	return 
+}
+
+TVector3 EUTelTrackStateImpl::getXYZfromArcLength( double s ) const {
+		streamlog_out(DEBUG2) << "EUTelTrackStateImpl::getXYZfromArcLength----------------------------BEGIN" << std::endl;
+
+	TVector3 pVec = getPfromCartesianParameters();
+	TVector3 pos = geo::gGeometry().getXYZfromArcLength( _x, _y, _zparameter, pVec[0], pVec[1], pVec[2], _beamQ, s);
+
+		streamlog_out(DEBUG2) << "EUTelTrackStateImpl::getXYZfromArcLength----------------------------END" << std::endl;	
+	return pos
+
+}	
+
+//This function returns the H matrix of the state. This relates the state in global coordinates to local coordinates. 
+    /** Retrieve track state projection onto measurement space matrix
+     * 
+     * @param ts track state
+     * @return 
+     */
+TMatrixD EUTelTrackStateImpl::getH() const {
+	streamlog_out( DEBUG2 ) << "EUTelTrackStateImpl::getH()---------------------------------------BEGIN" << std::endl;
+	
+  TMatrixD H(2,5);
+  H.Zero();
+  double trkPoint[] = { _x, _y, _zparameter };
+  const TGeoHMatrix* globalH = geo::gGeometry().getHMatrix( trkPoint );
+        
+  if ( streamlog_level(DEBUG0) ) {
+  	streamlog_out( DEBUG0 ) << "Local to global transformation matrix:" << std::endl;
+    globalH->Print();
+  }
+        
+	const TGeoHMatrix& globalHInv = globalH->Inverse();
+	if ( streamlog_level(DEBUG0) ) {
+		streamlog_out( DEBUG0 ) << "Global to local transformation matrix:" << std::endl;
+  	globalHInv.Print();
+	}
+        
+	const double* rotation = globalHInv.GetRotationMatrix();
+
+  // Fill necessary components
+  H[0][0] = rotation[0]; // x projection, xx
+  H[0][1] = rotation[1]; // y projection, xy
+  H[1][0] = rotation[3]; // x projection, yx
+  H[1][1] = rotation[4]; // y projection, yy
+
+	if ( streamlog_level(DEBUG0) ) {
+		streamlog_out( DEBUG0 ) << "Matrix H:" << std::endl;
+		H.Print();
+  }
+ 	streamlog_out( DEBUG2 ) << "EUTelTrackStateImpl::getH()---------------------------------------END" << std::endl;       
+	return H;
+}
+
+
+
+ 			 
 
 } // namespace eutelescope
 

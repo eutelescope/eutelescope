@@ -164,6 +164,10 @@ namespace eutelescope {
  
 			void master2LocalVec( int, const double[], double[] );
 
+			int findIntersectionWithCertainID( double x0, double y0, double z0, double px, double py, double pz, double _beamQ, int nextPlaneID  double *output);
+
+			TVector3 getXYZfromArcLength( double x0, double y0, double z0, double px, double py, double pz, double _beamQ, double s)
+
 			
             
             const TGeoHMatrix* getHMatrix( const double globalPos[] );

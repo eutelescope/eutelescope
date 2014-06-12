@@ -1011,6 +1011,147 @@ int EUTelGeometryTelescopeGeoDescription::findNextPlaneEntrance(  double* lpoint
 
 }
 
-//This function will intake position 
+/**
+* Find closest surface intersected by the track and propagate track to that point
+* @param input: ts track state
+* @param input: The plane you want to find the intersection.
+* @param input: Pointer to fill with the new global coordinates   
+* @return planeID. If there was a problem return -999.
+*/
+int EUTelGeometryTelescopeGeoDescription::findIntersectionWithCertainID( double x0, double y0, double z0, double px, double py, double pz, double _beamQ, int nextPlaneID, double* output) {
+streamlog_out(DEBUG5) << "EUTelKalmanFilter::findIntersection()" << std::endl;
+ 
+	// Set position and momentum vector//////////////////////////////////
+  TVector3 trkVec(x0,y0,z0);
+	TVector3 pVec(px,px,px);
+	/////////////////////////////////////////////////////////////////////
+
+	streamlog_out(DEBUG5) << "  Global positions: "<< x0 <<"  "<< y0 <<"  "<< z0 << std::endl;
+  /////////////////////////////////////////////////////////////////////////////////////////  
+
+ 
+  // Find magnetic field at that point and then the components/////////////////////////////////// 
+  gear::Vector3D vectorGlobal( x0, y0, z0 );        // assuming uniform magnetic field running along X direction. Why do we need this assumption. Equations of motion do not seem to dictate this.
+  const gear::BField&   B = geo::gGeometry().getMagneticFiled();
+	const double bx         = B.at( vectorGlobal ).x();
+	const double by         = B.at( vectorGlobal ).y();
+	const double bz         = B.at( vectorGlobal ).z();
+  TVector3 hVec(bx,by,bz);
+	const double H = hVec.Mag();
+  //////////////////////////////////////////////////////////////////////////////////////////////
+
+  // Calculate track momentum from track parameters and fill some useful variables///////////////////////////////////////////////////////////
+  const double p = pVec.Mag();
+	const double mm = 1000.;
+  const double k = -0.299792458/mm*_beamQ*H;
+  const double rho = k/p; 
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////       
+				      
+	//Determine geometry of sensor to be used to determine the point of intersection.//////////////////////////////////////
+  TVector3 norm = geo::gGeometry().siPlaneNormal( nextPlaneID  );       
+  TVector3 sensorCenter( geo::gGeometry().siPlaneXPosition( nextPlaneID  ), geo::gGeometry().siPlaneYPosition( nextPlaneID  ), geo::gGeometry().siPlaneZPosition( nextPlaneID  ) );
+  TVector3 delta = trkVec - sensorCenter;
+  TVector3 pVecCrosH = pVec.Cross( hVec.Unit() );
+	////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+  if ( streamlog_level(DEBUG0) ) {
+		streamlog_out (DEBUG5) << "-------------------------------------------" << std::endl;
+	  streamlog_out (DEBUG5) << "Current point (X,Y,Z): " << std::setw(15) << x0  << std::setw(15) << y0 << std::setw(15) << z0 << std::endl;
+	  streamlog_out (DEBUG5) << "Next PlaneID : " << nextPlaneID << std::endl;
+	  streamlog_out (DEBUG5) << "Normal vector" << std::endl;
+	  norm.Print();
+	  streamlog_out (DEBUG5) << "P x H vector" << std::endl;
+	  pVecCrosH.Print();
+	  streamlog_out (DEBUG5) << "Rho: " << rho << std::endl;
+	  streamlog_out (DEBUG5) << "P: " << p << std::endl;
+  }
+
+
+	//Solution to the plane equation and the curved line intersection will be an quadratic with the coefficients. The solution is the arc length along the curve
+	const double a = -0.5 * rho * ( norm.Dot( pVecCrosH ) ) / p;
+  const double b = norm.Dot( pVec ) / p;
+  const double c = norm.Dot( delta );
+	//////////////////////////////////////////////////////////////////////////////////////////////////////// 
+   
+  std::vector< double > sol = Utility::solveQuadratic(a,b,c); // solutions are sorted in ascending order. This is a vector of arc length
+	double solution = ( sol[0] > 0. ) ? sol[0] : ( ( sol[0] < 0. && sol[1] > 0. ) ? sol[1] : -1. ); //choose solution with minimum arc length
+	if(solution < 0){
+		streamlog_out ( DEBUG3 ) << "Track intersection was not found" << std::endl;
+		return -999;
+	}
+			
+	//Determine the global position from arc length.             
+  TVector3 newPos;
+	newPos = getXYZfromArcLength(x0, y0,z0,px,py,pz,_beamQ,s);
+	output[0]=newPos[0]; 				output[1]=newPos[1]; 				output[2]=newPos[2];
+				
+	streamlog_out (DEBUG5) << "Solutions for arc length: " << std::setw(15) << sol[0] << std::setw(15) << sol[1] << std::endl;
+	streamlog_out (DEBUG5) << "Final solution (X,Y,Z): " << std::setw(15) << output[0]  << std::setw(15) << output[1]  << std::setw(15) << output[2] << std::endl;
+
+        
+  streamlog_out(DEBUG2) << "-------------------------EUTelKalmanFilter::findIntersection()--------------------------" << std::endl;
+        
+  return nextPlaneID;
+}
+//This function determined the xyz position in global coordinates using the state and arc length of the track s.
+TVector3 EUTelKalmanFilter::getXYZfromArcLength( double x0, double y0, double z0, double px, double py, double pz, double _beamQ, double s) const {
+	streamlog_out(DEBUG2) << "EUTelKalmanFilter::getXYZfromArcLength()" << std::endl;
+
+  // Fill the postion and momentun into vector
+	TVector3 pos( x0, y0, z0 );
+	TVector3 pVec(px, py, pz );
+                
+  // Get magnetic field vector
+  gear::Vector3D vectorGlobal( x0, y0, z0 );        // assuming uniform magnetic field running along X direction
+	const gear::BField&   B = geo::gGeometry().getMagneticFiled();
+  const double bx         = B.at( vectorGlobal ).x();
+  const double by         = B.at( vectorGlobal ).y();
+  const double bz         = B.at( vectorGlobal ).z();
+  TVector3 hVec(bx,by,bz);
+               
+	const double H = hVec.Mag();
+  const double p = pVec.Mag();
+	const double mm = 1000.;
+ 	const double k = -0.299792458/mm*_beamQ*H;
+  const double rho = k/p;
+        
+	if ( fabs( k ) > 1.E-6  ) {
+		// Non-zero magnetic field case
+		TVector3 pCrossH = pVec.Cross(hVec.Unit());
+		TVector3 pCrossHCrossH = pCrossH.Cross(hVec.Unit());
+		const double pDotH = pVec.Dot(hVec.Unit());
+		TVector3 temp1 = pCrossHCrossH;	temp1 *= ( -1./k * sin( rho * s ) );
+		TVector3 temp2 = pCrossH;       temp2 *= ( -1./k * ( 1. - cos( rho * s ) ) );
+		TVector3 temp3 = hVec;          temp3 *= ( pDotH / p * s );
+		pos += temp1;
+		pos += temp2;
+		pos += temp3;
+        } else {
+		// Vanishing magnetic field case
+		const double cosA =  tx / sqrt( 1. + tx * tx + ty * ty );       // Calculate cos of the angle between Z(beam) and X(solenoid field axis)
+		const double cosB = ty / sqrt( 1. + tx * tx + ty * ty );         // Calculate cos of the angle between Z(beam) and Y
+		pos.SetX( x0 + cosA * s );
+		pos.SetY( y0 + cosB * s );
+		pos.SetZ( z0 + 1./p * pVec.Z() * s );
+	}
+        
+	streamlog_out(DEBUG2) << "---------------------------------EUTelKalmanFilter::getXYZfromArcLength()------------------------------------" << std::endl;
+        
+	return pos;
+}
+    
+
+
+//This function will intake position and direction. Then using the gear file and magnetic field will output position and sensor ID in correct order of intersection. 
+//We need to introduce the idea of:
+//sensitive volume => data and state to be created
+//scatter volume => state only to be created
+//volume => This will cause scattering but no state is to be created on this volume
+//At the moment everything in gear file is assumed to be sensitive volume
+
+//std::map<int,double> EUTelGeometryTelescopeGeoDescription::UsingStateReturnAllVolumesIntersected(){}
+
+ 
 
 

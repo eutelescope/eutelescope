@@ -14,6 +14,16 @@
 
 #include <map>
 
+// ROOT
+#if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
+#include "TVector3.h"
+#include "TVectorD.h"
+#include "TMatrixD.h"
+#include "TMatrixDSym.h"
+#endif
+
+#include "EUTelGeometryTelescopeGeoDescription.h"
+
 
 #define TRKSTATENCOVMATRIX 15
 #define TRKSTATENREFSIZE 3
@@ -27,7 +37,7 @@ namespace eutelescope {
     /** Default constructor, initializes values to 0.
      */
     EUTelTrackStateImpl() ;
-    EUTelTrackStateImpl(int, float, float, float, float, float, const float*, const float* ) ;
+    EUTelTrackStateImpl(int, float, float, float, float, float, const float*, const float*) ;
     EUTelTrackStateImpl(int, float, float, float, float, float, const EVENT::FloatVec&, const float* ) ;
     /** Copy constructor which takes as an argument an EVENT::EUTelTrackState reference */
     EUTelTrackStateImpl(const EUTelTrackStateImpl &p );
@@ -61,6 +71,14 @@ namespace eutelescope {
 
 		virtual float getZParameter() const ;
 
+		virtual TVector3 getPfromCartesianParameters() const;
+
+		virtual int findIntersectionWithCertainID(int , double*) const; 
+
+		virtual TVector3 getXYZfromArcLength( double s ) const;
+
+    virtual TMatrixD EUTelTrackStateImpl::getH() const
+
     /** Covariance matrix of the track parameters. Stored as lower triangle matrix where
      * the order of parameters is:   x, y, tx, ty, q/p.
      * So we have cov(x,x), cov( y, x ), cov( y, y ), ...
@@ -92,6 +110,9 @@ namespace eutelescope {
 
 
   protected:
+
+		//Static since there is not point in using more memory than needed. Since the particle change will always be the same for a single run
+		static int _beamQ; //This seems a strange parameter to store here. However to state variable _invp is q/p. Therefore to determine p here you need Q. _invp should be renamed or changed?
 
     int _location ; // location defined by EUTelTrackStateLocationEnum
     float _tx ;
