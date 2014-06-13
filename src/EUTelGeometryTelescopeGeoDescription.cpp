@@ -1019,14 +1019,14 @@ int EUTelGeometryTelescopeGeoDescription::findNextPlaneEntrance(  double* lpoint
 * @return planeID. If there was a problem return -999.
 */
 int EUTelGeometryTelescopeGeoDescription::findIntersectionWithCertainID( float x0, float y0, float z0, float px, float py, float pz, float _beamQ, int nextPlaneID, float* output) {
-streamlog_out(DEBUG5) << "EUTelKalmanFilter::findIntersection()" << std::endl;
+streamlog_out(DEBUG5) << "EUTelGeometryTelescopeGeoDescription::findIntersection()" << std::endl;
  
 	// Set position and momentum vector//////////////////////////////////
   TVector3 trkVec(x0,y0,z0);
-	TVector3 pVec(px,px,px);
+	TVector3 pVec(px,py,pz);
 	/////////////////////////////////////////////////////////////////////
 
-	streamlog_out(DEBUG5) << "  Global positions: "<< x0 <<"  "<< y0 <<"  "<< z0 << std::endl;
+	streamlog_out(DEBUG5) << "  Global positions: "<< x0 <<"  "<< y0 <<"  "<< z0 << " Momentum: "<< pVec[0]<<","<<pVec[1]<<","<<pVec[2]<<","<< std::endl;
   /////////////////////////////////////////////////////////////////////////////////////////  
 
  
@@ -1055,7 +1055,7 @@ streamlog_out(DEBUG5) << "EUTelKalmanFilter::findIntersection()" << std::endl;
 	////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-  if ( streamlog_level(DEBUG0) ) {
+  if ( streamlog_level(DEBUG5) ) {
 		streamlog_out (DEBUG5) << "-------------------------------------------" << std::endl;
 	  streamlog_out (DEBUG5) << "Current point (X,Y,Z): " << std::setw(15) << x0  << std::setw(15) << y0 << std::setw(15) << z0 << std::endl;
 	  streamlog_out (DEBUG5) << "Next PlaneID : " << nextPlaneID << std::endl;
@@ -1090,13 +1090,13 @@ streamlog_out(DEBUG5) << "EUTelKalmanFilter::findIntersection()" << std::endl;
 	streamlog_out (DEBUG5) << "Final solution (X,Y,Z): " << std::setw(15) << output[0]  << std::setw(15) << output[1]  << std::setw(15) << output[2] << std::endl;
 
         
-  streamlog_out(DEBUG2) << "-------------------------EUTelKalmanFilter::findIntersection()--------------------------" << std::endl;
+  streamlog_out(DEBUG2) << "-------------------------EUTelGeometryTelescopeGeoDescription::findIntersection()--------------------------" << std::endl;
         
   return nextPlaneID;
 }
 //This function determined the xyz position in global coordinates using the state and arc length of the track s.
 TVector3 EUTelGeometryTelescopeGeoDescription::getXYZfromArcLength( float x0, float y0, float z0, float px, float py, float pz, float _beamQ, float s) const {
-	streamlog_out(DEBUG2) << "EUTelKalmanFilter::getXYZfromArcLength()" << std::endl;
+	streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::getXYZfromArcLength()" << std::endl;
 
   // Fill the postion and momentun into vector
 	TVector3 pos( x0, y0, z0 );
@@ -1156,7 +1156,7 @@ TVector3 EUTelGeometryTelescopeGeoDescription::getXYZfromArcLength( float x0, fl
      * @return 
      */
   TMatrix EUTelGeometryTelescopeGeoDescription::getPropagationJacobianF( float x0, float y0, float z0, float px, float py, float pz, float _beamQ, float dz ) {
-        streamlog_out( DEBUG2 ) << "EUTelKalmanFilter::getPropagationJacobianF()" << std::endl;
+        streamlog_out( DEBUG2 ) << "EUTelGeometryTelescopeGeoDescription::getPropagationJacobianF()" << std::endl;
 	// The formulas below are derived from equations of motion of the particle in
         // magnetic field under assumption |dz| small. Must be valid for |dz| < 10 cm
 
@@ -1204,8 +1204,8 @@ TVector3 EUTelGeometryTelescopeGeoDescription::getXYZfromArcLength( float x0, fl
 	const double dtydinvP0 = k * dz * Ay;
 
 	// Fill-in matrix elements
-	TMatrix jacobianF;
-	jacobianF.Zero();
+	TMatrix jacobianF(5,5);
+	jacobianF.UnitMatrix();
 	jacobianF[0][2] = dxdtx0;	jacobianF[0][3] = dxdty0;	jacobianF[0][4] = dxdinvP0;
 	jacobianF[1][2] = dydtx0;	jacobianF[1][3] = dydty0;	jacobianF[1][4] = dydinvP0;
 	jacobianF[2][3] = dtxdty0;	jacobianF[2][4] = dtxdinvP0;
@@ -1216,7 +1216,7 @@ TVector3 EUTelGeometryTelescopeGeoDescription::getXYZfromArcLength( float x0, fl
             jacobianF.Print();
         }
 	
-        streamlog_out( DEBUG2 ) << "-----------------------------EUTelKalmanFilter::getPropagationJacobianF()-------------------------------" << std::endl;
+        streamlog_out( DEBUG2 ) << "-----------------------------EUTelGeometryTelescopeGeoDescription::getPropagationJacobianF()-------------------------------" << std::endl;
 
 	return jacobianF;
         

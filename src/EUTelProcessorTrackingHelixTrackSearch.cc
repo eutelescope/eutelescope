@@ -63,6 +63,7 @@ using namespace eutelescope;
 std::string EUTelProcessorTrackingHelixTrackSearch::_histName::_numberTracksCandidatesHistName = "NumberTracksCandidates";
 std::string EUTelProcessorTrackingHelixTrackSearch::_histName::_numberOfHitOnTrackCandidateHistName = "NumberOfHitsOnTrackCandidate";
 std::string EUTelProcessorTrackingHelixTrackSearch::_histName::_HitOnTrackCandidateHistName = "HitsOnTrackCandidate";
+std::string EUTelProcessorTrackingHelixTrackSearch::_histName::_chi2CandidateHistName = "chi2CandidateHistName";
 #endif // defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
 /** Default constructor */
@@ -314,6 +315,13 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
 }
 
 void EUTelProcessorTrackingHelixTrackSearch::outputLCIO(LCEvent* evt, std::vector< EUTelTrackImpl* >& trackCartesian){
+
+
+
+
+
+
+
 /*
 	//Loop through all tracks
 	vector< EUTelTrackImpl* >::const_iterator itTrackCartesian;
@@ -397,14 +405,6 @@ void EUTelProcessorTrackingHelixTrackSearch::cartesian2LCIOTrack( EUTelTrackImpl
 }
 
 
-
-
-
-
-
-
-
-
 /** 
  * Plot few histos.
  * 
@@ -420,6 +420,11 @@ void EUTelProcessorTrackingHelixTrackSearch::plotHistos( vector< EUTelTrackImpl*
             int nHitsOnTrack = 0;
             vector< EUTelTrackImpl* >::const_iterator itrk;
             for ( itrk = trackCandidates.begin( ) ; itrk != trackCandidates.end( ); ++itrk ) {
+						//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Here we fill the chi2 of the candidate tracks
+            static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_chi2CandidateHistName ] ) -> fill( (*itrk)->getChi2() );
+						////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
                 const EVENT::TrackerHitVec& trkHits = ( *itrk )->getTrackerHits( );
                 nHitsOnTrack = trkHits.size( );
                 EVENT::TrackerHitVec::const_iterator itTrkHits;
@@ -681,6 +686,24 @@ void EUTelProcessorTrackingHelixTrackSearch::bookHistograms() {
             streamlog_out(ERROR2) << "Problem booking the " << (_histName::_numberTracksCandidatesHistName) << endl;
             streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
         }
+
+
+
+				///////////////////////////////////////////////////////////////////////////////////////////////////////////////Chi2 create plot. Useful to determine the behaviour of the pattern recognition
+        histoInfo = histoMgr->getHistogramInfo(_histName::_chi2CandidateHistName);
+        NBin =  histoInfo->_xBin; 
+        XMin =  histoInfo->_xMin; 
+        XMax = histoInfo->_xMax;
+
+        AIDA::IHistogram1D * chi2 =
+                marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_chi2CandidateHistName, NBin,
+                XMin, XMax);
+
+            numberTracksCandidates->setTitle("Number of track candidates;N tracks;N events");
+            _aidaHistoMap1D.insert(make_pair(_histName::_chi2CandidateHistName, chi2));
+				//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+				  
+				
          
         const int hitsNBin = 10;
         const double hitsMin = -0.5;

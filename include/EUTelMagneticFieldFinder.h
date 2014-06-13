@@ -245,7 +245,7 @@ namespace eutelescope {
         TVector3 getXYZfromArcLength( const EUTelTrackStateImpl*, double ) const;
         TVector3 getXYZfromArcLength1( const EUTelTrackStateImpl*, double ) const;
 
-				void nextStateUsingJacobianFinder(EUTelTrackStateImpl* input, EUTelTrackStateImpl* output, const  TMatrixD& jacobian);
+				void nextStateUsingJacobianFinder(EUTelTrackStateImpl* input, EUTelTrackStateImpl* output, TMatrixD& jacobian);
 
 				void UpdateStateUsingHitInformation(EUTelTrackStateImpl*,const EVENT::TrackerHit* , const TMatrixD&, TMatrixD &, TMatrixD &);
 

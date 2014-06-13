@@ -209,6 +209,7 @@ namespace eutelescope {
             static string _numberTracksCandidatesHistName;
             static string _numberOfHitOnTrackCandidateHistName;
             static string _HitOnTrackCandidateHistName;
+						static string _chi2CandidateHistName;
 
         };
 

@@ -170,7 +170,6 @@ namespace eutelescope {
      */
 TVector3 EUTelTrackStateImpl::getPfromCartesianParameters() const {
 	streamlog_out(DEBUG2) << "EUTelTrackStateImpl::getPfromCartesianParameters()--------------------------BEGIN" << std::endl;
-	//const double p  = 1. / state->getInvP() * fabs( _beamQ );
 	const double p  = 1. / (_invp * _beamQ);
   const double px = p*_tx / sqrt( 1. + _tx*_tx + _ty*_ty );
   const double py = p*_ty / sqrt( 1. + _tx*_tx + _ty*_ty );
@@ -182,8 +181,12 @@ TVector3 EUTelTrackStateImpl::getPfromCartesianParameters() const {
 }
 	//This function uses the class member findIntersectionWithCertainID. This find the point on the sensor specified by nextPlaneID and returns the global position in output.
 	int EUTelTrackStateImpl::findIntersectionWithCertainID(int nextPlaneID, float* output ) const {
+	streamlog_out(DEBUG5) << "EUTelTrackStateImpl::findIntersectionWithCertainID----------------------------BEGIN" << std::endl;
 	TVector3 pVec = getPfromCartesianParameters();
+	streamlog_out(DEBUG5) << "Momentum: " << pVec[0]<<","<<pVec[1]<<","<<pVec[2]<<","<< std::endl;
 	int sensorID = geo::gGeometry().findIntersectionWithCertainID( _x, _y, _zparameter, pVec[0],pVec[1],pVec[2], _beamQ, nextPlaneID, output ); //Input global positions and momentum in cartesian
+	streamlog_out(DEBUG5) << "SensorID" << sensorID << std::endl;
+	streamlog_out(DEBUG5) << "EUTelTrackStateImpl::findIntersectionWithCertainID----------------------------END" << std::endl;
 	return sensorID;
 }
 
@@ -292,8 +295,8 @@ TMatrix EUTelTrackStateImpl::getPropagationJacobianF( float dz ){
 
 
 	TVector3 pVec = getPfromCartesianParameters();
-	TMatrix jacobian;
-	jacobian.UnitMatrix();
+	TMatrix jacobian(5,5);
+	jacobian.Zero();
 
 	jacobian = geo::gGeometry().getPropagationJacobianF(  _x, _y, _zparameter, pVec[0],pVec[1],pVec[2], _beamQ, dz);
 
