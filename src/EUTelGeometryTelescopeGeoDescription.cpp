@@ -489,6 +489,12 @@ int EUTelGeometryTelescopeGeoDescription::getSensorID( const float globalPos[] )
     
     _geoManager->FindNode( globalPos[0], globalPos[1], globalPos[2] );
 
+		_geoManager->CdUp();
+
+		_geoManager->CdUp();	
+
+		_geoManager->CdUp();	////////////////////////////////////////THIS NEEDS TO BE FIXED. If partice falls in the pixel volume and to find sensor ID you need to be on the sensor volume
+
     const char* volName = const_cast < char* > ( geo::gGeometry( )._geoManager->GetCurrentVolume( )->GetName( ) );
 
     streamlog_out( DEBUG5 ) << "Point (" << globalPos[0] << "," << globalPos[1] << "," << globalPos[2] << ") found in volume: " << volName << std::endl;

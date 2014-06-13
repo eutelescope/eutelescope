@@ -205,7 +205,7 @@ namespace eutelescope {
             float dpoint[3];
             int newSensorID = state->findIntersectionWithCertainID((iter->second+1), dpoint );
 						int sensorIntersection = geo::gGeometry( ).getSensorID(dpoint);
-						if(newSensorID < 0){ //If there was no intersection of infinite plane or if the intersection is not in the sensor. NEED TO FIX SENSORID GEOMETRY. Should be ok for now since distance will be too great if outside to matter
+						if(newSensorID < 0 or sensorIntersection < 0){ //If there was no intersection of infinite plane or if the intersection is not in the sensor. NEED TO FIX SENSORID GEOMETRY. Should be ok for now since distance will be too great if outside to matter
 							streamlog_out ( DEBUG5 ) << "Point (" <<  dpoint[0] << ", " <<  dpoint[1] << ", " << dpoint[2]  << ")" << "found on no sensor. New sensor ID (Was there intersection?):"  << newSensorID <<"SensorID (Was the intersection on the plane?)"<< sensorIntersection  << std::endl;
 						}
 						else{ //So we found a intersection so we need to determine that new state.
