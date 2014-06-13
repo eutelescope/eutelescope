@@ -13,6 +13,7 @@
 //Geometry implementations
 #include "Mimosa26GeoDescr.h"
 #include "FEI4Single.h"
+#include "FEI4Double.h"
 #include "FEI4FourChip.h"
 
 //ROOT includes
@@ -70,6 +71,14 @@ void EUTelGenericPixGeoMgr::addPlane(int planeID, std::string geoName, std::stri
 		else if(geoName == "FEI4Single.so")
 		{
 			pixgeodescrptr = new FEI4Single();
+			streamlog_out( MESSAGE3 ) << "Inserting " << planeID << " into map" << std::endl;
+			_geoDescriptions.insert( std::make_pair(planeID, pixgeodescrptr) );
+			_pixelDescriptions.insert ( std::make_pair(geoName, pixgeodescrptr) );
+		}
+		//FE-I4 Double
+		else if(geoName == "FEI4Double.so")
+		{
+			pixgeodescrptr = new FEI4Double();
 			streamlog_out( MESSAGE3 ) << "Inserting " << planeID << " into map" << std::endl;
 			_geoDescriptions.insert( std::make_pair(planeID, pixgeodescrptr) );
 			_pixelDescriptions.insert ( std::make_pair(geoName, pixgeodescrptr) );
