@@ -251,20 +251,14 @@ void EUTelProcessorHitMaker::DumpReferenceHitDB()
     if( TMath::Abs( gRotation[2]) > 1e-6 ) 
     {
         _RotatedVector.Rotate(  gRotation[2], _Xaxis ); // in ZY
-//        _Zaxis.Rotate(  gRotation[2], _Xaxis  ); // in XY
-//        _Yaxis.Rotate(  gRotation[2], _Xaxis  ); // in XY
     }
     if( TMath::Abs( gRotation[1]) > 1e-6 ) 
     {
         _RotatedVector.Rotate(  gRotation[1], _Yaxis ); // in ZX 
-//        _Xaxis.Rotate(  gRotation[1], _Yaxis  ); // in XY
-//        _Zaxis.Rotate(  gRotation[1], _Yaxis  ); // in XY
     }
     if( TMath::Abs( gRotation[0]) > 1e-6 ) 
     {   
         _RotatedVector.Rotate(  gRotation[0], _Zaxis ); // in XY
-//        _Xaxis.Rotate(  gRotation[0], _Zaxis  ); // in XY
-//        _Yaxis.Rotate(  gRotation[0], _Zaxis  ); // in XY
     }
  
      refhit->setAlpha( _RotatedVector[0] );
@@ -320,25 +314,6 @@ void EUTelProcessorHitMaker::processRunHeader (LCRunHeader * rdr) {
                                <<  "This may mean that the GeoID parameter was not set" << endl;
 
 
-  if ( header->getGeoID() != _siPlanesParameters->getSiPlanesID() ) {
-    streamlog_out ( WARNING5 ) <<  "Error during the geometry consistency check: " << endl
-                             << "The run header says the GeoID is " << header->getGeoID() << endl
-                             << "The GEAR description says is     " << _siPlanesParameters->getSiPlanesID() << endl;
-#ifdef EUTEL_INTERACTIVE
-    string answer;
-    while (true) {
-      streamlog_out ( ERROR1 ) << "Type Q to quit now or C to continue using the actual GEAR description anyway [Q/C]" << endl;
-      cin >> answer;
-      // put the answer in lower case before making the comparison.
-      transform( answer.begin(), answer.end(), answer.begin(), ::tolower );
-      if ( answer == "q" ) {
-        exit(-1);
-      } else if ( answer == "c" ) {
-        break;
-      }
-    }
-#endif
-  }
 
   // now book histograms plz...
   if ( isFirstEvent() )  book3DHisto();
