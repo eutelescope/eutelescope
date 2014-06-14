@@ -306,7 +306,7 @@ namespace eutelescope {
      *  in the meaning the each time a new sensorID is encoutered 
      *  all the corresponding histograms are booked.
      */
-    void bookHistos(int sensorID, bool isDUT, lcio::LCCollection * xEtaCol, lcio::LCCollection * yEtaCol);
+    void bookHistos(int sensorID, lcio::LCCollection * xEtaCol, lcio::LCCollection * yEtaCol);
 
     //! Book the 3D hitogram
     void book3DHisto();
@@ -456,7 +456,7 @@ namespace eutelescope {
     //! Silicon planes parameters as described in GEAR
     /*! This structure actually contains the following:
      *  @li A reference to the telescope geoemtry and layout
-     *  @li An integer number saying if the telescope is w/ or w/o DUT
+     *  @li An integer number saying if the telescope 
      *  @li An integer number saying the number of planes in the
      *  telescope.
      *
@@ -561,12 +561,6 @@ namespace eutelescope {
      */
     std::vector< int > _orderedSensorIDVec;
 
-
-    //! Sensor Offset X and Y
-    /*!
-     */
-    std::map <int, double> _siOffsetXMap;
-    std::map <int, double> _siOffsetYMap;
    
     void DumpReferenceHitDB();
  

@@ -111,9 +111,7 @@ _siPlanesParameters(0),
 _siPlanesLayerLayout(0),
 _aidaHistoMap(),
 _histogramSwitch(true),
-_orderedSensorIDVec(),
-_siOffsetXMap(),
-_siOffsetYMap()
+_orderedSensorIDVec()
 {
 
   // modify processor description
@@ -216,12 +214,8 @@ void EUTelProcessorHitMaker::init() {
   _siPlanesLayerLayout = const_cast<SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
 
   _orderedSensorIDVec.clear();
-  _siOffsetXMap.clear();
-  _siOffsetYMap.clear();
   for ( int iPlane = 0 ; iPlane < _siPlanesParameters->getSiPlanesNumber() ; ++iPlane ) {
     _orderedSensorIDVec.push_back( _siPlanesLayerLayout->getID( iPlane ) );
-//    _siOffsetXMap.push_back( 0.) ;
-//    _siOffsetYMap.push_back( 0.) ;
   }
 
   _histogramSwitch = true;
@@ -532,35 +526,7 @@ void EUTelProcessorHitMaker::processEvent (LCEvent * event) {
       {
         oldDetectorID = detectorID;
 
-        // check if this telescope setup has a DUT
-        if ( 
-                ( _siPlanesParameters->getSiPlanesType() == _siPlanesParameters->TelescopeWithDUT ) 
-                &&
-                ( _siPlanesLayerLayout->getDUTID() == detectorID ) 
-                ) 
-        {
-          xZero        = _siPlanesLayerLayout->getDUTSensitivePositionX(); // mm
-          yZero        = _siPlanesLayerLayout->getDUTSensitivePositionY(); // mm
-          zZero        = _siPlanesLayerLayout->getDUTSensitivePositionZ(); // mm
-          zThickness   = _siPlanesLayerLayout->getDUTSensitiveThickness(); // mm
-          resolution   = _siPlanesLayerLayout->getDUTSensitiveResolution();// mm
-          xPitch       = _siPlanesLayerLayout->getDUTSensitivePitchX();    // mm
-          yPitch       = _siPlanesLayerLayout->getDUTSensitivePitchY();    // mm
-          xSize        = _siPlanesLayerLayout->getDUTSensitiveSizeX();     // mm
-          ySize        = _siPlanesLayerLayout->getDUTSensitiveSizeY();     // mm
-          xPointing[0] = _siPlanesLayerLayout->getDUTSensitiveRotation1(); // was -1 ;
-          xPointing[1] = _siPlanesLayerLayout->getDUTSensitiveRotation2(); // was  0 ;
-          yPointing[0] = _siPlanesLayerLayout->getDUTSensitiveRotation3(); // was  0 ;
-          yPointing[1] = _siPlanesLayerLayout->getDUTSensitiveRotation4(); // was
-
-          // check if the histos for this sensor ID have been booked
-          // already.
-          if ( _alreadyBookedSensorID.find( detectorID ) == _alreadyBookedSensorID.end() ) {
-            // we need to book now!
-            bookHistos( detectorID, true, xEtaCollection, yEtaCollection );
-          }
-
-        } else {
+        
 
 
           if ( _conversionIdMap.size() != static_cast< unsigned >(_siPlanesParameters->getSiPlanesNumber()) ) {
@@ -618,13 +584,8 @@ void EUTelProcessorHitMaker::processEvent (LCEvent * event) {
           {
 	    streamlog_out ( MESSAGE5 ) << " no sensor rotation is given in the GEAR steering file, assume NONE " << endl;
           }
-        }
+        
 
-        if( _preAlignmentCollectionVec != 0 )
-        {
-           xZero -= _siOffsetXMap[detectorID];
-           yZero -= _siOffsetYMap[detectorID];
-        }
     
         if (  ( xPointing[0] == xPointing[1] ) && ( xPointing[0] == 0 ) ) {
           streamlog_out ( ERROR4 ) << "Detector " << detectorID << " has a singular rotation matrix. Sorry for quitting" << endl;
@@ -981,14 +942,12 @@ void EUTelProcessorHitMaker::end()
   streamlog_out ( MESSAGE4 )  << "Successfully finished" << endl;
 }
 
-void EUTelProcessorHitMaker::bookHistos(int sensorID, bool isDUT, LCCollection * xEtaCollection, LCCollection * yEtaCollection) {
+void EUTelProcessorHitMaker::bookHistos(int sensorID, LCCollection * xEtaCollection, LCCollection * yEtaCollection) {
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
   int layerIndex = 0;
-  if ( !isDUT ) {
-    layerIndex   = _conversionIdMap[ sensorID ];
-  }
+  layerIndex   = _conversionIdMap[ sensorID ];
 
   string tempHistoName;
   string basePath = "plane_" + to_string( sensorID ) ;
@@ -998,13 +957,13 @@ void EUTelProcessorHitMaker::bookHistos(int sensorID, bool isDUT, LCCollection *
   tempHistoName = _hitHistoLocalName + "_" + to_string( sensorID ) ;
 
   double xMin =  0;
-  double xMax =  (isDUT) ? _siPlanesLayerLayout->getDUTSensitiveSizeX() : _siPlanesLayerLayout->getSensitiveSizeX ( layerIndex );
+  double xMax =   _siPlanesLayerLayout->getSensitiveSizeX ( layerIndex );
 
   double yMin =  0;
-  double yMax =  (isDUT) ? _siPlanesLayerLayout->getDUTSensitiveSizeY() :_siPlanesLayerLayout->getSensitiveSizeY ( layerIndex );
+  double yMax = _siPlanesLayerLayout->getSensitiveSizeY ( layerIndex );
 
-  int xNBin =  (isDUT) ? _siPlanesLayerLayout->getDUTSensitiveNpixelX() : _siPlanesLayerLayout->getSensitiveNpixelX( layerIndex );
-  int yNBin =  (isDUT) ? _siPlanesLayerLayout->getDUTSensitiveNpixelY() : _siPlanesLayerLayout->getSensitiveNpixelY( layerIndex );
+  int xNBin =   _siPlanesLayerLayout->getSensitiveNpixelX( layerIndex );
+  int yNBin =   _siPlanesLayerLayout->getSensitiveNpixelY( layerIndex );
 
 
   AIDA::IHistogram2D * hitHistoLocal = AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName).c_str(),
@@ -1022,12 +981,12 @@ void EUTelProcessorHitMaker::bookHistos(int sensorID, bool isDUT, LCCollection *
   // means that the sensor is wrong
   // by all its size.
   double safetyFactor = 2.0;
-  double xPosition = (isDUT) ? _siPlanesLayerLayout->getDUTSensitivePositionX( ) : _siPlanesLayerLayout->getSensitivePositionX( layerIndex );
-  double yPosition = (isDUT) ? _siPlanesLayerLayout->getDUTSensitivePositionY( ) : _siPlanesLayerLayout->getSensitivePositionY( layerIndex );
-  double xSize     = (isDUT) ? _siPlanesLayerLayout->getDUTSensitiveSizeX ( )    : _siPlanesLayerLayout->getSensitiveSizeX ( layerIndex );
-  double ySize     = (isDUT) ? _siPlanesLayerLayout->getDUTSensitiveSizeY ( )    : _siPlanesLayerLayout->getSensitiveSizeY ( layerIndex );
-  int xBin         = (isDUT) ? _siPlanesLayerLayout->getDUTSensitiveNpixelX( )   : _siPlanesLayerLayout->getSensitiveNpixelX( layerIndex );
-  int yBin         = (isDUT) ? _siPlanesLayerLayout->getDUTSensitiveNpixelY( )   : _siPlanesLayerLayout->getSensitiveNpixelY( layerIndex );
+  double xPosition =  _siPlanesLayerLayout->getSensitivePositionX( layerIndex );
+  double yPosition =  _siPlanesLayerLayout->getSensitivePositionY( layerIndex );
+  double xSize     =  _siPlanesLayerLayout->getSensitiveSizeX ( layerIndex );
+  double ySize     =  _siPlanesLayerLayout->getSensitiveSizeY ( layerIndex );
+  int xBin         =  _siPlanesLayerLayout->getSensitiveNpixelX( layerIndex );
+  int yBin         =  _siPlanesLayerLayout->getSensitiveNpixelY( layerIndex );
 
   xMin = safetyFactor * ( xPosition - ( 0.5 * xSize ));
   xMax = safetyFactor * ( xPosition + ( 0.5 * xSize ));
@@ -1189,18 +1148,6 @@ void EUTelProcessorHitMaker::book3DHisto() {
 
     }
 
-    if  ( _siPlanesParameters->getSiPlanesType() == _siPlanesParameters->TelescopeWithDUT ) {
-      // x axis
-      xMin  = min( _siPlanesLayerLayout->getDUTSensitivePositionX(  ) - ( 0.5  * _siPlanesLayerLayout->getDUTSensitiveSizeX(  )), xMin);
-      xMax  = max( _siPlanesLayerLayout->getDUTSensitivePositionX(  ) + ( 0.5  * _siPlanesLayerLayout->getDUTSensitiveSizeX(  )), xMax);
-      xNBin = max( _siPlanesLayerLayout->getDUTSensitiveNpixelX(  ), xNBin );
-
-      // y axis
-      yMin  = min( _siPlanesLayerLayout->getDUTSensitivePositionY(  ) - ( 0.5  * _siPlanesLayerLayout->getDUTSensitiveSizeY(  )), yMin);
-      yMax  = max( _siPlanesLayerLayout->getDUTSensitivePositionY(  ) + ( 0.5  * _siPlanesLayerLayout->getDUTSensitiveSizeY(  )), yMax);
-      yNBin = max( _siPlanesLayerLayout->getDUTSensitiveNpixelY(  ), yNBin );
-
-    }
 
     if ( _3DHistoSwitch ) {
       // since we may still have alignment problem, we have to take a
@@ -1243,10 +1190,6 @@ void EUTelProcessorHitMaker::book3DHisto() {
       vector< double > zPos;
       for ( int i = 0 ; i < _siPlanesParameters->getSiPlanesNumber(); ++i ) {
         zPos.push_back( _siPlanesLayerLayout->getSensitivePositionZ( i ) );
-      }
-
-      if ( _siPlanesParameters->getSiPlanesType() == _siPlanesParameters->TelescopeWithDUT ) {
-        zPos.push_back(  _siPlanesLayerLayout->getDUTSensitivePositionZ(  ) );
       }
 
       sort( zPos.begin(), zPos.end() );
