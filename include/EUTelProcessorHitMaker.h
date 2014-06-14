@@ -306,7 +306,7 @@ namespace eutelescope {
      *  in the meaning the each time a new sensorID is encoutered 
      *  all the corresponding histograms are booked.
      */
-    void bookHistos(int sensorID, lcio::LCCollection * xEtaCol, lcio::LCCollection * yEtaCol);
+    void bookHistos( int sensorID );
 
     //! Book the 3D hitogram
     void book3DHisto();
@@ -337,25 +337,7 @@ namespace eutelescope {
      */
     std::string _hitCollectionName;
 
-    //! Eta function collection names
-    /*! This is a vector containg the name of the eta collection along
-     *  the two directions (say x and y). AS for pedestal information
-     *  the Eta function has to be calculated beforehand and then
-     *  loaded as a condition collection by a suitable
-     *  ConditionProcessor.
-     */
-    std::vector< std::string > _etaCollectionNames;
 
-    //! preAlignment Collection name 
-    /*!
-     */
-    std::string _preAlignmentCollectionName;
-    
-    //! preAlignment Collection  
-    /*!
-     */
-    LCCollectionVec *_preAlignmentCollectionVec;  
- 
     //! reference HitCollection name 
     /*!
      */
@@ -366,14 +348,6 @@ namespace eutelescope {
      */
     LCCollectionVec *_referenceHitCollectionVec;  
     
-    //! Switch to apply eta correction
-    /*! Eta correction is very important to obtain the maximum
-     *  possibile spatial resolution, but having the possibility to
-     *  switch off the correction might be usefull for debug
-     *  purposes.
-     *
-     */
-    bool _etaCorrection ;
 
     //! Switch to enable the filling of the density plot
     bool _3DHistoSwitch;
@@ -440,11 +414,6 @@ namespace eutelescope {
      */
     std::map< int, int > _conversionIdMap;
 
-    //! Eta function map
-    std::map< int, int > _etaMap;
-
-    //! Eta function version
-    int _etaVersion;
 
     //! Set of booked histogram
     /*  This helper set is used 
@@ -527,22 +496,6 @@ namespace eutelescope {
      */
     static std::string _clusterCenterYHistoName;
 
-    //! Cluster center (Eta corrected)
-    /*! This 2D histogram contains the center of all the clusters
-     *  corrected using the provided Eta functions. The binning is
-     *  fixed and corresponds to the Eta function granularity.
-     */
-    static std::string _clusterCenterEtaHistoName;
-
-    //! Cluster center projection along X (Eta corrected)
-    /*! This is the projection along the X axis of the previous plot.
-     */
-    static std::string _clusterCenterEtaXHistoName;
-
-    //! Cluster center projection along Y (Eta corrected)
-    /*! This is the projection along the Y axis of the previous plot.
-     */
-    static std::string _clusterCenterEtaYHistoName;
 
 #endif
 

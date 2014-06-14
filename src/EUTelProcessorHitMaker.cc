@@ -26,7 +26,6 @@
 #include "EUTelBrickedClusterImpl.h"
 #include "EUTelSparseClusterImpl.h"
 #include "EUTelExceptions.h"
-#include "EUTelEtaFunctionImpl.h"
 #include "EUTelAlignmentConstant.h"
 #include "EUTelReferenceHit.h"
 
@@ -79,21 +78,14 @@ std::string EUTelProcessorHitMaker::_densityPlotName            = "DensityPlot";
 std::string EUTelProcessorHitMaker::_clusterCenterHistoName     = "ClusterCenter";
 std::string EUTelProcessorHitMaker::_clusterCenterXHistoName    = "ClusterCenterX";
 std::string EUTelProcessorHitMaker::_clusterCenterYHistoName    = "ClusterCenterY";
-std::string EUTelProcessorHitMaker::_clusterCenterEtaHistoName  = "ClusterCenterEta";
-std::string EUTelProcessorHitMaker::_clusterCenterEtaXHistoName = "ClusterCenterEtaX";
-std::string EUTelProcessorHitMaker::_clusterCenterEtaYHistoName = "ClusterCenterEtaY";
 #endif
 
 EUTelProcessorHitMaker::EUTelProcessorHitMaker () : Processor("EUTelProcessorHitMaker"),
 _zsDataCollectionName(),
 _pulseCollectionName(),
 _hitCollectionName(),
-_etaCollectionNames(),
-_preAlignmentCollectionName("preAlignment"),
-_preAlignmentCollectionVec(),
 _referenceHitCollectionName("referenceHit"),
 _referenceHitCollectionVec(),
-_etaCorrection(true),
 _3DHistoSwitch(true),
 _wantLocalCoordinates(false),
 _offsetDBFile("offset-db.slcio"),
@@ -104,8 +96,6 @@ _referenceHitLCIOFile("reference.slcio"),
 _iRun(0),
 _iEvt(0),
 _conversionIdMap(),
-_etaMap(),
-_etaVersion(0),
 _alreadyBookedSensorID(),
 _siPlanesParameters(0),
 _siPlanesLayerLayout(0),
@@ -153,22 +143,6 @@ _orderedSensorIDVec()
   registerOptionalParameter("NxMPixel", "The submatrix size to be used for CoGAlgorithm = \"NxMPixel\"",
                             _xyCluSize, xyCluSizeExample, xyCluSizeExample.size());
 
-  vector<string > etaNames;
-  etaNames.push_back("xEta");
-  etaNames.push_back("yEta");
-
-  registerOptionalParameter("EtaCollectionName",
-                            "The name of the collections containing the eta function (x and y respectively)",
-                            _etaCollectionNames, etaNames, etaNames.size());
-
-  registerOptionalParameter("EtaSwitch","Enable or disable eta correction",
-                            _etaCorrection, static_cast< bool > ( true ) );
-
-  registerOptionalParameter("OffsetDBFile","This is the name of the LCIO file name with the output offset db (add .slcio)",
-                            _offsetDBFile, static_cast< string > ( "offset-db.slcio" ) );
- 
-  registerOptionalParameter("OffsetCollection","This is the name of the preAligment collection determined from hit correlations and stored in the offset db file.",
-                            _preAlignmentCollectionName, static_cast< string > ( "preAlignment" ) );
  
   registerOptionalParameter("ReferenceCollection","This is the name of the reference hit collection initialized in this processor. This collection provides the reference vector to correctly determine a plane corresponding to a global hit coordiante.",
                             _referenceHitCollectionName, static_cast< string > ( "referenceHit" ) );
@@ -394,65 +368,6 @@ void EUTelProcessorHitMaker::processEvent (LCEvent * event) {
   }
 
 
-    LCCollectionVec * xEtaCollection = 0x0, * yEtaCollection = 0x0;
-
-    if ( _etaCorrection == 1 ) 
-    {
-      // this means that the user wants to apply the eta correction to
-      // the center of gravity, so we need to have the two Eta function
-      // collections
-
-      try 
-      {
-        xEtaCollection = static_cast<LCCollectionVec*> (event->getCollection( _etaCollectionNames[0] )) ;
-      }
-      catch (DataNotAvailableException& e) 
-      {
-        streamlog_out ( ERROR1 )  << "The eta collection " << _etaCollectionNames[0] << " is not available" << endl
-                                  << "Continuing without eta correction " << endl;
-        _etaCorrection = 0;
-      }
-
-      try 
-      {
-        yEtaCollection = static_cast<LCCollectionVec*> (event->getCollection( _etaCollectionNames[1] )) ;
-      }
-      catch (DataNotAvailableException& e) 
-      {
-        streamlog_out ( ERROR1 ) << "The eta collection " << _etaCollectionNames[1] << " is not available" << endl
-                                 << "Continuing without eta correction " << endl;
-        _etaCorrection = 0;
-      }
-    }
-
-
-    if ( isFirstEvent() && ( _etaCorrection == 1 )) 
-    {
-
-      EUTelEtaFunctionImpl * func = static_cast< EUTelEtaFunctionImpl*> ( xEtaCollection->getElementAt( 0 ) );
-
-      if ( func->getNInt() != 0 ) 
-      {
-        _etaVersion = 2;
-      } else {
-        _etaVersion = 1;
-      }
-
-
-      for ( size_t iDet = 0 ; iDet < xEtaCollection->size(); iDet++) 
-      {
-
-        EUTelEtaFunctionImpl * xEtaFunc = static_cast<EUTelEtaFunctionImpl*> ( xEtaCollection->getElementAt(iDet) );
-
-        if ( _etaVersion == 2 ) 
-        {
-          _etaMap[ xEtaFunc->getSensorID() ] = iDet;
-        }
-
-      }
-
-    }
-
     
     LCCollectionVec * pulseCollection   = 0;
     LCCollectionVec * hitCollection     = 0;
@@ -550,7 +465,7 @@ void EUTelProcessorHitMaker::processEvent (LCEvent * event) {
           // already.
           if ( _alreadyBookedSensorID.find( detectorID ) == _alreadyBookedSensorID.end() ) {
             // we need to book now!
-            bookHistos( detectorID, false, xEtaCollection, yEtaCollection );
+            bookHistos( detectorID );
           }
 
           layerIndex   = _conversionIdMap[detectorID];
@@ -640,129 +555,24 @@ void EUTelProcessorHitMaker::processEvent (LCEvent * event) {
 
       if ( _cogAlgorithm == "full" )
       {
-        if (_etaCorrection == 1 && p_tmpBrickedCluster != NULL)
-        {
-            p_tmpBrickedCluster->getCenterOfGravityShiftWithOutGlobalSeedCoordinateCorrection(xShift,yShift);
-        }
-        else cluster->getCenterOfGravityShift( xShift, yShift );
+	 cluster->getCenterOfGravityShift( xShift, yShift );
       }
       else if ( _cogAlgorithm == "npixel" )
       {
-        if (_etaCorrection == 1 && p_tmpBrickedCluster != NULL)
-        {
-            p_tmpBrickedCluster->getCenterOfGravityShiftWithOutGlobalSeedCoordinateCorrection(xShift,yShift,_nPixel);
-        }
-        else
-        {
             streamlog_out( DEBUG5 ) << "Center of gravity algorithm: N PIXEL" << endl;
             cluster->getCenterOfGravityShift( xShift, yShift, _nPixel );
-        }
       }
       else if ( _cogAlgorithm == "nxmpixel")
       {
-        if (_etaCorrection == 1 && p_tmpBrickedCluster != NULL)
-        {
-            streamlog_out ( WARNING2 ) << " .Bricked Cluster to be asked for CoG Without Global Seed Coord Correction." << endl;
-            streamlog_out ( WARNING2 ) << " .This is not implemented for the NxMPixel algo, cause it does not make much sense for a bricked cluster." << endl;
-            streamlog_out ( WARNING2 ) << " .Doing FULL instead." << endl;
-            p_tmpBrickedCluster->getCenterOfGravityShiftWithOutGlobalSeedCoordinateCorrection(xShift, yShift);
-        }
-        else
-        {
             //will be okay for a brickedClusterImpl! accounted for such a call internally.
             streamlog_out( DEBUG5 ) << "Center of gravity algorithm: NxM PIXEL" << endl;
             cluster->getCenterOfGravityShift( xShift, yShift, _xyCluSize[0], _xyCluSize[1]);
-        }
       }
     
       double xCorrection = static_cast<double> (xShift) ;
       double yCorrection = static_cast<double> (yShift) ;
-      //!HACK TAKI if (_etaCorrection==1 && p_tmpBrickedCluster != NULL) THEN DO NOT FORGET
-      //!     TO APPLY THE GLOBAL SEED COORD CORRECTION ON TOP AFTERWARDS!
-
-      //if etaCorrection is to applied, then it will overwrite the two Corrections in here:
-      if ( _etaCorrection == 1 ) {
-
-        EUTelEtaFunctionImpl * xEtaFunc = NULL;
-        EUTelEtaFunctionImpl * yEtaFunc = NULL;
-
-        if ( _etaVersion == 1 ) {
-          xEtaFunc = static_cast<EUTelEtaFunctionImpl*> ( xEtaCollection->getElementAt(detectorID) );
-          yEtaFunc = static_cast<EUTelEtaFunctionImpl*> ( yEtaCollection->getElementAt(detectorID) );
-        } else {
-          xEtaFunc = static_cast<EUTelEtaFunctionImpl*> ( xEtaCollection->getElementAt( _etaMap[ detectorID ]) );
-          yEtaFunc = static_cast<EUTelEtaFunctionImpl*> ( yEtaCollection->getElementAt( _etaMap[ detectorID ]) );
-        }
-
-        bool anomalous = false;
-        if ( ( xShift >= -0.5 ) && ( xShift <= 0.5 ) ) {
-          xCorrection = xEtaFunc->getEtaFromCoG( xShift );
-        } else {
-          anomalous = true;
-        }
-        if ( ( yShift >= -0.5 ) && ( yShift <= 0.5 ) ) {
-          yCorrection = yEtaFunc->getEtaFromCoG( yShift );
-        } else {
-          anomalous = true;
-        }
-
-        if ( anomalous )
-        {
-          streamlog_out ( WARNING4 ) << "Found anomalous cluster\n" << ( * cluster ) << endl;
-        }
-
-        //! HACK TAKI (see above):
-        //! APPLY THE GLOBAL SEED COORD CORRECTION ON TOP NOW
-        if (type == kEUTelBrickedClusterImpl)
-        {
-            int seedX, seedY;
-            cluster->getSeedCoord(seedX, seedY);
-            if (seedY %2 == 0)
-            {
-                xCorrection -= 0.5f;
-            }
-        }
-
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-        string tempHistoName;
-        if ( _histogramSwitch ) {
-          tempHistoName =  _clusterCenterEtaHistoName + "_" + to_string( detectorID ) ;
-          if ( AIDA::IHistogram2D * histo = dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[ tempHistoName ] )) {
-            histo->fill( xCorrection, yCorrection );
-          }
-
-          tempHistoName =  _clusterCenterHistoName + "_" + to_string( detectorID ) ;
-          if ( AIDA::IHistogram2D * histo = dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[ tempHistoName ] )) {
-            histo->fill( xShift, yShift );
-          }
-
-          tempHistoName =  _clusterCenterEtaXHistoName + "_" + to_string( detectorID );
-          if ( AIDA::IHistogram1D * histo = dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[ tempHistoName ] )) {
-            histo->fill( xCorrection );
-          }
-
-          tempHistoName = _clusterCenterXHistoName + "_" + to_string( detectorID );
-          if ( AIDA::IHistogram1D * histo = dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[ tempHistoName ] )) {
-            histo->fill( xShift );
-          }
-
-          tempHistoName = _clusterCenterEtaYHistoName + "_" + to_string( detectorID );
-          if ( AIDA::IHistogram1D * histo = dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[ tempHistoName ] )) {
-            histo->fill( yCorrection );
-          }
-
-          tempHistoName = _clusterCenterYHistoName + "_" + to_string( detectorID );
-          if ( AIDA::IHistogram1D * histo = dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[ tempHistoName ] )) {
-            histo->fill( yShift );
-          }
-        }
-#endif
-
-      }
 
       // rescale the pixel number in millimeter
-//      double xDet = ( static_cast<double> (xCluCenter) + xCorrection + 0.5 ) * xPitch ;
-//      double yDet = ( static_cast<double> (yCluCenter) + yCorrection + 0.5 ) * yPitch ;
       double xDet = ( static_cast<double> (xCluSeed) + xCorrection + 0.5 ) * xPitch ;
       double yDet = ( static_cast<double> (yCluSeed) + yCorrection + 0.5 ) * yPitch ;
 
@@ -942,7 +752,7 @@ void EUTelProcessorHitMaker::end()
   streamlog_out ( MESSAGE4 )  << "Successfully finished" << endl;
 }
 
-void EUTelProcessorHitMaker::bookHistos(int sensorID, LCCollection * xEtaCollection, LCCollection * yEtaCollection) {
+void EUTelProcessorHitMaker::bookHistos(int sensorID) {
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
@@ -1012,108 +822,7 @@ void EUTelProcessorHitMaker::bookHistos(int sensorID, LCCollection * xEtaCollect
   }
 
 
-  if ( _etaCorrection && xEtaCollection != NULL && yEtaCollection != NULL ) {
 
-    EUTelEtaFunctionImpl * xEtaFunc = NULL, * yEtaFunc = NULL;
-
-    if ( _etaVersion >= 2 ) {
-
-      xEtaFunc = static_cast< EUTelEtaFunctionImpl * > ( xEtaCollection->getElementAt( _etaMap[ sensorID ] ) );
-      yEtaFunc = static_cast< EUTelEtaFunctionImpl * > ( yEtaCollection->getElementAt( _etaMap[ sensorID ] ) );
-
-    } else {
-
-      xEtaFunc = static_cast< EUTelEtaFunctionImpl * > ( xEtaCollection->getElementAt( sensorID  ) );
-      yEtaFunc = static_cast< EUTelEtaFunctionImpl * > ( yEtaCollection->getElementAt( sensorID  ) );
-    }
-
-      int xNoOfBin = xEtaFunc->getNoOfBin();
-      int yNoOfBin = yEtaFunc->getNoOfBin();
-      string tempHistoName = _clusterCenterEtaHistoName + "_" + to_string( sensorID ) ;
-
-    AIDA::IHistogram2D * clusterCenterEta =
-      AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName ).c_str(),
-                                                                1* xNoOfBin, -.5, +.5, 1 * yNoOfBin, -.5, +.5);
-
-    if ( clusterCenterEta ) {
-      clusterCenterEta->setTitle("Position of the cluster center (Eta corrected)");
-      _aidaHistoMap.insert( make_pair( tempHistoName, clusterCenterEta ) );
-    } else {
-      streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
-                                << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
-      _histogramSwitch = false;
-    }
-
-
-    tempHistoName = _clusterCenterHistoName + "_" + to_string( sensorID );
-    AIDA::IHistogram2D * clusterCenter =
-      AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName ).c_str(),
-                                                                1* xNoOfBin, -.5, +.5, 1 * yNoOfBin, -.5, +.5);
-
-    if ( clusterCenter ) {
-      clusterCenterEta->setTitle("Position of the cluster center");
-      _aidaHistoMap.insert( make_pair( tempHistoName, clusterCenter ) );
-    } else {
-      streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
-                                << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
-      _histogramSwitch = false;
-    }
-
-
-    tempHistoName = _clusterCenterEtaXHistoName + "_" + to_string( sensorID );
-    AIDA::IHistogram1D * clusterCenterEtaX =
-      AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
-                                                                1 * xNoOfBin, -0.5, +0.5 );
-    if ( clusterCenterEtaX ) {
-      clusterCenterEtaX->setTitle("Projection along X of the cluster center (Eta corrected)");
-      _aidaHistoMap.insert( make_pair( tempHistoName, clusterCenterEtaX ) );
-    } else {
-      streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
-                                << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
-      _histogramSwitch = false;
-    }
-
-    tempHistoName = _clusterCenterXHistoName + "_" + to_string( sensorID );
-    AIDA::IHistogram1D * clusterCenterX =
-      AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
-                                                                1 * xNoOfBin, -0.5, +0.5 );
-    if ( clusterCenterX ) {
-      clusterCenterX->setTitle("Projection along X of the cluster center");
-      _aidaHistoMap.insert( make_pair( tempHistoName, clusterCenterX ) );
-    } else {
-      streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
-                                << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
-      _histogramSwitch = false;
-    }
-
-    tempHistoName = _clusterCenterEtaYHistoName + "_" + to_string( sensorID );
-
-    AIDA::IHistogram1D * clusterCenterEtaY =
-      AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
-                                                                1 * xNoOfBin, -0.5, +0.5 );
-    if ( clusterCenterEtaY ) {
-      clusterCenterEtaY->setTitle("Projection along Y of the cluster center (Eta corrected)");
-      _aidaHistoMap.insert( make_pair( tempHistoName, clusterCenterEtaY ) );
-    } else {
-      streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
-                                << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
-      _histogramSwitch = false;
-    }
-
-    tempHistoName =  _clusterCenterYHistoName + "_" + to_string( sensorID );
-    AIDA::IHistogram1D * clusterCenterY =
-      AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
-                                                                1 * xNoOfBin, -0.5, +0.5 );
-    if ( clusterCenterY ) {
-      clusterCenterY->setTitle("Projection along Y of the cluster center");
-      _aidaHistoMap.insert( make_pair( tempHistoName, clusterCenterY ) );
-    } else {
-      streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
-                                << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
-      _histogramSwitch = false;
-    }
-
-    }
 
   _alreadyBookedSensorID.insert( sensorID );
 
