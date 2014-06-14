@@ -81,7 +81,6 @@ std::string EUTelProcessorHitMaker::_clusterCenterYHistoName    = "ClusterCenter
 #endif
 
 EUTelProcessorHitMaker::EUTelProcessorHitMaker () : Processor("EUTelProcessorHitMaker"),
-_zsDataCollectionName(),
 _pulseCollectionName(),
 _hitCollectionName(),
 _referenceHitCollectionName("referenceHit"),
@@ -108,10 +107,6 @@ _orderedSensorIDVec()
   _description =
     "EUTelProcessorHitMaker is responsible to translate cluster centers from the local frame of reference"
     " to the external frame of reference using the GEAR geometry description";
-
-  registerInputCollection (LCIO::TRACKERDATA, "ZSDataCollectionName", 
-                          "LCIO converted data files", 
-                          _zsDataCollectionName, string("original_zsdata"));
 
 
   registerInputCollection(LCIO::TRACKERPULSE,"PulseCollectionName",

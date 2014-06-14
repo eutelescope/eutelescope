@@ -318,10 +318,6 @@ namespace eutelescope {
 
   protected:
 
-    //! original zsData collection name
-    /*! This is the name of the collection holding original data
-     */  
-    std::string _zsDataCollectionName;
 
     //! TrackerPulse collection name
     /*! This is the name of the collection holding the pulse
