@@ -107,6 +107,24 @@ namespace eutelescope {
             
             /** Sensor Z side size */
             double siPlaneZSize( int );
+ 
+            /** Sensor X side pixel pitch [mm] */
+            double siPlaneXPitch( int );
+            
+            /** Sensor Y side pixel pitch [mm] */
+            double siPlaneYPitch( int );
+
+            /** Sensor X side size in pixels */
+            double siPlaneXNpixels( int );
+            
+            /** Sensor Y side size in pixels */
+            double siPlaneYNpixels( int );
+ 
+            /** Sensor X side size in pixels */
+            double siPlaneXResolution( int );
+            
+            /** Sensor Y side size in pixels */
+            double siPlaneYResolution( int );
             
             /** Sensor medium radiation length */
             double siPlaneMediumRadLen( int );
@@ -220,7 +238,7 @@ namespace eutelescope {
             gear::TelPlanesLayerLayout* _telPlanesLayerLayout;
 
 // overwrite private to public ::
-        public :
+        private :
             /** Vector of Sensor IDs */
             EVENT::IntVec _sensorIDVec;
 
@@ -252,13 +270,31 @@ namespace eutelescope {
             EVENT::DoubleVec _siPlaneZRotation;
             
             /** Sensor X side length [mm]*/
-            EVENT::DoubleVec _siPlaneSizeX;
+            EVENT::DoubleVec _siPlaneXSize;
             
             /** Sensor Y side length [mm]*/
-            EVENT::DoubleVec _siPlaneSizeY;
+            EVENT::DoubleVec _siPlaneYSize;
             
             /** Sensor Z side length [mm]*/
-            EVENT::DoubleVec _siPlaneSizeZ;
+            EVENT::DoubleVec _siPlaneZSize;
+ 
+            /** Sensor X side pitch length [mm]*/
+            EVENT::DoubleVec _siPlaneXPitch;
+            
+            /** Sensor Y side pitch length [mm]*/
+            EVENT::DoubleVec _siPlaneYPitch;
+ 
+            /** Sensor X side pitch length [pixels]*/
+            EVENT::DoubleVec _siPlaneXNpixels;
+            
+            /** Sensor Y side pitch length [pixels]*/
+            EVENT::DoubleVec _siPlaneYNpixels;
+
+            /** Sensor X side pitch length [pixels]*/
+            EVENT::DoubleVec _siPlaneXResolution;
+            
+            /** Sensor Y side pitch length [pixels]*/
+            EVENT::DoubleVec _siPlaneYResolution;
             
             /** Radiation length of the sensor [mm]*/
             EVENT::DoubleVec _siPlaneRadLength;
