@@ -167,9 +167,15 @@ double EUTelGeometryTelescopeGeoDescription::siPlaneYResolution( int planeID ) {
 
 
 std::string EUTelGeometryTelescopeGeoDescription::geoLibName( int planeID ) {
-    std::map<int,int>::iterator it;
+
+    std::map<int,int>::const_iterator it;
     it = _sensorIDtoZOrderMap.find(planeID);
-    if ( it != _sensorIDtoZOrderMap.end() ) return _geoLibName[ _sensorIDtoZOrderMap[ planeID ] ];
+
+    int iplane = it->second ;
+    std::string& s = _geoLibName[ iplane ];
+    streamlog_out(DEBUG1) << s.c_str() << std::endl;
+ 
+    if ( it != _sensorIDtoZOrderMap.end() ) return s;
     return "failed";
 }
 
@@ -251,8 +257,6 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesParameters() {
         _siPlaneRadLength.push_back(_siPlanesLayerLayout->getSensitiveRadLength(iPlane));
 	_geoLibName.push_back(geometryNameParameters[iPlane]);
 
-//      lcio::StringVec layoutGeometry =  _siPlanesLayerLayout->getStringVals("Geometry");
-//        std::cout << "layout:" << layoutGeometry << ":" << std::endl;
     }
 
 
@@ -266,7 +270,6 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesParameters() {
     _sensorIDVecMap.clear();
     _sensorIDtoZOrderMap.clear();
 
-    double* keepZPosition = new double[ _siPlanesLayerLayout->getNLayers() ];
 
     for (int iPlane = 0; iPlane < _siPlanesLayerLayout->getNLayers(); iPlane++) {
         int sensorID = _siPlanesLayerLayout->getID(iPlane);
@@ -275,15 +278,14 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesParameters() {
 
         // count number of the sensors to the left of the current one:
         int sensorsToTheLeft = 0;
-        keepZPosition[ iPlane ] = _siPlanesLayerLayout->getSensitivePositionZ(iPlane);
+        int kposition = _siPlanesLayerLayout->getSensitivePositionZ(iPlane);
         for (int jPlane = 0; jPlane < _siPlanesLayerLayout->getNLayers(); jPlane++)
-            if (_siPlanesLayerLayout->getSensitivePositionZ(jPlane) + 1e-06 < keepZPosition[ iPlane ]) sensorsToTheLeft++;
+            if (_siPlanesLayerLayout->getSensitivePositionZ(jPlane) + 1e-06 < kposition  ) sensorsToTheLeft++;
 
         _sensorZOrderToIDMap.insert(std::make_pair(sensorsToTheLeft, sensorID));        
         _sensorIDtoZOrderMap.insert(std::make_pair(sensorID, sensorsToTheLeft));
     }
 
-    delete [] keepZPosition;
 
     _nPlanes = _siPlanesParameters->getSiPlanesNumber();
 
@@ -295,26 +297,77 @@ void EUTelGeometryTelescopeGeoDescription::readTelPlanesParameters() {
     _telPlanesParameters = const_cast< gear::TelPlanesParameters*> (&(marlin::Global::GEAR->getTelPlanesParameters()));
     _telPlanesLayerLayout = const_cast< gear::TelPlanesLayerLayout*> (&(_telPlanesParameters->getTelPlanesLayerLayout()));
     
+    // clear the sensor ID vector
+    _sensorIDVec.clear();
+    // clear the sensor ID map
+    _sensorIDVecMap.clear();
+    _sensorIDtoZOrderMap.clear();
+
+
     // create an array with the z positions of each layer
-    int nlayers = _telPlanesLayerLayout->getNLayers();
-    for (int iLayer = 0; iLayer < nlayers; iLayer++) {
+    int nLayers = _telPlanesLayerLayout->getNLayers();
+    for (int iLayer = 0; iLayer < nLayers; iLayer++) {
         gear::TelPlanesLayerImpl* _telPlanesLayerImpl = const_cast< gear::TelPlanesLayerImpl*>  (_telPlanesLayerLayout->getLayer( iLayer) );
+        streamlog_out(DEBUG1) << " ilayer : " << iLayer << " " << nLayers  << " at " << _telPlanesLayerImpl;
         int nsensitive = _telPlanesLayerImpl->getNSensitiveLayers() ;
+        streamlog_out(DEBUG1) << " constains " << nsensitive << " sensitive (sub)layers " << std::endl;
+
         gear::TelPlanesSensitiveLayerImplVec& vector = _telPlanesLayerImpl->getSensitiveLayerVec();
        
         for (int iSensLayer = 0; iSensLayer < nsensitive; iSensLayer++) {       
 
-            std::cout << " iLayer " << iLayer << " sens: " << iSensLayer << " id :" << vector.at(iSensLayer).getID() << std::endl;
+            gear::TelPlanesSensitiveLayerImpl& sensitiveLayer = vector.at(iSensLayer);
+            int sensorID =   sensitiveLayer.getID();
+            streamlog_out(DEBUG1) << " iLayer " << iLayer << " sens: " << iSensLayer << " id :" << sensorID << std::endl;
+
+                   
+            _siPlaneXPosition.push_back( sensitiveLayer.getPositionX() );
+            _siPlaneYPosition.push_back( sensitiveLayer.getPositionY() );
+            _siPlaneZPosition.push_back( sensitiveLayer.getPositionZ() );
+            _siPlaneXRotation.push_back( sensitiveLayer.getRotationZY() );
+            _siPlaneYRotation.push_back( sensitiveLayer.getRotationZX() );
+            _siPlaneZRotation.push_back( sensitiveLayer.getRotationXY() );
         
+            _siPlaneXSize.push_back( sensitiveLayer.getSizeX() );
+            _siPlaneYSize.push_back( sensitiveLayer.getSizeY() );
+            _siPlaneZSize.push_back( sensitiveLayer.getThickness() );
+ 
+            _siPlaneXNpixels.push_back( sensitiveLayer.getNpixelX() );
+            _siPlaneYNpixels.push_back( sensitiveLayer.getNpixelY() );
+            _siPlaneXPitch.push_back( sensitiveLayer.getPitchX() );
+            _siPlaneYPitch.push_back( sensitiveLayer.getPitchY() );
+            _siPlaneXResolution.push_back( sensitiveLayer.getResolutionX() );
+            _siPlaneYResolution.push_back( sensitiveLayer.getResolutionY() );
+        
+            _siPlaneRadLength.push_back( sensitiveLayer.getRadLength() );
+          
+            _geoLibName.push_back( sensitiveLayer.getInfo().c_str() );
+
+            _sensorIDVec.push_back(sensorID);
+            _sensorIDVecMap.insert(std::make_pair(sensorID, iLayer)); // what if there are more then 1 sensore per layer?
+            streamlog_out(DEBUG1) << " iter: " << _sensorIDVec.at( _sensorIDVec.size()-1 ) << " " << sensorID << " " << sensitiveLayer.getInfo() .c_str() << std::endl; 
         }
     }
- 
+
+
+    for(int i=0; i< _siPlaneZPosition.size(); i++){ 
+      int sensorsToTheLeft = 0;
+      int sensorID = _sensorIDVec.at(i);
+
+      for(int j=0; j< _siPlaneZPosition.size(); j++){ 
+        if( _siPlaneZPosition.at(j) < _siPlaneZPosition.at(i) - 1e-06 ) sensorsToTheLeft++;
+      }
+       _sensorZOrderToIDMap.insert(std::make_pair(sensorsToTheLeft, sensorID));        
+       _sensorIDtoZOrderMap.insert(std::make_pair(sensorID, sensorsToTheLeft));
+    }
 }
 
 
 EUTelGeometryTelescopeGeoDescription::EUTelGeometryTelescopeGeoDescription() :
 _siPlanesParameters(0),
 _siPlanesLayerLayout(0),
+_telPlanesParameters(0),
+_telPlanesLayerLayout(0),
 _sensorIDVec(),
 _sensorIDVecMap(),
 _sensorZOrderToIDMap(),
@@ -325,6 +378,17 @@ _siPlaneZPosition(),
 _siPlaneXRotation(),
 _siPlaneYRotation(),
 _siPlaneZRotation(),
+ _siPlaneXSize(),
+ _siPlaneYSize(),
+ _siPlaneZSize(),
+ _siPlaneXPitch(),
+ _siPlaneYPitch(),
+ _siPlaneXNpixels(),
+ _siPlaneYNpixels(),
+ _siPlaneXResolution(),
+ _siPlaneYResolution(),
+ _siPlaneRadLength(),
+ _geoLibName(),
 _nPlanes(0),
 _isGeoInitialized(false),
 _geoManager(0)
@@ -507,7 +571,9 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
        pvolumeWorld->AddNode(pvolumeSensor, 1/*(SensorId)*/, combi);
 	
 	//this line tells the pixel geometry manager to load the pixel geometry into the plane			
-        _pixGeoMgr->addPlane( SensorId, geoLibName( SensorId), stVolName);
+        streamlog_out(DEBUG1) << " sensorID: " << SensorId << " " << stVolName << std::endl;   
+        std::string name = geoLibName( SensorId);
+        _pixGeoMgr->addPlane( SensorId, name, stVolName);
 
 
 }
