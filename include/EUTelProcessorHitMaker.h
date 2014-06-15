@@ -351,42 +351,6 @@ namespace eutelescope {
     //! Coordinates reference frame switch
     bool _wantLocalCoordinates;
 
-    //! Input offset db file 
-    /*!
-     */
-    std::string _offsetDBFile;
-
-
-
-    //! The algorithm for CoG calculation.
-    /*! The algorithm for the calculation of the Center of Gravity is
-     *  obviously always the same, what can be different is the
-     *  considered number of pixels and the size.
-     *
-     *  These are the algorithms available:
-     *
-     *  @li <b>Full</b>: All pixels are used in the calculation
-     *
-     *  @li <b>NPixel</b>: Only the first N most significant pixels
-     *  are used. The user has to set also the NPixel parameter
-     *
-     *  @li <b>NxMPixel</b>: The CoG will be calculated using a
-     *  submatrix N x M centered around the seed pixel.
-     *
-     */
-    std::string _cogAlgorithm;
-
-    //! The number of most significant pixels
-    /*! This number is used only when _cogAlgorithm is "NPixel"
-     */
-    int _nPixel;
-
-    //! The submatrix size (x and y)
-    /*! This vector contains the size along x and along y of the
-     *  cluster submatrix for CoG calculation only when _cogAlgorithm
-     *  is "NxMPixel
-     */
-    std::vector<int > _xyCluSize;
 
     //! Reference Hit file 
     std::string _referenceHitLCIOFile;

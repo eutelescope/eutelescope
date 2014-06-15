@@ -87,10 +87,6 @@ _referenceHitCollectionName("referenceHit"),
 _referenceHitCollectionVec(),
 _3DHistoSwitch(true),
 _wantLocalCoordinates(false),
-_offsetDBFile("offset-db.slcio"),
-_cogAlgorithm("NxMPixel"),
-_nPixel(9),
-_xyCluSize(),
 _referenceHitLCIOFile("reference.slcio"),
 _iRun(0),
 _iEvt(0),
@@ -110,22 +106,14 @@ _orderedSensorIDVec()
 
 
   registerInputCollection(LCIO::TRACKERPULSE,"PulseCollectionName",
-                          "Cluster (pulse) collection name",
-                          _pulseCollectionName, string ( "" ));
+                           "Cluster (pulse) collection name",
+                           _pulseCollectionName, string ( "" ));
 
   registerOutputCollection(LCIO::TRACKERHIT,"HitCollectionName",
                            "Hit collection name",
                            _hitCollectionName, string ( "" ));
 
 
-  registerProcessorParameter("CoGAlgorithm", "Select here how the center of gravity should be calculated.\n"
-                             "FULL: using the full cluster\n"
-                             "NPixel: using only the first N most significant pixels (set NPixel too)\n"
-                             "NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).",
-                             _cogAlgorithm, string( "NxMPixel" ) );
-
-  registerOptionalParameter("NPixel", "The number of most significant pixels to be used if CoGAlgorithm is \"NPixel\"",
-                            _nPixel, static_cast<int>( 9 ) );
 
   registerOptionalParameter("Enable3DHisto","If true a 3D histo will be filled. It may require large memory",
                             _3DHistoSwitch, static_cast<bool> ( true ) );
@@ -133,12 +121,6 @@ _orderedSensorIDVec()
   registerOptionalParameter("EnableLocalCoordidates","Hit coordinates are calculated in local reference frame of sensor",
                             _wantLocalCoordinates, static_cast<bool> ( false ) );
 
-
-  vector<int > xyCluSizeExample(2,3);
-  registerOptionalParameter("NxMPixel", "The submatrix size to be used for CoGAlgorithm = \"NxMPixel\"",
-                            _xyCluSize, xyCluSizeExample, xyCluSizeExample.size());
-
- 
   registerOptionalParameter("ReferenceCollection","This is the name of the reference hit collection initialized in this processor. This collection provides the reference vector to correctly determine a plane corresponding to a global hit coordiante.",
                             _referenceHitCollectionName, static_cast< string > ( "referenceHit" ) );
  
@@ -157,8 +139,6 @@ void EUTelProcessorHitMaker::init() {
   _iRun = 0;
   _iEvt = 0;
 
-  // transform the algorithm string to small letters
-  transform(_cogAlgorithm.begin(), _cogAlgorithm.end(), _cogAlgorithm.begin(), ::tolower);
 
   // check if Marlin was built with GEAR support or not
 #ifndef USE_GEAR
@@ -325,19 +305,17 @@ void EUTelProcessorHitMaker::processRunHeader (LCRunHeader * rdr) {
 
 void EUTelProcessorHitMaker::processEvent (LCEvent * event) {
 
-   ++_iEvt;
+    ++_iEvt;
 
-  EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event) ;
+    EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event) ;
 
-  if ( evt->getEventType() == kEORE ) {
-    streamlog_out ( DEBUG4 ) << "EORE found: nothing else to do." << endl;
-    return;
-  } else if ( evt->getEventType() == kUNKNOWN ) {
-    streamlog_out ( WARNING2 ) << "Event number " << evt->getEventNumber() << " in run " << evt->getRunNumber()
+    if ( evt->getEventType() == kEORE ) {
+      streamlog_out ( DEBUG4 ) << "EORE found: nothing else to do." << endl;
+      return;
+    } else if ( evt->getEventType() == kUNKNOWN ) {
+      streamlog_out ( WARNING2 ) << "Event number " << evt->getEventNumber() << " in run " << evt->getRunNumber()
                                << " is of unknown type. Continue considering it as a normal Data Event." << endl;
-  }
-
-
+    }
     
     LCCollectionVec * pulseCollection   = 0;
     LCCollectionVec * hitCollection     = 0;
@@ -399,8 +377,7 @@ void EUTelProcessorHitMaker::processEvent (LCEvent * event) {
 	int		    detectorID  = ( static_cast<int> ( clusterCellDecoder(clusterFrame)["sensorID"] ));
 	SparsePixelType          type   = static_cast<SparsePixelType> ( static_cast<int> ( clusterCellDecoder( clusterFrame )["type"]) );
 
-        EUTelVirtualCluster * cluster = 
-                                       new EUTelSparseClusterImpl< EUTelGenericSparsePixel > (static_cast<TrackerDataImpl *> ( channelList ));
+        EUTelVirtualCluster * cluster   = new EUTelSparseClusterImpl< EUTelGenericSparsePixel > (static_cast<TrackerDataImpl *> ( channelList ));
 
       // there could be several clusters belonging to the same
       // detector. So update the geometry information only if this new
@@ -409,10 +386,7 @@ void EUTelProcessorHitMaker::processEvent (LCEvent * event) {
 
       if ( detectorID != oldDetectorID ) 
       {
-        oldDetectorID = detectorID;
-
-        
-
+          oldDetectorID = detectorID;
 
           if ( _conversionIdMap.size() != static_cast< unsigned >(_siPlanesParameters->getSiPlanesNumber()) ) {
             // first of all try to see if this detectorID already belong to
@@ -470,15 +444,14 @@ void EUTelProcessorHitMaker::processEvent (LCEvent * event) {
 	    streamlog_out ( MESSAGE5 ) << " no sensor rotation is given in the GEAR steering file, assume NONE " << endl;
           }
         
+ 
+          if (  ( xPointing[0] == xPointing[1] ) && ( xPointing[0] == 0 ) ) {
+            streamlog_out ( ERROR4 ) << "Detector " << detectorID << " has a singular rotation matrix. Sorry for quitting" << endl;
+          }
 
-    
-        if (  ( xPointing[0] == xPointing[1] ) && ( xPointing[0] == 0 ) ) {
-          streamlog_out ( ERROR4 ) << "Detector " << detectorID << " has a singular rotation matrix. Sorry for quitting" << endl;
-        }
-
-        if (  ( yPointing[0] == yPointing[1] ) && ( yPointing[0] == 0 ) ) {
-          streamlog_out ( ERROR4 ) << "Detector " << detectorID << " has a singular rotation matrix. Sorry for quitting" << endl;
-        }
+          if (  ( yPointing[0] == yPointing[1] ) && ( yPointing[0] == 0 ) ) {
+            streamlog_out ( ERROR4 ) << "Detector " << detectorID << " has a singular rotation matrix. Sorry for quitting" << endl;
+          }
 
       }
 
@@ -523,21 +496,7 @@ void EUTelProcessorHitMaker::processEvent (LCEvent * event) {
       float xShift = 0.;
       float yShift = 0.;
 
-      if ( _cogAlgorithm == "full" )
-      {
 	 cluster->getCenterOfGravityShift( xShift, yShift );
-      }
-      else if ( _cogAlgorithm == "npixel" )
-      {
-            streamlog_out( DEBUG5 ) << "Center of gravity algorithm: N PIXEL" << endl;
-            cluster->getCenterOfGravityShift( xShift, yShift, _nPixel );
-      }
-      else if ( _cogAlgorithm == "nxmpixel")
-      {
-            //will be okay for a brickedClusterImpl! accounted for such a call internally.
-            streamlog_out( DEBUG5 ) << "Center of gravity algorithm: NxM PIXEL" << endl;
-            cluster->getCenterOfGravityShift( xShift, yShift, _xyCluSize[0], _xyCluSize[1]);
-      }
     
       double xCorrection = static_cast<double> (xShift) ;
       double yCorrection = static_cast<double> (yShift) ;
