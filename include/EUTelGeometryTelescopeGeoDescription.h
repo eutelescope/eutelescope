@@ -18,8 +18,12 @@
 
 // GEAR includes
 #include "gear/GearMgr.h"
-#include "gear/SiPlanesLayerLayout.h"
-#include "gear/SiPlanesParameters.h"
+#include "gearimpl/SiPlanesLayerLayoutImpl.h"
+#include "gearimpl/SiPlanesParametersImpl.h"
+
+#include "gearimpl/TelPlanesLayerLayoutImpl.h"
+#include "gearimpl/TelPlanesParametersImpl.h"
+
 #include "gear/BField.h"
 
 // EUTELESCOPE
@@ -130,6 +134,17 @@ namespace eutelescope {
         public:
             virtual ~EUTelGeometryTelescopeGeoDescription();
 
+        private:
+            /** reading initial info from gear: part of contructor */
+	    void readSiPlanesParameters();
+
+            /** reading initial info from gear: part of contructor
+              * new GEAR from branch/TelPlanes
+              */
+	    void readTelPlanesParameters(); 
+
+            void translateSiPlane2TGeo(TGeoVolume*,int );
+
         public:
             // TGeo stuff
 
@@ -196,6 +211,8 @@ namespace eutelescope {
              */
             gear::SiPlanesLayerLayout* _siPlanesLayerLayout;
 
+            gear::TelPlanesParameters*  _telPlanesParameters;
+            gear::TelPlanesLayerLayout* _telPlanesLayerLayout;
 
         private:
             /** Vector of Sensor IDs */
