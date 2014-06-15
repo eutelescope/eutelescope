@@ -46,7 +46,6 @@
 #include <AIDA/IHistogramFactory.h>
 #include <AIDA/IHistogram1D.h>
 #include <AIDA/IHistogram2D.h>
-#include <AIDA/IHistogram3D.h>
 #include <AIDA/ITree.h>
 #endif
 
@@ -87,15 +86,12 @@ _pulseCollectionName(),
 _hitCollectionName(),
 _referenceHitCollectionName("referenceHit"),
 _referenceHitCollectionVec(),
-_3DHistoSwitch(true),
 _wantLocalCoordinates(false),
 _referenceHitLCIOFile("reference.slcio"),
 _iRun(0),
 _iEvt(0),
 _conversionIdMap(),
 _alreadyBookedSensorID(),
-_siPlanesParameters(0),
-_siPlanesLayerLayout(0),
 _aidaHistoMap(),
 _histogramSwitch(true),
 _orderedSensorIDVec()
@@ -115,9 +111,6 @@ _orderedSensorIDVec()
                             "Hit collection name",
                             _hitCollectionName, string ( "" ));
 
-  registerOptionalParameter("Enable3DHisto","If true a 3D histo will be filled. It may require large memory",
-                            _3DHistoSwitch, static_cast<bool> ( true ) );
-  
   registerOptionalParameter("EnableLocalCoordidates","Hit coordinates are calculated in local reference frame of sensor",
                             _wantLocalCoordinates, static_cast<bool> ( false ) );
 
@@ -162,14 +155,6 @@ void EUTelProcessorHitMaker::init() {
     exit(-1);
   }
 
-  _siPlanesParameters  = const_cast<SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
-  _siPlanesLayerLayout = const_cast<SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
-
-  _orderedSensorIDVec.clear();
-  for ( int iPlane = 0 ; iPlane < _siPlanesParameters->getSiPlanesNumber() ; ++iPlane ) {
-    _orderedSensorIDVec.push_back( _siPlanesLayerLayout->getID( iPlane ) );
-  }
-
   _histogramSwitch = true;
 
   DumpReferenceHitDB();
@@ -177,6 +162,7 @@ void EUTelProcessorHitMaker::init() {
 #endif
 
 }
+
 
 void EUTelProcessorHitMaker::DumpReferenceHitDB()
 {
@@ -205,22 +191,26 @@ void EUTelProcessorHitMaker::DumpReferenceHitDB()
 
   LCCollectionVec * referenceHitCollection = new LCCollectionVec( LCIO::LCGENERICOBJECT );
   double refVec[3] ;
-  for(size_t ii = 0 ; ii <  _orderedSensorIDVec.size(); ii++)
+
+  int Nlayers =  geo::gGeometry().nPlanes();
+  for(size_t ii = 0 ; ii <  Nlayers; ii++)
   {
     EUTelReferenceHit * refhit = new EUTelReferenceHit();
-    refhit->setSensorID( _orderedSensorIDVec[ii] );
-    refhit->setXOffset( _siPlanesLayerLayout->getSensitivePositionX(ii) );
-    refhit->setYOffset( _siPlanesLayerLayout->getSensitivePositionY(ii) );
-    refhit->setZOffset( _siPlanesLayerLayout->getSensitivePositionZ(ii) + 0.5*_siPlanesLayerLayout->getSensitiveThickness(ii) );
+
+    int sensorID = geo::gGeometry().sensorZOrderToID( ii );
+    refhit->setSensorID( sensorID );
+    refhit->setXOffset( geo::gGeometry().siPlaneXPosition( sensorID ) );
+    refhit->setYOffset( geo::gGeometry().siPlaneYPosition(sensorID) );
+    refhit->setZOffset( geo::gGeometry().siPlaneZPosition(sensorID) + 0.5*geo::gGeometry().siPlaneZSize(sensorID) );
     
     refVec[0] = 0.;
     refVec[1] = 0.;
     refVec[2] = 1.;
   
     double gRotation[3] = { 0., 0., 0.}; // not rotated
-    gRotation[0] = _siPlanesLayerLayout->getLayerRotationXY(ii); // Euler alpha ;
-    gRotation[1] = _siPlanesLayerLayout->getLayerRotationZX(ii); // Euler alpha ;
-    gRotation[2] = _siPlanesLayerLayout->getLayerRotationZY(ii); // Euler alpha ;
+    gRotation[0] = geo::gGeometry().siPlaneZRotation(sensorID); // Euler alpha ;
+    gRotation[1] = geo::gGeometry().siPlaneYRotation(sensorID); // Euler alpha ;
+    gRotation[2] = geo::gGeometry().siPlaneXRotation(sensorID); // Euler alpha ;
     streamlog_out( DEBUG5 ) << "GEAR rotations: " << gRotation[0] << " " << gRotation[1] << " " <<  gRotation[2] << endl;
     gRotation[0] =  gRotation[0]*3.1415926/180.; // 
     gRotation[1] =  gRotation[1]*3.1415926/180.; //
@@ -256,14 +246,19 @@ void EUTelProcessorHitMaker::DumpReferenceHitDB()
   lcWriter->close();
 }
 
+
+
 void EUTelProcessorHitMaker::addReferenceHitCollection(LCEvent *event, std::string referenceHitName="referenceHit")
 { 
 
   LCCollectionVec * referenceHitCollection = new LCCollectionVec( LCIO::LCGENERICOBJECT );
-  for(size_t ii = 0 ; ii <  _orderedSensorIDVec.size(); ii++)
+ 
+  int Nlayers =  geo::gGeometry().nPlanes();
+  for(size_t ii = 0 ; ii <  Nlayers; ii++)
   {
     EUTelReferenceHit * refhit = new EUTelReferenceHit();
-    refhit->setSensorID( _orderedSensorIDVec[ii] );
+    int sensorID = geo::gGeometry().sensorZOrderToID( ii );
+    refhit->setSensorID( sensorID );
     refhit->setXOffset( 0.0 );
     refhit->setYOffset( 0.0 );
     refhit->setZOffset( 0.0 );
@@ -297,9 +292,6 @@ void EUTelProcessorHitMaker::processRunHeader (LCRunHeader * rdr) {
                                <<  "This may mean that the GeoID parameter was not set" << endl;
 
 
-
-  // now book histograms plz...
-  if ( isFirstEvent() )  book3DHisto();
 
   // increment the run counter
   ++_iRun;
@@ -351,111 +343,64 @@ void EUTelProcessorHitMaker::processEvent (LCEvent * event) {
     CellIDDecoder<TrackerPulseImpl>  clusterCellDecoder(pulseCollection);
     CellIDDecoder<TrackerDataImpl>   cellDecoder( pulseCollection );
 
-    int detectorID    = -99; // it's a non sense
     int oldDetectorID = -100;
 
-    int    layerIndex = -99;
     double xZero = 0., yZero = 0., zZero = 0. ;
-    double xSize = 0., ySize = 0.;
-    double zThickness = 0.;
-    double resolution = 0.;
+    double xSize = 0., ySize = 0., zThickness = 0.;
+    double resolutionX = 0., resolutionY = 0.;
     double xPitch = 0., yPitch = 0.;
-    double xPointing[2] = { 1., 0. }, yPointing[2] = { 1., 0. };
-
-    double gRotation[3] = { 0., 0., 0.}; // not rotated
+    int xNpixels = 0, yNpixels = 0;
 
     for ( int iCluster = 0; iCluster < pulseCollection->getNumberOfElements(); iCluster++ ) 
     {
  	TrackerPulseImpl * clusterFrame = dynamic_cast<TrackerPulseImpl*> ( pulseCollection->getElementAt( iCluster ) ); // actual cluster
     
-			int sensorID    = clusterCellDecoder(clusterFrame)["sensorID"];
-			int clusterID   = clusterCellDecoder(clusterFrame)["clusterID"];
-			int clusterType = clusterCellDecoder(clusterFrame)["type"];
+	int sensorID    = clusterCellDecoder(clusterFrame)["sensorID"];
+	int clusterID   = clusterCellDecoder(clusterFrame)["clusterID"];
+	SparsePixelType clusterType = static_cast<SparsePixelType> ( static_cast<int> (clusterCellDecoder(clusterFrame)["type"] ) );
 
-       streamlog_out(DEBUG1) << "cluster[" << setw(4) << iCluster << "] on sensor[" << setw(3) << sensorID << "]"
-                                                                  << " clusterType : " << setw(3) << clusterType << endl;
+        streamlog_out(DEBUG1) << "cluster[" << setw(4) << iCluster << "] on sensor[" << setw(3) << sensorID << "]" << "[" << clusterID << "]" << " clusterType : " << setw(3) << clusterType << endl;
 	
         TrackerDataImpl  * channelList  = dynamic_cast<TrackerDataImpl*> ( clusterFrame->getTrackerData() ); // list of pixels ?
 		
-	int		    detectorID  = ( static_cast<int> ( clusterCellDecoder(clusterFrame)["sensorID"] ));
-	SparsePixelType          type   = static_cast<SparsePixelType> ( static_cast<int> ( clusterCellDecoder( clusterFrame )["type"]) );
-
         EUTelVirtualCluster * cluster   = new EUTelSparseClusterImpl< EUTelGenericSparsePixel > (static_cast<TrackerDataImpl *> ( channelList ));
 
       // there could be several clusters belonging to the same
       // detector. So update the geometry information only if this new
       // cluster belongs to a different detector.
-      // superseeded with above ;; detectorID = cluster->getDetectorID();
+      // superseeded with above ;; sensorID = cluster->getDetectorID();
 
-      if ( detectorID != oldDetectorID ) 
+      if ( sensorID != oldDetectorID ) 
       {
-          oldDetectorID = detectorID;
+          oldDetectorID = sensorID;
 
-          if ( _conversionIdMap.size() != static_cast< unsigned >(_siPlanesParameters->getSiPlanesNumber()) ) {
-            // first of all try to see if this detectorID already belong to
-            if ( _conversionIdMap.find( detectorID ) == _conversionIdMap.end() ) {
-              // this means that this detector ID was not already inserted,
-              // so this is the right place to do that
-              for ( int iLayer = 0; iLayer < _siPlanesLayerLayout->getNLayers(); iLayer++ ) {
-                if ( _siPlanesLayerLayout->getID(iLayer) == detectorID ) {
-                  _conversionIdMap.insert( make_pair( detectorID, iLayer ) );
-                  break;
-                }
-              }
-            }
-          }
 
           // perfect! The full geometry description is now coming from the
           // GEAR interface. Let's keep the finger xed!
 
           // check if the histos for this sensor ID have been booked
           // already.
-          if ( _alreadyBookedSensorID.find( detectorID ) == _alreadyBookedSensorID.end() ) {
+          if ( _alreadyBookedSensorID.find( sensorID ) == _alreadyBookedSensorID.end() ) {
             // we need to book now!
-            bookHistos( detectorID );
+            bookHistos( sensorID );
           }
 
-          layerIndex   = _conversionIdMap[detectorID];
-          xZero        = _siPlanesLayerLayout->getSensitivePositionX(layerIndex); // mm
-          yZero        = _siPlanesLayerLayout->getSensitivePositionY(layerIndex); // mm
-          zZero        = _siPlanesLayerLayout->getSensitivePositionZ(layerIndex); // mm
-          zThickness   = _siPlanesLayerLayout->getSensitiveThickness(layerIndex); // mm
-          resolution   = _siPlanesLayerLayout->getSensitiveResolution(layerIndex);// mm
-          xPitch       = _siPlanesLayerLayout->getSensitivePitchX(layerIndex);    // mm
-          yPitch       = _siPlanesLayerLayout->getSensitivePitchY(layerIndex);    // mm
-          xSize        = _siPlanesLayerLayout->getSensitiveSizeX(layerIndex);     // mm
-          ySize        = _siPlanesLayerLayout->getSensitiveSizeY(layerIndex);     // mm
-          xPointing[0] = _siPlanesLayerLayout->getSensitiveRotation1(layerIndex); // was -1 ;
-          xPointing[1] = _siPlanesLayerLayout->getSensitiveRotation2(layerIndex); // was  0 ;
-          yPointing[0] = _siPlanesLayerLayout->getSensitiveRotation3(layerIndex); // was  0 ;
-          yPointing[1] = _siPlanesLayerLayout->getSensitiveRotation4(layerIndex); // was -1 ;
+          xZero        = geo::gGeometry().siPlaneXPosition( sensorID ); // mm
+          yZero        = geo::gGeometry().siPlaneYPosition( sensorID ); // mm
+          zZero        = geo::gGeometry().siPlaneZPosition( sensorID ); // mm
 
-          try
-          {
-          gRotation[0] = _siPlanesLayerLayout->getLayerRotationXY(layerIndex); // Euler gamma ;
-          gRotation[1] = _siPlanesLayerLayout->getLayerRotationZX(layerIndex); // Euler beta  ;
-          gRotation[2] = _siPlanesLayerLayout->getLayerRotationZY(layerIndex); // Euler alpha ;
+          resolutionX  = geo::gGeometry().siPlaneXResolution( sensorID );// mm
+          resolutionY  = geo::gGeometry().siPlaneYResolution( sensorID );// mm
 
-          // input angles are in DEGREEs !!!
-          // translate into radians
-          gRotation[0] =  gRotation[0]*3.1415926/180.; // 
-          gRotation[1] =  gRotation[1]*3.1415926/180.; //
-          gRotation[2] =  gRotation[2]*3.1415926/180.; //
-          }
-          catch(...)
-          {
-	    streamlog_out ( MESSAGE5 ) << " no sensor rotation is given in the GEAR steering file, assume NONE " << endl;
-          }
-        
- 
-          if (  ( xPointing[0] == xPointing[1] ) && ( xPointing[0] == 0 ) ) {
-            streamlog_out ( ERROR4 ) << "Detector " << detectorID << " has a singular rotation matrix. Sorry for quitting" << endl;
-          }
+          xSize        = geo::gGeometry().siPlaneXSize ( sensorID );    // mm
+          ySize        = geo::gGeometry().siPlaneYSize ( sensorID );    // mm
+          zThickness   = geo::gGeometry().siPlaneZSize ( sensorID );    // mm
 
-          if (  ( yPointing[0] == yPointing[1] ) && ( yPointing[0] == 0 ) ) {
-            streamlog_out ( ERROR4 ) << "Detector " << detectorID << " has a singular rotation matrix. Sorry for quitting" << endl;
-          }
+          xPitch       = geo::gGeometry().siPlaneXPitch( sensorID );    // mm
+          yPitch       = geo::gGeometry().siPlaneYPitch( sensorID );    // mm
 
+          xNpixels     = geo::gGeometry().siPlaneXNpixels( sensorID );    // mm
+          yNpixels     = geo::gGeometry().siPlaneYNpixels( sensorID );    // mm
       }
 
 
@@ -484,7 +429,7 @@ void EUTelProcessorHitMaker::processEvent (LCEvent * event) {
       //! So prepare a brickedCluster pointer now:
 
       EUTelBrickedClusterImpl* p_tmpBrickedCluster = NULL;
-      if ( type == kEUTelBrickedClusterImpl )
+      if ( clusterType == kEUTelBrickedClusterImpl )
       {
             p_tmpBrickedCluster = dynamic_cast< EUTelBrickedClusterImpl* >(cluster);
             if (p_tmpBrickedCluster == NULL)
@@ -497,7 +442,7 @@ void EUTelProcessorHitMaker::processEvent (LCEvent * event) {
       float xShift = 0.;
       float yShift = 0.;
 
-	 cluster->getCenterOfGravityShift( xShift, yShift );
+      cluster->getCenterOfGravityShift( xShift, yShift );
     
       double xCorrection = static_cast<double> (xShift) ;
       double yCorrection = static_cast<double> (yShift) ;
@@ -510,21 +455,18 @@ void EUTelProcessorHitMaker::processEvent (LCEvent * event) {
       float xCoG(0.0f), yCoG(0.0f);
       cluster->getCenterOfGravity(xCoG, yCoG);
       xDet = (xCoG + 0.5) * xPitch;
-      yDet = (yCoG + 0.5) * yPitch;
-
- 
+      yDet = (yCoG + 0.5) * yPitch; 
 
       streamlog_out(DEBUG1) << "cluster[" << setw(4) << iCluster << "] on sensor[" << setw(3) << sensorID 
                             << "] at [" << setw(8) << setprecision(3) << xCoG << ":" << setw(8) << setprecision(3) << yCoG << "]"
                             << " ->  [" << setw(8) << setprecision(3) << xDet << ":" << setw(8) << setprecision(3) << yDet << "]"
                             << endl;
-
       
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
       string tempHistoName;
       if ( _histogramSwitch ) 
       {
-        tempHistoName =  _hitHistoLocalName + "_" + to_string( detectorID );
+        tempHistoName =  _hitHistoLocalName + "_" + to_string( sensorID );
         if ( AIDA::IHistogram2D* histo = dynamic_cast<AIDA::IHistogram2D*>(_aidaHistoMap[ tempHistoName ]) )
         {
             histo->fill(xDet, yDet);
@@ -544,33 +486,10 @@ void EUTelProcessorHitMaker::processEvent (LCEvent * event) {
       // 
        
       double telPos[3];
-      // now perform the rotation of the frame of references and put the
-      // results already into a 3D array of double to be ready for the
-      // setPosition method of TrackerHit
-      telPos[0] = xPointing[0] * xDet + xPointing[1] * yDet;
-      telPos[1] = yPointing[0] * xDet + yPointing[1] * yDet;
+      telPos[0] = xDet - xSize/2. ;
+      telPos[1] = yDet - ySize/2. ; 
+      telPos[2] =   0.;
 
-      // now the translation
-      // not sure about the sign. At least it is working for the current
-      // configuration but we need to double check it
-      double sign = 0;
-      if      ( xPointing[0] < -0.7 )       sign = -1 ;
-      else if ( xPointing[0] > 0.7 )       sign =  1 ;
-      else {
-          if       ( xPointing[1] < -0.7 )    sign = -1 ;
-          else if  ( xPointing[1] > 0.7 )    sign =  1 ;
-      }
-      telPos[0] +=  ( -1 ) * sign * xSize / 2;   //apply shifts few lines later
-
-      if      ( yPointing[0] < -0.7 )       sign = -1 ;
-      else if ( yPointing[0] > 0.7 )       sign =  1 ;
-      else {
-          if       ( yPointing[1] < -0.7 )    sign = -1 ;
-          else if  ( yPointing[1] > 0.7 )    sign =  1 ;
-      }
-      telPos[1] += ( -1 ) * sign * ySize / 2;   // apply shifts few lines later
-
-      telPos[2] = 0.0 ;       // apply shifts few lines later 
       if ( !_wantLocalCoordinates ) {
             // 
             // NOW !!
@@ -578,7 +497,7 @@ void EUTelProcessorHitMaker::processEvent (LCEvent * event) {
 
             // rotate according to gRotation angles:
 
-            _EulerRotation( telPos, gRotation );
+//            _EulerRotation( telPos, gRotation );
             //
             //    finally apply initial shifts:       
             telPos[0] += xZero;
@@ -589,7 +508,7 @@ void EUTelProcessorHitMaker::processEvent (LCEvent * event) {
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
       if ( _histogramSwitch ) 
       {
-        tempHistoName = _hitHistoTelescopeName + "_" + to_string( detectorID );
+        tempHistoName = _hitHistoTelescopeName + "_" + to_string( sensorID );
         AIDA::IHistogram2D * histo2D = dynamic_cast<AIDA::IHistogram2D*> (_aidaHistoMap[ tempHistoName ] );
         if ( histo2D )
         {
@@ -602,34 +521,20 @@ void EUTelProcessorHitMaker::processEvent (LCEvent * event) {
           _histogramSwitch = false;
         }
 
-        if ( _3DHistoSwitch ) 
-        {
-          AIDA::IHistogram3D * histo3D = dynamic_cast<AIDA::IHistogram3D*> (_aidaHistoMap[ _densityPlotName ] );
-          if ( histo3D ) 
-          {
-              histo3D->fill( telPos[0], telPos[1], telPos[2] );
-          }
-          else 
-          {
-            streamlog_out ( ERROR1 )  << "Not able to retrieve histogram pointer for " << tempHistoName
-                                      << ".\nDisabling histogramming from now on " << endl;
-            _histogramSwitch = false;
-          }
-        }
-      }
+            }
 #endif
 
       // create the new hit
       TrackerHitImpl * hit = new TrackerHitImpl;
-//      hit->setDetectorID( detectorID ) ;
+
       hit->setPosition( &telPos[0] );
       float cov[TRKHITNCOVMATRIX] = {0.,0.,0.,0.,0.,0.};
-      double resx = resolution;
-      double resy = resolution;
+      double resx = resolutionX;
+      double resy = resolutionY;
       cov[0] = resx * resx; // cov(x,x)
       cov[2] = resy * resy; // cov(y,y)
       hit->setCovMatrix( cov );
-      hit->setType( clusterCellDecoder(clusterFrame)["type"] );
+      hit->setType( clusterType  );
 
       // prepare a LCObjectVec to store the current cluster
       LCObjectVec clusterVec;
@@ -639,7 +544,7 @@ void EUTelProcessorHitMaker::processEvent (LCEvent * event) {
       hit->rawHits() = clusterVec;
       
       // Determine sensorID from the cluster data.
-      idHitEncoder["sensorID"] =  detectorID ;
+      idHitEncoder["sensorID"] =  sensorID ;
 
       // set the local/global bit flag property for the hit
       idHitEncoder["properties"] = 0; // init
@@ -676,8 +581,6 @@ void EUTelProcessorHitMaker::bookHistos(int sensorID) {
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
-  int layerIndex = 0;
-  layerIndex   = _conversionIdMap[ sensorID ];
 
   string tempHistoName;
   string basePath = "plane_" + to_string( sensorID ) ;
@@ -687,13 +590,13 @@ void EUTelProcessorHitMaker::bookHistos(int sensorID) {
   tempHistoName = _hitHistoLocalName + "_" + to_string( sensorID ) ;
 
   double xMin =  0;
-  double xMax =   _siPlanesLayerLayout->getSensitiveSizeX ( layerIndex );
+  double xMax =  geo::gGeometry().siPlaneXSize ( sensorID );   
 
   double yMin =  0;
-  double yMax = _siPlanesLayerLayout->getSensitiveSizeY ( layerIndex );
+  double yMax =  geo::gGeometry().siPlaneYSize ( sensorID ); 
 
-  int xNBin =   _siPlanesLayerLayout->getSensitiveNpixelX( layerIndex );
-  int yNBin =   _siPlanesLayerLayout->getSensitiveNpixelY( layerIndex );
+  int xNBin =    geo::gGeometry().siPlaneXNpixels ( sensorID );
+  int yNBin =    geo::gGeometry().siPlaneYNpixels ( sensorID );
 
 
   AIDA::IHistogram2D * hitHistoLocal = AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName).c_str(),
@@ -710,13 +613,13 @@ void EUTelProcessorHitMaker::bookHistos(int sensorID) {
   // 2 should be enough because it
   // means that the sensor is wrong
   // by all its size.
-  double safetyFactor = 2.0;
-  double xPosition =  _siPlanesLayerLayout->getSensitivePositionX( layerIndex );
-  double yPosition =  _siPlanesLayerLayout->getSensitivePositionY( layerIndex );
-  double xSize     =  _siPlanesLayerLayout->getSensitiveSizeX ( layerIndex );
-  double ySize     =  _siPlanesLayerLayout->getSensitiveSizeY ( layerIndex );
-  int xBin         =  _siPlanesLayerLayout->getSensitiveNpixelX( layerIndex );
-  int yBin         =  _siPlanesLayerLayout->getSensitiveNpixelY( layerIndex );
+  double safetyFactor = 1.2;
+  double xPosition =  geo::gGeometry().siPlaneXPosition( sensorID );
+  double yPosition =  geo::gGeometry().siPlaneYPosition( sensorID );
+  double xSize     =  geo::gGeometry().siPlaneXSize ( sensorID );
+  double ySize     =  geo::gGeometry().siPlaneYSize ( sensorID );
+  int xBin         =  geo::gGeometry().siPlaneXNpixels( sensorID );
+  int yBin         =  geo::gGeometry().siPlaneYNpixels( sensorID );
 
   xMin = safetyFactor * ( xPosition - ( 0.5 * xSize ));
   xMax = safetyFactor * ( xPosition + ( 0.5 * xSize ));
@@ -750,126 +653,5 @@ void EUTelProcessorHitMaker::bookHistos(int sensorID) {
 
 }
 
-void EUTelProcessorHitMaker::book3DHisto() {
-
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-    // we have to found the boundaries of this histograms. Let's take
-    // the outer positions in all directions
-    double xMin  =      numeric_limits< double >::max();
-    double xMax  = -1 * numeric_limits< double >::max();
-    int    xNBin = numeric_limits< int >::min();
-
-    double yMin  =      numeric_limits< double >::max();
-    double yMax  = -1 * numeric_limits< double >::max();
-    int    yNBin = numeric_limits< int >::min();
-
-    for ( int iPlane = 0 ; iPlane < _siPlanesParameters->getSiPlanesNumber(); ++iPlane ) {
-
-      // x axis
-      xMin  = min( _siPlanesLayerLayout->getSensitivePositionX( iPlane ) - ( 0.5  * _siPlanesLayerLayout->getSensitiveSizeX( iPlane )), xMin);
-      xMax  = max( _siPlanesLayerLayout->getSensitivePositionX( iPlane ) + ( 0.5  * _siPlanesLayerLayout->getSensitiveSizeX( iPlane )), xMax);
-      xNBin = max( _siPlanesLayerLayout->getSensitiveNpixelX( iPlane ), xNBin );
-
-      // y axis
-      yMin  = min( _siPlanesLayerLayout->getSensitivePositionY( iPlane ) - ( 0.5  * _siPlanesLayerLayout->getSensitiveSizeY( iPlane )), yMin);
-      yMax  = max( _siPlanesLayerLayout->getSensitivePositionY( iPlane ) + ( 0.5  * _siPlanesLayerLayout->getSensitiveSizeY( iPlane )), yMax);
-      yNBin = max( _siPlanesLayerLayout->getSensitiveNpixelY( iPlane ), yNBin );
-
-    }
-
-
-    if ( _3DHistoSwitch ) {
-      // since we may still have alignment problem, we have to take a
-      // safety factor on the x and y direction especially.
-      // here I take something less than 2 because otherwise I will have
-      // a 200MB histogram.
-      double safetyFactor = 1.2;
-
-      double xDistance = std::abs( xMax - xMin ) ;
-      double xCenter   = ( xMax + xMin ) / 2 ;
-      xMin  = xCenter - safetyFactor * ( xDistance / 2 );
-      xMax  = xCenter + safetyFactor * ( xDistance / 2 );
-      xNBin = static_cast< int > ( xNBin * safetyFactor );
-
-      // generate the x axis binning
-      vector< double > xAxis;
-      double step = xDistance / xNBin;
-      for ( int i = 0 ; i < xNBin ; ++i ) {
-        xAxis.push_back ( xMin + i * step );
-      }
-
-      double yDistance = std::abs( yMax - yMin ) ;
-      double yCenter   = ( yMax + yMin ) / 2 ;
-      yMin  = yCenter - safetyFactor * ( yDistance / 2 );
-      yMax  = yCenter + safetyFactor * ( yDistance / 2 );
-      yNBin = static_cast< int > ( yNBin * safetyFactor );
-
-      // generate the y axis binning
-      vector< double > yAxis;
-      step = yDistance / yNBin;
-      for ( int i = 0 ; i < yNBin ; ++i ) {
-        yAxis.push_back( yMin + i * step ) ;
-      }
-
-
-      // generate the z axis but not equally spaced!
-      double safetyMargin = 10; // this is mm
-      vector< double > zAxis;
-
-      vector< double > zPos;
-      for ( int i = 0 ; i < _siPlanesParameters->getSiPlanesNumber(); ++i ) {
-        zPos.push_back( _siPlanesLayerLayout->getSensitivePositionZ( i ) );
-      }
-
-      sort( zPos.begin(), zPos.end() );
-
-      for ( size_t pos = 0; pos < zPos.size(); ++pos ) {
-        zAxis.push_back( zPos.at( pos ) - safetyMargin );
-        zAxis.push_back( zPos.at( pos ) + safetyMargin );
-      }
-
-      AIDA::IHistogram3D * densityPlot = AIDAProcessor::histogramFactory(this)->createHistogram3D( _densityPlotName ,
-                                                                                                   "Hit position in the telescope frame of reference",
-                                                                                                   xAxis, yAxis, zAxis, "");
-
-      if ( densityPlot ) {
-        _aidaHistoMap.insert( make_pair ( _densityPlotName, densityPlot ) ) ;
-      } else {
-        streamlog_out ( ERROR1 )  << "Problem booking the " << (_densityPlotName) << ".\n"
-                                  << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
-        _histogramSwitch = false;
-      }
-    }
-
-#endif // AIDA
-}
-
-void EUTelProcessorHitMaker::_EulerRotation(double* _telPos, double* _gRotation) {
-  
-    TVector3 _UnrotatedSensorHit( _telPos[0], _telPos[1], 0. );
-    TVector3 _RotatedSensorHit( _telPos[0], _telPos[1], 0. );
-
-    TVector3 _Xaxis( 1.0, 0.0, 0.0 );
-    TVector3 _Yaxis( 0.0, 1.0, 0.0 );
-    TVector3 _Zaxis( 0.0, 0.0, 1.0 );
-
-    if( TMath::Abs(_gRotation[2]) > 1e-6 ) 
-    {
-        _RotatedSensorHit.Rotate( _gRotation[2], _Xaxis ); // in ZY
-    }
-    if( TMath::Abs(_gRotation[1]) > 1e-6 ) 
-    {
-        _RotatedSensorHit.Rotate( _gRotation[1], _Yaxis ); // in ZX 
-    } 
-    if( TMath::Abs(_gRotation[0]) > 1e-6 ) 
-    {   
-        _RotatedSensorHit.Rotate( _gRotation[0], _Zaxis ); // in XY
-    }
- 
-    _telPos[0] = _RotatedSensorHit.X();
-    _telPos[1] = _RotatedSensorHit.Y();
-    _telPos[2] = _telPos[2] + _RotatedSensorHit.Z();
- 
-}
 
 #endif // GEAR
