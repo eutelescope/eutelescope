@@ -211,10 +211,16 @@ namespace eutelescope {
              */
             gear::SiPlanesLayerLayout* _siPlanesLayerLayout;
 
+            /**
+             */
             gear::TelPlanesParameters*  _telPlanesParameters;
+ 
+            /**
+             */
             gear::TelPlanesLayerLayout* _telPlanesLayerLayout;
 
-        private:
+// overwrite private to public ::
+        public :
             /** Vector of Sensor IDs */
             EVENT::IntVec _sensorIDVec;
 
@@ -264,14 +270,15 @@ namespace eutelescope {
             size_t _nPlanes;
 
             /** Pointer to the pixel geometry manager */
-			EUTelGenericPixGeoMgr* _pixGeoMgr;
+            EUTelGenericPixGeoMgr* _pixGeoMgr;
             //#ifdef  USE_TGEO
 
-			/** Flag if geoemtry is already initialized */
-			bool _isGeoInitialized;
+        private:
+	    /** Flag if geoemtry is already initialized */
+	    bool _isGeoInitialized;
 
-			/** Map containing plane path (string) and corresponding planeID */
-			std::map<int, std::string> _planePath;
+	    /** Map containing plane path (string) and corresponding planeID */
+	    std::map<int, std::string> _planePath;
 
         public:
             // TGeo stuff
