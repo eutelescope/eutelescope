@@ -108,14 +108,12 @@ _orderedSensorIDVec()
 
 
   registerInputCollection(LCIO::TRACKERPULSE,"PulseCollectionName",
-                           "Cluster (pulse) collection name",
-                           _pulseCollectionName, string ( "" ));
+                            "Cluster (pulse) collection name",
+                            _pulseCollectionName, string ( "" ));
 
   registerOutputCollection(LCIO::TRACKERHIT,"HitCollectionName",
-                           "Hit collection name",
-                           _hitCollectionName, string ( "" ));
-
-
+                            "Hit collection name",
+                            _hitCollectionName, string ( "" ));
 
   registerOptionalParameter("Enable3DHisto","If true a 3D histo will be filled. It may require large memory",
                             _3DHistoSwitch, static_cast<bool> ( true ) );
@@ -466,8 +464,6 @@ void EUTelProcessorHitMaker::processEvent (LCEvent * event) {
       //
 
       // get the position of the seed pixel. This is in pixel number.
-//      int xCluCenter, yCluCenter;
-//      cluster->getCenterCoord(xCluCenter, yCluCenter);
       int xCluSeed = 0;
       int yCluSeed = 0;
       cluster->getSeedCoord(xCluSeed, yCluSeed);
@@ -564,7 +560,6 @@ void EUTelProcessorHitMaker::processEvent (LCEvent * event) {
           if       ( xPointing[1] < -0.7 )    sign = -1 ;
           else if  ( xPointing[1] > 0.7 )    sign =  1 ;
       }
-      //     telPos[0] += xZero - sign * xSize/2;
       telPos[0] +=  ( -1 ) * sign * xSize / 2;   //apply shifts few lines later
 
       if      ( yPointing[0] < -0.7 )       sign = -1 ;
@@ -573,24 +568,15 @@ void EUTelProcessorHitMaker::processEvent (LCEvent * event) {
           if       ( yPointing[1] < -0.7 )    sign = -1 ;
           else if  ( yPointing[1] > 0.7 )    sign =  1 ;
       }
-      //      telPos[1] += yZero - sign * ySize/2;
       telPos[1] += ( -1 ) * sign * ySize / 2;   // apply shifts few lines later
 
-
-      //    telPos[2] = zZero + 0.5 * zThickness;
       telPos[2] = 0.0 ;       // apply shifts few lines later 
       if ( !_wantLocalCoordinates ) {
             // 
             // NOW !!
             // GLOBAL coordinate system !!!
-            // 
 
-            // 
             // rotate according to gRotation angles:
-            // 
-
-            //      if(  detectorID >= 10 )
-            //     test mode: all planes can be tilted  
 
             _EulerRotation( telPos, gRotation );
             //
@@ -870,20 +856,14 @@ void EUTelProcessorHitMaker::_EulerRotation(double* _telPos, double* _gRotation)
     if( TMath::Abs(_gRotation[2]) > 1e-6 ) 
     {
         _RotatedSensorHit.Rotate( _gRotation[2], _Xaxis ); // in ZY
-//        _Zaxis.Rotate( _gRotation[2], _Xaxis  ); // in XY
-//        _Yaxis.Rotate( _gRotation[2], _Xaxis  ); // in XY
     }
     if( TMath::Abs(_gRotation[1]) > 1e-6 ) 
     {
         _RotatedSensorHit.Rotate( _gRotation[1], _Yaxis ); // in ZX 
-//        _Xaxis.Rotate( _gRotation[1], _Yaxis  ); // in XY
-//        _Zaxis.Rotate( _gRotation[1], _Yaxis  ); // in XY
     } 
     if( TMath::Abs(_gRotation[0]) > 1e-6 ) 
     {   
         _RotatedSensorHit.Rotate( _gRotation[0], _Zaxis ); // in XY
-//        _Xaxis.Rotate( _gRotation[0], _Zaxis  ); // in XY
-//        _Yaxis.Rotate( _gRotation[0], _Zaxis  ); // in XY
     }
  
     _telPos[0] = _RotatedSensorHit.X();
