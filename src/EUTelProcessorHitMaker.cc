@@ -16,6 +16,8 @@
 #include "TVector3.h"
 
 // eutelescope includes ".h"
+#include "EUTelGeometryTelescopeGeoDescription.h"
+
 #include "EUTelProcessorHitMaker.h"
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelEventImpl.h"
@@ -139,6 +141,9 @@ void EUTelProcessorHitMaker::init() {
   _iRun = 0;
   _iEvt = 0;
 
+  // Getting access to geometry description
+  std::string name("test.root");
+  geo::gGeometry().initializeTGeoDescription(name,false);
 
   // check if Marlin was built with GEAR support or not
 #ifndef USE_GEAR
