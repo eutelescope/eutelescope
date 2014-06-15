@@ -494,15 +494,10 @@ void EUTelProcessorHitMaker::processEvent (LCEvent * event) {
             // 
             // NOW !!
             // GLOBAL coordinate system !!!
+           
+        const double localPos[3] = { telPos[0], telPos[1], telPos[2] };
+        geo::gGeometry().local2Master( sensorID, localPos, telPos);
 
-            // rotate according to gRotation angles:
-
-//            _EulerRotation( telPos, gRotation );
-            //
-            //    finally apply initial shifts:       
-            telPos[0] += xZero;
-            telPos[1] += yZero;
-            telPos[2] += zZero + 0.5 * zThickness;
       }
           
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
