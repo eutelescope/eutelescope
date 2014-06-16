@@ -201,7 +201,7 @@ TVector3 EUTelTrackStateImpl::getXYZfromArcLength( float s ) const {
 
 }	
 
-//This function returns the H matrix of the state. This relates the state in global coordinates to local coordinates. 
+//This function returns the H matrix of the state. This relates the state in global coordinates to local coordinates. Note it assumes that z axis is a parameter so you only need the rotations of the plane you must be on.
     /** Retrieve track state projection onto measurement space matrix
      * 
      * @param ts track state

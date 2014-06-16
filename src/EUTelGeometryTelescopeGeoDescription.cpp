@@ -715,7 +715,7 @@ void EUTelGeometryTelescopeGeoDescription::master2LocalVec( int sensorID, const 
 }
 
 /**
- * Global-to-local coordinate transformation matrix.
+ * Global-to-local coordinate transformation matrix. Are we sure this is the correct transform??????? Is it the other way? Since the other processor take the inverse of this and we need global to local for that so the inverse must be local to global. 
  * Corresponding volume is determined automatically.
  * 
  * @param globalPos (x,y,z) in global coordinate system

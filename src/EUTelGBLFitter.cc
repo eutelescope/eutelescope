@@ -1014,14 +1014,25 @@ namespace eutelescope {
 
 // convert input TrackCandidates and TrackStates into a GBL Trajectory
 void EUTelGBLFitter::FillInformationToGBLPointObject(IMPL::TrackImpl* trackimpl){
-	// sanity check. Mustn't happen in principle.
+	// sanity check. Mustn't happen in principle. That the number of hits is greater than the number of hits
   if ( trackimpl->getTrackerHits().size() > geo::gGeometry().nPlanes() ){
   	streamlog_out(ERROR) << "Sanity check. This should not happen in principle. Number of hits is greater then number of planes" << std::endl;
    	return;
   }
 
+	//Create the jacobian
+	TMatrixD jacPointToPoint(5, 5);
+  jacPointToPoint.UnitMatrix();
+ 	////////////////////////////////////////////////////////////////////////////////////////////////// loop through all states.
+  for(int i=0;i < trackimpl->getTrackStates().size(); i++){
+  gbl::GblPoint point(jacPointToPoint);	//We create the first point. Note the first point the Jacobian is the identity matrix. After that the jacobian is how a change in the state before it affects it.
 
+	// Calculate the matrix to go from the state measurement to the hit measurement. This will also be affected by the jacobian. Since the jacobian we use relates global positions in the telescope frame to each other. The the state vector must be global telescope to local on the plane. HOWEVER! The z axis is a parameter NOT a variable. This means that it is not a state varible and therefore the H matrix only needs to shift the global to local frame by the rotations of the plane. 
+  TMatrixD Global2Local(2,5);
+  CalculateProjMatrix(Global2Local, hitPointGlobal); //This here since the tracksstate is not EUTelescope derived and this should not go in geometry since it is particular to a trackstate.
 
+	}//END OF LOOP THROUGH ALL PLANES
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////
 }
 
 

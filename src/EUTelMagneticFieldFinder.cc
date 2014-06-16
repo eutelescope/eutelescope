@@ -247,7 +247,7 @@ namespace eutelescope {
             			streamlog_out (DEBUG5 ) << "NextPlane MATCHED. Position of Hit (Local) " <<  uvpos[0] << " " <<  uvpos[1] << " " << uvpos[2] <<" Position of state (Global) " << state_new->getX() << "," << state_new->getY()<<","<< state_new->getZParameter() <<" Distance between them: "<< distance << " Sensor ID:"<< state_new->getLocation() << " Seed we began at: " << (*itTrk) << endl;
               		streamlog_out ( DEBUG5 ) << "Will now alter Cov matrix and state variables using hit information " << std::endl;
 									TMatrixD HMatrix = state_new->getH(); //We need to be able to move from the measurement to the state space
-       						TMatrixD GainMatrix = updateGainK( state_new, closestHit ); //This is a matrix that tells you
+       						TMatrixD GainMatrix = updateGainK( state_new, closestHit ); //This is a matrix that tells you how much the state should be changed with the information from the hit
 									UpdateStateUsingHitInformation(state_new ,closestHit, jacobian, GainMatrix, HMatrix); //Update the state on the track
 									UpdateTrackUsingHitInformation( state_new , closestHit, (*itTrk), jacobian, GainMatrix,HMatrix); //Update the track itself.									
             		}
