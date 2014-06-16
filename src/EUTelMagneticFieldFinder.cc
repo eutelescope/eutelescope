@@ -205,7 +205,7 @@ namespace eutelescope {
             float dpoint[3];
             int newSensorID = state->findIntersectionWithCertainID((iter->second+1), dpoint );
 						int sensorIntersection = geo::gGeometry( ).getSensorID(dpoint);
-						if(newSensorID < 0 or sensorIntersection < 0){ //If there was no intersection of infinite plane or if the intersection is not in the sensor. NEED TO FIX SENSORID GEOMETRY. Should be ok for now since distance will be too great if outside to matter
+						if(newSensorID < 0 or sensorIntersection < 0){ //If there was no intersection of infinite plane or if the intersection is not in the sensor.
 							streamlog_out ( DEBUG5 ) << "Point (" <<  dpoint[0] << ", " <<  dpoint[1] << ", " << dpoint[2]  << ")" << "found on no sensor. New sensor ID (Was there intersection?):"  << newSensorID <<"SensorID (Was the intersection on the plane?)"<< sensorIntersection  << std::endl;
 						}
 						else{ //So we found a intersection so we need to determine that new state.
@@ -220,6 +220,11 @@ namespace eutelescope {
             	//jacobian.Print();
 							nextStateUsingJacobianFinder(state, state_new, jacobian); //Here we determine the new state position and CovMatrix using the jacobian. This might not need to be done now but would involve changing closestHit()????
 							state_new->setZParameter( dpoint[2] ); //Set this here since it is not a state variable but a parameter
+							double global[] = { state_new->getX(),state_new->getY(),state_new->getZParameter() };
+							double local[3];
+							geo::gGeometry().master2Localtwo( state_new->getLocation(), global, local );
+							const float localRef[3] = {local[0], local[1], local[3]}; 
+							state_new->setReferencePoint(localRef);
 							
 							streamlog_out ( DEBUG5 ) << "Both FindIntersection and Jacobian should be the same" << std::endl;
 							streamlog_out ( DEBUG5 ) << "Point (" <<  dpoint[0] << ", " <<  dpoint[1] << ") from findIntersection" << std::endl;
@@ -230,8 +235,8 @@ namespace eutelescope {
           		EVENT::TrackerHit* closestHit = const_cast< EVENT::TrackerHit* > ( findClosestHit( state_new, newSensorID ) ); //This will look for the closest hit but not if it is within the excepted range		
  							if ( closestHit ){ //Just check if the closestHit exist 
           			const double* uvpos = closestHit->getPosition(); //Get that hits position
-            		const double distance = getResidual( state_new, closestHit ).Norm2Sqr( ); //Determine the residual to it
-            		const double DCA = 100000;                             //getXYPredictionPrecision( state_new ); // basically RMax cut at the moment. MUST FIX!!!! HOW SHOULD THIS BE TREAT?;;
+            		const double distance = getResidual( state_new, closestHit ).Norm2Sqr( ); //Determine the residual to it. //Distance is in mm.
+            		const double DCA = 1;  //DCA since is mm since distance is.                             //getXYPredictionPrecision( state_new ); // basically RMax cut at the moment. MUST FIX!!!! HOW SHOULD THIS BE TREAT?;;
             		streamlog_out ( DEBUG5 ) << "NextPlane " << newSensorID << " " << uvpos[0] << " " << uvpos[1] << " " << uvpos[2] << " resid:" << distance << " ResidualCut: " << DCA << endl;
             		if ( distance > DCA ) {
               		streamlog_out ( DEBUG1 ) << "Closest hit is outside of search window." << std::endl;
