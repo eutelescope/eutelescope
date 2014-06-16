@@ -10,16 +10,18 @@
 
 #include "marlin/Processor.h"
 
+#include "EUTelUtility.h"
+
 using namespace lcio;
 using namespace marlin;
 using namespace std;
 
 namespace eutelescope {
 
- class EUTelProcessorGBLFitCandidates : public Processor {
+ class EUTelProcessorGBLFitCandidates : public marlin::Processor {
 
     private:
-        DISALLOW_COPY_AND_ASSIGN(EUTelProcessorGBLFitCandidates)     // prevent users from making (default) copies of processors
+        DISALLOW_COPY_AND_ASSIGN(EUTelProcessorGBLFitCandidates);     // prevent users from making (default) copies of processors
         
     public:
 
@@ -45,7 +47,16 @@ namespace eutelescope {
 
         virtual void check(LCEvent * evt);
 
-        /** Called after data processing for clean up.
+        /** Called after data processing for clean up. **/
+	
+			  virtual void end();
+
+};
+
+    /** A global instance of the processor */
+    EUTelProcessorGBLFitCandidates gEUTelProcessorGBLFitCandidates;
+
+}
 
 
 #endif // USE_GBL

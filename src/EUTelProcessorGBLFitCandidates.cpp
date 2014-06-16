@@ -27,6 +27,8 @@
 
 #include "EUTelProcessorGBLFitCandidates.h"
 
+using namespace eutelescope;
+
 EUTelProcessorGBLFitCandidates::EUTelProcessorGBLFitCandidates() :
 Processor("EUTelProcessorGBLFitCandidates"){}
 
@@ -34,10 +36,10 @@ void EUTelProcessorGBLFitCandidates::init() {}
 
 void EUTelProcessorGBLFitCandidates::processRunHeader(LCRunHeader * run) {}
 
-void check(LCEvent * evt){}
+void EUTelProcessorGBLFitCandidates::check(LCEvent * evt){}
 
 void EUTelProcessorGBLFitCandidates::processEvent(LCEvent * evt){}
 
-void EUTelProcessorTrackingGBLTrajectory::end() {]
+void EUTelProcessorGBLFitCandidates::end() {}
 
 #endif // USE_GBL
