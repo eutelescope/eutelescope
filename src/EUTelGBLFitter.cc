@@ -1013,6 +1013,18 @@ namespace eutelescope {
     }
 
 // convert input TrackCandidates and TrackStates into a GBL Trajectory
+void EUTelGBLFitter::FillInformationToGBLPointObject(IMPL::TrackImpl* trackimpl){
+	// sanity check. Mustn't happen in principle.
+  if ( trackimpl->getTrackerHits().size() > geo::gGeometry().nPlanes() ){
+  	streamlog_out(ERROR) << "Sanity check. This should not happen in principle. Number of hits is greater then number of planes" << std::endl;
+   	return;
+  }
+
+
+
+}
+
+
     void EUTelGBLFitter::TrackCandidatesToGBLTrajectory( vector<IMPL::TrackImpl*>::const_iterator& itTrkCand) {
 
             // sanity check. Mustn't happen in principle.
@@ -1247,18 +1259,19 @@ namespace eutelescope {
 
 // convert input TrackCandidates and TrackStates into a GBL Trajectory
     void EUTelGBLFitter::TrackCandidatesToGBLTrajectories( ) {
-        Clear(); // 
+  	//      Clear(); //  This should be done explictly outside the class. So it is not hidden away.
 
-        // prepare output collection
-        try {
-            _fittrackvec = new IMPL::LCCollectionVec( EVENT::LCIO::TRACK );
-            _fithitsvec = new IMPL::LCCollectionVec( EVENT::LCIO::TRACKERHIT );
-            IMPL::LCFlagImpl flag( _fittrackvec->getFlag( ) );
-            flag.setBit( lcio::LCIO::TRBIT_HITS );
-            _fittrackvec->setFlag( flag.getFlag( ) );
-        } catch ( ... ) {
-            streamlog_out( ERROR2 ) << "Can't allocate output collection" << std::endl;
-        }
+        ////////////////////////////////////////////////////////////////////////// prepare output collection!!!!!!!!!!NOT HERE HOW STUPID! Unless I am missing something
+     //   try {
+       //     _fittrackvec = new IMPL::LCCollectionVec( EVENT::LCIO::TRACK );
+         //   _fithitsvec = new IMPL::LCCollectionVec( EVENT::LCIO::TRACKERHIT );
+      //      IMPL::LCFlagImpl flag( _fittrackvec->getFlag( ) );
+       //     flag.setBit( lcio::LCIO::TRBIT_HITS );
+       //     _fittrackvec->setFlag( flag.getFlag( ) );
+      //  } catch ( ... ) {
+       //     streamlog_out( ERROR2 ) << "Can't allocate output collection" << std::endl;
+      //  }
+				////////////////////////////////////////////////////////////////////////////////////////////////////////
  
 //
         vector<IMPL::TrackImpl*>::const_iterator itTrkCand;
