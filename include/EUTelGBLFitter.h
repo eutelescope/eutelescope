@@ -65,11 +65,11 @@ namespace eutelescope {
 
         void TrackCandidatesToGBLTrajectories();
 
-				void FillInformationToGBLPointObject(EUTelTrackImpl* trackimpl);
+				void FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack);
 
-				void FindHitIfThereIsOne(IMPL::TrackImpl* trackimpl, EVENT::TrackerHit* hit, IMPL::TrackStateImpl* state);
+				void FindHitIfThereIsOne(EUTelTrackImpl* trackimpl, EVENT::TrackerHit* hit, EUTelTrackStateImpl* state);
 
-				void addMeasurementGBL(gbl::GblPoint& point, const double *hitPos, const double *statePos, const EVENT::FloatVec& hitCov, TMatrixD& HMatrix);
+				void addMeasurementGBL(gbl::GblPoint& point, const double *hitPos, const double *statePos, const EVENT::FloatVec& hitCov, TMatrixD HMatrix);
 
 				void addSiPlaneScattererGBL(gbl::GblPoint& point, int iPlane);
 

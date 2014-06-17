@@ -159,6 +159,15 @@ void EUTelProcessorGBLFitCandidates::CreateEUTrackandStates(TrackImpl* trackimpl
 
 		EUtrack->addTrackState(EUstate);	 
 	}
+
+   	// Assign hits to LCIO TRACK
+    const EVENT::TrackerHitVec& trkcandhits = trackimpl->getTrackerHits();
+    EVENT::TrackerHitVec::const_iterator itrHit;
+    for ( itrHit = trkcandhits.begin(); itrHit != trkcandhits.end(); ++itrHit ){
+    	EUtrack->addHit( *itrHit );
+    }
+
+	
 }
 
 

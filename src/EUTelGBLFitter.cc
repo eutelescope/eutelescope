@@ -987,9 +987,9 @@ namespace eutelescope {
     }
 
 // convert input TrackCandidates and TrackStates into a GBL Trajectory
-void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* trackimpl){
+void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack){
 	// sanity check. Mustn't happen in principle. That the number of hits is greater than the number of hits
- /* if ( trackimpl->getTrackerHits().size() > geo::gGeometry().nPlanes() ){
+  if ( EUtrack->getTrackerHits().size() > geo::gGeometry().nPlanes() ){
   	streamlog_out(ERROR) << "Sanity check. This should not happen in principle. Number of hits is greater then number of planes" << std::endl;
    	return;
   }
@@ -998,31 +998,27 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* trackimpl){
 	TMatrixD jacPointToPoint(5, 5);
   jacPointToPoint.UnitMatrix();
  	////////////////////////////////////////////////////////////////////////////////////////////////// loop through all states.
-  for(int i=0;i < trackimpl->getTrackStates().size(); i++){		
+  for(int i=0;i < EUtrack->getTrackStates().size(); i++){		
 		/////////////////////////////////////////////////////////////////////////////////////////////BEGIN to create GBL point 
 		gbl::GblPoint point(jacPointToPoint);
-  	IMPL::TrackStateImpl* state = static_cast < IMPL::TrackStateImpl*> ( trackimpl->getTrackStates().at(i) ) ; //get the state for this track. Static cast from EVENT::TrackState to derived class IMPL::TrackStateImpl.
+  	EUTelTrackStateImpl* state = EUtrack->getTrackStates().at(i); //get the state for this track. Static cast from EVENT::TrackState to derived class IMPL::TrackStateImpl.
 		//Need to find hit that this state may be associated with. Note this is a problem for two reasons. Not all states have a hit. Furthermore we can not associate a hit with a state with the current LCIO format. This must be fixed
 		EVENT::TrackerHit* hit = NULL; //Create the hit pointer
-		FindHitIfThereIsOne(trackimpl, hit, state); //This will point the hit to the correct hit object associated with this state. If non exists then point it will remain pointed to NULL
+		FindHitIfThereIsOne(EUtrack, hit, state); //This will point the hit to the correct hit object associated with this state. If non exists then point it will remain pointed to NULL
 
 		if(hit != NULL){
 			double fitPointLocal[] = {0.,0.,0.};
   		fitPointLocal [0] = state->getReferencePoint()[0] ;
   		fitPointLocal [1] = state->getReferencePoint()[1] ;
   		fitPointLocal [2] = state->getReferencePoint()[2] ;	 
-			double fitPointGlobal[3];
-			geo::gGeometry().local2Master( state->getLocation(), fitPointLocal, fitPointGlobal );
-			TMatrixD Global2Local(2,5); //Takes a state and returns this as a hit. Only depends on rotations.
- 			CalculateProjMatrix(Global2Local, fitPointGlobal); //This here since the tracksstate is not EUTelescope derived and this should not go in geometry since it is particular to a trackstate.
-			addMeasurementGBL(point, hit->getPosition(),  fitPointLocal, hit->getCovMatrix(), Global2Local);
+			addMeasurementGBL(point, hit->getPosition(),  fitPointLocal, hit->getCovMatrix(), state->getH());
 			addSiPlaneScattererGBL(point, state->getLocation()); //This we still functions still assumes silicon is the thin scatterer. This can be easily changed when we have the correct gear file. However we will always assume that states will come with scattering information. To take into account material between states this will be dealt with latter. 
  
 
 		}//END OF IF STATEMENT IF THERE WAS A HIT
 		//////////////////////////////////////////////////////////////////////////////END OF CREATING GBL POINT
 
-*/
+
 		////////////////////////////////////////////////////////////////////////////////START TO CREATE SCATTERS BETWEEN PLANES
 	/*	if(i != (trackimpl->getTrackStates().size()-1)){
 			IMPL::TrackStateImpl* state_next = static_cast < IMPL::TrackStateImpl*> ( trackimpl->getTrackStates().at(i+1) ) ; //Get the next trackstate to determine dz
@@ -1078,7 +1074,7 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* trackimpl){
 		
 		}
 		*/	
-//	}//END OF LOOP THROUGH ALL PLANES
+	}//END OF LOOP THROUGH ALL PLANES
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////
 }
 
@@ -1108,7 +1104,7 @@ void EUTelGBLFitter::addSiPlaneScattererGBL(gbl::GblPoint& point, int iPlane) {
 
 
 //This will add the measurement of the hit and predicted position. Using the covariant matrix of the hit. NOT! the residual.
-void EUTelGBLFitter::addMeasurementGBL(gbl::GblPoint& point, const double *hitPos, const double *statePos, const EVENT::FloatVec& hitCov, TMatrixD& HMatrix){
+void EUTelGBLFitter::addMeasurementGBL(gbl::GblPoint& point, const double *hitPos, const double *statePos, const EVENT::FloatVec& hitCov, TMatrixD HMatrix){
      
 	streamlog_out(DEBUG4) << " addMeasurementsGBL " << std::endl;
  	TVectorD meas;
@@ -1128,12 +1124,12 @@ void EUTelGBLFitter::addMeasurementGBL(gbl::GblPoint& point, const double *hitPo
 
 }
 
-void EUTelGBLFitter::FindHitIfThereIsOne(IMPL::TrackImpl* trackimpl, EVENT::TrackerHit* hit, IMPL::TrackStateImpl* state){
+void EUTelGBLFitter::FindHitIfThereIsOne(EUTelTrackImpl* EUtrack, EVENT::TrackerHit* hit, EUTelTrackStateImpl* state){
 	
 	int state_location = state->getLocation(); //Get this states location
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////Loop through all the hits on this track and see of it any are on this states plane using location
-	const EVENT::TrackerHitVec& HitOnTrack = trackimpl->getTrackerHits(); //point to these hits by reference
+	const EVENT::TrackerHitVec& HitOnTrack = EUtrack->getTrackerHits(); //point to these hits by reference
   EVENT::TrackerHitVec::const_iterator itrHit;
 	for( itrHit = HitOnTrack.begin(); itrHit != HitOnTrack.end(); ++itrHit){
   	const int planeID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(*itrHit) ); //Get the sensor ID for this hit
