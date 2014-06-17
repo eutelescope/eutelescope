@@ -1029,7 +1029,25 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(IMPL::TrackImpl* trackimpl)
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////
 }
 //This will add the measurement of the hit and predicted position. Using the covariant matrix of the hit. NOT! the residual.
-void EUTelGBLFitter::addMeasurementGBL(gbl::GblPoint& point, const double *hitPos, const double *statePos, const EVENT::FloatVec& hitCov, TMatrixD& HMatrix){}
+void EUTelGBLFitter::addMeasurementGBL(gbl::GblPoint& point, const double *hitPos, const double *statePos, const EVENT::FloatVec& hitCov, TMatrixD& HMatrix){
+     
+	streamlog_out(DEBUG4) << " addMeasurementsGBL " << std::endl;
+ 	TVectorD meas;
+	meas[0] = hitPos[0] - statePos[0];
+  meas[1] = hitPos[1] - statePos[1];
+	TMatrixDSym measPrec(2,2); //Precision matrix is symmetric. The vector option that was here was silly since there could be correlation between variance and x/y.
+  measPrec[0][0] = 1. / hitCov[0];	// cov(x,x)
+  measPrec[1][1] = 1. / hitCov[2];	// cov(y,y)
+	measPrec[0][1] = 1. / hitCov[1];  //cov(x,y)
+
+	streamlog_out(DEBUG4) << "Residuals and covariant matrix for the hit:" << std::endl;
+  streamlog_out(DEBUG4) << "X:" << std::setw(20) << meas[0] << std::setw(20) << measPrec[0][0] << measPrec[0][1] << std::endl;
+  streamlog_out(DEBUG4) << "Y:" << std::setw(20) << meas[1] << std::setw(20) << measPrec[1][0] << measPrec[1][1] << std::endl;
+	
+
+  point.addMeasurement(HMatrix, meas, measPrec);
+
+}
 
 void EUTelGBLFitter::FindHitIfThereIsOne(IMPL::TrackImpl* trackimpl, EVENT::TrackerHit* hit, IMPL::TrackStateImpl* state){
 	
