@@ -987,9 +987,9 @@ namespace eutelescope {
     }
 
 // convert input TrackCandidates and TrackStates into a GBL Trajectory
-void EUTelGBLFitter::FillInformationToGBLPointObject(IMPL::TrackImpl* trackimpl){
+void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* trackimpl){
 	// sanity check. Mustn't happen in principle. That the number of hits is greater than the number of hits
-  if ( trackimpl->getTrackerHits().size() > geo::gGeometry().nPlanes() ){
+ /* if ( trackimpl->getTrackerHits().size() > geo::gGeometry().nPlanes() ){
   	streamlog_out(ERROR) << "Sanity check. This should not happen in principle. Number of hits is greater then number of planes" << std::endl;
    	return;
   }
@@ -999,7 +999,7 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(IMPL::TrackImpl* trackimpl)
   jacPointToPoint.UnitMatrix();
  	////////////////////////////////////////////////////////////////////////////////////////////////// loop through all states.
   for(int i=0;i < trackimpl->getTrackStates().size(); i++){		
-		/////////////////////////////////////////////////////////////////////////////////////////////BEGIN to create GBL point
+		/////////////////////////////////////////////////////////////////////////////////////////////BEGIN to create GBL point 
 		gbl::GblPoint point(jacPointToPoint);
   	IMPL::TrackStateImpl* state = static_cast < IMPL::TrackStateImpl*> ( trackimpl->getTrackStates().at(i) ) ; //get the state for this track. Static cast from EVENT::TrackState to derived class IMPL::TrackStateImpl.
 		//Need to find hit that this state may be associated with. Note this is a problem for two reasons. Not all states have a hit. Furthermore we can not associate a hit with a state with the current LCIO format. This must be fixed
@@ -1022,9 +1022,9 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(IMPL::TrackImpl* trackimpl)
 		}//END OF IF STATEMENT IF THERE WAS A HIT
 		//////////////////////////////////////////////////////////////////////////////END OF CREATING GBL POINT
 
-
+*/
 		////////////////////////////////////////////////////////////////////////////////START TO CREATE SCATTERS BETWEEN PLANES
-		if(i != (trackimpl->getTrackStates().size()-1)){
+	/*	if(i != (trackimpl->getTrackStates().size()-1)){
 			IMPL::TrackStateImpl* state_next = static_cast < IMPL::TrackStateImpl*> ( trackimpl->getTrackStates().at(i+1) ) ; //Get the next trackstate to determine dz
 			double fitPointLocal_next[] = {0.,0.,0.}; 
 			fitPointLocal_next [0] = state_next->getReferencePoint()[0] ;
@@ -1055,7 +1055,7 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(IMPL::TrackImpl* trackimpl)
 			//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////BEGIN THE SECOND SCATTERING PLANE
 			float distance2 = (fitPointGlobal_next[2] + fitPointGlobal[2])/2 + (fitPointGlobal_next[2] - fitPointGlobal[2])/sqrt(12);
 							
-		}
+		}  */
 		/////////////////////////////////////////////////////////////////////////////////////////END OF CREATE SCATTERERS BETWEEN PLANES
 		
 
@@ -1075,10 +1075,10 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(IMPL::TrackImpl* trackimpl)
 			float dz = fitPointGlobal_next[2] - fitPointGlobal[2];
 
 			TMatrix jacobian(5,5); jacobian = getPropagationJacobianF( fitPointGlobal[0], fitPointGlobal[1], fitPointGlobal[2], 0, 0, 1, _beamQ, dz );
-		*/
+		
 		}
-			
-	}//END OF LOOP THROUGH ALL PLANES
+		*/	
+//	}//END OF LOOP THROUGH ALL PLANES
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////
 }
 
@@ -1086,7 +1086,8 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(IMPL::TrackImpl* trackimpl)
 void EUTelGBLFitter::addSiPlaneScattererGBL(gbl::GblPoint& point, int iPlane) {
 
 	TVectorD scatPrecSensor(2);
-	TVectorD scat(2) = {0.0,0.0}; //This should always be 0 right? If not then it should be given as a parameter
+	TVectorD scat(2); 
+	scat[0] = 0.0; scat[1]=0.0; //This should always be 0 right? If not then it should be given as a parameter
 	const double radlenSi           = geo::gGeometry()._siPlanesLayerLayout->getSensitiveRadLength(iPlane);
 	const double radlenKap          = geo::gGeometry()._siPlanesLayerLayout->getLayerRadLength(iPlane);
 	const double thicknessSi        = geo::gGeometry()._siPlanesLayerLayout->getSensitiveThickness(iPlane);

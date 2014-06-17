@@ -332,7 +332,16 @@ void EUTelProcessorTrackingHelixTrackSearch::cartesian2LCIOTrack( EUTelTrackImpl
 	EUTelTrackStateVec::const_iterator trackstate;
 	for(trackstate=tracks.begin(); trackstate !=tracks.end(); trackstate++){
     //EUTelTrackStateImpl* nexttrackstate = new EUTelTrackStateImpl( *(track->getTrackStates().at(i)) );
+		TVectorD statevector = (*trackstate)->getTrackStateVec();
+
+
     IMPL::TrackStateImpl* implstate     = static_cast <IMPL::TrackStateImpl*> (*trackstate ); //This is possible since EUTelTrack is derived from IMPL::TrackState
+		////////Add our state variables into container. The covariant matrix is for our coordinate system
+		implstate->setD0(statevector[0]); //x position global
+		implstate->setPhi(statevector[1]); //y position global
+		implstate->setOmega(statevector[2]); //tx position global
+		implstate->setZ0(statevector[3]); //ty position global
+		implstate->setTanLambda(statevector[4]); //invp position global		 
     LCIOtrack->addTrackState( implstate );
 	}
 	

@@ -65,7 +65,7 @@ namespace eutelescope {
 
         void TrackCandidatesToGBLTrajectories();
 
-				void FillInformationToGBLPointObject(IMPL::TrackImpl* trackimpl);
+				void FillInformationToGBLPointObject(EUTelTrackImpl* trackimpl);
 
 				void FindHitIfThereIsOne(IMPL::TrackImpl* trackimpl, EVENT::TrackerHit* hit, IMPL::TrackStateImpl* state);
 

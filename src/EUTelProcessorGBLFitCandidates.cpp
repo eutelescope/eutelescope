@@ -123,15 +123,16 @@ void EUTelProcessorGBLFitCandidates::processEvent(LCEvent * evt){
         throw SkipEventException(this);
       }
     	IMPL::TrackImpl* trackimpl = static_cast<IMPL::TrackImpl*> (col->getElementAt(iCol));
-
+			EUTelTrackImpl* EUtrack;
+			CreateEUTrackandStates(trackimpl,EUtrack);
       streamlog_out(DEBUG1) << "Track " << iCol << " nhits " << trackimpl->getTrackerHits().size() << endl;
 
 			//_trackFitter->Clear(); //This is a good point to clear all things that need to be reset for each event. Why should gop here?
-      _trackFitter->FillInformationToGBLPointObject(trackimpl);      
+      _trackFitter->FillInformationToGBLPointObject(EUtrack);      
 
 		}//END OF LOOP FOR ALL TRACKS IN AN EVENT
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		
+
 	}//END OF COLLECTION IS NOT NULL LOOP	
 
 }
@@ -139,3 +140,25 @@ void EUTelProcessorGBLFitCandidates::processEvent(LCEvent * evt){
 void EUTelProcessorGBLFitCandidates::end() {}
 
 #endif // USE_GBL
+
+/////////////////////////////////////////////////////Functions
+void EUTelProcessorGBLFitCandidates::CreateEUTrackandStates(TrackImpl* trackimpl, EUTelTrackImpl* EUtrack){
+	
+  for(int i=0;i < trackimpl->getTrackStates().size(); i++){
+		EUTelTrackStateImpl *EUstate = new EUTelTrackStateImpl;
+
+  	IMPL::TrackStateImpl* state = static_cast < IMPL::TrackStateImpl*> ( trackimpl->getTrackStates().at(i) ) ;
+		EUstate->setX(state->getD0()); //x position global
+		EUstate->setY(state->getPhi()); //y position global
+		EUstate->setTx(state->getOmega()); //tx position global
+		EUstate->setTy(state->getZ0()); //ty position global
+		EUstate->setInvP(state->getTanLambda()); //invp position global
+		
+		EUstate->setReferencePoint(state->getReferencePoint());
+		EUstate->setCovMatrix(state->getCovMatrix());	
+
+		EUtrack->addTrackState(EUstate);	 
+	}
+}
+
+

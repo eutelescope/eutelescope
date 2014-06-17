@@ -37,6 +37,8 @@
 #include "EUTelGBLFitter.h"
 #include "EUTelExceptions.h"
 #include "EUTelEventImpl.h"
+#include "EUTelTrackStateImpl.h"
+#include "EUTelTrackImpl.h"
 
 using namespace lcio;
 using namespace marlin;
@@ -100,6 +102,8 @@ namespace eutelescope {
 
 				//Beam energy. 
 				double _eBeam;
+
+				void CreateEUTrackandStates(TrackImpl* trackimpl, EUTelTrackImpl*);
 
 };
 
