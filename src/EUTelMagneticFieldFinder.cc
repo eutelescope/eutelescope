@@ -196,9 +196,11 @@ namespace eutelescope {
 
       const map< int, int > sensorMap = geo::gGeometry().sensorZOrdertoIDs();
       int planeID     = sensorMap.at(0); // the first first plane in the array of the planes according to z direction. // assume not tilted plane. 
-      const int    iPlane             = geo::gGeometry().sensorIDtoZOrder(planeID);
-      const double thicknessSen       = geo::gGeometry()._siPlanesLayerLayout->getSensitiveThickness(iPlane );
-      const double thicknessLay       = geo::gGeometry()._siPlanesLayerLayout->getLayerThickness(iPlane );
+//obsolete??      const int    iPlane             = geo::gGeometry().sensorIDtoZOrder(planeID);
+      const double thicknessSen       = geo::gGeometry().siPlaneZSize( planeID );
+// not needed here: ???      const double thicknessLay       = geo::gGeometry().getLayerThickness(iPlane );
+
+
 //
 // ATTENTION: manual manipulation of the z-coordinate of a ref point
 // should be rather done by a swim function to a will defined "initial" coordinate
@@ -1817,13 +1819,19 @@ itTrk++;
             }
         }
         
+        streamlog_out(DEBUG2) << "EUTelKalmanFilter::sortHitsByMeasurementLayers()  start loop through the .sensorIDsVec()"  << std::endl;
+        int nplanes        =  geo::gGeometry().nPlanes();
+        int nplanesVecSize =  geo::gGeometry().sensorIDsVec().size();
+        streamlog_out(DEBUG2) << "EUTelKalmanFilter::sortHitsByMeasurementLayers()  nplanes : " << nplanes << " vectorSize: " << nplanesVecSize << std::endl;
+
         // Sort measurement layers such that layers encountered by track first
         // are in the front of array
-        _allMeasurements = std::vector< MeasurementLayer* >( geo::gGeometry().nPlanes(), NULL );   // flush vector
+        _allMeasurements = std::vector< MeasurementLayer* >( nplanesVecSize , NULL );   // flush vector
         int numberAlongZ = -1;
         std::vector< int >::const_iterator itSensorID;
         for ( itSensorID = geo::gGeometry().sensorIDsVec().begin(); itSensorID != geo::gGeometry().sensorIDsVec().end(); ++itSensorID ) {
             sensorID = (*itSensorID);
+            streamlog_out(DEBUG1) << " sensorID  : " << sensorID << std::endl;
             itMeasLayer = measLayers.find( sensorID );
             if ( itMeasLayer != measLayers.end() ) {
                 numberAlongZ = geo::gGeometry().sensorIDtoZOrder( sensorID );
