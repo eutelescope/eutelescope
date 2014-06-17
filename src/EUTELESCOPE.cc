@@ -74,6 +74,8 @@ const char *   EUTELESCOPE::BINARY              = "Binary";
 const char *   EUTELESCOPE::FLAGONLY            = "FlagOnly";
 const char *   EUTELESCOPE::MATRIXDEFAULTENCODING    = "sensorID:7,xMin:12,xMax:12,yMin:12,yMax:12";
 const char *   EUTELESCOPE::CLUSTERDEFAULTENCODING   = "sensorID:7,xSeed:12,ySeed:12,xCluSize:5,yCluSize:5,quality:7";
+const char *   EUTELESCOPE::CLUSTERENCODING          = "sensorID:5,clusterID:12,xSeed:11,ySeed:10,xCluSize:9,yCluSize:9,type:5";
+
 const char *   EUTELESCOPE::PULSEDEFAULTENCODING     = "sensorID:7,xSeed:12,ySeed:12,xCluSize:5,yCluSize:5,type:5,quality:5";
 const char *   EUTELESCOPE::ZSDATADEFAULTENCODING    = "sensorID:7,sparsePixelType:5";
 const char *   EUTELESCOPE::ZSCLUSTERDEFAULTENCODING = "sensorID:7,sparsePixelType:5,quality:5";
