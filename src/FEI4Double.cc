@@ -12,11 +12,11 @@ FEI4Double::FEI4Double(): EUTelGenericPixGeoDescr(	40.40, 16.8, 0.025,		//size X
 	Si = new TGeoMedium("FEI4Silicon",1, matSi);
 
 	/* Make a box for the sensitive area
-	Size is: x=2*400+78*250=20300 microns and y=336*50=16800 microns
+	Size is: x=2*78*250+2*450=40400 microns and y=336*50=16800 microns
 	MakeBox takes the half of those values in mm as arguments */
 	plane = _tGeoManager->MakeBox( "sensarea_fei4d", Si, 20.20, 8.4, 0.0125 );
 
-	//Create volumes for the centre and edge regions
+	//Create volumes for the centre and edge region(s)
 	TGeoVolume* centreregion = _tGeoManager->MakeBox("fei4dcentreregion",Si, 0.45, 8.4, 0.0125);
 	TGeoVolume* edgeregion = _tGeoManager->MakeBox("fei4dedgeregion",Si, 9.875, 8.4, 0.0125);
 
@@ -26,7 +26,7 @@ FEI4Double::FEI4Double(): EUTelGenericPixGeoDescr(	40.40, 16.8, 0.025,		//size X
 	TGeoVolume* centrerow = centreregion->Divide("fei4dcentrerow", 2 , 336, 0 , 1, 0, "N"); 
 	centrerow->Divide("fei4dcentrepixel", 1 , 2, 0 , 1, 0, "N"); 
 
-	//And place them to make a singlechip
+	//And place them to make a doublechip
 	plane->AddNode(centreregion, 1);
 	plane->AddNode(edgeregion, 1, new TGeoTranslation(-10.325,0,0));
 	plane->AddNode(edgeregion, 2, new TGeoTranslation(10.325,0,0));
@@ -34,8 +34,7 @@ FEI4Double::FEI4Double(): EUTelGenericPixGeoDescr(	40.40, 16.8, 0.025,		//size X
 
 FEI4Double::~FEI4Double()
 {
-	//delete matSi;
-	//delete Si;
+	//deletion of medium and material done by root
 }
 
 void  FEI4Double::createRootDescr(char const * planeVolume)

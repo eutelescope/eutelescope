@@ -3,9 +3,11 @@
 
   /** @class FEI4Double
 	* This class is the implementation of  @class EUTelGenericPixGeoDescr
-	* for a FEI4 layout with edge pixels which are 400 microns long, the
-	* other properties are: 80 x 336 pixels, 250 x 50 microns**2 size
-	* with exception of the edge pixels (X=0,79) which are longer.
+	* for a FEI4 double chip layout with  default edge pixels (250 microns)
+	* and two prolonged pixels in between the two single chips of 450 micron
+	* size.
+	* 160 x 672 pixels, in x-direction: 79 times 250 mu, 2 times 450 mu and 
+	* again 79 times 250 mu. In y-direction 336 times 50 mu
     */
 
 //EUTELESCOPE
