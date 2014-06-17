@@ -431,20 +431,16 @@ namespace eutelescope {
      * @param p momentum of the particle
      */
     void EUTelGBLFitter::addSiPlaneScattererGBL(gbl::GblPoint& point, TVectorD& scat, TVectorD& scatPrecSensor, int planeID, double p) {
-        const int iPlane = geo::gGeometry().sensorIDtoZOrder(planeID);
-        const double radlenSi           = geo::gGeometry()._siPlanesLayerLayout->getSensitiveRadLength(iPlane);
-        const double radlenKap          = geo::gGeometry()._siPlanesLayerLayout->getLayerRadLength(iPlane);
-        const double thicknessSi        = geo::gGeometry()._siPlanesLayerLayout->getSensitiveThickness(iPlane);
-        const double thicknessKap       = geo::gGeometry()._siPlanesLayerLayout->getLayerThickness(iPlane);
 
-        const double X0Si  = thicknessSi / radlenSi; // Si 
-        const double X0Kap = thicknessKap / radlenKap; // Kapton                
+        const double radlen           = geo::gGeometry().siPlaneRadLength( planeID );
+        const double thickness        = geo::gGeometry().siPlaneZSize( planeID );
 
-        const double tetSi  = Utility::getThetaRMSHighland(p, X0Si);
-        const double tetKap = Utility::getThetaRMSHighland(p, X0Kap);
+        const double X0  = thickness / radlen; // X0 some given material 
 
-        scatPrecSensor[0] = 1.0 / (tetSi * tetSi + tetKap * tetKap);
-        scatPrecSensor[1] = 1.0 / (tetSi * tetSi + tetKap * tetKap);
+        const double tetX0  = Utility::getThetaRMSHighland(p, X0);
+
+        scatPrecSensor[0] = 1.0 / (tetX0 * tetX0 );
+        scatPrecSensor[1] = 1.0 / (tetX0 * tetX0 );
 
         point.addScatterer(scat, scatPrecSensor);
     }
@@ -906,10 +902,10 @@ namespace eutelescope {
 
       const map< int, int > sensorMap = geo::gGeometry().sensorZOrdertoIDs();
       int planeID     = sensorMap.at(0); // the first first plane in the array of the planes according to z direction. // assume not tilted plane. 
-      const int    iPlane             = geo::gGeometry().sensorIDtoZOrder(planeID);
-      const double thicknessSen       = geo::gGeometry()._siPlanesLayerLayout->getSensitiveThickness(iPlane );
-      const double thicknessLay       = geo::gGeometry()._siPlanesLayerLayout->getLayerThickness(iPlane );
-      start[2]    = geo::gGeometry().siPlaneZPosition(planeID) - thicknessSen - thicknessLay; //initial z position to the most-first plane
+
+      const double thicknessSen       = geo::gGeometry().siPlaneZSize( planeID );
+      start[2]    = geo::gGeometry().siPlaneZPosition(planeID) - thicknessSen ; //initial z position to the most-first plane
+
       double dir[3]   = {0.,0.,1.};  // as good as any other value along z axis.
       float dpoint[3] = {0.,0.,0.};  // initialise output point-vector (World frame)
       float lpoint[3] = {0.,0.,0.};  // initialise output point-vector (sensor frame)
