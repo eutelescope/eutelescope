@@ -355,13 +355,10 @@ void EUTelProcessorSparseClustering::sparseClustering(LCEvent* evt, LCCollection
 				// prepare a reimplementation of sparsified cluster
 				std::auto_ptr<EUTelSparseClusterImpl<EUTelGenericSparsePixel > > sparseCluster ( new EUTelSparseClusterImpl<EUTelGenericSparsePixel>( zsCluster.get() ) );
 
-				std::vector<EUTelGenericSparsePixel> cluCandidate;
-
 				//First we need to take any pixel, so let's take the first one
 				//Add it to the cluster as well as the newly added pixels
 				newlyAdded.push_back( hitPixelVec.front() );
-				//sparseCluster->addSparsePixel( &(hitPixelVec.front()) );
-				cluCandidate.push_back( hitPixelVec.front() );
+				sparseCluster->addSparsePixel( &(hitPixelVec.front()) );
 				//And remove it from the original collection
 				hitPixelVec.erase( hitPixelVec.begin() );
 
@@ -391,8 +388,7 @@ void EUTelProcessorSparseClustering::sparseClustering(LCEvent* evt, LCCollection
 						{
 							//add them to the cluster as well as to the newly added ones
 							newlyAdded.push_back( *hitVec );
-							cluCandidate.push_back( *hitVec );
-						//	sparseCluster->addSparsePixel( &(*hitVec) );
+							sparseCluster->addSparsePixel( &(*hitVec) );
 							//and remove it from the original collection
 							hitPixelVec.erase( hitVec );
 							//for the pixel we test there might be other neighbours, we still have to check
@@ -408,7 +404,7 @@ void EUTelProcessorSparseClustering::sparseClustering(LCEvent* evt, LCCollection
 				}
 				
 				//Now we need to process the found cluster
-				if ( sparseCluster->size() > 0 )
+				if (  sparseCluster->size() > 0 )
 				{
 					// set the ID for this zsCluster
 					idZSClusterEncoder["sensorID"] = sensorID;
