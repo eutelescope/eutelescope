@@ -1024,16 +1024,40 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(IMPL::TrackImpl* trackimpl)
 
 
 		////////////////////////////////////////////////////////////////////////////////START TO CREATE SCATTERS BETWEEN PLANES
-		IMPL::TrackStateImpl* state_next = static_cast < IMPL::TrackStateImpl*> ( trackimpl->getTrackStates().at(i+1) ) ; //Get the next trackstate to determine dz
-		double fitPointLocal_next[] = {0.,0.,0.}; 
-		fitPointLocal_next [0] = state_next->getReferencePoint()[0] ;
-  	fitPointLocal_next [1] = state_next->getReferencePoint()[1] ;
-  	fitPointLocal_next [2] = state_next->getReferencePoint()[2] ;
+		if(i != (trackimpl->getTrackStates().size()-1)){
+			IMPL::TrackStateImpl* state_next = static_cast < IMPL::TrackStateImpl*> ( trackimpl->getTrackStates().at(i+1) ) ; //Get the next trackstate to determine dz
+			double fitPointLocal_next[] = {0.,0.,0.}; 
+			fitPointLocal_next [0] = state_next->getReferencePoint()[0] ;
+  		fitPointLocal_next [1] = state_next->getReferencePoint()[1] ;
+  		fitPointLocal_next [2] = state_next->getReferencePoint()[2] ;
 
-		double fitPointGlobal_next[3];
-		geo::gGeometry().local2Master( state_new->getLocation(), fitPointLocal_next, fitPointGlobal_next );
+			double fitPointGlobal_next[3];
+			geo::gGeometry().local2Master( state_new->getLocation(), fitPointLocal_next, fitPointGlobal_next );
+			float rad = findRadLengthIntegral( fitPointGlobal, fitPointGlobal_next, true ) //We need to skip the volumes that contain the hits since this has already been counted.
 
-		float dz = fitPointGlobal_next[2] - fitPointGlobal[2];
+			///////////////////////////////////////////////////////////////////////////////////////////////////////BEGIN THE FIRST SCATTERING PLANE
+			//These distances are from the last state plane. There are where the next scatterer should be
+			float distance1 = (fitPointGlobal_next[2] + fitPointGlobal[2])/2 - (fitPointGlobal_next[2] - fitPointGlobal[2])/sqrt(12); 
+
+			//Note the distance is used along the track and not from the scattering plane. How should this be dealt with?
+			TMatrix jacobianScat1(5,5); jacobianScat1 = getPropagationJacobianF( fitPointGlobal[0], fitPointGlobal[1], fitPointGlobal[2], 0, 0, 1, _beamQ, distance1 );
+			gbl::GblPoint point_scat1(jacobianScat1);
+
+			TVectorD scat(2);
+			TVectorD scat(2) = {0.0,0.0}; //This should always be 0 right? If not then it should be given as a parameter
+
+ 			const double scatvariance  = Utility::getThetaRMSHighland(GetBeamEnergy(), rad/2);
+			TVectorD scatPrecSensor(2);
+ 			scatPrecSensor[0] = 1.0 / (scatvariance * scatvariance );
+
+  		point.addScatterer(scat, scatPrecSensor);
+			/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////END THE FIRST SCATTERING PLANE
+			//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////BEGIN THE SECOND SCATTERING PLANE
+			float distance2 = (fitPointGlobal_next[2] + fitPointGlobal[2])/2 + (fitPointGlobal_next[2] - fitPointGlobal[2])/sqrt(12);
+							
+		}
+		/////////////////////////////////////////////////////////////////////////////////////////END OF CREATE SCATTERERS BETWEEN PLANES
+		
 
 
 		//////////////////////////////////////////////////////////////////////////Create the point with the jacobian and find the new jacobain of the next point
@@ -1054,7 +1078,6 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(IMPL::TrackImpl* trackimpl)
 		*/
 		}
 			
-
 	}//END OF LOOP THROUGH ALL PLANES
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////
 }
