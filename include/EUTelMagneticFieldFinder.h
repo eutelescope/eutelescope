@@ -333,10 +333,7 @@ namespace eutelescope {
         TMatrixD _trkParamCovCkkm1;
         
         /** Process noise matrix */
-        TMatrixDSym _processNoiseQ;
-        
-        /** Kalman filter gain matrix */
-	TMatrixD _gainK;
+        TMatrixDSym _processNoiseQ;       
         
         /** Kalman residual covariance matrix */
         TMatrixD _residualCovR;

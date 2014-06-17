@@ -201,7 +201,7 @@ TVector3 EUTelTrackStateImpl::getXYZfromArcLength( float s ) const {
 
 }	
 
-//This function returns the H matrix of the state. This relates the state in global coordinates to local coordinates. Note it assumes that z axis is a parameter so you only need the rotations of the plane you must be on.
+//This function returns the H matrix of the state. This relates the state in global coordinates to local coordinates (The hit measurement). Note it assumes that z axis is a parameter so you only need the rotations of the plane you must be on. Note the H matrix from Geometry is Local->Global so we must take the inverse.
     /** Retrieve track state projection onto measurement space matrix
      * 
      * @param ts track state
@@ -210,7 +210,7 @@ TVector3 EUTelTrackStateImpl::getXYZfromArcLength( float s ) const {
 TMatrixD EUTelTrackStateImpl::getH() const {
 	streamlog_out( DEBUG2 ) << "EUTelTrackStateImpl::getH()---------------------------------------BEGIN" << std::endl;
 	
-  TMatrixD H(2,5);
+  TMatrixD H(2,5);//2x5 matrix. 
   H.Zero();
   double trkPoint[] = { _x, _y, _zparameter };
   const TGeoHMatrix* globalH = geo::gGeometry().getHMatrix( trkPoint );

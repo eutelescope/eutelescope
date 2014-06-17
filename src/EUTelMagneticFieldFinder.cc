@@ -62,7 +62,6 @@ namespace eutelescope {
 	    _jacobianF(5,5),
             _trkParamCovCkkm1(5,5),
             _processNoiseQ(5,5),
-            _gainK(5,2),
             _residualCovR(2,2),
             _eomIntegrator( new EUTelUtilityRungeKutta() ),
             _jacobianIntegrator( new EUTelUtilityRungeKutta() ),
@@ -98,7 +97,6 @@ namespace eutelescope {
 	    _jacobianF(5,5),
             _trkParamCovCkkm1(5,5),
             _processNoiseQ(5,5),
-            _gainK(5,2),
             _residualCovR(2,2),
             _eomIntegrator( new EUTelUtilityRungeKutta() ),
             _jacobianIntegrator( new EUTelUtilityRungeKutta() ),
@@ -851,7 +849,7 @@ itTrk++;
         return Rkkm1;
     }
     
-    /** Retrieve Kalman gain matrix
+    /** Retrieve Kalman gain matrix. This is a 5x2 matrix so takes a state 5x1 as an argument.
      * 
      * @param ts track state
      * @param hit
@@ -860,23 +858,22 @@ itTrk++;
      */
     const TMatrixD& EUTelKalmanFilter::updateGainK( const EUTelTrackStateImpl* ts, const EVENT::TrackerHit* hit ) {
         streamlog_out( DEBUG2 ) << "EUTelKalmanFilter::updateGainK()" << std::endl;
-        _processNoiseQ.Zero();
+				TMatrixD gainK;
+        _processNoiseQ.Zero(); //Not sure the need for this?
         TMatrixDSym Ckm1 = ts->getTrackStateCov( );
-        TMatrixDSym Ckkm1 = Ckm1.Similarity( _jacobianF );        //Ckkm1 += _processNoiseQ;
-        TMatrixD Ht(5,2);     Ht = Ht.Transpose( ts->getH() );
+        TMatrixDSym Ckkm1 = Ckm1.Similarity( _jacobianF ); //Transform covariant matrix from one position to the next      
+        TMatrixD Ht(5,2);     Ht = Ht.Transpose( ts->getH() );//This matrix transforms from local to global.
         
-        _gainK = Ckkm1 * Ht * getResidualCov( ts, hit ).Invert();
-//        _gainK *= Ht;
-//        _gainK *= Ckkm1;
+        gainK = Ckkm1 * Ht * getResidualCov( ts, hit ).Invert();//take residual of hit and track in local frame. Transform to global. Then multiply by global state covariant matrix
         
         if ( streamlog_level(DEBUG0) ) {
             streamlog_out( DEBUG0 ) << "Gain matrix:" << std::endl;
-            _gainK.Print();
+            gainK.Print();
         }
         
         streamlog_out( DEBUG2 ) << "----------------------------------------EUTelKalmanFilter::updateGainK()------------------------------------" << std::endl;
         
-        return _gainK;
+        return gainK;
     }
     
     /** Update track state given new hit
@@ -894,7 +891,7 @@ itTrk++;
 				///////////////////////////////////////////////////////////////////////
 
 				///////////////////////////////////////////////////////First the state. Note that if the hit is accurate you want to change the state to that position
-        state += KGain * residual;   //If the hit is very certain KGain will be unity so the new state position will be the hit position. If the hit is very uncertain then KGain is very small and has no effect.
+        state += KGain * residual;   //If the hit is very certain KGain will be unity so the new state position will be the hit position. If the hit is very uncertain then KGain is very small and has no effect. Note matrix (5x1)=+(5x2)*(2x1). 
         input -> setX( state[0] );
         input -> setY( state[1] );
         input -> setTx( state[2] );
@@ -906,8 +903,7 @@ itTrk++;
 				TMatrixDSym CovMatrix = input->getTrackStateCov();
 				TMatrixD I(5,5);
 				I.UnitMatrix();
-				I -= KGain*HMatrix;  //If we have low uncertainty in the hit then I will be 0. So the covariant will be 0 at this state 
-
+				I -= KGain*HMatrix;  //If we have low uncertainty in the hit then I will be 0. So the covariant will be 0 at this state // Matrix    (5x5)=(5x2)*(2x5). Simply transform gain from
         TMatrixD newCovMatrix = I*CovMatrix;
 
         float trkCov[15] = { static_cast<float>(newCovMatrix[0][0]), static_cast<float>(newCovMatrix[1][0]), static_cast<float>(newCovMatrix[1][1]), 

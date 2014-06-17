@@ -715,16 +715,22 @@ void EUTelGeometryTelescopeGeoDescription::master2LocalVec( int sensorID, const 
 }
 
 /**
- * Global-to-local coordinate transformation matrix. Are we sure this is the correct transform??????? Is it the other way? Since the other processor take the inverse of this and we need global to local for that so the inverse must be local to global. 
+ * Local-to-Global coordinate transformation matrix.
  * Corresponding volume is determined automatically.
  * 
  * @param globalPos (x,y,z) in global coordinate system
  * @return 
  */
 const TGeoHMatrix* EUTelGeometryTelescopeGeoDescription::getHMatrix( const double globalPos[] ) {
-    streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::getHMatrix() " << std::endl;
+    streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::getHMatrix()--------BEGIN " << std::endl;
     _geoManager->FindNode( globalPos[0], globalPos[1], globalPos[2] );    
     const TGeoHMatrix* globalH = _geoManager->GetCurrentMatrix();
+		if(streamlog_out(DEBUG2)){
+    streamlog_out(DEBUG2) << "Transformation matrix " << std::endl;
+		globalH->Print();
+		}
+		
+    streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::getHMatrix()----END " << std::endl;
     return globalH;
 }
 
