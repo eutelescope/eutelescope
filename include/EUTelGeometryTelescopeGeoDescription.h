@@ -71,7 +71,13 @@ namespace eutelescope {
              */
             static EUTelGeometryTelescopeGeoDescription& getInstance();
  
-           
+ 
+            /** Number of planes in the setup */
+            inline size_t getSiPlanesLayoutID() const { return _siPlanesLayoutID; } ;
+
+             /** Number of planes in the setup */
+            void setSiPlanesLayoutID(size_t value) { _siPlanesLayoutID = value; } ;          
+                    
             /** Number of planes in the setup */
             size_t nPlanes() const;
             
@@ -127,7 +133,7 @@ namespace eutelescope {
             double siPlaneYResolution( int );
             
             /** Sensor medium radiation length */
-            double siPlaneMediumRadLen( int );
+            double siPlaneRadLength( int );
             
 	    /** Name of pixel geometry library */
 	    std::string geoLibName( int );
@@ -239,6 +245,10 @@ namespace eutelescope {
 
 // overwrite private to public ::
         private :
+
+            /** */
+            size_t _siPlanesLayoutID;
+
             /** Vector of Sensor IDs */
             EVENT::IntVec _sensorIDVec;
 

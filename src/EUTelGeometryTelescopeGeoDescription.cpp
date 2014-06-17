@@ -114,7 +114,7 @@ double EUTelGeometryTelescopeGeoDescription::siPlaneZSize( int planeID ) {
     return -999.;
 }
 
-double EUTelGeometryTelescopeGeoDescription::siPlaneMediumRadLen( int planeID ) {
+double EUTelGeometryTelescopeGeoDescription::siPlaneRadLength( int planeID ) {
     std::map<int,int>::iterator it;
     it = _sensorIDtoZOrderMap.find(planeID);
     if ( it != _sensorIDtoZOrderMap.end() ) return _siPlaneRadLength[ _sensorIDtoZOrderMap[ planeID ] ];
@@ -233,9 +233,13 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesParameters() {
     //read the geoemtry names from the "Geometry" StringVec section of the gear file
     lcio::StringVec geometryNameParameters =  _siPlanesParameters->getStringVals("Geometry");
  
+    setSiPlanesLayoutID( _siPlanesParameters->getSiPlanesID() ) ;
+
+    // data member::
+    _nPlanes = _siPlanesLayerLayout->getNLayers(); 
    
     // create an array with the z positions of each layer
-    for (int iPlane = 0; iPlane < _siPlanesLayerLayout->getNLayers(); iPlane++) {
+    for (int iPlane = 0; iPlane < _nPlanes; iPlane++) {
         _siPlaneXPosition.push_back(_siPlanesLayerLayout->getSensitivePositionX(iPlane));
         _siPlaneYPosition.push_back(_siPlanesLayerLayout->getSensitivePositionY(iPlane));
         _siPlaneZPosition.push_back(_siPlanesLayerLayout->getSensitivePositionZ(iPlane));
@@ -297,12 +301,17 @@ void EUTelGeometryTelescopeGeoDescription::readTelPlanesParameters() {
     _telPlanesParameters = const_cast< gear::TelPlanesParameters*> (&(marlin::Global::GEAR->getTelPlanesParameters()));
     _telPlanesLayerLayout = const_cast< gear::TelPlanesLayerLayout*> (&(_telPlanesParameters->getTelPlanesLayerLayout()));
     
+    setSiPlanesLayoutID( _telPlanesParameters->getTelPlanesID() ) ;
+
     // clear the sensor ID vector
     _sensorIDVec.clear();
     // clear the sensor ID map
     _sensorIDVecMap.clear();
     _sensorIDtoZOrderMap.clear();
 
+    // data memberS::
+
+    _nPlanes = 0; // should be filed based on the length of the sensor vector.// after the loop
 
     // create an array with the z positions of each layer
     int nLayers = _telPlanesLayerLayout->getNLayers();
@@ -348,8 +357,9 @@ void EUTelGeometryTelescopeGeoDescription::readTelPlanesParameters() {
             streamlog_out(DEBUG1) << " iter: " << _sensorIDVec.at( _sensorIDVec.size()-1 ) << " " << sensorID << " " << sensitiveLayer.getInfo() .c_str() << std::endl; 
         }
     }
-
-
+ 
+    _nPlanes =  _sensorIDVec.size(); 
+ 
     for(int i=0; i< _siPlaneZPosition.size(); i++){ 
       int sensorsToTheLeft = 0;
       int sensorID = _sensorIDVec.at(i);
@@ -529,7 +539,7 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
        double a       = 28.085500;     
        double z       = 14.000000;
        double density = 2.330000;
-       double radl    = siPlaneMediumRadLen( SensorId );
+       double radl    = siPlaneRadLength( SensorId );
        double absl    = 45.753206;
        string stMatName = "materialSensor";
        stMatName.append( strId.str() );
