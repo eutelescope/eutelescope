@@ -131,7 +131,7 @@ void EUTelProcessorGeometricClustering::init() {
 
 void EUTelProcessorGeometricClustering::processRunHeader (LCRunHeader * rdr) {
 
-	auto_ptr<EUTelRunHeaderImpl> runHeader( new EUTelRunHeaderImpl( rdr ) );
+	std::auto_ptr<EUTelRunHeaderImpl> runHeader( new EUTelRunHeaderImpl( rdr ) );
 	runHeader->addProcessor( type() );
   	//increment the run counter
 	++_iRun;
@@ -330,7 +330,7 @@ void EUTelProcessorGeometricClustering::geometricClustering(LCEvent * evt, LCCol
 		{
 
 			// now prepare the EUTelescope interface to sparsified data.
-			auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel > > sparseData( new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> ( zsData ) );
+			std::auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel > > sparseData( new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> ( zsData ) );
 
 			streamlog_out ( DEBUG2 ) << "Processing sparse data on detector " << sensorID << " with " << sparseData->size() << " pixels " << std::endl;
 
@@ -395,9 +395,9 @@ void EUTelProcessorGeometricClustering::geometricClustering(LCEvent * evt, LCCol
 			while( !hitPixelVec.empty() )
 			{
 				// prepare a TrackerData to store the cluster candidate
-				auto_ptr< TrackerDataImpl > zsCluster ( new TrackerDataImpl );
+				std::auto_ptr< TrackerDataImpl > zsCluster ( new TrackerDataImpl );
 				// prepare a reimplementation of sparsified cluster
-				auto_ptr<EUTelGenericSparseClusterImpl<EUTelGeometricPixel > > sparseCluster ( new EUTelGenericSparseClusterImpl<EUTelGeometricPixel >( zsCluster.get() ) );
+				std::auto_ptr<EUTelGenericSparseClusterImpl<EUTelGeometricPixel > > sparseCluster ( new EUTelGenericSparseClusterImpl<EUTelGeometricPixel >( zsCluster.get() ) );
 
 				//First we need to take any pixel, so let's take the first one
 				//Add it to the cluster as well as the newly added pixels
@@ -472,7 +472,7 @@ void EUTelProcessorGeometricClustering::geometricClustering(LCEvent * evt, LCCol
 					//sparseCluster->getClusterInfo(xSeed, ySeed, xSize, ySize);
 
 					// prepare a pulse for this cluster
-					auto_ptr<TrackerPulseImpl> zsPulse ( new TrackerPulseImpl );
+					std::auto_ptr<TrackerPulseImpl> zsPulse ( new TrackerPulseImpl );
 					idZSPulseEncoder["sensorID"]  = sensorID;
 					//idZSPulseEncoder["xSeed"]     = xSeed;
 					//idZSPulseEncoder["ySeed"]     = ySeed;
@@ -492,7 +492,7 @@ void EUTelProcessorGeometricClustering::geometricClustering(LCEvent * evt, LCCol
 				else 
 				{
 					//in the case the cluster candidate is not passing the threshold ...
-					//forget about them, the memory should be automatically cleaned by auto_ptr's
+					//forget about them, the memory should be automatically cleaned by std::auto_ptr's
 				}
 			} //loop over all found clusters
 			
@@ -636,13 +636,13 @@ void EUTelProcessorGeometricClustering::bookHistos() {
 
   // histograms are grouped in loops and detectors
   streamlog_out ( DEBUG5 )  << "Booking histograms " << std::endl;
-  auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ) );
+  std::auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ) );
   EUTelHistogramInfo* histoInfo;
   bool isHistoManagerAvailable;
 
   try {
     isHistoManagerAvailable = histoMgr->init();
-  } catch ( ios::failure& e) {
+  } catch ( std::ios::failure& e) {
     streamlog_out ( WARNING2 ) << "I/O problem with " << _histoInfoFileName << "\n"
                                << "Continuing without histogram manager"  << std::endl;
     isHistoManagerAvailable = false;
