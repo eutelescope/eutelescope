@@ -71,6 +71,8 @@ namespace eutelescope {
 
 				void addMeasurementGBL(gbl::GblPoint& point, const double *hitPos, const double *statePos, const EVENT::FloatVec& hitCov, TMatrixD& HMatrix);
 
+				void addSiPlaneScattererGBL(gbl::GblPoint& point, int iPlane);
+
         // private:
         void TrackCandidatesToGBLTrajectory( vector<IMPL::TrackImpl*>::const_iterator&  );
         void PerformFitGBLTrajectory( gbl::GblTrajectory* ,  vector<IMPL::TrackImpl*>::const_iterator&, double );
@@ -184,7 +186,7 @@ namespace eutelescope {
 
         void addMeasurementsGBL( gbl::GblPoint&, TVectorD&, TVectorD&, const double*, const double*, const EVENT::FloatVec&, TMatrixD& );
         
-        void addSiPlaneScattererGBL( gbl::GblPoint&, TVectorD&, TVectorD&, int, double );
+    //    void addSiPlaneScattererGBL( gbl::GblPoint&, TVectorD&, TVectorD&, int, double );
         
         void addGlobalParametersGBL( gbl::GblPoint&, TMatrixD&, std::vector<int>&, int, const double*, double, double );
         

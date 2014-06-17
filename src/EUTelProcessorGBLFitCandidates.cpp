@@ -9,7 +9,9 @@ Processor("EUTelProcessorGBLFitCandidates"),
 _trackCandidatesInputCollectionName("Default_input"),
 _tracksOutputCollectionName("Default_output"),
 _nProcessedRuns(0),
-_nProcessedEvents(0)
+_nProcessedEvents(0),
+_beamQ(-1),
+_eBeam(4)
 {
 	// Processor description
   _description = "EUTelProcessorTrackingGBLTrajectory performs track fits using GBL optionally writing data files for MILLEPEDE II.";
@@ -17,8 +19,15 @@ _nProcessedEvents(0)
   // TrackerHit input collection
   registerInputCollection(LCIO::TRACK, "TrackCandidatesInputCollectionName", "Input track candidate collection name",_trackCandidatesInputCollectionName,std::string("TrackCandidatesCollection"));
 
-    // Track output collection
-    registerOutputCollection(LCIO::TRACK,"TracksOutputCollectionName","Output tracks collection name",_tracksOutputCollectionName,std::string("TrackCollection"));
+  // Track output collection
+  registerOutputCollection(LCIO::TRACK,"TracksOutputCollectionName","Output tracks collection name",_tracksOutputCollectionName,std::string("TrackCollection"));
+
+  registerOptionalParameter("BeamCharge", "Beam charge [e]", _beamQ, static_cast<double> (-1));
+
+  // Necessary processor parameters that define fitter settings
+  registerProcessorParameter("BeamEnergy", "Beam energy [GeV]", _eBeam, static_cast<double> (4.0));
+
+
 
 }
 
@@ -37,6 +46,8 @@ void EUTelProcessorGBLFitCandidates::init() {
 
 	// Initialize GBL fitter
 	EUTelGBLFitter* Fitter = new EUTelGBLFitter("GBLFitter");
+  Fitter->SetBeamCharge(_beamQ);
+  Fitter->SetBeamEnergy(_eBeam);
   _trackFitter = Fitter;
 
 

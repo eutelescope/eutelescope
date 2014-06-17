@@ -95,6 +95,12 @@ namespace eutelescope {
         /** Track fitter */
         EUTelGBLFitter *_trackFitter;
 
+        /** Beam charge in [e] */
+        double _beamQ;
+
+				//Beam energy. 
+				double _eBeam;
+
 };
 
     /** A global instance of the processor */

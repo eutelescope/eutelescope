@@ -59,7 +59,7 @@ namespace eutelescope {
     _fithitsvec(0),
     _parPropJac(5, 5),
     _beamQ(-1),
-    _eBeam(-1.),
+    _eBeam(4.),
     _hitId2GblPointLabel(),
     _hitId2GblPointLabelMille(),
     _alignmentMode(Utility::XYShiftXYRot),
@@ -404,7 +404,7 @@ namespace eutelescope {
      * @param iPlane plane id
      * @param p momentum of the particle
      */
-    void EUTelGBLFitter::addSiPlaneScattererGBL(gbl::GblPoint& point, TVectorD& scat, TVectorD& scatPrecSensor, int planeID, double p) {
+/*    void EUTelGBLFitter::addSiPlaneScattererGBL(gbl::GblPoint& point, TVectorD& scat, TVectorD& scatPrecSensor, int planeID, double p) {
         const int iPlane = geo::gGeometry().sensorIDtoZOrder(planeID);
         const double radlenSi           = geo::gGeometry()._siPlanesLayerLayout->getSensitiveRadLength(iPlane);
         const double radlenKap          = geo::gGeometry()._siPlanesLayerLayout->getLayerRadLength(iPlane);
@@ -421,7 +421,7 @@ namespace eutelescope {
         scatPrecSensor[1] = 1.0 / (tetSi * tetSi + tetKap * tetKap);
 
         point.addScatterer(scat, scatPrecSensor);
-    }
+    }   */
 
     // @TODO iplane, xPred, yPred must not be here. consider refactoring
 
@@ -998,36 +998,91 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(IMPL::TrackImpl* trackimpl)
 	TMatrixD jacPointToPoint(5, 5);
   jacPointToPoint.UnitMatrix();
  	////////////////////////////////////////////////////////////////////////////////////////////////// loop through all states.
-  for(int i=0;i < trackimpl->getTrackStates().size(); i++){
-  	gbl::GblPoint point(jacPointToPoint);	//We create the first point. Note the first point the Jacobian is the identity matrix. After that the jacobian is how a change in the state before it affects it.
-		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////find state and the hit that it is associated with
+  for(int i=0;i < trackimpl->getTrackStates().size(); i++){		
+		/////////////////////////////////////////////////////////////////////////////////////////////BEGIN to create GBL point
+		gbl::GblPoint point(jacPointToPoint);
   	IMPL::TrackStateImpl* state = static_cast < IMPL::TrackStateImpl*> ( trackimpl->getTrackStates().at(i) ) ; //get the state for this track. Static cast from EVENT::TrackState to derived class IMPL::TrackStateImpl.
 		//Need to find hit that this state may be associated with. Note this is a problem for two reasons. Not all states have a hit. Furthermore we can not associate a hit with a state with the current LCIO format. This must be fixed
 		EVENT::TrackerHit* hit = NULL; //Create the hit pointer
 		FindHitIfThereIsOne(trackimpl, hit, state); //This will point the hit to the correct hit object associated with this state. If non exists then point it will remain pointed to NULL
-		///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-			// Calculate the matrix to go from the state measurement to the hit measurement. This will also be affected by the jacobian. Since the jacobian we use relates global positions in the telescope frame to each other. The the state vector must be global telescope to local on the plane. HOWEVER! The z axis is a parameter NOT a variable. This means that it is not a state varible and therefore the H matrix only needs to shift the global to local frame by the rotations of the plane. 
-	
 		if(hit != NULL){
-			
-  		double fitPointLocal[] = {0.,0.,0.};
+			double fitPointLocal[] = {0.,0.,0.};
   		fitPointLocal [0] = state->getReferencePoint()[0] ;
   		fitPointLocal [1] = state->getReferencePoint()[1] ;
-  		fitPointLocal [2] = state->getReferencePoint()[2] ;
-	 
+  		fitPointLocal [2] = state->getReferencePoint()[2] ;	 
 			double fitPointGlobal[3];
 			geo::gGeometry().local2Master( state->getLocation(), fitPointLocal, fitPointGlobal );
 			TMatrixD Global2Local(2,5); //Takes a state and returns this as a hit. Only depends on rotations.
  			CalculateProjMatrix(Global2Local, fitPointGlobal); //This here since the tracksstate is not EUTelescope derived and this should not go in geometry since it is particular to a trackstate.
-			addMeasurementGBL(point, hit->getPosition(),  fitPointLocal, hit->getCovMatrix(), Global2Local); 
-
+			addMeasurementGBL(point, hit->getPosition(),  fitPointLocal, hit->getCovMatrix(), Global2Local);
+			addSiPlaneScattererGBL(point, state->getLocation()); //This we still functions still assumes silicon is the thin scatterer. This can be easily changed when we have the correct gear file. However we will always assume that states will come with scattering information. To take into account material between states this will be dealt with latter. 
+ 
 
 		}//END OF IF STATEMENT IF THERE WAS A HIT
+		//////////////////////////////////////////////////////////////////////////////END OF CREATING GBL POINT
+
+
+		////////////////////////////////////////////////////////////////////////////////START TO CREATE SCATTERS BETWEEN PLANES
+		IMPL::TrackStateImpl* state_next = static_cast < IMPL::TrackStateImpl*> ( trackimpl->getTrackStates().at(i+1) ) ; //Get the next trackstate to determine dz
+		double fitPointLocal_next[] = {0.,0.,0.}; 
+		fitPointLocal_next [0] = state_next->getReferencePoint()[0] ;
+  	fitPointLocal_next [1] = state_next->getReferencePoint()[1] ;
+  	fitPointLocal_next [2] = state_next->getReferencePoint()[2] ;
+
+		double fitPointGlobal_next[3];
+		geo::gGeometry().local2Master( state_new->getLocation(), fitPointLocal_next, fitPointGlobal_next );
+
+		float dz = fitPointGlobal_next[2] - fitPointGlobal[2];
+
+
+		//////////////////////////////////////////////////////////////////////////Create the point with the jacobian and find the new jacobain of the next point
+/*
+		if(i != (trackimpl->getTrackStates().size()-1)){
+			IMPL::TrackStateImpl* state_next = static_cast < IMPL::TrackStateImpl*> ( trackimpl->getTrackStates().at(i+1) ) ; //Get the next trackstate to determine dz
+			double fitPointLocal_next[] = {0.,0.,0.}; 
+			fitPointLocal_next [0] = state_next->getReferencePoint()[0] ;
+  		fitPointLocal_next [1] = state_next->getReferencePoint()[1] ;
+  		fitPointLocal_next [2] = state_next->getReferencePoint()[2] ;
+
+			double fitPointGlobal_next[3];
+			geo::gGeometry().local2Master( state_new->getLocation(), fitPointLocal_next, fitPointGlobal_next );
+
+			float dz = fitPointGlobal_next[2] - fitPointGlobal[2];
+
+			TMatrix jacobian(5,5); jacobian = getPropagationJacobianF( fitPointGlobal[0], fitPointGlobal[1], fitPointGlobal[2], 0, 0, 1, _beamQ, dz );
+		*/
+		}
+			
+
 	}//END OF LOOP THROUGH ALL PLANES
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////
 }
+
+
+void EUTelGBLFitter::addSiPlaneScattererGBL(gbl::GblPoint& point, int iPlane) {
+
+	TVectorD scatPrecSensor(2);
+	TVectorD scat(2) = {0.0,0.0}; //This should always be 0 right? If not then it should be given as a parameter
+	const double radlenSi           = geo::gGeometry()._siPlanesLayerLayout->getSensitiveRadLength(iPlane);
+	const double radlenKap          = geo::gGeometry()._siPlanesLayerLayout->getLayerRadLength(iPlane);
+	const double thicknessSi        = geo::gGeometry()._siPlanesLayerLayout->getSensitiveThickness(iPlane);
+	const double thicknessKap       = geo::gGeometry()._siPlanesLayerLayout->getLayerThickness(iPlane);
+
+	const double X0Si  = thicknessSi / radlenSi; // Si 
+ 	const double X0Kap = thicknessKap / radlenKap; // Kapton                
+	
+	const double tetSi  = Utility::getThetaRMSHighland(GetBeamEnergy(), X0Si);
+  const double tetKap = Utility::getThetaRMSHighland(GetBeamEnergy(), X0Kap);
+
+  scatPrecSensor[0] = 1.0 / (tetSi * tetSi + tetKap * tetKap);
+  scatPrecSensor[1] = 1.0 / (tetSi * tetSi + tetKap * tetKap);
+
+  point.addScatterer(scat, scatPrecSensor);
+}
+
+
+
 //This will add the measurement of the hit and predicted position. Using the covariant matrix of the hit. NOT! the residual.
 void EUTelGBLFitter::addMeasurementGBL(gbl::GblPoint& point, const double *hitPos, const double *statePos, const EVENT::FloatVec& hitCov, TMatrixD& HMatrix){
      
@@ -1288,7 +1343,7 @@ void EUTelGBLFitter::FindHitIfThereIsOne(IMPL::TrackImpl* trackimpl, EVENT::Trac
                   }                          
                  }
 
-                 addSiPlaneScattererGBL(point, scat, scatPrecSensor, trkVolumeID, p);
+             //   addSiPlaneScattererGBL(point, scat, scatPrecSensor, trkVolumeID, p);
                  pushBackPoint( pointList, point, trk->id() );
  
 // get jacobian to arrive to next point (if not at last point already):: 
@@ -1659,7 +1714,7 @@ void EUTelGBLFitter::FindHitIfThereIsOne(IMPL::TrackImpl* trackimpl, EVENT::Trac
                     addMeasurementsGBL( point, residual, measErr, hitPointLocal, trackPointLocal, hitcov, proL2m);
                 }
 // add scatterrers
-                addSiPlaneScattererGBL(point, scat, scatPrecSensor, planeID, p);
+            //    addSiPlaneScattererGBL(point, scat, scatPrecSensor, planeID, p);
 
 // add global derivatives derived from the track parameters after the track fit (coordinate system?) 
 // this one needed only for alignment with millepede
