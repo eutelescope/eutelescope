@@ -170,7 +170,6 @@ void EUTelProcessorTrackingHelixTrackSearch::init() {
     _nProcessedEvents = 0;
 
     // Getting access to geometry description
-//    geo::gGeometry().initializeTGeoDescription(_tgeoFileName);
     std::string name("test.root");
     geo::gGeometry().initializeTGeoDescription(name,false);
     // Instantiate track finder. This is a working horse of the processor.
