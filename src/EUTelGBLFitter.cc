@@ -394,32 +394,6 @@ namespace eutelescope {
         _hitId2GblPointLabelMille.clear();
     }
 
-    /** Add a measurement to GBL point
-     * 
-     * @param point
-     * @param meas measuremet vector (residuals) to be calculated in this routine
-     * @param measPrec residuals weights (1/unc^2) to be calculated in this routine
-     * @param hitpos hit position
-     * @param predpos predicted by hit x-position (approximation)
-     * @param hitcov hit covariance matrix
-     * @param proL2m projection matrix from track coordinate system onto measurement system
-     */
-    void EUTelGBLFitter::addMeasurementsGBL(gbl::GblPoint& point, TVectorD& meas, TVectorD& measPrec, const double* hitpos,
-            const double* predpos, const EVENT::FloatVec& hitcov, TMatrixD& proL2m) {
-     
-        streamlog_out(DEBUG4) << " addMeasurementsGBL " << std::endl;
- 
-        meas[0] = hitpos[0] - predpos[0];
-        meas[1] = hitpos[1] - predpos[1];
-        measPrec[0] = 1. / hitcov[0];	// cov(x,x)
-        measPrec[1] = 1. / hitcov[2];	// cov(y,y)
-
-        streamlog_out(DEBUG4) << "Residuals:" << std::endl;
-        streamlog_out(DEBUG4) << "X:" << std::setw(20) << meas[0] << std::setw(20) << measPrec[0] << std::endl;
-        streamlog_out(DEBUG4) << "Y:" << std::setw(20) << meas[1] << std::setw(20) << measPrec[1] << std::endl;
-
-        point.addMeasurement(proL2m, meas, measPrec);
-    }
 
     /** Add a acatterer to GBL point
      * Add Si + Kapton thin scatterer to a point
@@ -942,7 +916,7 @@ namespace eutelescope {
         ++iter;
       } 
     }
- 
+ 		//getHmatrix is local to global. So we need global to local or using gbl library terminology. local (our global_ to measurement frame (our local). So we take the inverse
     void EUTelGBLFitter::CalculateProjMatrix(TMatrixD& proL2m, double* hitPointGlobal )
     {  
 		// Calculate projection matrix
@@ -1025,17 +999,82 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(IMPL::TrackImpl* trackimpl)
   jacPointToPoint.UnitMatrix();
  	////////////////////////////////////////////////////////////////////////////////////////////////// loop through all states.
   for(int i=0;i < trackimpl->getTrackStates().size(); i++){
-  gbl::GblPoint point(jacPointToPoint);	//We create the first point. Note the first point the Jacobian is the identity matrix. After that the jacobian is how a change in the state before it affects it.
+  	gbl::GblPoint point(jacPointToPoint);	//We create the first point. Note the first point the Jacobian is the identity matrix. After that the jacobian is how a change in the state before it affects it.
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////find state and the hit that it is associated with
+  	IMPL::TrackStateImpl* state = static_cast < IMPL::TrackStateImpl*> ( trackimpl->getTrackStates().at(i) ) ; //get the state for this track. Static cast from EVENT::TrackState to derived class IMPL::TrackStateImpl.
+		//Need to find hit that this state may be associated with. Note this is a problem for two reasons. Not all states have a hit. Furthermore we can not associate a hit with a state with the current LCIO format. This must be fixed
+		EVENT::TrackerHit* hit = NULL; //Create the hit pointer
+		FindHitIfThereIsOne(trackimpl, hit, state); //This will point the hit to the correct hit object associated with this state. If non exists then point it will remain pointed to NULL
+		///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	// Calculate the matrix to go from the state measurement to the hit measurement. This will also be affected by the jacobian. Since the jacobian we use relates global positions in the telescope frame to each other. The the state vector must be global telescope to local on the plane. HOWEVER! The z axis is a parameter NOT a variable. This means that it is not a state varible and therefore the H matrix only needs to shift the global to local frame by the rotations of the plane. 
-  //TMatrixD Global2Local(2,5);
-  //CalculateProjMatrix(Global2Local, hitPointGlobal); //This here since the tracksstate is not EUTelescope derived and this should not go in geometry since it is particular to a trackstate.
+
+			// Calculate the matrix to go from the state measurement to the hit measurement. This will also be affected by the jacobian. Since the jacobian we use relates global positions in the telescope frame to each other. The the state vector must be global telescope to local on the plane. HOWEVER! The z axis is a parameter NOT a variable. This means that it is not a state varible and therefore the H matrix only needs to shift the global to local frame by the rotations of the plane. 
+	
+		if(hit != NULL){
+			
+  		double fitPointLocal[] = {0.,0.,0.};
+  		fitPointLocal [0] = state->getReferencePoint()[0] ;
+  		fitPointLocal [1] = state->getReferencePoint()[1] ;
+  		fitPointLocal [2] = state->getReferencePoint()[2] ;
+	 
+			double fitPointGlobal[3];
+			geo::gGeometry().local2Master( state->getLocation(), fitPointLocal, fitPointGlobal );
+			TMatrixD Global2Local(2,5); //Takes a state and returns this as a hit. Only depends on rotations.
+ 			CalculateProjMatrix(Global2Local, fitPointGlobal); //This here since the tracksstate is not EUTelescope derived and this should not go in geometry since it is particular to a trackstate.
+			addMeasurementGBL(point, hit->getPosition(),  fitPointLocal, hit->getCovMatrix(), Global2Local); 
 
 
-
+		}//END OF IF STATEMENT IF THERE WAS A HIT
 	}//END OF LOOP THROUGH ALL PLANES
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////
 }
+//This will add the measurement of the hit and predicted position. Using the covariant matrix of the hit. NOT! the residual.
+void EUTelGBLFitter::addMeasurementGBL(gbl::GblPoint& point, const double *hitPos, const double *statePos, const EVENT::FloatVec& hitCov, TMatrixD& HMatrix){}
+
+void EUTelGBLFitter::FindHitIfThereIsOne(IMPL::TrackImpl* trackimpl, EVENT::TrackerHit* hit, IMPL::TrackStateImpl* state){
+	
+	int state_location = state->getLocation(); //Get this states location
+
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////Loop through all the hits on this track and see of it any are on this states plane using location
+	const EVENT::TrackerHitVec& HitOnTrack = trackimpl->getTrackerHits(); //point to these hits by reference
+  EVENT::TrackerHitVec::const_iterator itrHit;
+	for( itrHit = HitOnTrack.begin(); itrHit != HitOnTrack.end(); ++itrHit){
+  	const int planeID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(*itrHit) ); //Get the sensor ID for this hit
+			streamlog_out(DEBUG5) << "Hit was on plane " << planeID <<"This state location is: " << state_location << std::endl;
+			if(planeID == state_location){
+				streamlog_out(DEBUG5) << "Hit and Plane ID the same. Point the hit object to this hit " << std::endl;
+				hit = *itrHit;
+			}//END OF IF STATEMENT
+	}//END OF HIT LOOP
+		
+}
+
+    /** Add a measurement to GBL point
+     * 
+     * @param point
+     * @param meas measuremet vector (residuals) to be calculated in this routine
+     * @param measPrec residuals weights (1/unc^2) to be calculated in this routine
+     * @param hitpos hit position
+     * @param predpos predicted by hit x-position (approximation)
+     * @param hitcov hit covariance matrix
+     * @param proL2m projection matrix from track coordinate system onto measurement system
+     */
+    void EUTelGBLFitter::addMeasurementsGBL(gbl::GblPoint& point, TVectorD& meas, TVectorD& measPrec, const double* hitpos,
+            const double* predpos, const EVENT::FloatVec& hitcov, TMatrixD& proL2m) {
+     
+        streamlog_out(DEBUG4) << " addMeasurementsGBL " << std::endl;
+ 
+        meas[0] = hitpos[0] - predpos[0];
+        meas[1] = hitpos[1] - predpos[1];
+        measPrec[0] = 1. / hitcov[0];	// cov(x,x)
+        measPrec[1] = 1. / hitcov[2];	// cov(y,y)
+
+        streamlog_out(DEBUG4) << "Residuals:" << std::endl;
+        streamlog_out(DEBUG4) << "X:" << std::setw(20) << meas[0] << std::setw(20) << measPrec[0] << std::endl;
+        streamlog_out(DEBUG4) << "Y:" << std::setw(20) << meas[1] << std::setw(20) << measPrec[1] << std::endl;
+
+        point.addMeasurement(proL2m, meas, measPrec);
+    }
 
 
     void EUTelGBLFitter::TrackCandidatesToGBLTrajectory( vector<IMPL::TrackImpl*>::const_iterator& itTrkCand) {

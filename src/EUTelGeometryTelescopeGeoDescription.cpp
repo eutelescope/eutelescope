@@ -725,10 +725,10 @@ const TGeoHMatrix* EUTelGeometryTelescopeGeoDescription::getHMatrix( const doubl
     streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::getHMatrix()--------BEGIN " << std::endl;
     _geoManager->FindNode( globalPos[0], globalPos[1], globalPos[2] );    
     const TGeoHMatrix* globalH = _geoManager->GetCurrentMatrix();
-		if(streamlog_out(DEBUG2)){
-    streamlog_out(DEBUG2) << "Transformation matrix " << std::endl;
-		globalH->Print();
-		}
+	//	if(streamlog_out(DEBUG2)){
+  //  streamlog_out(DEBUG2) << "Transformation matrix " << std::endl;
+	//	globalH->Print();
+	//	}
 		
     streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::getHMatrix()----END " << std::endl;
     return globalH;
