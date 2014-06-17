@@ -51,14 +51,14 @@ namespace eutelescope {
     virtual const std::string & name() const { return Processor::name() ; }
     virtual void init ();
     virtual void processRunHeader (LCRunHeader * run);
-    virtual void processEvent (LCEvent * evt);
-    virtual void modifyEvent( LCEvent * evt ) ;
+    virtual void processEvent (LCEvent * );
+    virtual void modifyEvent( LCEvent * ) ;
     virtual void check (LCEvent * evt);
     virtual void end();
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-	void bookHistos();
-	void fillHistos(LCEvent * evt);
+	void bookHistos(LCEvent *);
+	void fillHistos(LCEvent *);
 	static std::string _clusterSignalHistoName;
 	static std::string _seedSignalHistoName;
 	static std::string _hitMapHistoName;
@@ -74,7 +74,6 @@ namespace eutelescope {
 	static std::string _lvl1TriggerName;
 	static std::string _lvl1TriggerDiffName;
 #endif
-    void initializeGeometry( LCEvent * event ) throw ( marlin::SkipEventException );
     
     protected:
 	void Clustering(LCEvent * evt, LCCollectionVec * pulse);
@@ -84,7 +83,8 @@ namespace eutelescope {
 	int _iEvt; 
 	bool _isFirstEvent;
 	unsigned int _initialClusterCollectionSize;
-	int _minNPixels;
+        std::vector<int> _sensorIDVec;
+        int _minNPixels;
 	int _minXDistance;
 	int _minYDistance;
 	int _minDiagDistance;
@@ -104,7 +104,6 @@ namespace eutelescope {
     
 	int _noOfDetector;
 	bool _isGeometryReady;
-	std::vector<int> _sensorIDVec;
 	gear::SiPlanesParameters* _siPlanesParameters;
 	gear::SiPlanesLayerLayout*_siPlanesLayerLayout;
 	std::map< int , int > _layerIndexMap;
