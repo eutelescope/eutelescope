@@ -53,14 +53,12 @@
 							pitchX="0.018402778"	pitchY="0.018402778" 	resolutionX="0.0035" resolutionY="0.0035"
 					/>
 					<ladder 	ID="2" info="Kapton" 	 			positionZ="22.00"
-	                                                rotationXY="0.00"       rotationZX="0.00"       rotationZY="0.00"
 							sizeX="21.2"		sizeY="10.6"		thickness="0.025" radLength="93.660734"
 					/>
 				</layer>
 
 				<layer ID="2" info="tel" >
 					<ladder 	ID="1" info="Kapton" 	 			positionZ="27.00"
-	                                                rotationXY="0.00"       rotationZX="0.00"       rotationZY="0.00"
 							sizeX="21.2"		sizeY="10.6"		thickness="0.025" radLength="93.660734"
 					/>
 					<sensitive 	ID="2" info="Mimosa26.so" 			positionZ="40.00" 
@@ -70,7 +68,6 @@
 							pitchX="0.018402778"	pitchY="0.018402778" 	resolutionX="0.0035" resolutionY="0.0035"
 					/>
 					<ladder 	ID="2" info="Kapton" 	 			positionZ="42.00"
-	                                                rotationXY="0.00"       rotationZX="0.00"       rotationZY="0.00"
 							sizeX="21.2"		sizeY="10.6"		thickness="0.025" radLength="93.660734"
 					/>
 				</layer>
@@ -125,6 +122,7 @@
 							sizeX="20.0"		sizeY="20.0"		thickness="0.025" radLength="93.660734"
 					/>	
 					<sensitive 	ID="21"  info="FEI4Single.so"			positionZ="120.0" 
+       	                                                rotationXY="0.00"       rotationZX="3.1415926"  rotationZY="0.00"
                 		                        sizeX="20.0"            sizeY="16.8"            thickness="0.250" radLength="93.660734"
 
                                                         npixelX="80"            npixelY="336"
