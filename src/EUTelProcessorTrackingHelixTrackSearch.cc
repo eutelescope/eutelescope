@@ -638,9 +638,12 @@ void EUTelProcessorTrackingHelixTrackSearch::bookHistograms() {
 
 				///////////////////////////////////////////////////////////////////////////////////////////////////////////////Chi2 create plot. Useful to determine the behaviour of the pattern recognition
         histoInfo = histoMgr->getHistogramInfo(_histName::_chi2CandidateHistName);
-        NBin =  histoInfo->_xBin; 
-        XMin =  histoInfo->_xMin; 
-        XMax = histoInfo->_xMax;
+//      NBin =  histoInfo->_xBin; 
+//      XMin =  histoInfo->_xMin; 
+//      XMax = histoInfo->_xMax;
+        NBin = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : tracksNBin;
+        XMin = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : tracksXMin;
+        XMax = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : tracksXMax;
 
         AIDA::IHistogram1D * chi2 =
                 marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_chi2CandidateHistName, NBin,
