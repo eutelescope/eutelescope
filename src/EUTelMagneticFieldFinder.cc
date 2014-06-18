@@ -242,21 +242,21 @@ namespace eutelescope {
         		const double distance = getResidual( state_new, closestHit ).Norm2Sqr( ); //Determine the residual to it. //Distance is in mm.
             		const double DCA = 25;  //DCA since is mm^2 since distance is.                             
 			//getXYPredictionPrecision( state_new ); // basically RMax cut at the moment. MUST FIX!!!! HOW SHOULD THIS BE TREAT?;;
-	           	streamlog_out ( DEBUG5 ) << "NextPlane " << newSensorID << " " << uvpos[0] << " " << uvpos[1] << " " << uvpos[2] << " resid:" << distance << " ResidualCut: " << DCA << endl;
+	           	streamlog_out ( DEBUG1 ) << "NextPlane " << newSensorID << " " << uvpos[0] << " " << uvpos[1] << " " << uvpos[2] << " resid:" << distance << " ResidualCut: " << DCA << endl;
            		if ( distance > DCA ) {
              	           	streamlog_out ( DEBUG1 ) << "Closest hit is outside of search window." << std::endl;
               	           	streamlog_out ( DEBUG1 ) << "Skipping current plane. Covariant Matrix and position already updated to this point " << std::endl;
-	  	  	   	streamlog_out (MESSAGE5 ) << " Distance between them: "<< distance << endl;
+	  	  	   	streamlog_out ( DEBUG1 ) << " Distance between them: "<< distance << endl;
             		}
 			else{
-            			streamlog_out (DEBUG5 ) << "NextPlane MATCHED. Position of Hit (Local) " <<  uvpos[0] << " " <<  uvpos[1] << " " << uvpos[2] 
+            			streamlog_out (DEBUG1 ) << "NextPlane MATCHED. Position of Hit (Local) " <<  uvpos[0] << " " <<  uvpos[1] << " " << uvpos[2] 
                                                         <<" Position of state (Global) " << state_new->getX() 
                                                         << "," << state_new->getY()
                                                         <<","<< state_new->getZParameter() 
                                                         <<" Distance between them: " << distance 
                                                         << " Sensor ID:" << state_new->getLocation() 
                                                         << " Seed we began at: " << (*itTrk) << endl;
-	              		streamlog_out ( DEBUG5 ) << "Will now alter Cov matrix and state variables using hit information " << std::endl;
+	              		streamlog_out ( DEBUG1 ) << "Will now alter Cov matrix and state variables using hit information " << std::endl;
 				TMatrixD HMatrix = state_new->getH(); //We need to be able to move from the measurement to the state space
 				TMatrixD GainMatrix = updateGainK( state_new, closestHit ); //This is a matrix that tells you how much the state should be changed with the information from the hit
 				UpdateStateUsingHitInformation( state_new ,closestHit, jacobian, GainMatrix, HMatrix); //Update the state on the track
