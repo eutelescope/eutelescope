@@ -153,6 +153,8 @@ void EUTelProcessorGBLFitCandidates::CreateEUTrackandStates(TrackImpl* trackimpl
 		EUstate->setTx(state->getOmega()); //tx position global
 		EUstate->setTy(state->getZ0()); //ty position global
 		EUstate->setInvP(state->getTanLambda()); //invp position global
+
+		EUstate->setbeamQ(_beamQ); //Beam charge
 		
 		EUstate->setReferencePoint(state->getReferencePoint());
 		EUstate->setCovMatrix(state->getCovMatrix());	
