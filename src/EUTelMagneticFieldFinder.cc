@@ -179,9 +179,8 @@ namespace eutelescope {
 			//Set up the geometry//////////////////////////////////////////////////////////////////////// 
       const map< int, int > sensorMap = geo::gGeometry().sensorZOrdertoIDs();
       int planeID     = sensorMap.at(0); // the first first plane in the array of the planes according to z direction. // assume not tilted plane. 
-      const int    iPlane             = geo::gGeometry().sensorIDtoZOrder(planeID);
-      const double thicknessSen       = geo::gGeometry()._siPlanesLayerLayout->getSensitiveThickness(iPlane );
-      const double thicknessLay       = geo::gGeometry()._siPlanesLayerLayout->getLayerThickness(iPlane );
+//      const int    iPlane             = geo::gGeometry().sensorIDtoZOrder(planeID);
+      const double thicknessSen       = geo::gGeometry().siPlaneZSize( planeID );
 			////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
       EUTelTrackStateImpl* state = const_cast<EUTelTrackStateImpl*>((*itTrk)->getFirstTrackState( ));
@@ -197,12 +196,16 @@ namespace eutelescope {
 	    
       // loop through all known sensors (local, defined above):
       map< int, int >::const_iterator iter = sensorMap.begin();
-      while ( iter != sensorMap.end() ) { ////////////////////////////NEED TO FIX FOR SOME REASON LOOPS 1 EXTRA TIME
-        if( iter->first > -999 ){
+      while ( iter->first < sensorMap.size()-1 ) { // do not iterate through the very last plane
+        if( iter->first < 0 ) continue;
+
             float dpoint[3];
-            int newSensorID = state->findIntersectionWithCertainID((iter->second+1), dpoint );
-						int sensorIntersection = geo::gGeometry( ).getSensorID(dpoint);
-						if(newSensorID < 0 or sensorIntersection < 0){ //If there was no intersection of infinite plane or if the intersection is not in the sensor.
+            int next = iter->first + 1;
+            map< int, int >::const_iterator nextSensor = sensorMap.find( next );
+            int newSensorID = state->findIntersectionWithCertainID( nextSensor->second, dpoint );
+            int sensorIntersection = geo::gGeometry( ).getSensorID(dpoint);
+            streamlog_out ( DEBUG5 ) << " propagateFromRefPoint: pos:" <<  iter->first << " from ID= " << iter->second << " to ID=" <<  nextSensor->second << " and got: " << newSensorID << " sensorIntersection= " << sensorIntersection << std::endl;
+						if( newSensorID < 0 or sensorIntersection < 0 ){ //If there was no intersection of infinite plane or if the intersection is not in the sensor.
 							streamlog_out ( DEBUG5 ) << "Point (" <<  dpoint[0] << ", " <<  dpoint[1] << ", " << dpoint[2]  << ")" << "found on no sensor. New sensor ID (Was there intersection?):"  << newSensorID <<"SensorID (Was the intersection on the plane?)"<< sensorIntersection  << std::endl;
 						}
 						else{ //So we found a intersection so we need to determine that new state.
@@ -220,7 +223,7 @@ namespace eutelescope {
 							double global[] = { state_new->getX(),state_new->getY(),state_new->getZParameter() };
 							double local[3];
 							geo::gGeometry().master2Localtwo( state_new->getLocation(), global, local );
-							const float localRef[3] = {local[0], local[1], local[3]}; 
+							const float localRef[3] = {local[0], local[1], local[2]}; 
 							state_new->setReferencePoint(localRef);
 							
 							streamlog_out ( DEBUG5 ) << "Both FindIntersection and Jacobian should be the same" << std::endl;
@@ -230,23 +233,29 @@ namespace eutelescope {
 							
 							////////////Find next closest hit and determine if it is within window. If both fill new state with information about hit. Otherwise fill without it/////////////////////////////// 
           		EVENT::TrackerHit* closestHit = const_cast< EVENT::TrackerHit* > ( findClosestHit( state_new, newSensorID ) ); //This will look for the closest hit but not if it is within the excepted range		
- 							if ( closestHit ){ //Just check if the closestHit exist 
+ 			if ( closestHit ){ //Just check if the closestHit exist 
           			const double* uvpos = closestHit->getPosition(); //Get that hits position
-            		const double distance = getResidual( state_new, closestHit ).Norm2Sqr( ); //Determine the residual to it. //Distance is in mm.
-            		const double DCA = 1;  //DCA since is mm since distance is.                             //getXYPredictionPrecision( state_new ); // basically RMax cut at the moment. MUST FIX!!!! HOW SHOULD THIS BE TREAT?;;
-            		streamlog_out ( DEBUG5 ) << "NextPlane " << newSensorID << " " << uvpos[0] << " " << uvpos[1] << " " << uvpos[2] << " resid:" << distance << " ResidualCut: " << DCA << endl;
-            		if ( distance > DCA ) {
-              		streamlog_out ( DEBUG1 ) << "Closest hit is outside of search window." << std::endl;
-              		streamlog_out ( DEBUG1 ) << "Skipping current plane. Covariant Matrix and position already updated to this point " << std::endl;
-	streamlog_out (MESSAGE5 ) << " Distance between them: "<< distance << endl;
-            		}
+            			const double distance = getResidual( state_new, closestHit ).Norm2Sqr( ); //Determine the residual to it. //Distance is in mm.
+        	    		const double DCA = 1;  //DCA since is mm since distance is.                             //getXYPredictionPrecision( state_new ); // basically RMax cut at the moment. MUST FIX!!!! HOW SHOULD THIS BE TREAT?;;
+	            		streamlog_out ( DEBUG5 ) << "NextPlane " << newSensorID << " " << uvpos[0] << " " << uvpos[1] << " " << uvpos[2] << " resid:" << distance << " ResidualCut: " << DCA << endl;
+            			if ( distance > DCA ) {
+              	          	   streamlog_out ( DEBUG1 ) << "Closest hit is outside of search window." << std::endl;
+               	          	   streamlog_out ( DEBUG1 ) << "Skipping current plane. Covariant Matrix and position already updated to this point " << std::endl;
+		  	  	   streamlog_out (MESSAGE5 ) << " Distance between them: "<< distance << endl;
+             			}
 								else{
-            			streamlog_out (DEBUG5 ) << "NextPlane MATCHED. Position of Hit (Local) " <<  uvpos[0] << " " <<  uvpos[1] << " " << uvpos[2] <<" Position of state (Global) " << state_new->getX() << "," << state_new->getY()<<","<< state_new->getZParameter() <<" Distance between them: "<< distance << " Sensor ID:"<< state_new->getLocation() << " Seed we began at: " << (*itTrk) << endl;
-              		streamlog_out ( DEBUG5 ) << "Will now alter Cov matrix and state variables using hit information " << std::endl;
-									TMatrixD HMatrix = state_new->getH(); //We need to be able to move from the measurement to the state space
-       						TMatrixD GainMatrix = updateGainK( state_new, closestHit ); //This is a matrix that tells you how much the state should be changed with the information from the hit
-									UpdateStateUsingHitInformation(state_new ,closestHit, jacobian, GainMatrix, HMatrix); //Update the state on the track
-									UpdateTrackUsingHitInformation( state_new , closestHit, (*itTrk), jacobian, GainMatrix,HMatrix); //Update the track itself.									
+            			streamlog_out (DEBUG5 ) << "NextPlane MATCHED. Position of Hit (Local) " <<  uvpos[0] << " " <<  uvpos[1] << " " << uvpos[2] 
+                                                        <<" Position of state (Global) " << state_new->getX() 
+                                                        << "," << state_new->getY()
+                                                        <<","<< state_new->getZParameter() 
+                                                        <<" Distance between them: " << distance 
+                                                        << " Sensor ID:" << state_new->getLocation() 
+                                                        << " Seed we began at: " << (*itTrk) << endl;
+	              		streamlog_out ( DEBUG5 ) << "Will now alter Cov matrix and state variables using hit information " << std::endl;
+				TMatrixD HMatrix = state_new->getH(); //We need to be able to move from the measurement to the state space
+				TMatrixD GainMatrix = updateGainK( state_new, closestHit ); //This is a matrix that tells you how much the state should be changed with the information from the hit
+				UpdateStateUsingHitInformation(state_new ,closestHit, jacobian, GainMatrix, HMatrix); //Update the state on the track
+				UpdateTrackUsingHitInformation( state_new , closestHit, (*itTrk), jacobian, GainMatrix,HMatrix); //Update the track itself.									
             		}
 
 							}
@@ -259,7 +268,7 @@ namespace eutelescope {
 
           }
         ++iter;	
-      } 
+       
  
     }
 						//	streamlog_out ( MESSAGE5 ) << "Test LCIO container " << state << endl; 
@@ -833,10 +842,10 @@ itTrk++;
         TMatrixD Hk = ts->getH();
         
         _processNoiseQ.Zero();
-        TMatrixDSym Ckm1 = ts->getTrackStateCov( );
-        TMatrixDSym Ckkm1 = Ckm1.Similarity( _jacobianF );        //Ckkm1 += _processNoiseQ;       
-        TMatrixDSym Rkkm1 = Ckkm1.Similarity(Hk);
-        Rkkm1 += getHitCov(hit);
+        TMatrixDSym Ckm1 = ts->getTrackStateCov( ); // 5x5
+        TMatrixDSym Ckkm1 = Ckm1.Similarity( _jacobianF ); // 5x5        //Ckkm1 += _processNoiseQ;       
+        TMatrixDSym Rkkm1 = Ckkm1.Similarity(Hk); // 5x5
+        Rkkm1 += getHitCov(hit); // hitCov is 2x2 ??
         
         if ( streamlog_level(DEBUG0) ) {
             streamlog_out( DEBUG0 ) << "Residual covariance matrix:" << std::endl;
@@ -855,9 +864,10 @@ itTrk++;
      * 
      * @return Gain matrix K
      */
-    const TMatrixD& EUTelKalmanFilter::updateGainK( const EUTelTrackStateImpl* ts, const EVENT::TrackerHit* hit ) {
+    TMatrixD EUTelKalmanFilter::updateGainK( const EUTelTrackStateImpl* ts, const EVENT::TrackerHit* hit ) {
         streamlog_out( DEBUG2 ) << "EUTelKalmanFilter::updateGainK()" << std::endl;
-				TMatrixD gainK;
+
+	TMatrixD gainK(5,2);
         _processNoiseQ.Zero(); //Not sure the need for this?
         TMatrixDSym Ckm1 = ts->getTrackStateCov( );
         TMatrixDSym Ckkm1 = Ckm1.Similarity( _jacobianF ); //Transform covariant matrix from one position to the next      
