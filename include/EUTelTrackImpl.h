@@ -56,6 +56,15 @@ namespace eutelescope {
         streamlog_out(MESSAGE0) << std::setw(7) << point[0] << " " << std::setw(7) << point[1] << " " << std::setw(7) << point[2] ;
         streamlog_out(MESSAGE0) << std::endl;
       }
+        //IMPL::TrackImpl* track = static_cast< IMPL::TrackImpl*> (*itTrk);
+        for (int i = 0; i< _hits.size(); i++ ) 
+        { 
+            EVENT::TrackerHit* ihit = _hits[i];
+            int ic = ihit->id();
+            streamlog_out(DEBUG5) << ic << " Is the hit IDs " << std::endl;
+        }
+        streamlog_out(DEBUG5) << std::endl;
+
     }
 
     virtual float getTx(int i=0) const ;
