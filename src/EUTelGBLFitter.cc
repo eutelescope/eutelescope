@@ -977,24 +977,24 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack){
    	return;
   }
 
-	//Create the jacobian
-	TMatrixD jacPointToPoint(5, 5);
+  //Create the jacobian
+  TMatrixD jacPointToPoint(5, 5);
   jacPointToPoint.UnitMatrix();
  	////////////////////////////////////////////////////////////////////////////////////////////////// loop through all states.
   for(int i=0;i < EUtrack->getTrackStates().size(); i++){		
 		/////////////////////////////////////////////////////////////////////////////////////////////BEGIN to create GBL point 
 		gbl::GblPoint point(jacPointToPoint);
-  	EUTelTrackStateImpl* state = EUtrack->getTrackStates().at(i); //get the state for this track. Static cast from EVENT::TrackState to derived class IMPL::TrackStateImpl.
+  		EUTelTrackStateImpl* state = EUtrack->getTrackStates().at(i); //get the state for this track. Static cast from EVENT::TrackState to derived class IMPL::TrackStateImpl.
 		//Need to find hit that this state may be associated with. Note this is a problem for two reasons. Not all states have a hit. Furthermore we can not associate a hit with a state with the current LCIO format. This must be fixed
 		EVENT::TrackerHit* hit = NULL; //Create the hit pointer
 		FindHitIfThereIsOne(EUtrack, hit, state); //This will point the hit to the correct hit object associated with this state. If non exists then point it will remain pointed to NULL
 		double fitPointGlobal[3]; //Need this part since z parameter not saved as state variable.
 		if(hit != NULL){
 			double fitPointLocal[] = {0.,0.,0.};
-  		fitPointLocal [0] = state->getReferencePoint()[0] ;
-  		fitPointLocal [1] = state->getReferencePoint()[1] ;
-  		fitPointLocal [2] = state->getReferencePoint()[2] ;
-
+	  		fitPointLocal [0] = state->getReferencePoint()[0] ;
+  			fitPointLocal [1] = state->getReferencePoint()[1] ;
+  			fitPointLocal [2] = state->getReferencePoint()[2] ;
+	
 			geo::gGeometry().local2Master( state->getLocation(), fitPointLocal, fitPointGlobal);	 
 			addMeasurementGBL(point, hit->getPosition(),  fitPointLocal, hit->getCovMatrix(), state->getH());
 			addSiPlaneScattererGBL(point, state->getLocation()); //This we still functions still assumes silicon is the thin scatterer. This can be easily changed when we have the correct gear file. However we will always assume that states will come with scattering information. To take into account material between states this will be dealt with latter. 
@@ -1006,11 +1006,11 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack){
 
 		////////////////////////////////////////////////////////////////////////////////START TO CREATE SCATTERS BETWEEN PLANES
 		if(i != (EUtrack->getTrackStates().size()-1)){
-  		EUTelTrackStateImpl* state_next = EUtrack->getTrackStates().at(i+1); //get the next tracks state to determine dz between the two states
+  			EUTelTrackStateImpl* state_next = EUtrack->getTrackStates().at(i+1); //get the next tracks state to determine dz between the two states
 			double fitPointLocal_next[] = {0.,0.,0.};  //Need this since we dont save the z parameter as state variable
 			fitPointLocal_next [0] = state_next->getReferencePoint()[0] ;
-  		fitPointLocal_next [1] = state_next->getReferencePoint()[1] ;
-  		fitPointLocal_next [2] = state_next->getReferencePoint()[2] ;
+  			fitPointLocal_next [1] = state_next->getReferencePoint()[1] ;
+	  		fitPointLocal_next [2] = state_next->getReferencePoint()[2] ;
 
 			double fitPointGlobal_next[3];
 			geo::gGeometry().local2Master( state_next->getLocation(), fitPointLocal_next, fitPointGlobal_next );
@@ -1031,7 +1031,7 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack){
 			TVectorD scatPrecSensor(2);
  			scatPrecSensor[0] = 1.0 / (scatvariance * scatvariance );
 
-  		pointScat1.addScatterer(scat, scatPrecSensor);
+  			pointScat1.addScatterer(scat, scatPrecSensor);
 			/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////END THE FIRST SCATTERING PLANE
 			//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////BEGIN THE SECOND SCATTERING PLANE
 			float distance2 = (fitPointGlobal_next[2] + fitPointGlobal[2])/2 + (fitPointGlobal_next[2] - fitPointGlobal[2])/sqrt(12);
@@ -1039,7 +1039,7 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack){
 			TMatrix jacobianScat2(5,5); jacobianScat1 = state->getPropagationJacobianF(distance2);
 			gbl::GblPoint pointScat2(jacobianScat1);
 
-  		pointScat2.addScatterer(scat, scatPrecSensor);
+  			pointScat2.addScatterer(scat, scatPrecSensor);
 							
 		}  
 		/////////////////////////////////////////////////////////////////////////////////////////END OF CREATE SCATTERERS BETWEEN PLANES
@@ -1062,10 +1062,10 @@ void EUTelGBLFitter::addSiPlaneScattererGBL(gbl::GblPoint& point, int iPlane) {
 	
 	const double tetSi  = Utility::getThetaRMSHighland(GetBeamEnergy(), X0Si);
 
-  scatPrecSensor[0] = 1.0 / (tetSi * tetSi );
-  scatPrecSensor[1] = 1.0 / (tetSi * tetSi );
+        scatPrecSensor[0] = 1.0 / (tetSi * tetSi );
+        scatPrecSensor[1] = 1.0 / (tetSi * tetSi );
 
-  point.addScatterer(scat, scatPrecSensor);
+        point.addScatterer(scat, scatPrecSensor);
 }
 
 
@@ -1074,20 +1074,21 @@ void EUTelGBLFitter::addSiPlaneScattererGBL(gbl::GblPoint& point, int iPlane) {
 void EUTelGBLFitter::addMeasurementGBL(gbl::GblPoint& point, const double *hitPos, const double *statePos, const EVENT::FloatVec& hitCov, TMatrixD HMatrix){
      
 	streamlog_out(DEBUG4) << " addMeasurementsGBL " << std::endl;
+
  	TVectorD meas;
 	meas[0] = hitPos[0] - statePos[0];
-  meas[1] = hitPos[1] - statePos[1];
+        meas[1] = hitPos[1] - statePos[1];
+
 	TMatrixDSym measPrec(2,2); //Precision matrix is symmetric. The vector option that was here was silly since there could be correlation between variance and x/y.
-  measPrec[0][0] = 1. / hitCov[0];	// cov(x,x)
-  measPrec[1][1] = 1. / hitCov[2];	// cov(y,y)
+        measPrec[0][0] = 1. / hitCov[0];	// cov(x,x)
+        measPrec[1][1] = 1. / hitCov[2];	// cov(y,y)
 	measPrec[0][1] = 1. / hitCov[1];  //cov(x,y)
 
 	streamlog_out(DEBUG4) << "Residuals and covariant matrix for the hit:" << std::endl;
-  streamlog_out(DEBUG4) << "X:" << std::setw(20) << meas[0] << std::setw(20) << measPrec[0][0] << measPrec[0][1] << std::endl;
-  streamlog_out(DEBUG4) << "Y:" << std::setw(20) << meas[1] << std::setw(20) << measPrec[1][0] << measPrec[1][1] << std::endl;
-	
+        streamlog_out(DEBUG4) << "X:" << std::setw(20) << meas[0] << std::setw(20) << measPrec[0][0] << measPrec[0][1] << std::endl;
+        streamlog_out(DEBUG4) << "Y:" << std::setw(20) << meas[1] << std::setw(20) << measPrec[1][0] << measPrec[1][1] << std::endl;
 
-  point.addMeasurement(HMatrix, meas, measPrec);
+        point.addMeasurement(HMatrix, meas, measPrec);
 
 }
 
