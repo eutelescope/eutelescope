@@ -277,12 +277,6 @@ namespace eutelescope {
        
  
     }
-	//	streamlog_out ( MESSAGE5 ) << "Test LCIO container " << state << endl; 
-	//		IMPL::TrackImpl* test = cartesian2LCIOTrack( *itTrk );
-	//		const EVENT::TrackerHitVec& hit_test = test->getTrackerHits();
-	//		const  EVENT::TrackStateVec track_test = test->getTrackStates();
-	//		streamlog_out ( MESSAGE5 ) << "Test LCIO container output position: " << *((*hit_test.begin())->getPosition()) << "," << *((*hit_test.begin())->getPosition()+1) << endl;
-	//	streamlog_out ( MESSAGE5 ) << "Test LCIO container output position: " << *((*track_test.begin())->getPosition()) << "," << *((*track_test.begin())->getPosition()+1) << endl;
 
 }
 
@@ -316,6 +310,7 @@ namespace eutelescope {
 
       for (  itTrk = _collection.begin(); itTrk != _collection.end();) 
       {
+        // obsolte code from very old times ....
         // check that it's not a fitted hit (type =32)
 	//     if( (*itTrk)->getType() > 31 ) continue;            Is this the best way to deal with type? Should it no be in LCIO bit field?
  
@@ -380,7 +375,7 @@ itTrk++;
  
 						//Check the number of hit on the track after propagation and collecting hits is over the minimum
             if ( isGoodTrack && ( *itTrk )->getTrackerHits( ).size( ) < geo::gGeometry( ).nPlanes( ) - _allowedMissingHits ) {
-		streamlog_out ( MESSAGE5 ) << "Number of hits on the track: " << ( *itTrk )->getTrackerHits( ).size( ) <<" Number needed: " << geo::gGeometry( ).nPlanes( ) - _allowedMissingHits << std::endl;
+		streamlog_out ( MESSAGE4 ) << "Number of hits on the track: " << ( *itTrk )->getTrackerHits( ).size( ) <<" Number needed: " << geo::gGeometry( ).nPlanes( ) - _allowedMissingHits << std::endl;
                	streamlog_out ( DEBUG5 ) << "Track candidate has to many missing hits." << std::endl;
                	streamlog_out ( DEBUG5 ) << "Removing this track candidate from further consideration." << std::endl;
            	(*itTrk)->Print();
