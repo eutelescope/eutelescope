@@ -885,11 +885,11 @@ void EUTelCorrelator::bookHistos() {
 
             histoInfo = histoMgr->getHistogramInfo(_hitXCorrelationHistoName);
             colNBin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 100   ;    
-            colMin   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : -10.;
-            colMax   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax :  10.;
+            colMin   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : -0.5* geo::gGeometry().siPlaneXSize(row);
+            colMax   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax :  0.5* geo::gGeometry().siPlaneXSize(row);
             rowNBin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yBin : 100   ;    
-            rowMin   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMin : -10.;
-            rowMax   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMax :  10.;
+            rowMin   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMin : -0.5* geo::gGeometry().siPlaneXSize(col);
+            rowMax   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMax :  0.5* geo::gGeometry().siPlaneXSize(col);
 
 
             AIDA::IHistogram2D * histo2D =
@@ -916,11 +916,11 @@ void EUTelCorrelator::bookHistos() {
  
             histoInfo = histoMgr->getHistogramInfo(_hitYCorrelationHistoName);
             colNBin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 100   ;    
-            colMin   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : -10.;
-            colMax   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax :  10.;
+            colMin   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : -0.5* geo::gGeometry().siPlaneYSize(row);
+            colMax   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax :  0.5* geo::gGeometry().siPlaneYSize(row);
             rowNBin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yBin : 100   ;    
-            rowMin   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMin : -10.;
-            rowMax   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMax :  10.;
+            rowMin   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMin : -0.5* geo::gGeometry().siPlaneYSize(col);
+            rowMax   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMax :  0.5* geo::gGeometry().siPlaneYSize(col);
 
             histo2D =
               AIDAProcessor::histogramFactory( this )->createHistogram2D( tempHistoName.c_str(), 
@@ -939,11 +939,11 @@ void EUTelCorrelator::bookHistos() {
 
             histoInfo = histoMgr->getHistogramInfo(_hitXCorrShiftHistoName);
             colNBin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 100   ;    
-            colMin   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : -10.;
-            colMax   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax :  10.;
+            colMin   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : -0.5* geo::gGeometry().siPlaneXSize(row);
+            colMax   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax :  0.5* geo::gGeometry().siPlaneXSize(row);
             rowNBin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yBin : 100   ;    
-            rowMin   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMin : -10.;
-            rowMax   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMax :  10.;
+            rowMin   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMin : -0.5* geo::gGeometry().siPlaneXSize(col);
+            rowMax   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMax :  0.5* geo::gGeometry().siPlaneXSize(col);
 
             histo2D = AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(), rowNBin, rowMin, rowMax, colNBin, colMin, colMax );
 
@@ -959,11 +959,11 @@ void EUTelCorrelator::bookHistos() {
 
             histoInfo = histoMgr->getHistogramInfo(_hitYCorrShiftHistoName);
             colNBin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 100   ;    
-            colMin   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : -10.;
-            colMax   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax :  10.;
+            colMin   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : -0.5* geo::gGeometry().siPlaneYSize(row);
+            colMax   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax :  0.5* geo::gGeometry().siPlaneYSize(row);
             rowNBin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yBin : 100   ;    
-            rowMin   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMin : -10.;
-            rowMax   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMax :  10.;
+            rowMin   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMin : -0.5* geo::gGeometry().siPlaneYSize(col);
+            rowMax   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMax :  0.5* geo::gGeometry().siPlaneYSize(col);
 
             histo2D = AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(), rowNBin, rowMin, rowMax, colNBin, colMin, colMax );
            
