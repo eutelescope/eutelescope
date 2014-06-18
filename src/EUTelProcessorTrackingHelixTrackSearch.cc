@@ -171,7 +171,6 @@ void EUTelProcessorTrackingHelixTrackSearch::init() {
     _nProcessedEvents = 0;
 
     // Getting access to geometry description
-//    geo::gGeometry().initializeTGeoDescription(_tgeoFileName);
     std::string name("test.root");
     geo::gGeometry().initializeTGeoDescription(name,false);
     // Instantiate track finder. This is a working horse of the processor.
@@ -216,10 +215,10 @@ void EUTelProcessorTrackingHelixTrackSearch::processRunHeader(LCRunHeader* run) 
             << "This may mean that the GeoID parameter was not set" << endl;
 
 
-    if (header->getGeoID() != geo::gGeometry()._siPlanesParameters->getSiPlanesID()) {
+    if (header->getGeoID() != geo::gGeometry().getSiPlanesLayoutID()) {
         streamlog_out(WARNING5) << "Error during the geometry consistency check: " << endl
                 << "The run header says the GeoID is " << header->getGeoID() << endl
-                << "The GEAR description says is     " << geo::gGeometry()._siPlanesParameters->getSiPlanesID() << endl;
+                << "The GEAR description says is     " << geo::gGeometry().getSiPlanesLayoutID() << endl;
     }
 
     _nProcessedRuns++;
@@ -264,8 +263,7 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
 	EVENT::TrackerHitVec::const_iterator itHits;
 	for ( itHits = allHitsVec.begin() ; itHits != allHitsVec.end(); ++itHits ) {
 		const double* uvpos = (*itHits)->getPosition();
-                    const int sensorID = Utility::GuessSensorID( static_cast<IMPL::TrackerHitImpl*> (*itHits) );
-//                    const int usensorID = Utility::GuessSensorID( static_cast<EVENT::TrackerHit*> (*itHits) );
+                    const int sensorID = Utility::getSensorIDfromHit( static_cast<IMPL::TrackerHitImpl*> (*itHits) );
 		streamlog_out(MESSAGE0) << "Hit (id=" << setw(3) << sensorID << ") local(u,v) coordinates: (" 
                        << setw(7) << setprecision(4) << uvpos[0] << "," << setw(7) << setprecision(4) << uvpos[1] << ")" << std::endl;
 	}
@@ -382,8 +380,7 @@ void EUTelProcessorTrackingHelixTrackSearch::plotHistos( vector< EUTelTrackImpl*
                 streamlog_out( MESSAGE1 ) << "Track hits start:==============" << std::endl;
                 for ( itTrkHits = trkHits.begin( ) ; itTrkHits != trkHits.end( ); ++itTrkHits ) {
                     const double* uvpos = ( *itTrkHits )->getPosition( );
-                    const int sensorID = Utility::GuessSensorID( static_cast<IMPL::TrackerHitImpl*> (*itTrkHits) );
-//                    const int usensorID = Utility::GuessSensorID( static_cast<EVENT::TrackerHit*> (*itTrkHits) );
+                    const int sensorID = Utility::getSensorIDfromHit( static_cast<IMPL::TrackerHitImpl*> (*itTrkHits) );
                     streamlog_out( MESSAGE1 ) << "Hit (id=" << setw(3) << sensorID << ") local(u,v) coordinates: (" 
                              << setw(7) << setprecision(4) << uvpos[0] << "," <<  setw(7) << setprecision(4) << uvpos[1] << ")";
                     double globalHit[] = {0.,0.,0.};
@@ -450,8 +447,7 @@ void EUTelProcessorTrackingHelixTrackSearch::FillHits(LCEvent * evt,
             delete cluster; // <--- destroying the cluster
         }
 
-        const int localSensorID = Utility::GuessSensorID( static_cast<IMPL::TrackerHitImpl*> (hit) );
-//       const int localSensorID = Utility::GuessSensorID( hit );  // localSensorID == -1, if detector ID was not found
+        const int localSensorID = Utility::getSensorIDfromHit( static_cast<IMPL::TrackerHitImpl*> (hit) );
         if ( localSensorID >= 0 ) allHitsVec.push_back( hit );
         
     } // end loop over all hits in collection

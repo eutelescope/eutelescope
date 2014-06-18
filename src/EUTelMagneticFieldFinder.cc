@@ -184,7 +184,6 @@ namespace eutelescope {
       const double thicknessLay       = geo::gGeometry()._siPlanesLayerLayout->getLayerThickness(iPlane );
 			////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
       EUTelTrackStateImpl* state = const_cast<EUTelTrackStateImpl*>((*itTrk)->getFirstTrackState( ));
 			state->setbeamQ(_beamQ); //Set the beam charge here. This is not perfect I think. Since we could set it as a static variable. However how this should be used in other processor I am unsure???????/
 			streamlog_out ( DEBUG5 ) << "Memory location of initial state: " << state << endl; 
@@ -595,7 +594,7 @@ itTrk++;
             const double* uvpos = (*itHit)->getPosition();
             float posLocal[] =  { static_cast<float>(uvpos[0]), static_cast<float>(uvpos[1]), static_cast<float>(uvpos[2]) };
 
-            const int sensorID = Utility::GuessSensorID( *itHit );
+            const int sensorID = Utility::getSensorIDfromHit( *itHit );
 
             double temp[] = {0.,0.,0.};
             geo::gGeometry().local2Master( sensorID, uvpos, temp);
@@ -1088,7 +1087,7 @@ itTrk++;
         EVENT::TrackerHitVec::const_iterator itr;
         for( itr = hits.begin(); itr != hits.end(); ++itr ) {
 
-            const int sensorID = Utility::GuessSensorID( *itr );
+            const int sensorID = Utility::getSensorIDfromHit( *itr );
 
             itMeasLayer = measLayers.find( sensorID );
             if ( itMeasLayer != measLayers.end() ) itMeasLayer->second->addHit( *itr );
@@ -1098,13 +1097,19 @@ itTrk++;
             }
         }
         
+        streamlog_out(DEBUG2) << "EUTelKalmanFilter::sortHitsByMeasurementLayers()  start loop through the .sensorIDsVec()"  << std::endl;
+        int nplanes        =  geo::gGeometry().nPlanes();
+        int nplanesVecSize =  geo::gGeometry().sensorIDsVec().size();
+        streamlog_out(DEBUG2) << "EUTelKalmanFilter::sortHitsByMeasurementLayers()  nplanes : " << nplanes << " vectorSize: " << nplanesVecSize << std::endl;
+
         // Sort measurement layers such that layers encountered by track first
         // are in the front of array
-        _allMeasurements = std::vector< MeasurementLayer* >( geo::gGeometry().nPlanes(), NULL );   // flush vector
+        _allMeasurements = std::vector< MeasurementLayer* >( nplanesVecSize , NULL );   // flush vector
         int numberAlongZ = -1;
         std::vector< int >::const_iterator itSensorID;
         for ( itSensorID = geo::gGeometry().sensorIDsVec().begin(); itSensorID != geo::gGeometry().sensorIDsVec().end(); ++itSensorID ) {
             sensorID = (*itSensorID);
+            streamlog_out(DEBUG1) << " sensorID  : " << sensorID << std::endl;
             itMeasLayer = measLayers.find( sensorID );
             if ( itMeasLayer != measLayers.end() ) {
                 numberAlongZ = geo::gGeometry().sensorIDtoZOrder( sensorID );

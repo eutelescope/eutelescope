@@ -184,17 +184,6 @@ namespace eutelescope {
      */
     int _events;
 
-
-    //! Input flag to dump the Offset values 
-    /*!
-     */
-    bool _dumpOffset;
-
-    //! Output offset db file 
-    /*!
-     */
-    std::string _offsetDBFile;
-
     //! Cluster collection list (EVENT::StringVec) 
     /*!
      */

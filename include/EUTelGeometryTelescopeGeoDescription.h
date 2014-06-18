@@ -18,8 +18,12 @@
 
 // GEAR includes
 #include "gear/GearMgr.h"
-#include "gear/SiPlanesLayerLayout.h"
-#include "gear/SiPlanesParameters.h"
+#include "gearimpl/SiPlanesLayerLayoutImpl.h"
+#include "gearimpl/SiPlanesParametersImpl.h"
+
+#include "gearimpl/TelPlanesLayerLayoutImpl.h"
+#include "gearimpl/TelPlanesParametersImpl.h"
+
 #include "gear/BField.h"
 
 // EUTELESCOPE
@@ -67,7 +71,13 @@ namespace eutelescope {
              */
             static EUTelGeometryTelescopeGeoDescription& getInstance();
  
-           
+ 
+            /** Number of planes in the setup */
+            inline size_t getSiPlanesLayoutID() const { return _siPlanesLayoutID; } ;
+
+             /** Number of planes in the setup */
+            void setSiPlanesLayoutID(size_t value) { _siPlanesLayoutID = value; } ;          
+                    
             /** Number of planes in the setup */
             size_t nPlanes() const;
             
@@ -103,9 +113,27 @@ namespace eutelescope {
             
             /** Sensor Z side size */
             double siPlaneZSize( int );
+ 
+            /** Sensor X side pixel pitch [mm] */
+            double siPlaneXPitch( int );
+            
+            /** Sensor Y side pixel pitch [mm] */
+            double siPlaneYPitch( int );
+
+            /** Sensor X side size in pixels */
+            double siPlaneXNpixels( int );
+            
+            /** Sensor Y side size in pixels */
+            double siPlaneYNpixels( int );
+ 
+            /** Sensor X side size in pixels */
+            double siPlaneXResolution( int );
+            
+            /** Sensor Y side size in pixels */
+            double siPlaneYResolution( int );
             
             /** Sensor medium radiation length */
-            double siPlaneMediumRadLen( int );
+            double siPlaneRadLength( int );
             
 	    /** Name of pixel geometry library */
 	    std::string geoLibName( int );
@@ -129,6 +157,17 @@ namespace eutelescope {
 
         public:
             virtual ~EUTelGeometryTelescopeGeoDescription();
+
+        private:
+            /** reading initial info from gear: part of contructor */
+	    void readSiPlanesParameters();
+
+            /** reading initial info from gear: part of contructor
+              * new GEAR from branch/TelPlanes
+              */
+	    void readTelPlanesParameters(); 
+
+            void translateSiPlane2TGeo(TGeoVolume*,int );
 
         public:
             // TGeo stuff
@@ -206,8 +245,20 @@ namespace eutelescope {
              */
             gear::SiPlanesLayerLayout* _siPlanesLayerLayout;
 
+            /**
+             */
+            gear::TelPlanesParameters*  _telPlanesParameters;
+ 
+            /**
+             */
+            gear::TelPlanesLayerLayout* _telPlanesLayerLayout;
 
-        private:
+// overwrite private to public ::
+        private :
+
+            /** */
+            size_t _siPlanesLayoutID;
+
             /** Vector of Sensor IDs */
             EVENT::IntVec _sensorIDVec;
 
@@ -239,13 +290,31 @@ namespace eutelescope {
             EVENT::DoubleVec _siPlaneZRotation;
             
             /** Sensor X side length [mm]*/
-            EVENT::DoubleVec _siPlaneSizeX;
+            EVENT::DoubleVec _siPlaneXSize;
             
             /** Sensor Y side length [mm]*/
-            EVENT::DoubleVec _siPlaneSizeY;
+            EVENT::DoubleVec _siPlaneYSize;
             
             /** Sensor Z side length [mm]*/
-            EVENT::DoubleVec _siPlaneSizeZ;
+            EVENT::DoubleVec _siPlaneZSize;
+ 
+            /** Sensor X side pitch length [mm]*/
+            EVENT::DoubleVec _siPlaneXPitch;
+            
+            /** Sensor Y side pitch length [mm]*/
+            EVENT::DoubleVec _siPlaneYPitch;
+ 
+            /** Sensor X side pitch length [pixels]*/
+            EVENT::DoubleVec _siPlaneXNpixels;
+            
+            /** Sensor Y side pitch length [pixels]*/
+            EVENT::DoubleVec _siPlaneYNpixels;
+
+            /** Sensor X side pitch length [pixels]*/
+            EVENT::DoubleVec _siPlaneXResolution;
+            
+            /** Sensor Y side pitch length [pixels]*/
+            EVENT::DoubleVec _siPlaneYResolution;
             
             /** Radiation length of the sensor [mm]*/
             EVENT::DoubleVec _siPlaneRadLength;
@@ -257,14 +326,15 @@ namespace eutelescope {
             size_t _nPlanes;
 
             /** Pointer to the pixel geometry manager */
-			EUTelGenericPixGeoMgr* _pixGeoMgr;
+            EUTelGenericPixGeoMgr* _pixGeoMgr;
             //#ifdef  USE_TGEO
 
-			/** Flag if geoemtry is already initialized */
-			bool _isGeoInitialized;
+        private:
+	    /** Flag if geoemtry is already initialized */
+	    bool _isGeoInitialized;
 
-			/** Map containing plane path (string) and corresponding planeID */
-			std::map<int, std::string> _planePath;
+	    /** Map containing plane path (string) and corresponding planeID */
+	    std::map<int, std::string> _planePath;
 
         public:
             // TGeo stuff

@@ -43,7 +43,7 @@ namespace eutelescope {
 
         virtual void SetTrackCandidates( const EVENT::TrackVec& );
 
-        virtual void SetTrackCandidates( const std::vector<IMPL::TrackImpl*> & );
+        virtual void SetTrackCandidates( std::vector<const IMPL::TrackImpl*> & );
 
       // do some clean up of internal data structures
         virtual void Clear();
@@ -57,7 +57,7 @@ namespace eutelescope {
         virtual void FitTracks();
         virtual void TrackCandidatesToGBLTrajectories();
         virtual void PerformFitGBLTrajectories();
-        virtual void PerformMille();
+        virtual bool PerformMille();
 
         virtual void FitSingleTrackCandidate();
 

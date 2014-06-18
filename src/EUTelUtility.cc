@@ -183,9 +183,9 @@ namespace eutelescope {
          * @param hit 
          * @return plane id
          */
-        int GuessSensorID( EVENT::TrackerHit* hit ) {
+        int getSensorIDfromHit( EVENT::TrackerHit* hit ) {
             if ( hit == NULL ) {
-                streamlog_out(ERROR) << "An invalid hit pointer supplied! will exit now\n" << std::endl;
+                streamlog_out(ERROR) << "getSensorIDfromHit:: An invalid hit pointer supplied! will exit now\n" << std::endl;
                 return -1;
             }
 
@@ -197,7 +197,7 @@ namespace eutelescope {
                 return sensorID;
 
             } catch (...) {
-                streamlog_out(ERROR) << "guessSensorID() produced an exception!" << std::endl;
+                streamlog_out(ERROR) << "getSensorIDfromHit() produced an exception!" << std::endl;
             }
 
             return -1;
