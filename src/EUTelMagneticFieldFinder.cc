@@ -375,7 +375,7 @@ itTrk++;
  
 						//Check the number of hit on the track after propagation and collecting hits is over the minimum
             if ( isGoodTrack && ( *itTrk )->getTrackerHits( ).size( ) < geo::gGeometry( ).nPlanes( ) - _allowedMissingHits ) {
-		streamlog_out ( MESSAGE4 ) << "Number of hits on the track: " << ( *itTrk )->getTrackerHits( ).size( ) <<" Number needed: " << geo::gGeometry( ).nPlanes( ) - _allowedMissingHits << std::endl;
+		streamlog_out ( MESSAGE2 ) << "Number of hits on the track: " << ( *itTrk )->getTrackerHits( ).size( ) <<" Number needed: " << geo::gGeometry( ).nPlanes( ) - _allowedMissingHits << std::endl;
                	streamlog_out ( DEBUG5 ) << "Track candidate has to many missing hits." << std::endl;
                	streamlog_out ( DEBUG5 ) << "Removing this track candidate from further consideration." << std::endl;
            	(*itTrk)->Print();
