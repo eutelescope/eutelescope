@@ -1054,8 +1054,8 @@ void EUTelGBLFitter::addSiPlaneScattererGBL(gbl::GblPoint& point, int iPlane) {
 	TVectorD scatPrecSensor(2);
 	TVectorD scat(2); 
 	scat[0] = 0.0; scat[1]=0.0; //This should always be 0 right? If not then it should be given as a parameter
-	const double radlenSi           = geo::gGeometry()._siPlanesLayerLayout->getSensitiveRadLength(iPlane);
-	const double thicknessSi        = geo::gGeometry()._siPlanesLayerLayout->getSensitiveThickness(iPlane);
+	const double radlenSi           = geo::gGeometry().siPlaneRadLength(iPlane);
+	const double thicknessSi        = geo::gGeometry().siPlaneZSize(iPlane);
 
 	const double X0Si  = thicknessSi / radlenSi; // Si 
                
