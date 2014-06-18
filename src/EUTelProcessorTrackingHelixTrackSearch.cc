@@ -278,17 +278,18 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
             streamlog_out( DEBUG1 ) << "Trying to find tracks..." << endl;
 
 // searching for hits along the expected track direction 
-            _trackFitter->SearchTrackCandidates( );
+            	_trackFitter->SearchTrackCandidates( );
+
 // remove possible duplicates (the amount of commont hits on the split tracks is controled via the processor paraemter)
-            _trackFitter->PruneTrackCandidates( );
+            	_trackFitter->PruneTrackCandidates( );
 
-            streamlog_out( DEBUG1 ) << "Retrieving track candidates..." << endl;
+            	streamlog_out( DEBUG1 ) << "Retrieving track candidates..." << endl;
 
-						std::vector< EUTelTrackImpl* >& trackCartesian = static_cast < EUTelKalmanFilter* > (_trackFitter)->getTracks(); //Need to cast this since error: ‘class eutelescope::EUTelTrackFitter’ otherwise Why??
+		std::vector< EUTelTrackImpl* >& trackCartesian = static_cast < EUTelKalmanFilter* > (_trackFitter)->getTracks(); //Need to cast this since error: ‘class eutelescope::EUTelTrackFitter’ otherwise Why??
 						
-						plotHistos(trackCartesian);
+		plotHistos(trackCartesian);
 
-						outputLCIO(evt,trackCartesian);
+//		outputLCIO(evt,trackCartesian);
 
         }
         _nProcessedEvents++;
@@ -298,27 +299,31 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
 }
 
 void EUTelProcessorTrackingHelixTrackSearch::outputLCIO(LCEvent* evt, std::vector< EUTelTrackImpl* >& trackCartesian){
+
 	//Create once per event    
 	LCCollectionVec * trkCandCollection = new LCCollectionVec(LCIO::TRACK);
-    // Prepare output collection
-  LCFlagImpl flag(trkCandCollection->getFlag());
-  flag.setBit( LCIO::TRBIT_HITS );
-  trkCandCollection->setFlag( flag.getFlag( ) );
+
+	// Prepare output collection
+  	LCFlagImpl flag(trkCandCollection->getFlag());
+  	flag.setBit( LCIO::TRBIT_HITS );
+  	trkCandCollection->setFlag( flag.getFlag( ) );
 
 	//Loop through all tracks
 	vector< EUTelTrackImpl* >::const_iterator itTrackCartesian;
-  for ( itTrackCartesian = trackCartesian.begin(); itTrackCartesian != trackCartesian.end(); itTrackCartesian++){
+	for ( itTrackCartesian = trackCartesian.begin(); itTrackCartesian != trackCartesian.end(); itTrackCartesian++){
 		IMPL::TrackImpl* LCIOtrack = new IMPL::TrackImpl; //Create container of type IMPL::TrackImpl //Will be deleted automatically latter by LCIO object
 		int nstates =  (*itTrackCartesian)->getTrackStates().size(); //* to dereference the pointer to the pointer trackCartesian
+
 		//Loops over all states to change to the correct format for LCIO
 		for(int i=0;i < nstates; i++){
 			cartesian2LCIOTrack((*itTrackCartesian), LCIOtrack);
 		}//END STATE LOOP
 		//For every track add this to the collection
-    trkCandCollection->push_back( LCIOtrack );
+    		trkCandCollection->push_back( LCIOtrack );
 	}//END TRACK LOOP
+
 	//Now add this collection to the 
-  evt->addCollection(trkCandCollection, _trackCandidateHitsOutputCollectionName);
+  	evt->addCollection(trkCandCollection, _trackCandidateHitsOutputCollectionName);
 
 }
 
