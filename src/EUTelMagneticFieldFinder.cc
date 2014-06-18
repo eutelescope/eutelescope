@@ -946,7 +946,8 @@ itTrk++;
            return -999;
           }            
 
-          streamlog_out ( DEBUG2 ) << "identified NextPlane Entrance: " <<  fpoint[0] << " " <<  fpoint[1] << " " << fpoint[2] << " at plane : " << nextPlaneId << " err:"<< getErrorID << endl;
+          streamlog_out ( DEBUG2 ) << "propagate: goind from this plane       : " <<  x0        << " " <<  y0        << " " << z0        << " at plane : " << tsPlaneID                           << endl;
+          streamlog_out ( DEBUG2 ) << "propagate:identified NextPlane Entrance: " <<  fpoint[0] << " " <<  fpoint[1] << " " << fpoint[2] << " at plane : " << nextPlaneId << " err:"<< getErrorID << endl;
 //	  const float newPos[] = {fpoint[0], fpoint[1], fpoint[2]};
 //	  const float newPos[] = {static_cast<float>(x), static_cast<float>(y), static_cast<float>(z0+dz)};
 	
