@@ -674,40 +674,52 @@ int EUTelGeometryTelescopeGeoDescription::getSensorID( const float globalPos[] )
     
     _geoManager->FindNode( globalPos[0], globalPos[1], globalPos[2] );
 
-		_geoManager->CdUp();
+    std::vector<std::string> split;
+ 
+    int sensorID = -999;
 
-		_geoManager->CdUp();	
+    const char* volName1 = const_cast < char* > ( geo::gGeometry( )._geoManager->GetCurrentVolume( )->GetName( ) );
+    streamlog_out(DEBUG2) << "init sensorID  : " << sensorID  <<  " " << volName1 << std::endl;
 
-		_geoManager->CdUp();	////////////////////////////////////////THIS NEEDS TO BE FIXED. If partice falls in the pixel volume and to find sensor ID you need to be on the sensor volume
+    while( _geoManager->GetLevel() > 0 ) { 
+      const char* volName = const_cast < char* > ( geo::gGeometry( )._geoManager->GetCurrentVolume( )->GetName( ) );
+      streamlog_out( DEBUG1 ) << "Point (" << globalPos[0] << "," << globalPos[1] << "," << globalPos[2] << ") found in volume: " << volName << " level: " << _geoManager->GetLevel() << std::endl;
+      split = Utility::stringSplit( std::string( volName ), "/", false);
+      if ( split.size() > 0 && split[0].length() > 16 && (split[0].substr(0,16) == "volume_SensorID:") ) {
+         int strLength = split[0].length(); 
+         sensorID = strtol( (split[0].substr(16, strLength )).c_str(), NULL, 10 );
+         streamlog_out(DEBUG1) << "Point (" << globalPos[0] << "," << globalPos[1] << "," << globalPos[2] << ") was found at :" << sensorID << std::endl;       
+         break;
+      }
+      _geoManager->CdUp();	////////////////////////////////////////THIS NEEDS TO BE FIXED. If partice falls in the pixel volume and to find sensor ID you need to be on the sensor volume
+    }
 
-    const char* volName = const_cast < char* > ( geo::gGeometry( )._geoManager->GetCurrentVolume( )->GetName( ) );
-
-    streamlog_out( DEBUG5 ) << "Point (" << globalPos[0] << "," << globalPos[1] << "," << globalPos[2] << ") found in volume: " << volName << std::endl;
+    const char* volName2 = const_cast < char* > ( geo::gGeometry( )._geoManager->GetCurrentVolume( )->GetName( ) );
+    streamlog_out( DEBUG2 ) << "Point (" << globalPos[0] << "," << globalPos[1] << "," << globalPos[2] << ") found in volume: " << volName2 << " no moving around any more" << std::endl;
     
-	std::vector<std::string> split = Utility::stringSplit( std::string( volName ), "/", false);
+//	std::vector<std::string> split = Utility::stringSplit( std::string( volName ), "/", false);
 
-	int sensorID = -999;
-	streamlog_out(DEBUG5) << "init sensorID  : " << sensorID  <<  " " << volName << std::endl;
 
-        if( split.size() == 1 && split[0].length() > 16 ) {
+//        if( split.size() == 1 && split[0].length() > 16 ) {
 
-          streamlog_out(DEBUG5) << "split[0] " << split[0] << std::endl;
-          streamlog_out(DEBUG5) << "split[0].substr(0,16) " << split[0].substr(0,16) << std::endl;
-          int strLength = split[0].length(); 
-          streamlog_out(DEBUG5) << "split[0].substr(16, strLength ) " << split[0].substr(16, strLength ) << std::endl;
+//          streamlog_out(DEBUG5) << "split[0] " << split[0] << std::endl;
+//          streamlog_out(DEBUG5) << "split[0].substr(0,16) " << split[0].substr(0,16) << std::endl;
+//          int strLength = split[0].length(); 
+//          streamlog_out(DEBUG5) << "split[0].substr(16, strLength ) " << split[0].substr(16, strLength ) << std::endl;
 
           //since we check bounds, no need for vector.at() but use [], it saves cycles :-)
-	  if (  (split[0].substr(0,16) == "volume_SensorID:") )
+//	  if (  (split[0].substr(0,16) == "volume_SensorID:") )
+          if( sensorID >= 0 )
 	  {
-                sensorID = strtol( (split[0].substr(16, strLength )).c_str(), NULL, 10 );
-		streamlog_out(DEBUG5) << "Point (" << globalPos[0] << "," << globalPos[1] << "," << globalPos[2] << ") was found at :" << sensorID << std::endl;
+//                sensorID = strtol( (split[0].substr(16, strLength )).c_str(), NULL, 10 );
+		streamlog_out(DEBUG5) << "Point (" << globalPos[0] << "," << globalPos[1] << "," << globalPos[2] << ") was found. sensorID = " << sensorID << std::endl;
           }
 	  else
 	  {
-		streamlog_out(DEBUG5) << "Point (" << globalPos[0] << "," << globalPos[1] << "," << globalPos[2] << ") was not found inside any sensor!" << std::endl;
+		streamlog_out(DEBUG5) << "Point (" << globalPos[0] << "," << globalPos[1] << "," << globalPos[2] << ") was not found inside any sensor! sensorID = " << sensorID << std::endl;
 	  }
-        }
-        streamlog_out(DEBUG5) << "sensorID  : " << sensorID  << std::endl;
+//        }
+//        streamlog_out(DEBUG5) << "sensorID  : " << sensorID  << std::endl;
 
 	return sensorID;
 }
