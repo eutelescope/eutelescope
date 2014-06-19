@@ -73,9 +73,13 @@ namespace eutelescope {
 
 				void CreateTrajectoryandFit(std::vector< gbl::GblPoint >* pointList,  gbl::GblTrajectory* traj, double* chi2, int* ndf);
 
-				void CreateEUTelTrackFromTrajectory(gbl::GblTrajectory* traj, EUTelTrackImpl* EUtrackWithTrajInfo);
+				void UpdateTrackFromGBLTrajectory(gbl::GblTrajectory* traj,std::vector< gbl::GblPoint >* pointList);
 		
 				void pushBackPointandState( std::vector< gbl::GblPoint >* pointListTrack, const gbl::GblPoint pointTrack, EUTelTrackStateImpl *state);
+
+				void CorrectSizeOfMatrixVector(TMatrixD* alDer, std::vector<int>* globalLabels);
+
+				void CreateAlignmentToMeasurementJacobian();
 
 				void addSiPlaneScattererGBL(gbl::GblPoint& point, int iPlane);
 
@@ -95,11 +99,11 @@ namespace eutelescope {
 
         void FitSingleTrackCandidate(EVENT::TrackVec::const_iterator& itTrkCand);
  
-        inline void SetAlignmentMode( Utility::AlignmentMode alignmentMode) {
-            this->_alignmentMode = alignmentMode;
+        inline void SetAlignmentMode( int number) {
+            this->_alignmentMode = number;
         }
 
-        inline Utility::AlignmentMode GetAlignmentMode() const {
+        inline int GetAlignmentMode() const {
             return _alignmentMode;
         }
 
@@ -136,6 +140,10 @@ namespace eutelescope {
         void SetMilleBinary(gbl::MilleBinary* _mille) {
             this->_mille = _mille;
         }
+			
+				void SetMilleBinaryName(std::string binaryname){
+					_binaryname = binaryname;
+				} 
 
         inline void SetChi2Cut(double chi2cut) {
             this->_chi2cut = chi2cut;
@@ -252,13 +260,15 @@ namespace eutelescope {
         // Alignment 
     private:
         /** Alignment degrees of freedom */
-        Utility::AlignmentMode _alignmentMode;
+        int _alignmentMode;
 
         /** Outlier downweighting option */
         std::string _mEstimatorType;
         
         /** Milipede binary file handle */
         gbl::MilleBinary* _mille;
+
+				std::string _binaryname;
         
         /** Parameter resolutions */
         std::vector<int> _parameterIdPlaneVec;

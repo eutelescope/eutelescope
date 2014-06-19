@@ -94,14 +94,22 @@ namespace eutelescope {
         /** Output Tracks collection name */
         string _tracksOutputCollectionName;
 
+				string _milleBinaryFilename;
+
         /** Track fitter */
         EUTelGBLFitter *_trackFitter;
+
+				//This specifies what rotations etc will be taken into account. This directly effects the jacobian that transforms alignment parameters to changes in measured hits
+				int _alignmentMode;
 
         /** Beam charge in [e] */
         double _beamQ;
 
 				//Beam energy. 
 				double _eBeam;
+
+				//This is the maximum chi2 of a track that will be used in the millepede alignment fit
+				double _maxChi2Cut;
 
         /** Outlier downweighting option */
         std::string _mEstimatorType;

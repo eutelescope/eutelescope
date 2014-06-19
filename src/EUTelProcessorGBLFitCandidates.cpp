@@ -13,7 +13,10 @@ _nProcessedRuns(0),
 _nProcessedEvents(0),
 _beamQ(-1),
 _eBeam(4),
-_mEstimatorType()
+_mEstimatorType(),
+_maxChi2Cut(1000),
+_milleBinaryFilename("mille.bin"),
+_alignmentMode(0)
 {
 	// Processor description
   _description = "EUTelProcessorTrackingGBLTrajectory performs track fits using GBL optionally writing data files for MILLEPEDE II.";
@@ -32,6 +35,22 @@ _mEstimatorType()
   // Optional processor parameters that define finder settings
 
   registerOptionalParameter("GBLMEstimatorType", "GBL outlier down-weighting option (t,h,c)", _mEstimatorType, string() );
+
+  registerOptionalParameter("MilleMaxChi2Cut", "Maximum chi2 of a track candidate that goes into millepede", _maxChi2Cut, double(1000.));
+
+  registerOptionalParameter("MilleBinaryFilename", "Name of the Millepede binary file", _milleBinaryFilename, std::string("mille.bin"));
+
+    // MILLEPEDE specific parameters
+    registerOptionalParameter("AlignmentMode", "Alignment mode specifies alignment degrees of freedom to be considered\n"
+            "0 - No alignment at all. Simply fit tracks assuming that alignment is correct\n"
+            "1 - Alignment of XY shifts\n"
+            "2 - Alignment of XY shifts + rotations around Z\n"
+            "3 - Alignment of XYZ shifts + rotations around Z\n"
+            "4 - Alignment of XY shifts + rotations around X and Z\n"
+            "5 - Alignment of XY shifts + rotations around Y and Z\n"
+            "6 - Alignment of XY shifts + rotations around X,Y and Z\n"
+            "7 - Alignment of XYZ shifts + rotations around X,Y and Z\n",
+            _alignmentMode, static_cast<int> (0));
 
 
 
@@ -55,6 +74,9 @@ void EUTelProcessorGBLFitCandidates::init() {
   Fitter->SetBeamCharge(_beamQ);
   Fitter->SetBeamEnergy(_eBeam);
 	Fitter->setMEstimatorType(_mEstimatorType);
+  Fitter->SetMilleBinaryName(_milleBinaryFilename);
+  Fitter->SetAlignmentMode( _alignmentMode);
+  Fitter->SetChi2Cut(_maxChi2Cut);
   _trackFitter = Fitter;
 
 
@@ -151,11 +173,14 @@ void EUTelProcessorGBLFitCandidates::processEvent(LCEvent * evt){
 			int* ndf=0;
 			_trackFitter->CreateTrajectoryandFit(pointList,traj, chi2,ndf);
 
-			//Create new EUTelTracks with these new state parameters. This is needed to calculate the alignment jacobian to measurement state
-			EUTelTrackImpl* EUtrackWithTrajInfo = new EUTelTrackImpl(*EUtrack); //Create new object with old data. This is where we will add the correction from the trajectory of GBL fit
-			_trackFitter->CreateEUTelTrackFromTrajectory(traj,EUtrackWithTrajInfo);
+			//Update track and then state variables//////////////////////////////////////////////BEGIN
+			EUtrack->setChi2(*chi2);
+			EUtrack->setNdf(*ndf);
+			_trackFitter->UpdateTrackFromGBLTrajectory(traj, pointList);
+			//////////////////////////////////////////////////////////////////////////////////////END
+			_trackFitter->CreateAlignmentToMeasurementJacobian();
+			
 			      
-			delete[] EUtrackWithTrajInfo;
 		}//END OF LOOP FOR ALL TRACKS IN AN EVENT
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

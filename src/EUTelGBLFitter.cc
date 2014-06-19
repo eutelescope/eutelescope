@@ -63,6 +63,7 @@ namespace eutelescope {
     _hitId2GblPointLabel(),
     _hitId2GblPointLabelMille(),
 		_PointToState(),
+		_binaryname(),
     _alignmentMode(Utility::XYShiftXYRot),
     _mEstimatorType(),
     _mille(0),
@@ -96,6 +97,7 @@ namespace eutelescope {
     _hitId2GblPointLabel(),
     _hitId2GblPointLabelMille(),
 		_PointToState(),
+		_binaryname(),
     _alignmentMode(Utility::XYShiftXYRot),
     _mEstimatorType(),
     _mille(0),
@@ -515,22 +517,30 @@ namespace eutelescope {
 
 
 
-void EUTelGBLFitter::CreateEUTelTrackFromTrajectory(gbl::GblTrajectory* traj, EUTelTrackImpl* EUtrackWithTrajInfo){
+void EUTelGBLFitter::UpdateTrackFromGBLTrajectory (gbl::GblTrajectory* traj, std::vector< gbl::GblPoint >* pointList){
 
-	//Loop over all state on the track and fill new track object
-	EUTelTrackStateVec states = EUtrackWithTrajInfo->getTrackStates();
-	EUTelTrackStateVec::const_iterator trackstate;
-	for(trackstate=states.begin(); trackstate !=states.end(); trackstate++){
+	int number_of_points = pointList->size();
+	int pointNum = 0;
+	for(pointNum=0; pointNum < number_of_points; ++pointNum){ //Must make sure that the label starts at ????????
+		EUTelTrackStateImpl * state = 	_PointToState[ &(pointList->at(pointNum)) ]; //get the state associated with this point
+		if(state != NULL){
 
-  //	EUTelTrackStateImpl& trkState = *(EUtrackWithTrajInfo->getTrackStates().at(i)) ;
+			TVectorD corrections;
+			TMatrixDSym correctionsCov;
 
-  //  double x    = trkState->getX() ;
-	//	double y    = trkState->getY() ;
-   // double tx   = trkState->getTx() ;
-	 // double ty   = trkState->getTy() ;
-	 //	double invp = trkState->getInvP() ;
+      traj->getResults(pointNum, corrections, correctionsCov );
 
-	}//END OF LOOP THROUGH ALL STATES IN TRACK
+			state->setX( state->getX() + corrections[0]);
+			state->setY( state->getY() + corrections[1]);
+			state->setTx( state->getTx() + corrections[2]);
+			state->setTy( state->getTy() + corrections[3]);
+			state->setInvP( state->getInvP() + corrections[4]);
+
+			//state->setCovMatrix( state->getCovMatrix() + correctionsCov ); Need to add this but getcov returns a vector???????
+			
+		}
+
+	}//END OF LOOP OVER POINTS
 
 }
 
@@ -1832,6 +1842,49 @@ void EUTelGBLFitter::FindHitIfThereIsOne(EUTelTrackImpl* EUtrack, EVENT::Tracker
         delete traj; 
  
    }// Method end prepareMilleOut
+
+void EUTelGBLFitter::CreateAlignmentToMeasurementJacobian(){
+
+	TMatrixD* alDer; // alignment derivatives
+	std::vector<int>* globalLabels;
+	CorrectSizeOfMatrixVector(alDer,globalLabels);
+
+
+
+
+}
+
+void EUTelGBLFitter::CorrectSizeOfMatrixVector(TMatrixD* alDer, std::vector<int>* globalLabels){
+	if(_alignmentMode == 0){
+		streamlog_out(MESSAGE1) << "No alignment was chosen "<< std::endl;	
+	}else if (_alignmentMode == 1) {
+		globalLabels->resize(2);
+    alDer->ResizeTo(2, 2);
+	} else if (_alignmentMode == 2) {
+  	globalLabels->resize(3);
+    alDer->ResizeTo(2, 3);
+  } else if (_alignmentMode == 3) {
+  	globalLabels->resize(4);
+    alDer->ResizeTo(2, 4);
+	} else if (_alignmentMode == 4) {
+		globalLabels->resize(4);
+		alDer->ResizeTo(2, 4);
+ 	} else if (_alignmentMode == 5) {
+		globalLabels->resize(4);
+		alDer->ResizeTo(2, 4);
+	} else if (_alignmentMode == 6) {
+		globalLabels->resize(5);
+		alDer->ResizeTo(2, 5);
+	} else if (_alignmentMode == 7) {
+		globalLabels->resize(6);
+ 		alDer->ResizeTo(2, 6);
+  }
+  alDer->Zero();
+
+}
+
+
+
 
 } // namespace eutelescope
 
