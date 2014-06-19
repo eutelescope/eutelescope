@@ -62,7 +62,7 @@ namespace eutelescope {
     _eBeam(4.),
     _hitId2GblPointLabel(),
     _hitId2GblPointLabelMille(),
-		_pointlabeltoBoolPatternState(),
+		_PointToState(),
 		_pointlabeltoHasHit(),
     _alignmentMode(Utility::XYShiftXYRot),
     _mEstimatorType(),
@@ -96,7 +96,7 @@ namespace eutelescope {
     _eBeam(-1.),
     _hitId2GblPointLabel(),
     _hitId2GblPointLabelMille(),
-		_pointlabeltoBoolPatternState(),
+		_PointToState(),
 		_pointlabeltoHasHit(),
     _alignmentMode(Utility::XYShiftXYRot),
     _mEstimatorType(),
@@ -496,12 +496,13 @@ namespace eutelescope {
         _hitId2GblPointLabel[ hitid ] = static_cast<int>(pointListTrack.size());
     }
 
-    void EUTelGBLFitter::pushBackPointandBooleans( std::vector< gbl::GblPoint >* pointListTrack, const gbl::GblPoint pointTrack, bool originalState, bool hasHit  ) {
+    void EUTelGBLFitter::pushBackPointandState( std::vector< gbl::GblPoint >* pointListTrack, const gbl::GblPoint pointTrack, EUTelTrackStateImpl *state, bool hasHit ) {
         pointListTrack->push_back(pointTrack);
        
-        streamlog_out(MESSAGE0) << endl << "pushBackPoint: " << pointListTrack->size() << originalState <<  std::endl;
+        streamlog_out(MESSAGE0) << endl << "pushBackPoint: " << pointListTrack->size() << hasHit <<  std::endl;
         // store point's GBL label for future reference
-        _pointlabeltoBoolPatternState[ pointListTrack->size() ] = originalState; //This mean that the state is from pattern recognition
+				const gbl::GblPoint *pointer_to_gblpoint = &pointTrack;
+        _PointToState[ pointer_to_gblpoint ] = state; //This mean that the state is from pattern recognition
         _pointlabeltoHasHit[ pointListTrack->size() ] = hasHit; //This means the state has a a hit. Important for alignment
     }
 
@@ -518,7 +519,21 @@ namespace eutelescope {
 
 
 void EUTelGBLFitter::CreateEUTelTrackFromTrajectory(gbl::GblTrajectory* traj, EUTelTrackImpl* EUtrackWithTrajInfo){
-	int nstates = EUtrackWithTrajInfo->getTrackStates().size();
+
+	//Loop over all state on the track and fill new track object
+	EUTelTrackStateVec states = EUtrackWithTrajInfo->getTrackStates();
+	EUTelTrackStateVec::const_iterator trackstate;
+	for(trackstate=states.begin(); trackstate !=states.end(); trackstate++){
+
+  //	EUTelTrackStateImpl& trkState = *(EUtrackWithTrajInfo->getTrackStates().at(i)) ;
+
+  //  double x    = trkState->getX() ;
+	//	double y    = trkState->getY() ;
+   // double tx   = trkState->getTx() ;
+	 // double ty   = trkState->getTy() ;
+	 //	double invp = trkState->getInvP() ;
+
+	}//END OF LOOP THROUGH ALL STATES IN TRACK
 
 }
 
@@ -1041,9 +1056,10 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack, st
 		geo::gGeometry().local2Master( state->getLocation(), fitPointLocal, fitPointGlobal);	
 		if(hit != NULL){ 
 			addMeasurementGBL(point, hit->getPosition(),  fitPointLocal, hit->getCovMatrix(), state->getH()); 		
-			pushBackPointandBooleans( pointList, point, true, true  ); //The point is from pattern recognition and it has a hit
+			pushBackPointandState(pointList, point, state, true );
+
 		}else{
-		pushBackPointandBooleans( pointList, point, true, false  ); //The point is from pattern recogntion and has no hit
+			pushBackPointandState(pointList, point, state, false );
 		}
 
 		////////////////////////////////////////////////////////////////////////////////START TO CREATE SCATTERS BETWEEN PLANES
@@ -1074,7 +1090,7 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack, st
  			scatPrecSensor[0] = 1.0 / (scatvariance * scatvariance );
 
   		pointScat1.addScatterer(scat, scatPrecSensor);
-			pushBackPointandBooleans( pointList, pointScat1, false, false  );
+			pushBackPointandState(pointList, pointScat1, state, false );
 			/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////END THE FIRST SCATTERING PLANE
 			//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////BEGIN THE SECOND SCATTERING PLANE
 			float distance2 = (fitPointGlobal_next[2] + fitPointGlobal[2])/2 + (fitPointGlobal_next[2] - fitPointGlobal[2])/sqrt(12);
@@ -1083,7 +1099,7 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack, st
 			gbl::GblPoint pointScat2(jacobianScat1);
 
   		pointScat2.addScatterer(scat, scatPrecSensor);
-			pushBackPointandBooleans( pointList, pointScat1, false, false  );
+			pushBackPointandState(pointList, pointScat2, state, false );
 			//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////END OF SECOND SCATTERING PLANE
 			jacPointToPoint = state->getPropagationJacobianF(fitPointGlobal_next[2] - fitPointGlobal[2]); 				
 		}  
