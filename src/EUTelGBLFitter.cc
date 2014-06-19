@@ -1165,7 +1165,32 @@ void EUTelGBLFitter::FindHitIfThereIsOne(EUTelTrackImpl* EUtrack, EVENT::Tracker
  
                      if ( !excludeFromFit )
                      {
-                       addMeasurementsGBL(point, meas, measPrec, hitPointLocal, fitPointLocal, hitcov, proL2m);
+                       	addMeasurementsGBL(point, meas, measPrec, hitPointLocal, fitPointLocal, hitcov, proL2m);
+			if( _alignmentMode > 0 ) {
+
+ 			        TMatrixD alDer; // alignment derivatives
+				alDer.ResizeTo(2, 6);
+        			alDer.Zero();
+
+			        std::vector<int> globalLabels;
+			        globalLabels.resize(6);
+
+			        TVectorD statevector(5);
+                                statevector.Zero(); 
+
+                                statevector[0] = trk->getD0       ();    // 0 - x   
+                                statevector[1] = trk->getPhi      ();    // 1 - y
+                                statevector[2] = trk->getOmega    ();     // 2 - tx
+                                statevector[3] = trk->getZ0       ();    // 3 - ty
+                                statevector[4] = trk->getTanLambda();    // 4 - invP
+                             
+				double trackDirGlobal[] = { statevector[2], statevector[3], 1.};
+		            	double trackDirLocal[] = { 0., 0., 0. };
+	    			geo::gGeometry().master2LocalVec( planeID, trackDirGlobal, trackDirLocal );
+
+
+               			addGlobalParametersGBL( point, alDer, globalLabels, planeID, fitPointLocal, trackDirLocal[0], trackDirLocal[1] );
+                        }
                      }
 
                   }                          
@@ -1572,7 +1597,7 @@ void EUTelGBLFitter::FindHitIfThereIsOne(EUTelTrackImpl* EUtrack, EVENT::Tracker
 
 // add global derivatives derived from the track parameters after the track fit (coordinate system?) 
 // this one needed only for alignment with millepede
-                addGlobalParametersGBL( point, alDer, globalLabels, planeID, trackPointLocal, trackDirLocal[0], trackDirLocal[1] );
+                addGlobalParametersGBL( point, 	alDer, globalLabels, planeID, trackPointLocal, trackDirLocal[0], trackDirLocal[1] );
  
                 if ( itrHit != ( trackCandidate.rend() -1) )
                 {
