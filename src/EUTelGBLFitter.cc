@@ -400,8 +400,8 @@ namespace eutelescope {
     /** Add alignment derivative necessary for MILLIPEDE
      * 
      * @param point
-     * @param alDer matrix of global parameter (alignment constants) derivatives 
-     * @param globalLabels vector of alignment parameters ids
+     * @param alDer matrix of global parameter (alignment constants) derivatives. This relates this particular point to this particular sensor orientation. This completely depends on the state variables in LOCAL frame. 
+     * @param globalLabels vector of alignment parameters ids. These are used to associate each alignment constant (shift x, y z and rotations) on each plane with a unique number. This is done so that if a particular alignment parameter i.e particular number is changed. The MILLEPEDE knows that all points hit measurements must change by the amount that is calculated by there particular jacobain. Note that for each point this change will be different due to different incidence angles etc.
      * @param iPlane plane id
      * @param xPred predicted by hit x-position (first approximation)
      * @param yPred predicted by hit y-position (first approximation)
@@ -969,8 +969,29 @@ namespace eutelescope {
            
     }
 
+
+void EUTelGBLFitter::CreateTrajectoryandFit(std::vector< gbl::GblPoint >* pointList,  gbl::GblTrajectory* traj, double* chi2, int* ndf){
+	streamlog_out ( DEBUG4 ) << " EUTelGBLFitter::CreateTrajectoryandFit -- BEGIN " << endl;
+
+	double loss = 0.;
+  int ierr = 0;
+
+	if ( !_mEstimatorType.empty( ) ) ierr = traj->fit( *chi2, *ndf, loss, _mEstimatorType );
+  else ierr = traj->fit( *chi2, *ndf, loss );
+
+  streamlog_out(MESSAGE0) << " Track error: "<< ierr << " and chi2: " << chi2 << std::endl;
+
+	streamlog_out ( DEBUG4 ) << " EUTelGBLFitter::CreateTrajectoryandFit -- END " << endl;
+}
+
+
+
+
+
+
+
 // convert input TrackCandidates and TrackStates into a GBL Trajectory
-void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack){
+void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack, std::vector< gbl::GblPoint >* pointList){
 	// sanity check. Mustn't happen in principle. That the number of hits is greater than the number of hits
   if ( EUtrack->getTrackerHits().size() > geo::gGeometry().nPlanes() ){
   	streamlog_out(ERROR) << "Sanity check. This should not happen in principle. Number of hits is greater then number of planes" << std::endl;
@@ -999,10 +1020,9 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack){
 			addMeasurementGBL(point, hit->getPosition(),  fitPointLocal, hit->getCovMatrix(), state->getH());
 			addSiPlaneScattererGBL(point, state->getLocation()); //This we still functions still assumes silicon is the thin scatterer. This can be easily changed when we have the correct gear file. However we will always assume that states will come with scattering information. To take into account material between states this will be dealt with latter. 
  
-
 		}//END OF IF STATEMENT IF THERE WAS A HIT
 		//////////////////////////////////////////////////////////////////////////////END OF CREATING GBL POINT
-
+		pointList->push_back(point);
 
 		////////////////////////////////////////////////////////////////////////////////START TO CREATE SCATTERS BETWEEN PLANES
 		if(i != (EUtrack->getTrackStates().size()-1)){
@@ -1032,6 +1052,7 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack){
  			scatPrecSensor[0] = 1.0 / (scatvariance * scatvariance );
 
   		pointScat1.addScatterer(scat, scatPrecSensor);
+			pointList->push_back(pointScat1);
 			/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////END THE FIRST SCATTERING PLANE
 			//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////BEGIN THE SECOND SCATTERING PLANE
 			float distance2 = (fitPointGlobal_next[2] + fitPointGlobal[2])/2 + (fitPointGlobal_next[2] - fitPointGlobal[2])/sqrt(12);
@@ -1040,7 +1061,9 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack){
 			gbl::GblPoint pointScat2(jacobianScat1);
 
   		pointScat2.addScatterer(scat, scatPrecSensor);
-							
+			pointList->push_back(pointScat2);
+			//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////END OF SECOND SCATTERING PLANE
+			jacPointToPoint = state->getPropagationJacobianF(fitPointGlobal_next[2] - fitPointGlobal[2]); 				
 		}  
 		/////////////////////////////////////////////////////////////////////////////////////////END OF CREATE SCATTERERS BETWEEN PLANES
 	

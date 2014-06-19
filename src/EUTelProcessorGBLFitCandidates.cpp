@@ -1,6 +1,7 @@
 #ifdef USE_GBL    // Not sure where this is defined. However it is used in all the other GBL processors will use it.
 
 #include "EUTelProcessorGBLFitCandidates.h"
+#include "include/GblTrajectory.h"
 
 using namespace eutelescope;
 
@@ -11,7 +12,8 @@ _tracksOutputCollectionName("Default_output"),
 _nProcessedRuns(0),
 _nProcessedEvents(0),
 _beamQ(-1),
-_eBeam(4)
+_eBeam(4),
+_mEstimatorType()
 {
 	// Processor description
   _description = "EUTelProcessorTrackingGBLTrajectory performs track fits using GBL optionally writing data files for MILLEPEDE II.";
@@ -26,6 +28,10 @@ _eBeam(4)
 
   // Necessary processor parameters that define fitter settings
   registerProcessorParameter("BeamEnergy", "Beam energy [GeV]", _eBeam, static_cast<double> (4.0));
+
+  // Optional processor parameters that define finder settings
+
+  registerOptionalParameter("GBLMEstimatorType", "GBL outlier down-weighting option (t,h,c)", _mEstimatorType, string() );
 
 
 
@@ -48,6 +54,7 @@ void EUTelProcessorGBLFitCandidates::init() {
 	EUTelGBLFitter* Fitter = new EUTelGBLFitter("GBLFitter");
   Fitter->SetBeamCharge(_beamQ);
   Fitter->SetBeamEnergy(_eBeam);
+	Fitter->setMEstimatorType(_mEstimatorType);
   _trackFitter = Fitter;
 
 
@@ -128,7 +135,22 @@ void EUTelProcessorGBLFitCandidates::processEvent(LCEvent * evt){
       streamlog_out(DEBUG1) << "Track " << iCol << " nhits " << trackimpl->getTrackerHits().size() << endl;
 
 			//_trackFitter->Clear(); //This is a good point to clear all things that need to be reset for each event. Why should gop here?
-      _trackFitter->FillInformationToGBLPointObject(EUtrack);      
+			std::vector< gbl::GblPoint >* pointList;
+      _trackFitter->FillInformationToGBLPointObject(EUtrack, pointList);
+
+ 			const gear::BField& B = geo::gGeometry().getMagneticFiled();
+      const double Bmag = B.at( TVector3(0.,0.,0.) ).r2();
+
+  		gbl::GblTrajectory* traj = 0;
+      if ( Bmag < 1.E-6 ) {
+      	traj = new gbl::GblTrajectory( *pointList, false ); //Must make sure this is not a memory leak
+      } else {
+      	traj = new gbl::GblTrajectory( *pointList, true );
+      }
+			double * chi2=0; 
+			int* ndf=0;
+			_trackFitter->CreateTrajectoryandFit(pointList,traj, chi2,ndf);
+			      
 
 		}//END OF LOOP FOR ALL TRACKS IN AN EVENT
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -103,6 +103,9 @@ namespace eutelescope {
 				//Beam energy. 
 				double _eBeam;
 
+        /** Outlier downweighting option */
+        std::string _mEstimatorType;
+
 				void CreateEUTrackandStates(TrackImpl* trackimpl, EUTelTrackImpl*);
 
 };
