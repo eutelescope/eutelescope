@@ -5,6 +5,13 @@
 // C++
 #include <string>
 
+// MARLIN
+#include "marlin/Exceptions.h"
+#include "marlin/Global.h"
+#include "marlin/Processor.h"
+#include "marlin/VerbosityLevels.h"
+
+
 // LCIO
 #include "lcio.h"
 
@@ -18,7 +25,11 @@
 #include <AIDA/IHistogram1D.h>
 #include <AIDA/IHistogram2D.h>
 #include <AIDA/IProfile1D.h>
-#endif
+#include <marlin/AIDAProcessor.h>
+#include <AIDA/IHistogramFactory.h>
+#include <AIDA/IProfile2D.h>
+#endif // MARLIN_USE_AIDA
+
 
 #ifdef USE_GBL
 

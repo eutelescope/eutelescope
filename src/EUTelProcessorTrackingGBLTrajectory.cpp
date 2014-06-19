@@ -11,20 +11,6 @@
 // LCIO
 #include <EVENT/LCCollection.h>
 
-// MARLIN
-#include "marlin/Exceptions.h"
-#include "marlin/Global.h"
-#include "marlin/Processor.h"
-#include "marlin/VerbosityLevels.h"
-
-// AIDA
-#ifdef MARLIN_USE_AIDA
-#include <marlin/AIDAProcessor.h>
-#include <AIDA/IHistogramFactory.h>
-#include <AIDA/IHistogram1D.h>
-#include <AIDA/IProfile2D.h>
-#endif // MARLIN_USE_AIDA
-
 // ROOT
 #if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
 #include "TMath.h"
@@ -110,7 +96,7 @@ _maxChi2Cut(1000.),
 _tgeoFileName("TELESCOPE.root"),
 _histoInfoFileName("histoinfo.xml"),
 _trackCandidatesInputCollectionName("TrackCandidatesCollection"),
-_tracksOutputCollectionName("TrackCollection"),
+_tracksOutputCollectionName("GBLTrackCollection"),
 _trackFitter(0),
 _milleGBL(0),
 _nProcessedRuns(0),
@@ -138,7 +124,7 @@ _aidaProfileMap2D()
             "TracksOutputCollectionName",
             "Output tracks collection name",
             _tracksOutputCollectionName,
-            std::string("TrackCollection"));
+            std::string("GBLTrackCollection"));
 
     // Necessary processor parameters that define fitter settings
     registerProcessorParameter("BeamEnergy", "Beam energy [GeV]", _eBeam, static_cast<double> (4.0));
@@ -279,6 +265,7 @@ void EUTelProcessorTrackingGBLTrajectory::init() {
         Fitter->SetBeamEnergy(_eBeam);
         Fitter->SetBeamCharge(_qBeam);
         Fitter->SetChi2Cut(_maxChi2Cut);
+        Fitter->getFitTrackVec()->clear();
         _trackFitter = Fitter;
 
         if (!_trackFitter) {
@@ -326,7 +313,7 @@ void EUTelProcessorTrackingGBLTrajectory::plotTracks(LCEvent *event){
         TVectorD residualGBLErr(2);
         TVectorD downWeightGBL(2);
  
-            IMPL::LCCollectionVec* fittrackvec = static_cast< EUTelGBLFitter* > (_trackFitter)->GetFitTrackVec();
+            IMPL::LCCollectionVec* fittrackvec = _trackFitter->getFitTrackVec();
 //            vector<IMPL::TrackImpl *> *fittrackvec = static_cast<vector<IMPL::TrackImpl *> *> (collection);
 
             if( fittrackvec == 0 )  {
@@ -369,7 +356,8 @@ void EUTelProcessorTrackingGBLTrajectory::plotTracks(LCEvent *event){
 
 
                 // Retrieve original GBL information
-                std::map< int, gbl::GblTrajectory* > gblTracks = static_cast < EUTelGBLFitter* > ( _trackFitter )->GetGblTrackCandidates( );
+//                std::map< int, gbl::GblTrajectory* > gblTracks = static_cast < EUTelGBLFitter* > ( _trackFitter )->GetGblTrackCandidates( );
+                std::map< int, gbl::GblTrajectory* > gblTracks = static_cast<EUTelGBLFitter*>(_trackFitter)->GetGblTrackCandidates( );
                 IMPL::LCCollectionVec::const_iterator begin = fittrackvec->begin( );
                 int iCounter = std::distance( begin, itFitTrack );
                 gbl::GblTrajectory* gblTraj = ( *gblTracks.find( iCounter ) ).second;
@@ -390,7 +378,8 @@ void EUTelProcessorTrackingGBLTrajectory::plotTracks(LCEvent *event){
                 }
 
 
-                const std::map<long, int> gblPointLabel = static_cast < EUTelGBLFitter* > ( _trackFitter )->getHitId2GblPointLabel( );
+//                const std::map<long, int> gblPointLabel = static_cast < EUTelGBLFitter* > ( _trackFitter )->getHitId2GblPointLabel( );
+                const std::map<long, int> gblPointLabel =  static_cast<EUTelGBLFitter*>(_trackFitter) ->getHitId2GblPointLabel( );
                 const EVENT::TrackerHitVec& trackHits = static_cast < TrackImpl* > ( *itFitTrack )->getTrackerHits( );
 
                 // If this is an run plot residuals for selected tracks. Plot everything otherwise.
@@ -682,9 +671,17 @@ void EUTelProcessorTrackingGBLTrajectory::processEvent(LCEvent * evt) {
                 streamlog_out( DEBUG1 ) << "Getting collection " << _tracksOutputCollectionName << endl;
                 evt->getCollection( _tracksOutputCollectionName );
             } catch ( ... ) {
-                streamlog_out( DEBUG1 ) << "Adding collection " << _tracksOutputCollectionName << endl;
-                evt->addCollection( static_cast < EUTelGBLFitter* > ( _trackFitter )->GetFitHitsVec( ), _tracksOutputCollectionName+"_fittedhits" );
-                evt->addCollection( static_cast < EUTelGBLFitter* > ( _trackFitter )->GetFitTrackVec( ), _tracksOutputCollectionName );
+                streamlog_out( MESSAGE5 ) << "Adding collection " << _tracksOutputCollectionName << endl;
+
+               	LCCollectionVec* fithitvec = new LCCollectionVec( LCIO::TRACKERHIT);   
+  		Utility::copyLCCollectionHitVec( _trackFitter->getFitHitVec( ), fithitvec );
+		if(  fithitvec != 0 )
+               	evt->addCollection( fithitvec, _tracksOutputCollectionName+"_fittedhits" );
+
+        	LCCollectionVec* fittrackvec = new LCCollectionVec( LCIO::TRACK );
+	 	Utility::copyLCCollectionTrackVec( _trackFitter->getFitTrackVec(), fittrackvec );
+		if(  fittrackvec != 0 )
+		evt->addCollection( fittrackvec, _tracksOutputCollectionName );
             }   
 
         } 
