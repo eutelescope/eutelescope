@@ -191,7 +191,8 @@ void EUTelProcessorTrackingHelixTrackSearch::init() {
         Finder->setPlanesProject( _planesProject );
         Finder->setBeamMomentumUncertainty( _eBeamUncertatinty );
         Finder->setBeamSpread( _beamSpread );
-        
+        Finder->Clear(); // once per job, this is in an initialiser
+       
         _trackFitter = Finder;
     }
 
@@ -247,6 +248,9 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
         streamlog_out(WARNING2) << _hitInputCollectionName << " collection not available" << std::endl;
         throw marlin::SkipEventException(this);
     }
+
+    //This is a good point to clear all things that need to be reset for each event. Why should gop here?
+    _trackFitter->Clear(); // once per event, at the beginning, after the collections ave been read 
 
     // this will only be entered if the collection is available
     if ( hitMeasuredCollection == NULL) {
