@@ -77,7 +77,7 @@ namespace eutelescope {
 		
 				void pushBackPointandState( std::vector< gbl::GblPoint >* pointListTrack, const gbl::GblPoint pointTrack, EUTelTrackStateImpl *state);
 
-				void CreateAlignmentToMeasurementJacobian();
+				void CreateAlignmentToMeasurementJacobian(std::vector< gbl::GblPoint >* pointList);
 
 				void addSiPlaneScattererGBL(gbl::GblPoint& point, int iPlane);
 

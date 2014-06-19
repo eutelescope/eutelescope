@@ -184,7 +184,7 @@ void EUTelProcessorGBLFitCandidates::processEvent(LCEvent * evt){
 			EUtrack->setNdf(*ndf);
 			_trackFitter->UpdateTrackFromGBLTrajectory(traj, pointList);
 			//////////////////////////////////////////////////////////////////////////////////////END
-			_trackFitter->CreateAlignmentToMeasurementJacobian();
+			_trackFitter->CreateAlignmentToMeasurementJacobian(pointList);
 			
 			      
 		}//END OF LOOP FOR ALL TRACKS IN AN EVENT
