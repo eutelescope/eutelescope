@@ -334,8 +334,6 @@ void EUTelProcessorTrackingGBLTrajectory::plotTracks(LCEvent *event){
             int ndfTrk = 0;
             double p = 0.;
 
-//            vector<IMPL::TrackImpl*>::const_iterator itFitTrack;
-
             IMPL::LCCollectionVec::const_iterator itFitTrack;
 
             // Loop over fitted tracks
@@ -356,7 +354,6 @@ void EUTelProcessorTrackingGBLTrajectory::plotTracks(LCEvent *event){
 
 
                 // Retrieve original GBL information
-//                std::map< int, gbl::GblTrajectory* > gblTracks = static_cast < EUTelGBLFitter* > ( _trackFitter )->GetGblTrackCandidates( );
                 std::map< int, gbl::GblTrajectory* > gblTracks = static_cast<EUTelGBLFitter*>(_trackFitter)->GetGblTrackCandidates( );
                 IMPL::LCCollectionVec::const_iterator begin = fittrackvec->begin( );
                 int iCounter = std::distance( begin, itFitTrack );
@@ -378,7 +375,6 @@ void EUTelProcessorTrackingGBLTrajectory::plotTracks(LCEvent *event){
                 }
 
 
-//                const std::map<long, int> gblPointLabel = static_cast < EUTelGBLFitter* > ( _trackFitter )->getHitId2GblPointLabel( );
                 const std::map<long, int> gblPointLabel =  static_cast<EUTelGBLFitter*>(_trackFitter) ->getHitId2GblPointLabel( );
                 const EVENT::TrackerHitVec& trackHits = static_cast < TrackImpl* > ( *itFitTrack )->getTrackerHits( );
 
@@ -401,7 +397,6 @@ void EUTelProcessorTrackingGBLTrajectory::plotTracks(LCEvent *event){
                     for ( itrHit = trackHits.begin( ); itrHit != trackHits.end( ); ++itrHit ) {
 
                        // Get input hit information
-// wtf?                       IMPL::TrackerHitImpl* originalHit =  static_cast < IMPL::TrackerHitImpl* > ( ( *itrHit )->getRawHits( ).front( ) );
                         IMPL::TrackerHitImpl* originalHit =  static_cast < IMPL::TrackerHitImpl* > ( *itrHit  );
                         const double* originalhitpos = originalHit->getPosition( );
                         int originalID = originalHit->id();
