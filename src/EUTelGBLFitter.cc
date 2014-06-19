@@ -7,10 +7,11 @@
 
 #ifdef USE_GBL
 
+// its own header 
+#include "EUTelGBLFitter.h"
+
 // eutelescope includes ".h"
 #include "EUTelGeometryTelescopeGeoDescription.h"
-#include "EUTelGBLFitter.h"
-#include "EUTelTrackFitter.h"
 #include "EUTelUtilityRungeKutta.h"
 #include "EUTELESCOPE.h"
 
@@ -32,14 +33,6 @@
 #include "include/MilleBinary.h"
 #include "include/VMatrix.h"
 
-// LCIO includes <.h>
-#include <EVENT/LCCollection.h>
-#include <IMPL/LCCollectionVec.h>
-#include <IMPL/TrackerHitImpl.h>
-#include <IMPL/TrackImpl.h>
-#include <IMPL/LCFlagImpl.h>
-#include "LCIOTypes.h"
-#include "lcio.h"
 
 // system includes <>
 #include <map>
@@ -55,8 +48,6 @@ namespace eutelescope {
     EUTelGBLFitter::EUTelGBLFitter() : EUTelTrackFitter("GBLTrackFitter"),
     _trackCandidates(),
     _gblTrackCandidates(),
-    _fittrackvec(0),
-    _fithitsvec(0),
     _parPropJac(5, 5),
     _beamQ(-1),
     _eBeam(4.),
@@ -76,19 +67,20 @@ namespace eutelescope {
     _eomIntegrator( new EUTelUtilityRungeKutta() ),
     _eomODE( 0 )
     {
+       streamlog_out( MESSAGE4) << " EUTelGBLFitter::EUTelGBLFitter default constructor FitTrackVec: " << getFitTrackVec() << std::endl;
                 // Initialise ODE integrators for eom and jacobian
                 {
                     _eomODE = new eom::EOMODE(5);
                     _eomIntegrator->setRhs( _eomODE );
                     _eomIntegrator->setButcherTableau( new ButcherTableauDormandPrince );
                 }
+       // reset parent members: 
+       streamlog_out( MESSAGE4) << " EUTelGBLFitter::EUTelGBLFitter constructor over" << std::endl;
     }
 
     EUTelGBLFitter::EUTelGBLFitter(std::string name) : EUTelTrackFitter(name),
     _trackCandidates(),
     _gblTrackCandidates(),
-    _fittrackvec(0),
-    _fithitsvec(0),
     _parPropJac(5, 5),
     _beamQ(-1),
     _eBeam(-1.),
@@ -108,13 +100,15 @@ namespace eutelescope {
     _eomIntegrator( new EUTelUtilityRungeKutta() ),
     _eomODE( 0 )
     {
-                // Initialise ODE integrators for eom and jacobian
+        streamlog_out( MESSAGE4) << " EUTelGBLFitter::EUTelGBLFitter " << name << " constructor FitTrackVec: " << getFitTrackVec() << std::endl;
+               // Initialise ODE integrators for eom and jacobian
                 {
                     _eomODE = new eom::EOMODE(5);
                     _eomIntegrator->setRhs( _eomODE );
                     _eomIntegrator->setButcherTableau( new ButcherTableauDormandPrince );
                 }
-    }
+        streamlog_out( MESSAGE4) << " EUTelGBLFitter::EUTelGBLFitter constructor over" << std::endl;
+   }
 
     EUTelGBLFitter::~EUTelGBLFitter() {
     }
@@ -386,6 +380,9 @@ namespace eutelescope {
 
 
     void EUTelGBLFitter::Clear() {
+
+        EUTelTrackFitter::Clear();
+
         std::map< int, gbl::GblTrajectory* >::iterator it;
         for (it = _gblTrackCandidates.begin(); it != _gblTrackCandidates.end(); ++it) delete it->second;
         _gblTrackCandidates.clear();
@@ -503,7 +500,7 @@ namespace eutelescope {
     /**
      * merging too sources of information: a copy of a Track Candidate (*itTrkCand) gets updated with gblTraj
      * 
-     * @param fittrack pointer to track object to be stored
+     * @param LCIOtrack pointer to track object to be stored
      * @param chi2     Chi2 of the track fit
      * @param ndf      NDF of the track fit
      */
@@ -512,7 +509,7 @@ namespace eutelescope {
  
 // output  track
 
-        IMPL::TrackImpl * fittrack = new IMPL::TrackImpl( **itTrkCand); 
+        IMPL::TrackImpl * LCIOtrack = new IMPL::TrackImpl( **itTrkCand); 
  
         unsigned int numData;
         TVectorD corrections(5);
@@ -523,12 +520,12 @@ namespace eutelescope {
         TVectorD residualErr(2);
         TVectorD downWeight(2);
  
-          streamlog_out(MESSAGE1) << endl; 
+        streamlog_out(MESSAGE1) << endl; 
  
-          int nstates = fittrack->getTrackStates().size();
-          streamlog_out(MESSAGE1) << "states " << nstates << "    " << endl;
+        int nstates = LCIOtrack->getTrackStates().size();
+        streamlog_out(MESSAGE1) << "states " << nstates << "    " << endl;
 
-          for(int i=0;i < nstates; i++) 
+        for(int i=0;i < nstates; i++) 
             {
                 const IMPL::TrackStateImpl* const_trkState = static_cast <const IMPL::TrackStateImpl*> ( (*itTrkCand)->getTrackStates().at(i) ) ;
 
@@ -574,7 +571,7 @@ namespace eutelescope {
           for(int i=0;i < nstates; i++) 
             {
                 const IMPL::TrackStateImpl* const_trkState = static_cast <const IMPL::TrackStateImpl*> ( (*itTrkCand)->getTrackStates().at(i) ) ;
-                      IMPL::TrackStateImpl* trkState = static_cast <      IMPL::TrackStateImpl*> ( fittrack->getTrackStates().at(i) ) ;
+                      IMPL::TrackStateImpl* trkState = static_cast <      IMPL::TrackStateImpl*> ( LCIOtrack->getTrackStates().at(i) ) ;
 
                 // first get the GBL trajectory fit results:
                 const int hitGblLabel = _hitId2GblPointLabel[ const_trkState->id() ];
@@ -652,9 +649,9 @@ namespace eutelescope {
             }
             streamlog_out(MESSAGE1) << std::endl;
 
-
-        const EVENT::TrackerHitVec& chits = fittrack->getTrackerHits();
-        itrk = fittrack->id();
+/*
+        const EVENT::TrackerHitVec& chits = LCIOtrack->getTrackerHits();
+        itrk = LCIOtrack->id();
         nhits =  chits.size( ) ;
         expec =  _parameterIdPlaneVec.size();
         streamlog_out(MESSAGE1) <<  " track itrk:" <<  itrk  << " with " << nhits << " at least " << expec  << "       ";
@@ -666,13 +663,14 @@ namespace eutelescope {
             streamlog_out(MESSAGE0) <<  ic << " ";
         }
         streamlog_out(MESSAGE1) << std::endl;
- 
+ */
          // prepare track
-        fittrack->setChi2 ( chi2 );      // Chi2 of the fit (including penalties)
-        fittrack->setNdf  ( ndf );        // Number of planes fired (!)
+        LCIOtrack->setChi2 ( chi2 );      // Chi2 of the fit (including penalties)
+        LCIOtrack->setNdf  ( ndf );        // Number of planes fired (!)
         
         // add track to LCIO collection vector
-        _fittrackvec->addElement( fittrack );
+
+        if( getFitTrackVec() != 0 ) getFitTrackVec()->push_back( LCIOtrack );
  
     }
 
@@ -681,14 +679,15 @@ namespace eutelescope {
      * Set track omega, D0, Z0, Phi, tan(Lambda), Chi2, NDF parameters
      * and add it to the LCIO collection of fitted tracks
      * 
-     * @param fittrack pointer to track object to be stored
+     * @param LCIOtrack pointer to track object to be stored
      * @param chi2     Chi2 of the track fit
      * @param ndf      NDF of the track fit
      */
-    void EUTelGBLFitter::prepareLCIOTrack( gbl::GblTrajectory* gblTraj, const EVENT::TrackerHitVec& trackCandidate, 
+/*
+     void EUTelGBLFitter::prepareLCIOTrack( gbl::GblTrajectory* gblTraj, const EVENT::TrackerHitVec& trackCandidate, 
                                           double chi2, int ndf, double omega, double d0, double z0, double phi, double tanlam ) {
         
-        IMPL::TrackImpl * fittrack = new IMPL::TrackImpl();        
+        IMPL::TrackImpl * LCIOtrack = new IMPL::TrackImpl();        
          
         unsigned int numData;
         TVectorD corrections(5);
@@ -801,24 +800,26 @@ namespace eutelescope {
            
             hit -> setCovMatrix(cov);
             
-            fittrack->addHit( hit );
-	    _fithitsvec->addElement( hit ); // fitted hit needs to be stored in a collection separately
+            LCIOtrack->addHit( hit );
+	    if( getFitHitVec() > 0 )  getFitHitVec()->addElement( hit ); // fitted hit needs to be stored in a collection separately
         } // loop over track hits
 
         // prepare track
-        fittrack->setReferencePoint( trackRefPoint );
-        fittrack->setChi2 ( chi2 );      // Chi2 of the fit (including penalties)
-        fittrack->setNdf  ( ndf );        // Number of planes fired (!)
-        fittrack->setOmega( omega );       // curvature of the track
-        fittrack->setD0   ( d0 );          // impact parameter of the track in (r-phi)
-        fittrack->setZ0   ( z0 );          // impact parameter of the track in (r-z)
-        fittrack->setPhi  ( phi );         // phi of the track at reference point
-        fittrack->setTanLambda( tanlam );   // dip angle of the track at reference point
+        LCIOtrack->setReferencePoint( trackRefPoint );
+        LCIOtrack->setChi2 ( chi2 );      // Chi2 of the fit (including penalties)
+        LCIOtrack->setNdf  ( ndf );        // Number of planes fired (!)
+        LCIOtrack->setOmega( omega );       // curvature of the track
+        LCIOtrack->setD0   ( d0 );          // impact parameter of the track in (r-phi)
+        LCIOtrack->setZ0   ( z0 );          // impact parameter of the track in (r-z)
+        LCIOtrack->setPhi  ( phi );         // phi of the track at reference point
+        LCIOtrack->setTanLambda( tanlam );   // dip angle of the track at reference point
         
         // add track to LCIO collection vector
-        _fittrackvec->addElement( fittrack );
+
+        if( getFitTrackVec() != 0 )  getFitTrackVec()->addElement( LCIOtrack );
+
     }
-   
+  */ 
     void EUTelGBLFitter::FitSingleTrackCandidate(EVENT::TrackVec::const_iterator& itTrkCand)
     {
             // relies on sane itTrkCand -> sanity checks ?
@@ -1373,19 +1374,9 @@ void EUTelGBLFitter::FindHitIfThereIsOne(EUTelTrackImpl* EUtrack, EVENT::Tracker
     void EUTelGBLFitter::TrackCandidatesToGBLTrajectories( ) {
   	//      Clear(); //  This should be done explictly outside the class. So it is not hidden away.
 
-        ////////////////////////////////////////////////////////////////////////// prepare output collection!!!!!!!!!!NOT HERE HOW STUPID! Unless I am missing something
-     //   try {
-       //     _fittrackvec = new IMPL::LCCollectionVec( EVENT::LCIO::TRACK );
-         //   _fithitsvec = new IMPL::LCCollectionVec( EVENT::LCIO::TRACKERHIT );
-      //      IMPL::LCFlagImpl flag( _fittrackvec->getFlag( ) );
-       //     flag.setBit( lcio::LCIO::TRBIT_HITS );
-       //     _fittrackvec->setFlag( flag.getFlag( ) );
-      //  } catch ( ... ) {
-       //     streamlog_out( ERROR2 ) << "Can't allocate output collection" << std::endl;
-      //  }
-				////////////////////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////////////
  
-//
+	//
         vector<const IMPL::TrackImpl*>::const_iterator itTrkCand;
         int trackcounter = 0;
         for ( itTrkCand = _trackCandidatesVec.begin(); itTrkCand != _trackCandidatesVec.end(); ++itTrkCand) {

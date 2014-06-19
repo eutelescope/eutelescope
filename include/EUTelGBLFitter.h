@@ -10,16 +10,27 @@
 #ifndef EUTELGBLFITTER_H
 #define	EUTELGBLFITTER_H
 
-// eutelescope includes ".h"
+// mother class:
 #include "EUTelTrackFitter.h"
+
+// eutelescope includes ".h"
 #include "EUTelUtility.h"
 #include "EUTelUtilityRungeKutta.h"
 #include "EUTelEquationsOfMotion.h"
 #include "EUTelTrackStateImpl.h"
 #include "EUTelTrackImpl.h"
 
-// LCIO
+// EVENT includes
+#include <IMPL/TrackerHitImpl.h>
+#include <EVENT/LCCollection.h>
+
+// LCIO includes
 #include <IMPL/LCCollectionVec.h>
+#include <IMPL/TrackerHitImpl.h>
+#include <IMPL/TrackImpl.h>
+#include <IMPL/LCFlagImpl.h>
+#include "lcio.h"
+#include "LCIOTypes.h"
 
 // ROOT
 #if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
@@ -40,7 +51,7 @@
 
 namespace eutelescope {
 
-    class EUTelGBLFitter : public EUTelTrackFitter {
+    class EUTelGBLFitter :  public EUTelTrackFitter {
         
     private:
         DISALLOW_COPY_AND_ASSIGN(EUTelGBLFitter)        // prevent users from making (default) copies of processors
@@ -51,29 +62,27 @@ namespace eutelescope {
         explicit EUTelGBLFitter(std::string name);
         virtual ~EUTelGBLFitter();
 
-      // do some clean up of internal data structures
-      // will be automatically run when calling EUTelGBLFitter::FitTracks()
+        // do some clean up of internal data structures
+        // will be automatically run when calling EUTelGBLFitter::FitTracks()
         void Clear();
 
         void SetTrackCandidates( vector <const IMPL::TrackImpl*> &);
 
         void SetTrackCandidates( const EVENT::TrackVec&);
 
-
         /** Fit tracks */
         // public: 
 
         void TrackCandidatesToGBLTrajectories();
 
-				void FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack);
+	void FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack);
 
-				void FindHitIfThereIsOne(EUTelTrackImpl* trackimpl, EVENT::TrackerHit* hit, EUTelTrackStateImpl* state);
+	void FindHitIfThereIsOne(EUTelTrackImpl* trackimpl, EVENT::TrackerHit* hit, EUTelTrackStateImpl* state);
 
-				void addMeasurementGBL(gbl::GblPoint& point, const double *hitPos, const double *statePos, const EVENT::FloatVec& hitCov, TMatrixD HMatrix);
+	void addMeasurementGBL(gbl::GblPoint& point, const double *hitPos, const double *statePos, const EVENT::FloatVec& hitCov, TMatrixD HMatrix);
 
-				void addSiPlaneScattererGBL(gbl::GblPoint& point, int iPlane);
+	void addSiPlaneScattererGBL(gbl::GblPoint& point, int iPlane);
 
-        // private:
         /*
          */  
         void TrackCandidatesToGBLTrajectory( vector<const IMPL::TrackImpl*>::const_iterator&  );
@@ -117,15 +126,7 @@ namespace eutelescope {
             return _gblTrackCandidates;
         }
 
-      // return the fitted tracks
-        IMPL::LCCollectionVec* GetFitTrackVec() const {
-            return _fittrackvec;
-        }
 
-      // return the hits belonging to the fitted tracks
-        IMPL::LCCollectionVec* GetFitHitsVec() const {
-            return _fithitsvec;
-        }
 
         void SetMilleBinary(gbl::MilleBinary* _mille) {
             this->_mille = _mille;
@@ -210,8 +211,8 @@ namespace eutelescope {
         void prepareMilleOut( const IMPL::TrackImpl & );
 
 // to be obsolete:
-            void prepareLCIOTrack( gbl::GblTrajectory*, const EVENT::TrackerHitVec&,
-                                double, int, double, double, double, double, double );
+//            void prepareLCIOTrack( gbl::GblTrajectory*, const EVENT::TrackerHitVec&,
+//                                double, int, double, double, double, double, double );
             void prepareMilleOut( gbl::GblTrajectory*, const EVENT::TrackVec::const_iterator& );
 //
 
@@ -222,10 +223,6 @@ namespace eutelescope {
 
         std::map< int, gbl::GblTrajectory* > _gblTrackCandidates;
 
-      // contains the fitted tracks, accessible through class methods
-        IMPL::LCCollectionVec * _fittrackvec;
-      // contains the fitted hits, accessible through class methods
-        IMPL::LCCollectionVec * _fithitsvec;
 
     private:
         /** Parameter propagation jacobian */
