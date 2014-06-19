@@ -211,7 +211,7 @@ namespace eutelescope {
             try {
                 hotPixelCollectionVec = static_cast<LCCollectionVec*> (event->getCollection(hotPixelCollectionName));
             } catch (...) {
-                streamlog_out(MESSAGE) << "hotPixelCollectionName " << hotPixelCollectionName.c_str() << " not found" << std::endl;
+                streamlog_out( MESSAGE4 ) << "hotPixelCollectionName " << hotPixelCollectionName.c_str() << " not found" << std::endl;
                 return hotPixelMap;
             }
 
@@ -366,11 +366,11 @@ namespace eutelescope {
 	   	//
 	   	int nElements = input->getNumberOfElements() ;
 
-           	streamlog_out( MESSAGE4) << "HIT : copy of n= " << nElements << " element for collection : " << input->getTypeName() << std::endl;
+           	streamlog_out( DEBUG4) << "HIT : copy of n= " << nElements << " element for collection : " << input->getTypeName() << std::endl;
 
 	   	for(int i=0; i< nElements ; i++){
 	        	IMPL::TrackerHitImpl *hit = static_cast<IMPL::TrackerHitImpl *> ( input->getElementAt(i) );
-                	streamlog_out( MESSAGE4) << " i= " << i << " type : " << hit->getType() << std::endl;
+                	streamlog_out( DEBUG4) << " i= " << i << " type : " << hit->getType() << std::endl;
     			output->push_back(  hit ) ;
 	   	}
         
@@ -389,11 +389,11 @@ namespace eutelescope {
 	   	//
 	   	int nElements = input->getNumberOfElements() ;
 
-                streamlog_out( MESSAGE4) << "TRACK: copy of n= " << nElements << " element for collection : " << input->getTypeName() << std::endl;
+                streamlog_out( DEBUG4) << "TRACK: copy of n= " << nElements << " element for collection : " << input->getTypeName() << std::endl;
    
 	   	for(int i=0; i< nElements ; i++){
                         IMPL::TrackImpl *trk = static_cast<IMPL::TrackImpl *> ( input->getElementAt(i) );
-                        streamlog_out( MESSAGE4) << " i= " << i << 
+                        streamlog_out( DEBUG4) << " i= " << i << 
                                                     " type : " << trk->getType() << 
                                                     " nstates: " << trk->getTrackStates().size() << 
                                                     " nhits: " << trk->getTrackerHits().size() << 

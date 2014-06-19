@@ -671,7 +671,7 @@ void EUTelProcessorTrackingGBLTrajectory::processEvent(LCEvent * evt) {
                 streamlog_out( DEBUG1 ) << "Getting collection " << _tracksOutputCollectionName << endl;
                 evt->getCollection( _tracksOutputCollectionName );
             } catch ( ... ) {
-                streamlog_out( MESSAGE5 ) << "Adding collection " << _tracksOutputCollectionName << endl;
+                streamlog_out( DEBUG1 ) << "Adding collection " << _tracksOutputCollectionName << endl;
 
                	LCCollectionVec* fithitvec = new LCCollectionVec( LCIO::TRACKERHIT);   
   		Utility::copyLCCollectionHitVec( _trackFitter->getFitHitVec( ), fithitvec );
