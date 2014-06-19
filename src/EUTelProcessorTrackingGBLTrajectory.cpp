@@ -664,11 +664,12 @@ void EUTelProcessorTrackingGBLTrajectory::processEvent(LCEvent * evt) {
         if (  nTracks > 0 ) {
             _trackFitter->SetTrackCandidates(trackCandidates);
             _trackFitter->TrackCandidatesToGBLTrajectories();
-            _trackFitter->PerformFitGBLTrajectories();
-
-            if( _alignmentMode > 0 )
+ 
+            if( _alignmentMode == 0 )
             {
-             _trackFitter->PerformMille();
+              _trackFitter->PerformFitGBLTrajectories();
+            }else{
+              _trackFitter->PerformMille();
             }
 
             plotTracks(event);
