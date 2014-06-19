@@ -1845,51 +1845,19 @@ void EUTelGBLFitter::FindHitIfThereIsOne(EUTelTrackImpl* EUtrack, EVENT::Tracker
 
 void EUTelGBLFitter::CreateAlignmentToMeasurementJacobian(){
 
-	TMatrixD* alDer; // alignment derivatives
-	std::vector<int>* globalLabels;
-	CorrectSizeOfMatrixVector(alDer,globalLabels);
-
 //	for(pointNum=0; pointNum < number_of_points; ++pointNum){ //Must make sure that the label starts at ????????
 //		EUTelTrackStateImpl * state = 	_PointToState[ &(pointList->at(pointNum)) ]; //get the state associated with this point
 //		if(state != NULL){
 
-			//state->setCovMatrix( state->getCovMatrix() + correctionsCov ); Need to add this but getcov returns a vector???????
-	//	}
-///	}
+//		state->setCovMatrix( state->getCovMatrix() + correctionsCov ); //Need to add this but getcov returns a vector???????
+//		}
+//	}
 
 
 
 
 }
 
-void EUTelGBLFitter::CorrectSizeOfMatrixVector(TMatrixD* alDer, std::vector<int>* globalLabels){
-	if(_alignmentMode == 0){
-		streamlog_out(MESSAGE1) << "No alignment was chosen "<< std::endl;	
-	}else if (_alignmentMode == 1) {
-		globalLabels->resize(2);
-    alDer->ResizeTo(2, 2);
-	} else if (_alignmentMode == 2) {
-  	globalLabels->resize(3);
-    alDer->ResizeTo(2, 3);
-  } else if (_alignmentMode == 3) {
-  	globalLabels->resize(4);
-    alDer->ResizeTo(2, 4);
-	} else if (_alignmentMode == 4) {
-		globalLabels->resize(4);
-		alDer->ResizeTo(2, 4);
- 	} else if (_alignmentMode == 5) {
-		globalLabels->resize(4);
-		alDer->ResizeTo(2, 4);
-	} else if (_alignmentMode == 6) {
-		globalLabels->resize(5);
-		alDer->ResizeTo(2, 5);
-	} else if (_alignmentMode == 7) {
-		globalLabels->resize(6);
- 		alDer->ResizeTo(2, 6);
-  }
-  alDer->Zero();
-
-}
 
 
 

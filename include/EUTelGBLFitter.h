@@ -77,8 +77,6 @@ namespace eutelescope {
 		
 				void pushBackPointandState( std::vector< gbl::GblPoint >* pointListTrack, const gbl::GblPoint pointTrack, EUTelTrackStateImpl *state);
 
-				void CorrectSizeOfMatrixVector(TMatrixD* alDer, std::vector<int>* globalLabels);
-
 				void CreateAlignmentToMeasurementJacobian();
 
 				void addSiPlaneScattererGBL(gbl::GblPoint& point, int iPlane);
@@ -152,6 +150,14 @@ namespace eutelescope {
         inline double GetChi2Cut() const {
             return _chi2cut;
         }
+
+				void SetJacobain(TMatrixD matrix ){
+					_jacobianAlignment = matrix;
+				}
+		
+				void SetAlignmentVariablesList(std::vector<int> globalLabels){
+					_globalLabels = globalLabels;
+				}
  
         void setParamterIdPlaneVec( const std::vector<int>& );
  
@@ -269,6 +275,10 @@ namespace eutelescope {
         gbl::MilleBinary* _mille;
 
 				std::string _binaryname;
+
+				TMatrixD _jacobianAlignment;
+
+				std::vector<int> _globalLabels;
         
         /** Parameter resolutions */
         std::vector<int> _parameterIdPlaneVec;

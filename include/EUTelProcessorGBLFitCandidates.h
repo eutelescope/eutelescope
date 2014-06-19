@@ -116,6 +116,10 @@ namespace eutelescope {
 
 				void CreateEUTrackandStates(TrackImpl* trackimpl, EUTelTrackImpl*);
 
+				//This create the size of the matrix to be used by GBLFitter. This should only be done once
+				void CorrectSizeOfMatrixVector(TMatrixD* alDer, std::vector<int>* globalLabels);
+
+
 };
 
     /** A global instance of the processor */

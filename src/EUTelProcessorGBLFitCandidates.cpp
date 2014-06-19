@@ -69,14 +69,20 @@ void EUTelProcessorGBLFitCandidates::init() {
 	std::string name("test.root");
 	geo::gGeometry().initializeTGeoDescription(name,false);
 
+	//Create the size of the jacobian and parameter list for alignment
+	TMatrixD* alDer; // alignment derivatives
+	std::vector<int>* globalLabels;
+	CorrectSizeOfMatrixVector(alDer,globalLabels);
+
 	// Initialize GBL fitter
 	EUTelGBLFitter* Fitter = new EUTelGBLFitter("GBLFitter");
   Fitter->SetBeamCharge(_beamQ);
   Fitter->SetBeamEnergy(_eBeam);
 	Fitter->setMEstimatorType(_mEstimatorType);
   Fitter->SetMilleBinaryName(_milleBinaryFilename);
-  Fitter->SetAlignmentMode( _alignmentMode);
   Fitter->SetChi2Cut(_maxChi2Cut);
+	Fitter->SetJacobain(*alDer);
+	Fitter->SetAlignmentVariablesList(*globalLabels);
   _trackFitter = Fitter;
 
 
@@ -221,6 +227,35 @@ void EUTelProcessorGBLFitCandidates::CreateEUTrackandStates(TrackImpl* trackimpl
     }
 
 	
+}
+
+void EUTelProcessorGBLFitCandidates::CorrectSizeOfMatrixVector(TMatrixD* alDer, std::vector<int>* globalLabels){
+	if(_alignmentMode == 0){
+		streamlog_out(MESSAGE1) << "No alignment was chosen "<< std::endl;	
+	}else if (_alignmentMode == 1) {
+		globalLabels->resize(2);
+    alDer->ResizeTo(2, 2);
+	} else if (_alignmentMode == 2) {
+  	globalLabels->resize(3);
+    alDer->ResizeTo(2, 3);
+  } else if (_alignmentMode == 3) {
+  	globalLabels->resize(4);
+    alDer->ResizeTo(2, 4);
+	} else if (_alignmentMode == 4) {
+		globalLabels->resize(4);
+		alDer->ResizeTo(2, 4);
+ 	} else if (_alignmentMode == 5) {
+		globalLabels->resize(4);
+		alDer->ResizeTo(2, 4);
+	} else if (_alignmentMode == 6) {
+		globalLabels->resize(5);
+		alDer->ResizeTo(2, 5);
+	} else if (_alignmentMode == 7) {
+		globalLabels->resize(6);
+ 		alDer->ResizeTo(2, 6);
+  }
+  alDer->Zero();
+
 }
 
 
