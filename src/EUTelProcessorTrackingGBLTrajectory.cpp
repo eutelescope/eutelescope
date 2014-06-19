@@ -663,7 +663,7 @@ void EUTelProcessorTrackingGBLTrajectory::processEvent(LCEvent * evt) {
              _trackFitter->PerformMille();
             }
 
-//            plotTracks(event);
+            plotTracks(event);
 
           
             // Write track candidates collection
