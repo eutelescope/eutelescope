@@ -140,6 +140,7 @@ namespace eutelescope {
 
     daffitter::TrackerSystem _system;
     std::map<float, int> _zSort;
+    std::map<int, int> _indexIDMap;
     std::string _asciiName;
     std::vector<float> _radLength;
 
