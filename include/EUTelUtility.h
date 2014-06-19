@@ -17,6 +17,8 @@
 
 // lcio includes <.h>
 #include "IMPL/TrackerHitImpl.h"
+#include "IMPL/TrackImpl.h"
+
 
 #include "EVENT/LCEvent.h"
 
@@ -209,6 +211,11 @@ namespace eutelescope {
         /** getClusterSize method from TrackerHit object:: assumes known cluster types */
         void getClusterSize(const IMPL::TrackerHitImpl * hit, int& sizeX, int& sizeY ) ;
 
+        /** */
+        void copyLCCollectionHitVec( LCCollectionVec*, LCCollectionVec* );
+ 
+        /** */
+        void copyLCCollectionTrackVec( LCCollectionVec*, LCCollectionVec* );
         /** Tokenize string */
                 /**
          * String tokenizer
