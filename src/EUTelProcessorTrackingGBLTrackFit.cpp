@@ -451,7 +451,7 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
 //             _trackFitter->FitSingleTrackCandidate();
 
             IMPL::LCCollectionVec* fittrackvec;
-            fittrackvec = static_cast<EUTelGBLFitter*> (_trackFitter)->GetFitTrackVec();
+            fittrackvec = _trackFitter->getFitTrackVec();
             
             if( fittrackvec == 0 )  {
               streamlog_out( MESSAGE0 ) << " fittrackvec is null " << std::endl;  
@@ -658,8 +658,8 @@ if( event->getEventNumber()/999*999   == event->getEventNumber() )
                 evt->getCollection( _tracksOutputCollectionName );
             } catch ( ... ) {
                 streamlog_out( DEBUG1 ) << "Adding collection " << _tracksOutputCollectionName << endl;
-                evt->addCollection( static_cast < EUTelGBLFitter* > ( _trackFitter )->GetFitHitsVec( ), _tracksOutputCollectionName+"_fittedhits" );
-                evt->addCollection( static_cast < EUTelGBLFitter* > ( _trackFitter )->GetFitTrackVec( ), _tracksOutputCollectionName );
+                evt->addCollection(  _trackFitter ->getFitHitVec( ), _tracksOutputCollectionName+"_fittedhits" );
+                evt->addCollection(  _trackFitter ->getFitTrackVec( ), _tracksOutputCollectionName );
             }   
         
     
