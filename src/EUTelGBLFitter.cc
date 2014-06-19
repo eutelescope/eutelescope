@@ -62,6 +62,7 @@ namespace eutelescope {
     _eBeam(4.),
     _hitId2GblPointLabel(),
     _hitId2GblPointLabelMille(),
+		_pointlabeltoBoolean(),
     _alignmentMode(Utility::XYShiftXYRot),
     _mEstimatorType(),
     _mille(0),
@@ -492,6 +493,15 @@ namespace eutelescope {
         _hitId2GblPointLabel[ hitid ] = static_cast<int>(pointListTrack.size());
     }
 
+    void EUTelGBLFitter::pushBackPointandBooleanIsOriginalPatternTrackState( std::vector< gbl::GblPoint >* pointListTrack, const gbl::GblPoint pointTrack, bool originalState  ) {
+        pointListTrack->push_back(pointTrack);
+       
+        streamlog_out(MESSAGE0) << endl << "pushBackPoint: " << pointListTrack->size() << originalState <<  std::endl;
+        // store point's GBL label for future reference
+        _pointlabeltoBoolean[ pointListTrack->size() ] = originalState; 
+    }
+
+
     void EUTelGBLFitter::pushBackPointMille( std::vector< gbl::GblPoint >& pointListMille, const gbl::GblPoint& pointMille, int hitid ) {
         pointListMille.push_back(pointMille);
         
@@ -499,6 +509,14 @@ namespace eutelescope {
         // store point's GBL label for future reference
         _hitId2GblPointLabelMille[ hitid ] = static_cast<int>(pointListMille.size());
     }
+
+
+
+
+void EUTelGBLFitter::CreateEUTelTrackFromTrajectory(gbl::GblTrajectory* traj, EUTelTrackImpl* EUtrackWithTrajInfo){
+	int nstates = EUtrackWithTrajInfo->getTrackStates().size();
+
+}
 
     /**
      * merging too sources of information: a copy of a Track Candidate (*itTrkCand) gets updated with gblTraj
@@ -1010,19 +1028,16 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack, st
 		EVENT::TrackerHit* hit = NULL; //Create the hit pointer
 		FindHitIfThereIsOne(EUtrack, hit, state); //This will point the hit to the correct hit object associated with this state. If non exists then point it will remain pointed to NULL
 		double fitPointGlobal[3]; //Need this part since z parameter not saved as state variable.
-		if(hit != NULL){
-			double fitPointLocal[] = {0.,0.,0.};
-  		fitPointLocal [0] = state->getReferencePoint()[0] ;
-  		fitPointLocal [1] = state->getReferencePoint()[1] ;
-  		fitPointLocal [2] = state->getReferencePoint()[2] ;
+		double fitPointLocal[] = {0.,0.,0.};
+  	fitPointLocal [0] = state->getReferencePoint()[0] ;
+  	fitPointLocal [1] = state->getReferencePoint()[1] ;
+  	fitPointLocal [2] = state->getReferencePoint()[2] ;
+		addSiPlaneScattererGBL(point, state->getLocation()); //This we still functions still assumes silicon is the thin scatterer. This can be easily changed when we have the correct gear file. However we will always assume that states will come with scattering information. To take into account material between states this will be dealt with latter. 
 
-			geo::gGeometry().local2Master( state->getLocation(), fitPointLocal, fitPointGlobal);	 
-			addMeasurementGBL(point, hit->getPosition(),  fitPointLocal, hit->getCovMatrix(), state->getH());
-			addSiPlaneScattererGBL(point, state->getLocation()); //This we still functions still assumes silicon is the thin scatterer. This can be easily changed when we have the correct gear file. However we will always assume that states will come with scattering information. To take into account material between states this will be dealt with latter. 
- 
-		}//END OF IF STATEMENT IF THERE WAS A HIT
-		//////////////////////////////////////////////////////////////////////////////END OF CREATING GBL POINT
-		pointList->push_back(point);
+		geo::gGeometry().local2Master( state->getLocation(), fitPointLocal, fitPointGlobal);	
+		if(hit != NULL) addMeasurementGBL(point, hit->getPosition(),  fitPointLocal, hit->getCovMatrix(), state->getH());
+
+		pushBackPointandBooleanIsOriginalPatternTrackState( pointList, point, true  );
 
 		////////////////////////////////////////////////////////////////////////////////START TO CREATE SCATTERS BETWEEN PLANES
 		if(i != (EUtrack->getTrackStates().size()-1)){

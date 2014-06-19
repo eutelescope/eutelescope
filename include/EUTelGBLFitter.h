@@ -73,6 +73,10 @@ namespace eutelescope {
 
 				void CreateTrajectoryandFit(std::vector< gbl::GblPoint >* pointList,  gbl::GblTrajectory* traj, double* chi2, int* ndf);
 
+				void CreateEUTelTrackFromTrajectory(gbl::GblTrajectory* traj, EUTelTrackImpl* EUtrackWithTrajInfo);
+
+				void pushBackPointandBooleanIsOriginalPatternTrackState( std::vector< gbl::GblPoint >* pointListTrack, const gbl::GblPoint pointTrack, bool originalState  );
+
 				void addSiPlaneScattererGBL(gbl::GblPoint& point, int iPlane);
 
         // private:
@@ -282,6 +286,8 @@ namespace eutelescope {
         
         /** Parameter ids */
         std::map<int,int> _parameterIdZRotationsMap;
+				//this maps the original states from the pattern recognition with true and the other scatterers to take into account volumes inbetween them as false. This is needed since you may not know the number of scatterers inbetween in future versions. 
+				std::map<int,bool> _pointlabeltoBoolean;
         
         /** Planes ids to be excluded from refit */
         std::vector< int > _excludeFromFit;

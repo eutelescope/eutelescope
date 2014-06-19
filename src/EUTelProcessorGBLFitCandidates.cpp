@@ -150,8 +150,12 @@ void EUTelProcessorGBLFitCandidates::processEvent(LCEvent * evt){
 			double * chi2=0; 
 			int* ndf=0;
 			_trackFitter->CreateTrajectoryandFit(pointList,traj, chi2,ndf);
-			      
 
+			//Create new EUTelTracks with these new state parameters. This is needed to calculate the alignment jacobian to measurement state
+			EUTelTrackImpl* EUtrackWithTrajInfo = new EUTelTrackImpl(*EUtrack); //Create new object with old data. This is where we will add the correction from the trajectory of GBL fit
+			_trackFitter->CreateEUTelTrackFromTrajectory(traj,EUtrackWithTrajInfo);
+			      
+			delete[] EUtrackWithTrajInfo;
 		}//END OF LOOP FOR ALL TRACKS IN AN EVENT
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
