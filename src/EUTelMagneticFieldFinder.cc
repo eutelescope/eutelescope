@@ -10,8 +10,6 @@
 
 #include "EUTelGeometryTelescopeGeoDescription.h"
 
-#include "EUTelUtilityRungeKutta.h"
-
 #include "gear/gearimpl/Vector3D.h"
 
 // ROOT
