@@ -146,9 +146,8 @@ void EUTelProcessorApplyAlign::processEvent (LCEvent * event) {
       TrackerHitImpl   * inputHit   = dynamic_cast< TrackerHitImpl * >  ( inputCollectionVec->getElementAt( iHit ) ) ;
       // now we have to understand which layer this hit belongs to.
 
-      int sensorID = hitDecoder(inputHit)["sensorID"];
-
-	if( sensorID != Utility::GuessSensorID(inputHit) ) std::cout << "Hit misid" << std::endl;
+			UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
+			const int sensorID = hitDecoder(inputHit)["sensorID"];
 
       // copy the input to the output, at least for the common part
       TrackerHitImpl   * outputHit  = new TrackerHitImpl;
@@ -172,7 +171,7 @@ void EUTelProcessorApplyAlign::processEvent (LCEvent * event) {
 	// Rotations
         double xPlaneCenter    = geo::gGeometry().siPlaneXPosition( sensorID );
         double yPlaneCenter    = geo::gGeometry().siPlaneXPosition( sensorID );
-        double zPlaneThickness = geo::gGeometry()._siPlanesLayerLayout->getSensitiveThickness( geo::gGeometry().sensorIDtoZOrder(sensorID) );
+        double zPlaneThickness = geo::gGeometry().siPlaneZSize(sensorID) ;
         double zPlaneCenter    = geo::gGeometry().siPlaneZPosition( sensorID ) + zPlaneThickness / 2.;
 
         TVector3 inputVec( inputPosition[0] - xPlaneCenter, inputPosition[1] - yPlaneCenter, inputPosition[2] - zPlaneCenter );

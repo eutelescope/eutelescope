@@ -14,7 +14,10 @@
 #include "EUTelGenericSparsePixel.h"
 
 // marlin includes ".h"
+#include "marlin/EventModifier.h"
 #include "marlin/Processor.h"
+#include "marlin/Exceptions.h"
+
 
 // lcio includes <.h>
 #include <LCIOTypes.h>
@@ -57,24 +60,27 @@ namespace eutelescope {
    *
    */
 
-  class EUTelHotPixelKiller : public marlin::Processor {
+  class EUTelProcessorHotPixelFinder : public marlin::Processor, public marlin::EventModifier  {
 
   public:
 
 
-    //! Returns a new instance of EUTelHotPixelKiller
+    //! Returns a new instance of EUTelProcessorHotPixelFinder
     /*! This method returns an new instance of the this processor.  It
      *  is called by Marlin execution framework and it shouldn't be
      *  called/used by the final user.
      *
-     *  @return a new EUTelHotPixelKiller.
+     *  @return a new EUTelProcessorHotPixelFinder.
      */
     virtual Processor * newProcessor() {
-      return new EUTelHotPixelKiller;
+      return new EUTelProcessorHotPixelFinder;
     }
 
+    virtual const std::string & name() const { return Processor::name() ; }
+
+
     //! Default constructor
-    EUTelHotPixelKiller ();
+    EUTelProcessorHotPixelFinder ();
 
     //! Called at the job beginning.
     /*! This is executed only once in the whole execution. It prints
@@ -82,6 +88,14 @@ namespace eutelescope {
      *  the value of the provided parameters
      */
     virtual void init ();
+
+    //! Modify event method
+    /*! Actually this function is not used, but must be included due to
+     *  the inheritence of this class from an abstract base class
+     *  @param evt the current LCEvent event as passed by the ProcessMgr
+     */
+    virtual void modifyEvent( LCEvent * evt ) ;
+
 
     //! Called for every run.
     /*! It is called for every run, and consequently the run counter
@@ -138,8 +152,6 @@ namespace eutelescope {
 
 
   protected:
-
-    std::string _lcioWriteMode ; 
 
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -312,7 +324,7 @@ namespace eutelescope {
   };
 
   //! A global instance of the processor
-  EUTelHotPixelKiller gEUTelHotPixelKiller;
+  EUTelProcessorHotPixelFinder gEUTelProcessorHotPixelFinder;
 
 }
 #endif

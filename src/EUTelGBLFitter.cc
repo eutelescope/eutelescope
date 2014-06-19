@@ -59,18 +59,18 @@ namespace eutelescope {
     _fithitsvec(0),
     _parPropJac(5, 5),
     _beamQ(-1),
-    _eBeam(-1.),
+    _eBeam(4.),
     _hitId2GblPointLabel(),
     _hitId2GblPointLabelMille(),
     _alignmentMode(Utility::XYShiftXYRot),
     _mEstimatorType(),
     _mille(0),
-    _paramterIdXShiftsMap(),
-    _paramterIdYShiftsMap(),
-    _paramterIdZShiftsMap(),
-    _paramterIdXRotationsMap(),
-    _paramterIdYRotationsMap(),
-    _paramterIdZRotationsMap(),
+    _parameterIdXShiftsMap(),
+    _parameterIdYShiftsMap(),
+    _parameterIdZShiftsMap(),
+    _parameterIdXRotationsMap(),
+    _parameterIdYRotationsMap(),
+    _parameterIdZRotationsMap(),
     _excludeFromFit(),
     _chi2cut(1000.),
     _eomIntegrator( new EUTelUtilityRungeKutta() ),
@@ -97,12 +97,12 @@ namespace eutelescope {
     _alignmentMode(Utility::XYShiftXYRot),
     _mEstimatorType(),
     _mille(0),
-    _paramterIdXShiftsMap(),
-    _paramterIdYShiftsMap(),
-    _paramterIdZShiftsMap(),
-    _paramterIdXRotationsMap(),
-    _paramterIdYRotationsMap(),
-    _paramterIdZRotationsMap(),
+    _parameterIdXShiftsMap(),
+    _parameterIdYShiftsMap(),
+    _parameterIdZShiftsMap(),
+    _parameterIdXRotationsMap(),
+    _parameterIdYRotationsMap(),
+    _parameterIdZRotationsMap(),
     _excludeFromFit(),
     _chi2cut(1000.),
     _eomIntegrator( new EUTelUtilityRungeKutta() ),
@@ -121,66 +121,66 @@ namespace eutelescope {
     
     void EUTelGBLFitter::setParamterIdPlaneVec( const std::vector<int>& vector)
     {
-      _paramterIdPlaneVec = vector;
+      _parameterIdPlaneVec = vector;
     }
  
     void EUTelGBLFitter::setParamterIdXResolutionVec( const std::vector<float>& vector)
     {
-      _paramterIdXResolutionVec = vector;
+      _parameterIdXResolutionVec = vector;
     }
  
     void EUTelGBLFitter::setParamterIdYResolutionVec( const std::vector<float>& vector)
     {
-      _paramterIdYResolutionVec = vector;
+      _parameterIdYResolutionVec = vector;
     }
        
 
     void EUTelGBLFitter::setParamterIdXRotationsMap( const std::map<int, int>& map ) {
-        _paramterIdXRotationsMap = map;
+        _parameterIdXRotationsMap = map;
     }
     
     void EUTelGBLFitter::setParamterIdYRotationsMap( const std::map<int, int>& map ) {
-        _paramterIdYRotationsMap = map;
+        _parameterIdYRotationsMap = map;
     }
     
     void EUTelGBLFitter::setParamterIdZRotationsMap( const std::map<int, int>& map ) {
-        _paramterIdZRotationsMap = map;
+        _parameterIdZRotationsMap = map;
     }
 
     void EUTelGBLFitter::setParamterIdZShiftsMap( const std::map<int, int>& map ) {
-        _paramterIdZShiftsMap = map;
+        _parameterIdZShiftsMap = map;
     }
 
     void EUTelGBLFitter::setParamterIdYShiftsMap( const std::map<int, int>& map ) {
-        _paramterIdYShiftsMap = map;
+        _parameterIdYShiftsMap = map;
     }
 
     void EUTelGBLFitter::setParamterIdXShiftsMap( const std::map<int, int>& map ) {
-        _paramterIdXShiftsMap = map;
+        _parameterIdXShiftsMap = map;
     }
     
     const std::map<int, int>& EUTelGBLFitter::getParamterIdXRotationsMap() const {
-        return _paramterIdXRotationsMap;
+        return _parameterIdXRotationsMap;
     }
     
     const std::map<int, int>& EUTelGBLFitter::getParamterIdYRotationsMap() const {
-        return _paramterIdYRotationsMap;
+        return _parameterIdYRotationsMap;
     }
     
     const std::map<int, int>& EUTelGBLFitter::getParamterIdZRotationsMap() const {
-        return _paramterIdZRotationsMap;
+        return _parameterIdZRotationsMap;
     }
 
     const std::map<int, int>& EUTelGBLFitter::getParamterIdZShiftsMap() const {
-        return _paramterIdZShiftsMap;
+        return _parameterIdZShiftsMap;
     }
 
     const std::map<int, int>& EUTelGBLFitter::getParamterIdYShiftsMap() const {
-        return _paramterIdYShiftsMap;
+        return _parameterIdYShiftsMap;
     }
 
     const std::map<int, int>& EUTelGBLFitter::getParamterIdXShiftsMap() const {
-        return _paramterIdXShiftsMap;
+        return _parameterIdXShiftsMap;
     }
 
     void EUTelGBLFitter::setMEstimatorType( const std::string& mEstimatorType ) {
@@ -229,7 +229,7 @@ namespace eutelescope {
         _parPropJac[4][2] = ds; // y = y0 + yp * ds
         return _parPropJac;
     }
-        
+     
     /** Propagation jacobian in inhomogeneous magnetic field
      * 
      * 
@@ -371,90 +371,17 @@ namespace eutelescope {
        
         return result;
     }
-        
-    void EUTelGBLFitter::SetTrackCandidates(const EVENT::TrackVec& trackCandidates) {
+ 
+    void EUTelGBLFitter::SetTrackCandidates( vector<const IMPL::TrackImpl*>& trackCandidatesVec) {
+
+        this->_trackCandidatesVec = trackCandidatesVec	;
+        return;
+    }
+       
+    void EUTelGBLFitter::SetTrackCandidates( const EVENT::TrackVec& trackCandidates) {
 
         this->_trackCandidates = trackCandidates;
         return;
-    }
-
-    double EUTelGBLFitter::interpolateTrackX(const EVENT::TrackerHitVec& trackCand, const double z) const {
-        const int planeIDStart = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(trackCand.front()) );
-        const double* hitPointLocalStart = trackCand.front()->getPosition();
-        double hitposStart[] = {hitPointLocalStart[0],hitPointLocalStart[1],hitPointLocalStart[2]};
-        double hitPointGlobalStart[] = {0.,0.,0.};
-        geo::gGeometry().local2Master(planeIDStart,hitposStart,hitPointGlobalStart);
-        
-        double x0 = hitPointGlobalStart[0];
-        double z0 = hitPointGlobalStart[2];
-
-        double x = x0 - getTrackSlopeX(trackCand) * (z0 - z);
-
-        return x;
-    }
-    
-
-    double EUTelGBLFitter::interpolateTrackY(const EVENT::TrackerHitVec& trackCand, const double z) const {
-        const int planeIDStart = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(trackCand.front()) );
-        const double* hitPointLocalStart = trackCand.front()->getPosition();
-        double hitposStart[] = {hitPointLocalStart[0],hitPointLocalStart[1],hitPointLocalStart[2]};
-        double hitPointGlobalStart[] = {0.,0.,0.};
-        geo::gGeometry().local2Master(planeIDStart,hitposStart,hitPointGlobalStart);
-        
-        double y0 = hitPointGlobalStart[1];
-        double z0 = hitPointGlobalStart[2];
-
-        double y = y0 - getTrackSlopeY(trackCand) * (z0 - z);
-
-        return y;
-    }
-    
-    double EUTelGBLFitter::getTrackSlopeX(const EVENT::TrackerHitVec& trackCand) const {
-        const int planeIDStart = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(trackCand.front()) );
-        const double* hitPointLocalStart = trackCand.front()->getPosition();
-        double hitposStart[] = {hitPointLocalStart[0],hitPointLocalStart[1],hitPointLocalStart[2]};
-        double hitPointGlobalStart[] = {0.,0.,0.};
-        geo::gGeometry().local2Master(planeIDStart,hitposStart,hitPointGlobalStart);
-        
-        double x0 = hitPointGlobalStart[0];
-        double z0 = hitPointGlobalStart[2];
-
-        const int planeIDFinish = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(trackCand.back()) );
-        const double* hitPointLocalFinish = trackCand.back()->getPosition();
-        double hitposFinish[] = {hitPointLocalFinish[0],hitPointLocalFinish[1],hitPointLocalFinish[2]};
-        double hitPointGlobalFinish[] = {0.,0.,0.};
-        geo::gGeometry().local2Master(planeIDFinish,hitposFinish,hitPointGlobalFinish);
-        
-        double xLast = hitPointGlobalFinish[0];
-        double zLast = hitPointGlobalFinish[2];
-
-        double kx = (x0 - xLast) / (z0 - zLast);
-
-        return kx;
-    }
-    
-    double EUTelGBLFitter::getTrackSlopeY(const EVENT::TrackerHitVec& trackCand) const {
-        const int planeIDStart = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(trackCand.front()) );
-        const double* hitPointLocalStart = trackCand.front()->getPosition();
-        double hitposStart[] = {hitPointLocalStart[0],hitPointLocalStart[1],hitPointLocalStart[2]};
-        double hitPointGlobalStart[] = {0.,0.,0.};
-        geo::gGeometry().local2Master(planeIDStart,hitposStart,hitPointGlobalStart);
-        
-        double y0 = hitPointGlobalStart[1];
-        double z0 = hitPointGlobalStart[2];
-
-        const int planeIDFinish = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(trackCand.back()) );
-        const double* hitPointLocalFinish = trackCand.back()->getPosition();
-        double hitposFinish[] = {hitPointLocalFinish[0],hitPointLocalFinish[1],hitPointLocalFinish[2]};
-        double hitPointGlobalFinish[] = {0.,0.,0.};
-        geo::gGeometry().local2Master(planeIDFinish,hitposFinish,hitPointGlobalFinish);
-        
-        double yLast = hitPointGlobalFinish[1];
-        double zLast = hitPointGlobalFinish[2];
-
-        double ky = (y0 - yLast) / (z0 - zLast);
-
-        return ky;
     }
 
 
@@ -467,61 +394,6 @@ namespace eutelescope {
         _hitId2GblPointLabelMille.clear();
     }
 
-
-    /** Add a measurement to GBL point
-     * 
-     * @param point
-     * @param meas measuremet vector (residuals) to be calculated in this routine
-     * @param measPrec residuals weights (1/unc^2) to be calculated in this routine
-     * @param hitpos hit position
-     * @param predpos predicted by hit x-position (approximation)
-     * @param hitcov hit covariance matrix
-     * @param proL2m projection matrix from track coordinate system onto measurement system
-     */
-    void EUTelGBLFitter::addMeasurementsGBL(gbl::GblPoint& point, TVectorD& meas, TVectorD& measPrec, const double* hitpos,
-            const double* predpos, const EVENT::FloatVec& hitcov, TMatrixD& proL2m) {
-     
-        streamlog_out(DEBUG3) << " addMeasurementsGBL " << std::endl;
- 
-        meas[0] = hitpos[0] - predpos[0];
-        meas[1] = hitpos[1] - predpos[1];
-        measPrec[0] = 1. / hitcov[0];	// cov(x,x)
-        measPrec[1] = 1. / hitcov[2];	// cov(y,y)
-
-        streamlog_out(DEBUG0) << "Residuals:" << std::endl;
-        streamlog_out(DEBUG0) << "X:" << std::setw(20) << meas[0] << std::setw(20) << measPrec[0] << std::endl;
-        streamlog_out(DEBUG0) << "Y:" << std::setw(20) << meas[1] << std::setw(20) << measPrec[1] << std::endl;
-
-        point.addMeasurement(proL2m, meas, measPrec);
-    }
-
-    /** Add a acatterer to GBL point
-     * Add Si + Kapton thin scatterer to a point
-     * 
-     * @param point
-     * @param scat average scattering angle
-     * @param scatPrecSensor 1/RMS^2 of the scattering angle (ususally determined from Highland's formula)
-     * @param iPlane plane id
-     * @param p momentum of the particle
-     */
-    void EUTelGBLFitter::addSiPlaneScattererGBL(gbl::GblPoint& point, TVectorD& scat, TVectorD& scatPrecSensor, int planeID, double p) {
-        const int iPlane = geo::gGeometry().sensorIDtoZOrder(planeID);
-        const double radlenSi           = geo::gGeometry()._siPlanesLayerLayout->getSensitiveRadLength(iPlane);
-        const double radlenKap          = geo::gGeometry()._siPlanesLayerLayout->getLayerRadLength(iPlane);
-        const double thicknessSi        = geo::gGeometry()._siPlanesLayerLayout->getSensitiveThickness(iPlane);
-        const double thicknessKap       = geo::gGeometry()._siPlanesLayerLayout->getLayerThickness(iPlane);
-
-        const double X0Si = thicknessSi / radlenSi; // Si 
-        const double X0Kap = thicknessKap / radlenKap; // Kapton                
-
-        const double tetSi = Utility::getThetaRMSHighland(p, X0Si);
-        const double tetKap = Utility::getThetaRMSHighland(p, X0Kap);
-
-        scatPrecSensor[0] = 1.0 / (tetSi * tetSi + tetKap * tetKap);
-        scatPrecSensor[1] = 1.0 / (tetSi * tetSi + tetKap * tetKap);
-
-        point.addScatterer(scat, scatPrecSensor);
-    }
 
     // @TODO iplane, xPred, yPred must not be here. consider refactoring
 
@@ -539,14 +411,14 @@ namespace eutelescope {
     void EUTelGBLFitter::addGlobalParametersGBL(gbl::GblPoint& point, TMatrixD& alDer, std::vector<int>& globalLabels, int iPlane,
             const double* predpos, double xSlope, double ySlope) {
 
-        streamlog_out(MESSAGE1) << " addGlobalPArametersGBL " << std::endl;
+        streamlog_out(MESSAGE0) << " addGlobalParametersGBL " << std::endl;
 
         alDer[0][0] = -1.0; // dx/dx
         alDer[0][1] =  0.0; // dx/dy
         alDer[1][0] =  0.0; // dy/dx
         alDer[1][1] = -1.0; // dy/dy
-        globalLabels[0] = _paramterIdXShiftsMap[iPlane]; // dx
-        globalLabels[1] = _paramterIdYShiftsMap[iPlane]; // dy
+        globalLabels[0] = _parameterIdXShiftsMap[iPlane]; // dx
+        globalLabels[1] = _parameterIdYShiftsMap[iPlane]; // dy
 
 
         if (_alignmentMode == Utility::XYShiftXYRot
@@ -557,7 +429,7 @@ namespace eutelescope {
                 || _alignmentMode == Utility::XYZShiftXZRotYZRotXYRot) {
             alDer[0][2] = -predpos[1]; // dx/rot
             alDer[1][2] =  predpos[0]; // dy/rot
-            globalLabels[2] = _paramterIdZRotationsMap[iPlane]; // rot z
+            globalLabels[2] = _parameterIdZRotationsMap[iPlane]; // rot z
         }
 
 
@@ -565,16 +437,16 @@ namespace eutelescope {
                 || _alignmentMode == Utility::XYZShiftXZRotYZRotXYRot) {
             alDer[0][3] =   -xSlope; // dx/dz
             alDer[1][3] =   -ySlope; // dy/dz
-            globalLabels[3] = _paramterIdZShiftsMap[iPlane]; // dz
+            globalLabels[3] = _parameterIdZShiftsMap[iPlane]; // dz
         }
 
         if (_alignmentMode == Utility::XYZShiftXZRotYZRotXYRot) {
             alDer[0][4] =   predpos[0]*xSlope; // dx/rot y
             alDer[1][4] =   predpos[0]*ySlope; // dy/rot y
-            globalLabels[4] = _paramterIdYRotationsMap[iPlane]; // drot y  - actually X?
+            globalLabels[4] = _parameterIdYRotationsMap[iPlane]; // drot y  - actually X?
             alDer[0][5] =  -predpos[1]*xSlope; // dx/rot x          
             alDer[1][5] =  -predpos[1]*ySlope; // dy/rot x         
-            globalLabels[5] = _paramterIdXRotationsMap[iPlane]; // drot x  - actually Y?
+            globalLabels[5] = _parameterIdXRotationsMap[iPlane]; // drot x  - actually Y?
         }
 
 
@@ -582,49 +454,229 @@ namespace eutelescope {
         if (_alignmentMode == Utility::XYShiftXZRotXYRot) {
             alDer[0][3] = predpos[0]*xSlope; // dx/rot y
             alDer[1][3] = predpos[0]*ySlope; // dy/rot y
-            globalLabels[3] = _paramterIdYRotationsMap[iPlane]; // drot y
+            globalLabels[3] = _parameterIdYRotationsMap[iPlane]; // drot y
         }
         if (_alignmentMode == Utility::XYShiftYZRotXYRot) {
             alDer[0][3] = predpos[1]*xSlope; // dx/rot x
             alDer[1][3] = predpos[1]*ySlope; // dy/rot x
-            globalLabels[3] = _paramterIdXRotationsMap[iPlane]; // drot x
+            globalLabels[3] = _parameterIdXRotationsMap[iPlane]; // drot x
         }
  
         if (_alignmentMode == Utility::XYShiftXZRotYZRotXYRot) {
             alDer[0][3] = predpos[0]*xSlope; // dx/rot y
             alDer[1][3] = predpos[0]*ySlope; // dy/rot y
-            globalLabels[3] = _paramterIdYRotationsMap[iPlane]; // drot y
+            globalLabels[3] = _parameterIdYRotationsMap[iPlane]; // drot y
             alDer[0][4] = predpos[1]*xSlope; // dx/rot x
             alDer[1][4] = predpos[1]*ySlope; // dy/rot x
-            globalLabels[4] = _paramterIdXRotationsMap[iPlane]; // drot x
+            globalLabels[4] = _parameterIdXRotationsMap[iPlane]; // drot x
         }
         if (_alignmentMode == Utility::XYShiftXZRotYZRotXYRot) {
             alDer[0][3] = predpos[0]*xSlope; // dx/rot y
             alDer[1][3] = predpos[0]*ySlope; // dy/rot y
-            globalLabels[3] = _paramterIdYRotationsMap[iPlane]; // drot y
+            globalLabels[3] = _parameterIdYRotationsMap[iPlane]; // drot y
             alDer[0][4] = predpos[1]*xSlope; // dx/rot x
             alDer[1][4] = predpos[1]*ySlope; // dy/rot x
-            globalLabels[4] = _paramterIdXRotationsMap[iPlane]; // drot x
+            globalLabels[4] = _parameterIdXRotationsMap[iPlane]; // drot x
         }
 
         point.addGlobals(globalLabels, alDer);
  
-        streamlog_out(MESSAGE1) << " addGlobalPArametersGBL over " << std::endl;
+        streamlog_out(MESSAGE0) << " addGlobalPArametersGBL over " << std::endl;
    }
 
-    void EUTelGBLFitter::pushBackPoint( std::vector< gbl::GblPoint >& pointList, const gbl::GblPoint& point, int hitid ) {
-        pointList.push_back(point);
-        
+    void EUTelGBLFitter::pushBackPoint( std::vector< gbl::GblPoint >& pointListTrack, const gbl::GblPoint& pointTrack, int hitid ) {
+        pointListTrack.push_back(pointTrack);
+       
+        streamlog_out(MESSAGE0) << endl << "pushBackPoint: " << hitid << std::endl;
         // store point's GBL label for future reference
-        _hitId2GblPointLabel[ hitid ] = static_cast<int>(pointList.size());
+        _hitId2GblPointLabel[ hitid ] = static_cast<int>(pointListTrack.size());
     }
 
-    void EUTelGBLFitter::pushBackPointMille( std::vector< gbl::GblPoint >& pointList, const gbl::GblPoint& point, int hitid ) {
-        pointList.push_back(point);
+    void EUTelGBLFitter::pushBackPointMille( std::vector< gbl::GblPoint >& pointListMille, const gbl::GblPoint& pointMille, int hitid ) {
+        pointListMille.push_back(pointMille);
         
+        streamlog_out(MESSAGE0) << endl << "pushBackPointMille: " << hitid << std::endl;
         // store point's GBL label for future reference
-        _hitId2GblPointLabelMille[ hitid ] = static_cast<int>(pointList.size());
+        _hitId2GblPointLabelMille[ hitid ] = static_cast<int>(pointListMille.size());
     }
+
+    /**
+     * merging too sources of information: a copy of a Track Candidate (*itTrkCand) gets updated with gblTraj
+     * 
+     * @param fittrack pointer to track object to be stored
+     * @param chi2     Chi2 of the track fit
+     * @param ndf      NDF of the track fit
+     */
+     void EUTelGBLFitter::prepareLCIOTrack( gbl::GblTrajectory* gblTraj, vector<const IMPL::TrackImpl*>::const_iterator& itTrkCand, 
+                                          double chi2, int ndf, double omega, double d0, double z0, double phi, double tanlam ) {
+ 
+// output  track
+
+        IMPL::TrackImpl * fittrack = new IMPL::TrackImpl( **itTrkCand); 
+ 
+        unsigned int numData;
+        TVectorD corrections(5);
+        TMatrixDSym correctionsCov(5);
+ 
+        TVectorD residual(2);
+        TVectorD measErr(2);
+        TVectorD residualErr(2);
+        TVectorD downWeight(2);
+ 
+          streamlog_out(MESSAGE1) << endl; 
+ 
+          int nstates = fittrack->getTrackStates().size();
+          streamlog_out(MESSAGE1) << "states " << nstates << "    " << endl;
+
+          for(int i=0;i < nstates; i++) 
+            {
+                const IMPL::TrackStateImpl* const_trkState = static_cast <const IMPL::TrackStateImpl*> ( (*itTrkCand)->getTrackStates().at(i) ) ;
+
+                double fitPointLocal[] = {0.,0.,0.};
+                fitPointLocal[0] = const_trkState->getReferencePoint()[0] ;
+                fitPointLocal[1] = const_trkState->getReferencePoint()[1] ;
+                fitPointLocal[2] = const_trkState->getReferencePoint()[2] ;
+
+                double bd0        = const_trkState->getD0() ;
+ 	        double bphi       = const_trkState->getPhi() ;
+                double bomega     = const_trkState->getOmega() ;
+	        double btanlambda = const_trkState->getTanLambda() ;
+	        double bz0        = const_trkState->getZ0() ;
+
+                const int hitGblLabel = _hitId2GblPointLabel[ const_trkState->id() ];
+
+                streamlog_out(MESSAGE1) << hitGblLabel << " corr: " << const_trkState->id() 
+                                        << " [d0]" << std::setw(6) << bd0 << ":" 
+                                        << " [phi]" << std::setw(6) << bphi << ":" 
+                                        << " [ome]" << std::setw(6) << bomega << ":" 
+                                        << " [tanl]" << std::setw(6) << btanlambda << ":" 
+                                        << " [z0]" << std::setw(6) << bz0 << ":" << " ["<< setw(3) << const_trkState->getLocation() <<"]" 
+                                        << " points:"  << setw(8) << fitPointLocal[0] << setw(8) << fitPointLocal[1] << setw(8) << fitPointLocal[2] << " "  ;   
+
+               streamlog_out(MESSAGE1) << endl; 
+            }
+ 
+          streamlog_out(MESSAGE1) << endl; 
+  
+        const EVENT::TrackerHitVec& ihits = (*itTrkCand)->getTrackerHits();
+        int itrk = (*itTrkCand)->id();
+        int nhits =  ihits.size( ) ;
+        int expec = _parameterIdPlaneVec.size();
+        streamlog_out(MESSAGE1) <<  " track itrk:" <<  itrk  << " with " << nhits << " at least " << expec << "       " ;//std::endl;
+        for (unsigned int i = 0; i< ihits.size(); i++ ) 
+        { 
+            EVENT::TrackerHit* ihit = ihits[i];
+            int ic = ihit->id();
+            streamlog_out(MESSAGE0) <<  ic << " ";
+        }
+        streamlog_out(MESSAGE1) << std::endl;
+ 
+          for(int i=0;i < nstates; i++) 
+            {
+                const IMPL::TrackStateImpl* const_trkState = static_cast <const IMPL::TrackStateImpl*> ( (*itTrkCand)->getTrackStates().at(i) ) ;
+                      IMPL::TrackStateImpl* trkState = static_cast <      IMPL::TrackStateImpl*> ( fittrack->getTrackStates().at(i) ) ;
+
+                // first get the GBL trajectory fit results:
+                const int hitGblLabel = _hitId2GblPointLabel[ const_trkState->id() ];
+
+                _hitId2GblPointLabel.insert( std::make_pair(   trkState->id() , hitGblLabel  ) );
+
+                gblTraj->getResults( hitGblLabel, corrections, correctionsCov );
+
+                float fitPointLocal[] = {0.,0.,0.};
+                fitPointLocal[0] = const_trkState->getReferencePoint()[0] ;
+                fitPointLocal[1] = const_trkState->getReferencePoint()[1] ;
+                fitPointLocal[2] = const_trkState->getReferencePoint()[2] ;
+
+                double bd0        = const_trkState->getD0() ;
+ 	        double bphi       = const_trkState->getPhi() ;
+                double bomega     = const_trkState->getOmega() ;
+	        double btanlambda = const_trkState->getTanLambda() ;
+	        double bz0        = const_trkState->getZ0() ;
+
+                // apply GBL fit results:
+                trkState->setD0(        const_trkState->getD0() + corrections[0] ) ;
+ 	        trkState->setPhi(       const_trkState->getPhi() + corrections[1] ) ;
+                trkState->setOmega(     const_trkState->getOmega() + corrections[2] ) ;
+	        trkState->setTanLambda( const_trkState->getTanLambda() + corrections[3] ) ;
+	        trkState->setZ0(        const_trkState->getZ0() + corrections[4] ) ;
+
+                double ed0        = trkState->getD0() ;
+ 	        double ephi       = trkState->getPhi()  ;
+                double eomega     = trkState->getOmega()  ;
+	        double etanlambda = trkState->getTanLambda()  ;
+	        double ez0        = trkState->getZ0()  ;
+
+
+
+                streamlog_out(MESSAGE1) << hitGblLabel << " corr: " << trkState->id() 
+                                        << " [d0]" << std::setw(6)  << ed0 <<  ":"
+                                        << " [phi]" << std::setw(6)  << ephi<<  ":"
+                                        << " [ome]" << std::setw(6)  << eomega<<  ":"
+                                        << " [tanl]" << std::setw(6)  << etanlambda<<  ":"
+                                        << " [z0]" << std::setw(6)  << ez0 <<  ":" << " ["<< setw(3) << trkState->getLocation() <<"]" ;      
+
+                if( trkState->getLocation() >= 0 ) {
+                  gblTraj->getMeasResults( hitGblLabel, numData, residual, measErr, residualErr, downWeight);
+                  // correct original values to the fitted ones
+
+                  bool foundAhit = false; 
+                  for (unsigned int i = 0; i< ihits.size(); i++ ) 
+                  { 
+                      EVENT::TrackerHit* ihit = ihits[i];
+                      const int planeID = Utility::getSensorIDfromHit( static_cast< IMPL::TrackerHitImpl* >(ihit) );
+                      if( planeID == trkState->getLocation()) {
+                         foundAhit = true;   
+                         double* hitPointLocal = const_cast <double *> (ihit->getPosition());                   
+                         hitPointLocal[0] -= residual[0]; // why minus?
+                         hitPointLocal[1] -= residual[1];
+
+                         // need a float
+                         const float opoint[3] = { hitPointLocal[0], hitPointLocal[1], hitPointLocal[2] };
+                         trkState->setReferencePoint( opoint );                        
+                      } 
+                  }
+ 
+
+                  double PointLocal[] = {0.,0.,0.};
+                  PointLocal[0] = trkState->getReferencePoint()[0] ;
+                  PointLocal[1] = trkState->getReferencePoint()[1] ;
+                  PointLocal[2] = trkState->getReferencePoint()[2] ;
+
+                  streamlog_out(MESSAGE1) << " points:"  << setw(8) << PointLocal[0] << setw(8)  << PointLocal[1] << setw(8) << PointLocal[2] << " "  ;   
+                  streamlog_out(MESSAGE1) << "  re[0]:"  << std::setw(7) << residual[0] << " re[1]:"  << std::setw(7) << residual[1] ;
+                }
+
+                streamlog_out(MESSAGE1) << endl;      
+
+            }
+            streamlog_out(MESSAGE1) << std::endl;
+
+
+        const EVENT::TrackerHitVec& chits = fittrack->getTrackerHits();
+        itrk = fittrack->id();
+        nhits =  chits.size( ) ;
+        expec =  _parameterIdPlaneVec.size();
+        streamlog_out(MESSAGE1) <<  " track itrk:" <<  itrk  << " with " << nhits << " at least " << expec  << "       ";
+
+        for (int i = 0; i< chits.size(); i++ ) 
+        { 
+            EVENT::TrackerHit* ihit = chits[i];
+            int ic = ihit->id();
+            streamlog_out(MESSAGE0) <<  ic << " ";
+        }
+        streamlog_out(MESSAGE1) << std::endl;
+ 
+         // prepare track
+        fittrack->setChi2 ( chi2 );      // Chi2 of the fit (including penalties)
+        fittrack->setNdf  ( ndf );        // Number of planes fired (!)
+        
+        // add track to LCIO collection vector
+        _fittrackvec->addElement( fittrack );
+ 
+    }
+
+
     /**
      * Set track omega, D0, Z0, Phi, tan(Lambda), Chi2, NDF parameters
      * and add it to the LCIO collection of fitted tracks
@@ -657,8 +709,9 @@ namespace eutelescope {
 
         EVENT::TrackerHitVec::const_iterator itrHit;
         for ( itrHit = trackCandidate.begin(); itrHit != trackCandidate.end(); ++itrHit ) {
-            const int planeID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(*itrHit) );
-             
+
+            const int planeID = Utility::getSensorIDfromHit( static_cast< IMPL::TrackerHitImpl* >(*itrHit) );
+
             bool excludeFromFit = false;
             if ( std::find( _excludeFromFit.begin(), _excludeFromFit.end(), planeID ) != _excludeFromFit.end() ) excludeFromFit = true;
             if(excludeFromFit)
@@ -671,7 +724,7 @@ namespace eutelescope {
                   
             gblTraj->getResults( hitGblLabel, corrections, correctionsCov );
             
-            streamlog_out(DEBUG2) << "Corrections: " << std::endl;
+            streamlog_out(DEBUG2) << "LCIO - Corrections: " << std::endl;
             streamlog_message( DEBUG2, corrections.Print();, std::endl; );
 /// get measured hit position:
 // in local:
@@ -711,15 +764,15 @@ namespace eutelescope {
             if ( itrHit != (trackCandidate.end() - 1) ) {
             
 // here we assume that trackCandidate does not contain hits from same plane ! should be checked explicitely somewhere ...
-                    const int nextPlaneID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(*(itrHit + 1)) );
+                    const int nextPlaneID = Utility::getSensorIDfromHit( static_cast< IMPL::TrackerHitImpl* >(*itrHit+1) );
                     const double* nextHitPoint = (*(itrHit + 1))->getPosition();
                     double nextHitPointGlobal[] = { 0., 0., 0. };
                     geo::gGeometry().local2Master(nextPlaneID,nextHitPoint,nextHitPointGlobal);
                     
 // correct only for linear tracks ?
-                    const double hitSpacing = sqrt( (nextHitPointGlobal[0]- trackPointGlobal[0])*(nextHitPointGlobal[0]-trackPointGlobal[0])+
-                                                           (nextHitPointGlobal[1]-trackPointGlobal[1])*(nextHitPointGlobal[1]-trackPointGlobal[1])+
-                                                           (nextHitPointGlobal[2]-trackPointGlobal[2])*(nextHitPointGlobal[2]-trackPointGlobal[2]) ); 
+//                    const double hitSpacing = sqrt( (nextHitPointGlobal[0]- trackPointGlobal[0])*(nextHitPointGlobal[0]-trackPointGlobal[0])+
+//                                                           (nextHitPointGlobal[1]-trackPointGlobal[1])*(nextHitPointGlobal[1]-trackPointGlobal[1])+
+//                                                           (nextHitPointGlobal[2]-trackPointGlobal[2])*(nextHitPointGlobal[2]-trackPointGlobal[2]) ); 
                     const double hitSpacingDz = -nextHitPointGlobal[2] +trackPointGlobal[2];
  
 	            double trackDirLocal[] = { corrections[1], corrections[2], 0. };
@@ -734,7 +787,7 @@ namespace eutelescope {
            
             if ( itrHit == trackCandidate.begin() ) {
 //              double hitPosGlobal[] = {0.,0.,0.};
-//                geo::gGeometry().local2Master( Utility::GuessSensorID(*itrHit), pos, hitPosGlobal);
+//                geo::gGeometry().local2Master( Utility::getSensorIDfromHit(*itrHit), pos, hitPosGlobal);
 //                geo::gGeometry().local2Master( planeID, pos, hitPosGlobal);
                 trackRefPoint[0] = hitPointGlobal[0];     trackRefPoint[1] = hitPointGlobal[1];     trackRefPoint[2] = hitPointGlobal[2];
                 omega +=  corrections[0];
@@ -765,76 +818,10 @@ namespace eutelescope {
         // add track to LCIO collection vector
         _fittrackvec->addElement( fittrack );
     }
-    
-    void EUTelGBLFitter::FitTracks() {
-        Clear(); // 
-
-        // prepare output collection
-        try {
-            _fittrackvec = new IMPL::LCCollectionVec( EVENT::LCIO::TRACK );
-            _fithitsvec = new IMPL::LCCollectionVec( EVENT::LCIO::TRACKERHIT );
-            IMPL::LCFlagImpl flag( _fittrackvec->getFlag( ) );
-            flag.setBit( lcio::LCIO::TRBIT_HITS );
-            _fittrackvec->setFlag( flag.getFlag( ) );
-        } catch ( ... ) {
-            streamlog_out( ERROR2 ) << "Can't allocate output collection" << std::endl;
-        }
-        
-        streamlog_out(DEBUG2) << " EUTelGBLFitter::FitTracks() " << std::endl;
-        streamlog_out(DEBUG1) << " N track candidates:" << static_cast<int>(_trackCandidates.size()) << std::endl;
-
-        TVectorD meas(2);
-        TVectorD measPrec(2); // precision = 1/resolution^2
-
-        TVectorD scat(2);
-        scat.Zero();
-
-        TVectorD scatPrecSensor(2);
-        //TMatrixDSym scatPrec(2,2);
-        TVectorD scatPrec(2);
-
-        TMatrixD alDer; // alignment derivatives
-        std::vector<int> globalLabels;
-        if (_alignmentMode == Utility::XYShift) {
-            globalLabels.resize(2);
-            alDer.ResizeTo(2, 2);
-        } else if (_alignmentMode == Utility::XYShiftXYRot) {
-            globalLabels.resize(3);
-            alDer.ResizeTo(2, 3);
-        } else if (_alignmentMode == Utility::XYZShiftXYRot) {
-            globalLabels.resize(4);
-            alDer.ResizeTo(2, 4);
-        } else if (_alignmentMode == Utility::XYShiftYZRotXYRot) {
-            globalLabels.resize(4);
-            alDer.ResizeTo(2, 4);
-        } else if (_alignmentMode == Utility::XYShiftXZRotXYRot) {
-            globalLabels.resize(4);
-            alDer.ResizeTo(2, 4);
-        } else if (_alignmentMode == Utility::XYShiftXZRotYZRotXYRot) {
-            globalLabels.resize(5);
-            alDer.ResizeTo(2, 5);
-        } else if (_alignmentMode == Utility::XYZShiftXZRotYZRotXYRot) {
-            globalLabels.resize(6);
-            alDer.ResizeTo(2, 6);
-        }
-        alDer.Zero();
-
-        double p = _eBeam; // beam momentum
-       
-
-        EVENT::TrackVec::const_iterator itTrkCand;
-
-        for ( itTrkCand = _trackCandidates.begin(); itTrkCand != _trackCandidates.end(); ++itTrkCand) {
-            // sanity check. Mustn't happen in principle.
-            if ((*itTrkCand)->getTrackerHits().size() > geo::gGeometry().nPlanes()) continue;
-
-            //GBL trajectory construction
-            std::vector< gbl::GblPoint > pointList;
-
-            TMatrixD jacPointToPoint(5, 5);
-            jacPointToPoint.UnitMatrix();
-
-            double step = 0.;
+   
+    void EUTelGBLFitter::FitSingleTrackCandidate(EVENT::TrackVec::const_iterator& itTrkCand)
+    {
+            // relies on sane itTrkCand -> sanity checks ?
 
 	    // Z axis points along beam direction.
 	    double pt = ( 1./(*itTrkCand)->getOmega() ) * _beamQ;
@@ -846,7 +833,7 @@ namespace eutelescope {
 	    double ty   = py / pz;
 	    double invP = _beamQ / sqrt( px*px + pt*pt );
  
-            streamlog_out(DEBUG4) << "FitTracks   ";
+            streamlog_out(DEBUG4) << "::FitSingleTrackCandidate FitTracks   ";
             streamlog_out(DEBUG4) << " omega: " << std::setw(8) << (*itTrkCand)->getOmega()  ;
             streamlog_out(DEBUG4) << " Q: " << std::setw(8) << _beamQ ;
             streamlog_out(DEBUG4) << " px: " << std::setw(8) << px ;
@@ -856,101 +843,72 @@ namespace eutelescope {
 	    // Reference point is the last hit on a track
 	    const float *refPoint = (*itTrkCand)->getReferencePoint();
 
-	    TVectorD prevState = getXYZfromDzNum( invP, tx, ty, refPoint[0], refPoint[1], refPoint[2], 0. );
-	    double prevZ = refPoint[2];
-            
+            // remember last hit-point from the track candidate below
+            double start[3] = { 0.,0.,-500.}; // 
+ 
             // Loop over hits on a track candidate
             const EVENT::TrackerHitVec& hits = (*itTrkCand)->getTrackerHits();
             EVENT::TrackerHitVec::const_reverse_iterator itHit;
-            for ( itHit = hits.rbegin(); itHit != hits.rend(); ++itHit) {
-                const int planeID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(*itHit) );
-		if ( planeID < 0 ) streamlog_out( WARNING2 ) << "Can't guess sensor ID. Check supplied hits." << std::endl;
 
-                // Go to global coordinates
-                const double* hitPointLocal = (*itHit)->getPosition();
-                double hitPointGlobal[] = {0.,0.,0.};
-                geo::gGeometry().local2Master(planeID,hitPointLocal,hitPointGlobal);
+      const map< int, int > sensorMap = geo::gGeometry().sensorZOrdertoIDs();
+      int planeID     = sensorMap.at(0); // the first first plane in the array of the planes according to z direction. // assume not tilted plane. 
 
+      const double thicknessSen       = geo::gGeometry().siPlaneZSize( planeID );
+      start[2]    = geo::gGeometry().siPlaneZPosition(planeID) - thicknessSen ; //initial z position to the most-first plane
 
-//                const EVENT::FloatVec hitcov = (*itHit)->getCovMatrix();
-                EVENT::FloatVec hitcov(4);
-                hitcov[0]=0.01;
-                hitcov[1]=0.00;
-                hitcov[2]=0.01;
-                hitcov[3]=0.00;
+      double dir[3]   = {0.,0.,1.};  // as good as any other value along z axis.
+      float dpoint[3] = {0.,0.,0.};  // initialise output point-vector (World frame)
+      float lpoint[3] = {0.,0.,0.};  // initialise output point-vector (sensor frame)
 
-                // check Processor Parameters for plane resolution // Denys
-                if( _paramterIdXResolutionVec.size() > 0 && _paramterIdYResolutionVec.size() > 0 )
-                {
-                  for(int izPlane=0;izPlane<_paramterIdPlaneVec.size();izPlane++)
-                  {
-                    if( _paramterIdPlaneVec[izPlane] == planeID )
-                    {  
-                      hitcov[0] =  _paramterIdXResolutionVec[izPlane];
-                      hitcov[2] =  _paramterIdYResolutionVec[izPlane];
+      streamlog_out ( DEBUG0 ) << "::FitSingleTrackCandidate starting point: "  <<  start[0] << " "  << start[1] << " " << start[2] << " dir:"<< dir[0]<<" "<<dir[1]<<" "<<dir[2] << endl;
  
-                      hitcov[0] *= hitcov[0]; // squared !
-                      hitcov[2] *= hitcov[2]; // squared !
-                      break;
-                    } 
-                  }
-                }
-                else
-                {  
-                  hitcov = (*itHit)->getCovMatrix();            
-                  
-                }
+      map< int, int >::const_iterator iter = sensorMap.begin();
+      while ( iter != sensorMap.end() ) {
+        bool found = false;
+        if( iter->first > -999 )
+          {
+            int getErrorID = geo::gGeometry( ).findNextPlaneEntrance(  start,  dir, iter->second, dpoint ) ;
 
-                streamlog_out(DEBUG0) << "Hit covariance matrix: [0: "  << hitcov[0] << "] [1: "  << hitcov[1] << "] [2: "  << hitcov[2] << "] [3: " << hitcov[3]  << std::endl;
-
-//                double xPred = interpolateTrackX(hits, hitPointGlobal[2]);
-//                double yPred = interpolateTrackY(hits, hitPointGlobal[2]);
-
-		const double dz = hitPointGlobal[2] - prevZ;
-//                prevZ = hitPointGlobal[2];
+            // get to local frame for sensor newSensorID:
+//            geo::gGeometry().master2Local(dpoint, lpoint);
 
 
-//		double hitPointLocal2[] = {0.,0.,0.};
-//                geo::gGeometry().master2Local( hitPointGlobal, hitPointLocal2 );
-//		streamlog_out(MESSAGE4) << "hitl2= " << hitPointLocal2[0] << " " << hitPointLocal2[1] << " " << hitPointLocal2[2] << std::endl;
+            if( getErrorID < 0 ) 
+            {
+              streamlog_out ( DEBUG4 ) << "no Entrance: " <<  dpoint[0] << " " <<  dpoint[1] << " " << dpoint[2] << " err:"<< getErrorID << endl;
+            } else {     
+              streamlog_out ( DEBUG0 ) << "identified NextPlane Entrance: " <<  dpoint[0] << " " <<  dpoint[1] << " " << dpoint[2] <<  " err:"<< getErrorID << endl;
+              start[0] = dpoint[0];
+              start[1] = dpoint[1];
+              start[2] = dpoint[2];
+              for ( itHit = hits.rbegin(); itHit != hits.rend(); ++itHit) {
 
-		streamlog_out(DEBUG4) << "hitl= " << hitPointLocal[0] << " " << hitPointLocal[1] << " " << hitPointLocal[2] << std::endl;
-		streamlog_out(DEBUG4) << "hitm= " << hitPointGlobal[0] << " " << hitPointGlobal[1] << " " << hitPointGlobal[2] << std::endl;
-		streamlog_out(DEBUG4) << "dz= " << dz << std::endl;
-//		prevState.Print();
-		
-		// Propagate track parameters to the next hit
-// rubinskiy		TVectorD trackParamPrediction = getXYZfromDzNum( invP, prevState[2], prevState[3], prevState[0], prevState[1], refPoint[2], dz );
-                TVectorD trackParamPrediction = getXYZfromDzNum( invP, prevState[2], prevState[3], prevState[0], prevState[1], prevZ, dz );
-//		trackParamPrediction.Print();
-                prevZ = hitPointGlobal[2];
+                 const int planeID = Utility::getSensorIDfromHit( static_cast< IMPL::TrackerHitImpl* >(*itHit) );
 
-                prevState[0] =   trackParamPrediction[0];
-                prevState[1] =   trackParamPrediction[1];
-                prevState[2] =   trackParamPrediction[2];
-
-		// Perform transformation to the sensor local coordinates
-		double trackPointGlobal[] = { trackParamPrediction[0], trackParamPrediction[1], hitPointGlobal[2] };
-		double trackPointLocal[] = { 0., 0., 0. };
-                geo::gGeometry().master2Local( trackPointGlobal, trackPointLocal );
-
-		double trackDirGlobal[] = { trackParamPrediction[2], trackParamPrediction[3], 1. };
-		double trackDirLocal[] = { 0., 0., 0. };
-		geo::gGeometry().master2LocalVec( planeID, trackDirGlobal, trackDirLocal );
-
-                // print track parameters:
-		streamlog_out(DEBUG4) << "dir trkg=  " << trackDirGlobal[0] << " " << trackDirGlobal[1] << " " << trackDirGlobal[2] << std::endl;
-		streamlog_out(DEBUG4) << "dir trkl=  " << trackDirLocal [0] << " " << trackDirLocal [1] << " " << trackDirLocal [2] << std::endl;
-
-		streamlog_out(DEBUG4) << "pos trkg=  " << trackPointGlobal[0] << " " << trackPointGlobal[1] << " " << trackPointGlobal[2] << std::endl;
-		streamlog_out(DEBUG4) << "pos trkl=  " << trackPointLocal [0] << " " << trackPointLocal [1] << " " << trackPointLocal [2] << std::endl;
-
-
-                gbl::GblPoint point(jacPointToPoint);
-//                jacPointToPoint.Print();
-
+                 if(planeID == getErrorID)
+                 {
+                   streamlog_out ( DEBUG4 ) << "match sensor found: extrapl@ " <<  dpoint[0] << " " <<  dpoint[1] << " " << dpoint[2] <<  " @"<< getErrorID << endl;
+                  //
+                  const double* hitPointLocal = (*itHit)->getPosition();
+                  double hitPointGlobal[] = {0.,0.,0.};
+                  geo::gGeometry().local2Master(planeID,hitPointLocal,hitPointGlobal);
+   		  streamlog_out(DEBUG4) << "hitm= " << hitPointGlobal[0] << " " << hitPointGlobal[1] << " " << hitPointGlobal[2] << std::endl;
+                  found = true;
+                 }
+              }
+              if(!found) 
+              {
+                streamlog_out ( DEBUG4 ) << "identified NextPlane UNMATCHED " <<  dpoint[0] << " " <<  dpoint[1] << " " << dpoint[2] <<  " err:"<< getErrorID << endl;
+              } 
+            }
+          }
+        ++iter;
+      } 
+    }
+ 		//getHmatrix is local to global. So we need global to local or using gbl library terminology. local (our global_ to measurement frame (our local). So we take the inverse
+    void EUTelGBLFitter::CalculateProjMatrix(TMatrixD& proL2m, double* hitPointGlobal )
+    {  
 		// Calculate projection matrix
-                TMatrixD proL2m(2, 2);
 
 		const TGeoHMatrix* globalH = geo::gGeometry().getHMatrix( hitPointGlobal );
 		const TGeoHMatrix& globalHInv = globalH->Inverse();
@@ -961,188 +919,642 @@ namespace eutelescope {
 		proL2m[1][0] = rotation[3]; // x projection, yx
 		proL2m[1][1] = rotation[4]; // y projection, yy
 
-//		proL2m.UnitMatrix();
-//		proL2m.Print();
+    }
+
+// GBL Trajectory treatment ::  Fit and dump into LCIO
+    void EUTelGBLFitter::PerformFitGBLTrajectory( gbl::GblTrajectory* traj, vector<const IMPL::TrackImpl*>::const_iterator& itTrkCand, double invP  ) {
                 
-                bool excludeFromFit = false;
-                if ( std::find( _excludeFromFit.begin(), _excludeFromFit.end(), planeID ) != _excludeFromFit.end() ) excludeFromFit = true;
- 
-                if ( !excludeFromFit )
-                {
-                     addMeasurementsGBL(point, meas, measPrec, hitPointLocal, trackPointLocal, hitcov, proL2m);
-//                   addMeasurementsGBL(point, meas, measPrec, hitPointGlobal, trackPointGlobal, hitcov, proL2m);
-                  if (_alignmentMode != Utility::noAlignment) {
-//                    if ( !excludeFromFit ) addGlobalParametersGBL( point, alDer, globalLabels, planeID, trackPointLocal, trackDirLocal[0], trackDirLocal[1] );
-//                      addGlobalParametersGBL( point, alDer, globalLabels, planeID, trackPointLocal, trackDirLocal[0], trackDirLocal[1] );
-                  }
-                }
-
-                addSiPlaneScattererGBL(point, scat, scatPrecSensor, planeID, p);
-               
-                pushBackPoint( pointList, point, (*itHit)->id() );
-
-                // construct effective scatters for air
-                // the scatters must be at (Z(plane i) + Z(plane i+1))/2. +/- (Z(plane i) - Z(plane i+1))/sqrt(12)
-                if ( itHit != (hits.rend() - 1) ) {
-
-                    // Go to global coordinates
-                    const int nextPlaneID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(*(itHit + 1)) );
-                    const double* nextHitPoint = (*(itHit + 1))->getPosition();
-                    double nextHitPointGlobal[] = { 0., 0., 0. };
-                    geo::gGeometry().local2Master(nextPlaneID,nextHitPoint,nextHitPointGlobal);
-                    
-                    const double hitSpacing = sqrt( (nextHitPointGlobal[0]-hitPointGlobal[0])*(nextHitPointGlobal[0]-hitPointGlobal[0])+
-                                                           (nextHitPointGlobal[1]-hitPointGlobal[1])*(nextHitPointGlobal[1]-hitPointGlobal[1])+
-                                                           (nextHitPointGlobal[2]-hitPointGlobal[2])*(nextHitPointGlobal[2]-hitPointGlobal[2]) ); 
-                    const double hitSpacingDz = nextHitPointGlobal[2]-hitPointGlobal[2];
-                    
-		    // Check if start and finish points are inside silicon sensor planes. Sometimes it happens because of numerical rounding.
-		    double rad = geo::gGeometry().findRadLengthIntegral( hitPointGlobal, nextHitPointGlobal, true );
-                    streamlog_out(DEBUG0) << "Rad length( " << planeID << "-" << nextPlaneID << "): " << rad << std::endl;
-		    if ( rad < 1e-10 ) {
-			streamlog_out(WARNING3) << "Rad length is too small for thick GBL scatterer( " << planeID << "-" << nextPlaneID << "): " << rad << std::endl;
-			streamlog_out(WARNING3) << "Check the calculations" << std::endl;
-			streamlog_out(WARNING3) << "Setting radiation length to " << 1e-10 << std::endl;
-			rad = 1e-10;
-		    }
-                    
-                    double sigmaTheta = Utility::getThetaRMSHighland(p, rad);
-
-		    // Calculate scalar products of local offset directions and track direction
-		    double uDir[] = { 1., 0., 0. };
-		    double uDirGlobal[] = { 0., 0., 0. };
-		    geo::gGeometry().local2Master(planeID,uDir,uDirGlobal);
-		    double vDir[] = { 0., 1., 0. };
-		    double vDirGlobal[] = { 0., 0., 0. };
-		    geo::gGeometry().local2Master(planeID,vDir,vDirGlobal);
-
-		    // Calculate px, py, pz at current point
-//		    const double px = p*trackParamPrediction[2] / sqrt( 1. + trackParamPrediction[2]*trackParamPrediction[2] +
-//									     trackParamPrediction[3]*trackParamPrediction[3] );
-//                    const double py = p*trackParamPrediction[3] / sqrt( 1. + trackParamPrediction[2]*trackParamPrediction[2] + 
-//									     trackParamPrediction[3]*trackParamPrediction[3] );
-//                    const double pz = p    / sqrt( 1. + trackParamPrediction[2]*trackParamPrediction[2] + trackParamPrediction[3]*trackParamPrediction[3] );			  const double p = sqrt ( px*px + py*py + pz*pz );
-//
-//		    double c1, c2;
-//		    c1 = uDirGlobal[0]*px + uDirGlobal[1]*py + uDirGlobal[2]*pz;
-//		    c1 /= p;
-//		    c2 = vDirGlobal[0]*px + vDirGlobal[1]*py + vDirGlobal[2]*pz;
-//		    c2 /= p;
-//
-//                    scatPrec[0][0] = 1. - c1*c1;
-//                    scatPrec[0][1] = -c1*c2;
-//                    scatPrec[1][0] = -c1*c2;
-//                    scatPrec[1][1] = 1. - c2*c2;
-//		    scatPrec *= 1.0 / (sigmaTheta * sigmaTheta) * (1. - c1*c1 - c2*c2);
-
-		    scatPrec[0] = 1.0 / (sigmaTheta * sigmaTheta);
-		    scatPrec[1] = 1.0 / (sigmaTheta * sigmaTheta);
-
-                    streamlog_out(DEBUG0) << "Scattering between hits:" << std::endl;
-//                    scatPrec.Print();
-                    
-                    // propagate parameters into the air gap between consecutive planes 
-
-                    {   // downstream air scatterer
-                        step = hitSpacingDz / 2. - hitSpacingDz / sqrt(12.);
-// rubinsky                        prevZ += step;
-                        jacPointToPoint = PropagatePar( step, invP, prevState[2], prevState[3], prevState[0], prevState[1], prevZ );
-//rubinsky                       jacPointToPoint = PropagatePar( step, invP, trackParamPrediction[2], trackParamPrediction[3], trackParamPrediction[0], trackParamPrediction[1], hitPointGlobal[2] );
-//                        jacPointToPoint.Print();
-// rubinskiy           prevState = getXYZfromDzNum( invP, trackParamPrediction[2], trackParamPrediction[3], trackParamPrediction[0], trackParamPrediction[1], hitPointGlobal[2], step );
-                       prevState = getXYZfromDzNum( invP, trackParamPrediction[2], trackParamPrediction[3], trackParamPrediction[0], trackParamPrediction[1], prevZ, step );
-                       prevZ += step;
-
-                        gbl::GblPoint pointInAir1(jacPointToPoint);
-                        pointInAir1.addScatterer(scat, scatPrec);
-                        pointList.push_back(pointInAir1);
-                    }
-                    
-                    {   // upstream air scatterer
-                        step = 2*hitSpacingDz / sqrt( 12. ); // rubinskiy
-// rubinsky                        prevZ += step;
-// rubinsky                         jacPointToPoint = PropagatePar( step, invP, prevState[2], prevState[3], prevState[0], prevState[1], hitPointGlobal[2] );
-                        jacPointToPoint = PropagatePar( step, invP, prevState[2], prevState[3], prevState[0], prevState[1], prevZ );
-//                        jacPointToPoint.Print();
-//rubinskiy             prevState = getXYZfromDzNum( invP, prevState[2], prevState[3], prevState[0], prevState[1], hitPointGlobal[2], step );
-                        prevState = getXYZfromDzNum( invP, prevState[2], prevState[3], prevState[0], prevState[1], prevZ, step );
-                        prevZ += step;
-                        gbl::GblPoint pointInAir2( jacPointToPoint );
-                        pointInAir2.addScatterer( scat, scatPrec );
-                        pointList.push_back( pointInAir2 );
-                    }
-                    
-                    // propagate to the next hit
-                    {
-                        step = hitSpacingDz / 2. - hitSpacingDz / sqrt( 12. );
-// not needed after this step anymore                         prevZ += step;
-// rubinskiy            jacPointToPoint = PropagatePar( step, invP, prevState[2], prevState[3], prevState[0], prevState[1], hitPointGlobal[2] );
-                        jacPointToPoint = PropagatePar( step, invP, prevState[2], prevState[3], prevState[0], prevState[1], prevZ );
-//                        jacPointToPoint.Print();
-                    }
-                } // if not the last hit
-            } // loop over hits
+            streamlog_out ( DEBUG4 ) << " EUTelGBLFitter::PerformFitGBLTrajectory -- starting " << endl;
 
             double loss = 0.;
             double chi2 = 0.;
             int ndf = 0;
             // perform GBL fit
-            {
-                // check magnetic field at (0,0,0)
-                const gear::BField&   B = geo::gGeometry().getMagneticFiled();
-                const double Bmag       = B.at( TVector3(0.,0.,0.) ).r2();
-                
-                gbl::GblTrajectory* traj = 0;
-                if ( Bmag < 1.E-6 ) {
-                   traj = new gbl::GblTrajectory( pointList, false );
-                } else {
-                   traj = new gbl::GblTrajectory( pointList, true );
-                }
-                
-//                if ( !traj.isValid() ) {
-//                        streamlog_out(WARNING1) << "Not valid GBL trajectory. Check the input." << std::endl;
-//                        streamlog_message( MESSAGE0, traj->printData(); traj->printPoints(1); traj->printTrajectory(1);, std::endl;); 
-//                    continue;
-//                }
-                
+
                 int ierr = 0;
 
+		        if ( streamlog_level(MESSAGE0) ){
+	        	  std::cout << "pre fit FitTrack - trajectory: " << std::endl;
+//		 	  traj->printTrajectory(1);
+//			  traj->printData();
+//	 		  traj->printPoints(1);
+	        	  std::cout << "pre fit FitTrack - trajectory: end;" << std::endl;
+
+		        }
+	
                 if ( !_mEstimatorType.empty( ) ) ierr = traj->fit( chi2, ndf, loss, _mEstimatorType );
                 else ierr = traj->fit( chi2, ndf, loss );
 
-              if ( chi2 < _chi2cut ) 
-                {
-                    if ( ierr )
+                streamlog_out(MESSAGE0) << "ierr : "<< ierr << " and chi2: " << chi2 << std::endl;
+
+                if ( ierr  )
                     {
-			traj->printTrajectory(1);
-			traj->printData();
-			traj->printPoints(1);
+		        if ( streamlog_level(MESSAGE0) ){
+	        	  std::cout << "after fit FitTrack - trajectory: " << std::endl;
+//		 	  traj->printTrajectory(1);
+//			  traj->printData();
+//	 		  traj->printPoints(1);
+	        	  std::cout << "after fit FitTrack - trajectory: " << std::endl;
+  		        }
 		    }
-                } 
+  
+                    // for some reason (??) need to keep the same numbering for trajectories as for the Track Candidates
+                    vector<const IMPL::TrackImpl*>::const_iterator begin = _trackCandidatesVec.begin();
+                    _gblTrackCandidates.insert( std::make_pair( std::distance( begin, itTrkCand ), traj ) );
                 
-                 EVENT::TrackVec::const_iterator begin = _trackCandidates.begin();
-                _gblTrackCandidates.insert( std::make_pair( std::distance( begin, itTrkCand ), traj ) );
-                
-                // Write fit result
-                {
-                    prepareLCIOTrack( traj, (*itTrkCand)->getTrackerHits(), chi2, ndf, invP, 0., 0., 0., 0. );
-                }
+                    // Write fit result
+                    prepareLCIOTrack( traj, itTrkCand, chi2, ndf, invP, 0., 0., 0., 0. );
 
-                // Prepare and write Mille Out
-                if (_alignmentMode != Utility::noAlignment) 
-                {
-//                     prepareMilleOut( traj, (*itTrkCand)->getTrackerHits(), chi2, ndf, invP, 0., 0., 0., 0. );
-                   prepareMilleOut( traj, itTrkCand, chi2, ndf, invP, 0., 0., 0., 0. );
-                }
+                    streamlog_out ( DEBUG4 ) << " EUTelGBLFitter::PerformFitGBLTrajectory -- finished " << endl;
+           
+    }
+
+// convert input TrackCandidates and TrackStates into a GBL Trajectory
+void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack){
+	// sanity check. Mustn't happen in principle. That the number of hits is greater than the number of hits
+  if ( EUtrack->getTrackerHits().size() > geo::gGeometry().nPlanes() ){
+  	streamlog_out(ERROR) << "Sanity check. This should not happen in principle. Number of hits is greater then number of planes" << std::endl;
+   	return;
+  }
+
+  //Create the jacobian
+  TMatrixD jacPointToPoint(5, 5);
+  jacPointToPoint.UnitMatrix();
+ 	////////////////////////////////////////////////////////////////////////////////////////////////// loop through all states.
+  for(int i=0;i < EUtrack->getTrackStates().size(); i++){		
+		/////////////////////////////////////////////////////////////////////////////////////////////BEGIN to create GBL point 
+		gbl::GblPoint point(jacPointToPoint);
+  		EUTelTrackStateImpl* state = EUtrack->getTrackStates().at(i); //get the state for this track. Static cast from EVENT::TrackState to derived class IMPL::TrackStateImpl.
+		//Need to find hit that this state may be associated with. Note this is a problem for two reasons. Not all states have a hit. Furthermore we can not associate a hit with a state with the current LCIO format. This must be fixed
+		EVENT::TrackerHit* hit = NULL; //Create the hit pointer
+		FindHitIfThereIsOne(EUtrack, hit, state); //This will point the hit to the correct hit object associated with this state. If non exists then point it will remain pointed to NULL
+		double fitPointGlobal[3]; //Need this part since z parameter not saved as state variable.
+		if(hit != NULL){
+			double fitPointLocal[] = {0.,0.,0.};
+	  		fitPointLocal [0] = state->getReferencePoint()[0] ;
+  			fitPointLocal [1] = state->getReferencePoint()[1] ;
+  			fitPointLocal [2] = state->getReferencePoint()[2] ;
+	
+			geo::gGeometry().local2Master( state->getLocation(), fitPointLocal, fitPointGlobal);	 
+			addMeasurementGBL(point, hit->getPosition(),  fitPointLocal, hit->getCovMatrix(), state->getH());
+			addSiPlaneScattererGBL(point, state->getLocation()); //This we still functions still assumes silicon is the thin scatterer. This can be easily changed when we have the correct gear file. However we will always assume that states will come with scattering information. To take into account material between states this will be dealt with latter. 
+ 
+
+		}//END OF IF STATEMENT IF THERE WAS A HIT
+		//////////////////////////////////////////////////////////////////////////////END OF CREATING GBL POINT
+
+
+		////////////////////////////////////////////////////////////////////////////////START TO CREATE SCATTERS BETWEEN PLANES
+		if(i != (EUtrack->getTrackStates().size()-1)){
+  			EUTelTrackStateImpl* state_next = EUtrack->getTrackStates().at(i+1); //get the next tracks state to determine dz between the two states
+			double fitPointLocal_next[] = {0.,0.,0.};  //Need this since we dont save the z parameter as state variable
+			fitPointLocal_next [0] = state_next->getReferencePoint()[0] ;
+  			fitPointLocal_next [1] = state_next->getReferencePoint()[1] ;
+	  		fitPointLocal_next [2] = state_next->getReferencePoint()[2] ;
+
+			double fitPointGlobal_next[3];
+			geo::gGeometry().local2Master( state_next->getLocation(), fitPointLocal_next, fitPointGlobal_next );
+			float rad = geo::gGeometry().findRadLengthIntegral( fitPointGlobal, fitPointGlobal_next, true ); //We need to skip the volumes that contain the hits since this has already been counted. Must check this functions as expect????
+
+			///////////////////////////////////////////////////////////////////////////////////////////////////////BEGIN THE FIRST SCATTERING PLANE
+			//These distances are from the last state plane. There are where the next scatterer should be
+			float distance1 = (fitPointGlobal_next[2] + fitPointGlobal[2])/2 - (fitPointGlobal_next[2] - fitPointGlobal[2])/sqrt(12); 
+
+			//Note the distance is used along the track and not from the scattering plane. How should this be dealt with?
+			TMatrix jacobianScat1(5,5); jacobianScat1 = state->getPropagationJacobianF(distance1);
+			gbl::GblPoint pointScat1(jacobianScat1);
+			TVectorD scat(2);
+			scat[0] = 0.0; //This should always be 0 right? If not then it should be given as a parameter
+			scat[1] = 0.0; 
+
+ 			const double scatvariance  = Utility::getThetaRMSHighland(GetBeamEnergy(), rad/2);
+			TVectorD scatPrecSensor(2);
+ 			scatPrecSensor[0] = 1.0 / (scatvariance * scatvariance );
+
+  			pointScat1.addScatterer(scat, scatPrecSensor);
+			/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////END THE FIRST SCATTERING PLANE
+			//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////BEGIN THE SECOND SCATTERING PLANE
+			float distance2 = (fitPointGlobal_next[2] + fitPointGlobal[2])/2 + (fitPointGlobal_next[2] - fitPointGlobal[2])/sqrt(12);
+
+			TMatrix jacobianScat2(5,5); jacobianScat1 = state->getPropagationJacobianF(distance2);
+			gbl::GblPoint pointScat2(jacobianScat1);
+
+  			pointScat2.addScatterer(scat, scatPrecSensor);
+							
+		}  
+		/////////////////////////////////////////////////////////////////////////////////////////END OF CREATE SCATTERERS BETWEEN PLANES
+	
+	}//END OF LOOP THROUGH ALL PLANES
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////
+}
+
+
+void EUTelGBLFitter::addSiPlaneScattererGBL(gbl::GblPoint& point, int iPlane) {
+
+	TVectorD scatPrecSensor(2);
+	TVectorD scat(2); 
+	scat[0] = 0.0; scat[1]=0.0; //This should always be 0 right? If not then it should be given as a parameter
+	const double radlenSi           = geo::gGeometry().siPlaneRadLength(iPlane);
+	const double thicknessSi        = geo::gGeometry().siPlaneZSize(iPlane);
+
+	const double X0Si  = thicknessSi / radlenSi; // Si 
+               
+	
+	const double tetSi  = Utility::getThetaRMSHighland(GetBeamEnergy(), X0Si);
+
+        scatPrecSensor[0] = 1.0 / (tetSi * tetSi );
+        scatPrecSensor[1] = 1.0 / (tetSi * tetSi );
+
+        point.addScatterer(scat, scatPrecSensor);
+}
+
+
+
+//This will add the measurement of the hit and predicted position. Using the covariant matrix of the hit. NOT! the residual.
+void EUTelGBLFitter::addMeasurementGBL(gbl::GblPoint& point, const double *hitPos, const double *statePos, const EVENT::FloatVec& hitCov, TMatrixD HMatrix){
+     
+	streamlog_out(DEBUG4) << " addMeasurementsGBL " << std::endl;
+
+ 	TVectorD meas;
+	meas[0] = hitPos[0] - statePos[0];
+        meas[1] = hitPos[1] - statePos[1];
+
+	TMatrixDSym measPrec(2,2); //Precision matrix is symmetric. The vector option that was here was silly since there could be correlation between variance and x/y.
+        measPrec[0][0] = 1. / hitCov[0];	// cov(x,x)
+        measPrec[1][1] = 1. / hitCov[2];	// cov(y,y)
+	measPrec[0][1] = 1. / hitCov[1];  //cov(x,y)
+
+	streamlog_out(DEBUG4) << "Residuals and covariant matrix for the hit:" << std::endl;
+        streamlog_out(DEBUG4) << "X:" << std::setw(20) << meas[0] << std::setw(20) << measPrec[0][0] << measPrec[0][1] << std::endl;
+        streamlog_out(DEBUG4) << "Y:" << std::setw(20) << meas[1] << std::setw(20) << measPrec[1][0] << measPrec[1][1] << std::endl;
+
+        point.addMeasurement(HMatrix, meas, measPrec);
+
+}
+
+void EUTelGBLFitter::FindHitIfThereIsOne(EUTelTrackImpl* EUtrack, EVENT::TrackerHit* hit, EUTelTrackStateImpl* state){
+	
+	int state_location = state->getLocation(); //Get this states location
+
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////Loop through all the hits on this track and see of it any are on this states plane using location
+	const EVENT::TrackerHitVec& HitOnTrack = EUtrack->getTrackerHits(); //point to these hits by reference
+  EVENT::TrackerHitVec::const_iterator itrHit;
+	for( itrHit = HitOnTrack.begin(); itrHit != HitOnTrack.end(); ++itrHit){
+  	const int planeID = Utility::getSensorIDfromHit( static_cast< IMPL::TrackerHitImpl* >(*itrHit) ); //Get the sensor ID for this hit
+			streamlog_out(DEBUG5) << "Hit was on plane " << planeID <<"This state location is: " << state_location << std::endl;
+			if(planeID == state_location){
+				streamlog_out(DEBUG5) << "Hit and Plane ID the same. Point the hit object to this hit " << std::endl;
+				hit = *itrHit;
+			}//END OF IF STATEMENT
+	}//END OF HIT LOOP
+		
+}
+
+    /** Add a measurement to GBL point
+     * 
+     * @param point
+     * @param meas measuremet vector (residuals) to be calculated in this routine
+     * @param measPrec residuals weights (1/unc^2) to be calculated in this routine
+     * @param hitpos hit position
+     * @param predpos predicted by hit x-position (approximation)
+     * @param hitcov hit covariance matrix
+     * @param proL2m projection matrix from track coordinate system onto measurement system
+     */
+    void EUTelGBLFitter::addMeasurementsGBL(gbl::GblPoint& point, TVectorD& meas, TVectorD& measPrec, const double* hitpos,
+            const double* predpos, const EVENT::FloatVec& hitcov, TMatrixD& proL2m) {
+     
+        streamlog_out(DEBUG4) << " addMeasurementsGBL " << std::endl;
+ 
+        meas[0] = hitpos[0] - predpos[0];
+        meas[1] = hitpos[1] - predpos[1];
+        measPrec[0] = 1. / hitcov[0];	// cov(x,x)
+        measPrec[1] = 1. / hitcov[2];	// cov(y,y)
+
+        streamlog_out(DEBUG4) << "Residuals:" << std::endl;
+        streamlog_out(DEBUG4) << "X:" << std::setw(20) << meas[0] << std::setw(20) << measPrec[0] << std::endl;
+        streamlog_out(DEBUG4) << "Y:" << std::setw(20) << meas[1] << std::setw(20) << measPrec[1] << std::endl;
+
+        point.addMeasurement(proL2m, meas, measPrec);
+    }
+
+    void EUTelGBLFitter::TrackCandidatesToGBLTrajectory( vector<const IMPL::TrackImpl*>::const_iterator& itTrkCand) {
+
+
+            // sanity check. Mustn't happen in principle.
+            if ( (*itTrkCand)->getTrackerHits().size() > geo::gGeometry().nPlanes() )
+            {
+              streamlog_out(ERROR) << "Sanity check. This should not happen in principle. Number of hits is greater then number of planes" << std::endl;
+              return;
             }
-        } // loop over supplied track candidates
-
-        return;
-    } // EUTelGBLFitter::FitTracks()
 
 
-    void EUTelGBLFitter::prepareMilleOut( gbl::GblTrajectory* gblTraj, const EVENT::TrackVec::const_iterator& itTrkCand, 
-                                          double chi2, int ndf, double omega, double d0, double z0, double phi, double tanlam ) {
+
+            // Z axis points along beam direction.
+            double pt = ( 1./(*itTrkCand)->getOmega() ) * _beamQ;
+            double px = (*itTrkCand)->getTanLambda() * pt;
+   	    double py = pt * sin( (*itTrkCand)->getPhi() );
+	    double pz = pt * cos( (*itTrkCand)->getPhi() );
+
+	    double tx   = px / pz;
+	    double ty   = py / pz;
+//	    double invP = _beamQ / sqrt( px*px + pt*pt );
+ 
+            double p = _eBeam; // beam momentum
+            double invP = 1./p;
+
+            //GBL trajectory construction
+            // lsit of GBL points that goes eventually into the trajectory
+            std::vector< gbl::GblPoint > pointList;
+
+            // introduce new jacobian from point to point // not sure why we need it here ? 
+            //
+            TMatrixD jacPointToPoint(5, 5);
+            jacPointToPoint.UnitMatrix();
+
+            // get measurement points:
+            const EVENT::TrackerHitVec& hits = (*itTrkCand)->getTrackerHits();
+            EVENT::TrackerHitVec::const_reverse_iterator itHit;
+            unsigned int imatch=0;
+            streamlog_out( MESSAGE0 ) << "list requested planes: " ;
+            for(unsigned int izPlane=0; izPlane<_parameterIdPlaneVec.size(); izPlane++) {
+              int kPlaneID =  _parameterIdPlaneVec[izPlane];
+              streamlog_out( MESSAGE0 ) << " [" << imatch << ":" << kPlaneID ;
+              bool ifound = false;
+              for ( itHit = hits.rbegin(); itHit != hits.rend(); ++itHit) {
+              const int planeID = Utility::getSensorIDfromHit( static_cast< IMPL::TrackerHitImpl* >(*itHit) );
+               if( kPlaneID == planeID )
+                {  
+                  imatch++;
+                  streamlog_out( MESSAGE0 ) << " yes "   ;
+                  ifound = true;
+                  break;
+                }
+              }     
+              if( !ifound)  streamlog_out( MESSAGE0 ) << " not "   ;      
+              streamlog_out( MESSAGE0 ) << "] "   ;
+            }
+            streamlog_out( MESSAGE0 ) << std::endl;
+
+            streamlog_out( MESSAGE1 ) << "from the list of requested planes and available hit on a track candidate: " << imatch << "/" <<_parameterIdPlaneVec.size() << " found" << std::endl;
+
+            if( imatch != _parameterIdPlaneVec.size() ) 
+            { 
+              streamlog_out(MESSAGE1) << " Number of hits does not correspond to the number of planes selected for tracking" << std::endl;
+              return;
+            }
+
+
+
+            TVectorD meas(2);
+            TVectorD measPrec(2); // precision = 1/resolution^2
+
+            TVectorD scat(2);
+            scat.Zero();
+
+            TVectorD scatPrecSensor(2);
+            TVectorD scatPrec(2);
+ 
+
+            // loop through scattering planes (including measurement planes) ::
+            int nstates = (*itTrkCand)->getTrackStates().size();
+            for(int i=0;i < nstates; i++) 
+            {
+
+                streamlog_out(MESSAGE1) << "state: at " << i << " of " << nstates ;
+                IMPL::TrackStateImpl* trk = static_cast < IMPL::TrackStateImpl*> ( (*itTrkCand)->getTrackStates().at(i) ) ;
+                int trkVolumeID =  trk->getLocation();
+
+                if ( trkVolumeID < 0 )
+                {
+                   streamlog_out(DEBUG0) << "Sanity check. SensorID can not be negative. Negative TrackStates are kept for the beginning and end of the TrackStates on Pattern Recognition. skip this one.";
+                   streamlog_out(MESSAGE1) << std::endl; // to be consistent with the MESSAGE1 level printouts in the for-loop
+                   continue;
+                } 
+
+                streamlog_out(MESSAGE1) << "  [ " << trk->id() << " ] " ;
+ 
+                double fitPointLocal[] = {0.,0.,0.};
+                fitPointLocal [0] = trk->getReferencePoint()[0] ;
+                fitPointLocal [1] = trk->getReferencePoint()[1] ;
+                fitPointLocal [2] = trk->getReferencePoint()[2] ;
+
+                double fitPointGlobal[] = {0.,0.,0.};
+                geo::gGeometry().local2Master( trkVolumeID, fitPointLocal, fitPointGlobal);
+
+                // fill next GBL point:
+                gbl::GblPoint point(jacPointToPoint);
+
+
+                if(  trkVolumeID == -1 )
+                {
+                   // begining of the track - does not exist normally
+                }
+                else if(  trkVolumeID == -2 )
+                {
+                   // end of the track - can ignore
+                   streamlog_out(MESSAGE1) << std::endl;
+                }
+                if(  trkVolumeID >= 0 )
+                {
+
+
+                 // look for the measurement point corresponding to the TrackState Location (fitted hit on the volume surface)
+                 EVENT::TrackerHitVec::const_iterator itHit;
+                 for ( itHit = hits.begin(); itHit != hits.end(); itHit++) {
+                  const int planeID = Utility::getSensorIDfromHit( static_cast< IMPL::TrackerHitImpl* >(*itHit) );
+                  if( trkVolumeID == planeID )
+                  { 
+                    EVENT::FloatVec hitcov(4);
+                    hitcov[0]=0.01;
+                    hitcov[1]=0.00;
+                    hitcov[2]=0.01;
+                    hitcov[3]=0.00;
+
+                    // check Processor Parameters for plane resolution // Denys
+                    if( _parameterIdXResolutionVec.size() > 0 && _parameterIdYResolutionVec.size() > 0 )
+                    {
+                      for(unsigned int izPlane=0;izPlane<_parameterIdPlaneVec.size();izPlane++)
+                      {
+                        if( _parameterIdPlaneVec[izPlane] == planeID )
+                        {  
+                          hitcov[0] =  _parameterIdXResolutionVec[izPlane];
+                          hitcov[2] =  _parameterIdYResolutionVec[izPlane];
+
+                          hitcov[0] *= hitcov[0]; // squared !
+                          hitcov[2] *= hitcov[2]; // squared !
+                          break;
+                        } 
+                      }
+                    }
+                    else
+                    {  
+                      hitcov = (*itHit)->getCovMatrix();            
+                    }
+
+ 
+                    const double* hitPointLocal = (*itHit)->getPosition();
+                    double hitPointGlobal[] = {0.,0.,0.};
+                    geo::gGeometry().local2Master(planeID,hitPointLocal,hitPointGlobal);
+/*
+                     streamlog_out(MESSAGE0) << " | " <<  setw(3)  << right 
+                                               <<   planeID  << " " << fixed << setw(11) << setprecision (3) << noshowpos << setw(7) << " " <<
+                                                                      hitPointGlobal[0] << " : " <<  fitPointGlobal[0] 
+                                                             << " " <<  noshowpos << setw(7) << " " <<
+                                                                      hitPointGlobal[1] << " : " <<  fitPointGlobal[1] 
+                                                             << " " <<  noshowpos << setw(7) << " " <<
+                                                                      hitPointGlobal[2] << " : " <<  fitPointGlobal[2] ;
+*/
+                     streamlog_out(MESSAGE1) << " | " <<  setw(3)  << right 
+                                               <<   planeID  << " " << fixed << setw(11) << setprecision (3) << noshowpos << setw(7) << " " <<
+                                                                      hitPointLocal[0] << " : " <<  fitPointLocal[0] 
+                                                             << " " <<  noshowpos << setw(7) << " " <<
+                                                                      hitPointLocal[1] << " : " <<  fitPointLocal[1] 
+                                                             << " " <<  noshowpos << setw(7) << " " <<
+                                                                      hitPointLocal[2] << " : " <<  fitPointLocal[2] << " glo " << setw(8) << fitPointGlobal[2] ;
+
+                 
+                     // Calculate projection matrix
+                     // GBL language "Local" -> our language "Telescope"="global" system
+                     // GLB language "measurement" -> our language "measurement"="detector" system
+                     TMatrixD proL2m(2, 2);
+                     CalculateProjMatrix(proL2m, hitPointGlobal);
+                
+                     bool excludeFromFit = false;
+                     if ( std::find( _excludeFromFit.begin(), _excludeFromFit.end(), planeID ) != _excludeFromFit.end() ) excludeFromFit = true;
+ 
+                     if ( !excludeFromFit )
+                     {
+                       addMeasurementsGBL(point, meas, measPrec, hitPointLocal, fitPointLocal, hitcov, proL2m);
+                     }
+
+                  }                          
+                 }
+
+             //   addSiPlaneScattererGBL(point, scat, scatPrecSensor, trkVolumeID, p);
+                 pushBackPoint( pointList, point, trk->id() );
+ 
+// get jacobian to arrive to next point (if not at last point already):: 
+                 if( i < nstates-1 ){
+                   // get next point
+                   IMPL::TrackStateImpl* trk = static_cast < IMPL::TrackStateImpl*> ( (*itTrkCand)->getTrackStates().at(i+1) ) ;
+                   const float *fitPoint  = trk->getReferencePoint();
+                   const int nextVolumeID = trk->getLocation();
+                   double hitPointLocal[] = {static_cast<double>(fitPoint[0]), static_cast<double>(fitPoint[1]), static_cast<double>(fitPoint[2]) };
+                   double hitPointGlobal[] = {0.,0.,0.};
+                   geo::gGeometry().local2Master( nextVolumeID, hitPointLocal, hitPointGlobal);
+
+                   double ds = hitPointGlobal[2] - fitPointGlobal[2]; // actually it should be a method which returns Jacobian matrix (from state1 to state2)
+                   jacPointToPoint = propagatePar(ds);
+                   streamlog_out(MESSAGE1) << " step[" << i << "] = " << ds << std::endl;
+                 } else {
+                   streamlog_out(MESSAGE1) << std::endl;
+                 }
+
+                }
+
+           }
+
+            // check magnetic field at (0,0,0)
+            const gear::BField&   B = geo::gGeometry().getMagneticFiled();
+            const double Bmag       = B.at( TVector3(0.,0.,0.) ).r2();
+                
+            gbl::GblTrajectory* traj = 0;
+            if ( Bmag < 1.E-6 ) {
+                traj = new gbl::GblTrajectory( pointList, false );
+            } else {
+                traj = new gbl::GblTrajectory( pointList, true );
+            }
+ 
+            PerformFitGBLTrajectory( traj, itTrkCand, invP  );
+
+    }
+
+// convert input TrackCandidates and TrackStates into a GBL Trajectory
+    void EUTelGBLFitter::TrackCandidatesToGBLTrajectories( ) {
+  	//      Clear(); //  This should be done explictly outside the class. So it is not hidden away.
+
+        ////////////////////////////////////////////////////////////////////////// prepare output collection!!!!!!!!!!NOT HERE HOW STUPID! Unless I am missing something
+     //   try {
+       //     _fittrackvec = new IMPL::LCCollectionVec( EVENT::LCIO::TRACK );
+         //   _fithitsvec = new IMPL::LCCollectionVec( EVENT::LCIO::TRACKERHIT );
+      //      IMPL::LCFlagImpl flag( _fittrackvec->getFlag( ) );
+       //     flag.setBit( lcio::LCIO::TRBIT_HITS );
+       //     _fittrackvec->setFlag( flag.getFlag( ) );
+      //  } catch ( ... ) {
+       //     streamlog_out( ERROR2 ) << "Can't allocate output collection" << std::endl;
+      //  }
+				////////////////////////////////////////////////////////////////////////////////////////////////////////
+ 
+//
+        vector<const IMPL::TrackImpl*>::const_iterator itTrkCand;
+        int trackcounter = 0;
+        for ( itTrkCand = _trackCandidatesVec.begin(); itTrkCand != _trackCandidatesVec.end(); ++itTrkCand) {
+            streamlog_out(MESSAGE) << " track candidate # " << trackcounter << " of " << _trackCandidatesVec.size() << std::endl; 
+            const EVENT::TrackerHitVec& hits = (*itTrkCand)->getTrackerHits();
+            for(unsigned int i=0;i< hits.size();i++){
+                streamlog_out(MESSAGE) << "hit " << i << " of " << hits.size() << " at " << hits[i] << endl;
+            }
+            // take care of a track candidate
+            TrackCandidatesToGBLTrajectory( itTrkCand  );         
+            trackcounter++;
+        }
+ 
+    }
+
+    bool EUTelGBLFitter:: PerformMille() {
+       streamlog_out ( DEBUG4 ) << " EUTelGBLFitter::PerformMille started " << endl;
+       bool _mille_success = false;
+       unsigned ncands = _trackCandidatesVec.size();
+       for(unsigned int i=0;i < ncands; i++){
+         const IMPL::TrackImpl* itTrkCand = _trackCandidatesVec[i];
+         streamlog_out ( DEBUG4 ) << " reading Track Candidate : " << i << " of " << ncands << " trkCand:" << itTrkCand << endl;
+         prepareMilleOut( *itTrkCand) ;
+       }
+       streamlog_out ( DEBUG4 ) << " EUTelGBLFitter::PerformMille -- finished " << endl;
+       return _mille_success;
+    }
+
+
+ /* prepare Millepede II compatible binaries 
+  * gblTraj  - input GBL trajectory
+  * itTrkCan - input Track CAndidates vector (used) to build GBL trajectory
+  */
+    void EUTelGBLFitter::prepareMilleOut( const IMPL::TrackImpl &itTrkCand) {
+   // no GBL fit in here! assumes it has been done before and the results stored in TrackImpl object
+
+        unsigned int numData;
+        TVectorD corrections(5);
+        TMatrixDSym correctionsCov(5);
+ 
+        TVectorD residual(2);
+        TVectorD measErr(2);
+        TVectorD residualErr(2);
+        TVectorD downWeight(2);
+        
+        streamlog_out(MESSAGE1) << endl; 
+ 
+        int nstates = itTrkCand.getTrackStates().size();
+        streamlog_out(MESSAGE1) << "states " << nstates << "    " << endl;
+
+// now get starting point:  // needed by GBL point
+        TMatrixD jacPointToPoint(5, 5);
+        jacPointToPoint.UnitMatrix();  // swim from one track point to the current one
+
+        // Z axis points along beam direction.
+        double pt = ( 1./itTrkCand.getOmega() ) * _beamQ;
+        double px = itTrkCand.getTanLambda() * pt;
+        double py = pt * sin( itTrkCand.getPhi() );
+        double pz = pt * cos( itTrkCand.getPhi() );
+
+        double tx   = px / pz;
+        double ty   = py / pz;
+        double invP = _beamQ / sqrt( px*px + pt*pt );
+ 
+        std::vector< gbl::GblPoint > pointList;
+
+        TMatrixD alDer; // alignment derivatives
+        alDer.ResizeTo(2, 6);
+        alDer.Zero();
+
+        std::vector<int> globalLabels;
+        globalLabels.resize(6);
+
+ 
+        const EVENT::TrackerHitVec trackCandidate = itTrkCand.getTrackerHits();
+
+        for(int i=0;i < nstates; i++) 
+            {
+                const IMPL::TrackStateImpl* const_trkState = static_cast <const IMPL::TrackStateImpl*> ( itTrkCand.getTrackStates().at(i) ) ;
+                const int nstatePlane = const_trkState->getLocation();
+                if( nstatePlane < 0 ) continue; 
+ 
+                double hitPointLocal[] = {0.,0.,0.};
+                hitPointLocal[0] = 0. ;
+                hitPointLocal[1] = 0. ;
+                hitPointLocal[2] = 0. ;
+                bool isHitOnTrack = false;
+
+                // 
+                EVENT::TrackerHitVec::const_reverse_iterator itrHit;
+                for ( itrHit = trackCandidate.rbegin(); itrHit != trackCandidate.rend(); ++itrHit ) 
+                {
+                   const int planeID = Utility::getSensorIDfromHit(static_cast< IMPL::TrackerHitImpl* >(*itrHit));
+                   if( planeID == nstatePlane){
+                      hitPointLocal[0] =  (*itrHit)->getPosition()[0];
+                      hitPointLocal[1] =  (*itrHit)->getPosition()[1];
+                      hitPointLocal[2] =  (*itrHit)->getPosition()[2];
+
+                      streamlog_out(MESSAGE1) << "plane " << planeID << " hit found at " ;
+                      streamlog_out(MESSAGE1) << " " << hitPointLocal[0] ;
+                      streamlog_out(MESSAGE1) << " " << hitPointLocal[1] ;
+                      streamlog_out(MESSAGE1) << " " << hitPointLocal[2] ;
+                      streamlog_out(MESSAGE1) << endl;
+                      isHitOnTrack = true;
+                   } 
+                }
+                double fitPointLocal[] = {0.,0.,0.};
+                fitPointLocal[0] = const_trkState->getReferencePoint()[0] ;
+                fitPointLocal[1] = const_trkState->getReferencePoint()[1] ;
+                fitPointLocal[2] = const_trkState->getReferencePoint()[2] ;
+
+                double bd0        = const_trkState->getD0() ;
+ 	        double bphi       = const_trkState->getPhi() ;
+                double bomega     = const_trkState->getOmega() ;
+	        double btanlambda = const_trkState->getTanLambda() ;
+	        double bz0        = const_trkState->getZ0() ;
+
+                const int hitGblLabel = _hitId2GblPointLabel[ const_trkState->id() ];
+
+                streamlog_out(DEBUG1) << hitGblLabel << " corr: " << const_trkState->id() 
+                                        << " [d0]" << std::setw(6) << bd0 << ":" 
+                                        << " [phi]" << std::setw(6) << bphi << ":" 
+                                        << " [ome]" << std::setw(6) << bomega << ":" 
+                                        << " [tanl]" << std::setw(6) << btanlambda << ":" 
+                                        << " [z0]" << std::setw(6) << bz0 << ":" << " ["<< setw(3) << const_trkState->getLocation() <<"]" 
+                                        << " points:"  << setw(8) << fitPointLocal[0] << setw(8) << fitPointLocal[1] << setw(8) << fitPointLocal[2] << " "  ;   
+
+                if( isHitOnTrack ) {
+                  streamlog_out(MESSAGE1) << hitGblLabel << " hit on track     found [" << isHitOnTrack <<"]";
+                  
+                }else{
+                  streamlog_out(MESSAGE1) << hitGblLabel << " hit on track NOT found [" << isHitOnTrack <<"]";
+                     
+                }
+                streamlog_out(MESSAGE1) << endl; 
+
+                streamlog_out(DEBUG1) << endl; 
+            }
+ 
+        streamlog_out(MESSAGE1) << endl; 
+
+        TVectorD scat(2);
+        scat.Zero();
+        TVectorD scatPrecSensor(2);
+
+        double p = _eBeam; // beam momentum 
+ 
+        if( abs(_eBeam)<1e-12) streamlog_out(WARNING) << " provided beam energy is too low, _eBeam = " << _eBeam << " check inputs!" << std::endl;
+
+/*
+        gbl::GblTrajectory* traj;
+        traj = new gbl::GblTrajectory( pointList, false );
+ 
+        if ( streamlog_level(MESSAGE0) ){
+          std::cout << "MilleOut - trajectory: " << std::endl;
+ 	  traj->printTrajectory(1);
+	  traj->printData();
+ 	  traj->printPoints(1);
+        }
+
+        traj->milleOut( *_mille );
+        
+        delete traj; 
+*/
+
+    }
+
+    void EUTelGBLFitter::prepareMilleOut( gbl::GblTrajectory* gblTraj, const EVENT::TrackVec::const_iterator& itTrkCand ) {
+//                                          double chi2, int ndf, double omega, double d0, double z0, double phi, double tanlam ) {
 
         const EVENT::TrackerHitVec trackCandidate = (*itTrkCand)->getTrackerHits();
 
@@ -1150,7 +1562,7 @@ namespace eutelescope {
           TMatrixD jacPointToPoint(5, 5);
           jacPointToPoint.UnitMatrix();
 
-          double step = 0.;
+//          double step = 0.;
 
           // Z axis points along beam direction.
           double pt = ( 1./(*itTrkCand)->getOmega() ) * _beamQ;
@@ -1162,7 +1574,7 @@ namespace eutelescope {
 	  double ty   = py / pz;
 	  double invP = _beamQ / sqrt( px*px + pt*pt );
  
-          const float *refPoint = (*itTrkCand)->getReferencePoint();
+          const float *refPoint = (*itTrkCand)->getReferencePoint(); // will fail miserably now with state in LOCAL frame
 
           TVectorD prevState = getXYZfromDzNum( invP, tx, ty, refPoint[0], refPoint[1], refPoint[2], 0. );
           double prevZ = refPoint[2];
@@ -1206,9 +1618,7 @@ namespace eutelescope {
             alDer.ResizeTo(2, 6);
         }
         alDer.Zero();
-
-
-         
+ 
         unsigned int numData;
         TVectorD corrections(5);
         TMatrixDSym correctionsCov(5);
@@ -1230,13 +1640,13 @@ namespace eutelescope {
         EVENT::TrackerHitVec::const_reverse_iterator itrHit;
         for ( itrHit = trackCandidate.rbegin(); itrHit != trackCandidate.rend(); ++itrHit ) 
         {
-            const int planeID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(*itrHit) );
+            const int planeID = Utility::getSensorIDfromHit(static_cast< IMPL::TrackerHitImpl* >(*itrHit));
 
             const int hitGblLabel = _hitId2GblPointLabel[ (*itrHit)->id() ];
                   
             gblTraj->getResults( hitGblLabel, corrections, correctionsCov );
             
-            streamlog_out(MESSAGE0) << "Corrections: " << std::endl;
+            streamlog_out(MESSAGE0) << "MilleOut - Corrections: " << std::endl;
             streamlog_message( MESSAGE0, corrections.Print();, std::endl; );
             
             gblTraj->getMeasResults( hitGblLabel, numData, residual, measErr, residualErr, downWeight);
@@ -1247,17 +1657,15 @@ namespace eutelescope {
             streamlog_out(DEBUG1) << "meas point : " << hitGblLabel << std::endl;
 	    streamlog_out(DEBUG1) << "p0 : " << pos[0] << " p1: " << pos[1] << " p2: " << pos[2] << std::endl;
 
-	    double hitPointLocal[] = {pos[0], pos[1], pos[2]};
+	    double hitPointLocal[]  = {pos[0], pos[1], pos[2]};
             double hitPointGlobal[] = {0.,0.,0.};
             geo::gGeometry().local2Master( planeID, hitPointLocal , hitPointGlobal);
             streamlog_out(MESSAGE1) << "hitg2= " << hitPointGlobal[0] << " " << hitPointGlobal[1] << " " << hitPointGlobal[2] << std::endl;
             streamlog_out(MESSAGE1) << "hitl2= " << hitPointLocal[0] << " " << hitPointLocal[1] << " " << hitPointLocal[2] << std::endl;
 
-           
             // correct original values to the fitted ones
             pos[0] -= residual[0] ; // residual = meas - fitted -> to get fitted from measured;
             pos[1] -= residual[1] ;
-
 
 	    double trackPointLocal[] = { pos[0], pos[1], pos[2] };
 	    double trackPointGlobal[] = { 0., 0., 0. };
@@ -1265,25 +1673,19 @@ namespace eutelescope {
 
 //--------------- get the track slope...
             const double dz = trackPointGlobal[2] - prevZ;
-//                step = dz; 
-//                prevZ = hitPointGlobal[2];
 
-//                TVectorD trackParamPrediction = getXYZfromDzNum( invP, prevState[2], prevState[3], prevState[0], prevState[1], prevZ, dz );
-//                TVectorD trackParamPrediction = getXYZfromDzNum( invP, prevState[2], prevState[3], prevState[0], prevState[1], refPoint[2], dz );
-                TVectorD trackParamPrediction = getXYZfromDzNum( invP, prevState[2], prevState[3], prevState[0], prevState[1], prevZ, dz );
-                streamlog_message( DEBUG2,                trackParamPrediction.Print();, std::endl; );
-                prevZ = trackPointGlobal[2];
+            TVectorD trackParamPrediction = getXYZfromDzNum( invP, prevState[2], prevState[3], prevState[0], prevState[1], prevZ, dz );
+            streamlog_message( DEBUG2,                trackParamPrediction.Print();, std::endl; );
+            prevZ = trackPointGlobal[2];
 
-                prevState[0] =   trackParamPrediction[0];
-                prevState[1] =   trackParamPrediction[1];
-                prevState[2] =   trackParamPrediction[2];
+            prevState[0] =   trackParamPrediction[0];
+            prevState[1] =   trackParamPrediction[1];
+            prevState[2] =   trackParamPrediction[2];
 //---------------
 
 	    double trackDirGlobal[] = { trackParamPrediction[2], trackParamPrediction[3], 1.};
             double trackDirLocal[] = { 0., 0., 0. };
-//           double trackDirLocal[] = { corrections[1], corrections[2], 1. };
 
-//	    geo::gGeometry().local2MasterVec( planeID, trackDirLocal, trackDirGlobal );
 	    geo::gGeometry().master2LocalVec( planeID, trackDirGlobal, trackDirLocal );
 
             streamlog_out(MESSAGE1) << "fitg2= " << trackPointGlobal[0] << " " << trackPointGlobal[1] << " " << trackPointGlobal[2] << std::endl;
@@ -1292,23 +1694,21 @@ namespace eutelescope {
             streamlog_out(MESSAGE1) << "fitDIRg2= " << trackDirGlobal[0] << " " << trackDirGlobal[1] << " " << trackDirGlobal[2] << std::endl;
             streamlog_out(MESSAGE1) << "fitDIRl2= " << trackDirLocal[0] << " " << trackDirLocal[1] << " " << trackDirLocal[2] << std::endl;
    
-
-
-                EVENT::FloatVec hitcov(4);
+            EVENT::FloatVec hitcov(4);
                 hitcov[0]=0.01;
                 hitcov[1]=0.00;
                 hitcov[2]=0.01;
                 hitcov[3]=0.00;
 
-                // check Processor Parameters for plane resolution // Denys
-                if( _paramterIdXResolutionVec.size() > 0 && _paramterIdYResolutionVec.size() > 0 )
+            // check Processor Parameters for plane resolution // Denys
+                if( _parameterIdXResolutionVec.size() > 0 && _parameterIdYResolutionVec.size() > 0 )
                 {
-                  for(int izPlane=0;izPlane<_paramterIdPlaneVec.size();izPlane++)
+                  for(unsigned int izPlane=0;izPlane<_parameterIdPlaneVec.size();izPlane++)
                   {
-                    if( _paramterIdPlaneVec[izPlane] == planeID )
+                    if( _parameterIdPlaneVec[izPlane] == planeID )
                     {  
-                      hitcov[0] =  _paramterIdXResolutionVec[izPlane];
-                      hitcov[2] =  _paramterIdYResolutionVec[izPlane];
+                      hitcov[0] =  _parameterIdXResolutionVec[izPlane];
+                      hitcov[2] =  _parameterIdYResolutionVec[izPlane];
  
                       hitcov[0] *= hitcov[0]; // squared !
                       hitcov[2] *= hitcov[2]; // squared !
@@ -1322,38 +1722,31 @@ namespace eutelescope {
                   
                 }
 
+                gbl::GblPoint point(jacPointToPoint);
 
-
-
-            gbl::GblPoint point(jacPointToPoint);
-            // Calculate projection matrix
-
- 		// Calculate projection matrix
+		// Calculate projection matrix
                 TMatrixD proL2m(2, 2);
-
-		const TGeoHMatrix* globalH = geo::gGeometry().getHMatrix( hitPointGlobal );
-		const TGeoHMatrix& globalHInv = globalH->Inverse();
-		const double* rotation = globalHInv.GetRotationMatrix();
-
-		proL2m[0][0] = rotation[0]; // x projection, xx
-		proL2m[0][1] = rotation[1]; // y projection, xy
-		proL2m[1][0] = rotation[3]; // x projection, yx
-		proL2m[1][1] = rotation[4]; // y projection, yy
-
+                CalculateProjMatrix(proL2m, hitPointGlobal);
+ 
+                bool excludeFromFit = false;
+                if ( std::find( _excludeFromFit.begin(), _excludeFromFit.end(), planeID ) != _excludeFromFit.end() ) excludeFromFit = true;
+ 
+                if ( !excludeFromFit )
+                {
 // add measurment (residuals) in the measurement system (module 2D coordinates)
-                addMeasurementsGBL( point, residual, measErr, hitPointLocal, trackPointLocal, hitcov, proL2m);
-
-// add global derivatives derived from the track parameters after the track fit (coordinate system?)
-                addGlobalParametersGBL( point, alDer, globalLabels, planeID, trackPointLocal, trackDirLocal[0], trackDirLocal[1] );
-//              addGlobalParametersGBL( point, alDer, globalLabels, planeID, trackPointLocal, trackDirGlobal[0], trackDirGlobal[1] );
-
+                    addMeasurementsGBL( point, residual, measErr, hitPointLocal, trackPointLocal, hitcov, proL2m);
+                }
 // add scatterrers
-                addSiPlaneScattererGBL(point, scat, scatPrecSensor, planeID, p);
+            //    addSiPlaneScattererGBL(point, scat, scatPrecSensor, planeID, p);
+
+// add global derivatives derived from the track parameters after the track fit (coordinate system?) 
+// this one needed only for alignment with millepede
+                addGlobalParametersGBL( point, alDer, globalLabels, planeID, trackPointLocal, trackDirLocal[0], trackDirLocal[1] );
  
                 if ( itrHit != ( trackCandidate.rend() -1) )
                 {
                     // Go to global coordinates
-                    const int nextPlaneID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(*(itrHit + 1)) );
+   		    const int nextPlaneID = Utility::getSensorIDfromHit(static_cast< IMPL::TrackerHitImpl* >(*(itrHit+1)) );
                     const double* nextHitPoint = (*(itrHit + 1))->getPosition();
                     double nextHitPointGlobal[] = { 0., 0., 0. };
                     geo::gGeometry().local2Master(nextPlaneID,nextHitPoint,nextHitPointGlobal);
@@ -1370,10 +1763,14 @@ namespace eutelescope {
         gbl::GblTrajectory* traj;
         traj = new gbl::GblTrajectory( pointList, false );
  
-        if ( chi2 < _chi2cut ) 
-        {
-             traj->milleOut( *_mille );
+        if ( streamlog_level(MESSAGE0) ){
+          std::cout << "MilleOut - trajectory: " << std::endl;
+ 	  traj->printTrajectory(1);
+	  traj->printData();
+ 	  traj->printPoints(1);
         }
+
+        traj->milleOut( *_mille );
         
         delete traj; 
  

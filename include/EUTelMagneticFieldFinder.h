@@ -39,6 +39,7 @@ class TrackImpl;
 
 namespace eutelescope {
     
+
     class MeasurementLayer {
     private:
         DISALLOW_COPY_AND_ASSIGN(MeasurementLayer)
@@ -80,8 +81,20 @@ namespace eutelescope {
 
         virtual ~EUTelKalmanFilter();
 
-        /** Fit supplied hits */
-        virtual void FitTracks();
+        /** just print the list of tracks */
+        void Print( std::string Name, std::vector< EUTelTrackImpl*> &_collection );
+
+        /** fomr the list of _tracks remove _tracks_to_delete */
+        void Prune(  std::vector< EUTelTrackImpl*> &_tracks , std::vector< EUTelTrackImpl*> &_tracks_to_delete );
+
+        /** search for hit along track direction 
+         *  using TGeo derived functions         */  
+        void SearchTrackCandidates();
+
+        /** Prune track candidates
+         *  supposed to be removing track candidates which have n% hits in common      */  
+        void PruneTrackCandidates();
+
 
         /** Initialise Fitter */
         bool initialise();
@@ -89,14 +102,22 @@ namespace eutelescope {
         // Getters and Setters
     public:
 
-        inline std::vector< IMPL::TrackImpl* >& getTracks() {
-            return _tracks;
+        inline std::vector< EUTelTrackImpl* >& getTracks() {
+            return _tracksCartesian;
         }
                 
+        void setPlanesProject( int value){
+          _planesForPR = value;
+        }
+
         void setHits( EVENT::TrackerHitVec& );
 
         inline int getAllowedMissingHits() const {
             return _allowedMissingHits;
+        };
+
+        inline void setAllowedSharedHitsOnTrackCandidate( int AllowedSharedHitsOnTrackCandidate) {
+            this->_AllowedSharedHitsOnTrackCandidate = AllowedSharedHitsOnTrackCandidate;
         };
 
         inline void setAllowedMissingHits(unsigned int allowedMissingHits) {
@@ -115,7 +136,7 @@ namespace eutelescope {
             this->_residualsRMax = window;
         }
 
-        inline double setWindowSize() const {
+        inline double getWindowSize() const {
             return _residualsRMax;
         }
         
@@ -151,20 +172,49 @@ namespace eutelescope {
             return _beamAngularSpread;
         }
         
+	/* type conversion:
+	*
+	**/
+        double* toDouble(int n, const float * x){
+          double *y = new double[n];
+          for(int i=0;i<n;i++){
+            y[i] = static_cast<double> (x[i]);
+          }
+          return y; 
+        }
+
 
     private:
         /** Flush fitter data stored from previous event */
         void reset();
         
+        /** prune seed track candidates */
+        void pruneSeeds();
+
         /** Generate seed track candidates */
         void initialiseSeeds();
 
-        /** Find intersection point of a track with geometry planes */
-        double findIntersection( EUTelTrackStateImpl* ts );
-        
-        /** Propagate track state by dz */
-	void propagateTrackRefPoint( EUTelTrackStateImpl*, double );
-        
+        /** update EUTelTrackState object at a new plane ID*/
+        int findNextPlaneEntrance(  EUTelTrackStateImpl* , int  );
+
+    		void propagateFromRefPoint( 	std::vector< EUTelTrackImpl* >::iterator &itTrk    );
+
+        /** a vector of hits found while swimming through the detector planes 
+        * write down and dump into a collection in EUTelProcessorTrackerHelixSearch
+        */
+        EVENT::TrackerHitVec hitFittedVec;
+
+    public:
+        /* need a method to get hitFittedVec
+         * to be consistent with the other methods - passing the object by reference
+         */     
+        EVENT::TrackerHitVec& getHitFittedVec() { 
+          return hitFittedVec;
+        }
+ 
+    private:
+
+
         /** Update track state and it's cov matrix */
         double updateTrackState( EUTelTrackStateImpl*, const EVENT::TrackerHit* );
 
@@ -172,7 +222,7 @@ namespace eutelescope {
 	const TMatrixD& getPropagationJacobianF( const EUTelTrackStateImpl*, double );
         
         /** Update Kalman gain matrix */
-        const TMatrixD& updateGainK( const EUTelTrackStateImpl*, const EVENT::TrackerHit* );
+        TMatrixD updateGainK( const EUTelTrackStateImpl*, const EVENT::TrackerHit* );
 
         /** Propagate track state */
         void propagateTrackState( EUTelTrackStateImpl* );
@@ -194,6 +244,12 @@ namespace eutelescope {
          * from track's ref. point*/
         TVector3 getXYZfromArcLength( const EUTelTrackStateImpl*, double ) const;
         TVector3 getXYZfromArcLength1( const EUTelTrackStateImpl*, double ) const;
+
+				void nextStateUsingJacobianFinder(EUTelTrackStateImpl* input, EUTelTrackStateImpl* output, TMatrixD& jacobian);
+
+				void UpdateStateUsingHitInformation(EUTelTrackStateImpl*,const EVENT::TrackerHit* , const TMatrixD&, TMatrixD &, TMatrixD &);
+
+				void UpdateTrackUsingHitInformation( EUTelTrackStateImpl* input,const EVENT::TrackerHit* hit, EUTelTrackImpl* track, const TMatrixD& jacobian, TMatrixD & KGain, TMatrixD & HMatrix);
         
         /** Calculate position of the track in global 
          * coordinate system for given arc length starting
@@ -201,18 +257,7 @@ namespace eutelescope {
         TVector3 getXYZfromDzNum( const EUTelTrackStateImpl*, double ) const;
 
 	double getXYPredictionPrecision( const EUTelTrackStateImpl* ts ) const;
-
-        /** Cosine of the angle of the slope of track in XZ plane */
-	double cosAlpha( const EUTelTrackStateImpl* ) const;
-
-        /** Cosine of the angle of the slope of track in YZ plane */
-	double cosBeta( const EUTelTrackStateImpl* ) const;
         
-        /** Get track state vector */
-        TVectorD getTrackStateVec( const EUTelTrackStateImpl* ) const;
-        
-        /** Get track state covariance matrix */
-        TMatrixDSym getTrackStateCov( const EUTelTrackStateImpl* ) const;
         
         /** Get hit covariance matrix */
         TMatrixDSym getHitCov( const EVENT::TrackerHit* hit ) const;
@@ -223,8 +268,6 @@ namespace eutelescope {
         /** Get residual covariance matrix */
         TMatrixDSym getResidualCov( const EUTelTrackStateImpl*, const EVENT::TrackerHit* hit );
         
-        /** Get track state projection matrix */
-        TMatrixD getH( const EUTelTrackStateImpl* ) const;
         
         /** Convert EUTelTrackImpl to TrackImpl */
         IMPL::TrackImpl* cartesian2LCIOTrack( EUTelTrackImpl* ) const;
@@ -234,8 +277,6 @@ namespace eutelescope {
 
         // Kalman filter states and tracks
     private:       
-        /** Final set of tracks for LCIO */
-        std::vector< IMPL::TrackImpl* > _tracks;
         
         /** Final set of tracks in cartesian parameterisation */
         std::vector< EUTelTrackImpl* > _tracksCartesian;
@@ -258,8 +299,13 @@ namespace eutelescope {
         /** Validity of user input flag */
         bool _isReady;
 
+        /** Maximum number of sensitive planes to be considered for initial seed hits */
+        int _planesForPR;
+
         /** Maximum number of missing on a track candidate */
         int _allowedMissingHits;
+				/**Allowed # of common hits on a track for a single event.*/
+				int _AllowedSharedHitsOnTrackCandidate;
 
         /** Maximum number of track candidates to be stored */
         int _maxTrackCandidates;
@@ -287,10 +333,7 @@ namespace eutelescope {
         TMatrixD _trkParamCovCkkm1;
         
         /** Process noise matrix */
-        TMatrixDSym _processNoiseQ;
-        
-        /** Kalman filter gain matrix */
-	TMatrixD _gainK;
+        TMatrixDSym _processNoiseQ;       
         
         /** Kalman residual covariance matrix */
         TMatrixD _residualCovR;

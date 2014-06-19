@@ -18,17 +18,17 @@ FEI4Single::FEI4Single(): EUTelGenericPixGeoDescr(	20.30, 16.8, 0.025,		//size X
 
 	//Create volumes for the centre and edge regions
 	TGeoVolume* centreregion = _tGeoManager->MakeBox("fei4centreregion",Si, 9.75, 8.4, 0.0125);
-	TGeoVolume* edgeregion = _tGeoManager->MakeBox("fei4edgeregion",Si, 0.2, 8.4, 0.0125);
+	TGeoVolume* edgeregion   = _tGeoManager->MakeBox("fei4edgeregion"  ,Si, 0.2 , 8.4, 0.0125);
 
 	//Divide the regions to create pixels
-	edgeregion->Divide("fei4edgepixel", 2 , 336, 0 , 1, 0, "N"); 
-	TGeoVolume* centrerow = centreregion->Divide("fei4centrerow", 2 , 336, 0 , 1, 0, "N"); 
-	centrerow->Divide("fei4centrepixel", 1 , 78, 0 , 1, 0, "N"); 
+ 	edgeregion->Divide("fei4edgepixel",   2, 336, 0, 1, 0, "N"); 
+	TGeoVolume* centrerow = centreregion->Divide("fei4centrerow", 2, 336, 0, 1, 0, "N");
+	centrerow ->Divide("fei4centrepixel", 1,  78, 0, 1, 0, "N"); 
 
-	//And place them to make a singlechip
-	plane->AddNode(centreregion, 1);
-	plane->AddNode(edgeregion, 1, new TGeoTranslation(-9.95,0,0));
-	plane->AddNode(edgeregion, 2, new TGeoTranslation(9.95,0,0));
+	plane->AddNode(centreregion, 1, new TGeoTranslation( 0.00 , 0 , 0) );
+	plane->AddNode(edgeregion,   2, new TGeoTranslation(-9.95 , 0 , 0) );
+	plane->AddNode(edgeregion,   3, new TGeoTranslation( 9.95 , 0 , 0) );
+
 }
 
 FEI4Single::~FEI4Single()

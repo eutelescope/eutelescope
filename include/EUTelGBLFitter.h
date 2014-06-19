@@ -15,6 +15,8 @@
 #include "EUTelUtility.h"
 #include "EUTelUtilityRungeKutta.h"
 #include "EUTelEquationsOfMotion.h"
+#include "EUTelTrackStateImpl.h"
+#include "EUTelTrackImpl.h"
 
 // LCIO
 #include <IMPL/LCCollectionVec.h>
@@ -43,6 +45,7 @@ namespace eutelescope {
     private:
         DISALLOW_COPY_AND_ASSIGN(EUTelGBLFitter)        // prevent users from making (default) copies of processors
       
+
     public:
         EUTelGBLFitter();
         explicit EUTelGBLFitter(std::string name);
@@ -52,12 +55,40 @@ namespace eutelescope {
       // will be automatically run when calling EUTelGBLFitter::FitTracks()
         void Clear();
 
-        void SetTrackCandidates(const EVENT::TrackVec&);
+        void SetTrackCandidates( vector <const IMPL::TrackImpl*> &);
+
+        void SetTrackCandidates( const EVENT::TrackVec&);
 
 
         /** Fit tracks */
-        void FitTracks();
+        // public: 
 
+        void TrackCandidatesToGBLTrajectories();
+
+				void FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack);
+
+				void FindHitIfThereIsOne(EUTelTrackImpl* trackimpl, EVENT::TrackerHit* hit, EUTelTrackStateImpl* state);
+
+				void addMeasurementGBL(gbl::GblPoint& point, const double *hitPos, const double *statePos, const EVENT::FloatVec& hitCov, TMatrixD HMatrix);
+
+				void addSiPlaneScattererGBL(gbl::GblPoint& point, int iPlane);
+
+        // private:
+        /*
+         */  
+        void TrackCandidatesToGBLTrajectory( vector<const IMPL::TrackImpl*>::const_iterator&  );
+
+        /*
+         */
+        void PerformFitGBLTrajectory( gbl::GblTrajectory* ,  vector<const IMPL::TrackImpl*>::const_iterator&, double );
+     
+        /* check that all trajectories are valid for Millepede
+         * and dumpe the mille binary file
+         */   
+        bool PerformMille();
+
+        void FitSingleTrackCandidate(EVENT::TrackVec::const_iterator& itTrkCand);
+ 
         inline void SetAlignmentMode( Utility::AlignmentMode alignmentMode) {
             this->_alignmentMode = alignmentMode;
         }
@@ -155,43 +186,46 @@ namespace eutelescope {
         std::vector<int> getExcludeFromFitPlanes() const;
 
     private:
+        void CalculateProjMatrix(TMatrixD&, double*);
+
         TMatrixD PropagatePar(  double, double, double, double, double, double, double );
 
 	TVectorD getXYZfromDzNum( double, double, double, double, double, double, double ) const;
         
         TMatrixD propagatePar(double);
 
-        double interpolateTrackX(const EVENT::TrackerHitVec&, const double) const;
-        double interpolateTrackY(const EVENT::TrackerHitVec&, const double) const;
- 
-        double getTrackSlopeX(const EVENT::TrackerHitVec&) const;
-        double getTrackSlopeY(const EVENT::TrackerHitVec&) const;
-
         void addMeasurementsGBL( gbl::GblPoint&, TVectorD&, TVectorD&, const double*, const double*, const EVENT::FloatVec&, TMatrixD& );
         
-        void addSiPlaneScattererGBL( gbl::GblPoint&, TVectorD&, TVectorD&, int, double );
+    //    void addSiPlaneScattererGBL( gbl::GblPoint&, TVectorD&, TVectorD&, int, double );
         
         void addGlobalParametersGBL( gbl::GblPoint&, TMatrixD&, std::vector<int>&, int, const double*, double, double );
         
         void pushBackPoint( std::vector< gbl::GblPoint >&, const gbl::GblPoint&, int );
         void pushBackPointMille( std::vector< gbl::GblPoint >&, const gbl::GblPoint&, int );
-       
-        void prepareLCIOTrack( gbl::GblTrajectory*, const EVENT::TrackerHitVec&,
-                                double, int, double, double, double, double, double );
-
-//         void prepareMilleOut( gbl::GblTrajectory*, const EVENT::TrackerHitVec&,
-        void prepareMilleOut( gbl::GblTrajectory*, const EVENT::TrackVec::const_iterator&,
-                                double, int, double, double, double, double, double );
  
+        void prepareLCIOTrack( gbl::GblTrajectory*, vector<const IMPL::TrackImpl*>::const_iterator&,
+                                double, int, double, double, double, double, double );
+      
+
+        void prepareMilleOut( const IMPL::TrackImpl & );
+
+// to be obsolete:
+            void prepareLCIOTrack( gbl::GblTrajectory*, const EVENT::TrackerHitVec&,
+                                double, int, double, double, double, double, double );
+            void prepareMilleOut( gbl::GblTrajectory*, const EVENT::TrackVec::const_iterator& );
+//
+
     private:
+        vector<const IMPL::TrackImpl*> _trackCandidatesVec;
+
         EVENT::TrackVec _trackCandidates;
 
         std::map< int, gbl::GblTrajectory* > _gblTrackCandidates;
 
       // contains the fitted tracks, accessible through class methods
-        IMPL::LCCollectionVec *_fittrackvec;
+        IMPL::LCCollectionVec * _fittrackvec;
       // contains the fitted hits, accessible through class methods
-        IMPL::LCCollectionVec *_fithitsvec;
+        IMPL::LCCollectionVec * _fithitsvec;
 
     private:
         /** Parameter propagation jacobian */
@@ -221,31 +255,31 @@ namespace eutelescope {
         gbl::MilleBinary* _mille;
         
         /** Parameter resolutions */
-        std::vector<int> _paramterIdPlaneVec;
+        std::vector<int> _parameterIdPlaneVec;
  
         /** Parameter resolutions */
-        std::vector< float> _paramterIdXResolutionVec;
+        std::vector< float> _parameterIdXResolutionVec;
  
         /** Parameter resolutions */
-        std::vector< float> _paramterIdYResolutionVec;
+        std::vector< float> _parameterIdYResolutionVec;
 
         /** Parameter ids */
-        std::map<int,int> _paramterIdXShiftsMap;
+        std::map<int,int> _parameterIdXShiftsMap;
         
         /** Parameter ids */
-        std::map<int,int> _paramterIdYShiftsMap;
+        std::map<int,int> _parameterIdYShiftsMap;
         
         /** Parameter ids */
-        std::map<int,int> _paramterIdZShiftsMap;
+        std::map<int,int> _parameterIdZShiftsMap;
         
         /** Parameter ids */
-        std::map<int,int> _paramterIdXRotationsMap;
+        std::map<int,int> _parameterIdXRotationsMap;
         
         /** Parameter ids */
-        std::map<int,int> _paramterIdYRotationsMap;
+        std::map<int,int> _parameterIdYRotationsMap;
         
         /** Parameter ids */
-        std::map<int,int> _paramterIdZRotationsMap;
+        std::map<int,int> _parameterIdZRotationsMap;
         
         /** Planes ids to be excluded from refit */
         std::vector< int > _excludeFromFit;
