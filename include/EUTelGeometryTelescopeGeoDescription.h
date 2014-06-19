@@ -222,7 +222,7 @@ namespace eutelescope {
 			/** Returns the TGeo path of given plane */
 			std::string  getPlanePath( int  );
 
-        public:
+        private:
             /** Silicon planes parameters as described in GEAR
              * This structure actually contains the following:
              *  @li A reference to the telescope geoemtry and layout
