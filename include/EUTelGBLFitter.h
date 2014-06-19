@@ -187,7 +187,6 @@ namespace eutelescope {
         std::vector<int> getExcludeFromFitPlanes() const;
 
     private:
-        void CalculateProjMatrix(TMatrixD&, double*);
 
         TMatrixD PropagatePar(  double, double, double, double, double, double, double );
 
@@ -197,7 +196,7 @@ namespace eutelescope {
 
         void addMeasurementsGBL( gbl::GblPoint&, TVectorD&, TVectorD&, const double*, const double*, const EVENT::FloatVec&, TMatrixD& );
         
-    //    void addSiPlaneScattererGBL( gbl::GblPoint&, TVectorD&, TVectorD&, int, double );
+  //    void addSiPlaneScattererGBL( gbl::GblPoint&, TVectorD&, TVectorD&, int, double );
         
         void addGlobalParametersGBL( gbl::GblPoint&, TMatrixD&, std::vector<int>&, int, const double*, double, double );
         
@@ -206,15 +205,10 @@ namespace eutelescope {
  
         void prepareLCIOTrack( gbl::GblTrajectory*, vector<const IMPL::TrackImpl*>::const_iterator&,
                                 double, int, double, double, double, double, double );
-      
 
         void prepareMilleOut( const IMPL::TrackImpl & );
 
-// to be obsolete:
-//            void prepareLCIOTrack( gbl::GblTrajectory*, const EVENT::TrackerHitVec&,
-//                                double, int, double, double, double, double, double );
-            void prepareMilleOut( gbl::GblTrajectory*, const EVENT::TrackVec::const_iterator& );
-//
+        void prepareMilleOut( gbl::GblTrajectory*, const EVENT::TrackVec::const_iterator& );
 
     private:
         vector<const IMPL::TrackImpl*> _trackCandidatesVec;
