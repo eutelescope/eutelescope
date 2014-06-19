@@ -491,7 +491,7 @@ void EUTelProcessorTrackingGBLTrajectory::plotTracks(LCEvent *event){
 
                         // 1D histograms
                         // SPATIAL RESIDUALS
-                        const double um = 1.; // units in micron
+                        const double um = 1000.; // units in micron
                         sstrX     << _histName::_residGblFitHistNameX << planeID;
                         sstrXNorm << _histName::_normResidGblFitHistNameX << planeID;
 
@@ -504,27 +504,40 @@ void EUTelProcessorTrackingGBLTrajectory::plotTracks(LCEvent *event){
                         static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstrY.str( ) ] ) -> fill( residualGBL[1] * um, downWeightGBL[1] );
                         static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstrYNorm.str( ) ] ) -> fill( residualGBL[1] / residualGBLErr[1], downWeightGBL[1] );
  
-if( event->getEventNumber()/1000*1000   == event->getEventNumber() )
+if(
+   (  streamlog_level(MESSAGE4) && ( event->getEventNumber()/1000*1000   == event->getEventNumber()) )  
+   ||
+   ( streamlog_level(MESSAGE3) && ( event->getEventNumber()/100*100   == event->getEventNumber())  )
+   ||
+   ( streamlog_level(MESSAGE2) && ( event->getEventNumber()/10*10   == event->getEventNumber())  )
+  )
 {
-   streamlog_out(MESSAGE3) << left     <<  setw(20) << sstrX.str( ) ;
-   streamlog_out(MESSAGE3) << "      "
-            << " hitpos: " << setw(8)  <<  setprecision(3) << right << hitpos[0] << setw(8) << setprecision(3) << hitpos[1]  << setw(8) << setprecision(3) << hitpos[2]  
-            << " X: mean:" << setw(8)  <<  setprecision(3) << right << static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstrX.str( ) ] ) -> mean()  
-            << " rms:"     << setw(8)  <<  setprecision(3) << right << static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstrX.str( ) ] ) -> rms() << "   " ;
-//   streamlog_out(MESSAGE1) << left     <<  setw(20) << sstrY.str( )
-//            << " Y: mean:" << setw(8)  <<  setprecision(3) << right << static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstrY.str( ) ] ) -> mean()  
-//            << " rms:"     << setw(8)  <<  setprecision(3) << right << static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstrY.str( ) ] ) -> rms() ;
-   streamlog_out(MESSAGE3) << endl;
+   std::cout << left     <<  setw(20) << sstrX.str( ) ;
+   std::cout << "      "
+             << " hitpos: " << setw(8)  <<  setprecision(3) << right << hitpos[0] << setw(8) << setprecision(3) << hitpos[1]  << setw(8) << setprecision(3) << hitpos[2]              << " X: mean:" << setw(8)  <<  setprecision(3) << right << static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstrX.str( ) ] ) -> mean()  
+             << " rms:"     << setw(8)  <<  setprecision(3) << right << static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstrX.str( ) ] ) -> rms() << "   " ;
+   std::cout << " residual X: "  << setw(8)  <<  setprecision(3) << right << residualGBL[0]  
+                                 << " " << setw(8)  <<  setprecision(3) << right << residualGBLErr[0] ;
+
+   std::cout << std::endl;
 } 
 
+if(
+  ( streamlog_level(MESSAGE4) && ( event->getEventNumber()/1000*1000   == event->getEventNumber()) )
+   ||
+  ( streamlog_level(MESSAGE3) && ( event->getEventNumber()/100*100   == event->getEventNumber()) )
+   ||
+  ( streamlog_level(MESSAGE2) && ( event->getEventNumber()/10*10   == event->getEventNumber()) )
+  )
+{
+//   std::cout << left     <<  setw(20) << sstrY.str( )
+//             << " Y: mean:" << setw(8)  <<  setprecision(3) << right << static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstrY.str( ) ] ) -> mean()  
+//             << " rms:"     << setw(8)  <<  setprecision(3) << right << static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstrY.str( ) ] ) -> rms() ;
+//   std::cout << " residual Y: "  << setw(8)  <<  setprecision(3) << right << residualGBL[1]  
+//                                 << " " << setw(8)  <<  setprecision(3) << right << residualGBLErr[1] ;
+//   std::cout << endl;
+}
 
-   streamlog_out(MESSAGE1) << " residual X: "  << setw(8)  <<  setprecision(3) << right << residualGBL[0]  
-                                        << " " << setw(8)  <<  setprecision(3) << right << residualGBLErr[0] ;
-   streamlog_out(MESSAGE1) << " residual Y: "  << setw(8)  <<  setprecision(3) << right << residualGBL[1]  
-                                        << " " << setw(8)  <<  setprecision(3) << right << residualGBLErr[1] ;
-   streamlog_out(MESSAGE1) << endl;
-
-continue;
                         if ( planeID == 5 ) { 
                           streamlog_out( MESSAGE1 ) << planeID 
                           << " res[0]:" << std::setw( 15 ) << std::setprecision( 5 ) << residualGBL[0] << " +- " 
