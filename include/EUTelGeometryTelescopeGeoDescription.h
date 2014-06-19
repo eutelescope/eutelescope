@@ -31,6 +31,14 @@
 #include "EUTelGenericPixGeoMgr.h"
 //#include "EUTelGenericPixGeoDescr.h"
 
+// ROOT
+#if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
+#include "TMatrixD.h"
+#else
+#error *** You need ROOT to compile this code.  *** 
+#endif
+
+
 //#ifdef USE_TGEO
 // ROOT
 #include "TGeoManager.h"
@@ -185,33 +193,47 @@ namespace eutelescope {
 
             // Geometry operations
         public:
-            float findRadLengthIntegral( const double[], const double[], bool );
+            	float findRadLengthIntegral( const double[], const double[], bool );
             
-            int getSensorID( const float globalPos[] ) const;
+            	int getSensorID( const float globalPos[] ) const;
            
-            void local2Master( int, const double[], double[] );
+            	void local2Master( int, const double[], double[] );
 
-						void local2masterHit(EVENT::TrackerHit* hit_input, IMPL::TrackerHitImpl* hit_output, LCCollection * hitCollectionOutput);
-
-						void master2localHit(EVENT::TrackerHit* hit_input, IMPL::TrackerHitImpl* hit_output, LCCollection * hitCollectionOutput);
+		void local2masterHit(EVENT::TrackerHit* hit_input, IMPL::TrackerHitImpl* hit_output, LCCollection * hitCollectionOutput);
+		
+		void master2localHit(EVENT::TrackerHit* hit_input, IMPL::TrackerHitImpl* hit_output, LCCollection * hitCollectionOutput);
             
-            void master2Local( const double[], double[] );
+            	void master2Local( const double[], double[] );
 
-            void master2Localtwo(int, const double[], double[] );
+            	void master2Localtwo(int, const double[], double[] );
 
-			void local2MasterVec( int, const double[], double[] );
+		void local2MasterVec( int, const double[], double[] );
  
-			void master2LocalVec( int, const double[], double[] );
+		void master2LocalVec( int, const double[], double[] );
 
-			int findIntersectionWithCertainID( float x0, float y0, float z0, float px, float py, float pz, float _beamQ, int nextPlaneID, float* output);
+		int findIntersectionWithCertainID( float x0, float y0, float z0, float px, float py, float pz, float _beamQ, int nextPlaneID, float* output);
 
-			TVector3 getXYZfromArcLength( float x0, float y0, float z0, float px, float py, float pz, float _beamQ, float s) const;
+		TVector3 getXYZfromArcLength( float x0, float y0, float z0, float px, float py, float pz, float _beamQ, float s) const;
 
-			TMatrix getPropagationJacobianF( float x0, float y0, float z0, float px, float py, float pz, float _beamQ, float dz );
+		TMatrix getPropagationJacobianF( float x0, float y0, float z0, float px, float py, float pz, float _beamQ, float dz );
 
-			
-            
-            const TGeoHMatrix* getHMatrix( const double globalPos[] );
+                void CalculateProjMatrix( TMatrixD& proL2m, double* hitPointGlobal )
+		{  
+		// Calculate projection matrix
+
+		const TGeoHMatrix* globalH = getHMatrix( hitPointGlobal );
+		const TGeoHMatrix& globalHInv = globalH->Inverse();
+		const double* rotation = globalHInv.GetRotationMatrix();
+
+		proL2m[0][0] = rotation[0]; // x projection, xx
+		proL2m[0][1] = rotation[1]; // y projection, xy
+		proL2m[1][0] = rotation[3]; // x projection, yx
+		proL2m[1][1] = rotation[4]; // y projection, yy
+
+    		}
+
+
+        	const TGeoHMatrix* getHMatrix( const double globalPos[] );
             
             /** Magnetic field */
             const gear::BField& getMagneticFiled() const;
