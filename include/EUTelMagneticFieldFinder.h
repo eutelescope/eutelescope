@@ -247,7 +247,7 @@ namespace eutelescope {
 
 				void nextStateUsingJacobianFinder(EUTelTrackStateImpl* input, EUTelTrackStateImpl* output, TMatrixD& jacobian);
 
-				void UpdateStateUsingHitInformation(EUTelTrackStateImpl*,const EVENT::TrackerHit* , const TMatrixD&, TMatrixD &, TMatrixD &);
+				void UpdateStateUsingHitInformation(EUTelTrackStateImpl*,EVENT::TrackerHit* , const TMatrixD&, TMatrixD &, TMatrixD &);
 
 				void UpdateTrackUsingHitInformation( EUTelTrackStateImpl* input,const EVENT::TrackerHit* hit, EUTelTrackImpl* track, const TMatrixD& jacobian, TMatrixD & KGain, TMatrixD & HMatrix);
         

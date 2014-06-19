@@ -16,7 +16,8 @@ namespace eutelescope {
         _y(0),
         _invp(0),
         _covMatrix(),
-				_zparameter(0)   
+				_zparameter(0),
+				_hit()   
     {
 
         for(int i=0 ; i < TRKSTATENCOVMATRIX ; i++ ) {
@@ -82,6 +83,7 @@ namespace eutelescope {
         setLocation( p.getLocation() );
 
         setReferencePoint( p.getReferencePoint() );
+				setHit(p.getHit());
     }
 
 
@@ -96,6 +98,8 @@ namespace eutelescope {
     float EUTelTrackStateImpl::getY() const { return _y ;}
     float EUTelTrackStateImpl::getInvP() const { return _invp ;}
 		float EUTelTrackStateImpl::getZParameter() const { return _zparameter; }
+
+		EVENT::TrackerHit* EUTelTrackStateImpl::getHit() const { return _hit; }
 
     const EVENT::FloatVec& EUTelTrackStateImpl::getCovMatrix() const { return _covMatrix ; }
     const float* EUTelTrackStateImpl::getReferencePoint() const { return _reference ; }
@@ -161,6 +165,10 @@ namespace eutelescope {
 		void EUTelTrackStateImpl::setbeamQ(int beamQ){ //This really should be a static I think but then exactly how to use this I dont know. MUST FIX
 			_beamQ=beamQ;
 		}
+
+    void EUTelTrackStateImpl::setHit( EVENT::TrackerHit* hit) {
+        _hit = hit;
+    }
 
 
 //This function will output the momentum of the track in cartesian coordinates into a TVector structure

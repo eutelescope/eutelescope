@@ -85,6 +85,8 @@ namespace eutelescope {
 
 		virtual TMatrix  getPropagationJacobianF( float dz );
 
+		virtual EVENT::TrackerHit* getHit() const;
+
     /** Covariance matrix of the track parameters. Stored as lower triangle matrix where
      * the order of parameters is:   x, y, tx, ty, q/p.
      * So we have cov(x,x), cov( y, x ), cov( y, y ), ...
@@ -116,6 +118,8 @@ namespace eutelescope {
 
 		virtual void setbeamQ(int);
 
+		virtual void setHit( EVENT::TrackerHit* hit);
+
 
   protected:
 
@@ -133,6 +137,8 @@ namespace eutelescope {
     float  _reference[TRKSTATENREFSIZE] ;
 
 		float _zparameter;
+	
+		EVENT::TrackerHit* _hit;
 
 }; // class
 

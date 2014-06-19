@@ -1849,6 +1849,14 @@ void EUTelGBLFitter::CreateAlignmentToMeasurementJacobian(){
 	std::vector<int>* globalLabels;
 	CorrectSizeOfMatrixVector(alDer,globalLabels);
 
+//	for(pointNum=0; pointNum < number_of_points; ++pointNum){ //Must make sure that the label starts at ????????
+//		EUTelTrackStateImpl * state = 	_PointToState[ &(pointList->at(pointNum)) ]; //get the state associated with this point
+//		if(state != NULL){
+
+			//state->setCovMatrix( state->getCovMatrix() + correctionsCov ); Need to add this but getcov returns a vector???????
+	//	}
+///	}
+
 
 
 

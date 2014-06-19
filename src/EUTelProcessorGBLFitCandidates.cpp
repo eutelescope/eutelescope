@@ -208,8 +208,8 @@ void EUTelProcessorGBLFitCandidates::CreateEUTrackandStates(TrackImpl* trackimpl
 		EUstate->setbeamQ(_beamQ); //Beam charge
 		
 		EUstate->setReferencePoint(state->getReferencePoint());
-		EUstate->setCovMatrix(state->getCovMatrix());	
-
+		EUstate->setCovMatrix(state->getCovMatrix());			
+		//EUstate->setHit(getHit()
 		EUtrack->addTrackState(EUstate);	 
 	}
 
@@ -217,7 +217,7 @@ void EUTelProcessorGBLFitCandidates::CreateEUTrackandStates(TrackImpl* trackimpl
     const EVENT::TrackerHitVec& trkcandhits = trackimpl->getTrackerHits();
     EVENT::TrackerHitVec::const_iterator itrHit;
     for ( itrHit = trkcandhits.begin(); itrHit != trkcandhits.end(); ++itrHit ){
-    	EUtrack->addHit( *itrHit );
+    	//EUtrack->addHit( *itrHit );
     }
 
 	

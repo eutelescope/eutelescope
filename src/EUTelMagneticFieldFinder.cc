@@ -638,8 +638,8 @@ itTrk++;
 						state->setZParameter(posGlobal[2]);
             
             EUTelTrackImpl* track = new EUTelTrackImpl;
+						state->setHit(*itHit);
             track->addTrackState( state );
-        		track->addHit( const_cast< EVENT::TrackerHit* > (*itHit) );
             _tracksCartesian.push_back( track );
 
           }// loop over for the iplane
@@ -882,7 +882,7 @@ itTrk++;
      */
 
 
-		void EUTelKalmanFilter::UpdateStateUsingHitInformation(EUTelTrackStateImpl* input,const EVENT::TrackerHit* hit, const TMatrixD& jacobian, TMatrixD & KGain, TMatrixD & HMatrix){
+		void EUTelKalmanFilter::UpdateStateUsingHitInformation(EUTelTrackStateImpl* input,EVENT::TrackerHit* hit, const TMatrixD& jacobian, TMatrixD & KGain, TMatrixD & HMatrix){
        streamlog_out( DEBUG2 ) << "-----------------------EUTelKalmanFilter::UpdateStateUsingHitInformation()-------------------------------START" << std::endl;
 				//Get the residual of the hit and the track and the state vector/////////
         TVectorD residual = getResidual( input, hit ); //This is just the components of distance in x and y
@@ -913,6 +913,7 @@ itTrk++;
 
         input->setCovMatrix( trkCov );
 				//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+				input->setHit(hit);
         streamlog_out( DEBUG2 ) << "-----------------EUTelKalmanFilter::UpdateStateUsingHitInformation()-------------------------------END" << std::endl;
 
 		}
@@ -937,7 +938,6 @@ itTrk++;
         track->setChi2( chi2 );
 				///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 				streamlog_out( DEBUG5 ) << "Add hit: " << hit << " to track " << track << std::endl;
-        track->addHit( const_cast< EVENT::TrackerHit* > (hit) );
 				streamlog_out( DEBUG2 ) << "-----------------EUTelKalmanFilter::UpdateTrackUsingHitInformation()-------------------------------END" << std::endl;
 	
 	}

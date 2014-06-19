@@ -273,10 +273,6 @@ namespace eutelescope {
         _dEdxError = dEdxError  ;
     }   
 
-    void EUTelTrackImpl::addHit( EVENT::TrackerHit* hit) {
-        _hits.push_back( hit ) ;
-    }
-
     void  EUTelTrackImpl::addTrack( EUTelTrackImpl* trk ) {
         checkAccess("EUTelTrackImpl::addTrack") ;
         _tracks.push_back( trk ) ;

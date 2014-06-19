@@ -160,7 +160,6 @@ namespace eutelescope {
 
     virtual void  addTrack( EUTelTrackImpl* trk ) ;
     virtual void  addTrackState( EUTelTrackStateImpl* trkstate ) ;
-    virtual void  addHit( EVENT::TrackerHit* hit) ;
 
     // direct access to the track state vector 
     virtual  EUTelTrackStateVec & trackStates() ;
