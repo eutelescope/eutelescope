@@ -63,7 +63,6 @@ namespace eutelescope {
     _hitId2GblPointLabel(),
     _hitId2GblPointLabelMille(),
 		_PointToState(),
-		_pointlabeltoHasHit(),
     _alignmentMode(Utility::XYShiftXYRot),
     _mEstimatorType(),
     _mille(0),
@@ -97,7 +96,6 @@ namespace eutelescope {
     _hitId2GblPointLabel(),
     _hitId2GblPointLabelMille(),
 		_PointToState(),
-		_pointlabeltoHasHit(),
     _alignmentMode(Utility::XYShiftXYRot),
     _mEstimatorType(),
     _mille(0),
@@ -496,14 +494,13 @@ namespace eutelescope {
         _hitId2GblPointLabel[ hitid ] = static_cast<int>(pointListTrack.size());
     }
 
-    void EUTelGBLFitter::pushBackPointandState( std::vector< gbl::GblPoint >* pointListTrack, const gbl::GblPoint pointTrack, EUTelTrackStateImpl *state, bool hasHit ) {
+    void EUTelGBLFitter::pushBackPointandState( std::vector< gbl::GblPoint >* pointListTrack, const gbl::GblPoint pointTrack, EUTelTrackStateImpl *state) {
         pointListTrack->push_back(pointTrack);
        
-        streamlog_out(MESSAGE0) << endl << "pushBackPoint: " << pointListTrack->size() << hasHit <<  std::endl;
+        streamlog_out(MESSAGE0) << endl << "pushBackPoint: " << pointListTrack->size() <<  std::endl;
         // store point's GBL label for future reference
 				const gbl::GblPoint *pointer_to_gblpoint = &pointTrack;
-        _PointToState[ pointer_to_gblpoint ] = state; //This mean that the state is from pattern recognition
-        _pointlabeltoHasHit[ pointListTrack->size() ] = hasHit; //This means the state has a a hit. Important for alignment
+        _PointToState[ pointer_to_gblpoint ] = state; 
     }
 
 
@@ -1056,10 +1053,10 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack, st
 		geo::gGeometry().local2Master( state->getLocation(), fitPointLocal, fitPointGlobal);	
 		if(hit != NULL){ 
 			addMeasurementGBL(point, hit->getPosition(),  fitPointLocal, hit->getCovMatrix(), state->getH()); 		
-			pushBackPointandState(pointList, point, state, true );
+			pushBackPointandState(pointList, point, state);
 
 		}else{
-			pushBackPointandState(pointList, point, state, false );
+			pushBackPointandState(pointList, point, state);
 		}
 
 		////////////////////////////////////////////////////////////////////////////////START TO CREATE SCATTERS BETWEEN PLANES
@@ -1090,7 +1087,7 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack, st
  			scatPrecSensor[0] = 1.0 / (scatvariance * scatvariance );
 
   		pointScat1.addScatterer(scat, scatPrecSensor);
-			pushBackPointandState(pointList, pointScat1, state, false );
+			pushBackPointandState(pointList, pointScat1, NULL);
 			/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////END THE FIRST SCATTERING PLANE
 			//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////BEGIN THE SECOND SCATTERING PLANE
 			float distance2 = (fitPointGlobal_next[2] + fitPointGlobal[2])/2 + (fitPointGlobal_next[2] - fitPointGlobal[2])/sqrt(12);
@@ -1099,7 +1096,7 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack, st
 			gbl::GblPoint pointScat2(jacobianScat1);
 
   		pointScat2.addScatterer(scat, scatPrecSensor);
-			pushBackPointandState(pointList, pointScat2, state, false );
+			pushBackPointandState(pointList, pointScat2, NULL);
 			//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////END OF SECOND SCATTERING PLANE
 			jacPointToPoint = state->getPropagationJacobianF(fitPointGlobal_next[2] - fitPointGlobal[2]); 				
 		}  
