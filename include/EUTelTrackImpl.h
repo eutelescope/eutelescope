@@ -57,7 +57,7 @@ namespace eutelescope {
         streamlog_out(MESSAGE0) << std::endl;
       }
         //IMPL::TrackImpl* track = static_cast< IMPL::TrackImpl*> (*itTrk);
-        for (int i = 0; i< _hits.size(); i++ ) 
+        for ( size_t i = 0; i< _hits.size(); i++ ) 
         { 
             EVENT::TrackerHit* ihit = _hits[i];
             int ic = ihit->id();
@@ -67,15 +67,15 @@ namespace eutelescope {
 
     }
 
-    virtual float getTx(int i=0) const ;
+    virtual float getTx(unsigned int i=0) const ;
 
-    virtual float getTy(int i=0) const ;
+    virtual float getTy(unsigned int i=0) const ;
 
-    virtual float getX(int i=0) const ;
+    virtual float getX(unsigned int i=0) const ;
 
-    virtual float getY(int i=0) const ;
+    virtual float getY(unsigned int i=0) const ;
 
-    virtual float getInvP(int i=0) const ;
+    virtual float getInvP(unsigned int i=0) const ;
 
     /** Covariance matrix of the track parameters. Stored as lower triangle matrix where
      *  the order of parameters is:   d0, phi, omega, z0, tan(lambda).
