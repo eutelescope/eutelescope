@@ -38,8 +38,8 @@ using namespace geo;
 using namespace std;
 
 
-EUTelGeometryTelescopeGeoDescription& EUTelGeometryTelescopeGeoDescription::getInstance() {
-      static  EUTelGeometryTelescopeGeoDescription instance;
+EUTelGeometryTelescopeGeoDescription& EUTelGeometryTelescopeGeoDescription::getInstance(gear::GearMgr* _g) {
+      static  EUTelGeometryTelescopeGeoDescription& instance = *(new EUTelGeometryTelescopeGeoDescription(_g));
       return instance;
 }
 
@@ -51,6 +51,45 @@ const EVENT::DoubleVec& EUTelGeometryTelescopeGeoDescription::siPlanesZPositions
     return _siPlaneZPosition;
 }
 
+/** set methods */ 
+void EUTelGeometryTelescopeGeoDescription::setPlaneXPosition( int planeID, double value ) {
+    std::map<int,int>::iterator it;
+    it = _sensorIDtoZOrderMap.find(planeID);
+    if ( it != _sensorIDtoZOrderMap.end() )  _siPlaneXPosition[ _sensorIDtoZOrderMap[ planeID ] ] = value ;
+}
+
+void EUTelGeometryTelescopeGeoDescription::setPlaneYPosition( int planeID, double value ) {
+    std::map<int,int>::iterator it;
+    it = _sensorIDtoZOrderMap.find(planeID);
+    if ( it != _sensorIDtoZOrderMap.end() )  _siPlaneYPosition[ _sensorIDtoZOrderMap[ planeID ] ] = value ;
+}
+
+void EUTelGeometryTelescopeGeoDescription::setPlaneZPosition( int planeID, double value ) {
+    std::map<int,int>::iterator it;
+    it = _sensorIDtoZOrderMap.find(planeID);
+    if ( it != _sensorIDtoZOrderMap.end() )  _siPlaneZPosition[ _sensorIDtoZOrderMap[ planeID ] ] = value ;
+}
+
+
+void EUTelGeometryTelescopeGeoDescription::setPlaneXRotation( int planeID, double value ) {
+    std::map<int,int>::iterator it;
+    it = _sensorIDtoZOrderMap.find(planeID);
+    if ( it != _sensorIDtoZOrderMap.end() )  _siPlaneXRotation[ _sensorIDtoZOrderMap[ planeID ] ] = value ;
+}
+
+void EUTelGeometryTelescopeGeoDescription::setPlaneYRotation( int planeID, double value ) {
+    std::map<int,int>::iterator it;
+    it = _sensorIDtoZOrderMap.find(planeID);
+    if ( it != _sensorIDtoZOrderMap.end() )  _siPlaneYRotation[ _sensorIDtoZOrderMap[ planeID ] ] = value ;
+}
+
+void EUTelGeometryTelescopeGeoDescription::setPlaneZRotation( int planeID, double value ) {
+    std::map<int,int>::iterator it;
+    it = _sensorIDtoZOrderMap.find(planeID);
+    if ( it != _sensorIDtoZOrderMap.end() )  _siPlaneZRotation[ _sensorIDtoZOrderMap[ planeID ] ] = value ;
+}
+
+/** get methods */
 double EUTelGeometryTelescopeGeoDescription::siPlaneXPosition( int planeID ) {
     std::map<int,int>::iterator it;
     it = _sensorIDtoZOrderMap.find(planeID);
@@ -227,7 +266,8 @@ const EVENT::IntVec& EUTelGeometryTelescopeGeoDescription::sensorIDsVec( ) const
 void EUTelGeometryTelescopeGeoDescription::readSiPlanesParameters() {
 
     // sensor-planes in geometry navigation:
-    _siPlanesParameters = const_cast< gear::SiPlanesParameters*> (&(marlin::Global::GEAR->getSiPlanesParameters()));
+    
+    _siPlanesParameters = const_cast< gear::SiPlanesParameters*> (&( _gearManager->getSiPlanesParameters()));
     _siPlanesLayerLayout = const_cast< gear::SiPlanesLayerLayout*> (&(_siPlanesParameters->getSiPlanesLayerLayout()));
     
     //read the geoemtry names from the "Geometry" StringVec section of the gear file
@@ -297,8 +337,9 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesParameters() {
 
 void EUTelGeometryTelescopeGeoDescription::readTelPlanesParameters() {
 
+ 
     // sensor-planes in geometry navigation:
-    _telPlanesParameters = const_cast< gear::TelPlanesParameters*> (&(marlin::Global::GEAR->getTelPlanesParameters()));
+    _telPlanesParameters = const_cast< gear::TelPlanesParameters*> (&( _gearManager->getTelPlanesParameters()));
     _telPlanesLayerLayout = const_cast< gear::TelPlanesLayerLayout*> (&(_telPlanesParameters->getTelPlanesLayerLayout()));
     
     setSiPlanesLayoutID( _telPlanesParameters->getTelPlanesID() ) ;
@@ -373,6 +414,7 @@ void EUTelGeometryTelescopeGeoDescription::readTelPlanesParameters() {
 }
 
 EUTelGeometryTelescopeGeoDescription::EUTelGeometryTelescopeGeoDescription() :
+_gearManager( marlin::Global::GEAR ),
 _siPlanesParameters(0),
 _siPlanesLayerLayout(0),
 _telPlanesParameters(0),
@@ -402,9 +444,52 @@ _nPlanes(0),
 _isGeoInitialized(false),
 _geoManager(0)
 {
-    // Check if the GEAR manager is not corrupted, otherwise stop
+    if ( _gearManager == 0 ) {
+        streamlog_out(ERROR2) << "The GearMgr is not available, for an unknown reason." << std::endl;
+        throw eutelescope::InvalidGeometryException("GEAR manager is not initialised");
+    }
 
-    if (!marlin::Global::GEAR) {
+   // TGeo manager initialisation
+    // ?
+
+    //Pixel Geometry manager creation
+    _pixGeoMgr = new EUTelGenericPixGeoMgr();
+
+}
+
+EUTelGeometryTelescopeGeoDescription::EUTelGeometryTelescopeGeoDescription(gear::GearMgr* _g) :
+_gearManager( _g ),
+_siPlanesParameters(0),
+_siPlanesLayerLayout(0),
+_telPlanesParameters(0),
+_telPlanesLayerLayout(0),
+_sensorIDVec(),
+_sensorIDVecMap(),
+_sensorZOrderToIDMap(),
+_sensorIDtoZOrderMap(),
+_siPlaneXPosition(),
+_siPlaneYPosition(),
+_siPlaneZPosition(),
+_siPlaneXRotation(),
+_siPlaneYRotation(),
+_siPlaneZRotation(),
+ _siPlaneXSize(),
+ _siPlaneYSize(),
+ _siPlaneZSize(),
+ _siPlaneXPitch(),
+ _siPlaneYPitch(),
+ _siPlaneXNpixels(),
+ _siPlaneYNpixels(),
+ _siPlaneXResolution(),
+ _siPlaneYResolution(),
+ _siPlaneRadLength(),
+ _geoLibName(),
+_nPlanes(0),
+_isGeoInitialized(false),
+_geoManager(0)
+{
+
+    if ( _gearManager == 0 ) {
         streamlog_out(ERROR2) << "The GearMgr is not available, for an unknown reason." << std::endl;
         throw eutelescope::InvalidGeometryException("GEAR manager is not initialised");
     }
@@ -413,7 +498,7 @@ _geoManager(0)
     bool telPlanesDefined = false;
 
     try{
-      _siPlanesParameters = const_cast< gear::SiPlanesParameters*> (&(marlin::Global::GEAR->getSiPlanesParameters()));
+      _siPlanesParameters = const_cast< gear::SiPlanesParameters*> (&(_gearManager->getSiPlanesParameters()));
       streamlog_out(MESSAGE1)  << "si planes : " << _siPlanesParameters << std::endl;
       siPlanesDefined = true;
     }catch(...){
@@ -421,7 +506,7 @@ _geoManager(0)
     }
 
     try{
-      _telPlanesParameters = const_cast< gear::TelPlanesParameters*> (&(marlin::Global::GEAR->getTelPlanesParameters()));
+      _telPlanesParameters = const_cast< gear::TelPlanesParameters*> (&(_gearManager->getTelPlanesParameters()));
       streamlog_out(MESSAGE1)  << "tel planes : " << _telPlanesParameters << std::endl;
       telPlanesDefined = true;
     }catch(...){
@@ -938,7 +1023,7 @@ const TGeoHMatrix* EUTelGeometryTelescopeGeoDescription::getHMatrix( const doubl
  */
 const gear::BField& EUTelGeometryTelescopeGeoDescription::getMagneticFiled() const {
     streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::getMagneticFiled() " << std::endl;
-    return marlin::Global::GEAR->getBField();
+    return _gearManager->getBField();
 }
 
 

@@ -67,19 +67,29 @@ namespace eutelescope {
         class EUTelGeometryTelescopeGeoDescription {
             
         private:
+            /** */
             EUTelGeometryTelescopeGeoDescription();
 
+            /** */
+            EUTelGeometryTelescopeGeoDescription( gear::GearMgr* _g);
+
+
+            /** */ 
             DISALLOW_COPY_AND_ASSIGN(EUTelGeometryTelescopeGeoDescription)      // prevent users from making (default) copies of processors
 
+            /** need only for pede2lcio*/
+            gear::GearMgr* _gearManager;
 
         public:
             /** Retrieves the instanstance of geometry.
              * Performs lazy intialization if necessary.
              * @TODO this routine has to be considered to be constant
              */
-            static EUTelGeometryTelescopeGeoDescription& getInstance();
+            static EUTelGeometryTelescopeGeoDescription& getInstance( gear::GearMgr* _g = marlin::Global::GEAR);
  
- 
+            /** needed only for pede2lcio*/ 
+            void setGearManager( gear::GearMgr* value ) { _gearManager = value ; }
+
             /** Number of planes in the setup */
             inline size_t getSiPlanesLayoutID() const { return _siPlanesLayoutID; } ;
 
@@ -91,7 +101,27 @@ namespace eutelescope {
             
             /** Z coordinates of centers of planes */
             const EVENT::DoubleVec& siPlanesZPositions() const;
-            
+           
+            /** set methods */
+
+            /** set X position  */
+            void setPlaneXPosition(int sensorID, double value);
+ 
+            /** set Y position  */
+            void setPlaneYPosition(int sensorID, double value);
+ 
+            /** set Z position  */
+            void setPlaneZPosition(int sensorID, double value);
+ 
+            /** set X rotation  */
+            void setPlaneXRotation(int sensorID, double value);
+ 
+            /** set Y rotation  */
+            void setPlaneYRotation(int sensorID, double value);
+ 
+            /** set Z rotation  */
+            void setPlaneZRotation(int sensorID, double value);
+ 
             /** X coordinate of center of sensor 
              * with given ID in global coordinate frame */
             double siPlaneXPosition( int );
@@ -374,8 +404,8 @@ namespace eutelescope {
 
         };
         
-        inline EUTelGeometryTelescopeGeoDescription& gGeometry() {
-                return EUTelGeometryTelescopeGeoDescription::getInstance(); 
+        inline EUTelGeometryTelescopeGeoDescription& gGeometry( gear::GearMgr* _g = marlin::Global::GEAR ) {
+                return EUTelGeometryTelescopeGeoDescription::getInstance( _g ); 
         }
 
         
@@ -383,6 +413,6 @@ namespace eutelescope {
 } // namespace eutelescope
 
 #endif  // USE_GEAR
-
+ 
 #endif	/* EUTELGEOMETRYTELESCOPEGEODESCRIPTION_H */
 
