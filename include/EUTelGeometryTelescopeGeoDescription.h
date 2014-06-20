@@ -70,10 +70,6 @@ namespace eutelescope {
             /** */
             EUTelGeometryTelescopeGeoDescription();
 
-            /** */
-            EUTelGeometryTelescopeGeoDescription( gear::GearMgr* _g);
-
-
             /** */ 
             DISALLOW_COPY_AND_ASSIGN(EUTelGeometryTelescopeGeoDescription)      // prevent users from making (default) copies of processors
 
@@ -85,8 +81,11 @@ namespace eutelescope {
              * Performs lazy intialization if necessary.
              * @TODO this routine has to be considered to be constant
              */
-            static EUTelGeometryTelescopeGeoDescription& getInstance( gear::GearMgr* _g = marlin::Global::GEAR);
+            static EUTelGeometryTelescopeGeoDescription& getInstance( gear::GearMgr* _g );
  
+            /** */
+            unsigned counter() { return _counter++; }
+
             /** needed only for pede2lcio*/ 
             void setGearManager( gear::GearMgr* value ) { _gearManager = value ; }
 
@@ -204,6 +203,10 @@ namespace eutelescope {
               * new GEAR from branch/TelPlanes
               */
 	    void readTelPlanesParameters(); 
+
+            /** housing for the above two 
+              */    
+            void readGear();
 
             void translateSiPlane2TGeo(TGeoVolume*,int );
 
@@ -384,7 +387,7 @@ namespace eutelescope {
         private:
 	    /** Flag if geoemtry is already initialized */
 	    bool _isGeoInitialized;
-
+         
 	    /** Map containing plane path (string) and corresponding planeID */
 	    std::map<int, std::string> _planePath;
 
@@ -401,6 +404,9 @@ namespace eutelescope {
 
             int findNextPlaneEntrance(  double* ,  double *, int, float*  );
             int findNextPlane(  double* lpoint,  double* ldir,  float* newpoint );
+
+            /** */
+            static unsigned _counter;
 
         };
         

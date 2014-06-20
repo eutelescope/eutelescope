@@ -38,8 +38,22 @@ using namespace geo;
 using namespace std;
 
 
-EUTelGeometryTelescopeGeoDescription& EUTelGeometryTelescopeGeoDescription::getInstance(gear::GearMgr* _g) {
-      static  EUTelGeometryTelescopeGeoDescription& instance = *(new EUTelGeometryTelescopeGeoDescription(_g));
+unsigned EUTelGeometryTelescopeGeoDescription::_counter = 0;
+
+EUTelGeometryTelescopeGeoDescription& EUTelGeometryTelescopeGeoDescription::getInstance( gear::GearMgr* _g ) {
+      streamlog_out ( DEBUG4) << "  EUTelGeometryTelescopeGeoDescription::getInstance --- BEGIN ---" << std::endl; 
+      static  EUTelGeometryTelescopeGeoDescription instance;
+
+      unsigned i = EUTelGeometryTelescopeGeoDescription::_counter;
+      streamlog_out ( DEBUG4) << "  EUTelGeometryTelescopeGeoDescription::getInstance --- iter: " << i << std::endl;  
+      if( i < 1 )  { // do it only once !
+         instance.setGearManager(_g);
+         instance.readGear();
+      }
+ 
+      instance.counter();
+      streamlog_out ( DEBUG4) << "  EUTelGeometryTelescopeGeoDescription::getInstance --- END --- " << std::endl; 
+
       return instance;
 }
 
@@ -444,51 +458,16 @@ _nPlanes(0),
 _isGeoInitialized(false),
 _geoManager(0)
 {
-    if ( _gearManager == 0 ) {
-        streamlog_out(ERROR2) << "The GearMgr is not available, for an unknown reason." << std::endl;
-        throw eutelescope::InvalidGeometryException("GEAR manager is not initialised");
-    }
-
-   // TGeo manager initialisation
+   
+    // TGeo manager initialisation
     // ?
 
     //Pixel Geometry manager creation
     _pixGeoMgr = new EUTelGenericPixGeoMgr();
-
 }
 
-EUTelGeometryTelescopeGeoDescription::EUTelGeometryTelescopeGeoDescription(gear::GearMgr* _g) :
-_gearManager( _g ),
-_siPlanesParameters(0),
-_siPlanesLayerLayout(0),
-_telPlanesParameters(0),
-_telPlanesLayerLayout(0),
-_sensorIDVec(),
-_sensorIDVecMap(),
-_sensorZOrderToIDMap(),
-_sensorIDtoZOrderMap(),
-_siPlaneXPosition(),
-_siPlaneYPosition(),
-_siPlaneZPosition(),
-_siPlaneXRotation(),
-_siPlaneYRotation(),
-_siPlaneZRotation(),
- _siPlaneXSize(),
- _siPlaneYSize(),
- _siPlaneZSize(),
- _siPlaneXPitch(),
- _siPlaneYPitch(),
- _siPlaneXNpixels(),
- _siPlaneYNpixels(),
- _siPlaneXResolution(),
- _siPlaneYResolution(),
- _siPlaneRadLength(),
- _geoLibName(),
-_nPlanes(0),
-_isGeoInitialized(false),
-_geoManager(0)
-{
-
+void EUTelGeometryTelescopeGeoDescription::readGear() {
+	
     if ( _gearManager == 0 ) {
         streamlog_out(ERROR2) << "The GearMgr is not available, for an unknown reason." << std::endl;
         throw eutelescope::InvalidGeometryException("GEAR manager is not initialised");
@@ -520,12 +499,6 @@ _geoManager(0)
       readTelPlanesParameters();
     }
 
-    
-    // TGeo manager initialisation
-    // ?
-
-    //Pixel Geometry manager creation
-    _pixGeoMgr = new EUTelGenericPixGeoMgr();
 }
 
 EUTelGeometryTelescopeGeoDescription::~EUTelGeometryTelescopeGeoDescription() {
