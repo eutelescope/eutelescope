@@ -336,6 +336,9 @@ void EUTelProcessorTrackingHelixTrackSearch::outputLCIO(LCEvent* evt, std::vecto
 //Since we can not put a generic object which will contain trackerhit objects. Then we need to use the given containers for LCIO. This function takes the EUTelTrackStates and turns it into TrackState objects. The it fills a track object with them and Trackerhit objects
 void EUTelProcessorTrackingHelixTrackSearch::cartesian2LCIOTrack( EUTelTrackImpl* track, IMPL::TrackImpl* LCIOtrack ) const { 
 
+        streamlog_out( DEBUG4 ) << " ---------------- EUTelProcessorTrackingHelixTrackSearch::cartesian2LCIOTrack -- BEGIN ------------- " << std::endl;
+
+
 	//Loop over all state on the track and fill new track object
 	EUTelTrackStateVec tracks = track->getTrackStates();
 	EUTelTrackStateVec::const_iterator trackstate;
@@ -365,6 +368,7 @@ void EUTelProcessorTrackingHelixTrackSearch::cartesian2LCIOTrack( EUTelTrackImpl
     		LCIOtrack->addHit( *itrHit );
     	}
 
+        streamlog_out( DEBUG4 ) << " ---------------- EUTelProcessorTrackingHelixTrackSearch::cartesian2LCIOTrack -- END ------------- " << std::endl;
 }
 
 
