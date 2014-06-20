@@ -38,8 +38,6 @@
 using namespace std;
 using namespace eutelescope;
 
-        const Double_t PI = 3.141592653589793;
-        const Double_t DEG = 180./PI;
  
 
 struct CollectionWriter {
@@ -100,9 +98,9 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
             xplane = geo::gGeometry().siPlaneXPosition(sensorID) ; 
             yplane = geo::gGeometry().siPlaneYPosition(sensorID) ; 
             zplane = geo::gGeometry().siPlaneZPosition(sensorID) ;
- 	    xrot   = geo::gGeometry().siPlaneXRotation(sensorID) ;// /DEG;
- 	    yrot   = geo::gGeometry().siPlaneYRotation(sensorID) ;// /DEG;
-	    zrot   = geo::gGeometry().siPlaneZRotation(sensorID) ;// /DEG;
+ 	    xrot   = geo::gGeometry().siPlaneXRotation(sensorID) ;
+ 	    yrot   = geo::gGeometry().siPlaneYRotation(sensorID) ;
+	    zrot   = geo::gGeometry().siPlaneZRotation(sensorID) ;
 
             streamlog_out(MESSAGE4) << std::endl << 
                                  setw(10) << "original " << std::fixed <<
@@ -179,9 +177,9 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
             xplane = geo::gGeometry().siPlaneXPosition(sensorID) ; 
             yplane = geo::gGeometry().siPlaneYPosition(sensorID) ; 
             zplane = geo::gGeometry().siPlaneZPosition(sensorID) ;
- 	    xrot   = geo::gGeometry().siPlaneXRotation(sensorID) ;// /DEG;
- 	    yrot   = geo::gGeometry().siPlaneYRotation(sensorID) ;// /DEG;
-	    zrot   = geo::gGeometry().siPlaneZRotation(sensorID) ;// /DEG;
+ 	    xrot   = geo::gGeometry().siPlaneXRotation(sensorID) ;
+ 	    yrot   = geo::gGeometry().siPlaneYRotation(sensorID) ;
+	    zrot   = geo::gGeometry().siPlaneZRotation(sensorID) ;
 
             streamlog_out(MESSAGE4) <<
                                  setw(10) << "new : " << 
