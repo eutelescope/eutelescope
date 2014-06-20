@@ -204,7 +204,7 @@ namespace eutelescope {
         void pushBackPointMille( std::vector< gbl::GblPoint >&, const gbl::GblPoint&, int );
  
         void prepareLCIOTrack( gbl::GblTrajectory*, vector<const IMPL::TrackImpl*>::const_iterator&,
-                                double, int, double, double, double, double, double );
+                                double, int); //, double, double, double, double, double );
 
         void prepareMilleOut( const IMPL::TrackImpl & );
 

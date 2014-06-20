@@ -408,7 +408,7 @@ namespace eutelescope {
     void EUTelGBLFitter::addGlobalParametersGBL(gbl::GblPoint& point, TMatrixD& alDer, std::vector<int>& globalLabels, int iPlane,
             const double* predpos, double xSlope, double ySlope) {
 
-        streamlog_out(MESSAGE0) << " addGlobalParametersGBL " << std::endl;
+        streamlog_out(MESSAGE1) << " addGlobalParametersGBL " << std::endl;
 
         alDer[0][0] = -1.0; // dx/dx
         alDer[0][1] =  0.0; // dx/dy
@@ -478,7 +478,7 @@ namespace eutelescope {
 
         point.addGlobals(globalLabels, alDer);
  
-        streamlog_out(MESSAGE0) << " addGlobalPArametersGBL over " << std::endl;
+        streamlog_out(MESSAGE1) << " addGlobalPArametersGBL over " << std::endl;
    }
 
     void EUTelGBLFitter::pushBackPoint( std::vector< gbl::GblPoint >& pointListTrack, const gbl::GblPoint& pointTrack, int hitid ) {
@@ -505,7 +505,7 @@ namespace eutelescope {
      * @param ndf      NDF of the track fit
      */
      void EUTelGBLFitter::prepareLCIOTrack( gbl::GblTrajectory* gblTraj, vector<const IMPL::TrackImpl*>::const_iterator& itTrkCand, 
-                                          double chi2, int ndf, double omega, double d0, double z0, double phi, double tanlam ) {
+                                          double chi2, int ndf ){ //, double omega, double d0, double z0, double phi, double tanlam ) {
  
 // output  track
 
@@ -804,7 +804,7 @@ namespace eutelescope {
                     _gblTrackCandidates.insert( std::make_pair( std::distance( begin, itTrkCand ), traj ) );
                 
                     // Write fit result
-                    prepareLCIOTrack( traj, itTrkCand, chi2, ndf, invP, 0., 0., 0., 0. );
+                    prepareLCIOTrack( traj, itTrkCand, chi2, ndf); //, invP, 0., 0., 0., 0. );
 
                     streamlog_out ( DEBUG4 ) << " EUTelGBLFitter::PerformFitGBLTrajectory -- finished " << endl;
            
@@ -892,6 +892,9 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack){
 
 void EUTelGBLFitter::addSiPlaneScattererGBL(gbl::GblPoint& point, int iPlane) {
 
+	streamlog_out(MESSAGE1) << " addSiPlaneScattererGBL ------------- BEGIN --------------  " << std::endl;
+
+
 	TVectorD scatPrecSensor(2);
 	TVectorD scat(2); 
 	scat[0] = 0.0; scat[1]=0.0; //This should always be 0 right? If not then it should be given as a parameter
@@ -907,6 +910,8 @@ void EUTelGBLFitter::addSiPlaneScattererGBL(gbl::GblPoint& point, int iPlane) {
         scatPrecSensor[1] = 1.0 / (tetSi * tetSi );
 
         point.addScatterer(scat, scatPrecSensor);
+
+	streamlog_out(MESSAGE1) << " addSiPlaneScattererGBL  ------------- END ----------------- " << std::endl;
 }
 
 
@@ -914,7 +919,7 @@ void EUTelGBLFitter::addSiPlaneScattererGBL(gbl::GblPoint& point, int iPlane) {
 //This will add the measurement of the hit and predicted position. Using the covariant matrix of the hit. NOT! the residual.
 void EUTelGBLFitter::addMeasurementGBL(gbl::GblPoint& point, const double *hitPos, const double *statePos, const EVENT::FloatVec& hitCov, TMatrixD HMatrix){
      
-	streamlog_out(DEBUG4) << " addMeasurementsGBL " << std::endl;
+	streamlog_out(MESSAGE1) << " addMeasurementsGBL ------------- BEGIN --------------- " << std::endl;
 
  	TVectorD meas;
 	meas[0] = hitPos[0] - statePos[0];
@@ -931,6 +936,7 @@ void EUTelGBLFitter::addMeasurementGBL(gbl::GblPoint& point, const double *hitPo
 
         point.addMeasurement(HMatrix, meas, measPrec);
 
+	streamlog_out(MESSAGE1) << " addMeasurementsGBL ------------- END ----------------- " << std::endl;
 }
 
 void EUTelGBLFitter::FindHitIfThereIsOne(EUTelTrackImpl* EUtrack, EVENT::TrackerHit* hit, EUTelTrackStateImpl* state){
@@ -1196,7 +1202,9 @@ void EUTelGBLFitter::FindHitIfThereIsOne(EUTelTrackImpl* EUtrack, EVENT::Tracker
                   }                          
                  }
 
-             //   addSiPlaneScattererGBL(point, scat, scatPrecSensor, trkVolumeID, p);
+ 		 if( _alignmentMode == 0 ) {
+                   addSiPlaneScattererGBL(point, trk->getLocation() );
+	 	 }
                  pushBackPoint( pointList, point, trk->id() );
  
 // get jacobian to arrive to next point (if not at last point already):: 
@@ -1230,8 +1238,12 @@ void EUTelGBLFitter::FindHitIfThereIsOne(EUTelTrackImpl* EUtrack, EVENT::Tracker
             } else {
                 traj = new gbl::GblTrajectory( pointList, true );
             }
- 
-            PerformFitGBLTrajectory( traj, itTrkCand, invP  );
+
+            if( _alignmentMode == 0 ) { 
+              PerformFitGBLTrajectory( traj, itTrkCand, invP  );
+            } else {
+
+            }
 
     }
 
