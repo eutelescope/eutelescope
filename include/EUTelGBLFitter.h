@@ -89,7 +89,7 @@ namespace eutelescope {
 
         /*
          */
-        void PerformFitGBLTrajectory( gbl::GblTrajectory* ,  vector<const IMPL::TrackImpl*>::const_iterator&, double );
+        void PerformFitGBLTrajectory( gbl::GblTrajectory* ,  vector<const IMPL::TrackImpl*>::const_iterator& );
      
         /* check that all trajectories are valid for Millepede
          * and dumpe the mille binary file
@@ -98,7 +98,7 @@ namespace eutelescope {
 
         void FitSingleTrackCandidate(EVENT::TrackVec::const_iterator& itTrkCand);
  
-        inline void SetAlignmentMode( Utility::AlignmentMode alignmentMode) {
+        inline void SetAlignmentMode( Utility::AlignmentMode alignmentMode = Utility::noAlignment ) {
             this->_alignmentMode = alignmentMode;
         }
 
@@ -196,19 +196,17 @@ namespace eutelescope {
 
         void addMeasurementsGBL( gbl::GblPoint&, TVectorD&, TVectorD&, const double*, const double*, const EVENT::FloatVec&, TMatrixD& );
         
-  //    void addSiPlaneScattererGBL( gbl::GblPoint&, TVectorD&, TVectorD&, int, double );
-        
         void addGlobalParametersGBL( gbl::GblPoint&, TMatrixD&, std::vector<int>&, int, const double*, double, double );
         
         void pushBackPoint( std::vector< gbl::GblPoint >&, const gbl::GblPoint&, int );
+
         void pushBackPointMille( std::vector< gbl::GblPoint >&, const gbl::GblPoint&, int );
  
         void prepareLCIOTrack( gbl::GblTrajectory*, vector<const IMPL::TrackImpl*>::const_iterator&,
                                 double, int); //, double, double, double, double, double );
 
-        void prepareMilleOut( const IMPL::TrackImpl & );
+        void prepareMilleOut( gbl::GblTrajectory* );
 
-        void prepareMilleOut( gbl::GblTrajectory*, const EVENT::TrackVec::const_iterator& );
 
     private:
         vector<const IMPL::TrackImpl*> _trackCandidatesVec;
