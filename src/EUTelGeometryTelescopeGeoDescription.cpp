@@ -38,8 +38,22 @@ using namespace geo;
 using namespace std;
 
 
-EUTelGeometryTelescopeGeoDescription& EUTelGeometryTelescopeGeoDescription::getInstance() {
+unsigned EUTelGeometryTelescopeGeoDescription::_counter = 0;
+
+EUTelGeometryTelescopeGeoDescription& EUTelGeometryTelescopeGeoDescription::getInstance( gear::GearMgr* _g ) {
+      streamlog_out ( DEBUG4) << "  EUTelGeometryTelescopeGeoDescription::getInstance --- BEGIN ---" << std::endl; 
       static  EUTelGeometryTelescopeGeoDescription instance;
+
+      unsigned i = EUTelGeometryTelescopeGeoDescription::_counter;
+      streamlog_out ( DEBUG4) << "  EUTelGeometryTelescopeGeoDescription::getInstance --- iter: " << i << std::endl;  
+      if( i < 1 )  { // do it only once !
+         instance.setGearManager(_g);
+         instance.readGear();
+      }
+ 
+      instance.counter();
+      streamlog_out ( DEBUG4) << "  EUTelGeometryTelescopeGeoDescription::getInstance --- END --- " << std::endl; 
+
       return instance;
 }
 
@@ -51,6 +65,45 @@ const EVENT::DoubleVec& EUTelGeometryTelescopeGeoDescription::siPlanesZPositions
     return _siPlaneZPosition;
 }
 
+/** set methods */ 
+void EUTelGeometryTelescopeGeoDescription::setPlaneXPosition( int planeID, double value ) {
+    std::map<int,int>::iterator it;
+    it = _sensorIDtoZOrderMap.find(planeID);
+    if ( it != _sensorIDtoZOrderMap.end() )  _siPlaneXPosition[ _sensorIDtoZOrderMap[ planeID ] ] = value ;
+}
+
+void EUTelGeometryTelescopeGeoDescription::setPlaneYPosition( int planeID, double value ) {
+    std::map<int,int>::iterator it;
+    it = _sensorIDtoZOrderMap.find(planeID);
+    if ( it != _sensorIDtoZOrderMap.end() )  _siPlaneYPosition[ _sensorIDtoZOrderMap[ planeID ] ] = value ;
+}
+
+void EUTelGeometryTelescopeGeoDescription::setPlaneZPosition( int planeID, double value ) {
+    std::map<int,int>::iterator it;
+    it = _sensorIDtoZOrderMap.find(planeID);
+    if ( it != _sensorIDtoZOrderMap.end() )  _siPlaneZPosition[ _sensorIDtoZOrderMap[ planeID ] ] = value ;
+}
+
+
+void EUTelGeometryTelescopeGeoDescription::setPlaneXRotation( int planeID, double value ) {
+    std::map<int,int>::iterator it;
+    it = _sensorIDtoZOrderMap.find(planeID);
+    if ( it != _sensorIDtoZOrderMap.end() )  _siPlaneXRotation[ _sensorIDtoZOrderMap[ planeID ] ] = value ;
+}
+
+void EUTelGeometryTelescopeGeoDescription::setPlaneYRotation( int planeID, double value ) {
+    std::map<int,int>::iterator it;
+    it = _sensorIDtoZOrderMap.find(planeID);
+    if ( it != _sensorIDtoZOrderMap.end() )  _siPlaneYRotation[ _sensorIDtoZOrderMap[ planeID ] ] = value ;
+}
+
+void EUTelGeometryTelescopeGeoDescription::setPlaneZRotation( int planeID, double value ) {
+    std::map<int,int>::iterator it;
+    it = _sensorIDtoZOrderMap.find(planeID);
+    if ( it != _sensorIDtoZOrderMap.end() )  _siPlaneZRotation[ _sensorIDtoZOrderMap[ planeID ] ] = value ;
+}
+
+/** get methods */
 double EUTelGeometryTelescopeGeoDescription::siPlaneXPosition( int planeID ) {
     std::map<int,int>::iterator it;
     it = _sensorIDtoZOrderMap.find(planeID);
@@ -227,7 +280,8 @@ const EVENT::IntVec& EUTelGeometryTelescopeGeoDescription::sensorIDsVec( ) const
 void EUTelGeometryTelescopeGeoDescription::readSiPlanesParameters() {
 
     // sensor-planes in geometry navigation:
-    _siPlanesParameters = const_cast< gear::SiPlanesParameters*> (&(marlin::Global::GEAR->getSiPlanesParameters()));
+    
+    _siPlanesParameters = const_cast< gear::SiPlanesParameters*> (&( _gearManager->getSiPlanesParameters()));
     _siPlanesLayerLayout = const_cast< gear::SiPlanesLayerLayout*> (&(_siPlanesParameters->getSiPlanesLayerLayout()));
     
     //read the geoemtry names from the "Geometry" StringVec section of the gear file
@@ -297,8 +351,9 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesParameters() {
 
 void EUTelGeometryTelescopeGeoDescription::readTelPlanesParameters() {
 
+ 
     // sensor-planes in geometry navigation:
-    _telPlanesParameters = const_cast< gear::TelPlanesParameters*> (&(marlin::Global::GEAR->getTelPlanesParameters()));
+    _telPlanesParameters = const_cast< gear::TelPlanesParameters*> (&( _gearManager->getTelPlanesParameters()));
     _telPlanesLayerLayout = const_cast< gear::TelPlanesLayerLayout*> (&(_telPlanesParameters->getTelPlanesLayerLayout()));
     
     setSiPlanesLayoutID( _telPlanesParameters->getTelPlanesID() ) ;
@@ -373,6 +428,7 @@ void EUTelGeometryTelescopeGeoDescription::readTelPlanesParameters() {
 }
 
 EUTelGeometryTelescopeGeoDescription::EUTelGeometryTelescopeGeoDescription() :
+_gearManager( marlin::Global::GEAR ),
 _siPlanesParameters(0),
 _siPlanesLayerLayout(0),
 _telPlanesParameters(0),
@@ -402,9 +458,17 @@ _nPlanes(0),
 _isGeoInitialized(false),
 _geoManager(0)
 {
-    // Check if the GEAR manager is not corrupted, otherwise stop
+   
+    // TGeo manager initialisation
+    // ?
 
-    if (!marlin::Global::GEAR) {
+    //Pixel Geometry manager creation
+    _pixGeoMgr = new EUTelGenericPixGeoMgr();
+}
+
+void EUTelGeometryTelescopeGeoDescription::readGear() {
+	
+    if ( _gearManager == 0 ) {
         streamlog_out(ERROR2) << "The GearMgr is not available, for an unknown reason." << std::endl;
         throw eutelescope::InvalidGeometryException("GEAR manager is not initialised");
     }
@@ -413,7 +477,7 @@ _geoManager(0)
     bool telPlanesDefined = false;
 
     try{
-      _siPlanesParameters = const_cast< gear::SiPlanesParameters*> (&(marlin::Global::GEAR->getSiPlanesParameters()));
+      _siPlanesParameters = const_cast< gear::SiPlanesParameters*> (&(_gearManager->getSiPlanesParameters()));
       streamlog_out(MESSAGE1)  << "si planes : " << _siPlanesParameters << std::endl;
       siPlanesDefined = true;
     }catch(...){
@@ -421,7 +485,7 @@ _geoManager(0)
     }
 
     try{
-      _telPlanesParameters = const_cast< gear::TelPlanesParameters*> (&(marlin::Global::GEAR->getTelPlanesParameters()));
+      _telPlanesParameters = const_cast< gear::TelPlanesParameters*> (&(_gearManager->getTelPlanesParameters()));
       streamlog_out(MESSAGE1)  << "tel planes : " << _telPlanesParameters << std::endl;
       telPlanesDefined = true;
     }catch(...){
@@ -435,12 +499,6 @@ _geoManager(0)
       readTelPlanesParameters();
     }
 
-    
-    // TGeo manager initialisation
-    // ?
-
-    //Pixel Geometry manager creation
-    _pixGeoMgr = new EUTelGenericPixGeoMgr();
 }
 
 EUTelGeometryTelescopeGeoDescription::~EUTelGeometryTelescopeGeoDescription() {
@@ -674,40 +732,52 @@ int EUTelGeometryTelescopeGeoDescription::getSensorID( const float globalPos[] )
     
     _geoManager->FindNode( globalPos[0], globalPos[1], globalPos[2] );
 
-		_geoManager->CdUp();
+    std::vector<std::string> split;
+ 
+    int sensorID = -999;
 
-		_geoManager->CdUp();	
+    const char* volName1 = const_cast < char* > ( geo::gGeometry( )._geoManager->GetCurrentVolume( )->GetName( ) );
+    streamlog_out(DEBUG2) << "init sensorID  : " << sensorID  <<  " " << volName1 << std::endl;
 
-		_geoManager->CdUp();	////////////////////////////////////////THIS NEEDS TO BE FIXED. If partice falls in the pixel volume and to find sensor ID you need to be on the sensor volume
+    while( _geoManager->GetLevel() > 0 ) { 
+      const char* volName = const_cast < char* > ( geo::gGeometry( )._geoManager->GetCurrentVolume( )->GetName( ) );
+      streamlog_out( DEBUG1 ) << "Point (" << globalPos[0] << "," << globalPos[1] << "," << globalPos[2] << ") found in volume: " << volName << " level: " << _geoManager->GetLevel() << std::endl;
+      split = Utility::stringSplit( std::string( volName ), "/", false);
+      if ( split.size() > 0 && split[0].length() > 16 && (split[0].substr(0,16) == "volume_SensorID:") ) {
+         int strLength = split[0].length(); 
+         sensorID = strtol( (split[0].substr(16, strLength )).c_str(), NULL, 10 );
+         streamlog_out(DEBUG1) << "Point (" << globalPos[0] << "," << globalPos[1] << "," << globalPos[2] << ") was found at :" << sensorID << std::endl;       
+         break;
+      }
+      _geoManager->CdUp();	////////////////////////////////////////THIS NEEDS TO BE FIXED. If partice falls in the pixel volume and to find sensor ID you need to be on the sensor volume
+    }
 
-    const char* volName = const_cast < char* > ( geo::gGeometry( )._geoManager->GetCurrentVolume( )->GetName( ) );
-
-    streamlog_out( DEBUG5 ) << "Point (" << globalPos[0] << "," << globalPos[1] << "," << globalPos[2] << ") found in volume: " << volName << std::endl;
+    const char* volName2 = const_cast < char* > ( geo::gGeometry( )._geoManager->GetCurrentVolume( )->GetName( ) );
+    streamlog_out( DEBUG2 ) << "Point (" << globalPos[0] << "," << globalPos[1] << "," << globalPos[2] << ") found in volume: " << volName2 << " no moving around any more" << std::endl;
     
-	std::vector<std::string> split = Utility::stringSplit( std::string( volName ), "/", false);
+//	std::vector<std::string> split = Utility::stringSplit( std::string( volName ), "/", false);
 
-	int sensorID = -999;
-	streamlog_out(DEBUG5) << "init sensorID  : " << sensorID  <<  " " << volName << std::endl;
 
-        if( split.size() == 1 && split[0].length() > 16 ) {
+//        if( split.size() == 1 && split[0].length() > 16 ) {
 
-          streamlog_out(DEBUG5) << "split[0] " << split[0] << std::endl;
-          streamlog_out(DEBUG5) << "split[0].substr(0,16) " << split[0].substr(0,16) << std::endl;
-          int strLength = split[0].length(); 
-          streamlog_out(DEBUG5) << "split[0].substr(16, strLength ) " << split[0].substr(16, strLength ) << std::endl;
+//          streamlog_out(DEBUG5) << "split[0] " << split[0] << std::endl;
+//          streamlog_out(DEBUG5) << "split[0].substr(0,16) " << split[0].substr(0,16) << std::endl;
+//          int strLength = split[0].length(); 
+//          streamlog_out(DEBUG5) << "split[0].substr(16, strLength ) " << split[0].substr(16, strLength ) << std::endl;
 
           //since we check bounds, no need for vector.at() but use [], it saves cycles :-)
-	  if (  (split[0].substr(0,16) == "volume_SensorID:") )
+//	  if (  (split[0].substr(0,16) == "volume_SensorID:") )
+          if( sensorID >= 0 )
 	  {
-                sensorID = strtol( (split[0].substr(16, strLength )).c_str(), NULL, 10 );
-		streamlog_out(DEBUG5) << "Point (" << globalPos[0] << "," << globalPos[1] << "," << globalPos[2] << ") was found at :" << sensorID << std::endl;
+//                sensorID = strtol( (split[0].substr(16, strLength )).c_str(), NULL, 10 );
+		streamlog_out(DEBUG5) << "Point (" << globalPos[0] << "," << globalPos[1] << "," << globalPos[2] << ") was found. sensorID = " << sensorID << std::endl;
           }
 	  else
 	  {
-		streamlog_out(DEBUG5) << "Point (" << globalPos[0] << "," << globalPos[1] << "," << globalPos[2] << ") was not found inside any sensor!" << std::endl;
+		streamlog_out(DEBUG5) << "Point (" << globalPos[0] << "," << globalPos[1] << "," << globalPos[2] << ") was not found inside any sensor! sensorID = " << sensorID << std::endl;
 	  }
-        }
-        streamlog_out(DEBUG5) << "sensorID  : " << sensorID  << std::endl;
+//        }
+//        streamlog_out(DEBUG5) << "sensorID  : " << sensorID  << std::endl;
 
 	return sensorID;
 }
@@ -926,7 +996,7 @@ const TGeoHMatrix* EUTelGeometryTelescopeGeoDescription::getHMatrix( const doubl
  */
 const gear::BField& EUTelGeometryTelescopeGeoDescription::getMagneticFiled() const {
     streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::getMagneticFiled() " << std::endl;
-    return marlin::Global::GEAR->getBField();
+    return _gearManager->getBField();
 }
 
 

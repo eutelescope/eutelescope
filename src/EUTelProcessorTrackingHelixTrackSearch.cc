@@ -191,7 +191,8 @@ void EUTelProcessorTrackingHelixTrackSearch::init() {
         Finder->setPlanesProject( _planesProject );
         Finder->setBeamMomentumUncertainty( _eBeamUncertatinty );
         Finder->setBeamSpread( _beamSpread );
-        
+        Finder->Clear(); // once per job, this is in an initialiser
+       
         _trackFitter = Finder;
     }
 
@@ -248,6 +249,9 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
         throw marlin::SkipEventException(this);
     }
 
+    //This is a good point to clear all things that need to be reset for each event. Why should gop here?
+    _trackFitter->Clear(); // once per event, at the beginning, after the collections ave been read 
+
     // this will only be entered if the collection is available
     if ( hitMeasuredCollection == NULL) {
         streamlog_out(DEBUG2) << "EUTelProcessorTrackingHelixTrackSearch :: processEvent() hitMeasuredCollection is void" << std::endl;
@@ -278,17 +282,18 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
             streamlog_out( DEBUG1 ) << "Trying to find tracks..." << endl;
 
 // searching for hits along the expected track direction 
-            _trackFitter->SearchTrackCandidates( );
+            	_trackFitter->SearchTrackCandidates( );
+
 // remove possible duplicates (the amount of commont hits on the split tracks is controled via the processor paraemter)
-            _trackFitter->PruneTrackCandidates( );
+            	_trackFitter->PruneTrackCandidates( );
 
-            streamlog_out( DEBUG1 ) << "Retrieving track candidates..." << endl;
+            	streamlog_out( DEBUG1 ) << "Retrieving track candidates..." << endl;
 
-						std::vector< EUTelTrackImpl* >& trackCartesian = static_cast < EUTelKalmanFilter* > (_trackFitter)->getTracks(); //Need to cast this since error: ‘class eutelescope::EUTelTrackFitter’ otherwise Why??
+		std::vector< EUTelTrackImpl* >& trackCartesian = static_cast < EUTelKalmanFilter* > (_trackFitter)->getTracks(); //Need to cast this since error: ‘class eutelescope::EUTelTrackFitter’ otherwise Why??
 						
-						plotHistos(trackCartesian);
+		plotHistos(trackCartesian);
 
-						outputLCIO(evt,trackCartesian);
+		outputLCIO(evt,trackCartesian);
 
         }
         _nProcessedEvents++;
@@ -298,59 +303,72 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
 }
 
 void EUTelProcessorTrackingHelixTrackSearch::outputLCIO(LCEvent* evt, std::vector< EUTelTrackImpl* >& trackCartesian){
+
+        streamlog_out( DEBUG4 ) << " ---------------- EUTelProcessorTrackingHelixTrackSearch::outputLCIO ---------- BEGIN ------------- " << std::endl;
+
 	//Create once per event    
 	LCCollectionVec * trkCandCollection = new LCCollectionVec(LCIO::TRACK);
-    // Prepare output collection
-  LCFlagImpl flag(trkCandCollection->getFlag());
-  flag.setBit( LCIO::TRBIT_HITS );
-  trkCandCollection->setFlag( flag.getFlag( ) );
+
+	// Prepare output collection
+  	LCFlagImpl flag(trkCandCollection->getFlag());
+  	flag.setBit( LCIO::TRBIT_HITS );
+  	trkCandCollection->setFlag( flag.getFlag( ) );
 
 	//Loop through all tracks
 	vector< EUTelTrackImpl* >::const_iterator itTrackCartesian;
-  for ( itTrackCartesian = trackCartesian.begin(); itTrackCartesian != trackCartesian.end(); itTrackCartesian++){
+	for ( itTrackCartesian = trackCartesian.begin(); itTrackCartesian != trackCartesian.end(); itTrackCartesian++){
 		IMPL::TrackImpl* LCIOtrack = new IMPL::TrackImpl; //Create container of type IMPL::TrackImpl //Will be deleted automatically latter by LCIO object
-		int nstates =  (*itTrackCartesian)->getTrackStates().size(); //* to dereference the pointer to the pointer trackCartesian
-		//Loops over all states to change to the correct format for LCIO
-		for(int i=0;i < nstates; i++){
-			cartesian2LCIOTrack((*itTrackCartesian), LCIOtrack);
-		}//END STATE LOOP
-		//For every track add this to the collection
-    trkCandCollection->push_back( LCIOtrack );
-	}//END TRACK LOOP
-	//Now add this collection to the 
-  evt->addCollection(trkCandCollection, _trackCandidateHitsOutputCollectionName);
 
+                if(streamlog_level(DEBUG4) ) (*itTrackCartesian)->Print();
+
+		cartesian2LCIOTrack((*itTrackCartesian), LCIOtrack);
+
+		//For every track add this to the collection
+    		trkCandCollection->push_back( LCIOtrack );
+	}//END TRACK LOOP
+
+	//Now add this collection to the 
+  	evt->addCollection(trkCandCollection, _trackCandidateHitsOutputCollectionName);
+
+        streamlog_out( DEBUG4 ) << " ---------------- EUTelProcessorTrackingHelixTrackSearch::outputLCIO ---------- END ------------- " << std::endl;
 }
 
 //Since we can not put a generic object which will contain trackerhit objects. Then we need to use the given containers for LCIO. This function takes the EUTelTrackStates and turns it into TrackState objects. The it fills a track object with them and Trackerhit objects
 void EUTelProcessorTrackingHelixTrackSearch::cartesian2LCIOTrack( EUTelTrackImpl* track, IMPL::TrackImpl* LCIOtrack ) const { 
 
+        streamlog_out( DEBUG4 ) << " ---------------- EUTelProcessorTrackingHelixTrackSearch::cartesian2LCIOTrack -- BEGIN ------------- " << std::endl;
+
+
 	//Loop over all state on the track and fill new track object
 	EUTelTrackStateVec tracks = track->getTrackStates();
 	EUTelTrackStateVec::const_iterator trackstate;
 	for(trackstate=tracks.begin(); trackstate !=tracks.end(); trackstate++){
-    //EUTelTrackStateImpl* nexttrackstate = new EUTelTrackStateImpl( *(track->getTrackStates().at(i)) );
+    		//EUTelTrackStateImpl* nexttrackstate = new EUTelTrackStateImpl( *(track->getTrackStates().at(i)) );
 		TVectorD statevector = (*trackstate)->getTrackStateVec();
 
 
-    IMPL::TrackStateImpl* implstate     = static_cast <IMPL::TrackStateImpl*> (*trackstate ); //This is possible since EUTelTrack is derived from IMPL::TrackState
+		IMPL::TrackStateImpl* implstate     = static_cast <IMPL::TrackStateImpl*> (*trackstate ); //This is possible since EUTelTrack is derived from IMPL::TrackState
+
 		////////Add our state variables into container. The covariant matrix is for our coordinate system
 		implstate->setD0(statevector[0]); //x position global
 		implstate->setPhi(statevector[1]); //y position global
 		implstate->setOmega(statevector[2]); //tx position global
 		implstate->setZ0(statevector[3]); //ty position global
 		implstate->setTanLambda(statevector[4]); //invp position global		 
-    LCIOtrack->addTrackState( implstate );
+
+                streamlog_out(MESSAGE3) <<  "  " << (*trackstate ) -> id() << "  " << (*trackstate ) -> getLocation() << " " << (*trackstate )->getX() << " " << (*trackstate )->getY() << std::endl;
+		LCIOtrack->addTrackState( implstate );
 	}
 	
 
    	// Assign hits to LCIO TRACK
-    const EVENT::TrackerHitVec& trkcandhits = track->getTrackerHits();
-    EVENT::TrackerHitVec::const_iterator itrHit;
-    for ( itrHit = trkcandhits.begin(); itrHit != trkcandhits.end(); ++itrHit ){
-    	LCIOtrack->addHit( *itrHit );
-    }
+	const EVENT::TrackerHitVec& trkcandhits = track->getTrackerHits();
+    	EVENT::TrackerHitVec::const_iterator itrHit;
+    	for ( itrHit = trkcandhits.begin(); itrHit != trkcandhits.end(); ++itrHit ){
+    		LCIOtrack->addHit( *itrHit );
+    	}
 
+        streamlog_out( DEBUG4 ) << " ---------------- EUTelProcessorTrackingHelixTrackSearch::cartesian2LCIOTrack -- END ------------- " << std::endl;
 }
 
 
@@ -638,9 +656,12 @@ void EUTelProcessorTrackingHelixTrackSearch::bookHistograms() {
 
 				///////////////////////////////////////////////////////////////////////////////////////////////////////////////Chi2 create plot. Useful to determine the behaviour of the pattern recognition
         histoInfo = histoMgr->getHistogramInfo(_histName::_chi2CandidateHistName);
-        NBin =  histoInfo->_xBin; 
-        XMin =  histoInfo->_xMin; 
-        XMax = histoInfo->_xMax;
+//      NBin =  histoInfo->_xBin; 
+//      XMin =  histoInfo->_xMin; 
+//      XMax = histoInfo->_xMax;
+        NBin = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : tracksNBin;
+        XMin = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : tracksXMin;
+        XMax = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : tracksXMax;
 
         AIDA::IHistogram1D * chi2 =
                 marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_chi2CandidateHistName, NBin,

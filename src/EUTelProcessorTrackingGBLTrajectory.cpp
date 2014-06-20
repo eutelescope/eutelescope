@@ -11,20 +11,6 @@
 // LCIO
 #include <EVENT/LCCollection.h>
 
-// MARLIN
-#include "marlin/Exceptions.h"
-#include "marlin/Global.h"
-#include "marlin/Processor.h"
-#include "marlin/VerbosityLevels.h"
-
-// AIDA
-#ifdef MARLIN_USE_AIDA
-#include <marlin/AIDAProcessor.h>
-#include <AIDA/IHistogramFactory.h>
-#include <AIDA/IHistogram1D.h>
-#include <AIDA/IProfile2D.h>
-#endif // MARLIN_USE_AIDA
-
 // ROOT
 #if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
 #include "TMath.h"
@@ -110,9 +96,8 @@ _maxChi2Cut(1000.),
 _tgeoFileName("TELESCOPE.root"),
 _histoInfoFileName("histoinfo.xml"),
 _trackCandidatesInputCollectionName("TrackCandidatesCollection"),
-_tracksOutputCollectionName("TrackCollection"),
+_tracksOutputCollectionName("GBLTrackCollection"),
 _trackFitter(0),
-_milleGBL(0),
 _nProcessedRuns(0),
 _nProcessedEvents(0),
 _flag_nohistos(false),
@@ -138,7 +123,7 @@ _aidaProfileMap2D()
             "TracksOutputCollectionName",
             "Output tracks collection name",
             _tracksOutputCollectionName,
-            std::string("TrackCollection"));
+            std::string("GBLTrackCollection"));
 
     // Necessary processor parameters that define fitter settings
     registerProcessorParameter("BeamEnergy", "Beam energy [GeV]", _eBeam, static_cast<double> (4.0));
@@ -154,8 +139,8 @@ _aidaProfileMap2D()
  
     //
     registerOptionalParameter("Planes", "Ids of planes to be used ", _planeIds, IntVec());
-    registerOptionalParameter("xResolutionPlane", "x resolution of planes given in AlignmentPlanes", _SteeringxResolutions, FloatVec());
-    registerOptionalParameter("yResolutionPlane", "y resolution of planes given in AlignmentPlanes", _SteeringyResolutions, FloatVec());
+    registerOptionalParameter("xResolutionPlane", "x resolution of planes given in Planes", _SteeringxResolutions, FloatVec());
+    registerOptionalParameter("yResolutionPlane", "y resolution of planes given in Planes", _SteeringyResolutions, FloatVec());
    
    
     registerOptionalParameter("ExcludePlanesFromFit", "Ids of planes that will be excluded from the fit", _excludePlanesFromFit, IntVec());
@@ -169,31 +154,6 @@ _aidaProfileMap2D()
 
     registerOptionalParameter("HistogramInfoFilename", "Name of histogram info xml file", _histoInfoFileName, string("histoinfo.xml"));
 
-    // MILLEPEDE specific parameters
-    registerOptionalParameter("AlignmentMode", "Alignment mode specifies alignment degrees of freedom to be considered\n"
-            "0 - No alignment at all. Simply fit tracks assuming that alignment is correct\n"
-            "1 - Alignment of XY shifts\n"
-            "2 - Alignment of XY shifts + rotations around Z\n"
-            "3 - Alignment of XYZ shifts + rotations around Z\n"
-            "4 - Alignment of XY shifts + rotations around X and Z\n"
-            "5 - Alignment of XY shifts + rotations around Y and Z\n"
-            "6 - Alignment of XY shifts + rotations around X,Y and Z\n"
-            "7 - Alignment of XYZ shifts + rotations around X,Y and Z\n",
-            _alignmentMode, static_cast<int> (0));
-
-    registerOptionalParameter("MilleBinaryFilename", "Name of the Millepede binary file", _milleBinaryFilename, std::string("mille.bin"));
-
-    registerOptionalParameter("MilleSteeringFilename", "Name of the Millepede steering file to be created", _milleSteeringFilename, std::string("pede-steer.txt"));
-    
-    registerOptionalParameter("MilleResultFilename", "Name of the Millepede result file", _milleResultFileName, std::string("millepede.res"));
-    
-    registerOptionalParameter("GearAlignedFile", "Suffix to add to the new Gear with alignment corrections", _gear_aligned_file, std::string("gear-00001-aligned.xml"));
-
-    registerOptionalParameter("PedeSteeringAdditionalCmds","FOR EXPERTS: List of commands that should be included in the pede steering file. Use '\\' to seperate options and introduce a line break.",_pedeSteerAddCmds, StringVec());
-
-    registerOptionalParameter("MilleMaxChi2Cut", "Maximum chi2 of a track candidate that goes into millepede", _maxChi2Cut, double(1000.));
-
-    registerOptionalParameter("AlignmentPlanes", "Ids of planes to be used in alignment", _alignmentPlaneIds, IntVec());
  
 }
 
@@ -201,9 +161,6 @@ void EUTelProcessorTrackingGBLTrajectory::init() {
 
     streamlog_out(DEBUG2) << "EUTelProcessorTrackingGBLTrajectory::init( )" << std::endl;
 
-    // Free file resource before running pede exe
-    delete _milleGBL;
- 
     // usually a good idea to
     printParameters();
 
@@ -220,41 +177,6 @@ void EUTelProcessorTrackingGBLTrajectory::init() {
     {
         streamlog_out(DEBUG) << "Initialisation of track fitter" << std::endl;
 
-        const unsigned int reserveSize = 80000;
-        _milleGBL = new gbl::MilleBinary(_milleBinaryFilename, reserveSize);
-
-        if (_milleGBL == 0) {
-
-            streamlog_out(ERROR) << "Can't allocate an instance of mMilleBinary. Stopping ..." << std::endl;
-            throw UnknownDataTypeException("MilleBinary was not created");
-        }
-
-        Utility::AlignmentMode alignmentMode = Utility::noAlignment;
-        if (_alignmentMode==0) {
-            alignmentMode = Utility::noAlignment;
-        } else if (_alignmentMode==1) {
-            alignmentMode = Utility::XYShift;
-        } else if (_alignmentMode==2) {
-            alignmentMode = Utility::XYShiftXYRot; 
-        } else if (_alignmentMode==3) {
-            alignmentMode = Utility::XYZShiftXYRot;
-        } else if (_alignmentMode==4) {
-            alignmentMode = Utility::XYShiftYZRotXYRot;
-        } else if (_alignmentMode==5) {
-            alignmentMode = Utility::XYShiftXZRotXYRot;
-        } else if (_alignmentMode==6) {
-            alignmentMode = Utility::XYShiftXZRotYZRotXYRot;
-        } else if (_alignmentMode==7) {
-            alignmentMode = Utility::XYZShiftXZRotYZRotXYRot;
-        }else {
-            streamlog_out(WARNING3) << "Alignment mode was not recognized:" << _alignmentMode << std::endl;
-            streamlog_out(WARNING3) << "Alignment will not be performed" << std::endl;
-            alignmentMode = Utility::noAlignment;
-        }
-
-        // fill MILLEPEDE alignment parameters labels
-        fillMilleParametersLabels();
- 
         // Initialize GBL fitter
         EUTelGBLFitter* Fitter = new EUTelGBLFitter("GBLFitter");
  
@@ -266,19 +188,10 @@ void EUTelProcessorTrackingGBLTrajectory::init() {
 
         Fitter->setExcludeFromFitPlanes( _excludePlanesFromFit );
 
-// alignment:
-        Fitter->SetAlignmentMode( alignmentMode);
-        Fitter->setParamterIdXShiftsMap(_xShiftsMap);
-        Fitter->setParamterIdYShiftsMap(_yShiftsMap);
-        Fitter->setParamterIdZShiftsMap(_zShiftsMap);
-        Fitter->setParamterIdXRotationsMap(_xRotationsMap);
-        Fitter->setParamterIdYRotationsMap(_yRotationsMap);
-        Fitter->setParamterIdZRotationsMap(_zRotationsMap);
-        Fitter->SetMilleBinary(_milleGBL);
-
         Fitter->SetBeamEnergy(_eBeam);
         Fitter->SetBeamCharge(_qBeam);
         Fitter->SetChi2Cut(_maxChi2Cut);
+        Fitter->getFitTrackVec()->clear();
         _trackFitter = Fitter;
 
         if (!_trackFitter) {
@@ -306,10 +219,10 @@ void EUTelProcessorTrackingGBLTrajectory::processRunHeader(LCRunHeader * run) {
             << "This may mean that the GeoID parameter was not set" << endl;
 
 
-    if (header->getGeoID() != geo::gGeometry()._siPlanesParameters->getSiPlanesID()) {
+    if (header->getGeoID() != geo::gGeometry().getSiPlanesLayoutID()) {
         streamlog_out(WARNING5) << "Error during the geometry consistency check: " << endl
                 << "The run header says the GeoID is " << header->getGeoID() << endl
-                << "The GEAR description says is     " << geo::gGeometry()._siPlanesParameters->getSiPlanesID() << endl;
+                << "The GEAR description says is     " << geo::gGeometry().getSiPlanesLayoutID() << endl;
     }
     
     _nProcessedRuns++;
@@ -326,7 +239,7 @@ void EUTelProcessorTrackingGBLTrajectory::plotTracks(LCEvent *event){
         TVectorD residualGBLErr(2);
         TVectorD downWeightGBL(2);
  
-            IMPL::LCCollectionVec* fittrackvec = static_cast< EUTelGBLFitter* > (_trackFitter)->GetFitTrackVec();
+            IMPL::LCCollectionVec* fittrackvec = _trackFitter->getFitTrackVec();
 //            vector<IMPL::TrackImpl *> *fittrackvec = static_cast<vector<IMPL::TrackImpl *> *> (collection);
 
             if( fittrackvec == 0 )  {
@@ -346,8 +259,6 @@ void EUTelProcessorTrackingGBLTrajectory::plotTracks(LCEvent *event){
             double chi2Trk = 0.;
             int ndfTrk = 0;
             double p = 0.;
-
-//            vector<IMPL::TrackImpl*>::const_iterator itFitTrack;
 
             IMPL::LCCollectionVec::const_iterator itFitTrack;
 
@@ -369,7 +280,7 @@ void EUTelProcessorTrackingGBLTrajectory::plotTracks(LCEvent *event){
 
 
                 // Retrieve original GBL information
-                std::map< int, gbl::GblTrajectory* > gblTracks = static_cast < EUTelGBLFitter* > ( _trackFitter )->GetGblTrackCandidates( );
+                std::map< int, gbl::GblTrajectory* > gblTracks = static_cast<EUTelGBLFitter*>(_trackFitter)->GetGblTrackCandidates( );
                 IMPL::LCCollectionVec::const_iterator begin = fittrackvec->begin( );
                 int iCounter = std::distance( begin, itFitTrack );
                 gbl::GblTrajectory* gblTraj = ( *gblTracks.find( iCounter ) ).second;
@@ -390,7 +301,7 @@ void EUTelProcessorTrackingGBLTrajectory::plotTracks(LCEvent *event){
                 }
 
 
-                const std::map<long, int> gblPointLabel = static_cast < EUTelGBLFitter* > ( _trackFitter )->getHitId2GblPointLabel( );
+                const std::map<long, int> gblPointLabel =  static_cast<EUTelGBLFitter*>(_trackFitter) ->getHitId2GblPointLabel( );
                 const EVENT::TrackerHitVec& trackHits = static_cast < TrackImpl* > ( *itFitTrack )->getTrackerHits( );
 
                 // If this is an run plot residuals for selected tracks. Plot everything otherwise.
@@ -412,7 +323,6 @@ void EUTelProcessorTrackingGBLTrajectory::plotTracks(LCEvent *event){
                     for ( itrHit = trackHits.begin( ); itrHit != trackHits.end( ); ++itrHit ) {
 
                        // Get input hit information
-// wtf?                       IMPL::TrackerHitImpl* originalHit =  static_cast < IMPL::TrackerHitImpl* > ( ( *itrHit )->getRawHits( ).front( ) );
                         IMPL::TrackerHitImpl* originalHit =  static_cast < IMPL::TrackerHitImpl* > ( *itrHit  );
                         const double* originalhitpos = originalHit->getPosition( );
                         int originalID = originalHit->id();
@@ -507,7 +417,7 @@ void EUTelProcessorTrackingGBLTrajectory::plotTracks(LCEvent *event){
 
                         // 1D histograms
                         // SPATIAL RESIDUALS
-                        const double um = 1.; // units in micron
+                        const double um = 1000.; // units in micron
                         sstrX     << _histName::_residGblFitHistNameX << planeID;
                         sstrXNorm << _histName::_normResidGblFitHistNameX << planeID;
 
@@ -520,27 +430,40 @@ void EUTelProcessorTrackingGBLTrajectory::plotTracks(LCEvent *event){
                         static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstrY.str( ) ] ) -> fill( residualGBL[1] * um, downWeightGBL[1] );
                         static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstrYNorm.str( ) ] ) -> fill( residualGBL[1] / residualGBLErr[1], downWeightGBL[1] );
  
-if( event->getEventNumber()/1000*1000   == event->getEventNumber() )
+if(
+   (  streamlog_level(MESSAGE4) && ( event->getEventNumber()/1000*1000   == event->getEventNumber()) )  
+   ||
+   ( streamlog_level(MESSAGE3) && ( event->getEventNumber()/100*100   == event->getEventNumber())  )
+   ||
+   ( streamlog_level(MESSAGE2) && ( event->getEventNumber()/10*10   == event->getEventNumber())  )
+  )
 {
-   streamlog_out(MESSAGE3) << left     <<  setw(20) << sstrX.str( ) ;
-   streamlog_out(MESSAGE3) << "      "
-            << " hitpos: " << setw(8)  <<  setprecision(3) << right << hitpos[0] << setw(8) << setprecision(3) << hitpos[1]  << setw(8) << setprecision(3) << hitpos[2]  
-            << " X: mean:" << setw(8)  <<  setprecision(3) << right << static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstrX.str( ) ] ) -> mean()  
-            << " rms:"     << setw(8)  <<  setprecision(3) << right << static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstrX.str( ) ] ) -> rms() << "   " ;
-//   streamlog_out(MESSAGE1) << left     <<  setw(20) << sstrY.str( )
-//            << " Y: mean:" << setw(8)  <<  setprecision(3) << right << static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstrY.str( ) ] ) -> mean()  
-//            << " rms:"     << setw(8)  <<  setprecision(3) << right << static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstrY.str( ) ] ) -> rms() ;
-   streamlog_out(MESSAGE3) << endl;
+   std::cout << left     <<  setw(20) << sstrX.str( ) ;
+   std::cout << "      "
+             << " hitpos: " << setw(8)  <<  setprecision(3) << right << hitpos[0] << setw(8) << setprecision(3) << hitpos[1]  << setw(8) << setprecision(3) << hitpos[2]              << " X: mean:" << setw(8)  <<  setprecision(3) << right << static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstrX.str( ) ] ) -> mean()  
+             << " rms:"     << setw(8)  <<  setprecision(3) << right << static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstrX.str( ) ] ) -> rms() << "   " ;
+   std::cout << " residual X: "  << setw(8)  <<  setprecision(3) << right << residualGBL[0]  
+                                 << " " << setw(8)  <<  setprecision(3) << right << residualGBLErr[0] ;
+
+   std::cout << std::endl;
 } 
 
+if(
+  ( streamlog_level(MESSAGE4) && ( event->getEventNumber()/1000*1000   == event->getEventNumber()) )
+   ||
+  ( streamlog_level(MESSAGE3) && ( event->getEventNumber()/100*100   == event->getEventNumber()) )
+   ||
+  ( streamlog_level(MESSAGE2) && ( event->getEventNumber()/10*10   == event->getEventNumber()) )
+  )
+{
+//   std::cout << left     <<  setw(20) << sstrY.str( )
+//             << " Y: mean:" << setw(8)  <<  setprecision(3) << right << static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstrY.str( ) ] ) -> mean()  
+//             << " rms:"     << setw(8)  <<  setprecision(3) << right << static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ sstrY.str( ) ] ) -> rms() ;
+//   std::cout << " residual Y: "  << setw(8)  <<  setprecision(3) << right << residualGBL[1]  
+//                                 << " " << setw(8)  <<  setprecision(3) << right << residualGBLErr[1] ;
+//   std::cout << endl;
+}
 
-   streamlog_out(MESSAGE1) << " residual X: "  << setw(8)  <<  setprecision(3) << right << residualGBL[0]  
-                                        << " " << setw(8)  <<  setprecision(3) << right << residualGBLErr[0] ;
-   streamlog_out(MESSAGE1) << " residual Y: "  << setw(8)  <<  setprecision(3) << right << residualGBL[1]  
-                                        << " " << setw(8)  <<  setprecision(3) << right << residualGBLErr[1] ;
-   streamlog_out(MESSAGE1) << endl;
-
-continue;
                         if ( planeID == 5 ) { 
                           streamlog_out( MESSAGE1 ) << planeID 
                           << " res[0]:" << std::setw( 15 ) << std::setprecision( 5 ) << residualGBL[0] << " +- " 
@@ -666,15 +589,12 @@ void EUTelProcessorTrackingGBLTrajectory::processEvent(LCEvent * evt) {
 
         if (  nTracks > 0 ) {
             _trackFitter->SetTrackCandidates(trackCandidates);
+
             _trackFitter->TrackCandidatesToGBLTrajectories();
+ 
             _trackFitter->PerformFitGBLTrajectories();
 
-            if( _alignmentMode > 0 )
-            {
-             _trackFitter->PerformMille();
-            }
-
-//            plotTracks(event);
+            plotTracks(event);
 
           
             // Write track candidates collection
@@ -683,8 +603,16 @@ void EUTelProcessorTrackingGBLTrajectory::processEvent(LCEvent * evt) {
                 evt->getCollection( _tracksOutputCollectionName );
             } catch ( ... ) {
                 streamlog_out( DEBUG1 ) << "Adding collection " << _tracksOutputCollectionName << endl;
-                evt->addCollection( static_cast < EUTelGBLFitter* > ( _trackFitter )->GetFitHitsVec( ), _tracksOutputCollectionName+"_fittedhits" );
-                evt->addCollection( static_cast < EUTelGBLFitter* > ( _trackFitter )->GetFitTrackVec( ), _tracksOutputCollectionName );
+
+               	LCCollectionVec* fithitvec = new LCCollectionVec( LCIO::TRACKERHIT);   
+  		Utility::copyLCCollectionHitVec( _trackFitter->getFitHitVec( ), fithitvec );
+		if(  fithitvec != 0 )
+               	evt->addCollection( fithitvec, _tracksOutputCollectionName+"_fittedhits" );
+
+        	LCCollectionVec* fittrackvec = new LCCollectionVec( LCIO::TRACK );
+	 	Utility::copyLCCollectionTrackVec( _trackFitter->getFitTrackVec(), fittrackvec );
+		if(  fittrackvec != 0 )
+		evt->addCollection( fittrackvec, _tracksOutputCollectionName );
             }   
 
         } 
@@ -712,31 +640,6 @@ void EUTelProcessorTrackingGBLTrajectory::end() {
     delete _trackFitter;
 }
 
-
-void EUTelProcessorTrackingGBLTrajectory::fillMilleParametersLabels() {
-
-    int currentLabel = 0;
-    const IntVec sensorIDsVec = geo::gGeometry().sensorIDsVec();
-    IntVec::const_iterator itr;
-    for( itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {
-        _xShiftsMap.insert( make_pair(*itr, ++currentLabel) );
-    }
-    for( itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {
-        _yShiftsMap.insert( make_pair(*itr, ++currentLabel) );
-    }
-    for( itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {
-        _zShiftsMap.insert( make_pair(*itr, ++currentLabel) );
-    }
-    for( itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {
-        _xRotationsMap.insert( make_pair(*itr, ++currentLabel) );
-    }
-    for( itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {
-        _yRotationsMap.insert( make_pair(*itr, ++currentLabel) );
-    }
-    for( itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {
-        _zRotationsMap.insert( make_pair(*itr, ++currentLabel) );
-    }
-}
 
 void EUTelProcessorTrackingGBLTrajectory::bookHistograms() {
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)

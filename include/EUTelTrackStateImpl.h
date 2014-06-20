@@ -57,33 +57,33 @@ namespace eutelescope {
     /** The location of the track state.
      *  Location can be set to: AtIP, AtFirstHit, AtLastHit, AtCalorimeter, AtVertex, AtOther
      */
-    virtual int getLocation() const ;
+    	virtual int getLocation() const ;
 
-    virtual float getTx() const ;
+    	virtual float getTx() const ;
 
-    virtual float getTy() const ;
+    	virtual float getTy() const ;
 
-    virtual float getX() const ;
+    	virtual float getX() const ;
 
-    virtual float getY() const ;
+    	virtual float getY() const ;
 
-    virtual float getInvP() const ;
+    	virtual float getInvP() const ;
 
-		virtual float getZParameter() const ;
+	virtual float getZParameter() const ;
 
-    TVectorD getTrackStateVec() const ;
+    	TVectorD getTrackStateVec() const ;
 
-		TMatrixDSym getTrackStateCov() const;
+	TMatrixDSym getTrackStateCov() const;
 
-		virtual TVector3 getPfromCartesianParameters() const;
+	virtual TVector3 getPfromCartesianParameters() const;
 
-		virtual int findIntersectionWithCertainID(int , float*) const; 
+	virtual int findIntersectionWithCertainID(int , float*) const; 
 
-		virtual TVector3 getXYZfromArcLength( float s ) const;
+	virtual TVector3 getXYZfromArcLength( float s ) const;
 
-    virtual TMatrixD getH() const;
+    	virtual TMatrixD getH() const;
 
-		virtual TMatrix  getPropagationJacobianF( float dz );
+	virtual TMatrix  getPropagationJacobianF( float dz );
 
 		virtual EVENT::TrackerHit* getHit() const;
 
@@ -91,17 +91,18 @@ namespace eutelescope {
      * the order of parameters is:   x, y, tx, ty, q/p.
      * So we have cov(x,x), cov( y, x ), cov( y, y ), ...
      */
-    virtual const EVENT::FloatVec & getCovMatrix() const ;
+    	virtual const EVENT::FloatVec & getCovMatrix() const ;
 
     /** Reference point of the track parameters, e.g. the origin at the IP, or the position
      *  of the first/last hits or the entry point into the calorimeter.
      */
+
     virtual const float* getReferencePoint() const ;
 
 		virtual TVector3 getIncidenceVectorInLocalFrame();
-   
 
-    virtual void Print();
+   
+    	virtual void Print() const;
 
     // setters 
     virtual void  setLocation( int location ) ;

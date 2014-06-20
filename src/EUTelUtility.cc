@@ -41,7 +41,7 @@ namespace eutelescope {
          * 0   -1       1       2       ...    -1      k-2
          * 
          * Array of indices of not excluded planes
-         * 
+        & * 
          * @param indexconverter 
          *              returned indices of not excluded planes
          * 
@@ -211,7 +211,7 @@ namespace eutelescope {
             try {
                 hotPixelCollectionVec = static_cast<LCCollectionVec*> (event->getCollection(hotPixelCollectionName));
             } catch (...) {
-                streamlog_out(MESSAGE) << "hotPixelCollectionName " << hotPixelCollectionName.c_str() << " not found" << std::endl;
+                streamlog_out( MESSAGE4 ) << "hotPixelCollectionName " << hotPixelCollectionName.c_str() << " not found" << std::endl;
                 return hotPixelMap;
             }
 
@@ -353,5 +353,85 @@ namespace eutelescope {
  
         }
   
+ 	void copyLCCollectionHitVec(  IMPL::LCCollectionVec* input, LCCollectionVec* output ) {
+
+
+		// Prepare output collection
+//	 	LCFlagImpl flag( input->getFlag() );
+//	  	flag.setBit( LCIO::TRBIT_HITS );
+//	  	output->setFlag( flag.getFlag( ) );
+
+
+	   	// deep copy of all elements  - requires clone of original elements
+	   	//
+	   	int nElements = input->getNumberOfElements() ;
+
+           	streamlog_out( DEBUG4) << "HIT : copy of n= " << nElements << " element for collection : " << input->getTypeName() << std::endl;
+
+	   	for(int i=0; i< nElements ; i++){
+	        	IMPL::TrackerHitImpl *hit = static_cast<IMPL::TrackerHitImpl *> ( input->getElementAt(i) );
+                	streamlog_out( DEBUG4) << " i= " << i << " type : " << hit->getType() << std::endl;
+    			output->push_back(  hit ) ;
+	   	}
+        
+        }
+
+
+	//Create once per event     !!
+	void copyLCCollectionTrackVec(  IMPL::LCCollectionVec* input,  LCCollectionVec* output) {
+
+		// Prepare output collection
+  		LCFlagImpl flag( input->getFlag() );
+  		flag.setBit( LCIO::TRBIT_HITS );
+  		output->setFlag( flag.getFlag( ) );
+
+	   	// deep copy of all elements  - requires clone of original elements
+	   	//
+	   	int nElements = input->getNumberOfElements() ;
+
+                streamlog_out( DEBUG4) << "TRACK: copy of n= " << nElements << " element for collection : " << input->getTypeName() << std::endl;
+   
+	   	for(int i=0; i< nElements ; i++){
+                        IMPL::TrackImpl *trk = static_cast<IMPL::TrackImpl *> ( input->getElementAt(i) );
+                        streamlog_out( DEBUG4) << " i= " << i << 
+                                                    " type : " << trk->getType() << 
+                                                    " nstates: " << trk->getTrackStates().size() << 
+                                                    " nhits: " << trk->getTrackerHits().size() << 
+                                                    std::endl;
+	     		output->push_back(  trk ) ;
+//	     		output->push_back(  trk->clone() ) ;
+	   	}
+        
+        }
+
+        float DoubleToFloat(double a){
+                return static_cast<float> (a);  
+        }
+
+        float* toFloatN(double* a, int N){ 
+           float *vec = new float[N];
+           for(int i=0;i<N;i++) {
+             vec[i] = DoubleToFloat( a[i]) ;  
+           }
+           return vec;            
+        }
+
+        const float* HitCDoubleShiftCFloat(const double* hitPosition, TVectorD& residual ){
+
+             double hit[3];
+             std::copy(hitPosition, hitPosition+3, hit);             
+
+             hit[0] -= residual[0]; // why minus?
+             hit[1] -= residual[1];
+
+             streamlog_out(MESSAGE1)  << " " << hit[0]  << " " << hit[1] << " " << hit[2]  << std::endl;
+
+             float *opoint = new float[3];
+                         
+ //c++0x     std::ransform( hitPointLocal, hitPointLocal+3, const_cast<float*>( temp), [](double hitPointLocal){return (float) hitPointLocal;}  );
+             std::transform( hit, hit+3, opoint, DoubleToFloat  );
+	  return opoint;
+        }
+
   }
 }

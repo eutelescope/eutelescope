@@ -5,6 +5,13 @@
 // C++
 #include <string>
 
+// MARLIN
+#include "marlin/Exceptions.h"
+#include "marlin/Global.h"
+#include "marlin/Processor.h"
+#include "marlin/VerbosityLevels.h"
+
+
 // LCIO
 #include "lcio.h"
 
@@ -18,7 +25,11 @@
 #include <AIDA/IHistogram1D.h>
 #include <AIDA/IHistogram2D.h>
 #include <AIDA/IProfile1D.h>
-#endif
+#include <marlin/AIDAProcessor.h>
+#include <AIDA/IHistogramFactory.h>
+#include <AIDA/IProfile2D.h>
+#endif // MARLIN_USE_AIDA
+
 
 #ifdef USE_GBL
 
@@ -71,8 +82,6 @@ namespace eutelescope {
          */
         virtual void end();
 
-        /** Generate MILLEPEDE parameter labels */
-        void fillMilleParametersLabels();
  
     public:
         /** Histogram booking */
@@ -95,56 +104,18 @@ namespace eutelescope {
 
         // Optional parameters
 
-        /** Alignment mode */
-        int _alignmentMode;
-      
+     
         /** GBL M-estimator option */
         string _mEstimatorType;
         
-        /** Parameter ids */
-        map<int,int> _xShiftsMap;
-        
-        /** Parameter ids */
-        map<int,int> _yShiftsMap;
-        
-        /** Parameter ids */
-        map<int,int> _zShiftsMap;
-        
-        /** Parameter ids */
-        map<int,int> _xRotationsMap;
-        
-        /** Parameter ids */
-        map<int,int> _yRotationsMap;
-        
-        /** Parameter ids */
-        map<int,int> _zRotationsMap;
-        
-        /** Mille binary filename */
-        string _milleBinaryFilename;
-
-        /** Mille steering filename */
-        string _milleSteeringFilename;
-
-        /** Mille result filename */
-        string _milleResultFileName;
-        
-        /** GEAR new filename */
-        string _gear_aligned_file;
-
-
-        /** Allows user-added commands in the pede steering file */
-        StringVec _pedeSteerAddCmds;
-        
-        /** Alignment plane ids*/
-        IntVec _alignmentPlaneIds;
-        
+       
         /** plane ids*/
         IntVec _planeIds;
  
-        /** x Resolution of planes in AlignmentPlaneIds */
+        /** x Resolution of planes in PlaneIds */
         FloatVec _SteeringxResolutions;
  
-        /** y Resolution of planes in AlignmentPlaneIds */
+        /** y Resolution of planes in PlaneIds */
         FloatVec _SteeringyResolutions;
 
         /** Planes ids to be excluded from refit */
@@ -155,9 +126,6 @@ namespace eutelescope {
 
         /** Automatic pede run flag*/
         bool _runPede;
-        
-        /** Alignment constants file name */
-        string _alignmentConstantLCIOFile;
         
         /** TGeo geometry file name */
         string _tgeoFileName;
@@ -180,8 +148,6 @@ namespace eutelescope {
         /** Track fitter */
         EUTelTrackFitter *_trackFitter;
 
-        /** Mille */
-        gbl::MilleBinary * _milleGBL;
 
 
     protected:

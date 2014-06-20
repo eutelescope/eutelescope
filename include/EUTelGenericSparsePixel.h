@@ -91,9 +91,6 @@ public:
 
 protected:
      
-//    //! The chip
-//    short _chip;
-
     //! The x coordinate
     short _xCoord;
     
@@ -105,6 +102,7 @@ protected:
 
 	//! The time
     short _time;
+
 };
 
 } //namespace eutelescope

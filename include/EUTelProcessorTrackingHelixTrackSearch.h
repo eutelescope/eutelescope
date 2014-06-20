@@ -21,7 +21,7 @@
 #endif
 
 // EUTELESCOPE
-#include "EUTelTrackFitter.h"
+#include "EUTelGBLFitter.h"
 #include "EUTelGeometryTelescopeGeoDescription.h"
 #include "EUTelUtility.h"
 #include "EUTelTrackImpl.h"

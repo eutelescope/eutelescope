@@ -222,7 +222,7 @@ namespace eutelescope {
 	const TMatrixD& getPropagationJacobianF( const EUTelTrackStateImpl*, double );
         
         /** Update Kalman gain matrix */
-        const TMatrixD& updateGainK( const EUTelTrackStateImpl*, const EVENT::TrackerHit* );
+        TMatrixD updateGainK( const EUTelTrackStateImpl*, const EVENT::TrackerHit* );
 
         /** Propagate track state */
         void propagateTrackState( EUTelTrackStateImpl* );

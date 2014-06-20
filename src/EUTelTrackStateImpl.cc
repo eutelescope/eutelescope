@@ -97,15 +97,15 @@ namespace eutelescope {
     float EUTelTrackStateImpl::getX() const { return _x ; }
     float EUTelTrackStateImpl::getY() const { return _y ;}
     float EUTelTrackStateImpl::getInvP() const { return _invp ;}
-		float EUTelTrackStateImpl::getZParameter() const { return _zparameter; }
+    float EUTelTrackStateImpl::getZParameter() const { return _zparameter; }
 
 		EVENT::TrackerHit* EUTelTrackStateImpl::getHit() const { return _hit; }
 
     const EVENT::FloatVec& EUTelTrackStateImpl::getCovMatrix() const { return _covMatrix ; }
     const float* EUTelTrackStateImpl::getReferencePoint() const { return _reference ; }
 
-    void EUTelTrackStateImpl::Print(){
-      streamlog_out(MESSAGE0) << "location " << getLocation() << " Tx:"<<getTx() << " Ty:"<<getTy() << " X:"<<getX() << " Y:"<<getY() << " InvP:"<<getInvP() << std::endl;  
+    void EUTelTrackStateImpl::Print() const {
+      	streamlog_out(MESSAGE0) << "location " << getLocation() << " Tx:"<<getTx() << " Ty:"<<getTy() << " X:"<<getX() << " Y:"<<getY() << " InvP:"<<getInvP() << std::endl;  
     }
 
     void  EUTelTrackStateImpl::setLocation( int location ){
@@ -216,36 +216,38 @@ TVector3 EUTelTrackStateImpl::getXYZfromArcLength( float s ) const {
      * @return 
      */
 TMatrixD EUTelTrackStateImpl::getH() const {
+
 	streamlog_out( DEBUG2 ) << "EUTelTrackStateImpl::getH()---------------------------------------BEGIN" << std::endl;
 	
-  TMatrixD H(2,5);//2x5 matrix. 
-  H.Zero();
-  double trkPoint[] = { _x, _y, _zparameter };
-  const TGeoHMatrix* globalH = geo::gGeometry().getHMatrix( trkPoint );
+  	TMatrixD H(2,5);//2x5 matrix. 
+  	H.Zero();
+  	double trkPoint[] = { _x, _y, _zparameter };
+  	const TGeoHMatrix* globalH = geo::gGeometry().getHMatrix( trkPoint );
         
-  if ( streamlog_level(DEBUG0) ) {
-  	streamlog_out( DEBUG0 ) << "Local to global transformation matrix:" << std::endl;
-    globalH->Print();
-  }
+  	if ( streamlog_level(DEBUG0) ) {
+  		streamlog_out( DEBUG0 ) << "Local to global transformation matrix:" << std::endl;
+		globalH->Print();
+	}
         
 	const TGeoHMatrix& globalHInv = globalH->Inverse();
 	if ( streamlog_level(DEBUG0) ) {
 		streamlog_out( DEBUG0 ) << "Global to local transformation matrix:" << std::endl;
-  	globalHInv.Print();
+	 	globalHInv.Print();
 	}
         
 	const double* rotation = globalHInv.GetRotationMatrix();
 
-  // Fill necessary components
-  H[0][0] = rotation[0]; // x projection, xx
-  H[0][1] = rotation[1]; // y projection, xy
-  H[1][0] = rotation[3]; // x projection, yx
-  H[1][1] = rotation[4]; // y projection, yy
+	// Fill necessary components
+  	H[0][0] = rotation[0]; // x projection, xx
+  	H[0][1] = rotation[1]; // y projection, xy
+  	H[1][0] = rotation[3]; // x projection, yx
+  	H[1][1] = rotation[4]; // y projection, yy
 
 	if ( streamlog_level(DEBUG0) ) {
 		streamlog_out( DEBUG0 ) << "Matrix H:" << std::endl;
 		H.Print();
-  }
+	}
+
  	streamlog_out( DEBUG2 ) << "EUTelTrackStateImpl::getH()---------------------------------------END" << std::endl;       
 	return H;
 }
@@ -256,20 +258,20 @@ TMatrixD EUTelTrackStateImpl::getH() const {
      * @return vector of parameters
      */
 TVectorD EUTelTrackStateImpl::getTrackStateVec() const {
-	streamlog_out( DEBUG2 ) << "EUTelTrackStateImpl::getTrackStateVec()------------------------BEGIN" << std::endl;
-  TVectorD x(5);
-  x[0] = _x;
-  x[1] = _y;
-  x[2] = _tx;
-  x[3] = _ty;
-  x[4] = _invp;
+	streamlog_out( DEBUG1 ) << "EUTelTrackStateImpl::getTrackStateVec()------------------------BEGIN" << std::endl;
+        TVectorD x(5);
+	  x[0] = _x;
+	  x[1] = _y;
+	  x[2] = _tx;
+	  x[3] = _ty;
+	  x[4] = _invp;
         
 	if ( streamlog_level(DEBUG0) ){
 		streamlog_out( DEBUG0 ) << "Track state:" << std::endl;
-    x.Print();
+		Print();
 	}
-  	streamlog_out( DEBUG2 ) << "EUTelTrackStateImpl::getTrackStateVec()------------------------END" << std::endl;
- 		return x;
+  	streamlog_out( DEBUG1 ) << "EUTelTrackStateImpl::getTrackStateVec()------------------------END" << std::endl;
+ 	return x;
 }
     
 /** Convert track state parameter covariances to the matrix object. Useful for matrix operations
@@ -278,29 +280,29 @@ TVectorD EUTelTrackStateImpl::getTrackStateVec() const {
 * @return covariance matrix
 */
 TMatrixDSym EUTelTrackStateImpl::getTrackStateCov() const {
-	streamlog_out( DEBUG2 ) << "EUTelTrackStateImpl::getTrackStateCov()----------------------------BEGIN" << std::endl;
-  TMatrixDSym C(5);        
-  const EVENT::FloatVec& trkCov = getCovMatrix();        
-  C.Zero();
+
+	streamlog_out( DEBUG1 ) << "EUTelTrackStateImpl::getTrackStateCov()----------------------------BEGIN" << std::endl;
+	TMatrixDSym C(5);        
+	const EVENT::FloatVec& trkCov = getCovMatrix();        
+	C.Zero();
             
 	C[0][0] = trkCov[0]; 
-  C[1][0] = trkCov[1];  C[1][1] = trkCov[2]; 
-  C[2][0] = trkCov[3];  C[2][1] = trkCov[4];  C[2][2] = trkCov[5]; 
-  C[3][0] = trkCov[6];  C[3][1] = trkCov[7];  C[3][2] = trkCov[8];  C[3][3] = trkCov[9]; 
-  C[4][0] = trkCov[10]; C[4][1] = trkCov[11]; C[4][2] = trkCov[12]; C[4][3] = trkCov[13]; C[4][4] = trkCov[14]; 
+	C[1][0] = trkCov[1];  C[1][1] = trkCov[2]; 
+	C[2][0] = trkCov[3];  C[2][1] = trkCov[4];  C[2][2] = trkCov[5]; 
+	C[3][0] = trkCov[6];  C[3][1] = trkCov[7];  C[3][2] = trkCov[8];  C[3][3] = trkCov[9]; 
+	C[4][0] = trkCov[10]; C[4][1] = trkCov[11]; C[4][2] = trkCov[12]; C[4][3] = trkCov[13]; C[4][4] = trkCov[14]; 
         
 	if ( streamlog_level(DEBUG0) ){
-  	streamlog_out( DEBUG0 ) << "Track state covariance matrix:" << std::endl;
-    C.Print();
-  }
+  		streamlog_out( DEBUG0 ) << "Track state covariance matrix:" << std::endl;
+	    	C.Print();
+	}
         
 	return C;
-	streamlog_out( DEBUG2 ) << "EUTelTrackStateImpl::getTrackStateCov()----------------------------END" << std::endl;
+	streamlog_out( DEBUG1 ) << "EUTelTrackStateImpl::getTrackStateCov()----------------------------END" << std::endl;
 }
 
 
 TMatrix EUTelTrackStateImpl::getPropagationJacobianF( float dz ){
-
 
 	TVector3 pVec = getPfromCartesianParameters();
 	TMatrix jacobian(5,5);
@@ -309,7 +311,6 @@ TMatrix EUTelTrackStateImpl::getPropagationJacobianF( float dz ){
 	jacobian = geo::gGeometry().getPropagationJacobianF(  _x, _y, _zparameter, pVec[0],pVec[1],pVec[2], _beamQ, dz);
 
 	return jacobian;
-
 }
 
 TVector3 EUTelTrackStateImpl::getIncidenceVectorInLocalFrame(){
