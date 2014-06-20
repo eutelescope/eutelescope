@@ -65,6 +65,12 @@ namespace eutelescope {
 	
 			  virtual void end();
 
+		protected: 
+
+				std::string _milleBinaryFilename;
+				std::string _milleSteeringFilename;
+				std::string _milleResultFileName;
+				std::string _gear_aligned_file;
 
 };
 
