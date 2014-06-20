@@ -14,6 +14,7 @@ namespace eutelescope {
 
    public:
         EUTelMillepede();
+				EUTelMillepede(int alignmentMode);
 
         ~EUTelMillepede();
 
@@ -27,6 +28,8 @@ namespace eutelescope {
 		protected:
 			int alignmentMode;
 			Utility::AlignmentMode _alignmentMode =  Utility::noAlignment;
+			TMatrixD* _jacobian; 
+			std::vector<int>* _globalLabels;
 
     };
 

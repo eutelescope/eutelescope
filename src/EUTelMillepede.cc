@@ -4,39 +4,60 @@ namespace eutelescope {
 
 	EUTelMillepede::EUTelMillepede(){}
 
+	EUTelMillepede::EUTelMillepede(int alignmentMode){
+	SetAlignmentMode(alignmentMode);
+	}
+
 	EUTelMillepede::~EUTelMillepede(){}
 
 	void EUTelMillepede::SetAlignmentMode(int alignmentMode){
 
-		//This is important since we need to know how millepede numbers theres axis. Ithink this is the reason for this step //////BEGIN        
+		//This is important since we need to know how millepede numbers theres axis. I think this is the reason for this step. Also set the matrix size //////BEGIN        
 		if (alignmentMode==0) {
+			streamlog_out(WARNING1) << "No alignment was chosen "<< std::endl;	
 			_alignmentMode = Utility::noAlignment;
 		} else if (alignmentMode==1) {
     	_alignmentMode = Utility::XYShift;
+			_globalLabels->resize(2);
+    	_jacobian->ResizeTo(2, 2);
     } else if (alignmentMode==2) {
-    	_alignmentMode = Utility::XYShiftXYRot; 
+    	_alignmentMode = Utility::XYShiftXYRot;
+  		_globalLabels->resize(3);
+    	_jacobian->ResizeTo(2, 3);
+ 
     } else if (alignmentMode==3) {
     	_alignmentMode = Utility::XYZShiftXYRot;
+  	_globalLabels->resize(4);
+    _jacobian->ResizeTo(2, 4);
+
    	} else if (alignmentMode==4) {
     	_alignmentMode = Utility::XYShiftYZRotXYRot;
+		_globalLabels->resize(4);
+		_jacobian->ResizeTo(2, 4);
+
    	} else if (alignmentMode==5) {
 			_alignmentMode = Utility::XYShiftXZRotXYRot;
+		_globalLabels->resize(4);
+		_jacobian->ResizeTo(2, 4);
+
     } else if (alignmentMode==6) {
     	_alignmentMode = Utility::XYShiftXZRotYZRotXYRot;
+		_globalLabels->resize(5);
+		_jacobian->ResizeTo(2, 5);
+
     } else if (alignmentMode==7) {
     	_alignmentMode = Utility::XYZShiftXZRotYZRotXYRot;
+		_globalLabels->resize(6);
+ 		_jacobian->ResizeTo(2, 6);
+
     }else {
     	streamlog_out(WARNING3) << "Alignment mode was not recognized:" << _alignmentMode << std::endl;
       streamlog_out(WARNING3) << "Alignment will not be performed" << std::endl;
       alignmentMode = Utility::noAlignment;
     }
-		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////END
-
-		//Now set the correct size of the jacobian and global vector.////////////////////////////?BEGIN
-
-
-
-	}
+  	_jacobian->Zero();
+		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////END	
+}
 
 	//This will take as input a EUTelState and output the correct jacobian. Need to set the aligment mode before.
 	int EUTelMillepede::CreateAlignmentToMeasurementJacobian( EUTelTrackStateImpl* state, TMatrixD* Jacobian ){
