@@ -18,9 +18,10 @@
 // lcio includes <.h>
 #include "IMPL/TrackerHitImpl.h"
 #include "IMPL/TrackImpl.h"
-
-
 #include "EVENT/LCEvent.h"
+
+// ROOT
+#include "TVectorD.h" 
 
 // system includes <>
 #include <iomanip>
@@ -216,6 +217,14 @@ namespace eutelescope {
  
         /** */
         void copyLCCollectionTrackVec( LCCollectionVec*, LCCollectionVec* );
+
+        /**  type conversion  */
+        float DoubleToFloat(double a);
+        float* DoubleToFloatN(double* a, int N);
+
+        /** */ 
+        const float* HitCDoubleShiftCFloat(const double* , TVectorD& );
+
         /** Tokenize string */
                 /**
          * String tokenizer

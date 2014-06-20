@@ -404,6 +404,34 @@ namespace eutelescope {
         
         }
 
+        float DoubleToFloat(double a){
+                return static_cast<float> (a);  
+        }
+
+        float* toFloatN(double* a, int N){ 
+           float *vec = new float[N];
+           for(int i=0;i<N;i++) {
+             vec[i] = DoubleToFloat( a[i]) ;  
+           }
+           return vec;            
+        }
+
+        const float* HitCDoubleShiftCFloat(const double* hitPosition, TVectorD& residual ){
+
+             double hit[3];
+             std::copy(hitPosition, hitPosition+3, hit);             
+
+             hit[0] -= residual[0]; // why minus?
+             hit[1] -= residual[1];
+
+             streamlog_out(MESSAGE1)  << " " << hit[0]  << " " << hit[1] << " " << hit[2]  << std::endl;
+
+             float *opoint = new float[3];
+                         
+ //c++0x     std::ransform( hitPointLocal, hitPointLocal+3, const_cast<float*>( temp), [](double hitPointLocal){return (float) hitPointLocal;}  );
+             std::transform( hit, hit+3, opoint, DoubleToFloat  );
+	  return opoint;
+        }
 
   }
 }
