@@ -14,6 +14,7 @@
 // LCIO
 #include <EVENT/LCCollection.h>
 #include "lcio.h"
+//#include "LCIOSTLTypes.h"
 
 // MARLIN
 #include "marlin/Exceptions.h"
@@ -43,7 +44,6 @@
 using namespace lcio;
 using namespace marlin;
 using namespace std;
-
 namespace eutelescope {
 
  class EUTelProcessorGBLFitCandidates : public Processor {
@@ -130,4 +130,4 @@ namespace eutelescope {
 
 #endif // USE_GBL
 
-#endif	/* EUTELESCOPEPROCESSORTRACKINGGBLTRACKFIT_H */
+#endif	/* EUTELESCOPEPROCESSORGBLFITCANDIDATES_H */

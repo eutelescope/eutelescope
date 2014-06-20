@@ -1861,7 +1861,7 @@ void EUTelGBLFitter::CreateAlignmentToMeasurementJacobian(std::vector< gbl::GblP
 		
 		if(state != NULL and state->getHit() != NULL){
 		
-			/////////////////////////////////////////////////////////////////////////////////////////BEGIN  Using the state information in local coordinates create the matrix
+	/*		/////////////////////////////////////////////////////////////////////////////////////////BEGIN  Using the state information in local coordinates create the matrix
       alDer[0][0] = -1.0; // dx/dx
       alDer[0][1] =  0.0; // dx/dy
       alDer[1][0] =  0.0; // dy/dx
@@ -1930,7 +1930,7 @@ void EUTelGBLFitter::CreateAlignmentToMeasurementJacobian(std::vector< gbl::GblP
 				//////////////////////////////////////////////////////////////////////////////////////////////////////////END OF CREATION OF MATRIX
 
 
-
+*/
 
 
 		}//END OF IF STATEMENT IF THE THERE IS A STATE WITH HIT
