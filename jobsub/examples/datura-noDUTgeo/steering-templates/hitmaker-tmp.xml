@@ -1,6 +1,5 @@
-<?xml version="1.0" encoding="us-ascii"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!-- ?xml-stylesheet type="text/xsl" href="http://ilcsoft.desy.de/marlin/marlin.xsl"? -->
-<!-- ?xml-stylesheet type="text/xsl" href="marlin.xsl"? -->
 
 
 <marlin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ilcsoft.desy.de/marlin/marlin.xsd">
@@ -27,11 +26,11 @@
  <processor name="AIDA" type="AIDAProcessor">
  <!--Processor that handles AIDA files. Creates on directory per processor.  Processors only need to create and fill the histograms, clouds and tuples. Needs to be the first ActiveProcessor-->
   <!-- compression of output file 0: false >0: true (default) -->
-  <parameter name="Compress" type="int">1 </parameter>
+  <parameter name="Compress" type="int"> 1 </parameter>
   <!-- filename without extension-->
   <parameter name="FileName" type="string" value= "@HistogramPath@/run@RunNumber@-hitmaker-histo"/>
   <!-- type of output file root (default) or xml )-->
-  <parameter name="FileType" type="string">root </parameter>
+  <parameter name="FileType" type="string"> root </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
  </processor>
@@ -47,7 +46,7 @@
   <!--This is the name of the LCIO file name with the output offset db (add .slcio)-->
   <!--parameter name="OffsetDBFile" type="string">offset-db.slcio </parameter-->
   <!--Cluster (pulse) collection name-->
-  <parameter name="PulseCollectionName" type="string" lcioInType="TrackerPulse">cluster_m26_free </parameter>
+  <parameter name="PulseCollectionName" type="string" lcioInType="TrackerPulse"> cluster_m26_free </parameter>
   <!--This is the name of the reference hit collection initialized in this processor. This collection provides the reference vector to correctly determine a plane corresponding to a global hit coordiante.-->
   <!--parameter name="ReferenceCollection" type="string">referenceHit </parameter-->
   <!--This is the file where the reference hit collection is stored-->
@@ -61,7 +60,7 @@
   <!--Name of LCIO db file where alignment constantds will be stored-->
   <parameter name="AlignmentConstantLCIOFile" type="string"> @DatabasePath@/run@RunNumber@-prealign-db.slcio </parameter>
   <!--How many events should be used for an approximation to the X,Y shifts (pre-alignment)? (default=50000)-->
-  <parameter name="Events" type="int">9999 </parameter>
+  <parameter name="Events" type="int"> 9999 </parameter>
   <!--SensorID of fixed plane-->
   <!--parameter name="FixedPlane" type="int">0 </parameter-->
   <!--Switch on or off the histogram filling-->
@@ -69,7 +68,7 @@
   <!--This is the name of the hot pixel collection that clusters should be checked against (optional). -->
   <!--parameter name="HotPixelCollectionName" type="string"> </parameter-->
   <!--The name of the input hit collection-->
-  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit">hit </parameter>
+  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
   <!--If there are more then this number of correlated hits (planes->track candidate) (default=5)-->
   <!--parameter name="MinNumberOfCorrelatedHits" type="int">5 </parameter-->
   <!--reference hit collection name -->
@@ -103,9 +102,9 @@
   <!--List of cluster collections-->
   <parameter name="InputClusterCollections" type="StringVec" lcioInType="TrackerPulse"> </parameter>
   <!--Hit collection name-->
-  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit">hit </parameter>
+  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
   <!--If there are more then this number of correlated hits (planes->track candidate) (default=5)-->
-  <parameter name="MinNumberOfCorrelatedHits" type="int">5 </parameter>
+  <parameter name="MinNumberOfCorrelatedHits" type="int"> 5 </parameter>
   <!--This is the name of the LCIO file name with the output offset db (add .slcio)-->
   <!--parameter name="OffsetDBFile" type="string">offset-db.slcio </parameter-->
   <!--reference hit collection name -->
@@ -139,7 +138,7 @@
   <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
   <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   <!--Set it to true to remove intermediate EORE in merged runs-->
-  <parameter name="SkipIntermediateEORE" type="bool">true </parameter>
+  <parameter name="SkipIntermediateEORE" type="bool"> true </parameter>
   <!--will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW-->
   <!--parameter name="SplitFileSizekB" type="int">1992294 </parameter-->
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
@@ -149,7 +148,7 @@
  <processor name="EUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">
  <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
   <!--Print event number for every n-th event-->
-  <parameter name="EveryNEvents" type="int">2500 </parameter>
+  <parameter name="EveryNEvents" type="int"> 2500 </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
   <!--print the event timestamp as read from LCIO-->

@@ -1,6 +1,5 @@
-<?xml version="1.0" encoding="us-ascii"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!-- ?xml-stylesheet type="text/xsl" href="http://ilcsoft.desy.de/marlin/marlin.xsl"? -->
-<!-- ?xml-stylesheet type="text/xsl" href="marlin.xsl"? -->
 
 <marlin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ilcsoft.desy.de/marlin/marlin.xsd">
 
@@ -63,9 +62,9 @@
   <!--parameter name="LCIOWriteMode" type="string">WRITE_NEW </parameter-->
   <!--This float number [0,1] represents the maximum allowed firing frequency
 within the selected number of event per cycle-->
-  <parameter name="MaxAllowedFiringFreq" type="float"> 0.01 </parameter>
+  <parameter name="MaxAllowedFiringFreq" type="float"> 0.001 </parameter>
   <!--The number of events to be considered for each update cycle-->
-  <parameter name="NoOfEvents" type="int"> 5000 </parameter>
+  <parameter name="NoOfEvents" type="int"> 9999 </parameter>
   <!--The sensorID for the generated collection (one per detector)-->
   <parameter name="SensorIDVec" type="IntVec"> 0 1 2 3 4 5</parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->

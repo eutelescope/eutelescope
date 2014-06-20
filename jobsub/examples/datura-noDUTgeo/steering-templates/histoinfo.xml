@@ -53,8 +53,8 @@
 
 
     <!-- EUTelTestFitter -->
-    <histo name="logChi2"     type="H1D" xBin="200" xMin="-1"      xMax="9"/>
-    <histo name="nTrack"      type="H1D" xBin="10"  xMin="-0.5"    xMax="9.5"/>
+    <histo name="logChi2"     type="H1D" xBin="200" xMin="-1"      xMax="3"/>
+    <histo name="nTrack"      type="H1D" xBin="10"  xMin="-0.5"    xMax="10.5"/>
     <histo name="nHit"        type="H1D" xBin="10"  xMin="-0.01"   xMax="9.99"/>
 
 
