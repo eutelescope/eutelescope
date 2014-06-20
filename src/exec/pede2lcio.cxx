@@ -77,8 +77,9 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
 
     map< int, EUTelAlignmentConstant* >::const_iterator itrAlignmentConstant;
 
-    streamlog_out(MESSAGE4) << "Plane ID" << setw(20) << "X shift" << setw(20) << "Y shift" << setw(20) << "Z shift" << setw(20)
-                     << "X ROTATION" << setw(20) << "Y ROTATION" << setw(20) << "Z ROTATION" << std::endl;
+    streamlog_out(MESSAGE4) <<  setw(10) << "" << setw(8) << "Plane ID" << setw(13) << setprecision(4) << "X "       << setw(13) << setprecision(4) << "Y "       << setw(13) << setprecision(4) << "Z "
+                                                                        << setw(13) << setprecision(4) << "ZY(Xrot)" << setw(13) << setprecision(4) << "ZX(Yrot)" << setw(13) << setprecision(4) << "XY(Zrot)" 
+                                                                        << setw(13) << setprecision(4) << "     in global coordinates, the shifts (X,Y,Z)  " << std::endl;
 
     double xplane = 0.;
     double yplane = 0.;
@@ -97,19 +98,21 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
 
 
             xplane = geo::gGeometry().siPlaneXPosition(sensorID) ; 
-            xplane = geo::gGeometry().siPlaneYPosition(sensorID) ; 
-            xplane = geo::gGeometry().siPlaneZPosition(sensorID) ;
+            yplane = geo::gGeometry().siPlaneYPosition(sensorID) ; 
+            zplane = geo::gGeometry().siPlaneZPosition(sensorID) ;
  	    xrot   = geo::gGeometry().siPlaneXRotation(sensorID) ;// /DEG;
  	    yrot   = geo::gGeometry().siPlaneYRotation(sensorID) ;// /DEG;
 	    zrot   = geo::gGeometry().siPlaneZRotation(sensorID) ;// /DEG;
 
-            streamlog_out(MESSAGE4) << "former " << sensorID << 
-                                 setw(20) << xplane   << 
-                                 setw(20) << yplane   << 
-                                 setw(20) << zplane   << 
-                 		 setw(20) << xrot     <<
-                                 setw(20) << yrot     <<
-                                 setw(20) << zrot     << std::endl;
+            streamlog_out(MESSAGE4) << std::endl << 
+                                 setw(10) << "original " << std::fixed <<
+                                 setw( 8) << sensorID << 
+                                 setw(13) << setprecision(4) << xplane   << 
+                                 setw(13) << setprecision(4) << yplane   << 
+                                 setw(13) << setprecision(4) << zplane   << 
+                 		 setw(13) << setprecision(4) << xrot     <<
+                                 setw(13) << setprecision(4) << yrot     <<
+                                 setw(13) << setprecision(4) << zrot     << std::endl;
 
 	    TRotation invR;
 	    invR.RotateX( xrot );
@@ -137,11 +140,11 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
 //	    delta_r0 = invR*(invDeltaR*delta_r0);
             delta_r0 = invR*delta_r0;
  
-             streamlog_out(MESSAGE4) << "invR:"<< std::endl;
-             streamlog_out(MESSAGE4) << " X: " << setw(20) << invR[0][0] << " " << invR[0][1] << " " << invR[0][2]  << std::endl;
-             streamlog_out(MESSAGE4) << " Y: " << setw(20) << invR[1][0] << " " << invR[1][1] << " " << invR[1][2]  << std::endl;
-             streamlog_out(MESSAGE4) << " Z: " << setw(20) << invR[2][0] << " " << invR[2][1] << " " << invR[2][2]  << std::endl;
-             streamlog_out(MESSAGE4) << ""<< std::endl;
+             streamlog_out(MESSAGE2) << "invR:"<< std::endl;
+             streamlog_out(MESSAGE2) << " X: " << setw(20) << invR[0][0] << " " << invR[0][1] << " " << invR[0][2]  << std::endl;
+             streamlog_out(MESSAGE2) << " Y: " << setw(20) << invR[1][0] << " " << invR[1][1] << " " << invR[1][2]  << std::endl;
+             streamlog_out(MESSAGE2) << " Z: " << setw(20) << invR[2][0] << " " << invR[2][1] << " " << invR[2][2]  << std::endl;
+             streamlog_out(MESSAGE2) << ""<< std::endl;
  
            
 //	    delta_r0 *= invR;
@@ -155,39 +158,40 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
             geo::gGeometry().setPlaneYPosition(sensorID,  yplane  +  delta_r0.Y() ) ;
             geo::gGeometry().setPlaneZPosition(sensorID,  zplane  +  delta_r0.Z() ) ;
             geo::gGeometry().setPlaneXRotation(sensorID, (xrot  - dalpha)  ) ;
-            geo::gGeometry().setPlaneXRotation(sensorID, (yrot  - dbeta )  ) ;
-            geo::gGeometry().setPlaneXRotation(sensorID, (zrot  - dgamma)  ) ;
+            geo::gGeometry().setPlaneYRotation(sensorID, (yrot  - dbeta )  ) ;
+            geo::gGeometry().setPlaneZRotation(sensorID, (zrot  - dgamma)  ) ;
 //#endif
 //#endif       
-            streamlog_out(MESSAGE4) << "align by shifts (in local frame) " << std::endl;
-            streamlog_out(MESSAGE4) << " by: X' " << setw(20) << dr0x;
-            streamlog_out(MESSAGE4) << " by: Y' " << setw(20) << dr0y;
-            streamlog_out(MESSAGE4) << " by: Z' " << setw(20) << dr0z << std::endl;
+            streamlog_out(MESSAGE4) << setw(10) << "align  " << setw( 8) << " " ;
+            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) << dr0x;
+            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) << dr0y;
+            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) << dr0z; 
 
-            streamlog_out(MESSAGE4) << "align by rotations (in local frame) " << std::endl;
-            streamlog_out(MESSAGE4) << " by: al " << setw(20) << dalpha;
-            streamlog_out(MESSAGE4) << " by: be " << setw(20) << dbeta;
-            streamlog_out(MESSAGE4) << " by: ga " << setw(20) << dgamma << std::endl;
+            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) << dalpha;
+            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) << dbeta;
+            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) << dgamma ;
 
-            streamlog_out(MESSAGE4) << "rotated from local to global: " << std::endl;
-            streamlog_out(MESSAGE4) << " by: X" << setw(20) <<  delta_r0.X() ;
-            streamlog_out(MESSAGE4) << " by: Y" << setw(20) <<  delta_r0.Y();
-            streamlog_out(MESSAGE4) << " by: Z" << setw(20) <<  delta_r0.Z() << std::endl;
+            streamlog_out(MESSAGE4) << setw( 3) << " " ;
+            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) <<  delta_r0.X() ;
+            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) <<  delta_r0.Y();
+            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) <<  delta_r0.Z() << std::endl;
 
             xplane = geo::gGeometry().siPlaneXPosition(sensorID) ; 
-            xplane = geo::gGeometry().siPlaneYPosition(sensorID) ; 
-            xplane = geo::gGeometry().siPlaneZPosition(sensorID) ;
+            yplane = geo::gGeometry().siPlaneYPosition(sensorID) ; 
+            zplane = geo::gGeometry().siPlaneZPosition(sensorID) ;
  	    xrot   = geo::gGeometry().siPlaneXRotation(sensorID) ;// /DEG;
  	    yrot   = geo::gGeometry().siPlaneYRotation(sensorID) ;// /DEG;
 	    zrot   = geo::gGeometry().siPlaneZRotation(sensorID) ;// /DEG;
 
-            streamlog_out(MESSAGE4) << "new : " << sensorID << 
-                                 setw(20) << xplane   << 
-                                 setw(20) << yplane   << 
-                                 setw(20) << zplane   << 
-                 		 setw(20) << xrot     <<
-                                 setw(20) << yrot     <<
-                                 setw(20) << zrot     << std::endl;
+            streamlog_out(MESSAGE4) <<
+                                 setw(10) << "new : " << 
+                                 setw( 8) << " "  << 
+                                 setw(13) << setprecision(4) << xplane   << 
+                                 setw(13) << setprecision(4) << yplane   << 
+                                 setw(13) << setprecision(4) << zplane   << 
+                 		 setw(13) << setprecision(4) << xrot     <<
+                                 setw(13) << setprecision(4) << yrot     <<
+                                 setw(13) << setprecision(4) << zrot     << std::endl;
 
 
         }
@@ -201,7 +205,17 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
 
 int main( int argc, char ** argv ) {
 
-   
+  streamlog::out.init( std::cout , "pede2lcio output stream") ;
+//  streamlog::out.addLevelName<streamlog::MESSAGE0>() ;
+
+    streamlog::logscope scope(streamlog::out) ;
+  
+//    scope.setName( "Subroutine") ;
+    scope.setLevel<streamlog::MESSAGE3>() ;
+//    scope.setLevel( "MESSAGE3" )  ;
+
+
+
   auto_ptr< AnyOption > option( new AnyOption );
 
   string usageString = 
