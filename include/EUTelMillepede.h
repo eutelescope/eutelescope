@@ -5,6 +5,9 @@
 #include "EUTelTrackStateImpl.h"
 
 
+#include <fstream>
+
+
 // system includes <>
 #include <map>
 #include <string>
@@ -13,6 +16,7 @@
 #include <iomanip>
 #include <iterator>
 #include <algorithm>
+#include <cstdio>
 
 namespace eutelescope {
 
@@ -40,7 +44,11 @@ namespace eutelescope {
 
 				void FillMilleParametersLabels();
 
-				void writeMilleSteeringFile();
+				int writeMilleSteeringFile();
+
+				void runPede();
+	
+				void parseMilleOutput();
 
 
 				/////////////////////////set stuff!
@@ -50,18 +58,26 @@ namespace eutelescope {
 				void setXRotationsFixed(lcio::IntVec xRotfixed);
 				void setYRotationsFixed(lcio::IntVec yRotfixed);
 				void setZRotationsFixed(lcio::IntVec zRotfixed);
+				void setPlanesExclude(lcio::IntVec exclude);
+				void setSteeringFileName(std::string name);
+				void setBinaryFileName(std::string binary);
 
 		protected:
-			int alignmentMode;
-			Utility::AlignmentMode _alignmentMode =  Utility::noAlignment;
-			TMatrixD* _jacobian; 
-			std::vector<int> _globalLabels;
-			std::map<int, int> _xShiftsMap;
-			std::map<int, int> _yShiftsMap;
-			std::map<int, int> _zShiftsMap;
-      std::map<int, int> _xRotationsMap;
-      std::map<int, int> _yRotationsMap;
-      std::map<int, int> _zRotationsMap;
+				int alignmentMode;
+				Utility::AlignmentMode _alignmentMode =  Utility::noAlignment;
+				TMatrixD* _jacobian; 
+				std::vector<int> _globalLabels;
+				std::map<int, int> _xShiftsMap;
+				std::map<int, int> _yShiftsMap;
+				std::map<int, int> _zShiftsMap;
+      	std::map<int, int> _xRotationsMap;
+      	std::map<int, int> _yRotationsMap;
+      	std::map<int, int> _zRotationsMap;
+
+        /** Mille steering filename */
+				std::string _milleSteeringFilename;
+
+				std::string _milleBinaryFilename;
 
   		 /** Alignment X shift plane ids to be fixed */
 			lcio::IntVec _fixedAlignmentXShfitPlaneIds;
@@ -80,6 +96,9 @@ namespace eutelescope {
         
         /** Alignment Z rotation plane ids to be fixed */
 				lcio::IntVec _fixedAlignmentZRotationPlaneIds;
+
+        /** Alignment plane ids of planes that are excluded*/
+				lcio::IntVec _alignmentPlaneIdsExclude;
 
     };
 

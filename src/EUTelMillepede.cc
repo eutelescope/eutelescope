@@ -1,6 +1,8 @@
 #include "EUTelMillepede.h"
 
+
 using namespace std;
+
 
 
 namespace eutelescope {
@@ -267,12 +269,186 @@ void EUTelMillepede::setZRotationsFixed(lcio::IntVec zRotfixed){
 	_fixedAlignmentZRotationPlaneIds = zRotfixed;
 }
 
-  
-void EUTelMillepede::writeMilleSteeringFile(){
-
-
-
+void EUTelMillepede::setPlanesExclude(lcio::IntVec exclude){
+	_alignmentPlaneIdsExclude = exclude;
 }
+
+void EUTelMillepede::setBinaryFileName(std::string binary){
+	_milleBinaryFilename = binary;
+}
+
+
+
+void EUTelMillepede::setSteeringFileName(std::string name){
+
+	_milleSteeringFilename = name;
+}
+
+
+  
+int EUTelMillepede::writeMilleSteeringFile(){
+
+streamlog_out(DEBUG2) << "EUTelMillepede::writeMilleSteeringFile------------------------------------BEGIN" << endl;
+
+	// Prepare millepede steering files only if alignment was requested //////////////Check the alignment and that you can open the steering file name/////////BEGIN
+	if (_alignmentMode == Utility::noAlignment) {
+		streamlog_out(WARNING1) << "Alignment steering file will not be created" << endl;
+		return -999;
+	}
+	
+	ofstream steerFile;
+  steerFile.open(_milleSteeringFilename.c_str());
+
+	if (!steerFile.is_open()) {
+		streamlog_out(ERROR2) << "Could not open steering file." << _milleSteeringFilename << endl;
+		return -999;
+  }
+	//////////////////////////////////////////////////////////////////////////////////////////////////END 
+
+	
+	steerFile << "Cfiles" << endl;
+  steerFile << _milleBinaryFilename << endl;
+  steerFile << endl;
+    //
+  steerFile << "Parameter" << endl;
+
+  int counter = 0;
+/*
+////////////////////////////////////////////////////////////////////////// loop over all planes BEGIN
+// @TODO assumes that planes have ids 0..._nplanes !generaly wrong            
+	for (unsigned int help = 0; help < geo::gGeometry().nPlanes(); help++) {
+
+///////////////////////////////////////////////////////////////////////////////////////////////////Determine if the plane should be excluded or if some of alignment parameters are fixed. BEGIN
+	const int sensorId = geo::gGeometry().sensorZOrderToID(help);
+  const bool isPlaneExcluded = std::find(_alignmentPlaneIdsExclude.begin(), _alignmentPlaneIdsExclude.end(), sensorId) == _alignmentPlaneIdsExclude.end();
+        
+  // check if plane has to be used as fixed
+  const bool isFixedXShift = std::find(_fixedAlignmentXShfitPlaneIds.begin(), _fixedAlignmentXShfitPlaneIds.end(), sensorId) != _fixedAlignmentXShfitPlaneIds.end();
+  const bool isFixedYShift = std::find(_fixedAlignmentYShfitPlaneIds.begin(), _fixedAlignmentYShfitPlaneIds.end(), sensorId) != _fixedAlignmentYShfitPlaneIds.end();
+  const bool isFixedZShift = std::find(_fixedAlignmentZShfitPlaneIds.begin(), _fixedAlignmentZShfitPlaneIds.end(), sensorId) != _fixedAlignmentZShfitPlaneIds.end();
+  const bool isFixedXRotation = std::find(_fixedAlignmentXRotationPlaneIds.begin(), _fixedAlignmentXRotationPlaneIds.end(), sensorId) != _fixedAlignmentXRotationPlaneIds.end();
+  const bool isFixedYRotation = std::find(_fixedAlignmentYRotationPlaneIds.begin(), _fixedAlignmentYRotationPlaneIds.end(), sensorId) != _fixedAlignmentYRotationPlaneIds.end();
+  const bool isFixedZRotation = std::find(_fixedAlignmentZRotationPlaneIds.begin(), _fixedAlignmentZRotationPlaneIds.end(), sensorId) != _fixedAlignmentZRotationPlaneIds.end();
+
+////////////////////////////////////////////////////////////////////////////////////////////////////END
+
+  // if plane not excluded
+  if ( !isPlaneExcluded ) {
+///////////////////////////////////////////////////////////////////////////////////////////Now fill string that will go into steering depending on if fixed or not BEGIN
+		const string initUncertaintyXShift = (isFixedXShift) ? "-1." : "0.01";
+    const string initUncertaintyYShift = (isFixedYShift) ? "-1." : "0.01";
+    const string initUncertaintyZShift = (isFixedZShift) ? "-1." : "0.01";
+    const string initUncertaintyXRotation = (isFixedXRotation) ? "-1." : "0.01";
+    const string initUncertaintyYRotation = (isFixedYRotation) ? "-1." : "0.01";
+    const string initUncertaintyZRotation = (isFixedZRotation) ? "-1." : "0.01";
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////END
+
+
+          
+    const double initXshift = (isFixedXShift) ? 0. : _seedAlignmentConstants._xResiduals[sensorId]/_seedAlignmentConstants._nxResiduals[sensorId];
+    const double initYshift = (isFixedYShift) ? 0. : _seedAlignmentConstants._yResiduals[sensorId]/_seedAlignmentConstants._nyResiduals[sensorId];
+            
+            if( fitter->GetAlignmentMode()==Utility::XYZShiftXYRot ) {
+                steerFile << left << setw(25) << _xShiftsMap[sensorId] << setw(25) << -initXshift << setw(25) << initUncertaintyXShift
+                           << setw(25) << " ! X shift " << setw(25) << sensorId << endl;
+                steerFile << left << setw(25) << _yShiftsMap[sensorId] << setw(25) << -initYshift << setw(25) << initUncertaintyYShift
+                           << setw(25) << " ! Y shift " << setw(25) << sensorId << endl;
+                steerFile << left << setw(25) << _zShiftsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyZShift
+                           << setw(25) << " ! Z shift " << setw(25) << sensorId << endl;
+                steerFile << left << setw(25) << _zRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyZRotation
+                          << setw(25) << " ! XY rotation " << sensorId << endl;
+            } else if( fitter->GetAlignmentMode()==Utility::XYShiftYZRotXYRot ) {
+                steerFile << left << setw(25) << _xShiftsMap[sensorId] << setw(25) << -initXshift << setw(25) << initUncertaintyXShift
+                          << setw(25) << " ! X shift " << sensorId << endl;
+                steerFile << left << setw(25) << _yShiftsMap[sensorId] << setw(25)  << -initYshift << setw(25) << initUncertaintyYShift
+                          << setw(25) << " ! Y shift " << sensorId << endl;
+                steerFile << left << setw(25) << _xRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyXRotation
+                          << setw(25) << " ! YZ rotation " << sensorId << endl;
+                steerFile << left << setw(25) << _zRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyZRotation
+                          << setw(25) << " ! XY rotation " << sensorId << endl;
+            } else if( fitter->GetAlignmentMode()==Utility::XYShiftXZRotXYRot ) {
+                steerFile << left << setw(25) << _xShiftsMap[sensorId] << setw(25) << -initXshift << setw(25) << initUncertaintyXShift
+                          << setw(25) << " ! X shift " << sensorId << endl;
+                steerFile << left << setw(25) << _yShiftsMap[sensorId] << setw(25) << -initYshift << setw(25) << initUncertaintyYShift
+                          << setw(25) << " ! Y shift " << sensorId << endl;
+                steerFile << left << setw(25) << _yRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyYRotation
+                          << setw(25) << " ! XZ rotation " << sensorId << endl;
+                steerFile << left << setw(25) << _zRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyZRotation
+                         << setw(25)  << " ! XY rotation " << sensorId << endl;
+            } else if( fitter->GetAlignmentMode()==Utility::XYShiftXZRotYZRotXYRot ) {
+                steerFile << left << setw(25) << _xShiftsMap[sensorId] << setw(25) << -initXshift << setw(25) << initUncertaintyXShift
+                          << setw(25) << " ! X shift " << sensorId << endl;
+                steerFile << left << setw(25) << _yShiftsMap[sensorId] << setw(25) << -initYshift << setw(25) << initUncertaintyYShift
+                          << setw(25) << " ! Y shift " << sensorId << endl;
+                steerFile << left << setw(25) << _yRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyYRotation
+                          << setw(25) << " ! XZ rotation " << sensorId << endl;
+                steerFile << left << setw(25) << _xRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyXRotation
+                          << setw(25) << " ! YZ rotation " << sensorId << endl;
+                steerFile << left << setw(25) << _zRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyZRotation
+                         << setw(25)  << " ! XY rotation " << sensorId << endl;
+            } else if( fitter->GetAlignmentMode()==Utility::XYZShiftXZRotYZRotXYRot ) {
+                steerFile << left << setw(25) << _xShiftsMap[sensorId] << setw(25) << -initXshift << setw(25) << initUncertaintyXShift
+                          << setw(25) << " ! X shift " << sensorId << endl;
+                steerFile << left << setw(25) << _yShiftsMap[sensorId] << setw(25) << -initYshift << setw(25) << initUncertaintyYShift
+                          << setw(25) << " ! Y shift " << sensorId << endl;
+                steerFile << left << setw(25) << _zShiftsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyZShift
+                          << setw(25) << " ! Z shift " << sensorId << endl;
+                steerFile << left << setw(25) << _yRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyYRotation
+                          << setw(25) << " ! XZ rotation " << sensorId << endl;
+                steerFile << left << setw(25) << _xRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyXRotation
+                          << setw(25) << " ! YZ rotation " << sensorId << endl;
+                steerFile << left << setw(25) << _zRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyZRotation
+                         << setw(25)  << " ! XY rotation " << sensorId << endl;
+            } else if ( fitter->GetAlignmentMode()==Utility::XYShiftXYRot ) {
+                steerFile << left << setw(25) << _xShiftsMap[sensorId] << setw(25) << -initXshift << setw(25) << initUncertaintyXShift
+                          << setw(25) << " ! X shift " << sensorId << endl;
+                steerFile << left << setw(25) << _yShiftsMap[sensorId] << setw(25) << -initYshift << setw(25) << initUncertaintyYShift
+                          << setw(25) << " ! Y shift " << sensorId << endl;
+                steerFile << left << setw(25) << _zRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyZRotation
+                          << setw(25) << " ! XY rotation " << sensorId << endl;
+            } else if ( fitter->GetAlignmentMode()==Utility::XYShift ) {
+                steerFile << left << setw(25) << _xShiftsMap[sensorId] << setw(25) << -initXshift << setw(25) << initUncertaintyXShift
+                          << setw(25) << " ! X shift " << sensorId << endl;
+                steerFile << left << setw(25) << _yShiftsMap[sensorId] << setw(25) << -initYshift << setw(25) << initUncertaintyYShift
+                          << setw(25) << " ! Y shift " << sensorId << endl;
+                steerFile << left << setw(25) << _zRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << "-1.0"
+                          << setw(25) << " ! XY rotation fixed" << sensorId << endl;
+            }  
+
+            counter++;
+
+        } // end if plane not excluded
+
+    } // end loop over all planes
+
+//    steerFile << "method diagonalization 15 0.1" << endl;
+//    steerFile << "hugecut 500." << endl;
+//    steerFile << "!chiscut 50. 25." << endl;
+//    steerFile << "outlierdownweighting 4" << endl;
+//    steerFile << "dwfractioncut 0.2" << endl;
+
+    steerFile << endl;
+    for ( StringVec::iterator it = _pedeSteerAddCmds.begin( ); it != _pedeSteerAddCmds.end( ); ++it ) {
+        // two backslashes will be interpreted as newline
+        if ( *it == "\\\\" )
+            steerFile << endl;
+        else
+            steerFile << *it << " ";
+    }
+    steerFile << endl;
+    steerFile << "end" << endl;
+
+    steerFile.close();
+
+    if( _alignmentMode != Utility::noAlignment ) streamlog_out(MESSAGE5) << "File " << _milleSteeringFilename << " written." << endl;   */
+
+  
+}
+
+void EUTelMillepede::runPede() {}
+
+void EUTelMillepede::parseMilleOutput(){}
 
 
 } // namespace eutelescope
