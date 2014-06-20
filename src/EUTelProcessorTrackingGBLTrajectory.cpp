@@ -98,7 +98,6 @@ _histoInfoFileName("histoinfo.xml"),
 _trackCandidatesInputCollectionName("TrackCandidatesCollection"),
 _tracksOutputCollectionName("GBLTrackCollection"),
 _trackFitter(0),
-_milleGBL(0),
 _nProcessedRuns(0),
 _nProcessedEvents(0),
 _flag_nohistos(false),
@@ -140,8 +139,8 @@ _aidaProfileMap2D()
  
     //
     registerOptionalParameter("Planes", "Ids of planes to be used ", _planeIds, IntVec());
-    registerOptionalParameter("xResolutionPlane", "x resolution of planes given in AlignmentPlanes", _SteeringxResolutions, FloatVec());
-    registerOptionalParameter("yResolutionPlane", "y resolution of planes given in AlignmentPlanes", _SteeringyResolutions, FloatVec());
+    registerOptionalParameter("xResolutionPlane", "x resolution of planes given in Planes", _SteeringxResolutions, FloatVec());
+    registerOptionalParameter("yResolutionPlane", "y resolution of planes given in Planes", _SteeringyResolutions, FloatVec());
    
    
     registerOptionalParameter("ExcludePlanesFromFit", "Ids of planes that will be excluded from the fit", _excludePlanesFromFit, IntVec());
@@ -155,31 +154,6 @@ _aidaProfileMap2D()
 
     registerOptionalParameter("HistogramInfoFilename", "Name of histogram info xml file", _histoInfoFileName, string("histoinfo.xml"));
 
-    // MILLEPEDE specific parameters
-    registerOptionalParameter("AlignmentMode", "Alignment mode specifies alignment degrees of freedom to be considered\n"
-            "0 - No alignment at all. Simply fit tracks assuming that alignment is correct\n"
-            "1 - Alignment of XY shifts\n"
-            "2 - Alignment of XY shifts + rotations around Z\n"
-            "3 - Alignment of XYZ shifts + rotations around Z\n"
-            "4 - Alignment of XY shifts + rotations around X and Z\n"
-            "5 - Alignment of XY shifts + rotations around Y and Z\n"
-            "6 - Alignment of XY shifts + rotations around X,Y and Z\n"
-            "7 - Alignment of XYZ shifts + rotations around X,Y and Z\n",
-            _alignmentMode, static_cast<int> (0));
-
-    registerOptionalParameter("MilleBinaryFilename", "Name of the Millepede binary file", _milleBinaryFilename, std::string("mille.bin"));
-
-    registerOptionalParameter("MilleSteeringFilename", "Name of the Millepede steering file to be created", _milleSteeringFilename, std::string("pede-steer.txt"));
-    
-    registerOptionalParameter("MilleResultFilename", "Name of the Millepede result file", _milleResultFileName, std::string("millepede.res"));
-    
-    registerOptionalParameter("GearAlignedFile", "Suffix to add to the new Gear with alignment corrections", _gear_aligned_file, std::string("gear-00001-aligned.xml"));
-
-    registerOptionalParameter("PedeSteeringAdditionalCmds","FOR EXPERTS: List of commands that should be included in the pede steering file. Use '\\' to seperate options and introduce a line break.",_pedeSteerAddCmds, StringVec());
-
-    registerOptionalParameter("MilleMaxChi2Cut", "Maximum chi2 of a track candidate that goes into millepede", _maxChi2Cut, double(1000.));
-
-    registerOptionalParameter("AlignmentPlanes", "Ids of planes to be used in alignment", _alignmentPlaneIds, IntVec());
  
 }
 
@@ -187,9 +161,6 @@ void EUTelProcessorTrackingGBLTrajectory::init() {
 
     streamlog_out(DEBUG2) << "EUTelProcessorTrackingGBLTrajectory::init( )" << std::endl;
 
-    // Free file resource before running pede exe
-    delete _milleGBL;
- 
     // usually a good idea to
     printParameters();
 
@@ -206,41 +177,6 @@ void EUTelProcessorTrackingGBLTrajectory::init() {
     {
         streamlog_out(DEBUG) << "Initialisation of track fitter" << std::endl;
 
-        const unsigned int reserveSize = 80000;
-        _milleGBL = new gbl::MilleBinary(_milleBinaryFilename, reserveSize);
-
-        if (_milleGBL == 0) {
-
-            streamlog_out(ERROR) << "Can't allocate an instance of mMilleBinary. Stopping ..." << std::endl;
-            throw UnknownDataTypeException("MilleBinary was not created");
-        }
-
-        Utility::AlignmentMode alignmentMode = Utility::noAlignment;
-        if (_alignmentMode==0) {
-            alignmentMode = Utility::noAlignment;
-        } else if (_alignmentMode==1) {
-            alignmentMode = Utility::XYShift;
-        } else if (_alignmentMode==2) {
-            alignmentMode = Utility::XYShiftXYRot; 
-        } else if (_alignmentMode==3) {
-            alignmentMode = Utility::XYZShiftXYRot;
-        } else if (_alignmentMode==4) {
-            alignmentMode = Utility::XYShiftYZRotXYRot;
-        } else if (_alignmentMode==5) {
-            alignmentMode = Utility::XYShiftXZRotXYRot;
-        } else if (_alignmentMode==6) {
-            alignmentMode = Utility::XYShiftXZRotYZRotXYRot;
-        } else if (_alignmentMode==7) {
-            alignmentMode = Utility::XYZShiftXZRotYZRotXYRot;
-        }else {
-            streamlog_out(WARNING3) << "Alignment mode was not recognized:" << _alignmentMode << std::endl;
-            streamlog_out(WARNING3) << "Alignment will not be performed" << std::endl;
-            alignmentMode = Utility::noAlignment;
-        }
-
-        // fill MILLEPEDE alignment parameters labels
-        fillMilleParametersLabels();
- 
         // Initialize GBL fitter
         EUTelGBLFitter* Fitter = new EUTelGBLFitter("GBLFitter");
  
@@ -251,16 +187,6 @@ void EUTelProcessorTrackingGBLTrajectory::init() {
         Fitter->setParamterIdYResolutionVec(_SteeringyResolutions);
 
         Fitter->setExcludeFromFitPlanes( _excludePlanesFromFit );
-
-// alignment:
-        Fitter->SetAlignmentMode( alignmentMode);
-        Fitter->setParamterIdXShiftsMap(_xShiftsMap);
-        Fitter->setParamterIdYShiftsMap(_yShiftsMap);
-        Fitter->setParamterIdZShiftsMap(_zShiftsMap);
-        Fitter->setParamterIdXRotationsMap(_xRotationsMap);
-        Fitter->setParamterIdYRotationsMap(_yRotationsMap);
-        Fitter->setParamterIdZRotationsMap(_zRotationsMap);
-        Fitter->SetMilleBinary(_milleGBL);
 
         Fitter->SetBeamEnergy(_eBeam);
         Fitter->SetBeamCharge(_qBeam);
@@ -663,14 +589,10 @@ void EUTelProcessorTrackingGBLTrajectory::processEvent(LCEvent * evt) {
 
         if (  nTracks > 0 ) {
             _trackFitter->SetTrackCandidates(trackCandidates);
+
             _trackFitter->TrackCandidatesToGBLTrajectories();
  
-            if( _alignmentMode == 0 )
-            {
-              _trackFitter->PerformFitGBLTrajectories();
-            }else{
-              _trackFitter->PerformMille();
-            }
+            _trackFitter->PerformFitGBLTrajectories();
 
             plotTracks(event);
 
@@ -718,31 +640,6 @@ void EUTelProcessorTrackingGBLTrajectory::end() {
     delete _trackFitter;
 }
 
-
-void EUTelProcessorTrackingGBLTrajectory::fillMilleParametersLabels() {
-
-    int currentLabel = 0;
-    const IntVec sensorIDsVec = geo::gGeometry().sensorIDsVec();
-    IntVec::const_iterator itr;
-    for( itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {
-        _xShiftsMap.insert( make_pair(*itr, ++currentLabel) );
-    }
-    for( itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {
-        _yShiftsMap.insert( make_pair(*itr, ++currentLabel) );
-    }
-    for( itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {
-        _zShiftsMap.insert( make_pair(*itr, ++currentLabel) );
-    }
-    for( itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {
-        _xRotationsMap.insert( make_pair(*itr, ++currentLabel) );
-    }
-    for( itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {
-        _yRotationsMap.insert( make_pair(*itr, ++currentLabel) );
-    }
-    for( itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {
-        _zRotationsMap.insert( make_pair(*itr, ++currentLabel) );
-    }
-}
 
 void EUTelProcessorTrackingGBLTrajectory::bookHistograms() {
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
