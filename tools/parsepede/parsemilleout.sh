@@ -122,8 +122,8 @@ if [ $# == 5 ]; then
   exit $E_BADFILE
  fi
 
+ echo pede2lcio -g out.pede2lcio $lcio_file $oldgear_file $newgear_file
  pede2lcio -g out.pede2lcio $lcio_file $oldgear_file $newgear_file
-
 
  rm -f out.pede2lcio
  rm -f file1 file2
