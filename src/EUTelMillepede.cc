@@ -7,8 +7,8 @@ namespace eutelescope {
 	EUTelMillepede::~EUTelMillepede(){}
 
 	void EUTelMillepede::SetAlignmentMode(int alignmentMode){
-        
-		_alignmentMode = Utility::noAlignment;
+
+		//This is important since we need to know how millepede numbers theres axis. Ithink this is the reason for this step //////BEGIN        
 		if (alignmentMode==0) {
 			_alignmentMode = Utility::noAlignment;
 		} else if (alignmentMode==1) {
@@ -30,85 +30,109 @@ namespace eutelescope {
       streamlog_out(WARNING3) << "Alignment will not be performed" << std::endl;
       alignmentMode = Utility::noAlignment;
     }
+		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////END
+
+		//Now set the correct size of the jacobian and global vector.////////////////////////////?BEGIN
+
+
+
 	}
 
-	
-
 	//This will take as input a EUTelState and output the correct jacobian. Need to set the aligment mode before.
-	int EUTelMillepede::CreateAlignmentToMeasurementJacobian( EUTelTrackStateImpl* state, TMatrixD Jacobian ){
+	int EUTelMillepede::CreateAlignmentToMeasurementJacobian( EUTelTrackStateImpl* state, TMatrixD* Jacobian ){
+
+		if(state->getHit() == NULL){
+			streamlog_out( WARNING1 ) << "This state contains no hit. Will continue but this can not be used for alignment. So why do you want the matrix????" << std::endl;
+		}
+
+		if(_alignmentMode == Utility::noAlignment){
+			streamlog_out( WARNING1 ) << "You have not set the alignment mode OR have set it to no alignment. Either way this function must end!" << std::endl;
+			return -999;
+		}
+
+		TVector3 incidenceVecLocal = state->getIncidenceVectorInLocalFrame();
+
+		float TxLocal =  incidenceVecLocal[0]/incidenceVecLocal[2];
+		float TyLocal =  incidenceVecLocal[1]/incidenceVecLocal[2];
+		const float* localpos = state->getReferencePoint();
 		
-	/*		/////////////////////////////////////////////////////////////////////////////////////////BEGIN  Using the state information in local coordinates create the matrix
-      alDer[0][0] = -1.0; // dx/dx
-      alDer[0][1] =  0.0; // dx/dy
-      alDer[1][0] =  0.0; // dy/dx
-      alDer[1][1] = -1.0; // dy/dy
-        globalLabels[0] = _parameterIdXShiftsMap[iPlane]; // dx
-        globalLabels[1] = _parameterIdYShiftsMap[iPlane]; // dy
+
+		CreateAlignmentToMeasurementJacobian( *localpos,*(localpos+1), TxLocal, TyLocal,Jacobian );
+
+	} 
+
+// Jacobian from below looks like //   (-1   0  -y   -dx/dz   x*dx/dz   -y*dx/dz)( x local )
+																  //   (0  -1 	x   -dy/dz   x*dy/dz   -y*dy/dz )( y local )
+                                  //                                             ( anti clockwise rotation around z) ?? Strange but whatever
+                                  //                                             (moving the plane in the z direction)
+																	//                                             (this is clockwise rotation look in + y direction )
+																	// 	                                           (this is clockwise rotations in the x direction  )
+		
+int EUTelMillepede::CreateAlignmentToMeasurementJacobian( float x,float y, float slopeXvsZ, float slopeYvsZ, TMatrixD* Jacobian ){			
+		
+	//////////////////////////////////////Moving the sensor in x and y. Obviously if the sensor move right the hit will appear to move left. Always create this!!!! BEGIN
+	Jacobian[0][0] = -1.0; // dxh/dxs      dxh => change in hit position         dxs => Change in sensor position
+	Jacobian[0][1] =  0.0; // dxh/dys
+	Jacobian[1][0] =  0.0; // dyh/dxs
+	Jacobian[1][1] = -1.0; // dyh/dys
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////END
 
 
-        if (_alignmentMode == Utility::XYShiftXYRot
+	//////////////////////////////////////////////////////////////Rotations around the z axis of sensor. Only create this if you want rotations around z. BEGIN
+	if (_alignmentMode == Utility::XYShiftXYRot
                 || _alignmentMode == Utility::XYZShiftXYRot
                 || _alignmentMode == Utility::XYShiftXZRotXYRot
                 || _alignmentMode == Utility::XYShiftYZRotXYRot
                 || _alignmentMode == Utility::XYShiftXZRotYZRotXYRot
                 || _alignmentMode == Utility::XYZShiftXZRotYZRotXYRot) {
-            alDer[0][2] = -predpos[1]; // dx/rot
-            alDer[1][2] =  predpos[0]; // dy/rot
-            globalLabels[2] = _parameterIdZRotationsMap[iPlane]; // rot z
-        }
+		Jacobian[0][2] = -y; // dxh/rotzs   rotzs => rotation of sensor around z axis
+		Jacobian[1][2] =  x; // dyh/rotzs
+	}
+	///////////////////////////////////////////////////////////////////////////////////////////////////////END
 
-
-        if (_alignmentMode == Utility::XYZShiftXYRot
+	///////////////////////////////////////////////////Moving the sensor in the z axis. Only create this if you want shifts in z BEGIN
+	if (_alignmentMode == Utility::XYZShiftXYRot
                 || _alignmentMode == Utility::XYZShiftXZRotYZRotXYRot) {
-            alDer[0][3] =   -xSlope; // dx/dz
-            alDer[1][3] =   -ySlope; // dy/dz
-            globalLabels[3] = _parameterIdZShiftsMap[iPlane]; // dz
-        }
+  	Jacobian[0][3] =   -slopeXvsZ; // dxh/dzs
+    Jacobian[1][3] =   -slopeYvsZ; // dyh/dzs
+  }
+	///////////////////////////////////////////////////////////////////////////////////////////END
 
-        if (_alignmentMode == Utility::XYZShiftXZRotYZRotXYRot) {
-            alDer[0][4] =   predpos[0]*xSlope; // dx/rot y
-            alDer[1][4] =   predpos[0]*ySlope; // dy/rot y
-            globalLabels[4] = _parameterIdYRotationsMap[iPlane]; // drot y  - actually X?
-            alDer[0][5] =  -predpos[1]*xSlope; // dx/rot x          
-            alDer[1][5] =  -predpos[1]*ySlope; // dy/rot x         
-            globalLabels[5] = _parameterIdXRotationsMap[iPlane]; // drot x  - actually Y?
-        }
-
-
-// partial alignment 
-        if (_alignmentMode == Utility::XYShiftXZRotXYRot) {
-            alDer[0][3] = predpos[0]*xSlope; // dx/rot y
-            alDer[1][3] = predpos[0]*ySlope; // dy/rot y
-            globalLabels[3] = _parameterIdYRotationsMap[iPlane]; // drot y
-        }
-        if (_alignmentMode == Utility::XYShiftYZRotXYRot) {
-            alDer[0][3] = predpos[1]*xSlope; // dx/rot x
-            alDer[1][3] = predpos[1]*ySlope; // dy/rot x
-            globalLabels[3] = _parameterIdXRotationsMap[iPlane]; // drot x
-        }
- 
-        if (_alignmentMode == Utility::XYShiftXZRotYZRotXYRot) {
-            alDer[0][3] = predpos[0]*xSlope; // dx/rot y
-            alDer[1][3] = predpos[0]*ySlope; // dy/rot y
-            globalLabels[3] = _parameterIdYRotationsMap[iPlane]; // drot y
-            alDer[0][4] = predpos[1]*xSlope; // dx/rot x
-            alDer[1][4] = predpos[1]*ySlope; // dy/rot x
-            globalLabels[4] = _parameterIdXRotationsMap[iPlane]; // drot x
-        }
-        if (_alignmentMode == Utility::XYShiftXZRotYZRotXYRot) {
-            alDer[0][3] = predpos[0]*xSlope; // dx/rot y
-            alDer[1][3] = predpos[0]*ySlope; // dy/rot y
-            globalLabels[3] = _parameterIdYRotationsMap[iPlane]; // drot y
-            alDer[0][4] = predpos[1]*xSlope; // dx/rot x
-            alDer[1][4] = predpos[1]*ySlope; // dy/rot x
-            globalLabels[4] = _parameterIdXRotationsMap[iPlane]; // drot x
-        }
-				//////////////////////////////////////////////////////////////////////////////////////////////////////////END OF CREATION OF MATRI
-
-*/
+		
+	///////////////////////////////////////////////////////////////Rotations around x and y axis. Only do this if you want to move everything. WHY NOT ALSO PARTIAL SHIFTS?????? BEGIN.
+	if (_alignmentMode == Utility::XYZShiftXZRotYZRotXYRot) {
+  	Jacobian[0][4] =   x*slopeXvsZ; // dxh/rotys
+    Jacobian[1][4] =   x*slopeYvsZ; // dyh/rotys
+    Jacobian[0][5] =  -y*slopeXvsZ; // dxh/rotxs          
+    Jacobian[1][5] =  -y*slopeYvsZ; // dyh/rotxs         
+  }
+	///////////////////////////////////////////////////////////////////////////////////END
 
 
+//This part is if there is only partial alignment. Therefore you need to overwrite some parts of the full size matrix we have just filled BEGIN
+	/////////////////////////////rotation around y axis BEGIN
+	if (_alignmentMode == Utility::XYShiftXZRotXYRot) {
+		Jacobian[0][3] = x*slopeXvsZ; // dxh/rotys
+   	Jacobian[1][3] = x*slopeYvsZ; // dyh/rotys
+  }
+	///////////////////////////////////////////////////////////////////////Rotation around x axis BEGIN
+	if (_alignmentMode == Utility::XYShiftYZRotXYRot) {
+  	Jacobian[0][3] = -y*slopeXvsZ; // dxh/rotxs  //Note if changed  the signs here since they were wrong I think. Should match smae calculation above
+    Jacobian[1][3] = -y*slopeYvsZ; // dyh/rotxs  
+  }
+	///////////////////////////////////////////////////////////////////////////////////////////END
+
+ 	///////////////This does all rotations but not z shift////////////////////////BEGIN
+	if (_alignmentMode == Utility::XYShiftXZRotYZRotXYRot) {
+		Jacobian[0][3] =  x*slopeXvsZ; // dxh/rotys
+		Jacobian[1][3] =  x*slopeYvsZ; // dyh/rotys
+		Jacobian[0][4] = -y*slopeXvsZ; // dxh/rotxs
+		Jacobian[1][4] = -y*slopeYvsZ; // dyh/rotxs
+  }
+	/////////////////////////////////////////////////////////////////////////////END
+					//////////////////////////////////////////////////////////////////////////////////////////////////////////END OF PARTIAL MATRIX FILL		
 }
+
 
 
 } // namespace eutelescope

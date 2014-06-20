@@ -97,6 +97,8 @@ namespace eutelescope {
      *  of the first/last hits or the entry point into the calorimeter.
      */
     virtual const float* getReferencePoint() const ;
+
+		virtual TVector3 getIncidenceVectorInLocalFrame();
    
 
     virtual void Print();

@@ -312,8 +312,20 @@ TMatrix EUTelTrackStateImpl::getPropagationJacobianF( float dz ){
 
 }
 
+TVector3 EUTelTrackStateImpl::getIncidenceVectorInLocalFrame(){
+	TVector3 pVec =	getPfromCartesianParameters();
+	TVector3 pVecUnit = pVec.Unit();
 
+	double globalVec[] = { pVecUnit[0],pVecUnit[1],pVecUnit[2] };
+	double localVec[3];
 
+	geo::gGeometry().master2LocalVec( _location ,globalVec, localVec );
+
+	TVector3 pVecUnitLocal;
+	pVecUnitLocal[0] = localVec[0]; 	pVecUnitLocal[1] = localVec[1]; 	pVecUnitLocal[2] = localVec[2]; 
+
+	return pVecUnitLocal;
+}
  			 
 
 } // namespace eutelescope
