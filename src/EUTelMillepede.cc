@@ -1,7 +1,9 @@
 #include "EUTelMillepede.h"
 
-
+using namespace lcio;
 using namespace std;
+using namespace marlin;
+using namespace eutelescope;
 
 
 
@@ -284,9 +286,15 @@ void EUTelMillepede::setSteeringFileName(std::string name){
 	_milleSteeringFilename = name;
 }
 
+void EUTelMillepede::setResultsFileName(std::string name){
+
+	_milleResultFileName = name;
+
+}
+
 
   
-int EUTelMillepede::writeMilleSteeringFile(){
+int EUTelMillepede::writeMilleSteeringFile(lcio::StringVec pedeSteerAddCmds){
 
 streamlog_out(DEBUG2) << "EUTelMillepede::writeMilleSteeringFile------------------------------------BEGIN" << endl;
 
@@ -313,7 +321,7 @@ streamlog_out(DEBUG2) << "EUTelMillepede::writeMilleSteeringFile----------------
   steerFile << "Parameter" << endl;
 
   int counter = 0;
-/*
+
 ////////////////////////////////////////////////////////////////////////// loop over all planes BEGIN
 // @TODO assumes that planes have ids 0..._nplanes !generaly wrong            
 	for (unsigned int help = 0; help < geo::gGeometry().nPlanes(); help++) {
@@ -345,11 +353,13 @@ streamlog_out(DEBUG2) << "EUTelMillepede::writeMilleSteeringFile----------------
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////END
 
 
-          
+/*  Not sure what this part does. Need to fix is later.        
     const double initXshift = (isFixedXShift) ? 0. : _seedAlignmentConstants._xResiduals[sensorId]/_seedAlignmentConstants._nxResiduals[sensorId];
     const double initYshift = (isFixedYShift) ? 0. : _seedAlignmentConstants._yResiduals[sensorId]/_seedAlignmentConstants._nyResiduals[sensorId];
-            
-            if( fitter->GetAlignmentMode()==Utility::XYZShiftXYRot ) {
+  */          
+
+const double initXshift =0; const double initYshift = 0;
+            if( _alignmentMode==Utility::XYZShiftXYRot ) {
                 steerFile << left << setw(25) << _xShiftsMap[sensorId] << setw(25) << -initXshift << setw(25) << initUncertaintyXShift
                            << setw(25) << " ! X shift " << setw(25) << sensorId << endl;
                 steerFile << left << setw(25) << _yShiftsMap[sensorId] << setw(25) << -initYshift << setw(25) << initUncertaintyYShift
@@ -358,7 +368,7 @@ streamlog_out(DEBUG2) << "EUTelMillepede::writeMilleSteeringFile----------------
                            << setw(25) << " ! Z shift " << setw(25) << sensorId << endl;
                 steerFile << left << setw(25) << _zRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyZRotation
                           << setw(25) << " ! XY rotation " << sensorId << endl;
-            } else if( fitter->GetAlignmentMode()==Utility::XYShiftYZRotXYRot ) {
+            } else if( _alignmentMode==Utility::XYShiftYZRotXYRot ) {
                 steerFile << left << setw(25) << _xShiftsMap[sensorId] << setw(25) << -initXshift << setw(25) << initUncertaintyXShift
                           << setw(25) << " ! X shift " << sensorId << endl;
                 steerFile << left << setw(25) << _yShiftsMap[sensorId] << setw(25)  << -initYshift << setw(25) << initUncertaintyYShift
@@ -367,7 +377,7 @@ streamlog_out(DEBUG2) << "EUTelMillepede::writeMilleSteeringFile----------------
                           << setw(25) << " ! YZ rotation " << sensorId << endl;
                 steerFile << left << setw(25) << _zRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyZRotation
                           << setw(25) << " ! XY rotation " << sensorId << endl;
-            } else if( fitter->GetAlignmentMode()==Utility::XYShiftXZRotXYRot ) {
+            } else if( _alignmentMode==Utility::XYShiftXZRotXYRot ) {
                 steerFile << left << setw(25) << _xShiftsMap[sensorId] << setw(25) << -initXshift << setw(25) << initUncertaintyXShift
                           << setw(25) << " ! X shift " << sensorId << endl;
                 steerFile << left << setw(25) << _yShiftsMap[sensorId] << setw(25) << -initYshift << setw(25) << initUncertaintyYShift
@@ -376,7 +386,7 @@ streamlog_out(DEBUG2) << "EUTelMillepede::writeMilleSteeringFile----------------
                           << setw(25) << " ! XZ rotation " << sensorId << endl;
                 steerFile << left << setw(25) << _zRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyZRotation
                          << setw(25)  << " ! XY rotation " << sensorId << endl;
-            } else if( fitter->GetAlignmentMode()==Utility::XYShiftXZRotYZRotXYRot ) {
+            } else if( _alignmentMode==Utility::XYShiftXZRotYZRotXYRot ) {
                 steerFile << left << setw(25) << _xShiftsMap[sensorId] << setw(25) << -initXshift << setw(25) << initUncertaintyXShift
                           << setw(25) << " ! X shift " << sensorId << endl;
                 steerFile << left << setw(25) << _yShiftsMap[sensorId] << setw(25) << -initYshift << setw(25) << initUncertaintyYShift
@@ -387,7 +397,7 @@ streamlog_out(DEBUG2) << "EUTelMillepede::writeMilleSteeringFile----------------
                           << setw(25) << " ! YZ rotation " << sensorId << endl;
                 steerFile << left << setw(25) << _zRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyZRotation
                          << setw(25)  << " ! XY rotation " << sensorId << endl;
-            } else if( fitter->GetAlignmentMode()==Utility::XYZShiftXZRotYZRotXYRot ) {
+            } else if( _alignmentMode==Utility::XYZShiftXZRotYZRotXYRot ) {
                 steerFile << left << setw(25) << _xShiftsMap[sensorId] << setw(25) << -initXshift << setw(25) << initUncertaintyXShift
                           << setw(25) << " ! X shift " << sensorId << endl;
                 steerFile << left << setw(25) << _yShiftsMap[sensorId] << setw(25) << -initYshift << setw(25) << initUncertaintyYShift
@@ -400,14 +410,14 @@ streamlog_out(DEBUG2) << "EUTelMillepede::writeMilleSteeringFile----------------
                           << setw(25) << " ! YZ rotation " << sensorId << endl;
                 steerFile << left << setw(25) << _zRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyZRotation
                          << setw(25)  << " ! XY rotation " << sensorId << endl;
-            } else if ( fitter->GetAlignmentMode()==Utility::XYShiftXYRot ) {
+            } else if ( _alignmentMode==Utility::XYShiftXYRot ) {
                 steerFile << left << setw(25) << _xShiftsMap[sensorId] << setw(25) << -initXshift << setw(25) << initUncertaintyXShift
                           << setw(25) << " ! X shift " << sensorId << endl;
                 steerFile << left << setw(25) << _yShiftsMap[sensorId] << setw(25) << -initYshift << setw(25) << initUncertaintyYShift
                           << setw(25) << " ! Y shift " << sensorId << endl;
                 steerFile << left << setw(25) << _zRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyZRotation
                           << setw(25) << " ! XY rotation " << sensorId << endl;
-            } else if ( fitter->GetAlignmentMode()==Utility::XYShift ) {
+            } else if ( _alignmentMode==Utility::XYShift ) {
                 steerFile << left << setw(25) << _xShiftsMap[sensorId] << setw(25) << -initXshift << setw(25) << initUncertaintyXShift
                           << setw(25) << " ! X shift " << sensorId << endl;
                 steerFile << left << setw(25) << _yShiftsMap[sensorId] << setw(25) << -initYshift << setw(25) << initUncertaintyYShift
@@ -429,7 +439,7 @@ streamlog_out(DEBUG2) << "EUTelMillepede::writeMilleSteeringFile----------------
 //    steerFile << "dwfractioncut 0.2" << endl;
 
     steerFile << endl;
-    for ( StringVec::iterator it = _pedeSteerAddCmds.begin( ); it != _pedeSteerAddCmds.end( ); ++it ) {
+    for ( StringVec::iterator it = pedeSteerAddCmds.begin( ); it != pedeSteerAddCmds.end( ); ++it ) {
         // two backslashes will be interpreted as newline
         if ( *it == "\\\\" )
             steerFile << endl;
@@ -441,14 +451,143 @@ streamlog_out(DEBUG2) << "EUTelMillepede::writeMilleSteeringFile----------------
 
     steerFile.close();
 
-    if( _alignmentMode != Utility::noAlignment ) streamlog_out(MESSAGE5) << "File " << _milleSteeringFilename << " written." << endl;   */
+    if( _alignmentMode != Utility::noAlignment ) streamlog_out(MESSAGE5) << "File " << _milleSteeringFilename << " written." << endl;   
 
   
 }
 
-void EUTelMillepede::runPede() {}
+int EUTelMillepede::runPede(){
+	// check if alignment was requested
+	if ( _alignmentMode == Utility::noAlignment ) {
+		streamlog_out( WARNING1 ) << "No alignment mode has been set. Must end" << endl;
+        return -999;
+  }
 
-void EUTelMillepede::parseMilleOutput(){}
+	std::string command = "pede " + _milleSteeringFilename;
+	streamlog_out ( MESSAGE5 ) << "Starting pede...: " << command.c_str( ) << endl;
+
+  // run pede and create a streambuf that reads its stdout and stderr
+  redi::ipstream pede( command.c_str( ), redi::pstreams::pstdout | redi::pstreams::pstderr );
+
+	if ( !pede.is_open( ) ) {
+		streamlog_out( ERROR5 ) << "Pede cannot be executed: command not found in the path" << endl;
+  } else {
+
+		// Currently unused variable:
+    //bool encounteredError = false;
+
+    // output multiplexing: parse pede output in both stdout and stderr and echo messages accordingly
+    char buf[1024];
+		std::streamsize n;
+    std::stringstream pedeoutput; // store stdout to parse later
+    std::stringstream pedeerrors;
+    bool finished[2] = { false, false };
+    while ( !finished[0] || !finished[1] ) {
+    	if ( !finished[0] ) {
+    		while ( ( n = pede.err( ).readsome( buf, sizeof (buf ) ) ) > 0 ) {
+    			streamlog_out( ERROR5 ).write( buf, n ).flush( );
+          string error ( buf, n );
+          pedeerrors << error;
+                    //encounteredError = true;
+        }
+       if ( pede.eof( ) ) {
+       	finished[0] = true;
+       		if ( !finished[1] ) pede.clear( );
+       }
+    	}
+
+      if ( !finished[1] ) {
+                while ( ( n = pede.out( ).readsome( buf, sizeof (buf ) ) ) > 0 ) {
+                    streamlog_out( MESSAGE4 ).write( buf, n ).flush( );
+                    string output ( buf, n );
+                    pedeoutput << output;
+                }
+                if ( pede.eof( ) ) {
+                    finished[1] = true;
+                    if ( !finished[0] )
+                        pede.clear( );
+                }
+            }
+        }
+        // wait for the pede execution to finish
+        pede.close( );
+        
+        // Parse and rename MILLEPEDE result file
+      //  if ( parseMilleOutput( "millepede.res" ) ) //moveMilleResultFile( "millepede.res", _milleResultFileName );
+    }//END OF IF STATEMENT
+
+return 0;
+
+}
+
+bool EUTelMillepede::parseMilleOutput(std::string alignmentConstantLCIOFile, std::string gear_aligned_file){
+   
+    bool isOK = true;
+    
+    // Check if the file is avaliable
+    ifstream file( _milleResultFileName.c_str() );
+    if ( !file.good( ) ) {
+        streamlog_out( WARNING2 ) << "Can't read/find " << _milleResultFileName << " in current directory." << endl;
+        isOK = false;
+        return isOK;
+    }
+ 
+   
+    const string command = "parsemilleout.sh " + _milleSteeringFilename + " " + _milleResultFileName + " " + alignmentConstantLCIOFile + 
+                           " " + Global::parameters->getStringVal("GearXMLFile" ) + " " + gear_aligned_file;
+    streamlog_out ( MESSAGE5 ) << "Convering millepede results to LCIO collections... " << endl;
+    streamlog_out ( MESSAGE5 ) << command << endl;
+
+    // run pede and create a streambuf that reads its stdout and stderr
+    redi::ipstream parsepede( command.c_str( ), redi::pstreams::pstdout | redi::pstreams::pstderr );
+
+    if ( !parsepede.is_open( ) ) {
+        streamlog_out( ERROR5 ) << "Pede cannot be executed: command not found in the path" << endl;
+    } else {
+        // Currently unused variable:
+        // bool encounteredError = false;
+        // output multiplexing: parse parsepede output in both stdout and stderr and echo messages accordingly
+        char buf[1024];
+        std::streamsize n;
+        std::stringstream parsepedeoutput; // store stdout to parse later
+        std::stringstream parsepedeerrors;
+        bool finished[2] = { false, false };
+        while ( !finished[0] || !finished[1] ) {
+            if ( !finished[0] ) {
+                while ( ( n = parsepede.err( ).readsome( buf, sizeof (buf ) ) ) > 0 ) {
+                    streamlog_out( ERROR5 ).write( buf, n ).flush( );
+                    string error ( buf, n );
+                    parsepedeerrors << error;
+                    //encounteredError = true;
+                }
+                if ( parsepede.eof( ) ) {
+                    finished[0] = true;
+                    if ( !finished[1] )
+                        parsepede.clear( );
+                }
+            }
+
+            if ( !finished[1] ) {
+                while ( ( n = parsepede.out( ).readsome( buf, sizeof (buf ) ) ) > 0 ) {
+                    streamlog_out( MESSAGE4 ).write( buf, n ).flush( );
+                    string output ( buf, n );
+                    parsepedeoutput << output;
+                }
+                if ( parsepede.eof( ) ) {
+                    finished[1] = true;
+                    if ( !finished[0] )
+                        parsepede.clear( );
+                }
+            }
+        }
+        // wait for the parsepede execution to finish
+        parsepede.close( );
+    }
+    
+    return isOK;
+    
+
+}
 
 
 } // namespace eutelescope

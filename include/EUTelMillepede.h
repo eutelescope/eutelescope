@@ -6,6 +6,13 @@
 
 
 #include <fstream>
+#include "EUTelPStream.h"
+
+// MARLIN
+#include "marlin/Exceptions.h"
+#include "marlin/Global.h"
+#include "marlin/Processor.h"
+#include "marlin/VerbosityLevels.h"
 
 
 // system includes <>
@@ -44,11 +51,11 @@ namespace eutelescope {
 
 				void FillMilleParametersLabels();
 
-				int writeMilleSteeringFile();
+				int writeMilleSteeringFile(lcio::StringVec pedeSteerAddCmds);
 
-				void runPede();
+				int runPede();
 	
-				void parseMilleOutput();
+				bool parseMilleOutput(std::string alignmentConstantLCIOFile, std::string gear_aligned_file);
 
 
 				/////////////////////////set stuff!
@@ -61,6 +68,7 @@ namespace eutelescope {
 				void setPlanesExclude(lcio::IntVec exclude);
 				void setSteeringFileName(std::string name);
 				void setBinaryFileName(std::string binary);
+				void setResultsFileName(std::string name);
 
 		protected:
 				int alignmentMode;
@@ -78,6 +86,8 @@ namespace eutelescope {
 				std::string _milleSteeringFilename;
 
 				std::string _milleBinaryFilename;
+				//the results file
+				std::string _milleResultFileName;
 
   		 /** Alignment X shift plane ids to be fixed */
 			lcio::IntVec _fixedAlignmentXShfitPlaneIds;
