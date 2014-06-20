@@ -49,7 +49,7 @@ namespace eutelescope {
  class EUTelProcessorGBLFitCandidates : public Processor {
 
     private:
-        DISALLOW_COPY_AND_ASSIGN(EUTelProcessorGBLFitCandidates);     // prevent users from making (default) copies of processors
+        DISALLOW_COPY_AND_ASSIGN(EUTelProcessorGBLFitCandidates)      // prevent users from making (default) copies of processors
         
     public:
 
