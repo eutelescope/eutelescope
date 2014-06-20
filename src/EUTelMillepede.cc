@@ -5,10 +5,15 @@ using namespace std;
 
 namespace eutelescope {
 
-	EUTelMillepede::EUTelMillepede(){}
+	//This constructor is useful for running the binary files execution
+	EUTelMillepede::EUTelMillepede(){
+	FillMilleParametersLabels();
+	}
 
+	//This constructor useful for mille binary output part
 	EUTelMillepede::EUTelMillepede(int alignmentMode){
 	SetAlignmentMode(alignmentMode);
+	FillMilleParametersLabels();
 	}
 
 	EUTelMillepede::~EUTelMillepede(){}
@@ -237,10 +242,41 @@ void EUTelMillepede::CreateGlobalLabels( int iPlane){
 
 
 }
+//////////////////////////////////////////////////////////////////////////////////////////////////////All these functions are used after binary file creation.
+void EUTelMillepede::setXShiftFixed(lcio::IntVec xfixed){
+	_fixedAlignmentXShfitPlaneIds = xfixed;
+}
+
+void EUTelMillepede::setYShiftFixed(lcio::IntVec yfixed){
+	_fixedAlignmentYShfitPlaneIds = yfixed;
+}
+
+void EUTelMillepede::setZShiftFixed(lcio::IntVec zfixed){
+	_fixedAlignmentZShfitPlaneIds = zfixed;
+}
+
+void EUTelMillepede::setXRotationsFixed(lcio::IntVec xRotfixed){
+	_fixedAlignmentXRotationPlaneIds = xRotfixed;
+}
+
+void EUTelMillepede::setYRotationsFixed(lcio::IntVec yRotfixed){
+	_fixedAlignmentYRotationPlaneIds = yRotfixed;
+}
+
+void EUTelMillepede::setZRotationsFixed(lcio::IntVec zRotfixed){
+	_fixedAlignmentZRotationPlaneIds = zRotfixed;
+}
+
+  
+void EUTelMillepede::writeMilleSteeringFile(){
 
 
 
+}
 
 
 } // namespace eutelescope
+
+
+
 

@@ -40,6 +40,17 @@ namespace eutelescope {
 
 				void FillMilleParametersLabels();
 
+				void writeMilleSteeringFile();
+
+
+				/////////////////////////set stuff!
+				void setXShiftFixed(lcio::IntVec xfixed);
+				void setYShiftFixed(lcio::IntVec yfixed);
+				void setZShiftFixed(lcio::IntVec zfixed);
+				void setXRotationsFixed(lcio::IntVec xRotfixed);
+				void setYRotationsFixed(lcio::IntVec yRotfixed);
+				void setZRotationsFixed(lcio::IntVec zRotfixed);
+
 		protected:
 			int alignmentMode;
 			Utility::AlignmentMode _alignmentMode =  Utility::noAlignment;
@@ -51,6 +62,24 @@ namespace eutelescope {
       std::map<int, int> _xRotationsMap;
       std::map<int, int> _yRotationsMap;
       std::map<int, int> _zRotationsMap;
+
+  		 /** Alignment X shift plane ids to be fixed */
+			lcio::IntVec _fixedAlignmentXShfitPlaneIds;
+        
+        /** Alignment Y shift plane ids to be fixed */
+				lcio::IntVec _fixedAlignmentYShfitPlaneIds;
+        
+        /** Alignment Z shift plane ids to be fixed */
+				lcio::IntVec _fixedAlignmentZShfitPlaneIds;
+        
+        /** Alignment X rotation plane ids to be fixed */
+				lcio::IntVec _fixedAlignmentXRotationPlaneIds;
+        
+        /** Alignment Y rotation plane ids to be fixed */
+				lcio::IntVec _fixedAlignmentYRotationPlaneIds;
+        
+        /** Alignment Z rotation plane ids to be fixed */
+				lcio::IntVec _fixedAlignmentZRotationPlaneIds;
 
     };
 
