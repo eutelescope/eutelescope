@@ -103,6 +103,7 @@ join tmp_parsepede_file1 tmp_parsepede_file2 | grep '^[0-9]' | awk '{ printf "%-
 
 # Convert to lcio collection file
 if [ $# == 3 ]; then 
+ echo  pede2lcio out.pede2lcio $lcio_file
  pede2lcio out.pede2lcio $lcio_file
 
 
