@@ -195,7 +195,8 @@ namespace eutelescope {
       	map< int, int >::const_iterator iter = sensorMap.begin();
       	while ( iter->first < sensorMap.size()-1 ) { // do not iterate through the very last plane
         if( iter->first < 0 ) continue;
-	
+				streamlog_out (DEBUG0) << "Here is the state variable before update and propagation(state): " <<std::endl;
+				state->Print();
         float dpoint[3];
         int next = iter->first + 1;
         map< int, int >::const_iterator nextSensor = sensorMap.find( next );
@@ -219,9 +220,13 @@ namespace eutelescope {
 		jacobian = state->getPropagationJacobianF((dpoint[2] - state->getZParameter())); //Find all the relations between state variables at a particular z parameter dpoint[2] 
         	
   		//jacobian.Print();
+		std::cout<<"I am here"<<std::endl;
+		//state->Print();
 		nextStateUsingJacobianFinder(state, state_new, jacobian); //Here we determine the new state position and CovMatrix using the jacobian. This might not need to be done now but would involve changing closestHit()????
 		state_new->setZParameter( dpoint[2] ); //Set this here since it is not a state variable but a parameter
 		state_new->setLocation( newSensorID );
+				streamlog_out (DEBUG0) << "Here is the state variable before update but after propagation (state_new): " <<std::endl;
+		state_new->Print(); //The covariance matrix prints not symmetric?????????
 
 		double global[] = { state_new->getX(),state_new->getY(),state_new->getZParameter() };
 		double local[3];
@@ -238,9 +243,8 @@ namespace eutelescope {
  		if ( closestHit ){ //Just check if the closestHit exist 
          	
 			const double* uvpos = closestHit->getPosition(); //Get that hits position
-        		const double distance = getResidual( state_new, closestHit ).Norm2Sqr( ); //Determine the residual to it. //Distance is in mm.
-            		const double DCA = 10000;  //DCA since is mm^2 since distance is.                             
-			//getXYPredictionPrecision( state_new ); // basically RMax cut at the moment. MUST FIX!!!! HOW SHOULD THIS BE TREAT?;;
+        		const double distance = std::sqrt(getResidual( state_new, closestHit ).Norm2Sqr( )); //Determine the residual to it. //Distance is in mm.
+            		const double DCA = getXYPredictionPrecision( state_new ); //This does nothing but return a number specified by user. In the future this should use convariance matrix information
 	           	streamlog_out ( DEBUG1 ) << "NextPlane " << newSensorID << " " << uvpos[0] << " " << uvpos[1] << " " << uvpos[2] << " resid:" << distance << " ResidualCut: " << DCA << endl;
            		if ( distance > DCA ) {
              	           	streamlog_out ( DEBUG1 ) << "Closest hit is outside of search window." << std::endl;
@@ -259,6 +263,8 @@ namespace eutelescope {
 				TMatrixD HMatrix = state_new->getH(); //We need to be able to move from the measurement to the state space
 				TMatrixD GainMatrix = updateGainK( state_new, closestHit ); //This is a matrix that tells you how much the state should be changed with the information from the hit
 				UpdateStateUsingHitInformation( state_new ,closestHit, jacobian, GainMatrix, HMatrix); //Update the state on the track
+				streamlog_out (DEBUG0) << "Here is the state variable after update with hit and propagation (state_new): " <<std::endl;
+				state_new->Print();
 				UpdateTrackUsingHitInformation( state_new , closestHit, (*itTrk), jacobian, GainMatrix,HMatrix); //Update the track itself.									
             		}
 
@@ -371,10 +377,9 @@ itTrk++;
             }
 						//This will propagate the initial seed to the other planes. On the new plane it will add hits and change the state depending on relation to hit.
             propagateFromRefPoint(itTrk);
- 
+ streamlog_out ( MESSAGE2 ) << "Number of hits on the track: " <<( *itTrk )->getHitsOnTrack().size( ) <<" Number needed: " << geo::gGeometry( ).nPlanes( ) - _allowedMissingHits << std::endl;
 						//Check the number of hit on the track after propagation and collecting hits is over the minimum
             if ( isGoodTrack && ( *itTrk )->getHitsOnTrack().size( ) < geo::gGeometry( ).nPlanes( ) - _allowedMissingHits ) {
-		streamlog_out ( MESSAGE2 ) << "Number of hits on the track: " << ( *itTrk )->getTrackerHits( ).size( ) <<" Number needed: " << geo::gGeometry( ).nPlanes( ) - _allowedMissingHits << std::endl;
                	streamlog_out ( DEBUG5 ) << "Track candidate has to many missing hits." << std::endl;
                	streamlog_out ( DEBUG5 ) << "Removing this track candidate from further consideration." << std::endl;
            	(*itTrk)->Print();
@@ -387,7 +392,7 @@ itTrk++;
 //               state->setLocation( EUTelTrackStateImpl::AtLastHit );
                	int nstates = (*itTrk)->getTrackStates().size();
 	
-               	streamlog_out(DEBUG5) << "'Tracks' looped through. I.e initial hit seed as a track. (Ignore states with no hits): "  << local_itTrk << ". Number of seeds: " << size_itTrk << ". At seed: " << *itTrk << " after propagation with: " << ( *itTrk )->getTrackerHits( ).size( ) << " hits collected on track.  Expecting at least " << geo::gGeometry( ).nPlanes( ) - _allowedMissingHits << " The states. I.e Including planes with no hits: "<< nstates << std::endl << std::endl << std::endl << std::endl;
+               	streamlog_out(DEBUG5) << "'Tracks' looped through. I.e initial hit seed as a track. (Ignore states with no hits): "  << local_itTrk << ". Number of seeds: " << size_itTrk << ". At seed: " << *itTrk << " after propagation with: " << ( *itTrk )->getHitsOnTrack().size( ) << " hits collected on track.  Expecting at least " << geo::gGeometry( ).nPlanes( ) - _allowedMissingHits << " The states. I.e Including planes with no hits: "<< nstates << std::endl << std::endl << std::endl << std::endl;
 
              	streamlog_out ( DEBUG5 ) << "Successful track state after propagation: " << endl; 
             	(*itTrk)->Print();
@@ -692,7 +697,7 @@ itTrk++;
 
 	return *itClosestHit;
     }
-    
+		//This is not very useful at the moment since the covariant matrix for the hit is guess work at the moment.   
     double EUTelKalmanFilter::getXYPredictionPrecision( const EUTelTrackStateImpl* ts ) const {
       streamlog_out(DEBUG2) << "EUTelKalmanFilter::getXYPredictionPrecision()" << std::endl;
       
@@ -728,12 +733,16 @@ itTrk++;
 
 	void EUTelKalmanFilter::nextStateUsingJacobianFinder(EUTelTrackStateImpl* input, EUTelTrackStateImpl* output, TMatrixD& jacobian){
         	streamlog_out( DEBUG5 ) << "EUTelKalmanFilter::nextStateUsingJacobianFinder()" << std::endl;
+
+        	streamlog_out( DEBUG5 ) << "The jacobian that will transfrom the state and covariance matrix" << std::endl;
+	        streamlog_message( DEBUG4, jacobian.Print();, std::endl; );
+
 		/////////////////////////////////////////////////////////////////////////////////////////////////////Here we update the new global position of the track
 		TVectorD xkm1 = input->getTrackStateVec();
-	        streamlog_out( DEBUG4 ) << "Before transformation" << std::endl;
+	        streamlog_out( DEBUG4 ) << "Before transformation state variables" << std::endl;
 	        streamlog_message( DEBUG4, xkm1.Print();, std::endl; );
 	        TVectorD xkkm1 = jacobian * xkm1; 
-	        streamlog_out( DEBUG4 ) << "After transformation" << std::endl;
+	        streamlog_out( DEBUG4 ) << "After transformation state variables" << std::endl;
         	streamlog_message( DEBUG4, xkkm1.Print();, std::endl; );
         
 	        output->setX( xkkm1[0] );
@@ -744,7 +753,11 @@ itTrk++;
 
 		///////////////////////////////////////////////////////////Here we update the Covariant matrix
        		TMatrixDSym TrackCovInput = input->getTrackStateCov();
-	        TMatrixDSym TrackCovOutput  = TrackCovInput.Similarity( jacobian ); 
+	        streamlog_out( DEBUG4 ) << "Before transformation covMatrix" << std::endl;
+	        streamlog_message( DEBUG4, TrackCovInput.Print();, std::endl; );
+	        TMatrixDSym TrackCovOutput  = TrackCovInput.Similarity( jacobian );
+	        streamlog_out( DEBUG4 ) << "After transformation covMatrix" << std::endl;
+	        streamlog_message( DEBUG4, TrackCovOutput.Print();, std::endl; ); 
 
         	float trkCov[15] = { static_cast<float>(TrackCovOutput[0][0]), static_cast<float>(TrackCovOutput[1][0]), static_cast<float>(TrackCovOutput[1][1]), 
                 	             static_cast<float>(TrackCovOutput[2][0]), static_cast<float>(TrackCovOutput[2][1]), static_cast<float>(TrackCovOutput[2][2]),
@@ -752,7 +765,7 @@ itTrk++;
 	                             static_cast<float>(TrackCovOutput[3][3]), static_cast<float>(TrackCovOutput[4][0]), static_cast<float>(TrackCovOutput[4][1]),
         	                     static_cast<float>(TrackCovOutput[4][2]), static_cast<float>(TrackCovOutput[4][3]), static_cast<float>(TrackCovOutput[4][4]) };
 
-	        input->setCovMatrix( trkCov );    
+	        output->setCovMatrix( trkCov );    
 				
         
         	streamlog_out( DEBUG5 ) << "-----------------------------------EUTelKalmanFilter::nextStateUsingJacobianFinder()----------------------------------" << std::endl;

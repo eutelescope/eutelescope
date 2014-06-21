@@ -118,7 +118,7 @@ namespace eutelescope {
      */
     virtual const EUTelTrackStateVec & getTrackStates() const ;
 
-		virtual EVENT::TrackerHitVec getHitsOnTrack() const;
+		virtual const EVENT::TrackerHitVec & getHitsOnTrack() const;
   
     virtual void PrintTrackStates(){
       streamlog_out(MESSAGE0) << " printing track states " << _trackStates.size() << std::endl;

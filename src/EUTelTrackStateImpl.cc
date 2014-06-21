@@ -105,8 +105,13 @@ namespace eutelescope {
     const float* EUTelTrackStateImpl::getReferencePoint() const { return _reference ; }
 
     void EUTelTrackStateImpl::Print() const {
-      	streamlog_out(MESSAGE0) << "location " << getLocation() << " Tx:"<<getTx() << " Ty:"<<getTy() << " X:"<<getX() << " Y:"<<getY() << " InvP:"<<getInvP() << std::endl;  
-    }
+      	streamlog_out(DEBUG0) << "location " << getLocation() << " Tx:"<<getTx() << " Ty:"<<getTy() << " X:"<<getX() << " Y:"<<getY() << " InvP:"<<getInvP() << std::endl; 
+streamlog_out(DEBUG0) << "Zparameter " << _zparameter <<std::endl;
+streamlog_out(DEBUG0) << "Hit pointer " << _hit << std::endl;
+streamlog_out(DEBUG0) << "The covariance matrix of the state" << std::endl;
+	        streamlog_message( DEBUG0, getTrackStateCov().Print();, std::endl; );
+
+}
 
     void  EUTelTrackStateImpl::setLocation( int location ){
 //        checkAccess("EUTelTrackStateImpl::setLocation") ;
@@ -282,7 +287,7 @@ TVectorD EUTelTrackStateImpl::getTrackStateVec() const {
 TMatrixDSym EUTelTrackStateImpl::getTrackStateCov() const {
 
 	streamlog_out( DEBUG1 ) << "EUTelTrackStateImpl::getTrackStateCov()----------------------------BEGIN" << std::endl;
-	TMatrixDSym C(5);        
+	TMatrixDSym C(5);   
 	const EVENT::FloatVec& trkCov = getCovMatrix();        
 	C.Zero();
             

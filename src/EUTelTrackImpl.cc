@@ -292,7 +292,7 @@ namespace eutelescope {
     return _trackStates ;
   }
 	//We dont want to attach hits to a track in most cases. Since then you lose the information of what state it was part of. So you add hits to states and states to tracks. However you can access hit directy with this function.
-EVENT::TrackerHitVec EUTelTrackImpl::getHitsOnTrack() const {
+ const EVENT::TrackerHitVec & EUTelTrackImpl::getHitsOnTrack() const {
 	EUTelTrackStateVec::const_iterator state;		
 	EVENT::TrackerHitVec hits;
 	for( state =  _trackStates.begin(); state != _trackStates.end(); ++state){
@@ -302,7 +302,9 @@ EVENT::TrackerHitVec EUTelTrackImpl::getHitsOnTrack() const {
 		hits.push_back((*state)->getHit());
 		}
 	}
+	return hits;
 }
+
 	
 
  
