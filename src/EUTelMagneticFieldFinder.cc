@@ -210,6 +210,7 @@ namespace eutelescope {
 		//So we found a intersection so we need to determine that new state.
 		streamlog_out ( DEBUG3 ) << "Intersection on a plane " << newSensorID << std::endl;
 		EUTelTrackStateImpl* state_new =  new EUTelTrackStateImpl(); //This creates a new state object
+		state_new->setHit(NULL); //By default it should contain no hit
 		state_new->setbeamQ(_beamQ); //Set the beam charge here. This is not perfect I think. Since we could set it as a static variable. However how this should be used in other processor I am unsure???????/
 		
 		//Here we fill the state with its new approximate new hit position. Nothing else is filled yet since this will depend on if hit information is there.
@@ -238,7 +239,7 @@ namespace eutelescope {
          	
 			const double* uvpos = closestHit->getPosition(); //Get that hits position
         		const double distance = getResidual( state_new, closestHit ).Norm2Sqr( ); //Determine the residual to it. //Distance is in mm.
-            		const double DCA = 25;  //DCA since is mm^2 since distance is.                             
+            		const double DCA = 10000;  //DCA since is mm^2 since distance is.                             
 			//getXYPredictionPrecision( state_new ); // basically RMax cut at the moment. MUST FIX!!!! HOW SHOULD THIS BE TREAT?;;
 	           	streamlog_out ( DEBUG1 ) << "NextPlane " << newSensorID << " " << uvpos[0] << " " << uvpos[1] << " " << uvpos[2] << " resid:" << distance << " ResidualCut: " << DCA << endl;
            		if ( distance > DCA ) {
@@ -372,7 +373,7 @@ itTrk++;
             propagateFromRefPoint(itTrk);
  
 						//Check the number of hit on the track after propagation and collecting hits is over the minimum
-            if ( isGoodTrack && ( *itTrk )->getTrackerHits( ).size( ) < geo::gGeometry( ).nPlanes( ) - _allowedMissingHits ) {
+            if ( isGoodTrack && ( *itTrk )->getHitsOnTrack().size( ) < geo::gGeometry( ).nPlanes( ) - _allowedMissingHits ) {
 		streamlog_out ( MESSAGE2 ) << "Number of hits on the track: " << ( *itTrk )->getTrackerHits( ).size( ) <<" Number needed: " << geo::gGeometry( ).nPlanes( ) - _allowedMissingHits << std::endl;
                	streamlog_out ( DEBUG5 ) << "Track candidate has to many missing hits." << std::endl;
                	streamlog_out ( DEBUG5 ) << "Removing this track candidate from further consideration." << std::endl;
