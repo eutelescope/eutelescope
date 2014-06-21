@@ -71,8 +71,6 @@ EUTelProcessorTrackingHelixTrackSearch::EUTelProcessorTrackingHelixTrackSearch()
 Processor("EUTelProcessorTrackingHelixTrackSearch"),
 _hitInputCollectionName("HitCollection"),
 _trackCandidateHitsOutputCollectionName("TrackCandidatesCollection"),
-//_hotPixelCollectionName("hotpixel"),
-//_hotPixelMap(),
 _trackFitter(0),
 _tgeoFileName("TELESCOPE.root"),
 _maxMissingHitsPerTrackCand(0),

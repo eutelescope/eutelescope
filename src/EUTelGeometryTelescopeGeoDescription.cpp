@@ -489,7 +489,7 @@ void EUTelGeometryTelescopeGeoDescription::readGear() {
       streamlog_out(MESSAGE1)  << "tel planes : " << _telPlanesParameters << std::endl;
       telPlanesDefined = true;
     }catch(...){
-      streamlog_out(WARNING)   << "tel planes not found "  << std::endl;
+      streamlog_out(WARNING)   << "tel planes description not found. Must add pixel geometry to gear "  << std::endl;
     }
 
     if( siPlanesDefined ){
