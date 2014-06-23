@@ -13,6 +13,8 @@
 // built only if GEAR is available
 #ifdef USE_GEAR
 // eutelescope includes ".h"
+#include "EUTelUtility.h"
+
 //#include "TrackerHitImpl2.h"
 #include "IMPL/TrackerHitImpl.h"
 
