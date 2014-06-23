@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef EUTelProcessorGeometricClustering_H
-#define EUTelProcessorGeometricClustering_H 1
+#ifndef EUTelProcessorSparseClustering_H
+#define EUTelProcessorSparseClustering_H 1
 
 // eutelescope includes ".h"
 #include "EUTelExceptions.h"
@@ -91,25 +91,25 @@ namespace eutelescope {
    *
    */
 
-class EUTelProcessorGeometricClustering :public marlin::Processor , public marlin::EventModifier {
+class EUTelProcessorSparseClustering :public marlin::Processor , public marlin::EventModifier {
 
 public:
 
-    //! Returns a new instance of EUTelProcessorGeometricClustering
+    //! Returns a new instance of EUTelProcessorSparseClustering
     /*! This method returns an new instance of the this processor.  It
      *  is called by Marlin execution framework and it shouldn't be
      *  called/used by the final user.
      *
-     *  @return a new EUTelProcessorGeometricClustering.
+     *  @return a new EUTelProcessorSparseClustering.
      */
     virtual Processor* newProcessor() {
-		return new EUTelProcessorGeometricClustering;
+		return new EUTelProcessorSparseClustering;
     }
 
     virtual const std::string & name() const { return Processor::name(); }
 
     //! Default constructor
-    EUTelProcessorGeometricClustering ();
+    EUTelProcessorSparseClustering ();
 
     //! Called at the job beginning.
     /*! This is executed only once in the whole execution. It prints
@@ -133,7 +133,7 @@ public:
     /*! It looks for clusters in the current event using the selected
      *  algorithm.
      *
-     *  @see EUTelProcessorGeometricClustering::fixedFrameClustering(LCEvent *)
+     *  @see EUTelProcessorSparseClustering::fixedFrameClustering(LCEvent *)
      *
      *  @param evt the current LCEvent event as passed by the
      *  ProcessMgr
@@ -228,7 +228,7 @@ protected:
      *  @param pulse The collection of pulses to append the found
      *  clusters.
      */
-    void geometricClustering(LCEvent* evt, LCCollectionVec* pulse);
+    void sparseClustering(LCEvent* evt, LCCollectionVec* pulse);
 
     //! Input collection name for ZS data
     /*! The input collection is the calibrated data one coming from
@@ -280,11 +280,11 @@ private:
 	#ifndef DISALLOW_COPY_AND_ASSIGN
 	//Following #define stops the accidental creation of a copy or assignment operator by causing a link error. 
 	//Copy and Assignment operators not allowed because they are unnecessary and the cause of many bugs
-	#define DISALLOW_COPY_AND_ASSIGN(EUTelProcessorGeometricClustering) \
-	EUTelProcessorGeometricClustering(const EUTelProcessorGeometricClustering&); \
-	void operator=(const EUTelProcessorGeometricClustering&);
+	#define DISALLOW_COPY_AND_ASSIGN(EUTelProcessorSparseClustering) \
+	EUTelProcessorSparseClustering(const EUTelProcessorSparseClustering&); \
+	void operator=(const EUTelProcessorSparseClustering&);
 	//Private Functions
-	DISALLOW_COPY_AND_ASSIGN(EUTelProcessorGeometricClustering)//See #define just above
+	DISALLOW_COPY_AND_ASSIGN(EUTelProcessorSparseClustering)//See #define just above
 	#endif
 
     //! read secondary collections
@@ -354,10 +354,12 @@ private:
     
     //! pulse Collection 
     LCCollectionVec* _pulseCollectionVec;
-  
+ 
+    //! Squared cut value for distance in pixel index count (integer!)
+    int _sparseMinDistanceSquared;
 };
 
 //! A global instance of the processor
-EUTelProcessorGeometricClustering gEUTelProcessorGeometricClustering;
+EUTelProcessorSparseClustering gEUTelProcessorSparseClustering;
 }
 #endif
