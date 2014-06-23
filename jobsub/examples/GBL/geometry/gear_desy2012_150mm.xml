@@ -5,6 +5,7 @@
   <BField type="ConstantBField" x="0.0" y="0.0" z="0.0"/>
   <detectors>
     <detector name="SiPlanes" geartype="SiPlanesParameters">
+    <parameter name="Geometry" type="StringVec" value="Mimosa26.so Mimosa26.so Mimosa26.so Mimosa26.so Mimosa26.so Mimosa26.so"/>
       <siplanesID ID="0"/>
       <siplanesType type="TelescopeWithoutDUT"/>
       <siplanesNumber number="6"/>
