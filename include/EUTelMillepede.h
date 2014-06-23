@@ -70,6 +70,11 @@ namespace eutelescope {
 				void setBinaryFileName(std::string binary);
 				void setResultsFileName(std::string name);
 
+
+				///////////////////////////////////////////get stuff
+				TMatrixD* getAlignmentJacobian() const { return _jacobian; }
+				std::vector<int> getGlobalParameters() { return _globalLabels; }
+
 		protected:
 				int alignmentMode;
 				Utility::AlignmentMode _alignmentMode =  Utility::noAlignment;

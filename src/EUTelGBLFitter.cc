@@ -1399,6 +1399,14 @@ void EUTelGBLFitter::CreateAlignmentToMeasurementJacobian(std::vector< gbl::GblP
 		EUTelTrackStateImpl * state = 	_PointToState[ &(pointList->at(pointNum)) ]; //get the state associated with this point
 		
 		if(state != NULL and state->getHit() != NULL){
+		_MilleInterface->CreateAlignmentToMeasurementJacobian(state); //Get the jacobain for that state and sensor
+		_MilleInterface->CreateGlobalLabels(state);  //Gets the coorect labels for that sensor
+		TMatrixD * Jac = _MilleInterface->getAlignmentJacobian();
+		std::vector<int> labels =  _MilleInterface->getGlobalParameters();
+		
+		
+		
+		
 		
 
 

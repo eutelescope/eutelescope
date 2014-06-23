@@ -127,7 +127,8 @@ void EUTelMillepede::FillMilleParametersLabels() {
 																	//                                             (this is clockwise rotation look in + y direction )
 																	// 	                                           (this is clockwise rotations in the x direction  )
 		
-int EUTelMillepede::CreateAlignmentToMeasurementJacobian( float x,float y, float slopeXvsZ, float slopeYvsZ){			
+int EUTelMillepede::CreateAlignmentToMeasurementJacobian( float x,float y, float slopeXvsZ, float slopeYvsZ){
+	_jacobian->Zero();			
 		
 	//////////////////////////////////////Moving the sensor in x and y. Obviously if the sensor move right the hit will appear to move left. Always create this!!!! BEGIN
 	_jacobian[0][0] = -1.0; // dxh/dxs      dxh => change in hit position         dxs => Change in sensor position
@@ -199,7 +200,7 @@ void EUTelMillepede::CreateGlobalLabels(EUTelTrackStateImpl* state){
 }
 
 void EUTelMillepede::CreateGlobalLabels( int iPlane){
-
+	_globalLabels.clear();
 
 	_globalLabels[0] = _xShiftsMap[iPlane]; // dx
 	_globalLabels[1] = _yShiftsMap[iPlane]; // dy
@@ -291,6 +292,8 @@ void EUTelMillepede::setResultsFileName(std::string name){
 	_milleResultFileName = name;
 
 }
+
+
 
 
   
