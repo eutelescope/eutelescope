@@ -28,8 +28,8 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
   </execute>
 
   <global>
-    <parameter name="LCIOInputFiles"> @LcioRawFolder@/run@RunNumber@.slcio </parameter>
-    <parameter name="GearXMLFile" value="@GearPath@/@GearFile@"/>
+    <parameter name="LCIOInputFiles"> @LcioPath@/run@RunNumber@.slcio </parameter>
+    <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
     <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
     <parameter name="SkipNEvents" value="0"/>
     <parameter name="SupressCheck" value="false"/>

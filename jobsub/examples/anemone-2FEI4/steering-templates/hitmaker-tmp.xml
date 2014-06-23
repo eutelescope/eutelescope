@@ -32,11 +32,11 @@ Version: $Id: hitmaker-tmp.xml,v 1.3 2009-06-04 17:19:01 bulgheroni Exp $
 
    <global>
       <parameter name="LCIOInputFiles"> @InputFile@  </parameter>
-      <parameter name="GearXMLFile" value="@GearPath@/@GearFile@"/>
+      <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="0"/>
       <parameter name="SupressCheck" value="false"/>
-      <parameter name="Verbosity" value="MESSAGE"/>
+      <parameter name="Verbosity" value="MESSAGE4"/>
    </global>
 
  <processor name="AIDA" type="AIDAProcessor">
@@ -95,7 +95,7 @@ Version: $Id: hitmaker-tmp.xml,v 1.3 2009-06-04 17:19:01 bulgheroni Exp $
   <parameter name="SensorIDVec" type="IntVec"> 0 1 2 3 4 5  </parameter>
 </processor>
 
- <processor name="HitMakerM26" type="EUTelHitMaker">
+ <processor name="HitMakerM26" type="EUTelProcessorHitMaker">
  <!--EUTelHitMaker is responsible to translate cluster centers from the local frame of reference to the external frame of reference using the GEAR geometry description-->
   <!--Cluster (pulse) collection name-->
   <parameter name="PulseCollectionName" type="string" lcioInType="TrackerPulse"> cluster_m26 </parameter>
@@ -119,7 +119,7 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
   <parameter name="ReferenceHitFile" type="string"> @DBPath@/@Output@-refhit-db.slcio </parameter>
 </processor>
 
- <processor name="HitMakerAPIX" type="EUTelHitMaker">
+ <processor name="HitMakerAPIX" type="EUTelProcessorHitMaker">
  <!--EUTelHitMaker is responsible to translate cluster centers from the local frame of reference to the external frame of reference using the GEAR geometry description-->
   <!--Cluster (pulse) collection name-->
   <parameter name="PulseCollectionName" type="string" lcioInType="TrackerPulse"> cluster_apix </parameter>
@@ -140,6 +140,7 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
   <!--parameter name="NPixel" type="int" value="9"/-->
   <!--The submatrix size to be used for CoGAlgorithm = "NxMPixel"-->
   <parameter name="NxMPixel" type="IntVec"> 3 3 </parameter>
+  <parameter name="ReferenceHitFile" type="string"> @DBPath@/@Output@-refhit-db.slcio </parameter>
 </processor>
 
  <processor name="Save" type="EUTelOutputProcessor">
@@ -168,15 +169,15 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
     <parameter name="AlignmentConstantLCIOFile" type="string"> @DBPath@/@Output@-prealign-db.slcio </parameter>
     <parameter name="ReferenceCollection" type="string" > refhit </parameter>
     <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
-    <parameter name="MinNumberOfCorrelatedHits" type="int" value="8"/>
-    <parameter name="Events"  type="int" value="9999"/>
+    <parameter name="MinNumberOfCorrelatedHits" type="int" value="6"/>
+    <parameter name="Events"  type="int" value="1999"/>
     <parameter name="HotPixelCollectionName"> hotpixel_apix </parameter>
 
     <!--Residual cuts along both size in microns-->
-    <parameter name="ResidualsXMax" type="FloatVec">  1.  1.  1.  -5.0 -5.0  1.  1.  0.          </parameter>
-    <parameter name="ResidualsXMin" type="FloatVec"> -1. -1. -1.  -8.0 -8.0 -1. -1. -4.          </parameter>
-    <parameter name="ResidualsYMax" type="FloatVec">  1.  1.  1.   2.0  2.0  1.  1.  0.          </parameter>
-    <parameter name="ResidualsYMin" type="FloatVec"> -1. -1. -1.  -2.0 -2.0 -1. -1. -4.          </parameter>
+    <parameter name="ResidualsXMax" type="FloatVec">  3.  3.  3.   8.0  8.0  3.  3.  3.          </parameter>
+    <parameter name="ResidualsXMin" type="FloatVec"> -3. -3. -3.  -8.0 -8.0 -3. -3. -3.          </parameter>
+    <parameter name="ResidualsYMax" type="FloatVec">  3.  3.  3.   5.0  5.0  3.  3.  3.          </parameter>
+    <parameter name="ResidualsYMin" type="FloatVec"> -3. -3. -3.  -5.0 -5.0 -3. -3. -3.          </parameter>
  </processor>
  
 <processor name="Correlator" type="EUTelCorrelator">
@@ -187,15 +188,15 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
   <parameter name="DumpOffset" type="bool" > false </parameter>
   <parameter name="ReferenceCollection" type="string" > refhit </parameter>
   <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
-  <parameter name="MinNumberOfCorrelatedHits" type="int" value="8"/>
-  <parameter name="Events"  type="int" value="9999"/>
+  <parameter name="MinNumberOfCorrelatedHits" type="int" value="6"/>
+  <parameter name="Events"  type="int" value="1999"/>
   <parameter name="HotPixelCollectionName"  type="string" value="hotpixel_apix"/>
 
   <!--Residual cuts along both size in microns-->
-    <parameter name="ResidualsXMax" type="FloatVec">  1.  1.  1.  -5.0 -5.0    1.  1.  0.          </parameter>
-    <parameter name="ResidualsXMin" type="FloatVec"> -1. -1. -1.  -8.0 -8.0   -1. -1. -4.          </parameter>
-    <parameter name="ResidualsYMax" type="FloatVec">  1.  1.  1.   2.0  2.0    1.  1.  0.          </parameter>
-    <parameter name="ResidualsYMin" type="FloatVec"> -1. -1. -1.  -2.0 -2.0   -1. -1. -4.          </parameter>
+    <parameter name="ResidualsXMax" type="FloatVec">  3.  3.  3.   8.0  8.0    3.  3.  3.          </parameter>
+    <parameter name="ResidualsXMin" type="FloatVec"> -3. -3. -3.  -8.0 -8.0   -3. -3. -3.          </parameter>
+    <parameter name="ResidualsYMax" type="FloatVec">  3.  3.  3.   5.0  5.0    3.  3.  3.          </parameter>
+    <parameter name="ResidualsYMin" type="FloatVec"> -3.  3. -3.  -5.0 -5.0   -3. -3. -3.          </parameter>
 
 
 </processor>
