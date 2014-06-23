@@ -37,6 +37,7 @@ namespace eutelescope {
     /** Default constructor, initializes values to 0.
      */
     EUTelTrackStateImpl() ;
+		EUTelTrackStateImpl(const IMPL::TrackStateImpl& o );
     EUTelTrackStateImpl(int, float, float, float, float, float, const float*, const float*) ;
     EUTelTrackStateImpl(int, float, float, float, float, float, const EVENT::FloatVec&, const float* ) ;
     /** Copy constructor which takes as an argument an EVENT::EUTelTrackState reference */

@@ -33,6 +33,31 @@ namespace eutelescope {
     
   }
 
+	//This constructor will change IMPL::TrackImpl into EUTeltrack
+	EUTelTrackImpl::EUTelTrackImpl(const IMPL::TrackImpl& o) : EVENT::LCObject(), AccessChecked(),
+  _chi2(o.getChi2()),
+  _ndf(o.getNdf()),
+  _dEdx(o.getdEdx()),
+  _dEdxError(o.getdEdxError())
+  { 
+		EVENT::TrackStateVec states =  o.getTrackStates();
+		EVENT::TrackStateVec::const_iterator state;
+		for(state = states.begin(); state != states.end(); ++state){
+			EUTelTrackStateImpl* EUState = new EUTelTrackStateImpl(*(*state));
+			EVENT::TrackerHitVec hits = 	o.getTrackerHits();
+			EVENT::TrackerHitVec::const_iterator hit;
+			for(hit = hits.begin();hit != hits.end(); ++hit){
+				if((*state)->getLocation() == Utility::getSensorIDfromHit(*hit)){
+					EUState->setHit(*hit);
+				}else{
+					EUState->setHit(NULL);
+				}
+			}
+		addTrackState(EUState);
+		}			
+	    
+  }
+
     const EUTelTrackImpl & EUTelTrackImpl::operator = ( const EUTelTrackImpl &o )
     {
     _chi2 = o._chi2 ;

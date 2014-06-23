@@ -1376,7 +1376,7 @@ void EUTelGBLFitter::FindHitIfThereIsOne(EUTelTrackImpl* EUtrack, EVENT::Tracker
  	  gblTraj->printPoints(1);
         }
 
-        gblTraj->milleOut( *_mille );
+        //gblTraj->milleOut( *_mille );
         
 
     }
@@ -1404,6 +1404,8 @@ void EUTelGBLFitter::CreateAlignmentToMeasurementJacobian(std::vector< gbl::GblP
 		TMatrixD * Jac = _MilleInterface->getAlignmentJacobian();
 		std::vector<int> labels =  _MilleInterface->getGlobalParameters();
 		
+
+		(pointList->at(pointNum)).addGlobals(labels, *Jac);
 		
 		
 		

@@ -13,6 +13,7 @@
 #include <bitset>
 
 #include "EUTelTrackStateImpl.h"
+#include "EUTelUtility.h"
 
 namespace eutelescope {
 
@@ -33,6 +34,8 @@ namespace eutelescope {
     /** Default constructor, initializes values to 0.
      */
     EUTelTrackImpl() ;
+
+		EUTelTrackImpl(const IMPL::TrackImpl& o);
     
     /** Copy constructor - creates shallow copy, i.e. all data members are copied but pointers to other LCObjects
      *  i.e. TrackerHits and Tracks are preserved.

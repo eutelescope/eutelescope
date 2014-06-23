@@ -190,6 +190,7 @@ void EUTelProcessorGBLFitCandidates::processEvent(LCEvent * evt){
 			_trackFitter->UpdateTrackFromGBLTrajectory(traj, pointList);
 			//////////////////////////////////////////////////////////////////////////////////////END
 			_trackFitter->CreateAlignmentToMeasurementJacobian(pointList);
+	//		traj->milleOut( _milleBinaryFilename.c_str() );
 			
 			      
 		}//END OF LOOP FOR ALL TRACKS IN AN EVENT
