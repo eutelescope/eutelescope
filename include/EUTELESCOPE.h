@@ -379,14 +379,6 @@ namespace eutelescope
      */
     static const char * ZSCLUSTERDEFAULTENCODING;
 
-    //! Zero suppress cluster encoding for ATLAS-Pixel clusters
-    /*! This encoding string is used for the TrackerData containing
-     *  clusters made by ATLAS PIXEL pixels
-     *
-     *  @see SparsePixelType
-     *  @see ClusterQuality
-     */
-    static const char * ZSAPIXCLUSTERENCODING;
 
     //! SensorID and properties encoding for hits
     /*! This encoding string is used for the TrackerHit* classes
