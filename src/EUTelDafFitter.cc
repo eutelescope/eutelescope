@@ -125,6 +125,9 @@ void EUTelDafFitter::dafInit() {
 
 void EUTelDafFitter::dafEvent (LCEvent * event) {
 
+  streamlog_out(MESSAGE3) << " dafEvent -- START --- " << std::endl;
+
+
   //Prepare track collection
   if(_addToLCIO){
     // Define output track and hit collections
@@ -178,6 +181,9 @@ void EUTelDafFitter::dafEvent (LCEvent * event) {
     }
     event->addCollection(_fitpointvec, sfitpoints );
   }
+
+  streamlog_out(MESSAGE3) << " dafEvent -- END --- " << std::endl;
+
 
 }
 

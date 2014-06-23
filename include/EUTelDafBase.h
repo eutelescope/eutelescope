@@ -11,6 +11,7 @@
 #ifdef USE_GEAR
 
 // eutelescope includes
+#include "EUTelUtility.h"
 #include "EUTelDafTrackerSystem.h"
 #include "EUTelAlignmentConstant.h"
 

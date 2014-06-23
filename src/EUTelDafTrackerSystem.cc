@@ -108,7 +108,7 @@ void TrackerSystem::getChi2Kf(TrackCandidate *candidate){
 void TrackerSystem::getChi2Daf(TrackCandidate *candidate){
   float chi2(0.0), ndof(0.0);
   Vector2f chi2v;
-  for(int plane = 0; plane <static_cast< int >(planes.size()); plane++){
+  for(int plane = 0; plane < static_cast< int >(planes.size()); plane++){
     FitPlane& p = planes.at(plane);
     if(p.isExcluded()){ continue;}
     for(size_t meas = 0; meas < p.meas.size(); meas++){
@@ -144,9 +144,12 @@ int TrackerSystem::addNeighbors(vector<PlaneHit> &candidate, list<PlaneHit> &hit
 
 
 void TrackerSystem::clusterTracker(){
+  streamlog_out(MESSAGE2)<< " void TrackerSystem::clusterTracker ---------- BEGIN ------------ " << std::endl;
+
   list<PlaneHit> availableHits;
   //Add all meas points to list
   for(size_t ii = 0; ii < planes.size(); ii++){
+    streamlog_out(MESSAGE2) << " i : " << ii << " of " << planes.size() << std::endl;
     if(planes.at(ii).isExcluded()) { continue;}
     float xShift = -1 * getNominalXdz() * planes.at(ii).getZpos();
     float yShift = -1 * getNominalYdz() * planes.at(ii).getZpos();
@@ -188,6 +191,9 @@ void TrackerSystem::clusterTracker(){
     m_nTracks++;
 //printf("TrackerSystem::clusterTracker m_nTracks = %5d \n", m_nTracks);
   }
+
+  streamlog_out(MESSAGE2)<< " void TrackerSystem::clusterTracker ----------- END --------------" << std::endl;
+
 }
 
 void TrackerSystem::fitPlanesInfo(TrackCandidate *candidate){
