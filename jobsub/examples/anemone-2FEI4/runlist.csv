@@ -1,4 +1,4 @@
-RunNumber,BeamEnergy,Threshold
+RunNumber,BeamEnergy,Threshold,GearGeoFile,angle,xclumin,xclumax,yclumin,yclumax
 
-0017,4.0,7.0
+000017,4.0,7.0,gear_desy2012_04_anemone_2FEI4.xml,96.0,0,100,0,3
 
