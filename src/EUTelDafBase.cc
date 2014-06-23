@@ -331,6 +331,7 @@ void EUTelDafBase::init() {
   _zSort.clear();
   for(int plane = 0; plane < _siPlanesLayerLayout->getNLayers(); plane++){
     _zSort[ _siPlanesLayerLayout->getLayerPositionZ(plane) * 1000.0 ] = plane;
+    _indexIDMap[ _siPlanesLayerLayout->getID( plane )] = plane;
   }
 
   //Add Planes to tracker system,
@@ -378,6 +379,8 @@ void EUTelDafBase::init() {
 
     //Add plane to tracker system
     if(not excluded){ nActive++;}
+
+	std::cout << "Adding plane: " << sensorID << " (excluded: " << excluded << ")" << std::endl;
    _system.addPlane(sensorID, zPos , errX, errY, scatter, excluded);
     gearRotate(index, (*zit).second);
   }
@@ -487,26 +490,34 @@ void EUTelDafBase::readHitCollection(LCEvent* event)
        if(_mcCollection != 0 ) simhit = static_cast<SimTrackerHitImpl*> ( _mcCollection->getElementAt(iHit) );
        if(simhit != 0 )
        {
-	 UTIL::CellIDDecoder<SimTrackerHitImpl> simHitDecoder (_mcCollection);
-	 planeIndex = simHitDecoder(simhit)["sensorID"];
+	  UTIL::CellIDDecoder<SimTrackerHitImpl> simHitDecoder (_mcCollection);
+	  const double * simpos = simhit->getPosition();
+          pos[0]=simpos[0];
+          pos[1]=simpos[1];
+          pos[2]=simpos[2];
+	  planeIndex = simHitDecoder(simhit)["sensorID"];
        }
        streamlog_out ( DEBUG5 ) << " SIM: simhit="<< ( simhit != 0 ) <<" add point [" << planeIndex << "] "<< 
                       static_cast< float >(pos[0]) * 1000.0f << " " << static_cast< float >(pos[1]) * 1000.0f << " " <<  static_cast< float >(pos[2]) * 1000.0f << endl;
      }else
       if(hit != 0 )
       {
-	UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
-	planeIndex = hitDecoder(hit)["sensorID"];
-       streamlog_out ( DEBUG5 ) << " REAL: add point [" << planeIndex << "] "<< 
+	 const double * hitpos = hit->getPosition();
+         pos[0]=hitpos[0];
+         pos[1]=hitpos[1];
+         pos[2]=hitpos[2];
+	 UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
+	 planeIndex = hitDecoder(hit)["sensorID"];
+         streamlog_out ( DEBUG5 ) << " REAL: add point [" << planeIndex << "] "<< 
                       static_cast< float >(pos[0]) * 1000.0f << " " << static_cast< float >(pos[1]) * 1000.0f << " " <<  static_cast< float >(pos[2]) * 1000.0f << endl;
-       region = checkClusterRegion( hit, _system.planes.at(planeIndex).getSensorID() );
+       //region = checkClusterRegion( hit, _system.planes.at(planeIndex).getSensorID() );
       }
 
       if(planeIndex >=0 ) 
       { 
 	streamlog_out ( DEBUG5 ) << " add point [" << planeIndex << "] "<< 
                       static_cast< float >(pos[0]) * 1000.0f << " " << static_cast< float >(pos[1]) * 1000.0f << " " <<  static_cast< float >(pos[2]) * 1000.0f << endl;
-        _system.addMeasurement( planeIndex, static_cast< float >(pos[0]) * 1000.0f, static_cast< float >(pos[1]) * 1000.0f, static_cast< float >(pos[2]) * 1000.0f,  region, iHit);
+        _system.addMeasurement( _indexIDMap[planeIndex], static_cast< float >(pos[0]) * 1000.0f, static_cast< float >(pos[1]) * 1000.0f, static_cast< float >(pos[2]) * 1000.0f,  region, iHit);
       }
     }
   }
