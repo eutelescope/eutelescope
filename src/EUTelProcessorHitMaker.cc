@@ -356,10 +356,8 @@ void EUTelProcessorHitMaker::processEvent (LCEvent * event) {
  	TrackerPulseImpl * clusterFrame = dynamic_cast<TrackerPulseImpl*> ( pulseCollection->getElementAt( iCluster ) ); // actual cluster
     
 	int sensorID    = clusterCellDecoder(clusterFrame)["sensorID"];
-	int clusterID   = clusterCellDecoder(clusterFrame)["clusterID"];
 	SparsePixelType clusterType = static_cast<SparsePixelType> ( static_cast<int> (clusterCellDecoder(clusterFrame)["type"] ) );
 
-        streamlog_out(DEBUG1) << "cluster[" << setw(4) << iCluster << "] on sensor[" << setw(3) << sensorID << "]" << "[" << clusterID << "]" << " clusterType : " << setw(3) << clusterType << endl;
 	
         TrackerDataImpl  * channelList  = dynamic_cast<TrackerDataImpl*> ( clusterFrame->getTrackerData() ); // list of pixels ?
 		
