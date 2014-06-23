@@ -1216,79 +1216,6 @@ void EUTelMille::processEvent (LCEvent * event) {
 
             TrackerHitImpl * hit = static_cast<TrackerHitImpl*> ( collection->getElementAt(iHit) );
              
-            if( hitContainsHotPixels(hit) )
-            {
-              streamlog_out ( DEBUG3 ) << "Hit " << i << " contains hot pixels; skip this one. " << endl;
-              continue;
-            }
-
-            LCObjectVec clusterVector = hit->getRawHits();
-
-            EUTelVirtualCluster * cluster;
-
-            if ( hit->getType() == kEUTelBrickedClusterImpl ) {
-
-               // fixed cluster implementation. Remember it
-               //  can come from
-               //  both RAW and ZS data
-   
-                cluster = new EUTelBrickedClusterImpl(static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
-                
-            } else if ( hit->getType() == kEUTelDFFClusterImpl ) {
-              
-              // fixed cluster implementation. Remember it can come from
-              // both RAW and ZS data
-              cluster = new EUTelDFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
-            } else if ( hit->getType() == kEUTelFFClusterImpl ) {
-              
-              // fixed cluster implementation. Remember it can come from
-              // both RAW and ZS data
-              cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
-            } else if ( hit->getType() == kEUTelSparseClusterImpl ) {
-
-              // ok the cluster is of sparse type, but we also need to know
-              // the kind of pixel description used. This information is
-              // stored in the corresponding original data collection.
-
-              LCCollectionVec * sparseClusterCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection("original_zsdata"));
-
-             TrackerDataImpl * oneCluster = dynamic_cast<TrackerDataImpl*> (sparseClusterCollectionVec->getElementAt( 0 ));
-              CellIDDecoder<TrackerDataImpl > anotherDecoder(sparseClusterCollectionVec);
-              SparsePixelType pixelType = static_cast<SparsePixelType> ( static_cast<int> ( anotherDecoder( oneCluster )["sparsePixelType"] ));
-
-              // now we know the pixel type. So we can properly create a new
-              // instance of the sparse cluster
-              if ( pixelType == kEUTelGenericSparsePixel ) {
-
-                cluster = new EUTelSparseClusterImpl< EUTelGenericSparsePixel >
-                  ( static_cast<TrackerDataImpl *> ( clusterVector[ 0 ]  ) );
-
-              } else {
-                streamlog_out ( ERROR4 ) << "Unknown pixel type.  Sorry for quitting." << endl;
-                throw UnknownDataTypeException("Pixel type unknown");
-              }
-
- 
-            } else {
-              throw UnknownDataTypeException("Unknown cluster type");
-            }
-
-            if ( 
-                    hit->getType() == kEUTelDFFClusterImpl 
-                    ||
-                    hit->getType() == kEUTelFFClusterImpl 
-                    ||
-                    hit->getType() == kEUTelSparseClusterImpl 
-                    ) 
-            {
-                if(cluster->getTotalCharge() <= getMimosa26ClusterChargeMin() )
-                {
-		  streamlog_out( DEBUG5 ) << " Thin cluster (charge <=" << getMimosa26ClusterChargeMin() << ") found and removed (hit type " << hit->getType() << " on detector w/ id " << cluster->getDetectorID() << ")" << endl;
-		  delete cluster; 
-		  continue;
-                }
-            }
-
 	    int localSensorID = hitDecoder(hit)["sensorID"]; 
             
             layerIndex = _sensorIDVecMap[localSensorID] ;
@@ -1300,7 +1227,6 @@ void EUTelMille::processEvent (LCEvent * event) {
             hitsInPlane.measuredZ = 1000. * hit->getPosition()[2];
 
             _allHitsArray[layerIndex].push_back(hitsInPlane);
-            delete cluster; // <--- destroying the cluster
           } // end loop over all hits in collection
 
         } else if (_inputMode == 2) {
@@ -1492,75 +1418,9 @@ void EUTelMille::processEvent (LCEvent * event) {
                 {
                   TrackerHitImpl *hit = static_cast<TrackerHitImpl*> ( collection->getElementAt(iHit) );
 
-                  LCObjectVec clusterVector = hit->getRawHits();
-                  EUTelVirtualCluster *cluster;
-
-                  if ( hit->getType() == kEUTelBrickedClusterImpl ) {
-
-                    // fixed cluster implementation. Remember it can come from
-                    // both RAW and ZS data
-                    cluster = new EUTelBrickedClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
-                  }
-                  else if ( hit->getType() == kEUTelDFFClusterImpl ) {
-
-                    // fixed cluster implementation. Remember it can come from
-                    // both RAW and ZS data
-                    cluster = new EUTelDFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
-                  }
-                  else if ( hit->getType() == kEUTelFFClusterImpl ) {
-
-                    // fixed cluster implementation. Remember it can come from
-                    // both RAW and ZS data
-                    cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
-                  }
-                  else if ( hit->getType() == kEUTelSparseClusterImpl ) {
-                    //copy and paste from the inputmode 0
-                    // code. needs to be tested ...
-
-                    // ok the cluster is of sparse type, but we also need to know
-                    // the kind of pixel description used. This information is
-                    // stored in the corresponding original data collection.
-
-                    LCCollectionVec * sparseClusterCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection("original_zsdata"));
-                    TrackerDataImpl * oneCluster = dynamic_cast<TrackerDataImpl*> (sparseClusterCollectionVec->getElementAt( 0 ));
-                    CellIDDecoder<TrackerDataImpl > anotherDecoder(sparseClusterCollectionVec);
-                    SparsePixelType pixelType = static_cast<SparsePixelType> ( static_cast<int> ( anotherDecoder( oneCluster )["sparsePixelType"] ));
-
-                    // now we know the pixel type. So we can properly create a new
-                    // instance of the sparse cluster
-                    if ( pixelType == kEUTelGenericSparsePixel ) {
-
-                      cluster = new EUTelSparseClusterImpl< EUTelGenericSparsePixel >
-                        ( static_cast<TrackerDataImpl *> ( clusterVector[ 0 ]  ) );
-
-                    } else {
-                      streamlog_out ( ERROR4 ) << "Unknown pixel type.  Sorry for quitting." << endl;
-                      throw UnknownDataTypeException("Pixel type unknown");
-                    }
-
-                  } else {
-                    throw UnknownDataTypeException("Unknown cluster type");
-                  }
-
                   std::vector<EUTelMille::HitsInPlane> hitsplane;
-
-                  if ( 
-                    hit->getType() == kEUTelDFFClusterImpl 
-                    ||
-                    hit->getType() == kEUTelFFClusterImpl 
-                    ||
-                    hit->getType() == kEUTelSparseClusterImpl 
-                    ) 
-                  {
-                      if(cluster->getTotalCharge() <= getMimosa26ClusterChargeMin() )
-                      {
-                          delete cluster; 
-                          continue;
-                      }
-                  }
-
-
-                  hitsplane.push_back(
+                  
+		  hitsplane.push_back(
                           EUTelMille::HitsInPlane(
                               1000. * hit->getPosition()[0],
                               1000. * hit->getPosition()[1],
@@ -1569,8 +1429,6 @@ void EUTelMille::processEvent (LCEvent * event) {
                           );
  
                   double measuredz = hit->getPosition()[2];
-
-                  delete cluster; // <--- destroying the cluster
 
 		  // setup cellIdDecoder to decode the hit properties
 		  CellIDDecoder<TrackerHit>  hitCellDecoder(EUTELESCOPE::HITENCODING);
