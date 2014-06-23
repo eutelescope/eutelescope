@@ -349,14 +349,14 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesParameters() {
 
 }
 
-void EUTelGeometryTelescopeGeoDescription::readTelPlanesParameters() {
+void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesParameters() {
 
  
     // sensor-planes in geometry navigation:
-    _telPlanesParameters = const_cast< gear::TelPlanesParameters*> (&( _gearManager->getTelPlanesParameters()));
-    _telPlanesLayerLayout = const_cast< gear::TelPlanesLayerLayout*> (&(_telPlanesParameters->getTelPlanesLayerLayout()));
+    _trackerPlanesParameters = const_cast< gear::TrackerPlanesParameters*> (&( _gearManager->getTrackerPlanesParameters()));
+    _trackerPlanesLayerLayout = const_cast< gear::TrackerPlanesLayerLayout*> (&(_trackerPlanesParameters->getTrackerPlanesLayerLayout()));
     
-    setSiPlanesLayoutID( _telPlanesParameters->getTelPlanesID() ) ;
+    setSiPlanesLayoutID( _trackerPlanesParameters->getLayoutID() ) ;
 
     // clear the sensor ID vector
     _sensorIDVec.clear();
@@ -369,18 +369,18 @@ void EUTelGeometryTelescopeGeoDescription::readTelPlanesParameters() {
     _nPlanes = 0; // should be filed based on the length of the sensor vector.// after the loop
 
     // create an array with the z positions of each layer
-    int nLayers = _telPlanesLayerLayout->getNLayers();
+    int nLayers = _trackerPlanesLayerLayout->getNLayers();
     for (int iLayer = 0; iLayer < nLayers; iLayer++) {
-        gear::TelPlanesLayerImpl* _telPlanesLayerImpl = const_cast< gear::TelPlanesLayerImpl*>  (_telPlanesLayerLayout->getLayer( iLayer) );
-        streamlog_out(DEBUG1) << " ilayer : " << iLayer << " " << nLayers  << " at " << _telPlanesLayerImpl;
-        int nsensitive = _telPlanesLayerImpl->getNSensitiveLayers() ;
+        gear::TrackerPlanesLayerImpl* _trackerPlanesLayerImpl = const_cast< gear::TrackerPlanesLayerImpl*>  (_trackerPlanesLayerLayout->getLayer( iLayer) );
+        streamlog_out(DEBUG1) << " ilayer : " << iLayer << " " << nLayers  << " at " << _trackerPlanesLayerImpl;
+        int nsensitive = _trackerPlanesLayerImpl->getNSensitiveLayers() ;
         streamlog_out(DEBUG1) << " constains " << nsensitive << " sensitive (sub)layers " << std::endl;
 
-        gear::TelPlanesSensitiveLayerImplVec& vector = _telPlanesLayerImpl->getSensitiveLayerVec();
+        gear::TrackerPlanesSensitiveLayerImplVec& vector = _trackerPlanesLayerImpl->getSensitiveLayerVec();
        
         for (int iSensLayer = 0; iSensLayer < nsensitive; iSensLayer++) {       
 
-            gear::TelPlanesSensitiveLayerImpl& sensitiveLayer = vector.at(iSensLayer);
+            gear::TrackerPlanesSensitiveLayerImpl& sensitiveLayer = vector.at(iSensLayer);
             int sensorID =   sensitiveLayer.getID();
             streamlog_out(DEBUG1) << " iLayer " << iLayer << " sens: " << iSensLayer << " id :" << sensorID << std::endl;
 
@@ -431,8 +431,8 @@ EUTelGeometryTelescopeGeoDescription::EUTelGeometryTelescopeGeoDescription() :
 _gearManager( marlin::Global::GEAR ),
 _siPlanesParameters(0),
 _siPlanesLayerLayout(0),
-_telPlanesParameters(0),
-_telPlanesLayerLayout(0),
+_trackerPlanesParameters(0),
+_trackerPlanesLayerLayout(0),
 _sensorIDVec(),
 _sensorIDVecMap(),
 _sensorZOrderToIDMap(),
@@ -485,8 +485,8 @@ void EUTelGeometryTelescopeGeoDescription::readGear() {
     }
 
     try{
-      _telPlanesParameters = const_cast< gear::TelPlanesParameters*> (&(_gearManager->getTelPlanesParameters()));
-      streamlog_out(MESSAGE1)  << "tel planes : " << _telPlanesParameters << std::endl;
+      _trackerPlanesParameters = const_cast< gear::TrackerPlanesParameters*> (&(_gearManager->getTrackerPlanesParameters()));
+      streamlog_out(MESSAGE1)  << "tel planes : " << _trackerPlanesParameters << std::endl;
       telPlanesDefined = true;
     }catch(...){
       streamlog_out(WARNING)   << "tel planes not found "  << std::endl;
@@ -496,7 +496,7 @@ void EUTelGeometryTelescopeGeoDescription::readGear() {
       readSiPlanesParameters();
     }
     else if( telPlanesDefined ){
-      readTelPlanesParameters();
+      readTrackerPlanesParameters();
     }
 
 }
