@@ -488,9 +488,9 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
         std::vector<double> trackY;
         std::vector<int  > iplane;
 
-       trackX.clear();
-       trackY.clear();
-       iplane.clear();
+        trackX.clear();
+        trackY.clear();
+        iplane.clear();
 
         // this is the external hit
 
@@ -503,11 +503,11 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
         double etrackPointLocal[]  = { externalPosition[0], externalPosition[1], externalPosition[2] };
         double etrackPointGlobal[] = { externalPosition[0], externalPosition[1], externalPosition[2] };
 
-// do local2Master only if the externalHit is defined in the local frame of the module:  
-// skip if already in global 
-// steer by a processor flag ?
-        geo::gGeometry().local2Master( externalSensorID, etrackPointLocal, etrackPointGlobal );
-//
+        if ( hitDecoder( externalHit) ["properties"] != kHitInGlobalCoord ) {
+           geo::gGeometry().local2Master( externalSensorID, etrackPointLocal, etrackPointGlobal );
+        } else {
+           // do nothing, already in global telescope frame 
+        }
 
         trackX.push_back( etrackPointGlobal[0]);
         trackY.push_back( etrackPointGlobal[1]);
@@ -529,11 +529,12 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 
           double itrackPointLocal[]  = { internalPosition[0], internalPosition[1], internalPosition[2] };
           double itrackPointGlobal[] = { internalPosition[0], internalPosition[1], internalPosition[2] };
-// do local2Master only if the externalHit is defined in the local frame of the module:  
-// skip if already in global 
-// steer by a processor flag ?
-          geo::gGeometry().local2Master( internalSensorID, itrackPointLocal, itrackPointGlobal );
- 
+
+          if ( hitDecoder( internalHit )["properties"] != kHitInGlobalCoord ) {
+             geo::gGeometry().local2Master( internalSensorID, itrackPointLocal, itrackPointGlobal );
+          } else {
+             // do nothing, already in global telescope frame 
+          }
 
           if ( 
                   ( internalSensorID != getFixedPlaneID() && externalSensorID == getFixedPlaneID() )
