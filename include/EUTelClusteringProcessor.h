@@ -668,6 +668,8 @@ namespace eutelescope {
      */
     int _ffYClusterSize;
 
+    int _charge;
+
     //! Threshold for seed pixel identification
     /*! This float number represents the threshold in SNR units for
      *  the identification of seed pixels for Fixed Frame

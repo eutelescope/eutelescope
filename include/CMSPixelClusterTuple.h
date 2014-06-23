@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef EUTelFitTuple_h
-#define EUTelFitTuple_h 1
+#ifndef CMSPixelClusterTuple_h
+#define CMSPixelClusterTuple_h 1
 
 #include "marlin/Processor.h"
 
@@ -34,12 +34,8 @@
 namespace eutelescope {
 
 
-  //! Processor for building n-tuple with track fit results
-  /*! This processor prepared for easier analysis of track fitting results.
-   *  Results stored in \c Track collection are used: number of fitted
-   *  planes, measured positions (XY) in these planes, Chi2 of the fit
-   *  and fitted XY positions in each plane. Also positions measured
-   *  in DUT can be included.
+  //! Processor for building n-tuple with clustering results
+  /*! This processor prepared for easier analysis of clustering results.
    *
    * \par Geometry description
    * Geometry information is taken from GEAR. However, it is possible
@@ -55,48 +51,33 @@ namespace eutelescope {
    *
    * \param InputCollectionName  Name of the input  Tracker collection
    *
-   * \param InputDUTCollectionName  Name of the input TrackerHit
-   *        collection, from which DUT hits are taken
+   * \param DebugEventCount      Print out debug and information
+   *        messages only for one out of given number of events. If
+   *        zero, no debug information is printed.
    *
-   * \param UseManualDUT Flag for manual DUT selection
-   *                      i.e. ignoring GEAR definition
-   *
-   * \param ManualDUTid  Id of telescope layer which should be used as DUT
-   *
-   * \param DUTalignment Alignment corrections for DUT: shift in X, Y
-   *                     and rotation around Z
-   *
-   * \param DistMax Maximum allowed distance between fit and matched
-   *                 DUT hit.
-   *
-   * \param MissingValue Value (double) which is used for missing
-   *        measurements.
-   *
-
-   * \author A.F.Zarnecki, University of Warsaw
-   * @version $Id$
-   * \date 2007.09.10
+   * \author U. Grundler, National Tawain University
+   * Based on EUTelFitTuple
    *
    */
 
 
-  class EUTelFitTuple : public marlin::Processor {
+  class CMSPixelClusterTuple : public marlin::Processor {
 
   public:
 
 
 
-    //! Returns a new instance of EUTelFitTuple
+    //! Returns a new instance of CMSPixelClusterTuple
     /*! This method returns an new instance of the this processor.  It
      *  is called by Marlin execution framework and it shouldn't be
      *  called/used by the final user.
      *
-     *  @return a new EUTelFitTuple
+     *  @return a new CMSPixelClusterTuple
      */
-    virtual Processor*  newProcessor() { return new EUTelFitTuple ; }
+    virtual Processor*  newProcessor() { return new CMSPixelClusterTuple ; }
 
     //! Default constructor
-    EUTelFitTuple() ;
+    CMSPixelClusterTuple() ;
 
     //! Called at the job beginning.
     /*! This is executed only once in the whole execution.
@@ -167,19 +148,11 @@ namespace eutelescope {
     gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
 
 
-    //! Input \c Track collection name
-    std::string _inputColName ;
+    //! Input \c cluster collection name
+    std::string _clusterColName ;
 
-    //! Input \c TrackerHit collection name
-    std::string _inputDUTColName ;
-
-    //! Flag for manual DUT selection
-
-    bool _useManualDUT;
-
-    //! Id of telescope layer which should be used as DUT
-
-    int _manualDUTid;
+    //!  Debug print out for one out of given number of events.
+    int _debugCount ;
 
     //!  Value to be used for missing measurements
     double _missingValue;
@@ -198,20 +171,10 @@ namespace eutelescope {
     double * _measuredY;
     double * _measuredZ;
     double * _measuredQ;
-    double * _ClusterSize;
 
     bool   * _isFitted;
     double * _fittedX;
     double * _fittedY;
-    double * _fittedEX;
-    double * _fittedEY;
-    int * _nhits;
-
-    int _iDUT;
-    double _zDUT;
-    double _distMax;
-    double _maxZDistance;
-    std::vector<float > _DUTalign;
 
     // Internal processor variables
     // ----------------------------
@@ -220,15 +183,14 @@ namespace eutelescope {
     int _nEvt ;
     int _runNr;
     int _evtNr;
-    long int  _tluTimeStamp;
 
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
 
-    static std::string _FitTupleName;
+    static std::string _ClusterTupleName;
 
-    AIDA::ITuple * _FitTuple;
+    AIDA::ITuple * _ClusterTuple;
 
 #endif
 
@@ -236,7 +198,7 @@ namespace eutelescope {
 
 
   //! A global instance of the processor.
-  EUTelFitTuple aEUTelFitTuple ;
+  CMSPixelClusterTuple aCMSPixelClusterTuple ;
 
 
 }

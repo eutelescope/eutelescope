@@ -172,6 +172,7 @@ INSTALL_SHARED_LIBRARY( ${libname} DESTINATION lib )
 
 # Properly add the CMSPixelDecoder external dependency:
 ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}/external/CMSPixelDecoder)
+INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/external/CMSPixelDecoder)
 # ..and link it to libEUTelescope:
 TARGET_LINK_LIBRARIES( ${libname} CMSPixelDecoder )
 

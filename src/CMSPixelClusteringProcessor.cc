@@ -719,9 +719,9 @@ void CMSPixelClusteringProcessor::bookHistos() {
 		double signalMin   = 0.;
 		double signalMax   = 2000.;
 		
-		int clusterNBin = 10;
+		int clusterNBin = 100;
 		double clusterMin = 0.;
-		double clusterMax = 10.;
+		double clusterMax = 100.;
 		
 		string clusterSizeTitle = "Clustersize";
 		tempHistoName = _clusterSizeName + "_d" + to_string( sensorID );

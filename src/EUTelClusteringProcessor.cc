@@ -679,7 +679,7 @@ void EUTelClusteringProcessor::readCollections (LCEvent * event)
     // in the current event it is possible to have either full frame and
     // zs data. Here is the right place to guess what we have
 
-    hasNZSData = true;
+    //hasNZSData = true;
     hasZSData  = true;
 
     try 
@@ -866,6 +866,8 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
   
   
   dim2array<bool> pixelmatrix(_ffXClusterSize, _ffYClusterSize, false);
+  dim2array<int> pixelchargematrix(_ffXClusterSize, _ffYClusterSize, _charge);
+
   for ( unsigned int i = 0 ; i < zsInputDataCollectionVec->size(); i++ ) 
   {
     // get the TrackerData and guess which kind of sparsified data it
@@ -944,6 +946,7 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
     //    dim2array<bool> sensormatrix((unsigned int)(_maxX+1 - _minX), (unsigned int)(_maxY+1 - _minY), false);
 
     std::map<unsigned int, std::map<unsigned int, bool> > sensormatrix;
+    std::map<unsigned int, std::map<unsigned int, int> > chargematrix;
 
 
     // prepare the matrix decoder
@@ -986,6 +989,11 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
 
           sparseData->getSparsePixelAt( iPixel, sparsePixel.get() );
           int index = matrixDecoder.getIndexFromXY( sparsePixel->getXCoord(), sparsePixel->getYCoord() );
+	  float signal = sparsePixel->getSignal();
+	  dataVec[ index  ] = signal;
+
+	  streamlog_out ( DEBUG1) << "pixel x " << sparsePixel->getXCoord() << " y " <<  sparsePixel->getYCoord()
+				  << " charge " << signal << endl;
 
           if(static_cast<int>(_hitIndexMapVec.size()) > sensorID ){
               if( _hitIndexMapVec[sensorID].find( index ) != _hitIndexMapVec[sensorID].end() )
@@ -995,12 +1003,14 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                   " iPixel " << iPixel << 
                   " unique index " << index <<
                   " at x = " << sparsePixel->getXCoord() <<
-                  " y= " << sparsePixel->getYCoord() << endl;
+                  " y= " << sparsePixel->getYCoord() << 
+		" charge = " << signal << endl;
               continue;
           }
           }
 
                   sensormatrix[sparsePixel->getXCoord()][sparsePixel->getYCoord()] = true;
+                  chargematrix[sparsePixel->getXCoord()][sparsePixel->getYCoord()] = signal;
       }
     }
     else 
@@ -1227,11 +1237,18 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                                     pix[j].y + yoffset - seedY + static_cast<int>(_ffYClusterSize / 2),
                                     true
                                     );
+                            pixelchargematrix.set(
+                                    pix[j].x + xoffset - seedX + static_cast<int>(_ffXClusterSize / 2),
+                                    pix[j].y + yoffset - seedY + static_cast<int>(_ffYClusterSize / 2),				    
+				    chargematrix[pix[j].x][pix[j].y]
+				    );
                         }
 
                         // loop over the cluster pixels and fill them into
                         // the 1d array. The ordering of the two loops is
                         // copied from the CoG shift method of the class EUTelDFFClusterImpl
+			int xsize=0;
+			int ysize=0;
                            
                         for(int yPixel = 0; yPixel < _ffYClusterSize; yPixel++)
                         {
@@ -1239,7 +1256,8 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                             {
                                 if(pixelmatrix.at(xPixel,yPixel))
                                 {
-                                    clusterCandidateCharges.push_back(1.0);
+				  //clusterCandidateCharges.push_back(1.0);
+				  clusterCandidateCharges.push_back(pixelchargematrix.at(xPixel,yPixel));				  
                                 }
                                 else
                                 {
@@ -1247,6 +1265,13 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                                 }
                             }
                         }
+
+                        for(int yPixel = 0; yPixel < _ffYClusterSize; yPixel++){
+			  if( pixelmatrix.at(0,yPixel) || pixelmatrix.at(1,yPixel) || pixelmatrix.at(2,yPixel) ) ysize ++;
+			}
+			for(int xPixel = 0; xPixel < _ffXClusterSize; xPixel++){
+			  if( pixelmatrix.at(xPixel,0) || pixelmatrix.at(xPixel,1) || pixelmatrix.at(xPixel,2) ) xsize ++;
+			}
 
 
                         // check whether this cluster is partly outside
@@ -1271,8 +1296,8 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                         idPulseEncoder["sensorID"]      = _sensorID;
                         idPulseEncoder["xSeed"]         = seedX;
                         idPulseEncoder["ySeed"]         = seedY;
-                        idPulseEncoder["xCluSize"]      = _ffXClusterSize;
-                        idPulseEncoder["yCluSize"]      = _ffYClusterSize;
+                        idPulseEncoder["xCluSize"]      = _ffXClusterSize; //xsize; //_ffXClusterSize;
+                        idPulseEncoder["yCluSize"]      = _ffYClusterSize; //ysize; //_ffYClusterSize;
                         idPulseEncoder["type"]          = static_cast<int>(kEUTelDFFClusterImpl);
                         idPulseEncoder.setCellID(pulse);
 
@@ -1281,8 +1306,8 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                         idClusterEncoder["sensorID"]      = _sensorID;
                         idClusterEncoder["xSeed"]         = seedX;
                         idClusterEncoder["ySeed"]         = seedY;
-                        idClusterEncoder["xCluSize"]      = _ffXClusterSize;
-                        idClusterEncoder["yCluSize"]      = _ffYClusterSize;
+                        idClusterEncoder["xCluSize"]      = _ffXClusterSize; //xsize; //_ffXClusterSize;
+                        idClusterEncoder["yCluSize"]      = _ffYClusterSize; //ysize; //_ffYClusterSize;
                         idClusterEncoder["quality"]       = static_cast<int>(cluQuality);
                         idClusterEncoder.setCellID(cluster);
 
@@ -3093,7 +3118,7 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
 
       // plot the cluster total charge
       (dynamic_cast<AIDA::IHistogram1D*> (_clusterSignalHistos[detectorID]))->fill(cluster->getTotalCharge());
-
+      streamlog_out ( DEBUG4 ) <<  " cluster charge " << cluster->getTotalCharge() << endl;
       // get the cluster size in X and Y separately and plot it:
       int xSize, ySize;
       cluster->getClusterSize(xSize,ySize);
@@ -3245,17 +3270,17 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
         }
       }
 
-      delete cluster;
+      //delete cluster;
     }
 
     // fill the event multiplicity here
-    string tempHistoName;
-    for ( int iDetector = 0; iDetector < _noOfDetector; iDetector++ ) {
-      AIDA::IHistogram1D * histo = dynamic_cast<AIDA::IHistogram1D *> ( _eventMultiplicityHistos[_orderedSensorIDVec.at( iDetector)] );
-      if ( histo ) {
-        histo->fill( eventCounterVec[iDetector] );
-      }
-    }
+//     string tempHistoName;
+//     for ( int iDetector = 0; iDetector < _noOfDetector; iDetector++ ) {
+//       AIDA::IHistogram1D * histo = dynamic_cast<AIDA::IHistogram1D *> ( _eventMultiplicityHistos[_orderedSensorIDVec.at( iDetector)] );
+//       if ( histo ) {
+//         histo->fill( eventCounterVec[iDetector] );
+//       }
+//     }
   } catch (lcio::DataNotAvailableException& e) {
     return;
   }

@@ -19,6 +19,7 @@
 #include "EUTelFitTuple.h"
 #include "EUTelVirtualCluster.h"
 #include "EUTelFFClusterImpl.h"
+#include "EUTelSparseClusterImpl.h"
 #include "EUTELESCOPE.h"
 #include "EUTelEventImpl.h"
 #include "EUTelRunHeaderImpl.h"
@@ -107,6 +108,10 @@ EUTelFitTuple::EUTelFitTuple() : Processor("EUTelFitTuple") {
   registerProcessorParameter ("DistMax",
                               "Maximum allowed distance between fit and matched DUT hit",
                               _distMax,  static_cast < double > (0.1));
+
+  registerProcessorParameter ("MaxZDistance",
+                              "Maximum allowed distance between hit Z coordinate and the plane's Z coordinate",
+                              _maxZDistance,  static_cast < double > (1.));
 
 
   std::vector<float > initAlign;
@@ -292,6 +297,11 @@ void EUTelFitTuple::init() {
   _measuredQ     = new double[_nTelPlanes];
   _fittedX       = new double[_nTelPlanes];
   _fittedY       = new double[_nTelPlanes];
+  _fittedEX       = new double[_nTelPlanes];
+  _fittedEY       = new double[_nTelPlanes];
+  _nhits         = new int[_nTelPlanes];
+  _ClusterSize         = new double[_nTelPlanes];
+
 
 
 // Book histograms
@@ -375,6 +385,26 @@ void EUTelFitTuple::processEvent( LCEvent * event ) {
 
   message<DEBUG5> ( log() << "Total of " << nDUT << " hits in input collection " );
 
+  // nhits for each plane
+  for(int i=0;i<_nTelPlanes;i++) _nhits[i] = 0;
+  for(int ihit=0; ihit< nDUT ; ihit++)
+  {
+      TrackerHit * meshit = dynamic_cast<TrackerHit*>( hitcol->getElementAt(ihit) ) ;
+      // Hit position
+      const double * pos = meshit->getPosition();
+      // We find plane number of the hit by looking at the Z position
+      double distMin = 1.; int hitPlane = -1 ;
+      for(int ipl=0;ipl<_nTelPlanes;ipl++)
+      {
+          double dist =  pos[2] - _planePosition[ipl] ;
+          if(dist*dist < distMin*distMin)
+          {
+              hitPlane=ipl;
+              distMin=dist;
+              if(hitPlane!=-1) _nhits[hitPlane]++;
+          }
+      }
+  }
 
   for(int itrack=0; itrack< nTrack ; itrack++)
     {
@@ -408,6 +438,11 @@ void EUTelFitTuple::processEvent( LCEvent * event ) {
 
           _fittedX[ipl]=_missingValue;
           _fittedY[ipl]=_missingValue;
+          _fittedEX[ipl]=_missingValue;
+          _fittedEY[ipl]=_missingValue;
+
+          _ClusterSize[ipl]=0;
+
 
         }
 
@@ -427,8 +462,9 @@ void EUTelFitTuple::processEvent( LCEvent * event ) {
           // We find plane number of the hit
           // by looking at the Z position
 
-          double distMin = 1.;
           int hitPlane = -1 ;
+	  // Initialise variable for comparing distance to planes:
+	  double distMin = _maxZDistance;
 
           for(int ipl=0;ipl<_nTelPlanes;ipl++)
             {
@@ -466,11 +502,14 @@ void EUTelFitTuple::processEvent( LCEvent * event ) {
 
               EVENT::LCObjectVec rawdata =  meshit->getRawHits();
 
-              if(rawdata.size()>0 && rawdata.at(0)!=NULL )
-                {
-                  EUTelVirtualCluster * cluster = new EUTelFFClusterImpl ( static_cast<TrackerDataImpl*> (rawdata.at(0))) ;
-                  _measuredQ[hitPlane]=cluster->getTotalCharge();
-                }
+              if(rawdata.size()>0 && rawdata.at(0)!=NULL ) {
+		EUTelSparseClusterImpl< EUTelSimpleSparsePixel > * cluster =
+		  new EUTelSparseClusterImpl< EUTelSimpleSparsePixel > ( static_cast<TrackerDataImpl*> (rawdata.at(0))) ;
+		_measuredQ[hitPlane]=cluster->getTotalCharge();
+
+		// Get cluster size
+		_ClusterSize[hitPlane]=(double)cluster->size();
+	      }
 
               message<DEBUG5> ( log() << "Measured hit in plane " << hitPlane << " at  X = "
                                         << pos[0] << ", Y = " << pos[1] << ", Q = " << _measuredQ[hitPlane] );
@@ -479,11 +518,15 @@ void EUTelFitTuple::processEvent( LCEvent * event ) {
           else
             {
               // Fitted hits
+              const EVENT::FloatVec cov = meshit->getCovMatrix();
 
               _isFitted[hitPlane]=true;
 
               _fittedX[hitPlane]=pos[0];
               _fittedY[hitPlane]=pos[1];
+              if(cov.at(0)>0.) _fittedEX[hitPlane]=sqrt(cov.at(0));
+              if(cov.at(0)>0.) message<DEBUG> ( log()<<"Test : "<<_fittedEX[hitPlane]);
+              if(cov.at(2)>0.) _fittedEY[hitPlane]=sqrt(cov.at(2));
 
               message<DEBUG5> ( log() << "Fitted  hit  in plane " << hitPlane << " at  X = "
                                         << pos[0] << ", Y = " << pos[1] );
@@ -511,6 +554,11 @@ void EUTelFitTuple::processEvent( LCEvent * event ) {
           _FitTuple->fill(icol++,_measuredQ[ipl]);
           _FitTuple->fill(icol++,_fittedX[ipl]);
           _FitTuple->fill(icol++,_fittedY[ipl]);
+          _FitTuple->fill(icol++,_fittedEX[ipl]);
+          _FitTuple->fill(icol++,_fittedEY[ipl]);
+          _FitTuple->fill(icol++,(double)_nhits[ipl]);
+          _FitTuple->fill(icol++,(double)_ClusterSize[ipl]);
+
         }
 
       //  Look for closest DUT hit
@@ -520,6 +568,7 @@ void EUTelFitTuple::processEvent( LCEvent * event ) {
       double dutY=_missingValue;
       double dutR=_missingValue;
       double dutQ=_missingValue;
+      double dutClusterSize=_missingValue;
 
       if(_DUTok)
         {
@@ -574,8 +623,12 @@ void EUTelFitTuple::processEvent( LCEvent * event ) {
 
               if(rawdata.size()>0 && rawdata.at(0)!=NULL )
                 {
-                  EUTelVirtualCluster * cluster = new EUTelFFClusterImpl ( static_cast<TrackerDataImpl*> (rawdata.at(0))) ;
+                  //EUTelVirtualCluster * cluster = new EUTelFFClusterImpl ( static_cast<TrackerDataImpl*> (rawdata.at(0))) ;
+                  EUTelSparseClusterImpl< EUTelSimpleSparsePixel > * cluster =
+                      new EUTelSparseClusterImpl< EUTelSimpleSparsePixel > ( static_cast<TrackerDataImpl*> (rawdata.at(0))) ;
                   dutQ=cluster->getTotalCharge();
+                  // Get cluster size
+                  dutClusterSize=(double)cluster->size();
                 }
 
               dutR=sqrt(distmin);
@@ -595,6 +648,8 @@ void EUTelFitTuple::processEvent( LCEvent * event ) {
       _FitTuple->fill(icol++,dutY);
       _FitTuple->fill(icol++,dutR);
       _FitTuple->fill(icol++,dutQ);
+      _FitTuple->fill(icol++,dutClusterSize);
+      _FitTuple->fill(icol++,nTrack);
 
       _FitTuple->addRow();
 
@@ -638,6 +693,11 @@ void EUTelFitTuple::end(){
   delete [] _measuredQ  ;
   delete [] _fittedX ;
   delete [] _fittedY ;
+  delete [] _fittedEX ;
+  delete [] _fittedEY ;
+  delete [] _nhits ;
+  delete [] _ClusterSize ;
+
 
 
 }
@@ -674,10 +734,10 @@ void EUTelFitTuple::bookHistos()
   _columnNames.push_back("Chi2");
   _columnType.push_back("float");
 
-  const char * _varName[] = { "measX", "measY" , "measZ", "measQ", "fitX", "fitY" };
+  const char * _varName[] = { "measX", "measY" , "measZ", "measQ", "fitX", "fitY","fitEX","fitEY","nhits","ClusterSize" };
 
   for(int ipl=0; ipl<_nTelPlanes;ipl++)
-    for(int ivar=0; ivar<6;ivar++)
+    for(int ivar=0; ivar<10;ivar++)
       {
         stringstream ss;
         ss << _varName[ivar] << "_" << ipl;
@@ -699,6 +759,11 @@ void EUTelFitTuple::bookHistos()
   _columnNames.push_back("dutQ");
   _columnType.push_back("double");
 
+  _columnNames.push_back("dutClusterSize");
+  _columnType.push_back("double");
+
+  _columnNames.push_back("nTrack");
+  _columnType.push_back("int");
 
   _FitTuple=AIDAProcessor::tupleFactory(this)->create(_FitTupleName, _FitTupleName, _columnNames, _columnType, "");
 
