@@ -243,9 +243,9 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesParameters() {
         _siPlaneXPosition.push_back(_siPlanesLayerLayout->getSensitivePositionX(iPlane));
         _siPlaneYPosition.push_back(_siPlanesLayerLayout->getSensitivePositionY(iPlane));
         _siPlaneZPosition.push_back(_siPlanesLayerLayout->getSensitivePositionZ(iPlane));
-        _siPlaneXRotation.push_back(_siPlanesLayerLayout->getSensitiveRotationZY(iPlane));
-        _siPlaneYRotation.push_back(_siPlanesLayerLayout->getSensitiveRotationZX(iPlane));
-        _siPlaneZRotation.push_back(_siPlanesLayerLayout->getSensitiveRotationXY(iPlane));
+        _siPlaneXRotation.push_back(_siPlanesLayerLayout->getLayerRotationZY(iPlane));
+        _siPlaneYRotation.push_back(_siPlanesLayerLayout->getLayerRotationZX(iPlane));
+        _siPlaneZRotation.push_back(_siPlanesLayerLayout->getLayerRotationXY(iPlane));
         
         _siPlaneXSize.push_back(_siPlanesLayerLayout->getSensitiveSizeX(iPlane));
         _siPlaneYSize.push_back(_siPlanesLayerLayout->getSensitiveSizeY(iPlane));
@@ -255,8 +255,8 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesParameters() {
         _siPlaneYNpixels.push_back(_siPlanesLayerLayout->getSensitiveNpixelY(iPlane));
         _siPlaneXPitch.push_back(_siPlanesLayerLayout->getSensitivePitchX(iPlane));
         _siPlaneYPitch.push_back(_siPlanesLayerLayout->getSensitivePitchY(iPlane));
-        _siPlaneXResolution.push_back(_siPlanesLayerLayout->getSensitiveResolutionX(iPlane));
-        _siPlaneYResolution.push_back(_siPlanesLayerLayout->getSensitiveResolutionY(iPlane));
+        _siPlaneXResolution.push_back(_siPlanesLayerLayout->getSensitiveResolution(iPlane)); // should be ResolutionX
+        _siPlaneYResolution.push_back(_siPlanesLayerLayout->getSensitiveResolution(iPlane)); // should be ResolutionY
         
         _siPlaneRadLength.push_back(_siPlanesLayerLayout->getSensitiveRadLength(iPlane));
 	_geoLibName.push_back(geometryNameParameters[iPlane]);
