@@ -1,6 +1,10 @@
 #ifndef IMPL_EUTELTRACKIMPL_H
 #define IMPL_EUTELTRACKIMPL_H 1
 
+#include "streamlog/streamlog.h"
+#include <iostream>
+#include <iomanip>      // std::setw
+
 #include "IMPL/AccessChecked.h"
 #include "EVENT/TrackerHit.h"
 
@@ -8,6 +12,7 @@
 
 #include <bitset>
 
+#include "EUTelTrackStateImpl.h"
 
 namespace eutelescope {
 
@@ -15,10 +20,12 @@ namespace eutelescope {
   /**Vector of (pointers to) Tracks.*/
   typedef std::vector<EUTelTrackImpl*> EUTelTrackVec;
 
-  class EUTelTrackStateImpl ;
+//  class EUTelTrackStateImpl ;
   /**Vector of (pointers to) TrackStates.*/
   typedef std::vector<EUTelTrackStateImpl*> EUTelTrackStateVec ;
   
+  using namespace std;
+
   class EUTelTrackImpl : public EVENT::LCObject, public IMPL::AccessChecked {
     
   public: 
@@ -38,17 +45,28 @@ namespace eutelescope {
     virtual ~EUTelTrackImpl() ; 
     
     virtual int id() const { return simpleUID() ; }
+ 
+    virtual void Print(){
+//      PrintTrackStates();   
+      for(unsigned int i=0; i < this->getTrackStates().size() ; i++) {    
+        streamlog_out(MESSAGE0) << "track " << id() << " state:" << i  << " id: " << setw(5) << (getTrackStates().at(i))->id() << " location: " ;
+         streamlog_out(MESSAGE0) << setw(3) << (getTrackStates().at(i))->getLocation() << " at "<< getTrackStates().at(i) ;
+         streamlog_out(MESSAGE0) << " at Tx: " << getTx(i) << " at Ty: " << getTy(i) << " getX() " << getX(i) << " getY() " << getY(i) << " "  ;
+        const float*   point = (getTrackStates().at(i))->getReferencePoint();
+        streamlog_out(MESSAGE0) << std::setw(7) << point[0] << " " << std::setw(7) << point[1] << " " << std::setw(7) << point[2] ;
+        streamlog_out(MESSAGE0) << std::endl;
+      }
+    }
 
+    virtual float getTx(int i=0) const ;
 
-    virtual float getTx() const ;
+    virtual float getTy(int i=0) const ;
 
-    virtual float getTy() const ;
+    virtual float getX(int i=0) const ;
 
-    virtual float getX() const ;
+    virtual float getY(int i=0) const ;
 
-    virtual float getY() const ;
-
-    virtual float getInvP() const ;
+    virtual float getInvP(int i=0) const ;
 
     /** Covariance matrix of the track parameters. Stored as lower triangle matrix where
      *  the order of parameters is:   d0, phi, omega, z0, tan(lambda).
@@ -83,11 +101,26 @@ namespace eutelescope {
      */
     virtual const EUTelTrackVec & getTracks() const ;
 
+    /** Returns very first track state associated with this track. @see TrackState.
+     */
+    virtual const EUTelTrackStateImpl* getFirstTrackState(  ) const ;
 
     /** Returns track states associated with this track. @see TrackState.
      */
     virtual const EUTelTrackStateVec & getTrackStates() const ;
-
+  
+    virtual void PrintTrackStates(){
+      streamlog_out(MESSAGE0) << " printing track states " << _trackStates.size() << std::endl;
+//      for(unsigned int i=0; i<states.size(); i++){
+//        EUTelTrackStateImpl* state = static_cast<EUTelTrackStateImpl*> (states.at(i));
+//        streamlog_out(MESSAGE0) << state->getLocation() << " ";
+//      } 
+       for( unsigned int i=0 ; i < _trackStates.size() ; i++ ){
+          streamlog_out(MESSAGE0) << i << " of " <<  _trackStates.size() << " location: " <<    _trackStates[i]->getLocation() << std::endl ;
+        }
+      streamlog_out(MESSAGE0) << std::endl;
+  
+    }
 
     /** Returns track state closest to the given point. @see TrackState.
      */

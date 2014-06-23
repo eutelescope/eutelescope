@@ -8,9 +8,9 @@
  *   header with author names in all development based on this file.
  *
  */
-
+ 
 // eutelescope includes ".h"
-#include "EUTelHotPixelKiller.h"
+#include "EUTelProcessorHotPixelFinder.h"
 #include "EUTELESCOPE.h"
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelMatrixDecoder.h"
@@ -46,7 +46,8 @@
 #include <EVENT/LCCollection.h>
 #include <EVENT/LCEvent.h>
 #include <Exceptions.h>
-
+// lccd
+//#include <lccd/DBInterface.hh>
 
 // system includes <>
 #include <map>
@@ -57,44 +58,17 @@ using namespace marlin;
 using namespace eutelescope;
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-string EUTelHotPixelKiller::_firing2DHistoName = "Firing2D";
-string EUTelHotPixelKiller::_firing1DHistoName = "Firing1D";
+string EUTelProcessorHotPixelFinder::_firing2DHistoName = "Firing2D";
+string EUTelProcessorHotPixelFinder::_firing1DHistoName = "Firing1D";
 #endif
 
 
-EUTelHotPixelKiller::EUTelHotPixelKiller ()
-: Processor("EUTelHotPixelKiller"),
-  _lcioWriteMode(""),
-  _zsDataCollectionName(""),
-  _noiseCollectionName(""), 
-  _statusCollectionName(""),
-  _hotPixelCollectionName(""),
-  _ExcludedPlanes(),
-  _noOfEventPerCycle(0),
-  _maxAllowedFiringFreq(0.0),
-  _ancillaryIndexMap(),
-  _hitIndexMapVec(),
-  _inverse_hitIndexMapVec(),
-  _pixelMapVec(),
-  _iRun(0),
-  _iEvt(0),
-  _noOfDetectors(0),
-  _minX(),
-  _maxX(),
-  _minY(),
-  _maxY(),
-  _sensorIDVec(),
-  _totalNoOfCycle(0),
-  _hotpixelDBFile(""),
-  _iCycle(0),
-  _killedPixelVec(),
-  _firingFreqVec(),
-  _flagBuildHotPixelDatabase(0)
+EUTelProcessorHotPixelFinder::EUTelProcessorHotPixelFinder () : Processor("EUTelProcessorHotPixelFinder") 
 {
 
   // modify processor description
   _description =
-    "EUTelHotPixelKiller periodically check for pixel singing loud too often and remove them from the analysis";
+    "EUTelProcessorHotPixelFinder periodically check for pixel singing loud too often and remove them from the analysis";
 
 
   registerInputCollection (LCIO::TRACKERDATA, "ZSDataCollectionName",
@@ -130,22 +104,18 @@ EUTelHotPixelKiller::EUTelHotPixelKiller ()
   registerOptionalParameter("HotPixelDBFile","This is the name of the LCIO file name with the output hotpixel db (add .slcio)",
                              _hotpixelDBFile, static_cast< string > ( "hotpixel.slcio" ) );
 
-  registerOptionalParameter( "LCIOWriteMode" , 
-			      "Write mode for HotPixelDB file:  WRITE_APPEND or WRITE_NEW"  ,
-			      _lcioWriteMode ,
-			      std::string("WRITE_APPEND") ) ;
-
   registerOptionalParameter("ExcludedPlanes", "The list of sensor ids that have to be excluded from the clustering.",
                              _ExcludedPlanes, std::vector<int> () );
 
   registerOptionalParameter("HotPixelCollectionName", "This is the name of the hot pixel collection to be saved into the output slcio file",
                              _hotPixelCollectionName, static_cast< string > ( "hotpixel" ));
 
+
 }
 
 
 
-void EUTelHotPixelKiller::init () 
+void EUTelProcessorHotPixelFinder::init () 
 {
   // this method is called only once even when the rewind is active
   // usually a good idea to
@@ -171,7 +141,13 @@ void EUTelHotPixelKiller::init ()
 
 }
 
-void EUTelHotPixelKiller::processRunHeader (LCRunHeader * rdr ) {
+void EUTelProcessorHotPixelFinder::modifyEvent( LCEvent * /*event*/ )
+{
+  //This function does nothing, but must be included due to being inherited from an abstract base class
+  return;
+}
+
+void EUTelProcessorHotPixelFinder::processRunHeader (LCRunHeader * rdr ) {
 
   auto_ptr<EUTelRunHeaderImpl> runHeader ( new EUTelRunHeaderImpl ( rdr ) );
   runHeader->addProcessor( type() );
@@ -185,7 +161,7 @@ void EUTelHotPixelKiller::processRunHeader (LCRunHeader * rdr ) {
 }
 
 
-void EUTelHotPixelKiller::initializeGeometry( LCEvent * event ) 
+void EUTelProcessorHotPixelFinder::initializeGeometry( LCEvent * event ) 
 {
 
     LCCollectionVec * collection = dynamic_cast< LCCollectionVec *> ( event->getCollection( _statusCollectionName ) );
@@ -252,7 +228,7 @@ void EUTelHotPixelKiller::initializeGeometry( LCEvent * event )
 // 
 // this method will run only standalone
 // 
-void EUTelHotPixelKiller::HotPixelFinder(EUTelEventImpl  *evt)
+void EUTelProcessorHotPixelFinder::HotPixelFinder(EUTelEventImpl  *evt)
 {
     if (evt == 0 )
     {
@@ -270,16 +246,19 @@ void EUTelHotPixelKiller::HotPixelFinder(EUTelEventImpl  *evt)
     CellIDDecoder<TrackerDataImpl> noiseDecoder( noiseCollectionVec );
 
 
-    for ( size_t iDetector = 0 ; iDetector < zsInputCollectionVec->size(); iDetector++ ) 
+    for ( unsigned int iDetector = 0 ; iDetector < zsInputCollectionVec->size(); iDetector++ ) 
     {
         
         // get the TrackerData and guess which kind of sparsified data it
         // contains.
 
         TrackerDataImpl * zsData = dynamic_cast< TrackerDataImpl * > ( zsInputCollectionVec->getElementAt( iDetector ) );
+        SparsePixelType   type   = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( zsData )["sparsePixelType"]) );
 
-        // next line is obsolete ?? // rubinsky 26-09-2012//
-        // SparsePixelType   type   = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( zsData )["sparsePixelType"]) );
+        if (type != kEUTelGenericSparsePixel  ) 
+        {
+          std::cout << " pixel is not of Geneneric type " << std::endl ;
+        }
 
         int _sensorID            = static_cast<int > ( cellDecoder( zsData )["sensorID"] );
         int  sensorID            = _sensorID;
@@ -310,12 +289,12 @@ void EUTelHotPixelKiller::HotPixelFinder(EUTelEventImpl  *evt)
         //the noise map. we only need this map for decoding issues.
         noise  = dynamic_cast<TrackerDataImpl*>   (noiseCollectionVec->getElementAt( _ancillaryIndexMap[ sensorID ] ));
 
-
         // prepare the matrix decoder
         EUTelMatrixDecoder matrixDecoder( noiseDecoder , noise );
 
         // now prepare the EUTelescope interface to sparsified data.  
-        auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> > sparseData(new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>( zsData ));
+        // what's the point of this one ?
+        auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel > > sparseData(new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> ( zsData ));
 
         streamlog_out ( DEBUG1 ) << "Processing sparse data on detector " << _sensorID << " with "
                                  << sparseData->size() << " pixels " << endl;
@@ -344,11 +323,14 @@ void EUTelHotPixelKiller::HotPixelFinder(EUTelEventImpl  *evt)
                 status->adcValues()[ last_element ] = EUTELESCOPE::HITPIXEL ;  // adcValues is a vector, there fore must address the elements incrementally
                 
                 _pixelMapVec[iDetector].insert ( make_pair( decoded_XY_index, sparsePixel ) );                     // one more map, get the pixel point bny its unique index
+//                printf("--last_element:%7d;  pixel %7d, index %7d, pointer %7d %7d \n",
+//                        last_element, iPixel, decoded_XY_index, _pixelMapVec[iDetector][ decoded_XY_index]->getXCoord(), _pixelMapVec[iDetector][ decoded_XY_index]->getYCoord()  );
             }
             else
             {
+//                printf("idet: %5d, status: %p, addressing known pixel decoded: %7d  orig: %7d  status->size:%7d\n", 
+//                        iDetector, status, decoded_XY_index, _hitIndexMapVec[iDetector][ decoded_XY_index ], status->adcValues().size()  );
                 status->adcValues()[ _hitIndexMapVec[iDetector][ decoded_XY_index]  ] = EUTELESCOPE::HITPIXEL ;
-		delete sparsePixel;
             }
         }
     }    
@@ -357,7 +339,7 @@ void EUTelHotPixelKiller::HotPixelFinder(EUTelEventImpl  *evt)
 
 
 
-void EUTelHotPixelKiller::processEvent (LCEvent * event) 
+void EUTelProcessorHotPixelFinder::processEvent (LCEvent * event) 
 {
 
     if( event == 0 )
@@ -366,8 +348,15 @@ void EUTelHotPixelKiller::processEvent (LCEvent * event)
         return;
     }
     
-    if ( _iCycle > static_cast< unsigned short >( _totalNoOfCycle ) )  return;
+    if ( _iCycle > static_cast< unsigned short >( _totalNoOfCycle ) ) return;
 
+    if (_iEvt % 1000 == 0)
+        streamlog_out( MESSAGE4 ) << "Processing event "
+            << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
+            << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
+            << " (Total = " << setw(10) << (_iCycle * _noOfEventPerCycle) + _iEvt << ")"
+            << resetiosflags(ios::left) << endl;
+    
     EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
     if ( evt->getEventType() == kEORE ) 
     {
@@ -383,16 +372,6 @@ void EUTelHotPixelKiller::processEvent (LCEvent * event)
     try 
     {
         LCCollectionVec * statusCollectionVec = dynamic_cast< LCCollectionVec * > ( event->getCollection( _statusCollectionName ) );
-        statusCollectionVec->getNumberOfElements();
-    }
-    catch(...)
-    {
-        streamlog_out ( MESSAGE5 ) <<  "Input collection status: " << _statusCollectionName.c_str() << " not found in the current event. Skipping..." << endl;
-    }
-
-    try 
-    {
-        LCCollectionVec * statusCollectionVec = dynamic_cast< LCCollectionVec * > ( event->getCollection( _statusCollectionName ) );
         CellIDDecoder<TrackerRawDataImpl>      statusCellDecoder( statusCollectionVec );
 
     // if first event initilize 
@@ -400,6 +379,7 @@ void EUTelHotPixelKiller::processEvent (LCEvent * event)
     //  
     if ( isFirstEvent() ) 
     {
+        streamlog_out ( MESSAGE5 ) << "in initializeGeometry : " << event << "; will prepare map of pixels too " << endl;;
         initializeGeometry( event );
 
         _firingFreqVec.clear();
@@ -410,17 +390,16 @@ void EUTelHotPixelKiller::processEvent (LCEvent * event)
             _pixelMapVec.clear();
         }
         
-        for ( size_t iDetector = 0; iDetector < static_cast< unsigned int >(statusCollectionVec->getNumberOfElements()); iDetector++) 
-        {    
-	   // Apparently not used at all:        
-	   // TrackerRawDataImpl * status = dynamic_cast< TrackerRawDataImpl * > ( statusCollectionVec->getElementAt( iDetector ) );
+        for ( int iDetector = 0; iDetector < statusCollectionVec->getNumberOfElements() ; iDetector++) 
+        {  
+           streamlog_out ( MESSAGE5 ) << " First event :: adding Detector " << iDetector << endl;          
            _firingFreqVec.resize( iDetector+1 );
            
            if( getBuildHotPixelDatabase() != 0 )
             {
-                if( _hitIndexMapVec.size() < iDetector+1 )            _hitIndexMapVec.resize(iDetector+1);
-                if( _inverse_hitIndexMapVec.size() < iDetector+1 )    _inverse_hitIndexMapVec.resize(iDetector+1);
-                if( _pixelMapVec.size() < iDetector+1 )               _pixelMapVec.resize(iDetector+1);
+                if(static_cast< int >( _hitIndexMapVec.size()) < iDetector+1 )            _hitIndexMapVec.resize(iDetector+1);
+                if( static_cast< int >(_inverse_hitIndexMapVec.size()) < iDetector+1 )    _inverse_hitIndexMapVec.resize(iDetector+1);
+                if( static_cast< int >(_pixelMapVec.size()) < iDetector+1 )               _pixelMapVec.resize(iDetector+1);
             }
         }
         
@@ -434,7 +413,7 @@ void EUTelHotPixelKiller::processEvent (LCEvent * event)
 
      
     
-    for ( size_t iDetector = 0; iDetector < static_cast< unsigned int >(statusCollectionVec->getNumberOfElements()) ; iDetector++) 
+    for ( int iDetector = 0; iDetector < statusCollectionVec->getNumberOfElements() ; iDetector++) 
     {
         TrackerRawDataImpl * status = dynamic_cast< TrackerRawDataImpl * > ( statusCollectionVec->getElementAt( iDetector ) );
         if( _firingFreqVec[iDetector].size() < status->getADCValues().size() )
@@ -455,22 +434,18 @@ void EUTelHotPixelKiller::processEvent (LCEvent * event)
         // some incremental index value to status of each pixel 
         for ( unsigned int index = 0; index < statusVec.size(); index++ ) 
         {
-#ifndef STREAMLOG_DEBUG_ACTIVE
-	  if( streamlog_level( DEBUG3) ){
-
             streamlog_out ( DEBUG3 )  << 
-	      " index "<< index << 
-	      " all " << statusVec.size() << 
-	      " statusVec[index]: " <<  statusVec[index] << 
-	      " hit:" << EUTELESCOPE::HITPIXEL << endl;
+                " index "<< index << 
+                " all " << statusVec.size() << 
+                " statusVec[index]: " <<  statusVec[index] << 
+                " hit:" << EUTELESCOPE::HITPIXEL << endl;
             streamlog_out ( DEBUG3)  << 
-	      " get index " << index << 
-	      " (tot " << statusVec.size() << ")" <<
-	      " (orig decoded_XY_index = " << _inverse_hitIndexMapVec[iDetector][index] <<
-	      " freq " << _firingFreqVec[iDetector][index] <<
-	      " status " <<  statusVec[ index ]  << endl;
-	  }
-#endif           
+                " get index " << index << 
+                " (tot " << statusVec.size() << ")" <<
+                " (orig decoded_XY_index = " << _inverse_hitIndexMapVec[iDetector][index] <<
+                " freq " << _firingFreqVec[iDetector][index] <<
+                " status " <<  statusVec[ index ]  << endl;
+            
            if( statusVec[ index ] == EUTELESCOPE::HITPIXEL ) 
             {
                 _firingFreqVec[ iDetector ][ index ] += 1;
@@ -493,19 +468,20 @@ void EUTelHotPixelKiller::processEvent (LCEvent * event)
   } 
   catch (lcio::DataNotAvailableException& e ) 
   {
-    streamlog_out ( WARNING2 )  << "Input collection not found in the current event. Skipping..." << e.what() << endl;
+    streamlog_out ( WARNING2 )  << "Input collection not found in the current event. Skipping..." << endl;
+    std::cout <<  "Input collection not found in the current event. Skipping..." << std::endl;
     return;    
   } 
   catch ( ParseException& e ) 
   {
-      streamlog_out ( MESSAGE5 )  << "Input collection not found in the current event. Skipping..." << e.what() << endl;
+      std::cout <<  e.what() << "\n" << std::endl;
       return;     
   }
 
 }
 
 
-void EUTelHotPixelKiller::end() {
+void EUTelProcessorHotPixelFinder::end() {
 
   streamlog_out ( MESSAGE4 ) << "Successfully finished" << endl;
   streamlog_out ( MESSAGE4 ) << printSummary() << endl;
@@ -513,7 +489,7 @@ void EUTelHotPixelKiller::end() {
 }
 
 
-string EUTelHotPixelKiller::printSummary() const {
+string EUTelProcessorHotPixelFinder::printSummary() const {
 
   stringstream ss;
   int bigSpacer   = 10;
@@ -527,7 +503,7 @@ string EUTelHotPixelKiller::printSummary() const {
     singleLine << "-";
   }
 
-  if ( _killedPixelVec.size() == 0 ) {
+  if ( _killedPixelVec.empty() ) {
     return "" ;
   }
 
@@ -551,7 +527,7 @@ string EUTelHotPixelKiller::printSummary() const {
 
 
 
-void EUTelHotPixelKiller::check( LCEvent * event ) 
+void EUTelProcessorHotPixelFinder::check( LCEvent * event ) 
 {
 
     if ( _iCycle > static_cast< unsigned short >( _totalNoOfCycle ) )
@@ -617,10 +593,15 @@ void EUTelHotPixelKiller::check( LCEvent * event )
 }
 
 
-void EUTelHotPixelKiller::HotPixelDBWriter(LCEvent *input_event)
+void EUTelProcessorHotPixelFinder::HotPixelDBWriter(LCEvent *input_event)
 {    
+//    lccd::DBInterface dbinterface =  lccd::DBInterface("m26", false);
+//    lccd::LCCDTimeStamp timestampe= lccd::LCCDTimeStamp();
+//    dbinterface.createSimpleFile 	( timestampe, 	"tag1 ");
+//return;
 
-    streamlog_out ( DEBUG5 ) << "Writing out hot pixel db into " << _hotpixelDBFile.c_str() << endl;
+    streamlog_out ( MESSAGE5 ) << "EUTelProcessorHotPixelFinder::HotPixelDBWriter " << endl;
+    streamlog_out ( MESSAGE5 ) << "writing out hot pixel db into " << _hotpixelDBFile.c_str() << endl;
 
     // create data decoder
     LCCollectionVec * statusCollectionVec = dynamic_cast< LCCollectionVec * > ( input_event->getCollection( _statusCollectionName ) );
@@ -628,81 +609,83 @@ void EUTelHotPixelKiller::HotPixelDBWriter(LCEvent *input_event)
 
     // reopen the LCIO file this time in append mode
     LCWriter * lcWriter = LCFactory::getInstance()->createLCWriter();
-    LCReader * lcReader = LCFactory::getInstance()->createLCReader( );
-    LCRunHeaderImpl *lcHeader= 0;
-    LCEventImpl      *event  = 0;
-    LCTime           *now    = 0;
-    
-    // default: try appending to DB file
-    if( _lcioWriteMode != "WRITE_NEW" ) {
-      try {
-	lcWriter->open( _hotpixelDBFile, LCIO::WRITE_APPEND );	    
-	try {
-	  lcReader->open( _hotpixelDBFile );
-	  event =  static_cast<LCEventImpl *>  (lcReader->readNextEvent());
-	  streamlog_out ( DEBUG5 ) << "event read back ok from file"  << endl;       
-	  if( event == 0 )
-	    {
-	      lcHeader  = new LCRunHeaderImpl;
-	      lcHeader->setRunNumber( 0 );
-	      lcWriter->writeRunHeader(lcHeader);
-	      delete lcHeader;
-		    
-	      event = new LCEventImpl;
-	      event->setRunNumber( 0 );
-	      event->setEventNumber( 0 );
-	      event->setDetectorName("Mimosa26");
-	      streamlog_out ( DEBUG5 ) << "event recreated ok"  << endl;       
-		
-	      now   = new LCTime;
-	      event->setTimeStamp( now->timeStamp() );
-	      delete now; 
-	    }
-	}
-	catch(...) {
-	  streamlog_out ( ERROR5 ) << "could not read anything from HotPixelDB file"  << endl;       
-	  event = 0;
-	}
-	streamlog_out ( DEBUG5 ) << _hotpixelDBFile << " was opened for writing" << endl;
+    LCReader * lcReader = LCFactory::getInstance()->createLCReader();
+    LCRunHeaderImpl  *lcHeader = 0;
+    LCEventImpl      *event    = 0;
+    LCTime           *now      = 0;
+
+    try 
+    {
+       lcWriter->open( _hotpixelDBFile, LCIO::WRITE_APPEND );
+       streamlog_out ( MESSAGE5 ) << _hotpixelDBFile << " was opened for writing" << endl;
+    } 
+    catch ( IOException& e ) 
+    {
+      streamlog_out ( ERROR4 ) << e.what() << endl << "Sorry, was not abel to APPEND to a hotpixel file, try open new " << endl;
+      try 
+      {
+          lcWriter->open( _hotpixelDBFile, LCIO::WRITE_NEW );
+          // create.write new stuff: 
+          // write an almost empty run header
+          lcHeader  = new LCRunHeaderImpl;
+          lcHeader->setRunNumber( 0 );
+
+          lcWriter->writeRunHeader(lcHeader);
+          delete lcHeader;
+
+          event = new LCEventImpl;
+          event->setRunNumber( 0 );
+          event->setEventNumber( 0 );
+          event->setDetectorName("PixelDetecor");
+          streamlog_out ( MESSAGE5 ) << "event created ok"  << endl;       
+
+          now   = new LCTime;
+          event->setTimeStamp( now->timeStamp() );
+          delete now;
       }
-      catch ( IOException& e ) 	{
-	streamlog_out ( DEBUG5 ) << e.what() << endl << "Sorry, was not able to APPEND to the hotpixel file " << _hotpixelDBFile << ", try open new " << endl;
+      catch ( IOException& e ) 
+      {
+          streamlog_out ( ERROR4 ) << e.what() << endl << "Sorry, was not able to create new file, will quit now. " << endl;
+          exit(-1);
       }
     }
 
-    // create new file if requested OR opening of existing file did
-    // not succeed
-    if( _lcioWriteMode == "WRITE_NEW" || event == 0) {
-      try 
-	{
-	  lcWriter->open( _hotpixelDBFile, LCIO::WRITE_NEW );
-	  // create.write new stuff: 
-	  // write an almost empty run header
-	  lcHeader  = new LCRunHeaderImpl;
-	  lcHeader->setRunNumber( 0 );
-	
-	  lcWriter->writeRunHeader(lcHeader);
-	  delete lcHeader;
-	
-	  event = new LCEventImpl;
-	  event->setRunNumber( 0 );
-	  event->setEventNumber( 0 );
-	  event->setDetectorName("Mimosa26");
-	  streamlog_out ( DEBUG5 ) << "HotPixelDB file: run header and event created ok"  << endl;       
-	  now   = new LCTime;
-	  event->setTimeStamp( now->timeStamp() );
-	  delete now;
-	}
-      catch ( IOException& e ) 
-	{
-          streamlog_out ( ERROR4 ) << e.what() << endl << "Sorry, was not able to create new HotPixelDB file " << _hotpixelDBFile <<", will quit now. " << endl;
+    if( event == 0 )
+    {
+       streamlog_out ( MESSAGE5 ) << "creating new event"  << endl;      
+       try
+       {
+         lcReader->open( _hotpixelDBFile );
+         event =  static_cast<LCEventImpl *>  (lcReader->readNextEvent( ));
+         streamlog_out ( MESSAGE5 ) << "event read ok"  << endl;
+         if( event == 0 )
+         {
+           lcHeader  = new LCRunHeaderImpl;
+           lcHeader->setRunNumber( 0 );
+           lcWriter->writeRunHeader(lcHeader);
+           delete lcHeader;
+
+           event = new LCEventImpl;
+           event->setRunNumber( 0 );
+           event->setEventNumber( 0 );
+           event->setDetectorName("PixelDetector");
+           streamlog_out ( MESSAGE5 ) << "event recreated ok"  << endl;       
+
+           now   = new LCTime;
+           event->setTimeStamp( now->timeStamp() );
+           delete now; 
+         }
+      }
+      catch(...)
+      {
+          streamlog_out ( MESSAGE5 ) << "could not read anything"  << endl;       
           exit(-1);
-	}
+      }
     }
-  
+   
     if(event==0)
     {
-      streamlog_out ( ERROR5 ) << "Problem opening HotPixelDB file, event == 0 " << endl;
+      streamlog_out ( ERROR5 ) << " event == 0 " << endl;
       return;  
     }
 
@@ -713,11 +696,11 @@ void EUTelHotPixelKiller::HotPixelDBWriter(LCEvent *input_event)
     try 
     {
         hotPixelCollection = static_cast< LCCollectionVec* > ( event->getCollection( _hotPixelCollectionName  ) );
-        streamlog_out ( DEBUG5 ) << "hotPixelCollection: " << _hotPixelCollectionName << 
+        streamlog_out ( MESSAGE5 ) << " hotPixelCollection: " << _hotPixelCollectionName << 
                                    " found found with " << hotPixelCollection->getNumberOfElements() << 
                                    " elements " <<  endl; 
         hotPixelCollection->clear();
-        streamlog_out ( DEBUG5 ) << "hotPixelCollection: " << _hotPixelCollectionName << 
+        streamlog_out ( MESSAGE5 ) << " hotPixelCollection: " << _hotPixelCollectionName << 
                                    " cleared: now " << hotPixelCollection->getNumberOfElements() << 
                                    " elements " <<  endl; 
     }
@@ -725,15 +708,20 @@ void EUTelHotPixelKiller::HotPixelDBWriter(LCEvent *input_event)
     {
         hotPixelCollection = new LCCollectionVec( lcio::LCIO::TRACKERDATA );
         event->addCollection( hotPixelCollection, _hotPixelCollectionName );
-        streamlog_out ( DEBUG5 ) << "hotPixelCollection: " << _hotPixelCollectionName << 
+        streamlog_out ( MESSAGE5 ) << " hotPixelCollection: " << _hotPixelCollectionName << 
                                    " created" <<  endl; 
     }
+
 
 
     for ( unsigned int iDetector = 0; iDetector < _firingFreqVec.size(); iDetector++ ) 
     {
         TrackerRawDataImpl * status = dynamic_cast< TrackerRawDataImpl * > ( statusCollectionVec->getElementAt( iDetector ) );
         int sensorID = decoder( status ) [ "sensorID" ] ;
+        streamlog_out ( MESSAGE5 ) <<
+                                 " iDetector : " << iDetector  <<
+                                 " sensorID : " << sensorID  <<
+                                  endl;
 
         vector< short > statusVec  = status->adcValues();
          
@@ -746,53 +734,76 @@ void EUTelHotPixelKiller::HotPixelDBWriter(LCEvent *input_event)
         hotPixelEncoder.setCellID( currentFrame.get() );
 
         // this is the structure that will host the sparse pixel  
-        std::auto_ptr<EUTelTrackerDataInterfacerImpl<eutelescope::EUTelGenericSparsePixel> > sparseFrame( new EUTelTrackerDataInterfacerImpl<eutelescope::EUTelGenericSparsePixel>( currentFrame.get() ));
+        std::auto_ptr< eutelescope::EUTelTrackerDataInterfacerImpl< eutelescope::EUTelGenericSparsePixel > >
+            sparseFrame( new eutelescope::EUTelTrackerDataInterfacerImpl< eutelescope::EUTelGenericSparsePixel > ( currentFrame.get() ) );
 
         for ( unsigned int iPixel = 0; iPixel < _firingFreqVec[iDetector].size(); iPixel++ ) 
         {
             int decoded_XY_index = _inverse_hitIndexMapVec[iDetector][iPixel];
 
-            if ( decoded_XY_index > 0 && statusVec[ iPixel ] == EUTELESCOPE::FIRINGPIXEL )                
+            if ( decoded_XY_index > 0 &&  statusVec[ iPixel ] == EUTELESCOPE::FIRINGPIXEL )                
             {
-                streamlog_out (DEBUG3) <<
-                    " writing out idet: " << iDetector <<
-                    " ipixel: " << iPixel <<
-                    " decoded_XY_index " << decoded_XY_index <<
-                    " fired " <<   _firingFreqVec[iDetector][ iPixel ]  / ( static_cast< double > ( _iEvt ) ) <<
-                    " allowed = " << _maxAllowedFiringFreq << 
-                    endl; 
-                sparseFrame->addSparsePixel( _pixelMapVec[iDetector][ decoded_XY_index] );                
+                 streamlog_out ( MESSAGE5 ) <<
+                     " writing out idet: " << iDetector <<
+                     " ipixel: " << iPixel <<
+                     " statusVec: " << statusVec[ iPixel ]  <<
+                     " decoded_XY_index " << decoded_XY_index <<
+                     " fired " <<   _firingFreqVec[iDetector][ iPixel ]  / ( static_cast< double >( _iEvt ) ) <<
+                     " allowed = " << _maxAllowedFiringFreq << 
+                     endl; 
+                 sparseFrame->addSparsePixel( _pixelMapVec[iDetector][ decoded_XY_index] );                
             }
         }
+
         hotPixelCollection->push_back( currentFrame.release() );
     }
-    
+ 
+
+//    lcReader->close();
+// modify to skip if APPENDing an event 
     lcWriter->writeEvent( event );
-    delete event;
     
     lcWriter->close();    
+
+    try 
+    {
+       // open the smae file once again as NEW (overwrite mode!) 
+       lcWriter->open( _hotpixelDBFile, LCIO::WRITE_NEW );
+
+       // write out the same event, will be the first event now 
+       lcWriter->writeEvent( event );
+   
+       // close it
+       lcWriter->close();    
+    }
+    catch ( IOException& e ) 
+    {
+       streamlog_out ( ERROR4 ) << e.what() << endl << "Sorry, was not able to create new file, will quit now. " << endl;
+       exit(-1);
+    } 
+
+    delete event;
 }
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
-void EUTelHotPixelKiller::bookAndFillHistos() 
+void EUTelProcessorHotPixelFinder::bookAndFillHistos() 
 {
 
-
-  streamlog_out ( DEBUG5 ) << "Booking and filling histograms for cycle " << _iCycle << endl;
+  streamlog_out ( MESSAGE0 ) << "Booking and filling histograms for cycle " << _iCycle << endl;
 
   string tempHistoName, basePath;
   for ( int iDetector = 0; iDetector < _noOfDetectors; iDetector++ ) 
   { 
-      
+    streamlog_out ( MESSAGE0 ) << "-- histograms for iDetector = " << iDetector << " of " << _noOfDetectors << endl;
+
+       
     basePath = "detector_" + to_string( _sensorIDVec.at( iDetector ) ) ;
     AIDAProcessor::tree(this)->mkdir(basePath.c_str());
 
     basePath += "/cycle_" + to_string( _iCycle );
     AIDAProcessor::tree(this)->mkdir(basePath.c_str());
     basePath.append("/");
-
-
 
 
     tempHistoName = _firing2DHistoName + "_d" + to_string( _sensorIDVec.at(iDetector)) + "_c" + to_string( _iCycle ) ;
@@ -830,20 +841,18 @@ void EUTelHotPixelKiller::bookAndFillHistos()
 
     int iPixel = 0;
 
-
+  //  streamlog_out( MESSAGE5 ) << " iDetector " << iDetector << "  _firingFreqVec.size = " <<  _firingFreqVec.size() << endl;
     
     for (int yPixel = _minY[_sensorIDVec.at( iDetector)]; yPixel <= _maxY[_sensorIDVec.at( iDetector)]; yPixel++) 
     {
       for (int xPixel = _minX[_sensorIDVec.at( iDetector)]; xPixel <= _maxX[_sensorIDVec.at( iDetector)]; xPixel++) 
       {
-          if( _firingFreqVec.size() > 0){
-            if(_firingFreqVec[ iDetector ].size() > 0){
-              if(_firingFreqVec[ iDetector ][ iPixel ] > 0){
-                firing2DHisto->fill(xPixel, yPixel, _firingFreqVec[ iDetector ][ iPixel ] );
-                firing1DHisto->fill( _firingFreqVec[ iDetector ][ iPixel ] / ( static_cast< double >( _noOfEventPerCycle ) ));
-                ++iPixel;
-              }
-            }
+          //streamlog_out( MESSAGE5 ) << " iPixel = " << iPixel << " _firingFreqVec[ iDetector ].size()= " << _firingFreqVec[ iDetector ].size() <<  endl; 
+          if(  iDetector < static_cast< int >(_firingFreqVec.size()) &&  static_cast< int >(_firingFreqVec[ iDetector ].size()) > 0  &&  _firingFreqVec[ iDetector ][ iPixel ] > 0 )
+          {
+              firing2DHisto->fill(xPixel, yPixel, _firingFreqVec[ iDetector ][ iPixel ] );
+              firing1DHisto->fill( _firingFreqVec[ iDetector ][ iPixel ] / ( static_cast< double >( _noOfEventPerCycle ) ) );
+              ++iPixel;
           }
       }
     }

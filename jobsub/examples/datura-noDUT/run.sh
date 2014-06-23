@@ -12,7 +12,7 @@ RUNLIST="runlist-150.csv"
 #modus="daf"
 modus="gbl"
 
-#DRY=--dry-run
+DRY=--dry-run
 
 for i in `seq $first $last`; do
 

@@ -6,8 +6,8 @@
  *   header with author names in all development based on this file.
  *
  */
-#ifndef EUTELHITMAKER_H
-#define EUTELHITMAKER_H
+#ifndef EUTELPROCESSORHITMAKER_H
+#define EUTELPROCESSORHITMAKER_H
 
 // built only if GEAR is available
 #ifdef USE_GEAR
@@ -229,27 +229,27 @@ namespace eutelescope {
    *
    */
 
-  class EUTelHitMaker : public marlin::Processor {
+  class EUTelProcessorHitMaker : public marlin::Processor {
 
   private:
-      DISALLOW_COPY_AND_ASSIGN(EUTelHitMaker)
+      DISALLOW_COPY_AND_ASSIGN(EUTelProcessorHitMaker)
       
   public:
 
 
-    //! Returns a new instance of EUTelHitMaker
+    //! Returns a new instance of EUTelProcessorHitMaker
     /*! This method returns a new instance of this processor.  It is
      *  called by Marlin execution framework and it shouldn't be
      *  called/used by the final user.
      *
-     *  @return a new EUTelHitMaker.
+     *  @return a new EUTelProcessorHitMaker.
      */
     virtual Processor * newProcessor() {
-      return new EUTelHitMaker;
+      return new EUTelProcessorHitMaker;
     }
 
     //! Default constructor
-    EUTelHitMaker ();
+    EUTelProcessorHitMaker ();
 
     //! Called at the job beginning.
     /*! This is executed only once in the whole execution. It prints
@@ -306,17 +306,13 @@ namespace eutelescope {
      *  in the meaning the each time a new sensorID is encoutered 
      *  all the corresponding histograms are booked.
      */
-    void bookHistos(int sensorID, bool isDUT, lcio::LCCollection * xEtaCol, lcio::LCCollection * yEtaCol);
+    void bookHistos( int sensorID );
 
-    //! Book the 3D hitogram
-    void book3DHisto();
-
-    //! Perform Euler rotations
-    void _EulerRotation(double* _telPos, double* _gRotation);
 
     void addReferenceHitCollection(LCEvent *event, std::string referenceHitName);
 
   protected:
+
 
     //! TrackerPulse collection name
     /*! This is the name of the collection holding the pulse
@@ -332,25 +328,7 @@ namespace eutelescope {
      */
     std::string _hitCollectionName;
 
-    //! Eta function collection names
-    /*! This is a vector containg the name of the eta collection along
-     *  the two directions (say x and y). AS for pedestal information
-     *  the Eta function has to be calculated beforehand and then
-     *  loaded as a condition collection by a suitable
-     *  ConditionProcessor.
-     */
-    std::vector< std::string > _etaCollectionNames;
 
-    //! preAlignment Collection name 
-    /*!
-     */
-    std::string _preAlignmentCollectionName;
-    
-    //! preAlignment Collection  
-    /*!
-     */
-    LCCollectionVec *_preAlignmentCollectionVec;  
- 
     //! reference HitCollection name 
     /*!
      */
@@ -361,57 +339,10 @@ namespace eutelescope {
      */
     LCCollectionVec *_referenceHitCollectionVec;  
     
-    //! Switch to apply eta correction
-    /*! Eta correction is very important to obtain the maximum
-     *  possibile spatial resolution, but having the possibility to
-     *  switch off the correction might be usefull for debug
-     *  purposes.
-     *
-     */
-    bool _etaCorrection ;
 
-    //! Switch to enable the filling of the density plot
-    bool _3DHistoSwitch;
-    
     //! Coordinates reference frame switch
     bool _wantLocalCoordinates;
 
-    //! Input offset db file 
-    /*!
-     */
-    std::string _offsetDBFile;
-
-
-
-    //! The algorithm for CoG calculation.
-    /*! The algorithm for the calculation of the Center of Gravity is
-     *  obviously always the same, what can be different is the
-     *  considered number of pixels and the size.
-     *
-     *  These are the algorithms available:
-     *
-     *  @li <b>Full</b>: All pixels are used in the calculation
-     *
-     *  @li <b>NPixel</b>: Only the first N most significant pixels
-     *  are used. The user has to set also the NPixel parameter
-     *
-     *  @li <b>NxMPixel</b>: The CoG will be calculated using a
-     *  submatrix N x M centered around the seed pixel.
-     *
-     */
-    std::string _cogAlgorithm;
-
-    //! The number of most significant pixels
-    /*! This number is used only when _cogAlgorithm is "NPixel"
-     */
-    int _nPixel;
-
-    //! The submatrix size (x and y)
-    /*! This vector contains the size along x and along y of the
-     *  cluster submatrix for CoG calculation only when _cogAlgorithm
-     *  is "NxMPixel
-     */
-    std::vector<int > _xyCluSize;
 
     //! Reference Hit file 
     std::string _referenceHitLCIOFile;
@@ -435,11 +366,6 @@ namespace eutelescope {
      */
     std::map< int, int > _conversionIdMap;
 
-    //! Eta function map
-    std::map< int, int > _etaMap;
-
-    //! Eta function version
-    int _etaVersion;
 
     //! Set of booked histogram
     /*  This helper set is used 
@@ -447,28 +373,6 @@ namespace eutelescope {
      *  procedure.
      */
     std::set< int > _alreadyBookedSensorID;
-
-    //! Silicon planes parameters as described in GEAR
-    /*! This structure actually contains the following:
-     *  @li A reference to the telescope geoemtry and layout
-     *  @li An integer number saying if the telescope is w/ or w/o DUT
-     *  @li An integer number saying the number of planes in the
-     *  telescope.
-     *
-     *  This object is provided by GEAR during the init() phase and
-     *  stored here for local use.
-     */
-    gear::SiPlanesParameters * _siPlanesParameters;
-
-    //! Silicon plane layer layout
-    /*! This is the real geoemetry description. For each layer
-     *  composing the telescope the relevant information are
-     *  available.
-     *
-     *  This object is taken from the _siPlanesParameters during the
-     *  init() phase and stored for local use
-     */
-    gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     //! AIDA histogram map
@@ -522,22 +426,6 @@ namespace eutelescope {
      */
     static std::string _clusterCenterYHistoName;
 
-    //! Cluster center (Eta corrected)
-    /*! This 2D histogram contains the center of all the clusters
-     *  corrected using the provided Eta functions. The binning is
-     *  fixed and corresponds to the Eta function granularity.
-     */
-    static std::string _clusterCenterEtaHistoName;
-
-    //! Cluster center projection along X (Eta corrected)
-    /*! This is the projection along the X axis of the previous plot.
-     */
-    static std::string _clusterCenterEtaXHistoName;
-
-    //! Cluster center projection along Y (Eta corrected)
-    /*! This is the projection along the Y axis of the previous plot.
-     */
-    static std::string _clusterCenterEtaYHistoName;
 
 #endif
 
@@ -556,19 +444,13 @@ namespace eutelescope {
      */
     std::vector< int > _orderedSensorIDVec;
 
-
-    //! Sensor Offset X and Y
-    /*!
-     */
-    std::map <int, double> _siOffsetXMap;
-    std::map <int, double> _siOffsetYMap;
    
     void DumpReferenceHitDB();
  
   };
 
   //! A global instance of the processor
-  EUTelHitMaker gEUTelHitMaker;
+  EUTelProcessorHitMaker gEUTelProcessorHitMaker;
 
 }
 #endif

@@ -15,7 +15,6 @@
 #include "EUTelFFClusterImpl.h"
 
 // lcio includes <.h>
-#include "IMPL/TrackerHitImpl.h"
 
 #include <EVENT/LCEvent.h>
 
@@ -137,7 +136,7 @@ namespace eutelescope {
                         delete cluster;
                     }
                     
-                if ( cluster != NULL ) delete cluster;
+//                if ( cluster != 0 ) delete cluster;
                     
                 } catch (lcio::Exception e) {
                     // catch specific exceptions
@@ -184,30 +183,26 @@ namespace eutelescope {
          * @param hit 
          * @return plane id
          */
-        int GuessSensorID( const EVENT::TrackerHit* hit ) {
+        int getSensorIDfromHit( EVENT::TrackerHit* hit ) {
             if ( hit == NULL ) {
-                streamlog_out(ERROR) << "An invalid hit pointer supplied! will exit now\n" << std::endl;
+                streamlog_out(ERROR) << "getSensorIDfromHit:: An invalid hit pointer supplied! will exit now\n" << std::endl;
                 return -1;
             }
 
             try {
-                EUTelVirtualCluster * cluster = GetClusterFromHit( static_cast< const IMPL::TrackerHitImpl*> (hit) );
 
-                if ( cluster != NULL ) {
-                    int sensorID = cluster->getDetectorID();
-		    delete cluster;
-                    return sensorID;
-                } else {
-                    int sensorID = hit->getCellID0();
-                    return sensorID;
-                }
+                UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
+
+                int sensorID = hitDecoder(static_cast< IMPL::TrackerHitImpl* >(hit))["sensorID"];
+                return sensorID;
+
             } catch (...) {
-                streamlog_out(ERROR) << "guessSensorID() produced an exception!" << std::endl;
+                streamlog_out(ERROR) << "getSensorIDfromHit() produced an exception!" << std::endl;
             }
 
             return -1;
         }     
-        
+ 
         std::map<std::string, bool > FillHotPixelMap( EVENT::LCEvent *event, const std::string& hotPixelCollectionName ) {
             
             std::map < std::string, bool > hotPixelMap;
@@ -338,6 +333,25 @@ namespace eutelescope {
 
                 return X;
         }
-        
-    }
+
+        /** get cluster size in X and Y for TrackerHit derived hits:
+         *  includes only certain type of data
+         *  to-do: replace with generic hit and cluster structure not requiring explicit declaration of data types
+         */
+
+        void getClusterSize(const IMPL::TrackerHitImpl * hit, int& sizeX, int& sizeY ) {
+        // rewrite from EUTelAXPITbTrackTuple:
+  
+	  if(hit==0)
+	  {
+	    streamlog_out( ERROR5 ) << "An invalid hit pointer supplied! will exit now\n" << endl;
+	    return ;
+	  }
+               EUTelVirtualCluster* cluster = GetClusterFromHit( hit ) ;
+
+	       if(cluster != 0 )  cluster->getClusterSize(sizeX, sizeY);
+ 
+        }
+  
+  }
 }

@@ -89,6 +89,7 @@ public:
     inline float getTime() const { return static_cast<float> (_time); } 
 
 protected:
+     
     //! The x coordinate
     short _xCoord;
     

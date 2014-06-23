@@ -14,8 +14,9 @@ Mimosa26GeoDescr::Mimosa26GeoDescr(): EUTelGenericPixGeoDescr(	21.2, 10.6, 0.02,
 	//Create a plane for the sensitive area
 	plane = _tGeoManager->MakeBox( "sensarea_mimosa", Si, 10.6, 5.3, 0.01 );
 	//Divide the regions to create pixels
-	TGeoVolume* row = plane->Divide("mimorow", 1 , 1152 , 0 , 1, 0, "N"); 
+  	TGeoVolume* row = plane->Divide("mimorow", 1 , 1152 , 0 , 1, 0, "N"); 
 	row->Divide("mimopixel", 2 , 576, 0 , 1, 0, "N");
+
 }
 
 Mimosa26GeoDescr::~ Mimosa26GeoDescr()
@@ -31,6 +32,7 @@ void  Mimosa26GeoDescr::createRootDescr(char const * planeVolume)
 	TGeoVolume* topplane =_tGeoManager->GetVolume(planeVolume);
 	//Add the sensitive area to the plane
 	topplane->AddNode(plane, 1);
+    
 }
 
 std::string Mimosa26GeoDescr::getPixName(int x , int y)
