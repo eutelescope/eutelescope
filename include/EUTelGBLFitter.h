@@ -19,6 +19,7 @@
 #include "EUTelEquationsOfMotion.h"
 #include "EUTelTrackStateImpl.h"
 #include "EUTelTrackImpl.h"
+#include "EUTelMillepede.h"
 
 // EVENT includes
 #include <IMPL/TrackerHitImpl.h>
@@ -142,6 +143,8 @@ namespace eutelescope {
         void SetMilleBinary(gbl::MilleBinary* _mille) {
             this->_mille = _mille;
         }
+
+				void SetMillepede( EUTelMillepede* Mille ) { _MilleInterface =  Mille; }
 			
 				void SetMilleBinaryName(std::string binaryname){
 					_binaryname = binaryname;
@@ -180,7 +183,7 @@ namespace eutelescope {
         void setParamterIdYShiftsMap( const std::map<int, int>& );
         
         void setParamterIdXShiftsMap(const std::map<int, int>& );
-        
+				        
         const std::vector<  int>& getParamterIdPlaneVec() const;
 
         const std::vector<  float>& getParamterIdXResolutionVec() const;
@@ -314,6 +317,8 @@ namespace eutelescope {
 
 	/** ODE for equations of motion */
         ODE* _eomODE;
+
+				EUTelMillepede* _MilleInterface;
         
     };
 

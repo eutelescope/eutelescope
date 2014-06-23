@@ -220,7 +220,6 @@ namespace eutelescope {
 		jacobian = state->getPropagationJacobianF((dpoint[2] - state->getZParameter())); //Find all the relations between state variables at a particular z parameter dpoint[2] 
         	
   		//jacobian.Print();
-		std::cout<<"I am here"<<std::endl;
 		//state->Print();
 		nextStateUsingJacobianFinder(state, state_new, jacobian); //Here we determine the new state position and CovMatrix using the jacobian. This might not need to be done now but would involve changing closestHit()????
 		state_new->setZParameter( dpoint[2] ); //Set this here since it is not a state variable but a parameter

@@ -133,7 +133,7 @@ _aidaHistoMap1D() {
     registerOptionalParameter("ResidualsRMax", "Maximal allowed distance between hits entering the recognition step "
             "per 10 cm space between the planes. One value for each neighbor planes. "
             "DistanceMax will be used for each pair if this vector is empty. Units are mm.",
-            _residualsRMax, static_cast<double> (0.4));
+            _residualsRMax, static_cast<double> (10));
     
     registerOptionalParameter("BeamEnergy", "Beam energy [GeV]", _eBeam, static_cast<double> (4.0));
 
@@ -339,6 +339,7 @@ void EUTelProcessorTrackingHelixTrackSearch::cartesian2LCIOTrack( EUTelTrackImpl
 
 	//Loop over all state on the track and fill new track object
 	EUTelTrackStateVec tracks = track->getTrackStates();
+	streamlog_out( DEBUG0 ) << "The size of the state " << tracks.size() <<std::endl;  
 	EUTelTrackStateVec::const_iterator trackstate;
 	for(trackstate=tracks.begin(); trackstate !=tracks.end(); trackstate++){
     		//EUTelTrackStateImpl* nexttrackstate = new EUTelTrackStateImpl( *(track->getTrackStates().at(i)) );
@@ -361,6 +362,7 @@ void EUTelProcessorTrackingHelixTrackSearch::cartesian2LCIOTrack( EUTelTrackImpl
 
    	// Assign hits to LCIO TRACK
 	const EVENT::TrackerHitVec& trkcandhits = track->getTrackerHits();
+	streamlog_out( DEBUG0 ) << "The size of hits " << trkcandhits.size() <<std::endl; 
     	EVENT::TrackerHitVec::const_iterator itrHit;
     	for ( itrHit = trkcandhits.begin(); itrHit != trkcandhits.end(); ++itrHit ){
     		LCIOtrack->addHit( *itrHit );

@@ -75,6 +75,7 @@ void EUTelProcessorGBLFitCandidates::init() {
 
 	// Initialize GBL fitter
 	EUTelGBLFitter* Fitter = new EUTelGBLFitter("GBLFitter");
+	EUTelMillepede* Mille  = new EUTelMillepede(_alignmentMode);
   Fitter->SetBeamCharge(_beamQ);
   Fitter->SetBeamEnergy(_eBeam);
 	Fitter->setMEstimatorType(_mEstimatorType);
@@ -82,6 +83,7 @@ void EUTelProcessorGBLFitCandidates::init() {
   Fitter->SetChi2Cut(_maxChi2Cut);
 	Fitter->SetJacobain(*alDer);
 	Fitter->SetAlignmentVariablesList(*globalLabels);
+	Fitter->SetMillepede(Mille);
   _trackFitter = Fitter;
 
 
