@@ -49,6 +49,7 @@
 //#include <TrackerHitImpl2.h>
 #include <IMPL/TrackerHitImpl.h>
 #include <UTIL/CellIDDecoder.h>
+#include <UTIL/CellIDEncoder.h>
 #include <UTIL/LCTime.h>
 
 // system includes <>
@@ -332,7 +333,9 @@ void EUTelHitMakerTwo::processEvent (LCEvent* event) {
   
     CellIDDecoder<TrackerPulseImpl>  pulseCellDecoder(pulseCollection);
 
-    int detectorID    = -99; // it's a non sense
+    CellIDEncoder<TrackerHitImpl> idHitEncoder(EUTELESCOPE::HITENCODING, hitCollection);
+    
+int detectorID    = -99; // it's a non sense
     int oldDetectorID = -100;
 
     int    layerIndex = -99;
@@ -555,10 +558,15 @@ void EUTelHitMakerTwo::processEvent (LCEvent* event) {
       // add the clusterVec to the hit
       hit->rawHits() = clusterVec;
       
-      // Determine sensorID from raw data.
-      //int sensorID = Utility::GuessSensorID( hit );
-	  //TODO: Tobias: fix
-      hit->setCellID0( pulseCellDecoder(pulse)["sensorID"] );
+      // Determine sensorID from the cluster data.
+      idHitEncoder["sensorID"] =  static_cast<int> (pulseCellDecoder(pulse)["sensorID"]);
+
+      // set the local/global bit flag property for the hit
+      idHitEncoder["properties"] = 0; // init
+      if (!_wantLocalCoordinates) idHitEncoder["properties"] = kHitInGlobalCoord;
+
+      // store values
+      idHitEncoder.setCellID( hit );
 
       // add the new hit to the hit collection
       hitCollection->push_back( hit );
