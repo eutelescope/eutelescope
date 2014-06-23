@@ -46,6 +46,10 @@ namespace eutelescope {
 
     /// Destructor.
     virtual ~EUTelTrackImpl() ; 
+
+IMPL::TrackImpl CreateLCIOTrack();
+
+	
     
     virtual int id() const { return simpleUID() ; }
  

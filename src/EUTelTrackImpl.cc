@@ -330,9 +330,43 @@ namespace eutelescope {
 	return hits;
 }
 
+IMPL::TrackImpl EUTelTrackImpl::CreateLCIOTrack(){
+streamlog_out( DEBUG4 ) << " ---------------- EUTelTrackImpl::CreateLCIOTrack-- BEGIN ------------- " << std::endl;
+
+	IMPL::TrackImpl LCIOtrack;
+	//Loop over all state on the track and fill new track object
+	EUTelTrackStateVec tracks = getTrackStates();
+	streamlog_out( DEBUG0 ) << "The size of the state " << tracks.size() <<std::endl;  
+	EUTelTrackStateVec::const_iterator trackstate;
+	for(trackstate=tracks.begin(); trackstate !=tracks.end(); trackstate++){
+		TVectorD statevector = (*trackstate)->getTrackStateVec();
+
+
+		IMPL::TrackStateImpl* implstate     = static_cast <IMPL::TrackStateImpl*> (*trackstate ); //This is possible since EUTelTrack is derived from IMPL::TrackState
+
+		////////Add our state variables into container. The covariant matrix is for our coordinate system
+		implstate->setD0(statevector[0]); //x position global
+		implstate->setPhi(statevector[1]); //y position global
+		implstate->setOmega(statevector[2]); //tx position global
+		implstate->setZ0(statevector[3]); //ty position global
+		implstate->setTanLambda(statevector[4]); //invp position global		 
+
+                streamlog_out(MESSAGE3) <<  "  " << (*trackstate ) -> id() << "  " << (*trackstate ) -> getLocation() << " " << (*trackstate )->getX() << " " << (*trackstate )->getY() << std::endl;
+		LCIOtrack.addTrackState( implstate );
+	}
+
 	
 
- 
+   	// Assign hits to LCIO TRACK
+	const EVENT::TrackerHitVec& trkcandhits = getTrackerHits();
+	streamlog_out( DEBUG0 ) << "The size of hits " << trkcandhits.size() <<std::endl; 
+    	EVENT::TrackerHitVec::const_iterator itrHit;
+    	for ( itrHit = trkcandhits.begin(); itrHit != trkcandhits.end(); ++itrHit ){
+    		LCIOtrack.addHit( *itrHit );
+    	}
+	
+streamlog_out( DEBUG4 ) << " ---------------- EUTelTrackImpl::CreateLCIOTrack-- END ------------- " << std::endl;
+} 
 
 	//int EUTelTrackImpl::getType(){
 //		return  _type;

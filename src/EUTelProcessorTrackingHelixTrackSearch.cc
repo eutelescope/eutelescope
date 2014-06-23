@@ -315,14 +315,14 @@ void EUTelProcessorTrackingHelixTrackSearch::outputLCIO(LCEvent* evt, std::vecto
 	//Loop through all tracks
 	vector< EUTelTrackImpl* >::const_iterator itTrackCartesian;
 	for ( itTrackCartesian = trackCartesian.begin(); itTrackCartesian != trackCartesian.end(); itTrackCartesian++){
-		IMPL::TrackImpl* LCIOtrack = new IMPL::TrackImpl; //Create container of type IMPL::TrackImpl //Will be deleted automatically latter by LCIO object
 
                 if(streamlog_level(DEBUG4) ) (*itTrackCartesian)->Print();
 
-		cartesian2LCIOTrack((*itTrackCartesian), LCIOtrack);
+		IMPL::TrackImpl LCIOtrack = (*itTrackCartesian)->CreateLCIOTrack();
+		
 
 		//For every track add this to the collection
-    		trkCandCollection->push_back( LCIOtrack );
+    		trkCandCollection->push_back( &LCIOtrack );
 	}//END TRACK LOOP
 
 	//Now add this collection to the 
@@ -330,47 +330,6 @@ void EUTelProcessorTrackingHelixTrackSearch::outputLCIO(LCEvent* evt, std::vecto
 
         streamlog_out( DEBUG4 ) << " ---------------- EUTelProcessorTrackingHelixTrackSearch::outputLCIO ---------- END ------------- " << std::endl;
 }
-
-//Since we can not put a generic object which will contain trackerhit objects. Then we need to use the given containers for LCIO. This function takes the EUTelTrackStates and turns it into TrackState objects. The it fills a track object with them and Trackerhit objects
-void EUTelProcessorTrackingHelixTrackSearch::cartesian2LCIOTrack( EUTelTrackImpl* track, IMPL::TrackImpl* LCIOtrack ) const { 
-
-        streamlog_out( DEBUG4 ) << " ---------------- EUTelProcessorTrackingHelixTrackSearch::cartesian2LCIOTrack -- BEGIN ------------- " << std::endl;
-
-
-	//Loop over all state on the track and fill new track object
-	EUTelTrackStateVec tracks = track->getTrackStates();
-	streamlog_out( DEBUG0 ) << "The size of the state " << tracks.size() <<std::endl;  
-	EUTelTrackStateVec::const_iterator trackstate;
-	for(trackstate=tracks.begin(); trackstate !=tracks.end(); trackstate++){
-    		//EUTelTrackStateImpl* nexttrackstate = new EUTelTrackStateImpl( *(track->getTrackStates().at(i)) );
-		TVectorD statevector = (*trackstate)->getTrackStateVec();
-
-
-		IMPL::TrackStateImpl* implstate     = static_cast <IMPL::TrackStateImpl*> (*trackstate ); //This is possible since EUTelTrack is derived from IMPL::TrackState
-
-		////////Add our state variables into container. The covariant matrix is for our coordinate system
-		implstate->setD0(statevector[0]); //x position global
-		implstate->setPhi(statevector[1]); //y position global
-		implstate->setOmega(statevector[2]); //tx position global
-		implstate->setZ0(statevector[3]); //ty position global
-		implstate->setTanLambda(statevector[4]); //invp position global		 
-
-                streamlog_out(MESSAGE3) <<  "  " << (*trackstate ) -> id() << "  " << (*trackstate ) -> getLocation() << " " << (*trackstate )->getX() << " " << (*trackstate )->getY() << std::endl;
-		LCIOtrack->addTrackState( implstate );
-	}
-	
-
-   	// Assign hits to LCIO TRACK
-	const EVENT::TrackerHitVec& trkcandhits = track->getTrackerHits();
-	streamlog_out( DEBUG0 ) << "The size of hits " << trkcandhits.size() <<std::endl; 
-    	EVENT::TrackerHitVec::const_iterator itrHit;
-    	for ( itrHit = trkcandhits.begin(); itrHit != trkcandhits.end(); ++itrHit ){
-    		LCIOtrack->addHit( *itrHit );
-    	}
-
-        streamlog_out( DEBUG4 ) << " ---------------- EUTelProcessorTrackingHelixTrackSearch::cartesian2LCIOTrack -- END ------------- " << std::endl;
-}
-
 
 /** 
  * Plot few histos.

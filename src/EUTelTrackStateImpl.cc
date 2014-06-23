@@ -30,6 +30,28 @@ namespace eutelescope {
 
     }
 
+		//This is the constructor to change TrackStateImpl LCIO to EUTelTrackState
+    EUTelTrackStateImpl::EUTelTrackStateImpl( const IMPL::TrackStateImpl& o ) : TrackStateImpl(),
+        _location(o.getLocation()),
+        _tx(o.getOmega()),
+        _ty(o.getZ0()),
+        _x(o.getD0()),
+        _y(o.getPhi()),
+        _invp(o.getTanLambda()),
+        _covMatrix(o.getCovMatrix()),
+				_zparameter(0)	
+    {
+			//I dont think this is needed to add this. Also need to add the hit at state level!!!!
+     //   for(int i=0 ; i < TRKSTATENCOVMATRIX ; i++ ) {
+     //       _covMatrix.push_back( 0.0 ) ; 
+     //   }
+				//has to be called this way to change from const float to float. 
+        for(int i=0 ; i < TRKSTATENREFSIZE ; i++ ) {
+            _reference[i] = o.getReferencePoint()[i];
+        }
+
+    }
+
     EUTelTrackStateImpl::EUTelTrackStateImpl(int location, float tx, float ty, float x, float y, float invp, const float* covMatrix, const float* reference) :
         _location(0),
         _tx(tx),
