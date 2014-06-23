@@ -474,6 +474,7 @@ void EUTelGeometryTelescopeGeoDescription::readGear() {
     }
 
     bool siPlanesDefined = false;
+    bool telPlanesDefined = false;
 
     try{
       _siPlanesParameters = const_cast< gear::SiPlanesParameters*> (&(_gearManager->getSiPlanesParameters()));
