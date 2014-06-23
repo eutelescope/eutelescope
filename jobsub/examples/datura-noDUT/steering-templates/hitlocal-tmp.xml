@@ -45,7 +45,7 @@
 </processor>
 
 
- <processor name="HitMakerM26" type="EUTelHitMaker">
+ <processor name="HitMakerM26" type="EUTelProcessorHitMaker">
  <!--EUTelHitMaker is responsible to translate cluster centers from the local frame of reference to the external frame of reference using the GEAR geometry description-->
   <!--Cluster (pulse) collection name-->
   <parameter name="PulseCollectionName" type="string" lcioInType="TrackerPulse"> filtered_cluster_m26 </parameter>
