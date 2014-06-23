@@ -524,16 +524,18 @@ void EUTelGBLFitter::UpdateTrackFromGBLTrajectory (gbl::GblTrajectory* traj, std
 
 			TVectorD corrections;
 			TMatrixDSym correctionsCov;
-
       traj->getResults(pointNum, corrections, correctionsCov );
 
+     	streamlog_out(MESSAGE0) << endl << "State before we have added corrections: " << std::endl;
+			state->Print();
 			state->setX( state->getX() + corrections[0]);
 			state->setY( state->getY() + corrections[1]);
 			state->setTx( state->getTx() + corrections[2]);
 			state->setTy( state->getTy() + corrections[3]);
 			state->setInvP( state->getInvP() + corrections[4]);
+     	streamlog_out(MESSAGE0) << endl << "State after we have added corrections: " << std::endl;
+			state->Print();
 
-			//state->setCovMatrix( state->getCovMatrix() + correctionsCov ); Need to add this but getcov returns a vector???????
 			
 		}
 

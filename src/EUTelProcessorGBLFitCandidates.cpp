@@ -154,7 +154,8 @@ void EUTelProcessorGBLFitCandidates::processEvent(LCEvent * evt){
   	if (col != NULL) {
   		streamlog_out(DEBUG2) << "Collection contains data! Continue!" << endl;
 
-		////////////////////////////////////////////////////////////////////////////For the each event we get loop over all track candidates and fit them	
+		////////////////////////////////////////////////////////////////////////////For the each event we get loop over all track candidates and fit them
+		std::vector< EUTelTrackImpl* > EUtracks;	
 		for (int iCol = 0; iCol < col->getNumberOfElements(); iCol++) {
 			
 			if (!col) {
@@ -162,8 +163,7 @@ void EUTelProcessorGBLFitCandidates::processEvent(LCEvent * evt){
 		        	throw SkipEventException(this);
      			}
 	   		IMPL::TrackImpl* trackimpl = static_cast<IMPL::TrackImpl*> (col->getElementAt(iCol));
-			EUTelTrackImpl* EUtrack;
-			CreateEUTrackandStates(trackimpl,EUtrack);
+			EUTelTrackImpl* EUtrack = new EUTelTrackImpl(*trackimpl);
       			streamlog_out(DEBUG1) << "Track " << iCol << " nhits " << trackimpl->getTrackerHits().size() << endl;
 
 			//_trackFitter->Clear(); //This is a good point to clear all things that need to be reset for each event. Why should gop here?
@@ -189,14 +189,14 @@ void EUTelProcessorGBLFitCandidates::processEvent(LCEvent * evt){
 			EUtrack->setNdf(*ndf);
 			_trackFitter->UpdateTrackFromGBLTrajectory(traj, pointList);
 			//////////////////////////////////////////////////////////////////////////////////////END
-			_trackFitter->CreateAlignmentToMeasurementJacobian(pointList);
-	//		traj->milleOut( _milleBinaryFilename.c_str() );
+			EUtracks.push_back(EUtrack);
 			
 			      
 		}//END OF LOOP FOR ALL TRACKS IN AN EVENT
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+			outputLCIO(evt, EUtracks);
 	}//END OF COLLECTION IS NOT NULL LOOP	
+
 
 }
 
@@ -204,7 +204,43 @@ void EUTelProcessorGBLFitCandidates::end() {}
 
 #endif // USE_GBL
 
-/////////////////////////////////////////////////////Functions
+/////////////////////////////////////////////////////Functions THIS IS OLD WILL REMOVE
+
+void EUTelProcessorGBLFitCandidates::outputLCIO(LCEvent* evt, std::vector< EUTelTrackImpl* >& trackCartesian){
+
+        streamlog_out( DEBUG4 ) << " ---------------- EUTelProcessorGBLFitCandidates::outputLCIO ---------- BEGIN ------------- " << std::endl;
+
+	//Create once per event    
+	LCCollectionVec * trkCandCollection = new LCCollectionVec(LCIO::TRACK);
+
+	// Prepare output collection
+  	LCFlagImpl flag(trkCandCollection->getFlag());
+  	flag.setBit( LCIO::TRBIT_HITS );
+  	trkCandCollection->setFlag( flag.getFlag( ) );
+
+	//Loop through all tracks
+	vector< EUTelTrackImpl* >::const_iterator itTrackCartesian;
+	for ( itTrackCartesian = trackCartesian.begin(); itTrackCartesian != trackCartesian.end(); itTrackCartesian++){
+
+                if(streamlog_level(DEBUG4) ) (*itTrackCartesian)->Print();
+
+		IMPL::TrackImpl LCIOtrack = (*itTrackCartesian)->CreateLCIOTrack();
+		
+
+		//For every track add this to the collection
+    		trkCandCollection->push_back( &LCIOtrack );
+	}//END TRACK LOOP
+
+	//Now add this collection to the 
+  	evt->addCollection(trkCandCollection, _tracksOutputCollectionName);
+
+        streamlog_out( DEBUG4 ) << " ---------------- EUTelProcessorGBLFitCandidates::outputLCIO ---------- END ------------- " << std::endl;
+}
+
+
+
+
+
 void EUTelProcessorGBLFitCandidates::CreateEUTrackandStates(TrackImpl* trackimpl, EUTelTrackImpl* EUtrack){
 	
   	for(int i=0;i < trackimpl->getTrackStates().size(); i++){
