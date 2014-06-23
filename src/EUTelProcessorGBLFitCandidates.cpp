@@ -19,7 +19,7 @@ _milleBinaryFilename("mille.bin"),
 _alignmentMode(0)
 {
 	// Processor description
-  _description = "EUTelProcessorTrackingGBLTrajectory performs track fits using GBL optionally writing data files for MILLEPEDE II.";
+  _description = "EUTelProcessorGBLFitCandidates this will fit gbl tracks and output them into LCIO file.";
 
   // TrackerHit input collection
   registerInputCollection(LCIO::TRACK, "TrackCandidatesInputCollectionName", "Input track candidate collection name",_trackCandidatesInputCollectionName,std::string("TrackCandidatesCollection"));
@@ -80,8 +80,6 @@ void EUTelProcessorGBLFitCandidates::init() {
 	Fitter->setMEstimatorType(_mEstimatorType);
   Fitter->SetMilleBinaryName(_milleBinaryFilename);
   Fitter->SetChi2Cut(_maxChi2Cut);
-	Fitter->SetJacobain(*alDer);
-	Fitter->SetAlignmentVariablesList(*globalLabels);
 	Fitter->SetMillepede(Mille);
   _trackFitter = Fitter;
 
@@ -187,14 +185,14 @@ void EUTelProcessorGBLFitCandidates::processEvent(LCEvent * evt){
 			//Update track and then state variables//////////////////////////////////////////////BEGIN
 			EUtrack->setChi2(*chi2);
 			EUtrack->setNdf(*ndf);
-			_trackFitter->UpdateTrackFromGBLTrajectory(traj, pointList);
+			_trackFitter->UpdateTrackFromGBLTrajectory(traj, pointList); 
 			//////////////////////////////////////////////////////////////////////////////////////END
 			EUtracks.push_back(EUtrack);
 			
 			      
 		}//END OF LOOP FOR ALL TRACKS IN AN EVENT
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-			outputLCIO(evt, EUtracks);
+			outputLCIO(evt, EUtracks); // Important to note that EUtracks are still only the original states at input. The scatterers are used in the fit but are not included here.
 	}//END OF COLLECTION IS NOT NULL LOOP	
 
 

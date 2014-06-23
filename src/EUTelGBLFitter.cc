@@ -1409,17 +1409,9 @@ void EUTelGBLFitter::CreateAlignmentToMeasurementJacobian(std::vector< gbl::GblP
 
 		(pointList->at(pointNum)).addGlobals(labels, *Jac);
 		
-		
-		
-		
-
 
 		}//END OF IF STATEMENT IF THE THERE IS A STATE WITH HIT
 	}
-
-
-
-
 
 
 }

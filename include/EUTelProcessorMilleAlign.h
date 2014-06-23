@@ -24,6 +24,11 @@
 #include "EUTelUtility.h"
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelExceptions.h"
+#include "EUTelTrackFitter.h"
+#include "EUTelGBLFitter.h"
+#include "EUTelGeometryTelescopeGeoDescription.h"
+#include "EUTelEventImpl.h"
+#include "EUTelMillepede.h"
 
 
 using namespace lcio;
@@ -71,6 +76,43 @@ namespace eutelescope {
 				std::string _milleSteeringFilename;
 				std::string _milleResultFileName;
 				std::string _gear_aligned_file;
+
+        /** Number of events processed */
+        int _nProcessedRuns;
+        /** Number of runs processed */
+        int _nProcessedEvents;
+
+				int _alignmentMode;
+
+        /** Beam charge in [e] */
+        double _beamQ;
+
+				//Beam energy. 
+				double _eBeam;
+
+				//This is the maximum chi2 of a track that will be used in the millepede alignment fit
+				double _maxChi2Cut;
+
+        /** Outlier downweighting option */
+        std::string _mEstimatorType;
+
+        /** Track fitter */
+        EUTelGBLFitter *_trackFitter;
+
+        /** Input TrackerHit collection name */
+        string _trackCandidatesInputCollectionName;
+
+        /** Output Tracks collection name */
+        string _tracksOutputCollectionName;
+
+        /** Allows user-added commands in the pede steering file */
+				lcio::StringVec _pedeSteerAddCmds;
+
+				EUTelMillepede* _Mille;
+
+        /** Alignment constants file name */
+				std::string _alignmentConstantLCIOFile;
+
 
 };
 
