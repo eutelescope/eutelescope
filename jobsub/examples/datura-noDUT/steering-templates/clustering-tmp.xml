@@ -88,7 +88,7 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="Clustering" type="EUTelProcessorClustering">
+ <processor name="Clustering" type="EUTelProcessorSparseClustering">
  <!--EUTelProcessorClustering is looking for clusters into a calibrated pixel matrix.-->
   <!--Input calibrated data not zero suppressed collection name-->
   <parameter name="NZSDataCollectionName" type="string" lcioInType="TrackerData"> data </parameter>
