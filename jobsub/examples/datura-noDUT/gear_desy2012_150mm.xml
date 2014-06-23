@@ -10,7 +10,7 @@
       <siplanesNumber number="6"/>
       <parameter name="Geometry" 
                  type="StringVec" 
-                 value="FEI4Single.so  Mimosa26.so Mimosa26.so Mimosa26.so Mimosa26.so Mimosa26.so Mimosa26.so FEI4Single.so"/>
+                 value="Mimosa26.so Mimosa26.so Mimosa26.so Mimosa26.so Mimosa26.so Mimosa26.so"/>
 
      <!-- z along beam -->
       <layers>
