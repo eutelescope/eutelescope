@@ -72,8 +72,8 @@
   <parameter name="SimpleFileHandler" type="StringVec"> refhit42 @DBPath@/@Output@-refhit-db.slcio referenceHit </parameter>
   <parameter name="SimpleFileHandler" type="StringVec"> refhit51 @DBPath@/@Output@-refhit-db.slcio referenceHit </parameter>
   <parameter name="SimpleFileHandler" type="StringVec"> refhit52 @DBPath@/@Output@-refhit-db.slcio referenceHit </parameter>
-  <parameter name="SimpleFileHandler" type="StringVec"> prealign  @DBPath@/@Output@-prealignment.slcio alignment </parameter>
-  <parameter name="SimpleFileHandler" type="StringVec"> align @DBPath@/@Output@-alignment.slcio alignment </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> prealign  @DBPath@/@Output@-prealign-db.slcio alignment </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> align @DBPath@/@Output@-align-db.slcio alignment </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>

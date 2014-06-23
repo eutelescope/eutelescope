@@ -89,7 +89,7 @@
   <!--Initialization of a data file handler-->
   <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
   <!--Initialization of a simple conditions file handler-->
-  <parameter name="SimpleFileHandler" type="StringVec"> prealign @DBPath@/@Output@-prealignment.slcio alignment </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> prealign @DBPath@/@Output@-prealign-db.slcio alignment </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
@@ -156,7 +156,7 @@
   <!--Initialization of a data file handler-->
   <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
   <!--Initialization of a simple conditions file handler-->
-  <parameter name="SimpleFileHandler" type="StringVec"> alignment @DBPath@/@Output@-alignment.slcio alignment </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> alignment @DBPath@/@Output@-align-db.slcio alignment </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>

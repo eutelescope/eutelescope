@@ -119,7 +119,7 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
     <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
     <!--parameter name="KeepCollectionNames" type="StringVec" value="MyPreciousSimTrackerHits"/-->
     <!-- name of output file -->
-    <parameter name="LCIOOutputFile" type="string" value="@ResultsPath@/run@RunNumber@-clu@MemCheckFlag@.slcio"/>
+    <parameter name="LCIOOutputFile" type="string" value="@LcioPath@/run@RunNumber@-clu@MemCheckFlag@.slcio"/>
     <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
     <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
     <!--Set it to true to remove intermediate EORE in merged runs-->
