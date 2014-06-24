@@ -204,13 +204,10 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
 int main( int argc, char ** argv ) {
 
   streamlog::out.init( std::cout , "pede2lcio output stream") ;
-//  streamlog::out.addLevelName<streamlog::MESSAGE0>() ;
 
-    streamlog::logscope scope(streamlog::out) ;
-  
-//    scope.setName( "Subroutine") ;
-    scope.setLevel<streamlog::MESSAGE3>() ;
-//    scope.setLevel( "MESSAGE3" )  ;
+  streamlog::logscope scope(streamlog::out) ;
+
+  scope.setLevel<streamlog::MESSAGE3>() ;
 
 
 
@@ -256,6 +253,7 @@ int main( int argc, char ** argv ) {
 
   // check GEAR flag
   string oldGearFileName, newGearFileName;
+
   bool wantGEAR = false;
   if ( option->getFlag('g') || option->getFlag( "gear" ) ) {
       
@@ -267,11 +265,11 @@ int main( int argc, char ** argv ) {
          oldGearFileName.append( ".xml" );
     }
     newGearFileName = option->getArgv(3);
-    if ( lcioFileName.rfind( ".xml", string::npos ) == string::npos ) {
-         lcioFileName.append( ".xml" );
+    if ( newGearFileName.rfind( ".xml", string::npos ) == string::npos ) {
+         newGearFileName.append( ".xml" );
     }
     
-    streamlog_out(MESSAGE4) << oldGearFileName << " " << lcioFileName << std::endl;
+    streamlog_out(MESSAGE4) << " oldGear: " << oldGearFileName << " newGear: " << newGearFileName << std::endl;
   }
   
   streamlog_out(MESSAGE4) << "Converting " << pedeFileName << " in " << lcioFileName << std::endl;

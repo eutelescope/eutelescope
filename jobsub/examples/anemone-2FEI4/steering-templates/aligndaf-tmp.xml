@@ -23,6 +23,7 @@
       <processor name="ApplyPreAlignment"/>
       <processor name="DafFitter"/>
       <processor name="Align"/>
+      <processor name="Save"/>
    </execute>
 
    <global>
@@ -154,7 +155,7 @@
   <!--Sigma of telescope resolution in the global Y plane,-->
   <parameter name="TelResolutionY" type="float" value="140"/>
   <!--List of sensor IDs for the telescope planes. These planes are used for the track finder, and track fitter.-->
-  <parameter name="TelescopePlanes" type="IntVec"> 0 1 2 3 4 5 </parameter>
+  <parameter name="TelescopePlanes" type="IntVec"> 0 1 2 20 21 3 4 5 </parameter>
   <!--Filename for fitted tracks-->
   <!--parameter name="TrackAsciiName" type="string" value="tracks.txt"/-->
   <!--Do you want the reference hit collection to be used for coordinate transformations?-->
@@ -191,7 +192,7 @@
   <!--Exclude planes from fit according to their sensor ids.-->
   <parameter name="ExcludePlanes" type="IntVec" value="@ExcludePlanes@"/>
   <!--Fixes the given alignment parameters in the fit if alignMode==3 is used. For each sensor an integer must be specified (If no value is given, then all parameters will be free). bit 0 = x shift, bit 1 = y shift, bit 2 = z shift, bit 3 = alpha, bit 4 = beta, bit 5 = gamma. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="FixParameter" type="IntVec"> 0 0 0 0 0 0 </parameter>
+  <parameter name="FixParameter" type="IntVec"> @FixedParameter@ </parameter>
   <!--Fix sensor planes in the fit according to their sensor ids.-->
   <parameter name="FixedPlanes" type="IntVec" value="@FixedPlanes@"/>
   <!--Generate a steering file for the pede program.-->
@@ -241,11 +242,11 @@
   <!--Minimal values of the hit residuals in the Y direction for a track. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
   <parameter name="ResidualsYMin" type="FloatVec" value="@ResidualYMin@"/>
   <!--X resolution parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResolutionX" type="FloatVec"> 18 18 18 18 18 18 </parameter>
+  <parameter name="ResolutionX" type="FloatVec"> @ResolutionX@ </parameter>
   <!--Y resolution parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResolutionY" type="FloatVec"> 18 18 18 18 18 18 </parameter>
+  <parameter name="ResolutionY" type="FloatVec"> @ResolutionY@ </parameter>
   <!--Z resolution parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResolutionZ" type="FloatVec"> 1000 1000 1000 1000 1000 1000 </parameter>
+  <parameter name="ResolutionZ" type="FloatVec"> @ResolutionZ@ </parameter>
   <!--Execute the pede program using the generated steering file.-->
   <parameter name="RunPede" type="bool" value="@RunPede@"/>
   <!--(default) Resolution of the telescope for Millepede (sigma_x=sigma_y) used only if plane dependent resolution is set inconsistently.-->
@@ -279,5 +280,26 @@
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
+
+ <processor name="Save" type="EUTelOutputProcessor">
+ <!--Writes the current event to the specified LCIO outputfile. Eventually it adds a EORE at the of the file if it was missing Needs to be the last ActiveProcessor.-->
+  <!--drops the named collections from the event-->
+  <!-- parameter name="DropCollectionNames" type="StringVec"> filteredcluster zsdata refilteredcluster </parameter -->
+  <!--drops all collections of the given type from the event-->
+  <!--parameter name="DropCollectionTypes" type="StringVec"> SimTrackerHit SimCalorimeterHit </parameter-->
+  <!-- write complete objects in subset collections to the file (i.e. ignore subset flag)-->
+  <!--parameter name="FullSubsetCollections" type="StringVec" value="MCParticlesSkimmed"/-->
+  <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
+  <!--parameter name="KeepCollectionNames" type="StringVec" value="MyPreciousSimTrackerHits"/-->
+  <!-- name of output file -->
+  <parameter name="LCIOOutputFile" type="string" value="@LcioPath@/@Output@-aligndaf.slcio "/>
+  <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
+  <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
+  <!--Set it to true to remove intermediate EORE in merged runs-->
+  <parameter name="SkipIntermediateEORE" type="bool" value="true"/>
+  <!--will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW-->
+  <!--parameter name="SplitFileSizekB" type="int" value="500000"/-->
+</processor>
+
 
 </marlin>

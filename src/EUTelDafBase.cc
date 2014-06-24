@@ -331,6 +331,7 @@ void EUTelDafBase::init() {
   _zSort.clear();
   for(int plane = 0; plane < _siPlanesLayerLayout->getNLayers(); plane++){
     _zSort[ _siPlanesLayerLayout->getLayerPositionZ(plane) * 1000.0 ] = plane;
+    _indexIDMap[ _siPlanesLayerLayout->getID( plane )] = plane;
   }
 
   //Add Planes to tracker system,
@@ -378,6 +379,8 @@ void EUTelDafBase::init() {
 
     //Add plane to tracker system
     if(not excluded){ nActive++;}
+
+	std::cout << "Adding plane: " << sensorID << " (excluded: " << excluded << ")" << std::endl;
    _system.addPlane(sensorID, zPos , errX, errY, scatter, excluded);
     gearRotate(index, (*zit).second);
   }
@@ -487,60 +490,36 @@ void EUTelDafBase::readHitCollection(LCEvent* event)
        if(_mcCollection != 0 ) simhit = static_cast<SimTrackerHitImpl*> ( _mcCollection->getElementAt(iHit) );
        if(simhit != 0 )
        {
-	 const double * simpos = simhit->getPosition();
-         pos[0]=simpos[0];
-         pos[1]=simpos[1];
-         pos[2]=simpos[2];
- 	 UTIL::CellIDDecoder<SimTrackerHitImpl> simHitDecoder (_mcCollection);
-         for(unsigned plane = 0; plane <  _system.planes.size(); plane++ ){
-           if( _system.planes.at(plane).getSensorID() == simHitDecoder(simhit)["sensorID"] ) planeIndex = plane;
-         }
+	  UTIL::CellIDDecoder<SimTrackerHitImpl> simHitDecoder (_mcCollection);
+	  const double * simpos = simhit->getPosition();
+          pos[0]=simpos[0];
+          pos[1]=simpos[1];
+          pos[2]=simpos[2];
+	  planeIndex = simHitDecoder(simhit)["sensorID"];
        }
        streamlog_out ( DEBUG5 ) << " SIM: simhit="<< ( simhit != 0 ) <<" add point [" << planeIndex << "] "<< 
                       static_cast< float >(pos[0]) * 1000.0f << " " << static_cast< float >(pos[1]) * 1000.0f << " " <<  static_cast< float >(pos[2]) * 1000.0f << endl;
      }else
       if(hit != 0 )
       {
-   	const double * hitpos = hit->getPosition();
-        pos[0]=hitpos[0];
-        pos[1]=hitpos[1];
-        pos[2]=hitpos[2];
-        for(unsigned plane = 0; plane < _system.planes.size(); plane++ ){
-           if( _system.planes.at(plane).getSensorID() == Utility::getSensorIDfromHit(hit) ) planeIndex = plane;
-        }
-        streamlog_out ( DEBUG5 ) << " REAL: add point [" << planeIndex << "] "<< 
+	 const double * hitpos = hit->getPosition();
+         pos[0]=hitpos[0];
+         pos[1]=hitpos[1];
+         pos[2]=hitpos[2];
+	 UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
+	 planeIndex = hitDecoder(hit)["sensorID"];
+         streamlog_out ( DEBUG5 ) << " REAL: add point [" << planeIndex << "] "<< 
                       static_cast< float >(pos[0]) * 1000.0f << " " << static_cast< float >(pos[1]) * 1000.0f << " " <<  static_cast< float >(pos[2]) * 1000.0f << endl;
-        region = checkClusterRegion( hit, _system.planes.at(planeIndex).getSensorID() );
       }
 
       if(planeIndex >=0 ) 
       { 
 	streamlog_out ( DEBUG5 ) << " add point [" << planeIndex << "] "<< 
                       static_cast< float >(pos[0]) * 1000.0f << " " << static_cast< float >(pos[1]) * 1000.0f << " " <<  static_cast< float >(pos[2]) * 1000.0f << endl;
-        _system.addMeasurement( planeIndex, static_cast< float >(pos[0]) * 1000.0f, static_cast< float >(pos[1]) * 1000.0f, static_cast< float >(pos[2]) * 1000.0f,  region, iHit);
+        _system.addMeasurement( _indexIDMap[planeIndex], static_cast< float >(pos[0]) * 1000.0f, static_cast< float >(pos[1]) * 1000.0f, static_cast< float >(pos[2]) * 1000.0f,  region, iHit);
       }
     }
   }
-}
-
-bool EUTelDafBase::checkClusterRegion(lcio::TrackerHitImpl* hit, int iden){
-  	//TODO: APIX was removed
-	bool goodRegion(true);
-  /*if( hit->getType() == kEUTelAPIXClusterImpl ){
-    auto_ptr<EUTelVirtualCluster> cluster( new EUTelSparseClusterImpl< EUTelAPIXSparsePixel >
-  					   ( static_cast<TrackerDataImpl *> ( hit->getRawHits()[0] )));
-    int xSeed(0), ySeed(0);
-    cluster->getCenterCoord(xSeed, ySeed);
-    int xSize(0), ySize(0);
-    cluster->getClusterSize(xSize, ySize);
-    std::pair<int, int> &colMinMax = _colMinMax[iden]; 
-    if( (xSeed - xSize / 2 ) < colMinMax.first ) { goodRegion = false;}
-    if( (xSeed + xSeed / 2) > colMinMax.second ) { goodRegion = false;}
-    std::pair<int, int> &rowMinMax = _rowMinMax[iden]; 
-    if( (ySeed - ySize / 2) < rowMinMax.first ) { goodRegion = false;}
-    if( (ySeed + ySize / 2) > rowMinMax.second ) { goodRegion = false;}
-  }*/
-  return(goodRegion);
 }
 
 int EUTelDafBase::checkInTime(){

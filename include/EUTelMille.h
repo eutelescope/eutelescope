@@ -326,6 +326,9 @@ namespace eutelescope {
      */
     virtual void processEvent (LCEvent * evt);
 
+    //! Track search method, fills class members _xPos and _trackResidX (Y,Z as well) 
+    /** */
+    void findMatchedHits( int &, Track* ) ;
 
     //! Called after data processing.
     /*! This method is called when the loop on events is
@@ -569,6 +572,11 @@ namespace eutelescope {
     std::vector<DoubleVec > _xPos;
     std::vector<DoubleVec > _yPos;
     std::vector<DoubleVec > _zPos;
+
+    std::vector<DoubleVec > _trackResidX;
+    std::vector<DoubleVec > _trackResidY;
+    std::vector<DoubleVec > _trackResidZ;
+
 
 //    std::vector<DoubleVec > _xPosTrack;
 //    std::vector<DoubleVec > _yPosTrack;
