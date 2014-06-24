@@ -857,16 +857,21 @@ void EUTelGBLFitter::UpdateTrackFromGBLTrajectory (gbl::GblTrajectory* traj, std
     }
 
 
-void EUTelGBLFitter::CreateTrajectoryandFit(std::vector< gbl::GblPoint >* pointList,  gbl::GblTrajectory* traj, double* chi2, int* ndf){
+void EUTelGBLFitter::CreateTrajectoryandFit(std::vector< gbl::GblPoint >* pointList,  gbl::GblTrajectory* traj, double* chi2, int* ndf, int & ierr){
 	streamlog_out ( DEBUG4 ) << " EUTelGBLFitter::CreateTrajectoryandFit -- BEGIN " << endl;
 
 	double loss = 0.;
-  int ierr = 0;
 
 	if ( !_mEstimatorType.empty( ) ) ierr = traj->fit( *chi2, *ndf, loss, _mEstimatorType );
   else ierr = traj->fit( *chi2, *ndf, loss );
 
-  streamlog_out(MESSAGE0) << " Track error: "<< ierr << " and chi2: " << chi2 << std::endl;
+	if( ierr != 0 ){
+		streamlog_out(MESSAGE0) << "Fit failed! Track error: "<< ierr << " and chi2: " << chi2 << std::endl;
+	}
+	else{
+  streamlog_out(MESSAGE0) << "Fit Successful! Track error; "<< ierr << " and chi2: " << chi2 << std::endl;
+	}
+	
 
 	streamlog_out ( DEBUG4 ) << " EUTelGBLFitter::CreateTrajectoryandFit -- END " << endl;
 }
@@ -884,7 +889,6 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack, st
   	streamlog_out(ERROR) << "Sanity check. This should not happen in principle. Number of hits is greater then number of planes" << std::endl;
    	return;
   }
-
   //Create the jacobian
   TMatrixD jacPointToPoint(5, 5);
   jacPointToPoint.UnitMatrix();
@@ -893,6 +897,9 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack, st
 		/////////////////////////////////////////////////////////////////////////////////////////////BEGIN to create GBL point 
 		gbl::GblPoint point(jacPointToPoint);
   		EUTelTrackStateImpl* state = EUtrack->getTrackStates().at(i); //get the state for this track. Static cast from EVENT::TrackState to derived class IMPL::TrackStateImpl.
+  		streamlog_out(DEBUG3) << "This is the track state being used in creation of GBL points" << std::endl;
+			state->Print();
+
 		//Need to find hit that this state may be associated with. Note this is a problem for two reasons. Not all states have a hit. Furthermore we can not associate a hit with a state with the current LCIO format. This must be fixed
 		EVENT::TrackerHit* hit = NULL; //Create the hit pointer
 		FindHitIfThereIsOne(EUtrack, hit, state); //This will point the hit to the correct hit object associated with this state. If non exists then point it will remain pointed to NULL
@@ -902,7 +909,8 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack, st
   	fitPointLocal [2] = state->getReferencePoint()[2] ;
 		addSiPlaneScattererGBL(point, state->getLocation()); //This we still functions still assumes silicon is the thin scatterer. This can be easily changed when we have the correct gear file. However we will always assume that states will come with scattering information. To take into account material between states this will be dealt with latter. 
 		double fitPointGlobal[3];
-		geo::gGeometry().local2Master( state->getLocation(), fitPointLocal, fitPointGlobal);	
+		geo::gGeometry().local2Master( state->getLocation(), fitPointLocal, fitPointGlobal);
+		streamlog_out(DEBUG3) << "This is the global position of the track state. Should be the same x,y as above: " <<fitPointGlobal[0]<<","<<fitPointGlobal[1]<<","<<fitPointGlobal[2]<< std::endl;	
 		if(hit != NULL){ 
 			addMeasurementGBL(point, hit->getPosition(),  fitPointLocal, hit->getCovMatrix(), state->getH()); 		
 			pushBackPointandState(pointList, point, state);
@@ -914,6 +922,8 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack, st
 		////////////////////////////////////////////////////////////////////////////////START TO CREATE SCATTERS BETWEEN PLANES
 		if(i != (EUtrack->getTrackStates().size()-1)){
   			EUTelTrackStateImpl* state_next = EUtrack->getTrackStates().at(i+1); //get the next tracks state to determine dz between the two states
+  		streamlog_out(DEBUG3) << "This is the track state that is one state ahead" << std::endl;
+			state->Print();
 			double fitPointLocal_next[] = {0.,0.,0.};  //Need this since we dont save the z parameter as state variable
 			fitPointLocal_next [0] = state_next->getReferencePoint()[0] ;
   			fitPointLocal_next [1] = state_next->getReferencePoint()[1] ;
@@ -921,12 +931,14 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack, st
 
 			double fitPointGlobal_next[3];
 			geo::gGeometry().local2Master( state_next->getLocation(), fitPointLocal_next, fitPointGlobal_next );
+		streamlog_out(DEBUG3) << "This is the global position of the track state. Should be the same x,y as above: " <<fitPointGlobal_next[0]<<","<<fitPointGlobal_next[1]<<","<<fitPointGlobal_next[2]<< std::endl;	
 			float rad = geo::gGeometry().findRadLengthIntegral( fitPointGlobal, fitPointGlobal_next, true ); //We need to skip the volumes that contain the hits since this has already been counted. Must check this functions as expect????
+			streamlog_out(DEBUG3) << "This is the radiation length between the two points  " << fitPointGlobal[0]<<","<<fitPointGlobal[1]<<","<<fitPointGlobal[2]<<" and  " <<fitPointGlobal_next[0]<<","<<fitPointGlobal_next[1]<<","<<fitPointGlobal_next[2] <<"Radition length:  "<< rad <<std::endl;
 
 			///////////////////////////////////////////////////////////////////////////////////////////////////////BEGIN THE FIRST SCATTERING PLANE
 			//These distances are from the last state plane. There are where the next scatterer should be
 			float distance1 = (fitPointGlobal_next[2] + fitPointGlobal[2])/2 - (fitPointGlobal_next[2] - fitPointGlobal[2])/sqrt(12); 
-
+			streamlog_out(DEBUG3) << "This is the distance to the first scatterer: " << distance1 <<std::endl;	
 			//Note the distance is used along the track and not from the scattering plane. How should this be dealt with?
 			TMatrix jacobianScat1(5,5); jacobianScat1 = state->getPropagationJacobianF(distance1);
 			gbl::GblPoint pointScat1(jacobianScat1);
@@ -935,8 +947,10 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack, st
 			scat[1] = 0.0; 
 
  			const double scatvariance  = Utility::getThetaRMSHighland(GetBeamEnergy(), rad/2);
+			streamlog_out(DEBUG3) << "Scattering mean angle and variance. Average angle: " << scat[0] <<"," <<scat[1] << ".Variance " <<scatvariance<<std::endl;	
 			TVectorD scatPrecSensor(2);
  			scatPrecSensor[0] = 1.0 / (scatvariance * scatvariance );
+ 			scatPrecSensor[1] = 1.0 / (scatvariance * scatvariance );
 
   		pointScat1.addScatterer(scat, scatPrecSensor);
 			pushBackPointandState(pointList, pointScat1, NULL);

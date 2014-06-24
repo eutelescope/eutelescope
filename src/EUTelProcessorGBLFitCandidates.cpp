@@ -5,6 +5,13 @@
 
 using namespace eutelescope;
 
+// definition of static members mainly used to name histograms
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+std::string EUTelProcessorGBLFitCandidates::_histName::_chi2CandidateHistName = "chi2CandidateHistName";
+std::string EUTelProcessorGBLFitCandidates::_histName::_fitsuccessHistName = "FitSuccessfulHistName";
+#endif // defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+
+
 EUTelProcessorGBLFitCandidates::EUTelProcessorGBLFitCandidates() :
 Processor("EUTelProcessorGBLFitCandidates"),
 _trackCandidatesInputCollectionName("Default_input"),
@@ -34,6 +41,8 @@ _maxChi2Cut(1000)
 
   registerOptionalParameter("GBLMEstimatorType", "GBL outlier down-weighting option (t,h,c)", _mEstimatorType, string() );
 
+  registerOptionalParameter("HistogramInfoFilename", "Name of histogram info xml file", _histoInfoFileName, std::string("histoinfo.xml"));
+
 }
 
 void EUTelProcessorGBLFitCandidates::init() {
@@ -61,7 +70,7 @@ void EUTelProcessorGBLFitCandidates::init() {
 		streamlog_out(ERROR) << "Can't allocate an instance of EUTelGBLFitter. Stopping ..." << std::endl;
 		throw UnknownDataTypeException("Track finder was not created");
 	}
-
+	bookHistograms();
 	streamlog_out(DEBUG2) << "EUTelProcessorGBLFitCandidates::init( )---------------------------------------------END" << std::endl;
 
 
@@ -153,15 +162,21 @@ void EUTelProcessorGBLFitCandidates::processEvent(LCEvent * evt){
       }
 			double * chi2=0; 
 			int* ndf=0;
-			_trackFitter->CreateTrajectoryandFit(pointList,traj, chi2,ndf);
-
-			//Update track and then state variables//////////////////////////////////////////////BEGIN
-			EUtrack->setChi2(*chi2);
-			EUtrack->setNdf(*ndf);
-			_trackFitter->UpdateTrackFromGBLTrajectory(traj, pointList); 
-			//////////////////////////////////////////////////////////////////////////////////////END
-			EUtracks.push_back(EUtrack);
-			
+			int ierr=0;
+			_trackFitter->CreateTrajectoryandFit(pointList,traj, chi2,ndf, ierr);
+			if(ierr == 0 ){
+      	static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_chi2CandidateHistName ] ) -> fill( (*chi2)/(*ndf));
+      	static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_fitsuccessHistName ] ) -> fill(1);
+				//Update track and then state variables//////////////////////////////////////////////BEGIN
+				EUtrack->setChi2(*chi2);
+				EUtrack->setNdf(*ndf);
+				_trackFitter->UpdateTrackFromGBLTrajectory(traj, pointList); 
+				//////////////////////////////////////////////////////////////////////////////////////END
+				EUtracks.push_back(EUtrack);
+			}
+			else{
+      	static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_fitsuccessHistName ] ) -> fill(0);
+			}			
 			      
 		}//END OF LOOP FOR ALL TRACKS IN AN EVENT
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -207,6 +222,67 @@ void EUTelProcessorGBLFitCandidates::outputLCIO(LCEvent* evt, std::vector< EUTel
 
         streamlog_out( DEBUG4 ) << " ---------------- EUTelProcessorGBLFitCandidates::outputLCIO ---------- END ------------- " << std::endl;
 }
+
+
+
+
+void EUTelProcessorGBLFitCandidates::bookHistograms() {
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+
+ try {
+        streamlog_out(DEBUG) << "Booking histograms..." << std::endl;
+
+        auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
+        EUTelHistogramInfo    * histoInfo;
+        bool                    isHistoManagerAvailable;
+											
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////Chi2 create plot.
+
+	const int chiNbins = 5000;
+	const double chiXmin = 0;
+	const double chiXmax = 500000;	
+  histoInfo = histoMgr->getHistogramInfo(_histName::_chi2CandidateHistName);
+
+  int NBin = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : chiNbins;
+  double XMin = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin :chiXmin;
+  double XMax = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : chiXmax;
+
+  AIDA::IHistogram1D * chi2 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_chi2CandidateHistName, NBin, XMin, XMax);
+
+ 	chi2->setTitle("Chi2 of tracks");
+  _aidaHistoMap1D.insert(make_pair(_histName::_chi2CandidateHistName, chi2));
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Create plot if fit was successful
+	const int Nbins = 2;
+	const double Xmin = 0;
+	const double Xmax = 1;	
+
+
+  histoInfo = histoMgr->getHistogramInfo(_histName::_fitsuccessHistName);
+
+  NBin = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : Nbins;
+  XMin = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin :Xmin;
+  XMax = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : Xmax;
+
+  AIDA::IHistogram1D * successful = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_fitsuccessHistName, NBin, XMin, XMax);
+
+ 	successful->setTitle("Was the fit successful?");
+  _aidaHistoMap1D.insert(make_pair(_histName::_fitsuccessHistName, successful));
+
+
+}
+catch (lcio::Exception& e) {
+        streamlog_out(WARNING2) << "Can't allocate histograms. Continue without histogramming" << endl;
+}
+#endif // defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+
+}
+
+
+
+
+
 
 
 

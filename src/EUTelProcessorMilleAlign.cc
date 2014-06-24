@@ -188,7 +188,9 @@ EUTelEventImpl * event = static_cast<EUTelEventImpl*> (evt); ///We change the cl
       }
 			double * chi2=0; 
 			int* ndf=0;
-			_trackFitter->CreateTrajectoryandFit(pointList,traj, chi2,ndf);
+			int ierr = 0;
+			_trackFitter->CreateTrajectoryandFit(pointList,traj, chi2,ndf, ierr);
+			
 
 			//Update track and then state variables//////////////////////////////////////////////BEGIN
 			EUtrack->setChi2(*chi2);

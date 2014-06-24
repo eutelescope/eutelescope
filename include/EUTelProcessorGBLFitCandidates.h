@@ -40,6 +40,7 @@
 #include "EUTelEventImpl.h"
 #include "EUTelTrackStateImpl.h"
 #include "EUTelTrackImpl.h"
+#include "EUTelHistogramManager.h"
 
 using namespace lcio;
 using namespace marlin;
@@ -110,9 +111,36 @@ namespace eutelescope {
         /** Outlier downweighting option */
         std::string _mEstimatorType;
 
+        /** Histogram info file name */
+			std::string _histoInfoFileName;
+
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+        /** AIDA histogram map
+         *  Instead of putting several pointers to AIDA histograms as
+         *  class members, histograms are booked in the init() method and
+         *  their pointers are inserted into this map keyed by their
+         *  names.
+         *  The histogram filling can proceed recalling an object through
+         *  its name
+         */
+	std::map< std::string, AIDA::IHistogram1D* > _aidaHistoMap1D;
+
+        /** Names of histograms */
+        struct _histName {
+						static string _chi2CandidateHistName;
+						static string  _fitsuccessHistName;
+
+        };
+
+#endif // defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+
 				void CreateEUTrackandStates(TrackImpl* trackimpl, EUTelTrackImpl*);
 
 				void outputLCIO(LCEvent* evt, std::vector< EUTelTrackImpl* >& EUtracks);
+
+				void bookHistograms();
+
+				
 
 
 };
