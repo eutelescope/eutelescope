@@ -127,7 +127,8 @@ namespace eutelescope {
     const float* EUTelTrackStateImpl::getReferencePoint() const { return _reference ; }
 
     void EUTelTrackStateImpl::Print() const {
-      	streamlog_out(DEBUG0) << "location " << getLocation() << " Tx:"<<getTx() << " Ty:"<<getTy() << " X:"<<getX() << " Y:"<<getY() << " InvP:"<<getInvP() << std::endl; 
+      	streamlog_out(DEBUG0) << "location " << getLocation() << " Tx:"<<getTx() << " Ty:"<<getTy() << " X:"<<getX() << " Y:"<<getY() << " InvP:"<<getInvP() << std::endl;
+				streamlog_out(DEBUG0) << "Reference hit: "  << _reference[0] << "," << _reference[1] << "," <<_reference[2]  << std::endl;
 streamlog_out(DEBUG0) << "Zparameter " << _zparameter <<std::endl;
 streamlog_out(DEBUG0) << "Hit pointer " << _hit << std::endl;
 streamlog_out(DEBUG0) << "The covariance matrix of the state" << std::endl;

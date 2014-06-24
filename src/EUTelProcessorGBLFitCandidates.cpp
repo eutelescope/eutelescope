@@ -14,9 +14,7 @@ _nProcessedEvents(0),
 _beamQ(-1),
 _eBeam(4),
 _mEstimatorType(),
-_maxChi2Cut(1000),
-_milleBinaryFilename("mille.bin"),
-_alignmentMode(0)
+_maxChi2Cut(1000)
 {
 	// Processor description
   _description = "EUTelProcessorGBLFitCandidates this will fit gbl tracks and output them into LCIO file.";
@@ -36,24 +34,6 @@ _alignmentMode(0)
 
   registerOptionalParameter("GBLMEstimatorType", "GBL outlier down-weighting option (t,h,c)", _mEstimatorType, string() );
 
-  registerOptionalParameter("MilleMaxChi2Cut", "Maximum chi2 of a track candidate that goes into millepede", _maxChi2Cut, double(1000.));
-
-  registerOptionalParameter("MilleBinaryFilename", "Name of the Millepede binary file", _milleBinaryFilename, std::string("mille.bin"));
-
-    // MILLEPEDE specific parameters
-    registerOptionalParameter("AlignmentMode", "Alignment mode specifies alignment degrees of freedom to be considered\n"
-            "0 - No alignment at all. Simply fit tracks assuming that alignment is correct\n"
-            "1 - Alignment of XY shifts\n"
-            "2 - Alignment of XY shifts + rotations around Z\n"
-            "3 - Alignment of XYZ shifts + rotations around Z\n"
-            "4 - Alignment of XY shifts + rotations around X and Z\n"
-            "5 - Alignment of XY shifts + rotations around Y and Z\n"
-            "6 - Alignment of XY shifts + rotations around X,Y and Z\n"
-            "7 - Alignment of XYZ shifts + rotations around X,Y and Z\n",
-            _alignmentMode, static_cast<int> (0));
-
-
-
 }
 
 void EUTelProcessorGBLFitCandidates::init() {
@@ -68,19 +48,12 @@ void EUTelProcessorGBLFitCandidates::init() {
 	std::string name("test.root");
 	geo::gGeometry().initializeTGeoDescription(name,false);
 
-	//Create the size of the jacobian and parameter list for alignment
-	TMatrixD* alDer; // alignment derivatives
-	std::vector<int>* globalLabels;
-
 	// Initialize GBL fitter
 	EUTelGBLFitter* Fitter = new EUTelGBLFitter("GBLFitter");
-	EUTelMillepede* Mille  = new EUTelMillepede(_alignmentMode);
   Fitter->SetBeamCharge(_beamQ);
   Fitter->SetBeamEnergy(_eBeam);
 	Fitter->setMEstimatorType(_mEstimatorType);
-  Fitter->SetMilleBinaryName(_milleBinaryFilename);
   Fitter->SetChi2Cut(_maxChi2Cut);
-	Fitter->SetMillepede(Mille);
   _trackFitter = Fitter;
 
 

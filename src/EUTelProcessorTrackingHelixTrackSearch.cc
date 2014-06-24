@@ -608,8 +608,10 @@ void EUTelProcessorTrackingHelixTrackSearch::bookHistograms() {
         } else {
             streamlog_out(ERROR2) << "Problem booking the " << (_histName::_numberTracksCandidatesHistName) << endl;
             streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
-        }
-
+	        }
+			const int chiNbins = 5000;
+			const double chiXmin = 0;
+			const double chiXmax = 500000;												
 
 
 				///////////////////////////////////////////////////////////////////////////////////////////////////////////////Chi2 create plot. Useful to determine the behaviour of the pattern recognition
@@ -617,9 +619,9 @@ void EUTelProcessorTrackingHelixTrackSearch::bookHistograms() {
 //      NBin =  histoInfo->_xBin; 
 //      XMin =  histoInfo->_xMin; 
 //      XMax = histoInfo->_xMax;
-        NBin = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : tracksNBin;
-        XMin = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : tracksXMin;
-        XMax = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : tracksXMax;
+        NBin = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : chiNbins;
+        XMin = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin :chiXmin;
+        XMax = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : chiXmax;
 
         AIDA::IHistogram1D * chi2 =
                 marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_chi2CandidateHistName, NBin,
