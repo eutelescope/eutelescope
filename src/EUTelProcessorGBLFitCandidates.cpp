@@ -147,8 +147,8 @@ void EUTelProcessorGBLFitCandidates::processEvent(LCEvent * evt){
       			streamlog_out(DEBUG1) << "Track " << iCol << " nhits " << trackimpl->getTrackerHits().size() << endl;
 
 			//_trackFitter->Clear(); //This is a good point to clear all things that need to be reset for each event. Why should gop here?
-			std::vector< gbl::GblPoint >* pointList;
-      _trackFitter->FillInformationToGBLPointObject(EUtrack, pointList);
+			std::vector< gbl::GblPoint > pointList;
+      _trackFitter->FillInformationToGBLPointObject(EUtrack, &pointList);
 
  			const gear::BField& B = geo::gGeometry().getMagneticFiled();
       const double Bmag = B.at( TVector3(0.,0.,0.) ).r2();
@@ -156,21 +156,21 @@ void EUTelProcessorGBLFitCandidates::processEvent(LCEvent * evt){
 
   		gbl::GblTrajectory* traj = 0;
       if ( Bmag < 1.E-6 ) {
-      	traj = new gbl::GblTrajectory( *pointList, false ); //Must make sure this is not a memory leak
+      	traj = new gbl::GblTrajectory( pointList, false ); //Must make sure this is not a memory leak
       } else {
-      	traj = new gbl::GblTrajectory( *pointList, true );
+      	traj = new gbl::GblTrajectory( pointList, true );
       }
-			double * chi2=0; 
-			int* ndf=0;
+			double  chi2=0; 
+			int ndf=0;
 			int ierr=0;
-			_trackFitter->CreateTrajectoryandFit(pointList,traj, chi2,ndf, ierr);
+			_trackFitter->CreateTrajectoryandFit(&pointList,traj, &chi2,&ndf, ierr);
 			if(ierr == 0 ){
-      	static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_chi2CandidateHistName ] ) -> fill( (*chi2)/(*ndf));
+      	static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_chi2CandidateHistName ] ) -> fill( (chi2)/(ndf));
       	static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_fitsuccessHistName ] ) -> fill(1);
 				//Update track and then state variables//////////////////////////////////////////////BEGIN
-				EUtrack->setChi2(*chi2);
-				EUtrack->setNdf(*ndf);
-				_trackFitter->UpdateTrackFromGBLTrajectory(traj, pointList); 
+				EUtrack->setChi2(chi2);
+				EUtrack->setNdf(ndf);
+				_trackFitter->UpdateTrackFromGBLTrajectory(traj, &pointList); 
 				//////////////////////////////////////////////////////////////////////////////////////END
 				EUtracks.push_back(EUtrack);
 			}
