@@ -25,6 +25,7 @@ FEI4Single::FEI4Single(): EUTelGenericPixGeoDescr(	20.30, 16.8, 0.025,		//size X
 	TGeoVolume* centrerow = centreregion->Divide("fei4centrerow", 2, 336, 0, 1, 0, "N");
 	centrerow ->Divide("fei4centrepixel", 1,  78, 0, 1, 0, "N"); 
 
+        //And place them to make a singlechip
 	plane->AddNode(centreregion, 1, new TGeoTranslation( 0.00 , 0 , 0) );
 	plane->AddNode(edgeregion,   2, new TGeoTranslation(-9.95 , 0 , 0) );
 	plane->AddNode(edgeregion,   3, new TGeoTranslation( 9.95 , 0 , 0) );
@@ -53,17 +54,17 @@ std::string FEI4Single::getPixName(int x , int y)
 	//(one for the offset in TGeo which starts counting at 1)
 	if (x == 0 )
 	{
-		snprintf( buffer, 100, "/sensarea_fei4_1/fei4edgeregion_1/fei4egdepixel_%d", 336-y);
+		snprintf( buffer, 100, "/sensarea_fei4_1/fei4edgeregion_1/fei4edgepixel_%d", 336-y);
 	}
 
 	else if ( x == 79 )
 	{
-		snprintf( buffer, 100, "/sensarea_fei4_1/fei4edgeregion_2/fei4egdepixel_%d", 336-y);
+		snprintf( buffer, 100, "/sensarea_fei4_1/fei4edgeregion_2/fei4edgepixel_%d", 336-y);
 	}
 	if(x > 0 && x < 79 )
 	{
 	
-		snprintf( buffer, 100, "/sensarea_fei4_1/fei4centreregion_1/fei4centrerow_%d/fei4centrepixel_%d", 336-y, x+1);
+		snprintf( buffer, 100, "/sensarea_fei4_1/fei4centreregion_1/fei4centrerow_%d/fei4centrepixel_%d", 336-y, x);
 	}
 	//Return the full path
 	return std::string( buffer ); 

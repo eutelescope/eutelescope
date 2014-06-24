@@ -11,7 +11,7 @@
  */
 
 //eutelescope includes
-#include "EUTelProcessorGeometricClustering.h"
+#include "EUTelProcessorSparseClustering.h"
 
 #include "EUTELESCOPE.h"
 #include "EUTelExceptions.h"
@@ -21,7 +21,7 @@
 
 //eutel data specific
 #include "EUTelTrackerDataInterfacerImpl.h"
-#include "EUTelGenericSparseClusterImpl.h"
+#include "EUTelSparseClusterImpl.h"
 
 //eutel geometry
 #include "EUTelGeometryTelescopeGeoDescription.h"
@@ -55,15 +55,15 @@
 #include <string>
 #include <vector>
 #include <memory>
-//#include <iostream>
+#include <iostream>
 #include <cmath>
 
 using namespace lcio;
 using namespace marlin;
 using namespace eutelescope;
 
-EUTelProcessorGeometricClustering::EUTelProcessorGeometricClustering(): 
-  Processor("EUTelProcessorGeometricClustering"), 
+EUTelProcessorSparseClustering::EUTelProcessorSparseClustering(): 
+  Processor("EUTelProcessorSparseClustering"), 
   _zsDataCollectionName(""),
   _pulseCollectionName(""),
   _initialPulseCollectionSize(0),
@@ -84,11 +84,12 @@ EUTelProcessorGeometricClustering::EUTelProcessorGeometricClustering():
   _isGeometryReady(false),
   _sensorIDVec(),
   _zsInputDataCollectionVec(NULL),
-  _pulseCollectionVec(NULL)
+  _pulseCollectionVec(NULL),
+  _sparseMinDistanceSquared(2)
  {
   
   // modify processor description
-  _description = "EUTelProcessorGeometricClustering is looking for clusters into a calibrated pixel matrix.";
+  _description = "EUTelProcessorSparseClustering is looking for clusters into a calibrated pixel matrix.";
 
   // first of all we need to register the input collection
   registerInputCollection (LCIO::TRACKERDATA, "ZSDataCollectionName", "Input of Zero Suppressed data",
@@ -110,10 +111,14 @@ EUTelProcessorGeometricClustering::EUTelProcessorGeometricClustering():
   registerOptionalParameter("ExcludedPlanes", "The list of sensor ids that have to be excluded from the clustering.",
                              _ExcludedPlanes, std::vector<int> () );
 
+  registerProcessorParameter("SparseMinDistanceSquared","Minimum distance squared between sparsified pixel ( touching == 2) ",
+                             _sparseMinDistanceSquared, static_cast<int>(2) );
+  
+
   		_isFirstEvent = true;
 }
 
-void EUTelProcessorGeometricClustering::init() {
+void EUTelProcessorSparseClustering::init() {
 	//this method is called only once even when the rewind is active, it is usually a good idea to
 	printParameters ();
 
@@ -129,7 +134,7 @@ void EUTelProcessorGeometricClustering::init() {
 	_isGeometryReady = false;
 }
 
-void EUTelProcessorGeometricClustering::processRunHeader (LCRunHeader * rdr) {
+void EUTelProcessorSparseClustering::processRunHeader (LCRunHeader * rdr) {
 
 	std::auto_ptr<EUTelRunHeaderImpl> runHeader( new EUTelRunHeaderImpl( rdr ) );
 	runHeader->addProcessor( type() );
@@ -137,7 +142,7 @@ void EUTelProcessorGeometricClustering::processRunHeader (LCRunHeader * rdr) {
 	++_iRun;
 }
 
-void EUTelProcessorGeometricClustering::initializeGeometry( LCEvent * event ) throw ( marlin::SkipEventException ) {
+void EUTelProcessorSparseClustering::initializeGeometry( LCEvent * event ) throw ( marlin::SkipEventException ) {
 
 	//set the total number of detector to zero. This number can be different from the one written in the gear description because
 	//the input collection can contain only a fraction of all the sensors.
@@ -170,12 +175,12 @@ void EUTelProcessorGeometricClustering::initializeGeometry( LCEvent * event ) th
     _isGeometryReady = true;
 }
 
-void EUTelProcessorGeometricClustering::modifyEvent( LCEvent * /* event */ )
+void EUTelProcessorSparseClustering::modifyEvent( LCEvent * /* event */ )
 {
 	return;
 }
 
-void EUTelProcessorGeometricClustering::readCollections(LCEvent* event)
+void EUTelProcessorSparseClustering::readCollections(LCEvent* event)
 {
 	try 
 	{
@@ -198,7 +203,7 @@ void EUTelProcessorGeometricClustering::readCollections(LCEvent* event)
 	}
 }
 
-void EUTelProcessorGeometricClustering::processEvent (LCEvent * event) 
+void EUTelProcessorSparseClustering::processEvent (LCEvent * event) 
 {
 	//increment event counter
 	++_iEvt;
@@ -247,7 +252,7 @@ void EUTelProcessorGeometricClustering::processEvent (LCEvent * event)
 	}
 
 	//HERE WE ACTUALLY CALL THE CLUSTERING ROUTINE:
-	geometricClustering(evt, pulseCollection);
+	sparseClustering(evt, pulseCollection);
 
 	// if the pulseCollection is not empty add it to the event
 	if ( ! pulseCollectionExists && ( pulseCollection->size() != _initialPulseCollectionSize )) 
@@ -269,175 +274,117 @@ void EUTelProcessorGeometricClustering::processEvent (LCEvent * event)
 	_isFirstEvent = false;
 }
 
-void EUTelProcessorGeometricClustering::geometricClustering(LCEvent * evt, LCCollectionVec * pulseCollection) 
+
+void EUTelProcessorSparseClustering::sparseClustering(LCEvent* evt, LCCollectionVec* pulseCollection)
 {
+
 	// prepare some decoders
 	CellIDDecoder<TrackerDataImpl> cellDecoder( _zsInputDataCollectionVec );
 
 	bool isDummyAlreadyExisting = false;
 	LCCollectionVec* sparseClusterCollectionVec = NULL;
 
-	try 
+	try
 	{
 		sparseClusterCollectionVec = dynamic_cast< LCCollectionVec* > ( evt->getCollection( "original_zsdata") );
 		isDummyAlreadyExisting = true ;
-	} 
-	catch (lcio::DataNotAvailableException& e) 
+	}
+	catch (lcio::DataNotAvailableException& e)
 	{
-		sparseClusterCollectionVec =  new LCCollectionVec(LCIO::TRACKERDATA);
+		sparseClusterCollectionVec = new LCCollectionVec(LCIO::TRACKERDATA);
 		isDummyAlreadyExisting = false;
 	}
 
-	CellIDEncoder<TrackerDataImpl> idZSClusterEncoder( EUTELESCOPE::ZSCLUSTERDEFAULTENCODING, sparseClusterCollectionVec  );
+	CellIDEncoder<TrackerDataImpl> idZSClusterEncoder( EUTELESCOPE::ZSCLUSTERDEFAULTENCODING, sparseClusterCollectionVec );
 
 	// prepare an encoder also for the pulse collection
 	CellIDEncoder<TrackerPulseImpl> idZSPulseEncoder(EUTELESCOPE::PULSEDEFAULTENCODING, pulseCollection);
 
-	// in the _zsInputDataCollectionVec we should have one TrackerData for each 
+	// in the zsInputDataCollectionVec we should have one TrackerData for each
 	// detector working in ZS mode. We need to loop over all of them
-	for ( unsigned int idetector = 0 ; idetector < _zsInputDataCollectionVec->size(); idetector++ ) 
+	for ( unsigned int idetector = 0 ; idetector < _zsInputDataCollectionVec->size(); idetector++ )
 	{
 		// get the TrackerData and guess which kind of sparsified data it contains.
-		TrackerDataImpl * zsData = dynamic_cast< TrackerDataImpl * > ( _zsInputDataCollectionVec->getElementAt( idetector ) );
-		SparsePixelType   type   = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( zsData )["sparsePixelType"]) );
-		int sensorID             = static_cast<int > ( cellDecoder( zsData )["sensorID"] );
-    
-		//get alle the plane relevant geo information, that is the plane name and the plane pix geometry
-		std::string planePath = geo::gGeometry().getPlanePath( sensorID );
-		geo::EUTelGenericPixGeoDescr* geoDescr =  ( geo::gGeometry().getPixGeoDescr( sensorID ) );
+		TrackerDataImpl* zsData = dynamic_cast<TrackerDataImpl*>( _zsInputDataCollectionVec->getElementAt(idetector) );
+		SparsePixelType type = static_cast<SparsePixelType>( static_cast<int>(cellDecoder(zsData)["sparsePixelType"]) );
+		int sensorID = static_cast<int >( cellDecoder(zsData)["sensorID"] );
+	    
 
 		//if this is an excluded sensor go to the next element
 		bool foundexcludedsensor = false;
 		for(size_t iexclude = 0; iexclude < _ExcludedPlanes.size(); ++iexclude)
 		{
-		    if(_ExcludedPlanes[iexclude] == sensorID)
-		    {
-		        foundexcludedsensor = true;
-		    }
+			if(_ExcludedPlanes[iexclude] == sensorID)
+			{
+				foundexcludedsensor = true;
+			}
 		}
-
-		if(foundexcludedsensor)       
-		{		
+		if(foundexcludedsensor)
+		{	
 			continue;
 		}
 
-		//now that we know which is the sensorID, we can ask which are the minX, minY, maxX and maxY.
-		int minX, minY, maxX, maxY;
-		minX = minY = maxX = maxY = 0;
-		geoDescr->getPixelIndexRange( minX, maxX, minY, maxY );
 
-    		if ( type == kEUTelGenericSparsePixel ) 
+		if ( type == kEUTelGenericSparsePixel )
 		{
 
 			// now prepare the EUTelescope interface to sparsified data.
 			std::auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel > > sparseData( new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> ( zsData ) );
 
-			streamlog_out ( DEBUG2 ) << "Processing sparse data on detector " << sensorID << " with " << sparseData->size() << " pixels " << std::endl;
-
 			int hitPixelsInEvent = sparseData->size();
-			std::vector<EUTelGeometricPixel> hitPixelVec;
-			EUTelGenericSparsePixel* genericPixel = new EUTelGenericSparsePixel;
+			std::vector<EUTelGenericSparsePixel> hitPixelVec;
+			EUTelGenericSparsePixel* pixel = new EUTelGenericSparsePixel;
 
-			//This for-loop loads all the hits of the given event and detector plane and stores them as GeometricPixels
+			//This for-loop loads all the hits of the given event and detector plane and stores them
 			for(int i = 0; i < hitPixelsInEvent; ++i )
 			{
 				//Load the information of the hit pixel into genericPixel
-				sparseData->getSparsePixelAt( i, genericPixel );
-				EUTelGeometricPixel hitPixel( *genericPixel );
+				sparseData->getSparsePixelAt( i, pixel );
+				EUTelGenericSparsePixel hitPixel( *pixel );
 
-				//And get the path to the given pixel
-				std::string pixelPath = geoDescr->getPixName(hitPixel.getXCoord(), hitPixel.getYCoord());
-
-				//Then navigate to this pixel with the TGeo manager
-				geo::gGeometry()._geoManager->cd( (planePath+pixelPath).c_str() );
-
-				//get the imbedding box
-				TGeoShape* currentShape =  geo::gGeometry()._geoManager->GetCurrentVolume()->GetShape();
-				TGeoBBox* bbox = dynamic_cast<TGeoBBox*>( currentShape );
-				//store the dimensions of this box in the GeometricPixel
-				hitPixel.setBoundaryX( bbox->GetDX() );
-				hitPixel.setBoundaryY( bbox->GetDY() );
-
-				//Get how deep the node description goes (this is how often we have to transform to get coordinates in the local plane coordinate system)
-				std::vector<std::string> split = Utility::stringSplit( planePath+pixelPath , "/", false);
-
-				//Three recursions for the telescope/plane
-				int recursionDepth = split.size() - 3;
-
-				//The do the transformation
-				Double_t origin_pt[3] = {0,0,0};
-				Double_t transformed1_pt[3];
-				Double_t transformed2_pt[3];
-				gGeoManager->GetCurrentNode()->LocalToMaster(origin_pt, transformed1_pt);
-
-				transformed2_pt[0] = transformed1_pt[0];
-				transformed2_pt[1] = transformed1_pt[1];
-				transformed2_pt[2] = transformed1_pt[2];
-
-				//transform into local plane coordinate system
-				for(int i = 1 ; i < recursionDepth; ++i)
-				{
-					gGeoManager->GetMother(i)->LocalToMaster(transformed1_pt, transformed2_pt);
-					transformed1_pt[0] = transformed2_pt[0];
-					transformed1_pt[1] = transformed2_pt[1];
-					transformed1_pt[2] = transformed2_pt[2];
-				}
-
-				//store all the position information in the GeometricPixel
-				hitPixel.setPosX( transformed2_pt[0] );
-				hitPixel.setPosY( transformed2_pt[1] );
 				//and push this pixel back
 				hitPixelVec.push_back( hitPixel );
-			}		
+			}	
 
-			std::vector<EUTelGeometricPixel> newlyAdded;
+			std::vector<EUTelGenericSparsePixel> newlyAdded;
 			//We now cluster those hits together
 			while( !hitPixelVec.empty() )
 			{
-				// prepare a TrackerData to store the cluster candidate
+                           	// prepare a TrackerData to store the cluster candidate
 				std::auto_ptr< TrackerDataImpl > zsCluster ( new TrackerDataImpl );
 				// prepare a reimplementation of sparsified cluster
-				std::auto_ptr<EUTelGenericSparseClusterImpl<EUTelGeometricPixel > > sparseCluster ( new EUTelGenericSparseClusterImpl<EUTelGeometricPixel >( zsCluster.get() ) );
+				std::auto_ptr<EUTelSparseClusterImpl<EUTelGenericSparsePixel > > sparseCluster ( new EUTelSparseClusterImpl<EUTelGenericSparsePixel>( zsCluster.get() ) );
 
 				//First we need to take any pixel, so let's take the first one
 				//Add it to the cluster as well as the newly added pixels
 				newlyAdded.push_back( hitPixelVec.front() );
-				sparseCluster->addSparsePixel( &hitPixelVec.front() );
+				sparseCluster->addSparsePixel( &(hitPixelVec.front()) );
 				//And remove it from the original collection
 				hitPixelVec.erase( hitPixelVec.begin() );
-		
+
 				//Now process all newly added pixels, initially this is the just previously added one
 				//but in the process of neighbour finding we continue to add new pixels
 				while( !newlyAdded.empty() )
 				{
 					bool newlyDone = true;
-					float x1, x2, y1, y2, dX, dY, cx1, cy1, cx2, cy2, cutX, cutY, t1 , t2, dT;
+					int  x1, x2, y1, y2, dX, dY;
 
 					//check against all pixels in the hitPixelVec
-					for( std::vector<EUTelGeometricPixel>::iterator hitVec = hitPixelVec.begin(); hitVec != hitPixelVec.end(); ++hitVec )
+					for( std::vector<EUTelGenericSparsePixel>::iterator hitVec = hitPixelVec.begin(); hitVec != hitPixelVec.end(); ++hitVec )
 					{
 						//get the relevant infos from the newly added pixel
-						x1 = newlyAdded.front().getPosX();
-						y1 = newlyAdded.front().getPosY();
-						t1 =  newlyAdded.front().getTime();
-						cx1 = newlyAdded.front().getBoundaryX();
-						cy1 = newlyAdded.front().getBoundaryY();
+						x1 = newlyAdded.front().getXCoord();
+						y1 = newlyAdded.front().getYCoord();
 
 						//and the pixel we test against
-						x2 = hitVec->getPosX();
-						y2 = hitVec->getPosY();
-						t2 = hitVec->getTime();
-						cx2 = hitVec->getBoundaryX();
-						cy2 = hitVec->getBoundaryY();
+						x2 = hitVec->getXCoord();
+						y2 = hitVec->getYCoord();
 
 						dX = x1 - x2;
 						dY = y1 - y2;
-						dT = t1 - t2;
-						cutX = (cx1+cx2)*1.01; //this additional 1% is accounting for precision
-						cutY = (cy1+cy2)*1.01; //uncertainty with the geo framework
-
-						//if they pass the spatial and temporal cuts, we add them	
-						if(	(dX*dX <= cutX*cutX) && (dY*dY <= cutY*cutY) && (dT*dT <= _cutT*_cutT) )
+						int distance = dX*dX+dY*dY;
+						//if they pass the spatial and temporal cuts, we add them
+						if( distance <= _sparseMinDistanceSquared )
 						{
 							//add them to the cluster as well as to the newly added ones
 							newlyAdded.push_back( *hitVec );
@@ -449,18 +396,18 @@ void EUTelProcessorGeometricClustering::geometricClustering(LCEvent * evt, LCCol
 							break;
 						}
 					}
-				
+
 					//if no neighbours are found, we can delete the pixel from the newly added
 					//we tested against _ALL_ non cluster pixels, there are no other pixels
 					//which could be neighbours
 					if(newlyDone) newlyAdded.erase( newlyAdded.begin() );
-				}	
-
+				}
+				
 				//Now we need to process the found cluster
-				if ( sparseCluster->size() > 0 ) 
+				if (  sparseCluster->size() > 0 )
 				{
 					// set the ID for this zsCluster
-					idZSClusterEncoder["sensorID"]  = sensorID;
+					idZSClusterEncoder["sensorID"] = sensorID;
 					idZSClusterEncoder["sparsePixelType"] = static_cast<int>( type );
 					idZSClusterEncoder["quality"] = 0;
 					idZSClusterEncoder.setCellID( zsCluster.get() );
@@ -468,62 +415,57 @@ void EUTelProcessorGeometricClustering::geometricClustering(LCEvent * evt, LCCol
 					// add it to the cluster collection
 					sparseClusterCollectionVec->push_back( zsCluster.get() );
 
-					//int xSeed, ySeed, xSize, ySize;
-					//sparseCluster->getClusterInfo(xSeed, ySeed, xSize, ySize);
-
 					// prepare a pulse for this cluster
 					std::auto_ptr<TrackerPulseImpl> zsPulse ( new TrackerPulseImpl );
-					idZSPulseEncoder["sensorID"]  = sensorID;
-					//idZSPulseEncoder["xSeed"]     = xSeed;
-					//idZSPulseEncoder["ySeed"]     = ySeed;
-					idZSPulseEncoder["type"]      = static_cast<int>(kEUTelGenericSparseClusterImpl);
+					idZSPulseEncoder["sensorID"] = sensorID;
+					idZSPulseEncoder["type"] = static_cast<int>(kEUTelSparseClusterImpl);
 					idZSPulseEncoder.setCellID( zsPulse.get() );
 
-					zsPulse->setCharge( sparseCluster->getTotalCharge() );
-					//zsPulse->setQuality( static_cast<int > (sparseCluster->getClusterQuality()) );
+					//zsPulse->setCharge( sparseCluster->getTotalCharge() );
 					zsPulse->setTrackerData( zsCluster.release() );
 					pulseCollection->push_back( zsPulse.release() );
 
 					// last but not least increment the totClusterMap
 					_totClusterMap[ sensorID ] += 1;
-
 				} //cluster processing if
 
-				else 
+				else
 				{
 					//in the case the cluster candidate is not passing the threshold ...
 					//forget about them, the memory should be automatically cleaned by std::auto_ptr's
 				}
 			} //loop over all found clusters
-			
-			delete genericPixel;
-    		}	 
-		else 
+
+			delete pixel;
+		}
+		else
 		{
-    			throw UnknownDataTypeException("Unknown sparsified pixel");
-    		}
+		     throw UnknownDataTypeException("Unknown sparsified pixel");
+		}
 	} // this is the end of the loop over all ZS detectors
 
 	// if the sparseClusterCollectionVec isn't empty add it to the
 	// current event. The pulse collection will be added afterwards
-	if ( ! isDummyAlreadyExisting ) 
+	if ( ! isDummyAlreadyExisting )
 	{
-		if ( sparseClusterCollectionVec->size() != 0 ) 
+		if ( sparseClusterCollectionVec->size() != 0 )
 		{
 			evt->addCollection( sparseClusterCollectionVec, "original_zsdata" );
 		}
-		else 
+		else
 		{
 			delete sparseClusterCollectionVec;
 		}
 	}
 }
 
-void EUTelProcessorGeometricClustering::check (LCEvent * /* evt */) {
+
+
+void EUTelProcessorSparseClustering::check (LCEvent * /* evt */) {
   // nothing to check here - could be used to fill check plots in reconstruction processor
 }
 
-void EUTelProcessorGeometricClustering::end() {
+void EUTelProcessorSparseClustering::end() {
 	
 	streamlog_out ( MESSAGE4 ) <<  "Successfully finished" << std::endl;
   
@@ -536,7 +478,7 @@ void EUTelProcessorGeometricClustering::end() {
 }
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-void EUTelProcessorGeometricClustering::fillHistos (LCEvent * evt) 
+void EUTelProcessorSparseClustering::fillHistos (LCEvent * evt) 
 {
 	EUTelEventImpl* eutelEvent = static_cast<EUTelEventImpl*> (evt);
 	EventType type = eutelEvent->getEventType();
@@ -568,11 +510,12 @@ void EUTelProcessorGeometricClustering::fillHistos (LCEvent * evt)
 			int detectorID = static_cast<int>( cellDecoder(pulse)["sensorID"] ); 
 			//TODO: do we need this check?
 			//SparsePixelType pixelType = static_cast<SparsePixelType> (0);
-			EUTelSimpleVirtualCluster* cluster;
+			
+			EUTelSparseClusterImpl<EUTelGenericSparsePixel>* cluster;
 	
-			if( type == kEUTelGenericSparseClusterImpl ) 
+			if( type == kEUTelSparseClusterImpl ) 
 			{
-		    	cluster = new EUTelGenericSparseClusterImpl<EUTelGeometricPixel> ( static_cast<TrackerDataImpl*> ( pulse->getTrackerData() ) );
+		    		cluster = new EUTelSparseClusterImpl<EUTelGenericSparsePixel>( static_cast<TrackerDataImpl*>(pulse->getTrackerData()) );
 			}	 
 			else 
 			{
@@ -598,15 +541,14 @@ void EUTelProcessorGeometricClustering::fillHistos (LCEvent * evt)
 
 			// get the cluster size in X and Y separately and plot it:
 			int xPos, yPos, xSize, ySize;
-			cluster->getClusterInfo(xPos, yPos, xSize, ySize);
-			float geoPosX, geoPosY, geoSizeX, geoSizeY;
-			cluster->getClusterGeomInfo(geoPosX, geoPosY, geoSizeX, geoSizeY);
-
+			
+			cluster->getCenterCoord(xPos, yPos);
+			cluster->getClusterSize(xSize, ySize);			
+			
 			//Do all the plots
 			(dynamic_cast<AIDA::IHistogram1D*> (_clusterSizeXHistos[detectorID]))->fill(xSize);
 			(dynamic_cast<AIDA::IHistogram1D*> (_clusterSizeYHistos[detectorID]))->fill(ySize);
 			(dynamic_cast<AIDA::IHistogram2D*> (_hitMapHistos[detectorID]))->fill(static_cast<double >(xPos), static_cast<double >(yPos), 1.);
-			(dynamic_cast<AIDA::IHistogram2D*> (_hitMapGeomHistos[detectorID]))->fill(geoPosX, geoPosY, 1.);
 			(dynamic_cast<AIDA::IHistogram1D*> (_clusterSizeTotalHistos[detectorID]))->fill( static_cast<int>(cluster->size()) );
 			(dynamic_cast<AIDA::IHistogram1D*> (_clusterSignalHistos[detectorID]))->fill(cluster->getTotalCharge());
 
@@ -632,7 +574,7 @@ void EUTelProcessorGeometricClustering::fillHistos (LCEvent * evt)
 #endif
 
 #ifdef MARLIN_USE_AIDA
-void EUTelProcessorGeometricClustering::bookHistos() {
+void EUTelProcessorSparseClustering::bookHistos() {
 
   // histograms are grouped in loops and detectors
   streamlog_out ( DEBUG5 )  << "Booking histograms " << std::endl;
@@ -783,21 +725,6 @@ void EUTelProcessorGeometricClustering::bookHistos() {
 		AIDA::IHistogram2D * hitMapHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName).c_str(), xBin, xMin, xMax,yBin, yMin, yMax);
 		_hitMapHistos.insert(std::make_pair(sensorID, hitMapHisto));
 		hitMapHisto->setTitle("Pixel Index Hit Map;X Index [#];Y Index [#];Count [#]");
-
-
-		float binX = (maxX-minX+0)*60/sizeX;
-		float binY = (maxY-minY+0)*40/sizeY;
-
-		tempHistoName = _hitMapGeomHistoName + "_d" + to_string( sensorID );
-		int     xGeomBin = ceil(binX);
-		double  xGeomMin = -30.25;
-		double  xGeomMax =  29.75;
-		int     yGeomBin = ceil(binY);
-		double  yGeomMin = -20.25;
-		double  yGeomMax = 19.75;
-		AIDA::IHistogram2D * hitMapGeomHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName).c_str(), xGeomBin, xGeomMin, xGeomMax, yGeomBin, yGeomMin, yGeomMax);
-		_hitMapGeomHistos.insert(std::make_pair(sensorID, hitMapGeomHisto));
-		hitMapGeomHisto->setTitle("Geometric Cluster Hit Map;X-Position [mm];Y-Position [mm];Count [#]");
 
 		tempHistoName = _eventMultiplicityHistoName + "_d" + to_string( sensorID );
 		int     eventMultiNBin  = 15;

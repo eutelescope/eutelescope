@@ -21,8 +21,8 @@
 #include "gearimpl/SiPlanesLayerLayoutImpl.h"
 #include "gearimpl/SiPlanesParametersImpl.h"
 
-#include "gearimpl/TelPlanesLayerLayoutImpl.h"
-#include "gearimpl/TelPlanesParametersImpl.h"
+#include "gearimpl/TrackerPlanesLayerLayoutImpl.h"
+#include "gearimpl/TrackerPlanesParametersImpl.h"
 
 #include "gear/BField.h"
 
@@ -202,7 +202,7 @@ namespace eutelescope {
             /** reading initial info from gear: part of contructor
               * new GEAR from branch/TelPlanes
               */
-	    void readTelPlanesParameters(); 
+	    void readTrackerPlanesParameters(); 
 
             /** housing for the above two 
               */    
@@ -302,11 +302,11 @@ namespace eutelescope {
 
             /**
              */
-            gear::TelPlanesParameters*  _telPlanesParameters;
+            gear::TrackerPlanesParameters*  _trackerPlanesParameters;
  
             /**
              */
-            gear::TelPlanesLayerLayout* _telPlanesLayerLayout;
+            gear::TrackerPlanesLayerLayout* _trackerPlanesLayerLayout;
 
 // overwrite private to public ::
         private :

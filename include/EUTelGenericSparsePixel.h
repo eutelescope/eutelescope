@@ -86,7 +86,6 @@ public:
     inline float getSignal() const { return static_cast<float> (_signal); } 
 
     //! Getter for the time
-    // should it not be a double ?!
     inline float getTime() const { return static_cast<float> (_time); } 
 
 protected:

@@ -27,6 +27,8 @@
 #include "EUTelAlignmentConstant.h"
 #include "EUTelReferenceHit.h"
 #include "EUTelCDashMeasurement.h"
+#include "EUTelGeometryTelescopeGeoDescription.h"
+
 
 
 // marlin includes ".h"
@@ -328,6 +330,11 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
 
 void EUTelMille::init() {
 
+    // Getting access to geometry description
+    std::string name("test.root");
+    geo::gGeometry().initializeTGeoDescription(name,false);
+
+
   // check if the GEAR manager pointer is not null!
   if ( Global::GEAR == 0x0 ) {
     streamlog_out ( ERROR2 ) << "The GearMgr is not available, for an unknown reason." << endl;
@@ -386,10 +393,7 @@ void EUTelMille::init() {
       // the number of planes is got from the GEAR description and is
       // the sum of the telescope reference planes and the DUT (if
       // any)
-      _nPlanes = _siPlanesParameters->getSiPlanesNumber();
-      if ( _siPlanesParameters->getSiPlanesType() == _siPlanesParameters->TelescopeWithDUT ) {
-        ++_nPlanes;
-      }
+      _nPlanes = geo::gGeometry().nPlanes();
 
       if (_useSensorRectangular.empty()) {
 	      streamlog_out(MESSAGE4) << "No rectangular limits on pixels of sensorplanes applied" << endl;
@@ -415,7 +419,7 @@ void EUTelMille::init() {
     }
   else if(_inputMode == 1)
     {
-      _nPlanes = _siPlanesParameters->getSiPlanesNumber();
+      _nPlanes = geo::gGeometry().nPlanes();
     }
   else if(_inputMode == 3)
     {
@@ -423,10 +427,7 @@ void EUTelMille::init() {
       // the number of planes is got from the GEAR description and is
       // the sum of the telescope reference planes and the DUT (if
       // any)
-      _nPlanes = _siPlanesParameters->getSiPlanesNumber();
-      if ( _siPlanesParameters->getSiPlanesType() == _siPlanesParameters->TelescopeWithDUT ) {
-        ++_nPlanes;
-      }
+      _nPlanes = geo::gGeometry().nPlanes();
     }
   else
     {
@@ -442,10 +443,6 @@ void EUTelMille::init() {
     sensorIDMap.insert( make_pair( _siPlanesLayerLayout->getLayerPositionZ(iPlane), _siPlanesLayerLayout->getID(iPlane) ) );
   }
 
-  if  ( _siPlanesParameters->getSiPlanesType() == _siPlanesParameters->TelescopeWithDUT ) {
-    _siPlaneZPosition.push_back(_siPlanesLayerLayout->getDUTPositionZ());
-    sensorIDMap.insert( make_pair( _siPlanesLayerLayout->getDUTPositionZ(),  _siPlanesLayerLayout->getDUTID() ) ) ;
-  }
 
   //lets sort the array with increasing z
   sort(_siPlaneZPosition.begin(), _siPlaneZPosition.end());
@@ -649,10 +646,10 @@ void EUTelMille::processRunHeader (LCRunHeader * rdr) {
   // in the xml file. If the numbers are different, instead of barely
   // quitting ask the user what to do.
 
-  if ( header->getGeoID() != _siPlanesParameters->getSiPlanesID() ) {
+  if ( header->getGeoID() != geo::gGeometry().getSiPlanesLayoutID() ) {
     streamlog_out ( ERROR2 ) << "Error during the geometry consistency check: " << endl;
     streamlog_out ( ERROR2 ) << "The run header says the GeoID is " << header->getGeoID() << endl;
-    streamlog_out ( ERROR2 ) << "The GEAR description says is     " << _siPlanesParameters->getSiPlanesNumber() << endl;
+    streamlog_out ( ERROR2 ) << "The GEAR description says is     " << geo::gGeometry().getSiPlanesLayoutID() << endl;
 
 #ifdef EUTEL_INTERACTIVE
     string answer;
@@ -1123,7 +1120,6 @@ void  EUTelMille::FillHotPixelMap(LCEvent *event)
  
 void EUTelMille::processEvent (LCEvent * event) {
 
-	UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder( EUTELESCOPE::HITENCODING );
   if ( isFirstEvent() )
   {
     FillHotPixelMap(event);
@@ -1252,7 +1248,7 @@ void EUTelMille::processEvent (LCEvent * event) {
 
               LCCollectionVec * sparseClusterCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection("original_zsdata"));
 
-             TrackerDataImpl * oneCluster = dynamic_cast<TrackerDataImpl*> (sparseClusterCollectionVec->getElementAt( 0 ));
+              TrackerDataImpl * oneCluster = dynamic_cast<TrackerDataImpl*> (sparseClusterCollectionVec->getElementAt( 0 ));
               CellIDDecoder<TrackerDataImpl > anotherDecoder(sparseClusterCollectionVec);
               SparsePixelType pixelType = static_cast<SparsePixelType> ( static_cast<int> ( anotherDecoder( oneCluster )["sparsePixelType"] ));
 
@@ -1289,7 +1285,7 @@ void EUTelMille::processEvent (LCEvent * event) {
                 }
             }
 
-	    int localSensorID = hitDecoder(hit)["sensorID"]; 
+	    int localSensorID = Utility::getSensorIDfromHit(hit);
             
             layerIndex = _sensorIDVecMap[localSensorID] ;
 
@@ -1386,7 +1382,7 @@ void EUTelMille::processEvent (LCEvent * event) {
     }
     const int nTracksHere = collection->getNumberOfElements();
 
-    streamlog_out ( MILLEMESSAGE ) << "Number of tracks available in track collection: " << nTracksHere << endl;
+    streamlog_out ( MESSAGE1 ) << "Number of tracks available in track collection: " << nTracksHere << endl;
 
     // loop over all tracks
     for (int nTracksEvent = 0; nTracksEvent < nTracksHere && nTracksEvent < _maxTrackCandidates; nTracksEvent++) {
@@ -1398,7 +1394,7 @@ void EUTelMille::processEvent (LCEvent * event) {
       std::vector<EVENT::TrackerHit*> TrackHitsHere = TrackHere->getTrackerHits();
 
       // check for a hit in every plane
-      streamlog_out ( MILLEMESSAGE ) << "track " << nTracksEvent << " has " << TrackHitsHere.size() << " hits <F12>" << endl;
+      streamlog_out ( MESSAGE1 ) << "track " << nTracksEvent << " has " << TrackHitsHere.size() << " hits <F12>" << endl;
 
 
 //    if (_nPlanes == (TrackHitsHere.size() / 2)) 
@@ -1419,6 +1415,8 @@ void EUTelMille::processEvent (LCEvent * event) {
           const double *PositionsHere = HitHere->getPosition();
 
           // check if this is a measured hit or a fitted hit, want measured hit
+          streamlog_out( MESSAGE0 ) << "hit properties : " << ( hitCellDecoder(HitHere)["properties"] & kFittedHit ) << std::endl;
+
           if ( (hitCellDecoder(HitHere)["properties"] & kFittedHit) == 0 ){
 
             // fill hits to arrays
@@ -1426,7 +1424,7 @@ void EUTelMille::processEvent (LCEvent * event) {
             _yPos[nTracksEvent][nPlaneHere] = PositionsHere[1] * 1000.;
             _zPos[nTracksEvent][nPlaneHere] = PositionsHere[2] * 1000.;
 
-            streamlog_out ( MILLEMESSAGE ) << "hit: " << nHits << " " 
+            streamlog_out ( MESSAGE1 ) << "hit: " << nHits << " " 
                          << _xPos[nTracksEvent][nPlaneHere] << " " 
                          << _yPos[nTracksEvent][nPlaneHere] << " " 
                          << _zPos[nTracksEvent][nPlaneHere] << " type: " << HitHere->getType() << endl;
@@ -1442,7 +1440,7 @@ void EUTelMille::processEvent (LCEvent * event) {
 
 //      } else {
 
-//        streamlog_out ( MILLEMESSAGE ) << "Dropping track " << nTracksEvent << " because there is not a hit in every plane assigned to it." << endl;
+//        streamlog_out ( MESSAGE1 ) << "Dropping track " << nTracksEvent << " because there is not a hit in every plane assigned to it." << endl;
 
 //      }
 
@@ -1469,9 +1467,6 @@ void EUTelMille::processEvent (LCEvent * event) {
 
       size_t number_of_planes = (TrackHitsHere.size() - _excludePlanes.size() )/ 2;
 
-      if ( _siPlanesParameters->getSiPlanesType() == _siPlanesParameters->TelescopeWithDUT ) {
-        ++number_of_planes;
-      }
       // check for a hit in every telescope plane. this needs probably
       // some further investigations. perhaps it fails if some planes
       // were excluded in the track fitter. but it should work
@@ -1543,7 +1538,7 @@ void EUTelMille::processEvent (LCEvent * event) {
                   }
 
                   std::vector<EUTelMille::HitsInPlane> hitsplane;
-
+/*
                   if ( 
                     hit->getType() == kEUTelDFFClusterImpl 
                     ||
@@ -1559,7 +1554,7 @@ void EUTelMille::processEvent (LCEvent * event) {
                       }
                   }
 
-
+*/
                   hitsplane.push_back(
                           EUTelMille::HitsInPlane(
                               1000. * hit->getPosition()[0],
@@ -1569,6 +1564,7 @@ void EUTelMille::processEvent (LCEvent * event) {
                           );
  
                   double measuredz = hit->getPosition()[2];
+                  streamlog_out( MESSAGE1 ) << " hitsplane : " << hitsplane.size() << " z : " << measuredz << std::endl;
 
                   delete cluster; // <--- destroying the cluster
 
@@ -1589,9 +1585,11 @@ void EUTelMille::processEvent (LCEvent * event) {
                       //reconstructed hits in the DUT in order to
                       //avoid double counting.
 
-                      if( std::abs( measuredz - PositionsHere[2] ) > 5.0 /* mm */)
+//                      if( std::abs( measuredz - PositionsHere[2] ) > 5.0 /* mm */)
                         {
 			  // test if this is a fitted hit
+                          streamlog_out( MESSAGE0 ) << "fit hit properties : " << ( hitCellDecoder(HitHere)["properties"] & kFittedHit ) << std::endl;
+
                           if ( (hitCellDecoder(HitHere)["properties"] & kFittedHit) > 0 )
                             {
                               hitsplane.push_back(
@@ -1624,25 +1622,26 @@ void EUTelMille::processEvent (LCEvent * event) {
           //end of the loop
         } else {
 
-        streamlog_out ( MILLEMESSAGE ) << "Dropping track " << nTracksEvent << " because there is not a hit in every plane assigned to it." << endl;
+        streamlog_out ( MESSAGE1 ) << "Dropping track " << nTracksEvent << " because there is not a hit in every plane assigned to it." << endl;
       }
 
     } // end loop over all tracks
 
   }
 
-  streamlog_out ( MILLEMESSAGE ) << "Number of hits in the individual planes: ";
+  streamlog_out ( MESSAGE1 ) << "Number of hits in the individual planes: ";
   for(size_t i = 0; i < _allHitsArray.size(); i++)
-    streamlog_out ( MILLEMESSAGE ) << _allHitsArray[i].size() << " ";
-  streamlog_out ( MILLEMESSAGE ) << endl;
+    streamlog_out ( MESSAGE1 ) << _allHitsArray[i].size() << " ";
+  streamlog_out ( MESSAGE1 ) << endl;
 
-  streamlog_out ( MILLEMESSAGE ) << "Number of track candidates found: " << _iEvt << ": " << _nTracks << endl;
+  streamlog_out ( MESSAGE1 ) << "Number of track candidates found: " << _iEvt << ": " << _nTracks << endl;
 
   // Perform fit for all found track candidates
   // ------------------------------------------
 
   // only one track or no single track event
-  if (_nTracks == 1 || _onlySingleTrackEvents == 0) {
+//  if (_nTracks == 1 || _onlySingleTrackEvents == 0) 
+  {
 
     DoubleVec lambda;
     lambda.reserve(_nPlanes);
@@ -1667,7 +1666,7 @@ void EUTelMille::processEvent (LCEvent * event) {
       Chiquare[0] = 0.0;
       Chiquare[1] = 0.0;
 
-      streamlog_out ( MILLEMESSAGE ) << "Adding track using the following coordinates: ";
+      streamlog_out ( MESSAGE1 ) << "Adding track using the following coordinates: ";
 
       // loop over all planes
       for (unsigned int help = 0; help < _nPlanes; help++) 
@@ -1684,12 +1683,14 @@ void EUTelMille::processEvent (LCEvent * event) {
         }
 
         if (excluded == 0) {
-          streamlog_out ( MILLEMESSAGE ) << _xPosHere[help] << " " << _yPosHere[help] << " " << _zPosHere[help] << "   ";
+          streamlog_out ( MESSAGE1 ) << 
+                std::endl << " not Excluded @ " << help  << "["<<_nPlanes << "] " <<_xPosHere[help] << " " << _yPosHere[help] << " " << _zPosHere[help] ;
         }
+        streamlog_out ( MESSAGE1 ) << std::endl;
 
       } // end loop over all planes
 
-      streamlog_out ( MILLEMESSAGE ) << endl;
+      streamlog_out ( MESSAGE1 ) << endl;
       
       if(_alignMode == 3)
         {
@@ -1729,6 +1730,7 @@ void EUTelMille::processEvent (LCEvent * event) {
             }
             const double xresid = x0 - x;
             const double yresid = y0 - y;
+            streamlog_out ( MESSAGE1 ) << " x0 = " << x0 << " x= " << x << " ;; y0 = " << y0 << " y = " << y << std::endl;
 
             if ( xresid < _residualsXMin[help] || xresid > _residualsXMax[help]) 
               {
@@ -1774,6 +1776,7 @@ void EUTelMille::processEvent (LCEvent * event) {
           mean_y = mean_y / static_cast< double >(mean_n);
 	  
           int diff_mean = _nPlanes - mean_n;
+          streamlog_out( MESSAGE0 ) << " diff_mean: " << diff_mean << " _nPlanes = " << _nPlanes << " mean_n = " << mean_n << std::endl;
 
           if( diff_mean > getAllowedMissingHits() ) 
           {
@@ -1943,29 +1946,29 @@ void EUTelMille::processEvent (LCEvent * event) {
                    _waferResidY,
                    angle);
         }
-      streamlog_out ( MILLEMESSAGE ) << "Residuals X: ";
+      streamlog_out ( MESSAGE1 ) << "Residuals X: ";
 
       for (unsigned int help = 0; help < _nPlanes; help++) {
-        streamlog_out ( MILLEMESSAGE ) << _waferResidX[help] << " ";
+        streamlog_out ( MESSAGE1 ) << _waferResidX[help] << " ";
       }
 
-      streamlog_out ( MILLEMESSAGE ) << endl;
+      streamlog_out ( MESSAGE1 ) << endl;
 
-      streamlog_out ( MILLEMESSAGE ) << "Residuals Y: ";
+      streamlog_out ( MESSAGE1 ) << "Residuals Y: ";
 
       for (unsigned int help = 0; help < _nPlanes; help++) {
-        streamlog_out ( MILLEMESSAGE ) << _waferResidY[help] << " ";
+        streamlog_out ( MESSAGE1 ) << _waferResidY[help] << " ";
       }
 
-      streamlog_out ( MILLEMESSAGE ) << endl;
+      streamlog_out ( MESSAGE1 ) << endl;
 
-      streamlog_out ( MILLEMESSAGE ) << "Residuals Z: ";
+      streamlog_out ( MESSAGE1 ) << "Residuals Z: ";
 
       for (unsigned int help = 0; help < _nPlanes; help++) {
-        streamlog_out ( MILLEMESSAGE ) << _waferResidZ[help] << " ";
+        streamlog_out ( MESSAGE1 ) << _waferResidZ[help] << " ";
       }
 
-      streamlog_out ( MILLEMESSAGE ) << endl;
+      streamlog_out ( MESSAGE1 ) << endl;
 
 
       int residualsXOkay = 1;
@@ -2006,7 +2009,7 @@ void EUTelMille::processEvent (LCEvent * event) {
       } // end check if residual cuts are used
 
       if (_useResidualCuts != 0 && (residualsXOkay == 0 || residualsYOkay == 0)) {
-        streamlog_out ( MILLEMESSAGE ) << "Track did not pass the residual cuts." << endl;
+        streamlog_out ( MESSAGE1 ) << "Track did not pass the residual cuts." << endl;
       }
 
       // apply track cuts (at the moment only residuals)
@@ -2500,7 +2503,7 @@ void EUTelMille::processEvent (LCEvent * event) {
 
   } // end if only one track or no single track event
 
-  streamlog_out ( MILLEMESSAGE ) << "Finished fitting tracks in event " << _iEvt << endl;
+  streamlog_out ( MESSAGE1 ) << "Finished fitting tracks in event " << _iEvt << endl;
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 

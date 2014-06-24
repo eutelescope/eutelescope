@@ -359,17 +359,6 @@ namespace eutelescope
     static const char * CLUSTERDEFAULTENCODING;
 
 
-    //! Normal TrackerData encoding for cluster
-    /*! This constant string is used with CellIDEncoder to define the first non- default encoding used for describe cells into a clusters. This
-     *  encoding is different from the one for complete matrices.
-     *
-     *  Note about cluster quality: this is a three bit flag to be
-     *  used with the cluster quality enum.
-     *
-     *  @see ClusterQuality
-     */
-    static const char * CLUSTERENCODING;
-
     //! Default TrackerPulse encoding for cluster
     /*! This constant string is used with CellIDEncoder to define the
      *  default encoding used to describe cells into a tracker
@@ -390,14 +379,6 @@ namespace eutelescope
      */
     static const char * ZSCLUSTERDEFAULTENCODING;
 
-    //! Zero suppress cluster encoding for ATLAS-Pixel clusters
-    /*! This encoding string is used for the TrackerData containing
-     *  clusters made by ATLAS PIXEL pixels
-     *
-     *  @see SparsePixelType
-     *  @see ClusterQuality
-     */
-    static const char * ZSAPIXCLUSTERENCODING;
 
     //! SensorID and properties encoding for hits
     /*! This encoding string is used for the TrackerHit* classes

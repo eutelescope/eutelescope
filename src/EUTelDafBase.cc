@@ -476,7 +476,7 @@ void EUTelDafBase::readHitCollection(LCEvent* event)
 
    for ( int iHit = 0; iHit < _hitCollection->getNumberOfElements(); iHit++ ) {
       TrackerHitImpl* hit = static_cast<TrackerHitImpl*> ( _hitCollection->getElementAt(iHit) );
-     double pos[3]  = {0.,0.,0.};
+      double pos[3]  = {0.,0.,0.};
       bool region    = true;
       int planeIndex = -1;
 
@@ -487,19 +487,30 @@ void EUTelDafBase::readHitCollection(LCEvent* event)
        if(_mcCollection != 0 ) simhit = static_cast<SimTrackerHitImpl*> ( _mcCollection->getElementAt(iHit) );
        if(simhit != 0 )
        {
-	 UTIL::CellIDDecoder<SimTrackerHitImpl> simHitDecoder (_mcCollection);
-	 planeIndex = simHitDecoder(simhit)["sensorID"];
+	 const double * simpos = simhit->getPosition();
+         pos[0]=simpos[0];
+         pos[1]=simpos[1];
+         pos[2]=simpos[2];
+ 	 UTIL::CellIDDecoder<SimTrackerHitImpl> simHitDecoder (_mcCollection);
+         for(unsigned plane = 0; plane <  _system.planes.size(); plane++ ){
+           if( _system.planes.at(plane).getSensorID() == simHitDecoder(simhit)["sensorID"] ) planeIndex = plane;
+         }
        }
        streamlog_out ( DEBUG5 ) << " SIM: simhit="<< ( simhit != 0 ) <<" add point [" << planeIndex << "] "<< 
                       static_cast< float >(pos[0]) * 1000.0f << " " << static_cast< float >(pos[1]) * 1000.0f << " " <<  static_cast< float >(pos[2]) * 1000.0f << endl;
      }else
       if(hit != 0 )
       {
-	UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
-	planeIndex = hitDecoder(hit)["sensorID"];
-       streamlog_out ( DEBUG5 ) << " REAL: add point [" << planeIndex << "] "<< 
+   	const double * hitpos = hit->getPosition();
+        pos[0]=hitpos[0];
+        pos[1]=hitpos[1];
+        pos[2]=hitpos[2];
+        for(unsigned plane = 0; plane < _system.planes.size(); plane++ ){
+           if( _system.planes.at(plane).getSensorID() == Utility::getSensorIDfromHit(hit) ) planeIndex = plane;
+        }
+        streamlog_out ( DEBUG5 ) << " REAL: add point [" << planeIndex << "] "<< 
                       static_cast< float >(pos[0]) * 1000.0f << " " << static_cast< float >(pos[1]) * 1000.0f << " " <<  static_cast< float >(pos[2]) * 1000.0f << endl;
-       region = checkClusterRegion( hit, _system.planes.at(planeIndex).getSensorID() );
+        region = checkClusterRegion( hit, _system.planes.at(planeIndex).getSensorID() );
       }
 
       if(planeIndex >=0 ) 
@@ -601,11 +612,16 @@ void EUTelDafBase::processEvent(LCEvent * event){
   //Dump hit collection to collection sorted by plane
   readHitCollection(event);
 
+  streamlog_out(MESSAGE1) << " readHitCollection is OVER " <<std::endl;
   //Run track finder
   _system.clusterTracker();
-  
+ 
+  streamlog_out(MESSAGE1) << " _system.clusterTracker is OVER " <<std::endl;
+ 
   //Child specific actions
   dafEvent(event); // Riccard: what does this do?
+
+  streamlog_out(MESSAGE1) << " dafEvent is OVER " <<std::endl;
 
   if(event->getEventNumber() % 1000 == 0){
     streamlog_out ( MESSAGE5 ) << "Accepted " << _nTracks <<" tracks at event " << event->getEventNumber() << endl;
