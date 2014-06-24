@@ -700,7 +700,8 @@ itTrk++;
     double EUTelKalmanFilter::getXYPredictionPrecision( const EUTelTrackStateImpl* ts ) const {
       streamlog_out(DEBUG2) << "EUTelKalmanFilter::getXYPredictionPrecision()" << std::endl;
       
-      TMatrixDSym Ckkm1 = ts->getTrackStateCov();
+      TMatrixDSym Ckkm1(5); 
+			Ckkm1 = ts->getTrackStateCov();
       double xyPrec = getWindowSize();   //sqrt( Ckkm1[0][0]*Ckkm1[0][0] + Ckkm1[1][1]*Ckkm1[1][1] );
       
       streamlog_out(DEBUG0) << "Minimal combined UV resolution : " << xyPrec << std::endl;

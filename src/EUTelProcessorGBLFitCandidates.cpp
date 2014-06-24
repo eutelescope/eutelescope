@@ -222,11 +222,11 @@ void EUTelProcessorGBLFitCandidates::outputLCIO(LCEvent* evt, std::vector< EUTel
 
                 if(streamlog_level(DEBUG4) ) (*itTrackCartesian)->Print();
 
-		IMPL::TrackImpl LCIOtrack = (*itTrackCartesian)->CreateLCIOTrack();
+		IMPL::TrackImpl* LCIOtrack = (*itTrackCartesian)->CreateLCIOTrack();
 		
 
 		//For every track add this to the collection
-    		trkCandCollection->push_back( &LCIOtrack );
+    		trkCandCollection->push_back( LCIOtrack );
 	}//END TRACK LOOP
 
 	//Now add this collection to the 

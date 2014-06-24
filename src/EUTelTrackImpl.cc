@@ -330,10 +330,10 @@ namespace eutelescope {
 	return hits;
 }
 
-IMPL::TrackImpl EUTelTrackImpl::CreateLCIOTrack(){
+IMPL::TrackImpl* EUTelTrackImpl::CreateLCIOTrack(){
 streamlog_out( DEBUG4 ) << " ---------------- EUTelTrackImpl::CreateLCIOTrack-- BEGIN ------------- " << std::endl;
 
-	IMPL::TrackImpl LCIOtrack;
+	IMPL::TrackImpl* LCIOtrack = new IMPL::TrackImpl;
 	//Loop over all state on the track and fill new track object
 	EUTelTrackStateVec tracks = getTrackStates();
 	streamlog_out( DEBUG0 ) << "The size of the state " << tracks.size() <<std::endl;  
@@ -352,7 +352,7 @@ streamlog_out( DEBUG4 ) << " ---------------- EUTelTrackImpl::CreateLCIOTrack-- 
 		implstate->setTanLambda(statevector[4]); //invp position global		 
 
                 streamlog_out(MESSAGE3) <<  "  " << (*trackstate ) -> id() << "  " << (*trackstate ) -> getLocation() << " " << (*trackstate )->getX() << " " << (*trackstate )->getY() << std::endl;
-		LCIOtrack.addTrackState( implstate );
+		LCIOtrack->addTrackState( implstate );
 	}
 
 	
@@ -362,9 +362,10 @@ streamlog_out( DEBUG4 ) << " ---------------- EUTelTrackImpl::CreateLCIOTrack-- 
 	streamlog_out( DEBUG0 ) << "The size of hits " << trkcandhits.size() <<std::endl; 
     	EVENT::TrackerHitVec::const_iterator itrHit;
     	for ( itrHit = trkcandhits.begin(); itrHit != trkcandhits.end(); ++itrHit ){
-    		LCIOtrack.addHit( *itrHit );
+    		LCIOtrack->addHit( *itrHit );
     	}
 	
+			return LCIOtrack;
 streamlog_out( DEBUG4 ) << " ---------------- EUTelTrackImpl::CreateLCIOTrack-- END ------------- " << std::endl;
 } 
 

@@ -47,7 +47,7 @@ namespace eutelescope {
     /// Destructor.
     virtual ~EUTelTrackImpl() ; 
 
-IMPL::TrackImpl CreateLCIOTrack();
+IMPL::TrackImpl* CreateLCIOTrack();
 
 	
     
