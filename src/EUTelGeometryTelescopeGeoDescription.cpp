@@ -277,7 +277,7 @@ const EVENT::IntVec& EUTelGeometryTelescopeGeoDescription::sensorIDsVec( ) const
     return _sensorIDVec;
 }
 
-void EUTelGeometryTelescopeGeoDescription::readSiPlanesParameters() {
+void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout() {
 
     // sensor-planes in geometry navigation:
     
@@ -294,9 +294,9 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesParameters() {
    
     // create an array with the z positions of each layer
     for (int iPlane = 0; iPlane < _nPlanes; iPlane++) {
-        _siPlaneXPosition.push_back(_siPlanesLayerLayout->getSensitivePositionX(iPlane));
-        _siPlaneYPosition.push_back(_siPlanesLayerLayout->getSensitivePositionY(iPlane));
-        _siPlaneZPosition.push_back(_siPlanesLayerLayout->getSensitivePositionZ(iPlane));
+        _siPlaneXPosition.push_back(_siPlanesLayerLayout->getLayerPositionX(iPlane));
+        _siPlaneYPosition.push_back(_siPlanesLayerLayout->getLayerPositionY(iPlane));
+        _siPlaneZPosition.push_back(_siPlanesLayerLayout->getLayerPositionZ(iPlane));
         _siPlaneXRotation.push_back(_siPlanesLayerLayout->getLayerRotationZY(iPlane));
         _siPlaneYRotation.push_back(_siPlanesLayerLayout->getLayerRotationZX(iPlane));
         _siPlaneZRotation.push_back(_siPlanesLayerLayout->getLayerRotationXY(iPlane));
@@ -349,7 +349,7 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesParameters() {
 
 }
 
-void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesParameters() {
+void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout() {
 
  
     // sensor-planes in geometry navigation:
@@ -372,9 +372,10 @@ void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesParameters() {
     int nLayers = _trackerPlanesLayerLayout->getNLayers();
     for (int iLayer = 0; iLayer < nLayers; iLayer++) {
         gear::TrackerPlanesLayerImpl* _trackerPlanesLayerImpl = const_cast< gear::TrackerPlanesLayerImpl*>  (_trackerPlanesLayerLayout->getLayer( iLayer) );
-        streamlog_out(DEBUG1) << " ilayer : " << iLayer << " " << nLayers  << " at " << _trackerPlanesLayerImpl;
+        streamlog_out(DEBUG1) << " dlayer : " << iLayer << " " << nLayers  << " at " << _trackerPlanesLayerImpl << " " ;
+
         int nsensitive = _trackerPlanesLayerImpl->getNSensitiveLayers() ;
-        streamlog_out(DEBUG1) << " constains " << nsensitive << " sensitive (sub)layers " << std::endl;
+        streamlog_out(DEBUG1) << " contains " << nsensitive << " sensitive (sub)layers " << std::endl;
 
         gear::TrackerPlanesSensitiveLayerImplVec& vector = _trackerPlanesLayerImpl->getSensitiveLayerVec();
        
@@ -428,6 +429,8 @@ void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesParameters() {
 }
 
 EUTelGeometryTelescopeGeoDescription::EUTelGeometryTelescopeGeoDescription() :
+_siPlanesDefined (false),
+_telPlanesDefined (false),
 _gearManager( marlin::Global::GEAR ),
 _siPlanesParameters(0),
 _siPlanesLayerLayout(0),
@@ -473,30 +476,30 @@ void EUTelGeometryTelescopeGeoDescription::readGear() {
         throw eutelescope::InvalidGeometryException("GEAR manager is not initialised");
     }
 
-    bool siPlanesDefined = false;
-    bool telPlanesDefined = false;
+    _siPlanesDefined = false;
+    _telPlanesDefined = false;
 
     try{
       _siPlanesParameters = const_cast< gear::SiPlanesParameters*> (&(_gearManager->getSiPlanesParameters()));
-      streamlog_out(MESSAGE1)  << "si planes : " << _siPlanesParameters << std::endl;
-      siPlanesDefined = true;
+      streamlog_out(MESSAGE1)  << "gear::SiPlanes : " << _siPlanesParameters << std::endl;
+      _siPlanesDefined = true;
     }catch(...){
-      streamlog_out(WARNING)   << "si planesnot found " << std::endl;
+      streamlog_out(WARNING)   << "gear::SiPlanes NOT found " << std::endl;
     }
 
     try{
       _trackerPlanesParameters = const_cast< gear::TrackerPlanesParameters*> (&(_gearManager->getTrackerPlanesParameters()));
-      streamlog_out(MESSAGE1)  << "tel planes : " << _trackerPlanesParameters << std::endl;
-      telPlanesDefined = true;
+      streamlog_out(MESSAGE1)  << "gear::TrackerPlanes : " << _trackerPlanesParameters << std::endl;
+      _telPlanesDefined = true;
     }catch(...){
-      streamlog_out(WARNING)   << "tel planes not found "  << std::endl;
+      streamlog_out(WARNING)   << "gear::TrackerPlanes NOT found "  << std::endl;
     }
 
-    if( siPlanesDefined ){
-      readSiPlanesParameters();
+    if( _siPlanesDefined ){
+      readSiPlanesLayout();
     }
-    else if( telPlanesDefined ){
-      readTrackerPlanesParameters();
+    else if( _telPlanesDefined ){
+      readTrackerPlanesLayout();
     }
 
 }
@@ -1504,4 +1507,122 @@ TVector3 EUTelGeometryTelescopeGeoDescription::getXYZfromArcLength( float x0, fl
 
  
 
+void EUTelGeometryTelescopeGeoDescription::updateSiPlanesLayout() {
+ streamlog_out( MESSAGE1 ) << "EUTelGeometryTelescopeGeoDescription::updateSiPlanesLayout() --- START ---- " << std::endl;
+
+
+    gear::SiPlanesParameters*    siplanesParameters = const_cast< gear::SiPlanesParameters*> (&( _gearManager->getSiPlanesParameters()));
+    gear::SiPlanesLayerLayout*  siplanesLayerLayout = const_cast< gear::SiPlanesLayerLayout*> (&(_siPlanesParameters->getSiPlanesLayerLayout()));
+
+    // data member::
+    _nPlanes = siplanesLayerLayout->getNLayers(); 
+ 
+    // create an array with the z positions of each layer
+    for (int iPlane = 0; iPlane < _nPlanes; iPlane++) {
+        int sensorID =  _sensorIDVec.at(iPlane);
+        std::cout << " iplane " << iPlane << " [" << _nPlanes << "] id :" <<  setw(3) << sensorID  ;
+        std::cout << " xPos: " << setw(10) << setprecision(4) <<  _siPlaneXPosition.at( iPlane);
+        std::cout << " yPos: " << setw(10) << setprecision(4) <<  _siPlaneYPosition.at( iPlane);
+        std::cout << " zPos: " << setw(10) << setprecision(4) <<  _siPlaneZPosition.at( iPlane);
+        std::cout << " xRot: " << setw(10) << setprecision(4) <<  _siPlaneXRotation.at( iPlane);
+        std::cout << " yRot: " << setw(10) << setprecision(4) <<  _siPlaneYRotation.at( iPlane);
+        std::cout << " zRot: " << setw(10) << setprecision(4) <<  _siPlaneZRotation.at( iPlane);
+        std::cout << "       "                                   << std::endl;
+
+        siplanesLayerLayout->setLayerPositionX(  iPlane, _siPlaneXPosition.at(iPlane) );
+        siplanesLayerLayout->setLayerPositionY(  iPlane, _siPlaneYPosition.at(iPlane) );
+        siplanesLayerLayout->setLayerPositionZ(  iPlane, _siPlaneZPosition.at(iPlane) );
+        siplanesLayerLayout->setLayerRotationZY( iPlane, _siPlaneXRotation.at(iPlane) );
+        siplanesLayerLayout->setLayerRotationZX( iPlane, _siPlaneYRotation.at(iPlane) );
+        siplanesLayerLayout->setLayerRotationXY( iPlane, _siPlaneZRotation.at(iPlane) );
+
+    }
+
+
+    // ------- add to GearMgr ----
+    if( _gearManager != 0 ) {
+      
+      _gearManager->setSiPlanesParameters( siplanesParameters ) ;
+
+    }
+
+
+ streamlog_out( MESSAGE1 ) << "EUTelGeometryTelescopeGeoDescription::updateSiPlanesLayout() --- OVER ---- " << std::endl;
+}
+
+
+void EUTelGeometryTelescopeGeoDescription::updateTrackerPlanesLayout() {
+
+    streamlog_out( MESSAGE1 ) << "EUTelGeometryTelescopeGeoDescription::updateTrackerPlanesLayout() --- START ---- " << std::endl;
+
+    gear::TrackerPlanesParameters*  trackerplanesParameters  = const_cast< gear::TrackerPlanesParameters*>  (&( _gearManager->getTrackerPlanesParameters() ));
+    gear::TrackerPlanesLayerLayout* trackerplanesLayerLayout = const_cast< gear::TrackerPlanesLayerLayout*> (&(  trackerplanesParameters->getTrackerPlanesLayerLayout() ));
+    
+    trackerplanesParameters->setLayoutID( getSiPlanesLayoutID() ) ;
+ 
+
+
+    // create an array with the z positions of each layer
+    int nLayers = trackerplanesLayerLayout->getNLayers();
+    for (int iLayer = 0; iLayer < nLayers; iLayer++) {
+        gear::TrackerPlanesLayerImpl*  trackerplanesLayerImpl = const_cast< gear::TrackerPlanesLayerImpl*>  ( trackerplanesLayerLayout->getLayer( iLayer) );
+        int nsensitive =  trackerplanesLayerImpl->getNSensitiveLayers() ;
+
+        gear::TrackerPlanesSensitiveLayerImplVec& vector =  trackerplanesLayerImpl->getSensitiveLayerVec();
+       
+        for (int iSensLayer = 0; iSensLayer < nsensitive; iSensLayer++) {       
+
+            gear::TrackerPlanesSensitiveLayerImpl& sensitiveLayer = vector.at(iSensLayer);
+ 
+            for( int iplane = 0; iplane < _sensorIDVec.size(); iplane++ ) {
+              int sensorID =  _sensorIDVec.at(iplane);
+              if( sensitiveLayer.getID() !=  _sensorIDVec.at( iplane) ) continue;  
+ 
+              std::cout << " iLayer " << setw(3)<< iLayer << "["<< setw(3) << nLayers <<"] sens: " << setw(3) << iSensLayer << "[" << setw(3) << nsensitive << "] id :" <<  setw(3) << sensorID  ;
+              std::cout << " xPos: " << setw(10) << setprecision(4) << _siPlaneXPosition.at( iplane);
+              std::cout << " yPos: " << setw(10) << setprecision(4) <<  _siPlaneYPosition.at( iplane);
+              std::cout << " zPos: " << setw(10) << setprecision(4) <<  _siPlaneZPosition.at( iplane);
+              std::cout << " xRot: " << setw(10) << setprecision(4) <<  _siPlaneXRotation.at( iplane);
+              std::cout << " yRot: " << setw(10) << setprecision(4) <<  _siPlaneYRotation.at( iplane);
+              std::cout << " zRot: " << setw(10) << setprecision(4) <<  _siPlaneZRotation.at( iplane);
+              std::cout << "       "                                   << std::endl;
+
+              sensitiveLayer.setPositionX( _siPlaneXPosition.at( iplane) );
+              sensitiveLayer.setPositionY( _siPlaneYPosition.at( iplane) );
+              sensitiveLayer.setPositionZ( _siPlaneZPosition.at( iplane) );
+
+              sensitiveLayer.setRotationZY( _siPlaneXRotation.at( iplane) );
+              sensitiveLayer.setRotationZX( _siPlaneYRotation.at( iplane) );
+              sensitiveLayer.setRotationXY( _siPlaneZRotation.at( iplane) );
+
+            }
+                
+   
+        }
+    }
+
+    // ------- add to GearMgr ----
+    if( _gearManager != 0 ) {
+      
+     _gearManager->setTrackerPlanesParameters( trackerplanesParameters ) ;
+
+    }
+
+
+    streamlog_out( MESSAGE1 ) << "EUTelGeometryTelescopeGeoDescription::updateTrackerPlanesLayout() --- OVER ---- " << std::endl;
+}
+
+void EUTelGeometryTelescopeGeoDescription::updateGearManager() {
+
+ streamlog_out( MESSAGE1 ) << "EUTelGeometryTelescopeGeoDescription::updateGearManager() --- START ---- " << std::endl;
+
+ if( _siPlanesDefined ){
+   updateSiPlanesLayout();
+ }
+ else if( _telPlanesDefined ){
+   updateTrackerPlanesLayout();
+ }
+
+ streamlog_out( MESSAGE1 ) << "EUTelGeometryTelescopeGeoDescription::updateGearManager() --- OVER ---- " << std::endl;
+}
 

@@ -76,12 +76,22 @@ namespace eutelescope {
             /** need only for pede2lcio*/
             gear::GearMgr* _gearManager;
 
+
+            /** */ 
+            bool _siPlanesDefined;
+
+            /** */ 
+            bool _telPlanesDefined;
+
         public:
             /** Retrieves the instanstance of geometry.
              * Performs lazy intialization if necessary.
              * @TODO this routine has to be considered to be constant
              */
             static EUTelGeometryTelescopeGeoDescription& getInstance( gear::GearMgr* _g );
+  
+            /** */
+            void updateGearManager();  
  
             /** */
             unsigned counter() { return _counter++; }
@@ -197,12 +207,20 @@ namespace eutelescope {
 
         private:
             /** reading initial info from gear: part of contructor */
-	    void readSiPlanesParameters();
+	    void readSiPlanesLayout();
+
+            /** reading initial info from gear: part of contructor */
+	    void updateSiPlanesLayout();
+
 
             /** reading initial info from gear: part of contructor
               * new GEAR from branch/TelPlanes
               */
-	    void readTrackerPlanesParameters(); 
+	    void readTrackerPlanesLayout(); 
+           
+            /**  */
+	    void updateTrackerPlanesLayout(); 
+
 
             /** housing for the above two 
               */    

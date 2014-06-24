@@ -16,10 +16,11 @@
 #include <IMPL/LCCollectionVec.h>
 
 // GEAR
-#include "gear/GearMgr.h"
-#include "gear/gearxml/GearXML.h"
 #include "gearimpl/Util.h"
-#include "gear/SiPlanesLayerLayout.h"
+#include "gearxml/GearXML.h"
+#include "gear/GearMgr.h"
+#include "gear/GEAR.h"
+
 
 // system includes
 #include <iostream>
@@ -54,7 +55,6 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
     streamlog_out(MESSAGE4) << "GEAR file " << newGearfileName << " will be generated." << std::endl;
     
     gear::GearXML gearXML( oldGearfileName ) ;
-
     gear::GearMgr* gearManager = gearXML.createGearMgr() ;
     
     if (!gearManager) {
@@ -66,6 +66,7 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
     // Getting access to geometry description
     std::string name("test.root");
     geo::gGeometry( gearManager ).initializeTGeoDescription(name,false);
+
 
 
     // update positions and orientations of the planes
@@ -195,7 +196,11 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
         }
     }
 
-    
+  
+    geo::gGeometry().updateGearManager();
+  
+    gear::GearXML::createXMLFile( gearManager, newGearfileName ) ;
+
     streamlog_out(MESSAGE4) << "Not implemented" << std::endl;
     
     return;
