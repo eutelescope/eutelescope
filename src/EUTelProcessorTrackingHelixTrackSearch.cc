@@ -350,7 +350,7 @@ void EUTelProcessorTrackingHelixTrackSearch::plotHistos( vector< EUTelTrackImpl*
 						////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-                const EVENT::TrackerHitVec& trkHits = ( *itrk )->getTrackerHits( );
+                const EVENT::TrackerHitVec trkHits = ( *itrk )->getHitsOnTrack();
                 nHitsOnTrack = trkHits.size( );
                 EVENT::TrackerHitVec::const_iterator itTrkHits;
                 streamlog_out( MESSAGE1 ) << "Track hits start:==============" << std::endl;

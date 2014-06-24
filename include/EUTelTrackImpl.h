@@ -125,7 +125,7 @@ IMPL::TrackImpl* CreateLCIOTrack();
      */
     virtual const EUTelTrackStateVec & getTrackStates() const ;
 
-		virtual const EVENT::TrackerHitVec & getHitsOnTrack() const;
+		virtual const EVENT::TrackerHitVec  getHitsOnTrack() const;
   
     virtual void PrintTrackStates(){
       streamlog_out(MESSAGE0) << " printing track states " << _trackStates.size() << std::endl;
@@ -154,7 +154,7 @@ IMPL::TrackImpl* CreateLCIOTrack();
     /** Optionally ( check/set flag(LCIO::TRBIT_HITS)==1)  return the hits that have been used 
      *  to create this track.
      */
-    virtual const EVENT::TrackerHitVec & getTrackerHits() const ;
+    virtual const EVENT::TrackerHitVec &  getTrackerHits() const ;
 
 	//	int getType();
     
