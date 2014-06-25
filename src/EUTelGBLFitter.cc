@@ -895,14 +895,16 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack, st
  	////////////////////////////////////////////////////////////////////////////////////////////////// loop through all states.
   for(int i=0;i < EUtrack->getTrackStates().size(); i++){		
 		/////////////////////////////////////////////////////////////////////////////////////////////BEGIN to create GBL point 
+  	streamlog_out(DEBUG3) << "The first GBL point is made from this jacobian:" << std::endl;
+	  streamlog_message( DEBUG0, jacPointToPoint.Print();, std::endl; );
 		gbl::GblPoint point(jacPointToPoint);
   		EUTelTrackStateImpl* state = EUtrack->getTrackStates().at(i); //get the state for this track. Static cast from EVENT::TrackState to derived class IMPL::TrackStateImpl.
   		streamlog_out(DEBUG3) << "This is the track state being used in creation of GBL points" << std::endl;
 			state->Print();
 
 		//Need to find hit that this state may be associated with. Note this is a problem for two reasons. Not all states have a hit. Furthermore we can not associate a hit with a state with the current LCIO format. This must be fixed
-		EVENT::TrackerHit* hit = NULL; //Create the hit pointer
-		FindHitIfThereIsOne(EUtrack, hit, state); //This will point the hit to the correct hit object associated with this state. If non exists then point it will remain pointed to NULL
+		EVENT::TrackerHit* hit = state->getHit();
+		//FindHitIfThereIsOne(EUtrack, hit, state); //This will point the hit to the correct hit object associated with this state. If non exists then point it will remain pointed to NULL. Not needed state holds hit
 		double fitPointLocal[] = {0.,0.,0.};
   	fitPointLocal [0] = state->getReferencePoint()[0] ;
   	fitPointLocal [1] = state->getReferencePoint()[1] ;
@@ -944,6 +946,8 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack, st
 			streamlog_out(DEBUG3) << "This is the distance to the first scatterer: " << distance1 <<std::endl;	
 			//Note the distance is used along the track and not from the scattering plane. How should this be dealt with?
 			TMatrix jacobianScat1(5,5); jacobianScat1 = state->getPropagationJacobianF(distance1);
+  		streamlog_out(DEBUG3) << "The first scattering point point is made from this jacobian:" << std::endl;
+	  	streamlog_message( DEBUG0, jacobianScat1.Print();, std::endl; );
 			gbl::GblPoint pointScat1(jacobianScat1);
 			TVectorD scat(2);
 			scat[0] = 0.0; //This should always be 0 right? If not then it should be given as a parameter
@@ -962,8 +966,10 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack, st
 			//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////BEGIN THE SECOND SCATTERING PLANE
 			float distance2 = (fitPointGlobal_next[2] + fitPointGlobal[2])/2 + (fitPointGlobal_next[2] - fitPointGlobal[2])/sqrt(12);
 
-			TMatrix jacobianScat2(5,5); jacobianScat1 = state->getPropagationJacobianF(distance2);
-			gbl::GblPoint pointScat2(jacobianScat1);
+			TMatrix jacobianScat2(5,5); jacobianScat2 = state->getPropagationJacobianF(distance2);
+  		streamlog_out(DEBUG3) << "The second scattering point point is made from this jacobian:" << std::endl;
+	  	streamlog_message( DEBUG0, jacobianScat2.Print();, std::endl; );
+			gbl::GblPoint pointScat2(jacobianScat2);
 
 
   		pointScat2.addScatterer(scat, scatPrecSensor);
@@ -1010,11 +1016,11 @@ void EUTelGBLFitter::addMeasurementGBL(gbl::GblPoint& point, const double *hitPo
      
 	streamlog_out(MESSAGE1) << " addMeasurementsGBL ------------- BEGIN --------------- " << std::endl;
 
- 	TVectorD meas;
+ 	TVectorD meas(2);
 	meas[0] = hitPos[0] - statePos[0];
         meas[1] = hitPos[1] - statePos[1];
 
-	TMatrixDSym measPrec(2,2); //Precision matrix is symmetric. The vector option that was here was silly since there could be correlation between variance and x/y.
+	TMatrixDSym measPrec(2); //Precision matrix is symmetric. The vector option that was here was silly since there could be correlation between variance and x/y.
         measPrec[0][0] = 1. / hitCov[0];	// cov(x,x)
         measPrec[1][1] = 1. / hitCov[2];	// cov(y,y)
 	measPrec[0][1] = 1. / hitCov[1];  //cov(x,y)
