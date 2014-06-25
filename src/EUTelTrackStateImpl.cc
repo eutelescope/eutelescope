@@ -198,6 +198,17 @@ streamlog_out(DEBUG0) << "The covariance matrix of the state" << std::endl;
         _hit = hit;
     }
 
+		void EUTelTrackStateImpl::setTrackStateHitCov(float cov[4]){
+
+			if(_hit != NULL){
+				_covHitMatrix[0] = cov[0];
+				_covHitMatrix[1] = cov[1];
+				_covHitMatrix[2] = cov[2];
+				_covHitMatrix[3] = cov[3];
+
+			}
+}
+
 
 //This function will output the momentum of the track in cartesian coordinates into a TVector structure
     /** Calculate track momentum from track parameters 

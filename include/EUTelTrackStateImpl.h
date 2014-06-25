@@ -124,6 +124,8 @@ namespace eutelescope {
 
 		virtual void setHit( EVENT::TrackerHit* hit);
 
+		virtual void setTrackStateHitCov(float cov[4]);
+
 
   protected:
 
@@ -143,6 +145,8 @@ namespace eutelescope {
 		float _zparameter;
 	
 		EVENT::TrackerHit* _hit;
+
+		float _covHitMatrix[4];
 
 }; // class
 
