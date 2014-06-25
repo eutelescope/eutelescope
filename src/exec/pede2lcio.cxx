@@ -156,9 +156,9 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
             geo::gGeometry().setPlaneXPosition(sensorID,  xplane  +  delta_r0.X() ) ;
             geo::gGeometry().setPlaneYPosition(sensorID,  yplane  +  delta_r0.Y() ) ;
             geo::gGeometry().setPlaneZPosition(sensorID,  zplane  +  delta_r0.Z() ) ;
-            geo::gGeometry().setPlaneXRotation(sensorID, (xrot  - dalpha)  ) ;
-            geo::gGeometry().setPlaneYRotation(sensorID, (yrot  - dbeta )  ) ;
-            geo::gGeometry().setPlaneZRotation(sensorID, (zrot  - dgamma)  ) ;
+            geo::gGeometry().setPlaneXRotationRadians(sensorID, (xrot  - dalpha)  ) ;
+            geo::gGeometry().setPlaneYRotationRadians(sensorID, (yrot  - dbeta )  ) ;
+            geo::gGeometry().setPlaneZRotationRadians(sensorID, (zrot  - dgamma)  ) ;
 //#endif
 //#endif       
             streamlog_out(MESSAGE4) << setw(10) << "align  " << setw( 8) << " " ;
@@ -178,9 +178,9 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
             xplane = geo::gGeometry().siPlaneXPosition(sensorID) ; 
             yplane = geo::gGeometry().siPlaneYPosition(sensorID) ; 
             zplane = geo::gGeometry().siPlaneZPosition(sensorID) ;
- 	    xrot   = geo::gGeometry().siPlaneXRotation(sensorID) ;
- 	    yrot   = geo::gGeometry().siPlaneYRotation(sensorID) ;
-	    zrot   = geo::gGeometry().siPlaneZRotation(sensorID) ;
+ 	    xrot   = geo::gGeometry().siPlaneXRotationRadians(sensorID) ;
+ 	    yrot   = geo::gGeometry().siPlaneYRotationRadians(sensorID) ;
+	    zrot   = geo::gGeometry().siPlaneZRotationRadians(sensorID) ;
 
             streamlog_out(MESSAGE4) <<
                                  setw(10) << "new : " << 
