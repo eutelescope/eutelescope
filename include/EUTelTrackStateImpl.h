@@ -102,6 +102,8 @@ namespace eutelescope {
 
 		virtual TVector3 getIncidenceVectorInLocalFrame();
 
+		virtual void getTrackStateHitCov( double (&cov)[4]);
+
    
     	virtual void Print() const;
 
@@ -124,7 +126,8 @@ namespace eutelescope {
 
 		virtual void setHit( EVENT::TrackerHit* hit);
 
-		virtual void setTrackStateHitCov(float cov[4]);
+		virtual void setTrackStateHitCov(double cov[4]);
+
 
 
   protected:
@@ -146,7 +149,7 @@ namespace eutelescope {
 	
 		EVENT::TrackerHit* _hit;
 
-		float _covHitMatrix[4];
+		double _covHitMatrix[4];
 
 }; // class
 

@@ -1432,7 +1432,7 @@ void EUTelGBLFitter::CreateAlignmentToMeasurementJacobian(std::vector< gbl::GblP
 
 void EUTelGBLFitter::SetHitCovMatrixFromFitterGBL(EUTelTrackStateImpl *state){
 
-float hitcov[4];
+double hitcov[4];
                     if( _parameterIdXResolutionVec.size() > 0 && _parameterIdYResolutionVec.size() > 0 )
                     {
                       for(unsigned int izPlane=0;izPlane<_parameterIdPlaneVec.size();izPlane++)
@@ -1448,7 +1448,7 @@ float hitcov[4];
                         }
                       }
                     }
-//state->setTrackStateHitCov(hitcov);
+state->setTrackStateHitCov(hitcov);
 }
 
 } // namespace eutelescope
