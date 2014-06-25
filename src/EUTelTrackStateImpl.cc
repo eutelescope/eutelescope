@@ -350,7 +350,7 @@ TMatrix EUTelTrackStateImpl::getPropagationJacobianF( float dz ){
 	TVector3 pVec = getPfromCartesianParameters();
 	TMatrix jacobian(5,5);
 	jacobian.Zero();
-
+	streamlog_out( DEBUG1 ) << "These are the parameters being used in the calculation of the Jacobian. "<< "X="<< _x << "Y="<< _y << "Zparameter="<< _zparameter << "Px=" << pVec[0] << "Py=" << pVec[1] << "Pz=" << pVec[2] << std::endl;
 	jacobian = geo::gGeometry().getPropagationJacobianF(  _x, _y, _zparameter, pVec[0],pVec[1],pVec[2], _beamQ, dz);
 
 	return jacobian;
