@@ -436,8 +436,8 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 
 
           if ( ( internalSensorID != getFixedPlaneID() && externalSensorID == getFixedPlaneID() )
-//                  ||
-//                  (  geo::gGeometry().sensorIDtoZOrder(internalSensorID) == geo::gGeometry().sensorIDtoZOrder(externalSensorID) + 1 )
+                  ||
+                  (  geo::gGeometry().sensorIDtoZOrder(internalSensorID) == geo::gGeometry().sensorIDtoZOrder(externalSensorID) + 1 )
                   ) 
           {
 
@@ -508,7 +508,9 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
         } else {
            // do nothing, already in global telescope frame 
         }
-
+ 
+          
+ 
         trackX.push_back( etrackPointGlobal[0]);
         trackY.push_back( etrackPointGlobal[1]);
 
@@ -538,8 +540,8 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 
           if ( 
                   ( internalSensorID != getFixedPlaneID() && externalSensorID == getFixedPlaneID() )
-//                   ||
-//                  (  geo::gGeometry().sensorIDtoZOrder(internalSensorID) == geo::gGeometry().sensorIDtoZOrder(externalSensorID) + 1 )
+                   ||
+                  (  geo::gGeometry().sensorIDtoZOrder(internalSensorID) == geo::gGeometry().sensorIDtoZOrder(externalSensorID) + 1 )
               ) 
             {
 
@@ -564,23 +566,30 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 
         }
 
-  vector<int>  iplane_unique = iplane;
-  vector<int>::iterator p, p_end;
+        vector<int>  iplane_unique = iplane;
+        vector<int>::iterator p, p_end;
  
-  p_end = unique( iplane_unique.begin(), iplane_unique.end());       // remove duplicates
-
-if( static_cast< int >(iplane_unique.size()) > _minNumberOfCorrelatedHits && trackX.size() == trackY.size())
-{
-      for(size_t i=1;i< trackX.size();i++)
-      {
-            _hitXCorrelationMatrix[ iplane[0]        ] [ iplane[i]        ] -> fill ( trackX[0]          , trackX[i]           ) ;
-            _hitYCorrelationMatrix[ iplane[0]        ] [ iplane[i]        ] -> fill ( trackY[0]          , trackY[i]           ) ;
-            // assume all rotations have been done in the hitmaker processor:
-            _hitXCorrShiftMatrix[ iplane[0]        ][ iplane[i]        ]->fill( trackX[0]          , trackX[0]          - trackX[i]          );
-            _hitYCorrShiftMatrix[ iplane[0]        ][ iplane[i]        ]->fill( trackY[0]          , trackY[0]          - trackY[i]         );
-      }
-}else{
-}
+        p_end = unique( iplane_unique.begin(), iplane_unique.end());       // remove duplicates
+  
+        if( static_cast< int >(iplane_unique.size()) > _minNumberOfCorrelatedHits && trackX.size() == trackY.size())
+        {
+          int indexPlane = 0;
+ 
+          indexPlane = 0; // should be always the first element, as it's filled in the externalID loop
+ 
+          if( indexPlane >= 0 ) {
+            for(size_t i=0;i< trackX.size();i++)
+            {
+              if( i == indexPlane ) continue; // skip as this one is not booked
+              _hitXCorrelationMatrix[ iplane[ indexPlane ]        ] [ iplane[i]        ] -> fill ( trackX[ indexPlane ]          , trackX[i]           ) ;
+              _hitYCorrelationMatrix[ iplane[ indexPlane ]        ] [ iplane[i]        ] -> fill ( trackY[ indexPlane ]          , trackY[i]           ) ;
+              // assume all rotations have been done in the hitmaker processor:
+              _hitXCorrShiftMatrix[ iplane[ indexPlane ]        ][ iplane[i]        ]->fill( trackX[ indexPlane ]          , trackX[ indexPlane ]          - trackX[i]          );
+              _hitYCorrShiftMatrix[ iplane[ indexPlane ]        ][ iplane[i]        ]->fill( trackY[ indexPlane ]          , trackY[ indexPlane ]          - trackY[i]         );
+            }
+          }
+        }else{
+        }
  
       }
     }
@@ -602,18 +611,18 @@ void EUTelCorrelator::end() {
     {
         streamlog_out( MESSAGE5 ) << "The input CollectionVec contains HitCollection, calculating offest values " << endl;
  
-        for ( size_t iin = 0 ; iin < geo::gGeometry().nPlanes(); iin++ ) 
+        for ( size_t exx = 0 ; exx < geo::gGeometry().nPlanes(); exx++ ) 
         {           
-            int inPlaneID = geo::gGeometry().sensorIDsVec().at( iin );
-            for ( size_t iex = 0 ; iex < geo::gGeometry().nPlanes(); iex++ ) 
+            int exPlaneID = geo::gGeometry().sensorIDsVec().at( exx );
+            if( exPlaneID != getFixedPlaneID() ) continue;
+            for ( size_t inn = 0 ; inn < geo::gGeometry().nPlanes(); inn++ ) 
             {
-                int exPlaneID = geo::gGeometry().sensorIDsVec().at( iex );
+                int inPlaneID = geo::gGeometry().sensorIDsVec().at( inn );
+                if( inPlaneID == getFixedPlaneID() ) continue;
+
                 if( _hitXCorrShiftMatrix[ exPlaneID ][ inPlaneID ] == 0 ) continue;
                 if( _hitXCorrShiftMatrix[ exPlaneID ][ inPlaneID ]->yAxis().bins() <= 0 ) continue;
 
-                if(
-                    !( inPlaneID != getFixedPlaneID() && exPlaneID == getFixedPlaneID() )
-                  )continue;
 
                 float _heighestBinX = 0.;
                 for( size_t ibin = 0; ibin < _hitXCorrShiftMatrix[ exPlaneID ][ inPlaneID ]->yAxis().bins(); ibin++)
@@ -693,7 +702,7 @@ void EUTelCorrelator::end() {
 
                
                 streamlog_out( MESSAGE5 ) << "Hit Offset values: " ; 
-                streamlog_out ( MESSAGE5 ) << " plane : " << inPlaneID << " " ;
+                streamlog_out ( MESSAGE5 ) << " plane : " << inPlaneID << " to plane : " << exPlaneID ;
                 streamlog_out ( MESSAGE5 ) << " X offset : "<<  (_correlationBandBinsX == 0. ? 0.: _correlationBandCenterX/_correlationBandBinsX) ; 
                 streamlog_out ( MESSAGE5 ) << " Y offset : "<<  (_correlationBandBinsY == 0. ? 0.: _correlationBandCenterY/_correlationBandBinsY) ; 
                 streamlog_out( MESSAGE5 ) << endl;
@@ -807,8 +816,8 @@ void EUTelCorrelator::bookHistos() {
 
          if ( 
                   ( col != getFixedPlaneID() && row == getFixedPlaneID() )
-//                  ||
-//                  (  geo::gGeometry().sensorIDtoZOrder( col ) == geo::gGeometry().sensorIDtoZOrder( row ) + 1 )
+                  ||
+                  (  geo::gGeometry().sensorIDtoZOrder( col ) == geo::gGeometry().sensorIDtoZOrder( row ) + 1 )
                   ) 
           {
 
