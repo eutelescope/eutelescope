@@ -114,6 +114,12 @@ namespace eutelescope {
         /** Histogram info file name */
 			std::string _histoInfoFileName;
 
+        /** x Resolution of planes in PlaneIds */
+        FloatVec _SteeringxResolutions;
+ 
+        /** y Resolution of planes in PlaneIds */
+        FloatVec _SteeringyResolutions;
+
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
         /** AIDA histogram map
          *  Instead of putting several pointers to AIDA histograms as
