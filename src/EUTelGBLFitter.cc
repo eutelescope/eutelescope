@@ -912,6 +912,7 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack, st
 		addSiPlaneScattererGBL(point, state->getLocation()); //This we still functions still assumes silicon is the thin scatterer. This can be easily changed when we have the correct gear file. However we will always assume that states will come with scattering information. To take into account material between states this will be dealt with latter. 
 		double fitPointGlobal[3];
 		geo::gGeometry().local2Master( state->getLocation(), fitPointLocal, fitPointGlobal);
+		state->setZParameter(fitPointGlobal[2]); //This is needed to calculate jacobian for some reason. Need to check this.
 		streamlog_out(DEBUG3) << "This is the global position of the track state. Should be the same x,y as above: " <<fitPointGlobal[0]<<","<<fitPointGlobal[1]<<","<<fitPointGlobal[2]<< std::endl;	
 		if(hit != NULL){
 			double cov[4] ;
@@ -936,13 +937,16 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack, st
 
 			double fitPointGlobal_next[3];
 			geo::gGeometry().local2Master( state_next->getLocation(), fitPointLocal_next, fitPointGlobal_next );
+			state_next->setZParameter(fitPointGlobal_next[2]); //This is needed to calculate jacobian for some reason. Need to check this. This is not really needed for state_next
 		streamlog_out(DEBUG3) << "This is the global position of the track state. Should be the same x,y as above: " <<fitPointGlobal_next[0]<<","<<fitPointGlobal_next[1]<<","<<fitPointGlobal_next[2]<< std::endl;	
 			float rad = geo::gGeometry().findRadLengthIntegral( fitPointGlobal, fitPointGlobal_next, true ); //We need to skip the volumes that contain the hits since this has already been counted. Must check this functions as expect????
 			streamlog_out(DEBUG3) << "This is the radiation length between the two points  " << fitPointGlobal[0]<<","<<fitPointGlobal[1]<<","<<fitPointGlobal[2]<<" and  " <<fitPointGlobal_next[0]<<","<<fitPointGlobal_next[1]<<","<<fitPointGlobal_next[2] <<"Radition length:  "<< rad <<std::endl;
 
 			///////////////////////////////////////////////////////////////////////////////////////////////////////BEGIN THE FIRST SCATTERING PLANE
 			//These distances are from the last state plane. There are where the next scatterer should be
-			float distance1 = (fitPointGlobal_next[2] + fitPointGlobal[2])/2 - (fitPointGlobal_next[2] - fitPointGlobal[2])/sqrt(12); 
+			//float distance1 = (fitPointGlobal_next[2] + fitPointGlobal[2])/2 - (fitPointGlobal_next[2] - fitPointGlobal[2])/sqrt(12); 
+			//The original plane should always be 0 so the above expression does not work
+			float distance1 = (fitPointGlobal_next[2] - fitPointGlobal[2])/2 - (fitPointGlobal_next[2] - fitPointGlobal[2])/sqrt(12); 
 			streamlog_out(DEBUG3) << "This is the distance to the first scatterer: " << distance1 <<std::endl;	
 			//Note the distance is used along the track and not from the scattering plane. How should this be dealt with?
 			TMatrix jacobianScat1(5,5); jacobianScat1 = state->getPropagationJacobianF(distance1);
@@ -964,7 +968,9 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack, st
 
 			/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////END THE FIRST SCATTERING PLANE
 			//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////BEGIN THE SECOND SCATTERING PLANE
-			float distance2 = (fitPointGlobal_next[2] + fitPointGlobal[2])/2 + (fitPointGlobal_next[2] - fitPointGlobal[2])/sqrt(12);
+			//float distance2 = (fitPointGlobal_next[2] + fitPointGlobal[2])/2 + (fitPointGlobal_next[2] - fitPointGlobal[2])/sqrt(12);
+			//The original plane should always be 0 so the above expression does not work
+			float distance2 = (fitPointGlobal_next[2] - fitPointGlobal[2])/2 + (fitPointGlobal_next[2] - fitPointGlobal[2])/sqrt(12); 
 
 			TMatrix jacobianScat2(5,5); jacobianScat2 = state->getPropagationJacobianF(distance2);
   		streamlog_out(DEBUG3) << "The second scattering point point is made from this jacobian:" << std::endl;

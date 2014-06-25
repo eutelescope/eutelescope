@@ -640,7 +640,7 @@ itTrk++;
             state->setY(posGlobal[1]);          // 0. at first hit
             state->setInvP(invp);            // independent of reference point
 						////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	    state->setZParameter(posGlobal[2]);
+	    			state->setZParameter(posGlobal[2]);
 
             if( streamlog_level(DEBUG1) ){            
               state->Print();

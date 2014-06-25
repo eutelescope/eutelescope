@@ -51,6 +51,7 @@ _maxChi2Cut(1000)
 void EUTelProcessorGBLFitCandidates::init() {
 
 	streamlog_out(DEBUG2) << "EUTelProcessorGBLFitCandidates::init( )---------------------------------------------BEGIN" << std::endl;
+		streamlog_out(DEBUG2) << "Beam charge= " << _beamQ <<" Beam energy= " << _eBeam << std::endl;
 
 	// Reset counters
 	_nProcessedRuns = 0;
