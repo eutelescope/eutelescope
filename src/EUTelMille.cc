@@ -1185,9 +1185,9 @@ void  EUTelMille::findMatchedHits(int& _ntrack, Track* TrackHere) {
             _yPos[_ntrack][nPlaneHere] = hitPosition[1] * 1000.;
             _zPos[_ntrack][nPlaneHere] = hitPosition[2] * 1000.;
 
-            _trackResidX[_ntrack][nPlaneHere] = ( hitPosition[0] - fitPosition[0] ) * 1000. ;
-            _trackResidY[_ntrack][nPlaneHere] = ( hitPosition[1] - fitPosition[1] ) * 1000. ;
-            _trackResidZ[_ntrack][nPlaneHere] = ( hitPosition[2] - fitPosition[2] ) * 1000. ;
+            _trackResidX[_ntrack][nPlaneHere] = ( fitPosition[0] - hitPosition[0] ) * 1000. ;
+            _trackResidY[_ntrack][nPlaneHere] = ( fitPosition[1] - hitPosition[1] ) * 1000. ;
+            _trackResidZ[_ntrack][nPlaneHere] = ( fitPosition[2] - hitPosition[2] ) * 1000. ;
    
             streamlog_out ( MESSAGE1 ) << "hit: @ " << hitID << " " 
                           << _xPos[_ntrack][nPlaneHere] << " " 
