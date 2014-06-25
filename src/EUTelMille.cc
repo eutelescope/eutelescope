@@ -1603,9 +1603,9 @@ void EUTelMille::processEvent (LCEvent * event) {
 
       streamlog_out ( MESSAGE1 ) << endl;
      
-      if( _inputMode == 1 ) {
-
-      }else{ 
+//    if( _inputMode == 1 ) {
+//    }else
+      { 
       if(_alignMode == 3)
         {
           streamlog_out(MESSAGE1) << " AlignMode = " << _alignMode << " _inputMode = " << _inputMode << std::endl;
