@@ -103,6 +103,53 @@ void EUTelGeometryTelescopeGeoDescription::setPlaneZRotation( int planeID, doubl
     if ( it != _sensorIDtoZOrderMap.end() )  _siPlaneZRotation[ _sensorIDtoZOrderMap[ planeID ] ] = value ;
 }
 
+void EUTelGeometryTelescopeGeoDescription::setPlaneXRotationRadians( int planeID, double value /* in Radians */ ) {
+    std::map<int,int>::iterator it;
+    it = _sensorIDtoZOrderMap.find(planeID);
+    if ( it != _sensorIDtoZOrderMap.end() )  _siPlaneXRotation[ _sensorIDtoZOrderMap[ planeID ] ] = value * DEG;
+}
+
+void EUTelGeometryTelescopeGeoDescription::setPlaneYRotationRadians( int planeID, double value /* in Radians */ ) {
+    std::map<int,int>::iterator it;
+    it = _sensorIDtoZOrderMap.find(planeID);
+    if ( it != _sensorIDtoZOrderMap.end() )  _siPlaneYRotation[ _sensorIDtoZOrderMap[ planeID ] ] = value * DEG;
+}
+
+void EUTelGeometryTelescopeGeoDescription::setPlaneZRotationRadians( int planeID, double value /* in Radians */ ) {
+    std::map<int,int>::iterator it;
+    it = _sensorIDtoZOrderMap.find(planeID);
+    if ( it != _sensorIDtoZOrderMap.end() )  _siPlaneZRotation[ _sensorIDtoZOrderMap[ planeID ] ] = value * DEG ;
+}
+
+/** get methods */
+float  EUTelGeometryTelescopeGeoDescription::siPlaneRotation1( int planeID ) {
+    std::map<int,int>::iterator it;
+    it = _sensorIDtoZOrderMap.find(planeID);
+    if ( it != _sensorIDtoZOrderMap.end() ) return _siPlaneRotation1[ _sensorIDtoZOrderMap[ planeID ] ];
+    return -999.;
+}
+float  EUTelGeometryTelescopeGeoDescription::siPlaneRotation2( int planeID ) {
+    std::map<int,int>::iterator it;
+    it = _sensorIDtoZOrderMap.find(planeID);
+    if ( it != _sensorIDtoZOrderMap.end() ) return _siPlaneRotation2[ _sensorIDtoZOrderMap[ planeID ] ];
+    return -999.;
+}
+float  EUTelGeometryTelescopeGeoDescription::siPlaneRotation3( int planeID ) {
+    std::map<int,int>::iterator it;
+    it = _sensorIDtoZOrderMap.find(planeID);
+    if ( it != _sensorIDtoZOrderMap.end() ) return _siPlaneRotation3[ _sensorIDtoZOrderMap[ planeID ] ];
+    return -999.;
+}
+float  EUTelGeometryTelescopeGeoDescription::siPlaneRotation4( int planeID ) {
+    std::map<int,int>::iterator it;
+    it = _sensorIDtoZOrderMap.find(planeID);
+    if ( it != _sensorIDtoZOrderMap.end() ) return _siPlaneRotation4[ _sensorIDtoZOrderMap[ planeID ] ];
+    return -999.;
+}
+
+
+
+
 /** get methods */
 double EUTelGeometryTelescopeGeoDescription::siPlaneXPosition( int planeID ) {
     std::map<int,int>::iterator it;
@@ -143,6 +190,27 @@ double EUTelGeometryTelescopeGeoDescription::siPlaneZRotation( int planeID ) {
     std::map<int,int>::iterator it;
     it = _sensorIDtoZOrderMap.find(planeID);
     if ( it != _sensorIDtoZOrderMap.end() ) return _siPlaneZRotation[ _sensorIDtoZOrderMap[ planeID ] ];
+    return -999.;
+}
+
+double/* in Radians */ EUTelGeometryTelescopeGeoDescription::siPlaneXRotationRadians( int planeID ) {
+    std::map<int,int>::iterator it;
+    it = _sensorIDtoZOrderMap.find(planeID);
+    if ( it != _sensorIDtoZOrderMap.end() ) return _siPlaneXRotation[ _sensorIDtoZOrderMap[ planeID ] ]* RADIAN;
+    return -999.;
+}
+
+double/* in Radians */ EUTelGeometryTelescopeGeoDescription::siPlaneYRotationRadians( int planeID ) {
+    std::map<int,int>::iterator it;
+    it = _sensorIDtoZOrderMap.find(planeID);
+    if ( it != _sensorIDtoZOrderMap.end() ) return _siPlaneYRotation[ _sensorIDtoZOrderMap[ planeID ] ]* RADIAN;
+    return -999.;
+}
+
+double/* in Radians */ EUTelGeometryTelescopeGeoDescription::siPlaneZRotationRadians( int planeID ) {
+    std::map<int,int>::iterator it;
+    it = _sensorIDtoZOrderMap.find(planeID);
+    if ( it != _sensorIDtoZOrderMap.end() ) return _siPlaneZRotation[ _sensorIDtoZOrderMap[ planeID ] ]* RADIAN;
     return -999.;
 }
 
@@ -300,7 +368,12 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout() {
         _siPlaneXRotation.push_back(_siPlanesLayerLayout->getLayerRotationZY(iPlane));
         _siPlaneYRotation.push_back(_siPlanesLayerLayout->getLayerRotationZX(iPlane));
         _siPlaneZRotation.push_back(_siPlanesLayerLayout->getLayerRotationXY(iPlane));
-        
+ 
+        _siPlaneRotation1.push_back(_siPlanesLayerLayout->getSensitiveRotation1(iPlane));
+        _siPlaneRotation2.push_back(_siPlanesLayerLayout->getSensitiveRotation2(iPlane));
+        _siPlaneRotation3.push_back(_siPlanesLayerLayout->getSensitiveRotation3(iPlane));
+        _siPlaneRotation4.push_back(_siPlanesLayerLayout->getSensitiveRotation4(iPlane));
+      
         _siPlaneXSize.push_back(_siPlanesLayerLayout->getSensitiveSizeX(iPlane));
         _siPlaneYSize.push_back(_siPlanesLayerLayout->getSensitiveSizeY(iPlane));
         _siPlaneZSize.push_back(_siPlanesLayerLayout->getSensitiveThickness(iPlane));
@@ -393,6 +466,11 @@ void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout() {
             _siPlaneYRotation.push_back( sensitiveLayer.getRotationZX() );
             _siPlaneZRotation.push_back( sensitiveLayer.getRotationXY() );
         
+            _siPlaneRotation1.push_back( 1.0 );
+            _siPlaneRotation2.push_back( 0.0 );
+            _siPlaneRotation3.push_back( 0.0 );
+            _siPlaneRotation4.push_back( 1.0 );
+
             _siPlaneXSize.push_back( sensitiveLayer.getSizeX() );
             _siPlaneYSize.push_back( sensitiveLayer.getSizeY() );
             _siPlaneZSize.push_back( sensitiveLayer.getThickness() );
@@ -446,6 +524,10 @@ _siPlaneZPosition(),
 _siPlaneXRotation(),
 _siPlaneYRotation(),
 _siPlaneZRotation(),
+_siPlaneRotation1(),
+_siPlaneRotation2(),
+_siPlaneRotation3(),
+_siPlaneRotation4(),
  _siPlaneXSize(),
  _siPlaneYSize(),
  _siPlaneZSize(),
@@ -532,12 +614,10 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( string tge
  */
 void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvolumeWorld, int SensorId ){
 
-   // Iterate over registered GEAR objects and construct their TGeo representation
-   const Double_t PI = 3.141592653589793;
-   const Double_t DEG = 180./PI; 
   
    double xc, yc, zc;   // volume center position 
    double alpha, beta, gamma;
+   double rot1, rot2, rot3, rot4; // for backward compatibility with previous GEAR 
 
        std::stringstream strId;
        strId << SensorId;
@@ -548,10 +628,15 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
        zc = siPlaneZPosition( SensorId );
        
        // Get sensor orientation
-       alpha = siPlaneXRotation( SensorId )*DEG; // [rad] in degrees !
-       beta  = siPlaneYRotation( SensorId )*DEG; // [rad]
-       gamma = siPlaneZRotation( SensorId )*DEG; // [rad]
-       
+       alpha = siPlaneXRotation( SensorId ); //  in degrees !
+       beta  = siPlaneYRotation( SensorId ); // 
+       gamma = siPlaneZRotation( SensorId ); // 
+
+       rot1 = siPlaneRotation1( SensorId );
+       rot2 = siPlaneRotation2( SensorId );
+       rot3 = siPlaneRotation3( SensorId );
+       rot4 = siPlaneRotation4( SensorId );
+
        // Spatial translations of the sensor center
        string stTranslationName = "matrixTranslationSensor";
        stTranslationName.append( strId.str() );
@@ -559,33 +644,93 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
        //ALL clsses deriving from TGeoMatrix are not owned by the ROOT geometry manager, invoking RegisterYourself() transfers
        //ownership and thus ROOT will clean up
        pMatrixTrans->RegisterYourself();      
-       
+
+// initial rot1,2,3,4 rotate and flip: 
+       string stRotationName = "matrixRotationSensorRotatenFlip";
+       stRotationName.append( strId.str() );
+       TGeoRotation* pMatrixRotFlip = new TGeoRotation( stRotationName.c_str(), 0.,  0., 0.);                // around X axis
+       pMatrixRotFlip->RegisterYourself();
+       if(   abs(rot2)<1e-6 &&    abs(rot3)<1e-6  ) {
+          // do not rotate it's diagonal
+
+         if(  abs(rot1+1.)<1e-6  ) {
+          // flip X axis
+          pMatrixRotFlip->ReflectX(0);
+         }
+
+         if(  abs(rot4+1.)<1e-6  ) {
+          // flip Y axis
+          pMatrixRotFlip->ReflectY(0);
+         }
+       }
+
+       if(  abs(rot1)<1e-6 &&  abs(rot4)<1e-6 ) {
+         // do rotate it's OFF diagonal
+         pMatrixRotFlip->RotateZ(90.);
+         // X->Y     0  1
+         // Y->-X   -1  0
+
+         if(  abs(rot2-1.)<1e-6 &&  abs(rot3+1.)<1e-6  ) {
+          //         0  1
+          //        -1  0
+          // do nothing  
+         }
+
+         if(  abs(rot2-1.)<1e-6 &&  abs(rot3-1.)<1e-6  ) {
+          //         0  1
+          //        -1  0
+          pMatrixRotFlip->ReflectY(0);
+         }
+
+         if(  abs(rot2+1.)<1e-6 &&  abs(rot3+1.)<1e-6  ) {
+          //         0  1
+          //        -1  0
+          pMatrixRotFlip->ReflectX(0);
+         }
+
+         if(  abs(rot2+1.)<1e-6 &&  abs(rot3-1.)<1e-6  ) {
+          //         0  1
+          //        -1  0
+          pMatrixRotFlip->ReflectX(0);
+          pMatrixRotFlip->ReflectY(0);
+         }
+
+ 
+       }
+
+
+      
        // Spatial rotation around sensor center
        // TGeoRotation requires Euler angles in degrees
-       string stRotationName = "matrixRotationSensorX";
+       stRotationName = "matrixRotationSensorX";
        stRotationName.append( strId.str() );
        TGeoRotation* pMatrixRotX = new TGeoRotation( stRotationName.c_str(), 0.,  alpha, 0.);                // around X axis
+       pMatrixRotX->RegisterYourself();
+
        stRotationName = "matrixRotationSensorY";
        stRotationName.append( strId.str() );
        TGeoRotation* pMatrixRotY = new TGeoRotation( stRotationName.c_str(), 90., beta,  0.);                // around Y axis (combination of rotation around Z axis and new X axis)
        stRotationName = "matrixRotationSensorBackY";
+       pMatrixRotY->RegisterYourself();
+
        stRotationName.append( strId.str() );
        TGeoRotation* pMatrixRotY1 = new TGeoRotation( stRotationName.c_str(), -90., 0.,  0.);                    // restoration of original orientation (valid in small angle approximataion ~< 15 deg)
+       pMatrixRotY1->RegisterYourself(); 
+
        stRotationName = "matrixRotationSensorZ";
        stRotationName.append( strId.str() );
        TGeoRotation* pMatrixRotZ = new TGeoRotation( stRotationName.c_str(), 0. , 0.,        gamma);         // around Z axis
-       
+       pMatrixRotZ->RegisterYourself();
+      
        // Combined rotation in several steps
        TGeoRotation* pMatrixRot = new TGeoRotation( *pMatrixRotX );
+ 
+       pMatrixRot->MultiplyBy( pMatrixRotFlip );
        pMatrixRot->MultiplyBy( pMatrixRotY );
        pMatrixRot->MultiplyBy( pMatrixRotY1 );
        pMatrixRot->MultiplyBy( pMatrixRotZ );
        pMatrixRot->RegisterYourself();      
       
-       pMatrixRotX->RegisterYourself();
-       pMatrixRotY->RegisterYourself();
-       pMatrixRotY1->RegisterYourself(); 
-       pMatrixRotZ->RegisterYourself();
 
        // Combined translation and orientation
        TGeoCombiTrans* combi = new TGeoCombiTrans( *pMatrixTrans, *pMatrixRot );
