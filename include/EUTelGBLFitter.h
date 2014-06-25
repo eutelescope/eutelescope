@@ -110,6 +110,8 @@ namespace eutelescope {
 
         void FitSingleTrackCandidate(EVENT::TrackVec::const_iterator& itTrkCand);
 
+				void SetHitCovMatrixFromFitterGBL(EUTelTrackStateImpl *state);
+
         inline void SetAlignmentMode( int number) {
             this->_alignmentMode = number;
         }
