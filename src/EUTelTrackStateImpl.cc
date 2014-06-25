@@ -211,7 +211,10 @@ streamlog_out(DEBUG0) << "The covariance matrix of the state" << std::endl;
 }
 
 void EUTelTrackStateImpl::getTrackStateHitCov( double (&cov)[4]) {
-memcpy(cov, _covHitMatrix, sizeof(cov));
+				cov[0] = _covHitMatrix[0];
+				cov[1] = _covHitMatrix[1];
+				cov[2] = _covHitMatrix[2];
+				cov[3] = _covHitMatrix[3];
 }
 
 

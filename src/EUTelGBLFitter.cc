@@ -862,6 +862,11 @@ void EUTelGBLFitter::CreateTrajectoryandFit(std::vector< gbl::GblPoint >* pointL
 
 	double loss = 0.;
 
+		streamlog_out ( DEBUG0 ) << "This is the trajectory we are just about to fit: " << endl;
+	  streamlog_message( DEBUG0, traj->printTrajectory(10);, std::endl; );
+		streamlog_out ( DEBUG0 ) << "This is the points in that trajectory " << endl;
+	  streamlog_message( DEBUG0, traj->printPoints(10);, std::endl; );
+
 	if ( !_mEstimatorType.empty( ) ) ierr = traj->fit( *chi2, *ndf, loss, _mEstimatorType );
   else ierr = traj->fit( *chi2, *ndf, loss );
 
@@ -915,8 +920,9 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack, st
 		state->setZParameter(fitPointGlobal[2]); //This is needed to calculate jacobian for some reason. Need to check this.
 		streamlog_out(DEBUG3) << "This is the global position of the track state. Should be the same x,y as above: " <<fitPointGlobal[0]<<","<<fitPointGlobal[1]<<","<<fitPointGlobal[2]<< std::endl;	
 		if(hit != NULL){
+			SetHitCovMatrixFromFitterGBL(state);
 			double cov[4] ;
-			state->setTrackStateHitCov(cov); //This part should not be done in the way it has. MUST FIX! Hit cov should be part of hits own class. Must learn more about LCIO data format
+			state->getTrackStateHitCov(cov); //This part should not be done in the way it has. MUST FIX! Hit cov should be part of hits own class. Must learn more about LCIO data format
 			
 			addMeasurementGBL(point, hit->getPosition(),  fitPointLocal, cov, state->getH()); 		
 			pushBackPointandState(pointList, point, state);
@@ -949,7 +955,9 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack, st
 			float distance1 = (fitPointGlobal_next[2] - fitPointGlobal[2])/2 - (fitPointGlobal_next[2] - fitPointGlobal[2])/sqrt(12); 
 			streamlog_out(DEBUG3) << "This is the distance to the first scatterer: " << distance1 <<std::endl;	
 			//Note the distance is used along the track and not from the scattering plane. How should this be dealt with?
-			TMatrix jacobianScat1(5,5); jacobianScat1 = state->getPropagationJacobianF(distance1);
+			TMatrixD jacobianScat1(5,5); jacobianScat1 = state->getPropagationJacobianF(distance1);
+			TVectorD stateVec = state->getTrackStateVec();
+			TVectorD stateVecOnScat1 = jacobianScat1 * stateVec; 
   		streamlog_out(DEBUG3) << "The first scattering point point is made from this jacobian:" << std::endl;
 	  	streamlog_message( DEBUG0, jacobianScat1.Print();, std::endl; );
 			gbl::GblPoint pointScat1(jacobianScat1);
@@ -970,9 +978,13 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack, st
 			//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////BEGIN THE SECOND SCATTERING PLANE
 			//float distance2 = (fitPointGlobal_next[2] + fitPointGlobal[2])/2 + (fitPointGlobal_next[2] - fitPointGlobal[2])/sqrt(12);
 			//The original plane should always be 0 so the above expression does not work
-			float distance2 = (fitPointGlobal_next[2] - fitPointGlobal[2])/2 + (fitPointGlobal_next[2] - fitPointGlobal[2])/sqrt(12); 
-
-			TMatrix jacobianScat2(5,5); jacobianScat2 = state->getPropagationJacobianF(distance2);
+			float distance2 = (fitPointGlobal_next[2] - fitPointGlobal[2])/2 + (fitPointGlobal_next[2] - fitPointGlobal[2])/sqrt(12) - distance1; //Since we want the distance between the scatterers
+			double p  = 1. / (stateVecOnScat1[4] * -1);
+  		double px = p*stateVecOnScat1[2] / sqrt( 1. + stateVecOnScat1[2]*stateVecOnScat1[2] + stateVecOnScat1[3]*stateVecOnScat1[3] );
+  		double py = p*stateVecOnScat1[3] / sqrt( 1. + stateVecOnScat1[2]*stateVecOnScat1[2] + stateVecOnScat1[3]*stateVecOnScat1[3] );
+  		double pz = p    / sqrt( 1. + stateVecOnScat1[2]*stateVecOnScat1[2] + stateVecOnScat1[3]*stateVecOnScat1[3] );
+			TMatrixD jacobianScat2(5,5); jacobianScat2 = geo::gGeometry().getPropagationJacobianF( stateVecOnScat1[0], stateVecOnScat1[1], 0, px, py, pz, -1, distance2 ); //Set z to zero since the magnetic field is assumed homogenious and this is all that z is used for
+			TVectorD stateVecOnScat2 = jacobianScat2 * stateVecOnScat1; 
   		streamlog_out(DEBUG3) << "The second scattering point point is made from this jacobian:" << std::endl;
 	  	streamlog_message( DEBUG0, jacobianScat2.Print();, std::endl; );
 			gbl::GblPoint pointScat2(jacobianScat2);
@@ -981,7 +993,12 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack, st
   		pointScat2.addScatterer(scat, scatPrecSensor);
 			pushBackPointandState(pointList, pointScat2, NULL);
 			//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////END OF SECOND SCATTERING PLANE
-			jacPointToPoint = state->getPropagationJacobianF(fitPointGlobal_next[2] - fitPointGlobal[2]); 				
+
+			p  = 1. / (stateVecOnScat2[4] * -1);
+  		px = p*stateVecOnScat2[2] / sqrt( 1. + stateVecOnScat2[2]*stateVecOnScat2[2] + stateVecOnScat2[3]*stateVecOnScat2[3] );
+  		py = p*stateVecOnScat2[3] / sqrt( 1. + stateVecOnScat2[2]*stateVecOnScat2[2] + stateVecOnScat2[3]*stateVecOnScat2[3] );
+  		pz = p    / sqrt( 1. + stateVecOnScat2[2]*stateVecOnScat2[2] + stateVecOnScat2[3]*stateVecOnScat2[3] );
+			jacPointToPoint =  geo::gGeometry().getPropagationJacobianF( stateVecOnScat2[0], stateVecOnScat2[1], 0, px, py, pz, -1, fitPointGlobal_next[2] - distance2 );
 
 		}  
 		/////////////////////////////////////////////////////////////////////////////////////////END OF CREATE SCATTERERS BETWEEN PLANES
@@ -1022,20 +1039,31 @@ void EUTelGBLFitter::addMeasurementGBL(gbl::GblPoint& point, const double *hitPo
      
 	streamlog_out(MESSAGE1) << " addMeasurementsGBL ------------- BEGIN --------------- " << std::endl;
 
- 	TVectorD meas(2);
+ 	TVectorD meas(5);
 	meas[0] = hitPos[0] - statePos[0];
         meas[1] = hitPos[1] - statePos[1];
 
-	TMatrixDSym measPrec(2); //Precision matrix is symmetric. The vector option that was here was silly since there could be correlation between variance and x/y.
-        measPrec[0][0] = 1. / hitCov[0];	// cov(x,x)
-        measPrec[1][1] = 1. / hitCov[2];	// cov(y,y)
-	measPrec[0][1] = 1. / hitCov[1];  //cov(x,y)
-
+	TVectorD measPrec(5); //Precision matrix is symmetric. The vector option that was here was silly since there could be correlation between variance and x/y. However for now leave it.
+        measPrec[0] = 1. / hitCov[0];	// cov(x,x)
+       // measPrec[0][1] = 1. / hitCov[1];	// cov(x,x)
+       // measPrec[1][0] = 1. / hitCov[2];	// cov(x,x)
+        measPrec[1] = 1. / hitCov[3];	// cov(y,y)
+	//measPrec[0][1] = 1. / hitCov[1];  //cov(x,y)
+	streamlog_out(DEBUG4) << "This is what we add to the measured point:" << std::endl;
 	streamlog_out(DEBUG4) << "Residuals and covariant matrix for the hit:" << std::endl;
-        streamlog_out(DEBUG4) << "X:" << std::setw(20) << meas[0] << std::setw(20) << measPrec[0][0] << measPrec[0][1] << std::endl;
-        streamlog_out(DEBUG4) << "Y:" << std::setw(20) << meas[1] << std::setw(20) << measPrec[1][0] << measPrec[1][1] << std::endl;
+        streamlog_out(DEBUG4) << "X:" << std::setw(20) << meas[0] << std::setw(20) << measPrec[0] <<"," << std::endl;
+        streamlog_out(DEBUG4) << "Y:" << std::setw(20) << meas[1] << std::setw(20)  <<"," << measPrec[1] << std::endl;
+	streamlog_out(DEBUG4) << "This H matrix:" << std::endl;
+	streamlog_message( DEBUG0, HMatrix.Print();, std::endl; );
 
-        point.addMeasurement(HMatrix, meas, measPrec);
+//The gbl library creates 5 measurement vector and 5x5 propagation matrix automatically. 
+//So need to alter how HMatrix is added to this. 
+TMatrixD proM2l(5, 5);
+proM2l.UnitMatrix();
+proM2l[0][0]=HMatrix[0][0]; proM2l[0][1]=HMatrix[0][1];
+proM2l[1][0]=HMatrix[1][0]; proM2l[1][1]=HMatrix[1][1];
+
+        point.addMeasurement(proM2l, meas, measPrec);
 
 	streamlog_out(MESSAGE1) << " addMeasurementsGBL ------------- END ----------------- " << std::endl;
 }
@@ -1461,7 +1489,9 @@ void EUTelGBLFitter::SetHitCovMatrixFromFitterGBL(EUTelTrackStateImpl *state){
 	}
 	else{
 		hitcov[0]=0.1;
-		hitcov[2]=0.1;
+		hitcov[1]=0;
+		hitcov[2]=0;
+		hitcov[3]=0.1;
 	}
 
 state->setTrackStateHitCov(hitcov);
