@@ -20,15 +20,16 @@
       <processor name="LoadDB"/>
       <processor name="ApplyPreAlignment"/>
       <processor name="ApplyAlignment"/>
-      <group name="TelDUTFitter"/>
-      <group name="TelDUTTransferToLocalCoordinates"/>
-      <group name="TelDUTHistos"/>
+      <processor name="DafFitter"/>
+      <xgroup name="TelDUTFitter"/>
+      <xgroup name="TelDUTTransferToLocalCoordinates"/>
+      <xgroup name="TelDUTHistos"/>
       <processor name="MyEUTelUtilityPrintEventNumber"/>
       <processor name="Save"/>
    </execute>
 
    <global>
-      <parameter name="LCIOInputFiles"> @LcioPath@/@Output@-hitmaker.slcio </parameter>
+      <parameter name="LCIOInputFiles"> @LcioPath@/@Output@-hit.slcio </parameter>
       <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
@@ -41,7 +42,7 @@
   <!-- compression of output file 0: false >0: true (default) -->
   <parameter name="Compress" type="int" value="1"/>
   <!-- filename without extension-->
-  <parameter name="FileName" type="string" value="@HistoPath@/@Output@-fitter"/>
+  <parameter name="FileName" type="string" value="@HistoPath@/@Output@-trackdaf"/>
   <!-- type of output file root (default) or xml )-->
   <parameter name="FileType" type="string" value="root"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
@@ -79,108 +80,121 @@
 </processor>
 
 
- <processor name="ApplyPreAlignment" type="EUTelApplyAlignmentProcessor">
- <!--Apply to the input hit the alignment corrections-->
-  <!--Alignment constant from the condition file-->
-  <parameter name="AlignmentConstantName" type="string" lcioInType="LCGenericObject"> prealign </parameter>
-  <!--The name of the input hit collection-->
-  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
-  <!--The name of the output hit collection-->
-  <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> alignedPre </parameter>
-  <!--Rotation Angle around X axis-->
-  <!--parameter name="Alpha" type="double" value="0"/-->
-  <!--Available directinos are:
- 0 -> direct  
- 1 -> reverse -->
-  <parameter name="ApplyAlignmentDirection" type="int" value="0"/>
-  <!--Do you want the reference hit collection to be corrected by the shifts and tilts from the alignment collection?-->
+  <processor name="ApplyPreAlignment" type="EUTelApplyAlignmentProcessor">
+    <parameter name="AlignmentConstantName" type="string" lcioInType="LCGenericObject"> prealign </parameter>
+    <parameter name="alignmentCollectionNames"> prealign </parameter>
+    <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
+    <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> PreAlignedHit </parameter>
+    <parameter name="CorrectionMethod" type="int" value="1"/>
+    <parameter name="ReferenceCollection" type="string" > refhit </parameter>
+    <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
+
+    <parameter name="DoAlignCollection" type="bool" value="true"/>
+    <parameter name="HistogramSwitch" type="bool" value="false"/>
+    <parameter name="DEBUG" type="bool" value="false"/>
+    <parameter name="PrintEvents" type="int" value="0"/>
+  </processor>
+
+
+  <processor name="ApplyAlignment" type="EUTelApplyAlignmentProcessor">
+    <parameter name="AlignmentConstantName" type="string" lcioInType="LCGenericObject"> align </parameter>
+    <parameter name="alignmentCollectionNames"> align </parameter>
+    <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> PreAlignedHit </parameter>
+    <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> alignedHit </parameter>
+    <parameter name="CorrectionMethod" type="int" value="1"/>
+    <parameter name="ReferenceCollection" type="string" > refhit </parameter>
+    <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
+
+    <parameter name="DoAlignCollection" type="bool" value="true"/>
+    <parameter name="HistogramSwitch" type="bool" value="false"/>
+    <parameter name="DEBUG" type="bool" value="false"/>
+    <parameter name="PrintEvents" type="int" value="10"/>
+  </processor>
+
+
+
+
+<processor name="Correlator" type="EUTelCorrelator">
+ <!--EUTelCorrelator fills histograms with correlation plots-->
+  <!--Hit collection name-->
+  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> alignedHit </parameter>
+  <!-- -->
+  <parameter name="DumpOffset" type="bool" > false </parameter>
+  <parameter name="ReferenceCollection" type="string" > refhit </parameter>
   <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
-  <!--Rotation Angle around Y axis-->
-  <!--parameter name="Beta" type="double" value="0"/-->
-  <!--Available methods are:
- 0 -> shift only 
- 1 -> rotation first 
- 2 -> shift first -->
-  <parameter name="CorrectionMethod" type="int" value="1"/>
-  <!--Enable or disable DEBUG mode -->
-  <parameter name="DEBUG" type="bool" value="false"/>
-  <!--Implement geometry shifts and rotations as described in alignmentCollectionName -->
-  <parameter name="DoAlignCollection" type="bool" value="true"/>
-  <!--Apply alignment steps in one go. Is supposed to be used for reversealignment in reverse order, like: undoAlignment, undoPreAlignment, undoGear -->
-  <!--parameter name="DoAlignmentInOneGo" type="bool" value="false"/-->
-  <!--Implement geometry shifts and rotations as described in GEAR steering file -->
-  <!--parameter name="DoGear" type="bool" value="false"/-->
-  <!--Rotation Angle around Z axis-->
-  <!--parameter name="Gamma" type="double" value="0"/-->
-  <!--Enable or disable histograms-->
-  <parameter name="HistogramSwitch" type="bool" value="true"/>
-  <!--This is the name of the modified output reference hit collection-->
-  <!--parameter name="OutputReferenceCollection" type="string" value="output_refhit"/-->
-  <!--Events number to have DEBUG1 printed outs (default=10)-->
-  <parameter name="PrintEvents" type="int" value="0"/>
-  <!--This is the name of the reference hit collection-->
-  <parameter name="ReferenceCollection" type="string" value="refhit"/>
-  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <!--parameter name="Verbosity" type="string" value=""/-->
-  <!--List of alignment collections that were applied to the DUT-->
-  <parameter name="alignmentCollectionNames" type="StringVec" value="prealign"/>
-  <!--List of hit collections. First one is INPUT collection, every subsequent corresponds to applying alignment collection-->
-  <parameter name="hitCollectionNames" type="StringVec" value="hitCollectionNames"/>
-  <!--List of refhit collections. First one is INPUT collection, every subsequent corresponds to applying alignment collection-->
-  <parameter name="refhitCollectionNames" type="StringVec" value="hitCollectionNames"/>
+  <parameter name="MinNumberOfCorrelatedHits" type="int" value="6"/>
+  <parameter name="Events"  type="int" value="1999"/>
+  <parameter name="HotPixelCollectionName"  type="string" value="hotpixel_apix"/>
+
+  <!--Residual cuts along both size in microns-->
+    <parameter name="ResidualsXMax" type="FloatVec">  2.  2.  2.   2.   2.     2.  2.  2.          </parameter>
+    <parameter name="ResidualsXMin" type="FloatVec"> -2. -2. -2.  -2.  -2.    -2. -2. -2.          </parameter>
+    <parameter name="ResidualsYMax" type="FloatVec">  2.  2.  2.   2.   2.     2.  2.  2.          </parameter>
+    <parameter name="ResidualsYMin" type="FloatVec"> -2. -2. -2.  -2.  -2.    -2. -2. -2.          </parameter>
+
 </processor>
 
 
- <processor name="ApplyAlignment" type="EUTelApplyAlignmentProcessor">
- <!--Apply to the input hit the alignment corrections-->
-  <!--Alignment constant from the condition file-->
-  <parameter name="AlignmentConstantName" type="string" lcioInType="LCGenericObject"> align </parameter>
-  <!--The name of the input hit collection-->
-  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> alignedPre </parameter>
-  <!--The name of the output hit collection-->
-  <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> alignedHit </parameter>
-  <!--Rotation Angle around X axis-->
-  <!--parameter name="Alpha" type="double" value="0"/-->
-  <!--Available directinos are:
- 0 -> direct  
- 1 -> reverse -->
-  <parameter name="ApplyAlignmentDirection" type="int" value="0"/>
-  <!--Do you want the reference hit collection to be corrected by the shifts and tilts from the alignment collection?-->
-  <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
-  <!--Rotation Angle around Y axis-->
-  <!--parameter name="Beta" type="double" value="0"/-->
-  <!--Available methods are:
- 0 -> shift only 
- 1 -> rotation first 
- 2 -> shift first -->
-  <parameter name="CorrectionMethod" type="int" value="1"/>
-  <!--Enable or disable DEBUG mode -->
-  <parameter name="DEBUG" type="bool" value="false"/>
-  <!--Implement geometry shifts and rotations as described in alignmentCollectionName -->
-  <parameter name="DoAlignCollection" type="bool" value="true"/>
-  <!--Apply alignment steps in one go. Is supposed to be used for reversealignment in reverse order, like: undoAlignment, undoPreAlignment, undoGear -->
-  <!--parameter name="DoAlignmentInOneGo" type="bool" value="false"/-->
-  <!--Implement geometry shifts and rotations as described in GEAR steering file -->
-  <!--parameter name="DoGear" type="bool" value="false"/-->
-  <!--Rotation Angle around Z axis-->
-  <!--parameter name="Gamma" type="double" value="0"/-->
-  <!--Enable or disable histograms-->
-  <parameter name="HistogramSwitch" type="bool" value="false"/>
-  <!--This is the name of the modified output reference hit collection-->
-  <!--parameter name="OutputReferenceCollection" type="string" value="output_refhit"/-->
-  <!--Events number to have DEBUG1 printed outs (default=10)-->
-  <parameter name="PrintEvents" type="int" value="0"/>
-  <!--This is the name of the reference hit collection-->
+ <processor name="DafFitter" type="EUTelDafFitter">
+ <!--This processor preforms track reconstruction. The tracks are as final track fit for analysis.-->
+  <!--Collection name for fitted tracks-->
+  <parameter name="TrackCollectionName" type="string" lcioOutType="Track"> tracks </parameter>
+  <!--Should plots be made and filled?-->
+  <!--parameter name="AddToLCIO" type="bool" value="true"/-->
+  <!--Names of alignment collections, should be in same order as application-->
+  <parameter name="AlignmentCollectionNames" type="StringVec" value="prealign align"/>
+  <!--DAF fitter: The cutoff value for a measurement to be included in the fit.-->
+  <parameter name="Chi2Cutoff" type="float" value="100"/>
+  <!--List of sensor IDs for the DUT planes. Used to make the decision on whether ro accept the track or not. These planes are not used in track finder, and not in the track fitter unless option 'useDutsInFit' is set.-->
+  <parameter name="DutPlanes" type="IntVec"> 20 21 </parameter>
+  <!--Sigma of telescope resolution in the global X plane,-->
+  <parameter name="DutResolutionX" type="float" value="14"/>
+  <!--Sigma of telescope resolution in the global Y plane,-->
+  <parameter name="DutResolutionY" type="float" value="70"/>
+  <!--Beam energy [GeV], used to calculate amount of scatter-->
+  <parameter name="Ebeam" type="float" value="4.0"/>
+  <!--Track finding: The maximum allowed distance between to hits in the xy plane for inclusion in track candidate-->
+  <parameter name="FinderRadius" type="float" value="1000"/>
+  <!--Set this to true if you want DUTs to be included in the track fit-->
+  <parameter name="FitDuts" type="bool" value="true"/>
+  <!--Names of input hit collections-->
+  <parameter name="HitCollectionName" type="StringVec" value="alignedHit"/>
+  <!--Should plots be made and filled?-->
+  <parameter name="MakePlots" type="bool" value="true"/>
+  <!--Maximum allowed global chi2/ndof-->
+  <parameter name="MaxChi2OverNdof" type="float" value="10"/>
+  <!--How many DUT hits do we need in order to accept track?-->
+  <parameter name="NDutHits" type="int" value="0"/>
+  <!--dx/dz assumed by track finder-->
+  <parameter name="NominalDxdz" type="float" value="0.0"/>
+  <!--dy/dz assumed by track finder-->
+  <parameter name="NominalDydz" type="float" value="0.0"/>
+  <!--Radiation lengths of planes.-->
+  <!--parameter name="RadiationLengths" type="FloatVec"> </parameter-->
+  <!--reference hit collection name -->
   <parameter name="ReferenceCollection" type="string" value="refhit"/>
+  <!--How many telescope planes do we require to be included in the fit?-->
+  <parameter name="RequireNTelPlanes" type="float" value="6"/>
+  <!--Scale thickness of DUT planes-->
+  <!--parameter name="ScaleScattering" type="float" value="1"/-->
+  <!--Sigma of telescope resolution in the global X plane,-->
+  <parameter name="TelResolutionX" type="float" value="3.5"/>
+  <!--Sigma of telescope resolution in the global Y plane,-->
+  <parameter name="TelResolutionY" type="float" value="3.5"/>
+  <!--List of sensor IDs for the telescope planes. These planes are used for the track finder, and track fitter.-->
+  <parameter name="TelescopePlanes" type="IntVec"> 0 1 2  3 4 5 </parameter>
+  <!--Filename for fitted tracks-->
+  <!--Filename for fitted tracks-->
+  <!--parameter name="TrackAsciiName" type="string" value="tracks.txt"/-->
+  <!--Do you want the reference hit collection to be used for coordinate transformations?-->
+  <!--parameter name="UseReferenceCollection" type="bool" value="true"/-->
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
-  <!--List of alignment collections that were applied to the DUT-->
-  <parameter name="alignmentCollectionNames" type="StringVec" value="align"/>
   <!--List of hit collections. First one is INPUT collection, every subsequent corresponds to applying alignment collection-->
-  <parameter name="hitCollectionNames" type="StringVec" value="hitCollectionNames"/>
-  <!--List of refhit collections. First one is INPUT collection, every subsequent corresponds to applying alignment collection-->
-  <parameter name="refhitCollectionNames" type="StringVec" value="hitCollectionNames"/>
+  <parameter name="mccollections" type="StringVec"> </parameter>
 </processor>
+
+
 
 <group name="TelDUTFitter" >
   <!--Should plots be made and filled?-->

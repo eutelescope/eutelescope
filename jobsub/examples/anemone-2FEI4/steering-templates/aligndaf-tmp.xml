@@ -21,6 +21,7 @@
       <processor name="LoadRefHitDB"/>
       <processor name="LoadPreAlignment"/>
       <processor name="ApplyPreAlignment"/>
+      <processor name="Correlator" />
       <processor name="DafFitter"/>
       <processor name="Align"/>
       <processor name="Save"/>
@@ -106,6 +107,30 @@
   </processor>
 
 
+<processor name="Correlator" type="EUTelCorrelator">
+ <!--EUTelCorrelator fills histograms with correlation plots-->
+  <!--Hit collection name-->
+  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> PreAlignedHit </parameter>
+  <!-- -->
+  <parameter name="DumpOffset" type="bool" > false </parameter>
+  <parameter name="ReferenceCollection" type="string" > refhit </parameter>
+  <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
+  <parameter name="MinNumberOfCorrelatedHits" type="int" value="3"/>
+  <parameter name="Events"  type="int" value="1999"/>
+  <parameter name="HotPixelCollectionName"  type="string" value="hotpixel_apix"/>
+
+  <!--Residual cuts along both size in microns-->
+    <parameter name="ResidualsXMax" type="FloatVec">  2.  2.  2.   2.0  2.0    2.  2.  2.          </parameter>
+    <parameter name="ResidualsXMin" type="FloatVec"> -2. -2. -2.  -2.0 -2.0   -2. -2. -2.          </parameter>
+    <parameter name="ResidualsYMax" type="FloatVec">  2.  2.  2.   2.0  2.0    2.  2.  2.          </parameter>
+    <parameter name="ResidualsYMin" type="FloatVec"> -2. -2. -2.  -2.0 -2.0   -2. -2. -2.          </parameter>
+
+  <parameter name="Verbosity" type="string" value="MESSAGE6"/>
+
+</processor>
+
+
+
 
 
  <processor name="DafFitter" type="EUTelDafFitter">
@@ -119,17 +144,17 @@
   <!--DAF fitter: The cutoff value for a measurement to be included in the fit.-->
   <parameter name="Chi2Cutoff" type="float" value="1000"/>
   <!--List of sensor IDs for the DUT planes. Used to make the decision on whether ro accept the track or not. These planes are not used in track finder, and not in the track fitter unless option 'useDutsInFit' is set.-->
-  <!--parameter name="DutPlanes" type="IntVec"> </parameter-->
+  <parameter name="DutPlanes" type="IntVec"> 20 21 </parameter>
   <!--Sigma of telescope resolution in the global X plane,-->
-  <parameter name="DutResolutionX" type="float" value="200"/>
+  <parameter name="DutResolutionX" type="float" value="50"/>
   <!--Sigma of telescope resolution in the global Y plane,-->
-  <parameter name="DutResolutionY" type="float" value="200"/>
+  <parameter name="DutResolutionY" type="float" value="250"/>
   <!--Beam energy [GeV], used to calculate amount of scatter-->
   <parameter name="Ebeam" type="float" value="@BeamEnergy@"/>
   <!--Track finding: The maximum allowed distance between to hits in the xy plane for inclusion in track candidate-->
-  <parameter name="FinderRadius" type="float" value="1500"/>
+  <parameter name="FinderRadius" type="float" value="500"/>
   <!--Set this to true if you want DUTs to be included in the track fit-->
-  <parameter name="FitDuts" type="bool" value="false"/>
+  <parameter name="FitDuts" type="bool" value="true"/>
   <!--Names of input hit collections-->
   <parameter name="HitCollectionName" type="StringVec" value="PreAlignedHit"/>
   <!--Should plots be made and filled?-->
@@ -151,11 +176,11 @@
   <!--Scale thickness of DUT planes-->
   <!--parameter name="ScaleScattering" type="float" value="1"/-->
   <!--Sigma of telescope resolution in the global X plane,-->
-  <parameter name="TelResolutionX" type="float" value="140"/>
+  <parameter name="TelResolutionX" type="float" value="18"/>
   <!--Sigma of telescope resolution in the global Y plane,-->
-  <parameter name="TelResolutionY" type="float" value="140"/>
+  <parameter name="TelResolutionY" type="float" value="18"/>
   <!--List of sensor IDs for the telescope planes. These planes are used for the track finder, and track fitter.-->
-  <parameter name="TelescopePlanes" type="IntVec"> 0 1 2 20 21 3 4 5 </parameter>
+  <parameter name="TelescopePlanes" type="IntVec"> 0 1 2  3 4 5 </parameter>
   <!--Filename for fitted tracks-->
   <!--parameter name="TrackAsciiName" type="string" value="tracks.txt"/-->
   <!--Do you want the reference hit collection to be used for coordinate transformations?-->
