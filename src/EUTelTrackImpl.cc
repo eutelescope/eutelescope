@@ -49,6 +49,7 @@ namespace eutelescope {
 			for(hit = hits.begin();hit != hits.end(); ++hit){
 				if((*state)->getLocation() == Utility::getSensorIDfromHit(*hit)){
 					EUState->setHit(*hit);
+					break;
 				}else{
 					EUState->setHit(NULL);
 				}

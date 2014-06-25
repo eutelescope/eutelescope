@@ -82,7 +82,7 @@ namespace eutelescope {
 
 	void FindHitIfThereIsOne(EUTelTrackImpl* trackimpl, EVENT::TrackerHit* hit, EUTelTrackStateImpl* state);
 
-	void addMeasurementGBL(gbl::GblPoint& point, const double *hitPos, const double *statePos, const EVENT::FloatVec& hitCov, TMatrixD HMatrix);
+	void addMeasurementGBL(gbl::GblPoint& point, const double *hitPos, const double *statePos, double hitCov[4], TMatrixD HMatrix);
 
 
 				void CreateTrajectoryandFit(std::vector< gbl::GblPoint >* pointList,  gbl::GblTrajectory* traj, double* chi2, int* ndf, int & ierr);

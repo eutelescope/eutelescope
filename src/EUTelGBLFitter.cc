@@ -866,10 +866,10 @@ void EUTelGBLFitter::CreateTrajectoryandFit(std::vector< gbl::GblPoint >* pointL
   else ierr = traj->fit( *chi2, *ndf, loss );
 
 	if( ierr != 0 ){
-		streamlog_out(MESSAGE0) << "Fit failed! Track error: "<< ierr << " and chi2: " << chi2 << std::endl;
+		streamlog_out(MESSAGE0) << "Fit failed! Track error: "<< ierr << " and chi2: " << *chi2 << std::endl;
 	}
 	else{
-  streamlog_out(MESSAGE0) << "Fit Successful! Track error; "<< ierr << " and chi2: " << chi2 << std::endl;
+  streamlog_out(MESSAGE0) << "Fit Successful! Track error; "<< ierr << " and chi2: " << *chi2 << std::endl;
 	}
 	
 
@@ -911,8 +911,11 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack, st
 		double fitPointGlobal[3];
 		geo::gGeometry().local2Master( state->getLocation(), fitPointLocal, fitPointGlobal);
 		streamlog_out(DEBUG3) << "This is the global position of the track state. Should be the same x,y as above: " <<fitPointGlobal[0]<<","<<fitPointGlobal[1]<<","<<fitPointGlobal[2]<< std::endl;	
-		if(hit != NULL){ 
-			addMeasurementGBL(point, hit->getPosition(),  fitPointLocal, hit->getCovMatrix(), state->getH()); 		
+		if(hit != NULL){
+			double cov[4] ;
+			state->setTrackStateHitCov(cov); //This part should not be done in the way it has. MUST FIX! Hit cov should be part of hits own class. Must learn more about LCIO data format
+			
+			addMeasurementGBL(point, hit->getPosition(),  fitPointLocal, cov, state->getH()); 		
 			pushBackPointandState(pointList, point, state);
 
 		}else{
@@ -1003,7 +1006,7 @@ void EUTelGBLFitter::addSiPlaneScattererGBL(gbl::GblPoint& point, int iPlane) {
 
 
 //This will add the measurement of the hit and predicted position. Using the covariant matrix of the hit. NOT! the residual.
-void EUTelGBLFitter::addMeasurementGBL(gbl::GblPoint& point, const double *hitPos, const double *statePos, const EVENT::FloatVec& hitCov, TMatrixD HMatrix){
+void EUTelGBLFitter::addMeasurementGBL(gbl::GblPoint& point, const double *hitPos, const double *statePos, double hitCov[4], TMatrixD HMatrix){
      
 	streamlog_out(MESSAGE1) << " addMeasurementsGBL ------------- BEGIN --------------- " << std::endl;
 
@@ -1432,23 +1435,25 @@ void EUTelGBLFitter::CreateAlignmentToMeasurementJacobian(std::vector< gbl::GblP
 
 void EUTelGBLFitter::SetHitCovMatrixFromFitterGBL(EUTelTrackStateImpl *state){
 
-double hitcov[4];
-                    if( _parameterIdXResolutionVec.size() > 0 && _parameterIdYResolutionVec.size() > 0 )
-                    {
-                      for(unsigned int izPlane=0;izPlane<_parameterIdPlaneVec.size();izPlane++)
-                      {
-                        if( state->getHit() != NULL )
-                        {
-                          hitcov[0] = _parameterIdXResolutionVec[izPlane];
-                          hitcov[2] = _parameterIdYResolutionVec[izPlane];
+	double hitcov[4];
 
-                          hitcov[0] *= hitcov[0]; // squared !
-                          hitcov[2] *= hitcov[2]; // squared !
-                          break;
-                        }
-                      }
-                    }
+	int izPlane = state->getLocation();
+	if( _parameterIdXResolutionVec.size() > 0 && _parameterIdYResolutionVec.size() > 0 ){
+		if( state->getHit() != NULL ){
+  		hitcov[0] = _parameterIdXResolutionVec[izPlane];
+    	hitcov[2] = _parameterIdYResolutionVec[izPlane];
+
+   		hitcov[0] *= hitcov[0]; // squared !
+   		hitcov[2] *= hitcov[2]; // squared !
+  	}
+	}
+	else{
+		hitcov[0]=0.1;
+		hitcov[2]=0.1;
+	}
+
 state->setTrackStateHitCov(hitcov);
+
 }
 
 } // namespace eutelescope

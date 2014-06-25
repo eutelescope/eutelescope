@@ -66,6 +66,8 @@ void EUTelProcessorGBLFitCandidates::init() {
   Fitter->SetBeamEnergy(_eBeam);
 	Fitter->setMEstimatorType(_mEstimatorType);
   Fitter->SetChi2Cut(_maxChi2Cut);
+  Fitter->setParamterIdXResolutionVec(_SteeringxResolutions);
+  Fitter->setParamterIdYResolutionVec(_SteeringyResolutions);
   _trackFitter = Fitter;
 
 
