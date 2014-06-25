@@ -21,9 +21,9 @@
       <processor name="ApplyPreAlignment"/>
       <processor name="ApplyAlignment"/>
       <processor name="DafFitter"/>
-      <xgroup name="TelDUTFitter"/>
-      <xgroup name="TelDUTTransferToLocalCoordinates"/>
-      <xgroup name="TelDUTHistos"/>
+      <group name="TelDUTFitter"/>
+      <group name="TelDUTTransferToLocalCoordinates"/>
+      <group name="TelDUTHistos"/>
       <processor name="MyEUTelUtilityPrintEventNumber"/>
       <processor name="Save"/>
    </execute>
