@@ -6,10 +6,14 @@
 
    <execute>
       <processor name="AIDA"/>
-      <processor name="LoadHotPixelDB"/>
+      <processor name="LoadHotPixelM26"/>
+      <processor name="LoadHotPixelAPIX"/>
       <processor name="ClusteringMimosa"/>
-      <processor name="NoisyClusterMasker"/>
-      <processor name="NoisyClusterRemover"/>
+      <processor name="ClusteringAPIX"/>
+      <processor name="NoisyClusterMaskerM26"/>
+      <processor name="NoisyClusterRemoverM26"/>
+      <processor name="NoisyClusterMaskerAPIX"/>
+      <processor name="NoisyClusterRemoverAPIX"/>
       <processor name="Save"/>
       <processor name="EUTelUtilityPrintEventNumber"/>
    </execute>
@@ -35,7 +39,7 @@
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
  </processor>
  
- <processor name="LoadHotPixelDB" type="ConditionsProcessor">
+ <processor name="LoadHotPixelM26" type="ConditionsProcessor">
  <!--ConditionsProcessor provides access to conditions data  transparently from LCIO files or a databases, using LCCD-->
   <!--Initialization of a conditions database handler-->
   <!--parameter name="DBCondHandler" type="StringVec">conditionsName /lccd/myfolder HEAD  </parameter-->
@@ -51,25 +55,59 @@
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
  </processor>
  
- <processor name="ClusteringMimosa" type="EUTelProcessorGeometricClustering">
- <!--EUTelProcessorGeometricClustering is looking for clusters into a calibrated pixel matrix.-->
-  <!--The list of sensor ids that have to be excluded from the clustering.-->
-  <!--parameter name="ExcludedPlanes" type="IntVec"> </parameter-->
-  <!--This is the name of the histogram information file-->
-  <parameter name="HistoInfoFileName" type="string" value="@HistoInfoFile@"/>
-  <!--Switch on or off the histogram filling-->
-  <parameter name="HistogramFilling" type="bool">true </parameter>
-  <!--Cluster (output) collection name-->
-  <parameter name="PulseCollectionName" type="string" lcioOutType="TrackerPulse">cluster_m26 </parameter>
-  <!--Time cut in time units of your sensor-->
-  <!--parameter name="TCut" type="float">3.40282e+38 </parameter-->
+ <processor name="LoadHotPixelAPIX" type="ConditionsProcessor">
+ <!--ConditionsProcessor provides access to conditions data  transparently from LCIO files or a databases, using LCCD-->
+  <!--Initialization of a conditions database handler-->
+  <!--parameter name="DBCondHandler" type="StringVec">conditionsName /lccd/myfolder HEAD  </parameter-->
+  <!--Initialization of a conditions db file handler-->
+  <!--parameter name="DBFileHandler" type="StringVec">conditionsName conditions.slcio collectionName  </parameter-->
+  <!--Initialization string for conditions database-->
+  <parameter name="DBInit" type="string">localhost:lccd_test:calvin:hobbes </parameter>
+  <!--Initialization of a data file handler-->
+  <!--parameter name="DataFileHandler" type="StringVec">conditionsName  </parameter-->
+  <!--Initialization of a simple conditions file handler-->
+  <parameter name="SimpleFileHandler" type="StringVec"> hotpixel_apix   @DatabasePath@/run@RunNumber@-hotpixel-apix-db.slcio hotpixel_apix  </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
-  <!--Input of Zero Suppressed data-->
-  <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData">zsdata_m26 </parameter>
  </processor>
 
- <processor name="NoisyClusterMasker" type="EUTelProcessorNoisyClusterMasker">
+<processor name="ClusteringMimosa" type="EUTelProcessorGeometricClustering">
+<!--EUTelProcessorGeometricClustering is looking for clusters into a calibrated pixel matrix.-->
+<!--The list of sensor ids that have to be excluded from the clustering.-->
+<!--parameter name="ExcludedPlanes" type="IntVec"> </parameter-->
+<!--This is the name of the histogram information file-->
+<parameter name="HistoInfoFileName" type="string" value="@HistoInfoFile@"/>
+<!--Switch on or off the histogram filling-->
+<parameter name="HistogramFilling" type="bool">true </parameter>
+<!--Cluster (output) collection name-->
+<parameter name="PulseCollectionName" type="string" lcioOutType="TrackerPulse">cluster_m26 </parameter>
+<!--Time cut in time units of your sensor-->
+<!--parameter name="TCut" type="float">3.40282e+38 </parameter-->
+<!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+<!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+<!--Input of Zero Suppressed data-->
+<parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData">zsdata_m26 </parameter>
+</processor>
+
+<processor name="ClusteringAPIX" type="EUTelProcessorGeometricClustering">
+<!--EUTelProcessorGeometricClustering is looking for clusters into a calibrated pixel matrix.-->
+<!--The list of sensor ids that have to be excluded from the clustering.-->
+<!--parameter name="ExcludedPlanes" type="IntVec"> </parameter-->
+<!--This is the name of the histogram information file-->
+<parameter name="HistoInfoFileName" type="string" value="@HistoInfoFile@"/>
+<!--Switch on or off the histogram filling-->
+<parameter name="HistogramFilling" type="bool">true </parameter>
+<!--Cluster (output) collection name-->
+<parameter name="PulseCollectionName" type="string" lcioOutType="TrackerPulse">cluster_apix </parameter>
+<!--Time cut in time units of your sensor-->
+<!--parameter name="TCut" type="float">3.40282e+38 </parameter-->
+<!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+<!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+<!--Input of Zero Suppressed data-->
+<parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData">zsdata_apix </parameter>
+</processor>
+
+ <processor name="NoisyClusterMaskerM26" type="EUTelProcessorNoisyClusterMasker">
  <!--EUTelProcessorNoisyClusterMasker masks pulses which contain hot pixels. For this, the quality field of pulses is used to encode the kNoisyCluster enum provided by EUTelescope.-->
   <!--Name of the hot pixel collection.-->
   <parameter name="HotPixelCollectionName" type="string">hotpixel_m26 </parameter>
@@ -79,12 +117,32 @@
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
  </processor>
 
- <processor name="NoisyClusterRemover" type="EUTelProcessorNoisyClusterRemover">
+ <processor name="NoisyClusterRemoverM26" type="EUTelProcessorNoisyClusterRemover">
  <!--EUTelProcessorNoisyClusterRemover removes masked noisy clusters (TrackerPulses) from a collection, please note that the clusters have to be masked previously. This processor does not read in a hot pixel collection, it simply removes previusly masked TrackerPulses.-->
   <!--Input collection containing noise masked tracker pulse objects-->
   <parameter name="InputCollectionName" type="string" lcioInType="TrackerPulse">cluster_m26 </parameter>
   <!--Output collection where noisy clusters have been removed-->
   <parameter name="OutputCollectionName" type="string" lcioOutType="TrackerPulse"> cluster_m26_free </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+ </processor>
+
+ <processor name="NoisyClusterMaskerAPIX" type="EUTelProcessorNoisyClusterMasker">
+ <!--EUTelProcessorNoisyClusterMasker masks pulses which contain hot pixels. For this, the quality field of pulses is used to encode the kNoisyCluster enum provided by EUTelescope.-->
+  <!--Name of the hot pixel collection.-->
+  <parameter name="HotPixelCollectionName" type="string">hotpixel_apix </parameter>
+  <!--Input of zero suppressed data, still containing hot pixels-->
+  <parameter name="InputCollectionName" type="string" lcioInType="TrackerData">cluster_apix </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+ </processor>
+
+ <processor name="NoisyClusterRemoverAPIX" type="EUTelProcessorNoisyClusterRemover">
+ <!--EUTelProcessorNoisyClusterRemover removes masked noisy clusters (TrackerPulses) from a collection, please note that the clusters have to be masked previously. This processor does not read in a hot pixel collection, it simply removes previusly masked TrackerPulses.-->
+  <!--Input collection containing noise masked tracker pulse objects-->
+  <parameter name="InputCollectionName" type="string" lcioInType="TrackerPulse">cluster_apix </parameter>
+  <!--Output collection where noisy clusters have been removed-->
+  <parameter name="OutputCollectionName" type="string" lcioOutType="TrackerPulse"> cluster_apix_free </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
  </processor>
@@ -100,7 +158,7 @@
   <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
   <!--parameter name="KeepCollectionNames" type="StringVec">MyPreciousSimTrackerHits  </parameter-->
   <!-- name of output file -->
-  <parameter name="LCIOOutputFile" type="string" value="@LcioPath@/run@RunNumber@-clustering.slcio"/>
+  <parameter name="LCIOOutputFile" type="string" value="@LcioPath@/run@RunNumber@-geoclustering.slcio"/>
   <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
   <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   <!--Set it to true to remove intermediate EORE in merged runs-->

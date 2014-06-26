@@ -17,7 +17,6 @@
 
    <execute>
       <processor name="AIDA"/>
-      <processor name="LoadHotPixelDB"/>
       <processor name="LoadRefHitDB"/>
       <processor name="HitMakerM26"/>
       <processor name="PreAligner"/>
@@ -27,7 +26,7 @@
    </execute>
 
    <global>
-      <parameter name="LCIOInputFiles"> @LcioPath@/@FilePrefix@-clustering-filtered.slcio </parameter>
+      <parameter name="LCIOInputFiles"> @LcioPath@/@FilePrefix@-clustering.slcio </parameter>
       <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
@@ -47,23 +46,7 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="LoadHotPixelDB" type="ConditionsProcessor">
- <!--ConditionsProcessor provides access to conditions data  transparently from LCIO files or a databases, using LCCD-->
-  <!--Initialization of a conditions database handler-->
-  <!--parameter name="DBCondHandler" type="StringVec"> conditionsName /lccd/myfolder HEAD </parameter-->
-  <!--Initialization of a conditions db file handler-->
-  <!--parameter name="DBFileHandler" type="StringVec"> conditionsName conditions.slcio collectionName </parameter-->
-  <!--Initialization string for conditions database-->
-  <parameter name="DBInit" type="string" value="localhost:lccd_test:calvin:hobbes"/>
-  <!--Initialization of a data file handler-->
-  <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
-  <!--Initialization of a simple conditions file handler-->
-  <parameter name="SimpleFileHandler" type="StringVec"> hotpixel_m26 @DatabasePath@/@FilePrefix@-hotpixel.slcio hotpixel_m26 </parameter>
-  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <!--parameter name="Verbosity" type="string" value=""/-->
-</processor>
-
- <processor name="LoadRefHitDB" type="ConditionsProcessor">
+<processor name="LoadRefHitDB" type="ConditionsProcessor">
  <!--ConditionsProcessor provides access to conditions data  transparently from LCIO files or a databases, using LCCD-->
   <!--Initialization of a conditions database handler-->
   <!--parameter name="DBCondHandler" type="StringVec"> conditionsName /lccd/myfolder HEAD </parameter-->
@@ -82,7 +65,7 @@
  <processor name="HitMakerM26" type="EUTelProcessorHitMaker">
  <!--EUTelHitMaker is responsible to translate cluster centers from the local frame of reference to the external frame of reference using the GEAR geometry description-->
   <!--Cluster (pulse) collection name-->
-  <parameter name="PulseCollectionName" type="string" lcioInType="TrackerPulse"> filtered_cluster_m26 </parameter>
+  <parameter name="PulseCollectionName" type="string" lcioInType="TrackerPulse"> cluster_m26_free </parameter>
   <!--Hit collection name-->
   <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit </parameter>
   <!--Select here how the center of gravity should be calculated.
@@ -209,7 +192,7 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
  <processor name="MyEUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">
  <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
   <!--Print event number for every n-th event-->
-  <parameter name="EveryNEvents" type="int" value="1000"/>
+  <parameter name="EveryNEvents" type="int" value="2500"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
   <!--print the event timestamp as read from LCIO-->

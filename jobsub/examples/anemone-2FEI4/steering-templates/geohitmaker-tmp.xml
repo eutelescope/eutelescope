@@ -8,6 +8,7 @@
    <execute>
       <processor name="AIDA"/>
       <processor name="HitMakerM26"/>
+      <processor name="HitMakerAPIX"/>
       <processor name="Correlator"/>
       <processor name="PreAligner"/>
       <processor name="Save"/>
@@ -56,7 +57,27 @@
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
  </processor>
 
- <processor name="PreAligner" type="EUTelPreAlign">
+ <processor name="HitMakerAPIX" type="EUTelHitMakerTwo">
+ <!--EUTelHitMakerTwo is responsible to translate cluster centers from the local frame of reference to the external frame of reference using the GEAR geometry description-->
+  <!--If true a 3D histo will be filled. It may require large memory-->
+  <!--parameter name="Enable3DHisto" type="bool">true </parameter-->
+  <!--Hit coordinates are calculated in local reference frame of sensor-->
+  <!--parameter name="EnableLocalCoordidates" type="bool">false </parameter-->
+  <!--Hit collection name-->
+  <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit </parameter>
+  <!--This is the name of the LCIO file name with the output offset db (add .slcio)-->
+  <!--parameter name="OffsetDBFile" type="string">offset-db.slcio </parameter-->
+  <!--Cluster (pulse) collection name-->
+  <parameter name="PulseCollectionName" type="string" lcioInType="TrackerPulse">cluster_apix_free </parameter>
+  <!--This is the name of the reference hit collection initialized in this processor. This collection provides the reference vector to correctly determine a plane corresponding to a global hit coordiante.-->
+  <!--parameter name="ReferenceCollection" type="string">referenceHit </parameter-->
+  <!--This is the file where the reference hit collection is stored-->
+  <parameter name="ReferenceHitFile" type="string"> @DatabasePath@/run@RunNumber@-refhit-db.slcio </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+ </processor>
+
+<processor name="PreAligner" type="EUTelPreAlign">
  <!--Apply alignment constants to hit collection-->
   <!--Name of LCIO db file where alignment constantds will be stored-->
   <parameter name="AlignmentConstantLCIOFile" type="string"> @DatabasePath@/run@RunNumber@-prealign-db.slcio </parameter>
@@ -75,13 +96,13 @@
   <!--reference hit collection name -->
   <parameter name="ReferenceCollection" type="string">referenceHit </parameter>
   <!--Maximal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResidualsXMax" type="FloatVec"> 2. 2. 2. 2. 2. 2. </parameter>
+  <parameter name="ResidualsXMax" type="FloatVec"> 2. 2. 2.  8. 8.   2. 2. 5. </parameter>
   <!--Minimal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResidualsXMin" type="FloatVec"> -2. -2. -2. -2. -2. -2. </parameter>
+  <parameter name="ResidualsXMin" type="FloatVec"> -2. -2. -2.  -8. -8.  -2. -2. -5. </parameter>
   <!--Maximal values of the hit residuals in the Y direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResidualsYMax" type="FloatVec"> 2. 2. 2. 2. 2. 2. </parameter>
+  <parameter name="ResidualsYMax" type="FloatVec"> 2. 2. 2.  8. 8.  2. 2. 5. </parameter>
   <!--Minimal values of the hit residuals in the Y direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResidualsYMin" type="FloatVec"> -2. -2. -2. -2. -2. -2. </parameter>
+  <parameter name="ResidualsYMin" type="FloatVec"> -2. -2. -2.  -8. -8.  -2. -2. -5. </parameter>
   <!--Do you want the reference hit collection to be used for coordinate transformations?-->
   <!--parameter name="UseReferenceCollection" type="bool">true </parameter-->
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
@@ -111,13 +132,13 @@
   <!--reference hit collection name -->
    <parameter name="ReferenceCollection" type="string" value="refhit"/>
   <!--Maximal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResidualsXMax" type="FloatVec"> 2. 2. 2. 2. 2. 2. </parameter>
+  <parameter name="ResidualsXMax" type="FloatVec"> 2. 2. 2.  8. 8.  2. 2. 5. </parameter>
   <!--Minimal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResidualsXMin" type="FloatVec"> -2. -2. -2. -2. -2. -2. </parameter>
+  <parameter name="ResidualsXMin" type="FloatVec"> -2. -2. -2.  -8. -8.  -2. -2. -5. </parameter>
   <!--Maximal values of the hit residuals in the Y direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResidualsYMax" type="FloatVec"> 2. 2. 2. 2. 2. 2. </parameter>
+  <parameter name="ResidualsYMax" type="FloatVec"> 2. 2. 2.  8. 8.  2. 2. 5. </parameter>
   <!--Minimal values of the hit residuals in the Y direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResidualsYMin" type="FloatVec"> -2. -2. -2. -2. -2. -2. </parameter>
+  <parameter name="ResidualsYMin" type="FloatVec"> -2. -2. -2.  -8. -8.  -2. -2. -5. </parameter>
  <!--Do you want the reference hit collection to be used for coordinate transformations?-->
   <parameter name="UseReferenceCollection" type="bool">true </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
