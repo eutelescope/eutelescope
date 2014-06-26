@@ -70,7 +70,7 @@
   <!--Initialization of a data file handler-->
   <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
   <!--Initialization of a simple conditions file handler-->
-  <parameter name="SimpleFileHandler" type="StringVec"> refhit @DBPath@/@Output@-refhit-db.slcio referenceHit </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> refhit @RefHitDBFile@ referenceHit </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
@@ -86,7 +86,7 @@
   <!--Initialization of a data file handler-->
   <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
   <!--Initialization of a simple conditions file handler-->
-  <parameter name="SimpleFileHandler" type="StringVec"> prealign @DBPath@/@Output@-prealign-db.slcio alignment </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> prealign @PreAlignmentDBFile@ alignment </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
@@ -205,7 +205,7 @@
   <!--This is the name of the alignment collection to be saved into the slcio file-->
   <!--parameter name="AlignmentConstantCollectionName" type="string" value="alignment"/-->
   <!--This is the name of the LCIO file name with the output alignmentconstants (add .slcio)-->
-  <parameter name="AlignmentConstantLCIOFile" type="string" value="@DBPath@/@Output@-align-db.slcio"/>
+  <parameter name="AlignmentConstantLCIOFile" type="string" value="@AlignmentDBFile@"/>
   <!--Set how many hits (=planes) can be missing on a track candidate.-->
   <!--parameter name="AllowedMissingHits" type="int" value="0"/-->
   <!--Name of the Millepede binary file.-->
@@ -317,7 +317,7 @@
   <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
   <!--parameter name="KeepCollectionNames" type="StringVec" value="MyPreciousSimTrackerHits"/-->
   <!-- name of output file -->
-  <parameter name="LCIOOutputFile" type="string" value="@LcioPath@/@Output@-aligndaf.slcio "/>
+  <parameter name="LCIOOutputFile" type="string" value="@OutputFile@"/>
   <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
   <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   <!--Set it to true to remove intermediate EORE in merged runs-->

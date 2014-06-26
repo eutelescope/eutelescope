@@ -42,7 +42,7 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
     <!-- compression of output file 0: false >0: true (default) -->
     <parameter name="Compress" type="int" value="1"/>
     <!-- filename without extension-->
-    <parameter name="FileName" type="string" value= "@HistoPath@/run@RunNumber@-converter-histo@MemCheckFlag@"/>
+    <parameter name="FileName" type="string" value= "@HistoFile@"/>
     <!-- type of output file xml (default) or root ( only OpenScientist)-->
     <parameter name="FileType" type="string" value="root"/>
   </processor>
@@ -65,7 +65,7 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
   <!--The geometry identification number-->
   <parameter name="GeoID" type="int" value="100"/>
   <!--This is the input file name-->
-  <parameter name="InputFileName" type="string" value="@NativeFolder@/run@RunNumber@.raw  "/>
+  <parameter name="InputFileName" type="string" value="@InputFile@"/>
   <!--Resynchronize the events based on the TLU trigger ID-->
   <parameter name="SyncTriggerID" type="bool" value="true"/>
  </processor>
@@ -99,7 +99,7 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
  <processor name="HotPixelFinder" type="EUTelProcessorHotPixelFinder">
  
     <!--This is the name of the LCIO file name with the input/output hot pixel collection  (add .slcio)-->
-    <parameter name="HotPixelDBFile" type="string" value="@DBPath@/run@HotPixelRunNumber@-hotpixel-db.slcio"/>
+    <parameter name="HotPixelDBFile" type="string" value="@HotPixelDBFile@"/>
     <parameter name="HotPixelCollectionName" type="string" value="hotpixel_m26" />
 
     <!--EUTelHotPixelFinder periodically check for pixel singing loud too often and remove them from the analysis-->
@@ -121,9 +121,9 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
 
     <!--This float number [0,1] represents the maximum allowed firing frequency
         within the selected number of event per cycle-->
-    <parameter name="MaxAllowedFiringFreq" type="float" value="0.0005"/>
+    <parameter name="MaxAllowedFiringFreq" type="float" value="@M26MaxFreq@"/>
     <!--The number of events to be considered for each update cycle-->
-    <parameter name="NoOfEventPerCycle" type="int" value="9999"/>
+    <parameter name="NoOfEventPerCycle" type="int" value="@M26MaxEvents@"/>
     <!--The total number of hot pixel cycle-->
     <parameter name="TotalNoOfCycle" type="int" value="0"/>
  </processor>
@@ -158,7 +158,7 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
  <processor name="APIXHotPixelFinder" type="EUTelProcessorHotPixelFinder">
  
     <!--This is the name of the LCIO file name with the input/output hot pixel collection  (add .slcio)-->
-    <parameter name="HotPixelDBFile" type="string" value="@DBPath@/run@HotPixelRunNumber@-hotpixel-db.slcio"/>
+    <parameter name="HotPixelDBFile" type="string" value="@HotPixelDBFile@"/>
     <parameter name="HotPixelCollectionName" type="string" value="hotpixel_apix" />
 
     <!--EUTelHotPixelFinder periodically check for pixel singing loud too often and remove them from the analysis-->
@@ -180,9 +180,9 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
 
     <!--This float number [0,1] represents the maximum allowed firing frequency
         within the selected number of event per cycle-->
-    <parameter name="MaxAllowedFiringFreq" type="float" value="0.0005"/>
+    <parameter name="MaxAllowedFiringFreq" type="float" value="@FEI4MaxFreq@"/>
     <!--The number of events to be considered for each update cycle-->
-    <parameter name="NoOfEventPerCycle" type="int" value="9999"/>
+    <parameter name="NoOfEventPerCycle" type="int" value="@FEI4MaxEvents@"/>
     <!--The total number of hot pixel cycle-->
     <parameter name="TotalNoOfCycle" type="int" value="0"/>
  </processor>
@@ -199,7 +199,7 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
   <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
   <!--parameter name="KeepCollectionNames" type="StringVec" value="MyPreciousSimTrackerHits"/-->
   <!-- name of output file -->
-  <parameter name="LCIOOutputFile" type="string" value="@LcioPath@/run@RunNumber@@MemCheckFlag@.slcio  "/>
+  <parameter name="LCIOOutputFile" type="string" value="@OutputFile@ "/>
   <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
   <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   <!--Set it to true to remove intermediate EORE in merged runs-->

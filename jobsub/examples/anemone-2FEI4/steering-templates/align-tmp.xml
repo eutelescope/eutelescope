@@ -22,8 +22,7 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
       <processor name="LoadRefHitDB"/>
       <processor name="LoadPreAlignment"/>
       <processor name="ApplyPreAlignment"/>
-      <processor name="DafFitter"/> 
-      <xprocessor name="Align"/>
+      <processor name="Align"/>
       <processor name="MyEUTelUtilityPrintEventNumber"/>
   </execute>
 
@@ -33,7 +32,7 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
       <parameter name="SupressCheck" value="false"/>
-      <parameter name="Verbosity" value="MESSAGE"/>
+      <parameter name="Verbosity" value="MESSAGE4"/>
    </global>
 
  <processor name="AIDA" type="AIDAProcessor">
@@ -41,7 +40,7 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
   <!-- compression of output file 0: false >0: true (default) -->
   <parameter name="Compress" type="int" value="1"/>
   <!-- filename without extension-->
-  <parameter name="FileName" type="string" value="@HistoPath@/@Output@-align-histo@MemCheckFlag@"/>
+  <parameter name="FileName" type="string" value="@HistoFile@"/>
   <!-- type of output file xml (default) or root ( only OpenScientist)-->
   <parameter name="FileType" type="string" value="root"/>
  </processor>
@@ -57,19 +56,17 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
     <!--Initialization of a data file handler-->
     <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
     <!--Initialization of a simple conditions file handler-->
-    <parameter name="SimpleFileHandler" type="StringVec"> hotpixel_apix  @DBPath@/@Output@-hotpixel-db.slcio hotpixel_apix </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> hotpixel_apix  @HotPixelDBFile@ hotpixel_apix </parameter>
   </processor>
 
   <processor name="LoadRefHitDB"     type="ConditionsProcessor">
     <parameter name="DBInit" type="string" value="localhost:lccd_test:align:tel"/>
-    <parameter name="SimpleFileHandler" type="StringVec"> refhit  @DBPath@/@Output@-refhit-db.slcio referenceHit  </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> refhit  @RefHitDBFile@ referenceHit  </parameter>
   </processor>
-
-
 
   <processor name="LoadPreAlignment" type="ConditionsProcessor">
     <parameter name="DBInit" type="string" value="localhost:lccd_test:align:tel"/>
-    <parameter name="SimpleFileHandler" type="StringVec"> prealign @DBPath@/@Output@-prealign-db.slcio alignment </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> prealign @PreAlignmentDBFile@ alignment </parameter>
   </processor>
 
   <processor name="ApplyPreAlignment" type="EUTelApplyAlignmentProcessor">
@@ -88,31 +85,6 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
   </processor>
 
 
-  <processor name="DafFitter" type="EUTelDafFitter">
-    <parameter name="TelescopePlanes" type="IntVec"> 0 1 2 3 4 5 20 21  </parameter>
-    <parameter name="DutPlanes" type="IntVec">  </parameter>
-    <parameter name="FitDuts" type="bool" value="false"/>
-    <parameter name="MakePlots" type="bool" value="true"/>
-    <parameter name="RequireNTelPlanes" type="float" value="8"/>
-    <parameter name="HitCollectionName" type="string" lcioInType="TrackerHit"> PreAlignedHit </parameter>
-    <parameter name="TrackCollectionName" type="string" lcioInType="Track">  @TrackCollectionName@ </parameter>
-    <parameter name="AlignmentCollectionNames">prealign    </parameter>
-    <parameter name="ReferenceCollection" type="string" > refhit </parameter>
-    <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
-    <parameter name="Ebeam" type="float" value="@BeamEnergy@"/>
-    <parameter name="TelResolutionX" type="float" value="180"/>
-    <parameter name="TelResolutionY" type="float" value="180"/>
-    <parameter name="DutResolutionX" type="float" value="500" />
-    <parameter name="DutResolutionY" type="float" value="2500"/>
-    <parameter name="NominalDxdz" type="float" value="0.0"/>
-    <parameter name="NominalDydz" type="float" value="0.0"/>
-    <parameter name="FinderRadius" type="float" value="500" />
-    <parameter name="Chi2Cutoff" type="float" value="1000"/>
-    <parameter name="MaxChi2OverNdof" type="float" value="1000"/>
-    <parameter name="NDutHits" type="int" value="0"/>
-  </processor>
-
-
  <processor name="Align" type="EUTelMille">
  <!--EUTelMille uses the MILLE program to write data files for MILLEPEDE II.-->
   <parameter name="MimosaClusterChargeMin" type="int" value="0" />
@@ -120,8 +92,11 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
   <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
   <parameter name="HotPixelCollectionName"  type="string" value="hotpixel_apix"/>
 
+  <parameter name="HitCollectionName" type="string" lcioInType="TrackerHit"> PreAlignedHit  </parameter>
+
+
   <!--This is the name of the LCIO file name with the output alignmentconstants (add .slcio)-->
-  <parameter name="AlignmentConstantLCIOFile" type="string" value="@DBPath@/@Output@-align-db@MemCheckFlag@.slcio"/>
+  <parameter name="AlignmentConstantLCIOFile" type="string" value="@AlignmentFile@"/>
 
   <!--Name of the Millepede binary file.-->
   <parameter name="BinaryFilename" type="string" value="@LcioPath@/@Output@-align-mille@MemCheckFlag@.bin"/>
@@ -165,7 +140,7 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
   <!--Generate a steering file for the pede program.-->
   <parameter name="GeneratePedeSteerfile" type="int" value="1"/>
   <!--Selects the source of input hits. 0 - hits read from hitfile with simple trackfinding. 1 - hits read from output of tracking processor. 2 - Test mode. Simple internal simulation and simple trackfinding.-->
-  <parameter name="InputMode" type="int" value="1"/>
+  <parameter name="InputMode" type="int" value="0"/>
   <!--Maximal number of track candidates.-->
   <parameter name="MaxTrackCandidates" type="int" value="100000"/>
   <parameter name="MaxTrackCandidatesTotal" type="int" value="100000"/>
@@ -189,9 +164,12 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
   <!--parameter name="PedeUserStartValuesY" type="FloatVec"> 0 0 0 0 0 0 </parameter-->
   <!--Resolution of the telescope for Millepede.-->
   <parameter name="TelescopeResolution" type="float" value="10"/>
-  <parameter name="ResolutionX" type="float" value="   4     4     4      10   10        4     4     4 "/>
-  <parameter name="ResolutionY" type="float" value="   4     4     4      50   50        4     4     4 "/>
-  <parameter name="ResolutionZ" type="float" value="  10    10    10      10   10       10    10    10 "/>
+   <!--X resolution parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
+  <parameter name="ResolutionX" type="FloatVec"> @ResolutionX@ </parameter>
+  <!--Y resolution parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
+  <parameter name="ResolutionY" type="FloatVec"> @ResolutionY@ </parameter>
+  <!--Z resolution parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
+  <parameter name="ResolutionZ" type="FloatVec"> @ResolutionZ@ </parameter>
   <!--Rotation around the x axis of the sensors in test mode (to be determined by the alignment).-->
   <!--parameter name="TestModeSensorAlpha" type="FloatVec"> 0 0 0 0 0 0 </parameter-->
   <!--Rotation around the y axis of the sensors in test mode (to be determined by the alignment).-->

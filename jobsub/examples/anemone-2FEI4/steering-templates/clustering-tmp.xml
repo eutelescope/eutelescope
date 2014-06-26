@@ -28,7 +28,7 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
   </execute>
 
   <global>
-    <parameter name="LCIOInputFiles"> @LcioPath@/run@RunNumber@.slcio </parameter>
+    <parameter name="LCIOInputFiles"> @InputFile@ </parameter>
     <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
     <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
     <parameter name="SkipNEvents" value="0"/>
@@ -41,8 +41,7 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
     <!-- compression of output file 0: false >0: true (default) -->
     <parameter name="Compress" type="int" value="1"/>
     <!-- filename without extension-->
-     <parameter name="FileName" type="string" value=
-    "@HistoPath@/run@RunNumber@-clu-histo@MemCheckFlag@"/>
+     <parameter name="FileName" type="string" value="@HistoFile@"/>
     <!-- type of output file xml (default) or root ( only OpenScientist)-->
     <parameter name="FileType" type="string" value="root"/>
   </processor>
@@ -119,7 +118,7 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
     <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
     <!--parameter name="KeepCollectionNames" type="StringVec" value="MyPreciousSimTrackerHits"/-->
     <!-- name of output file -->
-    <parameter name="LCIOOutputFile" type="string" value="@LcioPath@/run@RunNumber@-clu@MemCheckFlag@.slcio"/>
+    <parameter name="LCIOOutputFile" type="string" value="@OutputFile@"/>
     <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
     <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
     <!--Set it to true to remove intermediate EORE in merged runs-->
