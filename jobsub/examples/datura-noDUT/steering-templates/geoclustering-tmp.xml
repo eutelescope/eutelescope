@@ -6,14 +6,16 @@
 
    <execute>
       <processor name="AIDA"/>
-      <processor name="UniversalNativeReader"/>
-      <processor name="HotPixelMasker"/>
+      <processor name="LoadHotPixelDB"/>
+      <processor name="ClusteringMimosa"/>
+      <processor name="NoisyClusterMasker"/>
+      <processor name="NoisyClusterRemover"/>
       <processor name="Save"/>
       <processor name="EUTelUtilityPrintEventNumber"/>
    </execute>
 
    <global>
-      <parameter name="LCIOInputFiles"> </parameter>
+      <parameter name="LCIOInputFiles"> @LcioPath@/run@RunNumber@-converter.slcio </parameter>
       <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
@@ -26,52 +28,65 @@
   <!-- compression of output file 0: false >0: true (default) -->
   <parameter name="Compress" type="int">1 </parameter>
   <!-- filename without extension-->
-  <parameter name="FileName" type="string" value= "@HistogramPath@/run@RunNumber@-converter-histo"/>
+  <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-geoclustering"/>
   <!-- type of output file root (default) or xml )-->
   <parameter name="FileType" type="string">root </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
  </processor>
+ 
+ <processor name="LoadHotPixelDB" type="ConditionsProcessor">
+ <!--ConditionsProcessor provides access to conditions data  transparently from LCIO files or a databases, using LCCD-->
+  <!--Initialization of a conditions database handler-->
+  <!--parameter name="DBCondHandler" type="StringVec">conditionsName /lccd/myfolder HEAD  </parameter-->
+  <!--Initialization of a conditions db file handler-->
+  <!--parameter name="DBFileHandler" type="StringVec">conditionsName conditions.slcio collectionName  </parameter-->
+  <!--Initialization string for conditions database-->
+  <parameter name="DBInit" type="string">localhost:lccd_test:calvin:hobbes </parameter>
+  <!--Initialization of a data file handler-->
+  <!--parameter name="DataFileHandler" type="StringVec">conditionsName  </parameter-->
+  <!--Initialization of a simple conditions file handler-->
+  <parameter name="SimpleFileHandler" type="StringVec"> hotpixel_m26   @DatabasePath@/run@RunNumber@-hotpixel-m26-db.slcio hotpixel_m26  </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+ </processor>
+ 
+ <processor name="ClusteringMimosa" type="EUTelProcessorGeometricClustering">
+ <!--EUTelProcessorGeometricClustering is looking for clusters into a calibrated pixel matrix.-->
+  <!--The list of sensor ids that have to be excluded from the clustering.-->
+  <!--parameter name="ExcludedPlanes" type="IntVec"> </parameter-->
+  <!--This is the name of the histogram information file-->
+  <parameter name="HistoInfoFileName" type="string" value="@HistoInfoFile@"/>
+  <!--Switch on or off the histogram filling-->
+  <parameter name="HistogramFilling" type="bool">true </parameter>
+  <!--Cluster (output) collection name-->
+  <parameter name="PulseCollectionName" type="string" lcioOutType="TrackerPulse">cluster_m26 </parameter>
+  <!--Time cut in time units of your sensor-->
+  <!--parameter name="TCut" type="float">3.40282e+38 </parameter-->
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+  <!--Input of Zero Suppressed data-->
+  <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData">zsdata_m26 </parameter>
+ </processor>
 
- <processor name="UniversalNativeReader" type="EUTelNativeReader">
- <!--Reads data streams produced by EUDAQ and produced the corresponding LCIO output-->
-  <!--This is the depfet produced output collection-->
-  <parameter name="DEPFETOutputCollection" type="string" lcioOutType="TrackerData">rawdata_dep </parameter>
-  <!--This is the eudrb producer output collection when read in RAW mode-->
-  <parameter name="EUBRDRawModeOutputCollection" type="string" lcioOutType="TrackerRawData">rawdata </parameter>
-  <!--Type of sparsified pixel data structure (use SparsePixelType enumerator)-->
-  <!--parameter name="EUDRBSparsePixelType" type="int">1 </parameter-->
-  <!--This si the mimotel output collection when read in ZS mode-->
-  <parameter name="EUDRBZSModeOutputCollection" type="string" lcioOutType="TrackerData">zsdata </parameter>
-  <!--The geometry identification number-->
-  <parameter name="GeoID" type="int">0 </parameter>
-  <!--This is the input file name-->
-  <parameter name="InputFileName" type="string" value="@NativePath@/run@RunNumber@.raw  "/>
+ <processor name="NoisyClusterMasker" type="EUTelProcessorNoisyClusterMasker">
+ <!--EUTelProcessorNoisyClusterMasker masks pulses which contain hot pixels. For this, the quality field of pulses is used to encode the kNoisyCluster enum provided by EUTelescope.-->
+  <!--Name of the hot pixel collection.-->
+  <parameter name="HotPixelCollectionName" type="string">hotpixel_m26 </parameter>
+  <!--Input of zero suppressed data, still containing hot pixels-->
+  <parameter name="InputCollectionName" type="string" lcioInType="TrackerData">cluster_m26 </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
  </processor>
 
- <processor name="HotPixelMasker" type="EUTelProcessorHotPixelMasker">
- <!--EUTelProcessorHotPixelMasker computes the firing frequency of pixels and applies a cut on this value to mask (NOT remove) hot pixels.-->
-  <!--The list of sensor IDs that shall be excluded.-->
-  <!--parameter name="ExcludedPlanes" type="IntVec"> </parameter-->
-  <!--This is the name of the hot pixel collection to be saved into the output slcio file-->
-  <parameter name="HotPixelCollectionName" type="string" value="hotpixel_m26" />
-  <!--This is the name of the LCIO file name with the output hotpixel db (add .slcio)-->
-  <parameter name="HotPixelDBFile" type="string" value="@DatabasePath@/run@HotPixelRunNumber@-hotpixel-m26-db.slcio"/>
-  <!--Write mode for HotPixelDB file:  WRITE_APPEND or WRITE_NEW-->
-  <!--parameter name="LCIOWriteMode" type="string">WRITE_NEW </parameter-->
-  <!--This float number [0,1] represents the maximum allowed firing frequency
-within the selected number of event per cycle-->
-  <parameter name="MaxAllowedFiringFreq" type="float"> 0.01 </parameter>
-  <!--The number of events to be considered for each update cycle-->
-  <parameter name="NoOfEvents" type="int"> 5000 </parameter>
-  <!--The sensorID for the generated collection (one per detector)-->
-  <parameter name="SensorIDVec" type="IntVec"> 0 1 2 3 4 5</parameter>
+ <processor name="NoisyClusterRemover" type="EUTelProcessorNoisyClusterRemover">
+ <!--EUTelProcessorNoisyClusterRemover removes masked noisy clusters (TrackerPulses) from a collection, please note that the clusters have to be masked previously. This processor does not read in a hot pixel collection, it simply removes previusly masked TrackerPulses.-->
+  <!--Input collection containing noise masked tracker pulse objects-->
+  <parameter name="InputCollectionName" type="string" lcioInType="TrackerPulse">cluster_m26 </parameter>
+  <!--Output collection where noisy clusters have been removed-->
+  <parameter name="OutputCollectionName" type="string" lcioOutType="TrackerPulse"> cluster_m26_free </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
-  <!--Input of Zero Suppressed data-->
-  <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> zsdata_m26 </parameter>
  </processor>
 
  <processor name="Save" type="EUTelOutputProcessor">
@@ -85,7 +100,7 @@ within the selected number of event per cycle-->
   <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
   <!--parameter name="KeepCollectionNames" type="StringVec">MyPreciousSimTrackerHits  </parameter-->
   <!-- name of output file -->
-  <parameter name="LCIOOutputFile" type="string" value="@LcioPath@/run@RunNumber@-converter.slcio"/>
+  <parameter name="LCIOOutputFile" type="string" value="@LcioPath@/run@RunNumber@-geoclustering.slcio"/>
   <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
   <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   <!--Set it to true to remove intermediate EORE in merged runs-->
