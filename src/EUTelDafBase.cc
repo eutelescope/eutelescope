@@ -479,7 +479,7 @@ void EUTelDafBase::readHitCollection(LCEvent* event)
 
    for ( int iHit = 0; iHit < _hitCollection->getNumberOfElements(); iHit++ ) {
       TrackerHitImpl* hit = static_cast<TrackerHitImpl*> ( _hitCollection->getElementAt(iHit) );
-     double pos[3]  = {0.,0.,0.};
+      double pos[3]  = {0.,0.,0.};
       bool region    = true;
       int planeIndex = -1;
 
@@ -510,7 +510,6 @@ void EUTelDafBase::readHitCollection(LCEvent* event)
 	 planeIndex = hitDecoder(hit)["sensorID"];
          streamlog_out ( DEBUG5 ) << " REAL: add point [" << planeIndex << "] "<< 
                       static_cast< float >(pos[0]) * 1000.0f << " " << static_cast< float >(pos[1]) * 1000.0f << " " <<  static_cast< float >(pos[2]) * 1000.0f << endl;
-       //region = checkClusterRegion( hit, _system.planes.at(planeIndex).getSensorID() );
       }
 
       if(planeIndex >=0 ) 
@@ -521,26 +520,6 @@ void EUTelDafBase::readHitCollection(LCEvent* event)
       }
     }
   }
-}
-
-bool EUTelDafBase::checkClusterRegion(lcio::TrackerHitImpl* hit, int iden){
-  	//TODO: APIX was removed
-	bool goodRegion(true);
-  /*if( hit->getType() == kEUTelAPIXClusterImpl ){
-    auto_ptr<EUTelVirtualCluster> cluster( new EUTelSparseClusterImpl< EUTelAPIXSparsePixel >
-  					   ( static_cast<TrackerDataImpl *> ( hit->getRawHits()[0] )));
-    int xSeed(0), ySeed(0);
-    cluster->getCenterCoord(xSeed, ySeed);
-    int xSize(0), ySize(0);
-    cluster->getClusterSize(xSize, ySize);
-    std::pair<int, int> &colMinMax = _colMinMax[iden]; 
-    if( (xSeed - xSize / 2 ) < colMinMax.first ) { goodRegion = false;}
-    if( (xSeed + xSeed / 2) > colMinMax.second ) { goodRegion = false;}
-    std::pair<int, int> &rowMinMax = _rowMinMax[iden]; 
-    if( (ySeed - ySize / 2) < rowMinMax.first ) { goodRegion = false;}
-    if( (ySeed + ySize / 2) > rowMinMax.second ) { goodRegion = false;}
-  }*/
-  return(goodRegion);
 }
 
 int EUTelDafBase::checkInTime(){
@@ -612,11 +591,16 @@ void EUTelDafBase::processEvent(LCEvent * event){
   //Dump hit collection to collection sorted by plane
   readHitCollection(event);
 
+  streamlog_out(MESSAGE1) << " readHitCollection is OVER " <<std::endl;
   //Run track finder
   _system.clusterTracker();
-  
+ 
+  streamlog_out(MESSAGE1) << " _system.clusterTracker is OVER " <<std::endl;
+ 
   //Child specific actions
   dafEvent(event); // Riccard: what does this do?
+
+  streamlog_out(MESSAGE1) << " dafEvent is OVER " <<std::endl;
 
   if(event->getEventNumber() % 1000 == 0){
     streamlog_out ( MESSAGE5 ) << "Accepted " << _nTracks <<" tracks at event " << event->getEventNumber() << endl;

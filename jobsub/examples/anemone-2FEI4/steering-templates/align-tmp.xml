@@ -23,13 +23,13 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
       <processor name="LoadPreAlignment"/>
       <processor name="ApplyPreAlignment"/>
       <processor name="DafFitter"/> 
-      <processor name="Align"/>
+      <xprocessor name="Align"/>
       <processor name="MyEUTelUtilityPrintEventNumber"/>
   </execute>
 
    <global>
       <parameter name="LCIOInputFiles"> @InputFile@ </parameter>
-      <parameter name="GearXMLFile" value="@GearPath@/@GearFile@"/>
+      <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
       <parameter name="SupressCheck" value="false"/>
@@ -124,10 +124,10 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
   <parameter name="AlignmentConstantLCIOFile" type="string" value="@DBPath@/@Output@-align-db@MemCheckFlag@.slcio"/>
 
   <!--Name of the Millepede binary file.-->
-  <parameter name="BinaryFilename" type="string" value="@ResultsPath@/@Output@-align-mille@MemCheckFlag@.bin"/>
+  <parameter name="BinaryFilename" type="string" value="@LcioPath@/@Output@-align-mille@MemCheckFlag@.bin"/>
 
   <!--Name of the steering file for the pede program.-->
-  <parameter name="PedeSteerfileName" type="string" value="@ResultsPath@/@Output@-pede-steer@MemCheckFlag@.txt"/>
+  <parameter name="PedeSteerfileName" type="string" value="@LcioPath@/@Output@-pede-steer@MemCheckFlag@.txt"/>
 
   <!--Execute the pede program using the generated steering file.-->
   <parameter name="RunPede" type="int" value="@RunPede@"/>

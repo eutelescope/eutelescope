@@ -10,6 +10,9 @@
 			<siplanesID ID="225"/>
 			<siplanesType type="TelescopeWithoutDUT"/>
 			<siplanesNumber number="8"/>
+	                 <parameter name="Geometry" 
+                                   type="StringVec" 
+                                   value="Mimosa26.so Mimosa26.so Mimosa26.so FEI4Single.so  FEI4Single.so  Mimosa26.so Mimosa26.so Mimosa26.so "/>
 			<layers>
 				<!--Eudet-Plane 0 - EUD0 -->
 				<layer>
@@ -21,7 +24,7 @@
 					/>
 					<sensitive 	ID="0"
 							positionX="0.00"	positionY="0.00"	positionZ="0.00" 
-							sizeX="21.2"		sizeY="10.6"		thickness="0.014"
+							sizeX="21.2"		sizeY="10.6"		thickness="0.070"
 							npixelX="1152"		npixelY="576" 
 							pitchX="0.018402778"	pitchY="0.018402778" 	resolution="0.0045" 
 							rotation1="-1.0" 	rotation2="0.0" 
@@ -39,7 +42,7 @@
 					/>
 					<sensitive 	ID="1" 
 							positionX="0.00"	positionY="0.00"	positionZ="279.0" 
-							sizeX="21.2"		sizeY="10.6"		thickness="0.014"
+							sizeX="21.2"		sizeY="10.6"		thickness="0.070"
 							npixelX="1152"		npixelY="576" 
 							pitchX="0.018402778"	pitchY="0.018402778"	resolution="0.0045" 
 							rotation1="-1.0"	rotation2="0.0" 
@@ -57,7 +60,7 @@
 					/>
 					<sensitive 	ID="2" 
 							positionX="0.00"	positionY="0.00"	positionZ="302.0" 
-							sizeX="21.2"		sizeY="10.6"		thickness="0.014"
+							sizeX="21.2"		sizeY="10.6"		thickness="0.070"
 							npixelX="1152"		npixelY="576"
 							pitchX="0.018402778" 	pitchY="0.018402778" 	resolution="0.0045"
 							rotation1="-1.0"	rotation2="0.0"
@@ -70,7 +73,7 @@
 					<layer>
 					<ladder 	ID="20" 
 							positionX="0.00"	positionY="0.00"	positionZ="334.0" 
-							rotationZY="0.0"	rotationZX="0.0"	rotationXY="0.0" 
+							rotationZY="0.0"	rotationZX="3.1415"	rotationXY="1.5708"
 							sizeX="20.0"		sizeY="16.8"		thickness="0.700" 
 							radLength="65.000000"
 					/>
@@ -89,7 +92,7 @@
 					<layer>
 					<ladder 	ID="21" 
 							positionX="0.00"	positionY="0.00"	positionZ="388.0" 
-							rotationZY="0.0"	rotationZX="0.0"	rotationXY="0.0" 
+							rotationZY="0.0"	rotationZX="3.1415"	rotationXY="1.5708" 
 							sizeX="20.0"		sizeY="16.8"		thickness="0.500" 
 							radLength="65.000000"
 					/>
@@ -114,7 +117,7 @@
                                         />
                                         <sensitive      ID="3"
                                                         positionX="0.00"        positionY="0.00"        positionZ="392.0" 
-                                                        sizeX="21.2"            sizeY="10.6"            thickness="0.014"
+                                                        sizeX="21.2"            sizeY="10.6"            thickness="0.070"
                                                         npixelX="1152"          npixelY="576" 
                                                         pitchX="0.018402778"    pitchY="0.018402778"    resolution="0.0045" 
                                                         rotation1="-1.0"        rotation2="0.0" 
@@ -132,7 +135,7 @@
                                         />
                                         <sensitive      ID="4"
                                                         positionX="0.00"        positionY="0.00"        positionZ="418.00" 
-                                                        sizeX="21.2"            sizeY="10.6"            thickness="0.014"
+                                                        sizeX="21.2"            sizeY="10.6"            thickness="0.070"
                                                         npixelX="1152"          npixelY="576" 
                                                         pitchX="0.018402778"    pitchY="0.018402778"    resolution="0.0045" 
                                                         rotation1="-1.0"        rotation2="0.0" 
@@ -150,7 +153,7 @@
                                         />
                                         <sensitive      ID="5"
                                                         positionX="0.00"        positionY="0.00"        positionZ="691.00" 
-                                                        sizeX="21.2"            sizeY="10.6"            thickness="0.014"
+                                                        sizeX="21.2"            sizeY="10.6"            thickness="0.070"
                                                         npixelX="1152"          npixelY="576" 
                                                         pitchX="0.018402778"    pitchY="0.018402778"    resolution="0.0045" 
                                                         rotation1="-1.0"        rotation2="0.0" 

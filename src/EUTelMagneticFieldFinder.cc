@@ -10,8 +10,6 @@
 
 #include "EUTelGeometryTelescopeGeoDescription.h"
 
-#include "EUTelUtilityRungeKutta.h"
-
 #include "gear/gearimpl/Vector3D.h"
 
 // ROOT
@@ -62,7 +60,6 @@ namespace eutelescope {
 	    _jacobianF(5,5),
             _trkParamCovCkkm1(5,5),
             _processNoiseQ(5,5),
-            _gainK(5,2),
             _residualCovR(2,2),
             _eomIntegrator( new EUTelUtilityRungeKutta() ),
             _jacobianIntegrator( new EUTelUtilityRungeKutta() ),
@@ -98,7 +95,6 @@ namespace eutelescope {
 	    _jacobianF(5,5),
             _trkParamCovCkkm1(5,5),
             _processNoiseQ(5,5),
-            _gainK(5,2),
             _residualCovR(2,2),
             _eomIntegrator( new EUTelUtilityRungeKutta() ),
             _jacobianIntegrator( new EUTelUtilityRungeKutta() ),
@@ -166,171 +162,167 @@ namespace eutelescope {
               streamlog_out ( DEBUG2 ) << "identified NextPlane Entrance: " <<  lpoint[0] << " " <<  lpoint[1] << " " << lpoint[2] <<  " at : "<< newSensorID << endl;
               const float opoint[3] = { lpoint[0], lpoint[1], lpoint[2] };
               ts->setReferencePoint( opoint );  
-              ts->setLocation(sensorID);
+              ts->setLocation( newSensorID );
            }
 
       return newSensorID;
     }
 
     /** */
+
+
+
     void EUTelKalmanFilter::propagateFromRefPoint( 	std::vector< EUTelTrackImpl* >::iterator &itTrk    ){
+			
+	//Set up the geometry//////////////////////////////////////////////////////////////////////// 
+      	const map< int, int > sensorMap = geo::gGeometry().sensorZOrdertoIDs();
+      	int planeID     = sensorMap.at(0); // the first first plane in the array of the planes according to z direction. // assume not tilted plane. 
+	//      const int    iPlane             = geo::gGeometry().sensorIDtoZOrder(planeID);
+      	const double thicknessSen       = geo::gGeometry().siPlaneZSize( planeID );
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-      EUTelTrackStateImpl* state = const_cast<EUTelTrackStateImpl*>((*itTrk)->getFirstTrackState( ));
+      	EUTelTrackStateImpl* state = const_cast<EUTelTrackStateImpl*>((*itTrk)->getFirstTrackState( ));
+	state->setbeamQ(_beamQ); //Set the beam charge here. This is not perfect I think. Since we could set it as a static variable. However how this should be used in other processor I am unsure???????/
+	streamlog_out ( DEBUG0 ) << "Memory location of initial state: " << state << endl; 
 
-      if( state == 0 )
-      {
-        streamlog_out ( WARNING0 ) << "track _tracksCartesian return a NULL state, skip this one " << endl; 
-        return ;
-      }
-
-// assumes state to be in some FRAME 
-      const double x0 = state->getReferencePoint()[0];
-      const double y0 = state->getReferencePoint()[1];
-      const double z0 = state->getReferencePoint()[2];
+      	if( state == 0 )
+      	{
+        	streamlog_out ( WARNING0 ) << "track _tracksCartesian return a NULL state, skip this one " << endl; 
+        	return ;
+      	}
 	
-      // get the very first sensor : why?
-      // remember last hit-point from the track candidate below
-      double start[3] = { x0, y0, z0}; // 
- 
-      // Loop over hits on a track candidate
+      	// loop through all known sensors (local, defined above):
+      	map< int, int >::const_iterator iter = sensorMap.begin();
+      	while ( iter->first < sensorMap.size()-1 ) { // do not iterate through the very last plane
+        if( iter->first < 0 ) continue;
+	
+        float dpoint[3];
+        int next = iter->first + 1;
+        map< int, int >::const_iterator nextSensor = sensorMap.find( next );
+        int newSensorID = state->findIntersectionWithCertainID( nextSensor->second, dpoint );
+        int sensorIntersection = geo::gGeometry( ).getSensorID(dpoint);
+        streamlog_out ( DEBUG5 ) << " propagateFromRefPoint: pos:" <<  iter->first << " from ID= " << iter->second << " to ID=" <<  nextSensor->second << " and got: " << newSensorID << " sensorIntersection= " << sensorIntersection << std::endl;
 
-      const map< int, int > sensorMap = geo::gGeometry().sensorZOrdertoIDs();
-      int planeID     = sensorMap.at(0); // the first first plane in the array of the planes according to z direction. // assume not tilted plane. 
-//obsolete??      const int    iPlane             = geo::gGeometry().sensorIDtoZOrder(planeID);
-      const double thicknessSen       = geo::gGeometry().siPlaneZSize( planeID );
-// not needed here: ???      const double thicknessLay       = geo::gGeometry().getLayerThickness(iPlane );
+	if( newSensorID < 0 or sensorIntersection < 0 ){ //If there was no intersection of infinite plane or if the intersection is not in the sensor.
+		streamlog_out ( DEBUG4 ) << "Point (" <<  dpoint[0] << ", " <<  dpoint[1] << ", " << dpoint[2]  << ")" << "found on no sensor. New sensor ID (Was there intersection?):"  << newSensorID <<"SensorID (Was the intersection on the plane?)"<< sensorIntersection  << std::endl;
+	}
+	else{ 
+		//So we found a intersection so we need to determine that new state.
+		streamlog_out ( DEBUG3 ) << "Intersection on a plane " << newSensorID << std::endl;
+		EUTelTrackStateImpl* state_new =  new EUTelTrackStateImpl(); //This creates a new state object
+		state_new->setbeamQ(_beamQ); //Set the beam charge here. This is not perfect I think. Since we could set it as a static variable. However how this should be used in other processor I am unsure???????/
+		
+		//Here we fill the state with its new approximate new hit position. Nothing else is filled yet since this will depend on if hit information is there.
+		TMatrixD jacobian(5,5);
+		jacobian.Zero();
+		jacobian = state->getPropagationJacobianF((dpoint[2] - state->getZParameter())); //Find all the relations between state variables at a particular z parameter dpoint[2] 
+        	
+  		//jacobian.Print();
+		nextStateUsingJacobianFinder(state, state_new, jacobian); //Here we determine the new state position and CovMatrix using the jacobian. This might not need to be done now but would involve changing closestHit()????
+		state_new->setZParameter( dpoint[2] ); //Set this here since it is not a state variable but a parameter
+		state_new->setLocation( newSensorID );
 
+		double global[] = { state_new->getX(),state_new->getY(),state_new->getZParameter() };
+		double local[3];
+		geo::gGeometry().master2Localtwo( state_new->getLocation(), global, local );
+		const float localRef[3] = {local[0], local[1], local[2]}; 
+		state_new->setReferencePoint(localRef);
+			
+		streamlog_out ( DEBUG5 ) << "Both FindIntersection and Jacobian should be the same" << std::endl;
+		streamlog_out ( DEBUG5 ) << "Point (" <<  dpoint[0] << ", " <<  dpoint[1] << ") from findIntersection" << std::endl;
+		streamlog_out ( DEBUG5 ) << "Point (" <<  state_new->getX() << ", " <<  state_new->getY() << ") from jacobian to sensor : " << state_new->getLocation()  << std::endl<<std::endl;
+						
+		////////////Find next closest hit and determine if it is within window. If both fill new state with information about hit. Otherwise fill without it/////////////////////////////// 
+         	EVENT::TrackerHit* closestHit = const_cast< EVENT::TrackerHit* > ( findClosestHit( state_new, newSensorID ) ); //This will look for the closest hit but not if it is within the excepted range		
+ 		if ( closestHit ){ //Just check if the closestHit exist 
+         	
+			const double* uvpos = closestHit->getPosition(); //Get that hits position
+        		const double distance = getResidual( state_new, closestHit ).Norm2Sqr( ); //Determine the residual to it. //Distance is in mm.
+            		const double DCA = 25;  //DCA since is mm^2 since distance is.                             
+			//getXYPredictionPrecision( state_new ); // basically RMax cut at the moment. MUST FIX!!!! HOW SHOULD THIS BE TREAT?;;
+	           	streamlog_out ( DEBUG1 ) << "NextPlane " << newSensorID << " " << uvpos[0] << " " << uvpos[1] << " " << uvpos[2] << " resid:" << distance << " ResidualCut: " << DCA << endl;
+           		if ( distance > DCA ) {
+             	           	streamlog_out ( DEBUG1 ) << "Closest hit is outside of search window." << std::endl;
+              	           	streamlog_out ( DEBUG1 ) << "Skipping current plane. Covariant Matrix and position already updated to this point " << std::endl;
+	  	  	   	streamlog_out ( DEBUG1 ) << " Distance between them: "<< distance << endl;
+            		}
+			else{
+            			streamlog_out (DEBUG1 ) << "NextPlane MATCHED. Position of Hit (Local) " <<  uvpos[0] << " " <<  uvpos[1] << " " << uvpos[2] 
+                                                        <<" Position of state (Global) " << state_new->getX() 
+                                                        << "," << state_new->getY()
+                                                        <<","<< state_new->getZParameter() 
+                                                        <<" Distance between them: " << distance 
+                                                        << " Sensor ID:" << state_new->getLocation() 
+                                                        << " Seed we began at: " << (*itTrk) << endl;
+	              		streamlog_out ( DEBUG1 ) << "Will now alter Cov matrix and state variables using hit information " << std::endl;
+				TMatrixD HMatrix = state_new->getH(); //We need to be able to move from the measurement to the state space
+				TMatrixD GainMatrix = updateGainK( state_new, closestHit ); //This is a matrix that tells you how much the state should be changed with the information from the hit
+				UpdateStateUsingHitInformation( state_new ,closestHit, jacobian, GainMatrix, HMatrix); //Update the state on the track
+				UpdateTrackUsingHitInformation( state_new , closestHit, (*itTrk), jacobian, GainMatrix,HMatrix); //Update the track itself.									
+            		}
 
-//
-// ATTENTION: manual manipulation of the z-coordinate of a ref point
-// should be rather done by a swim function to a will defined "initial" coordinate
-// could be critical for B-field/high spread/high rate beam
-//
-// todo: replace with a method going backwards along z axis based on TGeo navigation 
- 
-// assumes FRAME:
-//       start[2]    = geo::gGeometry().siPlaneZPosition(planeID) - thicknessSen - thicknessLay; //initial z position to the most-first plane
-//      start[2]    =  - thicknessSen - thicknessLay; //initial z position to the most-first plane
+		}
+                if( streamlog_level(DEBUG1) ) state_new->Print();
+  		(*itTrk)->addTrackState( new EUTelTrackStateImpl(*state_new) ); //New memory allocation here should be deleted by LCIO memory management. I think...
+		streamlog_out ( DEBUG1 ) << "Memory location of initial state after all allocation (Should be the same): " << state << endl; 
+		streamlog_out ( DEBUG1 ) << "Memory location of state_new: " << state_new << endl; 
+						
+	 	state = state_new; //MUST DOUBLE CHECK THIS MEMORY MANAGEMENT DOES NOT LOOK RIGHT TO ME
+		streamlog_out ( DEBUG1 ) << "Memory location of initial state after it was made equal to state_new: " << state << endl; 		
 
-      // as good as any other value along z axis.
-      double dir[3]   = {0.,0.,1.};  
-      
-      // updated starting RefPoint:
-      const float opoint[3] = {start[0], start[1], start[2]}; // correct start[2] position 
-      state->setReferencePoint( opoint );
-
-      // loop through all known sensors (local, defined above):
-      map< int, int >::const_iterator iter = sensorMap.begin();
-      while ( iter != sensorMap.end() ) {
-        bool found = false;
-        if( iter->first > -999 )
-          {
-            // EUTelGeometry TGeo track swim 
-            // straight line at this point
-            // how to get helix ? 
-            // propagator :: 
-            int newSensorID = findNextPlaneEntrance( state, iter->second ) ;
-
-            const float* fpoint = state->getReferencePoint();
-            const int sensorID  = state->getLocation();
-            double *lpoint = toDouble(3, fpoint);
-            double dpoint[] = {0.,0.,0.};
-            geo::gGeometry().local2Master( sensorID, lpoint, dpoint );
-            
-            // collect propagator state ::
-            (*itTrk)->addTrackState( new EUTelTrackStateImpl( *state) );
-
- 
-            streamlog_out ( DEBUG4 ) << "aqu: Entrance: " <<  dpoint[0] << " " <<  dpoint[1] << " " << dpoint[2]  << " sensorID: " << newSensorID ;
-            streamlog_out ( DEBUG4 ) << " in local " <<  lpoint[0] << " " <<  lpoint[1] << " " << lpoint[2]  <<  endl;
-
-
-            bool findhit = true;
-            EVENT::TrackerHit* closestHit = const_cast< EVENT::TrackerHit* > ( findClosestHit( state, newSensorID ) );
-                if ( closestHit ) {
-                    const double* uvpos = closestHit->getPosition();
-                    const double distance = getResidual( state, closestHit ).Norm2Sqr( );
-                    const double DCA = getXYPredictionPrecision( state ); // basically RMax cut at the moment
-                    streamlog_out ( DEBUG4 ) << "NextPlane " << newSensorID << " " << uvpos[0] << " " << uvpos[1] << " " << uvpos[2] << " resid:" << distance << " DCA:" << DCA << endl;
-                    if ( distance > DCA ) {
-                        streamlog_out ( DEBUG1 ) << "Closest hit is outside of search window." << std::endl;
-                        streamlog_out ( DEBUG1 ) << "Skipping current plane." << std::endl;
-                        findhit = false;
-                    }else{
-                        streamlog_out (MESSAGE0 ) << "NextPlane MATCHED " <<  uvpos[0] << " " <<  uvpos[1] << " " << uvpos[2] <<  " err:"<< newSensorID << endl;
-                    }
-                } else {
-                    streamlog_out ( DEBUG4 ) << "There are no hits in the closest plane." << std::endl;
-                    findhit = false;
-                }
-
-
-                if( findhit ) { 
-                    double chi2 = (*itTrk)->getChi2() + updateTrackState( state, closestHit );
-//                    state->Print(); 
-                    (*itTrk)->setChi2( chi2 );
-                    (*itTrk)->addHit( closestHit );
-                    const double* uvpos = closestHit->getPosition();
-                    streamlog_out ( MESSAGE0 ) << "adding Hit " << newSensorID << " " << uvpos[0] << " " << uvpos[1] << " " << uvpos[2] <<  endl;
-                }
-            
           }
-        ++iter;
-      } 
+	  ++iter;	
+       
  
     }
 
-    /** Perform Kalman filter track search and track fit */
-    void EUTelKalmanFilter::Print( std::string Name, std::vector< IMPL::TrackImpl*> &_collection) 
+}
+
+    //Print the list of tracks given in _collection
+    void EUTelKalmanFilter::Print( std::string Name, std::vector< EUTelTrackImpl*> & _collection) 
     {
-      int itrk = 0; 
-      int size_itTrk  = _collection.size();
+       int itrk = 0; 
+       int size_itTrk  = _collection.size();
 
-      std::vector< IMPL::TrackImpl* >::iterator itTrk;
+       std::vector< EUTelTrackImpl* >::iterator itTrk;
  
-      for ( itTrk = _collection.begin(); itTrk != _collection.end(); itTrk++, itrk++ ) 
-      {
-        if( (*itTrk) == 0 ) 
-        {
-           streamlog_out(MESSAGE1) <<  Name.c_str() << " itrk = " << itrk << " is not found ? " << std::endl;
-           continue; 
-        }
-        IMPL::TrackImpl* track = static_cast< IMPL::TrackImpl*> (*itTrk);
-        const EVENT::TrackerHitVec& ihits = track->getTrackerHits();
-        int nhits =  ihits.size( ) ;
-        int expec =  geo::gGeometry( ).nPlanes( ) - _allowedMissingHits;
-        streamlog_out(MESSAGE1) << Name.c_str() << " track itrk:" <<  itrk << " of " << size_itTrk << " at  " << (*itTrk) << " with " << nhits << " at least " << expec ;//std::endl;
-        for (int i = 0; i< ihits.size(); i++ ) 
-        { 
-            EVENT::TrackerHit* ihit = ihits[i];
-            int ic = ihit->id();
-            streamlog_out(MESSAGE0) <<  ic << " ";
-        }
-        streamlog_out(MESSAGE1) << std::endl;
-      }
+       for ( itTrk = _collection.begin(); itTrk != _collection.end(); itTrk++, itrk++ ) 
+       {
+          if( (*itTrk) == 0 ) 
+          {         
+             streamlog_out(WARNING1) << " Track vector: " << Name.c_str() << " contains no information at track = " << itrk << "." << std::endl;
+             continue; 
+          }
+          const EVENT::TrackerHitVec& ihits = (*itTrk)->getTrackerHits();
+          int nhits =  ihits.size( ) ;
+          int expec =  geo::gGeometry( ).nPlanes( ) - _allowedMissingHits;
+          streamlog_out(DEBUG5) << " Track vector " << Name.c_str() << " at track number " <<  itrk << " of size " << size_itTrk << " with " << nhits << " and expecting at least " << expec << " hits " << std::endl;
+          (*itTrk)->Print();
+       }
     }
  
-    void EUTelKalmanFilter::Prune( std::vector< IMPL::TrackImpl*> &_collection, std::vector< IMPL::TrackImpl*> &_collection_to_delete ) 
+    void EUTelKalmanFilter::Prune( std::vector< EUTelTrackImpl*> &_collection, std::vector< EUTelTrackImpl*> &_collection_to_delete ) 
     {
       int itrk = 0 ;
-      std::vector< IMPL::TrackImpl* >::iterator itTrk;
+      std::vector< EUTelTrackImpl* >::iterator itTrk;
 
       for (  itTrk = _collection.begin(); itTrk != _collection.end();) 
       {
-         // check that it's not a fitted hit (type =32)
-         if( (*itTrk)->getType() > 31 ) continue;
+        // obsolte code from very old times ....
+        // check that it's not a fitted hit (type =32)
+	//     if( (*itTrk)->getType() > 31 ) continue;            Is this the best way to deal with type? Should it no be in LCIO bit field?
  
-         bool iend = std::find( _collection_to_delete.begin(), _collection_to_delete.end(), (*itTrk) ) == _collection_to_delete.end(); 
-         if( iend )
-         {
+        bool iend = std::find( _collection_to_delete.begin(), _collection_to_delete.end(), (*itTrk) ) == _collection_to_delete.end(); 
+        if( iend )
+        {
            streamlog_out(DEBUG3) << " track " << itrk << " at " << (*itTrk) << " NOT found  in _collection_to_delete " << std::endl;
 itTrk++;
 	   itrk++ ;
-         } else {
+        } else {
            streamlog_out(DEBUG3) << " track " << itrk << " at " << (*itTrk) << "     found  in _collection_to_delete, deleting ... " << std::endl;
            delete (*itTrk);
            itTrk = _collection.erase(itTrk);
-         } 
+        } 
       }
     }
 
@@ -356,243 +348,133 @@ itTrk++;
 	std::vector< EUTelTrackImpl* >::iterator itTrk;
         int local_itTrk = 0;
         int size_itTrk = _tracksCartesian.size();
+				//LOOP over list of all tracks. At this point they are only the hits on the first and second plane as track objects.
         for ( itTrk = _tracksCartesian.begin(); itTrk != _tracksCartesian.end(); itTrk++ ) {
             streamlog_out(MESSAGE0) << "beginning now at : " << local_itTrk << " of " << size_itTrk << " itTrk: " << (*itTrk) << endl;
             bool isGoodTrack = true; 
          
-   //       if( (*itTrk) == NULL ) continue;
- 
-            (const_cast<EUTelTrackImpl*>(*itTrk)) ->Print();
+             streamlog_out ( DEBUG5 ) << "The track seed before propagation to find other states and hits on other surfaces. " << endl; 
+            (*itTrk)->Print();
 
+						//Get the first state of the track. Remember at this point we only have single hits on a track
             EUTelTrackStateImpl* state = const_cast<EUTelTrackStateImpl*>((*itTrk)->getFirstTrackState( ));
             
+						//Check is the state of the hit on the track exists
             if( state == 0 )
             {
                streamlog_out ( WARNING0 ) << "track _tracksCartesian return a NULL state, skip this one " << endl; 
                isGoodTrack = false;
-               delete (*itTrk);
-               itTrk = _tracksCartesian.erase( itTrk ); itTrk--;
+               delete (*itTrk); //Is this really needed?
+               itTrk = _tracksCartesian.erase( itTrk ); itTrk--; //Must itTrk-- since the erase will take us to the next hit automatically 
                continue;
             }
- 
+						//This will propagate the initial seed to the other planes. On the new plane it will add hits and change the state depending on relation to hit.
             propagateFromRefPoint(itTrk);
  
+						//Check the number of hit on the track after propagation and collecting hits is over the minimum
             if ( isGoodTrack && ( *itTrk )->getTrackerHits( ).size( ) < geo::gGeometry( ).nPlanes( ) - _allowedMissingHits ) {
-               streamlog_out ( DEBUG1 ) << "Track candidate has to many missing hits." << std::endl;
-               streamlog_out ( DEBUG1 ) << "Removing this track candidate from further consideration." << std::endl;
-               delete (*itTrk);
-               isGoodTrack = false;
-               itTrk = _tracksCartesian.erase( itTrk ); itTrk--; // rubinsky 08-05-14
+		streamlog_out ( MESSAGE2 ) << "Number of hits on the track: " << ( *itTrk )->getTrackerHits( ).size( ) <<" Number needed: " << geo::gGeometry( ).nPlanes( ) - _allowedMissingHits << std::endl;
+               	streamlog_out ( DEBUG5 ) << "Track candidate has to many missing hits." << std::endl;
+               	streamlog_out ( DEBUG5 ) << "Removing this track candidate from further consideration." << std::endl;
+           	(*itTrk)->Print();
+               	delete (*itTrk);  //Is this really needed?
+               	isGoodTrack = false;
+               	itTrk = _tracksCartesian.erase( itTrk ); itTrk--; 
             }
 
             if ( isGoodTrack ) {
-               state->setLocation( EUTelTrackStateImpl::AtLastHit );
-               IMPL::TrackImpl *trackimpl = cartesian2LCIOTrack( *itTrk );
-               _tracks.push_back( trackimpl );
-                int nstates = trackimpl->getTrackStates().size();
-  //             for(int i = 0;i< nstates; i++) {
-  //               IMPL::TrackStateImpl* implstate = static_cast< IMPL::TrackStateImpl*> (trackimpl->getTrackStates().at(i)) ;
-  //               EUTelTrackStateImpl* istate = static_cast<EUTelTrackStateImpl* > (implstate);   
-//                IMPL::TrackStateImpl* implstate = new IMPL::TrackStateImpl( *nexttrackstate );
- //                 EUTelTrackStateImpl *istate =  (trackimpl->getTrackStates().at(i));
-  //               streamlog_out(MESSAGE0) << "state: " << istate->id() << " location: " << istate->getLocation() << " X:" << istate->getX() << " Y:" << istate->getY() << std::endl;
-  //             } 
-               streamlog_out(MESSAGE0) << local_itTrk << " of " << size_itTrk << " hits on track " << *itTrk << " with " <<  ( *itTrk )->getTrackerHits( ).size( ) << " expecting at least " << geo::gGeometry( ).nPlanes( ) - _allowedMissingHits << " states: "<< nstates << std::endl;
- 
-               delete (*itTrk);
-               itTrk = _tracksCartesian.erase( itTrk ); itTrk--; // rubinsky 08-05-14
+//               state->setLocation( EUTelTrackStateImpl::AtLastHit );
+               	int nstates = (*itTrk)->getTrackStates().size();
+	
+               	streamlog_out(DEBUG5) << "'Tracks' looped through. I.e initial hit seed as a track. (Ignore states with no hits): "  << local_itTrk << ". Number of seeds: " << size_itTrk << ". At seed: " << *itTrk << " after propagation with: " << ( *itTrk )->getTrackerHits( ).size( ) << " hits collected on track.  Expecting at least " << geo::gGeometry( ).nPlanes( ) - _allowedMissingHits << " The states. I.e Including planes with no hits: "<< nstates << std::endl << std::endl << std::endl << std::endl;
+
+             	streamlog_out ( DEBUG5 ) << "Successful track state after propagation: " << endl; 
+            	(*itTrk)->Print();
             }
-            streamlog_out(MESSAGE0) << "finished : " << local_itTrk << " of " << size_itTrk << endl;
+
             local_itTrk++;
         }
+
+        streamlog_out(MESSAGE0) << "Finished looping through all seeds! Looped at total of : " << local_itTrk << " after seeds with no state are deduced. Total seeds were: " << size_itTrk << endl;
   
        streamlog_out(MESSAGE1) << "------------------------------EUTelKalmanFilter::SearchTrackCandidates()---------------------------------" << std::endl;
 
     }
  
 
-    /** Perform track pruning */
+    // Perform track pruning this removes tracks that have the same hits used to create the track on some planes
     void EUTelKalmanFilter::PruneTrackCandidates() {
 
-      streamlog_out(MESSAGE1) << "EUTelKalmanFilter::PruneTrackCandidates()" << std::endl;
+      	streamlog_out(MESSAGE1) << "EUTelKalmanFilter::PruneTrackCandidates()" << std::endl;
  
-      std::vector< IMPL::TrackImpl* >::iterator itTrk;
-      std::vector< IMPL::TrackImpl* >::iterator jtTrk;
-      std::vector< IMPL::TrackImpl* >           _tracks_to_delete;
-
-      int itrk = 0;
-      int jtrk = 0;
-
-      for ( itTrk = _tracks.begin(); itTrk != _tracks.end(); itTrk++, itrk++ ) 
-      {
-        streamlog_out(MESSAGE1) <<  "track itrk:" <<  itrk << " at  " << ( *itTrk) << std::endl;
-   
-        const EVENT::TrackerHitVec ihits = (*itTrk)->getTrackerHits();
-      
-        for ( jtrk = itrk+1; jtrk < _tracks.size(); jtrk++ ) 
-        {
-          int hitscount=0;
- 
-          IMPL::TrackImpl* jtTrack = _tracks[jtrk];
-          const EVENT::TrackerHitVec jhits = jtTrack->getTrackerHits();
-// cross check every track to all following ones in the _track collection
-          for(int i=0;i<ihits.size();i++)
-          { // loop through hits in itTrk candidate
-            EVENT::TrackerHit* ihit = ihits[i];
-            int ic = ihit->id();
-            for(int j=0;j<jhits.size();j++)
-            { // loop through hits in jtTrk candidate 
-               EVENT::TrackerHit* jhit = jhits[j];
-               int jc = jhit->id();
-               if(ic == jc ){
-                 hitscount++; 
-                 streamlog_out(MESSAGE0) <<  "i=" << i << " " << ic << " j=" << j << " " << jc << " number of common hits: " << hitscount << std::endl; 
-               }
-            }
-          } 
-    
-          if(hitscount > _AllowedSharedHitsOnTrackCandidate) {   
-            if( std::find(_tracks_to_delete.begin(), _tracks_to_delete.end(), *itTrk ) == _tracks_to_delete.end() || _tracks_to_delete.size() == 0 )
-            {
-               streamlog_out(MESSAGE1) <<  "is duped " << itrk << " & " << jtrk << std::endl;
-              _tracks_to_delete.push_back( *itTrk );
-            }
-            continue;
-          }
-        }
-
-      }
-
-      Print( "_tracks", _tracks);   
-
-      Print( "_tracks_to_delete", _tracks_to_delete);   
- 
-      Prune( _tracks, _tracks_to_delete);   
-
-      Print( "_tracks", _tracks);   
- 
-      streamlog_out(MESSAGE1) << "------------------------------EUTelKalmanFilter::PruneTrackCandidates()---------------------------------" << std::endl;
-    }
-    
-    /** Perform Kalman filter track search and track fit */
-    void EUTelKalmanFilter::FitTracks() {
-        streamlog_out(DEBUG2) << "EUTelKalmanFilter::FitTracks()" << std::endl;
-        // Check if the fitter was configured correctly
-        if ( !_isReady ) {
-            streamlog_out(ERROR1) << _name << ": Can't fit. The fitter is not initialised!" << std::endl;
-            return;
-        }
-        
-        // Flush data from previous event
-        reset();
-        
-        // Initialise Kalman filter states
-        initialiseSeeds();
-        
-	// Start Kalman filter
+	//   std::vector< IMPL::TrackImpl* >::iterator itTrk;
 	std::vector< EUTelTrackImpl* >::iterator itTrk;
-	for ( itTrk = _tracksCartesian.begin(); itTrk != _tracksCartesian.end();  ) {
-            bool isGoodTrack = true;
-            
-            EUTelTrackStateImpl* state = const_cast<EUTelTrackStateImpl*>((*itTrk)->getTrackState( EUTelTrackStateImpl::AtFirstHit ));
-            
-            if( state == 0 )
-            {
-              streamlog_out ( WARNING0 ) << "track _tracksCartesian return a NULL state, skip this one " << endl; 
-              isGoodTrack = false;
-              delete (*itTrk);
-              itTrk = _tracksCartesian.erase( itTrk );
-              continue;
-            }
+      	std::vector< EUTelTrackImpl* >::iterator jtTrk;
+      	std::vector< EUTelTrackImpl* >  _tracks_to_delete;
 
-            int newSensorID = -999;
+      	int itrk = 0;
+      	int jtrk = 0;
 
-            // iterate until the particle flies out of the detector volume
-            // replaceing with loop over sensor IDs ::            while ( dz > 0 ) {
-            EVENT::IntVec sensID = geo::gGeometry().sensorIDsVec();
-
-            // Calculate track's new position
-            const float* startingPoint =  state->getReferencePoint( );
-            double dz = startingPoint[2];
-
-            int isensorID = 0;             
-            while( isensorID < sensID.size() - 1 ) 
-            {
-                isensorID++;
-                // looping by Z order  in the range of sensID (Vec) which should have same length // ASSUMPTION !!!
-                int SensorID = geo::gGeometry().sensorZOrderToID(isensorID); 
-
-                streamlog_out ( DEBUG0 ) << "expecting sensor: " << isensorID << " ID:"<< SensorID << endl;
-                int newSensorID = propagateTrackRefPoint( state, SensorID );
-
-                // Calculate track's new position
-                const float* xnew =  state->getReferencePoint( );
-                dz = xnew[2]-dz;
-
-                // Determine id of the sensor in which track reference point is located
-                bool findhit = true;
-                streamlog_out ( MESSAGE0 ) << "New point: " << xnew[0] << " " << xnew[1] << " " << xnew[2] << " matches sensor: " << newSensorID <<  std::endl;
-                if ( newSensorID != -999 ) {
-                    findhit = true;
-                } else {
-                    streamlog_out ( MESSAGE0 ) << "New point is outside of any sensor volume." << std::endl;
-                    streamlog_out ( MESSAGE0 ) << "Removing this track candidate from further consideration." << std::endl;
-                    continue;
-                }
-
-                // ASSUMPTION that xnew has at least 3 elements ....
-                double dz = xnew[2];
-
-                //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                // @TODO Allow missing hits
-                //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                EVENT::TrackerHit* closestHit = const_cast< EVENT::TrackerHit* > ( findClosestHit( state, newSensorID ) );
-                if ( closestHit ) {
-                    const double distance = getResidual( state, closestHit ).Norm2Sqr( );
-                    const double distanceCut = dz/100.*getXYPredictionPrecision( state );
-                    if ( distance > distanceCut ) {
-                        streamlog_out ( DEBUG1 ) << "Closest hit is outside of search window." << std::endl;
-                        streamlog_out ( DEBUG1 ) << "Skipping current plane." << std::endl;
-                        findhit = false;
-                    }
-                } else {
-                    streamlog_out ( DEBUG1 ) << "There are no hits in the closest plane." << std::endl;
-                    findhit = false;
-                }
-                
-                if ( findhit ) {
-                    getPropagationJacobianF( state, dz );
-                    propagateTrackState( state );
-                    double chi2 = (*itTrk)->getChi2() + updateTrackState( state, closestHit );
-                    (*itTrk)->setChi2( chi2 );
-                    (*itTrk)->addHit( closestHit );
-                } else {
-                    getPropagationJacobianF( state, dz );
-                    propagateTrackState( state );
-                }
-
-            }
+	//Loop over all tracks 
+	for ( itTrk = _tracksCartesian.begin(); itTrk != _tracksCartesian.end(); itTrk++, itrk++ ) 
+	{
+        	streamlog_out(MESSAGE1) <<  "Loop at track number:" <<  itrk << " at  " << ( *itTrk) << std::endl;
+   
+	        const EVENT::TrackerHitVec ihits = (*itTrk)->getTrackerHits(); //get the hits contained within this track object
  
-            if ( isGoodTrack && ( *itTrk )->getTrackerHits( ).size( ) < geo::gGeometry( ).nPlanes( ) - _allowedMissingHits ) {
-                streamlog_out ( DEBUG1 ) << "Track candidate has to many missing hits." << std::endl;
-                streamlog_out ( DEBUG1 ) << "Removing this track candidate from further consideration." << std::endl;
-                delete (*itTrk);
-                itTrk = _tracksCartesian.erase( itTrk );
-                isGoodTrack = false;
-            }
+		//Now loop through all tracks one ahead of the original track itTrk. This is done since we want to compare all the track to each other to if they have similar hits     
+	        for ( jtrk = itrk+1; jtrk < _tracksCartesian.size(); jtrk++ ) 
+	        {
+          		int hitscount=0;
  
-            if ( isGoodTrack ) {
-//                state->setLocation( EUTelTrackStateImpl::AtLastHit );
-                _tracks.push_back( cartesian2LCIOTrack( *itTrk ) );
-                delete (*itTrk);
-                ++itTrk;
-            }
+          		EUTelTrackImpl* jtTrack = _tracksCartesian[jtrk];
+          		const EVENT::TrackerHitVec jhits = jtTrack->getTrackerHits();
+			// cross check every track to all following ones in the _track collection
+			int outer_loop = 0;
+			int inner_loop = 0;
+		        for(int i=0;i<ihits.size();i++)
+          		{ // loop through hits in itTrk candidate
+				streamlog_out(MESSAGE1) <<  "The number of hits to loop through (outer) :" << ihits.size()<< " Beginning loop (outer) : " <<outer_loop<< std::endl;
+				outer_loop++; 
+            			EVENT::TrackerHit* ihit = ihits[i];
+            			int ic = ihit->id();
+				inner_loop = 0;
+            
+				for(int j=0;j<jhits.size();j++)
+            			{ // loop through hits in jtTrk candidate 
+					streamlog_out(MESSAGE1) <<  "The number of hits to loop through (compare, inner)  :" << jhits.size()<< " Beginning loop (inner) : " <<inner_loop<< std::endl; 
+					inner_loop++;
+               				EVENT::TrackerHit* jhit = jhits[j];
+               				int jc = jhit->id();
+               				if(ic == jc ){
+                 				hitscount++; 
+                 				streamlog_out(MESSAGE1) <<  "Hit number on track you are comparing all other to :" << i << ". Hit ID: " << ic << ". Hit number of comparison: " << j << ". Hit ID of this comparison : " << jc << ". Number of common hits: " << hitscount << std::endl; 
+               				}
+            			}
+          		} 
+    			//Here we fill up a vector with tracks we want to delete.
+          		if(hitscount > _AllowedSharedHitsOnTrackCandidate) {   
+            			if( std::find(_tracks_to_delete.begin(), _tracks_to_delete.end(), *itTrk ) == _tracks_to_delete.end() || _tracks_to_delete.size() == 0 ) {
+               				streamlog_out(DEBUG5) <<  "Track " << itrk << " and " << jtrk <<"Have similar hits. Remove track " <<*itTrk << std::endl;
+              				_tracks_to_delete.push_back( *itTrk );
+            			}
+            			continue;
+          		}
+        	}
 
-	} //for ( itTrk = _tracks.begin(); itTrk != _tracks.end(); )
+      	}
 
-	streamlog_out(DEBUG2) << "------------------------------EUTelKalmanFilter::FitTracks()---------------------------------" << std::endl;
+      	Print( "_tracksCartesian ", _tracksCartesian);   
+
+      	Print( "Tracks that are to be deleted: ", _tracks_to_delete);   
+ 
+      	Prune( _tracksCartesian, _tracks_to_delete);   
+
+      	Print( "After deletion the tracks left: ", _tracksCartesian);   
+ 
+      	streamlog_out(MESSAGE1) << "------------------------------EUTelKalmanFilter::PruneTrackCandidates()---------------------------------" << std::endl;
     }
-    
+        
     /** Check validity of the user input */
     bool EUTelKalmanFilter::initialise() {
         streamlog_out(DEBUG2) << "EUTelKalmanFilter::initialise()" << std::endl;
@@ -631,7 +513,6 @@ itTrk++;
     
     void EUTelKalmanFilter::reset() {
         streamlog_out(DEBUG2) << "EUTelKalmanFilter::reset()" << std::endl;
-        _tracks.clear();
         _tracksCartesian.clear();
         _trackStates.clear();
         streamlog_out(DEBUG2) << "-------------------------------EUTelKalmanFilter::reset()-----------------------------------" << std::endl;
@@ -743,19 +624,25 @@ itTrk++;
             else trkCov[9] = 1.E5;
             trkCov[14] = ( _beamEnergyUncertainty * _beamE ) * ( _beamEnergyUncertainty * _beamE );               //cov(q/p,x)=0, cov(q/p,y)=0, cov(q/p,tx)=0, cov(q/p,ty)=0, cov(q/p,q/p)
             
+						//NOTE THESE PARAMETERS ARE WHAT DEFINE THE MOVEMENT OF A PARTICLE THROUGH A SURFACE. 
+						//NOTE THIS IS GLOBAL TELESCOPE FRAME. Also note that there is no SetZ. Since this state will be moved along the z axis by the jacobian calculated later. So it is only a parameter
             state->setCovMatrix( trkCov );          
-            state->setReferencePoint( posLocal ); // was posGlobal before // now switching all states to LOCAL !!
+            state->setReferencePoint( posLocal ); //Is this needed if we store the global position of the hit?
             state->setLocation( sensorID ) ; //  EUTelTrackStateImpl::AtFirstHit );
             state->setTx(0.);         // seed with 0 at first hit. Given by beam direction.
             state->setTy(0.);         // seed with 0 at first hit. Given by beam direction.
             state->setX(posGlobal[0]);          // 0. at first hit
             state->setY(posGlobal[1]);          // 0. at first hit
             state->setInvP(invp);            // independent of reference point
-            
+						////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	    state->setZParameter(posGlobal[2]);
+
+            if( streamlog_level(DEBUG1) ){            
+              state->Print();
+            }
             EUTelTrackImpl* track = new EUTelTrackImpl;
-//            track->addHit( (*itHit) );
             track->addTrackState( state );
-//            track->Print();
+            track->addHit( const_cast< EVENT::TrackerHit* > (*itHit) );
             _tracksCartesian.push_back( track );
 
           }// loop over for the iplane
@@ -764,291 +651,7 @@ itTrk++;
 
         streamlog_out(DEBUG2) << "--------------------------------EUTelKalmanFilter::initialiseSeeds()---------------------------" << std::endl;
     }
-    
-    /** Calculate track momentum from track parameters 
-     * @param ts track state with specified tx,ty,x,y,invP
-     * @return 3-vector of momentum
-     */
-    TVector3 EUTelKalmanFilter::getPfromCartesianParameters( const EUTelTrackStateImpl* ts ) const {
-        streamlog_out(DEBUG2) << "EUTelKalmanFilter::getPfromCartesianParameters()" << std::endl;
-        //const double p  = 1. / state->getInvP() * fabs( _beamQ );
-        const double p  = 1. / ts->getInvP() * _beamQ;
-        const double tx = ts->getTx();
-        const double ty = ts->getTy();
-        const double px = p*tx / sqrt( 1. + tx*tx + ty*ty );
-        const double py = p*ty / sqrt( 1. + tx*tx + ty*ty );
-        const double pz = p    / sqrt( 1. + tx*tx + ty*ty );
         
-        streamlog_out(DEBUG2) << "-------------------------------EUTelKalmanFilter::getPfromCartesianParameters()-------------------------" << std::endl;
-        
-        return TVector3(px,py,pz);
-    }
-    
-    /**
-     * Find closest surface intersected by the track and propagate track to that point
-     * @param input: ts track state
-     * @param output: nextPlane - SensorID derived from the next geo::Volume intersection    
-     * @return dz or -999 on failure
-     */
-    double EUTelKalmanFilter::findIntersection( EUTelTrackStateImpl* ts, int& nextPlane ) {
-        streamlog_out(DEBUG2) << "EUTelKalmanFilter::findIntersection()" << std::endl;
-        
-        // Get track position
-        const float* x = ts->getReferencePoint();
-        const double x0 = x[0];
-        const double y0 = x[1];
-        const double z0 = x[2];
-        TVector3 trkVec(x0,y0,z0);
-        
-        // Get magnetic field vector
-        gear::Vector3D vectorGlobal( x0, y0, z0 );        // assuming uniform magnetic field running along X direction
-        const gear::BField&   B = geo::gGeometry().getMagneticFiled();
-	const double bx         = B.at( vectorGlobal ).x();
-	const double by         = B.at( vectorGlobal ).y();
-	const double bz         = B.at( vectorGlobal ).z();
-        TVector3 hVec(bx,by,bz);
-	const double H = hVec.Mag();
-        
-        // Calculate track momentum from track parameters
-        TVector3 pVec = getPfromCartesianParameters( ts );
-        const double p = pVec.Mag();
-	const double mm = 1000.;
-        const double k = -0.299792458/mm*_beamQ*H;
-        const double rho = k/p; 
-        
-        // Determine id of the sensor in which track reference point is located
-        int sensorID = geo::gGeometry().getSensorID( x );
-        int sensorZorder = geo::gGeometry().sensorIDtoZOrder( sensorID );
-        
-        streamlog_out(DEBUG0) << "SensorID:" << sensorID << std::endl;
-        streamlog_out(DEBUG0) << "Sensor Z order:" << sensorZorder << std::endl;
-        
-        if ( sensorID < 0 ) {
-            streamlog_out ( DEBUG3 ) << "Track interseciton was not found" << std::endl;
-            return -999.;
-        }
-        
-        // Get planes normals in global reference system
-        std::map< int, TVector3 > planesNorm;
-        EVENT::IntVec sensID = geo::gGeometry().sensorIDsVec();
-        EVENT::IntVec::const_iterator itPlaneId;
-        for ( itPlaneId = sensID.begin(); itPlaneId != sensID.end(); ++itPlaneId ) {
-            TVector3 norm = geo::gGeometry().siPlaneNormal( *itPlaneId );
-            if ( norm.Mag2() > 1e-6 ) planesNorm[ *itPlaneId ] = norm;
-            else {
-                streamlog_out( ERROR0 ) << "Wrong sensor normal vector:\n";
-                streamlog_out( ERROR0 ) << "ID: " << *itPlaneId << "\n";
-                streamlog_out( ERROR0 ) << "x: " << norm.X() << " y: " << norm.Y() << " z: " << norm.Z()<< std::endl;
-            }
-        }
-        
-        // Find closest plane downstream
-        const int nextPlaneId = geo::gGeometry().sensorZOrderToID(sensorZorder+1);
-        nextPlane = nextPlaneId;
-
-        if ( nextPlaneId > 0 ) {
-            itPlaneId = std::find( sensID.begin(), sensID.end(), nextPlaneId ); 
-        } else {
-            streamlog_out ( DEBUG3 ) << "Track intersection was not found" << std::endl;
-            return -999.;
-        }
-        // Construct quadratic equation
-//        for ( itPlaneId = sensID.begin(); itPlaneId != sensID.end(); ++itPlaneId ) {
-        
-            TVector3 sensorCenter( geo::gGeometry().siPlaneXPosition( *itPlaneId ),
-                                   geo::gGeometry().siPlaneYPosition( *itPlaneId ),
-                                   geo::gGeometry().siPlaneZPosition( *itPlaneId ) );
-            TVector3 delta = trkVec - sensorCenter;
-            TVector3 pVecCrosH = pVec.Cross( hVec.Unit() );
-
-            if ( streamlog_level(DEBUG0) ) {
-	     streamlog_out (DEBUG0) << "-------------------------------------------" << std::endl;
-	     streamlog_out (DEBUG0) << "Current point (X,Y,Z): " << std::setw(15) << x0 
-								 << std::setw(15) << y0 
-								 << std::setw(15) << z0 << std::endl;
-	     streamlog_out (DEBUG0) << "PlaneID: " << *itPlaneId << std::endl;
-	     streamlog_out (DEBUG0) << "Normal vector" << std::endl;
-	     planesNorm[*itPlaneId].Print();
-	     streamlog_out (DEBUG0) << "P x H vector" << std::endl;
-	     pVecCrosH.Print();
-	     streamlog_out (DEBUG0) << "Rho: " << rho << std::endl;
-	     streamlog_out (DEBUG0) << "P: " << p << std::endl;
-            }
-            const double a = -0.5 * rho * ( planesNorm[*itPlaneId].Dot( pVecCrosH ) ) / p;
-            const double b = planesNorm[*itPlaneId].Dot( pVec ) / p;
-            const double c = planesNorm[*itPlaneId].Dot( delta );
-            
-            // solutions are sorted in ascending order
-            std::vector< double > sol = Utility::solveQuadratic(a,b,c);
-            
-            TVector3 newPos[2];
-	    newPos[0] = getXYZfromArcLength( ts, sol[0] );
-	    newPos[1] = getXYZfromArcLength( ts, sol[1] );
-
-	    streamlog_out (DEBUG0) << "Next intersected volume can be: " << *itPlaneId << std::endl;
-	    streamlog_out (DEBUG0) << "Plane: " << *itPlaneId << std::endl;
-	    streamlog_out (DEBUG0) << "Solutions for arc length: " << std::setw(15) << sol[0] << std::setw(15) << sol[1] << std::endl;
-	    streamlog_out (DEBUG0) << "First solution (X,Y,Z): " << std::setw(15) << newPos[0].X() 
-								 << std::setw(15) << newPos[0].Y() 
-								 << std::setw(15) << newPos[0].Z() << std::endl;
-	    streamlog_out (DEBUG0) << "Second solution (X,Y,Z): " << std::setw(15) << newPos[1].X() 
-								 << std::setw(15) << newPos[1].Y() 
-								 << std::setw(15) << newPos[1].Z() << std::endl;
-//        } // for ( itPlaneId = sensID.begin(); itPlaneId != sensID.end(); ++itPlaneId ) {
-
-        // Choose solution with minimal positive arc length. It will correspond to the closest point along the helix
-	double solution = ( sol[0] > 0. ) ? sol[0] : ( ( sol[0] < 0. && sol[1] > 0. ) ? sol[1] : -1. );
-        int solutionNum = ( sol[0] > 0. ) ? 0 : ( ( sol[0] < 0. && sol[1] > 0. ) ? 1 : -1 );
-	double dz = ( solution > 0. ) ? newPos[ solutionNum ].Z() - trkVec.Z() : -1.;
-
-        if ( dz < 1.E-6 ) {
-            streamlog_out ( DEBUG3 ) << "Track intersection was not found" << std::endl;
-            return -999.;
-        }       
-        
-//          getXYZfromDzNum( ts, dz );
-        
-        streamlog_out(DEBUG2) << "-------------------------EUTelKalmanFilter::findIntersection()--------------------------" << std::endl;
-        
-           return dz;
-    }
-
-    /** Propagate track state by dz 
-     * 
-     * @param ts track state
-     * @param dz propagation distance
-     */
-    int EUTelKalmanFilter::propagateTrackRefPoint( EUTelTrackStateImpl* ts, int nextPlaneId ) {
-        streamlog_out(DEBUG2) << "EUTelKalmanFilter::propagateTrackRefPoint()" << std::endl;
- 
-	  const double invP = ts->getInvP();
-//	  const double x0 = ts->getX();
-//	  const double y0 = ts->getY();
-//	  const double z0 = ts->getZ();
-	  const double x0 = ts->getReferencePoint()[0];
-	  const double y0 = ts->getReferencePoint()[1];
-	  const double z0 = ts->getReferencePoint()[2];
-	  const double tx0 = ts->getTx();
-	  const double ty0 = ts->getTy();
-          const int tsPlaneID = ts->getLocation();
-//
-          double lpoint[3]   = { x0, y0, z0}; // 
-          double gpoint[3]   = {0.,0.,0.};  // initialise output point-vector global frame (World)
-
-          geo::gGeometry().local2Master( tsPlaneID, lpoint, gpoint );
-
-          double dir[3]   = {0.,0.,1.};  
-          float fpoint[3] = {0.,0.,0.};
-          int getErrorID = geo::gGeometry( ).findNextPlaneEntrance( gpoint,  dir, nextPlaneId, fpoint ) ;
-          if(getErrorID < 0 ) 
-          {
-            streamlog_out ( DEBUG2 ) << "no Entrance: " <<  fpoint[0] << " " <<  fpoint[1] << " " << fpoint[2] << " at plane : " << nextPlaneId << " err:"<< getErrorID << endl;
-           return -999;
-          }            
-
-          streamlog_out ( DEBUG2 ) << "propagate: goind from this plane       : " <<  x0        << " " <<  y0        << " " << z0        << " at plane : " << tsPlaneID                           << endl;
-          streamlog_out ( DEBUG2 ) << "propagate:identified NextPlane Entrance: " <<  fpoint[0] << " " <<  fpoint[1] << " " << fpoint[2] << " at plane : " << nextPlaneId << " err:"<< getErrorID << endl;
-//	  const float newPos[] = {fpoint[0], fpoint[1], fpoint[2]};
-//	  const float newPos[] = {static_cast<float>(x), static_cast<float>(y), static_cast<float>(z0+dz)};
-	
-	  ts->setLocation( EUTelTrackStateImpl::AtOther );
-	  ts->setReferencePoint( fpoint );
-        
-          streamlog_out(DEBUG2) << "EUTelKalmanFilter::propagateTrackRefPoint() finish" << std::endl;
-          return nextPlaneId;
-    }
-
-
-    /** Propagate track state by dz 
-     * 
-     * @param ts track state
-     * @param dz propagation distance
-     */
-    void EUTelKalmanFilter::propagateTrackRefPoint( EUTelTrackStateImpl* ts, const int nextPlaneId,  double dz ) {
-        streamlog_out(DEBUG2) << "EUTelKalmanFilter::propagateTrackRefPoint()" << std::endl;
-          // The formulas below are derived from equations of motion of the particle in 
-          // magnetic field under assumption |dz| small. Must be valid for |dz| < 10 cm
-
-
-	  // Get track parameters
-	  const double invP = ts->getInvP();
-	  const double x0 = ts->getX();
-	  const double y0 = ts->getY();
-//	  const double z0 = ts->getZ();
-//	  const double x0 = ts->getReferencePoint()[0];
-//	  const double y0 = ts->getReferencePoint()[1];
-	  const double z0 = ts->getReferencePoint()[2];
-	  const double tx0 = ts->getTx();
-	  const double ty0 = ts->getTy();
-//
-          TVector3 vectorRefPoint( x0, y0, z0 );        
-
-
-//
-          EVENT::IntVec sensID = geo::gGeometry().sensorIDsVec();
-          EVENT::IntVec::const_iterator itPlaneId;
-          if ( nextPlaneId > 0 ) {
-            itPlaneId = std::find( sensID.begin(), sensID.end(), nextPlaneId ); 
-          } else {
-            streamlog_out ( DEBUG3 ) << "Track intersection was not found" << std::endl;
-          }
-          TVector3 norm = geo::gGeometry().siPlaneNormal( *itPlaneId ).Unit();
-          TVector3 sensorCenter( geo::gGeometry().siPlaneXPosition( *itPlaneId ),
-                                 geo::gGeometry().siPlaneYPosition( *itPlaneId ),
-                                 geo::gGeometry().siPlaneZPosition( *itPlaneId ) );
-          TVector3 delta = vectorRefPoint - sensorCenter;
-          const double positionRefPoint = delta.Dot( norm.Unit() );
- 
-          streamlog_out ( DEBUG3 ) << "refpoint: " << x0 << " " << y0 << " " << z0 << std::endl;
-          streamlog_out ( DEBUG3 ) << "next sensor " << nextPlaneId << " c:" << sensorCenter[0] << " "  << sensorCenter[1] << " " << sensorCenter[2] << " "  << std::endl;
-          streamlog_out ( DEBUG3 ) << "next sensor " << nextPlaneId << " n:" << norm[0] << " "  << norm[1] << " " << norm[2] << " "  << std::endl;
-          if ( positionRefPoint > 0 ) {
-            streamlog_out ( DEBUG3 ) << "positionRefPoint: " << positionRefPoint << std::endl;
-          } else {
-            streamlog_out ( DEBUG3 ) << "positionRefPoint: " << positionRefPoint << std::endl;
-          }
-           
-//
-
-          // Get magnetic field vector
-          gear::Vector3D vectorGlobal( x0, y0, z0 );        // assuming uniform magnetic field
-	  const gear::BField&   B = geo::gGeometry().getMagneticFiled();
-	  const double Bx         = B.at( vectorGlobal ).x();
-	  const double By         = B.at( vectorGlobal ).y();
-	  const double Bz         = B.at( vectorGlobal ).z();
-	  const double mm = 1000.;
-	  const double k = 0.299792458/mm;
-          
-	  const double sqrtFactor = sqrt( 1. + tx0*tx0 + ty0*ty0 );
-
-	  const double Ax = sqrtFactor * (  ty0 * ( tx0 * Bx + Bz ) - ( 1. + tx0*tx0 ) * By );
-	  const double Ay = sqrtFactor * ( -tx0 * ( ty0 * By + Bz ) + ( 1. + ty0*ty0 ) * Bx );
-
-	  double x = x0 + tx0 * dz + 0.5 * k * invP * Ax * dz*dz;
-	  double y = y0 + ty0 * dz + 0.5 * k * invP * Ay * dz*dz;
-          
-//	  const double tx = tx0 + invP * k * Ax * dz;
-//	  const double ty = ty0 + invP * k * Ay * dz;
-
-	  streamlog_out( DEBUG0 ) << "Old track state (x,y,tx,ty,invP):" << std::endl;
-	  streamlog_out( DEBUG0 ) << std::setw(15) << x0
-				  << std::setw(15) << y0
-				  << std::setw(15) << tx0
-				  << std::setw(15) << ty0
-				  << std::setw(15) << invP << std::endl;
-	  streamlog_out( DEBUG0 ) << "Old track ref point (x,y,z):" << std::endl;
-	  streamlog_out( DEBUG0 ) << std::setw(15) << ts->getReferencePoint()[0]
-				  << std::setw(15) << ts->getReferencePoint()[1]
-				  << std::setw(15) << ts->getReferencePoint()[2] << std::endl;
-
-	  const float newPos[] = {static_cast<float>(x), static_cast<float>(y), static_cast<float>(z0+dz)};
-	  ts->setLocation( EUTelTrackStateImpl::AtOther );
-	  ts->setReferencePoint( newPos );
-        
-          streamlog_out(DEBUG2) << "EUTelKalmanFilter::propagateTrackRefPoint() finish" << std::endl;
-    }
-
-    
     /** Find the hit closest to the intersection of a track with given sensor
      * 
      * @param ts track state
@@ -1091,7 +694,7 @@ itTrk++;
     double EUTelKalmanFilter::getXYPredictionPrecision( const EUTelTrackStateImpl* ts ) const {
       streamlog_out(DEBUG2) << "EUTelKalmanFilter::getXYPredictionPrecision()" << std::endl;
       
-      TMatrixDSym Ckkm1 = getTrackStateCov(ts);
+      TMatrixDSym Ckkm1 = ts->getTrackStateCov();
       double xyPrec = getWindowSize();   //sqrt( Ckkm1[0][0]*Ckkm1[0][0] + Ckkm1[1][1]*Ckkm1[1][1] );
       
       streamlog_out(DEBUG0) << "Minimal combined UV resolution : " << xyPrec << std::endl;
@@ -1100,327 +703,6 @@ itTrk++;
       return xyPrec;
     }
 
-    /** Calculate track parameters propagation jacobian for given track state
-     *  and propagation distance. The expressions were derived in parabolic approximation
-     *  valid for small values of propagation distance |dz| < 10cm. Can be iterated if necessary.
-     * 
-     * @param ts track state
-     * @param dz propagation distance
-     * @return 
-     */
-    const TMatrixD& EUTelKalmanFilter::getPropagationJacobianF( const EUTelTrackStateImpl* ts, double dz ) {
-        streamlog_out( DEBUG2 ) << "EUTelKalmanFilter::getPropagationJacobianF()" << std::endl;
-	// The formulas below are derived from equations of motion of the particle in
-        // magnetic field under assumption |dz| small. Must be valid for |dz| < 10 cm
-
-	const double mm = 1000.;
-	const double k = 0.299792458/mm;
-
-	// Get track parameters
-	const double invP = ts->getInvP();
-	const double x0 = ts->getX();
-        const double y0 = ts->getY();
-        const double z0 = ts->getReferencePoint()[2];
-        const double tx0 = ts->getTx();
-        const double ty0 = ts->getTy();
-
-        // Get magnetic field vector
-        gear::Vector3D vectorGlobal( x0, y0, z0 );        // assuming uniform magnetic field
-	const gear::BField&   B = geo::gGeometry().getMagneticFiled();
-        const double Bx         = B.at( vectorGlobal ).x();
-        const double By         = B.at( vectorGlobal ).y();
-        const double Bz         = B.at( vectorGlobal ).z();
-        
-        const double sqrtFactor = sqrt( 1. + tx0*tx0 + ty0*ty0 );
-
-	const double Ax = sqrtFactor * (  ty0 * ( tx0 * Bx + Bz ) - ( 1. + tx0*tx0 ) * By );
-	const double Ay = sqrtFactor * ( -tx0 * ( ty0 * By + Bz ) + ( 1. + ty0*ty0 ) * Bx );
-
-	// Partial derivatives
-	//const double dAxdtx0 = tx0 * Ax / (sqrtFactor*sqrtFactor) + sqrtFactor*( ty0*Bx - 2. * tx0 * By );
-	const double dAxdty0 = ty0 * Ax / (sqrtFactor*sqrtFactor) + sqrtFactor*( tx0*Bx + Bz );
-	const double dAydtx0 = tx0 * Ay / (sqrtFactor*sqrtFactor) + sqrtFactor*( -ty0*By - Bz );
-	//const double dAydty0 = ty0 * Ay / (sqrtFactor*sqrtFactor) + sqrtFactor*( -tx0*By + 2. * ty0 * Bx );
-
-	const double dxdtx0 = dz;
-	const double dxdty0 = 0.5 * invP * k * dz*dz * dAxdty0;
-
-	const double dydtx0 = 0.5 * invP * k * dz*dz * dAydtx0;
-	const double dydty0 = dz;
-
-	const double dtxdty0 = invP * k * dz * dAxdty0;
-	const double dtydtx0 = invP * k * dz * dAydtx0;
-
-	const double dxdinvP0 = 0.5 * k * dz*dz * Ax;
-	const double dydinvP0 = 0.5 * k * dz*dz * Ay;
-
-	const double dtxdinvP0 = k * dz * Ax;
-	const double dtydinvP0 = k * dz * Ay;
-
-	// Fill-in matrix elements
-	_jacobianF.UnitMatrix();
-	_jacobianF[0][2] = dxdtx0;	_jacobianF[0][3] = dxdty0;	_jacobianF[0][4] = dxdinvP0;
-	_jacobianF[1][2] = dydtx0;	_jacobianF[1][3] = dydty0;	_jacobianF[1][4] = dydinvP0;
-	_jacobianF[2][3] = dtxdty0;	_jacobianF[2][4] = dtxdinvP0;
-	_jacobianF[3][2] = dtydtx0;	_jacobianF[3][4] = dtydinvP0;
-        
-        if ( streamlog_level(DEBUG0) ){
-             streamlog_out( DEBUG0 ) << "Propagation jacobian: " << std::endl;
-            _jacobianF.Print();
-        }
-	
-        streamlog_out( DEBUG2 ) << "-----------------------------EUTelKalmanFilter::getPropagationJacobianF()-------------------------------" << std::endl;
-        
-	return _jacobianF;
-    }
-    
-    /**
-     * Get extrapolated position of the track in global coordinate system
-     * Extrapolation performed along the helix. Formulas are also valid for vanishing magnetic field.
-     * 
-     * @param ts track state
-     * @param s arc length
-     * @return 3d vector of coordinates in the global coordinate system
-     */
-    TVector3 EUTelKalmanFilter::getXYZfromArcLength1( const EUTelTrackStateImpl* ts, double s ) const {
-        streamlog_out(DEBUG2) << "EUTelKalmanFilter::getXYZfromArcLength()" << std::endl;
-        
-        // Get starting track position
-        const float* x = ts->getReferencePoint(); // this is in measurment system already
-        const double x0 = x[0];
-        const double y0 = x[1];
-        const double z0 = x[2]; // redundant (always zero)
-        const int sensorID = ts->getLocation();
-
-       	double trkPointLocal[]  = {x0, y0, z0};
-       	double trkPointGlobal[] = {0.,0.,0.};
-	geo::gGeometry().local2Master( sensorID, trkPointLocal, trkPointGlobal );
-
-        // Get magnetic field vector
-        gear::Vector3D vectorGlobal(  trkPointGlobal[0], trkPointGlobal[1], trkPointGlobal[2]  );        // assuming uniform magnetic field running along X direction
-	const gear::BField&   B = geo::gGeometry().getMagneticFiled();
-        const double bx         = B.at( vectorGlobal ).x();
-        const double by         = B.at( vectorGlobal ).y();
-        const double bz         = B.at( vectorGlobal ).z();
-        TVector3 hVec(bx,by,bz);
-               
-        TVector3 pVec = getPfromCartesianParameters( ts );
-
-        const double p = pVec.Mag();
-	const double mm = 1000.;
-        const double k = -0.299792458/mm*_beamQ*hVec.Mag();
-        const double rho = k/p;
-               
-        // Calculate end track position
-	TVector3 pos;
-	if ( fabs( k ) > 1.E-6  ) {
-		// Non-zero magnetic field case
-        	pos.SetX( trkPointGlobal[0] + 1./p * pVec.X() * s );
-		pos.SetY( trkPointGlobal[1] + 1./k * pVec.Y() * sin( rho*s ) + 1./k * pVec.Z() * ( 1. - cos( rho*s ) ) );
-                pos.SetZ( trkPointGlobal[2] + 1./k * pVec.Z() * sin( rho*s ) - 1./k * pVec.Y() * ( 1. - cos( rho*s ) ) );
-        } else {
-		// Vanishing magnetic field case
-		const double cosA = cosAlpha( ts );
-		const double cosB = cosBeta( ts );
-		pos.SetX( trkPointGlobal[0] + cosA * s );
-		pos.SetY( trkPointGlobal[1] + cosB * s );
-		pos.SetZ( trkPointGlobal[2] + 1./p * pVec.Z() * s );
-	}
-        
-        streamlog_out(DEBUG2) << "---------------------------------EUTelKalmanFilter::getXYZfromArcLength()------------------------------------" << std::endl;
-        
-        return pos;
-    }
-
-    /**
-     * Get extrapolated position of the track in global coordinate system
-     * Extrapolation performed along the helix. Formulas are also valid for vanishing magnetic field.
-     * 
-     * @param ts track state
-     * @param s arc length
-     * @return 3d vector of coordinates in the global coordinate system
-     */
-    TVector3 EUTelKalmanFilter::getXYZfromArcLength( const EUTelTrackStateImpl* ts, double s ) const {
-        streamlog_out(DEBUG2) << "EUTelKalmanFilter::getXYZfromArcLength()" << std::endl;
-        
-        // Get starting track position
-        const float* x = ts->getReferencePoint();
-        const double x0 = x[0];
-        const double y0 = x[1];
-        const double z0 = x[2];
-        
-        // Get magnetic field vector
-        gear::Vector3D vectorGlobal( x0, y0, z0 );        // assuming uniform magnetic field running along X direction
-	const gear::BField&   B = geo::gGeometry().getMagneticFiled();
-        const double bx         = B.at( vectorGlobal ).x();
-        const double by         = B.at( vectorGlobal ).y();
-        const double bz         = B.at( vectorGlobal ).z();
-        TVector3 hVec(bx,by,bz);
-               
-        TVector3 pVec = getPfromCartesianParameters( ts );
-
-	const double H = hVec.Mag();
-        const double p = pVec.Mag();
-	const double mm = 1000.;
-        const double k = -0.299792458/mm*_beamQ*H;
-        const double rho = k/p;
-        
-        // Calculate end track position
-	TVector3 pos( x0, y0, z0 );
-	if ( fabs( k ) > 1.E-6  ) {
-		// Non-zero magnetic field case
-		TVector3 pCrossH = pVec.Cross(hVec.Unit());
-		TVector3 pCrossHCrossH = pCrossH.Cross(hVec.Unit());
-		const double pDotH = pVec.Dot(hVec.Unit());
-		TVector3 temp1 = pCrossHCrossH;	temp1 *= ( -1./k * sin( rho * s ) );
-		TVector3 temp2 = pCrossH;       temp2 *= ( -1./k * ( 1. - cos( rho * s ) ) );
-		TVector3 temp3 = hVec;          temp3 *= ( pDotH / p * s );
-		pos += temp1;
-		pos += temp2;
-		pos += temp3;
-        } else {
-		// Vanishing magnetic field case
-		const double cosA = cosAlpha( ts );
-		const double cosB = cosBeta( ts );
-		pos.SetX( x0 + cosA * s );
-		pos.SetY( y0 + cosB * s );
-		pos.SetZ( z0 + 1./p * pVec.Z() * s );
-	}
-        
-        streamlog_out(DEBUG2) << "---------------------------------EUTelKalmanFilter::getXYZfromArcLength()------------------------------------" << std::endl;
-        
-        return pos;
-    }
-    
-    /**
-     * Get extrapolated position of the track in global coordinate system
-     * Formulas are also valid for vanishing magnetic field.
-     * Calculation is based on numerical integration of equations of motion
-     * 
-     * @param ts track state
-     * @param dz propagation distance along z
-     * @return 3d vector of coordinates in the global coordinate system
-     */
-    TVector3 EUTelKalmanFilter::getXYZfromDzNum( const EUTelTrackStateImpl* ts, double dz ) const {
-        streamlog_out(DEBUG2) << "EUTelKalmanFilter::getXYZfromDzNum()" << std::endl;
-        
-        // Get starting track position
-        
-        TVectorD trackStateVec = getTrackStateVec( ts );
-	const float* x = ts->getReferencePoint();
-        const double x0 = x[0];
-        const double y0 = x[1];
-        const double z0 = x[2];
-        
-        // Get magnetic field vector
-        gear::Vector3D vectorGlobal( x0, y0, z0 );        // assuming uniform magnetic field running along X direction
-	const gear::BField&   B = geo::gGeometry().getMagneticFiled();
-        const double bx         = B.at( vectorGlobal ).x();
-        const double by         = B.at( vectorGlobal ).y();
-        const double bz         = B.at( vectorGlobal ).z();
-        TVector3 hVec(bx,by,bz);
-        
-        // Setup the equation
-	trackStateVec[0] = x0;
-	trackStateVec[1] = y0;
-        static_cast< eom::EOMODE* >(_eomODE)->setInitValue( trackStateVec );
-        static_cast< eom::EOMODE* >(_eomODE)->setBField( hVec );
-        
-        // Integrate
-        TVectorD result = _eomIntegrator->integrate( dz );
-        
-        TVector3 pos(result[0],result[0],z0+dz);
-        
-        streamlog_out(DEBUG0) << "Result of the integration:" << std::endl;
-        streamlog_message( DEBUG0, result.Print();, std::endl; );
-        
-        streamlog_out(DEBUG2) << "---------------------------------EUTelKalmanFilter::getXYZfromDzNum()------------------------------------" << std::endl;
-        
-        return pos;
-    }
-
-    /** Calculate cos of the angle between Z(beam) and X(solenoid field axis)
-     *  from track parameters
-     * 
-     * @param ts track state
-     * @return cos(alpha)
-     */
-    double EUTelKalmanFilter::cosAlpha( const EUTelTrackStateImpl* ts ) const {
-        streamlog_out( DEBUG2 ) << "EUTelKalmanFilter::cosAlpha()" << std::endl;
-        const double tx = ts->getTx( );
-        const double ty = ts->getTy( );
-        const double cos = tx / sqrt( 1. + tx * tx + ty * ty );
-        
-        streamlog_out( DEBUG0 ) << "cosAlpha= " << cos << std::endl;
-        
-        return cos;
-    }
-
-    /** Calculate cos of the angle between Z(beam) and Y
-     *  from track parameters
-     * 
-     * @param ts track state
-     * @return cos(beta)
-     */
-    double EUTelKalmanFilter::cosBeta( const EUTelTrackStateImpl* ts ) const {
-        streamlog_out( DEBUG2 ) << "EUTelKalmanFilter::cosBeta()" << std::endl;
-        const double tx = ts->getTx( );
-        const double ty = ts->getTy( );
-        const double cos = ty / sqrt( 1. + tx * tx + ty * ty );
-        
-        streamlog_out( DEBUG0 ) << "cosBeta= " << cos << std::endl;
-        
-        return ty / sqrt( 1. + tx * tx + ty * ty );
-    }
-
-    /** Convert track state to the vector object. Useful for matrix operations
-     * 
-     * @param ts track stare
-     * @return vector of parameters
-     */
-    TVectorD EUTelKalmanFilter::getTrackStateVec( const EUTelTrackStateImpl* ts ) const {
-        streamlog_out( DEBUG2 ) << "EUTelKalmanFilter::getTrackStateVec()" << std::endl;
-        TVectorD x(5);
-        x[0] = ts->getX();
-        x[1] = ts->getY();
-        x[2] = ts->getTx();
-        x[3] = ts->getTy();
-        x[4] = ts->getInvP();
-        
-        if ( streamlog_level(DEBUG0) ){
-            streamlog_out( DEBUG0 ) << "Track state:" << std::endl;
-            x.Print();
-        }
-        
-        return x;
-    }
-    
-    /** Convert track state parameter covariances to the matrix object. Useful for matrix operations
-     * 
-     * @param ts track state
-     * @return covariance matrix
-     */
-    TMatrixDSym EUTelKalmanFilter::getTrackStateCov( const EUTelTrackStateImpl* ts ) const {
-        streamlog_out( DEBUG2 ) << "EUTelKalmanFilter::getTrackStateVec()" << std::endl;
-        TMatrixDSym C(5);
-        
-        const EVENT::FloatVec& trkCov = ts->getCovMatrix();
-        
-        C.Zero();
-            
-        C[0][0] = trkCov[0]; 
-        C[1][0] = trkCov[1];  C[1][1] = trkCov[2]; 
-        C[2][0] = trkCov[3];  C[2][1] = trkCov[4];  C[2][2] = trkCov[5]; 
-        C[3][0] = trkCov[6];  C[3][1] = trkCov[7];  C[3][2] = trkCov[8];  C[3][3] = trkCov[9]; 
-        C[4][0] = trkCov[10]; C[4][1] = trkCov[11]; C[4][2] = trkCov[12]; C[4][3] = trkCov[13]; C[4][4] = trkCov[14]; 
-        
-        if ( streamlog_level(DEBUG0) ){
-            streamlog_out( DEBUG0 ) << "Track state covariance matrix:" << std::endl;
-            C.Print();
-        }
-        
-        return C;
-    }
         
     /**
      * Propagate track state k-1 -> k
@@ -1428,7 +710,7 @@ itTrk++;
      */
     void EUTelKalmanFilter::propagateTrackState( EUTelTrackStateImpl* ts ) {
         streamlog_out( DEBUG2 ) << "EUTelKalmanFilter::propagateTrackState()" << std::endl;
-        TVectorD xkm1 = getTrackStateVec( ts );
+        TVectorD xkm1 = ts->getTrackStateVec();
         TVectorD xkkm1 = _jacobianF * xkm1;
         
         streamlog_message( DEBUG0, xkkm1.Print();, std::endl; );
@@ -1441,7 +723,39 @@ itTrk++;
         
         streamlog_out( DEBUG2 ) << "-----------------------------------EUTelKalmanFilter::propagateTrackState()----------------------------------" << std::endl;
     }
-    
+
+	void EUTelKalmanFilter::nextStateUsingJacobianFinder(EUTelTrackStateImpl* input, EUTelTrackStateImpl* output, TMatrixD& jacobian){
+        	streamlog_out( DEBUG5 ) << "EUTelKalmanFilter::nextStateUsingJacobianFinder()" << std::endl;
+		/////////////////////////////////////////////////////////////////////////////////////////////////////Here we update the new global position of the track
+		TVectorD xkm1 = input->getTrackStateVec();
+	        streamlog_out( DEBUG4 ) << "Before transformation" << std::endl;
+	        streamlog_message( DEBUG4, xkm1.Print();, std::endl; );
+	        TVectorD xkkm1 = jacobian * xkm1; 
+	        streamlog_out( DEBUG4 ) << "After transformation" << std::endl;
+        	streamlog_message( DEBUG4, xkkm1.Print();, std::endl; );
+        
+	        output->setX( xkkm1[0] );
+	        output->setY( xkkm1[1] );
+	        output->setTx( xkkm1[2] );
+	        output->setTy( xkkm1[3] );
+	        output->setInvP( xkkm1[4] );
+
+		///////////////////////////////////////////////////////////Here we update the Covariant matrix
+       		TMatrixDSym TrackCovInput = input->getTrackStateCov();
+	        TMatrixDSym TrackCovOutput  = TrackCovInput.Similarity( jacobian ); 
+
+        	float trkCov[15] = { static_cast<float>(TrackCovOutput[0][0]), static_cast<float>(TrackCovOutput[1][0]), static_cast<float>(TrackCovOutput[1][1]), 
+                	             static_cast<float>(TrackCovOutput[2][0]), static_cast<float>(TrackCovOutput[2][1]), static_cast<float>(TrackCovOutput[2][2]),
+                        	     static_cast<float>(TrackCovOutput[3][0]), static_cast<float>(TrackCovOutput[3][1]), static_cast<float>(TrackCovOutput[3][2]),
+	                             static_cast<float>(TrackCovOutput[3][3]), static_cast<float>(TrackCovOutput[4][0]), static_cast<float>(TrackCovOutput[4][1]),
+        	                     static_cast<float>(TrackCovOutput[4][2]), static_cast<float>(TrackCovOutput[4][3]), static_cast<float>(TrackCovOutput[4][4]) };
+
+	        input->setCovMatrix( trkCov );    
+				
+        
+        	streamlog_out( DEBUG5 ) << "-----------------------------------EUTelKalmanFilter::nextStateUsingJacobianFinder()----------------------------------" << std::endl;
+	}
+				    
     /** Retrieve hit covariance matrix from hit object. Useful for matrix operations
      * 
      * @param hit
@@ -1473,40 +787,38 @@ itTrk++;
     TVectorD EUTelKalmanFilter::getResidual( const EUTelTrackStateImpl* ts, const EVENT::TrackerHit* hit ) const {
         streamlog_out( DEBUG2 ) << "EUTelKalmanFilter::getResidual()" << std::endl;
 
+	//Determined hit on plane ins local coordinates 
         const double* uvpos = hit->getPosition();
-        TVectorD mk(2); 
-        mk[0] = uvpos[0];          mk[1] = uvpos[1];
-        
-	TVector3 trkPointVec = getXYZfromArcLength( ts, 0. );
-        double trkPointLocal[] = { trkPointVec.X(), trkPointVec.Y(), trkPointVec.Z() };
-        
-	TVectorD prediction(2);
-	prediction[0] = trkPointLocal[0];	prediction[1] = trkPointLocal[1];    
-        
-        streamlog_out( DEBUG0 ) << "Hit (id=" << hit->id() << ") local(u,v) coordinates: (" << uvpos[0] << "," << uvpos[1] << ")" << std::endl;
-        streamlog_out( DEBUG0 ) << "Prediction for hit (id=" << hit->id() << ") local(u,v) coordinates: (" 
-				<< trkPointLocal[0] << "," << trkPointLocal[1] << ")" << std::endl;
+        TVectorD mk(3); 
+        mk[0] = uvpos[0];          
+	mk[1] = uvpos[1];
+	
+        streamlog_out( DEBUG3 ) << "Hit (id=" << hit->id() << ") local(u,v) coordinates of hit: (" << mk[0] << "," << mk[1] <<","<<mk[2] << ")" << std::endl;
+	/////////////////////////////////////////////////////////////////////////
 
-/*
-        TMatrixD Hk = getH(ts);
-        if ( streamlog_level(DEBUG0) ){
-            streamlog_out( DEBUG0 ) << "Projection Matrix Hk:" << std::endl;
-            Hk.Print();
-        }
+	//Determine local coordinates of state prediction////////////////////////
+	TVectorD prediction(3);
+	double localState[3];
+	const double input[3] = {ts->getX(),ts->getY(),ts->getZParameter()};
 
-        TVectorD xkkm1 = getTrackStateVec( ts );       // track state must be updated to x(k,k-1) not initial xk        
-        xkkm1[0] -= xc;
-        xkkm1[1] -= yc;
+       	streamlog_out( DEBUG3 ) << "	Global(u,v,z) coordinates before transform to local  (" << input[0] << "," << input[1] << "," << input[2] << ")" << " planeID: " <<  ts->getLocation() << std::endl;
 
+	geo::gGeometry().master2Localtwo( ts->getLocation(), input, localState );
+	prediction[0] = localState[0];	prediction[1] = localState[1]; prediction[2] = localState[2];
+	
+        streamlog_out( DEBUG3 ) << "	Prediction for hit (id=" << hit->id() << ") local(u,v) coordinates of state: ("  << prediction[0] << "," << prediction[1] <<","<<prediction[2] << ")" << std::endl;
+	//////////////////////////////////////////////////////////////////////////
+
+        
+      
         TVectorD rk(2);
-        rk = mk;        rk -= Hk * xkkm1;
-*/        
-
-        TVectorD rk(2);
-        rk = mk - prediction;
+        rk[0] = mk[0] - prediction[0];
+        rk[1] = mk[1] - prediction[1];
+				
+				
         
-        if ( streamlog_level(DEBUG0) ){
-            streamlog_out( DEBUG0 ) << "Residual vector rk:" << std::endl;
+        if ( streamlog_level(DEBUG2) ){
+            streamlog_out( DEBUG2 ) << "	Residual vector rk: (" <<rk[0] <<","<<rk[1]<<")"<< std::endl;
             rk.Print();
         }
         
@@ -1523,13 +835,13 @@ itTrk++;
      */
     TMatrixDSym EUTelKalmanFilter::getResidualCov( const EUTelTrackStateImpl* ts, const EVENT::TrackerHit* hit ) {
         streamlog_out( DEBUG2 ) << "EUTelKalmanFilter::getResidualCov()" << std::endl;
-        TMatrixD Hk = getH(ts);
+        TMatrixD Hk = ts->getH();
         
         _processNoiseQ.Zero();
-        TMatrixDSym Ckm1 = getTrackStateCov( ts );
-        TMatrixDSym Ckkm1 = Ckm1.Similarity( _jacobianF );        //Ckkm1 += _processNoiseQ;       
-        TMatrixDSym Rkkm1 = Ckkm1.Similarity(Hk);
-        Rkkm1 += getHitCov(hit);
+        TMatrixDSym Ckm1 = ts->getTrackStateCov( ); // 5x5
+        TMatrixDSym Ckkm1 = Ckm1.Similarity( _jacobianF ); // 5x5        //Ckkm1 += _processNoiseQ;       
+        TMatrixDSym Rkkm1 = Ckkm1.Similarity(Hk); // 5x5
+        Rkkm1 += getHitCov(hit); // hitCov is 2x2 ??
         
         if ( streamlog_level(DEBUG0) ) {
             streamlog_out( DEBUG0 ) << "Residual covariance matrix:" << std::endl;
@@ -1541,32 +853,32 @@ itTrk++;
         return Rkkm1;
     }
     
-    /** Retrieve Kalman gain matrix
+    /** Retrieve Kalman gain matrix. This is a 5x2 matrix so takes a state 5x1 as an argument.
      * 
      * @param ts track state
      * @param hit
      * 
      * @return Gain matrix K
      */
-    const TMatrixD& EUTelKalmanFilter::updateGainK( const EUTelTrackStateImpl* ts, const EVENT::TrackerHit* hit ) {
+    TMatrixD EUTelKalmanFilter::updateGainK( const EUTelTrackStateImpl* ts, const EVENT::TrackerHit* hit ) {
         streamlog_out( DEBUG2 ) << "EUTelKalmanFilter::updateGainK()" << std::endl;
-        _processNoiseQ.Zero();
-        TMatrixDSym Ckm1 = getTrackStateCov( ts );
-        TMatrixDSym Ckkm1 = Ckm1.Similarity( _jacobianF );        //Ckkm1 += _processNoiseQ;
-        TMatrixD Ht(5,2);     Ht = Ht.Transpose( getH(ts) );
+
+	TMatrixD gainK(5,2);
+        _processNoiseQ.Zero(); //Not sure the need for this?
+        TMatrixDSym Ckm1 = ts->getTrackStateCov( );
+        TMatrixDSym Ckkm1 = Ckm1.Similarity( _jacobianF ); //Transform covariant matrix from one position to the next      
+        TMatrixD Ht(5,2);     Ht = Ht.Transpose( ts->getH() );//This matrix transforms from local to global.
         
-        _gainK = Ckkm1 * Ht * getResidualCov( ts, hit ).Invert();
-//        _gainK *= Ht;
-//        _gainK *= Ckkm1;
+        gainK = Ckkm1 * Ht * getResidualCov( ts, hit ).Invert();//take residual of hit and track in local frame. Transform to global. Then multiply by global state covariant matrix
         
         if ( streamlog_level(DEBUG0) ) {
             streamlog_out( DEBUG0 ) << "Gain matrix:" << std::endl;
-            _gainK.Print();
+            gainK.Print();
         }
         
         streamlog_out( DEBUG2 ) << "----------------------------------------EUTelKalmanFilter::updateGainK()------------------------------------" << std::endl;
         
-        return _gainK;
+        return gainK;
     }
     
     /** Update track state given new hit
@@ -1574,10 +886,78 @@ itTrk++;
      * @param ts track state
      * @param hit
      */
+
+
+	void EUTelKalmanFilter::UpdateStateUsingHitInformation(EUTelTrackStateImpl* input,const EVENT::TrackerHit* hit, const TMatrixD& jacobian, TMatrixD & KGain, TMatrixD & HMatrix){
+   		streamlog_out( DEBUG2 ) << "-----------------------EUTelKalmanFilter::UpdateStateUsingHitInformation()-------------------------------START" << std::endl;
+	
+		//Get the residual of the hit and the track and the state vector/////////
+	        TVectorD residual = getResidual( input, hit ); //This is just the components of distance in x and y
+        	TVectorD state = input->getTrackStateVec( );       
+		///////////////////////////////////////////////////////////////////////
+
+		///////////////////////////////////////////////////////First the state. Note that if the hit is accurate you want to change the state to that position
+		state += KGain * residual;   //If the hit is very certain KGain will be unity so the new state position will be the hit position. If the hit is very uncertain then KGain is very small and has no effect. Note matrix (5x1)=+(5x2)*(2x1). 
+		input -> setX( state[0] );
+		input -> setY( state[1] );
+		input -> setTx( state[2] );
+		input -> setTy( state[3] );
+       		input -> setInvP( state[4] );
+                input->Print();
+		///////////////////////////////////////////////////////////////////////////
+				
+		/////////////////////////////////////////////////////////////////Now the Cov Matrix. Note that if the hit is very accurate it will reduce the Cov matrix
+		TMatrixDSym CovMatrix = input->getTrackStateCov();
+		TMatrixD I(5,5);
+		I.UnitMatrix();
+		I -= KGain*HMatrix;  //If we have low uncertainty in the hit then I will be 0. So the covariant will be 0 at this state // Matrix    (5x5)=(5x2)*(2x5). Simply transform gain from
+        	TMatrixD newCovMatrix = I*CovMatrix;
+
+	        float trkCov[15] = { static_cast<float>(newCovMatrix[0][0]), static_cast<float>(newCovMatrix[1][0]), static_cast<float>(newCovMatrix[1][1]), 
+                             static_cast<float>(newCovMatrix[2][0]), static_cast<float>(newCovMatrix[2][1]), static_cast<float>(newCovMatrix[2][2]),
+                             static_cast<float>(newCovMatrix[3][0]), static_cast<float>(newCovMatrix[3][1]), static_cast<float>(newCovMatrix[3][2]),
+                             static_cast<float>(newCovMatrix[3][3]), static_cast<float>(newCovMatrix[4][0]), static_cast<float>(newCovMatrix[4][1]),
+                             static_cast<float>(newCovMatrix[4][2]), static_cast<float>(newCovMatrix[4][3]), static_cast<float>(newCovMatrix[4][4]) };
+
+	        input->setCovMatrix( trkCov );
+	
+		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        	streamlog_out( DEBUG2 ) << "-----------------EUTelKalmanFilter::UpdateStateUsingHitInformation()-------------------------------END" << std::endl;
+
+	}
+
+	
+	void EUTelKalmanFilter::UpdateTrackUsingHitInformation( EUTelTrackStateImpl* input,const EVENT::TrackerHit* hit, EUTelTrackImpl* track, const TMatrixD& jacobian, TMatrixD & KGain, TMatrixD & HMatrix){
+		streamlog_out( DEBUG2 ) << "-----------------EUTelKalmanFilter::UpdateTrackUsingHitInformation()-------------------------------BEGIN" << std::endl;			
+		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Now determine the chi2 of the track.
+		TMatrixDSym newCovMatrix = input->getTrackStateCov( );
+	        TVectorD residual(2);   residual = getResidual( input, hit ); //This is just the components of distance in x and y
+
+	        TMatrixD HMatrixTranspose(5,2);      HMatrixTranspose.Transpose( HMatrix );
+	        TMatrixD newCovMatrixMeas(2,2);  newCovMatrixMeas = HMatrix * newCovMatrix * HMatrixTranspose; //This is the new state covariant matrix in measurements space.
+		TMatrixD hitCov(2,2);       hitCov = getHitCov( hit );
+		hitCov -= newCovMatrixMeas;
+		TMatrixD I(2,2);
+		I.UnitMatrix();
+		I -= HMatrix*KGain;
+		TVectorD change_residual(2); change_residual =  I*residual;
+
+		double chi2 = hitCov.Invert().Similarity(change_residual);
+	        track->setChi2( chi2 );
+	
+		///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		streamlog_out( DEBUG5 ) << "Add hit: " << hit << " to track " << track << std::endl;
+	        track->addHit( const_cast< EVENT::TrackerHit* > (hit) );
+		streamlog_out( DEBUG2 ) << "-----------------EUTelKalmanFilter::UpdateTrackUsingHitInformation()-------------------------------END" << std::endl;
+	
+	}
+
+
+
     double EUTelKalmanFilter::updateTrackState( EUTelTrackStateImpl* ts, const EVENT::TrackerHit* hit ) {
         streamlog_out( DEBUG2 ) << "EUTelKalmanFilter::updateTrackState()" << std::endl;
         TVectorD rkkm1(2);      rkkm1 = getResidual( ts, hit );
-        TVectorD xk(5);         xk = getTrackStateVec( ts );
+        TVectorD xk(5);         xk = ts->getTrackStateVec( );
         
         TMatrixD Kk = updateGainK( ts, hit );
         xk += Kk * rkkm1;
@@ -1587,7 +967,7 @@ itTrk++;
             xk.Print();
         }
         
-        TMatrixD Hk = getH( ts );
+        TMatrixD Hk = ts->getH();
         TMatrixD I(5,5);     I.UnitMatrix();
         I -= Kk*Hk;
 
@@ -1599,7 +979,7 @@ itTrk++;
         }
         
         _processNoiseQ.Zero();
-        TMatrixDSym Ckm1 = getTrackStateCov( ts );
+        TMatrixDSym Ckm1 = ts->getTrackStateCov( );
         TMatrixDSym Ckkm1 = Ckm1.Similarity( _jacobianF );        //Ckkm1 += _processNoiseQ;
         
         TMatrixD Ck(5,5);
@@ -1660,71 +1040,11 @@ itTrk++;
         return chi2;
     }
     
-    /** Retrieve track state projection onto measurement space matrix
-     * 
-     * @param ts track state
-     * @return 
-     */
-    TMatrixD EUTelKalmanFilter::getH( const EUTelTrackStateImpl* ts ) const {
-        streamlog_out( DEBUG2 ) << "EUTelKalmanFilter::getH()" << std::endl;
-        TMatrixD H(2,5);
-        H.Zero();
-        TVector3 trkPointVec = getXYZfromArcLength( ts, 0. );
-        double trkPoint[] = { trkPointVec.X(), trkPointVec.Y(), trkPointVec.Z() };
-        const TGeoHMatrix* globalH = geo::gGeometry().getHMatrix( trkPoint );
-        
-        if ( streamlog_level(DEBUG0) ) {
-            streamlog_out( DEBUG0 ) << "Local to global transformation matrix:" << std::endl;
-            globalH->Print();
-        }
-        
-        const TGeoHMatrix& globalHInv = globalH->Inverse();
-        if ( streamlog_level(DEBUG0) ) {
-            streamlog_out( DEBUG0 ) << "Global to local transformation matrix:" << std::endl;
-            globalHInv.Print();
-        }
-        
-//        const double* shift = globalHInv.GetTranslation();
-        const double* rotation = globalHInv.GetRotationMatrix();
-
-        // Fill necessary components
-        H[0][0] = rotation[0]; // x projection, xx
-        H[0][1] = rotation[1]; // y projection, xy
-        H[1][0] = rotation[3]; // x projection, yx
-        H[1][1] = rotation[4]; // y projection, yy
-
-        if ( streamlog_level(DEBUG0) ) {
-            streamlog_out( DEBUG0 ) << "Matrix H:" << std::endl;
-            H.Print();
-        }
-        
-        return H;
-    }
-
-    /**
-     * Convert EUTelTrackImpl representation to LCIO's TrackImpl class
-     * 
-     * @param track track to be converted
-     * 
-     * @return converted track object
-     */
     IMPL::TrackImpl* EUTelKalmanFilter::cartesian2LCIOTrack( EUTelTrackImpl* track ) const {
 
         IMPL::TrackImpl* LCIOtrack = new IMPL::TrackImpl;
 
-/*
-        const EUTelTrackStateImpl* state = track->getTrackState( EUTelTrackStateImpl::AtLastHit );
-        if(state == 0) {
-          streamlog_out(MESSAGE0) << "TrackState is NULL, means no LastHit marked on the track - odd " << endl;
-          return 0;
-        } 
-        const float* r = state->getReferencePoint();
-        const double rx = r[0];
-        const double ry = r[1];
-        const double rz = r[2];
-        
-        LCIOtrack->setReferencePoint( r );
-*/
+
         int nstates =  track->getTrackStates().size();
         for(int i=0;i < nstates; i++) 
         {
@@ -1740,40 +1060,7 @@ itTrk++;
         for ( itrHit = trkcandhits.begin(); itrHit != trkcandhits.end(); ++itrHit ) {
              LCIOtrack->addHit( *itrHit );
         }
-/*                
-        // Get magnetic field vector
-        gear::Vector3D vectorGlobal( rx, ry, rz );        // assuming uniform magnetic field running along X direction
-	const gear::BField&   B = geo::gGeometry().getMagneticFiled();
-        const double bx         = B.at( vectorGlobal ).x();
-        const double by         = B.at( vectorGlobal ).y();
-        const double bz         = B.at( vectorGlobal ).z();
-        TVector3 h(bx,by,bz);
-               
-        TVector3 p = getPfromCartesianParameters( state );
 
-	const double H = h.Mag();
-	const double mm = 1000.;
-        const double k = -0.299792458/mm*_beamQ*H;
-        
-        const double pt  = sqrt(p.Y()*p.Y() + p.Z()*p.Z());
-        
-        const double om  =    _beamQ/( pt );
-        const double d0  =    0.;               // d0 in the plane transverse to magnetic field vector
-        const double z0  =    0.;               // z0 along the magnetic field
-        const double phi =    atan2( p.Y(), p.Z() );
-        const double tanlam = p.X()/pt;
-        
-        const double chi2 = track->getChi2();
-        LCIOtrack->setChi2( chi2 );
-        LCIOtrack->setNdf( trkcandhits.size() ); // NDF contains number of hits used for the fit
-*/
-       /* 
-        LCIOtrack->setOmega( om );
-        LCIOtrack->setD0( d0 );
-        LCIOtrack->setZ0( z0 );
-        LCIOtrack->setPhi( phi );
-        LCIOtrack->setTanLambda( tanlam );
-*/
         return LCIOtrack;
 
     }

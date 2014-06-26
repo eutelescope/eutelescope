@@ -101,6 +101,7 @@ protected:
 
 	//! The time
     short _time;
+
 };
 
 } //namespace eutelescope

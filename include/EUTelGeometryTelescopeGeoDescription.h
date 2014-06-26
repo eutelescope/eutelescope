@@ -21,6 +21,8 @@
 #include "gearimpl/SiPlanesLayerLayoutImpl.h"
 #include "gearimpl/SiPlanesParametersImpl.h"
 
+#include "gearimpl/TrackerPlanesLayerLayoutImpl.h"
+#include "gearimpl/TrackerPlanesParametersImpl.h"
 
 #include "gear/BField.h"
 
@@ -28,6 +30,14 @@
 #include "EUTelUtility.h"
 #include "EUTelGenericPixGeoMgr.h"
 //#include "EUTelGenericPixGeoDescr.h"
+
+// ROOT
+#if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
+#include "TMatrixD.h"
+#else
+#error *** You need ROOT to compile this code.  *** 
+#endif
+
 
 //#ifdef USE_TGEO
 // ROOT
@@ -53,23 +63,46 @@ namespace eutelescope {
 
     namespace geo {
 
+        // Iterate over registered GEAR objects and construct their TGeo representation
+        const Double_t PI     = 3.141592653589793;
+        const Double_t DEG    = 180./PI; 
+        const Double_t RADIAN = PI/180.; 
 
         class EUTelGeometryTelescopeGeoDescription {
             
         private:
+            /** */
             EUTelGeometryTelescopeGeoDescription();
 
+            /** */ 
             DISALLOW_COPY_AND_ASSIGN(EUTelGeometryTelescopeGeoDescription)      // prevent users from making (default) copies of processors
 
+            /** need only for pede2lcio*/
+            gear::GearMgr* _gearManager;
+
+
+            /** */ 
+            bool _siPlanesDefined;
+
+            /** */ 
+            bool _telPlanesDefined;
 
         public:
             /** Retrieves the instanstance of geometry.
              * Performs lazy intialization if necessary.
              * @TODO this routine has to be considered to be constant
              */
-            static EUTelGeometryTelescopeGeoDescription& getInstance();
+            static EUTelGeometryTelescopeGeoDescription& getInstance( gear::GearMgr* _g );
+  
+            /** */
+            void updateGearManager();  
  
- 
+            /** */
+            unsigned counter() { return _counter++; }
+
+            /** needed only for pede2lcio*/ 
+            void setGearManager( gear::GearMgr* value ) { _gearManager = value ; }
+
             /** Number of planes in the setup */
             inline size_t getSiPlanesLayoutID() const { return _siPlanesLayoutID; } ;
 
@@ -81,7 +114,48 @@ namespace eutelescope {
             
             /** Z coordinates of centers of planes */
             const EVENT::DoubleVec& siPlanesZPositions() const;
-            
+           
+            /** set methods */
+
+            /** set X position  */
+            void setPlaneXPosition(int sensorID, double value);
+ 
+            /** set Y position  */
+            void setPlaneYPosition(int sensorID, double value);
+ 
+            /** set Z position  */
+            void setPlaneZPosition(int sensorID, double value);
+ 
+            /** set X rotation  */
+            void setPlaneXRotation(int sensorID, double value);
+ 
+            /** set Y rotation  */
+            void setPlaneYRotation(int sensorID, double value);
+ 
+            /** set Z rotation  */
+            void setPlaneZRotation(int sensorID, double value);
+ 
+            /** set X rotation  */
+            void setPlaneXRotationRadians(int sensorID, double value /* in Radians */);
+ 
+            /** set Y rotation  */
+            void setPlaneYRotationRadians(int sensorID, double value /* in Radians */);
+ 
+            /** set Z rotation  */
+            void setPlaneZRotationRadians(int sensorID, double value /* in Radians */);
+
+            /** */ 
+            float siPlaneRotation1(int sensorID);
+
+            /** */ 
+            float siPlaneRotation2(int sensorID);
+
+            /** */ 
+            float siPlaneRotation3(int sensorID);
+
+            /** */ 
+            float siPlaneRotation4(int sensorID);
+ 
             /** X coordinate of center of sensor 
              * with given ID in global coordinate frame */
             double siPlaneXPosition( int );
@@ -102,7 +176,17 @@ namespace eutelescope {
             
             /** Rotation around Z axis of global coordinate frame */
             double siPlaneZRotation( int );
+
+             /** Rotation around X axis of the global coordinate frame */
+            double siPlaneXRotationRadians( int );
             
+            /** Rotation around Y axis of global coordinate frame */
+            double siPlaneYRotationRadians( int );
+            
+            /** Rotation around Z axis of global coordinate frame */
+            double siPlaneZRotationRadians( int );
+
+          
             /** Sensor X side size */
             double siPlaneXSize( int );
             
@@ -158,8 +242,24 @@ namespace eutelescope {
 
         private:
             /** reading initial info from gear: part of contructor */
-	    void readSiPlanesParameters();
+	    void readSiPlanesLayout();
 
+            /** reading initial info from gear: part of contructor */
+	    void updateSiPlanesLayout();
+
+
+            /** reading initial info from gear: part of contructor
+              * new GEAR from branch/TelPlanes
+              */
+	    void readTrackerPlanesLayout(); 
+           
+            /**  */
+	    void updateTrackerPlanesLayout(); 
+
+
+            /** housing for the above two 
+              */    
+            void readGear();
 
             void translateSiPlane2TGeo(TGeoVolume*,int );
 
@@ -179,23 +279,47 @@ namespace eutelescope {
 
             // Geometry operations
         public:
-            float findRadLengthIntegral( const double[], const double[], bool );
+            	float findRadLengthIntegral( const double[], const double[], bool );
             
-            int getSensorID( const float globalPos[] ) const;
+            	int getSensorID( const float globalPos[] ) const;
            
-            void local2Master( int, const double[], double[] );
+            	void local2Master( int, const double[], double[] );
 
-						void local2masterHit(EVENT::TrackerHit* hit_input, IMPL::TrackerHitImpl* hit_output, LCCollection * hitCollectionOutput);
-
-						void master2localHit(EVENT::TrackerHit* hit_input, IMPL::TrackerHitImpl* hit_output, LCCollection * hitCollectionOutput);
+		void local2masterHit(EVENT::TrackerHit* hit_input, IMPL::TrackerHitImpl* hit_output, LCCollection * hitCollectionOutput);
+		
+		void master2localHit(EVENT::TrackerHit* hit_input, IMPL::TrackerHitImpl* hit_output, LCCollection * hitCollectionOutput);
             
-            void master2Local( const double[], double[] );
+            	void master2Local( const double[], double[] );
 
-			void local2MasterVec( int, const double[], double[] );
+            	void master2Localtwo(int, const double[], double[] );
+
+		void local2MasterVec( int, const double[], double[] );
  
-			void master2LocalVec( int, const double[], double[] );
-            
-            const TGeoHMatrix* getHMatrix( const double globalPos[] );
+		void master2LocalVec( int, const double[], double[] );
+
+		int findIntersectionWithCertainID( float x0, float y0, float z0, float px, float py, float pz, float _beamQ, int nextPlaneID, float* output);
+
+		TVector3 getXYZfromArcLength( float x0, float y0, float z0, float px, float py, float pz, float _beamQ, float s) const;
+
+		TMatrix getPropagationJacobianF( float x0, float y0, float z0, float px, float py, float pz, float _beamQ, float dz );
+
+                void CalculateProjMatrix( TMatrixD& proL2m, double* hitPointGlobal )
+		{  
+		// Calculate projection matrix
+
+		const TGeoHMatrix* globalH = getHMatrix( hitPointGlobal );
+		const TGeoHMatrix& globalHInv = globalH->Inverse();
+		const double* rotation = globalHInv.GetRotationMatrix();
+
+		proL2m[0][0] = rotation[0]; // x projection, xx
+		proL2m[0][1] = rotation[1]; // y projection, xy
+		proL2m[1][0] = rotation[3]; // x projection, yx
+		proL2m[1][1] = rotation[4]; // y projection, yy
+
+    		}
+
+
+        	const TGeoHMatrix* getHMatrix( const double globalPos[] );
             
             /** Magnetic field */
             const gear::BField& getMagneticFiled() const;
@@ -206,7 +330,7 @@ namespace eutelescope {
 			/** Returns the TGeo path of given plane */
 			std::string  getPlanePath( int  );
 
-        public:
+        private:
             /** Silicon planes parameters as described in GEAR
              * This structure actually contains the following:
              *  @li A reference to the telescope geoemtry and layout
@@ -229,6 +353,13 @@ namespace eutelescope {
              */
             gear::SiPlanesLayerLayout* _siPlanesLayerLayout;
 
+            /**
+             */
+            gear::TrackerPlanesParameters*  _trackerPlanesParameters;
+ 
+            /**
+             */
+            gear::TrackerPlanesLayerLayout* _trackerPlanesLayerLayout;
 
 // overwrite private to public ::
         private :
@@ -265,7 +396,19 @@ namespace eutelescope {
             
             /** Rotation around Z axis of global coordinate frame [rad]*/
             EVENT::DoubleVec _siPlaneZRotation;
-            
+           
+            /** deprecated rotaion natrix elements */
+            EVENT::DoubleVec _siPlaneRotation1; 
+
+            /** deprecated rotaion natrix elements */
+            EVENT::DoubleVec _siPlaneRotation2; 
+
+            /** deprecated rotaion natrix elements */
+            EVENT::DoubleVec _siPlaneRotation3; 
+
+            /** deprecated rotaion natrix elements */
+            EVENT::DoubleVec _siPlaneRotation4; 
+
             /** Sensor X side length [mm]*/
             EVENT::DoubleVec _siPlaneXSize;
             
@@ -309,7 +452,7 @@ namespace eutelescope {
         private:
 	    /** Flag if geoemtry is already initialized */
 	    bool _isGeoInitialized;
-
+         
 	    /** Map containing plane path (string) and corresponding planeID */
 	    std::map<int, std::string> _planePath;
 
@@ -327,10 +470,13 @@ namespace eutelescope {
             int findNextPlaneEntrance(  double* ,  double *, int, float*  );
             int findNextPlane(  double* lpoint,  double* ldir,  float* newpoint );
 
+            /** */
+            static unsigned _counter;
+
         };
         
-        inline EUTelGeometryTelescopeGeoDescription& gGeometry() {
-                return EUTelGeometryTelescopeGeoDescription::getInstance(); 
+        inline EUTelGeometryTelescopeGeoDescription& gGeometry( gear::GearMgr* _g = marlin::Global::GEAR ) {
+                return EUTelGeometryTelescopeGeoDescription::getInstance( _g ); 
         }
 
         
@@ -338,6 +484,6 @@ namespace eutelescope {
 } // namespace eutelescope
 
 #endif  // USE_GEAR
-
+ 
 #endif	/* EUTELGEOMETRYTELESCOPEGEODESCRIPTION_H */
 

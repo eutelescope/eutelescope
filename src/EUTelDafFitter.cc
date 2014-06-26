@@ -125,6 +125,9 @@ void EUTelDafFitter::dafInit() {
 
 void EUTelDafFitter::dafEvent (LCEvent * event) {
 
+  streamlog_out(MESSAGE3) << " dafEvent -- START --- " << std::endl;
+
+
   //Prepare track collection
   if(_addToLCIO){
     // Define output track and hit collections
@@ -179,6 +182,9 @@ void EUTelDafFitter::dafEvent (LCEvent * event) {
     event->addCollection(_fitpointvec, sfitpoints );
   }
 
+  streamlog_out(MESSAGE3) << " dafEvent -- END --- " << std::endl;
+
+
 }
 
 void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate* track, LCCollectionVec *lcvec){
@@ -208,7 +214,7 @@ void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate* track, LCCollectionVec
     // encode and store sensorID
     idHitEncoder["sensorID"] = _system.planes.at(plane).getSensorID();
     // set the local/global bit flag property AND the FittedHit property for the hit
-    idHitEncoder["properties"] = kHitInGlobalCoord || kFittedHit;
+    idHitEncoder["properties"] = kHitInGlobalCoord ^ kFittedHit;
     double pos[3];
     pos[0]= estim->getX() / 1000.0;
     pos[1]= estim->getY() / 1000.0;
@@ -231,6 +237,9 @@ void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate* track, LCCollectionVec
     idHitEncoder.setCellID( fitpoint );
     _fitpointvec->push_back(fitpoint);
     fittrack->addHit(fitpoint);
+
+    streamlog_out(DEBUG3) << " hit : sensorID " << idHitEncoder["sensorID"] << " properties: " << idHitEncoder["properties"]  << std::endl;
+
 
     if(plane == 0){
       refpoint[0] = pos[0];

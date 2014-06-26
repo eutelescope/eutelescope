@@ -22,15 +22,15 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
       <processor name="AIDA"/>
       <processor name="UniversalNativeReader"/>
       <processor name="Mimosa26EUTelAutoPedestalNoiseProcessor"/>
-      <processor name="HotPixelKiller"/>
+      <processor name="HotPixelFinder"/>
       <processor name="APIXNoiseProcessor"/>
-      <processor name="APIXHotPixelKiller"/>
+      <processor name="APIXHotPixelFinder"/>
       <processor name="Save"/>
    </execute>
 
    <global>
       <parameter name="LCIOInputFiles"> </parameter>
-      <parameter name="GearXMLFile" value="@GearPath@/@GearFile@"/>
+      <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="0"/>
       <parameter name="SupressCheck" value="false"/>
@@ -96,13 +96,13 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
 
 
 
- <processor name="HotPixelKiller" type="EUTelHotPixelKiller">
+ <processor name="HotPixelFinder" type="EUTelProcessorHotPixelFinder">
  
     <!--This is the name of the LCIO file name with the input/output hot pixel collection  (add .slcio)-->
     <parameter name="HotPixelDBFile" type="string" value="@DBPath@/run@HotPixelRunNumber@-hotpixel-db.slcio"/>
     <parameter name="HotPixelCollectionName" type="string" value="hotpixel_m26" />
 
-    <!--EUTelHotPixelKiller periodically check for pixel singing loud too often and remove them from the analysis-->
+    <!--EUTelHotPixelFinder periodically check for pixel singing loud too often and remove them from the analysis-->
 
     <!--
         INPUT / OUTPUT
@@ -155,13 +155,13 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
 
 
 
- <processor name="APIXHotPixelKiller" type="EUTelAPIXHotPixelKiller">
+ <processor name="APIXHotPixelFinder" type="EUTelProcessorHotPixelFinder">
  
     <!--This is the name of the LCIO file name with the input/output hot pixel collection  (add .slcio)-->
     <parameter name="HotPixelDBFile" type="string" value="@DBPath@/run@HotPixelRunNumber@-hotpixel-db.slcio"/>
     <parameter name="HotPixelCollectionName" type="string" value="hotpixel_apix" />
 
-    <!--EUTelHotPixelKiller periodically check for pixel singing loud too often and remove them from the analysis-->
+    <!--EUTelHotPixelFinder periodically check for pixel singing loud too often and remove them from the analysis-->
 
     <!--
         INPUT / OUTPUT
@@ -199,7 +199,7 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
   <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
   <!--parameter name="KeepCollectionNames" type="StringVec" value="MyPreciousSimTrackerHits"/-->
   <!-- name of output file -->
-  <parameter name="LCIOOutputFile" type="string" value="@LcioRawFolder@/run@RunNumber@@MemCheckFlag@.slcio  "/>
+  <parameter name="LCIOOutputFile" type="string" value="@LcioPath@/run@RunNumber@@MemCheckFlag@.slcio  "/>
   <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
   <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   <!--Set it to true to remove intermediate EORE in merged runs-->

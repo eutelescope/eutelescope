@@ -91,10 +91,10 @@ void EUTelProcessorCoordinateTransformHits::processRunHeader (LCRunHeader * rdr)
                                <<  "This may mean that the GeoID parameter was not set" << endl;
 
 
-  if ( header->getGeoID() != geo::gGeometry()._siPlanesParameters->getSiPlanesID() ) {
+  if ( header->getGeoID() != geo::gGeometry().getSiPlanesLayoutID() ) {
   	streamlog_out ( WARNING5 ) <<  "Error during the geometry consistency check: " << endl
                              << "The run header says the GeoID is " << header->getGeoID() << endl
-                             << "The GEAR description says is     " << geo::gGeometry()._siPlanesParameters->getSiPlanesID() << endl;
+                             << "The GEAR description says is     " << geo::gGeometry().getSiPlanesLayoutID() << endl;
 
 //Here if the geometry number and gear file number don't match decide if you should continue
 #ifdef EUTEL_INTERACTIVE

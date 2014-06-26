@@ -6,9 +6,9 @@
 	<global detectorName="EUTelescope"/>
 	<BField type="ConstantBField" x="0.0" y="0.0" z="0.0"/>
 	<detectors>
-		<detector name="SiPlanes" geartype="TelPlanesParameters">
-			<telplanesID ID="225"/>
-			<telplanesNumber number="2"/>
+		<detector name="SiPlanes" geartype="TrackerPlanesParameters">
+			<LayoutID ID="225"/>
+			<LayoutNumberOfLayers number="2"/>
 
 			<layers>
 				<!--APIX-Plane 1 - most upstream/ the most-downstream at the end of the list  -->

@@ -12,7 +12,7 @@
                  type="StringVec" 
                  value="Mimosa26.so Mimosa26.so Mimosa26.so Mimosa26.so Mimosa26.so Mimosa26.so"/>
 
-     <!-- z along beam -->
+      <!-- z along beam -->
       <layers>
 	<!--Datura Plane 0 -->
 	<layer>
