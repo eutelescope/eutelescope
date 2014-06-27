@@ -1,6 +1,6 @@
 //STL
 #include <map>
-#include <iostream>
+#include <sstream>
 #include <stdexcept>
 
 //EUTelescope
@@ -11,6 +11,7 @@
 #include "marlin/VerbosityLevels.h"
 
 //Geometry implementations
+#include "GEARPixGeoDescr.h"
 #include "Mimosa26GeoDescr.h"
 #include "FEI4Single.h"
 #include "FEI4Double.h"
@@ -36,6 +37,42 @@ EUTelGenericPixGeoMgr::~EUTelGenericPixGeoMgr()
 		streamlog_out( MESSAGE3 ) << "Deleting " << (*it).first << std::endl;
 		delete (*it).second;
 	}
+}
+
+//TODO: comments
+void EUTelGenericPixGeoMgr::addCastedPlane(int planeID, int xPixel, int yPixel, double xSize, double ySize, double zSize, double radLength, std::string planeVolume)
+{
+	EUTelGenericPixGeoDescr* pixgeodescrptr = NULL;
+	int xSizeMap  = static_cast<int>(1000*xSize+0.5);  
+	int ySizeMap  = static_cast<int>(1000*ySize+0.5); 
+	int zSizeMap  = static_cast<int>(1000*zSize+0.5); 
+
+	std::stringstream stream;
+	stream << xPixel << yPixel << xSizeMap << ySizeMap << zSizeMap;
+	std::string name = stream.str();
+
+        std::map<std::string, EUTelGenericPixGeoDescr*>::iterator it;
+	it = _castedDescriptions.find(name);
+	
+	if( it!=_castedDescriptions.end() )
+	{
+		//if it is, use it!
+		streamlog_out( MESSAGE3 )  << "Found " << name << ", using it" << std::endl;
+		pixgeodescrptr = (*it).second;
+		streamlog_out( MESSAGE3 ) << "Inserting " << name << " into map" << std::endl;
+		_geoDescriptions.insert( std::make_pair(planeID, pixgeodescrptr) );
+	}
+	else
+	{
+		streamlog_out( MESSAGE3 ) << "Didnt find " << name << " yet, thus creating" << std::endl;
+		pixgeodescrptr = new GEARPixGeoDescr(xPixel, yPixel, xSize, ySize, zSize, radLength);
+		streamlog_out( MESSAGE3 ) << "Inserting " << name << " into map" << std::endl;
+		_geoDescriptions.insert( std::make_pair(planeID, pixgeodescrptr) );
+		_castedDescriptions.insert( std::make_pair(name, pixgeodescrptr) );
+	}
+	
+	streamlog_out( MESSAGE3 )  << "Adding plane: " << planeID << " with geoLibName: " << name << " in volume " << planeVolume << std::endl;
+	pixgeodescrptr->createRootDescr(planeVolume);
 }
 
 
