@@ -65,9 +65,9 @@ within the selected number of event per cycle-->
   <!--The number of events to be considered for each update cycle-->
   <parameter name="NoOfEventPerCycle" type="int" value="@M26MaxEvents@"/>
   <!--The sensorID for the generated collection (one per detector)-->
-  <parameter name="SensorIDVec" type="IntVec"> 0 1 2 3 4 5</parameter>
+  <parameter name="SensorIDVec" type="IntVec"> @SensorIDVecM26@ </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+  <parameter name="Verbosity" type="string"> @Verbosity@ </parameter>
   <!--Input of Zero Suppressed data-->
   <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> zsdata_m26 </parameter>
  </processor>
@@ -88,7 +88,11 @@ within the selected number of event per cycle-->
   <!--The number of events to be considered for each update cycle-->
   <parameter name="NoOfEventPerCycle" type="int" value="@FEI4MaxEvents@"/>
   <!--The sensorID for the generated collection (one per detector)-->
-  <parameter name="SensorIDVec" type="IntVec"> 20 21     </parameter>
+  <parameter name="SensorIDVec" type="IntVec">  @SensorIDVecAPIX@     </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <parameter name="Verbosity" type="string"> @Verbosity@ </parameter>
+  <!--Input of Zero Suppressed data-->
+  <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> zsdata_apix </parameter>
  </processor>
 
 

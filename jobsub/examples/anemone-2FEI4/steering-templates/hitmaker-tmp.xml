@@ -87,13 +87,11 @@
   <!--Name of LCIO db file where alignment constantds will be stored-->
   <parameter name="AlignmentConstantLCIOFile" type="string"> @PreAlignmentDBFile@ </parameter>
   <!--How many events should be used for an approximation to the X,Y shifts (pre-alignment)? (default=50000)-->
-  <parameter name="Events" type="int">9999 </parameter>
+  <parameter name="Events" type="int"> @BoxCutEventsMax@ </parameter>
   <!--SensorID of fixed plane-->
   <!--parameter name="FixedPlane" type="int">0 </parameter-->
   <!--Switch on or off the histogram filling-->
   <!--parameter name="HistogramFilling" type="bool">true </parameter-->
-  <!--This is the name of the hot pixel collection that clusters should be checked against (optional). -->
-  <!--parameter name="HotPixelCollectionName" type="string"> </parameter-->
   <!--The name of the input hit collection-->
   <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit">hit </parameter>
   <!--If there are more then this number of correlated hits (planes->track candidate) (default=5)-->
@@ -101,13 +99,13 @@
   <!--reference hit collection name -->
   <parameter name="ReferenceCollection" type="string">referenceHit </parameter>
   <!--Maximal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResidualsXMax" type="FloatVec"> 2. 2. 2.  8. 8.  2. 2. 5. </parameter>
+  <parameter name="ResidualsXMax" type="FloatVec">   @BoxCutVecXMax@ </parameter>
   <!--Minimal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResidualsXMin" type="FloatVec"> -2. -2. -2.  -8. -8.  -2. -2. -5. </parameter>
+  <parameter name="ResidualsXMin" type="FloatVec">   @BoxCutVecXMin@  </parameter>
   <!--Maximal values of the hit residuals in the Y direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResidualsYMax" type="FloatVec"> 2. 2. 2.  8. 8.  2. 2. 5. </parameter>
+  <parameter name="ResidualsYMax" type="FloatVec">   @BoxCutVecYMax@  </parameter>
   <!--Minimal values of the hit residuals in the Y direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResidualsYMin" type="FloatVec"> -2. -2. -2.  -8. -8.  -2. -2. -5. </parameter>
+  <parameter name="ResidualsYMin" type="FloatVec">   @BoxCutVecYMin@  </parameter>
   <!--Do you want the reference hit collection to be used for coordinate transformations?-->
   <parameter name="UseReferenceCollection" type="bool">true </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
@@ -117,15 +115,13 @@
  <processor name="Correlator" type="EUTelCorrelator">
  <!--EUTelCorrelator fills histograms with correlation plots-->
   <!--Minimum allowed cluster charge to be taken into account for the correlation plots (default = 2)-->
-  <parameter name="ClusterChargeMinimum" type="int">2 </parameter>
+  <!--parameter name="ClusterChargeMinimum" type="int">2 </parameter-->
   <!--Dump the offset X and Y values calculated from the correlation bands (default = true)-->
   <parameter name="DumpOffset" type="bool"> false </parameter>
   <!--How many events are needed to get reasonable correlation plots (and Offset DB)? (default=1000)-->
-  <parameter name="Events" type="int"> 9999 </parameter>
+  <parameter name="Events" type="int"> @BoxCutEventsMax@ </parameter>
   <!--SensorID of fixed plane-->
   <!--parameter name="FixedPlane" type="int">0 </parameter-->
-  <!--This is the name of the hot pixel collection to be saved into the output slcio file-->
-  <!--parameter name="HotPixelCollectionName" type="string">hotpixel </parameter-->
   <!--List of cluster collections-->
   <parameter name="InputClusterCollections" type="StringVec" lcioInType="TrackerPulse"> </parameter>
   <!--Hit collection name-->
@@ -137,13 +133,13 @@
   <!--reference hit collection name -->
    <parameter name="ReferenceCollection" type="string" value="refhit"/>
   <!--Maximal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResidualsXMax" type="FloatVec"> 2. 2. 2.  8. 8.  2. 2. 5. </parameter>
+  <parameter name="ResidualsXMax" type="FloatVec">   @BoxCutVecXMax@ </parameter>
   <!--Minimal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResidualsXMin" type="FloatVec"> -2. -2. -2.  -8. -8.  -2. -2. -5. </parameter>
+  <parameter name="ResidualsXMin" type="FloatVec">   @BoxCutVecXMin@  </parameter>
   <!--Maximal values of the hit residuals in the Y direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResidualsYMax" type="FloatVec"> 2. 2. 2.  8. 8.  2. 2. 5. </parameter>
+  <parameter name="ResidualsYMax" type="FloatVec">   @BoxCutVecYMax@  </parameter>
   <!--Minimal values of the hit residuals in the Y direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResidualsYMin" type="FloatVec"> -2. -2. -2.  -8. -8.  -2. -2. -5. </parameter>
+  <parameter name="ResidualsYMin" type="FloatVec">   @BoxCutVecYMin@  </parameter>
  <!--Do you want the reference hit collection to be used for coordinate transformations?-->
   <parameter name="UseReferenceCollection" type="bool">true </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
