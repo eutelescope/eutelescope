@@ -132,7 +132,7 @@
   <!--Exclude planes from fit according to their sensor ids.-->
   <parameter name="ExcludePlanes" type="IntVec" value="@ExcludePlanes@"/>
   <!--Fixes the given alignment parameters in the fit if alignMode==3 is used. For each sensor an integer must be specified (If no value is given, then all parameters will be free). bit 0 = x shift, bit 1 = y shift, bit 2 = z shift, bit 3 = alpha, bit 4 = beta, bit 5 = gamma. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="FixParameter" type="IntVec"> 0 0 0  0 0  0 0 0 </parameter>
+  <parameter name="FixParameter" type="IntVec"> @FixParameter@ </parameter>
   <!--Fix sensor planes in the fit according to their sensor ids.-->
   <parameter name="FixedPlanes" type="IntVec" value="@FixedPlanes@"/>
   <!--Generate a steering file for the pede program.-->

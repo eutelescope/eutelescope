@@ -41,7 +41,7 @@
   <!-- compression of output file 0: false >0: true (default) -->
   <parameter name="Compress" type="int" value="1"/>
   <!-- filename without extension-->
-  <parameter name="FileName" type="string" value="@HistoPath@/@Output@-alignmentdaf"/>
+  <parameter name="FileName" type="string" value="@HistoFile@"/>
   <!-- type of output file root (default) or xml )-->
   <parameter name="FileType" type="string" value="root"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
@@ -209,7 +209,7 @@
   <!--Set how many hits (=planes) can be missing on a track candidate.-->
   <!--parameter name="AllowedMissingHits" type="int" value="0"/-->
   <!--Name of the Millepede binary file.-->
-  <parameter name="BinaryFilename" type="string" value="@DBPath@/@Output@-align-mille.bin"/>
+  <parameter name="BinaryFilename" type="string" value="@DatabasePath@/run@RunNumber@-align-mille.bin"/>
   <!--Maximal allowed distance between hits entering the fit per 10 cm space between the planes.-->
   <parameter name="DistanceMax" type="float" value="@DistanceMax@"/>
   <!--Maximal allowed distance between hits entering the fit per 10 cm space between the planes. One value for each neighbor planes. DistanceMax will be used for each pair if this vector is empty.-->
@@ -217,7 +217,7 @@
   <!--Exclude planes from fit according to their sensor ids.-->
   <parameter name="ExcludePlanes" type="IntVec" value="@ExcludePlanes@"/>
   <!--Fixes the given alignment parameters in the fit if alignMode==3 is used. For each sensor an integer must be specified (If no value is given, then all parameters will be free). bit 0 = x shift, bit 1 = y shift, bit 2 = z shift, bit 3 = alpha, bit 4 = beta, bit 5 = gamma. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="FixParameter" type="IntVec"> @FixedParameter@ </parameter>
+  <parameter name="FixParameter" type="IntVec"> @FixParameter@ </parameter>
   <!--Fix sensor planes in the fit according to their sensor ids.-->
   <parameter name="FixedPlanes" type="IntVec" value="@FixedPlanes@"/>
   <!--Generate a steering file for the pede program.-->
@@ -241,7 +241,7 @@
   <!--Use only events with one track candidate.-->
   <parameter name="OnlySingleTrackEvents" type="bool" value="0"/>
   <!--Name of the steering file for the pede program.-->
-  <parameter name="PedeSteerfileName" type="string" value="@DBPath@/@Output@-pede-steer.txt"/>
+  <parameter name="PedeSteerfileName" type="string" value="@DatabasePath@/run@RunNumber@-pede-steer.txt"/>
   <!--FOR EXPERTS: List of commands that should be included in the pede steering file. Use '\' to seperate options and introduce a line break.-->
   <!--parameter name="PedeSteeringAdditionalCmds" type="StringVec"> </parameter-->
   <!--Start values for the alignment for the angle alpha.-->

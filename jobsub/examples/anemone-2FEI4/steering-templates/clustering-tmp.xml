@@ -109,7 +109,7 @@
   <!--Output collection where noisy clusters have been removed-->
   <parameter name="OutputCollectionName" type="string" lcioOutType="TrackerPulse"> cluster_m26_free </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <parameter name="Verbosity" type="string">DEBUG </parameter>
+  <parameter name="Verbosity" type="string">@Verbosity@ </parameter>
  </processor>
 
  <processor name="NoisyClusterMaskerAPIX" type="EUTelProcessorNoisyClusterMasker">
@@ -129,7 +129,7 @@
   <!--Output collection where noisy clusters have been removed-->
   <parameter name="OutputCollectionName" type="string" lcioOutType="TrackerPulse"> cluster_apix_free </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <parameter name="Verbosity" type="string">DEBUG </parameter>
+  <parameter name="Verbosity" type="string">@Verbosity@ </parameter>
  </processor>
 
  <processor name="Save" type="EUTelOutputProcessor">
@@ -151,7 +151,7 @@
   <!--will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW-->
   <!--parameter name="SplitFileSizekB" type="int">1992294 </parameter-->
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <parameter name="Verbosity" type="string">DEBUG </parameter>
+  <parameter name="Verbosity" type="string">@Verbosity@ </parameter>
  </processor>
 
  <processor name="EUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">
