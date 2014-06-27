@@ -79,7 +79,7 @@ namespace eutelescope {
 
 				void FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack, std::vector< gbl::GblPoint >* pointList);
 
-
+		void changejacobainGBL(TMatrixD & input, TMatrixD & output);
 	void FindHitIfThereIsOne(EUTelTrackImpl* trackimpl, EVENT::TrackerHit* hit, EUTelTrackStateImpl* state);
 
 	void addMeasurementGBL(gbl::GblPoint& point, const double *hitPos, const double *statePos, double hitCov[4], TMatrixD HMatrix);

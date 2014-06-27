@@ -901,8 +901,10 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack, st
   for(int i=0;i < EUtrack->getTrackStates().size(); i++){		
 		/////////////////////////////////////////////////////////////////////////////////////////////BEGIN to create GBL point 
   	streamlog_out(DEBUG3) << "The first GBL point is made from this jacobian:" << std::endl;
+		TMatrixD output(5,5);
 	  streamlog_message( DEBUG0, jacPointToPoint.Print();, std::endl; );
-		gbl::GblPoint point(jacPointToPoint);
+		changejacobainGBL(jacPointToPoint, output);
+		gbl::GblPoint point(output);
   		EUTelTrackStateImpl* state = EUtrack->getTrackStates().at(i); //get the state for this track. Static cast from EVENT::TrackState to derived class IMPL::TrackStateImpl.
   		streamlog_out(DEBUG3) << "This is the track state being used in creation of GBL points" << std::endl;
 			state->Print();
@@ -914,7 +916,7 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack, st
   	fitPointLocal [0] = state->getReferencePoint()[0] ;
   	fitPointLocal [1] = state->getReferencePoint()[1] ;
   	fitPointLocal [2] = state->getReferencePoint()[2] ;
-		addSiPlaneScattererGBL(point, state->getLocation()); //This we still functions still assumes silicon is the thin scatterer. This can be easily changed when we have the correct gear file. However we will always assume that states will come with scattering information. To take into account material between states this will be dealt with latter. 
+		//addSiPlaneScattererGBL(point, state->getLocation()); //This we still functions still assumes silicon is the thin scatterer. This can be easily changed when we have the correct gear file. However we will always assume that states will come with scattering information. To take into account material between states this will be dealt with latter. 
 		double fitPointGlobal[3];
 		geo::gGeometry().local2Master( state->getLocation(), fitPointLocal, fitPointGlobal);
 		state->setZParameter(fitPointGlobal[2]); //This is needed to calculate jacobian for some reason. Need to check this.
@@ -960,7 +962,8 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack, st
 			TVectorD stateVecOnScat1 = jacobianScat1 * stateVec; 
   		streamlog_out(DEBUG3) << "The first scattering point point is made from this jacobian:" << std::endl;
 	  	streamlog_message( DEBUG0, jacobianScat1.Print();, std::endl; );
-			gbl::GblPoint pointScat1(jacobianScat1);
+			changejacobainGBL(jacobianScat1, output);
+			gbl::GblPoint pointScat1(output);
 			TVectorD scat(2);
 			scat[0] = 0.0; //This should always be 0 right? If not then it should be given as a parameter
 			scat[1] = 0.0; 
@@ -972,7 +975,7 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack, st
  			scatPrecSensor[1] = 1.0 / (scatvariance * scatvariance );
 
   		pointScat1.addScatterer(scat, scatPrecSensor);
-			pushBackPointandState(pointList, pointScat1, NULL);
+		//	pushBackPointandState(pointList, pointScat1, NULL);
 
 			/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////END THE FIRST SCATTERING PLANE
 			//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////BEGIN THE SECOND SCATTERING PLANE
@@ -987,18 +990,25 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack, st
 			TVectorD stateVecOnScat2 = jacobianScat2 * stateVecOnScat1; 
   		streamlog_out(DEBUG3) << "The second scattering point point is made from this jacobian:" << std::endl;
 	  	streamlog_message( DEBUG0, jacobianScat2.Print();, std::endl; );
-			gbl::GblPoint pointScat2(jacobianScat2);
+				changejacobainGBL(jacobianScat2, output);
+			gbl::GblPoint pointScat2(output);
 
 
   		pointScat2.addScatterer(scat, scatPrecSensor);
-			pushBackPointandState(pointList, pointScat2, NULL);
+		//	pushBackPointandState(pointList, pointScat2, NULL);
 			//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////END OF SECOND SCATTERING PLANE
 
 			p  = 1. / (stateVecOnScat2[4] * -1);
   		px = p*stateVecOnScat2[2] / sqrt( 1. + stateVecOnScat2[2]*stateVecOnScat2[2] + stateVecOnScat2[3]*stateVecOnScat2[3] );
   		py = p*stateVecOnScat2[3] / sqrt( 1. + stateVecOnScat2[2]*stateVecOnScat2[2] + stateVecOnScat2[3]*stateVecOnScat2[3] );
   		pz = p    / sqrt( 1. + stateVecOnScat2[2]*stateVecOnScat2[2] + stateVecOnScat2[3]*stateVecOnScat2[3] );
-			jacPointToPoint =  geo::gGeometry().getPropagationJacobianF( stateVecOnScat2[0], stateVecOnScat2[1], 0, px, py, pz, -1, fitPointGlobal_next[2] - distance2 );
+			//jacPointToPoint =  geo::gGeometry().getPropagationJacobianF( stateVecOnScat2[0], stateVecOnScat2[1], 0, px, py, pz, -1, fitPointGlobal_next[2] - distance2 );
+
+//This part is just to check without scatterers
+float distance = (fitPointGlobal_next[2] -  fitPointGlobal[2]);
+jacPointToPoint = state->getPropagationJacobianF(distance);
+
+
 
 		}  
 		/////////////////////////////////////////////////////////////////////////////////////////END OF CREATE SCATTERERS BETWEEN PLANES
@@ -1007,6 +1017,17 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack, st
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////
 }
 
+//This matrix is a hack. It changes the Jacobian in geometry to what is needed as input to GBL. 
+void EUTelGBLFitter::changejacobainGBL(TMatrixD & jacobianF, TMatrixD & _parPropJac){
+	_parPropJac.UnitMatrix();
+
+_parPropJac[1][0] =	jacobianF[2][4]; _parPropJac[1][2] = 	jacobianF[2][3];	
+_parPropJac[2][0] = jacobianF[3][4]; _parPropJac[2][1] = jacobianF[3][2];	
+_parPropJac[3][0] = jacobianF[0][4]; _parPropJac[3][1] = jacobianF[0][2];	_parPropJac[3][2] = jacobianF[0][3];	
+_parPropJac[4][0] = jacobianF[1][4]; _parPropJac[4][1] = jacobianF[1][2];	_parPropJac[4][2] = jacobianF[1][3];	
+
+
+} 
 
 void EUTelGBLFitter::addSiPlaneScattererGBL(gbl::GblPoint& point, int iPlane) {
 
@@ -1039,7 +1060,7 @@ void EUTelGBLFitter::addMeasurementGBL(gbl::GblPoint& point, const double *hitPo
      
 	streamlog_out(MESSAGE1) << " addMeasurementsGBL ------------- BEGIN --------------- " << std::endl;
 
- 	TVectorD meas(5);
+ 	TVectorD meas(2);
 	meas[0] = hitPos[0] - statePos[0];
         meas[1] = hitPos[1] - statePos[1];
 
@@ -1058,7 +1079,7 @@ void EUTelGBLFitter::addMeasurementGBL(gbl::GblPoint& point, const double *hitPo
 
 //The gbl library creates 5 measurement vector and 5x5 propagation matrix automatically. 
 //So need to alter how HMatrix is added to this. 
-TMatrixD proM2l(5, 5);
+TMatrixD proM2l(2, 2);
 proM2l.UnitMatrix();
 proM2l[0][0]=HMatrix[0][0]; proM2l[0][1]=HMatrix[0][1];
 proM2l[1][0]=HMatrix[1][0]; proM2l[1][1]=HMatrix[1][1];
@@ -1488,10 +1509,10 @@ void EUTelGBLFitter::SetHitCovMatrixFromFitterGBL(EUTelTrackStateImpl *state){
   	}
 	}
 	else{
-		hitcov[0]=0.1;
+		hitcov[0]=1;
 		hitcov[1]=0;
 		hitcov[2]=0;
-		hitcov[3]=0.1;
+		hitcov[3]=1;
 	}
 
 state->setTrackStateHitCov(hitcov);

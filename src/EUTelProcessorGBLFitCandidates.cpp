@@ -7,7 +7,7 @@ using namespace eutelescope;
 
 // definition of static members mainly used to name histograms
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-std::string EUTelProcessorGBLFitCandidates::_histName::_chi2CandidateHistName = "chi2CandidateHistName";
+std::string EUTelProcessorGBLFitCandidates::_histName::_chi2CandidateHistName = "chi2HistName";
 std::string EUTelProcessorGBLFitCandidates::_histName::_fitsuccessHistName = "FitSuccessfulHistName";
 #endif // defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
@@ -171,8 +171,9 @@ void EUTelProcessorGBLFitCandidates::processEvent(LCEvent * evt){
 			int ierr=0;
 			_trackFitter->CreateTrajectoryandFit(&pointList,traj, &chi2,&ndf, ierr);
 			if(ierr == 0 ){
+		     streamlog_out(DEBUG5) << "Ierr is: " << ierr << " Entering loop to update track information " << endl;
       	static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_chi2CandidateHistName ] ) -> fill( (chi2)/(ndf));
-      	static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_fitsuccessHistName ] ) -> fill(1);
+      	static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_fitsuccessHistName ] ) -> fill(1.0);
 				//Update track and then state variables//////////////////////////////////////////////BEGIN
 				EUtrack->setChi2(chi2);
 				EUtrack->setNdf(ndf);
@@ -181,7 +182,8 @@ void EUTelProcessorGBLFitCandidates::processEvent(LCEvent * evt){
 				EUtracks.push_back(EUtrack);
 			}
 			else{
-      	static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_fitsuccessHistName ] ) -> fill(0);
+		     streamlog_out(DEBUG5) << "Ierr is: " << ierr << " Do not update track information " << endl;
+      		static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_fitsuccessHistName ] ) -> fill(0.0);
 			}			
 			      
 		}//END OF LOOP FOR ALL TRACKS IN AN EVENT
@@ -246,7 +248,7 @@ void EUTelProcessorGBLFitCandidates::bookHistograms() {
 
 	const int chiNbins = 5000;
 	const double chiXmin = 0;
-	const double chiXmax = 500000;	
+	const double chiXmax = 100;	
   histoInfo = histoMgr->getHistogramInfo(_histName::_chi2CandidateHistName);
 
   int NBin = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : chiNbins;
@@ -261,8 +263,8 @@ void EUTelProcessorGBLFitCandidates::bookHistograms() {
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Create plot if fit was successful
 	const int Nbins = 2;
-	const double Xmin = 0;
-	const double Xmax = 1;	
+	const double Xmin = -0.5;
+	const double Xmax = 1.5;	
 
 
   histoInfo = histoMgr->getHistogramInfo(_histName::_fitsuccessHistName);
