@@ -16,11 +16,11 @@
 #include <IMPL/LCCollectionVec.h>
 
 // GEAR
-#include "gear/GearMgr.h"
-#include "gear/gearxml/GearXML.h"
 #include "gearimpl/Util.h"
-#include "gear/SiPlanesLayerLayout.h"
-#include "gear/SiPlanesParameters.h"
+#include "gearxml/GearXML.h"
+#include "gear/GearMgr.h"
+#include "gear/GEAR.h"
+
 
 // system includes
 #include <iostream>
@@ -37,25 +37,24 @@
 #include "TVector3.h"
 
 using namespace std;
+using namespace eutelescope;
 
-        const Double_t PI = 3.141592653589793;
-        const Double_t DEG = 180./PI;
  
+
 struct CollectionWriter {
     lcio::LCCollectionVec* _constantsCollection;
-        void operator()( std::pair<const int, eutelescope::EUTelAlignmentConstant*>& pair ) {
+        void operator()( std::pair<const int, EUTelAlignmentConstant*>& pair ) {
           _constantsCollection->push_back( pair.second );
                 cout << (*pair.second) << endl;
         }
 } colWriter;
 
-void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, const map< int, eutelescope::EUTelAlignmentConstant* >& alignmentConstants ) {
+void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, const map< int, EUTelAlignmentConstant* >& alignmentConstants ) {
     
     streamlog_out(MESSAGE4) << "Reading " << oldGearfileName << std::endl;
     streamlog_out(MESSAGE4) << "GEAR file " << newGearfileName << " will be generated." << std::endl;
     
     gear::GearXML gearXML( oldGearfileName ) ;
-
     gear::GearMgr* gearManager = gearXML.createGearMgr() ;
     
     if (!gearManager) {
@@ -63,40 +62,61 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
         return;
     }
 
-    // sensor-planes in geometry navigation:
-    gear::SiPlanesParameters* siPlanesParameters = const_cast<gear::SiPlanesParameters*> (&(gearManager->getSiPlanesParameters()));
-    gear::SiPlanesLayerLayout* siPlanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*> (&(siPlanesParameters->getSiPlanesLayerLayout()));
+
+    // Getting access to geometry description
+    std::string name("test.root");
+    geo::gGeometry( gearManager ).initializeTGeoDescription(name,false);
+
+
 
     // update positions and orientations of the planes
     // TODO: set appropriate new values for new GEAR file
 
     streamlog_out(MESSAGE4) << "Combined alignment (current GEAR + MILLE corrections below):" << std::endl;    
 
-    map< int, eutelescope::EUTelAlignmentConstant* >::const_iterator itrAlignmentConstant;
+    map< int, EUTelAlignmentConstant* >::const_iterator itrAlignmentConstant;
 
-    streamlog_out(MESSAGE4) << "Plane ID" << setw(20) << "X shift" << setw(20) << "Y shift" << setw(20) << "Z shift" << setw(20)
-                     << "X ROTATION" << setw(20) << "Y ROTATION" << setw(20) << "Z ROTATION" << std::endl;
-    
-    for (int iPlane = 0; iPlane < siPlanesLayerLayout->getNLayers(); iPlane++) {
-        int sensorID = siPlanesLayerLayout->getSensitiveID(iPlane);
+    streamlog_out(MESSAGE4) <<  setw(10) << "" << setw(8) << "Plane ID" << setw(13) << setprecision(4) << "X "       << setw(13) << setprecision(4) << "Y "       << setw(13) << setprecision(4) << "Z "
+                                                                        << setw(13) << setprecision(4) << "ZY(Xrot)" << setw(13) << setprecision(4) << "ZX(Yrot)" << setw(13) << setprecision(4) << "XY(Zrot)" 
+                                                                        << setw(13) << setprecision(4) << "     in global coordinates, the shifts (X,Y,Z)  " << std::endl;
+
+    double xplane = 0.;
+    double yplane = 0.;
+    double zplane = 0.;
+    double xrot   = 0.;
+    double yrot   = 0.;
+    double zrot   = 0.;
+
+
+
+    std::vector <int> sensorIDsVec = geo::gGeometry().sensorIDsVec();    
+    for (int iPlane = 0; iPlane < sensorIDsVec.size(); iPlane++) {
+
+        int sensorID = sensorIDsVec.at(iPlane);
         if( ( itrAlignmentConstant = alignmentConstants.find( sensorID ) ) != alignmentConstants.end() ) {
 
 
- 	    const double alpha = siPlanesLayerLayout->getLayerRotationZY(iPlane);// /DEG;
-	    const double beta  = siPlanesLayerLayout->getLayerRotationZX(iPlane);// /DEG;
-	    const double gamma = siPlanesLayerLayout->getLayerRotationXY(iPlane);// /DEG;
+            xplane = geo::gGeometry().siPlaneXPosition(sensorID) ; 
+            yplane = geo::gGeometry().siPlaneYPosition(sensorID) ; 
+            zplane = geo::gGeometry().siPlaneZPosition(sensorID) ;
+ 	    xrot   = geo::gGeometry().siPlaneXRotation(sensorID) ;
+ 	    yrot   = geo::gGeometry().siPlaneYRotation(sensorID) ;
+	    zrot   = geo::gGeometry().siPlaneZRotation(sensorID) ;
 
-            streamlog_out(MESSAGE4) << "former " << sensorID << setw(20) << siPlanesLayerLayout->getLayerPositionX(iPlane)  << 
-			 	 setw(20) << siPlanesLayerLayout->getLayerPositionY(iPlane)  <<
-				 setw(20) << siPlanesLayerLayout->getLayerPositionZ(iPlane)  <<
-                 		 setw(20) << alpha  <<
-                                 setw(20) << beta   <<
-                                 setw(20) << gamma  << std::endl;
+            streamlog_out(MESSAGE4) << std::endl << 
+                                 setw(10) << "original " << std::fixed <<
+                                 setw( 8) << sensorID << 
+                                 setw(13) << setprecision(4) << xplane   << 
+                                 setw(13) << setprecision(4) << yplane   << 
+                                 setw(13) << setprecision(4) << zplane   << 
+                 		 setw(13) << setprecision(4) << xrot     <<
+                                 setw(13) << setprecision(4) << yrot     <<
+                                 setw(13) << setprecision(4) << zrot     << std::endl;
 
 	    TRotation invR;
-	    invR.RotateX(alpha);
-	    invR.RotateY(beta);
-	    invR.RotateZ(gamma);
+	    invR.RotateX( xrot );
+	    invR.RotateY( yrot );
+	    invR.RotateZ( zrot );
 	    invR.Invert();
 	
 	    const double dalpha = (*itrAlignmentConstant).second->getAlpha();
@@ -119,11 +139,11 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
 //	    delta_r0 = invR*(invDeltaR*delta_r0);
             delta_r0 = invR*delta_r0;
  
-             streamlog_out(MESSAGE4) << "invR:"<< std::endl;
-             streamlog_out(MESSAGE4) << " X: " << setw(20) << invR[0][0] << " " << invR[0][1] << " " << invR[0][2]  << std::endl;
-             streamlog_out(MESSAGE4) << " Y: " << setw(20) << invR[1][0] << " " << invR[1][1] << " " << invR[1][2]  << std::endl;
-             streamlog_out(MESSAGE4) << " Z: " << setw(20) << invR[2][0] << " " << invR[2][1] << " " << invR[2][2]  << std::endl;
-             streamlog_out(MESSAGE4) << ""<< std::endl;
+             streamlog_out(MESSAGE2) << "invR:"<< std::endl;
+             streamlog_out(MESSAGE2) << " X: " << setw(20) << invR[0][0] << " " << invR[0][1] << " " << invR[0][2]  << std::endl;
+             streamlog_out(MESSAGE2) << " Y: " << setw(20) << invR[1][0] << " " << invR[1][1] << " " << invR[1][2]  << std::endl;
+             streamlog_out(MESSAGE2) << " Z: " << setw(20) << invR[2][0] << " " << invR[2][1] << " " << invR[2][2]  << std::endl;
+             streamlog_out(MESSAGE2) << ""<< std::endl;
  
            
 //	    delta_r0 *= invR;
@@ -133,48 +153,69 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
 // ZY and ZX rotations are calculated wrongly yet, do not implement:
 // XYZ shifts and XY rotation seems to be correct
 //
-            siPlanesLayerLayout-> setLayerPositionX(iPlane, siPlanesLayerLayout->getLayerPositionX(iPlane) +  delta_r0.X() ) ;
-            siPlanesLayerLayout-> setLayerPositionY(iPlane, siPlanesLayerLayout->getLayerPositionY(iPlane) +  delta_r0.Y() ) ;
-            siPlanesLayerLayout-> setLayerPositionZ(iPlane, siPlanesLayerLayout->getLayerPositionZ(iPlane) +  delta_r0.Z() ) ;
-            siPlanesLayerLayout->setLayerRotationZY(iPlane, (alpha - dalpha) );
-            siPlanesLayerLayout->setLayerRotationZX(iPlane, (beta  - dbeta ) );
-            siPlanesLayerLayout->setLayerRotationXY(iPlane, (gamma - dgamma) );
+            geo::gGeometry().setPlaneXPosition(sensorID,  xplane  +  delta_r0.X() ) ;
+            geo::gGeometry().setPlaneYPosition(sensorID,  yplane  +  delta_r0.Y() ) ;
+            geo::gGeometry().setPlaneZPosition(sensorID,  zplane  +  delta_r0.Z() ) ;
+            geo::gGeometry().setPlaneXRotationRadians(sensorID, (xrot  - dalpha)  ) ;
+            geo::gGeometry().setPlaneYRotationRadians(sensorID, (yrot  - dbeta )  ) ;
+            geo::gGeometry().setPlaneZRotationRadians(sensorID, (zrot  - dgamma)  ) ;
 //#endif
 //#endif       
-            streamlog_out(MESSAGE4) << "align by shifts (in local frame) " << std::endl;
-            streamlog_out(MESSAGE4) << " by: X' " << setw(20) << dr0x;
-            streamlog_out(MESSAGE4) << " by: Y' " << setw(20) << dr0y;
-            streamlog_out(MESSAGE4) << " by: Z' " << setw(20) << dr0z << std::endl;
+            streamlog_out(MESSAGE4) << setw(10) << "align  " << setw( 8) << " " ;
+            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) << dr0x;
+            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) << dr0y;
+            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) << dr0z; 
 
-            streamlog_out(MESSAGE4) << "align by rotations (in local frame) " << std::endl;
-            streamlog_out(MESSAGE4) << " by: al " << setw(20) << dalpha;
-            streamlog_out(MESSAGE4) << " by: be " << setw(20) << dbeta;
-            streamlog_out(MESSAGE4) << " by: ga " << setw(20) << dgamma << std::endl;
+            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) << dalpha;
+            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) << dbeta;
+            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) << dgamma ;
 
-            streamlog_out(MESSAGE4) << "rotated from local to global: " << std::endl;
-            streamlog_out(MESSAGE4) << " by: X" << setw(20) <<  delta_r0.X() ;
-            streamlog_out(MESSAGE4) << " by: Y" << setw(20) <<  delta_r0.Y();
-            streamlog_out(MESSAGE4) << " by: Z" << setw(20) <<  delta_r0.Z() << std::endl;
+            streamlog_out(MESSAGE4) << setw( 3) << " " ;
+            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) <<  delta_r0.X() ;
+            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) <<  delta_r0.Y();
+            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) <<  delta_r0.Z() << std::endl;
 
-            streamlog_out(MESSAGE4) << "new : " << sensorID << setw(20) << siPlanesLayerLayout->getLayerPositionX(iPlane)  << 
-				setw(20) << siPlanesLayerLayout->getLayerPositionY(iPlane)  <<
-				setw(20) << siPlanesLayerLayout->getLayerPositionZ(iPlane)  <<
-		               	setw(20) << siPlanesLayerLayout->getLayerRotationZY(iPlane)  <<
-                 	  	setw(20) << siPlanesLayerLayout->getLayerRotationZX(iPlane)  <<
-                  		setw(20) << siPlanesLayerLayout->getLayerRotationXY(iPlane)  << std::endl;
+            xplane = geo::gGeometry().siPlaneXPosition(sensorID) ; 
+            yplane = geo::gGeometry().siPlaneYPosition(sensorID) ; 
+            zplane = geo::gGeometry().siPlaneZPosition(sensorID) ;
+ 	    xrot   = geo::gGeometry().siPlaneXRotationRadians(sensorID) ;
+ 	    yrot   = geo::gGeometry().siPlaneYRotationRadians(sensorID) ;
+	    zrot   = geo::gGeometry().siPlaneZRotationRadians(sensorID) ;
+
+            streamlog_out(MESSAGE4) <<
+                                 setw(10) << "new : " << 
+                                 setw( 8) << " "  << 
+                                 setw(13) << setprecision(4) << xplane   << 
+                                 setw(13) << setprecision(4) << yplane   << 
+                                 setw(13) << setprecision(4) << zplane   << 
+                 		 setw(13) << setprecision(4) << xrot     <<
+                                 setw(13) << setprecision(4) << yrot     <<
+                                 setw(13) << setprecision(4) << zrot     << std::endl;
+
+
         }
     }
 
-    
+  
+    geo::gGeometry().updateGearManager();
+  
+    gear::GearXML::createXMLFile( gearManager, newGearfileName ) ;
+
     streamlog_out(MESSAGE4) << "Not implemented" << std::endl;
-    gear::GearXML::createXMLFile( gearManager, newGearfileName );
     
     return;
 }
 
 int main( int argc, char ** argv ) {
 
-    
+  streamlog::out.init( std::cout , "pede2lcio output stream") ;
+
+  streamlog::logscope scope(streamlog::out) ;
+
+  scope.setLevel<streamlog::MESSAGE3>() ;
+
+
+
   auto_ptr< AnyOption > option( new AnyOption );
 
   string usageString = 
@@ -217,6 +258,7 @@ int main( int argc, char ** argv ) {
 
   // check GEAR flag
   string oldGearFileName, newGearFileName;
+
   bool wantGEAR = false;
   if ( option->getFlag('g') || option->getFlag( "gear" ) ) {
       
@@ -228,11 +270,11 @@ int main( int argc, char ** argv ) {
          oldGearFileName.append( ".xml" );
     }
     newGearFileName = option->getArgv(3);
-    if ( lcioFileName.rfind( ".xml", string::npos ) == string::npos ) {
-         lcioFileName.append( ".xml" );
+    if ( newGearFileName.rfind( ".xml", string::npos ) == string::npos ) {
+         newGearFileName.append( ".xml" );
     }
     
-    streamlog_out(MESSAGE4) << oldGearFileName << " " << lcioFileName << std::endl;
+    streamlog_out(MESSAGE4) << " oldGear: " << oldGearFileName << " newGear: " << newGearFileName << std::endl;
   }
   
   streamlog_out(MESSAGE4) << "Converting " << pedeFileName << " in " << lcioFileName << std::endl;
@@ -240,7 +282,7 @@ int main( int argc, char ** argv ) {
   // try to open the input file. This should be a text file
   ifstream pedeFile( pedeFileName.c_str(), ios::in );
 
-  map< int, eutelescope::EUTelAlignmentConstant* > constants_map;
+  map< int, EUTelAlignmentConstant* > constants_map;
   
   if ( pedeFile.fail() ) {
 
@@ -248,6 +290,7 @@ int main( int argc, char ** argv ) {
     return -1;
 
   } else {
+
 
     // open the LCIO output file
     lcio::LCWriter * lcWriter = lcio::LCFactory::getInstance()->createLCWriter();
@@ -311,7 +354,7 @@ int main( int argc, char ** argv ) {
         if( tokens.size() == 5 ) err = 0.;
         
         if( constants_map.find( sensorID ) == constants_map.end() ) {
-            eutelescope::EUTelAlignmentConstant * constant = new eutelescope::EUTelAlignmentConstant;
+            EUTelAlignmentConstant * constant = new EUTelAlignmentConstant;
             constants_map[sensorID] = constant;
         }
         

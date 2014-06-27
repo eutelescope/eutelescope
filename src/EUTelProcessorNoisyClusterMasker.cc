@@ -131,9 +131,9 @@ void EUTelProcessorNoisyClusterMasker::processEvent(LCEvent * event)
 		//interface to sparsified data
                 auto_ptr<EUTelTrackerDataInterfacer> sparseData = auto_ptr<EUTelTrackerDataInterfacer>();
 
-		if( pixelType == kEUTelSimpleSparsePixel )
+		if( pixelType == kEUTelGenericSparsePixel )
 		{
-			sparseData =  auto_ptr<EUTelTrackerDataInterfacer>( new EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel>(trackerData) );
+			sparseData =  auto_ptr<EUTelTrackerDataInterfacer>( new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>(trackerData) );
 		}
 		else
                 {
@@ -229,9 +229,9 @@ void EUTelProcessorNoisyClusterMasker::readHotPixelList(LCEvent* event)
 
 		auto_ptr<EUTelTrackerDataInterfacer> noisyPixelData = auto_ptr<EUTelTrackerDataInterfacer>();
 
-		if( pixelType == kEUTelSimpleSparsePixel )
+		if( pixelType == kEUTelGenericSparsePixel )
 		{
-			noisyPixelData =  auto_ptr<EUTelTrackerDataInterfacer>( new EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel>(hotPixelData) );
+			noisyPixelData =  auto_ptr<EUTelTrackerDataInterfacer>( new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>(hotPixelData) );
 		}
 		//else if
 		else

@@ -14,7 +14,7 @@
 #include "EUTelMatrixDecoder.h"
 #include "EUTelTrackerDataInterfacerImpl.h"
 #include "EUTelBaseSparsePixel.h"
-#include "EUTelSimpleSparsePixel.h"
+#include "EUTelGenericSparsePixel.h"
 #include "EUTelExceptions.h"
 #include "EUTelRawDataSparsifier.h"
 #include "EUTelRunHeaderImpl.h"
@@ -205,15 +205,15 @@ void EUTelRawDataSparsifier::processEvent (LCEvent * event) {
       // instead of
       float sigmaCut = _sigmaCutVec[ iDetector ];
 
-      if ( _pixelType == kEUTelSimpleSparsePixel ) {
+      if ( _pixelType == kEUTelGenericSparsePixel ) {
 
-        EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel>  sparseData( sparsified ) ;
+        EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>  sparseData( sparsified ) ;
         while ( rawIter != rawData->getADCValues().end() ) {
           if (  (*statusIter) == EUTELESCOPE::GOODPIXEL ) {
             float data      = (*rawIter) - (*pedIter);
             float threshold = sigmaCut * (*noiseIter);
             if ( data > threshold  ) {
-              auto_ptr<EUTelSimpleSparsePixel> sparsePixel( new EUTelSimpleSparsePixel );
+              auto_ptr<EUTelGenericSparsePixel> sparsePixel( new EUTelGenericSparsePixel );
               sparsePixel->setXCoord( matrixDecoder.getXFromIndex(iPixel) );
               sparsePixel->setYCoord( matrixDecoder.getYFromIndex(iPixel) );
               sparsePixel->setSignal( static_cast<short> ( data ) );

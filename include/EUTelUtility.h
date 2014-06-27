@@ -17,8 +17,11 @@
 
 // lcio includes <.h>
 #include "IMPL/TrackerHitImpl.h"
-
+#include "IMPL/TrackImpl.h"
 #include "EVENT/LCEvent.h"
+
+// ROOT
+#include "TVectorD.h" 
 
 // system includes <>
 #include <iomanip>
@@ -192,7 +195,7 @@ namespace eutelescope {
 
         EUTelVirtualCluster* GetClusterFromHit(const IMPL::TrackerHitImpl*);
 
-        int GuessSensorID( EVENT::TrackerHit* hit);
+        int getSensorIDfromHit( EVENT::TrackerHit* hit);
 
         /** Highland's formula for multiple scattering */
         double getThetaRMSHighland( double, double );
@@ -208,6 +211,19 @@ namespace eutelescope {
  
         /** getClusterSize method from TrackerHit object:: assumes known cluster types */
         void getClusterSize(const IMPL::TrackerHitImpl * hit, int& sizeX, int& sizeY ) ;
+
+        /** */
+        void copyLCCollectionHitVec( LCCollectionVec*, LCCollectionVec* );
+ 
+        /** */
+        void copyLCCollectionTrackVec( LCCollectionVec*, LCCollectionVec* );
+
+        /**  type conversion  */
+        float DoubleToFloat(double a);
+        float* DoubleToFloatN(double* a, int N);
+
+        /** */ 
+        const float* HitCDoubleShiftCFloat(const double* , TVectorD& );
 
         /** Tokenize string */
                 /**

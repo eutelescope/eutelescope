@@ -13,10 +13,6 @@
 #include <iostream>
 #include <cmath>
 
-using namespace std;
-
-using namespace EVENT;
-
 namespace eutelescope {
 
 template<class PixelType>

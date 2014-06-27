@@ -61,18 +61,13 @@ namespace eutelescope {
         }
 
     } 
-/*
-    float EUTelTrackImpl::getTx() const {               return ( _trackStates.size()>0 ? _trackStates[0]->getTx()             : 0 ) ;  }
-    float EUTelTrackImpl::getTy() const {               return ( _trackStates.size()>0 ? _trackStates[0]->getTy()            : 0 ) ;  }
-    float EUTelTrackImpl::getX() const {                return ( _trackStates.size()>0 ? _trackStates[0]->getX()          : 0 ) ;  }
-    float EUTelTrackImpl::getY() const {                return ( _trackStates.size()>0 ? _trackStates[0]->getY()             : 0 ) ;  }
-    float EUTelTrackImpl::getInvP() const {             return ( _trackStates.size()>0 ? _trackStates[0]->getInvP()      : 0 ) ;  }
-*/
-    float EUTelTrackImpl::getTx(int i) const {               return ( _trackStates.size()>i ? _trackStates[i]->getTx()        : 0 ) ;  }
-    float EUTelTrackImpl::getTy(int i) const {               return ( _trackStates.size()>i ? _trackStates[i]->getTy()        : 0 ) ;  }
-    float EUTelTrackImpl::getX(int i) const {                return ( _trackStates.size()>i ? _trackStates[i]->getX()         : 0 ) ;  }
-    float EUTelTrackImpl::getY(int i) const {                return ( _trackStates.size()>i ? _trackStates[i]->getY()         : 0 ) ;  }
-    float EUTelTrackImpl::getInvP(int i) const {             return ( _trackStates.size()>i ? _trackStates[i]->getInvP()      : 0 ) ;  }
+
+
+    float EUTelTrackImpl::getTx(unsigned int i) const {               return ( _trackStates.size()>i ? _trackStates[i]->getTx()        : 0 ) ;  }
+    float EUTelTrackImpl::getTy(unsigned int i) const {               return ( _trackStates.size()>i ? _trackStates[i]->getTy()        : 0 ) ;  }
+    float EUTelTrackImpl::getX(unsigned int i) const {                return ( _trackStates.size()>i ? _trackStates[i]->getX()         : 0 ) ;  }
+    float EUTelTrackImpl::getY(unsigned int i) const {                return ( _trackStates.size()>i ? _trackStates[i]->getY()         : 0 ) ;  }
+    float EUTelTrackImpl::getInvP(unsigned int i) const {             return ( _trackStates.size()>i ? _trackStates[i]->getInvP()      : 0 ) ;  }
 
 
     const EVENT::FloatVec& EUTelTrackImpl::getCovMatrix() const {   
@@ -299,7 +294,16 @@ namespace eutelescope {
   EUTelTrackStateVec & EUTelTrackImpl::trackStates()  {
     checkAccess("EUTelTrackImpl::trackStates") ;
     return _trackStates ;
-  } 
+  }
+
+	
+
+ 
+
+	//int EUTelTrackImpl::getType(){
+//		return  _type;
+//	}
+
 
 } // namespace eutelescope
 

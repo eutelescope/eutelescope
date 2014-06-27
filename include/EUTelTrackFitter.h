@@ -9,8 +9,12 @@
 #define	EUTELTRACKFITTER_H
 
 // eutelescope includes ".h"
+
+// EVENT includes
 #include <IMPL/TrackerHitImpl.h>
 #include <EVENT/LCCollection.h>
+
+// LCIO includes
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/TrackerHitImpl.h>
 #include <IMPL/TrackImpl.h>
@@ -31,6 +35,12 @@ namespace eutelescope {
     private:
         DISALLOW_COPY_AND_ASSIGN(EUTelTrackFitter)        // prevent users from making (default) copies of processors
       
+        // contains the fitted tracks, accessible through class methods
+        IMPL::LCCollectionVec * _LCIO_fittrackvec;
+
+        // contains the fitted hits, accessible through class methods
+        IMPL::LCCollectionVec * _LCIO_fithitvec;
+
     public:
         EUTelTrackFitter();
  
@@ -43,7 +53,7 @@ namespace eutelescope {
 
         virtual void SetTrackCandidates( const EVENT::TrackVec& );
 
-        virtual void SetTrackCandidates( const std::vector<IMPL::TrackImpl*> & );
+        virtual void SetTrackCandidates( std::vector<const IMPL::TrackImpl*> & );
 
       // do some clean up of internal data structures
         virtual void Clear();
@@ -57,10 +67,16 @@ namespace eutelescope {
         virtual void FitTracks();
         virtual void TrackCandidatesToGBLTrajectories();
         virtual void PerformFitGBLTrajectories();
-        virtual void PerformMille();
+        virtual bool PerformMille();
 
         virtual void FitSingleTrackCandidate();
 
+        /** */ 
+        virtual IMPL::LCCollectionVec* getFitHitVec()   const {   return _LCIO_fithitvec;       }
+
+        /** */
+        virtual IMPL::LCCollectionVec* getFitTrackVec() const {   return _LCIO_fittrackvec;     }
+ 
     protected:
         std::string _name;
 

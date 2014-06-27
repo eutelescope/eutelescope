@@ -11,6 +11,7 @@
 #ifdef USE_GEAR
 
 // eutelescope includes
+#include "EUTelUtility.h"
 #include "EUTelDafTrackerSystem.h"
 #include "EUTelAlignmentConstant.h"
 
@@ -118,7 +119,6 @@ namespace eutelescope {
     virtual void dafEvent(LCEvent * /*evt*/){;}  //evt commented out because it causes a warning, function doesn't seem to do anything here but is probably used in another file through inheritance
     virtual void dafEnd(){;}
     virtual void dafParams(){;}
-    bool checkClusterRegion(lcio::TrackerHitImpl* hit, int iden); 
     
 
     size_t getPlaneIndex(float zPos);
@@ -140,6 +140,7 @@ namespace eutelescope {
 
     daffitter::TrackerSystem _system;
     std::map<float, int> _zSort;
+    std::map<int, int> _indexIDMap;
     std::string _asciiName;
     std::vector<float> _radLength;
 

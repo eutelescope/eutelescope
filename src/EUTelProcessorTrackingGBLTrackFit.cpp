@@ -340,10 +340,10 @@ void EUTelProcessorTrackingGBLTrackFit::processRunHeader(LCRunHeader * run) {
             << "This may mean that the GeoID parameter was not set" << endl;
 
 
-    if (header->getGeoID() != geo::gGeometry()._siPlanesParameters->getSiPlanesID()) {
+    if (header->getGeoID() != geo::gGeometry().getSiPlanesLayoutID()) {
         streamlog_out(WARNING5) << "Error during the geometry consistency check: " << endl
                 << "The run header says the GeoID is " << header->getGeoID() << endl
-                << "The GEAR description says is     " << geo::gGeometry()._siPlanesParameters->getSiPlanesID() << endl;
+                << "The GEAR description says is     " << geo::gGeometry().getSiPlanesLayoutID() << endl;
     }
 
     // Flush seeding alignment constants
@@ -451,7 +451,7 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
 //             _trackFitter->FitSingleTrackCandidate();
 
             IMPL::LCCollectionVec* fittrackvec;
-            fittrackvec = static_cast<EUTelGBLFitter*> (_trackFitter)->GetFitTrackVec();
+            fittrackvec = _trackFitter->getFitTrackVec();
             
             if( fittrackvec == 0 )  {
               streamlog_out( MESSAGE0 ) << " fittrackvec is null " << std::endl;  
@@ -530,7 +530,7 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
 
                         // Get fitted hit information
                         const double* hitpos = ( *itrHit )->getPosition( );
-                        const int planeID = geo::gGeometry().getSensorID( originalHit );
+                        const int planeID = Utility::getSensorIDfromHit( originalHit );
 
                         bool excludeFromFit = false;
                         if ( std::find( _excludePlanesFromFit.begin(), _excludePlanesFromFit.end(), planeID ) != _excludePlanesFromFit.end() ) excludeFromFit = true;
@@ -658,8 +658,8 @@ if( event->getEventNumber()/999*999   == event->getEventNumber() )
                 evt->getCollection( _tracksOutputCollectionName );
             } catch ( ... ) {
                 streamlog_out( DEBUG1 ) << "Adding collection " << _tracksOutputCollectionName << endl;
-                evt->addCollection( static_cast < EUTelGBLFitter* > ( _trackFitter )->GetFitHitsVec( ), _tracksOutputCollectionName+"_fittedhits" );
-                evt->addCollection( static_cast < EUTelGBLFitter* > ( _trackFitter )->GetFitTrackVec( ), _tracksOutputCollectionName );
+                evt->addCollection(  _trackFitter ->getFitHitVec( ), _tracksOutputCollectionName+"_fittedhits" );
+                evt->addCollection(  _trackFitter ->getFitTrackVec( ), _tracksOutputCollectionName );
             }   
         
     

@@ -350,10 +350,10 @@ private:
     std::vector< int > _sensorIDVec;
 
     //! Zero Suppressed Data Collection
-    LCCollectionVec *zsInputDataCollectionVec;
+    LCCollectionVec *_zsInputDataCollectionVec;
     
     //! pulse Collection 
-    LCCollectionVec* pulseCollectionVec;
+    LCCollectionVec* _pulseCollectionVec;
   
 };
 

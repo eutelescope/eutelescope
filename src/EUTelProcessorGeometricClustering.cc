@@ -18,7 +18,6 @@
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelEventImpl.h"
 #include "EUTelHistogramManager.h"
-#include "EUTelUtility.h"
 
 //eutel data specific
 #include "EUTelTrackerDataInterfacerImpl.h"
@@ -40,7 +39,6 @@
 //lcio includes
 #include <UTIL/CellIDEncoder.h>
 #include <UTIL/CellIDDecoder.h>
-#include <IMPL/TrackerRawDataImpl.h>
 #include <IMPL/TrackerDataImpl.h>
 #include <IMPL/TrackerPulseImpl.h>
 #include <IMPL/LCCollectionVec.h>
@@ -54,13 +52,10 @@
 #endif
 
 //system includes
-#include <algorithm>
 #include <string>
 #include <vector>
 #include <memory>
-#include <cstdio>
-#include <stdio.h>
-#include <iostream>
+//#include <iostream>
 #include <cmath>
 
 using namespace lcio;
@@ -88,8 +83,8 @@ EUTelProcessorGeometricClustering::EUTelProcessorGeometricClustering():
   _eventMultiplicityHistos(),
   _isGeometryReady(false),
   _sensorIDVec(),
-  zsInputDataCollectionVec(NULL),
-  pulseCollectionVec(NULL)
+  _zsInputDataCollectionVec(NULL),
+  _pulseCollectionVec(NULL)
  {
   
   // modify processor description
@@ -123,8 +118,8 @@ void EUTelProcessorGeometricClustering::init() {
 	printParameters ();
 
 	//init new geometry
-    std::string name("test.root");
-    geo::gGeometry().initializeTGeoDescription(name,true);
+	std::string name("test.root");
+	geo::gGeometry().initializeTGeoDescription(name,true);
 
 	//set to zero the run and event counters
 	_iRun = 0;
@@ -136,7 +131,7 @@ void EUTelProcessorGeometricClustering::init() {
 
 void EUTelProcessorGeometricClustering::processRunHeader (LCRunHeader * rdr) {
 
-	auto_ptr<EUTelRunHeaderImpl> runHeader( new EUTelRunHeaderImpl( rdr ) );
+	std::auto_ptr<EUTelRunHeaderImpl> runHeader( new EUTelRunHeaderImpl( rdr ) );
 	runHeader->addProcessor( type() );
   	//increment the run counter
 	++_iRun;
@@ -150,25 +145,25 @@ void EUTelProcessorGeometricClustering::initializeGeometry( LCEvent * event ) th
 	_noOfDetector = 0;
 	_sensorIDVec.clear();
 
-	streamlog_out( DEBUG5 ) << "Initializing geometry" << endl;
+	streamlog_out( DEBUG5 ) << "Initializing geometry" << std::endl;
 
   	try 
   	{
-		zsInputDataCollectionVec = dynamic_cast< LCCollectionVec * > ( event->getCollection( _zsDataCollectionName ) ) ;
-		_noOfDetector += zsInputDataCollectionVec->getNumberOfElements();
-		CellIDDecoder<TrackerDataImpl > cellDecoder( zsInputDataCollectionVec );
+		_zsInputDataCollectionVec = dynamic_cast<LCCollectionVec*>( event->getCollection(_zsDataCollectionName) );
+		_noOfDetector += _zsInputDataCollectionVec->getNumberOfElements();
+		CellIDDecoder<TrackerDataImpl> cellDecoder(_zsInputDataCollectionVec);
 
-		for ( size_t i = 0; i < zsInputDataCollectionVec->size(); ++i ) 
+		for ( size_t i = 0; i < _zsInputDataCollectionVec->size(); ++i ) 
 		{
-			TrackerDataImpl * data = dynamic_cast< TrackerDataImpl * > ( zsInputDataCollectionVec->getElementAt( i ) ) ;
-			_sensorIDVec.push_back( cellDecoder( data )[ "sensorID" ] );
-			_totClusterMap.insert( std::make_pair( cellDecoder( data )[ "sensorID" ] , 0 ));
+			TrackerDataImpl * data = dynamic_cast< TrackerDataImpl * > ( _zsInputDataCollectionVec->getElementAt( i ) ) ;
+			_sensorIDVec.push_back( cellDecoder(data)["sensorID"] );
+			_totClusterMap.insert( std::make_pair( cellDecoder(data)["sensorID"], 0) );
 		}
 	} 
 
 	catch ( lcio::DataNotAvailableException ) 
 	{
-		streamlog_out( DEBUG5 ) << "_zsDataCollectionName " << _zsDataCollectionName.c_str() << " not found " << endl;
+		streamlog_out( DEBUG5 ) << "Could not find the input collection: " << _zsDataCollectionName.c_str() << " !" << std::endl;
 		return;
 	}
 
@@ -177,30 +172,30 @@ void EUTelProcessorGeometricClustering::initializeGeometry( LCEvent * event ) th
 
 void EUTelProcessorGeometricClustering::modifyEvent( LCEvent * /* event */ )
 {
-    return;
+	return;
 }
 
-void EUTelProcessorGeometricClustering::readCollections (LCEvent * event)
+void EUTelProcessorGeometricClustering::readCollections(LCEvent* event)
 {
 	try 
 	{
-		zsInputDataCollectionVec = dynamic_cast< LCCollectionVec * > ( event->getCollection( _zsDataCollectionName ) ) ;
-        streamlog_out ( DEBUG4 ) << "zsInputDataCollectionVec: " << _zsDataCollectionName.c_str() << " found " << endl;
-    } 
+		_zsInputDataCollectionVec = dynamic_cast< LCCollectionVec * > ( event->getCollection( _zsDataCollectionName ) ) ;
+        	streamlog_out ( DEBUG4 ) << "_zsInputDataCollectionVec: " << _zsDataCollectionName.c_str() << " found " << std::endl;
+	} 
 	catch ( lcio::DataNotAvailableException )   // do nothing
 	{
-        streamlog_out ( DEBUG4 ) << "zsInputDataCollectionVec: " << _zsDataCollectionName.c_str() << " not found " << endl;
-    }
+		streamlog_out ( DEBUG4 ) << "_zsInputDataCollectionVec: " << _zsDataCollectionName.c_str() << " not found " << std::endl;
+	}
 
-    try 
-    {
-        event->getCollection( _zsDataCollectionName ) ;
-    } 
-    catch (lcio::DataNotAvailableException& e ) 
-    {
-        streamlog_out ( MESSAGE2 ) << "The current event doesn't contain nZS data collections: skip # " << event->getEventNumber() << endl;
-        throw SkipEventException( this );
-    }
+	try 
+	{
+		event->getCollection( _zsDataCollectionName ) ;
+	} 
+	catch (lcio::DataNotAvailableException& e ) 
+	{
+		streamlog_out(MESSAGE2) << "The current event doesn't contain nZS data collections: skip # " << event->getEventNumber() << std::endl;
+		throw SkipEventException(this);
+	}
 }
 
 void EUTelProcessorGeometricClustering::processEvent (LCEvent * event) 
@@ -228,12 +223,12 @@ void EUTelProcessorGeometricClustering::processEvent (LCEvent * event)
 	EUTelEventImpl* evt = static_cast<EUTelEventImpl*> (event);
 	if ( evt->getEventType() == kEORE ) 
   	{
-		streamlog_out ( DEBUG4 ) <<  "EORE found: nothing else to do." <<  endl;
+		streamlog_out ( DEBUG4 ) <<  "EORE found: nothing else to do." <<  std::endl;
 		return;
 	}
 	else if ( evt->getEventType() == kUNKNOWN ) 
 	{
-		streamlog_out ( WARNING2 ) << "Event number " << evt->getEventNumber() << " is of unknown type. Continue considering it as a normal Data Event." << endl;
+		streamlog_out ( WARNING2 ) << "Event number " << evt->getEventNumber() << " is of unknown type. Continue considering it as a normal Data Event." << std::endl;
 	}
 
 	// prepare a pulse collection to add all clusters found this can be either a new collection or already existing in the event
@@ -277,7 +272,7 @@ void EUTelProcessorGeometricClustering::processEvent (LCEvent * event)
 void EUTelProcessorGeometricClustering::geometricClustering(LCEvent * evt, LCCollectionVec * pulseCollection) 
 {
 	// prepare some decoders
-	CellIDDecoder<TrackerDataImpl> cellDecoder( zsInputDataCollectionVec );
+	CellIDDecoder<TrackerDataImpl> cellDecoder( _zsInputDataCollectionVec );
 
 	bool isDummyAlreadyExisting = false;
 	LCCollectionVec* sparseClusterCollectionVec = NULL;
@@ -298,12 +293,12 @@ void EUTelProcessorGeometricClustering::geometricClustering(LCEvent * evt, LCCol
 	// prepare an encoder also for the pulse collection
 	CellIDEncoder<TrackerPulseImpl> idZSPulseEncoder(EUTELESCOPE::PULSEDEFAULTENCODING, pulseCollection);
 
-	// in the zsInputDataCollectionVec we should have one TrackerData for each 
+	// in the _zsInputDataCollectionVec we should have one TrackerData for each 
 	// detector working in ZS mode. We need to loop over all of them
-	for ( unsigned int idetector = 0 ; idetector < zsInputDataCollectionVec->size(); idetector++ ) 
+	for ( unsigned int idetector = 0 ; idetector < _zsInputDataCollectionVec->size(); idetector++ ) 
 	{
 		// get the TrackerData and guess which kind of sparsified data it contains.
-		TrackerDataImpl * zsData = dynamic_cast< TrackerDataImpl * > ( zsInputDataCollectionVec->getElementAt( idetector ) );
+		TrackerDataImpl * zsData = dynamic_cast< TrackerDataImpl * > ( _zsInputDataCollectionVec->getElementAt( idetector ) );
 		SparsePixelType   type   = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( zsData )["sparsePixelType"]) );
 		int sensorID             = static_cast<int > ( cellDecoder( zsData )["sensorID"] );
     
@@ -331,13 +326,13 @@ void EUTelProcessorGeometricClustering::geometricClustering(LCEvent * evt, LCCol
 		minX = minY = maxX = maxY = 0;
 		geoDescr->getPixelIndexRange( minX, maxX, minY, maxY );
 
-    	if ( type == kEUTelGenericSparsePixel ) 
+    		if ( type == kEUTelGenericSparsePixel ) 
 		{
 
 			// now prepare the EUTelescope interface to sparsified data.
-			auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel > > sparseData( new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> ( zsData ) );
+			std::auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel > > sparseData( new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> ( zsData ) );
 
-			streamlog_out ( DEBUG2 ) << "Processing sparse data on detector " << sensorID << " with " << sparseData->size() << " pixels " << endl;
+			streamlog_out ( DEBUG2 ) << "Processing sparse data on detector " << sensorID << " with " << sparseData->size() << " pixels " << std::endl;
 
 			int hitPixelsInEvent = sparseData->size();
 			std::vector<EUTelGeometricPixel> hitPixelVec;
@@ -400,9 +395,9 @@ void EUTelProcessorGeometricClustering::geometricClustering(LCEvent * evt, LCCol
 			while( !hitPixelVec.empty() )
 			{
 				// prepare a TrackerData to store the cluster candidate
-				auto_ptr< TrackerDataImpl > zsCluster ( new TrackerDataImpl );
+				std::auto_ptr< TrackerDataImpl > zsCluster ( new TrackerDataImpl );
 				// prepare a reimplementation of sparsified cluster
-				auto_ptr<EUTelGenericSparseClusterImpl<EUTelGeometricPixel > > sparseCluster ( new EUTelGenericSparseClusterImpl<EUTelGeometricPixel >( zsCluster.get() ) );
+				std::auto_ptr<EUTelGenericSparseClusterImpl<EUTelGeometricPixel > > sparseCluster ( new EUTelGenericSparseClusterImpl<EUTelGeometricPixel >( zsCluster.get() ) );
 
 				//First we need to take any pixel, so let's take the first one
 				//Add it to the cluster as well as the newly added pixels
@@ -477,7 +472,7 @@ void EUTelProcessorGeometricClustering::geometricClustering(LCEvent * evt, LCCol
 					//sparseCluster->getClusterInfo(xSeed, ySeed, xSize, ySize);
 
 					// prepare a pulse for this cluster
-					auto_ptr<TrackerPulseImpl> zsPulse ( new TrackerPulseImpl );
+					std::auto_ptr<TrackerPulseImpl> zsPulse ( new TrackerPulseImpl );
 					idZSPulseEncoder["sensorID"]  = sensorID;
 					//idZSPulseEncoder["xSeed"]     = xSeed;
 					//idZSPulseEncoder["ySeed"]     = ySeed;
@@ -497,16 +492,16 @@ void EUTelProcessorGeometricClustering::geometricClustering(LCEvent * evt, LCCol
 				else 
 				{
 					//in the case the cluster candidate is not passing the threshold ...
-					//forget about them, the memory should be automatically cleaned by auto_ptr's
+					//forget about them, the memory should be automatically cleaned by std::auto_ptr's
 				}
 			} //loop over all found clusters
 			
 			delete genericPixel;
-    	} 
+    		}	 
 		else 
 		{
-    		throw UnknownDataTypeException("Unknown sparsified pixel");
-    	}
+    			throw UnknownDataTypeException("Unknown sparsified pixel");
+    		}
 	} // this is the end of the loop over all ZS detectors
 
 	// if the sparseClusterCollectionVec isn't empty add it to the
@@ -529,15 +524,15 @@ void EUTelProcessorGeometricClustering::check (LCEvent * /* evt */) {
 }
 
 void EUTelProcessorGeometricClustering::end() {
-
-  streamlog_out ( MESSAGE4 ) <<  "Successfully finished" << endl;
-
-  std::map<int,int>::iterator iter = _totClusterMap.begin();
-  while ( iter != _totClusterMap.end() ) {
-
-    streamlog_out ( MESSAGE4 ) << "Found " << iter->second << " clusters on detector " << iter->first << endl;
-    ++iter;
-  }
+	
+	streamlog_out ( MESSAGE4 ) <<  "Successfully finished" << std::endl;
+  
+	std::map<int,int>::iterator iter = _totClusterMap.begin();
+	while( iter != _totClusterMap.end() )
+	{
+		streamlog_out ( MESSAGE4 ) << "Found " << iter->second << " clusters on detector " << iter->first << std::endl;
+		++iter;
+	}
 }
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -548,7 +543,7 @@ void EUTelProcessorGeometricClustering::fillHistos (LCEvent * evt)
 
 	if ( type == kEORE ) 
 	{
-	    streamlog_out ( DEBUG4 ) << "EORE found: nothing else to do." << endl;
+	    streamlog_out ( DEBUG4 ) << "EORE found: nothing else to do." << std::endl;
 	    return;
 	}
 	else if ( type == kUNKNOWN ) 
@@ -561,14 +556,14 @@ void EUTelProcessorGeometricClustering::fillHistos (LCEvent * evt)
 
 	try 
 	{
-		LCCollectionVec* pulseCollectionVec = dynamic_cast<LCCollectionVec*>  (evt->getCollection(_pulseCollectionName));
-		CellIDDecoder<TrackerPulseImpl > cellDecoder(pulseCollectionVec);
+		LCCollectionVec* _pulseCollectionVec = dynamic_cast<LCCollectionVec*>  (evt->getCollection(_pulseCollectionName));
+		CellIDDecoder<TrackerPulseImpl > cellDecoder(_pulseCollectionVec);
 
 		std::map<int, int> eventCounterMap;
 
-		for( int iPulse = _initialPulseCollectionSize; iPulse < pulseCollectionVec->getNumberOfElements(); iPulse++ ) 
+		for( int iPulse = _initialPulseCollectionSize; iPulse < _pulseCollectionVec->getNumberOfElements(); iPulse++ ) 
 		{
-			TrackerPulseImpl* pulse = dynamic_cast<TrackerPulseImpl*> ( pulseCollectionVec->getElementAt(iPulse) );
+			TrackerPulseImpl* pulse = dynamic_cast<TrackerPulseImpl*> ( _pulseCollectionVec->getElementAt(iPulse) );
 			ClusterType type  = static_cast<ClusterType> ( static_cast<int> ( cellDecoder(pulse)["type"] ));
 			int detectorID = static_cast<int>( cellDecoder(pulse)["sensorID"] ); 
 			//TODO: do we need this check?
@@ -581,18 +576,9 @@ void EUTelProcessorGeometricClustering::fillHistos (LCEvent * evt)
 			}	 
 			else 
 			{
-			    streamlog_out ( ERROR4 ) <<  "Unknown cluster type. Sorry for quitting" << endl;
+			    streamlog_out ( ERROR4 ) <<  "Unknown cluster type. Sorry for quitting" << std::endl;
 			    throw UnknownDataTypeException("Cluster type unknown");
 			}
-
-			/*int detectorID2 = cluster->getDetectorID();
-			if (detectorID != detectorID2 ) 
-			{
-				std::cout << _iEvt << std::endl;
-				std::cout << "detectorID: " << detectorID << std::endl;
-				std::cout << "detectorID2: " << detectorID2 << std::endl;
-				std::cout << *cluster << std::endl;
-			}*/
 	
 			//if this key doesn't exist yet it will be value initialized, this is desired, for int this is 0!
 			eventCounterMap[detectorID]++;
@@ -649,20 +635,20 @@ void EUTelProcessorGeometricClustering::fillHistos (LCEvent * evt)
 void EUTelProcessorGeometricClustering::bookHistos() {
 
   // histograms are grouped in loops and detectors
-  streamlog_out ( DEBUG5 )  << "Booking histograms " << endl;
-  auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ) );
+  streamlog_out ( DEBUG5 )  << "Booking histograms " << std::endl;
+  std::auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ) );
   EUTelHistogramInfo* histoInfo;
   bool isHistoManagerAvailable;
 
   try {
     isHistoManagerAvailable = histoMgr->init();
-  } catch ( ios::failure& e) {
+  } catch ( std::ios::failure& e) {
     streamlog_out ( WARNING2 ) << "I/O problem with " << _histoInfoFileName << "\n"
-                               << "Continuing without histogram manager"  << endl;
+                               << "Continuing without histogram manager"  << std::endl;
     isHistoManagerAvailable = false;
   } catch ( ParseException& e ) {
     streamlog_out ( WARNING2 ) << e.what() << "\n"
-                               << "Continuing without histogram manager" << endl;
+                               << "Continuing without histogram manager" << std::endl;
     isHistoManagerAvailable = false;
   }
 
@@ -705,7 +691,7 @@ void EUTelProcessorGeometricClustering::bookHistos() {
 			histoInfo = histoMgr->getHistogramInfo( _clusterSizeTotalHistoName );
 			if ( histoInfo ) 
 			{
-				streamlog_out ( DEBUG2 ) << (* histoInfo ) << endl;
+				streamlog_out ( DEBUG2 ) << (* histoInfo ) << std::endl;
 				/* clusterNBin = histoInfo->_xBin;
 				clusterMin  = histoInfo->_xMin;
 				clusterMax  = histoInfo->_xMax;*/
@@ -720,7 +706,7 @@ void EUTelProcessorGeometricClustering::bookHistos() {
 		if ( isHistoManagerAvailable ) {
 		  histoInfo = histoMgr->getHistogramInfo( _clusterSignalHistoName );
 		  if ( histoInfo ) {
-		    streamlog_out ( DEBUG2 ) << (* histoInfo ) << endl;
+		    streamlog_out ( DEBUG2 ) << (* histoInfo ) << std::endl;
 		   /* clusterTotBin = histoInfo->_xBin;
 		    clusterTotMin  = histoInfo->_xMin;
 		    clusterTotMax  = histoInfo->_xMax;*/
@@ -735,7 +721,7 @@ void EUTelProcessorGeometricClustering::bookHistos() {
 		if ( isHistoManagerAvailable ) {
 		  histoInfo = histoMgr->getHistogramInfo( _clusterSizeXHistoName );
 		  if ( histoInfo ) {
-		    streamlog_out ( DEBUG2 ) << (* histoInfo ) << endl;
+		    streamlog_out ( DEBUG2 ) << (* histoInfo ) << std::endl;
 		  /*  clusterXNBin = histoInfo->_xBin;
 		    clusterXMin  = histoInfo->_xMin;
 		    clusterXMax  = histoInfo->_xMax;*/
@@ -751,7 +737,7 @@ void EUTelProcessorGeometricClustering::bookHistos() {
 		if ( isHistoManagerAvailable ) {
 		  histoInfo = histoMgr->getHistogramInfo( _clusterSizeYHistoName );
 		  if ( histoInfo ) {
-		    streamlog_out ( DEBUG2 ) << (* histoInfo ) << endl;
+		    streamlog_out ( DEBUG2 ) << (* histoInfo ) << std::endl;
 		   /* clusterXNBin = histoInfo->_xBin;
 		    clusterXMin  = histoInfo->_xMin;
 		    clusterXMax  = histoInfo->_xMax;*/
@@ -821,7 +807,7 @@ void EUTelProcessorGeometricClustering::bookHistos() {
 		if ( isHistoManagerAvailable ) {
 		  histoInfo = histoMgr->getHistogramInfo(  _eventMultiplicityHistoName );
 		  if ( histoInfo ) {
-		    streamlog_out ( DEBUG2 ) << (* histoInfo ) << endl;
+		    streamlog_out ( DEBUG2 ) << (* histoInfo ) << std::endl;
 		    /*eventMultiNBin  = histoInfo->_xBin;
 		    eventMultiMin   = histoInfo->_xMin;
 		    eventMultiMax   = histoInfo->_xMax;*/
@@ -835,6 +821,6 @@ void EUTelProcessorGeometricClustering::bookHistos() {
 		eventMultiHisto->setTitle( eventMultiTitle.c_str() );
 
   }
-  streamlog_out ( DEBUG5 )  << "end of Booking histograms " << endl; 
+  streamlog_out ( DEBUG5 )  << "end of Booking histograms " << std::endl; 
 }
 #endif

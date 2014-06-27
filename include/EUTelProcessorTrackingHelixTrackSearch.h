@@ -21,7 +21,7 @@
 #endif
 
 // EUTELESCOPE
-#include "EUTelTrackFitter.h"
+#include "EUTelGBLFitter.h"
 #include "EUTelGeometryTelescopeGeoDescription.h"
 #include "EUTelUtility.h"
 #include "EUTelTrackImpl.h"
@@ -76,7 +76,12 @@ namespace eutelescope {
         /** Histogram booking */
         void bookHistograms();
 
-        void plotHistos( vector< IMPL::TrackImpl* >& trackCandidates ) ;
+        void plotHistos( vector< EUTelTrackImpl* >&  trackCandidates );
+
+				void outputLCIO(LCEvent* evt,std::vector< EUTelTrackImpl* >&);
+
+				void cartesian2LCIOTrack( EUTelTrackImpl* track, IMPL::TrackImpl*) const ;
+
 
         // Processor parameters        
 
@@ -145,12 +150,15 @@ namespace eutelescope {
     private:
 
         /** TGeo geometry file name */
-	std::string _tgeoFileName;
+				std::string _tgeoFileName;
         
         // Exhaustive finder state definition
 
         /** Maximal amount of missing hits per track candidate */
         int _maxMissingHitsPerTrackCand;
+
+				//The number of allowed similar hits on track candidates of a single event
+				int _AllowedSharedHitsOnTrackCandidate;
 
         /** Maximal amount of tracks per event */
         int _maxNTracks;
@@ -202,6 +210,7 @@ namespace eutelescope {
             static string _numberTracksCandidatesHistName;
             static string _numberOfHitOnTrackCandidateHistName;
             static string _HitOnTrackCandidateHistName;
+						static string _chi2CandidateHistName;
 
         };
 

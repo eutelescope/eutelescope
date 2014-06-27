@@ -17,6 +17,9 @@
 #include "TMatrixDSym.h"
 #endif
 
+// stl:
+#include <cmath>
+
 namespace eom {
         /** 
          * @class Implementation of particles differential
@@ -85,7 +88,7 @@ namespace eom {
                const double By = _h.Y();
                const double Bz = _h.Z();
                 
-               const double sqrtFactor = sqrt( 1. + tx*tx + ty*ty );
+               const double sqrtFactor = std::sqrt( 1. + tx*tx + ty*ty );
                const double Ax = sqrtFactor * (  ty * ( tx * Bx + Bz ) - ( 1. + tx*tx ) * By );
                const double Ay = sqrtFactor * ( -tx * ( ty * By + Bz ) + ( 1. + ty*ty ) * Bx );
                

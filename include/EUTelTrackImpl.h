@@ -48,23 +48,34 @@ namespace eutelescope {
  
     virtual void Print(){
 //      PrintTrackStates();   
-      for(int i=0; i < this->getTrackStates().size() ; i++) {    
-        streamlog_out(MESSAGE0) << "track " << id() << " state:" << i  << " id: " << (getTrackStates().at(i))->id() << " location: " << (getTrackStates().at(i))->getLocation() << " at "<< getTrackStates().at(i) << " at Tx:" << getTx(i) << " at Ty:" << getTy(i) << " getX() " << getX(i) << " getY() " << getY(i) ;
+      for(unsigned int i=0; i < this->getTrackStates().size() ; i++) {    
+        streamlog_out(MESSAGE0) << "track " << id() << " state:" << i  << " id: " << setw(5) << (getTrackStates().at(i))->id() << " location: " ;
+         streamlog_out(MESSAGE0) << setw(3) << (getTrackStates().at(i))->getLocation() << " at "<< getTrackStates().at(i) ;
+         streamlog_out(MESSAGE0) << " at Tx: " << getTx(i) << " at Ty: " << getTy(i) << " getX() " << getX(i) << " getY() " << getY(i) << " "  ;
         const float*   point = (getTrackStates().at(i))->getReferencePoint();
-        streamlog_out(MESSAGE0) << std::setw(7) << point[0] << std::setw(7) << point[1] << std::setw(7) << point[2] ;
+        streamlog_out(MESSAGE0) << std::setw(7) << point[0] << " " << std::setw(7) << point[1] << " " << std::setw(7) << point[2] ;
         streamlog_out(MESSAGE0) << std::endl;
       }
+        //IMPL::TrackImpl* track = static_cast< IMPL::TrackImpl*> (*itTrk);
+        for ( size_t i = 0; i< _hits.size(); i++ ) 
+        { 
+            EVENT::TrackerHit* ihit = _hits[i];
+            int ic = ihit->id();
+            streamlog_out(DEBUG5) << ic << " Is the hit IDs " << std::endl;
+        }
+        streamlog_out(DEBUG5) << std::endl;
+
     }
 
-    virtual float getTx(int i=0) const ;
+    virtual float getTx(unsigned int i=0) const ;
 
-    virtual float getTy(int i=0) const ;
+    virtual float getTy(unsigned int i=0) const ;
 
-    virtual float getX(int i=0) const ;
+    virtual float getX(unsigned int i=0) const ;
 
-    virtual float getY(int i=0) const ;
+    virtual float getY(unsigned int i=0) const ;
 
-    virtual float getInvP(int i=0) const ;
+    virtual float getInvP(unsigned int i=0) const ;
 
     /** Covariance matrix of the track parameters. Stored as lower triangle matrix where
      *  the order of parameters is:   d0, phi, omega, z0, tan(lambda).
@@ -135,6 +146,8 @@ namespace eutelescope {
      *  to create this track.
      */
     virtual const EVENT::TrackerHitVec & getTrackerHits() const ;
+
+	//	int getType();
     
 
     // setters 
