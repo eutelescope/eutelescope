@@ -20,6 +20,7 @@
       <processor name="LoadRefHitDB"/>
       <processor name="LoadPreAlignment"/>
       <processor name="ApplyPreAlignment"/>
+      <processor name="Correlator"/>
       <processor name="Align"/>
       <processor name="EUTelUtilityPrintEventNumber"/>
   </execute>
@@ -69,6 +70,40 @@
     <parameter name="DEBUG" type="bool" value="false"/>
     <parameter name="PrintEvents" type="int" value="0"/>
  </processor>
+
+ <processor name="Correlator" type="EUTelCorrelator">
+ <!--EUTelCorrelator fills histograms with correlation plots-->
+  <!--Minimum allowed cluster charge to be taken into account for the correlation plots (default = 2)-->
+  <!--parameter name="ClusterChargeMinimum" type="int">2 </parameter-->
+  <!--Dump the offset X and Y values calculated from the correlation bands (default = true)-->
+  <parameter name="DumpOffset" type="bool"> false </parameter>
+  <!--How many events are needed to get reasonable correlation plots (and Offset DB)? (default=1000)-->
+  <parameter name="Events" type="int"> @BoxCutEventsMax@ </parameter>
+  <!--SensorID of fixed plane-->
+  <!--parameter name="FixedPlane" type="int">0 </parameter-->
+  <!--List of cluster collections-->
+  <parameter name="InputClusterCollections" type="StringVec" lcioInType="TrackerPulse"> </parameter>
+  <!--Hit collection name-->
+  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> PreAlignedHit  </parameter>
+  <!--If there are more then this number of correlated hits (planes->track candidate) (default=5)-->
+  <parameter name="MinNumberOfCorrelatedHits" type="int">5 </parameter>
+  <!--This is the name of the LCIO file name with the output offset db (add .slcio)-->
+  <!--parameter name="OffsetDBFile" type="string">offset-db.slcio </parameter-->
+  <!--reference hit collection name -->
+   <parameter name="ReferenceCollection" type="string" value="refhit"/>
+  <!--Maximal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
+  <parameter name="ResidualsXMax" type="FloatVec">   @BoxCutVecXMax@ </parameter>
+  <!--Minimal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
+  <parameter name="ResidualsXMin" type="FloatVec">   @BoxCutVecXMin@  </parameter>
+  <!--Maximal values of the hit residuals in the Y direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
+  <parameter name="ResidualsYMax" type="FloatVec">   @BoxCutVecYMax@  </parameter>
+  <!--Minimal values of the hit residuals in the Y direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
+  <parameter name="ResidualsYMin" type="FloatVec">   @BoxCutVecYMin@  </parameter>
+ <!--Do you want the reference hit collection to be used for coordinate transformations?-->
+  <parameter name="UseReferenceCollection" type="bool">true </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
 
 
  <processor name="Align" type="EUTelMille">
