@@ -216,7 +216,7 @@
     <parameter name="DutPlanes" type="IntVec"> 20 21 </parameter>
     <parameter name="FitDuts" type="bool" value="false"/>
     <parameter name="MakePlots" type="bool" value="true"/>
-    <parameter name="RequireNTelPlanes" type="float" value="6"/>
+    <parameter name="RequireNTelPlanes" type="float" value="5"/>
     <parameter name="HitCollectionName" type="string" lcioInType="TrackerHit"> alignedHit </parameter>
     <parameter name="TrackCollectionName" type="string" lcioInType="Track"> track </parameter>
     <parameter name="AlignmentCollectionNames">prealign alignment   </parameter>
