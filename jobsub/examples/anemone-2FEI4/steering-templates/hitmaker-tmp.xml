@@ -16,7 +16,7 @@
    </execute>
 
    <global>
-      <parameter name="LCIOInputFiles"> @LcioPath@/run@RunNumber@-clustering.slcio </parameter>
+      <parameter name="LCIOInputFiles"> @InputFile@ </parameter>
       <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
@@ -30,11 +30,16 @@
   <!-- compression of output file 0: false >0: true (default) -->
   <parameter name="Compress" type="int">1 </parameter>
   <!-- filename without extension-->
-  <parameter name="FileName" type="string" value= "@HistogramPath@/run@RunNumber@-hitmaker-histo"/>
+  <parameter name="FileName" type="string" value= "@HistoFile@ "/>
   <!-- type of output file root (default) or xml )-->
   <parameter name="FileType" type="string">root </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+ </processor>
+
+ <processor name="LoadRefHitDB"     type="ConditionsProcessor">
+   <parameter name="DBInit" type="string" value="localhost:lccd_test:align:tel"/>
+   <parameter name="SimpleFileHandler" type="StringVec"> refhit  @RefHitDBFile@ referenceHit  </parameter>
  </processor>
 
  <processor name="HitMakerM26" type="EUTelProcessorHitMaker">
@@ -52,7 +57,7 @@
   <!--This is the name of the reference hit collection initialized in this processor. This collection provides the reference vector to correctly determine a plane corresponding to a global hit coordiante.-->
   <!--parameter name="ReferenceCollection" type="string">referenceHit </parameter-->
   <!--This is the file where the reference hit collection is stored-->
-  <parameter name="ReferenceHitFile" type="string"> @DatabasePath@/run@RunNumber@-refhit-db.slcio </parameter>
+  <parameter name="ReferenceHitFile" type="string"> @RefHitDBFile@ </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
  </processor>
@@ -72,7 +77,7 @@
   <!--This is the name of the reference hit collection initialized in this processor. This collection provides the reference vector to correctly determine a plane corresponding to a global hit coordiante.-->
   <!--parameter name="ReferenceCollection" type="string">referenceHit </parameter-->
   <!--This is the file where the reference hit collection is stored-->
-  <parameter name="ReferenceHitFile" type="string"> @DatabasePath@/run@RunNumber@-refhit-db.slcio </parameter>
+  <parameter name="ReferenceHitFile" type="string"> @RefHitDBFile@ </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
  </processor>
@@ -80,7 +85,7 @@
 <processor name="PreAligner" type="EUTelPreAlign">
  <!--Apply alignment constants to hit collection-->
   <!--Name of LCIO db file where alignment constantds will be stored-->
-  <parameter name="AlignmentConstantLCIOFile" type="string"> @DatabasePath@/run@RunNumber@-prealign-db.slcio </parameter>
+  <parameter name="AlignmentConstantLCIOFile" type="string"> @PreAlignmentDBFile@ </parameter>
   <!--How many events should be used for an approximation to the X,Y shifts (pre-alignment)? (default=50000)-->
   <parameter name="Events" type="int">9999 </parameter>
   <!--SensorID of fixed plane-->
@@ -92,7 +97,7 @@
   <!--The name of the input hit collection-->
   <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit">hit </parameter>
   <!--If there are more then this number of correlated hits (planes->track candidate) (default=5)-->
-  <!--parameter name="MinNumberOfCorrelatedHits" type="int">5 </parameter-->
+  <parameter name="MinNumberOfCorrelatedHits" type="int"> 6 </parameter>
   <!--reference hit collection name -->
   <parameter name="ReferenceCollection" type="string">referenceHit </parameter>
   <!--Maximal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
@@ -104,7 +109,7 @@
   <!--Minimal values of the hit residuals in the Y direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
   <parameter name="ResidualsYMin" type="FloatVec"> -2. -2. -2.  -8. -8.  -2. -2. -5. </parameter>
   <!--Do you want the reference hit collection to be used for coordinate transformations?-->
-  <!--parameter name="UseReferenceCollection" type="bool">true </parameter-->
+  <parameter name="UseReferenceCollection" type="bool">true </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
  </processor>
@@ -156,7 +161,7 @@
   <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
   <!--parameter name="KeepCollectionNames" type="StringVec">MyPreciousSimTrackerHits  </parameter-->
   <!-- name of output file -->
-  <parameter name="LCIOOutputFile" type="string" value="@LcioPath@/run@RunNumber@-hitmaker.slcio"/>
+  <parameter name="LCIOOutputFile" type="string" value="@OutputFile@"/>
   <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
   <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   <!--Set it to true to remove intermediate EORE in merged runs-->
@@ -165,9 +170,10 @@
   <!--parameter name="SplitFileSizekB" type="int">1992294 </parameter-->
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
- </processor>
+</processor>
 
- <processor name="EUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">
+
+  <processor name="EUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">
  <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
   <!--Print event number for every n-th event-->
   <parameter name="EveryNEvents" type="int">2500 </parameter>
