@@ -64,11 +64,11 @@
   <!--parameter name="LCIOWriteMode" type="string">WRITE_NEW </parameter-->
   <!--This float number [0,1] represents the maximum allowed firing frequency
 within the selected number of event per cycle-->
-  <parameter name="MaxAllowedFiringFreq" type="float"> 0.0008 </parameter>
+  <parameter name="MaxAllowedFiringFreq" type="float"> @FiringFreqCutM26@ </parameter>
   <!--The number of events to be considered for each update cycle-->
-  <parameter name="NoOfEvents" type="int"> 5000 </parameter>
+  <parameter name="NoOfEvents" type="int"> @NoOfEvents@ </parameter>
   <!--The sensorID for the generated collection (one per detector)-->
-  <parameter name="SensorIDVec" type="IntVec"> 0 1 2 3 4 5</parameter>
+  <parameter name="SensorIDVec" type="IntVec"> @M26SensorVec@ </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
   <!--Input of Zero Suppressed data-->
@@ -87,11 +87,11 @@ within the selected number of event per cycle-->
   <!--parameter name="LCIOWriteMode" type="string">WRITE_NEW </parameter-->
   <!--This float number [0,1] represents the maximum allowed firing frequency
 within the selected number of event per cycle-->
-  <parameter name="MaxAllowedFiringFreq" type="float"> 0.0008 </parameter>
+  <parameter name="MaxAllowedFiringFreq" type="float"> @FiringFreqCutAPIX@ </parameter>
   <!--The number of events to be considered for each update cycle-->
-  <parameter name="NoOfEvents" type="int"> 5000 </parameter>
+  <parameter name="NoOfEvents" type="int"> @NoOfEvents@ </parameter>
   <!--The sensorID for the generated collection (one per detector)-->
-  <parameter name="SensorIDVec" type="IntVec"> 20 21 </parameter>
+  <parameter name="SensorIDVec" type="IntVec"> @APIXSensorVec@ </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
   <!--Input of Zero Suppressed data-->
@@ -123,7 +123,7 @@ within the selected number of event per cycle-->
  <processor name="EUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">
  <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
   <!--Print event number for every n-th event-->
-  <parameter name="EveryNEvents" type="int">2500 </parameter>
+  <parameter name="EveryNEvents" type="int"> @NEventsMessage@ </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
   <!--print the event timestamp as read from LCIO-->

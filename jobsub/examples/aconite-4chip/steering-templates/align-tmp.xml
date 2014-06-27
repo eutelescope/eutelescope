@@ -70,19 +70,6 @@
     <parameter name="PrintEvents" type="int" value="0"/>
 </processor>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
  <processor name="DafFitter" type="EUTelDafFitter">
  <!--This processor preforms track reconstruction. The tracks are as final track fit for analysis.-->
   <!--Collection name for fitted tracks-->
