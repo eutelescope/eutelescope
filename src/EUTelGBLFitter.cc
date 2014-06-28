@@ -500,9 +500,9 @@ namespace eutelescope {
        
         streamlog_out(DEBUG0) << endl << "pushBackPoint: " << pointListTrack->size() <<  std::endl;
         // store point's GBL label for future reference
-			 	streamlog_out(DEBUG0) << endl << "This is the state and point " << state <<"," <<&(pointListTrack->back())<<std::endl;
+			 	streamlog_out(DEBUG0) << endl << "This is the state and point " << state <<"," <<&(pointListTrack->back())<<"State hit: "<<state->getHit()<<std::endl;
         _PointToState.insert(make_pair( &(pointListTrack->back()), *state)); 
-    }
+}
 
 
     void EUTelGBLFitter::pushBackPointMille( std::vector< gbl::GblPoint >& pointListMille, const gbl::GblPoint& pointMille, int hitid ) {
@@ -522,7 +522,6 @@ void EUTelGBLFitter::UpdateTrackFromGBLTrajectory (gbl::GblTrajectory* traj, std
 	int pointNum = 0;
 	for(pointNum=0; pointNum < number_of_points; ++pointNum){ //Must make sure that the label starts at ????????
 		EUTelTrackStateImpl  state = 	_PointToState[ &(pointList->at(pointNum)) ]; //get the state associated with this point
-		if(state.getHit() != NULL){
 
 			TVectorD corrections(5);
 			TMatrixDSym correctionsCov(5,5);
@@ -538,10 +537,6 @@ void EUTelGBLFitter::UpdateTrackFromGBLTrajectory (gbl::GblTrajectory* traj, std
      	streamlog_out(DEBUG3) << endl << "State after we have added corrections: " << std::endl;
 			state.Print();
 
-			
-		}else{
-     	streamlog_out(DEBUG3) << endl << "State is NULL no corrections added! " << std::endl;
-		}
 		
 
 	}//END OF LOOP OVER POINTS
@@ -556,7 +551,7 @@ void EUTelGBLFitter::getResidualOfTrackandHits(gbl::GblTrajectory* traj, std::ve
 	for(pointNum=0; pointNum < number_of_points; ++pointNum){ //Must make sure that the label starts at ????????
 		EUTelTrackStateImpl state = 	_PointToState[ &(pointList->at(pointNum)) ]; //get the state associated with this point
 		if(state.getHit() != NULL){
-			streamlog_out(DEBUG0) << endl << "There is a hit on the state. Find update Residuals!" << std::endl;
+			streamlog_out(DEBUG0) << endl << "There is a hit on the state. Hit pointer: "<< state.getHit()<<" Find update Residuals!" << std::endl;
   	unsigned int numData; //Not sure what this is used for??????
 		TVectorD aResiduals(2);
 		TVectorD aMeasErrors(2);
@@ -571,7 +566,7 @@ void EUTelGBLFitter::getResidualOfTrackandHits(gbl::GblTrajectory* traj, std::ve
 		
 		}
 		else{
-			streamlog_out(DEBUG0) << endl << "The state is NULL or the hit is NULL. So will not get residual" << std::endl;
+			streamlog_out(DEBUG0) << "The hit is NULL. State pointer: "<<&state<< " Hit pointer " << state.getHit() <<" So will not get residual" << std::endl;
 		}
 
 	}
@@ -961,10 +956,12 @@ void EUTelGBLFitter::FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack, st
 			double cov[4] ;
 			state->getTrackStateHitCov(cov); //This part should not be done in the way it has. MUST FIX! Hit cov should be part of hits own class. Must learn more about LCIO data format
 			
-			addMeasurementGBL(point, hit->getPosition(),  fitPointLocal, cov, state->getH()); 		
+			addMeasurementGBL(point, hit->getPosition(),  fitPointLocal, cov, state->getH());
+		streamlog_out(DEBUG3) << "Just before adding state hit pointer is " << state->getHit() <<std::endl; 		
 			pushBackPointandState(pointList, point, state);
 
 		}else{
+			streamlog_out(DEBUG3) << "The state has no hit so just just at point with no measurement" <<std::endl;
 			pushBackPointandState(pointList, point, state);
 		}
 
