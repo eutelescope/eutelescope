@@ -49,6 +49,7 @@
 #include <string>
 #include <algorithm>
 #include <functional>
+#include <iostream>
 
 namespace eutelescope {
 
@@ -89,11 +90,13 @@ namespace eutelescope {
 
 				void UpdateTrackFromGBLTrajectory(gbl::GblTrajectory* traj,std::vector< gbl::GblPoint >* pointList);
 		
-				void pushBackPointandState( std::vector< gbl::GblPoint >* pointListTrack, const gbl::GblPoint pointTrack, EUTelTrackStateImpl *state);
+				void pushBackPointandState( std::vector< gbl::GblPoint >* pointListTrack, gbl::GblPoint pointTrack, EUTelTrackStateImpl *state);
 
 				void CreateAlignmentToMeasurementJacobian(std::vector< gbl::GblPoint >* pointList);
 
 				void addSiPlaneScattererGBL(gbl::GblPoint& point, int iPlane);
+
+				void getResidualOfTrackandHits(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint >* pointList, map< int, map< float, float > > & SensorResidualError);
 
         /*
          */  
@@ -304,7 +307,7 @@ namespace eutelescope {
         /** Parameter ids */
         std::map<int,int> _parameterIdZRotationsMap;
 				//this maps the original states from the pattern recognition with true and the other scatterers to take into account volumes inbetween them as false. This is needed since you may not know the number of scatterers inbetween in future versions. 
-				std::map<const gbl::GblPoint*,EUTelTrackStateImpl *> _PointToState;
+				std::map<gbl::GblPoint*,EUTelTrackStateImpl > _PointToState;
        
         /** Planes ids to be excluded from refit */
         std::vector< int > _excludeFromFit;

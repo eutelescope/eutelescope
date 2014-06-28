@@ -135,6 +135,7 @@ namespace eutelescope {
         struct _histName {
 						static string _chi2CandidateHistName;
 						static string  _fitsuccessHistName;
+						static string _residGblFitHistName;
 
         };
 
@@ -146,6 +147,8 @@ namespace eutelescope {
 
 				void bookHistograms();
 
+				void plotResidual( map< int, map< float, float > >  & SensorResidualError, bool & first_time);
+				bool _first_time=true;
 				
 
 

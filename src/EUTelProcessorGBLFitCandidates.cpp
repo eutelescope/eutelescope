@@ -9,7 +9,9 @@ using namespace eutelescope;
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 std::string EUTelProcessorGBLFitCandidates::_histName::_chi2CandidateHistName = "chi2HistName";
 std::string EUTelProcessorGBLFitCandidates::_histName::_fitsuccessHistName = "FitSuccessfulHistName";
+std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistName = "Residual";
 #endif // defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+
 
 
 EUTelProcessorGBLFitCandidates::EUTelProcessorGBLFitCandidates() :
@@ -150,7 +152,7 @@ void EUTelProcessorGBLFitCandidates::processEvent(LCEvent * evt){
      			}
 	   		IMPL::TrackImpl* trackimpl = static_cast<IMPL::TrackImpl*> (col->getElementAt(iCol));
 			EUTelTrackImpl* EUtrack = new EUTelTrackImpl(*trackimpl);
-      			streamlog_out(DEBUG1) << "Track " << iCol << " nhits " << trackimpl->getTrackerHits().size() << endl;
+      			streamlog_out(DEBUG1) << "Track " << iCol << " nhits " << EUtrack->getHitsOnTrack().size() << endl;
 
 			//_trackFitter->Clear(); //This is a good point to clear all things that need to be reset for each event. Why should gop here?
 			std::vector< gbl::GblPoint > pointList;
@@ -177,14 +179,21 @@ void EUTelProcessorGBLFitCandidates::processEvent(LCEvent * evt){
 				//Update track and then state variables//////////////////////////////////////////////BEGIN
 				EUtrack->setChi2(chi2);
 				EUtrack->setNdf(ndf);
-				_trackFitter->UpdateTrackFromGBLTrajectory(traj, &pointList); 
+				_trackFitter->UpdateTrackFromGBLTrajectory(traj, &pointList);
+				EUtracks.push_back(EUtrack); 
 				//////////////////////////////////////////////////////////////////////////////////////END
-				EUtracks.push_back(EUtrack);
+				///////////////////////////////////////////////////////////////////////////////////////////Determine the residual of this new track and plot// BEGIN
+				map< int, map< float, float > >  SensorResidualError; 
+				_trackFitter->getResidualOfTrackandHits(traj, &pointList, SensorResidualError);
+				plotResidual(SensorResidualError, _first_time);
+				_first_time = false;
+ 
 			}
 			else{
 		     streamlog_out(DEBUG5) << "Ierr is: " << ierr << " Do not update track information " << endl;
       		static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_fitsuccessHistName ] ) -> fill(0.0);
-			}			
+			}	
+	_trackFitter->Clear();		
 			      
 		}//END OF LOOP FOR ALL TRACKS IN AN EVENT
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -193,6 +202,54 @@ void EUTelProcessorGBLFitCandidates::processEvent(LCEvent * evt){
 
 
 }
+
+
+
+void EUTelProcessorGBLFitCandidates::plotResidual(map< int, map<float, float > >  & SensorResidualError, bool &first_time){
+
+		std::map< int, map< float, float > >::iterator sensor_residual_Err_it;
+		for(sensor_residual_Err_it = SensorResidualError.begin(); sensor_residual_Err_it != SensorResidualError.end(); sensor_residual_Err_it++) {
+
+ std::stringstream sstm;
+        std::string residGblFitHistName;
+						ostringstream convert;
+						convert << sensor_residual_Err_it->first;
+            sstm << _histName::_residGblFitHistName << convert.str();
+            residGblFitHistName = "Residual3";   //sstm.str();
+			if(first_time){
+        int NBinX;
+        double MinX;
+        double MaxX;
+
+        std::string histTitle;
+
+            histTitle = "Residual of plane " + convert.str();
+        EUTelHistogramInfo    * histoInfo;
+        auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
+            histoInfo = histoMgr->getHistogramInfo(residGblFitHistName);
+						if(histoInfo){streamlog_out(DEBUG5) << "There is a histogram" <<std::endl;}
+            NBinX = (  histoInfo ) ? histoInfo->_xBin : 40;
+            MinX =  (  histoInfo ) ? histoInfo->_xMin : -0.2;
+            MaxX =  (  histoInfo ) ? histoInfo->_xMax : 0.2;
+            AIDA::IHistogram1D * residGblFit =
+                    marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Residual3", NBinX, MinX, MaxX);  // (residGblFitHistName, NBinX, MinX, MaxX);
+
+                residGblFit->setTitle(histTitle);
+                _aidaHistoMap1D.insert(std::make_pair(residGblFitHistName, residGblFit));
+					first_time=false;
+  			}//end of if the first loop
+				map<float, float> map = sensor_residual_Err_it->second;
+				if( !map.empty()){
+					float res = map.begin()->first;	
+					static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ "Residual3" ] ) -> fill(res);
+				}else{
+					streamlog_out(DEBUG5) << "The map is NULL" <<std::endl;
+				}
+				
+        }
+
+}
+
 
 void EUTelProcessorGBLFitCandidates::end() {}
 
@@ -243,6 +300,8 @@ void EUTelProcessorGBLFitCandidates::bookHistograms() {
         auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
         EUTelHistogramInfo    * histoInfo;
         bool                    isHistoManagerAvailable;
+
+////////////////////////////////////////////////////////This is for the residual
 											
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////Chi2 create plot.
 
