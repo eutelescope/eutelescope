@@ -9,7 +9,12 @@ using namespace eutelescope;
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 std::string EUTelProcessorGBLFitCandidates::_histName::_chi2CandidateHistName = "chi2HistName";
 std::string EUTelProcessorGBLFitCandidates::_histName::_fitsuccessHistName = "FitSuccessfulHistName";
-std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistName = "Residual";
+std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistName0 = "Residual0";
+std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistName1 = "Residual1";
+std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistName2 = "Residual2";
+std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistName3 = "Residual3";
+std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistName4 = "Residual4";
+std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistName5 = "Residual5";
 #endif // defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
 
@@ -210,38 +215,13 @@ void EUTelProcessorGBLFitCandidates::plotResidual(map< int, map<float, float > >
 		std::map< int, map< float, float > >::iterator sensor_residual_Err_it;
 		for(sensor_residual_Err_it = SensorResidualError.begin(); sensor_residual_Err_it != SensorResidualError.end(); sensor_residual_Err_it++) {
 
- std::stringstream sstm;
-        std::string residGblFitHistName;
-						ostringstream convert;
-						convert << sensor_residual_Err_it->first;
-            sstm << _histName::_residGblFitHistName << convert.str();
-            residGblFitHistName = "Residual3";   //sstm.str();
-			if(first_time){
-        int NBinX;
-        double MinX;
-        double MaxX;
-
-        std::string histTitle;
-
-            histTitle = "Residual of plane " + convert.str();
-        EUTelHistogramInfo    * histoInfo;
-        auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
-            histoInfo = histoMgr->getHistogramInfo(residGblFitHistName);
-						if(histoInfo){streamlog_out(DEBUG5) << "There is a histogram" <<std::endl;}
-            NBinX = (  histoInfo ) ? histoInfo->_xBin : 40;
-            MinX =  (  histoInfo ) ? histoInfo->_xMin : -0.2;
-            MaxX =  (  histoInfo ) ? histoInfo->_xMax : 0.2;
-            AIDA::IHistogram1D * residGblFit =
-                    marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Residual3", NBinX, MinX, MaxX);  // (residGblFitHistName, NBinX, MinX, MaxX);
-
-                residGblFit->setTitle(histTitle);
-                _aidaHistoMap1D.insert(std::make_pair(residGblFitHistName, residGblFit));
-					first_time=false;
-  			}//end of if the first loop
 				map<float, float> map = sensor_residual_Err_it->second;
 				if( !map.empty()){
 					float res = map.begin()->first;	
-					static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ "Residual3" ] ) -> fill(res);
+					if( sensor_residual_Err_it->first == 0){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistName0 ] ) -> fill(res);}
+				if( sensor_residual_Err_it->first == 3){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistName3 ] ) -> fill(res);}
+				if( sensor_residual_Err_it->first == 4){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistName4 ] ) -> fill(res);}
+				if( sensor_residual_Err_it->first == 5){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistName5 ] ) -> fill(res);}
 				}else{
 					streamlog_out(DEBUG5) << "The map is NULL" <<std::endl;
 				}
@@ -301,7 +281,34 @@ void EUTelProcessorGBLFitCandidates::bookHistograms() {
         EUTelHistogramInfo    * histoInfo;
         bool                    isHistoManagerAvailable;
 
-////////////////////////////////////////////////////////This is for the residual
+////////////////////////////////////////////////////////This is for the residual//Thi si a hack must fix so can accept any number of planes. Really should be a separate processor
+
+        int NBinX=40;
+        double MinX=-0.2;
+        double MaxX=0.2;
+
+
+        EUTelHistogramInfo    *    histoInfo0  = histoMgr->getHistogramInfo( _histName::_residGblFitHistName0);
+        EUTelHistogramInfo    *    histoInfo1  = histoMgr->getHistogramInfo( _histName::_residGblFitHistName1);
+        EUTelHistogramInfo    *    histoInfo2  = histoMgr->getHistogramInfo( _histName::_residGblFitHistName2);
+        EUTelHistogramInfo    *    histoInfo3  = histoMgr->getHistogramInfo( _histName::_residGblFitHistName3);
+        EUTelHistogramInfo    *    histoInfo4  = histoMgr->getHistogramInfo( _histName::_residGblFitHistName4);
+        EUTelHistogramInfo    *    histoInfo5  = histoMgr->getHistogramInfo( _histName::_residGblFitHistName5);
+ 
+        AIDA::IHistogram1D * residGblFit0 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistName0, NBinX, MinX, MaxX); 
+        AIDA::IHistogram1D * residGblFit1 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistName1, NBinX, MinX, MaxX); 
+        AIDA::IHistogram1D * residGblFit2 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistName2, NBinX, MinX, MaxX); 
+        AIDA::IHistogram1D * residGblFit3 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistName3, NBinX, MinX, MaxX); 
+        AIDA::IHistogram1D * residGblFit4 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistName4, NBinX, MinX, MaxX); 
+        AIDA::IHistogram1D * residGblFit5 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistName5, NBinX, MinX, MaxX); 
+
+
+              _aidaHistoMap1D.insert(std::make_pair(_histName::_residGblFitHistName0, residGblFit0));
+              _aidaHistoMap1D.insert(std::make_pair(_histName::_residGblFitHistName1, residGblFit1));
+              _aidaHistoMap1D.insert(std::make_pair(_histName::_residGblFitHistName2, residGblFit2));
+              _aidaHistoMap1D.insert(std::make_pair(_histName::_residGblFitHistName3, residGblFit3));
+              _aidaHistoMap1D.insert(std::make_pair(_histName::_residGblFitHistName4, residGblFit4));
+              _aidaHistoMap1D.insert(std::make_pair(_histName::_residGblFitHistName5, residGblFit5));
 											
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////Chi2 create plot.
 
