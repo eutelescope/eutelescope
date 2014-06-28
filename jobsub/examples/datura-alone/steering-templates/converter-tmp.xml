@@ -94,7 +94,7 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
   <parameter name="SensorIDVec" type="IntVec"> 0 1 2 3 4 5 </parameter>
  </processor>
 
- <processor name="HotPixelKiller" type="EUTelHotPixelKiller">
+ <processor name="HotPixelKiller" type="EUTelProcessorHotPixelMasker">
  
     <!--This is the name of the LCIO file name with the input/output hot pixel collection  (add .slcio)-->
     <parameter name="HotPixelDBFile" type="string" value="@DBPath@/run@HotPixelRunNumber@-hotpixel-db.slcio"/>
@@ -107,13 +107,6 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
     <!--
         INPUT / OUTPUT
     -->
-    <!--Input calibrated data not zero suppressed collection name-->
-    <parameter name="NZSDataCollectionName" type="string" lcioInType="TrackerData"> data </parameter>
-    <!--Noise (input) collection name-->
-    <parameter name="NoiseCollectionName" type="string" lcioInType="TrackerData"> m26_noise </parameter>
-    <!--Pixel status (input) collection name-->
-    <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData"> m26_status </parameter>
-    <!--Input of Zero Suppressed data-->
     <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> zsdata_m26 </parameter>
     <!--This flag is used to initialise simple data decoding and hot pixel finder (0-no, 1-yes)-->
     <parameter name="BuildHotPixelDatabase" type="int" value="1" />
