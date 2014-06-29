@@ -111,9 +111,14 @@ void EUTelMillepede::FillMilleParametersLabels() {
 
 		TVector3 incidenceVecLocal = state->getIncidenceVectorInLocalFrame();
 
+		streamlog_out( DEBUG0 ) << "Incidence vector in local frame"<<incidenceVecLocal[0] <<","<< incidenceVecLocal[1]<<","<<incidenceVecLocal[2] << std::endl;
+
 		float TxLocal =  incidenceVecLocal[0]/incidenceVecLocal[2];
 		float TyLocal =  incidenceVecLocal[1]/incidenceVecLocal[2];
 		const float* localpos = state->getReferencePoint();
+
+			streamlog_out( DEBUG0 ) << "This is px/pz, py/pz (local) "<< TxLocal <<","<< TyLocal << std::endl;
+			streamlog_out( DEBUG0 ) << "Local frame position "<< *localpos<<","<<*(localpos+1)<<","<<*(localpos+2) << std::endl;
 		
 
 		CreateAlignmentToMeasurementJacobian( *localpos,*(localpos+1), TxLocal, TyLocal);

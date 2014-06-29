@@ -113,6 +113,30 @@ namespace eutelescope {
         /** Alignment constants file name */
 				std::string _alignmentConstantLCIOFile;
 
+        /** Alignment X shift plane ids to be fixed */
+	lcio::IntVec _fixedAlignmentXShfitPlaneIds;
+        
+        /** Alignment Y shift plane ids to be fixed */
+	lcio::IntVec _fixedAlignmentYShfitPlaneIds;
+        
+        /** Alignment Z shift plane ids to be fixed */
+	lcio::IntVec _fixedAlignmentZShfitPlaneIds;
+        
+        /** Alignment X rotation plane ids to be fixed */
+	lcio::IntVec _fixedAlignmentXRotationPlaneIds;
+        
+        /** Alignment Y rotation plane ids to be fixed */
+	lcio::IntVec _fixedAlignmentYRotationPlaneIds;
+        
+        /** Alignment Z rotation plane ids to be fixed */
+	lcio::IntVec _fixedAlignmentZRotationPlaneIds;
+        
+        /** Planes ids to be excluded from refit */
+	lcio::IntVec _excludePlanesFromFit;
+
+        /** Alignment plane ids*/
+	lcio::IntVec _alignmentPlaneIds;
+
 
 };
 

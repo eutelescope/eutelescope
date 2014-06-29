@@ -219,6 +219,8 @@ void EUTelProcessorGBLFitCandidates::plotResidual(map< int, map<float, float > >
 				if( !map.empty()){
 					float res = map.begin()->first;	
 					if( sensor_residual_Err_it->first == 0){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistName0 ] ) -> fill(res);}
+if( sensor_residual_Err_it->first == 1){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistName1 ] ) -> fill(res);}
+if( sensor_residual_Err_it->first == 2){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistName2 ] ) -> fill(res);}
 				if( sensor_residual_Err_it->first == 3){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistName3 ] ) -> fill(res);}
 				if( sensor_residual_Err_it->first == 4){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistName4 ] ) -> fill(res);}
 				if( sensor_residual_Err_it->first == 5){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistName5 ] ) -> fill(res);}

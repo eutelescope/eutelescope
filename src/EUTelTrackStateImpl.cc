@@ -225,10 +225,13 @@ void EUTelTrackStateImpl::getTrackStateHitCov( double (&cov)[4]) {
      */
 TVector3 EUTelTrackStateImpl::getPfromCartesianParameters() const {
 	streamlog_out(DEBUG2) << "EUTelTrackStateImpl::getPfromCartesianParameters()--------------------------BEGIN" << std::endl;
+	streamlog_out(DEBUG2) << "Input parameters: tx,ty, beamq,invp "<<_tx <<","<<_ty<<","<<_beamQ<<","<<_invp<<std::endl;
 	const double p  = 1. / (_invp * _beamQ);
   const double px = p*_tx / sqrt( 1. + _tx*_tx + _ty*_ty );
   const double py = p*_ty / sqrt( 1. + _tx*_tx + _ty*_ty );
   const double pz = p    / sqrt( 1. + _tx*_tx + _ty*_ty );
+
+	streamlog_out(DEBUG2) << "Output parameters: px,py, pz "<<px <<","<<py<<","<<pz<<","<<std::endl;
         
   streamlog_out(DEBUG2) << "-------------------------------EUTelTrackStateImpl::getPfromCartesianParameters()-------------------------END" << std::endl;
         
@@ -362,8 +365,8 @@ TMatrix EUTelTrackStateImpl::getPropagationJacobianF( float dz ){
 
 TVector3 EUTelTrackStateImpl::getIncidenceVectorInLocalFrame(){
 	TVector3 pVec =	getPfromCartesianParameters();
-	TVector3 pVecUnit = pVec.Unit();
-
+	TVector3 pVecUnit = pVec;   //.Unit();
+    streamlog_out(DEBUG2) << "Momentum in global coordinates  Px,Py,Pz= " << pVec[0]<<","<<pVec[1]<<","<<pVec[2] << std::endl;
 	double globalVec[] = { pVecUnit[0],pVecUnit[1],pVecUnit[2] };
 	double localVec[3];
 
@@ -371,6 +374,7 @@ TVector3 EUTelTrackStateImpl::getIncidenceVectorInLocalFrame(){
 
 	TVector3 pVecUnitLocal;
 	pVecUnitLocal[0] = localVec[0]; 	pVecUnitLocal[1] = localVec[1]; 	pVecUnitLocal[2] = localVec[2]; 
+  streamlog_out(DEBUG2) << "Momentum in local coordinates  Px,Py,Pz= " << pVecUnitLocal[0]<<","<<pVecUnitLocal[1]<<","<<pVecUnitLocal[2]<< std::endl;
 
 	return pVecUnitLocal;
 }

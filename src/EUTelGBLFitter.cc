@@ -394,7 +394,9 @@ namespace eutelescope {
         //_hitId2GblPointLabel.clear();
         //_hitId2GblPointLabelMille.clear();
 
-				_PointToState.clear();
+				_points.clear();
+				_states.clear();
+				_counter_num_pointer = 1;
     }
 
 
@@ -496,14 +498,30 @@ namespace eutelescope {
     }
 
     void EUTelGBLFitter::pushBackPointandState( std::vector< gbl::GblPoint >* pointListTrack, gbl::GblPoint pointTrack, EUTelTrackStateImpl *state) {
+				pointTrack.setLabel(_counter_num_pointer);
         pointListTrack->push_back(pointTrack);
        
         streamlog_out(DEBUG0) << endl << "pushBackPoint: " << pointListTrack->size() <<  std::endl;
         // store point's GBL label for future reference
 			 	streamlog_out(DEBUG0) << endl << "This is the state and point " << state <<"," <<&(pointListTrack->back())<<"State hit: "<<state->getHit()<<std::endl;
-        _PointToState.insert(make_pair( &(pointListTrack->back()), *state)); 
+				//This does not work. Maps I hate!!!!!!!!!!!!
+        //_PointToState[*state] = &(pointListTrack->back()); 
+				//OutputMap(_PointToState);
+				_states.push_back(*state);
+				_points.push_back(pointTrack);
+				_counter_num_pointer++;
+				
 }
 
+void EUTelGBLFitter::OutputMap(std::map< EUTelTrackStateImpl, gbl::GblPoint*, compare_points > mapex){
+typedef std::map<EUTelTrackStateImpl,gbl::GblPoint*, compare_points >::const_iterator MapIterator;
+for (MapIterator iter = mapex.begin(); iter != mapex.end(); iter++)
+{
+    cout << "Key: " << &(iter->first) << "Values:  "<< iter->second << endl;
+   
+}
+
+}
 
     void EUTelGBLFitter::pushBackPointMille( std::vector< gbl::GblPoint >& pointListMille, const gbl::GblPoint& pointMille, int hitid ) {
         pointListMille.push_back(pointMille);
@@ -517,14 +535,15 @@ namespace eutelescope {
 
 
 void EUTelGBLFitter::UpdateTrackFromGBLTrajectory (gbl::GblTrajectory* traj, std::vector< gbl::GblPoint >* pointList){
-
-	int number_of_points = pointList->size();
-	int pointNum = 0;
-	for(pointNum=0; pointNum < number_of_points; ++pointNum){ //Must make sure that the label starts at ????????
-		EUTelTrackStateImpl  state = 	_PointToState[ &(pointList->at(pointNum)) ]; //get the state associated with this point
+int i=0;
+typedef std::vector<EUTelTrackStateImpl>::iterator MapIterator ;
+for (MapIterator iter = _states.begin(); iter != _states.end(); iter++)
+{
+			EUTelTrackStateImpl & state = *iter;
 
 			TVectorD corrections(5);
 			TMatrixDSym correctionsCov(5,5);
+			unsigned int pointNum = _points[i].getLabel();
       traj->getResults(pointNum, corrections, correctionsCov );
 
      	streamlog_out(DEBUG3) << endl << "State before we have added corrections: " << std::endl;
@@ -534,11 +553,17 @@ void EUTelGBLFitter::UpdateTrackFromGBLTrajectory (gbl::GblTrajectory* traj, std
 			state.setTx( state.getTx() + corrections[1]);
 			state.setTy( state.getTy() + corrections[2]);
 			state.setInvP( state.getInvP() + corrections[0]);
+
+			//This will wor for now but the when we tilt sensor no longer. Need to start troring z parameter. Since we need this to transfrom from global to local coordinates.
+			float ref[3];
+			ref[0] = state.getReferencePoint()[0]; ref[1] = state.getReferencePoint()[1];			ref[2] = 0;
+			state.setReferencePoint(ref);
+			
      	streamlog_out(DEBUG3) << endl << "State after we have added corrections: " << std::endl;
 			state.Print();
 
 		
-
+i++;
 	}//END OF LOOP OVER POINTS
 
 }
@@ -546,10 +571,11 @@ void EUTelGBLFitter::UpdateTrackFromGBLTrajectory (gbl::GblTrajectory* traj, std
 //This used after trackfit will fill a map between (sensor ID and residual), (sensor ID and residual error).
 void EUTelGBLFitter::getResidualOfTrackandHits(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint >* pointList, map< int, map< float, float > > &  SensorResidualError){
 
-	int number_of_points = pointList->size();
-	int pointNum = 0;
-	for(pointNum=0; pointNum < number_of_points; ++pointNum){ //Must make sure that the label starts at ????????
-		EUTelTrackStateImpl state = 	_PointToState[ &(pointList->at(pointNum)) ]; //get the state associated with this point
+int i=0;
+typedef std::vector<EUTelTrackStateImpl>::iterator MapIterator ;
+for (MapIterator iter = _states.begin(); iter != _states.end(); iter++)
+{
+			EUTelTrackStateImpl & state = *iter;
 		if(state.getHit() != NULL){
 			streamlog_out(DEBUG0) << endl << "There is a hit on the state. Hit pointer: "<< state.getHit()<<" Find update Residuals!" << std::endl;
   	unsigned int numData; //Not sure what this is used for??????
@@ -557,7 +583,7 @@ void EUTelGBLFitter::getResidualOfTrackandHits(gbl::GblTrajectory* traj, std::ve
 		TVectorD aMeasErrors(2);
 		TVectorD aResErrors(2,2);
 		TVectorD aDownWeights(2); 
-
+		unsigned int pointNum = _points[i].getLabel();
 		traj->getMeasResults(pointNum, numData, aResiduals, aMeasErrors, aResErrors, aDownWeights);
 		//Store the x and y component of residual. Need to change the naem of the container
 		map<float, float> res_err; //This is create on the stack but will pass thisa by value to the new map so it 
@@ -568,7 +594,7 @@ void EUTelGBLFitter::getResidualOfTrackandHits(gbl::GblTrajectory* traj, std::ve
 		else{
 			streamlog_out(DEBUG0) << "The hit is NULL. State pointer: "<<&state<< " Hit pointer " << state.getHit() <<" So will not get residual" << std::endl;
 		}
-
+i++;
 	}
 
 } 
@@ -1505,22 +1531,24 @@ void EUTelGBLFitter::FindHitIfThereIsOne(EUTelTrackImpl* EUtrack, EVENT::Tracker
 
 void EUTelGBLFitter::CreateAlignmentToMeasurementJacobian(std::vector< gbl::GblPoint >* pointList ){
 
-	int number_of_points = pointList->size();
-	int pointNum = 0;
-	for(pointNum=0; pointNum < number_of_points; ++pointNum){ //Must make sure that the label starts at ????????
-		EUTelTrackStateImpl state = 	_PointToState[ &(pointList->at(pointNum)) ]; //get the state associated with this point
+int i=0;
+typedef std::vector<EUTelTrackStateImpl>::iterator MapIterator ;
+for (MapIterator iter = _states.begin(); iter != _states.end(); iter++)
+{
+			EUTelTrackStateImpl & state = *iter;
 		
-		if(state.getHit() != NULL){
+	//	if(state.getHit() != NULL){
 		_MilleInterface->CreateAlignmentToMeasurementJacobian(&state); //Get the jacobain for that state and sensor
 		_MilleInterface->CreateGlobalLabels(&state);  //Gets the coorect labels for that sensor
 		TMatrixD * Jac = _MilleInterface->getAlignmentJacobian();
 		std::vector<int> labels =  _MilleInterface->getGlobalParameters();
 		
-
-		(pointList->at(pointNum)).addGlobals(labels, *Jac);
+			
+		_points[i].addGlobals(labels, *Jac);
 		
 
-		}//END OF IF STATEMENT IF THE THERE IS A STATE WITH HIT
+	//	}//END OF IF STATEMENT IF THE THERE IS A STATE WITH HIT.  REMOVE THIS FOR NOW
+i++;
 	}
 
 

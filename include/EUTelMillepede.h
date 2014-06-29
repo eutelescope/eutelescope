@@ -78,7 +78,8 @@ namespace eutelescope {
 		protected:
 				int alignmentMode;
 				Utility::AlignmentMode _alignmentMode =  Utility::noAlignment;
-				TMatrixD* _jacobian; 
+				TMatrixD _jac; //Remember you need to create the object before you point ot it
+				TMatrixD* _jacobian = &_jac; 
 				std::vector<int> _globalLabels;
 				std::map<int, int> _xShiftsMap;
 				std::map<int, int> _yShiftsMap;

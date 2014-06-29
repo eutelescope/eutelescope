@@ -4,7 +4,7 @@
 using namespace eutelescope;
 
 EUTelProcessorMilleAlign::EUTelProcessorMilleAlign() :
-Processor("EUTelProcessorGBLFitCandidates"),
+Processor("EUTelProcessorMilleAlign"),
 _milleBinaryFilename("mille.bin"),
 _milleSteeringFilename("pede-steer.txt"),
 _milleResultFileName("millepede.res"),
@@ -53,6 +53,20 @@ _alignmentMode(0){
             "6 - Alignment of XY shifts + rotations around X,Y and Z\n"
             "7 - Alignment of XYZ shifts + rotations around X,Y and Z\n",
             _alignmentMode, static_cast<int> (0));
+
+    registerOptionalParameter("AlignmentPlanes", "Ids of planes to be used in alignment", _alignmentPlaneIds, IntVec());
+
+    registerOptionalParameter("FixedAlignmentPlanesXshift", "Ids of planes for which X shift will be fixed during millepede call", _fixedAlignmentXShfitPlaneIds, IntVec());
+    
+    registerOptionalParameter("FixedAlignmentPlanesYshift", "Ids of planes for which Y shift will be fixed during millepede call", _fixedAlignmentYShfitPlaneIds, IntVec());
+    
+    registerOptionalParameter("FixedAlignmentPlanesZshift", "Ids of planes for which Z shift will be fixed during millepede call", _fixedAlignmentZShfitPlaneIds, IntVec());
+    
+    registerOptionalParameter("FixedAlignmentPlanesXrotation", "Ids of planes for which rotation around X will be fixed during millepede call", _fixedAlignmentXRotationPlaneIds, IntVec());
+    
+    registerOptionalParameter("FixedAlignmentPlanesYrotation", "Ids of planes for which rotation around Y will be fixed during millepede call", _fixedAlignmentYRotationPlaneIds, IntVec());
+    
+    registerOptionalParameter("FixedAlignmentPlanesZrotation", "Ids of planes for which rotation around Z will be fixed during millepede call", _fixedAlignmentZRotationPlaneIds, IntVec());
 
     registerOptionalParameter("PedeSteeringAdditionalCmds","FOR EXPERTS: List of commands that should be included in the pede steering file. Use '\\' to seperate options and introduce a line break.",_pedeSteerAddCmds, StringVec());
 
@@ -121,11 +135,6 @@ void EUTelProcessorMilleAlign::processRunHeader(LCRunHeader * run) {
   	}
     
     	_nProcessedRuns++;
-
-
-
-
-
 }
 
 void EUTelProcessorMilleAlign::processEvent(LCEvent * evt){
@@ -152,8 +161,6 @@ EUTelEventImpl * event = static_cast<EUTelEventImpl*> (evt); ///We change the cl
   	}
 	///////////////////////////////////////////////////////////////////////////////
 
-	//This is a good point to clear all things that need to be reset for each event. Why should gop here?
-        _trackFitter->Clear(); 
 
 
 	// this will only be entered if the collection is available
@@ -172,9 +179,9 @@ EUTelEventImpl * event = static_cast<EUTelEventImpl*> (evt); ///We change the cl
 			EUTelTrackImpl* EUtrack = new EUTelTrackImpl(*trackimpl);
       			streamlog_out(DEBUG1) << "Track " << iCol << " nhits " << trackimpl->getTrackerHits().size() << endl;
 
-			//_trackFitter->Clear(); //This is a good point to clear all things that need to be reset for each event. Why should gop here?
-			std::vector< gbl::GblPoint >* pointList;
-      _trackFitter->FillInformationToGBLPointObject(EUtrack, pointList);
+			///Create points but do not fit this time
+			std::vector< gbl::GblPoint > pointList;
+      _trackFitter->FillInformationToGBLPointObject(EUtrack, &pointList);
 
  			const gear::BField& B = geo::gGeometry().getMagneticFiled();
       const double Bmag = B.at( TVector3(0.,0.,0.) ).r2();
@@ -182,24 +189,17 @@ EUTelEventImpl * event = static_cast<EUTelEventImpl*> (evt); ///We change the cl
 
   		gbl::GblTrajectory* traj = 0;
       if ( Bmag < 1.E-6 ) {
-      	traj = new gbl::GblTrajectory( *pointList, false ); //Must make sure this is not a memory leak
+      	traj = new gbl::GblTrajectory( pointList, false ); //Must make sure this is not a memory leak
       } else {
-      	traj = new gbl::GblTrajectory( *pointList, true );
+      	traj = new gbl::GblTrajectory( pointList, true );
       }
-			double * chi2=0; 
-			int* ndf=0;
-			int ierr = 0;
-			_trackFitter->CreateTrajectoryandFit(pointList,traj, chi2,ndf, ierr);
+	streamlog_out ( DEBUG0 ) << "This is the trajectory we are just about to fit: " << endl;
+	  streamlog_message( DEBUG0, traj->printTrajectory(10);, std::endl; );
 			
-
-			//Update track and then state variables//////////////////////////////////////////////BEGIN
-			EUtrack->setChi2(*chi2);
-			EUtrack->setNdf(*ndf);
-			_trackFitter->UpdateTrackFromGBLTrajectory(traj, pointList); 
 			//////////////////////////////////////////////////////////////////////////////////////END
-       _trackFitter->CreateAlignmentToMeasurementJacobian(pointList ); //This is place in GBLFitter since millepede has not idea about states and points. Only GBLFitter know about that
+       _trackFitter->CreateAlignmentToMeasurementJacobian(&pointList ); //This is place in GBLFitter since millepede has not idea about states and points. Only GBLFitter know about that
 			
-			      
+			              _trackFitter->Clear();
 		}//END OF LOOP FOR ALL TRACKS IN AN EVENT
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//	outputLCIO(evt, EUtracks); // Important to note that EUtracks are still only the original states at input. The scatterers are used in the fit but are not included here.
@@ -207,7 +207,6 @@ EUTelEventImpl * event = static_cast<EUTelEventImpl*> (evt); ///We change the cl
 
 
 }
-
 void EUTelProcessorMilleAlign::check(LCEvent * evt){}
 
 void EUTelProcessorMilleAlign::end(){
