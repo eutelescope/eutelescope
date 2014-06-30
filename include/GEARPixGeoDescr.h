@@ -27,7 +27,7 @@ namespace geo {
 class GEARPixGeoDescr : public EUTelGenericPixGeoDescr {
 	
 	public:
-		GEARPixGeoDescr();
+		GEARPixGeoDescr( int xPixel, int yPixel, double xSize, double ySize, double zSize, double radLength);
 		~GEARPixGeoDescr();
 
 		void createRootDescr(char const *);

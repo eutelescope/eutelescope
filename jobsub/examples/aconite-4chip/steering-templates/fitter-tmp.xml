@@ -210,36 +210,70 @@
   <parameter name="refhitCollectionNames" type="StringVec" value="hitCollectionNames"/>
 </processor>
 
-
-  <processor name="DafFitter" type="EUTelDafFitter">
-    <parameter name="TelescopePlanes" type="IntVec"> 0 1 2 3 4 5  </parameter>
-    <parameter name="DutPlanes" type="IntVec"> 20 21 </parameter>
-    <parameter name="FitDuts" type="bool" value="false"/>
-    <parameter name="MakePlots" type="bool" value="true"/>
-    <parameter name="RequireNTelPlanes" type="float" value="6"/>
-    <parameter name="HitCollectionName" type="string" lcioInType="TrackerHit"> alignedHit </parameter>
-    <parameter name="TrackCollectionName" type="string" lcioInType="Track"> track </parameter>
-    <parameter name="AlignmentCollectionNames">prealign alignment   </parameter>
-    <parameter name="ReferenceCollection" type="string" > refhit32 </parameter>
-    <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
-    <parameter name="Ebeam" type="float" value="4"/>
-    <parameter name="TelResolutionX" type="float" value="4.0"/>
-    <parameter name="TelResolutionY" type="float" value="4.0"/>
-    <parameter name="DutResolutionX" type="float" value="14" />
-    <parameter name="DutResolutionY" type="float" value="70"/>
-    <parameter name="NominalDxdz" type="float" value="0.0"/>
-    <parameter name="NominalDydz" type="float" value="0.0"/>
-    <parameter name="FinderRadius" type="float" value="500" />
-    <parameter name="Chi2Cutoff" type="float" value="1000"/>
-    <parameter name="MaxChi2OverNdof" type="float" value="10"/>
-    <parameter name="NDutHits" type="int" value="0"/>
-  </processor>
-
+ <processor name="DafFitter" type="EUTelDafFitter">
+ <!--This processor preforms track reconstruction. The tracks are as final track fit for analysis.-->
+  <!--Should plots be made and filled?-->
+  <!--parameter name="AddToLCIO" type="bool">true </parameter-->
+  <!--Names of alignment collections, should be in same order as application-->
+  <parameter name="AlignmentCollectionNames" type="StringVec"> prealign alignment </parameter>
+  <!--DAF fitter: The cutoff value for a measurement to be included in the fit.-->
+  <parameter name="Chi2Cutoff" type="float"> 1000 </parameter>
+  <!--cluster collection name -->
+  <!--parameter name="ClusterCollection" type="string">cluster_m26 </parameter-->
+  <!--List of sensor IDs for the DUT planes. Used to make the decision on whether ro accept the track or not. These planes are not used in track finder, and not in the track fitter unless option 'useDutsInFit' is set.-->
+  <parameter name="DutPlanes" type="IntVec"> @DUTPlanes@ </parameter>
+  <!--Sigma of telescope resolution in the global X plane,-->
+  <parameter name="DutResolutionX" type="float"> 72.2 </parameter>
+  <!--Sigma of telescope resolution in the global Y plane,-->
+  <parameter name="DutResolutionY" type="float"> 14.4 </parameter>
+  <!--Beam energy [GeV], used to calculate amount of scatter-->
+  <parameter name="Ebeam" type="float"> @BeamEnergy@ </parameter>
+  <!--Track finding: The maximum allowed distance between to hits in the xy plane for inclusion in track candidate-->
+  <parameter name="FinderRadius" type="float"> 500 </parameter>
+  <!--Set this to true if you want DUTs to be included in the track fit-->
+  <parameter name="FitDuts" type="bool"> false </parameter>
+  <!--Names of input hit collections-->
+  <parameter name="HitCollectionName" type="StringVec"> alignedHit  </parameter>
+  <!--Should plots be made and filled?-->
+  <parameter name="MakePlots" type="bool"> true </parameter>
+  <!--Maximum allowed global chi2/ndof-->
+  <parameter name="MaxChi2OverNdof" type="float"> 50 </parameter>
+  <!--How many DUT hits do we need in order to accept track?-->
+  <!--parameter name="NDutHits" type="int">0 </parameter-->
+  <!--dx/dz assumed by track finder-->
+  <parameter name="NominalDxdz" type="float"> 0 </parameter>
+  <!--dy/dz assumed by track finder-->
+  <parameter name="NominalDydz" type="float"> 0 </parameter>
+  <!--Radiation lengths of planes.-->
+  <!--parameter name="RadiationLengths" type="FloatVec"> </parameter-->
+  <!--reference hit collection name -->
+  <parameter name="ReferenceCollection" type="string"> refhit32 </parameter>
+  <!--How many telescope planes do we require to be included in the fit?-->
+  <parameter name="RequireNTelPlanes" type="float"> 5 </parameter>
+  <!--Scale thickness of DUT planes-->
+  <!--parameter name="ScaleScattering" type="float">1 </parameter-->
+  <!--Sigma of telescope resolution in the global X plane,-->
+  <parameter name="TelResolutionX" type="float"> @TelResolution@ </parameter>
+  <!--Sigma of telescope resolution in the global Y plane,-->
+  <parameter name="TelResolutionY" type="float"> @TelResolution@ </parameter>
+  <!--List of sensor IDs for the telescope planes. These planes are used for the track finder, and track fitter.-->
+  <parameter name="TelescopePlanes" type="IntVec"> @TelPlanes@  </parameter>
+  <!--Filename for fitted tracks-->
+  <!--parameter name="TrackAsciiName" type="string">tracks.txt </parameter-->
+  <!--Collection name for fitted tracks-->
+  <parameter name="TrackCollectionName" type="string" lcioOutType="Track"> track </parameter>
+  <!--Do you want the reference hit collection to be used for coordinate transformations?-->
+  <!--parameter name="UseReferenceCollection" type="bool">true </parameter-->
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+  <!--List of hit collections. First one is INPUT collection, every subsequent corresponds to applying alignment collection-->
+  <parameter name="mccollections" type="StringVec"> </parameter>
+</processor>
 
  <processor name="MyEUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">
  <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
   <!--Print event number for every n-th event-->
-  <parameter name="EveryNEvents" type="int" value="2500"/>
+  <parameter name="EveryNEvents" type="int"> @MaxRecordNumber@ </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
   <!--print the event timestamp as read from LCIO-->

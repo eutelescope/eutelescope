@@ -94,38 +94,23 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
   <parameter name="SensorIDVec" type="IntVec"> 0 1 2 3 4 5 </parameter>
  </processor>
 
- <processor name="HotPixelKiller" type="EUTelHotPixelKiller">
+ <processor name="HotPixelKiller" type="EUTelProcessorHotPixelMasker">
  
     <!--This is the name of the LCIO file name with the input/output hot pixel collection  (add .slcio)-->
     <parameter name="HotPixelDBFile" type="string" value="@DBPath@/run@HotPixelRunNumber@-hotpixel-db.slcio"/>
     <!--write mode for output file:  WRITE_APPEND or WRITE_NEW, default: WRITE_APPEND-->
     <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
     <parameter name="HotPixelCollectionName" type="string" value="hotpixel_m26" />
-
-    <!--EUTelHotPixelKiller periodically check for pixel singing loud too often and remove them from the analysis-->
-
-    <!--
-        INPUT / OUTPUT
-    -->
-    <!--Input calibrated data not zero suppressed collection name-->
-    <parameter name="NZSDataCollectionName" type="string" lcioInType="TrackerData"> data </parameter>
-    <!--Noise (input) collection name-->
-    <parameter name="NoiseCollectionName" type="string" lcioInType="TrackerData"> m26_noise </parameter>
-    <!--Pixel status (input) collection name-->
-    <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData"> m26_status </parameter>
-    <!--Input of Zero Suppressed data-->
     <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> zsdata_m26 </parameter>
     <!--This flag is used to initialise simple data decoding and hot pixel finder (0-no, 1-yes)-->
     <parameter name="BuildHotPixelDatabase" type="int" value="1" />
-    
-
+    <!--The sensorID for the generated collection (one per detector)-->
+    <parameter name="SensorIDVec" type="IntVec"> 0 1 2 3 4 5</parameter>    
     <!--This float number [0,1] represents the maximum allowed firing frequency
         within the selected number of event per cycle-->
     <parameter name="MaxAllowedFiringFreq" type="float" value="0.50"/>
     <!--The number of events to be considered for each update cycle-->
-    <parameter name="NoOfEventPerCycle" type="int" value="9999"/>
-    <!--The total number of hot pixel cycle-->
-    <parameter name="TotalNoOfCycle" type="int" value="0"/>
+    <parameter name="NoOfEvents" type="int" value="9999"/>
  </processor>
 
  

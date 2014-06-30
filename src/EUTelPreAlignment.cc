@@ -132,8 +132,8 @@ void EUTelPreAlign::init () {
       _fixedZ = _siPlanesLayerLayout->getSensitivePositionZ(iPlane); 
     } else {
       //Get 
-      _preAligners.push_back( PreAligner( _siPlanesLayerLayout->getSensitivePitchX(iPlane),
-					  _siPlanesLayerLayout->getSensitivePitchY(iPlane),
+      _preAligners.push_back( PreAligner( _siPlanesLayerLayout->getSensitivePitchX(iPlane) /50.,
+					  _siPlanesLayerLayout->getSensitivePitchY(iPlane) /50.,
 					  _siPlanesLayerLayout->getSensitivePositionZ(iPlane),
 					  _siPlanesLayerLayout->getID(iPlane)) );
     }

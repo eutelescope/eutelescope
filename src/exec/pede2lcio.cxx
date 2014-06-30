@@ -16,10 +16,11 @@
 #include <IMPL/LCCollectionVec.h>
 
 // GEAR
-#include "gear/GearMgr.h"
-#include "gear/gearxml/GearXML.h"
 #include "gearimpl/Util.h"
-#include "gear/SiPlanesLayerLayout.h"
+#include "gearxml/GearXML.h"
+#include "gear/GearMgr.h"
+#include "gear/GEAR.h"
+
 
 // system includes
 #include <iostream>
@@ -54,7 +55,6 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
     streamlog_out(MESSAGE4) << "GEAR file " << newGearfileName << " will be generated." << std::endl;
     
     gear::GearXML gearXML( oldGearfileName ) ;
-
     gear::GearMgr* gearManager = gearXML.createGearMgr() ;
     
     if (!gearManager) {
@@ -66,6 +66,7 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
     // Getting access to geometry description
     std::string name("test.root");
     geo::gGeometry( gearManager ).initializeTGeoDescription(name,false);
+
 
 
     // update positions and orientations of the planes
@@ -155,9 +156,9 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
             geo::gGeometry().setPlaneXPosition(sensorID,  xplane  +  delta_r0.X() ) ;
             geo::gGeometry().setPlaneYPosition(sensorID,  yplane  +  delta_r0.Y() ) ;
             geo::gGeometry().setPlaneZPosition(sensorID,  zplane  +  delta_r0.Z() ) ;
-            geo::gGeometry().setPlaneXRotation(sensorID, (xrot  - dalpha)  ) ;
-            geo::gGeometry().setPlaneYRotation(sensorID, (yrot  - dbeta )  ) ;
-            geo::gGeometry().setPlaneZRotation(sensorID, (zrot  - dgamma)  ) ;
+            geo::gGeometry().setPlaneXRotationRadians(sensorID, (xrot  - dalpha)  ) ;
+            geo::gGeometry().setPlaneYRotationRadians(sensorID, (yrot  - dbeta )  ) ;
+            geo::gGeometry().setPlaneZRotationRadians(sensorID, (zrot  - dgamma)  ) ;
 //#endif
 //#endif       
             streamlog_out(MESSAGE4) << setw(10) << "align  " << setw( 8) << " " ;
@@ -177,9 +178,9 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
             xplane = geo::gGeometry().siPlaneXPosition(sensorID) ; 
             yplane = geo::gGeometry().siPlaneYPosition(sensorID) ; 
             zplane = geo::gGeometry().siPlaneZPosition(sensorID) ;
- 	    xrot   = geo::gGeometry().siPlaneXRotation(sensorID) ;
- 	    yrot   = geo::gGeometry().siPlaneYRotation(sensorID) ;
-	    zrot   = geo::gGeometry().siPlaneZRotation(sensorID) ;
+ 	    xrot   = geo::gGeometry().siPlaneXRotationRadians(sensorID) ;
+ 	    yrot   = geo::gGeometry().siPlaneYRotationRadians(sensorID) ;
+	    zrot   = geo::gGeometry().siPlaneZRotationRadians(sensorID) ;
 
             streamlog_out(MESSAGE4) <<
                                  setw(10) << "new : " << 
@@ -195,7 +196,11 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
         }
     }
 
-    
+  
+    geo::gGeometry().updateGearManager();
+  
+    gear::GearXML::createXMLFile( gearManager, newGearfileName ) ;
+
     streamlog_out(MESSAGE4) << "Not implemented" << std::endl;
     
     return;
@@ -204,13 +209,10 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
 int main( int argc, char ** argv ) {
 
   streamlog::out.init( std::cout , "pede2lcio output stream") ;
-//  streamlog::out.addLevelName<streamlog::MESSAGE0>() ;
 
-    streamlog::logscope scope(streamlog::out) ;
-  
-//    scope.setName( "Subroutine") ;
-    scope.setLevel<streamlog::MESSAGE3>() ;
-//    scope.setLevel( "MESSAGE3" )  ;
+  streamlog::logscope scope(streamlog::out) ;
+
+  scope.setLevel<streamlog::MESSAGE3>() ;
 
 
 
@@ -256,6 +258,7 @@ int main( int argc, char ** argv ) {
 
   // check GEAR flag
   string oldGearFileName, newGearFileName;
+
   bool wantGEAR = false;
   if ( option->getFlag('g') || option->getFlag( "gear" ) ) {
       
@@ -267,11 +270,11 @@ int main( int argc, char ** argv ) {
          oldGearFileName.append( ".xml" );
     }
     newGearFileName = option->getArgv(3);
-    if ( lcioFileName.rfind( ".xml", string::npos ) == string::npos ) {
-         lcioFileName.append( ".xml" );
+    if ( newGearFileName.rfind( ".xml", string::npos ) == string::npos ) {
+         newGearFileName.append( ".xml" );
     }
     
-    streamlog_out(MESSAGE4) << oldGearFileName << " " << lcioFileName << std::endl;
+    streamlog_out(MESSAGE4) << " oldGear: " << oldGearFileName << " newGear: " << newGearFileName << std::endl;
   }
   
   streamlog_out(MESSAGE4) << "Converting " << pedeFileName << " in " << lcioFileName << std::endl;

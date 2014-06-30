@@ -63,6 +63,10 @@ namespace eutelescope {
 
     namespace geo {
 
+        // Iterate over registered GEAR objects and construct their TGeo representation
+        const Double_t PI     = 3.141592653589793;
+        const Double_t DEG    = 180./PI; 
+        const Double_t RADIAN = PI/180.; 
 
         class EUTelGeometryTelescopeGeoDescription {
             
@@ -76,12 +80,22 @@ namespace eutelescope {
             /** need only for pede2lcio*/
             gear::GearMgr* _gearManager;
 
+
+            /** */ 
+            bool _siPlanesDefined;
+
+            /** */ 
+            bool _telPlanesDefined;
+
         public:
             /** Retrieves the instanstance of geometry.
              * Performs lazy intialization if necessary.
              * @TODO this routine has to be considered to be constant
              */
             static EUTelGeometryTelescopeGeoDescription& getInstance( gear::GearMgr* _g );
+  
+            /** */
+            void updateGearManager();  
  
             /** */
             unsigned counter() { return _counter++; }
@@ -121,6 +135,27 @@ namespace eutelescope {
             /** set Z rotation  */
             void setPlaneZRotation(int sensorID, double value);
  
+            /** set X rotation  */
+            void setPlaneXRotationRadians(int sensorID, double value /* in Radians */);
+ 
+            /** set Y rotation  */
+            void setPlaneYRotationRadians(int sensorID, double value /* in Radians */);
+ 
+            /** set Z rotation  */
+            void setPlaneZRotationRadians(int sensorID, double value /* in Radians */);
+
+            /** */ 
+            float siPlaneRotation1(int sensorID);
+
+            /** */ 
+            float siPlaneRotation2(int sensorID);
+
+            /** */ 
+            float siPlaneRotation3(int sensorID);
+
+            /** */ 
+            float siPlaneRotation4(int sensorID);
+ 
             /** X coordinate of center of sensor 
              * with given ID in global coordinate frame */
             double siPlaneXPosition( int );
@@ -141,7 +176,17 @@ namespace eutelescope {
             
             /** Rotation around Z axis of global coordinate frame */
             double siPlaneZRotation( int );
+
+             /** Rotation around X axis of the global coordinate frame */
+            double siPlaneXRotationRadians( int );
             
+            /** Rotation around Y axis of global coordinate frame */
+            double siPlaneYRotationRadians( int );
+            
+            /** Rotation around Z axis of global coordinate frame */
+            double siPlaneZRotationRadians( int );
+
+          
             /** Sensor X side size */
             double siPlaneXSize( int );
             
@@ -197,12 +242,20 @@ namespace eutelescope {
 
         private:
             /** reading initial info from gear: part of contructor */
-	    void readSiPlanesParameters();
+	    void readSiPlanesLayout();
+
+            /** reading initial info from gear: part of contructor */
+	    void updateSiPlanesLayout();
+
 
             /** reading initial info from gear: part of contructor
               * new GEAR from branch/TelPlanes
               */
-	    void readTrackerPlanesParameters(); 
+	    void readTrackerPlanesLayout(); 
+           
+            /**  */
+	    void updateTrackerPlanesLayout(); 
+
 
             /** housing for the above two 
               */    
@@ -343,8 +396,20 @@ namespace eutelescope {
             
             /** Rotation around Z axis of global coordinate frame [rad]*/
             EVENT::DoubleVec _siPlaneZRotation;
-            
-            /** Sensor X side length [mm]*/
+           
+            /** deprecated rotaion natrix elements */
+            EVENT::DoubleVec _siPlaneRotation1; 
+
+            /** deprecated rotaion natrix elements */
+            EVENT::DoubleVec _siPlaneRotation2; 
+
+            /** deprecated rotaion natrix elements */
+            EVENT::DoubleVec _siPlaneRotation3; 
+
+            /** deprecated rotaion natrix elements */
+            EVENT::DoubleVec _siPlaneRotation4; 
+
+	    /** Sensor X side length [mm]*/
             EVENT::DoubleVec _siPlaneXSize;
             
             /** Sensor Y side length [mm]*/

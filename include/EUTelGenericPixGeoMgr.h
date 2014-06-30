@@ -52,6 +52,8 @@ public:
 	 */
 	void addPlane(int planeID, std::string geoName, std::string planeVolume);
 
+	void addCastedPlane(int planeID, int xPixel, int yPixel, double xSize, double ySize, double zSize, double radLength, std::string planeVolume);
+
 	/** Method to get the EUTelGenericPixGeoDescr of a plane. 
 	 * 
 	 *  @param planeID The plane of which the EUTelGenericPixGeoDescr
@@ -64,6 +66,9 @@ protected:
 	/** Map of the geo library name and the actual pointer to the instance of it. */
 	std::map<std::string, EUTelGenericPixGeoDescr*> _pixelDescriptions;	
 
+	/** Map of the casted geoemtry and the actual pointer to the instance of it. */
+	std::map<std::string, EUTelGenericPixGeoDescr*> _castedDescriptions;	
+	
 	/** Map of the planeID and corresponding EUTelGenericPixGeoDescr* */
 	std::map<int, EUTelGenericPixGeoDescr* > _geoDescriptions;
 
