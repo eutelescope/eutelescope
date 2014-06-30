@@ -95,6 +95,16 @@ void EUTelProcessorMilleAlign::init() {
 	// Initialize GBL fitter
 	EUTelGBLFitter* Fitter = new EUTelGBLFitter("GBLFitter");
 	_Mille  = new EUTelMillepede(_alignmentMode);
+	_Mille->setSteeringFileName(_milleSteeringFilename);
+	_Mille->setXShiftFixed(_fixedAlignmentXRotationPlaneIds);
+	_Mille->setYShiftFixed(_fixedAlignmentYRotationPlaneIds);
+	_Mille->setZShiftFixed(_fixedAlignmentZRotationPlaneIds);
+	_Mille->setXRotationsFixed(_fixedAlignmentXRotationPlaneIds);
+	_Mille->setYRotationsFixed(_fixedAlignmentYRotationPlaneIds);
+	_Mille->setZRotationsFixed(_fixedAlignmentZRotationPlaneIds);
+	_Mille->setBinaryFileName(_milleBinaryFilename);
+	_Mille->setResultsFileName(_milleResultFileName);
+//	_Mille->setPlanesExclude(
   Fitter->SetBeamCharge(_beamQ);
   Fitter->SetBeamEnergy(_eBeam);
 	Fitter->setMEstimatorType(_mEstimatorType);
@@ -182,7 +192,21 @@ EUTelEventImpl * event = static_cast<EUTelEventImpl*> (evt); ///We change the cl
 			///Create points but do not fit this time
 			std::vector< gbl::GblPoint > pointList;
       _trackFitter->FillInformationToGBLPointObject(EUtrack, &pointList);
+       _trackFitter->CreateAlignmentToMeasurementJacobian(pointList ); //This is place in GBLFitter since millepede has not idea about states and points. Only GBLFitter know about that
 
+		//Check that we have created the alignment jacobian and global parameters correctly
+		typedef std::vector<gbl::GblPoint>::iterator IteratorType;
+		for(IteratorType point = pointList.begin(); point != pointList.end(); point++){
+			streamlog_out(DEBUG1) << "Global derivative for point: " << point->getLabel()<<std::endl;
+			streamlog_message( DEBUG0, point->getGlobalDerivatives().Print();, std::endl; );
+			std::vector<int> label = point->getGlobalLabels();
+			streamlog_out(DEBUG1) << "Global labels for point: " << point->getLabel() << "Global label size "<<label.size() <<std::endl;
+			for( std::vector<int>::const_iterator i = label.begin(); i != label.end(); ++i){
+    		std::cout << *i << ' ';
+			}
+
+		}
+		
  			const gear::BField& B = geo::gGeometry().getMagneticFiled();
       const double Bmag = B.at( TVector3(0.,0.,0.) ).r2();
 
@@ -193,11 +217,16 @@ EUTelEventImpl * event = static_cast<EUTelEventImpl*> (evt); ///We change the cl
       } else {
       	traj = new gbl::GblTrajectory( pointList, true );
       }
+
+double chi2, loss;
+int ndf;
+
+traj->fit(chi2, ndf, loss, _mEstimatorType );
 	streamlog_out ( DEBUG0 ) << "This is the trajectory we are just about to fit: " << endl;
 	  streamlog_message( DEBUG0, traj->printTrajectory(10);, std::endl; );
 			
-			//////////////////////////////////////////////////////////////////////////////////////END
-       _trackFitter->CreateAlignmentToMeasurementJacobian(&pointList ); //This is place in GBLFitter since millepede has not idea about states and points. Only GBLFitter know about that
+		traj->milleOut(*(_Mille->_milleGBL));
+
 			
 			              _trackFitter->Clear();
 		}//END OF LOOP FOR ALL TRACKS IN AN EVENT

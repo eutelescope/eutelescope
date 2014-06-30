@@ -1529,7 +1529,7 @@ void EUTelGBLFitter::FindHitIfThereIsOne(EUTelTrackImpl* EUtrack, EVENT::Tracker
 
                   		 
 
-void EUTelGBLFitter::CreateAlignmentToMeasurementJacobian(std::vector< gbl::GblPoint >* pointList ){
+void EUTelGBLFitter::CreateAlignmentToMeasurementJacobian(std::vector< gbl::GblPoint >& pointList ){
 
 int i=0;
 typedef std::vector<EUTelTrackStateImpl>::iterator MapIterator ;
@@ -1537,17 +1537,21 @@ for (MapIterator iter = _states.begin(); iter != _states.end(); iter++)
 {
 			EUTelTrackStateImpl & state = *iter;
 		
-	//	if(state.getHit() != NULL){
+		if(state.getHit() != NULL){
 		_MilleInterface->CreateAlignmentToMeasurementJacobian(&state); //Get the jacobain for that state and sensor
 		_MilleInterface->CreateGlobalLabels(&state);  //Gets the coorect labels for that sensor
-		TMatrixD * Jac = _MilleInterface->getAlignmentJacobian();
+		TMatrixD &  Jac = _MilleInterface->getAlignmentJacobian();
 		std::vector<int> labels =  _MilleInterface->getGlobalParameters();
 		
 			
-		_points[i].addGlobals(labels, *Jac);
+		pointList[i].addGlobals(labels, Jac);
+
 		
 
-	//	}//END OF IF STATEMENT IF THE THERE IS A STATE WITH HIT.  REMOVE THIS FOR NOW
+		}//END OF IF STATEMENT IF THE THERE IS A STATE WITH HIT.  REMOVE THIS FOR NOW
+		else{		
+			streamlog_out(DEBUG0)<<"There was no hit so will not create jacobian and global variables for state"<<std::endl;
+		}
 i++;
 	}
 

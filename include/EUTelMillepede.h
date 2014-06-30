@@ -25,6 +25,9 @@
 #include <algorithm>
 #include <cstdio>
 
+#include "include/MilleBinary.h"
+#include "EUTelExceptions.h"
+
 namespace eutelescope {
 
     class EUTelMillepede {
@@ -72,15 +75,19 @@ namespace eutelescope {
 
 
 				///////////////////////////////////////////get stuff
-				TMatrixD* getAlignmentJacobian() const { return _jacobian; }
+				TMatrixD& getAlignmentJacobian()  { return _jacobian; }
 				std::vector<int> getGlobalParameters() { return _globalLabels; }
+
+				gbl::MilleBinary * _milleGBL = NULL;
+
+
+void CreateBinary();
 
 		protected:
 				int alignmentMode;
 				Utility::AlignmentMode _alignmentMode =  Utility::noAlignment;
-				TMatrixD _jac; //Remember you need to create the object before you point ot it
-				TMatrixD* _jacobian = &_jac; 
-				std::vector<int> _globalLabels;
+				TMatrixD _jacobian =TMatrixD(5,5); //Remember you need to create the object before you point ot it
+				std::vector<int> _globalLabels =std::vector<int>(5);
 				std::map<int, int> _xShiftsMap;
 				std::map<int, int> _yShiftsMap;
 				std::map<int, int> _zShiftsMap;

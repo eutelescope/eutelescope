@@ -18,6 +18,7 @@ namespace eutelescope {
 	EUTelMillepede::EUTelMillepede(int alignmentMode){
 	SetAlignmentMode(alignmentMode);
 	FillMilleParametersLabels();
+	CreateBinary();
 	}
 
 	EUTelMillepede::~EUTelMillepede(){}
@@ -31,43 +32,43 @@ namespace eutelescope {
 		} else if (alignmentMode==1) {
     	_alignmentMode = Utility::XYShift;
 			_globalLabels.resize(2);
-    	_jacobian->ResizeTo(2, 2);
+    	_jacobian.ResizeTo(2, 2);
     } else if (alignmentMode==2) {
     	_alignmentMode = Utility::XYShiftXYRot;
   		_globalLabels.resize(3);
-    	_jacobian->ResizeTo(2, 3);
+    	_jacobian.ResizeTo(2, 3);
  
     } else if (alignmentMode==3) {
     	_alignmentMode = Utility::XYZShiftXYRot;
   	_globalLabels.resize(4);
-    _jacobian->ResizeTo(2, 4);
+    _jacobian.ResizeTo(2, 4);
 
    	} else if (alignmentMode==4) {
     	_alignmentMode = Utility::XYShiftYZRotXYRot;
 		_globalLabels.resize(4);
-		_jacobian->ResizeTo(2, 4);
+		_jacobian.ResizeTo(2, 4);
 
    	} else if (alignmentMode==5) {
 			_alignmentMode = Utility::XYShiftXZRotXYRot;
 		_globalLabels.resize(4);
-		_jacobian->ResizeTo(2, 4);
+		_jacobian.ResizeTo(2, 4);
 
     } else if (alignmentMode==6) {
     	_alignmentMode = Utility::XYShiftXZRotYZRotXYRot;
 		_globalLabels.resize(5);
-		_jacobian->ResizeTo(2, 5);
+		_jacobian.ResizeTo(2, 5);
 
     } else if (alignmentMode==7) {
     	_alignmentMode = Utility::XYZShiftXZRotYZRotXYRot;
 		_globalLabels.resize(6);
- 		_jacobian->ResizeTo(2, 6);
+ 		_jacobian.ResizeTo(2, 6);
 
     }else {
     	streamlog_out(WARNING3) << "Alignment mode was not recognized:" << _alignmentMode << std::endl;
       streamlog_out(WARNING3) << "Alignment will not be performed" << std::endl;
       alignmentMode = Utility::noAlignment;
     }
-  	_jacobian->Zero();
+  	_jacobian.Zero();
 		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////END	
 }
 
@@ -133,7 +134,9 @@ void EUTelMillepede::FillMilleParametersLabels() {
 																	// 	                                           (this is clockwise rotations in the x direction  )
 		
 int EUTelMillepede::CreateAlignmentToMeasurementJacobian( float x,float y, float slopeXvsZ, float slopeYvsZ){
-	_jacobian->Zero();			
+	_jacobian.Zero();
+streamlog_out(DEBUG0) << "This is the empty Alignment Jacobian" << std::endl;
+	        streamlog_message( DEBUG0, _jacobian.Print();, std::endl; );			
 		
 	//////////////////////////////////////Moving the sensor in x and y. Obviously if the sensor move right the hit will appear to move left. Always create this!!!! BEGIN
 	_jacobian[0][0] = -1.0; // dxh/dxs      dxh => change in hit position         dxs => Change in sensor position
@@ -205,7 +208,7 @@ void EUTelMillepede::CreateGlobalLabels(EUTelTrackStateImpl* state){
 }
 
 void EUTelMillepede::CreateGlobalLabels( int iPlane){
-	_globalLabels.clear();
+	//_globalLabels.clear(); cant do this since it will resize the vector
 
 	_globalLabels[0] = _xShiftsMap[iPlane]; // dx
 	_globalLabels[1] = _yShiftsMap[iPlane]; // dy
@@ -250,6 +253,10 @@ void EUTelMillepede::CreateGlobalLabels( int iPlane){
 		_globalLabels[4] = _xRotationsMap[iPlane]; // drot x
   }
 
+			streamlog_out(DEBUG1) << "Output of global labels for plane "<<iPlane<<" The size of labels "<<_globalLabels.size() <<std::endl;
+			for( std::vector<int>::const_iterator i = _globalLabels.begin(); i != _globalLabels.end(); ++i){
+    		std::cout << *i << ' ';
+			}
 
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////All these functions are used after binary file creation.
@@ -320,7 +327,7 @@ streamlog_out(DEBUG2) << "EUTelMillepede::writeMilleSteeringFile----------------
 		return -999;
   }
 	//////////////////////////////////////////////////////////////////////////////////////////////////END 
-
+		streamlog_out(DEBUG0) << "Millepede binary:" << _milleBinaryFilename << endl;
 	
 	steerFile << "Cfiles" << endl;
   steerFile << _milleBinaryFilename << endl;
@@ -349,7 +356,7 @@ streamlog_out(DEBUG2) << "EUTelMillepede::writeMilleSteeringFile----------------
 ////////////////////////////////////////////////////////////////////////////////////////////////////END
 
   // if plane not excluded
-  if ( !isPlaneExcluded ) {
+//  if ( !isPlaneExcluded ) {
 ///////////////////////////////////////////////////////////////////////////////////////////Now fill string that will go into steering depending on if fixed or not BEGIN
 		const string initUncertaintyXShift = (isFixedXShift) ? "-1." : "0.01";
     const string initUncertaintyYShift = (isFixedYShift) ? "-1." : "0.01";
@@ -436,7 +443,7 @@ const double initXshift =0; const double initYshift = 0;
 
             counter++;
 
-        } // end if plane not excluded
+     //   } // end if plane not excluded
 
     } // end loop over all planes
 
@@ -597,8 +604,24 @@ bool EUTelMillepede::parseMilleOutput(std::string alignmentConstantLCIOFile, std
 
 }
 
+void EUTelMillepede::CreateBinary(){
+        streamlog_out(DEBUG0) << "Initialising Mille..." << std::endl;
+				streamlog_out(DEBUG0) << "Millepede binary:" << _milleBinaryFilename << endl;
+
+        const unsigned int reserveSize = 80000;
+				std::string string = "millepede.bin"; //need to fix this. Not reading it correctly
+        _milleGBL = new gbl::MilleBinary(string, reserveSize);
+
+        if (_milleGBL == NULL) {
+            streamlog_out(ERROR) << "Can't allocate an instance of mMilleBinary. Stopping ..." << std::endl;
+            throw UnknownDataTypeException("MilleBinary was not created");
+        }
+}
+
 
 } // namespace eutelescope
+
+
 
 
 

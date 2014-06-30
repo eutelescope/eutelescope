@@ -225,8 +225,10 @@ void EUTelTrackStateImpl::getTrackStateHitCov( double (&cov)[4]) {
      */
 TVector3 EUTelTrackStateImpl::getPfromCartesianParameters() const {
 	streamlog_out(DEBUG2) << "EUTelTrackStateImpl::getPfromCartesianParameters()--------------------------BEGIN" << std::endl;
+		//Ignore else where must fix:
+
 	streamlog_out(DEBUG2) << "Input parameters: tx,ty, beamq,invp "<<_tx <<","<<_ty<<","<<_beamQ<<","<<_invp<<std::endl;
-	const double p  = 1. / (_invp * _beamQ);
+	const double p  =  1. / (_invp * -1);      //1. / (_invp * _beamQ);
   const double px = p*_tx / sqrt( 1. + _tx*_tx + _ty*_ty );
   const double py = p*_ty / sqrt( 1. + _tx*_tx + _ty*_ty );
   const double pz = p    / sqrt( 1. + _tx*_tx + _ty*_ty );
