@@ -3,12 +3,10 @@
  *  (2014 DESY)
  *
  *  email:thomas.eichhorn@cern.ch
- *
- *  modified by: Eda Yildirim eda.yildirim@cern.ch
  */
 
-#ifndef ALIBAVACONSTANTCOMMONMODEPROCESSOR_H
-#define ALIBAVACONSTANTCOMMONMODEPROCESSOR_H 1
+#ifndef ALIBAVAMERGER_H
+#define ALIBAVAMERGER_H 1
 
 // alibava includes ".h"
 #include "AlibavaBaseProcessor.h"
@@ -18,7 +16,7 @@
 
 // lcio includes <.h>
 #include <IMPL/LCRunHeaderImpl.h>
-#include <IMPL/TrackerDataImpl.h>
+#include <IMPL/TrackerRawDataImpl.h>
 
 // ROOT includes <>
 #include "TObject.h"
@@ -27,29 +25,30 @@
 #include <string>
 #include <list>
 
+
 namespace alibava {
 	
-	//! Common mode processor for Marlin.
+	//! Alibava merge processor for Marlin.
 
 	
-	class AlibavaConstantCommonModeProcessor:public alibava::AlibavaBaseProcessor   {
+	class AlibavaMerger:public alibava::AlibavaBaseProcessor   {
 		
 	public:
 		
 		
-		//! Returns a new instance of AlibavaConstantCommonModeProcessor
+		//! Returns a new instance of AlibavaMerger
 		/*! This method returns an new instance of the this processor.  It
 		 *  is called by Marlin execution framework and it shouldn't be
 		 *  called/used by the final user.
 		 *
-		 *  @return a new AlibavaConstantCommonModeProcessor.
+		 *  @return a new AlibavaMerger.
 		 */
 		virtual Processor * newProcessor () {
-			return new AlibavaConstantCommonModeProcessor;
+			return new AlibavaMerger;
 		}
 		
 		//! Default constructor
-		AlibavaConstantCommonModeProcessor ();
+		AlibavaMerger ();
 		
 		//! Called at the job beginning.
 		/*! This is executed only once in the whole execution. It prints
@@ -66,18 +65,18 @@ namespace alibava {
 		 *  header is dynamically re-casted to a EUTelRunHeaderImpl and
 		 *  then important things like the number of detectors and the
 		 *  pixel detector boundaries are dumped from the file. After that
-		 *  the EUTelCommonModeProcess::bookHistos() is called.
+		 *  the EUTelPedestalNoiseProcess::bookHistos() is called.
 		 *
 		 *  @param run the LCRunHeader of the this current run
 		 */
 		virtual void processRunHeader (LCRunHeader * run);
 		
 		//! Called every event
-		/*! Since the behavior of the CommonMode processor is different
+		/*! Since the behavior of the PedestalNoise processor is different
 		 *  if this is the first or one of the following loop, this method
 		 *  is just calling
-		 *  AlibavaConstantCommonModeProcessor::firstLoop(LCEvent*) or
-		 *  AlibavaConstantCommonModeProcessor::otherLoop(LCEvent*)
+		 *  AlibavaMerger::firstLoop(LCEvent*) or
+		 *  AlibavaMerger::otherLoop(LCEvent*)
 		 *
 		 *  @param evt the current LCEvent event as passed by the
 		 *  ProcessMgr
@@ -101,9 +100,9 @@ namespace alibava {
 		/*! This method is used to prepare the needed directory structure
 		 *  within the current ITree folder and books all required
 		 *  histograms. Histogram pointers are stored into
-		 *  EUTelCommonModeProcess::_rootObjectMap so that they can be
+		 *  EUTelPedestalNoiseProcess::_rootObjectMap so that they can be
 		 *  recalled and filled from anywhere in the code.  Apart from the
-		 *  histograms listed in AlibavaConstantCommonModeProcessor::fillHistos()
+		 *  histograms listed in AlibavaMerger::fillHistos()
 		 *  there is also a common mode histo described here below:
 		 *
 		 *  \li commonModeHisto: 1D histogram to store the calculated
@@ -113,7 +112,7 @@ namespace alibava {
 		 *  This histo is not filled with the other because it needs to be
 		 *  updated every event.
 		 *
-		 *  @see AlibavaConstantCommonModeProcessor::fillHistos() for the todos
+		 *  @see AlibavaMerger::fillHistos() for the todos
 		 */
 		void bookHistos();
 		
@@ -121,7 +120,7 @@ namespace alibava {
 		/*! This method is used to fill in histograms for each channel. 
 		 *
 		 */
-		void fillHistos(TrackerDataImpl * trkdata, int event);
+		void fillHistos();
 		
 
 		//! Called after data processing.
@@ -134,81 +133,63 @@ namespace alibava {
 		 *  just have to crosscheck if _iLoop is equal to noOfCMIterations.
 		 */
 		virtual void end();
-				
-		//! Common mode collection name.
-		/*! See _commonmodeCollectionName for the detailed description
-		 */
-		std::string _commonmodeCollectionName;
-		
-		//! Common mode error collection name.
-		/*! See _commonmodeCollectionName for the detailed description
-		 */
-		std::string _commonmodeerrorCollectionName;
-		
-		//! Common Mode Error Calculation Iteration
-		/*! The number of iteration that should be used in common mode calculation
-		 */
-		int _Niteration;
-		
-		//! Noise Deviation
-		/*! The limit to the deviation of noise. The data exceeds this deviation will be considered as signal and not be included in common mode error calculation
-		 */
-		float _NoiseDeviation;
-		
-		// getter and setter for _commonmodeCollectionName
-		void setCommonModeCollectionName(std::string CommonModeCollectionName);
-		std::string getCommonModeCollectionName();
-		
-		// getter and setter for _commonmodeerrorCollectionName
-		void setCommonModeErrorCollectionName(std::string CommonModeErrorCollectionName);
-		std::string getCommonModeErrorCollectionName();
 
-		// getter and setter for _commonmode
-		void setCommonModeVec(EVENT::FloatVec common);
-		EVENT::FloatVec getCommonModeVec();
-		
-		// getter and setter for _commonmodeerror
-		void setCommonModeErrorVec(EVENT::FloatVec commonerror);
-		EVENT::FloatVec getCommonModeErrorVec();
+		//! The alibava file we want to read
+		string _alibavaFile;
 
+		//! The telescope file we want to read
+		string _telescopeFile;
+
+		//! The alibava collection name we want to read
+		string _alibavaCollectionName;
+
+		//! The telescope collection name
+		string _telescopeCollectionName;
+
+		//! The alibava collection name no2
+		string _alibavaCollectionName2;
+
+		//! The telescope collection name no2
+		string _telescopeCollectionName2;
+
+		//! How do we want to merge?
+		int _mergetype;
+
+		//! The output collection names
+		string _outputCollectionName;
+
+		//! The output collection names no2
+		string _outputCollectionName2;
+
+		//! The output collection names no3
+		string _outputCollectionName3;
+
+		//! How do we want to output?
+		int _outputmode;
+
+		//! The reading instance
+		LCReader* lcReader;
+
+		//! The flag if the file is open
+		bool _telescopeopen;
+
+		//! The reading function
+		LCEvent *readTelescope ();
+		
+		void addCorrelation(float ali_x, float ali_y, float ali_z, float tele_x, float tele_y, float tele_z, int event);
+		
+		//! The unsensitive axis of our strip sensor
+		string _nonsensitiveaxis;
+		
 		
 	protected:
-										
-		//! Name of the Common mode histogram 
-		/*!
-		 */
-		std::string _commonmodeHistoName;
-		
-		//! Name of the Common mode error histogram 
-		/*!
-		 */
-		std::string _commonmodeerrorHistoName;
-		
-		//! Calculates common mode values
-		/*! Fills the histograms
-		 */
-
-		void calculateConstantCommonMode(TrackerDataImpl * trkdata);
-		
-
-		//! The function that returns name of the signal correction histo
-		/*!
-		 *  returns a name
-		 */
-		std::string getCommonCorrectionName();
-		
-		
-		//! vector to store intermediate/final common mode value
-		EVENT::FloatVec _commonmode;
-		
-		//! vector to store intermediate/final common mode error value
-		EVENT::FloatVec _commonmodeerror;
-		
+			
+	
 		
 	};
 	
 	//! A global instance of the processor
-	AlibavaConstantCommonModeProcessor gAlibavaConstantCommonModeProcessor;
+	AlibavaMerger gAlibavaMerger;
 	
 }
 
