@@ -137,6 +137,12 @@ namespace eutelescope {
         /** Alignment plane ids*/
 	lcio::IntVec _alignmentPlaneIds;
 
+        /** x Resolution of planes in PlaneIds */
+        FloatVec _SteeringxResolutions;
+ 
+        /** y Resolution of planes in PlaneIds */
+        FloatVec _SteeringyResolutions;
+
 
 };
 

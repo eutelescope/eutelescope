@@ -42,6 +42,9 @@ _alignmentMode(0){
 
   registerOptionalParameter("MilleMaxChi2Cut", "Maximum chi2 of a track candidate that goes into millepede", _maxChi2Cut, double(1000.));
 
+  registerOptionalParameter("xResolutionPlane", "x resolution of planes given in Planes", _SteeringxResolutions, FloatVec());
+  registerOptionalParameter("yResolutionPlane", "y resolution of planes given in Planes", _SteeringyResolutions, FloatVec());
+
     // MILLEPEDE specific parameters
     registerOptionalParameter("AlignmentMode", "Alignment mode specifies alignment degrees of freedom to be considered\n"
             "0 - No alignment at all. Simply fit tracks assuming that alignment is correct\n"
@@ -96,9 +99,9 @@ void EUTelProcessorMilleAlign::init() {
 	EUTelGBLFitter* Fitter = new EUTelGBLFitter("GBLFitter");
 	_Mille  = new EUTelMillepede(_alignmentMode);
 	_Mille->setSteeringFileName(_milleSteeringFilename);
-	_Mille->setXShiftFixed(_fixedAlignmentXRotationPlaneIds);
-	_Mille->setYShiftFixed(_fixedAlignmentYRotationPlaneIds);
-	_Mille->setZShiftFixed(_fixedAlignmentZRotationPlaneIds);
+	_Mille->setXShiftFixed(_fixedAlignmentXShfitPlaneIds);
+	_Mille->setYShiftFixed(_fixedAlignmentXShfitPlaneIds);
+	_Mille->setZShiftFixed(_fixedAlignmentXShfitPlaneIds);
 	_Mille->setXRotationsFixed(_fixedAlignmentXRotationPlaneIds);
 	_Mille->setYRotationsFixed(_fixedAlignmentYRotationPlaneIds);
 	_Mille->setZRotationsFixed(_fixedAlignmentZRotationPlaneIds);
@@ -110,6 +113,8 @@ void EUTelProcessorMilleAlign::init() {
 	Fitter->setMEstimatorType(_mEstimatorType);
   Fitter->SetMilleBinaryName(_milleBinaryFilename);
   Fitter->SetChi2Cut(_maxChi2Cut);
+  Fitter->setParamterIdXResolutionVec(_SteeringxResolutions);
+  Fitter->setParamterIdYResolutionVec(_SteeringyResolutions);
 	Fitter->SetMillepede(_Mille);
   _trackFitter = Fitter;
 
@@ -202,7 +207,7 @@ EUTelEventImpl * event = static_cast<EUTelEventImpl*> (evt); ///We change the cl
 			std::vector<int> label = point->getGlobalLabels();
 			streamlog_out(DEBUG1) << "Global labels for point: " << point->getLabel() << "Global label size "<<label.size() <<std::endl;
 			for( std::vector<int>::const_iterator i = label.begin(); i != label.end(); ++i){
-    		std::cout << *i << ' ';
+    		streamlog_out(DEBUG1) << *i << ' ';
 			}
 
 		}

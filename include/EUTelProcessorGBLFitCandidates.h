@@ -22,6 +22,9 @@
 #include "marlin/Processor.h"
 #include "marlin/VerbosityLevels.h"
 
+//GBL
+#include "include/GblTrajectory.h"
+
 // AIDA
 #ifdef MARLIN_USE_AIDA
 #include <marlin/AIDAProcessor.h>

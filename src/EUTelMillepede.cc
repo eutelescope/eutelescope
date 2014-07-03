@@ -255,7 +255,7 @@ void EUTelMillepede::CreateGlobalLabels( int iPlane){
 
 			streamlog_out(DEBUG1) << "Output of global labels for plane "<<iPlane<<" The size of labels "<<_globalLabels.size() <<std::endl;
 			for( std::vector<int>::const_iterator i = _globalLabels.begin(); i != _globalLabels.end(); ++i){
-    		std::cout << *i << ' ';
+    		streamlog_out(DEBUG1) << *i << ' ';
 			}
 
 }
@@ -503,6 +503,7 @@ int EUTelMillepede::runPede(){
     			streamlog_out( ERROR5 ).write( buf, n ).flush( );
           string error ( buf, n );
           pedeerrors << error;
+					streamlog_out( ERROR5 ) << error;
                     //encounteredError = true;
         }
        if ( pede.eof( ) ) {
@@ -516,6 +517,7 @@ int EUTelMillepede::runPede(){
                     streamlog_out( MESSAGE4 ).write( buf, n ).flush( );
                     string output ( buf, n );
                     pedeoutput << output;
+										streamlog_out( MESSAGE5 )  << output;
                 }
                 if ( pede.eof( ) ) {
                     finished[1] = true;

@@ -1,7 +1,10 @@
+//Written by Alexander Morton using code by  Denys Lontkovskyi.
+//contact alexander.morton@desy.de
+
+
 #ifdef USE_GBL    // Not sure where this is defined. However it is used in all the other GBL processors will use it.
 
 #include "EUTelProcessorGBLFitCandidates.h"
-#include "include/GblTrajectory.h"
 
 using namespace eutelescope;
 
