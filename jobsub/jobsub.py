@@ -14,8 +14,6 @@ to see the list of command line options.
 """
 import sys
 import logging
-#Include to have colorful jobsub output
-#import Colorer
 
 def parseIntegerString(nputstr=""):
     """
@@ -380,7 +378,12 @@ def main(argv=None):
     parser.add_argument("--plain", action="store_true", default=False, help="Output written to stdout/stderr and log file in prefix-less format i.e. without time stamping")
     parser.add_argument("jobtask", help="Which task to submit (e.g. convert, hitmaker, align); task names are arbitrary and can be set up by the user; they determine e.g. the config section and default steering file names.")
     parser.add_argument("runs", help="The runs to be analyzed; can be a list of single runs and/or a range, e.g. 1056-1060.", nargs='*')
+    parser.add_argument("-g", "--graphic", action="count", default=0)
     args = parser.parse_args(argv)
+
+    #if desired, import the colorer module
+    if args.graphic >= 1:
+        import Colorer
 
     # set the logging level
     numeric_level = getattr(logging, "INFO", None) # default: INFO messages and above
