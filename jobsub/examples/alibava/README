@@ -1,0 +1,19 @@
+Analysis chain:
+
+To calculate Pedestals
+../../jobsub.py -c config.cfg convert-ped <PedRunNum>
+../../jobsub.py -c config.cfg pedestal <PedRunNum>
+../../jobsub.py -c config.cfg commonmode <PedRunNum>
+../../jobsub.py -c config.cfg pedestal2 <PedRunNum>
+
+To get pedestal subtracted and common mode corrected signal values
+../../jobsub.py -c config.cfg converter <SourceRunNum>
+../../jobsub.py -c config.cfg reco <SourceRunNum>
+../../jobsub.py -c config.cfg cmmdcut <SourceRunNum>
+../../jobsub.py -c config.cfg seedclustering <SourceRunNum>
+
+To plot histograms for data before clustering 
+../../jobsub.py -c config.cfg datahisto <SourceRunNum>
+../../jobsub.py -c config.cfg clusterhisto <SourceRunNum>
+
+
