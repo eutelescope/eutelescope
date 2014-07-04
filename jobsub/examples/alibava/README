@@ -14,6 +14,6 @@ To get pedestal subtracted and common mode corrected signal values
 
 To plot histograms for data before clustering 
 ../../jobsub.py -c config.cfg -csv runlist.csv datahisto <SourceRunNum>
-../../jobsub.py -c config.cfg clusterhisto <SourceRunNum>
+../../jobsub.py -c config.cfg -csv runlist.csv clusterhisto <SourceRunNum>
 
 
