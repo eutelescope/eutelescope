@@ -9,7 +9,7 @@ To calculate Pedestals
 To get pedestal subtracted and common mode corrected signal values
 ../../jobsub.py -c config.cfg -csv runlist.csv converter <SourceRunNum>
 ../../jobsub.py -c config.cfg -csv runlist.csv reco <SourceRunNum>
-../../jobsub.py -c config.cfg cmmdcut <SourceRunNum>
+../../jobsub.py -c config.cfg commonmodecut <SourceRunNum>
 ../../jobsub.py -c config.cfg seedclustering <SourceRunNum>
 
 To plot histograms for data before clustering 
