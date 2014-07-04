@@ -1,13 +1,13 @@
 Analysis chain:
 
 To calculate Pedestals
-../../jobsub.py -c config.cfg convert-ped <PedRunNum>
+../../jobsub.py -c config.cfg -csv runlist.csv convert-ped <PedRunNum>
 ../../jobsub.py -c config.cfg pedestal <PedRunNum>
-../../jobsub.py -c config.cfg commonmode <PedRunNum>
+../../jobsub.py -c config.cfg -csv runlist.csv commonmode <PedRunNum>
 ../../jobsub.py -c config.cfg pedestal2 <PedRunNum>
 
 To get pedestal subtracted and common mode corrected signal values
-../../jobsub.py -c config.cfg converter <SourceRunNum>
+../../jobsub.py -c config.cfg -csv runlist.csv converter <SourceRunNum>
 ../../jobsub.py -c config.cfg reco <SourceRunNum>
 ../../jobsub.py -c config.cfg cmmdcut <SourceRunNum>
 ../../jobsub.py -c config.cfg seedclustering <SourceRunNum>
