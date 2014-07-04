@@ -75,9 +75,6 @@ namespace eutelescope {
         /** Fit tracks */
         // public: 
 
-        void TrackCandidatesToGBLTrajectories();
-
-
 				void FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack, std::vector< gbl::GblPoint >* pointList);
 
 		void changejacobainGBL(TMatrixD & input, TMatrixD & output);
@@ -105,11 +102,7 @@ namespace eutelescope {
         /*
          */
         void PerformFitGBLTrajectory( gbl::GblTrajectory* ,  vector<const IMPL::TrackImpl*>::const_iterator& );
-     
-        /* check that all trajectories are valid for Millepede
-         * and dumpe the mille binary file
-         */   
-        bool PerformMille();
+       
 
         void FitSingleTrackCandidate(EVENT::TrackVec::const_iterator& itTrkCand);
 
