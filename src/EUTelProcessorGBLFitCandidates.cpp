@@ -8,6 +8,7 @@
 
 using namespace eutelescope;
 
+//They way we histogram make no sense to me. We should have a class that when called will book any histograms in xml file automatically. So you don not have to book in every processor. It should also return a vector of names to access these histograms. I begain this but have not finished. Therefore the silly way of doing the residuals
 // definition of static members mainly used to name histograms
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 std::string EUTelProcessorGBLFitCandidates::_histName::_chi2CandidateHistName = "chi2HistName";
@@ -30,7 +31,7 @@ _nProcessedRuns(0),
 _nProcessedEvents(0),
 _beamQ(-1),
 _eBeam(4),
-_mEstimatorType(),
+_mEstimatorType(), //This is used by the GBL software to outliers down weighting
 _maxChi2Cut(1000)
 {
 	// Processor description
@@ -71,7 +72,7 @@ void EUTelProcessorGBLFitCandidates::init() {
 	std::string name("test.root");
 	geo::gGeometry().initializeTGeoDescription(name,false);
 
-	// Initialize GBL fitter
+	// Initialize GBL fitter. This is the class that does all the work. Seems to me a good practice to for the most part create a class that does the work. Since then you can use the same functions in another processor.
 	EUTelGBLFitter* Fitter = new EUTelGBLFitter("GBLFitter");
   Fitter->SetBeamCharge(_beamQ);
   Fitter->SetBeamEnergy(_eBeam);
@@ -207,7 +208,7 @@ void EUTelProcessorGBLFitCandidates::processEvent(LCEvent * evt){
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 			outputLCIO(evt, EUtracks); // Important to note that EUtracks are still only the original states at input. The scatterers are used in the fit but are not included here.
 	}//END OF COLLECTION IS NOT NULL LOOP	
-
+_nProcessedEvents++;
 
 }
 
