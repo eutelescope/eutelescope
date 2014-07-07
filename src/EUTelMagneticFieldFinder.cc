@@ -600,6 +600,7 @@ _tracksCartesian.push_back( track );
 streamlog_out(DEBUG2) << "--------------------------------EUTelKalmanFilter::initialiseSeeds()---------------------------" << std::endl;
 }
 void EUTelKalmanFilter::setHitsVecPerPlane(){
+	_hitsVecPerPlane.clear();
 	int numberOfPlanes = geo::gGeometry().sensorIDstoZOrder().size();//Note should not make this a class data member since we call this by reference in geometry so defacto it is already accessed directly each time. By this I mean we do not create a new copy each time we call the function. 
 	for(int i=0 ; i<numberOfPlanes;++i){
 		EVENT::TrackerHitVec tempHitsVecPlaneX; 
@@ -611,27 +612,65 @@ void EUTelKalmanFilter::setHitsVecPerPlane(){
 	_hitsVecPerPlane.push_back(tempHitsVecPlaneX);
 	}	
 }
+//This member function will loop through each position array and determine if some entries are all one number (Usually 0). This is done so we can determine the dimension of the hit.
 void EUTelKalmanFilter::setPlaneDimensionsVec(){
-	int numberOfDimensionsBefore=0;
-	int numberOfDimensions=0;
+	_planeDimensions.clear();
+	const double* positionBefore=NULL;//This is a pointer to a const not a const pointer
+	const double* position=NULL;
 	int numberOfPlanes = geo::gGeometry().sensorIDstoZOrder().size();
-	for(int i=0; i<numberOfPlanes; ++i){
-		for(int j = 0 ; j< _hitsVecPerPlane.size();++j){
-			numberOfDimensions = sizeof((_hitsVecPerPlane.at(i)).at(j)->getPosition());
-			streamlog_out(DEBUG2) << "The size of Dimensions : "<< numberOfDimensions <<" What we compare to: "<< numberOfDimensionsBefore << std::endl;
-			if(numberOfDimensions != numberOfDimensionsBefore and j != 0){//The last condition j != 0 is to ensure we do not compare the last sensor with the next. 
-				throw(lcio::Exception( "The number of dimensions of hits varies with one sensor. Something must be wrong"));
-			}			
-			numberOfDimensionsBefore= numberOfDimensions;
-		}	
+	for(int i=0; i<numberOfPlanes; ++i){//Loop through each plane
+		int numberOfDimensions=0;
+		bool sensorIsAtLeast1D=false;
+		bool sensorIsAtLeast2D=false;
+		bool sensorIsAtLeast3D=false;
+		for(int j = 0 ; j< _hitsVecPerPlane.at(i).size();++j){//Loop through all hits on each plane
+			streamlog_out(DEBUG0) << "Entering loop over hits. "<< std::endl;
+			position = (_hitsVecPerPlane.at(i)).at(j)->getPosition();
+			if(position == NULL){
+				throw(lcio::Exception( "Must exit since one position vector within hit is NULL!"));
+			}
+			streamlog_out(DEBUG0) << "Here is the information for this hit about to be checked:"<< std::endl;
+			streamlog_out(DEBUG0) << "Position: "<<position[0]<<","<<position[1]<<","<< position[2]<< " Plane: "<< j <<std::endl;
+			if(j !=0){
+				if(positionBefore == NULL){
+				throw(lcio::Exception( "Must exit since position before vector within hit is NULL!"));
+				}
+				streamlog_out(DEBUG0) << "Position: "<<positionBefore[0]<<","<<positionBefore[1]<<","<< positionBefore[2]<< " Plane: "<< j <<std::endl;
+				streamlog_out(DEBUG0) << "Position 0 check enter"<< std::endl;
+				if(position[0] != positionBefore[0]){//The last condition j != 0 is to ensure we do not compare the last sensor with the next. 
+				sensorIsAtLeast1D=true;
+				}			
+				streamlog_out(DEBUG0) << "Position 1 check enter"<< std::endl;
+				if(position[1] != positionBefore[1]){//The last condition j != 0 is to ensure we do not compare the last sensor with the next. 
+				sensorIsAtLeast2D=true;
+				}			
+				streamlog_out(DEBUG0) << "Position 2 check enter"<< std::endl;
+				if(position[2] != positionBefore[2]){//The last condition j != 0 is to ensure we do not compare the last sensor with the next. 
+				sensorIsAtLeast3D=true;
+				}			
+			}//END of if j !=0;
+				positionBefore= position;
+		}	//END of loop over hits
+		if(sensorIsAtLeast1D){
+			numberOfDimensions++;
+		}
+		if(sensorIsAtLeast2D){
+			numberOfDimensions++;
+		}
+		if(sensorIsAtLeast3D){
+			numberOfDimensions++;
+		}
+		streamlog_out(DEBUG2) << "The size of Dimensions : "<< numberOfDimensions << std::endl;
 		_planeDimensions.push_back(numberOfDimensions);
-	}
+	}//END of loop over planes
 }	    
 
 void EUTelKalmanFilter::testHitsVecPerPlane(){
 	if(_hitsVecPerPlane.size() !=  geo::gGeometry().sensorIDstoZOrder().size()){
-		throw(lcio::Exception( "The number of planes that contains hits is not the same as the total number of planes"));
-	}	
+		streamlog_out(ERROR0) << _hitsVecPerPlane.size()<< endl <<"Sensors from Geometry: "<<  geo::gGeometry().sensorIDstoZOrder().size();
+		throw(lcio::Exception(Utility::outputColourString("The number of planes with hits and the number of planes is different", "RED"))); 	
+
+	}
 	for(int i=0 ;i<_hitsVecPerPlane.size();++i){
 		if(_hitsVecPerPlane.at(i).size() <= 0){
 			streamlog_out(WARNING0) << "One plane has not hits at all. Is this correct?" << std::endl;
@@ -641,7 +680,8 @@ void EUTelKalmanFilter::testHitsVecPerPlane(){
 
 void EUTelKalmanFilter::testPlaneDimensions(){
 	if(_planeDimensions.size() != geo::gGeometry().sensorIDstoZOrder().size()){
-		throw(lcio::Exception( "The size of your dimesion vector is not the same as the number of planes. Something must be wrong!"));
+		streamlog_out(ERROR5) << "The size of planesDimensions is: "<< _planeDimensions.size()<<" The size of sensorIDtoOrderZ is: " << geo::gGeometry().sensorIDstoZOrder().size()<< std::endl;
+		throw(lcio::Exception( Utility::outputColourString("The size of your dimesion vector is not the same as the number of planes. Something must be wrong!","RED")));
 	}
 	for(int i=0;i<_planeDimensions.size();++i){
 		if(_planeDimensions.at(i)>3 or _planeDimensions.at(i)<0){
@@ -649,6 +689,14 @@ void EUTelKalmanFilter::testPlaneDimensions(){
 		}
 	}
 }
+void EUTelKalmanFilter::onlyRunOnce(){
+	if(_firstExecution){
+		setPlaneDimensionsVec();
+	}
+	_firstExecution=false;
+}
+
+
     /** Find the hit closest to the intersection of a track with given sensor
      * 
      * @param ts track state

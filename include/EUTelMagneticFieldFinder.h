@@ -39,11 +39,6 @@
 #include "streamlog/streamlog.h"
 #include "gear/gearimpl/Vector3D.h"
 
-
-class TrackerHit;
-class TrackImpl;
-
-
 namespace eutelescope {
     
 
@@ -214,6 +209,8 @@ namespace eutelescope {
 				std::vector<int> _planeDimensions;
 				void setHitsVecPerPlane();
 				void findHitsOrderVec(LCCollection* lcCollection,EVENT::TrackerHitVec& hitsOrderVec); 
+				void onlyRunOnce();
+				bool _firstExecution=true;
         /* need a method to get hitFittedVec
          * to be consistent with the other methods - passing the object by reference
          */     
