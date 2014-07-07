@@ -1,13 +1,23 @@
-/* 
- * File:   EUTelMagneticFieldFinder.h
- *
- * Created on July 2, 2013, 12:53 PM
- */
+//  File:   EUTelMagneticFieldFinder.h
+//  Created on July 2, 2013, 12:53 PM
 
 #ifndef EUTELMAGNETICFIELDFINDER_H
 #define	EUTELMAGNETICFIELDFINDER_H
 
+// ROOT
+#if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
+#include "TVector3.h"
+#include "TVectorD.h"
+#include "TMatrixD.h"
+#include "TMatrixDSym.h"
+#endif
+
 // system includes <>
+#include <iostream>
+#include <functional>
+#include <algorithm>
+#include <cmath>
+#include <math.h>
 #include <string>
 #include <vector>
 #include <cmath>
@@ -19,18 +29,15 @@
 #include "EUTelTrackFitter.h"
 #include "EUTelTrackStateImpl.h"
 #include "EUTelTrackImpl.h"
-
-// ROOT
-#if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
-#include "TVector3.h"
-#include "TMatrixD.h"
-#include "TMatrixDSym.h"
-#endif
+#include "EUTelGeometryTelescopeGeoDescription.h"
 
 //LCIO
 #include "lcio.h"
 #include "IMPL/TrackerHitImpl.h"
 #include "IMPL/TrackImpl.h"
+//other
+#include "streamlog/streamlog.h"
+#include "gear/gearimpl/Vector3D.h"
 
 
 class TrackerHit;
@@ -70,7 +77,7 @@ namespace eutelescope {
         EVENT::TrackerHitVec _allHits;
     };
     
-    class EUTelKalmanFilter : public EUTelTrackFitter {
+    class EUTelKalmanFilter {
     private:
         DISALLOW_COPY_AND_ASSIGN(EUTelKalmanFilter) // prevent users from making (default) copies of processors
 
@@ -89,7 +96,7 @@ namespace eutelescope {
 
         /** search for hit along track direction 
          *  using TGeo derived functions         */  
-        void SearchTrackCandidates();
+        void findTrackCandidates();
 
         /** Prune track candidates
          *  supposed to be removing track candidates which have n% hits in common      */  
@@ -97,21 +104,20 @@ namespace eutelescope {
 
 
         /** Initialise Fitter */
-        bool initialise();
+        void testUserInput();
 
-        // Getters and Setters
+				void testHitsVec();
+				bool _hitsInputGood;
     public:
 
         inline std::vector< EUTelTrackImpl* >& getTracks() {
             return _tracksCartesian;
         }
                 
-        void setPlanesProject( int value){
-          _planesForPR = value;
-        }
 
-        void setHits( EVENT::TrackerHitVec& );
 
+				void	setHitsVec(EVENT::TrackerHitVec& allHitsVec){ _allHitsVec = allHitsVec;}
+						 
         inline int getAllowedMissingHits() const {
             return _allowedMissingHits;
         };
@@ -185,8 +191,6 @@ namespace eutelescope {
 
 
     private:
-        /** Flush fitter data stored from previous event */
-        void reset();
         
         /** prune seed track candidates */
         void pruneSeeds();
@@ -196,7 +200,6 @@ namespace eutelescope {
 
         /** update EUTelTrackState object at a new plane ID*/
         int findNextPlaneEntrance(  EUTelTrackStateImpl* , int  );
-
     		void propagateFromRefPoint( 	std::vector< EUTelTrackImpl* >::iterator &itTrk    );
 
         /** a vector of hits found while swimming through the detector planes 
@@ -205,9 +208,17 @@ namespace eutelescope {
         EVENT::TrackerHitVec hitFittedVec;
 
     public:
+				void setPlaneDimensionsVec();
+				void testPlaneDimensions();
+				void testHitsVecPerPlane();
+				std::vector<int> _planeDimensions;
+				void setHitsVecPerPlane();
+				void findHitsOrderVec(LCCollection* lcCollection,EVENT::TrackerHitVec& hitsOrderVec); 
         /* need a method to get hitFittedVec
          * to be consistent with the other methods - passing the object by reference
          */     
+				void printHits();
+
         EVENT::TrackerHitVec& getHitFittedVec() { 
           return hitFittedVec;
         }
@@ -274,8 +285,9 @@ namespace eutelescope {
         
         /** Find hit closest to the track */
         const EVENT::TrackerHit* findClosestHit( const EUTelTrackStateImpl*, int );
-
-        // Kalman filter states and tracks
+				std::vector<EVENT::TrackerHitVec> _hitsVecPerPlane;
+			protected:
+				EVENT::TrackerHitVec _allHitsVec;//This is all the hits for a single event. 
     private:       
         
         /** Final set of tracks in cartesian parameterisation */
@@ -297,7 +309,7 @@ namespace eutelescope {
         bool _isHitsOK;
         
         /** Validity of user input flag */
-        bool _isReady;
+        bool _userInputGood;
 
         /** Maximum number of sensitive planes to be considered for initial seed hits */
         int _planesForPR;

@@ -143,8 +143,8 @@ void EUTelProcessorGBLFitCandidates::processEvent(LCEvent * evt){
   	}
 	///////////////////////////////////////////////////////////////////////////////
 
-	//This is a good point to clear all things that need to be reset for each event. Why should gop here?
-        _trackFitter->Clear(); 
+	//This is a good point to clear all things that need to be reset for each event. 
+  _trackFitter->Clear(); 
 
 
 	// this will only be entered if the collection is available
@@ -160,8 +160,8 @@ void EUTelProcessorGBLFitCandidates::processEvent(LCEvent * evt){
 		        	throw SkipEventException(this);
      			}
 	   		IMPL::TrackImpl* trackimpl = static_cast<IMPL::TrackImpl*> (col->getElementAt(iCol));
-			EUTelTrackImpl* EUtrack = new EUTelTrackImpl(*trackimpl);
-      			streamlog_out(DEBUG1) << "Track " << iCol << " nhits " << EUtrack->getHitsOnTrack().size() << endl;
+				EUTelTrackImpl* EUtrack = new EUTelTrackImpl(*trackimpl); //here we create the EUTelTrackState. We can not just static cast since the variables are a bit differnt in each
+      	streamlog_out(DEBUG1) << "Track " << iCol << " nhits " << EUtrack->getHitsOnTrack().size() << endl;
 
 			//_trackFitter->Clear(); //This is a good point to clear all things that need to be reset for each event. Why should gop here?
 			std::vector< gbl::GblPoint > pointList;

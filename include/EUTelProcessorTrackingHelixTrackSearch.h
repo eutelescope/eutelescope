@@ -2,31 +2,58 @@
 #ifndef EUTelTrackingHelixTrackSearch_h
 #define EUTelTrackingHelixTrackSearch_h 1
 
-// C++
-#include <string>
-
-// LCIO
-#include "lcio.h"
-
-#include "marlin/Processor.h"
-
-#include "IMPL/TrackerHitImpl.h"
-
 // AIDA
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <AIDA/IBaseHistogram.h>
+#include <marlin/AIDAProcessor.h>
 #include <AIDA/IHistogram1D.h>
 #include <AIDA/IHistogram2D.h>
 #include <AIDA/IProfile1D.h>
+#include <AIDA/IHistogramFactory.h>
 #endif
 
-// EUTELESCOPE
-#include "EUTelGBLFitter.h"
-#include "EUTelGeometryTelescopeGeoDescription.h"
-#include "EUTelUtility.h"
-#include "EUTelTrackImpl.h"
+// C++
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
 
-class EUTelTrackImpl;
+// LCIO
+#include <EVENT/LCCollection.h>
+#include <EVENT/TrackerHit.h>
+#include <IMPL/TrackImpl.h>
+#include "IMPL/TrackerHitImpl.h"
+#include "lcio.h"
+#include "marlin/Processor.h"
+
+// MARLIN
+#include "marlin/Exceptions.h"
+#include "marlin/Global.h"
+#include "marlin/Processor.h"
+#include "marlin/VerbosityLevels.h"
+
+// EUTELESCOPE
+#include "EUTelHistogramManager.h"
+#include "EUTelExceptions.h"
+#include "EUTelRunHeaderImpl.h"
+#include "EUTelEventImpl.h"
+#include "EUTelUtility.h"
+#include "EUTelMagneticFieldFinder.h"
+#include "EUTelGeometryTelescopeGeoDescription.h"
+#include "EUTelTrackImpl.h"
+#include "EUTelMagneticFieldFinder.h"
+
+// Cluster types
+#include "EUTelSparseClusterImpl.h"
+#include "EUTelBrickedClusterImpl.h"
+#include "EUTelDFFClusterImpl.h"
+#include "EUTelFFClusterImpl.h"
+//namespaces
+using namespace lcio;
+using namespace std;
+using namespace marlin;
+using namespace eutelescope;
+
 
 namespace eutelescope {
 
@@ -34,15 +61,13 @@ namespace eutelescope {
      * 
      *  This processor performs track pattern recognition step that is 
      *  necessary for two-step (track-search/fit) tracking, for example GBL.
-     *  Pattern recognition is based on brute-force enumeration of
-     *  all possible hit combinations that fulfill some requirements (optional);
-     * 
-     *  @see EUTelTrackFinder
+     *  Pattern recognition uses simple equation of motion and one directional Kalman filter 
+     *  Process noise is not added. Therefore scattering is not taken into account.
+     *  Furthermore smooth of the result is not performed therefore it is not a full Kalman filter 
+     *   *  @see EUTelTrackFinder
      */
   class EUTelProcessorTrackingHelixTrackSearch : public marlin::Processor {
-    private:
-        DISALLOW_COPY_AND_ASSIGN(EUTelProcessorTrackingHelixTrackSearch)   // prevent users from making (default) copies of processors
-        
+       
     public:
 
     virtual marlin::Processor* newProcessor() {
@@ -94,8 +119,7 @@ namespace eutelescope {
 
 
     public:
-        /** Fills hits data structure for track finder */
-        void FillHits(LCEvent*, LCCollection*, EVENT::TrackerHitVec&) const;
+
         
         /** Prepare LCIO data structure for dumping track
          * candidate hits into LCIO files
@@ -144,14 +168,11 @@ namespace eutelescope {
     protected:
 
         /** Track fitter*/
-        EUTelTrackFitter* _trackFitter;
+        EUTelKalmanFilter* _trackFitter;
 
 
     private:
 
-        /** TGeo geometry file name */
-				std::string _tgeoFileName;
-        
         // Exhaustive finder state definition
 
         /** Maximal amount of missing hits per track candidate */
@@ -206,16 +227,19 @@ namespace eutelescope {
 	std::map< std::string, AIDA::IHistogram1D* > _aidaHistoMap1D;
 
         /** Names of histograms */
-        struct _histName {
-            static string _numberTracksCandidatesHistName;
-            static string _numberOfHitOnTrackCandidateHistName;
-            static string _HitOnTrackCandidateHistName;
-						static string _chi2CandidateHistName;
+	struct _histName {
+	static string _numberTracksCandidatesHistName;
+		    static string _numberOfHitOnTrackCandidateHistName;
+		    static string _HitOnTrackCandidateHistName;
+	static string _chi2CandidateHistName;
 
         };
-
 #endif // defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
+
+	private:
+	DISALLOW_COPY_AND_ASSIGN(EUTelProcessorTrackingHelixTrackSearch)   // prevent users from making (default) copies of processors
+     
     };
 
     /** A global instance of the processor */
