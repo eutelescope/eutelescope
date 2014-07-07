@@ -26,6 +26,17 @@ namespace eutelescope {
 
     namespace Utility {
 
+
+			std::string outputColourString(std::string inputString, std::string colour){
+				std::string outputString;
+				if(colour == "RED"){
+					outputString = "\033[41m" +  inputString + "\033[49m";
+					return	outputString;
+				}
+			}
+		 
+
+
         /**
          * Fills indices of not excluded planes
          * 
@@ -51,7 +62,7 @@ namespace eutelescope {
          * @param nPlanes
          *              total number of planes
          */
-        
+				
         void FillNotExcludedPlanesIndices( std::vector<int>& indexconverter, const std::vector<unsigned int >& excludePlanes,  unsigned int nPlanes ) {
             int icounter = 0;
             int nExcludePlanes = static_cast< int >( excludePlanes.size());

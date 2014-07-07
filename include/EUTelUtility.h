@@ -41,6 +41,8 @@ namespace eutelescope {
 
     namespace Utility {
 
+				std::string outputColourString(std::string inputString, std::string colour);
+			
         class Hit;
 
         /**
