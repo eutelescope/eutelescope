@@ -250,7 +250,13 @@ def runMarlin(filenamebase, jobtask, silent):
                 try:  
                     line = qout.get_nowait() # or q.get(timeout=.1)
                     if not silent:
-                        log.info(line.strip())
+			if "WARNING" in line.strip():
+				log.warning(line.strip())
+			elif "ERROR" in line.strip():
+				log.error(line.strip())
+			else:
+				log.info(line.strip())
+
                     log_file.write(line)
                 except Empty:
                     pass
@@ -372,7 +378,12 @@ def main(argv=None):
     parser.add_argument("--plain", action="store_true", default=False, help="Output written to stdout/stderr and log file in prefix-less format i.e. without time stamping")
     parser.add_argument("jobtask", help="Which task to submit (e.g. convert, hitmaker, align); task names are arbitrary and can be set up by the user; they determine e.g. the config section and default steering file names.")
     parser.add_argument("runs", help="The runs to be analyzed; can be a list of single runs and/or a range, e.g. 1056-1060.", nargs='*')
+    parser.add_argument("-g", "--graphic", action="store_true", default=False)
     args = parser.parse_args(argv)
+
+    #if desired, import the colorer module
+    if args.graphic:
+        import Colorer
 
     # set the logging level
     numeric_level = getattr(logging, "INFO", None) # default: INFO messages and above
