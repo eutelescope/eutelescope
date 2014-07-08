@@ -1,42 +1,21 @@
-// Version: $Id$
 // eutelescope inlcudes
 #include "EUTelAPIXTbTrackTuple.h"
 #include "EUTELESCOPE.h"
 #include "EUTelEventImpl.h"
 #include "EUTelRunHeaderImpl.h"
-#include "EUTelExceptions.h"
-
 #include "EUTelTrackerDataInterfacerImpl.h"
-
-// marlin includes ".h"
-#include "marlin/Processor.h"
-#include "marlin/Exceptions.h"
-#include "marlin/Global.h"
 
 #include <EVENT/LCCollection.h>
 #include <EVENT/LCEvent.h>
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/TrackerHitImpl.h>
 #include <IMPL/TrackImpl.h>
-#include <IMPL/TrackerPulseImpl.h>
-#include <IMPL/LCFlagImpl.h>
-#include <Exceptions.h>
-
-#include <string>
-#include <vector>
-#include <map>
-#include <stdlib.h>
-
-//#include <UTIL/CellIDEncoder.h>
 #include <UTIL/CellIDDecoder.h>
 
-//TbTrack include
 #include <algorithm>
 
-using namespace std;
-using namespace marlin ;
+//using namespace marlin ;
 using namespace eutelescope;
-
 
 EUTelAPIXTbTrackTuple::EUTelAPIXTbTrackTuple()
 : Processor("EUTelAPIXTbTrackTuple"),
@@ -76,12 +55,12 @@ EUTelAPIXTbTrackTuple::EUTelAPIXTbTrackTuple()
   _hitXPos(NULL),
   _hitYPos(NULL),
   _hitZPos(NULL),
-  _hitSensorId(NULL),
-  _hitPointerToCluster(NULL) 
+  _hitSensorId(NULL)
  {
-  // modify processor description
+  //processor description
   _description = "Prepare tbtrack style n-tuple with track fit results" ;
-	
+
+
   registerInputCollection(LCIO::TRACK, "InputTrackCollectionName", "Name of the input Track collection",
 		  		_inputTrackColName, std::string("fittracks"));
 
@@ -92,11 +71,10 @@ EUTelAPIXTbTrackTuple::EUTelAPIXTbTrackTuple()
   registerProcessorParameter ("DutZsColName", "DUT zero surpressed data colection name",
  		     _dutZsColName, std::string("zsdata_apix"));
  
-  // other processor parameters:
   registerProcessorParameter ("OutputPath", "Path/File where root-file should be stored",
 			      _path2file, std::string("NTuple.root"));
   
-  registerProcessorParameter ("DUTIDs", "Int vector containing the IDs of the DUTs",
+  registerProcessorParameter ("DUTIDs", "Int std::vector containing the IDs of the DUTs",
 		  		_DUTIDs, std::vector<int>());
 
 }
@@ -112,15 +90,13 @@ void EUTelAPIXTbTrackTuple::init()
 	_nRun = 0;
 	_nEvt = 0;
 
-  //message<DEBUG5> ( log() << "Initializing " );
-	
 	// Prepare TTree/TFiles
 	prepareTree();
 }
 
 void EUTelAPIXTbTrackTuple::processRunHeader( LCRunHeader* runHeader) 
 {
-	auto_ptr<EUTelRunHeaderImpl> eutelHeader( new EUTelRunHeaderImpl ( runHeader ) );
+	std::auto_ptr<EUTelRunHeaderImpl> eutelHeader( new EUTelRunHeaderImpl ( runHeader ) );
 	eutelHeader->addProcessor( type() );
 	_nRun++;
 	
@@ -131,38 +107,37 @@ void EUTelAPIXTbTrackTuple::processRunHeader( LCRunHeader* runHeader)
 void EUTelAPIXTbTrackTuple::processEvent( LCEvent * event )
 {
 	_nEvt ++;
-
 	_evtNr = event->getEventNumber();
 	EUTelEventImpl* euEvent = static_cast<EUTelEventImpl*> ( event );
-  	if( euEvent->getEventType() == kEORE )
+
+	if( euEvent->getEventType() == kEORE )
        	{
-		message<DEBUG5> ( "EORE found: nothing else to do." );
+		streamlog_out( DEBUG5) << "EORE found: nothing else to do." << std::endl;
     		return;
 	}
 
 	//Clear all event info containers
 	clear();
 
-	
+	//try to read in hits (e.g. fitted hits in local frame)	
   	if( !readHits( _inputTrackerHitColName, event )) 
 	{ 
 		return; 
 	}
   	
-
+	//read in raw data	
 	if(!readZsHits( _dutZsColName , event )) 
 	{ 
 		return; 
 	}
   
-	/* --- Dump fitted track params --- */
-  	if(!readTracks(event))
+  	//read in tracks
+	if(!readTracks(event))
        	{
 		return;
 	}
-  
-
-	/* Filling tree */
+ 
+        //fill the trees	
 	_zstree->Fill();
 	_eutracks->Fill();
 	_euhits->Fill();
@@ -176,7 +151,7 @@ void EUTelAPIXTbTrackTuple::end()
 	_file->Write();
 }
 
-
+//Read in TrackerHit(Impl) to later dump them
 bool EUTelAPIXTbTrackTuple::readHits( std::string hitColName, LCEvent* event )
 {
 	LCCollection* hitCollection = NULL;
@@ -203,6 +178,7 @@ bool EUTelAPIXTbTrackTuple::readHits( std::string hitColName, LCEvent* event )
 		UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
     		int sensorID = hitDecoder(meshit)["sensorID"];
 
+		//Only dump DUT hits
 		if( std::find( _DUTIDs.begin(), _DUTIDs.end(), sensorID) == _DUTIDs.end() )
 		{
 			continue;
@@ -221,7 +197,7 @@ bool EUTelAPIXTbTrackTuple::readHits( std::string hitColName, LCEvent* event )
 	return true;
 }
 
-
+//Read in TrackerHit to later dump
 bool EUTelAPIXTbTrackTuple::readTracks(LCEvent* event)
 {
 	LCCollection* trackCol = NULL;
@@ -237,7 +213,7 @@ bool EUTelAPIXTbTrackTuple::readTracks(LCEvent* event)
   	}
 
 	// setup cellIdDecoder to decode the hit properties
-	UTIL::CellIDDecoder<TrackerHit>  hitCellDecoder(trackCol);
+	UTIL::CellIDDecoder<TrackerHitImpl>  hitCellDecoder( EUTELESCOPE::HITENCODING );
 
 	int nTrackParams=0;
 	for(int itrack=0; itrack< trackCol->getNumberOfElements(); itrack++)
@@ -250,7 +226,7 @@ bool EUTelAPIXTbTrackTuple::readTracks(LCEvent* event)
 		double dxdz = fittrack->getOmega();
 		double dydz = fittrack->getPhi();
 
- 
+ 		//Get the (fitted) hits belonging to this track, they are in local frame!
 		for(unsigned int ihit=0; ihit< trackhits.size(); ihit++)
 	       	{
       			TrackerHitImpl* fittedHit = dynamic_cast<TrackerHitImpl*>( trackhits.at(ihit) );
@@ -263,8 +239,7 @@ bool EUTelAPIXTbTrackTuple::readTracks(LCEvent* event)
      			UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
       			int sensorID = hitDecoder(fittedHit)["sensorID"];
 
-
-			//if( _DUTIDs.find(sensorID) == _DUTIDs.end() )
+			//Dump the (fitted) hits for the DUTs
 			if( std::find( _DUTIDs.begin(), _DUTIDs.end(), sensorID) == _DUTIDs.end() )
 			{
 				continue;
@@ -274,7 +249,7 @@ bool EUTelAPIXTbTrackTuple::readTracks(LCEvent* event)
       			
 			double x = pos[0];
       			double y = pos[1];
-      			double z = pos[2];
+      			//double z = pos[2]; //not used!
 			
 			//eutrack tree
       			_xPos->push_back(x);
@@ -292,6 +267,7 @@ bool EUTelAPIXTbTrackTuple::readTracks(LCEvent* event)
 	return true;
 }
 
+//Read in raw (zs) TrackerData(Impl) to later dump
 bool EUTelAPIXTbTrackTuple::readZsHits( std::string colName, LCEvent* event)
 {
 	LCCollectionVec* zsInputCollectionVec = NULL;
@@ -315,7 +291,7 @@ bool EUTelAPIXTbTrackTuple::readZsHits( std::string colName, LCEvent* event)
     
 		if (type == kEUTelGenericSparsePixel  ) 
 		{
-      			auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> > apixData( new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> ( zsData ));
+			std::auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> > apixData( new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> ( zsData ));
       			EUTelGenericSparsePixel apixPixel;
       				
 			for( unsigned int iHit = 0; iHit < apixData->size(); iHit++ ) 
@@ -360,43 +336,40 @@ void EUTelAPIXTbTrackTuple::clear()
   _hitYPos->clear();
   _hitZPos->clear();
   _hitSensorId->clear();
-  _hitPointerToCluster->clear();
  }
 
 void EUTelAPIXTbTrackTuple::prepareTree()
 {
 	_file = new TFile(_path2file.c_str(),"RECREATE");
-	//streamlog_out ( DEBUG5 )  << "Writing to: " << _path2file.c_str() << endl;
 
-	_xPos = new vector<double>();	     
-	_yPos = new vector<double>();	   
-	_dxdz = new vector<double>();	   
-	_dydz = new vector<double>();	   
-	_trackIden  = new vector<int>();
-	_trackNum = new vector<int>();
-	_chi2 = new vector<double>();	   
-	_ndof = new vector<double>();    
+	_xPos = new std::vector<double>();	     
+	_yPos = new std::vector<double>();	   
+	_dxdz = new std::vector<double>();	   
+	_dydz = new std::vector<double>();	   
+	_trackIden  = new std::vector<int>();
+	_trackNum = new std::vector<int>();
+	_chi2 = new std::vector<double>();	   
+	_ndof = new std::vector<double>();    
 
-	p_col = new vector<int>();
-	p_row = new vector<int>();
-	p_tot = new vector<int>();
-	p_iden = new vector<int>();
-	p_lv1 = new vector<int>();
+	p_col = new std::vector<int>();
+	p_row = new std::vector<int>();
+	p_tot = new std::vector<int>();
+	p_iden = new std::vector<int>();
+	p_lv1 = new std::vector<int>();
 
-	_hitXPos = new vector<double>();
-	_hitYPos = new vector<double>();
-	_hitZPos = new vector<double>();
-	_hitSensorId  = new vector<int>();
-	_hitPointerToCluster = new vector<IMPL::TrackerDataImpl*>();
+	_hitXPos = new std::vector<double>();
+	_hitYPos = new std::vector<double>();
+	_hitZPos = new std::vector<double>();
+	_hitSensorId  = new std::vector<int>();
 
-	_euhits = new TTree("euhits","euhits");
+	_euhits = new TTree("fitpoints","fitpoints");
 	_euhits->Branch("nHits", &_nHits);
 	_euhits->Branch("xPos", &_hitXPos);
 	_euhits->Branch("yPos", &_hitYPos);
 	_euhits->Branch("zPos", &_hitZPos);
 	_euhits->Branch("sensorId", &_hitSensorId);
 
-	_zstree = new TTree("zspix", "zspix");
+	_zstree = new TTree("rawdata", "rawdata");
 	_zstree->Branch("nPixHits", &_nPixHits);
 	_zstree->Branch("euEvt",    &_nEvt);
 	_zstree->Branch("col",      &p_col);
@@ -406,7 +379,7 @@ void EUTelAPIXTbTrackTuple::prepareTree()
 	_zstree->Branch("iden",     &p_iden);
 
 	//Tree for storing all track param info
-	_eutracks = new TTree("eutracks", "eutracks");
+	_eutracks = new TTree("tracks", "tracks");
 	_eutracks->Branch("nTrackParams", &_nTrackParams);
 	_eutracks->Branch("euEvt", &_nEvt);
 	_eutracks->Branch("xPos", &_xPos);
@@ -420,5 +393,8 @@ void EUTelAPIXTbTrackTuple::prepareTree()
 
 	_euhits->AddFriend(_zstree);
 	_euhits->AddFriend(_eutracks);
-}
 
+	_versionVec = new TVectorD(1);
+	_versionVec[0] = 1.1;
+	_euhits->GetUserInfo()->Add(_versionVec);
+}
