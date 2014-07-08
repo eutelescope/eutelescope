@@ -2,33 +2,14 @@
 #define EUTelFitTuple_h 1
 
 #include "marlin/Processor.h"
-#include "EUTelAlignmentConstant.h"
-
-// lcio includes <.h>
-#include "lcio.h"
-#include <EVENT/LCCollection.h>
-#include <EVENT/LCEvent.h>
-#include <IMPL/LCCollectionVec.h>
-#include <IMPL/TrackerHitImpl.h>
-#include <IMPL/TrackImpl.h>
-#include <IMPL/TrackerPulseImpl.h>
-#include <IMPL/TrackerDataImpl.h>
-#include <IMPL/LCFlagImpl.h>
-
-
-// AIDA includes <.h>
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-#include <AIDA/IBaseHistogram.h>
-#include <AIDA/ITuple.h>
-#endif
 
 // system includes <>
 #include <string>
 #include <vector>
-#include <map>
 
 #include <TFile.h>
 #include <TTree.h>
+#include <TVectorT.h>
 
 namespace eutelescope {
   class EUTelAPIXTbTrackTuple : public marlin::Processor {
@@ -101,15 +82,11 @@ namespace eutelescope {
     std::vector<double> *_hitYPos;
     std::vector<double> *_hitZPos;
     std::vector<int>    *_hitSensorId;
-    std::vector<IMPL::TrackerDataImpl*>    *_hitPointerToCluster;
-  };
 
+    TVectorD* _versionVec;
+  };
 
   //! A global instance of the processor.
   EUTelAPIXTbTrackTuple aEUTelAPIXTbTrackTuple;
 }
-
 #endif
-
-
-
