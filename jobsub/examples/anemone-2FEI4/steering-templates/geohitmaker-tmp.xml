@@ -16,7 +16,7 @@
    </execute>
 
    <global>
-      <parameter name="LCIOInputFiles"> @LcioPath@/run@RunNumber@-clustering.slcio </parameter>
+      <parameter name="LCIOInputFiles"> @LcioPath@/run@RunNumber@-geoclustering.slcio </parameter>
       <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
@@ -177,4 +177,5 @@
   <!--parameter name="printTimestamp" type="bool">false </parameter-->
  </processor>
 
+ t
 </marlin>
