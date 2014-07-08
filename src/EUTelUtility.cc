@@ -33,6 +33,10 @@ namespace eutelescope {
 					outputString = "\033[41m" +  inputString + "\033[49m";
 					return	outputString;
 				}
+				if(colour =="BLUE"){
+					outputString = "\033[44m" +  inputString + "\033[49m";
+					return	outputString;
+				}
 			}
 		 
 

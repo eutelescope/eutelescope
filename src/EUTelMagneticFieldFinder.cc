@@ -23,7 +23,6 @@ namespace eutelescope {
             _allHits(),
             _allMeasurements(),
             _isHitsOK(false),
-            _userInputGood(false),
             _allowedMissingHits(0),
 						_AllowedSharedHitsOnTrackCandidate(0),
             _maxTrackCandidates(0),
@@ -59,7 +58,6 @@ namespace eutelescope {
             _allHits(),
             _allMeasurements(),
             _isHitsOK(false),
-            _userInputGood(false),
             _allowedMissingHits(0),
             _maxTrackCandidates(0),
             _beamE(-1.),
@@ -347,7 +345,7 @@ if ( isGoodTrack && ( *itTrk )->getHitsOnTrack().size( ) < geo::gGeometry( ).nPl
 	streamlog_out ( DEBUG5 ) << "Track candidate has to many missing hits." << std::endl;
 	streamlog_out ( DEBUG5 ) << "Removing this track candidate from further consideration." << std::endl;
 (*itTrk)->Print();
-	delete (*itTrk);  //Is this really needed?
+	delete (*itTrk);  //Is this really nee:ded?
 	isGoodTrack = false;
 	itTrk = _tracksCartesian.erase( itTrk ); itTrk--; 
 }
@@ -449,24 +447,35 @@ streamlog_out(MESSAGE1) << "------------------------------EUTelKalmanFilter::fin
 void EUTelKalmanFilter::testUserInput() {
 	streamlog_out(DEBUG2) << "EUTelKalmanFilter::testUserInput()" << std::endl;
 
-	_userInputGood = true;
-
 	// Check the validity of supplied beam energy 
 	if ( _beamE < 1.E-6 ) {
-		streamlog_out(ERROR1) << "Beam direction was set incorrectly" << std::endl;
-		_userInputGood = false;
+		throw(lcio::Exception( Utility::outputColourString("Beam direction was set incorrectly","RED"))); 
+	}
+	else{
+	 streamlog_out(DEBUG0) << Utility::outputColourString("Beam energy is reasonable", "BLUE") << std::endl;
 	}
 
 	if ( _beamEnergyUncertainty < 0 ) {
-		streamlog_out(ERROR1) << "Beam uncertainty is negative. Check supplied values" << std::endl;
-		_userInputGood = false;
-	if(!_userInputGood){
-		throw(lcio::Exception( "Users input wrong!"));
+		throw(lcio::Exception( Utility::outputColourString("Beam uncertainty is negative. Check supplied values","RED"))); 
+	}else{
+	 streamlog_out(DEBUG0) << Utility::outputColourString("Beam Energy uncertainty is reasonable","BLUE") << std::endl;
 	}
-				
-				
+
+	if(_createSeedsFromPlanes.size() == 0){
+		throw(lcio::Exception( Utility::outputColourString("The number of planes to make seeds from is 0. We need at least one plane", "RED")));
 	}
-}
+
+	if(_createSeedsFromPlanes.size() >= geo::gGeometry().sensorIDstoZOrder().size()){
+		throw(lcio::Exception( Utility::outputColourString("You have specified all planes or more than that. This is too many planes for seeds", "RED")));
+	}else{
+		streamlog_out(DEBUG0) << Utility::outputColourString("The number of planes to make seeds from is good " +  to_string(_createSeedsFromPlanes.size()),"BLUE") << std::endl;
+	}
+	if(_excludePlanes.size() >= geo::gGeometry().sensorIDstoZOrder().size()){	
+		throw(lcio::Exception( Utility::outputColourString("The number of excluded planes is too large. We can not fit tracks with magic.", "RED")));
+	else{
+		streamlog_out(DEBUG0) << Utility::outputColourString("The number of excluded planes is" +  to_string(_planesExcluded.size()),"BLUE") << std::endl;
+	}
+}	
 void  EUTelKalmanFilter::testHitsVec(){
 	_hitsInputGood=true;
 	if(_allHitsVec.size() == 0){
@@ -476,8 +485,13 @@ void  EUTelKalmanFilter::testHitsVec(){
 		throw(lcio::Exception( "The hit input is wrong!"));
 	}
 }
-
-    /** Prune seed track states necessary to
+	
+		
+		
+		/**
+		 *
+		 * Prune seed track states necessary to
+		 *
      * start Kalman filter
      * 
      * 
@@ -516,12 +530,6 @@ void  EUTelKalmanFilter::testHitsVec(){
 void EUTelKalmanFilter::initialiseSeeds() {
 	streamlog_out(DEBUG2) << "EUTelKalmanFilter::initialiseSeeds()" << std::endl;
 
-if ( _allMeasurements.empty() ) {
-streamlog_out(WARNING1) << "Can't initialise track seeds for the finder. No hits in this event." << std::endl;
-return;
-}
-
-//
 // loop over the first 2 planes assuming the numbering to go 0,1,2,3,.. etc.
 // building track seeds from every hit found in the planes. could do from all planes, but perhaps an overkill - parameter control?
 //          

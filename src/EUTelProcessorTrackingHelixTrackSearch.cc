@@ -81,6 +81,10 @@ _aidaHistoMap1D() {
 
 	registerOptionalParameter("HistogramInfoFilename", "Name of histogram info xml file", _histoInfoFileName, std::string("histoinfo.xml"));
 
+	registerOptionalParameter("PlanesToCreateSeedsFrom", "This is the planes you want to create seeds from", _createSeedsFromPlanes,FloatVec(0));
+
+	registerOptionalParameter("ExcludePlanes", "This is the planes that will not be included in analysis", _excludePlanes ,FloatVec());
+
 }
 
 void EUTelProcessorTrackingHelixTrackSearch::init() {
@@ -104,11 +108,13 @@ void EUTelProcessorTrackingHelixTrackSearch::init() {
 	Finder->setAllowedMissingHits( _maxMissingHitsPerTrackCand );
 	Finder->setAllowedSharedHitsOnTrackCandidate( _AllowedSharedHitsOnTrackCandidate );
 	Finder->setWindowSize( _residualsRMax );
+	Finder->setPlanesToCreateSeedsFrom(_createSeedsFromPlanes);
 
 	Finder->setBeamMomentum( _eBeam );
 	Finder->setBeamCharge( _qBeam );
 	Finder->setBeamMomentumUncertainty( _eBeamUncertatinty );
 	Finder->setBeamSpread( _beamSpread );
+	Finder->setExcludePlanes(_excludePlanes);
 
 	_trackFitter = Finder;
 	_trackFitter->testUserInput();
@@ -176,7 +182,7 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
   _trackFitter->printHits();
 	_trackFitter->setHitsVecPerPlane();//set hits vectors ordered by plane(Determined by geometry)
 	_trackFitter->testHitsVecPerPlane();
-	_trackFitter->setPlaneDimensionsVec();//This looks through all planes and hit and determines the hits position dimension. I.e Is is strip or pixel.    
+	_trackFitter->onlyRunOnce();//This will only execute once. It can not be placed in init since it needs hit information. It currently only determines hit dimension. However can be used for other thing latter. 
 	_trackFitter->testPlaneDimensions();
 	streamlog_out(DEBUG1) << "Event #" << _nProcessedEvents << std::endl;
 	streamlog_out( DEBUG1 ) << "Trying to find tracks..." << endl;

@@ -152,6 +152,13 @@ namespace eutelescope {
         inline void setBeamMomentumUncertainty(double prec) {
             this->_beamEnergyUncertainty = prec;
         }
+				inline  void setPlanesToCreateSeedsFrom(EVENT::FloatVec createSeedsFromPlanes){
+					this-> _createSeedsFromPlanes = createSeedsFromPlanes;
+				}
+
+				inline void setExcludePlanes(excludePlanes ){
+					this->_excludePlanes = excludePlanes;
+				}
 
         inline double getBeamMomentumUncertainty() const {
             return _beamEnergyUncertainty;
@@ -211,6 +218,9 @@ namespace eutelescope {
 				void findHitsOrderVec(LCCollection* lcCollection,EVENT::TrackerHitVec& hitsOrderVec); 
 				void onlyRunOnce();
 				bool _firstExecution=true;
+				EVENT::FloatVec _createSeedsFromPlanes;
+				EVENT::FloatVec _excludePlanes;         
+
         /* need a method to get hitFittedVec
          * to be consistent with the other methods - passing the object by reference
          */     
@@ -305,8 +315,6 @@ namespace eutelescope {
         /** Validity of supplied hits */
         bool _isHitsOK;
         
-        /** Validity of user input flag */
-        bool _userInputGood;
 
         /** Maximum number of sensitive planes to be considered for initial seed hits */
         int _planesForPR;
