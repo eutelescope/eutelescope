@@ -14,6 +14,8 @@ to see the list of command line options.
 """
 import sys
 import logging
+#Include to have colorful jobsub output
+#import Colorer
 
 def parseIntegerString(nputstr=""):
     """
