@@ -23,6 +23,10 @@
       <processor name="LoadAlignment"/>
       <processor name="ApplyAlignment"/> 
       <processor name="DafFitter"/>
+      
+      <processor name="ReverseAlignment"/>
+      <processor name="TrackDumper"/> 
+      
       <processor name="MyEUTelUtilityPrintEventNumber"/>
       <processor name="Save"/>
    </execute>
@@ -270,7 +274,73 @@
   <parameter name="mccollections" type="StringVec"> </parameter>
 </processor>
 
- <processor name="MyEUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">
+<processor name="ReverseAlignment" type="EUTelApplyAlignmentProcessor">
+	  <!--Apply to the input hit the alignment corrections-->
+	  <!--Alignment constant from the condition file-->
+	  <parameter name="AlignmentConstantName" type="string" lcioInType="LCGenericObject"> dummy </parameter>
+	  <!--The name of the output hit collection-->
+	  <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> fitpoints_local </parameter>
+	  <!--Rotation Angle around X axis-->
+	  <!--parameter name="Alpha" type="double" value="0"/-->
+	  <!--Available directions are:
+	      0 -> direct  
+	      1 -> reverse -->
+	  <parameter name="ApplyAlignmentDirection" type="int" value="1"/>
+	  <!--Do you want the reference hit collection to be corrected by the shifts and tilts from the alignment collection?-->
+	  <parameter name="ApplyToReferenceCollection" type="bool"> 1 </parameter>
+	  <!--Rotation Angle around Y axis-->
+	  <!--parameter name="Beta" type="double" value="0"/-->
+	  <!--Available methods are:
+	      0 -> shift only 
+	      1 -> rotation first 
+	      2 -> shift first -->
+	  <parameter name="CorrectionMethod" type="int" value="1"/>
+	  <!--Enable or disable DEBUG mode -->
+	  <parameter name="DEBUG" type="bool" value="false"/>
+	  <!--Implement geometry shifts and rotations as described in alignmentCollectionName -->
+	  <!--parameter name="DoAlignCollection" type="bool" value="false"/-->
+	  <!--Apply alignment steps in one go. Is supposed to be used for reversealignment in reverse order, like: undoAlignment, undoPreAlignment, undoGear -->
+	  <parameter name="DoAlignmentInOneGo" type="bool" value="true"/>
+	  <!--Implement geometry shifts and rotations as described in GEAR steering file -->
+	  <!--parameter name="DoGear" type="bool" value="false"/-->
+	  <!--Rotation Angle around Z axis-->
+	  <!--parameter name="Gamma" type="double" value="0"/-->
+	  <!--Enable or disable histograms-->
+	  <parameter name="HistogramSwitch" type="bool" value="false"/>
+	  <!--This is the name of the modified output reference hit collection-->
+	  <!--parameter name="OutputReferenceCollection" type="string" value="output_refhit"/-->
+	  <!--Events number to have DEBUG1 printed outs (default=10)-->
+	  <parameter name="PrintEvents" type="int" value="0"/>
+	  <!--This is the name of the reference hit collection-->
+	  <parameter name="ReferenceCollection" type="string"> refhit refhit </parameter>
+	  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+	  <!--parameter name="Verbosity" type="string" value=""/-->
+	  <!--List of alignment collections that were applied to the DUT-->
+	  <parameter name="alignmentCollectionNames" type="StringVec"> prealign alignment </parameter>
+	  <!--The name of the input hit collection-->
+	  <parameter name="InputHitCollectionName" type="StringVec" lcioInType="TrackerHit"> fitpoints alignedHit  </parameter>
+	  <!--List of hit collections. First one is INPUT collection, every subsequent corresponds to applying alignment collection-->
+	  <parameter name="hitCollectionNames" type="StringVec"> fitpoints_local1 fitpoints_local2  </parameter>
+	  <!--List of refhit collections. First one is INPUT collection, every subsequent corresponds to applying alignment collection-->
+	  <parameter name="refhitCollectionNames" type="StringVec"> refhit32 refhit32 </parameter>
+</processor>
+
+ <processor name="TrackDumper" type="EUTelAPIXTbTrackTuple">
+ <!--Prepare tbtrack style n-tuple with track fit results-->
+  <!--DUT zero surpressed data colection name-->
+  <parameter name="DutZsColName" type="string">zsdata_apix </parameter>
+  <!--Name of the input Track collection-->
+  <parameter name="InputTrackCollectionName" type="string" lcioInType="Track"> track </parameter>
+  <!--Name of the plane-wide hit-data hit collection-->
+  <parameter name="InputTrackerHitCollectionName" type="string" lcioInType="TrackerHit"> fitpoints_local1 </parameter>
+  <!--Path/File where root-file should be stored-->
+  <parameter name="OutputPath" type="string">NTuple.root </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <parameter name="DUTIDs" type="IntVec" value="20" />
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+<processor name="MyEUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">
  <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
   <!--Print event number for every n-th event-->
   <parameter name="EveryNEvents" type="int"> @MaxRecordNumber@ </parameter>
