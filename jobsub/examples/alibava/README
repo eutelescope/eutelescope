@@ -1,19 +1,19 @@
 Analysis chain:
 
 To calculate Pedestals
-../../jobsub.py -c config.cfg -csv runlist.csv convert-ped <PedRunNum>
-../../jobsub.py -c config.cfg pedestal <PedRunNum>
-../../jobsub.py -c config.cfg -csv runlist.csv commonmode <PedRunNum>
-../../jobsub.py -c config.cfg pedestal2 <PedRunNum>
+../../jobsub.py -c config.cfg -csv runlist.csv alibava-convert-ped <PedRunNum>
+../../jobsub.py -c config.cfg alibava-pedestal <PedRunNum>
+../../jobsub.py -c config.cfg -csv runlist.csv alibava-commonmode <PedRunNum>
+../../jobsub.py -c config.cfg alibava-pedestal2 <PedRunNum>
 
 To get pedestal subtracted and common mode corrected signal values
-../../jobsub.py -c config.cfg -csv runlist.csv converter <SourceRunNum>
-../../jobsub.py -c config.cfg -csv runlist.csv reco <SourceRunNum>
-../../jobsub.py -c config.cfg commonmodecut <SourceRunNum>
-../../jobsub.py -c config.cfg -csv runlist.csv seedclustering <SourceRunNum>
+../../jobsub.py -c config.cfg -csv runlist.csv alibava-converter <SourceRunNum>
+../../jobsub.py -c config.cfg -csv runlist.csv alibava-reco <SourceRunNum>
+../../jobsub.py -c config.cfg alibava-commonmodecut <SourceRunNum>
+../../jobsub.py -c config.cfg -csv runlist.csv alibava-seedclustering <SourceRunNum>
 
 To plot histograms for data before clustering 
-../../jobsub.py -c config.cfg -csv runlist.csv datahisto <SourceRunNum>
-../../jobsub.py -c config.cfg -csv runlist.csv clusterhisto <SourceRunNum>
+../../jobsub.py -c config.cfg -csv runlist.csv alibava-datahisto <SourceRunNum>
+../../jobsub.py -c config.cfg -csv runlist.csv alibava-clusterhisto <SourceRunNum>
 
 
