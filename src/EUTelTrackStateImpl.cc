@@ -244,10 +244,10 @@ TVector3 EUTelTrackStateImpl::getPfromCartesianParameters() const {
 	streamlog_out(DEBUG5) << "EUTelTrackStateImpl::findIntersectionWithCertainID----------------------------BEGIN" << std::endl;
 	TVector3 pVec = getPfromCartesianParameters();
 	streamlog_out(DEBUG5) << "Momentum: " << pVec[0]<<","<<pVec[1]<<","<<pVec[2]<<","<< std::endl;
-	int sensorID = geo::gGeometry().findIntersectionWithCertainID( _x, _y, _zparameter, pVec[0],pVec[1],pVec[2], _beamQ, nextPlaneID, output ); //Input global positions and momentum in cartesian
-	streamlog_out(DEBUG5) << "SensorID" << sensorID << std::endl;
+//	int sensorID = geo::gGeometry().findIntersectionWithCertainID( _x, _y, _zparameter, pVec[0],pVec[1],pVec[2], _beamQ, nextPlaneID, output ); //Input global positions and momentum in cartesian
+//	streamlog_out(DEBUG5) << "SensorID" << sensorID << std::endl;
 	streamlog_out(DEBUG5) << "EUTelTrackStateImpl::findIntersectionWithCertainID----------------------------END" << std::endl;
-	return sensorID;
+	return nextPlaneID;
 }
 
 TVector3 EUTelTrackStateImpl::getXYZfromArcLength( float s ) const {
