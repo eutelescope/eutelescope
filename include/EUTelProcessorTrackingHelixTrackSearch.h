@@ -201,8 +201,9 @@ namespace eutelescope {
         
         /** Beam spread in [mrad] */
         EVENT::FloatVec _beamSpread;
-				EVENT::FloatVec _createSeedsFromPlanes;
-        /** Histogram info file name */
+				EVENT::IntVec _createSeedsFromPlanes;
+				EVENT::FloatVec _excludePlanes;         
+				/* Histogram info file name */
 	std::string _histoInfoFileName;
 
     protected:

@@ -81,7 +81,7 @@ _aidaHistoMap1D() {
 
 	registerOptionalParameter("HistogramInfoFilename", "Name of histogram info xml file", _histoInfoFileName, std::string("histoinfo.xml"));
 
-	registerOptionalParameter("PlanesToCreateSeedsFrom", "This is the planes you want to create seeds from", _createSeedsFromPlanes,FloatVec(0));
+	registerOptionalParameter("PlanesToCreateSeedsFrom", "This is the planes you want to create seeds from", _createSeedsFromPlanes,IntVec());
 
 	registerOptionalParameter("ExcludePlanes", "This is the planes that will not be included in analysis", _excludePlanes ,FloatVec());
 
@@ -96,6 +96,7 @@ void EUTelProcessorTrackingHelixTrackSearch::init() {
 
 	std::string name("test.root"); //This is the name outputed at the end to store geo info.
 	geo::gGeometry().initializeTGeoDescription(name,false);
+	geo::gGeometry().initialisePlanesNotExcluded(_excludePlanes);
 	// Instantiate track finder. This is a working horse of the processor.
 	streamlog_out(DEBUG) << "Initialisation of track finder" << std::endl;
 
@@ -109,14 +110,15 @@ void EUTelProcessorTrackingHelixTrackSearch::init() {
 	Finder->setAllowedSharedHitsOnTrackCandidate( _AllowedSharedHitsOnTrackCandidate );
 	Finder->setWindowSize( _residualsRMax );
 	Finder->setPlanesToCreateSeedsFrom(_createSeedsFromPlanes);
+	Finder->setExcludePlanes(_excludePlanes);
 
 	Finder->setBeamMomentum( _eBeam );
 	Finder->setBeamCharge( _qBeam );
 	Finder->setBeamMomentumUncertainty( _eBeamUncertatinty );
 	Finder->setBeamSpread( _beamSpread );
-	Finder->setExcludePlanes(_excludePlanes);
 
 	_trackFitter = Finder;
+	_trackFitter->setAutoPlanestoCreateSeedsFrom();
 	_trackFitter->testUserInput();
 	// Book histograms. Yet again this should be replaced. TO DO:Create better histogram method.
  	bookHistograms();
@@ -186,7 +188,8 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
 	_trackFitter->testPlaneDimensions();
 	streamlog_out(DEBUG1) << "Event #" << _nProcessedEvents << std::endl;
 	streamlog_out( DEBUG1 ) << "Trying to find tracks..." << endl;
-
+	_trackFitter->initialiseSeeds();
+	_trackFitter->testInitialSeeds();
 // searching for hits along the expected track direction 
 	_trackFitter->findTrackCandidates( );
 
