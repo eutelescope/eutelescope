@@ -8,7 +8,7 @@
  */
 
 // eutelescope includes ".h"
-#include "EUTelProcessorHotPixelMasker.h"
+#include "EUTelProcessorNoisyPixelFinder.h"
 #include "EUTELESCOPE.h"
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelTrackerDataInterfacerImpl.h"
@@ -55,13 +55,13 @@ using namespace marlin;
 using namespace eutelescope;
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-std::string EUTelProcessorHotPixelMasker::_firing2DHistoName = "Firing2D";
-std::string EUTelProcessorHotPixelMasker::_firing1DHistoName = "Firing1D";
+std::string EUTelProcessorNoisyPixelFinder::_firing2DHistoName = "Firing2D";
+std::string EUTelProcessorNoisyPixelFinder::_firing1DHistoName = "Firing1D";
 #endif
 
 
-EUTelProcessorHotPixelMasker::EUTelProcessorHotPixelMasker(): 
-  Processor("EUTelProcessorHotPixelMasker"),
+EUTelProcessorNoisyPixelFinder::EUTelProcessorNoisyPixelFinder(): 
+  Processor("EUTelProcessorNoisyPixelFinder"),
   _lcioWriteMode(""),
   _zsDataCollectionName(""),
   _hotPixelCollectionName(""),
@@ -74,7 +74,7 @@ EUTelProcessorHotPixelMasker::EUTelProcessorHotPixelMasker():
   _hotpixelDBFile("")
 {
   //processor description
-  _description = "EUTelProcessorHotPixelMasker computes the firing frequency of pixels and applies a cut on this value to mask (NOT remove) hot pixels.";
+  _description = "EUTelProcessorNoisyPixelFinder computes the firing frequency of pixels and applies a cut on this value to mask (NOT remove) hot pixels.";
 
 
   registerInputCollection (LCIO::TRACKERDATA, "ZSDataCollectionName", "Input of Zero Suppressed data",
@@ -105,7 +105,7 @@ EUTelProcessorHotPixelMasker::EUTelProcessorHotPixelMasker():
                              _hotPixelCollectionName, static_cast< string > ( "hotpixel" ));
 }
 
-EUTelProcessorHotPixelMasker::~EUTelProcessorHotPixelMasker()
+EUTelProcessorNoisyPixelFinder::~EUTelProcessorNoisyPixelFinder()
 {
 	//clean up!
 	for( std::map<int, std::vector<std::vector<int> >* >::iterator it = _hitVecMap.begin(); it != _hitVecMap.end(); ++it )
@@ -114,7 +114,7 @@ EUTelProcessorHotPixelMasker::~EUTelProcessorHotPixelMasker()
 	}
 }
 
-void EUTelProcessorHotPixelMasker::initializeHitMaps() 
+void EUTelProcessorNoisyPixelFinder::initializeHitMaps() 
 {
 	//it stored detectoID and itt stores the vector for the y-entries
 	for( EVENT::IntVec::iterator it = _sensorIDVec.begin(); it != _sensorIDVec.end(); ++it ) 
@@ -158,7 +158,7 @@ void EUTelProcessorHotPixelMasker::initializeHitMaps()
     }  
 }
 
-void EUTelProcessorHotPixelMasker::init() 
+void EUTelProcessorNoisyPixelFinder::init() 
 {
 	// this method is called only once even when the rewind is active usually a good idea to
 	printParameters ();
@@ -175,7 +175,7 @@ void EUTelProcessorHotPixelMasker::init()
 	initializeHitMaps();
 }
 
-void EUTelProcessorHotPixelMasker::processRunHeader(LCRunHeader* rdr)
+void EUTelProcessorNoisyPixelFinder::processRunHeader(LCRunHeader* rdr)
 {
 	auto_ptr<EUTelRunHeaderImpl> runHeader( new EUTelRunHeaderImpl(rdr) );
 	runHeader->addProcessor(type());
@@ -187,7 +187,7 @@ void EUTelProcessorHotPixelMasker::processRunHeader(LCRunHeader* rdr)
 	_iEvt = 0;
 }
 
-void EUTelProcessorHotPixelMasker::HotPixelFinder(EUTelEventImpl* evt)
+void EUTelProcessorNoisyPixelFinder::HotPixelFinder(EUTelEventImpl* evt)
 {
     if (evt == NULL )
     {
@@ -250,7 +250,7 @@ void EUTelProcessorHotPixelMasker::HotPixelFinder(EUTelEventImpl* evt)
 	} 
 }
 
-void EUTelProcessorHotPixelMasker::processEvent (LCEvent * event) 
+void EUTelProcessorNoisyPixelFinder::processEvent (LCEvent * event) 
 {
 	//if we are over the number of events we need we just skip
 	if(_noOfEvents < _iEvt)
@@ -296,12 +296,12 @@ void EUTelProcessorHotPixelMasker::processEvent (LCEvent * event)
 	++_iEvt;
 }
 
-void EUTelProcessorHotPixelMasker::end() 
+void EUTelProcessorNoisyPixelFinder::end() 
 {
 	streamlog_out ( MESSAGE4 ) << "Successfully finished" << endl;
 }
 
-void EUTelProcessorHotPixelMasker::check(LCEvent* /*event*/ ) 
+void EUTelProcessorNoisyPixelFinder::check(LCEvent* /*event*/ ) 
 {
 	//only if the eventNo is the amount of events to be processed we analyse the data
 	//since check() runs after the event and we increment the event counter before that
@@ -352,7 +352,7 @@ void EUTelProcessorHotPixelMasker::check(LCEvent* /*event*/ )
 	}
 }
 
-void EUTelProcessorHotPixelMasker::HotPixelDBWriter()
+void EUTelProcessorNoisyPixelFinder::HotPixelDBWriter()
 {    
     streamlog_out ( DEBUG5 ) << "Writing out hot pixel db into " << _hotpixelDBFile.c_str() << endl;
 
@@ -486,7 +486,7 @@ void EUTelProcessorHotPixelMasker::HotPixelDBWriter()
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
-void EUTelProcessorHotPixelMasker::bookAndFillHistos() 
+void EUTelProcessorNoisyPixelFinder::bookAndFillHistos() 
 {
 	streamlog_out ( MESSAGE1 ) << "Booking and filling histograms " << endl;
 
