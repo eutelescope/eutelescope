@@ -30,7 +30,7 @@
 #include "EUTelTrackStateImpl.h"
 #include "EUTelTrackImpl.h"
 #include "EUTelGeometryTelescopeGeoDescription.h"
-
+#include "EUTelTrack.h"
 //LCIO
 #include "lcio.h"
 #include "IMPL/TrackerHitImpl.h"
@@ -152,11 +152,11 @@ namespace eutelescope {
         inline void setBeamMomentumUncertainty(double prec) {
             this->_beamEnergyUncertainty = prec;
         }
-				inline  void setPlanesToCreateSeedsFrom(EVENT::FloatVec createSeedsFromPlanes){
+				inline  void setPlanesToCreateSeedsFrom(EVENT::IntVec createSeedsFromPlanes){
 					this-> _createSeedsFromPlanes = createSeedsFromPlanes;
 				}
 
-				inline void setExcludePlanes(excludePlanes ){
+				inline void setExcludePlanes(EVENT::FloatVec excludePlanes ){
 					this->_excludePlanes = excludePlanes;
 				}
 
@@ -179,6 +179,14 @@ namespace eutelescope {
         inline EVENT::FloatVec getBeamSpread() const {
             return _beamAngularSpread;
         }
+
+//Here if the user does not set a create seeds from planes x. The we set it automatically to the first plane travelling as the beam travels. 
+//This has the best of both world. No reduction on functionality. User does not even know this is here. 	
+void setAutoPlanestoCreateSeedsFrom(){
+	if(_createSeedsFromPlanes.size() == 0){
+		_createSeedsFromPlanes.push_back(geo::gGeometry().sensorZOrdertoIDs().at(0));
+	}
+}	
         
 	/* type conversion:
 	*
@@ -198,11 +206,10 @@ namespace eutelescope {
         void pruneSeeds();
 
         /** Generate seed track candidates */
-        void initialiseSeeds();
 
         /** update EUTelTrackState object at a new plane ID*/
         int findNextPlaneEntrance(  EUTelTrackStateImpl* , int  );
-    		void propagateFromRefPoint( 	std::vector< EUTelTrackImpl* >::iterator &itTrk    );
+    		void propagateForwardFromSeedState(EUTelTrack, EUTelTrack& );
 
         /** a vector of hits found while swimming through the detector planes 
         * write down and dump into a collection in EUTelProcessorTrackerHelixSearch
@@ -218,9 +225,11 @@ namespace eutelescope {
 				void findHitsOrderVec(LCCollection* lcCollection,EVENT::TrackerHitVec& hitsOrderVec); 
 				void onlyRunOnce();
 				bool _firstExecution=true;
-				EVENT::FloatVec _createSeedsFromPlanes;
+				EVENT::IntVec _createSeedsFromPlanes;
 				EVENT::FloatVec _excludePlanes;         
 
+        void initialiseSeeds();
+				void testInitialSeeds();
         /* need a method to get hitFittedVec
          * to be consistent with the other methods - passing the object by reference
          */     
@@ -292,14 +301,14 @@ namespace eutelescope {
         
         /** Find hit closest to the track */
         const EVENT::TrackerHit* findClosestHit( const EUTelTrackStateImpl*, int );
-				std::vector<EVENT::TrackerHitVec> _hitsVecPerPlane;
+				std::map<int ,EVENT::TrackerHitVec> _mapHitsVecPerPlane;
 			protected:
 				EVENT::TrackerHitVec _allHitsVec;//This is all the hits for a single event. 
     private:       
         
         /** Final set of tracks in cartesian parameterisation */
         std::vector< EUTelTrackImpl* > _tracksCartesian;
-
+				std::map<int, std::vector<EUTelTrack> > _mapSensorIDToSeedStatesVec;
         /** Kalman track states */
         std::vector< EUTelTrackStateImpl* > _trackStates;
 
