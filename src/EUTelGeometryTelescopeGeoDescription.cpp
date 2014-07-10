@@ -319,7 +319,26 @@ TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneNormal( int planeID ) {
 const std::map<int, int>& EUTelGeometryTelescopeGeoDescription::sensorIDstoZOrder( ) const {
     return _sensorIDtoZOrderMap;
 }
-
+std::map<int, int>& EUTelGeometryTelescopeGeoDescription::sensorZOrderToIDWithoutExcludedPlanes() {
+	return _sensorZOrderToIDWithoutExcludedPlanes;
+}
+std::map<int, int>& EUTelGeometryTelescopeGeoDescription::sensorIDToZOrderWithoutExcludedPlanes() {
+	return _sensorIDToZOrderWithoutExcludedPlanes;
+}
+void EUTelGeometryTelescopeGeoDescription::initialisePlanesNotExcluded(FloatVec planeIDs ){
+	for(int i = 0 ; i <_sensorZOrderToIDMap.size(); ++i){
+		bool excluded=false;
+		for(int  j =0; j< planeIDs.size(); ++j){
+			if(_sensorZOrderToIDMap[i] = planeIDs[j]){
+				excluded=true;
+			} 
+		}
+		if(!excluded){
+		_sensorIDToZOrderWithoutExcludedPlanes[_sensorZOrderToIDMap[i]] =  i;
+		_sensorZOrderToIDWithoutExcludedPlanes[i]=_sensorZOrderToIDMap[i];
+		}
+	}
+}
 int EUTelGeometryTelescopeGeoDescription::sensorIDtoZOrder( int planeID ) const {
     std::map<int,int>::const_iterator it;
     it = _sensorIDtoZOrderMap.find(planeID);
@@ -1456,7 +1475,7 @@ int EUTelGeometryTelescopeGeoDescription::findNextPlaneEntrance(  double* lpoint
 * @param input: Pointer to fill with the new global coordinates   
 * @return planeID. If there was a problem return -999.
 */
-int EUTelGeometryTelescopeGeoDescription::findIntersectionWithCertainID( float x0, float y0, float z0, float px, float py, float pz, float _beamQ, int nextPlaneID, float* output) {
+int EUTelGeometryTelescopeGeoDescription::findIntersectionWithCertainID( float x0, float y0, float z0, float px, float py, float pz, float _beamQ, int nextPlaneID, float output[]) {
 streamlog_out(DEBUG5) << "EUTelGeometryTelescopeGeoDescription::findIntersection()" << std::endl;
  
 	// Set position and momentum vector//////////////////////////////////
@@ -1644,10 +1663,10 @@ TVector3 EUTelGeometryTelescopeGeoDescription::getXYZfromArcLength( float x0, fl
 	// Fill-in matrix elements
 	TMatrix jacobianF(5,5);
 	jacobianF.UnitMatrix();
-	jacobianF[0][2] = dxdtx0;	jacobianF[0][3] = dxdty0;	jacobianF[0][4] = dxdinvP0;
-	jacobianF[1][2] = dydtx0;	jacobianF[1][3] = dydty0;	jacobianF[1][4] = dydinvP0;
-	jacobianF[2][3] = dtxdty0;	jacobianF[2][4] = dtxdinvP0;
-	jacobianF[3][2] = dtydtx0;	jacobianF[3][4] = dtydinvP0;
+	jacobianF[3][1] = dxdtx0;	jacobianF[3][2] = dxdty0;	jacobianF[3][0] = dxdinvP0;
+	jacobianF[4][1] = dydtx0;	jacobianF[4][2] = dydty0;	jacobianF[4][0] = dydinvP0;
+	jacobianF[1][2] = dtxdty0;	jacobianF[1][0] = dtxdinvP0;
+	jacobianF[2][1] = dtydtx0;	jacobianF[2][0] = dtydinvP0;
         
         if ( streamlog_level(DEBUG0) ){
              streamlog_out( DEBUG0 ) << "Propagation jacobian: " << std::endl;
@@ -1659,6 +1678,8 @@ TVector3 EUTelGeometryTelescopeGeoDescription::getXYZfromArcLength( float x0, fl
 	return jacobianF;
         
 }   
+
+		
 
 
     

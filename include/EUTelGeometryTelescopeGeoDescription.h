@@ -223,17 +223,20 @@ namespace eutelescope {
 	    /** Plane normal vector (nx,ny,nz) */
             TVector3 siPlaneNormal( int );
             
-            
+            void initialisePlanesNotExcluded(FloatVec planeIDs );
             /** Map from sensor ID to number along Z */
             const std::map<int, int>& sensorZOrdertoIDs() const;
             
+            std::map<int, int>& sensorZOrderToIDWithoutExcludedPlanes(); 
+						std::map<int,int>& sensorIDToZOrderWithoutExcludedPlanes();
             /** Map from sensor ID to number along Z */
             const std::map<int, int>& sensorIDstoZOrder() const;
             
             int sensorIDtoZOrder( int ) const;
             
             int sensorZOrderToID( int ) const;
-            
+
+	
             /** Vector of all sensor IDs */
             const EVENT::IntVec& sensorIDsVec() const;
 
@@ -297,7 +300,7 @@ namespace eutelescope {
  
 		void master2LocalVec( int, const double[], double[] );
 
-		int findIntersectionWithCertainID( float x0, float y0, float z0, float px, float py, float pz, float _beamQ, int nextPlaneID, float* output);
+		int findIntersectionWithCertainID( float x0, float y0, float z0, float px, float py, float pz, float _beamQ, int nextPlaneID, float output[]);
 
 		TVector3 getXYZfromArcLength( float x0, float y0, float z0, float px, float py, float pz, float _beamQ, float s) const;
 
@@ -379,7 +382,11 @@ namespace eutelescope {
             /** Map from sensor ID to number along Z */
             std::map<int, int> _sensorIDtoZOrderMap;
 
+						std::map<int,int> _sensorZOrderToIDWithoutExcludedPlanes;
             /** X coordinate of the sensors centers in global coordinate frame [mm]*/
+
+						std::map<int, int> _sensorIDToZOrderWithoutExcludedPlanes;
+
             EVENT::DoubleVec _siPlaneXPosition;
             
             /** Y coordinate of the sensors centers in global coordinate frame [mm]*/
