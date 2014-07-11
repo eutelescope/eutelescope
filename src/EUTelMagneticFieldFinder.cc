@@ -159,7 +159,7 @@ void EUTelKalmanFilter::propagateForwardFromSeedState( EUTelTrack state, EUTelTr
 		}
 		TMatrixD jacobian(5,5);
 		jacobian.Zero();
-		jacobian = state.findPropagationJacobianFromStateToThisZLocation(globalIntersection[2]); //Find all the relations between state variables at a particular z parameter dpoint[2] 
+		jacobian = state.computePropagationJacobianFromStateToThisZLocation(globalIntersection[2]); //Find all the relations between state variables at a particular z parameter dpoint[2] 
 	}
 
 		/*	
@@ -494,8 +494,8 @@ void EUTelKalmanFilter::initialiseSeeds() {
 			streamlog_out ( DEBUG2 ) << "pick next hit " << _createSeedsFromPlanes[iplane]<< " " <<  posLocal[0] << " " << posLocal[1] << " " << posLocal[2] <<  " : "<< posGlobal[0] << " "    << posGlobal[1] << " "   << posGlobal[2] << " " << endl;
 			state.setLocation(_createSeedsFromPlanes[iplane]);//This stores the location as a float in Z0 since no location for track LCIO. This is preferable to problems with storing hits however 
 			state.setPosition(posGlobal); //This will automatically take cartesian coordinate system and save it to reference point. //This is different from most LCIO applications since each track will have own reference point. 		
-			state.setdirectionXY(0.);  // seed with 0 at first hit. This one is stored as tan (x/y) rather than angle as in LCIO format TO DO:This really should be give as a beam direction.  
-			state.setdirectionYZ(0.);  // seed with 0 at first hit.
+			state.setDirectionXY(0.);  // seed with 0 at first hit. This one is stored as tan (x/y) rather than angle as in LCIO format TO DO:This really should be give as a beam direction.  
+			state.setDirectionYZ(0.);  // seed with 0 at first hit.
 			state.setBeamCharge(_beamQ);//this is set for each state. to do: is there a more efficient way of doing this since we only need this stored once?
 			state.setBeamEnergy(_beamE);//this is saved in gev. 
 			state.initialiseCurvature(); //this will perform the calculation _beamq/_beame ad place in invp
