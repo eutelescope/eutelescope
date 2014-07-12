@@ -192,9 +192,9 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
 	_trackFitter->testInitialSeeds();
 // searching for hits along the expected track direction 
 	_trackFitter->findTrackCandidates( );
-
+	_trackFitter->findTracksWithEnoughHits();
 // remove possible duplicates (the amount of commont hits on the split tracks is controled via the processor paraemter)
-	_trackFitter->PruneTrackCandidates( );
+	_trackFitter->findTrackCandidatesWithSameHitsAndRemove();
 
 	streamlog_out( DEBUG1 ) << "Retrieving track candidates..." << endl;
 

@@ -93,11 +93,6 @@ namespace eutelescope {
          *  using TGeo derived functions         */  
         void findTrackCandidates();
 
-        /** Prune track candidates
-         *  supposed to be removing track candidates which have n% hits in common      */  
-        void PruneTrackCandidates();
-
-
         /** Initialise Fitter */
         void testUserInput();
 
@@ -220,14 +215,19 @@ void setAutoPlanestoCreateSeedsFrom(){
 				void setPlaneDimensionsVec();
 				void testPlaneDimensions();
 				void testHitsVecPerPlane();
+				void testPositionEstimation(float position1[], float position2[]);
 				std::vector<int> _planeDimensions;
 				void setHitsVecPerPlane();
 				void findHitsOrderVec(LCCollection* lcCollection,EVENT::TrackerHitVec& hitsOrderVec); 
+				void findTracksWithEnoughHits();
+				void findTrackCandidatesWithSameHitsAndRemove();
 				void onlyRunOnce();
 				bool _firstExecution=true;
 				EVENT::IntVec _createSeedsFromPlanes;
 				EVENT::FloatVec _excludePlanes;         
-
+				std::vector<EUTelTrack> _tracks;
+				std::vector<EUTelTrack> _tracksAfterEnoughHitsCut;
+				std::vector<EUTelTrack>	_trackAfterSameHitsCut;
         void initialiseSeeds();
 				void testInitialSeeds();
         /* need a method to get hitFittedVec
@@ -252,7 +252,7 @@ void setAutoPlanestoCreateSeedsFrom(){
         TMatrixD updateGainK( const EUTelTrackStateImpl*, const EVENT::TrackerHit* );
 
         /** Propagate track state */
-        void propagateTrackState( EUTelTrackStateImpl* );
+        void propagateTrackState( EUTelTrack& );
         
         /** Construct LCIO track object from internal track data */
         void prepareLCIOTrack();
@@ -272,7 +272,7 @@ void setAutoPlanestoCreateSeedsFrom(){
         TVector3 getXYZfromArcLength( const EUTelTrackStateImpl*, double ) const;
         TVector3 getXYZfromArcLength1( const EUTelTrackStateImpl*, double ) const;
 
-				void nextStateUsingJacobianFinder(EUTelTrackStateImpl* input, EUTelTrackStateImpl* output, TMatrixD& jacobian);
+				void findNextStateUsingJacobian(EUTelTrack& state,TMatrixD & jacobian,float zPosition, EUTelTrack& newState);
 
 				void UpdateStateUsingHitInformation(EUTelTrackStateImpl*,EVENT::TrackerHit* , const TMatrixD&, TMatrixD &, TMatrixD &);
 
@@ -283,14 +283,14 @@ void setAutoPlanestoCreateSeedsFrom(){
          * from track's ref. point */
         TVector3 getXYZfromDzNum( const EUTelTrackStateImpl*, double ) const;
 
-	double getXYPredictionPrecision( const EUTelTrackStateImpl* ts ) const;
+	double getXYPredictionPrecision(EUTelTrack& ts ) const;
         
         
         /** Get hit covariance matrix */
         TMatrixDSym getHitCov( const EVENT::TrackerHit* hit ) const;
         
         /** Get residual vector */
-        TVectorD getResidual( const EUTelTrackStateImpl*, const EVENT::TrackerHit* ) const;
+        TVectorD computeResidual(  EUTelTrack &, const EVENT::TrackerHit* ) const;
         
         /** Get residual covariance matrix */
         TMatrixDSym getResidualCov( const EUTelTrackStateImpl*, const EVENT::TrackerHit* hit );
@@ -300,7 +300,7 @@ void setAutoPlanestoCreateSeedsFrom(){
         IMPL::TrackImpl* cartesian2LCIOTrack( EUTelTrackImpl* ) const;
         
         /** Find hit closest to the track */
-        const EVENT::TrackerHit* findClosestHit( const EUTelTrackStateImpl*, int );
+        const EVENT::TrackerHit* findClosestHit(EUTelTrack&);
 				std::map<int ,EVENT::TrackerHitVec> _mapHitsVecPerPlane;
 			protected:
 				EVENT::TrackerHitVec _allHitsVec;//This is all the hits for a single event. 

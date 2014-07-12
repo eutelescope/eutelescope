@@ -22,8 +22,9 @@ namespace eutelescope {
 		public: 
 			EUTelTrack();
 			//getters
-			int	getLocation();
-
+			int	getLocation() const;
+			TMatrixDSym getTrackStateCov() const;
+			TVectorD getTrackStateVec() const ;
 			//setters
 			void setLocation(int location);
 			void setBeamEnergy(float beamE);
