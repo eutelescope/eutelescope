@@ -33,7 +33,7 @@ EUTelSimpleSparsePixel::EUTelSimpleSparsePixel()\
   _type = kEUTelSimpleSparsePixel;
 }
 
-EUTelSimpleSparsePixel::EUTelSimpleSparsePixel(short xCoord, short yCoord, short signal)
+EUTelSimpleSparsePixel::EUTelSimpleSparsePixel(short xCoord, short yCoord, float signal)
   : _xCoord(0),
     _yCoord(0),
     _signal(0)
