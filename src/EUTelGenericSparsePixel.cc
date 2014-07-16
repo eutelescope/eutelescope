@@ -31,7 +31,7 @@ EUTelGenericSparsePixel::EUTelGenericSparsePixel():
 
 
 //Constructor with all four parameters
-EUTelGenericSparsePixel::EUTelGenericSparsePixel(short xCoord, short yCoord, short signal, short time):
+EUTelGenericSparsePixel::EUTelGenericSparsePixel(short xCoord, short yCoord, float signal, short time):
 	_xCoord(xCoord),
 	_yCoord(yCoord),
 	_signal(signal),
@@ -42,7 +42,7 @@ EUTelGenericSparsePixel::EUTelGenericSparsePixel(short xCoord, short yCoord, sho
 }
 
 //Constructor with only X,Y,signal. The time is thus set to zero
-EUTelGenericSparsePixel::EUTelGenericSparsePixel(short xCoord, short yCoord, short signal):
+EUTelGenericSparsePixel::EUTelGenericSparsePixel(short xCoord, short yCoord, float signal):
 	_xCoord(xCoord),
 	_yCoord(yCoord),
 	_signal(signal),

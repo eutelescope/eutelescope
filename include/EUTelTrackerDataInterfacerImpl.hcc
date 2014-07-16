@@ -119,9 +119,9 @@ namespace eutelescope {
 	inline EUTelSimpleSparsePixel* EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel>::getSparsePixelAt(unsigned int index, EUTelSimpleSparsePixel * pixel ) const 
 	{
 		if ( index * _nElement + 2 > _trackerData->getChargeValues().size() ) return 0x0;
-		pixel->setXCoord( static_cast<int> ( _trackerData->getChargeValues()[index * _nElement] ) );
-		pixel->setYCoord( static_cast<int> ( _trackerData->getChargeValues()[index * _nElement + 1] ) );
-		pixel->setSignal( static_cast<int> ( _trackerData->getChargeValues()[index * _nElement + 2] ) );
+		pixel->setXCoord( static_cast<short> ( _trackerData->getChargeValues()[index * _nElement] ) );
+		pixel->setYCoord( static_cast<short> ( _trackerData->getChargeValues()[index * _nElement + 1] ) );
+		pixel->setSignal(  _trackerData->getChargeValues()[index * _nElement + 2] ) ;
 
 		return pixel;
 	}
@@ -130,10 +130,10 @@ namespace eutelescope {
 	inline EUTelGenericSparsePixel* EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>::getSparsePixelAt(unsigned int index, EUTelGenericSparsePixel* pixel ) const
 	{
 		if ( index * _nElement + 3 > _trackerData->getChargeValues().size() ) return 0x0;
-		pixel->setXCoord( static_cast<int> ( _trackerData->getChargeValues()[index * _nElement] ) );
-		pixel->setYCoord( static_cast<int> ( _trackerData->getChargeValues()[index * _nElement + 1] ) );
-		pixel->setSignal( static_cast<int> ( _trackerData->getChargeValues()[index * _nElement + 2] ) );
-		pixel->setTime(   static_cast<int> ( _trackerData->getChargeValues()[index * _nElement + 3] ) );
+		pixel->setXCoord( static_cast<short> ( _trackerData->getChargeValues()[index * _nElement] ) );
+		pixel->setYCoord( static_cast<short> ( _trackerData->getChargeValues()[index * _nElement + 1] ) );
+		pixel->setSignal( _trackerData->getChargeValues()[index * _nElement + 2] );
+		pixel->setTime(   static_cast<short> ( _trackerData->getChargeValues()[index * _nElement + 3] ) );
 		
 		return pixel;
 	}
@@ -142,10 +142,10 @@ namespace eutelescope {
 	inline EUTelGeometricPixel* EUTelTrackerDataInterfacerImpl<EUTelGeometricPixel>::getSparsePixelAt(unsigned int index, EUTelGeometricPixel* pixel ) const
 	{
 		if ( index * _nElement + 7 > _trackerData->getChargeValues().size() ) return 0x0;
-		pixel->setXCoord( static_cast<int>( _trackerData->getChargeValues()[index * _nElement] ) );
-		pixel->setYCoord( static_cast<int>( _trackerData->getChargeValues()[index * _nElement + 1] ) );
-		pixel->setSignal( static_cast<int>( _trackerData->getChargeValues()[index * _nElement + 2] ) );
-		pixel->setTime(   static_cast<int>( _trackerData->getChargeValues()[index * _nElement + 3] ) );
+		pixel->setXCoord( static_cast<short>( _trackerData->getChargeValues()[index * _nElement] ) );
+		pixel->setYCoord( static_cast<short>( _trackerData->getChargeValues()[index * _nElement + 1] ) );
+		pixel->setSignal( _trackerData->getChargeValues()[index * _nElement + 2] );
+		pixel->setTime(   static_cast<short>( _trackerData->getChargeValues()[index * _nElement + 3] ) );
 
 		pixel->setPosX( _trackerData->getChargeValues()[index * _nElement + 4] );
 		pixel->setPosY( _trackerData->getChargeValues()[index * _nElement + 5] );
@@ -164,9 +164,9 @@ namespace eutelescope {
 		_trackerData->chargeValues().push_back( static_cast<float> (pixel->getYCoord()) );
 		_trackerData->chargeValues().push_back( static_cast<float> (pixel->getSignal()) );
 
-		_pixelVec.push_back (EUTelSimpleSparsePixel(	static_cast< short >(pixel->getXCoord()), 
-								static_cast< short >(pixel->getYCoord()), 
-								static_cast< short >(pixel->getSignal()) 
+		_pixelVec.push_back (EUTelSimpleSparsePixel(	static_cast<short>(pixel->getXCoord()), 
+								static_cast<short>(pixel->getYCoord()), 
+								static_cast<float>(pixel->getSignal()) 
 								));
 	}
   
@@ -181,7 +181,7 @@ namespace eutelescope {
 		//add pixel to local pixel vector
 		_pixelVec.push_back(EUTelGenericSparsePixel(	static_cast<short>(pixel->getXCoord()),
 								static_cast<short>(pixel->getYCoord()),
-								static_cast<short>(pixel->getSignal()),
+								static_cast<float>(pixel->getSignal()),
 								static_cast<short>(pixel->getTime() )
 								));
 	}
@@ -203,7 +203,7 @@ namespace eutelescope {
 		//add pixel to local pixel vector
 		_pixelVec.push_back(EUTelGeometricPixel(	static_cast<short>(pixel->getXCoord()),
 								static_cast<short>(pixel->getYCoord()),
-								static_cast<short>(pixel->getSignal()),
+								static_cast<float>(pixel->getSignal()),
 								static_cast<short>(pixel->getTime() ),
 								pixel->getPosX(),
 								pixel->getPosY(),
@@ -218,9 +218,9 @@ namespace eutelescope {
 	{
 		for ( unsigned int index = 0 ; index < _trackerData->getChargeValues().size() ; index += 3 )
 		{
-			_pixelVec.push_back( EUTelSimpleSparsePixel(	static_cast< short >(_trackerData->getChargeValues()[ index ]),
-									static_cast< short >(_trackerData->getChargeValues()[ index + 1 ]),
-									static_cast< short >(_trackerData->getChargeValues()[ index + 2 ]) 
+			_pixelVec.push_back( EUTelSimpleSparsePixel(	static_cast<short>(_trackerData->getChargeValues()[ index ]),
+									static_cast<short>(_trackerData->getChargeValues()[ index + 1 ]),
+									static_cast<float>(_trackerData->getChargeValues()[ index + 2 ]) 
 									));
 		}
 	}
@@ -232,7 +232,7 @@ namespace eutelescope {
 		{
 			_pixelVec.push_back(EUTelGenericSparsePixel(	static_cast<short>(_trackerData->getChargeValues()[ index ] ),
 									static_cast<short>(_trackerData->getChargeValues()[ index + 1 ]),
-									static_cast<short>(_trackerData->getChargeValues()[ index + 2 ]),
+									static_cast<float>(_trackerData->getChargeValues()[ index + 2 ]),
 									static_cast<short>(_trackerData->getChargeValues()[ index + 3 ])
 									));
 		}
@@ -245,15 +245,14 @@ namespace eutelescope {
 		{
 			_pixelVec.push_back(EUTelGeometricPixel(	static_cast<short>(_trackerData->getChargeValues()[ index ] ),
 									static_cast<short>(_trackerData->getChargeValues()[ index + 1 ]),
-									static_cast<short>(_trackerData->getChargeValues()[ index + 2 ]),
+									static_cast<float>(_trackerData->getChargeValues()[ index + 2 ]),
 									static_cast<short>(_trackerData->getChargeValues()[ index + 3 ]),
 									_trackerData->getChargeValues()[ index + 4 ],
 									_trackerData->getChargeValues()[ index + 5 ],
 									_trackerData->getChargeValues()[ index + 6 ],
 									_trackerData->getChargeValues()[ index + 7 ]
 									));
+		}
 	}
-}
-
 } //namespace
 #endif

@@ -35,7 +35,7 @@ namespace eutelescope {
   public:
     
     //! Default constructor with all arguments
-    EUTelSimpleSparsePixel(short xCoord, short yCoord, short signal); 
+    EUTelSimpleSparsePixel(short xCoord, short yCoord, float signal); 
 
     //! Default constructor with no args
     EUTelSimpleSparsePixel(); 
@@ -74,7 +74,7 @@ namespace eutelescope {
     void setYCoord(short yCoord) { _yCoord = yCoord ; }
 
     //! Setter for the signal
-    void setSignal(short signal) { _signal = signal ; }
+    void setSignal(float signal) { _signal = signal ; }
 
     //! Getter for the x coordinate
     inline short getXCoord() const { return _xCoord ; } 
@@ -83,8 +83,7 @@ namespace eutelescope {
     inline short getYCoord() const { return _yCoord ; } 
 
     //! Getter for the signal
-//    inline float getSignal() const { return static_cast<float> (_signal) ; } 
-    inline float getSignal() const { return static_cast<float> (_signal) ; } 
+    inline float getSignal() const { return _signal ; } 
 
 
   private:
@@ -96,7 +95,7 @@ namespace eutelescope {
     short _yCoord;
 
     //! The signal
-    short _signal;
+    float _signal;
 
   };
 }

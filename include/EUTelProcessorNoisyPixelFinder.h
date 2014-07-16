@@ -6,8 +6,8 @@
  *   header with author names in all development based on this file.
  *
  */
-#ifndef EUTELPROCESSORHOTPIXELMASKER_H
-#define EUTELPROCESSORHOTPIXELMASKER_H
+#ifndef EUTELPROCESSORNOISYPIXELFINDER_H
+#define EUTELPROCESSORNOISYPIXELFINDER_H
 
 // eutelescope includes ".h"
 #include "EUTelEventImpl.h"
@@ -66,25 +66,25 @@ struct sensor {
  *
  *  @param HotPixelCollectionName The name of the collection in the output file
  */
-class EUTelProcessorHotPixelMasker : public marlin::Processor {
+class EUTelProcessorNoisyPixelFinder : public marlin::Processor {
 
 public:
-    //! Returns a new instance of EUTelProcessorHotPixelMasker
+    //! Returns a new instance of EUTelProcessorNoisyPixelFinder
     /*! This method returns an new instance of the this processor.  It
      *  is called by Marlin execution framework and it shouldn't be
      *  called/used by the final user.
      *
-     *  @return a new EUTelProcessorHotPixelMasker.
+     *  @return a new EUTelProcessorNoisyPixelFinder.
      */
     virtual Processor* newProcessor() {
-      return new EUTelProcessorHotPixelMasker;
+      return new EUTelProcessorNoisyPixelFinder;
     }
 
     //! Default constructor
-    EUTelProcessorHotPixelMasker();
+    EUTelProcessorNoisyPixelFinder();
 
     //! Default destructor
-    ~EUTelProcessorHotPixelMasker();
+    ~EUTelProcessorNoisyPixelFinder();
 
     //! Called at the job beginning.
     /*! This is executed only once in the whole execution. It prints
@@ -229,7 +229,7 @@ protected:
 };
 
 //! A global instance of the processor
-EUTelProcessorHotPixelMasker gEUTelProcessorHotPixelMasker;
+EUTelProcessorNoisyPixelFinder gEUTelProcessorNoisyPixelFinder;
 
 }
 #endif
