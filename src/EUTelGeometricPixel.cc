@@ -30,7 +30,7 @@ EUTelGeometricPixel::EUTelGeometricPixel():
 }
 
 //Constructor taking all possible eight arguments
-EUTelGeometricPixel::EUTelGeometricPixel(short xCoord, short yCoord, short signal, short time, float posX, float posY, float boundX, float boundY):
+EUTelGeometricPixel::EUTelGeometricPixel(short xCoord, short yCoord, float signal, short time, float posX, float posY, float boundX, float boundY):
 	EUTelGenericSparsePixel(xCoord, yCoord, signal, time),
 	_posX(posX),
 	_posY(posY),

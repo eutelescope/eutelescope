@@ -44,7 +44,7 @@ class EUTelGeometricPixel : public EUTelGenericSparsePixel  {
 
 public:
     //! Default constructor with all arguments (individually)
-    EUTelGeometricPixel(short xCoord, short yCoord, short signal, short time, float posX, float posY, float boundX, float boundY); 
+    EUTelGeometricPixel(short xCoord, short yCoord, float signal, short time, float posX, float posY, float boundX, float boundY); 
 
     //! Default constructor with all arguments (EUTelGenericSparsePixel, 4 additional geometry related)
     EUTelGeometricPixel(EUTelGenericSparsePixel& genericPixel, float posX, float posY, float boundX, float boundY); 
