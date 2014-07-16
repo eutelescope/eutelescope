@@ -261,29 +261,23 @@ namespace eutelescope {
   //
   template<class PixelType> 
   void EUTelSparseClusterImpl<PixelType>::getCenterOfGravity(float&  xCoG, float& yCoG) const {
-    // getCenterOfGravityShift(xCoG, yCoG);
-//printf("new cluster \n");    
-    // int xSeed = 0;
-    // int ySeed = 0;
-    // getSeedCoord(xSeed, ySeed);
     
-    // xCoG += static_cast<float > ( xSeed );
-    // yCoG += static_cast<float > ( ySeed );
-    PixelType * pixel = new PixelType;
+    PixelType* pixel = new PixelType;
+    
     float xPos(0.0f), yPos(0.0f), totWeight(0.0f);
-    for ( unsigned int index = 0; index < size() ; index++ ) {
+  
+    for ( unsigned int index = 0; index < size() ; index++ ) 
+    {
       getSparsePixelAt( index, pixel );
-      xPos += pixel->getXCoord();
-      yPos += pixel->getYCoord();
-      totWeight += 1.0f;
-//if(size()>3)
-//{
-//printf("index:%5d xPos:%8d  yPos:%8d weight:%8.3f :: %8.3f %8.3f \n", 
-//          index, pixel->getXCoord(), pixel->getYCoord(), totWeight, xPos / totWeight, yPos / totWeight);
-//}
+      float curSignal = pixel->getSignal(); 
+      xPos += (pixel->getXCoord())*curSignal;
+      yPos += (pixel->getYCoord())*curSignal;
+      totWeight += curSignal;
     }
+
     xCoG = xPos / totWeight;
     yCoG = yPos / totWeight;
+    
     delete pixel;
   }
 
