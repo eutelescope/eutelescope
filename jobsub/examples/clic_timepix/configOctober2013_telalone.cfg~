@@ -1,0 +1,213 @@
+# EXAMPLE CONFIG FOR RUNNING LOCALLY OVER TELESCOPE DATA ONLY
+# - configuration for Datura telescope used for test beam campaign in June 2012 at DESY TB21
+# - for details see the included README
+# - for tests, you can find an example run here:
+#   /afs/desy.de/group/telescopes/EutelTestData/TestPysubExampleDaturaAlone/run004118.raw
+#   (telescope only data taken with (passive) CMS pixel as DUT)
+# ---------------------------------------------------------------------------------------------
+# 
+
+[DEFAULT]
+# global section. Settings can be overwritten through task-specific sections
+
+# The python config parser interprets '%(NAME)s' as the corresponding variable NAME.
+# The variable EutelescopePath is by default filled with the environment variable EUTELESCOPE
+# and should correspond to the installation path of EUTelescope.
+# Also, the variable %(home)s corresponds to the user's home directory.
+
+# the template file name can be set with
+# TemplateFile = file.xml
+# The default is '[task]-tmp.xml'
+
+BasePath     		= %(eutelescopepath)s/jobsub/examples/datura-alone
+TemplatePath		= %(BasePath)s/steering-templates
+# set the folder which contains the raw/native data files
+NativeFolder            = /VertexScratch/TB_Data/DESY_TB_DATA_October2013
+# geometry file
+GEARFile    		= gear_desyOctober2013_tb21_telalone.xml
+# histogram information
+Histoinfo   		= histoinfo.xml
+# format for the output; @RunNumber@ is the current run number padded with leading zeros to 6 digits
+Output			= run@RunNumber@
+# which run number to use for hot pixel determination
+HotpixelRunNumber	= @RunNumber@
+SkipNEvents = 
+# set here the path where the gear file are stored
+GearPath	    	      = %(BasePath)s
+# set here the path for the histoinfo file
+HistoinfoPath          = %(BasePath)s
+# Set here the path for the input file
+# recommended subfolder structure:
+LocalFolderOutputBase		= /VertexScratch/TB_Data/DESY_TB_DATA_October2013_align_results
+LcioRawFolder            	= %(LocalFolderOutputBase)s/lcio-raw
+DBPath				= %(LocalFolderOutputBase)s/db
+ResultsPath			= %(LocalFolderOutputBase)s/results
+HistoPath			= %(LocalFolderOutputBase)s/histo
+LogPath				= %(LocalFolderOutputBase)s/logs
+# limit processing of run to a certain number of events
+MaxRecordNumber = 150000
+# the verbosity used by the eutelescope producers (i.e. MESSAGE, DEBUG, ERROR with appended level from 0..9, e.g. MESSAGE5)
+# if you set this to DEBUG0 but you do not see any DEBUG messages, make sure that you set CMAKE_BUILD_TYPE to Debug in the 
+# $EUTELESCOPE/CMakeList.txt file.
+Verbosity = MESSAGE
+
+[converter]
+# section for the converter step
+
+[clusearch]
+
+[hitmaker]
+InputFile		= %(ResultsPath)s/run@RunNumber@-clu.slcio
+
+[align]
+InputFile		= %(ResultsPath)s/run@RunNumber@-hit.slcio
+PedeSteeringFile	= %(TemplatePath)s/pede-steer-tmp.txt
+# do not need so many events for alignment - this overwrites global value set above
+RunPede             = 1 
+UseResidualCuts     = 1
+Records             = 10000000
+# Skip                = 0
+#                     plane0  1     2     3     4     5
+ResidualXMin        = -500. -450. -450.  -450. -450. -450  
+ResidualXMax        =  500.  450.  450.   450.  450.  450  
+ResidualYMin        = -500. -450. -450.  -450. -450. -450 
+ResidualYMax        =  500.  450.  450.   450.  450.  450  
+#
+# DistanceMax [um] used in EUTelMille/findTrack:
+#
+#
+BeamEnergy 	       = 5.6 
+
+InputFile		= %(ResultsPath)s/run@RunNumber@-hit.slcio
+AlignmentFile		= %(DBPath)s/run@RunNumber@-align-db.slcio
+
+
+
+Records                 = 10000000
+MaxRecordNumber         = 10000000
+#
+# TestFitter options
+AllowedSkipHits        = 0	
+SkipHitPenalty         = 1 
+AllowedMissingHits     = 0
+MissingHitPenalty      = 1 
+Chi2Max                = 50
+PassiveLayerIDs        = 6
+DistanceMax            = 4500.0
+BeamEnergy 	       = 5
+ExcludePlanes       = 6
+
+FixedPlanes         = 0
+
+
+MinDxDz = -0.2
+MaxDxDz =  0.2
+MinDyDz = -0.2
+MaxDyDz =  0.2
+MaxChi2 = 500
+
+PreAlignmentFile	= %(DBPath)s/run000048-prealign-db.slcio
+
+
+TelescopeResolution = 3.5 3.5 3.5 3.5 3.5 3.5
+ResolutionX = 14.6 14.6 14.6 14.6 14.6 14.6
+ResolutionY = 14.6 14.6 14.6 14.6 14.6 14.6
+
+[aligndut]
+InputFile		=  %(ResultsPath)s/run000062-hit.slcio %(ResultsPath)s/run000131-hit.slcio 
+
+
+
+
+PedeSteeringFile	= %(TemplatePath)s/pede-steer-tmp.txt
+# do not need so many events for alignment - this overwrites global value set above
+MaxRecordNumber     = 1000000
+RunPede             = 1 
+UseResidualCuts     = 0
+Records             = 10000000
+# Skip                = 0
+#                     plane0  1     2     3     4     5
+ResidualXMin        = -150. -150. -150. -275. -150. -150.  -150
+ResidualXMax        =  150.  150.  150.  -50.  150.  150.   150
+ResidualYMin        = -150. -150. -150.  325. -150. -150.  -150
+ResidualYMax        =  150.  150.  150.  575.  150.  150.   150
+#
+
+#ResidualXMin        = -1500. -1500. -1500. -5000. -1500. -1500.  -1500
+#ResidualXMax        =  1500.  1500.  1500.  5000.  1500.  1500.   1500
+#ResidualYMin        = -1500. -1500. -1500. -5000. -1500. -1500.  -1500
+#ResidualYMax        =  1500.  1500.  1500.  5000.  1500.  1500.   1500
+
+
+AllowedSkipHits        = 0
+SkipHitPenalty         = 1 
+AllowedMissingHits     = 0
+MissingHitPenalty      = 1 
+Chi2Max                = 100000000
+PassiveLayerIDs        =  
+BeamEnergy 	       = 5 
+#
+ExcludePlanes       = 
+FixedPlanes         = 0 1 2 3 4 5 
+
+
+MinDxDz = -1
+MaxDxDz = 1
+MinDyDz = -1
+MaxDyDz = 1
+MaxChi2 = 100000
+DistanceMax         =  10
+
+TelescopeResolution = 200 200 200 500 200 200 200
+
+
+PreAlignmentFile	= %(DBPath)s/run000001_prealign-db_final.slcio
+AlignmentFile		= %(DBPath)s/runs_1-2-3-9_freeZ_align-db_resCuts.slcio
+
+
+
+[fitter]
+
+InputFile		= %(ResultsPath)s/run@RunNumber@-hit.slcio
+#PreAlignmentFile	= %(DBPath)s/run@RunNumber@_prealign-db.slcio
+#AlignmentFile		= %(DBPath)s/run@RunNumber@-align-db.slcio
+
+PreAlignmentFile	= %(DBPath)s/run@RunNumber@_prealign-db.slcio
+AlignmentFile		= %(DBPath)s/run@RunNumber@-align-db.slcio
+
+
+Records                 = 10000000
+MaxRecordNumber         = 10000
+#
+# TestFitter options
+AllowedSkipHits        = 0	
+SkipHitPenalty         = 1 
+AllowedMissingHits     = 0
+MissingHitPenalty      = 1 
+Chi2Max                = 5000
+PassiveLayerIDs        = 6
+DistanceMax            = 2000.0
+BeamEnergy 	       = 5
+ExcludePlanes       = 
+
+FixedPlanes         = 
+
+
+MinDxDz = -0.2
+MaxDxDz =  0.2
+MinDyDz = -0.2
+MaxDyDz =  0.2
+MaxChi2 = 500
+
+TelescopeResolution = 35 35 35 35 35 35
+UseResidualCuts     = 1
+
+ResidualXMin        = -80. -80. -80. -250. -80. -80.  -80
+ResidualXMax        =  80.  80.  80.  250.  80.  80.   80
+ResidualYMin        = -80. -80. -80. -250. -80. -80.  -80
+ResidualYMax        =  80.  80.  80.  250.  80.  80.   80
+
+
+[viewer]
+AlignmentFile		= %(DBPath)s/runs_1-2-3-9_fixedZ_align-db.slcio
+InputFile		= %(ResultsPath)s/run@RunNumber@-track.slcio
