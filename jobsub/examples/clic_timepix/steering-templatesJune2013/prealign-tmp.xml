@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="us-ascii"?>
+<!-- ?xml-stylesheet type="text/xsl" href="http://ilcsoft.desy.de/marlin/marlin.xsl"? -->
+<!-- ?xml-stylesheet type="text/xsl" href="marlin.xsl"? -->
+
+<!--
+
+==========================================================================================
+                    Steering file template for the pysub framework
+
+                              ==> align-tmp.xml <===
+
+Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
+==========================================================================================
+
+-->
+<marlin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ilcsoft.desy.de/marlin/marlin.xsd">
+
+  <execute>
+     <processor name="AIDA"/>
+     <processor name="Align"/>
+  </execute>
+
+  <global>
+     <parameter name="LCIOInputFiles"> @AlignInputFiles@ </parameter>
+     <parameter name="GearXMLFile" value="@GearFile@"/>
+     <parameter name="MaxRecordNumber" value="@RecordNumber@"/>
+     <parameter name="SkipNEvents" value="@SkipNEvents@"/>
+     <parameter name="SupressCheck" value="false"/>
+     <parameter name="Verbosity" value="MESSAGE"/>
+  </global>
+
+ <processor name="AIDA" type="AIDAProcessor">
+ <!--Processor that handles AIDA files. Creates on directory per processor.  Processors only need to create and fill the histograms, clouds and tuples. Needs to be the first ActiveProcessor-->
+  <!-- compression of output file 0: false >0: true (default) -->
+  <parameter name="Compress" type="int" value="1"/>
+  <!-- filename without extension-->
+  <parameter name="FileName" type="string" value="@HistoPath@/run@RunNumber@-align-tel-histo"/>
+  <!-- type of output file xml (default) or root ( only OpenScientist)-->
+  <parameter name="FileType" type="string" value="root"/>
+</processor>
+
+ <processor name="Align" type="EUTelAPIXKalman">
+  <parameter name="IncludeScatter" type="bool" value="false"/>
+  <!--This is the name of the LCIO file name with the output alignmentconstants (add .slcio)-->
+  <parameter name="AlignmentConstantLCIOFile" type="string" value="@DbPath@/@TelAlignmentDb@"/>
+  <!--Name of the Millepede binary input file.-->
+ <parameter name="BinaryFilename" type="string" value="@ResultPath@/run@RunNumber@-align-tel-mille.bin"/> 
+  <!--Name of the steering file for the pede program.-->
+  <parameter name="PedeSteerfileName" type="string" value="@ResultPath@/run@RunNumber@-tel-pede-steer.txt"/>
+  <!--Generate binary input file, steering file and execute the pede program.-->
+  <parameter name="RunPede" type="bool" value="@RunPede@"/>
+  <!--Use cuts on the residuals before accepting track-->
+  <parameter name="UseResidualCuts" type="bool" value="@UseResidualCuts@"/>
+  <!--Residual cuts along both size in microns-->
+  <parameter name="ResidualsXMax" type="FloatVec"> @ResidualXMax@ </parameter>
+  <parameter name="ResidualsXMin" type="FloatVec"> @ResidualXMin@ </parameter>
+  <parameter name="ResidualsYMax" type="FloatVec"> @ResidualYMax@ </parameter>
+  <parameter name="ResidualsYMin" type="FloatVec"> @ResidualYMin@ </parameter>
+  <!-- supply resolution of planes by hand, from config -->
+  <parameter name="AllowNSkippedPlanes" type="int" value="0"/>
+  <parameter name="UseHitResolution" type="bool" value="false"/>
+  <parameter name="TelescopeResolution" type="FloatVec"> @TelescopeResolution@ </parameter>
+  <parameter name="Ebeam" type="double" value="@BeamEnergy@"/>
+
+  <!-- Cuts on dx/dz, dy/dz and chi2 for accepting track candidate, currently done manually -->
+  <parameter name="MaxChi2" type="float" value="@MaxChi2@"/>
+  <parameter name="MinDxDz" type="float" value="@MinDxDz@"/>
+  <parameter name="MaxDxDz" type="float" value="@MaxDxDz@"/>
+  <parameter name="MinDyDz" type="float" value="@MinDyDz@"/>
+  <parameter name="MaxDyDz" type="float" value="@MaxDyDz@"/>
+  <!--Maximum fabs(hitPos - fitPos) / sigma(hitPos) for measurement to be picked up by track finder .-->
+  <parameter name="DistanceMax" type="float"> @DistanceMax@ </parameter>
+  <!--Exclude planes from fit.-->
+  <parameter name="ExcludePlanes" type="IntVec"> @ExcludePlanes@ </parameter>
+  <!--Fix planes in alignment-->
+  <parameter name="FixedPlanes" type="IntVec"> @FixedPlanes@ </parameter>
+  <parameter name="FixedTranslations" type="IntVec"> @FixedTranslations@ </parameter>
+  <parameter name="FixedZRotations" type="IntVec"> @FixedZRotations@ </parameter>
+  <parameter name="FixedScales" type="IntVec"> @FixedScales@ </parameter>
+
+  <!-- 
+       ========================
+       Parameters not modified 
+       ========================
+  -->
+  <!--Hit collection name-->
+  <parameter name="HitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
+  <!--Track collection name-->
+  <parameter name="TrackCollectionName" type="string" lcioInType="Track"> fittracks </parameter>
+</processor>
+
+
