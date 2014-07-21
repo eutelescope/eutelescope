@@ -39,6 +39,7 @@
 
 #include <iostream>
 #include <sstream>
+using namespace std;
 
 class CDashMeasurement
 {
@@ -90,6 +91,7 @@ public:
 
   // only show output when precompiler flag is set
 #ifdef DO_TESTING
+
   friend ostream& operator<<( ostream& os, const CDashMeasurement& cdm )
   {
 
