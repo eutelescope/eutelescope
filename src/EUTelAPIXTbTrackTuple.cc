@@ -14,7 +14,6 @@
 
 #include <algorithm>
 
-//using namespace marlin ;
 using namespace eutelescope;
 
 EUTelAPIXTbTrackTuple::EUTelAPIXTbTrackTuple()
@@ -396,5 +395,5 @@ void EUTelAPIXTbTrackTuple::prepareTree()
 
 	_versionVec = new TVectorD(1);
 	_versionVec[0] = 1.1;
-	_euhits->GetUserInfo()->Add(_versionVec);
+        _versionVec->Write("ver");
 }
