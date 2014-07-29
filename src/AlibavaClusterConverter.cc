@@ -69,39 +69,39 @@ _missingCorrdinateValue(0)
 	
 	// first of register the input collection
 	registerInputCollection (LCIO::TRACKERDATA, "InputCollectionName",
-									  "Input alibava cluster collection name",
-									  _inputCollectionName, string("alibava_clusters") );
-
+									 "Input alibava cluster collection name",
+									 _inputCollectionName, string("alibava_clusters") );
+	
 	// if needed one can change these to optional parameters
 	
 	registerProcessorParameter ("OutputEUTelClusterPulseCollectionName",
 										 "The collection name of cluster pulse.  This might be hardcoded in EUTelescope framework",
 										 _pulseCollectionName , string("clustercollection") );
-
+	
 	registerProcessorParameter ("OutputEUTelSparseClusterCollectionName",
 										 "The collection name of sparse cluster.  This might be hardcoded in EUTelescope framework",
 										 _sparseCollectionName , string("original_zsdata") );
-
 	
-	 registerProcessorParameter ("SensorIDStartsFrom",
-										  "The sensor ID for the data. The actual sensorID will be stored as SensorIDStartsFrom + ChipNumber ",
-										  _sensorIDStartsFrom, int(6) );
-	 
-	 
-	 // now the optional parameters
-	 registerOptionalParameter ("MissingCoordinateValue",
-										 "The value that should be stored in missing coordinate. This number has to be integer since it will be used as channel number of the missing coordinate",
-										 _missingCorrdinateValue, int(0) );
+	
+	registerProcessorParameter ("SensorIDStartsFrom",
+										 "The sensor ID for the data. The actual sensorID will be stored as SensorIDStartsFrom + ChipNumber ",
+										 _sensorIDStartsFrom, int(6) );
+	
+	
+	// now the optional parameters
+	registerOptionalParameter ("MissingCoordinateValue",
+										"The value that should be stored in missing coordinate. This number has to be integer since it will be used as channel number of the missing coordinate",
+										_missingCorrdinateValue, int(0) );
 }
 
 
 void AlibavaClusterConverter::init () {
 	streamlog_out ( MESSAGE4 ) << "Running init" << endl;
-
+	
 	// this method is called only once even when the rewind is active
 	// usually a good idea to
 	printParameters ();
-
+	
 	/* To choose if processor should skip masked events
 	 ex. Set the value to 0 for false, to 1 for true
 	 */
@@ -110,25 +110,25 @@ void AlibavaClusterConverter::init () {
 	else {
 		streamlog_out ( MESSAGE4 ) << "The Global Parameter "<< ALIBAVA::SKIPMASKEDEVENTS <<" is not set! Masked events will be used!" << endl;
 	}
-
+	
 	
 }
 void AlibavaClusterConverter::processRunHeader (LCRunHeader * rdr) {
 	streamlog_out ( MESSAGE4 ) << "Running processRunHeader" << endl;
-
+	
 	// Add processor name to the runheader
 	auto_ptr<AlibavaRunHeaderImpl> arunHeader ( new AlibavaRunHeaderImpl(rdr)) ;
 	arunHeader->addProcessor(type());
 	
 	// get and set selected chips
 	setChipSelection(arunHeader->getChipSelection());
-			
+	
 	// if you want
 	bookHistos();
 	
 	// set number of skipped events to zero (defined in AlibavaBaseProcessor)
 	_numberOfSkippedEvents = 0;
-
+	
 }
 
 
@@ -138,19 +138,19 @@ void AlibavaClusterConverter::processEvent (LCEvent * anEvent) {
 		streamlog_out ( MESSAGE4 ) << "Looping events "<<anEvent->getEventNumber() << endl;
 	
 	AlibavaEventImpl * alibavaEvent = static_cast<AlibavaEventImpl*> (anEvent);
-
+	
 	if (_skipMaskedEvents && (alibavaEvent->isEventMasked()) ) {
 		_numberOfSkippedEvents++;
 		return;
 	}
-
+	
 	LCCollectionVec * alibavaCluColVec; // alibava cluster collection vector
-
+	
 	// the pulse collection we need for EUTelescope
 	LCCollectionVec * pulseColVec =new LCCollectionVec(LCIO::TRACKERPULSE);
 	// the sparse collection needed for EUTelescope
 	LCCollectionVec * sparseColVec  =  new LCCollectionVec(LCIO::TRACKERDATA);
-
+	
 	// Here is the Cell ID Encodes for pulseFrame and sparseFrame
 	// CellID Encodes are introduced in eutelescope::EUTELESCOPE
 	
@@ -172,7 +172,7 @@ void AlibavaClusterConverter::processEvent (LCEvent * anEvent) {
 		{
 			// get your data from the collection and do what ever you want
 			TrackerDataImpl * alibavaClu = dynamic_cast< TrackerDataImpl * > ( alibavaCluColVec->getElementAt( i ) ) ;
-
+			
 			AlibavaCluster anAlibavaCluster(alibavaClu);
 			int chipnum = anAlibavaCluster.getChipNum();
 			
@@ -204,12 +204,12 @@ void AlibavaClusterConverter::processEvent (LCEvent * anEvent) {
 				eutelPixel.setTime(0); // there is no time info for channels in Alibava
 				eutelPixelCluster->addSparsePixel( new EUTelGenericSparsePixel(eutelPixel) );
 			}
-
+			
 			// Now we have a EUTelSparseCluster
-						
+			
 			// Fill pulse collection
 			float totalSignal = anAlibavaCluster.getTotalSignal() *anAlibavaCluster.getSignalPolarity();
-
+			
 			// set the ID for this zsCluster
 			sparseColEncoder["sensorID"] = _sensorIDStartsFrom + chipnum;
 			sparseColEncoder["sparsePixelType"] = static_cast<int>( kEUTelGenericSparsePixel );
@@ -229,11 +229,11 @@ void AlibavaClusterConverter::processEvent (LCEvent * anEvent) {
 			pulseColVec->push_back( pulseFrame );
 			
 			// last but not least increment the totClusterMap
-//			_totClusterMap[ sensorID ] += 1; // do we need this?
+			//			_totClusterMap[ sensorID ] += 1; // do we need this?
 			
 			/*
 			 pulseColEncoder["clusterID"] = anAlibavaCluster.getClusterID();
-
+			 
 			 if (anAlibavaCluster.getIsSensitiveAxisX() == true) {
 			 pulseColEncoder["xSeed"] = anAlibavaCluster.getSeedChanNum();
 			 pulseColEncoder["ySeed"] = _missingCorrdinateValue;
@@ -255,46 +255,47 @@ void AlibavaClusterConverter::processEvent (LCEvent * anEvent) {
 			 }
 			 
 			 */
-
 			
 			
 			
-/*
-			pulseFrame->setCharge(totalSignal);
-			pulseColEncoder["sensorID"] = _sensorIDStartsFrom + chipnum;
-			pulseColEncoder["clusterID"] = anAlibavaCluster.getClusterID();
-			pulseColEncoder["type"] = static_cast<int>(kEUTelSparseClusterImpl);
-			if (anAlibavaCluster.getIsSensitiveAxisX() == true) {
-				pulseColEncoder["xSeed"] = anAlibavaCluster.getSeedChanNum();
-				pulseColEncoder["ySeed"] = _missingCorrdinateValue;
-				pulseColEncoder["xCluSize"] = clusterSize;
-				pulseColEncoder["yCluSize"] = 1;
-			}
-			else{
-				pulseColEncoder["xSeed"] = _missingCorrdinateValue;
-				pulseColEncoder["ySeed"] = anAlibavaCluster.getSeedChanNum();
-				pulseColEncoder["xCluSize"] = 1;
-				pulseColEncoder["yCluSize"] = clusterSize;
-			}
-			pulseColEncoder.setCellID(pulseFrame);
-			pulseFrame->setTrackerData(sparseFrame);
-			pulseColVec->push_back(pulseFrame);
 			
-			// fill sparse cluster collection
-			sparseColEncoder["sensorID"] = _sensorIDStartsFrom + chipnum;
-			sparseColEncoder["clusterID"] = anAlibavaCluster.getClusterID();
-			sparseColEncoder["sparsePixelType"] = static_cast<int>(1); // set this to 1 for hitmaker
-			sparseColEncoder["quality"] = static_cast<int>(0);
-			sparseColEncoder.setCellID(sparseFrame);
-			sparseColVec->push_back(sparseFrame);
-
-			delete eutelPixelCluster;
+			/*
+			 pulseFrame->setCharge(totalSignal);
+			 pulseColEncoder["sensorID"] = _sensorIDStartsFrom + chipnum;
+			 pulseColEncoder["clusterID"] = anAlibavaCluster.getClusterID();
+			 pulseColEncoder["type"] = static_cast<int>(kEUTelSparseClusterImpl);
+			 if (anAlibavaCluster.getIsSensitiveAxisX() == true) {
+			 pulseColEncoder["xSeed"] = anAlibavaCluster.getSeedChanNum();
+			 pulseColEncoder["ySeed"] = _missingCorrdinateValue;
+			 pulseColEncoder["xCluSize"] = clusterSize;
+			 pulseColEncoder["yCluSize"] = 1;
+			 }
+			 else{
+			 pulseColEncoder["xSeed"] = _missingCorrdinateValue;
+			 pulseColEncoder["ySeed"] = anAlibavaCluster.getSeedChanNum();
+			 pulseColEncoder["xCluSize"] = 1;
+			 pulseColEncoder["yCluSize"] = clusterSize;
+			 }
+			 pulseColEncoder.setCellID(pulseFrame);
+			 pulseFrame->setTrackerData(sparseFrame);
+			 pulseColVec->push_back(pulseFrame);
+			 
+			 // fill sparse cluster collection
+			 sparseColEncoder["sensorID"] = _sensorIDStartsFrom + chipnum;
+			 sparseColEncoder["clusterID"] = anAlibavaCluster.getClusterID();
+			 sparseColEncoder["sparsePixelType"] = static_cast<int>(1); // set this to 1 for hitmaker
+			 sparseColEncoder["quality"] = static_cast<int>(0);
+			 sparseColEncoder.setCellID(sparseFrame);
+			 sparseColVec->push_back(sparseFrame);
+			 
+			 delete eutelPixelCluster;
+			 }
+			 
+			 */
+			alibavaEvent->addCollection(pulseColVec, _pulseCollectionName);
+			alibavaEvent->addCollection(sparseColVec, _sparseCollectionName);
 		}
- 
- */
-		alibavaEvent->addCollection(pulseColVec, _pulseCollectionName);
-		alibavaEvent->addCollection(sparseColVec, _sparseCollectionName);
-
+		
 	} catch ( lcio::DataNotAvailableException ) {
 		// do nothing again
 		streamlog_out( ERROR5 ) << "Collection ("<<getInputCollectionName()<<") not found! " << endl;
@@ -308,7 +309,7 @@ void AlibavaClusterConverter::check (LCEvent * /* evt */ ) {
 
 
 void AlibavaClusterConverter::end() {
-
+	
 	if (_numberOfSkippedEvents > 0)
 		streamlog_out ( MESSAGE5 ) << _numberOfSkippedEvents<<" events skipped since they are masked" << endl;
 	streamlog_out ( MESSAGE4 ) << "Successfully finished" << endl;
@@ -322,7 +323,7 @@ void AlibavaClusterConverter::fillHistos(TrackerDataImpl * /* trkdata */){
 
 void AlibavaClusterConverter::bookHistos(){
 	// nothing is done here
-//	streamlog_out ( MESSAGE1 )  << "End of Booking histograms. " << endl;
+	//	streamlog_out ( MESSAGE1 )  << "End of Booking histograms. " << endl;
 }
 
 
