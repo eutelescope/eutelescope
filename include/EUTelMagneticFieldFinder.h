@@ -100,9 +100,7 @@ namespace eutelescope {
 				bool _hitsInputGood;
     public:
 
-        inline std::vector< EUTelTrackImpl* >& getTracks() {
-            return _tracksCartesian;
-        }
+         std::vector<EUTelTrack>& getTracks();
                 
 
 
@@ -216,7 +214,7 @@ void setAutoPlanestoCreateSeedsFrom(){
 				void testPlaneDimensions();
 				void testHitsVecPerPlane();
 				void testPositionEstimation(float position1[], float position2[]);
-				std::vector<int> _planeDimensions;
+				std::map< int, int > _planeDimensions;
 				void setHitsVecPerPlane();
 				void findHitsOrderVec(LCCollection* lcCollection,EVENT::TrackerHitVec& hitsOrderVec); 
 				void findTracksWithEnoughHits();
@@ -228,8 +226,12 @@ void setAutoPlanestoCreateSeedsFrom(){
 				std::vector<EUTelTrack> _tracks;
 				std::vector<EUTelTrack> _tracksAfterEnoughHitsCut;
 				std::vector<EUTelTrack>	_trackAfterSameHitsCut;
+				int _numberOfTracksTotal=0;
+				int _numberOfTracksAfterHitCut=0;
+				int _numberOfTracksAfterPruneCut=0;
         void initialiseSeeds();
 				void testInitialSeeds();
+				void testTrackQuality();
         /* need a method to get hitFittedVec
          * to be consistent with the other methods - passing the object by reference
          */     
@@ -258,7 +260,6 @@ void setAutoPlanestoCreateSeedsFrom(){
         void prepareLCIOTrack();
 
         /** Sort hits according to particles propagation direction */
-        bool sortHitsByMeasurementLayers( const EVENT::TrackerHitVec& );
         
         // Helper functions
     private:

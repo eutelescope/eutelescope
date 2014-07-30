@@ -143,22 +143,28 @@ namespace eutelescope {
     /** */
 
 
-
+std::vector<EUTelTrack>& EUTelKalmanFilter::getTracks(){
+	return	_trackAfterSameHitsCut; 
+}
+//This is the work horse of the class. Using seeds it propagates the track forward using equations of motion. This can be with or without magnetic field.
 void EUTelKalmanFilter::propagateForwardFromSeedState( EUTelTrack state, EUTelTrack & track    ){
 
 	//Here we loop through all the planes not excluded. We begin at the seed which might not be the first. Then we stop before the last plane, since we do not want to propagate anymore
 	for(int i = geo::gGeometry().sensorIDToZOrderWithoutExcludedPlanes()[state.getLocation()]; i < (geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()-1); ++i){
 	
 		float globalIntersection[3];
-		int newSensorID = state.findIntersectionWithCertainID(geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i], globalIntersection);
+		int newSensorID = state.findIntersectionWithCertainID(geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i+1], globalIntersection);
 		int sensorIntersection = geo::gGeometry( ).getSensorID(globalIntersection);//This is needed with the jacobian since the jacobian needs the z distance to the next point to do the calculation
-		streamlog_out ( DEBUG5 ) << "Intersection point on infinite plane: " <<  globalIntersection[0]<<" , "<<globalIntersection[1] <<" , "<<globalIntersection[2]<< " from ID= " <<  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i]<< " onto ID(-999 if no intersection)= " <<  newSensorID  << " Also(-999) if there is no intersection through sensitive area  " << sensorIntersection << std::endl;
-		if(newSensorID < 0 or sensorIntersection < 0 ){
-			streamlog_out(MESSAGE5) << Utility::outputColourString("No intersection found moving on","YELLOW"); 
+		if(newSensorID < 0 ){ //TO DO Fix geo: or sensorIntersection < 0 ){
+			streamlog_out ( MESSAGE5 ) << "Intersection point on infinite plane: " <<  globalIntersection[0]<<" , "<<globalIntersection[1] <<" , "<<globalIntersection[2]<<std::endl;
+			streamlog_out(MESSAGE5) <<" From ID= " <<  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i]<< " to " <<  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i+1]  <<std::endl;
+			streamlog_out(MESSAGE5)<<"Was there intersection on plane: "<<newSensorID<<" Was there intersection in sensitive area: "<< sensorIntersection <<" Both number -999 if no intersection" << std::endl;
+			streamlog_out(MESSAGE5) << Utility::outputColourString("No intersection found moving on plane. Move to next plane and look again.","YELLOW")<<std::endl; 
 			continue;//So if there is no intersection look on the next plane. Important since two planes could be at the same z position
 		}
 		//So we have intersection lets create a new state
 		EUTelTrack newState; 
+		newState.setDimensionSize(_planeDimensions[newSensorID]);//We set this since we need this information for later processors
 		newState.addHit(NULL); //By default the state has no hit. Could be just a surface. 
 		newState.setBeamEnergy(_beamE);
 		newState.setBeamCharge(_beamQ);
@@ -166,11 +172,11 @@ void EUTelKalmanFilter::propagateForwardFromSeedState( EUTelTrack state, EUTelTr
 		newState.setLocation(newSensorID);
 		TMatrixD jacobian(5,5);
 		jacobian.Zero();
-		jacobian = newState.computePropagationJacobianFromStateToThisZLocation(globalIntersection[3]);
-		findNextStateUsingJacobian(state,jacobian,globalIntersection[3], newState);
+		jacobian = newState.computePropagationJacobianFromStateToThisZLocation(globalIntersection[2]);
+		findNextStateUsingJacobian(state,jacobian,globalIntersection[2], newState);
 		testPositionEstimation(const_cast<float*>(newState.getReferencePoint()),globalIntersection);//Here we compare the estimation from the simple equation of motion and jacobian.
-		if(_mapHitsVecPerPlane[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i]].size() == 0){
-			streamlog_out(MESSAGE5) << Utility::outputColourString("The are not hit on the plane with this state. Add state to track as it is and move on ","YELLOW");
+		if(_mapHitsVecPerPlane[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i+1]].size() == 0){
+			streamlog_out(DEBUG5) << Utility::outputColourString("There are no hits on the plane with this state. Add state to track as it is and move on ","YELLOW");
 			track.addTrack(static_cast<EVENT::Track*>(&newState));//Need to return this to LCIO object. Loss functionality but retain information 
 			state = newState;
 			continue;
@@ -187,6 +193,10 @@ void EUTelKalmanFilter::propagateForwardFromSeedState( EUTelTrack state, EUTelTr
 			state = newState;
 			continue;
 		}	
+		if(closestHit == NULL){
+			throw(lcio::Exception( Utility::outputColourString("The closest hit you are trying to add is NULL. This can not be correct","RED")));
+		}
+		streamlog_out ( DEBUG1 ) << "Found a hit! Distance: "<< distance << endl;
 		newState.addHit(closestHit);
 		track.addTrack(static_cast<EVENT::Track*>(&newState));//Need to return this to LCIO object. Loss functionality but retain information 
 		state = newState;
@@ -227,6 +237,22 @@ void EUTelKalmanFilter::propagateForwardFromSeedState( EUTelTrack state, EUTelTr
  
     }
 */
+void EUTelKalmanFilter::testTrackQuality(){
+	_numberOfTracksTotal = _numberOfTracksTotal + _tracks.size();
+	_numberOfTracksAfterHitCut = _numberOfTracksAfterHitCut + _tracksAfterEnoughHitsCut.size();
+	_numberOfTracksAfterPruneCut = _numberOfTracksAfterPruneCut +	_trackAfterSameHitsCut.size();
+
+	if(_numberOfTracksTotal % 1000 == 0){
+		streamlog_out(MESSAGE5)<<" Total Tracks "<<" Pass Hit Cut "<<" Pass Prune Cut " <<std::endl;
+		streamlog_out(MESSAGE5)<<"    "<<_numberOfTracksTotal<<"    "<<"    "<<_numberOfTracksAfterHitCut<<"                                       "<<_numberOfTracksAfterPruneCut<<std::endl;
+		float percentAfterHitCut = (_numberOfTracksAfterHitCut/_numberOfTracksTotal)*100;
+		float percentAfterPruneCut = (_numberOfTracksAfterPruneCut/_numberOfTracksTotal)*100;
+		streamlog_out(MESSAGE5)<<"               "<<percentAfterHitCut<<"                                                      "<<percentAfterPruneCut<<std::endl;
+		if(percentAfterHitCut < 0.1 or percentAfterPruneCut < 0.1){
+			streamlog_out(MESSAGE5)<< Utility::outputColourString("The percentage of track making the cut is very low at the moment ","YELLOW");
+		}
+	}
+}
 void EUTelKalmanFilter::testPositionEstimation(float position1[], float position2[]){
 	if(position1[0] -position2[0] > 0.004){ //in mm
 		throw(lcio::Exception( Utility::outputColourString("The positions between the two methods is different in the x direction. ","RED"))); 
@@ -261,34 +287,8 @@ if(position1[1] -position2[1] > 0.004){ //in mm
        }
     }
  
-    void EUTelKalmanFilter::Prune( std::vector< EUTelTrackImpl*> &_collection, std::vector< EUTelTrackImpl*> &_collection_to_delete ) 
-    {
-      int itrk = 0 ;
-      std::vector< EUTelTrackImpl* >::iterator itTrk;
-
-      for (  itTrk = _collection.begin(); itTrk != _collection.end();) 
-      {
-        // obsolte code from very old times ....
-        // check that it's not a fitted hit (type =32)
-	//     if( (*itTrk)->getType() > 31 ) continue;            Is this the best way to deal with type? Should it no be in LCIO bit field?
- 
-        bool iend = std::find( _collection_to_delete.begin(), _collection_to_delete.end(), (*itTrk) ) == _collection_to_delete.end(); 
-        if( iend )
-        {
-           streamlog_out(DEBUG3) << " track " << itrk << " at " << (*itTrk) << " NOT found  in _collection_to_delete " << std::endl;
-itTrk++;
-	   itrk++ ;
-        } else {
-           streamlog_out(DEBUG3) << " track " << itrk << " at " << (*itTrk) << "     found  in _collection_to_delete, deleting ... " << std::endl;
-           delete (*itTrk);
-           itTrk = _collection.erase(itTrk);
-        } 
-      }
-    }
-
-
-
-
+//    void EUTelKalmanFilter::Prune( std::vector< EUTelTrackImpl*> &_collection, std::vector< EUTelTrackImpl*> &_collection_to_delete ) 
+//    {
     // Perform track pruning this removes tracks that have the same hits used to create the track on some planes
 void EUTelKalmanFilter::findTrackCandidatesWithSameHitsAndRemove() {
 
@@ -360,6 +360,33 @@ void EUTelKalmanFilter::testUserInput() {
 		streamlog_out(DEBUG0) << Utility::outputColourString("The number of planes to make seeds from is good " +  to_string(_createSeedsFromPlanes.size()),"GREEN") << std::endl;
 	}
 	if(_excludePlanes.size() >= geo::gGeometry().sensorIDstoZOrder().size()){//TO DO: should check if seed planes are also excluded	
+	 streamlog_out(DEBUG0) << Utility::outputColourString("Beam energy is reasonable", "GREEN") << std::endl;
+	}
+
+	if ( _beamEnergyUncertainty < 0 ) {
+		throw(lcio::Exception( Utility::outputColourString("Beam uncertainty is negative. Check supplied values","RED"))); 
+	}else{
+	 streamlog_out(DEBUG0) << Utility::outputColourString("Beam Energy uncertainty is reasonable","GREEN") << std::endl;
+	}
+
+	if(_beamAngularSpread.size() == 0){
+		throw(lcio::Exception( Utility::outputColourString("The beam spread size is zero.","RED"))); 
+	}
+	if(_beamAngularSpread[0] <= 0  or  _beamAngularSpread[1] <= 0){
+		throw(lcio::Exception( Utility::outputColourString("The beam spread is zero.","RED"))); 
+	}else{
+		streamlog_out(DEBUG0) << Utility::outputColourString("The size of beam spread is" +  to_string(_beamAngularSpread.size()),"GREEN") << std::endl;
+	}
+	if(_createSeedsFromPlanes.size() == 0){
+		throw(lcio::Exception( Utility::outputColourString("The number of planes to make seeds from is 0. We need at least one plane", "RED")));
+	}
+
+	if(_createSeedsFromPlanes.size() >= geo::gGeometry().sensorIDstoZOrder().size()){
+		throw(lcio::Exception( Utility::outputColourString("You have specified all planes or more than that. This is too many planes for seeds", "RED")));
+	}else{
+		streamlog_out(DEBUG0) << Utility::outputColourString("The number of planes to make seeds from is good " +  to_string(_createSeedsFromPlanes.size()),"GREEN") << std::endl;
+	}
+	if(_excludePlanes.size() >= geo::gGeometry().sensorIDstoZOrder().size()){//TO DO: should check if seed planes are also excluded	
 		throw(lcio::Exception( Utility::outputColourString("The number of excluded planes is too large. We can not fit tracks with magic.", "RED")));
 	}
 	if(geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() != (geo::gGeometry().sensorIDstoZOrder().size()-_excludePlanes.size())){
@@ -369,13 +396,10 @@ void EUTelKalmanFilter::testUserInput() {
 	}
 }	
 void  EUTelKalmanFilter::testHitsVec(){
-	_hitsInputGood=true;
 	if(_allHitsVec.size() == 0){
-		_hitsInputGood=false;
-	}
-	if(!_hitsInputGood){
 		throw(lcio::Exception( "The hit input is wrong!"));
 	}
+
 }
 
 		
@@ -411,22 +435,21 @@ void  EUTelKalmanFilter::testHitsVec(){
  
     }
    
-/** Generate seed track states necessary to
-* start Kalman filter
-* 
-* Generate as many starting states as number of hits in first telescope plane
-* plus one additional state for missing hit in the fist plane if allowed
+/** 
+*   Using a list of planes use the hits on those planes to create the initial seeds. 
+*   These seeds are used then to propagate to the next plane.
 * 
 */
+//TO DO:This will not work with a strip sensor creating a seed. Since the strip sensor creates a line of possible hit positions not just a single point. Therefore you need to loop through  all points on the line and determine its trajectory and then see if the intersection is close enough to the hit on the next plane to add that hit on the track. This is a lot of work for something which is not that important.   
 void EUTelKalmanFilter::initialiseSeeds() {
 	streamlog_out(DEBUG2) << "EUTelKalmanFilter::initialiseSeeds()" << std::endl;
-
+	_mapSensorIDToSeedStatesVec.clear();
 	for( int iplane = 0; iplane < _createSeedsFromPlanes.size() ; iplane++) {
 
 		streamlog_out(DEBUG1) << "We are using plane: " <<  _createSeedsFromPlanes[iplane] << " to create seeds" << std::endl;
 
 		EVENT::TrackerHitVec& hitFirstLayer = _mapHitsVecPerPlane[_createSeedsFromPlanes[iplane]];
-		streamlog_out(DEBUG1) << "N hits in first non-empty layer: " << hitFirstLayer.size() << std::endl;
+		streamlog_out(DEBUG1) << "N hits on sensor : " << hitFirstLayer.size() << std::endl;
 		if(hitFirstLayer.size()== 0){
 			continue;
 		}
@@ -435,14 +458,16 @@ void EUTelKalmanFilter::initialiseSeeds() {
 		for ( itHit = hitFirstLayer.begin(); itHit != hitFirstLayer.end(); ++itHit ) {
 			EUTelTrack state;//Here we create a track state. This is a point on a track that we can give a position,momentum and direction. We combine these to create a track. 
 			double posLocal[] =  { (*itHit)->getPosition()[0], (*itHit)->getPosition()[1], (*itHit)->getPosition()[2] };
-			if(posLocal[3] != 0){
-				throw(lcio::Exception(Utility::outputColourString("The position of this local coordinate in the z direction is 0", "RED"))); 	
+			if(posLocal[2] != 0){//TO DO:This should be in test hits
+				streamlog_out(MESSAGE5) << "The local position of the hit is " << posLocal[0]<<","<< posLocal[1]<<","<< posLocal[2]<<","<<std::endl;
+				throw(lcio::Exception(Utility::outputColourString("The position of this local coordinate in the z direction is non 0", "RED"))); 	
 			}
 			double temp[] = {0.,0.,0.};
-			geo::gGeometry().local2Master(_createSeedsFromPlanes[iplane] , posLocal, temp);
+			geo::gGeometry().local2Master(_createSeedsFromPlanes[iplane] , posLocal, temp);//IMPORTANT:For strip sensors this will make the hit strip look like a pixel at (Xstriplocal,somevalue,somevalue).
+			//There is no way round this since the strip give a range of possible positions in 2D/3D space.      //To allow strip sensor to be seed would involve major change to how this is done. For now just don't do it  
 			float posGlobal[] = { static_cast<float>(temp[0]), static_cast<float>(temp[1]), static_cast<float>(temp[2]) };
 			streamlog_out ( DEBUG2 ) << "pick next hit " << _createSeedsFromPlanes[iplane]<< " " <<  posLocal[0] << " " << posLocal[1] << " " << posLocal[2] <<  " : "<< posGlobal[0] << " "    << posGlobal[1] << " "   << posGlobal[2] << " " << endl;
-			state.setLocation(_createSeedsFromPlanes[iplane]);//This stores the location as a float in Z0 since no location for track LCIO. This is preferable to problems with storing hits however 
+			state.setLocation(_createSeedsFromPlanes[iplane]);//This stores the location as a float in Z0 since no location for track LCIO. This is preferable to problems with storing hits.  
 			state.setPosition(posGlobal); //This will automatically take cartesian coordinate system and save it to reference point. //This is different from most LCIO applications since each track will have own reference point. 		
 			state.setDirectionXY(0.);  // seed with 0 at first hit. This one is stored as tan (x/y) rather than angle as in LCIO format TO DO:This really should be give as a beam direction.  
 			state.setDirectionYZ(0.);  // seed with 0 at first hit.
@@ -455,12 +480,13 @@ void EUTelKalmanFilter::initialiseSeeds() {
 			trkCov[2] = _beamAngularSpread[0] * _beamAngularSpread[0];          //cov(tx,x)=0, cov(tx,y)=0, cov(tx,tx)
 			trkCov[5] = _beamAngularSpread[1] * _beamAngularSpread[1];          //cov(ty,x)=0, cov(ty,y)=0, cov(ty,tx)=0, cov(ty,ty)
 
-			//TO DO: Need to get proper convariance matrix for hits. Since we make the hits error so large the Kalman filter will not work as intended. 
+			//TO DO: Need to get proper convariance matrix for hits. Since we make the hits error so large the Kalman filter will not work as intended. This would also make life easier to deal with strip sensors since we could make the variance very large for the dimension we do not know and use the same code as pixel sensor.  
 			const EVENT::FloatVec uvcov = (*itHit)->getCovMatrix();
 			trkCov[13] = uvcov[0]*1.E4;                               //cov(x,x)
 			trkCov[14] = uvcov[1]*1.E4;   trkCov[15] = uvcov[2]*1.E4;       //cov(y,x), cov(y,y)
 
 			state.addHit(*itHit);
+			state.setDimensionSize(_planeDimensions[state.getLocation()]);
 			stateVec.push_back(state);
 		}
 		_mapSensorIDToSeedStatesVec[_createSeedsFromPlanes[iplane]] = stateVec; 
@@ -468,7 +494,7 @@ void EUTelKalmanFilter::initialiseSeeds() {
 	streamlog_out(DEBUG2) << "--------------------------------EUTelKalmanFilter::initialiseSeeds()---------------------------" << std::endl;
 }
 void EUTelKalmanFilter::testInitialSeeds(){
-	if(_mapSensorIDToSeedStatesVec.size() != _mapHitsVecPerPlane.size()){
+	if(_mapSensorIDToSeedStatesVec.size() != _createSeedsFromPlanes.size()){
 		throw(lcio::Exception(Utility::outputColourString("The size of intial state seeds planes and the number to use at the start are different", "RED"))); 	
 	}
 	for(int i = 0 ; i < _mapSensorIDToSeedStatesVec.size(); ++i){
@@ -480,26 +506,37 @@ void EUTelKalmanFilter::testInitialSeeds(){
 		}
 	}
 }
-
-	/** Perform Kalman filter track search and track fit */
+//Loop through each plane that contains seeds and then each seed. From that seed you then create a track.
 void EUTelKalmanFilter::findTrackCandidates() {
 	streamlog_out(MESSAGE1) << "EUTelKalmanFilter::findTrackCandidates()" << std::endl;
-
+	_tracks.clear(); //Clear all past track information
 	for(int i = 0 ; i < _mapSensorIDToSeedStatesVec.size(); ++i){
 		std::vector<EUTelTrack> statesVec =  _mapSensorIDToSeedStatesVec[_createSeedsFromPlanes[i]]; 	
+		if(statesVec.size() == 0){
+			streamlog_out(MESSAGE5) << Utility::outputColourString("The size of state Vector seeds is zero. try next seed plane","YELLOW")<<std::endl; 
+			continue;
+		}
 		for(int j = 0 ; j < statesVec.size() ; ++j){
 			EUTelTrack track;
 			propagateForwardFromSeedState(statesVec[j], track);
+			streamlog_out(MESSAGE1) << "This is just before the track gets the hits" << std::endl;
+
+			const EVENT::TrackerHitVec& trkcandhits = track.getTracks().at(0)->getTrackerHits();
+			cout << track.getTracks().at(0) << endl;
+			streamlog_out(MESSAGE1) << "This is just before the track gets the hits after being in vector " << std::endl;
 			_tracks.push_back(track);//Here we create a long list of possible tracks
+			const EVENT::TrackerHitVec& trkcandhits2 = _tracks[0].getTracks()[0]->getTrackerHits();
+
 		}
 	}
 	streamlog_out(MESSAGE1) << "EUTelKalmanFilter::findTrackCandidates()------END" << std::endl;
 }
 void EUTelKalmanFilter::findTracksWithEnoughHits(){
+	_tracksAfterEnoughHitsCut.clear();
 	for(int i = 0 ; i<_tracks.size(); ++i){
-		EUTelTrack track = _tracks[i];
-		streamlog_out ( DEBUG2 ) << "Number of hits on the track: " <<track.getTrackerHits().size() <<" Number needed: " <<  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() - _allowedMissingHits << std::endl;
-		if(track.getTrackerHits().size()> geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() - _allowedMissingHits){
+		EUTelTrack& track = _tracks[i];
+		streamlog_out ( DEBUG2 ) << "Number of hits on the track: " <<track.getNumberOfHitsOnTrack()<<" Number needed: " <<  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() - _allowedMissingHits << std::endl;
+		if(track.getNumberOfHitsOnTrack()> geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() - _allowedMissingHits){
 			streamlog_out(DEBUG5) << "There are enough hits. So attach this track makes the cut!"<<endl;
 			_tracksAfterEnoughHitsCut.push_back(track);
 		}
@@ -533,34 +570,43 @@ streamlog_out(MESSAGE0) << "Finished looping through all seeds! Looped at total 
 
 streamlog_out(MESSAGE1) << "------------------------------EUTelKalmanFilter::findTrackCandidates()---------------------------------" << std::endl;
 */
-
+//This creates map between plane ID and hits on that plane. 
+//We also order the map correcly with geometry.
 void EUTelKalmanFilter::setHitsVecPerPlane(){
 	_mapHitsVecPerPlane.clear();
-	int numberOfPlanes = geo::gGeometry().sensorIDstoZOrder().size();//Note should not make this a class data member since we call this by reference in geometry so defacto it is already accessed directly each time. By this I mean we do not create a new copy each time we call the function. 
+	int numberOfPlanes = geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size();//Note should not make this a class data member since we call this by reference in geometry so defacto it is already accessed directly each time. By this I mean we do not create a new copy each time we call the function. 
+	if(numberOfPlanes == 0){
+		throw(lcio::Exception( "The number of planes is 0 to get hits from."));
+	}
+	if( _allHitsVec.size()== 0){
+		throw(lcio::Exception( "The number of hits is zero."));
+	}
 	for(int i=0 ; i<numberOfPlanes;++i){
 		EVENT::TrackerHitVec tempHitsVecPlaneX; 
 		for(int j=0 ; j<_allHitsVec.size();++j){
-			if(Utility::getSensorIDfromHit( (_allHitsVec[j]) ) ==  geo::gGeometry().sensorZOrderToID(i)){
+			if(Utility::getSensorIDfromHit( static_cast<IMPL::TrackerHitImpl*>(_allHitsVec[j]) ) ==  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i]){
 				tempHitsVecPlaneX.push_back(_allHitsVec[j]);
 			}
 		}		
-	_mapHitsVecPerPlane[ geo::gGeometry().sensorZOrderToID(i)] = 	tempHitsVecPlaneX;
+	_mapHitsVecPerPlane[ geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i]] = 	tempHitsVecPlaneX;
 	}	
 }
 //This member function will loop through each position array and determine if some entries are all one number (Usually 0). This is done so we can determine the dimension of the hit.
+//We create a vector that excluded planes that are notoncluded
 void EUTelKalmanFilter::setPlaneDimensionsVec(){
 	_planeDimensions.clear();
 	const double* positionBefore=NULL;//This is a pointer to a const not a const pointer
 	const double* position=NULL;
-	int numberOfPlanes = geo::gGeometry().sensorIDstoZOrder().size();
+	int numberOfPlanes = geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size();
 	for(int i=0; i<numberOfPlanes; ++i){//Loop through each plane
+		int planeID = geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i];
 		int numberOfDimensions=0;
 		bool sensorIsAtLeast1D=false;
 		bool sensorIsAtLeast2D=false;
 		bool sensorIsAtLeast3D=false;
 		for(int j = 0 ; j< _mapHitsVecPerPlane.at(i).size();++j){//Loop through all hits on each plane
 			streamlog_out(DEBUG0) << "Entering loop over hits. "<< std::endl;
-			position = (_mapHitsVecPerPlane.at(i)).at(j)->getPosition();
+			position = (_mapHitsVecPerPlane.at(planeID)).at(j)->getPosition();
 			if(position == NULL){
 				throw(lcio::Exception( "Must exit since one position vector within hit is NULL!"));
 			}
@@ -596,19 +642,19 @@ void EUTelKalmanFilter::setPlaneDimensionsVec(){
 			numberOfDimensions++;
 		}
 		streamlog_out(DEBUG2) << "The size of Dimensions : "<< numberOfDimensions << std::endl;
-		_planeDimensions.push_back(numberOfDimensions);
+		_planeDimensions[planeID] = numberOfDimensions;
 	}//END of loop over planes
 }	    
 
 void EUTelKalmanFilter::testHitsVecPerPlane(){
-	if(_mapHitsVecPerPlane.size() !=  geo::gGeometry().sensorIDstoZOrder().size()){
-		streamlog_out(ERROR0) << _mapHitsVecPerPlane.size()<< endl <<"Sensors from Geometry: "<<  geo::gGeometry().sensorIDstoZOrder().size();
+	if(_mapHitsVecPerPlane.size() !=  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()){
+		streamlog_out(ERROR0) <<"The size of the planes with hits " << _mapHitsVecPerPlane.size() <<"  Sensors from Geometry with no excluded planes: "<<  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()<<std::endl;
 		throw(lcio::Exception(Utility::outputColourString("The number of planes with hits and the number of planes is different", "RED"))); 	
 
 	}
 	for(int i=0 ;i<_mapHitsVecPerPlane.size();++i){
 		if(_mapHitsVecPerPlane.at(i).size() <= 0){
-			streamlog_out(WARNING0) << "One plane has not hits at all. Is this correct?" << std::endl;
+			streamlog_out(DEBUG0) << Utility::outputColourString("One plane has no hits at all. Is this correct?","YELLOW") << std::endl;
 		}
 	}
 }
@@ -619,7 +665,7 @@ void EUTelKalmanFilter::testPlaneDimensions(){
 		throw(lcio::Exception( Utility::outputColourString("The size of your dimesion vector is not the same as the number of planes. Something must be wrong!","RED")));
 	}
 	for(int i=0;i<_planeDimensions.size();++i){
-		if(_planeDimensions.at(i)>3 or _planeDimensions.at(i)<0){
+		if(_planeDimensions.at(geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i])>3 or _planeDimensions.at(geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i])<0){
 			throw(lcio::Exception( "The number of dimension for one of your planes is greater than 3 or less than 0. If this is not a mistake collect you nobel prize now!"));
 		}
 	}
@@ -646,7 +692,7 @@ const EVENT::TrackerHit* EUTelKalmanFilter::findClosestHit(EUTelTrack & state ) 
 	EVENT::TrackerHitVec::const_iterator itHit;
 	streamlog_out(DEBUG0) << "N hits in plane " << state.getLocation() << ": " << hitInPlane.size() << std::endl;
 	for ( itHit = hitInPlane.begin(); itHit != hitInPlane.end(); ++itHit ) {
-		const double distance = computeResidual( state, *itHit ).Norm2Sqr();
+		const double distance = computeResidual( state, *itHit ).Norm2Sqr();//This distance could be 2D or 1D depending on if you have a strip or pixel sensor.
 		streamlog_out(DEBUG0) << "Distance^2 between hit and track intersection: " << distance << std::endl;
 		if ( distance < maxDistance ) {
 			itClosestHit = itHit;
@@ -769,9 +815,11 @@ TVectorD EUTelKalmanFilter::computeResidual(EUTelTrack& state , const EVENT::Tra
 	streamlog_out( DEBUG3 ) << "	Prediction for hit (id=" << hit->id() << ") local(u,v) coordinates of state: ("  << localPosition[0] << "," << localPosition[1] <<","<<localPosition[2] << ")" << std::endl;
 
 	TVectorD residual(2);
-	residual[0] = hitPosition[0] - localPosition[0];
-	residual[1] = hitPosition[1] - localPosition[1];
-	
+	residual[0] = 0 ; residual[1] = 0;
+	//This loop is used in case we have a strip sensor. So we should use only 1 dimension of information
+	for(int i=0; i<_planeDimensions.at(state.getLocation());++i){
+		residual[i] = hitPosition[i] - localPosition[i];
+	}	
 	
 	if ( streamlog_level(DEBUG2) ){
 			streamlog_out( DEBUG2 ) << "	Residual vector residual: (" <<residual[0] <<","<<residual[1]<<")"<< std::endl;
@@ -1016,89 +1064,7 @@ TVectorD EUTelKalmanFilter::computeResidual(EUTelTrack& state , const EVENT::Tra
         return LCIOtrack;
 
     }
-    
-    /**
-     * Distributes hits among measurement layers in the order
-     * seen by track traversing the telescope planes 
-     * 
-     * @param hits Vector of hits to be assigned to the measurement layers of Klaman filter
-     */ 
-    bool EUTelKalmanFilter::sortHitsByMeasurementLayers( const EVENT::TrackerHitVec& hits ) {
-        bool isReady = true;
-        
-        if ( hits.empty() ) {
-            streamlog_out(WARNING1) << "No hits supplied this event." << std::endl;
-            isReady = false;
-            return isReady;
-        }
-        
-        streamlog_out(DEBUG2) << "EUTelKalmanFilter::sortHitsByMeasurementLayers()" << std::endl;
-       
-        // Clear information leftover from previous events
-        std::vector< MeasurementLayer* >::iterator itLayer;
-        for ( itLayer = _allMeasurements.begin(); itLayer != _allMeasurements.end(); ++itLayer) {
-            delete (*itLayer);
-        }
-        _allMeasurements.clear();
-        
-        // Distribute all hits among measurement layers
-        std::map< int, MeasurementLayer* > measLayers;
-        std::map< int, MeasurementLayer* >::iterator itMeasLayer;
-        
-        int sensorID = -1;
-        EVENT::TrackerHitVec::const_iterator itr;
-        for( itr = hits.begin(); itr != hits.end(); ++itr ) {
-
-            const int sensorID = Utility::getSensorIDfromHit( *itr );
-
-            itMeasLayer = measLayers.find( sensorID );
-            if ( itMeasLayer != measLayers.end() ) itMeasLayer->second->addHit( *itr );
-            else {
-                measLayers[ sensorID ] = new MeasurementLayer( sensorID );
-                measLayers[ sensorID ]->addHit( *itr );
-            }
-        }
-        
-        streamlog_out(DEBUG2) << "EUTelKalmanFilter::sortHitsByMeasurementLayers()  start loop through the .sensorIDsVec()"  << std::endl;
-        int nplanes        =  geo::gGeometry().nPlanes();
-        int nplanesVecSize =  geo::gGeometry().sensorIDsVec().size();
-        streamlog_out(DEBUG2) << "EUTelKalmanFilter::sortHitsByMeasurementLayers()  nplanes : " << nplanes << " vectorSize: " << nplanesVecSize << std::endl;
-
-        // Sort measurement layers such that layers encountered by track first
-        // are in the front of array
-        _allMeasurements = std::vector< MeasurementLayer* >( nplanesVecSize , NULL );   // flush vector
-        int numberAlongZ = -1;
-        std::vector< int >::const_iterator itSensorID;
-        for ( itSensorID = geo::gGeometry().sensorIDsVec().begin(); itSensorID != geo::gGeometry().sensorIDsVec().end(); ++itSensorID ) {
-            sensorID = (*itSensorID);
-            streamlog_out(DEBUG1) << " sensorID  : " << sensorID << std::endl;
-            itMeasLayer = measLayers.find( sensorID );
-            if ( itMeasLayer != measLayers.end() ) {
-                numberAlongZ = geo::gGeometry().sensorIDtoZOrder( sensorID );
-                _allMeasurements.at( numberAlongZ ) = itMeasLayer->second;
-            }
-        }
-        
-        // remove elements without MeasurementLayer assigned
-        for ( itLayer = _allMeasurements.begin(); itLayer != _allMeasurements.end(); ) {
-            if ( (*itLayer) == NULL ) itLayer = _allMeasurements.erase(itLayer);
-            else ++itLayer;
-        }
-        
-        return isReady;
-    }
-    
-/** 
- * Fill hits in a vector. Virtual function to other hit ordering can be created.    
- * This version only take the output and places it in a vector. So basic but the function is there.
- * It is possible that at this step you want to remove hits with a certain characteristic.     
- * 
- * @param evt event pointer
- * @param collection hits collection pointer
- * @param [out] allHitsVec vector of hits in event
- */ 
 void EUTelKalmanFilter::findHitsOrderVec(LCCollection* lcCollection,EVENT::TrackerHitVec& hitsOrderVec) {
-
 	for (int iHit = 0; iHit < lcCollection->getNumberOfElements(); iHit++) {
 		TrackerHitImpl * hit = static_cast<TrackerHitImpl*> (lcCollection->getElementAt(iHit));
 
