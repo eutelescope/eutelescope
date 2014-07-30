@@ -22,16 +22,23 @@ namespace eutelescope {
 		public: 
 			EUTelTrack();
 			//getters
+			int getDimensionSize() const ;
 			int	getLocation() const;
 			TMatrixDSym getTrackStateCov() const;
 			TVectorD getTrackStateVec() const ;
+			int getNumberOfHitsOnTrack() const;
+			void getCombinedHitAndStateCovMatrixInLocalFrame(double (&cov)[4]) const;
+			TMatrixD getProjectionMatrix() const;
 			//setters
+			void setDimensionSize(int dimension);
 			void setLocation(int location);
 			void setBeamEnergy(float beamE);
 			void setBeamCharge(float beamQ);
 			void setDirectionYZ(float directionYZ);
 			void setDirectionXY(float directionXY);
 			void setPosition(float position[]);
+			void setCombinedHitAndStateCovMatrixInLocalFrame(double cov[4]);
+			void setTrackStateVecPlusZParameter(TVectorD stateVec, float zParameter);
 			//initialise
 			void initialiseCurvature();
 			//find
@@ -39,9 +46,14 @@ namespace eutelescope {
 			//compute
 			TVector3 computeCartesianMomentum();
 			TMatrix computePropagationJacobianFromStateToThisZLocation(float zPosition);
+			//print
+			void print();
+			bool operator<(const EUTelTrack compareState ) const;
+
   	private:
     	float _beamQ;
 			float _beamE;
+			float _covCombinedMatrix[4];
 	};
 
 }

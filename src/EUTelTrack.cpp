@@ -3,6 +3,10 @@ using namespace eutelescope;
 EUTelTrack::EUTelTrack(){} 
 
 //getters
+int EUTelTrack::getDimensionSize() const {
+	int dimension = static_cast<int>(getD0());
+	return dimension;
+}
 int EUTelTrack::getLocation() const {
 	int location = static_cast<int>(getZ0());
 	return location;
@@ -48,7 +52,45 @@ TMatrixDSym EUTelTrack::getTrackStateCov() const {
 	return C;
 	streamlog_out( DEBUG1 ) << "EUTelTrack::getTrackStateCov()----------------------------END" << std::endl;
 }
+int EUTelTrack::getNumberOfHitsOnTrack() const {
+	int numberOfHitsOnTrack =0;
+	const EVENT::TrackVec& states = getTracks();
+	if(states.size() == 0){
+		throw(lcio::Exception(Utility::outputColourString("The number of states is 0.", "RED"))); 	
+	}
+	streamlog_out(DEBUG0) <<"The number of states " << states.size()<<std::endl; 
+	for(int i =0; i< states.size();++i){
+		streamlog_out(DEBUG0) <<"The states memory address for loop number "<<i<<" " << &states<<std::endl; 
+		const EVENT::TrackerHitVec& hit = states[i]->getTrackerHits();
+		if(states[i]->getTrackerHits().size() == 0){
+			continue;
+		}
+		if(states[i]->getTrackerHits().size()>1){
+			throw(lcio::Exception(Utility::outputColourString("The number of hits for the state is greater than 1.", "RED"))); 	
+		}
+		numberOfHitsOnTrack++;
+	}
+	return numberOfHitsOnTrack;
+}
+void EUTelTrack::getCombinedHitAndStateCovMatrixInLocalFrame( double (&cov)[4] ) const {
+	cov[0] = _covCombinedMatrix[0];
+	cov[1] = _covCombinedMatrix[1];
+	cov[2] = _covCombinedMatrix[2];
+	cov[3] = _covCombinedMatrix[3];
+}
+//TO DO:This matrix will only work for no tilted sensors. Must determine the generic projection matrix
+TMatrixD EUTelTrack::getProjectionMatrix() const {
+	TMatrixD projection(5,5);
+	projection.Zero();
+	TMatrixD proM2l(2, 2);
+	proM2l.UnitMatrix();
+	projection.SetSub(3, 3, proM2l);
+	return projection;
+}
 //setters
+void EUTelTrack::setDimensionSize(int dimension){
+	setD0(static_cast<float>(dimension));
+}
 void EUTelTrack::setLocation(int location){
 	float locationFloat = static_cast<float>(location);
 	setZ0(locationFloat);
@@ -69,7 +111,21 @@ void EUTelTrack::setDirectionXY(float directionXY){
 void EUTelTrack::setPosition(float position[]){
 	setReferencePoint(position);
 }
+void EUTelTrack::setCombinedHitAndStateCovMatrixInLocalFrame(double cov[4]){
+	_covCombinedMatrix[0] = cov[0];
+	_covCombinedMatrix[1] = cov[1];
+	_covCombinedMatrix[2] = cov[2];
+	_covCombinedMatrix[3] = cov[3];
+}
 
+void EUTelTrack::setTrackStateVecPlusZParameter(TVectorD stateVec,float zParameter){
+	float referencePoint[] = {stateVec[3],stateVec[4],zParameter};
+	setReferencePoint(referencePoint);
+	setPhi(stateVec[1]);
+	setTanLambda(stateVec[2]);
+	setOmega(stateVec[0]);
+
+}
 ///initialise
 void EUTelTrack::initialiseCurvature(){
 	if(_beamQ == 0){
@@ -128,5 +184,12 @@ TMatrix EUTelTrack::computePropagationJacobianFromStateToThisZLocation(float zPo
 	return jacobian;
 
 }
-
-
+//print
+void EUTelTrack::print(){
+	TVectorD stateVec = getTrackStateVec();
+	stateVec.Print();
+}
+//Overload operators.
+bool EUTelTrack::operator<(const EUTelTrack compareState ) const {
+	return getReferencePoint()[2]<compareState.getReferencePoint()[2];
+}
