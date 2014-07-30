@@ -30,19 +30,19 @@ namespace eutelescope {
 			std::string outputColourString(std::string inputString, std::string colour){
 				std::string outputString;
 				if(colour == "RED"){
-					outputString = "\033[41m" +  inputString + "\033[49m";
+					outputString = "\033[31m" +  inputString + "\033[39m";
 					return	outputString;
 				}
 				if(colour =="BLUE"){
-					outputString = "\033[44m" +  inputString + "\033[49m";
+					outputString = "\033[34m" +  inputString + "\033[39m";
 					return	outputString;
 				}
 				if(colour =="GREEN"){
-					outputString = "\033[42m" +  inputString + "\033[42m";
+					outputString = "\033[32m" +  inputString + "\033[39m";
 					return	outputString;
 				}
 				if(colour =="YELLOW"){
-					outputString = "\033[33m" +  inputString + "\033[33m";
+					outputString = "\033[33m" +  inputString + "\033[39m";
 					return	outputString;
 				}
 	
