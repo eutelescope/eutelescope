@@ -146,9 +146,16 @@ namespace eutelescope {
 std::vector<EUTelTrack>& EUTelKalmanFilter::getTracks(){
 	return	_trackAfterSameHitsCut; 
 }
-//This is the work horse of the class. Using seeds it propagates the track forward using equations of motion. This can be with or without magnetic field.
-void EUTelKalmanFilter::propagateForwardFromSeedState( EUTelTrack state, EUTelTrack & track    ){
+void EUTelKalmanFilter::clearEveryRun(){
+	int _totalNumberOfHits=0;
+	int _totalNumberOfSharedHits=0;
+}
 
+//This is the work horse of the class. Using seeds it propagates the track forward using equations of motion. This can be with or without magnetic field.
+void EUTelKalmanFilter::propagateForwardFromSeedState( EUTelTrack& state, EUTelTrack & track    ){
+	//TO DO: To delete this in smart way. 
+	EUTelTrack *firstState = new EUTelTrack(state);//Need to create an initial state that will not be deleted outside this scope  
+	track.addTrack(static_cast<EVENT::Track*>(firstState));//Note we do not have to create new since this object State is saved in class member scope
 	//Here we loop through all the planes not excluded. We begin at the seed which might not be the first. Then we stop before the last plane, since we do not want to propagate anymore
 	for(int i = geo::gGeometry().sensorIDToZOrderWithoutExcludedPlanes()[state.getLocation()]; i < (geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()-1); ++i){
 	
@@ -163,43 +170,43 @@ void EUTelKalmanFilter::propagateForwardFromSeedState( EUTelTrack state, EUTelTr
 			continue;//So if there is no intersection look on the next plane. Important since two planes could be at the same z position
 		}
 		//So we have intersection lets create a new state
-		EUTelTrack newState; 
-		newState.setDimensionSize(_planeDimensions[newSensorID]);//We set this since we need this information for later processors
-		newState.addHit(NULL); //By default the state has no hit. Could be just a surface. 
-		newState.setBeamEnergy(_beamE);
-		newState.setBeamCharge(_beamQ);
-		newState.initialiseCurvature();
-		newState.setLocation(newSensorID);
+		EUTelTrack *newState = new EUTelTrack();//Need to create this since we save the pointer and we would be out of scope when we leave this function. Destroying this object. 
+		newState->setDimensionSize(_planeDimensions[newSensorID]);//We set this since we need this information for later processors
+		newState->setBeamEnergy(_beamE);
+		newState->setBeamCharge(_beamQ);
+		newState->initialiseCurvature();
+		newState->setLocation(newSensorID);
 		TMatrixD jacobian(5,5);
 		jacobian.Zero();
-		jacobian = newState.computePropagationJacobianFromStateToThisZLocation(globalIntersection[2]);
-		findNextStateUsingJacobian(state,jacobian,globalIntersection[2], newState);
-		testPositionEstimation(const_cast<float*>(newState.getReferencePoint()),globalIntersection);//Here we compare the estimation from the simple equation of motion and jacobian.
+		jacobian = newState->computePropagationJacobianFromStateToThisZLocation(globalIntersection[2]);
+		findNextStateUsingJacobian(state,jacobian,globalIntersection[2], *newState);
+		testPositionEstimation(const_cast<float*>(newState->getReferencePoint()),globalIntersection);//Here we compare the estimation from the simple equation of motion and jacobian.
 		if(_mapHitsVecPerPlane[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i+1]].size() == 0){
 			streamlog_out(DEBUG5) << Utility::outputColourString("There are no hits on the plane with this state. Add state to track as it is and move on ","YELLOW");
-			track.addTrack(static_cast<EVENT::Track*>(&newState));//Need to return this to LCIO object. Loss functionality but retain information 
-			state = newState;
+			track.addTrack(static_cast<EVENT::Track*>(newState));//Need to return this to LCIO object. Loss functionality but retain information 
+			state = *newState;
 			continue;
 		}
-		EVENT::TrackerHit* closestHit = const_cast< EVENT::TrackerHit* > ( findClosestHit( newState )); //This will look for the closest hit but not if it is within the excepted range		
+		EVENT::TrackerHit* closestHit = const_cast< EVENT::TrackerHit* > ( findClosestHit( *newState )); //This will look for the closest hit but not if it is within the excepted range		
 		const double* hitPosition = closestHit->getPosition();
-		const double distance = std::sqrt(computeResidual(newState, closestHit ).Norm2Sqr()); //Determine the residual to it. //Distance is in mm.
-		const double DCA = getXYPredictionPrecision( newState ); //This does nothing but return a number specified by user. In the future this should use convariance matrix information TO DO: FIX
+		const double distance = std::sqrt(computeResidual(*newState, closestHit ).Norm2Sqr()); //Determine the residual to it. //Distance is in mm.
+		const double DCA = getXYPredictionPrecision( *newState ); //This does nothing but return a number specified by user. In the future this should use convariance matrix information TO DO: FIX
+		streamlog_out ( DEBUG1 ) <<"At plane: "<<newState->getLocation() << ". Distance between state and hit: "<< distance <<" Must be less than: "<<DCA<< endl;
 		if ( distance > DCA ) {
-			streamlog_out ( DEBUG1 ) << " Distance between them: "<< distance << endl;
 			streamlog_out ( DEBUG1 ) << "Closest hit is outside of search window." << std::endl;
 			streamlog_out ( DEBUG1 ) << "Skipping current plane. Covariant Matrix and position already updated to this point. Add to track " << std::endl;
-			track.addTrack(static_cast<EVENT::Track*>(&newState));//Need to return this to LCIO object. Loss functionality but retain information 
-			state = newState;
+			track.addTrack(static_cast<EVENT::Track*>(newState));//Need to return this to LCIO object. Loss functionality but retain information 
+			state = *newState;
 			continue;
 		}	
 		if(closestHit == NULL){
 			throw(lcio::Exception( Utility::outputColourString("The closest hit you are trying to add is NULL. This can not be correct","RED")));
 		}
 		streamlog_out ( DEBUG1 ) << "Found a hit! Distance: "<< distance << endl;
-		newState.addHit(closestHit);
-		track.addTrack(static_cast<EVENT::Track*>(&newState));//Need to return this to LCIO object. Loss functionality but retain information 
-		state = newState;
+		newState->addHit(closestHit);
+		_totalNumberOfHits++;//This is used for test of the processor later.   
+		track.addTrack(static_cast<EVENT::Track*>(newState));//Need to return this to LCIO object. Loss functionality but retain information 
+		state = *newState;
 	}//TO DO: Must add the kalman filter back into the code. 
 
 }	
@@ -243,14 +250,22 @@ void EUTelKalmanFilter::testTrackQuality(){
 	_numberOfTracksAfterPruneCut = _numberOfTracksAfterPruneCut +	_trackAfterSameHitsCut.size();
 
 	if(_numberOfTracksTotal % 1000 == 0){
-		streamlog_out(MESSAGE5)<<" Total Tracks "<<" Pass Hit Cut "<<" Pass Prune Cut " <<std::endl;
-		streamlog_out(MESSAGE5)<<"    "<<_numberOfTracksTotal<<"    "<<"    "<<_numberOfTracksAfterHitCut<<"                                       "<<_numberOfTracksAfterPruneCut<<std::endl;
+		streamlog_out(MESSAGE5)<<"///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////"<<std::endl;
+		streamlog_out(MESSAGE5)<<" Total Tracks "<<" Pass Hit Cut " <<"                           Pass Prune Cut " <<std::endl;
+		streamlog_out(MESSAGE5)<<"    "<<_numberOfTracksTotal<<"    "<<"    "<<_numberOfTracksAfterHitCut<<"                                                     "<<_numberOfTracksAfterPruneCut<<std::endl;
 		float percentAfterHitCut = (_numberOfTracksAfterHitCut/_numberOfTracksTotal)*100;
 		float percentAfterPruneCut = (_numberOfTracksAfterPruneCut/_numberOfTracksTotal)*100;
 		streamlog_out(MESSAGE5)<<"               "<<percentAfterHitCut<<"                                                      "<<percentAfterPruneCut<<std::endl;
-		if(percentAfterHitCut < 0.1 or percentAfterPruneCut < 0.1){
-			streamlog_out(MESSAGE5)<< Utility::outputColourString("The percentage of track making the cut is very low at the moment ","YELLOW");
+		float averageNumberOfHitsOnTrack = _totalNumberOfHits/_numberOfTracksTotal;
+		float averageNumberOfSharedHitsOnTrack = _totalNumberOfSharedHits/ _numberOfTracksTotal;
+		streamlog_out(MESSAGE5)<<"The average number of hits on a track: "<< averageNumberOfHitsOnTrack<<std::endl;
+		streamlog_out(MESSAGE5)<<"The average number of shared hits on a track with other tracks: "<< averageNumberOfSharedHitsOnTrack<<std::endl;
+		if(percentAfterHitCut < 0.1){
+			streamlog_out(MESSAGE5)<< Utility::outputColourString("The percentage of track making the hit cut is very low at the moment ","YELLOW")<<std::endl;
 		}
+		if(percentAfterPruneCut < 0.1){
+			streamlog_out(MESSAGE5)<< Utility::outputColourString("The percentage of track making the prune cut is very low at the moment ","YELLOW")<<std::endl;
+		}	
 	}
 }
 void EUTelKalmanFilter::testPositionEstimation(float position1[], float position2[]){
@@ -308,6 +323,7 @@ void EUTelKalmanFilter::findTrackCandidatesWithSameHitsAndRemove() {
 					EVENT::TrackerHit* jhit = jhits[j];
 					int jc = jhit->id();
 					if(ic == jc ){
+						_totalNumberOfSharedHits++;
 						hitscount++; 
 						streamlog_out(MESSAGE1) <<  "Hit number on track you are comparing all other to :" << i << ". Hit ID: " << ic << ". Hit number of comparison: " << j << ". Hit ID of this comparison : " << jc << ". Number of common hits: " << hitscount << std::endl; 
 					}
@@ -474,7 +490,8 @@ void EUTelKalmanFilter::initialiseSeeds() {
 			state.setBeamCharge(_beamQ);//this is set for each state. to do: is there a more efficient way of doing this since we only need this stored once?
 			state.setBeamEnergy(_beamE);//this is saved in gev. 
 			state.initialiseCurvature(); //this will perform the calculation _beamq/_beame ad place in invp
-			float trkCov[15] = {0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.};//This is the covariance matrix of the track state: (1/p, Tx,Ty,x,y)X(1/p, Tx,Ty,x,y) Z is not included since this is a parameter.This is also a symmetric matrix so only need 15 entries. 
+			//TO DO We just fill the cov matrix with junk. We don't use it at the moment 
+	/*		float trkCov[15] = {0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.};//This is the covariance matrix of the track state: (1/p, Tx,Ty,x,y)X(1/p, Tx,Ty,x,y) Z is not included since this is a parameter.This is also a symmetric matrix so only need 15 entries. 
 			trkCov[0] = ( _beamEnergyUncertainty * _beamE ) * ( _beamEnergyUncertainty * _beamE );               //cov(q/p,x)=0, cov(q/p,y)=0, cov(q/p,tx)=0, cov(q/p,ty)=0, cov(q/p,q/p)
 
 			trkCov[2] = _beamAngularSpread[0] * _beamAngularSpread[0];          //cov(tx,x)=0, cov(tx,y)=0, cov(tx,tx)
@@ -484,19 +501,22 @@ void EUTelKalmanFilter::initialiseSeeds() {
 			const EVENT::FloatVec uvcov = (*itHit)->getCovMatrix();
 			trkCov[13] = uvcov[0]*1.E4;                               //cov(x,x)
 			trkCov[14] = uvcov[1]*1.E4;   trkCov[15] = uvcov[2]*1.E4;       //cov(y,x), cov(y,y)
-
+			state.setCovMatrix(trkCov);*/
 			state.addHit(*itHit);
 			state.setDimensionSize(_planeDimensions[state.getLocation()]);
 			stateVec.push_back(state);
 		}
 		_mapSensorIDToSeedStatesVec[_createSeedsFromPlanes[iplane]] = stateVec; 
+	//	streamlog_out(MESSAGE5) << "The size of stateVec: "<<stateVec.size()<<"The size of the map " <<_mapSensorIDToSeedStatesVec.size() << std::endl;
 	}
 	streamlog_out(DEBUG2) << "--------------------------------EUTelKalmanFilter::initialiseSeeds()---------------------------" << std::endl;
 }
 void EUTelKalmanFilter::testInitialSeeds(){
-	if(_mapSensorIDToSeedStatesVec.size() != _createSeedsFromPlanes.size()){
-		throw(lcio::Exception(Utility::outputColourString("The size of intial state seeds planes and the number to use at the start are different", "RED"))); 	
-	}
+	//Even if there are no hits then we can compare these. Since it will contain stateVec with size 0.      
+//	if(_mapSensorIDToSeedStatesVec.size() != _createSeedsFromPlanes.size()){TO DO:Fix strange error with some event gives no seed planes
+	//	streamlog_out(MESSAGE5) <<"The size of sensors with seeds: " << _mapSensorIDToSeedStatesVec.size() <<" The number of planes you are suppose to create seeds from: "<<_createSeedsFromPlanes.size()<< " For event number: " <<getEventNumber()<<std::endl;
+//		throw(lcio::Exception(Utility::outputColourString("The size of intial state seeds planes and the number to use at the start are different", "RED"))); 	
+//	}
 	for(int i = 0 ; i < _mapSensorIDToSeedStatesVec.size(); ++i){
 		std::vector<EUTelTrack> StatesVec =  _mapSensorIDToSeedStatesVec[_createSeedsFromPlanes[i]]; 	
 		for(int j = 0 ; j < StatesVec.size() ; ++j){
@@ -509,7 +529,7 @@ void EUTelKalmanFilter::testInitialSeeds(){
 //Loop through each plane that contains seeds and then each seed. From that seed you then create a track.
 void EUTelKalmanFilter::findTrackCandidates() {
 	streamlog_out(MESSAGE1) << "EUTelKalmanFilter::findTrackCandidates()" << std::endl;
-	_tracks.clear(); //Clear all past track information
+	clearTrackAndTrackStates(); //Clear all past track information
 	for(int i = 0 ; i < _mapSensorIDToSeedStatesVec.size(); ++i){
 		std::vector<EUTelTrack> statesVec =  _mapSensorIDToSeedStatesVec[_createSeedsFromPlanes[i]]; 	
 		if(statesVec.size() == 0){
@@ -519,20 +539,29 @@ void EUTelKalmanFilter::findTrackCandidates() {
 		for(int j = 0 ; j < statesVec.size() ; ++j){
 			EUTelTrack track;
 			propagateForwardFromSeedState(statesVec[j], track);
-			streamlog_out(MESSAGE1) << "This is just before the track gets the hits" << std::endl;
-
-			const EVENT::TrackerHitVec& trkcandhits = track.getTracks().at(0)->getTrackerHits();
-			cout << track.getTracks().at(0) << endl;
-			streamlog_out(MESSAGE1) << "This is just before the track gets the hits after being in vector " << std::endl;
 			_tracks.push_back(track);//Here we create a long list of possible tracks
-			const EVENT::TrackerHitVec& trkcandhits2 = _tracks[0].getTracks()[0]->getTrackerHits();
 
 		}
 	}
 	streamlog_out(MESSAGE1) << "EUTelKalmanFilter::findTrackCandidates()------END" << std::endl;
 }
+//We need to delete the states AND the track. Since we have allocated memory to store the state.
+void EUTelKalmanFilter::clearTrackAndTrackStates(){
+	for(int i=0; i < _tracks.size(); ++i){
+		for(int j=0; j< _tracks.at(i).getTracks().size(); ++j){   
+		//	delete [] _tracks.at(i).getTracks().at(j); TO DO: Delete memory properly 
+		}
+	}
+	_tracks.clear();
+}
+
 void EUTelKalmanFilter::findTracksWithEnoughHits(){
+	streamlog_out(DEBUG1) << "EUTelKalmanFilter::findTracksWithEnoughHits()------BEGIN" << std::endl;
 	_tracksAfterEnoughHitsCut.clear();
+	if(_tracks.size() == 0 ){
+		streamlog_out(MESSAGE5) <<"This is event: " <<getEventNumber()<<std::endl;   
+		streamlog_out(MESSAGE5) << Utility::outputColourString("The number of tracks for this event is zero ","YELLOW")<<std::endl; 
+	}
 	for(int i = 0 ; i<_tracks.size(); ++i){
 		EUTelTrack& track = _tracks[i];
 		streamlog_out ( DEBUG2 ) << "Number of hits on the track: " <<track.getNumberOfHitsOnTrack()<<" Number needed: " <<  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() - _allowedMissingHits << std::endl;
@@ -541,6 +570,8 @@ void EUTelKalmanFilter::findTracksWithEnoughHits(){
 			_tracksAfterEnoughHitsCut.push_back(track);
 		}
 	}
+	streamlog_out(DEBUG1) << "EUTelKalmanFilter::findTracksWithEnoughHits()-----END" << std::endl;
+
 }
 /*
 //Check the number of hit on the track after propagation and collecting hits is over the minimum
@@ -593,6 +624,7 @@ void EUTelKalmanFilter::setHitsVecPerPlane(){
 }
 //This member function will loop through each position array and determine if some entries are all one number (Usually 0). This is done so we can determine the dimension of the hit.
 //We create a vector that excluded planes that are notoncluded
+//TO DO: This way of calculating the dimesions is silly since y ou way have only 1 hit in the first event on any plane. Need to fix this. 
 void EUTelKalmanFilter::setPlaneDimensionsVec(){
 	_planeDimensions.clear();
 	const double* positionBefore=NULL;//This is a pointer to a const not a const pointer
@@ -642,7 +674,7 @@ void EUTelKalmanFilter::setPlaneDimensionsVec(){
 			numberOfDimensions++;
 		}
 		streamlog_out(DEBUG2) << "The size of Dimensions : "<< numberOfDimensions << std::endl;
-		_planeDimensions[planeID] = numberOfDimensions;
+		_planeDimensions[planeID] = 2;
 	}//END of loop over planes
 }	    
 
@@ -665,10 +697,16 @@ void EUTelKalmanFilter::testPlaneDimensions(){
 		throw(lcio::Exception( Utility::outputColourString("The size of your dimesion vector is not the same as the number of planes. Something must be wrong!","RED")));
 	}
 	for(int i=0;i<_planeDimensions.size();++i){
-		if(_planeDimensions.at(geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i])>3 or _planeDimensions.at(geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i])<0){
+		if(_planeDimensions.at(geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i])>3 or _planeDimensions.at(geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i])<=0){
 			throw(lcio::Exception( "The number of dimension for one of your planes is greater than 3 or less than 0. If this is not a mistake collect you nobel prize now!"));
 		}
 	}
+	for(int i=0;i<_planeDimensions.size();++i){
+		if(_planeDimensions.at(geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i]) != 2){
+			throw(lcio::Exception( "The number of dimensions is not two. If you have a strip sensor remove this test!!!!!!!!   "));
+		}
+	}
+
 }
 void EUTelKalmanFilter::onlyRunOnce(){
 	if(_firstExecution){

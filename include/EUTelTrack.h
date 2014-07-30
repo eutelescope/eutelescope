@@ -21,12 +21,15 @@ namespace eutelescope {
 	class  EUTelTrack : public IMPL::TrackImpl{
 		public: 
 			EUTelTrack();
+			EUTelTrack( const EUTelTrack& state);
 			//getters
 			int getDimensionSize() const ;
 			int	getLocation() const;
 			TMatrixDSym getTrackStateCov() const;
 			TVectorD getTrackStateVec() const ;
 			int getNumberOfHitsOnTrack() const;
+			inline int getBeamCharge() const  { return _beamQ;}
+			inline int getBeamEnergy() const {return _beamE;}
 			void getCombinedHitAndStateCovMatrixInLocalFrame(double (&cov)[4]) const;
 			TMatrixD getProjectionMatrix() const;
 			//setters

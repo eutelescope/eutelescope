@@ -144,7 +144,7 @@ void EUTelProcessorTrackingHelixTrackSearch::processRunHeader(LCRunHeader* run) 
 				<< "The run header says the GeoID is " << header->getGeoID() << endl
 				<< "The GEAR description says is     " << geo::gGeometry().getSiPlanesLayoutID() << endl;
 	}
-
+	_trackFitter->clearEveryRun();		
 		_nProcessedRuns++;
 }
 
@@ -152,7 +152,7 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
 
 	streamlog_out(DEBUG1) << "Event #" << _nProcessedEvents << std::endl;
 	EUTelEventImpl * event = static_cast<EUTelEventImpl*> (evt); //Change the LCIO object to EUTel object. This is a simple way to extend functionality of the object.
-
+	_trackFitter->setEventNumber(_nProcessedEvents);
 	// Do not process last or unknown events
 	if (event->getEventType() == kEORE) {
 		streamlog_out(DEBUG4) << "EORE found: nothing else to do." << std::endl;

@@ -2,6 +2,19 @@
 using namespace eutelescope;
 EUTelTrack::EUTelTrack(){} 
 
+EUTelTrack::EUTelTrack(const EUTelTrack& state){
+streamlog_out( DEBUG0 ) << "Call copy constructor for Track" << std::endl;
+
+setLocation(state.getLocation());//This stores the location as a float in Z0 since no location for track LCIO. This is preferable to problems with storing hits.  
+setPosition(const_cast<float*>(state.getReferencePoint()));//This will automatically take cartesian coordinate system and save it to reference point. //This is different from most LCIO applications since each track will have own reference point. 	
+setDirectionXY(	state.getPhi());  // seed with 0 at first hit. This one is stored as tan (x/y) rather than angle as in LCIO format TO DO:This really should be give as a beam direction.  
+setDirectionYZ(state.getTanLambda());  // seed with 0 at first hit.
+setBeamCharge(state.getBeamCharge());//this is set for each state. to do: is there a more efficient way of doing this since we only need this stored once?
+setBeamEnergy(state.getBeamEnergy());//this is saved in gev. 
+initialiseCurvature(); //this will perform the calculation _beamq/_beame ad place in invp
+addHit(const_cast<EVENT::TrackerHit*>(state.getTrackerHits()[0]));
+setDimensionSize(state.getDimensionSize());
+}
 //getters
 int EUTelTrack::getDimensionSize() const {
 	int dimension = static_cast<int>(getD0());
@@ -66,6 +79,7 @@ int EUTelTrack::getNumberOfHitsOnTrack() const {
 			continue;
 		}
 		if(states[i]->getTrackerHits().size()>1){
+			streamlog_out( DEBUG1 ) << "The number of hits in one state is: "<< states[i]->getTrackerHits().size() << std::endl;
 			throw(lcio::Exception(Utility::outputColourString("The number of hits for the state is greater than 1.", "RED"))); 	
 		}
 		numberOfHitsOnTrack++;

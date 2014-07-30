@@ -64,7 +64,6 @@ namespace eutelescope {
         inline int sensorID() const {
             return _id;
         }
-        
     private:
         /** Measurement layer id */
         int _id;
@@ -96,8 +95,12 @@ namespace eutelescope {
         /** Initialise Fitter */
         void testUserInput();
 
+				void clearEveryRun();  
 				void testHitsVec();
 				bool _hitsInputGood;
+				int _eventNumber;
+				int _totalNumberOfHits=0;
+				int _totalNumberOfSharedHits=0;
     public:
 
          std::vector<EUTelTrack>& getTracks();
@@ -105,7 +108,13 @@ namespace eutelescope {
 
 
 				void	setHitsVec(EVENT::TrackerHitVec& allHitsVec){ _allHitsVec = allHitsVec;}
-						 
+				void setEventNumber(int eventNumber){ 
+					_eventNumber = eventNumber;
+				}
+				inline int getEventNumber()	const {
+					return _eventNumber;
+				}
+
         inline int getAllowedMissingHits() const {
             return _allowedMissingHits;
         };
@@ -202,7 +211,7 @@ void setAutoPlanestoCreateSeedsFrom(){
 
         /** update EUTelTrackState object at a new plane ID*/
         int findNextPlaneEntrance(  EUTelTrackStateImpl* , int  );
-    		void propagateForwardFromSeedState(EUTelTrack, EUTelTrack& );
+    		void propagateForwardFromSeedState(EUTelTrack&, EUTelTrack& );
 
         /** a vector of hits found while swimming through the detector planes 
         * write down and dump into a collection in EUTelProcessorTrackerHelixSearch
@@ -232,6 +241,7 @@ void setAutoPlanestoCreateSeedsFrom(){
         void initialiseSeeds();
 				void testInitialSeeds();
 				void testTrackQuality();
+				void clearTrackAndTrackStates();
         /* need a method to get hitFittedVec
          * to be consistent with the other methods - passing the object by reference
          */     
@@ -260,6 +270,7 @@ void setAutoPlanestoCreateSeedsFrom(){
         void prepareLCIOTrack();
 
         /** Sort hits according to particles propagation direction */
+        bool sortHitsByMeasurementLayers( const EVENT::TrackerHitVec& );
         
         // Helper functions
     private:
