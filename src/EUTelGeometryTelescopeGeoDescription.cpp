@@ -44,18 +44,18 @@ using namespace std;
 unsigned EUTelGeometryTelescopeGeoDescription::_counter = 0;
 
 EUTelGeometryTelescopeGeoDescription& EUTelGeometryTelescopeGeoDescription::getInstance( gear::GearMgr* _g ) {
-      streamlog_out ( DEBUG4) << "  EUTelGeometryTelescopeGeoDescription::getInstance --- BEGIN ---" << std::endl; 
+     // streamlog_out ( DEBUG4) << "  EUTelGeometryTelescopeGeoDescription::getInstance --- BEGIN ---" << std::endl; 
       static  EUTelGeometryTelescopeGeoDescription instance;
 
       unsigned i = EUTelGeometryTelescopeGeoDescription::_counter;
-      streamlog_out ( DEBUG4) << "  EUTelGeometryTelescopeGeoDescription::getInstance --- iter: " << i << std::endl;  
+    //  streamlog_out ( DEBUG4) << "  EUTelGeometryTelescopeGeoDescription::getInstance --- iter: " << i << std::endl;  
       if( i < 1 )  { // do it only once !
          instance.setGearManager(_g);
          instance.readGear();
       }
  
       instance.counter();
-      streamlog_out ( DEBUG4) << "  EUTelGeometryTelescopeGeoDescription::getInstance --- END --- " << std::endl; 
+    //  streamlog_out ( DEBUG4) << "  EUTelGeometryTelescopeGeoDescription::getInstance --- END --- " << std::endl; 
 
       return instance;
 }

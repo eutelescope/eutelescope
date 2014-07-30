@@ -150,6 +150,7 @@ void EUTelProcessorTrackingHelixTrackSearch::processRunHeader(LCRunHeader* run) 
 
 void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
 
+	streamlog_out(DEBUG1) << "Event #" << _nProcessedEvents << std::endl;
 	EUTelEventImpl * event = static_cast<EUTelEventImpl*> (evt); //Change the LCIO object to EUTel object. This is a simple way to extend functionality of the object.
 
 	// Do not process last or unknown events
@@ -178,38 +179,37 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
 
 	// Prepare hits for track finder
 	EVENT::TrackerHitVec allHitsVec;
-	_trackFitter->findHitsOrderVec(hitMeasuredCollection,allHitsVec); 
-	_trackFitter->setHitsVec(allHitsVec);
+	_trackFitter->findHitsOrderVec(hitMeasuredCollection,allHitsVec);//Create hit vector 
+	_trackFitter->setHitsVec(allHitsVec);//Will set data member of class _trackFitter 
 	_trackFitter->testHitsVec();//Here we simply make sure the vector contains hits.
-  _trackFitter->printHits();
-	_trackFitter->setHitsVecPerPlane();//set hits vectors ordered by plane(Determined by geometry)
-	_trackFitter->testHitsVecPerPlane();
+  _trackFitter->printHits();//We print the hits to screen for debugging
+	_trackFitter->setHitsVecPerPlane();//Create map Sensor ID(non excluded)->HitsVec (Using geometry)
+	_trackFitter->testHitsVecPerPlane();//tests the size of the map and does it contain hits
 	_trackFitter->onlyRunOnce();//This will only execute once. It can not be placed in init since it needs hit information. It currently only determines hit dimension. However can be used for other thing latter. 
-	_trackFitter->testPlaneDimensions();
-	streamlog_out(DEBUG1) << "Event #" << _nProcessedEvents << std::endl;
+	_trackFitter->testPlaneDimensions();//test that the number of dimensions is 3> >0
 	streamlog_out( DEBUG1 ) << "Trying to find tracks..." << endl;
-	_trackFitter->initialiseSeeds();
-	_trackFitter->testInitialSeeds();
+	_trackFitter->initialiseSeeds();//Create first states from hits. Shouldl work also for strip sensors
+	_trackFitter->testInitialSeeds();//Check hits not NULL and size correct
 // searching for hits along the expected track direction 
-	_trackFitter->findTrackCandidates( );
+	_trackFitter->findTrackCandidates();//Find tracks from seeds. No cuts made here
 	_trackFitter->findTracksWithEnoughHits();
 // remove possible duplicates (the amount of commont hits on the split tracks is controled via the processor paraemter)
 	_trackFitter->findTrackCandidatesWithSameHitsAndRemove();
-
+	_trackFitter->testTrackQuality();//Here we test how many tracks we have after all cuts
 	streamlog_out( DEBUG1 ) << "Retrieving track candidates..." << endl;
 
-std::vector< EUTelTrackImpl* >& trackCartesian = static_cast < EUTelKalmanFilter* > (_trackFitter)->getTracks(); //Need to cast this since error: ‘class eutelescope::EUTelTrackFitter’ otherwise Why??
+std::vector<EUTelTrack>& tracks = _trackFitter->getTracks(); 
 
-plotHistos(trackCartesian);
+plotHistos(tracks);
 
-outputLCIO(evt,trackCartesian);
+//outputLCIO(evt,trackCartesian);
 
 _nProcessedEvents++;
 
 //  if (isFirstEvent()) _isFirstEvent = false; Is this needed
 }
 
-void EUTelProcessorTrackingHelixTrackSearch::outputLCIO(LCEvent* evt, std::vector< EUTelTrackImpl* >& trackCartesian){
+void EUTelProcessorTrackingHelixTrackSearch::outputLCIO(LCEvent* evt, std::vector<EUTelTrack>& trackCartesian){
 
         streamlog_out( DEBUG4 ) << " ---------------- EUTelProcessorTrackingHelixTrackSearch::outputLCIO ---------- BEGIN ------------- " << std::endl;
 
@@ -222,15 +222,10 @@ void EUTelProcessorTrackingHelixTrackSearch::outputLCIO(LCEvent* evt, std::vecto
   	trkCandCollection->setFlag( flag.getFlag( ) );
 
 	//Loop through all tracks
-	vector< EUTelTrackImpl* >::const_iterator itTrackCartesian;
-	for ( itTrackCartesian = trackCartesian.begin(); itTrackCartesian != trackCartesian.end(); itTrackCartesian++){
-
-                if(streamlog_level(DEBUG4) ) (*itTrackCartesian)->Print();
-
-		IMPL::TrackImpl* LCIOtrack = (*itTrackCartesian)->CreateLCIOTrack();
+	for ( int i = 0 ; i < trackCartesian.size(); ++i) {
 
 		//For every track add this to the collection
-    		trkCandCollection->push_back( LCIOtrack );
+    		trkCandCollection->push_back(static_cast<EVENT::Track*>(&trackCartesian[i]));
 	}//END TRACK LOOP
 
 	//Now add this collection to the 
@@ -238,44 +233,26 @@ void EUTelProcessorTrackingHelixTrackSearch::outputLCIO(LCEvent* evt, std::vecto
 
         streamlog_out( DEBUG4 ) << " ---------------- EUTelProcessorTrackingHelixTrackSearch::outputLCIO ---------- END ------------- " << std::endl;
 }
+//TO DO: find a more generic way to plot histograms
+void EUTelProcessorTrackingHelixTrackSearch::plotHistos( vector<EUTelTrack>& trackCandidates)  {
 
-/** 
- * Plot few histos.
- * 
- */
-void EUTelProcessorTrackingHelixTrackSearch::plotHistos( vector< EUTelTrackImpl* >& trackCandidates)  {
-
-            const int nTracks = trackCandidates.size( );
+	const int nTracks = trackCandidates.size( );
  
-            static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_numberTracksCandidatesHistName ] ) -> fill( nTracks );
-            streamlog_out( MESSAGE2 ) << "Event #" << _nProcessedEvents << endl;
-
-            int nHitsOnTrack = 0;
-            vector< EUTelTrackImpl* >::const_iterator itrk;
-            for ( itrk = trackCandidates.begin( ) ; itrk != trackCandidates.end( ); ++itrk ) {
-						//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Here we fill the chi2 of the candidate tracks
-            static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_chi2CandidateHistName ] ) -> fill( (*itrk)->getChi2() );
-						////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-                const EVENT::TrackerHitVec trkHits = ( *itrk )->getHitsOnTrack();
-                nHitsOnTrack = trkHits.size( );
-                EVENT::TrackerHitVec::const_iterator itTrkHits;
-                streamlog_out( MESSAGE1 ) << "Track hits start:==============" << std::endl;
-                for ( itTrkHits = trkHits.begin( ) ; itTrkHits != trkHits.end( ); ++itTrkHits ) {
-                    const double* uvpos = ( *itTrkHits )->getPosition( );
-                    const int sensorID = Utility::getSensorIDfromHit( static_cast<IMPL::TrackerHitImpl*> (*itTrkHits) );
-                    streamlog_out( MESSAGE1 ) << "Hit (id=" << setw(3) << sensorID << ") local(u,v) coordinates: (" 
-                             << setw(7) << setprecision(4) << uvpos[0] << "," <<  setw(7) << setprecision(4) << uvpos[1] << ")";
-                    double globalHit[] = {0.,0.,0.};
-                    geo::gGeometry().local2Master( sensorID, uvpos, globalHit);
-                    streamlog_out( MESSAGE1 ) << " WorldC: " << setw(7) << globalHit[0] << setw(7) << globalHit[1] << setw(7) << globalHit[2] ;
-                    streamlog_out( MESSAGE1 )  << std::endl;
-                    static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_HitOnTrackCandidateHistName ] ) -> fill( sensorID );
-                }
-                streamlog_out( MESSAGE1 ) << "Track hits end:==============" << std::endl;
-                static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_numberOfHitOnTrackCandidateHistName ] ) -> fill( nHitsOnTrack );
-            }
+	static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_numberTracksCandidatesHistName ] ) -> fill( nTracks );
+	streamlog_out( MESSAGE2 ) << "Event #" << _nProcessedEvents << endl;
+	int numberOfHits =0;
+	for (int i = 0; i< trackCandidates.size( ) ; ++i ) {//loop over all tracks
+		for(int j = 0; j <trackCandidates[i].getTracks().size(); ++j){//loop over all states 
+			if(trackCandidates[i].getTracks()[j]->getTrackerHits()[0] == NULL){//We only ever store on hit per state
+				continue;
+			}
+			numberOfHits++;
+			int sensorID = static_cast<int>(trackCandidates[i].getTracks()[j]->getZ0());//since we store sensor ID in Z0
+			static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_HitOnTrackCandidateHistName ] ) -> fill( sensorID );
+		}
+	streamlog_out( MESSAGE1 ) << "Track hits end:==============" << std::endl;
+	static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_numberOfHitOnTrackCandidateHistName ] ) -> fill(numberOfHits);
+		}
 }
 
 /**

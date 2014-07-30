@@ -101,9 +101,9 @@ namespace eutelescope {
         /** Histogram booking */
         void bookHistograms();
 
-        void plotHistos( vector< EUTelTrackImpl* >&  trackCandidates );
+        void plotHistos( vector<EUTelTrack>&  trackCandidates );
 
-				void outputLCIO(LCEvent* evt,std::vector< EUTelTrackImpl* >&);
+				void outputLCIO(LCEvent* evt,std::vector< EUTelTrack >&);
 
 				void cartesian2LCIOTrack( EUTelTrackImpl* track, IMPL::TrackImpl*) const ;
 
