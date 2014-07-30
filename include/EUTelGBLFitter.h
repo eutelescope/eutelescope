@@ -18,6 +18,7 @@
 #include "EUTelUtilityRungeKutta.h"
 #include "EUTelEquationsOfMotion.h"
 #include "EUTelTrackStateImpl.h"
+#include "EUTelTrack.h"
 #include "EUTelTrackImpl.h"
 #include "EUTelMillepede.h"
 
@@ -74,26 +75,27 @@ namespace eutelescope {
 
         /** Fit tracks */
         // public: 
-
-				void FillInformationToGBLPointObject(EUTelTrackImpl* EUtrack, std::vector< gbl::GblPoint >* pointList);
-
+				void findScattersZPositionBetweenTwoStates(EUTelTrack& state, EUTelTrack& nextState);
+				TMatrixD findScattersJacobians(EUTelTrack state, EUTelTrack nextTrack);
+				void setInformationForGBLPointList(EUTelTrack& EUtrack, std::vector< gbl::GblPoint >& pointList);
+				void testTrack(EUTelTrack& track);
 		void changejacobainGBL(TMatrixD & input, TMatrixD & output);
 	void FindHitIfThereIsOne(EUTelTrackImpl* trackimpl, EVENT::TrackerHit* hit, EUTelTrackStateImpl* state);
 
-	void addMeasurementGBL(gbl::GblPoint& point, const double *hitPos, const double *statePos, double hitCov[4], TMatrixD HMatrix);
+	void setMeasurementGBL(gbl::GblPoint& point, const double *hitPos, double statePos[3], double combinedCov[4], TMatrixD projection);
 
 
-				void CreateTrajectoryandFit(std::vector< gbl::GblPoint >* pointList,  gbl::GblTrajectory* traj, double* chi2, int* ndf, int & ierr);
+				void computeTrajectoryAndFit(std::vector< gbl::GblPoint >& pointList,  gbl::GblTrajectory* traj, double* chi2, int* ndf, int & ierr);
 
-				void UpdateTrackFromGBLTrajectory(gbl::GblTrajectory* traj,std::vector< gbl::GblPoint >* pointList);
-		
-				void pushBackPointandState( std::vector< gbl::GblPoint >* pointListTrack, gbl::GblPoint pointTrack, EUTelTrackStateImpl *state);
+				void UpdateTrackFromGBLTrajectory(gbl::GblTrajectory* traj,std::vector< gbl::GblPoint > pointList, EUTelTrack & track);
+				void setPointVecAndLabel( std::vector< gbl::GblPoint >& pointList, gbl::GblPoint& point, EUTelTrack& state);
 
 				void CreateAlignmentToMeasurementJacobian(std::vector< gbl::GblPoint >& pointList);
 
-				void addSiPlaneScattererGBL(gbl::GblPoint& point, int iPlane);
-
-				void getResidualOfTrackandHits(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint >* pointList, map< int, map< float, float > > & SensorResidualError);
+				void setScattererGBL(gbl::GblPoint& point, int iPlane);
+				void setScattererGBL(gbl::GblPoint& point, float x0);
+				void setPointListWithNewScatterers(std::vector< gbl::GblPoint >& pointList, float rad );
+				void getResidualOfTrackandHits(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint > pointList, EUTelTrack& track, map< int, map< float, float > > & SensorResidual);
 
         /*
          */  
@@ -106,7 +108,7 @@ namespace eutelescope {
 
         void FitSingleTrackCandidate(EVENT::TrackVec::const_iterator& itTrkCand);
 
-				void SetHitCovMatrixFromFitterGBL(EUTelTrackStateImpl *state);
+				void setMeasurementCov(EUTelTrack& state);
 
         inline void SetAlignmentMode( int number) {
             this->_alignmentMode = number;
@@ -120,7 +122,7 @@ namespace eutelescope {
             this->_beamQ = beamQ;
         }
 
-        inline double GetBeamCharge() const {
+        inline double getBeamCharge() const {
             return _beamQ;
         }
 
@@ -128,7 +130,7 @@ namespace eutelescope {
             this->_eBeam = beamE;
         }
 
-        inline double GetBeamEnergy() const {
+        inline double getBeamEnergy() const {
             return _eBeam;
         }
 
@@ -270,7 +272,8 @@ namespace eutelescope {
 				std::string _binaryname;
 
 				TMatrixD _jacobianAlignment;
-
+				std::vector<TMatrixD> _scattererJacobians;
+				std::vector<float> _scattererPositions;
 				std::vector<int> _globalLabels;
         
         /** Parameter resolutions */
@@ -314,7 +317,7 @@ struct compare_points
 
 void OutputMap(std::map<EUTelTrackStateImpl,gbl::GblPoint*, compare_points > _PointToState);
 
-std::vector<EUTelTrackStateImpl> _states;
+std::map< EUTelTrack, int > _mapStatesToLabel;
 std::vector<gbl::GblPoint> _points;
 
 unsigned int _counter_num_pointer = 1;
