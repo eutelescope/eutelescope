@@ -153,6 +153,7 @@ void EUTelProcessorMilleAlign::processRunHeader(LCRunHeader * run) {
 }
 
 void EUTelProcessorMilleAlign::processEvent(LCEvent * evt){
+/*
 EUTelEventImpl * event = static_cast<EUTelEventImpl*> (evt); ///We change the class so we can use EUTelescope functions
 
 	
@@ -196,7 +197,7 @@ EUTelEventImpl * event = static_cast<EUTelEventImpl*> (evt); ///We change the cl
 
 			///Create points but do not fit this time
 			std::vector< gbl::GblPoint > pointList;
-      _trackFitter->FillInformationToGBLPointObject(EUtrack, &pointList);
+      _trackFitter->setInformationForGBLPointList(EUtrack, pointList);
        _trackFitter->CreateAlignmentToMeasurementJacobian(pointList ); //This is place in GBLFitter since millepede has not idea about states and points. Only GBLFitter know about that
 
 		//Check that we have created the alignment jacobian and global parameters correctly
@@ -239,7 +240,7 @@ traj->fit(chi2, ndf, loss, _mEstimatorType );
 		//	outputLCIO(evt, EUtracks); // Important to note that EUtracks are still only the original states at input. The scatterers are used in the fit but are not included here.
 	}//END OF COLLECTION IS NOT NULL LOOP	
 
-
+*/
 }
 void EUTelProcessorMilleAlign::check(LCEvent * evt){}
 

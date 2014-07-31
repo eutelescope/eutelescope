@@ -153,6 +153,7 @@ void EUTelKalmanFilter::clearEveryRun(){
 
 //This is the work horse of the class. Using seeds it propagates the track forward using equations of motion. This can be with or without magnetic field.
 void EUTelKalmanFilter::propagateForwardFromSeedState( EUTelTrack& state, EUTelTrack & track    ){
+	streamlog_out ( DEBUG1 ) << "EUTelKalmanFilter::propagateForwardFromSeedState-----BEGIN "<< endl;
 	//TO DO: To delete this in smart way. 
 	EUTelTrack *firstState = new EUTelTrack(state);//Need to create an initial state that will not be deleted outside this scope  
 	track.addTrack(static_cast<EVENT::Track*>(firstState));//Note we do not have to create new since this object State is saved in class member scope
@@ -205,9 +206,14 @@ void EUTelKalmanFilter::propagateForwardFromSeedState( EUTelTrack& state, EUTelT
 		streamlog_out ( DEBUG1 ) << "Found a hit! Distance: "<< distance << endl;
 		newState->addHit(closestHit);
 		_totalNumberOfHits++;//This is used for test of the processor later.   
+		streamlog_out ( DEBUG1 ) << "Add state to track. "<< endl;
 		track.addTrack(static_cast<EVENT::Track*>(newState));//Need to return this to LCIO object. Loss functionality but retain information 
+		streamlog_out ( DEBUG1 ) << "Make new state just state. "<< endl;
 		state = *newState;
+		streamlog_out ( DEBUG1 ) << "End of loop "<< endl;
+
 	}//TO DO: Must add the kalman filter back into the code. 
+	streamlog_out ( DEBUG1 ) << "EUTelKalmanFilter::propagateForwardFromSeedState-----END "<< endl;
 
 }	
 		/*	
@@ -539,7 +545,10 @@ void EUTelKalmanFilter::findTrackCandidates() {
 		for(int j = 0 ; j < statesVec.size() ; ++j){
 			EUTelTrack track;
 			propagateForwardFromSeedState(statesVec[j], track);
+			streamlog_out ( DEBUG1 ) << "Before adding track to vector "<< endl;
 			_tracks.push_back(track);//Here we create a long list of possible tracks
+			streamlog_out ( DEBUG1 ) << "After adding track to vector "<< endl;
+
 
 		}
 	}
@@ -744,14 +753,15 @@ const EVENT::TrackerHit* EUTelKalmanFilter::findClosestHit(EUTelTrack & state ) 
 }
 //This is not very useful at the moment since the covariant matrix for the hit is guess work at the moment.   
     double EUTelKalmanFilter::getXYPredictionPrecision(EUTelTrack& ts ) const {
-      streamlog_out(DEBUG2) << "EUTelKalmanFilter::getXYPredictionPrecision()" << std::endl;
-      
-      TMatrixDSym Ckkm1(5); 
-			Ckkm1 = ts.getTrackStateCov();
+      streamlog_out(DEBUG2) << "EUTelKalmanFilter::getXYPredictionPrecision()---BEGIN" << std::endl;
+
+     // TO DO: Need proper error analysis to calculate this rather than providing an answer.  
+     // TMatrixDSym Ckkm1(5); 
+		//	Ckkm1 = ts.getTrackStateCov();
       double xyPrec = getWindowSize();   //sqrt( Ckkm1[0][0]*Ckkm1[0][0] + Ckkm1[1][1]*Ckkm1[1][1] );
       
       streamlog_out(DEBUG0) << "Minimal combined UV resolution : " << xyPrec << std::endl;
-      streamlog_out(DEBUG2) << "----------------------EUTelKalmanFilter::getXYPredictionPrecision()------------------------" << std::endl;
+      streamlog_out(DEBUG2) << "----------------------EUTelKalmanFilter::getXYPredictionPrecision()------------------------END" << std::endl;
 
       return xyPrec;
     }
