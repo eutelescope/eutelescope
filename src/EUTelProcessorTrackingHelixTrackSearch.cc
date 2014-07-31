@@ -179,6 +179,7 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
 
 	// Prepare hits for track finder
 	EVENT::TrackerHitVec allHitsVec;
+	_trackFitter->clearFinalTracks(); //This is to clear the tracks from the last event.
 	_trackFitter->findHitsOrderVec(hitMeasuredCollection,allHitsVec);//Create hit vector 
 	_trackFitter->setHitsVec(allHitsVec);//Will set data member of class _trackFitter 
 	_trackFitter->testHitsVec();//Here we simply make sure the vector contains hits.
@@ -192,6 +193,8 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
 	_trackFitter->testInitialSeeds();//Check hits not NULL and size correct
 // searching for hits along the expected track direction 
 	_trackFitter->findTrackCandidates();//Find tracks from seeds. No cuts made here
+	_trackFitter->printTrackCandidates();
+	_trackFitter->testTrackCandidates();
 	_trackFitter->findTracksWithEnoughHits();
 // remove possible duplicates (the amount of commont hits on the split tracks is controled via the processor paraemter)
 	_trackFitter->findTrackCandidatesWithSameHitsAndRemove();

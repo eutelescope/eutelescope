@@ -234,7 +234,7 @@ namespace eutelescope {
     }
 //Not all points are states so we need a way to do:
 //state->label->point. This is what this function does.  
-void EUTelGBLFitter::setPointVecAndLabel( std::vector< gbl::GblPoint >& pointList, gbl::GblPoint& point, EUTelTrack& state) {
+void EUTelGBLFitter::setPointVecAndLabel( std::vector< gbl::GblPoint >& pointList, gbl::GblPoint& point, EUTelState& state) {
 	point.setLabel(_counter_num_pointer);
 	if(point.getLabel() != _counter_num_pointer){
 		throw(lcio::Exception(Utility::outputColourString("The label for te point is not correct", "RED")));
@@ -256,7 +256,7 @@ typedef std::map<EUTelTrackStateImpl,gbl::GblPoint*, compare_points >::const_ite
 
 void EUTelGBLFitter::UpdateTrackFromGBLTrajectory (gbl::GblTrajectory* traj, std::vector< gbl::GblPoint > pointList,EUTelTrack &track){
 	for(int i=0;i < track.getTracks().size(); i++){		
-		EUTelTrack& state = *(static_cast<EUTelTrack*>(const_cast<EVENT::Track*>((track.getTracks()[i]))));
+		EUTelState& state = *(static_cast<EUTelState*>(const_cast<EVENT::Track*>((track.getTracks()[i]))));
 		TVectorD corrections(5);
 		TMatrixDSym correctionsCov(5,5);
 		traj->getResults(_mapStatesToLabel[state], corrections, correctionsCov );
@@ -278,7 +278,7 @@ void EUTelGBLFitter::UpdateTrackFromGBLTrajectory (gbl::GblTrajectory* traj, std
 //This used after trackfit will fill a map between (sensor ID and residualx/y).
 void EUTelGBLFitter::getResidualOfTrackandHits(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint > pointList,EUTelTrack& track, map< int, map< float, float > > &  SensorResidual){
 	for(int i=0;i < track.getTracks().size(); i++){		
-		EUTelTrack state = *(static_cast<EUTelTrack*>(const_cast<EVENT::Track*>((track.getTracks()[i]))));
+		EUTelState state = *(static_cast<EUTelState*>(const_cast<EVENT::Track*>((track.getTracks()[i]))));
 		if(state.getTrackerHits()[0] != NULL){//Need to test this since could be a state with no measurement
 			streamlog_out(DEBUG0) << endl << "There is a hit on the state. Hit pointer: "<< state.getTrackerHits()[0]<<" Find updated Residuals!" << std::endl;
 			unsigned int numData; //Not sure what this is used for??????
@@ -334,8 +334,8 @@ void EUTelGBLFitter::setInformationForGBLPointList(EUTelTrack& track, std::vecto
 		streamlog_out(DEBUG3) << "The first GBL point is made from this jacobian:" << std::endl;
 	  streamlog_message( DEBUG0, jacPointToPoint.Print();, std::endl; );
 		gbl::GblPoint point(jacPointToPoint);
-		EUTelTrack state = *(static_cast<EUTelTrack*>(const_cast<EVENT::Track*>((track.getTracks()[i]))));
-		EUTelTrack nextState = *(static_cast<EUTelTrack*>(const_cast<EVENT::Track*>((track.getTracks()[i+1]))));
+		EUTelState state = *(static_cast<EUTelState*>(const_cast<EVENT::Track*>((track.getTracks()[i]))));
+		EUTelState nextState = *(static_cast<EUTelState*>(const_cast<EVENT::Track*>((track.getTracks()[i+1]))));
 		setScattererGBL(point,state.getLocation());//Every sensor will have scattering due to itself. 
 		if(state.getTrackerHits().size() == 0 ){
 			streamlog_out(DEBUG3)  << Utility::outputColourString("This state does not have a hit. ", "YELLOW")<<std::endl;
@@ -379,13 +379,13 @@ void EUTelGBLFitter::setPointListWithNewScatterers(std::vector< gbl::GblPoint >&
 	}
 }
 
-TMatrixD EUTelGBLFitter::findScattersJacobians(EUTelTrack state, EUTelTrack nextTrack){
+TMatrixD EUTelGBLFitter::findScattersJacobians(EUTelState state, EUTelState nextState){
 	_scattererJacobians.clear();
-	EUTelTrack loopState = state;
+	EUTelState loopState = state;
 	for(int i=0;i<_scattererPositions.size();i++){
 		_scattererJacobians.push_back(loopState.computePropagationJacobianFromStateToThisZLocation(_scattererPositions[i]));
 		TVectorD nextStateVec = _scattererJacobians.at(i) * loopState.getTrackStateVec(); 
-		EUTelTrack nextLoopState;
+		EUTelState nextLoopState;
 		nextLoopState.setTrackStateVecPlusZParameter(nextStateVec, _scattererPositions[i]);
 		nextLoopState.setBeamCharge(getBeamCharge());
 		nextLoopState.setBeamEnergy(getBeamEnergy());
@@ -396,7 +396,7 @@ TMatrixD EUTelGBLFitter::findScattersJacobians(EUTelTrack state, EUTelTrack next
 }
 //The distance from the first state to the next scatterer and then from that scatterer to the next all the way to the next state. 
 //TO DO: This uses the optimum positions as described by Claus.  However for non homogeneous material distribution this might not be the case.
-void EUTelGBLFitter::findScattersZPositionBetweenTwoStates(EUTelTrack& state, EUTelTrack& nextState){
+void EUTelGBLFitter::findScattersZPositionBetweenTwoStates(EUTelState& state, EUTelState& nextState){
 	_scattererPositions.clear();	
 	float distance1 = (nextState.getReferencePoint()[2] + state.getReferencePoint()[2])/2 - (nextState.getReferencePoint()[2] - state.getReferencePoint()[2])/sqrt(12); 
 	_scattererPositions.push_back(distance1);//Z position of 1st scatter	
@@ -512,7 +512,7 @@ i++;
 }
 //TO DO: This is the iterative alignment part that varies the precision of the measurement to allow the GBL tracks to be fitted. The precision matrix itself is an input by us. In the long run can we not do proper error calculations? 
 //TO DO: This does not have to be done for each state since it only varies per plane. So could input this data another way. However in the long run this may not be favourable since we could have correct error analysis eventually. 
-void EUTelGBLFitter::setMeasurementCov(EUTelTrack& state){
+void EUTelGBLFitter::setMeasurementCov(EUTelState& state){
 	double hitcov[]= {0,0,0,0};
 	int izPlane = state.getLocation();
 	if( _parameterIdXResolutionVec.size() > 0 && _parameterIdYResolutionVec.size() > 0 ){

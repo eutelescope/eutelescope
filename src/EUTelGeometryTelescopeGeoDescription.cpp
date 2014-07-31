@@ -1024,7 +1024,7 @@ void EUTelGeometryTelescopeGeoDescription::master2Local( const double globalPos[
 
 
 void EUTelGeometryTelescopeGeoDescription::master2Localtwo(int sensorID, const double globalPos[], double localPos[] ) {
-    streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::master2Local() " << std::endl;
+    streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::master2Local()--BEGIN " << std::endl;
 
     _geoManager->cd( _planePath[sensorID].c_str() );
 		_geoManager->GetCurrentNode()->MasterToLocal( globalPos, localPos );
@@ -1034,6 +1034,8 @@ void EUTelGeometryTelescopeGeoDescription::master2Localtwo(int sensorID, const d
     streamlog_out(DEBUG0) << std::setw(10) << std::setprecision(5) << globalPos[0] << std::setw(10) << std::setprecision(5) << globalPos[1] << std::setw(10) << std::setprecision(5) << globalPos[2] << std::endl;
     streamlog_out(DEBUG0) << "Local coordinates: " << std::endl;
     streamlog_out(DEBUG0) << std::setw(10) << std::setprecision(5) << localPos[0] << std::setw(10) << std::setprecision(5) << localPos[1] << std::setw(10) << std::setprecision(5) << localPos[2] << std::endl;
+		streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::master2Local()----END " << std::endl;
+
 }
 
 

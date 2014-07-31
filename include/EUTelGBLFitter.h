@@ -19,6 +19,7 @@
 #include "EUTelEquationsOfMotion.h"
 #include "EUTelTrackStateImpl.h"
 #include "EUTelTrack.h"
+#include "EUTelState.h"
 #include "EUTelTrackImpl.h"
 #include "EUTelMillepede.h"
 
@@ -75,9 +76,9 @@ namespace eutelescope {
 
         /** Fit tracks */
         // public: 
-				void findScattersZPositionBetweenTwoStates(EUTelTrack& state, EUTelTrack& nextState);
-				TMatrixD findScattersJacobians(EUTelTrack state, EUTelTrack nextTrack);
-				void setInformationForGBLPointList(EUTelTrack& EUtrack, std::vector< gbl::GblPoint >& pointList);
+				void findScattersZPositionBetweenTwoStates(EUTelState& state, EUTelState& nextState);
+				TMatrixD findScattersJacobians(EUTelState state, EUTelState nextTrack);
+				void setInformationForGBLPointList(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList);
 				void testTrack(EUTelTrack& track);
 		void changejacobainGBL(TMatrixD & input, TMatrixD & output);
 	void FindHitIfThereIsOne(EUTelTrackImpl* trackimpl, EVENT::TrackerHit* hit, EUTelTrackStateImpl* state);
@@ -88,7 +89,7 @@ namespace eutelescope {
 				void computeTrajectoryAndFit(std::vector< gbl::GblPoint >& pointList,  gbl::GblTrajectory* traj, double* chi2, int* ndf, int & ierr);
 
 				void UpdateTrackFromGBLTrajectory(gbl::GblTrajectory* traj,std::vector< gbl::GblPoint > pointList, EUTelTrack & track);
-				void setPointVecAndLabel( std::vector< gbl::GblPoint >& pointList, gbl::GblPoint& point, EUTelTrack& state);
+				void setPointVecAndLabel( std::vector< gbl::GblPoint >& pointList, gbl::GblPoint& point, EUTelState& state);
 
 				void CreateAlignmentToMeasurementJacobian(std::vector< gbl::GblPoint >& pointList);
 
@@ -108,7 +109,7 @@ namespace eutelescope {
 
         void FitSingleTrackCandidate(EVENT::TrackVec::const_iterator& itTrkCand);
 
-				void setMeasurementCov(EUTelTrack& state);
+				void setMeasurementCov(EUTelState& state);
 
         inline void SetAlignmentMode( int number) {
             this->_alignmentMode = number;
@@ -317,7 +318,7 @@ struct compare_points
 
 void OutputMap(std::map<EUTelTrackStateImpl,gbl::GblPoint*, compare_points > _PointToState);
 
-std::map< EUTelTrack, int > _mapStatesToLabel;
+std::map< EUTelState, int > _mapStatesToLabel;
 std::vector<gbl::GblPoint> _points;
 
 unsigned int _counter_num_pointer = 1;

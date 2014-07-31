@@ -1,3 +1,5 @@
+#ifndef EUTELTRACK_H
+#define	EUTELTRACK_H
 
 #include "EUTelUtility.h"
 // ROOT
@@ -10,6 +12,7 @@
 //lcio
 #include "IMPL/TrackImpl.h"
 #include "EUTelGeometryTelescopeGeoDescription.h"
+#include "EUTelState.h"
 
 
 using namespace lcio;
@@ -21,42 +24,16 @@ namespace eutelescope {
 	class  EUTelTrack : public IMPL::TrackImpl{
 		public: 
 			EUTelTrack();
-			EUTelTrack( const EUTelTrack& state);
+			EUTelTrack( const EUTelTrack& track);
 			//getters
-			int getDimensionSize() const ;
-			int	getLocation() const;
-			TMatrixDSym getTrackStateCov() const;
-			TVectorD getTrackStateVec() const ;
 			int getNumberOfHitsOnTrack() const;
-			inline int getBeamCharge() const  { return _beamQ;}
-			inline int getBeamEnergy() const {return _beamE;}
-			void getCombinedHitAndStateCovMatrixInLocalFrame(double (&cov)[4]) const;
-			TMatrixD getProjectionMatrix() const;
-			//setters
-			void setDimensionSize(int dimension);
-			void setLocation(int location);
-			void setBeamEnergy(float beamE);
-			void setBeamCharge(float beamQ);
-			void setDirectionYZ(float directionYZ);
-			void setDirectionXY(float directionXY);
-			void setPosition(float position[]);
-			void setCombinedHitAndStateCovMatrixInLocalFrame(double cov[4]);
-			void setTrackStateVecPlusZParameter(TVectorD stateVec, float zParameter);
-			//initialise
-			void initialiseCurvature();
-			//find
-			int findIntersectionWithCertainID(int nextsensorID, float intersectionPoint[] );
-			//compute
-			TVector3 computeCartesianMomentum();
-			TMatrix computePropagationJacobianFromStateToThisZLocation(float zPosition);
+			std::vector<EUTelState> getStates();
+
 			//print
 			void print();
-			bool operator<(const EUTelTrack compareState ) const;
 
   	private:
-    	float _beamQ;
-			float _beamE;
-			float _covCombinedMatrix[4];
 	};
 
 }
+#endif
