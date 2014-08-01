@@ -229,7 +229,7 @@ namespace eutelescope {
     }
 
 
-    void EUTelGBLFitter::Clear() {
+    void EUTelGBLFitter::resetPerTrack() {
 				_counter_num_pointer = 1;
     }
 //Not all points are states so we need a way to do:
@@ -255,8 +255,9 @@ typedef std::map<EUTelTrackStateImpl,gbl::GblPoint*, compare_points >::const_ite
 }
 
 void EUTelGBLFitter::UpdateTrackFromGBLTrajectory (gbl::GblTrajectory* traj, std::vector< gbl::GblPoint > pointList,EUTelTrack &track){
-	for(int i=0;i < track.getTracks().size(); i++){		
-		EUTelState& state = *(static_cast<EUTelState*>(const_cast<EVENT::Track*>((track.getTracks()[i]))));
+	streamlog_out ( DEBUG4 ) << " EUTelGBLFitter::UpdateTrackFromGBLTrajectory-- BEGIN " << endl;
+	for(int i=0;i < track.getStates().size(); i++){		
+		EUTelState state = track.getStates()[i];
 		TVectorD corrections(5);
 		TMatrixDSym correctionsCov(5,5);
 		traj->getResults(_mapStatesToLabel[state], corrections, correctionsCov );
@@ -265,11 +266,11 @@ void EUTelGBLFitter::UpdateTrackFromGBLTrajectory (gbl::GblTrajectory* traj, std
 		state.print();
 		TVectorD newStateVec(5);
 		newStateVec[0] = state.getOmega() + corrections[0];
-		newStateVec[1] = state.getPhi()+corrections[1];
-		newStateVec[2] = state.getTanLambda()+corrections[2];
-		newStateVec[3] = state.getReferencePoint()[0]+corrections[3];
-		newStateVec[4] = state.getReferencePoint()[1]+corrections[4]; 
-		state.setTrackStateVecPlusZParameter(newStateVec,state.getReferencePoint()[3]);
+		newStateVec[1] = state.getDirectionXY()+corrections[1];
+		newStateVec[2] = state.getDirectionYZ()+corrections[2];
+		newStateVec[3] = state.getPosition()[0]+corrections[3];
+		newStateVec[4] = state.getPosition()[1]+corrections[4]; 
+		state.setTrackStateVecPlusZParameter(newStateVec,state.getPosition()[2]);
 		streamlog_out(DEBUG3) << endl << "State after we have added corrections: " << std::endl;
 		state.print();
 	}//END of loop of all states
@@ -277,22 +278,23 @@ void EUTelGBLFitter::UpdateTrackFromGBLTrajectory (gbl::GblTrajectory* traj, std
 
 //This used after trackfit will fill a map between (sensor ID and residualx/y).
 void EUTelGBLFitter::getResidualOfTrackandHits(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint > pointList,EUTelTrack& track, map< int, map< float, float > > &  SensorResidual){
-	for(int i=0;i < track.getTracks().size(); i++){		
-		EUTelState state = *(static_cast<EUTelState*>(const_cast<EVENT::Track*>((track.getTracks()[i]))));
-		if(state.getTrackerHits()[0] != NULL){//Need to test this since could be a state with no measurement
+	for(int i=0;i < track.getStates().size(); i++){		
+		EUTelState state = track.getStates()[i];
+		if(!state.getTrackerHits().empty()){//Need to test this since could be a state with no measurement
 			streamlog_out(DEBUG0) << endl << "There is a hit on the state. Hit pointer: "<< state.getTrackerHits()[0]<<" Find updated Residuals!" << std::endl;
 			unsigned int numData; //Not sure what this is used for??????
 			TVectorD aResiduals(2);
 			TVectorD aMeasErrors(2);
-			TVectorD aResErrors(2,2);
+			TVectorD aResErrors(2);
 			TVectorD aDownWeights(2); 
 			traj->getMeasResults(_mapStatesToLabel[state], numData, aResiduals, aMeasErrors, aResErrors, aDownWeights);
+			streamlog_out(DEBUG0) <<"State location: "<<state.getLocation()<<" The residual x " <<aResiduals[0]<<" The residual y " <<aResiduals[1]<<endl;
 			map<float, float> res; //This is create on the stack but will pass thisa by value to the new map so it 
 			res.insert(make_pair(aResiduals[0],aResiduals[1]));
 			SensorResidual.insert(make_pair(state.getLocation(), res));		
 		}
 		else{
-			streamlog_out(DEBUG0) << "The hit is NULL. State pointer: "<<&state<< " Hit pointer " << state.getTrackerHits()[0] <<" So will not get residual" << std::endl;
+			streamlog_out(DEBUG0) << "There are no hits so don't get residual" << std::endl;
 		}
 	}
 } 
@@ -304,6 +306,7 @@ void EUTelGBLFitter::computeTrajectoryAndFit(std::vector< gbl::GblPoint >& point
 	streamlog_message( DEBUG0, traj->printTrajectory(10);, std::endl; );
 	streamlog_out ( DEBUG0 ) << "This is the points in that trajectory " << endl;
 	streamlog_message( DEBUG0, traj->printPoints(10);, std::endl; );
+
 
 	if ( !_mEstimatorType.empty( ) ) ierr = traj->fit( *chi2, *ndf, loss, _mEstimatorType );
   else ierr = traj->fit( *chi2, *ndf, loss );
@@ -318,24 +321,32 @@ void EUTelGBLFitter::computeTrajectoryAndFit(std::vector< gbl::GblPoint >& point
 }
 
 void EUTelGBLFitter::testTrack(EUTelTrack& track){
-	if(track.getTracks().size() == 0 ){
+	streamlog_out(DEBUG4)<<"EUTelGBLFitter::testTrack------------------------------------BEGIN"<<endl;
+	if(track.getStates().size() == 0 ){
 		throw(lcio::Exception(Utility::outputColourString("The number of states is zero.", "RED")));
 	}
 ///Note we do not use excluded planes here. This should be dealt with in pattern recognition.
   if (track.getNumberOfHitsOnTrack() > geo::gGeometry().nPlanes() ){
 		throw(lcio::Exception(Utility::outputColourString("The number of hits on the track is greater than the number of planes.", "RED"))); 	
   }
+	streamlog_out(DEBUG5)<< Utility::outputColourString("Input track passed tests!", "GREEN")<<std::endl;
+	streamlog_out(DEBUG4)<<"EUTelGBLFitter::testTrack------------------------------------END"<<endl;
+
 } 
 // convert input TrackCandidates and TrackStates into a GBL Trajectory
 void EUTelGBLFitter::setInformationForGBLPointList(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList){
+	streamlog_out(DEBUG4)<<"EUTelGBLFitter::setInformationForGBLPointList-------------------------------------BEGIN"<<endl;
   TMatrixD jacPointToPoint(5, 5);
   jacPointToPoint.UnitMatrix();
-  for(int i=0;i < track.getTracks().size(); i++){		
-		streamlog_out(DEBUG3) << "The first GBL point is made from this jacobian:" << std::endl;
+  for(int i=0;i < track.getStates().size(); i++){		
+		streamlog_out(DEBUG3) << "The jacobian to get to this state jacobian on state number: " << i<<" Out of a total of states "<<track.getStates().size() << std::endl;
 	  streamlog_message( DEBUG0, jacPointToPoint.Print();, std::endl; );
 		gbl::GblPoint point(jacPointToPoint);
-		EUTelState state = *(static_cast<EUTelState*>(const_cast<EVENT::Track*>((track.getTracks()[i]))));
-		EUTelState nextState = *(static_cast<EUTelState*>(const_cast<EVENT::Track*>((track.getTracks()[i+1]))));
+		EUTelState state = track.getStates().at(i);
+		EUTelState nextState;
+		if(i != (track.getStates().size()-1)){
+			nextState = track.getStates().at(i+1);
+		}
 		setScattererGBL(point,state.getLocation());//Every sensor will have scattering due to itself. 
 		if(state.getTrackerHits().size() == 0 ){
 			streamlog_out(DEBUG3)  << Utility::outputColourString("This state does not have a hit. ", "YELLOW")<<std::endl;
@@ -352,45 +363,65 @@ void EUTelGBLFitter::setInformationForGBLPointList(EUTelTrack& track, std::vecto
 			setPointVecAndLabel(pointList, point, state);
 		}//End of else statement if there is a hit.
 
-		if(i != (track.getTracks().size()-1)){//We do not produce scatterers after the last plane
+		if(i != (track.getStates().size()-1)){//We do not produce scatterers after the last plane
 			double stateReferencePoint[3];
-			stateReferencePoint[0]=state.getReferencePoint()[0];
-			stateReferencePoint[1]=state.getReferencePoint()[1];
-			stateReferencePoint[2]=state.getReferencePoint()[2];
+			stateReferencePoint[0]=state.getPosition()[0];//Position is in mm
+			stateReferencePoint[1]=state.getPosition()[1];
+			stateReferencePoint[2]=state.getPosition()[2];
 			double nextStateReferencePoint[3];
-			nextStateReferencePoint[0]=state.getReferencePoint()[0];
-			nextStateReferencePoint[1]=state.getReferencePoint()[1];
-			nextStateReferencePoint[2]=state.getReferencePoint()[2];
-			float rad = geo::gGeometry().findRadLengthIntegral(stateReferencePoint,nextStateReferencePoint, true ); //We need to skip the volumes that contain the hits since this has already been counted. Must check this functions as expect????
+			nextStateReferencePoint[0]=nextState.getPosition()[0];
+			nextStateReferencePoint[1]=nextState.getPosition()[1];
+			nextStateReferencePoint[2]=nextState.getPosition()[2];
+			testDistanceBetweenPoints(stateReferencePoint,nextStateReferencePoint);
+			float rad = geo::gGeometry().findRadLengthIntegral(stateReferencePoint,nextStateReferencePoint, true );//TO DO: Make sure this is not adding planes radiation length again 
 			findScattersZPositionBetweenTwoStates(state, nextState); 
 			jacPointToPoint=findScattersJacobians(state,nextState);
 			setPointListWithNewScatterers(pointList, rad);
+		}else{
+			streamlog_out(DEBUG3)<<"We have reached the last plane"<<std::endl;
 		}
 	} 
+	streamlog_out(DEBUG4)<<"EUTelGBLFitter::setInformationForGBLPointList-------------------------------------END"<<endl;
+
 }
+void EUTelGBLFitter::testDistanceBetweenPoints(double* position1,double* position2){
+	TVectorD displacement(3);
+	displacement(0) = position1[0] - position2[0];
+	displacement(1) = position1[1] - position2[1];
+	displacement(2) = position1[2] - position2[2];
+	float distance= displacement.Norm2Sqr();
+	streamlog_out(DEBUG0)<<"The distance between the points to calculate radiation length is: "<<distance<<std::endl;
+	if(distance<1){
+		throw(lcio::Exception(Utility::outputColourString("The distance between the states is too small.", "RED"))); 	
+	}
+}
+
 void EUTelGBLFitter::setPointListWithNewScatterers(std::vector< gbl::GblPoint >& pointList, float rad ){
 	if(_scattererJacobians.size() != _scattererPositions.size()){
 		throw(lcio::Exception(Utility::outputColourString("The size of the scattering positions and jacobians is different.", "RED"))); 	
 	}
-	for(int i = 0 ;i < _scattererJacobians.size()-1;++i){
+	for(int i = 0 ;i < _scattererJacobians.size()-1;++i){//The last jacobain is used to get to the plane! So only loop over to (_scatterJacobians-1)
 		gbl::GblPoint point(_scattererJacobians[i]);
 		setScattererGBL(point,rad/2);//TO DO:Simply dividing by 2 will work when there is only two planes
 		pointList.push_back(point);
 	}
 }
-
+//We want to create a jacobain from (Plane1 -> scatterer1) then (scatterer1->scatterer2) then (scatter2->plane2). We return the last jacobain
 TMatrixD EUTelGBLFitter::findScattersJacobians(EUTelState state, EUTelState nextState){
 	_scattererJacobians.clear();
 	EUTelState loopState = state;
 	for(int i=0;i<_scattererPositions.size();i++){
 		_scattererJacobians.push_back(loopState.computePropagationJacobianFromStateToThisZLocation(_scattererPositions[i]));
 		TVectorD nextStateVec = _scattererJacobians.at(i) * loopState.getTrackStateVec(); 
-		EUTelState nextLoopState;
-		nextLoopState.setTrackStateVecPlusZParameter(nextStateVec, _scattererPositions[i]);
-		nextLoopState.setBeamCharge(getBeamCharge());
-		nextLoopState.setBeamEnergy(getBeamEnergy());
-		nextLoopState.initialiseCurvature();
-		loopState = nextLoopState;
+		streamlog_out(DEBUG5)<<"The new state vector on the scatter is: " <<std::endl;
+		//nextStateVec.Print();
+		streamlog_out(DEBUG5)<<"The z position of this scatter is: "<< _scattererPositions[i] <<std::endl;
+		loopState.setTrackStateVecPlusZParameter(nextStateVec, _scattererPositions[i]);
+		streamlog_out(DEBUG5)<<"The z position of loop state: "<< loopState.getPosition()[2]<<std::endl;
+
+	}
+	if(_scattererJacobians.size() != 3){
+		throw(lcio::Exception(Utility::outputColourString("There is not 3 jacobians produced by scatterers!.", "RED"))); 	
 	}
 	return _scattererJacobians.back();//return the last jacobian so the next state can use this
 }
@@ -411,15 +442,18 @@ void EUTelGBLFitter::setScattererGBL(gbl::GblPoint& point, int iPlane) {
 	TVectorD scat(2); 
 	scat[0] = 0.0; scat[1]=0.0;//TO DO: This will depend on the direction of the beam.  
 	//TO DO:Should make the reading for any planes not just si. 
-	const double radiationLength  = geo::gGeometry().siPlaneRadLength(iPlane);
-	const double thickness        = geo::gGeometry().siPlaneZSize(iPlane);
+	const double radiationLength  = geo::gGeometry().siPlaneRadLength(iPlane);//This is in mm.
+	const double thickness        = geo::gGeometry().siPlaneZSize(iPlane);//TO DO: Need to get the correct thickness
+	streamlog_out(DEBUG5)<<"The radiation length for the sensor is: " << radiationLength <<std::endl; 
 	if( radiationLength== 0){
 		throw(lcio::Exception(Utility::outputColourString("Radiation length is zero.", "RED"))); 	
 	}
+	streamlog_out(DEBUG5)<<"The thickness for the sensor is: " << thickness <<std::endl; 
 	if(thickness == 0 ){ 
 		throw(lcio::Exception(Utility::outputColourString("thickness is zero", "RED"))); 	
 	}
 	const double x0  = thickness / radiationLength; 
+	streamlog_out(DEBUG5)<<"The X0 for the sensor is: " << x0 <<std::endl; 
 	if(x0 == 0){
 		throw(lcio::Exception(Utility::outputColourString("X0 is zero.", "RED"))); 	
 	}
@@ -443,6 +477,7 @@ void EUTelGBLFitter::setScattererGBL(gbl::GblPoint& point, float x0 ) {
 	TVectorD scat(2); 
 	scat[0] = 0.0; scat[1]=0.0;//TO DO: This will depend on the direction of the beam.  
 	//TO DO:Should make the reading for any planes not just si. 
+	streamlog_out(DEBUG5)<<"The X0 for the sensor is: " << x0 <<std::endl; 
 	if(x0 == 0){
 		throw(lcio::Exception(Utility::outputColourString("X0 is zero.", "RED"))); 	
 	}

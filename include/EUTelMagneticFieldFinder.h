@@ -36,6 +36,7 @@
 #include "lcio.h"
 #include "IMPL/TrackerHitImpl.h"
 #include "IMPL/TrackImpl.h"
+#include <UTIL/LCTOOLS.h>
 //other
 #include "streamlog/streamlog.h"
 #include "gear/gearimpl/Vector3D.h"

@@ -119,14 +119,15 @@ void EUTelProcessorGBLFitCandidates::processEvent(LCEvent * evt){
 		throw marlin::SkipEventException(this);
 	}
 
-  _trackFitter->Clear(); 
 
-	if (col != NULL) {
+	if (col == NULL) {
 		streamlog_out(MESSAGE0)<<Utility::outputColourString("The collection is NULL for this event.", "YELLOW")<<std::endl;
 		throw marlin::SkipEventException(this);
 	}
 	for (int iCol = 0; iCol < col->getNumberOfElements(); iCol++) {
 		EUTelTrack track = *(static_cast<EUTelTrack*> (col->getElementAt(iCol)));
+		_trackFitter->resetPerTrack(); //Here we reset the label that connects state to GBL point to 1 again
+		track.print();//Print the track use for debugging
 		_trackFitter->testTrack(track);//Check the track has states and hits  
 		std::vector< gbl::GblPoint > pointList;
 		_trackFitter->setInformationForGBLPointList(track, pointList);

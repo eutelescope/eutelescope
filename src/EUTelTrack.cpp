@@ -41,7 +41,8 @@ int EUTelTrack::getNumberOfHitsOnTrack() const {
 }
 
 void EUTelTrack::print(){
-	streamlog_out(DEBUG1) << "Track contains " << getTracks().size() << "states" << std::endl;
+	streamlog_out(DEBUG1) <<"TRACK INFORMATION//////////////////////////////////////////////////////////////////////////START"<<std::endl;
+	streamlog_out(DEBUG1) << "Track contains " << getTracks().size() << " states " << std::endl;
 	for(int i=0; i < getTracks().size(); ++i){
 		const  EVENT::Track* state = getTracks().at(i);
 		//Z0 contains the location. Need to static cast to EUTelState to use getLocation
@@ -50,4 +51,6 @@ void EUTelTrack::print(){
 			streamlog_out(DEBUG1) <<"The hit ID of the state is "<<state->getTrackerHits().at(0)->id()<<std::endl;
 		}
 	}	
+	streamlog_out(DEBUG1) <<"TRACK INFORMATION///////////////////////////////////////////////////////////////////////////////END"<<std::endl;
+
 }

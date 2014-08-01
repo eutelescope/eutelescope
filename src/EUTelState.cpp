@@ -1,9 +1,9 @@
 #include "EUTelState.h"
 
 using namespace eutelescope;
-EUTelState::EUTelState():
-_beamQ(-1.0),
-_beamE(5.0){
+EUTelState::EUTelState(){
+setBeamCharge(-1.0);
+setBeamEnergy(5.0);
 } 
 
 EUTelState::EUTelState(const EUTelState& state){
@@ -34,10 +34,10 @@ float* EUTelState::getPosition() const {
 TVectorD EUTelState::getTrackStateVec() const { 
 	streamlog_out( DEBUG1 ) << "EUTelState::getTrackStateVec()------------------------BEGIN" << std::endl;
 	TVectorD stateVec(5);
-	stateVec[3] = getReferencePoint()[0];
-	stateVec[4] = getReferencePoint()[1];
-	stateVec[1] = getPhi();
-	stateVec[2] = getTanLambda();
+	stateVec[3] = getPosition()[0];
+	stateVec[4] = getPosition()[1];
+	stateVec[1] = getDirectionXY(); 
+	stateVec[2] = getDirectionYZ(); 
 	stateVec[0] = getOmega();
 			
 	if ( streamlog_level(DEBUG0) ){
@@ -97,11 +97,11 @@ void EUTelState::setLocation(int location){
 	setZ0(locationFloat);
 }
 void EUTelState::setBeamEnergy(float beamE){
-	_beamE = beamE;
+	setdEdx(beamE);
 }
 
 void EUTelState::setBeamCharge(float beamQ){
-	_beamQ = beamQ;
+	setdEdxError(beamQ);
 }
 void EUTelState::setDirectionYZ(float directionYZ){
 	setTanLambda(directionYZ);
@@ -121,22 +121,22 @@ void EUTelState::setCombinedHitAndStateCovMatrixInLocalFrame(double cov[4]){
 
 void EUTelState::setTrackStateVecPlusZParameter(TVectorD stateVec,float zParameter){
 	float referencePoint[] = {stateVec[3],stateVec[4],zParameter};
-	setReferencePoint(referencePoint);
-	setPhi(stateVec[1]);
-	setTanLambda(stateVec[2]);
+	setPosition(referencePoint);
+	setDirectionXY(stateVec[1]);
+	setDirectionYZ(stateVec[2]);
 	setOmega(stateVec[0]);
 
 }
 ///initialise
 void EUTelState::initialiseCurvature(){
-	if(_beamQ == 0){
+	if(getBeamCharge() == 0){
 		throw(lcio::Exception( Utility::outputColourString("The beam charge is 0.Can not set curvature","RED"))); 
 	}
-	if(_beamE == 0){
+	if(getBeamEnergy() == 0){
 		throw(lcio::Exception( Utility::outputColourString("The beam Energy is zero. Can not set curvature","RED"))); 
 	}
 	
-	setOmega(_beamQ/_beamE);
+	setOmega(getBeamCharge()/getBeamEnergy());
 }
 //find
 int EUTelState::findIntersectionWithCertainID(int nextSensorID, float intersectionPoint[] ){
@@ -146,7 +146,7 @@ int EUTelState::findIntersectionWithCertainID(int nextSensorID, float intersecti
 	if(pVec.Mag() == 0){
 		throw(lcio::Exception( Utility::outputColourString("The momentum is 0","RED"))); 
 	}
-	int sensorID = geo::gGeometry().findIntersectionWithCertainID( getReferencePoint()[0],  getReferencePoint()[1] , getReferencePoint()[2], pVec[0],pVec[1],pVec[2], _beamQ, nextSensorID, intersectionPoint ); 
+	int sensorID = geo::gGeometry().findIntersectionWithCertainID( getReferencePoint()[0],  getReferencePoint()[1] , getReferencePoint()[2], pVec[0],pVec[1],pVec[2], getBeamCharge(), nextSensorID, intersectionPoint ); 
 	streamlog_out(DEBUG5) << "-EUTelState::findIntersectionWithCertainID--------------------------END" << std::endl;
 	return sensorID;
 }
@@ -155,32 +155,36 @@ int EUTelState::findIntersectionWithCertainID(int nextSensorID, float intersecti
 TVector3 EUTelState::computeCartesianMomentum(){
 	streamlog_out(DEBUG2) << "EUTelState::computeCartesianMomentum()-------------------------BEGIN" << std::endl;
 float tx = getPhi();float ty= getTanLambda(); float curvature = getOmega(); 
-	streamlog_out(DEBUG2) << "Input parameters: tx,ty, beamq,invp "<<tx <<","<<ty<<","<<_beamQ<<","<<curvature<<std::endl;
-	if(_beamQ == 0){
+	streamlog_out(DEBUG2) << "Input parameters: tx,ty, beamq,invp "<<tx <<","<<ty<<","<<getBeamCharge()<<","<<curvature<<std::endl;
+	if(getBeamCharge() == 0){
 		throw(lcio::Exception( Utility::outputColourString("The beam charge is 0.","RED"))); 
 	}
 	if(curvature == INFINITY or curvature == NAN ){
 		throw(lcio::Exception( Utility::outputColourString("The curvature is zero","RED"))); 
 	}
-	const double p  =  1. / (curvature *_beamQ );     
+	const double p  =  1. / (curvature *getBeamCharge() );     
   const double px = p*tx / sqrt( 1. + tx*tx + ty*ty );
   const double py = p*ty / sqrt( 1. + tx*tx + ty*ty );
   const double pz = p    / sqrt( 1. + tx*tx + ty*ty );
 
 	streamlog_out(DEBUG2) << "Output parameters: px,py, pz "<<px <<","<<py<<","<<pz<<","<<std::endl;
         
-  streamlog_out(DEBUG2) << "-------------------------------EUTelStateStateImpl::getPfromCartesianParameters()-------------------------END" << std::endl;
+  streamlog_out(DEBUG2) << "-------------------------------EUTelState::getPfromCartesianParameters()-------------------------END" << std::endl;
         
   return TVector3(px,py,pz);
 }
 TMatrix EUTelState::computePropagationJacobianFromStateToThisZLocation(float zPosition){
-	float dz = zPosition - getReferencePoint()[3];
+	 streamlog_out(DEBUG2) << "-------------------------------EUTelState::computePropagationJacobianFromStateToThisZLocation()-------------------------BEGIN" << std::endl;
+	streamlog_out(DEBUG2) <<"The position you want to get to in z direction:  " << zPosition<<std::endl; 
+	streamlog_out(DEBUG2) <<"The position of the state is in z direction: " << getPosition()[2]<<std::endl; 
+	float dz = zPosition - getPosition()[2];
+	streamlog_out(DEBUG2) <<"The displacement in the z direction is " << dz <<std::endl; 
 	TVector3 pVec = computeCartesianMomentum();
 	TMatrix jacobian(5,5);
 	jacobian.Zero();
-	float x = getReferencePoint()[0]; float y = getReferencePoint()[1];	float z = getReferencePoint()[2];
-	streamlog_out( DEBUG1 ) << "These are the parameters being used in the calculation of the Jacobian. "<< "X= "<< x << " Y= "<< y << "Z= "<< z << " Px= " << pVec[0] << " Py= " << pVec[1] << " Pz= " << pVec[2] << " Qbeam= " <<_beamQ  << std::endl;
-	jacobian = geo::gGeometry().getPropagationJacobianF(  x, y, z, pVec[0],pVec[1],pVec[2], _beamQ, dz);
+	float x = getPosition()[0]; float y = getPosition()[1];	float z = getPosition()[2];
+	streamlog_out( DEBUG1 ) << "These are the parameters being used in the calculation of the Jacobian. "<< "X= "<< x << " Y= "<< y << "Z= "<< z << " Px= " << pVec[0] << " Py= " << pVec[1] << " Pz= " << pVec[2] << " Qbeam= " <<getBeamCharge()  << std::endl;
+	jacobian = geo::gGeometry().getPropagationJacobianF(  x, y, z, pVec[0],pVec[1],pVec[2], getBeamCharge(), dz);
 
 	return jacobian;
 
@@ -189,7 +193,7 @@ TMatrix EUTelState::computePropagationJacobianFromStateToThisZLocation(float zPo
 void EUTelState::print(){
 	streamlog_out(DEBUG2) << "The state vector//////////////////////////////////////////////////////" << endl;
 	TVectorD stateVec = getTrackStateVec();
-	stateVec.Print();
+	streamlog_message( DEBUG0, stateVec.Print();, std::endl; );
 	streamlog_out(DEBUG2) << "/////////////////////////////////////////////////////" << endl;
 	streamlog_out(DEBUG1) <<"State memory location "<< this << " The sensor location of the state " <<getLocation()<<std::endl;
 	if(!getTrackerHits().empty()){

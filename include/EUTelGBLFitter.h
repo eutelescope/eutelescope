@@ -68,7 +68,7 @@ namespace eutelescope {
 
         // do some clean up of internal data structures
         // will be automatically run when calling EUTelGBLFitter::FitTracks()
-        void Clear();
+        void resetPerTrack();
 
         void SetTrackCandidates( vector <const IMPL::TrackImpl*> &);
 
@@ -82,7 +82,7 @@ namespace eutelescope {
 				void testTrack(EUTelTrack& track);
 		void changejacobainGBL(TMatrixD & input, TMatrixD & output);
 	void FindHitIfThereIsOne(EUTelTrackImpl* trackimpl, EVENT::TrackerHit* hit, EUTelTrackStateImpl* state);
-
+				void testDistanceBetweenPoints(double* position1,double* position2);
 	void setMeasurementGBL(gbl::GblPoint& point, const double *hitPos, double statePos[3], double combinedCov[4], TMatrixD projection);
 
 

@@ -205,36 +205,49 @@ std::vector<EUTelTrack>& tracks = _trackFitter->getTracks();
 
 plotHistos(tracks);
 
-//outputLCIO(evt,trackCartesian);
+outputLCIO(evt,tracks);
 
 _nProcessedEvents++;
-
-//  if (isFirstEvent()) _isFirstEvent = false; Is this needed
 }
 
-void EUTelProcessorTrackingHelixTrackSearch::outputLCIO(LCEvent* evt, std::vector<EUTelTrack>& trackCartesian){
+void EUTelProcessorTrackingHelixTrackSearch::outputLCIO(LCEvent* evt, std::vector<EUTelTrack>& tracks){
 
-        streamlog_out( DEBUG4 ) << " ---------------- EUTelProcessorTrackingHelixTrackSearch::outputLCIO ---------- BEGIN ------------- " << std::endl;
+	streamlog_out( DEBUG4 ) << " ---------------- EUTelProcessorTrackingHelixTrackSearch::outputLCIO ---------- BEGIN ------------- " << std::endl;
 
 	//Create once per event    
 	LCCollectionVec * trkCandCollection = new LCCollectionVec(LCIO::TRACK);
+	LCCollectionVec * stateCandCollection = new LCCollectionVec(LCIO::TRACK);
+	LCCollectionVec * hitCandCollection = new LCCollectionVec(LCIO::TRACKERHIT);
 
 	// Prepare output collection
-  	LCFlagImpl flag(trkCandCollection->getFlag());
-  	flag.setBit( LCIO::TRBIT_HITS );
-  	trkCandCollection->setFlag( flag.getFlag( ) );
+	LCFlagImpl flag(trkCandCollection->getFlag());
+	flag.setBit( LCIO::TRBIT_HITS );
+	trkCandCollection->setFlag( flag.getFlag( ) );
+
+	LCFlagImpl flag2(stateCandCollection->getFlag());
+	flag2.setBit( LCIO::TRBIT_HITS );
+	stateCandCollection->setFlag( flag2.getFlag( ) );
 
 	//Loop through all tracks
-	for ( int i = 0 ; i < trackCartesian.size(); ++i) {
-
+	for ( int i = 0 ; i < tracks.size(); ++i) {
+		EUTelTrack* trackheap = new  EUTelTrack(tracks[i]);
+		trackheap->print();
 		//For every track add this to the collection
-    		trkCandCollection->push_back(static_cast<EVENT::Track*>(&trackCartesian[i]));
+		trkCandCollection->push_back(static_cast<EVENT::Track*>(trackheap));
+		for(int j = 0;j < trackheap->getTracks().size();++j){
+			stateCandCollection->push_back(trackheap->getTracks().at(j) );
+//			if(!trackheap->getTracks().at(j)->getTrackerHits().empty()){
+	//			hitCandCollection->push_back(trackheap->getTracks().at(j)->getTrackerHits().at(0));
+	//		}
+		}
 	}//END TRACK LOOP
 
 	//Now add this collection to the 
-  	evt->addCollection(trkCandCollection, _trackCandidateHitsOutputCollectionName);
-
-        streamlog_out( DEBUG4 ) << " ---------------- EUTelProcessorTrackingHelixTrackSearch::outputLCIO ---------- END ------------- " << std::endl;
+	evt->addCollection(trkCandCollection, _trackCandidateHitsOutputCollectionName);
+	evt->addCollection(stateCandCollection, "States");
+//	evt->addCollection(hitCandCollection, "Hits");
+//	UTIL::LCTOOLS::dumpEventDetailed(evt);
+	streamlog_out( DEBUG4 ) << " ---------------- EUTelProcessorTrackingHelixTrackSearch::outputLCIO ---------- END ------------- " << std::endl;
 }
 //TO DO: find a more generic way to plot histograms
 void EUTelProcessorTrackingHelixTrackSearch::plotHistos( vector<EUTelTrack>& trackCandidates)  {

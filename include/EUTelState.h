@@ -30,8 +30,8 @@ namespace eutelescope {
 			int	getLocation() const;
 			TMatrixDSym getTrackStateCov() const;
 			TVectorD getTrackStateVec() const ;
-			inline int getBeamCharge() const  { return _beamQ;}
-			inline int getBeamEnergy() const {return _beamE;}
+			inline float  getBeamCharge() const  { return getdEdxError();}
+			inline float  getBeamEnergy() const {return getdEdx();}
 			float getDirectionXY() const {return getPhi();}
 			float getDirectionYZ() const {return getTanLambda();}
 			float* getPosition() const; 
@@ -59,8 +59,6 @@ namespace eutelescope {
 			bool operator<(const EUTelState compareState ) const;
 
   	private:
-    	float _beamQ;
-			float _beamE;
 			float _covCombinedMatrix[4];
 	};
 

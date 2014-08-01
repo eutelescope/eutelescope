@@ -221,7 +221,7 @@ void EUTelKalmanFilter::propagateForwardFromSeedState( EUTelState& state, EUTelT
 		}
 		EVENT::TrackerHit* closestHit = const_cast< EVENT::TrackerHit* > ( findClosestHit( *newState )); //This will look for the closest hit but not if it is within the excepted range		
 		const double* hitPosition = closestHit->getPosition();
-		const double distance = std::sqrt(computeResidual(*newState, closestHit ).Norm2Sqr()); //Determine the residual to it. //Distance is in mm.
+		const double distance = computeResidual(*newState, closestHit ).Norm2Sqr(); //Determine the residual to it. //Distance is in mm.
 		const double DCA = getXYPredictionPrecision( *newState ); //This does nothing but return a number specified by user. In the future this should use convariance matrix information TO DO: FIX
 		streamlog_out ( DEBUG1 ) <<"At plane: "<<newState->getLocation() << ". Distance between state and hit: "<< distance <<" Must be less than: "<<DCA<< endl;
 		if ( distance > DCA ) {
@@ -283,7 +283,9 @@ void EUTelKalmanFilter::propagateForwardFromSeedState( EUTelState& state, EUTelT
     }
 */
 void EUTelKalmanFilter::clearFinalTracks(){
-	_finalTracks.clear();
+	if(!_finalTracks.empty()){
+		_finalTracks.clear();
+	}
 }
 void EUTelKalmanFilter::testTrackQuality(){
 	_numberOfTracksTotal = _numberOfTracksTotal + _tracks.size();
