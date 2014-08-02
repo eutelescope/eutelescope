@@ -23,6 +23,9 @@ namespace eutelescope {
 
 	EUTelMillepede::~EUTelMillepede(){}
 
+	//Depending on the number alignmentMode(This tell us what shift/rotation we can do), we create the alignment jacobain here with the correct dimensions. 
+	//Furthermore we determine the size of the labels per plane.
+	//Note this is used for all sensors but we can still fix some alignement parameters independent of this.
 	void EUTelMillepede::SetAlignmentMode(int alignmentMode){
 
 		//This is important since we need to know how millepede numbers theres axis. I think this is the reason for this step. Also set the matrix size //////BEGIN        
@@ -64,9 +67,7 @@ namespace eutelescope {
  		_jacobian.ResizeTo(2, 6);
 
     }else {
-    	streamlog_out(WARNING3) << "Alignment mode was not recognized:" << _alignmentMode << std::endl;
-      streamlog_out(WARNING3) << "Alignment will not be performed" << std::endl;
-      alignmentMode = Utility::noAlignment;
+			throw(lcio::Exception(Utility::outputColourString(" Alignment mode was not recognized. ", "RED")));
     }
   	_jacobian.Zero();
 		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////END	
@@ -97,46 +98,34 @@ void EUTelMillepede::FillMilleParametersLabels() {
         _zRotationsMap.insert( make_pair(*itr, ++currentLabel) );
     }
 }
+//This function calculates the alignment jacobain in the local frame of the telescope. Using the state parameters
+int EUTelMillepede::computeAlignmentToMeasurementJacobian( EUTelState &state){
+	if(_alignmentMode == Utility::noAlignment){
+		throw(lcio::Exception(Utility::outputColourString("No alignment has been chosen.", "RED"))); 	
+	}
+	TVector3 incidenceVecLocal = state.getIncidenceUnitMomentumVectorInLocalFrame();//This is the state incidence in the local frame of the telescope. TO DO: Make sure this is being calculated correctly.
+	streamlog_out( DEBUG0 ) << "Incidence vector in local frame"<<incidenceVecLocal[0] <<","<< incidenceVecLocal[1]<<","<<incidenceVecLocal[2] << std::endl;
+	float TxLocal =  incidenceVecLocal[0]/incidenceVecLocal[2];//We calculate the incidence angle in both planes.
+	float TyLocal =  incidenceVecLocal[1]/incidenceVecLocal[2];
+	float* localpos = state.getPosition();
+	streamlog_out( DEBUG0 ) << "This is px/pz, py/pz (local) "<< TxLocal <<","<< TyLocal << std::endl;
+	streamlog_out( DEBUG0 ) << "Local frame position "<< *localpos<<","<<*(localpos+1)<<","<<*(localpos+2) << std::endl;
+	computeAlignmentToMeasurementJacobian( *localpos,*(localpos+1), TxLocal, TyLocal);
+} 
 
-	//This will take as input a EUTelState and output the correct jacobian. Need to set the aligment mode before.
-	int EUTelMillepede::CreateAlignmentToMeasurementJacobian( EUTelTrackStateImpl* state){
 
-		if(state->getHit() == NULL){
-			streamlog_out( WARNING1 ) << "This state contains no hit. Will continue but this can not be used for alignment. So why do you want the matrix????" << std::endl;
-		}
 
-		if(_alignmentMode == Utility::noAlignment){
-			streamlog_out( WARNING1 ) << "You have not set the alignment mode OR have set it to no alignment. Either way this function must end!" << std::endl;
-			return -999;
-		}
-
-		TVector3 incidenceVecLocal = state->getIncidenceVectorInLocalFrame();
-
-		streamlog_out( DEBUG0 ) << "Incidence vector in local frame"<<incidenceVecLocal[0] <<","<< incidenceVecLocal[1]<<","<<incidenceVecLocal[2] << std::endl;
-
-		float TxLocal =  incidenceVecLocal[0]/incidenceVecLocal[2];
-		float TyLocal =  incidenceVecLocal[1]/incidenceVecLocal[2];
-		const float* localpos = state->getReferencePoint();
-
-			streamlog_out( DEBUG0 ) << "This is px/pz, py/pz (local) "<< TxLocal <<","<< TyLocal << std::endl;
-			streamlog_out( DEBUG0 ) << "Local frame position "<< *localpos<<","<<*(localpos+1)<<","<<*(localpos+2) << std::endl;
-		
-
-		CreateAlignmentToMeasurementJacobian( *localpos,*(localpos+1), TxLocal, TyLocal);
-
-	} 
-
+//This function does the leg work of all the calculation for each state to determine the alignment jacobian
 // _jacobian from below looks like //   (-1   0  -y   -dx/dz   x*dx/dz   -y*dx/dz)( x local )
 																  //   (0  -1 	x   -dy/dz   x*dy/dz   -y*dy/dz )( y local )
                                   //                                             ( anti clockwise rotation around z) ?? Strange but whatever
                                   //                                             (moving the plane in the z direction)
 																	//                                             (this is clockwise rotation look in + y direction )
 																	// 	                                           (this is clockwise rotations in the x direction  )
-		
-int EUTelMillepede::CreateAlignmentToMeasurementJacobian( float x,float y, float slopeXvsZ, float slopeYvsZ){
+int EUTelMillepede::computeAlignmentToMeasurementJacobian( float x,float y, float slopeXvsZ, float slopeYvsZ){
 	_jacobian.Zero();
-streamlog_out(DEBUG0) << "This is the empty Alignment Jacobian" << std::endl;
-	        streamlog_message( DEBUG0, _jacobian.Print();, std::endl; );			
+	streamlog_out(DEBUG0) << "This is the empty Alignment Jacobian" << std::endl;
+	streamlog_message( DEBUG0, _jacobian.Print();, std::endl; );			
 		
 	//////////////////////////////////////Moving the sensor in x and y. Obviously if the sensor move right the hit will appear to move left. Always create this!!!! BEGIN
 	_jacobian[0][0] = -1.0; // dxh/dxs      dxh => change in hit position         dxs => Change in sensor position
@@ -198,16 +187,14 @@ streamlog_out(DEBUG0) << "This is the empty Alignment Jacobian" << std::endl;
 		_jacobian[1][4] = -y*slopeYvsZ; // dyh/rotxs
   }
 	/////////////////////////////////////////////////////////////////////////////END
-					//////////////////////////////////////////////////////////////////////////////////////////////////////////END OF PARTIAL MATRIX FILL		
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////END OF PARTIAL MATRIX FILL		
 }
 
-//This might not need to separate but just incase we want to fill this without the need for the jacobian. Unlikely but I like to keep different processes separated
-
-void EUTelMillepede::CreateGlobalLabels(EUTelTrackStateImpl* state){
-	CreateGlobalLabels( state->getLocation());
+void EUTelMillepede::setGlobalLabels(EUTelState& state){
+	setGlobalLabels( state.getLocation());
 }
-
-void EUTelMillepede::CreateGlobalLabels( int iPlane){
+//Here depending on the palne the states is on we return a particular label for x shift, y shift.....
+void EUTelMillepede::setGlobalLabels( int iPlane){
 	//_globalLabels.clear(); cant do this since it will resize the vector
 
 	_globalLabels[0] = _xShiftsMap[iPlane]; // dx

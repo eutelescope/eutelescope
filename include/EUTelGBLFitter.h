@@ -91,7 +91,7 @@ namespace eutelescope {
 				void UpdateTrackFromGBLTrajectory(gbl::GblTrajectory* traj,std::vector< gbl::GblPoint > pointList, EUTelTrack & track);
 				void setPointVecAndLabel( std::vector< gbl::GblPoint >& pointList, gbl::GblPoint& point, EUTelState& state);
 
-				void CreateAlignmentToMeasurementJacobian(std::vector< gbl::GblPoint >& pointList);
+				void setAlignmentToMeasurementJacobian(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList);
 
 				void setScattererGBL(gbl::GblPoint& point, int iPlane);
 				void setScattererGBL(gbl::GblPoint& point, float x0);
@@ -145,13 +145,13 @@ namespace eutelescope {
             this->_mille = _mille;
         }
 
-				void SetMillepede( EUTelMillepede* Mille ) { _MilleInterface =  Mille; }
+				void setMillepede( EUTelMillepede* Mille ) { _MilleInterface =  Mille; }
 			
 				void SetMilleBinaryName(std::string binaryname){
 					_binaryname = binaryname;
 				} 
 
-        inline void SetChi2Cut(double chi2cut) {
+        inline void setChi2Cut(double chi2cut) {
             this->_chi2cut = chi2cut;
         }
 

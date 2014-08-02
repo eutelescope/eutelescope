@@ -151,7 +151,7 @@ namespace eutelescope {
 
 				void CreateEUTrackandStates(TrackImpl* trackimpl, EUTelTrackImpl*);
 
-				void outputLCIO(LCEvent* evt, std::vector< EUTelTrackImpl* >& EUtracks);
+				void outputLCIO(LCEvent* evt, std::vector< EUTelTrack >& tracks);
 
 				void bookHistograms();
 

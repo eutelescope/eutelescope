@@ -37,6 +37,7 @@ namespace eutelescope {
 			float* getPosition() const; 
 			void getCombinedHitAndStateCovMatrixInLocalFrame(double (&cov)[4]) const;
 			TMatrixD getProjectionMatrix() const;
+			TVector3 getIncidenceUnitMomentumVectorInLocalFrame();
 			//setters
 			void setDimensionSize(int dimension);
 			void setLocation(int location);

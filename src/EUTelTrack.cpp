@@ -16,6 +16,14 @@ std::vector<EUTelState> EUTelTrack::getStates(){
 	}
 	return states;
 }
+std::vector<EUTelState*> EUTelTrack::getStatesPointers(){//This will return the pointers to the states. This is needed if we want to change the contents of the track and not just copyu like getStates()
+	std::vector<EUTelState*> states;
+	for(int i=0; i<getTracks().size();++i){
+		EUTelState* state = static_cast<EUTelState*>(getTracks().at(i));
+		states.push_back(state);
+	}
+	return states;
+}
 int EUTelTrack::getNumberOfHitsOnTrack() const {
 	//streamlog_out( DEBUG1 ) << "EUTelTrack::EUTelTrack::getNumberOfHitsOnTrack()---------------------------BEGIN" << std::endl;
 	int numberOfHitsOnTrack =0;

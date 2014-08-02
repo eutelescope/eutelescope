@@ -88,6 +88,18 @@ TMatrixD EUTelState::getProjectionMatrix() const {
 	projection.SetSub(3, 3, proM2l);
 	return projection;
 }
+TVector3 EUTelState::getIncidenceUnitMomentumVectorInLocalFrame(){
+	TVector3 pVec =	computeCartesianMomentum();
+	TVector3 pVecUnit = pVec.Unit();//Make the vector unit.
+    streamlog_out(DEBUG2) << "Momentum in global coordinates  Px,Py,Pz= " << pVec[0]<<","<<pVec[1]<<","<<pVec[2] << std::endl;
+	double globalVec[] = { pVecUnit[0],pVecUnit[1],pVecUnit[2] };
+	double localVec[3];
+	geo::gGeometry().master2LocalVec( getLocation() ,globalVec, localVec );
+	TVector3 pVecUnitLocal;
+	pVecUnitLocal[0] = localVec[0]; 	pVecUnitLocal[1] = localVec[1]; 	pVecUnitLocal[2] = localVec[2]; 
+  streamlog_out(DEBUG2) << "Momentum in local coordinates  Px,Py,Pz= " << pVecUnitLocal[0]<<","<<pVecUnitLocal[1]<<","<<pVecUnitLocal[2]<< std::endl;
+	return pVecUnitLocal;
+}
 //setters
 void EUTelState::setDimensionSize(int dimension){
 	setD0(static_cast<float>(dimension));
@@ -169,7 +181,7 @@ float tx = getPhi();float ty= getTanLambda(); float curvature = getOmega();
 
 	streamlog_out(DEBUG2) << "Output parameters: px,py, pz "<<px <<","<<py<<","<<pz<<","<<std::endl;
         
-  streamlog_out(DEBUG2) << "-------------------------------EUTelState::getPfromCartesianParameters()-------------------------END" << std::endl;
+  streamlog_out(DEBUG2) << "-------------------------------EUTelState::computeCartesianMomentum()-------------------------END" << std::endl;
         
   return TVector3(px,py,pz);
 }

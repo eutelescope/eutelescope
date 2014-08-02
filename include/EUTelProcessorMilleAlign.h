@@ -29,6 +29,8 @@
 #include "EUTelGeometryTelescopeGeoDescription.h"
 #include "EUTelEventImpl.h"
 #include "EUTelMillepede.h"
+#include "EUTelTrack.h"
+#include "EUTelState.h"
 
 
 using namespace lcio;
@@ -69,7 +71,7 @@ namespace eutelescope {
         /** Called after data processing for clean up. **/
 	
 			  virtual void end();
-
+				void printPointsInformation(std::vector<gbl::GblPoint>& pointList);
 		protected: 
 
 				std::string _milleBinaryFilename;

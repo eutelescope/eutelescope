@@ -28,7 +28,7 @@ namespace eutelescope {
 			//getters
 			int getNumberOfHitsOnTrack() const;
 			std::vector<EUTelState> getStates();
-
+			std::vector<EUTelState*> getStatesPointers();
 			//print
 			void print();
 

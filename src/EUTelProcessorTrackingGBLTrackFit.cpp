@@ -311,7 +311,7 @@ void EUTelProcessorTrackingGBLTrackFit::init() {
         Fitter->SetMilleBinary(_milleGBL);
         Fitter->SetBeamEnergy(_eBeam);
         Fitter->SetBeamCharge(_qBeam);
-        Fitter->SetChi2Cut(_maxMilleChi2Cut);
+        Fitter->setChi2Cut(_maxMilleChi2Cut);
         if (!_mEstimatorType.empty() ) Fitter->setMEstimatorType(_mEstimatorType);
         _trackFitter = Fitter;
 

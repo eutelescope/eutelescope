@@ -80,42 +80,29 @@ _alignmentMode(0){
 }
 
 void EUTelProcessorMilleAlign::init() {
-
 	streamlog_out(DEBUG2) << "EUTelProcessorMilleAlign::init( )---------------------------------------------BEGIN" << std::endl;
-
-	// Reset counters
 	_nProcessedRuns = 0;
 	_nProcessedEvents = 0;
-
-	// Getting access to geometry description
 	std::string name("test.root");
 	geo::gGeometry().initializeTGeoDescription(name,false);
 
-	//Create the size of the jacobian and parameter list for alignment
-	TMatrixD* alDer; // alignment derivatives
-	std::vector<int>* globalLabels;
-
 	// Initialize GBL fitter
 	EUTelGBLFitter* Fitter = new EUTelGBLFitter("GBLFitter");
-	_Mille  = new EUTelMillepede(_alignmentMode);
-	_Mille->setSteeringFileName(_milleSteeringFilename);
+	_Mille  = new EUTelMillepede(_alignmentMode);//The sets the size of alignment jacobian and labels to identify global variables for millepede 
+	_Mille->setSteeringFileName(_milleSteeringFilename);// The steering file will store the labels for global variables in text file, along with errors and seeds guess.
 	_Mille->setXShiftFixed(_fixedAlignmentXShfitPlaneIds);
 	_Mille->setYShiftFixed(_fixedAlignmentXShfitPlaneIds);
 	_Mille->setZShiftFixed(_fixedAlignmentXShfitPlaneIds);
 	_Mille->setXRotationsFixed(_fixedAlignmentXRotationPlaneIds);
 	_Mille->setYRotationsFixed(_fixedAlignmentYRotationPlaneIds);
 	_Mille->setZRotationsFixed(_fixedAlignmentZRotationPlaneIds);
-	_Mille->setBinaryFileName(_milleBinaryFilename);
+	_Mille->setBinaryFileName(_milleBinaryFilename);//The binary file holds for each state: Hold all the information needed for Millepede to work 
 	_Mille->setResultsFileName(_milleResultFileName);
-//	_Mille->setPlanesExclude(
-  Fitter->SetBeamCharge(_beamQ);
-  Fitter->SetBeamEnergy(_eBeam);
-	Fitter->setMEstimatorType(_mEstimatorType);
-  Fitter->SetMilleBinaryName(_milleBinaryFilename);
-  Fitter->SetChi2Cut(_maxChi2Cut);
-  Fitter->setParamterIdXResolutionVec(_SteeringxResolutions);
+	Fitter->setMEstimatorType(_mEstimatorType);//This I am not too sure about. As far as I understand it specifies the procedure that Millepede will use to deal with outliers. Outliers are hits that are far from any state. So their impact to alignemt should be down weighted.
+	Fitter->setChi2Cut(_maxChi2Cut);
+  Fitter->setParamterIdXResolutionVec(_SteeringxResolutions);//We set the accuracy of the residual information since we have no correct hit error analysis yet.
   Fitter->setParamterIdYResolutionVec(_SteeringyResolutions);
-	Fitter->SetMillepede(_Mille);
+	Fitter->setMillepede(_Mille);//We need to have a connection between GBL and Millepede since GBL knows nothing about sensor orientations.
   _trackFitter = Fitter;
 
 
@@ -137,110 +124,60 @@ void EUTelProcessorMilleAlign::processRunHeader(LCRunHeader * run) {
 
 
 	// this is the right place also to check the geometry ID. This is a
-  	// unique number identifying each different geometry used at the
-  	// beam test. The same number should be saved in the run header and
+	// unique number identifying each different geometry used at the
+	// beam test. The same number should be saved in the run header and
  	// in the xml file. If the numbers are different, warn the user.
 
-	if (header->getGeoID() == 0)
- 		streamlog_out(WARNING0) << "The geometry ID in the run header is set to zero." << endl << "This may mean that the GeoID parameter was not set" << endl;
-
-
+	if (header->getGeoID() == 0)	streamlog_out(WARNING0) << "The geometry ID in the run header is set to zero." << endl << "This may mean that the GeoID parameter was not set" << endl;
   	if (header->getGeoID() != geo::gGeometry().getSiPlanesLayoutID()) {  
-		streamlog_out(WARNING5) << "Error during the geometry consistency check: " << endl << "The run header says the GeoID is " << header->getGeoID() << endl << "The GEAR description says is     " << geo::gGeometry().getSiPlanesLayoutID() << endl;
+			streamlog_out(WARNING5) << "Error during the geometry consistency check: " << endl << "The run header says the GeoID is " << header->getGeoID() << endl << "The GEAR description says is     " << geo::gGeometry().getSiPlanesLayoutID() << endl;
   	}
     
-    	_nProcessedRuns++;
+		_nProcessedRuns++;
 }
 
 void EUTelProcessorMilleAlign::processEvent(LCEvent * evt){
-/*
-EUTelEventImpl * event = static_cast<EUTelEventImpl*> (evt); ///We change the class so we can use EUTelescope functions
 
-	
-	//////////////////////////////////////////////////////////////////////// Do not process last events
-  	if (event->getEventType() == kEORE) {
-  		streamlog_out(DEBUG4) << "EORE found: nothing else to do." << endl;
-  		return;
-  	}else if (event->getEventType() == kUNKNOWN) {
-  		streamlog_out(WARNING2) << "Event number " << event->getEventNumber() << " in run " << event->getRunNumber() << " is of unknown type. Continue considering it as a normal Data Event." << endl;
-  	}
-	////////////////////////////////////////////////////////////////////////
-	
-	//////////////////////////////////////////////////////////////////////////Try to access collection	
-  	LCCollection* col = NULL;
+	EUTelEventImpl * event = static_cast<EUTelEventImpl*> (evt); ///We change the class so we can use EUTelescope functions
+
+	if (event->getEventType() == kEORE) {
+		streamlog_out(DEBUG4) << "EORE found: nothing else to do." << endl;
+		return;
+	}else if (event->getEventType() == kUNKNOWN) {
+		streamlog_out(WARNING2) << "Event number " << event->getEventNumber() << " in run " << event->getRunNumber() << " is of unknown type. Continue considering it as a normal Data Event." << endl;
+	}
+	LCCollection* eventCollection = NULL;
 	try {
-  		col = evt->getCollection(_trackCandidatesInputCollectionName);
-    		streamlog_out(DEBUG1) << "collection : " << _trackCandidatesInputCollectionName << " retrieved" << std::endl;
-  	} catch (DataNotAvailableException e) {
-  		streamlog_out(MESSAGE0) << _trackCandidatesInputCollectionName << " collection not available" << std::endl;
-    		throw marlin::SkipEventException(this);
-  	}
-	///////////////////////////////////////////////////////////////////////////////
-
-
-
-	// this will only be entered if the collection is available
-  	if (col != NULL) {
-  		streamlog_out(DEBUG2) << "Collection contains data! Continue!" << endl;
-
-		////////////////////////////////////////////////////////////////////////////For the each event we get loop over all track candidates and fit them
-		std::vector< EUTelTrackImpl* > EUtracks;	
-		for (int iCol = 0; iCol < col->getNumberOfElements(); iCol++) {
-			
-			if (!col) {
-		      		streamlog_out(WARNING2) << "Track collection not found found for event " << _nProcessedEvents << " in run " << _nProcessedRuns << endl;
-		        	throw SkipEventException(this);
-     			}
-	   		IMPL::TrackImpl* trackimpl = static_cast<IMPL::TrackImpl*> (col->getElementAt(iCol));
-			EUTelTrackImpl* EUtrack = new EUTelTrackImpl(*trackimpl);
-      			streamlog_out(DEBUG1) << "Track " << iCol << " nhits " << trackimpl->getTrackerHits().size() << endl;
-
-			///Create points but do not fit this time
-			std::vector< gbl::GblPoint > pointList;
-      _trackFitter->setInformationForGBLPointList(EUtrack, pointList);
-       _trackFitter->CreateAlignmentToMeasurementJacobian(pointList ); //This is place in GBLFitter since millepede has not idea about states and points. Only GBLFitter know about that
-
-		//Check that we have created the alignment jacobian and global parameters correctly
-		typedef std::vector<gbl::GblPoint>::iterator IteratorType;
-		for(IteratorType point = pointList.begin(); point != pointList.end(); point++){
-			streamlog_out(DEBUG1) << "Global derivative for point: " << point->getLabel()<<std::endl;
-			streamlog_message( DEBUG0, point->getGlobalDerivatives().Print();, std::endl; );
-			std::vector<int> label = point->getGlobalLabels();
-			streamlog_out(DEBUG1) << "Global labels for point: " << point->getLabel() << "Global label size "<<label.size() <<std::endl;
-			for( std::vector<int>::const_iterator i = label.begin(); i != label.end(); ++i){
-    		streamlog_out(DEBUG1) << *i << ' ';
+		eventCollection = evt->getCollection(_trackCandidatesInputCollectionName);
+		streamlog_out(DEBUG1) << "collection : " << _trackCandidatesInputCollectionName << " retrieved" << std::endl;
+	}catch (DataNotAvailableException e) {
+		streamlog_out(MESSAGE0) << _trackCandidatesInputCollectionName << " collection not available" << std::endl;
+		throw marlin::SkipEventException(this);
+	}
+	if (eventCollection != NULL) {
+		streamlog_out(DEBUG2) << "Collection contains data! Continue!" << endl;
+		for (int iTrack = 0; iTrack < eventCollection->getNumberOfElements(); ++iTrack) {
+			EUTelTrack track = *(static_cast<EUTelTrack*> (eventCollection->getElementAt(iTrack)));
+			std::vector< gbl::GblPoint > pointList;//This is the GBL points. These contain the state information, scattering and alignment jacobian. All the information that the mille binary will get.
+			_trackFitter->setInformationForGBLPointList(track, pointList);//We create all the GBL points with scatterer inbetween both planes. This is identical to creating GBL tracks
+			_trackFitter->setAlignmentToMeasurementJacobian(track, pointList); //This is place in GBLFitter since millepede has not idea about states and points. Only GBLFitter know about that
+			const gear::BField& B = geo::gGeometry().getMagneticFiled();
+			const double Bmag = B.at( TVector3(0.,0.,0.) ).r2();
+			gbl::GblTrajectory* traj = 0;
+			if ( Bmag < 1.E-6 ) {
+				traj = new gbl::GblTrajectory( pointList, false ); //Must make sure this is not a memory leak
+			} else {
+				traj = new gbl::GblTrajectory( pointList, true );
 			}
-
-		}
-		
- 			const gear::BField& B = geo::gGeometry().getMagneticFiled();
-      const double Bmag = B.at( TVector3(0.,0.,0.) ).r2();
-
-
-  		gbl::GblTrajectory* traj = 0;
-      if ( Bmag < 1.E-6 ) {
-      	traj = new gbl::GblTrajectory( pointList, false ); //Must make sure this is not a memory leak
-      } else {
-      	traj = new gbl::GblTrajectory( pointList, true );
-      }
-
-double chi2, loss;
-int ndf;
-
-traj->fit(chi2, ndf, loss, _mEstimatorType );
-	streamlog_out ( DEBUG0 ) << "This is the trajectory we are just about to fit: " << endl;
-	  streamlog_message( DEBUG0, traj->printTrajectory(10);, std::endl; );
-			
-		traj->milleOut(*(_Mille->_milleGBL));
-
-			
-			              _trackFitter->Clear();
+			double chi2, loss;
+			int ndf;
+		//	traj->fit(chi2, ndf, loss, _mEstimatorType );
+			streamlog_out ( DEBUG0 ) << "This is the trajectory we are just about to fit: " << endl;
+			streamlog_message( DEBUG0, traj->printTrajectory(10);, std::endl; );
+				
+			traj->milleOut(*(_Mille->_milleGBL));
 		}//END OF LOOP FOR ALL TRACKS IN AN EVENT
-		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		//	outputLCIO(evt, EUtracks); // Important to note that EUtracks are still only the original states at input. The scatterers are used in the fit but are not included here.
 	}//END OF COLLECTION IS NOT NULL LOOP	
-
-*/
 }
 void EUTelProcessorMilleAlign::check(LCEvent * evt){}
 
@@ -252,3 +189,17 @@ _Mille->parseMilleOutput(_alignmentConstantLCIOFile, _gear_aligned_file);
 
 
 }
+
+void EUTelProcessorMilleAlign::printPointsInformation(std::vector<gbl::GblPoint>& pointList){
+	typedef std::vector<gbl::GblPoint>::iterator IteratorType;
+	for(IteratorType point = pointList.begin(); point != pointList.end(); point++){
+		streamlog_out(DEBUG1) << "Global derivative for point: " << point->getLabel()<<std::endl;
+		streamlog_message( DEBUG0, point->getGlobalDerivatives().Print();, std::endl; );
+		std::vector<int> label = point->getGlobalLabels();
+		streamlog_out(DEBUG1) << "Global labels for point: " << point->getLabel() << "Global label size "<<label.size() <<std::endl;
+		for( std::vector<int>::const_iterator i = label.begin(); i != label.end(); ++i){
+			streamlog_out(DEBUG1) << *i << ' ';
+		}
+
+	}
+}	

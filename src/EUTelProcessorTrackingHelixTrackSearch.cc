@@ -201,13 +201,13 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
 	_trackFitter->testTrackQuality();//Here we test how many tracks we have after all cuts
 	streamlog_out( DEBUG1 ) << "Retrieving track candidates..." << endl;
 
-std::vector<EUTelTrack>& tracks = _trackFitter->getTracks(); 
+	std::vector<EUTelTrack>& tracks = _trackFitter->getTracks(); 
 
-plotHistos(tracks);
+	plotHistos(tracks);
 
-outputLCIO(evt,tracks);
+	outputLCIO(evt,tracks);
 
-_nProcessedEvents++;
+	_nProcessedEvents++;
 }
 
 void EUTelProcessorTrackingHelixTrackSearch::outputLCIO(LCEvent* evt, std::vector<EUTelTrack>& tracks){

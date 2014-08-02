@@ -3,6 +3,8 @@
 
 #include "EUTelUtility.h"
 #include "EUTelTrackStateImpl.h"
+#include "EUTelTrack.h"
+#include "EUTelState.h"
 
 
 #include <fstream>
@@ -44,13 +46,13 @@ namespace eutelescope {
 				//This set the number given by the processor to a aligment mode string
 				void SetAlignmentMode(int alignmentMode);
 				//This take a state and outputs a its alignment jacobian given the alignment mode
-				int CreateAlignmentToMeasurementJacobian( EUTelTrackStateImpl* state);
+				int computeAlignmentToMeasurementJacobian( EUTelState& state);
 
-				int CreateAlignmentToMeasurementJacobian( float x,float y, float slopeXvsZ, float slopeYvsZ);
+				int computeAlignmentToMeasurementJacobian( float x,float y, float slopeXvsZ, float slopeYvsZ);
 
-				void CreateGlobalLabels(EUTelTrackStateImpl* state);
+				void setGlobalLabels(EUTelState& state);
 
-				void CreateGlobalLabels(int iPlane);
+				void setGlobalLabels(int iPlane);
 
 				void FillMilleParametersLabels();
 

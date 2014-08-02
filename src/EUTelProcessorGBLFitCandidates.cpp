@@ -68,7 +68,7 @@ void EUTelProcessorGBLFitCandidates::init() {
   Fitter->SetBeamCharge(_beamQ);
   Fitter->SetBeamEnergy(_eBeam);
 	Fitter->setMEstimatorType(_mEstimatorType);
-  Fitter->SetChi2Cut(_maxChi2Cut);
+  Fitter->setChi2Cut(_maxChi2Cut);
   Fitter->setParamterIdXResolutionVec(_SteeringxResolutions);
   Fitter->setParamterIdYResolutionVec(_SteeringyResolutions);
   _trackFitter = Fitter;
@@ -101,6 +101,7 @@ void EUTelProcessorGBLFitCandidates::processRunHeader(LCRunHeader * run) {
 void EUTelProcessorGBLFitCandidates::check(LCEvent * evt){}
 
 void EUTelProcessorGBLFitCandidates::processEvent(LCEvent * evt){
+	streamlog_out(DEBUG5) << "Start of event " << _nProcessedEvents << endl;
 
 	EUTelEventImpl * event = static_cast<EUTelEventImpl*> (evt); ///We change the class so we can use EUTelescope functions
 
@@ -124,6 +125,7 @@ void EUTelProcessorGBLFitCandidates::processEvent(LCEvent * evt){
 		streamlog_out(MESSAGE0)<<Utility::outputColourString("The collection is NULL for this event.", "YELLOW")<<std::endl;
 		throw marlin::SkipEventException(this);
 	}
+	std::vector<EUTelTrack> allTracksForThisEvent;
 	for (int iCol = 0; iCol < col->getNumberOfElements(); iCol++) {
 		EUTelTrack track = *(static_cast<EUTelTrack*> (col->getElementAt(iCol)));
 		_trackFitter->resetPerTrack(); //Here we reset the label that connects state to GBL point to 1 again
@@ -160,11 +162,12 @@ void EUTelProcessorGBLFitCandidates::processEvent(LCEvent * evt){
 			 streamlog_out(DEBUG5) << "Ierr is: " << ierr << " Do not update track information " << endl;
 				static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_fitsuccessHistName ] ) -> fill(0.0);
 		}	
-_trackFitter->Clear();		
+	allTracksForThisEvent.push_back(track);
 	}//END OF LOOP FOR ALL TRACKS IN AN EVENT
-//		outputLCIO(evt, EUtracks); // Important to note that EUtracks are still only the original states at input. The scatterers are used in the fit but are not included here.
+	outputLCIO(evt, allTracksForThisEvent); 
+	allTracksForThisEvent.clear();//We clear this so we don't add the same track twice
+	streamlog_out(DEBUG5) << "End of event " << _nProcessedEvents << endl;
 	_nProcessedEvents++;
-
 }
 
 
@@ -196,37 +199,40 @@ void EUTelProcessorGBLFitCandidates::end() {}
 
 #endif // USE_GBL
 
-/////////////////////////////////////////////////////Functions THIS IS OLD WILL REMOVE
 
-void EUTelProcessorGBLFitCandidates::outputLCIO(LCEvent* evt, std::vector< EUTelTrackImpl* >& trackCartesian){
+void EUTelProcessorGBLFitCandidates::outputLCIO(LCEvent* evt, std::vector<EUTelTrack>& tracks){
 
-        streamlog_out( DEBUG4 ) << " ---------------- EUTelProcessorGBLFitCandidates::outputLCIO ---------- BEGIN ------------- " << std::endl;
+	streamlog_out( DEBUG4 ) << " ---------------- EUTelProcessorGBLFitCandidates::outputLCIO ---------- BEGIN ------------- " << std::endl;
 
-	//Create once per event    
+	//Create once per event//Note that this will not cause a memory leak since lcio will delete the memory automatically for you    
 	LCCollectionVec * trkCandCollection = new LCCollectionVec(LCIO::TRACK);
+	LCCollectionVec * stateCandCollection = new LCCollectionVec(LCIO::TRACK);
 
 	// Prepare output collection
-  	LCFlagImpl flag(trkCandCollection->getFlag());
-  	flag.setBit( LCIO::TRBIT_HITS );
-  	trkCandCollection->setFlag( flag.getFlag( ) );
+	LCFlagImpl flag(trkCandCollection->getFlag());
+	flag.setBit( LCIO::TRBIT_HITS );
+	trkCandCollection->setFlag( flag.getFlag( ) );
+
+	LCFlagImpl flag2(stateCandCollection->getFlag());
+	flag2.setBit( LCIO::TRBIT_HITS );
+	stateCandCollection->setFlag( flag2.getFlag( ) );
 
 	//Loop through all tracks
-	vector< EUTelTrackImpl* >::const_iterator itTrackCartesian;
-	for ( itTrackCartesian = trackCartesian.begin(); itTrackCartesian != trackCartesian.end(); itTrackCartesian++){
-
-                if(streamlog_level(DEBUG4) ) (*itTrackCartesian)->Print();
-
-		IMPL::TrackImpl* LCIOtrack = (*itTrackCartesian)->CreateLCIOTrack();
-		
-
+	for ( int i = 0 ; i < tracks.size(); ++i) {
+		EUTelTrack* trackheap = new  EUTelTrack(tracks[i]);
+		trackheap->print();
 		//For every track add this to the collection
-    		trkCandCollection->push_back( LCIOtrack );
+		trkCandCollection->push_back(static_cast<EVENT::Track*>(trackheap));
+		for(int j = 0;j < trackheap->getTracks().size();++j){
+			stateCandCollection->push_back(trackheap->getTracks().at(j) );
+		}
 	}//END TRACK LOOP
 
 	//Now add this collection to the 
-  	evt->addCollection(trkCandCollection, _tracksOutputCollectionName);
+	evt->addCollection(trkCandCollection, _tracksOutputCollectionName);
+	evt->addCollection(stateCandCollection, "States_After_GBL_Track_Fit");
 
-        streamlog_out( DEBUG4 ) << " ---------------- EUTelProcessorGBLFitCandidates::outputLCIO ---------- END ------------- " << std::endl;
+	streamlog_out( DEBUG4 ) << " ---------------- EUTelProcessorGBLFitCandidates::outputLCIO ---------- END ------------- " << std::endl;
 }
 
 

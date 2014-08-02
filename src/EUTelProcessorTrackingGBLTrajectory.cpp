@@ -190,7 +190,7 @@ void EUTelProcessorTrackingGBLTrajectory::init() {
 
         Fitter->SetBeamEnergy(_eBeam);
         Fitter->SetBeamCharge(_qBeam);
-        Fitter->SetChi2Cut(_maxChi2Cut);
+        Fitter->setChi2Cut(_maxChi2Cut);
         Fitter->getFitTrackVec()->clear();
         _trackFitter = Fitter;
 

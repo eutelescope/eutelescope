@@ -256,23 +256,23 @@ typedef std::map<EUTelTrackStateImpl,gbl::GblPoint*, compare_points >::const_ite
 
 void EUTelGBLFitter::UpdateTrackFromGBLTrajectory (gbl::GblTrajectory* traj, std::vector< gbl::GblPoint > pointList,EUTelTrack &track){
 	streamlog_out ( DEBUG4 ) << " EUTelGBLFitter::UpdateTrackFromGBLTrajectory-- BEGIN " << endl;
-	for(int i=0;i < track.getStates().size(); i++){		
-		EUTelState state = track.getStates()[i];
+	for(int i=0;i < track.getStatesPointers().size(); i++){//We get the pointers no since we want to change the track state contents		
+		EUTelState* state = track.getStatesPointers().at(i);
 		TVectorD corrections(5);
 		TMatrixDSym correctionsCov(5,5);
-		traj->getResults(_mapStatesToLabel[state], corrections, correctionsCov );
+		traj->getResults(_mapStatesToLabel[*state], corrections, correctionsCov );
 
 		streamlog_out(DEBUG3) << endl << "State before we have added corrections: " << std::endl;
-		state.print();
+		state->print();
 		TVectorD newStateVec(5);
-		newStateVec[0] = state.getOmega() + corrections[0];
-		newStateVec[1] = state.getDirectionXY()+corrections[1];
-		newStateVec[2] = state.getDirectionYZ()+corrections[2];
-		newStateVec[3] = state.getPosition()[0]+corrections[3];
-		newStateVec[4] = state.getPosition()[1]+corrections[4]; 
-		state.setTrackStateVecPlusZParameter(newStateVec,state.getPosition()[2]);
+		newStateVec[0] = state->getOmega() + corrections[0];
+		newStateVec[1] = state->getDirectionXY()+corrections[1];
+		newStateVec[2] = state->getDirectionYZ()+corrections[2];
+		newStateVec[3] = state->getPosition()[0]+corrections[3];
+		newStateVec[4] = state->getPosition()[1]+corrections[4]; 
+		state->setTrackStateVecPlusZParameter(newStateVec,state->getPosition()[2]);//TO DO:We set the z position to be the same. However if the sensor is tilted this should change. How should we deal with this
 		streamlog_out(DEBUG3) << endl << "State after we have added corrections: " << std::endl;
-		state.print();
+		state->print();
 	}//END of loop of all states
 }
 
@@ -389,10 +389,13 @@ void EUTelGBLFitter::testDistanceBetweenPoints(double* position1,double* positio
 	displacement(0) = position1[0] - position2[0];
 	displacement(1) = position1[1] - position2[1];
 	displacement(2) = position1[2] - position2[2];
-	float distance= displacement.Norm2Sqr();
+	float distance= sqrt(displacement.Norm2Sqr());
 	streamlog_out(DEBUG0)<<"The distance between the points to calculate radiation length is: "<<distance<<std::endl;
 	if(distance<1){
 		throw(lcio::Exception(Utility::outputColourString("The distance between the states is too small.", "RED"))); 	
+	}
+	if(distance>1000){//The planes should not be over a 1m in width
+		throw(lcio::Exception(Utility::outputColourString("The distance between the planes is over 1m.", "RED"))); 	
 	}
 }
 
@@ -516,34 +519,29 @@ void EUTelGBLFitter::setMeasurementGBL(gbl::GblPoint& point, const double *hitPo
 	streamlog_out(MESSAGE1) << " setMeasurementsGBL ------------- END ----------------- " << std::endl;
 }
 
-//This is use in alignment.
-void EUTelGBLFitter::CreateAlignmentToMeasurementJacobian(std::vector< gbl::GblPoint >& pointList ){
-/*
-int i=0;
-typedef std::vector<EUTelTrackStateImpl>::iterator MapIterator ;
-for (MapIterator iter = _states.begin(); iter != _states.end(); iter++)
-{
-			EUTelTrackStateImpl & state = *iter;
-		
-		if(state.getHit() != NULL){
-		_MilleInterface->CreateAlignmentToMeasurementJacobian(&state); //Get the jacobain for that state and sensor
-		_MilleInterface->CreateGlobalLabels(&state);  //Gets the coorect labels for that sensor
-		TMatrixD &  Jac = _MilleInterface->getAlignmentJacobian();
-		std::vector<int> labels =  _MilleInterface->getGlobalParameters();
-		
-			
-		pointList[i].addGlobals(labels, Jac);
-
-		
-
-		}//END OF IF STATEMENT IF THE THERE IS A STATE WITH HIT.  REMOVE THIS FOR NOW
-		else{		
+//This function calculates the alignment jacobian and labels and attaches this to the point
+void EUTelGBLFitter::setAlignmentToMeasurementJacobian(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList ){
+	for (int i = 0;i<track.getStates().size() ;++i ){
+		EUTelState state = track.getStates().at(i);
+		if(!state.getTrackerHits().empty()){//We don't want to calculate this for states with no hit.
+			_MilleInterface->computeAlignmentToMeasurementJacobian(state);//We calculate the jacobian. 
+			_MilleInterface->setGlobalLabels(state); //Get the correct label for the sensors x,y,z shift and rotations. Depending on alignment mode and sensor the plane is on 
+			TMatrixD&  alignmentJacobian = _MilleInterface->getAlignmentJacobian();//Return what was calculated by computeAlignmentToMeasurementJacobian
+			std::vector<int> labels =  _MilleInterface->getGlobalParameters();//Return what was set by setGlobalLabels
+			unsigned int labelOfState = _mapStatesToLabel.at(state);//This is not the same as the label above. This is a number to identify a state. 
+			for(int i = 0; i < pointList.size(); ++i){//We need to find what point is associated with this state. We do this by using map from state to point label.
+				if(labelOfState == pointList[i].getLabel()){
+					pointList[i].addGlobals(labels, alignmentJacobian);
+					break;
+				}
+				if(i == (pointList.size()-1)){
+					throw(lcio::Exception(Utility::outputColourString("There is no point associated with this state.", "RED")));
+				}
+			}
+		}else{		
 			streamlog_out(DEBUG0)<<"There was no hit so will not create jacobian and global variables for state"<<std::endl;
 		}
-i++;
 	}
-
-*/
 }
 //TO DO: This is the iterative alignment part that varies the precision of the measurement to allow the GBL tracks to be fitted. The precision matrix itself is an input by us. In the long run can we not do proper error calculations? 
 //TO DO: This does not have to be done for each state since it only varies per plane. So could input this data another way. However in the long run this may not be favourable since we could have correct error analysis eventually. 
@@ -562,7 +560,6 @@ void EUTelGBLFitter::setMeasurementCov(EUTelState& state){
 	}
 	state.setCombinedHitAndStateCovMatrixInLocalFrame(hitcov);
 }
-
 } // namespace eutelescope
 
 
