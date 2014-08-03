@@ -96,7 +96,7 @@ void EUTelProcessorTrackingHelixTrackSearch::init() {
 
 	std::string name("test.root"); //This is the name outputed at the end to store geo info.
 	geo::gGeometry().initializeTGeoDescription(name,false);
-	geo::gGeometry().initialisePlanesNotExcluded(_excludePlanes);
+	geo::gGeometry().initialisePlanesToExcluded(_excludePlanes);
 	// Instantiate track finder. This is a working horse of the processor.
 	streamlog_out(DEBUG) << "Initialisation of track finder" << std::endl;
 

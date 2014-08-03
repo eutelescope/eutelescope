@@ -223,7 +223,7 @@ namespace eutelescope {
 	    /** Plane normal vector (nx,ny,nz) */
             TVector3 siPlaneNormal( int );
             
-            void initialisePlanesNotExcluded(FloatVec planeIDs );
+            void initialisePlanesToExcluded(FloatVec planeIDs );
             /** Map from sensor ID to number along Z */
             const std::map<int, int>& sensorZOrdertoIDs() const;
             

@@ -94,7 +94,7 @@ namespace eutelescope {
 
 				//This is the maximum chi2 of a track that will be used in the millepede alignment fit
 				double _maxChi2Cut;
-
+				bool _createBinary;
         /** Outlier downweighting option */
         std::string _mEstimatorType;
 
@@ -145,7 +145,7 @@ namespace eutelescope {
         /** y Resolution of planes in PlaneIds */
         FloatVec _SteeringyResolutions;
 
-
+				FloatVec _excludePlanes;
 };
 
     /** A global instance of the processor */

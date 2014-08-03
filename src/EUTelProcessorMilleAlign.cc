@@ -15,7 +15,8 @@ _beamQ(-1),
 _eBeam(4),
 _mEstimatorType(),
 _maxChi2Cut(1000),
-_alignmentMode(0){
+_alignmentMode(0),
+_createBinary(true){
 
   // TrackerHit input collection
   registerInputCollection(LCIO::TRACK, "TrackCandidatesInputCollectionName", "Input track candidate collection name",_trackCandidatesInputCollectionName,std::string("TrackCandidatesCollection"));
@@ -41,6 +42,7 @@ _alignmentMode(0){
   registerOptionalParameter("GBLMEstimatorType", "GBL outlier down-weighting option (t,h,c)", _mEstimatorType, string() );
 
   registerOptionalParameter("MilleMaxChi2Cut", "Maximum chi2 of a track candidate that goes into millepede", _maxChi2Cut, double(1000.));
+  registerOptionalParameter("CreateBinary", "Should we create a binary file for millepede containing the data that millepede needs  ", _createBinary, bool(true));
 
   registerOptionalParameter("xResolutionPlane", "x resolution of planes given in Planes", _SteeringxResolutions, FloatVec());
   registerOptionalParameter("yResolutionPlane", "y resolution of planes given in Planes", _SteeringyResolutions, FloatVec());
@@ -73,8 +75,9 @@ _alignmentMode(0){
 
     registerOptionalParameter("PedeSteeringAdditionalCmds","FOR EXPERTS: List of commands that should be included in the pede steering file. Use '\\' to seperate options and introduce a line break.",_pedeSteerAddCmds, StringVec());
 
-   registerOptionalParameter("AlignmentConstantLCIOFile","This is the name of the LCIO file name with the output alignment"
+		registerOptionalParameter("AlignmentConstantLCIOFile","This is the name of the LCIO file name with the output alignment"
                             "constants (add .slcio)",_alignmentConstantLCIOFile, static_cast< string > ( "alignment.slcio" ) );
+		registerOptionalParameter("ExcludePlanes", "This is the planes that will not be included in analysis", _excludePlanes ,FloatVec());
 
 
 }
@@ -85,6 +88,7 @@ void EUTelProcessorMilleAlign::init() {
 	_nProcessedEvents = 0;
 	std::string name("test.root");
 	geo::gGeometry().initializeTGeoDescription(name,false);
+	geo::gGeometry().initialisePlanesToExcluded(_excludePlanes);
 
 	// Initialize GBL fitter
 	EUTelGBLFitter* Fitter = new EUTelGBLFitter("GBLFitter");
@@ -138,46 +142,48 @@ void EUTelProcessorMilleAlign::processRunHeader(LCRunHeader * run) {
 
 void EUTelProcessorMilleAlign::processEvent(LCEvent * evt){
 
-	EUTelEventImpl * event = static_cast<EUTelEventImpl*> (evt); ///We change the class so we can use EUTelescope functions
+	if(_createBinary){
+		EUTelEventImpl * event = static_cast<EUTelEventImpl*> (evt); ///We change the class so we can use EUTelescope functions
 
-	if (event->getEventType() == kEORE) {
-		streamlog_out(DEBUG4) << "EORE found: nothing else to do." << endl;
-		return;
-	}else if (event->getEventType() == kUNKNOWN) {
-		streamlog_out(WARNING2) << "Event number " << event->getEventNumber() << " in run " << event->getRunNumber() << " is of unknown type. Continue considering it as a normal Data Event." << endl;
+		if (event->getEventType() == kEORE) {
+			streamlog_out(DEBUG4) << "EORE found: nothing else to do." << endl;
+			return;
+		}else if (event->getEventType() == kUNKNOWN) {
+			streamlog_out(WARNING2) << "Event number " << event->getEventNumber() << " in run " << event->getRunNumber() << " is of unknown type. Continue considering it as a normal Data Event." << endl;
+		}
+		LCCollection* eventCollection = NULL;
+		try {
+			eventCollection = evt->getCollection(_trackCandidatesInputCollectionName);
+			streamlog_out(DEBUG1) << "collection : " << _trackCandidatesInputCollectionName << " retrieved" << std::endl;
+		}catch (DataNotAvailableException e) {
+			streamlog_out(MESSAGE0) << _trackCandidatesInputCollectionName << " collection not available" << std::endl;
+			throw marlin::SkipEventException(this);
+		}
+		if (eventCollection != NULL) {
+			streamlog_out(DEBUG2) << "Collection contains data! Continue!" << endl;
+			for (int iTrack = 0; iTrack < eventCollection->getNumberOfElements(); ++iTrack) {
+				EUTelTrack track = *(static_cast<EUTelTrack*> (eventCollection->getElementAt(iTrack)));
+				std::vector< gbl::GblPoint > pointList;//This is the GBL points. These contain the state information, scattering and alignment jacobian. All the information that the mille binary will get.
+				_trackFitter->setInformationForGBLPointList(track, pointList);//We create all the GBL points with scatterer inbetween both planes. This is identical to creating GBL tracks
+				_trackFitter->setAlignmentToMeasurementJacobian(track, pointList); //This is place in GBLFitter since millepede has not idea about states and points. Only GBLFitter know about that
+				const gear::BField& B = geo::gGeometry().getMagneticFiled();
+				const double Bmag = B.at( TVector3(0.,0.,0.) ).r2();
+				gbl::GblTrajectory* traj = 0;
+				if ( Bmag < 1.E-6 ) {
+					traj = new gbl::GblTrajectory( pointList, false ); //Must make sure this is not a memory leak
+				} else {
+					traj = new gbl::GblTrajectory( pointList, true );
+				}
+				double chi2, loss;
+				int ndf;
+			//	traj->fit(chi2, ndf, loss, _mEstimatorType );
+				streamlog_out ( DEBUG0 ) << "This is the trajectory we are just about to fit: " << endl;
+				streamlog_message( DEBUG0, traj->printTrajectory(10);, std::endl; );
+					
+				traj->milleOut(*(_Mille->_milleGBL));
+			}//END OF LOOP FOR ALL TRACKS IN AN EVENT
+		}//END OF COLLECTION IS NOT NULL LOOP	
 	}
-	LCCollection* eventCollection = NULL;
-	try {
-		eventCollection = evt->getCollection(_trackCandidatesInputCollectionName);
-		streamlog_out(DEBUG1) << "collection : " << _trackCandidatesInputCollectionName << " retrieved" << std::endl;
-	}catch (DataNotAvailableException e) {
-		streamlog_out(MESSAGE0) << _trackCandidatesInputCollectionName << " collection not available" << std::endl;
-		throw marlin::SkipEventException(this);
-	}
-	if (eventCollection != NULL) {
-		streamlog_out(DEBUG2) << "Collection contains data! Continue!" << endl;
-		for (int iTrack = 0; iTrack < eventCollection->getNumberOfElements(); ++iTrack) {
-			EUTelTrack track = *(static_cast<EUTelTrack*> (eventCollection->getElementAt(iTrack)));
-			std::vector< gbl::GblPoint > pointList;//This is the GBL points. These contain the state information, scattering and alignment jacobian. All the information that the mille binary will get.
-			_trackFitter->setInformationForGBLPointList(track, pointList);//We create all the GBL points with scatterer inbetween both planes. This is identical to creating GBL tracks
-			_trackFitter->setAlignmentToMeasurementJacobian(track, pointList); //This is place in GBLFitter since millepede has not idea about states and points. Only GBLFitter know about that
-			const gear::BField& B = geo::gGeometry().getMagneticFiled();
-			const double Bmag = B.at( TVector3(0.,0.,0.) ).r2();
-			gbl::GblTrajectory* traj = 0;
-			if ( Bmag < 1.E-6 ) {
-				traj = new gbl::GblTrajectory( pointList, false ); //Must make sure this is not a memory leak
-			} else {
-				traj = new gbl::GblTrajectory( pointList, true );
-			}
-			double chi2, loss;
-			int ndf;
-		//	traj->fit(chi2, ndf, loss, _mEstimatorType );
-			streamlog_out ( DEBUG0 ) << "This is the trajectory we are just about to fit: " << endl;
-			streamlog_message( DEBUG0, traj->printTrajectory(10);, std::endl; );
-				
-			traj->milleOut(*(_Mille->_milleGBL));
-		}//END OF LOOP FOR ALL TRACKS IN AN EVENT
-	}//END OF COLLECTION IS NOT NULL LOOP	
 }
 void EUTelProcessorMilleAlign::check(LCEvent * evt){}
 
@@ -185,9 +191,6 @@ void EUTelProcessorMilleAlign::end(){
 _Mille->writeMilleSteeringFile(_pedeSteerAddCmds);
 _Mille->runPede();
 _Mille->parseMilleOutput(_alignmentConstantLCIOFile, _gear_aligned_file);
-
-
-
 }
 
 void EUTelProcessorMilleAlign::printPointsInformation(std::vector<gbl::GblPoint>& pointList){

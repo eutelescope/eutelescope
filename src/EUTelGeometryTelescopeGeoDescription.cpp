@@ -325,7 +325,7 @@ std::map<int, int>& EUTelGeometryTelescopeGeoDescription::sensorZOrderToIDWithou
 std::map<int, int>& EUTelGeometryTelescopeGeoDescription::sensorIDToZOrderWithoutExcludedPlanes() {
 	return _sensorIDToZOrderWithoutExcludedPlanes;
 }
-void EUTelGeometryTelescopeGeoDescription::initialisePlanesNotExcluded(FloatVec planeIDs ){
+void EUTelGeometryTelescopeGeoDescription::initialisePlanesToExcluded(FloatVec planeIDs ){
 	for(int i = 0 ; i <_sensorZOrderToIDMap.size(); ++i){
 		bool excluded=false;
 		for(int  j =0; j< planeIDs.size(); ++j){

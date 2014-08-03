@@ -127,7 +127,10 @@ void EUTelProcessorGBLFitCandidates::processEvent(LCEvent * evt){
 	}
 	std::vector<EUTelTrack> allTracksForThisEvent;
 	for (int iCol = 0; iCol < col->getNumberOfElements(); iCol++) {
-		EUTelTrack track = *(static_cast<EUTelTrack*> (col->getElementAt(iCol)));
+		//TO DO: The original states from pattern recognition are changed for some reason. We want to create a completely new collection since we may want to run over this data again. 
+		//Also this is a memory leak.
+		EUTelTrack* trackPointer = new  EUTelTrack(*(static_cast<EUTelTrack*> (col->getElementAt(iCol))));
+		EUTelTrack track = *trackPointer;
 		_trackFitter->resetPerTrack(); //Here we reset the label that connects state to GBL point to 1 again
 		track.print();//Print the track use for debugging
 		_trackFitter->testTrack(track);//Check the track has states and hits  
@@ -218,14 +221,15 @@ void EUTelProcessorGBLFitCandidates::outputLCIO(LCEvent* evt, std::vector<EUTelT
 	stateCandCollection->setFlag( flag2.getFlag( ) );
 
 	//Loop through all tracks
-	for ( int i = 0 ; i < tracks.size(); ++i) {
-		EUTelTrack* trackheap = new  EUTelTrack(tracks[i]);
-		trackheap->print();
+	for ( int i = 0 ; i < tracks.size(); ++i){
+		EUTelTrack* trackheap = new  EUTelTrack();
 		//For every track add this to the collection
-		trkCandCollection->push_back(static_cast<EVENT::Track*>(trackheap));
-		for(int j = 0;j < trackheap->getTracks().size();++j){
-			stateCandCollection->push_back(trackheap->getTracks().at(j) );
+		for(int j = 0;j < tracks.at(i).getStates().size();++j){
+			EUTelState* stateheap = new EUTelState(tracks.at(i).getStates().at(j));
+			trackheap->addTrack(stateheap);
+			stateCandCollection->push_back(static_cast<EVENT::Track*>(stateheap));
 		}
+		trkCandCollection->push_back(static_cast<EVENT::Track*>(trackheap));
 	}//END TRACK LOOP
 
 	//Now add this collection to the 
