@@ -193,6 +193,7 @@ void EUTelKalmanFilter::propagateForwardFromSeedState( EUTelState& state, EUTelT
 	
 		float globalIntersection[3];
 		int newSensorID = state.findIntersectionWithCertainID(geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i+1], globalIntersection);
+		cout<<"HERE1: "<<state.getPosition()[0]<<","<<state.getPosition()[1]<<","<<state.getPosition()[2]<<","<<state.getLocation()<<endl;
 		int sensorIntersection = geo::gGeometry( ).getSensorID(globalIntersection);//This is needed with the jacobian since the jacobian needs the z distance to the next point to do the calculation
 		if(newSensorID < 0 ){ //TO DO Fix geo: or sensorIntersection < 0 ){
 			streamlog_out ( MESSAGE5 ) << "Intersection point on infinite plane: " <<  globalIntersection[0]<<" , "<<globalIntersection[1] <<" , "<<globalIntersection[2]<<std::endl;
@@ -212,11 +213,12 @@ void EUTelKalmanFilter::propagateForwardFromSeedState( EUTelState& state, EUTelT
 		jacobian.Zero();
 		jacobian = newState->computePropagationJacobianFromStateToThisZLocation(globalIntersection[2]);
 		findNextStateUsingJacobian(state,jacobian,globalIntersection[2], *newState);
-		testPositionEstimation(const_cast<float*>(newState->getReferencePoint()),globalIntersection);//Here we compare the estimation from the simple equation of motion and jacobian.
+		cout<<"HERE2: "<<newState->getPosition()[0]<<","<<newState->getPosition()[1]<<","<<newState->getPosition()[2]<<","<<newState->getLocation()<<endl;
+		testPositionEstimation(newState->getPosition(),globalIntersection);//Here we compare the estimation from the simple equation of motion and jacobian.
 		if(_mapHitsVecPerPlane[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i+1]].size() == 0){
 			streamlog_out(DEBUG5) << Utility::outputColourString("There are no hits on the plane with this state. Add state to track as it is and move on ","YELLOW");
 			track.addTrack(static_cast<EVENT::Track*>(newState));//Need to return this to LCIO object. Loss functionality but retain information 
-			state = *newState;
+			state = EUTelState(*newState);
 			continue;
 		}
 		EVENT::TrackerHit* closestHit = const_cast< EVENT::TrackerHit* > ( findClosestHit( *newState )); //This will look for the closest hit but not if it is within the excepted range		
@@ -227,7 +229,7 @@ void EUTelKalmanFilter::propagateForwardFromSeedState( EUTelState& state, EUTelT
 		if ( distance > DCA ) {
 			streamlog_out ( DEBUG1 ) << "Closest hit is outside of search window." << std::endl;
 			track.addTrack(static_cast<EVENT::Track*>(newState));//Need to return this to LCIO object. Loss functionality but retain information 
-			state = *newState;
+			state = EUTelState(*newState);
 			continue;
 		}	
 		if(closestHit == NULL){
@@ -241,7 +243,10 @@ void EUTelKalmanFilter::propagateForwardFromSeedState( EUTelState& state, EUTelT
 		track.addTrack(static_cast<EVENT::Track*>(newState));//Need to return this to LCIO object. Loss functionality but retain information 
 		track.print();
 		streamlog_out ( DEBUG1 ) << "The number of hits on the track now is "<< track.getNumberOfHitsOnTrack()<< endl;
-		state = *newState;
+		cout<<"HERE3: "<<newState->getPosition()[0]<<","<<newState->getPosition()[1]<<","<<newState->getPosition()[2]<<","<<newState->getLocation()<<endl;
+		cout<<"HERE5: "<<state.getPosition()[0]<<","<<state.getPosition()[1]<<","<<state.getPosition()[2]<<","<<state.getLocation()<<endl;
+		state = EUTelState(*newState);
+		cout<<"HERE4: "<<state.getPosition()[0]<<","<<state.getPosition()[1]<<","<<state.getPosition()[2]<<","<<state.getLocation()<<endl;
 		streamlog_out ( DEBUG1 ) << "End of loop "<< endl;
 
 	}//TO DO: Must add the kalman filter back into the code. 
@@ -584,7 +589,8 @@ void EUTelKalmanFilter::findTrackCandidates() {
 		}
 		for(int j = 0 ; j < statesVec.size() ; ++j){
 			EUTelTrack track;
-			propagateForwardFromSeedState(statesVec[j], track);
+			EUTelState stateCopy = EUTelState(statesVec.at(j));//We create a copy since we alter stateCopy in propagateForwardFromSeedState.
+			propagateForwardFromSeedState(stateCopy, track);
 			streamlog_out ( DEBUG1 ) << "Before adding track to vector "<< endl;
 			_tracks.push_back(track);//Here we create a long list of possible tracks
 			streamlog_out ( DEBUG1 ) << "After adding track to vector "<< endl;

@@ -1471,21 +1471,21 @@ int EUTelGeometryTelescopeGeoDescription::findNextPlaneEntrance(  double* lpoint
 }
 
 /**
-* Find closest surface intersected by the track and propagate track to that point
-* @param input: ts track state
-* @param input: The plane you want to find the intersection.
-* @param input: Pointer to fill with the new global coordinates   
-* @return planeID. If there was a problem return -999.
+* Find closest surface intersected by the track and return the position
 */
-int EUTelGeometryTelescopeGeoDescription::findIntersectionWithCertainID( float x0, float y0, float z0, float px, float py, float pz, float _beamQ, int nextPlaneID, float output[]) {
-streamlog_out(DEBUG5) << "EUTelGeometryTelescopeGeoDescription::findIntersection()" << std::endl;
- 
-	// Set position and momentum vector//////////////////////////////////
+int EUTelGeometryTelescopeGeoDescription::findIntersectionWithCertainID( float x0, float y0, float z0, float px, float py, float pz, float beamQ, int nextPlaneID, float output[]) {
+streamlog_out(DEBUG5) << "EUTelGeometryTelescopeGeoDescription::findIntersectionWithCertainID()------BEGIN" << std::endl;
   TVector3 trkVec(x0,y0,z0);
-	TVector3 pVec(px,py,pz);
-	/////////////////////////////////////////////////////////////////////
-
-	streamlog_out(DEBUG5) << "  Global positions: "<< x0 <<"  "<< y0 <<"  "<< z0 << " Momentum: "<< pVec[0]<<","<<pVec[1]<<","<<pVec[2]<<","<< std::endl;
+	//Momentum here is the energy of the beam in Gev. So we should change to eV by x by 10^9
+	//Then we divide by c to get momentum
+	//Then we note that 1eV/c = 5.36x10^-28 kg m s^-1 to change to kg m s^-1
+	//Then we x by 1000 to get mm and not metres
+	double pxSIUnits = ((px*pow(10,9))/3*pow(10,8))/5.36*pow(10,-28)*1000000000000;
+	double pySIUnits = ((py*pow(10,9))/3*pow(10,8))/5.36*pow(10,-28)*1000000000000;
+	double pzSIUnits = ((pz*pow(10,9))/3*pow(10,8))/5.36*pow(10,-28)*1000000000000;//this is in femtometers since the container can not hold such a small number.
+	cout<<"This is the momentum "<<pzSIUnits;
+	TVector3 pVec(pxSIUnits,pySIUnits,pzSIUnits);
+	streamlog_out(DEBUG5) << "  Global positions (Input): "<< x0 <<"  "<< y0 <<"  "<< z0 << " Momentum: "<< pVec[0]<<","<<pVec[1]<<","<<pVec[2]<<","<< std::endl;
   /////////////////////////////////////////////////////////////////////////////////////////  
 
  
@@ -1495,19 +1495,24 @@ streamlog_out(DEBUG5) << "EUTelGeometryTelescopeGeoDescription::findIntersection
 	const double bx         = B.at( vectorGlobal ).x();
 	const double by         = B.at( vectorGlobal ).y();
 	const double bz         = B.at( vectorGlobal ).z();
+	streamlog_out (DEBUG5) << "The magnetic field vector (x,y,z): "<<bx<<","<<by<<","<<bz << std::endl;
   TVector3 hVec(bx,by,bz);
 	const double H = hVec.Mag();
   //////////////////////////////////////////////////////////////////////////////////////////////
 
   // Calculate track momentum from track parameters and fill some useful variables///////////////////////////////////////////////////////////
-  const double p = pVec.Mag();
-	const double mm = 1000.;
-  const double k = -0.299792458/mm*_beamQ*H;
-  const double rho = k/p; 
+  const double p = pVec.Mag();//Must be in (kg*mm*s-1)
+	//const double mm = 1000.;
+  //const double k = -0.299792458/mm*beamQ*H;
+	const double constant = -0.299792458; //This is a constant used in the derivation of this equation. I am not sure where is comes from.
+	const double electronCharge = 1.602*pow(10,-19);//This is in coulombs
+	const double combineConstantsAndMagneticField = constant*beamQ*electronCharge*H;
+  const double rho = combineConstantsAndMagneticField/p;//must have units of 1/mm. 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////       
 				      
 	//Determine geometry of sensor to be used to determine the point of intersection.//////////////////////////////////////
   TVector3 norm = geo::gGeometry().siPlaneNormal( nextPlaneID  );       
+	streamlog_out (DEBUG5) << "The normal of the plane is (x,y,z): "<<norm[0]<<","<<norm[1]<<","<<norm[2]<< std::endl;
   TVector3 sensorCenter( geo::gGeometry().siPlaneXPosition( nextPlaneID  ), geo::gGeometry().siPlaneYPosition( nextPlaneID  ), geo::gGeometry().siPlaneZPosition( nextPlaneID  ) );
   TVector3 delta = trkVec - sensorCenter;
   TVector3 pVecCrosH = pVec.Cross( hVec.Unit() );
@@ -1542,7 +1547,7 @@ streamlog_out(DEBUG5) << "EUTelGeometryTelescopeGeoDescription::findIntersection
 			
 	//Determine the global position from arc length.             
   TVector3 newPos;
-	newPos = getXYZfromArcLength(x0, y0,z0,px,py,pz,_beamQ,solution);
+	newPos = getXYZfromArcLength(x0, y0,z0,px,py,pz,beamQ,solution);
 	output[0]=newPos[0]; 				output[1]=newPos[1]; 				output[2]=newPos[2];
 				
 	streamlog_out (DEBUG5) << "Solutions for arc length: " << std::setw(15) << sol[0] << std::setw(15) << sol[1] << std::endl;
