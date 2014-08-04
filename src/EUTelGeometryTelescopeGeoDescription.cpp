@@ -1483,7 +1483,7 @@ streamlog_out(DEBUG5) << "EUTelGeometryTelescopeGeoDescription::findIntersection
 	double pxSIUnits = ((px*pow(10,9))/3*pow(10,8))/5.36*pow(10,-28)*1000000000000;
 	double pySIUnits = ((py*pow(10,9))/3*pow(10,8))/5.36*pow(10,-28)*1000000000000;
 	double pzSIUnits = ((pz*pow(10,9))/3*pow(10,8))/5.36*pow(10,-28)*1000000000000;//this is in femtometers since the container can not hold such a small number.
-	cout<<"This is the momentum "<<pzSIUnits;
+	//cout<<"This is the momentum "<<pzSIUnits;
 	TVector3 pVec(pxSIUnits,pySIUnits,pzSIUnits);
 	streamlog_out(DEBUG5) << "  Global positions (Input): "<< x0 <<"  "<< y0 <<"  "<< z0 << " Momentum: "<< pVec[0]<<","<<pVec[1]<<","<<pVec[2]<<","<< std::endl;
   /////////////////////////////////////////////////////////////////////////////////////////  
@@ -1507,15 +1507,16 @@ streamlog_out(DEBUG5) << "EUTelGeometryTelescopeGeoDescription::findIntersection
 	const double constant = -0.299792458; //This is a constant used in the derivation of this equation. I am not sure where is comes from.
 	const double electronCharge = 1.602*pow(10,-19);//This is in coulombs
 	const double combineConstantsAndMagneticField = constant*beamQ*electronCharge*H;
-  const double rho = combineConstantsAndMagneticField/p;//must have units of 1/mm. 
+  const double rho = combineConstantsAndMagneticField/p;//must have units of 1/fm since p = kg x fm x s^-1. 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////       
 				      
 	//Determine geometry of sensor to be used to determine the point of intersection.//////////////////////////////////////
   TVector3 norm = geo::gGeometry().siPlaneNormal( nextPlaneID  );       
 	streamlog_out (DEBUG5) << "The normal of the plane is (x,y,z): "<<norm[0]<<","<<norm[1]<<","<<norm[2]<< std::endl;
   TVector3 sensorCenter( geo::gGeometry().siPlaneXPosition( nextPlaneID  ), geo::gGeometry().siPlaneYPosition( nextPlaneID  ), geo::gGeometry().siPlaneZPosition( nextPlaneID  ) );
-  TVector3 delta = trkVec - sensorCenter;
-  TVector3 pVecCrosH = pVec.Cross( hVec.Unit() );
+	streamlog_out (DEBUG5) << "The sensor centre (x,y,z): "<<sensorCenter[0]<<","<<sensorCenter[1]<<","<<sensorCenter[2] << std::endl;
+  TVector3 delta = (trkVec - sensorCenter)*pow(10,9);//Must be in femtometers since momentum is.
+  TVector3 pVecCrosH = pVec.Cross(hVec.Unit());
 	////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -1529,6 +1530,8 @@ streamlog_out(DEBUG5) << "EUTelGeometryTelescopeGeoDescription::findIntersection
 	  pVecCrosH.Print();
 	  streamlog_out (DEBUG5) << "Rho: " << rho << std::endl;
 	  streamlog_out (DEBUG5) << "P: " << p << std::endl;
+	  streamlog_out (DEBUG5) << "Delta "<< std::endl;
+		delta.Print();
   }
 
 
@@ -1537,7 +1540,7 @@ streamlog_out(DEBUG5) << "EUTelGeometryTelescopeGeoDescription::findIntersection
   const double b = norm.Dot( pVec ) / p;
   const double c = norm.Dot( delta );
 	//////////////////////////////////////////////////////////////////////////////////////////////////////// 
-   
+  //Solution must be in femto metres 
   std::vector< double > sol = Utility::solveQuadratic(a,b,c); // solutions are sorted in ascending order. This is a vector of arc length
 	double solution = ( sol[0] > 0. ) ? sol[0] : ( ( sol[0] < 0. && sol[1] > 0. ) ? sol[1] : -1. ); //choose solution with minimum arc length
 	if(solution < 0){
@@ -1547,8 +1550,8 @@ streamlog_out(DEBUG5) << "EUTelGeometryTelescopeGeoDescription::findIntersection
 			
 	//Determine the global position from arc length.             
   TVector3 newPos;
-	newPos = getXYZfromArcLength(x0, y0,z0,px,py,pz,beamQ,solution);
-	output[0]=newPos[0]; 				output[1]=newPos[1]; 				output[2]=newPos[2];
+	newPos = getXYZfromArcLength(x0*pow(10,9), y0*pow(10,9),z0*pow(10,9),pxSIUnits,pySIUnits,pzSIUnits,beamQ,solution);
+	output[0]=newPos[0]*pow(10,-9); 				output[1]=newPos[1]*pow(10,-9); 				output[2]=newPos[2]*pow(10,-9);
 				
 	streamlog_out (DEBUG5) << "Solutions for arc length: " << std::setw(15) << sol[0] << std::setw(15) << sol[1] << std::endl;
 	streamlog_out (DEBUG5) << "Final solution (X,Y,Z): " << std::setw(15) << output[0]  << std::setw(15) << output[1]  << std::setw(15) << output[2] << std::endl;
@@ -1559,7 +1562,7 @@ streamlog_out(DEBUG5) << "EUTelGeometryTelescopeGeoDescription::findIntersection
   return nextPlaneID;
 }
 //This function determined the xyz position in global coordinates using the state and arc length of the track s.
-TVector3 EUTelGeometryTelescopeGeoDescription::getXYZfromArcLength( float x0, float y0, float z0, float px, float py, float pz, float _beamQ, float s) const {
+TVector3 EUTelGeometryTelescopeGeoDescription::getXYZfromArcLength( double x0, double  y0, double z0, double px, double py, double pz, float beamQ, double s) const {
 	streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::getXYZfromArcLength()" << std::endl;
 
   // Fill the postion and momentun into vector
@@ -1577,9 +1580,16 @@ TVector3 EUTelGeometryTelescopeGeoDescription::getXYZfromArcLength( float x0, fl
                
 	const double H = hVec.Mag();
   const double p = pVec.Mag();
-	const double mm = 1000.;
- 	const double k = -0.299792458/mm*_beamQ*H;
-  const double rho = k/p;
+//	const double mm = 1000.;
+// 	const double k = -0.299792458/mm*_beamQ*H;
+//  const double rho = k/p;
+	const double constant = -0.299792458; //This is a constant used in the derivation of this equation. I am not sure where is comes from.
+	const double electronCharge = 1.602*pow(10,-19);//This is in coulombs
+	const double combineConstantsAndMagneticField = constant*beamQ*electronCharge*H;
+	const double k = combineConstantsAndMagneticField;
+  const double rho = combineConstantsAndMagneticField/p;//must have units of 1/fm since p = kg x fm x s^-1. 
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////       
+
         
 	if ( fabs( k ) > 1.E-6  ) {
 		// Non-zero magnetic field case

@@ -160,7 +160,6 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
 	} else if (event->getEventType() == kUNKNOWN) {
 		streamlog_out(WARNING2) << "Event number " << event->getEventNumber() << " in run " << event->getRunNumber()<< " is of unknown type. Continue considering it as a normal Data Event." << std::endl;
 	}
-
 	LCCollection* hitMeasuredCollection = NULL;
 	try {
 		hitMeasuredCollection = evt->getCollection(_hitInputCollectionName);
@@ -259,7 +258,7 @@ void EUTelProcessorTrackingHelixTrackSearch::plotHistos( vector<EUTelTrack>& tra
 	int numberOfHits =0;
 	for (int i = 0; i< trackCandidates.size( ) ; ++i ) {//loop over all tracks
 		for(int j = 0; j <trackCandidates[i].getTracks().size(); ++j){//loop over all states 
-			if(trackCandidates[i].getTracks()[j]->getTrackerHits()[0] == NULL){//We only ever store on hit per state
+			if(!trackCandidates[i].getStates()[j].getTrackerHits().empty()){//We only ever store on hit per state
 				continue;
 			}
 			numberOfHits++;

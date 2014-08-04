@@ -24,7 +24,7 @@ namespace eutelescope {
 	class  EUTelState : public IMPL::TrackImpl{
 		public: 
 			EUTelState();
-			EUTelState( const EUTelState& state);
+			EUTelState(EUTelState *state);
 			//getters
 			int getDimensionSize() const ;
 			int	getLocation() const;
