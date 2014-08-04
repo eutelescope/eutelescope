@@ -354,54 +354,67 @@ if(position1[1] -position2[1] > 0.004){ //in mm
 //    void EUTelKalmanFilter::Prune( std::vector< EUTelTrackImpl*> &_collection, std::vector< EUTelTrackImpl*> &_collection_to_delete ) 
 //    {
     // Perform track pruning this removes tracks that have the same hits used to create the track on some planes
+		//TO DO: consider a better approach. Since we could remove tracks that have a better residual to hits just because that have came first. For example was will always add the final track in the list. Could this introduce bias? 
+		//TO DO:We compare all states to all other states on a track. We don't need to do that since hits on differents planes must be different.
 void EUTelKalmanFilter::findTrackCandidatesWithSameHitsAndRemove(){
 	streamlog_out(MESSAGE1) << "EUTelKalmanFilter::findTrackCandidatesWithSameHitsAndRemove----BEGIN" << std::endl;
 	for(int i =0; i < _tracksAfterEnoughHitsCut.size();++i){//LOOP through all tracks 
+	//	cout<<"New state size "<< _tracksAfterEnoughHitsCut.size()<<"The i is : " << i<<endl;
 		streamlog_out(DEBUG1) <<  "Loop at track number: " <<  i <<". Must loop over " << _tracksAfterEnoughHitsCut.size()<<" tracks in total."   << std::endl;
 		std::vector<EUTelState> iStates = _tracksAfterEnoughHitsCut.at(i).getStates();
 		//Now loop through all tracks one ahead of the original track itTrk. This is done since we want to compare all the track to each other to if they have similar hits     
 		for(int j =i+1; j < _tracksAfterEnoughHitsCut.size();++j){ //LOOP over all track again.
-			cout<<"test"<<endl;
+	//		cout<<"Increase track to: "<<j <<endl;
 			int hitscount=0;
 			std::vector<EUTelState> jStates = _tracksAfterEnoughHitsCut[j].getStates();
 			for(int i=0;i<iStates.size();i++){
+		//		cout<<"I top states "<< i<<endl;
+			
 				EVENT::TrackerHit* ihit;
 				if(!iStates[i].getTrackerHits().empty()){//Need since we could have tracks that have a state but no hits here.
 					ihit = iStates[i].getTrackerHits()[0];
 				}else{
 					continue;
 				}
-				cout<<"test2"<<endl;
 				int ic = ihit->id();
 				for(int j=0;j<jStates.size();j++){
+		//		cout<<"I bottom states "<< j<<endl;
+
 					EVENT::TrackerHit* jhit;
 					if(!jStates[j].getTrackerHits().empty()){//Need since we could have tracks that have a state but no hits here.
 						jhit = jStates[j].getTrackerHits()[0];
 					}else{
 						continue;
 					}
-					cout<<"test3"<<endl;
 					int jc = jhit->id();
 					if(ic == jc ){
+				//		cout<<"This is ic and jc " <<ic<<","<<jc<<endl;
 						_totalNumberOfSharedHits++;
 						hitscount++; 
 						streamlog_out(MESSAGE1) <<  "Hit number on track you are comparing all other to :" << i << ". Hit ID: " << ic << ". Hit number of comparison: " << j << ". Hit ID of this comparison : " << jc << ". Number of common hits: " << hitscount << std::endl; 
 					}
-					cout<<"test4"<<endl;
 				}
-				cout<<"test5"<<endl;
 
 			} 
 			//If for any track we are comparing to the number of similar hits is to high then we move to the next track and do not add this track to the new list of tracks
+	//		cout<<"Number of hits: " <<hitscount<<" allowed: " <<_AllowedSharedHitsOnTrackCandidate<<endl;
 			if(hitscount > _AllowedSharedHitsOnTrackCandidate) {   
 				streamlog_out(DEBUG1)<<"Tracks has too many similar hits remove "<<std::endl;
 				break;
 			}
 			if(j == (_tracksAfterEnoughHitsCut.size()-1)){//If we have loop through all and not breaked then track must be good.
+	//			cout<<"Enter the addition of track"<<endl;
 				_finalTracks.push_back(_tracksAfterEnoughHitsCut[i]);
 				streamlog_out(DEBUG1)<<"Track made prune tracks cut"<<std::endl;
 			}
 		}
+		//We need to add the last track here since the inner loop j+1 will never be entered. We always add the last track since if it has similar hits to past tracks then those tracks have been removed.
+		if(i == (_tracksAfterEnoughHitsCut.size()-1)){//If we have loop through all and not breaked then track must be good.
+//		cout<<"Enter the last addition of track"<<endl;
+		_finalTracks.push_back(_tracksAfterEnoughHitsCut[i]);
+	//	streamlog_out(DEBUG1)<<"Track made prune tracks cut"<<std::endl;
+		}
+
 	}
 	streamlog_out(MESSAGE1) << "------------------------------EUTelKalmanFilter::findTrackCandidatesWithSameHitsAndRemove()---------------------------------END" << std::endl;
 }
