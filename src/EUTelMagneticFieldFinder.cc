@@ -212,7 +212,7 @@ void EUTelKalmanFilter::propagateForwardFromSeedState( EUTelState& stateInput, E
 		newState->setLocation(newSensorID);
 		TMatrixD jacobian(5,5);
 		jacobian.Zero();
-		jacobian = newState->computePropagationJacobianFromStateToThisZLocation(globalIntersection[2]);
+		jacobian = state->computePropagationJacobianFromStateToThisZLocation(globalIntersection[2]);
 		findNextStateUsingJacobian(*state,jacobian,globalIntersection[2], *newState);
 		//cout<<"HERE2: "<<newState->getPosition()[0]<<","<<newState->getPosition()[1]<<","<<newState->getPosition()[2]<<","<<newState->getLocation()<<endl;
 		testPositionEstimation(newState->getPosition(),globalIntersection);//Here we compare the estimation from the simple equation of motion and jacobian.
