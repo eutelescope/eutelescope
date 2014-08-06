@@ -295,9 +295,10 @@ void AlibavaClusterConverter::processEvent (LCEvent * anEvent) {
 			 }
 			 
 			 */
-			alibavaEvent->addCollection(pulseColVec, _pulseCollectionName);
-			alibavaEvent->addCollection(sparseColVec, _sparseCollectionName);
-		}
+		} // end of loop over number of clusters
+		
+		alibavaEvent->addCollection(pulseColVec, _pulseCollectionName);
+		alibavaEvent->addCollection(sparseColVec, _sparseCollectionName);
 		
 	} catch ( lcio::DataNotAvailableException ) {
 		// do nothing again
