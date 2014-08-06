@@ -189,6 +189,8 @@ void AlibavaClusterConverter::processEvent (LCEvent * anEvent) {
 			for (int imember=0; imember < clusterSize; imember++) {
 				EUTelGenericSparsePixel eutelPixel;
 				
+				streamlog_out ( MESSAGE4 ) << "a pixel! "<< endl;
+
 				int memberChanNum = anAlibavaCluster.getChanNum(imember);
 				float memberSignal = anAlibavaCluster.getSignal(imember) * anAlibavaCluster.getSignalPolarity();
 				
@@ -206,7 +208,8 @@ void AlibavaClusterConverter::processEvent (LCEvent * anEvent) {
 			}
 			
 			// Now we have a EUTelSparseCluster
-			
+			streamlog_out ( MESSAGE4 ) << "creating collections "<< endl;
+
 			// Fill pulse collection
 			float totalSignal = anAlibavaCluster.getTotalSignal() *anAlibavaCluster.getSignalPolarity();
 			
