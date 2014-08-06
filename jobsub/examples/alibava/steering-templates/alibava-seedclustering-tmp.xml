@@ -82,7 +82,7 @@
 	<!--The collection name of sparse cluster.  This might be hardcoded in EUTelescope framework-->
 	<parameter name="OutputEUTelSparseClusterCollectionName" type="string">original_zsdata </parameter>
 	<!--The sensor ID for the data. The actual sensorID will be stored as SensorIDStartsFrom + ChipNumber -->
-	<parameter name="SensorIDStartsFrom" type="int">15 </parameter>
+	<parameter name="SensorIDStartsFrom" type="int">6 </parameter>
 	<!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
 	<!--parameter name="Verbosity" type="string">DEBUG </parameter-->
 </processor>
