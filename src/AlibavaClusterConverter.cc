@@ -189,8 +189,6 @@ void AlibavaClusterConverter::processEvent (LCEvent * anEvent) {
 			for (int imember=0; imember < clusterSize; imember++) {
 				EUTelGenericSparsePixel eutelPixel;
 				
-				streamlog_out ( MESSAGE4 ) << "a pixel! "<< endl;
-
 				int memberChanNum = anAlibavaCluster.getChanNum(imember);
 				float memberSignal = anAlibavaCluster.getSignal(imember) * anAlibavaCluster.getSignalPolarity();
 				
@@ -208,7 +206,6 @@ void AlibavaClusterConverter::processEvent (LCEvent * anEvent) {
 			}
 			
 			// Now we have a EUTelSparseCluster
-			streamlog_out ( MESSAGE4 ) << "creating collections "<< endl;
 
 			// Fill pulse collection
 			float totalSignal = anAlibavaCluster.getTotalSignal() *anAlibavaCluster.getSignalPolarity();
@@ -231,70 +228,6 @@ void AlibavaClusterConverter::processEvent (LCEvent * anEvent) {
 			pulseFrame->setTrackerData( sparseFrame );
 			pulseColVec->push_back( pulseFrame );
 			
-			// last but not least increment the totClusterMap
-			//			_totClusterMap[ sensorID ] += 1; // do we need this?
-			
-			/*
-			 pulseColEncoder["clusterID"] = anAlibavaCluster.getClusterID();
-			 
-			 if (anAlibavaCluster.getIsSensitiveAxisX() == true) {
-			 pulseColEncoder["xSeed"] = anAlibavaCluster.getSeedChanNum();
-			 pulseColEncoder["ySeed"] = _missingCorrdinateValue;
-			 pulseColEncoder["xCluSize"] = clusterSize;
-			 pulseColEncoder["yCluSize"] = 1;
-			 }
-			 else{
-			 pulseColEncoder["xSeed"] = _missingCorrdinateValue;
-			 pulseColEncoder["ySeed"] = anAlibavaCluster.getSeedChanNum();
-			 pulseColEncoder["xCluSize"] = 1;
-			 pulseColEncoder["yCluSize"] = clusterSize;
-			 }
-			 
-			 
-			 // fill sparse cluster collection
-			 sparseColEncoder["clusterID"] = anAlibavaCluster.getClusterID();
-			 
-			 delete eutelPixelCluster;
-			 }
-			 
-			 */
-			
-			
-			
-			
-			/*
-			 pulseFrame->setCharge(totalSignal);
-			 pulseColEncoder["sensorID"] = _sensorIDStartsFrom + chipnum;
-			 pulseColEncoder["clusterID"] = anAlibavaCluster.getClusterID();
-			 pulseColEncoder["type"] = static_cast<int>(kEUTelSparseClusterImpl);
-			 if (anAlibavaCluster.getIsSensitiveAxisX() == true) {
-			 pulseColEncoder["xSeed"] = anAlibavaCluster.getSeedChanNum();
-			 pulseColEncoder["ySeed"] = _missingCorrdinateValue;
-			 pulseColEncoder["xCluSize"] = clusterSize;
-			 pulseColEncoder["yCluSize"] = 1;
-			 }
-			 else{
-			 pulseColEncoder["xSeed"] = _missingCorrdinateValue;
-			 pulseColEncoder["ySeed"] = anAlibavaCluster.getSeedChanNum();
-			 pulseColEncoder["xCluSize"] = 1;
-			 pulseColEncoder["yCluSize"] = clusterSize;
-			 }
-			 pulseColEncoder.setCellID(pulseFrame);
-			 pulseFrame->setTrackerData(sparseFrame);
-			 pulseColVec->push_back(pulseFrame);
-			 
-			 // fill sparse cluster collection
-			 sparseColEncoder["sensorID"] = _sensorIDStartsFrom + chipnum;
-			 sparseColEncoder["clusterID"] = anAlibavaCluster.getClusterID();
-			 sparseColEncoder["sparsePixelType"] = static_cast<int>(1); // set this to 1 for hitmaker
-			 sparseColEncoder["quality"] = static_cast<int>(0);
-			 sparseColEncoder.setCellID(sparseFrame);
-			 sparseColVec->push_back(sparseFrame);
-			 
-			 delete eutelPixelCluster;
-			 }
-			 
-			 */
 		} // end of loop over number of clusters
 		
 		alibavaEvent->addCollection(pulseColVec, _pulseCollectionName);
