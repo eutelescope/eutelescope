@@ -7,7 +7,7 @@
     <detector name="SiPlanes" geartype="SiPlanesParameters">
       <siplanesID ID="0"/>
       <siplanesType type="TelescopeWithoutDUT"/>
-      <siplanesNumber number="7"/>
+      <siplanesNumber number="8"/>
       <!-- z along beam -->
       <layers>
 	<!--Datura Plane 0 -->
@@ -64,19 +64,37 @@
 			radLength="93.660734"
 			/>
 	</layer>
-        <!-- DUT -->
+        <!-- DUT 1 -->
         <layer>
           <ladder         ID="6"
                           positionX="0.00"        positionY="0.00"        positionZ="270.00"
                           rotationZY="0.00"       rotationZX="0.0"        rotationXY="0.0" 
-                          sizeX="10"              sizeY="10.24"            thickness="0.036"
+                          sizeX="9.536"           sizeY="8.0"             thickness="0.300"
                           radLength="93.660734"
                           />
           <sensitive      ID="6"
-                          positionX="0.00"        positionY="0.00"        positionZ="270.00" 
-                          sizeX="10"              sizeY="10.24"           thickness="0.014"
-                          npixelX="1"             npixelY="128" 
-                          pitchX="10"             pitchY="0.08"           resolution="0.0045" 
+                          positionX="0.00"        positionY="0.00"      positionZ="270.00" 
+                          sizeX="9.536"           sizeY="8.0"             thickness="0.300"
+                          npixelX="128"           npixelY="1" 
+                          pitchX="0.0745"         pitchY="8.0"          resolution="0.0215" 
+                          rotation1="-1.0"        rotation2="0.0" 
+                          rotation3="0.0"         rotation4="-1.0" 
+                          radLength="93.660734"
+                          />
+        </layer>
+         <!-- DUT 2 -->
+        <layer>
+          <ladder         ID="7"
+                          positionX="0.00"        positionY="0.00"        positionZ="270.01"
+                          rotationZY="0.00"       rotationZX="0.0"        rotationXY="0.0" 
+                          sizeX="9.536"           sizeY="8.0"             thickness="0.300"
+                          radLength="93.660734"
+                          />
+          <sensitive      ID="7"
+                          positionX="0.00"        positionY="0.00"      positionZ="270.01" 
+                          sizeX="9.536"           sizeY="8.0"             thickness="0.300"
+                          npixelX="128"           npixelY="1" 
+                          pitchX="0.0745"         pitchY="8.0"          resolution="0.0215" 
                           rotation1="-1.0"        rotation2="0.0" 
                           rotation3="0.0"         rotation4="-1.0" 
                           radLength="93.660734"
