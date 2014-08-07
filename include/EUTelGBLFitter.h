@@ -88,11 +88,12 @@ namespace eutelescope {
 
 				void computeTrajectoryAndFit(std::vector< gbl::GblPoint >& pointList,  gbl::GblTrajectory* traj, double* chi2, int* ndf, int & ierr);
 
-				void UpdateTrackFromGBLTrajectory(gbl::GblTrajectory* traj,std::vector< gbl::GblPoint > pointList, EUTelTrack & track);
-				void setPointVecAndLabel( std::vector< gbl::GblPoint >& pointList, gbl::GblPoint& point, EUTelState& state);
-
+				void UpdateTrackFromGBLTrajectory(gbl::GblTrajectory* traj,std::vector< gbl::GblPoint >& pointList, EUTelTrack & track);
+				void setPointVec( std::vector< gbl::GblPoint >& pointList, gbl::GblPoint& point);
+				std::vector<EUTelState> _measurementStatesInOrder;
+				void setMapFromStateToLabel(std::vector< gbl::GblPoint >& pointList, gbl::GblTrajectory*);
+				gbl::GblPoint getLabelToPoint(std::vector<gbl::GblPoint> & pointList, int label);
 				void setAlignmentToMeasurementJacobian(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList);
-
 				void setScattererGBL(gbl::GblPoint& point, int iPlane);
 				void setScattererGBL(gbl::GblPoint& point, float x0);
 				void setPointListWithNewScatterers(std::vector< gbl::GblPoint >& pointList, float rad );
@@ -318,7 +319,7 @@ struct compare_points
 
 void OutputMap(std::map<EUTelTrackStateImpl,gbl::GblPoint*, compare_points > _PointToState);
 
-std::map< EUTelState, int > _mapStatesToLabel;
+std::vector< pair< EUTelState, int> > _vectorOfPairsMeasurementStatesAndLabels;
 std::vector<gbl::GblPoint> _points;
 
 unsigned int _counter_num_pointer = 1;

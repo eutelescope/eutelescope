@@ -144,6 +144,7 @@ void EUTelProcessorGBLFitCandidates::processEvent(LCEvent * evt){
 		}else {
 			traj = new gbl::GblTrajectory( pointList, true );
 		}
+		_trackFitter->setMapFromStateToLabel(pointList,traj);//We must do this after trajectory. Since trajectory will label the points. 
 		double  chi2=0; 
 		int ndf=0;
 		int ierr=0;

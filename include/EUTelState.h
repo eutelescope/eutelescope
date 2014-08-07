@@ -58,6 +58,7 @@ namespace eutelescope {
 			//print
 			void print();
 			bool operator<(const EUTelState compareState ) const;
+			bool operator==(const EUTelState compareState ) const;
 
   	private:
 			float _covCombinedMatrix[4];

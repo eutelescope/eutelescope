@@ -1113,7 +1113,7 @@ void EUTelGeometryTelescopeGeoDescription::master2localHit(EVENT::TrackerHit* hi
  * @param localVec (x,y,z) in local coordinate system
  */
 void EUTelGeometryTelescopeGeoDescription::local2MasterVec( int sensorID, const double localVec[], double globalVec[] ) {
-    streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::master2LocalVec() " << std::endl;
+    streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::local2masterVec() " << std::endl;
     const double sensorCenterX = siPlaneXPosition( sensorID );
     const double sensorCenterY = siPlaneYPosition( sensorID );
     const double sensorCenterZ = siPlaneZPosition( sensorID );
@@ -1187,8 +1187,9 @@ const TGeoHMatrix* EUTelGeometryTelescopeGeoDescription::getHMatrix( const doubl
  * @return reference to gear::BField object
  */
 const gear::BField& EUTelGeometryTelescopeGeoDescription::getMagneticFiled() const {
-    streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::getMagneticFiled() " << std::endl;
+    streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::getMagneticFiled()----BEGIN " << std::endl;
     return _gearManager->getBField();
+
 }
 
 

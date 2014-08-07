@@ -359,7 +359,7 @@ if(position1[1] -position2[1] > 0.004){ //in mm
 void EUTelKalmanFilter::findTrackCandidatesWithSameHitsAndRemove(){
 	streamlog_out(MESSAGE1) << "EUTelKalmanFilter::findTrackCandidatesWithSameHitsAndRemove----BEGIN" << std::endl;
 	for(int i =0; i < _tracksAfterEnoughHitsCut.size();++i){//LOOP through all tracks 
-	//	cout<<"New state size "<< _tracksAfterEnoughHitsCut.size()<<"The i is : " << i<<endl;
+		cout<<"ALEX ist DOOF "<<endl;
 		streamlog_out(DEBUG1) <<  "Loop at track number: " <<  i <<". Must loop over " << _tracksAfterEnoughHitsCut.size()<<" tracks in total."   << std::endl;
 		std::vector<EUTelState> iStates = _tracksAfterEnoughHitsCut.at(i).getStates();
 		//Now loop through all tracks one ahead of the original track itTrk. This is done since we want to compare all the track to each other to if they have similar hits     
