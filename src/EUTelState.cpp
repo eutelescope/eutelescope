@@ -225,7 +225,7 @@ bool EUTelState::operator==(const EUTelState compareState ) const {
 	if(getLocation() == compareState.getLocation() and 	getPosition()[0] == compareState.getPosition()[0] and	getPosition()[1] == compareState.getPosition()[1] and 	getPosition()[2] == compareState.getPosition()[2]){
 		return true;
 	}else{
-		false;
+		return false;
 	}
 }
 

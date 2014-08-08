@@ -162,9 +162,11 @@ void EUTelProcessorMilleAlign::processEvent(LCEvent * evt){
 		if (eventCollection != NULL) {
 			streamlog_out(DEBUG2) << "Collection contains data! Continue!" << endl;
 			for (int iTrack = 0; iTrack < eventCollection->getNumberOfElements(); ++iTrack) {
+				_trackFitter->resetPerTrack(); //Here we reset the label that connects state to GBL point to 1 again. Also we set the list of states->labels to 0
 				EUTelTrack track = *(static_cast<EUTelTrack*> (eventCollection->getElementAt(iTrack)));
 				std::vector< gbl::GblPoint > pointList;//This is the GBL points. These contain the state information, scattering and alignment jacobian. All the information that the mille binary will get.
 				_trackFitter->setInformationForGBLPointList(track, pointList);//We create all the GBL points with scatterer inbetween both planes. This is identical to creating GBL tracks
+				_trackFitter->setListStateAndLabelBeforeTrajectory(pointList);
 				_trackFitter->setAlignmentToMeasurementJacobian(track, pointList); //This is place in GBLFitter since millepede has not idea about states and points. Only GBLFitter know about that
 				const gear::BField& B = geo::gGeometry().getMagneticFiled();
 				const double Bmag = B.at( TVector3(0.,0.,0.) ).r2();

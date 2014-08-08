@@ -131,7 +131,7 @@ void EUTelProcessorGBLFitCandidates::processEvent(LCEvent * evt){
 		//Also this is a memory leak.
 		EUTelTrack* trackPointer = new  EUTelTrack(*(static_cast<EUTelTrack*> (col->getElementAt(iCol))));
 		EUTelTrack track = *trackPointer;
-		_trackFitter->resetPerTrack(); //Here we reset the label that connects state to GBL point to 1 again
+		_trackFitter->resetPerTrack(); //Here we reset the label that connects state to GBL point to 1 again. Also we set the list of states->labels to 0
 		track.print();//Print the track use for debugging
 		_trackFitter->testTrack(track);//Check the track has states and hits  
 		std::vector< gbl::GblPoint > pointList;
@@ -144,7 +144,7 @@ void EUTelProcessorGBLFitCandidates::processEvent(LCEvent * evt){
 		}else {
 			traj = new gbl::GblTrajectory( pointList, true );
 		}
-		_trackFitter->setMapFromStateToLabel(pointList,traj);//We must do this after trajectory. Since trajectory will label the points. 
+		_trackFitter->setListStateAndLabelAfterTrajectory(pointList,traj);//We must do this after trajectory. Since trajectory will label the points. 
 		double  chi2=0; 
 		int ndf=0;
 		int ierr=0;

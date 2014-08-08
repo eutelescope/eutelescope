@@ -251,9 +251,9 @@ typedef std::map<EUTelTrackStateImpl,gbl::GblPoint*, compare_points >::const_ite
 	}
 }
 //We use the labels for trajectory and equate them to the pointList index.
-//Note that pointList will never have a label since this is done in trajectory. However we mirror what is done in trjectory since it is usefulto use htis later.
-void EUTelGBLFitter::setMapFromStateToLabel(std::vector< gbl::GblPoint >& pointList, gbl::GblTrajectory* traj){
-	streamlog_out ( DEBUG4 ) << " EUTelGBLFitter::setMapFromStateToLabel-- BEGIN " << endl;
+//We create them when creating the points. However trajectory will overwrite these.
+void EUTelGBLFitter::setListStateAndLabelAfterTrajectory(std::vector< gbl::GblPoint >& pointList, gbl::GblTrajectory* traj){
+	streamlog_out ( DEBUG4 ) << " EUTelGBLFitter::setListStateAndLabelAfterTrajectory-- BEGIN " << endl;
 	_vectorOfPairsMeasurementStatesAndLabels.clear();
 	streamlog_out(DEBUG5)<<"The number of measurement states is: "<< _measurementStatesInOrder.size()<<std::endl;
 	int	counter=0;
@@ -264,6 +264,7 @@ void EUTelGBLFitter::setMapFromStateToLabel(std::vector< gbl::GblPoint >& pointL
 	}
 	for(int i=0; i<pointList.size();++i){
 		if(pointList.at(i).hasMeasurement()>0){//Here we assume that traj has ordered the pointList the same.
+			streamlog_out(DEBUG0)<<"Measurement found! Pair (state,label)  ("<<  &(_measurementStatesInOrder.at(counter))<<","<<labels.at(i)<<")"<<std::endl; 
 			_vectorOfPairsMeasurementStatesAndLabels.push_back(make_pair(_measurementStatesInOrder.at(counter), labels.at(i)));	
 			counter++;
 		}
@@ -274,9 +275,29 @@ void EUTelGBLFitter::setMapFromStateToLabel(std::vector< gbl::GblPoint >& pointL
 	if(counter !=  (_measurementStatesInOrder.size())){//Since we make an extra loop and counter++ again
 		throw(lcio::Exception(Utility::outputColourString("We did not add all the states .", "RED")));
 	}
-	streamlog_out ( DEBUG4 ) << " EUTelGBLFitter::setMapFromStateToLabel-- END " << endl;
+	streamlog_out ( DEBUG4 ) << " EUTelGBLFitter::setListStateAndLabelAfterTrajectory-- END " << endl;
 }
-
+//This code must be repeated since we need to create the ling between states and labels before trajectory in alignment
+void EUTelGBLFitter::setListStateAndLabelBeforeTrajectory(std::vector< gbl::GblPoint >& pointList){
+	streamlog_out ( DEBUG4 ) << " EUTelGBLFitter::setListStateAndLabelBeforeTrajectory-- BEGIN " << endl;
+	_vectorOfPairsMeasurementStatesAndLabels.clear();
+	streamlog_out(DEBUG5)<<"The number of measurement states is: "<< _measurementStatesInOrder.size()<<std::endl;
+	int	counter=0;
+	for(int i=0; i<pointList.size();++i){
+		if(pointList.at(i).hasMeasurement()>0){//Here we assume that traj has ordered the pointList the same.
+			streamlog_out(DEBUG0)<<"Measurement found! Pair (state,label)  ("<<  &(_measurementStatesInOrder.at(counter))<<","<<pointList.at(i).getLabel()<<")"<<std::endl; 
+			_vectorOfPairsMeasurementStatesAndLabels.push_back(make_pair(_measurementStatesInOrder.at(counter), pointList.at(i).getLabel()));	
+			counter++;
+		}
+		if(counter == (_measurementStatesInOrder.size()+1)){//Add one since you will make an extra loop
+			throw(lcio::Exception(Utility::outputColourString("The counter is larger than the number of states saved as measurements.", "RED")));
+		}
+	}
+	if(counter !=  (_measurementStatesInOrder.size())){//Since we make an extra loop and counter++ again
+		throw(lcio::Exception(Utility::outputColourString("We did not add all the states .", "RED")));
+	}
+	streamlog_out ( DEBUG4 ) << " EUTelGBLFitter::setListStateAndLabelBeforeTrajectory-- END " << endl;
+}
 
 void EUTelGBLFitter::UpdateTrackFromGBLTrajectory (gbl::GblTrajectory* traj, std::vector< gbl::GblPoint >& pointList,EUTelTrack &track){
 	streamlog_out ( DEBUG4 ) << " EUTelGBLFitter::UpdateTrackFromGBLTrajectory-- BEGIN " << endl;
@@ -290,6 +311,7 @@ void EUTelGBLFitter::UpdateTrackFromGBLTrajectory (gbl::GblTrajectory* traj, std
 				if(getLabelToPoint(pointList,_vectorOfPairsMeasurementStatesAndLabels.at(j).second).hasMeasurement() == 0){//TO DO: Some states will not have hits in the future so should remove. Leave for now to test
 					throw(lcio::Exception(Utility::outputColourString("This point does not contain a measurements. Labeling of the state must be wrong ", "RED")));
 				} 
+				streamlog_out(DEBUG0)<<"To update track we use label: "<<_vectorOfPairsMeasurementStatesAndLabels.at(j).second<<std::endl; 
 				traj->getResults(_vectorOfPairsMeasurementStatesAndLabels.at(j).second, corrections, correctionsCov );
 				streamlog_out(DEBUG3) << endl << "State before we have added corrections: " << std::endl;
 				state->print();
@@ -310,32 +332,24 @@ void EUTelGBLFitter::UpdateTrackFromGBLTrajectory (gbl::GblTrajectory* traj, std
 
 //This used after trackfit will fill a map between (sensor ID and residualx/y).
 void EUTelGBLFitter::getResidualOfTrackandHits(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint > pointList,EUTelTrack& track, map< int, map< float, float > > &  SensorResidual){
-	for(int i=0;i < track.getStates().size(); i++){		
-		EUTelState state = track.getStates()[i];
-		for(int j=0 ; j< _vectorOfPairsMeasurementStatesAndLabels.size();j++){
-			if(_vectorOfPairsMeasurementStatesAndLabels.at(j).first == state){
-				if(getLabelToPoint(pointList,_vectorOfPairsMeasurementStatesAndLabels.at(j).second).hasMeasurement() == 0){
-					throw(lcio::Exception(Utility::outputColourString("This point does not contain a measurements. Labeling of the state must be wrong ", "RED")));
-				} 
-				streamlog_out(DEBUG0) << endl << "There is a hit on the state. Hit pointer: "<< state.getTrackerHits()[0]<<" Find updated Residuals!" << std::endl;
-				unsigned int numData; //Not sure what this is used for??????
-				TVectorD aResiduals(2);
-				TVectorD aMeasErrors(2);
-				TVectorD aResErrors(2);
-				TVectorD aDownWeights(2); 
-				cout<<"test1:"<<endl;
-				traj->getMeasResults(_vectorOfPairsMeasurementStatesAndLabels.at(j).second, numData, aResiduals, aMeasErrors, aResErrors, aDownWeights);
-				cout<<"test2"<<endl;
-				streamlog_out(DEBUG0) <<"State location: "<<state.getLocation()<<" The residual x " <<aResiduals[0]<<" The residual y " <<aResiduals[1]<<endl;
-				map<float, float> res; //This is create on the stack but will pass thisa by value to the new map so it 
-				res.insert(make_pair(aResiduals[0],aResiduals[1]));
-				SensorResidual.insert(make_pair(state.getLocation(), res));		
-				break;
-			}else{
-				streamlog_out(DEBUG0) << "There are no hits so don't get residual" << std::endl;
-			}
-		}
-	} 
+	for(int j=0 ; j< _vectorOfPairsMeasurementStatesAndLabels.size();j++){
+		EUTelState state = _vectorOfPairsMeasurementStatesAndLabels.at(j).first;
+		if(getLabelToPoint(pointList,_vectorOfPairsMeasurementStatesAndLabels.at(j).second).hasMeasurement() == 0){
+			throw(lcio::Exception(Utility::outputColourString("This point does not contain a measurements. Labeling of the state must be wrong ", "RED")));
+		} 
+		streamlog_out(DEBUG0) << endl << "There is a hit on the state. Hit pointer: "<< state.getTrackerHits()[0]<<" Find updated Residuals!" << std::endl;
+		unsigned int numData; //Not sure what this is used for??????
+		TVectorD aResiduals(2);
+		TVectorD aMeasErrors(2);
+		TVectorD aResErrors(2);
+		TVectorD aDownWeights(2); 
+		streamlog_out(DEBUG0)<<"To get residual of states we use label: "<<_vectorOfPairsMeasurementStatesAndLabels.at(j).second<<std::endl; 
+		traj->getMeasResults(_vectorOfPairsMeasurementStatesAndLabels.at(j).second, numData, aResiduals, aMeasErrors, aResErrors, aDownWeights);
+		streamlog_out(DEBUG0) <<"State location: "<<state.getLocation()<<" The residual x " <<aResiduals[0]<<" The residual y " <<aResiduals[1]<<endl;
+		map<float, float> res; //This is create on the stack but will pass thisa by value to the new map so it 
+		res.insert(make_pair(aResiduals[0],aResiduals[1]));
+		SensorResidual.insert(make_pair(state.getLocation(), res));		
+	}
 }
 
 void EUTelGBLFitter::computeTrajectoryAndFit(std::vector< gbl::GblPoint >& pointList,  gbl::GblTrajectory* traj, double* chi2, int* ndf, int & ierr){
@@ -413,7 +427,7 @@ void EUTelGBLFitter::setInformationForGBLPointList(EUTelTrack& track, std::vecto
 			nextStateReferencePoint[1]=nextState.getPosition()[1];
 			nextStateReferencePoint[2]=nextState.getPosition()[2];
 			testDistanceBetweenPoints(stateReferencePoint,nextStateReferencePoint);
-			float rad = geo::gGeometry().findRadLengthIntegral(stateReferencePoint,nextStateReferencePoint, true );//TO DO: Make sure this is not adding planes radiation length again 
+			float rad = geo::gGeometry().findRadLengthIntegral(stateReferencePoint,nextStateReferencePoint, false );//TO DO: This adds the radiation length of the plane again. If you chose true the some times it returns 0 
 			findScattersZPositionBetweenTwoStates(state, nextState); 
 			jacPointToPoint=findScattersJacobians(state,nextState);
 			setPointListWithNewScatterers(pointList, rad);
@@ -442,6 +456,9 @@ void EUTelGBLFitter::testDistanceBetweenPoints(double* position1,double* positio
 void EUTelGBLFitter::setPointListWithNewScatterers(std::vector< gbl::GblPoint >& pointList, float rad ){
 	if(_scattererJacobians.size() != _scattererPositions.size()){
 		throw(lcio::Exception(Utility::outputColourString("The size of the scattering positions and jacobians is different.", "RED"))); 	
+	}
+	if(rad == 0){
+		throw(lcio::Exception(Utility::outputColourString("The provides radiation length to create scatterers it zero.", "RED"))); 	
 	}
 	for(int i = 0 ;i < _scattererJacobians.size()-1;++i){//The last jacobain is used to get to the plane! So only loop over to (_scatterJacobians-1)
 		gbl::GblPoint point(_scattererJacobians[i]);
@@ -500,7 +517,8 @@ void EUTelGBLFitter::setScattererGBL(gbl::GblPoint& point, int iPlane) {
 	const double x0  = thickness / radiationLength; 
 	streamlog_out(DEBUG5)<<"The X0 for the sensor is: " << x0 <<std::endl; 
 	if(x0 == 0){
-		throw(lcio::Exception(Utility::outputColourString("X0 is zero.", "RED"))); 	
+		streamlog_out(MESSAGE0)<<"The thickness: " << thickness << "The radiation length is: "<< radiationLength <<std::endl; 
+		throw(lcio::Exception(Utility::outputColourString("X0 is zero for the plane itself.", "RED"))); 	
 	}
 	if(getBeamEnergy() == 0 ){ 
 		throw(lcio::Exception(Utility::outputColourString("Beam energy is zero", "RED"))); 	
@@ -524,7 +542,7 @@ void EUTelGBLFitter::setScattererGBL(gbl::GblPoint& point, float x0 ) {
 	//TO DO:Should make the reading for any planes not just si. 
 	streamlog_out(DEBUG5)<<"The X0 for the sensor is: " << x0 <<std::endl; 
 	if(x0 == 0){
-		throw(lcio::Exception(Utility::outputColourString("X0 is zero.", "RED"))); 	
+		throw(lcio::Exception(Utility::outputColourString("X0 is zero for the medium inbetween the planes .", "RED"))); 	
 	}
 	if(getBeamEnergy() == 0 ){ 
 		throw(lcio::Exception(Utility::outputColourString("Beam energy is zero", "RED"))); 	
@@ -556,7 +574,7 @@ void EUTelGBLFitter::setMeasurementGBL(gbl::GblPoint& point, const double *hitPo
 	streamlog_out(DEBUG4) << "This H matrix:" << std::endl;
 	streamlog_message( DEBUG0, projection.Print();, std::endl; );
 	//The gbl library creates 5 measurement vector and 5x5 propagation matrix automatically. If  
-	point.addMeasurement(projection, meas, measPrec);
+	point.addMeasurement(projection, meas, measPrec, 0);
 
 	streamlog_out(DEBUG1) << " setMeasurementsGBL ------------- END ----------------- " << std::endl;
 }
@@ -570,8 +588,8 @@ void EUTelGBLFitter::setAlignmentToMeasurementJacobian(EUTelTrack& track, std::v
 		for(int j = 0; j < pointList.size(); ++j){
 			if( _vectorOfPairsMeasurementStatesAndLabels.at(i).second == pointList.at(j).getLabel()){
 				EUTelState state = _vectorOfPairsMeasurementStatesAndLabels.at(i).first;
-				streamlog_out(DEBUG0)<<"This point has "<<pointList.at(i).hasMeasurement()<<" measurements."<<std::endl;
-				if(getLabelToPoint(pointList,_vectorOfPairsMeasurementStatesAndLabels.at(j).second).hasMeasurement() == 0){
+				streamlog_out(DEBUG0)<<"This point has "<<pointList.at(j).hasMeasurement()<<" measurements."<<std::endl;
+				if(getLabelToPoint(pointList,_vectorOfPairsMeasurementStatesAndLabels.at(i).second).hasMeasurement() == 0){
 					throw(lcio::Exception(Utility::outputColourString("This point does not contain a measurements. Labeling of the state must be wrong ", "RED")));
 				} 
 				_MilleInterface->computeAlignmentToMeasurementJacobian(state);//We calculate the jacobian. 
@@ -581,10 +599,10 @@ void EUTelGBLFitter::setAlignmentToMeasurementJacobian(EUTelTrack& track, std::v
 				streamlog_out(DEBUG0)<<"This is the alignment jacobian we are about to add to the point at location "<<state.getLocation()<<std::endl;
 				streamlog_message( DEBUG0, alignmentJacobian.Print();, std::endl; );
 				streamlog_out(DEBUG0)<<"Here are the labels for these alignment parameters for the state at location: "<<state.getLocation()<<std::endl;
-				for(int i=0; i<labels.size();++i){
-					streamlog_out(DEBUG0)<<"Label: "<<labels.at(i) <<std::endl;
+				for(int k=0; k<labels.size();++k){
+					streamlog_out(DEBUG0)<<"Label: "<<labels.at(k) <<std::endl;
 				}
-				pointList.at(i).addGlobals(labels, alignmentJacobian);
+				pointList.at(j).addGlobals(labels, alignmentJacobian);
 				streamlog_out(DEBUG0)<<"The number of global parameters for this point are "<<pointList[i].getNumGlobals()<<std::endl;
 				streamlog_out(DEBUG0)<<"The alignment matrix from GBL looks like: "<<std::endl;
 				streamlog_message( DEBUG0, pointList.at(i).getGlobalDerivatives().Print() ;, std::endl; );
@@ -592,22 +610,21 @@ void EUTelGBLFitter::setAlignmentToMeasurementJacobian(EUTelTrack& track, std::v
 				streamlog_message( DEBUG0, state.print() ;, std::endl; );
 				break;
 			}
-			if(i == (pointList.size()-1)){
+			streamlog_out(DEBUG0)<<"This point has "<<pointList.at(j).hasMeasurement()<<" measurements. It has label "<<pointList.at(j).getLabel() <<std::endl;
+			if(j == (pointList.size()-1)){
 				throw(lcio::Exception(Utility::outputColourString("There is no point associated with this state.", "RED")));
 			}
-			//Here we make sure that no points with measurements are missed. 
-			streamlog_out(DEBUG0)<<"This point has "<<pointList.at(i).hasMeasurement()<<" measurements."<<std::endl;
-			if(pointList.at(i).hasMeasurement() >  0){
-				throw(lcio::Exception(Utility::outputColourString("There is a measurement that does not have global derivatives. Labeling must be wrong", "RED")));
-			} 
 		}
 	}
 }
 gbl::GblPoint EUTelGBLFitter::getLabelToPoint(std::vector<gbl::GblPoint> & pointList, int label){
 	for(int i = 0; i< pointList.size();++i){
+		streamlog_out(DEBUG0)<<"This point has label : "<<pointList.at(i).getLabel()<<". The label number: "<<label<<std::endl;
 		if(pointList.at(i).getLabel() == label){
 			return pointList.at(i);
-		}else{
+		}
+		if(i == (pointList.size()-1)){ //If we reach the end of the loop and still no match then this label must belong to no point
+			streamlog_out(MESSAGE5)<<"The size of pointList: "<<pointList.size()<<". The label number: "<<label<<std::endl;
 			throw(lcio::Exception(Utility::outputColourString("There is no point with this label", "RED")));
 		}
 	}

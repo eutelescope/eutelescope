@@ -1482,13 +1482,13 @@ streamlog_out(DEBUG5) << "EUTelGeometryTelescopeGeoDescription::findIntersection
 	//Then we divide by c to get momentum
 	//Then we note that 1eV/c = 5.36x10^-28 kg m s^-1 to change to kg m s^-1
 	//Then we x by 1000 to get mm and not metres
-	double pxSIUnits = (((px*pow(10,9))/(3*pow(10,8)))*5.36*pow(10,-28))*1000;
-	double pySIUnits = (((py*pow(10,9))/(3*pow(10,8)))*5.36*pow(10,-28))*1000;
-	double pzSIUnits = (((pz*pow(10,9))/(3*pow(10,8)))*5.36*pow(10,-28))*1000;//this is in femtometers since the container can not hold such a small number.
+	double pxSIUnits = ((px*pow(10,9)))*(5.36*pow(10,-28))*1000;
+	double pySIUnits = ((py*pow(10,9)))*(5.36*pow(10,-28))*1000;
+	double pzSIUnits = ((pz*pow(10,9)))*(5.36*pow(10,-28))*1000;//this is in femtometers since the container can not hold such a small number.
 	//p is kg mm s^-1 
 	//This will not be outputed to screen since it is too small.
 	TVector3 pVec(pxSIUnits,pySIUnits,pzSIUnits);
-	streamlog_out(DEBUG5) << "  Global positions (Input): "<< x0 <<"  "<< y0 <<"  "<< z0 << " Momentum: "<< pVec[0]<<","<<pVec[1]<<","<<pVec[2]<<","<< std::endl;
+	streamlog_out(DEBUG5) << "  Global positions (Input): "<< x0 <<"  "<< y0 <<"  "<< z0 << " Momentum(Number too small to be outputed): "<< pVec[0]<<","<<pVec[1]<<","<<pVec[2]<<","<< std::endl;
  
   // Find magnetic field at that point and then the components/////////////////////////////////// 
   gear::Vector3D vectorGlobal( x0, y0, z0 );        // assuming uniform magnetic field running along X direction. Why do we need this assumption. Equations of motion do not seem to dictate this.
@@ -1505,7 +1505,7 @@ streamlog_out(DEBUG5) << "EUTelGeometryTelescopeGeoDescription::findIntersection
   const double p = pVec.Mag();//Must be in (kg*mm*s-1)
 	//const double mm = 1000.;
   //const double k = -0.299792458/mm*beamQ*H;
-	const double constant = -0.299792458; //This is a constant used in the derivation of this equation. I am not sure where is comes from.
+	const double constant = -1;   // -0.299792458; //This is a constant used in the derivation of this equation. I am not sure where is comes from.//unitless
 	const double electronCharge = 1.602*pow(10,-19);//This is in coulombs
 	const double combineConstantsAndMagneticField = constant*beamQ*electronCharge*H;
   const double rho = combineConstantsAndMagneticField/p;//must have units of 1/mm since p = kg x mm x s^-1. 
@@ -1585,11 +1585,11 @@ TVector3 EUTelGeometryTelescopeGeoDescription::getXYZfromArcLength( double x0, d
 //	const double mm = 1000.;
 // 	const double k = -0.299792458/mm*_beamQ*H;
 //  const double rho = k/p;
-	const double constant = -0.299792458; //This is a constant used in the derivation of this equation. I am not sure where is comes from.
+	const double constant = -1;  // -0.299792458; //This is a constant used in the derivation of this equation. I am not sure where is comes from.
 	const double electronCharge = 1.602*pow(10,-19);//This is in coulombs
 	const double combineConstantsAndMagneticField = constant*beamQ*electronCharge*H;
 	const double k = combineConstantsAndMagneticField;
-  const double rho = combineConstantsAndMagneticField/p;//must have units of 1/fm since p = kg x fm x s^-1. 
+  const double rho = combineConstantsAndMagneticField/p;//must have units of 1/mm since p = kg x mm x s^-1. 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////       
 
 	if ( fabs( k ) > 0  ){
@@ -1597,14 +1597,14 @@ TVector3 EUTelGeometryTelescopeGeoDescription::getXYZfromArcLength( double x0, d
 		TVector3 pCrossH = pVec.Cross(hVec.Unit());
 		TVector3 pCrossHCrossH = pCrossH.Cross(hVec.Unit());
 		const double pDotH = pVec.Dot(hVec.Unit());
-		TVector3 temp1 = pCrossHCrossH;	temp1 *= ( -1./k * sin( rho * s ) );
-		TVector3 temp2 = pCrossH;       temp2 *= ( -1./k * ( 1. - cos( rho * s ) ) );
-		TVector3 temp3 = hVec;          temp3 *=(pDotH/p)*(s-(sin(rho*s)/rho));                                      // *= ( pDotH / p * s );
+		TVector3 temp1 = pCrossHCrossH;	temp1 *= ( (-1./k) * sin( rho * s ) );
+		TVector3 temp2 = pCrossH;       temp2 *= ( (-1./k) * ( 1. - cos( rho * s ) ) );
+		TVector3 temp3 = hVec;          temp3 *= ( (pDotH / p) * s );
 		pos += temp1;
 		pos += temp2;
 		pos += temp3;
 	}else{
-		// Vanishing magnetic field case
+		// Vanishing magnetic field case. //Here you just determine the fraction of P in each direction and this must be the fraction of s that this direction gets
 		const double cosA =  px/p;      // Calculate cos of the angle between Z(beam) and X(solenoid field axis) //NEED TO MAKE SURE THAT TX=PX/P
 		const double cosB = py/p ;        // Calculate cos of the angle between Z(beam) and Y
 		pos.SetX( x0 + cosA * s );
@@ -1632,10 +1632,10 @@ TVector3 EUTelGeometryTelescopeGeoDescription::getXYZfromArcLength( double x0, d
         streamlog_out( DEBUG2 ) << "EUTelGeometryTelescopeGeoDescription::getPropagationJacobianF()" << std::endl;
 	// The formulas below are derived from equations of motion of the particle in
 	// magnetic field under assumption |dz| small. Must be valid for |dz| < 10 cm
-	const double k = 0.299792458*pow(10,-6);//Here is the conversion from k=(GeV/c) KG mm^-1
-	const double pxMomentum = px/3*pow(10,8);//change momentum to GeV/c 
-	const double pyMomentum = py/3*pow(10,8);//change momentum to GeV/c 
-	const double pzMomentum = pz/3*pow(10,8);//change momentum to GeV/c 
+	const double k = 0.299792458*pow(10,-4);//Here is the conversion from k=(GeV/c) KG mm^-1
+	const double pxMomentum = px;//change momentum to GeV/c 
+	const double pyMomentum = py;//change momentum to GeV/c 
+	const double pzMomentum = pz;//change momentum to GeV/c 
 	TVector3 pVec(pxMomentum, pyMomentum, pzMomentum);	
 	// Get track parameters
 	const double invP = beamQ/pVec.Mag();//This should be in 1/(GeV/c)

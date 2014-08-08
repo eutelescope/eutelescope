@@ -227,6 +227,7 @@ void EUTelKalmanFilter::propagateForwardFromSeedState( EUTelState& stateInput, E
 		const double distance = sqrt(computeResidual(*newState, closestHit ).Norm2Sqr()); //Determine the residual of state and hit  //Distance is in mm. Norm2Sqr does not square root for some reason
 		const double DCA = getXYPredictionPrecision( *newState ); //This does nothing but return a number specified by user. In the future this should use convariance matrix information TO DO: FIX
 		streamlog_out ( DEBUG1 ) <<"At plane: "<<newState->getLocation() << ". Distance between state and hit: "<< distance <<" Must be less than: "<<DCA<< endl;
+		streamlog_out(DEBUG0) <<"Closest hit position: " << closestHit->getPosition()[0]<< closestHit->getPosition()[1]<< closestHit->getPosition()[2]<<endl;
 		if ( distance > DCA ) {
 			streamlog_out ( DEBUG1 ) << "Closest hit is outside of search window." << std::endl;
 			track.addTrack(static_cast<EVENT::Track*>(newState));//Need to return this to LCIO object. Loss functionality but retain information 
@@ -318,13 +319,16 @@ void EUTelKalmanFilter::testTrackQuality(){
 	}
 }
 void EUTelKalmanFilter::testPositionEstimation(float position1[], float position2[]){
-	if(position1[0] -position2[0] > 0.004){ //in mm
+	streamlog_out(DEBUG0) << " The distance between the jacobain methods and simple equations of motion are for the x direction " <<  position1[0] -position2[0] << std::endl;
+	if(fabs(position1[0] -position2[0]) > 0.004){ //in mm
 		throw(lcio::Exception( Utility::outputColourString("The positions between the two methods is different in the x direction. ","RED"))); 
 	}
-if(position1[1] -position2[1] > 0.004){ //in mm
+	streamlog_out(DEBUG0) << " The distance between the jacobain methods and simple equations of motion are for the y direction " <<  position1[1] -position2[1] << std::endl;
+	if(fabs(position1[1] -position2[1]) > 0.004){ //in mm
 		throw(lcio::Exception( Utility::outputColourString("The positions between the two methods is different in the y direction. ","RED"))); 
 	}
- if(position1[2] -position2[2] > 0.004){ //in mm
+	streamlog_out(DEBUG0) << " The distance between the jacobain methods and simple equations of motion are for the z  direction " <<  position1[2] -position2[2] << std::endl;
+	if(fabs(position1[2] -position2[2]) > 0.004){ //in mm
 		throw(lcio::Exception( Utility::outputColourString("The positions between the two methods is different in the z direction. ","RED"))); 
 	} 
 }
@@ -359,7 +363,6 @@ if(position1[1] -position2[1] > 0.004){ //in mm
 void EUTelKalmanFilter::findTrackCandidatesWithSameHitsAndRemove(){
 	streamlog_out(MESSAGE1) << "EUTelKalmanFilter::findTrackCandidatesWithSameHitsAndRemove----BEGIN" << std::endl;
 	for(int i =0; i < _tracksAfterEnoughHitsCut.size();++i){//LOOP through all tracks 
-		cout<<"ALEX ist DOOF "<<endl;
 		streamlog_out(DEBUG1) <<  "Loop at track number: " <<  i <<". Must loop over " << _tracksAfterEnoughHitsCut.size()<<" tracks in total."   << std::endl;
 		std::vector<EUTelState> iStates = _tracksAfterEnoughHitsCut.at(i).getStates();
 		//Now loop through all tracks one ahead of the original track itTrk. This is done since we want to compare all the track to each other to if they have similar hits     

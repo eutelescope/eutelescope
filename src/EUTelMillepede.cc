@@ -457,10 +457,10 @@ int EUTelMillepede::runPede(){
 
 			if ( !finished[1] ) {
 				while ( ( n = pede.out( ).readsome( buf, sizeof (buf ) ) ) > 0 ) {
-					streamlog_out( MESSAGE4 ).write( buf, n ).flush( );
+					streamlog_out( MESSAGE0 ).write( buf, n ).flush( );
 					string output ( buf, n );
 					pedeoutput << output;
-					streamlog_out( MESSAGE5 )  << output;
+					streamlog_out( MESSAGE9 )  << output;
 				}
 				if ( pede.eof( ) ) {
 					finished[1] = true;
@@ -512,7 +512,7 @@ bool EUTelMillepede::parseMilleOutput(std::string alignmentConstantLCIOFile, std
 
 			if ( !finished[1] ) {
 				while ( ( n = parsepede.out( ).readsome( buf, sizeof (buf ) ) ) > 0 ) {
-					streamlog_out( MESSAGE4 ).write( buf, n ).flush( );
+					streamlog_out( MESSAGE9 ).write( buf, n ).flush( );
 					string output ( buf, n );
 					parsepedeoutput << output;
 				}
