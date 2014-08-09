@@ -138,12 +138,18 @@ namespace eutelescope {
         struct _histName {
 						static string _chi2CandidateHistName;
 						static string  _fitsuccessHistName;
-						static string _residGblFitHistName0;
-						static string _residGblFitHistName1;
-						static string _residGblFitHistName2;
-						static string _residGblFitHistName3;
-						static string _residGblFitHistName4;
-						static string _residGblFitHistName5;
+						static string _residGblFitHistNameX0;
+						static string _residGblFitHistNameX1;
+						static string _residGblFitHistNameX2;
+						static string _residGblFitHistNameX3;
+						static string _residGblFitHistNameX4;
+						static string _residGblFitHistNameX5;
+						static string _residGblFitHistNameY0;
+						static string _residGblFitHistNameY1;
+						static string _residGblFitHistNameY2;
+						static string _residGblFitHistNameY3;
+						static string _residGblFitHistNameY4;
+						static string _residGblFitHistNameY5;
 
         };
 

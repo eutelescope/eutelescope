@@ -304,7 +304,7 @@ int EUTelMillepede::writeMilleSteeringFile(lcio::StringVec pedeSteerAddCmds){
 	ofstream steerFile;
 	steerFile.open(_milleSteeringFilename.c_str());//We open the text file se we can add text to it.
 	if (!steerFile.is_open()) {
-		throw(lcio::Exception(Utility::outputColourString("No alignment has been chosen.", "RED"))); 	
+		throw(lcio::Exception(Utility::outputColourString("Could not open steering file.", "RED"))); 	
 	}
 	streamlog_out(DEBUG0) << "Millepede binary:" << _milleBinaryFilename << endl;
 	steerFile << "Cfiles" << endl;
@@ -532,7 +532,7 @@ void EUTelMillepede::CreateBinary(){
 				streamlog_out(DEBUG0) << "Millepede binary:" << _milleBinaryFilename << endl;
 
         const unsigned int reserveSize = 80000;
-				std::string string = "millepede.bin"; //need to fix this. Not reading it correctly
+				std::string string = "millepede.bin"; //TO DO:need to fix this. Not reading it correctly
         _milleGBL = new gbl::MilleBinary(string, reserveSize);
 
         if (_milleGBL == NULL) {
