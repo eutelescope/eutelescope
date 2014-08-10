@@ -129,7 +129,7 @@ int EUTelMillepede::computeAlignmentToMeasurementJacobian( float x,float y, floa
 		
 	//////////////////////////////////////Moving the sensor in x and y. Obviously if the sensor move right the hit will appear to move left. Always create this!!!! BEGIN
 	_jacobian[0][0] = 1.0; // dxh/dxs      dxh => change in hit position         dxs => Change in sensor position
-	_jacobian[0][1] = 0.0; // dxh/dys      //I have changed this from -1 to 1
+	_jacobian[0][1] = 0.0; // dxh/dys      //I have changed this from -1 to 1. It seems this is the sign convention that Millepede uses.
 	_jacobian[1][0] = 0.0; // dyh/dxs
 	_jacobian[1][1] = 1.0; // dyh/dys
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////END
@@ -142,8 +142,8 @@ int EUTelMillepede::computeAlignmentToMeasurementJacobian( float x,float y, floa
                 || _alignmentMode == Utility::XYShiftYZRotXYRot
                 || _alignmentMode == Utility::XYShiftXZRotYZRotXYRot
                 || _alignmentMode == Utility::XYZShiftXZRotYZRotXYRot) {
-		_jacobian[0][2] = -y; // dxh/rotzs   rotzs => rotation of sensor around z axis
-		_jacobian[1][2] =  x; // dyh/rotzs
+		_jacobian[0][2] = y; // dxh/rotzs   rotzs => rotation of sensor around z axis
+		_jacobian[1][2] = -x; // dyh/rotzs
 	}
 	///////////////////////////////////////////////////////////////////////////////////////////////////////END
 
@@ -324,7 +324,7 @@ int EUTelMillepede::writeMilleSteeringFile(lcio::StringVec pedeSteerAddCmds){
 		const bool isFixedYRotation = std::find(_fixedAlignmentYRotationPlaneIds.begin(), _fixedAlignmentYRotationPlaneIds.end(), sensorId) != _fixedAlignmentYRotationPlaneIds.end();
 		const bool isFixedZRotation = std::find(_fixedAlignmentZRotationPlaneIds.begin(), _fixedAlignmentZRotationPlaneIds.end(), sensorId) != _fixedAlignmentZRotationPlaneIds.end();
 		////////////////////////////////////////////////////////////////////////////////////////////////////END
-	//	streamlog_out(DEBUG0)<<"(X shift)This is for sensor ID:  "<<sensorId<< " Found sensor ID using find   "<< *(std::find(_fixedAlignmentXShfitPlaneIds.begin(), _fixedAlignmentXShfitPlaneIds.end(), sensorId)) <<" Is it fixed? " << isFixedXShift<<endl;
+		//cout<<"(Z rotation)This is for sensor ID:  "<<sensorId<< " Found sensor ID using find   "<< *(std::find(_fixedAlignmentZRotationPlaneIds.begin(), _fixedAlignmentZRotationPlaneIds.end(), sensorId)) <<" Is it fixed? " << isFixedZRotation<<endl;
 	//	streamlog_out(DEBUG0)<<"(Y shift) This is for sensor ID:  "<<sensorId<< " Found sensor ID using find   "<< *(std::find(_fixedAlignmentYShfitPlaneIds.begin(), _fixedAlignmentYShfitPlaneIds.end(), sensorId)) <<" Is it fixed? " << isFixedYShift<<endl;
 
 		//TO DO: These uncertainties I believe come from the accuracy of the alignment jacobain. We currently just say this is 0.01. However it there a way to quantify this? 
@@ -598,6 +598,10 @@ void EUTelMillepede::printFixedPlanes(){
 	streamlog_out(MESSAGE5)<<endl<<"These are the planes what have Z Rotation fixed"<<endl;
 	for(int i=0;i<_fixedAlignmentZRotationPlaneIds.size();++i){
 		streamlog_out(MESSAGE5)<<_fixedAlignmentZRotationPlaneIds.at(i)<<"  ";
+	}
+	streamlog_out(MESSAGE5)<<endl<<"The planes we will align with are: "<<endl;
+	for(int i =0 ; i < geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size(); ++i){
+		streamlog_out(MESSAGE5)<<geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)<<"  ";
 	}
 	streamlog_out(MESSAGE5)<<endl;
 }

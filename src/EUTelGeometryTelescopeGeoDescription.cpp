@@ -326,17 +326,21 @@ std::map<int, int>& EUTelGeometryTelescopeGeoDescription::sensorIDToZOrderWithou
 	return _sensorIDToZOrderWithoutExcludedPlanes;
 }
 void EUTelGeometryTelescopeGeoDescription::initialisePlanesToExcluded(FloatVec planeIDs ){
+	int counter=0;
 	for(int i = 0 ; i <_sensorZOrderToIDMap.size(); ++i){
 		bool excluded=false;
 		for(int  j =0; j< planeIDs.size(); ++j){
-			if(_sensorZOrderToIDMap[i] = planeIDs[j]){
+			if(_sensorZOrderToIDMap[i] == planeIDs[j]){
 				excluded=true;
+				break;
 			} 
 		}
 		if(!excluded){
-		_sensorIDToZOrderWithoutExcludedPlanes[_sensorZOrderToIDMap[i]] =  i;
-		_sensorZOrderToIDWithoutExcludedPlanes[i]=_sensorZOrderToIDMap[i];
+			_sensorIDToZOrderWithoutExcludedPlanes[_sensorZOrderToIDMap[i]] =  counter;
+			_sensorZOrderToIDWithoutExcludedPlanes[counter]=_sensorZOrderToIDMap[i];
+			counter++;
 		}
+
 	}
 }
 int EUTelGeometryTelescopeGeoDescription::sensorIDtoZOrder( int planeID ) const {
