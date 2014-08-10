@@ -128,10 +128,10 @@ int EUTelMillepede::computeAlignmentToMeasurementJacobian( float x,float y, floa
 	streamlog_message( DEBUG0, _jacobian.Print();, std::endl; );			
 		
 	//////////////////////////////////////Moving the sensor in x and y. Obviously if the sensor move right the hit will appear to move left. Always create this!!!! BEGIN
-	_jacobian[0][0] = -1.0; // dxh/dxs      dxh => change in hit position         dxs => Change in sensor position
-	_jacobian[0][1] =  0.0; // dxh/dys
-	_jacobian[1][0] =  0.0; // dyh/dxs
-	_jacobian[1][1] = -1.0; // dyh/dys
+	_jacobian[0][0] = 1.0; // dxh/dxs      dxh => change in hit position         dxs => Change in sensor position
+	_jacobian[0][1] = 0.0; // dxh/dys      //I have changed this from -1 to 1
+	_jacobian[1][0] = 0.0; // dyh/dxs
+	_jacobian[1][1] = 1.0; // dyh/dys
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////END
 
 
@@ -312,10 +312,11 @@ int EUTelMillepede::writeMilleSteeringFile(lcio::StringVec pedeSteerAddCmds){
 	steerFile << endl;
 	steerFile << "Parameter" << endl;
 	//TO DO: There should be a test that all planes that are used have a state associated with them and that state has a hit
-	for(int sensorId = geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(0); sensorId < geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size(); ++sensorId){
+	for(int i =0 ; i < geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size(); ++i){
+		int sensorId = geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i); 
 		///////////////////////////////////////////////////////////////////////////////////////////////////Determine if some of alignment parameters are fixed. BEGIN
 		// check if plane has to be used as fixed
-		// TO DO: Must check that this actually fixes the last planes. Since if find return the iterator last due it being fixed it will look the same as if it found nothing and just ended the search.
+		// end points to one past the last element so this is ok.
 		const bool isFixedXShift = std::find(_fixedAlignmentXShfitPlaneIds.begin(), _fixedAlignmentXShfitPlaneIds.end(), sensorId) != _fixedAlignmentXShfitPlaneIds.end();
 		const bool isFixedYShift = std::find(_fixedAlignmentYShfitPlaneIds.begin(), _fixedAlignmentYShfitPlaneIds.end(), sensorId) != _fixedAlignmentYShfitPlaneIds.end();
 		const bool isFixedZShift = std::find(_fixedAlignmentZShfitPlaneIds.begin(), _fixedAlignmentZShfitPlaneIds.end(), sensorId) != _fixedAlignmentZShfitPlaneIds.end();
@@ -323,6 +324,8 @@ int EUTelMillepede::writeMilleSteeringFile(lcio::StringVec pedeSteerAddCmds){
 		const bool isFixedYRotation = std::find(_fixedAlignmentYRotationPlaneIds.begin(), _fixedAlignmentYRotationPlaneIds.end(), sensorId) != _fixedAlignmentYRotationPlaneIds.end();
 		const bool isFixedZRotation = std::find(_fixedAlignmentZRotationPlaneIds.begin(), _fixedAlignmentZRotationPlaneIds.end(), sensorId) != _fixedAlignmentZRotationPlaneIds.end();
 		////////////////////////////////////////////////////////////////////////////////////////////////////END
+	//	streamlog_out(DEBUG0)<<"(X shift)This is for sensor ID:  "<<sensorId<< " Found sensor ID using find   "<< *(std::find(_fixedAlignmentXShfitPlaneIds.begin(), _fixedAlignmentXShfitPlaneIds.end(), sensorId)) <<" Is it fixed? " << isFixedXShift<<endl;
+	//	streamlog_out(DEBUG0)<<"(Y shift) This is for sensor ID:  "<<sensorId<< " Found sensor ID using find   "<< *(std::find(_fixedAlignmentYShfitPlaneIds.begin(), _fixedAlignmentYShfitPlaneIds.end(), sensorId)) <<" Is it fixed? " << isFixedYShift<<endl;
 
 		//TO DO: These uncertainties I believe come from the accuracy of the alignment jacobain. We currently just say this is 0.01. However it there a way to quantify this? 
 		/////////////////////////////////////////////////////////////////////////////////////////////Now fill string that will go into steering depending on if fixed or not BEGIN
@@ -541,7 +544,63 @@ void EUTelMillepede::CreateBinary(){
         }
 }
 
-
+void EUTelMillepede::testUserInput(){
+	bool fixedGood=true;
+	if(_fixedAlignmentXShfitPlaneIds.size()== 0){
+		streamlog_out(MESSAGE9) <<	Utility::outputColourString("You have not fixed any X shifts. This is ill advised .", "YELLOW")<<std::endl;
+		fixedGood=false;
+	}
+	if(_fixedAlignmentYShfitPlaneIds.size()== 0){
+		streamlog_out(MESSAGE9) <<	Utility::outputColourString("You have not fixed any Y shifts. This is ill advised .", "YELLOW")<<std::endl;
+		fixedGood=false;
+	}
+	if(_fixedAlignmentZShfitPlaneIds.size()== 0){
+		streamlog_out(MESSAGE9) <<	Utility::outputColourString("You have not fixed any Z shifts. This is ill advised .", "YELLOW")<<std::endl;
+		fixedGood=false;
+	}
+	if(_fixedAlignmentXRotationPlaneIds.size()== 0){
+		streamlog_out(MESSAGE9) <<	Utility::outputColourString("You have not fixed any X rotations. This is ill advised .", "YELLOW")<<std::endl;
+		fixedGood=false;
+	}
+	if(_fixedAlignmentYRotationPlaneIds.size()== 0){
+		streamlog_out(MESSAGE9) <<	Utility::outputColourString("You have not fixed any Y rotations. This is ill advised .", "YELLOW")<<std::endl;
+		fixedGood=false;
+	}
+	if(_fixedAlignmentZRotationPlaneIds.size()== 0){
+		streamlog_out(MESSAGE9) <<	Utility::outputColourString("You have not fixed any Z rotations. This is ill advised .", "YELLOW")<<std::endl;
+		fixedGood=false;
+	}
+	if(fixedGood){
+		streamlog_out(MESSAGE9) <<	Utility::outputColourString("For all alignment parameters each has one fixed. GOOD! .", "GREEN")<<std::endl;
+	}
+}
+void EUTelMillepede::printFixedPlanes(){
+	streamlog_out(MESSAGE5)<<"These are the planes what have X shifts fixed"<<endl;
+	for(int i=0;i<_fixedAlignmentXShfitPlaneIds.size();++i){
+		streamlog_out(MESSAGE5)<<_fixedAlignmentXShfitPlaneIds.at(i)<<"  ";
+	}
+	streamlog_out(MESSAGE5)<<endl<<"These are the planes what have Y shifts fixed"<<endl;
+	for(int i=0;i<_fixedAlignmentYShfitPlaneIds.size();++i){
+		streamlog_out(MESSAGE5)<<_fixedAlignmentYShfitPlaneIds.at(i)<<"  ";
+	}
+	streamlog_out(MESSAGE5)<<endl<<"These are the planes what have Z shifts fixed"<<endl;
+	for(int i=0;i<_fixedAlignmentZShfitPlaneIds.size();++i){
+		streamlog_out(MESSAGE5)<<_fixedAlignmentZShfitPlaneIds.at(i)<<"  ";
+	}
+	streamlog_out(MESSAGE5)<<endl<<"These are the planes what have X Rotation fixed"<<endl;
+	for(int i=0;i<_fixedAlignmentXRotationPlaneIds.size();++i){
+		streamlog_out(MESSAGE5)<<_fixedAlignmentXRotationPlaneIds.at(i)<<"  ";
+	}
+	streamlog_out(MESSAGE5)<<endl<<"These are the planes what have Y Rotation fixed"<<endl;
+	for(int i=0;i<_fixedAlignmentYRotationPlaneIds.size();++i){
+		streamlog_out(MESSAGE5)<<_fixedAlignmentYRotationPlaneIds.at(i)<<"  ";
+	}
+	streamlog_out(MESSAGE5)<<endl<<"These are the planes what have Z Rotation fixed"<<endl;
+	for(int i=0;i<_fixedAlignmentZRotationPlaneIds.size();++i){
+		streamlog_out(MESSAGE5)<<_fixedAlignmentZRotationPlaneIds.at(i)<<"  ";
+	}
+	streamlog_out(MESSAGE5)<<endl;
+}
 } // namespace eutelescope
 
 

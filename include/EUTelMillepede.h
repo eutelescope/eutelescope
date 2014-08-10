@@ -62,7 +62,8 @@ namespace eutelescope {
 	
 				bool parseMilleOutput(std::string alignmentConstantLCIOFile, std::string gear_aligned_file);
 
-
+				void testUserInput();
+				void printFixedPlanes();
 				/////////////////////////set stuff!
 				void setXShiftFixed(lcio::IntVec xfixed);
 				void setYShiftFixed(lcio::IntVec yfixed);

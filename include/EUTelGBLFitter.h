@@ -79,6 +79,7 @@ namespace eutelescope {
 				void findScattersZPositionBetweenTwoStates(EUTelState& state, EUTelState& nextState);
 				TMatrixD findScattersJacobians(EUTelState state, EUTelState nextTrack);
 				void setInformationForGBLPointList(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList);
+				void setInformationForGBLPointListForAlignment(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList);
 				void testTrack(EUTelTrack& track);
 		void changejacobainGBL(TMatrixD & input, TMatrixD & output);
 	void FindHitIfThereIsOne(EUTelTrackImpl* trackimpl, EVENT::TrackerHit* hit, EUTelTrackStateImpl* state);

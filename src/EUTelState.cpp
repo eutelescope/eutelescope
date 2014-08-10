@@ -76,6 +76,13 @@ TMatrixDSym EUTelState::getTrackStateCov() const {
 	return C;
 	streamlog_out( DEBUG1 ) << "EUTelState::getTrackStateCov()----------------------------END" << std::endl;
 }
+bool EUTelState::getIsThereAHit() const {
+	if(!getTrackerHits().empty()){
+		return true;
+	}else{
+		return false;
+	}
+}
 
 void EUTelState::getCombinedHitAndStateCovMatrixInLocalFrame( double (&cov)[4] ) const {
 	cov[0] = _covCombinedMatrix[0];
@@ -90,7 +97,7 @@ TMatrixD EUTelState::getProjectionMatrix() const {
 	TMatrixD proM2l(2, 2);
 	proM2l.UnitMatrix();
 	projection.SetSub(3, 3, proM2l);
-	return projection;
+	return proM2l;
 }
 TVector3 EUTelState::getIncidenceUnitMomentumVectorInLocalFrame(){
 	TVector3 pVec =	computeCartesianMomentum();
@@ -212,8 +219,10 @@ void EUTelState::print(){
 	streamlog_message( DEBUG0, stateVec.Print();, std::endl; );
 	streamlog_out(DEBUG2) << "/////////////////////////////////////////////////////" << endl;
 	streamlog_out(DEBUG1) <<"State memory location "<< this << " The sensor location of the state " <<getLocation()<<std::endl;
-	if(!getTrackerHits().empty()){
+	if(getIsThereAHit()){
 			streamlog_out(DEBUG1) <<"The hit ID of the state is "<<getTrackerHits().at(0)->id()<<std::endl;
+	}else{
+		streamlog_out(DEBUG1) <<"This state has no hit " <<endl;
 	}
 }	
 //Overload operators.

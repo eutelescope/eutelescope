@@ -57,9 +57,7 @@ _createBinary(true){
             "5 - Alignment of XY shifts + rotations around Y and Z\n"
             "6 - Alignment of XY shifts + rotations around X,Y and Z\n"
             "7 - Alignment of XYZ shifts + rotations around X,Y and Z\n",
-            _alignmentMode, static_cast<int> (0));
-
-    registerOptionalParameter("AlignmentPlanes", "Ids of planes to be used in alignment", _alignmentPlaneIds, IntVec());
+            _alignmentMode, static_cast<int> (1));
 
     registerOptionalParameter("FixedAlignmentPlanesXshift", "Ids of planes for which X shift will be fixed during millepede call", _fixedAlignmentXShfitPlaneIds, IntVec());
     
@@ -95,13 +93,15 @@ void EUTelProcessorMilleAlign::init() {
 	_Mille  = new EUTelMillepede(_alignmentMode);//The sets the size of alignment jacobian and labels to identify global variables for millepede 
 	_Mille->setSteeringFileName(_milleSteeringFilename);// The steering file will store the labels for global variables in text file, along with errors and seeds guess.
 	_Mille->setXShiftFixed(_fixedAlignmentXShfitPlaneIds);
-	_Mille->setYShiftFixed(_fixedAlignmentXShfitPlaneIds);
-	_Mille->setZShiftFixed(_fixedAlignmentXShfitPlaneIds);
+	_Mille->setYShiftFixed(_fixedAlignmentYShfitPlaneIds);
+	_Mille->setZShiftFixed(_fixedAlignmentZShfitPlaneIds);
 	_Mille->setXRotationsFixed(_fixedAlignmentXRotationPlaneIds);
 	_Mille->setYRotationsFixed(_fixedAlignmentYRotationPlaneIds);
 	_Mille->setZRotationsFixed(_fixedAlignmentZRotationPlaneIds);
 	_Mille->setBinaryFileName(_milleBinaryFilename);//The binary file holds for each state: Hold all the information needed for Millepede to work 
 	_Mille->setResultsFileName(_milleResultFileName);
+	_Mille->testUserInput();
+	_Mille->printFixedPlanes();
 	Fitter->setMEstimatorType(_mEstimatorType);//This I am not too sure about. As far as I understand it specifies the procedure that Millepede will use to deal with outliers. Outliers are hits that are far from any state. So their impact to alignemt should be down weighted.
 	Fitter->setChi2Cut(_maxChi2Cut);
   Fitter->setParamterIdXResolutionVec(_SteeringxResolutions);//We set the accuracy of the residual information since we have no correct hit error analysis yet.
@@ -165,7 +165,7 @@ void EUTelProcessorMilleAlign::processEvent(LCEvent * evt){
 				_trackFitter->resetPerTrack(); //Here we reset the label that connects state to GBL point to 1 again. Also we set the list of states->labels to 0
 				EUTelTrack track = *(static_cast<EUTelTrack*> (eventCollection->getElementAt(iTrack)));
 				std::vector< gbl::GblPoint > pointList;//This is the GBL points. These contain the state information, scattering and alignment jacobian. All the information that the mille binary will get.
-				_trackFitter->setInformationForGBLPointList(track, pointList);//We create all the GBL points with scatterer inbetween both planes. This is identical to creating GBL tracks
+				_trackFitter->setInformationForGBLPointListForAlignment(track, pointList);//We create all the GBL points with scatterer inbetween both planes. This is identical to creating GBL tracks
 				_trackFitter->setListStateAndLabelBeforeTrajectory(pointList);
 				_trackFitter->setAlignmentToMeasurementJacobian(track, pointList); //This is place in GBLFitter since millepede has not idea about states and points. Only GBLFitter know about that
 				const gear::BField& B = geo::gGeometry().getMagneticFiled();
@@ -178,7 +178,7 @@ void EUTelProcessorMilleAlign::processEvent(LCEvent * evt){
 				}
 				double chi2, loss;
 				int ndf;
-			//	traj->fit(chi2, ndf, loss, _mEstimatorType );
+				traj->fit(chi2, ndf, loss, _mEstimatorType );
 				streamlog_out ( DEBUG0 ) << "This is the trajectory we are just about to fit: " << endl;
 				streamlog_message( DEBUG0, traj->printTrajectory(10);, std::endl; );
 					
