@@ -57,6 +57,7 @@ AlibavaPedestalNoiseProcessor::AlibavaPedestalNoiseProcessor () :
 AlibavaBaseProcessor("AlibavaPedestalNoiseProcessor"),
 _pedestalHistoName ("hpedestal"),
 _noiseHistoName ("hnoise"),
+_temperatureHistoName("htemperature"),
 _chanDataHistoName ("Data_chan"),
 _chanDataFitName ("Fit_chan")
 {
@@ -154,6 +155,11 @@ void AlibavaPedestalNoiseProcessor::processEvent (LCEvent * anEvent) {
 	{
 		collectionVec = dynamic_cast< LCCollectionVec * > ( alibavaEvent->getCollection( getInputCollectionName() ) ) ;
 		noOfDetector = collectionVec->getNumberOfElements();
+		
+		// fill temperature histogram
+		TH1D * temperatureHisto = dynamic_cast<TH1D*> (_rootObjectMap[_temperatureHistoName]);
+		temperatureHisto->Fill(alibavaEvent->getEventTemp());
+		
 		
 		for ( size_t i = 0; i < noOfDetector; ++i )
 		{
@@ -271,6 +277,10 @@ void AlibavaPedestalNoiseProcessor::bookHistos(){
 	//the chipSelection should be in ascending order!
 	//this is guaranteed with AlibavaConverter::checkIfChipSelectionIsValid()
 	
+	// temperature of event
+	TH1D * temperatureHisto = new TH1D(_temperatureHistoName,"Temperature",1000,-50,50);
+	_rootObjectMap.insert(make_pair(_temperatureHistoName,temperatureHisto));
+	
 	for (unsigned int i=0; i<chipSelection.size(); i++) {
 		unsigned int ichip=chipSelection[i];
 		
@@ -288,6 +298,7 @@ void AlibavaPedestalNoiseProcessor::bookHistos(){
 		stringstream sn; //title string for noise histogram
 		sn<< "Noise (chip "<<ichip<<");Channel Number;Pedestal (ADCs)";
 		noiseHisto->SetTitle((sn.str()).c_str());
+		
 	}
 
 
