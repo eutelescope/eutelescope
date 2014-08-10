@@ -147,6 +147,11 @@ namespace alibava {
 		/*! 
 		 */
 		std::string _noiseHistoName;
+
+		//! Name of the Temperature histogram
+		/*!
+		 */
+		std::string _temperatureHistoName;
 		
 		//! The name of the histogram used to calculate pedestal and noise
 		/*! For every channel a histogram will be created
@@ -177,8 +182,7 @@ namespace alibava {
 		
 		//! The function that returns name of the noise histogram for each chip
 		std::string getNoiseHistoName(unsigned int ichip);
-		
-		
+				
 		//! Calculates and saves pedestal and noise values
 		/*! Fills the histograms
 		 */		
