@@ -278,7 +278,7 @@ void AlibavaPedestalNoiseProcessor::bookHistos(){
 	//this is guaranteed with AlibavaConverter::checkIfChipSelectionIsValid()
 	
 	// temperature of event
-	TH1D * temperatureHisto = new TH1D(_temperatureHistoName,"Temperature",1000,-50,50);
+	TH1D * temperatureHisto = new TH1D(_temperatureHistoName.c_str(),"Temperature",1000,-50,50);
 	_rootObjectMap.insert(make_pair(_temperatureHistoName,temperatureHisto));
 	
 	for (unsigned int i=0; i<chipSelection.size(); i++) {
