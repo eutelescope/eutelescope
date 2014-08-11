@@ -8,11 +8,11 @@ RUNLIST="runlist-150.csv"
 #last="33"
 #RUNLIST="runlist-20.csv"
 
-#modus="straight"
+modus="straight"
 #modus="daf"
-modus="gbl"
+#modus="gbl"
 
-DRY=--dry-run
+#DRY=--dry-run
 
 for i in `seq $first $last`; do
 
