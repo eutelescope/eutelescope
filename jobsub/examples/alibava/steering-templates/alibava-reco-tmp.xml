@@ -24,7 +24,7 @@
    </execute>
 
    <global>
-      <parameter name="LCIOInputFiles"> @AlibavaLcioRawPath@/@AlibavaOutputFormat@-converter.slcio </parameter>
+      <parameter name="LCIOInputFiles"> @LcioRawPath@/@AlibavaOutputFormat@-converter.slcio </parameter>
       <parameter name="GearXMLFile" value="@GearFile@"/>
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
@@ -42,7 +42,7 @@
   <!-- compression of output file 0: false >0: true (default) -->
   <parameter name="Compress" type="int" value="1"/>
   <!-- filename without extension-->
-  <parameter name="FileName" type="string" value="@AlibavaHistoPath@/@AlibavaOutputFormat@-reco"/>
+  <parameter name="FileName" type="string" value="@HistogramPath@/@AlibavaOutputFormat@-reco"/>
   <!-- type of output file root (default) or xml )-->
   <parameter name="FileType" type="string" value="root"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
@@ -60,7 +60,7 @@
   <!--Pedestal collection name, better not to change-->
   <parameter name="PedestalCollectionName" type="string" value="pedestal_cmmd"/>
   <!--The filename where the pedestal and noise values stored-->
-  <parameter name="PedestalInputFile" type="string" value="@AlibavaResultsPath@/ped@PedestalRunNumber@-commonmode.slcio"/>
+  <parameter name="PedestalInputFile" type="string" value="@DatabasePath@/ped@PedestalRunNumber@-commonmode.slcio"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
@@ -106,7 +106,7 @@
   <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
   <!--parameter name="KeepCollectionNames" type="StringVec" value="MyPreciousSimTrackerHits"/-->
   <!-- name of output file -->
-  <parameter name="LCIOOutputFile" type="string" value="@AlibavaResultsPath@/@AlibavaOutputFormat@-reco.slcio"/>
+  <parameter name="LCIOOutputFile" type="string" value="@ResultsPath@/@AlibavaOutputFormat@-reco.slcio"/>
   <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
   <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   <!--will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW-->
