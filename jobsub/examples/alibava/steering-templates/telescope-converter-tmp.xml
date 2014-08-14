@@ -69,7 +69,7 @@
   <!--This is the name of the hot pixel collection to be saved into the output slcio file-->
   <parameter name="HotPixelCollectionName" type="string" value="hotpixel_m26" />
   <!--This is the name of the LCIO file name with the output hotpixel db (add .slcio)-->
-  <parameter name="HotPixelDBFile" type="string" value="@DatabasePath@/run@HotPixelRunNumber@-hotpixel-m26-db.slcio"/>
+  <parameter name="HotPixelDBFile" type="string" value="@DatabasePath@/@TelescopeOutputFormat@-hotpixel.slcio"/>
   <!--Write mode for HotPixelDB file:  WRITE_APPEND or WRITE_NEW-->
   <!--parameter name="LCIOWriteMode" type="string">WRITE_NEW </parameter-->
   <!--This float number [0,1] represents the maximum allowed firing frequency
