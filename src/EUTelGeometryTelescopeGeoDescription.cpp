@@ -1620,7 +1620,155 @@ TVector3 EUTelGeometryTelescopeGeoDescription::getXYZfromArcLength( double x0, d
         
 	return pos;
 }
+TMatrix EUTelGeometryTelescopeGeoDescription::getLocalToCurvilinearTransformMatrix(TVector3 globalPosition  , TVector3 globalMomentum, int  planeID, float charge){
+	const gear::BField&   Bfield = geo::gGeometry().getMagneticFiled();
+	gear::Vector3D vectorGlobal(globalPosition[0],globalPosition[1],globalPosition[1]);//Since field is homogeneous this seems silly but we need to specify a position to geometry to get B-field.
+	const double Bx = (Bfield.at( vectorGlobal ).x())*0.3;//We times bu 0.3 due to units of other variables. See paper. Must be Tesla
+	const double By = (Bfield.at( vectorGlobal ).y())*0.3;
+	const double Bz = (Bfield.at( vectorGlobal ).z())*0.3;
+	TVector3 B;
+	B[0]=Bx; B[1]=By; B[2]=Bz;
+	TVector3 H = B.Unit();
+	const float lambda = asin(globalMomentum[2]/(globalMomentum.Mag()));//This will be in radians.
+	const float cosLambda = cos(lambda);
+	TVector3 zGlobalNormal;
+	zGlobalNormal[0]=0;zGlobalNormal[1]=0;zGlobalNormal[2]=1;
+	TVector3 xGlobalNormal;
+	xGlobalNormal[0]=1;xGlobalNormal[1]=0;xGlobalNormal[2]=0;
+	TVector3 T = globalMomentum.Unit();//This is one coordinate axis of curvilinear coordinate system.	
+	TVector3 U = (zGlobalNormal.Cross(T)).Unit();//This is the next coordinate axis
+	TVector3 V = (T.Cross(U));	
+  TVector3 I = geo::gGeometry().siPlaneNormal( planeID  ); //This is the z direction of the plane in local frame      
+	TVector3 K = (I.Cross(xGlobalNormal)).Unit();//This should be the y direction of the sensor in local frame
+	TVector3 J = (I.Cross(K)).Unit(); //This should be x axis in local frame. 
+	TVector3 N = (H.Cross(T)).Unit();
+	//
+	const float alpha = (H.Cross(T)).Mag();
+	const float Q = -(B.Mag())*(charge/(globalMomentum.Mag()));//You could use end momentum since it must be constant
+	//
+	const float TDotI = T.Dot(I);
+	const float TDotJ = T.Dot(J);
+	const float TDotK = T.Dot(K);
+	const float VDotJ = V.Dot(J);
+	const float VDotK = V.Dot(K);
+	const float VDotN = V.Dot(N);
+	const float UDotJ = U.Dot(J);
+	const float UDotK = U.Dot(K);
+	const float UDotN = U.Dot(N);
+	TMatrix jacobian(5,5);
+	jacobian.Zero();
+	jacobian[0][0]=1; 
+	                 jacobian[1][1]=TDotI*VDotJ;             jacobian[1][2]=TDotI*VDotK;             jacobian[1][3]=-alpha*Q*TDotJ*VDotN;             jacobian[1][4]=-alpha*Q*TDotK*VDotN;
+	                 jacobian[2][1]=(TDotI*UDotJ)/cosLambda; jacobian[2][2]=(TDotI*UDotK)/cosLambda; jacobian[2][3]=(-alpha*Q*TDotJ*UDotN)/cosLambda; jacobian[2][4]=(-alpha*Q*TDotK*UDotN)/cosLambda;
+																																																   jacobian[3][3]=UDotJ;													  jacobian[3][4]=UDotK;
+																																																   jacobian[3][3]=VDotJ;													  jacobian[3][4]=VDotK;
+	return jacobian;
+}
+//This is described in Derivations of Jacobians for the propagation of covariance matrices of track parameters in homogeneous magnetic fields. A satrandie, W Wittek
+//This papaer describes the one letter variables. 
+//s must be in metres
+//momentum must be GeV/c
+TMatrix EUTelGeometryTelescopeGeoDescription::getPropagationJacobianCurvilinear(TVector3 globalMomentumStart, TVector3 globalMomentumEnd, TVector3 globalPositionStart, TVector3 globalPositionEnd, float charge, float arcLength){
+	const float lambda0 = asin(globalMomentumStart[2]/(globalMomentumStart.Mag()));//This will be in radians.
+	const float lambda = asin(globalMomentumEnd[2]/(globalMomentumEnd.Mag()));//This will be in radians.
+	const float phi0 = asin(globalMomentumStart[1]/(globalMomentumStart.Mag())*cos(lambda0));
+	const float phi = asin(globalMomentumEnd[1]/(globalMomentumEnd.Mag())*cos(lambda));
+	const float cosLambda0 = cos(lambda0);
+	const float cosLambda = cos(lambda);
 
+	//The global normal will alway be in this direction.
+	TVector3 zGlobalNormal;
+	zGlobalNormal[0]=0;zGlobalNormal[1]=0;zGlobalNormal[2]=1;
+	TVector3 M0;
+	M0[0] = globalPositionStart[0]; M0[1] = globalPositionStart[1]; M0[2] = globalPositionStart[2];
+	TVector3 M;
+	M[0] = globalPositionEnd[0]; M[1] = globalPositionEnd[1]; M[2] = globalPositionEnd[2];
+	TVector3 M0MinusM = M0-M;
+	TVector3 T0 = globalMomentumStart.Unit();//This is one coordinate axis of curvilinear coordinate system.	
+	TVector3 U0 = (zGlobalNormal.Cross(T0)).Unit();//This is the next coordinate axis
+	TVector3 V0 = (T0.Cross(U0));	 
+	TVector3 T = globalMomentumEnd.Unit();//This is one coordinate axis of curvilinear coordinate system.	
+	TVector3 U = (zGlobalNormal.Cross(T)).Unit();//This is the next coordinate axis
+	TVector3 V = (T.Cross(U));	
+	const gear::BField&   Bfield = geo::gGeometry().getMagneticFiled();
+	gear::Vector3D vectorGlobal(globalPositionStart[0],globalPositionStart[1],globalPositionStart[1]);//Since field is homogeneous this seems silly but we need to specify a position to geometry to get B-field.
+	const double Bx = (Bfield.at( vectorGlobal ).x())*0.3;//We times bu 0.3 due to units of other variables. See paper. Must be Tesla
+	const double By = (Bfield.at( vectorGlobal ).y())*0.3;
+	const double Bz = (Bfield.at( vectorGlobal ).z())*0.3;
+	TVector3 B;
+	B[0]=Bx; B[1]=By; B[2]=Bz;
+	TVector3 H = B.Unit();
+	const float alpha = (H.Cross(T)).Mag();
+	const float gamma = H.Dot(T);
+	const float Q = -(B.Mag())*(charge/(globalMomentumStart.Mag()));//You could use end momentum since it must be constant
+	const float qpInv = pow((charge/(globalMomentumStart.Mag())),-1);
+	float theta = Q*arcLength;
+	TVector3 N = (H.Cross(T)).Unit();
+	//Some terms used in the deriviatives.
+	const float NDotV = N.Dot(V);
+	const float NDotU = N.Dot(U);
+	const float VDotM0MinusM = V.Dot(M0MinusM);
+	const float V0DotV = V0.Dot(V); 
+	const float V0DotU = V0.Dot(U);
+	const float V0DotT = V0.Dot(T);
+	const float V0DotN = V0.Dot(N);
+	const float HDotV0 = H.Dot(V0);
+	const float HDotV = H.Dot(V);
+	const float HDotT = H.Dot(T);
+	const float HDotU = H.Dot(U);
+	const float HDotU0 = H.Dot(U0);
+	const float HCrossV0DotV = (H.Cross(V0)).Dot(V);
+	const float HCrossU0DotV = (H.Cross(U0)).Dot(V);
+	const float HCrossV0DotU = (H.Cross(V0)).Dot(U);
+	const float HCrossU0DotU = (H.Cross(U0)).Dot(U);
+	const float U0DotV = U0.Dot(V);
+	const float U0DotU = U0.Dot(U);
+	const float U0DotT = U0.Dot(T);
+	const float U0DotN = U0.Dot(N);
+	const float UDotM0MinusM = U.Dot(M0MinusM);
+	const float cosTheta = cos(theta);
+	const float oneMinusCosTheta = (1-cos(theta));
+	const float sinTheta =sin(theta);
+	const float thetaMinusSinTheta = (theta - sin(theta));
+	//Here is the derivatives for the jacobain
+	//mometum
+	const float dQPdQP0 = 1; //A.1  //A.1 is the equation number in the paper
+	//lambda
+	const float dLambdadQP0= -alpha*Q*qpInv*(NDotV)*(T.Dot(M0MinusM));//A.2
+	const float dLambdadLambda0 =  cosTheta*V0DotV + sinTheta*HCrossV0DotV + oneMinusCosTheta*HDotV0*HDotV + alpha*NDotV*(-sinTheta*V0DotT) + alpha*(oneMinusCosTheta)*V0DotN - thetaMinusSinTheta*HDotT*HDotV0;//A.3 
+	const float dLambdadPhi0 = cosLambda0*(cosTheta*U0DotV+sinTheta*HCrossU0DotV + oneMinusCosTheta*HDotU0*HDotV +alpha*NDotV*(-sinTheta*U0DotT + alpha*oneMinusCosTheta*U0DotN - thetaMinusSinTheta*HDotT*HDotU0));//A.4  
+	const float dLambdadx0 = -alpha*Q*NDotV*U0DotT;//A.5
+	const float dLambdady0 = -alpha*Q*NDotV*V0DotT;//A.6
+	//phi
+	const float dPhidQP0 = -((alpha*Q)/cosLambda)*qpInv*NDotU*(T.Dot(M0MinusM));//A.7 
+	const float dPhidLambda0 = (1/cosLambda)*(cosTheta*V0DotU+ sinTheta*HCrossV0DotU+oneMinusCosTheta*HDotV0*HDotU +alpha*NDotU*(-sinTheta*V0DotT + alpha*oneMinusCosTheta*V0DotN -thetaMinusSinTheta*HDotT*HDotV0));//A.8
+	const float dPhidPhi0 = (cosLambda0/cosLambda)*(cosTheta*U0DotU + sinTheta*HCrossU0DotU+oneMinusCosTheta*HDotU0*HDotU +alpha*NDotU*(-sinTheta*U0DotT+alpha*oneMinusCosTheta*U0DotN-thetaMinusSinTheta*HDotT*HDotU0));//A.9 
+	const float dPhidx0 = -(alpha*Q/cosLambda)*NDotU*U0DotT;//A.10
+	const float dPhidy0 = -(alpha*Q/cosLambda)*NDotU*V0DotT;//A.11
+	//x
+	const float dxdQP0 = qpInv*UDotM0MinusM;//A.12
+	const float dxdLambda0 = (sinTheta/Q)*V0DotU + (oneMinusCosTheta/Q)*HCrossV0DotU+(thetaMinusSinTheta/Q)*HDotV0*HDotU;//A.13
+	const float dxdPhi0 = cosLambda0*((sinTheta/Q)*U0DotU + (oneMinusCosTheta/Q)*HCrossU0DotU+(thetaMinusSinTheta/Q)*HDotU0*HDotU);//A.14
+	const float dxdx0 = U0DotU;//A.15
+	const float dxdy0 = V0DotU;//A.16
+	//y
+	const float dydQP0 = qpInv*VDotM0MinusM;//A.17
+	const float dydLambda0 = (sinTheta/Q)*V0DotV + (oneMinusCosTheta/Q)*HCrossV0DotV+(thetaMinusSinTheta/Q)*HDotV0*HDotV;//A.18 
+	const float dydPhi0 = cosLambda0*((sinTheta/Q)*U0DotV +(oneMinusCosTheta/Q)*HCrossU0DotV+(thetaMinusSinTheta/Q)*HDotU0*HDotV);//A.19
+	const float dydx0 = U0DotV;//A.20
+	const float dydy0 = V0DotV;//A.21
+	//Create matrix from these terms
+	TMatrix jacobian(5,5);
+	jacobian.Zero();
+	jacobian[0][0] = dQPdQP0; 
+	jacobian[1][0] = dLambdadQP0; jacobian[1][1]=dLambdadLambda0; jacobian[1][2]=dLambdadPhi0; jacobian[1][3]=dLambdadx0; jacobian[1][4]=dLambdady0;
+	jacobian[2][0] = dPhidQP0; jacobian[2][1]=dPhidLambda0; jacobian[2][2]=dPhidPhi0; jacobian[2][3]=dPhidx0; jacobian[2][4]=dPhidy0;
+	jacobian[3][0] = dxdQP0; jacobian[3][1]=dxdx0; jacobian[3][2]=dxdPhi0; jacobian[3][3]=dxdx0; jacobian[3][4]=dxdy0;
+	jacobian[4][0] = dydQP0; jacobian[4][1]=dydy0; jacobian[4][2]=dydPhi0; jacobian[4][3]=dydx0; jacobian[4][4]=dydy0;
+
+	return jacobian;
+
+}
 //This function given position/momentum of a particle. Will give you the approximate jacobian at any point along the track. This effectively relates changes in the particle position/momentum at the original to some distant point. 
 //So if I change the initial position by x amount how much will all the other variables position/momentum at the new position change? This is what the Jacobian tells you.
 

@@ -303,6 +303,9 @@ namespace eutelescope {
 		int findIntersectionWithCertainID( float x0, float y0, float z0, float px, float py, float pz, float _beamQ, int nextPlaneID, float output[]);
 
 		TVector3 getXYZfromArcLength( double x0, double y0, double z0, double px, double py, double pz, float _beamQ, double s) const;
+		TMatrix getPropagationJacobianCurvilinear(TVector3 globalMomentumStart, TVector3 globalMomentumEnd, TVector3 globalPositionStart, TVector3 globalPositionEnd, float charge, float  arcLength );
+		TMatrix getLocalToCurvilinearTransformMatrix(TVector3 globalPosition  , TVector3 globalMomentum, int  planeID, float charge);
+
 
 		TMatrix getPropagationJacobianF( float x0, float y0, float z0, float px, float py, float pz, float _beamQ, float dz );
 
