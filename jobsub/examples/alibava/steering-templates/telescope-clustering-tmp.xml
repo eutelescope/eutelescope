@@ -56,7 +56,7 @@
   <!--The list of sensor ids that have to be excluded from the clustering.-->
   <!--parameter name="ExcludedPlanes" type="IntVec"> </parameter-->
   <!--This is the name of the histogram information file-->
-  <parameter name="HistoInfoFileName" type="string" value="@HistoInfoFile@"/>
+  <parameter name="HistoInfoFileName" type="string" value="@TelescopeHistoInfo@"/>
   <!--Switch on or off the histogram filling-->
   <parameter name="HistogramFilling" type="bool">true </parameter>
   <!--Cluster (output) collection name-->
