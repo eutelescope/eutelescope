@@ -13,6 +13,10 @@
 #include "AlibavaRunHeaderImpl.h"
 #include "AlibavaEventImpl.h"
 
+// eutelescope includes ".h"
+#include "EUTELESCOPE.h"
+
+
 // marlin includes
 #include "marlin/Global.h"
 #include "marlin/Exceptions.h"
@@ -24,6 +28,7 @@
 // lcio includes
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/TrackerDataImpl.h>
+#include <IMPL/TrackerPulseImpl.h>
 #include <IMPL/LCGenericObjectImpl.h>
 #include <IMPL/LCRunHeaderImpl.h>
 #include <IMPL/LCEventImpl.h>
@@ -210,12 +215,12 @@ void AlibavaClusterCollectionMerger::readDataSource(int /* numEvents */) {
 			} // end of loop over alibava clusters
 			
 			
-			LCEvent* outputEvent = new LCEvent();
+			LCEventImpl* outputEvent = new LCEventImpl();
 			outputEvent->addCollection(outputPulseColVec, _outputPulseCollectionName);
 			outputEvent->addCollection(outputSparseColVec, _outputSparseCollectionName);
 
 			ProcessorMgr::instance()->processEvent( static_cast<LCEventImpl*> ( outputEvent ) ) ;
-			delete outputEvent;
+			//delete outputEvent;
 			
 		} catch ( IOException& e) {
 			// do nothing again
