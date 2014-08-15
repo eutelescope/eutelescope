@@ -330,7 +330,7 @@ namespace eutelescope {
                         double disc2 =  b*b - 4.*a*c ;
                         if( disc2 < 0. )
                         {
-                                cout << "WARNING! disc2 < 0: " << disc2 << endl;
+                                cout << " Quadratic equation solution is imaginary! WARNING! disc2 < 0: " << disc2 << endl;
                                 return X;
                         }
                         double disc = sqrt( disc2 );

@@ -1506,7 +1506,7 @@ streamlog_out(DEBUG5) << "EUTelGeometryTelescopeGeoDescription::findIntersection
 	//positions are in mm
   TVector3 trkVec(x0,y0,z0);
 	TVector3 pVec(px,py,pz);
-	streamlog_out(DEBUG5) << "  Global positions (Input): "<< x0 <<"  "<< y0 <<"  "<< z0 << " Momentum(Number too small to be outputed): "<< px<<","<<py<<","<<pz<< std::endl;
+	streamlog_out(DEBUG5) << "  Global positions (Input): "<< x0 <<"  "<< y0 <<"  "<< z0 << " Momentum: "<< px<<","<<py<<","<<pz<< std::endl;
  
   // Find magnetic field at that point and then the components/////////////////////////////////// 
   gear::Vector3D vectorGlobal( x0, y0, z0 );        // assuming uniform magnetic field running along X direction. Why do we need this assumption. Equations of motion do not seem to dictate this.
@@ -1515,17 +1515,18 @@ streamlog_out(DEBUG5) << "EUTelGeometryTelescopeGeoDescription::findIntersection
 	const double by         = B.at( vectorGlobal ).y();
 	const double bz         = B.at( vectorGlobal ).z();
 	streamlog_out (DEBUG5) << "The magnetic field vector (x,y,z): "<<bx<<","<<by<<","<<bz << std::endl;
+	streamlog_out (DEBUG5) << "Beam charge: "<<beamQ<< std::endl;
+
 	//B field is in units of Tesla
   TVector3 hVec(bx,by,bz);
 	const double H = hVec.Mag();
 
   // Calculate track momentum from track parameters and fill some useful variables///////////////////////////////////////////////////////////
-  const double p = pVec.Mag();//Must be in (kg*mm*s-1)
-	//const double mm = 1000.;
-  //const double k = -0.299792458/mm*beamQ*H;
+  const double p = pVec.Mag();
 	const double constant =  -0.299792458; //This is a constant used in the derivation of this equation. This is the distance light travels in a nano second    
-	const double combineConstantsAndMagneticField = constant*beamQ*H;
-  const double rho = combineConstantsAndMagneticField/p;//must have units of 1/mm since p = kg x mm x s^-1. 
+	const double mm = 1000;
+	const double combineConstantsAndMagneticField = (constant*beamQ*H)/mm;
+  const double rho = combineConstantsAndMagneticField/p; 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////       
 				      
 	//Determine geometry of sensor to be used to determine the point of intersection.//////////////////////////////////////
@@ -1569,7 +1570,7 @@ streamlog_out(DEBUG5) << "EUTelGeometryTelescopeGeoDescription::findIntersection
 	TVector3 newMomentum;
 	newPos = getXYZfromArcLength(x0, y0,z0,px,py,pz,beamQ,solution);
 	newMomentum = getXYZMomentumfromArcLength(pVec, trkVec, newPos, beamQ, solution);
-	outputPosition[0]=newPos[0]*pow(10,-3); 				outputPosition[1]=newPos[1]*pow(10,-3); 				outputPosition[2]=newPos[2]*pow(10,-3);
+	outputPosition[0]=newPos[0]; 				outputPosition[1]=newPos[1]; 				outputPosition[2]=newPos[2];
 	outputMomentum[0]=newMomentum[0]; 				outputMomentum[1]=newMomentum[1]; 				outputMomentum[2]=newMomentum[2];
 	arcLength = solution*pow(10,-3);		
 	streamlog_out (DEBUG5) << "Solutions for arc length: " << std::setw(15) << sol[0] << std::setw(15) << sol[1] << std::endl;
@@ -1585,26 +1586,25 @@ TVector3 EUTelGeometryTelescopeGeoDescription::getXYZMomentumfromArcLength(TVect
 	TVector3 zGlobalNormal;
 	zGlobalNormal[0]=0;zGlobalNormal[1]=0;zGlobalNormal[2]=1;
 	TVector3 M0;
-	M0[0] = globalPositionStart[0]; M0[1] = globalPositionStart[1]; M0[2] = globalPositionStart[2];
+	float mm= 1000;
+	M0[0] = globalPositionStart[0]/mm; M0[1] = globalPositionStart[1]/mm; M0[2] = globalPositionStart[2]/mm;
 	TVector3 M;
-	M[0] = globalPositionEnd[0]; M[1] = globalPositionEnd[1]; M[2] = globalPositionEnd[2];
+	M[0] = globalPositionEnd[0]/mm; M[1] = globalPositionEnd[1]/mm; M[2] = globalPositionEnd[2]/mm;
 	TVector3 M0MinusM = M0-M;
 	TVector3 T = momentum.Unit();//This is one coordinate axis of curvilinear coordinate system.	
-	TVector3 U = (zGlobalNormal.Cross(T)).Unit();//This is the next coordinate axis
-	TVector3 V = (T.Cross(U));	
 	const gear::BField&   Bfield = geo::gGeometry().getMagneticFiled();
-	gear::Vector3D vectorGlobal(globalPositionStart[0],globalPositionStart[1],globalPositionStart[1]);//Since field is homogeneous this seems silly but we need to specify a position to geometry to get B-field.
-	const double Bx = (Bfield.at( vectorGlobal ).x())*0.3;//We times bu 0.3 due to units of other variables. See paper. Must be Tesla
-	const double By = (Bfield.at( vectorGlobal ).y())*0.3;
-	const double Bz = (Bfield.at( vectorGlobal ).z())*0.3;
+	gear::Vector3D vectorGlobal(globalPositionStart[0],globalPositionStart[1],globalPositionStart[2]);//Since field is homogeneous this seems silly but we need to specify a position to geometry to get B-field.
+	const double Bx = (Bfield.at( vectorGlobal ).x());//We times bu 0.3 due to units of other variables. See paper. Must be Tesla
+	const double By = (Bfield.at( vectorGlobal ).y());
+	const double Bz = (Bfield.at( vectorGlobal ).z());
 	TVector3 B;
 	B[0]=Bx; B[1]=By; B[2]=Bz;
-	TVector3 H = B.Unit();
+	TVector3 H = (B.Unit())*0.3;
 	const float alpha = (H.Cross(T)).Mag();
 	const float gamma = H.Dot(T);
 	const float Q = -(B.Mag())*(charge/(momentum.Mag()));//You could use end momentum since it must be constant
 	const float qpInv = pow((charge/(momentum.Mag())),-1);
-	float theta = Q*arcLength;
+	float theta = (Q*arcLength)/mm;
 	TVector3 N = (H.Cross(T)).Unit();
 	const float cosTheta = cos(theta);
 	const float sinTheta = sin(theta);
@@ -1634,7 +1634,8 @@ TVector3 EUTelGeometryTelescopeGeoDescription::getXYZfromArcLength( double x0, d
 	const double H = hVec.Mag();
   const double p = pVec.Mag();
 	const double constant = -0.299792458; 
-	const double combineConstantsAndMagneticField = constant*beamQ*H;
+	const double mm = 1000;
+	const double combineConstantsAndMagneticField = (constant*beamQ*H)/mm;
 	const double k = combineConstantsAndMagneticField;
   const double rho = combineConstantsAndMagneticField/p; 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////       

@@ -200,11 +200,15 @@ void EUTelKalmanFilter::propagateForwardFromSeedState( EUTelState& stateInput, E
 		int sensorIntersectionTrue = geo::gGeometry( ).getSensorID(globalIntersection);//This is needed with the jacobian since the jacobian needs the z distance to the next point to do the calculation
 		if(newSensorID < 0 ){ //TO DO Fix geo: or sensorIntersectionTrue < 0 ){
 			streamlog_out ( MESSAGE5 ) << "Intersection point on infinite plane: " <<  globalIntersection[0]<<" , "<<globalIntersection[1] <<" , "<<globalIntersection[2]<<std::endl;
+			streamlog_out ( MESSAGE5 ) << "Momentum on next plane: " <<  momentumAtIntersection[0]<<" , "<<momentumAtIntersection[1] <<" , "<<momentumAtIntersection[2]<<std::endl;
 			streamlog_out(MESSAGE5) <<" From ID= " <<  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i]<< " to " <<  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i+1]  <<std::endl;
 			streamlog_out(MESSAGE5)<<"Was there intersection on plane: "<<newSensorID<<" Was there intersection in sensitive area: "<<std::endl;
 			streamlog_out(MESSAGE5) << Utility::outputColourString("No intersection found moving on plane. Move to next plane and look again.","YELLOW")<<std::endl; 
 			continue;//So if there is no intersection look on the next plane. Important since two planes could be at the same z position
 		}
+		streamlog_out ( DEBUG0 ) << "Intersection point on infinite plane: " <<  globalIntersection[0]<<" , "<<globalIntersection[1] <<" , "<<globalIntersection[2]<<std::endl;
+		streamlog_out ( DEBUG0 ) << "Momentum on next plane: " <<  momentumAtIntersection[0]<<" , "<<momentumAtIntersection[1] <<" , "<<momentumAtIntersection[2]<<std::endl;
+
 		//So we have intersection lets create a new state
 		EUTelState *newState = new EUTelState();//Need to create this since we save the pointer and we would be out of scope when we leave this function. Destroying this object. 
 		newState->setDimensionSize(_planeDimensions[newSensorID]);//We set this since we need this information for later processors
@@ -224,7 +228,7 @@ void EUTelKalmanFilter::propagateForwardFromSeedState( EUTelState& stateInput, E
 		const double distance = sqrt(computeResidual(*newState, closestHit ).Norm2Sqr()); //Determine the residual of state and hit  //Distance is in mm. Norm2Sqr does not square root for some reason
 		const double DCA = getXYPredictionPrecision( *newState ); //This does nothing but return a number specified by user. In the future this should use convariance matrix information TO DO: FIX
 		streamlog_out ( DEBUG1 ) <<"At plane: "<<newState->getLocation() << ". Distance between state and hit: "<< distance <<" Must be less than: "<<DCA<< endl;
-		streamlog_out(DEBUG0) <<"Closest hit position: " << closestHit->getPosition()[0]<< closestHit->getPosition()[1]<< closestHit->getPosition()[2]<<endl;
+		streamlog_out(DEBUG0) <<"Closest hit position: " << closestHit->getPosition()[0]<<" "<< closestHit->getPosition()[1]<<"  "<< closestHit->getPosition()[2]<<endl;
 		if ( distance > DCA ) {
 			streamlog_out ( DEBUG1 ) << "Closest hit is outside of search window." << std::endl;
 			track.addTrack(static_cast<EVENT::Track*>(newState));//Need to return this to LCIO object. Loss functionality but retain information 
@@ -925,10 +929,7 @@ TVectorD EUTelKalmanFilter::computeResidual(EUTelState& state , const EVENT::Tra
 	streamlog_out( DEBUG3 ) << "Hit (id=" << hit->id() << ") local(u,v) coordinates of hit: (" << hitPosition[0] << "," << hitPosition[1] <<","<<hitPosition[2] << ")" << std::endl;
 
 	double localPosition [3];
-	//TO DO:Fix master2Localtwo so that is is the only one. This is currently a hack
-	const double referencePoint[]	= {state.getReferencePoint()[0], state.getReferencePoint()[1],state.getReferencePoint()[2]};//Need this since geometry works with const doubles not floats 
-	geo::gGeometry().master2Localtwo( state.getLocation(), referencePoint, localPosition );
-
+	localPosition[0]=state.getPosition()[0];	localPosition[1]=state.getPosition()[1];	localPosition[2]=state.getPosition()[2];
 	streamlog_out( DEBUG3 ) << "	Prediction for hit (id=" << hit->id() << ") local(u,v) coordinates of state: ("  << localPosition[0] << "," << localPosition[1] <<","<<localPosition[2] << ")" << std::endl;
 
 	TVectorD residual(2);
