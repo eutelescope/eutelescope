@@ -41,6 +41,7 @@
 
 using namespace std;
 using namespace marlin;
+using namespace lcio;
 using namespace alibava;
 
 AlibavaClusterCollectionMerger::AlibavaClusterCollectionMerger ():
@@ -152,12 +153,12 @@ void AlibavaClusterCollectionMerger::readDataSource(int /* numEvents */) {
 	
 	// we will copy alibava run header to as the header of output file.
 	try {
-		LCRunHeaderImpl* alibava_runHeader = alibava_lcReader->readNextRunHeader();
+		LCRunHeader* alibava_runHeader = alibava_lcReader->readNextRunHeader();
+		ProcessorMgr::instance()->processRunHeader( alibava_runHeader ) ;
 	} catch( IOException& e ){
 		streamlog_out ( ERROR1 ) << "Can't access run header of the alibava file: " << e.what() << endl ;
 	}
 	
-	ProcessorMgr::instance()->processRunHeader( alibava_runHeader ) ;
 
 	
 	
