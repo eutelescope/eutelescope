@@ -17,8 +17,7 @@
 
    <execute>
       <processor name="AIDA"/>
-      <processor name="MyAlibavaConverter"/>
-      <processor name="MyAlibavaTimeCutProcessor"/>     
+      <processor name="MyAlibavaClusterCollectionMerger"/>
       <processor name="Save"/>
    </execute>
 
