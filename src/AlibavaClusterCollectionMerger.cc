@@ -146,7 +146,8 @@ void AlibavaClusterCollectionMerger::readDataSource(int /* numEvents */) {
 	} catch( IOException& e ){
 		streamlog_out ( ERROR1 ) << "Can't open the telescope file: " << e.what() << endl ;
 	}
-	
+	streamlog_out ( MESSAGE1 ) << "Successfully opened Telescope file" << endl ;
+
 	// open alibava file
 	LCReader* alibava_lcReader = LCFactory::getInstance()->createLCReader();
 	try {
@@ -154,6 +155,7 @@ void AlibavaClusterCollectionMerger::readDataSource(int /* numEvents */) {
 	} catch( IOException& e ){
 		streamlog_out ( ERROR1 ) << "Can't open the alibava file: " << e.what() << endl ;
 	}
+	streamlog_out ( MESSAGE1 ) << "Successfully opened Alibava file" << endl ;
 	
 	
 	// we will copy alibava run header to as the header of output file.
@@ -163,24 +165,47 @@ void AlibavaClusterCollectionMerger::readDataSource(int /* numEvents */) {
 	} catch( IOException& e ){
 		streamlog_out ( ERROR1 ) << "Can't access run header of the alibava file: " << e.what() << endl ;
 	}
-	
+	streamlog_out ( MESSAGE1 ) << "Successfully copied Alibava run header to output run header" << endl ;
+
 	
 	LCEvent*  telescopeEvent;
 	LCEvent* alibavaEvent;
 	while( ((telescopeEvent = telescope_lcReader->readNextEvent()) != 0)
 			&& ((alibavaEvent = alibava_lcReader->readNextEvent()) != 0 ) )
 	{
+		if ( alibavaEvent->getEventNumber() % 1000 == 0 )
+			streamlog_out ( MESSAGE4 ) << "Looping events "<<alibavaEvent->getEventNumber() << endl;
+
+		LCCollectionVec * alibavaPulseColVec;
+		LCCollectionVec * alibavaSparseColVec;
+		LCCollectionVec * telescopePulseColVec;
+		LCCollectionVec * telescopeSparseColVec;
 		try
 		{
-			
 			// get alibava collections
-			LCCollectionVec * alibavaPulseColVec = dynamic_cast< LCCollectionVec * > ( alibavaEvent->getCollection( _alibavaPulseCollectionName ) ) ;
-			LCCollectionVec * alibavaSparseColVec = dynamic_cast< LCCollectionVec * > ( alibavaEvent->getCollection( _alibavaSparseCollectionName ) ) ;
+			alibavaPulseColVec = dynamic_cast< LCCollectionVec * > ( alibavaEvent->getCollection( _alibavaPulseCollectionName ) ) ;
+			alibavaSparseColVec = dynamic_cast< LCCollectionVec * > ( alibavaEvent->getCollection( _alibavaSparseCollectionName ) ) ;
+
+			streamlog_out ( DEBUG1 ) << "Alibava collections successfully found" << endl ;
 			
+		} catch ( IOException& e) {
+			// do nothing again
+			streamlog_out( ERROR5 ) << e.what() << endl;
+		}
+
+		try
+		{
 			// get telescope collections
-			LCCollectionVec * telescopePulseColVec = dynamic_cast< LCCollectionVec * > ( telescopeEvent->getCollection( _telescopePulseCollectionName ) ) ;
-			LCCollectionVec * telescopeSparseColVec = dynamic_cast< LCCollectionVec * > ( telescopeEvent->getCollection( _telescopeSparseCollectionName ) ) ;
-			
+			telescopePulseColVec = dynamic_cast< LCCollectionVec * > ( telescopeEvent->getCollection( _telescopePulseCollectionName ) ) ;
+			telescopeSparseColVec = dynamic_cast< LCCollectionVec * > ( telescopeEvent->getCollection( _telescopeSparseCollectionName ) ) ;
+
+			streamlog_out ( DEBUG1 ) << "Telescope collections successfully found" << endl ;
+
+		} catch ( IOException& e) {
+			// do nothing again
+			streamlog_out( ERROR5 ) << e.what() << endl;
+		}
+		
 			// create output collections
 			LCCollectionVec * outputPulseColVec = new LCCollectionVec(LCIO::TRACKERPULSE);
 			LCCollectionVec * outputSparseColVec = new LCCollectionVec(LCIO::TRACKERDATA);
@@ -195,16 +220,17 @@ void AlibavaClusterCollectionMerger::readDataSource(int /* numEvents */) {
 			
 			
 			unsigned int noOfClusters;
-			
+		try
+		{
 			// first go through telescope clusters and copy them to output cluster collection
 			// for sure pulse and sparse collections have same number of clusters
 			noOfClusters = telescopeSparseColVec->getNumberOfElements();
-			
 			for ( size_t i = 0; i < noOfClusters; ++i ){
 				outputSparseColVec->push_back( telescopeSparseColVec->getElementAt(i) );
 				outputPulseColVec->push_back( telescopePulseColVec->getElementAt(i) );
 			} // end of loop over telescope clusters
-			
+			streamlog_out ( MESSAGE1 ) << "Successfully copied Telescope collections to output event" << endl ;
+
 			// now alibava clusters, copy them to output cluster collection
 			// for sure pulse and sparse collections have same number of clusters
 			noOfClusters = alibavaSparseColVec->getNumberOfElements();
@@ -213,22 +239,29 @@ void AlibavaClusterCollectionMerger::readDataSource(int /* numEvents */) {
 				outputSparseColVec->push_back( alibavaSparseColVec->getElementAt(i) );
 				outputPulseColVec->push_back( alibavaPulseColVec->getElementAt(i) );
 			} // end of loop over alibava clusters
-			
-			
+			streamlog_out ( MESSAGE1 ) << "Successfully copied Alibava collections to output event" << endl ;
+		} catch ( IOException& e) {
+			// do nothing again
+			streamlog_out( ERROR5 ) << e.what() << endl;
+		}
+		
+		try
+		{
 			LCEventImpl* outputEvent = new LCEventImpl();
 			outputEvent->addCollection(outputPulseColVec, _outputPulseCollectionName);
 			outputEvent->addCollection(outputSparseColVec, _outputSparseCollectionName);
 
 			ProcessorMgr::instance()->processEvent( static_cast<LCEventImpl*> ( outputEvent ) ) ;
-			//delete outputEvent;
-			
+			// delete outputEvent;
+			streamlog_out ( MESSAGE1 ) << "Successfully copied Alibava collections to output event" << endl ;
+
 		} catch ( IOException& e) {
 			// do nothing again
 			streamlog_out( ERROR5 ) << e.what() << endl;
 		}
 		
       
-	}
+	}// end of loop over events
 	
 	
 	/*
