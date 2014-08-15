@@ -287,7 +287,8 @@ void setAutoPlanestoCreateSeedsFrom(){
         TVector3 getXYZfromArcLength( const EUTelTrackStateImpl*, double ) const;
         TVector3 getXYZfromArcLength1( const EUTelTrackStateImpl*, double ) const;
 
-				void findNextStateUsingJacobian(EUTelState& state,TMatrixD & jacobian,float zPosition, EUTelState& newState);
+				void setNewState(float position[],float momentum[],  EUTelState& newState);
+				
 
 				void UpdateStateUsingHitInformation(EUTelTrackStateImpl*,EVENT::TrackerHit* , const TMatrixD&, TMatrixD &, TMatrixD &);
 

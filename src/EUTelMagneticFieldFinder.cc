@@ -193,29 +193,26 @@ void EUTelKalmanFilter::propagateForwardFromSeedState( EUTelState& stateInput, E
 	for(int i = geo::gGeometry().sensorIDToZOrderWithoutExcludedPlanes()[state->getLocation()]; i < (geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()-1); ++i){
 	
 		float globalIntersection[3];
-		int newSensorID = state->findIntersectionWithCertainID(geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i+1], globalIntersection);
+		float momentumAtIntersection[3];
+		float arcLength;
+		int newSensorID = state->findIntersectionWithCertainID(geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i+1], globalIntersection, momentumAtIntersection, arcLength);
 		//cout<<"HERE1: "<<state->getPosition()[0]<<","<<state->getPosition()[1]<<","<<state->getPosition()[2]<<","<<state->getLocation()<<endl;
-		int sensorIntersection = geo::gGeometry( ).getSensorID(globalIntersection);//This is needed with the jacobian since the jacobian needs the z distance to the next point to do the calculation
-		if(newSensorID < 0 ){ //TO DO Fix geo: or sensorIntersection < 0 ){
+		int sensorIntersectionTrue = geo::gGeometry( ).getSensorID(globalIntersection);//This is needed with the jacobian since the jacobian needs the z distance to the next point to do the calculation
+		if(newSensorID < 0 ){ //TO DO Fix geo: or sensorIntersectionTrue < 0 ){
 			streamlog_out ( MESSAGE5 ) << "Intersection point on infinite plane: " <<  globalIntersection[0]<<" , "<<globalIntersection[1] <<" , "<<globalIntersection[2]<<std::endl;
 			streamlog_out(MESSAGE5) <<" From ID= " <<  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i]<< " to " <<  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i+1]  <<std::endl;
-			streamlog_out(MESSAGE5)<<"Was there intersection on plane: "<<newSensorID<<" Was there intersection in sensitive area: "<< sensorIntersection <<" Both number -999 if no intersection" << std::endl;
+			streamlog_out(MESSAGE5)<<"Was there intersection on plane: "<<newSensorID<<" Was there intersection in sensitive area: "<<std::endl;
 			streamlog_out(MESSAGE5) << Utility::outputColourString("No intersection found moving on plane. Move to next plane and look again.","YELLOW")<<std::endl; 
 			continue;//So if there is no intersection look on the next plane. Important since two planes could be at the same z position
 		}
 		//So we have intersection lets create a new state
 		EUTelState *newState = new EUTelState();//Need to create this since we save the pointer and we would be out of scope when we leave this function. Destroying this object. 
 		newState->setDimensionSize(_planeDimensions[newSensorID]);//We set this since we need this information for later processors
-		newState->setBeamEnergy(_beamE);
 		newState->setBeamCharge(_beamQ);
-		newState->initialiseCurvature();
 		newState->setLocation(newSensorID);
-		TMatrixD jacobian(5,5);
-		jacobian.Zero();
-		jacobian = state->computePropagationJacobianFromStateToThisZLocation(globalIntersection[2]);
-		findNextStateUsingJacobian(*state,jacobian,globalIntersection[2], *newState);
-		//cout<<"HERE2: "<<newState->getPosition()[0]<<","<<newState->getPosition()[1]<<","<<newState->getPosition()[2]<<","<<newState->getLocation()<<endl;
-		testPositionEstimation(newState->getPosition(),globalIntersection);//Here we compare the estimation from the simple equation of motion and jacobian.
+		newState->setPositionGlobal(globalIntersection);
+		newState->setArcLengthToNextState(arcLength); 
+		newState->setDirectionXZAndXZAndCurvatureUsingMomentum(momentumAtIntersection);
 		if(_mapHitsVecPerPlane[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i+1]].size() == 0){
 			streamlog_out(DEBUG5) << Utility::outputColourString("There are no hits on the plane with this state. Add state to track as it is and move on ","YELLOW");
 			track.addTrack(static_cast<EVENT::Track*>(newState));//Need to return this to LCIO object. Loss functionality but retain information 
@@ -558,19 +555,18 @@ void EUTelKalmanFilter::initialiseSeeds() {
 		EVENT::TrackerHitVec::iterator itHit;
 		for ( itHit = hitFirstLayer.begin(); itHit != hitFirstLayer.end(); ++itHit ) {
 			EUTelState state;//Here we create a track state. This is a point on a track that we can give a position,momentum and direction. We combine these to create a track. 
-			double posLocal[] =  { (*itHit)->getPosition()[0], (*itHit)->getPosition()[1], (*itHit)->getPosition()[2] };
-			if(posLocal[2] != 0){//TO DO:This should be in test hits
+			double temp[] = { (*itHit)->getPosition()[0], (*itHit)->getPosition()[1], (*itHit)->getPosition()[2] };
+			float posLocal[] = { static_cast<float>(temp[0]), static_cast<float>(temp[1]), static_cast<float>(temp[2]) };
+			if( posLocal[2] != 0){//TO DO:This should be in test hits
 				streamlog_out(MESSAGE5) << "The local position of the hit is " << posLocal[0]<<","<< posLocal[1]<<","<< posLocal[2]<<","<<std::endl;
 				throw(lcio::Exception(Utility::outputColourString("The position of this local coordinate in the z direction is non 0", "RED"))); 	
 			}
-			double temp[] = {0.,0.,0.};
-			geo::gGeometry().local2Master(_createSeedsFromPlanes[iplane] , posLocal, temp);//IMPORTANT:For strip sensors this will make the hit strip look like a pixel at (Xstriplocal,somevalue,somevalue).
+			//geo::gGeometry().local2Master(_createSeedsFromPlanes[iplane] , posLocal, temp);//IMPORTANT:For strip sensors this will make the hit strip look like a pixel at (Xstriplocal,somevalue,somevalue).
 			//There is no way round this since the strip give a range of possible positions in 2D/3D space.      //To allow strip sensor to be seed would involve major change to how this is done. For now just don't do it  
-			float posGlobal[] = { static_cast<float>(temp[0]), static_cast<float>(temp[1]), static_cast<float>(temp[2]) };
-			streamlog_out ( DEBUG2 ) << "pick next hit " << _createSeedsFromPlanes[iplane]<< " " <<  posLocal[0] << " " << posLocal[1] << " " << posLocal[2] <<  " : "<< posGlobal[0] << " "    << posGlobal[1] << " "   << posGlobal[2] << " " << endl;
+		//	float posGlobal[] = { static_cast<float>(temp[0]), static_cast<float>(temp[1]), static_cast<float>(temp[2]) };
 			state.setLocation(_createSeedsFromPlanes[iplane]);//This stores the location as a float in Z0 since no location for track LCIO. This is preferable to problems with storing hits.  
-			state.setPosition(posGlobal); //This will automatically take cartesian coordinate system and save it to reference point. //This is different from most LCIO applications since each track will have own reference point. 		
-			state.setDirectionXY(0.);  // seed with 0 at first hit. This one is stored as tan (x/y) rather than angle as in LCIO format TO DO:This really should be give as a beam direction.  
+			state.setPositionLocal(posLocal); //This will automatically take cartesian coordinate system and save it to reference point. //This is different from most LCIO applications since each track will have own reference point. 		
+			state.setDirectionXZ(0.);  // seed with 0 at first hit. This one is stored as tan (x/y) rather than angle as in LCIO format TO DO:This really should be give as a beam direction.  
 			state.setDirectionYZ(0.);  // seed with 0 at first hit.
 			state.setBeamCharge(_beamQ);//this is set for each state. to do: is there a more efficient way of doing this since we only need this stored once?
 			state.setBeamEnergy(_beamE);//this is saved in gev. 
@@ -868,20 +864,12 @@ const EVENT::TrackerHit* EUTelKalmanFilter::findClosestHit(EUTelState & state ) 
         streamlog_out( DEBUG2 ) << "-----------------------------------EUTelKalmanFilter::propagateTrackState()----------------------------------" << std::endl;
   */  }
 
-	void EUTelKalmanFilter::findNextStateUsingJacobian(EUTelState& state,TMatrixD & jacobian,float zPosition, EUTelState& newState){
-	streamlog_out( DEBUG5 ) << "EUTelKalmanFilter::findNextStateUsingJacobianFinder()" << std::endl;
-
-	streamlog_out( DEBUG5 ) << "The jacobian that will transfrom the state and covariance matrix" << std::endl;
-	streamlog_message( DEBUG4, jacobian.Print();, std::endl; );
-
-	TVectorD stateVec = state.getTrackStateVec();
-	streamlog_out( DEBUG4 ) << "Before transformation state variables" << std::endl;
-	streamlog_message( DEBUG4, stateVec.Print();, std::endl; );
-	TVectorD stateVecNew = jacobian * stateVec; 
-	streamlog_out( DEBUG4 ) << "After transformation state variables" << std::endl;
-	streamlog_message( DEBUG4, stateVecNew.Print();, std::endl; );
-	float referencePoint[] = {stateVecNew[3],stateVecNew[4],zPosition};//Z position is not a state parameter but should add here for use later. 
-	newState.setPosition(referencePoint);		
+	void EUTelKalmanFilter::setNewState(float position[],float momentum[], EUTelState& newState){
+//	streamlog_out( DEBUG5 ) << "EUTelKalmanFilter::setNewState()" << std::endl;
+//	newState.setPosition(Position);		
+//	newState.setDirectionXY(momentum[0]/momentum[2]);
+//	newState.setDirectionYZ(momentum[1]/momentum[2]);
+	/* We should not update the error matrix here. This can be done by the GBL processor.
 ///////////////////////////////////////////////////////////Here we update the Covariant matrix
 	TMatrixDSym TrackCovState = state.getTrackStateCov();
 	streamlog_out( DEBUG4 ) << "Before transformation covMatrix" << std::endl;
@@ -898,8 +886,8 @@ const EVENT::TrackerHit* EUTelKalmanFilter::findClosestHit(EUTelState & state ) 
 
 	newState.setCovMatrix( trkCov );    
 	
-	
-	streamlog_out( DEBUG5 ) << "-----------------------------------EUTelKalmanFilter::findNextStateUsingJacobianFinder()----------------------------------" << std::endl;
+*/	
+//	streamlog_out( DEBUG5 ) << "-----------------------------------EUTelKalmanFilter::setNewState()----------------------------------" << std::endl;
 }
 				    
     /** Retrieve hit covariance matrix from hit object. Useful for matrix operations

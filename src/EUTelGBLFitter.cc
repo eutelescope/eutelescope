@@ -317,11 +317,11 @@ void EUTelGBLFitter::UpdateTrackFromGBLTrajectory (gbl::GblTrajectory* traj, std
 				state->print();
 				TVectorD newStateVec(5);
 				newStateVec[0] = state->getOmega() + corrections[0];
-				newStateVec[1] = state->getDirectionXY()+corrections[1];
+				newStateVec[1] = state->getDirectionXZ()+corrections[1];
 				newStateVec[2] = state->getDirectionYZ()+corrections[2];
 				newStateVec[3] = state->getPosition()[0]+corrections[3];
 				newStateVec[4] = state->getPosition()[1]+corrections[4]; 
-				state->setTrackStateVecPlusZParameter(newStateVec,state->getPosition()[2]);//TO DO:We set the z position to be the same. However if the sensor is tilted this should change. How should we deal with this
+				state->setStateVec(newStateVec);//TO DO:We set the z position to be the same. However if the sensor is tilted this should change. How should we deal with this
 				streamlog_out(DEBUG3) << endl << "State after we have added corrections: " << std::endl;
 				state->print();
 				break;
@@ -406,10 +406,8 @@ void EUTelGBLFitter::setInformationForGBLPointList(EUTelTrack& track, std::vecto
 			streamlog_out(DEBUG3)  << Utility::outputColourString("This state does not have a hit. ", "YELLOW")<<std::endl;
 			setPointVec(pointList, point);//This creates the vector of points and keeps a link between states and the points they created
 		}else{
-			double localPositionForState[3];
 			//TO DO:Fix master2Localtwo so that is is the only one. This is currently a hack
-			const double referencePoint[]	= {state.getReferencePoint()[0], state.getReferencePoint()[1],state.getReferencePoint()[2]};//Need this since geometry works with const doubles not floats 
-			geo::gGeometry().master2Localtwo( state.getLocation(), referencePoint, localPositionForState );
+			double localPositionForState[]	= {state.getPosition()[0], state.getPosition()[1],state.getPosition()[2]};//Need this since geometry works with const doubles not floats 
 			setMeasurementCov(state);
 			double cov[4] ;
 			state.getCombinedHitAndStateCovMatrixInLocalFrame(cov);
@@ -419,17 +417,16 @@ void EUTelGBLFitter::setInformationForGBLPointList(EUTelTrack& track, std::vecto
 		}//End of else statement if there is a hit.
 
 		if(i != (track.getStates().size()-1)){//We do not produce scatterers after the last plane
-			double stateReferencePoint[3];
-			stateReferencePoint[0]=state.getPosition()[0];//Position is in mm
-			stateReferencePoint[1]=state.getPosition()[1];
-			stateReferencePoint[2]=state.getPosition()[2];
-			double nextStateReferencePoint[3];
-			nextStateReferencePoint[0]=nextState.getPosition()[0];
-			nextStateReferencePoint[1]=nextState.getPosition()[1];
-			nextStateReferencePoint[2]=nextState.getPosition()[2];
-			testDistanceBetweenPoints(stateReferencePoint,nextStateReferencePoint);
-			float rad = geo::gGeometry().findRadLengthIntegral(stateReferencePoint,nextStateReferencePoint, false );//TO DO: This adds the radiation length of the plane again. If you chose true the some times it returns 0 
-			findScattersZPositionBetweenTwoStates(state, nextState); 
+			//TO DO this will not take into account the tiny change when the trajectory is bent. This could be a problem.
+			const double stateReferencePoint[] = {state.getPosition()[0], state.getPosition()[1],state.getPosition()[2]};
+			double globalPosSensor1[3];
+			geo::gGeometry().local2Master(state.getLocation(),stateReferencePoint , globalPosSensor1 );
+			const double nextStateReferencePoint[] = {nextState.getPosition()[0], nextState.getPosition()[1],nextState.getPosition()[2]};
+			double globalPosSensor2[3];
+			geo::gGeometry().local2Master(nextState.getLocation(),nextStateReferencePoint , globalPosSensor2 );
+			testDistanceBetweenPoints(globalPosSensor1,globalPosSensor2);
+			float rad = geo::gGeometry().findRadLengthIntegral(globalPosSensor1,globalPosSensor2, false );//TO DO: This adds the radiation length of the plane again. If you chose true the some times it returns 0 
+			findScattersZPositionBetweenTwoStates(state); 
 			jacPointToPoint=findScattersJacobians(state,nextState);
 			setPointListWithNewScatterers(pointList, rad);
 		}else{
@@ -458,10 +455,7 @@ void EUTelGBLFitter::setInformationForGBLPointListForAlignment(EUTelTrack& track
 			streamlog_out(DEBUG3)  << Utility::outputColourString("This state does not have a hit. ", "YELLOW")<<std::endl;
 			setPointVec(pointList, point);//This creates the vector of points and keeps a link between states and the points they created
 		}else{
-			double localPositionForState[3];
-			//TO DO:Fix master2Localtwo so that is is the only one. This is currently a hack
-			const double referencePoint[]	= {state.getReferencePoint()[0], state.getReferencePoint()[1],state.getReferencePoint()[2]};//Need this since geometry works with const doubles not floats 
-			geo::gGeometry().master2Localtwo( state.getLocation(), referencePoint, localPositionForState );
+			double localPositionForState[]	= {state.getPosition()[0], state.getPosition()[1],state.getPosition()[2]};//Need this since geometry works with const doubles not floats 
 			setMeasurementCov(state);
 			double cov[4] ;
 			state.getCombinedHitAndStateCovMatrixInLocalFrame(cov);
@@ -471,7 +465,7 @@ void EUTelGBLFitter::setInformationForGBLPointListForAlignment(EUTelTrack& track
 		}//End of else statement if there is a hit.
 
 		if(i != (track.getStates().size()-1)){//We do not produce scatterers after the last plane
-			jacPointToPoint=state.computePropagationJacobianFromStateToThisZLocation(nextState.getPosition()[2]);
+		//	jacPointToPoint=state.computePropagationJacobianFromStateToThisZLocation(nextState.getPosition()[2]);
 		}else{
 			streamlog_out(DEBUG3)<<"We have reached the last plane"<<std::endl;
 		}
@@ -512,16 +506,30 @@ void EUTelGBLFitter::setPointListWithNewScatterers(std::vector< gbl::GblPoint >&
 //We want to create a jacobain from (Plane1 -> scatterer1) then (scatterer1->scatterer2) then (scatter2->plane2). We return the last jacobain
 TMatrixD EUTelGBLFitter::findScattersJacobians(EUTelState state, EUTelState nextState){
 	_scattererJacobians.clear();
-	EUTelState loopState = state;
+	float loopPosition[3];
+	loopPosition[0]=state.getPosition()[0];	loopPosition[1]=state.getPosition()[1];	loopPosition[2]=state.getPosition()[2];
+	TVector3 momentum = state.computeCartesianMomentum();
+	double loopMomentum[3];
+	loopMomentum[0] = momentum[0];
+	loopMomentum[1] = momentum[1];
+	loopMomentum[2] = momentum[2];
+	TVector3 newPos;
+	TVector3 newMomentum;
 	for(int i=0;i<_scattererPositions.size();i++){
-		_scattererJacobians.push_back(loopState.computePropagationJacobianFromStateToThisZLocation(_scattererPositions[i]));
-		TVectorD nextStateVec = _scattererJacobians.at(i) * loopState.getTrackStateVec(); 
-		streamlog_out(DEBUG5)<<"The new state vector on the scatter is: " <<std::endl;
-		//nextStateVec.Print();
-		streamlog_out(DEBUG5)<<"The z position of this scatter is: "<< _scattererPositions[i] <<std::endl;
-		loopState.setTrackStateVecPlusZParameter(nextStateVec, _scattererPositions[i]);
-		streamlog_out(DEBUG5)<<"The z position of loop state: "<< loopState.getPosition()[2]<<std::endl;
+/*		newPos = getXYZfromArcLength(loopPosition[0], loopPosition[1],loopPosition[2],loopMomentum[0],loopMomentum[1],loopMomentum[2],state.getBeamCharge(),_scatterPositions[i]); 
+		newMomentum = getXYZMomentumfromArcLength(momentum,loopPosition,newPos);
+		TMatrix curvilinearJacobian = geo::gGeometry().getPropagationJacobianCurvilinear(momentum,newMomentim ,position, newPos,getBeamCharge() , _scatterPositions[i]);
+		TMatrix localToCurvilinearJacobianStartSensor =  geo::gGeometry().getLocalToCurvilinearTransformMatrix(position,momentum, getLocation(),getBeamCharge() )
+		TMatrix localToCurvilinearJacobianEndSensor =  geo::gGeometry().getLocalToCurvilinearTransformMatrix(positionEnd,momentumEnd,nextPlaneID ,getBeamCharge() )
+		TMatrix curvilinearToLocaljacobianEndSensor = localToCurvilinearJacobianEndSensor.Invert()
+		TMatrix localToNextLocaljacobian = curvilinearToLocaljacobianEndSensor*curvilinearJacobian*localToCurvilinearJacobianStartSensor
 
+		_scattererJacobians.push_back(loopState.computePropagationJacobianFromLocalStateToNextLocalState(newPos,newMomentum ,_scatterPosition[i] , -999));//To DO if scatter then plane is always parallel to z axis
+		momentum[0]=newMomentum[0]; momentum[1]=newMomentum[1];	momentum[2]=newMomentum[2];
+		double loopMomentum[0] = ((momentum[0]*pow(10,9)))*(5.36*pow(10,-28))*1000;
+		double loopMomentum[1] = ((momentum[1]*pow(10,9)))*(5.36*pow(10,-28))*1000;
+		double loopMomentum[2] = ((momentum[2]*pow(10,9)))*(5.36*pow(10,-28))*1000;
+		loopPosition[0]=newPos[0];	loopPosition[1]=newPos[1];	loopPosition[2]=newPos[2];*/
 	}
 	if(_scattererJacobians.size() != 3){
 		throw(lcio::Exception(Utility::outputColourString("There is not 3 jacobians produced by scatterers!.", "RED"))); 	
@@ -530,13 +538,14 @@ TMatrixD EUTelGBLFitter::findScattersJacobians(EUTelState state, EUTelState next
 }
 //The distance from the first state to the next scatterer and then from that scatterer to the next all the way to the next state. 
 //TO DO: This uses the optimum positions as described by Claus.  However for non homogeneous material distribution this might not be the case.
-void EUTelGBLFitter::findScattersZPositionBetweenTwoStates(EUTelState& state, EUTelState& nextState){
+void EUTelGBLFitter::findScattersZPositionBetweenTwoStates(EUTelState& state){
 	_scattererPositions.clear();	
-	float distance1 = (nextState.getReferencePoint()[2] + state.getReferencePoint()[2])/2 - (nextState.getReferencePoint()[2] - state.getReferencePoint()[2])/sqrt(12); 
+	float arcLength = state.getArcLengthToNextState();
+ 	float distance1 =arcLength/2 - arcLength/sqrt(12); 
 	_scattererPositions.push_back(distance1);//Z position of 1st scatter	
-	float distance2 = (nextState.getReferencePoint()[2] + state.getReferencePoint()[2])/2 + (nextState.getReferencePoint()[2] - state.getReferencePoint()[2])/sqrt(12);//Z position of 2nd scatter 
+	float distance2 = arcLength/2 + arcLength/sqrt(12);//Z position of 2nd scatter 
 	_scattererPositions.push_back(distance2);
-	_scattererPositions.push_back(nextState.getReferencePoint()[2]); 
+	_scattererPositions.push_back(arcLength); 
 }
 //Note that we take the planes themselfs at scatters and also add scatterers to simulate the medium inbetween. 
 void EUTelGBLFitter::setScattererGBL(gbl::GblPoint& point, int iPlane) {

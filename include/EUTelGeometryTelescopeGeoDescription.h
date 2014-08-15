@@ -222,7 +222,8 @@ namespace eutelescope {
             
 	    /** Plane normal vector (nx,ny,nz) */
             TVector3 siPlaneNormal( int );
-            
+            TVector3 siPlaneXAxis( int);
+						TVector3 siPlaneYAxis( int );
             void initialisePlanesToExcluded(FloatVec planeIDs );
             /** Map from sensor ID to number along Z */
             const std::map<int, int>& sensorZOrdertoIDs() const;
@@ -300,10 +301,12 @@ namespace eutelescope {
  
 		void master2LocalVec( int, const double[], double[] );
 
-		int findIntersectionWithCertainID( float x0, float y0, float z0, float px, float py, float pz, float _beamQ, int nextPlaneID, float output[]);
+		int findIntersectionWithCertainID( float x0, float y0, float z0, float px, float py, float pz, float beamQ, int nextPlaneID, float outputPosition[],float outputMomentum[], float& arcLength );
+		TVector3 getXYZMomentumfromArcLength(TVector3 momentum, TVector3 globalPositionStart, TVector3 globalPositionEnd, float charge, float  arcLength );
+
 
 		TVector3 getXYZfromArcLength( double x0, double y0, double z0, double px, double py, double pz, float _beamQ, double s) const;
-		TMatrix getPropagationJacobianCurvilinear(TVector3 globalMomentumStart, TVector3 globalMomentumEnd, TVector3 globalPositionStart, TVector3 globalPositionEnd, float charge, float  arcLength );
+		TMatrix getPropagationJacobianCurvilinear( double ds, double qbyp, TVector3& t1, TVector3& t2, TVector3& bc);
 		TMatrix getLocalToCurvilinearTransformMatrix(TVector3 globalPosition  , TVector3 globalMomentum, int  planeID, float charge);
 
 

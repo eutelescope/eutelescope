@@ -28,12 +28,13 @@ namespace eutelescope {
 			//getters
 			int getDimensionSize() const ;
 			int	getLocation() const;
-			TMatrixDSym getTrackStateCov() const;
-			TVectorD getTrackStateVec() const ;
+			TMatrixDSym getStateCov() const;
+			TVectorD getStateVec() const ;
 			inline float  getBeamCharge() const  { return getdEdxError();}
 			inline float  getBeamEnergy() const {return getdEdx();}
-			float getDirectionXY() const {return getPhi();}
+			float getDirectionXZ() const {return getPhi();}
 			float getDirectionYZ() const {return getTanLambda();}
+			float getArcLengthToNextState() const {return getChi2();} 
 			float* getPosition() const; 
 			void getCombinedHitAndStateCovMatrixInLocalFrame(double (&cov)[4]) const;
 			bool getIsThereAHit() const;
@@ -45,17 +46,20 @@ namespace eutelescope {
 			void setBeamEnergy(float beamE);
 			void setBeamCharge(float beamQ);
 			void setDirectionYZ(float directionYZ);
-			void setDirectionXY(float directionXY);
-			void setPosition(float position[]);
+			void setDirectionXZ(float directionXZ);
+			void setDirectionXZAndXZAndCurvatureUsingMomentum(float momentumIn[]);
+			void setPositionLocal(float position[]);
+			void setPositionGlobal(float positionGlobal[]);
 			void setCombinedHitAndStateCovMatrixInLocalFrame(double cov[4]);
-			void setTrackStateVecPlusZParameter(TVectorD stateVec, float zParameter);
+			void setStateVec(TVectorD stateVec);
+			void setArcLengthToNextState(float arcLength){setChi2(arcLength);} 
 			//initialise
 			void initialiseCurvature();
 			//find
-			int findIntersectionWithCertainID(int nextsensorID, float intersectionPoint[] );
+			int findIntersectionWithCertainID(int nextsensorID, float intersectionPoint[],float momentumAtIntersection[], float & arcLength );
 			//compute
-			TVector3 computeCartesianMomentum();
-			TMatrix computePropagationJacobianFromStateToThisZLocation(float zPosition);
+			TVector3 computeCartesianMomentum() const ;
+			TMatrix computePropagationJacobianFromLocalStateToNextLocalState(TVector3 positionEnd, TVector3 momentumEnd, float arcLength,float nextPlaneID);
 			//print
 			void print();
 			bool operator<(const EUTelState compareState ) const;

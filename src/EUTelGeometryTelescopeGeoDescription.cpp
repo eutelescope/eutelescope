@@ -315,7 +315,30 @@ TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneNormal( int planeID ) {
     }
     return TVector3(0.,0.,0.);
 }
-
+TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneXAxis( int planeID ) {
+    std::map<int,int>::iterator it;
+    it = _sensorIDtoZOrderMap.find(planeID);
+    if ( it != _sensorIDtoZOrderMap.end() ) {
+        TVector3 normVec( 1., 0., 0. );
+        normVec.RotateX( siPlaneXRotation( planeID) ); // to be in rad
+        normVec.RotateY( siPlaneYRotation( planeID) ); // to be in rad
+        normVec.RotateZ( siPlaneZRotation( planeID) ); // to be in rad
+        return normVec;
+    }
+    return TVector3(0.,0.,0.);
+}
+TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneYAxis( int planeID ) {
+    std::map<int,int>::iterator it;
+    it = _sensorIDtoZOrderMap.find(planeID);
+    if ( it != _sensorIDtoZOrderMap.end() ) {
+        TVector3 normVec( 0., 1., 0. );
+        normVec.RotateX( siPlaneXRotation( planeID) ); // to be in rad
+        normVec.RotateY( siPlaneYRotation( planeID) ); // to be in rad
+        normVec.RotateZ( siPlaneZRotation( planeID) ); // to be in rad
+        return normVec;
+    }
+    return TVector3(0.,0.,0.);
+}
 const std::map<int, int>& EUTelGeometryTelescopeGeoDescription::sensorIDstoZOrder( ) const {
     return _sensorIDtoZOrderMap;
 }
@@ -1478,21 +1501,12 @@ int EUTelGeometryTelescopeGeoDescription::findNextPlaneEntrance(  double* lpoint
 /**
 * Find closest surface intersected by the track and return the position
 */
-int EUTelGeometryTelescopeGeoDescription::findIntersectionWithCertainID( float x0, float y0, float z0, float px, float py, float pz, float beamQ, int nextPlaneID, float output[]) {
+int EUTelGeometryTelescopeGeoDescription::findIntersectionWithCertainID( float x0, float y0, float z0, float px, float py, float pz, float beamQ, int nextPlaneID, float outputPosition[],float outputMomentum[], float& arcLength) {
 streamlog_out(DEBUG5) << "EUTelGeometryTelescopeGeoDescription::findIntersectionWithCertainID()------BEGIN" << std::endl;
 	//positions are in mm
   TVector3 trkVec(x0,y0,z0);
-	//Momentum here is the energy of the beam in Gev. So we should change to eV by x by 10^9
-	//Then we divide by c to get momentum
-	//Then we note that 1eV/c = 5.36x10^-28 kg m s^-1 to change to kg m s^-1
-	//Then we x by 1000 to get mm and not metres
-	double pxSIUnits = ((px*pow(10,9)))*(5.36*pow(10,-28))*1000;
-	double pySIUnits = ((py*pow(10,9)))*(5.36*pow(10,-28))*1000;
-	double pzSIUnits = ((pz*pow(10,9)))*(5.36*pow(10,-28))*1000;//this is in femtometers since the container can not hold such a small number.
-	//p is kg mm s^-1 
-	//This will not be outputed to screen since it is too small.
-	TVector3 pVec(pxSIUnits,pySIUnits,pzSIUnits);
-	streamlog_out(DEBUG5) << "  Global positions (Input): "<< x0 <<"  "<< y0 <<"  "<< z0 << " Momentum(Number too small to be outputed): "<< pVec[0]<<","<<pVec[1]<<","<<pVec[2]<<","<< std::endl;
+	TVector3 pVec(px,py,pz);
+	streamlog_out(DEBUG5) << "  Global positions (Input): "<< x0 <<"  "<< y0 <<"  "<< z0 << " Momentum(Number too small to be outputed): "<< px<<","<<py<<","<<pz<< std::endl;
  
   // Find magnetic field at that point and then the components/////////////////////////////////// 
   gear::Vector3D vectorGlobal( x0, y0, z0 );        // assuming uniform magnetic field running along X direction. Why do we need this assumption. Equations of motion do not seem to dictate this.
@@ -1509,9 +1523,8 @@ streamlog_out(DEBUG5) << "EUTelGeometryTelescopeGeoDescription::findIntersection
   const double p = pVec.Mag();//Must be in (kg*mm*s-1)
 	//const double mm = 1000.;
   //const double k = -0.299792458/mm*beamQ*H;
-	const double constant = -1;   // -0.299792458; //This is a constant used in the derivation of this equation. I am not sure where is comes from.//unitless
-	const double electronCharge = 1.602*pow(10,-19);//This is in coulombs
-	const double combineConstantsAndMagneticField = constant*beamQ*electronCharge*H;
+	const double constant =  -0.299792458; //This is a constant used in the derivation of this equation. This is the distance light travels in a nano second    
+	const double combineConstantsAndMagneticField = constant*beamQ*H;
   const double rho = combineConstantsAndMagneticField/p;//must have units of 1/mm since p = kg x mm x s^-1. 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////       
 				      
@@ -1538,8 +1551,6 @@ streamlog_out(DEBUG5) << "EUTelGeometryTelescopeGeoDescription::findIntersection
 	  streamlog_out (DEBUG5) << "Delta "<< std::endl;
 		delta.Print();
   }
-
-
 	//Solution to the plane equation and the curved line intersection will be an quadratic with the coefficients. The solution is the arc length along the curve
 	const double a = -0.5 * rho * ( norm.Dot( pVecCrosH ) ) / p;
   const double b = norm.Dot( pVec ) / p;
@@ -1555,16 +1566,52 @@ streamlog_out(DEBUG5) << "EUTelGeometryTelescopeGeoDescription::findIntersection
 			
 	//Determine the global position from arc length.             
   TVector3 newPos;
-	newPos = getXYZfromArcLength(x0, y0,z0,pxSIUnits,pySIUnits,pzSIUnits,beamQ,solution);
-	output[0]=newPos[0]; 				output[1]=newPos[1]; 				output[2]=newPos[2];
-				
+	TVector3 newMomentum;
+	newPos = getXYZfromArcLength(x0, y0,z0,px,py,pz,beamQ,solution);
+	newMomentum = getXYZMomentumfromArcLength(pVec, trkVec, newPos, beamQ, solution);
+	outputPosition[0]=newPos[0]*pow(10,-3); 				outputPosition[1]=newPos[1]*pow(10,-3); 				outputPosition[2]=newPos[2]*pow(10,-3);
+	outputMomentum[0]=newMomentum[0]; 				outputMomentum[1]=newMomentum[1]; 				outputMomentum[2]=newMomentum[2];
+	arcLength = solution*pow(10,-3);		
 	streamlog_out (DEBUG5) << "Solutions for arc length: " << std::setw(15) << sol[0] << std::setw(15) << sol[1] << std::endl;
-	streamlog_out (DEBUG5) << "Final solution (X,Y,Z): " << std::setw(15) << output[0]  << std::setw(15) << output[1]  << std::setw(15) << output[2] << std::endl;
+	streamlog_out (DEBUG5) << "Final solution (X,Y,Z): " << std::setw(15) << outputPosition[0]  << std::setw(15) << outputPosition[1]  << std::setw(15) << outputPosition[2] << std::endl;
 
         
   streamlog_out(DEBUG2) << "-------------------------EUTelGeometryTelescopeGeoDescription::findIntersection()--------------------------" << std::endl;
         
   return nextPlaneID;
+}
+//This will calculate the momentum at a arc length away given initial parameters.
+TVector3 EUTelGeometryTelescopeGeoDescription::getXYZMomentumfromArcLength(TVector3 momentum, TVector3 globalPositionStart, TVector3 globalPositionEnd, float charge, float arcLength ){
+	TVector3 zGlobalNormal;
+	zGlobalNormal[0]=0;zGlobalNormal[1]=0;zGlobalNormal[2]=1;
+	TVector3 M0;
+	M0[0] = globalPositionStart[0]; M0[1] = globalPositionStart[1]; M0[2] = globalPositionStart[2];
+	TVector3 M;
+	M[0] = globalPositionEnd[0]; M[1] = globalPositionEnd[1]; M[2] = globalPositionEnd[2];
+	TVector3 M0MinusM = M0-M;
+	TVector3 T = momentum.Unit();//This is one coordinate axis of curvilinear coordinate system.	
+	TVector3 U = (zGlobalNormal.Cross(T)).Unit();//This is the next coordinate axis
+	TVector3 V = (T.Cross(U));	
+	const gear::BField&   Bfield = geo::gGeometry().getMagneticFiled();
+	gear::Vector3D vectorGlobal(globalPositionStart[0],globalPositionStart[1],globalPositionStart[1]);//Since field is homogeneous this seems silly but we need to specify a position to geometry to get B-field.
+	const double Bx = (Bfield.at( vectorGlobal ).x())*0.3;//We times bu 0.3 due to units of other variables. See paper. Must be Tesla
+	const double By = (Bfield.at( vectorGlobal ).y())*0.3;
+	const double Bz = (Bfield.at( vectorGlobal ).z())*0.3;
+	TVector3 B;
+	B[0]=Bx; B[1]=By; B[2]=Bz;
+	TVector3 H = B.Unit();
+	const float alpha = (H.Cross(T)).Mag();
+	const float gamma = H.Dot(T);
+	const float Q = -(B.Mag())*(charge/(momentum.Mag()));//You could use end momentum since it must be constant
+	const float qpInv = pow((charge/(momentum.Mag())),-1);
+	float theta = Q*arcLength;
+	TVector3 N = (H.Cross(T)).Unit();
+	const float cosTheta = cos(theta);
+	const float sinTheta = sin(theta);
+	const float oneMinusCosTheta = (1-cos(theta));
+	TVector3 momentumEnd = gamma*oneMinusCosTheta*H+cosTheta*momentum+alpha*sinTheta*N;
+
+	return momentumEnd;
 }
 //This function determined the xyz position in global coordinates using the state and arc length of the track s.
 //x,y,z is in mm and momentum is in kg mm s^-1. s is in mm
@@ -1586,14 +1633,10 @@ TVector3 EUTelGeometryTelescopeGeoDescription::getXYZfromArcLength( double x0, d
                
 	const double H = hVec.Mag();
   const double p = pVec.Mag();
-//	const double mm = 1000.;
-// 	const double k = -0.299792458/mm*_beamQ*H;
-//  const double rho = k/p;
-	const double constant = -1;  // -0.299792458; //This is a constant used in the derivation of this equation. I am not sure where is comes from.
-	const double electronCharge = 1.602*pow(10,-19);//This is in coulombs
-	const double combineConstantsAndMagneticField = constant*beamQ*electronCharge*H;
+	const double constant = -0.299792458; 
+	const double combineConstantsAndMagneticField = constant*beamQ*H;
 	const double k = combineConstantsAndMagneticField;
-  const double rho = combineConstantsAndMagneticField/p;//must have units of 1/mm since p = kg x mm x s^-1. 
+  const double rho = combineConstantsAndMagneticField/p; 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////       
 
 	if ( fabs( k ) > 0  ){
@@ -1638,9 +1681,24 @@ TMatrix EUTelGeometryTelescopeGeoDescription::getLocalToCurvilinearTransformMatr
 	TVector3 T = globalMomentum.Unit();//This is one coordinate axis of curvilinear coordinate system.	
 	TVector3 U = (zGlobalNormal.Cross(T)).Unit();//This is the next coordinate axis
 	TVector3 V = (T.Cross(U));	
-  TVector3 I = geo::gGeometry().siPlaneNormal( planeID  ); //This is the z direction of the plane in local frame      
-	TVector3 K = (I.Cross(xGlobalNormal)).Unit();//This should be the y direction of the sensor in local frame
-	TVector3 J = (I.Cross(K)).Unit(); //This should be x axis in local frame. 
+	TVector3 I;
+	TVector3 K;
+	TVector3 J;
+	if(planeID>0){
+		I = geo::gGeometry().siPlaneNormal( planeID  ); //This is the z direction of the plane in local frame      
+	}else{
+		I[0]=0;		I[1]=0;		I[2]=1;
+	}
+	if(planeID>0){
+		K = geo::gGeometry().siPlaneYAxis( planeID  ); //This is the y direction of the local frame in global coordinates.      
+	}else{
+		K[0]=0;		K[1]=1;		K[2]=0;
+	}
+	if(planeID>0){
+		J  = geo::gGeometry().siPlaneXAxis( planeID  ); //X direction      
+	}else{
+		J[0]=1;		J[1]=0;		J[2]=0;
+	}
 	TVector3 N = (H.Cross(T)).Unit();
 	//
 	const float alpha = (H.Cross(T)).Mag();
@@ -1668,6 +1726,7 @@ TMatrix EUTelGeometryTelescopeGeoDescription::getLocalToCurvilinearTransformMatr
 //This papaer describes the one letter variables. 
 //s must be in metres
 //momentum must be GeV/c
+/*
 TMatrix EUTelGeometryTelescopeGeoDescription::getPropagationJacobianCurvilinear(TVector3 globalMomentumStart, TVector3 globalMomentumEnd, TVector3 globalPositionStart, TVector3 globalPositionEnd, float charge, float arcLength){
 	const float lambda0 = asin(globalMomentumStart[2]/(globalMomentumStart.Mag()));//This will be in radians.
 	const float lambda = asin(globalMomentumEnd[2]/(globalMomentumEnd.Mag()));//This will be in radians.
@@ -1768,6 +1827,104 @@ TMatrix EUTelGeometryTelescopeGeoDescription::getPropagationJacobianCurvilinear(
 
 	return jacobian;
 
+}
+*/
+/*
+ * \param [in] ds   (3D) arc length to end point
+ *  * \param [in] qbyp q/p (signed inverse momentum)
+ *   * \param [in] t1   track direction at start point
+ *    * \param [in] t2   track direction at end point
+ *     * \param [in] b   B (magnetic field)
+ *      * \return (5*5) propagation matrix
+ *       */
+TMatrix EUTelGeometryTelescopeGeoDescription::getPropagationJacobianCurvilinear(double ds, double qbyp, TVector3& t1, TVector3& t2, TVector3& b) {
+	TMatrixD ajac(5, 5);
+	TVector3  bc  = b*0.3;//This is b*c. speed of light in 1 nanosecond
+	ajac.UnitMatrix(); 
+	const double qp = -bc.Mag(); // -|B*c|
+	const double q = qp * qbyp; // Q
+	if (q == 0.) {
+		// line
+ 		ajac[3][2] = ds * sqrt(t1[0] * t1[0] + t1[1] * t1[1]);
+		ajac[4][1] = ds;
+	} else {
+		// helix
+		// at start
+		const double cosl1 = sqrt(t1[0] * t1[0] + t1[1] * t1[1]);
+		// at end
+		const double cosl2 = sqrt(t2[0] * t2[0] + t2[1] * t2[1]);
+		const double cosl2Inv = 1. / cosl2;
+		// magnetic field direction
+		TVector3 hn(bc.Unit());
+		// (signed) momentum
+		const double pav = 1.0 / qbyp;
+		//
+		const double theta = q * ds;
+		const double sint = sin(theta);
+		const double cost = cos(theta);
+		const double gamma = hn.Dot(t2); // H*T
+		TVector3 an1 = hn.Cross(t1); // HxT0
+		TVector3 an2 = hn.Cross(t2); // HxT
+		// U0, V0
+		const double au1 = 1. / sqrt(t1[0]*t1[0]+t2[1]*t2[1]);
+		TVector3 u1(-au1 * t1[1], au1 * t1[0], 0.);
+		TVector3 v1(-t1[2] * u1[1], t1[2] * u1[0], t1[0] * u1[1] - t1[1] * u1[0]);
+		// U, V
+		const double au2 = 1. /sqrt(t1[0]*t1[0]+t2[1]*t2[1]);
+		TVector3 u2(-au2 * t2[1], au2 * t2[0], 0.);
+		TVector3 v2(-t2[2] * u2[1], t2[2] * u2[0], t2[0] * u2[1] - t2[1] * u2[0]);
+		//
+		const double anv = -hn.Dot(u2); // N*V=-H*U
+		const double anu = hn.Dot(v2);  // N*U= H*V
+		const double omcost = 1. - cost;
+		const double tmsint = theta - sint;
+		// M0-M
+		TVector3 dx(-(gamma * tmsint * hn[0] + sint * t1[0] + omcost * an1[0]) / q,
+		-(gamma * tmsint * hn[1] + sint * t1[1] + omcost * an1[1]) / q,
+		-(gamma * tmsint * hn[2] + sint * t1[2] + omcost * an1[2]) / q);
+		// HxU0
+		TVector3 hu1 = hn.Cross(u1);
+		// HxV0
+		TVector3 hv1 = hn.Cross(v1);
+		// some.Dot products
+		const double u1u2 = u1.Dot(u2), u1v2 = u1.Dot(v2), v1u2 = v1.Dot(u2), v1v2 = v1.Dot(v2);
+		const double hu1u2 = hu1.Dot(u2), hu1v2 = hu1.Dot(v2), hv1u2 = hv1.Dot(u2), hv1v2 = hv1.Dot(v2);
+		const double hnu1 = hn.Dot(u1), hnv1 = hn.Dot(v1), hnu2 = hn.Dot(u2), hnv2 = hn.Dot(v2);
+		const double t2u1 = t2.Dot(u1), t2v1 = t2.Dot(v1);
+		const double t2dx = t2.Dot(dx), u2dx = u2.Dot(dx), v2dx = v2.Dot(dx);
+		const double an2u1 = an2.Dot(u1), an2v1 = an2.Dot(v1);
+		// jacobian
+		// 1/P
+		ajac[0][0] = 1.;
+		// Lambda
+		ajac[1][0] = -qp * anv * t2dx;
+		ajac[1][1] = cost * v1v2 + sint * hv1v2 + omcost * hnv1 * hnv2 + anv * (-sint * t2v1 + omcost * an2v1 - gamma * tmsint * hnv1);
+		ajac[1][2] = cosl1
+		* (cost * u1v2 + sint * hu1v2 + omcost * hnu1 * hnv2 + anv * (-sint * t2u1 + omcost * an2u1 - gamma * tmsint * hnu1));
+		ajac[1][3] = -q * anv * t2u1;
+		ajac[1][4] = -q * anv * t2v1;
+		// Phi
+		ajac[2][0] = -qp * anu * t2dx * cosl2Inv;
+		ajac[2][1] = cosl2Inv
+		* (cost * v1u2 + sint * hv1u2 + omcost * hnv1 * hnu2 + anu * (-sint * t2v1 + omcost * an2v1 - gamma * tmsint * hnv1));
+		ajac[2][2] = cosl2Inv * cosl1
+		* (cost * u1u2 + sint * hu1u2 + omcost * hnu1 * hnu2 + anu * (-sint * t2u1 + omcost * an2u1 - gamma * tmsint * hnu1));
+		ajac[2][3] = -q * anu * t2u1 * cosl2Inv;
+		ajac[2][4] = -q * anu * t2v1 * cosl2Inv;
+		// Xt
+		ajac[3][0] = pav * u2dx;
+		ajac[3][1] = (sint * v1u2 + omcost * hv1u2 + tmsint * hnu2 * hnv1) / q;
+		ajac[3][2] = (sint * u1u2 + omcost * hu1u2 + tmsint * hnu2 * hnu1) * cosl1 / q;
+		ajac[3][3] = u1u2;
+		ajac[3][4] = v1u2;
+		// Yt
+		ajac[4][0] = pav * v2dx;
+		ajac[4][1] = (sint * v1v2 + omcost * hv1v2 + tmsint * hnv2 * hnv1) / q;
+		ajac[4][2] = (sint * u1v2 + omcost * hu1v2 + tmsint * hnv2 * hnu1) * cosl1 / q;
+		ajac[4][3] = u1v2;
+		ajac[4][4] = v1v2;
+	}
+		return ajac;
 }
 //This function given position/momentum of a particle. Will give you the approximate jacobian at any point along the track. This effectively relates changes in the particle position/momentum at the original to some distant point. 
 //So if I change the initial position by x amount how much will all the other variables position/momentum at the new position change? This is what the Jacobian tells you.
