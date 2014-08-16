@@ -465,7 +465,7 @@ void EUTelGBLFitter::setInformationForGBLPointListForAlignment(EUTelTrack& track
 		}//End of else statement if there is a hit.
 
 		if(i != (track.getStates().size()-1)){//We do not produce scatterers after the last plane
-		//	jacPointToPoint=state.computePropagationJacobianFromStateToThisZLocation(nextState.getPosition()[2]);
+			jacPointToPoint=state.computePropagationJacobianFromLocalStateToNextLocalState(nextState.getPositionGlobal(), nextState.computeCartesianMomentum() ,state.getArcLengthToNextState() ,nextState.getLocation());
 		}else{
 			streamlog_out(DEBUG3)<<"We have reached the last plane"<<std::endl;
 		}
@@ -506,46 +506,64 @@ void EUTelGBLFitter::setPointListWithNewScatterers(std::vector< gbl::GblPoint >&
 //We want to create a jacobain from (Plane1 -> scatterer1) then (scatterer1->scatterer2) then (scatter2->plane2). We return the last jacobain
 TMatrixD EUTelGBLFitter::findScattersJacobians(EUTelState state, EUTelState nextState){
 	_scattererJacobians.clear();
-	float loopPosition[3];
-	loopPosition[0]=state.getPosition()[0];	loopPosition[1]=state.getPosition()[1];	loopPosition[2]=state.getPosition()[2];
+	TVector3 position = state.getPositionGlobal();
 	TVector3 momentum = state.computeCartesianMomentum();
-	double loopMomentum[3];
-	loopMomentum[0] = momentum[0];
-	loopMomentum[1] = momentum[1];
-	loopMomentum[2] = momentum[2];
 	TVector3 newPos;
 	TVector3 newMomentum;
+	int location = state.getLocation();
+	int locationEnd = -999; //This will create a scatterer with normal in beam direction
+	const gear::BField&   Bfield = geo::gGeometry().getMagneticFiled();
+	gear::Vector3D vectorGlobal(position[0],position[1],position[1]);//Since field is homogeneous this seems silly but we need to specify a position to geometry to get B-field.
+	const double Bx = (Bfield.at( vectorGlobal ).x());//We times bu 0.3 due to units of other variables. See paper. Must be Tesla
+	const double By = (Bfield.at( vectorGlobal ).y());
+	const double Bz = (Bfield.at( vectorGlobal ).z());
+	TVector3 B;
+	B[0]=Bx; B[1]=By; B[2]=Bz;
 	for(int i=0;i<_scattererPositions.size();i++){
-/*		newPos = getXYZfromArcLength(loopPosition[0], loopPosition[1],loopPosition[2],loopMomentum[0],loopMomentum[1],loopMomentum[2],state.getBeamCharge(),_scatterPositions[i]); 
-		newMomentum = getXYZMomentumfromArcLength(momentum,loopPosition,newPos);
-		TMatrix curvilinearJacobian = geo::gGeometry().getPropagationJacobianCurvilinear(momentum,newMomentim ,position, newPos,getBeamCharge() , _scatterPositions[i]);
-		TMatrix localToCurvilinearJacobianStartSensor =  geo::gGeometry().getLocalToCurvilinearTransformMatrix(position,momentum, getLocation(),getBeamCharge() )
-		TMatrix localToCurvilinearJacobianEndSensor =  geo::gGeometry().getLocalToCurvilinearTransformMatrix(positionEnd,momentumEnd,nextPlaneID ,getBeamCharge() )
-		TMatrix curvilinearToLocaljacobianEndSensor = localToCurvilinearJacobianEndSensor.Invert()
-		TMatrix localToNextLocaljacobian = curvilinearToLocaljacobianEndSensor*curvilinearJacobian*localToCurvilinearJacobianStartSensor
-
-		_scattererJacobians.push_back(loopState.computePropagationJacobianFromLocalStateToNextLocalState(newPos,newMomentum ,_scatterPosition[i] , -999));//To DO if scatter then plane is always parallel to z axis
+		newPos = geo::gGeometry().getXYZfromArcLength(position,momentum ,state.getBeamCharge(),_scattererPositions[i]); 
+		newMomentum = geo::gGeometry().getXYZMomentumfromArcLength(momentum, position,newPos,state.getBeamCharge(), _scattererPositions[i] );
+		TMatrix curvilinearJacobian = geo::gGeometry().getPropagationJacobianCurvilinear(_scattererPositions[i], state.getOmega(), momentum.Unit(),newMomentum.Unit());
+		streamlog_out(DEBUG0)<<"This is the curvilinear jacobian at sensor : " << location << " or scatter: "<< i << std::endl; 
+		streamlog_message( DEBUG0, curvilinearJacobian.Print();, std::endl; );
+		TMatrix localToCurvilinearJacobianStart =  geo::gGeometry().getLocalToCurvilinearTransformMatrix(position,momentum, location ,state.getBeamCharge() );
+		streamlog_out(DEBUG0)<<"This is the local to curvilinear jacobian at sensor : " << location << " or scatter: "<< i << std::endl; 
+		streamlog_message( DEBUG0, localToCurvilinearJacobianStart.Print();, std::endl; );
+		TMatrix localToCurvilinearJacobianEnd =  geo::gGeometry().getLocalToCurvilinearTransformMatrix(newPos,newMomentum,locationEnd ,state.getBeamCharge() );
+		streamlog_out(DEBUG0)<<"This is the local to curvilinear jacobian at sensor : " << locationEnd << " or scatter: "<< i << std::endl; 
+		streamlog_message( DEBUG0, localToCurvilinearJacobianEnd.Print();, std::endl; );
+		TMatrix curvilinearToLocalJacobianEnd = localToCurvilinearJacobianEnd.Invert();
+		streamlog_out(DEBUG0)<<"This is the curvilinear to local jacobian at sensor : " << locationEnd << " or scatter: "<< i << std::endl; 
+		streamlog_message( DEBUG0, curvilinearToLocalJacobianEnd.Print();, std::endl; );
+		TMatrix localToNextLocalJacobian = curvilinearToLocalJacobianEnd*curvilinearJacobian*localToCurvilinearJacobianStart;
+		streamlog_out(DEBUG0)<<"This is the full jacobian : " << locationEnd << " or scatter: "<< i << std::endl; 
+		streamlog_message( DEBUG0, localToNextLocalJacobian.Print();, std::endl; );
+		_scattererJacobians.push_back(localToNextLocalJacobian);//To DO if scatter then plane is always parallel to z axis
 		momentum[0]=newMomentum[0]; momentum[1]=newMomentum[1];	momentum[2]=newMomentum[2];
-		double loopMomentum[0] = ((momentum[0]*pow(10,9)))*(5.36*pow(10,-28))*1000;
-		double loopMomentum[1] = ((momentum[1]*pow(10,9)))*(5.36*pow(10,-28))*1000;
-		double loopMomentum[2] = ((momentum[2]*pow(10,9)))*(5.36*pow(10,-28))*1000;
-		loopPosition[0]=newPos[0];	loopPosition[1]=newPos[1];	loopPosition[2]=newPos[2];*/
+		position[0]=newPos[0];	position[1]=newPos[1];	position[2]=newPos[2];
+		location = -999;//location will always be a scatter after first loop 
+		if(i == (_scattererPositions.size()-2)){//On the last loop we want to create the jacobain to the next plane
+			locationEnd = nextState.getLocation();
+		}
 	}
 	if(_scattererJacobians.size() != 3){
-		throw(lcio::Exception(Utility::outputColourString("There is not 3 jacobians produced by scatterers!.", "RED"))); 	
+		throw(lcio::Exception(Utility::outputColourString("There are not 3 jacobians produced by scatterers!.", "RED"))); 	
 	}
 	return _scattererJacobians.back();//return the last jacobian so the next state can use this
 }
 //The distance from the first state to the next scatterer and then from that scatterer to the next all the way to the next state. 
 //TO DO: This uses the optimum positions as described by Claus.  However for non homogeneous material distribution this might not be the case.
 void EUTelGBLFitter::findScattersZPositionBetweenTwoStates(EUTelState& state){
+	streamlog_out(DEBUG1) << "  findScattersZPositionBetweenTwoStates------------- BEGIN --------------  " << std::endl;
 	_scattererPositions.clear();	
 	float arcLength = state.getArcLengthToNextState();
+	streamlog_out(DEBUG1) << "The arc length to the next state is: " << arcLength << std::endl;
  	float distance1 =arcLength/2 - arcLength/sqrt(12); 
 	_scattererPositions.push_back(distance1);//Z position of 1st scatter	
 	float distance2 = arcLength/2 + arcLength/sqrt(12);//Z position of 2nd scatter 
 	_scattererPositions.push_back(distance2);
 	_scattererPositions.push_back(arcLength); 
+	streamlog_out(DEBUG1) << "  findScattersZPositionBetweenTwoStates------------- END --------------  " << std::endl;
+
 }
 //Note that we take the planes themselfs at scatters and also add scatterers to simulate the medium inbetween. 
 void EUTelGBLFitter::setScattererGBL(gbl::GblPoint& point, int iPlane) {

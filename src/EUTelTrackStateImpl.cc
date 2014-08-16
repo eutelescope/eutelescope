@@ -251,13 +251,13 @@ TVector3 EUTelTrackStateImpl::getPfromCartesianParameters() const {
 }
 
 TVector3 EUTelTrackStateImpl::getXYZfromArcLength( float s ) const {
-		streamlog_out(DEBUG2) << "EUTelTrackStateImpl::getXYZfromArcLength----------------------------BEGIN" << std::endl;
+//		streamlog_out(DEBUG2) << "EUTelTrackStateImpl::getXYZfromArcLength----------------------------BEGIN" << std::endl;
 
-	TVector3 pVec = getPfromCartesianParameters();
-	TVector3 pos = geo::gGeometry().getXYZfromArcLength( _x, _y, _zparameter, pVec[0], pVec[1], pVec[2], _beamQ, s);
+//	TVector3 pVec = getPfromCartesianParameters();
+//	TVector3 pos = geo::gGeometry().getXYZfromArcLength( _x, _y, _zparameter, pVec[0], pVec[1], pVec[2], _beamQ, s);
 
-		streamlog_out(DEBUG2) << "EUTelTrackStateImpl::getXYZfromArcLength----------------------------END" << std::endl;	
-	return pos;
+//		streamlog_out(DEBUG2) << "EUTelTrackStateImpl::getXYZfromArcLength----------------------------END" << std::endl;	
+//	return pos;
 
 }	
 

@@ -36,6 +36,7 @@ namespace eutelescope {
 			float getDirectionYZ() const {return getTanLambda();}
 			float getArcLengthToNextState() const {return getChi2();} 
 			float* getPosition() const; 
+			TVector3 getPositionGlobal() const; 
 			void getCombinedHitAndStateCovMatrixInLocalFrame(double (&cov)[4]) const;
 			bool getIsThereAHit() const;
 			TMatrixD getProjectionMatrix() const;

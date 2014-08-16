@@ -1568,7 +1568,7 @@ streamlog_out(DEBUG5) << "EUTelGeometryTelescopeGeoDescription::findIntersection
 	//Determine the global position from arc length.             
   TVector3 newPos;
 	TVector3 newMomentum;
-	newPos = getXYZfromArcLength(x0, y0,z0,px,py,pz,beamQ,solution);
+	newPos = getXYZfromArcLength(trkVec,pVec,beamQ,solution);
 	newMomentum = getXYZMomentumfromArcLength(pVec, trkVec, newPos, beamQ, solution);
 	outputPosition[0]=newPos[0]; 				outputPosition[1]=newPos[1]; 				outputPosition[2]=newPos[2];
 	outputMomentum[0]=newMomentum[0]; 				outputMomentum[1]=newMomentum[1]; 				outputMomentum[2]=newMomentum[2];
@@ -1615,25 +1615,20 @@ TVector3 EUTelGeometryTelescopeGeoDescription::getXYZMomentumfromArcLength(TVect
 }
 //This function determined the xyz position in global coordinates using the state and arc length of the track s.
 //x,y,z is in mm and momentum is in kg mm s^-1. s is in mm
-TVector3 EUTelGeometryTelescopeGeoDescription::getXYZfromArcLength( double x0, double  y0, double z0, double px, double py, double pz, float beamQ, double s) const {
+TVector3 EUTelGeometryTelescopeGeoDescription::getXYZfromArcLength(TVector3 pos ,TVector3 pVec , float beamQ, double s) const {
 	streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::getXYZfromArcLength()" << std::endl;
-
-  // Fill the postion and momentun into vector
-	TVector3 pos( x0, y0, z0 );
-	TVector3 pVec(px, py, pz );	
-	//////////////////////////////////////////////////////
                 
   // Get magnetic field vector
-  gear::Vector3D vectorGlobal( x0, y0, z0 );        // assuming uniform magnetic field running along X direction
+  gear::Vector3D vectorGlobal( pos[0], pos[1], pos[2] );        // assuming uniform magnetic field running along X direction
 	const gear::BField&   B = geo::gGeometry().getMagneticFiled();
-  const double bx         = B.at( vectorGlobal ).x();
-  const double by         = B.at( vectorGlobal ).y();
-  const double bz         = B.at( vectorGlobal ).z();
+  const double bx         = B.at( vectorGlobal ).x()*0.3;
+  const double by         = B.at( vectorGlobal ).y()*0.3;
+  const double bz         = B.at( vectorGlobal ).z()*0.3;
   TVector3 hVec(bx,by,bz);
                
 	const double H = hVec.Mag();
   const double p = pVec.Mag();
-	const double constant = -0.299792458; 
+	const double constant =1;   //  -0.299792458; 
 	const double mm = 1000;
 	const double combineConstantsAndMagneticField = (constant*beamQ*H)/mm;
 	const double k = combineConstantsAndMagneticField;
@@ -1653,11 +1648,11 @@ TVector3 EUTelGeometryTelescopeGeoDescription::getXYZfromArcLength( double x0, d
 		pos += temp3;
 	}else{
 		// Vanishing magnetic field case. //Here you just determine the fraction of P in each direction and this must be the fraction of s that this direction gets
-		const double cosA =  px/p;      // Calculate cos of the angle between Z(beam) and X(solenoid field axis) //NEED TO MAKE SURE THAT TX=PX/P
-		const double cosB = py/p ;        // Calculate cos of the angle between Z(beam) and Y
-		pos.SetX( x0 + cosA * s );
-		pos.SetY( y0 + cosB * s );
-		pos.SetZ( z0 + 1./p * pVec.Z() * s );
+		const double cosA =  pVec[0]/p;      // Calculate cos of the angle between Z(beam) and X(solenoid field axis) //NEED TO MAKE SURE THAT TX=PX/P
+		const double cosB = pVec[1]/p ;        // Calculate cos of the angle between Z(beam) and Y
+		pos.SetX( pos[0] + cosA * s );
+		pos.SetY( pos[1] + cosB * s );
+		pos.SetZ( pos[2] + 1./p * pVec.Z() * s );
 	}
         
 	streamlog_out(DEBUG2) << "---------------------------------EUTelKalmanFilter::getXYZfromArcLength()------------------------------------" << std::endl;
@@ -1673,15 +1668,18 @@ TMatrix EUTelGeometryTelescopeGeoDescription::getLocalToCurvilinearTransformMatr
 	TVector3 B;
 	B[0]=Bx; B[1]=By; B[2]=Bz;
 	TVector3 H = B.Unit();
-	const float lambda = asin(globalMomentum[2]/(globalMomentum.Mag()));//This will be in radians.
-	const float cosLambda = cos(lambda);
-	TVector3 zGlobalNormal;
-	zGlobalNormal[0]=0;zGlobalNormal[1]=0;zGlobalNormal[2]=1;
+	TVector3 T = globalMomentum.Unit();//With no magnetic field this will point in z direction.	
+	const float cosLambda = sqrt(T[2] * T[2] + (-1*T[1]) * (-1*T[1]));;
 	TVector3 xGlobalNormal;
 	xGlobalNormal[0]=1;xGlobalNormal[1]=0;xGlobalNormal[2]=0;
-	TVector3 T = globalMomentum.Unit();//This is one coordinate axis of curvilinear coordinate system.	
-	TVector3 U = (zGlobalNormal.Cross(T)).Unit();//This is the next coordinate axis
-	TVector3 V = (T.Cross(U));	
+	TVector3 U = -(xGlobalNormal.Cross(T)).Unit();//With no magnetic field this will point in global + y direction. Lime magnetic field
+	TVector3 V = -(T.Cross(U));//With no magnetic field this will point in global  x direction. 	
+	streamlog_out(DEBUG0)<<"The X axis of the curvilinear system in the global system"<< std::endl; 
+	streamlog_message( DEBUG0, V.Print();, std::endl; );
+	streamlog_out(DEBUG0)<<"The Y axis of the curvilinear system in the global system"<< std::endl; 
+	streamlog_message( DEBUG0, U.Print();, std::endl; );
+	streamlog_out(DEBUG0)<<"The Z axis of the curvilinear system in the global system (Should be in beam direction)"<< std::endl; 
+	streamlog_message( DEBUG0, T.Print();, std::endl; );
 	TVector3 I;
 	TVector3 K;
 	TVector3 J;
@@ -1700,6 +1698,13 @@ TMatrix EUTelGeometryTelescopeGeoDescription::getLocalToCurvilinearTransformMatr
 	}else{
 		J[0]=1;		J[1]=0;		J[2]=0;
 	}
+	streamlog_out(DEBUG0)<<"The X axis of local system in the global system"<< std::endl; 
+	streamlog_message( DEBUG0, J.Print();, std::endl; );
+	streamlog_out(DEBUG0)<<"The Y axis of local system in the global system"<< std::endl; 
+	streamlog_message( DEBUG0, K.Print();, std::endl; );
+	streamlog_out(DEBUG0)<<"The Z axis of local system in the global system"<< std::endl; 
+	streamlog_message( DEBUG0, I.Print();, std::endl; );
+
 	TVector3 N = (H.Cross(T)).Unit();
 	//
 	const float alpha = (H.Cross(T)).Mag();
@@ -1720,7 +1725,7 @@ TMatrix EUTelGeometryTelescopeGeoDescription::getLocalToCurvilinearTransformMatr
 	                 jacobian[1][1]=TDotI*VDotJ;             jacobian[1][2]=TDotI*VDotK;             jacobian[1][3]=-alpha*Q*TDotJ*VDotN;             jacobian[1][4]=-alpha*Q*TDotK*VDotN;
 	                 jacobian[2][1]=(TDotI*UDotJ)/cosLambda; jacobian[2][2]=(TDotI*UDotK)/cosLambda; jacobian[2][3]=(-alpha*Q*TDotJ*UDotN)/cosLambda; jacobian[2][4]=(-alpha*Q*TDotK*UDotN)/cosLambda;
 																																																   jacobian[3][3]=UDotJ;													  jacobian[3][4]=UDotK;
-																																																   jacobian[3][3]=VDotJ;													  jacobian[3][4]=VDotK;
+																																																   jacobian[4][3]=VDotJ;													  jacobian[4][4]=VDotK;
 	return jacobian;
 }
 //This is described in Derivations of Jacobians for the propagation of covariance matrices of track parameters in homogeneous magnetic fields. A satrandie, W Wittek
@@ -1838,7 +1843,27 @@ TMatrix EUTelGeometryTelescopeGeoDescription::getPropagationJacobianCurvilinear(
  *     * \param [in] b   B (magnetic field)
  *      * \return (5*5) propagation matrix
  *       */
-TMatrix EUTelGeometryTelescopeGeoDescription::getPropagationJacobianCurvilinear(double ds, double qbyp, TVector3& t1, TVector3& t2, TVector3& b) {
+TMatrix EUTelGeometryTelescopeGeoDescription::getPropagationJacobianCurvilinear(float ds , float  qbyp,  TVector3 t1w, TVector3 t2w) {
+	//TO DO:This is a hack. Should change equations to suit our coordinate system
+	TVector3 t1(t1w[2],-t1w[1],t1w[0]);//This is need to change to claus's coordinate system
+	TVector3 t2(t2w[2],-t2w[1],t2w[0]);
+	const gear::BField&   Bfield = getMagneticFiled();
+	gear::Vector3D vectorGlobal(0.1,0.1,0.1);//Since field is homogeneous this seems silly but we need to specify a position to geometry to get B-field.
+	const double Bx = (Bfield.at( vectorGlobal ).x());//We times bu 0.3 due to units of other variables. See paper. Must be Tesla
+	const double By = (Bfield.at( vectorGlobal ).y());
+	const double Bz = (Bfield.at( vectorGlobal ).z());
+	TVector3 b;
+	b[0]=Bx; b[1]=By; b[2]=Bz;
+	streamlog_out( DEBUG2 ) << "EUTelGeometryTelescopeGeoDescription::getPropagationJacobianCurvilinear()------BEGIN" << std::endl;
+	streamlog_out( DEBUG2 ) <<"This is the input to the jacobian"<<endl;  
+	streamlog_out( DEBUG2 ) <<"The arc length: " <<ds <<endl;
+	streamlog_out( DEBUG2 ) <<"The curvature: "<< qbyp <<endl; 
+	streamlog_out(DEBUG0)<<"The unit momentum start "<< std::endl; 
+	streamlog_message( DEBUG0, t1.Print();, std::endl; );
+	streamlog_out(DEBUG0)<<"The unit momentum end "<< std::endl; 
+	streamlog_message( DEBUG0, t2.Print();, std::endl; );
+	streamlog_out(DEBUG0)<<"The unit Magnetic field  "<< std::endl; 
+	streamlog_message( DEBUG0, b.Print();, std::endl; );
 	TMatrixD ajac(5, 5);
 	TVector3  bc  = b*0.3;//This is b*c. speed of light in 1 nanosecond
 	ajac.UnitMatrix(); 
@@ -1925,6 +1950,8 @@ TMatrix EUTelGeometryTelescopeGeoDescription::getPropagationJacobianCurvilinear(
 		ajac[4][3] = u1v2;
 		ajac[4][4] = v1v2;
 	}
+	streamlog_out( DEBUG2 ) << "EUTelGeometryTelescopeGeoDescription::getPropagationJacobianCurvilinear()------END" << std::endl;
+
 		return ajac;
 }
 //This function given position/momentum of a particle. Will give you the approximate jacobian at any point along the track. This effectively relates changes in the particle position/momentum at the original to some distant point. 

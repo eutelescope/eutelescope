@@ -305,8 +305,8 @@ namespace eutelescope {
 		TVector3 getXYZMomentumfromArcLength(TVector3 momentum, TVector3 globalPositionStart, TVector3 globalPositionEnd, float charge, float  arcLength );
 
 
-		TVector3 getXYZfromArcLength( double x0, double y0, double z0, double px, double py, double pz, float _beamQ, double s) const;
-		TMatrix getPropagationJacobianCurvilinear( double ds, double qbyp, TVector3& t1, TVector3& t2, TVector3& bc);
+		TVector3 getXYZfromArcLength( TVector3 pos,TVector3 pVec , float _beamQ, double s) const;
+		TMatrix getPropagationJacobianCurvilinear(float ds, float qbyp, TVector3 t1, TVector3 t2);
 		TMatrix getLocalToCurvilinearTransformMatrix(TVector3 globalPosition  , TVector3 globalMomentum, int  planeID, float charge);
 
 

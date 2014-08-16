@@ -190,12 +190,22 @@ void EUTelKalmanFilter::propagateForwardFromSeedState( EUTelState& stateInput, E
 	streamlog_out(DEBUG2) << "This is the memory location of the state: "<< firstState << std::endl;
 	track.addTrack(static_cast<EVENT::Track*>(firstState));//Note we do not have to create new since this object State is saved in class member scope
 	//Here we loop through all the planes not excluded. We begin at the seed which might not be the first. Then we stop before the last plane, since we do not want to propagate anymore
+	bool firstLoop =true;//TO DO:: This works but is very stupid. Must fix
 	for(int i = geo::gGeometry().sensorIDToZOrderWithoutExcludedPlanes()[state->getLocation()]; i < (geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()-1); ++i){
 	
 		float globalIntersection[3];
 		float momentumAtIntersection[3];
 		float arcLength;
 		int newSensorID = state->findIntersectionWithCertainID(geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i+1], globalIntersection, momentumAtIntersection, arcLength);
+		if(arcLength == 0 or arcLength < 0 ){ 
+			throw(lcio::Exception( Utility::outputColourString("The arc length is less than or equal to zero. ","RED"))); 
+		}
+		if(firstLoop){
+			firstState->setArcLengthToNextState(arcLength); 
+			firstLoop =false;
+		}else{
+			state->setArcLengthToNextState(arcLength);
+		}
 		//cout<<"HERE1: "<<state->getPosition()[0]<<","<<state->getPosition()[1]<<","<<state->getPosition()[2]<<","<<state->getLocation()<<endl;
 		int sensorIntersectionTrue = geo::gGeometry( ).getSensorID(globalIntersection);//This is needed with the jacobian since the jacobian needs the z distance to the next point to do the calculation
 		if(newSensorID < 0 ){ //TO DO Fix geo: or sensorIntersectionTrue < 0 ){
@@ -215,7 +225,6 @@ void EUTelKalmanFilter::propagateForwardFromSeedState( EUTelState& stateInput, E
 		newState->setBeamCharge(_beamQ);
 		newState->setLocation(newSensorID);
 		newState->setPositionGlobal(globalIntersection);
-		newState->setArcLengthToNextState(arcLength); 
 		newState->setDirectionXZAndXZAndCurvatureUsingMomentum(momentumAtIntersection);
 		if(_mapHitsVecPerPlane[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i+1]].size() == 0){
 			streamlog_out(DEBUG5) << Utility::outputColourString("There are no hits on the plane with this state. Add state to track as it is and move on ","YELLOW");

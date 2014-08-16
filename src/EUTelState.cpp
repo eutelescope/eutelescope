@@ -35,6 +35,14 @@ int EUTelState::getLocation() const {
 float* EUTelState::getPosition() const {
 	return const_cast<float*>(getReferencePoint());
 }
+TVector3 EUTelState::getPositionGlobal() const {
+	float* local =  const_cast<float*>(getReferencePoint());
+	const double posLocal[3] = {local[0],local[1],local[2]};
+  double posGlobal[3];
+	geo::gGeometry().local2Master(getLocation() ,posLocal,posGlobal);
+	TVector3 posGlobalVec(posGlobal[0],posGlobal[1],posGlobal[2]);
+	return posGlobalVec;
+}
 TVectorD EUTelState::getStateVec() const { 
 	streamlog_out( DEBUG1 ) << "EUTelState::getTrackStateVec()------------------------BEGIN" << std::endl;
 	TVector3 momentum =	computeCartesianMomentum();
@@ -220,25 +228,27 @@ float tx = getDirectionXZ();float ty= getDirectionYZ(); float curvature = getOme
   const double px = p*tx / sqrt( 1. + tx*tx + ty*ty );
   const double py = p*ty / sqrt( 1. + tx*tx + ty*ty );
   const double pz = p    / sqrt( 1. + tx*tx + ty*ty );
-
-	streamlog_out(DEBUG2) << "Output parameters: px,py, pz "<<px <<","<<py<<","<<pz<<","<<std::endl;
+	const double input[3]={px,py,pz};
+	double localMomentum[3];
+	geo::gGeometry().local2MasterVec(getLocation(),input,localMomentum);
+	streamlog_out(DEBUG2) << "Output parameters: px,py, pz "<<localMomentum[0] <<","<<localMomentum[1]<<","<<localMomentum[2]<<","<<std::endl;
         
   streamlog_out(DEBUG2) << "-------------------------------EUTelState::computeCartesianMomentum()-------------------------END" << std::endl;
         
-  return TVector3(px,py,pz);
+  return TVector3(localMomentum[0],localMomentum[1],localMomentum[2]);
 }
 TMatrix EUTelState::computePropagationJacobianFromLocalStateToNextLocalState(TVector3 positionEnd, TVector3 momentumEnd, float arcLength,float nextPlaneID) {
 	streamlog_out(DEBUG2) << "-------------------------------EUTelState::computePropagationJacobianFromStateToThisZLocation()-------------------------BEGIN" << std::endl;
-/*	TVector3 position[3];
-	position[0]=getPosition()[0]; position[1]=getPosition()[1];position[2]=getPosition()[2]
-	TVector3 momentum = computeCartesianMomentum();
-	TMatrix curvilinearJacobian = geo::gGeometry().getPropagationJacobianCurvilinear(double ds, double qbyp, Vector3D& t1, Vector3D& t2, Vector3D& bc);
-	TMatrix localToCurvilinearJacobianStartSensor =  geo::gGeometry().getLocalToCurvilinearTransformMatrix(position,momentum, getLocation(),getBeamCharge() )
-	TMatrix localToCurvilinearJacobianEndSensor =  geo::gGeometry().getLocalToCurvilinearTransformMatrix(positionEnd,momentumEnd,nextPlaneID ,getBeamCharge() )
-	TMatrix curvilinearToLocaljacobianEndSensor = localToCurvilinearJacobianEndSensor.Invert()
-	TMatrix localToNextLocaljacobian = curvilinearToLocaljacobianEndSensor*curvilinearJacobian*localToCurvilinearJacobianStartSensor
-	return localToNextLocaljacobian;
-	*/
+	TMatrix curvilinearJacobian = geo::gGeometry().getPropagationJacobianCurvilinear(arcLength,getOmega(), computeCartesianMomentum().Unit(),momentumEnd.Unit());
+	TMatrix localToCurvilinearJacobianStart =  geo::gGeometry().getLocalToCurvilinearTransformMatrix(getPositionGlobal() ,computeCartesianMomentum(), nextPlaneID ,getBeamCharge() );
+	TMatrix localToCurvilinearJacobianEnd =  geo::gGeometry().getLocalToCurvilinearTransformMatrix(positionEnd ,momentumEnd,nextPlaneID ,getBeamCharge() );
+	TMatrix curvilinearToLocalJacobianEnd = localToCurvilinearJacobianEnd.Invert();
+	TMatrix localToNextLocalJacobian = curvilinearToLocalJacobianEnd*curvilinearJacobian*localToCurvilinearJacobianStart;
+	streamlog_out(DEBUG0)<<"This is the full jacobian : "<<  std::endl; 
+	streamlog_message( DEBUG0, localToNextLocalJacobian.Print();, std::endl; );
+
+	streamlog_out(DEBUG2) << "-------------------------------EUTelState::computePropagationJacobianFromStateToThisZLocation()-------------------------END" << std::endl;
+	return localToNextLocalJacobian;
 }
 //print
 void EUTelState::print(){
