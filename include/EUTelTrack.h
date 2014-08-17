@@ -25,6 +25,7 @@ namespace eutelescope {
 		public: 
 			EUTelTrack();
 			EUTelTrack( const EUTelTrack& track);
+			EUTelTrack( const EUTelTrack& track,bool);
 			//getters
 			int getNumberOfHitsOnTrack() const;
 			std::vector<EUTelState> getStates();

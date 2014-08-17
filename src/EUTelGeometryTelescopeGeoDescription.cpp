@@ -1280,7 +1280,7 @@ float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double 
     
     double snext;
     double pt[3], loc[3];
-    double epsil = 1.E-7;
+    double epsil = 1.E-4;    //1.E-7;
     double lastrad = 0.;
     int ismall       = 0;
     int nbound       = 0;
@@ -1583,14 +1583,7 @@ streamlog_out(DEBUG5) << "EUTelGeometryTelescopeGeoDescription::findIntersection
 }
 //This will calculate the momentum at a arc length away given initial parameters.
 TVector3 EUTelGeometryTelescopeGeoDescription::getXYZMomentumfromArcLength(TVector3 momentum, TVector3 globalPositionStart, TVector3 globalPositionEnd, float charge, float arcLength ){
-	TVector3 zGlobalNormal;
-	zGlobalNormal[0]=0;zGlobalNormal[1]=0;zGlobalNormal[2]=1;
-	TVector3 M0;
 	float mm= 1000;
-	M0[0] = globalPositionStart[0]/mm; M0[1] = globalPositionStart[1]/mm; M0[2] = globalPositionStart[2]/mm;
-	TVector3 M;
-	M[0] = globalPositionEnd[0]/mm; M[1] = globalPositionEnd[1]/mm; M[2] = globalPositionEnd[2]/mm;
-	TVector3 M0MinusM = M0-M;
 	TVector3 T = momentum.Unit();//This is one coordinate axis of curvilinear coordinate system.	
 	const gear::BField&   Bfield = geo::gGeometry().getMagneticFiled();
 	gear::Vector3D vectorGlobal(globalPositionStart[0],globalPositionStart[1],globalPositionStart[2]);//Since field is homogeneous this seems silly but we need to specify a position to geometry to get B-field.
@@ -1598,18 +1591,20 @@ TVector3 EUTelGeometryTelescopeGeoDescription::getXYZMomentumfromArcLength(TVect
 	const double By = (Bfield.at( vectorGlobal ).y());
 	const double Bz = (Bfield.at( vectorGlobal ).z());
 	TVector3 B;
-	B[0]=Bx; B[1]=By; B[2]=Bz;
-	TVector3 H = (B.Unit())*0.3;
+	B[0]=Bx*0.3; B[1]=By*0.3; B[2]=Bz*0.3;
+	TVector3 H = (B.Unit());
 	const float alpha = (H.Cross(T)).Mag();
 	const float gamma = H.Dot(T);
 	const float Q = -(B.Mag())*(charge/(momentum.Mag()));//You could use end momentum since it must be constant
-	const float qpInv = pow((charge/(momentum.Mag())),-1);
-	float theta = (Q*arcLength)/mm;
+	float theta = (Q*arcLength)/mm;//divide by 1000 to convert to metres 
 	TVector3 N = (H.Cross(T)).Unit();
 	const float cosTheta = cos(theta);
 	const float sinTheta = sin(theta);
 	const float oneMinusCosTheta = (1-cos(theta));
-	TVector3 momentumEnd = gamma*oneMinusCosTheta*H+cosTheta*momentum+alpha*sinTheta*N;
+	TVector3 momentumEndUnit = gamma*oneMinusCosTheta*H+cosTheta*T+alpha*sinTheta*N;
+	streamlog_out ( DEBUG0 ) << "Momentum direction (Unit Vector): " <<  momentumEndUnit[0]<<" , "<<momentumEndUnit[1] <<" , "<<momentumEndUnit[2]<<std::endl;
+	TVector3 momentumEnd = momentumEndUnit*(momentum.Mag());
+	streamlog_out ( DEBUG0 ) << "Momentum: " <<  momentumEnd[0]<<" , "<<momentumEnd[1] <<" , "<<momentumEnd[2]<<std::endl;
 
 	return momentumEnd;
 }

@@ -239,10 +239,21 @@ float tx = getDirectionXZ();float ty= getDirectionYZ(); float curvature = getOme
 }
 TMatrix EUTelState::computePropagationJacobianFromLocalStateToNextLocalState(TVector3 positionEnd, TVector3 momentumEnd, float arcLength,float nextPlaneID) {
 	streamlog_out(DEBUG2) << "-------------------------------EUTelState::computePropagationJacobianFromStateToThisZLocation()-------------------------BEGIN" << std::endl;
+	if(arcLength == 0 or arcLength < 0 ){ 
+		throw(lcio::Exception( Utility::outputColourString("The arc length is less than or equal to zero. ","RED"))); 
+	}
 	TMatrix curvilinearJacobian = geo::gGeometry().getPropagationJacobianCurvilinear(arcLength,getOmega(), computeCartesianMomentum().Unit(),momentumEnd.Unit());
+	streamlog_out(DEBUG0)<<"This is the curvilinear jacobian at sensor:" << std::endl; 
+	streamlog_message( DEBUG0, curvilinearJacobian.Print();, std::endl; );
 	TMatrix localToCurvilinearJacobianStart =  geo::gGeometry().getLocalToCurvilinearTransformMatrix(getPositionGlobal() ,computeCartesianMomentum(), nextPlaneID ,getBeamCharge() );
+	streamlog_out(DEBUG0)<<"This is the local to curvilinear jacobian at sensor : " << std::endl; 
+	streamlog_message( DEBUG0, localToCurvilinearJacobianStart.Print();, std::endl; );
 	TMatrix localToCurvilinearJacobianEnd =  geo::gGeometry().getLocalToCurvilinearTransformMatrix(positionEnd ,momentumEnd,nextPlaneID ,getBeamCharge() );
+	streamlog_out(DEBUG0)<<"This is the local to curvilinear jacobian at sensor at last next sensor : " << std::endl; 
+	streamlog_message( DEBUG0, localToCurvilinearJacobianEnd.Print();, std::endl; );
 	TMatrix curvilinearToLocalJacobianEnd = localToCurvilinearJacobianEnd.Invert();
+	streamlog_out(DEBUG0)<<"This is the curvilinear to local jacobian at sensor : " << std::endl; 
+	streamlog_message( DEBUG0, curvilinearToLocalJacobianEnd.Print();, std::endl; );
 	TMatrix localToNextLocalJacobian = curvilinearToLocalJacobianEnd*curvilinearJacobian*localToCurvilinearJacobianStart;
 	streamlog_out(DEBUG0)<<"This is the full jacobian : "<<  std::endl; 
 	streamlog_message( DEBUG0, localToNextLocalJacobian.Print();, std::endl; );

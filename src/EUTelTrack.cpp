@@ -3,9 +3,19 @@ using namespace eutelescope;
 EUTelTrack::EUTelTrack(){
 } 
 EUTelTrack::EUTelTrack(const EUTelTrack& track){
+	setChi2(track.getChi2());
+	setNdf(track.getNdf());
 	for(int i=0; i<track.getTracks().size();++i){
 		addTrack(track.getTracks().at(i));
 	}
+}
+EUTelTrack::EUTelTrack(const EUTelTrack& track, bool copyContents){
+	if( track.getChi2()== 0 or track.getNdf() == 0){
+		streamlog_out(MESSAGE5)<<"Chi: "<<track.getChi2() <<" ndf: "<<track.getNdf() <<endl;
+		throw(lcio::Exception(Utility::outputColourString("You are trying to create a track that is empty. With another track that has not chi2 or degrees of freedom.", "RED"))); 	
+	}
+	setChi2(track.getChi2());
+	setNdf(track.getNdf());
 }
 //getters
 std::vector<EUTelState> EUTelTrack::getStates(){

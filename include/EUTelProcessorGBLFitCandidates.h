@@ -110,6 +110,7 @@ namespace eutelescope {
 
 				//This is the maximum chi2 of a track that will be used in the millepede alignment fit
 				double _maxChi2Cut;
+				std::vector<float> _chi2NdfVec;
 
         /** Outlier downweighting option */
         std::string _mEstimatorType;

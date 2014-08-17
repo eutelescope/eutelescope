@@ -100,6 +100,7 @@ void EUTelProcessorGBLFitCandidates::processRunHeader(LCRunHeader * run) {
 	if (header->getGeoID() != geo::gGeometry().getSiPlanesLayoutID()) {  
 		streamlog_out(WARNING5) << "Error during the geometry consistency check: " << endl << "The run header says the GeoID is " << header->getGeoID() << endl << "The GEAR description says is     " << geo::gGeometry().getSiPlanesLayoutID() << endl;
 	}
+	_chi2NdfVec.clear();
     
 	_nProcessedRuns++;
 
@@ -162,6 +163,8 @@ void EUTelProcessorGBLFitCandidates::processEvent(LCEvent * evt){
 			static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_fitsuccessHistName ] ) -> fill(1.0);
 			track.setChi2(chi2);
 			track.setNdf(ndf);
+			_chi2NdfVec.push_back(chi2/static_cast<float>(ndf));
+
 			_trackFitter->UpdateTrackFromGBLTrajectory(traj, pointList,track);
 			map< int, map< float, float > >  SensorResidual; 
 			_trackFitter->getResidualOfTrackandHits(traj, pointList,track, SensorResidual);
@@ -214,7 +217,15 @@ if( sensor_residual_Err_it->first == 2){static_cast < AIDA::IHistogram1D* > ( _a
 }
 
 
-void EUTelProcessorGBLFitCandidates::end() {}
+void EUTelProcessorGBLFitCandidates::end() {
+	float total = 0;
+	for(int i=0; i<_chi2NdfVec.size(); ++i){
+		total= total + _chi2NdfVec.at(i);
+	}
+  float average = total/_chi2NdfVec.size();
+	streamlog_out(MESSAGE9) << "This is the average chi2 -"<< average <<std::endl;
+
+}
 
 #endif // USE_GBL
 
@@ -238,8 +249,8 @@ void EUTelProcessorGBLFitCandidates::outputLCIO(LCEvent* evt, std::vector<EUTelT
 
 	//Loop through all tracks
 	for ( int i = 0 ; i < tracks.size(); ++i){
-		EUTelTrack* trackheap = new  EUTelTrack();
-		//For every track add this to the collection
+		EUTelTrack* trackheap = new  EUTelTrack(tracks.at(i), false); //We dont want to copy contents so set to false.
+//	For every track add this to the collection
 		for(int j = 0;j < tracks.at(i).getStates().size();++j){
 			EUTelState* stateheap = new EUTelState(tracks.at(i).getStates().at(j));
 			trackheap->addTrack(stateheap);

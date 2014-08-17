@@ -83,6 +83,8 @@ namespace eutelescope {
         int _nProcessedRuns;
         /** Number of runs processed */
         int _nProcessedEvents;
+				int _chi2PassCount;
+				int _totalTrackCount;
 
 				int _alignmentMode;
 

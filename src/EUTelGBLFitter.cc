@@ -406,7 +406,6 @@ void EUTelGBLFitter::setInformationForGBLPointList(EUTelTrack& track, std::vecto
 			streamlog_out(DEBUG3)  << Utility::outputColourString("This state does not have a hit. ", "YELLOW")<<std::endl;
 			setPointVec(pointList, point);//This creates the vector of points and keeps a link between states and the points they created
 		}else{
-			//TO DO:Fix master2Localtwo so that is is the only one. This is currently a hack
 			double localPositionForState[]	= {state.getPosition()[0], state.getPosition()[1],state.getPosition()[2]};//Need this since geometry works with const doubles not floats 
 			setMeasurementCov(state);
 			double cov[4] ;
@@ -426,6 +425,12 @@ void EUTelGBLFitter::setInformationForGBLPointList(EUTelTrack& track, std::vecto
 			geo::gGeometry().local2Master(nextState.getLocation(),nextStateReferencePoint , globalPosSensor2 );
 			testDistanceBetweenPoints(globalPosSensor1,globalPosSensor2);
 			float rad = geo::gGeometry().findRadLengthIntegral(globalPosSensor1,globalPosSensor2, false );//TO DO: This adds the radiation length of the plane again. If you chose true the some times it returns 0 
+			if(rad == 0){
+				streamlog_out(MESSAGE9)<<"The positions between the scatterers are: "<<endl;
+				streamlog_out(MESSAGE9)<<"Start: "<<globalPosSensor1[0]<<" "<<globalPosSensor1[1]<<" "<<globalPosSensor1[2]<<endl;
+				streamlog_out(MESSAGE9)<<"End: "<<globalPosSensor2[0]<<" "<<globalPosSensor2[1]<<" "<<globalPosSensor2[2]<<endl;
+				throw(lcio::Exception(Utility::outputColourString("The provides radiation length to create scatterers it zero.", "RED"))); 	
+			} 
 			findScattersZPositionBetweenTwoStates(state); 
 			jacPointToPoint=findScattersJacobians(state,nextState);
 			setPointListWithNewScatterers(pointList, rad);
@@ -491,9 +496,6 @@ void EUTelGBLFitter::testDistanceBetweenPoints(double* position1,double* positio
 void EUTelGBLFitter::setPointListWithNewScatterers(std::vector< gbl::GblPoint >& pointList, float rad ){
 	if(_scattererJacobians.size() != _scattererPositions.size()){
 		throw(lcio::Exception(Utility::outputColourString("The size of the scattering positions and jacobians is different.", "RED"))); 	
-	}
-	if(rad == 0){
-		throw(lcio::Exception(Utility::outputColourString("The provides radiation length to create scatterers it zero.", "RED"))); 	
 	}
 	for(int i = 0 ;i < _scattererJacobians.size()-1;++i){//The last jacobain is used to get to the plane! So only loop over to (_scatterJacobians-1)
 		gbl::GblPoint point(_scattererJacobians[i]);

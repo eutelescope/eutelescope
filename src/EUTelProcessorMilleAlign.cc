@@ -137,7 +137,9 @@ void EUTelProcessorMilleAlign::processRunHeader(LCRunHeader * run) {
 			streamlog_out(WARNING5) << "Error during the geometry consistency check: " << endl << "The run header says the GeoID is " << header->getGeoID() << endl << "The GEAR description says is     " << geo::gGeometry().getSiPlanesLayoutID() << endl;
   	}
     
-		_nProcessedRuns++;
+	_nProcessedRuns++;
+	_chi2PassCount=0;
+	_totalTrackCount=0;	
 }
 
 void EUTelProcessorMilleAlign::processEvent(LCEvent * evt){
@@ -162,8 +164,22 @@ void EUTelProcessorMilleAlign::processEvent(LCEvent * evt){
 		if (eventCollection != NULL) {
 			streamlog_out(DEBUG2) << "Collection contains data! Continue!" << endl;
 			for (int iTrack = 0; iTrack < eventCollection->getNumberOfElements(); ++iTrack) {
+				_totalTrackCount++;
 				_trackFitter->resetPerTrack(); //Here we reset the label that connects state to GBL point to 1 again. Also we set the list of states->labels to 0
 				EUTelTrack track = *(static_cast<EUTelTrack*> (eventCollection->getElementAt(iTrack)));
+				float chi = track.getChi2();
+				float ndf = static_cast<float>(track.getNdf());
+				if(chi == 0 or ndf == 0){
+					streamlog_out(MESSAGE5)<<"Chi: "<<chi<<" ndf: "<<ndf<<endl;
+					throw(lcio::Exception(Utility::outputColourString("The track has either no degrees of freedom or chi2 is zero.", "RED"))); 	
+				}
+				if(_totalTrackCount % 1000 == 0){
+					streamlog_out(MESSAGE9)<<"The percentage of tracks that made chi2 cut of "<<_maxChi2Cut<<" was : "<<(static_cast<float>(_chi2PassCount)/static_cast<float>(_totalTrackCount))*100<<endl;
+				}
+				if((chi/ndf)>_maxChi2Cut){
+					continue; //Do not use this track in the fit.
+				}
+				_chi2PassCount++;
 				std::vector< gbl::GblPoint > pointList;//This is the GBL points. These contain the state information, scattering and alignment jacobian. All the information that the mille binary will get.
 				_trackFitter->setInformationForGBLPointListForAlignment(track, pointList);//We create all the GBL points with scatterer inbetween both planes. This is identical to creating GBL tracks
 				_trackFitter->setListStateAndLabelBeforeTrajectory(pointList);
@@ -177,8 +193,8 @@ void EUTelProcessorMilleAlign::processEvent(LCEvent * evt){
 					traj = new gbl::GblTrajectory( pointList, true );
 				}
 				double chi2, loss;
-				int ndf;
-				traj->fit(chi2, ndf, loss, _mEstimatorType );
+				//int ndf;
+				//traj->fit(chi2, ndf, loss, _mEstimatorType );
 				streamlog_out ( DEBUG0 ) << "This is the trajectory we are just about to fit: " << endl;
 				streamlog_message( DEBUG0, traj->printTrajectory(10);, std::endl; );
 					
