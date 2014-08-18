@@ -1656,7 +1656,7 @@ TVector3 EUTelGeometryTelescopeGeoDescription::getXYZfromArcLength(TVector3 pos 
 }
 TMatrix EUTelGeometryTelescopeGeoDescription::getLocalToCurvilinearTransformMatrix(TVector3 globalPosition  , TVector3 globalMomentum, int  planeID, float charge){
 	const gear::BField&   Bfield = geo::gGeometry().getMagneticFiled();
-	gear::Vector3D vectorGlobal(globalPosition[0],globalPosition[1],globalPosition[1]);//Since field is homogeneous this seems silly but we need to specify a position to geometry to get B-field.
+	gear::Vector3D vectorGlobal(globalPosition[0],globalPosition[1],globalPosition[2]);//Since field is homogeneous this seems silly but we need to specify a position to geometry to get B-field.
 	const double Bx = (Bfield.at( vectorGlobal ).x())*0.3;//We times bu 0.3 due to units of other variables. See paper. Must be Tesla
 	const double By = (Bfield.at( vectorGlobal ).y())*0.3;
 	const double Bz = (Bfield.at( vectorGlobal ).z())*0.3;

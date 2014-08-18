@@ -193,8 +193,8 @@ void EUTelProcessorMilleAlign::processEvent(LCEvent * evt){
 					traj = new gbl::GblTrajectory( pointList, true );
 				}
 				double chi2, loss;
-				//int ndf;
-				//traj->fit(chi2, ndf, loss, _mEstimatorType );
+				int ndf2;
+				traj->fit(chi2, ndf2, loss, _mEstimatorType );
 				streamlog_out ( DEBUG0 ) << "This is the trajectory we are just about to fit: " << endl;
 				streamlog_message( DEBUG0, traj->printTrajectory(10);, std::endl; );
 					

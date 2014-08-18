@@ -161,6 +161,9 @@ void EUTelProcessorGBLFitCandidates::processEvent(LCEvent * evt){
 			 streamlog_out(DEBUG5) << "Ierr is: " << ierr << " Entering loop to update track information " << endl;
 			static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_chi2CandidateHistName ] ) -> fill( (chi2)/(ndf));
 			static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_fitsuccessHistName ] ) -> fill(1.0);
+			if(chi2 ==0 or ndf ==0){
+				throw(lcio::Exception(Utility::outputColourString("Your fitted track has zero degrees of freedom or a chi2 or 0.", "RED"))); 	
+			}
 			track.setChi2(chi2);
 			track.setNdf(ndf);
 			_chi2NdfVec.push_back(chi2/static_cast<float>(ndf));
@@ -261,7 +264,8 @@ void EUTelProcessorGBLFitCandidates::outputLCIO(LCEvent* evt, std::vector<EUTelT
 
 	//Now add this collection to the 
 	evt->addCollection(trkCandCollection, _tracksOutputCollectionName);
-	evt->addCollection(stateCandCollection, "States_After_GBL_Track_Fit");
+	string name = _tracksOutputCollectionName + "_states" ;
+	evt->addCollection(stateCandCollection, name);
 
 	streamlog_out( DEBUG4 ) << " ---------------- EUTelProcessorGBLFitCandidates::outputLCIO ---------- END ------------- " << std::endl;
 }
