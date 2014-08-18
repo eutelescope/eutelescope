@@ -33,6 +33,7 @@
 #include <IMPL/LCRunHeaderImpl.h>
 #include <IMPL/LCEventImpl.h>
 #include <UTIL/CellIDEncoder.h>
+#include <UTIL/CellIDDecoder.h>
 
 // system includes
 #include <iostream>
