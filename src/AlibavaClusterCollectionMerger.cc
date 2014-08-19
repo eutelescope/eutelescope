@@ -172,10 +172,10 @@ void AlibavaClusterCollectionMerger::readDataSource(int /* numEvents */) {
 		if ( alibavaEvent->getEventNumber() % 1000 == 0 )
 			streamlog_out ( MESSAGE4 ) << "Looping events "<<alibavaEvent->getEventNumber() << endl;
 		
-		LCCollectionVec * alibavaPulseColVec;
-		LCCollectionVec * alibavaSparseColVec;
-		LCCollectionVec * telescopePulseColVec;
-		LCCollectionVec * telescopeSparseColVec;
+		LCCollectionVec * alibavaPulseColVec = 0;
+		LCCollectionVec * alibavaSparseColVec = 0;
+		LCCollectionVec * telescopePulseColVec = 0;
+		LCCollectionVec * telescopeSparseColVec = 0;
 		try
 		{
 			// get alibava collections
