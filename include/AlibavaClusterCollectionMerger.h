@@ -98,11 +98,8 @@ namespace alibava {
 		std::string _outputSparseCollectionName;
 			
 	private:
-		//! The reading instance for telescope file
-	//	LCReader* _telescope_lcReader;
-
-		//! The reading instance for alibava file
-	//	LCReader* _alibava_lcReader;
+		
+		void copyClustersInCollection(LCCollectionVec * outputPulseColVec, LCCollectionVec * outputSparseColVec, LCCollectionVec * inputPulseColVec, LCCollectionVec * inputSparseColVec, CellIDEncoder<TrackerPulseImpl> outputPulseColEncoder, CellIDEncoder<TrackerDataImpl> outputSparseColEncoder );
 
 	};
 	
