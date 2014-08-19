@@ -17,10 +17,7 @@
 #include "marlin/DataSourceProcessor.h"
 
 // lcio includes <.h>
-#include <UTIL/CellIDEncoder.h>
 #include <IMPL/LCCollectionVec.h>
-#include <IMPL/TrackerDataImpl.h>
-#include <IMPL/TrackerPulseImpl.h>
 
 // system includes <>
 #include <string>

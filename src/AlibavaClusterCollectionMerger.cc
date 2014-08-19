@@ -132,8 +132,6 @@ AlibavaClusterCollectionMerger * AlibavaClusterCollectionMerger::newProcessor ()
 
 void AlibavaClusterCollectionMerger::init () {
 	
-	
-	
 	printParameters ();
 }
 
@@ -147,7 +145,6 @@ void AlibavaClusterCollectionMerger::readDataSource(int /* numEvents */) {
 	} catch( IOException& e ){
 		streamlog_out ( ERROR1 ) << "Can't open the telescope file: " << e.what() << endl ;
 	}
-	streamlog_out ( MESSAGE1 ) << "Successfully opened Telescope file" << endl ;
 	
 	// open alibava file
 	LCReader* alibava_lcReader = LCFactory::getInstance()->createLCReader();
@@ -156,7 +153,6 @@ void AlibavaClusterCollectionMerger::readDataSource(int /* numEvents */) {
 	} catch( IOException& e ){
 		streamlog_out ( ERROR1 ) << "Can't open the alibava file: " << e.what() << endl ;
 	}
-	streamlog_out ( MESSAGE1 ) << "Successfully opened Alibava file" << endl ;
 	
 	
 	// we will copy alibava run header to as the header of output file.
@@ -166,7 +162,6 @@ void AlibavaClusterCollectionMerger::readDataSource(int /* numEvents */) {
 	} catch( IOException& e ){
 		streamlog_out ( ERROR1 ) << "Can't access run header of the alibava file: " << e.what() << endl ;
 	}
-	streamlog_out ( MESSAGE1 ) << "Successfully copied Alibava run header to output run header" << endl ;
 	
 	
 	LCEvent*  telescopeEvent;
@@ -187,7 +182,6 @@ void AlibavaClusterCollectionMerger::readDataSource(int /* numEvents */) {
 			alibavaPulseColVec = dynamic_cast< LCCollectionVec * > ( alibavaEvent->getCollection( _alibavaPulseCollectionName ) ) ;
 			alibavaSparseColVec = dynamic_cast< LCCollectionVec * > ( alibavaEvent->getCollection( _alibavaSparseCollectionName ) ) ;
 			
-			streamlog_out ( DEBUG1 ) << "Alibava collections successfully found" << endl ;
 			
 		} catch ( IOException& e) {
 			// do nothing again
@@ -199,9 +193,7 @@ void AlibavaClusterCollectionMerger::readDataSource(int /* numEvents */) {
 			// get telescope collections
 			telescopePulseColVec = dynamic_cast< LCCollectionVec * > ( telescopeEvent->getCollection( _telescopePulseCollectionName ) ) ;
 			telescopeSparseColVec = dynamic_cast< LCCollectionVec * > ( telescopeEvent->getCollection( _telescopeSparseCollectionName ) ) ;
-			
-			streamlog_out ( DEBUG1 ) << "Telescope collections successfully found" << endl ;
-			
+						
 		} catch ( IOException& e) {
 			// do nothing again
 			streamlog_out( ERROR5 ) << e.what() << endl;
@@ -216,66 +208,6 @@ void AlibavaClusterCollectionMerger::readDataSource(int /* numEvents */) {
 		// copy alibava cluster
 		copyClustersInCollection(outputPulseColVec, outputSparseColVec, alibavaPulseColVec, alibavaSparseColVec);
 		
-/*
-		// for telescope
-		CellIDDecoder<TrackerPulseImpl> telescopePulseColDecoder(telescopePulseColVec);
-		CellIDDecoder<TrackerDataImpl> telescopeSparseColDecoder(telescopeSparseColVec);
-
-		// for alibava
-		CellIDDecoder<TrackerPulseImpl> alibavaPulseColDecoder(alibavaPulseColVec);
-		CellIDDecoder<TrackerDataImpl> alibavaSparseColDecoder(alibavaSparseColVec);
-		
-		unsigned int noOfClusters;
-		try
-		{
-			// first go through telescope clusters and copy them to output cluster collection
-			// for sure pulse and sparse collections have same number of clusters
-			noOfClusters = telescopePulseColVec->getNumberOfElements();
-			for ( size_t i = 0; i < noOfClusters; ++i ){
-				TrackerPulseImpl * outputPulseFrame = new TrackerPulseImpl();
-				TrackerDataImpl * outputSparseFrame = new TrackerDataImpl();
-		
-				TrackerPulseImpl* telescopePulseFrame = dynamic_cast<TrackerPulseImpl*>(telescopePulseColVec->getElementAt(i));
-				TrackerDataImpl* telescopeSparseFrame = dynamic_cast<TrackerDataImpl*>(telescopePulseFrame->getTrackerData());
-
-				// set Cell ID for sparse collection
-				outputSparseColEncoder["sensorID"] = static_cast<int>(telescopeSparseColDecoder(telescopeSparseFrame) ["sensorID"]);
-				outputSparseColEncoder["sparsePixelType"] =static_cast<int>(telescopeSparseColDecoder(telescopeSparseFrame)["sparsePixelType"]);
-				outputSparseColEncoder["quality"] = static_cast<int>(telescopeSparseColDecoder(telescopeSparseFrame)["quality"]);
-				outputSparseColEncoder.setCellID( outputSparseFrame );
-				
-				// copy tracker data
-				outputSparseFrame->setChargeValues(telescopeSparseFrame->getChargeValues());
-				// add it to the cluster collection
-				outputSparseColVec->push_back( outputSparseFrame );
-				
-				// prepare a pulse for this cluster
-				outputPulseColEncoder["sensorID"] = static_cast<int> (telescopePulseColDecoder(telescopePulseFrame) ["sensorID"]);
-				outputPulseColEncoder["type"] = static_cast<int>(telescopePulseColDecoder(telescopePulseFrame) ["type"]);
-				outputPulseColEncoder.setCellID( outputPulseFrame );
-				
-				outputPulseFrame->setCharge( telescopePulseFrame->getCharge() );
-				outputPulseFrame->setTrackerData( outputSparseFrame);
-				outputPulseColVec->push_back( outputPulseFrame );
-
-			} // end of loop over telescope clusters
-			streamlog_out ( MESSAGE1 ) << "Successfully copied Telescope collections to output event" << endl ;
-
-			// now alibava clusters, copy them to output cluster collection
-			// for sure pulse and sparse collections have same number of clusters
-			noOfClusters = alibavaSparseColVec->getNumberOfElements();
-
-			for ( size_t i = 0; i < noOfClusters; ++i ){
-				outputSparseColVec->push_back( alibavaSparseColVec->getElementAt(i) );
-				outputPulseColVec->push_back( alibavaPulseColVec->getElementAt(i) );
-			} // end of loop over alibava clusters
-
-			streamlog_out ( MESSAGE1 ) << "Successfully copied Alibava collections to output event" << endl ;
-		} catch ( IOException& e) {
-			// do nothing again
-			streamlog_out( ERROR5 ) << e.what() << endl;
-		}
-*/
 		try
 		{
 			LCEventImpl* outputEvent = new LCEventImpl();
@@ -284,7 +216,7 @@ void AlibavaClusterCollectionMerger::readDataSource(int /* numEvents */) {
 			
 			ProcessorMgr::instance()->processEvent( static_cast<LCEventImpl*> ( outputEvent ) ) ;
 			// delete outputEvent;
-		//	streamlog_out ( MESSAGE1 ) << "Successfully copied Alibava collections to output event" << endl ;
+			//	streamlog_out ( MESSAGE1 ) << "Successfully copied Alibava collections to output event" << endl ;
 			
 		} catch ( IOException& e) {
 			// do nothing again
@@ -296,17 +228,16 @@ void AlibavaClusterCollectionMerger::readDataSource(int /* numEvents */) {
 	
 }
 
+
 void AlibavaClusterCollectionMerger::copyClustersInCollection(LCCollectionVec * outputPulseColVec, LCCollectionVec * outputSparseColVec, LCCollectionVec * inputPulseColVec, LCCollectionVec * inputSparseColVec){
 	
-		// Here is the Cell ID Encodes for pulseFrame and sparseFrame
-		// CellID Encodes are introduced in eutelescope::EUTELESCOPE
-		
-		// for sparseFrame (usually called cluster collection)
-		CellIDEncoder<TrackerDataImpl> outputSparseColEncoder ( eutelescope::EUTELESCOPE::ZSCLUSTERDEFAULTENCODING, outputSparseColVec );
-		// for pulseFrame
-		CellIDEncoder<TrackerPulseImpl> outputPulseColEncoder ( eutelescope::EUTELESCOPE::PULSEDEFAULTENCODING, outputPulseColVec );
-		
-		
+	// Here is the Cell ID Encodes for pulseFrame and sparseFrame
+	// CellID Encodes are introduced in eutelescope::EUTELESCOPE
+	
+	// for sparseFrame (usually called cluster collection)
+	CellIDEncoder<TrackerDataImpl> outputSparseColEncoder ( eutelescope::EUTELESCOPE::ZSCLUSTERDEFAULTENCODING, outputSparseColVec );
+	// for pulseFrame
+	CellIDEncoder<TrackerPulseImpl> outputPulseColEncoder ( eutelescope::EUTELESCOPE::PULSEDEFAULTENCODING, outputPulseColVec );
 	
 	// for input
 	CellIDDecoder<TrackerPulseImpl> inputPulseColDecoder(inputPulseColVec);
@@ -314,7 +245,7 @@ void AlibavaClusterCollectionMerger::copyClustersInCollection(LCCollectionVec * 
 	
 	unsigned int noOfClusters;
 	// go through input clusters and copy them to output cluster collection
-
+	
 	noOfClusters = inputPulseColVec->getNumberOfElements();
 	for ( size_t i = 0; i < noOfClusters; ++i ){
 		TrackerPulseImpl * outputPulseFrame = new TrackerPulseImpl();
@@ -344,7 +275,7 @@ void AlibavaClusterCollectionMerger::copyClustersInCollection(LCCollectionVec * 
 		outputPulseColVec->push_back( outputPulseFrame );
 		
 	} // end of loop over input clusters
-
+	
 }
 
 
