@@ -17,6 +17,10 @@
 #include "marlin/DataSourceProcessor.h"
 
 // lcio includes <.h>
+#include <UTIL/CellIDEncoder.h>
+#include <IMPL/LCCollectionVec.h>
+#include <IMPL/TrackerDataImpl.h>
+#include <IMPL/TrackerPulseImpl.h>
 
 // system includes <>
 #include <string>
@@ -99,7 +103,7 @@ namespace alibava {
 			
 	private:
 		
-		void copyClustersInCollection(LCCollectionVec * outputPulseColVec, LCCollectionVec * outputSparseColVec, LCCollectionVec * inputPulseColVec, LCCollectionVec * inputSparseColVec, CellIDEncoder<TrackerPulseImpl> outputPulseColEncoder, CellIDEncoder<TrackerDataImpl> outputSparseColEncoder );
+		void copyClustersInCollection(LCCollectionVec * outputPulseColVec, LCCollectionVec * outputSparseColVec, LCCollectionVec * inputPulseColVec, LCCollectionVec * inputSparseColVec );
 
 	};
 	
