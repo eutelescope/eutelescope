@@ -22,7 +22,7 @@
    </execute>
 
    <global>
-      <parameter name="LCIOInputFiles"> @ResultsPath@/@AlibavaOutputFormat@-seedclustering.slcio </parameter>
+      <parameter name="LCIOInputFiles"> @ResultsPath@/@AlibavaOutputFormat@-merger.slcio </parameter>
       <parameter name="GearXMLFile" value="@GearFile@"/>
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
@@ -47,9 +47,9 @@
   <!--Hit coordinates are calculated in local reference frame of sensor-->
   <!--parameter name="EnableLocalCoordidates" type="bool">false </parameter-->
   <!--Hit collection name-->
-  <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> alibava_hit </parameter>
+  <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> merged_hits </parameter>
     <!--Cluster (pulse) collection name-->
-  <parameter name="PulseCollectionName" type="string" lcioInType="TrackerPulse"> clustercollection </parameter>
+  <parameter name="PulseCollectionName" type="string" lcioInType="TrackerPulse"> merged_cluster_pulse </parameter>
     <!--This is the name of the reference hit collection initialized in this processor. This collection provides the reference vector to correctly determine a plane corresponding to a global hit coordiante.-->
   <!--parameter name="ReferenceCollection" type="string">referenceHit </parameter-->
   <!--This is the file where the reference hit collection is stored-->
