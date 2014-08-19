@@ -219,6 +219,12 @@ void AlibavaClusterCollectionMerger::readDataSource(int /* numEvents */) {
 		// for pulseFrame
 		CellIDEncoder<TrackerPulseImpl> outputPulseColEncoder ( eutelescope::EUTELESCOPE::PULSEDEFAULTENCODING, outputPulseColVec );
 		
+		// copy telescope clusters
+		copyClustersInCollection(outputPulseColVec, outputSparseColVec, telescopePulseColVec, telescopeSparseColVec, outputPulseColEncoder, outputSparseColEncoder);
+		// copy alibava cluster
+		copyClustersInCollection(outputPulseColVec, outputSparseColVec, alibavaPulseColVec, alibavaSparseColVec, outputPulseColEncoder, outputSparseColEncoder);
+		
+/*
 		// for telescope
 		CellIDDecoder<TrackerPulseImpl> telescopePulseColDecoder(telescopePulseColVec);
 		CellIDDecoder<TrackerDataImpl> telescopeSparseColDecoder(telescopeSparseColVec);
@@ -236,10 +242,10 @@ void AlibavaClusterCollectionMerger::readDataSource(int /* numEvents */) {
 			for ( size_t i = 0; i < noOfClusters; ++i ){
 				TrackerPulseImpl * outputPulseFrame = new TrackerPulseImpl();
 				TrackerDataImpl * outputSparseFrame = new TrackerDataImpl();
-				
+		
 				TrackerPulseImpl* telescopePulseFrame = dynamic_cast<TrackerPulseImpl*>(telescopePulseColVec->getElementAt(i));
 				TrackerDataImpl* telescopeSparseFrame = dynamic_cast<TrackerDataImpl*>(telescopePulseFrame->getTrackerData());
-				
+
 				// set Cell ID for sparse collection
 				outputSparseColEncoder["sensorID"] = static_cast<int>(telescopeSparseColDecoder(telescopeSparseFrame) ["sensorID"]);
 				outputSparseColEncoder["sparsePixelType"] =static_cast<int>(telescopeSparseColDecoder(telescopeSparseFrame)["sparsePixelType"]);
@@ -259,49 +265,25 @@ void AlibavaClusterCollectionMerger::readDataSource(int /* numEvents */) {
 				outputPulseFrame->setCharge( telescopePulseFrame->getCharge() );
 				outputPulseFrame->setTrackerData( outputSparseFrame);
 				outputPulseColVec->push_back( outputPulseFrame );
-				/*
-				 // set the ID for this zsCluster
-				 sparseColEncoder["sensorID"] = _sensorIDStartsFrom + chipnum;
-				 sparseColEncoder["sparsePixelType"] = static_cast<int>( kEUTelGenericSparsePixel );
-				 sparseColEncoder["quality"] = static_cast<int>(0);
-				 sparseColEncoder.setCellID( sparseFrame );
-				 
-				 // add it to the cluster collection
-				 sparseColVec->push_back( sparseFrame );
-				 
-				 // prepare a pulse for this cluster
-				 pulseColEncoder["sensorID"] = _sensorIDStartsFrom + chipnum;
-				 pulseColEncoder["type"] = static_cast<int>(kEUTelSparseClusterImpl);
-				 pulseColEncoder.setCellID( pulseFrame );
-				 
-				 pulseFrame->setCharge( totalSignal ); // no need
-				 pulseFrame->setTrackerData( sparseFrame );
-				 pulseColVec->push_back( pulseFrame );
-				 */
-				
-				//	outputSparseColVec->push_back( telescopeSparseColVec->getElementAt(i) );
-				//	outputPulseColVec->push_back( telescopePulseColVec->getElementAt(i) );
-				
-				
-				
+
 			} // end of loop over telescope clusters
 			streamlog_out ( MESSAGE1 ) << "Successfully copied Telescope collections to output event" << endl ;
-			
+
 			// now alibava clusters, copy them to output cluster collection
 			// for sure pulse and sparse collections have same number of clusters
 			noOfClusters = alibavaSparseColVec->getNumberOfElements();
-		/*
+
 			for ( size_t i = 0; i < noOfClusters; ++i ){
 				outputSparseColVec->push_back( alibavaSparseColVec->getElementAt(i) );
 				outputPulseColVec->push_back( alibavaPulseColVec->getElementAt(i) );
 			} // end of loop over alibava clusters
-		 */
+
 			streamlog_out ( MESSAGE1 ) << "Successfully copied Alibava collections to output event" << endl ;
 		} catch ( IOException& e) {
 			// do nothing again
 			streamlog_out( ERROR5 ) << e.what() << endl;
 		}
-		
+*/
 		try
 		{
 			LCEventImpl* outputEvent = new LCEventImpl();
@@ -310,7 +292,7 @@ void AlibavaClusterCollectionMerger::readDataSource(int /* numEvents */) {
 			
 			ProcessorMgr::instance()->processEvent( static_cast<LCEventImpl*> ( outputEvent ) ) ;
 			// delete outputEvent;
-			streamlog_out ( MESSAGE1 ) << "Successfully copied Alibava collections to output event" << endl ;
+		//	streamlog_out ( MESSAGE1 ) << "Successfully copied Alibava collections to output event" << endl ;
 			
 		} catch ( IOException& e) {
 			// do nothing again
@@ -320,6 +302,48 @@ void AlibavaClusterCollectionMerger::readDataSource(int /* numEvents */) {
       
 	}// end of loop over events
 	
+}
+
+void AlibavaClusterCollectionMerger::copyClustersInCollection(LCCollectionVec * outputPulseColVec, LCCollectionVec * outputSparseColVec, LCCollectionVec * inputPulseColVec, LCCollectionVec * inputSparseColVec, CellIDEncoder<TrackerPulseImpl> outputPulseColEncoder, CellIDEncoder<TrackerDataImpl> outputSparseColEncoder ){
+	
+	
+	// for input
+	CellIDDecoder<TrackerPulseImpl> inputPulseColDecoder(inputPulseColVec);
+	CellIDDecoder<TrackerDataImpl> inputSparseColDecoder(inputSparseColVec);
+	
+	unsigned int noOfClusters;
+	// go through input clusters and copy them to output cluster collection
+
+	noOfClusters = inputPulseColVec->getNumberOfElements();
+	for ( size_t i = 0; i < noOfClusters; ++i ){
+		TrackerPulseImpl * outputPulseFrame = new TrackerPulseImpl();
+		TrackerDataImpl * outputSparseFrame = new TrackerDataImpl();
+		
+		TrackerPulseImpl* inputPulseFrame = dynamic_cast<TrackerPulseImpl*>(inputPulseColVec->getElementAt(i));
+		TrackerDataImpl* inputSparseFrame = dynamic_cast<TrackerDataImpl*>(inputPulseFrame->getTrackerData());
+		
+		// set Cell ID for sparse collection
+		outputSparseColEncoder["sensorID"] = static_cast<int>(inputSparseColDecoder(inputSparseFrame) ["sensorID"]);
+		outputSparseColEncoder["sparsePixelType"] =static_cast<int>(inputSparseColDecoder(inputSparseFrame)["sparsePixelType"]);
+		outputSparseColEncoder["quality"] = static_cast<int>(inputSparseColDecoder(inputSparseFrame)["quality"]);
+		outputSparseColEncoder.setCellID( outputSparseFrame );
+		
+		// copy tracker data
+		outputSparseFrame->setChargeValues(inputSparseFrame->getChargeValues());
+		// add it to the cluster collection
+		outputSparseColVec->push_back( outputSparseFrame );
+		
+		// prepare a pulse for this cluster
+		outputPulseColEncoder["sensorID"] = static_cast<int> (inputPulseColDecoder(inputPulseFrame) ["sensorID"]);
+		outputPulseColEncoder["type"] = static_cast<int>(inputPulseColDecoder(inputPulseFrame) ["type"]);
+		outputPulseColEncoder.setCellID( outputPulseFrame );
+		
+		outputPulseFrame->setCharge( inputPulseFrame->getCharge() );
+		outputPulseFrame->setTrackerData( outputSparseFrame);
+		outputPulseColVec->push_back( outputPulseFrame );
+		
+	} // end of loop over input clusters
+
 }
 
 
