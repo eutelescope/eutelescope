@@ -211,18 +211,10 @@ void AlibavaClusterCollectionMerger::readDataSource(int /* numEvents */) {
 		LCCollectionVec * outputPulseColVec = new LCCollectionVec(LCIO::TRACKERPULSE);
 		LCCollectionVec * outputSparseColVec = new LCCollectionVec(LCIO::TRACKERDATA);
 		
-		// Here is the Cell ID Encodes for pulseFrame and sparseFrame
-		// CellID Encodes are introduced in eutelescope::EUTELESCOPE
-		
-		// for sparseFrame (usually called cluster collection)
-		CellIDEncoder<TrackerDataImpl> outputSparseColEncoder ( eutelescope::EUTELESCOPE::ZSCLUSTERDEFAULTENCODING, outputSparseColVec );
-		// for pulseFrame
-		CellIDEncoder<TrackerPulseImpl> outputPulseColEncoder ( eutelescope::EUTELESCOPE::PULSEDEFAULTENCODING, outputPulseColVec );
-		
 		// copy telescope clusters
-		copyClustersInCollection(outputPulseColVec, outputSparseColVec, telescopePulseColVec, telescopeSparseColVec, outputPulseColEncoder, outputSparseColEncoder);
+		copyClustersInCollection(outputPulseColVec, outputSparseColVec, telescopePulseColVec, telescopeSparseColVec);
 		// copy alibava cluster
-		copyClustersInCollection(outputPulseColVec, outputSparseColVec, alibavaPulseColVec, alibavaSparseColVec, outputPulseColEncoder, outputSparseColEncoder);
+		copyClustersInCollection(outputPulseColVec, outputSparseColVec, alibavaPulseColVec, alibavaSparseColVec);
 		
 /*
 		// for telescope
@@ -304,8 +296,17 @@ void AlibavaClusterCollectionMerger::readDataSource(int /* numEvents */) {
 	
 }
 
-void AlibavaClusterCollectionMerger::copyClustersInCollection(LCCollectionVec * outputPulseColVec, LCCollectionVec * outputSparseColVec, LCCollectionVec * inputPulseColVec, LCCollectionVec * inputSparseColVec, CellIDEncoder<TrackerPulseImpl> outputPulseColEncoder, CellIDEncoder<TrackerDataImpl> outputSparseColEncoder ){
+void AlibavaClusterCollectionMerger::copyClustersInCollection(LCCollectionVec * outputPulseColVec, LCCollectionVec * outputSparseColVec, LCCollectionVec * inputPulseColVec, LCCollectionVec * inputSparseColVec){
 	
+		// Here is the Cell ID Encodes for pulseFrame and sparseFrame
+		// CellID Encodes are introduced in eutelescope::EUTELESCOPE
+		
+		// for sparseFrame (usually called cluster collection)
+		CellIDEncoder<TrackerDataImpl> outputSparseColEncoder ( eutelescope::EUTELESCOPE::ZSCLUSTERDEFAULTENCODING, outputSparseColVec );
+		// for pulseFrame
+		CellIDEncoder<TrackerPulseImpl> outputPulseColEncoder ( eutelescope::EUTELESCOPE::PULSEDEFAULTENCODING, outputPulseColVec );
+		
+		
 	
 	// for input
 	CellIDDecoder<TrackerPulseImpl> inputPulseColDecoder(inputPulseColVec);
