@@ -112,7 +112,7 @@ _orderedSensorIDVec()
                             _hitCollectionName, string ( "" ));
 
   registerOptionalParameter("EnableLocalCoordidates","Hit coordinates are calculated in local reference frame of sensor",
-                            _wantLocalCoordinates, static_cast<bool> ( false ) );
+                            _wantLocalCoordinates, static_cast<bool> ( true ) );
 
   registerOptionalParameter("ReferenceCollection","This is the name of the reference hit collection initialized in this processor. This collection provides the reference vector to correctly determine a plane corresponding to a global hit coordiante.",
                             _referenceHitCollectionName, static_cast< string > ( "referenceHit" ) );

@@ -198,7 +198,7 @@ namespace eutelescope {
         
         /** Beam energy uncertainty [%] */
         double _eBeamUncertatinty;
-        
+				float _initialDisplacement;        
         /** Beam spread in [mrad] */
         EVENT::FloatVec _beamSpread;
 				EVENT::IntVec _createSeedsFromPlanes;

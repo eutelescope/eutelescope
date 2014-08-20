@@ -99,6 +99,7 @@ namespace eutelescope {
  
             /** */
             unsigned counter() { return _counter++; }
+						void setInitialDisplacementToFirstPlane(float initialDisplacement);
 
             /** needed only for pede2lcio*/ 
             void setGearManager( gear::GearMgr* value ) { _gearManager = value ; }
@@ -301,9 +302,9 @@ namespace eutelescope {
  
 		void master2LocalVec( int, const double[], double[] );
 
-		int findIntersectionWithCertainID( float x0, float y0, float z0, float px, float py, float pz, float beamQ, int nextPlaneID, float outputPosition[],float outputMomentum[], float& arcLength );
-		TVector3 getXYZMomentumfromArcLength(TVector3 momentum, TVector3 globalPositionStart, TVector3 globalPositionEnd, float charge, float  arcLength );
-
+		int findIntersectionWithCertainID( float x0, float y0, float z0, float px, float py, float pz, float beamQ, int nextPlaneID, float outputPosition[],TVector3& outputMomentum, float& arcLength );
+		TVector3 getXYZMomentumfromArcLength(TVector3 momentum, TVector3 globalPositionStart, float charge, float  arcLength );
+		float getInitialDisplacementToFirstPlane() const;
 
 		TVector3 getXYZfromArcLength( TVector3 pos,TVector3 pVec , float _beamQ, double s) const;
 		TMatrix getPropagationJacobianCurvilinear(float ds, float qbyp, TVector3 t1, TVector3 t2);
@@ -375,6 +376,7 @@ namespace eutelescope {
 
             /** */
             size_t _siPlanesLayoutID;
+						float _initialDisplacement; 
 
             /** Vector of Sensor IDs */
             EVENT::IntVec _sensorIDVec;

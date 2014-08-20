@@ -194,7 +194,7 @@ void EUTelKalmanFilter::propagateForwardFromSeedState( EUTelState& stateInput, E
 	for(int i = geo::gGeometry().sensorIDToZOrderWithoutExcludedPlanes()[state->getLocation()]; i < (geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()-1); ++i){
 	
 		float globalIntersection[3];
-		float momentumAtIntersection[3];
+		TVector3 momentumAtIntersection;
 		float arcLength;
 		int newSensorID = state->findIntersectionWithCertainID(geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i+1], globalIntersection, momentumAtIntersection, arcLength);
 		if(arcLength == 0 or arcLength < 0 ){ 
@@ -225,7 +225,7 @@ void EUTelKalmanFilter::propagateForwardFromSeedState( EUTelState& stateInput, E
 		newState->setBeamCharge(_beamQ);
 		newState->setLocation(newSensorID);
 		newState->setPositionGlobal(globalIntersection);
-		newState->setDirectionXZAndXZAndCurvatureUsingMomentum(momentumAtIntersection);
+		newState->setLocalXZAndYZIntersectionAndCurvatureUsingGlobalMomentum(momentumAtIntersection);
 		if(_mapHitsVecPerPlane[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i+1]].size() == 0){
 			streamlog_out(DEBUG5) << Utility::outputColourString("There are no hits on the plane with this state. Add state to track as it is and move on ","YELLOW");
 			track.addTrack(static_cast<EVENT::Track*>(newState));//Need to return this to LCIO object. Loss functionality but retain information 
@@ -579,11 +579,11 @@ void EUTelKalmanFilter::initialiseSeeds() {
 		//	float posGlobal[] = { static_cast<float>(temp[0]), static_cast<float>(temp[1]), static_cast<float>(temp[2]) };
 			state.setLocation(_createSeedsFromPlanes[iplane]);//This stores the location as a float in Z0 since no location for track LCIO. This is preferable to problems with storing hits.  
 			state.setPositionLocal(posLocal); //This will automatically take cartesian coordinate system and save it to reference point. //This is different from most LCIO applications since each track will have own reference point. 		
-			state.setDirectionXZ(0.);  // seed with 0 at first hit. This one is stored as tan (x/y) rather than angle as in LCIO format TO DO:This really should be give as a beam direction.  
-			state.setDirectionYZ(0.);  // seed with 0 at first hit.
+			float xzDirection;
+			float yzDirection;
 			state.setBeamCharge(_beamQ);//this is set for each state. to do: is there a more efficient way of doing this since we only need this stored once?
-			state.setBeamEnergy(_beamE);//this is saved in gev. 
-			state.initialiseCurvature(); //this will perform the calculation _beamq/_beame ad place in invp
+			TVector3 momentum = computeInitialMomentumGlobal(); 
+			state.setLocalXZAndYZIntersectionAndCurvatureUsingGlobalMomentum(momentum);
 			//TO DO We just fill the cov matrix with junk. We don't use it at the moment 
 	/*		float trkCov[15] = {0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.};//This is the covariance matrix of the track state: (1/p, Tx,Ty,x,y)X(1/p, Tx,Ty,x,y) Z is not included since this is a parameter.This is also a symmetric matrix so only need 15 entries. 
 			trkCov[0] = ( _beamEnergyUncertainty * _beamE ) * ( _beamEnergyUncertainty * _beamE );               //cov(q/p,x)=0, cov(q/p,y)=0, cov(q/p,tx)=0, cov(q/p,ty)=0, cov(q/p,q/p)
@@ -605,6 +605,15 @@ void EUTelKalmanFilter::initialiseSeeds() {
 	//	streamlog_out(MESSAGE5) << "The size of stateVec: "<<stateVec.size()<<"The size of the map " <<_mapSensorIDToSeedStatesVec.size() << std::endl;
 	}
 	streamlog_out(DEBUG2) << "--------------------------------EUTelKalmanFilter::initialiseSeeds()---------------------------" << std::endl;
+}
+TVector3 EUTelKalmanFilter::computeInitialMomentumGlobal(){
+	//We assume that the arc length is the displacement in the z direction. The assumption should be a valid one in most cases
+	TVector3 position(0,0,0);//The position we start from does not matter since the magnetic field is homogeneous.
+	TVector3 momentum(0,0,_beamE);//Assume the beam starts in a straight line
+	float arcLength= geo::gGeometry().getInitialDisplacementToFirstPlane();
+	TVector3 momentumEnd = geo::gGeometry().getXYZMomentumfromArcLength(momentum, position, _beamQ, arcLength);
+	streamlog_out(DEBUG2) << "Momentum on the first sensor: px,py,pz "<<momentumEnd[0] <<","<<momentumEnd[1]<<","<<momentumEnd[2]<<","<<"At an arc length of "<<arcLength<<std::endl;
+	return momentumEnd;
 }
 void EUTelKalmanFilter::testInitialSeeds(){
 	//Even if there are no hits then we can compare these. Since it will contain stateVec with size 0.      
@@ -881,7 +890,7 @@ const EVENT::TrackerHit* EUTelKalmanFilter::findClosestHit(EUTelState & state ) 
 //	streamlog_out( DEBUG5 ) << "EUTelKalmanFilter::setNewState()" << std::endl;
 //	newState.setPosition(Position);		
 //	newState.setDirectionXY(momentum[0]/momentum[2]);
-//	newState.setDirectionYZ(momentum[1]/momentum[2]);
+//	newState.setIntersectionLocalYZ(momentum[1]/momentum[2]);
 	/* We should not update the error matrix here. This can be done by the GBL processor.
 ///////////////////////////////////////////////////////////Here we update the Covariant matrix
 	TMatrixDSym TrackCovState = state.getTrackStateCov();

@@ -6,7 +6,7 @@ using namespace marlin;
 using namespace eutelescope;
 
 
-
+//TO DO: The last alignment mode does not work. I.e alignment mode 7. This is not a big deal since we will never align all degrees of freedom in one go.
 namespace eutelescope {
 
 	//This constructor is useful for running the binary files execution
@@ -79,22 +79,22 @@ void EUTelMillepede::FillMilleParametersLabels() {
     int currentLabel = 0;
     const IntVec sensorIDsVec = geo::gGeometry().sensorIDsVec();
     IntVec::const_iterator itr;
-    for( itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {
+    for( itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {//sensor 0 to 5 will have numbers 1 to 6 for this x shift
         _xShiftsMap.insert( make_pair(*itr, ++currentLabel) );
     }
-    for( itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {
+    for( itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {// sensor 0 to 5 will have numbers 7 to 12 for this y shift
         _yShiftsMap.insert( make_pair(*itr, ++currentLabel) );
     }
-    for( itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {
+    for( itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {// sensor 0 to 5 will have numbers 13 to 18 for this z shift
         _zShiftsMap.insert( make_pair(*itr, ++currentLabel) );
     }
-    for( itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {
+    for( itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {// sensor 0 to 5 will have numbers 19 to 24  for this x rotation 
         _xRotationsMap.insert( make_pair(*itr, ++currentLabel) );
     }
-    for( itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {
+    for( itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {// sensor 0 to 5 will have numbers 25 to 30  for this x rotation 
         _yRotationsMap.insert( make_pair(*itr, ++currentLabel) );
     }
-    for( itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {
+    for( itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {// sensor 0 to 5 will have numbers 31 to 36  for this x rotation 
         _zRotationsMap.insert( make_pair(*itr, ++currentLabel) );
     }
 }
@@ -195,8 +195,7 @@ void EUTelMillepede::setGlobalLabels(EUTelState& state){
 }
 //Here depending on the palne the states is on we return a particular label for x shift, y shift.....
 void EUTelMillepede::setGlobalLabels( int iPlane){
-	//_globalLabels.clear(); cant do this since it will resize the vector
-
+	//We alway add these to the first to places in the alignment matrix
 	_globalLabels[0] = _xShiftsMap[iPlane]; // dx
 	_globalLabels[1] = _yShiftsMap[iPlane]; // dy
 
@@ -213,7 +212,7 @@ void EUTelMillepede::setGlobalLabels( int iPlane){
 
 	if (_alignmentMode == Utility::XYZShiftXYRot
                 || _alignmentMode == Utility::XYZShiftXZRotYZRotXYRot) {
-		_globalLabels[3] = _zRotationsMap[iPlane]; // dz
+		_globalLabels[3] = _zShiftsMap[iPlane]; // dz
   }
 
 	if (_alignmentMode == Utility::XYZShiftXZRotYZRotXYRot) {

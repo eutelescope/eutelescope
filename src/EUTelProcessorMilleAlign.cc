@@ -206,9 +206,11 @@ void EUTelProcessorMilleAlign::processEvent(LCEvent * evt){
 void EUTelProcessorMilleAlign::check(LCEvent * evt){}
 
 void EUTelProcessorMilleAlign::end(){
-_Mille->writeMilleSteeringFile(_pedeSteerAddCmds);
-_Mille->runPede();
-_Mille->parseMilleOutput(_alignmentConstantLCIOFile, _gear_aligned_file);
+	streamlog_out (MESSAGE9) << "The total number of tracks that have been passed to millepede is " << _chi2PassCount << endl;
+
+	_Mille->writeMilleSteeringFile(_pedeSteerAddCmds);
+	_Mille->runPede();
+	_Mille->parseMilleOutput(_alignmentConstantLCIOFile, _gear_aligned_file);
 }
 
 void EUTelProcessorMilleAlign::printPointsInformation(std::vector<gbl::GblPoint>& pointList){

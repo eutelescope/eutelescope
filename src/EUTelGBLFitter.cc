@@ -317,8 +317,8 @@ void EUTelGBLFitter::UpdateTrackFromGBLTrajectory (gbl::GblTrajectory* traj, std
 				state->print();
 				TVectorD newStateVec(5);
 				newStateVec[0] = state->getOmega() + corrections[0];
-				newStateVec[1] = state->getDirectionXZ()+corrections[1];
-				newStateVec[2] = state->getDirectionYZ()+corrections[2];
+				newStateVec[1] = state->getIntersectionLocalXZ()+corrections[1];
+				newStateVec[2] = state->getIntersectionLocalYZ()+corrections[2];
 				newStateVec[3] = state->getPosition()[0]+corrections[3];
 				newStateVec[4] = state->getPosition()[1]+corrections[4]; 
 				state->setStateVec(newStateVec);//TO DO:We set the z position to be the same. However if the sensor is tilted this should change. How should we deal with this
@@ -455,7 +455,6 @@ void EUTelGBLFitter::setInformationForGBLPointListForAlignment(EUTelTrack& track
 		if(i != (track.getStates().size()-1)){
 			nextState = track.getStates().at(i+1);
 		}
-	//	setScattererGBL(point,state.getLocation());//Every sensor will have scattering due to itself. 
 		if(state.getTrackerHits().size() == 0 ){
 			streamlog_out(DEBUG3)  << Utility::outputColourString("This state does not have a hit. ", "YELLOW")<<std::endl;
 			setPointVec(pointList, point);//This creates the vector of points and keeps a link between states and the points they created
@@ -523,7 +522,7 @@ TMatrixD EUTelGBLFitter::findScattersJacobians(EUTelState state, EUTelState next
 	B[0]=Bx; B[1]=By; B[2]=Bz;
 	for(int i=0;i<_scattererPositions.size();i++){
 		newPos = geo::gGeometry().getXYZfromArcLength(position,momentum ,state.getBeamCharge(),_scattererPositions[i]); 
-		newMomentum = geo::gGeometry().getXYZMomentumfromArcLength(momentum, position,newPos,state.getBeamCharge(), _scattererPositions[i] );
+		newMomentum = geo::gGeometry().getXYZMomentumfromArcLength(momentum, position,state.getBeamCharge(), _scattererPositions[i] );
 		TMatrix curvilinearJacobian = geo::gGeometry().getPropagationJacobianCurvilinear(_scattererPositions[i], state.getOmega(), momentum.Unit(),newMomentum.Unit());
 		streamlog_out(DEBUG0)<<"This is the curvilinear jacobian at sensor : " << location << " or scatter: "<< i << std::endl; 
 		streamlog_message( DEBUG0, curvilinearJacobian.Print();, std::endl; );

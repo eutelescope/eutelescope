@@ -84,6 +84,7 @@ _aidaHistoMap1D() {
 	registerOptionalParameter("PlanesToCreateSeedsFrom", "This is the planes you want to create seeds from", _createSeedsFromPlanes,IntVec());
 
 	registerOptionalParameter("ExcludePlanes", "This is the planes that will not be included in analysis", _excludePlanes ,FloatVec());
+	registerOptionalParameter("InitialDisplacement", "This is the initial distance the particle must travel to reach the first plane", _initialDisplacement ,float(0));
 
 }
 
@@ -97,6 +98,8 @@ void EUTelProcessorTrackingHelixTrackSearch::init() {
 	std::string name("test.root"); //This is the name outputed at the end to store geo info.
 	geo::gGeometry().initializeTGeoDescription(name,false);
 	geo::gGeometry().initialisePlanesToExcluded(_excludePlanes);
+	geo::gGeometry().setInitialDisplacementToFirstPlane(_initialDisplacement);
+
 	// Instantiate track finder. This is a working horse of the processor.
 	streamlog_out(DEBUG) << "Initialisation of track finder" << std::endl;
 

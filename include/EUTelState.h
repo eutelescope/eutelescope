@@ -32,8 +32,8 @@ namespace eutelescope {
 			TVectorD getStateVec() const ;
 			inline float  getBeamCharge() const  { return getdEdxError();}
 			inline float  getBeamEnergy() const {return getdEdx();}
-			float getDirectionXZ() const {return getPhi();}
-			float getDirectionYZ() const {return getTanLambda();}
+			float getIntersectionLocalXZ() const {return getPhi();}
+			float getIntersectionLocalYZ() const {return getTanLambda();}
 			float getArcLengthToNextState() const {return getChi2();} 
 			float* getPosition() const; 
 			TVector3 getPositionGlobal() const; 
@@ -46,9 +46,9 @@ namespace eutelescope {
 			void setLocation(int location);
 			void setBeamEnergy(float beamE);
 			void setBeamCharge(float beamQ);
-			void setDirectionYZ(float directionYZ);
-			void setDirectionXZ(float directionXZ);
-			void setDirectionXZAndXZAndCurvatureUsingMomentum(float momentumIn[]);
+			void setIntersectionLocalYZ(float directionYZ);
+			void setIntersectionLocalXZ(float directionXZ);
+			void setLocalXZAndYZIntersectionAndCurvatureUsingGlobalMomentum(TVector3 momentumIn);
 			void setPositionLocal(float position[]);
 			void setPositionGlobal(float positionGlobal[]);
 			void setCombinedHitAndStateCovMatrixInLocalFrame(double cov[4]);
@@ -57,7 +57,7 @@ namespace eutelescope {
 			//initialise
 			void initialiseCurvature();
 			//find
-			int findIntersectionWithCertainID(int nextsensorID, float intersectionPoint[],float momentumAtIntersection[], float & arcLength );
+			int findIntersectionWithCertainID(int nextsensorID, float intersectionPoint[],TVector3 & momentumAtIntersection, float & arcLength );
 			//compute
 			TVector3 computeCartesianMomentum() const ;
 			TMatrix computePropagationJacobianFromLocalStateToNextLocalState(TVector3 positionEnd, TVector3 momentumEnd, float arcLength,float nextPlaneID);

@@ -14,8 +14,8 @@ EUTelState::EUTelState(EUTelState *state){
 	float position[] = {state->getPosition()[0],state->getPosition()[1],state->getPosition()[2]};//Z position is not a state parameter but should add here for use later. 
 	setPositionLocal(position);//This will automatically take cartesian coordinate system and save it to reference point. //This is different from most LCIO applications since each track will have own reference point. 	
 	//cout<<"HEREnewstate: "<<getPosition()[0]<<","<<getPosition()[1]<<","<<getPosition()[2]<<","<<getLocation()<<endl;
-	setDirectionXZ(state->getDirectionXZ());    
-	setDirectionYZ(state->getDirectionYZ());  
+	setIntersectionLocalXZ(state->getIntersectionLocalXZ());    
+	setIntersectionLocalYZ(state->getIntersectionLocalYZ());  
 	setBeamCharge(state->getBeamCharge());//this is set for each state. to do: is there a more efficient way of doing this since we only need this stored once?
 	setBeamEnergy(state->getBeamEnergy());//this is saved in gev. 
 	initialiseCurvature(); //this will perform the calculation _beamq/_beame ad place in invp
@@ -52,15 +52,15 @@ TVectorD EUTelState::getStateVec() const {
 
 
 	stateVec[0] = getOmega();
-	stateVec[1] = lambda;
-	stateVec[2] = phi; 
-	stateVec[3] = 0;//State is alway at the centre of its curvilinear frame 
-	stateVec[4] = 0;
+	stateVec[1] = getIntersectionLocalXZ();
+	stateVec[2] = getIntersectionLocalYZ(); 
+	stateVec[3] = getPosition()[0]; 
+	stateVec[4] = getPosition()[1];
 			
-	if ( streamlog_level(DEBUG0) ){
-		streamlog_out( DEBUG0 ) << "Track state:" << std::endl;
-		stateVec.Print();
-	}
+//	if ( streamlog_level(DEBUG0) ){
+//		streamlog_out( DEBUG0 ) << "Track state:" << std::endl;
+//		stateVec.Print();
+//	}
 	if(stateVec[0] == INFINITY or stateVec[0] == NAN ){
 		throw(lcio::Exception( Utility::outputColourString("Passing a state vector where curvature is not defined","RED"))); 
 	}
@@ -139,10 +139,12 @@ void EUTelState::setBeamEnergy(float beamE){
 void EUTelState::setBeamCharge(float beamQ){
 	setdEdxError(beamQ);
 }
-void EUTelState::setDirectionYZ(float directionYZ){
+//Note this is dy/dz in the LOCAL frame
+void EUTelState::setIntersectionLocalYZ(float directionYZ){
 	setTanLambda(directionYZ);
 }	
-void EUTelState::setDirectionXZ(float directionXZ){
+//Note this is the dx/dz in the LOCAL frame
+void EUTelState::setIntersectionLocalXZ(float directionXZ){
 	setPhi(directionXZ);//This is only a container. So hold inverseTan(Phi)
 }
 void EUTelState::setPositionLocal(float position[]){
@@ -156,19 +158,20 @@ void EUTelState::setPositionGlobal(float positionGlobal[]){
 	float posLocal[] = { static_cast<float>(localPosition[0]), static_cast<float>(localPosition[1]), static_cast<float>(localPosition[2]) };
 	setReferencePoint(posLocal);
 }
-void EUTelState::setDirectionXZAndXZAndCurvatureUsingMomentum(float momentumIn[]){
-	TVector3 momentum(momentumIn[0],momentumIn[1],momentumIn[2]);
-	setBeamEnergy(momentum.Mag());
+//This sets the LOCAL frame intersection. Not the curvilinear frames intersection
+void EUTelState::setLocalXZAndYZIntersectionAndCurvatureUsingGlobalMomentum(TVector3 momentumIn){
+	//set the beam energy and curvature
+	setBeamEnergy(momentumIn.Mag());
 	initialiseCurvature();//You must set beam charge before you call this.
-	const double momentumGlobal[] = { static_cast<float>(momentumIn[0]), static_cast<float>(momentumIn[1]), static_cast<float>(momentumIn[2]) };
-	double localMomentum[3];
-	geo::gGeometry().master2LocalVec(getLocation(), momentumGlobal,localMomentum); 
-	setDirectionXZ(localMomentum[0]/localMomentum[2]);
-	setDirectionYZ(localMomentum[1]/localMomentum[2]);
+	//Now calculate the momentum in LOCAL coordinates.
+	//TO DO:Fix master2Localtwo so that is is the only one. This is currently a hack
+	const double momentum[]	= {momentumIn[0], momentumIn[1],momentumIn[2]};//Need this since geometry works with const doubles not floats 
+	double localMomentum [3];
+	geo::gGeometry().local2MasterVec(getLocation(), momentum, localMomentum );
+	//In the LOCAL coordinates this is just dx/dz and dy/dz in the LOCAL frame
+	setIntersectionLocalXZ(localMomentum[0]/localMomentum[2]);
+	setIntersectionLocalYZ(localMomentum[1]/localMomentum[2]);
 }
-
-
-
 
 void EUTelState::setCombinedHitAndStateCovMatrixInLocalFrame(double cov[4]){
 	_covCombinedMatrix[0] = cov[0];
@@ -180,8 +183,8 @@ void EUTelState::setCombinedHitAndStateCovMatrixInLocalFrame(double cov[4]){
 void EUTelState::setStateVec(TVectorD stateVec){
 	float referencePoint[] = {stateVec[3],stateVec[4],0};
 	setPositionLocal(referencePoint);
-	setDirectionXZ(stateVec[1]);
-	setDirectionYZ(stateVec[2]);
+	setIntersectionLocalXZ(stateVec[1]);
+	setIntersectionLocalYZ(stateVec[2]);
 	setOmega(stateVec[0]);
 
 }
@@ -197,10 +200,10 @@ void EUTelState::initialiseCurvature(){
 	setOmega(getBeamCharge()/getBeamEnergy());
 }
 //find
-int EUTelState::findIntersectionWithCertainID(int nextSensorID, float intersectionPoint[], float momentumAtIntersection[], float& arcLength ){
+int EUTelState::findIntersectionWithCertainID(int nextSensorID, float intersectionPoint[], TVector3& momentumAtIntersection, float& arcLength ){
 	streamlog_out(DEBUG5) << "-EUTelState::findIntersectionWithCertainID---------------------------BEGIN" << std::endl;
 	TVector3 pVec = computeCartesianMomentum();
-	streamlog_out(DEBUG5) << "Momentum: " << pVec[0]<<","<<pVec[1]<<","<<pVec[2]<<","<<" Position: "<<getPosition()[0]<<","<<getPosition()[1]<<","<<getPosition()[2]<< std::endl;
+	streamlog_out(DEBUG5) << "Momentum (Global): " << pVec[0]<<","<<pVec[1]<<","<<pVec[2]<<","<<" Position (local): "<<getPosition()[0]<<","<<getPosition()[1]<<","<<getPosition()[2]<< std::endl;
 	if(pVec.Mag() == 0){
 		throw(lcio::Exception( Utility::outputColourString("The momentum is 0","RED"))); 
 	}
@@ -216,7 +219,7 @@ int EUTelState::findIntersectionWithCertainID(int nextSensorID, float intersecti
 //compute
 TVector3 EUTelState::computeCartesianMomentum() const {
 	streamlog_out(DEBUG2) << "EUTelState::computeCartesianMomentum()-------------------------BEGIN" << std::endl;
-float tx = getDirectionXZ();float ty= getDirectionYZ(); float curvature = getOmega(); 
+float tx = getIntersectionLocalXZ();float ty= getIntersectionLocalYZ(); float curvature = getOmega(); 
 	streamlog_out(DEBUG2) << "Input parameters: tx,ty, beamq,invp "<<tx <<","<<ty<<","<<getBeamCharge()<<","<<curvature<<std::endl;
 	if(getBeamCharge() == 0){
 		throw(lcio::Exception( Utility::outputColourString("The beam charge is 0.","RED"))); 
@@ -224,14 +227,14 @@ float tx = getDirectionXZ();float ty= getDirectionYZ(); float curvature = getOme
 	if(curvature == INFINITY or curvature == NAN ){
 		throw(lcio::Exception( Utility::outputColourString("The curvature is zero","RED"))); 
 	}
-	const double p  =  1. / (curvature *getBeamCharge() );     
-  const double px = p*tx / sqrt( 1. + tx*tx + ty*ty );
-  const double py = p*ty / sqrt( 1. + tx*tx + ty*ty );
-  const double pz = p    / sqrt( 1. + tx*tx + ty*ty );
+	const double p  =  1. / (curvature *getBeamCharge() );//Must times but beam charge or we would be going in the wrong direction     
+  const double pz = p/(sqrt(pow(tx,2)+pow(ty,2)+1));
+  const double px = tx*pz;
+  const double py = ty*pz;
 	const double input[3]={px,py,pz};
 	double localMomentum[3];
 	geo::gGeometry().local2MasterVec(getLocation(),input,localMomentum);
-	streamlog_out(DEBUG2) << "Output parameters: px,py, pz "<<localMomentum[0] <<","<<localMomentum[1]<<","<<localMomentum[2]<<","<<std::endl;
+	streamlog_out(DEBUG2) << "output global momentum: px,py, pz "<<localMomentum[0] <<","<<localMomentum[1]<<","<<localMomentum[2]<<","<<std::endl;
         
   streamlog_out(DEBUG2) << "-------------------------------EUTelState::computeCartesianMomentum()-------------------------END" << std::endl;
         
@@ -245,6 +248,8 @@ TMatrix EUTelState::computePropagationJacobianFromLocalStateToNextLocalState(TVe
 	TMatrix curvilinearJacobian = geo::gGeometry().getPropagationJacobianCurvilinear(arcLength,getOmega(), computeCartesianMomentum().Unit(),momentumEnd.Unit());
 	streamlog_out(DEBUG0)<<"This is the curvilinear jacobian at sensor:" << std::endl; 
 	streamlog_message( DEBUG0, curvilinearJacobian.Print();, std::endl; );
+	streamlog_out(DEBUG0)<<"The state vector that create the curvilinear system is:" << std::endl; 
+	print();
 	TMatrix localToCurvilinearJacobianStart =  geo::gGeometry().getLocalToCurvilinearTransformMatrix(getPositionGlobal() ,computeCartesianMomentum(), nextPlaneID ,getBeamCharge() );
 	streamlog_out(DEBUG0)<<"This is the local to curvilinear jacobian at sensor : " << std::endl; 
 	streamlog_message( DEBUG0, localToCurvilinearJacobianStart.Print();, std::endl; );

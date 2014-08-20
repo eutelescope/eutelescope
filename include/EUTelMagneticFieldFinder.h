@@ -241,6 +241,7 @@ void setAutoPlanestoCreateSeedsFrom(){
 				int _numberOfTracksAfterHitCut=0;
 				int _numberOfTracksAfterPruneCut=0;
         void initialiseSeeds();
+				TVector3 computeInitialMomentumGlobal();
 				void testInitialSeeds();
 				void testTrackQuality();
 				void clearTrackAndTrackStates();
