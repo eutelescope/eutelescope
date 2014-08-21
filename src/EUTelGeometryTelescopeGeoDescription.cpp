@@ -1287,7 +1287,7 @@ float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double 
     
     double snext;
     double pt[3], loc[3];
-    double epsil = 1.E-4;    //1.E-7;
+    double epsil = 1.E-2; //1.E-7; //This number must be in the order of 10s of microns to make sure you leave the starting volume everytime.
     double lastrad = 0.;
     int ismall       = 0;
     int nbound       = 0;
@@ -1900,11 +1900,11 @@ TMatrix EUTelGeometryTelescopeGeoDescription::getPropagationJacobianCurvilinear(
 		TVector3 an1 = hn.Cross(t1); // HxT0
 		TVector3 an2 = hn.Cross(t2); // HxT
 		// U0, V0
-		const double au1 = 1. / sqrt(t1[0]*t1[0]+t2[1]*t2[1]);
+		const double au1 = 1. / sqrt(t1[0]*t1[0]+t1[1]*t1[1]);
 		TVector3 u1(-au1 * t1[1], au1 * t1[0], 0.);
 		TVector3 v1(-t1[2] * u1[1], t1[2] * u1[0], t1[0] * u1[1] - t1[1] * u1[0]);
 		// U, V
-		const double au2 = 1. /sqrt(t1[0]*t1[0]+t2[1]*t2[1]);
+		const double au2 = 1. /sqrt(t2[0]*t2[0]+t2[1]*t2[1]);
 		TVector3 u2(-au2 * t2[1], au2 * t2[0], 0.);
 		TVector3 v2(-t2[2] * u2[1], t2[2] * u2[0], t2[0] * u2[1] - t2[1] * u2[0]);
 		//
