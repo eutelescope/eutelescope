@@ -26,6 +26,7 @@ namespace eutelescope {
 			EUTelState();
 			EUTelState(EUTelState *state);
 			//getters
+			EVENT::TrackerHit* getHit();
 			int getDimensionSize() const ;
 			int	getLocation() const;
 			TMatrixDSym getTrackStateCov() const;
