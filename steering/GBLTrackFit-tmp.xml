@@ -68,7 +68,7 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
  </processor>
 
 	<processor name="TrackAnalysis" type="EUTelProcessorTrackAnalysis">
-		<parameter name="TrackInputCollectionName" type="string" lcioInType="Track"> @inputCollectionNameGBLTracks@  </parameter>
+		<parameter name="TrackInputCollectionName" type="string" lcioInType="Track"> @outputCollectionName@  </parameter>
 		<parameter name="SensorIDs" type="IntVec"> @Planes@ </parameter>
 	</processor>
 
