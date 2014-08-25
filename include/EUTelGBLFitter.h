@@ -99,7 +99,7 @@ namespace eutelescope {
 				void setScattererGBL(gbl::GblPoint& point, int iPlane);
 				void setScattererGBL(gbl::GblPoint& point, float x0);
 				void setPointListWithNewScatterers(std::vector< gbl::GblPoint >& pointList, float rad );
-				void getResidualOfTrackandHits(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint > pointList, EUTelTrack& track, map< int, map< float, float > > & SensorResidual);
+				void getResidualOfTrackandHits(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint > pointList, EUTelTrack& track, map< int, map< float, float > > & SensorResidual, map< int, map< float, float > >& sensorResidualError);
 
         /*
          */  

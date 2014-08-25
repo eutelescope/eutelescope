@@ -24,6 +24,9 @@ EUTelState::EUTelState(EUTelState *state){
 	}
 }
 //getters
+EVENT::TrackerHit* EUTelState::getHit(){
+	return	const_cast<EVENT::TrackerHit*>(getTrackerHits().at(0));
+}
 int EUTelState::getDimensionSize() const {
 	int dimension = static_cast<int>(getD0());
 	return dimension;

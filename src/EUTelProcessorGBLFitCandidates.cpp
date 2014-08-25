@@ -21,6 +21,20 @@ std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistNameY3 = 
 std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistNameY4 = "Residual4Y";
 std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistNameY5 = "Residual5Y";
 
+std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistNameX0p = "Residual0Xpull";
+std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistNameX1p = "Residual1Xpull";
+std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistNameX2p = "Residual2Xpull";
+std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistNameX3p = "Residual3Xpull";
+std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistNameX4p = "Residual4Xpull";
+std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistNameX5p = "Residual5Xpull";
+std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistNameY0p = "Residual0Ypull";
+std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistNameY1p = "Residual1Ypull";
+std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistNameY2p = "Residual2Ypull";
+std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistNameY3p = "Residual3Ypull";
+std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistNameY4p = "Residual4Ypull";
+std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistNameY5p = "Residual5Ypull";
+
+
 #endif // defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
 EUTelProcessorGBLFitCandidates::EUTelProcessorGBLFitCandidates() :
@@ -170,8 +184,9 @@ void EUTelProcessorGBLFitCandidates::processEvent(LCEvent * evt){
 
 			_trackFitter->UpdateTrackFromGBLTrajectory(traj, pointList,track);
 			map< int, map< float, float > >  SensorResidual; 
-			_trackFitter->getResidualOfTrackandHits(traj, pointList,track, SensorResidual);
-			plotResidual(SensorResidual, _first_time);
+			map< int, map< float, float > >  SensorResidualError; 
+			_trackFitter->getResidualOfTrackandHits(traj, pointList,track, SensorResidual, SensorResidualError);
+			plotResidual(SensorResidual,SensorResidualError, _first_time);
 			_first_time = false;
 
 		}
@@ -189,33 +204,62 @@ void EUTelProcessorGBLFitCandidates::processEvent(LCEvent * evt){
 
 
 //TO DO:This is a very stupid way to histogram but will add new class to do this is long run 
-void EUTelProcessorGBLFitCandidates::plotResidual(map< int, map<float, float > >  & SensorResidualError, bool &first_time){
+void EUTelProcessorGBLFitCandidates::plotResidual(map< int, map<float, float > >  & sensorResidual, map< int, map<float, float > >  & sensorResidualError, bool &first_time){
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Residual plot
+	std::map< int, map< float, float > >::iterator sensor_residual_it;
+	for(sensor_residual_it = sensorResidual.begin(); sensor_residual_it != sensorResidual.end(); sensor_residual_it++) {
+		map<float, float> map = sensor_residual_it->second;
+		if( !map.empty()){
+			float res = map.begin()->first;	
+			if( sensor_residual_it->first == 0){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX0 ] ) -> fill(res);}
+			if( sensor_residual_it->first == 1){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX1 ] ) -> fill(res);}
+			if( sensor_residual_it->first == 2){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX2 ] ) -> fill(res);}
+			if( sensor_residual_it->first == 3){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX3 ] ) -> fill(res);}
+			if( sensor_residual_it->first == 4){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX4 ] ) -> fill(res);}
+			if( sensor_residual_it->first == 5){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX5 ] ) -> fill(res);}
+			}else{
+				streamlog_out(DEBUG5) << "The map is NULL" <<std::endl;
+			}
+			float res2 = map.begin()->second;
 
-		std::map< int, map< float, float > >::iterator sensor_residual_Err_it;
-		for(sensor_residual_Err_it = SensorResidualError.begin(); sensor_residual_Err_it != SensorResidualError.end(); sensor_residual_Err_it++) {
+			if( sensor_residual_it->first == 0){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY0 ] ) -> fill(res2);}
+			if( sensor_residual_it->first == 1){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY1 ] ) -> fill(res2);}
+			if( sensor_residual_it->first == 2){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY2 ] ) -> fill(res2);}
+			if( sensor_residual_it->first == 3){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY3 ] ) -> fill(res2);}
+			if( sensor_residual_it->first == 4){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY4 ] ) -> fill(res2);}
+			if( sensor_residual_it->first == 5){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY5 ] ) -> fill(res2);}
+				
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Residual Error plot
+	std::map< int, map< float, float > >::iterator sensor_residualerror_it;
+	for(sensor_residualerror_it = sensorResidualError.begin(); sensor_residualerror_it != sensorResidualError.end(); sensor_residualerror_it++) {
+			map<float, float> maperror = sensor_residualerror_it->second;
+			map<float, float> mapres = sensorResidual.at(sensor_residualerror_it->first);
 
-				map<float, float> map = sensor_residual_Err_it->second;
-				if( !map.empty()){
-					float res = map.begin()->first;	
-					if( sensor_residual_Err_it->first == 0){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX0 ] ) -> fill(res);}
-if( sensor_residual_Err_it->first == 1){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX1 ] ) -> fill(res);}
-if( sensor_residual_Err_it->first == 2){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX2 ] ) -> fill(res);}
-				if( sensor_residual_Err_it->first == 3){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX3 ] ) -> fill(res);}
-				if( sensor_residual_Err_it->first == 4){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX4 ] ) -> fill(res);}
-				if( sensor_residual_Err_it->first == 5){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX5 ] ) -> fill(res);}
+			if( !maperror.empty()){
+				float res = mapres.begin()->first;	
+				float reserror = maperror.begin()->first;	
+				if( sensor_residualerror_it->first == 0){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX0p ] ) -> fill(res/reserror);}
+				if( sensor_residualerror_it->first == 1){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX1p ] ) -> fill(res/reserror);}
+				if( sensor_residualerror_it->first == 2){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX2p ] ) -> fill(res/reserror);}
+				if( sensor_residualerror_it->first == 3){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX3p ] ) -> fill(res/reserror);}
+				if( sensor_residualerror_it->first == 4){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX4p ] ) -> fill(res/reserror);}
+				if( sensor_residualerror_it->first == 5){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX5p ] ) -> fill(res/reserror);}
 				}else{
 					streamlog_out(DEBUG5) << "The map is NULL" <<std::endl;
 				}
-									float res2 = map.begin()->second;
+				float res2 = mapres.begin()->second;
+				float res2error = maperror.begin()->second;
 
-					if( sensor_residual_Err_it->first == 0){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY0 ] ) -> fill(res2);}
-if( sensor_residual_Err_it->first == 1){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY1 ] ) -> fill(res2);}
-if( sensor_residual_Err_it->first == 2){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY2 ] ) -> fill(res2);}
-			if( sensor_residual_Err_it->first == 3){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY3 ] ) -> fill(res2);}
-				if( sensor_residual_Err_it->first == 4){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY4 ] ) -> fill(res2);}
-				if( sensor_residual_Err_it->first == 5){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY5 ] ) -> fill(res2);}
-				
-        }
+				if( sensor_residualerror_it->first == 0){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY0p ] ) -> fill(res2/res2error);}
+				if( sensor_residualerror_it->first == 1){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY1p ] ) -> fill(res2/res2error);}
+				if( sensor_residualerror_it->first == 2){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY2p ] ) -> fill(res2/res2error);}
+				if( sensor_residualerror_it->first == 3){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY3p ] ) -> fill(res2/res2error);}
+				if( sensor_residualerror_it->first == 4){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY4p ] ) -> fill(res2/res2error);}
+				if( sensor_residualerror_it->first == 5){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY5p ] ) -> fill(res2/res2error);}
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 }
 
@@ -326,7 +370,51 @@ void EUTelProcessorGBLFitCandidates::bookHistograms() {
               _aidaHistoMap1D.insert(std::make_pair(_histName::_residGblFitHistNameY3, residGblFit3Y));
               _aidaHistoMap1D.insert(std::make_pair(_histName::_residGblFitHistNameY4, residGblFit4Y));
               _aidaHistoMap1D.insert(std::make_pair(_histName::_residGblFitHistNameY5, residGblFit5Y));
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Pull plots											
+        int NBinp=400;
+        double MinXp=-5;
+        double MaxXp=5;
+
+
+        EUTelHistogramInfo    *    histoInfo0p  = histoMgr->getHistogramInfo( _histName::_residGblFitHistNameX0p);
+        EUTelHistogramInfo    *    histoInfo1p  = histoMgr->getHistogramInfo( _histName::_residGblFitHistNameX1p);
+        EUTelHistogramInfo    *    histoInfo2p  = histoMgr->getHistogramInfo( _histName::_residGblFitHistNameX2p);
+        EUTelHistogramInfo    *    histoInfo3p  = histoMgr->getHistogramInfo( _histName::_residGblFitHistNameX3p);
+        EUTelHistogramInfo    *    histoInfo4p  = histoMgr->getHistogramInfo( _histName::_residGblFitHistNameX4p);
+        EUTelHistogramInfo    *    histoInfo5p  = histoMgr->getHistogramInfo( _histName::_residGblFitHistNameX5p);
+ 
+        AIDA::IHistogram1D * residGblFit0Xp = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistNameX0p, NBinp, MinXp, MaxXp); 
+        AIDA::IHistogram1D * residGblFit1Xp = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistNameX1p, NBinp, MinXp, MaxXp); 
+        AIDA::IHistogram1D * residGblFit2Xp = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistNameX2p, NBinp, MinXp, MaxXp); 
+        AIDA::IHistogram1D * residGblFit3Xp = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistNameX3p, NBinp, MinXp, MaxXp); 
+        AIDA::IHistogram1D * residGblFit4Xp = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistNameX4p, NBinp, MinXp, MaxXp); 
+        AIDA::IHistogram1D * residGblFit5Xp = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistNameX5p, NBinp, MinXp, MaxXp); 
+
+
+              _aidaHistoMap1D.insert(std::make_pair(_histName::_residGblFitHistNameX0p, residGblFit0Xp));
+              _aidaHistoMap1D.insert(std::make_pair(_histName::_residGblFitHistNameX1p, residGblFit1Xp));
+              _aidaHistoMap1D.insert(std::make_pair(_histName::_residGblFitHistNameX2p, residGblFit2Xp));
+              _aidaHistoMap1D.insert(std::make_pair(_histName::_residGblFitHistNameX3p, residGblFit3Xp));
+              _aidaHistoMap1D.insert(std::make_pair(_histName::_residGblFitHistNameX4p, residGblFit4Xp));
+              _aidaHistoMap1D.insert(std::make_pair(_histName::_residGblFitHistNameX5p, residGblFit5Xp));
 											
+        AIDA::IHistogram1D * residGblFit0Yp = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistNameY0p, NBinp, MinXp, MaxXp); 
+        AIDA::IHistogram1D * residGblFit1Yp = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistNameY1p, NBinp, MinXp, MaxXp); 
+        AIDA::IHistogram1D * residGblFit2Yp = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistNameY2p, NBinp, MinXp, MaxXp); 
+        AIDA::IHistogram1D * residGblFit3Yp = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistNameY3p, NBinp, MinXp, MaxXp); 
+        AIDA::IHistogram1D * residGblFit4Yp = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistNameY4p, NBinp, MinXp, MaxXp); 
+        AIDA::IHistogram1D * residGblFit5Yp = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistNameY5p, NBinp, MinXp, MaxXp); 
+
+
+              _aidaHistoMap1D.insert(std::make_pair(_histName::_residGblFitHistNameY0p, residGblFit0Yp));
+              _aidaHistoMap1D.insert(std::make_pair(_histName::_residGblFitHistNameY1p, residGblFit1Yp));
+              _aidaHistoMap1D.insert(std::make_pair(_histName::_residGblFitHistNameY2p, residGblFit2Yp));
+              _aidaHistoMap1D.insert(std::make_pair(_histName::_residGblFitHistNameY3p, residGblFit3Yp));
+              _aidaHistoMap1D.insert(std::make_pair(_histName::_residGblFitHistNameY4p, residGblFit4Yp));
+              _aidaHistoMap1D.insert(std::make_pair(_histName::_residGblFitHistNameY5p, residGblFit5Yp));
+											
+
+
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////Chi2 create plot.
 

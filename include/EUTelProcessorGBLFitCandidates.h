@@ -152,6 +152,19 @@ namespace eutelescope {
 						static string _residGblFitHistNameY4;
 						static string _residGblFitHistNameY5;
 
+						static string _residGblFitHistNameX0p;
+						static string _residGblFitHistNameX1p;
+						static string _residGblFitHistNameX2p;
+						static string _residGblFitHistNameX3p;
+						static string _residGblFitHistNameX4p;
+						static string _residGblFitHistNameX5p;
+						static string _residGblFitHistNameY0p;
+						static string _residGblFitHistNameY1p;
+						static string _residGblFitHistNameY2p;
+						static string _residGblFitHistNameY3p;
+						static string _residGblFitHistNameY4p;
+						static string _residGblFitHistNameY5p;
+
         };
 
 #endif // defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -162,7 +175,7 @@ namespace eutelescope {
 
 				void bookHistograms();
 
-				void plotResidual( map< int, map< float, float > >  & SensorResidualError, bool & first_time);
+				void plotResidual(map< int, map<float, float > >  & sensorResidual, map< int, map<float, float > >  & sensorResidualError, bool &first_time);
 				bool _first_time=true;
 				
 

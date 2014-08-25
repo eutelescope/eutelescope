@@ -21,6 +21,7 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
     <processor name="AIDA"/>
     <processor name="MyEUTelUtilityPrintEventNumber"/>
     <processor name="TrackFit"/>
+    <processor name="TrackAnalysis"/>
     <processor name="Save"/>
   </execute>
 
@@ -65,6 +66,11 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
   <parameter name="TracksOutputCollectionName" type="string" lcioOutType="Track"> @outputCollectionName@  </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
  </processor>
+
+	<processor name="TrackAnalysis" type="EUTelProcessorTrackAnalysis">
+		<parameter name="TrackInputCollectionName" type="string" lcioInType="Track"> @inputCollectionNameGBLTracks@  </parameter>
+		<parameter name="SensorIDs" type="IntVec"> @Planes@ </parameter>
+	</processor>
 
  <processor name="Save" type="EUTelOutputProcessor">
   <!--Writes the current event to the specified LCIO outputfile. Eventually it adds a EORE at the of the file if it was missing Needs to be the last ActiveProcessor.-->

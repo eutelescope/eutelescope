@@ -331,7 +331,7 @@ void EUTelGBLFitter::UpdateTrackFromGBLTrajectory (gbl::GblTrajectory* traj, std
 }
 
 //This used after trackfit will fill a map between (sensor ID and residualx/y).
-void EUTelGBLFitter::getResidualOfTrackandHits(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint > pointList,EUTelTrack& track, map< int, map< float, float > > &  SensorResidual){
+void EUTelGBLFitter::getResidualOfTrackandHits(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint > pointList,EUTelTrack& track, map< int, map< float, float > > &  SensorResidual, map< int, map< float, float > >& sensorResidualError ){
 	for(int j=0 ; j< _vectorOfPairsMeasurementStatesAndLabels.size();j++){
 		EUTelState state = _vectorOfPairsMeasurementStatesAndLabels.at(j).first;
 		if(getLabelToPoint(pointList,_vectorOfPairsMeasurementStatesAndLabels.at(j).second).hasMeasurement() == 0){
@@ -349,6 +349,9 @@ void EUTelGBLFitter::getResidualOfTrackandHits(gbl::GblTrajectory* traj, std::ve
 		map<float, float> res; //This is create on the stack but will pass thisa by value to the new map so it 
 		res.insert(make_pair(aResiduals[0],aResiduals[1]));
 		SensorResidual.insert(make_pair(state.getLocation(), res));		
+		map<float, float> resError; //This is create on the stack but will pass thisa by value to the new map so it 
+		resError.insert(make_pair(aResErrors[0],aResErrors[1]));
+		sensorResidualError.insert(make_pair(state.getLocation(), resError));	
 	}
 }
 
