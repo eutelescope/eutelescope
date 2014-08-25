@@ -146,6 +146,9 @@ void EUTelAPIXTbTrackTuple::processEvent( LCEvent * event )
 
 void EUTelAPIXTbTrackTuple::end()
 {
+	//write version number
+	_versionNo->push_back(1.1);
+	_versionTree->Fill();
 	//Maybe some stats output?
 	_file->Write();
 }
@@ -361,7 +364,13 @@ void EUTelAPIXTbTrackTuple::prepareTree()
 	_hitZPos = new std::vector<double>();
 	_hitSensorId  = new std::vector<int>();
 
+	_versionNo = new std::vector<double>();
+	_versionTree = new TTree("version","version");
+	_versionTree->Branch("no", &_versionNo);
+
 	_euhits = new TTree("fitpoints","fitpoints");
+	_euhits->SetAutoSave(1000000000);
+	
 	_euhits->Branch("nHits", &_nHits);
 	_euhits->Branch("xPos", &_hitXPos);
 	_euhits->Branch("yPos", &_hitYPos);
@@ -369,6 +378,7 @@ void EUTelAPIXTbTrackTuple::prepareTree()
 	_euhits->Branch("sensorId", &_hitSensorId);
 
 	_zstree = new TTree("rawdata", "rawdata");
+	_zstree->SetAutoSave(1000000000);
 	_zstree->Branch("nPixHits", &_nPixHits);
 	_zstree->Branch("euEvt",    &_nEvt);
 	_zstree->Branch("col",      &p_col);
@@ -379,6 +389,7 @@ void EUTelAPIXTbTrackTuple::prepareTree()
 
 	//Tree for storing all track param info
 	_eutracks = new TTree("tracks", "tracks");
+	_eutracks->SetAutoSave(1000000000);
 	_eutracks->Branch("nTrackParams", &_nTrackParams);
 	_eutracks->Branch("euEvt", &_nEvt);
 	_eutracks->Branch("xPos", &_xPos);
@@ -392,8 +403,4 @@ void EUTelAPIXTbTrackTuple::prepareTree()
 
 	_euhits->AddFriend(_zstree);
 	_euhits->AddFriend(_eutracks);
-
-	_versionVec = new TVectorD(1);
-	_versionVec[0] = 1.1;
-        _versionVec->Write("ver");
 }

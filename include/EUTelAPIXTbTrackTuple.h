@@ -54,9 +54,8 @@ namespace eutelescope {
     bool _isFirstEvent;
     
     TFile* _file;
-    
+
     TTree* _eutracks;
-    
     int _nTrackParams;
     std::vector<double> *_xPos;
     std::vector<double> *_yPos;
@@ -83,7 +82,8 @@ namespace eutelescope {
     std::vector<double> *_hitZPos;
     std::vector<int>    *_hitSensorId;
 
-    TVectorD* _versionVec;
+    TTree* _versionTree;
+    std::vector<double>* _versionNo;
   };
 
   //! A global instance of the processor.
