@@ -286,8 +286,8 @@ void EUTelProcessorGBLFitCandidates::bookHistograms() {
 ////////////////////////////////////////////////////////This is for the residual//Thi si a hack must fix so can accept any number of planes. Really should be a separate processor
 
         int NBinX=320;
-        double MinX=0.9;  //-0.2;
-        double MaxX=0.9;
+        double MinX=-0.1;  //-0.2;
+        double MaxX=0.1;
 
 
         EUTelHistogramInfo    *    histoInfo0  = histoMgr->getHistogramInfo( _histName::_residGblFitHistNameX0);
@@ -330,9 +330,9 @@ void EUTelProcessorGBLFitCandidates::bookHistograms() {
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////Chi2 create plot.
 
-	const int chiNbins = 5000;
+	const int chiNbins = 100;
 	const double chiXmin = 0;
-	const double chiXmax = 100;	
+	const double chiXmax = 10;	
   histoInfo = histoMgr->getHistogramInfo(_histName::_chi2CandidateHistName);
 
   int NBin = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : chiNbins;
