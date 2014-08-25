@@ -15,7 +15,7 @@ do
        esac
 done
 
-MaxRecordNumber="1000" 
+MaxRecordNumber="10000" 
 
 echo "Input recieved"
 echo "Config: " $CONFIG
@@ -25,28 +25,32 @@ echo "Run (MAKE SURE YOU HAVE THE CORRECT NUMBER OF ZEROS!): " $RUN #TO DO
 echo "MaxRecordNumber: " $MaxRecordNumber
 
 Fxr="0 1 2 3 4 5"
-Fxs="0         5"
+Fxs="0 1 2 3 4 5"
 Fyr="0 1 2 3 4 5"
-Fys="0         5"
-Fzr="0 1 2 3 4 5"
+Fys="0 1 2 3 4 5"
+Fzr="0         5"
 Fzs="0 1 2 3 4 5"
 
 #inputGear="gear_desy2012_150mm.xml"
 #outputGear="gear-final-XYshift-0000${RUN}.xml"
-#histoNameInput="GBLtrack"
+#histoNameInput="GBLtrack-XYshift"
 
 inputGear="gear-final-XYshift-0000${RUN}.xml"
 outputGear="gear-final-Zrotations-0000${RUN}.xml"
-histoNameInput="GBLtrack-XYshift"
+histoNameInput="GBLtrack-zRotation"
+
+#inputGear="gear-final-Zrotations-0000${RUN}.xml"
+#outputGear="gear-final-XRotation-0000${RUN}.xml"
+#histoNameInput="GBLtrack-Zrotation"
 
 #This is the alignment mode. It sets the size of the alignment jacobian dimensions.
-amode="7";
+amode="2";
 
-pede="chiscut 50. 5. " #This is the input that tell millepede what tracks to discard.  
+pede="chiscut 10. 3. " #This is the input that tell millepede what tracks to discard.  
 
 ExcludePlanes=""
 
-r="0.125";
+r="0.05";
 xres="$r $r $r $r $r $r";
 yres="$r $r $r $r $r $r";
 
@@ -61,7 +65,7 @@ then
 fi
 #TO DO:For some reason when I drop collections this causes a segfault in alignment. I have no clue why. So I create many lcio files in this process.
 #We first run pattern recognition
-$do jobsub.py -c $CONFIG -csv $RUNLIST -o MaxRecordNumber="$MaxRecordNumber" -o ExcludePlanes="$ExcludePlanes" tracksearchHelix $RUN 
+$do jobsub.py -c $CONFIG -csv $RUNLIST -o MaxRecordNumber="$MaxRecordNumber" -o GearFile="$inputGear"  -o ExcludePlanes="$ExcludePlanes" tracksearchHelix $RUN 
 
 #Then we create the first tracks using pattern recognition tracks.
 $do jobsub.py  -c $CONFIG -csv $RUNLIST -o GearFile="$inputGear" -o lcioInputName="trackcand"  -o inputCollectionName="track_candidates" -o lcioOutputName="GBLtracks-1" -o outputCollectionName="tracks1"  -o MaxRecordNumber="$MaxRecordNumber" -o ExcludePlanes="$ExcludePlanes" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" GBLTrackFit  $RUN 
@@ -74,15 +78,15 @@ if [[ $averageChi2 == "" ]]; then
 	echo "ERROR!!!!!!!!! string for chi2 GBL not found. Check output log file is in the correct place. Furthermore check the string is there. "
   exit
 fi
-if [[ $(echo "$averageChi2 < 0.5"|bc) -eq 1 ]]; then
+if [[ $(echo "$averageChi2 < 0.8"|bc) -eq 1 ]]; then
 	echo "The average chi2 is: " $averageChi2. "So decrease resolution."		
-	r=$(echo "scale=4;$r*0.5"|bc);
+	r=$(echo "scale=4;$r*0.8"|bc);
 	xres="$r $r $r $r $r $r";
 	yres="$r $r $r $r $r $r";
 	echo "New resolutions are for (X/Y):" $xres"/"$yres
-elif [[ $(echo "$averageChi2 > 3"|bc) -eq 1 ]]; then
+elif [[ $(echo "$averageChi2 > 1.2"|bc) -eq 1 ]]; then
 	echo "The average chi2 is: " $averageChi2. "So increase resolution."		
-	r=$(echo "scale=4;$r*2"|bc);
+	r=$(echo "scale=4;$r*1.2"|bc);
 	xres="$r $r $r $r $r $r";
 	yres="$r $r $r $r $r $r";
 	echo "New resolutions are for (X/Y):" $xres"/"$yres
@@ -107,15 +111,15 @@ for x in {1..10}; do
 		echo "ERROR!!!!!!!!! string for chi2 GBL not found. Check output log file is in the correct place. Furthermore check the string is there. "
 		exit
 	fi
-	if [[ $(echo "$averageChi2 < 0.5"|bc) -eq 1 ]]; then
+	if [[ $(echo "$averageChi2 < 0.8"|bc) -eq 1 ]]; then
 		echo "The average chi2 is: " $averageChi2. "So decrease resolution."		
-		r=$(echo "scale=4;$r*0.5"|bc);
+		r=$(echo "scale=4;$r*0.8"|bc);
 		xres="$r $r $r $r $r $r";
 		yres="$r $r $r $r $r $r";
 		echo "New resolutions are for (X/Y):" $xres"/"$yres
-	elif [[ $(echo "$averageChi2 > 3"|bc) -eq 1 ]]; then
+	elif [[ $(echo "$averageChi2 > 1.2"|bc) -eq 1 ]]; then
 		echo "The average chi2 is: " $averageChi2. "So increase resolution."		
-		r=$(echo "scale=4;$r*2"|bc);
+		r=$(echo "scale=4;$r*1.2"|bc);
 		xres="$r $r $r $r $r $r";
 		yres="$r $r $r $r $r $r";
 		echo "New resolutions are for (X/Y):" $xres"/"$yres
@@ -159,7 +163,7 @@ fi
 fileAlign="/scratch/ilcsoft/v01-17-05/Eutelescope/master/jobsub/examples/GBL/output/logs/GBLAlign-0000${RUN}.zip"
 
 #Do one iteration of alignment to create new loop gear
-$do jobsub.py -c $CONFIG -csv $RUNLIST -o lcioInputName="GBLtracks-$lcioNumber" -o inputCollectionName="tracks$lcioNumber" -o MaxRecordNumber="$MaxRecordNumber" -o ExcludePlanes="$ExcludePlanes" -o GearAlignedFile="$outputGear" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o MilleMaxChi2Cut="$Chi2Cut" -o pede="$pede" GBLAlign  $RUN 
+$do jobsub.py -c $CONFIG -csv $RUNLIST -o lcioInputName="GBLtracks-$lcioNumber" -o inputCollectionName="tracks$lcioNumber" -o MaxRecordNumber="$MaxRecordNumber" -o ExcludePlanes="$ExcludePlanes" -o GearFile="$inputGear" -o GearAlignedFile="$outputGear" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o MilleMaxChi2Cut="$Chi2Cut" -o pede="$pede" GBLAlign  $RUN 
 
 error=`unzip  -p  $fileAlign |grep "Backtrace for this error:" | awk '{ print $NF }'`;
 if [[ $error != "" ]];then
@@ -171,56 +175,58 @@ fi
 while :
 	do
 	echo "Resolution inside ALignment loop beginning (X/Y):" $xres"/"$yres
-	$do jobsub.py -c $CONFIG -csv $RUNLIST -o lcioInputName="GBLtracks-$lcioNumber" -o inputCollectionName="tracks$lcioNumber" -o MaxRecordNumber="$MaxRecordNumber" -o ExcludePlanes="$ExcludePlanes" -o GearFile="$outputGear" -o GearAlignedFile="gear-loop-0000${RUN}.xml" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" -o AlignmentMode="$amode" -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}" -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o MilleMaxChi2Cut="$Chi2Cut" -o pede="$pede"  GBLAlign  $RUN
+	$do jobsub.py -c $CONFIG -csv $RUNLIST -o lcioInputName="GBLtracks-$lcioNumber" -o inputCollectionName="tracks$lcioNumber" -o MaxRecordNumber="$MaxRecordNumber" -o ExcludePlanes="$ExcludePlanes" -o GearFile="$inputGear" -o GearAlignedFile="gear-loop-0000${RUN}.xml" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" -o AlignmentMode="$amode" -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}" -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o MilleMaxChi2Cut="$Chi2Cut" -o pede="$pede"  GBLAlign  $RUN
 
 	rejected=`unzip  -p  $fileAlign |grep "Too many rejects" |cut -d '-' -f2`; 
-	echo "Rejects word found: " $rejected
+	echo "Rejects word:  $rejected "
 	if [[ $rejected != "" ]];then
-		echo "Too many rejects. Resolution must increase."
+		echo "Too many rejects. Resolution must increase by factor 2."
 		r=$(echo "scale=4;$r*2"|bc);
 		xres="$r $r $r $r $r $r";
 		yres="$r $r $r $r $r $r";
 		echo "New resolutions are for (X/Y):" $xres"/"$yres
 	fi
 	factor=`unzip  -p  $fileAlign |grep "multiply all input standard deviations by factor" | awk '{ print $NF }'`;
-	echo "factor word found: " $factor
+	echo "factor word: " $factor
 	if [[ $factor != "" ]];then
-		echo "Too many rejects. Resolution must increase."
+		echo "Factor word found! Resolution must increase by factor $factor "
 		r=$(echo "scale=4;  $r*$factor" |bc);
 		xres="$r $r $r $r $r $r";
 		yres="$r $r $r $r $r $r";
 		echo "New resolutions are for (X/Y):" $xres"/"$yres
 	fi
-	$do jobsub.py -c $CONFIG -csv $RUNLIST -o lcioInputName="GBLtracks-$lcioNumber" -o inputCollectionName="tracks$lcioNumber" -o MaxRecordNumber="$MaxRecordNumber" -o ExcludePlanes="$ExcludePlanes" -o GearFile="gear-loop-0000${RUN}.xml " -o GearAlignedFile="$outputGear" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o MilleMaxChi2Cut="$Chi2Cut" -o pede="$pede"  GBLAlign  $RUN 
+	$do jobsub.py -c $CONFIG -csv $RUNLIST -o lcioInputName="GBLtracks-$lcioNumber" -o inputCollectionName="tracks$lcioNumber" -o MaxRecordNumber="$MaxRecordNumber" -o ExcludePlanes="$ExcludePlanes" -o GearFile="$inputGear" -o GearAlignedFile="$outputGear" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o MilleMaxChi2Cut="$Chi2Cut" -o pede="$pede"  GBLAlign  $RUN 
 	rejected=`unzip  -p  $fileAlign |grep "Too many rejects" |cut -d '-' -f2`; 
 
 	averageChi2Mille=`unzip -p $fileAlign |grep "Chi^2/Ndf" | awk '{ print $(NF-5) }'`;
 
-	if [[ $averageChi2Mille == "" ]]; then
-		echo "Mille chi2 is non existant. Here it is: $averageChi2Mille"
-	fi
-	echo "Rejects word found: " $rejected
+	echo "Rejects word:  $rejected "
 	if [[ $rejected != "" ]];then
-		echo "Too many rejects. Resolution must increase."
+		echo "Too many rejects. Resolution must increase by factor 2."
 		r=$(echo "scale=4;$r*2"|bc);
 		xres="$r $r $r $r $r $r";
 		yres="$r $r $r $r $r $r";
 		echo "New resolutions are for (X/Y):" $xres"/"$yres
 	fi
 	factor=`unzip  -p  $fileAlign |grep "multiply all input standard deviations by factor" | awk '{ print $NF }'`;
-	echo "factor word found: " $factor
+	echo "factor word: " $factor
 	if [[ $factor != "" ]];then
-		echo "Too many rejects. Resolution must increase."
+		echo "Factor word found! Resolution must increase by $factor."
 		r=$(echo "scale=4;$r*$factor"|bc);
 		xres="$r $r $r $r $r $r";
 		yres="$r $r $r $r $r $r";
 		echo "New resolutions are for (X/Y):" $xres"/"$yres
 	fi
-	if [[ $(echo "$averageChi2Mille < 0.5"|bc) -eq 1 ]]; then
+	if [[ $averageChi2Mille == "" ]] && [[ $factor == "" ]] && [[ $rejected == "" ]];then
+		echo "Mille chi2 is non existant. Here it is: $averageChi2Mille"
+		echo "We can not find this or factor or rejects. Sit chi2 to 1 and exit"
+		averageChi2Mille=1
+	fi
+	if [[ $(echo "$averageChi2Mille < 0.8"|bc) -eq 1 ]]; then
 		echo "The average chi2 is: " $averageChi2Mille. "So decrease resolution."		
 		echo "New resolutions are for (X/Y):" $xres"/"$yres
 		echo "Continue"
-	elif [[ $(echo "$averageChi2Mille > 3"|bc) -eq 1 ]]; then
+	elif [[ $(echo "$averageChi2Mille > 1.2"|bc) -eq 1 ]]; then
 		echo "The average chi2 is: " $averageChi2Mille. "So increase resolution."		
 		echo "New resolutions are for (X/Y):" $xres"/"$yres
 	else 
@@ -228,3 +234,12 @@ while :
 		break
 	fi
 done 
+
+
+$do jobsub.py -c $CONFIG -csv $RUNLIST -o MaxRecordNumber="$MaxRecordNumber" -o GearFile="$outputGear"  -o ExcludePlanes="$ExcludePlanes" tracksearchHelix $RUN 
+r="0.005";
+xres="$r $r $r $r $r $r";
+yres="$r $r $r $r $r $r";
+
+#Then we create the first tracks using pattern recognition tracks.
+$do jobsub.py  -c $CONFIG -csv $RUNLIST -o GearFile="$outputGear" -o histoName="$histoNameInput" -o lcioInputName="trackcand"  -o inputCollectionName="track_candidates" -o lcioOutputName="GBLtracks-1" -o outputCollectionName="tracks1"  -o MaxRecordNumber="$MaxRecordNumber" -o ExcludePlanes="$ExcludePlanes" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" GBLTrackFit  $RUN 
