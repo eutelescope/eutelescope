@@ -371,9 +371,9 @@ void EUTelProcessorGBLFitCandidates::bookHistograms() {
               _aidaHistoMap1D.insert(std::make_pair(_histName::_residGblFitHistNameY4, residGblFit4Y));
               _aidaHistoMap1D.insert(std::make_pair(_histName::_residGblFitHistNameY5, residGblFit5Y));
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Pull plots											
-        int NBinp=400;
-        double MinXp=-5;
-        double MaxXp=5;
+        int NBinp=120;
+        double MinXp=-10;
+        double MaxXp=10;
 
 
         EUTelHistogramInfo    *    histoInfo0p  = histoMgr->getHistogramInfo( _histName::_residGblFitHistNameX0p);

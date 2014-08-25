@@ -15,7 +15,7 @@ do
        esac
 done
 
-MaxRecordNumber="10000" 
+MaxRecordNumber="1000" 
 
 echo "Input recieved"
 echo "Config: " $CONFIG
@@ -28,16 +28,17 @@ Fxr="0 1 2 3 4 5"
 Fxs="0 1 2 3 4 5"
 Fyr="0 1 2 3 4 5"
 Fys="0 1 2 3 4 5"
-Fzr="0         5"
+Fzr="0     3 4 5"
 Fzs="0 1 2 3 4 5"
 
-#inputGear="gear_desy2012_150mm.xml"
+inputGear="gear_desy2012_150mm.xml"
+#inputGear="gear_lam_1T.xml"
 #outputGear="gear-final-XYshift-0000${RUN}.xml"
-#histoNameInput="GBLtrack-XYshift"
+#histoNameInput="GBLtrack-XYshift-0000${RUN}"
 
 inputGear="gear-final-XYshift-0000${RUN}.xml"
 outputGear="gear-final-Zrotations-0000${RUN}.xml"
-histoNameInput="GBLtrack-zRotation"
+histoNameInput="GBLtrack-zRotation-0000${RUN}"
 
 #inputGear="gear-final-Zrotations-0000${RUN}.xml"
 #outputGear="gear-final-XRotation-0000${RUN}.xml"
@@ -46,7 +47,7 @@ histoNameInput="GBLtrack-zRotation"
 #This is the alignment mode. It sets the size of the alignment jacobian dimensions.
 amode="2";
 
-pede="chiscut 10. 3. " #This is the input that tell millepede what tracks to discard.  
+pede="chiscut 5. 3. " #This is the input that tell millepede what tracks to discard.  
 
 ExcludePlanes=""
 
