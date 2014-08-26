@@ -95,10 +95,10 @@ void	EUTelProcessorTrackAnalysis::initialiseResidualVsPositionHistograms(){
 		histTitle = sstm.str();
 		sstm.str(std::string(""));
 		histoInfo = histoMgr->getHistogramInfo(residGblFitHistName);
-		NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 100;
+		NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 40;
 		MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin :-10 ;
 		MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 10;
-		NBinY = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yBin : 100;
+		NBinY = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yBin : 20;
 		MinY =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMin : -5;
 		MaxY =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMax : 5;
 		MinZ =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_zMin : -20;
@@ -121,10 +121,10 @@ void	EUTelProcessorTrackAnalysis::initialiseResidualVsPositionHistograms(){
 		histTitle = sstm.str();
 		sstm.str(std::string(""));
 		histoInfo = histoMgr->getHistogramInfo(residGblFitHistName);
-		NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 100;
+		NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 40;//every 500 micron there is a bin
 		MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin :-10 ;
 		MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 10;
-		NBinY = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yBin : 100;
+		NBinY = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yBin : 20;//every 500 micron there is a bin
 		MinY =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMin : -5;
 		MaxY =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMax : 5;
 		MinZ =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_zMin : -20;

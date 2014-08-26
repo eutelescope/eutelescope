@@ -1661,56 +1661,86 @@ TVector3 EUTelGeometryTelescopeGeoDescription::getXYZfromArcLength(TVector3 pos 
         
 	return pos;
 }
+//Here we define the transformation between the curvilinear and the local frame. Note the local frame we have is defined as the local frame of the telescope. 
+//We do this since the local frame is arbitrary.
+//However we must describe the local frame in the curvilinear frame. Since we connect the two frames via the same global frame. 
+//The transformations are the same as described below.
+//This is unlike the curvilinear frame which can not have the particles moving in z due to construction. 
+//Therefore we follow the paper: Derivation of Jacobians for the propagation of covariance matrices of track parameters in homogeneous magnetic fields. 
+//Which implies that anytime we are describing the curvilinear system using our global momentums then we need to transform the from our system to theirs.
+//Within the function this will be clearly labelled
+//This is a simple transform our x becomes their(curvilinear y), our y becomes their z and z becomes x
+//However this is ok since we never directly access the curvilinear system. It is only a bridge between two local systems. 
 TMatrix EUTelGeometryTelescopeGeoDescription::getLocalToCurvilinearTransformMatrix(TVector3 globalPosition  , TVector3 globalMomentum, int  planeID, float charge){
 	const gear::BField&   Bfield = geo::gGeometry().getMagneticFiled();
 	gear::Vector3D vectorGlobal(globalPosition[0],globalPosition[1],globalPosition[2]);//Since field is homogeneous this seems silly but we need to specify a position to geometry to get B-field.
-	const double Bx = (Bfield.at( vectorGlobal ).x())*0.3;//We times bu 0.3 due to units of other variables. See paper. Must be Tesla
-	const double By = (Bfield.at( vectorGlobal ).y())*0.3;
-	const double Bz = (Bfield.at( vectorGlobal ).z())*0.3;
+	//Magnetic field must be changed to curvilinear coordinate system. Since this is used in the curvilinear jacobian/////////////////////////////////////////////////////////////////////////////////////////
+	const double Bx = (Bfield.at( vectorGlobal ).z())*0.3;//We times bu 0.3 due to units of other variables. See paper. Must be Tesla
+	const double By = (Bfield.at( vectorGlobal ).x())*0.3;
+	const double Bz = (Bfield.at( vectorGlobal ).y())*0.3;
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	TVector3 B;
 	B[0]=Bx; B[1]=By; B[2]=Bz;
 	TVector3 H = B.Unit();
-	TVector3 T = globalMomentum.Unit();//With no magnetic field this will point in z direction.	
-	const float cosLambda = sqrt(T[2] * T[2] + (-1*T[1]) * (-1*T[1]));;
-	TVector3 xGlobalNormal;
-	xGlobalNormal[0]=1;xGlobalNormal[1]=0;xGlobalNormal[2]=0;
-	TVector3 U = -(xGlobalNormal.Cross(T)).Unit();//With no magnetic field this will point in global + y direction. 
-	TVector3 V = -(T.Cross(U));//With no magnetic field this will point in global  x direction. 	
-	streamlog_out(DEBUG0)<<"The X(V) axis of the curvilinear system in the global system"<< std::endl; 
+	////////////////////////////////////We transform the momentum to curvilinear frame. Since this is what is used to describe the curvilinear frame///////////////////// 
+	TVector3 curvilinearGlobalMomentum;
+	curvilinearGlobalMomentum[0]=globalMomentum[2];curvilinearGlobalMomentum[1]=globalMomentum[0];curvilinearGlobalMomentum[2]=globalMomentum[1];
+	TVector3 T = curvilinearGlobalMomentum.Unit();//With no magnetic field this will point in z direction.	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	const float cosLambda = sqrt(T[0] * T[0] + (T[1]) * (T[1]));
+	//////////////////////////////////////////We use the global curvilinear frame z direction to create the other unit axis/////////////// 
+	TVector3 zGlobalNormal;
+	zGlobalNormal[0]=0;zGlobalNormal[1]=0;zGlobalNormal[2]=1;
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	TVector3 U = (zGlobalNormal.Cross(T)).Unit(); 
+	TVector3 V = (T.Cross(U)); 	
+	streamlog_out(DEBUG0)<<"The Z(V) axis of the curvilinear system in the global system (Note not the same as global telescope frame)."<< std::endl; 
 	streamlog_message( DEBUG0, V.Print();, std::endl; );
-	streamlog_out(DEBUG0)<<"The Y(U) axis of the curvilinear system in the global system"<< std::endl; 
+	streamlog_out(DEBUG0)<<"The Y(U) axis of the curvilinear system in the global system (Note not the same as global telescope frame)"<< std::endl; 
 	streamlog_message( DEBUG0, U.Print();, std::endl; );
-	streamlog_out(DEBUG0)<<"The Z(T) axis of the curvilinear system in the global system (Should be in beam direction)"<< std::endl; 
+	streamlog_out(DEBUG0)<<"The X(T) axis of the curvilinear system in the global system  (Note not the same as global telescope frame). Should be beam direction."<< std::endl; 
 	streamlog_message( DEBUG0, T.Print();, std::endl; );
+	TVector3 ITelescopeFrame;
+	TVector3 KTelescopeFrame;
+	TVector3 JTelescopeFrame;
 	TVector3 I;
 	TVector3 K;
 	TVector3 J;
+
+	///This is the EUTelescope local z direction.//////////////////////////// 
 	if(planeID>0){
-		I = geo::gGeometry().siPlaneNormal( planeID  ); //This is the z direction of the plane in local frame      
+		ITelescopeFrame = geo::gGeometry().siPlaneNormal( planeID  );       
+		I[0]=ITelescopeFrame[2];I[1]=ITelescopeFrame[0];I[2]=ITelescopeFrame[1];
 	}else{
-		I[0]=0;		I[1]=0;		I[2]=1;
+		I[0]=1;		I[1]=0;		I[2]=0;//By default in point in the x direction
 	}
+	//////////////////////////////////////////////////////////////////////////////
+	//This is the EUTelescope local Y direction////////////////////////////////////////
 	if(planeID>0){
-		K = geo::gGeometry().siPlaneYAxis( planeID  ); //This is the y direction of the local frame in global coordinates.      
+		KTelescopeFrame = geo::gGeometry().siPlaneYAxis( planeID  ); //This is the y direction of the local frame in global coordinates.      
+		K[0]=KTelescopeFrame[2];K[1]=KTelescopeFrame[0];K[2]=KTelescopeFrame[1];
 	}else{
-		K[0]=0;		K[1]=-1;		K[2]=0;
+		K[0]=0;		K[1]=0;		K[2]=-1;//This points in the -z direction by default of the global curvilinear frame.
 	}
+	//This is the EUTelescope local x direction//////////////////////////////////
 	if(planeID>0){
-		J  = geo::gGeometry().siPlaneXAxis( planeID  ); //X direction      
+		JTelescopeFrame  = geo::gGeometry().siPlaneXAxis( planeID  ); //X direction      
+		J[0]=JTelescopeFrame[2];J[1]=JTelescopeFrame[0];J[2]=JTelescopeFrame[1];
 	}else{
-		J[0]=-1;		J[1]=0;		J[2]=0;
+		J[0]=0;		J[1]=-1;		J[2]=0;//This points in the -y direction of the global curvilinear frame by default
 	}
-	streamlog_out(DEBUG0)<<"The X(J) axis of local system in the global system"<< std::endl; 
+	///////////////////////////////////////////////////////////////////
+	streamlog_out(DEBUG0)<<"The X(J) axis of local system in the global curvilinear system"<< std::endl; 
 	streamlog_message( DEBUG0, J.Print();, std::endl; );
-	streamlog_out(DEBUG0)<<"The Y(K) axis of local system in the global system"<< std::endl; 
+	streamlog_out(DEBUG0)<<"The Y(K) axis of local system in the global curvilinear system"<< std::endl; 
 	streamlog_message( DEBUG0, K.Print();, std::endl; );
-	streamlog_out(DEBUG0)<<"The Z(I) axis of local system in the global system"<< std::endl; 
+	streamlog_out(DEBUG0)<<"The Z(I) axis of local system in the global curvilinear system"<< std::endl; 
 	streamlog_message( DEBUG0, I.Print();, std::endl; );
 
 	TVector3 N = (H.Cross(T)).Unit();
 	//
 	const float alpha = (H.Cross(T)).Mag();
-	const float Q = -(B.Mag())*(charge/(globalMomentum.Mag()));//You could use end momentum since it must be constant
+	const float Q = -(B.Mag())*(charge/(curvilinearGlobalMomentum.Mag()));//You could use end momentum since it must be constant
 	//
 	const float TDotI = T.Dot(I);
 	const float TDotJ = T.Dot(J);
@@ -1845,10 +1875,14 @@ TMatrix EUTelGeometryTelescopeGeoDescription::getPropagationJacobianCurvilinear(
  *     * \param [in] b   B (magnetic field)
  *      * \return (5*5) propagation matrix
  *       */
+//Note that the curvilinear frame that this jacobian has been derived in does not work for particles moving in z-direction. 
+//This is due to a construction that assumes tha beam pipe is in the z-direction. Since it is used for collider experiements. 
+//We therefore have to change to the coordinate system used in paper before we apply this jacobian.
+//This is ok since we never access the curvilinear system directly but always through the local system which is defined in the local frame of the telescope
+//I.e Telescope x becomes y, y becomes z and z becomes x.
 TMatrix EUTelGeometryTelescopeGeoDescription::getPropagationJacobianCurvilinear(float ds , float  qbyp,  TVector3 t1w, TVector3 t2w) {
-	//TO DO:This is a hack. Should change equations to suit our coordinate system
-	TVector3 t1(t1w[2],-t1w[1],t1w[0]);//This is need to change to claus's coordinate system
-	TVector3 t2(t2w[2],-t2w[1],t2w[0]);
+	TVector3 t1(t1w[2],t1w[0],t1w[1]);//This is need to change to claus's coordinate system
+	TVector3 t2(t2w[2],t2w[0],t2w[1]);
 	t1.Unit();
 	t2.Unit();
 //	if(t1.Mag() != 1.0 or t2.Mag() != 1.0){//TO DO: This statement does not work for some reason.
@@ -1856,10 +1890,13 @@ TMatrix EUTelGeometryTelescopeGeoDescription::getPropagationJacobianCurvilinear(
 //		throw(lcio::Exception(Utility::outputColourString("The calculation of the jacobian must be performed by unit vectors!.", "RED"))); 	
 //	}
 	const gear::BField&   Bfield = getMagneticFiled();
+	//Must transform the B field to be in the frame used in the curvilinear frame 
 	gear::Vector3D vectorGlobal(0.1,0.1,0.1);//Since field is homogeneous this seems silly but we need to specify a position to geometry to get B-field.
-	const double Bx = (Bfield.at( vectorGlobal ).x())*0.3; //We times but 0.3 due to units of other variables. See paper. Must be Tesla
-	const double By = (Bfield.at( vectorGlobal ).y())*0.3;
-	const double Bz = (Bfield.at( vectorGlobal ).z())*0.3;
+	/////////////////////////////////////////////////////////Must also change the magnetic field to be in the correct coordinate system///////////
+	const double Bx = (Bfield.at( vectorGlobal ).z())*0.3*pow(10,-3); //We times but 0.3 due to units of other variables. See paper. Must be Tesla
+	const double By = (Bfield.at( vectorGlobal ).x())*0.3*pow(10,-3);
+	const double Bz = (Bfield.at( vectorGlobal ).y())*0.3*pow(10,-3);
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	TVector3 b;
 	b[0]=Bx; b[1]=By; b[2]=Bz;
 	streamlog_out( DEBUG2 ) << "EUTelGeometryTelescopeGeoDescription::getPropagationJacobianCurvilinear()------BEGIN" << std::endl;
