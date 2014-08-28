@@ -404,7 +404,7 @@ void EUTelGBLFitter::setInformationForGBLPointList(EUTelTrack& track, std::vecto
 		if(i != (track.getStates().size()-1)){
 			nextState = track.getStates().at(i+1);
 		}
-		setScattererGBL(point,state.getLocation());//Every sensor will have scattering due to itself. 
+		setScattererGBL(point,state);//Every sensor will have scattering due to itself. 
 		if(state.getTrackerHits().size() == 0 ){
 			streamlog_out(DEBUG3)  << Utility::outputColourString("This state does not have a hit. ", "YELLOW")<<std::endl;
 			setPointVec(pointList, point);//This creates the vector of points and keeps a link between states and the points they created
@@ -427,8 +427,8 @@ void EUTelGBLFitter::setInformationForGBLPointList(EUTelTrack& track, std::vecto
 			double globalPosSensor2[3];
 			geo::gGeometry().local2Master(nextState.getLocation(),nextStateReferencePoint , globalPosSensor2 );
 			testDistanceBetweenPoints(globalPosSensor1,globalPosSensor2);
-			float rad = geo::gGeometry().findRadLengthIntegral(globalPosSensor1,globalPosSensor2, false );//TO DO: This adds the radiation length of the plane again. If you chose true the some times it returns 0 
-			if(rad == 0){
+			float percentageRadiationLength  = geo::gGeometry().findRadLengthIntegral(globalPosSensor1,globalPosSensor2, false );//TO DO: This adds the radiation length of the plane again. If you chose true the some times it returns 0 
+			if(percentageRadiationLength == 0){
 				streamlog_out(MESSAGE9)<<"The positions between the scatterers are: "<<endl;
 				streamlog_out(MESSAGE9)<<"Start: "<<globalPosSensor1[0]<<" "<<globalPosSensor1[1]<<" "<<globalPosSensor1[2]<<endl;
 				streamlog_out(MESSAGE9)<<"End: "<<globalPosSensor2[0]<<" "<<globalPosSensor2[1]<<" "<<globalPosSensor2[2]<<endl;
@@ -436,7 +436,7 @@ void EUTelGBLFitter::setInformationForGBLPointList(EUTelTrack& track, std::vecto
 			} 
 			findScattersZPositionBetweenTwoStates(state); 
 			jacPointToPoint=findScattersJacobians(state,nextState);
-			setPointListWithNewScatterers(pointList, rad);
+			setPointListWithNewScatterers(pointList,state, percentageRadiationLength);//TO DO: We assume that on all planes the incidence angle is the same as state on lat plane. Not a terrible approximation.
 		}else{
 			streamlog_out(DEBUG3)<<"We have reached the last plane"<<std::endl;
 		}
@@ -495,7 +495,7 @@ void EUTelGBLFitter::testDistanceBetweenPoints(double* position1,double* positio
 	}
 }
 
-void EUTelGBLFitter::setPointListWithNewScatterers(std::vector< gbl::GblPoint >& pointList, float rad ){
+void EUTelGBLFitter::setPointListWithNewScatterers(std::vector< gbl::GblPoint >& pointList,EUTelState & state, float  percentageRadiationLength){
 	if(_scattererJacobians.size() != _scattererPositions.size()){
 		throw(lcio::Exception(Utility::outputColourString("The size of the scattering positions and jacobians is different.", "RED"))); 	
 	}
@@ -503,7 +503,7 @@ void EUTelGBLFitter::setPointListWithNewScatterers(std::vector< gbl::GblPoint >&
 		gbl::GblPoint point(_scattererJacobians[i]);
 		point.setLabel(_counter_num_pointer);
 		_counter_num_pointer++;
-		setScattererGBL(point,rad/2);//TO DO:Simply dividing by 2 will work when there is only two planes
+		setScattererGBL(point,state, percentageRadiationLength/2);//TO DO:Simply dividing by 2 will work when there is only two planes
 		pointList.push_back(point);
 	}
 }
@@ -570,59 +570,25 @@ void EUTelGBLFitter::findScattersZPositionBetweenTwoStates(EUTelState& state){
 
 }
 //Note that we take the planes themselfs at scatters and also add scatterers to simulate the medium inbetween. 
-void EUTelGBLFitter::setScattererGBL(gbl::GblPoint& point, int iPlane) {
+void EUTelGBLFitter::setScattererGBL(gbl::GblPoint& point, EUTelState & state ) {
 	streamlog_out(DEBUG1) << " setScattererGBL ------------- BEGIN --------------  " << std::endl;
-	TVectorD scatPrecSensor(2);
 	TVectorD scat(2); 
-	scat[0] = 0.0; scat[1]=0.0;//TO DO: This will depend on the direction of the beam.  
-	//TO DO:Should make the reading for any planes not just si. 
-	const double radiationLength  = geo::gGeometry().siPlaneRadLength(iPlane);//This is in mm.
-	const double thickness        = geo::gGeometry().siPlaneZSize(iPlane);//TO DO: Need to get the correct thickness
-	streamlog_out(DEBUG5)<<"The radiation length for the sensor is: " << radiationLength <<std::endl; 
-	if( radiationLength== 0){
-		throw(lcio::Exception(Utility::outputColourString("Radiation length is zero.", "RED"))); 	
-	}
-	streamlog_out(DEBUG5)<<"The thickness for the sensor is: " << thickness <<std::endl; 
-	if(thickness == 0 ){ 
-		throw(lcio::Exception(Utility::outputColourString("thickness is zero", "RED"))); 	
-	}
-	const double x0  = thickness / radiationLength; 
-	streamlog_out(DEBUG5)<<"The X0 for the sensor is: " << x0 <<std::endl; 
-	if(x0 == 0){
-		streamlog_out(MESSAGE0)<<"The thickness: " << thickness << "The radiation length is: "<< radiationLength <<std::endl; 
-		throw(lcio::Exception(Utility::outputColourString("X0 is zero for the plane itself.", "RED"))); 	
-	}
-	if(getBeamEnergy() == 0 ){ 
-		throw(lcio::Exception(Utility::outputColourString("Beam energy is zero", "RED"))); 	
-	}
-
-	const double scatteringVariance  = Utility::getThetaRMSHighland(getBeamEnergy(), x0);
-
-	scatPrecSensor[0] = 1.0 / (scatteringVariance *scatteringVariance);
-	scatPrecSensor[1] = 1.0 / (scatteringVariance * scatteringVariance);
-
-	point.addScatterer(scat, scatPrecSensor);
-
+	scat[0] = 0.0; scat[1]=0.0;//TO DO: This will depend on if the initial track guess has kinks. Only important if we reiterate GBL track in high radiation length enviroments  
+	TMatrixDSym precisionMatrix =  state.getScatteringVarianceInLocalFrame();
+	streamlog_out(MESSAGE1) << "The precision matrix being used for the sensor  "<<state.getLocation()<<":" << std::endl;
+	streamlog_message( DEBUG0, precisionMatrix.Print();, std::endl; );
+	point.addScatterer(scat, precisionMatrix);
 	streamlog_out(DEBUG1) << "  setScattererGBL  ------------- END ----------------- " << std::endl;
 }
 //This is used when the we know the radiation length already
-void EUTelGBLFitter::setScattererGBL(gbl::GblPoint& point, float x0 ) {
+void EUTelGBLFitter::setScattererGBL(gbl::GblPoint& point,EUTelState & state, float  percentageRadiationLength) {
 	streamlog_out(MESSAGE1) << " setScattererGBL ------------- BEGIN --------------  " << std::endl;
-	TVectorD scatPrecSensor(2);
 	TVectorD scat(2); 
-	scat[0] = 0.0; scat[1]=0.0;//TO DO: This will depend on the direction of the beam.  
-	//TO DO:Should make the reading for any planes not just si. 
-	streamlog_out(DEBUG5)<<"The X0 for the sensor is: " << x0 <<std::endl; 
-	if(x0 == 0){
-		throw(lcio::Exception(Utility::outputColourString("X0 is zero for the medium inbetween the planes .", "RED"))); 	
-	}
-	if(getBeamEnergy() == 0 ){ 
-		throw(lcio::Exception(Utility::outputColourString("Beam energy is zero", "RED"))); 	
-	}
-	const double scatteringVariance  = Utility::getThetaRMSHighland(getBeamEnergy(), x0);
-	scatPrecSensor[0] = 1.0 / (scatteringVariance *scatteringVariance);
-	scatPrecSensor[1] = 1.0 / (scatteringVariance * scatteringVariance);
-	point.addScatterer(scat, scatPrecSensor);
+	scat[0] = 0.0; scat[1]=0.0;  
+	TMatrixDSym precisionMatrix =  state.getScatteringVarianceInLocalFrame(percentageRadiationLength);
+	streamlog_out(MESSAGE1) << "The precision matrix being used for the scatter:  " << std::endl;
+	streamlog_message( DEBUG0, precisionMatrix.Print();, std::endl; );
+	point.addScatterer(scat, precisionMatrix);
 	streamlog_out(MESSAGE1) << "  setScattererGBL  ------------- END ----------------- " << std::endl;
 }
 //This will add measurement information to the GBL point

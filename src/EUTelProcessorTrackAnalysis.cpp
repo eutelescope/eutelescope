@@ -15,7 +15,7 @@ Processor("EUTelProcessorTrackAnalysis"){
 
 void EUTelProcessorTrackAnalysis::init(){
 	initialiseResidualVsPositionHistograms();
-	EUTelTrackAnalysis*	analysis = new EUTelTrackAnalysis(_mapFromSensorIDToHistogramX,_mapFromSensorIDToHistogramY) ;
+	EUTelTrackAnalysis*	analysis = new EUTelTrackAnalysis(_mapFromSensorIDToHistogramX,_mapFromSensorIDToHistogramY,_mapFromSensorIDToKinkXZ,_mapFromSensorIDToKinkYZ) ;
 	_analysis = analysis;
 }
 
@@ -46,6 +46,7 @@ void EUTelProcessorTrackAnalysis::processEvent(LCEvent * evt){
 		for (int iTrack = 0; iTrack < eventCollection->getNumberOfElements(); ++iTrack){
 			EUTelTrack track = *(static_cast<EUTelTrack*> (eventCollection->getElementAt(iTrack)));
 			_analysis->plotResidualVsPosition(track);	
+			_analysis->plotIncidenceAngles(track);
 		}
 
 	}	
@@ -88,6 +89,7 @@ void	EUTelProcessorTrackAnalysis::initialiseResidualVsPositionHistograms(){
 	std::string residGblFitHistName;
 	std::string histTitle;
 	for (int i = 0; i < _sensorIDs.size() ; ++i){
+		/////////////////////////////////////////////////////////////////////////////XY residual plots with position
 		sstm << "ResidualX" << _sensorIDs.at(i);
 		residGblFitHistName = sstm.str();
 		sstm.str(std::string());
@@ -139,4 +141,51 @@ void	EUTelProcessorTrackAnalysis::initialiseResidualVsPositionHistograms(){
 		}
 		sstm.str(std::string(""));
 	}
+		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		/////////////////////////////////////////////////////////////////////////////////////The incidence angles for each plane
+	for (int i = 0; i < _sensorIDs.size() ; ++i){
+		sstm << "IncidenceXZ" << _sensorIDs.at(i);
+		residGblFitHistName = sstm.str();
+		sstm.str(std::string());
+		sstm << "Incidence local Tx (XZ plane). Plane " <<  _sensorIDs.at(i);
+		histTitle = sstm.str();
+		sstm.str(std::string(""));
+		histoInfo = histoMgr->getHistogramInfo(residGblFitHistName);
+		NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 40000;
+		MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin :-0.1 ;
+		MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 0.1;
+		AIDA::IHistogram1D * incidenceGblFitXZ = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(residGblFitHistName, NBinX, MinX, MaxX); 
+
+		if (incidenceGblFitXZ){
+				incidenceGblFitXZ->setTitle(histTitle);
+				_mapFromSensorIDToKinkXZ.insert(std::make_pair(_sensorIDs.at(i), incidenceGblFitXZ));
+		} else {
+				streamlog_out(ERROR2) << "Problem booking the " << (residGblFitHistName) << std::endl;
+				streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << std::endl;
+		}
+		sstm.str(std::string(""));
+	}
+	for (int i = 0; i < _sensorIDs.size() ; ++i){
+		sstm << "IncidenceYZ" << _sensorIDs.at(i);
+		residGblFitHistName = sstm.str();
+		sstm.str(std::string());
+		sstm << "Incidence local Ty (YZ plane). Plane " <<  _sensorIDs.at(i);
+		histTitle = sstm.str();
+		sstm.str(std::string(""));
+		histoInfo = histoMgr->getHistogramInfo(residGblFitHistName);
+		NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 40;
+		MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin :-0.001 ;
+		MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 0.001;
+		AIDA::IHistogram1D * incidenceGblFitYZ = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(residGblFitHistName, NBinX, MinX, MaxX); 
+
+		if (incidenceGblFitYZ) {
+				incidenceGblFitYZ->setTitle(histTitle);
+				_mapFromSensorIDToKinkYZ.insert(std::make_pair(_sensorIDs.at(i), incidenceGblFitYZ));
+		} else {
+				streamlog_out(ERROR2) << "Problem booking the " << (residGblFitHistName) << std::endl;
+				streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << std::endl;
+		}
+		sstm.str(std::string(""));
+	}
+	/////////////////////////////////////////////////////////////////////////////////////// 
 }

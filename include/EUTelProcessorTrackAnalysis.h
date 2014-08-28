@@ -69,6 +69,8 @@ namespace eutelescope {
 		IntVec _sensorIDs;
 		map< int,  AIDA::IProfile2D* > _mapFromSensorIDToHistogramX;
 		map< int,  AIDA::IProfile2D* > _mapFromSensorIDToHistogramY;
+		map< int,   AIDA::IHistogram1D *> _mapFromSensorIDToKinkXZ;
+		map< int,  AIDA::IHistogram1D * > _mapFromSensorIDToKinkYZ;
 
 	};
 

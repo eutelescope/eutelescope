@@ -71,6 +71,66 @@ TVectorD EUTelState::getStateVec() const {
 	streamlog_out( DEBUG1 ) << "EUTelState::getTrackStateVec()------------------------END" << std::endl;
  	return stateVec;
 }
+TMatrixDSym EUTelState::getScatteringVarianceInLocalFrame(){
+	streamlog_out( DEBUG1 ) << "EUTelState::getScatteringVarianceInLocalFrame(Sensor)----------------------------BEGIN" << std::endl;
+	//TO DO:Should make the reading for any planes not just si. 
+	const double x0  = geo::gGeometry().siPlaneRadLength(getLocation());//This is in mm.
+	const double thickness        = geo::gGeometry().siPlaneZSize(getLocation());//TO DO: Need to get the correct thickness
+	streamlog_out(DEBUG5)<<"The radiation length for the sensor is: " << x0 <<std::endl; 
+	if( x0== 0){
+		throw(lcio::Exception(Utility::outputColourString("Radiation length is zero.", "RED"))); 	
+	}
+	streamlog_out(DEBUG5)<<"The thickness for the sensor is: " << thickness <<std::endl; 
+	if(thickness == 0 ){ 
+		throw(lcio::Exception(Utility::outputColourString("thickness is zero", "RED"))); 	
+	}
+	const double percentageOfRadiationLength  = thickness / x0; 
+	streamlog_out(DEBUG5)<<"The  percentageOfRadiationLength for the sensor is: " <<  percentageOfRadiationLength<<std::endl; 
+	if( percentageOfRadiationLength== 0){
+		streamlog_out(MESSAGE0)<<"The thickness: " << thickness << "The radiation length is: "<< x0 <<std::endl; 
+		throw(lcio::Exception(Utility::outputColourString("percentageOfRadiationLength is zero for the plane itself.", "RED"))); 	
+	}
+	if(getBeamEnergy() == 0 ){ 
+		throw(lcio::Exception(Utility::outputColourString("Beam energy is zero", "RED"))); 	
+	}
+	const double scatteringVariance  = Utility::getThetaRMSHighland(getBeamEnergy(), percentageOfRadiationLength);
+	streamlog_out(DEBUG5)<<"The scattering variance in radians: " <<  scatteringVariance <<std::endl; 
+
+	float scatPrecisionSqrt = 1.0/scatteringVariance;
+	//We need the track direction in the direction of x/y in the local frame. 
+	//This will be the same as unitMomentum in the x/y direction
+	TVector3 unitMomentumLocalFrame =	getIncidenceUnitMomentumVectorInLocalFrame();
+	//c1 and c2 come from Claus's paper GBL
+	float c1 = 	unitMomentumLocalFrame[0]; float c2 =	unitMomentumLocalFrame[1];
+	streamlog_out( DEBUG1 ) << "The component in the x/y direction: "<< c1 <<"  "<<c2 << std::endl;
+	TMatrixDSym precisionMatrix(2);
+	float factor = pow(scatPrecisionSqrt,2)/pow((1-pow(c1,2)-pow(c2,2)),2);
+	streamlog_out( DEBUG1 ) << "The factor: "<< factor << std::endl;
+	precisionMatrix[0][0]=factor*(1-pow(c2,2));
+  precisionMatrix[1][0]=factor*c1*c2;				precisionMatrix[1][1]=factor*(1-pow(c1,2));
+	streamlog_out( DEBUG1 ) << "EUTelState::getScatteringVarianceInLocalFrame(Sensor)----------------------------END" << std::endl;
+	return precisionMatrix;
+}
+TMatrixDSym EUTelState::getScatteringVarianceInLocalFrame(float  percentageOfRadiationLength){
+	streamlog_out( DEBUG1 ) << "EUTelState::getScatteringVarianceInLocalFrame(Scatter)----------------------------BEGIN" << std::endl;
+	const double scatteringVariance  = Utility::getThetaRMSHighland(getBeamEnergy(), percentageOfRadiationLength);
+	streamlog_out(DEBUG5)<<"The scattering variance in radians: " <<  scatteringVariance <<std::endl; 
+	float scatPrecisionSqrt = 1.0 /scatteringVariance;
+	//We need the track direction in the direction of x/y in the local frame. 
+	//This will be the same as unitMomentum in the x/y direction
+	TVector3 unitMomentumLocalFrame =	getIncidenceUnitMomentumVectorInLocalFrame();
+	//c1 and c2 come from Claus's paper GBL
+	float c1 = 	unitMomentumLocalFrame[0]; float c2 = 	unitMomentumLocalFrame[1];
+	streamlog_out( DEBUG1 ) << "The component in the x/y direction: "<< c1 <<"  "<<c2 << std::endl;
+	TMatrixDSym precisionMatrix(2);
+	float factor = pow(scatPrecisionSqrt,2)/pow((1-pow(c1,2)-pow(c2,2)),2);
+	streamlog_out( DEBUG1 ) << "The factor: "<< factor << std::endl;
+	precisionMatrix[0][0]=factor*(1-pow(c2,2));
+  precisionMatrix[1][0]=factor*c1*c2;				precisionMatrix[1][1]=factor*(1-pow(c1,2));
+	streamlog_out( DEBUG1 ) << "EUTelState::getScatteringVarianceInLocalFrame(Scatter)----------------------------END" << std::endl;
+
+	return precisionMatrix;
+}
 TMatrixDSym EUTelState::getStateCov() const {
 
 	streamlog_out( DEBUG1 ) << "EUTelState::getTrackStateCov()----------------------------BEGIN" << std::endl;

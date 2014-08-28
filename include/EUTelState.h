@@ -42,6 +42,8 @@ namespace eutelescope {
 			bool getIsThereAHit() const;
 			TMatrixD getProjectionMatrix() const;
 			TVector3 getIncidenceUnitMomentumVectorInLocalFrame();
+			TMatrixDSym getScatteringVarianceInLocalFrame();
+			TMatrixDSym getScatteringVarianceInLocalFrame(float percentageRadiationLength);
 			//setters
 			void setDimensionSize(int dimension);
 			void setLocation(int location);

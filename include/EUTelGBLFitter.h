@@ -96,9 +96,9 @@ namespace eutelescope {
 				void setListStateAndLabelBeforeTrajectory(std::vector< gbl::GblPoint >& pointList);
 				gbl::GblPoint getLabelToPoint(std::vector<gbl::GblPoint> & pointList, int label);
 				void setAlignmentToMeasurementJacobian(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList);
-				void setScattererGBL(gbl::GblPoint& point, int iPlane);
-				void setScattererGBL(gbl::GblPoint& point, float x0);
-				void setPointListWithNewScatterers(std::vector< gbl::GblPoint >& pointList, float rad );
+				void setScattererGBL(gbl::GblPoint& point,EUTelState & state );
+				void setScattererGBL(gbl::GblPoint& point,EUTelState & state,  float  percentageRadiationLength);
+				void setPointListWithNewScatterers(std::vector< gbl::GblPoint >& pointList,EUTelState & state, float  percentageRadiationLength);
 				void getResidualOfTrackandHits(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint > pointList, EUTelTrack& track, map< int, map< float, float > > & SensorResidual, map< int, map< float, float > >& sensorResidualError);
 
         /*
