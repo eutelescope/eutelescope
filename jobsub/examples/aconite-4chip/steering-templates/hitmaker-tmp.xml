@@ -111,6 +111,7 @@
 
  <processor name="Correlator" type="EUTelCorrelator">
  <!--EUTelCorrelator fills histograms with correlation plots-->
+  <parameter name="HistogramInfoFilename" type="string"> @HistoInfoFile@ </parameter>
   <!--Minimum allowed cluster charge to be taken into account for the correlation plots (default = 2)-->
   <parameter name="ClusterChargeMinimum" type="int">2 </parameter>
   <!--Dump the offset X and Y values calculated from the correlation bands (default = true)-->

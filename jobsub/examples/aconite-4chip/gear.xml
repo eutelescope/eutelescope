@@ -7,7 +7,7 @@
 	<detectors>
 		<detector name="SiPlanes" geartype="SiPlanesParameters">
 		     <parameter name="Geometry" type="StringVec" value="Mimosa26.so Mimosa26.so Mimosa26.so FEI4FourChip.so FEI4Single.so Mimosa26.so Mimosa26.so Mimosa26.so"/>
-			<siplanesID ID="39"/>
+			<siplanesID ID="95"/>
 			<siplanesType type="TelescopeWithoutDUT"/>
 			<siplanesNumber number="8"/>
 			<layers>
