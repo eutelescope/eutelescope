@@ -329,9 +329,9 @@ void EUTelProcessorGBLFitCandidates::bookHistograms() {
 
 ////////////////////////////////////////////////////////This is for the residual//Thi si a hack must fix so can accept any number of planes. Really should be a separate processor
 
-        int NBinX=100;
-        double MinX=-0.05;  //-0.2;
-        double MaxX=0.05;
+        int NBinX=300;
+        double MinX=-0.04;  //-0.2;
+        double MaxX=0.04;
 
 
         EUTelHistogramInfo    *    histoInfo0  = histoMgr->getHistogramInfo( _histName::_residGblFitHistNameX0);

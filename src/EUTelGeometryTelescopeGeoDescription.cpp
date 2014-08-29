@@ -1671,9 +1671,9 @@ TVector3 EUTelGeometryTelescopeGeoDescription::getXYZfromArcLength(TVector3 pos 
 //Within the function this will be clearly labelled
 //This is a simple transform our x becomes their(curvilinear y), our y becomes their z and z becomes x
 //However this is ok since we never directly access the curvilinear system. It is only a bridge between two local systems. 
-TMatrix EUTelGeometryTelescopeGeoDescription::getLocalToCurvilinearTransformMatrix(TVector3 globalPosition  , TVector3 globalMomentum, int  planeID, float charge){
+TMatrixD EUTelGeometryTelescopeGeoDescription::getLocalToCurvilinearTransformMatrix(TVector3 globalMomentum, int  planeID, float charge){
 	const gear::BField&   Bfield = geo::gGeometry().getMagneticFiled();
-	gear::Vector3D vectorGlobal(globalPosition[0],globalPosition[1],globalPosition[2]);//Since field is homogeneous this seems silly but we need to specify a position to geometry to get B-field.
+	gear::Vector3D vectorGlobal(0.1,0.1,0.1);//Since field is homogeneous this seems silly but we need to specify a position to geometry to get B-field.
 	//Magnetic field must be changed to curvilinear coordinate system. Since this is used in the curvilinear jacobian/////////////////////////////////////////////////////////////////////////////////////////
 	const double Bx = (Bfield.at( vectorGlobal ).z())*0.3;//We times bu 0.3 due to units of other variables. See paper. Must be Tesla
 	const double By = (Bfield.at( vectorGlobal ).x())*0.3;
@@ -1739,18 +1739,18 @@ TMatrix EUTelGeometryTelescopeGeoDescription::getLocalToCurvilinearTransformMatr
 
 	TVector3 N = (H.Cross(T)).Unit();
 	//
-	const float alpha = (H.Cross(T)).Mag();
-	const float Q = -(B.Mag())*(charge/(curvilinearGlobalMomentum.Mag()));//You could use end momentum since it must be constant
+	const double alpha = (H.Cross(T)).Mag();
+	const double Q = -(B.Mag())*(charge/(curvilinearGlobalMomentum.Mag()));//You could use end momentum since it must be constant
 	//
-	const float TDotI = T.Dot(I);
-	const float TDotJ = T.Dot(J);
-	const float TDotK = T.Dot(K);
-	const float VDotJ = V.Dot(J);
-	const float VDotK = V.Dot(K);
-	const float VDotN = V.Dot(N);
-	const float UDotJ = U.Dot(J);
-	const float UDotK = U.Dot(K);
-	const float UDotN = U.Dot(N);
+	const double TDotI = T.Dot(I);
+	const double TDotJ = T.Dot(J);
+	const double TDotK = T.Dot(K);
+	const double VDotJ = V.Dot(J);
+	const double VDotK = V.Dot(K);
+	const double VDotN = V.Dot(N);
+	const double UDotJ = U.Dot(J);
+	const double UDotK = U.Dot(K);
+	const double UDotN = U.Dot(N);
 	TMatrix jacobian(5,5);
 	jacobian.Zero();
 	jacobian[0][0]=1; 
@@ -1880,7 +1880,7 @@ TMatrix EUTelGeometryTelescopeGeoDescription::getPropagationJacobianCurvilinear(
 //We therefore have to change to the coordinate system used in paper before we apply this jacobian.
 //This is ok since we never access the curvilinear system directly but always through the local system which is defined in the local frame of the telescope
 //I.e Telescope x becomes y, y becomes z and z becomes x.
-TMatrix EUTelGeometryTelescopeGeoDescription::getPropagationJacobianCurvilinear(float ds , float  qbyp,  TVector3 t1w, TVector3 t2w) {
+TMatrixD EUTelGeometryTelescopeGeoDescription::getPropagationJacobianCurvilinear(float ds , float  qbyp,  TVector3 t1w, TVector3 t2w) {
 	TVector3 t1(t1w[2],t1w[0],t1w[1]);//This is need to change to claus's coordinate system
 	TVector3 t2(t2w[2],t2w[0],t2w[1]);
 	t1.Unit();

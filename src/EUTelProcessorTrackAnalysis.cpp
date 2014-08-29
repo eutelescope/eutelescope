@@ -152,8 +152,8 @@ void	EUTelProcessorTrackAnalysis::initialiseResidualVsPositionHistograms(){
 		sstm.str(std::string(""));
 		histoInfo = histoMgr->getHistogramInfo(residGblFitHistName);
 		NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 40000;
-		MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin :-0.1 ;
-		MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 0.1;
+		MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin :-0.05 ;
+		MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 0.005;
 		AIDA::IHistogram1D * incidenceGblFitXZ = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(residGblFitHistName, NBinX, MinX, MaxX); 
 
 		if (incidenceGblFitXZ){

@@ -103,6 +103,8 @@ int EUTelMillepede::computeAlignmentToMeasurementJacobian( EUTelState &state){
 	if(_alignmentMode == Utility::noAlignment){
 		throw(lcio::Exception(Utility::outputColourString("No alignment has been chosen.", "RED"))); 	
 	}
+	streamlog_out(DEBUG3) <<"The sensor position we are just about to create alignment Jacobian and state: "<< state.getLocation()<<endl; 
+	state.print();
 	TVector3 incidenceVecLocal = state.getIncidenceUnitMomentumVectorInLocalFrame();//This is the state incidence in the local frame of the telescope. TO DO: Make sure this is being calculated correctly.
 	streamlog_out( DEBUG0 ) << "Incidence vector in local frame"<<incidenceVecLocal[0] <<","<< incidenceVecLocal[1]<<","<<incidenceVecLocal[2] << std::endl;
 	float TxLocal =  incidenceVecLocal[0]/incidenceVecLocal[2];//We calculate the incidence angle in both planes.
@@ -142,8 +144,8 @@ int EUTelMillepede::computeAlignmentToMeasurementJacobian( float x,float y, floa
                 || _alignmentMode == Utility::XYShiftYZRotXYRot
                 || _alignmentMode == Utility::XYShiftXZRotYZRotXYRot
                 || _alignmentMode == Utility::XYZShiftXZRotYZRotXYRot) {
-		_jacobian[0][2] = y; // dxh/rotzs   rotzs => rotation of sensor around z axis
-		_jacobian[1][2] = -x; // dyh/rotzs
+		_jacobian[0][2] =  -y; // dxh/rotzs   rotzs => rotation of sensor around z axis
+		_jacobian[1][2] =  x; // dyh/rotzs
 	}
 	///////////////////////////////////////////////////////////////////////////////////////////////////////END
 

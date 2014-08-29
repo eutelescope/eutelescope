@@ -25,9 +25,9 @@ echo "Run (MAKE SURE YOU HAVE THE CORRECT NUMBER OF ZEROS!): " $RUN #TO DO
 echo "MaxRecordNumber: " $MaxRecordNumber
 
 Fxr="0 1 2 3 4 5"
-Fxs="0        5"
+Fxs="0         5"
 Fyr="0 1 2 3 4 5"
-Fys="0        5"
+Fys="0         5"
 Fzr="0 1 2 3 4 5"
 Fzs="0 1 2 3 4 5"
 
@@ -37,8 +37,8 @@ outputGear="gear-final-XYshift-000${RUN}.xml"
 histoNameInput="GBLtrack-XYshift-000${RUN}"
 
 #inputGear="gear-final-XYshift-000${RUN}.xml"
-#outputGear="gear-final-Zrotations-000${RUN}.xml"
-#histoNameInput="GBLtrack-zRotation-000${RUN}"
+#outputGear="gear-final-Zrotations2-000${RUN}.xml"
+#histoNameInput="GBLtrack-zRotation2-000${RUN}"
 
 #inputGear="gear-final-Zrotations-000${RUN}.xml"
 #outputGear="gear-final-XRotation-000${RUN}.xml"
@@ -47,7 +47,7 @@ histoNameInput="GBLtrack-XYshift-000${RUN}"
 #This is the alignment mode. It sets the size of the alignment jacobian dimensions.
 amode="2";
 
-pede="chiscut 10. 5. " #This is the input that tell millepede what tracks to discard.  
+pede="chiscut 15. 7. " #This is the input that tell millepede what tracks to discard.  
 
 ExcludePlanes=""
 
