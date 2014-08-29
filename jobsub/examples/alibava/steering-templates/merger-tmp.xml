@@ -61,7 +61,9 @@
 	 <parameter name="OutputClusterPulseCollectionName" type="string" lcioOutType="TrackerPulse">merged_cluster_pulse </parameter>
 	 <!--Name of the merged/output sparse cluster collection. DO NOT Change this. This is hard coded in other  -->
 	 <parameter name="OutputSparseClusterCollectionName" type="string" lcioOutType="TrackerData">original_zsdata </parameter>
-	 <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--AlibavaEventNumber - TelescopeEventNumber-->
+  <parameter name="EventIDDifference" type="int">-1 </parameter>
+<!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
 	 <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
  </processor>
 
