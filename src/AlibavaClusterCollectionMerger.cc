@@ -121,7 +121,12 @@ _outputSparseCollectionName(ALIBAVA::NOTSET)
 	registerOutputCollection (LCIO::TRACKERDATA, "OutputSparseClusterCollectionName",
 									  "Name of the merged/output sparse cluster collection. DO NOT Change this. This is hard coded in other  ",
 									  _outputSparseCollectionName, string("original_zsdata") );
-	
+ 
+      registerProcessorParameter ("EventIDDifference",
+                                                                                 "AlibavaEventNumber - TelescopeEventNumber",
+                                                                                 _eventIDDiff , int(0));
+
+ 	
 }
 
 AlibavaClusterCollectionMerger * AlibavaClusterCollectionMerger::newProcessor () {
@@ -166,6 +171,16 @@ void AlibavaClusterCollectionMerger::readDataSource(int /* numEvents */) {
 	
 	LCEvent*  telescopeEvent;
 	LCEvent* alibavaEvent;
+
+	if (_eventIDDiff<0 ){
+		for (int i=0; i<abs(_eventIDDiff); i++)
+			telescopeEvent=telescope_lcReader->readNextEvent();
+	}
+	else if (_eventIDDiff>0){
+		for (int i=0; i<_eventIDDiff; i++)
+			alibavaEvent=alibava_lcReader->readNextEvent();
+	}
+
 	while( ((telescopeEvent = telescope_lcReader->readNextEvent()) != 0)
 			&& ((alibavaEvent = alibava_lcReader->readNextEvent()) != 0 ) )
 	{
