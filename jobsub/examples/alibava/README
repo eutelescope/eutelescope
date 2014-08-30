@@ -23,6 +23,8 @@ jobsub.py -c config.cfg -csv runlist.csv telescope-filter <TelescopeRunNum>
 
 Now it is time to merge telescope and alibava cluster collections
 jobsub.py -c config.cfg -csv runlist.csv merger <SourceRunNum>
+
+And finally run hitmaker ;)
 jobsub.py -c config.cfg -csv runlist.csv hitmaker <SourceRunNum>
 
 Notes:
