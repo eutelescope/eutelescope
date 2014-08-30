@@ -1,19 +1,34 @@
 Analysis chain:
 
 To calculate Pedestals
-../../jobsub.py -c config.cfg -csv runlist.csv alibava-convert-ped <PedRunNum>
-../../jobsub.py -c config.cfg alibava-pedestal <PedRunNum>
-../../jobsub.py -c config.cfg -csv runlist.csv alibava-commonmode <PedRunNum>
-../../jobsub.py -c config.cfg alibava-pedestal2 <PedRunNum>
+jobsub.py -c config.cfg -csv runlist.csv alibava-convert-ped <PedRunNum>
+jobsub.py -c config.cfg alibava-pedestal <PedRunNum>
+jobsub.py -c config.cfg -csv runlist.csv alibava-commonmode <PedRunNum>
+jobsub.py -c config.cfg alibava-pedestal2 <PedRunNum>
 
 To get pedestal subtracted and common mode corrected signal values
-../../jobsub.py -c config.cfg -csv runlist.csv alibava-converter <SourceRunNum>
-../../jobsub.py -c config.cfg -csv runlist.csv alibava-reco <SourceRunNum>
-../../jobsub.py -c config.cfg alibava-commonmodecut <SourceRunNum>
-../../jobsub.py -c config.cfg -csv runlist.csv alibava-seedclustering <SourceRunNum>
+jobsub.py -c config.cfg -csv runlist.csv alibava-converter <SourceRunNum>
+jobsub.py -c config.cfg -csv runlist.csv alibava-reco <SourceRunNum>
+jobsub.py -c config.cfg alibava-commonmodecut <SourceRunNum>
+jobsub.py -c config.cfg -csv runlist.csv alibava-seedclustering <SourceRunNum>
 
 To plot histograms for data before clustering 
-../../jobsub.py -c config.cfg -csv runlist.csv alibava-datahisto <SourceRunNum>
-../../jobsub.py -c config.cfg -csv runlist.csv alibava-clusterhisto <SourceRunNum>
+jobsub.py -c config.cfg -csv runlist.csv alibava-datahisto <SourceRunNum>
+jobsub.py -c config.cfg -csv runlist.csv alibava-clusterhisto <SourceRunNum>
+
+At this point we have clusters from alibava data, lets get the ones from telescope too
+jobsub.py -c config.cfg -csv runlist.csv telescope-converter <TelescopeRunNum>
+jobsub.py -c config.cfg -csv runlist.csv telescope-clustering <TelescopeRunNum>
+jobsub.py -c config.cfg -csv runlist.csv telescope-filter <TelescopeRunNum>
+
+Now it is time to merge telescope and alibava cluster collections
+jobsub.py -c config.cfg -csv runlist.csv merger <SourceRunNum>
+jobsub.py -c config.cfg -csv runlist.csv hitmaker <SourceRunNum>
+
+Notes:
+<PedRunNum> : Alibava pedestal data run number
+<SourceRunNum> : Alibava beam data run number
+<TelescopeRunNum> : Telescope run number
+
 
 
