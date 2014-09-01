@@ -151,7 +151,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!--Beam energy [GeV]-->
   <parameter name="Ebeam" type="double" value="@BeamEnergy@"/>
   <!--Name of the histogram information file-->
-  <parameter name="HistoInfoFileName" type="string" value="@HistoInfoPath@/@HistoInfo@"/>
+  <parameter name="HistoInfoFileName" type="string" value="@HistoInfoFile@"/>
   <!--Flag for storing input (measured) hits in track-->
   <parameter name="InputHitsInTrack" type="bool" value="true"/>
   <!--Ids of layers for which position masks are applied-->

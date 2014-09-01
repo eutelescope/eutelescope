@@ -201,9 +201,6 @@
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTAlignOutput PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTAlignRun)
 
 
-
-
-
 #
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #  STEP 5: FITTER
