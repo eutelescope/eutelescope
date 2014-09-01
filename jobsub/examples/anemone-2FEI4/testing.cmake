@@ -72,13 +72,17 @@
     ADD_TEST( TestJobsubExampleAnemone2FEI4ConverterHisto sh -c "[ -f ${testdir}/output/histograms/run${PaddedRunNr}-converter-histo.root ]" )
     SET_TESTS_PROPERTIES (TestJobsubExampleAnemone2FEI4ConverterHisto PROPERTIES DEPENDS TestJobsubExampleAnemone2FEI4ConverterRun)
 
-    ADD_TEST( TestJobsubExampleAnemone2FEI4ConverterHotpix sh -c "[ -f ${testdir}/output/database/run${PaddedRunNr}-hotpixel-db.slcio ] && lcio_check_col_elements --expelements 6  hotpixel_m26  ${testdir}/output/database/run${PaddedRunNr}-hotpixel-db.slcio" )
-    SET_TESTS_PROPERTIES (TestJobsubExampleAnemone2FEI4ConverterHotpix PROPERTIES DEPENDS TestJobsubExampleAnemone2FEI4ConverterRun)
+    ADD_TEST( TestJobsubExampleAnemone2FEI4ConverterHotpixM26 sh -c "[ -f ${testdir}/output/database/run${PaddedRunNr}-hotpixel-m26-db.slcio ] && lcio_check_col_elements --expelements 6  hotpixel_m26  ${testdir}/output/database/run${PaddedRunNr}-hotpixel-m26-db.slcio" )
+    SET_TESTS_PROPERTIES (TestJobsubExampleAnemone2FEI4ConverterHotpixM26 PROPERTIES DEPENDS TestJobsubExampleAnemone2FEI4ConverterRun)
 
-    ADD_TEST( TestJobsubExampleAnemone2FEI4ConverterOutput sh -c "[ -f ${testdir}/output/lcio/run${PaddedRunNr}.slcio ] && lcio_check_col_elements --expelements 6 zsdata_m26 ${testdir}/output/lcio/run${PaddedRunNr}.slcio" )
-    SET_TESTS_PROPERTIES (TestJobsubExampleAnemone2FEI4ConverterOutput PROPERTIES DEPENDS TestJobsubExampleAnemone2FEI4ConverterRun)
+    ADD_TEST( TestJobsubExampleAnemone2FEI4ConverterOutputM26 sh -c "[ -f ${testdir}/output/lcio/run${PaddedRunNr}-converter.slcio ] && lcio_check_col_elements --expelements 6 zsdata_m26 ${testdir}/output/lcio/run${PaddedRunNr}-converter.slcio" )
+    SET_TESTS_PROPERTIES (TestJobsubExampleAnemone2FEI4ConverterOutputM26 PROPERTIES DEPENDS TestJobsubExampleAnemone2FEI4ConverterRun)
 
+    ADD_TEST( TestJobsubExampleAnemone2FEI4ConverterHotpixAPIX sh -c "[ -f ${testdir}/output/database/run${PaddedRunNr}-hotpixel-apix-db.slcio ] && lcio_check_col_elements --expelements 2  hotpixel_apix  ${testdir}/output/database/run${PaddedRunNr}-hotpixel-apix-db.slcio" )
+    SET_TESTS_PROPERTIES (TestJobsubExampleAnemone2FEI4ConverterHotpixAPIX PROPERTIES DEPENDS TestJobsubExampleAnemone2FEI4ConverterRun)
 
+    ADD_TEST( TestJobsubExampleAnemone2FEI4ConverterOutputAPIX sh -c "[ -f ${testdir}/output/lcio/run${PaddedRunNr}-converter.slcio ] && lcio_check_col_elements --expelements 2 zsdata_apix ${testdir}/output/lcio/run${PaddedRunNr}-converter.slcio" )
+    SET_TESTS_PROPERTIES (TestJobsubExampleAnemone2FEI4ConverterOutputAPIX PROPERTIES DEPENDS TestJobsubExampleAnemone2FEI4ConverterRun)
 
 
 #
@@ -101,14 +105,16 @@
     ADD_TEST( TestJobsubExampleAnemone2FEI4ClusteringLog sh -c "[ -f ${testdir}/output/logs/clustering-${PaddedRunNr}.zip ]" )
     SET_TESTS_PROPERTIES (TestJobsubExampleAnemone2FEI4ClusteringLog PROPERTIES DEPENDS TestJobsubExampleAnemone2FEI4ClusteringRun)
 
-    ADD_TEST( TestJobsubExampleAnemone2FEI4ClusteringHisto sh -c "[ -f ${testdir}/output/histograms/run${PaddedRunNr}-clu-histo.root ]" )
+    ADD_TEST( TestJobsubExampleAnemone2FEI4ClusteringHisto sh -c "[ -f ${testdir}/output/histograms/run${PaddedRunNr}-clustering.root ]" )
     SET_TESTS_PROPERTIES (TestJobsubExampleAnemone2FEI4ClusteringHisto PROPERTIES DEPENDS TestJobsubExampleAnemone2FEI4ClusteringRun)
 
-    # we expect an average of 24.4 clusters per event
-    ADD_TEST( TestJobsubExampleAnemone2FEI4ClusteringOutput sh -c "[ -f ${testdir}/output/results/run${PaddedRunNr}-clu.slcio ] && lcio_check_col_elements --average --expelements 38 --relelementerror 0.1 cluster_m26 ${testdir}/output/results/run${PaddedRunNr}-clu.slcio" )
-    SET_TESTS_PROPERTIES (TestJobsubExampleAnemone2FEI4ClusteringOutput PROPERTIES DEPENDS TestJobsubExampleAnemone2FEI4ClusteringRun)
+    # we expect an average of 24.4 clusters per event for M26
+    ADD_TEST( TestJobsubExampleAnemone2FEI4ClusteringOutputM26 sh -c "[ -f ${testdir}/output/results/run${PaddedRunNr}-clustering.slcio ] && lcio_check_col_elements --average --expelements 38 --relelementerror 0.1 cluster_m26_free ${testdir}/output/lcio/run${PaddedRunNr}-clustering.slcio" )
+    SET_TESTS_PROPERTIES (TestJobsubExampleAnemone2FEI4ClusteringOutputM26 PROPERTIES DEPENDS TestJobsubExampleAnemone2FEI4ClusteringRun)
 
-
+    # we expect an average of XYZ clusters per event for APIX
+    ADD_TEST( TestJobsubExampleAnemone2FEI4ClusteringOutputAPIX sh -c "[ -f ${testdir}/output/results/run${PaddedRunNr}-clustering.slcio ] && lcio_check_col_elements --average --expelements 38 --relelementerror 0.1 cluster_apix_free ${testdir}/output/lcio/run${PaddedRunNr}-clustering.slcio" )
+    SET_TESTS_PROPERTIES (TestJobsubExampleAnemone2FEI4ClusteringOutputAPIX PROPERTIES DEPENDS TestJobsubExampleAnemone2FEI4ClusteringRun)
 
 #
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -165,10 +171,10 @@
     ADD_TEST( TestJobsubExampleAnemone2FEI4AlignLog sh -c "[ -f ${testdir}/output/logs/align-${PaddedRunNr}.zip ]" )
     SET_TESTS_PROPERTIES (TestJobsubExampleAnemone2FEI4AlignLog PROPERTIES DEPENDS TestJobsubExampleAnemone2FEI4AlignRun)
 
-    ADD_TEST( TestJobsubExampleAnemone2FEI4AlignHisto sh -c "[ -f ${testdir}/output/histograms/run${PaddedRunNr}-align-histo.root ]" )
+    ADD_TEST( TestJobsubExampleAnemone2FEI4AlignHisto sh -c "[ -f ${testdir}/output/histograms/run${PaddedRunNr}-alignmentdaf.root ]" )
     SET_TESTS_PROPERTIES (TestJobsubExampleAnemone2FEI4AlignHisto PROPERTIES DEPENDS TestJobsubExampleAnemone2FEI4AlignRun)
 
-    ADD_TEST( TestJobsubExampleAnemone2FEI4AlignDB sh -c "[ -f ${testdir}/output/database/run${PaddedRunNr}-align-db.slcio ] && lcio_check_col_elements --expelements 8  alignment  ${testdir}/output/database/run${PaddedRunNr}-align-db.slcio" )
+    ADD_TEST( TestJobsubExampleAnemone2FEI4AlignDB sh -c "[ -f ${testdir}/output/database/run${PaddedRunNr}-alignment.slcio ] && lcio_check_col_elements --expelements 8  alignment  ${testdir}/output/database/run${PaddedRunNr}-alignment.slcio" )
     SET_TESTS_PROPERTIES (TestJobsubExampleAnemone2FEI4AlignDB PROPERTIES DEPENDS TestJobsubExampleAnemone2FEI4AlignRun)
 
     ADD_TEST( TestJobsubExampleAnemone2FEI4AlignOutput sh -c "[ -f ${testdir}/output/results/run${PaddedRunNr}-align-mille.bin -a -f ${testdir}/output/results/run${PaddedRunNr}-pede-steer.txt ] " )

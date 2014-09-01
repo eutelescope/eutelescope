@@ -73,7 +73,7 @@
     ADD_TEST( TestJobsubExampleDaturaNoDUTConverterHisto sh -c "[ -f ${testdir}/output/histograms/run${PaddedRunNr}-converter.root ]" )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTConverterHisto PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTConverterRun)
 
-    ADD_TEST( TestJobsubExampleDaturaNoDUTConverterHotpix sh -c "[ -f ${testdir}/output/database/run${PaddedRunNr}-hotpixel.slcio ] && lcio_check_col_elements --expelements 6  hotpixel_m26  ${testdir}/output/database/run${PaddedRunNr}-hotpixel.slcio" )
+    ADD_TEST( TestJobsubExampleDaturaNoDUTConverterHotpix sh -c "[ -f ${testdir}/output/database/run${PaddedRunNr}-hotpixel-m26-db.slcio ] && lcio_check_col_elements --expelements 6  hotpixel_m26  ${testdir}/output/database/run${PaddedRunNr}-hotpixel-m26-db.slcio" )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTConverterHotpix PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTConverterRun)
 
     ADD_TEST( TestJobsubExampleDaturaNoDUTConverterOutput sh -c "[ -f ${testdir}/output/lcio/run${PaddedRunNr}-converter.slcio ] && lcio_check_col_elements --expelements 6 zsdata_m26 ${testdir}/output/lcio/run${PaddedRunNr}-converter.slcio" )
@@ -106,7 +106,7 @@
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTClusteringHisto PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTClusteringRun)
 
     # we expect an average of 24.4 clusters per event
-    ADD_TEST( TestJobsubExampleDaturaNoDUTClusteringOutput sh -c "[ -f ${testdir}/output/lcio/run${PaddedRunNr}-clustering.slcio ] && lcio_check_col_elements --average --expelements 24 cluster_m26 ${testdir}/output/lcio/run${PaddedRunNr}-clustering.slcio" )
+    ADD_TEST( TestJobsubExampleDaturaNoDUTClusteringOutput sh -c "[ -f ${testdir}/output/lcio/run${PaddedRunNr}-clustering.slcio ] && lcio_check_col_elements --average --expelements 24 cluster_m26_free ${testdir}/output/lcio/run${PaddedRunNr}-clustering.slcio" )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTClusteringOutput PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTClusteringRun)
 
 
