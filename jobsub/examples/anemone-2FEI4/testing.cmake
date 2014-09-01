@@ -109,11 +109,11 @@
     SET_TESTS_PROPERTIES (TestJobsubExampleAnemone2FEI4ClusteringHisto PROPERTIES DEPENDS TestJobsubExampleAnemone2FEI4ClusteringRun)
 
     # we expect an average of 24.4 clusters per event for M26
-    ADD_TEST( TestJobsubExampleAnemone2FEI4ClusteringOutputM26 sh -c "[ -f ${testdir}/output/results/run${PaddedRunNr}-clustering.slcio ] && lcio_check_col_elements --average --expelements 38 --relelementerror 0.1 cluster_m26_free ${testdir}/output/lcio/run${PaddedRunNr}-clustering.slcio" )
+    ADD_TEST( TestJobsubExampleAnemone2FEI4ClusteringOutputM26 sh -c "[ -f ${testdir}/output/lcio/run${PaddedRunNr}-clustering.slcio ] && lcio_check_col_elements --average --expelements 38 --relelementerror 0.1 cluster_m26_free ${testdir}/output/lcio/run${PaddedRunNr}-clustering.slcio" )
     SET_TESTS_PROPERTIES (TestJobsubExampleAnemone2FEI4ClusteringOutputM26 PROPERTIES DEPENDS TestJobsubExampleAnemone2FEI4ClusteringRun)
 
-    # we expect an average of XYZ clusters per event for APIX
-    ADD_TEST( TestJobsubExampleAnemone2FEI4ClusteringOutputAPIX sh -c "[ -f ${testdir}/output/results/run${PaddedRunNr}-clustering.slcio ] && lcio_check_col_elements --average --expelements 38 --relelementerror 0.1 cluster_apix_free ${testdir}/output/lcio/run${PaddedRunNr}-clustering.slcio" )
+    # we expect an average of 2.1 clusters per event for APIX
+    ADD_TEST( TestJobsubExampleAnemone2FEI4ClusteringOutputAPIX sh -c "[ -f ${testdir}/output/lcio/run${PaddedRunNr}-clustering.slcio ] && lcio_check_col_elements --average --expelements 2 --relelementerror 0.2 cluster_apix_free ${testdir}/output/lcio/run${PaddedRunNr}-clustering.slcio" )
     SET_TESTS_PROPERTIES (TestJobsubExampleAnemone2FEI4ClusteringOutputAPIX PROPERTIES DEPENDS TestJobsubExampleAnemone2FEI4ClusteringRun)
 
 #
@@ -136,14 +136,14 @@
     ADD_TEST( TestJobsubExampleAnemone2FEI4HitmakerLog sh -c "[ -f ${testdir}/output/logs/hitmaker-${PaddedRunNr}.zip ]" )
     SET_TESTS_PROPERTIES (TestJobsubExampleAnemone2FEI4HitmakerLog PROPERTIES DEPENDS TestJobsubExampleAnemone2FEI4HitmakerRun)
 
-    ADD_TEST( TestJobsubExampleAnemone2FEI4HitmakerHisto sh -c "[ -f ${testdir}/output/histograms/run${PaddedRunNr}-hit-histo.root ]" )
+    ADD_TEST( TestJobsubExampleAnemone2FEI4HitmakerHisto sh -c "[ -f ${testdir}/output/histograms/run${PaddedRunNr}-hitmaker-histo.root ]" )
     SET_TESTS_PROPERTIES (TestJobsubExampleAnemone2FEI4HitmakerHisto PROPERTIES DEPENDS TestJobsubExampleAnemone2FEI4HitmakerRun)
 
     ADD_TEST( TestJobsubExampleAnemone2FEI4HitmakerPrealign sh -c "[ -f ${testdir}/output/database/run${PaddedRunNr}-prealign-db.slcio ] && lcio_check_col_elements --expelements 8  alignment  ${testdir}/output/database/run${PaddedRunNr}-prealign-db.slcio" )
     SET_TESTS_PROPERTIES (TestJobsubExampleAnemone2FEI4HitmakerPrealign PROPERTIES DEPENDS TestJobsubExampleAnemone2FEI4HitmakerRun)
 
     # we expect an average hit number of 24 for run 97 (wide geometry) using the example configuration
-    ADD_TEST( TestJobsubExampleAnemone2FEI4HitmakerOutput sh -c "[ -f ${testdir}/output/results/run${PaddedRunNr}-hit.slcio ] && lcio_check_col_elements -a --expelements 39 --relelementerror 0.1 hit ${testdir}/output/results/run${PaddedRunNr}-hit.slcio" )
+    ADD_TEST( TestJobsubExampleAnemone2FEI4HitmakerOutput sh -c "[ -f ${testdir}/output/lcio/run${PaddedRunNr}-hitmaker.slcio ] && lcio_check_col_elements -a --expelements 39 --relelementerror 0.1 hit ${testdir}/output/lcio/run${PaddedRunNr}-hitmaker.slcio" )
     SET_TESTS_PROPERTIES (TestJobsubExampleAnemone2FEI4HitmakerOutput PROPERTIES DEPENDS TestJobsubExampleAnemone2FEI4HitmakerRun)
 
 
@@ -177,11 +177,8 @@
     ADD_TEST( TestJobsubExampleAnemone2FEI4AlignDB sh -c "[ -f ${testdir}/output/database/run${PaddedRunNr}-alignment.slcio ] && lcio_check_col_elements --expelements 8  alignment  ${testdir}/output/database/run${PaddedRunNr}-alignment.slcio" )
     SET_TESTS_PROPERTIES (TestJobsubExampleAnemone2FEI4AlignDB PROPERTIES DEPENDS TestJobsubExampleAnemone2FEI4AlignRun)
 
-    ADD_TEST( TestJobsubExampleAnemone2FEI4AlignOutput sh -c "[ -f ${testdir}/output/results/run${PaddedRunNr}-align-mille.bin -a -f ${testdir}/output/results/run${PaddedRunNr}-pede-steer.txt ] " )
+    ADD_TEST( TestJobsubExampleAnemone2FEI4AlignOutput sh -c "[ -f ${testdir}/output/database/run${PaddedRunNr}-align-mille.bin -a -f ${testdir}/output/database/run${PaddedRunNr}-pede-steer.txt ] " )
     SET_TESTS_PROPERTIES (TestJobsubExampleAnemone2FEI4AlignOutput PROPERTIES DEPENDS TestJobsubExampleAnemone2FEI4AlignRun)
-
-
-
 
 
 #
@@ -206,12 +203,12 @@
     ADD_TEST( TestJobsubExampleAnemone2FEI4FitterLog sh -c "[ -f ${testdir}/output/logs/fitter-${PaddedRunNr}.zip ]" )
     SET_TESTS_PROPERTIES (TestJobsubExampleAnemone2FEI4FitterLog PROPERTIES DEPENDS TestJobsubExampleAnemone2FEI4FitterRun)
 
-    ADD_TEST( TestJobsubExampleAnemone2FEI4FitterHisto sh -c "[ -f ${testdir}/output/histograms/run${PaddedRunNr}-track-histo.root ]" )
+    ADD_TEST( TestJobsubExampleAnemone2FEI4FitterHisto sh -c "[ -f ${testdir}/output/histograms/run${PaddedRunNr}-fitter.root ]" )
     SET_TESTS_PROPERTIES (TestJobsubExampleAnemone2FEI4FitterHisto PROPERTIES DEPENDS TestJobsubExampleAnemone2FEI4FitterRun)
 
     # we expect to see between 1 and 3 tracks in every event 
     # but tolerate if this is not the case in 40% of the events (empty events are counted)
-    ADD_TEST( TestJobsubExampleAnemone2FEI4FitterOutput sh -c "[ -f ${testdir}/output/results/run${PaddedRunNr}-track.slcio ] && lcio_check_col_elements --pedantic --expelements 3 --abselementerror 2 --releventerror .40 track ${testdir}/output/results/run${PaddedRunNr}-track.slcio" )
+    ADD_TEST( TestJobsubExampleAnemone2FEI4FitterOutput sh -c "[ -f ${testdir}/output/lcio/run${PaddedRunNr}-track.slcio ] && lcio_check_col_elements --pedantic --expelements 3 --abselementerror 2 --releventerror .40 track ${testdir}/output/lcio/run${PaddedRunNr}-track.slcio" )
     SET_TESTS_PROPERTIES (TestJobsubExampleAnemone2FEI4FitterOutput PROPERTIES DEPENDS TestJobsubExampleAnemone2FEI4FitterRun)
 
 #

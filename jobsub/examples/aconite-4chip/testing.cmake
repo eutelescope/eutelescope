@@ -174,10 +174,10 @@
     ADD_TEST( TestJobsubExampleAconite-4chipAlignHisto sh -c "[ -f ${testdir}/output/histograms/run${PaddedRunNr}-aligndaf-histo.root ]" )
     SET_TESTS_PROPERTIES (TestJobsubExampleAconite-4chipAlignHisto PROPERTIES DEPENDS TestJobsubExampleAconite-4chipAlignRun)
 
-    ADD_TEST( TestJobsubExampleAconite-4chipAlignDB sh -c "[ -f ${testdir}/output/database/run${PaddedRunNr}-align-db.slcio ] && lcio_check_col_elements --expelements 8  alignment  ${testdir}/output/database/run${PaddedRunNr}-align-db.slcio" )
+    ADD_TEST( TestJobsubExampleAconite-4chipAlignDB sh -c "[ -f ${testdir}/output/database/run${PaddedRunNr}-alignment.slcio ] && lcio_check_col_elements --expelements 8  alignment  ${testdir}/output/database/run${PaddedRunNr}-alignment.slcio" )
     SET_TESTS_PROPERTIES (TestJobsubExampleAconite-4chipAlignDB PROPERTIES DEPENDS TestJobsubExampleAconite-4chipAlignRun)
 
-    ADD_TEST( TestJobsubExampleAconite-4chipAlignOutput sh -c "[ -f ${testdir}/output/results/run${PaddedRunNr}-align-mille.bin -a -f ${testdir}/output/results/run${PaddedRunNr}-pede-steer.txt ] " )
+    ADD_TEST( TestJobsubExampleAconite-4chipAlignOutput sh -c "[ -f ${testdir}/output/database/run${PaddedRunNr}-align-mille.bin -a -f ${testdir}/output/database/run${PaddedRunNr}-pede-steer.txt ] " )
     SET_TESTS_PROPERTIES (TestJobsubExampleAconite-4chipAlignOutput PROPERTIES DEPENDS TestJobsubExampleAconite-4chipAlignRun)
 
 
@@ -211,7 +211,7 @@
 
     # we expect to see between 1 and 3 tracks in every event 
     # but tolerate if this is not the case in 40% of the events (empty events are counted)
-    ADD_TEST( TestJobsubExampleAconite-4chipFitterOutput sh -c "[ -f ${testdir}/output/results/run${PaddedRunNr}-track.slcio ] && lcio_check_col_elements --pedantic --expelements 3 --abselementerror 2 --releventerror .40 track ${testdir}/output/results/run${PaddedRunNr}-track.slcio" )
+    ADD_TEST( TestJobsubExampleAconite-4chipFitterOutput sh -c "[ -f ${testdir}/output/lcio/run${PaddedRunNr}-track.slcio ] && lcio_check_col_elements --pedantic --expelements 1+2-1 --abselementerror 2 --releventerror .40 track ${testdir}/output/lcio/run${PaddedRunNr}-track.slcio" )
     SET_TESTS_PROPERTIES (TestJobsubExampleAconite-4chipFitterOutput PROPERTIES DEPENDS TestJobsubExampleAconite-4chipFitterRun)
 
 #
