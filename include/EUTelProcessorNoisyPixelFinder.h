@@ -226,6 +226,9 @@ protected:
 
     //! write out the list of hot pixels
     void HotPixelDBWriter();
+
+    //! Flag which will be set once we're done finding noisy pixels
+    bool _finished;
 };
 
 //! A global instance of the processor

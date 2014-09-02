@@ -19,6 +19,7 @@
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
+#include "marlin/Exceptions.h"
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include "marlin/AIDAProcessor.h"
@@ -49,6 +50,7 @@
 #include <cmath>
 #include <iostream>
 #include <iterator>
+#include <stdexcept>
 
 using namespace std;
 using namespace marlin;
@@ -71,7 +73,8 @@ EUTelProcessorNoisyPixelFinder::EUTelProcessorNoisyPixelFinder():
   _iRun(0),
   _iEvt(0),
   _sensorIDVec(),
-  _hotpixelDBFile("")
+  _hotpixelDBFile(""),
+  _finished(false)
 {
   //processor description
   _description = "EUTelProcessorNoisyPixelFinder computes the firing frequency of pixels and applies a cut on this value to mask (NOT remove) hot pixels.";
@@ -118,44 +121,53 @@ void EUTelProcessorNoisyPixelFinder::initializeHitMaps()
 {
 	//it stored detectoID and itt stores the vector for the y-entries
 	for( EVENT::IntVec::iterator it = _sensorIDVec.begin(); it != _sensorIDVec.end(); ++it ) 
-    {
-		//get the geoemtry description of the plane
-		geo::EUTelGenericPixGeoDescr* geoDescr = geo::gGeometry().getPixGeoDescr( *it ) ;
-
-		//get the max/min pixel indices
-		int minX, minY, maxX, maxY;
-		minX = minY = maxX = maxY = 0;
-		geoDescr->getPixelIndexRange( minX, maxX, minY, maxY );
-
-		//a sensor structs holds all the helpful information
-		sensor thisSensor;
-
-		//store the information in them
-		thisSensor.offX = minX;
-		thisSensor.sizeX =  maxX - minX+1;
-
-		thisSensor.offY = minY;
-		thisSensor.sizeY = maxY - minY+1;
-
-		//this is the 2-dimensional array used to store all the pixels, it is implemented as a vector of vectors
-		//first the x-entries-vector
-		std::vector<std::vector<int> >* hitVecP = new std::vector<std::vector<int> > (thisSensor.sizeX);
-
-		//and the y-entries vector
-		for(std::vector<std::vector<int> >::iterator itt = hitVecP->begin(); itt != hitVecP->end(); ++itt )
+	{
+		try
 		{
-			//resize it now
-			itt->resize(thisSensor.sizeY, 0);
+			//get the geoemtry description of the plane
+			geo::EUTelGenericPixGeoDescr* geoDescr = geo::gGeometry().getPixGeoDescr( *it ) ;
+
+			//get the max/min pixel indices
+			int minX, minY, maxX, maxY;
+			minX = minY = maxX = maxY = 0;
+			geoDescr->getPixelIndexRange( minX, maxX, minY, maxY );
+
+			//a sensor structs holds all the helpful information
+			sensor thisSensor;
+
+			//store the information in them
+			thisSensor.offX = minX;
+			thisSensor.sizeX =  maxX - minX+1;
+
+			thisSensor.offY = minY;
+			thisSensor.sizeY = maxY - minY+1;
+
+			//this is the 2-dimensional array used to store all the pixels, it is implemented as a vector of vectors
+			//first the x-entries-vector
+			std::vector<std::vector<int> >* hitVecP = new std::vector<std::vector<int> > (thisSensor.sizeX);
+
+			//and the y-entries vector
+			for(std::vector<std::vector<int> >::iterator itt = hitVecP->begin(); itt != hitVecP->end(); ++itt )
+			{
+				//resize it now
+				itt->resize(thisSensor.sizeY, 0);
+			}
+
+			//collection to later hold the hot pixels
+			std::vector<EUTelGenericSparsePixel> hotPixelMap;
+
+			//store all the collections/pointers in the corresponding maps
+		    	_sensorMap[*it] = thisSensor;
+			_hitVecMap[*it] = hitVecP;
+			_hotPixelMap[*it] = hotPixelMap;
 		}
-	
-		//collection to later hold the hot pixels
-		std::vector<EUTelGenericSparsePixel> hotPixelMap;
-		
-		//store all the collections/pointers in the corresponding maps
-	    	_sensorMap[*it] = thisSensor;
-		_hitVecMap[*it] = hitVecP;
-		_hotPixelMap[*it] = hotPixelMap;
-    }  
+		catch(std::runtime_error& e)
+		{
+			streamlog_out ( ERROR0 ) << "Noisy pixel masker could not retrieve plane " << *it << std::endl;
+			streamlog_out ( ERROR0 ) << e.what() << std::endl;
+			throw StopProcessingException(this);
+		}
+	}
 }
 
 void EUTelProcessorNoisyPixelFinder::init() 
@@ -168,8 +180,8 @@ void EUTelProcessorNoisyPixelFinder::init()
 	_iEvt = 0;
 
 	//init new geometry
-    std::string name("test.root");
-    geo::gGeometry().initializeTGeoDescription(name,true);
+	std::string name("test.root");
+	geo::gGeometry().initializeTGeoDescription(name,true);
 
 	//and use it to prepare the hit maps
 	initializeHitMaps();
@@ -230,22 +242,30 @@ void EUTelProcessorNoisyPixelFinder::HotPixelFinder(EUTelEventImpl* evt)
 		    for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ ) 
 		    {
 				//get the pixel
-		        sparseData->getSparsePixelAt( iPixel, genericPixel );
+				sparseData->getSparsePixelAt( iPixel, genericPixel );
 
 				//compute the address in the array-like-structure, any offset
 				//has to be substracted (array index starts at 0)
 				int indexX = genericPixel->getXCoord() - currentSensor->offX;
 				int indexY = genericPixel->getYCoord() - currentSensor->offY;
-
-				//increment the hit counter for this pixel
-				(hitArray->at(indexX)).at(indexY)++;
+				
+				try
+				{
+					//increment the hit counter for this pixel
+					(hitArray->at(indexX)).at(indexY)++;
+				}
+				catch(std::out_of_range& e)
+				{
+					streamlog_out ( ERROR5 )  << "Pixel: " << genericPixel->getXCoord() << "|" <<  genericPixel->getYCoord() << " on plane: " << sensorID << " fired." << std::endl 
+					<< "This pixel is out of the range defined by the geometry. Either your data is corrupted or your pixel geometry not specified correctly!" << std::endl;
+				}
 		    }
 			delete genericPixel;
 		}    
 	}
 	catch (lcio::DataNotAvailableException& e ) 
 	{
-		streamlog_out ( WARNING2 )  << "Input collection not found in the current event. Skipping..." << e.what() << endl;
+		streamlog_out ( WARNING2 )  << "Input collection not found in the current event. Skipping..." << e.what() << std::endl;
 		return;    
 	} 
 }
@@ -261,14 +281,14 @@ void EUTelProcessorNoisyPixelFinder::processEvent (LCEvent * event)
 
     if( event == 0 )
     {
-        streamlog_out ( WARNING2 ) <<  "event does not exist!. skip " <<  endl;       
+        streamlog_out ( WARNING2 ) <<  "event does not exist!. skip " <<  std::endl;       
         return;
     }
 
     EUTelEventImpl* evt = static_cast<EUTelEventImpl*> (event);
     if ( evt->getEventType() == kEORE ) 
     {
-        streamlog_out ( DEBUG4 ) <<  "EORE found: nothing else to do." <<  endl;
+        streamlog_out ( DEBUG4 ) <<  "EORE found: nothing else to do." <<  std::endl;
         return;
     }
     else if ( evt->getEventType() == kUNKNOWN ) 
@@ -298,7 +318,15 @@ void EUTelProcessorNoisyPixelFinder::processEvent (LCEvent * event)
 
 void EUTelProcessorNoisyPixelFinder::end() 
 {
-	streamlog_out ( MESSAGE4 ) << "Successfully finished" << endl;
+	if(_finished)
+	{
+		streamlog_out ( MESSAGE4 ) << "Noisy pixel finder has successfully finished!" << std::endl;
+	}
+	else
+	{
+		streamlog_out ( ERROR3 ) << "End of run reached before enough events were processed for noisy pixel finder, databases have NOT been written!" << std::endl;
+		streamlog_out ( ERROR3 ) << "Increase the number or events to be processed for the run or decrease the number required for noisy pixel finding" << std::endl;
+	}
 }
 
 void EUTelProcessorNoisyPixelFinder::check(LCEvent* /*event*/ ) 
@@ -349,12 +377,15 @@ void EUTelProcessorNoisyPixelFinder::check(LCEvent* /*event*/ )
 		//write out the databases and histograms
 		HotPixelDBWriter();
 		bookAndFillHistos();
+
+		//we reached enough events, wrote out noisy pixel db and are done now
+		_finished = true;
 	}
 }
 
 void EUTelProcessorNoisyPixelFinder::HotPixelDBWriter()
 {    
-    streamlog_out ( DEBUG5 ) << "Writing out hot pixel db into " << _hotpixelDBFile.c_str() << endl;
+    streamlog_out ( DEBUG5 ) << "Writing out hot pixel db into " << _hotpixelDBFile.c_str() << std::endl;
 
     // reopen the LCIO file this time in append mode
     LCWriter * lcWriter = LCFactory::getInstance()->createLCWriter();
@@ -373,8 +404,8 @@ void EUTelProcessorNoisyPixelFinder::HotPixelDBWriter()
 			{
 				lcReader->open( _hotpixelDBFile );
 				event =  static_cast<LCEventImpl *>  (lcReader->readNextEvent());
-				streamlog_out ( DEBUG5 ) << "event read back ok from file"  << endl;       
-				std::cout << "event read back ok from file"  << endl;       
+				streamlog_out ( DEBUG5 ) << "event read back ok from file"  << std::endl;       
+				std::cout << "event read back ok from file"  << std::endl;       
 
 				if( event == 0 )
 				{
@@ -387,7 +418,7 @@ void EUTelProcessorNoisyPixelFinder::HotPixelDBWriter()
 					event->setRunNumber( 0 );
 					event->setEventNumber( 0 );
 					event->setDetectorName("Mimosa26");
-					std::cout  << "event recreated ok"  << endl;       
+					std::cout  << "event recreated ok"  << std::endl;       
 		
 					now   = new LCTime;
 					event->setTimeStamp( now->timeStamp() );
@@ -396,14 +427,14 @@ void EUTelProcessorNoisyPixelFinder::HotPixelDBWriter()
 			}
 			catch(...) 
 			{
-				streamlog_out ( ERROR5 ) << "could not read anything from HotPixelDB file"  << endl;       
+				streamlog_out ( ERROR5 ) << "could not read anything from HotPixelDB file"  << std::endl;       
 				event = NULL;
 			}
-			std::cout  << _hotpixelDBFile << " was opened for writing" << endl;
+			std::cout  << _hotpixelDBFile << " was opened for writing" << std::endl;
 		}
 		catch ( IOException& e ) 	
 		{
-			std::cout  << e.what() << endl << "Sorry, was not able to APPEND to the hotpixel file " << _hotpixelDBFile << ", try open new " << endl;
+			std::cout  << e.what() << std::endl << "Sorry, was not able to APPEND to the hotpixel file " << _hotpixelDBFile << ", try open new " << std::endl;
 		}
 	}
 
@@ -422,14 +453,14 @@ void EUTelProcessorNoisyPixelFinder::HotPixelDBWriter()
 			event->setRunNumber( 0 );
 			event->setEventNumber( 0 );
 			event->setDetectorName("Mimosa26");
-			std::cout  << "HotPixelDB file: run header and event created ok"  << endl;       
+			std::cout  << "HotPixelDB file: run header and event created ok"  << std::endl;       
 			now = new LCTime;
 			event->setTimeStamp( now->timeStamp() );        
 			delete now;
 		}
 		catch ( IOException& e ) 
 		{
-			streamlog_out ( ERROR4 ) << e.what() << endl << "Sorry, was not able to create new HotPixelDB file " << _hotpixelDBFile <<", will quit now. " << endl;
+			streamlog_out ( ERROR4 ) << e.what() << std::endl << "Sorry, was not able to create new HotPixelDB file " << _hotpixelDBFile <<", will quit now. " << std::endl;
 			return;
 			//exit(-1);
 		}
@@ -437,7 +468,7 @@ void EUTelProcessorNoisyPixelFinder::HotPixelDBWriter()
   
     if(event==0)
     {
-		streamlog_out ( ERROR5 ) << "Problem opening HotPixelDB file, event == 0 " << endl;
+		streamlog_out ( ERROR5 ) << "Problem opening HotPixelDB file, event == 0 " << std::endl;
 		return;  
     }
 
@@ -447,15 +478,15 @@ void EUTelProcessorNoisyPixelFinder::HotPixelDBWriter()
     try 
     {
 		hotPixelCollection = static_cast< LCCollectionVec* > ( event->getCollection( _hotPixelCollectionName  ) );
-        std::cout << "hotPixelCollection: " << _hotPixelCollectionName << " found found with " << hotPixelCollection->getNumberOfElements() << " elements " <<  endl; 
+        std::cout << "hotPixelCollection: " << _hotPixelCollectionName << " found found with " << hotPixelCollection->getNumberOfElements() << " elements " <<  std::endl; 
         hotPixelCollection->clear();
-        std::cout << "hotPixelCollection: " << _hotPixelCollectionName << " cleared: now " << hotPixelCollection->getNumberOfElements() << " elements " <<  endl; 
+        std::cout << "hotPixelCollection: " << _hotPixelCollectionName << " cleared: now " << hotPixelCollection->getNumberOfElements() << " elements " <<  std::endl; 
     }
     catch ( lcio::DataNotAvailableException& e ) 
     {
 		hotPixelCollection = new LCCollectionVec( lcio::LCIO::TRACKERDATA );
 		event->addCollection( hotPixelCollection, _hotPixelCollectionName );
-		 std::cout << "hotPixelCollection: " << _hotPixelCollectionName << " created" <<  endl; 
+		 std::cout << "hotPixelCollection: " << _hotPixelCollectionName << " created" <<  std::endl; 
     }
 
 	for ( std::map<int, std::vector<EUTelGenericSparsePixel> >::iterator it = _hotPixelMap.begin() ; it != _hotPixelMap.end(); ++it ) 
@@ -488,7 +519,7 @@ void EUTelProcessorNoisyPixelFinder::HotPixelDBWriter()
 
 void EUTelProcessorNoisyPixelFinder::bookAndFillHistos() 
 {
-	streamlog_out ( MESSAGE1 ) << "Booking and filling histograms " << endl;
+	streamlog_out ( MESSAGE1 ) << "Booking and filling histograms " << std::endl;
 
 	string tempHistoName, basePath;
 
@@ -515,8 +546,8 @@ void EUTelProcessorNoisyPixelFinder::bookAndFillHistos()
 	  
 		if( firing2DHisto == 0 )
 		{
-			streamlog_out ( ERROR5 ) << "CreateHistogram2D for " <<  (basePath + tempHistoName).c_str()  << " failed " << endl;
-		    streamlog_out ( ERROR5 ) << "Execution stopped, check that your path (" << basePath.c_str() << ")exists  " << endl;
+			streamlog_out ( ERROR5 ) << "CreateHistogram2D for " <<  (basePath + tempHistoName).c_str()  << " failed " << std::endl;
+		    streamlog_out ( ERROR5 ) << "Execution stopped, check that your path (" << basePath.c_str() << ")exists  " << std::endl;
 		    return;
 		}
 		
