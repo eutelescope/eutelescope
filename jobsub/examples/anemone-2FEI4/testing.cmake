@@ -224,7 +224,7 @@
 
     # run stattest tool on output from previous step and test it against reference file; test are configured in specified config file (*.qa)
 
-    ADD_TEST( TestJobsubExampleAnemone2FEI4StatTestClustering sh -c "PYTHONPATH=$ROOTSYS/lib:$PYTHONPATH ${executable} --cdash -g ${testdir}/output/stattest_report_clus.pdf ${referencedatadir}/StatTestConf_Anemone2FEI4Clustering.qa ${testdir}/output/histograms/run${PaddedRunNr}-clu-histo.root ${referencedatadir}/run${PaddedRunNr}-clu-histo.root" )
+    ADD_TEST( TestJobsubExampleAnemone2FEI4StatTestClustering sh -c "PYTHONPATH=$ROOTSYS/lib:$PYTHONPATH ${executable} --cdash -g ${testdir}/output/stattest_report_clus.pdf ${referencedatadir}/StatTestConf_Anemone2FEI4Clustering.qa ${testdir}/output/histograms/run${PaddedRunNr}-clustering.root ${referencedatadir}/run${PaddedRunNr}-clu-histo.root" )
     SET_TESTS_PROPERTIES (TestJobsubExampleAnemone2FEI4StatTestClustering PROPERTIES
         # test will pass if ALL of the following expressions are matched
         PASS_REGULAR_EXPRESSION "${fit_pass_regex_1}"
@@ -235,7 +235,7 @@
 	)
 
 
-    ADD_TEST( TestJobsubExampleAnemone2FEI4StatTestAlign sh -c "PYTHONPATH=$ROOTSYS/lib:$PYTHONPATH ${executable} --cdash -g ${testdir}/output/stattest_report_align.pdf ${referencedatadir}/StatTestConf_Anemone2FEI4Align.qa ${testdir}/output/histograms/run${PaddedRunNr}-align-histo.root ${referencedatadir}/run${PaddedRunNr}-align-histo.root" )
+    ADD_TEST( TestJobsubExampleAnemone2FEI4StatTestAlign sh -c "PYTHONPATH=$ROOTSYS/lib:$PYTHONPATH ${executable} --cdash -g ${testdir}/output/stattest_report_align.pdf ${referencedatadir}/StatTestConf_Anemone2FEI4Align.qa ${testdir}/output/histograms/run${PaddedRunNr}-alignmentdaf.root ${referencedatadir}/run${PaddedRunNr}-align-histo.root" )
     SET_TESTS_PROPERTIES (TestJobsubExampleAnemone2FEI4StatTestAlign PROPERTIES
         # test will pass if ALL of the following expressions are matched
         PASS_REGULAR_EXPRESSION "${fit_pass_regex_1}"
@@ -246,7 +246,7 @@
 	)
 
 
-    ADD_TEST( TestJobsubExampleAnemone2FEI4StatTestFitter sh -c "PYTHONPATH=$ROOTSYS/lib:$PYTHONPATH ${executable} --cdash  -g${testdir}/output/stattest_report_fitter.pdf ${referencedatadir}/StatTestConf_Anemone2FEI4Fitter.qa ${testdir}/output/histograms/run${PaddedRunNr}-track-histo.root ${referencedatadir}/run${PaddedRunNr}-track-histo.root" )
+    ADD_TEST( TestJobsubExampleAnemone2FEI4StatTestFitter sh -c "PYTHONPATH=$ROOTSYS/lib:$PYTHONPATH ${executable} --cdash  -g${testdir}/output/stattest_report_fitter.pdf ${referencedatadir}/StatTestConf_Anemone2FEI4Fitter.qa ${testdir}/output/histograms/run${PaddedRunNr}-fitter.root ${referencedatadir}/run${PaddedRunNr}-track-histo.root" )
     SET_TESTS_PROPERTIES (TestJobsubExampleAnemone2FEI4StatTestFitter PROPERTIES
         # test will pass if ALL of the following expressions are matched
         PASS_REGULAR_EXPRESSION "${fit_pass_regex_1}"
