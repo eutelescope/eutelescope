@@ -15,7 +15,7 @@ do
        esac
 done
 
-MaxRecordNumber="1000" 
+MaxRecordNumber="1000000" 
 
 echo "Input recieved"
 echo "Config: " $CONFIG
@@ -25,20 +25,21 @@ echo "Run (MAKE SURE YOU HAVE THE CORRECT NUMBER OF ZEROS!): " $RUN #TO DO
 echo "MaxRecordNumber: " $MaxRecordNumber
 
 Fxr="0 1 2 3 4 5"
-Fxs="0         5"
+Fxs=" 1 2 3 4"
 Fyr="0 1 2 3 4 5"
-Fys="0         5"
+Fys="  1 2 3 4  "
 Fzr="0 1 2 3 4 5"
 Fzs="0 1 2 3 4 5"
 
 #inputGear="gear_desy2012_150mm.xml"
-inputGear="gear_lam_1T.xml"
-outputGear="gear-final-XYshift-000${RUN}.xml"
-histoNameInput="GBLtrack-XYshift-000${RUN}"
+#inputGear="gear_lam_1T.xml"
+#inputGear="gear_150mm_1fei4_81.xml"
+#outputGear="gear-final-XYshift-000${RUN}.xml"
+#histoNameInput="GBLtrack-XYshift-000${RUN}"
 
-#inputGear="gear-final-XYshift-000${RUN}.xml"
-#outputGear="gear-final-Zrotations2-000${RUN}.xml"
-#histoNameInput="GBLtrack-zRotation2-000${RUN}"
+inputGear="gear-final-XYshift-000${RUN}.xml"
+outputGear="gear-final-XYshiftS2-000${RUN}.xml"
+histoNameInput="GBLtrack-XYshiftS2-000${RUN}"
 
 #inputGear="gear-final-Zrotations-000${RUN}.xml"
 #outputGear="gear-final-XRotation-000${RUN}.xml"
@@ -47,7 +48,7 @@ histoNameInput="GBLtrack-XYshift-000${RUN}"
 #This is the alignment mode. It sets the size of the alignment jacobian dimensions.
 amode="2";
 
-pede="chiscut 15. 7. " #This is the input that tell millepede what tracks to discard.  
+pede="chiscut 5. 3. " #This is the input that tell millepede what tracks to discard.  
 
 ExcludePlanes=""
 
@@ -228,11 +229,11 @@ while :
 		averageChi2Mille=1
 	fi
 #	averageChi2Mille=1
-	if [[ $(echo "$averageChi2Mille < 0.8"|bc) -eq 1 ]]; then
+	if [[ $(echo "$averageChi2Mille < 0.8"|bc) -eq 1 ]] && [[ $averageChi2Mille != "" ]]; then
 		echo "The average chi2 is: " $averageChi2Mille. "So decrease resolution."		
 		echo "New resolutions are for (X/Y):" $xres"/"$yres
 		echo "Continue"
-	elif [[ $(echo "$averageChi2Mille > 1.2"|bc) -eq 1 ]]; then
+	elif [[ $(echo "$averageChi2Mille > 1.2"|bc) -eq 1 ]] && [[ $averageChi2Mille != "" ]]; then
 		echo "The average chi2 is: " $averageChi2Mille. "So increase resolution."		
 		echo "New resolutions are for (X/Y):" $xres"/"$yres
 	else 

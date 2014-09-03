@@ -134,7 +134,11 @@ namespace eutelescope {
          *  its name
          */
 	std::map< std::string, AIDA::IHistogram1D* > _aidaHistoMap1D;
-
+	std::map< int, AIDA::IHistogram1D* > _mapSensorIDToHistogramCorrection0;
+	std::map< int, AIDA::IHistogram1D* > _mapSensorIDToHistogramCorrection1;
+	std::map< int, AIDA::IHistogram1D* > _mapSensorIDToHistogramCorrection2;
+	std::map< int, AIDA::IHistogram1D* > _mapSensorIDToHistogramCorrection3;
+	std::map< int, AIDA::IHistogram1D* > _mapSensorIDToHistogramCorrection4;
         /** Names of histograms */
         struct _histName {
 						static string _chi2CandidateHistName;

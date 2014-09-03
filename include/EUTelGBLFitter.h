@@ -89,7 +89,7 @@ namespace eutelescope {
 
 				void computeTrajectoryAndFit(std::vector< gbl::GblPoint >& pointList,  gbl::GblTrajectory* traj, double* chi2, int* ndf, int & ierr);
 
-				void UpdateTrackFromGBLTrajectory(gbl::GblTrajectory* traj,std::vector< gbl::GblPoint >& pointList, EUTelTrack & track);
+				void UpdateTrackFromGBLTrajectory(gbl::GblTrajectory* traj,std::vector< gbl::GblPoint >& pointList, EUTelTrack & track, map<int, vector<double> > &  mapSensorIDToCorrectionVec );
 				void setPointVec( std::vector< gbl::GblPoint >& pointList, gbl::GblPoint& point);
 				std::vector<EUTelState> _measurementStatesInOrder;
 				void setListStateAndLabelAfterTrajectory(std::vector< gbl::GblPoint >& pointList, gbl::GblTrajectory*);
@@ -144,6 +144,7 @@ namespace eutelescope {
 
 
 
+
         void SetMilleBinary(gbl::MilleBinary* _mille) {
             this->_mille = _mille;
         }
@@ -160,7 +161,17 @@ namespace eutelescope {
 
         inline double GetChi2Cut() const {
             return _chi2cut;
+				}
+        inline std::vector<double> getCorrectionsTotal() const {
+					std::vector<double> correctionsTotal;
+					correctionsTotal.push_back(_omegaCorrections);	
+					correctionsTotal.push_back(_intersectionLocalXZCorrections);	
+					correctionsTotal.push_back(	_intersectionLocalYZCorrections);	
+					correctionsTotal.push_back(_localPosXCorrections);
+					correctionsTotal.push_back(_localPosYCorrections);
+					return correctionsTotal;
         }
+
 
 				void SetJacobain(TMatrixD matrix ){
 					_jacobianAlignment = matrix;
@@ -245,6 +256,13 @@ namespace eutelescope {
 
         std::map< int, gbl::GblTrajectory* > _gblTrackCandidates;
 
+				double _omegaCorrections;	
+				double _intersectionLocalXZCorrections;	
+				double _intersectionLocalYZCorrections;	
+				double _localPosXCorrections;
+				double _localPosYCorrections;
+
+
 
     private:
         /** Parameter propagation jacobian */
@@ -284,10 +302,10 @@ namespace eutelescope {
         std::vector<int> _parameterIdPlaneVec;
  
         /** Parameter resolutions */
-        std::vector< float> _parameterIdXResolutionVec;
+        std::map< int,  float> _parameterIdXResolutionVec;
  
         /** Parameter resolutions */
-        std::vector< float> _parameterIdYResolutionVec;
+        std::map< int,  float> _parameterIdYResolutionVec;
 
         /** Parameter ids */
         std::map<int,int> _parameterIdXShiftsMap;

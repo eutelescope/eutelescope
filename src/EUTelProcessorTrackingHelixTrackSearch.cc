@@ -186,8 +186,11 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
 	_trackFitter->setHitsVec(allHitsVec);//Will set data member of class _trackFitter 
 	_trackFitter->testHitsVec();//Here we simply make sure the vector contains hits.
   _trackFitter->printHits();//We print the hits to screen for debugging
+	streamlog_out(DEBUG2) << "Now map hits to planes" << std::endl;
 	_trackFitter->setHitsVecPerPlane();//Create map Sensor ID(non excluded)->HitsVec (Using geometry)
+	streamlog_out(DEBUG2) << "Test hits on the planes" << std::endl;
 	_trackFitter->testHitsVecPerPlane();//tests the size of the map and does it contain hits
+	streamlog_out(DEBUG2) << "Determine the dimensionality of the hit" << std::endl;
 	_trackFitter->onlyRunOnce();//This will only execute once. It can not be placed in init since it needs hit information. It currently only determines hit dimension. However can be used for other thing latter. 
 	_trackFitter->testPlaneDimensions();//test that the number of dimensions is 3> >0
 	streamlog_out( DEBUG1 ) << "Trying to find tracks..." << endl;
@@ -519,7 +522,7 @@ void EUTelProcessorTrackingHelixTrackSearch::bookHistograms() {
             streamlog_out(ERROR2) << "Problem booking the " << (_histName::_HitOnTrackCandidateHistName) << endl;
             streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
         }
-        
+       
     } catch (lcio::Exception& e) {
         streamlog_out(WARNING2) << "Can't allocate histograms. Continue without histogramming" << endl;
     }

@@ -734,6 +734,7 @@ void EUTelKalmanFilter::setHitsVecPerPlane(){
 //We create a vector that excluded planes that are notoncluded
 //TO DO: This way of calculating the dimesions is silly since y ou way have only 1 hit in the first event on any plane. Need to fix this. 
 void EUTelKalmanFilter::setPlaneDimensionsVec(){
+	streamlog_out(ERROR0) <<"EUTelKalmanFilter::setPlaneDimensionsVec()----------------------------BEGIN" <<std::endl;
 	_planeDimensions.clear();
 	const double* positionBefore=NULL;//This is a pointer to a const not a const pointer
 	const double* position=NULL;
@@ -744,14 +745,14 @@ void EUTelKalmanFilter::setPlaneDimensionsVec(){
 		bool sensorIsAtLeast1D=false;
 		bool sensorIsAtLeast2D=false;
 		bool sensorIsAtLeast3D=false;
-		for(int j = 0 ; j< _mapHitsVecPerPlane.at(i).size();++j){//Loop through all hits on each plane
+		for(int j = 0 ; j< _mapHitsVecPerPlane.at(planeID).size();++j){//Loop through all hits on each plane
 			streamlog_out(DEBUG0) << "Entering loop over hits. "<< std::endl;
 			position = (_mapHitsVecPerPlane.at(planeID)).at(j)->getPosition();
 			if(position == NULL){
 				throw(lcio::Exception( "Must exit since one position vector within hit is NULL!"));
 			}
 			streamlog_out(DEBUG0) << "Here is the information for this hit about to be checked:"<< std::endl;
-			streamlog_out(DEBUG0) << "Position: "<<position[0]<<","<<position[1]<<","<< position[2]<< " Plane: "<< j <<std::endl;
+			streamlog_out(DEBUG0) << "Position: "<<position[0]<<","<<position[1]<<","<< position[2]<< " Plane: "<< planeID <<std::endl;
 			if(j !=0){
 				if(positionBefore == NULL){
 				throw(lcio::Exception( "Must exit since position before vector within hit is NULL!"));
@@ -784,19 +785,25 @@ void EUTelKalmanFilter::setPlaneDimensionsVec(){
 		streamlog_out(DEBUG2) << "The size of Dimensions : "<< numberOfDimensions << std::endl;
 		_planeDimensions[planeID] = 2;
 	}//END of loop over planes
+	streamlog_out(ERROR0) <<"EUTelKalmanFilter::setPlaneDimensionsVec()----------------------------END" <<std::endl;
+
 }	    
 
 void EUTelKalmanFilter::testHitsVecPerPlane(){
+	streamlog_out(DEBUG4) <<"EUTelKalmanFilter::testHitsVecPerPlane----------------------------BEGIN" <<std::endl;
 	if(_mapHitsVecPerPlane.size() !=  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()){
 		streamlog_out(ERROR0) <<"The size of the planes with hits " << _mapHitsVecPerPlane.size() <<"  Sensors from Geometry with no excluded planes: "<<  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()<<std::endl;
 		throw(lcio::Exception(Utility::outputColourString("The number of planes with hits and the number of planes is different", "RED"))); 	
 
 	}
 	for(int i=0 ;i<_mapHitsVecPerPlane.size();++i){
-		if(_mapHitsVecPerPlane.at(i).size() <= 0){
+		int planeID = geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i);
+		if(_mapHitsVecPerPlane.at(planeID).size() <= 0){
 			streamlog_out(DEBUG0) << Utility::outputColourString("One plane has no hits at all. Is this correct?","YELLOW") << std::endl;
 		}
 	}
+	streamlog_out(DEBUG4) <<"EUTelKalmanFilter::testHitsVecPerPlane----------------------------END" <<std::endl;
+
 }
 
 void EUTelKalmanFilter::testPlaneDimensions(){

@@ -124,12 +124,16 @@ namespace eutelescope {
  
     void EUTelGBLFitter::setParamterIdXResolutionVec( const std::vector<float>& vector)
     {
-      _parameterIdXResolutionVec = vector;
+			for(int i=0; i < geo::gGeometry().sensorZOrdertoIDs().size(); ++i){
+				_parameterIdXResolutionVec[ geo::gGeometry().sensorZOrderToID(i)] = vector.at(i);
+			}
     }
  
     void EUTelGBLFitter::setParamterIdYResolutionVec( const std::vector<float>& vector)
     {
-      _parameterIdYResolutionVec = vector;
+			for(int i=0; i < geo::gGeometry().sensorZOrdertoIDs().size(); ++i){
+				_parameterIdYResolutionVec[ geo::gGeometry().sensorZOrderToID(i)] = vector.at(i);
+			}
     }
        
 
@@ -299,7 +303,7 @@ void EUTelGBLFitter::setListStateAndLabelBeforeTrajectory(std::vector< gbl::GblP
 	streamlog_out ( DEBUG4 ) << " EUTelGBLFitter::setListStateAndLabelBeforeTrajectory-- END " << endl;
 }
 
-void EUTelGBLFitter::UpdateTrackFromGBLTrajectory (gbl::GblTrajectory* traj, std::vector< gbl::GblPoint >& pointList,EUTelTrack &track){
+void EUTelGBLFitter::UpdateTrackFromGBLTrajectory (gbl::GblTrajectory* traj, std::vector< gbl::GblPoint >& pointList,EUTelTrack &track, map<int, vector<double> > &  mapSensorIDToCorrectionVec){
 	streamlog_out ( DEBUG4 ) << " EUTelGBLFitter::UpdateTrackFromGBLTrajectory-- BEGIN " << endl;
 	for(int i=0;i < track.getStatesPointers().size(); i++){//We get the pointers no since we want to change the track state contents		
 		EUTelState* state = track.getStatesPointers().at(i);
@@ -321,7 +325,22 @@ void EUTelGBLFitter::UpdateTrackFromGBLTrajectory (gbl::GblTrajectory* traj, std
 				newStateVec[2] = state->getIntersectionLocalYZ()+corrections[2];
 				newStateVec[3] = state->getPosition()[0]+corrections[3];
 				newStateVec[4] = state->getPosition()[1]+corrections[4]; 
-				state->setStateVec(newStateVec);//TO DO:We set the z position to be the same. However if the sensor is tilted this should change. How should we deal with this
+				//Here we collect the total correction for every track and state. This we use to work out an average to make sure that on each iteration the track corrections are reducing
+				_omegaCorrections = _omegaCorrections + corrections[0];	
+				_intersectionLocalXZCorrections= _intersectionLocalXZCorrections+ corrections[1];	
+				_intersectionLocalYZCorrections = _intersectionLocalYZCorrections + corrections[2];	
+				_localPosXCorrections = _localPosXCorrections + corrections[3];
+				_localPosYCorrections = _localPosYCorrections + corrections[4];
+
+				std::vector<double> correctionVec;
+				correctionVec.push_back(corrections[0]);	
+				correctionVec.push_back(corrections[1]);	
+				correctionVec.push_back(corrections[2]);	
+				correctionVec.push_back(corrections[3]);	
+				correctionVec.push_back(corrections[4]);	
+
+				mapSensorIDToCorrectionVec[state->getLocation()] = correctionVec;
+				state->setStateVec(newStateVec);
 				streamlog_out(DEBUG3) << endl << "State after we have added corrections: " << std::endl;
 				state->print();
 				break;
@@ -460,6 +479,7 @@ void EUTelGBLFitter::setInformationForGBLPointListForAlignment(EUTelTrack& track
 		if(i != (track.getStates().size()-1)){
 			nextState = track.getStates().at(i+1);
 		}
+//		setScattererGBL(point,state);//Every sensor will have scattering due to itself. 
 		if(state.getTrackerHits().size() == 0 ){
 			streamlog_out(DEBUG3)  << Utility::outputColourString("This state does not have a hit. ", "YELLOW")<<std::endl;
 			setPointVec(pointList, point);//This creates the vector of points and keeps a link between states and the points they created
