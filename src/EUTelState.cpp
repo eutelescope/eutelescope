@@ -187,6 +187,13 @@ TVector3 EUTelState::getIncidenceUnitMomentumVectorInLocalFrame(){
   streamlog_out(DEBUG2) << "Momentum in local coordinates  Px,Py,Pz= " << pVecUnitLocal[0]<<","<<pVecUnitLocal[1]<<","<<pVecUnitLocal[2]<< std::endl;
 	return pVecUnitLocal;
 }
+TVectorD EUTelState::getKinks(){
+	EVENT::FloatVec kinksVec = getCovMatrix();
+	TVectorD kinks(2);
+	kinks(0) = kinksVec.at(0);
+	kinks(1) = kinksVec.at(1);
+	return kinks;
+}
 //setters
 void EUTelState::setDimensionSize(int dimension){
 	setD0(static_cast<float>(dimension));
@@ -212,6 +219,12 @@ void EUTelState::setIntersectionLocalXZ(float directionXZ){
 }
 void EUTelState::setPositionLocal(float position[]){
 	setReferencePoint(position);
+}
+void EUTelState::setKinks(TVectorD kinks){
+	EVENT::FloatVec kinksInput;
+	kinksInput.push_back(kinks[0]);
+	kinksInput.push_back(kinks[1]);
+	setCovMatrix(kinksInput);
 }
 void EUTelState::setPositionGlobal(float positionGlobal[]){
 	double localPosition [3];
@@ -334,6 +347,8 @@ void EUTelState::print(){
 	streamlog_out(DEBUG2) << "The state vector//////////////////////////////////////////////////////" << endl;
 	TVectorD stateVec = getStateVec();
 	streamlog_message( DEBUG0, stateVec.Print();, std::endl; );
+	TVectorD kinks = getKinks();
+	streamlog_out(DEBUG1) <<"The kink of this state is: "<< kinks[0] <<" ,  " << kinks[1]<<std::endl;
 	streamlog_out(DEBUG2) << "/////////////////////////////////////////////////////" << endl;
 	streamlog_out(DEBUG1) <<"State memory location "<< this << " The sensor location of the state " <<getLocation()<<std::endl;
 	if(getIsThereAHit()){

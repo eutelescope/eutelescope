@@ -793,7 +793,7 @@ void EUTelKalmanFilter::testHitsVecPerPlane(){
 	streamlog_out(DEBUG4) <<"EUTelKalmanFilter::testHitsVecPerPlane----------------------------BEGIN" <<std::endl;
 	if(_mapHitsVecPerPlane.size() !=  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()){
 		streamlog_out(ERROR0) <<"The size of the planes with hits " << _mapHitsVecPerPlane.size() <<"  Sensors from Geometry with no excluded planes: "<<  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()<<std::endl;
-		throw(lcio::Exception(Utility::outputColourString("The number of planes with hits and the number of planes is different", "RED"))); 	
+		throw(lcio::Exception(Utility::outputColourString("The number of planes that could contain hits and the number of planes is different", "RED"))); 	
 
 	}
 	for(int i=0 ;i<_mapHitsVecPerPlane.size();++i){

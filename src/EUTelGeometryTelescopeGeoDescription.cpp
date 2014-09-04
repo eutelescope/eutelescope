@@ -329,7 +329,7 @@ TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneXAxis( int planeID ) {
         TVector3 normVec( -1., 0., 0. );
         normVec.RotateX( siPlaneXRotation( planeID) ); // to be in rad
         normVec.RotateY( siPlaneYRotation( planeID) ); // to be in rad
-        normVec.RotateZ( siPlaneZRotation( planeID) ); // to be in rad
+        normVec.RotateZ( siPlaneZRotation(planeID) ); // to be in rad
         return normVec;
     }
     return TVector3(0.,0.,0.);
@@ -1708,25 +1708,31 @@ TMatrixD EUTelGeometryTelescopeGeoDescription::getLocalToCurvilinearTransformMat
 	TVector3 J;
 
 	///This is the EUTelescope local z direction.//////////////////////////// 
-	if(planeID>0){
+	if(planeID>=0){
+		streamlog_out(DEBUG0)<<"Set Z(I) with correct sensor rotation. Plane: "<< planeID  << std::endl; 
 		ITelescopeFrame = geo::gGeometry().siPlaneNormal( planeID  );       
 		I[0]=ITelescopeFrame[2];I[1]=ITelescopeFrame[0];I[2]=ITelescopeFrame[1];
 	}else{
+		streamlog_out(DEBUG0)<<"Set Z(I) with scatter information. Plane: "<< planeID  << std::endl; 
 		I[0]=1;		I[1]=0;		I[2]=0;//By default in point in the x direction
 	}
 	//////////////////////////////////////////////////////////////////////////////
 	//This is the EUTelescope local Y direction////////////////////////////////////////
-	if(planeID>0){
+	if(planeID>=0){
+		streamlog_out(DEBUG0)<<"Set Y(K) with correct sensor rotation. Plane: "<< planeID  << std::endl; 
 		KTelescopeFrame = geo::gGeometry().siPlaneYAxis( planeID  ); //This is the y direction of the local frame in global coordinates.      
 		K[0]=KTelescopeFrame[2];K[1]=KTelescopeFrame[0];K[2]=KTelescopeFrame[1];
 	}else{
+		streamlog_out(DEBUG0)<<"Set Y(K) with scatter information. Plane: "<< planeID  << std::endl; 
 		K[0]=0;		K[1]=0;		K[2]=-1;//This points in the -z direction by default of the global curvilinear frame.
 	}
 	//This is the EUTelescope local x direction//////////////////////////////////
-	if(planeID>0){
+	if(planeID>=0){
+		streamlog_out(DEBUG0)<<"Set X(J) with correct sensor rotation. Plane: "<< planeID  << std::endl; 
 		JTelescopeFrame  = geo::gGeometry().siPlaneXAxis( planeID  ); //X direction      
 		J[0]=JTelescopeFrame[2];J[1]=JTelescopeFrame[0];J[2]=JTelescopeFrame[1];
 	}else{
+		streamlog_out(DEBUG0)<<"Set X(J) with scatter information. Plane: "<< planeID  << std::endl; 
 		J[0]=0;		J[1]=-1;		J[2]=0;//This points in the -y direction of the global curvilinear frame by default
 	}
 	///////////////////////////////////////////////////////////////////

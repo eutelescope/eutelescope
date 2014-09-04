@@ -79,12 +79,14 @@ namespace eutelescope {
 				void findScattersZPositionBetweenTwoStates(EUTelState& state);
 				TMatrixD findScattersJacobians(EUTelState state, EUTelState nextTrack);
 				void setInformationForGBLPointList(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList);
-				void setInformationForGBLPointListForAlignment(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList);
+//				void setInformationForGBLPointListForAlignment(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList);
 				void testTrack(EUTelTrack& track);
-		void changejacobainGBL(TMatrixD & input, TMatrixD & output);
-	void FindHitIfThereIsOne(EUTelTrackImpl* trackimpl, EVENT::TrackerHit* hit, EUTelTrackStateImpl* state);
+				void changejacobainGBL(TMatrixD & input, TMatrixD & output);
+				void FindHitIfThereIsOne(EUTelTrackImpl* trackimpl, EVENT::TrackerHit* hit, EUTelTrackStateImpl* state);
 				void testDistanceBetweenPoints(double* position1,double* position2);
-	void setMeasurementGBL(gbl::GblPoint& point, const double *hitPos, double statePos[3], double combinedCov[4], TMatrixD projection);
+				void setMeasurementGBL(gbl::GblPoint& point, const double *hitPos, double statePos[3], double combinedCov[4], TMatrixD projection);
+				void setKinkInformationToTrack(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint >& pointList,EUTelTrack &track);
+
 
 
 				void computeTrajectoryAndFit(std::vector< gbl::GblPoint >& pointList,  gbl::GblTrajectory* traj, double* chi2, int* ndf, int & ierr);
@@ -92,6 +94,7 @@ namespace eutelescope {
 				void UpdateTrackFromGBLTrajectory(gbl::GblTrajectory* traj,std::vector< gbl::GblPoint >& pointList, EUTelTrack & track, map<int, vector<double> > &  mapSensorIDToCorrectionVec );
 				void setPointVec( std::vector< gbl::GblPoint >& pointList, gbl::GblPoint& point);
 				std::vector<EUTelState> _measurementStatesInOrder;
+				std::vector<EUTelState> _statesInOrder;
 				void setListStateAndLabelAfterTrajectory(std::vector< gbl::GblPoint >& pointList, gbl::GblTrajectory*);
 				void setListStateAndLabelBeforeTrajectory(std::vector< gbl::GblPoint >& pointList);
 				gbl::GblPoint getLabelToPoint(std::vector<gbl::GblPoint> & pointList, int label);
@@ -339,7 +342,8 @@ struct compare_points
 
 void OutputMap(std::map<EUTelTrackStateImpl,gbl::GblPoint*, compare_points > _PointToState);
 
-std::vector< pair< EUTelState, int> > _vectorOfPairsMeasurementStatesAndLabels;
+std::vector< pair< EUTelState, int> > _vectorOfPairsMeasurementStatesAndLabels;//This is used within alignment since you need to associate MEASUREMENT states to  labels
+std::vector< pair< EUTelState, int> > _vectorOfPairsStatesAndLabels;//This is used in track fit since you want to associate ANY states to labels.
 std::vector<gbl::GblPoint> _points;
 
 unsigned int _counter_num_pointer = 1;

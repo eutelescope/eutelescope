@@ -44,6 +44,7 @@ namespace eutelescope {
 			TVector3 getIncidenceUnitMomentumVectorInLocalFrame();
 			TMatrixDSym getScatteringVarianceInLocalFrame();
 			TMatrixDSym getScatteringVarianceInLocalFrame(float percentageRadiationLength);
+			TVectorD getKinks();
 			//setters
 			void setDimensionSize(int dimension);
 			void setLocation(int location);
@@ -57,6 +58,7 @@ namespace eutelescope {
 			void setCombinedHitAndStateCovMatrixInLocalFrame(double cov[4]);
 			void setStateVec(TVectorD stateVec);
 			void setArcLengthToNextState(float arcLength){setChi2(arcLength);} 
+			void setKinks(TVectorD kinks);
 			//initialise
 			void initialiseCurvature();
 			//find

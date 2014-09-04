@@ -159,6 +159,7 @@ void EUTelProcessorGBLFitCandidates::processEvent(LCEvent * evt){
 		_trackFitter->setInformationForGBLPointList(track, pointList);
 		const gear::BField& B = geo::gGeometry().getMagneticFiled();
 		const double Bmag = B.at( TVector3(0.,0.,0.) ).r2();
+		_trackFitter->setListStateAndLabelBeforeTrajectory(pointList);//TO DO. This function and setListState.. (see below) these are to relate measurement state -> label and Any state -> label. Must rename.
 		gbl::GblTrajectory* traj = 0;
 		if ( Bmag < 1.E-6 ) {
 			traj = new gbl::GblTrajectory( pointList, false ); 
