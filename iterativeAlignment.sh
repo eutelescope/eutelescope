@@ -56,34 +56,34 @@ echo "Run: " $RUN
 echo "MaxRecordNumber: " $MaxRecordNumber
 
 Fxr="0 1 2 3 4 5"
-Fxs=" 1 2 3 4"
+Fxs="0         5 "
 Fyr="0 1 2 3 4 5"
-Fys="  1 2 3 4  "
-Fzr="0 1 2 3 4 5"
+Fys="0         5"
+Fzr="0 "
 Fzs="0 1 2 3 4 5"
 
 #inputGear="gear_desy2012_150mm.xml"
-inputGear="gear_lam_1T.xml"
+#inputGear="gear_lam_1T.xml"
 #inputGear="gear_150mm_1fei4_81.xml"
-outputGear="gear-final-XYshift-${RUN}.xml"
-histoNameInput="GBLtrack-XYshift-${RUN}"
+#outputGear="gear-final-XYshift-${RUN}.xml"
+#histoNameInput="GBLtrack-XYshift-${RUN}"
 
-#inputGear="gear-final-XYshift-${RUN}.xml"
+inputGear="gear-final-XYshift-${RUN}.xml"
 #outputGear="gear-final-XYshiftS2-${RUN}.xml"
 #histoNameInput="GBLtrack-XYshiftS2-${RUN}"
 
 #inputGear="gear-final-Zrotations-${RUN}.xml"
-#outputGear="gear-final-XRotation-${RUN}.xml"
-#histoNameInput="GBLtrack-xRotation"
+outputGear="gear-final-ZRotation-${RUN}.xml"
+histoNameInput="GBLtrack-zRotation-${RUN}"
 
 #This is the alignment mode. It sets the size of the alignment jacobian dimensions.
-amode="2";
+amode="7";
 
 pede="chiscut 5. 3. " #This is the input that tell millepede what tracks to discard.  
 
 ExcludePlanes=""
 
-r="0.0864 ";
+r="0.0828";
 xres="$r $r $r $r $r $r";
 yres="$r $r $r $r $r $r";
 
@@ -129,12 +129,11 @@ else
 fi
 
 #Now we enter the GBLTrack loop. Here we use the GBLTrack to fit new track with a chi2 tending to 1.
-lcioNumber=0
 for x in {1..10}; do
 	echo "Resolution inside GBLTrack loop beginning (X/Y):" $xres"/"$yres
 	xnext=$(($x+1))
 	echo "This is x and xnext at the start of the loop x: $x and xnext: $xnext "
-	$do jobsub.py -c $CONFIG -csv $RUNLIST -o histoName="$histoNameInput-$x" -o lcioInputName="GBLtracks-$x" -o lcioOutputName="GBLtracks-$xnext"  -o inputCollectionName="tracks$x" -o  outputCollectionName="tracks$xnext" -o MaxRecordNumber="$MaxRecordNumber" -o ExcludePlanes="$ExcludePlanes" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" GBLTrackFit  $RUN 
+	$do jobsub.py -c $CONFIG -csv $RUNLIST -o histoName="$histoNameInput" -o lcioInputName="GBLtracks-$x" -o lcioOutputName="GBLtracks-$xnext"  -o inputCollectionName="tracks$x" -o  outputCollectionName="tracks$xnext" -o MaxRecordNumber="$MaxRecordNumber" -o ExcludePlanes="$ExcludePlanes" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" GBLTrackFit  $RUN 
 	fileName="GBLTrackFit-${RUN}.zip"
 	fullPath="$directoryTrack/$fileName"
 	echo "The full path to the log file is: $fullPath" 
@@ -163,38 +162,38 @@ for x in {1..10}; do
 done
 
 ############################################################################################################################################
-#####################################################################################################################Now we make sure the correction to the GBL tracks are close to 0 as possible
-echo "Now to reduce the corrections to near 1."
-while :
-	do
-	echo "Resolution inside GBLTrack corrections loop beginning (X/Y):" $xres"/"$yres
-	echo "We are on the $x iteration of lcio file" 
-	xnext=$(($x+1))
-	echo "This is x and xnext at the start of the loop x: $x and xnext: $xnext "
-	$do jobsub.py -c $CONFIG -csv $RUNLIST -o histoName="$histoNameInput-$x" -o lcioInputName="GBLtracks-$x" -o lcioOutputName="GBLtracks-$xnext"  -o inputCollectionName="tracks$x" -o  outputCollectionName="tracks$xnext" -o MaxRecordNumber="$MaxRecordNumber" -o ExcludePlanes="$ExcludePlanes" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" GBLTrackFit  $RUN 
-	fileName="GBLTrackFit-${RUN}.zip"
-	fullPath="$directoryTrack/$fileName"
-	echo "The full path to the log file is: $fullPath" 
-	correctionOmega=`unzip  -p  $fullPath |grep "This is the average correction for omega:" |cut -d '-' -f2`; 
-	correctionXZInclination=`unzip  -p  $fullPath |grep "This is the average correction for local xz inclination:" |cut -d ':' -f2`; 
-	correctionYZInclination=`unzip  -p  $fullPath |grep "This is the average correction for local yz inclination:" |cut -d ':' -f2`; 
-	correctionX=`unzip  -p  $fullPath |grep "This is the average correction for local x: " |cut -d ':' -f2`; 
-	correctionY=`unzip  -p  $fullPath |grep "This is the average correction for local y: " |cut -d ':' -f2`; 
-	echo "The average corrections:  $correctionOmega ,  $correctionXZInclination , $correctionYZInclination , $correctionX , $correctionY"   
-	if [[ $correctionOmega == "" ]] || [[ $correctionXZInclination == "" ]] || [[ $correctionYZInclination == "" ]] ||  [[ $correctionX == "" ]] || [[ $correctionY == "" ]];then
-		echo "One of the corrections is empty this must be wrong. Exit!!!!!11"
-		exit
-	fi
-
-	if [[ $(echo "$correctionXZInclination < 0.00001"|bc) -eq 1  ]] &&  [[ $(echo "$correctionYZInclination < 0.00001"|bc) -eq 1  ]] && [[ $(echo "$correctionX < 0.00001"|bc) -eq 1  ]] && [[ $(echo "$correctionY < 0.00001"|bc) -eq 1  ]]; then
-		echo "The corrections are now small enough. Lets now align. "
-	break	
-	fi
-	x=$(($x+1))
-done
+######################################################################################################################Now we make sure the correction to the GBL tracks are close to 0 as possible
+#echo "Now to reduce the corrections to near 1."
+#while :
+#	do
+#	echo "Resolution inside GBLTrack corrections loop beginning (X/Y):" $xres"/"$yres
+#	echo "We are on the $x iteration of lcio file" 
+#	xnext=$(($x+1))
+#	echo "This is x and xnext at the start of the loop x: $x and xnext: $xnext "
+#	$do jobsub.py -c $CONFIG -csv $RUNLIST -o histoName="$histoNameInput" -o lcioInputName="GBLtracks-$x" -o lcioOutputName="GBLtracks-$xnext"  -o inputCollectionName="tracks$x" -o  outputCollectionName="tracks$xnext" -o MaxRecordNumber="$MaxRecordNumber" -o ExcludePlanes="$ExcludePlanes" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" GBLTrackFit  $RUN 
+#	fileName="GBLTrackFit-${RUN}.zip"
+#	fullPath="$directoryTrack/$fileName"
+#	echo "The full path to the log file is: $fullPath" 
+#	correctionOmega=`unzip  -p  $fullPath |grep "This is the average correction for omega:" |cut -d '-' -f2`; 
+#	correctionXZInclination=`unzip  -p  $fullPath |grep "This is the average correction for local xz inclination:" |cut -d ':' -f2`; 
+#	correctionYZInclination=`unzip  -p  $fullPath |grep "This is the average correction for local yz inclination:" |cut -d ':' -f2`; 
+#	correctionX=`unzip  -p  $fullPath |grep "This is the average correction for local x: " |cut -d ':' -f2`; 
+#	correctionY=`unzip  -p  $fullPath |grep "This is the average correction for local y: " |cut -d ':' -f2`; 
+#	echo "The average corrections:  $correctionOmega ,  $correctionXZInclination , $correctionYZInclination , $correctionX , $correctionY"   
+#	if [[ $correctionOmega == "" ]] || [[ $correctionXZInclination == "" ]] || [[ $correctionYZInclination == "" ]] || [[ $correctionX == "" ]] || [[ $correctionY == "" ]];then
+#		echo "One of the corrections is empty this must be wrong. Exit!!!!!11"
+#		exit
+#	fi
+#	echo "Now to check if the corrections are small enough"
+#	if [[ $(echo "$correctionOmega < 0.001"|bc) -eq 1 ]];then # && [[ $(echo "$correctionYZInclination < 0.001"|bc) -eq 1  ]] && [[ $(echo "$correctionX < 0.001"|bc) -eq 1  ]] && [[ $(echo "$correctionY < 0.001"|bc) -eq 1  ]];then
+#		echo "The corrections are now small enough. Lets now align. "
+#	break	
+#	fi
+#	x=$(($x+1))
+#	echo "The corrections are not small enough. The new x is $x"
+#done
 #Entering alignment steps########################################################################################
 echo "Now begin alignment"
-exit
 fileAlign="/scratch/ilcsoft/v01-17-05/Eutelescope/master/jobsub/examples/GBL/output/logs/GBLAlign-${RUN}.zip"
 
 
@@ -202,19 +201,15 @@ fileAlign="/scratch/ilcsoft/v01-17-05/Eutelescope/master/jobsub/examples/GBL/out
 while :
 	do
 	echo "Resolution inside ALignment loop beginning (X/Y):" $xres"/"$yres
-	$do jobsub.py -c $CONFIG -csv $RUNLIST -o lcioInputName="GBLtracks-$lcioNumber" -o inputCollectionName="tracks$lcioNumber" -o MaxRecordNumber="$MaxRecordNumber" -o ExcludePlanes="$ExcludePlanes" -o GearFile="$inputGear" -o GearAlignedFile="$outputGear" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o MilleMaxChi2Cut="$Chi2Cut" -o pede="$pede"  GBLAlign  $RUN 
+	$do jobsub.py -c $CONFIG -csv $RUNLIST -o lcioInputName="GBLtracks-$x" -o inputCollectionName="tracks$x" -o MaxRecordNumber="$MaxRecordNumber" -o ExcludePlanes="$ExcludePlanes" -o GearFile="$inputGear" -o GearAlignedFile="$outputGear" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o MilleMaxChi2Cut="$Chi2Cut" -o pede="$pede"  GBLAlign  $RUN 
 
 	error=`unzip  -p  $fileAlign |grep "Backtrace for this error:" | awk '{ print $NF }'`;
 	if [[ $error != "" ]];then
 		echo "We have a segfault" 
 		exit
 	fi
-
-
 	rejected=`unzip  -p  $fileAlign |grep "Too many rejects" |cut -d '-' -f2`; 
-
 	averageChi2Mille=`unzip -p $fileAlign |grep "Chi^2/Ndf" | awk '{ print $(NF-5) }'`;
-
 	echo "Rejects word:  $rejected "
 	if [[ $rejected != "" ]];then
 		echo "Too many rejects. Resolution must increase by factor 2."
@@ -258,4 +253,5 @@ xres="$r $r $r $r $r $r";
 yres="$r $r $r $r $r $r";
 
 #Then we create the first tracks using pattern recognition tracks.
-$do jobsub.py  -c $CONFIG -csv $RUNLIST -o GearFile="$outputGear" -o histoName="$histoNameInput" -o lcioInputName="trackcand"  -o inputCollectionName="track_candidates" -o lcioOutputName="GBLtracks-1" -o outputCollectionName="tracks1"  -o MaxRecordNumber="$MaxRecordNumber" -o ExcludePlanes="$ExcludePlanes" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" GBLTrackFit  $RUN 
+x=$(($x+1))
+$do jobsub.py  -c $CONFIG -csv $RUNLIST -o GearFile="$outputGear" -o histoName="$histoNameInput" -o lcioInputName="trackcand"  -o inputCollectionName="track_candidates" -o lcioOutputName="GBLtracks-$x" -o outputCollectionName="tracks$x"  -o MaxRecordNumber="$MaxRecordNumber" -o ExcludePlanes="$ExcludePlanes" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" GBLTrackFit  $RUN
