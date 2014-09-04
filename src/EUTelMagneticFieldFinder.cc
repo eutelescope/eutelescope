@@ -807,7 +807,7 @@ void EUTelKalmanFilter::testHitsVecPerPlane(){
 }
 
 void EUTelKalmanFilter::testPlaneDimensions(){
-	if(_planeDimensions.size() != geo::gGeometry().sensorIDstoZOrder().size()){
+	if(_planeDimensions.size() != geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()){
 		streamlog_out(ERROR5) << "The size of planesDimensions is: "<< _planeDimensions.size()<<" The size of sensorIDtoOrderZ is: " << geo::gGeometry().sensorIDstoZOrder().size()<< std::endl;
 		throw(lcio::Exception( Utility::outputColourString("The size of your dimesion vector is not the same as the number of planes. Something must be wrong!","RED")));
 	}

@@ -178,6 +178,7 @@ void EUTelProcessorGBLFitCandidates::processEvent(LCEvent * evt){
 			if(chi2 ==0 or ndf ==0){
 				throw(lcio::Exception(Utility::outputColourString("Your fitted track has zero degrees of freedom or a chi2 or 0.", "RED"))); 	
 			}
+
 			track.setChi2(chi2);
 			track.setNdf(ndf);
 			_chi2NdfVec.push_back(chi2/static_cast<float>(ndf));
@@ -186,14 +187,15 @@ void EUTelProcessorGBLFitCandidates::processEvent(LCEvent * evt){
 			for(int i = 0; i < track.getStates().size();++i){
 				EUTelState state = track.getStates().at(i);
 				int location = state.getLocation();
-				_mapSensorIDToHistogramCorrection0[location]->fill(mapSensorIDToCorrectionVec[location].at(0));
-				_mapSensorIDToHistogramCorrection1[location]->fill(mapSensorIDToCorrectionVec[location].at(1));
+	//			_mapSensorIDToHistogramCorrection0[location]->fill(mapSensorIDToCorrectionVec[location].at(0));
+		//		_mapSensorIDToHistogramCorrection1[location]->fill(mapSensorIDToCorrectionVec[location].at(1));
 
-				_mapSensorIDToHistogramCorrection2[location]->fill(mapSensorIDToCorrectionVec[location].at(2));
+			//	_mapSensorIDToHistogramCorrection2[location]->fill(mapSensorIDToCorrectionVec[location].at(2));
 
-				_mapSensorIDToHistogramCorrection3[location]->fill(mapSensorIDToCorrectionVec[location].at(3));
-				_mapSensorIDToHistogramCorrection4[location]->fill(mapSensorIDToCorrectionVec[location].at(4));
+		//		_mapSensorIDToHistogramCorrection3[location]->fill(mapSensorIDToCorrectionVec[location].at(3));
+		//		_mapSensorIDToHistogramCorrection4[location]->fill(mapSensorIDToCorrectionVec[location].at(4));
 			}
+
 			map< int, map< float, float > >  SensorResidual; 
 			map< int, map< float, float > >  SensorResidualError; 
 			_trackFitter->getResidualOfTrackandHits(traj, pointList,track, SensorResidual, SensorResidualError);
@@ -297,7 +299,7 @@ void EUTelProcessorGBLFitCandidates::end() {
 
 #endif // USE_GBL
 
-
+//TO DO: If you have a missing hit from a state this does not seem to work. However you can exclude planes which produces no hit which is fine
 void EUTelProcessorGBLFitCandidates::outputLCIO(LCEvent* evt, std::vector<EUTelTrack>& tracks){
 
 	streamlog_out( DEBUG4 ) << " ---------------- EUTelProcessorGBLFitCandidates::outputLCIO ---------- BEGIN ------------- " << std::endl;
@@ -318,6 +320,7 @@ void EUTelProcessorGBLFitCandidates::outputLCIO(LCEvent* evt, std::vector<EUTelT
 	//Loop through all tracks
 	for ( int i = 0 ; i < tracks.size(); ++i){
 		EUTelTrack* trackheap = new  EUTelTrack(tracks.at(i), false); //We dont want to copy contents so set to false.
+		trackheap->print();
 //	For every track add this to the collection
 		for(int j = 0;j < tracks.at(i).getStates().size();++j){
 			EUTelState* stateheap = new EUTelState(tracks.at(i).getStates().at(j));
@@ -396,7 +399,7 @@ void EUTelProcessorGBLFitCandidates::bookHistograms() {
               _aidaHistoMap1D.insert(std::make_pair(_histName::_residGblFitHistNameY5, residGblFit5Y));
 
 			//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////??Corrections		
-				NBinX=300;
+/*				NBinX=300;
         MinX=-0.0001;  //-0.2;
         MaxX=0.0001;
 
@@ -471,6 +474,19 @@ void EUTelProcessorGBLFitCandidates::bookHistograms() {
 				_mapSensorIDToHistogramCorrection2.insert(std::make_pair(5,correction2Plane5));
 				_mapSensorIDToHistogramCorrection3.insert(std::make_pair(5,correction3Plane5));
 				_mapSensorIDToHistogramCorrection4.insert(std::make_pair(5,correction4Plane5));
+
+       AIDA::IHistogram1D * correction0Plane20 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Correction0 Plane20", NBinX, MinX, MaxX); 
+        AIDA::IHistogram1D * correction1Plane20 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Correction1 Plane20", NBinX, MinX, MaxX); 
+        AIDA::IHistogram1D * correction2Plane20 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Correction2 Plane20", NBinX, MinX, MaxX); 
+        AIDA::IHistogram1D * correction3Plane20 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Correction3 Plane20", NBinX, MinX, MaxX); 
+        AIDA::IHistogram1D * correction4Plane20 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Correction4 Plane20", NBinX, MinX, MaxX); 
+
+				_mapSensorIDToHistogramCorrection0.insert(std::make_pair(20,correction0Plane20));
+				_mapSensorIDToHistogramCorrection1.insert(std::make_pair(20,correction1Plane20));
+				_mapSensorIDToHistogramCorrection2.insert(std::make_pair(20,correction2Plane20));
+				_mapSensorIDToHistogramCorrection3.insert(std::make_pair(20,correction3Plane20));
+				_mapSensorIDToHistogramCorrection4.insert(std::make_pair(20,correction4Plane20));
+*/
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////The average residual plots per plane
 //			AIDA::ICloud2D* plotAverageResidual = 	marlin::AIDAProcessor::histogramFactory(this)->createCloud2D("aveRes", "The Average residual with plane number"); 				

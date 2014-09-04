@@ -19,7 +19,7 @@ EUTelState::EUTelState(EUTelState *state){
 	setBeamCharge(state->getBeamCharge());//this is set for each state. to do: is there a more efficient way of doing this since we only need this stored once?
 	setBeamEnergy(state->getBeamEnergy());//this is saved in gev. 
 	initialiseCurvature(); //this will perform the calculation _beamq/_beame ad place in invp
-	if(!state->getTrackerHits().empty()){
+	if(getIsThereAHit()){
 		addHit(const_cast<EVENT::TrackerHit*>(state->getTrackerHits().at(0)));
 	}
 }
