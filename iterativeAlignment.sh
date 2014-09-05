@@ -46,10 +46,14 @@ function adding_zeros_to_RUN {
 ########################################################################3
 RUN=$(adding_zeros_to_RUN $RUN)
 
-PatRec=tracksearchHelix-apix
-TrackFit=GBLTrackFit-apix
-Align=GBLAlign-apix
-MaxRecordNumber="1000" 
+#PatRec=tracksearchHelix-apix
+#TrackFit=GBLTrackFit-apix
+#Align=GBLAlign-apix
+PatRec=tracksearchHelix
+TrackFit=GBLTrackFit
+Align=GBLAlign
+
+MaxRecordNumber="2000" 
 
 echo "Input recieved"
 echo "Config: " $CONFIG
@@ -58,41 +62,44 @@ echo "Chi2Cut: " $Chi2Cut
 echo "Run: " $RUN 
 echo "MaxRecordNumber: " $MaxRecordNumber
 
-#Fxr="0 1 2 3 4 5"
-#Fxs="0         5 "
-#Fyr="0 1 2 3 4 5"
-#Fys="0         5"
-#Fzr="0 "
-#Fzs="0 1 2 3 4 5"
+Fxr="0 1 2 3 4 5"
+Fxs="0         5 "
+Fyr="0 1 2 3 4 5"
+Fys="0         5"
+Fzr="0          "
+Fzs="0 1 2 3 4 5"
 
-Fxr="0 1 2 3 4 5 20"
-Fxs="0           20"
-Fyr="0 1 2 3 4 5 20"
-Fys="0           20"
-Fzr="0 1 2 3 4 5 20"
-Fzs="0 1 2 3 4 5 20"
+#Fxr="0 1 2 3 4 5 20"
+#Fxs="0           20"
+#Fyr="0 1 2 3 4 5 20"
+#Fys="0           20"
+#Fzr="0  20"
+#Fzs="0 1 2 3 4 5 20"
 
 #inputGear="gear_desy2012_150mm.xml"
 #inputGear="gear_lam_1T.xml"
-inputGear="gear_150mm_1fei4_30.xml"
+#inputGear="gear_150mm_1fei4_30.xml"
 #outputGear="gear-final-XYshift-${RUN}.xml"
 #histoNameInput="GBLtrack-XYshift-${RUN}"
 
-#inputGear="gear-final-XYshift-${RUN}.xml"
+inputGear="gear-final-XYshift-${RUN}.xml"
 
 #outputGear="gear-final-XYshiftS2-${RUN}.xml"
 #histoNameInput="GBLtrack-XYshiftS2-${RUN}"
 
 #inputGear="gear-final-Zrotations-${RUN}.xml"
+#inputGear="gear-final-ZRotation-${RUN}.xml"
 outputGear="gear-final-ZRotation-${RUN}.xml"
+
 histoNameInput="GBLtrack-zRotation-${RUN}"
 
 #This is the alignment mode. It sets the size of the alignment jacobian dimensions.
 amode="7";
 
-pede="chiscut 5. 3. " #This is the input that tell millepede what tracks to discard.  
+pede="chiscut 10. 5. " #This is the input that tell millepede what tracks to discard.  
 
-ExcludePlanes="20"
+#ExcludePlanes="20"
+ExcludePlanes=
 
 r="0.0828";
 xres="$r $r $r $r $r $r $r";
