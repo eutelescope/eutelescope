@@ -308,43 +308,48 @@ std::string EUTelGeometryTelescopeGeoDescription::geoLibName( int planeID ) {
     if ( it != _sensorIDtoZOrderMap.end() ) return s;
     return "failed";
 }
-
+//Note  that to determine these axis we MUST use the geometry class after initialisation. By this I mean directly from the root file create.
 TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneNormal( int planeID ) {
     std::map<int,int>::iterator it;
     it = _sensorIDtoZOrderMap.find(planeID);
     if ( it != _sensorIDtoZOrderMap.end() ) {
-        TVector3 normVec( 0., 0., 1. );
-        normVec.RotateX( siPlaneXRotation( planeID) ); // to be in rad
-        normVec.RotateY( siPlaneYRotation( planeID) ); // to be in rad
-        normVec.RotateZ( siPlaneZRotation( planeID) ); // to be in rad
+				const double zAxisLocal[3]  = {0,0,1};
+				double zAxisGlobal[3]; 
+				local2MasterVec(planeID,zAxisLocal , zAxisGlobal ); 
+        TVector3 normVec(zAxisGlobal[0],zAxisGlobal[1],zAxisGlobal[2]);
         return normVec;
-    }
-    return TVector3(0.,0.,0.);
+    }else{
+			TVector3 defaultZ(0,0,1);
+			return defaultZ;
+		}
 }
-//TO DO: //This is a hack. I should be able to take into account the integer rotations of the miimosa sensors
 TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneXAxis( int planeID ) {
     std::map<int,int>::iterator it;
     it = _sensorIDtoZOrderMap.find(planeID);
     if ( it != _sensorIDtoZOrderMap.end() ) {
-        TVector3 normVec( -1., 0., 0. );
-        normVec.RotateX( siPlaneXRotation( planeID) ); // to be in rad
-        normVec.RotateY( siPlaneYRotation( planeID) ); // to be in rad
-        normVec.RotateZ( siPlaneZRotation(planeID) ); // to be in rad
-        return normVec;
-    }
-    return TVector3(0.,0.,0.);
+			const double xAxisLocal[3]  = {1,0,0};
+			double xAxisGlobal[3]; 
+			local2MasterVec(planeID,xAxisLocal , xAxisGlobal ); 
+			TVector3 xVec(xAxisGlobal[0],xAxisGlobal[1],xAxisGlobal[2]);
+			return xVec;
+    }else{
+			TVector3 defaultX(1,0,0);
+			return defaultX;
+		}
 }
 TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneYAxis( int planeID ) {
     std::map<int,int>::iterator it;
     it = _sensorIDtoZOrderMap.find(planeID);
     if ( it != _sensorIDtoZOrderMap.end() ) {
-        TVector3 normVec( 0., -1., 0. );
-        normVec.RotateX( siPlaneXRotation( planeID) ); // to be in rad
-        normVec.RotateY( siPlaneYRotation( planeID) ); // to be in rad
-        normVec.RotateZ( siPlaneZRotation( planeID) ); // to be in rad
-        return normVec;
-    }
-    return TVector3(0.,0.,0.);
+			const double yAxisLocal[3]  = {0,1,0};
+			double yAxisGlobal[3]; 
+			local2MasterVec(planeID,yAxisLocal , yAxisGlobal ); 
+			TVector3 yVec(yAxisGlobal[0],yAxisGlobal[1],yAxisGlobal[2]);
+			return yVec;
+    }else{
+			TVector3 defaultY (0,1,0);
+			return defaultY;
+	  }
 }
 const std::map<int, int>& EUTelGeometryTelescopeGeoDescription::sensorIDstoZOrder( ) const {
     return _sensorIDtoZOrderMap;
@@ -1676,15 +1681,15 @@ TMatrixD EUTelGeometryTelescopeGeoDescription::getLocalToCurvilinearTransformMat
 	gear::Vector3D vectorGlobal(0.1,0.1,0.1);//Since field is homogeneous this seems silly but we need to specify a position to geometry to get B-field.
 	//Magnetic field must be changed to curvilinear coordinate system. Since this is used in the curvilinear jacobian/////////////////////////////////////////////////////////////////////////////////////////
 	const double Bx = (Bfield.at( vectorGlobal ).z())*0.3;//We times bu 0.3 due to units of other variables. See paper. Must be Tesla
-	const double By = (Bfield.at( vectorGlobal ).x())*0.3;
-	const double Bz = (Bfield.at( vectorGlobal ).y())*0.3;
+	const double By = (Bfield.at( vectorGlobal ).y())*0.3;
+	const double Bz = (Bfield.at( vectorGlobal ).x())*0.3;
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	TVector3 B;
 	B[0]=Bx; B[1]=By; B[2]=Bz;
 	TVector3 H = B.Unit();
 	////////////////////////////////////We transform the momentum to curvilinear frame. Since this is what is used to describe the curvilinear frame///////////////////// 
 	TVector3 curvilinearGlobalMomentum;
-	curvilinearGlobalMomentum[0]=globalMomentum[2];curvilinearGlobalMomentum[1]=globalMomentum[0];curvilinearGlobalMomentum[2]=globalMomentum[1];
+	curvilinearGlobalMomentum[0]=globalMomentum[2];curvilinearGlobalMomentum[1]=globalMomentum[1];curvilinearGlobalMomentum[2]=globalMomentum[0];
 	TVector3 T = curvilinearGlobalMomentum.Unit();//With no magnetic field this will point in z direction.	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	const float cosLambda = sqrt(T[0] * T[0] + (T[1]) * (T[1]));
@@ -1708,39 +1713,24 @@ TMatrixD EUTelGeometryTelescopeGeoDescription::getLocalToCurvilinearTransformMat
 	TVector3 J;
 
 	///This is the EUTelescope local z direction.//////////////////////////// 
-	if(planeID>=0){
-		streamlog_out(DEBUG0)<<"Set Z(I) with correct sensor rotation. Plane: "<< planeID  << std::endl; 
-		ITelescopeFrame = geo::gGeometry().siPlaneNormal( planeID  );       
-		I[0]=ITelescopeFrame[2];I[1]=ITelescopeFrame[0];I[2]=ITelescopeFrame[1];
-	}else{
-		streamlog_out(DEBUG0)<<"Set Z(I) with scatter information. Plane: "<< planeID  << std::endl; 
-		I[0]=1;		I[1]=0;		I[2]=0;//By default in point in the x direction
-	}
+	streamlog_out(DEBUG0)<<"Set Z(I) with correct sensor rotation. Plane: "<< planeID  << std::endl; 
+	ITelescopeFrame = geo::gGeometry().siPlaneNormal( planeID  );       
+	I[0]=ITelescopeFrame[2];I[1]=ITelescopeFrame[1];I[2]=ITelescopeFrame[0];
 	//////////////////////////////////////////////////////////////////////////////
 	//This is the EUTelescope local Y direction////////////////////////////////////////
-	if(planeID>=0){
-		streamlog_out(DEBUG0)<<"Set Y(K) with correct sensor rotation. Plane: "<< planeID  << std::endl; 
-		KTelescopeFrame = geo::gGeometry().siPlaneYAxis( planeID  ); //This is the y direction of the local frame in global coordinates.      
-		K[0]=KTelescopeFrame[2];K[1]=KTelescopeFrame[0];K[2]=KTelescopeFrame[1];
-	}else{
-		streamlog_out(DEBUG0)<<"Set Y(K) with scatter information. Plane: "<< planeID  << std::endl; 
-		K[0]=0;		K[1]=0;		K[2]=-1;//This points in the -z direction by default of the global curvilinear frame.
-	}
+	streamlog_out(DEBUG0)<<"Set Y(K) with correct sensor rotation. Plane: "<< planeID  << std::endl; 
+	KTelescopeFrame = geo::gGeometry().siPlaneYAxis( planeID  ); //This is the y direction of the local frame in global coordinates.      
+	K[0]=KTelescopeFrame[2];K[1]=KTelescopeFrame[1];K[2]=KTelescopeFrame[0];
 	//This is the EUTelescope local x direction//////////////////////////////////
-	if(planeID>=0){
-		streamlog_out(DEBUG0)<<"Set X(J) with correct sensor rotation. Plane: "<< planeID  << std::endl; 
-		JTelescopeFrame  = geo::gGeometry().siPlaneXAxis( planeID  ); //X direction      
-		J[0]=JTelescopeFrame[2];J[1]=JTelescopeFrame[0];J[2]=JTelescopeFrame[1];
-	}else{
-		streamlog_out(DEBUG0)<<"Set X(J) with scatter information. Plane: "<< planeID  << std::endl; 
-		J[0]=0;		J[1]=-1;		J[2]=0;//This points in the -y direction of the global curvilinear frame by default
-	}
+	streamlog_out(DEBUG0)<<"Set X(J) with correct sensor rotation. Plane: "<< planeID  << std::endl; 
+	JTelescopeFrame  = geo::gGeometry().siPlaneXAxis( planeID  ); //X direction      
+	J[0]=JTelescopeFrame[2];J[1]=JTelescopeFrame[1];J[2]=JTelescopeFrame[0];
 	///////////////////////////////////////////////////////////////////
-	streamlog_out(DEBUG0)<<"The X(J) axis of local system in the global curvilinear system"<< std::endl; 
+	streamlog_out(DEBUG0)<<"The Z(J) axis of local system in the global curvilinear system"<< std::endl; 
 	streamlog_message( DEBUG0, J.Print();, std::endl; );
 	streamlog_out(DEBUG0)<<"The Y(K) axis of local system in the global curvilinear system"<< std::endl; 
 	streamlog_message( DEBUG0, K.Print();, std::endl; );
-	streamlog_out(DEBUG0)<<"The Z(I) axis of local system in the global curvilinear system"<< std::endl; 
+	streamlog_out(DEBUG0)<<"The X(I) axis of local system in the global curvilinear system"<< std::endl; 
 	streamlog_message( DEBUG0, I.Print();, std::endl; );
 
 	TVector3 N = (H.Cross(T)).Unit();
@@ -1887,8 +1877,8 @@ TMatrix EUTelGeometryTelescopeGeoDescription::getPropagationJacobianCurvilinear(
 //This is ok since we never access the curvilinear system directly but always through the local system which is defined in the local frame of the telescope
 //I.e Telescope x becomes y, y becomes z and z becomes x.
 TMatrixD EUTelGeometryTelescopeGeoDescription::getPropagationJacobianCurvilinear(float ds , float  qbyp,  TVector3 t1w, TVector3 t2w) {
-	TVector3 t1(t1w[2],t1w[0],t1w[1]);//This is need to change to claus's coordinate system
-	TVector3 t2(t2w[2],t2w[0],t2w[1]);
+	TVector3 t1(t1w[2],t1w[1],t1w[0]);//This is need to change to claus's coordinate system
+	TVector3 t2(t2w[2],t2w[1],t2w[0]);
 	t1.Unit();
 	t2.Unit();
 //	if(t1.Mag() != 1.0 or t2.Mag() != 1.0){//TO DO: This statement does not work for some reason.
@@ -1900,8 +1890,8 @@ TMatrixD EUTelGeometryTelescopeGeoDescription::getPropagationJacobianCurvilinear
 	gear::Vector3D vectorGlobal(0.1,0.1,0.1);//Since field is homogeneous this seems silly but we need to specify a position to geometry to get B-field.
 	/////////////////////////////////////////////////////////Must also change the magnetic field to be in the correct coordinate system///////////
 	const double Bx = (Bfield.at( vectorGlobal ).z())*0.3*pow(10,-3); //We times but 0.3 due to units of other variables. See paper. Must be Tesla
-	const double By = (Bfield.at( vectorGlobal ).x())*0.3*pow(10,-3);
-	const double Bz = (Bfield.at( vectorGlobal ).y())*0.3*pow(10,-3);
+	const double By = (Bfield.at( vectorGlobal ).y())*0.3*pow(10,-3);
+	const double Bz = (Bfield.at( vectorGlobal ).x())*0.3*pow(10,-3);
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	TVector3 b;
 	b[0]=Bx; b[1]=By; b[2]=Bz;
