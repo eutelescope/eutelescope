@@ -53,7 +53,7 @@ PatRec=tracksearchHelix
 TrackFit=GBLTrackFit
 Align=GBLAlign
 
-MaxRecordNumber="2000" 
+MaxRecordNumber="30000" 
 
 echo "Input recieved"
 echo "Config: " $CONFIG
@@ -66,7 +66,7 @@ Fxr="0 1 2 3 4 5"
 Fxs="0         5 "
 Fyr="0 1 2 3 4 5"
 Fys="0         5"
-Fzr="0          "
+Fzr="0 1 2 3 4 5"
 Fzs="0 1 2 3 4 5"
 
 #Fxr="0 1 2 3 4 5 20"
@@ -77,21 +77,21 @@ Fzs="0 1 2 3 4 5"
 #Fzs="0 1 2 3 4 5 20"
 
 #inputGear="gear_desy2012_150mm.xml"
-#inputGear="gear_lam_1T.xml"
+inputGear="gear_lam_1T.xml"
 #inputGear="gear_150mm_1fei4_30.xml"
-#outputGear="gear-final-XYshift-${RUN}.xml"
-#histoNameInput="GBLtrack-XYshift-${RUN}"
+outputGear="gear-final-XYshift-${RUN}.xml"
+histoNameInput="GBLtrack-XYshift-${RUN}"
 
-inputGear="gear-final-XYshift-${RUN}.xml"
+#inputGear="gear-final-XYshift-${RUN}.xml"
 
 #outputGear="gear-final-XYshiftS2-${RUN}.xml"
 #histoNameInput="GBLtrack-XYshiftS2-${RUN}"
 
 #inputGear="gear-final-Zrotations-${RUN}.xml"
 #inputGear="gear-final-ZRotation-${RUN}.xml"
-outputGear="gear-final-ZRotation-${RUN}.xml"
+#outputGear="gear-final-ZRotation-${RUN}.xml"
 
-histoNameInput="GBLtrack-zRotation-${RUN}"
+#histoNameInput="GBLtrack-zRotation-${RUN}"
 
 #This is the alignment mode. It sets the size of the alignment jacobian dimensions.
 amode="7";
