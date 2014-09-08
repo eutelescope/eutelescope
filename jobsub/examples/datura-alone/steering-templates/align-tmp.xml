@@ -204,7 +204,7 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
  <processor name="MyEUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">
  <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
   <!--Print event number for every n-th event-->
-  <parameter name="EveryNEvents" type="int" value="1000"/>
+  <parameter name="EveryNEvents" type="int" value="100000"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
   <!--print the event timestamp as read from LCIO-->

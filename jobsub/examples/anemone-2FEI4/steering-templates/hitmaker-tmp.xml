@@ -119,7 +119,9 @@
   <!--Dump the offset X and Y values calculated from the correlation bands (default = true)-->
   <parameter name="DumpOffset" type="bool"> false </parameter>
   <!--How many events are needed to get reasonable correlation plots (and Offset DB)? (default=1000)-->
-  <parameter name="Events" type="int"> @BoxCutEventsMax@ </parameter>
+  <parameter name="Events" type="int"> 9999 </parameter>
+  <!--Name of histogram info xml file-->
+  <parameter name="HistogramInfoFilename" type="string"> @HistoInfoFile@ </parameter>
   <!--SensorID of fixed plane-->
   <!--parameter name="FixedPlane" type="int">0 </parameter-->
   <!--List of cluster collections-->

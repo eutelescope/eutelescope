@@ -209,7 +209,9 @@ The presence of this collection in the event is allowing all the noise based sel
   </processor>
  
 <processor name="Correlator" type="EUTelCorrelator">
- <!--EUTelCorrelator fills histograms with correlation plots-->
+  <!--EUTelCorrelator fills histograms with correlation plots-->
+  <!--Name of histogram info xml file-->
+  <parameter name="HistogramInfoFilename" type="string"> @HistoInfoFile@ </parameter>
   <!--Hit collection name-->
   <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
   <!-- -->

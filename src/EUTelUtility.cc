@@ -15,7 +15,6 @@
 #include "EUTelFFClusterImpl.h"
 
 // lcio includes <.h>
-
 #include <EVENT/LCEvent.h>
 
 #include <cstdio>
@@ -183,23 +182,32 @@ namespace eutelescope {
          * @param hit 
          * @return raw data cluster information
          */
-        EUTelVirtualCluster* GetClusterFromHit( const IMPL::TrackerHitImpl* hit ) {
+	std::auto_ptr<EUTelVirtualCluster> GetClusterFromHit( const IMPL::TrackerHitImpl* hit ) 
+	{
             
             LCObjectVec clusterVector = hit->getRawHits();
             
-            if (hit->getType() == kEUTelBrickedClusterImpl) {
-                        return new EUTelBrickedClusterImpl(static_cast<TrackerDataImpl *> (clusterVector[0]));
-                    } else if (hit->getType() == kEUTelDFFClusterImpl) {
-                        return new EUTelDFFClusterImpl(static_cast<TrackerDataImpl *> (clusterVector[0]));
-                    } else if (hit->getType() == kEUTelFFClusterImpl) {
-                        return new EUTelFFClusterImpl(static_cast<TrackerDataImpl *> (clusterVector[0]));
-                    } else if (hit->getType() == kEUTelSparseClusterImpl) {
-			return new EUTelSparseClusterImpl< EUTelGenericSparsePixel > (static_cast<TrackerDataImpl *> (clusterVector[0]));
-                    } else {
-                        streamlog_out(WARNING2) << "Unknown cluster type: " << hit->getType() << std::endl;
-                        return NULL;
-                    }
-            
+            if (hit->getType() == kEUTelBrickedClusterImpl) 
+	    {
+            	return std::auto_ptr<EUTelVirtualCluster>( new EUTelBrickedClusterImpl(static_cast<TrackerDataImpl*>(clusterVector[0])) );
+            } 
+	    else if (hit->getType() == kEUTelDFFClusterImpl) 
+	    {
+		    return std::auto_ptr<EUTelVirtualCluster>( new EUTelDFFClusterImpl(static_cast<TrackerDataImpl*>(clusterVector[0])) );
+            } 
+	    else if (hit->getType() == kEUTelFFClusterImpl) 
+	    {
+		    return std::auto_ptr<EUTelVirtualCluster>( new EUTelFFClusterImpl(static_cast<TrackerDataImpl*>(clusterVector[0])) );
+	    } 
+	    else if (hit->getType() == kEUTelSparseClusterImpl) 
+	    {
+		    return std::auto_ptr<EUTelVirtualCluster>( new EUTelSparseClusterImpl<EUTelGenericSparsePixel>(static_cast<TrackerDataImpl*>(clusterVector[0])) );
+            }
+	    else 
+	    {
+		    streamlog_out(WARNING2) << "Unknown cluster type: " << hit->getType() << std::endl;
+                    return std::auto_ptr<EUTelVirtualCluster>();
+	    }
         }
 
         /**
@@ -365,15 +373,15 @@ namespace eutelescope {
 
         void getClusterSize(const IMPL::TrackerHitImpl * hit, int& sizeX, int& sizeY ) {
         // rewrite from EUTelAXPITbTrackTuple:
-  
-	  if(hit==0)
-	  {
-	    streamlog_out( ERROR5 ) << "An invalid hit pointer supplied! will exit now\n" << endl;
-	    return ;
-	  }
-               EUTelVirtualCluster* cluster = GetClusterFromHit( hit ) ;
+         if(hit==0)
+         {
+            streamlog_out( ERROR5 ) << "An invalid hit pointer supplied! will exit now\n" << endl;
+            return ;
+         }
 
-	       if(cluster != 0 )  cluster->getClusterSize(sizeX, sizeY);
+	  std::auto_ptr<EUTelVirtualCluster> cluster = GetClusterFromHit( hit ) ;
+
+	       if(cluster.get() != NULL )  cluster->getClusterSize(sizeX, sizeY);
  
         }
   

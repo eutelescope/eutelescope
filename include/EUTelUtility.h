@@ -28,6 +28,7 @@
 #include <iostream>
 #include <vector>
 #include <map>
+#include <memory>
 
 #ifndef DISALLOW_COPY_AND_ASSIGN
 //Following #define stops the accidental creation of a copy or assignment operator by causing a link error.
@@ -195,7 +196,7 @@ namespace eutelescope {
 
         bool HitContainsHotPixels(const IMPL::TrackerHitImpl * hit, const std::map<std::string, bool >& hotPixelMap);
 
-        EUTelVirtualCluster* GetClusterFromHit(const IMPL::TrackerHitImpl*);
+	std::auto_ptr<EUTelVirtualCluster> GetClusterFromHit(const IMPL::TrackerHitImpl*);
 
         int getSensorIDfromHit( EVENT::TrackerHit* hit);
 

@@ -2,12 +2,12 @@
  * File:   EUTelGeometryTelescopeGeoDescription.cpp
  * 
  */
-
 #include "EUTelGeometryTelescopeGeoDescription.h"
 
 // C++
 #include <algorithm>
 #include <string>
+#include <cstring>
 
 // MARLIN
 #include "marlin/Global.h"
@@ -29,8 +29,7 @@
 #include "TVectorD.h"
 #include "TVector3.h"
 #include "TMath.h"
-
-#include <cstring>
+#include "TError.h"
 
 // lcio includes <.h>
 #include <UTIL/CellIDEncoder.h>
@@ -616,12 +615,11 @@ _nPlanes(0),
 _isGeoInitialized(false),
 _geoManager(0)
 {
-   
-    // TGeo manager initialisation
-    // ?
+	//Set ROOTs verbosity to only display error messages or higher (so info will not be streamed to stderr)
+	gErrorIgnoreLevel =  kError;  
 
-    //Pixel Geometry manager creation
-    _pixGeoMgr = new EUTelGenericPixGeoMgr();
+	//Pixel Geometry manager creation
+	_pixGeoMgr = new EUTelGenericPixGeoMgr();
 }
 
 void EUTelGeometryTelescopeGeoDescription::readGear() {
@@ -670,8 +668,6 @@ EUTelGeometryTelescopeGeoDescription::~EUTelGeometryTelescopeGeoDescription() {
  * @param tgeofilename name of .root file
  */
 void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( string tgeofilename ) {
-//    #ifdef USE_TGEO
-    // get access to ROOT's geometry manager
     
     _geoManager = TGeoManager::Import( tgeofilename.c_str() );
     if( !_geoManager ) {
@@ -679,7 +675,6 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( string tge
     }
 
     _geoManager->CloseGeometry();
-//    #endif //USE_TGEO
 }
 
 /**
@@ -768,11 +763,7 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
           pMatrixRotFlip->ReflectX(0);
           pMatrixRotFlip->ReflectY(0);
          }
-
- 
        }
-
-
       
        // Spatial rotation around sensor center
        // TGeoRotation requires Euler angles in degrees
@@ -881,7 +872,6 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
  * @param dumpRoot dump automatically generated ROOT geometry file for further inspection
  */
 void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::string& geomName, bool dumpRoot = false ) {
-//    #ifdef USE_TGEO
     // get access to ROOT's geometry manager
     
 	if( _isGeoInitialized )
@@ -902,7 +892,6 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::strin
    
     
     // Create top world volume containing telescope geometry
-    
     
     // Create air mixture
     // see http://pdg.lbl.gov/2013/AtomicNuclearProperties/HTML_PAGES/104.html
@@ -932,9 +921,6 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::strin
    // Set top volume of geometry
    gGeoManager->SetTopVolume( pvolumeWorld );
    
- 
-   
-   
    IntVec::const_iterator itrPlaneId;
    for ( itrPlaneId = _sensorIDVec.begin(); itrPlaneId != _sensorIDVec.end(); ++itrPlaneId ) {
        
@@ -946,8 +932,6 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::strin
     _isGeoInitialized = true;
     // Dump ROOT TGeo object into file
     if ( dumpRoot ) _geoManager->Export( geomName.c_str() );
-
-//    #endif //USE_TGEO
     return;
 }
 
@@ -984,18 +968,6 @@ int EUTelGeometryTelescopeGeoDescription::getSensorID( const float globalPos[] )
     const char* volName2 = const_cast < char* > ( geo::gGeometry( )._geoManager->GetCurrentVolume( )->GetName( ) );
     streamlog_out( DEBUG2 ) << "Point (" << globalPos[0] << "," << globalPos[1] << "," << globalPos[2] << ") found in volume: " << volName2 << " no moving around any more" << std::endl;
     
-//	std::vector<std::string> split = Utility::stringSplit( std::string( volName ), "/", false);
-
-
-//        if( split.size() == 1 && split[0].length() > 16 ) {
-
-//          streamlog_out(DEBUG5) << "split[0] " << split[0] << std::endl;
-//          streamlog_out(DEBUG5) << "split[0].substr(0,16) " << split[0].substr(0,16) << std::endl;
-//          int strLength = split[0].length(); 
-//          streamlog_out(DEBUG5) << "split[0].substr(16, strLength ) " << split[0].substr(16, strLength ) << std::endl;
-
-          //since we check bounds, no need for vector.at() but use [], it saves cycles :-)
-//	  if (  (split[0].substr(0,16) == "volume_SensorID:") )
           if( sensorID >= 0 )
 	  {
 //                sensorID = strtol( (split[0].substr(16, strLength )).c_str(), NULL, 10 );

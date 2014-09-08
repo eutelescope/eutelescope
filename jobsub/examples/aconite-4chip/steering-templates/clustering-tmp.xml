@@ -31,7 +31,7 @@
   <!-- compression of output file 0: false >0: true (default) -->
   <parameter name="Compress" type="int">1 </parameter>
   <!-- filename without extension-->
-  <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-clustering"/>
+  <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-clustering-histo"/>
   <!-- type of output file root (default) or xml )-->
   <parameter name="FileType" type="string">root </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->

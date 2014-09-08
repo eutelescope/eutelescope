@@ -22,6 +22,7 @@
       <processor name="ApplyPreAlignment"/>
       <processor name="DafFitter"/>
       <processor name="Align"/>
+      <processor name="EUTelUtilityPrintEventNumber"/>
    </execute>
 
    <global>
@@ -299,6 +300,16 @@
   <!--parameter name="UseSensorRectangular" type="IntVec"> </parameter-->
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
+</processor>
+
+<processor name="EUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">
+  <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
+  <!--Print event number for every n-th event-->
+  <parameter name="EveryNEvents" type="int"> 100000 </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+  <!--print the event timestamp as read from LCIO-->
+  <!--parameter name="printTimestamp" type="bool">false </parameter-->
 </processor>
 
 </marlin>

@@ -52,8 +52,9 @@
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
  </processor>
 
- <processor name="HotPixelMaskerM26" type="EUTelProcessorHotPixelMasker">
- <!--EUTelProcessorHotPixelMasker computes the firing frequency of pixels and applies a cut on this value to mask (NOT remove) hot pixels.-->
+
+ <processor name="HotPixelMaskerM26" type="EUTelProcessorNoisyPixelFinder">
+ <!--EUTelProcessorNoisyPixelFinder computes the firing frequency of pixels and applies a cut on this value to mask (NOT remove) hot pixels.-->
   <!--The list of sensor IDs that shall be excluded.-->
   <!--parameter name="ExcludedPlanes" type="IntVec"> </parameter-->
   <!--This is the name of the hot pixel collection to be saved into the output slcio file-->
@@ -75,8 +76,9 @@ within the selected number of event per cycle-->
   <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> zsdata_m26 </parameter>
  </processor>
 
- <processor name="HotPixelMaskerAPIX" type="EUTelProcessorHotPixelMasker">
- <!--EUTelProcessorHotPixelMasker computes the firing frequency of pixels and applies a cut on this value to mask (NOT remove) hot pixels.-->
+
+ <processor name="HotPixelMaskerAPIX" type="EUTelProcessorNoisyPixelFinder">
+ <!--EUTelProcessorNoisyPixelFinder computes the firing frequency of pixels and applies a cut on this value to mask (NOT remove) hot pixels.-->
   <!--The list of sensor IDs that shall be excluded.-->
   <!--parameter name="ExcludedPlanes" type="IntVec"> </parameter-->
   <!--This is the name of the hot pixel collection to be saved into the output slcio file-->

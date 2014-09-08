@@ -42,12 +42,10 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
     <!-- compression of output file 0: false >0: true (default) -->
     <parameter name="Compress" type="int" value="1"/>
     <!-- filename without extension-->
-    <parameter name="FileName" type="string" value=
-    "@HistoPath@/run@RunNumber@-clu-histo"/>
+    <parameter name="FileName" type="string" value="@HistoPath@/run@RunNumber@-clu-histo"/>
     <!-- type of output file xml (default) or root ( only OpenScientist)-->
     <parameter name="FileType" type="string" value="root"/>
   </processor>
-
 
  <processor name="Mimosa26EUTelAutoPedestalNoiseProcessor" type="EUTelAutoPedestalNoiseProcessor">
  <!--EUTelAutoPedestalNoiseProcessor produces initial pedestal / noise / status with user provided values-->
@@ -166,7 +164,7 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
     <!--Switch on or off the histogram filling-->
     <parameter name="HistogramFilling" type="bool" value="false"/>
     <!--This is the name of the histogram information file-->
-    <parameter name="HistoInfoFileName" type="string" value="@HistoInfoPath@/@HistoInfo@"/>
+    <parameter name="HistoInfoFileName" type="string" value="@HistoInfoFile@"/>
     <!--The list of cluster N to be filled.For example 7 means filling the cluster spectra with the 7 most significant pixels-->
     <parameter name="ClusterN" type="IntVec" value="4 6 8 9"/>
     <!--The list of cluster NxN to be filled.For example 3 means filling the 3x3 histogram spectrum-->
@@ -190,6 +188,8 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
 
   <processor name="Correlator" type="EUTelCorrelator">
     <!--EUTelCorrelator fills histograms with correlation plots-->
+    <!--Name of histogram info xml file-->
+    <parameter name="HistogramInfoFilename" type="string"> @HistoInfoFile@ </parameter>
     <!--Cluster (pulse) collection name-->
     <parameter name="InputClusterCollections" type="StringVec" > cluster_m26  </parameter>
     <!--Hit collection name-->
