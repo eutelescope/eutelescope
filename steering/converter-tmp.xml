@@ -51,7 +51,7 @@
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
  </processor>
 
- <processor name="HotPixelMasker" type="EUTelProcessorHotPixelMasker">
+ <processor name="HotPixelMasker" type="EUTelProcessorNoisyPixelFinder">
  <!--EUTelProcessorHotPixelMasker computes the firing frequency of pixels and applies a cut on this value to mask (NOT remove) hot pixels.-->
   <!--The list of sensor IDs that shall be excluded.-->
   <!--parameter name="ExcludedPlanes" type="IntVec"> </parameter-->
