@@ -715,6 +715,10 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
        pMatrixTrans->RegisterYourself();      
 
 // initial rot1,2,3,4 rotate and flip: 
+// TO DO: This seems wrong for rotations like 0 -1
+//                                            1  0
+// I could be wrong. However even if correct we should deal with this in a better way.                                           
+// For any new gear file do not use the integer rotations.
        string stRotationName = "matrixRotationSensorRotatenFlip";
        stRotationName.append( strId.str() );
        TGeoRotation* pMatrixRotFlip = new TGeoRotation( stRotationName.c_str(), 0.,  0., 0.);                // around X axis

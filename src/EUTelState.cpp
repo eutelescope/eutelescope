@@ -240,10 +240,9 @@ void EUTelState::setLocalXZAndYZIntersectionAndCurvatureUsingGlobalMomentum(TVec
 	setBeamEnergy(momentumIn.Mag());
 	initialiseCurvature();//You must set beam charge before you call this.
 	//Now calculate the momentum in LOCAL coordinates.
-	//TO DO:Fix master2Localtwo so that is is the only one. This is currently a hack
 	const double momentum[]	= {momentumIn[0], momentumIn[1],momentumIn[2]};//Need this since geometry works with const doubles not floats 
 	double localMomentum [3];
-	geo::gGeometry().local2MasterVec(getLocation(), momentum, localMomentum );
+	geo::gGeometry().master2LocalVec(getLocation(), momentum, localMomentum );
 	//In the LOCAL coordinates this is just dx/dz and dy/dz in the LOCAL frame
 	setIntersectionLocalXZ(localMomentum[0]/localMomentum[2]);
 	setIntersectionLocalYZ(localMomentum[1]/localMomentum[2]);
@@ -308,13 +307,13 @@ float tx = getIntersectionLocalXZ();float ty= getIntersectionLocalYZ(); float cu
   const double px = tx*pz;
   const double py = ty*pz;
 	const double input[3]={px,py,pz};
-	double localMomentum[3];
-	geo::gGeometry().local2MasterVec(getLocation(),input,localMomentum);
-	streamlog_out(DEBUG2) << "output global momentum: px,py, pz "<<localMomentum[0] <<","<<localMomentum[1]<<","<<localMomentum[2]<<","<<std::endl;
+	double momentum[3];
+	geo::gGeometry().local2MasterVec(getLocation(),input,momentum);
+	streamlog_out(DEBUG2) << "output global momentum: px,py, pz "<<momentum[0] <<","<<momentum[1]<<","<<momentum[2]<<","<<std::endl;
         
   streamlog_out(DEBUG2) << "-------------------------------EUTelState::computeCartesianMomentum()-------------------------END" << std::endl;
         
-  return TVector3(localMomentum[0],localMomentum[1],localMomentum[2]);
+  return TVector3(momentum[0],momentum[1],momentum[2]);
 }
 TMatrix EUTelState::computePropagationJacobianFromLocalStateToNextLocalState(TVector3 positionEnd, TVector3 momentumEnd, float arcLength,float nextPlaneID) {
 	streamlog_out(DEBUG2) << "-------------------------------EUTelState::computePropagationJacobianFromStateToThisZLocation()-------------------------BEGIN" << std::endl;

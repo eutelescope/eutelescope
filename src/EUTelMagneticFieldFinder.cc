@@ -207,13 +207,14 @@ void EUTelKalmanFilter::propagateForwardFromSeedState( EUTelState& stateInput, E
 			state->setArcLengthToNextState(arcLength);
 		}
 		//cout<<"HERE1: "<<state->getPosition()[0]<<","<<state->getPosition()[1]<<","<<state->getPosition()[2]<<","<<state->getLocation()<<endl;
-		int sensorIntersectionTrue = geo::gGeometry( ).getSensorID(globalIntersection);//This is needed with the jacobian since the jacobian needs the z distance to the next point to do the calculation
-		if(newSensorID < 0 ){ //TO DO Fix geo: or sensorIntersectionTrue < 0 ){
+		int sensorIntersection = geo::gGeometry( ).getSensorID(globalIntersection);
+		if(newSensorID < 0 or sensorIntersection < 0 ){
 			streamlog_out ( MESSAGE5 ) << "Intersection point on infinite plane: " <<  globalIntersection[0]<<" , "<<globalIntersection[1] <<" , "<<globalIntersection[2]<<std::endl;
 			streamlog_out ( MESSAGE5 ) << "Momentum on next plane: " <<  momentumAtIntersection[0]<<" , "<<momentumAtIntersection[1] <<" , "<<momentumAtIntersection[2]<<std::endl;
 			streamlog_out(MESSAGE5) <<" From ID= " <<  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i]<< " to " <<  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i+1]  <<std::endl;
-			streamlog_out(MESSAGE5)<<"Was there intersection on plane: "<<newSensorID<<" Was there intersection in sensitive area: "<<std::endl;
+			streamlog_out(MESSAGE5)<<"Was there intersection on plane: "<<newSensorID<<" Was there intersection in sensitive area: "<< sensorIntersection <<std::endl;
 			streamlog_out(MESSAGE5) << Utility::outputColourString("No intersection found moving on plane. Move to next plane and look again.","YELLOW")<<std::endl; 
+			streamlog_out(MESSAGE5)<<"This is for event number " <<getEventNumber()<<std::endl;
 			continue;//So if there is no intersection look on the next plane. Important since two planes could be at the same z position
 		}
 		streamlog_out ( DEBUG0 ) << "Intersection point on infinite plane: " <<  globalIntersection[0]<<" , "<<globalIntersection[1] <<" , "<<globalIntersection[2]<<std::endl;
