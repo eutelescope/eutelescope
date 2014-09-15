@@ -228,19 +228,19 @@ void AlibavaClusterHistogramMaker::fillListOfHistos(){
 	
 	//////////////////////
 	// One per each chip
-	_histosPerChip.push_back(_etaHistoName);
-	_histosPerChip.push_back(_etaHistoNameCS2);
-	_histosPerChip.push_back(_etaHistoNameCS3);
-	_histosPerChip.push_back(_etaHistoNameCS4);
-	_histosPerChip.push_back(_etaHistoNameCS5);
-	_histosPerChip.push_back(_etaHistoNameCSgt5);
-	_histosPerChip.push_back(_clusterSizeHistoName);
-	_histosPerChip.push_back(_etaVSCoG);
-	_histosPerChip.push_back(_etaVSClusterSize);
+	addToHistoCheckList_PerChip(_etaHistoName);
+	addToHistoCheckList_PerChip(_etaHistoNameCS2);
+	addToHistoCheckList_PerChip(_etaHistoNameCS3);
+	addToHistoCheckList_PerChip(_etaHistoNameCS4);
+	addToHistoCheckList_PerChip(_etaHistoNameCS5);
+	addToHistoCheckList_PerChip(_etaHistoNameCSgt5);
+	addToHistoCheckList_PerChip(_clusterSizeHistoName);
+	addToHistoCheckList_PerChip(_etaVSCoG);
+	addToHistoCheckList_PerChip(_etaVSClusterSize);
 	
 	//////////////////////
 	// One for all chips
-	_histosOneForAllChips.push_back(_maskedEventsHistoName);
+	addToHistoCheckList(_maskedEventsHistoName);
 	
 	// here it checks
 	checkListOfHistosCreatedByXMLFile();

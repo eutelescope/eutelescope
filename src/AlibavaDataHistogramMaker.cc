@@ -313,26 +313,26 @@ void AlibavaDataHistogramMaker::fillListOfHistos(){
 	//////////////////////
 	// One per each chip
 	// Signal
-	_histosPerChip.push_back(_signalHistoName);
-	_histosPerChip.push_back(_signalVsTimeHistoName);
-	_histosPerChip.push_back(_signalVsTempHistoName);
+	addToHistoCheckList_PerChip(_signalHistoName);
+	addToHistoCheckList_PerChip(_signalVsTimeHistoName);
+	addToHistoCheckList_PerChip(_signalVsTempHistoName);
 	// SNR
-	_histosPerChip.push_back(_snrHistoName);
-	_histosPerChip.push_back(_snrVsTimeHistoName);
-	_histosPerChip.push_back(_snrVsTempHistoName);
+	addToHistoCheckList_PerChip(_snrHistoName);
+	addToHistoCheckList_PerChip(_snrVsTimeHistoName);
+	addToHistoCheckList_PerChip(_snrVsTempHistoName);
 	
 	//////////////////////
 	// One for all chips
 	//	Time
-	_histosOneForAllChips.push_back(_timeHistoName);
-	_histosOneForAllChips.push_back(_timeVsEventNumHistoName);
+	addToHistoCheckList(_timeHistoName);
+	addToHistoCheckList(_timeVsEventNumHistoName);
 	// Temperature
-	_histosOneForAllChips.push_back(_temperatureHistoName);
-	_histosOneForAllChips.push_back(_temperatureVsEventNumHistoName);
+	addToHistoCheckList(_temperatureHistoName);
+	addToHistoCheckList(_temperatureVsEventNumHistoName);
 	// Others
-	_histosOneForAllChips.push_back(_calChargeHistoName);
-	_histosOneForAllChips.push_back(_delayHistoName);
-	_histosOneForAllChips.push_back(_maskedEventsHistoName);
+	addToHistoCheckList(_calChargeHistoName);
+	addToHistoCheckList(_delayHistoName);
+	addToHistoCheckList(_maskedEventsHistoName);
 	
 	// here it checks
 	checkListOfHistosCreatedByXMLFile();
