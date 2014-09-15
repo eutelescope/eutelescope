@@ -74,8 +74,7 @@ _maskedEventsHistoName("hMaskedEvents"),
 // Calibration
 _calChargeHistoName("hCalibrationChargeValues"),
 _delayHistoName("hDelayValues"),
-_histosPerChip(),
-_histosOneForAllChips(),
+_histoList(),
 // Others
 _multiplySignalby(1.0),
 _totalNumberOfEvents(0),
@@ -231,31 +230,28 @@ void AlibavaBaseHistogramMaker::processHistoXMLFile(){
 	}
 }
 
+void AlibavaBaseHistogramMaker::addToHistoCheckList(string histoName){
+	_histoList.push_back(histoName);
+}
+void AlibavaBaseHistogramMaker::addToHistoCheckList_PerChip(string histoName){
+	IntVec chipSelection = getChipSelection();
+	for (unsigned int i=0; i<chipSelection.size(); i++){
+		int ichip=chipSelection[i];
+		_histoList.push_back(getHistoNameForChip(histoName,ichip));
+	}
+}
+
+
 bool AlibavaBaseHistogramMaker::checkListOfHistosCreatedByXMLFile(){
 	// Checks if all the histograms needed by this processor is defined in _histoXMLFileName
 	// Unfortunately histogram names are hard coded,  we are checking if all histo names exists in the _rootObjectMap
 	
 	// Now check if all histos exists
-	// check _histosPerChip
-	IntVec chipSelection = getChipSelection();
-	for (unsigned int ihisto=0; ihisto<_histosPerChip.size(); ihisto++) {
-		for (unsigned int i=0; i<chipSelection.size(); i++) {
-			int ichip=chipSelection[i];
-			string histoName = getHistoNameForChip(_histosPerChip[ihisto], ichip);
-			if (!doesRootObjectExists(histoName)) {
-				streamlog_out (ERROR5) << "Histogram "<< histoName <<" doesn't exists"<<endl;
-				streamlog_out (ERROR5) << "Define "<< _histosPerChip[ihisto] <<" with perEachChip=\"true\" in "<< _histoXMLFileName <<endl;
-				return false;
-			} // end of if
-		}// end of ichip loop
-	}// end of ihisto loop
-
-	// check _histosOneForAllChips
-	for (unsigned int ihisto=0; ihisto<_histosOneForAllChips.size(); ihisto++) {
-		string histoName = _histosOneForAllChips[ihisto];
+	for (unsigned int ihisto=0; ihisto<_histoList.size(); ihisto++) {
+		string histoName = _histoList[ihisto];
 		if (!doesRootObjectExists(histoName)) {
 			streamlog_out (ERROR5) << "Histogram "<< histoName <<" doesn't exists"<<endl;
-			streamlog_out (ERROR5) << "Define "<< _histosOneForAllChips[ihisto] <<" with perEachChip=\"false\" in "<< _histoXMLFileName <<endl;
+			streamlog_out (ERROR5) << "Define "<< _histoList[ihisto] <<" in "<< _histoXMLFileName <<endl;
 			return false;
 		} // end of if
 	}

@@ -251,12 +251,12 @@ void ExampleAlibavaHistogramMaker::fillListOfHistos(){
 	//////////////////////
 	// One per each chip
 	// lets say _someHistoName should be created for each chip
-	_histosPerChip.push_back(_someHistoName);
+	addToHistoCheckList_PerChip(_someHistoName);
 	
 	//////////////////////
 	// One for all chips
 	// and we need one _someOtherHistoName for all event
-	_histosOneForAllChips.push_back(_someOtherHistoName);
+	addToHistoCheckList(_someOtherHistoName);
 
 	// here it checks
 	checkListOfHistosCreatedByXMLFile();

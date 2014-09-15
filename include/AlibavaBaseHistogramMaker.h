@@ -133,6 +133,11 @@ namespace alibava {
 		
 		void addToXMLTitle(string histoName, string titleName, string whichSide, string stringToAdd);
 		
+		// adds the histo name to the histogram check list
+		void addToHistoCheckList(string histoName);
+
+		// adds the histo name per chip to the histogram check list
+		void addToHistoCheckList_PerChip(string histoName);
 		
 	protected:
 
@@ -176,8 +181,7 @@ namespace alibava {
 		// Others //
 		////////////
 		// Histogram lists that has to be defined in _histoXMLFileName
-		vector<string> _histosPerChip;
-		vector<string> _histosOneForAllChips;
+		vector<string> _histoList;
 
 		
 		//! If one wants to multiply signal by some number
