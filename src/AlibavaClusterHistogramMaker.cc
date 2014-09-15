@@ -240,7 +240,7 @@ void AlibavaClusterHistogramMaker::fillListOfHistos(){
 	
 	//////////////////////
 	// One for all chips
-	addToHistoCheckList(_maskedEventsHistoName)
+	addToHistoCheckList(_maskedEventsHistoName);
 	
 	// here it checks
 	checkListOfHistosCreatedByXMLFile();
