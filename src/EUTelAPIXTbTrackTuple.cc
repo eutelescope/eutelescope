@@ -246,27 +246,27 @@ bool EUTelAPIXTbTrackTuple::readHits( std::string hitColName, LCEvent* event )
     		const double* pos = meshit->getPosition();	
     		LCObjectVec clusterVec = (meshit->getRawHits());
 
-			UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
+		UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
     		int sensorID = hitDecoder(meshit)["sensorID"];
 
-			//Only dump DUT hits
-			if( std::find( _DUTIDs.begin(), _DUTIDs.end(), sensorID) == _DUTIDs.end() )
-			{
-				continue;
-			}
+		//Only dump DUT hits
+		if( std::find( _DUTIDs.begin(), _DUTIDs.end(), sensorID) == _DUTIDs.end() )
+		{
+			continue;
+		}
 
     		double x = pos[0];
     		double y = pos[1];
     		double z = pos[2];
    			
-			//undo GEAR rotations
-			rotMat rot = _invDUTRot.at(sensorID);
-			double xUnRot = rot.r1*x + rot.r2*y;
-			double yUnRot = rot.r3*x + rot.r4*y;
+		//undo GEAR rotations
+		/rotMat rot = _invDUTRot.at(sensorID);
+		double xUnRot = rot.r1*x + rot.r2*y;
+		double yUnRot = rot.r3*x + rot.r4*y;
  
 	       	//offset by half sensor/sensitive size
-			xUnRot += _xSensSize.at(sensorID)/2.0;
-			yUnRot += _ySensSize.at(sensorID)/2.0;
+		xUnRot += _xSensSize.at(sensorID)/2.0;
+		yUnRot += _ySensSize.at(sensorID)/2.0;
 		
     		_hitXPos->push_back(xUnRot);
     		_hitYPos->push_back(yUnRot);
