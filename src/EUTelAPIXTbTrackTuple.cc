@@ -91,6 +91,16 @@ void EUTelAPIXTbTrackTuple::init()
 
 	// Prepare TTree/TFiles
 	prepareTree();
+
+	for(std::vector<int>::iterator it = _DUTIDs.begin(); it != _DUTIDs.end(); it++)
+	{
+		geo::EUTelGenericPixGeoDescr* geoDescr = geo::gGeometry().getPixGeoDescr( *it ) ;
+		double xSize,ySize;
+		geoDescr->getSensitiveSize(xSize, ySize);
+
+		_xSensSize[*it] = xSize;
+		_ySensSize[*it] = ySize;
+	}
 }
 
 void EUTelAPIXTbTrackTuple::processRunHeader( LCRunHeader* runHeader) 
@@ -189,7 +199,11 @@ bool EUTelAPIXTbTrackTuple::readHits( std::string hitColName, LCEvent* event )
     		double x = pos[0];
     		double y = pos[1];
     		double z = pos[2];
-    
+   
+	       	//offset by half sensor/sensitive size
+		x += _xSensSize.at(sensorID);
+		y += _ySensSize.at(sensorID);
+		
     		_hitXPos->push_back(x);
     		_hitYPos->push_back(y);
     		_hitZPos->push_back(z);

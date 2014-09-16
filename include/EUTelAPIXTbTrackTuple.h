@@ -43,7 +43,9 @@ namespace eutelescope {
     std::string _path2file;
 
     std::vector<int> _DUTIDs;
- 
+    std::map<int, double> _xSensSize;
+    std::map<int, double> _ySensSize;
+
     // Internal processor variables
     // ----------------------------
     int _nRun ;
