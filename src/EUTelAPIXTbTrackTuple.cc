@@ -5,6 +5,10 @@
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelTrackerDataInterfacerImpl.h"
 
+// eutelescope geometry
+#include "EUTelGeometryTelescopeGeoDescription.h"
+#include "EUTelGenericPixGeoDescr.h"
+
 #include <EVENT/LCCollection.h>
 #include <EVENT/LCEvent.h>
 #include <IMPL/LCCollectionVec.h>
@@ -91,6 +95,71 @@ void EUTelAPIXTbTrackTuple::init()
 
 	// Prepare TTree/TFiles
 	prepareTree();
+
+	//init new geometry
+	std::string name("test.root");
+	geo::gGeometry().initializeTGeoDescription(name,true);
+
+
+	for(std::vector<int>::iterator it = _DUTIDs.begin(); it != _DUTIDs.end(); it++)
+	{
+		//Later we need to shift the sensor since in EUTel centre of sensor is 0|0 while in TBmon(II) it is in the lower left corner
+		geo::EUTelGenericPixGeoDescr* geoDescr = geo::gGeometry().getPixGeoDescr( *it ) ;
+		float xSize,ySize;
+		geoDescr->getSensitiveSize(xSize, ySize);
+
+		_xSensSize[*it] = xSize;
+		_ySensSize[*it] = ySize;
+		
+		//Also GEAR rotations need to be undone, we only support +-1 entries, diagonal or off-diagonal!
+		float r1, r2, r3 , r4;
+		r1 = geo::gGeometry().siPlaneRotation1(*it);
+		r2 = geo::gGeometry().siPlaneRotation2(*it);
+		r3 = geo::gGeometry().siPlaneRotation3(*it);
+		r4 = geo::gGeometry().siPlaneRotation4(*it);
+		
+		rotMat normRot;
+		rotMat invRot;
+		
+		//Check if we only have integer entries (no check if +-1, but if you messed up your GEAR file like that...)
+		if( 
+			ceil(r1) == r1 &&
+			ceil(r2) == r2 &&
+			ceil(r3) == r3 &&
+			ceil(r4) == r4 )
+		{
+			normRot.r1 = (int)r1;
+			normRot.r2 = (int)r2;
+			normRot.r3 = (int)r3;
+			normRot.r4 = (int)r4;
+		}
+		else
+		{
+        	streamlog_out ( ERROR5 ) << "Rotation matrix from GEAR [" << r1 << "," << r2 << "|" << r3 << "," << r4 << "] must only contain +-1!" << std::endl;       
+		}
+
+		//Check if we have diagonal matrix
+		if( r1 != 0 && r2 == 0 && r3 == 0 && r4 != 0)
+		{
+			//since we're only dealing with +-1 integers
+			invRot = normRot;
+		}
+		//offdiagonal matrix
+		else if( r1 == 0 && r2 != 0 && r3 != 0 && r4 == 4) 
+		{
+			invRot.r1 = 0;
+			invRot.r2 = 1/invRot.r3;
+			invRot.r3 = 1/invRot.r2;
+			invRot.r4 = 0;
+		}
+		else
+		{
+        	streamlog_out ( ERROR5 ) << "Rotation matrix from GEAR [" << r1 << "," << r2 << "|" << r3 << "," << r4 << "] must be diagonal or off-diagonal!" << std::endl;       
+			invRot = normRot;
+		}
+
+		_invDUTRot[*it] = invRot;
+	}
 }
 
 void EUTelAPIXTbTrackTuple::processRunHeader( LCRunHeader* runHeader) 
@@ -189,9 +258,18 @@ bool EUTelAPIXTbTrackTuple::readHits( std::string hitColName, LCEvent* event )
     		double x = pos[0];
     		double y = pos[1];
     		double z = pos[2];
-    
-    		_hitXPos->push_back(x);
-    		_hitYPos->push_back(y);
+   			
+		//undo GEAR rotations
+		/rotMat rot = _invDUTRot.at(sensorID);
+		double xUnRot = rot.r1*x + rot.r2*y;
+		double yUnRot = rot.r3*x + rot.r4*y;
+ 
+	       	//offset by half sensor/sensitive size
+		xUnRot += _xSensSize.at(sensorID)/2.0;
+		yUnRot += _ySensSize.at(sensorID)/2.0;
+		
+    		_hitXPos->push_back(xUnRot);
+    		_hitYPos->push_back(yUnRot);
     		_hitZPos->push_back(z);
     		_hitSensorId->push_back(sensorID);
 	}
@@ -249,11 +327,11 @@ bool EUTelAPIXTbTrackTuple::readTracks(LCEvent* event)
 
       			nTrackParams++;
       			
-			double x = pos[0];
+				double x = pos[0];
       			double y = pos[1];
       			//double z = pos[2]; //not used!
 			
-			//eutrack tree
+				//eutrack tree
       			_xPos->push_back(x);
       			_yPos->push_back(y);
       			_dxdz->push_back(dxdz);
@@ -305,8 +383,8 @@ bool EUTelAPIXTbTrackTuple::readZsHits( std::string colName, LCEvent* event)
 				p_col->push_back( apixPixel.getXCoord() );
 				p_tot->push_back( static_cast< int >(apixPixel.getSignal()) );
 				p_lv1->push_back( static_cast< int >(apixPixel.getTime()) );
-      			}
-    		}
+      		}
+    	}
 		else
 		{
 			//PANIC
@@ -317,28 +395,28 @@ bool EUTelAPIXTbTrackTuple::readZsHits( std::string colName, LCEvent* event)
 
 void EUTelAPIXTbTrackTuple::clear()
 {
-  /* Clear zsdata */
-  p_col->clear();
-  p_row->clear();
-  p_tot->clear();
-  p_iden->clear();
-  p_lv1->clear();
-  _nPixHits = 0;
-  /* Clear hittrack */
-  _xPos->clear();
-  _yPos->clear();
-  _dxdz->clear();
-  _dydz->clear();
-  _trackNum->clear();
-  _trackIden->clear();
-  _chi2->clear();
-  _ndof->clear();
-  //Clear hits
-  _hitXPos->clear();
-  _hitYPos->clear();
-  _hitZPos->clear();
-  _hitSensorId->clear();
- }
+	/* Clear zsdata */
+	p_col->clear();
+	p_row->clear();
+	p_tot->clear();
+	p_iden->clear();
+	p_lv1->clear();
+	_nPixHits = 0;
+	/* Clear hittrack */
+	_xPos->clear();
+	_yPos->clear();
+	_dxdz->clear();
+	_dydz->clear();
+	_trackNum->clear();
+	_trackIden->clear();
+	_chi2->clear();
+	_ndof->clear();
+	//Clear hits
+	_hitXPos->clear();
+	_hitYPos->clear();
+	_hitZPos->clear();
+	_hitSensorId->clear();
+}
 
 void EUTelAPIXTbTrackTuple::prepareTree()
 {
