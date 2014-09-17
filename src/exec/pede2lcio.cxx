@@ -133,11 +133,15 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
 	    const double dr0y = (*itrAlignmentConstant).second->getYOffset();
 	    const double dr0z = (*itrAlignmentConstant).second->getZOffset();
 
-	    TVector3 delta_r0( dr0x, dr0y, dr0z );
+			const double posLocalDiff[3] = {dr0x,dr0y,dr0z};
+			double delta_r0[3];
+			geo::gGeometry().local2MasterVec(sensorID,posLocalDiff, delta_r0);
+//	    TVector3 delta_r0( dr0x, dr0y, dr0z );
+			
 //	    delta_r0 *= invDeltaR;
 //	    delta_r0 *= invR;
 //	    delta_r0 = invR*(invDeltaR*delta_r0);
-            delta_r0 = invR*delta_r0;
+  //          delta_r0 = invR*delta_r0;
  
              streamlog_out(MESSAGE2) << "invR:"<< std::endl;
              streamlog_out(MESSAGE2) << " X: " << setw(20) << invR[0][0] << " " << invR[0][1] << " " << invR[0][2]  << std::endl;
@@ -153,9 +157,9 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
 // ZY and ZX rotations are calculated wrongly yet, do not implement:
 // XYZ shifts and XY rotation seems to be correct
 //
-            geo::gGeometry().setPlaneXPosition(sensorID,  xplane  +  delta_r0.X() ) ;
-            geo::gGeometry().setPlaneYPosition(sensorID,  yplane  +  delta_r0.Y() ) ;
-            geo::gGeometry().setPlaneZPosition(sensorID,  zplane  +  delta_r0.Z() ) ;
+            geo::gGeometry().setPlaneXPosition(sensorID,  xplane  +  delta_r0[0] ) ;
+            geo::gGeometry().setPlaneYPosition(sensorID,  yplane  +  delta_r0[1] ) ;
+            geo::gGeometry().setPlaneZPosition(sensorID,  zplane  +  delta_r0[2] ) ;
             geo::gGeometry().setPlaneXRotationRadians(sensorID, (xrot  - dalpha)  ) ;
             geo::gGeometry().setPlaneYRotationRadians(sensorID, (yrot  - dbeta )  ) ;
             geo::gGeometry().setPlaneZRotationRadians(sensorID, (zrot  - dgamma)  ) ;
@@ -171,9 +175,9 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
             streamlog_out(MESSAGE4) << setw(13) << setprecision(4) << dgamma ;
 
             streamlog_out(MESSAGE4) << setw( 3) << " " ;
-            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) <<  delta_r0.X() ;
-            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) <<  delta_r0.Y();
-            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) <<  delta_r0.Z() << std::endl;
+            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) <<  delta_r0[0] ;
+            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) <<  delta_r0[1];
+            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) <<  delta_r0[2] << std::endl;
 
             xplane = geo::gGeometry().siPlaneXPosition(sensorID) ; 
             yplane = geo::gGeometry().siPlaneYPosition(sensorID) ; 
