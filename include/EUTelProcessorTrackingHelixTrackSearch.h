@@ -203,6 +203,8 @@ namespace eutelescope {
         EVENT::FloatVec _beamSpread;
 				EVENT::IntVec _createSeedsFromPlanes;
 				EVENT::FloatVec _excludePlanes;         
+				EVENT::IntVec _planeDimension;
+
 				/* Histogram info file name */
 	std::string _histoInfoFileName;
 

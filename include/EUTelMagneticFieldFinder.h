@@ -221,7 +221,7 @@ void setAutoPlanestoCreateSeedsFrom(){
         EVENT::TrackerHitVec hitFittedVec;
 
     public:
-				void setPlaneDimensionsVec();
+				void setPlaneDimensionsVec(EVENT::IntVec);
 				void testPlaneDimensions();
 				void testHitsVecPerPlane();
 				void testPositionEstimation(float position1[], float position2[]);

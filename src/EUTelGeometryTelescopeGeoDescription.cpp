@@ -446,7 +446,7 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout() {
         _siPlaneRotation3.push_back(_siPlanesLayerLayout->getSensitiveRotation3(iPlane));
         _siPlaneRotation4.push_back(_siPlanesLayerLayout->getSensitiveRotation4(iPlane));
       
-	_siPlaneXSize.push_back(_siPlanesLayerLayout->getSensitiveSizeX(iPlane));
+				_siPlaneXSize.push_back(_siPlanesLayerLayout->getSensitiveSizeX(iPlane));
         _siPlaneYSize.push_back(_siPlanesLayerLayout->getSensitiveSizeY(iPlane));
         _siPlaneZSize.push_back(_siPlanesLayerLayout->getSensitiveThickness(iPlane));
  
@@ -458,7 +458,7 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout() {
         _siPlaneYResolution.push_back(_siPlanesLayerLayout->getSensitiveResolution(iPlane)); // should be ResolutionY
         
         _siPlaneRadLength.push_back(_siPlanesLayerLayout->getSensitiveRadLength(iPlane));
-	_geoLibName.push_back(geometryNameParameters[iPlane]);
+				_geoLibName.push_back(geometryNameParameters[iPlane]);
 
     }
 

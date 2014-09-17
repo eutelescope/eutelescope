@@ -713,8 +713,10 @@ streamlog_out(MESSAGE1) << "------------------------------EUTelKalmanFilter::fin
 //This creates map between plane ID and hits on that plane. 
 //We also order the map correcly with geometry.
 void EUTelKalmanFilter::setHitsVecPerPlane(){
+	streamlog_out(ERROR0) <<"EUTelKalmanFilter::setHitsVecPerPlane()----------------------------BEGIN" <<std::endl;
 	_mapHitsVecPerPlane.clear();
 	int numberOfPlanes = geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size();//Note should not make this a class data member since we call this by reference in geometry so defacto it is already accessed directly each time. By this I mean we do not create a new copy each time we call the function. 
+	streamlog_out(ERROR0) <<"The number of planes that we will add hits to: "<< numberOfPlanes  <<std::endl;
 	if(numberOfPlanes == 0){
 		throw(lcio::Exception( "The number of planes is 0 to get hits from."));
 	}
@@ -730,71 +732,33 @@ void EUTelKalmanFilter::setHitsVecPerPlane(){
 		}		
 	_mapHitsVecPerPlane[ geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i]] = 	tempHitsVecPlaneX;
 	}	
+	streamlog_out(ERROR0) <<"EUTelKalmanFilter::setHitsVecPerPlane()----------------------------END" <<std::endl;
 }
-//This member function will loop through each position array and determine if some entries are all one number (Usually 0). This is done so we can determine the dimension of the hit.
-//We create a vector that excluded planes that are notoncluded
-//TO DO: This way of calculating the dimesions is silly since y ou way have only 1 hit in the first event on any plane. Need to fix this. 
-void EUTelKalmanFilter::setPlaneDimensionsVec(){
+//Note loop through all planes. Even the excluded. This is easier since you don't have to change this input each time then.
+void EUTelKalmanFilter::setPlaneDimensionsVec(EVENT::IntVec planeDimensions){
 	streamlog_out(ERROR0) <<"EUTelKalmanFilter::setPlaneDimensionsVec()----------------------------BEGIN" <<std::endl;
+	if(planeDimensions.size() != geo::gGeometry().sensorZOrdertoIDs().size()){
+		streamlog_out(ERROR5) << "The size of planesDimensions input is: "<< planeDimensions.size()<<" The size of sensorZOrdertoIDs is: " << geo::gGeometry().sensorZOrdertoIDs().size()<< std::endl;
+		throw(lcio::Exception( Utility::outputColourString("The input dimension vector not the same as the number of planes!","RED")));
+	}
 	_planeDimensions.clear();
-	const double* positionBefore=NULL;//This is a pointer to a const not a const pointer
-	const double* position=NULL;
-	int numberOfPlanes = geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size();
-	for(int i=0; i<numberOfPlanes; ++i){//Loop through each plane
-		int planeID = geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i];
-		int numberOfDimensions=0;
-		bool sensorIsAtLeast1D=false;
-		bool sensorIsAtLeast2D=false;
-		bool sensorIsAtLeast3D=false;
-		for(int j = 0 ; j< _mapHitsVecPerPlane.at(planeID).size();++j){//Loop through all hits on each plane
-			streamlog_out(DEBUG0) << "Entering loop over hits. "<< std::endl;
-			position = (_mapHitsVecPerPlane.at(planeID)).at(j)->getPosition();
-			if(position == NULL){
-				throw(lcio::Exception( "Must exit since one position vector within hit is NULL!"));
-			}
-			streamlog_out(DEBUG0) << "Here is the information for this hit about to be checked:"<< std::endl;
-			streamlog_out(DEBUG0) << "Position: "<<position[0]<<","<<position[1]<<","<< position[2]<< " Plane: "<< planeID <<std::endl;
-			if(j !=0){
-				if(positionBefore == NULL){
-				throw(lcio::Exception( "Must exit since position before vector within hit is NULL!"));
-				}
-				streamlog_out(DEBUG0) << "Position: "<<positionBefore[0]<<","<<positionBefore[1]<<","<< positionBefore[2]<< " Plane: "<< j <<std::endl;
-				streamlog_out(DEBUG0) << "Position 0 check enter"<< std::endl;
-				if(position[0] != positionBefore[0]){//The last condition j != 0 is to ensure we do not compare the last sensor with the next. 
-				sensorIsAtLeast1D=true;
-				}			
-				streamlog_out(DEBUG0) << "Position 1 check enter"<< std::endl;
-				if(position[1] != positionBefore[1]){//The last condition j != 0 is to ensure we do not compare the last sensor with the next. 
-				sensorIsAtLeast2D=true;
-				}			
-				streamlog_out(DEBUG0) << "Position 2 check enter"<< std::endl;
-				if(position[2] != positionBefore[2]){//The last condition j != 0 is to ensure we do not compare the last sensor with the next. 
-				sensorIsAtLeast3D=true;
-				}			
-			}//END of if j !=0;
-				positionBefore= position;
-		}	//END of loop over hits
-		if(sensorIsAtLeast1D){
-			numberOfDimensions++;
-		}
-		if(sensorIsAtLeast2D){
-			numberOfDimensions++;
-		}
-		if(sensorIsAtLeast3D){
-			numberOfDimensions++;
-		}
-		streamlog_out(DEBUG2) << "The size of Dimensions : "<< numberOfDimensions << std::endl;
-		_planeDimensions[planeID] = 2;
+	for(int i=0; i<geo::gGeometry().sensorZOrdertoIDs().size(); ++i){//Loop through each plane
+		int planeID = geo::gGeometry().sensorZOrdertoIDs().at(i);
+		_planeDimensions[planeID] = planeDimensions.at(i);
 	}//END of loop over planes
+	if(_planeDimensions.size() != geo::gGeometry().sensorZOrdertoIDs().size()){
+		streamlog_out(ERROR5) << "The size of _planesDimensions is: "<< planeDimensions.size()<<" The size of sensorZOrdertoIDs is: " << geo::gGeometry().sensorZOrdertoIDs().size()<< std::endl;
+		throw(lcio::Exception( Utility::outputColourString("The output dimension vector is not the same size as the number of planes ","RED")));
+	}
 	streamlog_out(ERROR0) <<"EUTelKalmanFilter::setPlaneDimensionsVec()----------------------------END" <<std::endl;
-
 }	    
+
 
 void EUTelKalmanFilter::testHitsVecPerPlane(){
 	streamlog_out(DEBUG4) <<"EUTelKalmanFilter::testHitsVecPerPlane----------------------------BEGIN" <<std::endl;
 	if(_mapHitsVecPerPlane.size() !=  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()){
 		streamlog_out(ERROR0) <<"The size of the planes with hits " << _mapHitsVecPerPlane.size() <<"  Sensors from Geometry with no excluded planes: "<<  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()<<std::endl;
-		throw(lcio::Exception(Utility::outputColourString("The number of planes that could contain hits and the number of planes is different", "RED"))); 	
+		throw(lcio::Exception(Utility::outputColourString("The number of planes that could contain hits and the number of planes is different. Problem could be the gear file has to planes at the same z position.", "RED"))); 	
 
 	}
 	for(int i=0 ;i<_mapHitsVecPerPlane.size();++i){
@@ -817,18 +781,12 @@ void EUTelKalmanFilter::testPlaneDimensions(){
 			throw(lcio::Exception( "The number of dimension for one of your planes is greater than 3 or less than 0. If this is not a mistake collect you nobel prize now!"));
 		}
 	}
-	for(int i=0;i<_planeDimensions.size();++i){
-		if(_planeDimensions.at(geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i]) != 2){
-			throw(lcio::Exception( "The number of dimensions is not two. If you have a strip sensor remove this test!!!!!!!!   "));
-		}
-	}
-
 }
 void EUTelKalmanFilter::onlyRunOnce(){
-	if(_firstExecution){
-		setPlaneDimensionsVec();
-	}
-	_firstExecution=false;
+//	if(_firstExecution){
+//		setPlaneDimensionsVec();
+//	}
+//	_firstExecution=false;
 }
 
 

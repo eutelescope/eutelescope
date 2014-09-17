@@ -85,6 +85,7 @@ _aidaHistoMap1D() {
 
 	registerOptionalParameter("ExcludePlanes", "This is the planes that will not be included in analysis", _excludePlanes ,FloatVec());
 	registerOptionalParameter("InitialDisplacement", "This is the initial distance the particle must travel to reach the first plane", _initialDisplacement ,float(0));
+  registerOptionalParameter("planeDimensions", "This is a number 1(strip sensor) or 2(pixel sensor) to identify the type of detector. Must be in z order and include all planes.", _planeDimension, IntVec());
 
 }
 
@@ -119,6 +120,7 @@ void EUTelProcessorTrackingHelixTrackSearch::init() {
 	Finder->setBeamCharge( _qBeam );
 	Finder->setBeamMomentumUncertainty( _eBeamUncertatinty );
 	Finder->setBeamSpread( _beamSpread );
+	Finder->setPlaneDimensionsVec(_planeDimension);
 
 	_trackFitter = Finder;
 	_trackFitter->setAutoPlanestoCreateSeedsFrom();
@@ -191,7 +193,6 @@ void EUTelProcessorTrackingHelixTrackSearch::processEvent(LCEvent * evt) {
 	streamlog_out(DEBUG2) << "Test hits on the planes" << std::endl;
 	_trackFitter->testHitsVecPerPlane();//tests the size of the map and does it contain hits
 	streamlog_out(DEBUG2) << "Determine the dimensionality of the hit" << std::endl;
-	_trackFitter->onlyRunOnce();//This will only execute once. It can not be placed in init since it needs hit information. It currently only determines hit dimension. However can be used for other thing latter. 
 	_trackFitter->testPlaneDimensions();//test that the number of dimensions is 3> >0
 	streamlog_out( DEBUG1 ) << "Trying to find tracks..." << endl;
 	_trackFitter->initialiseSeeds();//Create first states from hits. Shouldl work also for strip sensors

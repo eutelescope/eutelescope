@@ -91,10 +91,10 @@ void EUTelMillepede::FillMilleParametersLabels() {
     for( itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {// sensor 0 to 5 will have numbers 19 to 24  for this x rotation 
         _xRotationsMap.insert( make_pair(*itr, ++currentLabel) );
     }
-    for( itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {// sensor 0 to 5 will have numbers 25 to 30  for this x rotation 
+    for( itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {// sensor 0 to 5 will have numbers 25 to 30  for this y rotation 
         _yRotationsMap.insert( make_pair(*itr, ++currentLabel) );
     }
-    for( itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {// sensor 0 to 5 will have numbers 31 to 36  for this x rotation 
+    for( itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {// sensor 0 to 5 will have numbers 31 to 36  for this z rotation 
         _zRotationsMap.insert( make_pair(*itr, ++currentLabel) );
     }
 }
@@ -103,12 +103,10 @@ int EUTelMillepede::computeAlignmentToMeasurementJacobian( EUTelState &state){
 	if(_alignmentMode == Utility::noAlignment){
 		throw(lcio::Exception(Utility::outputColourString("No alignment has been chosen.", "RED"))); 	
 	}
-	streamlog_out(DEBUG3) <<"The sensor position we are just about to create alignment Jacobian and state: "<< state.getLocation()<<endl; 
+	streamlog_out(DEBUG3) <<"State we arew about to add: "<< state.getLocation()<<endl; 
 	state.print();
-	TVector3 incidenceVecLocal = state.getIncidenceUnitMomentumVectorInLocalFrame();//This is the state incidence in the local frame of the telescope. TO DO: Make sure this is being calculated correctly.
-	streamlog_out( DEBUG0 ) << "Incidence vector in local frame"<<incidenceVecLocal[0] <<","<< incidenceVecLocal[1]<<","<<incidenceVecLocal[2] << std::endl;
-	float TxLocal =  incidenceVecLocal[0]/incidenceVecLocal[2];//We calculate the incidence angle in both planes.
-	float TyLocal =  incidenceVecLocal[1]/incidenceVecLocal[2];
+	float TxLocal =  state.getIntersectionLocalXZ();
+	float TyLocal =  state.getIntersectionLocalYZ();
 	float* localpos = state.getPosition();
 	streamlog_out( DEBUG0 ) << "This is px/pz, py/pz (local) "<< TxLocal <<","<< TyLocal << std::endl;
 	streamlog_out( DEBUG0 ) << "Local frame position "<< *localpos<<","<<*(localpos+1)<<","<<*(localpos+2) << std::endl;
@@ -152,8 +150,8 @@ int EUTelMillepede::computeAlignmentToMeasurementJacobian( float x,float y, floa
 	///////////////////////////////////////////////////Moving the sensor in the z axis. Only create this if you want shifts in z BEGIN
 	if (_alignmentMode == Utility::XYZShiftXYRot
                 || _alignmentMode == Utility::XYZShiftXZRotYZRotXYRot) {
-  	_jacobian[0][3] =   -slopeXvsZ; // dxh/dzs
-    _jacobian[1][3] =   -slopeYvsZ; // dyh/dzs
+  	_jacobian[0][3] =   slopeXvsZ; // dxh/dzs
+    _jacobian[1][3] =   slopeYvsZ; // dyh/dzs
   }
 	///////////////////////////////////////////////////////////////////////////////////////////END
 

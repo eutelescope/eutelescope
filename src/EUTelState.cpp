@@ -236,6 +236,8 @@ void EUTelState::setPositionGlobal(float positionGlobal[]){
 }
 //This sets the LOCAL frame intersection. Not the curvilinear frames intersection
 void EUTelState::setLocalXZAndYZIntersectionAndCurvatureUsingGlobalMomentum(TVector3 momentumIn){
+	streamlog_out(DEBUG5) << "EUTelState::setLocalXZAndYZIntersectionAndCurvatureUsingGlobalMomentum--------------------------BEGIN" << std::endl;
+
 	//set the beam energy and curvature
 	setBeamEnergy(momentumIn.Mag());
 	initialiseCurvature();//You must set beam charge before you call this.
@@ -244,8 +246,11 @@ void EUTelState::setLocalXZAndYZIntersectionAndCurvatureUsingGlobalMomentum(TVec
 	double localMomentum [3];
 	geo::gGeometry().master2LocalVec(getLocation(), momentum, localMomentum );
 	//In the LOCAL coordinates this is just dx/dz and dy/dz in the LOCAL frame
+	streamlog_out(DEBUG5) << "The local momentum (x,y,z) is: "<< localMomentum[0]<<","<< localMomentum[1] <<"," <<localMomentum[2] << std::endl;
 	setIntersectionLocalXZ(localMomentum[0]/localMomentum[2]);
 	setIntersectionLocalYZ(localMomentum[1]/localMomentum[2]);
+	streamlog_out(DEBUG5) << "The XZ tilt is: "<< getIntersectionLocalXZ()<<" The YZ tilt is: "<<  getIntersectionLocalYZ()<< std::endl;
+	streamlog_out(DEBUG5) << "EUTelState::setLocalXZAndYZIntersectionAndCurvatureUsingGlobalMomentum--------------------------END" << std::endl;
 }
 
 void EUTelState::setCombinedHitAndStateCovMatrixInLocalFrame(double cov[4]){

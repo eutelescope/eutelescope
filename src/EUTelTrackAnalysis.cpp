@@ -14,6 +14,9 @@ void EUTelTrackAnalysis::plotResidualVsPosition(EUTelTrack track){
 	for(int i=0; i<states.size();++i){
 		EUTelState state  = states.at(i);
 		state.print();
+		if(!state.getIsThereAHit()){
+			continue;
+		}
 		EVENT::TrackerHit* hit = state.getHit();	
 		float* statePosition = state.getPosition();
 		const double* hitPosition = hit->getPosition();
