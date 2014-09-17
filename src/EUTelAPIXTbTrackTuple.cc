@@ -260,7 +260,7 @@ bool EUTelAPIXTbTrackTuple::readHits( std::string hitColName, LCEvent* event )
     		double z = pos[2];
    			
 		//undo GEAR rotations
-		/rotMat rot = _invDUTRot.at(sensorID);
+		rotMat rot = _invDUTRot.at(sensorID);
 		double xUnRot = rot.r1*x + rot.r2*y;
 		double yUnRot = rot.r3*x + rot.r4*y;
  
