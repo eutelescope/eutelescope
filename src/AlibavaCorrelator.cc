@@ -324,8 +324,7 @@ void AlibavaCorrelator::processEvent (LCEvent * anEvent) {
 			int detID = hitDecoder( ahit )["sensorID"];
 			if ( !isInDetectorIDsList(detID) ) continue;
 			
-			double pos[3];
-			pos = ahit->getPosition();
+			const double* pos = ahit->getPosition();
 
 			string histoName;
 			// fill hX
@@ -344,8 +343,7 @@ void AlibavaCorrelator::processEvent (LCEvent * anEvent) {
 				// only consider hits from other detectors
 				if (detID <= anotherDetID) continue;
 
-				double anotherPos[3];
-				anotherPos = anotherHit->getPosition();
+				const double* anotherPos = anotherHit->getPosition();
 				
 				histoName = getHistoNameForDetector(_hCorX, detID, anotherDetID);
 				TH2D * hCorX = dynamic_cast<TH2D*> (_rootObjectMap[ histoName ]);

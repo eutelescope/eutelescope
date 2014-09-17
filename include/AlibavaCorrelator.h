@@ -189,7 +189,10 @@ namespace alibava {
 		// clones TH1D Histogram for each detector
 		void createClones_hHitPos(string histoName);
 
-		// clones TH2D Histogram for each detector combination
+		// clones Correlation Histogram for each detector combination
+		void createClones_hCor(string histoName);
+
+		// clones Synchronisation Histogram for each detector combination
 		void createClones_hCor(string histoName);
 
 		// checks if detID is in _detectorIDs list
