@@ -176,18 +176,19 @@ namespace alibava {
 		 */
 		std::string _hSyncY;
 
+		// number of detectors
+		IntVec _detectorIDs;
+		
 		
 		// just adding "_d" and detector number to the end of string
 		std::string getHistoNameForDetector(std::string name, int detID);
-
+		
 		// just adding "_d" detID1 and "_d" detID2 to the end of string
 		std::string getHistoNameForDetector(std::string name, int detID1, int detID2);
 
-		// number of detectors
-		int _NDetector;
-		
 		// clones TH1D Histogram for each detector
 		void createClones_hHitPos(string histoName);
+
 		// clones TH2D Histogram for each detector combination
 		void createClones_hCor(string histoName);
 
