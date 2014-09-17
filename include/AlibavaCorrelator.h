@@ -28,24 +28,24 @@
 
 namespace alibava {
 	
-	class ExampleAlibavaHistogramMaker : public alibava::AlibavaBaseHistogramMaker   {
+	class AlibavaCorrelator : public alibava::AlibavaBaseHistogramMaker   {
 		
 	public:
 		
 		
-		//! Returns a new instance of ExampleAlibavaHistogramMaker
+		//! Returns a new instance of AlibavaCorrelator
 		/*! This method returns an new instance of the this processor.  It
 		 *  is called by Marlin execution framework and it shouldn't be
 		 *  called/used by the final user.
 		 *
-		 *  @return a new ExampleAlibavaHistogramMaker.
+		 *  @return a new AlibavaCorrelator.
 		 */
 		virtual Processor * newProcessor () {
-			return new ExampleAlibavaHistogramMaker;
+			return new AlibavaCorrelator;
 		}
 		
 		//! Default constructor
-		ExampleAlibavaHistogramMaker ();
+		AlibavaCorrelator ();
 		
 		//! Called at the job beginning.
 		/*! This is executed only once in the whole execution. It prints
@@ -72,8 +72,8 @@ namespace alibava {
 		/*! Since the behavior of the PedestalNoise processor is different
 		 *  if this is the first or one of the following loop, this method
 		 *  is just calling
-		 *  ExampleAlibavaHistogramMaker::firstLoop(LCEvent*) or
-		 *  ExampleAlibavaHistogramMaker::otherLoop(LCEvent*)
+		 *  AlibavaCorrelator::firstLoop(LCEvent*) or
+		 *  AlibavaCorrelator::otherLoop(LCEvent*)
 		 *
 		 *  @param evt the current LCEvent event as passed by the
 		 *  ProcessMgr
@@ -99,10 +99,10 @@ namespace alibava {
 		 *  histograms. Histogram pointers are stored into
 		 *  AlibavaBaseProcessor::_rootObjectMap so that they can be
 		 *  recalled and filled from anywhere in the code.  Apart from the
-		 *  histograms listed in ExampleAlibavaHistogramMaker::fillHistos()
+		 *  histograms listed in AlibavaCorrelator::fillHistos()
 		 *  there is also a common mode histo described here below:
 		 *
-		 *  @see ExampleAlibavaHistogramMaker::fillHistos() for the todos
+		 *  @see AlibavaCorrelator::fillHistos() for the todos
 		 */
 		virtual void bookHistos();
 		
@@ -197,7 +197,7 @@ namespace alibava {
 	};
 	
 	//! A global instance of the processor
-	ExampleAlibavaHistogramMaker gExampleAlibavaHistogramMaker;
+	AlibavaCorrelator gAlibavaCorrelator;
 	
 }
 
