@@ -60,8 +60,8 @@ using namespace alibava;
 AlibavaCorrelator::AlibavaCorrelator () :
 AlibavaBaseHistogramMaker("AlibavaCorrelator"),
 // List of Histogram names, initialized here. As an example we put only 2
-_hHitPosX("hX"),
-_hHitPosY("hY"),
+_hHitPosX("hHitPosX"),
+_hHitPosY("hHitPosY"),
 _hCorX("hCorX"),
 _hCorY("hCorY"),
 _hSyncX("hSyncX"),
