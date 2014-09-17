@@ -193,7 +193,7 @@ namespace alibava {
 		void createClones_hCor(string histoName);
 
 		// clones Synchronisation Histogram for each detector combination
-		void createClones_hCor(string histoName);
+		void createClones_hSync(string histoName);
 
 		// checks if detID is in _detectorIDs list
 		bool isInDetectorIDsList(int detID);
