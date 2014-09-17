@@ -207,9 +207,8 @@ void AlibavaCorrelator::createClones_hHitPos(string histoName){
 	TH1D * h = dynamic_cast<TH1D*> (_rootObjectMap[histoName]);
 	for (unsigned int idet=0; idet<_detectorIDs.size(); idet++) {
 		int detID = _detectorIDs[idet];
-		TH1D * hnew = new TH1D();
 		string newHistoName = getHistoNameForDetector(histoName, detID);
-		hnew = (TH1D*)h->Clone( newHistoName.c_str() );
+		TH1D * hnew = (TH1D*)h->Clone( newHistoName.c_str() );
 		string title = hnew->GetTitle();
 		title = title + string(" (det ") + to_string(detID) + string(")");
 		_rootObjectMap.insert(make_pair(newHistoName, hnew));
@@ -226,9 +225,9 @@ void AlibavaCorrelator::createClones_hCor(string histoName){
 		int detID = _detectorIDs[idet];
 		for (unsigned int iCorDet=idet+1; iCorDet<_detectorIDs.size(); iCorDet++) {
 			int corDetID = _detectorIDs[iCorDet]; // correlated detector id
-			TH2D * hnew = new TH2D();
+			
 			string newHistoName = getHistoNameForDetector(histoName, detID, corDetID);
-			hnew = (TH2D*)h->Clone( newHistoName.c_str() );
+			TH2D * hnew = (TH2D*)h->Clone( newHistoName.c_str() );
 			string title = hnew->GetXaxis()->GetTitle();
 			title = title + string(" det") + to_string(detID);
 
@@ -249,9 +248,8 @@ void AlibavaCorrelator::createClones_hSync(string histoName){
 		int detID = _detectorIDs[idet];
 		for (unsigned int iCorDet=idet+1; iCorDet<_detectorIDs.size(); iCorDet++) {
 			int corDetID = _detectorIDs[iCorDet]; // correlated detector id
-			TH2D * hnew = new TH2D();
 			string newHistoName = getHistoNameForDetector(histoName, detID, corDetID);
-			hnew = (TH2D*)h->Clone( newHistoName.c_str() );
+			TH2D * hnew = (TH2D*)h->Clone( newHistoName.c_str() );
 			string title = hnew->GetYaxis()->GetTitle();
 			title = title + string(" d") + to_string(detID) + string(" - d")+to_string(corDetID);
 			
