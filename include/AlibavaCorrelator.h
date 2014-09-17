@@ -148,13 +148,51 @@ namespace alibava {
 	protected:
 
 
-		// SomeHisto
-		//! Name of the Some histogram
-		std::string _someHistoName;
+		// Hit position X
+		//! Name of the histogram of hit position X
+		std::string _hHitPosX;
 
-		// SomeOtherHisto
-		//! Name of the Some other histogram
-		std::string _someOtherHistoName;
+		// Hit position Y
+		//! Name of the histogram of hit position Y
+		std::string _hHitPosY;
+
+		// Hit correlation in X
+		//! Name of the histogram of hit correlation X
+		std::string _hCorX;
+
+		// Hit correlation in Y
+		//! Name of the histogram of hit correlation Y
+		std::string _hCorY;
+
+		// Hit residual in X vs eventnumber
+		//! Name of the histogram of hit redidual in X versus event number.
+		/*! This plot shows the syncronization of events
+		 */
+		std::string _hSyncX;
+
+		// Hit residual in Y vs eventnumber
+		//! Name of the histogram of hit redidual in Y versus event number.
+		/*! This plot shows the syncronization of events
+		 */
+		std::string _hSyncY;
+
+		
+		// just adding "_d" and detector number to the end of string
+		std::string getHistoNameForDetector(std::string name, int detID);
+
+		// just adding "_d" detID1 and "_d" detID2 to the end of string
+		std::string getHistoNameForDetector(std::string name, int detID1, int detID2);
+
+		// number of detectors
+		int _NDetector;
+		
+		// clones TH1D Histogram for each detector
+		void createClones_hHitPos(string histoName);
+		// clones TH2D Histogram for each detector combination
+		void createClones_hCor(string histoName);
+
+		// checks if detID is in _detectorIDs list
+		bool isInDetectorIDsList(int detID);
 
 	};
 	
