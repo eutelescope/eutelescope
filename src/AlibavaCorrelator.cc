@@ -13,6 +13,8 @@
 #include "AlibavaEventImpl.h"
 #include "ALIBAVA.h"
 
+// eutelescope includes ".h"
+#include "EUTELESCOPE.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -64,7 +66,7 @@ _hCorX("hCorX"),
 _hCorY("hCorY"),
 _hSyncX("hSyncX"),
 _hSyncY("hSyncY"),
-_NDetector(0)
+_detectorIDs()
 {
 	
 	// modify processor description
@@ -224,7 +226,7 @@ void AlibavaCorrelator::createClones_hCor(string histoName){
 		int detID = _detectorIDs[idet];
 		for (unsigned int iCorDet=idet+1; iCorDet<_detectorIDs.size(); iCorDet++) {
 			int corDetID = _detectorIDs[iCorDet]; // correlated detector id
-			TH2D * hnew = new TH1D();
+			TH2D * hnew = new TH2D();
 			string newHistoName = getHistoNameForDetector(histoName, detID, corDetID);
 			hnew = (TH2D*)h->Clone( newHistoName.c_str() );
 			string title = hnew->GetXaxis()->GetTitle();
@@ -247,7 +249,7 @@ void AlibavaCorrelator::createClones_hSync(string histoName){
 		int detID = _detectorIDs[idet];
 		for (unsigned int iCorDet=idet+1; iCorDet<_detectorIDs.size(); iCorDet++) {
 			int corDetID = _detectorIDs[iCorDet]; // correlated detector id
-			TH2D * hnew = new TH1D();
+			TH2D * hnew = new TH2D();
 			string newHistoName = getHistoNameForDetector(histoName, detID, corDetID);
 			hnew = (TH2D*)h->Clone( newHistoName.c_str() );
 			string title = hnew->GetYaxis()->GetTitle();
@@ -264,17 +266,17 @@ void AlibavaCorrelator::bookHistos(){
 	
 	
 	// hX plots
-	createClonesForEachDetector_TH1D(_hHitPosX);
+	createClones_hHitPos(_hHitPosX);
 	// hY plots
-	createClonesForEachDetector_TH1D(_hHitPosY);
+	createClones_hHitPos(_hHitPosY);
 	// hCorX
-	createClonesForEachDetector_TH2D(_hCorX);
+	createClones_hCor(_hCorX);
 	// hCorY
-	createClonesForEachDetector_TH2D(_hCorY);
+	createClones_hCor(_hCorY);
 	// hSyncX
-	createClonesForEachDetector_TH2D(_hSyncX);
+	createClones_hSync(_hSyncX);
 	// hSyncY
-	createClonesForEachDetector_TH2D(_hSyncY);
+	createClones_hSync(_hSyncY);
 
 	streamlog_out ( MESSAGE1 )  << "End of Booking histograms. " << endl;
 }
@@ -313,7 +315,7 @@ void AlibavaCorrelator::processEvent (LCEvent * anEvent) {
 	unsigned int noOfHits;
 	try{
 		collectionVec = dynamic_cast< LCCollectionVec * > ( alibavaEvent->getCollection( getInputCollectionName() ) ) ;
-		CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
+		CellIDDecoder<TrackerHitImpl> hitDecoder ( eutelescope::EUTELESCOPE::HITENCODING );
 
 		noOfHits = collectionVec->getNumberOfElements();
 		
@@ -391,11 +393,11 @@ void AlibavaCorrelator::end() {
 }
 
 // You have to define what bookEventHisto will do
-void AlibavaCorrelator::bookEventHisto(int eventnum){
+void AlibavaCorrelator::bookEventHisto(int ){
 	// does nothing
 }
 
 // You have to define what fillEventHisto will do
-void AlibavaCorrelator::fillEventHisto(int eventnum, TrackerDataImpl * trkdata){
+void AlibavaCorrelator::fillEventHisto(int , TrackerDataImpl * ){
 	// does nothing
 }
