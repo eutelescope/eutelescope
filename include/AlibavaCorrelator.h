@@ -5,8 +5,8 @@
  *  email:eda.yildirim@cern.ch
  */
 
-#ifndef EXAMPLEALIBAVAHISTOGRAMMAKER_H
-#define EXAMPLEALIBAVAHISTOGRAMMAKER_H 1
+#ifndef ALIBAVACORRELATOR_H
+#define ALIBAVACORRELATOR_H 1
 
 // alibava includes ".h"
 #include "AlibavaBaseHistogramMaker.h"
