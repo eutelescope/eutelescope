@@ -203,6 +203,7 @@ void AlibavaCorrelator::fillListOfHistos(){
 	addToHistoCheckList(_hCorY);
 	addToHistoCheckList(_hSyncX);
 	addToHistoCheckList(_hSyncY);
+	
 	checkListOfHistosCreatedByXMLFile();
 	
 }
@@ -214,7 +215,6 @@ void AlibavaCorrelator::createClones_hHitPos(string histoName){
 	TH1D * h = dynamic_cast<TH1D*> (_rootObjectMap[histoName]);
 	
 	streamlog_out ( MESSAGE1 )  << "hist "<< histoName<<" "<<h << endl;
-	AIDAProcessor::tree(this)->cd(this->name());
 	AIDAProcessor::tree(this)->mkdir(histoName.c_str());
 	AIDAProcessor::tree(this)->cd(histoName.c_str());
 	
@@ -236,7 +236,6 @@ void AlibavaCorrelator::createClones_hCor(string histoName){
 	AIDAProcessor::tree(this)->cd(getInputCollectionName().c_str());
 	TH2D * h = dynamic_cast<TH2D*> (_rootObjectMap[histoName]);
 	
-	AIDAProcessor::tree(this)->cd(this->name());
 	AIDAProcessor::tree(this)->mkdir(histoName.c_str());
 	AIDAProcessor::tree(this)->cd(histoName.c_str());
 	
@@ -263,7 +262,6 @@ void AlibavaCorrelator::createClones_hSync(string histoName){
 	AIDAProcessor::tree(this)->cd(getInputCollectionName().c_str());
 	TH2D * h = dynamic_cast<TH2D*> (_rootObjectMap[histoName]);
 	
-	AIDAProcessor::tree(this)->cd(this->name());
 	AIDAProcessor::tree(this)->mkdir(histoName.c_str());
 	AIDAProcessor::tree(this)->cd(histoName.c_str());
 	

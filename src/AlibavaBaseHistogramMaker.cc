@@ -196,6 +196,7 @@ void AlibavaBaseHistogramMaker::processHistoXMLFile(){
 					}
 					else
 						streamlog_out (ERROR5) << "Histogram type of "<<newHistoName<<" is not valid!"<<endl;
+				streamlog_out (DEBUG1) << "Histogram  "<< newHistoName <<" created!"<<endl;
 				}
 			}
 			else { // just create one
@@ -218,6 +219,9 @@ void AlibavaBaseHistogramMaker::processHistoXMLFile(){
 				}
 				else
 					streamlog_out (ERROR5) << "Histogram type of "<<histoName<<" is not valid!"<<endl;
+
+				streamlog_out (DEBUG1) << "Histogram  "<< histoName <<" created!" <<endl;
+
 			}
 			
 			// move to next element
