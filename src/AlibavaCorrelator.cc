@@ -197,19 +197,35 @@ std::string AlibavaCorrelator::getHistoNameForDetector(std::string name, int det
 }
 
 void AlibavaCorrelator::fillListOfHistos(){
+	addToHistoCheckList(_hHitPosX);
+	addToHistoCheckList(_hHitPosY);
+	addToHistoCheckList(_hCorX);
+	addToHistoCheckList(_hCorY);
+	addToHistoCheckList(_hSyncX);
+	addToHistoCheckList(_hSyncY);
+	checkListOfHistosCreatedByXMLFile();
 	
 }
 
 void AlibavaCorrelator::createClones_hHitPos(string histoName){
+	
+	AIDAProcessor::tree(this)->cd(this->name());
+	AIDAProcessor::tree(this)->cd(getInputCollectionName().c_str());
+	TH1D * h = dynamic_cast<TH1D*> (_rootObjectMap[histoName]);
+	
+	streamlog_out ( MESSAGE1 )  << "hist "<< histoName<<" "<<h << endl;
 	AIDAProcessor::tree(this)->cd(this->name());
 	AIDAProcessor::tree(this)->mkdir(histoName.c_str());
+	AIDAProcessor::tree(this)->cd(histoName.c_str());
 	
-	TH1D * h = dynamic_cast<TH1D*> (_rootObjectMap[histoName]);
 	for (unsigned int idet=0; idet<_detectorIDs.size(); idet++) {
 		int detID = _detectorIDs[idet];
 		string newHistoName = getHistoNameForDetector(histoName, detID);
 		TH1D * hnew = (TH1D*)h->Clone( newHistoName.c_str() );
+		
+	streamlog_out ( MESSAGE1 )  << "histnew "<< newHistoName<<" "<<hnew << endl;
 		string title = hnew->GetTitle();
+	streamlog_out ( MESSAGE1 )  << "histnew title "<< title << endl;
 		title = title + string(" (det ") + to_string(detID) + string(")");
 		_rootObjectMap.insert(make_pair(newHistoName, hnew));
 	}
@@ -217,9 +233,13 @@ void AlibavaCorrelator::createClones_hHitPos(string histoName){
 }
 void AlibavaCorrelator::createClones_hCor(string histoName){
 	AIDAProcessor::tree(this)->cd(this->name());
-	AIDAProcessor::tree(this)->mkdir(histoName.c_str());
-	
+	AIDAProcessor::tree(this)->cd(getInputCollectionName().c_str());
 	TH2D * h = dynamic_cast<TH2D*> (_rootObjectMap[histoName]);
+	
+	AIDAProcessor::tree(this)->cd(this->name());
+	AIDAProcessor::tree(this)->mkdir(histoName.c_str());
+	AIDAProcessor::tree(this)->cd(histoName.c_str());
+	
 	// the _detectorIDs vector has to be sorted
 	for (unsigned int idet=0; idet<_detectorIDs.size(); idet++) {
 		int detID = _detectorIDs[idet];
@@ -240,9 +260,13 @@ void AlibavaCorrelator::createClones_hCor(string histoName){
 }
 void AlibavaCorrelator::createClones_hSync(string histoName){
 	AIDAProcessor::tree(this)->cd(this->name());
-	AIDAProcessor::tree(this)->mkdir(histoName.c_str());
-	
+	AIDAProcessor::tree(this)->cd(getInputCollectionName().c_str());
 	TH2D * h = dynamic_cast<TH2D*> (_rootObjectMap[histoName]);
+	
+	AIDAProcessor::tree(this)->cd(this->name());
+	AIDAProcessor::tree(this)->mkdir(histoName.c_str());
+	AIDAProcessor::tree(this)->cd(histoName.c_str());
+	
 	// the _detectorIDs vector has to be sorted
 	for (unsigned int idet=0; idet<_detectorIDs.size(); idet++) {
 		int detID = _detectorIDs[idet];
