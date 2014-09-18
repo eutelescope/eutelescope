@@ -213,7 +213,7 @@ void AlibavaCorrelator::createClones_hHitPos(string histoName){
 		title = title + string(" (det ") + to_string(detID) + string(")");
 		_rootObjectMap.insert(make_pair(newHistoName, hnew));
 	}
-
+	
 }
 void AlibavaCorrelator::createClones_hCor(string histoName){
 	AIDAProcessor::tree(this)->cd(this->name());
@@ -230,10 +230,10 @@ void AlibavaCorrelator::createClones_hCor(string histoName){
 			TH2D * hnew = (TH2D*)h->Clone( newHistoName.c_str() );
 			string title = hnew->GetXaxis()->GetTitle();
 			title = title + string(" det") + to_string(detID);
-
+			
 			title = hnew->GetYaxis()->GetTitle();
 			title = title + string(" det") + to_string(corDetID);
-
+			
 			_rootObjectMap.insert(make_pair(newHistoName, hnew));
 		}
 	}
@@ -275,7 +275,7 @@ void AlibavaCorrelator::bookHistos(){
 	createClones_hSync(_hSyncX);
 	// hSyncY
 	createClones_hSync(_hSyncY);
-
+	
 	streamlog_out ( MESSAGE1 )  << "End of Booking histograms. " << endl;
 }
 
@@ -293,7 +293,7 @@ void AlibavaCorrelator::processEvent (LCEvent * anEvent) {
 	
 	AlibavaEventImpl * alibavaEvent = static_cast<AlibavaEventImpl*> (anEvent);
 	int eventnum = alibavaEvent->getEventNumber();
-	
+	/*
 	// if _skipMaskedEvents is set
 	if (_skipMaskedEvents && (alibavaEvent->isEventMasked()) ) {
 		_numberOfSkippedEvents++;
@@ -302,10 +302,10 @@ void AlibavaCorrelator::processEvent (LCEvent * anEvent) {
 		TH1D * histo = dynamic_cast<TH1D*> (_rootObjectMap[_maskedEventsHistoName]);
 		histo->Fill(eventnum);
 		
-		return;
+		return; //????
 	}
+	*/
 	
-
 	/////////////////////////////
 	// Now loop ever detectors //
 	
@@ -314,7 +314,7 @@ void AlibavaCorrelator::processEvent (LCEvent * anEvent) {
 	try{
 		collectionVec = dynamic_cast< LCCollectionVec * > ( alibavaEvent->getCollection( getInputCollectionName() ) ) ;
 		CellIDDecoder<TrackerHitImpl> hitDecoder ( eutelescope::EUTELESCOPE::HITENCODING );
-
+		
 		noOfHits = collectionVec->getNumberOfElements();
 		
 		for ( size_t ihit = 0; ihit < noOfHits; ++ihit ){
@@ -323,7 +323,7 @@ void AlibavaCorrelator::processEvent (LCEvent * anEvent) {
 			if ( !isInDetectorIDsList(detID) ) continue;
 			
 			const double* pos = ahit->getPosition();
-
+			
 			string histoName;
 			// fill hX
 			histoName = getHistoNameForDetector(_hHitPosX, detID);
@@ -340,13 +340,13 @@ void AlibavaCorrelator::processEvent (LCEvent * anEvent) {
 				int anotherDetID = hitDecoder( anotherHit )["sensorID"];
 				// only consider hits from other detectors
 				if (detID <= anotherDetID) continue;
-
+				
 				const double* anotherPos = anotherHit->getPosition();
 				
 				histoName = getHistoNameForDetector(_hCorX, detID, anotherDetID);
 				TH2D * hCorX = dynamic_cast<TH2D*> (_rootObjectMap[ histoName ]);
 				hCorX->Fill(pos[0], anotherPos[0]);
-
+				
 				histoName = getHistoNameForDetector(_hCorY, detID, anotherDetID);
 				TH2D * hCorY = dynamic_cast<TH2D*> (_rootObjectMap[ histoName ]);
 				hCorY->Fill(pos[1], anotherPos[1]);
