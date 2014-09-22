@@ -168,9 +168,9 @@ void AlibavaClusterCollectionMerger::readDataSource(int /* numEvents */) {
 		streamlog_out ( ERROR1 ) << "Can't access run header of the alibava file: " << e.what() << endl ;
 	}
 	
-	
+	int eventCounter=0;
 	LCEvent*  telescopeEvent;
-	LCEvent* alibavaEvent;
+	AlibavaEventImpl* alibavaEvent;
 
 	if (_eventIDDiff<0 ){
 		for (int i=0; i<abs(_eventIDDiff); i++)
@@ -182,9 +182,9 @@ void AlibavaClusterCollectionMerger::readDataSource(int /* numEvents */) {
 	}
 
 	while( ((telescopeEvent = telescope_lcReader->readNextEvent()) != 0)
-			&& ((alibavaEvent = alibava_lcReader->readNextEvent()) != 0 ) )
+			&& ((alibavaEvent = static_cast<AlibavaEventImpl*> (alibava_lcReader->readNextEvent())) != 0 ) )
 	{
-		if ( alibavaEvent->getEventNumber() % 1000 == 0 )
+		if ( eventCounter % 1000 == 0 )
 			streamlog_out ( MESSAGE4 ) << "Looping events "<<alibavaEvent->getEventNumber() << endl;
 		
 		LCCollectionVec * alibavaPulseColVec = 0;
@@ -208,7 +208,7 @@ void AlibavaClusterCollectionMerger::readDataSource(int /* numEvents */) {
 			// get telescope collections
 			telescopePulseColVec = dynamic_cast< LCCollectionVec * > ( telescopeEvent->getCollection( _telescopePulseCollectionName ) ) ;
 			telescopeSparseColVec = dynamic_cast< LCCollectionVec * > ( telescopeEvent->getCollection( _telescopeSparseCollectionName ) ) ;
-						
+			
 		} catch ( IOException& e) {
 			// do nothing again
 			streamlog_out( ERROR5 ) << e.what() << endl;
@@ -225,7 +225,22 @@ void AlibavaClusterCollectionMerger::readDataSource(int /* numEvents */) {
 		
 		try
 		{
-			LCEventImpl* outputEvent = new LCEventImpl();
+			AlibavaEventImpl* outputEvent = new AlibavaEventImpl();
+			
+			outputEvent->setRunNumber( alibavaEvent->getRunNumber() );
+			outputEvent->setEventNumber(eventCounter);
+			outputEvent->setEventType( alibavaEvent->getEventType() );
+			outputEvent->setEventSize( alibavaEvent->getEventSize() );
+			outputEvent->setEventValue( alibavaEvent->getEventValue() );
+			outputEvent->setEventTime( alibavaEvent->getEventTime() );
+			outputEvent->setEventTemp( alibavaEvent->getEventTemp() );
+			outputEvent->setCalCharge( alibavaEvent->getCalCharge() );
+			outputEvent->setCalDelay( alibavaEvent->getCalDelay() );
+			if (alibavaEvent->isEventMasked())
+				outputEvent->maskEvent();
+			else
+				outputEvent->unmaskEvent();
+						
 			outputEvent->addCollection(outputPulseColVec, _outputPulseCollectionName);
 			outputEvent->addCollection(outputSparseColVec, _outputSparseCollectionName);
 			
@@ -238,7 +253,7 @@ void AlibavaClusterCollectionMerger::readDataSource(int /* numEvents */) {
 			streamlog_out( ERROR5 ) << e.what() << endl;
 		}
 		
-      
+      eventCounter++;
 	}// end of loop over events
 	
 }
