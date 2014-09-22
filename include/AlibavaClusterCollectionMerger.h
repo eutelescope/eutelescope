@@ -97,7 +97,7 @@ namespace alibava {
 		 *  processors. It has to be "original_zsdata"
 		 */
 		std::string _outputSparseCollectionName;
-		int _eventIDDiff;			
+			
 	private:
 		
 		void copyClustersInCollection(LCCollectionVec * outputPulseColVec, LCCollectionVec * outputSparseColVec, LCCollectionVec * inputPulseColVec, LCCollectionVec * inputSparseColVec );
