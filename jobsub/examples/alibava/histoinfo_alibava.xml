@@ -179,22 +179,22 @@
 		
 		<!-- Detector ID will be added to the X and Y labels -->
 		<histo name="hCorX" perEachChip="false" type="TH2D"
-		xBin="100" xMin="-15" xMax="15" yMin="-15" yMax="15"
+		xBin="100" xMin="-15" xMax="15" yBin="100" yMin="-15" yMax="15"
 		title="Correlation" labelX="hit position X" labelY="hit position X" />
 		
 		<!-- Detector ID will be added to the labels -->
 		<histo name="hCorY" perEachChip="false" type="TH2D"
-		xBin="100" xMin="-15" xMax="15" yMin="-15" yMax="15"
+		xBin="100" xMin="-15" xMax="15" yBin="100" yMin="-15" yMax="15"
 		title="Correlation" labelX="hit position Y" labelY="hit position Y" />
 		
 		<!-- Calculation of residual will be added to labelY -->
 		<histo name="hSyncX" perEachChip="false" type="TH2D"
-		xBin="100" xMin="0" xMax="100000" yMin="-15" yMax="15"
+		xBin="100" xMin="0" xMax="100000" yBin="100" yMin="-15" yMax="15"
 		title="Synchronisation" labelX="Event number" labelY="dX" />
 		
 		<!-- Calculation of residual will be added to labelY -->
 		<histo name="hSyncY" perEachChip="false" type="TH2D"
-		xBin="100" xMin="0" xMax="100000" yMin="-15" yMax="15"
+		xBin="100" xMin="0" xMax="100000" yBin="100" yMin="-15" yMax="15"
 		title="Synchronisation" labelX="Event number" labelY="dY" />
 		
 	</myAlibavaCorrelator>
