@@ -60,6 +60,18 @@ namespace alibava {
 			return _lcHeader->getRunNumber();
 		}
 
+
+	//! Set detector name
+	/*! this is a string storing the detector name 
+	*
+	*  @param name The detector name
+	*/
+	virtual void setDetectorName (std::string name);
+	
+	//! return the header
+	inline std::string getDetectorName() const    {
+	return _lcHeader->getDetectorName();
+        }
 		
 	  //! Set the header
 	  /*! this is a string storing the header of alibava data file

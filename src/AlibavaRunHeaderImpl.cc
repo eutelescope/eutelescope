@@ -19,6 +19,12 @@
 using namespace std;
 using namespace alibava;
 
+void AlibavaRunHeaderImpl::setDetectorName (string name) {
+   // sets detector name
+	
+   _lcHeader->setDetectorName(name);
+}
+
 void AlibavaRunHeaderImpl::setRunNumber (int runnum) {
    // sets the run number
 	
