@@ -15,7 +15,7 @@
 
 // eutelescope includes ".h"
 #include "EUTELESCOPE.h"
-
+#include "EUTelEventImpl.h"
 
 // marlin includes
 #include "marlin/Global.h"
@@ -49,6 +49,7 @@ using namespace std;
 using namespace marlin;
 using namespace lcio;
 using namespace alibava;
+using namespace eutelescope;
 
 AlibavaClusterCollectionMerger::AlibavaClusterCollectionMerger ():
 DataSourceProcessor("AlibavaClusterCollectionMerger"),
@@ -169,21 +170,25 @@ void AlibavaClusterCollectionMerger::readDataSource(int /* numEvents */) {
 	}
 	
 	int eventCounter=0;
-	LCEvent*  telescopeEvent;
+	EUTelEventImpl*  telescopeEvent;
 	AlibavaEventImpl* alibavaEvent;
 
 	if (_eventIDDiff<0 ){
 		for (int i=0; i<abs(_eventIDDiff); i++)
-			telescopeEvent=telescope_lcReader->readNextEvent();
+			telescopeEvent = static_cast<EUTelEventImpl*> ( telescope_lcReader->readNextEvent() );
 	}
 	else if (_eventIDDiff>0){
 		for (int i=0; i<_eventIDDiff; i++)
-			alibavaEvent=static_cast<AlibavaEventImpl*> ( alibava_lcReader->readNextEvent() );
+			alibavaEvent = static_cast<AlibavaEventImpl*> ( alibava_lcReader->readNextEvent() );
 	}
 
-	while( ((telescopeEvent = telescope_lcReader->readNextEvent()) != 0)
+	while( ((telescopeEvent = static_cast<EUTelEventImpl*> ( telescope_lcReader->readNextEvent())) != 0 )
 			&& ((alibavaEvent = static_cast<AlibavaEventImpl*> (alibava_lcReader->readNextEvent())) != 0 ) )
 	{
+		if (telescopeEvent->getEventType() == kEORE){ 
+			streamlog_out ( MESSAGE5 ) << "Reached EORE of telescope data"<< endl;
+			break;		
+		}
 		if ( eventCounter % 1000 == 0 )
 			streamlog_out ( MESSAGE4 ) << "Looping events "<<alibavaEvent->getEventNumber() << endl;
 		

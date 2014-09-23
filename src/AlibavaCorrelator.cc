@@ -223,9 +223,7 @@ void AlibavaCorrelator::createClones_hHitPos(string histoName){
 		string newHistoName = getHistoNameForDetector(histoName, detID);
 		TH1D * hnew = (TH1D*)h->Clone( newHistoName.c_str() );
 		
-	streamlog_out ( MESSAGE1 )  << "histnew "<< newHistoName<<" "<<hnew << endl;
 		string title = hnew->GetTitle();
-	streamlog_out ( MESSAGE1 )  << "histnew title "<< title << endl;
 		title = title + string(" (det ") + to_string(detID) + string(")");
 		_rootObjectMap.insert(make_pair(newHistoName, hnew));
 	}
@@ -315,18 +313,6 @@ void AlibavaCorrelator::processEvent (LCEvent * anEvent) {
 	
 	AlibavaEventImpl * alibavaEvent = static_cast<AlibavaEventImpl*> (anEvent);
 	int eventnum = alibavaEvent->getEventNumber();
-	/*
-	// if _skipMaskedEvents is set
-	if (_skipMaskedEvents && (alibavaEvent->isEventMasked()) ) {
-		_numberOfSkippedEvents++;
-		
-		// Fill number of masked events histogram
-		TH1D * histo = dynamic_cast<TH1D*> (_rootObjectMap[_maskedEventsHistoName]);
-		histo->Fill(eventnum);
-		
-		return; //????
-	}
-	*/
 	
 	/////////////////////////////
 	// Now loop ever detectors //
@@ -343,7 +329,7 @@ void AlibavaCorrelator::processEvent (LCEvent * anEvent) {
 			TrackerHitImpl * ahit = dynamic_cast< TrackerHitImpl * > ( collectionVec->getElementAt( ihit ) ) ;
 			int detID = hitDecoder( ahit )["sensorID"];
 			if ( !isInDetectorIDsList(detID) ) continue;
-			
+
 			const double* pos = ahit->getPosition();
 			
 			string histoName;
@@ -361,7 +347,7 @@ void AlibavaCorrelator::processEvent (LCEvent * anEvent) {
 				TrackerHitImpl * anotherHit = dynamic_cast< TrackerHitImpl * > ( collectionVec->getElementAt( i ) ) ;
 				int anotherDetID = hitDecoder( anotherHit )["sensorID"];
 				// only consider hits from other detectors
-				if (detID <= anotherDetID) continue;
+				if (detID >= anotherDetID) continue;
 				
 				const double* anotherPos = anotherHit->getPosition();
 				
