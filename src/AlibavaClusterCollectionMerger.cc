@@ -178,7 +178,7 @@ void AlibavaClusterCollectionMerger::readDataSource(int /* numEvents */) {
 	}
 	else if (_eventIDDiff>0){
 		for (int i=0; i<_eventIDDiff; i++)
-			alibavaEvent=alibava_lcReader->readNextEvent();
+			alibavaEvent=static_cast<AlibavaEventImpl*> ( alibava_lcReader->readNextEvent() );
 	}
 
 	while( ((telescopeEvent = telescope_lcReader->readNextEvent()) != 0)
