@@ -194,7 +194,7 @@
 		
 		<!-- Calculation of residual will be added to labelY -->
 		<histo name="hSyncY" perEachChip="false" type="TH2D"
-		xBin="100" xMin="0 xMax="100000" yMin="-15" yMax="15"
+		xBin="100" xMin="0" xMax="100000" yMin="-15" yMax="15"
 		title="Synchronisation" labelX="Event number" labelY="dY" />
 		
 	</myAlibavaCorrelator>
