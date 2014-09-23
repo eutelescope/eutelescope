@@ -164,6 +164,41 @@
 		
 	</myAlibavaClusterHistogramMaker>
 	
+	
+	<!--     AlibavaCorrelator    -->
+	<myAlibavaCorrelator>
+		<!-- Detector ID will be added to the title -->
+		<histo name="hHitPosX" perEachChip="false" type="TH1D"
+		xBin="100" xMin="-15" xMax="15"
+		title="Hit X position" labelX="hit position X" labelY="Number of entries" />
+		
+		<!-- Detector ID will be added to the title -->
+		<histo name="hHitPosY" perEachChip="false" type="TH1D"
+		xBin="100" xMin="-15" xMax="15"
+		title="Hit Y position" labelX="hit position Y" labelY="Number of entries" />
+		
+		<!-- Detector ID will be added to the X and Y labels -->
+		<histo name="hCorX" perEachChip="false" type="TH2D"
+		xBin="100" xMin="-15" xMax="15" yMin="-15" yMax="15"
+		title="Correlation" labelX="hit position X" labelY="hit position X" />
+		
+		<!-- Detector ID will be added to the labels -->
+		<histo name="hCorY" perEachChip="false" type="TH2D"
+		xBin="100" xMin="-15" xMax="15" yMin="-15" yMax="15"
+		title="Correlation" labelX="hit position Y" labelY="hit position Y" />
+		
+		<!-- Calculation of residual will be added to labelY -->
+		<histo name="hSyncX" perEachChip="false" type="TH2D"
+		xBin="100" xMin="0" xMax="100000" yMin="-15" yMax="15"
+		title="Synchronisation" labelX="Event number" labelY="dX" />
+		
+		<!-- Calculation of residual will be added to labelY -->
+		<histo name="hSyncY" perEachChip="false" type="TH2D"
+		xBin="100" xMin="0 xMax="100000" yMin="-15" yMax="15"
+		title="Synchronisation" labelX="Event number" labelY="dY" />
+		
+	</myAlibavaCorrelator>
+	
 </AlibavaHistoList>
 
 
