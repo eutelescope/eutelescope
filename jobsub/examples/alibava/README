@@ -1,0 +1,36 @@
+Analysis chain:
+
+To calculate Pedestals
+jobsub -c config.cfg -csv runlist.csv alibava-convert-ped <PedRunNum>
+jobsub -c config.cfg alibava-pedestal <PedRunNum>
+jobsub -c config.cfg -csv runlist.csv alibava-commonmode <PedRunNum>
+jobsub -c config.cfg alibava-pedestal2 <PedRunNum>
+
+To get pedestal subtracted and common mode corrected signal values
+jobsub -c config.cfg -csv runlist.csv alibava-converter <SourceRunNum>
+jobsub -c config.cfg -csv runlist.csv alibava-reco <SourceRunNum>
+jobsub -c config.cfg alibava-commonmodecut <SourceRunNum>
+jobsub -c config.cfg -csv runlist.csv alibava-seedclustering <SourceRunNum>
+
+To plot histograms for data before clustering 
+jobsub -c config.cfg -csv runlist.csv alibava-datahisto <SourceRunNum>
+jobsub -c config.cfg -csv runlist.csv alibava-clusterhisto <SourceRunNum>
+
+At this point we have clusters from alibava data, lets get the ones from telescope too
+jobsub -c config.cfg -csv runlist.csv telescope-converter <TelescopeRunNum>
+jobsub -c config.cfg -csv runlist.csv telescope-clustering <TelescopeRunNum>
+jobsub -c config.cfg -csv runlist.csv telescope-filter <TelescopeRunNum>
+
+Now it is time to merge telescope and alibava cluster collections
+jobsub -c config.cfg -csv runlist.csv merger <SourceRunNum>
+
+And finally run hitmaker ;)
+jobsub -c config.cfg -csv runlist.csv hitmaker <SourceRunNum>
+
+Notes:
+<PedRunNum> : Alibava pedestal data run number
+<SourceRunNum> : Alibava beam data run number
+<TelescopeRunNum> : Telescope run number
+
+
+
