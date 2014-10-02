@@ -146,5 +146,15 @@ void EUTelGenericPixGeoMgr::addPlane(int planeID, std::string geoName, std::stri
 
 EUTelGenericPixGeoDescr* EUTelGenericPixGeoMgr::getPixGeoDescr(int planeID)
 {
-	return static_cast< EUTelGenericPixGeoDescr* > ( _geoDescriptions.find(planeID)->second );
+	std::map<int, EUTelGenericPixGeoDescr*>::iterator returnGeoDescrIt = _geoDescriptions.find(planeID);
+	if(returnGeoDescrIt == _geoDescriptions.end())
+	{
+		std::stringstream ss;
+		ss << "Could not retrieve plane: " << planeID << " from PixGeoMgr. Did you include it in your GEAR file?";
+		throw std::runtime_error( ss.str() );
+	}
+	else
+	{
+		return static_cast<EUTelGenericPixGeoDescr*>( returnGeoDescrIt->second );
+	}
 }

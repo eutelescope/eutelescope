@@ -1237,7 +1237,7 @@ void EUTelMille::processEvent (LCEvent * event) {
   
   if( _nMilleTracks > _maxTrackCandidatesTotal )
   {
-      throw StopProcessingException(this);
+	return; //throw StopProcessingException(this);
   }
   
   // fill resolution arrays
