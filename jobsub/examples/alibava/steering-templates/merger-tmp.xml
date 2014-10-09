@@ -35,7 +35,7 @@
   <!-- compression of output file 0: false >0: true (default) -->
   <parameter name="Compress" type="int" value="1"/>
   <!-- filename without extension-->
-  <parameter name="FileName" type="string" value="@HistogramPath@/@AlibavaOutputFormat@-converter"/>
+  <parameter name="FileName" type="string" value="@HistogramPath@/@MergedOutputFormat@-merger"/>
   <!-- type of output file root (default) or xml )-->
   <parameter name="FileType" type="string" value="root"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
@@ -62,7 +62,7 @@
 	 <!--Name of the merged/output sparse cluster collection. DO NOT Change this. This is hard coded in other  -->
 	 <parameter name="OutputSparseClusterCollectionName" type="string" lcioOutType="TrackerData">original_zsdata </parameter>
   <!--AlibavaEventNumber - TelescopeEventNumber-->
-  <parameter name="EventIDDifference" type="int">1 </parameter>
+  <parameter name="EventIDDifference" type="int">0 </parameter>
 <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
 	 <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
  </processor>
@@ -79,7 +79,7 @@
   <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
   <!--parameter name="KeepCollectionNames" type="StringVec" value="MyPreciousSimTrackerHits"/-->
   <!-- name of output file -->
-  <parameter name="LCIOOutputFile" type="string" value="@ResultsPath@/@AlibavaOutputFormat@-merger.slcio"/>
+  <parameter name="LCIOOutputFile" type="string" value="@ResultsPath@/@MergedOutputFormat@-merger.slcio"/>
   <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
   <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   <!--will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW-->
