@@ -20,6 +20,7 @@
       <processor name="MyEUTelProcessorHitMaker"/>
       <processor name="MyAlibavaCorrelator"/>
       <processor name="Save"/>
+      <processor name="EUTelUtilityPrintEventNumber"/>
    </execute>
 
    <global>
@@ -104,6 +105,17 @@
 	 <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
 	 <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
  </processor>
+
+ <processor name="EUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">
+ <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
+  <!--Print event number for every n-th event-->
+  <parameter name="EveryNEvents" type="int"> 2500 </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <parameter name="Verbosity" type="string"> MESSAGE0 </parameter>
+  <!--print the event timestamp as read from LCIO-->
+  <!--parameter name="printTimestamp" type="bool">false </parameter-->
+ </processor>
+
 
  <processor name="Save" type="EUTelOutputProcessor">
  <!--Writes the current event to the specified LCIO outputfile. Eventually it adds a EORE at the of the file if it was missing Needs to be the last ActiveProcessor.-->
