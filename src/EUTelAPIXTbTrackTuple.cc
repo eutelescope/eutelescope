@@ -258,7 +258,7 @@ bool EUTelAPIXTbTrackTuple::readHits( std::string hitColName, LCEvent* event )
     		double x = pos[0];
     		double y = pos[1];
     		double z = pos[2];
-   			
+  			
 		//undo GEAR rotations
 		rotMat rot = _invDUTRot.at(sensorID);
 		double xUnRot = rot.r1*x + rot.r2*y;
@@ -383,7 +383,7 @@ bool EUTelAPIXTbTrackTuple::readZsHits( std::string colName, LCEvent* event)
 				p_col->push_back( apixPixel.getXCoord() );
 				p_tot->push_back( static_cast< int >(apixPixel.getSignal()) );
 				p_lv1->push_back( static_cast< int >(apixPixel.getTime()) );
-      		}
+     		}
     	}
 		else
 		{
