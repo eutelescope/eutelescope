@@ -56,189 +56,121 @@ using namespace eutelescope;
 
 namespace eutelescope {
 
-    /** @class EUTelProcessorPatternRecognition Pattern recognition processor
-     * 
-     *  This processor performs track pattern recognition step that is 
-     *  necessary for two-step (track-search/fit) tracking, for example GBL.
-     *  Pattern recognition uses simple equation of motion and one directional Kalman filter 
-     *  Process noise is not added. Therefore scattering is not taken into account.
-     *  Furthermore smooth of the result is not performed therefore it is not a full Kalman filter 
-     *   *  @see EUTelTrackFinder
-     */
-  class EUTelProcessorPatternRecognition : public marlin::Processor {
+	/** @class EUTelProcessorPatternRecognition Pattern recognition processor
+	 * 
+	 *  This processor performs track pattern recognition step that is 
+	 *  necessary for two-step (track-search/fit) tracking, for example GBL.
+	 *  Pattern recognition uses simple equation of motion to estimate possible trajectory. 
+	 */
+	class EUTelProcessorPatternRecognition : public marlin::Processor {
        
     public:
 
     virtual marlin::Processor* newProcessor() {
-            return new EUTelProcessorPatternRecognition;
-        }
+			return new EUTelProcessorPatternRecognition;
+		}
 
-        EUTelProcessorPatternRecognition();
+		EUTelProcessorPatternRecognition();
 
-        /** Called at the begin of the job before anything is read.
-         * Use to initialize the processor, e.g. book histograms.
-         */
-        virtual void init();
+		//Here we define the virtual function from marlin::Processor.
+		/** Called at the begin of the job before anything is read.
+		 * Use to initialize the processor, e.g. book histograms.
+		 */
+		virtual void init();
 
-        /** Called for every run.
-         */
-        virtual void processRunHeader(lcio::LCRunHeader* run);
+		/** Called for every run.
+		 */
+		virtual void processRunHeader(lcio::LCRunHeader* run);
 
-        /** Called for every event - the working horse.
-         */
-        virtual void processEvent(lcio::LCEvent * evt);
+		/** Called for every event - the working horse.
+		 */
+		virtual void processEvent(lcio::LCEvent * evt);
 
-        virtual void check(lcio::LCEvent * evt);
+		virtual void check(lcio::LCEvent * evt);
 
-        /** Called after data processing for clean up.
-         */
-        virtual void end();
+		/** Called after data processing for clean up.
+		 */
+		virtual void end();
 
+    //This is the function declarations.//////////////////////////////////////
+		/** Histogram booking */
+		void bookHistograms();
 
+		void plotHistos( vector<EUTelTrack>&  trackCandidates );
 
-    public:
-        /** Histogram booking */
-        void bookHistograms();
+		void outputLCIO(LCEvent* evt,std::vector< EUTelTrack >&);
+		//Here we define all things to do with histogramming.
+		#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+		 /** AIDA histogram map
+		 *  Instead of putting several pointers to AIDA histograms as
+		 *  class members, histograms are booked in the init() method and
+		 *  their pointers are inserted into this map keyed by their
+		 *  names.
+		 *  The histogram filling can proceed recalling an object through
+		 *  its name
+		 */
+		std::map< std::string, AIDA::IHistogram1D* > _aidaHistoMap1D;
 
-        void plotHistos( vector<EUTelTrack>&  trackCandidates );
-
-				void outputLCIO(LCEvent* evt,std::vector< EUTelTrack >&);
-
-				void cartesian2LCIOTrack( EUTelTrackImpl* track, IMPL::TrackImpl*) const ;
-
-
-        // Processor parameters        
-
-    public:
-        /** Retuns amount of missing hits in a track candidate */
-        int getAllowedMissingHits() const;
-
-    public:
-
-        
-        /** Prepare LCIO data structure for dumping track
-         * candidate hits into LCIO files
-         */
-        void addTrackCandidateToCollection(lcio::LCEvent*, const std::vector< EVENT::TrackerHitVec >&);
-
-
-        /** Prepare LCIO data structure for dumping track hits from PR search
-         *  into LCIO files
-         */
-        void addTrackCandidateHitFittedToCollection(LCEvent*,  EVENT::TrackerHitVec& );
-
-
-        /** Prepare LCIO data structure for dumping track
-         * candidate hits into LCIO files
-         */
-        void addTrackCandidateToCollection1(lcio::LCEvent* evt, std::vector< IMPL::TrackImpl* >&);
-
-    protected:
-
-        // Input/Output collections of the processor
-
-        /** Input ZS Data collection name */
-	std::string _zsDataCollectionName;
-
-        /** Input TrackerHit collection name */
-	std::string _hitInputCollectionName;
-
-        /** Output TrackerHit collection name */
-        string _hitFittedOutputCollectionName;
-
-        /** Output TrackerHit collection name */
-        string _trackCandidateHitsOutputCollectionName;
-
+		/** Names of histograms */
+		struct _histName {
+			static string _numberTracksCandidatesHistName;
+			static string _numberOfHitOnTrackCandidateHistName;
+			static string _HitOnTrackCandidateHistName;
+			static string _chi2CandidateHistName;
+		};
+		#endif // defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
 
     protected:
-        /** Hot pixel collection name 
-         *  @TODO must be a part of a separate data structure
-         */
-//        string _hotPixelCollectionName;
+		//This is variables being declared here/////////////////////
+		/** Input TrackerHit collection name */
+		std::string _hitInputCollectionName;
 
-        /** Map of hot pixels */
-//        map<string, bool > _hotPixelMap;
+		/** Output Tracker collection name */
+		string _trackCandidateHitsOutputCollectionName;
 
-    protected:
+		/* Histogram info file name */
+		std::string _histoInfoFileName;
 
-        /** Track fitter*/
-        EUTelPatternRecognition* _trackFitter;
+		/** Track fitter*/
+		EUTelPatternRecognition* _trackFitter;
 
+		/** Maximal amount of missing hits per track candidate */
+		int _maxMissingHitsPerTrackCand;
 
-    private:
+		//The number of allowed similar hits on track candidates of a single event
+		int _AllowedSharedHitsOnTrackCandidate;
 
-        // Exhaustive finder state definition
+		/** Number of events processed */
+		int _nProcessedRuns;
+		/** Number of runs processed */
+		int _nProcessedEvents;
 
-        /** Maximal amount of missing hits per track candidate */
-        int _maxMissingHitsPerTrackCand;
+		/** Maximal amount of tracks per event */
+		int _maxNTracks;
 
-				//The number of allowed similar hits on track candidates of a single event
-				int _AllowedSharedHitsOnTrackCandidate;
+		float _initialDisplacement;        
 
-        /** Maximal amount of tracks per event */
-        int _maxNTracks;
- 
-        /** Maximal distance in XY plane */
-        double _residualsRMax;
-        
-        /** Beam energy in [GeV] */
-        double _eBeam;
+		/** Maximal distance in XY plane */
+		double _residualsRMax;
+		
+		/** Beam energy in [GeV] */
+		double _eBeam;
 
-        /** Beam charge in [e] */
-        double _qBeam;
-        
-        /** Beam energy uncertainty [%] */
-        double _eBeamUncertatinty;
-				float _initialDisplacement;        
-        /** Beam spread in [mrad] */
-        EVENT::FloatVec _beamSpread;
-				EVENT::IntVec _createSeedsFromPlanes;
-				EVENT::FloatVec _excludePlanes;         
-				EVENT::IntVec _planeDimension;
+		/** Beam charge in [e] */
+		double _qBeam;
+		
+		EVENT::IntVec _createSeedsFromPlanes;
+		EVENT::FloatVec _excludePlanes;         
+		EVENT::IntVec _planeDimension;
 
-				/* Histogram info file name */
-	std::string _histoInfoFileName;
-
-    protected:
-
-        // Statistics counters
-
-        /** Number of events processed */
-        int _nProcessedRuns;
-        /** Number of runs processed */
-        int _nProcessedEvents;
-
-    public:
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-        /** AIDA histogram map
-         *  Instead of putting several pointers to AIDA histograms as
-         *  class members, histograms are booked in the init() method and
-         *  their pointers are inserted into this map keyed by their
-         *  names.
-         *  The histogram filling can proceed recalling an object through
-         *  its name
-         */
-	std::map< std::string, AIDA::IHistogram1D* > _aidaHistoMap1D;
-
-        /** Names of histograms */
-	struct _histName {
-	static string _numberTracksCandidatesHistName;
-		    static string _numberOfHitOnTrackCandidateHistName;
-		    static string _HitOnTrackCandidateHistName;
-	static string _chi2CandidateHistName;
-
-        };
-#endif // defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-
-
-	private:
-	DISALLOW_COPY_AND_ASSIGN(EUTelProcessorPatternRecognition)   // prevent users from making (default) copies of processors
+		private:
+		DISALLOW_COPY_AND_ASSIGN(EUTelProcessorPatternRecognition)   // prevent users from making (default) copies of processors
      
-    };
+	};
 
-    /** A global instance of the processor */
-    EUTelProcessorPatternRecognition gEUTelProcessorPatternRecognition;
+	/** A global instance of the processor */
+	EUTelProcessorPatternRecognition gEUTelProcessorPatternRecognition;
 
 } // eutelescope
 

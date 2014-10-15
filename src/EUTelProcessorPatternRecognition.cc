@@ -39,9 +39,6 @@ _aidaHistoMap1D(){
 	// TrackerHit input collection
 	registerInputCollection(LCIO::TRACKERHIT,"HitInputCollectionName","Input hits collection name",_hitInputCollectionName,std::string("HitCollection"));
 
-	// TrackerHit output collection
-	registerInputCollection(LCIO::TRACKERHIT,"TrackerHitOutputCollectionName","Pattern recognition track - output hits collection name",_hitFittedOutputCollectionName,std::string("HitFittedCollection"));
-
 	// Track candidate hits output collection
 	registerOutputCollection(LCIO::TRACK,"TrackCandHitOutputCollectionName","Output track candidates hits collection name",_trackCandidateHitsOutputCollectionName,std::string("TrackCandidateHitCollection"));
 
