@@ -434,9 +434,7 @@ void EUTelPatternRecognition::findTrackCandidatesWithSameHitsAndRemove(){
 	}
 	streamlog_out(MESSAGE1) << "------------------------------EUTelPatternRecognition::findTrackCandidatesWithSameHitsAndRemove()---------------------------------END" << std::endl;
 }
-
-//This function can be expanded to check other user input that may be needed. 
-//Furthermore you can put other functions that cause _userInputGood to fail.        
+//This function is used to check that the input data is as expect. If not then we end the processor by throwing a exception.
 void EUTelPatternRecognition::testUserInput() {
 	streamlog_out(DEBUG2) << "EUTelPatternRecognition::testUserInput()" << std::endl;
 
@@ -446,21 +444,6 @@ void EUTelPatternRecognition::testUserInput() {
 	}
 	else{
 	 streamlog_out(DEBUG0) << Utility::outputColourString("Beam energy is reasonable", "GREEN") << std::endl;
-	}
-
-	if ( _beamEnergyUncertainty < 0 ) {
-		throw(lcio::Exception( Utility::outputColourString("Beam uncertainty is negative. Check supplied values","RED"))); 
-	}else{
-	 streamlog_out(DEBUG0) << Utility::outputColourString("Beam Energy uncertainty is reasonable","GREEN") << std::endl;
-	}
-
-	if(_beamAngularSpread.size() == 0){
-		throw(lcio::Exception( Utility::outputColourString("The beam spread size is zero.","RED"))); 
-	}
-	if(_beamAngularSpread[0] <= 0  or  _beamAngularSpread[1] <= 0){
-		throw(lcio::Exception( Utility::outputColourString("The beam spread is zero.","RED"))); 
-	}else{
-		streamlog_out(DEBUG0) << Utility::outputColourString("The size of beam spread is" +  to_string(_beamAngularSpread.size()),"GREEN") << std::endl;
 	}
 	if(_createSeedsFromPlanes.size() == 0){
 		throw(lcio::Exception( Utility::outputColourString("The number of planes to make seeds from is 0. We need at least one plane", "RED")));
@@ -473,21 +456,6 @@ void EUTelPatternRecognition::testUserInput() {
 	}
 	if(_excludePlanes.size() >= geo::gGeometry().sensorIDstoZOrder().size()){//TO DO: should check if seed planes are also excluded	
 	 streamlog_out(DEBUG0) << Utility::outputColourString("Beam energy is reasonable", "GREEN") << std::endl;
-	}
-
-	if ( _beamEnergyUncertainty < 0 ) {
-		throw(lcio::Exception( Utility::outputColourString("Beam uncertainty is negative. Check supplied values","RED"))); 
-	}else{
-	 streamlog_out(DEBUG0) << Utility::outputColourString("Beam Energy uncertainty is reasonable","GREEN") << std::endl;
-	}
-
-	if(_beamAngularSpread.size() == 0){
-		throw(lcio::Exception( Utility::outputColourString("The beam spread size is zero.","RED"))); 
-	}
-	if(_beamAngularSpread[0] <= 0  or  _beamAngularSpread[1] <= 0){
-		throw(lcio::Exception( Utility::outputColourString("The beam spread is zero.","RED"))); 
-	}else{
-		streamlog_out(DEBUG0) << Utility::outputColourString("The size of beam spread is" +  to_string(_beamAngularSpread.size()),"GREEN") << std::endl;
 	}
 	if(_createSeedsFromPlanes.size() == 0){
 		throw(lcio::Exception( Utility::outputColourString("The number of planes to make seeds from is 0. We need at least one plane", "RED")));
