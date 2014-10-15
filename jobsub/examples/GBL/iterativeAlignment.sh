@@ -66,8 +66,8 @@ Fxr="0 1 2 3 4 5"
 Fxs="0         5"
 Fyr="0 1 2 3 4 5"
 Fys="0         5"
-Fzr="0          "
-Fzs="0  3  5"
+Fzr="0 "
+Fzs="0 1 2 3 4 5"
 
 #Fxr="0 1 2 3 4 5 20"
 #Fxs="0         5 20"
@@ -82,19 +82,19 @@ Fzs="0  3  5"
 #outputGear="gear-final-XYshift-${RUN}.xml"
 #histoNameInput="GBLtrack-XYshift-${RUN}"
 
-#inputGear="gear-final-XYshift-${RUN}.xml"
+inputGear="gear-final-XYshift-${RUN}.xml"
 
 #outputGear="gear-final-XYshiftS2-${RUN}.xml"
 #histoNameInput="GBLtrack-XYshiftS2-${RUN}"
 
 #inputGear="gear-final-Zrotations-${RUN}.xml"
-inputGear="gear-final-ZRotation-${RUN}.xml"
-#outputGear="gear-final-ZRotation-${RUN}.xml"
+#inputGear="gear-final-ZRotation-${RUN}.xml"
+outputGear="gear-final-ZRotation-${RUN}.xml"
 #outputGear="gear-final-XYShift-DUT-${RUN}.xml"
 #histoNameInput="GBLtrack-XYshiftS-DUT-${RUN}"
-outputGear="gear-final-ZShift-${RUN}.xml"
-histoNameInput="GBLtrack-ZshiftS-${RUN}"
-#histoNameInput="GBLtrack-zRotation-${RUN}"
+#outputGear="gear-final-ZShift-${RUN}.xml"
+#histoNameInput="GBLtrack-ZshiftS-${RUN}"
+histoNameInput="GBLtrack-zRotation-${RUN}"
 
 #This is the alignment mode. It sets the size of the alignment jacobian dimensions.
 amode="7";
