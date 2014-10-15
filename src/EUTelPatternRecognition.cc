@@ -157,7 +157,7 @@ void EUTelPatternRecognition::testTrackCandidates(){
 		int idBefore=-999;
 		for(int j = 0; j<_tracks.at(i).getTracks().size();++j){
 			if(_tracks.at(i).getTracks().at(j)->getTrackerHits().size() > 1){
-				throw(lcio::Exception( Utility::outputColourString("The number of hits for each state is not 1","RED")));
+				throw(lcio::Exception( Utility::outputColourString("The number of hits for each state is greater than 1","RED")));
 			}
 			if(!_tracks.at(i).getTracks().at(j)->getTrackerHits().empty()){//Since some states will have not hits
 				const EVENT::TrackerHit* hit =  _tracks.at(i).getTracks().at(j)->getTrackerHits().at(0);

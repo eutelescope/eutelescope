@@ -98,26 +98,23 @@ void EUTelProcessorPatternRecognition::init(){
 		EUTelPatternRecognition* Finder = new EUTelPatternRecognition("PatternRecognition");//This is the class that contains all the functions that do the actual work
 		if (!Finder) {
 			streamlog_out(ERROR) << "Can't allocate an instance of EUTelExhaustiveTrackFinder. Stopping ..." << std::endl;
-			throw UnknownDataTypeException("Track finder was not created");
+			throw(lcio::Exception( Utility::outputColourString("Pattern recognition class not create correctly.","RED"))); 
 		}
 		 
 		Finder->setAllowedMissingHits( _maxMissingHitsPerTrackCand );
 		Finder->setAllowedSharedHitsOnTrackCandidate( _AllowedSharedHitsOnTrackCandidate );
-		Finder->setWindowSize( _residualsRMax );
+		Finder->setWindowSize( _residualsRMax );//This is the max distance between hit and predicted track position on plane that we will accept.
 		Finder->setPlanesToCreateSeedsFrom(_createSeedsFromPlanes);
-		Finder->setExcludePlanes(_excludePlanes);
+		Finder->setExcludePlanes(_excludePlanes);//No state will be made from these planes. These planes are completely ignored apart from there contribution to scattering.
 
 		Finder->setBeamMomentum( _eBeam );
 		Finder->setBeamCharge( _qBeam );
-		Finder->setBeamMomentumUncertainty( _eBeamUncertatinty );
-		Finder->setBeamSpread( _beamSpread );
-		Finder->setPlaneDimensionsVec(_planeDimension);
+		Finder->setPlaneDimensionsVec(_planeDimension);//This is to set if each plane is a strip/pixel sensor. 
 
 		_trackFitter = Finder;
-		_trackFitter->setAutoPlanestoCreateSeedsFrom();
-		_trackFitter->testUserInput();
-		// Book histograms. Yet again this should be replaced. TO DO:Create better histogram method.
-		bookHistograms();
+		_trackFitter->setAutoPlanestoCreateSeedsFrom();//If the user has not specified which planes to seed from the the first plane is used
+		_trackFitter->testUserInput();//Here we check that the user has provided the correct data. This is the most likey place to throw and exception.
+		bookHistograms();		// Book histograms. Yet again this should be replaced. TO DO:Create better histogram method.
 	}
 	catch(std::string &e){
 		streamlog_out(MESSAGE9) << e << std::endl;
@@ -132,7 +129,6 @@ void EUTelProcessorPatternRecognition::init(){
 		streamlog_out(MESSAGE9)<<"Unknown exception in init function of pattern recognition" <<endl;
 		throw StopProcessingException( this ) ;
 	}
-	
 }
 
 void EUTelProcessorPatternRecognition::processRunHeader(LCRunHeader* run) {
@@ -155,71 +151,82 @@ void EUTelProcessorPatternRecognition::processRunHeader(LCRunHeader* run) {
 				<< "The run header says the GeoID is " << header->getGeoID() << endl
 				<< "The GEAR description says is     " << geo::gGeometry().getSiPlanesLayoutID() << endl;
 	}
-	_trackFitter->clearEveryRun();		
+	_trackFitter->clearEveryRun();//This just sets the counter for the total number of hits/total number of shared hits to zero. 		
 		_nProcessedRuns++;
 }
 
 void EUTelProcessorPatternRecognition::processEvent(LCEvent * evt) {
-
-	streamlog_out(DEBUG1) << "Event #" << _nProcessedEvents << std::endl;
-	EUTelEventImpl * event = static_cast<EUTelEventImpl*> (evt); //Change the LCIO object to EUTel object. This is a simple way to extend functionality of the object.
-	_trackFitter->setEventNumber(_nProcessedEvents);
-	// Do not process last or unknown events
-	if (event->getEventType() == kEORE) {
-		streamlog_out(DEBUG4) << "EORE found: nothing else to do." << std::endl;
-		return;
-	} else if (event->getEventType() == kUNKNOWN) {
-		streamlog_out(WARNING2) << "Event number " << event->getEventNumber() << " in run " << event->getRunNumber()<< " is of unknown type. Continue considering it as a normal Data Event." << std::endl;
-	}
-	LCCollection* hitMeasuredCollection = NULL;
-	try {
+	try{
+		streamlog_out(DEBUG2) << "EUTelProcessorPatternRecognition::processEvent()" << std::endl;
+		streamlog_out(DEBUG1) << "Event #" << _nProcessedEvents << std::endl;
+		EUTelEventImpl * event = static_cast<EUTelEventImpl*> (evt); //Change the LCIO object to EUTel object. This is a simple way to extend functionality of the object.
+		_trackFitter->setEventNumber(_nProcessedEvents);//This is so we can use the event number with this class. 
+		// Do not process last event. For unknown events just a warning will do. 
+		if (event->getEventType() == kEORE) {
+			streamlog_out(DEBUG4) << "EORE found: nothing else to do." << std::endl;
+			throw marlin::SkipEventException(this);
+		} else if (event->getEventType() == kUNKNOWN) {
+			streamlog_out(WARNING2) << "Event number " << event->getEventNumber() << " in run " << event->getRunNumber()<< " is of unknown type. Continue considering it as a normal Data Event." << std::endl;
+		}
+		LCCollection* hitMeasuredCollection = NULL;
 		hitMeasuredCollection = evt->getCollection(_hitInputCollectionName);
 		streamlog_out(DEBUG1) << "collection : " <<_hitInputCollectionName << " retrieved" << std::endl;
-	} catch (DataNotAvailableException e) {
+
+		// this will only be entered if the collection is not available
+		if ( hitMeasuredCollection == NULL) {
+			streamlog_out(DEBUG2) << "EUTelProcessorPatternRecognition :: processEvent() hitMeasuredCollection is void" << std::endl;
+			throw marlin::SkipEventException(this);
+		}
+		// Prepare hits for track finder
+		EVENT::TrackerHitVec allHitsVec;
+		_trackFitter->clearFinalTracks(); //This is to clear the vector of tracks from the last event.
+		_trackFitter->findHitsOrderVec(hitMeasuredCollection,allHitsVec);//This is to create a vector of hits out of the input collection 
+		_trackFitter->setHitsVec(allHitsVec);//Will set data member of class _trackFitter. TO DO: We could do this within findHitsOrdervec.  
+		_trackFitter->testHitsVec();//Here we simply make sure the vector contains hits.
+		_trackFitter->printHits();//We print the hits to screen for debugging
+		streamlog_out(DEBUG2) << "Now map hits to planes" << std::endl;
+		_trackFitter->setHitsVecPerPlane();//Create map Sensor ID(non excluded)->HitsVec (Using geometry)
+		streamlog_out(DEBUG2) << "Test hits on the planes" << std::endl;
+		_trackFitter->testHitsVecPerPlane();//tests the size of the map and does it contain hits
+		streamlog_out(DEBUG2) << "Determine the dimensionality of the hit" << std::endl;
+		_trackFitter->testPlaneDimensions();//test that the number of dimensions is 3> >0
+		streamlog_out( DEBUG1 ) << "Trying to find tracks..." << endl;
+		_trackFitter->initialiseSeeds();//Create first states from hits. TO DO: This will not work for strip sensors. Not a big deal since we should not seed from strip sensors.
+		_trackFitter->testInitialSeeds();//Check hits not NULL and size correct
+	// searching for hits along the expected track direction 
+		_trackFitter->findTrackCandidates();//Find tracks from seeds. No cuts made here
+		_trackFitter->printTrackCandidates();
+		_trackFitter->testTrackCandidates();//Check that there is most 1 hit per state and each state has a unique hit.
+		_trackFitter->findTracksWithEnoughHits();//This will remove all tracks with hits less than specified by the cut.
+	// remove possible duplicates (the amount of commont hits on the split tracks is controled via the processor paraemter)
+		_trackFitter->findTrackCandidatesWithSameHitsAndRemove();//This will compare all tracks and if they have more than the allowed number of similar hits then remove. 
+		_trackFitter->testTrackQuality();//Here we test how many tracks we have after all cuts
+		streamlog_out( DEBUG1 ) << "Retrieving track candidates..." << endl;
+
+		std::vector<EUTelTrack>& tracks = _trackFitter->getTracks();//Get the tracks from the patternRecognition class. 
+
+		plotHistos(tracks);
+
+		outputLCIO(evt,tracks);
+
+		_nProcessedEvents++;
+	}
+ catch (DataNotAvailableException e) {
 		streamlog_out(WARNING2) << _hitInputCollectionName << " collection not available" << std::endl;
 		throw marlin::SkipEventException(this);
 	}
-
-	// this will only be entered if the collection is available
-	if ( hitMeasuredCollection == NULL) {
-		streamlog_out(DEBUG2) << "EUTelProcessorPatternRecognition :: processEvent() hitMeasuredCollection is void" << std::endl;
-		throw marlin::SkipEventException(this);
+	catch(std::string &e){
+		streamlog_out(MESSAGE9) << e << std::endl;
+		throw StopProcessingException( this ) ;
 	}
-	streamlog_out(DEBUG2) << "EUTelProcessorPatternRecognition::processEvent()" << std::endl;
-
-	// Prepare hits for track finder
-	EVENT::TrackerHitVec allHitsVec;
-	_trackFitter->clearFinalTracks(); //This is to clear the tracks from the last event.
-	_trackFitter->findHitsOrderVec(hitMeasuredCollection,allHitsVec);//Create hit vector 
-	_trackFitter->setHitsVec(allHitsVec);//Will set data member of class _trackFitter 
-	_trackFitter->testHitsVec();//Here we simply make sure the vector contains hits.
-  _trackFitter->printHits();//We print the hits to screen for debugging
-	streamlog_out(DEBUG2) << "Now map hits to planes" << std::endl;
-	_trackFitter->setHitsVecPerPlane();//Create map Sensor ID(non excluded)->HitsVec (Using geometry)
-	streamlog_out(DEBUG2) << "Test hits on the planes" << std::endl;
-	_trackFitter->testHitsVecPerPlane();//tests the size of the map and does it contain hits
-	streamlog_out(DEBUG2) << "Determine the dimensionality of the hit" << std::endl;
-	_trackFitter->testPlaneDimensions();//test that the number of dimensions is 3> >0
-	streamlog_out( DEBUG1 ) << "Trying to find tracks..." << endl;
-	_trackFitter->initialiseSeeds();//Create first states from hits. Shouldl work also for strip sensors
-	_trackFitter->testInitialSeeds();//Check hits not NULL and size correct
-// searching for hits along the expected track direction 
-	_trackFitter->findTrackCandidates();//Find tracks from seeds. No cuts made here
-	_trackFitter->printTrackCandidates();
-	_trackFitter->testTrackCandidates();
-	_trackFitter->findTracksWithEnoughHits();
-// remove possible duplicates (the amount of commont hits on the split tracks is controled via the processor paraemter)
-	_trackFitter->findTrackCandidatesWithSameHitsAndRemove();
-	_trackFitter->testTrackQuality();//Here we test how many tracks we have after all cuts
-	streamlog_out( DEBUG1 ) << "Retrieving track candidates..." << endl;
-
-	std::vector<EUTelTrack>& tracks = _trackFitter->getTracks(); 
-
-	plotHistos(tracks);
-
-	outputLCIO(evt,tracks);
-
-	_nProcessedEvents++;
+	catch(lcio::Exception& e){
+		streamlog_out(MESSAGE9) << e.what() <<endl;
+		throw StopProcessingException( this ) ;
+	}
+	catch(...){
+		streamlog_out(MESSAGE9)<<"Unknown exception in process function of pattern recognition" <<endl;
+		throw StopProcessingException( this ) ;
+	}
 }
 
 void EUTelProcessorPatternRecognition::outputLCIO(LCEvent* evt, std::vector<EUTelTrack>& tracks){
@@ -227,11 +234,10 @@ void EUTelProcessorPatternRecognition::outputLCIO(LCEvent* evt, std::vector<EUTe
 	streamlog_out( DEBUG4 ) << " ---------------- EUTelProcessorPatternRecognition::outputLCIO ---------- BEGIN ------------- " << std::endl;
 
 	//Create once per event    
-	LCCollectionVec * trkCandCollection = new LCCollectionVec(LCIO::TRACK);
-	LCCollectionVec * stateCandCollection = new LCCollectionVec(LCIO::TRACK);
-	LCCollectionVec * hitCandCollection = new LCCollectionVec(LCIO::TRACKERHIT);
+	LCCollectionVec * trkCandCollection = new LCCollectionVec(LCIO::TRACK);//This is for the track object
+	LCCollectionVec * stateCandCollection = new LCCollectionVec(LCIO::TRACK);// This is for the states which we attach to the track
 
-	// Prepare output collection
+	// Prepare output collection. Must set that this is a track object bit to save this lcio file correctly.
 	LCFlagImpl flag(trkCandCollection->getFlag());
 	flag.setBit( LCIO::TRBIT_HITS );
 	trkCandCollection->setFlag( flag.getFlag( ) );
@@ -248,17 +254,13 @@ void EUTelProcessorPatternRecognition::outputLCIO(LCEvent* evt, std::vector<EUTe
 		trkCandCollection->push_back(static_cast<EVENT::Track*>(trackheap));
 		for(int j = 0;j < trackheap->getTracks().size();++j){
 			stateCandCollection->push_back(trackheap->getTracks().at(j) );
-//			if(!trackheap->getTracks().at(j)->getTrackerHits().empty()){
-	//			hitCandCollection->push_back(trackheap->getTracks().at(j)->getTrackerHits().at(0));
-	//		}
 		}
 	}//END TRACK LOOP
 
 	//Now add this collection to the 
 	evt->addCollection(trkCandCollection, _trackCandidateHitsOutputCollectionName);
-	evt->addCollection(stateCandCollection, "States");
-//	evt->addCollection(hitCandCollection, "Hits");
-//	UTIL::LCTOOLS::dumpEventDetailed(evt);
+	string stateString = _trackCandidateHitsOutputCollectionName + "_States"; 
+	evt->addCollection(stateCandCollection, stateString);
 	streamlog_out( DEBUG4 ) << " ---------------- EUTelProcessorPatternRecognition::outputLCIO ---------- END ------------- " << std::endl;
 }
 //TO DO: find a more generic way to plot histograms
