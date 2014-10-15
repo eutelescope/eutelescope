@@ -1,4 +1,4 @@
-//Written by Alexander Morton using code by  Denys Lontkovskyi.
+//Written by Alexander Morton, Denys Lontkovskyi and Igor Rubinskiy.
 //contact alexander.morton975@gmail.com
 #ifdef USE_GBL   
 #include "EUTelProcessorGBLTrackFit.h"
@@ -34,7 +34,6 @@ std::string EUTelProcessorGBLTrackFit::_histName::_residGblFitHistNameY3p = "Res
 std::string EUTelProcessorGBLTrackFit::_histName::_residGblFitHistNameY4p = "Residual4Ypull";
 std::string EUTelProcessorGBLTrackFit::_histName::_residGblFitHistNameY5p = "Residual5Ypull";
 
-
 #endif // defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
 EUTelProcessorGBLTrackFit::EUTelProcessorGBLTrackFit() :
@@ -45,8 +44,7 @@ _nProcessedRuns(0),
 _nProcessedEvents(0),
 _beamQ(-1),
 _eBeam(4),
-_mEstimatorType(), //This is used by the GBL software for outliers down weighting
-_maxChi2Cut(1000)
+_mEstimatorType() //This is used by the GBL software for outliers down weighting
 {
 	// Processor description
 	_description = "EUTelProcessorGBLTrackFit this will fit gbl tracks and output them into LCIO file.";
@@ -57,64 +55,67 @@ _maxChi2Cut(1000)
 
   registerOptionalParameter("BeamCharge", "Beam charge [e]", _beamQ, static_cast<double> (-1));
 
-  // Necessary processor parameters that define fitter settings
   registerProcessorParameter("BeamEnergy", "Beam energy [GeV]", _eBeam, static_cast<double> (4.0));
-
-  // Optional processor parameters that define finder settings
-
+	//This is the determines the how we down weight our outliers. This by default is set that each point will have the same weighting.
   registerOptionalParameter("GBLMEstimatorType", "GBL outlier down-weighting option (t,h,c)", _mEstimatorType, string() );
 
   registerOptionalParameter("HistogramInfoFilename", "Name of histogram info xml file", _histoInfoFileName, std::string("histoinfo.xml"));
-
+	//This is the estimated resolution of the planes and DUT in x/y direction
   registerOptionalParameter("xResolutionPlane", "x resolution of planes given in Planes", _SteeringxResolutions, FloatVec());
   registerOptionalParameter("yResolutionPlane", "y resolution of planes given in Planes", _SteeringyResolutions, FloatVec());
-
 }
 
 void EUTelProcessorGBLTrackFit::init() {
-
-	streamlog_out(DEBUG2) << "EUTelProcessorGBLTrackFit::init( )---------------------------------------------BEGIN" << std::endl;
-	streamlog_out(DEBUG2) << "Beam charge= " << _beamQ <<" Beam energy= " << _eBeam << std::endl;
-
-	// Reset counters
-	_nProcessedRuns = 0;
-	_nProcessedEvents = 0;
-
-	// Getting access to geometry description
-	std::string name("test.root");
-	geo::gGeometry().initializeTGeoDescription(name,false);
-
-	// Initialize GBL fitter. This is the class that does all the work. Seems to me a good practice for the most part create a class that does the work. Since then you can use the same functions in another processor.
-	EUTelGBLFitter* Fitter = new EUTelGBLFitter("GBLFitter");
-  Fitter->SetBeamCharge(_beamQ);
-  Fitter->SetBeamEnergy(_eBeam);
-	Fitter->setMEstimatorType(_mEstimatorType);
-  Fitter->setChi2Cut(_maxChi2Cut);
-  Fitter->setParamterIdXResolutionVec(_SteeringxResolutions);
-  Fitter->setParamterIdYResolutionVec(_SteeringyResolutions);
-  _trackFitter = Fitter;
-
-
-	if (!_trackFitter) {
-		throw(lcio::Exception(Utility::outputColourString("Could not create instance of fitter class .", "RED")));
+	try{
+		streamlog_out(DEBUG2) << "EUTelProcessorGBLTrackFit::init( )---------------------------------------------BEGIN" << std::endl;
+		streamlog_out(DEBUG2) << "Beam charge= " << _beamQ <<" Beam energy= " << _eBeam << std::endl;
+		// Reset counters
+		_nProcessedRuns = 0;
+		_nProcessedEvents = 0;
+		//Create TGeo description from the gear.
+		std::string name("test.root");
+		geo::gGeometry().initializeTGeoDescription(name,false);
+		// Initialize GBL fitter. This is the class that does all the work. Seems to me a good practice for the most part create a class that does the work. Since then you can use the same functions in another processor.
+		EUTelGBLFitter* Fitter = new EUTelGBLFitter("GBLFitter");
+		Fitter->SetBeamCharge(_beamQ);
+		Fitter->SetBeamEnergy(_eBeam);
+		Fitter->setMEstimatorType(_mEstimatorType);//As said before this is to do with how we deal with outliers and the function we use to weight them.
+		Fitter->setParamterIdXResolutionVec(_SteeringxResolutions);
+		Fitter->setParamterIdYResolutionVec(_SteeringyResolutions);
+		_trackFitter = Fitter;
+		if (!_trackFitter) {
+			throw(lcio::Exception(Utility::outputColourString("Could not create instance of fitter class .", "RED")));
+		}
+		bookHistograms();//TO DO: Remove this and replace with generic histogram class 
+		streamlog_out(DEBUG2) << "EUTelProcessorGBLTrackFit::init( )---------------------------------------------END" << std::endl;
+	}	
+	catch(std::string &e){
+		streamlog_out(MESSAGE9) << e << std::endl;
+		throw StopProcessingException( this ) ;
 	}
-	bookHistograms();//TO DO: Remove this and replace with generic histogram class 
-	streamlog_out(DEBUG2) << "EUTelProcessorGBLTrackFit::init( )---------------------------------------------END" << std::endl;
+	catch(lcio::Exception& e){
+		streamlog_out(MESSAGE9) << e.what() <<endl;
+		throw StopProcessingException( this ) ;
+	}
+	catch(...){
+		streamlog_out(MESSAGE9)<<"Unknown exception in init function of EUTelProcessorGBLTrackFit" <<endl;
+		throw StopProcessingException( this ) ;
+	}
 }
 
 void EUTelProcessorGBLTrackFit::processRunHeader(LCRunHeader * run) {
 	auto_ptr<EUTelRunHeaderImpl> header(new EUTelRunHeaderImpl(run));
 	header->addProcessor(type());
 	// this is the right place also to check the geometry ID. This is a
-  	// unique number identifying each different geometry used at the
-  	// beam test. The same number should be saved in the run header and
+	// unique number identifying each different geometry used at the
+	// beam test. The same number should be saved in the run header and
  	// in the xml file. If the numbers are different, warn the user.
 	if (header->getGeoID() == 0)
  		streamlog_out(WARNING0) << "The geometry ID in the run header is set to zero." << endl << "This may mean that the GeoID parameter was not set" << endl;
 	if (header->getGeoID() != geo::gGeometry().getSiPlanesLayoutID()) {  
 		streamlog_out(WARNING5) << "Error during the geometry consistency check: " << endl << "The run header says the GeoID is " << header->getGeoID() << endl << "The GEAR description says is     " << geo::gGeometry().getSiPlanesLayoutID() << endl;
 	}
-	_chi2NdfVec.clear();
+	_chi2NdfVec.clear();//TO DO:This is needed to determine if the track is near chi2 of one. Do we need this however?
     
 	_nProcessedRuns++;
 }
@@ -122,98 +123,112 @@ void EUTelProcessorGBLTrackFit::processRunHeader(LCRunHeader * run) {
 void EUTelProcessorGBLTrackFit::check(LCEvent * evt){}
 
 void EUTelProcessorGBLTrackFit::processEvent(LCEvent * evt){
-	streamlog_out(DEBUG5) << "Start of event " << _nProcessedEvents << endl;
+	try{
+		streamlog_out(DEBUG5) << "Start of event " << _nProcessedEvents << endl;
 
-	EUTelEventImpl * event = static_cast<EUTelEventImpl*> (evt); ///We change the class so we can use EUTelescope functions
+		EUTelEventImpl * event = static_cast<EUTelEventImpl*> (evt); ///We change the class so we can use EUTelescope functions
 
-	if (event->getEventType() == kEORE) {
-		streamlog_out(DEBUG4) << "EORE found: nothing else to do." << endl;
-		return;
-	}else if (event->getEventType() == kUNKNOWN) {
-		streamlog_out(WARNING2) << "Event number " << event->getEventNumber() << " in run " << event->getRunNumber() << " is of unknown type. Continue considering it as a normal Data Event." << endl;
-	}
-	LCCollection* col = NULL;
-	try {
+		if (event->getEventType() == kEORE) {
+			streamlog_out(DEBUG4) << "EORE found: nothing else to do." << endl;
+			throw marlin::SkipEventException(this);
+		}else if (event->getEventType() == kUNKNOWN) {
+			streamlog_out(WARNING2) << "Event number " << event->getEventNumber() << " in run " << event->getRunNumber() << " is of unknown type. Continue considering it as a normal Data Event." << endl;
+		}
+		LCCollection* col = NULL;
 		col = evt->getCollection(_trackCandidatesInputCollectionName);
 		streamlog_out(DEBUG1) << "collection : " << _trackCandidatesInputCollectionName << " retrieved" << std::endl;
-	} catch (DataNotAvailableException e) {
+
+		if (col == NULL) {
+			streamlog_out(MESSAGE0)<<Utility::outputColourString("The collection is NULL for this event.", "YELLOW")<<std::endl;
+			throw marlin::SkipEventException(this);
+		}
+		std::vector<EUTelTrack> allTracksForThisEvent;//GBL will analysis the track one at a time. However we want to save to lcio per event.
+		for (int iCol = 0; iCol < col->getNumberOfElements(); iCol++) {
+			//TO DO: The original states from pattern recognition are changed for some reason. We want to create a completely new collection since we may want to run over this data again. 
+			//Also this is a memory leak.
+			EUTelTrack* trackPointer = new  EUTelTrack(*(static_cast<EUTelTrack*> (col->getElementAt(iCol))));
+			EUTelTrack track = *trackPointer;
+			_trackFitter->resetPerTrack(); //Here we reset the label that connects state to GBL point to 1 again. Also we set the list of states->labels to 0
+			track.print();//Print the track use for debugging
+			_trackFitter->testTrack(track);//Check the track has states and hits  
+			std::vector< gbl::GblPoint > pointList;
+			_trackFitter->setInformationForGBLPointList(track, pointList);
+			const gear::BField& B = geo::gGeometry().getMagneticFiled();
+			const double Bmag = B.at( TVector3(0.,0.,0.) ).r2();
+			_trackFitter->setListStateAndLabelBeforeTrajectory(pointList);//TO DO. This function and setListState.. (see below) these are to relate measurement state -> label and Any state -> label. Must rename.
+			gbl::GblTrajectory* traj = 0;
+			if ( Bmag < 1.E-6 ) {
+				traj = new gbl::GblTrajectory( pointList, false ); 
+			}else {
+				traj = new gbl::GblTrajectory( pointList, true );
+			}
+			_trackFitter->setListStateAndLabelAfterTrajectory(pointList,traj);//We must do this after trajectory. Since trajectory will label the points. 
+			double  chi2=0; 
+			int ndf=0;
+			int ierr=0;
+			_trackFitter->computeTrajectoryAndFit(pointList,traj, &chi2,&ndf, ierr);
+			if(ierr == 0 ){
+				 streamlog_out(DEBUG5) << "Ierr is: " << ierr << " Entering loop to update track information " << endl;
+				static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_chi2CandidateHistName ] ) -> fill( (chi2)/(ndf));
+				static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_fitsuccessHistName ] ) -> fill(1.0);
+				if(chi2 ==0 or ndf ==0){
+					throw(lcio::Exception(Utility::outputColourString("Your fitted track has zero degrees of freedom or a chi2 or 0.", "RED"))); 	
+				}
+
+				track.setChi2(chi2);
+				track.setNdf(ndf);
+				_chi2NdfVec.push_back(chi2/static_cast<float>(ndf));
+				map<int, vector<double> >  mapSensorIDToCorrectionVec;
+				_trackFitter->UpdateTrackFromGBLTrajectory(traj, pointList,track,mapSensorIDToCorrectionVec);
+				for(int i = 0; i < track.getStates().size();++i){
+					EUTelState state = track.getStates().at(i);
+					int location = state.getLocation();
+		//			_mapSensorIDToHistogramCorrection0[location]->fill(mapSensorIDToCorrectionVec[location].at(0));
+			//		_mapSensorIDToHistogramCorrection1[location]->fill(mapSensorIDToCorrectionVec[location].at(1));
+
+				//	_mapSensorIDToHistogramCorrection2[location]->fill(mapSensorIDToCorrectionVec[location].at(2));
+
+			//		_mapSensorIDToHistogramCorrection3[location]->fill(mapSensorIDToCorrectionVec[location].at(3));
+			//		_mapSensorIDToHistogramCorrection4[location]->fill(mapSensorIDToCorrectionVec[location].at(4));
+				}
+
+				map< int, map< float, float > >  SensorResidual; 
+				map< int, map< float, float > >  SensorResidualError; 
+				_trackFitter->getResidualOfTrackandHits(traj, pointList,track, SensorResidual, SensorResidualError);
+				plotResidual(SensorResidual,SensorResidualError, _first_time);
+				_first_time = false;
+
+			}
+			else{
+				 streamlog_out(DEBUG5) << "Ierr is: " << ierr << " Do not update track information " << endl;
+					static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_fitsuccessHistName ] ) -> fill(0.0);
+					continue;//We continue so we don't add an empty track
+			}	
+		allTracksForThisEvent.push_back(track);
+		}//END OF LOOP FOR ALL TRACKS IN AN EVENT
+		outputLCIO(evt, allTracksForThisEvent); 
+		allTracksForThisEvent.clear();//We clear this so we don't add the same track twice
+		streamlog_out(DEBUG5) << "End of event " << _nProcessedEvents << endl;
+		_nProcessedEvents++;
+	}
+	catch (DataNotAvailableException e) {
 		streamlog_out(MESSAGE0) << _trackCandidatesInputCollectionName << " collection not available" << std::endl;
 		throw marlin::SkipEventException(this);
 	}
-
-
-	if (col == NULL) {
-		streamlog_out(MESSAGE0)<<Utility::outputColourString("The collection is NULL for this event.", "YELLOW")<<std::endl;
-		throw marlin::SkipEventException(this);
+	catch(std::string &e){
+		streamlog_out(MESSAGE9) << e << std::endl;
+		throw StopProcessingException( this ) ;
 	}
-	std::vector<EUTelTrack> allTracksForThisEvent;
-	for (int iCol = 0; iCol < col->getNumberOfElements(); iCol++) {
-		//TO DO: The original states from pattern recognition are changed for some reason. We want to create a completely new collection since we may want to run over this data again. 
-		//Also this is a memory leak.
-		EUTelTrack* trackPointer = new  EUTelTrack(*(static_cast<EUTelTrack*> (col->getElementAt(iCol))));
-		EUTelTrack track = *trackPointer;
-		_trackFitter->resetPerTrack(); //Here we reset the label that connects state to GBL point to 1 again. Also we set the list of states->labels to 0
-		track.print();//Print the track use for debugging
-		_trackFitter->testTrack(track);//Check the track has states and hits  
-		std::vector< gbl::GblPoint > pointList;
-		_trackFitter->setInformationForGBLPointList(track, pointList);
-		const gear::BField& B = geo::gGeometry().getMagneticFiled();
-		const double Bmag = B.at( TVector3(0.,0.,0.) ).r2();
-		_trackFitter->setListStateAndLabelBeforeTrajectory(pointList);//TO DO. This function and setListState.. (see below) these are to relate measurement state -> label and Any state -> label. Must rename.
-		gbl::GblTrajectory* traj = 0;
-		if ( Bmag < 1.E-6 ) {
-			traj = new gbl::GblTrajectory( pointList, false ); 
-		}else {
-			traj = new gbl::GblTrajectory( pointList, true );
-		}
-		_trackFitter->setListStateAndLabelAfterTrajectory(pointList,traj);//We must do this after trajectory. Since trajectory will label the points. 
-		double  chi2=0; 
-		int ndf=0;
-		int ierr=0;
-		_trackFitter->computeTrajectoryAndFit(pointList,traj, &chi2,&ndf, ierr);
-		if(ierr == 0 ){
-			 streamlog_out(DEBUG5) << "Ierr is: " << ierr << " Entering loop to update track information " << endl;
-			static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_chi2CandidateHistName ] ) -> fill( (chi2)/(ndf));
-			static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_fitsuccessHistName ] ) -> fill(1.0);
-			if(chi2 ==0 or ndf ==0){
-				throw(lcio::Exception(Utility::outputColourString("Your fitted track has zero degrees of freedom or a chi2 or 0.", "RED"))); 	
-			}
+	catch(lcio::Exception& e){
+		streamlog_out(MESSAGE9) << e.what() <<endl;
+		throw StopProcessingException( this ) ;
 
-			track.setChi2(chi2);
-			track.setNdf(ndf);
-			_chi2NdfVec.push_back(chi2/static_cast<float>(ndf));
-			map<int, vector<double> >  mapSensorIDToCorrectionVec;
-			_trackFitter->UpdateTrackFromGBLTrajectory(traj, pointList,track,mapSensorIDToCorrectionVec);
-			for(int i = 0; i < track.getStates().size();++i){
-				EUTelState state = track.getStates().at(i);
-				int location = state.getLocation();
-	//			_mapSensorIDToHistogramCorrection0[location]->fill(mapSensorIDToCorrectionVec[location].at(0));
-		//		_mapSensorIDToHistogramCorrection1[location]->fill(mapSensorIDToCorrectionVec[location].at(1));
-
-			//	_mapSensorIDToHistogramCorrection2[location]->fill(mapSensorIDToCorrectionVec[location].at(2));
-
-		//		_mapSensorIDToHistogramCorrection3[location]->fill(mapSensorIDToCorrectionVec[location].at(3));
-		//		_mapSensorIDToHistogramCorrection4[location]->fill(mapSensorIDToCorrectionVec[location].at(4));
-			}
-
-			map< int, map< float, float > >  SensorResidual; 
-			map< int, map< float, float > >  SensorResidualError; 
-			_trackFitter->getResidualOfTrackandHits(traj, pointList,track, SensorResidual, SensorResidualError);
-			plotResidual(SensorResidual,SensorResidualError, _first_time);
-			_first_time = false;
-
-		}
-		else{
-			 streamlog_out(DEBUG5) << "Ierr is: " << ierr << " Do not update track information " << endl;
-				static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_fitsuccessHistName ] ) -> fill(0.0);
-				continue;//We continue so we don't add an empty track
-		}	
-	allTracksForThisEvent.push_back(track);
-	}//END OF LOOP FOR ALL TRACKS IN AN EVENT
-	outputLCIO(evt, allTracksForThisEvent); 
-	allTracksForThisEvent.clear();//We clear this so we don't add the same track twice
-	streamlog_out(DEBUG5) << "End of event " << _nProcessedEvents << endl;
-	_nProcessedEvents++;
+	}
+	catch(...){
+		streamlog_out(MESSAGE9)<<"Unknown exception in processEvent function of EUTelProcessorGBLTrackFit" <<endl;
+		throw StopProcessingException( this ) ;
+	}
+	
 }
 
 
