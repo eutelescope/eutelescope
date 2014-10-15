@@ -1,44 +1,44 @@
 //Written by Alexander Morton using code by  Denys Lontkovskyi.
-//contact alexander.morton@desy.de
+//contact alexander.morton975@gmail.com
 #ifdef USE_GBL   
-#include "EUTelProcessorGBLFitCandidates.h"
+#include "EUTelProcessorGBLTrackFit.h"
 using namespace eutelescope;
 //TO DO:
 //This way of making histograms makes no sense to me. We should have a class that when called will book any histograms in xml file automatically. So you dont have to book in every processor. It should also return a vector of names to access these histograms. I began this but have not finished. Therefore the silly way of doing the residuals
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-std::string EUTelProcessorGBLFitCandidates::_histName::_chi2CandidateHistName = "chi2HistName";
-std::string EUTelProcessorGBLFitCandidates::_histName::_fitsuccessHistName = "FitSuccessfulHistName";
-std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistNameX0 = "Residual0X";
-std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistNameX1 = "Residual1X";
-std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistNameX2 = "Residual2X";
-std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistNameX3 = "Residual3X";
-std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistNameX4 = "Residual4X";
-std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistNameX5 = "Residual5X";
-std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistNameY0 = "Residual0Y";
-std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistNameY1 = "Residual1Y";
-std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistNameY2 = "Residual2Y";
-std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistNameY3 = "Residual3Y";
-std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistNameY4 = "Residual4Y";
-std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistNameY5 = "Residual5Y";
+std::string EUTelProcessorGBLTrackFit::_histName::_chi2CandidateHistName = "chi2HistName";
+std::string EUTelProcessorGBLTrackFit::_histName::_fitsuccessHistName = "FitSuccessfulHistName";
+std::string EUTelProcessorGBLTrackFit::_histName::_residGblFitHistNameX0 = "Residual0X";
+std::string EUTelProcessorGBLTrackFit::_histName::_residGblFitHistNameX1 = "Residual1X";
+std::string EUTelProcessorGBLTrackFit::_histName::_residGblFitHistNameX2 = "Residual2X";
+std::string EUTelProcessorGBLTrackFit::_histName::_residGblFitHistNameX3 = "Residual3X";
+std::string EUTelProcessorGBLTrackFit::_histName::_residGblFitHistNameX4 = "Residual4X";
+std::string EUTelProcessorGBLTrackFit::_histName::_residGblFitHistNameX5 = "Residual5X";
+std::string EUTelProcessorGBLTrackFit::_histName::_residGblFitHistNameY0 = "Residual0Y";
+std::string EUTelProcessorGBLTrackFit::_histName::_residGblFitHistNameY1 = "Residual1Y";
+std::string EUTelProcessorGBLTrackFit::_histName::_residGblFitHistNameY2 = "Residual2Y";
+std::string EUTelProcessorGBLTrackFit::_histName::_residGblFitHistNameY3 = "Residual3Y";
+std::string EUTelProcessorGBLTrackFit::_histName::_residGblFitHistNameY4 = "Residual4Y";
+std::string EUTelProcessorGBLTrackFit::_histName::_residGblFitHistNameY5 = "Residual5Y";
 
-std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistNameX0p = "Residual0Xpull";
-std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistNameX1p = "Residual1Xpull";
-std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistNameX2p = "Residual2Xpull";
-std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistNameX3p = "Residual3Xpull";
-std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistNameX4p = "Residual4Xpull";
-std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistNameX5p = "Residual5Xpull";
-std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistNameY0p = "Residual0Ypull";
-std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistNameY1p = "Residual1Ypull";
-std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistNameY2p = "Residual2Ypull";
-std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistNameY3p = "Residual3Ypull";
-std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistNameY4p = "Residual4Ypull";
-std::string EUTelProcessorGBLFitCandidates::_histName::_residGblFitHistNameY5p = "Residual5Ypull";
+std::string EUTelProcessorGBLTrackFit::_histName::_residGblFitHistNameX0p = "Residual0Xpull";
+std::string EUTelProcessorGBLTrackFit::_histName::_residGblFitHistNameX1p = "Residual1Xpull";
+std::string EUTelProcessorGBLTrackFit::_histName::_residGblFitHistNameX2p = "Residual2Xpull";
+std::string EUTelProcessorGBLTrackFit::_histName::_residGblFitHistNameX3p = "Residual3Xpull";
+std::string EUTelProcessorGBLTrackFit::_histName::_residGblFitHistNameX4p = "Residual4Xpull";
+std::string EUTelProcessorGBLTrackFit::_histName::_residGblFitHistNameX5p = "Residual5Xpull";
+std::string EUTelProcessorGBLTrackFit::_histName::_residGblFitHistNameY0p = "Residual0Ypull";
+std::string EUTelProcessorGBLTrackFit::_histName::_residGblFitHistNameY1p = "Residual1Ypull";
+std::string EUTelProcessorGBLTrackFit::_histName::_residGblFitHistNameY2p = "Residual2Ypull";
+std::string EUTelProcessorGBLTrackFit::_histName::_residGblFitHistNameY3p = "Residual3Ypull";
+std::string EUTelProcessorGBLTrackFit::_histName::_residGblFitHistNameY4p = "Residual4Ypull";
+std::string EUTelProcessorGBLTrackFit::_histName::_residGblFitHistNameY5p = "Residual5Ypull";
 
 
 #endif // defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
-EUTelProcessorGBLFitCandidates::EUTelProcessorGBLFitCandidates() :
-Processor("EUTelProcessorGBLFitCandidates"),
+EUTelProcessorGBLTrackFit::EUTelProcessorGBLTrackFit() :
+Processor("EUTelProcessorGBLTrackFit"),
 _trackCandidatesInputCollectionName("Default_input"),
 _tracksOutputCollectionName("Default_output"),
 _nProcessedRuns(0),
@@ -49,7 +49,7 @@ _mEstimatorType(), //This is used by the GBL software for outliers down weightin
 _maxChi2Cut(1000)
 {
 	// Processor description
-	_description = "EUTelProcessorGBLFitCandidates this will fit gbl tracks and output them into LCIO file.";
+	_description = "EUTelProcessorGBLTrackFit this will fit gbl tracks and output them into LCIO file.";
   // TrackerHit input collection
   registerInputCollection(LCIO::TRACK, "TrackCandidatesInputCollectionName", "Input track candidate collection name",_trackCandidatesInputCollectionName,std::string("TrackCandidatesCollection"));
   // Track output collection
@@ -71,9 +71,9 @@ _maxChi2Cut(1000)
 
 }
 
-void EUTelProcessorGBLFitCandidates::init() {
+void EUTelProcessorGBLTrackFit::init() {
 
-	streamlog_out(DEBUG2) << "EUTelProcessorGBLFitCandidates::init( )---------------------------------------------BEGIN" << std::endl;
+	streamlog_out(DEBUG2) << "EUTelProcessorGBLTrackFit::init( )---------------------------------------------BEGIN" << std::endl;
 	streamlog_out(DEBUG2) << "Beam charge= " << _beamQ <<" Beam energy= " << _eBeam << std::endl;
 
 	// Reset counters
@@ -99,10 +99,10 @@ void EUTelProcessorGBLFitCandidates::init() {
 		throw(lcio::Exception(Utility::outputColourString("Could not create instance of fitter class .", "RED")));
 	}
 	bookHistograms();//TO DO: Remove this and replace with generic histogram class 
-	streamlog_out(DEBUG2) << "EUTelProcessorGBLFitCandidates::init( )---------------------------------------------END" << std::endl;
+	streamlog_out(DEBUG2) << "EUTelProcessorGBLTrackFit::init( )---------------------------------------------END" << std::endl;
 }
 
-void EUTelProcessorGBLFitCandidates::processRunHeader(LCRunHeader * run) {
+void EUTelProcessorGBLTrackFit::processRunHeader(LCRunHeader * run) {
 	auto_ptr<EUTelRunHeaderImpl> header(new EUTelRunHeaderImpl(run));
 	header->addProcessor(type());
 	// this is the right place also to check the geometry ID. This is a
@@ -119,9 +119,9 @@ void EUTelProcessorGBLFitCandidates::processRunHeader(LCRunHeader * run) {
 	_nProcessedRuns++;
 }
 
-void EUTelProcessorGBLFitCandidates::check(LCEvent * evt){}
+void EUTelProcessorGBLTrackFit::check(LCEvent * evt){}
 
-void EUTelProcessorGBLFitCandidates::processEvent(LCEvent * evt){
+void EUTelProcessorGBLTrackFit::processEvent(LCEvent * evt){
 	streamlog_out(DEBUG5) << "Start of event " << _nProcessedEvents << endl;
 
 	EUTelEventImpl * event = static_cast<EUTelEventImpl*> (evt); ///We change the class so we can use EUTelescope functions
@@ -218,7 +218,7 @@ void EUTelProcessorGBLFitCandidates::processEvent(LCEvent * evt){
 
 
 //TO DO:This is a very stupid way to histogram but will add new class to do this is long run 
-void EUTelProcessorGBLFitCandidates::plotResidual(map< int, map<float, float > >  & sensorResidual, map< int, map<float, float > >  & sensorResidualError, bool &first_time){
+void EUTelProcessorGBLTrackFit::plotResidual(map< int, map<float, float > >  & sensorResidual, map< int, map<float, float > >  & sensorResidualError, bool &first_time){
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Residual plot
 	std::map< int, map< float, float > >::iterator sensor_residual_it;
 	for(sensor_residual_it = sensorResidual.begin(); sensor_residual_it != sensorResidual.end(); sensor_residual_it++) {
@@ -279,7 +279,7 @@ void EUTelProcessorGBLFitCandidates::plotResidual(map< int, map<float, float > >
 }
 
 
-void EUTelProcessorGBLFitCandidates::end() {
+void EUTelProcessorGBLTrackFit::end() {
 	float total = 0;
 	double sizeFittedTracks = _chi2NdfVec.size();
 	for(int i=0; i<_chi2NdfVec.size(); ++i){
@@ -300,9 +300,9 @@ void EUTelProcessorGBLFitCandidates::end() {
 #endif // USE_GBL
 
 //TO DO: If you have a missing hit from a state this does not seem to work. However you can exclude planes which produces no hit which is fine
-void EUTelProcessorGBLFitCandidates::outputLCIO(LCEvent* evt, std::vector<EUTelTrack>& tracks){
+void EUTelProcessorGBLTrackFit::outputLCIO(LCEvent* evt, std::vector<EUTelTrack>& tracks){
 
-	streamlog_out( DEBUG4 ) << " ---------------- EUTelProcessorGBLFitCandidates::outputLCIO ---------- BEGIN ------------- " << std::endl;
+	streamlog_out( DEBUG4 ) << " ---------------- EUTelProcessorGBLTrackFit::outputLCIO ---------- BEGIN ------------- " << std::endl;
 
 	//Create once per event//Note that this will not cause a memory leak since lcio will delete the memory automatically for you    
 	LCCollectionVec * trkCandCollection = new LCCollectionVec(LCIO::TRACK);
@@ -335,13 +335,13 @@ void EUTelProcessorGBLFitCandidates::outputLCIO(LCEvent* evt, std::vector<EUTelT
 	string name = _tracksOutputCollectionName + "_states" ;
 	evt->addCollection(stateCandCollection, name);
 
-	streamlog_out( DEBUG4 ) << " ---------------- EUTelProcessorGBLFitCandidates::outputLCIO ---------- END ------------- " << std::endl;
+	streamlog_out( DEBUG4 ) << " ---------------- EUTelProcessorGBLTrackFit::outputLCIO ---------- END ------------- " << std::endl;
 }
 
 
 
 
-void EUTelProcessorGBLFitCandidates::bookHistograms() {
+void EUTelProcessorGBLTrackFit::bookHistograms() {
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
  try {
         streamlog_out(DEBUG) << "Booking histograms..." << std::endl;
@@ -589,7 +589,7 @@ catch (lcio::Exception& e) {
 
 
 
-void EUTelProcessorGBLFitCandidates::CreateEUTrackandStates(TrackImpl* trackimpl, EUTelTrackImpl* EUtrack){
+void EUTelProcessorGBLTrackFit::CreateEUTrackandStates(TrackImpl* trackimpl, EUTelTrackImpl* EUtrack){
 	
   	for(int i=0;i < trackimpl->getTrackStates().size(); i++){
 		EUTelTrackStateImpl *EUstate = new EUTelTrackStateImpl;

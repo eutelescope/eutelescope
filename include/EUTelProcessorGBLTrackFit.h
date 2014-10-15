@@ -50,18 +50,18 @@ using namespace marlin;
 using namespace std;
 namespace eutelescope {
 
- class EUTelProcessorGBLFitCandidates : public Processor {
+ class EUTelProcessorGBLTrackFit : public Processor {
 
     private:
-        DISALLOW_COPY_AND_ASSIGN(EUTelProcessorGBLFitCandidates)      // prevent users from making (default) copies of processors
+        DISALLOW_COPY_AND_ASSIGN(EUTelProcessorGBLTrackFit)      // prevent users from making (default) copies of processors
         
     public:
 
         virtual Processor* newProcessor() {
-            return new EUTelProcessorGBLFitCandidates;
+            return new EUTelProcessorGBLTrackFit;
         }
 
-        EUTelProcessorGBLFitCandidates();
+        EUTelProcessorGBLTrackFit();
         
     public:
         /** Called at the begin of the job before anything is read.
@@ -187,7 +187,7 @@ namespace eutelescope {
 };
 
     /** A global instance of the processor */
-    EUTelProcessorGBLFitCandidates gEUTelProcessorGBLFitCandidates;
+    EUTelProcessorGBLTrackFit gEUTelProcessorGBLTrackFit;
 
 }
 

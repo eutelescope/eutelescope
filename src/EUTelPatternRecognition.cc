@@ -681,10 +681,10 @@ streamlog_out(MESSAGE1) << "------------------------------EUTelPatternRecognitio
 //This creates map between plane ID and hits on that plane. 
 //We also order the map correcly with geometry.
 void EUTelPatternRecognition::setHitsVecPerPlane(){
-	streamlog_out(ERROR0) <<"EUTelPatternRecognition::setHitsVecPerPlane()----------------------------BEGIN" <<std::endl;
+	streamlog_out(DEBUG0) <<"EUTelPatternRecognition::setHitsVecPerPlane()----------------------------BEGIN" <<std::endl;
 	_mapHitsVecPerPlane.clear();
 	int numberOfPlanes = geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size();//Note should not make this a class data member since we call this by reference in geometry so defacto it is already accessed directly each time. By this I mean we do not create a new copy each time we call the function. 
-	streamlog_out(ERROR0) <<"The number of planes that we will add hits to: "<< numberOfPlanes  <<std::endl;
+	streamlog_out(DEBUG0) <<"The number of planes that we will add hits to: "<< numberOfPlanes  <<std::endl;
 	if(numberOfPlanes == 0){
 		throw(lcio::Exception( "The number of planes is 0 to get hits from."));
 	}
@@ -700,13 +700,13 @@ void EUTelPatternRecognition::setHitsVecPerPlane(){
 		}		
 	_mapHitsVecPerPlane[ geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i]] = 	tempHitsVecPlaneX;
 	}	
-	streamlog_out(ERROR0) <<"EUTelPatternRecognition::setHitsVecPerPlane()----------------------------END" <<std::endl;
+	streamlog_out(DEBUG0) <<"EUTelPatternRecognition::setHitsVecPerPlane()----------------------------END" <<std::endl;
 }
 //Note loop through all planes. Even the excluded. This is easier since you don't have to change this input each time then.
 void EUTelPatternRecognition::setPlaneDimensionsVec(EVENT::IntVec planeDimensions){
-	streamlog_out(ERROR0) <<"EUTelPatternRecognition::setPlaneDimensionsVec()----------------------------BEGIN" <<std::endl;
+	streamlog_out(DEBUG0) <<"EUTelPatternRecognition::setPlaneDimensionsVec()----------------------------BEGIN" <<std::endl;
 	if(planeDimensions.size() != geo::gGeometry().sensorZOrdertoIDs().size()){
-		streamlog_out(ERROR5) << "The size of planesDimensions input is: "<< planeDimensions.size()<<" The size of sensorZOrdertoIDs is: " << geo::gGeometry().sensorZOrdertoIDs().size()<< std::endl;
+		streamlog_out(ERROR) << "The size of planesDimensions input is: "<< planeDimensions.size()<<" The size of sensorZOrdertoIDs is: " << geo::gGeometry().sensorZOrdertoIDs().size()<< std::endl;
 		throw(lcio::Exception( Utility::outputColourString("The input dimension vector not the same as the number of planes!","RED")));
 	}
 	_planeDimensions.clear();
@@ -718,7 +718,7 @@ void EUTelPatternRecognition::setPlaneDimensionsVec(EVENT::IntVec planeDimension
 		streamlog_out(ERROR5) << "The size of _planesDimensions is: "<< planeDimensions.size()<<" The size of sensorZOrdertoIDs is: " << geo::gGeometry().sensorZOrdertoIDs().size()<< std::endl;
 		throw(lcio::Exception( Utility::outputColourString("The output dimension vector is not the same size as the number of planes ","RED")));
 	}
-	streamlog_out(ERROR0) <<"EUTelPatternRecognition::setPlaneDimensionsVec()----------------------------END" <<std::endl;
+	streamlog_out(DEBUG0) <<"EUTelPatternRecognition::setPlaneDimensionsVec()----------------------------END" <<std::endl;
 }	    
 
 
