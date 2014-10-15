@@ -285,127 +285,6 @@ void EUTelProcessorPatternRecognition::plotHistos( vector<EUTelTrack>& trackCand
 		}
 }
 
-/**
- * Dump track candidate fitted hits into lcio collection.
- * 
- * @param evt event pointer
- * @param trackCandidateHitFirred  vector of hits from Pattern recognition
- */
-void EUTelProcessorPatternRecognition::addTrackCandidateHitFittedToCollection(LCEvent* evt, EVENT::TrackerHitVec& trackCandidateHitFitted ) {
-    // Prepare output collection
-
-    // Try to access Output collection
-    LCCollectionVec* hitFittedCollection = NULL;
-    try {
-        hitFittedCollection =  static_cast<LCCollectionVec*> ( evt->getCollection(_hitFittedOutputCollectionName) ) ;
-        streamlog_out(DEBUG1) << "collection : " <<_hitFittedOutputCollectionName << " retrieved" << std::endl;
-    } catch (DataNotAvailableException e) {
-        streamlog_out(WARNING2) << _hitFittedOutputCollectionName << " collection not available, creating one ... " << std::endl;
-        hitFittedCollection = new LCCollectionVec(LCIO::TRACKERHIT);
-    }
-
-    // Fill 
-    EVENT::TrackerHitVec::iterator ihit;
-    for ( ihit = trackCandidateHitFitted.begin(); ihit != trackCandidateHitFitted.end(); ++ihit ) {
-        streamlog_out( MESSAGE1 ) << "hit " << (*ihit)->getType() << " hits" << endl;
-        hitFittedCollection->push_back( (*ihit) );
-
-    } // for (size_t itrk = 0; itrk < trackCandidates.size(); itrk++) 
-
-
-    // Write track candidates collection
-    try {
-        streamlog_out(MESSAGE1) << "Getting collection " << _hitFittedOutputCollectionName << endl;
-        evt->getCollection(_trackCandidateHitsOutputCollectionName);
-    } catch (...) {
-        streamlog_out(MESSAGE1) << "Adding collection " << _hitFittedOutputCollectionName << endl;
-        evt->addCollection( hitFittedCollection, _hitFittedOutputCollectionName);
-    }
-
-}
-
-
-/**
- * Dump track candidate into lcio collection.
- * 
- * @param evt event pointer
- * @param trackCandidates  vectors of hits assigned to track candidates
- */
-void EUTelProcessorPatternRecognition::addTrackCandidateToCollection1(LCEvent* evt, std::vector< IMPL::TrackImpl* >& trackCandidates ) {
-    // Prepare output collection
-    LCCollectionVec * trkCandCollection = 0;
-    try {
-        trkCandCollection = new LCCollectionVec(LCIO::TRACK);
-        LCFlagImpl flag(trkCandCollection->getFlag());
-        flag.setBit( LCIO::TRBIT_HITS );
-        trkCandCollection->setFlag( flag.getFlag( ) );
-    } catch (...) {
-        streamlog_out(WARNING2) << "Can't allocate output collection" << endl;
-    }
-
-    // Fill track parameters with nonsense except of hits
-    std::vector< IMPL::TrackImpl* >::iterator itrk;
-    for ( itrk = trackCandidates.begin(); itrk != trackCandidates.end(); ++itrk ) {
-        streamlog_out( MESSAGE1 ) << "Track has " << (*itrk)->getTrackerHits().size() << " hits" << endl;
-        trkCandCollection->push_back( (*itrk) );
-
-    } // for (size_t itrk = 0; itrk < trackCandidates.size(); itrk++) 
-
-    // Write track candidates collection
-    try {
-        streamlog_out(MESSAGE1) << "Getting collection " << _trackCandidateHitsOutputCollectionName << endl;
-        evt->getCollection(_trackCandidateHitsOutputCollectionName);
-    } catch (...) {
-        streamlog_out(MESSAGE1) << "Adding collection " << _trackCandidateHitsOutputCollectionName << endl;
-        evt->addCollection(trkCandCollection, _trackCandidateHitsOutputCollectionName);
-    }
-
-}
-
-/**
- * Dumpt track candidate into lcio collection.
- * 
- * @param evt event pointer
- * @param trackCandidates  vectors of hits assigned to track candidates
- */
-void EUTelProcessorPatternRecognition::addTrackCandidateToCollection(LCEvent* evt, const vector< EVENT::TrackerHitVec >& trackCandidates) {
-    // Prepare output collection
-    LCCollectionVec * trkCandCollection = 0;
-    try {
-        trkCandCollection = new LCCollectionVec(LCIO::TRACK);
-        LCFlagImpl flag(trkCandCollection->getFlag());
-        flag.setBit( LCIO::TRBIT_HITS );
-        trkCandCollection->setFlag( flag.getFlag( ) );
-    } catch (...) {
-        streamlog_out(WARNING2) << "Can't allocate output collection" << endl;
-    }
-
-    // Fill track parameters with nonsense except of hits
-    for (size_t itrk = 0; itrk < trackCandidates.size(); itrk++) {
-        IMPL::TrackImpl* trackcand = new IMPL::TrackImpl;           // Don't free it manually, because it is owned by trkCandCollection
-
-        // Assign hits to LCIO TRACK
-        EVENT::TrackerHitVec trkcandhits = trackCandidates[itrk];
-        for (size_t ihit = 0; ihit < trkcandhits.size(); ihit++) {
-            TrackerHitImpl* hit = static_cast<TrackerHitImpl*>(trkcandhits[ihit]);
-            trackcand->addHit( hit );
-        }
-        streamlog_out( DEBUG1 ) << "Track has " << trackcand->getTrackerHits().size() << " hits" << endl;
-        trkCandCollection->push_back(trackcand);
-
-    } // for (size_t itrk = 0; itrk < trackCandidates.size(); itrk++) 
-
-    // Write track candidates collection
-    try {
-        streamlog_out(DEBUG1) << "Getting collection " << _trackCandidateHitsOutputCollectionName << endl;
-        evt->getCollection(_trackCandidateHitsOutputCollectionName);
-    } catch (...) {
-        streamlog_out(DEBUG1) << "Adding collection " << _trackCandidateHitsOutputCollectionName << endl;
-        evt->addCollection(trkCandCollection, _trackCandidateHitsOutputCollectionName);
-    }
-
-}
-
 void EUTelProcessorPatternRecognition::check(LCEvent * /*evt*/) {
     // nothing to check here
 }
@@ -420,7 +299,7 @@ void EUTelProcessorPatternRecognition::end() {
             << " track candidates : " << static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_numberOfHitOnTrackCandidateHistName ] ) -> allEntries()
             << std::endl;
 }
-
+//TO DO: Create a better way of booking histograms.
 void EUTelProcessorPatternRecognition::bookHistograms() {
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
@@ -538,7 +417,3 @@ void EUTelProcessorPatternRecognition::bookHistograms() {
 #endif // defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 }
 
-
-int EUTelProcessorPatternRecognition::getAllowedMissingHits() const {
-    return _maxMissingHitsPerTrackCand;
-}
