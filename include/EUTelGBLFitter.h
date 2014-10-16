@@ -1,8 +1,7 @@
 /* 
  * File:   EUTelGBLFitter.h
- * Contact: denys.lontkovskyi@desy.de
+ * Contact: alexander.morton975@gmail.com
  *
- * Created on January 25, 2013, 2:53 PM
  */
 
 #ifdef USE_GBL
@@ -91,12 +90,12 @@ namespace eutelescope {
 
 				void computeTrajectoryAndFit(std::vector< gbl::GblPoint >& pointList,  gbl::GblTrajectory* traj, double* chi2, int* ndf, int & ierr);
 
-				void UpdateTrackFromGBLTrajectory(gbl::GblTrajectory* traj,std::vector< gbl::GblPoint >& pointList, EUTelTrack & track, map<int, vector<double> > &  mapSensorIDToCorrectionVec );
+				void updateTrackFromGBLTrajectory(gbl::GblTrajectory* traj,std::vector< gbl::GblPoint >& pointList, EUTelTrack & track, map<int, vector<double> > &  mapSensorIDToCorrectionVec );
 				void setPointVec( std::vector< gbl::GblPoint >& pointList, gbl::GblPoint& point);
 				std::vector<EUTelState> _measurementStatesInOrder;
 				std::vector<EUTelState> _statesInOrder;
-				void setListStateAndLabelAfterTrajectory(std::vector< gbl::GblPoint >& pointList, gbl::GblTrajectory*);
-				void setListStateAndLabelBeforeTrajectory(std::vector< gbl::GblPoint >& pointList);
+				void setPairAnyStateAndPointLabelVec(std::vector< gbl::GblPoint >& pointList, gbl::GblTrajectory*);
+				void setPairMeasurementStateAndPointLabelVec(std::vector< gbl::GblPoint >& pointList);
 				gbl::GblPoint getLabelToPoint(std::vector<gbl::GblPoint> & pointList, int label);
 				void setAlignmentToMeasurementJacobian(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList);
 				void setScattererGBL(gbl::GblPoint& point,EUTelState & state );

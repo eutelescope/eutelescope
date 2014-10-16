@@ -1,5 +1,5 @@
-#ifndef EUTELESCOPEPROCESSORGBLFITCANDIDATES_H
-#define	EUTELESCOPEPROCESSORGBLFITCANDIDATES_H
+#ifndef EUTELESCOPEPROCESSORGBLTRACKFIT_H
+#define	EUTELESCOPEPROCESSORGBLTRACKFIT_H
 
 #ifdef USE_GBL
 
@@ -50,80 +50,85 @@ using namespace marlin;
 using namespace std;
 namespace eutelescope {
 
- class EUTelProcessorGBLTrackFit : public Processor {
+	class EUTelProcessorGBLTrackFit : public Processor {
 
-    private:
-        DISALLOW_COPY_AND_ASSIGN(EUTelProcessorGBLTrackFit)      // prevent users from making (default) copies of processors
-        
-    public:
+		private:
+			DISALLOW_COPY_AND_ASSIGN(EUTelProcessorGBLTrackFit)      // prevent users from making (default) copies of processors
+						
+		public:
 
-        virtual Processor* newProcessor() {
-            return new EUTelProcessorGBLTrackFit;
-        }
+			virtual Processor* newProcessor() {
+					return new EUTelProcessorGBLTrackFit;
+			}
 
-        EUTelProcessorGBLTrackFit();
-        
-    public:
-        /** Called at the begin of the job before anything is read.
-         * Use to initialize the processor, e.g. book histograms.
-         */
-        virtual void init();
+			EUTelProcessorGBLTrackFit();
 
-        /** Called for every run.
-         */
-        virtual void processRunHeader(LCRunHeader* run);
+			/** Called at the begin of the job before anything is read.
+			 * Use to initialize the processor, e.g. book histograms.
+			 */
+			virtual void init();
 
-        /** Called for every event - the working horse.
-         */
-        virtual void processEvent(LCEvent * evt);
+			/** Called for every run.
+			 */
+			virtual void processRunHeader(LCRunHeader* run);
 
-        virtual void check(LCEvent * evt);
+			/** Called for every event - the working horse.
+			 */
+			virtual void processEvent(LCEvent * evt);
 
-        /** Called after data processing for clean up. **/
-	
-			  virtual void end();
+			virtual void check(LCEvent * evt);
+
+			/** Called after data processing for clean up. **/
+
+			virtual void end();
 
     protected:
 
-        // Statistics counters
+			bool _first_time=true;
+			/** Number of events processed */
+			int _nProcessedRuns;
+			/** Number of runs processed */
+			int _nProcessedEvents;
 
-        /** Number of events processed */
-        int _nProcessedRuns;
-        /** Number of runs processed */
-        int _nProcessedEvents;
+			/** Beam charge in [e] */
+			double _beamQ;
 
-        /** Input TrackerHit collection name */
-        string _trackCandidatesInputCollectionName;
+			//Beam energy. 
+			double _eBeam;
 
-        /** Output Tracks collection name */
-        string _tracksOutputCollectionName;
+			//This is the maximum chi2 of a track that will be used in the millepede alignment fit
+			double _maxChi2Cut;
 
-        /** Track fitter */
-        EUTelGBLFitter *_trackFitter;
+			std::vector<float> _chi2NdfVec;
 
+			/** Input TrackerHit collection name */
+			string _trackCandidatesInputCollectionName;
 
-        /** Beam charge in [e] */
-        double _beamQ;
+			/** Output Tracks collection name */
+			string _tracksOutputCollectionName;
 
-				//Beam energy. 
-				double _eBeam;
-
-				//This is the maximum chi2 of a track that will be used in the millepede alignment fit
-				double _maxChi2Cut;
-				std::vector<float> _chi2NdfVec;
-
-        /** Outlier downweighting option */
-        std::string _mEstimatorType;
+			/** Outlier downweighting option */
+			std::string _mEstimatorType;
 
         /** Histogram info file name */
 			std::string _histoInfoFileName;
 
-        /** x Resolution of planes in PlaneIds */
-        FloatVec _SteeringxResolutions;
+			/** x Resolution of planes in PlaneIds */
+			FloatVec _SteeringxResolutions;
  
-        /** y Resolution of planes in PlaneIds */
-        FloatVec _SteeringyResolutions;
+			/** y Resolution of planes in PlaneIds */
+			FloatVec _SteeringyResolutions;
 
+			/** Track fitter */
+			EUTelGBLFitter *_trackFitter;
+			//Function defined now for the processor////////////////////////////
+			void outputLCIO(LCEvent* evt, std::vector< EUTelTrack >& tracks);
+
+			void bookHistograms();
+
+			void plotResidual(map< int, map<float, float > >  & sensorResidual, map< int, map<float, float > >  & sensorResidualError, bool &first_time);
+				
+//TO DO: Fix all this histogramming stuff.
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
         /** AIDA histogram map
          *  Instead of putting several pointers to AIDA histograms as
@@ -173,24 +178,12 @@ namespace eutelescope {
 
 #endif // defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
-				void CreateEUTrackandStates(TrackImpl* trackimpl, EUTelTrackImpl*);
+	};
 
-				void outputLCIO(LCEvent* evt, std::vector< EUTelTrack >& tracks);
-
-				void bookHistograms();
-
-				void plotResidual(map< int, map<float, float > >  & sensorResidual, map< int, map<float, float > >  & sensorResidualError, bool &first_time);
-				bool _first_time=true;
-				
-
-
-};
-
-    /** A global instance of the processor */
-    EUTelProcessorGBLTrackFit gEUTelProcessorGBLTrackFit;
+/** A global instance of the processor */
+EUTelProcessorGBLTrackFit gEUTelProcessorGBLTrackFit;
 
 }
-
 
 #endif // USE_GBL
 

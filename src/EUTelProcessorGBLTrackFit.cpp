@@ -130,7 +130,7 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent * evt){
 
 		if (event->getEventType() == kEORE) {
 			streamlog_out(DEBUG4) << "EORE found: nothing else to do." << endl;
-			throw marlin::SkipEventException(this);
+			return;
 		}else if (event->getEventType() == kUNKNOWN) {
 			streamlog_out(WARNING2) << "Event number " << event->getEventNumber() << " in run " << event->getRunNumber() << " is of unknown type. Continue considering it as a normal Data Event." << endl;
 		}
@@ -144,29 +144,28 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent * evt){
 		}
 		std::vector<EUTelTrack> allTracksForThisEvent;//GBL will analysis the track one at a time. However we want to save to lcio per event.
 		for (int iCol = 0; iCol < col->getNumberOfElements(); iCol++) {
-			//TO DO: The original states from pattern recognition are changed for some reason. We want to create a completely new collection since we may want to run over this data again. 
-			//Also this is a memory leak.
-			EUTelTrack* trackPointer = new  EUTelTrack(*(static_cast<EUTelTrack*> (col->getElementAt(iCol))));
-			EUTelTrack track = *trackPointer;
+			//TO DO: Make sure that the original input collection is not changed by this.
+			EUTelTrack track =  EUTelTrack(*(static_cast<EUTelTrack*> (col->getElementAt(iCol))));//TO DO: Is there a more elegant way to copy this?
 			_trackFitter->resetPerTrack(); //Here we reset the label that connects state to GBL point to 1 again. Also we set the list of states->labels to 0
 			track.print();//Print the track use for debugging
 			_trackFitter->testTrack(track);//Check the track has states and hits  
 			std::vector< gbl::GblPoint > pointList;
-			_trackFitter->setInformationForGBLPointList(track, pointList);
-			const gear::BField& B = geo::gGeometry().getMagneticFiled();
+			_trackFitter->setInformationForGBLPointList(track, pointList);//Here we describe the whole setup. Geometry, scattering, data...
+			const gear::BField& B = geo::gGeometry().getMagneticFiled();//We need this to determine if we should fit a curve or a straight line.
 			const double Bmag = B.at( TVector3(0.,0.,0.) ).r2();
-			_trackFitter->setListStateAndLabelBeforeTrajectory(pointList);//TO DO. This function and setListState.. (see below) these are to relate measurement state -> label and Any state -> label. Must rename.
+			_trackFitter->setPairMeasurementStateAndPointLabelVec(pointList);//This will create a link between the states that have a hit associated with them and the GBL label that is associated with the state.
 			gbl::GblTrajectory* traj = 0;
+			//Here we create the trajectory from the points created by setInformationForGBLPointList. This will take the points and propagation jacobian and split this into smaller matrices to describe the problem in terms of offsets. Here is the difference between GBL and other fitting algorithms.  
 			if ( Bmag < 1.E-6 ) {
 				traj = new gbl::GblTrajectory( pointList, false ); 
 			}else {
 				traj = new gbl::GblTrajectory( pointList, true );
 			}
-			_trackFitter->setListStateAndLabelAfterTrajectory(pointList,traj);//We must do this after trajectory. Since trajectory will label the points. 
+			_trackFitter->setPairAnyStateAndPointLabelVec(pointList,traj);//This will create a link between any state and it's GBL point label. 
 			double  chi2=0; 
 			int ndf=0;
 			int ierr=0;
-			_trackFitter->computeTrajectoryAndFit(pointList,traj, &chi2,&ndf, ierr);
+			_trackFitter->computeTrajectoryAndFit(pointList,traj, &chi2,&ndf, ierr);//This will do the minimisation of the chi2 and produce the most probable trajectory.
 			if(ierr == 0 ){
 				 streamlog_out(DEBUG5) << "Ierr is: " << ierr << " Entering loop to update track information " << endl;
 				static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_chi2CandidateHistName ] ) -> fill( (chi2)/(ndf));
@@ -178,24 +177,12 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent * evt){
 				track.setChi2(chi2);
 				track.setNdf(ndf);
 				_chi2NdfVec.push_back(chi2/static_cast<float>(ndf));
-				map<int, vector<double> >  mapSensorIDToCorrectionVec;
-				_trackFitter->UpdateTrackFromGBLTrajectory(traj, pointList,track,mapSensorIDToCorrectionVec);
-				for(int i = 0; i < track.getStates().size();++i){
-					EUTelState state = track.getStates().at(i);
-					int location = state.getLocation();
-		//			_mapSensorIDToHistogramCorrection0[location]->fill(mapSensorIDToCorrectionVec[location].at(0));
-			//		_mapSensorIDToHistogramCorrection1[location]->fill(mapSensorIDToCorrectionVec[location].at(1));
-
-				//	_mapSensorIDToHistogramCorrection2[location]->fill(mapSensorIDToCorrectionVec[location].at(2));
-
-			//		_mapSensorIDToHistogramCorrection3[location]->fill(mapSensorIDToCorrectionVec[location].at(3));
-			//		_mapSensorIDToHistogramCorrection4[location]->fill(mapSensorIDToCorrectionVec[location].at(4));
-				}
-
+				map<int, vector<double> >  mapSensorIDToCorrectionVec;//This is not used now. However it maybe useful to be able to access the corrections that GBL makes to the original track. Since if this is too large then GBL may give th wrong trajectory. Since all the equations are only to first order. 
+				_trackFitter->updateTrackFromGBLTrajectory(traj, pointList,track,mapSensorIDToCorrectionVec);
 				map< int, map< float, float > >  SensorResidual; 
 				map< int, map< float, float > >  SensorResidualError; 
 				_trackFitter->getResidualOfTrackandHits(traj, pointList,track, SensorResidual, SensorResidualError);
-				plotResidual(SensorResidual,SensorResidualError, _first_time);
+				plotResidual(SensorResidual,SensorResidualError, _first_time);//TO DO: Need to fix how we histogram.
 				_first_time = false;
 
 			}
@@ -222,7 +209,6 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent * evt){
 	catch(lcio::Exception& e){
 		streamlog_out(MESSAGE9) << e.what() <<endl;
 		throw StopProcessingException( this ) ;
-
 	}
 	catch(...){
 		streamlog_out(MESSAGE9)<<"Unknown exception in processEvent function of EUTelProcessorGBLTrackFit" <<endl;
@@ -298,8 +284,9 @@ void EUTelProcessorGBLTrackFit::end() {
 	float total = 0;
 	double sizeFittedTracks = _chi2NdfVec.size();
 	for(int i=0; i<_chi2NdfVec.size(); ++i){
-		total= total + _chi2NdfVec.at(i);
+		total= total + _chi2NdfVec.at(i);//TO DO: This is does not seem to output the correct average chi2. Plus do we really need this to fit?
 	}
+	//TO DO: We really should have a better way to look track per track	and see if the correction is too large. 
 	std::vector<double> correctionTotal = _trackFitter->getCorrectionsTotal();
 	streamlog_out(MESSAGE9)<<"This is the average correction for omega: " <<correctionTotal.at(0)/sizeFittedTracks<<endl;	
 	streamlog_out(MESSAGE9)<<"This is the average correction for local xz inclination: " <<correctionTotal.at(1)/sizeFittedTracks<<endl;	
@@ -320,6 +307,7 @@ void EUTelProcessorGBLTrackFit::outputLCIO(LCEvent* evt, std::vector<EUTelTrack>
 	streamlog_out( DEBUG4 ) << " ---------------- EUTelProcessorGBLTrackFit::outputLCIO ---------- BEGIN ------------- " << std::endl;
 
 	//Create once per event//Note that this will not cause a memory leak since lcio will delete the memory automatically for you    
+	//Should create a new track and state in lcio memory. So we don't change the old stuff.
 	LCCollectionVec * trkCandCollection = new LCCollectionVec(LCIO::TRACK);
 	LCCollectionVec * stateCandCollection = new LCCollectionVec(LCIO::TRACK);
 
@@ -334,9 +322,9 @@ void EUTelProcessorGBLTrackFit::outputLCIO(LCEvent* evt, std::vector<EUTelTrack>
 
 	//Loop through all tracks
 	for ( int i = 0 ; i < tracks.size(); ++i){
-		EUTelTrack* trackheap = new  EUTelTrack(tracks.at(i), false); //We dont want to copy contents so set to false.
+		EUTelTrack* trackheap = new  EUTelTrack(tracks.at(i), false); //We dont want to copy contents so set to false. We only want the track object but not the states or hits. Since the states should have there own place in memory before saving.
 		trackheap->print();
-//	For every track add this to the collection
+		//For every track add this to the collection
 		for(int j = 0;j < tracks.at(i).getStates().size();++j){
 			EUTelState* stateheap = new EUTelState(tracks.at(i).getStates().at(j));
 			trackheap->addTrack(stateheap);
@@ -347,14 +335,11 @@ void EUTelProcessorGBLTrackFit::outputLCIO(LCEvent* evt, std::vector<EUTelTrack>
 
 	//Now add this collection to the 
 	evt->addCollection(trkCandCollection, _tracksOutputCollectionName);
-	string name = _tracksOutputCollectionName + "_states" ;
+	string name = _tracksOutputCollectionName + "_GBLstates" ;
 	evt->addCollection(stateCandCollection, name);
 
 	streamlog_out( DEBUG4 ) << " ---------------- EUTelProcessorGBLTrackFit::outputLCIO ---------- END ------------- " << std::endl;
 }
-
-
-
 
 void EUTelProcessorGBLTrackFit::bookHistograms() {
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -594,44 +579,4 @@ catch (lcio::Exception& e) {
 #endif // defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
 }
-
-
-
-
-
-
-
-
-
-
-void EUTelProcessorGBLTrackFit::CreateEUTrackandStates(TrackImpl* trackimpl, EUTelTrackImpl* EUtrack){
-	
-  	for(int i=0;i < trackimpl->getTrackStates().size(); i++){
-		EUTelTrackStateImpl *EUstate = new EUTelTrackStateImpl;
-
-  		IMPL::TrackStateImpl* state = static_cast < IMPL::TrackStateImpl*> ( trackimpl->getTrackStates().at(i) ) ;
-		EUstate->setX(state->getD0()); //x position global
-		EUstate->setY(state->getPhi()); //y position global
-		EUstate->setTx(state->getOmega()); //tx position global
-		EUstate->setTy(state->getZ0()); //ty position global
-		EUstate->setInvP(state->getTanLambda()); //invp position global
-
-		EUstate->setbeamQ(_beamQ); //Beam charge
-		
-		EUstate->setReferencePoint(state->getReferencePoint());
-		EUstate->setCovMatrix(state->getCovMatrix());			
-		//EUstate->setHit(getHit()
-		EUtrack->addTrackState(EUstate);	 
-	}
-
-    	const EVENT::TrackerHitVec& trkcandhits = trackimpl->getTrackerHits();
-    	EVENT::TrackerHitVec::const_iterator itrHit;
-    	for ( itrHit = trkcandhits.begin(); itrHit != trkcandhits.end(); ++itrHit ){
-    		//EUtrack->addHit( *itrHit );
-    	}
-
-
-}
-
-
 

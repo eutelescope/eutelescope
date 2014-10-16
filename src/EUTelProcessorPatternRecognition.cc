@@ -161,7 +161,7 @@ void EUTelProcessorPatternRecognition::processEvent(LCEvent * evt) {
 		// Do not process last event. For unknown events just a warning will do. 
 		if (event->getEventType() == kEORE) {
 			streamlog_out(DEBUG4) << "EORE found: nothing else to do." << std::endl;
-			throw marlin::SkipEventException(this);
+			return;
 		} else if (event->getEventType() == kUNKNOWN) {
 			streamlog_out(WARNING2) << "Event number " << event->getEventNumber() << " in run " << event->getRunNumber()<< " is of unknown type. Continue considering it as a normal Data Event." << std::endl;
 		}
