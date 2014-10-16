@@ -69,10 +69,6 @@ namespace eutelescope {
         // will be automatically run when calling EUTelGBLFitter::FitTracks()
         void resetPerTrack();
 
-        void SetTrackCandidates( vector <const IMPL::TrackImpl*> &);
-
-        void SetTrackCandidates( const EVENT::TrackVec&);
-
         /** Fit tracks */
         // public: 
 				void findScattersZPositionBetweenTwoStates(EUTelState& state);
@@ -116,14 +112,14 @@ namespace eutelescope {
 
 				void setMeasurementCov(EUTelState& state);
 
-        inline void SetAlignmentMode( int number) {
+				inline void setAlignmentMode( int number) {
             this->_alignmentMode = number;
         }
 
-        inline int GetAlignmentMode() const {
+        inline int getAlignmentMode() const {
             return _alignmentMode;
         }
-
+				int _alignmentMode;
         inline void SetBeamCharge(double beamQ) {
             this->_beamQ = beamQ;
         }
@@ -140,9 +136,6 @@ namespace eutelescope {
             return _eBeam;
         }
 
-        std::map<int, gbl::GblTrajectory*> GetGblTrackCandidates() const {
-            return _gblTrackCandidates;
-        }
 
 
 
@@ -153,10 +146,6 @@ namespace eutelescope {
 
 				void setMillepede( EUTelMillepede* Mille ) { _MilleInterface =  Mille; }
 			
-				void SetMilleBinaryName(std::string binaryname){
-					_binaryname = binaryname;
-				} 
-
         inline void setChi2Cut(double chi2cut) {
             this->_chi2cut = chi2cut;
         }
@@ -223,8 +212,6 @@ namespace eutelescope {
         
         std::string getMEstimatorType() const;
         
-        const std::map<long, int>& getHitId2GblPointLabel() const;
-        
         void setExcludeFromFitPlanes(const std::vector<int>&);
         
         std::vector<int> getExcludeFromFitPlanes() const;
@@ -254,22 +241,12 @@ namespace eutelescope {
     private:
         vector<const IMPL::TrackImpl*> _trackCandidatesVec;
 
-        EVENT::TrackVec _trackCandidates;
-
-        std::map< int, gbl::GblTrajectory* > _gblTrackCandidates;
 
 				double _omegaCorrections;	
 				double _intersectionLocalXZCorrections;	
 				double _intersectionLocalYZCorrections;	
 				double _localPosXCorrections;
 				double _localPosYCorrections;
-
-
-
-    private:
-        /** Parameter propagation jacobian */
-        TMatrixD _parPropJac;
-
 
     private:
         /** Beam charge in [e] */
@@ -278,14 +255,8 @@ namespace eutelescope {
         /** Beam energy in [GeV] */
         double _eBeam;
 
-        /** Hit id to GBL point label lookup table */
-        std::map<long,int> _hitId2GblPointLabel;
-        std::map<long,int> _hitId2GblPointLabelMille;
-       
-        // Alignment 
     private:
         /** Alignment degrees of freedom */
-        int _alignmentMode;
 
         /** Outlier downweighting option */
         std::string _mEstimatorType;

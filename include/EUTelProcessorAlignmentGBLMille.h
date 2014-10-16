@@ -169,7 +169,7 @@ namespace eutelescope {
 	lcio::IntVec _fixedAlignmentZRotationPlaneIds;
         
         /** Planes ids to be excluded from refit */
-	lcio::IntVec _excludePlanesFromFit;
+	lcio::FloatVec _excludePlanes;
         
         /** Automatic pede run flag*/
         bool _runPede;

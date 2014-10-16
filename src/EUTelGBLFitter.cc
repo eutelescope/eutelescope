@@ -44,74 +44,19 @@
 
 namespace eutelescope {
 
-	EUTelGBLFitter::EUTelGBLFitter() : EUTelTrackFitter("GBLTrackFitter"),
-    _trackCandidates(),
-    _gblTrackCandidates(),
-    _parPropJac(5, 5),
+	EUTelGBLFitter::EUTelGBLFitter() :
     _beamQ(-1),
     _eBeam(4.),
-    _hitId2GblPointLabel(),
-    _hitId2GblPointLabelMille(),
-		_PointToState(),
-		_binaryname(),
-    _alignmentMode( Utility::noAlignment ), // default - no Alignment 
     _mEstimatorType(),
     _mille(0),
+		_alignmentMode(0),
     _parameterIdXShiftsMap(),
     _parameterIdYShiftsMap(),
     _parameterIdZShiftsMap(),
     _parameterIdXRotationsMap(),
     _parameterIdYRotationsMap(),
-    _parameterIdZRotationsMap(),
-    _excludeFromFit(),
-    _chi2cut(1000.),
-    _eomIntegrator( new EUTelUtilityRungeKutta() ),
-    _eomODE( 0 )
-    {
-       streamlog_out( MESSAGE4) << " EUTelGBLFitter::EUTelGBLFitter default constructor FitTrackVec: " << getFitTrackVec() << std::endl;
-                // Initialise ODE integrators for eom and jacobian
-                {
-                    _eomODE = new eom::EOMODE(5);
-                    _eomIntegrator->setRhs( _eomODE );
-                    _eomIntegrator->setButcherTableau( new ButcherTableauDormandPrince );
-                }
-       // reset parent members: 
-       streamlog_out( MESSAGE4) << " EUTelGBLFitter::EUTelGBLFitter constructor over" << std::endl;
-    }
-
-    EUTelGBLFitter::EUTelGBLFitter(std::string name) : EUTelTrackFitter(name),
-    _trackCandidates(),
-    _gblTrackCandidates(),
-    _parPropJac(5, 5),
-    _beamQ(-1),
-    _eBeam(-1.),
-    _hitId2GblPointLabel(),
-    _hitId2GblPointLabelMille(),
-		_PointToState(),
-		_binaryname(),
-    _alignmentMode( Utility::noAlignment ),
-    _mEstimatorType(),
-    _mille(0),
-    _parameterIdXShiftsMap(),
-    _parameterIdYShiftsMap(),
-    _parameterIdZShiftsMap(),
-    _parameterIdXRotationsMap(),
-    _parameterIdYRotationsMap(),
-    _parameterIdZRotationsMap(),
-    _excludeFromFit(),
-    _chi2cut(1000.),
-    _eomIntegrator( new EUTelUtilityRungeKutta() ),
-    _eomODE(  0 )
-    {
-        streamlog_out( MESSAGE4) << " EUTelGBLFitter::EUTelGBLFitter " << name << " constructor FitTrackVec: " << getFitTrackVec() << std::endl;
-               // Initialise ODE integrators for eom and jacobian
-                {
-                    _eomODE = new eom::EOMODE(5);
-                    _eomIntegrator->setRhs( _eomODE );
-                    _eomIntegrator->setButcherTableau( new ButcherTableauDormandPrince );
-                }
-        streamlog_out( MESSAGE4) << " EUTelGBLFitter::EUTelGBLFitter constructor over" << std::endl;
-   }
+    _parameterIdZRotationsMap()
+    {}
 
     EUTelGBLFitter::~EUTelGBLFitter() {
     }
@@ -184,19 +129,21 @@ namespace eutelescope {
         return _parameterIdXShiftsMap;
     }
 
+		//This is used to deal with downweighting of ouliers. You must provide as input t,h or c. This specifies the function that will be used to do the downweigting.
+		//TO DO: Check that this function works as expected since it has never been used. 
     void EUTelGBLFitter::setMEstimatorType( const std::string& mEstimatorType ) {
         std::string mEstimatorTypeLowerCase = mEstimatorType;
-        std::transform( mEstimatorType.begin(), mEstimatorType.end(), mEstimatorTypeLowerCase.begin(), ::tolower);
+        std::transform( mEstimatorType.begin(), mEstimatorType.end(), mEstimatorTypeLowerCase.begin(), ::tolower);//Make the character lower case
         
         if ( mEstimatorType.size() != 1 ) {
             streamlog_out( WARNING1 ) << "More than one character supplied as M-estimator option" << std::endl;
             streamlog_out( WARNING1 ) << "No M-estimator downweighting will be used" << std::endl;
             return;
         }
-        
-        if ( mEstimatorType.compare("t") == 0 ||
-             mEstimatorType.compare("h") == 0 ||
-             mEstimatorType.compare("c") == 0   ) this->_mEstimatorType = _mEstimatorType;
+				//Compare character to the ones that are accepted and if one is the same then set out member variable equal to it.
+        if ( mEstimatorTypeLowerCase.compare("t") == 0 ||
+             mEstimatorTypeLowerCase.compare("h") == 0 ||
+             mEstimatorTypeLowerCase.compare("c") == 0   ) this->_mEstimatorType = _mEstimatorType;
         else {
             streamlog_out( WARNING1 ) << "M-estimator option " << mEstimatorType << " was not recognized" << std::endl;
             streamlog_out( WARNING1 ) << "No M-estimator downweighting will be used" << std::endl;
@@ -206,31 +153,6 @@ namespace eutelescope {
     std::string EUTelGBLFitter::getMEstimatorType( ) const {
         return _mEstimatorType;
     }
-
-    const std::map<long, int>& EUTelGBLFitter::getHitId2GblPointLabel( ) const {
-        return _hitId2GblPointLabel;
-    }
-
-    void EUTelGBLFitter::setExcludeFromFitPlanes( const std::vector<int>& excludedPlanes ) {
-        this->_excludeFromFit = excludedPlanes;
-    }
-
-    std::vector<int> EUTelGBLFitter::getExcludeFromFitPlanes( ) const {
-        return _excludeFromFit;
-    }
-     
-    void EUTelGBLFitter::SetTrackCandidates( vector<const IMPL::TrackImpl*>& trackCandidatesVec) {
-
-        this->_trackCandidatesVec = trackCandidatesVec	;
-        return;
-    }
-       
-    void EUTelGBLFitter::SetTrackCandidates( const EVENT::TrackVec& trackCandidates) {
-
-        this->_trackCandidates = trackCandidates;
-        return;
-    }
-
 
     void EUTelGBLFitter::resetPerTrack() {
 			_counter_num_pointer=1;

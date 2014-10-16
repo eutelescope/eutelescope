@@ -76,7 +76,7 @@ void EUTelProcessorGBLTrackFit::init() {
 		std::string name("test.root");
 		geo::gGeometry().initializeTGeoDescription(name,false);
 		// Initialize GBL fitter. This is the class that does all the work. Seems to me a good practice for the most part create a class that does the work. Since then you can use the same functions in another processor.
-		EUTelGBLFitter* Fitter = new EUTelGBLFitter("GBLFitter");
+		EUTelGBLFitter* Fitter = new EUTelGBLFitter();
 		Fitter->SetBeamCharge(_beamQ);
 		Fitter->SetBeamEnergy(_eBeam);
 		Fitter->setMEstimatorType(_mEstimatorType);//As said before this is to do with how we deal with outliers and the function we use to weight them.

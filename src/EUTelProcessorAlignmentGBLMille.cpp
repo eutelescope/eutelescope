@@ -83,7 +83,6 @@ _fixedAlignmentZShfitPlaneIds(),
 _fixedAlignmentXRotationPlaneIds(),
 _fixedAlignmentYRotationPlaneIds(),
 _fixedAlignmentZRotationPlaneIds(),
-_excludePlanesFromFit(),
 _runPede(false),
 _alignmentConstantLCIOFile("alignment.slcio"),
 _maxMilleChi2Cut(1000.),
@@ -163,7 +162,7 @@ _flag_nohistos(false)
     
     registerOptionalParameter("FixedAlignmentPlanesZrotation", "Ids of planes for which rotation around Z will be fixed during millepede call", _fixedAlignmentZRotationPlaneIds, IntVec());
     
-    registerOptionalParameter("ExcludePlanesFromFit", "Ids of planes that will be excluded from the fit", _excludePlanesFromFit, IntVec());
+    registerOptionalParameter("ExcludePlanesFromFit", "Ids of planes that will be excluded from the fit", _excludePlanes, FloatVec());
     
     // Pede run control
     
@@ -197,6 +196,7 @@ void EUTelProcessorAlignmentGBLMille::init() {
     // Getting access to geometry description
     std::string name("test.root");
     geo::gGeometry().initializeTGeoDescription(name,false);
+		geo::gGeometry().initialisePlanesToExcluded(_excludePlanes);//We specify the excluded planes here since this is rather generic and can be used by other processors
 
     // Instantiate millepede output. 
     {
@@ -242,13 +242,11 @@ void EUTelProcessorAlignmentGBLMille::init() {
         fillMilleParametersLabels();
         
         // Initialize GBL fitter
-        EUTelGBLFitter* Fitter = new EUTelGBLFitter("GBLFitter");
-        Fitter->SetAlignmentMode(alignmentMode);
+        EUTelGBLFitter* Fitter = new EUTelGBLFitter();
+        Fitter->setAlignmentMode(alignmentMode);
         Fitter->setParamterIdPlaneVec(_planeIds);
         Fitter->setParamterIdXResolutionVec(_SteeringxResolutions);
         Fitter->setParamterIdYResolutionVec(_SteeringyResolutions);
-
-        Fitter->setExcludeFromFitPlanes( _excludePlanesFromFit );
 
         Fitter->setParamterIdXShiftsMap(_xShiftsMap);
         Fitter->setParamterIdYShiftsMap(_yShiftsMap);
@@ -638,7 +636,7 @@ void EUTelProcessorAlignmentGBLMille::writeMilleSteeringFile() {
             const double initXshift = (isFixedXShift) ? 0. : _seedAlignmentConstants._xResiduals[sensorId]/_seedAlignmentConstants._nxResiduals[sensorId];
             const double initYshift = (isFixedYShift) ? 0. : _seedAlignmentConstants._yResiduals[sensorId]/_seedAlignmentConstants._nyResiduals[sensorId];
             
-            if( fitter->GetAlignmentMode()==Utility::XYZShiftXYRot ) {
+            if( fitter->getAlignmentMode()==Utility::XYZShiftXYRot ) {
                 steerFile << left << setw(25) << XShiftsMap[sensorId] << setw(25) << -initXshift << setw(25) << initUncertaintyXShift
                            << setw(25) << " ! X shift " << setw(25) << sensorId << endl;
                 steerFile << left << setw(25) << YShiftsMap[sensorId] << setw(25) << -initYshift << setw(25) << initUncertaintyYShift
@@ -647,7 +645,7 @@ void EUTelProcessorAlignmentGBLMille::writeMilleSteeringFile() {
                            << setw(25) << " ! Z shift " << setw(25) << sensorId << endl;
                 steerFile << left << setw(25) << ZRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyZRotation
                           << setw(25) << " ! XY rotation " << sensorId << endl;
-            } else if( fitter->GetAlignmentMode()==Utility::XYShiftYZRotXYRot ) {
+            } else if( fitter->getAlignmentMode()==Utility::XYShiftYZRotXYRot ) {
                 steerFile << left << setw(25) << XShiftsMap[sensorId] << setw(25) << -initXshift << setw(25) << initUncertaintyXShift
                           << setw(25) << " ! X shift " << sensorId << endl;
                 steerFile << left << setw(25) << YShiftsMap[sensorId] << setw(25)  << -initYshift << setw(25) << initUncertaintyYShift
@@ -656,7 +654,7 @@ void EUTelProcessorAlignmentGBLMille::writeMilleSteeringFile() {
                           << setw(25) << " ! YZ rotation " << sensorId << endl;
                 steerFile << left << setw(25) << ZRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyZRotation
                           << setw(25) << " ! XY rotation " << sensorId << endl;
-            } else if( fitter->GetAlignmentMode()==Utility::XYShiftXZRotXYRot ) {
+            } else if( fitter->getAlignmentMode()==Utility::XYShiftXZRotXYRot ) {
                 steerFile << left << setw(25) << XShiftsMap[sensorId] << setw(25) << -initXshift << setw(25) << initUncertaintyXShift
                           << setw(25) << " ! X shift " << sensorId << endl;
                 steerFile << left << setw(25) << YShiftsMap[sensorId] << setw(25) << -initYshift << setw(25) << initUncertaintyYShift
@@ -665,7 +663,7 @@ void EUTelProcessorAlignmentGBLMille::writeMilleSteeringFile() {
                           << setw(25) << " ! XZ rotation " << sensorId << endl;
                 steerFile << left << setw(25) << ZRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyZRotation
                          << setw(25)  << " ! XY rotation " << sensorId << endl;
-            } else if( fitter->GetAlignmentMode()==Utility::XYShiftXZRotYZRotXYRot ) {
+            } else if( fitter->getAlignmentMode()==Utility::XYShiftXZRotYZRotXYRot ) {
                 steerFile << left << setw(25) << XShiftsMap[sensorId] << setw(25) << -initXshift << setw(25) << initUncertaintyXShift
                           << setw(25) << " ! X shift " << sensorId << endl;
                 steerFile << left << setw(25) << YShiftsMap[sensorId] << setw(25) << -initYshift << setw(25) << initUncertaintyYShift
@@ -676,7 +674,7 @@ void EUTelProcessorAlignmentGBLMille::writeMilleSteeringFile() {
                           << setw(25) << " ! YZ rotation " << sensorId << endl;
                 steerFile << left << setw(25) << ZRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyZRotation
                          << setw(25)  << " ! XY rotation " << sensorId << endl;
-            } else if( fitter->GetAlignmentMode()==Utility::XYZShiftXZRotYZRotXYRot ) {
+            } else if( fitter->getAlignmentMode()==Utility::XYZShiftXZRotYZRotXYRot ) {
                 steerFile << left << setw(25) << XShiftsMap[sensorId] << setw(25) << -initXshift << setw(25) << initUncertaintyXShift
                           << setw(25) << " ! X shift " << sensorId << endl;
                 steerFile << left << setw(25) << YShiftsMap[sensorId] << setw(25) << -initYshift << setw(25) << initUncertaintyYShift
@@ -689,14 +687,14 @@ void EUTelProcessorAlignmentGBLMille::writeMilleSteeringFile() {
                           << setw(25) << " ! YZ rotation " << sensorId << endl;
                 steerFile << left << setw(25) << ZRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyZRotation
                          << setw(25)  << " ! XY rotation " << sensorId << endl;
-            } else if ( fitter->GetAlignmentMode()==Utility::XYShiftXYRot ) {
+            } else if ( fitter->getAlignmentMode()==Utility::XYShiftXYRot ) {
                 steerFile << left << setw(25) << XShiftsMap[sensorId] << setw(25) << -initXshift << setw(25) << initUncertaintyXShift
                           << setw(25) << " ! X shift " << sensorId << endl;
                 steerFile << left << setw(25) << YShiftsMap[sensorId] << setw(25) << -initYshift << setw(25) << initUncertaintyYShift
                           << setw(25) << " ! Y shift " << sensorId << endl;
                 steerFile << left << setw(25) << ZRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyZRotation
                           << setw(25) << " ! XY rotation " << sensorId << endl;
-            } else if ( fitter->GetAlignmentMode()==Utility::XYShift ) {
+            } else if ( fitter->getAlignmentMode()==Utility::XYShift ) {
                 steerFile << left << setw(25) << XShiftsMap[sensorId] << setw(25) << -initXshift << setw(25) << initUncertaintyXShift
                           << setw(25) << " ! X shift " << sensorId << endl;
                 steerFile << left << setw(25) << YShiftsMap[sensorId] << setw(25) << -initYshift << setw(25) << initUncertaintyYShift
