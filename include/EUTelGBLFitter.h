@@ -175,20 +175,6 @@ namespace eutelescope {
 			std::map<int,int> _parameterIdYRotationsMap;
 			/** Parameter ids */
 			std::map<int,int> _parameterIdZRotationsMap;
-			//this maps the original states from the pattern recognition with true and the other scatterers to take into account volumes inbetween them as false. This is needed since you may not know the number of scatterers inbetween in future versions. 
-
-//Need to create a comparision function to order the points. Needs to be in class format. not sure why?
-struct compare_points
-{
-  bool operator()(EUTelTrackStateImpl a, EUTelTrackStateImpl b) const
-  {
- 			streamlog_out(DEBUG0) << "Label 1 " << a.getLocation() <<" Label 2 " << b.getLocation() <<std::endl;
- 			return a.getLocation() > b.getLocation();
-  }
-};
-				std::map<EUTelTrackStateImpl, gbl::GblPoint*, compare_points > _PointToState;
-
-
 std::vector< pair< EUTelState, int> > _vectorOfPairsMeasurementStatesAndLabels;//This is used within alignment since you need to associate MEASUREMENT states to  labels
 std::vector< pair< EUTelState, int> > _vectorOfPairsStatesAndLabels;//This is used in track fit since you want to associate ANY states to labels.
 std::vector<gbl::GblPoint> _points;
