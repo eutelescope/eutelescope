@@ -797,60 +797,6 @@ TVectorD EUTelPatternRecognition::computeResidual(EUTelState& state , const EVEN
 	return residual;
 }
 
-    /** Retrieve residuals covariance
-     * 
-     * @param ts track state
-     * @param hit
-     * @return 
-     */
-    TMatrixDSym EUTelPatternRecognition::getResidualCov( const EUTelTrackStateImpl* ts, const EVENT::TrackerHit* hit ) {
-        streamlog_out( DEBUG2 ) << "EUTelPatternRecognition::getResidualCov()" << std::endl;
-        TMatrixD Hk = ts->getH();
-        
-        _processNoiseQ.Zero();
-        TMatrixDSym Ckm1 = ts->getTrackStateCov( ); // 5x5
-        TMatrixDSym Ckkm1 = Ckm1.Similarity( _jacobianF ); // 5x5        //Ckkm1 += _processNoiseQ;       
-        TMatrixDSym Rkkm1 = Ckkm1.Similarity(Hk); // 5x5
-        Rkkm1 += getHitCov(hit); // hitCov is 2x2 ??
-        
-        if ( streamlog_level(DEBUG0) ) {
-            streamlog_out( DEBUG0 ) << "Residual covariance matrix:" << std::endl;
-            Rkkm1.Print();
-        }
-        
-        streamlog_out( DEBUG2 ) << "-----------------------------------EUTelPatternRecognition::getResidualCov()------------------------------------" << std::endl;
-        
-        return Rkkm1;
-    }
-    
-    /** Retrieve Kalman gain matrix. This is a 5x2 matrix so takes a state 5x1 as an argument.
-     * 
-     * @param ts track state
-     * @param hit
-     * 
-     * @return Gain matrix K
-     */
-    TMatrixD EUTelPatternRecognition::updateGainK( const EUTelTrackStateImpl* ts, const EVENT::TrackerHit* hit ) {
-        streamlog_out( DEBUG2 ) << "EUTelPatternRecognition::updateGainK()" << std::endl;
-
-	TMatrixD gainK(5,2);
-        _processNoiseQ.Zero(); //Not sure the need for this?
-        TMatrixDSym Ckm1 = ts->getTrackStateCov( );
-        TMatrixDSym Ckkm1 = Ckm1.Similarity( _jacobianF ); //Transform covariant matrix from one position to the next      
-        TMatrixD Ht(5,2);     Ht = Ht.Transpose( ts->getH() );//This matrix transforms from local to global.
-        
-        gainK = Ckkm1 * Ht * getResidualCov( ts, hit ).Invert();//take residual of hit and track in local frame. Transform to global. Then multiply by global state covariant matrix
-        
-        if ( streamlog_level(DEBUG0) ) {
-            streamlog_out( DEBUG0 ) << "Gain matrix:" << std::endl;
-            gainK.Print();
-        }
-        
-        streamlog_out( DEBUG2 ) << "----------------------------------------EUTelPatternRecognition::updateGainK()------------------------------------" << std::endl;
-        
-        return gainK;
-    }
-    
     /** Update track state given new hit
      * 
      * @param ts track state
