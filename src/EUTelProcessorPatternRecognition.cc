@@ -92,7 +92,7 @@ void EUTelProcessorPatternRecognition::init(){
 		geo::gGeometry().initialisePlanesToExcluded(_excludePlanes);//We specify the excluded planes here since this is rather generic and can be used by other processors
 		geo::gGeometry().setInitialDisplacementToFirstPlane(_initialDisplacement);//We specify this here so we can access it throughout this processor. 
 		streamlog_out(DEBUG) << "Initialisation of track finder" << std::endl;
-		EUTelPatternRecognition* Finder = new EUTelPatternRecognition("PatternRecognition");//This is the class that contains all the functions that do the actual work
+		EUTelPatternRecognition* Finder = new EUTelPatternRecognition();//This is the class that contains all the functions that do the actual work
 		if (!Finder) {
 			streamlog_out(ERROR) << "Can't allocate an instance of EUTelExhaustiveTrackFinder. Stopping ..." << std::endl;
 			throw(lcio::Exception( Utility::outputColourString("Pattern recognition class not create correctly.","RED"))); 

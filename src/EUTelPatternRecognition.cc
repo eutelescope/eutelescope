@@ -1,36 +1,13 @@
-// Created on July 2, 2013, 12:59 PM
-// This code should take always a trackerHit object. Since it will never need to use a derived hit object with other functions since it only needs basic information about the hit.
+//This class contains all the pattern recognition functions. These are used within EUTelProcessorPatternRecogntion. They use basic input about the particles flight. So the particle charge, the magnetic field strength and beam energy. This combined with seeds states on the first plane (Can be others but the first by default) determined what set of hits come from a single track. 
 #include "EUTelPatternRecognition.h"
-
-
 namespace eutelescope {
-
-    namespace {
-
-        struct hasSensorID
-        {
-            int _requiredSensorID;
-
-            bool operator( )( MeasurementLayer* layer ) {
-                return ( layer->sensorID( ) == _requiredSensorID );
-            }
-        } ;
-    }
     
-    EUTelPatternRecognition::EUTelPatternRecognition() :  
-            _tracksCartesian(), 
-            _trackStates(), 
-            _allHits(),
-            _allMeasurements(),
-            _isHitsOK(false),
+	EUTelPatternRecognition::EUTelPatternRecognition() :  
             _allowedMissingHits(0),
 						_AllowedSharedHitsOnTrackCandidate(0),
-            _maxTrackCandidates(0),
             _beamE(-1.),
             _beamQ(-1.),
-            _beamEnergyUncertainty(0.),
-            _beamAngularSpread(2,-1.),
-	    _jacobianF(5,5),
+						_jacobianF(5,5),
             _trkParamCovCkkm1(5,5),
             _processNoiseQ(5,5),
             _residualCovR(2,2),
@@ -39,58 +16,9 @@ namespace eutelescope {
             _eomODE( 0 ),
             _jacobianODE( 0 ),
             _planesForPR(1) 
-            {
-                // Initialise ODE integrators for eom and jacobian       
-                {
-                    _eomODE = new eom::EOMODE(5);
-                    _eomIntegrator->setRhs( _eomODE );
-                    _eomIntegrator->setButcherTableau( new ButcherTableauDormandPrince );
-                }
+            {}
 
-                {
-                    _jacobianIntegrator->setButcherTableau( new ButcherTableauDormandPrince );
-                }
-            }
-
-    EUTelPatternRecognition::EUTelPatternRecognition( std::string name ) : 
-            _tracksCartesian(),
-            _trackStates(), 
-            _allHits(),
-            _allMeasurements(),
-            _isHitsOK(false),
-            _allowedMissingHits(0),
-            _maxTrackCandidates(0),
-            _beamE(-1.),
-            _beamQ(-1.),
-            _beamEnergyUncertainty(0.),
-            _beamAngularSpread(2,-1.),
-	    _jacobianF(5,5),
-            _trkParamCovCkkm1(5,5),
-            _processNoiseQ(5,5),
-            _residualCovR(2,2),
-            _eomIntegrator( new EUTelUtilityRungeKutta() ),
-            _jacobianIntegrator( new EUTelUtilityRungeKutta() ),
-            _eomODE( 0 ),
-            _jacobianODE( 0 ),
-            _planesForPR( 1 ) 
-            {
-                // Initialise ODE integrators for eom and jacobian       
-                {
-                    _eomODE = new eom::EOMODE(5);
-                    // _eomIntegrator integrator becomes the owner of _eomODE and ButcherTableauDormandPrince
-                    _eomIntegrator->setRhs( _eomODE );
-                    _eomIntegrator->setButcherTableau( new ButcherTableauDormandPrince );
-                }
-
-                {
-                    _jacobianIntegrator->setRhs( _jacobianODE );
-                    _jacobianIntegrator->setButcherTableau( new ButcherTableauDormandPrince );
-                }
-            }
-
-        EUTelPatternRecognition::~EUTelPatternRecognition() { 
-        delete _eomIntegrator;
-        delete _jacobianIntegrator;
+		EUTelPatternRecognition::~EUTelPatternRecognition() { 
     }
  
     /** */
@@ -482,39 +410,6 @@ void  EUTelPatternRecognition::testHitsVec(){
 
 }
 
-		
-		/**
-		 *
-		 * Prune seed track states necessary to
-		 *
-     * start Kalman filter
-     * 
-     * 
-     */
-    void EUTelPatternRecognition::pruneSeeds() {
-        streamlog_out(DEBUG2) << "EUTelPatternRecognition::pruneSeeds()" << std::endl;
-
-        if ( _allMeasurements.empty() ) {
-            streamlog_out(WARNING1) << "Can't initialise track seeds for the finder. No hits in this event." << std::endl;
-            return;
-        }
-
-
-	// Start Kalman filter
-	std::vector< EUTelTrackImpl* >::iterator itTrk;
-	for ( itTrk = _tracksCartesian.begin(); itTrk != _tracksCartesian.end(); itTrk++ ) {
-            bool isDuplTrack = false; 
-             
-            std::vector< EUTelTrackImpl* >::iterator itTrk_in;
-	    for ( itTrk_in = _tracksCartesian.begin(); itTrk_in != _tracksCartesian.end(); itTrk_in++ ) {
-              bool isDuplTrack = false; 
-
-            }
-            
-        }
- 
-    }
-   
 /** 
 *   Using a list of planes use the hits on those planes to create the initial seeds. 
 *   These seeds are used then to propagate to the next plane.
@@ -1156,18 +1051,5 @@ void EUTelPatternRecognition::printHits(){
 	}
 streamlog_out(MESSAGE0) << "EUTelPatternRecognition::printHits: END ==============" << std::endl;
 }
-
-
-
-
-    MeasurementLayer::MeasurementLayer() : _id(-1), _allHits() {}
-    
-    MeasurementLayer::MeasurementLayer( int id ) : _id(id), _allHits() {}
-    
-    MeasurementLayer::~MeasurementLayer() { }
-    
-    void MeasurementLayer::addHit( EVENT::TrackerHit* hit ) {
-        _allHits.push_back( hit );
-    }    
     
 } // namespace eutelescope
