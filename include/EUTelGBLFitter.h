@@ -172,42 +172,14 @@ namespace eutelescope {
 					_globalLabels = globalLabels;
 				}
  
-        void setParamterIdPlaneVec( const std::vector<int>& );
- 
         void setParamterIdXResolutionVec( const std::vector<float>& );
 
         void setParamterIdYResolutionVec( const std::vector<float>& );
-       
-        void setParamterIdXRotationsMap( const std::map<int, int>& );
-        
-        void setParamterIdYRotationsMap( const std::map<int, int>& );
-        
-        void setParamterIdZRotationsMap( const std::map<int, int>& );
-        
-        void setParamterIdZShiftsMap( const std::map<int, int>& );
-        
-        void setParamterIdYShiftsMap( const std::map<int, int>& );
-        
-        void setParamterIdXShiftsMap(const std::map<int, int>& );
 				        
-        const std::vector<  int>& getParamterIdPlaneVec() const;
-
         const std::vector<  float>& getParamterIdXResolutionVec() const;
 
         const std::vector<  float>& getParamterIdYResolutionVec() const;
-
-        const std::map<int, int>& getParamterIdXRotationsMap() const;
-        
-        const std::map<int, int>& getParamterIdYRotationsMap() const;
-        
-        const std::map<int, int>& getParamterIdZRotationsMap() const;
-        
-        const std::map<int, int>& getParamterIdZShiftsMap() const;
-        
-        const std::map<int, int>& getParamterIdYShiftsMap() const;
-        
-        const std::map<int, int>& getParamterIdXShiftsMap() const;
-        
+ 
         void setMEstimatorType( const std::string& _mEstimatorType );
         
         std::string getMEstimatorType() const;
@@ -310,7 +282,6 @@ struct compare_points
 };
 				std::map<EUTelTrackStateImpl, gbl::GblPoint*, compare_points > _PointToState;
 
-void OutputMap(std::map<EUTelTrackStateImpl,gbl::GblPoint*, compare_points > _PointToState);
 
 std::vector< pair< EUTelState, int> > _vectorOfPairsMeasurementStatesAndLabels;//This is used within alignment since you need to associate MEASUREMENT states to  labels
 std::vector< pair< EUTelState, int> > _vectorOfPairsStatesAndLabels;//This is used in track fit since you want to associate ANY states to labels.
