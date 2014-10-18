@@ -61,7 +61,126 @@ namespace eutelescope {
 	EUTelGBLFitter::~EUTelGBLFitter() {
 	}
 	//THIS IS THE SETTERS. Not simple get function but the action of all these functions it in the end to set a member variable to something.	
-	//This sets the estimated resolution for each plane in the X direction.
+	//TO DO: This is the iterative alignment part that varies the precision of the measurement to allow the GBL tracks to be fitted. The precision matrix itself is an input by us. In the long run can we not do proper error calculations? 
+	//TO DO: This does not have to be done for each state since it only varies per plane. So could input this data another way. However in the long run this may not be favourable since we could have correct error analysis eventually. 
+	void EUTelGBLFitter::setMeasurementCov(EUTelState& state){
+		double hitcov[]= {0,0,0,0};
+		int izPlane = state.getLocation();
+		if( _parameterIdXResolutionVec.size() > 0 && _parameterIdYResolutionVec.size() > 0 ){
+			hitcov[0] = _parameterIdXResolutionVec[izPlane];
+			hitcov[3] = _parameterIdYResolutionVec[izPlane];
+
+			hitcov[0] *= hitcov[0]; 
+			hitcov[3] *= hitcov[3];
+		}
+		else{//Default in case you have not specified a variance  
+			throw(lcio::Exception(Utility::outputColourString("There is no measurement variance specified.", "RED"))); 	
+		}
+		state.setCombinedHitAndStateCovMatrixInLocalFrame(hitcov);
+	}
+	//Note that we take the planes themselfs at scatters and also add scatterers to simulate the medium inbetween. 
+	void EUTelGBLFitter::setScattererGBL(gbl::GblPoint& point, EUTelState & state ) {
+		streamlog_out(DEBUG1) << " setScattererGBL ------------- BEGIN --------------  " << std::endl;
+		TVectorD scat(2); 
+		scat[0] = 0.0; scat[1]=0.0;//TO DO: This will depend on if the initial track guess has kinks. Only important if we reiterate GBL track in high radiation length enviroments  
+		TMatrixDSym precisionMatrix =  state.getScatteringVarianceInLocalFrame();
+		streamlog_out(MESSAGE1) << "The precision matrix being used for the sensor  "<<state.getLocation()<<":" << std::endl;
+		streamlog_message( DEBUG0, precisionMatrix.Print();, std::endl; );
+		point.addScatterer(scat, precisionMatrix);
+		streamlog_out(DEBUG1) << "  setScattererGBL  ------------- END ----------------- " << std::endl;
+		}
+		//This is used when the we know the radiation length already
+		void EUTelGBLFitter::setScattererGBL(gbl::GblPoint& point,EUTelState & state, float  percentageRadiationLength) {
+		streamlog_out(MESSAGE1) << " setScattererGBL ------------- BEGIN --------------  " << std::endl;
+		TVectorD scat(2); 
+		scat[0] = 0.0; scat[1]=0.0;  
+		TMatrixDSym precisionMatrix =  state.getScatteringVarianceInLocalFrame(percentageRadiationLength);
+		streamlog_out(MESSAGE1) << "The precision matrix being used for the scatter:  " << std::endl;
+		streamlog_message( DEBUG0, precisionMatrix.Print();, std::endl; );
+		point.addScatterer(scat, precisionMatrix);
+		streamlog_out(MESSAGE1) << "  setScattererGBL  ------------- END ----------------- " << std::endl;
+	}
+	//This will add measurement information to the GBL point
+	//Note that if we have a strip sensor then y will be ignored using projection matrix.
+	void EUTelGBLFitter::setMeasurementGBL(gbl::GblPoint& point, const double *hitPos,  double statePos[3], double combinedCov[4], TMatrixD projection){
+		streamlog_out(DEBUG1) << " setMeasurementGBL ------------- BEGIN --------------- " << std::endl;
+		TVectorD meas(2);//Remember we need to pass the same 5 since gbl expects this due to jacobian
+		meas.Zero();
+		meas[0] = hitPos[0] - statePos[0];//This is how residuals are shown as output after fit (measurement-prediction)
+		meas[1] = hitPos[1] - statePos[1];
+		TVectorD measPrec(2); 
+		//TO DO: Can make the variance vector a matrix to explore relationships between x/y and variance.  
+		measPrec[0] = 1. / combinedCov[0];	// cov(x,x)
+		measPrec[1] = 1. / combinedCov[3];	// cov(y,y)
+		streamlog_out(DEBUG4) << "This is what we add to the measured point:" << std::endl;
+		streamlog_out(DEBUG4) << "Residuals and covariant matrix for the hit:" << std::endl;
+		streamlog_out(DEBUG4) << "X:" << std::setw(20) << meas[0] << std::setw(20) << measPrec[0] <<"," << std::endl;
+		streamlog_out(DEBUG4) << "Y:" << std::setw(20) << meas[1] << std::setw(20)  <<"," << measPrec[1] << std::endl;
+		streamlog_out(DEBUG4) << "This H matrix:" << std::endl;
+		streamlog_message( DEBUG0, projection.Print();, std::endl; );
+		//The gbl library creates 5 measurement vector and 5x5 propagation matrix automatically. If  
+		point.addMeasurement(projection, meas, measPrec, 0);//The last zero is the minimum precision before this is set to 0. TO DO:Remove this magic number
+		streamlog_out(DEBUG1) << " setMeasurementsGBL ------------- END ----------------- " << std::endl;
+	}
+
+	//This function calculates the alignment jacobian and labels and attaches this to the point
+	void EUTelGBLFitter::setAlignmentToMeasurementJacobian(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList ){
+		for (int i = 0;i<_vectorOfPairsMeasurementStatesAndLabels.size() ;++i ){
+			if(_vectorOfPairsMeasurementStatesAndLabels.at(i).first.getTrackerHits().empty()){
+				throw(lcio::Exception(Utility::outputColourString("One of the points on the list of measurements states has no hit.", "RED")));
+			}
+			for(int j = 0; j < pointList.size(); ++j){
+				if( _vectorOfPairsMeasurementStatesAndLabels.at(i).second == pointList.at(j).getLabel()){
+					EUTelState state = _vectorOfPairsMeasurementStatesAndLabels.at(i).first;
+					streamlog_out(DEBUG0)<<"Point needs global parameters. It has  "<<pointList.at(j).hasMeasurement()<<" measurements."<<std::endl;
+					if(getLabelToPoint(pointList,_vectorOfPairsMeasurementStatesAndLabels.at(i).second).hasMeasurement() == 0){
+						throw(lcio::Exception(Utility::outputColourString("This point does not contain a measurements. Labeling of the state must be wrong ", "RED")));
+					} 
+					_MilleInterface->computeAlignmentToMeasurementJacobian(state);//We calculate the jacobian. 
+					_MilleInterface->setGlobalLabels(state); //Get the correct label for the sensors x,y,z shift and rotations. Depending on alignment mode and sensor the plane is on 
+					TMatrixD&  alignmentJacobian = _MilleInterface->getAlignmentJacobian();//Return what was calculated by computeAlignmentToMeasurementJacobian
+					std::vector<int> labels =  _MilleInterface->getGlobalParameters();//Return what was set by setGlobalLabels
+					streamlog_out(DEBUG0)<<"The state associated with this alignment jacobian:  "<<std::endl;
+					streamlog_message( DEBUG0, state.print() ;, std::endl; );
+					if(!state.getIsThereAHit()){
+						throw(lcio::Exception(Utility::outputColourString("You are just about to use a state with no hit to determine alignment jacobian.", "RED")));
+					}
+					streamlog_out(DEBUG0)<<"This is the alignment jacobian we are about to add to the point at location "<<state.getLocation()<<std::endl;
+					streamlog_message( DEBUG0, alignmentJacobian.Print();, std::endl; );
+					streamlog_out(DEBUG0)<<"Here are the labels for these alignment parameters for the state at location: "<<state.getLocation()<<std::endl;
+					for(int k=0; k<labels.size();++k){
+						streamlog_out(DEBUG0)<<"Label just before adding: "<<labels.at(k) <<std::endl;
+					}
+					pointList.at(j).addGlobals(labels, alignmentJacobian);
+					streamlog_out(DEBUG0)<<"The number of global parameters for this point are "<<pointList[i].getNumGlobals()<<std::endl;
+					for(int k=0; k<pointList.at(j).getGlobalLabels().size();++k){
+						streamlog_out(DEBUG0)<<"Label just after adding: "<<pointList.at(j).getGlobalLabels().at(k) <<std::endl;
+					}
+					streamlog_out(DEBUG0)<<"The alignment matrix after adding to point: "<<std::endl;
+					streamlog_message( DEBUG0, pointList.at(j).getGlobalDerivatives().Print() ;, std::endl; );
+					break;
+				}
+				//streamlog_out(DEBUG0)<<"This point has "<<pointList.at(j).hasMeasurement()<<" measurements. It has label "<<pointList.at(j).getLabel() <<std::endl;
+				if(j == (pointList.size()-1)){
+					throw(lcio::Exception(Utility::outputColourString("There is no point associated with this state.", "RED")));
+				}
+			}
+		}
+	}
+	//This creates the scatters point to simulate the passage through air. 
+	void EUTelGBLFitter::setPointListWithNewScatterers(std::vector< gbl::GblPoint >& pointList,EUTelState & state, float  percentageRadiationLength){
+		if(_scattererJacobians.size() != _scattererPositions.size()){
+			throw(lcio::Exception(Utility::outputColourString("The size of the scattering positions and jacobians is different.", "RED"))); 	
+		}
+		for(int i = 0 ;i < _scattererJacobians.size()-1;++i){//The last jacobain is used to get to the plane! So only loop over to (_scatterJacobians-1)
+			gbl::GblPoint point(_scattererJacobians[i]);
+			point.setLabel(_counter_num_pointer);
+			_counter_num_pointer++;
+			setScattererGBL(point,state, percentageRadiationLength/2);//TO DO:Simply dividing by 2 will work when there is only two planes
+			pointList.push_back(point);
+		}
+	}
+	//This set the estimate resolution for each plane in the X direction.
 	void EUTelGBLFitter::setParamterIdXResolutionVec( const std::vector<float>& vector)
 	{
 		for(int i=0; i < geo::gGeometry().sensorZOrdertoIDs().size(); ++i){
@@ -230,10 +349,22 @@ namespace eutelescope {
 				streamlog_out(DEBUG3)<<"We have reached the last plane"<<std::endl;
 			}
 		} 
-	streamlog_out(DEBUG4)<<"EUTelGBLFitter::setInformationForGBLPointList-------------------------------------END"<<endl;
+		streamlog_out(DEBUG4)<<"EUTelGBLFitter::setInformationForGBLPointList-------------------------------------END"<<endl;
 
-}
+	}
 	//THIS IS THE GETTERS
+	gbl::GblPoint EUTelGBLFitter::getLabelToPoint(std::vector<gbl::GblPoint> & pointList, int label){
+		for(int i = 0; i< pointList.size();++i){
+			streamlog_out(DEBUG0)<<"This point has label : "<<pointList.at(i).getLabel()<<". The label number: "<<label<<std::endl;
+			if(pointList.at(i).getLabel() == label){
+				return pointList.at(i);
+			}
+			if(i == (pointList.size()-1)){ //If we reach the end of the loop and still no match then this label must belong to no point
+				streamlog_out(MESSAGE5)<<"The size of pointList: "<<pointList.size()<<". The label number: "<<label<<std::endl;
+				throw(lcio::Exception(Utility::outputColourString("There is no point with this label", "RED")));
+			}
+		}
+	}
 	//This used after trackfit will fill a map between (sensor ID and residualx/y). 
 	void EUTelGBLFitter::getResidualOfTrackandHits(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint > pointList,EUTelTrack& track, map< int, map< float, float > > &  SensorResidual, map< int, map< float, float > >& sensorResidualError ){
 		for(int j=0 ; j< _vectorOfPairsMeasurementStatesAndLabels.size();j++){
@@ -296,8 +427,80 @@ namespace eutelescope {
 		streamlog_out(DEBUG4)<<"EUTelGBLFitter::testTrack------------------------------------END"<<endl;
 
 	} 
+	void EUTelGBLFitter::testDistanceBetweenPoints(double* position1,double* position2){
+		TVectorD displacement(3);
+		displacement(0) = position1[0] - position2[0];
+		displacement(1) = position1[1] - position2[1];
+		displacement(2) = position1[2] - position2[2];
+		float distance= sqrt(displacement.Norm2Sqr());
+		streamlog_out(DEBUG0)<<"The distance between the points to calculate radiation length is: "<<distance<<std::endl;
+		if(distance<1){
+			throw(lcio::Exception(Utility::outputColourString("The distance between the states is too small.", "RED"))); 	
+		}
+		if(distance>1000){//The planes should not be over a 1m in width
+			throw(lcio::Exception(Utility::outputColourString("The distance between the planes is over 1m.", "RED"))); 	
+		}
+	}
 
 	//OTHER FUNCTIONS
+	//We want to create a jacobain from (Plane1 -> scatterer1) then (scatterer1->scatterer2) then (scatter2->plane2). We return the last jacobain
+	TMatrixD EUTelGBLFitter::findScattersJacobians(EUTelState state, EUTelState nextState){
+		_scattererJacobians.clear();
+		TVector3 position = state.getPositionGlobal();
+		TVector3 momentum = state.computeCartesianMomentum();
+		TVector3 newMomentum;
+		int location = state.getLocation();
+		int locationEnd = -999; //This will create a scatterer with normal in beam direction
+		const gear::BField&   Bfield = geo::gGeometry().getMagneticFiled();
+		gear::Vector3D vectorGlobal(position[0],position[1],position[1]);//Since field is homogeneous this seems silly but we need to specify a position to geometry to get B-field.
+		const double Bx = (Bfield.at( vectorGlobal ).x());//We times bu 0.3 due to units of other variables. See paper. Must be Tesla
+		const double By = (Bfield.at( vectorGlobal ).y());
+		const double Bz = (Bfield.at( vectorGlobal ).z());
+		TVector3 B;
+		B[0]=Bx; B[1]=By; B[2]=Bz;
+		for(int i=0;i<_scattererPositions.size();i++){
+			newMomentum = geo::gGeometry().getXYZMomentumfromArcLength(momentum, position,state.getBeamCharge(), _scattererPositions[i] );
+			TMatrixD curvilinearJacobian = geo::gGeometry().getPropagationJacobianCurvilinear(_scattererPositions[i], state.getOmega(), momentum.Unit(),newMomentum.Unit());
+			streamlog_out(DEBUG0)<<"This is the curvilinear jacobian at sensor : " << location << " or scatter: "<< i << std::endl; 
+			streamlog_message( DEBUG0, curvilinearJacobian.Print();, std::endl; );
+			TMatrixD localToCurvilinearJacobianStart =  geo::gGeometry().getLocalToCurvilinearTransformMatrix(momentum, location ,state.getBeamCharge() );
+			streamlog_out(DEBUG0)<<"This is the local to curvilinear jacobian at sensor : " << location << " or scatter: "<< i << std::endl; 
+			streamlog_message( DEBUG0, localToCurvilinearJacobianStart.Print();, std::endl; );
+			TMatrixD localToCurvilinearJacobianEnd =  geo::gGeometry().getLocalToCurvilinearTransformMatrix(newMomentum,locationEnd ,state.getBeamCharge() );
+			streamlog_out(DEBUG0)<<"This is the local to curvilinear jacobian at sensor : " << locationEnd << " or scatter: "<< i << std::endl; 
+			streamlog_message( DEBUG0, localToCurvilinearJacobianEnd.Print();, std::endl; );
+			TMatrixD curvilinearToLocalJacobianEnd = localToCurvilinearJacobianEnd.Invert();
+			streamlog_out(DEBUG0)<<"This is the curvilinear to local jacobian at sensor : " << locationEnd << " or scatter: "<< i << std::endl; 
+			streamlog_message( DEBUG0, curvilinearToLocalJacobianEnd.Print();, std::endl; );
+			TMatrixD localToNextLocalJacobian = curvilinearToLocalJacobianEnd*curvilinearJacobian*localToCurvilinearJacobianStart;
+			streamlog_out(DEBUG0)<<"This is the full jacobian : " << locationEnd << " or scatter: "<< i << std::endl; 
+			streamlog_message( DEBUG0, localToNextLocalJacobian.Print();, std::endl; );
+			_scattererJacobians.push_back(localToNextLocalJacobian);//To DO if scatter then plane is always parallel to z axis
+			momentum[0]=newMomentum[0]; momentum[1]=newMomentum[1];	momentum[2]=newMomentum[2];
+			location = -999;//location will always be a scatter after first loop 
+			if(i == (_scattererPositions.size()-2)){//On the last loop we want to create the jacobain to the next plane
+				locationEnd = nextState.getLocation();
+			}
+		}
+		if(_scattererJacobians.size() != 3){
+			throw(lcio::Exception(Utility::outputColourString("There are not 3 jacobians produced by scatterers!.", "RED"))); 	
+		}
+		return _scattererJacobians.back();//return the last jacobian so the next state can use this
+	}
+	//The distance from the first state to the next scatterer and then from that scatterer to the next all the way to the next state. 
+	//TO DO: This uses the optimum positions as described by Claus.  However for non homogeneous material distribution this might not be the case.
+	void EUTelGBLFitter::findScattersZPositionBetweenTwoStates(EUTelState& state){
+		streamlog_out(DEBUG1) << "  findScattersZPositionBetweenTwoStates------------- BEGIN --------------  " << std::endl;
+		_scattererPositions.clear();	
+		float arcLength = state.getArcLengthToNextState();
+		streamlog_out(DEBUG1) << "The arc length to the next state is: " << arcLength << std::endl;
+		float distance1 =arcLength/2 - arcLength/sqrt(12); 
+		_scattererPositions.push_back(distance1);//Z position of 1st scatter	
+		float distance2 = arcLength/2 + arcLength/sqrt(12);//Z position of 2nd scatter 
+		_scattererPositions.push_back(distance2);
+		_scattererPositions.push_back(arcLength); 
+		streamlog_out(DEBUG1) << "  findScattersZPositionBetweenTwoStates------------- END --------------  " << std::endl;
+	}
 	void EUTelGBLFitter::resetPerTrack() {
 		_counter_num_pointer=1;
 		_measurementStatesInOrder.clear();
@@ -351,210 +554,6 @@ namespace eutelescope {
 		}//END of loop of all states
 	}
 
-void EUTelGBLFitter::testDistanceBetweenPoints(double* position1,double* position2){
-TVectorD displacement(3);
-displacement(0) = position1[0] - position2[0];
-displacement(1) = position1[1] - position2[1];
-displacement(2) = position1[2] - position2[2];
-float distance= sqrt(displacement.Norm2Sqr());
-streamlog_out(DEBUG0)<<"The distance between the points to calculate radiation length is: "<<distance<<std::endl;
-if(distance<1){
-	throw(lcio::Exception(Utility::outputColourString("The distance between the states is too small.", "RED"))); 	
-}
-if(distance>1000){//The planes should not be over a 1m in width
-	throw(lcio::Exception(Utility::outputColourString("The distance between the planes is over 1m.", "RED"))); 	
-}
-}
-
-void EUTelGBLFitter::setPointListWithNewScatterers(std::vector< gbl::GblPoint >& pointList,EUTelState & state, float  percentageRadiationLength){
-if(_scattererJacobians.size() != _scattererPositions.size()){
-	throw(lcio::Exception(Utility::outputColourString("The size of the scattering positions and jacobians is different.", "RED"))); 	
-}
-for(int i = 0 ;i < _scattererJacobians.size()-1;++i){//The last jacobain is used to get to the plane! So only loop over to (_scatterJacobians-1)
-	gbl::GblPoint point(_scattererJacobians[i]);
-	point.setLabel(_counter_num_pointer);
-	_counter_num_pointer++;
-	setScattererGBL(point,state, percentageRadiationLength/2);//TO DO:Simply dividing by 2 will work when there is only two planes
-	pointList.push_back(point);
-}
-}
-//We want to create a jacobain from (Plane1 -> scatterer1) then (scatterer1->scatterer2) then (scatter2->plane2). We return the last jacobain
-TMatrixD EUTelGBLFitter::findScattersJacobians(EUTelState state, EUTelState nextState){
-_scattererJacobians.clear();
-TVector3 position = state.getPositionGlobal();
-TVector3 momentum = state.computeCartesianMomentum();
-TVector3 newMomentum;
-int location = state.getLocation();
-int locationEnd = -999; //This will create a scatterer with normal in beam direction
-const gear::BField&   Bfield = geo::gGeometry().getMagneticFiled();
-gear::Vector3D vectorGlobal(position[0],position[1],position[1]);//Since field is homogeneous this seems silly but we need to specify a position to geometry to get B-field.
-const double Bx = (Bfield.at( vectorGlobal ).x());//We times bu 0.3 due to units of other variables. See paper. Must be Tesla
-const double By = (Bfield.at( vectorGlobal ).y());
-const double Bz = (Bfield.at( vectorGlobal ).z());
-TVector3 B;
-B[0]=Bx; B[1]=By; B[2]=Bz;
-for(int i=0;i<_scattererPositions.size();i++){
-	newMomentum = geo::gGeometry().getXYZMomentumfromArcLength(momentum, position,state.getBeamCharge(), _scattererPositions[i] );
-	TMatrixD curvilinearJacobian = geo::gGeometry().getPropagationJacobianCurvilinear(_scattererPositions[i], state.getOmega(), momentum.Unit(),newMomentum.Unit());
-	streamlog_out(DEBUG0)<<"This is the curvilinear jacobian at sensor : " << location << " or scatter: "<< i << std::endl; 
-	streamlog_message( DEBUG0, curvilinearJacobian.Print();, std::endl; );
-	TMatrixD localToCurvilinearJacobianStart =  geo::gGeometry().getLocalToCurvilinearTransformMatrix(momentum, location ,state.getBeamCharge() );
-	streamlog_out(DEBUG0)<<"This is the local to curvilinear jacobian at sensor : " << location << " or scatter: "<< i << std::endl; 
-	streamlog_message( DEBUG0, localToCurvilinearJacobianStart.Print();, std::endl; );
-	TMatrixD localToCurvilinearJacobianEnd =  geo::gGeometry().getLocalToCurvilinearTransformMatrix(newMomentum,locationEnd ,state.getBeamCharge() );
-	streamlog_out(DEBUG0)<<"This is the local to curvilinear jacobian at sensor : " << locationEnd << " or scatter: "<< i << std::endl; 
-	streamlog_message( DEBUG0, localToCurvilinearJacobianEnd.Print();, std::endl; );
-	TMatrixD curvilinearToLocalJacobianEnd = localToCurvilinearJacobianEnd.Invert();
-	streamlog_out(DEBUG0)<<"This is the curvilinear to local jacobian at sensor : " << locationEnd << " or scatter: "<< i << std::endl; 
-	streamlog_message( DEBUG0, curvilinearToLocalJacobianEnd.Print();, std::endl; );
-	TMatrixD localToNextLocalJacobian = curvilinearToLocalJacobianEnd*curvilinearJacobian*localToCurvilinearJacobianStart;
-	streamlog_out(DEBUG0)<<"This is the full jacobian : " << locationEnd << " or scatter: "<< i << std::endl; 
-	streamlog_message( DEBUG0, localToNextLocalJacobian.Print();, std::endl; );
-	_scattererJacobians.push_back(localToNextLocalJacobian);//To DO if scatter then plane is always parallel to z axis
-	momentum[0]=newMomentum[0]; momentum[1]=newMomentum[1];	momentum[2]=newMomentum[2];
-	location = -999;//location will always be a scatter after first loop 
-	if(i == (_scattererPositions.size()-2)){//On the last loop we want to create the jacobain to the next plane
-		locationEnd = nextState.getLocation();
-	}
-}
-if(_scattererJacobians.size() != 3){
-	throw(lcio::Exception(Utility::outputColourString("There are not 3 jacobians produced by scatterers!.", "RED"))); 	
-}
-return _scattererJacobians.back();//return the last jacobian so the next state can use this
-}
-//The distance from the first state to the next scatterer and then from that scatterer to the next all the way to the next state. 
-//TO DO: This uses the optimum positions as described by Claus.  However for non homogeneous material distribution this might not be the case.
-void EUTelGBLFitter::findScattersZPositionBetweenTwoStates(EUTelState& state){
-streamlog_out(DEBUG1) << "  findScattersZPositionBetweenTwoStates------------- BEGIN --------------  " << std::endl;
-_scattererPositions.clear();	
-float arcLength = state.getArcLengthToNextState();
-streamlog_out(DEBUG1) << "The arc length to the next state is: " << arcLength << std::endl;
-float distance1 =arcLength/2 - arcLength/sqrt(12); 
-_scattererPositions.push_back(distance1);//Z position of 1st scatter	
-float distance2 = arcLength/2 + arcLength/sqrt(12);//Z position of 2nd scatter 
-_scattererPositions.push_back(distance2);
-_scattererPositions.push_back(arcLength); 
-streamlog_out(DEBUG1) << "  findScattersZPositionBetweenTwoStates------------- END --------------  " << std::endl;
-
-}
-//Note that we take the planes themselfs at scatters and also add scatterers to simulate the medium inbetween. 
-void EUTelGBLFitter::setScattererGBL(gbl::GblPoint& point, EUTelState & state ) {
-streamlog_out(DEBUG1) << " setScattererGBL ------------- BEGIN --------------  " << std::endl;
-TVectorD scat(2); 
-scat[0] = 0.0; scat[1]=0.0;//TO DO: This will depend on if the initial track guess has kinks. Only important if we reiterate GBL track in high radiation length enviroments  
-TMatrixDSym precisionMatrix =  state.getScatteringVarianceInLocalFrame();
-streamlog_out(MESSAGE1) << "The precision matrix being used for the sensor  "<<state.getLocation()<<":" << std::endl;
-streamlog_message( DEBUG0, precisionMatrix.Print();, std::endl; );
-point.addScatterer(scat, precisionMatrix);
-streamlog_out(DEBUG1) << "  setScattererGBL  ------------- END ----------------- " << std::endl;
-}
-//This is used when the we know the radiation length already
-void EUTelGBLFitter::setScattererGBL(gbl::GblPoint& point,EUTelState & state, float  percentageRadiationLength) {
-streamlog_out(MESSAGE1) << " setScattererGBL ------------- BEGIN --------------  " << std::endl;
-TVectorD scat(2); 
-scat[0] = 0.0; scat[1]=0.0;  
-TMatrixDSym precisionMatrix =  state.getScatteringVarianceInLocalFrame(percentageRadiationLength);
-streamlog_out(MESSAGE1) << "The precision matrix being used for the scatter:  " << std::endl;
-streamlog_message( DEBUG0, precisionMatrix.Print();, std::endl; );
-point.addScatterer(scat, precisionMatrix);
-streamlog_out(MESSAGE1) << "  setScattererGBL  ------------- END ----------------- " << std::endl;
-}
-//This will add measurement information to the GBL point
-//Note that if we have a strip sensor then y will be ignored using projection matrix.
-void EUTelGBLFitter::setMeasurementGBL(gbl::GblPoint& point, const double *hitPos,  double statePos[3], double combinedCov[4], TMatrixD projection){
-streamlog_out(DEBUG1) << " setMeasurementGBL ------------- BEGIN --------------- " << std::endl;
-TVectorD meas(2);//Remember we need to pass the same 5 since gbl expects this due to jacobian
-meas.Zero();
-meas[0] = hitPos[0] - statePos[0];//This is how residuals are shown as output after fit (measurement-prediction)
-meas[1] = hitPos[1] - statePos[1];
-TVectorD measPrec(2); 
-//TO DO: Can make the variance vector a matrix to explore relationships between x/y and variance.  
-measPrec[0] = 1. / combinedCov[0];	// cov(x,x)
-measPrec[1] = 1. / combinedCov[3];	// cov(y,y)
-streamlog_out(DEBUG4) << "This is what we add to the measured point:" << std::endl;
-streamlog_out(DEBUG4) << "Residuals and covariant matrix for the hit:" << std::endl;
-streamlog_out(DEBUG4) << "X:" << std::setw(20) << meas[0] << std::setw(20) << measPrec[0] <<"," << std::endl;
-streamlog_out(DEBUG4) << "Y:" << std::setw(20) << meas[1] << std::setw(20)  <<"," << measPrec[1] << std::endl;
-streamlog_out(DEBUG4) << "This H matrix:" << std::endl;
-streamlog_message( DEBUG0, projection.Print();, std::endl; );
-//The gbl library creates 5 measurement vector and 5x5 propagation matrix automatically. If  
-point.addMeasurement(projection, meas, measPrec, 0);//The last zero is the minimum precision before this is set to 0. TO DO:Remove this magic number
-streamlog_out(DEBUG1) << " setMeasurementsGBL ------------- END ----------------- " << std::endl;
-}
-
-//This function calculates the alignment jacobian and labels and attaches this to the point
-void EUTelGBLFitter::setAlignmentToMeasurementJacobian(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList ){
-for (int i = 0;i<_vectorOfPairsMeasurementStatesAndLabels.size() ;++i ){
-	if(_vectorOfPairsMeasurementStatesAndLabels.at(i).first.getTrackerHits().empty()){
-		throw(lcio::Exception(Utility::outputColourString("One of the points on the list of measurements states has no hit.", "RED")));
-	}
-	for(int j = 0; j < pointList.size(); ++j){
-		if( _vectorOfPairsMeasurementStatesAndLabels.at(i).second == pointList.at(j).getLabel()){
-			EUTelState state = _vectorOfPairsMeasurementStatesAndLabels.at(i).first;
-			streamlog_out(DEBUG0)<<"Point needs global parameters. It has  "<<pointList.at(j).hasMeasurement()<<" measurements."<<std::endl;
-			if(getLabelToPoint(pointList,_vectorOfPairsMeasurementStatesAndLabels.at(i).second).hasMeasurement() == 0){
-				throw(lcio::Exception(Utility::outputColourString("This point does not contain a measurements. Labeling of the state must be wrong ", "RED")));
-			} 
-			_MilleInterface->computeAlignmentToMeasurementJacobian(state);//We calculate the jacobian. 
-			_MilleInterface->setGlobalLabels(state); //Get the correct label for the sensors x,y,z shift and rotations. Depending on alignment mode and sensor the plane is on 
-			TMatrixD&  alignmentJacobian = _MilleInterface->getAlignmentJacobian();//Return what was calculated by computeAlignmentToMeasurementJacobian
-			std::vector<int> labels =  _MilleInterface->getGlobalParameters();//Return what was set by setGlobalLabels
-			streamlog_out(DEBUG0)<<"The state associated with this alignment jacobian:  "<<std::endl;
-			streamlog_message( DEBUG0, state.print() ;, std::endl; );
-			if(!state.getIsThereAHit()){
-				throw(lcio::Exception(Utility::outputColourString("You are just about to use a state with no hit to determine alignment jacobian.", "RED")));
-			}
-			streamlog_out(DEBUG0)<<"This is the alignment jacobian we are about to add to the point at location "<<state.getLocation()<<std::endl;
-			streamlog_message( DEBUG0, alignmentJacobian.Print();, std::endl; );
-			streamlog_out(DEBUG0)<<"Here are the labels for these alignment parameters for the state at location: "<<state.getLocation()<<std::endl;
-			for(int k=0; k<labels.size();++k){
-				streamlog_out(DEBUG0)<<"Label just before adding: "<<labels.at(k) <<std::endl;
-			}
-			pointList.at(j).addGlobals(labels, alignmentJacobian);
-			streamlog_out(DEBUG0)<<"The number of global parameters for this point are "<<pointList[i].getNumGlobals()<<std::endl;
-			for(int k=0; k<pointList.at(j).getGlobalLabels().size();++k){
-				streamlog_out(DEBUG0)<<"Label just after adding: "<<pointList.at(j).getGlobalLabels().at(k) <<std::endl;
-			}
-			streamlog_out(DEBUG0)<<"The alignment matrix after adding to point: "<<std::endl;
-			streamlog_message( DEBUG0, pointList.at(j).getGlobalDerivatives().Print() ;, std::endl; );
-			break;
-		}
-		//streamlog_out(DEBUG0)<<"This point has "<<pointList.at(j).hasMeasurement()<<" measurements. It has label "<<pointList.at(j).getLabel() <<std::endl;
-		if(j == (pointList.size()-1)){
-			throw(lcio::Exception(Utility::outputColourString("There is no point associated with this state.", "RED")));
-		}
-	}
-}
-}
-gbl::GblPoint EUTelGBLFitter::getLabelToPoint(std::vector<gbl::GblPoint> & pointList, int label){
-for(int i = 0; i< pointList.size();++i){
-	streamlog_out(DEBUG0)<<"This point has label : "<<pointList.at(i).getLabel()<<". The label number: "<<label<<std::endl;
-	if(pointList.at(i).getLabel() == label){
-		return pointList.at(i);
-	}
-	if(i == (pointList.size()-1)){ //If we reach the end of the loop and still no match then this label must belong to no point
-		streamlog_out(MESSAGE5)<<"The size of pointList: "<<pointList.size()<<". The label number: "<<label<<std::endl;
-		throw(lcio::Exception(Utility::outputColourString("There is no point with this label", "RED")));
-	}
-}
-}
-//TO DO: This is the iterative alignment part that varies the precision of the measurement to allow the GBL tracks to be fitted. The precision matrix itself is an input by us. In the long run can we not do proper error calculations? 
-//TO DO: This does not have to be done for each state since it only varies per plane. So could input this data another way. However in the long run this may not be favourable since we could have correct error analysis eventually. 
-void EUTelGBLFitter::setMeasurementCov(EUTelState& state){
-double hitcov[]= {0,0,0,0};
-int izPlane = state.getLocation();
-if( _parameterIdXResolutionVec.size() > 0 && _parameterIdYResolutionVec.size() > 0 ){
-	hitcov[0] = _parameterIdXResolutionVec[izPlane];
-	hitcov[3] = _parameterIdYResolutionVec[izPlane];
-
-	hitcov[0] *= hitcov[0]; 
-	hitcov[3] *= hitcov[3];
-}
-else{//Default in case you have not specified a variance  
-	throw(lcio::Exception(Utility::outputColourString("There is no measurement variance specified.", "RED"))); 	
-}
-state.setCombinedHitAndStateCovMatrixInLocalFrame(hitcov);
-}
 } // namespace eutelescope
 
 

@@ -54,222 +54,128 @@
 
 namespace eutelescope {
 
-    class EUTelGBLFitter :  public EUTelTrackFitter {
+	class EUTelGBLFitter :  public EUTelTrackFitter {
         
     private:
-        DISALLOW_COPY_AND_ASSIGN(EUTelGBLFitter)        // prevent users from making (default) copies of processors
+			DISALLOW_COPY_AND_ASSIGN(EUTelGBLFitter)        // prevent users from making (default) copies of processors
       
-
     public:
-        EUTelGBLFitter();
-        explicit EUTelGBLFitter(std::string name);
-        virtual ~EUTelGBLFitter();
+			EUTelGBLFitter();
+			~EUTelGBLFitter();
+			//OTHER FUNCTIONS
+			void resetPerTrack();
+			void findScattersZPositionBetweenTwoStates(EUTelState& state);
+			TMatrixD findScattersJacobians(EUTelState state, EUTelState nextTrack);
+			void updateTrackFromGBLTrajectory(gbl::GblTrajectory* traj,std::vector< gbl::GblPoint >& pointList, EUTelTrack & track, map<int, vector<double> > &  mapSensorIDToCorrectionVec );
+			void prepareLCIOTrack( gbl::GblTrajectory*, vector<const IMPL::TrackImpl*>::const_iterator&, double, int); 
+			void prepareMilleOut( gbl::GblTrajectory* );
+			//SET
+			void setInformationForGBLPointList(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList);
+			void setMeasurementGBL(gbl::GblPoint& point, const double *hitPos, double statePos[3], double combinedCov[4], TMatrixD projection);
+			void setKinkInformationToTrack(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint >& pointList,EUTelTrack &track);
+			void setPointVec( std::vector< gbl::GblPoint >& pointList, gbl::GblPoint& point);
+			void setPairAnyStateAndPointLabelVec(std::vector< gbl::GblPoint >& pointList, gbl::GblTrajectory*);
+			void setPairMeasurementStateAndPointLabelVec(std::vector< gbl::GblPoint >& pointList);
+			void setAlignmentToMeasurementJacobian(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList);
+			void setScattererGBL(gbl::GblPoint& point,EUTelState & state );
+			void setScattererGBL(gbl::GblPoint& point,EUTelState & state,  float  percentageRadiationLength);
+			void setPointListWithNewScatterers(std::vector< gbl::GblPoint >& pointList,EUTelState & state, float  percentageRadiationLength);
+			void setMeasurementCov(EUTelState& state);
+			inline void setAlignmentMode( int number) {
+				this->_alignmentMode = number;
+			}
+			inline void setBeamCharge(double beamQ) {
+				this->_beamQ = beamQ;
+			}
+      inline void setBeamEnergy(double beamE) {
+				this->_eBeam = beamE;
+			}
+			void SetMilleBinary(gbl::MilleBinary* _mille) {
+				this->_mille = _mille;
+			}
+			void setMillepede( EUTelMillepede* Mille ) { _MilleInterface =  Mille; }
+			inline void setChi2Cut(double chi2cut) {
+				this->_chi2cut = chi2cut;
+			}
+			void SetJacobain(TMatrixD matrix ){
+				_jacobianAlignment = matrix;
+			}
+			void SetAlignmentVariablesList(std::vector<int> globalLabels){
+				_globalLabels = globalLabels;
+			}
+			void setParamterIdXResolutionVec( const std::vector<float>& );
+			void setParamterIdYResolutionVec( const std::vector<float>& );
+			void setExcludeFromFitPlanes(const std::vector<int>&);
+			void setMEstimatorType( const std::string& _mEstimatorType );
 
-        // do some clean up of internal data structures
-        // will be automatically run when calling EUTelGBLFitter::FitTracks()
-        void resetPerTrack();
-
-        /** Fit tracks */
-        // public: 
-				void findScattersZPositionBetweenTwoStates(EUTelState& state);
-				TMatrixD findScattersJacobians(EUTelState state, EUTelState nextTrack);
-				void setInformationForGBLPointList(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList);
-//				void setInformationForGBLPointListForAlignment(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList);
-				void testTrack(EUTelTrack& track);
-				void changejacobainGBL(TMatrixD & input, TMatrixD & output);
-				void FindHitIfThereIsOne(EUTelTrackImpl* trackimpl, EVENT::TrackerHit* hit, EUTelTrackStateImpl* state);
-				void testDistanceBetweenPoints(double* position1,double* position2);
-				void setMeasurementGBL(gbl::GblPoint& point, const double *hitPos, double statePos[3], double combinedCov[4], TMatrixD projection);
-				void setKinkInformationToTrack(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint >& pointList,EUTelTrack &track);
-
-
-
-				void computeTrajectoryAndFit(std::vector< gbl::GblPoint >& pointList,  gbl::GblTrajectory* traj, double* chi2, int* ndf, int & ierr);
-
-				void updateTrackFromGBLTrajectory(gbl::GblTrajectory* traj,std::vector< gbl::GblPoint >& pointList, EUTelTrack & track, map<int, vector<double> > &  mapSensorIDToCorrectionVec );
-				void setPointVec( std::vector< gbl::GblPoint >& pointList, gbl::GblPoint& point);
-				std::vector<EUTelState> _measurementStatesInOrder;
-				std::vector<EUTelState> _statesInOrder;
-				void setPairAnyStateAndPointLabelVec(std::vector< gbl::GblPoint >& pointList, gbl::GblTrajectory*);
-				void setPairMeasurementStateAndPointLabelVec(std::vector< gbl::GblPoint >& pointList);
-				gbl::GblPoint getLabelToPoint(std::vector<gbl::GblPoint> & pointList, int label);
-				void setAlignmentToMeasurementJacobian(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList);
-				void setScattererGBL(gbl::GblPoint& point,EUTelState & state );
-				void setScattererGBL(gbl::GblPoint& point,EUTelState & state,  float  percentageRadiationLength);
-				void setPointListWithNewScatterers(std::vector< gbl::GblPoint >& pointList,EUTelState & state, float  percentageRadiationLength);
-				void getResidualOfTrackandHits(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint > pointList, EUTelTrack& track, map< int, map< float, float > > & SensorResidual, map< int, map< float, float > >& sensorResidualError);
-
-        /*
-         */  
-        void TrackCandidatesToGBLTrajectory( vector<const IMPL::TrackImpl*>::const_iterator&  );
-
-        /*
-         */
-        void PerformFitGBLTrajectory( gbl::GblTrajectory* ,  vector<const IMPL::TrackImpl*>::const_iterator& );
-       
-
-        void FitSingleTrackCandidate(EVENT::TrackVec::const_iterator& itTrkCand);
-
-				void setMeasurementCov(EUTelState& state);
-
-				inline void setAlignmentMode( int number) {
-            this->_alignmentMode = number;
-        }
-
-        inline int getAlignmentMode() const {
-            return _alignmentMode;
-        }
+			//TEST
+			void testTrack(EUTelTrack& track);
+			void testDistanceBetweenPoints(double* position1,double* position2);
+			//COMPUTE
+			void computeTrajectoryAndFit(std::vector< gbl::GblPoint >& pointList,  gbl::GblTrajectory* traj, double* chi2, int* ndf, int & ierr);
+			//GET
+			gbl::GblPoint getLabelToPoint(std::vector<gbl::GblPoint> & pointList, int label);
+			void getResidualOfTrackandHits(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint > pointList, EUTelTrack& track, map< int, map< float, float > > & SensorResidual, map< int, map< float, float > >& sensorResidualError);
+			inline int getAlignmentMode() const {
+				return _alignmentMode;
+			}
 				int _alignmentMode;
-        inline void SetBeamCharge(double beamQ) {
-            this->_beamQ = beamQ;
-        }
-
-        inline double getBeamCharge() const {
-            return _beamQ;
-        }
-
-        inline void SetBeamEnergy(double beamE) {
-            this->_eBeam = beamE;
-        }
-
-        inline double getBeamEnergy() const {
-            return _eBeam;
-        }
-
-
-
-
-
-        void SetMilleBinary(gbl::MilleBinary* _mille) {
-            this->_mille = _mille;
-        }
-
-				void setMillepede( EUTelMillepede* Mille ) { _MilleInterface =  Mille; }
-			
-        inline void setChi2Cut(double chi2cut) {
-            this->_chi2cut = chi2cut;
-        }
-
-        inline double GetChi2Cut() const {
-            return _chi2cut;
-				}
-        inline std::vector<double> getCorrectionsTotal() const {
-					std::vector<double> correctionsTotal;
-					correctionsTotal.push_back(_omegaCorrections);	
-					correctionsTotal.push_back(_intersectionLocalXZCorrections);	
-					correctionsTotal.push_back(	_intersectionLocalYZCorrections);	
-					correctionsTotal.push_back(_localPosXCorrections);
-					correctionsTotal.push_back(_localPosYCorrections);
-					return correctionsTotal;
-        }
-
-
-				void SetJacobain(TMatrixD matrix ){
-					_jacobianAlignment = matrix;
-				}
-		
-				void SetAlignmentVariablesList(std::vector<int> globalLabels){
-					_globalLabels = globalLabels;
-				}
- 
-        void setParamterIdXResolutionVec( const std::vector<float>& );
-
-        void setParamterIdYResolutionVec( const std::vector<float>& );
-				        
-        const std::vector<  float>& getParamterIdXResolutionVec() const;
-
-        const std::vector<  float>& getParamterIdYResolutionVec() const;
- 
-        void setMEstimatorType( const std::string& _mEstimatorType );
-        
-        std::string getMEstimatorType() const;
-        
-        void setExcludeFromFitPlanes(const std::vector<int>&);
-        
-        std::vector<int> getExcludeFromFitPlanes() const;
-
-    private:
-
-        TMatrixD PropagatePar(  double, double, double, double, double, double, double );
-
-	TVectorD getXYZfromDzNum( double, double, double, double, double, double, double ) const;
-        
-        TMatrixD propagatePar(double);
-
-        void addMeasurementsGBL( gbl::GblPoint&, TVectorD&, TVectorD&, const double*, const double*, const EVENT::FloatVec&, TMatrixD& );
-        
-        void addGlobalParametersGBL( gbl::GblPoint&, TMatrixD&, std::vector<int>&, int, const double*, double, double );
-        
-        void pushBackPoint( std::vector< gbl::GblPoint >&, const gbl::GblPoint&, int );
-
-        void pushBackPointMille( std::vector< gbl::GblPoint >&, const gbl::GblPoint&, int );
- 
-        void prepareLCIOTrack( gbl::GblTrajectory*, vector<const IMPL::TrackImpl*>::const_iterator&,
-                                double, int); //, double, double, double, double, double );
-
-        void prepareMilleOut( gbl::GblTrajectory* );
-
-
-    private:
-        vector<const IMPL::TrackImpl*> _trackCandidatesVec;
-
-
-				double _omegaCorrections;	
-				double _intersectionLocalXZCorrections;	
-				double _intersectionLocalYZCorrections;	
-				double _localPosXCorrections;
-				double _localPosYCorrections;
-
-    private:
-        /** Beam charge in [e] */
-        double _beamQ;
-
-        /** Beam energy in [GeV] */
-        double _eBeam;
-
-    private:
-        /** Alignment degrees of freedom */
-
-        /** Outlier downweighting option */
-        std::string _mEstimatorType;
-        
-        /** Milipede binary file handle */
-        gbl::MilleBinary* _mille;
-
-				std::string _binaryname;
-
-				TMatrixD _jacobianAlignment;
-				std::vector<TMatrixD> _scattererJacobians;
-				std::vector<float> _scattererPositions;
-				std::vector<int> _globalLabels;
-        
-        /** Parameter resolutions */
-        std::vector<int> _parameterIdPlaneVec;
- 
-        /** Parameter resolutions */
-        std::map< int,  float> _parameterIdXResolutionVec;
- 
-        /** Parameter resolutions */
-        std::map< int,  float> _parameterIdYResolutionVec;
-
-        /** Parameter ids */
-        std::map<int,int> _parameterIdXShiftsMap;
-        
-        /** Parameter ids */
-        std::map<int,int> _parameterIdYShiftsMap;
-        
-        /** Parameter ids */
-        std::map<int,int> _parameterIdZShiftsMap;
-        
-        /** Parameter ids */
-        std::map<int,int> _parameterIdXRotationsMap;
-        
-        /** Parameter ids */
-        std::map<int,int> _parameterIdYRotationsMap;
-        
-        /** Parameter ids */
-        std::map<int,int> _parameterIdZRotationsMap;
-				//this maps the original states from the pattern recognition with true and the other scatterers to take into account volumes inbetween them as false. This is needed since you may not know the number of scatterers inbetween in future versions. 
+			inline double getBeamEnergy() const {
+				return _eBeam;
+			}
+			inline double GetChi2Cut() const {
+				return _chi2cut;
+			}
+			inline std::vector<double> getCorrectionsTotal() const {
+				std::vector<double> correctionsTotal;
+				correctionsTotal.push_back(_omegaCorrections);	
+				correctionsTotal.push_back(_intersectionLocalXZCorrections);	
+				correctionsTotal.push_back(	_intersectionLocalYZCorrections);	
+				correctionsTotal.push_back(_localPosXCorrections);
+				correctionsTotal.push_back(_localPosYCorrections);
+				return correctionsTotal;
+			}
+			const std::vector<  float>& getParamterIdXResolutionVec() const;
+			const std::vector<  float>& getParamterIdYResolutionVec() const;
+			std::string getMEstimatorType() const;
+			//VARIABLES
+			std::vector<EUTelState> _measurementStatesInOrder;
+			std::vector<EUTelState> _statesInOrder;
+	
+			double _omegaCorrections;	
+			double _intersectionLocalXZCorrections;	
+			double _intersectionLocalYZCorrections;	
+			double _localPosXCorrections;
+			double _localPosYCorrections;
+			double _beamQ;
+			double _eBeam;
+			/** Outlier downweighting option */
+			std::string _mEstimatorType;
+			/** Milipede binary file handle */
+			gbl::MilleBinary* _mille;
+			std::string _binaryname;
+			TMatrixD _jacobianAlignment;
+			std::vector<TMatrixD> _scattererJacobians;
+			std::vector<float> _scattererPositions;
+			std::vector<int> _globalLabels;
+			/** Parameter resolutions */
+			std::vector<int> _parameterIdPlaneVec;
+			/** Parameter resolutions */
+			std::map< int,  float> _parameterIdXResolutionVec;
+			/** Parameter resolutions */
+			std::map< int,  float> _parameterIdYResolutionVec;
+			/** Parameter ids */
+			std::map<int,int> _parameterIdXShiftsMap;
+			/** Parameter ids */
+			std::map<int,int> _parameterIdYShiftsMap;
+			std::map<int,int> _parameterIdZShiftsMap;
+			/** Parameter ids */
+			std::map<int,int> _parameterIdXRotationsMap;
+			/** Parameter ids */
+			std::map<int,int> _parameterIdYRotationsMap;
+			/** Parameter ids */
+			std::map<int,int> _parameterIdZRotationsMap;
+			//this maps the original states from the pattern recognition with true and the other scatterers to take into account volumes inbetween them as false. This is needed since you may not know the number of scatterers inbetween in future versions. 
 
 //Need to create a comparision function to order the points. Needs to be in class format. not sure why?
 struct compare_points
