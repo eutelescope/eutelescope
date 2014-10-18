@@ -103,7 +103,6 @@ void EUTelProcessorMilleAlign::init() {
 	_Mille->testUserInput();
 	_Mille->printFixedPlanes();
 	Fitter->setMEstimatorType(_mEstimatorType);//This I am not too sure about. As far as I understand it specifies the procedure that Millepede will use to deal with outliers. Outliers are hits that are far from any state. So their impact to alignemt should be down weighted.
-	Fitter->setChi2Cut(_maxChi2Cut);
   Fitter->setParamterIdXResolutionVec(_SteeringxResolutions);//We set the accuracy of the residual information since we have no correct hit error analysis yet.
   Fitter->setParamterIdYResolutionVec(_SteeringyResolutions);
 	Fitter->setMillepede(_Mille);//We need to have a connection between GBL and Millepede since GBL knows nothing about sensor orientations.

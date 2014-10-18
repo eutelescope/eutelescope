@@ -62,13 +62,6 @@ namespace eutelescope {
     public:
 			EUTelGBLFitter();
 			~EUTelGBLFitter();
-			//OTHER FUNCTIONS
-			void resetPerTrack();
-			void findScattersZPositionBetweenTwoStates(EUTelState& state);
-			TMatrixD findScattersJacobians(EUTelState state, EUTelState nextTrack);
-			void updateTrackFromGBLTrajectory(gbl::GblTrajectory* traj,std::vector< gbl::GblPoint >& pointList, EUTelTrack & track, map<int, vector<double> > &  mapSensorIDToCorrectionVec );
-			void prepareLCIOTrack( gbl::GblTrajectory*, vector<const IMPL::TrackImpl*>::const_iterator&, double, int); 
-			void prepareMilleOut( gbl::GblTrajectory* );
 			//SET
 			void setInformationForGBLPointList(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList);
 			void setMeasurementGBL(gbl::GblPoint& point, const double *hitPos, double statePos[3], double combinedCov[4], TMatrixD projection);
@@ -94,9 +87,6 @@ namespace eutelescope {
 				this->_mille = _mille;
 			}
 			void setMillepede( EUTelMillepede* Mille ) { _MilleInterface =  Mille; }
-			inline void setChi2Cut(double chi2cut) {
-				this->_chi2cut = chi2cut;
-			}
 			void SetJacobain(TMatrixD matrix ){
 				_jacobianAlignment = matrix;
 			}
@@ -107,24 +97,14 @@ namespace eutelescope {
 			void setParamterIdYResolutionVec( const std::vector<float>& );
 			void setExcludeFromFitPlanes(const std::vector<int>&);
 			void setMEstimatorType( const std::string& _mEstimatorType );
-
-			//TEST
-			void testTrack(EUTelTrack& track);
-			void testDistanceBetweenPoints(double* position1,double* position2);
-			//COMPUTE
-			void computeTrajectoryAndFit(std::vector< gbl::GblPoint >& pointList,  gbl::GblTrajectory* traj, double* chi2, int* ndf, int & ierr);
 			//GET
 			gbl::GblPoint getLabelToPoint(std::vector<gbl::GblPoint> & pointList, int label);
 			void getResidualOfTrackandHits(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint > pointList, EUTelTrack& track, map< int, map< float, float > > & SensorResidual, map< int, map< float, float > >& sensorResidualError);
 			inline int getAlignmentMode() const {
 				return _alignmentMode;
 			}
-				int _alignmentMode;
 			inline double getBeamEnergy() const {
 				return _eBeam;
-			}
-			inline double GetChi2Cut() const {
-				return _chi2cut;
 			}
 			inline std::vector<double> getCorrectionsTotal() const {
 				std::vector<double> correctionsTotal;
@@ -138,10 +118,24 @@ namespace eutelescope {
 			const std::vector<  float>& getParamterIdXResolutionVec() const;
 			const std::vector<  float>& getParamterIdYResolutionVec() const;
 			std::string getMEstimatorType() const;
+
+			//TEST
+			void testTrack(EUTelTrack& track);
+			void testDistanceBetweenPoints(double* position1,double* position2);
+			//COMPUTE
+			void computeTrajectoryAndFit(std::vector< gbl::GblPoint >& pointList,  gbl::GblTrajectory* traj, double* chi2, int* ndf, int & ierr);
+			//OTHER FUNCTIONS
+			void resetPerTrack();
+			void findScattersZPositionBetweenTwoStates(EUTelState& state);
+			TMatrixD findScattersJacobians(EUTelState state, EUTelState nextTrack);
+			void updateTrackFromGBLTrajectory(gbl::GblTrajectory* traj,std::vector< gbl::GblPoint >& pointList, EUTelTrack & track, map<int, vector<double> > &  mapSensorIDToCorrectionVec );
+			void prepareLCIOTrack( gbl::GblTrajectory*, vector<const IMPL::TrackImpl*>::const_iterator&, double, int); 
+			void prepareMilleOut( gbl::GblTrajectory* );
+
 			//VARIABLES
+			int _alignmentMode;
 			std::vector<EUTelState> _measurementStatesInOrder;
 			std::vector<EUTelState> _statesInOrder;
-	
 			double _omegaCorrections;	
 			double _intersectionLocalXZCorrections;	
 			double _intersectionLocalYZCorrections;	
@@ -175,32 +169,12 @@ namespace eutelescope {
 			std::map<int,int> _parameterIdYRotationsMap;
 			/** Parameter ids */
 			std::map<int,int> _parameterIdZRotationsMap;
-std::vector< pair< EUTelState, int> > _vectorOfPairsMeasurementStatesAndLabels;//This is used within alignment since you need to associate MEASUREMENT states to  labels
-std::vector< pair< EUTelState, int> > _vectorOfPairsStatesAndLabels;//This is used in track fit since you want to associate ANY states to labels.
-std::vector<gbl::GblPoint> _points;
-
-unsigned int _counter_num_pointer = 1;
-       
-        /** Planes ids to be excluded from refit */
-        std::vector< int > _excludeFromFit;
-        
-        // Track requirements for alignment step
-        
-        /** Maximum allowed track 2hi2 value*/
-        double _chi2cut;
-
-	/** ODE integrator for equations of motion */
-        EUTelUtilityRungeKutta* _eomIntegrator;
-
-	/** ODE for equations of motion */
-        ODE* _eomODE;
-
-				EUTelMillepede* _MilleInterface;
+			std::vector< pair< EUTelState, int> > _vectorOfPairsMeasurementStatesAndLabels;//This is used within alignment since you need to associate MEASUREMENT states to  labels
+			std::vector< pair< EUTelState, int> > _vectorOfPairsStatesAndLabels;//This is used in track fit since you want to associate ANY states to labels.
+			unsigned int _counter_num_pointer = 1;
+			EUTelMillepede* _MilleInterface;
         
     };
-
 }
 #endif	/* EUTELGBLFITTER_H */
-
-
 #endif
