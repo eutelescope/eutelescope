@@ -102,7 +102,6 @@ void EUTelProcessorPatternRecognition::init(){
 		Finder->setAllowedSharedHitsOnTrackCandidate( _AllowedSharedHitsOnTrackCandidate );
 		Finder->setWindowSize( _residualsRMax );//This is the max distance between hit and predicted track position on plane that we will accept.
 		Finder->setPlanesToCreateSeedsFrom(_createSeedsFromPlanes);
-		Finder->setExcludePlanes(_excludePlanes);//No state will be made from these planes. These planes are completely ignored apart from there contribution to scattering.
 
 		Finder->setBeamMomentum( _eBeam );
 		Finder->setBeamCharge( _qBeam );

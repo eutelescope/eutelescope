@@ -7,70 +7,11 @@ namespace eutelescope {
 						_AllowedSharedHitsOnTrackCandidate(0),
             _beamE(-1.),
             _beamQ(-1.),
-						_jacobianF(5,5),
-            _trkParamCovCkkm1(5,5),
-            _processNoiseQ(5,5),
-            _residualCovR(2,2),
-            _eomIntegrator( new EUTelUtilityRungeKutta() ),
-            _jacobianIntegrator( new EUTelUtilityRungeKutta() ),
-            _eomODE( 0 ),
-            _jacobianODE( 0 ),
-            _planesForPR(1) 
             {}
 
 		EUTelPatternRecognition::~EUTelPatternRecognition() { 
     }
  
-    /** */
-    int EUTelPatternRecognition::findNextPlaneEntrance(  EUTelTrackStateImpl* ts , int sensorID  ){
-
-// how to make sure that ts is in localframe system??
-
-      const double x0 = ts->getReferencePoint()[0];
-      const double y0 = ts->getReferencePoint()[1];
-      const double z0 = ts->getReferencePoint()[2];
-      int tsPlaneID   = ts->getLocation();
-	
-
-      // get the very first sensor : why?
-      // remember last hit-point from the track candidate below
-      double lpoint[3]   = { x0, y0, z0}; // 
-      double gpoint[3]   = {0.,0.,0.};  // initialise output point-vector global frame (World)
-
-      geo::gGeometry().local2Master( tsPlaneID, lpoint, gpoint );
-      streamlog_out ( DEBUG2 ) << "findNextPlaneEntrance: " << tsPlaneID << " " <<  lpoint[0] << " " <<  lpoint[1] << " " << lpoint[2] <<  " :"
-                                << gpoint[0] << " "    << gpoint[1] << " "   << gpoint[2] << " " << endl; 
-
-      gpoint[2] += -100.; 
-//      float start[3]     = {static_cast<float> (gpoint[0]),static_cast<float> (gpoint[1]),static_cast<float> (gpoint[2]) };  
-
-      double dir[3]      = {0.,0.,1.};  // as good as any other value along z axis.
-
-      float nextPoint[3] = {0.,0.,0.};  // initialise output point-vector local frame (sensor)
-
-            int newSensorID   = geo::gGeometry( ).findNextPlaneEntrance( gpoint,  dir, sensorID, nextPoint ) ;
-
-// get to local frame for sensor newSensorID:
-            double dGpoint[3] = {static_cast<double> (nextPoint[0]),static_cast<double> (nextPoint[1]),static_cast<double> (nextPoint[2]) };
-            double dLpoint[3] = {0.,0.,0.};  // initialise output point-vector local frame (sensor)
-            geo::gGeometry().master2Local( dGpoint, dLpoint);
-
-            if( newSensorID < 0 ) 
-            {
-              streamlog_out ( DEBUG4 ) << "no Entrance: " <<  lpoint[0] << " " <<  lpoint[1] << " " << lpoint[2] << " err:"<< newSensorID << endl;
-            } else {     
-              streamlog_out ( DEBUG2 ) << "identified NextPlane Entrance: " <<  lpoint[0] << " " <<  lpoint[1] << " " << lpoint[2] <<  " at : "<< newSensorID << endl;
-              const float opoint[3] = { lpoint[0], lpoint[1], lpoint[2] };
-              ts->setReferencePoint( opoint );  
-              ts->setLocation( newSensorID );
-           }
-
-      return newSensorID;
-    }
-
-    /** */
-
-
 std::vector<EUTelTrack>& EUTelPatternRecognition::getTracks(){
 	return	_finalTracks; 
 }
@@ -100,14 +41,6 @@ void EUTelPatternRecognition::testTrackCandidates(){
 			}
 		}
 	}
-}
-void EUTelPatternRecognition::printTrackCandidates(){
-	streamlog_out ( DEBUG1 ) << "EUTelPatternRecognition::printTrackCandidates----BEGIN "<< endl;
-	for(int i = 0; i < _tracks.size();++i){
-		streamlog_out(DEBUG5)<<"Track number "<<i<<" Out of " <<_tracks.size()<<std::endl; 
-		_tracks.at(i).print();
-	}
-	streamlog_out ( DEBUG1 ) << "EUTelPatternRecognition::printTrackCandidates----END "<< endl;
 }
 //This is the work horse of the class. Using seeds it propagates the track forward using equations of motion. This can be with or without magnetic field.
 void EUTelPatternRecognition::propagateForwardFromSeedState( EUTelState& stateInput, EUTelTrack & track    ){
@@ -190,44 +123,11 @@ void EUTelPatternRecognition::propagateForwardFromSeedState( EUTelState& stateIn
 		//cout<<"HERE4: "<<state->getPosition()[0]<<","<<state->getPosition()[1]<<","<<state->getPosition()[2]<<","<<state->getLocation()<<endl;
 		streamlog_out ( DEBUG1 ) << "End of loop "<< endl;
 
-	}//TO DO: Must add the kalman filter back into the code. 
+	}
 	streamlog_out ( DEBUG1 ) << "EUTelPatternRecognition::propagateForwardFromSeedState-----END "<< endl;
 
 }	
-		/*	
-	           	streamlog_out ( DEBUG1 ) << "NextPlane " << newSensorID << " " << uvpos[0] << " " << uvpos[1] << " " << uvpos[2] << " resid:" << distance << " ResidualCut: " << DCA << endl;
-           				else{
-            			streamlog_out (DEBUG1 ) << "NextPlane MATCHED. Position of Hit (Local) " <<  uvpos[0] << " " <<  uvpos[1] << " " << uvpos[2] 
-                                                        <<" Position of state (Global) " << state_new->getX() 
-                                                        << "," << state_new->getY()
-                                                        <<","<< state_new->getZParameter() 
-                                                        <<" Distance between them: " << distance 
-                                                        << " Sensor ID:" << state_new->getLocation() 
-                                                        << " Seed we began at: " << (*itTrk) << endl;
-	              		streamlog_out ( DEBUG1 ) << "Will now alter Cov matrix and state variables using hit information " << std::endl;
-				TMatrixD HMatrix = state_new->getH(); //We need to be able to move from the measurement to the state space
-				TMatrixD GainMatrix = updateGainK( state_new, closestHit ); //This is a matrix that tells you how much the state should be changed with the information from the hit
-				UpdateStateUsingHitInformation( state_new ,closestHit, jacobian, GainMatrix, HMatrix); //Update the state on the track
-				streamlog_out (DEBUG0) << "Here is the state variable after update with hit and propagation (state_new): " <<std::endl;
-				state_new->Print();
-				UpdateTrackUsingHitInformation( state_new , closestHit, (*itTrk), jacobian, GainMatrix,HMatrix); //Update the track itself.									
-            		}
 
-		}
-                if( streamlog_level(DEBUG1) ) state_new->Print();
-  		(*itTrk)->addTrackState( new EUTelTrackStateImpl(*state_new) ); //New memory allocation here should be deleted by LCIO memory management. I think...
-		streamlog_out ( DEBUG1 ) << "Memory location of initial state after all allocation (Should be the same): " << state << endl; 
-		streamlog_out ( DEBUG1 ) << "Memory location of state_new: " << state_new << endl; 
-						
-	 	state = state_new; //MUST DOUBLE CHECK THIS MEMORY MANAGEMENT DOES NOT LOOK RIGHT TO ME
-		streamlog_out ( DEBUG1 ) << "Memory location of initial state after it was made equal to state_new: " << state << endl; 		
-
-          }
-	  ++iter;	
-       
- 
-    }
-*/
 void EUTelPatternRecognition::clearFinalTracks(){
 	if(!_finalTracks.empty()){
 		_finalTracks.clear();
@@ -274,31 +174,7 @@ void EUTelPatternRecognition::testPositionEstimation(float position1[], float po
 	} 
 }
 
-    void EUTelPatternRecognition::Print( std::string Name, std::vector< EUTelTrackImpl*> & _collection) 
-    {
-       int itrk = 0; 
-       int size_itTrk  = _collection.size();
-
-       std::vector< EUTelTrackImpl* >::iterator itTrk;
- 
-       for ( itTrk = _collection.begin(); itTrk != _collection.end(); itTrk++, itrk++ ) 
-       {
-          if( (*itTrk) == 0 ) 
-          {         
-             streamlog_out(WARNING1) << " Track vector: " << Name.c_str() << " contains no information at track = " << itrk << "." << std::endl;
-             continue; 
-          }
-          const EVENT::TrackerHitVec& ihits = (*itTrk)->getTrackerHits();
-          int nhits =  ihits.size( ) ;
-          int expec =  geo::gGeometry( ).nPlanes( ) - _allowedMissingHits;
-          streamlog_out(DEBUG5) << " Track vector " << Name.c_str() << " at track number " <<  itrk << " of size " << size_itTrk << " with " << nhits << " and expecting at least " << expec << " hits " << std::endl;
-          (*itTrk)->Print();
-       }
-    }
- 
-//    void EUTelPatternRecognition::Prune( std::vector< EUTelTrackImpl*> &_collection, std::vector< EUTelTrackImpl*> &_collection_to_delete ) 
-//    {
-    // Perform track pruning this removes tracks that have the same hits used to create the track on some planes
+     // Perform track pruning this removes tracks that have the same hits used to create the track on some planes
 		//TO DO: consider a better approach. Since we could remove tracks that have a better residual to hits just because that have came first. For example was will always add the final track in the list. Could this introduce bias? 
 		//TO DO:We compare all states to all other states on a track. We don't need to do that since hits on differents planes must be different.
 void EUTelPatternRecognition::findTrackCandidatesWithSameHitsAndRemove(){
@@ -416,6 +292,8 @@ void  EUTelPatternRecognition::testHitsVec(){
 * 
 */
 //TO DO:This will not work with a strip sensor creating a seed. Since the strip sensor creates a line of possible hit positions not just a single point. Therefore you need to loop through  all points on the line and determine its trajectory and then see if the intersection is close enough to the hit on the next plane to add that hit on the track. This is a lot of work for something which is not that important.   
+//There is no way round this since the strip give a range of possible positions in 2D/3D space.      //To allow strip sensor to be seed would involve major change to how this is done. For now just don't do it  
+
 void EUTelPatternRecognition::initialiseSeeds() {
 	streamlog_out(DEBUG2) << "EUTelPatternRecognition::initialiseSeeds()" << std::endl;
 	_mapSensorIDToSeedStatesVec.clear();
@@ -438,35 +316,19 @@ void EUTelPatternRecognition::initialiseSeeds() {
 				streamlog_out(MESSAGE5) << "The local position of the hit is " << posLocal[0]<<","<< posLocal[1]<<","<< posLocal[2]<<","<<std::endl;
 				throw(lcio::Exception(Utility::outputColourString("The position of this local coordinate in the z direction is non 0", "RED"))); 	
 			}
-			//geo::gGeometry().local2Master(_createSeedsFromPlanes[iplane] , posLocal, temp);//IMPORTANT:For strip sensors this will make the hit strip look like a pixel at (Xstriplocal,somevalue,somevalue).
-			//There is no way round this since the strip give a range of possible positions in 2D/3D space.      //To allow strip sensor to be seed would involve major change to how this is done. For now just don't do it  
-		//	float posGlobal[] = { static_cast<float>(temp[0]), static_cast<float>(temp[1]), static_cast<float>(temp[2]) };
 			state.setLocation(_createSeedsFromPlanes[iplane]);//This stores the location as a float in Z0 since no location for track LCIO. This is preferable to problems with storing hits.  
 			state.setPositionLocal(posLocal); //This will automatically take cartesian coordinate system and save it to reference point. //This is different from most LCIO applications since each track will have own reference point. 		
 			float xzDirection;
 			float yzDirection;
 			state.setBeamCharge(_beamQ);//this is set for each state. to do: is there a more efficient way of doing this since we only need this stored once?
 			TVector3 momentum = computeInitialMomentumGlobal(); 
-			state.setLocalXZAndYZIntersectionAndCurvatureUsingGlobalMomentum(momentum);
-			//TO DO We just fill the cov matrix with junk. We don't use it at the moment 
-	/*		float trkCov[15] = {0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.};//This is the covariance matrix of the track state: (1/p, Tx,Ty,x,y)X(1/p, Tx,Ty,x,y) Z is not included since this is a parameter.This is also a symmetric matrix so only need 15 entries. 
-			trkCov[0] = ( _beamEnergyUncertainty * _beamE ) * ( _beamEnergyUncertainty * _beamE );               //cov(q/p,x)=0, cov(q/p,y)=0, cov(q/p,tx)=0, cov(q/p,ty)=0, cov(q/p,q/p)
-
-			trkCov[2] = _beamAngularSpread[0] * _beamAngularSpread[0];          //cov(tx,x)=0, cov(tx,y)=0, cov(tx,tx)
-			trkCov[5] = _beamAngularSpread[1] * _beamAngularSpread[1];          //cov(ty,x)=0, cov(ty,y)=0, cov(ty,tx)=0, cov(ty,ty)
-
-			//TO DO: Need to get proper convariance matrix for hits. Since we make the hits error so large the Kalman filter will not work as intended. This would also make life easier to deal with strip sensors since we could make the variance very large for the dimension we do not know and use the same code as pixel sensor.  
-			const EVENT::FloatVec uvcov = (*itHit)->getCovMatrix();
-			trkCov[13] = uvcov[0]*1.E4;                               //cov(x,x)
-			trkCov[14] = uvcov[1]*1.E4;   trkCov[15] = uvcov[2]*1.E4;       //cov(y,x), cov(y,y)
-			state.setCovMatrix(trkCov);*/
+			state.setLocalXZAndYZIntersectionAndCurvatureUsingGlobalMomentum(momentum); 
 			state.addHit(*itHit);
 			_totalNumberOfHits++;//This is used for test of the processor later.   
 			state.setDimensionSize(_planeDimensions[state.getLocation()]);
 			stateVec.push_back(state);
 		}
 		_mapSensorIDToSeedStatesVec[_createSeedsFromPlanes[iplane]] = stateVec; 
-	//	streamlog_out(MESSAGE5) << "The size of stateVec: "<<stateVec.size()<<"The size of the map " <<_mapSensorIDToSeedStatesVec.size() << std::endl;
 	}
 	streamlog_out(DEBUG2) << "--------------------------------EUTelPatternRecognition::initialiseSeeds()---------------------------" << std::endl;
 }
@@ -545,34 +407,6 @@ void EUTelPatternRecognition::findTracksWithEnoughHits(){
 	streamlog_out(DEBUG1) << "EUTelPatternRecognition::findTracksWithEnoughHits()-----END" << std::endl;
 
 }
-/*
-//Check the number of hit on the track after propagation and collecting hits is over the minimum
-if ( isGoodTrack && ( *itTrk )->getHitsOnTrack().size( ) < geo::gGeometry( ).nPlanes( ) - _allowedMissingHits ) {
-	streamlog_out ( DEBUG5 ) << "Track candidate has to many missing hits." << std::endl;
-	streamlog_out ( DEBUG5 ) << "Removing this track candidate from further consideration." << std::endl;
-(*itTrk)->Print();
-	delete (*itTrk);  //Is this really nee:ded?
-	isGoodTrack = false;
-	itTrk = _tracksCartesian.erase( itTrk ); itTrk--; 
-}
-
-if ( isGoodTrack ) {
-//               state->setLocation( EUTelTrackStateImpl::AtLastHit );
-	int nstates = (*itTrk)->getTrackStates().size();
-
-	streamlog_out(DEBUG5) << "'Tracks' looped through. I.e initial hit seed as a track. (Ignore states with no hits): "  << local_itTrk << ". Number of seeds: " << size_itTrk << ". At seed: " << *itTrk << " after propagation with: " << ( *itTrk )->getHitsOnTrack().size( ) << " hits collected on track.  Expecting at least " << geo::gGeometry( ).nPlanes( ) - _allowedMissingHits << " The states. I.e Including planes with no hits: "<< nstates << std::endl << std::endl << std::endl << std::endl;
-
-streamlog_out ( DEBUG5 ) << "Successful track state after propagation: " << endl; 
-(*itTrk)->Print();
-}
-
-local_itTrk++;
-}
-
-streamlog_out(MESSAGE0) << "Finished looping through all seeds! Looped at total of : " << local_itTrk << " after seeds with no state are deduced. Total seeds were: " << size_itTrk << endl;
-
-streamlog_out(MESSAGE1) << "------------------------------EUTelPatternRecognition::findTrackCandidates()---------------------------------" << std::endl;
-*/
 //This creates map between plane ID and hits on that plane. 
 //We also order the map correcly with geometry.
 void EUTelPatternRecognition::setHitsVecPerPlane(){
@@ -645,13 +479,6 @@ void EUTelPatternRecognition::testPlaneDimensions(){
 		}
 	}
 }
-void EUTelPatternRecognition::onlyRunOnce(){
-//	if(_firstExecution){
-//		setPlaneDimensionsVec();
-//	}
-//	_firstExecution=false;
-}
-
 
     /** Find the hit closest to the intersection of a track with given sensor
      * 
@@ -680,89 +507,16 @@ const EVENT::TrackerHit* EUTelPatternRecognition::findClosestHit(EUTelState & st
 	return *itClosestHit;
 }
 //This is not very useful at the moment since the covariant matrix for the hit is guess work at the moment.   
-    double EUTelPatternRecognition::getXYPredictionPrecision(EUTelState& ts ) const {
-      streamlog_out(DEBUG2) << "EUTelPatternRecognition::getXYPredictionPrecision()---BEGIN" << std::endl;
-
-     // TO DO: Need proper error analysis to calculate this rather than providing an answer.  
-     // TMatrixDSym Ckkm1(5); 
-		//	Ckkm1 = ts.getTrackStateCov();
-      double xyPrec = getWindowSize();   //sqrt( Ckkm1[0][0]*Ckkm1[0][0] + Ckkm1[1][1]*Ckkm1[1][1] );
-      
-      streamlog_out(DEBUG0) << "Minimal combined UV resolution : " << xyPrec << std::endl;
-      streamlog_out(DEBUG2) << "----------------------EUTelPatternRecognition::getXYPredictionPrecision()------------------------END" << std::endl;
-
-      return xyPrec;
-    }
-
-        
-    /**
-     * Propagate track state k-1 -> k
-     * @param ts track state to update
-     */
-    void EUTelPatternRecognition::propagateTrackState( EUTelState &ts ) {
-       /* streamlog_out( DEBUG2 ) << "EUTelPatternRecognition::propagateTrackState()" << std::endl;
-        TVectorD xkm1 = ts->getTrackStateVec();
-        TVectorD xkkm1 = _jacobianF * xkm1;
-        
-        streamlog_message( DEBUG0, xkkm1.Print();, std::endl; );
-        
-        ts->setX( xkkm1[0] );
-        ts->setY( xkkm1[1] );
-        ts->setTx( xkkm1[2] );
-        ts->setTy( xkkm1[3] );
-        ts->setInvP( xkkm1[4] );
-        
-        streamlog_out( DEBUG2 ) << "-----------------------------------EUTelPatternRecognition::propagateTrackState()----------------------------------" << std::endl;
-  */  }
-
-	void EUTelPatternRecognition::setNewState(float position[],float momentum[], EUTelState& newState){
-//	streamlog_out( DEBUG5 ) << "EUTelPatternRecognition::setNewState()" << std::endl;
-//	newState.setPosition(Position);		
-//	newState.setDirectionXY(momentum[0]/momentum[2]);
-//	newState.setIntersectionLocalYZ(momentum[1]/momentum[2]);
-	/* We should not update the error matrix here. This can be done by the GBL processor.
-///////////////////////////////////////////////////////////Here we update the Covariant matrix
-	TMatrixDSym TrackCovState = state.getTrackStateCov();
-	streamlog_out( DEBUG4 ) << "Before transformation covMatrix" << std::endl;
-	streamlog_message( DEBUG4, TrackCovState.Print();, std::endl; );
-	TMatrixDSym TrackCovStateNew  = TrackCovState.Similarity( jacobian );
-	streamlog_out( DEBUG4 ) << "After transformation covMatrix" << std::endl;
-	streamlog_message( DEBUG4, TrackCovStateNew.Print();, std::endl; ); 
-
-		float trkCov[15] = { static_cast<float>(TrackCovStateNew[0][0]), static_cast<float>(TrackCovStateNew[1][0]), static_cast<float>(TrackCovStateNew[1][1]), 
-												 static_cast<float>(TrackCovStateNew[2][0]), static_cast<float>(TrackCovStateNew[2][1]), static_cast<float>(TrackCovStateNew[2][2]),
-												 static_cast<float>(TrackCovStateNew[3][0]), static_cast<float>(TrackCovStateNew[3][1]), static_cast<float>(TrackCovStateNew[3][2]),
-												 static_cast<float>(TrackCovStateNew[3][3]), static_cast<float>(TrackCovStateNew[4][0]), static_cast<float>(TrackCovStateNew[4][1]),
-												 static_cast<float>(TrackCovStateNew[4][2]), static_cast<float>(TrackCovStateNew[4][3]), static_cast<float>(TrackCovStateNew[4][4]) };
-
-	newState.setCovMatrix( trkCov );    
-	
-*/	
-//	streamlog_out( DEBUG5 ) << "-----------------------------------EUTelPatternRecognition::setNewState()----------------------------------" << std::endl;
+double EUTelPatternRecognition::getXYPredictionPrecision(EUTelState& ts ) const {
+	streamlog_out(DEBUG2) << "EUTelPatternRecognition::getXYPredictionPrecision()---BEGIN" << std::endl;
+	// TO DO: Need proper error analysis to calculate this rather than providing an answer.  
+	double xyPrec = getWindowSize();   //sqrt( Ckkm1[0][0]*Ckkm1[0][0] + Ckkm1[1][1]*Ckkm1[1][1] );
+	streamlog_out(DEBUG0) << "Minimal combined UV resolution : " << xyPrec << std::endl;
+	streamlog_out(DEBUG2) << "----------------------EUTelPatternRecognition::getXYPredictionPrecision()------------------------END" << std::endl;
+	return xyPrec;
 }
-				    
-    /** Retrieve hit covariance matrix from hit object. Useful for matrix operations
-     * 
-     * @param hit
-     * @return hit covariance matrix
-     */
-    TMatrixDSym EUTelPatternRecognition::getHitCov( const EVENT::TrackerHit* hit ) const {
-        streamlog_out( DEBUG2 ) << "EUTelPatternRecognition::getHitCov()" << std::endl;
-        const EVENT::FloatVec uvcov = hit->getCovMatrix();
-        TMatrixDSym V(2);
-        V[0][0] = uvcov[0];                             //cov(x,x)
-        V[1][0] = uvcov[1];   V[1][1] = uvcov[2];       //cov(y,x), cov(y,y)
+
         
-        if ( streamlog_level(DEBUG0) ){
-            streamlog_out( DEBUG0 ) << "Hit covariance matrix:" << std::endl;
-            V.Print();
-        }
-        
-        streamlog_out( DEBUG2 ) << "--------------------------------------EUTelPatternRecognition::getHitCov()-----------------------------------------" << std::endl;
-        
-        return V;
-    }
-	
 /** Calculate residual vector between given track and hit
 * 
 * @param ts track state
@@ -797,185 +551,7 @@ TVectorD EUTelPatternRecognition::computeResidual(EUTelState& state , const EVEN
 	return residual;
 }
 
-    /** Update track state given new hit
-     * 
-     * @param ts track state
-     * @param hit
-     */
-
-
-		void EUTelPatternRecognition::UpdateStateUsingHitInformation(EUTelTrackStateImpl* input,EVENT::TrackerHit* hit, const TMatrixD& jacobian, TMatrixD & KGain, TMatrixD & HMatrix){
-       streamlog_out( DEBUG2 ) << "-----------------------EUTelPatternRecognition::UpdateStateUsingHitInformation()-------------------------------START" << std::endl;
-				//Get the residual of the hit and the track and the state vector/////////
-       // TVectorD residual = computeResidual( input, hit ); //This is just the components of distance in x and y
-        TVectorD state = input->getTrackStateVec( );       
-				///////////////////////////////////////////////////////////////////////
-
-				///////////////////////////////////////////////////////First the state. Note that if the hit is accurate you want to change the state to that position
-       // state += KGain * residual;   //If the hit is very certain KGain will be unity so the new state position will be the hit position. If the hit is very uncertain then KGain is very small and has no effect. Note matrix (5x1)=+(5x2)*(2x1). 
-        input -> setX( state[0] );
-        input -> setY( state[1] );
-        input -> setTx( state[2] );
-        input -> setTy( state[3] );
-        input -> setInvP( state[4] );
-				///////////////////////////////////////////////////////////////////////////
-				
-		/////////////////////////////////////////////////////////////////Now the Cov Matrix. Note that if the hit is very accurate it will reduce the Cov matrix
-		TMatrixDSym CovMatrix = input->getTrackStateCov();
-		TMatrixD I(5,5);
-		I.UnitMatrix();
-		I -= KGain*HMatrix;  //If we have low uncertainty in the hit then I will be 0. So the covariant will be 0 at this state // Matrix    (5x5)=(5x2)*(2x5). Simply transform gain from
-        	TMatrixD newCovMatrix = I*CovMatrix;
-
-	        float trkCov[15] = { static_cast<float>(newCovMatrix[0][0]), static_cast<float>(newCovMatrix[1][0]), static_cast<float>(newCovMatrix[1][1]), 
-                             static_cast<float>(newCovMatrix[2][0]), static_cast<float>(newCovMatrix[2][1]), static_cast<float>(newCovMatrix[2][2]),
-                             static_cast<float>(newCovMatrix[3][0]), static_cast<float>(newCovMatrix[3][1]), static_cast<float>(newCovMatrix[3][2]),
-                             static_cast<float>(newCovMatrix[3][3]), static_cast<float>(newCovMatrix[4][0]), static_cast<float>(newCovMatrix[4][1]),
-                             static_cast<float>(newCovMatrix[4][2]), static_cast<float>(newCovMatrix[4][3]), static_cast<float>(newCovMatrix[4][4]) };
-
-        input->setCovMatrix( trkCov );
-				//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-				input->setHit(hit);
-        streamlog_out( DEBUG2 ) << "-----------------EUTelPatternRecognition::UpdateStateUsingHitInformation()-------------------------------END" << std::endl;
-
-	}
-
 	
-	void EUTelPatternRecognition::UpdateTrackUsingHitInformation( EUTelTrackStateImpl* input,const EVENT::TrackerHit* hit, EUTelTrackImpl* track, const TMatrixD& jacobian, TMatrixD & KGain, TMatrixD & HMatrix){
-				streamlog_out( DEBUG2 ) << "-----------------EUTelPatternRecognition::UpdateTrackUsingHitInformation()-------------------------------BEGIN" << std::endl;			
-				//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Now determine the chi2 of the track.
-				TMatrixDSym newCovMatrix = input->getTrackStateCov( );
-        TVectorD residual(2);  // residual = computeResidual( input, hit ); //This is just the components of distance in x and y
-
-        TMatrixD HMatrixTranspose(5,2);      HMatrixTranspose.Transpose( HMatrix );
-        TMatrixD newCovMatrixMeas(2,2);  newCovMatrixMeas = HMatrix * newCovMatrix * HMatrixTranspose; //This is the new state covariant matrix in measurements space.
-				TMatrixD hitCov(2,2);       hitCov = getHitCov( hit );
-				hitCov -= newCovMatrixMeas;
-				TMatrixD I(2,2);
-				I.UnitMatrix();
-				I -= HMatrix*KGain;
-				TVectorD change_residual(2); change_residual =  I*residual;
-
-				double chi2 = hitCov.Invert().Similarity(change_residual);
-        track->setChi2( chi2 );
-				///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-				streamlog_out( DEBUG5 ) << "Add hit: " << hit << " to track " << track << std::endl;
-				streamlog_out( DEBUG2 ) << "-----------------EUTelPatternRecognition::UpdateTrackUsingHitInformation()-------------------------------END" << std::endl;
-	
-	}
-
-
-
-    double EUTelPatternRecognition::updateTrackState( EUTelTrackStateImpl* ts, const EVENT::TrackerHit* hit ) {
-        streamlog_out( DEBUG2 ) << "EUTelPatternRecognition::updateTrackState()" << std::endl;
-        TVectorD rkkm1(2);   //   rkkm1 = computeResidual( ts, hit );
-        TVectorD xk(5);         xk = ts->getTrackStateVec( );
-        
-        TMatrixD Kk = updateGainK( ts, hit );
-        xk += Kk * rkkm1;
-        
-        if ( streamlog_level(DEBUG0) ) {
-            streamlog_out( DEBUG0 ) << "Updated track parameters:" << std::endl;
-            xk.Print();
-        }
-        
-        TMatrixD Hk = ts->getH();
-        TMatrixD I(5,5);     I.UnitMatrix();
-        I -= Kk*Hk;
-
-        if ( streamlog_level(DEBUG0) ) {
-            streamlog_out( DEBUG0 ) << "Track parameters projection matrix Hk:" << std::endl;
-            Hk.Print();
-            streamlog_out( DEBUG0 ) << "Gain matrix Kk:" << std::endl;
-            Kk.Print();
-        }
-        
-        _processNoiseQ.Zero();
-        TMatrixDSym Ckm1 = ts->getTrackStateCov( );
-        TMatrixDSym Ckkm1 = Ckm1.Similarity( _jacobianF );        //Ckkm1 += _processNoiseQ;
-        
-        TMatrixD Ck(5,5);
-        Ck = I*Ckkm1;
-        
-        if ( streamlog_level(DEBUG0) ) {
-            streamlog_out( DEBUG0 ) << "Updated track covariance matrix:" << std::endl;
-            Ck.Print();
-        }
-        
-        ts -> setX( xk[0] );
-        ts -> setY( xk[1] );
-        ts -> setTx( xk[2] );
-        ts -> setTy( xk[3] );
-        ts -> setInvP( xk[4] );
-        
-        float trkCov[15] = { static_cast<float>(Ck[0][0]), static_cast<float>(Ck[1][0]), static_cast<float>(Ck[1][1]), 
-                             static_cast<float>(Ck[2][0]), static_cast<float>(Ck[2][1]), static_cast<float>(Ck[2][2]),
-                             static_cast<float>(Ck[3][0]), static_cast<float>(Ck[3][1]), static_cast<float>(Ck[3][2]),
-                             static_cast<float>(Ck[3][3]), static_cast<float>(Ck[4][0]), static_cast<float>(Ck[4][1]),
-                             static_cast<float>(Ck[4][2]), static_cast<float>(Ck[4][3]), static_cast<float>(Ck[4][4]) };
-
-        ts->setCovMatrix( trkCov );
-        ts->setLocation( EUTelTrackStateImpl::AtOther );
-
-        const float newPos[] = {static_cast<float>(xk[0]), static_cast<float>(xk[1]), static_cast<float>(ts->getReferencePoint()[2])};
-        ts->setReferencePoint( newPos );
-        
-        double chi2 = 0.;
-        
-        TVectorD rk(2);
-        TMatrixD Ir(2,2);        Ir.UnitMatrix();
-        Ir -= Hk * Kk;
-        rk = Ir * rkkm1;
-        
-        if ( streamlog_level(DEBUG0) ) {
-            streamlog_out( DEBUG0 ) << "Residual vector rk:" << std::endl;
-            rk.Print();
-        }
-        
-        TMatrixD Rk(2,2);       Rk = getHitCov( hit );
-        TMatrixD HkT(5,2);      HkT.Transpose( Hk );
-        TMatrixD HkCkHkT(2,2);  HkCkHkT = Hk * Ck * HkT;
-        
-        Rk -= HkCkHkT;
-
-        if ( streamlog_level(DEBUG0) ) {
-            streamlog_out( DEBUG0 ) << "Residual covariance matrix Rk:" << std::endl;
-            Rk.Print();
-        }
-        
-        chi2 = Rk.Invert().Similarity(rk);
-        
-        streamlog_out( DEBUG0 ) << "Chi2 contribution of the hit: " << chi2 << std::endl;
-        
-        streamlog_out( DEBUG2 ) << "------------------------------------------EUTelPatternRecognition::updateTrackState()----------------------------------" << std::endl;
-        
-        return chi2;
-    }
-    
-    IMPL::TrackImpl* EUTelPatternRecognition::cartesian2LCIOTrack( EUTelTrackImpl* track ) const {
-
-        IMPL::TrackImpl* LCIOtrack = new IMPL::TrackImpl;
-
-
-        int nstates =  track->getTrackStates().size();
-        for(int i=0;i < nstates; i++) 
-        {
-//           EUTelTrackStateImpl* nexttrackstate = (track->getTrackStates().at(i)) ;  
-          EUTelTrackStateImpl* nexttrackstate = new EUTelTrackStateImpl( *(track->getTrackStates().at(i)) ); // memory leak source ?
-          IMPL::TrackStateImpl* implstate     = static_cast <IMPL::TrackStateImpl*> (nexttrackstate );
-          LCIOtrack->addTrackState( implstate );
-        }
-
-        // Assign hits to LCIO TRACK
-        const EVENT::TrackerHitVec& trkcandhits = track->getTrackerHits();
-        EVENT::TrackerHitVec::const_iterator itrHit;
-        for ( itrHit = trkcandhits.begin(); itrHit != trkcandhits.end(); ++itrHit ) {
-             LCIOtrack->addHit( *itrHit );
-        }
-
-        return LCIOtrack;
-
-    }
 void EUTelPatternRecognition::findHitsOrderVec(LCCollection* lcCollection,EVENT::TrackerHitVec& hitsOrderVec) {
 	for (int iHit = 0; iHit < lcCollection->getNumberOfElements(); iHit++) {
 		TrackerHitImpl * hit = static_cast<TrackerHitImpl*> (lcCollection->getElementAt(iHit));
