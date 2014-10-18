@@ -177,6 +177,62 @@ namespace eutelescope {
 		}//END of loop of all states
 		streamlog_out ( DEBUG4 ) << " EUTelGBLFitter::setKinkInformationToTrack-- END " << endl;
 	}
+	// Convert input TrackCandidates and TrackStates into a GBL Trajectory
+	// This is done using the geometry setup, the scattering and the hits + predicted states.
+	void EUTelGBLFitter::setInformationForGBLPointList(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList){
+		streamlog_out(DEBUG4)<<"EUTelGBLFitter::setInformationForGBLPointList-------------------------------------BEGIN"<<endl;
+		TMatrixD jacPointToPoint(5, 5);
+		jacPointToPoint.UnitMatrix();
+		for(int i=0;i < track.getStates().size(); i++){		
+			streamlog_out(DEBUG3) << "The jacobian to get to this state jacobian on state number: " << i<<" Out of a total of states "<<track.getStates().size() << std::endl;
+			streamlog_message( DEBUG0, jacPointToPoint.Print();, std::endl; );
+			gbl::GblPoint point(jacPointToPoint);
+			EUTelState state = track.getStates().at(i);
+			EUTelState nextState;
+			if(i != (track.getStates().size()-1)){//Since we don't want to propagate from the last state.
+				nextState = track.getStates().at(i+1);
+			}
+			setScattererGBL(point,state);//Every sensor will have scattering due to itself. 
+			_statesInOrder.push_back(state);//This is list of measurements states in the correct order. This is used later to associate ANY states with point labels
+			if(state.getTrackerHits().size() == 0 ){
+				streamlog_out(DEBUG3)  << Utility::outputColourString("This state does not have a hit. ", "YELLOW")<<std::endl;
+				setPointVec(pointList, point);//This creates the vector of points and keeps a link between states and the points they created
+			}else{
+				double localPositionForState[]	= {state.getPosition()[0], state.getPosition()[1],state.getPosition()[2]};//Need this since geometry works with const doubles not floats 
+				setMeasurementCov(state);
+				double cov[4] ;
+				state.getCombinedHitAndStateCovMatrixInLocalFrame(cov);
+				setMeasurementGBL(point, state.getTrackerHits()[0]->getPosition(),  localPositionForState,  cov, state.getProjectionMatrix());
+				_measurementStatesInOrder.push_back(state);//This is list of measurements states in the correct order. This is used later to associate MEASUREMENT states with point labels in alignment
+				setPointVec(pointList, point);
+			}//End of else statement if there is a hit.
+
+			if(i != (track.getStates().size()-1)){//We do not produce scatterers after the last plane
+				//Note here to determine the scattering we use a straight line approximation between the two points the particle will travel through. However to determine were to place the scatterer we use the exact arc length. We do this since to change the TGeo radiation length would be a lot of work for a very small change. 
+				const double stateReferencePoint[] = {state.getPosition()[0], state.getPosition()[1],state.getPosition()[2]};
+				double globalPosSensor1[3];
+				geo::gGeometry().local2Master(state.getLocation(),stateReferencePoint , globalPosSensor1 );
+				const double nextStateReferencePoint[] = {nextState.getPosition()[0], nextState.getPosition()[1],nextState.getPosition()[2]};
+				double globalPosSensor2[3];
+				geo::gGeometry().local2Master(nextState.getLocation(),nextStateReferencePoint , globalPosSensor2 );
+				testDistanceBetweenPoints(globalPosSensor1,globalPosSensor2);
+				float percentageRadiationLength  = geo::gGeometry().findRadLengthIntegral(globalPosSensor1,globalPosSensor2, false );//TO DO: This adds the radiation length of the plane again. If you chose true the some times it returns 0. The could be the reason for the slightly small residuals. 
+				if(percentageRadiationLength == 0){
+					streamlog_out(MESSAGE9)<<"The positions between the scatterers are: "<<endl;
+					streamlog_out(MESSAGE9)<<"Start: "<<globalPosSensor1[0]<<" "<<globalPosSensor1[1]<<" "<<globalPosSensor1[2]<<endl;
+					streamlog_out(MESSAGE9)<<"End: "<<globalPosSensor2[0]<<" "<<globalPosSensor2[1]<<" "<<globalPosSensor2[2]<<endl;
+					throw(lcio::Exception(Utility::outputColourString("The provides radiation length to create scatterers it zero.", "RED"))); 	
+				} 
+				findScattersZPositionBetweenTwoStates(state);//We use the exact arc length between the two states to place the scatterers. 
+				jacPointToPoint=findScattersJacobians(state,nextState);
+				setPointListWithNewScatterers(pointList,state, percentageRadiationLength);//We assume that on all scattering planes the incidence angle is the same as on the last measurement state. Not a terrible approximation and will be corrected by GBL anyway.
+			}else{
+				streamlog_out(DEBUG3)<<"We have reached the last plane"<<std::endl;
+			}
+		} 
+	streamlog_out(DEBUG4)<<"EUTelGBLFitter::setInformationForGBLPointList-------------------------------------END"<<endl;
+
+}
 	//THIS IS THE GETTERS
 	//This used after trackfit will fill a map between (sensor ID and residualx/y). 
 	void EUTelGBLFitter::getResidualOfTrackandHits(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint > pointList,EUTelTrack& track, map< int, map< float, float > > &  SensorResidual, map< int, map< float, float > >& sensorResidualError ){
@@ -295,101 +351,6 @@ namespace eutelescope {
 		}//END of loop of all states
 	}
 
-// Convert input TrackCandidates and TrackStates into a GBL Trajectory
-// This is done using the geometry setup, the scattering and the hits + predicted states.
-void EUTelGBLFitter::setInformationForGBLPointList(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList){
-streamlog_out(DEBUG4)<<"EUTelGBLFitter::setInformationForGBLPointList-------------------------------------BEGIN"<<endl;
-TMatrixD jacPointToPoint(5, 5);
-jacPointToPoint.UnitMatrix();
-for(int i=0;i < track.getStates().size(); i++){		
-	streamlog_out(DEBUG3) << "The jacobian to get to this state jacobian on state number: " << i<<" Out of a total of states "<<track.getStates().size() << std::endl;
-	streamlog_message( DEBUG0, jacPointToPoint.Print();, std::endl; );
-	gbl::GblPoint point(jacPointToPoint);
-	EUTelState state = track.getStates().at(i);
-	EUTelState nextState;
-	if(i != (track.getStates().size()-1)){//Since we don't want to propagate from the last state.
-		nextState = track.getStates().at(i+1);
-	}
-	setScattererGBL(point,state);//Every sensor will have scattering due to itself. 
-	_statesInOrder.push_back(state);//This is list of measurements states in the correct order. This is used later to associate ANY states with point labels
-	if(state.getTrackerHits().size() == 0 ){
-		streamlog_out(DEBUG3)  << Utility::outputColourString("This state does not have a hit. ", "YELLOW")<<std::endl;
-		setPointVec(pointList, point);//This creates the vector of points and keeps a link between states and the points they created
-	}else{
-		double localPositionForState[]	= {state.getPosition()[0], state.getPosition()[1],state.getPosition()[2]};//Need this since geometry works with const doubles not floats 
-		setMeasurementCov(state);
-		double cov[4] ;
-		state.getCombinedHitAndStateCovMatrixInLocalFrame(cov);
-		setMeasurementGBL(point, state.getTrackerHits()[0]->getPosition(),  localPositionForState,  cov, state.getProjectionMatrix());
-		_measurementStatesInOrder.push_back(state);//This is list of measurements states in the correct order. This is used later to associate MEASUREMENT states with point labels in alignment
-		setPointVec(pointList, point);
-	}//End of else statement if there is a hit.
-
-	if(i != (track.getStates().size()-1)){//We do not produce scatterers after the last plane
-		//Note here to determine the scattering we use a straight line approximation between the two points the particle will travel through. However to determine were to place the scatterer we use the exact arc length. We do this since to change the TGeo radiation length would be a lot of work for a very small change. 
-		const double stateReferencePoint[] = {state.getPosition()[0], state.getPosition()[1],state.getPosition()[2]};
-		double globalPosSensor1[3];
-		geo::gGeometry().local2Master(state.getLocation(),stateReferencePoint , globalPosSensor1 );
-		const double nextStateReferencePoint[] = {nextState.getPosition()[0], nextState.getPosition()[1],nextState.getPosition()[2]};
-		double globalPosSensor2[3];
-		geo::gGeometry().local2Master(nextState.getLocation(),nextStateReferencePoint , globalPosSensor2 );
-		testDistanceBetweenPoints(globalPosSensor1,globalPosSensor2);
-		float percentageRadiationLength  = geo::gGeometry().findRadLengthIntegral(globalPosSensor1,globalPosSensor2, false );//TO DO: This adds the radiation length of the plane again. If you chose true the some times it returns 0. The could be the reason for the slightly small residuals. 
-		if(percentageRadiationLength == 0){
-			streamlog_out(MESSAGE9)<<"The positions between the scatterers are: "<<endl;
-			streamlog_out(MESSAGE9)<<"Start: "<<globalPosSensor1[0]<<" "<<globalPosSensor1[1]<<" "<<globalPosSensor1[2]<<endl;
-			streamlog_out(MESSAGE9)<<"End: "<<globalPosSensor2[0]<<" "<<globalPosSensor2[1]<<" "<<globalPosSensor2[2]<<endl;
-			throw(lcio::Exception(Utility::outputColourString("The provides radiation length to create scatterers it zero.", "RED"))); 	
-		} 
-		findScattersZPositionBetweenTwoStates(state);//We use the exact arc length between the two states to place the scatterers. 
-		jacPointToPoint=findScattersJacobians(state,nextState);
-		setPointListWithNewScatterers(pointList,state, percentageRadiationLength);//We assume that on all scattering planes the incidence angle is the same as on the last measurement state. Not a terrible approximation and will be corrected by GBL anyway.
-	}else{
-		streamlog_out(DEBUG3)<<"We have reached the last plane"<<std::endl;
-	}
-} 
-streamlog_out(DEBUG4)<<"EUTelGBLFitter::setInformationForGBLPointList-------------------------------------END"<<endl;
-
-}
-//This does the same as setInformationForGBLPointList. However this time we do not add scatterers. Millepede only wants measurement planes and global derivatives. 
-/*void EUTelGBLFitter::setInformationForGBLPointListForAlignment(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList){
-streamlog_out(DEBUG4)<<"EUTelGBLFitter::setInformationForGBLPointList-------------------------------------BEGIN"<<endl;
-TMatrixD jacPointToPoint(5, 5);
-jacPointToPoint.UnitMatrix();
-for(int i=0;i < track.getStates().size(); i++){		
-	EUTelState state = track.getStates().at(i);
-	streamlog_out(DEBUG3) <<"The state on loop iteration: " << i <<endl;	
-	state.print();	
-	streamlog_out(DEBUG3) << "The jacobian to get to this state jacobian on state number: " << i<<" Out of a total of states "<<track.getStates().size() << std::endl;
-	streamlog_message( DEBUG0, jacPointToPoint.Print();, std::endl; );
-	gbl::GblPoint point(jacPointToPoint);
-	EUTelState nextState;
-	if(i != (track.getStates().size()-1)){
-		nextState = track.getStates().at(i+1);
-	}
-//		setScattererGBL(point,state);//Every sensor will have scattering due to itself. 
-	if(state.getTrackerHits().size() == 0 ){
-		streamlog_out(DEBUG3)  << Utility::outputColourString("This state does not have a hit. ", "YELLOW")<<std::endl;
-		setPointVec(pointList, point);//This creates the vector of points and keeps a link between states and the points they created
-	}else{
-		double localPositionForState[]	= {state.getPosition()[0], state.getPosition()[1],state.getPosition()[2]};//Need this since geometry works with const doubles not floats 
-		setMeasurementCov(state);
-		double cov[4] ;
-		state.getCombinedHitAndStateCovMatrixInLocalFrame(cov);
-		setMeasurementGBL(point, state.getTrackerHits()[0]->getPosition(),  localPositionForState,  cov, state.getProjectionMatrix());
-		_measurementStatesInOrder.push_back(state);//This is list of measurements states in the correct order. This is used later to associate states with point labels
-		setPointVec(pointList, point);
-	}//End of else statement if there is a hit.
-
-	if(i != (track.getStates().size()-1)){//We do not produce scatterers after the last plane
-		jacPointToPoint=state.computePropagationJacobianFromLocalStateToNextLocalState(nextState.getPositionGlobal(), nextState.computeCartesianMomentum() ,state.getArcLengthToNextState() ,nextState.getLocation());
-	}else{
-		streamlog_out(DEBUG3)<<"We have reached the last plane"<<std::endl;
-	}
-} 
-streamlog_out(DEBUG4)<<"EUTelGBLFitter::setInformationForGBLPointList-------------------------------------END"<<endl;
-
-}*/
 void EUTelGBLFitter::testDistanceBetweenPoints(double* position1,double* position2){
 TVectorD displacement(3);
 displacement(0) = position1[0] - position2[0];
