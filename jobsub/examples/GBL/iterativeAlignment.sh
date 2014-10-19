@@ -181,38 +181,6 @@ for x in {1..10}; do
 		break
 	fi
 done
-
-############################################################################################################################################
-######################################################################################################################Now we make sure the correction to the GBL tracks are close to 0 as possible
-#echo "Now to reduce the corrections to near 1."
-#while :
-#	do
-#	echo "Resolution inside GBLTrack corrections loop beginning (X/Y):" $xres"/"$yres
-#	echo "We are on the $x iteration of lcio file" 
-#	xnext=$(($x+1))
-#	echo "This is x and xnext at the start of the loop x: $x and xnext: $xnext "
-#	$do jobsub.py -c $CONFIG -csv $RUNLIST -o histoName="$histoNameInput" -o lcioInputName="GBLtracks-$x" -o lcioOutputName="GBLtracks-$xnext"  -o inputCollectionName="tracks$x" -o  outputCollectionName="tracks$xnext" -o MaxRecordNumber="$MaxRecordNumber" -o ExcludePlanes="$ExcludePlanes" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" $TrackFit  $RUN 
-#	fileName="$TrackFit-${RUN}.zip"
-#	fullPath="$directoryTrack/$fileName"
-#	echo "The full path to the log file is: $fullPath" 
-#	correctionOmega=`unzip  -p  $fullPath |grep "This is the average correction for omega:" |cut -d '-' -f2`; 
-#	correctionXZInclination=`unzip  -p  $fullPath |grep "This is the average correction for local xz inclination:" |cut -d ':' -f2`; 
-#	correctionYZInclination=`unzip  -p  $fullPath |grep "This is the average correction for local yz inclination:" |cut -d ':' -f2`; 
-#	correctionX=`unzip  -p  $fullPath |grep "This is the average correction for local x: " |cut -d ':' -f2`; 
-#	correctionY=`unzip  -p  $fullPath |grep "This is the average correction for local y: " |cut -d ':' -f2`; 
-#	echo "The average corrections:  $correctionOmega ,  $correctionXZInclination , $correctionYZInclination , $correctionX , $correctionY"   
-#	if [[ $correctionOmega == "" ]] || [[ $correctionXZInclination == "" ]] || [[ $correctionYZInclination == "" ]] || [[ $correctionX == "" ]] || [[ $correctionY == "" ]];then
-#		echo "One of the corrections is empty this must be wrong. Exit!!!!!11"
-#		exit
-#	fi
-#	echo "Now to check if the corrections are small enough"
-#	if [[ $(echo "$correctionOmega < 0.001"|bc) -eq 1 ]];then # && [[ $(echo "$correctionYZInclination < 0.001"|bc) -eq 1  ]] && [[ $(echo "$correctionX < 0.001"|bc) -eq 1  ]] && [[ $(echo "$correctionY < 0.001"|bc) -eq 1  ]];then
-#		echo "The corrections are now small enough. Lets now align. "
-#	break	
-#	fi
-#	x=$(($x+1))
-#	echo "The corrections are not small enough. The new x is $x"
-#done
 #Entering alignment steps########################################################################################
 echo "Now begin alignment"
 fileAlign="/scratch/ilcsoft/v01-17-05/Eutelescope/master/jobsub/examples/GBL/output/logs/$Align-${RUN}.zip"
