@@ -6,7 +6,7 @@ namespace eutelescope {
             _allowedMissingHits(0),
 						_AllowedSharedHitsOnTrackCandidate(0),
             _beamE(-1.),
-            _beamQ(-1.),
+            _beamQ(-1.)
             {}
 
 		EUTelPatternRecognition::~EUTelPatternRecognition() { 
@@ -127,7 +127,14 @@ void EUTelPatternRecognition::propagateForwardFromSeedState( EUTelState& stateIn
 	streamlog_out ( DEBUG1 ) << "EUTelPatternRecognition::propagateForwardFromSeedState-----END "<< endl;
 
 }	
-
+void EUTelPatternRecognition::printTrackCandidates(){
+	streamlog_out ( DEBUG1 ) << "EUTelKalmanFilter::printTrackCandidates----BEGIN "<< endl;
+	for(int i = 0; i < _tracks.size();++i){
+		streamlog_out(DEBUG5)<<"Track number "<<i<<" Out of " <<_tracks.size()<<std::endl; 
+		_tracks.at(i).print();
+	}
+	streamlog_out ( DEBUG1 ) << "EUTelKalmanFilter::printTrackCandidates----END "<< endl;
+}
 void EUTelPatternRecognition::clearFinalTracks(){
 	if(!_finalTracks.empty()){
 		_finalTracks.clear();

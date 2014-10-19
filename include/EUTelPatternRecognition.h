@@ -48,20 +48,8 @@ namespace eutelescope {
 	public:
 		EUTelPatternRecognition();
 		~EUTelPatternRecognition();
-		/** just print the list of tracks */
-		void printTrackCandidates();
-		void testUserInput();
-		void testTrackCandidates();
-		void clearEveryRun();  
-		void testHitsVec();
-		int _eventNumber;
-		int _totalNumberOfHits=0;
-		int _totalNumberOfSharedHits=0;
+		//GETTERS
 		std::vector<EUTelTrack>& getTracks();
-		void	setHitsVec(EVENT::TrackerHitVec& allHitsVec){ _allHitsVec = allHitsVec;}
-		void setEventNumber(int eventNumber){ 
-			_eventNumber = eventNumber;
-		}
 		inline int getEventNumber()	const {
 			return _eventNumber;
 		}
@@ -69,7 +57,24 @@ namespace eutelescope {
 		inline int getAllowedMissingHits() const {
 				return _allowedMissingHits;
 		};
+		inline double getWindowSize() const {
+				return _residualsRMax;
+		}
+			inline double getBeamMomentum() const {
+				return _beamE;
+		}
+		inline double getBeamCharge() const {
+				return _beamQ;
+		}
 
+
+		//SETTERS
+		void setHitsVecPerPlane();
+
+		void	setHitsVec(EVENT::TrackerHitVec& allHitsVec){ _allHitsVec = allHitsVec;}
+		void setEventNumber(int eventNumber){ 
+			_eventNumber = eventNumber;
+		}
 		inline void setAllowedSharedHitsOnTrackCandidate( int AllowedSharedHitsOnTrackCandidate) {
 				this->_AllowedSharedHitsOnTrackCandidate = AllowedSharedHitsOnTrackCandidate;
 		};
@@ -82,27 +87,16 @@ namespace eutelescope {
 				this->_residualsRMax = window;
 		}
 
-		inline double getWindowSize() const {
-				return _residualsRMax;
-		}
-		
 		inline void setBeamMomentum(double beam) {
 				this->_beamE = beam;
 		}
 
-		inline double getBeamMomentum() const {
-				return _beamE;
-		}
 		inline  void setPlanesToCreateSeedsFrom(EVENT::IntVec createSeedsFromPlanes){
 			this-> _createSeedsFromPlanes = createSeedsFromPlanes;
 		}
 
 		inline void setBeamCharge(double q) {
 				this->_beamQ = q;
-		}
-
-		inline double getBeamCharge() const {
-				return _beamQ;
 		}
 		
 		//Here if the user does not set a create seeds from planes x. The we set it automatically to the first plane travelling as the beam travels. 
@@ -112,17 +106,35 @@ namespace eutelescope {
 				_createSeedsFromPlanes.push_back(geo::gGeometry().sensorZOrdertoIDs().at(0));
 			}
 		}	
-
-		void propagateForwardFromSeedState(EUTelState&, EUTelTrack& );
 		void setPlaneDimensionsVec(EVENT::IntVec);
+		//COMPUTE
+		TVector3 computeInitialMomentumGlobal();
+		//TEST
+		void testUserInput();
+		void testTrackCandidates();
+		void testHitsVec();
+
+		//OTHER
+		void clearEveryRun();  
+		void printTrackCandidates();
+		void propagateForwardFromSeedState(EUTelState&, EUTelTrack& );
 		void testPlaneDimensions();
 		void testHitsVecPerPlane();
 		void testPositionEstimation(float position1[], float position2[]);
-		std::map< int, int > _planeDimensions;
-		void setHitsVecPerPlane();
 		void findHitsOrderVec(LCCollection* lcCollection,EVENT::TrackerHitVec& hitsOrderVec); 
 		void findTracksWithEnoughHits();
 		void findTrackCandidatesWithSameHitsAndRemove();
+		void findTrackCandidates(); 
+		void initialiseSeeds();
+		void testInitialSeeds();
+		void testTrackQuality();
+		void clearTrackAndTrackStates();
+		void clearFinalTracks();
+		//VARIABLES
+		int _eventNumber;
+		int _totalNumberOfHits=0;
+		int _totalNumberOfSharedHits=0;
+		std::map< int, int > _planeDimensions;
 		bool _firstExecution=true;
 		EVENT::IntVec _createSeedsFromPlanes;
 		EVENT::FloatVec _excludePlanes;         
@@ -132,20 +144,7 @@ namespace eutelescope {
 		int _numberOfTracksTotal=0;
 		int _numberOfTracksAfterHitCut=0;
 		int _numberOfTracksAfterPruneCut=0;
-		void initialiseSeeds();
-		TVector3 computeInitialMomentumGlobal();
-		void testInitialSeeds();
-		void testTrackQuality();
-		void clearTrackAndTrackStates();
-		void clearFinalTracks();
-		/* need a method to get hitFittedVec
-		 * to be consistent with the other methods - passing the object by reference
-		 */     
 		void printHits();
-
-		EVENT::TrackerHitVec& getHitFittedVec() { 
-			return hitFittedVec;
-		}
 
 private:
 
