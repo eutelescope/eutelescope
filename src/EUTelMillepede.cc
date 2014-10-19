@@ -10,12 +10,22 @@ using namespace eutelescope;
 namespace eutelescope {
 
 	//This constructor is useful for running the binary files execution
-	EUTelMillepede::EUTelMillepede(){
+	EUTelMillepede::EUTelMillepede() : 
+	_milleGBL(NULL),
+	_alignmentMode(Utility::noAlignment),
+	_jacobian(5,5),
+	_globalLabels(5)
+ 	{
 	FillMilleParametersLabels();
 	}
 
 	//This constructor useful for mille binary output part
-	EUTelMillepede::EUTelMillepede(int alignmentMode){
+	EUTelMillepede::EUTelMillepede(int alignmentMode) :
+	_milleGBL(NULL),
+	_alignmentMode(Utility::noAlignment),
+	_jacobian(5,5),
+	_globalLabels(5)
+	{
 	SetAlignmentMode(alignmentMode);
 	FillMilleParametersLabels();
 	CreateBinary();

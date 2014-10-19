@@ -81,16 +81,16 @@ namespace eutelescope {
 				TMatrixD& getAlignmentJacobian()  { return _jacobian; }
 				std::vector<int> getGlobalParameters() { return _globalLabels; }
 
-				gbl::MilleBinary * _milleGBL = NULL;
+				gbl::MilleBinary * _milleGBL;
 
 
 void CreateBinary();
 
 		protected:
 				int alignmentMode;
-				Utility::AlignmentMode _alignmentMode =  Utility::noAlignment;
-				TMatrixD _jacobian =TMatrixD(5,5); //Remember you need to create the object before you point ot it
-				std::vector<int> _globalLabels =std::vector<int>(5);
+				Utility::AlignmentMode _alignmentMode;
+				TMatrixD _jacobian; //Remember you need to create the object before you point ot it
+				std::vector<int> _globalLabels;
 				std::map<int, int> _xShiftsMap;
 				std::map<int, int> _yShiftsMap;
 				std::map<int, int> _zShiftsMap;

@@ -3,14 +3,20 @@
 namespace eutelescope {
     
 	EUTelPatternRecognition::EUTelPatternRecognition() :  
-            _allowedMissingHits(0),
-						_AllowedSharedHitsOnTrackCandidate(0),
-            _beamE(-1.),
-            _beamQ(-1.)
-            {}
+	_allowedMissingHits(0),
+	_AllowedSharedHitsOnTrackCandidate(0),
+	_totalNumberOfHits(0),
+	_totalNumberOfSharedHits(0),
+	_numberOfTracksTotal(0),
+	_numberOfTracksAfterHitCut(0),
+	_numberOfTracksAfterPruneCut(0),
+	_firstExecution(true),
+	_beamE(-1.),
+	_beamQ(-1.)
+	{}
 
-		EUTelPatternRecognition::~EUTelPatternRecognition() { 
-    }
+	EUTelPatternRecognition::~EUTelPatternRecognition() { 
+	}
  
 std::vector<EUTelTrack>& EUTelPatternRecognition::getTracks(){
 	return	_finalTracks; 

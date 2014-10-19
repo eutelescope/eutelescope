@@ -171,7 +171,7 @@ namespace eutelescope {
 			std::map<int,int> _parameterIdZRotationsMap;
 			std::vector< pair< EUTelState, int> > _vectorOfPairsMeasurementStatesAndLabels;//This is used within alignment since you need to associate MEASUREMENT states to  labels
 			std::vector< pair< EUTelState, int> > _vectorOfPairsStatesAndLabels;//This is used in track fit since you want to associate ANY states to labels.
-			unsigned int _counter_num_pointer = 1;
+			unsigned int _counter_num_pointer;
 			EUTelMillepede* _MilleInterface;
         
     };

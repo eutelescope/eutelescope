@@ -132,18 +132,18 @@ namespace eutelescope {
 		void clearFinalTracks();
 		//VARIABLES
 		int _eventNumber;
-		int _totalNumberOfHits=0;
-		int _totalNumberOfSharedHits=0;
+		int _totalNumberOfHits;
+		int _totalNumberOfSharedHits;
 		std::map< int, int > _planeDimensions;
-		bool _firstExecution=true;
+		bool _firstExecution;
 		EVENT::IntVec _createSeedsFromPlanes;
 		EVENT::FloatVec _excludePlanes;         
 		std::vector<EUTelTrack> _tracks;
 		std::vector<EUTelTrack> _tracksAfterEnoughHitsCut;
 		std::vector<EUTelTrack>	_finalTracks;
-		int _numberOfTracksTotal=0;
-		int _numberOfTracksAfterHitCut=0;
-		int _numberOfTracksAfterPruneCut=0;
+		int _numberOfTracksTotal;
+		int _numberOfTracksAfterHitCut;
+		int _numberOfTracksAfterPruneCut;
 		void printHits();
 
 private:

@@ -50,6 +50,7 @@ namespace eutelescope {
 	_mEstimatorType(),
 	_mille(0),
 	_alignmentMode(0),
+	_counter_num_pointer(1),
 	_parameterIdXShiftsMap(),
 	_parameterIdYShiftsMap(),
 	_parameterIdZShiftsMap(),
