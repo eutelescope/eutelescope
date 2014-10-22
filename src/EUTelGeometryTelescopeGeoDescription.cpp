@@ -687,190 +687,113 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( string tge
  *
  */
 void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvolumeWorld, int SensorId ){
+	double xc, yc, zc;   // volume center position 
+	double alpha, beta, gamma;
+	double rot1; // for backward compatibility with previous GEAR. We only need 1 entry from the gear file. 
 
-  
-   double xc, yc, zc;   // volume center position 
-   double alpha, beta, gamma;
-   double rot1, rot2, rot3, rot4; // for backward compatibility with previous GEAR 
+	std::stringstream strId;
+	strId << SensorId;
 
-       std::stringstream strId;
-       strId << SensorId;
-       
-       // Get sensor center position
-       xc = siPlaneXPosition( SensorId );
-       yc = siPlaneYPosition( SensorId );
-       zc = siPlaneZPosition( SensorId );
-       
-       // Get sensor orientation
-       alpha = siPlaneXRotation( SensorId ); //  in degrees !
-       beta  = siPlaneYRotation( SensorId ); // 
-       gamma = siPlaneZRotation( SensorId ); // 
+	// Get sensor center position
+	xc = siPlaneXPosition( SensorId );
+	yc = siPlaneYPosition( SensorId );
+	zc = siPlaneZPosition( SensorId );
 
-       rot1 = siPlaneRotation1( SensorId );
-       rot2 = siPlaneRotation2( SensorId );
-       rot3 = siPlaneRotation3( SensorId );
-       rot4 = siPlaneRotation4( SensorId );
+	// Get sensor orientation
+	alpha = siPlaneXRotation( SensorId ); //  in degrees !
+	beta  = siPlaneYRotation( SensorId ); // 
+	gamma = siPlaneZRotation( SensorId ); // 
 
-       // Spatial translations of the sensor center
-       string stTranslationName = "matrixTranslationSensor";
-       stTranslationName.append( strId.str() );
-       TGeoTranslation* pMatrixTrans = new TGeoTranslation( stTranslationName.c_str(), xc, yc, zc );
-       //ALL clsses deriving from TGeoMatrix are not owned by the ROOT geometry manager, invoking RegisterYourself() transfers
-       //ownership and thus ROOT will clean up
-       pMatrixTrans->RegisterYourself();      
+	rot1 = siPlaneRotation1( SensorId );
 
-// initial rot1,2,3,4 rotate and flip: 
-// TO DO: This seems wrong for rotations like 0 -1
-//                                            1  0
-// I could be wrong. However even if correct we should deal with this in a better way.                                           
-// For any new gear file do not use the integer rotations.
-       string stRotationName = "matrixRotationSensorRotatenFlip";
-       stRotationName.append( strId.str() );
-       TGeoRotation* pMatrixRotFlip = new TGeoRotation( stRotationName.c_str(), 0.,  0., 0.);                // around X axis
-       pMatrixRotFlip->RegisterYourself();
-       if(   abs(rot2)<1e-6 &&    abs(rot3)<1e-6  ) {
-          // do not rotate it's diagonal
+	//Create spatial TGeoTranslation object.
+	string stTranslationName = "matrixTranslationSensor";
+	stTranslationName.append( strId.str() );
+	TGeoTranslation* pMatrixTrans = new TGeoTranslation( stTranslationName.c_str(), xc, yc, zc );
+	//ALL clsses deriving from TGeoMatrix are not owned by the ROOT geometry manager, invoking RegisterYourself() transfers
+	//ownership and thus ROOT will clean up
+	pMatrixTrans->RegisterYourself();      
 
-         if(  abs(rot1+1.)<1e-6  ) {
-          // flip X axis
-          pMatrixRotFlip->ReflectX(0);
-         }
+	//Create TGeoRotation object. 
+	//Translations are of course just positional changes in the global frame.
+	//Note that each subsequent rotation is using the new coordinate system of the last transformation all the way back to the global frame.
+	//The order is:
+	//Integer Z rotation. This only uses the top left element. This for future gear types should be removed.
+	//Z rotations specified by in degrees.
+	//X rotations 
+	//Y rotations
+	TGeoRotation * pMatrixRotCombined = new TGeoRotation();
+	pMatrixRotCombined->FastRotZ(&rot1);//Z Rotation (Integer)
+	pMatrixRotCombined->RotateZ(gamma);//Z Rotation (degrees)
+	pMatrixRotCombined->RotateX(alpha);//X Rotations (degrees)
+	pMatrixRotCombined->RotateY(beta);//Y Rotations (degrees)
+	pMatrixRotCombined->RegisterYourself();//We must allow the matrix to be used by the TGeo manager.
 
-         if(  abs(rot4+1.)<1e-6  ) {
-          // flip Y axis
-          pMatrixRotFlip->ReflectY(0);
-         }
-       }
+	// Combined translation and orientation
+	TGeoCombiTrans* combi = new TGeoCombiTrans( *pMatrixTrans, *pMatrixRotCombined );
+	combi->RegisterYourself();   
 
-       if(  abs(rot1)<1e-6 &&  abs(rot4)<1e-6 ) {
-         // do rotate it's OFF diagonal
-         pMatrixRotFlip->RotateZ(90.);
-         // X->Y     0  1
-         // Y->-X   -1  0
+	// Construction of sensor objects
 
-         if(  abs(rot2-1.)<1e-6 &&  abs(rot3+1.)<1e-6  ) {
-          //         0  1
-          //        -1  0
-          // do nothing  
-         }
+	// Construct object medium. Required for radiation length determination
 
-         if(  abs(rot2-1.)<1e-6 &&  abs(rot3-1.)<1e-6  ) {
-          //         0  1
-          //        -1  0
-          pMatrixRotFlip->ReflectY(0);
-         }
+	// assume SILICON, though all information except of radiation length is ignored
+	double a       = 28.085500;     
+	double z       = 14.000000;
+	double density = 2.330000;
+	double radl    = siPlaneRadLength( SensorId );
+	double absl    = 45.753206;
+	string stMatName = "materialSensor";
+	stMatName.append( strId.str() );
+	TGeoMaterial* pMat = new TGeoMaterial( stMatName.c_str(), a, z, density, radl, absl );
+	pMat->SetIndex( 1 );
+	// Medium: medium_Sensor_SILICON
+	int numed   = 0;  // medium number
+	double par[8];
+	par[0]  = 0.000000; // isvol
+	par[1]  = 0.000000; // ifield
+	par[2]  = 0.000000; // fieldm
+	par[3]  = 0.000000; // tmaxfd
+	par[4]  = 0.000000; // stemax
+	par[5]  = 0.000000; // deemax
+	par[6]  = 0.000000; // epsil
+	par[7]  = 0.000000; // stmin
+	string stMedName = "mediumSensor";
+	stMedName.append( strId.str() );
+	TGeoMedium* pMed = new TGeoMedium( stMedName.c_str(), numed, pMat, par );
 
-         if(  abs(rot2+1.)<1e-6 &&  abs(rot3+1.)<1e-6  ) {
-          //         0  1
-          //        -1  0
-          pMatrixRotFlip->ReflectX(0);
-         }
+	// Construct object shape
+	// Shape: Box type: TGeoBBox
+	// TGeo requires half-width of box side
+	Double_t dx = siPlaneXSize( SensorId ) / 2.;
+	Double_t dy = siPlaneYSize( SensorId ) / 2.;
+	Double_t dz = siPlaneZSize( SensorId ) / 2.;
+	TGeoShape *pBoxSensor = new TGeoBBox( "BoxSensor", dx, dy, dz );
+	// Volume: volume_Sensor1
 
-         if(  abs(rot2+1.)<1e-6 &&  abs(rot3-1.)<1e-6  ) {
-          //         0  1
-          //        -1  0
-          pMatrixRotFlip->ReflectX(0);
-          pMatrixRotFlip->ReflectY(0);
-         }
-       }
-      
-       // Spatial rotation around sensor center
-       // TGeoRotation requires Euler angles in degrees
-       stRotationName = "matrixRotationSensorX";
-       stRotationName.append( strId.str() );
-       TGeoRotation* pMatrixRotX = new TGeoRotation( stRotationName.c_str(), 0.,  alpha, 0.);                // around X axis
-       pMatrixRotX->RegisterYourself();
+	// Geometry navigation package requires following names for objects that have an ID
+	// name:ID
+	string stVolName = "volume_SensorID:";
+	stVolName.append( strId.str() );
 
-       stRotationName = "matrixRotationSensorY";
-       stRotationName.append( strId.str() );
-       TGeoRotation* pMatrixRotY = new TGeoRotation( stRotationName.c_str(), 90., beta,  0.);                // around Y axis (combination of rotation around Z axis and new X axis)
-       stRotationName = "matrixRotationSensorBackY";
-       pMatrixRotY->RegisterYourself();
+	_planePath.insert( std::make_pair(SensorId, "/volume_World_1/"+stVolName+"_1") );
 
-       stRotationName.append( strId.str() );
-       TGeoRotation* pMatrixRotY1 = new TGeoRotation( stRotationName.c_str(), -90., 0.,  0.);                    // restoration of original orientation (valid in small angle approximataion ~< 15 deg)
-       pMatrixRotY1->RegisterYourself(); 
+	TGeoVolume* pvolumeSensor = new TGeoVolume( stVolName.c_str(), pBoxSensor, pMed );
+	pvolumeSensor->SetVisLeaves( kTRUE );
+	pvolumeWorld->AddNode(pvolumeSensor, 1/*(SensorId)*/, combi);
 
-       stRotationName = "matrixRotationSensorZ";
-       stRotationName.append( strId.str() );
-       TGeoRotation* pMatrixRotZ = new TGeoRotation( stRotationName.c_str(), 0. , 0.,        gamma);         // around Z axis
-       pMatrixRotZ->RegisterYourself();
-      
-       // Combined rotation in several steps
-       TGeoRotation* pMatrixRot = new TGeoRotation( *pMatrixRotX );
- 
-       pMatrixRot->MultiplyBy( pMatrixRotFlip );
-       pMatrixRot->MultiplyBy( pMatrixRotY );
-       pMatrixRot->MultiplyBy( pMatrixRotY1 );
-       pMatrixRot->MultiplyBy( pMatrixRotZ );
-       pMatrixRot->RegisterYourself();      
-      
-
-       // Combined translation and orientation
-       TGeoCombiTrans* combi = new TGeoCombiTrans( *pMatrixTrans, *pMatrixRot );
-       combi->RegisterYourself();   
- 
-       // Construction of sensor objects
-       
-       // Construct object medium. Required for radiation length determination
-
-       // assume SILICON, though all information except of radiation length is ignored
-       double a       = 28.085500;     
-       double z       = 14.000000;
-       double density = 2.330000;
-       double radl    = siPlaneRadLength( SensorId );
-       double absl    = 45.753206;
-       string stMatName = "materialSensor";
-       stMatName.append( strId.str() );
-       TGeoMaterial* pMat = new TGeoMaterial( stMatName.c_str(), a, z, density, radl, absl );
-       pMat->SetIndex( 1 );
-       // Medium: medium_Sensor_SILICON
-       int numed   = 0;  // medium number
-       double par[8];
-       par[0]  = 0.000000; // isvol
-       par[1]  = 0.000000; // ifield
-       par[2]  = 0.000000; // fieldm
-       par[3]  = 0.000000; // tmaxfd
-       par[4]  = 0.000000; // stemax
-       par[5]  = 0.000000; // deemax
-       par[6]  = 0.000000; // epsil
-       par[7]  = 0.000000; // stmin
-       string stMedName = "mediumSensor";
-       stMedName.append( strId.str() );
-       TGeoMedium* pMed = new TGeoMedium( stMedName.c_str(), numed, pMat, par );
-       
-       // Construct object shape
-       // Shape: Box type: TGeoBBox
-       // TGeo requires half-width of box side
-       Double_t dx = siPlaneXSize( SensorId ) / 2.;
-       Double_t dy = siPlaneYSize( SensorId ) / 2.;
-       Double_t dz = siPlaneZSize( SensorId ) / 2.;
-       TGeoShape *pBoxSensor = new TGeoBBox( "BoxSensor", dx, dy, dz );
-       // Volume: volume_Sensor1
-       
-       // Geometry navigation package requires following names for objects that have an ID
-       // name:ID
-       string stVolName = "volume_SensorID:";
-       stVolName.append( strId.str() );
-
-       _planePath.insert( std::make_pair(SensorId, "/volume_World_1/"+stVolName+"_1") );
-
-       TGeoVolume* pvolumeSensor = new TGeoVolume( stVolName.c_str(), pBoxSensor, pMed );
-       pvolumeSensor->SetVisLeaves( kTRUE );
-       pvolumeWorld->AddNode(pvolumeSensor, 1/*(SensorId)*/, combi);
-	
 	//this line tells the pixel geometry manager to load the pixel geometry into the plane			
-        streamlog_out(DEBUG1) << " sensorID: " << SensorId << " " << stVolName << std::endl;   
-        std::string name = geoLibName(SensorId);
-        
+	streamlog_out(DEBUG1) << " sensorID: " << SensorId << " " << stVolName << std::endl;   
+	std::string name = geoLibName(SensorId);
+
 	if( name == "CAST" )
 	{
-		_pixGeoMgr->addCastedPlane( SensorId, siPlaneXNpixels(SensorId), siPlaneYNpixels(SensorId), siPlaneXSize(SensorId), siPlaneYSize(SensorId), siPlaneZSize(SensorId), siPlaneRadLength(SensorId), stVolName);
+	_pixGeoMgr->addCastedPlane( SensorId, siPlaneXNpixels(SensorId), siPlaneYNpixels(SensorId), siPlaneXSize(SensorId), siPlaneYSize(SensorId), siPlaneZSize(SensorId), siPlaneRadLength(SensorId), stVolName);
 	}
 
 	else
 	{
-		_pixGeoMgr->addPlane( SensorId, name, stVolName);
+	_pixGeoMgr->addPlane( SensorId, name, stVolName);
 	}
 }
 
