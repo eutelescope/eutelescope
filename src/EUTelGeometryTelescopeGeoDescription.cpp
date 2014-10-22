@@ -374,7 +374,12 @@ void EUTelGeometryTelescopeGeoDescription::initialisePlanesToExcluded(FloatVec p
 			_sensorZOrderToIDWithoutExcludedPlanes[counter]=_sensorZOrderToIDMap[i];
 			counter++;
 		}
-
+	}
+	//Check if the number of excluded planes set is the same as (total-number of plane IDs inputed that should be excluded)
+	if(geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() != (geo::gGeometry().sensorIDstoZOrder().size()-planeIDs.size())){
+		throw(lcio::Exception( Utility::outputColourString("The number of Planes-Excluded is not correct. This could be a problem with geometry", "RED")));
+	}else{
+		streamlog_out(DEBUG0) << Utility::outputColourString("The correct number of planes have been excluded","GREEN") << std::endl;
 	}
 }
 int EUTelGeometryTelescopeGeoDescription::sensorIDtoZOrder( int planeID ) const {

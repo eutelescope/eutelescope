@@ -134,14 +134,14 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
 	    const double dr0z = (*itrAlignmentConstant).second->getZOffset();
 
 			const double posLocalDiff[3] = {dr0x,dr0y,dr0z};
-			double delta_r0[3];
-			geo::gGeometry().local2MasterVec(sensorID,posLocalDiff, delta_r0);
-//	    TVector3 delta_r0( dr0x, dr0y, dr0z );
+//			double delta_r0[3];
+//			geo::gGeometry().local2MasterVec(sensorID,posLocalDiff, delta_r0);
+	    TVector3 delta_r0( dr0x, dr0y, dr0z );
 			
 //	    delta_r0 *= invDeltaR;
 //	    delta_r0 *= invR;
 //	    delta_r0 = invR*(invDeltaR*delta_r0);
-  //          delta_r0 = invR*delta_r0;
+            delta_r0 = invR*delta_r0;
  
              streamlog_out(MESSAGE2) << "invR:"<< std::endl;
              streamlog_out(MESSAGE2) << " X: " << setw(20) << invR[0][0] << " " << invR[0][1] << " " << invR[0][2]  << std::endl;

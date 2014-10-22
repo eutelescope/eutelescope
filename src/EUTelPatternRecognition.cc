@@ -252,10 +252,9 @@ void EUTelPatternRecognition::findTrackCandidatesWithSameHitsAndRemove(){
 	streamlog_out(MESSAGE1) << "------------------------------EUTelPatternRecognition::findTrackCandidatesWithSameHitsAndRemove()---------------------------------END" << std::endl;
 }
 //This function is used to check that the input data is as expect. If not then we end the processor by throwing a exception.
+////TO DO: should check if seed planes are also excluded	
 void EUTelPatternRecognition::testUserInput() {
 	streamlog_out(DEBUG2) << "EUTelPatternRecognition::testUserInput()" << std::endl;
-
-	// Check the validity of supplied beam energy 
 	if ( _beamE < 1.E-6 ) {
 		throw(lcio::Exception( Utility::outputColourString("Beam direction was set incorrectly","RED"))); 
 	}
@@ -271,26 +270,7 @@ void EUTelPatternRecognition::testUserInput() {
 	}else{
 		streamlog_out(DEBUG0) << Utility::outputColourString("The number of planes to make seeds from is good " +  to_string(_createSeedsFromPlanes.size()),"GREEN") << std::endl;
 	}
-	if(_excludePlanes.size() >= geo::gGeometry().sensorIDstoZOrder().size()){//TO DO: should check if seed planes are also excluded	
-	 streamlog_out(DEBUG0) << Utility::outputColourString("Beam energy is reasonable", "GREEN") << std::endl;
-	}
-	if(_createSeedsFromPlanes.size() == 0){
-		throw(lcio::Exception( Utility::outputColourString("The number of planes to make seeds from is 0. We need at least one plane", "RED")));
-	}
-
-	if(_createSeedsFromPlanes.size() >= geo::gGeometry().sensorIDstoZOrder().size()){
-		throw(lcio::Exception( Utility::outputColourString("You have specified all planes or more than that. This is too many planes for seeds", "RED")));
-	}else{
-		streamlog_out(DEBUG0) << Utility::outputColourString("The number of planes to make seeds from is good " +  to_string(_createSeedsFromPlanes.size()),"GREEN") << std::endl;
-	}
-	if(_excludePlanes.size() >= geo::gGeometry().sensorIDstoZOrder().size()){//TO DO: should check if seed planes are also excluded	
-		throw(lcio::Exception( Utility::outputColourString("The number of excluded planes is too large. We can not fit tracks with magic.", "RED")));
-	}
-	if(geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() != (geo::gGeometry().sensorIDstoZOrder().size()-_excludePlanes.size())){
-		throw(lcio::Exception( Utility::outputColourString("The number of Planes-Excluded is not correct. This could be a problem with geometry", "RED")));
-	}else{
-		streamlog_out(DEBUG0) << Utility::outputColourString("The number of excluded planes is" +  to_string(_excludePlanes.size()),"GREEN") << std::endl;
-	}
+	testPlaneDimensions();
 }	
 void  EUTelPatternRecognition::testHitsVec(){
 	if(_allHitsVec.size() == 0){
@@ -436,15 +416,16 @@ void EUTelPatternRecognition::setHitsVecPerPlane(){
 	for(int i=0 ; i<numberOfPlanes;++i){
 		EVENT::TrackerHitVec tempHitsVecPlaneX; 
 		for(int j=0 ; j<_allHitsVec.size();++j){
-			if(Utility::getSensorIDfromHit( static_cast<IMPL::TrackerHitImpl*>(_allHitsVec[j]) ) ==  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i]){
-				tempHitsVecPlaneX.push_back(_allHitsVec[j]);
+			if(Utility::getSensorIDfromHit( static_cast<IMPL::TrackerHitImpl*>(_allHitsVec[j]) ) ==  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)){
+				tempHitsVecPlaneX.push_back(_allHitsVec.at(j));
 			}
 		}		
-	_mapHitsVecPerPlane[ geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i]] = 	tempHitsVecPlaneX;
+	_mapHitsVecPerPlane[ geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)] = 	tempHitsVecPlaneX;
 	}	
 	streamlog_out(DEBUG0) <<"EUTelPatternRecognition::setHitsVecPerPlane()----------------------------END" <<std::endl;
 }
 //Note loop through all planes. Even the excluded. This is easier since you don't have to change this input each time then.
+//TO DO: sensors z position as used here only works if there is sufficient difference between planes. In the order of 1mm in gear file. This is too large.
 void EUTelPatternRecognition::setPlaneDimensionsVec(EVENT::IntVec planeDimensions){
 	streamlog_out(DEBUG0) <<"EUTelPatternRecognition::setPlaneDimensionsVec()----------------------------BEGIN" <<std::endl;
 	if(planeDimensions.size() != geo::gGeometry().sensorZOrdertoIDs().size()){
@@ -454,12 +435,13 @@ void EUTelPatternRecognition::setPlaneDimensionsVec(EVENT::IntVec planeDimension
 	_planeDimensions.clear();
 	for(int i=0; i<geo::gGeometry().sensorZOrdertoIDs().size(); ++i){//Loop through each plane
 		int planeID = geo::gGeometry().sensorZOrdertoIDs().at(i);
-		_planeDimensions[planeID] = planeDimensions.at(i);
+		if (_planeDimensions.find(planeID) == _planeDimensions.end()){//This is to check that we don't try to map the same sensor to two different plane dimensions.
+			_planeDimensions[planeID] = planeDimensions.at(i);
+		}else{
+			streamlog_out(ERROR5) <<"The z position is : "<< i <<" The plane ID is: " << planeID <<std::endl;
+			throw(lcio::Exception( Utility::outputColourString("You are trying to map the same sensor ID to two different plane dimensions. There is something wrong with you gear file input. Make sure there is some distance between your planes in the gear file!","RED")));
+		}
 	}//END of loop over planes
-	if(_planeDimensions.size() != geo::gGeometry().sensorZOrdertoIDs().size()){
-		streamlog_out(ERROR5) << "The size of _planesDimensions is: "<< planeDimensions.size()<<" The size of sensorZOrdertoIDs is: " << geo::gGeometry().sensorZOrdertoIDs().size()<< std::endl;
-		throw(lcio::Exception( Utility::outputColourString("The output dimension vector is not the same size as the number of planes ","RED")));
-	}
 	streamlog_out(DEBUG0) <<"EUTelPatternRecognition::setPlaneDimensionsVec()----------------------------END" <<std::endl;
 }	    
 
@@ -480,17 +462,20 @@ void EUTelPatternRecognition::testHitsVecPerPlane(){
 	streamlog_out(DEBUG4) <<"EUTelPatternRecognition::testHitsVecPerPlane----------------------------END" <<std::endl;
 
 }
-
+//This function makes sure that the input for the dimension size is correct.
+//NOTE:This input is alway for ALL planes and not just no excluded ones. This means we don't have to change this if we want to exclude planes. 
 void EUTelPatternRecognition::testPlaneDimensions(){
-	if(_planeDimensions.size() != geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()){
-		streamlog_out(ERROR5) << "The size of planesDimensions is: "<< _planeDimensions.size()<<" The size of sensorIDtoOrderZ is: " << geo::gGeometry().sensorIDstoZOrder().size()<< std::endl;
-		throw(lcio::Exception( Utility::outputColourString("The size of your dimesion vector is not the same as the number of planes. Something must be wrong!","RED")));
+	streamlog_out(DEBUG4) <<"EUTelPatternRecognition::testPlaneDimensions----------------------------BEGIN" <<std::endl;
+	if(_planeDimensions.size() != geo::gGeometry().sensorZOrdertoIDs().size()){
+		streamlog_out(ERROR5) << "The size of _planesDimensions is: "<< _planeDimensions.size()<<" The size of sensorZOrdertoIDs is: " << geo::gGeometry().sensorZOrdertoIDs().size()<< std::endl;
+		throw(lcio::Exception( Utility::outputColourString("The output dimension vector is not the same size as the number of planes. Could be something to do with the gear file. Make sure you have some distances between you planes!","RED")));
 	}
 	for(int i=0;i<_planeDimensions.size();++i){
-		if(_planeDimensions.at(geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i])>3 or _planeDimensions.at(geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i])<=0){
-			throw(lcio::Exception( "The number of dimension for one of your planes is greater than 3 or less than 0. If this is not a mistake collect you nobel prize now!"));
+		if(_planeDimensions.at(geo::gGeometry().sensorZOrdertoIDs().at(i))>2 or _planeDimensions.at(geo::gGeometry().sensorZOrdertoIDs().at(i))<=0){
+			throw(lcio::Exception( "The number of dimension for one of your planes is greater than 2 or less than 0. If this is not a mistake collect you nobel prize now!"));
 		}
 	}
+	streamlog_out(DEBUG4) <<"EUTelPatternRecognition::testPlaneDimensions----------------------------END" <<std::endl;
 }
 
     /** Find the hit closest to the intersection of a track with given sensor

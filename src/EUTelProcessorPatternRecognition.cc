@@ -184,8 +184,6 @@ void EUTelProcessorPatternRecognition::processEvent(LCEvent * evt) {
 		_trackFitter->setHitsVecPerPlane();//Create map Sensor ID(non excluded)->HitsVec (Using geometry)
 		streamlog_out(DEBUG2) << "Test hits on the planes" << std::endl;
 		_trackFitter->testHitsVecPerPlane();//tests the size of the map and does it contain hits
-		streamlog_out(DEBUG2) << "Determine the dimensionality of the hit" << std::endl;
-		_trackFitter->testPlaneDimensions();//test that the number of dimensions is 3> >0
 		streamlog_out( DEBUG1 ) << "Trying to find tracks..." << endl;
 		_trackFitter->initialiseSeeds();//Create first states from hits. TO DO: This will not work for strip sensors. Not a big deal since we should not seed from strip sensors.
 		_trackFitter->testInitialSeeds();//Check hits not NULL and size correct
