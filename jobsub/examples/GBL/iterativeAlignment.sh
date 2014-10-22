@@ -74,12 +74,12 @@ echo "MaxRecordNumber: " $MaxRecordNumber
 #Fzr="0 1 2 3 4 5 "
 #Fzs="0 1 2 3 4 5"
 
-Fxr="0 1 2 3 4 5 6 7"
-Fxs="0         5 6 7"
-Fyr="0 1 2 3 4 5 6 7"
-Fys="0         5 6 7"
-Fzr="0  6 7"
-Fzs="0 1 2 3 4 5 6 7"
+#Fxr="0 1 2 3 4 5 6 7"
+#Fxs="0         5 6 7"
+#Fyr="0 1 2 3 4 5 6 7"
+#Fys="0         5 6 7"
+#Fzr="0 1 2 3 4 5 6 7"
+#Fzs="0 1 2 3 4 5 6 7"
 
 Verbosity="MESSAGE5"
 planeDimensions="2 2 2 1 1 2 2 2"
@@ -97,13 +97,13 @@ planeDimensions="2 2 2 1 1 2 2 2"
 #histoNameInput="GBLtrack-XYshiftS2-${RUN}"
 
 #inputGear="gear-final-Zrotations-${RUN}.xml"
-inputGear="gear-final-ZRotation-${RUN}.xml"
+#inputGear="gear-final-ZRotation-${RUN}.xml"
 #outputGear="gear-final-ZRotation-${RUN}.xml"
-outputGear="gear-final-ZRotation2-${RUN}.xml"
+#outputGear="gear-final-ZRotation2-${RUN}.xml"
 #histoNameInput="GBLtrack-XYshiftS-DUT-${RUN}"
 #outputGear="gear-final-ZShift-${RUN}.xml"
 #histoNameInput="GBLtrack-ZshiftS-${RUN}"
-histoNameInput="GBLtrack-zRotation2-${RUN}"
+#histoNameInput="GBLtrack-zRotation2-${RUN}"
 
 #This is the alignment mode. It sets the size of the alignment jacobian dimensions.
 amode="7";
