@@ -107,6 +107,7 @@ void EUTelProcessorGBLAlign::init() {
 		Fitter->setParamterIdXResolutionVec(_SteeringxResolutions);//We set the accuracy of the residual information since we have no correct hit error analysis yet.
 		Fitter->setParamterIdYResolutionVec(_SteeringyResolutions);
 		Fitter->setMillepede(_Mille);//We need to have a connection between GBL and Millepede since GBL knows nothing about sensor orientations.
+		Fitter->testUserInput();
 		_trackFitter = Fitter;
 
 

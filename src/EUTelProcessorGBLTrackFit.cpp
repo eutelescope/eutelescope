@@ -82,6 +82,7 @@ void EUTelProcessorGBLTrackFit::init() {
 		Fitter->setMEstimatorType(_mEstimatorType);//As said before this is to do with how we deal with outliers and the function we use to weight them.
 		Fitter->setParamterIdXResolutionVec(_SteeringxResolutions);
 		Fitter->setParamterIdYResolutionVec(_SteeringyResolutions);
+		Fitter->testUserInput();
 		_trackFitter = Fitter;
 		if (!_trackFitter) {
 			throw(lcio::Exception(Utility::outputColourString("Could not create instance of fitter class .", "RED")));

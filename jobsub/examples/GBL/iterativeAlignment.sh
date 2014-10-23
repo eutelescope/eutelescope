@@ -54,9 +54,9 @@ RUN=$(adding_zeros_to_RUN $RUN)
 PatRec=patternRecognition
 TrackFit=GBLTrackFit
 Align=GBLAlign
-#This is the name given 
-#lcioPatternCollection="hit_filtered_m26"
-lcioPatternCollection="merged_hits"
+#This is the name given to the lcio collection. This is fix within the lcio file so must set here.  
+lcioPatternCollection="hit_filtered_m26"
+#lcioPatternCollection="merged_hits"
 
 MaxRecordNumber="5000" 
 
@@ -67,12 +67,12 @@ echo "Chi2Cut: " $Chi2Cut
 echo "Run: " $RUN 
 echo "MaxRecordNumber: " $MaxRecordNumber
 
-#Fxr="0 1 2 3 4 5"
-#Fxs="0         5"
-#Fyr="0 1 2 3 4 5"
-#Fys="0         5"
-#Fzr="0 1 2 3 4 5 "
-#Fzs="0 1 2 3 4 5"
+Fxr="0 1 2 3 4 5"
+Fxs="0         5"
+Fyr="0 1 2 3 4 5"
+Fys="0         5"
+Fzr="0"
+Fzs="0 1 2 3 4 5"
 
 #Fxr="0 1 2 3 4 5 6 7"
 #Fxs="0         5 6 7"
@@ -82,40 +82,40 @@ echo "MaxRecordNumber: " $MaxRecordNumber
 #Fzs="0 1 2 3 4 5 6 7"
 
 Verbosity="MESSAGE5"
-planeDimensions="2 2 2 1 1 2 2 2"
-#planeDimensions="2 2 2 2 2 2"
+#planeDimensions="2 2 2 1 1 2 2 2"
+planeDimensions="2 2 2 2 2 2"
 
 #inputGear="gear_desy2012_150mm.xml"
 #inputGear="gear-1T.xml"
 #inputGear="gear-stripSensor.xml"
-#outputGear="gear-final-XYshift-${RUN}.xml"
-#histoNameInput="GBLtrack-XYshift-${RUN}"
+#outputGear="gear-final-XYshift1-${RUN}.xml"
+#histoNameInput="GBLtrack-XYshift1-${RUN}"
 
-#inputGear="gear-final-XYshift-${RUN}.xml"
+inputGear="gear-final-XYshift1-${RUN}.xml"
 
 #outputGear="gear-final-XYshiftS2-${RUN}.xml"
 #histoNameInput="GBLtrack-XYshiftS2-${RUN}"
 
 #inputGear="gear-final-Zrotations-${RUN}.xml"
 #inputGear="gear-final-ZRotation-${RUN}.xml"
-#outputGear="gear-final-ZRotation-${RUN}.xml"
+outputGear="gear-final-ZRotation1-${RUN}.xml"
 #outputGear="gear-final-ZRotation2-${RUN}.xml"
 #histoNameInput="GBLtrack-XYshiftS-DUT-${RUN}"
 #outputGear="gear-final-ZShift-${RUN}.xml"
 #histoNameInput="GBLtrack-ZshiftS-${RUN}"
-#histoNameInput="GBLtrack-zRotation2-${RUN}"
+histoNameInput="GBLtrack-zRotation1-${RUN}"
 
 #This is the alignment mode. It sets the size of the alignment jacobian dimensions.
 amode="7";
 
 pede="chiscut 10. 5. " #This is the input that tell millepede what tracks to discard.  
 
-ExcludePlanes="6 7"
-#ExcludePlanes=""
+#ExcludePlanes="6 7"
+ExcludePlanes=""
 
 r="0.0828";
-dut="0.030 0.030"
-#dut=""
+#dut="0.030 0.030"
+dut=""
 xres="$r $r $r $dut $r $r $r";
 yres="$r $r $r $dut $r $r $r";
 
@@ -252,7 +252,7 @@ while :
 done 
 
 
-$do jobsub.py -c $CONFIG -csv $RUNLIST -o Verbosity="$Verbosity" -o MaxRecordNumber="$MaxRecordNumber" -o GearFile="$outputGear"  -o ExcludePlanes="$ExcludePlanes" $PatRec $RUN 
+$do jobsub.py -c $CONFIG -csv $RUNLIST -o HitInputCollectionName="$lcioPatternCollection" -o Verbosity="$Verbosity" -o MaxRecordNumber="$MaxRecordNumber" -o GearFile="$outputGear"  -o ExcludePlanes="$ExcludePlanes" $PatRec $RUN 
 r="0.005";
 xres="$r $r $r $dut $r $r $r";
 yres="$r $r $r $dut $r $r $r";

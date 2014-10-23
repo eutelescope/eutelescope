@@ -689,7 +689,7 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( string tge
 void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvolumeWorld, int SensorId ){
 	double xc, yc, zc;   // volume center position 
 	double alpha, beta, gamma;
-	double rot1; // for backward compatibility with previous GEAR. We only need 1 entry from the gear file. 
+	double rot1, rot3; // for backward compatibility with previous GEAR. We only need 2 entries from gear file for fast z rotation function in TGeoRotations. 
 
 	std::stringstream strId;
 	strId << SensorId;
@@ -705,7 +705,8 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
 	gamma = siPlaneZRotation( SensorId ); // 
 
 	rot1 = siPlaneRotation1( SensorId );
-
+	rot3 = siPlaneRotation3( SensorId );
+	double integerRotations[2]={rot3,rot1};
 	//Create spatial TGeoTranslation object.
 	string stTranslationName = "matrixTranslationSensor";
 	stTranslationName.append( strId.str() );
@@ -723,10 +724,10 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
 	//X rotations 
 	//Y rotations
 	TGeoRotation * pMatrixRotCombined = new TGeoRotation();
-	pMatrixRotCombined->FastRotZ(&rot1);//Z Rotation (Integer)
-	pMatrixRotCombined->RotateZ(gamma);//Z Rotation (degrees)
-	pMatrixRotCombined->RotateX(alpha);//X Rotations (degrees)
-	pMatrixRotCombined->RotateY(beta);//Y Rotations (degrees)
+	pMatrixRotCombined->FastRotZ(integerRotations);//Z Rotation (Integer). This will rotate a vector around the z axis using the right hand rule
+	pMatrixRotCombined->RotateZ(gamma);//Z Rotation (degrees)//This will again rotate a vector around z axis usign the right hand rule.  
+	pMatrixRotCombined->RotateX(alpha);//X Rotations (degrees)//This will rotate a vector usign the right hand rule round the x-axis
+	pMatrixRotCombined->RotateY(beta);//Y Rotations (degrees)//Same again for Y axis 
 	pMatrixRotCombined->RegisterYourself();//We must allow the matrix to be used by the TGeo manager.
 
 	// Combined translation and orientation

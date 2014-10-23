@@ -120,6 +120,7 @@ namespace eutelescope {
 			std::string getMEstimatorType() const;
 
 			//TEST
+			void testUserInput();
 			void testTrack(EUTelTrack& track);
 			void testDistanceBetweenPoints(double* position1,double* position2);
 			//COMPUTE

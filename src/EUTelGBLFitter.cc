@@ -415,6 +415,14 @@ namespace eutelescope {
 		streamlog_out ( DEBUG4 ) << " EUTelGBLFitter::computeTrajectoryAndFit -- END " << endl;
 	}
 	//TEST
+	void EUTelGBLFitter::testUserInput(){
+		if(_parameterIdXResolutionVec.size() != _parameterIdYResolutionVec.size()){
+				throw(lcio::Exception(Utility::outputColourString("The vector for resolutions for X and Y are different sizes.", "RED")));
+		}
+		if(_parameterIdXResolutionVec.size() != geo::gGeometry().nPlanes() ){
+				throw(lcio::Exception(Utility::outputColourString("The total number of planes and the resolution of the planes vector are different sizes.", "RED")));
+		}
+	}
 	void EUTelGBLFitter::testTrack(EUTelTrack& track){
 		streamlog_out(DEBUG4)<<"EUTelGBLFitter::testTrack------------------------------------BEGIN"<<endl;
 		if(track.getStates().size() == 0 ){

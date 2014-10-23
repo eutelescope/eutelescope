@@ -132,10 +132,15 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
 	    const double dr0x = (*itrAlignmentConstant).second->getXOffset();
 	    const double dr0y = (*itrAlignmentConstant).second->getYOffset();
 	    const double dr0z = (*itrAlignmentConstant).second->getZOffset();
-
+	
 			const double posLocalDiff[3] = {dr0x,dr0y,dr0z};
 			double delta_r0[3];
-			geo::gGeometry().local2MasterVec(sensorID,posLocalDiff, delta_r0);
+			geo::gGeometry().local2MasterVec(sensorID,posLocalDiff, delta_r0);//Here we transform the local alignment position offsets to global position offsets.
+			const double angleLocalDiff[3]={dalpha,dbeta,dgamma};
+			double delta_angle[3];
+			//IMPORTANT:Note the transformation of the angles assumes that they transform like a vector. This is not true unless the angles are small.   
+			geo::gGeometry().local2MasterVec(sensorID,angleLocalDiff, delta_angle);//Here we transform the local alignment angle offsets to global angle offsets.
+
 //	    TVector3 delta_r0( dr0x, dr0y, dr0z );
 			
 //	    delta_r0 *= invDeltaR;
@@ -160,9 +165,9 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
             geo::gGeometry().setPlaneXPosition(sensorID,  xplane  +  delta_r0[0] ) ;
             geo::gGeometry().setPlaneYPosition(sensorID,  yplane  +  delta_r0[1] ) ;
             geo::gGeometry().setPlaneZPosition(sensorID,  zplane  +  delta_r0[2] ) ;
-            geo::gGeometry().setPlaneXRotationRadians(sensorID, (xrot  - dalpha)  ) ;
-            geo::gGeometry().setPlaneYRotationRadians(sensorID, (yrot  - dbeta )  ) ;
-            geo::gGeometry().setPlaneZRotationRadians(sensorID, (zrot  - dgamma)  ) ;
+            geo::gGeometry().setPlaneXRotationRadians(sensorID, (xrot  - angleLocalDiff[0])  ) ;
+            geo::gGeometry().setPlaneYRotationRadians(sensorID, (yrot  - angleLocalDiff[1] )  ) ;
+            geo::gGeometry().setPlaneZRotationRadians(sensorID, (zrot  - angleLocalDiff[2])  ) ;
 //#endif
 //#endif       
             streamlog_out(MESSAGE4) << setw(10) << "align  " << setw( 8) << " " ;

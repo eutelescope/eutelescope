@@ -138,10 +138,10 @@ int EUTelMillepede::computeAlignmentToMeasurementJacobian( float x,float y, floa
 	streamlog_message( DEBUG0, _jacobian.Print();, std::endl; );			
 		
 	//////////////////////////////////////Moving the sensor in x and y. Obviously if the sensor move right the hit will appear to move left. Always create this!!!! BEGIN
-	_jacobian[0][0] = 1.0; // dxh/dxs      dxh => change in hit position         dxs => Change in sensor position
+	_jacobian[0][0] = -1.0; // dxh/dxs      dxh => change in hit position         dxs => Change in sensor position
 	_jacobian[0][1] = 0.0; // dxh/dys      //I have changed this from -1 to 1. It seems this is the sign convention that Millepede uses.
 	_jacobian[1][0] = 0.0; // dyh/dxs
-	_jacobian[1][1] = 1.0; // dyh/dys
+	_jacobian[1][1] = -1.0; // dyh/dys
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////END
 
 
