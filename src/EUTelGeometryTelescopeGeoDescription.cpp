@@ -706,6 +706,13 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
 
 	rot1 = siPlaneRotation1( SensorId );
 	rot3 = siPlaneRotation3( SensorId );
+	//rot1=sin and rot=cos
+	//We must check that the input is correct. Since there is only 1 degree of freedom.
+	float	possibleUnit = sqrt(pow(rot1,2)+pow(rot3,2));
+	if(possibleUnit>1.1 or possibleUnit<0.9){//Check that the squares equal 1 and give some rounding error room. 
+		streamlog_out(ERROR5) << "SensorID: " << SensorId << ". Rot Squares sum =  " <<possibleUnit << std::endl;   
+		throw(lcio::Exception(Utility::outputColourString("The integer rotations do not represent a z rotation since there squares don't sum to 1. Note we have four variables in gear file as input BUT A SINGLE DEGREE OF FREEDOM!", "RED"))); 	
+	}
 	double integerRotations[2]={rot3,rot1};
 	//Create spatial TGeoTranslation object.
 	string stTranslationName = "matrixTranslationSensor";

@@ -160,8 +160,8 @@ int EUTelMillepede::computeAlignmentToMeasurementJacobian( float x,float y, floa
 	///////////////////////////////////////////////////Moving the sensor in the z axis. Only create this if you want shifts in z BEGIN
 	if (_alignmentMode == Utility::XYZShiftXYRot
                 || _alignmentMode == Utility::XYZShiftXZRotYZRotXYRot) {
-  	_jacobian[0][3] =   slopeXvsZ; // dxh/dzs
-    _jacobian[1][3] =   slopeYvsZ; // dyh/dzs
+  	_jacobian[0][3] =   -slopeXvsZ; // dxh/dzs
+    _jacobian[1][3] =   -slopeYvsZ; // dyh/dzs
   }
 	///////////////////////////////////////////////////////////////////////////////////////////END
 

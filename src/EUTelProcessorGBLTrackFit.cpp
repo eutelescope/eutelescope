@@ -99,7 +99,7 @@ void EUTelProcessorGBLTrackFit::init() {
 		throw StopProcessingException( this ) ;
 	}
 	catch(...){
-		streamlog_out(MESSAGE9)<<"Unknown exception in init function of EUTelProcessorGBLTrackFit" <<endl;
+		streamlog_out(MESSAGE9)<<Utility::outputColourString("Unknown exception in init function of EUTelProcessorGBLTrackFit.","RED") <<endl;
 		throw StopProcessingException( this ) ;
 	}
 }
