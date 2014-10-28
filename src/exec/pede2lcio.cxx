@@ -72,21 +72,17 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
     // update positions and orientations of the planes
     // TODO: set appropriate new values for new GEAR file
 
-    streamlog_out(MESSAGE4) << "Combined alignment (current GEAR + MILLE corrections below):" << std::endl;    
-
     map< int, EUTelAlignmentConstant* >::const_iterator itrAlignmentConstant;
 
-    streamlog_out(MESSAGE4) <<  setw(10) << "" << setw(8) << "Plane ID" << setw(13) << setprecision(4) << "X "       << setw(13) << setprecision(4) << "Y "       << setw(13) << setprecision(4) << "Z "
-                                                                        << setw(13) << setprecision(4) << "ZY(Xrot)" << setw(13) << setprecision(4) << "ZX(Yrot)" << setw(13) << setprecision(4) << "XY(Zrot)" 
-                                                                        << setw(13) << setprecision(4) << "     in global coordinates, the shifts (X,Y,Z)  " << std::endl;
-
-    double xplane = 0.;
+   double xplane = 0.;
     double yplane = 0.;
     double zplane = 0.;
     double xrot   = 0.;
     double yrot   = 0.;
     double zrot   = 0.;
 
+		streamlog_out(MESSAGE9) << "Local translation come from Millepede." << std::endl;
+		streamlog_out(MESSAGE9) << "Global will be added to gear geometry parameters. " << std::endl;
 
 
     std::vector <int> sensorIDsVec = geo::gGeometry().sensorIDsVec();    
@@ -103,25 +99,15 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
  	    yrot   = geo::gGeometry().siPlaneYRotation(sensorID) ;
 	    zrot   = geo::gGeometry().siPlaneZRotation(sensorID) ;
 
-            streamlog_out(MESSAGE4) << std::endl << 
-                                 setw(10) << "original " << std::fixed <<
-                                 setw( 8) << sensorID << 
-                                 setw(13) << setprecision(4) << xplane   << 
-                                 setw(13) << setprecision(4) << yplane   << 
-                                 setw(13) << setprecision(4) << zplane   << 
-                 		 setw(13) << setprecision(4) << xrot     <<
-                                 setw(13) << setprecision(4) << yrot     <<
-                                 setw(13) << setprecision(4) << zrot     << std::endl;
-
 	    TRotation invR;
 	    invR.RotateX( xrot );
 	    invR.RotateY( yrot );
 	    invR.RotateZ( zrot );
 	    invR.Invert();
 	
-	    const double dalpha = (*itrAlignmentConstant).second->getAlpha();
-            const double dbeta  = (*itrAlignmentConstant).second->getBeta();
-            const double dgamma = (*itrAlignmentConstant).second->getGamma();
+	    const double dalpha = ((*itrAlignmentConstant).second->getAlpha())*(180/M_PI);
+            const double dbeta  = ((*itrAlignmentConstant).second->getBeta())*(180/M_PI);
+            const double dgamma = ((*itrAlignmentConstant).second->getGamma())*(180/M_PI);
 
 	    TRotation invDeltaR;
 	    invDeltaR.RotateX((*itrAlignmentConstant).second->getAlpha());
@@ -136,23 +122,16 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
 			const double posLocalDiff[3] = {dr0x,dr0y,dr0z};
 			double delta_r0[3];
 			geo::gGeometry().local2MasterVec(sensorID,posLocalDiff, delta_r0);//Here we transform the local alignment position offsets to global position offsets.
+			const double posTest[3]={1,0,0};
+			double posTestOutput[3];
+			geo::gGeometry().local2Master(sensorID,posTest, posTestOutput);
+			streamlog_out(MESSAGE9)<<"Here we have the test for sensor " << sensorID <<std::endl;
+			streamlog_out(MESSAGE9)<<posTestOutput[0]<<"  "<<posTestOutput[1]<<"  "<<posTestOutput[2]<<endl;	
 			const double angleLocalDiff[3]={dalpha,dbeta,dgamma};
 			double delta_angle[3];
 			//IMPORTANT:Note the transformation of the angles assumes that they transform like a vector. This is not true unless the angles are small.   
 			geo::gGeometry().local2MasterVec(sensorID,angleLocalDiff, delta_angle);//Here we transform the local alignment angle offsets to global angle offsets.
 
-//	    TVector3 delta_r0( dr0x, dr0y, dr0z );
-			
-//	    delta_r0 *= invDeltaR;
-//	    delta_r0 *= invR;
-//	    delta_r0 = invR*(invDeltaR*delta_r0);
-        //    delta_r0 = invR*delta_r0;
- 
-             streamlog_out(MESSAGE2) << "invR:"<< std::endl;
-             streamlog_out(MESSAGE2) << " X: " << setw(20) << invR[0][0] << " " << invR[0][1] << " " << invR[0][2]  << std::endl;
-             streamlog_out(MESSAGE2) << " Y: " << setw(20) << invR[1][0] << " " << invR[1][1] << " " << invR[1][2]  << std::endl;
-             streamlog_out(MESSAGE2) << " Z: " << setw(20) << invR[2][0] << " " << invR[2][1] << " " << invR[2][2]  << std::endl;
-             streamlog_out(MESSAGE2) << ""<< std::endl;
  
            
 //	    delta_r0 *= invR;
@@ -162,27 +141,24 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
 // ZY and ZX rotations are calculated wrongly yet, do not implement:
 // XYZ shifts and XY rotation seems to be correct
 //
-            geo::gGeometry().setPlaneXPosition(sensorID,  xplane  +  delta_r0[0] ) ;
-            geo::gGeometry().setPlaneYPosition(sensorID,  yplane  +  delta_r0[1] ) ;
-            geo::gGeometry().setPlaneZPosition(sensorID,  zplane  +  delta_r0[2] ) ;
-            geo::gGeometry().setPlaneXRotationRadians(sensorID, (xrot  - angleLocalDiff[0])  ) ;
-            geo::gGeometry().setPlaneYRotationRadians(sensorID, (yrot  - angleLocalDiff[1] )  ) ;
-            geo::gGeometry().setPlaneZRotationRadians(sensorID, (zrot  - angleLocalDiff[2])  ) ;
+            geo::gGeometry().setPlaneXPosition(sensorID,  xplane  + delta_r0[0]  ) ;
+            geo::gGeometry().setPlaneYPosition(sensorID,  yplane  + delta_r0[1]  ) ;
+            geo::gGeometry().setPlaneZPosition(sensorID,  zplane  + delta_r0[2]  ) ;
+            geo::gGeometry().setPlaneXRotation(sensorID, (xrot  - angleLocalDiff[0])  ) ;
+            geo::gGeometry().setPlaneYRotation(sensorID, (yrot  - angleLocalDiff[1] )  ) ;
+            geo::gGeometry().setPlaneZRotation(sensorID, (zrot  - angleLocalDiff[2])  ) ;
 //#endif
 //#endif       
-            streamlog_out(MESSAGE4) << setw(10) << "align  " << setw( 8) << " " ;
-            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) << dr0x;
-            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) << dr0y;
-            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) << dr0z; 
+					 streamlog_out(MESSAGE9) << "Input and output alignment shift (translations) for sensor: "<<sensorID << std::endl;
+            streamlog_out(MESSAGE4) << setw(10) << "Align Translations (Local) x,y,z  " << setw( 8) << " " ;
+            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) <<posLocalDiff[0] ;
+            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) <<posLocalDiff[1];
+            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) <<posLocalDiff[2]<<endl; 
 
-            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) << dalpha;
-            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) << dbeta;
-            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) << dgamma ;
-
-            streamlog_out(MESSAGE4) << setw( 3) << " " ;
-            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) <<  delta_r0[0] ;
-            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) <<  delta_r0[1];
-            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) <<  delta_r0[2] << std::endl;
+            streamlog_out(MESSAGE4) << setw(10) << "Align Translations (Global) x,y,z " << setw( 8) << " " ;
+            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) <<delta_r0[0];
+            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) <<delta_r0[1];
+            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) <<delta_r0[2]<<endl; 
 
             xplane = geo::gGeometry().siPlaneXPosition(sensorID) ; 
             yplane = geo::gGeometry().siPlaneYPosition(sensorID) ; 
@@ -190,17 +166,6 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
  	    xrot   = geo::gGeometry().siPlaneXRotationRadians(sensorID) ;
  	    yrot   = geo::gGeometry().siPlaneYRotationRadians(sensorID) ;
 	    zrot   = geo::gGeometry().siPlaneZRotationRadians(sensorID) ;
-
-            streamlog_out(MESSAGE4) <<
-                                 setw(10) << "new : " << 
-                                 setw( 8) << " "  << 
-                                 setw(13) << setprecision(4) << xplane   << 
-                                 setw(13) << setprecision(4) << yplane   << 
-                                 setw(13) << setprecision(4) << zplane   << 
-                 		 setw(13) << setprecision(4) << xrot     <<
-                                 setw(13) << setprecision(4) << yrot     <<
-                                 setw(13) << setprecision(4) << zrot     << std::endl;
-
 
         }
     }

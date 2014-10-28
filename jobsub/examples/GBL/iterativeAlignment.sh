@@ -67,11 +67,17 @@ echo "Chi2Cut: " $Chi2Cut
 echo "Run: " $RUN 
 echo "MaxRecordNumber: " $MaxRecordNumber
 
+maxChi2TrackAcceptance=15
+minChi2TrackAcceptance=0.3
+maxChi2AlignAcceptance=15
+minChi2AlignAcceptance=0.3
+pede="chiscut 10. 5. " #This is the input that tells millepede what tracks to discard.  
+
 Fxr="0 1 2 3 4 5"
 Fxs="0         5"
 Fyr="0 1 2 3 4 5"
 Fys="0         5"
-Fzr="0 "
+Fzr="0"
 Fzs="0 1 2 3 4 5"
 
 #Fxr="0 1 2 3 4 5 6 7"
@@ -85,35 +91,33 @@ Verbosity="MESSAGE5"
 #planeDimensions="2 2 2 1 1 2 2 2"
 planeDimensions="2 2 2 2 2 2"
 
-inputGear="gear_desy2012_150mm.xml"
+#inputGear="gear_desy2012_150mm.xml"
 #inputGear="gear-1T.xml"
 #inputGear="gear-stripSensor.xml"
-#outputGear="gear-final-XYshift-${RUN}.xml"
-#histoNameInput="GBLtrack-XYshift-${RUN}"
+#outputGear="gear-final-XYshift1-${RUN}.xml"
+#histoNameInput="GBLtrack-XYshift1-${RUN}"
 
-#inputGear="gear-final-XYshift-${RUN}.xml"
+inputGear="gear-final-XYshift1-${RUN}.xml"
 
 #outputGear="gear-final-XYshiftS2-${RUN}.xml"
 #histoNameInput="GBLtrack-XYshiftS2-${RUN}"
 
 #inputGear="gear-final-Zrotations-${RUN}.xml"
 #inputGear="gear-final-ZRotation-${RUN}.xml"
-outputGear="gear-final-ZRotationAll-${RUN}.xml"
-#outputGear="gear-final-ZRotation2-${RUN}.xml"
+#outputGear="gear-final-ZRotationAll-${RUN}.xml"
+outputGear="gear-final-ZRotation1-${RUN}.xml"
 #histoNameInput="GBLtrack-Zshift-${RUN}"
 #outputGear="gear-final-ZShift-${RUN}.xml"
 #histoNameInput="GBLtrack-ZshiftS-${RUN}"
-histoNameInput="GBLtrack-zRotationAll-${RUN}"
+histoNameInput="GBLtrack-zRotation1-${RUN}"
 
 #This is the alignment mode. It sets the size of the alignment jacobian dimensions.
 amode="7";
 
-pede="chiscut 10. 5. " #This is the input that tell millepede what tracks to discard.  
-
 #ExcludePlanes="6 7"
 ExcludePlanes=""
 
-r="0.0828";
+r="0.5"; #The large residual is due to errors in alignment.
 #dut="0.030 0.030"
 dut=""
 xres="$r $r $r $dut $r $r $r";
@@ -149,13 +153,13 @@ if [[ $averageChi2 == "" ]]; then
 	echo "ERROR!!!!!!!!! string for chi2 GBL not found. Check output log file is in the correct place. Furthermore check the string is there. "
   exit
 fi
-if [[ $(echo "$averageChi2 < 0.8"|bc) -eq 1 ]]; then
+if [[ $(echo "$averageChi2 <$minChi2TrackAcceptance "|bc) -eq 1 ]]; then
 	echo "The average chi2 is: " $averageChi2. "So decrease resolution."		
 	r=$(echo "scale=4;$r*0.8"|bc);
 	xres="$r $r $r $dut $r $r $r";
 	yres="$r $r $r $dut $r $r $r";
 	echo "New resolutions are for (X/Y):" $xres"/"$yres
-elif [[ $(echo "$averageChi2 > 1.2"|bc) -eq 1 ]]; then
+elif [[ $(echo "$averageChi2 >$maxChi2TrackAcceptance"|bc) -eq 1 ]]; then
 	echo "The average chi2 is: " $averageChi2. "So increase resolution."		
 	r=$(echo "scale=4;$r*1.2"|bc);
 	xres="$r $r $r $dut $r $r $r";
@@ -180,13 +184,13 @@ for x in {1..10}; do
 		echo "ERROR!!!!!!!!! string for chi2 GBL not found. Check output log file is in the correct place. Furthermore check the string is there. "
 		exit
 	fi
-	if [[ $(echo "$averageChi2 < 0.8"|bc) -eq 1 ]]; then
+	if [[ $(echo "$averageChi2 <$minChi2TrackAcceptance "|bc) -eq 1 ]]; then
 		echo "The average chi2 is: " $averageChi2. "So decrease resolution."		
 		r=$(echo "scale=4;$r*0.8"|bc);
 		xres="$r $r $r $dut $r $r $r";
 		yres="$r $r $r $dut $r $r $r";
 		echo "New resolutions are for (X/Y):" $xres"/"$yres
-	elif [[ $(echo "$averageChi2 > 1.2"|bc) -eq 1 ]]; then
+	elif [[ $(echo "$averageChi2 >$maxChi2TrackAcceptance "|bc) -eq 1 ]]; then
 		echo "The average chi2 is: " $averageChi2. "So increase resolution."		
 		r=$(echo "scale=4;$r*1.2"|bc);
 		xres="$r $r $r $dut $r $r $r";
@@ -238,11 +242,11 @@ while :
 		averageChi2Mille=1
 	fi
 #	averageChi2Mille=1
-	if [[ $(echo "$averageChi2Mille < 0.8"|bc) -eq 1 ]] && [[ $averageChi2Mille != "" ]]; then
+	if [[ $(echo "$averageChi2Mille <$minChi2AlignAcceptance "|bc) -eq 1 ]] && [[ $averageChi2Mille != "" ]]; then
 		echo "The average chi2 is: " $averageChi2Mille. "So decrease resolution."		
 		echo "New resolutions are for (X/Y):" $xres"/"$yres
 		echo "Continue"
-	elif [[ $(echo "$averageChi2Mille > 1.2"|bc) -eq 1 ]] && [[ $averageChi2Mille != "" ]]; then
+	elif [[ $(echo "$averageChi2Mille >$maxChi2AlignAcceptance"|bc) -eq 1 ]] && [[ $averageChi2Mille != "" ]]; then
 		echo "The average chi2 is: " $averageChi2Mille. "So increase resolution."		
 		echo "New resolutions are for (X/Y):" $xres"/"$yres
 	else 

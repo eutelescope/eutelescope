@@ -542,7 +542,7 @@ void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout() {
             _siPlaneXRotation.push_back( sensitiveLayer.getRotationZY() );
             _siPlaneYRotation.push_back( sensitiveLayer.getRotationZX() );
             _siPlaneZRotation.push_back( sensitiveLayer.getRotationXY() );
-        
+       			//Note we set rotations 1,2,3,4 automatically here since we don't want to add more gear information that uses this format. Only the old Si planes should use that.  
             _siPlaneRotation1.push_back( 1.0 );
             _siPlaneRotation2.push_back( 0.0 );
             _siPlaneRotation3.push_back( 0.0 );
@@ -736,10 +736,25 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
 	pMatrixRotCombined->RotateX(alpha);//X Rotations (degrees)//This will rotate a vector usign the right hand rule round the x-axis
 	pMatrixRotCombined->RotateY(beta);//Y Rotations (degrees)//Same again for Y axis 
 	pMatrixRotCombined->RegisterYourself();//We must allow the matrix to be used by the TGeo manager.
-
 	// Combined translation and orientation
 	TGeoCombiTrans* combi = new TGeoCombiTrans( *pMatrixTrans, *pMatrixRotCombined );
+	//This is to print to screen the rotation and translation matrices used to transform from local to global frame.
+	streamlog_out(MESSAGE9) << "THESE MATRICES ARE USED TO TAKE A POINT IN THE LOCAL FRAME AND MOVE IT TO THE GLOBAL FRAME."  << std::endl;   
+	streamlog_out(MESSAGE9) << "SensorID: " << SensorId << " Rotation matrix for this object."  << std::endl;   
+	const double* rotationMatrix =  combi->GetRotationMatrix();	
+	streamlog_out(MESSAGE9) << setw(10) <<rotationMatrix[0]<<"  "<<rotationMatrix[1]<<"   "<<rotationMatrix[2]<<endl;
+	streamlog_out(MESSAGE9) << setw(10) <<rotationMatrix[3]<<"  "<<rotationMatrix[4]<<"   "<<rotationMatrix[5]<<endl;
+	streamlog_out(MESSAGE9) << setw(10) <<rotationMatrix[6]<<"  "<<rotationMatrix[7]<<"   "<<rotationMatrix[8]<<endl;
+
+	//streamlog_out(MESSAGE9) << setw(10) <<rotationMatrix[0] << setw(10) <<rotationMatrix[1]<< setw(10) <<rotationMatrix[2]<< setw(10)<<endl<<endl; 
+	//streamlog_out(MESSAGE9) << setw(10) <<rotationMatrix[3] << setw(10) <<rotationMatrix[4]<< setw(10) <<rotationMatrix[5]<< setw(10)<<endl<<endl; 
+	//streamlog_out(MESSAGE9) << setw(10) <<rotationMatrix[6] << setw(10) <<rotationMatrix[7]<< setw(10) <<rotationMatrix[8]<< setw(10)<<endl<<endl; 
+	const double* translationMatrix =  combi->GetTranslation();	
+	streamlog_out(MESSAGE9) << "SensorID: " << SensorId << " Translation vector for this object."  << std::endl;   
+	streamlog_out(MESSAGE9) << setw(10) <<translationMatrix[0] << setw(10) <<translationMatrix[1]<< setw(10) <<translationMatrix[2]<< setw(10)<<endl; 
+
 	combi->RegisterYourself();   
+	
 
 	// Construction of sensor objects
 
