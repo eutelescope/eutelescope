@@ -92,24 +92,26 @@ Verbosity="MESSAGE5"
 planeDimensions="2 2 2 2 2 2"
 
 #inputGear="gear_desy2012_150mm.xml"
+#inputGear="gear-stripSensor-noDUT.xml"
 #inputGear="gear-1T.xml"
 #inputGear="gear-stripSensor.xml"
-#outputGear="gear-final-XYshift1-${RUN}.xml"
-#histoNameInput="GBLtrack-XYshift1-${RUN}"
+#outputGear="gear-final-XYshift-${RUN}.xml"
+#histoNameInput="GBLtrack-XYshift-${RUN}"
 
-inputGear="gear-final-XYshift1-${RUN}.xml"
+inputGear="gear-final-XYshift-${RUN}.xml"
 
 #outputGear="gear-final-XYshiftS2-${RUN}.xml"
 #histoNameInput="GBLtrack-XYshiftS2-${RUN}"
 
 #inputGear="gear-final-Zrotations-${RUN}.xml"
 #inputGear="gear-final-ZRotation-${RUN}.xml"
-#outputGear="gear-final-ZRotationAll-${RUN}.xml"
-outputGear="gear-final-ZRotation1-${RUN}.xml"
+outputGear="gear-final-ZRotation-${RUN}.xml"
+#inputGear="gear-final-ZRotation-${RUN}.xml"
+#outputGear="gear-final-ZRotation1-${RUN}.xml"
 #histoNameInput="GBLtrack-Zshift-${RUN}"
 #outputGear="gear-final-ZShift-${RUN}.xml"
-#histoNameInput="GBLtrack-ZshiftS-${RUN}"
-histoNameInput="GBLtrack-zRotation1-${RUN}"
+#histoNameInput="GBLtrack-Zshift-${RUN}"
+histoNameInput="GBLtrack-zRotation-${RUN}"
 
 #This is the alignment mode. It sets the size of the alignment jacobian dimensions.
 amode="7";

@@ -285,6 +285,7 @@ void EUTelProcessorGBLTrackFit::end() {
 	float total = 0;
 	double sizeFittedTracks = _chi2NdfVec.size();
 	for(int i=0; i<_chi2NdfVec.size(); ++i){
+		cout << "Here is the chi2 of the tracks: " <<_chi2NdfVec.at(i)<<endl;
 		total= total + _chi2NdfVec.at(i);//TO DO: This is does not seem to output the correct average chi2. Plus do we really need this to fit?
 	}
 	//TO DO: We really should have a better way to look track per track	and see if the correction is too large. 
