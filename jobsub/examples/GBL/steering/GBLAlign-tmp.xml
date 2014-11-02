@@ -75,7 +75,7 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
   <parameter name="PedeSteeringAdditionalCmds" type="StringVec">
 method inversion 5 0.1 \\
 !method diagonalization 15 0.001 \\ 
-outlierdownweighting 10. \\ 
+@outlierdownweighting@  \\ 
 @pede@
  </parameter>
   <parameter name="HistogramInfoFilename" type="string" value="@HistoInfoFile@"/>

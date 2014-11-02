@@ -66,7 +66,9 @@ namespace eutelescope {
 		inline double getBeamCharge() const {
 				return _beamQ;
 		}
-
+		inline int getNumberOfTracksAfterPruneCut(){
+			return _numberOfTracksAfterPruneCut;
+		}
 
 		//SETTERS
 		void setHitsVecPerPlane();
@@ -151,7 +153,7 @@ private:
 
 		/** Update track state and it's cov matrix */
 		double updateTrackState( EUTelTrackStateImpl*, const EVENT::TrackerHit* );
-
+	
 		/** Update track propagation matrix for a given step */
 const TMatrixD& getPropagationJacobianF( const EUTelTrackStateImpl*, double );
 		

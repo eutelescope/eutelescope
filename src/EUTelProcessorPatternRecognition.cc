@@ -284,10 +284,9 @@ void EUTelProcessorPatternRecognition::check(LCEvent * /*evt*/) {
 }
 
 void EUTelProcessorPatternRecognition::end() {
-
+    streamlog_out(MESSAGE9) <<"The average number of tracks per event: " << static_cast<float>(_trackFitter->getNumberOfTracksAfterPruneCut())/static_cast<float>(_nProcessedEvents) <<endl; 
     delete _trackFitter;
-    
-    streamlog_out(MESSAGE4) << "EUTelProcessorPatternRecognition::end()  " << name()
+    streamlog_out(MESSAGE9) << "EUTelProcessorPatternRecognition::end()  " << name()
             << " processed " << _nProcessedEvents << " events in " << _nProcessedRuns << " runs "
             << " av.tracks : " << static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_numberTracksCandidatesHistName ] ) -> mean()
             << " track candidates : " << static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_numberOfHitOnTrackCandidateHistName ] ) -> allEntries()
