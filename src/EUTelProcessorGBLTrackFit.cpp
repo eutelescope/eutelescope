@@ -284,10 +284,10 @@ void EUTelProcessorGBLTrackFit::plotResidual(map< int, map<float, float > >  & s
 void EUTelProcessorGBLTrackFit::end() {
 	float total = 0;
 	double sizeFittedTracks = _chi2NdfVec.size();
-//	cout<<"This is the chi2s"<<endl;
+	cout<<"This is the chi2s"<<endl;
 	for(int i=0; i<_chi2NdfVec.size(); ++i){
 		total= total + _chi2NdfVec.at(i);//TO DO: This is does not seem to output the correct average chi2. Plus do we really need this to fit?
-//		cout<<_chi2NdfVec.at(i)<<endl;
+		cout<<_chi2NdfVec.at(i)<<endl;
 	}
 	//TO DO: We really should have a better way to look track per track	and see if the correction is too large. 
 	std::vector<double> correctionTotal = _trackFitter->getCorrectionsTotal();

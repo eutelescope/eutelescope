@@ -48,7 +48,9 @@ Chi2Cut="$averageChi2"
 #tracks
 fraction=$(echo "scale=4;$Chi2Cut*0.0333"|bc); #Divided by 30(0.0333) since
 #this is close to the value of chi2 that is 3 standard deviations away. 
-export pede="chiscut $fraction  $fraction" #This is the factor in iteration 1 and
+export pede="!chiscut $fraction  $fraction" #! denotes a comment in the steering file we remove this to activate this functionality. TO DO: Must comment below as well must fix
+#this.
+#This is the factor in iteration 1 and
 #iteration 2 we times by the chi2 corresponding to max/min value that
 #would be 3 standard derviation away from the mean of n normal gaussians. 
 #Remember if our errors are purely statistically and not systematic like
@@ -60,7 +62,7 @@ export pede="chiscut $fraction  $fraction" #This is the factor in iteration 1 an
 # tracks again to improve the chi2 by finding good tracks labelled as bad by a
 # single data point of noise that produces a large chi2 which is above the 5 or 2.5 cut
 # above.
-export outlierdownweighting="outlierdownweighting 0"
+export outlierdownweighting="!outlierdownweighting 0"
 
 
 #THIS IS PART (3)
@@ -76,17 +78,38 @@ for x in {1..10}; do
 		echo "We have a segfault" 
 		exit
 	fi
+	factor=`unzip  -p  $fileAlign |grep "multiply all input standard deviations by factor" | awk '{ print $NF }'`;
+	factor=`echo ${factor} | sed -e 's/[eE]+*/\\*10\\^/'`
+	echo "factor word: " $factor
+	if [[ $factor != "" ]];then
+		echo "Factor word found! Resolution must increase by $factor."
+		r=$(echo "scale=4;$r*$factor"|bc);
+		xres="$r $r $r $dut $r $r $r";
+		yres="$r $r $r $dut $r $r $r";
+		echo "New resolutions are for (X/Y):" $xres"/"$yres
+	fi
 	rejected=`unzip  -p  $fileAlign |grep "Too many rejects" |cut -d '-' -f2`; 
 	averageChi2Mille=`unzip -p $fileAlign |grep "Chi^2/Ndf" | awk '{ print $(NF-5) }'`;
 	echo "Rejects word:  $rejected "
 	if [[ $rejected != "" ]];then #This makes sure that we do not cut too many tracks.
+		echo "Too many rejects. Resolution must increase by factor 2."
+		r=$(echo "scale=4;$r*2"|bc);
+		xres="$r $r $r $dut $r $r $r";
+		yres="$r $r $r $dut $r $r $r";
+		echo "New resolutions are for (X/Y):" $xres"/"$yres
 		echo "Too many rejects. Chi2 cut must increase."
 		export Chi2Cut=$(echo "scale=4;$Chi2Cut*1.2"|bc);
 		fraction=$(echo "scale=4;$Chi2Cut*0.0333"|bc);  
-		export pede="chiscut $fraction  $fraction" 
+		export pede="!chiscut $fraction  $fraction" 
 	fi
-	if [[ $(echo "$averageChi2Mille <$minChi2AlignAcceptance "|bc) -eq 1 ]] && [[ $averageChi2Mille != "" ]]; then
-		echo "The average chi2 is:  $averageChi2Mille. This is acceptable so finish."		
+#	if [[ $(echo "$averageChi2Mille <$minChi2AlignAcceptance "|bc) -eq 1 ]] && [[ $averageChi2Mille != "" ]]; then
+#		echo "The average chi2 is:  $averageChi2Mille. This is acceptable so finish."		
+#		break
+#	fi
+	if [[ $averageChi2Mille == "" ]] && [[ $factor == "" ]] && [[ $rejected == "" ]];then
+		echo "Mille chi2 is non existant. Here it is: $averageChi2Mille"
+		echo "We can not find this or factor or rejects."
 		break
 	fi
+
 done 

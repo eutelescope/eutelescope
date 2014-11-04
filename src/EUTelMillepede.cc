@@ -338,12 +338,12 @@ int EUTelMillepede::writeMilleSteeringFile(lcio::StringVec pedeSteerAddCmds){
 
 		//TO DO: These uncertainties I believe come from the accuracy of the alignment jacobain. We currently just say this is 0.01. However it there a way to quantify this? 
 		/////////////////////////////////////////////////////////////////////////////////////////////Now fill string that will go into steering depending on if fixed or not BEGIN
-		const string initUncertaintyXShift = (isFixedXShift) ? "-1." : "0.01";//-1 means that this is fixed
-		const string initUncertaintyYShift = (isFixedYShift) ? "-1." : "0.01";
-		const string initUncertaintyZShift = (isFixedZShift) ? "-1." : "0.01";
-		const string initUncertaintyXRotation = (isFixedXRotation) ? "-1." : "0.01";
-		const string initUncertaintyYRotation = (isFixedYRotation) ? "-1." : "0.01";
-		const string initUncertaintyZRotation = (isFixedZRotation) ? "-1." : "0.01";
+		const string initUncertaintyXShift = (isFixedXShift) ? "-1." : "1";//-1 means that this is fixed
+		const string initUncertaintyYShift = (isFixedYShift) ? "-1." : "1";
+		const string initUncertaintyZShift = (isFixedZShift) ? "-1." : "1";
+		const string initUncertaintyXRotation = (isFixedXRotation) ? "-1." : "1";
+		const string initUncertaintyYRotation = (isFixedYRotation) ? "-1." : "1";
+		const string initUncertaintyZRotation = (isFixedZRotation) ? "-1." : "1";
 		////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////END
 
 		//TO DO: Determine is this initial shift is needed. 

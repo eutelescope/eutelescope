@@ -1,6 +1,6 @@
 #!/bin/bash
 #VARIABLES. EVERYTHING THAT IS SET FOR ALL ALIGNMENT STEPS IS SET HERE.IMPORTANT NOT ALL VARIABLES ARE HERE LOOK IN STEERING FILES
-RUN="97" #This is the run number. Zeros are added later and then export
+RUN="290" #This is the run number. Zeros are added later and then export
 export CONFIG="/afs/phas.gla.ac.uk/user/a/amorton/ilcsoft/v01-17-05/Eutelescope/trunk/jobsub/examples/GBL/config/config.cfg"
 export RUNLIST="/afs/phas.gla.ac.uk/user/a/amorton/ilcsoft/v01-17-05/Eutelescope/trunk/jobsub/examples/GBL/runlist/runlist.csv"
 export directory="/afs/phas.gla.ac.uk/user/a/amorton/ilcsoft/v01-17-05/Eutelescope/trunk/jobsub/examples/GBL/output/logs"
@@ -24,11 +24,12 @@ export ExcludePlanes="" #These planes are completely excluded from the analysis.
 export minChi2AlignAcceptance=1
 
 export Verbosity="MESSAGE5"
-export inputGear="gear_desy2012_150mm.xml"
-export outputGear="gear-final-XYshiftTest-${RUN}.xml"
-export histoNameInput="GBLtrack-XYshiftTest-${RUN}"
+export inputGear="gear-1T.xml"
+#export inputGear="gear_desy2012_150mm.xml"
+export outputGear="gear-final-XYshiftTest1-${RUN}.xml"
+export histoNameInput="GBLtrack-XYshiftTest1-${RUN}"
 
-export r="0.005"; #This is the resolution of the mimosa sensors. This can be changed to taken into account of the misalignment but in most cases leave alone.
+export r="1"; #This is the resolution of the mimosa sensors. This can be changed to taken into account of the misalignment but in most cases leave alone.
 export dutX="" #This is the resolution of the DUT in the x LOCAL direction. This should just a rough estimate of the expect resolution.
 export dutY="" #This is the resolution of the DUT in the y LOCAL direction. This should just a rough estimate of the expect resolution.
 export MaxRecordNumber="5000" 
@@ -37,7 +38,7 @@ export MaxRecordNumber="5000"
 export xres="$r $r $r $dutX $r $r $r";
 export yres="$r $r $r $dutY $r $r $r";
 export amode="7";
-export patRecMultiplicationFactor=1.5 #This is the factor which we increase the window of acceptance by if too few tracks.
+export patRecMultiplicationFactor=2 #This is the factor which we increase the window of acceptance by if too few tracks.
 
 #FUNCTIONS. 
 function adding_zeros_to_RUN {
@@ -81,7 +82,18 @@ echo "Run number: $RUN"
 echo "Config file: $CONFIG"
 echo "Runlist file: $RUNLIST"
 echo "This is the resolutions X/Y:  $xres/$yres."
-#This is the loop to produce the new gear file. 
+#This is the loop to produce the new gear file for x/y shifts. 
+./singleIterationAlignment.sh
+
+export Fxr="0 1 2 3 4 5" #This is the fixed planes for rotations round the x axis
+export Fxs="0         5" #This is the fixed planes for shifts in the x axis
+export Fyr="0 1 2 3 4 5" #This is the fixed planes for rotations round the y axis
+export Fys="0         5" #This is the fixed planes for shifts in the y axis
+export Fzr="0" #This is the fixed planes for rotations round the z axis
+export Fzs="0 1 2 3 4 5" #This is the fixed planes for shifts in the z axis
+export inputGear="$outputGear"
+export outputGear="gear-final-ZRotations-${RUN}.xml"
+export histoNameInput="GBLtrack-ZRotations-${RUN}"
 ./singleIterationAlignment.sh
 
 $do jobsub.py -c $CONFIG -csv $RUNLIST -o HitInputCollectionName="$lcioPatternCollection" -o Verbosity="$Verbosity" -o MaxRecordNumber="$MaxRecordNumber" -o GearFile="$outputGear"  -o ExcludePlanes="$ExcludePlanes" $PatRec $RUN 
