@@ -1,21 +1,39 @@
 #!/bin/bash
+#VARIABLES. IMPORTANT CONSTANT VARIABLES THROUGH THE WHOLE ALIGNMENT PROCESS IS SET HERE. IMPORTANT NOT ALL VARIABLES ARE HERE LOOK IN STEERING FILES/CONFIG
+RUN="290" #This is the run number. Zeros are added later and then export
+export CONFIG="/afs/phas.gla.ac.uk/user/a/amorton/ilcsoft/v01-17-05/Eutelescope/trunk/jobsub/examples/GBL/config/config.cfg"
+export RUNLIST="/afs/phas.gla.ac.uk/user/a/amorton/ilcsoft/v01-17-05/Eutelescope/trunk/jobsub/examples/GBL/runlist/runlist.csv"
+export directory="/afs/phas.gla.ac.uk/user/a/amorton/ilcsoft/v01-17-05/Eutelescope/trunk/jobsub/examples/GBL/output/logs"
+export PatRec=patternRecognition #This is the name of the pattern recognition steering file
+export TrackFit=GBLTrackFit #This is the name of the GBLTrack fitting steering file.
+export Align=GBLAlign #This is the alignment steering file name
+export lcioPatternCollection="hit_filtered_m26" #This is the lcio name given to the hit collection. We may need to change this if we are give only lcio with hits.
+export planeDimensions="2 2 2 2 2 2"
+export MaxMissingHitsPerTrack="0" #This is the number of missing hits that a track can have on the planes
+export AllowedSharedHitsOnTrackCandidate="0" #This is the number of hits two tracks can have in common. One is discarded if over.
+export minTracksPerEventAcceptance=1 #This is the number of tracks that is needed per event before we stop pattern recognition 
+export ExcludePlanes="" #These planes are completely excluded from the analysis. The scattering from the plane however is still taken into account.
+export minChi2AlignAcceptance=1
+export ResidualsRMax="0.5" #This is the window size on the next plane that we will accept hits from.
+export Verbosity="MESSAGE5"
+export r="1"; #This is the resolution of the mimosa sensors. This can be changed to taken into account of the misalignment but in most cases leave alone.
+export dutX="" #This is the resolution of the DUT in the x LOCAL direction. This should just a rough estimate of the expect resolution.
+export dutY="" #This is the resolution of the DUT in the y LOCAL direction. This should just a rough estimate of the expect resolution.
+export MaxRecordNumber="5000" 
+export inputGearInitial="gear-1T.xml" #This is the initial input gear. 
+#export inputGearInitial="gear_desy2012_150mm.xml"
+export outputGearFinal="gear-final-${RUN}.xml" #This is name of the gear after all iterations of alignment. 
+export histoNameInputFinal="GBLtrack-final-${RUN}" #This is the name of the histograms which will will use the final gear to produce the tracks.
 
-# parameters:
-# 1 - config file location   $CONFIG	 
-# 2 - runlist csv file: $RUNLIST -o Verbosity="$Verbosity" 
-# 3 - This is the chi2 that alignment will use. Any tracks with a chi2 larger than this will not be used.
-# 4 - This is the run number.
-while getopts c:l:u:r: option
-do
-        case "${option}"
-        in
-                c) CONFIG=${OPTARG};;
-                l) RUNLIST=${OPTARG};;
-                u) Chi2Cut=${OPTARG};;
-                r) RUN=${OPTARG};;
-       esac
-done
-###################################################################################Functions
+#VARIABLES TO INITIALISE. THERE IS NO NEED TO CHANGE THESE.
+export xres="$r $r $r $dutX $r $r $r";
+export yres="$r $r $r $dutY $r $r $r";
+export amode="7";
+export patRecMultiplicationFactor=2 #This is the factor which we increase the window of acceptance by if too few tracks.
+
+
+#FUNCTIONS.
+#THIS FUNCTION WILL ADD THE CORRECT NUMBER OF ZEROS TO THE END OF THE NUMBER
 function adding_zeros_to_RUN {
 	RUN_Before=$1
 	char_length=${#RUN_Before}
@@ -44,225 +62,29 @@ function adding_zeros_to_RUN {
 	 fi
  echo $RUN_After
 }
-########################################################################3
-RUN=$(adding_zeros_to_RUN $RUN)
 
-#PatRec=tracksearchHelix-apix
-#TrackFit=GBLTrackFit-apix
-#Align=GBLAlign-apix
-#This is the name of the steering files since this can change.
-PatRec=patternRecognition
-TrackFit=GBLTrackFit
-Align=GBLAlign
-#This is the name given to the lcio collection. This is fix within the lcio file so must set here.  
-lcioPatternCollection="hit_filtered_m26"
-#lcioPatternCollection="merged_hits"
-
-MaxRecordNumber="5000" 
-
-echo "Input recieved"
-echo "Config: " $CONFIG
-echo "Runlist: " $RUNLIST 
-echo "Chi2Cut: " $Chi2Cut
-echo "Run: " $RUN 
-echo "MaxRecordNumber: " $MaxRecordNumber
-
-maxChi2TrackAcceptance=15
-minChi2TrackAcceptance=0.3
-maxChi2AlignAcceptance=15
-minChi2AlignAcceptance=0.3
-pede="chiscut 10. 5. " #This is the input that tells millepede what tracks to discard.  
-
-Fxr="0 1 2 3 4 5"
-Fxs="0         5"
-Fyr="0 1 2 3 4 5"
-Fys="0         5"
-Fzr="0"
-Fzs="0 1 2 3 4 5"
-
-#Fxr="0 1 2 3 4 5 6 7"
-#Fxs="0         5 6 7"
-#Fyr="0 1 2 3 4 5 6 7"
-#Fys="0         5 6 7"
-#Fzr="0 1 2 3 4 5 6 7"
-#Fzs="0 1 2 3 4 5 6 7"
-
-Verbosity="MESSAGE5"
-#planeDimensions="2 2 2 1 1 2 2 2"
-planeDimensions="2 2 2 2 2 2"
-
-#inputGear="gear_desy2012_150mm.xml"
-#inputGear="gear-stripSensor-noDUT.xml"
-#inputGear="gear-1T.xml"
-#inputGear="gear-stripSensor.xml"
-#outputGear="gear-final-XYshift-${RUN}.xml"
-#histoNameInput="GBLtrack-XYshift-${RUN}"
-
-inputGear="gear-final-XYshift-${RUN}.xml"
-
-#outputGear="gear-final-XYshiftS2-${RUN}.xml"
-#histoNameInput="GBLtrack-XYshiftS2-${RUN}"
-
-#inputGear="gear-final-Zrotations-${RUN}.xml"
-#inputGear="gear-final-ZRotation-${RUN}.xml"
-outputGear="gear-final-ZRotation-${RUN}.xml"
-#inputGear="gear-final-ZRotation-${RUN}.xml"
-#outputGear="gear-final-ZRotation1-${RUN}.xml"
-#histoNameInput="GBLtrack-Zshift-${RUN}"
-#outputGear="gear-final-ZShift-${RUN}.xml"
-#histoNameInput="GBLtrack-Zshift-${RUN}"
-histoNameInput="GBLtrack-zRotation-${RUN}"
-
-#This is the alignment mode. It sets the size of the alignment jacobian dimensions.
-amode="7";
-
-#ExcludePlanes="6 7"
-ExcludePlanes=""
-
-r="0.5"; #The large residual is due to errors in alignment.
-#dut="0.030 0.030"
-dut=""
-xres="$r $r $r $dut $r $r $r";
-yres="$r $r $r $dut $r $r $r";
-
-prev="$r";
-echo "prev:$prev and r:$r"
-directory="/afs/phas.gla.ac.uk/user/a/amorton/ilcsoft/v01-17-05/Eutelescope/trunk/jobsub/examples/GBL/output/logs"
-#Check that the directory exists.
+export RUN=$(adding_zeros_to_RUN $RUN)
+#CHECK INPUT
 if [ ! -d "$directory" ]; then
 	echo "The directory we will look in to find logs files does not exist. Must end now"
 	exit
 fi
+#PRINT VARIBLES TO SCREEN
+echo "These are all the input parameters to iterative alignment."
+echo "Run number: $RUN"
+echo "Config file: $CONFIG"
+echo "Runlist file: $RUNLIST"
+echo "This is the resolutions X/Y:  $xres/$yres."
 
-if [ $# -ne 8 ]
-then
- echo "$# parameters: $CONFIG $RUNLIST -o Verbosity="$Verbosity"  $Chi2Cut $RUN $file $gear10"
- exit
-fi
-#TO DO:For some reason when I drop collections this causes a segfault in alignment. I have no clue why. So I create many lcio files in this process.
-#We first run pattern recognition
-$do jobsub.py -c $CONFIG -csv $RUNLIST -o HitInputCollectionName="$lcioPatternCollection" -o Verbosity="$Verbosity" -o Verbosity="$Verbosity" -o planeDimensions="${planeDimensions}" -o MaxRecordNumber="$MaxRecordNumber" -o GearFile="$inputGear"  -o ExcludePlanes="$ExcludePlanes" $PatRec $RUN 
+#THIS WILL RUN THE ALIGNMENT PROCESS AS MANY TIME AS YOU LIKE TO IMPROVE ALIGNMENT
+./iterativeAlignment2.sh -i $inputGearInitial -o "gear-finished-iteration-1" -n 1
+./iterativeAlignment2.sh -i "gear-finished-iteration-1" -o "$outputGearFinal" -n 2
 
-
-#Then we create the first tracks using pattern recognition tracks. We iterate until the chi2 is close to one. ############################
-$do jobsub.py  -c $CONFIG -csv $RUNLIST -o Verbosity="$Verbosity" -o GearFile="$inputGear" -o lcioInputName="trackcand"  -o inputCollectionName="track_candidates" -o lcioOutputName="GBLtracks-1" -o outputCollectionName="tracks1"  -o MaxRecordNumber="$MaxRecordNumber" -o ExcludePlanes="$ExcludePlanes" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" $TrackFit  $RUN 
-fileName="$TrackFit-${RUN}.zip"
-fullPath="$directory/$fileName"
-echo "The full path to the log file is: $fullPath" 
-averageChi2=`unzip  -p  $fullPath |grep "This is the average chi2 -" |cut -d '-' -f2`; 
-echo "The average chi2ndf is :  $averageChi2"
-if [[ $averageChi2 == "" ]]; then
-	echo "ERROR!!!!!!!!! string for chi2 GBL not found. Check output log file is in the correct place. Furthermore check the string is there. "
-  exit
-fi
-if [[ $(echo "$averageChi2 <$minChi2TrackAcceptance "|bc) -eq 1 ]]; then
-	echo "The average chi2 is: " $averageChi2. "So decrease resolution."		
-	r=$(echo "scale=4;$r*0.8"|bc);
-	xres="$r $r $r $dut $r $r $r";
-	yres="$r $r $r $dut $r $r $r";
-	echo "New resolutions are for (X/Y):" $xres"/"$yres
-elif [[ $(echo "$averageChi2 >$maxChi2TrackAcceptance"|bc) -eq 1 ]]; then
-	echo "The average chi2 is: " $averageChi2. "So increase resolution."		
-	r=$(echo "scale=4;$r*1.2"|bc);
-	xres="$r $r $r $dut $r $r $r";
-	yres="$r $r $r $dut $r $r $r";
-	echo "New resolutions are for (X/Y):" $xres"/"$yres
-else 
-	echo "The average chi2 is: " $averageChi2. "So keep resolution the same."		
-fi
-
-#Now we enter the GBLTrack loop. Here we use the GBLTrack to fit new track with a chi2 tending to 1.
-for x in {1..10}; do
-	echo "Resolution inside GBLTrack loop beginning (X/Y):" $xres"/"$yres
-	xnext=$(($x+1))
-	echo "This is x and xnext at the start of the loop x: $x and xnext: $xnext "
-	$do jobsub.py -c $CONFIG -csv $RUNLIST -o Verbosity="$Verbosity" -o histoName="$histoNameInput" -o lcioInputName="GBLtracks-$x" -o lcioOutputName="GBLtracks-$xnext"  -o inputCollectionName="tracks$x" -o  outputCollectionName="tracks$xnext" -o MaxRecordNumber="$MaxRecordNumber" -o ExcludePlanes="$ExcludePlanes" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" $TrackFit  $RUN 
-	fileName="$TrackFit-${RUN}.zip"
-	fullPath="$directory/$fileName"
-	echo "The full path to the log file is: $fullPath" 
-	averageChi2=`unzip  -p  $fullPath |grep "This is the average chi2 -" |cut -d '-' -f2`; 
-	echo "The average chi2ndf is :  $averageChi2"
-	if [[ $averageChi2 == "" ]]; then
-		echo "ERROR!!!!!!!!! string for chi2 GBL not found. Check output log file is in the correct place. Furthermore check the string is there. "
-		exit
-	fi
-	if [[ $(echo "$averageChi2 <$minChi2TrackAcceptance "|bc) -eq 1 ]]; then
-		echo "The average chi2 is: " $averageChi2. "So decrease resolution."		
-		r=$(echo "scale=4;$r*0.8"|bc);
-		xres="$r $r $r $dut $r $r $r";
-		yres="$r $r $r $dut $r $r $r";
-		echo "New resolutions are for (X/Y):" $xres"/"$yres
-	elif [[ $(echo "$averageChi2 >$maxChi2TrackAcceptance "|bc) -eq 1 ]]; then
-		echo "The average chi2 is: " $averageChi2. "So increase resolution."		
-		r=$(echo "scale=4;$r*1.2"|bc);
-		xres="$r $r $r $dut $r $r $r";
-		yres="$r $r $r $dut $r $r $r";
-		echo "New resolutions are for (X/Y):" $xres"/"$yres
-	else 
-		echo "The average chi2 is: " $averageChi2. "So keep resolution the same."		
-		break
-	fi
-done
-#Entering alignment steps########################################################################################
-echo "Now begin alignment"
-fileAlign="$directory/$Align-${RUN}.zip"
-
-
-#Now we enter the alignment loop.
-while :
-	do
-	echo "Resolution inside ALignment loop beginning (X/Y):" $xres"/"$yres
-	$do jobsub.py -c $CONFIG -csv $RUNLIST -o Verbosity="$Verbosity" -o lcioInputName="GBLtracks-$x" -o inputCollectionName="tracks$x" -o MaxRecordNumber="$MaxRecordNumber" -o ExcludePlanes="$ExcludePlanes" -o GearFile="$inputGear" -o GearAlignedFile="$outputGear" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o MilleMaxChi2Cut="$Chi2Cut" -o pede="$pede"  $Align  $RUN 
-
-	error=`unzip  -p  $fileAlign |grep "Backtrace for this error:" | awk '{ print $NF }'`;
-	if [[ $error != "" ]];then
-		echo "We have a segfault" 
-		exit
-	fi
-	rejected=`unzip  -p  $fileAlign |grep "Too many rejects" |cut -d '-' -f2`; 
-	averageChi2Mille=`unzip -p $fileAlign |grep "Chi^2/Ndf" | awk '{ print $(NF-5) }'`;
-	echo "Rejects word:  $rejected "
-	if [[ $rejected != "" ]];then
-		echo "Too many rejects. Resolution must increase by factor 2."
-		r=$(echo "scale=4;$r*2"|bc);
-		xres="$r $r $r $dut $r $r $r";
-		yres="$r $r $r $dut $r $r $r";
-		echo "New resolutions are for (X/Y):" $xres"/"$yres
-	fi
-	factor=`unzip  -p  $fileAlign |grep "multiply all input standard deviations by factor" | awk '{ print $NF }'`;
-	echo "factor word: " $factor
-	if [[ $factor != "" ]];then
-		echo "Factor word found! Resolution must increase by $factor."
-		r=$(echo "scale=4;$r*$factor"|bc);
-		xres="$r $r $r $dut $r $r $r";
-		yres="$r $r $r $dut $r $r $r";
-		echo "New resolutions are for (X/Y):" $xres"/"$yres
-	fi
-	if [[ $averageChi2Mille == "" ]] && [[ $factor == "" ]] && [[ $rejected == "" ]];then
-		echo "Mille chi2 is non existant. Here it is: $averageChi2Mille"
-		echo "We can not find this or factor or rejects. Sit chi2 to 1 and exit"
-		averageChi2Mille=1
-	fi
-#	averageChi2Mille=1
-	if [[ $(echo "$averageChi2Mille <$minChi2AlignAcceptance "|bc) -eq 1 ]] && [[ $averageChi2Mille != "" ]]; then
-		echo "The average chi2 is: " $averageChi2Mille. "So decrease resolution."		
-		echo "New resolutions are for (X/Y):" $xres"/"$yres
-		echo "Continue"
-	elif [[ $(echo "$averageChi2Mille >$maxChi2AlignAcceptance"|bc) -eq 1 ]] && [[ $averageChi2Mille != "" ]]; then
-		echo "The average chi2 is: " $averageChi2Mille. "So increase resolution."		
-		echo "New resolutions are for (X/Y):" $xres"/"$yres
-	else 
-		echo "The average chi2 is: " $averageChi2Mille. "So keep resolution the same and exit loop."		
-		break
-	fi
-done 
-
-
-$do jobsub.py -c $CONFIG -csv $RUNLIST -o HitInputCollectionName="$lcioPatternCollection" -o Verbosity="$Verbosity" -o MaxRecordNumber="$MaxRecordNumber" -o GearFile="$outputGear"  -o ExcludePlanes="$ExcludePlanes" $PatRec $RUN 
+#THIS PART WILL RUN PATTERN RECOGNTION AND TRACKFITTING AGAIN WITH THE FINAL GEAR FILE.
+$do jobsub.py -c $CONFIG -csv $RUNLIST -o HitInputCollectionName="$lcioPatternCollection" -o Verbosity="$Verbosity" -o MaxRecordNumber="$MaxRecordNumber" -o GearFile="$outputGearFinal"  -o ExcludePlanes="$ExcludePlanes" $PatRec $RUN 
 r="0.005";
 xres="$r $r $r $dut $r $r $r";
 yres="$r $r $r $dut $r $r $r";
 
 #Then we create the first tracks using pattern recognition tracks.
-x=$(($x+1))
-$do jobsub.py  -c $CONFIG -csv $RUNLIST -o Verbosity="$Verbosity" -o GearFile="$outputGear" -o histoName="$histoNameInput" -o lcioInputName="trackcand"  -o inputCollectionName="track_candidates" -o lcioOutputName="GBLtracks-$x" -o outputCollectionName="tracks$x"  -o MaxRecordNumber="$MaxRecordNumber" -o ExcludePlanes="$ExcludePlanes" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" $TrackFit  $RUN
+$do jobsub.py  -c $CONFIG -csv $RUNLIST -o Verbosity="$Verbosity" -o GearFile="$outputGearFinal" -o histoName="$histoNameInputFinal" -o lcioInputName="trackcand"  -o inputCollectionName="track_candidates" -o lcioOutputName="GBLtracks" -o outputCollectionName="tracks"  -o MaxRecordNumber="$MaxRecordNumber" -o ExcludePlanes="$ExcludePlanes" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" $TrackFit  $RUN
