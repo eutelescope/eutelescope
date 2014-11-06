@@ -437,7 +437,11 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout() {
         _siPlaneRotation4.push_back(_siPlanesLayerLayout->getSensitiveRotation4(iPlane));
       
 <<<<<<< HEAD
+<<<<<<< HEAD
 				_siPlaneXSize.push_back(_siPlanesLayerLayout->getSensitiveSizeX(iPlane));
+=======
+        _siPlaneXSize.push_back(_siPlanesLayerLayout->getSensitiveSizeX(iPlane));
+>>>>>>> parent of 90ee494... Merge remote-tracking branch 'eutelescope/master' into AIDATelescope
 =======
         _siPlaneXSize.push_back(_siPlanesLayerLayout->getSensitiveSizeX(iPlane));
 >>>>>>> parent of 90ee494... Merge remote-tracking branch 'eutelescope/master' into AIDATelescope
@@ -796,6 +800,7 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
 
 	//this line tells the pixel geometry manager to load the pixel geometry into the plane			
 <<<<<<< HEAD
+<<<<<<< HEAD
 	streamlog_out(DEBUG1) << " sensorID: " << SensorId << " " << stVolName << std::endl;   
 	std::string name = geoLibName(SensorId);
 
@@ -808,6 +813,13 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
 	{
 	_pixGeoMgr->addPlane( SensorId, name, stVolName);
 	}
+=======
+        streamlog_out(DEBUG1) << " sensorID: " << SensorId << " " << stVolName << std::endl;   
+        std::string name = geoLibName( SensorId);
+        _pixGeoMgr->addPlane( SensorId, name, stVolName);
+
+
+>>>>>>> parent of 90ee494... Merge remote-tracking branch 'eutelescope/master' into AIDATelescope
 =======
         streamlog_out(DEBUG1) << " sensorID: " << SensorId << " " << stVolName << std::endl;   
         std::string name = geoLibName( SensorId);

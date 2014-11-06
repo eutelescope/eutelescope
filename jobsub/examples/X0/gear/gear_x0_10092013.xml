@@ -7,9 +7,13 @@
 	<BField type="ConstantBField" x="0.0" y="0.0" z="0.0"/>
 	<detectors>
 		<detector name="SiPlanes" geartype="SiPlanesParameters">
+<<<<<<< HEAD:jobsub/examples/X0/gear/gear_x0_10092013.xml
 <<<<<<< HEAD:jobsub/examples/aconite-4chip/gear.xml
 		     <parameter name="Geometry" type="StringVec" value="Mimosa26.so Mimosa26.so Mimosa26.so FEI4FourChip.so FEI4Single.so Mimosa26.so Mimosa26.so Mimosa26.so"/>
 			<siplanesID ID="95"/>
+=======
+			<siplanesID ID="1"/>
+>>>>>>> parent of 90ee494... Merge remote-tracking branch 'eutelescope/master' into AIDATelescope:jobsub/examples/X0/gear/gear_x0_10092013.xml
 =======
 			<siplanesID ID="1"/>
 >>>>>>> parent of 90ee494... Merge remote-tracking branch 'eutelescope/master' into AIDATelescope:jobsub/examples/X0/gear/gear_x0_10092013.xml
@@ -70,6 +74,7 @@
 							radLength="93.660734"
 					/>
 				</layer>
+<<<<<<< HEAD:jobsub/examples/X0/gear/gear_x0_10092013.xml
 <<<<<<< HEAD:jobsub/examples/aconite-4chip/gear.xml
 				<!--APIX-Plane 1 - FE-I4 SCC91 -->
 				<layer>
@@ -108,6 +113,9 @@
 					/>
 				</layer>
                                 <!--Eudet-Plane 3 - EUD3 -->
+=======
+                                <!--Eudet-Plane 3 - EUD0 -->
+>>>>>>> parent of 90ee494... Merge remote-tracking branch 'eutelescope/master' into AIDATelescope:jobsub/examples/X0/gear/gear_x0_10092013.xml
 =======
                                 <!--Eudet-Plane 3 - EUD0 -->
 >>>>>>> parent of 90ee494... Merge remote-tracking branch 'eutelescope/master' into AIDATelescope:jobsub/examples/X0/gear/gear_x0_10092013.xml

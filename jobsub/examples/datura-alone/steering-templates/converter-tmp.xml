@@ -95,9 +95,12 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
  </processor>
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 
  <processor name="HotPixelKiller" type="EUTelProcessorNoisyPixelFinder">
 =======
+=======
+>>>>>>> parent of 90ee494... Merge remote-tracking branch 'eutelescope/master' into AIDATelescope
  <processor name="HotPixelKiller" type="EUTelHotPixelKiller">
  
 >>>>>>> parent of 90ee494... Merge remote-tracking branch 'eutelescope/master' into AIDATelescope
