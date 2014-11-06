@@ -424,7 +424,7 @@ namespace eutelescope {
             /** deprecated rotaion natrix elements */
             EVENT::DoubleVec _siPlaneRotation4; 
 
-	    /** Sensor X side length [mm]*/
+            /** Sensor X side length [mm]*/
             EVENT::DoubleVec _siPlaneXSize;
             
             /** Sensor Y side length [mm]*/

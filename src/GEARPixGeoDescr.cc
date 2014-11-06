@@ -5,9 +5,9 @@ namespace geo {
 
 GEARPixGeoDescr::GEARPixGeoDescr( int xPixel, int yPixel, double xSize, double ySize, double zSize,  double radLength ): 
 	EUTelGenericPixGeoDescr(	xSize, ySize, zSize,		//size X, Y, Z
-					0, xPixel-1, 0, yPixel-1,	//min max X,Y
-					radLength )			//rad length
-{
+										0, xPixel-1, 0, yPixel-1,	//min max X,Y
+															radLength )			//rad length
+	{
 	//Create the material for the sensor
 	matSi = new TGeoMaterial( "Si", 28.0855 , 14.0, 2.33, _radLength, 45.753206 );
 	Si = new TGeoMedium("GenericSilicon",1, matSi);
@@ -18,6 +18,7 @@ GEARPixGeoDescr::GEARPixGeoDescr( int xPixel, int yPixel, double xSize, double y
 	TGeoVolume* row = plane->Divide("genrow", 1 , xPixel , 0 , 1, 0, "N"); 
 	row->Divide("genpixel", 2 , yPixel, 0 , 1, 0, "N");
 }
+
 
 GEARPixGeoDescr::~ GEARPixGeoDescr()
 {
