@@ -23,9 +23,10 @@ for x in {1..10}; do
 		break
 	fi
 	#If we reach this part of the code we need to increase the window size.
+	echo "$ResidualsRMax is the size of the radius of acceptance in this iteration"
 	export ResidualsRMax=$(echo "scale=4;$ResidualsRMax*$patRecMultiplicationFactor"|bc)    
+	echo "$ResidualsRMax is the size of the radius of acceptance in the next iteration"
 done
-
 #THIS IS PART (2)
 $do jobsub.py  -c $CONFIG -csv $RUNLIST -o Verbosity="$Verbosity" -o GearFile="$inputGear" -o lcioInputName="trackcand"  -o inputCollectionName="track_candidates" -o lcioOutputName="GBLtracks" -o outputCollectionName="tracks"  -o MaxRecordNumber="$MaxRecordNumber" -o ExcludePlanes="$ExcludePlanes" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" $TrackFit  $RUN 
 

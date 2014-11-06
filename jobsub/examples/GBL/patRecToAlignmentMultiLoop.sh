@@ -9,7 +9,24 @@ do
 								n) number=${OPTARG};; #Number is used to specify what iteration number we are on. 
        esac
 done
+echo "Entering MultiLoop on iteration $n"
+echo "These are the input parameters in multip loop."
+echo "Input Gear: $inputGear"
+echo "Output Gear: $outputGearLast"
+echo "Iteration: $number"
 
+if [  -z "$inputGear" ]; then
+	echo "The input gear is empty to multiLoop bash script!"
+	exit
+fi
+if [  -z "$outputGearLast" ]; then
+	echo "The output gear is empty to multiLoop bash script!"
+	exit
+fi
+if [  -z "$number" ]; then
+	echo "The number gear is empty to multiLoop bash script!"
+	exit
+fi
 #THESE VARIABLES ARE ALSO CHANGED BELOW TO ALIGN WITH DIFFERENT SHIFTS AND ROTATIONS.
 export Fxr="0 1 2 3 4 5" #This is the fixed planes for rotations round the x axis
 export Fxs="0         5" #This is the fixed planes for shifts in the x axis
@@ -18,6 +35,7 @@ export Fys="0         5" #This is the fixed planes for shifts in the y axis
 export Fzr="0 1 2 3 4 5" #This is the fixed planes for rotations round the z axis
 export Fzs="0 1 2 3 4 5" #This is the fixed planes for shifts in the z axis
 #First input gear comes from the input of the bash script. IMPORTANT: If you edit this file then the first alignment must use the inital gear.
+export inputGear="$inputGear"
 export outputGear="gear-XYShift-$number-${RUN}.xml"
 export histoNameInput="GBLtrack-XYShift-$number-${RUN}"
 
