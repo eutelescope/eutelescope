@@ -3,20 +3,19 @@
 namespace eutelescope {
 namespace geo {
 
-GEARPixGeoDescr::GEARPixGeoDescr( int xPixel, int yPixel, double xSize, double ySize, double zSize,  double radLength ): 
-	EUTelGenericPixGeoDescr(	xSize, ySize, zSize,		//size X, Y, Z
-					0, xPixel-1, 0, yPixel-1,	//min max X,Y
-					radLength )			//rad length
+GEARPixGeoDescr::GEARPixGeoDescr(): EUTelGenericPixGeoDescr(	21.2, 10.6, 0.02,		//size X, Y, Z
+								0, 1151, 0, 575,		//min max X,Y
+								93.660734 )			//rad length
 {
 	//Create the material for the sensor
 	matSi = new TGeoMaterial( "Si", 28.0855 , 14.0, 2.33, _radLength, 45.753206 );
 	Si = new TGeoMedium("GenericSilicon",1, matSi);
 
 	//Create a plane for the sensitive area
-	plane = _tGeoManager->MakeBox( "sensarea_gen", Si, xSize/2., ySize/2., zSize/2. );
+	plane = _tGeoManager->MakeBox( "sensarea_gen", Si, 10.6, 5.3, 0.01 );
 	//Divide the regions to create pixels
-	TGeoVolume* row = plane->Divide("genrow", 1 , xPixel , 0 , 1, 0, "N"); 
-	row->Divide("genpixel", 2 , yPixel, 0 , 1, 0, "N");
+	TGeoVolume* row = plane->Divide("genrow", 1 , 1152 , 0 , 1, 0, "N"); 
+	row->Divide("genpixel", 2 , 576, 0 , 1, 0, "N");
 }
 
 GEARPixGeoDescr::~ GEARPixGeoDescr()

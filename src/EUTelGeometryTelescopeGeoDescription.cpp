@@ -13,9 +13,6 @@
 #include "marlin/Global.h"
 #include "marlin/VerbosityLevels.h"
 
-//GEAR
-#include "GEAR.h" //for GEAR exceptions
-
 // EUTELESCOPE
 #include "EUTelExceptions.h"
 #include "EUTelGenericPixGeoMgr.h"
@@ -417,25 +414,13 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout() {
     _siPlanesParameters = const_cast< gear::SiPlanesParameters*> (&( _gearManager->getSiPlanesParameters()));
     _siPlanesLayerLayout = const_cast< gear::SiPlanesLayerLayout*> (&(_siPlanesParameters->getSiPlanesLayerLayout()));
     
-    _nPlanes = _siPlanesLayerLayout->getNLayers(); 
-    
     //read the geoemtry names from the "Geometry" StringVec section of the gear file
-    lcio::StringVec geometryNameParameters;
-   
-    try
-    {
-	    geometryNameParameters  =  _siPlanesParameters->getStringVals("Geometry");
-    }
-    catch(gear::UnknownParameterException e)
-    {
-	    std::cout << "No Geometry field found in GEAR file, assuming CAST for all planes" << std::endl;
-    	    for(int i = 0; i < _nPlanes; i++)
-            {
-		    geometryNameParameters.push_back("CAST");
-	    }
-    }
-	    
+    lcio::StringVec geometryNameParameters =  _siPlanesParameters->getStringVals("Geometry");
+ 
     setSiPlanesLayoutID( _siPlanesParameters->getSiPlanesID() ) ;
+
+    // data member::
+    _nPlanes = _siPlanesLayerLayout->getNLayers(); 
    
     // create an array with the z positions of each layer
     for (int iPlane = 0; iPlane < _nPlanes; iPlane++) {
@@ -451,7 +436,11 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout() {
         _siPlaneRotation3.push_back(_siPlanesLayerLayout->getSensitiveRotation3(iPlane));
         _siPlaneRotation4.push_back(_siPlanesLayerLayout->getSensitiveRotation4(iPlane));
       
+<<<<<<< HEAD
 				_siPlaneXSize.push_back(_siPlanesLayerLayout->getSensitiveSizeX(iPlane));
+=======
+        _siPlaneXSize.push_back(_siPlanesLayerLayout->getSensitiveSizeX(iPlane));
+>>>>>>> parent of 90ee494... Merge remote-tracking branch 'eutelescope/master' into AIDATelescope
         _siPlaneYSize.push_back(_siPlanesLayerLayout->getSensitiveSizeY(iPlane));
         _siPlaneZSize.push_back(_siPlanesLayerLayout->getSensitiveThickness(iPlane));
  
@@ -548,7 +537,7 @@ void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout() {
             _siPlaneRotation3.push_back( 0.0 );
             _siPlaneRotation4.push_back( 1.0 );
 
-	    _siPlaneXSize.push_back( sensitiveLayer.getSizeX() );
+            _siPlaneXSize.push_back( sensitiveLayer.getSizeX() );
             _siPlaneYSize.push_back( sensitiveLayer.getSizeY() );
             _siPlaneZSize.push_back( sensitiveLayer.getThickness() );
  
@@ -605,17 +594,17 @@ _siPlaneRotation1(),
 _siPlaneRotation2(),
 _siPlaneRotation3(),
 _siPlaneRotation4(),
-_siPlaneXSize(),
-_siPlaneYSize(),
-_siPlaneZSize(),
-_siPlaneXPitch(),
-_siPlaneYPitch(),
-_siPlaneXNpixels(),
-_siPlaneYNpixels(),
-_siPlaneXResolution(),
-_siPlaneYResolution(),
-_siPlaneRadLength(),
-_geoLibName(),
+ _siPlaneXSize(),
+ _siPlaneYSize(),
+ _siPlaneZSize(),
+ _siPlaneXPitch(),
+ _siPlaneYPitch(),
+ _siPlaneXNpixels(),
+ _siPlaneYNpixels(),
+ _siPlaneXResolution(),
+ _siPlaneYResolution(),
+ _siPlaneRadLength(),
+ _geoLibName(),
 _nPlanes(0),
 _isGeoInitialized(false),
 _geoManager(0)
@@ -806,6 +795,7 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
 	pvolumeWorld->AddNode(pvolumeSensor, 1/*(SensorId)*/, combi);
 
 	//this line tells the pixel geometry manager to load the pixel geometry into the plane			
+<<<<<<< HEAD
 	streamlog_out(DEBUG1) << " sensorID: " << SensorId << " " << stVolName << std::endl;   
 	std::string name = geoLibName(SensorId);
 
@@ -818,6 +808,13 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
 	{
 	_pixGeoMgr->addPlane( SensorId, name, stVolName);
 	}
+=======
+        streamlog_out(DEBUG1) << " sensorID: " << SensorId << " " << stVolName << std::endl;   
+        std::string name = geoLibName( SensorId);
+        _pixGeoMgr->addPlane( SensorId, name, stVolName);
+
+
+>>>>>>> parent of 90ee494... Merge remote-tracking branch 'eutelescope/master' into AIDATelescope
 }
 
 /**

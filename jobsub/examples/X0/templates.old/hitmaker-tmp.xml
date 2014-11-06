@@ -19,6 +19,7 @@ Version: $Id: hitmaker-tmp.xml,v 1.3 2009-06-04 17:19:01 bulgheroni Exp $
 
    <execute>
       <processor name="AIDA"/>
+      <processor name="LoadRefHitDB"/>
       <processor name="LoadHotPixelDB"/>
       <!--processor name="Mimosa26EUTelAutoPedestalNoiseProcessor"-->
       <!-- processor name="GeoSelection"/ -->
@@ -31,7 +32,7 @@ Version: $Id: hitmaker-tmp.xml,v 1.3 2009-06-04 17:19:01 bulgheroni Exp $
 
    <global>
       <parameter name="LCIOInputFiles"> @InputFile@  </parameter>
-      <parameter name="GearXMLFile" value="@GearPath@/@GearFile@"/>
+      <parameter name="GearXMLFile" value="@GearFolder@/@GearFile@"/>
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="0"/>
       <parameter name="SupressCheck" value="false"/>
@@ -39,16 +40,23 @@ Version: $Id: hitmaker-tmp.xml,v 1.3 2009-06-04 17:19:01 bulgheroni Exp $
    </global>
 
  <processor name="AIDA" type="AIDAProcessor">
- <!--Processor that handles AIDA files. Creates on directory per processor.  Processors only need to create and fill the histograms, clouds and tuples. Needs to be the first ActiveProcessor-->
+  <@LocalVerbosityCommentLeft@ parameter name="Verbosity" type="string" value="@AIDAVerbosity@"/@LocalVerbosityCommentRight@>
+  <!--Processor that handles AIDA files. Creates on directory per processor.  Processors only need to create and fill the histograms, clouds and tuples. Needs to be the first ActiveProcessor-->
   <!-- compression of output file 0: false >0: true (default) -->
   <parameter name="Compress" type="int" value="1"/>
   <!-- filename without extension-->
-  <parameter name="FileName" type="string" value="@HistoPath@/@Output@-hit-histo"/>
+  <parameter name="FileName" type="string" value="@HistoFolder@/@RunNumber@-hit"/>
   <!-- type of output file xml (default) or root ( only OpenScientist)-->
   <parameter name="FileType" type="string" value="root"/>
  </processor>
 
+  <processor name="LoadRefHitDB"     type="ConditionsProcessor">
+    <parameter name="DBInit" type="string" value="localhost:lccd_test:align:tel"/>
+    <parameter name="SimpleFileHandler" type="StringVec"> refhit  @DBFolder@/@RunNumber@-refhit-db.slcio referenceHit  </parameter>
+  </processor>
+
   <processor name="LoadHotPixelDB" type="ConditionsProcessor">
+  <@LocalVerbosityCommentLeft@ parameter name="Verbosity" type="string" value="@LoadHotPixelDBVerbosity@"/@LocalVerbosityCommentRight@>
     <!--ConditionsProcessor provides access to conditions data  transparently from LCIO files or a databases, using LCCD-->
     <!--Initialization of a conditions database handler-->
     <!--parameter name="DBCondHandler" type="StringVec"> conditionsName /lccd/myfolder HEAD </parameter-->
@@ -59,11 +67,12 @@ Version: $Id: hitmaker-tmp.xml,v 1.3 2009-06-04 17:19:01 bulgheroni Exp $
     <!--Initialization of a data file handler-->
     <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
     <!--Initialization of a simple conditions file handler-->
-    <parameter name="SimpleFileHandler" type="StringVec"> hotpixel_m26   @DBPath@/@Output@-hotpixel-db.slcio hotpixel_m26  </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> hotpixel_m26   @DBFolder@/@RunNumber@-hotpixel-db.slcio hotpixel_m26  </parameter>
   </processor>
 
 
  <processor name="Mimosa26EUTelAutoPedestalNoiseProcessor" type="EUTelAutoPedestalNoiseProcessor">
+  <@LocalVerbosityCommentLeft@ parameter name="Verbosity" type="string" value="@Mimosa26EUTelAutoPedestalNoiseProcessorVerbosity@"/@LocalVerbosityCommentRight@>
  <!--EUTelAutoPedestalNoiseProcessor produces initial pedestal / noise / status with user provided values-->
   <!--Noise local collection-->
   <parameter name="NoiseCollectionName" type="string" lcioOutType="TrackerData"> noiseDB </parameter>
@@ -88,6 +97,7 @@ Version: $Id: hitmaker-tmp.xml,v 1.3 2009-06-04 17:19:01 bulgheroni Exp $
 </processor>
 
  <processor name="HitMakerM26" type="EUTelHitMaker">
+  <@LocalVerbosityCommentLeft@ parameter name="Verbosity" type="string" value="@HitMakerM26Verbosity@"/@LocalVerbosityCommentRight@>
  <!--EUTelHitMaker is responsible to translate cluster centers from the local frame of reference to the external frame of reference using the GEAR geometry description-->
   <!--Cluster (pulse) collection name-->
   <parameter name="PulseCollectionName" type="string" lcioInType="TrackerPulse"> cluster_m26 </parameter>
@@ -97,21 +107,24 @@ Version: $Id: hitmaker-tmp.xml,v 1.3 2009-06-04 17:19:01 bulgheroni Exp $
 FULL: using the full cluster
 NPixel: using only the first N most significant pixels (set NPixel too)
 NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-->
-  <parameter name="CoGAlgorithm" type="string" value="FULL"/>
+  <parameter name="CoGAlgorithm" type="string" value="@CoGAlgorithm@"/>
+  <parameter name="ReferenceHitFile" type="string"> @DBFolder@/@RunNumber@-refhit-db.slcio </parameter>
   <!--If true a 3D histo will be filled. It may require large memory-->
-  <parameter name="Enable3DHisto" type="bool" value="false"/>
+  <parameter name="Enable3DHisto" type="bool" value="@3DHistogram@"/>
+  <parameter name="EnableLocalCoordinates" type="bool" value="@EnableLocalCoordinates@"/>
   <!--The name of the collections containing the eta function (x and y respectively)-->
   <!--parameter name="EtaCollectionName" type="StringVec"> xEta yEta </parameter-->
   <!--Enable or disable eta correction-->
   <parameter name="EtaSwitch" type="bool" value="false"/>
   <!--The number of most significant pixels to be used if CoGAlgorithm is "NPixel"-->
-  <!--parameter name="NPixel" type="int" value="9"/-->
+  <@NPixelCommentLeft@ parameter name="NPixel" type="int" value="@NPixel@"/@NPixelCommentRight@>
   <!--The submatrix size to be used for CoGAlgorithm = "NxMPixel"-->
-  <parameter name="NxMPixel" type="IntVec"> 3 3 </parameter>
+  <@NxMPixelCommentLeft@parameter name="NxMPixel" type="IntVec"> @NxMPixel@ </parameter@NxMPixelCommentRight@>
 </processor>
 
 
  <processor name="Save" type="EUTelOutputProcessor">
+  <@LocalVerbosityCommentLeft@ parameter name="Verbosity" type="string" value="SaveVerbosity"/@LocalVerbosityCommentRight@>
  <!--Writes the current event to the specified LCIO outputfile. Eventually it adds a EORE at the of the file if it was missing Needs to be the last ActiveProcessor.-->
   <!--drops the named collections from the event-->
   <parameter name="DropCollectionNames" type="StringVec"> zsdata_m26 cluster_m26 filteredcluster zsdata refilteredcluster </parameter>
@@ -122,7 +135,7 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
   <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
   <!--parameter name="KeepCollectionNames" type="StringVec" value="MyPreciousSimTrackerHits"/-->
   <!-- name of output file -->
-  <parameter name="LCIOOutputFile" type="string" value="@ResultsPath@/@Output@-hit.slcio "/>
+  <parameter name="LCIOOutputFile" type="string" value="@ResultsFolder@/@RunNumber@-hit.slcio "/>
   <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
   <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   <!--Set it to true to remove intermediate EORE in merged runs-->
@@ -132,6 +145,7 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
 </processor>
 
  <processor name="GeoSelection" type="EUTelClusterFilter">
+  <@LocalVerbosityCommentLeft@ parameter name="Verbosity" type="string" value="GeoSelectionVerbosity"/@LocalVerbosityCommentRight@>
  <!--EUTelClusterFilter is a very powerful tool. It allows to select among an input collection of TrackerPulse
 only the clusters fulfilling a certain set of selection criteria.
 The user can modify the switch on and off each selection cut and set the proper value for that via the processor parameter.-->
@@ -203,23 +217,22 @@ The presence of this collection in the event is allowing all the noise based sel
 </processor>
 
   <processor name="PreAligner" type="EUTelPreAlign">
+  <@LocalVerbosityCommentLeft@ parameter name="Verbosity" type="string" value="@PreAlignerVerbosity@"/@LocalVerbosityCommentRight@>
     <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
-    <parameter name="AlignmentConstantLCIOFile" type="string"> @DBPath@/@Output@-prealign-db.slcio </parameter>
-    <parameter name="UseReferenceCollection" type="bool" value="false"/>
+    <parameter name="AlignmentConstantLCIOFile" type="string"> @DBFolder@/@RunNumber@-prealign-db.slcio </parameter>
   </processor>
  
 <processor name="Correlator" type="EUTelCorrelator">
-  <!--EUTelCorrelator fills histograms with correlation plots-->
-  <!--Name of histogram info xml file-->
-  <parameter name="HistogramInfoFilename" type="string"> @HistoInfoFile@ </parameter>
+  <@LocalVerbosityCommentLeft@ parameter name="Verbosity" type="string" value="@CorrelatorVerbosity@"/@LocalVerbosityCommentRight@>
+ <!--EUTelCorrelator fills histograms with correlation plots-->
   <!--Hit collection name-->
   <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
   <!-- -->
   <parameter name="DumpOffset" type="bool" > false </parameter>
-  <parameter name="UseReferenceCollection" type="bool" value="false"/>
 </processor>
 
 <processor name="MyEUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">
+  <@LocalVerbosityCommentLeft@ parameter name="Verbosity" type="string" value="@MyEUTelUtilityPrintEventNumberVerbosity@"/@LocalVerbosityCommentRight@>
  <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
   <!--Print event number for every n-th event-->
   <parameter name="EveryNEvents" type="int" value="1000"/>
