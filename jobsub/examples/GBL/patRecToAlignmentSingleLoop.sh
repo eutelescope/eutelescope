@@ -1,16 +1,11 @@
 #!/bin/bash
 #This is the bash script that performs a single iteration of alignment. 
-#It does: 
+#The steps are: 
 #1) It will run pattern recognition and check that the number of found track candidates is reasonable if not then it will widen its acceptance window and try again.
-#2) Using these track candidates we will then produce tracks with the estimates resolution of the planes and DUT. 0.005 for mimosa planes. 
-#3) With these tracks we then use this to align and perform a chi2 cut. We repeat with different chi2 cuts until the chi2 is approximately the same each iteration.
-#		As we reduce the chi2 cut we reduce the tracks provided to millepede AND the threshold when millepede will reject tracks. 
-#		Therefore we would expect the chi2 to reduce constantly BUT falling very quicky when we are including rubbish tracks.
-#		We would expect this since the error on an actual track is due to the intrinsic resolution and misalignment which is roughly constant
-#   However noise will be completely random and will most likely be much larger than the error due to resolution and misalignment.
-#   Another way to know you have discarded the background is if the chi2 is below one. Assuming you residual is ONLY the intrisic resolution.
-#4) The repeat if the chi2 of alignment is too high or has changed drastically from the iteration before. Otherwise end.
-
+#2) Using these track candidates we will then produce tracks with the estimates resolution of the planes and DUT. This is approximately 1mm since it is misaligned. We also determine a average chi2 to use as our cut in alignment. 
+#3) With these tracks we then use this to align. Alignment uses 2 different kinds of cuts. We cut tracks with high chi2 before alignment procedure and during.   
+#4) If our chi2/ndf is not rougly equal to 1 or we have a high number of rejects then we run again with a different resolution.  
+#TO DO: If we change the resolution chi2 cut should also change. However at the moment we keep this constant for many iteration of alignment.
 #THIS IS PART (1)
 for x in {1..10}; do
 
@@ -44,9 +39,9 @@ if [[ $averageChi2 == "" ]]; then
   exit
 fi
 Chi2Cut="$averageChi2"
-#We must make sure this cut is close to the average so we do not cut too many
-#tracks
-fraction=$(echo "scale=4;$Chi2Cut*0.0333"|bc); #Divided by 30(0.0333) since
+#We must make sure this cut is close to the average so we do not cut too many tracks.
+#TO DO: Re-introduce chi2 cut during alignment procedure. Millepede use a strange way of specifying this. Need to better understand before implimentation.  
+#fraction=$(echo "scale=4;$Chi2Cut*0.0333"|bc); #Divided by 30(0.0333) since
 #this is close to the value of chi2 that is 3 standard deviations away. 
 export pede="!chiscut $fraction  $fraction" #! denotes a comment in the steering file we remove this to activate this functionality. TO DO: Must comment below as well must fix
 #this.
