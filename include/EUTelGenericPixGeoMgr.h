@@ -66,9 +66,8 @@ protected:
 	/** Map of the geo library name and the actual pointer to the instance of it. */
 	std::map<std::string, EUTelGenericPixGeoDescr*> _pixelDescriptions;	
 
-	/** Map of the casted geoemtry and the actual pointer to the instance of it. */
-	std::map<std::string, EUTelGenericPixGeoDescr*> _castedDescriptions;	
-	
+	std::map<std::string, EUTelGenericPixGeoDescr*> _castedDescriptions;
+
 	/** Map of the planeID and corresponding EUTelGenericPixGeoDescr* */
 	std::map<int, EUTelGenericPixGeoDescr* > _geoDescriptions;
 

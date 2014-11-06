@@ -16,7 +16,8 @@ namespace eutelescope {
         _y(0),
         _invp(0),
         _covMatrix(),
-				_zparameter(0)   
+				_zparameter(0),
+				_hit()   
     {
 
         for(int i=0 ; i < TRKSTATENCOVMATRIX ; i++ ) {
@@ -25,6 +26,29 @@ namespace eutelescope {
 
         for(int i=0 ; i < TRKSTATENREFSIZE ; i++ ) {
             _reference[i] = 0.0 ;
+        }
+
+    }
+
+		//This is the constructor to change TrackStateImpl LCIO to EUTelTrackState
+    EUTelTrackStateImpl::EUTelTrackStateImpl( const IMPL::TrackStateImpl& o ) : TrackStateImpl(),
+        _location(o.getLocation()),
+        _tx(o.getOmega()),
+        _ty(o.getZ0()),
+        _x(o.getD0()),
+        _y(o.getPhi()),
+        _invp(o.getTanLambda()),
+        _covMatrix(o.getCovMatrix()),
+				_zparameter(0),
+				_beamQ(-1)	
+    {
+			//I dont think this is needed to add this. Also need to add the hit at state level!!!!
+     //   for(int i=0 ; i < TRKSTATENCOVMATRIX ; i++ ) {
+     //       _covMatrix.push_back( 0.0 ) ; 
+     //   }
+				//has to be called this way to change from const float to float. 
+        for(int i=0 ; i < TRKSTATENREFSIZE ; i++ ) {
+            _reference[i] = o.getReferencePoint()[i];
         }
 
     }
@@ -82,6 +106,7 @@ namespace eutelescope {
         setLocation( p.getLocation() );
 
         setReferencePoint( p.getReferencePoint() );
+				setHit(p.getHit());
     }
 
 
@@ -97,12 +122,20 @@ namespace eutelescope {
     float EUTelTrackStateImpl::getInvP() const { return _invp ;}
     float EUTelTrackStateImpl::getZParameter() const { return _zparameter; }
 
+		EVENT::TrackerHit* EUTelTrackStateImpl::getHit() const { return _hit; }
+
     const EVENT::FloatVec& EUTelTrackStateImpl::getCovMatrix() const { return _covMatrix ; }
     const float* EUTelTrackStateImpl::getReferencePoint() const { return _reference ; }
 
     void EUTelTrackStateImpl::Print() const {
-      	streamlog_out(MESSAGE0) << "location " << getLocation() << " Tx:"<<getTx() << " Ty:"<<getTy() << " X:"<<getX() << " Y:"<<getY() << " InvP:"<<getInvP() << std::endl;  
-    }
+      	streamlog_out(DEBUG0) << "location " << getLocation() << " Tx:"<<getTx() << " Ty:"<<getTy() << " X:"<<getX() << " Y:"<<getY() << " InvP:"<<getInvP() << std::endl;
+				streamlog_out(DEBUG0) << "Reference hit: "  << _reference[0] << "," << _reference[1] << "," <<_reference[2]  << std::endl;
+streamlog_out(DEBUG0) << "Zparameter " << _zparameter <<std::endl;
+streamlog_out(DEBUG0) << "Hit pointer " << _hit << std::endl;
+streamlog_out(DEBUG0) << "The covariance matrix of the state" << std::endl;
+	        streamlog_message( DEBUG0, getTrackStateCov().Print();, std::endl; );
+
+}
 
     void  EUTelTrackStateImpl::setLocation( int location ){
 //        checkAccess("EUTelTrackStateImpl::setLocation") ;
@@ -162,6 +195,28 @@ namespace eutelescope {
 			_beamQ=beamQ;
 		}
 
+    void EUTelTrackStateImpl::setHit( EVENT::TrackerHit* hit) {
+        _hit = hit;
+    }
+
+		void EUTelTrackStateImpl::setTrackStateHitCov(double cov[4]){
+
+			if(_hit != NULL){
+				_covHitMatrix[0] = cov[0];
+				_covHitMatrix[1] = cov[1];
+				_covHitMatrix[2] = cov[2];
+				_covHitMatrix[3] = cov[3];
+
+			}
+}
+
+void EUTelTrackStateImpl::getTrackStateHitCov( double (&cov)[4]) {
+				cov[0] = _covHitMatrix[0];
+				cov[1] = _covHitMatrix[1];
+				cov[2] = _covHitMatrix[2];
+				cov[3] = _covHitMatrix[3];
+}
+
 
 //This function will output the momentum of the track in cartesian coordinates into a TVector structure
     /** Calculate track momentum from track parameters 
@@ -170,10 +225,15 @@ namespace eutelescope {
      */
 TVector3 EUTelTrackStateImpl::getPfromCartesianParameters() const {
 	streamlog_out(DEBUG2) << "EUTelTrackStateImpl::getPfromCartesianParameters()--------------------------BEGIN" << std::endl;
-	const double p  = 1. / (_invp * _beamQ);
+		//Ignore else where must fix:
+
+	streamlog_out(DEBUG2) << "Input parameters: tx,ty, beamq,invp "<<_tx <<","<<_ty<<","<<_beamQ<<","<<_invp<<std::endl;
+	const double p  =  1. / (_invp * -1);      //1. / (_invp * _beamQ);
   const double px = p*_tx / sqrt( 1. + _tx*_tx + _ty*_ty );
   const double py = p*_ty / sqrt( 1. + _tx*_tx + _ty*_ty );
   const double pz = p    / sqrt( 1. + _tx*_tx + _ty*_ty );
+
+	streamlog_out(DEBUG2) << "Output parameters: px,py, pz "<<px <<","<<py<<","<<pz<<","<<std::endl;
         
   streamlog_out(DEBUG2) << "-------------------------------EUTelTrackStateImpl::getPfromCartesianParameters()-------------------------END" << std::endl;
         
@@ -184,20 +244,20 @@ TVector3 EUTelTrackStateImpl::getPfromCartesianParameters() const {
 	streamlog_out(DEBUG5) << "EUTelTrackStateImpl::findIntersectionWithCertainID----------------------------BEGIN" << std::endl;
 	TVector3 pVec = getPfromCartesianParameters();
 	streamlog_out(DEBUG5) << "Momentum: " << pVec[0]<<","<<pVec[1]<<","<<pVec[2]<<","<< std::endl;
-	int sensorID = geo::gGeometry().findIntersectionWithCertainID( _x, _y, _zparameter, pVec[0],pVec[1],pVec[2], _beamQ, nextPlaneID, output ); //Input global positions and momentum in cartesian
-	streamlog_out(DEBUG5) << "SensorID" << sensorID << std::endl;
+//	int sensorID = geo::gGeometry().findIntersectionWithCertainID( _x, _y, _zparameter, pVec[0],pVec[1],pVec[2], _beamQ, nextPlaneID, output ); //Input global positions and momentum in cartesian
+//	streamlog_out(DEBUG5) << "SensorID" << sensorID << std::endl;
 	streamlog_out(DEBUG5) << "EUTelTrackStateImpl::findIntersectionWithCertainID----------------------------END" << std::endl;
-	return sensorID;
+	return nextPlaneID;
 }
 
 TVector3 EUTelTrackStateImpl::getXYZfromArcLength( float s ) const {
-		streamlog_out(DEBUG2) << "EUTelTrackStateImpl::getXYZfromArcLength----------------------------BEGIN" << std::endl;
+//		streamlog_out(DEBUG2) << "EUTelTrackStateImpl::getXYZfromArcLength----------------------------BEGIN" << std::endl;
 
-	TVector3 pVec = getPfromCartesianParameters();
-	TVector3 pos = geo::gGeometry().getXYZfromArcLength( _x, _y, _zparameter, pVec[0], pVec[1], pVec[2], _beamQ, s);
+//	TVector3 pVec = getPfromCartesianParameters();
+//	TVector3 pos = geo::gGeometry().getXYZfromArcLength( _x, _y, _zparameter, pVec[0], pVec[1], pVec[2], _beamQ, s);
 
-		streamlog_out(DEBUG2) << "EUTelTrackStateImpl::getXYZfromArcLength----------------------------END" << std::endl;	
-	return pos;
+//		streamlog_out(DEBUG2) << "EUTelTrackStateImpl::getXYZfromArcLength----------------------------END" << std::endl;	
+//	return pos;
 
 }	
 
@@ -274,7 +334,7 @@ TVectorD EUTelTrackStateImpl::getTrackStateVec() const {
 TMatrixDSym EUTelTrackStateImpl::getTrackStateCov() const {
 
 	streamlog_out( DEBUG1 ) << "EUTelTrackStateImpl::getTrackStateCov()----------------------------BEGIN" << std::endl;
-	TMatrixDSym C(5);        
+	TMatrixDSym C(5);   
 	const EVENT::FloatVec& trkCov = getCovMatrix();        
 	C.Zero();
             
@@ -299,14 +359,27 @@ TMatrix EUTelTrackStateImpl::getPropagationJacobianF( float dz ){
 	TVector3 pVec = getPfromCartesianParameters();
 	TMatrix jacobian(5,5);
 	jacobian.Zero();
-
+	streamlog_out( DEBUG1 ) << "These are the parameters being used in the calculation of the Jacobian. "<< "X= "<< _x << " Y= "<< _y << " Zparameter= "<< _zparameter << " Px= " << pVec[0] << " Py= " << pVec[1] << " Pz= " << pVec[2] << " Qbeam= " <<_beamQ  << std::endl;
 	jacobian = geo::gGeometry().getPropagationJacobianF(  _x, _y, _zparameter, pVec[0],pVec[1],pVec[2], _beamQ, dz);
 
 	return jacobian;
 }
 
+TVector3 EUTelTrackStateImpl::getIncidenceVectorInLocalFrame(){
+	TVector3 pVec =	getPfromCartesianParameters();
+	TVector3 pVecUnit = pVec;   //.Unit();
+    streamlog_out(DEBUG2) << "Momentum in global coordinates  Px,Py,Pz= " << pVec[0]<<","<<pVec[1]<<","<<pVec[2] << std::endl;
+	double globalVec[] = { pVecUnit[0],pVecUnit[1],pVecUnit[2] };
+	double localVec[3];
 
+	geo::gGeometry().master2LocalVec( _location ,globalVec, localVec );
 
+	TVector3 pVecUnitLocal;
+	pVecUnitLocal[0] = localVec[0]; 	pVecUnitLocal[1] = localVec[1]; 	pVecUnitLocal[2] = localVec[2]; 
+  streamlog_out(DEBUG2) << "Momentum in local coordinates  Px,Py,Pz= " << pVecUnitLocal[0]<<","<<pVecUnitLocal[1]<<","<<pVecUnitLocal[2]<< std::endl;
+
+	return pVecUnitLocal;
+}
  			 
 
 } // namespace eutelescope

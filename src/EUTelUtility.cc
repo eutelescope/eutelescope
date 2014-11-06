@@ -25,6 +25,30 @@ namespace eutelescope {
 
     namespace Utility {
 
+
+			std::string outputColourString(std::string inputString, std::string colour){
+				std::string outputString;
+				if(colour == "RED"){
+					outputString = "\033[31m" +  inputString + "\033[39m";
+					return	outputString;
+				}
+				if(colour =="BLUE"){
+					outputString = "\033[34m" +  inputString + "\033[39m";
+					return	outputString;
+				}
+				if(colour =="GREEN"){
+					outputString = "\033[32m" +  inputString + "\033[39m";
+					return	outputString;
+				}
+				if(colour =="YELLOW"){
+					outputString = "\033[33m" +  inputString + "\033[39m";
+					return	outputString;
+				}
+	
+			}
+		 
+
+
         /**
          * Fills indices of not excluded planes
          * 
@@ -50,7 +74,7 @@ namespace eutelescope {
          * @param nPlanes
          *              total number of planes
          */
-        
+				
         void FillNotExcludedPlanesIndices( std::vector<int>& indexconverter, const std::vector<unsigned int >& excludePlanes,  unsigned int nPlanes ) {
             int icounter = 0;
             int nExcludePlanes = static_cast< int >( excludePlanes.size());
@@ -314,7 +338,7 @@ namespace eutelescope {
                         double disc2 =  b*b - 4.*a*c ;
                         if( disc2 < 0. )
                         {
-                                cout << "WARNING! disc2 < 0: " << disc2 << endl;
+                                cout << " Quadratic equation solution is imaginary! WARNING! disc2 < 0: " << disc2 << endl;
                                 return X;
                         }
                         double disc = sqrt( disc2 );

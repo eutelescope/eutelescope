@@ -37,6 +37,7 @@ namespace eutelescope {
     /** Default constructor, initializes values to 0.
      */
     EUTelTrackStateImpl() ;
+		EUTelTrackStateImpl(const IMPL::TrackStateImpl& o );
     EUTelTrackStateImpl(int, float, float, float, float, float, const float*, const float*) ;
     EUTelTrackStateImpl(int, float, float, float, float, float, const EVENT::FloatVec&, const float* ) ;
     /** Copy constructor which takes as an argument an EVENT::EUTelTrackState reference */
@@ -85,6 +86,8 @@ namespace eutelescope {
 
 	virtual TMatrix  getPropagationJacobianF( float dz );
 
+		virtual EVENT::TrackerHit* getHit() const;
+
     /** Covariance matrix of the track parameters. Stored as lower triangle matrix where
      * the order of parameters is:   x, y, tx, ty, q/p.
      * So we have cov(x,x), cov( y, x ), cov( y, y ), ...
@@ -94,9 +97,14 @@ namespace eutelescope {
     /** Reference point of the track parameters, e.g. the origin at the IP, or the position
      *  of the first/last hits or the entry point into the calorimeter.
      */
-    	virtual const float* getReferencePoint() const ;
-   
 
+    virtual const float* getReferencePoint() const ;
+
+		virtual TVector3 getIncidenceVectorInLocalFrame();
+
+		virtual void getTrackStateHitCov( double (&cov)[4]);
+
+   
     	virtual void Print() const;
 
     // setters 
@@ -116,6 +124,11 @@ namespace eutelescope {
 
 		virtual void setbeamQ(int);
 
+		virtual void setHit( EVENT::TrackerHit* hit);
+
+		virtual void setTrackStateHitCov(double cov[4]);
+
+
 
   protected:
 
@@ -133,6 +146,10 @@ namespace eutelescope {
     float  _reference[TRKSTATENREFSIZE] ;
 
 		float _zparameter;
+	
+		EVENT::TrackerHit* _hit;
+
+		double _covHitMatrix[4];
 
 }; // class
 

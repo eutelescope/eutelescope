@@ -87,7 +87,7 @@ Version: $Id: hitmaker-tmp.xml,v 1.3 2009-06-04 17:19:01 bulgheroni Exp $
   <parameter name="SensorIDVec" type="IntVec"> 0 1 2 3 4 5  </parameter>
 </processor>
 
- <processor name="HitMakerM26" type="EUTelProcessorHitMaker">
+ <processor name="HitMakerM26" type="EUTelHitMaker">
  <!--EUTelHitMaker is responsible to translate cluster centers from the local frame of reference to the external frame of reference using the GEAR geometry description-->
   <!--Cluster (pulse) collection name-->
   <parameter name="PulseCollectionName" type="string" lcioInType="TrackerPulse"> cluster_m26 </parameter>

@@ -13,6 +13,7 @@
 #include <bitset>
 
 #include "EUTelTrackStateImpl.h"
+#include "EUTelUtility.h"
 
 namespace eutelescope {
 
@@ -33,6 +34,8 @@ namespace eutelescope {
     /** Default constructor, initializes values to 0.
      */
     EUTelTrackImpl() ;
+
+		EUTelTrackImpl(const IMPL::TrackImpl& o);
     
     /** Copy constructor - creates shallow copy, i.e. all data members are copied but pointers to other LCObjects
      *  i.e. TrackerHits and Tracks are preserved.
@@ -43,6 +46,10 @@ namespace eutelescope {
 
     /// Destructor.
     virtual ~EUTelTrackImpl() ; 
+
+IMPL::TrackImpl* CreateLCIOTrack();
+
+	
     
     virtual int id() const { return simpleUID() ; }
  
@@ -117,6 +124,8 @@ namespace eutelescope {
     /** Returns track states associated with this track. @see TrackState.
      */
     virtual const EUTelTrackStateVec & getTrackStates() const ;
+
+		virtual const EVENT::TrackerHitVec  getHitsOnTrack() const;
   
     virtual void PrintTrackStates(){
       streamlog_out(MESSAGE0) << " printing track states " << _trackStates.size() << std::endl;
@@ -145,7 +154,7 @@ namespace eutelescope {
     /** Optionally ( check/set flag(LCIO::TRBIT_HITS)==1)  return the hits that have been used 
      *  to create this track.
      */
-    virtual const EVENT::TrackerHitVec & getTrackerHits() const ;
+    virtual const EVENT::TrackerHitVec &  getTrackerHits() const ;
 
 	//	int getType();
     
@@ -169,7 +178,6 @@ namespace eutelescope {
 
     virtual void  addTrack( EUTelTrackImpl* trk ) ;
     virtual void  addTrackState( EUTelTrackStateImpl* trkstate ) ;
-    virtual void  addHit( EVENT::TrackerHit* hit) ;
 
     // direct access to the track state vector 
     virtual  EUTelTrackStateVec & trackStates() ;

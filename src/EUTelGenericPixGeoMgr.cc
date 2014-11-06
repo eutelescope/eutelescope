@@ -38,7 +38,6 @@ EUTelGenericPixGeoMgr::~EUTelGenericPixGeoMgr()
 		delete (*it).second;
 	}
 }
-
 //TODO: comments
 void EUTelGenericPixGeoMgr::addCastedPlane(int planeID, int xPixel, int yPixel, double xSize, double ySize, double zSize, double radLength, std::string planeVolume)
 {
@@ -74,7 +73,6 @@ void EUTelGenericPixGeoMgr::addCastedPlane(int planeID, int xPixel, int yPixel, 
 	streamlog_out( MESSAGE3 )  << "Adding plane: " << planeID << " with geoLibName: " << name << " in volume " << planeVolume << std::endl;
 	pixgeodescrptr->createRootDescr(planeVolume);
 }
-
 
 void EUTelGenericPixGeoMgr::addPlane(int planeID, std::string geoName, std::string planeVolume)
 {
