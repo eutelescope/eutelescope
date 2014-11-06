@@ -1,0 +1,86 @@
+Datura telescope without explicit DUT at different geometries
+===================
+
+This directory contains an example configuration for the Datura
+telescope with six planes of Mimosa26 without DUT.
+
+This example is based on a test beam campaign done in 2012/2013 at DESY.
+
+A corresponding data sample can be found at:
+/afs/desy.de/group/telescopes/EutelTestData/TestExampleDaturaNoDUT
+
+If you are interested in the data but cannot access the above path,
+please contact the EUTelescope software coordinators via mail:
+eutelescope-coordinators@desy.de
+
+
+Features of this configuration:
+------------------------------
+
+- Datura telescope with Mimosa26 sensors
+- telescope alone, no DUT
+- settings tuned for DESY testbeam (1-6 GeV electrons)
+
+
+Known issues:
+------------
+
+- Analysis still in progress: very preliminary results only!
+
+Alignment + tracking basic instructions:
+========================================
+Here are few basics instruction on how to start GBL alignment + tracking
+analysis. Very detailed information on how to use EUTELESCOPE software is
+available at http://eutelescope.web.cern.ch/
+
+
+- Copy this example folder somewhere you have some free space
+  export ANALYSIS=/path/to/somewhere
+  cp -a $EUTELESCOPE/jobsub/examples/datura-aloneGBL/* $ANALYSIS
+  cd $ANALYSIS
+
+- Create following necessary subfolder structure
+  mkdir -p $ANALYSIS/output/histo  && mkdir -p $ANALYSIS/output/db \
+           && mkdir -p $ANALYSIS/output/logs \
+           && mkdir -p $ANALYSIS/output/lcio-raw \
+	   && mkdir -p $ANALYSIS/output/results
+
+- Adjust configgbl.cfg file such that  variables
+  BasePath and NativeFolder match match your setup.
+  Given that now everything is in $ANALYSIS analysis folder 
+  BasePath = $ANALYSIS. 
+  NativeFolder can be set equal to 
+  /afs/desy.de/group/telescopes/EutelTestData/TestExampleDaturaNoDUT
+  for the tests. In general NativeFolder refers to a directory where your
+  raw files are stored. 
+  
+
+- Assuming that your environment is set properly 
+(see http://eutelescope.web.cern.ch/content/installation) you can submit jobs
+  $EUTELESCOPE/jobsub/jobsub.py --config=configgbl.cfg -csv table.csv converter 5063
+  $EUTELESCOPE/jobsub/jobsub.py --config=configgbl.cfg -csv table.csv clusearch 5063
+  $EUTELESCOPE/jobsub/jobsub.py --config=configgbl.cfg -csv table.csv hitmaker  5063
+  $EUTELESCOPE/jobsub/jobsub.py --config=configgbl.cfg -csv table.csv trksearch 5063
+  $EUTELESCOPE/jobsub/jobsub.py --config=configgbl.cfg -csv table.csv aligngbl 5063
+
+  NOTE: In table.csv file several run-dependent steering files variables are defined
+  You have to adjust table.csv if you analyse different than 5063,5080 runs.
+  (see http://eutelescope.web.cern.ch/content/job-submission)
+
+- Check the output in $ANALYSIS/output/histo and other folders.
+  aligngbl performs GBL track fits. It produces millipede binary and steering
+  files that have to be used to determine missalignment constants. For this you
+  have to run pede manually (see http://www.desy.de/~kleinwrt/MP2/doc/html/index.html).
+  For this do:
+  pede $ANALYSIS/output/results/run005063-pede-steer.txt
+  After this you must get millipede.res file with results of pede job
+  You have to convert this file to lcio file
+  $EUTELESCOPE/tools/parsepede/parsemilleout.sh $ANALYSIS/output/results/run005063-pede-steer.txt millipede.res run005063-alignment-db.slcio
+
+- At this point you must be able to run tracking
+  $EUTELESCOPE/jobsub/jobsub.py --config=configgbl.cfg -csv table.csv trkfit 5063
+
+  Check available options (alignment degrees of freedom, chi2 cut on a track candidate etc.)
+  in corresponding steering files and adjust according to your analysis. Beware some options
+  are still under development.
+

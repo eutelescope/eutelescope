@@ -13,9 +13,6 @@
 #include "marlin/Global.h"
 #include "marlin/VerbosityLevels.h"
 
-//GEAR
-#include "GEAR.h" //for GEAR exceptions
-
 // EUTELESCOPE
 #include "EUTelExceptions.h"
 #include "EUTelGenericPixGeoMgr.h"
@@ -43,18 +40,18 @@ using namespace std;
 unsigned EUTelGeometryTelescopeGeoDescription::_counter = 0;
 
 EUTelGeometryTelescopeGeoDescription& EUTelGeometryTelescopeGeoDescription::getInstance( gear::GearMgr* _g ) {
-      streamlog_out ( DEBUG0) << "  EUTelGeometryTelescopeGeoDescription::getInstance --- BEGIN ---" << std::endl; 
+     // streamlog_out ( DEBUG4) << "  EUTelGeometryTelescopeGeoDescription::getInstance --- BEGIN ---" << std::endl; 
       static  EUTelGeometryTelescopeGeoDescription instance;
 
       unsigned i = EUTelGeometryTelescopeGeoDescription::_counter;
-      streamlog_out ( DEBUG0) << "  EUTelGeometryTelescopeGeoDescription::getInstance --- iter: " << i << std::endl;  
+    //  streamlog_out ( DEBUG4) << "  EUTelGeometryTelescopeGeoDescription::getInstance --- iter: " << i << std::endl;  
       if( i < 1 )  { // do it only once !
          instance.setGearManager(_g);
          instance.readGear();
       }
  
       instance.counter();
-      streamlog_out ( DEBUG0) << "  EUTelGeometryTelescopeGeoDescription::getInstance --- END --- " << std::endl; 
+    //  streamlog_out ( DEBUG4) << "  EUTelGeometryTelescopeGeoDescription::getInstance --- END --- " << std::endl; 
 
       return instance;
 }
@@ -68,6 +65,9 @@ const EVENT::DoubleVec& EUTelGeometryTelescopeGeoDescription::siPlanesZPositions
 }
 
 /** set methods */ 
+void EUTelGeometryTelescopeGeoDescription::setInitialDisplacementToFirstPlane(float initialDisplacement){
+	_initialDisplacement = initialDisplacement;
+}
 void EUTelGeometryTelescopeGeoDescription::setPlaneXPosition( int planeID, double value ) {
     std::map<int,int>::iterator it;
     it = _sensorIDtoZOrderMap.find(planeID);
@@ -124,6 +124,9 @@ void EUTelGeometryTelescopeGeoDescription::setPlaneZRotationRadians( int planeID
 }
 
 /** get methods */
+float EUTelGeometryTelescopeGeoDescription::getInitialDisplacementToFirstPlane() const {
+	return _initialDisplacement;
+}
 float  EUTelGeometryTelescopeGeoDescription::siPlaneRotation1( int planeID ) {
     std::map<int,int>::iterator it;
     it = _sensorIDtoZOrderMap.find(planeID);
@@ -301,24 +304,81 @@ std::string EUTelGeometryTelescopeGeoDescription::geoLibName( int planeID ) {
     if ( it != _sensorIDtoZOrderMap.end() ) return s;
     return "failed";
 }
-
+//Note  that to determine these axis we MUST use the geometry class after initialisation. By this I mean directly from the root file create.
 TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneNormal( int planeID ) {
     std::map<int,int>::iterator it;
     it = _sensorIDtoZOrderMap.find(planeID);
     if ( it != _sensorIDtoZOrderMap.end() ) {
-        TVector3 normVec( 0., 0., 1. );
-        normVec.RotateX( siPlaneXRotation( planeID) ); // to be in rad
-        normVec.RotateY( siPlaneYRotation( planeID) ); // to be in rad
-        normVec.RotateZ( siPlaneZRotation( planeID) ); // to be in rad
+				const double zAxisLocal[3]  = {0,0,1};
+				double zAxisGlobal[3]; 
+				local2MasterVec(planeID,zAxisLocal , zAxisGlobal ); 
+        TVector3 normVec(zAxisGlobal[0],zAxisGlobal[1],zAxisGlobal[2]);
         return normVec;
-    }
-    return TVector3(0.,0.,0.);
+    }else{
+			TVector3 defaultZ(0,0,1);
+			return defaultZ;
+		}
 }
-
+TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneXAxis( int planeID ) {
+    std::map<int,int>::iterator it;
+    it = _sensorIDtoZOrderMap.find(planeID);
+    if ( it != _sensorIDtoZOrderMap.end() ) {
+			const double xAxisLocal[3]  = {1,0,0};
+			double xAxisGlobal[3]; 
+			local2MasterVec(planeID,xAxisLocal , xAxisGlobal ); 
+			TVector3 xVec(xAxisGlobal[0],xAxisGlobal[1],xAxisGlobal[2]);
+			return xVec;
+    }else{
+			TVector3 defaultX(1,0,0);
+			return defaultX;
+		}
+}
+TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneYAxis( int planeID ) {
+    std::map<int,int>::iterator it;
+    it = _sensorIDtoZOrderMap.find(planeID);
+    if ( it != _sensorIDtoZOrderMap.end() ) {
+			const double yAxisLocal[3]  = {0,1,0};
+			double yAxisGlobal[3]; 
+			local2MasterVec(planeID,yAxisLocal , yAxisGlobal ); 
+			TVector3 yVec(yAxisGlobal[0],yAxisGlobal[1],yAxisGlobal[2]);
+			return yVec;
+    }else{
+			TVector3 defaultY (0,1,0);
+			return defaultY;
+	  }
+}
 const std::map<int, int>& EUTelGeometryTelescopeGeoDescription::sensorIDstoZOrder( ) const {
     return _sensorIDtoZOrderMap;
 }
-
+std::map<int, int>& EUTelGeometryTelescopeGeoDescription::sensorZOrderToIDWithoutExcludedPlanes() {
+	return _sensorZOrderToIDWithoutExcludedPlanes;
+}
+std::map<int, int>& EUTelGeometryTelescopeGeoDescription::sensorIDToZOrderWithoutExcludedPlanes() {
+	return _sensorIDToZOrderWithoutExcludedPlanes;
+}
+void EUTelGeometryTelescopeGeoDescription::initialisePlanesToExcluded(FloatVec planeIDs ){
+	int counter=0;
+	for(int i = 0 ; i <_sensorZOrderToIDMap.size(); ++i){
+		bool excluded=false;
+		for(int  j =0; j< planeIDs.size(); ++j){
+			if(_sensorZOrderToIDMap[i] == planeIDs[j]){
+				excluded=true;
+				break;
+			} 
+		}
+		if(!excluded){
+			_sensorIDToZOrderWithoutExcludedPlanes[_sensorZOrderToIDMap[i]] =  counter;
+			_sensorZOrderToIDWithoutExcludedPlanes[counter]=_sensorZOrderToIDMap[i];
+			counter++;
+		}
+	}
+	//Check if the number of excluded planes set is the same as (total-number of plane IDs inputed that should be excluded)
+	if(geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() != (geo::gGeometry().sensorIDstoZOrder().size()-planeIDs.size())){
+		throw(lcio::Exception( Utility::outputColourString("The number of Planes-Excluded is not correct. This could be a problem with geometry", "RED")));
+	}else{
+		streamlog_out(DEBUG0) << Utility::outputColourString("The correct number of planes have been excluded","GREEN") << std::endl;
+	}
+}
 int EUTelGeometryTelescopeGeoDescription::sensorIDtoZOrder( int planeID ) const {
     std::map<int,int>::const_iterator it;
     it = _sensorIDtoZOrderMap.find(planeID);
@@ -354,25 +414,13 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout() {
     _siPlanesParameters = const_cast< gear::SiPlanesParameters*> (&( _gearManager->getSiPlanesParameters()));
     _siPlanesLayerLayout = const_cast< gear::SiPlanesLayerLayout*> (&(_siPlanesParameters->getSiPlanesLayerLayout()));
     
-    _nPlanes = _siPlanesLayerLayout->getNLayers(); 
-    
     //read the geoemtry names from the "Geometry" StringVec section of the gear file
-    lcio::StringVec geometryNameParameters;
-   
-    try
-    {
-	    geometryNameParameters  =  _siPlanesParameters->getStringVals("Geometry");
-    }
-    catch(gear::UnknownParameterException e)
-    {
-	    std::cout << "No Geometry field found in GEAR file, assuming CAST for all planes" << std::endl;
-    	    for(int i = 0; i < _nPlanes; i++)
-            {
-		    geometryNameParameters.push_back("CAST");
-	    }
-    }
-	    
+    lcio::StringVec geometryNameParameters =  _siPlanesParameters->getStringVals("Geometry");
+ 
     setSiPlanesLayoutID( _siPlanesParameters->getSiPlanesID() ) ;
+
+    // data member::
+    _nPlanes = _siPlanesLayerLayout->getNLayers(); 
    
     // create an array with the z positions of each layer
     for (int iPlane = 0; iPlane < _nPlanes; iPlane++) {
@@ -388,7 +436,15 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout() {
         _siPlaneRotation3.push_back(_siPlanesLayerLayout->getSensitiveRotation3(iPlane));
         _siPlaneRotation4.push_back(_siPlanesLayerLayout->getSensitiveRotation4(iPlane));
       
-	_siPlaneXSize.push_back(_siPlanesLayerLayout->getSensitiveSizeX(iPlane));
+<<<<<<< HEAD
+<<<<<<< HEAD
+				_siPlaneXSize.push_back(_siPlanesLayerLayout->getSensitiveSizeX(iPlane));
+=======
+        _siPlaneXSize.push_back(_siPlanesLayerLayout->getSensitiveSizeX(iPlane));
+>>>>>>> parent of 90ee494... Merge remote-tracking branch 'eutelescope/master' into AIDATelescope
+=======
+        _siPlaneXSize.push_back(_siPlanesLayerLayout->getSensitiveSizeX(iPlane));
+>>>>>>> parent of 90ee494... Merge remote-tracking branch 'eutelescope/master' into AIDATelescope
         _siPlaneYSize.push_back(_siPlanesLayerLayout->getSensitiveSizeY(iPlane));
         _siPlaneZSize.push_back(_siPlanesLayerLayout->getSensitiveThickness(iPlane));
  
@@ -400,7 +456,7 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout() {
         _siPlaneYResolution.push_back(_siPlanesLayerLayout->getSensitiveResolution(iPlane)); // should be ResolutionY
         
         _siPlaneRadLength.push_back(_siPlanesLayerLayout->getSensitiveRadLength(iPlane));
-	_geoLibName.push_back(geometryNameParameters[iPlane]);
+				_geoLibName.push_back(geometryNameParameters[iPlane]);
 
     }
 
@@ -479,13 +535,13 @@ void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout() {
             _siPlaneXRotation.push_back( sensitiveLayer.getRotationZY() );
             _siPlaneYRotation.push_back( sensitiveLayer.getRotationZX() );
             _siPlaneZRotation.push_back( sensitiveLayer.getRotationXY() );
-        
+       			//Note we set rotations 1,2,3,4 automatically here since we don't want to add more gear information that uses this format. Only the old Si planes should use that.  
             _siPlaneRotation1.push_back( 1.0 );
             _siPlaneRotation2.push_back( 0.0 );
             _siPlaneRotation3.push_back( 0.0 );
             _siPlaneRotation4.push_back( 1.0 );
 
-	    _siPlaneXSize.push_back( sensitiveLayer.getSizeX() );
+            _siPlaneXSize.push_back( sensitiveLayer.getSizeX() );
             _siPlaneYSize.push_back( sensitiveLayer.getSizeY() );
             _siPlaneZSize.push_back( sensitiveLayer.getThickness() );
  
@@ -542,17 +598,17 @@ _siPlaneRotation1(),
 _siPlaneRotation2(),
 _siPlaneRotation3(),
 _siPlaneRotation4(),
-_siPlaneXSize(),
-_siPlaneYSize(),
-_siPlaneZSize(),
-_siPlaneXPitch(),
-_siPlaneYPitch(),
-_siPlaneXNpixels(),
-_siPlaneYNpixels(),
-_siPlaneXResolution(),
-_siPlaneYResolution(),
-_siPlaneRadLength(),
-_geoLibName(),
+ _siPlaneXSize(),
+ _siPlaneYSize(),
+ _siPlaneZSize(),
+ _siPlaneXPitch(),
+ _siPlaneYPitch(),
+ _siPlaneXNpixels(),
+ _siPlaneYNpixels(),
+ _siPlaneXResolution(),
+ _siPlaneYResolution(),
+ _siPlaneRadLength(),
+ _geoLibName(),
 _nPlanes(0),
 _isGeoInitialized(false),
 _geoManager(0)
@@ -588,6 +644,7 @@ void EUTelGeometryTelescopeGeoDescription::readGear() {
       _telPlanesDefined = true;
     }catch(...){
       streamlog_out(WARNING)   << "gear::TrackerPlanes NOT found "  << std::endl;
+
     }
 
     if( _siPlanesDefined ){
@@ -623,187 +680,153 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( string tge
  *
  */
 void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvolumeWorld, int SensorId ){
+	double xc, yc, zc;   // volume center position 
+	double alpha, beta, gamma;
+	double rot1, rot3; // for backward compatibility with previous GEAR. We only need 2 entries from gear file for fast z rotation function in TGeoRotations. 
 
-  
-   double xc, yc, zc;   // volume center position 
-   double alpha, beta, gamma;
-   double rot1, rot2, rot3, rot4; // for backward compatibility with previous GEAR 
+	std::stringstream strId;
+	strId << SensorId;
 
-       std::stringstream strId;
-       strId << SensorId;
-       
-       // Get sensor center position
-       xc = siPlaneXPosition( SensorId );
-       yc = siPlaneYPosition( SensorId );
-       zc = siPlaneZPosition( SensorId );
-       
-       // Get sensor orientation
-       alpha = siPlaneXRotation( SensorId ); //  in degrees !
-       beta  = siPlaneYRotation( SensorId ); // 
-       gamma = siPlaneZRotation( SensorId ); // 
+	// Get sensor center position
+	xc = siPlaneXPosition( SensorId );
+	yc = siPlaneYPosition( SensorId );
+	zc = siPlaneZPosition( SensorId );
 
-       rot1 = siPlaneRotation1( SensorId );
-       rot2 = siPlaneRotation2( SensorId );
-       rot3 = siPlaneRotation3( SensorId );
-       rot4 = siPlaneRotation4( SensorId );
+	// Get sensor orientation
+	alpha = siPlaneXRotation( SensorId ); //  in degrees !
+	beta  = siPlaneYRotation( SensorId ); // 
+	gamma = siPlaneZRotation( SensorId ); // 
 
-       // Spatial translations of the sensor center
-       string stTranslationName = "matrixTranslationSensor";
-       stTranslationName.append( strId.str() );
-       TGeoTranslation* pMatrixTrans = new TGeoTranslation( stTranslationName.c_str(), xc, yc, zc );
-       //ALL clsses deriving from TGeoMatrix are not owned by the ROOT geometry manager, invoking RegisterYourself() transfers
-       //ownership and thus ROOT will clean up
-       pMatrixTrans->RegisterYourself();      
+	rot1 = siPlaneRotation1( SensorId );
+	rot3 = siPlaneRotation3( SensorId );
+	//rot1=sin and rot=cos
+	//We must check that the input is correct. Since there is only 1 degree of freedom.
+	float	possibleUnit = sqrt(pow(rot1,2)+pow(rot3,2));
+	if(possibleUnit>1.1 or possibleUnit<0.9){//Check that the squares equal 1 and give some rounding error room. 
+		streamlog_out(ERROR5) << "SensorID: " << SensorId << ". Rot Squares sum =  " <<possibleUnit << std::endl;   
+		throw(lcio::Exception(Utility::outputColourString("The integer rotations do not represent a z rotation since there squares don't sum to 1. Note we have four variables in gear file as input BUT A SINGLE DEGREE OF FREEDOM!", "RED"))); 	
+	}
+	double integerRotations[2]={rot3,rot1};
+	//Create spatial TGeoTranslation object.
+	string stTranslationName = "matrixTranslationSensor";
+	stTranslationName.append( strId.str() );
+	TGeoTranslation* pMatrixTrans = new TGeoTranslation( stTranslationName.c_str(), xc, yc, zc );
+	//ALL clsses deriving from TGeoMatrix are not owned by the ROOT geometry manager, invoking RegisterYourself() transfers
+	//ownership and thus ROOT will clean up
+	pMatrixTrans->RegisterYourself();      
 
-// initial rot1,2,3,4 rotate and flip: 
-       string stRotationName = "matrixRotationSensorRotatenFlip";
-       stRotationName.append( strId.str() );
-       TGeoRotation* pMatrixRotFlip = new TGeoRotation( stRotationName.c_str(), 0.,  0., 0.);                // around X axis
-       pMatrixRotFlip->RegisterYourself();
-       if(   abs(rot2)<1e-6 &&    abs(rot3)<1e-6  ) {
-          // do not rotate it's diagonal
+	//Create TGeoRotation object. 
+	//Translations are of course just positional changes in the global frame.
+	//Note that each subsequent rotation is using the new coordinate system of the last transformation all the way back to the global frame.
+	//The order is:
+	//Integer Z rotation. This only uses the top left element. This for future gear types should be removed.
+	//Z rotations specified by in degrees.
+	//X rotations 
+	//Y rotations
+	TGeoRotation * pMatrixRotCombined = new TGeoRotation();
+	pMatrixRotCombined->FastRotZ(integerRotations);//Z Rotation (Integer). This will rotate a vector around the z axis using the right hand rule
+	pMatrixRotCombined->RotateZ(gamma);//Z Rotation (degrees)//This will again rotate a vector around z axis usign the right hand rule.  
+	pMatrixRotCombined->RotateX(alpha);//X Rotations (degrees)//This will rotate a vector usign the right hand rule round the x-axis
+	pMatrixRotCombined->RotateY(beta);//Y Rotations (degrees)//Same again for Y axis 
+	pMatrixRotCombined->RegisterYourself();//We must allow the matrix to be used by the TGeo manager.
+	// Combined translation and orientation
+	TGeoCombiTrans* combi = new TGeoCombiTrans( *pMatrixTrans, *pMatrixRotCombined );
+	//This is to print to screen the rotation and translation matrices used to transform from local to global frame.
+	streamlog_out(MESSAGE9) << "THESE MATRICES ARE USED TO TAKE A POINT IN THE LOCAL FRAME AND MOVE IT TO THE GLOBAL FRAME."  << std::endl;   
+	streamlog_out(MESSAGE9) << "SensorID: " << SensorId << " Rotation matrix for this object."  << std::endl;   
+	const double* rotationMatrix =  combi->GetRotationMatrix();	
+	streamlog_out(MESSAGE9) << setw(10) <<rotationMatrix[0]<<"  "<<rotationMatrix[1]<<"   "<<rotationMatrix[2]<<endl;
+	streamlog_out(MESSAGE9) << setw(10) <<rotationMatrix[3]<<"  "<<rotationMatrix[4]<<"   "<<rotationMatrix[5]<<endl;
+	streamlog_out(MESSAGE9) << setw(10) <<rotationMatrix[6]<<"  "<<rotationMatrix[7]<<"   "<<rotationMatrix[8]<<endl;
 
-         if(  abs(rot1+1.)<1e-6  ) {
-          // flip X axis
-          pMatrixRotFlip->ReflectX(0);
-         }
+	//streamlog_out(MESSAGE9) << setw(10) <<rotationMatrix[0] << setw(10) <<rotationMatrix[1]<< setw(10) <<rotationMatrix[2]<< setw(10)<<endl<<endl; 
+	//streamlog_out(MESSAGE9) << setw(10) <<rotationMatrix[3] << setw(10) <<rotationMatrix[4]<< setw(10) <<rotationMatrix[5]<< setw(10)<<endl<<endl; 
+	//streamlog_out(MESSAGE9) << setw(10) <<rotationMatrix[6] << setw(10) <<rotationMatrix[7]<< setw(10) <<rotationMatrix[8]<< setw(10)<<endl<<endl; 
+	const double* translationMatrix =  combi->GetTranslation();	
+	streamlog_out(MESSAGE9) << "SensorID: " << SensorId << " Translation vector for this object."  << std::endl;   
+	streamlog_out(MESSAGE9) << setw(10) <<translationMatrix[0] << setw(10) <<translationMatrix[1]<< setw(10) <<translationMatrix[2]<< setw(10)<<endl; 
 
-         if(  abs(rot4+1.)<1e-6  ) {
-          // flip Y axis
-          pMatrixRotFlip->ReflectY(0);
-         }
-       }
-
-       if(  abs(rot1)<1e-6 &&  abs(rot4)<1e-6 ) {
-         // do rotate it's OFF diagonal
-         pMatrixRotFlip->RotateZ(90.);
-         // X->Y     0  1
-         // Y->-X   -1  0
-
-         if(  abs(rot2-1.)<1e-6 &&  abs(rot3+1.)<1e-6  ) {
-          //         0  1
-          //        -1  0
-          // do nothing  
-         }
-
-         if(  abs(rot2-1.)<1e-6 &&  abs(rot3-1.)<1e-6  ) {
-          //         0  1
-          //        -1  0
-          pMatrixRotFlip->ReflectY(0);
-         }
-
-         if(  abs(rot2+1.)<1e-6 &&  abs(rot3+1.)<1e-6  ) {
-          //         0  1
-          //        -1  0
-          pMatrixRotFlip->ReflectX(0);
-         }
-
-         if(  abs(rot2+1.)<1e-6 &&  abs(rot3-1.)<1e-6  ) {
-          //         0  1
-          //        -1  0
-          pMatrixRotFlip->ReflectX(0);
-          pMatrixRotFlip->ReflectY(0);
-         }
-       }
-      
-       // Spatial rotation around sensor center
-       // TGeoRotation requires Euler angles in degrees
-       stRotationName = "matrixRotationSensorX";
-       stRotationName.append( strId.str() );
-       TGeoRotation* pMatrixRotX = new TGeoRotation( stRotationName.c_str(), 0.,  alpha, 0.);                // around X axis
-       pMatrixRotX->RegisterYourself();
-
-       stRotationName = "matrixRotationSensorY";
-       stRotationName.append( strId.str() );
-       TGeoRotation* pMatrixRotY = new TGeoRotation( stRotationName.c_str(), 90., beta,  0.);                // around Y axis (combination of rotation around Z axis and new X axis)
-       stRotationName = "matrixRotationSensorBackY";
-       pMatrixRotY->RegisterYourself();
-
-       stRotationName.append( strId.str() );
-       TGeoRotation* pMatrixRotY1 = new TGeoRotation( stRotationName.c_str(), -90., 0.,  0.);                    // restoration of original orientation (valid in small angle approximataion ~< 15 deg)
-       pMatrixRotY1->RegisterYourself(); 
-
-       stRotationName = "matrixRotationSensorZ";
-       stRotationName.append( strId.str() );
-       TGeoRotation* pMatrixRotZ = new TGeoRotation( stRotationName.c_str(), 0. , 0.,        gamma);         // around Z axis
-       pMatrixRotZ->RegisterYourself();
-      
-       // Combined rotation in several steps
-       TGeoRotation* pMatrixRot = new TGeoRotation( *pMatrixRotX );
- 
-       pMatrixRot->MultiplyBy( pMatrixRotFlip );
-       pMatrixRot->MultiplyBy( pMatrixRotY );
-       pMatrixRot->MultiplyBy( pMatrixRotY1 );
-       pMatrixRot->MultiplyBy( pMatrixRotZ );
-       pMatrixRot->RegisterYourself();      
-      
-
-       // Combined translation and orientation
-       TGeoCombiTrans* combi = new TGeoCombiTrans( *pMatrixTrans, *pMatrixRot );
-       combi->RegisterYourself();   
- 
-       // Construction of sensor objects
-       
-       // Construct object medium. Required for radiation length determination
-
-       // assume SILICON, though all information except of radiation length is ignored
-       double a       = 28.085500;     
-       double z       = 14.000000;
-       double density = 2.330000;
-       double radl    = siPlaneRadLength( SensorId );
-       double absl    = 45.753206;
-       string stMatName = "materialSensor";
-       stMatName.append( strId.str() );
-       TGeoMaterial* pMat = new TGeoMaterial( stMatName.c_str(), a, z, density, radl, absl );
-       pMat->SetIndex( 1 );
-       // Medium: medium_Sensor_SILICON
-       int numed   = 0;  // medium number
-       double par[8];
-       par[0]  = 0.000000; // isvol
-       par[1]  = 0.000000; // ifield
-       par[2]  = 0.000000; // fieldm
-       par[3]  = 0.000000; // tmaxfd
-       par[4]  = 0.000000; // stemax
-       par[5]  = 0.000000; // deemax
-       par[6]  = 0.000000; // epsil
-       par[7]  = 0.000000; // stmin
-       string stMedName = "mediumSensor";
-       stMedName.append( strId.str() );
-       TGeoMedium* pMed = new TGeoMedium( stMedName.c_str(), numed, pMat, par );
-       
-       // Construct object shape
-       // Shape: Box type: TGeoBBox
-       // TGeo requires half-width of box side
-       Double_t dx = siPlaneXSize( SensorId ) / 2.;
-       Double_t dy = siPlaneYSize( SensorId ) / 2.;
-       Double_t dz = siPlaneZSize( SensorId ) / 2.;
-       TGeoShape *pBoxSensor = new TGeoBBox( "BoxSensor", dx, dy, dz );
-       // Volume: volume_Sensor1
-       
-       // Geometry navigation package requires following names for objects that have an ID
-       // name:ID
-       string stVolName = "volume_SensorID:";
-       stVolName.append( strId.str() );
-
-       _planePath.insert( std::make_pair(SensorId, "/volume_World_1/"+stVolName+"_1") );
-
-       TGeoVolume* pvolumeSensor = new TGeoVolume( stVolName.c_str(), pBoxSensor, pMed );
-       pvolumeSensor->SetVisLeaves( kTRUE );
-       pvolumeWorld->AddNode(pvolumeSensor, 1/*(SensorId)*/, combi);
+	combi->RegisterYourself();   
 	
+
+	// Construction of sensor objects
+
+	// Construct object medium. Required for radiation length determination
+
+	// assume SILICON, though all information except of radiation length is ignored
+	double a       = 28.085500;     
+	double z       = 14.000000;
+	double density = 2.330000;
+	double radl    = siPlaneRadLength( SensorId );
+	double absl    = 45.753206;
+	string stMatName = "materialSensor";
+	stMatName.append( strId.str() );
+	TGeoMaterial* pMat = new TGeoMaterial( stMatName.c_str(), a, z, density, radl, absl );
+	pMat->SetIndex( 1 );
+	// Medium: medium_Sensor_SILICON
+	int numed   = 0;  // medium number
+	double par[8];
+	par[0]  = 0.000000; // isvol
+	par[1]  = 0.000000; // ifield
+	par[2]  = 0.000000; // fieldm
+	par[3]  = 0.000000; // tmaxfd
+	par[4]  = 0.000000; // stemax
+	par[5]  = 0.000000; // deemax
+	par[6]  = 0.000000; // epsil
+	par[7]  = 0.000000; // stmin
+	string stMedName = "mediumSensor";
+	stMedName.append( strId.str() );
+	TGeoMedium* pMed = new TGeoMedium( stMedName.c_str(), numed, pMat, par );
+
+	// Construct object shape
+	// Shape: Box type: TGeoBBox
+	// TGeo requires half-width of box side
+	Double_t dx = siPlaneXSize( SensorId ) / 2.;
+	Double_t dy = siPlaneYSize( SensorId ) / 2.;
+	Double_t dz = siPlaneZSize( SensorId ) / 2.;
+	TGeoShape *pBoxSensor = new TGeoBBox( "BoxSensor", dx, dy, dz );
+	// Volume: volume_Sensor1
+
+	// Geometry navigation package requires following names for objects that have an ID
+	// name:ID
+	string stVolName = "volume_SensorID:";
+	stVolName.append( strId.str() );
+
+	_planePath.insert( std::make_pair(SensorId, "/volume_World_1/"+stVolName+"_1") );
+
+	TGeoVolume* pvolumeSensor = new TGeoVolume( stVolName.c_str(), pBoxSensor, pMed );
+	pvolumeSensor->SetVisLeaves( kTRUE );
+	pvolumeWorld->AddNode(pvolumeSensor, 1/*(SensorId)*/, combi);
+
 	//this line tells the pixel geometry manager to load the pixel geometry into the plane			
-        streamlog_out(DEBUG1) << " sensorID: " << SensorId << " " << stVolName << std::endl;   
-        std::string name = geoLibName(SensorId);
-        
+<<<<<<< HEAD
+<<<<<<< HEAD
+	streamlog_out(DEBUG1) << " sensorID: " << SensorId << " " << stVolName << std::endl;   
+	std::string name = geoLibName(SensorId);
+
 	if( name == "CAST" )
 	{
-		_pixGeoMgr->addCastedPlane( SensorId, siPlaneXNpixels(SensorId), siPlaneYNpixels(SensorId), siPlaneXSize(SensorId), siPlaneYSize(SensorId), siPlaneZSize(SensorId), siPlaneRadLength(SensorId), stVolName);
+	_pixGeoMgr->addCastedPlane( SensorId, siPlaneXNpixels(SensorId), siPlaneYNpixels(SensorId), siPlaneXSize(SensorId), siPlaneYSize(SensorId), siPlaneZSize(SensorId), siPlaneRadLength(SensorId), stVolName);
 	}
 
 	else
 	{
-		_pixGeoMgr->addPlane( SensorId, name, stVolName);
+	_pixGeoMgr->addPlane( SensorId, name, stVolName);
 	}
+=======
+        streamlog_out(DEBUG1) << " sensorID: " << SensorId << " " << stVolName << std::endl;   
+        std::string name = geoLibName( SensorId);
+        _pixGeoMgr->addPlane( SensorId, name, stVolName);
+
+
+>>>>>>> parent of 90ee494... Merge remote-tracking branch 'eutelescope/master' into AIDATelescope
+=======
+        streamlog_out(DEBUG1) << " sensorID: " << SensorId << " " << stVolName << std::endl;   
+        std::string name = geoLibName( SensorId);
+        _pixGeoMgr->addPlane( SensorId, name, stVolName);
+
+
+>>>>>>> parent of 90ee494... Merge remote-tracking branch 'eutelescope/master' into AIDATelescope
 }
 
 /**
@@ -976,7 +999,7 @@ void EUTelGeometryTelescopeGeoDescription::master2Local( const double globalPos[
 
 
 void EUTelGeometryTelescopeGeoDescription::master2Localtwo(int sensorID, const double globalPos[], double localPos[] ) {
-    streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::master2Local() " << std::endl;
+    streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::master2Local()--BEGIN " << std::endl;
 
     _geoManager->cd( _planePath[sensorID].c_str() );
 		_geoManager->GetCurrentNode()->MasterToLocal( globalPos, localPos );
@@ -986,6 +1009,8 @@ void EUTelGeometryTelescopeGeoDescription::master2Localtwo(int sensorID, const d
     streamlog_out(DEBUG0) << std::setw(10) << std::setprecision(5) << globalPos[0] << std::setw(10) << std::setprecision(5) << globalPos[1] << std::setw(10) << std::setprecision(5) << globalPos[2] << std::endl;
     streamlog_out(DEBUG0) << "Local coordinates: " << std::endl;
     streamlog_out(DEBUG0) << std::setw(10) << std::setprecision(5) << localPos[0] << std::setw(10) << std::setprecision(5) << localPos[1] << std::setw(10) << std::setprecision(5) << localPos[2] << std::endl;
+		streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::master2Local()----END " << std::endl;
+
 }
 
 
@@ -1063,7 +1088,7 @@ void EUTelGeometryTelescopeGeoDescription::master2localHit(EVENT::TrackerHit* hi
  * @param localVec (x,y,z) in local coordinate system
  */
 void EUTelGeometryTelescopeGeoDescription::local2MasterVec( int sensorID, const double localVec[], double globalVec[] ) {
-    streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::master2LocalVec() " << std::endl;
+    streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::local2masterVec() " << std::endl;
     const double sensorCenterX = siPlaneXPosition( sensorID );
     const double sensorCenterY = siPlaneYPosition( sensorID );
     const double sensorCenterZ = siPlaneZPosition( sensorID );
@@ -1137,8 +1162,9 @@ const TGeoHMatrix* EUTelGeometryTelescopeGeoDescription::getHMatrix( const doubl
  * @return reference to gear::BField object
  */
 const gear::BField& EUTelGeometryTelescopeGeoDescription::getMagneticFiled() const {
-    streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::getMagneticFiled() " << std::endl;
+    streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::getMagneticFiled()----BEGIN " << std::endl;
     return _gearManager->getBField();
+
 }
 
 
@@ -1202,7 +1228,7 @@ float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double 
     
     double snext;
     double pt[3], loc[3];
-    double epsil = 1.E-7;
+    double epsil = 1.E-2; //1.E-7; //This number must be in the order of 10s of microns to make sure you leave the starting volume everytime.
     double lastrad = 0.;
     int ismall       = 0;
     int nbound       = 0;
@@ -1421,23 +1447,14 @@ int EUTelGeometryTelescopeGeoDescription::findNextPlaneEntrance(  double* lpoint
 }
 
 /**
-* Find closest surface intersected by the track and propagate track to that point
-* @param input: ts track state
-* @param input: The plane you want to find the intersection.
-* @param input: Pointer to fill with the new global coordinates   
-* @return planeID. If there was a problem return -999.
+* Find closest surface intersected by the track and return the position
 */
-int EUTelGeometryTelescopeGeoDescription::findIntersectionWithCertainID( float x0, float y0, float z0, float px, float py, float pz, float _beamQ, int nextPlaneID, float* output) {
-streamlog_out(DEBUG5) << "EUTelGeometryTelescopeGeoDescription::findIntersection()" << std::endl;
- 
-	// Set position and momentum vector//////////////////////////////////
+int EUTelGeometryTelescopeGeoDescription::findIntersectionWithCertainID( float x0, float y0, float z0, float px, float py, float pz, float beamQ, int nextPlaneID, float outputPosition[],TVector3& outputMomentum, float& arcLength) {
+streamlog_out(DEBUG5) << "EUTelGeometryTelescopeGeoDescription::findIntersectionWithCertainID()------BEGIN" << std::endl;
+	//positions are in mm
   TVector3 trkVec(x0,y0,z0);
 	TVector3 pVec(px,py,pz);
-	/////////////////////////////////////////////////////////////////////
-
-	streamlog_out(DEBUG5) << "  Global positions: "<< x0 <<"  "<< y0 <<"  "<< z0 << " Momentum: "<< pVec[0]<<","<<pVec[1]<<","<<pVec[2]<<","<< std::endl;
-  /////////////////////////////////////////////////////////////////////////////////////////  
-
+	streamlog_out(DEBUG5) << "  Global positions (Input): "<< x0 <<"  "<< y0 <<"  "<< z0 << " Momentum: "<< px<<","<<py<<","<<pz<< std::endl;
  
   // Find magnetic field at that point and then the components/////////////////////////////////// 
   gear::Vector3D vectorGlobal( x0, y0, z0 );        // assuming uniform magnetic field running along X direction. Why do we need this assumption. Equations of motion do not seem to dictate this.
@@ -1445,22 +1462,28 @@ streamlog_out(DEBUG5) << "EUTelGeometryTelescopeGeoDescription::findIntersection
 	const double bx         = B.at( vectorGlobal ).x();
 	const double by         = B.at( vectorGlobal ).y();
 	const double bz         = B.at( vectorGlobal ).z();
+	streamlog_out (DEBUG5) << "The magnetic field vector (x,y,z): "<<bx<<","<<by<<","<<bz << std::endl;
+	streamlog_out (DEBUG5) << "Beam charge: "<<beamQ<< std::endl;
+
+	//B field is in units of Tesla
   TVector3 hVec(bx,by,bz);
 	const double H = hVec.Mag();
-  //////////////////////////////////////////////////////////////////////////////////////////////
 
   // Calculate track momentum from track parameters and fill some useful variables///////////////////////////////////////////////////////////
   const double p = pVec.Mag();
-	const double mm = 1000.;
-  const double k = -0.299792458/mm*_beamQ*H;
-  const double rho = k/p; 
+	const double constant =  -0.299792458; //This is a constant used in the derivation of this equation. This is the distance light travels in a nano second    
+	const double mm = 1000;
+	const double combineConstantsAndMagneticField = (constant*beamQ*H)/mm;
+  const double rho = combineConstantsAndMagneticField/p; 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////       
 				      
 	//Determine geometry of sensor to be used to determine the point of intersection.//////////////////////////////////////
   TVector3 norm = geo::gGeometry().siPlaneNormal( nextPlaneID  );       
+	streamlog_out (DEBUG5) << "The normal of the plane is (x,y,z): "<<norm[0]<<","<<norm[1]<<","<<norm[2]<< std::endl;
   TVector3 sensorCenter( geo::gGeometry().siPlaneXPosition( nextPlaneID  ), geo::gGeometry().siPlaneYPosition( nextPlaneID  ), geo::gGeometry().siPlaneZPosition( nextPlaneID  ) );
-  TVector3 delta = trkVec - sensorCenter;
-  TVector3 pVecCrosH = pVec.Cross( hVec.Unit() );
+	streamlog_out (DEBUG5) << "The sensor centre (x,y,z): "<<sensorCenter[0]<<","<<sensorCenter[1]<<","<<sensorCenter[2] << std::endl;
+  TVector3 delta = (trkVec - sensorCenter);//Must be in mm since momentum is.
+  TVector3 pVecCrosH = pVec.Cross(hVec.Unit());
 	////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -1474,15 +1497,15 @@ streamlog_out(DEBUG5) << "EUTelGeometryTelescopeGeoDescription::findIntersection
 	  pVecCrosH.Print();
 	  streamlog_out (DEBUG5) << "Rho: " << rho << std::endl;
 	  streamlog_out (DEBUG5) << "P: " << p << std::endl;
+	  streamlog_out (DEBUG5) << "Delta "<< std::endl;
+		delta.Print();
   }
-
-
 	//Solution to the plane equation and the curved line intersection will be an quadratic with the coefficients. The solution is the arc length along the curve
 	const double a = -0.5 * rho * ( norm.Dot( pVecCrosH ) ) / p;
   const double b = norm.Dot( pVec ) / p;
   const double c = norm.Dot( delta );
 	//////////////////////////////////////////////////////////////////////////////////////////////////////// 
-   
+  //Solution must be in femto metres 
   std::vector< double > sol = Utility::solveQuadratic(a,b,c); // solutions are sorted in ascending order. This is a vector of arc length
 	double solution = ( sol[0] > 0. ) ? sol[0] : ( ( sol[0] < 0. && sol[1] > 0. ) ? sol[1] : -1. ); //choose solution with minimum arc length
 	if(solution < 0){
@@ -1492,28 +1515,54 @@ streamlog_out(DEBUG5) << "EUTelGeometryTelescopeGeoDescription::findIntersection
 			
 	//Determine the global position from arc length.             
   TVector3 newPos;
-	newPos = getXYZfromArcLength(x0, y0,z0,px,py,pz,_beamQ,solution);
-	output[0]=newPos[0]; 				output[1]=newPos[1]; 				output[2]=newPos[2];
-				
-	streamlog_out (DEBUG5) << "Solutions for arc length: " << std::setw(15) << sol[0] << std::setw(15) << sol[1] << std::endl;
-	streamlog_out (DEBUG5) << "Final solution (X,Y,Z): " << std::setw(15) << output[0]  << std::setw(15) << output[1]  << std::setw(15) << output[2] << std::endl;
+	TVector3 newMomentum;
+	newPos = getXYZfromArcLength(trkVec,pVec,beamQ,solution);
+	newMomentum = getXYZMomentumfromArcLength(pVec, trkVec, beamQ, solution);
+	outputPosition[0]=newPos[0]; 				outputPosition[1]=newPos[1]; 				outputPosition[2]=newPos[2];
+	outputMomentum[0]=newMomentum[0]; 				outputMomentum[1]=newMomentum[1]; 				outputMomentum[2]=newMomentum[2];
+	arcLength = solution;		
+	streamlog_out (DEBUG5) << "Solutions for arc length: " << std::setw(15) << sol[0] << std::setw(15) << sol[1] << " Final output arc length: " << arcLength <<std::endl;
+	streamlog_out (DEBUG5) << "Final Solution momentum(X,Y,Z): " << std::setw(15) << outputMomentum[0]  << std::setw(15) << outputMomentum[1]  << std::setw(15) << outputMomentum[2] << std::endl;
+	streamlog_out (DEBUG5) << "Final solution (X,Y,Z): " << std::setw(15) << outputPosition[0]  << std::setw(15) << outputPosition[1]  << std::setw(15) << outputPosition[2] << std::endl;
 
         
   streamlog_out(DEBUG2) << "-------------------------EUTelGeometryTelescopeGeoDescription::findIntersection()--------------------------" << std::endl;
         
   return nextPlaneID;
 }
-//This function determined the xyz position in global coordinates using the state and arc length of the track s.
-TVector3 EUTelGeometryTelescopeGeoDescription::getXYZfromArcLength( float x0, float y0, float z0, float px, float py, float pz, float _beamQ, float s) const {
-	streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::getXYZfromArcLength()" << std::endl;
+//This will calculate the momentum at a arc length away given initial parameters.
+TVector3 EUTelGeometryTelescopeGeoDescription::getXYZMomentumfromArcLength(TVector3 momentum, TVector3 globalPositionStart, float charge, float arcLength ){
+	float mm= 1000;
+	TVector3 T = momentum.Unit();//This is one coordinate axis of curvilinear coordinate system.	
+	const gear::BField&   Bfield = geo::gGeometry().getMagneticFiled();
+	gear::Vector3D vectorGlobal(globalPositionStart[0],globalPositionStart[1],globalPositionStart[2]);//Since field is homogeneous this seems silly but we need to specify a position to geometry to get B-field.
+	const double Bx = (Bfield.at( vectorGlobal ).x());//We times bu 0.3 due to units of other variables. See paper. Must be Tesla
+	const double By = (Bfield.at( vectorGlobal ).y());
+	const double Bz = (Bfield.at( vectorGlobal ).z());
+	TVector3 B;
+	B[0]=Bx*0.3; B[1]=By*0.3; B[2]=Bz*0.3;
+	TVector3 H = (B.Unit());
+	const float alpha = (H.Cross(T)).Mag();
+	const float gamma = H.Dot(T);
+	const float Q = -(B.Mag())*(charge/(momentum.Mag()));//You could use end momentum since it must be constant
+	float theta = (Q*arcLength)/mm;//divide by 1000 to convert to metres 
+	TVector3 N = (H.Cross(T)).Unit();
+	const float cosTheta = cos(theta);
+	const float sinTheta = sin(theta);
+	const float oneMinusCosTheta = (1-cos(theta));
+	TVector3 momentumEndUnit = gamma*oneMinusCosTheta*H+cosTheta*T+alpha*sinTheta*N;
+	streamlog_out ( DEBUG0 ) << "Momentum direction (Unit Vector): " <<  momentumEndUnit[0]<<" , "<<momentumEndUnit[1] <<" , "<<momentumEndUnit[2]<<std::endl;
+	TVector3 momentumEnd = momentumEndUnit*(momentum.Mag());
+	streamlog_out ( DEBUG0 ) << "Momentum: " <<  momentumEnd[0]<<" , "<<momentumEnd[1] <<" , "<<momentumEnd[2]<<std::endl;
 
-  // Fill the postion and momentun into vector
-	TVector3 pos( x0, y0, z0 );
-	TVector3 pVec(px, py, pz );	
-	//////////////////////////////////////////////////////
+	return momentumEnd;
+}
+//This function determined the xyz position in global coordinates using the state and arc length of the track s.
+TVector3 EUTelGeometryTelescopeGeoDescription::getXYZfromArcLength(TVector3 pos ,TVector3 pVec , float beamQ, double s) const {
+	streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::getXYZfromArcLength()" << std::endl;
                 
   // Get magnetic field vector
-  gear::Vector3D vectorGlobal( x0, y0, z0 );        // assuming uniform magnetic field running along X direction
+  gear::Vector3D vectorGlobal( pos[0], pos[1], pos[2] );        // assuming uniform magnetic field running along X direction
 	const gear::BField&   B = geo::gGeometry().getMagneticFiled();
   const double bx         = B.at( vectorGlobal ).x();
   const double by         = B.at( vectorGlobal ).y();
@@ -1522,37 +1571,366 @@ TVector3 EUTelGeometryTelescopeGeoDescription::getXYZfromArcLength( float x0, fl
                
 	const double H = hVec.Mag();
   const double p = pVec.Mag();
-	const double mm = 1000.;
- 	const double k = -0.299792458/mm*_beamQ*H;
-  const double rho = k/p;
-        
-	if ( fabs( k ) > 1.E-6  ) {
+	const double constant = -0.299792458; 
+	const double mm = 1000;
+	const double combineConstantsAndMagneticField = (constant*beamQ*H)/mm;
+	const double k = combineConstantsAndMagneticField;
+  const double rho = combineConstantsAndMagneticField/p; 
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////       
+
+	if ( fabs( k ) > 0  ){
 		// Non-zero magnetic field case
 		TVector3 pCrossH = pVec.Cross(hVec.Unit());
 		TVector3 pCrossHCrossH = pCrossH.Cross(hVec.Unit());
 		const double pDotH = pVec.Dot(hVec.Unit());
-		TVector3 temp1 = pCrossHCrossH;	temp1 *= ( -1./k * sin( rho * s ) );
-		TVector3 temp2 = pCrossH;       temp2 *= ( -1./k * ( 1. - cos( rho * s ) ) );
-		TVector3 temp3 = hVec;          temp3 *= ( pDotH / p * s );
+		TVector3 temp1 = pCrossHCrossH;	temp1 *= ( (-1./k) * sin( rho * s ) );
+		TVector3 temp2 = pCrossH;       temp2 *= ( (-1./k) * ( 1. - cos( rho * s ) ) );
+		TVector3 temp3 = hVec;          temp3 *= ( (pDotH / p) * s );
 		pos += temp1;
 		pos += temp2;
 		pos += temp3;
-        } else {
-		// Vanishing magnetic field case
-
-		
-		const double cosA =  px/p;      // Calculate cos of the angle between Z(beam) and X(solenoid field axis) //NEED TO MAKE SURE THAT TX=PX/P
-		const double cosB = py/p ;        // Calculate cos of the angle between Z(beam) and Y
-		pos.SetX( x0 + cosA * s );
-		pos.SetY( y0 + cosB * s );
-		pos.SetZ( z0 + 1./p * pVec.Z() * s );
+	}else{
+		// Vanishing magnetic field case. //Here you just determine the fraction of P in each direction and this must be the fraction of s that this direction gets
+		const double cosA =  pVec[0]/p;      // Calculate cos of the angle between Z(beam) and X(solenoid field axis) //NEED TO MAKE SURE THAT TX=PX/P
+		const double cosB = pVec[1]/p ;        // Calculate cos of the angle between Z(beam) and Y
+		pos.SetX( pos[0] + cosA * s );
+		pos.SetY( pos[1] + cosB * s );
+		pos.SetZ( pos[2] + 1./p * pVec.Z() * s );
 	}
         
 	streamlog_out(DEBUG2) << "---------------------------------EUTelKalmanFilter::getXYZfromArcLength()------------------------------------" << std::endl;
         
 	return pos;
 }
+//Here we define the transformation between the curvilinear and the local frame. Note the local frame we have is defined as the local frame of the telescope. 
+//We do this since the local frame is arbitrary.
+//However we must describe the local frame in the curvilinear frame. Since we connect the two frames via the same global frame. 
+//The transformations are the same as described below.
+//This is unlike the curvilinear frame which can not have the particles moving in z due to construction. 
+//Therefore we follow the paper: Derivation of Jacobians for the propagation of covariance matrices of track parameters in homogeneous magnetic fields. 
+//Which implies that anytime we are describing the curvilinear system using our global momentums then we need to transform the from our system to theirs.
+//Within the function this will be clearly labelled
+//This is a simple transform our x becomes their(curvilinear y), our y becomes their z and z becomes x
+//However this is ok since we never directly access the curvilinear system. It is only a bridge between two local systems. 
+TMatrixD EUTelGeometryTelescopeGeoDescription::getLocalToCurvilinearTransformMatrix(TVector3 globalMomentum, int  planeID, float charge){
+	const gear::BField&   Bfield = geo::gGeometry().getMagneticFiled();
+	gear::Vector3D vectorGlobal(0.1,0.1,0.1);//Since field is homogeneous this seems silly but we need to specify a position to geometry to get B-field.
+	//Magnetic field must be changed to curvilinear coordinate system. Since this is used in the curvilinear jacobian/////////////////////////////////////////////////////////////////////////////////////////
+	const double Bx = (Bfield.at( vectorGlobal ).z())*0.3;//We times bu 0.3 due to units of other variables. See paper. Must be Tesla
+	const double By = (Bfield.at( vectorGlobal ).y())*0.3;
+	const double Bz = (Bfield.at( vectorGlobal ).x())*0.3;
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	TVector3 B;
+	B[0]=Bx; B[1]=By; B[2]=Bz;
+	TVector3 H = B.Unit();
+	////////////////////////////////////We transform the momentum to curvilinear frame. Since this is what is used to describe the curvilinear frame///////////////////// 
+	TVector3 curvilinearGlobalMomentum;
+	curvilinearGlobalMomentum[0]=globalMomentum[2];curvilinearGlobalMomentum[1]=globalMomentum[1];curvilinearGlobalMomentum[2]=globalMomentum[0];
+	TVector3 T = curvilinearGlobalMomentum.Unit();//With no magnetic field this will point in z direction.	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	const float cosLambda = sqrt(T[0] * T[0] + (T[1]) * (T[1]));
+	//////////////////////////////////////////We use the global curvilinear frame z direction to create the other unit axis/////////////// 
+	TVector3 zGlobalNormal;
+	zGlobalNormal[0]=0;zGlobalNormal[1]=0;zGlobalNormal[2]=1;
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	TVector3 U = (zGlobalNormal.Cross(T)).Unit(); 
+	TVector3 V = (T.Cross(U)); 	
+	streamlog_out(DEBUG0)<<"The Z(V) axis of the curvilinear system in the global system (Note not the same as global telescope frame)."<< std::endl; 
+	streamlog_message( DEBUG0, V.Print();, std::endl; );
+	streamlog_out(DEBUG0)<<"The Y(U) axis of the curvilinear system in the global system (Note not the same as global telescope frame)"<< std::endl; 
+	streamlog_message( DEBUG0, U.Print();, std::endl; );
+	streamlog_out(DEBUG0)<<"The X(T) axis of the curvilinear system in the global system  (Note not the same as global telescope frame). Should be beam direction."<< std::endl; 
+	streamlog_message( DEBUG0, T.Print();, std::endl; );
+	TVector3 ITelescopeFrame;
+	TVector3 KTelescopeFrame;
+	TVector3 JTelescopeFrame;
+	TVector3 I;
+	TVector3 K;
+	TVector3 J;
 
+	///This is the EUTelescope local z direction.//////////////////////////// 
+	streamlog_out(DEBUG0)<<"Set Z(I) with correct sensor rotation. Plane: "<< planeID  << std::endl; 
+	ITelescopeFrame = geo::gGeometry().siPlaneNormal( planeID  );       
+	I[0]=ITelescopeFrame[2];I[1]=ITelescopeFrame[1];I[2]=ITelescopeFrame[0];
+	//////////////////////////////////////////////////////////////////////////////
+	//This is the EUTelescope local Y direction////////////////////////////////////////
+	streamlog_out(DEBUG0)<<"Set Y(K) with correct sensor rotation. Plane: "<< planeID  << std::endl; 
+	KTelescopeFrame = geo::gGeometry().siPlaneYAxis( planeID  ); //This is the y direction of the local frame in global coordinates.      
+	K[0]=KTelescopeFrame[2];K[1]=KTelescopeFrame[1];K[2]=KTelescopeFrame[0];
+	//This is the EUTelescope local x direction//////////////////////////////////
+	streamlog_out(DEBUG0)<<"Set X(J) with correct sensor rotation. Plane: "<< planeID  << std::endl; 
+	JTelescopeFrame  = geo::gGeometry().siPlaneXAxis( planeID  ); //X direction      
+	J[0]=JTelescopeFrame[2];J[1]=JTelescopeFrame[1];J[2]=JTelescopeFrame[0];
+	///////////////////////////////////////////////////////////////////
+	streamlog_out(DEBUG0)<<"The Z(J) axis of local system in the global curvilinear system"<< std::endl; 
+	streamlog_message( DEBUG0, J.Print();, std::endl; );
+	streamlog_out(DEBUG0)<<"The Y(K) axis of local system in the global curvilinear system"<< std::endl; 
+	streamlog_message( DEBUG0, K.Print();, std::endl; );
+	streamlog_out(DEBUG0)<<"The X(I) axis of local system in the global curvilinear system"<< std::endl; 
+	streamlog_message( DEBUG0, I.Print();, std::endl; );
+
+	TVector3 N = (H.Cross(T)).Unit();
+	//
+	const double alpha = (H.Cross(T)).Mag();
+	const double Q = -(B.Mag())*(charge/(curvilinearGlobalMomentum.Mag()));//You could use end momentum since it must be constant
+	//
+	const double TDotI = T.Dot(I);
+	const double TDotJ = T.Dot(J);
+	const double TDotK = T.Dot(K);
+	const double VDotJ = V.Dot(J);
+	const double VDotK = V.Dot(K);
+	const double VDotN = V.Dot(N);
+	const double UDotJ = U.Dot(J);
+	const double UDotK = U.Dot(K);
+	const double UDotN = U.Dot(N);
+	TMatrix jacobian(5,5);
+	jacobian.Zero();
+	jacobian[0][0]=1; 
+	                 jacobian[1][1]=TDotI*VDotJ;             jacobian[1][2]=TDotI*VDotK;             jacobian[1][3]=-alpha*Q*TDotJ*VDotN;             jacobian[1][4]=-alpha*Q*TDotK*VDotN;
+	                 jacobian[2][1]=(TDotI*UDotJ)/cosLambda; jacobian[2][2]=(TDotI*UDotK)/cosLambda; jacobian[2][3]=(-alpha*Q*TDotJ*UDotN)/cosLambda; jacobian[2][4]=(-alpha*Q*TDotK*UDotN)/cosLambda;
+																																																   jacobian[3][3]=UDotJ;													  jacobian[3][4]=UDotK;
+																																																   jacobian[4][3]=VDotJ;													  jacobian[4][4]=VDotK;
+	return jacobian;
+}
+//This is described in Derivations of Jacobians for the propagation of covariance matrices of track parameters in homogeneous magnetic fields. A satrandie, W Wittek
+//This papaer describes the one letter variables. 
+//s must be in metres
+//momentum must be GeV/c
+/*
+TMatrix EUTelGeometryTelescopeGeoDescription::getPropagationJacobianCurvilinear(TVector3 globalMomentumStart, TVector3 globalMomentumEnd, TVector3 globalPositionStart, TVector3 globalPositionEnd, float charge, float arcLength){
+	const float lambda0 = asin(globalMomentumStart[2]/(globalMomentumStart.Mag()));//This will be in radians.
+	const float lambda = asin(globalMomentumEnd[2]/(globalMomentumEnd.Mag()));//This will be in radians.
+	const float phi0 = asin(globalMomentumStart[1]/(globalMomentumStart.Mag())*cos(lambda0));
+	const float phi = asin(globalMomentumEnd[1]/(globalMomentumEnd.Mag())*cos(lambda));
+	const float cosLambda0 = cos(lambda0);
+	const float cosLambda = cos(lambda);
+
+	//The global normal will alway be in this direction.
+	TVector3 zGlobalNormal;
+	zGlobalNormal[0]=0;zGlobalNormal[1]=0;zGlobalNormal[2]=1;
+	TVector3 M0;
+	M0[0] = globalPositionStart[0]; M0[1] = globalPositionStart[1]; M0[2] = globalPositionStart[2];
+	TVector3 M;
+	M[0] = globalPositionEnd[0]; M[1] = globalPositionEnd[1]; M[2] = globalPositionEnd[2];
+	TVector3 M0MinusM = M0-M;
+	TVector3 T0 = globalMomentumStart.Unit();//This is one coordinate axis of curvilinear coordinate system.	
+	TVector3 U0 = (zGlobalNormal.Cross(T0)).Unit();//This is the next coordinate axis
+	TVector3 V0 = (T0.Cross(U0));	 
+	TVector3 T = globalMomentumEnd.Unit();//This is one coordinate axis of curvilinear coordinate system.	
+	TVector3 U = (zGlobalNormal.Cross(T)).Unit();//This is the next coordinate axis
+	TVector3 V = (T.Cross(U));	
+	const gear::BField&   Bfield = geo::gGeometry().getMagneticFiled();
+	gear::Vector3D vectorGlobal(globalPositionStart[0],globalPositionStart[1],globalPositionStart[1]);//Since field is homogeneous this seems silly but we need to specify a position to geometry to get B-field.
+	const double Bx = (Bfield.at( vectorGlobal ).x())*0.3;//We times bu 0.3 due to units of other variables. See paper. Must be Tesla
+	const double By = (Bfield.at( vectorGlobal ).y())*0.3;
+	const double Bz = (Bfield.at( vectorGlobal ).z())*0.3;
+	TVector3 B;
+	B[0]=Bx; B[1]=By; B[2]=Bz;
+	TVector3 H = B.Unit();
+	const float alpha = (H.Cross(T)).Mag();
+	const float gamma = H.Dot(T);
+	const float Q = -(B.Mag())*(charge/(globalMomentumStart.Mag()));//You could use end momentum since it must be constant
+	const float qpInv = pow((charge/(globalMomentumStart.Mag())),-1);
+	float theta = Q*arcLength;
+	TVector3 N = (H.Cross(T)).Unit();
+	//Some terms used in the deriviatives.
+	const float NDotV = N.Dot(V);
+	const float NDotU = N.Dot(U);
+	const float VDotM0MinusM = V.Dot(M0MinusM);
+	const float V0DotV = V0.Dot(V); 
+	const float V0DotU = V0.Dot(U);
+	const float V0DotT = V0.Dot(T);
+	const float V0DotN = V0.Dot(N);
+	const float HDotV0 = H.Dot(V0);
+	const float HDotV = H.Dot(V);
+	const float HDotT = H.Dot(T);
+	const float HDotU = H.Dot(U);
+	const float HDotU0 = H.Dot(U0);
+	const float HCrossV0DotV = (H.Cross(V0)).Dot(V);
+	const float HCrossU0DotV = (H.Cross(U0)).Dot(V);
+	const float HCrossV0DotU = (H.Cross(V0)).Dot(U);
+	const float HCrossU0DotU = (H.Cross(U0)).Dot(U);
+	const float U0DotV = U0.Dot(V);
+	const float U0DotU = U0.Dot(U);
+	const float U0DotT = U0.Dot(T);
+	const float U0DotN = U0.Dot(N);
+	const float UDotM0MinusM = U.Dot(M0MinusM);
+	const float cosTheta = cos(theta);
+	const float oneMinusCosTheta = (1-cos(theta));
+	const float sinTheta =sin(theta);
+	const float thetaMinusSinTheta = (theta - sin(theta));
+	//Here is the derivatives for the jacobain
+	//mometum
+	const float dQPdQP0 = 1; //A.1  //A.1 is the equation number in the paper
+	//lambda
+	const float dLambdadQP0= -alpha*Q*qpInv*(NDotV)*(T.Dot(M0MinusM));//A.2
+	const float dLambdadLambda0 =  cosTheta*V0DotV + sinTheta*HCrossV0DotV + oneMinusCosTheta*HDotV0*HDotV + alpha*NDotV*(-sinTheta*V0DotT) + alpha*(oneMinusCosTheta)*V0DotN - thetaMinusSinTheta*HDotT*HDotV0;//A.3 
+	const float dLambdadPhi0 = cosLambda0*(cosTheta*U0DotV+sinTheta*HCrossU0DotV + oneMinusCosTheta*HDotU0*HDotV +alpha*NDotV*(-sinTheta*U0DotT + alpha*oneMinusCosTheta*U0DotN - thetaMinusSinTheta*HDotT*HDotU0));//A.4  
+	const float dLambdadx0 = -alpha*Q*NDotV*U0DotT;//A.5
+	const float dLambdady0 = -alpha*Q*NDotV*V0DotT;//A.6
+	//phi
+	const float dPhidQP0 = -((alpha*Q)/cosLambda)*qpInv*NDotU*(T.Dot(M0MinusM));//A.7 
+	const float dPhidLambda0 = (1/cosLambda)*(cosTheta*V0DotU+ sinTheta*HCrossV0DotU+oneMinusCosTheta*HDotV0*HDotU +alpha*NDotU*(-sinTheta*V0DotT + alpha*oneMinusCosTheta*V0DotN -thetaMinusSinTheta*HDotT*HDotV0));//A.8
+	const float dPhidPhi0 = (cosLambda0/cosLambda)*(cosTheta*U0DotU + sinTheta*HCrossU0DotU+oneMinusCosTheta*HDotU0*HDotU +alpha*NDotU*(-sinTheta*U0DotT+alpha*oneMinusCosTheta*U0DotN-thetaMinusSinTheta*HDotT*HDotU0));//A.9 
+	const float dPhidx0 = -(alpha*Q/cosLambda)*NDotU*U0DotT;//A.10
+	const float dPhidy0 = -(alpha*Q/cosLambda)*NDotU*V0DotT;//A.11
+	//x
+	const float dxdQP0 = qpInv*UDotM0MinusM;//A.12
+	const float dxdLambda0 = (sinTheta/Q)*V0DotU + (oneMinusCosTheta/Q)*HCrossV0DotU+(thetaMinusSinTheta/Q)*HDotV0*HDotU;//A.13
+	const float dxdPhi0 = cosLambda0*((sinTheta/Q)*U0DotU + (oneMinusCosTheta/Q)*HCrossU0DotU+(thetaMinusSinTheta/Q)*HDotU0*HDotU);//A.14
+	const float dxdx0 = U0DotU;//A.15
+	const float dxdy0 = V0DotU;//A.16
+	//y
+	const float dydQP0 = qpInv*VDotM0MinusM;//A.17
+	const float dydLambda0 = (sinTheta/Q)*V0DotV + (oneMinusCosTheta/Q)*HCrossV0DotV+(thetaMinusSinTheta/Q)*HDotV0*HDotV;//A.18 
+	const float dydPhi0 = cosLambda0*((sinTheta/Q)*U0DotV +(oneMinusCosTheta/Q)*HCrossU0DotV+(thetaMinusSinTheta/Q)*HDotU0*HDotV);//A.19
+	const float dydx0 = U0DotV;//A.20
+	const float dydy0 = V0DotV;//A.21
+	//Create matrix from these terms
+	TMatrix jacobian(5,5);
+	jacobian.Zero();
+	jacobian[0][0] = dQPdQP0; 
+	jacobian[1][0] = dLambdadQP0; jacobian[1][1]=dLambdadLambda0; jacobian[1][2]=dLambdadPhi0; jacobian[1][3]=dLambdadx0; jacobian[1][4]=dLambdady0;
+	jacobian[2][0] = dPhidQP0; jacobian[2][1]=dPhidLambda0; jacobian[2][2]=dPhidPhi0; jacobian[2][3]=dPhidx0; jacobian[2][4]=dPhidy0;
+	jacobian[3][0] = dxdQP0; jacobian[3][1]=dxdx0; jacobian[3][2]=dxdPhi0; jacobian[3][3]=dxdx0; jacobian[3][4]=dxdy0;
+	jacobian[4][0] = dydQP0; jacobian[4][1]=dydy0; jacobian[4][2]=dydPhi0; jacobian[4][3]=dydx0; jacobian[4][4]=dydy0;
+
+	return jacobian;
+
+}
+*/
+/*
+ * \param [in] ds   (3D) arc length to end point
+ *  * \param [in] qbyp q/p (signed inverse momentum)
+ *   * \param [in] t1   track direction at start point
+ *    * \param [in] t2   track direction at end point
+ *     * \param [in] b   B (magnetic field)
+ *      * \return (5*5) propagation matrix
+ *       */
+//Note that the curvilinear frame that this jacobian has been derived in does not work for particles moving in z-direction. 
+//This is due to a construction that assumes tha beam pipe is in the z-direction. Since it is used for collider experiements. 
+//We therefore have to change to the coordinate system used in paper before we apply this jacobian.
+//This is ok since we never access the curvilinear system directly but always through the local system which is defined in the local frame of the telescope
+//I.e Telescope x becomes y, y becomes z and z becomes x.
+TMatrixD EUTelGeometryTelescopeGeoDescription::getPropagationJacobianCurvilinear(float ds , float  qbyp,  TVector3 t1w, TVector3 t2w) {
+	TVector3 t1(t1w[2],t1w[1],t1w[0]);//This is need to change to claus's coordinate system
+	TVector3 t2(t2w[2],t2w[1],t2w[0]);
+	t1.Unit();
+	t2.Unit();
+//	if(t1.Mag() != 1.0 or t2.Mag() != 1.0){//TO DO: This statement does not work for some reason.
+//		streamlog_out(MESSAGE9) << "The magnitude of the two vectors is:  "<< t1.Mag()<< " , "<<t2.Mag() << std::endl;
+//		throw(lcio::Exception(Utility::outputColourString("The calculation of the jacobian must be performed by unit vectors!.", "RED"))); 	
+//	}
+	const gear::BField&   Bfield = getMagneticFiled();
+	//Must transform the B field to be in the frame used in the curvilinear frame 
+	gear::Vector3D vectorGlobal(0.1,0.1,0.1);//Since field is homogeneous this seems silly but we need to specify a position to geometry to get B-field.
+	/////////////////////////////////////////////////////////Must also change the magnetic field to be in the correct coordinate system///////////
+	const double Bx = (Bfield.at( vectorGlobal ).z())*0.3*pow(10,-3); //We times but 0.3 due to units of other variables. See paper. Must be Tesla
+	const double By = (Bfield.at( vectorGlobal ).y())*0.3*pow(10,-3);
+	const double Bz = (Bfield.at( vectorGlobal ).x())*0.3*pow(10,-3);
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	TVector3 b;
+	b[0]=Bx; b[1]=By; b[2]=Bz;
+	streamlog_out( DEBUG2 ) << "EUTelGeometryTelescopeGeoDescription::getPropagationJacobianCurvilinear()------BEGIN" << std::endl;
+	streamlog_out( DEBUG2 ) <<"This is the input to the jacobian"<<endl;  
+	streamlog_out( DEBUG2 ) <<"The arc length: " <<ds <<endl;
+	streamlog_out( DEBUG2 ) <<"The curvature: "<< qbyp <<endl; 
+	streamlog_out(DEBUG0)<<"The unit momentum start "<< std::endl; 
+	streamlog_message( DEBUG0, t1.Print();, std::endl; );
+	streamlog_out(DEBUG0)<<"The unit momentum end "<< std::endl; 
+	streamlog_message( DEBUG0, t2.Print();, std::endl; );
+	streamlog_out(DEBUG0)<<"The unit Magnetic field  "<< std::endl; 
+	streamlog_message( DEBUG0, b.Print();, std::endl; );
+	TMatrixD ajac(5, 5);
+	TVector3  bc  = b;//This is b*c. speed of light in 1 nanosecond
+	ajac.UnitMatrix(); 
+	const double qp = -bc.Mag(); // -|B*c|
+	const double q = qp * qbyp; // Q
+	if (q == 0.) {
+		// line
+ 		ajac[3][2] = ds * sqrt(t1[0] * t1[0] + t1[1] * t1[1]);
+		ajac[4][1] = ds;
+	} else {
+		// helix
+		// at start
+		const double cosl1 = sqrt(t1[0] * t1[0] + t1[1] * t1[1]);
+		// at end
+		const double cosl2 = sqrt(t2[0] * t2[0] + t2[1] * t2[1]);
+		const double cosl2Inv = 1. / cosl2;
+		// magnetic field direction
+		TVector3 hn(bc.Unit());
+		// (signed) momentum
+		const double pav = 1.0 / qbyp;
+		//
+		const double theta = q * ds;
+		const double sint = sin(theta);
+		const double cost = cos(theta);
+		const double gamma = hn.Dot(t2); // H*T
+		TVector3 an1 = hn.Cross(t1); // HxT0
+		TVector3 an2 = hn.Cross(t2); // HxT
+		// U0, V0
+		const double au1 = 1. / sqrt(t1[0]*t1[0]+t1[1]*t1[1]);
+		TVector3 u1(-au1 * t1[1], au1 * t1[0], 0.);
+		TVector3 v1(-t1[2] * u1[1], t1[2] * u1[0], t1[0] * u1[1] - t1[1] * u1[0]);
+		// U, V
+		const double au2 = 1. /sqrt(t2[0]*t2[0]+t2[1]*t2[1]);
+		TVector3 u2(-au2 * t2[1], au2 * t2[0], 0.);
+		TVector3 v2(-t2[2] * u2[1], t2[2] * u2[0], t2[0] * u2[1] - t2[1] * u2[0]);
+		//
+		const double anv = -hn.Dot(u2); // N*V=-H*U
+		const double anu = hn.Dot(v2);  // N*U= H*V
+		const double omcost = 1. - cost;
+		const double tmsint = theta - sint;
+		// M0-M
+		TVector3 dx(-(gamma * tmsint * hn[0] + sint * t1[0] + omcost * an1[0]) / q,
+		-(gamma * tmsint * hn[1] + sint * t1[1] + omcost * an1[1]) / q,
+		-(gamma * tmsint * hn[2] + sint * t1[2] + omcost * an1[2]) / q);
+		// HxU0
+		TVector3 hu1 = hn.Cross(u1);
+		// HxV0
+		TVector3 hv1 = hn.Cross(v1);
+		// some.Dot products
+		const double u1u2 = u1.Dot(u2), u1v2 = u1.Dot(v2), v1u2 = v1.Dot(u2), v1v2 = v1.Dot(v2);
+		const double hu1u2 = hu1.Dot(u2), hu1v2 = hu1.Dot(v2), hv1u2 = hv1.Dot(u2), hv1v2 = hv1.Dot(v2);
+		const double hnu1 = hn.Dot(u1), hnv1 = hn.Dot(v1), hnu2 = hn.Dot(u2), hnv2 = hn.Dot(v2);
+		const double t2u1 = t2.Dot(u1), t2v1 = t2.Dot(v1);
+		const double t2dx = t2.Dot(dx), u2dx = u2.Dot(dx), v2dx = v2.Dot(dx);
+		const double an2u1 = an2.Dot(u1), an2v1 = an2.Dot(v1);
+		// jacobian
+		// 1/P
+		ajac[0][0] = 1.;
+		// Lambda
+		ajac[1][0] = -qp * anv * t2dx;
+		ajac[1][1] = cost * v1v2 + sint * hv1v2 + omcost * hnv1 * hnv2 + anv * (-sint * t2v1 + omcost * an2v1 - gamma * tmsint * hnv1);
+		ajac[1][2] = cosl1
+		* (cost * u1v2 + sint * hu1v2 + omcost * hnu1 * hnv2 + anv * (-sint * t2u1 + omcost * an2u1 - gamma * tmsint * hnu1));
+		ajac[1][3] = -q * anv * t2u1;
+		ajac[1][4] = -q * anv * t2v1;
+		// Phi
+		ajac[2][0] = -qp * anu * t2dx * cosl2Inv;
+		ajac[2][1] = cosl2Inv
+		* (cost * v1u2 + sint * hv1u2 + omcost * hnv1 * hnu2 + anu * (-sint * t2v1 + omcost * an2v1 - gamma * tmsint * hnv1));
+		ajac[2][2] = cosl2Inv * cosl1
+		* (cost * u1u2 + sint * hu1u2 + omcost * hnu1 * hnu2 + anu * (-sint * t2u1 + omcost * an2u1 - gamma * tmsint * hnu1));
+		ajac[2][3] = -q * anu * t2u1 * cosl2Inv;
+		ajac[2][4] = -q * anu * t2v1 * cosl2Inv;
+		// Xt
+		ajac[3][0] = pav * u2dx;
+		ajac[3][1] = (sint * v1u2 + omcost * hv1u2 + tmsint * hnu2 * hnv1) / q;
+		ajac[3][2] = (sint * u1u2 + omcost * hu1u2 + tmsint * hnu2 * hnu1) * cosl1 / q;
+		ajac[3][3] = u1u2;
+		ajac[3][4] = v1u2;
+		// Yt
+		ajac[4][0] = pav * v2dx;
+		ajac[4][1] = (sint * v1v2 + omcost * hv1v2 + tmsint * hnv2 * hnv1) / q;
+		ajac[4][2] = (sint * u1v2 + omcost * hu1v2 + tmsint * hnv2 * hnu1) * cosl1 / q;
+		ajac[4][3] = u1v2;
+		ajac[4][4] = v1v2;
+	}
+	streamlog_out( DEBUG2 ) << "EUTelGeometryTelescopeGeoDescription::getPropagationJacobianCurvilinear()------END" << std::endl;
+
+		return ajac;
+}
 //This function given position/momentum of a particle. Will give you the approximate jacobian at any point along the track. This effectively relates changes in the particle position/momentum at the original to some distant point. 
 //So if I change the initial position by x amount how much will all the other variables position/momentum at the new position change? This is what the Jacobian tells you.
 
@@ -1564,29 +1942,28 @@ TVector3 EUTelGeometryTelescopeGeoDescription::getXYZfromArcLength( float x0, fl
      * @param dz propagation distance
      * @return 
      */
-  TMatrix EUTelGeometryTelescopeGeoDescription::getPropagationJacobianF( float x0, float y0, float z0, float px, float py, float pz, float _beamQ, float dz ) {
+  TMatrix EUTelGeometryTelescopeGeoDescription::getPropagationJacobianF( float x0, float y0, float z0, float px, float py, float pz, float beamQ, float dz ) {
         streamlog_out( DEBUG2 ) << "EUTelGeometryTelescopeGeoDescription::getPropagationJacobianF()" << std::endl;
 	// The formulas below are derived from equations of motion of the particle in
-        // magnetic field under assumption |dz| small. Must be valid for |dz| < 10 cm
-
-	const double mm = 1000.;
-	const double k = 0.299792458/mm;
-
-	TVector3 pVec(px, py, pz );	
-
+	// magnetic field under assumption |dz| small. Must be valid for |dz| < 10 cm
+	const double k = 0.299792458*pow(10,-4);//Here is the conversion from k=(GeV/c) KG mm^-1
+	const double pxMomentum = px;//change momentum to GeV/c 
+	const double pyMomentum = py;//change momentum to GeV/c 
+	const double pzMomentum = pz;//change momentum to GeV/c 
+	TVector3 pVec(pxMomentum, pyMomentum, pzMomentum);	
 	// Get track parameters
-	const double invP = _beamQ/pVec.Mag();
-        const double tx0 = px/pVec.Mag(); //NEED TO DOUBLE CHECK THAT TX = PX/P
-        const double ty0 = py/pVec.Mag();
+	const double invP = beamQ/pVec.Mag();//This should be in 1/(GeV/c)
+	const double tx0 = px/pVec.Mag();//Unitless  
+	const double ty0 = py/pVec.Mag();
 
         // Get magnetic field vector
-        gear::Vector3D vectorGlobal( x0, y0, z0 );        // assuming uniform magnetic field
+	gear::Vector3D vectorGlobal( x0, y0, z0 );        // assuming uniform magnetic field
 	const gear::BField&   B = geo::gGeometry().getMagneticFiled();
-        const double Bx         = B.at( vectorGlobal ).x();
-        const double By         = B.at( vectorGlobal ).y();
-        const double Bz         = B.at( vectorGlobal ).z();
-        
-        const double sqrtFactor = sqrt( 1. + tx0*tx0 + ty0*ty0 );
+	const double Bx         = (B.at( vectorGlobal ).x())*10;//times but 10 to convert from Tesla to KiloGauss. 1 T = 10^4 Gauss.
+	const double By         = (B.at( vectorGlobal ).y())*10;
+	const double Bz         = (B.at( vectorGlobal ).z())*10;
+	
+	const double sqrtFactor = sqrt( 1. + tx0*tx0 + ty0*ty0 );
 
 	const double Ax = sqrtFactor * (  ty0 * ( tx0 * Bx + Bz ) - ( 1. + tx0*tx0 ) * By );
 	const double Ay = sqrtFactor * ( -tx0 * ( ty0 * By + Bz ) + ( 1. + ty0*ty0 ) * Bx );
@@ -1615,10 +1992,10 @@ TVector3 EUTelGeometryTelescopeGeoDescription::getXYZfromArcLength( float x0, fl
 	// Fill-in matrix elements
 	TMatrix jacobianF(5,5);
 	jacobianF.UnitMatrix();
-	jacobianF[0][2] = dxdtx0;	jacobianF[0][3] = dxdty0;	jacobianF[0][4] = dxdinvP0;
-	jacobianF[1][2] = dydtx0;	jacobianF[1][3] = dydty0;	jacobianF[1][4] = dydinvP0;
-	jacobianF[2][3] = dtxdty0;	jacobianF[2][4] = dtxdinvP0;
-	jacobianF[3][2] = dtydtx0;	jacobianF[3][4] = dtydinvP0;
+	jacobianF[3][1] = dxdtx0;	jacobianF[3][2] = dxdty0;	jacobianF[3][0] = dxdinvP0;
+	jacobianF[4][1] = dydtx0;	jacobianF[4][2] = dydty0;	jacobianF[4][0] = dydinvP0;
+	jacobianF[1][2] = dtxdty0;	jacobianF[1][0] = dtxdinvP0;
+	jacobianF[2][1] = dtydtx0;	jacobianF[2][0] = dtydinvP0;
         
         if ( streamlog_level(DEBUG0) ){
              streamlog_out( DEBUG0 ) << "Propagation jacobian: " << std::endl;
@@ -1630,6 +2007,8 @@ TVector3 EUTelGeometryTelescopeGeoDescription::getXYZfromArcLength( float x0, fl
 	return jacobianF;
         
 }   
+
+		
 
 
     
