@@ -99,6 +99,7 @@ namespace eutelescope {
  
             /** */
             unsigned counter() { return _counter++; }
+						void setInitialDisplacementToFirstPlane(float initialDisplacement);
 
             /** needed only for pede2lcio*/ 
             void setGearManager( gear::GearMgr* value ) { _gearManager = value ; }
@@ -222,18 +223,22 @@ namespace eutelescope {
             
 	    /** Plane normal vector (nx,ny,nz) */
             TVector3 siPlaneNormal( int );
-            
-            
+            TVector3 siPlaneXAxis( int);
+						TVector3 siPlaneYAxis( int );
+            void initialisePlanesToExcluded(FloatVec planeIDs );
             /** Map from sensor ID to number along Z */
             const std::map<int, int>& sensorZOrdertoIDs() const;
             
+            std::map<int, int>& sensorZOrderToIDWithoutExcludedPlanes(); 
+						std::map<int,int>& sensorIDToZOrderWithoutExcludedPlanes();
             /** Map from sensor ID to number along Z */
             const std::map<int, int>& sensorIDstoZOrder() const;
             
             int sensorIDtoZOrder( int ) const;
             
             int sensorZOrderToID( int ) const;
-            
+
+	
             /** Vector of all sensor IDs */
             const EVENT::IntVec& sensorIDsVec() const;
 
@@ -297,9 +302,14 @@ namespace eutelescope {
  
 		void master2LocalVec( int, const double[], double[] );
 
-		int findIntersectionWithCertainID( float x0, float y0, float z0, float px, float py, float pz, float _beamQ, int nextPlaneID, float* output);
+		int findIntersectionWithCertainID( float x0, float y0, float z0, float px, float py, float pz, float beamQ, int nextPlaneID, float outputPosition[],TVector3& outputMomentum, float& arcLength );
+		TVector3 getXYZMomentumfromArcLength(TVector3 momentum, TVector3 globalPositionStart, float charge, float  arcLength );
+		float getInitialDisplacementToFirstPlane() const;
 
-		TVector3 getXYZfromArcLength( float x0, float y0, float z0, float px, float py, float pz, float _beamQ, float s) const;
+		TVector3 getXYZfromArcLength( TVector3 pos,TVector3 pVec , float _beamQ, double s) const;
+		TMatrixD getPropagationJacobianCurvilinear(float ds, float qbyp, TVector3 t1, TVector3 t2);
+		TMatrixD getLocalToCurvilinearTransformMatrix(TVector3 globalMomentum, int  planeID, float charge);
+
 
 		TMatrix getPropagationJacobianF( float x0, float y0, float z0, float px, float py, float pz, float _beamQ, float dz );
 
@@ -366,6 +376,7 @@ namespace eutelescope {
 
             /** */
             size_t _siPlanesLayoutID;
+						float _initialDisplacement; 
 
             /** Vector of Sensor IDs */
             EVENT::IntVec _sensorIDVec;
@@ -379,7 +390,11 @@ namespace eutelescope {
             /** Map from sensor ID to number along Z */
             std::map<int, int> _sensorIDtoZOrderMap;
 
+						std::map<int,int> _sensorZOrderToIDWithoutExcludedPlanes;
             /** X coordinate of the sensors centers in global coordinate frame [mm]*/
+
+						std::map<int, int> _sensorIDToZOrderWithoutExcludedPlanes;
+
             EVENT::DoubleVec _siPlaneXPosition;
             
             /** Y coordinate of the sensors centers in global coordinate frame [mm]*/

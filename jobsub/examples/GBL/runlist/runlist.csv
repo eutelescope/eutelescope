@@ -1,0 +1,6 @@
+RunNumber,BeamEnergy,Threshold,GearGeoFile
+97,4.4,7.0,gear_desy2012_150mm.xml
+290,4.4,6,gear-1T.xml
+613,4.4,6,gear-stripSensor.xml 
+1057,4.4,6,gear-stripSensor-noDUT.xml
+105,4.4,6,gear-quad.xml 
