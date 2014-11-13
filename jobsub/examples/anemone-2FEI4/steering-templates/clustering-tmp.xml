@@ -4,41 +4,40 @@
 
 <marlin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ilcsoft.desy.de/marlin/marlin.xsd">
 
- <execute>
-   <processor name="AIDA"/>
-   <processor name="LoadHotPixelDB"/>
-   <processor name="EUTelUtilityPrintEventNumber"/>
-   <processor name="ClusteringMimosa"/>
-   <processor name="ClusteringAPIX"/>
-   <processor name="NoisyClusterMaskerM26"/>
-   <processor name="NoisyClusterRemoverM26"/>
-   <processor name="NoisyClusterMaskerAPIX"/>
-   <processor name="NoisyClusterRemoverAPIX"/>
-   <processor name="Save"/>
- </execute>
+   <execute>
+      <processor name="AIDA"/>
+      <processor name="LoadHotPixelDB"/>
+      <processor name="ClusteringMimosa"/>
+      <processor name="ClusteringAPIX"/>
+      <processor name="NoisyClusterMaskerM26"/>
+      <processor name="NoisyClusterRemoverM26"/>
+      <processor name="NoisyClusterMaskerAPIX"/>
+      <processor name="NoisyClusterRemoverAPIX"/>
+      <processor name="Save"/>
+      <processor name="EUTelUtilityPrintEventNumber"/>
+   </execute>
 
- <global>
-   <parameter name="LCIOInputFiles"> @InputFile@ </parameter>
-   <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
-   <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
-   <parameter name="SkipNEvents" value="@SkipNEvents@"/>
-   <parameter name="SupressCheck" value="false"/>
-   <parameter name="Verbosity" value="@Verbosity@"/>
- </global>
- 
+   <global>
+      <parameter name="LCIOInputFiles"> @LcioPath@/run@RunNumber@-converter.slcio </parameter>
+      <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
+      <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
+      <parameter name="SkipNEvents" value="@SkipNEvents@"/>
+      <parameter name="SupressCheck" value="false"/>
+      <parameter name="Verbosity" value="@Verbosity@"/>
+   </global>
 
  <processor name="AIDA" type="AIDAProcessor">
-   <!--Processor that handles AIDA files. Creates on directory per processor.  Processors only need to create and fill the histograms, clouds and tuples. Needs to be the first ActiveProcessor-->
-   <!-- compression of output file 0: false >0: true (default) -->
-   <parameter name="Compress" type="int">1 </parameter>
-   <!-- filename without extension-->
-   <parameter name="FileName" type="string" value="@HistoFile@"/>
-   <!-- type of output file root (default) or xml )-->
-   <parameter name="FileType" type="string">root </parameter>
-   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+ <!--Processor that handles AIDA files. Creates on directory per processor.  Processors only need to create and fill the histograms, clouds and tuples. Needs to be the first ActiveProcessor-->
+  <!-- compression of output file 0: false >0: true (default) -->
+  <parameter name="Compress" type="int">1 </parameter>
+  <!-- filename without extension-->
+  <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-clustering"/>
+  <!-- type of output file root (default) or xml )-->
+  <parameter name="FileType" type="string">root </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
  </processor>
-
+ 
  <processor name="LoadHotPixelDB" type="ConditionsProcessor">
  <!--ConditionsProcessor provides access to conditions data  transparently from LCIO files or a databases, using LCCD-->
   <!--Initialization of a conditions database handler-->
@@ -50,8 +49,8 @@
   <!--Initialization of a data file handler-->
   <!--parameter name="DataFileHandler" type="StringVec">conditionsName  </parameter-->
   <!--Initialization of a simple conditions file handler-->
-  <parameter name="SimpleFileHandler" type="StringVec"> hotpixel_m26   @HotPixelDBFileM26@  hotpixel_m26  </parameter>
-  <parameter name="SimpleFileHandler" type="StringVec"> hotpixel_apix  @HotPixelDBFileAPIX@ hotpixel_apix  </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> hotpixel_m26   @DatabasePath@/run@RunNumber@-hotpixel-m26-db.slcio hotpixel_m26  </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> hotpixel_apix   @DatabasePath@/run@RunNumber@-hotpixel-apix-db.slcio hotpixel_apix  </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
  </processor>
@@ -109,7 +108,7 @@
   <!--Output collection where noisy clusters have been removed-->
   <parameter name="OutputCollectionName" type="string" lcioOutType="TrackerPulse"> cluster_m26_free </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <parameter name="Verbosity" type="string">@Verbosity@ </parameter>
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
  </processor>
 
  <processor name="NoisyClusterMaskerAPIX" type="EUTelProcessorNoisyClusterMasker">
@@ -129,7 +128,7 @@
   <!--Output collection where noisy clusters have been removed-->
   <parameter name="OutputCollectionName" type="string" lcioOutType="TrackerPulse"> cluster_apix_free </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <parameter name="Verbosity" type="string">@Verbosity@ </parameter>
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
  </processor>
 
  <processor name="Save" type="EUTelOutputProcessor">
@@ -143,7 +142,7 @@
   <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
   <!--parameter name="KeepCollectionNames" type="StringVec">MyPreciousSimTrackerHits  </parameter-->
   <!-- name of output file -->
-  <parameter name="LCIOOutputFile" type="string" value="@OutputFile@"/>
+  <parameter name="LCIOOutputFile" type="string" value="@LcioPath@/run@RunNumber@-clustering.slcio"/>
   <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
   <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   <!--Set it to true to remove intermediate EORE in merged runs-->
@@ -151,11 +150,11 @@
   <!--will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW-->
   <!--parameter name="SplitFileSizekB" type="int">1992294 </parameter-->
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <parameter name="Verbosity" type="string">@Verbosity@ </parameter>
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
  </processor>
 
  <processor name="EUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">
-  <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
+ <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
   <!--Print event number for every n-th event-->
   <parameter name="EveryNEvents" type="int">2500 </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
@@ -164,23 +163,4 @@
   <!--parameter name="printTimestamp" type="bool">false </parameter-->
  </processor>
 
-
- <processor name="Correlator" type="EUTelCorrelator">
-    <!--EUTelCorrelator fills histograms with correlation plots-->
-    <!--Cluster (pulse) collection name-->
-    <parameter name="InputClusterCollections" type="StringVec" > cluster_m26_free cluster_apix_free </parameter>
-    <!-- -->
-    <parameter name="ClusterChargeMinimum" type="int" value="1"/>
-    <!-- -->
-    <parameter name="MinNumberOfCorrelatedHits" type="int" value="7"/>
-    <parameter name="Events"  type="int" value="999"/>
-
-    <!--Residual cuts along both size in microns-->
-    <parameter name="ResidualsXMax" type="FloatVec">  20.  20.  20.      20.0   20.0    20.0  20.0  20.0          </parameter>
-    <parameter name="ResidualsXMin" type="FloatVec"> -20. -20. -20.     -20.0  -20.0   -20.0 -20.0 -20.0          </parameter>
-    <parameter name="ResidualsYMax" type="FloatVec">  20.  20.  20.      20.0   20.0    20.0  20.0  20.0          </parameter>
-    <parameter name="ResidualsYMin" type="FloatVec"> -20. -20. -20.     -20.0  -20.0   -20.0 -20.0 -20.0          </parameter>
- </processor>
-
- 
 </marlin>

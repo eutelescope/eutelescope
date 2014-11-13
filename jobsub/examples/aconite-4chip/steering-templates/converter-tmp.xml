@@ -52,7 +52,6 @@
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
  </processor>
 
-
  <processor name="HotPixelMaskerM26" type="EUTelProcessorNoisyPixelFinder">
  <!--EUTelProcessorNoisyPixelFinder computes the firing frequency of pixels and applies a cut on this value to mask (NOT remove) hot pixels.-->
   <!--The list of sensor IDs that shall be excluded.-->
@@ -75,7 +74,6 @@ within the selected number of event per cycle-->
   <!--Input of Zero Suppressed data-->
   <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> zsdata_m26 </parameter>
  </processor>
-
 
  <processor name="HotPixelMaskerAPIX" type="EUTelProcessorNoisyPixelFinder">
  <!--EUTelProcessorNoisyPixelFinder computes the firing frequency of pixels and applies a cut on this value to mask (NOT remove) hot pixels.-->
