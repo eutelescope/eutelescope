@@ -44,7 +44,8 @@ _nProcessedRuns(0),
 _nProcessedEvents(0),
 _beamQ(-1),
 _eBeam(4),
-_mEstimatorType() //This is used by the GBL software for outliers down weighting
+_mEstimatorType(), //This is used by the GBL software for outliers down weighting
+_first_time(true)
 {
 	// Processor description
 	_description = "EUTelProcessorGBLTrackFit this will fit gbl tracks and output them into LCIO file.";

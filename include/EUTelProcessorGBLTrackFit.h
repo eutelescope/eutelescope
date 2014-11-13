@@ -84,7 +84,7 @@ namespace eutelescope {
 
     protected:
 
-			bool _first_time=true;
+			bool _first_time;
 			/** Number of events processed */
 			int _nProcessedRuns;
 			/** Number of runs processed */
