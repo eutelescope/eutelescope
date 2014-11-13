@@ -94,6 +94,7 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
   <parameter name="SensorIDVec" type="IntVec"> 0 1 2 3 4 5 </parameter>
  </processor>
 
+
  <processor name="HotPixelKiller" type="EUTelProcessorNoisyPixelFinder">
     <!--This is the name of the LCIO file name with the input/output hot pixel collection  (add .slcio)-->
     <parameter name="HotPixelDBFile" type="string" value="@DBPath@/run@HotPixelRunNumber@-hotpixel-db.slcio"/>

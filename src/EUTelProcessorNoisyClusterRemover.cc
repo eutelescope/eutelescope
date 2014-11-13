@@ -126,7 +126,7 @@ void EUTelProcessorNoisyClusterRemover::processEvent(LCEvent * event)
 		if(!(quality & kNoisyCluster))
 		{
 			//TrackerPulseImpl for the output collection
-			auto_ptr<TrackerPulseImpl> outputPulse ( new TrackerPulseImpl );
+			auto_ptr<TrackerPulseImpl> outputPulse (new TrackerPulseImpl );
 
 			//copy the information which is the same
 			outputPulse->setCellID0( inputPulse->getCellID0() );
@@ -137,7 +137,8 @@ void EUTelProcessorNoisyClusterRemover::processEvent(LCEvent * event)
 			outputPulse->setQuality( inputPulse->getQuality() );
 			outputPulse->setTrackerData( inputPulse->getTrackerData() );
 			
-			outputCollection->push_back( outputPulse.release() );
+	                outputCollection->push_back( outputPulse.release() );
+                        streamlog_out ( DEBUG4 ) << "elements in collection : " << outputCollection->size() << std::endl;
 		}
 		//if the cluster is noisy, thus removed, we count that for nice user output
 		else
@@ -150,6 +151,7 @@ void EUTelProcessorNoisyClusterRemover::processEvent(LCEvent * event)
 	if ( !outputCollectionExists && ( outputCollection->size() != _initialOutputCollectionSize )) 
 	{
 		event->addCollection( outputCollection, _outputCollectionName );
+		streamlog_out ( DEBUG4 ) << "adding output collection: " << _outputCollectionName << " " <<  outputCollection->size() << std::endl;
 	}
 
 	if ( !outputCollectionExists && ( outputCollection->size() == _initialOutputCollectionSize ) ) 

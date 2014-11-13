@@ -33,6 +33,32 @@ namespace eutelescope {
     
   }
 
+	//This constructor will change IMPL::TrackImpl into EUTeltrack
+	EUTelTrackImpl::EUTelTrackImpl(const IMPL::TrackImpl& o) : EVENT::LCObject(), AccessChecked(),
+  _chi2(o.getChi2()),
+  _ndf(o.getNdf()),
+  _dEdx(o.getdEdx()),
+  _dEdxError(o.getdEdxError())
+  { 
+		EVENT::TrackStateVec states =  o.getTrackStates();
+		EVENT::TrackStateVec::const_iterator state;
+		for(state = states.begin(); state != states.end(); ++state){
+			EUTelTrackStateImpl* EUState = new EUTelTrackStateImpl(*(*state));
+			EVENT::TrackerHitVec hits = 	o.getTrackerHits();
+			EVENT::TrackerHitVec::const_iterator hit;
+			for(hit = hits.begin();hit != hits.end(); ++hit){
+				if((*state)->getLocation() == Utility::getSensorIDfromHit(*hit)){
+					EUState->setHit(*hit);
+					break;
+				}else{
+					EUState->setHit(NULL);
+				}
+			}
+		addTrackState(EUState);
+		}			
+	    
+  }
+
     const EUTelTrackImpl & EUTelTrackImpl::operator = ( const EUTelTrackImpl &o )
     {
     _chi2 = o._chi2 ;
@@ -268,10 +294,6 @@ namespace eutelescope {
         _dEdxError = dEdxError  ;
     }   
 
-    void EUTelTrackImpl::addHit( EVENT::TrackerHit* hit) {
-        _hits.push_back( hit ) ;
-    }
-
     void  EUTelTrackImpl::addTrack( EUTelTrackImpl* trk ) {
         checkAccess("EUTelTrackImpl::addTrack") ;
         _tracks.push_back( trk ) ;
@@ -295,10 +317,58 @@ namespace eutelescope {
     checkAccess("EUTelTrackImpl::trackStates") ;
     return _trackStates ;
   }
+	//We dont want to attach hits to a track in most cases. Since then you lose the information of what state it was part of. So you add hits to states and states to tracks. However you can access hit directy with this function.
+ const EVENT::TrackerHitVec EUTelTrackImpl::getHitsOnTrack() const {
+	EUTelTrackStateVec::const_iterator state;		
+	EVENT::TrackerHitVec hits;
+	for( state =  _trackStates.begin(); state != _trackStates.end(); ++state){
+		if((*state)->getHit() == NULL){
+			continue;
+		}else{
+		hits.push_back((*state)->getHit());
+		}
+	}
+	return hits;
+}
+
+IMPL::TrackImpl* EUTelTrackImpl::CreateLCIOTrack(){
+streamlog_out( DEBUG4 ) << " ---------------- EUTelTrackImpl::CreateLCIOTrack-- BEGIN ------------- " << std::endl;
+
+	IMPL::TrackImpl* LCIOtrack = new IMPL::TrackImpl;
+	//Loop over all state on the track and fill new track object
+	EUTelTrackStateVec tracks = getTrackStates();
+	streamlog_out( DEBUG0 ) << "The size of the state " << tracks.size() <<std::endl;  
+	EUTelTrackStateVec::const_iterator trackstate;
+	for(trackstate=tracks.begin(); trackstate !=tracks.end(); trackstate++){
+		TVectorD statevector = (*trackstate)->getTrackStateVec();
+
+
+		IMPL::TrackStateImpl* implstate     = static_cast <IMPL::TrackStateImpl*> (*trackstate ); //This is possible since EUTelTrack is derived from IMPL::TrackState
+
+		////////Add our state variables into container. The covariant matrix is for our coordinate system
+		implstate->setD0(statevector[0]); //x position global
+		implstate->setPhi(statevector[1]); //y position global
+		implstate->setOmega(statevector[2]); //tx position global
+		implstate->setZ0(statevector[3]); //ty position global
+		implstate->setTanLambda(statevector[4]); //invp position global		 
+
+                streamlog_out(MESSAGE3) <<  "  " << (*trackstate ) -> id() << "  " << (*trackstate ) -> getLocation() << " " << (*trackstate )->getX() << " " << (*trackstate )->getY() << std::endl;
+		LCIOtrack->addTrackState( implstate );
+	}
 
 	
 
- 
+   	// Assign hits to LCIO TRACK
+	const EVENT::TrackerHitVec& trkcandhits = getHitsOnTrack();
+	streamlog_out( DEBUG0 ) << "The size of hits " << trkcandhits.size() <<std::endl; 
+    	EVENT::TrackerHitVec::const_iterator itrHit;
+    	for ( itrHit = trkcandhits.begin(); itrHit != trkcandhits.end(); ++itrHit ){
+    		LCIOtrack->addHit( *itrHit );
+    	}
+	
+			return LCIOtrack;
+streamlog_out( DEBUG4 ) << " ---------------- EUTelTrackImpl::CreateLCIOTrack-- END ------------- " << std::endl;
+} 
 
 	//int EUTelTrackImpl::getType(){
 //		return  _type;
