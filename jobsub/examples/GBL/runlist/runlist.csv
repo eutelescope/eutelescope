@@ -3,3 +3,4 @@ RunNumber,BeamEnergy,Threshold,GearGeoFile
 290,4.4,6,gear-1T.xml
 613,4.4,6,gear-stripSensor.xml 
 1057,4.4,6,gear-stripSensor-noDUT.xml
+105,4.4,6,gear-quad.xml 

@@ -7,6 +7,9 @@
 #4) If our chi2/ndf is not rougly equal to 1 or we have a high number of rejects then we run again with a different resolution.  
 #TO DO: If we change the resolution chi2 cut should also change. However at the moment we keep this constant for many iteration of alignment.
 #THIS IS PART (1)
+echo "The input to single loop on iteration $number"
+echo "Input gear: $inputGear" 
+echo "Output gear: $outputGear"
 for x in {1..10}; do
 
 	$do jobsub.py -c $CONFIG -csv $RUNLIST -o MaxMissingHitsPerTrack="$MaxMissingHitsPerTrack" -o AllowedSharedHitsOnTrackCandidate="$AllowedSharedHitsOnTrackCandidate" -o ResidualsRMax="$ResidualsRMax" -o HitInputCollectionName="$lcioPatternCollection" -o Verbosity="$Verbosity" -o Verbosity="$Verbosity" -o planeDimensions="${planeDimensions}" -o MaxRecordNumber="$MaxRecordNumber" -o GearFile="$inputGear"  -o ExcludePlanes="$ExcludePlanes" $PatRec $RUN 
