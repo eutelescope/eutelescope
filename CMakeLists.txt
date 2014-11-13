@@ -153,6 +153,7 @@ ADD_DEFINITIONS("-DDO_TESTING")
 
 # include directories
 INCLUDE_DIRECTORIES( ./include )
+INCLUDE_DIRECTORIES( ./include/alibava )
 
 # definitions to pass to the compiler
 ADD_DEFINITIONS( "-Wall -ansi -pedantic -Wextra" )
@@ -166,6 +167,7 @@ SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g -fdiagnostics-show-option -Weffc++ -W
 # add library
 SET( libname ${PROJECT_NAME} )
 AUX_SOURCE_DIRECTORY( ./src library_sources )
+AUX_SOURCE_DIRECTORY( ./src/alibava library_sources )
 ADD_SHARED_LIBRARY( ${libname} ${library_sources} )
 INSTALL_SHARED_LIBRARY( ${libname} DESTINATION lib )
 #INSTALL_SHARED_LIBRARY( GBL DESTINATION lib )

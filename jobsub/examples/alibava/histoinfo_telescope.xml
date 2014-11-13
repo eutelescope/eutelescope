@@ -1,0 +1,143 @@
+<!-- 
+     Histogram information file
+     
+     This sort of file can be use to dynamically set booking
+     boundaries for histograms available in a Processor The basic idea
+     is that before booking the histograms, the processor will create
+     an instance of a EUTelHistogramManager pointing to a XML file
+     like this. The file name can be specified by the user via the
+     steering file.
+     After that, the histoMgr will parse this file and store a
+     EUTelHistogramInfo for each <histo= ... /> and a into a map keyed
+     by the histogram name. 
+
+     Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+  -->
+
+     <!-- Version $Id: histoinfo.xml,v 1.7 2008-10-04 17:11:47 bulgheroni Exp $	 -->
+
+<HistogramManager>
+  <histos>
+
+    <!-- EUTelCalibrateEvent --> 
+    <histo name="RawDataDistHisto"  type="H1D" xBin="4096" xMin="-2048.5" xMax="2047.5"/>
+    <histo name="DataDistHisto"     type="H1D" xBin="5000" xMin="-500"    xMax="500" />
+    <histo name="CommonDistHisto"   type="H1D" xBin="100"  xMin="-10"     xMax="10" />
+
+    <!-- EUTelHitMaker -->
+    <histo name="HitCloudLocal"     type="C2D" />
+    <histo name="HitCloudTelescope" type="C2D" />
+    <histo name="DensityPlot"       type="C3D" />
+
+    <!-- EUTelPedestalNoiseProcessor -->
+    <histo name="PedeDist"          type="H1D" xBin="100"  xMin="-20"     xMax="29"/>
+    <histo name="NoiseDist"         type="H1D" xBin="100"  xMin="-5"      xMax="15"/>
+    <histo name="CommonMode"        type="H1D" xBin="100"  xMin="-2"      xMax="2" />
+
+    <!-- EUTelHistogramMaker and EUTelClusteringProcessor -->
+    <histo name="clusterSignal"     type="H1D" xBin="500" xMin="0"        xMax="1000"/>
+    <histo name="clusterNoise"      type="H1D" xBin="70"  xMin="0"        xMax="50"/>
+    <histo name="seedSignal"        type="H1D" xBin="500" xMin="0"        xMax="300"/>
+    <histo name="seedSNR"           type="H1D" xBin="150" xMin="0"        xMax="100"/>
+    <histo name="clusterSNR"        type="H1D" xBin="200" xMin="0"        xMax="150"/>
+    <histo name="eventMultiplicity" type="H1D" xBin="60"  xMin="0"        xMax="60"/>
+
+    <!-- EUTelCalculateEtaProcessor -->
+    <!-- 
+	 The boundaries of histograms needed by this processor cannot
+	 be changed. They have to be -0.5 and +0.5.  The number of
+	 bins is already a variable that can be modified via the
+	 steering file.
+      -->
+
+
+
+    <!-- EUTelTestFitter -->
+    <histo name="logChi2"     type="H1D" xBin="200" xMin="-1"      xMax="9"/>
+    <histo name="nTrack"      type="H1D" xBin="10"  xMin="-0.5"    xMax="9.5"/>
+    <histo name="nHit"        type="H1D" xBin="10"  xMin="-0.01"   xMax="9.99"/>
+
+
+    <!-- EUTelFitHistograms -->
+    <histo name="measuredX"    type="H1D" xBin="200" xMin="-10" xMax="10"/>
+    <histo name="measuredY"    type="H1D" xBin="100" xMin="-5" xMax="5"/>
+    <histo name="measuredXY"   type="H2D" xBin="200" xMin="-10" xMax="10" 
+                                          yBin="100" yMin="-5" yMax="5"/>
+
+
+    <histo name="fittedX"    type="H1D" xBin="200" xMin="-10" xMax="10"/>
+    <histo name="fittedY"    type="H1D" xBin="100" xMin="-5" xMax="5"/>
+    <histo name="fittedXY"   type="H2D" xBin="200" xMin="-10" xMax="10" 
+                                        yBin="100" yMin="-5" yMax="5"/>
+
+
+    <histo name="residualX"    type="H1D" xBin="500" xMin="-0.50" xMax="0.50"/>
+    <histo name="residualY"    type="H1D" xBin="500" xMin="-0.50" xMax="0.50"/>
+    <histo name="residualXY"   type="H2D" xBin="500" xMin="-0.50" xMax="0.50" 
+                                          yBin="500" yMin="-0.50" yMax="0.50"/>
+
+    <histo name="beamShiftX"    type="H1D" xBin="100" xMin="-2" xMax="2"/>
+    <histo name="beamShiftY"    type="H1D" xBin="100" xMin="-2" xMax="2"/>
+
+    <histo name="beamRotX"    type="H1D" xBin="200" xMin="-10" xMax="10"/>
+    <histo name="beamRotY"    type="H1D" xBin="100" xMin="-5" xMax="5"/>
+    <histo name="beamRotX2D"  type="H2D" xBin="200" xMin="-10" xMax="10" yBin="100" yMin="-1.5" yMax="1.5" />
+    <histo name="beamRotY2D"  type="H2D" xBin="100" xMin="-5" xMax="5" yBin="100" yMin="-1.5" yMax="1.5" />
+    <histo name="beamRotX"    type="P1D" xBin="200" xMin="-10" xMax="10" yMin="-1.5" yMax="1.5" />
+    <histo name="beamRotY"    type="P1D" xBin="100" xMin="-5" xMax="5" yMin="-1.5" yMax="1.5" />
+
+    <!-- EUTelDUTHistograms -->
+            <histo name="DUTshiftY"     type="H1D" xBin="300" xMin="-0.15" xMax="0.15"/>
+            <histo name="DUTshiftX"     type="H1D" xBin="300" xMin="-0.15" xMax="0.15"/>
+
+    <!-- EUTelProcessorTrackingGBLTrackFit -->
+    <histo name="orchi2GblFit"    type="H1D" xBin="500" xMin="0." xMax="1000."/>
+    <histo name="orchi2ndfGblFit" type="H1D" xBin="500" xMin="0." xMax="100."/>
+    <histo name="orprobGblFit"    type="H1D" xBin="500" xMin="0." xMax="1."/>
+    <histo name="chi2GblFit"      type="H1D" xBin="500" xMin="0." xMax="1000."/>
+    <histo name="chi2ndfGblFit"   type="H1D" xBin="500" xMin="0." xMax="100."/>
+    <histo name="probGblFit"      type="H1D" xBin="500" xMin="0." xMax="1."/>
+    <histo name="Residuals2DGblFit_yVSx0"     type="H2D"  xBin="100" xMin="-10." xMax="10." yBin="100" yMin="-10." yMax="10."/>
+    <histo name="Residuals2DGblFit_yVSy0"     type="H2D"  xBin="100" xMin="-05." xMax="05." yBin="100" yMin="-10." yMax="10."/>
+    <histo name="Residuals2DGblFit_yVSx1"     type="H2D"  xBin="100" xMin="-10." xMax="10." yBin="100" yMin="-10." yMax="10."/>
+    <histo name="Residuals2DGblFit_yVSy1"     type="H2D"  xBin="100" xMin="-05." xMax="05." yBin="100" yMin="-10." yMax="10."/>
+    <histo name="Residuals2DGblFit_yVSx2"     type="H2D"  xBin="100" xMin="-10." xMax="10." yBin="100" yMin="-10." yMax="10."/>
+    <histo name="Residuals2DGblFit_yVSy2"     type="H2D"  xBin="100" xMin="-05." xMax="05." yBin="100" yMin="-10." yMax="10."/>
+    <histo name="Residuals2DGblFit_yVSx3"     type="H2D"  xBin="100" xMin="-10." xMax="10." yBin="100" yMin="-10." yMax="10."/>
+    <histo name="Residuals2DGblFit_yVSy3"     type="H2D"  xBin="100" xMin="-05." xMax="05." yBin="100" yMin="-10." yMax="10."/>
+    <histo name="Residuals2DGblFit_yVSx4"     type="H2D"  xBin="100" xMin="-10." xMax="10." yBin="100" yMin="-10." yMax="10."/>
+    <histo name="Residuals2DGblFit_yVSy4"     type="H2D"  xBin="100" xMin="-05." xMax="05." yBin="100" yMin="-10." yMax="10."/>
+    <histo name="Residuals2DGblFit_yVSx5"     type="H2D"  xBin="100" xMin="-10." xMax="10." yBin="100" yMin="-10." yMax="10."/>
+    <histo name="Residuals2DGblFit_yVSy5"     type="H2D"  xBin="100" xMin="-05." xMax="05." yBin="100" yMin="-10." yMax="10."/>
+    <histo name="Residuals2DGblFit_xVSx0"     type="H2D"  xBin="100" xMin="-10." xMax="10." yBin="100" yMin="-10." yMax="10."/>
+    <histo name="Residuals2DGblFit_xVSy0"     type="H2D"  xBin="100" xMin="-05." xMax="05." yBin="100" yMin="-10." yMax="10."/>
+    <histo name="Residuals2DGblFit_xVSx1"     type="H2D"  xBin="100" xMin="-10." xMax="10." yBin="100" yMin="-10." yMax="10."/>
+    <histo name="Residuals2DGblFit_xVSy1"     type="H2D"  xBin="100" xMin="-05." xMax="05." yBin="100" yMin="-10." yMax="10."/>
+    <histo name="Residuals2DGblFit_xVSx2"     type="H2D"  xBin="100" xMin="-10." xMax="10." yBin="100" yMin="-10." yMax="10."/>
+    <histo name="Residuals2DGblFit_xVSy2"     type="H2D"  xBin="100" xMin="-05." xMax="05." yBin="100" yMin="-10." yMax="10."/>
+    <histo name="Residuals2DGblFit_xVSx3"     type="H2D"  xBin="100" xMin="-10." xMax="10." yBin="100" yMin="-10." yMax="10."/>
+    <histo name="Residuals2DGblFit_xVSy3"     type="H2D"  xBin="100" xMin="-05." xMax="05." yBin="100" yMin="-10." yMax="10."/>
+    <histo name="Residuals2DGblFit_xVSx4"     type="H2D"  xBin="100" xMin="-10." xMax="10." yBin="100" yMin="-10." yMax="10."/>
+    <histo name="Residuals2DGblFit_xVSy4"     type="H2D"  xBin="100" xMin="-05." xMax="05." yBin="100" yMin="-10." yMax="10."/>
+    <histo name="Residuals2DGblFit_xVSx5"     type="H2D"  xBin="100" xMin="-10." xMax="10." yBin="100" yMin="-10." yMax="10."/>
+    <histo name="Residuals2DGblFit_xVSy5"     type="H2D"  xBin="100" xMin="-05." xMax="05." yBin="100" yMin="-10." yMax="10."/>
+    <histo name="ResidualsGblFit_x0"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
+    <histo name="ResidualsGblFit_y1"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
+    <histo name="ResidualsGblFit_x1"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
+    <histo name="ResidualsGblFit_y2"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
+    <histo name="ResidualsGblFit_x2"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
+    <histo name="ResidualsGblFit_y3"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
+    <histo name="ResidualsGblFit_x3"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
+    <histo name="ResidualsGblFit_y3"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
+    <histo name="ResidualsGblFit_x4"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
+    <histo name="ResidualsGblFit_y4"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
+    <histo name="ResidualsGblFit_x5"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
+    <histo name="ResidualsGblFit_y5"     type="H1D" xBin="500" xMin="-20." xMax="20."/>
+
+
+  </histos>
+</HistogramManager>
+  
+
+
+

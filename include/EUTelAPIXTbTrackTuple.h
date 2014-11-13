@@ -13,7 +13,12 @@
 
 namespace eutelescope {
   class EUTelAPIXTbTrackTuple : public marlin::Processor {
-    
+  
+  struct rotMat
+  {
+	int r1,r2,r3,r4;
+  };
+ 
   public:
     virtual Processor*  newProcessor() { return new EUTelAPIXTbTrackTuple; }
     
@@ -43,7 +48,10 @@ namespace eutelescope {
     std::string _path2file;
 
     std::vector<int> _DUTIDs;
- 
+    std::map<int, float> _xSensSize;
+    std::map<int, float> _ySensSize;
+    std::map<int, rotMat> _invDUTRot;
+
     // Internal processor variables
     // ----------------------------
     int _nRun ;
