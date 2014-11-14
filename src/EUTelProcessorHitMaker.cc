@@ -96,30 +96,18 @@ _aidaHistoMap(),
 _histogramSwitch(true),
 _orderedSensorIDVec()
 {
-
   // modify processor description
-  _description =
-    "EUTelProcessorHitMaker is responsible to translate cluster centers from the local frame of reference"
-    " to the external frame of reference using the GEAR geometry description";
+  _description =  "EUTelProcessorHitMaker is responsible to translate cluster centers from the local frame of reference \nto the external frame of reference using the GEAR geometry description";
 
+  registerInputCollection(LCIO::TRACKERPULSE,"PulseCollectionName", "Input cluster collection name", _pulseCollectionName, std::string(""));
 
-  registerInputCollection(LCIO::TRACKERPULSE,"PulseCollectionName",
-                            "Cluster (pulse) collection name",
-                            _pulseCollectionName, string ( "" ));
+  registerOutputCollection(LCIO::TRACKERHIT,"HitCollectionName", "Output hit collection name", _hitCollectionName, std::string(""));
 
-  registerOutputCollection(LCIO::TRACKERHIT,"HitCollectionName",
-                            "Hit collection name",
-                            _hitCollectionName, string ( "" ));
+  registerOptionalParameter("EnableLocalCoordidates","Hit coordinates are calculated in local reference frame of sensor", _wantLocalCoordinates, static_cast<bool>(false) );
 
-  registerOptionalParameter("EnableLocalCoordidates","Hit coordinates are calculated in local reference frame of sensor",
-                            _wantLocalCoordinates, static_cast<bool> ( true ) );
-
-  registerOptionalParameter("ReferenceCollection","This is the name of the reference hit collection initialized in this processor. This collection provides the reference vector to correctly determine a plane corresponding to a global hit coordiante.",
-                            _referenceHitCollectionName, static_cast< string > ( "referenceHit" ) );
+  registerOptionalParameter("ReferenceCollection","This is the name of the reference hit collection initialized in this processor. This collection provides the reference vector to correctly determine a plane corresponding to a global hit coordiante.", _referenceHitCollectionName, static_cast<string>("referenceHit") );
  
-  registerOptionalParameter("ReferenceHitFile","This is the file where the reference hit collection is stored",
-                            _referenceHitLCIOFile, static_cast< string > ( "reference.slcio" ) );
-    
+  registerOptionalParameter("ReferenceHitFile","This is the file where the reference hit collection is stored", _referenceHitLCIOFile, std::string("reference.slcio") );
 }
 
 
