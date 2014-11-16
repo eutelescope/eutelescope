@@ -1,4 +1,17 @@
 #!/bin/bash
+while getopts n: option
+do
+        case "${option}"
+        in
+								n) numberOfIterations=${OPTARG};;
+       esac
+done
+
+if [  -z "$numberOfIterations" ]; then
+	echo "The number of iterations is empty in iterativeAlignment bash script!"
+	exit
+fi
+
 #VARIABLES. IMPORTANT CONSTANT VARIABLES THROUGH THE WHOLE ALIGNMENT PROCESS ARE SET HERE. IMPORTANT NOT ALL VARIABLES ARE HERE LOOK IN STEERING FILES/CONFIG
 RUN="105" #This is the run number. Zeros are added later and then exported
 export CONFIG="/afs/phas.gla.ac.uk/user/a/amorton/ilcsoft/v01-17-05/Eutelescope/trunk/jobsub/examples/GBL/config/config.cfg"
@@ -11,24 +24,27 @@ export lcioPatternCollection="hit_filtered_m26" #This is the lcio name given to 
 export planeDimensions="2 2 2 2 2 2 2 2" #This specified if the planes is pixel (2) or strip (1)
 export MaxMissingHitsPerTrack="0" #This is the number of missing hits that a track can have on the planes
 export AllowedSharedHitsOnTrackCandidate="0" #This is the number of hits two tracks can have in common. One track is discarded if over the limit.
-export minTracksPerEventAcceptance=1 #This is the number of tracks that is needed per event before we stop pattern recognition 
+export minTracksPerEventAcceptance=0.5 #This is the number of tracks that is needed per event before we stop pattern recognition. Note value should depend on other cuts. 
 export ExcludePlanes="20 21" #These planes are completely excluded from the analysis. The scattering from the plane however is still taken into account.
 export ResidualsRMax="4" #This is the window size on the next plane that we will accept hits from. This will increase if less than 1 track per event is found.
 export Verbosity="MESSAGE5"
-export r="1"; #This is the resolution of the mimosa sensors taking into account the systematic uncertainty of the alignment. After alignment should be 0.005 mm
-export dutX="1 1" #This is the resolution of the DUT in the x LOCAL direction taking into account the misalignment
-export dutY="1 1" #This is the resolution of the DUT in the x LOCAL direction taking into account the misalignment
+export r="0.005"; 
+export dutX="0.5"
+export dutY="0.5"
 export MaxRecordNumber="10000" 
 #export inputGearInitial="gear-1T.xml" #This is the initial input gear. 
 #export inputGearInitial="gear_desy2012_150mm.xml"
 #export inputGearInitial="gear-stripSensor-noDUT.xml"
 export inputGearInitial="gear-quad.xml"
-export outputGearFinal="gear-final-${RUN}.xml" #This is name of the gear after all iterations of alignment. 
+export inputGearInitial="gear-final-${RUN}.xml"
+#export outputGearFinal="gear-final-${RUN}-DUT20.xml" #This is name of the gear after all iterations of alignment. 
 export histoNameInputFinal="GBLtrack-final-${RUN}" #This is the name of the histograms which will use the final gear to produce the tracks.
 
 #VARIABLES TO INITIALISE. THERE IS NO NEED TO CHANGE THESE.
-export xres="$r $r $r $dutX $r $r $r";
-export yres="$r $r $r $dutY $r $r $r";
+export dutXs="$dutX $dutX" #This is the resolution of the DUT in the x LOCAL direction taking into account the misalignment
+export dutYs="$dutY $dutY" #This is the resolution of the DUT in the x LOCAL direction taking into account the misalignment
+export xres="$r $r $r $dutXs $r $r $r";
+export yres="$r $r $r $dutYs $r $r $r";
 export amode="7";
 export patRecMultiplicationFactor=2 #This is the factor which we increase the window of acceptance by if too few tracks found.
 
@@ -77,14 +93,5 @@ echo "Runlist file: $RUNLIST"
 echo "This is the resolutions X/Y:  $xres/$yres."
 
 #THIS WILL RUN THE ALIGNMENT PROCESS AS MANY TIME AS YOU LIKE TO IMPROVE ALIGNMENT
-./patRecToAlignmentMultiLoop.sh -i "$inputGearInitial" -o "gear-finished-iteration-1.xml" -n 1
-./patRecToAlignmentMultiLoop.sh -i "gear-finished-iteration-1.xml" -o "gear-finished-iteration-2.xml" -n 2
-./patRecToAlignmentMultiLoop.sh -i "gear-finished-iteration-2.xml" -o "$outputGearFinal" -n 3
-
-
-#./patRecToAlignmentMultiLoop.sh -i "$inputGearInitial" -o "gear-finished-iteration-1.xml" -n 1
-#./patRecToAlignmentMultiLoop.sh -i "gear-finished-iteration-1.xml" -o "$outputGearFinal" -n 2
-
-#./patRecToAlignmentMultiLoop.sh -i "$inputGearInitial" -o "$outputGearFinal" -n 1
-
+./howManyIterationsDecider.sh -n "$numberOfIterations"
 ./patRecAndTrackFit.sh -i "$outputGearFinal" -h "$histoNameInputFinal"  

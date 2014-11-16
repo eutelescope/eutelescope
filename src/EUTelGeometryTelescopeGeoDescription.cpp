@@ -689,7 +689,7 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( string tge
 void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvolumeWorld, int SensorId ){
 	double xc, yc, zc;   // volume center position 
 	double alpha, beta, gamma;
-	double rot1, rot3; // for backward compatibility with previous GEAR. We only need 2 entries from gear file for fast z rotation function in TGeoRotations. 
+	double rotRef1, rotRef2, rotRef3, rotRef4; // for backward compatibility with previous GEAR. We only need 2 entries from gear file for fast z rotation function in TGeoRotations. 
 
 	std::stringstream strId;
 	strId << SensorId;
@@ -704,16 +704,19 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
 	beta  = siPlaneYRotation( SensorId ); // 
 	gamma = siPlaneZRotation( SensorId ); // 
 
-	rot1 = siPlaneRotation1( SensorId );
-	rot3 = siPlaneRotation3( SensorId );
-	//rot1=sin and rot=cos
-	//We must check that the input is correct. Since there is only 1 degree of freedom.
-	float	possibleUnit = sqrt(pow(rot1,2)+pow(rot3,2));
-	if(possibleUnit>1.1 or possibleUnit<0.9){//Check that the squares equal 1 and give some rounding error room. 
-		streamlog_out(ERROR5) << "SensorID: " << SensorId << ". Rot Squares sum =  " <<possibleUnit << std::endl;   
-		throw(lcio::Exception(Utility::outputColourString("The integer rotations do not represent a z rotation since there squares don't sum to 1. Note we have four variables in gear file as input BUT A SINGLE DEGREE OF FREEDOM!", "RED"))); 	
+	rotRef1 = siPlaneRotation1( SensorId );
+	rotRef2 = siPlaneRotation2( SensorId );
+	rotRef3 = siPlaneRotation3( SensorId );
+	rotRef4 = siPlaneRotation4( SensorId );
+
+	//We must check that the input is correct. Since this is a combination of initial rotations and reflections the determinate must be 1 or -1
+	float	determinant = rotRef1*rotRef4 - rotRef2*rotRef3  ;
+	if(determinant==1 or determinant==-1){ 
+		streamlog_out(MESSAGE5) << "SensorID: " << SensorId << ". Determinant =  " <<determinant <<"  This is the correct determinate for this transformation." << std::endl;   
+	}else{
+		streamlog_out(ERROR5) << "SensorID: " << SensorId << ". Determinant =  " <<determinant << std::endl;   
+		throw(lcio::Exception(Utility::outputColourString("The initial rotation and reflection matrix does not have determinant of 1 or -1. Gear file input must be wrong.", "RED"))); 	
 	}
-	double integerRotations[2]={rot3,rot1};
 	//Create spatial TGeoTranslation object.
 	string stTranslationName = "matrixTranslationSensor";
 	stTranslationName.append( strId.str() );
@@ -726,21 +729,22 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
 	//Translations are of course just positional changes in the global frame.
 	//Note that each subsequent rotation is using the new coordinate system of the last transformation all the way back to the global frame.
 	//The order is:
-	//Integer Z rotation. This only uses the top left element. This for future gear types should be removed.
+	//Integer Z rotation and reflections.
 	//Z rotations specified by in degrees.
 	//X rotations 
 	//Y rotations
-	TGeoRotation * pMatrixRotCombined = new TGeoRotation();
-	pMatrixRotCombined->FastRotZ(integerRotations);//Z Rotation (Integer). This will rotate a vector around the z axis using the right hand rule
-	pMatrixRotCombined->RotateZ(gamma);//Z Rotation (degrees)//This will again rotate a vector around z axis usign the right hand rule.  
-	pMatrixRotCombined->RotateX(alpha);//X Rotations (degrees)//This will rotate a vector usign the right hand rule round the x-axis
-	pMatrixRotCombined->RotateY(beta);//Y Rotations (degrees)//Same again for Y axis 
-	pMatrixRotCombined->RegisterYourself();//We must allow the matrix to be used by the TGeo manager.
+	TGeoRotation * pMatrixRotRefCombined = new TGeoRotation();
+	double integerRotationsAndReflections[9]={rotRef1,rotRef2,0,rotRef3,rotRef4,0,0,0,1};
+	pMatrixRotRefCombined->SetMatrix(integerRotationsAndReflections);
+	pMatrixRotRefCombined->RotateZ(gamma);//Z Rotation (degrees)//This will again rotate a vector around z axis usign the right hand rule.  
+	pMatrixRotRefCombined->RotateX(alpha);//X Rotations (degrees)//This will rotate a vector usign the right hand rule round the x-axis
+	pMatrixRotRefCombined->RotateY(beta);//Y Rotations (degrees)//Same again for Y axis 
+	pMatrixRotRefCombined->RegisterYourself();//We must allow the matrix to be used by the TGeo manager.
 	// Combined translation and orientation
-	TGeoCombiTrans* combi = new TGeoCombiTrans( *pMatrixTrans, *pMatrixRotCombined );
+	TGeoCombiTrans* combi = new TGeoCombiTrans( *pMatrixTrans, *pMatrixRotRefCombined );
 	//This is to print to screen the rotation and translation matrices used to transform from local to global frame.
 	streamlog_out(MESSAGE9) << "THESE MATRICES ARE USED TO TAKE A POINT IN THE LOCAL FRAME AND MOVE IT TO THE GLOBAL FRAME."  << std::endl;   
-	streamlog_out(MESSAGE9) << "SensorID: " << SensorId << " Rotation matrix for this object."  << std::endl;   
+	streamlog_out(MESSAGE9) << "SensorID: " << SensorId << " Rotation/Reflection matrix for this object."  << std::endl;   
 	const double* rotationMatrix =  combi->GetRotationMatrix();	
 	streamlog_out(MESSAGE9) << setw(10) <<rotationMatrix[0]<<"  "<<rotationMatrix[1]<<"   "<<rotationMatrix[2]<<endl;
 	streamlog_out(MESSAGE9) << setw(10) <<rotationMatrix[3]<<"  "<<rotationMatrix[4]<<"   "<<rotationMatrix[5]<<endl;

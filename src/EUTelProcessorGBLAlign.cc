@@ -187,14 +187,7 @@ void EUTelProcessorGBLAlign::processEvent(LCEvent * evt){
 						streamlog_out(MESSAGE5)<<"Chi: "<<chi<<" ndf: "<<ndf<<endl;
 						throw(lcio::Exception(Utility::outputColourString("The track has either no degrees of freedom or chi2 is zero.", "RED"))); 	
 					}
-					if(_totalTrackCount % 1000 == 0){
-						streamlog_out(MESSAGE9)<<"The percentage of tracks that made chi2 cut of "<<_maxChi2Cut<<" was : "<<(static_cast<float>(_chi2PassCount)/static_cast<float>(_totalTrackCount))*100<<endl;
-					}
-					if((chi/ndf)>_maxChi2Cut){
-						continue; //Do not use this track in the fit.
-					}
 //					cout<<"...More tracks that passed cut here is the chi/ndf: "<< chi/ndf <<" with cut "<< _maxChi2Cut  <<endl;
-					_chi2PassCount++;
 					std::vector< gbl::GblPoint > pointList;//This is the GBL points. These contain the state information, scattering and alignment jacobian. All the information that the mille binary will get.
 					_trackFitter->setInformationForGBLPointList(track, pointList);//We create all the GBL points with scatterer inbetween both planes. This is identical to creating GBL tracks
 					_trackFitter->setPairMeasurementStateAndPointLabelVec(pointList);

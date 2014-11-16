@@ -220,6 +220,7 @@ void EUTelState::setIntersectionLocalXZ(float directionXZ){
 void EUTelState::setPositionLocal(float position[]){
 	setReferencePoint(position);
 }
+//TO D0: This does nothing at the moment but should be implimented for high radiation enviroments.
 void EUTelState::setKinks(TVectorD kinks){
 	EVENT::FloatVec kinksInput;
 	kinksInput.push_back(kinks[0]);

@@ -91,7 +91,13 @@ void EUTelProcessorPatternRecognition::init(){
 		geo::gGeometry().initializeTGeoDescription(name,false);//This create TGeo object that contains all the planes position and scattering information.
 		geo::gGeometry().initialisePlanesToExcluded(_excludePlanes);//We specify the excluded planes here since this is rather generic and can be used by other processors
 		geo::gGeometry().setInitialDisplacementToFirstPlane(_initialDisplacement);//We specify this here so we can access it throughout this processor. 
-		streamlog_out(DEBUG) << "Initialisation of track finder" << std::endl;
+		{ 
+			streamlog_out(MESSAGE5)<<endl<<"These are the planes you will exclude from creating a state. Mass inbetween states will be turned to scatterers in GBLTrackProcessor."<<endl;
+			for(int i =0 ; i < geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size(); ++i){
+				streamlog_out(MESSAGE5)<<geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)<<"  ";
+			}
+			streamlog_out(MESSAGE5) << std::endl;
+		}
 		EUTelPatternRecognition* Finder = new EUTelPatternRecognition();//This is the class that contains all the functions that do the actual work
 		if (!Finder) {
 			streamlog_out(ERROR) << "Can't allocate an instance of EUTelExhaustiveTrackFinder. Stopping ..." << std::endl;

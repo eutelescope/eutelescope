@@ -234,7 +234,9 @@ void EUTelProcessorGBLTrackFit::plotResidual(map< int, map<float, float > >  & s
 			if( sensor_residual_it->first == 3){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX3 ] ) -> fill(res);}
 			if( sensor_residual_it->first == 4){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX4 ] ) -> fill(res);}
 			if( sensor_residual_it->first == 5){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX5 ] ) -> fill(res);}
-			if( sensor_residual_it->first == 20){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ "Residual6" ] ) -> fill(res);}
+			if( sensor_residual_it->first == 20){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ "Residual20X" ] ) -> fill(res);}
+			if( sensor_residual_it->first == 21){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ "Residual21X" ] ) -> fill(res);}
+
 		}else{
 			streamlog_out(DEBUG5) << "The map is NULL" <<std::endl;
 		}
@@ -246,6 +248,9 @@ void EUTelProcessorGBLTrackFit::plotResidual(map< int, map<float, float > >  & s
 			if( sensor_residual_it->first == 3){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY3 ] ) -> fill(res2);}
 			if( sensor_residual_it->first == 4){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY4 ] ) -> fill(res2);}
 			if( sensor_residual_it->first == 5){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY5 ] ) -> fill(res2);}
+			if( sensor_residual_it->first == 20){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ "Residual20Y" ] ) -> fill(res2);}
+			if( sensor_residual_it->first == 21){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ "Residual21Y" ] ) -> fill(res2);}
+
 				
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -375,7 +380,11 @@ void EUTelProcessorGBLTrackFit::bookHistograms() {
         AIDA::IHistogram1D * residGblFit4X = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistNameX4, NBinX, MinX, MaxX); 
         AIDA::IHistogram1D * residGblFit5X = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistNameX5, NBinX, MinX, MaxX); 
 
-        AIDA::IHistogram1D * residGblFit6X = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Residual6" , NBinX, MinX, MaxX); 
+        AIDA::IHistogram1D * residGblFit6X = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Residual20X" , NBinX, MinX, MaxX); 
+        AIDA::IHistogram1D * residGblFit6Y = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Residual20Y" , NBinX, MinX, MaxX); 
+        AIDA::IHistogram1D * residGblFit7X = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Residual21X" , NBinX, MinX, MaxX); 
+        AIDA::IHistogram1D * residGblFit7Y = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Residual21Y" , NBinX, MinX, MaxX); 
+
 
 
               _aidaHistoMap1D.insert(std::make_pair(_histName::_residGblFitHistNameX0, residGblFit0X));
@@ -384,7 +393,10 @@ void EUTelProcessorGBLTrackFit::bookHistograms() {
               _aidaHistoMap1D.insert(std::make_pair(_histName::_residGblFitHistNameX3, residGblFit3X));
               _aidaHistoMap1D.insert(std::make_pair(_histName::_residGblFitHistNameX4, residGblFit4X));
               _aidaHistoMap1D.insert(std::make_pair(_histName::_residGblFitHistNameX5, residGblFit5X));
-              _aidaHistoMap1D.insert(std::make_pair("Residual6", residGblFit6X));
+              _aidaHistoMap1D.insert(std::make_pair("Residual20X", residGblFit6X));
+              _aidaHistoMap1D.insert(std::make_pair("Residual20Y", residGblFit6Y));
+              _aidaHistoMap1D.insert(std::make_pair("Residual21X", residGblFit7X));
+              _aidaHistoMap1D.insert(std::make_pair("Residual21Y", residGblFit7Y));
 
 											
         AIDA::IHistogram1D * residGblFit0Y = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistNameY0, NBinX, MinX, MaxX); 

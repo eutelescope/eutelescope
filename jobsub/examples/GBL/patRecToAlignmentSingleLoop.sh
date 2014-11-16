@@ -10,6 +10,7 @@
 echo "The input to single loop on iteration $number"
 echo "Input gear: $inputGear" 
 echo "Output gear: $outputGear"
+echo "This is the resolutions X/Y:  $xres/$yres."
 for x in {1..10}; do
 
 	$do jobsub.py -c $CONFIG -csv $RUNLIST -o MaxMissingHitsPerTrack="$MaxMissingHitsPerTrack" -o AllowedSharedHitsOnTrackCandidate="$AllowedSharedHitsOnTrackCandidate" -o ResidualsRMax="$ResidualsRMax" -o HitInputCollectionName="$lcioPatternCollection" -o Verbosity="$Verbosity" -o Verbosity="$Verbosity" -o planeDimensions="${planeDimensions}" -o MaxRecordNumber="$MaxRecordNumber" -o GearFile="$inputGear"  -o ExcludePlanes="$ExcludePlanes" $PatRec $RUN 
@@ -42,12 +43,12 @@ if [[ $averageChi2 == "" ]]; then
 	echo "ERROR!!!!!!!!! string for chi2 GBL not found. Check output log file is in the correct place. Furthermore check the string is there. "
   exit
 fi
-Chi2Cut="$averageChi2"
+Chi2Cut=500000000000 #TO DO: Should remove chi2 within alignment since millepede deals with this.
 #We must make sure this cut is close to the average so we do not cut too many tracks.
 #TO DO: Re-introduce chi2 cut during alignment procedure. Millepede use a strange way of specifying this. Need to better understand before implimentation.  
 #fraction=$(echo "scale=4;$Chi2Cut*0.0333"|bc); #Divided by 30(0.0333) since
 #this is close to the value of chi2 that is 3 standard deviations away. 
-export pede="!chiscut $fraction  $fraction" #! denotes a comment in the steering file we remove this to activate this functionality. TO DO: Must comment below as well must fix
+export pede="chiscut 1  1" #! denotes a comment in the steering file we remove this to activate this functionality. TO DO: Must comment below as well must fix
 #this.
 #This is the factor in iteration 1 and
 #iteration 2 we times by the chi2 corresponding to max/min value that
@@ -83,8 +84,12 @@ for x in {1..10}; do
 	if [[ $factor != "" ]];then
 		echo "Factor word found! Resolution must increase by $factor."
 		r=$(echo "scale=4;$r*$factor"|bc);
-		xres="$r $r $r $dut $r $r $r";
-		yres="$r $r $r $dut $r $r $r";
+		dutX=$(echo "scale=4;$dutX*$factor"|bc);
+		dutY=$(echo "scale=4;$dutY*$factor"|bc);
+		dutXs="$dutX $dutX" #This is the resolution of the DUT in the x LOCAL direction taking into account the misalignment
+		dutYs="$dutY $dutY" #This is the resolution of the DUT in the x LOCAL direction taking into account the misalignment
+		xres="$r $r $r $dutXs $r $r $r";
+		yres="$r $r $r $dutYs $r $r $r";
 		echo "New resolutions are for (X/Y):" $xres"/"$yres
 	fi
 	rejected=`unzip  -p  $fileAlign |grep "Too many rejects" |cut -d '-' -f2`; 
@@ -93,13 +98,13 @@ for x in {1..10}; do
 	if [[ $rejected != "" ]];then #This makes sure that we do not cut too many tracks.
 		echo "Too many rejects. Resolution must increase by factor 2."
 		r=$(echo "scale=4;$r*2"|bc);
-		xres="$r $r $r $dut $r $r $r";
-		yres="$r $r $r $dut $r $r $r";
+		dutX=$(echo "scale=4;$dutX*2"|bc);
+		dutY=$(echo "scale=4;$dutY*2"|bc);
+		dutXs="$dutX $dutX" #This is the resolution of the DUT in the x LOCAL direction taking into account the misalignment
+		dutYs="$dutY $dutY" #This is the resolution of the DUT in the x LOCAL direction taking into account the misalignment
+		xres="$r $r $r $dutXs $r $r $r";
+		yres="$r $r $r $dutYs $r $r $r";
 		echo "New resolutions are for (X/Y):" $xres"/"$yres
-		echo "Too many rejects. Chi2 cut must increase."
-		export Chi2Cut=$(echo "scale=4;$Chi2Cut*1.2"|bc);
-		fraction=$(echo "scale=4;$Chi2Cut*0.0333"|bc);  
-		export pede="!chiscut $fraction  $fraction" 
 	fi
 #	if [[ $(echo "$averageChi2Mille <$minChi2AlignAcceptance "|bc) -eq 1 ]] && [[ $averageChi2Mille != "" ]]; then
 #		echo "The average chi2 is:  $averageChi2Mille. This is acceptable so finish."		

@@ -79,6 +79,7 @@ namespace eutelescope {
 		}
 		state.setCombinedHitAndStateCovMatrixInLocalFrame(hitcov);
 	}
+	//TO DO: Kinks are set to zero as inital guess this is ol for low radiation length enviroments.
 	//Note that we take the planes themselfs at scatters and also add scatterers to simulate the medium inbetween. 
 	void EUTelGBLFitter::setScattererGBL(gbl::GblPoint& point, EUTelState & state ) {
 		streamlog_out(DEBUG1) << " setScattererGBL ------------- BEGIN --------------  " << std::endl;
@@ -272,6 +273,7 @@ namespace eutelescope {
 		}
 		streamlog_out ( DEBUG4 ) << " EUTelGBLFitter::setPairMeasurementStateAndPointLabelVec------------ END " << endl;
 	}
+	//TO DO:This at the moment does nothing. However in the future it should be fixed to work for high radiation enviroments.
 	//As a track passes through a scatterer it will be kinked. The initial guessed trajectory has to provide GBL this information from pattern recognition. These come effectively from the states at each plane and can be calculated from these. However we store these number in the lcio file since the calculation is rather arduous
 	void EUTelGBLFitter::setKinkInformationToTrack(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint >& pointList,EUTelTrack &track){
 		streamlog_out ( DEBUG4 ) << " EUTelGBLFitter::setKinkInformationToTrack-- BEGIN " << endl;
