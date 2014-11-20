@@ -123,7 +123,7 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
   <!--Minimum allowed cluster charge to be taken into account for the correlation plots (default = 2)-->
   <parameter name="ClusterChargeMinimum" type="int" value="0"/>
   <!--Dump the offset X and Y values calculated from the correlation bands (default = true)-->
-  <parameter name="Events" type="int" value="5000"/>
+  <parameter name="Events" type="int" value="10000"/>
   <!--SensorID of fixed plane-->
   <!--If there are more then this number of correlated hits (planes->track candidate) (default=5)-->
   <parameter name="MinNumberOfCorrelatedHits" type="int" value="5"/>

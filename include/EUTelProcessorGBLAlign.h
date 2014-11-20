@@ -83,7 +83,6 @@ namespace eutelescope {
         int _nProcessedRuns;
         /** Number of runs processed */
         int _nProcessedEvents;
-				int _chi2PassCount;
 				int _totalTrackCount;
 
 				int _alignmentMode;
@@ -94,8 +93,6 @@ namespace eutelescope {
 				//Beam energy. 
 				double _eBeam;
 
-				//This is the maximum chi2 of a track that will be used in the millepede alignment fit
-				double _maxChi2Cut;
 				bool _createBinary;
         /** Outlier downweighting option */
         std::string _mEstimatorType;

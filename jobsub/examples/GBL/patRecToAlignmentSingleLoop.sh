@@ -30,38 +30,25 @@ for x in {1..10}; do
 	echo "$ResidualsRMax is the size of the radius of acceptance in this iteration"
 	export ResidualsRMax=$(echo "scale=4;$ResidualsRMax*$patRecMultiplicationFactor"|bc)    
 	echo "$ResidualsRMax is the size of the radius of acceptance in the next iteration"
+	#Did we find the correct number of track within x=10 iterations.
+	if [[ $x -eq 10 ]];then
+		echo "We are are iteration 10 and still have not found enough tracks in pattern recogntion"
+		exit
+	fi
 done
 #THIS IS PART (2)
 $do jobsub.py  -c $CONFIG -csv $RUNLIST -o Verbosity="$Verbosity" -o GearFile="$inputGear" -o lcioInputName="trackcand"  -o inputCollectionName="track_candidates" -o lcioOutputName="GBLtracks" -o outputCollectionName="tracks"  -o MaxRecordNumber="$MaxRecordNumber" -o ExcludePlanes="$ExcludePlanes" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" $TrackFit  $RUN 
 
-fileName="$TrackFit-${RUN}.zip"
-fullPath="$directory/$fileName"
-echo "The full path to the log file is: $fullPath" 
-averageChi2=`unzip  -p  $fullPath |grep "This is the average chi2 -" |cut -d '-' -f2`; 
-echo "The average chi2ndf from the log is :  $averageChi2"
-if [[ $averageChi2 == "" ]]; then
-	echo "ERROR!!!!!!!!! string for chi2 GBL not found. Check output log file is in the correct place. Furthermore check the string is there. "
-  exit
-fi
-Chi2Cut=500000000000 #TO DO: Should remove chi2 within alignment since millepede deals with this.
-#We must make sure this cut is close to the average so we do not cut too many tracks.
-#TO DO: Re-introduce chi2 cut during alignment procedure. Millepede use a strange way of specifying this. Need to better understand before implimentation.  
-#fraction=$(echo "scale=4;$Chi2Cut*0.0333"|bc); #Divided by 30(0.0333) since
-#this is close to the value of chi2 that is 3 standard deviations away. 
+#fileName="$TrackFit-${RUN}.zip"
+#fullPath="$directory/$fileName"
+#echo "The full path to the log file is: $fullPath" 
+#averageChi2=`unzip  -p  $fullPath |grep "This is the average chi2 -" |cut -d '-' -f2`; 
+#echo "The average chi2ndf from the log is :  $averageChi2"
+#if [[ $averageChi2 == "" ]]; then
+#	echo "ERROR!!!!!!!!! string for chi2 GBL not found. Check output log file is in the correct place. Furthermore check the string is there. "
+#  exit
+#fi
 export pede="chiscut 1  1" #! denotes a comment in the steering file we remove this to activate this functionality. TO DO: Must comment below as well must fix
-#this.
-#This is the factor in iteration 1 and
-#iteration 2 we times by the chi2 corresponding to max/min value that
-#would be 3 standard derviation away from the mean of n normal gaussians. 
-#Remember if our errors are purely statistically and not systematic like
-#alignment uncertainties then our 6 telescople planes and DUT will act like
-# 6 + 1 = 7 normal gaussian distributions (The 1 of course comes from the DUT).
-# Note that the chi2cut effectively just cuts tracks that are deemed bad
-# overall. Also note that these cuts are done after the track fit and do not
-# change how determine that chi2. Outliers on the otherhand will fit individual
-# tracks again to improve the chi2 by finding good tracks labelled as bad by a
-# single data point of noise that produces a large chi2 which is above the 5 or 2.5 cut
-# above.
 export outlierdownweighting="!outlierdownweighting 0"
 
 
@@ -69,15 +56,17 @@ export outlierdownweighting="!outlierdownweighting 0"
 fileAlign="$directory/$Align-${RUN}.zip"
 for x in {1..10}; do
 	echo "We are on loop number $x"
-	echo "The Chi2Cut variable is $Chi2Cut"
 	echo "The pede input string is:  $pede"
-	$do jobsub.py -c $CONFIG -csv $RUNLIST -o Verbosity="$Verbosity" -o lcioInputName="GBLtracks" -o inputCollectionName="tracks" -o MaxRecordNumber="$MaxRecordNumber" -o ExcludePlanes="$ExcludePlanes" -o GearFile="$inputGear" -o GearAlignedFile="$outputGear" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o chi2Cut="$Chi2Cut" -o pede="$pede" -o outlierdownweighting="$outlierdownweighting"  $Align  $RUN 
-
+	$do jobsub.py -c $CONFIG -csv $RUNLIST -o Verbosity="$Verbosity" -o lcioInputName="GBLtracks" -o inputCollectionName="tracks" -o MaxRecordNumber="$MaxRecordNumber" -o ExcludePlanes="$ExcludePlanes" -o GearFile="$inputGear" -o GearAlignedFile="$outputGear" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o pede="$pede" -o outlierdownweighting="$outlierdownweighting"  $Align  $RUN 
+	#Check that we have not seg fault within millepede.
 	error=`unzip  -p  $fileAlign |grep "Backtrace for this error:" | awk '{ print $NF }'`;
 	if [[ $error != "" ]];then
 		echo "We have a segfault" 
 		exit
 	fi
+	#What overall chi2 did we get from the fit. This is different from the chi2 of the individual tracks. 
+	averageChi2Mille=`unzip -p $fileAlign |grep "Chi^2/Ndf" | awk '{ print $(NF-5) }'`;
+	echo "The chi2/ndf of the fit is $averageChi2Mille" 
 	factor=`unzip  -p  $fileAlign |grep "multiply all input standard deviations by factor" | awk '{ print $NF }'`;
 	factor=`echo ${factor} | sed -e 's/[eE]+*/\\*10\\^/'`
 	echo "factor word: " $factor
@@ -93,27 +82,26 @@ for x in {1..10}; do
 		echo "New resolutions are for (X/Y):" $xres"/"$yres
 	fi
 	rejected=`unzip  -p  $fileAlign |grep "Too many rejects" |cut -d '-' -f2`; 
-	averageChi2Mille=`unzip -p $fileAlign |grep "Chi^2/Ndf" | awk '{ print $(NF-5) }'`;
 	echo "Rejects word:  $rejected "
 	if [[ $rejected != "" ]];then #This makes sure that we do not cut too many tracks.
-		echo "Too many rejects. Resolution must increase by factor 2."
-		r=$(echo "scale=4;$r*2"|bc);
-		dutX=$(echo "scale=4;$dutX*2"|bc);
-		dutY=$(echo "scale=4;$dutY*2"|bc);
+		echo "Too many rejects. Resolution must increase by factor 10."
+		r=$(echo "scale=4;$r*10"|bc);
+		dutX=$(echo "scale=4;$dutX*10"|bc);
+		dutY=$(echo "scale=4;$dutY*10"|bc);
 		dutXs="$dutX $dutX" #This is the resolution of the DUT in the x LOCAL direction taking into account the misalignment
 		dutYs="$dutY $dutY" #This is the resolution of the DUT in the x LOCAL direction taking into account the misalignment
 		xres="$r $r $r $dutXs $r $r $r";
 		yres="$r $r $r $dutYs $r $r $r";
 		echo "New resolutions are for (X/Y):" $xres"/"$yres
 	fi
-#	if [[ $(echo "$averageChi2Mille <$minChi2AlignAcceptance "|bc) -eq 1 ]] && [[ $averageChi2Mille != "" ]]; then
-#		echo "The average chi2 is:  $averageChi2Mille. This is acceptable so finish."		
-#		break
-#	fi
-	if [[ $averageChi2Mille == "" ]] && [[ $factor == "" ]] && [[ $rejected == "" ]];then
+	#If there is no suggested factor and we have enough tracks passing cut then we assume we have fitted as close to the correct resolution for this fit. 
+	if [[ $factor == "" ]] && [[ $rejected == "" ]];then
 		echo "Mille chi2 is non existant. Here it is: $averageChi2Mille"
-		echo "We can not find this or factor or rejects."
+		echo "We can not find this or factor or rejects. Break alignment loop."
 		break
 	fi
-
+	if [[ $x -eq 10 ]];then
+		echo "We are are iteration 10 and still have not found enough tracks in pattern recogntion"
+		exit
+	fi
 done 

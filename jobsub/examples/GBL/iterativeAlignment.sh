@@ -25,22 +25,24 @@ export planeDimensions="2 2 2 2 2 2 2 2" #This specified if the planes is pixel 
 export MaxMissingHitsPerTrack="0" #This is the number of missing hits that a track can have on the planes
 export AllowedSharedHitsOnTrackCandidate="0" #This is the number of hits two tracks can have in common. One track is discarded if over the limit.
 export minTracksPerEventAcceptance=0.5 #This is the number of tracks that is needed per event before we stop pattern recognition. Note value should depend on other cuts. 
-export ExcludePlanes="20 21" #These planes are completely excluded from the analysis. The scattering from the plane however is still taken into account.
+export dutPlanes="20 21" #Since the mimosa planes are always named the same but dut can be different, must note dut. This does NOT indicate that it will be used in analysis.
+export ExcludePlanes="21" #These planes are completely excluded from the analysis. The scattering from the plane however is still taken into account.
 export ResidualsRMax="4" #This is the window size on the next plane that we will accept hits from. This will increase if less than 1 track per event is found.
 export Verbosity="MESSAGE5"
-export r="0.005"; 
-export dutX="0.5"
-export dutY="0.5"
+export r="1"; #Make resolution large so we begin with small chi2 and factor improvement to get to chi2/ndf=1 on next iteration. 
+export dutX="1"
+export dutY="1"
 export MaxRecordNumber="10000" 
 #export inputGearInitial="gear-1T.xml" #This is the initial input gear. 
 #export inputGearInitial="gear_desy2012_150mm.xml"
 #export inputGearInitial="gear-stripSensor-noDUT.xml"
-export inputGearInitial="gear-quad.xml"
-export inputGearInitial="gear-final-${RUN}.xml"
-#export outputGearFinal="gear-final-${RUN}-DUT20.xml" #This is name of the gear after all iterations of alignment. 
-export histoNameInputFinal="GBLtrack-final-${RUN}" #This is the name of the histograms which will use the final gear to produce the tracks.
+#export inputGearInitial="gear-quad.xml" 
+export inputGearInitial="gear-final2-${RUN}.xml"
+export outputIdentifier="finalDUT20LargeResidual" #Use this string to identify final gear/histogram and all iterations before.
 
 #VARIABLES TO INITIALISE. THERE IS NO NEED TO CHANGE THESE.
+export outputGearFinal="gear-${outputIdentifier}-${RUN}.xml" #This is name of the gear after all iterations of alignment. 
+export histoNameInputFinal="GBLtrack-${outputIdentifier}-${RUN}" #This is the name of the histograms which will use the final gear to produce the tracks.
 export dutXs="$dutX $dutX" #This is the resolution of the DUT in the x LOCAL direction taking into account the misalignment
 export dutYs="$dutY $dutY" #This is the resolution of the DUT in the x LOCAL direction taking into account the misalignment
 export xres="$r $r $r $dutXs $r $r $r";
