@@ -180,12 +180,13 @@ void EUTelProcessorHitMaker::DumpReferenceHitDB()
   LCCollectionVec * referenceHitCollection = new LCCollectionVec( LCIO::LCGENERICOBJECT );
   double refVec[3] ;
 
-  int Nlayers =  geo::gGeometry().nPlanes();
-  for(size_t ii = 0 ; ii <  Nlayers; ii++)
+  EVENT::IntVec sensorIDVec = geo::gGeometry().sensorIDsVec();
+  
+  for(EVENT::IntVec::iterator it = sensorIDVec.begin(); it != sensorIDVec.end(); it++)
   {
-    EUTelReferenceHit * refhit = new EUTelReferenceHit();
+    EUTelReferenceHit* refhit = new EUTelReferenceHit();
 
-    int sensorID = geo::gGeometry().sensorZOrderToID( ii );
+    int sensorID = *it; 
     refhit->setSensorID( sensorID );
     refhit->setXOffset( geo::gGeometry().siPlaneXPosition( sensorID ) );
     refhit->setYOffset( geo::gGeometry().siPlaneYPosition(sensorID) );
