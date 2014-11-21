@@ -14,9 +14,8 @@ fi
 
 #VARIABLES. IMPORTANT CONSTANT VARIABLES THROUGH THE WHOLE ALIGNMENT PROCESS ARE SET HERE. IMPORTANT NOT ALL VARIABLES ARE HERE LOOK IN STEERING FILES/CONFIG
 RUN="105" #This is the run number. Zeros are added later and then exported
-export CONFIG="/afs/phas.gla.ac.uk/user/a/amorton/ilcsoft/v01-17-05/Eutelescope/trunk/jobsub/examples/GBL/config/config.cfg"
-export RUNLIST="/afs/phas.gla.ac.uk/user/a/amorton/ilcsoft/v01-17-05/Eutelescope/trunk/jobsub/examples/GBL/runlist/runlist.csv"
-export directory="/afs/phas.gla.ac.uk/user/a/amorton/ilcsoft/v01-17-05/Eutelescope/trunk/jobsub/examples/GBL/output/logs"
+export exampleLocation="/afs/phas.gla.ac.uk/user/a/amorton/ilcsoft/v01-17-05/Eutelescope/trunk/jobsub/examples/GBL/glasgowExample/"
+export scriptsLocation="/afs/phas.gla.ac.uk/user/a/amorton/ilcsoft/v01-17-05/Eutelescope/trunk/GBL/iterativeAlignmentScripts"
 export PatRec=patternRecognition #This is the name of the pattern recognition steering file
 export TrackFit=GBLTrackFit #This is the name of the GBLTrack fitting steering file.
 export Align=GBLAlign #This is the alignment steering file name
@@ -41,6 +40,9 @@ export inputGearInitial="gear-final2-${RUN}.xml"
 export outputIdentifier="finalDUT20LargeResidual" #Use this string to identify final gear/histogram and all iterations before.
 
 #VARIABLES TO INITIALISE. THERE IS NO NEED TO CHANGE THESE.
+export CONFIG="$exampleLocation/config/config.cfg"
+export RUNLIST="$exampleLocation/runlist/runlist.csv"
+export directory="$exampleLocation/output/logs"
 export outputGearFinal="gear-${outputIdentifier}-${RUN}.xml" #This is name of the gear after all iterations of alignment. 
 export histoNameInputFinal="GBLtrack-${outputIdentifier}-${RUN}" #This is the name of the histograms which will use the final gear to produce the tracks.
 export dutXs="$dutX $dutX" #This is the resolution of the DUT in the x LOCAL direction taking into account the misalignment
@@ -95,5 +97,5 @@ echo "Runlist file: $RUNLIST"
 echo "This is the resolutions X/Y:  $xres/$yres."
 
 #THIS WILL RUN THE ALIGNMENT PROCESS AS MANY TIME AS YOU LIKE TO IMPROVE ALIGNMENT
-./howManyIterationsDecider.sh -n "$numberOfIterations"
-./patRecAndTrackFit.sh -i "$outputGearFinal" -h "$histoNameInputFinal"  
+$scriptsLocation/howManyIterationsDecider.sh -n "$numberOfIterations"
+$scriptsLocation/patRecAndTrackFit.sh -i "$outputGearFinal" -h "$histoNameInputFinal"  

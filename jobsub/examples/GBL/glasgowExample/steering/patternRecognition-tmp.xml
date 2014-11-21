@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="us-ascii"?>
+<!-- ?xml-stylesheet type="text/xsl" href="http://ilcsoft.desy.de/marlin/marlin.xsl"? -->
+<!-- ?xml-stylesheet type="text/xsl" href="marlin.xsl"? -->
+
+<!-- 
+
+==========================================================================================
+                     Steering file template for the pysub framework
+
+                               ==> align-tmp.xml <===
+
+Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
+==========================================================================================
+
+--> 
+<marlin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ilcsoft.desy.de/marlin/marlin.xsd">
+
+
+  <execute>
+    <processor name="AIDA"/>
+    <processor name="MyEUTelUtilityPrintEventNumber"/>
+    <processor name="TrackSearch"/>
+    <processor name="Save"/>
+  </execute>
+
+   <global>
+      <parameter name="LCIOInputFiles"> @LcioPath@/@FilePrefix@-hitlocal.slcio </parameter>
+      <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
+      <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
+      <parameter name="SkipNEvents" value="@SkipNEvents@"/>
+      <parameter name="SupressCheck" value="false"/>
+      <parameter name="Verbosity" value="@Verbosity@"/>
+   </global>
+
+
+
+  <processor name="AIDA" type="AIDAProcessor">
+    <!--Processor that handles AIDA files.
+		  Creates one directory per processor.
+		  Processors only need to create and fill the histograms, clouds and tuples.
+		  Needs to be the first ActiveProcessor-->
+
+    <!-- compression of output file 0: false >0: true (default) -->
+    <parameter name="Compress" type="int" value="1"/>
+
+    <!-- filename without extension-->
+    <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-tracksearchHelix"/>
+
+    <!-- type of output file xml (default) or root ( only OpenScientist)-->
+    <parameter name="FileType" type="string" value="root"/>
+  </processor>
+
+
+ <processor name="TrackSearch" type="EUTelProcessorPatternRecognition">
+  <!--EUTelProcessorTrackingHelixTrackSearch preforms track pattern recognition.-->
+  <!--Beam charge [e]-->
+  <parameter name="BeamCharge" type="double">-1. </parameter>
+  <parameter name="ResidualsRMax" type="Float" value="@ResidualsRMax@" />
+  <parameter name="InitialDisplacement" type="Float" value="@InitialDisplacement@" />
+  <!--Beam charge [GeV]-->
+  <parameter name="BeamEnergy" type="double"> @BeamEnergy@ </parameter>
+  <!--Name of histogram info xml file-->
+  <parameter name="HistogramInfoFilename" type="string" value="@HistoInfoFile@"/>
+  <!--Input of Zero Suppressed data-->
+  <parameter name="HitInputCollectionName" type="string" lcioInType="TrackerHit"> @HitInputCollectionName@ </parameter>
+  <!--Maximal number of missing hits on a track candidate-->
+  <parameter name="MaxMissingHitsPerTrack" type="int"> @MaxMissingHitsPerTrack@ </parameter>
+  <!--Maximal number of track candidates to be found in events-->
+  <!--parameter name="MaxNTracksPerEvent" type="int">100 </parameter-->
+  <!--Output track candidates hits collection name-->
+	<parameter name = "AllowedSharedHitsOnTrackCandidate" type="int"> @AllowedSharedHitsOnTrackCandidate@ </parameter>	
+  <parameter name="TrackCandHitOutputCollectionName" type="string" lcioOutType="Track"> track_candidates </parameter>
+	<parameter name="BeamSpread" type="FloatVec" > @BeamSpread@ </parameter>
+	<parameter name="planeDimensions" type="IntVec" > @planeDimensions@ </parameter>
+	<parameter name="ExcludePlanes" type="string" lcioOutType="FloatVec"> @excludeplanes@ </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+ </processor>
+
+
+ <processor name="Save" type="EUTelOutputProcessor">
+  <!--Writes the current event to the specified LCIO outputfile. Eventually it adds a EORE at the of the file if it was missing Needs to be the last ActiveProcessor.-->
+  <!--drops the named collections from the event-->
+  <parameter name="DropCollectionNames" type="StringVec"> </parameter>
+  <!--drops all collections of the given type from the event-->
+  <!--parameter name="DropCollectionTypes" type="StringVec"> SimTrackerHit SimCalorimeterHit </parameter-->
+  <!-- write complete objects in subset collections to the file (i.e. ignore subset flag)-->
+  <!--parameter name="FullSubsetCollections" type="StringVec" value="MCParticlesSkimmed"/-->
+  <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
+  <!--parameter name="KeepCollectionNames" type="StringVec" value="MyPreciousSimTrackerHits"/-->
+  <!-- name of output file -->
+  <parameter name="LCIOOutputFile" type="string" value="@LcioPath@/@FilePrefix@-trackcand.slcio"/>
+  <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
+  <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
+  <!--Set it to true to remove intermediate EORE in merged runs-->
+  <parameter name="SkipIntermediateEORE" type="bool" value="true"/>
+  <!--will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW-->
+  <!-- <parameter name="SplitFileSizekB" type="int" value="1000000"/> DP -->
+ </processor>
+
+  <processor name="MyEUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">
+    <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
+    <!--Print event number for every n-th event-->
+    <parameter name="EveryNEvents" type="int">1000 </parameter>
+    <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+    <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+    <!--print the event timestamp as read from LCIO-->
+    <!--parameter name="printTimestamp" type="bool">false </parameter-->
+  </processor>
+
+
+</marlin>
