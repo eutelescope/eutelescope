@@ -10,11 +10,13 @@
 #include "EUTelDFFClusterImpl.h"
 #include "EUTelBrickedClusterImpl.h"
 #include "EUTelSparseClusterImpl.h"
+#include "EUTelGeometryTelescopeGeoDescription.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
 #include "marlin/Exceptions.h"
 #include "marlin/AIDAProcessor.h"
+#include "marlin/Global.h"
 
 // lcio includes <.h>
 #include <IO/LCWriter.h>
@@ -36,9 +38,7 @@
 #include <AIDA/ITree.h>
 #endif
 
-
 // gear includes <.h>
-#include "marlin/Global.h"
 #include <gear/GearMgr.h>
 #include <gear/SiPlanesParameters.h>
 
@@ -61,25 +61,16 @@ using namespace gear;
 EUTelPreAlign::EUTelPreAlign () :Processor("EUTelPreAlign") {
   _description = "Apply alignment constants to hit collection";
 
-  registerInputCollection (LCIO::TRACKERHIT, "InputHitCollectionName",
-                           "The name of the input hit collection",
-                           _inputHitCollectionName, string ("hit"));
+  registerInputCollection (LCIO::TRACKERHIT, "InputHitCollectionName", "The name of the input hit collection", _inputHitCollectionName, string ("hit"));
 
   registerOptionalParameter ("FixedPlane", "SensorID of fixed plane", _fixedID, 0);
 
-  registerOptionalParameter("AlignmentConstantLCIOFile","Name of LCIO db file where alignment constantds will be stored", 
-			    _alignmentConstantLCIOFile, std::string( "alignment.slcio" ) );
+  registerOptionalParameter("AlignmentConstantLCIOFile","Name of LCIO db file where alignment constants will be stored", _alignmentConstantLCIOFile, std::string( "alignment.slcio" ) );
 
-  registerOptionalParameter("HotPixelCollectionName", "This is the name of the hot pixel collection that clusters should be checked against (optional). ",
+  registerOptionalParameter("HotPixelCollectionName", "This is the name of the hot pixel collection that clusters should be checked against (optional).",
 			    _hotPixelCollectionName, static_cast< string > ( "" ));
 
-  registerProcessorParameter ("Events",
-                              "How many events should be used for an approximation to the X,Y shifts (pre-alignment)? (default=50000)",
-                              _events, static_cast <int> (50000) );
-
-  registerOptionalParameter("ReferenceCollection","reference hit collection name ", _referenceHitCollectionName, static_cast <string> ("referenceHit") );
- 
-  registerOptionalParameter("UseReferenceCollection","Do you want the reference hit collection to be used for coordinate transformations?",  _useReferenceHitCollection, static_cast< bool   > ( true ));
+  registerProcessorParameter ("Events", "How many events should be used for an approximation to the X,Y shifts (pre-alignment)? (default=50000)", _events, static_cast <int> (50000) );
  
   registerOptionalParameter("ResidualsXMin","Minimal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_residualsXMin, std::vector<float > (6, -10.) );
 
@@ -89,12 +80,10 @@ EUTelPreAlign::EUTelPreAlign () :Processor("EUTelPreAlign") {
 
   registerOptionalParameter("ResidualsYMax","Maximal values of the hit residuals in the Y direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_residualsYMax, std::vector<float > (6,  10.) );
 
-  registerOptionalParameter ("MinNumberOfCorrelatedHits",
-			     "If there are more then this number of correlated hits (planes->track candidate) (default=5)",
+  registerOptionalParameter ("MinNumberOfCorrelatedHits", "If there are more then this number of correlated hits (planes->track candidate) (default=5)",
 			     _minNumberOfCorrelatedHits, static_cast <int> (5) );
 
   registerOptionalParameter("HistogramFilling","Switch on or off the histogram filling",_fillHistos, static_cast< bool > ( true ) );
-
 }
 
 
@@ -106,10 +95,6 @@ void EUTelPreAlign::init () {
 
   // set to zero the run and event counters
   _iRun = 0;  _iEvt = 0;
-
-  _UsefullHotPixelCollectionFound = 0; 
-
-  _referenceHitVec = 0;
 
   // clear the sensor ID vector
   _sensorIDVec.clear();
@@ -257,10 +242,6 @@ void  EUTelPreAlign::FillHotPixelMap(LCEvent *event)
 		}
 	    }
 	}          
-      else
-	{
-	  _UsefullHotPixelCollectionFound = 0;
-	}  	
     }
 }
 
@@ -268,21 +249,7 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
 
   if(  isFirstEvent() )
     {
-
       FillHotPixelMap(event);
-
-      if(  _useReferenceHitCollection ) 
-	{
-	  try{
-
-	    _referenceHitVec = dynamic_cast < LCCollectionVec * > (event->getCollection( _referenceHitCollectionName));
-	  }
-	  catch(...)
-	    {
-	      _referenceHitVec = 0;
-	      _useReferenceHitCollection = false;
-	    }
-	}
     }
 
   ++_iEvt;
@@ -538,7 +505,15 @@ void EUTelPreAlign::end() {
     int sensorID = _preAligners.at(ii).getIden();
     constant->setSensorID( sensorID );
     constantsCollection->push_back( constant );
-    streamlog_out ( MESSAGE5 ) << (*constant) << endl;
+   
+    //Also update the EUTelGeometry descr.
+    double updatedXOff = geo::gGeometry().siPlaneXPosition(sensorID) + _preAligners.at(ii).getPeakX();
+    double updatedYOff = geo::gGeometry().siPlaneYPosition(sensorID) + _preAligners.at(ii).getPeakY();
+    
+    geo::gGeometry().setPlaneXPosition(sensorID, updatedXOff);
+    geo::gGeometry().setPlaneYPosition(sensorID, updatedYOff);
+
+ streamlog_out ( MESSAGE5 ) << (*constant) << endl;
   }
 
   streamlog_out( DEBUG5 ) << " adding Collection " << "alignment " << endl;
@@ -547,5 +522,11 @@ void EUTelPreAlign::end() {
   lcWriter->writeEvent( event );
   delete event;
   lcWriter->close();
+  
+  //Write updated GEAR file ("oldname_pre.xml")
+  marlin::StringParameters* MarlinStringParams = marlin::Global::parameters;
+  std::string outputFilename = (MarlinStringParams->getStringVal("GearXMLFile")).substr(0, (MarlinStringParams->getStringVal("GearXMLFile")).size()-4);
+  streamlog_out(MESSAGE5) << "Writing updated GEAR file with filename: " << outputFilename+"_pre.xml" << std::endl;
+  geo::gGeometry().writeGEARFile(outputFilename+"_pre.xml");
 }
 #endif

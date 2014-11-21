@@ -147,13 +147,6 @@ namespace eutelescope {
      */
     std::string _hotPixelCollectionName;
  
-    //! reference HitCollection name 
-    /*!
-     */
-    std::string      _referenceHitCollectionName;
-    bool             _useReferenceHitCollection;
-    LCCollectionVec* _referenceHitVec;    
-    
     //! map of vectors, keeps record of hit pixels 
     /*! 
      *  For each Detector a vector is stored in a map.
@@ -168,11 +161,6 @@ namespace eutelescope {
      *
      */
     int _events;
-   
-    //! bool tag if PreAlign should run anyway or not;
-    /*! default 0
-     */   
-    bool _UsefullHotPixelCollectionFound;
 
 // maps and vectors to navigate along the geometry of the setup:
     //! vector of Rotation Matrix elements
