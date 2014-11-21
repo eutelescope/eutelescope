@@ -487,26 +487,32 @@ int detectorID    = -99; // it's a non sense
 		}
 #endif
 
-		// STILL in the LOCAL coordinate system !!!
-       
 		double telPos[3];
-		// now perform the rotation of the frame of references and put the results already into a 3D array of double to be ready for the setPosition method of TrackerHit
-		telPos[0] = xPointing[0]*xPos + xPointing[1]*yPos;
-		telPos[1] = yPointing[0]*xPos + yPointing[1]*yPos;
-		telPos[2] = 0;
-
 		//if we want global coordinates, we have to transform
 		if ( !_wantLocalCoordinates )
 		{
-            //Rotate according to gRotation angles
-            _EulerRotation( telPos, gRotation );
+			// now perform the rotation of the frame of references and put the results already into a 3D array of double to be ready for the setPosition method of TrackerHit
+			telPos[0] = xPointing[0]*xPos + xPointing[1]*yPos;
+			telPos[1] = yPointing[0]*xPos + yPointing[1]*yPos;
+			telPos[2] = 0;
 
-            //And apply initial shifts     
-            telPos[0] += xZero;
-            telPos[1] += yZero;
-            telPos[2] += zZero + 0.5 * zThickness;
+			//Rotate according to gRotation angles
+			_EulerRotation( telPos, gRotation );
+
+			//And apply initial shifts     
+			telPos[0] += xZero;
+			telPos[1] += yZero;
+			telPos[2] += zZero + 0.5 * zThickness;
 		}
-          
+		else
+		{
+			// now perform the rotation of the frame of references and put the results already into a 3D array of double to be ready for the setPosition method of TrackerHit
+			telPos[0] = xPos; 
+			telPos[1] = yPos;
+			telPos[2] = 0;
+		}
+
+
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 		if( _histogramSwitch ) 
 		{
