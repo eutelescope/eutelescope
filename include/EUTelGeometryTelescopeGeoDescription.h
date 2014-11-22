@@ -133,10 +133,10 @@ namespace eutelescope {
             void setSiPlanesLayoutID(size_t value) { _siPlanesLayoutID = value; } ;          
                     
             /** Number of planes in the setup */
-            size_t nPlanes() const;
+            size_t nPlanes() const { return _nPlanes; };
             
             /** Z coordinates of centers of planes */
-            const EVENT::DoubleVec& siPlanesZPositions() const;
+            const EVENT::DoubleVec& siPlanesZPositions() const { return _siPlaneZPosition; };
            
             /** set methods */
 
@@ -251,20 +251,23 @@ namespace eutelescope {
 	    void initialisePlanesToExcluded(FloatVec planeIDs );
             
 	    /** Map from sensor ID to number along Z */
-            const std::map<int, int>& sensorZOrdertoIDs() const;
+            const std::map<int, int>& sensorZOrdertoIDs() const { return _sensorZOrderToIDMap; };
             
-            std::map<int, int>& sensorZOrderToIDWithoutExcludedPlanes(); 
-						std::map<int,int>& sensorIDToZOrderWithoutExcludedPlanes();
-            /** Map from sensor ID to number along Z */
-            const std::map<int, int>& sensorIDstoZOrder() const;
+	    /**TODO: NOP*/
+            std::map<int, int>& sensorZOrderToIDWithoutExcludedPlanes() { return _sensorZOrderToIDWithoutExcludedPlanes; };
+	    
+	    /**TODO: NOP*/
+	    std::map<int,int>& sensorIDToZOrderWithoutExcludedPlanes() { return _sensorIDToZOrderWithoutExcludedPlanes; };
+            
+	    /** Map from sensor ID to number along Z */
+            const std::map<int, int>& sensorIDstoZOrder() const { return _sensorIDtoZOrderMap; };
             
             int sensorIDtoZOrder( int ) const;
             
             int sensorZOrderToID( int ) const;
 
-	
             /** Vector of all sensor IDs */
-            const EVENT::IntVec& sensorIDsVec() const;
+            const EVENT::IntVec& sensorIDsVec() const { return _sensorIDVec; };
 
 	    Eigen::Vector3d getRotationAnglesFromMatrix( Eigen::Matrix3d rotMat );
 	    Eigen::Matrix3d rotationMatrixFromAngles(long double alpha, long double beta, long double gamma);
@@ -368,13 +371,13 @@ namespace eutelescope {
         	const TGeoHMatrix* getHMatrix( const double globalPos[] );
             
             /** Magnetic field */
-            const gear::BField& getMagneticFiled() const;
+            const gear::BField& getMagneticField() const { return _gearManager->getBField(); };
 
 			/** Returns a pointer to the EUTelGenericPixGeoDescr of given plane */
-			EUTelGenericPixGeoDescr* getPixGeoDescr( int );
+			EUTelGenericPixGeoDescr* getPixGeoDescr( int planeID ) { return _pixGeoMgr->getPixGeoDescr(planeID); };
 
 			/** Returns the TGeo path of given plane */
-			std::string  getPlanePath( int  );
+			std::string  getPlanePath( int planeID ) { return _planePath.find(planeID)->second; };
 
         private:
             /** Silicon planes parameters as described in GEAR

@@ -199,7 +199,7 @@ void EUTelProcessorGBLAlign::processEvent(LCEvent * evt){
 					_trackFitter->setInformationForGBLPointList(track, pointList);//We create all the GBL points with scatterer inbetween both planes. This is identical to creating GBL tracks
 					_trackFitter->setPairMeasurementStateAndPointLabelVec(pointList);
 					_trackFitter->setAlignmentToMeasurementJacobian(track, pointList); //This is place in GBLFitter since millepede has not idea about states and points. Only GBLFitter know about that
-					const gear::BField& B = geo::gGeometry().getMagneticFiled();
+					const gear::BField& B = geo::gGeometry().getMagneticField();
 					const double Bmag = B.at( TVector3(0.,0.,0.) ).r2();
 					gbl::GblTrajectory* traj = 0;
 					if ( Bmag < 1.E-6 ) {

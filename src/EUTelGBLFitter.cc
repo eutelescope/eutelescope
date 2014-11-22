@@ -470,7 +470,7 @@ namespace eutelescope {
 		TVector3 newMomentum;
 		int location = state.getLocation();
 		int locationEnd = -999; //This will create a scatterer with normal in beam direction
-		const gear::BField&   Bfield = geo::gGeometry().getMagneticFiled();
+		const gear::BField&   Bfield = geo::gGeometry().getMagneticField();
 		gear::Vector3D vectorGlobal(position[0],position[1],position[1]);//Since field is homogeneous this seems silly but we need to specify a position to geometry to get B-field.
 		const double Bx = (Bfield.at( vectorGlobal ).x());//We times bu 0.3 due to units of other variables. See paper. Must be Tesla
 		const double By = (Bfield.at( vectorGlobal ).y());
