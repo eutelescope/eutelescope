@@ -273,7 +273,7 @@ double EUTelDafFitter::getZfromRefHit(int plane, double *pos){
    
   if( ReferenceHitVecIsSet() )
   {
-    streamlog_out( MESSAGE5 ) << "_referenceHitVec is empty" << endl;
+    streamlog_out( MESSAGE1 ) << "_referenceHitVec is empty" << endl;
     return 0;
   }
   
