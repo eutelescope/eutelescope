@@ -1,3 +1,3 @@
-RunNumber,BeamEnergy,Threshold,GearGeoFile
+RunNumber,BeamEnergy,Threshold,GearGeoFile, GearPreFile, GearAlignFile
 
-001085,5.0,6.0,gear.xml
+001085,5.0,6.0,gear.xml,gear_pre.xml,gear_pre_aligned.xml
