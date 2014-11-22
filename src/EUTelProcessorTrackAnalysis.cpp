@@ -88,7 +88,7 @@ void	EUTelProcessorTrackAnalysis::initialiseResidualVsPositionHistograms(){
 	std::stringstream sstm;
 	std::string residGblFitHistName;
 	std::string histTitle;
-	for (int i = 0; i < _sensorIDs.size() ; ++i){
+	for (size_t i = 0; i < _sensorIDs.size() ; ++i){
 		/////////////////////////////////////////////////////////////////////////////XY residual plots with position
 		sstm << "ResidualX" << _sensorIDs.at(i);
 		residGblFitHistName = sstm.str();
@@ -115,7 +115,7 @@ void	EUTelProcessorTrackAnalysis::initialiseResidualVsPositionHistograms(){
 		}
 		sstm.str(std::string(""));
 	}
-	for (int i = 0; i < _sensorIDs.size() ; ++i){
+	for(size_t i = 0; i < _sensorIDs.size() ; ++i){
 		sstm << "ResidualY" << _sensorIDs.at(i);
 		residGblFitHistName = sstm.str();
 		sstm.str(std::string());
@@ -143,7 +143,7 @@ void	EUTelProcessorTrackAnalysis::initialiseResidualVsPositionHistograms(){
 	}
 		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////The incidence angles for each plane
-	for (int i = 0; i < _sensorIDs.size() ; ++i){
+	for(size_t i = 0; i < _sensorIDs.size() ; ++i){
 		sstm << "IncidenceXZ" << _sensorIDs.at(i);
 		residGblFitHistName = sstm.str();
 		sstm.str(std::string());
@@ -165,7 +165,7 @@ void	EUTelProcessorTrackAnalysis::initialiseResidualVsPositionHistograms(){
 		}
 		sstm.str(std::string(""));
 	}
-	for (int i = 0; i < _sensorIDs.size() ; ++i){
+	for(size_t i = 0; i < _sensorIDs.size() ; ++i){
 		sstm << "IncidenceYZ" << _sensorIDs.at(i);
 		residGblFitHistName = sstm.str();
 		sstm.str(std::string());

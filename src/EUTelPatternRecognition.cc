@@ -3,14 +3,14 @@
 namespace eutelescope {
     
 	EUTelPatternRecognition::EUTelPatternRecognition() :  
-	_allowedMissingHits(0),
-	_AllowedSharedHitsOnTrackCandidate(0),
 	_totalNumberOfHits(0),
 	_totalNumberOfSharedHits(0),
+	_firstExecution(true),
 	_numberOfTracksTotal(0),
 	_numberOfTracksAfterHitCut(0),
 	_numberOfTracksAfterPruneCut(0),
-	_firstExecution(true),
+	_allowedMissingHits(0),
+	_AllowedSharedHitsOnTrackCandidate(0),
 	_beamE(-1.),
 	_beamQ(-1.)
 	{}
@@ -28,9 +28,9 @@ void EUTelPatternRecognition::clearEveryRun(){
 
 
 void EUTelPatternRecognition::testTrackCandidates(){
-	for(int i=0; i < _tracks.size(); ++i){
+	for(size_t i=0; i < _tracks.size(); ++i){
 		int idBefore=-999;
-		for(int j = 0; j<_tracks.at(i).getTracks().size();++j){
+		for(size_t j = 0; j<_tracks.at(i).getTracks().size();++j){
 			if(_tracks.at(i).getTracks().at(j)->getTrackerHits().size() > 1){
 				throw(lcio::Exception( Utility::outputColourString("The number of hits for each state is greater than 1","RED")));
 			}
@@ -192,15 +192,15 @@ void EUTelPatternRecognition::testPositionEstimation(float position1[], float po
 		//TO DO:We compare all states to all other states on a track. We don't need to do that since hits on differents planes must be different.
 void EUTelPatternRecognition::findTrackCandidatesWithSameHitsAndRemove(){
 	streamlog_out(MESSAGE1) << "EUTelPatternRecognition::findTrackCandidatesWithSameHitsAndRemove----BEGIN" << std::endl;
-	for(int i =0; i < _tracksAfterEnoughHitsCut.size();++i){//LOOP through all tracks 
+	for(size_t i =0; i < _tracksAfterEnoughHitsCut.size();++i){//LOOP through all tracks 
 		streamlog_out(DEBUG1) <<  "Loop at track number: " <<  i <<". Must loop over " << _tracksAfterEnoughHitsCut.size()<<" tracks in total."   << std::endl;
 		std::vector<EUTelState> iStates = _tracksAfterEnoughHitsCut.at(i).getStates();
 		//Now loop through all tracks one ahead of the original track itTrk. This is done since we want to compare all the track to each other to if they have similar hits     
-		for(int j =i+1; j < _tracksAfterEnoughHitsCut.size();++j){ //LOOP over all track again.
+		for(size_t j =i+1; j < _tracksAfterEnoughHitsCut.size();++j){ //LOOP over all track again.
 	//		cout<<"Increase track to: "<<j <<endl;
 			int hitscount=0;
 			std::vector<EUTelState> jStates = _tracksAfterEnoughHitsCut[j].getStates();
-			for(int i=0;i<iStates.size();i++){
+			for(size_t i=0;i<iStates.size();i++){
 		//		cout<<"I top states "<< i<<endl;
 			
 				EVENT::TrackerHit* ihit;
@@ -210,7 +210,7 @@ void EUTelPatternRecognition::findTrackCandidatesWithSameHitsAndRemove(){
 					continue;
 				}
 				int ic = ihit->id();
-				for(int j=0;j<jStates.size();j++){
+				for(size_t j=0;j<jStates.size();j++){
 		//		cout<<"I bottom states "<< j<<endl;
 
 					EVENT::TrackerHit* jhit;
@@ -290,7 +290,7 @@ void  EUTelPatternRecognition::testHitsVec(){
 void EUTelPatternRecognition::initialiseSeeds() {
 	streamlog_out(DEBUG2) << "EUTelPatternRecognition::initialiseSeeds()" << std::endl;
 	_mapSensorIDToSeedStatesVec.clear();
-	for( int iplane = 0; iplane < _createSeedsFromPlanes.size() ; iplane++) {
+	for( size_t iplane = 0; iplane < _createSeedsFromPlanes.size() ; iplane++) {
 
 		streamlog_out(DEBUG1) << "We are using plane: " <<  _createSeedsFromPlanes[iplane] << " to create seeds" << std::endl;
 
@@ -340,9 +340,9 @@ void EUTelPatternRecognition::testInitialSeeds(){
 	//	streamlog_out(MESSAGE5) <<"The size of sensors with seeds: " << _mapSensorIDToSeedStatesVec.size() <<" The number of planes you are suppose to create seeds from: "<<_createSeedsFromPlanes.size()<< " For event number: " <<getEventNumber()<<std::endl;
 //		throw(lcio::Exception(Utility::outputColourString("The size of intial state seeds planes and the number to use at the start are different", "RED"))); 	
 //	}
-	for(int i = 0 ; i < _mapSensorIDToSeedStatesVec.size(); ++i){
+	for(size_t i = 0 ; i < _mapSensorIDToSeedStatesVec.size(); ++i){
 		std::vector<EUTelState> StatesVec =  _mapSensorIDToSeedStatesVec[_createSeedsFromPlanes[i]]; 	
-		for(int j = 0 ; j < StatesVec.size() ; ++j){
+		for(size_t j = 0 ; j < StatesVec.size() ; ++j){
 			if(StatesVec[j].getTrackerHits()[0] == NULL ){
 				throw(lcio::Exception(Utility::outputColourString("The hit is NULL. All seeds must have hits.", "RED"))); 	
 			}
@@ -353,13 +353,13 @@ void EUTelPatternRecognition::testInitialSeeds(){
 void EUTelPatternRecognition::findTrackCandidates() {
 	streamlog_out(MESSAGE1) << "EUTelPatternRecognition::findTrackCandidates()" << std::endl;
 	clearTrackAndTrackStates(); //Clear all past track information
-	for(int i = 0 ; i < _mapSensorIDToSeedStatesVec.size(); ++i){
+	for(size_t i = 0 ; i < _mapSensorIDToSeedStatesVec.size(); ++i){
 		std::vector<EUTelState> statesVec =  _mapSensorIDToSeedStatesVec[_createSeedsFromPlanes[i]]; 	
 		if(statesVec.size() == 0){
 			streamlog_out(MESSAGE5) << Utility::outputColourString("The size of state Vector seeds is zero. try next seed plane","YELLOW")<<std::endl; 
 			continue;
 		}
-		for(int j = 0 ; j < statesVec.size() ; ++j){
+		for(size_t j = 0 ; j < statesVec.size() ; ++j){
 			EUTelTrack track;
 			propagateForwardFromSeedState(statesVec[j], track);
 			streamlog_out ( DEBUG1 ) << "Before adding track to vector "<< endl;
@@ -374,8 +374,8 @@ void EUTelPatternRecognition::findTrackCandidates() {
 
 //We need to delete the states AND the track. Since we have allocated memory to store the state.
 void EUTelPatternRecognition::clearTrackAndTrackStates(){
-	for(int i=0; i < _tracks.size(); ++i){
-		for(int j=0; j< _tracks.at(i).getTracks().size(); ++j){   
+	for(size_t i=0; i < _tracks.size(); ++i){
+		for(size_t j=0; j< _tracks.at(i).getTracks().size(); ++j){   
 		//	delete [] _tracks.at(i).getTracks().at(j); TO DO: Delete memory properly 
 		}
 	}
@@ -389,7 +389,7 @@ void EUTelPatternRecognition::findTracksWithEnoughHits(){
 		streamlog_out(MESSAGE5) <<"This is event: " <<getEventNumber()<<std::endl;   
 		streamlog_out(MESSAGE5) << Utility::outputColourString("The number of tracks for this event is zero ","YELLOW")<<std::endl; 
 	}
-	for(int i = 0 ; i<_tracks.size(); ++i){
+	for(size_t i = 0 ; i<_tracks.size(); ++i){
 		EUTelTrack& track = _tracks[i];
 		streamlog_out ( DEBUG2 ) << "Number of hits on the track: " <<track.getNumberOfHitsOnTrack()<<" Number needed: " <<  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() - _allowedMissingHits << std::endl;
 		if(track.getNumberOfHitsOnTrack()>= geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() - _allowedMissingHits){
@@ -415,7 +415,7 @@ void EUTelPatternRecognition::setHitsVecPerPlane(){
 	}
 	for(int i=0 ; i<numberOfPlanes;++i){
 		EVENT::TrackerHitVec tempHitsVecPlaneX; 
-		for(int j=0 ; j<_allHitsVec.size();++j){
+		for(size_t j=0 ; j<_allHitsVec.size();++j){
 			if(Utility::getSensorIDfromHit( static_cast<IMPL::TrackerHitImpl*>(_allHitsVec[j]) ) ==  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)){
 				tempHitsVecPlaneX.push_back(_allHitsVec.at(j));
 			}
@@ -433,7 +433,7 @@ void EUTelPatternRecognition::setPlaneDimensionsVec(EVENT::IntVec planeDimension
 		throw(lcio::Exception( Utility::outputColourString("The input dimension vector not the same as the number of planes!","RED")));
 	}
 	_planeDimensions.clear();
-	for(int i=0; i<geo::gGeometry().sensorZOrdertoIDs().size(); ++i){//Loop through each plane
+	for(size_t i=0; i<geo::gGeometry().sensorZOrdertoIDs().size(); ++i){//Loop through each plane
 		int planeID = geo::gGeometry().sensorZOrdertoIDs().at(i);
 		if (_planeDimensions.find(planeID) == _planeDimensions.end()){//This is to check that we don't try to map the same sensor to two different plane dimensions.
 			_planeDimensions[planeID] = planeDimensions.at(i);
@@ -453,7 +453,7 @@ void EUTelPatternRecognition::testHitsVecPerPlane(){
 		throw(lcio::Exception(Utility::outputColourString("The number of planes that could contain hits and the number of planes is different. Problem could be the gear file has to planes at the same z position.", "RED"))); 	
 
 	}
-	for(int i=0 ;i<_mapHitsVecPerPlane.size();++i){
+	for(size_t i=0 ;i<_mapHitsVecPerPlane.size();++i){
 		int planeID = geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i);
 		if(_mapHitsVecPerPlane.at(planeID).size() <= 0){
 			streamlog_out(DEBUG0) << Utility::outputColourString("One plane has no hits at all. Is this correct?","YELLOW") << std::endl;
@@ -470,7 +470,7 @@ void EUTelPatternRecognition::testPlaneDimensions(){
 		streamlog_out(ERROR5) << "The size of _planesDimensions is: "<< _planeDimensions.size()<<" The size of sensorZOrdertoIDs is: " << geo::gGeometry().sensorZOrdertoIDs().size()<< std::endl;
 		throw(lcio::Exception( Utility::outputColourString("The output dimension vector is not the same size as the number of planes. Could be something to do with the gear file. Make sure you have some distances between you planes!","RED")));
 	}
-	for(int i=0;i<_planeDimensions.size();++i){
+	for(size_t i=0;i<_planeDimensions.size();++i){
 		if(_planeDimensions.at(geo::gGeometry().sensorZOrdertoIDs().at(i))>2 or _planeDimensions.at(geo::gGeometry().sensorZOrdertoIDs().at(i))<=0){
 			throw(lcio::Exception( "The number of dimension for one of your planes is greater than 2 or less than 0. If this is not a mistake collect you nobel prize now!"));
 		}

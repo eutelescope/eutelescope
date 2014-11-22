@@ -321,7 +321,7 @@ int EUTelMillepede::writeMilleSteeringFile(lcio::StringVec pedeSteerAddCmds){
 	steerFile << endl;
 	steerFile << "Parameter" << endl;
 	//TO DO: There should be a test that all planes that are used have a state associated with them and that state has a hit
-	for(int i =0 ; i < geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size(); ++i){
+	for(size_t i =0 ; i < geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size(); ++i){
 		int sensorId = geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i); 
 		///////////////////////////////////////////////////////////////////////////////////////////////////Determine if some of alignment parameters are fixed. BEGIN
 		// check if plane has to be used as fixed
@@ -585,31 +585,31 @@ void EUTelMillepede::testUserInput(){
 }
 void EUTelMillepede::printFixedPlanes(){
 	streamlog_out(MESSAGE5)<<"These are the planes what have X shifts fixed"<<endl;
-	for(int i=0;i<_fixedAlignmentXShfitPlaneIds.size();++i){
+	for(size_t i=0;i<_fixedAlignmentXShfitPlaneIds.size();++i){
 		streamlog_out(MESSAGE5)<<_fixedAlignmentXShfitPlaneIds.at(i)<<"  ";
 	}
 	streamlog_out(MESSAGE5)<<endl<<"These are the planes what have Y shifts fixed"<<endl;
-	for(int i=0;i<_fixedAlignmentYShfitPlaneIds.size();++i){
+	for(size_t i=0;i<_fixedAlignmentYShfitPlaneIds.size();++i){
 		streamlog_out(MESSAGE5)<<_fixedAlignmentYShfitPlaneIds.at(i)<<"  ";
 	}
 	streamlog_out(MESSAGE5)<<endl<<"These are the planes what have Z shifts fixed"<<endl;
-	for(int i=0;i<_fixedAlignmentZShfitPlaneIds.size();++i){
+	for(size_t i=0;i<_fixedAlignmentZShfitPlaneIds.size();++i){
 		streamlog_out(MESSAGE5)<<_fixedAlignmentZShfitPlaneIds.at(i)<<"  ";
 	}
 	streamlog_out(MESSAGE5)<<endl<<"These are the planes what have X Rotation fixed"<<endl;
-	for(int i=0;i<_fixedAlignmentXRotationPlaneIds.size();++i){
+	for(size_t i=0;i<_fixedAlignmentXRotationPlaneIds.size();++i){
 		streamlog_out(MESSAGE5)<<_fixedAlignmentXRotationPlaneIds.at(i)<<"  ";
 	}
 	streamlog_out(MESSAGE5)<<endl<<"These are the planes what have Y Rotation fixed"<<endl;
-	for(int i=0;i<_fixedAlignmentYRotationPlaneIds.size();++i){
+	for(size_t i=0;i<_fixedAlignmentYRotationPlaneIds.size();++i){
 		streamlog_out(MESSAGE5)<<_fixedAlignmentYRotationPlaneIds.at(i)<<"  ";
 	}
 	streamlog_out(MESSAGE5)<<endl<<"These are the planes what have Z Rotation fixed"<<endl;
-	for(int i=0;i<_fixedAlignmentZRotationPlaneIds.size();++i){
+	for(size_t i=0;i<_fixedAlignmentZRotationPlaneIds.size();++i){
 		streamlog_out(MESSAGE5)<<_fixedAlignmentZRotationPlaneIds.at(i)<<"  ";
 	}
 	streamlog_out(MESSAGE5)<<endl<<"The planes we will align with are: "<<endl;
-	for(int i =0 ; i < geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size(); ++i){
+	for(size_t i =0 ; i < geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size(); ++i){
 		streamlog_out(MESSAGE5)<<geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)<<"  ";
 	}
 	streamlog_out(MESSAGE5)<<endl;

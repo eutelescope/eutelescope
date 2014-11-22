@@ -35,7 +35,7 @@ namespace eutelescope {
     class EUTelMillepede {
         
     private:
-        DISALLOW_COPY_AND_ASSIGN(EUTelMillepede);        // prevent users from making (default) copies of processors
+        DISALLOW_COPY_AND_ASSIGN(EUTelMillepede)        // prevent users from making (default) copies of processors
 
    public:
         EUTelMillepede();

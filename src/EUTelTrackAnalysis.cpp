@@ -11,7 +11,7 @@ setSensorIDToIncidenceAngleYZ(mapFromSensorIDToKinkYZ);
 void EUTelTrackAnalysis::plotResidualVsPosition(EUTelTrack track){
   streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotResidualVsPosition------------------------------BEGIN"<< std::endl;
 	std::vector<EUTelState> states = track.getStates();
-	for(int i=0; i<states.size();++i){
+	for(size_t i=0; i<states.size();++i){
 		EUTelState state  = states.at(i);
 		state.print();
 		if(!state.getIsThereAHit()){
@@ -50,7 +50,7 @@ void EUTelTrackAnalysis::plotResidualVsPosition(EUTelTrack track){
 void EUTelTrackAnalysis::plotIncidenceAngles(EUTelTrack track){
   streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotIncidenceAngles------------------------------BEGIN"<< std::endl;
 	std::vector<EUTelState> states = track.getStates();
-	for(int i=0; i<states.size();++i){
+	for(size_t i=0; i<states.size();++i){
 		EUTelState state  = states.at(i);
 		state.print();
 		TVectorD stateVec = state.getStateVec();
@@ -64,7 +64,7 @@ void EUTelTrackAnalysis::plotIncidenceAngles(EUTelTrack track){
 			}
 		}
 	} 
-	for(int i=0; i<states.size();++i){
+	for(size_t i=0; i<states.size();++i){
 		EUTelState state  = states.at(i);
 		state.print();
 		TVectorD stateVec = state.getStateVec();

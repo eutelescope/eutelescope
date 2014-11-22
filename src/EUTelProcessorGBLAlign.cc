@@ -11,12 +11,13 @@ _milleResultFileName("millepede.res"),
 _gear_aligned_file("gear-00001-aligned.xml"),
 _nProcessedRuns(0),
 _nProcessedEvents(0),
+_alignmentMode(0),
 _beamQ(-1),
 _eBeam(4),
-_mEstimatorType(),
 _maxChi2Cut(1000),
-_alignmentMode(0),
-_createBinary(true){
+_createBinary(true),
+_mEstimatorType()
+{
 
   // TrackerHit input collection
   registerInputCollection(LCIO::TRACK, "TrackCandidatesInputCollectionName", "Input track candidate collection name",_trackCandidatesInputCollectionName,std::string("TrackCandidatesCollection"));
@@ -147,7 +148,7 @@ void EUTelProcessorGBLAlign::processRunHeader(LCRunHeader * run) {
  	// in the xml file. If the numbers are different, warn the user.
 
 	if (header->getGeoID() == 0)	streamlog_out(WARNING0) << "The geometry ID in the run header is set to zero." << endl << "This may mean that the GeoID parameter was not set" << endl;
-  	if (header->getGeoID() != geo::gGeometry().getSiPlanesLayoutID()) {  
+  	if ((unsigned int)header->getGeoID() != geo::gGeometry().getSiPlanesLayoutID()) {  
 			streamlog_out(WARNING5) << "Error during the geometry consistency check: " << endl << "The run header says the GeoID is " << header->getGeoID() << endl << "The GEAR description says is     " << geo::gGeometry().getSiPlanesLayoutID() << endl;
   	}
     
