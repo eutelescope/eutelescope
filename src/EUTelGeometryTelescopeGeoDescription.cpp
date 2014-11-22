@@ -95,7 +95,7 @@ TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneNormal( int planeID )
 	{
 		std::stringstream ss;
 		ss << planeID;
-		/std::string errMsg = "EUTelGeometryTelescopeGeoDescription::siPlaneNormal: Could not find planeID: " + ss.str();
+		std::string errMsg = "EUTelGeometryTelescopeGeoDescription::siPlaneNormal: Could not find planeID: " + ss.str();
 		throw InvalidGeometryException(errMsg);
 	}
 }

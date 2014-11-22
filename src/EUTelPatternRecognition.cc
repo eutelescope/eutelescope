@@ -58,12 +58,12 @@ void EUTelPatternRecognition::propagateForwardFromSeedState( EUTelState& stateIn
 	track.addTrack(static_cast<EVENT::Track*>(firstState));//Note we do not have to create new since this object State is saved in class member scope
 	//Here we loop through all the planes not excluded. We begin at the seed which might not be the first. Then we stop before the last plane, since we do not want to propagate anymore
 	bool firstLoop =true;//TO DO:: This works but is very stupid. Must fix
-	for(int i = geo::gGeometry().sensorIDToZOrderWithoutExcludedPlanes()[state->getLocation()]; i < (geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()-1); ++i){
+	for(int i = geo::gGeometry().sensorIDToZOrderWithoutExcludedPlanes().at(state->getLocation()); i < (geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()-1); ++i){
 	
 		float globalIntersection[3];
 		TVector3 momentumAtIntersection;
 		float arcLength;
-		int newSensorID = state->findIntersectionWithCertainID(geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i+1], globalIntersection, momentumAtIntersection, arcLength);
+		int newSensorID = state->findIntersectionWithCertainID(geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i+1), globalIntersection, momentumAtIntersection, arcLength);
 		if(arcLength == 0 or arcLength < 0 ){ 
 			throw(lcio::Exception( Utility::outputColourString("The arc length is less than or equal to zero. ","RED"))); 
 		}
@@ -78,7 +78,7 @@ void EUTelPatternRecognition::propagateForwardFromSeedState( EUTelState& stateIn
 		if(newSensorID < 0 or sensorIntersection < 0 ){
 			streamlog_out ( MESSAGE5 ) << "Intersection point on infinite plane: " <<  globalIntersection[0]<<" , "<<globalIntersection[1] <<" , "<<globalIntersection[2]<<std::endl;
 			streamlog_out ( MESSAGE5 ) << "Momentum on next plane: " <<  momentumAtIntersection[0]<<" , "<<momentumAtIntersection[1] <<" , "<<momentumAtIntersection[2]<<std::endl;
-			streamlog_out(MESSAGE5) <<" From ID= " <<  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i]<< " to " <<  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i+1]  <<std::endl;
+			streamlog_out(MESSAGE5) <<" From ID= " <<  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)<< " to " <<  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i+1)  <<std::endl;
 			streamlog_out(MESSAGE5)<<"Was there intersection on plane: "<<newSensorID<<" Was there intersection in sensitive area: "<< sensorIntersection <<std::endl;
 			streamlog_out(MESSAGE5) << Utility::outputColourString("No intersection found moving on plane. Move to next plane and look again.","YELLOW")<<std::endl; 
 			streamlog_out(MESSAGE5)<<"This is for event number " <<getEventNumber()<<std::endl;
@@ -94,7 +94,7 @@ void EUTelPatternRecognition::propagateForwardFromSeedState( EUTelState& stateIn
 		newState->setLocation(newSensorID);
 		newState->setPositionGlobal(globalIntersection);
 		newState->setLocalXZAndYZIntersectionAndCurvatureUsingGlobalMomentum(momentumAtIntersection);
-		if(_mapHitsVecPerPlane[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes()[i+1]].size() == 0){
+		if(_mapHitsVecPerPlane[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i+1)].size() == 0){
 			streamlog_out(DEBUG5) << Utility::outputColourString("There are no hits on the plane with this state. Add state to track as it is and move on ","YELLOW");
 			track.addTrack(static_cast<EVENT::Track*>(newState));//Need to return this to LCIO object. Loss functionality but retain information 
 			state = newState;

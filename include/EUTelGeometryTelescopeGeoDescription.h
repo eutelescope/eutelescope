@@ -254,10 +254,10 @@ namespace eutelescope {
             const std::map<int, int>& sensorZOrdertoIDs() const { return _sensorZOrderToIDMap; };
             
 	    /**TODO: NOP*/
-            std::map<int, int>& sensorZOrderToIDWithoutExcludedPlanes() { return _sensorZOrderToIDWithoutExcludedPlanes; };
+            const std::map<int, int>& sensorZOrderToIDWithoutExcludedPlanes() const { return _sensorZOrderToIDWithoutExcludedPlanes; };
 	    
 	    /**TODO: NOP*/
-	    std::map<int,int>& sensorIDToZOrderWithoutExcludedPlanes() { return _sensorIDToZOrderWithoutExcludedPlanes; };
+	    const std::map<int,int>& sensorIDToZOrderWithoutExcludedPlanes() const { return _sensorIDToZOrderWithoutExcludedPlanes; };
             
 	    /** Map from sensor ID to number along Z */
             const std::map<int, int>& sensorIDstoZOrder() const { return _sensorIDtoZOrderMap; };
