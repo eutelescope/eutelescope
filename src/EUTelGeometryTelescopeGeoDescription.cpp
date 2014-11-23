@@ -162,9 +162,9 @@ void EUTelGeometryTelescopeGeoDescription::initialisePlanesToExcluded(FloatVec p
 	}
 	//Check if the number of excluded planes set is the same as (total-number of plane IDs inputed that should be excluded)
 	if(geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() != (geo::gGeometry().sensorIDstoZOrder().size()-planeIDs.size())){
-		throw(lcio::Exception( Utility::outputColourString("The number of Planes-Excluded is not correct. This could be a problem with geometry", "RED")));
+		throw(lcio::Exception( "The number of Planes-Excluded is not correct. This could be a problem with geometry"));
 	}else{
-		streamlog_out(DEBUG0) << Utility::outputColourString("The correct number of planes have been excluded","GREEN") << std::endl;
+		streamlog_out(DEBUG0) <<"The correct number of planes have been excluded" << std::endl;
 	}
 }
 
@@ -477,7 +477,7 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
 	float	possibleUnit = sqrt(pow(rot1,2)+pow(rot3,2));
 	if(possibleUnit>1.1 or possibleUnit<0.9){//Check that the squares equal 1 and give some rounding error room. 
 		streamlog_out(ERROR5) << "SensorID: " << SensorId << ". Rot Squares sum =  " <<possibleUnit << std::endl;   
-		throw(lcio::Exception(Utility::outputColourString("The integer rotations do not represent a z rotation since there squares don't sum to 1. Note we have four variables in gear file as input BUT A SINGLE DEGREE OF FREEDOM!", "RED"))); 	
+		throw(lcio::Exception("The integer rotations do not represent a z rotation since there squares don't sum to 1. Note we have four variables in gear file as input BUT A SINGLE DEGREE OF FREEDOM!")); 	
 	}
 	double integerRotations[2]={rot3,rot1};
 	//Create spatial TGeoTranslation object.
@@ -1165,7 +1165,7 @@ int EUTelGeometryTelescopeGeoDescription::findNextPlane(  double* lpoint,  doubl
    streamlog_out( DEBUG0 ) << "::findNextPlane look for next node, starting at node: " << node << " id: " << inode  << " currentSensorID: " << currentSensorID << std::endl;
  
 //   double kStep = 1e-03;
-   while(  node = gGeoManager->FindNextBoundaryAndStep() )
+   while(( node = gGeoManager->FindNextBoundaryAndStep() ))
    {
        inode = node->GetIndex();
        streamlog_out( DEBUG0 ) << "::findNextPlane found next node: " << node << " id: " << inode << std::endl;
@@ -1213,7 +1213,7 @@ int EUTelGeometryTelescopeGeoDescription::findNextPlaneEntrance(  double* lpoint
    streamlog_out( DEBUG0 ) << "::findNextPlaneEntrance node: " << node << " id: " << inode << std::endl;
  
 	//Keep looping until you have left this plane volume and are at another. Note FindNextBoundaryAndStep will only take you to the next volume 'node' it will not enter it.
-   while( node = _geoManager->FindNextBoundaryAndStep( ) )
+   while(( node = _geoManager->FindNextBoundaryAndStep() ))
    {
        inode = node->GetIndex();
        const double* point = _geoManager->GetCurrentPoint(); //This will be the new global coordinates after the move
@@ -1618,7 +1618,7 @@ TMatrixD EUTelGeometryTelescopeGeoDescription::getPropagationJacobianCurvilinear
 	t2.Unit();
 //	if(t1.Mag() != 1.0 or t2.Mag() != 1.0){//TO DO: This statement does not work for some reason.
 //		streamlog_out(MESSAGE9) << "The magnitude of the two vectors is:  "<< t1.Mag()<< " , "<<t2.Mag() << std::endl;
-//		throw(lcio::Exception(Utility::outputColourString("The calculation of the jacobian must be performed by unit vectors!.", "RED"))); 	
+//		throw(lcio::Exception("The calculation of the jacobian must be performed by unit vectors!.")); 	
 //	}
 	const gear::BField&   Bfield = getMagneticField();
 	//Must transform the B field to be in the frame used in the curvilinear frame 

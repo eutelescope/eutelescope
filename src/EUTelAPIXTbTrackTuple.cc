@@ -2,6 +2,7 @@
 #include "EUTelAPIXTbTrackTuple.h"
 #include "EUTELESCOPE.h"
 #include "EUTelEventImpl.h"
+#include "EUTelExceptions.h"
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelTrackerDataInterfacerImpl.h"
 
@@ -135,7 +136,9 @@ void EUTelAPIXTbTrackTuple::init()
 		}
 		else
 		{
-        	streamlog_out ( ERROR5 ) << "Rotation matrix from GEAR [" << r1 << "," << r2 << "|" << r3 << "," << r4 << "] must only contain +-1!" << std::endl;       
+        		streamlog_out ( ERROR5 ) << "Rotation matrix from GEAR [" << r1 << "," << r2 << "|" << r3 << "," << r4 << "] must only contain +-1!" << std::endl;       
+			throw InvalidGeometryException("Rotation matrix from GEAR must only contain +-1!");
+			return;
 		}
 
 		//Check if we have diagonal matrix
@@ -154,7 +157,8 @@ void EUTelAPIXTbTrackTuple::init()
 		}
 		else
 		{
-        	streamlog_out ( ERROR5 ) << "Rotation matrix from GEAR [" << r1 << "," << r2 << "|" << r3 << "," << r4 << "] must be diagonal or off-diagonal!" << std::endl;       
+        		streamlog_out ( ERROR5 ) << "Rotation matrix from GEAR [" << r1 << "," << r2 << "|" << r3 << "," << r4 << "] must be diagonal or off-diagonal!" << std::endl;       
+			throw InvalidGeometryException("Rotation matrix from GEAR must be diagonal or off-diagonal!");
 			invRot = normRot;
 		}
 

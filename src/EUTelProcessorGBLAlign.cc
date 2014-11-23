@@ -186,7 +186,7 @@ void EUTelProcessorGBLAlign::processEvent(LCEvent * evt){
 					float ndf = static_cast<float>(track.getNdf());
 					if(chi == 0 or ndf == 0){
 						streamlog_out(MESSAGE5)<<"Chi: "<<chi<<" ndf: "<<ndf<<endl;
-						throw(lcio::Exception(Utility::outputColourString("The track has either no degrees of freedom or chi2 is zero.", "RED"))); 	
+						throw(lcio::Exception("The track has either no degrees of freedom or chi2 is zero.")); 	
 					}
 					if(_totalTrackCount % 1000 == 0){
 						streamlog_out(MESSAGE9)<<"The percentage of tracks that made chi2 cut of "<<_maxChi2Cut<<" was : "<<(static_cast<float>(_chi2PassCount)/static_cast<float>(_totalTrackCount))*100<<endl;

@@ -91,7 +91,7 @@ void EUTelProcessorCoordinateTransformHits::processRunHeader (LCRunHeader * rdr)
                                <<  "This may mean that the GeoID parameter was not set" << endl;
 
 
-  if ( header->getGeoID() != geo::gGeometry().getSiPlanesLayoutID() ) {
+  if ( (unsigned int)header->getGeoID() != geo::gGeometry().getSiPlanesLayoutID() ) {
   	streamlog_out ( WARNING5 ) <<  "Error during the geometry consistency check: " << endl
                              << "The run header says the GeoID is " << header->getGeoID() << endl
                              << "The GEAR description says is     " << geo::gGeometry().getSiPlanesLayoutID() << endl;

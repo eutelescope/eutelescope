@@ -75,7 +75,7 @@ namespace eutelescope {
 			hitcov[3] *= hitcov[3];
 		}
 		else{//Default in case you have not specified a variance  
-			throw(lcio::Exception(Utility::outputColourString("There is no measurement variance specified.", "RED"))); 	
+			throw(lcio::Exception("There is no measurement variance specified.")); 	
 		}
 		state.setCombinedHitAndStateCovMatrixInLocalFrame(hitcov);
 	}
@@ -128,14 +128,14 @@ namespace eutelescope {
 	void EUTelGBLFitter::setAlignmentToMeasurementJacobian(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList ){
 		for (size_t i = 0;i<_vectorOfPairsMeasurementStatesAndLabels.size() ;++i ){
 			if(_vectorOfPairsMeasurementStatesAndLabels.at(i).first.getTrackerHits().empty()){
-				throw(lcio::Exception(Utility::outputColourString("One of the points on the list of measurements states has no hit.", "RED")));
+				throw(lcio::Exception("One of the points on the list of measurements states has no hit."));
 			}
 			for(size_t j = 0; j < pointList.size(); ++j){
 				if( _vectorOfPairsMeasurementStatesAndLabels.at(i).second == pointList.at(j).getLabel()){
 					EUTelState state = _vectorOfPairsMeasurementStatesAndLabels.at(i).first;
 					streamlog_out(DEBUG0)<<"Point needs global parameters. It has  "<<pointList.at(j).hasMeasurement()<<" measurements."<<std::endl;
 					if(getLabelToPoint(pointList,_vectorOfPairsMeasurementStatesAndLabels.at(i).second).hasMeasurement() == 0){
-						throw(lcio::Exception(Utility::outputColourString("This point does not contain a measurements. Labeling of the state must be wrong ", "RED")));
+						throw(lcio::Exception("This point does not contain a measurements. Labeling of the state must be wrong "));
 					} 
 					_MilleInterface->computeAlignmentToMeasurementJacobian(state);//We calculate the jacobian. 
 					_MilleInterface->setGlobalLabels(state); //Get the correct label for the sensors x,y,z shift and rotations. Depending on alignment mode and sensor the plane is on 
@@ -144,7 +144,7 @@ namespace eutelescope {
 					streamlog_out(DEBUG0)<<"The state associated with this alignment jacobian:  "<<std::endl;
 					streamlog_message( DEBUG0, state.print() ;, std::endl; );
 					if(!state.getIsThereAHit()){
-						throw(lcio::Exception(Utility::outputColourString("You are just about to use a state with no hit to determine alignment jacobian.", "RED")));
+						throw(lcio::Exception("You are just about to use a state with no hit to determine alignment jacobian."));
 					}
 					streamlog_out(DEBUG0)<<"This is the alignment jacobian we are about to add to the point at location "<<state.getLocation()<<std::endl;
 					streamlog_message( DEBUG0, alignmentJacobian.Print();, std::endl; );
@@ -163,7 +163,7 @@ namespace eutelescope {
 				}
 				//streamlog_out(DEBUG0)<<"This point has "<<pointList.at(j).hasMeasurement()<<" measurements. It has label "<<pointList.at(j).getLabel() <<std::endl;
 				if(j == (pointList.size()-1)){
-					throw(lcio::Exception(Utility::outputColourString("There is no point associated with this state.", "RED")));
+					throw(lcio::Exception("There is no point associated with this state."));
 				}
 			}
 		}
@@ -171,7 +171,7 @@ namespace eutelescope {
 	//This creates the scatters point to simulate the passage through air. 
 	void EUTelGBLFitter::setPointListWithNewScatterers(std::vector< gbl::GblPoint >& pointList,EUTelState & state, float  percentageRadiationLength){
 		if(_scattererJacobians.size() != _scattererPositions.size()){
-			throw(lcio::Exception(Utility::outputColourString("The size of the scattering positions and jacobians is different.", "RED"))); 	
+			throw(lcio::Exception("The size of the scattering positions and jacobians is different.")); 	
 		}
 		for(size_t i = 0 ;i < _scattererJacobians.size()-1;++i){//The last jacobain is used to get to the plane! So only loop over to (_scatterJacobians-1)
 			gbl::GblPoint point(_scattererJacobians[i]);
@@ -187,7 +187,7 @@ namespace eutelescope {
 		//We have a similar check after this to see that number of planes and elements in resolution vector are the same. We need this here since if they are different then it will just give an exception from the vector tryign to access a element that does not exist.
 		if ( geo::gGeometry().sensorZOrdertoIDs().size() != vector.size() ){
 			streamlog_out( ERROR5 ) << "The number of planes: "<< geo::gGeometry().sensorZOrdertoIDs().size()<<"  The size of input resolution vector: "<<vector.size()  << std::endl;
-			throw(lcio::Exception(Utility::outputColourString("The size of the resolution vector and the total number of planes is different for x axis.", "RED")));
+			throw(lcio::Exception("The size of the resolution vector and the total number of planes is different for x axis."));
 		}
 
 		for(size_t i=0; i < geo::gGeometry().sensorZOrdertoIDs().size(); ++i){
@@ -199,7 +199,7 @@ namespace eutelescope {
 	{
 		if ( geo::gGeometry().sensorZOrdertoIDs().size() != vector.size() ){
 			streamlog_out( ERROR5 ) << "The number of planes: "<< geo::gGeometry().sensorZOrdertoIDs().size()<<"  The size of input resolution vector: "<<vector.size()  << std::endl;
-			throw(lcio::Exception(Utility::outputColourString("The size of the resolution vector and the total number of planes is different for y axis.", "RED")));
+			throw(lcio::Exception("The size of the resolution vector and the total number of planes is different for y axis."));
 		}
 		for(size_t i=0; i < geo::gGeometry().sensorZOrdertoIDs().size(); ++i){
 			_parameterIdYResolutionVec[ geo::gGeometry().sensorZOrderToID(i)] = vector.at(i);
@@ -264,11 +264,11 @@ namespace eutelescope {
 				counter++;
 			}
 			if(counter == (_measurementStatesInOrder.size()+1)){//Add one since you will make an extra loop
-				throw(lcio::Exception(Utility::outputColourString("The counter is larger than the number of states saved as measurements.", "RED")));
+				throw(lcio::Exception("The counter is larger than the number of states saved as measurements."));
 			}
 		}
 		if(counter !=  (_measurementStatesInOrder.size())){//Since we make an extra loop and counter++ again
-			throw(lcio::Exception(Utility::outputColourString("We did not add all the states .", "RED")));
+			throw(lcio::Exception("We did not add all the states."));
 		}
 		streamlog_out ( DEBUG4 ) << " EUTelGBLFitter::setPairMeasurementStateAndPointLabelVec------------ END " << endl;
 	}
@@ -283,7 +283,7 @@ namespace eutelescope {
 				if(_vectorOfPairsStatesAndLabels.at(j).first == *state){
 					streamlog_out(DEBUG0)<<"The loop number for states with measurements for kink update is: " << j << ". The label is: " << _vectorOfPairsStatesAndLabels.at(j).second <<endl; 
 					if(getLabelToPoint(pointList,_vectorOfPairsStatesAndLabels.at(j).second).hasMeasurement() == 0){//TO DO: Some states will not have hits in the future so should remove. Leave for now to test
-						throw(lcio::Exception(Utility::outputColourString("This point does not contain a measurements. So can not add kink information. Labeling of the state must be wrong ", "RED")));
+						throw(lcio::Exception("This point does not contain a measurements. So can not add kink information. Labeling of the state must be wrong"));
 					} 
 					streamlog_out(DEBUG0)<<"To update track kink we use label: "<<_vectorOfPairsStatesAndLabels.at(j).second<<std::endl; 
 					unsigned int numData; //Not sure what this is used for??????
@@ -325,7 +325,7 @@ namespace eutelescope {
 			setScattererGBL(point,state);//Every sensor will have scattering due to itself. 
 			_statesInOrder.push_back(state);//This is list of measurements states in the correct order. This is used later to associate ANY states with point labels
 			if(state.getTrackerHits().size() == 0 ){
-				streamlog_out(DEBUG3)  << Utility::outputColourString("This state does not have a hit. ", "YELLOW")<<std::endl;
+				streamlog_out(DEBUG3)  << "This state does not have a hit."<<std::endl;
 				setPointVec(pointList, point);//This creates the vector of points and keeps a link between states and the points they created
 			}else{
 				double localPositionForState[]	= {state.getPosition()[0], state.getPosition()[1],state.getPosition()[2]};//Need this since geometry works with const doubles not floats 
@@ -351,7 +351,7 @@ namespace eutelescope {
 					streamlog_out(MESSAGE9)<<"The positions between the scatterers are: "<<endl;
 					streamlog_out(MESSAGE9)<<"Start: "<<globalPosSensor1[0]<<" "<<globalPosSensor1[1]<<" "<<globalPosSensor1[2]<<endl;
 					streamlog_out(MESSAGE9)<<"End: "<<globalPosSensor2[0]<<" "<<globalPosSensor2[1]<<" "<<globalPosSensor2[2]<<endl;
-					throw(lcio::Exception(Utility::outputColourString("The provides radiation length to create scatterers it zero.", "RED"))); 	
+					throw(lcio::Exception("The provides radiation length to create scatterers it zero.")); 	
 				} 
 				findScattersZPositionBetweenTwoStates(state);//We use the exact arc length between the two states to place the scatterers. 
 				jacPointToPoint=findScattersJacobians(state,nextState);
@@ -363,25 +363,27 @@ namespace eutelescope {
 		streamlog_out(DEBUG4)<<"EUTelGBLFitter::setInformationForGBLPointList-------------------------------------END"<<endl;
 
 	}
+
 	//THIS IS THE GETTERS
-	gbl::GblPoint EUTelGBLFitter::getLabelToPoint(std::vector<gbl::GblPoint> & pointList, int label){
-		for(size_t i = 0; i< pointList.size();++i){
+	gbl::GblPoint EUTelGBLFitter::getLabelToPoint(std::vector<gbl::GblPoint> & pointList, int label)
+	{
+		for(size_t i = 0; i< pointList.size();++i)
+		{
 			streamlog_out(DEBUG0)<<"This point has label : "<<pointList.at(i).getLabel()<<". The label number: "<<label<<std::endl;
 			if(pointList.at(i).getLabel() == label){
 				return pointList.at(i);
 			}
-			if(i == (pointList.size()-1)){ //If we reach the end of the loop and still no match then this label must belong to no point
-				streamlog_out(MESSAGE5)<<"The size of pointList: "<<pointList.size()<<". The label number: "<<label<<std::endl;
-				throw(lcio::Exception(Utility::outputColourString("There is no point with this label", "RED")));
-			}
 		}
+
+		//if no match after loop this label must belong to no point 
+		throw(lcio::Exception("There is no point with this label"));
 	}
 	//This used after trackfit will fill a map between (sensor ID and residualx/y). 
 	void EUTelGBLFitter::getResidualOfTrackandHits(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint > pointList,EUTelTrack& track, map< int, map< float, float > > &  SensorResidual, map< int, map< float, float > >& sensorResidualError ){
 		for(size_t j=0 ; j< _vectorOfPairsMeasurementStatesAndLabels.size();j++){
 			EUTelState state = _vectorOfPairsMeasurementStatesAndLabels.at(j).first;
 			if(getLabelToPoint(pointList,_vectorOfPairsMeasurementStatesAndLabels.at(j).second).hasMeasurement() == 0){
-				throw(lcio::Exception(Utility::outputColourString("This point does not contain a measurements. Labeling of the state must be wrong ", "RED")));
+				throw(lcio::Exception("This point does not contain a measurements. Labeling of the state must be wrong "));
 			} 
 			streamlog_out(DEBUG0) << endl << "There is a hit on the state. Hit pointer: "<< state.getTrackerHits()[0]<<" Find updated Residuals!" << std::endl;
 			unsigned int numData; //Not sure what this is used for??????
@@ -417,32 +419,32 @@ namespace eutelescope {
 		else ierr = traj->fit( *chi2, *ndf, loss );
 
 		if( ierr != 0 ){
-			streamlog_out(MESSAGE0) << Utility::outputColourString("Fit failed!","YELLOW")<<" Track error: "<< ierr << " and chi2: " << *chi2 << std::endl;
+			streamlog_out(MESSAGE0) << "Fit failed!" << " Track error: "<< ierr << " and chi2: " << *chi2 << std::endl;
 		}
 		else{
-		streamlog_out(MESSAGE0) << Utility::outputColourString("Fit Successful!","GREEN")<<" Track error; "<< ierr << " and chi2: " << *chi2 << std::endl;
+		streamlog_out(MESSAGE0) << "Fit Successful!" << " Track error; "<< ierr << " and chi2: " << *chi2 << std::endl;
 		}
 		streamlog_out ( DEBUG4 ) << " EUTelGBLFitter::computeTrajectoryAndFit -- END " << endl;
 	}
 	//TEST
 	void EUTelGBLFitter::testUserInput(){
 		if(_parameterIdXResolutionVec.size() != _parameterIdYResolutionVec.size()){
-				throw(lcio::Exception(Utility::outputColourString("The vector for resolutions for X and Y are different sizes.", "RED")));
+				throw(lcio::Exception("The vector for resolutions for X and Y are different sizes."));
 		}
 		if(_parameterIdXResolutionVec.size() != geo::gGeometry().nPlanes() ){
-				throw(lcio::Exception(Utility::outputColourString("The total number of planes and the resolution of the planes vector are different sizes.", "RED")));
+				throw(lcio::Exception("The total number of planes and the resolution of the planes vector are different sizes."));
 		}
 	}
 	void EUTelGBLFitter::testTrack(EUTelTrack& track){
 		streamlog_out(DEBUG4)<<"EUTelGBLFitter::testTrack------------------------------------BEGIN"<<endl;
 		if(track.getStates().size() == 0 ){
-			throw(lcio::Exception(Utility::outputColourString("The number of states is zero.", "RED")));
+			throw(lcio::Exception("The number of states is zero."));
 		}
 		///Note we do not use excluded planes here. This should be dealt with in pattern recognition.
 		if (track.getNumberOfHitsOnTrack() > geo::gGeometry().nPlanes() ){
-			throw(lcio::Exception(Utility::outputColourString("The number of hits on the track is greater than the number of planes.", "RED"))); 	
+			throw(lcio::Exception("The number of hits on the track is greater than the number of planes.")); 	
 		}
-		streamlog_out(DEBUG5)<< Utility::outputColourString("Input track passed tests!", "GREEN")<<std::endl;
+		streamlog_out(DEBUG5)<< "Input track passed tests!" <<std::endl;
 		streamlog_out(DEBUG4)<<"EUTelGBLFitter::testTrack------------------------------------END"<<endl;
 
 	} 
@@ -454,10 +456,10 @@ namespace eutelescope {
 		float distance= sqrt(displacement.Norm2Sqr());
 		streamlog_out(DEBUG0)<<"The distance between the points to calculate radiation length is: "<<distance<<std::endl;
 		if(distance<1){
-			throw(lcio::Exception(Utility::outputColourString("The distance between the states is too small.", "RED"))); 	
+			throw(lcio::Exception("The distance between the states is too small.")); 	
 		}
 		if(distance>1000){//The planes should not be over a 1m in width
-			throw(lcio::Exception(Utility::outputColourString("The distance between the planes is over 1m.", "RED"))); 	
+			throw(lcio::Exception("The distance between the planes is over 1m.")); 	
 		}
 	}
 
@@ -502,7 +504,7 @@ namespace eutelescope {
 			}
 		}
 		if(_scattererJacobians.size() != 3){
-			throw(lcio::Exception(Utility::outputColourString("There are not 3 jacobians produced by scatterers!.", "RED"))); 	
+			throw(lcio::Exception("There are not 3 jacobians produced by scatterers!")); 	
 		}
 		return _scattererJacobians.back();//return the last jacobian so the next state can use this
 	}
@@ -537,7 +539,7 @@ namespace eutelescope {
 				if(_vectorOfPairsStatesAndLabels.at(j).first == *state){
 					streamlog_out(DEBUG0)<<"The loop number for states with measurements is: " << j << ". The label is: " << _vectorOfPairsStatesAndLabels.at(j).second <<endl; 
 		//				if(getLabelToPoint(pointList,_vectorOfPairsStatesAndLabels.at(j).second).hasMeasurement() == 0){//TO DO: Some states will not have hits in the future so should remove. Leave for now to test
-		//					throw(lcio::Exception(Utility::outputColourString("This point does not contain a measurements. Labeling of the state must be wrong ", "RED")));
+		//					throw(lcio::Exception("This point does not contain a measurements. Labeling of the state must be wrong "));
 		//				} 
 					streamlog_out(DEBUG0)<<"To update track we use label: "<<_vectorOfPairsStatesAndLabels.at(j).second<<std::endl; 
 					traj->getResults(_vectorOfPairsStatesAndLabels.at(j).second, corrections, correctionsCov );

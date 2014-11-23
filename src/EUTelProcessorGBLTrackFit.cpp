@@ -86,7 +86,7 @@ void EUTelProcessorGBLTrackFit::init() {
 		Fitter->testUserInput();
 		_trackFitter = Fitter;
 		if (!_trackFitter) {
-			throw(lcio::Exception(Utility::outputColourString("Could not create instance of fitter class .", "RED")));
+			throw(lcio::Exception("Could not create instance of fitter class."));
 		}
 		bookHistograms();//TO DO: Remove this and replace with generic histogram class 
 		streamlog_out(DEBUG2) << "EUTelProcessorGBLTrackFit::init( )---------------------------------------------END" << std::endl;
@@ -100,7 +100,7 @@ void EUTelProcessorGBLTrackFit::init() {
 		throw StopProcessingException( this ) ;
 	}
 	catch(...){
-		streamlog_out(MESSAGE9)<<Utility::outputColourString("Unknown exception in init function of EUTelProcessorGBLTrackFit.","RED") <<endl;
+		streamlog_out(MESSAGE9)<< "Unknown exception in init function of EUTelProcessorGBLTrackFit." << std::endl;
 		throw StopProcessingException( this ) ;
 	}
 }
@@ -141,7 +141,7 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent * evt){
 		streamlog_out(DEBUG1) << "collection : " << _trackCandidatesInputCollectionName << " retrieved" << std::endl;
 
 		if (col == NULL) {
-			streamlog_out(MESSAGE0)<<Utility::outputColourString("The collection is NULL for this event.", "YELLOW")<<std::endl;
+			streamlog_out(MESSAGE0)<< "The collection is NULL for this event." << std::endl;
 			throw marlin::SkipEventException(this);
 		}
 		std::vector<EUTelTrack> allTracksForThisEvent;//GBL will analysis the track one at a time. However we want to save to lcio per event.
@@ -173,7 +173,7 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent * evt){
 				static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_chi2CandidateHistName ] ) -> fill( (chi2)/(ndf));
 				static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_fitsuccessHistName ] ) -> fill(1.0);
 				if(chi2 ==0 or ndf ==0){
-					throw(lcio::Exception(Utility::outputColourString("Your fitted track has zero degrees of freedom or a chi2 of 0.", "RED"))); 	
+					throw(lcio::Exception("Your fitted track has zero degrees of freedom or a chi2 of 0.")); 	
 				}
 
 				track.setChi2(chi2);

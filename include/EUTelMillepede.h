@@ -46,9 +46,9 @@ namespace eutelescope {
 				//This set the number given by the processor to a aligment mode string
 				void SetAlignmentMode(int alignmentMode);
 				//This take a state and outputs a its alignment jacobian given the alignment mode
-				int computeAlignmentToMeasurementJacobian( EUTelState& state);
+				void computeAlignmentToMeasurementJacobian( EUTelState& state);
 
-				int computeAlignmentToMeasurementJacobian( float x,float y, float slopeXvsZ, float slopeYvsZ);
+				void computeAlignmentToMeasurementJacobian( float x,float y, float slopeXvsZ, float slopeYvsZ);
 
 				void setGlobalLabels(EUTelState& state);
 
@@ -56,7 +56,7 @@ namespace eutelescope {
 
 				void FillMilleParametersLabels();
 
-				int writeMilleSteeringFile(lcio::StringVec pedeSteerAddCmds);
+				void writeMilleSteeringFile(lcio::StringVec pedeSteerAddCmds);
 
 				int runPede();
 	

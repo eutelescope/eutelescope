@@ -77,7 +77,7 @@ namespace eutelescope {
  		_jacobian.ResizeTo(2, 6);
 
     }else {
-			throw(lcio::Exception(Utility::outputColourString(" Alignment mode was not recognized. ", "RED")));
+			throw(lcio::Exception("Alignment mode was not recognized."));
     }
   	_jacobian.Zero();
 		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////END	
@@ -109,9 +109,9 @@ void EUTelMillepede::FillMilleParametersLabels() {
     }
 }
 //This function calculates the alignment jacobain in the local frame of the telescope. Using the state parameters
-int EUTelMillepede::computeAlignmentToMeasurementJacobian( EUTelState &state){
+void EUTelMillepede::computeAlignmentToMeasurementJacobian( EUTelState &state){
 	if(_alignmentMode == Utility::noAlignment){
-		throw(lcio::Exception(Utility::outputColourString("No alignment has been chosen.", "RED"))); 	
+		throw(lcio::Exception("No alignment has been chosen.")); 	
 	}
 	streamlog_out(DEBUG3) <<"State we arew about to add: "<< state.getLocation()<<endl; 
 	state.print();
@@ -132,7 +132,7 @@ int EUTelMillepede::computeAlignmentToMeasurementJacobian( EUTelState &state){
                                   //                                             (moving the plane in the z direction)
 																	//                                             (this is clockwise rotation look in + y direction )
 																	// 	                                           (this is clockwise rotations in the x direction  )
-int EUTelMillepede::computeAlignmentToMeasurementJacobian( float x,float y, float slopeXvsZ, float slopeYvsZ){
+void EUTelMillepede::computeAlignmentToMeasurementJacobian( float x,float y, float slopeXvsZ, float slopeYvsZ){
 	_jacobian.Zero();
 	streamlog_out(DEBUG0) << "This is the empty Alignment Jacobian" << std::endl;
 	streamlog_message( DEBUG0, _jacobian.Print();, std::endl; );			
@@ -305,15 +305,16 @@ void EUTelMillepede::setResultsFileName(std::string name){
 
 
   
-int EUTelMillepede::writeMilleSteeringFile(lcio::StringVec pedeSteerAddCmds){
+void EUTelMillepede::writeMilleSteeringFile(lcio::StringVec pedeSteerAddCmds){
 	streamlog_out(DEBUG2) << "EUTelMillepede::writeMilleSteeringFile------------------------------------BEGIN" << endl;
+
 	if(_alignmentMode == Utility::noAlignment){
-		throw(lcio::Exception(Utility::outputColourString("No alignment has been chosen.", "RED"))); 	
+		throw(lcio::Exception("No alignment has been chosen.")); 	
 	}	
 	ofstream steerFile;
 	steerFile.open(_milleSteeringFilename.c_str());//We open the text file se we can add text to it.
 	if (!steerFile.is_open()) {
-		throw(lcio::Exception(Utility::outputColourString("Could not open steering file.", "RED"))); 	
+		throw(lcio::Exception("Could not open steering file.")); 	
 	}
 	streamlog_out(DEBUG0) << "Millepede binary:" << _milleBinaryFilename << endl;
 	steerFile << "Cfiles" << endl;
@@ -444,7 +445,7 @@ int EUTelMillepede::runPede(){
   redi::ipstream pede( command.c_str( ), redi::pstreams::pstdout | redi::pstreams::pstderr );// run pede and create a streambuf that reads its stdout and stderr
 
 	if ( !pede.is_open( ) ) {
-		throw(lcio::Exception(Utility::outputColourString("The pede file could not be openned. ", "RED")));
+		throw(lcio::Exception("The pede file could not be openned."));
   } else {
     // output multiplexing: parse pede output in both stdout and stderr and echo messages accordingly
     char buf[1024];
@@ -492,7 +493,7 @@ return 0;
 bool EUTelMillepede::parseMilleOutput(std::string alignmentConstantLCIOFile, std::string gear_aligned_file){
 	ifstream file( _milleResultFileName.c_str() );
 	if ( !file.good( ) ) {
-		throw(lcio::Exception(Utility::outputColourString("Can not open millepede results file. ", "RED")));
+		throw(lcio::Exception("Can not open millepede results file."));
 	}
 	const string command = "parsemilleout.sh " + _milleSteeringFilename + " " + _milleResultFileName + " " + alignmentConstantLCIOFile + 
 												 " " + Global::parameters->getStringVal("GearXMLFile" ) + " " + gear_aligned_file;
@@ -501,7 +502,7 @@ bool EUTelMillepede::parseMilleOutput(std::string alignmentConstantLCIOFile, std
 	// run pede and create a streambuf that reads its stdout and stderr
 	redi::ipstream parsepede( command.c_str( ), redi::pstreams::pstdout | redi::pstreams::pstderr );
 	if ( !parsepede.is_open( )){
-		throw(lcio::Exception(Utility::outputColourString("Could not open the parsepede file. ", "RED")));
+		throw(lcio::Exception("Could not open the parsepede file. "));
 	}else{
 	// output multiplexing: parse parsepede output in both stdout and stderr and echo messages accordingly
 	char buf[1024];
@@ -556,31 +557,31 @@ void EUTelMillepede::CreateBinary(){
 void EUTelMillepede::testUserInput(){
 	bool fixedGood=true;
 	if(_fixedAlignmentXShfitPlaneIds.size()== 0){
-		streamlog_out(MESSAGE9) <<	Utility::outputColourString("You have not fixed any X shifts. This is ill advised .", "YELLOW")<<std::endl;
+		streamlog_out(MESSAGE9) <<	"You have not fixed any X shifts. This is ill advised ." << std::endl;
 		fixedGood=false;
 	}
 	if(_fixedAlignmentYShfitPlaneIds.size()== 0){
-		streamlog_out(MESSAGE9) <<	Utility::outputColourString("You have not fixed any Y shifts. This is ill advised .", "YELLOW")<<std::endl;
+		streamlog_out(MESSAGE9) <<	"You have not fixed any Y shifts. This is ill advised." << std::endl;
 		fixedGood=false;
 	}
 	if(_fixedAlignmentZShfitPlaneIds.size()== 0){
-		streamlog_out(MESSAGE9) <<	Utility::outputColourString("You have not fixed any Z shifts. This is ill advised .", "YELLOW")<<std::endl;
+		streamlog_out(MESSAGE9) <<	"You have not fixed any Z shifts. This is ill advised ." << std::endl; 
 		fixedGood=false;
 	}
 	if(_fixedAlignmentXRotationPlaneIds.size()== 0){
-		streamlog_out(MESSAGE9) <<	Utility::outputColourString("You have not fixed any X rotations. This is ill advised .", "YELLOW")<<std::endl;
+		streamlog_out(MESSAGE9) <<	"You have not fixed any X rotations. This is ill advised ." << std::endl;
 		fixedGood=false;
 	}
 	if(_fixedAlignmentYRotationPlaneIds.size()== 0){
-		streamlog_out(MESSAGE9) <<	Utility::outputColourString("You have not fixed any Y rotations. This is ill advised .", "YELLOW")<<std::endl;
+		streamlog_out(MESSAGE9) <<	"You have not fixed any Y rotations. This is ill advised ."<< std::endl;
 		fixedGood=false;
 	}
 	if(_fixedAlignmentZRotationPlaneIds.size()== 0){
-		streamlog_out(MESSAGE9) <<	Utility::outputColourString("You have not fixed any Z rotations. This is ill advised .", "YELLOW")<<std::endl;
+		streamlog_out(MESSAGE9) <<	"You have not fixed any Z rotations. This is ill advised ." << std::endl;
 		fixedGood=false;
 	}
 	if(fixedGood){
-		streamlog_out(MESSAGE9) <<	Utility::outputColourString("For all alignment parameters each has one fixed. GOOD! .", "GREEN")<<std::endl;
+		streamlog_out(MESSAGE9) <<	"For all alignment parameters each has one fixed. GOOD! ." << std::endl;
 	}
 }
 void EUTelMillepede::printFixedPlanes(){

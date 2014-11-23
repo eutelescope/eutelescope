@@ -825,7 +825,7 @@ void EUTelCorrelator::bookHistos() {
           //we create histograms for X and Y Cluster correlation
           if ( _hasClusterCollection && !_hasHitCollection) {
 
-            double safetyFactor = 1.0; // 2 should be enough because it
+            //double safetyFactor = 1.0; // 2 should be enough because it
             // means that the sensor is wrong
             // by all its size.
 
@@ -1032,7 +1032,7 @@ void EUTelCorrelator::bookHistos() {
             streamlog_out( DEBUG5 ) << "Booking histo " << tempHistoName << endl;
 
  
-            double safetyFactor = 1.0; // 2 should be enough because it
+            //double safetyFactor = 1.0; // 2 should be enough because it
             // means that the sensor is wrong
             // by all its size.
 

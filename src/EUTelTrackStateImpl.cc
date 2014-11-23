@@ -258,7 +258,7 @@ TVector3 EUTelTrackStateImpl::getXYZfromArcLength( float s ) const {
 
 //		streamlog_out(DEBUG2) << "EUTelTrackStateImpl::getXYZfromArcLength----------------------------END" << std::endl;	
 //	return pos;
-
+	return TVector3();
 }	
 
 //This function returns the H matrix of the state. This relates the state in global coordinates to local coordinates (The hit measurement). Note it assumes that z axis is a parameter so you only need the rotations of the plane you must be on. Note the H matrix from Geometry is Local->Global so we must take the inverse.
