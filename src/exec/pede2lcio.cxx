@@ -86,7 +86,7 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
 
 
     std::vector <int> sensorIDsVec = geo::gGeometry().sensorIDsVec();    
-    for (int iPlane = 0; iPlane < sensorIDsVec.size(); iPlane++) {
+    for (size_t iPlane = 0; iPlane < sensorIDsVec.size(); iPlane++) {
 
         int sensorID = sensorIDsVec.at(iPlane);
         if( ( itrAlignmentConstant = alignmentConstants.find( sensorID ) ) != alignmentConstants.end() ) {

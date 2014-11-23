@@ -38,14 +38,14 @@ std::string EUTelProcessorGBLTrackFit::_histName::_residGblFitHistNameY5p = "Res
 
 EUTelProcessorGBLTrackFit::EUTelProcessorGBLTrackFit() :
 Processor("EUTelProcessorGBLTrackFit"),
-_trackCandidatesInputCollectionName("Default_input"),
-_tracksOutputCollectionName("Default_output"),
+_first_time(true),
 _nProcessedRuns(0),
 _nProcessedEvents(0),
 _beamQ(-1),
 _eBeam(4),
-_mEstimatorType(), //This is used by the GBL software for outliers down weighting
-_first_time(true)
+_trackCandidatesInputCollectionName("Default_input"),
+_tracksOutputCollectionName("Default_output"),
+_mEstimatorType() //This is used by the GBL software for outliers down weighting
 {
 	// Processor description
 	_description = "EUTelProcessorGBLTrackFit this will fit gbl tracks and output them into LCIO file.";
@@ -114,7 +114,7 @@ void EUTelProcessorGBLTrackFit::processRunHeader(LCRunHeader * run) {
  	// in the xml file. If the numbers are different, warn the user.
 	if (header->getGeoID() == 0)
  		streamlog_out(WARNING0) << "The geometry ID in the run header is set to zero." << endl << "This may mean that the GeoID parameter was not set" << endl;
-	if (header->getGeoID() != geo::gGeometry().getSiPlanesLayoutID()) {  
+	if ((unsigned int)header->getGeoID() != geo::gGeometry().getSiPlanesLayoutID()) {  
 		streamlog_out(WARNING5) << "Error during the geometry consistency check: " << endl << "The run header says the GeoID is " << header->getGeoID() << endl << "The GEAR description says is     " << geo::gGeometry().getSiPlanesLayoutID() << endl;
 	}
 	_chi2NdfVec.clear();//TO DO:This is needed to determine if the track is near chi2 of one. Do we need this however?
@@ -286,7 +286,7 @@ void EUTelProcessorGBLTrackFit::end() {
 	float total = 0;
 	double sizeFittedTracks = _chi2NdfVec.size();
 	cout<<"This is the chi2s"<<endl;
-	for(int i=0; i<_chi2NdfVec.size(); ++i){
+	for(size_t i=0; i<_chi2NdfVec.size(); ++i){
 		total= total + _chi2NdfVec.at(i);//TO DO: This is does not seem to output the correct average chi2. Plus do we really need this to fit?
 		cout<<_chi2NdfVec.at(i)<<endl;
 	}
@@ -325,11 +325,11 @@ void EUTelProcessorGBLTrackFit::outputLCIO(LCEvent* evt, std::vector<EUTelTrack>
 	stateCandCollection->setFlag( flag2.getFlag( ) );
 
 	//Loop through all tracks
-	for ( int i = 0 ; i < tracks.size(); ++i){
+	for (size_t i = 0 ; i < tracks.size(); ++i){
 		EUTelTrack* trackheap = new  EUTelTrack(tracks.at(i), false); //We dont want to copy contents so set to false. We only want the track object but not the states or hits. Since the states should have there own place in memory before saving.
 		trackheap->print();
 		//For every track add this to the collection
-		for(int j = 0;j < tracks.at(i).getStates().size();++j){
+		for( size_t j = 0;j < tracks.at(i).getStates().size();++j){
 			EUTelState* stateheap = new EUTelState(tracks.at(i).getStates().at(j));
 			trackheap->addTrack(stateheap);
 			stateCandCollection->push_back(static_cast<EVENT::Track*>(stateheap));
