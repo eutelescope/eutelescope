@@ -32,6 +32,7 @@ namespace eutelescope {
 
 		//This is the constructor to change TrackStateImpl LCIO to EUTelTrackState
     EUTelTrackStateImpl::EUTelTrackStateImpl( const IMPL::TrackStateImpl& o ) : TrackStateImpl(),
+	_beamQ(-1),
         _location(o.getLocation()),
         _tx(o.getOmega()),
         _ty(o.getZ0()),
@@ -39,8 +40,7 @@ namespace eutelescope {
         _y(o.getPhi()),
         _invp(o.getTanLambda()),
         _covMatrix(o.getCovMatrix()),
-				_zparameter(0),
-				_beamQ(-1)	
+	_zparameter(0)
     {
 			//I dont think this is needed to add this. Also need to add the hit at state level!!!!
      //   for(int i=0 ; i < TRKSTATENCOVMATRIX ; i++ ) {

@@ -153,7 +153,7 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent * evt){
 			_trackFitter->testTrack(track);//Check the track has states and hits  
 			std::vector< gbl::GblPoint > pointList;
 			_trackFitter->setInformationForGBLPointList(track, pointList);//Here we describe the whole setup. Geometry, scattering, data...
-			const gear::BField& B = geo::gGeometry().getMagneticFiled();//We need this to determine if we should fit a curve or a straight line.
+			const gear::BField& B = geo::gGeometry().getMagneticField();//We need this to determine if we should fit a curve or a straight line.
 			const double Bmag = B.at( TVector3(0.,0.,0.) ).r2();
 			_trackFitter->setPairMeasurementStateAndPointLabelVec(pointList);//This will create a link between the states that have a hit associated with them and the GBL label that is associated with the state.
 			gbl::GblTrajectory* traj = 0;
