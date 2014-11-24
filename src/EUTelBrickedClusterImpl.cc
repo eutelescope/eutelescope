@@ -346,25 +346,6 @@ void EUTelBrickedClusterImpl::getCenterOfGravity(float& xCoG, float& yCoG) const
 
 }
 
-void EUTelBrickedClusterImpl::setClusterQuality(ClusterQuality quality) {
-
-  lcio::long64 cell1 = static_cast<lcio::long64> (_trackerData->getCellID1()) ;
-
-  int rhs = 15;
-  lcio::long64  emptyMask = ~( 0x1F << rhs );
-  lcio::long64  maskedQuality = ( (static_cast<int> (quality) & 0x1F ) << rhs );
-
-  // first apply an empty mask for the quality bit ranges
-  cell1 = cell1 & emptyMask;
-
-  // now apply the maskedQuality
-  cell1 = cell1 | maskedQuality;
-
-  // apply the changes
-  _trackerData->setCellID1(cell1);
-
-}
-
 float EUTelBrickedClusterImpl::getSeedCharge() const {
 
   return *max_element( _trackerData->getChargeValues().begin(),

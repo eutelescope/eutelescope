@@ -310,7 +310,7 @@ bool EUTelClusterSeparationProcessor::applySeparationAlgorithm(std::vector<std::
         streamlog_out ( DEBUG4 ) << ( * cluster ) << endl;
 
         try {
-          cluster->setClusterQuality ( cluster->getClusterQuality() | kMergedCluster );
+	//TODO: FIxMe//cluster->setClusterQuality ( cluster->getClusterQuality() | kMergedCluster );
         } catch (lcio::ReadOnlyException& e) {
           streamlog_out ( WARNING2 )  << "Attempt to change the cluster quality on the original data\n"
             "This is possible only when the " << name() << " is not applied to data already on tape\n"

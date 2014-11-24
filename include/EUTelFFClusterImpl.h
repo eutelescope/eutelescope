@@ -188,15 +188,6 @@ namespace eutelescope {
         return static_cast<ClusterQuality>(static_cast<lcio::long64>(cellDecoder(_trackerData)["quality"]));
         }
 
-    //! Set the cluster quality flag
-    /*! This method is used to apply the cluster quality flag to the
-     *  current cluster. It modifies directly the CellID1 content
-     *
-     *  @param quality It is the cluster quality bit mask using a
-     *  eutelescope::ClusterQuality enum
-     */ 
-    void setClusterQuality(ClusterQuality quality);
-
     //! Get distance from another cluster
     /*! This method is used to calculate the distance between to
      *  clusters belonging to the same detector plane (having the same
