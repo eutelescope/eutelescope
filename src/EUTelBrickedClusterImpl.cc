@@ -732,7 +732,6 @@ void EUTelBrickedClusterImpl::print(std::ostream& os ) const {
 
     os  <<  setw(bigspacer) << setiosflags(ios::left) << "Bricked pixel cluster "<< "( one surrounding layer of neighbour pixels )\n"
                                                                                     //NOTE adjust this if you implement a variable size
-        <<  setw(bigspacer) <<  "Cluster ID: " << getClusterID() << " on detector " << getDetectorID() << ":\n"
         <<  setw(bigspacer) <<  "Cluster quality: " << quality << "\n"
         <<  setw(bigspacer) <<  "Seed coords: " << "x=" << xSeed << ", y=" << ySeed << "\n"
         <<  setw(bigspacer) <<  "Seed charge: " << getSeedCharge() << " in (" << xSeed << ", " << ySeed << ")\n"

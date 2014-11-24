@@ -514,7 +514,6 @@ void EUTelFFClusterImpl::print(std::ostream& os ) const {
   int bigspacer = 23;
 
   os   <<  setw(bigspacer) << setiosflags(ios::left) << "Fixed frame cluster "<< "(" << xSize << ", " << ySize << ")\n"
-       <<  setw(bigspacer) <<  "Cluster ID " << getClusterID() << " on detector " << getDetectorID() << "\n"
        <<  setw(bigspacer) <<  "Cluster quality " << quality << "\n"
        <<  setw(bigspacer) <<  "Cluster total charge " << getTotalCharge() << "\n"
        <<  setw(bigspacer) <<  "Cluster charge (9) " << getClusterCharge(9) << "\n"

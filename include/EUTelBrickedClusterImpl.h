@@ -67,26 +67,10 @@ namespace eutelescope {
     *
     *  @return the detector ID
     */
-    inline int getDetectorID()  const {
-
-        int   rhs = 0;
-        lcio::long64 mask  = 0x1F;
-        lcio::long64 cell0 = static_cast<lcio::long64> (_trackerData->getCellID0());
-        return static_cast<int> ( ( cell0 & mask ) >> rhs );
-
-    }
-
-    //! Get the cluster identification number
-    /*! This method is used to return the cluster identification number
-    *  @return the clusterID
-    */
-    inline int getClusterID() const {
-
-        int rhs = 5;
-        lcio::long64 mask = 0x1FE0;
-        lcio::long64 cell0 = static_cast<lcio::long64> (_trackerData->getCellID0());
-        return static_cast<int> ( ( cell0  & mask ) >> rhs );
-    }
+   inline int getDetectorID()  const {
+        UTIL::CellIDDecoder<TrackerDataImpl>cellDecoder( EUTELESCOPE::CLUSTERDEFAULTENCODING );
+        return cellDecoder(_trackerData)["sensorID"];
+        }
 
     //! Get the cluster central pixel
     /*! Due to the definition of EUTelBrickedClusterImpl the central pixel
@@ -109,28 +93,9 @@ namespace eutelescope {
     *  @param ySeed reference to the y coordinate of the seed pixel
     */
     inline void getSeedCoord(int& xSeed, int& ySeed) const {
-
-        lcio::long64 cell0 = static_cast<lcio::long64> (_trackerData->getCellID0());
-        lcio::long64 cell1 = static_cast<lcio::long64> (_trackerData->getCellID1());
-
-        {
-            // first parameter block
-            int rhs = 13;
-            lcio::long64 mask = (0xFFF << rhs);
-            xSeed = static_cast<int>  ( ( cell0 & mask ) >> rhs ) ;
-        }
-
-        {
-            // second parameter block
-            // being on the field edge, two masks are required
-
-            int          rhs0  =  25;
-            int          lhs1  =   7;
-            lcio::long64 mask0 = 0xFE000000;
-            lcio::long64 mask1 = 0x1F;
-
-            ySeed = static_cast<int> (( (cell0 & mask0) >> rhs0 ) | ( (cell1 & mask1)  << lhs1 ));
-        }
+        UTIL::CellIDDecoder<TrackerDataImpl>cellDecoder( EUTELESCOPE::CLUSTERDEFAULTENCODING );
+	xSeed = cellDecoder(_trackerData)["xSeed"];
+	ySeed = cellDecoder(_trackerData)["ySeed"];
     }
 
     //! Get the cluster size along the two directions
@@ -141,24 +106,9 @@ namespace eutelescope {
     *  @param ySize reference to the cluster size along y
     */
     inline void getClusterSize(int& xSize, int& ySize) const {
-
-        lcio::long64 cell1 = static_cast<lcio::long64> (_trackerData->getCellID1());
-
-        {
-            // first parameter block
-            int rhs = 5;
-            lcio::long64 mask = ( 0x1F << rhs );
-
-            xSize = static_cast<int> ( ( cell1 & mask ) >> rhs );
-        }
-
-        {
-            // second parameter block
-            int rhs = 10;
-            lcio::long64 mask = ( 0x1F << rhs );
-
-            ySize = static_cast<int> ( ( cell1 & mask ) >> rhs );
-        }
+     UTIL::CellIDDecoder<TrackerDataImpl>cellDecoder( EUTELESCOPE::CLUSTERDEFAULTENCODING );
+	xSize = cellDecoder(_trackerData)["xCluSize"];
+	ySize = cellDecoder(_trackerData)["yCluSize"];
     }
 
     //! Get cluster quality
@@ -169,14 +119,9 @@ namespace eutelescope {
     *  @return the current cluster quality
     */
     inline ClusterQuality getClusterQuality() const {
-        lcio::long64 cell1 = static_cast<lcio::long64> (_trackerData->getCellID1());
-
-        int rhs = 15;
-        lcio::long64 mask = ( 0x1F << rhs );
-
-        return static_cast<ClusterQuality> ( (cell1 & mask) >> rhs ) ;
-
-    }
+        UTIL::CellIDDecoder<TrackerDataImpl>cellDecoder( EUTELESCOPE::CLUSTERDEFAULTENCODING );
+        return static_cast<ClusterQuality>(static_cast<lcio::long64>(cellDecoder(_trackerData)["quality"]));
+        }
 
     //! Set the cluster quality flag
     /*! This method is used to apply the cluster quality flag to the
