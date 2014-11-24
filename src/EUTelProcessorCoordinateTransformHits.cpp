@@ -157,7 +157,7 @@ void EUTelProcessorCoordinateTransformHits::processEvent (LCEvent * event) {
 	UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );   
 	//Now get each individual hit LOOP OVER!
 	for (int iHit = 0; iHit < collection->getNumberOfElements(); ++iHit) {  
-		TrackerHit*	hit_input = static_cast<TrackerHit*>(collection->getElementAt(iHit)); //This will return a LCObject. Must cast to specify which type
+		TrackerHitImpl*	hit_input = static_cast<TrackerHitImpl*>(collection->getElementAt(iHit)); //This will return a LCObject. Must cast to specify which type
 	TrackerHitImpl* hit_output = new IMPL::TrackerHitImpl; 
 		//Call the local2masterHit/master2localHit function defined int EUTelGeometryTelescopeDescription
 		int properties = hitDecoder(static_cast< IMPL::TrackerHitImpl* >(hit_input))["properties"];
