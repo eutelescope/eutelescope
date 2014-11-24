@@ -203,13 +203,6 @@ namespace eutelescope {
      */ 
     virtual void  getCenterOfGravity(float& x, float& y) const = 0;
     
-    //! Set the cluster quality
-    /*! Used to set the cluster quality using the ClusterQuality enum.
-     *  
-     *  @see eutelescope::ClusterQuality
-     */
-    virtual void setClusterQuality(ClusterQuality) = 0;
-
     //! Get the noise value vector
     /*! This method is used to get a vector containing the pixel noise
      *  values. The order inside the vector corresponds to the one of

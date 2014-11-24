@@ -137,18 +137,6 @@ namespace eutelescope {
 	    return cellDecoder(_trackerData)["sensorID"];
     }
 
-    //! Get the cluster identification number
-    /*! This method is used to return the cluster identification number
-     *  @return the clusterID
-     */
-    inline int getClusterID() const {
-      
-      int rhs = 5;
-      lcio::long64 mask = 0x1FE0;
-      lcio::long64 cell0 = static_cast<lcio::long64> (_trackerData->getCellID0());
-      return static_cast<int> ( ( cell0  & mask ) >> rhs );
-    }
-
     //! Get the cluster central pixel
     /*! Due to the definition of EUTelFFClusterImpl the central pixel
      *  is the seed pixel. 
@@ -196,23 +184,9 @@ namespace eutelescope {
      *  @return the current cluster quality
      */
     inline ClusterQuality getClusterQuality() const {
-      lcio::long64 cell1 = static_cast<lcio::long64> (_trackerData->getCellID1());
-
-      int rhs = 19;
-      lcio::long64 mask = ( 0x1F << rhs );
-      
-      return static_cast<ClusterQuality> ( (cell1 & mask) >> rhs ) ;
- 
-    }
-
-    //! Set the cluster quality flag
-    /*! This method is used to apply the cluster quality flag to the
-     *  current cluster. It modifies directly the CellID1 content
-     *
-     *  @param quality It is the cluster quality bit mask using a
-     *  eutelescope::ClusterQuality enum
-     */ 
-    void setClusterQuality(ClusterQuality quality);
+        UTIL::CellIDDecoder<TrackerDataImpl>cellDecoder( EUTELESCOPE::CLUSTERDEFAULTENCODING );
+        return static_cast<ClusterQuality>(static_cast<lcio::long64>(cellDecoder(_trackerData)["quality"]));
+        }
 
     //! Get distance from another cluster
     /*! This method is used to calculate the distance between to
