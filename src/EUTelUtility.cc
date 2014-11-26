@@ -25,30 +25,6 @@ namespace eutelescope {
 
     namespace Utility {
 
-
-			std::string outputColourString(std::string inputString, std::string colour){
-				std::string outputString;
-				if(colour == "RED"){
-					outputString = "\033[31m" +  inputString + "\033[39m";
-					return	outputString;
-				}
-				if(colour =="BLUE"){
-					outputString = "\033[34m" +  inputString + "\033[39m";
-					return	outputString;
-				}
-				if(colour =="GREEN"){
-					outputString = "\033[32m" +  inputString + "\033[39m";
-					return	outputString;
-				}
-				if(colour =="YELLOW"){
-					outputString = "\033[33m" +  inputString + "\033[39m";
-					return	outputString;
-				}
-	
-			}
-		 
-
-
         /**
          * Fills indices of not excluded planes
          * 

@@ -96,7 +96,7 @@ void EUTelProcessorPatternRecognition::init(){
 		EUTelPatternRecognition* Finder = new EUTelPatternRecognition();//This is the class that contains all the functions that do the actual work
 		if (!Finder) {
 			streamlog_out(ERROR) << "Can't allocate an instance of EUTelExhaustiveTrackFinder. Stopping ..." << std::endl;
-			throw(lcio::Exception( Utility::outputColourString("Pattern recognition class not create correctly.","RED"))); 
+			throw(lcio::Exception("Pattern recognition class not create correctly.")); 
 		}
 		 
 		Finder->setAllowedMissingHits( _maxMissingHitsPerTrackCand );

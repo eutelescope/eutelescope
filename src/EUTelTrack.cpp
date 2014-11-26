@@ -12,7 +12,7 @@ EUTelTrack::EUTelTrack(const EUTelTrack& track): IMPL::TrackImpl(){
 EUTelTrack::EUTelTrack(const EUTelTrack& track, bool copyContents){
 	if( track.getChi2()== 0 or track.getNdf() == 0){
 		streamlog_out(MESSAGE5)<<"Chi: "<<track.getChi2() <<" ndf: "<<track.getNdf() <<endl;
-		throw(lcio::Exception(Utility::outputColourString("You are trying to create a track that is empty. With another track that has not chi2 or degrees of freedom.", "RED"))); 	
+		throw(lcio::Exception("You are trying to create a track that is empty. With another track that has not chi2 or degrees of freedom.")); 	
 	}
 	setChi2(track.getChi2());
 	setNdf(track.getNdf());
@@ -39,7 +39,7 @@ int EUTelTrack::getNumberOfHitsOnTrack() const {
 	int numberOfHitsOnTrack =0;
 	const EVENT::TrackVec& states = getTracks();
 	if(states.size() == 0){
-		throw(lcio::Exception(Utility::outputColourString("The number of states is 0.", "RED"))); 	
+		throw(lcio::Exception("The number of states is 0.")); 	
 	}
 	//streamlog_out(DEBUG0) <<"The number of states " << states.size()<<std::endl; 
 	for(size_t i =0; i< states.size();++i){
@@ -50,7 +50,7 @@ int EUTelTrack::getNumberOfHitsOnTrack() const {
 		}
 		if(states[i]->getTrackerHits().size()>1){
 			streamlog_out( DEBUG1 ) << "The number of hits in one state is: "<< states[i]->getTrackerHits().size() << std::endl;
-			throw(lcio::Exception(Utility::outputColourString("The number of hits for the state is greater than 1.", "RED"))); 	
+			throw(lcio::Exception("The number of hits for the state is greater than 1.")); 	
 		}
 		numberOfHitsOnTrack++;
 	}
