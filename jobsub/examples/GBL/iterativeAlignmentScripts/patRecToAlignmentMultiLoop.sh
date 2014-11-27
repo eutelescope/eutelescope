@@ -30,9 +30,9 @@ fi
 export number="$number" #We export this to echo in single loop bash script.
 #THESE VARIABLES ARE ALSO CHANGED BELOW TO ALIGN WITH DIFFERENT SHIFTS AND ROTATIONS. DOES NOT HAVE TO BE IN Z-ORDERING.
 export Fxr="0 1 2 3 4 5 $dutPlanes" #This is the fixed planes for rotations round the x axis. Note we use dutPlanes since rotation round x axis always fixed parameter.
-export Fxs="0         5 $ExcludePlanes" #This is the fixed planes for shifts in the x axis. Note we use exclude planes here so we can sometimes let dut alignment parameters free
+export Fxs="0 $allMimosaPlanesFixed 5 $ExcludePlanes" #This is the fixed planes for shifts in the x axis. Note we use exclude planes here so we can sometimes let dut alignment parameters free
 export Fyr="0 1 2 3 4 5 $dutPlanes" #This is the fixed planes for rotations round the y axis
-export Fys="0         5 $ExcludePlanes" #This is the fixed planes for shifts in the y axis
+export Fys="0 $allMimosaPlanesFixed 5 $ExcludePlanes" #This is the fixed planes for shifts in the y axis
 export Fzr="0 1 2 3 4 5 $dutPlanes" #This is the fixed planes for rotations round the z axis
 export Fzs="0 1 2 3 4 5 $dutPlanes" #This is the fixed planes for shifts in the z axis
 #First input gear comes from the input of the bash script. IMPORTANT: If you edit this file then the first alignment must use the inital gear.
@@ -44,10 +44,10 @@ $scriptsLocation/patRecToAlignmentSingleLoop.sh
 $scriptsLocation/patRecAndTrackFit.sh -i "$outputGear" -h "$histoNameInput"  
 echo "We have produced new histogram $histoNameInput"
 export Fxr="0 1 2 3 4 5 $dutPlanes" #This is the fixed planes for rotations round the x axis
-export Fxs="0         5 $ExcludePlanes" #This is the fixed planes for shifts in the x axis
+export Fxs="0 $allMimosaPlanesFixed 5 $ExcludePlanes" #This is the fixed planes for shifts in the x axis
 export Fyr="0 1 2 3 4 5 $dutPlanes" #This is the fixed planes for rotations round the y axis
-export Fys="0         5 $ExcludePlanes" #This is the fixed planes for shifts in the y axis
-export Fzr="0 $ExcludePlanes" #This is the fixed planes for rotations round the z axis
+export Fys="0 $allMimosaPlanesFixed 5 $ExcludePlanes" #This is the fixed planes for shifts in the y axis
+export Fzr="0 $allMimosaPlanesFixed $ExcludePlanes" #This is the fixed planes for rotations round the z axis
 export Fzs="0 1 2 3 4 5 $dutPlanes" #This is the fixed planes for shifts in the z axis
 export inputGear="$outputGear" #We now use the gear file produced from the last iteration.
 #export outputGear="gear-ZRotations-XYShifts-Iteration-$number-${RUN}.xml"

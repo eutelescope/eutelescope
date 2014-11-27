@@ -71,7 +71,6 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
   <!--Output track candidates hits collection name-->
 	<parameter name = "AllowedSharedHitsOnTrackCandidate" type="int"> @AllowedSharedHitsOnTrackCandidate@ </parameter>	
   <parameter name="TrackCandHitOutputCollectionName" type="string" lcioOutType="Track"> track_candidates </parameter>
-	<parameter name="BeamSpread" type="FloatVec" > @BeamSpread@ </parameter>
 	<parameter name="planeDimensions" type="IntVec" > @planeDimensions@ </parameter>
 	<parameter name="ExcludePlanes" type="string" lcioOutType="FloatVec"> @excludeplanes@ </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
@@ -89,7 +88,7 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
   <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
   <!--parameter name="KeepCollectionNames" type="StringVec" value="MyPreciousSimTrackerHits"/-->
   <!-- name of output file -->
-  <parameter name="LCIOOutputFile" type="string" value="@LcioPath@/@FilePrefix@-trackcand.slcio"/>
+  <parameter name="LCIOOutputFile" type="string" value="@LcioPath@/@FilePrefix@-@lcioOutputName@.slcio"/>
   <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
   <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   <!--Set it to true to remove intermediate EORE in merged runs-->

@@ -22,11 +22,11 @@ if [  -z "$histoNameInput" ]; then
 fi
 
 #THIS PART WILL RUN PATTERN RECOGNTION AND TRACKFITTING AGAIN WITH THE FINAL GEAR FILE.
-$do jobsub.py -c $CONFIG -csv $RUNLIST -o HitInputCollectionName="$lcioPatternCollection" -o planeDimensions="${planeDimensions}" -o Verbosity="$Verbosity" -o MaxRecordNumber="$MaxRecordNumber" -o GearFile="$inputGear"  -o ExcludePlanes="$ExcludePlanes" $PatRec $RUN 
+$do jobsub.py -c $CONFIG -csv $RUNLIST  -o planeDimensions="${planeDimensions}" -o Verbosity="$Verbosity" -o MaxRecordNumber="$MaxRecordNumber" -o GearFile="$inputGear"  -o ExcludePlanes="$ExcludePlanes" $PatRec $RUN 
 #TO DO: This be set here might be confusing should move to iterativeAlignment
 r="0.005"; #Correct mimosa resolution
-export dutX="0.02" #Correct DUT resolution.
-export dutY="0.02"
+export dutX="" #Correct DUT resolution.
+export dutY=""
 export dutXs="$dutX $dutX" 
 export dutYs="$dutY $dutY" 
 xres="$r $r $r $dutXs $r $r $r";

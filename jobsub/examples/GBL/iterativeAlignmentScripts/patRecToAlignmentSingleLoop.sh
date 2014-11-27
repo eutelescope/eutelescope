@@ -12,8 +12,8 @@ echo "Input gear: $inputGear"
 echo "Output gear: $outputGear"
 echo "This is the resolutions X/Y:  $xres/$yres."
 for x in {1..10}; do
-
-	$do jobsub.py -c $CONFIG -csv $RUNLIST -o MaxMissingHitsPerTrack="$MaxMissingHitsPerTrack" -o AllowedSharedHitsOnTrackCandidate="$AllowedSharedHitsOnTrackCandidate" -o ResidualsRMax="$ResidualsRMax" -o HitInputCollectionName="$lcioPatternCollection" -o Verbosity="$Verbosity" -o Verbosity="$Verbosity" -o planeDimensions="${planeDimensions}" -o MaxRecordNumber="$MaxRecordNumber" -o GearFile="$inputGear"  -o ExcludePlanes="$ExcludePlanes" $PatRec $RUN 
+	echo "PATTERN RECOGNTION ATTEMPT $x ON ITERATION $number"
+	$do jobsub.py -c $CONFIG -csv $RUNLIST -o MaxMissingHitsPerTrack="$MaxMissingHitsPerTrack" -o AllowedSharedHitsOnTrackCandidate="$AllowedSharedHitsOnTrackCandidate" -o ResidualsRMax="$ResidualsRMax"  -o Verbosity="$Verbosity" -o Verbosity="$Verbosity" -o planeDimensions="${planeDimensions}" -o MaxRecordNumber="$MaxRecordNumber" -o GearFile="$inputGear"  -o ExcludePlanes="$ExcludePlanes" $PatRec $RUN  
 
 	fileName="$PatRec-${RUN}.zip"
 	fullPath="$directory/$fileName"
@@ -37,7 +37,8 @@ for x in {1..10}; do
 	fi
 done
 #THIS IS PART (2)
-$do jobsub.py  -c $CONFIG -csv $RUNLIST -o Verbosity="$Verbosity" -o GearFile="$inputGear" -o lcioInputName="trackcand"  -o inputCollectionName="track_candidates" -o lcioOutputName="GBLtracks" -o outputCollectionName="tracks"  -o MaxRecordNumber="$MaxRecordNumber" -o ExcludePlanes="$ExcludePlanes" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" $TrackFit  $RUN 
+echo "GBLTRACKS CREATED FOR ALIGNMENT ON ITERATION $number"
+$do jobsub.py  -c $CONFIG -csv $RUNLIST -o Verbosity="$Verbosity" -o GearFile="$inputGear" -o lcioInputName="trackcand"  -o inputCollectionName="track_candidates" -o lcioOutputName="GBLtracks" -o outputCollectionName="tracks"  -o MaxRecordNumber="$MaxRecordNumber" -o ExcludePlanes="$ExcludePlanes" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" $TrackFit  $RUN  
 
 #fileName="$TrackFit-${RUN}.zip"
 #fullPath="$directory/$fileName"
@@ -54,8 +55,12 @@ export outlierdownweighting="!outlierdownweighting 0"
 
 #THIS IS PART (3)
 fileAlign="$directory/$Align-${RUN}.zip"
+numberRejectedAlignmentAttempts=0 #We set this since we do not want to fall in a loop were chi<1 the rejects then chi<1 .....
+tooManyRejectsExitLoopBool=false
+#We use the last successful attempt when we have two rejected otherwise if we have one then we increase the resolution and continue.
 for x in {1..10}; do
-	echo "We are on loop number $x"
+	echo "GBLALIGN ATTEMPT $x ON ITERATION $number"
+	echo "THE NUMBER OF FAILED ALIGNMENT ATTEMPTS $numberRejectedAlignmentAttempts"
 	echo "The pede input string is:  $pede"
 	$do jobsub.py -c $CONFIG -csv $RUNLIST -o Verbosity="$Verbosity" -o lcioInputName="GBLtracks" -o inputCollectionName="tracks" -o MaxRecordNumber="$MaxRecordNumber" -o ExcludePlanes="$ExcludePlanes" -o GearFile="$inputGear" -o GearAlignedFile="$outputGear" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o pede="$pede" -o outlierdownweighting="$outlierdownweighting"  $Align  $RUN 
 	#Check that we have not seg fault within millepede.
@@ -67,10 +72,16 @@ for x in {1..10}; do
 	#What overall chi2 did we get from the fit. This is different from the chi2 of the individual tracks. 
 	averageChi2Mille=`unzip -p $fileAlign |grep "Chi^2/Ndf" | awk '{ print $(NF-5) }'`;
 	echo "The chi2/ndf of the fit is $averageChi2Mille" 
+	if $tooManyRejectsExitLoopBool;then
+		echo "WE HAVE TOO MANY REJECTED ATTEMPTS AND NOW HAVE USED THE LAST WORKING EXAMPLE AND EXITING"
+		exit
+	fi
 	factor=`unzip  -p  $fileAlign |grep "multiply all input standard deviations by factor" | awk '{ print $NF }'`;
 	factor=`echo ${factor} | sed -e 's/[eE]+*/\\*10\\^/'`
 	echo "factor word: " $factor
 	if [[ $factor != "" ]];then
+		export xresWorking=$xres; #Must be set before the new resolution is set which may cause too many rejects
+		export yresWorking=$yres;
 		echo "Factor word found! Resolution must increase by $factor."
 		r=$(echo "scale=4;$r*$factor"|bc);
 		dutX=$(echo "scale=4;$dutX*$factor"|bc);
@@ -84,6 +95,10 @@ for x in {1..10}; do
 	rejected=`unzip  -p  $fileAlign |grep "Too many rejects" |cut -d '-' -f2`; 
 	echo "Rejects word:  $rejected "
 	if [[ $rejected != "" ]];then #This makes sure that we do not cut too many tracks.
+		export	numberRejectedAlignmentAttempts=$(($numberRejectedAlignmentAttempts+1))
+	fi
+	if [[ $numberRejectedAlignmentAttempts -eq 1 ]] && [[ $rejected != "" ]] #We add the 2nd condition to make sure we don't enter on a loop with factor term. 
+	then
 		echo "Too many rejects. Resolution must increase by factor 10."
 		r=$(echo "scale=4;$r*10"|bc);
 		dutX=$(echo "scale=4;$dutX*10"|bc);
@@ -93,7 +108,22 @@ for x in {1..10}; do
 		xres="$r $r $r $dutXs $r $r $r";
 		yres="$r $r $r $dutYs $r $r $r";
 		echo "New resolutions are for (X/Y):" $xres"/"$yres
+	elif [[ $numberRejectedAlignmentAttempts -eq 1 ]]
+	then
+		echo "We have already rejected $numberRejectedAlignmentAttempts times. However have found the factor $factor to improve alignment to continue."
+	elif [ $numberRejectedAlignmentAttempts -eq 2 ]   
+	then
+		echo "Too many rejects found set x/y resolution to last working alignment fit, run, then exit."
+		export xres=$xresWorking;
+		export yres=$yresWorking;
+		tooManyRejectsExitLoopBool=true
+	elif [ $numberRejectedAlignmentAttempts -eq 0 ]
+	then 
+	 echo "The number of rejected iterative alignment steps is $numberRejectedAlignmentAttempts."
+	else
+	 echo "ERROR YOU HAVE TRIED TOO MANY ITERATIONS. MUST BE A PROBLEM IN ITERATIVE ALIGNMENT SORRY."
 	fi
+
 	#If there is no suggested factor and we have enough tracks passing cut then we assume we have fitted as close to the correct resolution for this fit. 
 	if [[ $factor == "" ]] && [[ $rejected == "" ]];then
 		echo "Mille chi2 is non existant. Here it is: $averageChi2Mille"

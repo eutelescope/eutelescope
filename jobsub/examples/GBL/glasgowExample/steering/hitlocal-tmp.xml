@@ -21,6 +21,7 @@
       <processor name="HitMakerM26"/>
       <processor name="HitMakerAPIX"/>
       <processor name="HitFilter_m26"/> 
+      <processor name="HitFilter_apix"/> 
       <processor name="Correlator"/>
       <processor name="Save"/>
    </execute>
@@ -50,10 +51,10 @@
  <!--EUTelHitMaker is responsible to translate cluster centers from the local frame of reference to the external frame of reference using the GEAR geometry description-->
 
   <!--Input of Zero Suppressed data-->
-  <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> original_zsdata_m26 @DUTOriginalData@ </parameter>
+  <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> original_zsdata_m26  </parameter>
 
   <!--Cluster (pulse) collection name-->
-  <parameter name="PulseCollectionName" type="string" lcioInType="TrackerPulse"> cluster_m26_free @DUTClusters@ </parameter>
+  <parameter name="PulseCollectionName" type="string" lcioInType="TrackerPulse"> cluster_m26_free </parameter>
 
   <!--Hit collection name-->
   <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit </parameter>
@@ -87,31 +88,57 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
   <parameter name="Verbosity" type="string" value="@Verbosity@"/>
 </processor>
 
- <processor name="HitMakerAPIX" type="EUTelHitMakerTwo">
- <!--EUTelHitMakerTwo is responsible to translate cluster centers from the local frame of reference to the external frame of reference using the GEAR geometry description-->
-  <!--If true a 3D histo will be filled. It may require large memory-->
-  <parameter name="Enable3DHisto" type="bool">true </parameter>
-  <!--Hit coordinates are calculated in local reference frame of sensor-->
-  <!--parameter name="EnableLocalCoordidates" type="bool">false </parameter-->
+ <processor name="HitMakerAPIX" type="EUTelProcessorHitMaker">
+ <!--EUTelHitMaker is responsible to translate cluster centers from the local frame of reference to the external frame of reference using the GEAR geometry description-->
+
+  <!--Input of Zero Suppressed data-->
+  <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData">  zsdata_apix </parameter>
+
+  <!--Cluster (pulse) collection name-->
+  <parameter name="PulseCollectionName" type="string" lcioInType="TrackerPulse"> cluster_apix_free </parameter>
+
   <!--Hit collection name-->
   <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit </parameter>
-  <!--This is the name of the LCIO file name with the output offset db (add .slcio)-->
-  <!--parameter name="OffsetDBFile" type="string">offset-db.slcio </parameter-->
-  <!--Cluster (pulse) collection name-->
-  <parameter name="PulseCollectionName" type="string" lcioInType="TrackerPulse">cluster_apix_free</parameter>
-  <!--This is the name of the reference hit collection initialized in this processor. This collection provides the reference vector to correctly determine a plane corresponding to a global hit coordiante.-->
-  <!--parameter name="ReferenceCollection" type="string">referenceHit </parameter-->
-  <!--This is the file where the reference hit collection is stored-->
-  <parameter name="ReferenceHitFile" type="string"> @DatabasePath@/run@RunNumber@-refhit-db.slcio </parameter>
-  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
- </processor>
 
+  <!--Select here how the center of gravity should be calculated.
+FULL: using the full cluster
+NPixel: using only the first N most significant pixels (set NPixel too)
+NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-->
+  <parameter name="CoGAlgorithm" type="string" value="FULL"/>
+  <!--If true a 3D histo will be filled. It may require large memory-->
+  <parameter name="Enable3DHisto" type="bool" value="false"/>
+  <!--Hit coordinates are calculated in local reference frame of sensor-->
+  <parameter name="EnableLocalCoordidates" type="bool" value="true"/>
+  <!--The name of the collections containing the eta function (x and y respectively)-->
+  <!--parameter name="EtaCollectionName" type="StringVec"> xEta yEta </parameter-->
+  <!--Enable or disable eta correction-->
+  <parameter name="EtaSwitch" type="bool" value="false"/>
+  <!--The number of most significant pixels to be used if CoGAlgorithm is "NPixel"-->
+  <!--parameter name="NPixel" type="int" value="9"/-->
+  <!--The submatrix size to be used for CoGAlgorithm = "NxMPixel"-->
+  <parameter name="NxMPixel" type="IntVec"> 3 3 </parameter>
+  <!--This is the name of the preAligment collection determined from hit correlations and stored in the offset db file.-->
+  <!--parameter name="OffsetCollection" type="string" value="preAlignment"/-->
+  <!--This is the name of the LCIO file name with the output offset db (add .slcio)-->
+  <!--parameter name="OffsetDBFile" type="string" value="offset-db.slcio"/-->
+  <!--This is the name of the reference hit collection initialized in this processor. This collection provides the reference vector to correctly determine a plane corresponding to a global hit coordiante.-->
+  <!--parameter name="ReferenceCollection" type="string" value="referenceHit"/-->
+  <!--This is the file where the reference hit collection is stored-->
+  <parameter name="ReferenceHitFile" type="string" value="@DatabasePath@/@FilePrefix@-referencehit.slcio"/>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <parameter name="Verbosity" type="string" value="@Verbosity@"/>
+</processor>
 
  <processor name="HitFilter_m26" type="EUTelProcessorFilteringHitFilter">
     <parameter name="HitInputCollectionName" type="string" lcioOutType="TrackerHit"> hit </parameter>
-    <parameter name="HitOutputCollectionName" type="string" lcioOutType="TrackerHit"> hit_filtered_m26 </parameter>
+    <parameter name="HitOutputCollectionName" type="string" lcioOutType="TrackerHit"> @HitOutputCollectionName@  </parameter>
     <parameter name="HotPixelCollectionName" type="string" lcioOutType="TrackerHit"> hotpixel_m26 </parameter>
+ </processor>
+
+ <processor name="HitFilter_apix" type="EUTelProcessorFilteringHitFilter">
+    <parameter name="HitInputCollectionName" type="string" lcioOutType="TrackerHit"> hit </parameter>
+    <parameter name="HitOutputCollectionName" type="string" lcioOutType="TrackerHit"> @HitOutputCollectionName@  </parameter>
+    <parameter name="HotPixelCollectionName" type="string" lcioOutType="TrackerHit"> hotpixel_apix </parameter>
  </processor>
 
 
@@ -119,7 +146,7 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
  <processor name="Correlator" type="EUTelCorrelator">
  <!--EUTelCorrelator fills histograms with correlation plots-->
   <!--Hit collection name-->
-  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit_filtered_m26 </parameter>
+  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit_filtered_m26_apix </parameter>
   <!--Minimum allowed cluster charge to be taken into account for the correlation plots (default = 2)-->
   <parameter name="ClusterChargeMinimum" type="int" value="0"/>
   <!--Dump the offset X and Y values calculated from the correlation bands (default = true)-->

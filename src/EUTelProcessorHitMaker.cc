@@ -449,14 +449,23 @@ void EUTelProcessorHitMaker::processEvent (LCEvent * event) {
                             << " ->  [" << setw(8) << setprecision(3) << xDet << ":" << setw(8) << setprecision(3) << yDet << "]"
                             << endl;
       
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+      //We have calculated the cluster hit position in terms of distance along the X and Y axis.
+			//However we still fo not have the sensor centre as the origin of the coordinate system.
+			//To do this we need to deduct xSize/2 and ySize/2 for the respective cluster X/Y position 
+      double telPos[3];
+      telPos[0] = xDet - xSize/2. ;
+      telPos[1] = yDet - ySize/2. ; 
+      telPos[2] =   0.;
+	
+			//We now plot the the hits in the EUTelescope local frame. This frame has the coordinate centre at the sensor centre.
+			#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
       string tempHistoName;
       if ( _histogramSwitch ) 
       {
         tempHistoName =  _hitHistoLocalName + "_" + to_string( sensorID );
         if ( AIDA::IHistogram2D* histo = dynamic_cast<AIDA::IHistogram2D*>(_aidaHistoMap[ tempHistoName ]) )
         {
-            histo->fill(xDet, yDet);
+            histo->fill(telPos[0], telPos[1]);
         }
         else 
         {
@@ -465,17 +474,8 @@ void EUTelProcessorHitMaker::processEvent (LCEvent * event) {
             _histogramSwitch = false;
         }
       }
-#endif
+			#endif
 
-
-      // 
-      // STILL in the LOCAL coordinate system !!!
-      // 
-       
-      double telPos[3];
-      telPos[0] = xDet - xSize/2. ;
-      telPos[1] = yDet - ySize/2. ; 
-      telPos[2] =   0.;
 
       if ( !_wantLocalCoordinates ) {
             // 
@@ -571,11 +571,14 @@ void EUTelProcessorHitMaker::bookHistos(int sensorID) {
 
   tempHistoName = _hitHistoLocalName + "_" + to_string( sensorID ) ;
 
-  double xMin =  0;
-  double xMax =  geo::gGeometry().siPlaneXSize ( sensorID );   
+	//Note in the local frame the origin is at the centre of the sensor. So we want this to look for hits in the -x/y direction, as well at the + axis.
+	//We add and subtract a constant so we know for sure we can see all hits on the histogram.
+	double constant=5;
+  double xMin =  -(geo::gGeometry().siPlaneXSize ( sensorID )/2)-constant;
+  double xMax = ( geo::gGeometry().siPlaneXSize ( sensorID )/2)+constant;   
 
-  double yMin =  0;
-  double yMax =  geo::gGeometry().siPlaneYSize ( sensorID ); 
+  double yMin = -(geo::gGeometry().siPlaneYSize ( sensorID )/2)-constant;
+  double yMax = (geo::gGeometry().siPlaneYSize ( sensorID )/2)+constant; 
 
   int xNBin =    geo::gGeometry().siPlaneXNpixels ( sensorID );
   int yNBin =    geo::gGeometry().siPlaneYNpixels ( sensorID );

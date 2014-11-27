@@ -24,8 +24,8 @@
                                                         sizeX="21.2"            sizeY="10.6"            thickness="0.02"
                                                         npixelX="1152"          npixelY="576"
                                                         pitchX="0.018402778"    pitchY="0.018402778"    resolution="0.0045"
-                                                        rotation1="-1.0"        rotation2="0.0"
-                                                        rotation3="0.0"         rotation4="-1.0"
+                                                        rotation1="1.0"        rotation2="0.0"
+                                                        rotation3="0.0"         rotation4="1.0"
                                                         radLength="93.660734"
                                         />
                                 </layer>
@@ -42,8 +42,8 @@
                                                         sizeX="21.2"            sizeY="10.6"            thickness="0.02"
                                                         npixelX="1152"          npixelY="576"
                                                         pitchX="0.018402778"    pitchY="0.018402778"    resolution="0.0045"
-                                                        rotation1="-1.0"        rotation2="0.0"
-                                                        rotation3="0.0"         rotation4="-1.0"
+                                                        rotation1="1.0"        rotation2="0.0"
+                                                        rotation3="0.0"         rotation4="1.0"
                                                         radLength="93.660734"
                                         />
                                 </layer>
@@ -60,8 +60,8 @@
                                                         sizeX="21.2"            sizeY="10.6"            thickness="0.02"
                                                         npixelX="1152"          npixelY="576"
                                                         pitchX="0.018402778"    pitchY="0.018402778"    resolution="0.0045"
-                                                        rotation1="-1.0"        rotation2="0.0"
-                                                        rotation3="0.0"         rotation4="-1.0"
+                                                        rotation1="1.0"        rotation2="0.0"
+                                                        rotation3="0.0"         rotation4="1.0"
                                                         radLength="93.660734"
                                         />
                                 </layer>
@@ -86,8 +86,8 @@
                                 <!--APIX-Plane 0 - FE-I4 3072-4-8 (250x50) -->
                                 <layer>
                                         <ladder         ID="20"
-                                                        positionX="00.00"       positionY="0.00"        positionZ="183.00"
-                                                        rotationZY="0.0"        rotationZX="0.0"        rotationXY="90.0"
+                                                        positionX="2"       positionY="3.5"        positionZ="183.00"
+                                                        rotationZY="0.0"        rotationZX="0.0"        rotationXY="90"
                                                         sizeX="20.3"            sizeY="16.8"            thickness="0.300"
                                                         radLength="93.660734"
                                         />
@@ -96,7 +96,7 @@
                                                         sizeX="20.3"            sizeY="16.8"            thickness="0.300"
                                                         npixelX="80"            npixelY="336"
                                                         pitchX="0.250"          pitchY="0.05"           resolution="1.0000"
-                                                        rotation1="-1.0"        rotation2="0.0"
+                                                        rotation1="1.0"        rotation2="0.0"
                                                         rotation3="0.0"         rotation4="1.0"
                                                         radLength="93.660734"
                                         />
@@ -115,8 +115,8 @@
                                                         sizeX="21.2"            sizeY="10.6"            thickness="0.02"
                                                         npixelX="1152"          npixelY="576"
                                                         pitchX="0.018402778"    pitchY="0.018402778"    resolution="0.0045"
-                                                        rotation1="-1.0"        rotation2="0.0"
-                                                        rotation3="0.0"         rotation4="-1.0"
+                                                        rotation1="1.0"        rotation2="0.0"
+                                                        rotation3="0.0"         rotation4="1.0"
                                                         radLength="93.660734"
                                         />
                                 </layer>
@@ -133,8 +133,8 @@
                                                         sizeX="21.2"            sizeY="10.6"            thickness="0.02"
                                                         npixelX="1152"          npixelY="576"
                                                         pitchX="0.018402778"    pitchY="0.018402778"    resolution="0.0045"
-                                                        rotation1="-1.0"        rotation2="0.0"
-                                                        rotation3="0.0"         rotation4="-1.0"
+                                                        rotation1="1.0"        rotation2="0.0"
+                                                        rotation3="0.0"         rotation4="1.0"
                                                         radLength="93.660734"
                                         />
                                 </layer>
@@ -151,8 +151,8 @@
                                                         sizeX="21.2"            sizeY="10.6"            thickness="0.02"
                                                         npixelX="1152"          npixelY="576"
                                                         pitchX="0.018402778"    pitchY="0.018402778"    resolution="0.0045"
-                                                        rotation1="-1.0"        rotation2="0.0"
-                                                        rotation3="0.0"         rotation4="-1.0"
+                                                        rotation1="1.0"        rotation2="0.0"
+                                                        rotation3="0.0"         rotation4="1.0"
                                                         radLength="93.660734"
                                         />
                                 </layer>
