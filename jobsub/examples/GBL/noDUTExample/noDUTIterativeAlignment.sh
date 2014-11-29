@@ -30,9 +30,9 @@ export r="1"; #Make resolution large so we begin with small chi2 and factor impr
 export dutXs="" #This is the resolution of the DUT in the x LOCAL direction taking into account the misalignment
 export dutYs="" #This is the resolution of the DUT in the y LOCAL direction taking into account the misalignment
 export allMimosaPlanesFixed=" " #Planes 0 and 5 are always fixed. These are the additional planes you want to fix.
-export MaxRecordNumber="10000" 
+export MaxRecordNumber="50000" 
 export inputGearInitial="gear-1T.xml"
 #export inputGearInitial="gear-final-noDUT-${RUN}.xml"
-export outputIdentifier="final-noDUTsTest-LargeR-2" #Use this string to identify final gear/histogram and all iterations before.
+export outputIdentifier="final-noDUTsTest-LargeR-lotsEvents" #Use this string to identify final gear/histogram and all iterations before.
 
 $scriptsLocation/initialiseAndRun.sh
