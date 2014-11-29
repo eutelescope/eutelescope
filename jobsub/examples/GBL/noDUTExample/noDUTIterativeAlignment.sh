@@ -14,7 +14,7 @@ if [  -z "$numberOfIterations" ]; then
 fi
 
 #VARIABLES. IMPORTANT CONSTANT VARIABLES THROUGH THE WHOLE ALIGNMENT PROCESS ARE SET HERE. IMPORTANT NOT ALL VARIABLES ARE HERE LOOK IN STEERING FILES/CONFIG
-export RUN="97" 
+export RUN="290" 
 export numberOfIterations="$numberOfIterations"
 export exampleLocation="/afs/phas.gla.ac.uk/user/a/amorton/ilcsoft/v01-17-05/Eutelescope/trunk/jobsub/examples/GBL/noDUTExample"
 export scriptsLocation="/afs/phas.gla.ac.uk/user/a/amorton/ilcsoft/v01-17-05/Eutelescope/trunk/GBL/iterativeAlignmentScripts"
@@ -24,15 +24,15 @@ export AllowedSharedHitsOnTrackCandidate="0" #This is the number of hits two tra
 export minTracksPerEventAcceptance=0.5 #This is the number of tracks that is needed per event before we stop pattern recognition. Note value should depend on other cuts. 
 export dutPlanes="" #Since the mimosa planes are always named the same but dut can be different, must note dut. This does NOT indicate that it will be used in analysis.
 export ExcludePlanes="" #These planes are completely excluded from the analysis. The scattering from the plane however is still taken into account.
-export ResidualsRMax="1" #This is the window size on the next plane that we will accept hits from. This will increase if less than 1 track per event is found.
+export ResidualsRMax="5" #This is the window size on the next plane that we will accept hits from. This will increase if less than 1 track per event is found.
 export Verbosity="MESSAGE5"
 export r="1"; #Make resolution large so we begin with small chi2 and factor improvement to get to chi2/ndf=1 on next iteration. 
-export dutX=""
-export dutY=""
+export dutXs="" #This is the resolution of the DUT in the x LOCAL direction taking into account the misalignment
+export dutYs="" #This is the resolution of the DUT in the y LOCAL direction taking into account the misalignment
 export allMimosaPlanesFixed=" " #Planes 0 and 5 are always fixed. These are the additional planes you want to fix.
 export MaxRecordNumber="10000" 
-export inputGearInitial="gear_desy2012_150mm.xml"
+export inputGearInitial="gear-1T.xml"
 #export inputGearInitial="gear-final-noDUT-${RUN}.xml"
-export outputIdentifier="final-noDUTsTest-LargeR-final" #Use this string to identify final gear/histogram and all iterations before.
+export outputIdentifier="final-noDUTsTest-LargeR-2" #Use this string to identify final gear/histogram and all iterations before.
 
 $scriptsLocation/initialiseAndRun.sh

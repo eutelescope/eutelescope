@@ -25,8 +25,8 @@ fi
 $do jobsub.py -c $CONFIG -csv $RUNLIST  -o planeDimensions="${planeDimensions}" -o Verbosity="$Verbosity" -o MaxRecordNumber="$MaxRecordNumber" -o GearFile="$inputGear"  -o ExcludePlanes="$ExcludePlanes" $PatRec $RUN 
 #TO DO: This be set here might be confusing should move to iterativeAlignment
 r="0.005"; #Correct mimosa resolution
-export dutX="" #Correct DUT resolution.
-export dutY=""
+export dutX="0.250" #Correct DUT resolution.
+export dutY="0.05"
 export dutXs="$dutX $dutX" 
 export dutYs="$dutY $dutY" 
 xres="$r $r $r $dutXs $r $r $r";
