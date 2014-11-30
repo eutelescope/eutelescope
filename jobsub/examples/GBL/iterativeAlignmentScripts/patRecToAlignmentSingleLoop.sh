@@ -58,7 +58,8 @@ fileAlign="$directory/$Align-${RUN}.zip"
 numberRejectedAlignmentAttempts=0 #We set this since we do not want to fall in a loop were chi<1 the rejects then chi<1 .....
 tooManyRejectsExitLoopBool=false
 #We use the last successful attempt when we have two rejected otherwise if we have one then we increase the resolution and continue.
-for x in {1..10}; do
+# TO DO: Must change this to while loop since we exit down below as well. 
+for x in {1..20}; do
 	echo "GBLALIGN ATTEMPT $x ON ITERATION $number"
 	echo "THE NUMBER OF FAILED ALIGNMENT ATTEMPTS $numberRejectedAlignmentAttempts"
 	echo "The pede input string is:  $pede"
@@ -100,9 +101,9 @@ for x in {1..10}; do
 	if [[ $numberRejectedAlignmentAttempts -eq 1 ]] && [[ $rejected != "" ]] #We add the 2nd condition to make sure we don't enter on a loop with factor term. 
 	then
 		echo "Too many rejects. Resolution must increase by factor 10."
-		r=$(echo "scale=4;$r*10"|bc);
-		dutX=$(echo "scale=4;$dutX*10"|bc);
-		dutY=$(echo "scale=4;$dutY*10"|bc);
+		r=$(echo "scale=4;$r*5"|bc);
+		dutX=$(echo "scale=4;$dutX*5"|bc);
+		dutY=$(echo "scale=4;$dutY*5"|bc);
 		dutXs="$dutX $dutX" #This is the resolution of the DUT in the x LOCAL direction taking into account the misalignment
 		dutYs="$dutY $dutY" #This is the resolution of the DUT in the x LOCAL direction taking into account the misalignment
 		xres="$r $r $r $dutXs $r $r $r";
@@ -130,8 +131,9 @@ for x in {1..10}; do
 		echo "We can not find this or factor or rejects. Break alignment loop."
 		break
 	fi
-	if [[ $x -eq 10 ]];then
-		echo "We are are iteration 10 and still have not found enough tracks in pattern recogntion"
+	#We must make this large so we can get close as possible to chi2 = 1.
+	if [[ $x -eq 20 ]];then
+		echo "We are are iteration $x and still have not found enough tracks in pattern recogntion"
 		exit
 	fi
 done 
