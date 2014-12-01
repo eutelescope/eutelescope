@@ -480,7 +480,7 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
 		streamlog_out(MESSAGE5) << "SensorID: " << SensorId << ". Determinant =  " <<determinant <<"  This is the correct determinate for this transformation." << std::endl;   
 	}else{
 		streamlog_out(ERROR5) << "SensorID: " << SensorId << ". Determinant =  " <<determinant << std::endl;   
-		throw(lcio::Exception(Utility::outputColourString("The initial rotation and reflection matrix does not have determinant of 1 or -1. Gear file input must be wrong.", "RED"))); 	
+		throw(lcio::Exception("The initial rotation and reflection matrix does not have determinant of 1 or -1. Gear file input must be wrong.")); 	
 	}
 	//Create spatial TGeoTranslation object.
 	std::string stTranslationName = "matrixTranslationSensor";
