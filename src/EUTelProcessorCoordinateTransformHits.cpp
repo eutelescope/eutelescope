@@ -91,7 +91,7 @@ void EUTelProcessorCoordinateTransformHits::processRunHeader (LCRunHeader * rdr)
                                <<  "This may mean that the GeoID parameter was not set" << endl;
 
 
-  if ( header->getGeoID() != geo::gGeometry().getSiPlanesLayoutID() ) {
+  if ( (unsigned int)header->getGeoID() != geo::gGeometry().getSiPlanesLayoutID() ) {
   	streamlog_out ( WARNING5 ) <<  "Error during the geometry consistency check: " << endl
                              << "The run header says the GeoID is " << header->getGeoID() << endl
                              << "The GEAR description says is     " << geo::gGeometry().getSiPlanesLayoutID() << endl;
@@ -157,7 +157,7 @@ void EUTelProcessorCoordinateTransformHits::processEvent (LCEvent * event) {
 	UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );   
 	//Now get each individual hit LOOP OVER!
 	for (int iHit = 0; iHit < collection->getNumberOfElements(); ++iHit) {  
-		TrackerHit*	hit_input = static_cast<TrackerHit*>(collection->getElementAt(iHit)); //This will return a LCObject. Must cast to specify which type
+		TrackerHitImpl*	hit_input = static_cast<TrackerHitImpl*>(collection->getElementAt(iHit)); //This will return a LCObject. Must cast to specify which type
 	TrackerHitImpl* hit_output = new IMPL::TrackerHitImpl; 
 		//Call the local2masterHit/master2localHit function defined int EUTelGeometryTelescopeDescription
 		int properties = hitDecoder(static_cast< IMPL::TrackerHitImpl* >(hit_input))["properties"];

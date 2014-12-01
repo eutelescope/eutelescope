@@ -32,6 +32,7 @@ namespace eutelescope {
 
 		//This is the constructor to change TrackStateImpl LCIO to EUTelTrackState
     EUTelTrackStateImpl::EUTelTrackStateImpl( const IMPL::TrackStateImpl& o ) : TrackStateImpl(),
+	_beamQ(-1),
         _location(o.getLocation()),
         _tx(o.getOmega()),
         _ty(o.getZ0()),
@@ -39,8 +40,7 @@ namespace eutelescope {
         _y(o.getPhi()),
         _invp(o.getTanLambda()),
         _covMatrix(o.getCovMatrix()),
-				_zparameter(0),
-				_beamQ(-1)	
+	_zparameter(0)
     {
 			//I dont think this is needed to add this. Also need to add the hit at state level!!!!
      //   for(int i=0 ; i < TRKSTATENCOVMATRIX ; i++ ) {
@@ -258,7 +258,7 @@ TVector3 EUTelTrackStateImpl::getXYZfromArcLength( float s ) const {
 
 //		streamlog_out(DEBUG2) << "EUTelTrackStateImpl::getXYZfromArcLength----------------------------END" << std::endl;	
 //	return pos;
-
+	return TVector3();
 }	
 
 //This function returns the H matrix of the state. This relates the state in global coordinates to local coordinates (The hit measurement). Note it assumes that z axis is a parameter so you only need the rotations of the plane you must be on. Note the H matrix from Geometry is Local->Global so we must take the inverse.

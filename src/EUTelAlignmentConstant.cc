@@ -1,5 +1,3 @@
-// Contact: antonio.bulgheroni@gmail.com
-// Version $Id$
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -24,18 +22,13 @@ using namespace lcio;
 using namespace eutelescope;
 using namespace std;
 
-EUTelAlignmentConstant::EUTelAlignmentConstant() : IMPL::LCGenericObjectImpl( ALIGN_CONST_MAX_SIZE, 0 , ALIGN_CONST_MAX_SIZE ) {
+/**Defaut constructor, we use 1 int to store the sensorID and 12 doubles for the 3 offsets and 3 
+ * angles and their corresponding uncertainties */ 
+EUTelAlignmentConstant::EUTelAlignmentConstant() : IMPL::LCGenericObjectImpl(1, 0, 12)
+{
   _typeName        = "Alignment constant";
-  _dataDescription = "sensorID, xOff, yOff, zOff, alpha, beta, gamma + 13 spare fields";
+  _dataDescription = "sensorID, xOff, yOff, zOff, alpha, beta, gamma, xErr, yErr, zErr, alphaErr, betaErr, gammaErr";
   _isFixedSize     = true;
-
-
-  for ( size_t iPos = 0; iPos < ALIGN_CONST_MAX_SIZE; ++iPos ) {
-    setIntVal   ( iPos, 0   );
-    setDoubleVal( iPos, 0.0 );
-  }
-
-
 }
 
 EUTelAlignmentConstant::EUTelAlignmentConstant( int sensorID,
@@ -44,18 +37,11 @@ EUTelAlignmentConstant::EUTelAlignmentConstant( int sensorID,
                                                 double xOffErr,double yOffErr,double zOffErr,
                                                 double alphaErr, double betaErr, double gammaErr )  :
 
-  IMPL::LCGenericObjectImpl(ALIGN_CONST_MAX_SIZE,0,ALIGN_CONST_MAX_SIZE) {
-
+  IMPL::LCGenericObjectImpl(1, 0, 12)
+{
   _typeName        = "Alignment constant";
-  _dataDescription = "sensorID,\n"
-    "xOff,    yOff,    zOff,    alpha,    beta,    gamma\n"
-    "xOffErr, yOffErr, zOffErr, alphaErr, betaErr, gammaErr";
+  _dataDescription = "sensorID, xOff, yOff, zOff, alpha, beta, gamma, xErr, yErr, zErr, alphaErr, betaErr, gammaErr";
   _isFixedSize     = true;
-
-  for ( size_t iPos = 0; iPos < ALIGN_CONST_MAX_SIZE; ++iPos ) {
-    setIntVal   ( iPos, 0   );
-    setDoubleVal( iPos, 0.0 );
-  }
 
   // set the sensor ID
   setIntVal( 0 , sensorID );
@@ -154,7 +140,5 @@ void EUTelAlignmentConstant::print(ostream & os ) const {
      << endl
      << dashline
      << endl;
-
-
   return;
 }

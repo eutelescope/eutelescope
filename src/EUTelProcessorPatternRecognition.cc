@@ -22,17 +22,18 @@ std::string EUTelProcessorPatternRecognition::_histName::_chi2CandidateHistName 
 /** Default constructor */
 EUTelProcessorPatternRecognition::EUTelProcessorPatternRecognition() :
 Processor("EUTelProcessorPatternRecognition"),
+_aidaHistoMap1D(),
 _hitInputCollectionName("HitCollection"),
 _trackCandidateHitsOutputCollectionName("TrackCandidatesCollection"),
+_histoInfoFileName("histoinfo.xml"),
 _trackFitter(0),
 _maxMissingHitsPerTrackCand(0),
 _AllowedSharedHitsOnTrackCandidate(0),
-_eBeam(-1.),
-_qBeam(-1.),
-_histoInfoFileName("histoinfo.xml"),
 _nProcessedRuns(0),
 _nProcessedEvents(0),
-_aidaHistoMap1D(){
+_eBeam(-1.),
+_qBeam(-1.)
+{
 	//The standard description that comes with every processor 
 	_description = "EUTelProcessorPatternRecognition preforms track pattern recognition.";
 
@@ -101,7 +102,7 @@ void EUTelProcessorPatternRecognition::init(){
 		EUTelPatternRecognition* Finder = new EUTelPatternRecognition();//This is the class that contains all the functions that do the actual work
 		if (!Finder) {
 			streamlog_out(ERROR) << "Can't allocate an instance of EUTelExhaustiveTrackFinder. Stopping ..." << std::endl;
-			throw(lcio::Exception( Utility::outputColourString("Pattern recognition class not create correctly.","RED"))); 
+			throw(lcio::Exception("Pattern recognition class not create correctly.")); 
 		}
 		 
 		Finder->setAllowedMissingHits( _maxMissingHitsPerTrackCand );
@@ -148,7 +149,7 @@ void EUTelProcessorPatternRecognition::processRunHeader(LCRunHeader* run) {
 		<< "This may mean that the GeoID parameter was not set" << endl;
 
 
-	if (header->getGeoID() != geo::gGeometry().getSiPlanesLayoutID()) {
+	if ((unsigned int)header->getGeoID() != geo::gGeometry().getSiPlanesLayoutID()) {
 		streamlog_out(WARNING5) << "Error during the geometry consistency check: " << endl
 				<< "The run header says the GeoID is " << header->getGeoID() << endl
 				<< "The GEAR description says is     " << geo::gGeometry().getSiPlanesLayoutID() << endl;
@@ -247,12 +248,12 @@ void EUTelProcessorPatternRecognition::outputLCIO(LCEvent* evt, std::vector<EUTe
 	stateCandCollection->setFlag( flag2.getFlag( ) );
 
 	//Loop through all tracks
-	for ( int i = 0 ; i < tracks.size(); ++i) {
+	for ( size_t i = 0 ; i < tracks.size(); ++i) {
 		EUTelTrack* trackheap = new  EUTelTrack(tracks[i]);
 		trackheap->print();
 		//For every track add this to the collection
 		trkCandCollection->push_back(static_cast<EVENT::Track*>(trackheap));
-		for(int j = 0;j < trackheap->getTracks().size();++j){
+		for(size_t j = 0;j < trackheap->getTracks().size();++j){
 			stateCandCollection->push_back(trackheap->getTracks().at(j) );
 		}
 	}//END TRACK LOOP
@@ -271,8 +272,8 @@ void EUTelProcessorPatternRecognition::plotHistos( vector<EUTelTrack>& trackCand
 	static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_numberTracksCandidatesHistName ] ) -> fill( nTracks );
 	streamlog_out( MESSAGE2 ) << "Event #" << _nProcessedEvents << endl;
 	int numberOfHits =0;
-	for (int i = 0; i< trackCandidates.size( ) ; ++i ) {//loop over all tracks
-		for(int j = 0; j <trackCandidates[i].getTracks().size(); ++j){//loop over all states 
+	for (size_t i = 0; i< trackCandidates.size( ) ; ++i ) {//loop over all tracks
+		for(size_t j = 0; j <trackCandidates[i].getTracks().size(); ++j){//loop over all states 
 			if(!trackCandidates[i].getStates()[j].getTrackerHits().empty()){//We only ever store on hit per state
 				continue;
 			}

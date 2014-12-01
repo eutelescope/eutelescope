@@ -65,7 +65,7 @@ TVectorD EUTelState::getStateVec() const {
 //		stateVec.Print();
 //	}
 	if(stateVec[0] == INFINITY or stateVec[0] == NAN ){
-		throw(lcio::Exception( Utility::outputColourString("Passing a state vector where curvature is not defined","RED"))); 
+		throw(lcio::Exception("Passing a state vector where curvature is not defined")); 
 	}
 
 	streamlog_out( DEBUG1 ) << "EUTelState::getTrackStateVec()------------------------END" << std::endl;
@@ -78,20 +78,20 @@ TMatrixDSym EUTelState::getScatteringVarianceInLocalFrame(){
 	const double thickness        = geo::gGeometry().siPlaneZSize(getLocation());//TO DO: Need to get the correct thickness
 	streamlog_out(DEBUG5)<<"The radiation length for the sensor is: " << x0 <<std::endl; 
 	if( x0== 0){
-		throw(lcio::Exception(Utility::outputColourString("Radiation length is zero.", "RED"))); 	
+		throw(lcio::Exception("Radiation length is zero.")); 	
 	}
 	streamlog_out(DEBUG5)<<"The thickness for the sensor is: " << thickness <<std::endl; 
 	if(thickness == 0 ){ 
-		throw(lcio::Exception(Utility::outputColourString("thickness is zero", "RED"))); 	
+		throw(lcio::Exception("thickness is zero")); 	
 	}
 	const double percentageOfRadiationLength  = thickness / x0; 
 	streamlog_out(DEBUG5)<<"The  percentageOfRadiationLength for the sensor is: " <<  percentageOfRadiationLength<<std::endl; 
 	if( percentageOfRadiationLength== 0){
 		streamlog_out(MESSAGE0)<<"The thickness: " << thickness << "The radiation length is: "<< x0 <<std::endl; 
-		throw(lcio::Exception(Utility::outputColourString("percentageOfRadiationLength is zero for the plane itself.", "RED"))); 	
+		throw(lcio::Exception("percentageOfRadiationLength is zero for the plane itself.")); 	
 	}
 	if(getBeamEnergy() == 0 ){ 
-		throw(lcio::Exception(Utility::outputColourString("Beam energy is zero", "RED"))); 	
+		throw(lcio::Exception("Beam energy is zero")); 	
 	}
 	const double scatteringVariance  = Utility::getThetaRMSHighland(getBeamEnergy(), percentageOfRadiationLength);
 	streamlog_out(DEBUG5)<<"The scattering variance in radians: " <<  scatteringVariance <<std::endl; 
@@ -272,10 +272,10 @@ void EUTelState::setStateVec(TVectorD stateVec){
 ///initialise
 void EUTelState::initialiseCurvature(){
 	if(getBeamCharge() == 0){
-		throw(lcio::Exception( Utility::outputColourString("The beam charge is 0.Can not set curvature","RED"))); 
+		throw(lcio::Exception( "The beam charge is 0.Can not set curvature")); 
 	}
 	if(getBeamEnergy() == 0){
-		throw(lcio::Exception( Utility::outputColourString("The beam Energy is zero. Can not set curvature","RED"))); 
+		throw(lcio::Exception( "The beam Energy is zero. Can not set curvature")); 
 	}
 	
 	setOmega(getBeamCharge()/getBeamEnergy());
@@ -286,7 +286,7 @@ int EUTelState::findIntersectionWithCertainID(int nextSensorID, float intersecti
 	TVector3 pVec = computeCartesianMomentum();
 	streamlog_out(DEBUG5) << "Momentum (Global): " << pVec[0]<<","<<pVec[1]<<","<<pVec[2]<<","<<" Position (local): "<<getPosition()[0]<<","<<getPosition()[1]<<","<<getPosition()[2]<< std::endl;
 	if(pVec.Mag() == 0){
-		throw(lcio::Exception( Utility::outputColourString("The momentum is 0","RED"))); 
+		throw(lcio::Exception( "The momentum is 0")); 
 	}
 	double posLocal[] =  {getPosition()[0],getPosition()[1],getPosition()[2] };
 	double temp[] = {0.,0.,0.};
@@ -303,10 +303,10 @@ TVector3 EUTelState::computeCartesianMomentum() const {
 float tx = getIntersectionLocalXZ();float ty= getIntersectionLocalYZ(); float curvature = getOmega(); 
 	streamlog_out(DEBUG2) << "Input parameters: tx,ty, beamq,invp "<<tx <<","<<ty<<","<<getBeamCharge()<<","<<curvature<<std::endl;
 	if(getBeamCharge() == 0){
-		throw(lcio::Exception( Utility::outputColourString("The beam charge is 0.","RED"))); 
+		throw(lcio::Exception( "The beam charge is 0.")); 
 	}
 	if(curvature == INFINITY or curvature == NAN ){
-		throw(lcio::Exception( Utility::outputColourString("The curvature is zero","RED"))); 
+		throw(lcio::Exception( "The curvature is zero")); 
 	}
 	const double p  =  1. / (curvature *getBeamCharge() );//Must times but beam charge or we would be going in the wrong direction     
   const double pz = p/(sqrt(pow(tx,2)+pow(ty,2)+1));
@@ -324,7 +324,7 @@ float tx = getIntersectionLocalXZ();float ty= getIntersectionLocalYZ(); float cu
 TMatrix EUTelState::computePropagationJacobianFromLocalStateToNextLocalState(TVector3 positionEnd, TVector3 momentumEnd, float arcLength,float nextPlaneID) {
 	streamlog_out(DEBUG2) << "-------------------------------EUTelState::computePropagationJacobianFromStateToThisZLocation()-------------------------BEGIN" << std::endl;
 	if(arcLength == 0 or arcLength < 0 ){ 
-		throw(lcio::Exception( Utility::outputColourString("The arc length is less than or equal to zero. ","RED"))); 
+		throw(lcio::Exception( "The arc length is less than or equal to zero.")); 
 	}
 	TMatrixD curvilinearJacobian = geo::gGeometry().getPropagationJacobianCurvilinear(arcLength,getOmega(), computeCartesianMomentum().Unit(),momentumEnd.Unit());
 	streamlog_out(DEBUG0)<<"This is the curvilinear jacobian at sensor:" << std::endl; 

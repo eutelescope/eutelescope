@@ -206,7 +206,7 @@ void EUTelCorrelator::processRunHeader (LCRunHeader * rdr) {
                                <<  "This may mean that the GeoID parameter was not set" << endl;
 
 
-  if ( runHeader->getGeoID() != geo::gGeometry().getSiPlanesLayoutID() ) {
+  if ( (unsigned int)runHeader->getGeoID() != geo::gGeometry().getSiPlanesLayoutID() ) {
     streamlog_out ( WARNING5 ) <<  "Error during the geometry consistency check: " << endl
                              << "The run header says the GeoID is " << runHeader->getGeoID() << endl
                              << "The GEAR description says is     " << geo::gGeometry().getSiPlanesLayoutID()
@@ -578,7 +578,7 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
           indexPlane = 0; // should be always the first element, as it's filled in the externalID loop
  
           if( indexPlane >= 0 ) {
-            for(size_t i=0;i< trackX.size();i++)
+            for(int i = 0; i < (int)trackX.size();i++)
             {
               if( i == indexPlane ) continue; // skip as this one is not booked
               _hitXCorrelationMatrix[ iplane[ indexPlane ]        ] [ iplane[i]        ] -> fill ( trackX[ indexPlane ]          , trackX[i]           ) ;
@@ -625,7 +625,7 @@ void EUTelCorrelator::end() {
 
 
                 float _heighestBinX = 0.;
-                for( size_t ibin = 0; ibin < _hitXCorrShiftMatrix[ exPlaneID ][ inPlaneID ]->yAxis().bins(); ibin++)
+                for( int ibin = 0; ibin < _hitXCorrShiftMatrix[ exPlaneID ][ inPlaneID ]->yAxis().bins(); ibin++)
                 {
                     double xbin =  
                         _hitXCorrShiftProjection[ inPlaneID ]->axis().binLowerEdge(ibin)
@@ -643,7 +643,7 @@ void EUTelCorrelator::end() {
                 
                
                 float _heighestBinY = 0.;
-                for( size_t ibin = 0; ibin < _hitYCorrShiftMatrix[ exPlaneID ][ inPlaneID ]->yAxis().bins(); ibin++)
+                for( int ibin = 0; ibin < _hitYCorrShiftMatrix[ exPlaneID ][ inPlaneID ]->yAxis().bins(); ibin++)
                 {
                     double xbin =  
                         _hitYCorrShiftProjection[ inPlaneID ]->axis().binLowerEdge(ibin)
@@ -665,7 +665,7 @@ void EUTelCorrelator::end() {
                 double _correlationBandBinsX     = 0.;
                 double _correlationBandCenterX   = 0.;
 
-                for( size_t ibin = 0; ibin < _hitXCorrShiftProjection[ inPlaneID ]->axis().bins(); ibin++)
+                for( int ibin = 0; ibin < _hitXCorrShiftProjection[ inPlaneID ]->axis().bins(); ibin++)
                 {
                     double ybin =  _hitXCorrShiftProjection[ inPlaneID ]->binHeight(ibin); 
 
@@ -685,7 +685,7 @@ void EUTelCorrelator::end() {
                 double _correlationBandBinsY     = 0.;
                 double _correlationBandCenterY   = 0.;
 
-                for( size_t ibin = 0; ibin < _hitYCorrShiftMatrix[ exPlaneID ][ inPlaneID ]->yAxis().bins(); ibin++)
+                for( int ibin = 0; ibin < _hitYCorrShiftMatrix[ exPlaneID ][ inPlaneID ]->yAxis().bins(); ibin++)
                 {
                     double ybin =  _hitYCorrShiftProjection[ inPlaneID ]->binHeight(ibin); 
                     
@@ -825,7 +825,7 @@ void EUTelCorrelator::bookHistos() {
           //we create histograms for X and Y Cluster correlation
           if ( _hasClusterCollection && !_hasHitCollection) {
 
-            double safetyFactor = 1.0; // 2 should be enough because it
+            //double safetyFactor = 1.0; // 2 should be enough because it
             // means that the sensor is wrong
             // by all its size.
 
@@ -1032,7 +1032,7 @@ void EUTelCorrelator::bookHistos() {
             streamlog_out( DEBUG5 ) << "Booking histo " << tempHistoName << endl;
 
  
-            double safetyFactor = 1.0; // 2 should be enough because it
+            //double safetyFactor = 1.0; // 2 should be enough because it
             // means that the sensor is wrong
             // by all its size.
 

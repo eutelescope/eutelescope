@@ -429,24 +429,6 @@ namespace eutelescope {
   }
 
   template<class PixelType>
-  void EUTelSparseClusterImpl<PixelType>::setClusterQuality(eutelescope::ClusterQuality quality)  {
-    lcio::long64 cell0 = static_cast<lcio::long64> ( _trackerData->getCellID0() ); 
-    int rhs = 18;
-    lcio::long64 emptyMask     = ~( 0x1F << rhs );
-    lcio::long64 maskedQuality = ( (static_cast<int> ( quality ) & 0x1F ) << rhs );
-    
-    // first apply an empty mask for the quality bit ranges, that is
-    // to say reset the quality bit range but keep all the rest. 
-    cell0 = cell0 & emptyMask;
-    
-    // now apply the maskedQuality. 
-    cell0 = cell0 | maskedQuality;  
-
-    _trackerData->setCellID0(cell0);
-
-  }
-
-  template<class PixelType>
   float EUTelSparseClusterImpl<PixelType>::getClusterNoise() const {
     
     if ( ! _noiseSetSwitch ) throw DataNotAvailableException("No noise values set");

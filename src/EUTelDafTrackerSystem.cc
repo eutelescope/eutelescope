@@ -4,7 +4,6 @@
 #include <iostream>
 #include <algorithm>
 #include <Eigen/Core>
-#include <Eigen/Array>
 
 #include <TVector3.h>
 
@@ -16,7 +15,7 @@ FitPlane::FitPlane(int sensorID, float zPos, float sigmaX, float sigmaY, float s
   this->sensorID = sensorID;
   this->zPosition = zPos;
   this->sigmas(0) = sigmaX; sigmas(1) = sigmaY;
-  this->variances = sigmas.cwise().square();
+  this->variances = sigmas.array().square().matrix();
   this->invMeasVar(0) = 1/(sigmaX * sigmaX);
   this->invMeasVar(1) = 1/(sigmaY * sigmaY);
   this->scatterThetaSqr = scatterThetaSqr;
@@ -98,8 +97,8 @@ void TrackerSystem::getChi2Kf(TrackCandidate *candidate){
     if(candidate->indexes.at(plane) < 0) { continue; }
     Measurement& m = p.meas.at( candidate->indexes.at(plane));
     ndof += 1.0;
-    chi2v = (m.getM() - candidate->estimates.at(plane)->params.start<2>() ).cwise() / p.getSigmas();
-    chi2v = chi2v.cwise().square();
+    chi2v = ((m.getM() - candidate->estimates.at(plane)->params.head<2>()).array() / p.getSigmas().array()).matrix();
+    chi2v = chi2v.array().square().matrix();
     chi2 += chi2v.sum();
   }
   candidate->chi2 = chi2; candidate->ndof = (ndof * 2) - 4;
@@ -113,8 +112,8 @@ void TrackerSystem::getChi2Daf(TrackCandidate *candidate){
     if(p.isExcluded()){ continue;}
     for(size_t meas = 0; meas < p.meas.size(); meas++){
       Measurement& m = p.meas.at(meas);
-      chi2v = (m.getM() - m_fitter->smoothed.at(plane)->params.start<2>()).cwise() / p.getSigmas();
-      chi2v = chi2v.cwise().square();
+      chi2v = ((m.getM() - m_fitter->smoothed.at(plane)->params.head<2>()).array() / p.getSigmas().array()).matrix();
+      chi2v = chi2v.array().square().matrix();
       chi2 += p.weights(meas) * chi2v.sum();
       ndof += p.weights(meas);
     }

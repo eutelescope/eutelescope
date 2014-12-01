@@ -243,7 +243,7 @@ void EUTelProcessorHitMaker::addReferenceHitCollection(LCEvent *event, std::stri
   LCCollectionVec * referenceHitCollection = new LCCollectionVec( LCIO::LCGENERICOBJECT );
  
   int Nlayers =  geo::gGeometry().nPlanes();
-  for(size_t ii = 0 ; ii <  Nlayers; ii++)
+  for(int ii = 0 ; ii <  Nlayers; ii++)
   {
     EUTelReferenceHit * refhit = new EUTelReferenceHit();
     int sensorID = geo::gGeometry().sensorZOrderToID( ii );

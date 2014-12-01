@@ -38,14 +38,14 @@ std::string EUTelProcessorGBLTrackFit::_histName::_residGblFitHistNameY5p = "Res
 
 EUTelProcessorGBLTrackFit::EUTelProcessorGBLTrackFit() :
 Processor("EUTelProcessorGBLTrackFit"),
-_trackCandidatesInputCollectionName("Default_input"),
-_tracksOutputCollectionName("Default_output"),
+_first_time(true),
 _nProcessedRuns(0),
 _nProcessedEvents(0),
 _beamQ(-1),
 _eBeam(4),
-_mEstimatorType(), //This is used by the GBL software for outliers down weighting
-_first_time(true)
+_trackCandidatesInputCollectionName("Default_input"),
+_tracksOutputCollectionName("Default_output"),
+_mEstimatorType() //This is used by the GBL software for outliers down weighting
 {
 	// Processor description
 	_description = "EUTelProcessorGBLTrackFit this will fit gbl tracks and output them into LCIO file.";
@@ -86,7 +86,7 @@ void EUTelProcessorGBLTrackFit::init() {
 		Fitter->testUserInput();
 		_trackFitter = Fitter;
 		if (!_trackFitter) {
-			throw(lcio::Exception(Utility::outputColourString("Could not create instance of fitter class .", "RED")));
+			throw(lcio::Exception("Could not create instance of fitter class."));
 		}
 		bookHistograms();//TO DO: Remove this and replace with generic histogram class 
 		streamlog_out(DEBUG2) << "EUTelProcessorGBLTrackFit::init( )---------------------------------------------END" << std::endl;
@@ -100,7 +100,7 @@ void EUTelProcessorGBLTrackFit::init() {
 		throw StopProcessingException( this ) ;
 	}
 	catch(...){
-		streamlog_out(MESSAGE9)<<Utility::outputColourString("Unknown exception in init function of EUTelProcessorGBLTrackFit.","RED") <<endl;
+		streamlog_out(MESSAGE9)<< "Unknown exception in init function of EUTelProcessorGBLTrackFit." << std::endl;
 		throw StopProcessingException( this ) ;
 	}
 }
@@ -114,7 +114,7 @@ void EUTelProcessorGBLTrackFit::processRunHeader(LCRunHeader * run) {
  	// in the xml file. If the numbers are different, warn the user.
 	if (header->getGeoID() == 0)
  		streamlog_out(WARNING0) << "The geometry ID in the run header is set to zero." << endl << "This may mean that the GeoID parameter was not set" << endl;
-	if (header->getGeoID() != geo::gGeometry().getSiPlanesLayoutID()) {  
+	if ((unsigned int)header->getGeoID() != geo::gGeometry().getSiPlanesLayoutID()) {  
 		streamlog_out(WARNING5) << "Error during the geometry consistency check: " << endl << "The run header says the GeoID is " << header->getGeoID() << endl << "The GEAR description says is     " << geo::gGeometry().getSiPlanesLayoutID() << endl;
 	}
 	_chi2NdfVec.clear();//TO DO:This is needed to determine if the track is near chi2 of one. Do we need this however?
@@ -141,7 +141,7 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent * evt){
 		streamlog_out(DEBUG1) << "collection : " << _trackCandidatesInputCollectionName << " retrieved" << std::endl;
 
 		if (col == NULL) {
-			streamlog_out(MESSAGE0)<<Utility::outputColourString("The collection is NULL for this event.", "YELLOW")<<std::endl;
+			streamlog_out(MESSAGE0)<< "The collection is NULL for this event." << std::endl;
 			throw marlin::SkipEventException(this);
 		}
 		std::vector<EUTelTrack> allTracksForThisEvent;//GBL will analysis the track one at a time. However we want to save to lcio per event.
@@ -153,7 +153,7 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent * evt){
 			_trackFitter->testTrack(track);//Check the track has states and hits  
 			std::vector< gbl::GblPoint > pointList;
 			_trackFitter->setInformationForGBLPointList(track, pointList);//Here we describe the whole setup. Geometry, scattering, data...
-			const gear::BField& B = geo::gGeometry().getMagneticFiled();//We need this to determine if we should fit a curve or a straight line.
+			const gear::BField& B = geo::gGeometry().getMagneticField();//We need this to determine if we should fit a curve or a straight line.
 			const double Bmag = B.at( TVector3(0.,0.,0.) ).r2();
 			_trackFitter->setPairMeasurementStateAndPointLabelVec(pointList);//This will create a link between the states that have a hit associated with them and the GBL label that is associated with the state.
 			gbl::GblTrajectory* traj = 0;
@@ -173,7 +173,7 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent * evt){
 				static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_chi2CandidateHistName ] ) -> fill( (chi2)/(ndf));
 				static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_fitsuccessHistName ] ) -> fill(1.0);
 				if(chi2 ==0 or ndf ==0){
-					throw(lcio::Exception(Utility::outputColourString("Your fitted track has zero degrees of freedom or a chi2 of 0.", "RED"))); 	
+					throw(lcio::Exception("Your fitted track has zero degrees of freedom or a chi2 of 0.")); 	
 				}
 
 				track.setChi2(chi2);
@@ -328,11 +328,11 @@ void EUTelProcessorGBLTrackFit::outputLCIO(LCEvent* evt, std::vector<EUTelTrack>
 	stateCandCollection->setFlag( flag2.getFlag( ) );
 
 	//Loop through all tracks
-	for ( int i = 0 ; i < tracks.size(); ++i){
+	for (size_t i = 0 ; i < tracks.size(); ++i){
 		EUTelTrack* trackheap = new  EUTelTrack(tracks.at(i), false); //We dont want to copy contents so set to false. We only want the track object but not the states or hits. Since the states should have there own place in memory before saving.
 		trackheap->print();
 		//For every track add this to the collection
-		for(int j = 0;j < tracks.at(i).getStates().size();++j){
+		for( size_t j = 0;j < tracks.at(i).getStates().size();++j){
 			EUTelState* stateheap = new EUTelState(tracks.at(i).getStates().at(j));
 			trackheap->addTrack(stateheap);
 			stateCandCollection->push_back(static_cast<EVENT::Track*>(stateheap));
