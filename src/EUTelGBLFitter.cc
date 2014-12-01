@@ -473,7 +473,7 @@ namespace eutelescope {
 		TVector3 momentum = state.computeCartesianMomentum();
 		TVector3 newMomentum;
 		int location = state.getLocation();
-		int locationEnd = -999; //This will create a scatterer with normal in beam direction
+		int locationEnd = 314; //This will create a scatterer with normal in beam direction
 		const gear::BField&   Bfield = geo::gGeometry().getMagneticField();
 		gear::Vector3D vectorGlobal(position[0],position[1],position[1]);//Since field is homogeneous this seems silly but we need to specify a position to geometry to get B-field.
 		const double Bx = (Bfield.at( vectorGlobal ).x());//We times bu 0.3 due to units of other variables. See paper. Must be Tesla
@@ -500,7 +500,7 @@ namespace eutelescope {
 			streamlog_message( DEBUG0, localToNextLocalJacobian.Print();, std::endl; );
 			_scattererJacobians.push_back(localToNextLocalJacobian);//To DO if scatter then plane is always parallel to z axis
 			momentum[0]=newMomentum[0]; momentum[1]=newMomentum[1];	momentum[2]=newMomentum[2];
-			location = -999;//location will always be a scatter after first loop 
+			location = 314;//location will always be a scatter after first loop.  
 			if(i == (_scattererPositions.size()-2)){//On the last loop we want to create the jacobain to the next plane
 				locationEnd = nextState.getLocation();
 			}
