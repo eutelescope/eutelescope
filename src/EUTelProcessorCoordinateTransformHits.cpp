@@ -117,7 +117,6 @@ void EUTelProcessorCoordinateTransformHits::processRunHeader (LCRunHeader * rdr)
 }//end of processRunHeader
 
 void EUTelProcessorCoordinateTransformHits::check(LCEvent *event){
-	cout << "Checking event!!!!!!!   "<<event->getEventNumber() << endl;
 }
 
 
@@ -141,7 +140,7 @@ void EUTelProcessorCoordinateTransformHits::processEvent (LCEvent * event) {
 	}
 	catch(...){
 		hitCollectionOutput = new LCCollectionVec(LCIO::TRACKERHIT);
-		streamlog_out ( MESSAGE5 ) << "Collection does not exist. Create new collection."<<endl;
+		streamlog_out ( DEBUG5 ) << "Collection does not exist. Create new collection."<<endl;
 	}
 
 	//Opens collection for input. If it can not find it then through exception
@@ -162,11 +161,11 @@ void EUTelProcessorCoordinateTransformHits::processEvent (LCEvent * event) {
 		//Call the local2masterHit/master2localHit function defined int EUTelGeometryTelescopeDescription
 		int properties = hitDecoder(static_cast< IMPL::TrackerHitImpl* >(hit_input))["properties"];
 	if(properties == kHitInGlobalCoord){
-			streamlog_out(MESSAGE5) << " The properties cell ID is global. So will now change to local" << std::endl;
+			streamlog_out(DEBUG5) << " The properties cell ID is global. So will now change to local" << std::endl;
 			geo::gGeometry().master2localHit(hit_input, hit_output, hitCollectionOutput);
 		}
 		else{
-			streamlog_out(MESSAGE5) << " The properties cell ID is not set so assume local. So will change to global now" << std::endl;
+			streamlog_out(DEBUG5) << " The properties cell ID is not set so assume local. So will change to global now" << std::endl;
 			geo::gGeometry().local2masterHit(hit_input, hit_output, hitCollectionOutput);
 		}
 		streamlog_out ( DEBUG5 )  << "New hit "<< iHit << " for event  "<< evt->getEventNumber() <<" created" << endl;
@@ -188,7 +187,7 @@ void EUTelProcessorCoordinateTransformHits::processEvent (LCEvent * event) {
 	//Now push the hit for this event onto the collection
 	try{	
 		event->addCollection(hitCollectionOutput, _hitCollectionNameOutput );
-		streamlog_out ( MESSAGE5 )  << "Pushed onto collection: " << _hitCollectionNameOutput <<endl;	
+		streamlog_out ( DEBUG5 )  << "Pushed onto collection: " << _hitCollectionNameOutput <<endl;	
 	}
 	catch(...){
 		streamlog_out ( MESSAGE5 )  << "Problem with pushing collection onto event"<<endl;
