@@ -1454,16 +1454,28 @@ TMatrixD EUTelGeometryTelescopeGeoDescription::getLocalToCurvilinearTransformMat
 
 	///This is the EUTelescope local z direction.//////////////////////////// 
 	streamlog_out(DEBUG0)<<"Set Z(I) with correct sensor rotation. Plane: "<< planeID  << std::endl; 
-	ITelescopeFrame = geo::gGeometry().siPlaneNormal( planeID  );       
+	if(planeID != 314){ //314 is the number we chose to specify a scattering plane.
+		ITelescopeFrame = geo::gGeometry().siPlaneNormal( planeID  );       
+	}else{
+		ITelescopeFrame[0]=0; ITelescopeFrame[1]=0;	ITelescopeFrame[2]=1;
+	}
 	I[0]=ITelescopeFrame[2];I[1]=ITelescopeFrame[1];I[2]=ITelescopeFrame[0];
 	//////////////////////////////////////////////////////////////////////////////
 	//This is the EUTelescope local Y direction////////////////////////////////////////
 	streamlog_out(DEBUG0)<<"Set Y(K) with correct sensor rotation. Plane: "<< planeID  << std::endl; 
-	KTelescopeFrame = geo::gGeometry().siPlaneYAxis( planeID  ); //This is the y direction of the local frame in global coordinates.      
+	if(planeID != 314){ //314 is the number we chose to specify a scattering plane.
+		KTelescopeFrame = geo::gGeometry().siPlaneYAxis( planeID  ); //This is the y direction of the local frame in global coordinates.      
+	}else{
+		KTelescopeFrame[0]=0; KTelescopeFrame[1]=1;	KTelescopeFrame[2]=0;
+	}
 	K[0]=KTelescopeFrame[2];K[1]=KTelescopeFrame[1];K[2]=KTelescopeFrame[0];
 	//This is the EUTelescope local x direction//////////////////////////////////
 	streamlog_out(DEBUG0)<<"Set X(J) with correct sensor rotation. Plane: "<< planeID  << std::endl; 
-	JTelescopeFrame  = geo::gGeometry().siPlaneXAxis( planeID  ); //X direction      
+	if(planeID != 314){ //314 is the number we chose to specify a scattering plane.
+		JTelescopeFrame  = geo::gGeometry().siPlaneXAxis( planeID  ); //X direction      
+	}else{
+		JTelescopeFrame[0]=1; JTelescopeFrame[1]=0;	JTelescopeFrame[2]=0;
+	}
 	J[0]=JTelescopeFrame[2];J[1]=JTelescopeFrame[1];J[2]=JTelescopeFrame[0];
 	///////////////////////////////////////////////////////////////////
 	streamlog_out(DEBUG0)<<"The Z(J) axis of local system in the global curvilinear system"<< std::endl; 
