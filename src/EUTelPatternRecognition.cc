@@ -101,8 +101,14 @@ void EUTelPatternRecognition::propagateForwardFromSeedState( EUTelState& stateIn
 			continue;
 		}
 		EVENT::TrackerHit* closestHit = const_cast< EVENT::TrackerHit* > ( findClosestHit( *newState )); //This will look for the closest hit but not if it is within the excepted range		
-		const double* hitPosition = closestHit->getPosition();
-		const double distance = sqrt(computeResidual(*newState, closestHit ).Norm2Sqr()); //Determine the residual of state and hit  //Distance is in mm. Norm2Sqr does not square root for some reason
+		double distance;
+		if(newState->getDimensionSize() == 2){
+			distance = sqrt(computeResidual( *newState, closestHit ).Norm2Sqr());//This distance could be 2D or 1D depending on if you have a strip or pixel sensor. Norm2Sqr does not square toot for some reason.
+		}else if(newState->getDimensionSize() == 1){
+			distance = computeResidual( *newState, closestHit )[0];//If strip sensor then use only displacement along strips. Which should be x axis.
+		}else{
+			throw(lcio::Exception( "The closest hit is not on a pixel or strip sensor. Since the dimensionality if less than 1 or greater than 2."));
+		}
 		const double DCA = getXYPredictionPrecision( *newState ); //This does nothing but return a number specified by user. In the future this should use convariance matrix information TO DO: FIX
 		streamlog_out ( DEBUG1 ) <<"At plane: "<<newState->getLocation() << ". Distance between state and hit: "<< distance <<" Must be less than: "<<DCA<< endl;
 		streamlog_out(DEBUG0) <<"Closest hit position: " << closestHit->getPosition()[0]<<" "<< closestHit->getPosition()[1]<<"  "<< closestHit->getPosition()[2]<<endl;
@@ -492,7 +498,14 @@ const EVENT::TrackerHit* EUTelPatternRecognition::findClosestHit(EUTelState & st
 	EVENT::TrackerHitVec::const_iterator itHit;
 	streamlog_out(DEBUG0) << "N hits in plane " << state.getLocation() << ": " << hitInPlane.size() << std::endl;
 	for ( itHit = hitInPlane.begin(); itHit != hitInPlane.end(); ++itHit ) {
-		const double distance = computeResidual( state, *itHit ).Norm2Sqr();//This distance could be 2D or 1D depending on if you have a strip or pixel sensor.
+		double distance;
+		if(state.getDimensionSize() == 2){
+			distance = sqrt(computeResidual( state, *itHit ).Norm2Sqr());//This distance could be 2D or 1D depending on if you have a strip or pixel sensor. Norm2Sqr does not square toot for some reason.
+		}else if(state.getDimensionSize() == 1){
+			distance = computeResidual( state, *itHit )[0];//If strip sensor then use only displacement along strips. Which should be x axis.
+		}else{
+			throw(lcio::Exception( "When finding the closest hit to predicted state we find a hit which is not a strip or pixel sensor. Since the dimensionality if less than 1 or greater than 2."));
+		}
 		streamlog_out(DEBUG0) << "Distance^2 between hit and track intersection: " << distance << std::endl;
 		if ( distance < maxDistance ) {
 			itClosestHit = itHit;
