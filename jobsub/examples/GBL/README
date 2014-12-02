@@ -1,0 +1,78 @@
+-----README-----
+THIS IS THE EXAMPLES USING THE GBL ALGORITHM FOR FITTING. DIFFERENT EXAMPLES ARE PLACED IN A DIFFERENT 
+FOLDERS. DIFFERENT EXAMPLES USE DIFFERENT PROCESSORS WITHIN THE STEERING FILES.
+WE WANT IN THE END TO HAVE EXAMPLES THAT RUN FROM CONVERSION TO FINALLY ALIGNMENT AND TRACK FITTING. 
+TO DO THIS FOR DIFFERENT RUNS WITH DIFFERENT PROCESSOR THEN WE WILL NEED DIFFERENT STEERING FILES. 
+THESE ARE THE XML FILES THAT CONTROL THE SEQUENCE OF ACTIONS TO BE PERFORMED ON THE TELESCOPE DATA 
+ON AN EVENT BY EVENT BASES. WE PLACE THESE IN A SEPARATE FOLDER ALONG WITH THE GEOMETRY FILE USED, THE OUTPUTS AND THE RUNLIST. 
+THE GEOMETRY CONTAINS THE DISTANCE BETWEEN THE PLANES AND THE PIXEL OR STRIP DIMENSIONS. THE RUNLIST CONTAINS DIFFERENT INPUTS 
+TO THE SAME PROCESSORS. THE OUTPUTS ARE HISTOGRAMS,DATABASE,LOGS AND LCIO FILE. 
+
+TO DO: Create no tracks found error in alignment GBL.
+
+
+The size of the mimosa sensitive area are: 
+sizeX=21.2 and sizeY=10.6
+Note that this is defined in the local frame. So we only know the what is the x-axis from the data output. I.e the x-axis is defined to be the axis with the most pixels in that direction.
+
+CHECK:Within the histogram output by hit maker. We must check that the Xsize/Ysize are correctly set. We do this by checking the size of the sensor in the local frame of reference to the numbers give for sizeX and sizeY. 
+CHECK:Correlations will always be plotted in the global frame. Note that plotting in the local frame is pointless since you don't expect by default there to be a relation between the local X axis of one sensor and the local X axis of another. Since the local x direction or y is defined by the design of the sensor.  We must check that each sensors global correlations are approximately a line with gradient 1 through the origin. Now if this line is shifted or the gradient is not 1 then we have some mis-alignment. Now this is ok since the alignment processor will fix this. However if the correlation indicate that the two sensors need a reflection to be aligned then this MUST be corrected in the gear file manually. Alignment will NOT fix reflections. 
+Also check for noisey pixels here since you can clearly see what pixels have been associated event by event. You can not see that in teh hitmap. This noise can be see as a strip in the correlation with gradiant 0 or infinite. Noisey pixel should be removed before this step. 
+
+--Glasgow Example-----
+File: /GBL/glasgowexample
+Data was taken with 2 DUTs. One a quad module the other was a FEI4.
+We start the process after converter since we do not have the raw file
+
+The size of the Quad module:
+sizeX=21.2 and sizeY=10.6
+and for the FEI4:
+sizeX=20.3 sizeY=16.8 
+
+We can use the intial gear provided, which is misaligned:
+gear-quad.xml
+To change this we change only the runlist to use one geometry rather than the other.
+
+To align we must first deal with the very large misalignment between the two arms. We see this in the correlation plots. TO DO: Create new pre-alignment which produces gear. 
+Here is the gear that is produced after this alignment by eye:
+gear-quad-partialAlign-correlator.xml
+
+We use the aligned geometry with the respect to the 6 mimosa planes and leave the DUTs mis-aligned:
+gear-final-quad-aligned-noDUT-105.xml
+We should note that this point the gear files indirectly tell you your misalignments as you were setting up the experiment. The accuracy of this knowledge depends on the accuracy of the resolution of the final tracks. If this is about 5 micron then we can assume offsets of millimeters are accurate representation of the inital setup.
+We can see this to a less accurate extent with the correlator.
+This way of thinking is useful if you have a situation were you find one DUT has hits in the local frame but not the global frame were you have placed the hit map of the DUT in the same setup as the mimosa planes.  
+We then produce the aligned gear for the DUTs using the roughly increased estimated resolution of the x and y axis defined in the local frame. The rough increase is 10 times there resolutionwhich is 0.25 mm and 0.05 mm in the x and y axis. So 2.5 and 0.5 mm. This is for both DUTs. We align first with respect to the 20 DUT, leaving all others fixed.  
+Note we also check the correlation plots to make sure that we are roughly aligned.
+We produce this gear file:
+gear-final-quad-aligned-DUT20-105.xml
+The residuals appear large but the pitch of the sensor is large so this is expected. 
+TO DO: We need to try this will geometric clustering and so files for geometry.
+
+TO DO: When we install the examples we should automatically set the place where the data is( even if this is just a place to put the data). Futhermore we should set the location of the configuration file in the configuration file and the base path with respect to all the directories in each example. This would mean you could run js ... from the very beginning.
+
+Note that the variables in the configuration file are set to work for an optimum setup after alignment.
+
+--No DUT example--
+
+This example contains a run taken with a 1T magnetic field, run 290. We must include this information in the gear file. The direction of the magnetic field is in the global coordinates for the telescope. However the global coordinates depend on how you define this in the gear file. Therefore you need to check the hitmap of the sensor in local coordinates to see how the hit shift due to the magnetic field. The make sure the transformation of the mimosa sensors from local to global, and the magnetic field direction in global coordinate. Both give you that shift on the sensors hitmap. This has already been done of course for this example but if another run is added this must be taken into account.
+
+The average energy of the tracks is determined by using a small acceptance window of R=0.5 and then varying the estimated beam energy. The correct one will give the largest number of tracks on average.
+
+With example 290 we see that the average number of tracks per event is below 0.5 when R=1. This could be due to energy of the beam or how we are predicting the path of the particle in the pattern recogntion. Could also be the sensitivity of the mimosa planes.
+In principle we want the smallest R value possible that give a reasonable number of tracks with 6 hits.
+TO DO:
+One possible problem is how to deal with initial misalignment with magnetic fields since we need to interpret the correlation to do this? 
+
+
+--Strip Sensor Example----
+
+TO DO: Must have a look at correlation plots to see position of DUT in x axis and approximate y axis.
+We see with this example that we see a dramatic shift in the final aligned gears if we use a R=5 compared to R=1. This could be due to initial misalignment that should be dealt with a prealignment processor.
+This suggested that we should expect to see improvement in alignment with smaller R value as expected.
+We look at the correlation plots and make sure that the mimosa planes have an approximate alignment
+The initial gear is: gear-stripSensor.xml
+The gear after we have aligned the mimosa planes:gear-stripSensor-Aligned-With-noDUT.xml
+Now we check that the DUTs have an approximate alignment. We must look at the sync plots from the correlator since we do not expect the DUTs to be at zero position.
+However we do expect the residual between the global frames of the mimosa and DUT to be zero. This is what you see in the sync plots in the correlations. 
+
