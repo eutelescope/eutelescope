@@ -73,7 +73,7 @@ sizeX="9.536"           sizeY="8.0"             thickness="0.300"
 radLength="93.660734"
 />
 <sensitive      ID="6"
-positionX="-1.5"        positionY="0.00"      positionZ="270.00" 
+positionX="4.5"        positionY="0.00"      positionZ="270.00" 
 sizeX="9.536"           sizeY="8.0"             thickness="0.300"
 npixelX="128"           npixelY="1" 
 pitchX="0.0745"         pitchY="8.0"          resolution="0.0215" 
