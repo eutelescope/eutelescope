@@ -169,11 +169,11 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent * evt){
 			int ierr=0;
 			_trackFitter->computeTrajectoryAndFit(pointList,traj, &chi2,&ndf, ierr);//This will do the minimisation of the chi2 and produce the most probable trajectory.
 			if(ierr == 0 ){
-				 streamlog_out(DEBUG5) << "Ierr is: " << ierr << " Entering loop to update track information " << endl;
+				streamlog_out(DEBUG5) << "Ierr is: " << ierr << " Entering loop to update track information " << endl;
 				static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_chi2CandidateHistName ] ) -> fill( (chi2)/(ndf));
 				static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_fitsuccessHistName ] ) -> fill(1.0);
 				if(chi2 ==0 or ndf ==0){
-					throw(lcio::Exception("Your fitted track has zero degrees of freedom or a chi2 of 0.")); 	
+				throw(lcio::Exception("Your fitted track has zero degrees of freedom or a chi2 of 0.")); 	
 				}
 
 				track.setChi2(chi2);
@@ -186,19 +186,17 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent * evt){
 				_trackFitter->getResidualOfTrackandHits(traj, pointList,track, SensorResidual, SensorResidualError);
 				plotResidual(SensorResidual,SensorResidualError, _first_time);//TO DO: Need to fix how we histogram.
 				_first_time = false;
-
-			}
-			else{
-				 streamlog_out(DEBUG5) << "Ierr is: " << ierr << " Do not update track information " << endl;
-					static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_fitsuccessHistName ] ) -> fill(0.0);
-					continue;//We continue so we don't add an empty track
+			}else{
+				streamlog_out(DEBUG5) << "Ierr is: " << ierr << " Do not update track information " << endl;
+				static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_fitsuccessHistName ] ) -> fill(0.0);
+				continue;//We continue so we don't add an empty track
 			}	
-		allTracksForThisEvent.push_back(track);
-		}//END OF LOOP FOR ALL TRACKS IN AN EVENT
-		outputLCIO(evt, allTracksForThisEvent); 
-		allTracksForThisEvent.clear();//We clear this so we don't add the same track twice
-		streamlog_out(DEBUG5) << "End of event " << _nProcessedEvents << endl;
-		_nProcessedEvents++;
+			allTracksForThisEvent.push_back(track);
+			}//END OF LOOP FOR ALL TRACKS IN AN EVENT
+			outputLCIO(evt, allTracksForThisEvent); 
+			allTracksForThisEvent.clear();//We clear this so we don't add the same track twice
+			streamlog_out(DEBUG5) << "End of event " << _nProcessedEvents << endl;
+			_nProcessedEvents++;
 	}
 	catch (DataNotAvailableException e) {
 		streamlog_out(MESSAGE0) << _trackCandidatesInputCollectionName << " collection not available" << std::endl;
@@ -248,8 +246,8 @@ void EUTelProcessorGBLTrackFit::plotResidual(map< int, map<float, float > >  & s
 			if( sensor_residual_it->first == 3){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY3 ] ) -> fill(res2);}
 			if( sensor_residual_it->first == 4){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY4 ] ) -> fill(res2);}
 			if( sensor_residual_it->first == 5){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY5 ] ) -> fill(res2);}
-			if( sensor_residual_it->first == 6){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ "Residual6Y" ] ) -> fill(res2);}
-			if( sensor_residual_it->first == 7){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ "Residual7Y" ] ) -> fill(res2);}
+//			if( sensor_residual_it->first == 6){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ "Residual6Y" ] ) -> fill(res2);}
+//			if( sensor_residual_it->first == 7){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ "Residual7Y" ] ) -> fill(res2);}
 
 				
 	}
@@ -378,10 +376,10 @@ void EUTelProcessorGBLTrackFit::bookHistograms() {
         AIDA::IHistogram1D * residGblFit4X = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistNameX4, NBinX, MinX, MaxX); 
         AIDA::IHistogram1D * residGblFit5X = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistNameX5, NBinX, MinX, MaxX); 
 
-        AIDA::IHistogram1D * residGblFit6X = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Residual20X" , NBinX, MinX, MaxX); 
-        AIDA::IHistogram1D * residGblFit6Y = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Residual20Y" , NBinX, MinX, MaxX); 
-        AIDA::IHistogram1D * residGblFit7X = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Residual21X" , NBinX, MinX, MaxX); 
-        AIDA::IHistogram1D * residGblFit7Y = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Residual21Y" , NBinX, MinX, MaxX); 
+        AIDA::IHistogram1D * residGblFit6X = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Residual6X" , NBinX, MinX, MaxX); 
+        AIDA::IHistogram1D * residGblFit6Y = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Residual6Y" , NBinX, MinX, MaxX); 
+        AIDA::IHistogram1D * residGblFit7X = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Residual7X" , NBinX, MinX, MaxX); 
+        AIDA::IHistogram1D * residGblFit7Y = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Residual7Y" , NBinX, MinX, MaxX); 
 
 
 
@@ -391,10 +389,10 @@ void EUTelProcessorGBLTrackFit::bookHistograms() {
               _aidaHistoMap1D.insert(std::make_pair(_histName::_residGblFitHistNameX3, residGblFit3X));
               _aidaHistoMap1D.insert(std::make_pair(_histName::_residGblFitHistNameX4, residGblFit4X));
               _aidaHistoMap1D.insert(std::make_pair(_histName::_residGblFitHistNameX5, residGblFit5X));
-              _aidaHistoMap1D.insert(std::make_pair("Residual20X", residGblFit6X));
-              _aidaHistoMap1D.insert(std::make_pair("Residual20Y", residGblFit6Y));
-              _aidaHistoMap1D.insert(std::make_pair("Residual21X", residGblFit7X));
-              _aidaHistoMap1D.insert(std::make_pair("Residual21Y", residGblFit7Y));
+              _aidaHistoMap1D.insert(std::make_pair("Residual6X", residGblFit6X));
+              _aidaHistoMap1D.insert(std::make_pair("Residual6Y", residGblFit6Y));
+              _aidaHistoMap1D.insert(std::make_pair("Residual7X", residGblFit7X));
+              _aidaHistoMap1D.insert(std::make_pair("Residual7Y", residGblFit7Y));
 
 											
         AIDA::IHistogram1D * residGblFit0Y = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistNameY0, NBinX, MinX, MaxX); 
