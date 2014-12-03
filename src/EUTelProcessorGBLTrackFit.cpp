@@ -376,7 +376,7 @@ void EUTelProcessorGBLTrackFit::bookHistograms() {
         AIDA::IHistogram1D * residGblFit4X = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistNameX4, NBinX, MinX, MaxX); 
         AIDA::IHistogram1D * residGblFit5X = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistNameX5, NBinX, MinX, MaxX); 
 
-        AIDA::IHistogram1D * residGblFit6X = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Residual6X" , NBinX, MinX, MaxX); 
+        AIDA::IHistogram1D * residGblFit6X = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Residual6X" , 300, -0.4, 0.4); 
         AIDA::IHistogram1D * residGblFit6Y = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Residual6Y" , NBinX, MinX, MaxX); 
         AIDA::IHistogram1D * residGblFit7X = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Residual7X" , NBinX, MinX, MaxX); 
         AIDA::IHistogram1D * residGblFit7Y = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Residual7Y" , NBinX, MinX, MaxX); 

@@ -227,7 +227,8 @@ void EUTelProcessorGBLAlign::processEvent(LCEvent * evt){
 void EUTelProcessorGBLAlign::check(LCEvent * evt){}
 
 void EUTelProcessorGBLAlign::end(){
-	streamlog_out (MESSAGE9) <<" Total number of tracks: "<< _totalTrackCount << endl;
+	streamlog_out (MESSAGE9) <<"TOTAL NUMBER OF TRACKS PASSED TO ALIGNMENT: "<< _totalTrackCount << endl;
+	if(_totalTrackCount
 
 	_Mille->writeMilleSteeringFile(_pedeSteerAddCmds);
 	_Mille->runPede();

@@ -84,7 +84,7 @@ for x in {1..20}; do
 		export xresWorking=$xres; #Must be set before the new resolution is set which may cause too many rejects
 		export yresWorking=$yres;
 		echo "Factor word found! Resolution must increase by $factor."
-		r=$(echo "scale=4;$r*$factor"|bc);
+#		r=$(echo "scale=4;$r*$factor"|bc);
 		dutX=$(echo "scale=4;$dutX*$factor"|bc);
 		dutY=$(echo "scale=4;$dutY*$factor"|bc);
 		dutXs="$dutX $dutX" #This is the resolution of the DUT in the x LOCAL direction taking into account the misalignment
@@ -101,7 +101,7 @@ for x in {1..20}; do
 	if [[ $numberRejectedAlignmentAttempts -eq 1 ]] && [[ $rejected != "" ]] #We add the 2nd condition to make sure we don't enter on a loop with factor term. 
 	then
 		echo "Too many rejects. Resolution must increase by factor 10."
-		r=$(echo "scale=4;$r*5"|bc);
+#		r=$(echo "scale=4;$r*5"|bc);
 		dutX=$(echo "scale=4;$dutX*5"|bc);
 		dutY=$(echo "scale=4;$dutY*5"|bc);
 		dutXs="$dutX $dutX" #This is the resolution of the DUT in the x LOCAL direction taking into account the misalignment
