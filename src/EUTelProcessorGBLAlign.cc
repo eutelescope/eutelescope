@@ -228,8 +228,9 @@ void EUTelProcessorGBLAlign::check(LCEvent * evt){}
 
 void EUTelProcessorGBLAlign::end(){
 	streamlog_out (MESSAGE9) <<"TOTAL NUMBER OF TRACKS PASSED TO ALIGNMENT: "<< _totalTrackCount << endl;
-	if(_totalTrackCount
-
+	if(_totalTrackCount<1000){
+		streamlog_out(WARNING5)<<"You are trying to align with fewer than 1000 tracks. This could be too small a number." <<endl;
+	}
 	_Mille->writeMilleSteeringFile(_pedeSteerAddCmds);
 	_Mille->runPede();
 	_Mille->parseMilleOutput(_alignmentConstantLCIOFile, _gear_aligned_file);
