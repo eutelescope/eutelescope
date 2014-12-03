@@ -26,7 +26,7 @@ export dutPlanes="6 7" #Since the mimosa planes are always named the same but du
 export ExcludePlanes="7" #These planes are completely excluded from the analysis. The scattering from the plane however is still taken into account.
 export ResidualsRMax="1" #This is the window size on the next plane that we will accept hits from. This will increase if less than 1 track per event is found.
 export Verbosity="MESSAGE5"
-export r="0.005"; #Make resolution large so we begin with small chi2 and factor improvement to get to chi2/ndf=1 on next iteration. 
+export r="0.05"; #Make resolution large so we begin with small chi2 and factor improvement to get to chi2/ndf=1 on next iteration. 
 export dutX=0.5 #Need to add duts resolution like this since in alignment we times this by some factor during the process.
 export dutY=1000000000000
 export dutXs="$dutX $dutX" #This is the resolution of the DUT in the x LOCAL direction taking into account the misalignment
