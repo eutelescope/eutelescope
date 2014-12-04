@@ -60,7 +60,8 @@ This example contains a run taken with a 1T magnetic field, run 290. We must inc
 The average energy of the tracks is determined by using a small acceptance window of R=0.5 and then varying the estimated beam energy. The correct one will give the largest number of tracks on average.
 
 With example 290 we see that the average number of tracks per event is below 0.5 when R=1. This could be due to energy of the beam or how we are predicting the path of the particle in the pattern recogntion. Could also be the sensitivity of the mimosa planes.
-In principle we want the smallest R value possible that give a reasonable number of tracks with 6 hits.
+This example is very good at showing how the R-value picks the energy distribution. We see a tail to the residuals of this example which is caused by the different energies of the particles having different curvatures.
+Also we also must fix three planes to have successful alignment.
 TO DO:
 One possible problem is how to deal with initial misalignment with magnetic fields since we need to interpret the correlation to do this? 
 

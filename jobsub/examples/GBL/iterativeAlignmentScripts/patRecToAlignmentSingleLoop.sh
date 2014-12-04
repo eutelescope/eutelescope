@@ -13,7 +13,7 @@ echo "Output gear: $outputGear"
 echo "This is the resolutions X/Y:  $xres/$yres."
 for x in {1..10}; do
 	echo "PATTERN RECOGNTION ATTEMPT $x ON ITERATION $number"
-	$do jobsub.py -c $CONFIG -csv $RUNLIST -o MaxMissingHitsPerTrack="$MaxMissingHitsPerTrack" -o AllowedSharedHitsOnTrackCandidate="$AllowedSharedHitsOnTrackCandidate" -o ResidualsRMax="$ResidualsRMax"  -o Verbosity="$Verbosity" -o Verbosity="$Verbosity" -o planeDimensions="${planeDimensions}" -o MaxRecordNumber="$MaxRecordNumber" -o GearFile="$inputGear"  -o ExcludePlanes="$ExcludePlanes" $PatRec $RUN  
+	$do jobsub.py -c $CONFIG -csv $RUNLIST -o MaxMissingHitsPerTrack="$MaxMissingHitsPerTrack" -o AllowedSharedHitsOnTrackCandidate="$AllowedSharedHitsOnTrackCandidate" -o ResidualsRMax="$ResidualsRMax" -o Verbosity="$Verbosity" -o planeDimensions="${planeDimensions}" -o MaxRecordNumber="$MaxRecordNumber" -o GearFile="$inputGear"  -o ExcludePlanes="$ExcludePlanes" $PatRec $RUN  
 
 	fileName="$PatRec-${RUN}.zip"
 	fullPath="$directory/$fileName"
@@ -38,7 +38,7 @@ for x in {1..10}; do
 done
 #THIS IS PART (2)
 echo "GBLTRACKS CREATED FOR ALIGNMENT ON ITERATION $number"
-$do jobsub.py  -c $CONFIG -csv $RUNLIST -o Verbosity="$Verbosity" -o GearFile="$inputGear" -o lcioInputName="trackcand"  -o inputCollectionName="track_candidates" -o lcioOutputName="GBLtracks" -o outputCollectionName="tracks"  -o MaxRecordNumber="$MaxRecordNumber" -o ExcludePlanes="$ExcludePlanes" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" $TrackFit  $RUN  
+$do jobsub.py  -c $CONFIG -csv $RUNLIST -o Verbosity="$Verbosity" -o GearFile="$inputGear" -o MaxRecordNumber="$MaxRecordNumber" -o ExcludePlanes="$ExcludePlanes" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" $TrackFit  $RUN  
 
 #fileName="$TrackFit-${RUN}.zip"
 #fullPath="$directory/$fileName"
@@ -49,8 +49,8 @@ $do jobsub.py  -c $CONFIG -csv $RUNLIST -o Verbosity="$Verbosity" -o GearFile="$
 #	echo "ERROR!!!!!!!!! string for chi2 GBL not found. Check output log file is in the correct place. Furthermore check the string is there. "
 #  exit
 #fi
-export pede="chiscut 1  1" #! denotes a comment in the steering file we remove this to activate this functionality. TO DO: Must comment below as well must fix
-export outlierdownweighting="!outlierdownweighting 0"
+export pede="chiscut 5  3" #! denotes a comment in the steering file we remove this to activate this functionality. TO DO: Must comment below as well must fix
+export outlierdownweighting="outlierdownweighting 4"
 
 
 #THIS IS PART (3)
@@ -84,7 +84,7 @@ for x in {1..20}; do
 		export xresWorking=$xres; #Must be set before the new resolution is set which may cause too many rejects
 		export yresWorking=$yres;
 		echo "Factor word found! Resolution must increase by $factor."
-#		r=$(echo "scale=4;$r*$factor"|bc);
+		r=$(echo "scale=4;$r*$factor"|bc);
 		dutX=$(echo "scale=4;$dutX*$factor"|bc);
 		dutY=$(echo "scale=4;$dutY*$factor"|bc);
 		dutXs="$dutX $dutX" #This is the resolution of the DUT in the x LOCAL direction taking into account the misalignment
@@ -101,7 +101,7 @@ for x in {1..20}; do
 	if [[ $numberRejectedAlignmentAttempts -eq 1 ]] && [[ $rejected != "" ]] #We add the 2nd condition to make sure we don't enter on a loop with factor term. 
 	then
 		echo "Too many rejects. Resolution must increase by factor 10."
-#		r=$(echo "scale=4;$r*5"|bc);
+		r=$(echo "scale=4;$r*5"|bc);
 		dutX=$(echo "scale=4;$dutX*5"|bc);
 		dutY=$(echo "scale=4;$dutY*5"|bc);
 		dutXs="$dutX $dutX" #This is the resolution of the DUT in the x LOCAL direction taking into account the misalignment
