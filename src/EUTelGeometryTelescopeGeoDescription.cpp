@@ -1323,7 +1323,15 @@ streamlog_out(DEBUG5) << "EUTelGeometryTelescopeGeoDescription::findIntersection
 	TVector3 newMomentum;
 	newPos = getXYZfromArcLength(trkVec,pVec,beamQ,solution);
 	newMomentum = getXYZMomentumfromArcLength(pVec, trkVec, beamQ, solution);
-	outputPosition[0]=newPos[0]; 				outputPosition[1]=newPos[1]; 				outputPosition[2]=newPos[2];
+	//Note that the pattern recogntion appears to be accurate to about 50 micron with large curved tracks. 
+	//This is o.k for x/y position since track fitting will be used after. 
+	//However we need to make sure we are at the correct z position more accurate than 50 micron. So we will set this automatically.
+	//We still check that the estimated z-position is within 50 microns of the actual z position. 
+	//TO DO: Make sure this approximation does not affect the arc length estimation. Since these will be slightly different now.
+	if(newPos.z() - sensorCenter.z() > 0.050){
+		throw(lcio::Exception("The predicted z position is too much larger than the actual z position.")); 	
+	}
+	outputPosition[0]=newPos[0]; 				outputPosition[1]=newPos[1]; 				outputPosition[2]=sensorCenter.z();
 	outputMomentum[0]=newMomentum[0]; 				outputMomentum[1]=newMomentum[1]; 				outputMomentum[2]=newMomentum[2];
 	arcLength = solution;		
 	streamlog_out (DEBUG5) << "Solutions for arc length: " << std::setw(15) << sol[0] << std::setw(15) << sol[1] << " Final output arc length: " << arcLength <<std::endl;

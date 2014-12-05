@@ -76,7 +76,7 @@ void EUTelPatternRecognition::propagateForwardFromSeedState( EUTelState& stateIn
 		//cout<<"HERE1: "<<state->getPosition()[0]<<","<<state->getPosition()[1]<<","<<state->getPosition()[2]<<","<<state->getLocation()<<endl;
 		int sensorIntersection = geo::gGeometry( ).getSensorID(globalIntersection);
 		if(newSensorID < 0 or sensorIntersection < 0 ){
-			streamlog_out ( DEBUG5 ) << "Intersection point on infinite plane: " <<  globalIntersection[0]<<" , "<<globalIntersection[1] <<" , "<<globalIntersection[2]<<std::endl;
+			streamlog_out ( DEBUG5 ) << "INTERSECTION NOT FOUND! Intersection point on infinite plane: " <<  globalIntersection[0]<<" , "<<globalIntersection[1] <<" , "<<globalIntersection[2]<<std::endl;
 			streamlog_out ( DEBUG5 ) << "Momentum on next plane: " <<  momentumAtIntersection[0]<<" , "<<momentumAtIntersection[1] <<" , "<<momentumAtIntersection[2]<<std::endl;
 			streamlog_out(DEBUG5) <<" From ID= " <<  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)<< " to " <<  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i+1)  <<std::endl;
 			streamlog_out(DEBUG5)<<"Was there intersection on plane: "<<newSensorID<<" Was there intersection in sensitive area: "<< sensorIntersection <<std::endl;
@@ -84,8 +84,9 @@ void EUTelPatternRecognition::propagateForwardFromSeedState( EUTelState& stateIn
 			streamlog_out(DEBUG5)<<"This is for event number " <<getEventNumber()<<std::endl;
 			continue;//So if there is no intersection look on the next plane. Important since two planes could be at the same z position
 		}
-		streamlog_out ( DEBUG0 ) << "Intersection point on infinite plane: " <<  globalIntersection[0]<<" , "<<globalIntersection[1] <<" , "<<globalIntersection[2]<<std::endl;
-		streamlog_out ( DEBUG0 ) << "Momentum on next plane: " <<  momentumAtIntersection[0]<<" , "<<momentumAtIntersection[1] <<" , "<<momentumAtIntersection[2]<<std::endl;
+		streamlog_out(DEBUG5) <<"INTERSECTION FOUND! From ID= " <<  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)<< " to " <<  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i+1)  <<std::endl;
+		streamlog_out ( DEBUG5 ) << "Intersection point on infinite plane: " <<  globalIntersection[0]<<" , "<<globalIntersection[1] <<" , "<<globalIntersection[2]<<std::endl;
+		streamlog_out ( DEBUG5 ) << "Momentum on next plane: " <<  momentumAtIntersection[0]<<" , "<<momentumAtIntersection[1] <<" , "<<momentumAtIntersection[2]<<std::endl;
 
 		//So we have intersection lets create a new state
 		EUTelState *newState = new EUTelState();//Need to create this since we save the pointer and we would be out of scope when we leave this function. Destroying this object. 

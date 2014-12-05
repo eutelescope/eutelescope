@@ -65,6 +65,10 @@ Also we also must fix three planes to have successful alignment.
 TO DO:
 One possible problem is how to deal with initial misalignment with magnetic fields since we need to interpret the correlation to do this? 
 
+With the 3 GeV data we see that the accuracy of the pattern recognition decrease to about 50m micron at the worst. This can cause the particle to appear to not cross the plane.
+This is dealt with in pattern recognition so we ensure that the particle z position is on the plane. 
+We also see that the initial distance the particle travels before reaching the first plane makes little difference to the pattern recogntion. 
+
 
 --Strip Sensor Example----
 
