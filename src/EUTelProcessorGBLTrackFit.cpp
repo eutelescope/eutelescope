@@ -232,8 +232,8 @@ void EUTelProcessorGBLTrackFit::plotResidual(map< int, map<float, float > >  & s
 			if( sensor_residual_it->first == 3){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX3 ] ) -> fill(res);}
 			if( sensor_residual_it->first == 4){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX4 ] ) -> fill(res);}
 			if( sensor_residual_it->first == 5){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX5 ] ) -> fill(res);}
-			if( sensor_residual_it->first == 6){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ "Residual6X" ] ) -> fill(res);}
-			if( sensor_residual_it->first == 7){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ "Residual7X" ] ) -> fill(res);}
+			if( sensor_residual_it->first == 20){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ "Residual6X" ] ) -> fill(res);}
+			if( sensor_residual_it->first == 21){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ "Residual7X" ] ) -> fill(res);}
 
 		}else{
 			streamlog_out(DEBUG5) << "The map is NULL" <<std::endl;
@@ -246,8 +246,8 @@ void EUTelProcessorGBLTrackFit::plotResidual(map< int, map<float, float > >  & s
 			if( sensor_residual_it->first == 3){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY3 ] ) -> fill(res2);}
 			if( sensor_residual_it->first == 4){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY4 ] ) -> fill(res2);}
 			if( sensor_residual_it->first == 5){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY5 ] ) -> fill(res2);}
-//			if( sensor_residual_it->first == 6){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ "Residual6Y" ] ) -> fill(res2);}
-//			if( sensor_residual_it->first == 7){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ "Residual7Y" ] ) -> fill(res2);}
+			if( sensor_residual_it->first == 20){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ "Residual6Y" ] ) -> fill(res2);}
+			if( sensor_residual_it->first == 21){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ "Residual7Y" ] ) -> fill(res2);}
 
 				
 	}

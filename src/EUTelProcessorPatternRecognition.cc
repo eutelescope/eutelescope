@@ -93,7 +93,7 @@ void EUTelProcessorPatternRecognition::init(){
 		geo::gGeometry().initialisePlanesToExcluded(_excludePlanes);//We specify the excluded planes here since this is rather generic and can be used by other processors
 		geo::gGeometry().setInitialDisplacementToFirstPlane(_initialDisplacement);//We specify this here so we can access it throughout this processor. 
 		{ 
-			streamlog_out(MESSAGE5)<<endl<<"These are the planes you will exclude from creating a state. Mass inbetween states will be turned to scatterers in GBLTrackProcessor."<<endl;
+			streamlog_out(MESSAGE5)<<endl<<"These are the planes you will create a state from. Mass inbetween states will be turned to scatterers in GBLTrackProcessor."<<endl;
 			for(int i =0 ; i < geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size(); ++i){
 				streamlog_out(MESSAGE5)<<geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)<<"  ";
 			}
