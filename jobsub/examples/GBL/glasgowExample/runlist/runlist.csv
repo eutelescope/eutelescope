@@ -1,2 +1,2 @@
 RunNumber,BeamEnergy,Threshold,GearGeoFile
-105,4.4,6,gear-final-quad-aligned-DUT20-single-quad-105.xml
+105,4.4,6,gear-dut20-R=1-r=0.01-letend-free-100k-105.xml

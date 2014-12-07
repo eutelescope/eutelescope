@@ -1324,14 +1324,20 @@ streamlog_out(DEBUG5) << "EUTelGeometryTelescopeGeoDescription::findIntersection
 	newPos = getXYZfromArcLength(trkVec,pVec,beamQ,solution);
 	newMomentum = getXYZMomentumfromArcLength(pVec, trkVec, beamQ, solution);
 	//Note that the pattern recogntion appears to be accurate to about 50 micron with large curved tracks. 
+	//This 50 microns is always less than the expected z position. This implies that IF we change geometries and it is still less then it is not the misalignment in z.
 	//This is o.k for x/y position since track fitting will be used after. 
 	//However we need to make sure we are at the correct z position more accurate than 50 micron. So we will set this automatically.
 	//We still check that the estimated z-position is within 50 microns of the actual z position. 
 	//TO DO: Make sure this approximation does not affect the arc length estimation. Since these will be slightly different now.
-	if(newPos.z() - sensorCenter.z() > 0.050){
+	if(sensorCenter.z() - newPos.z() < 0.0){
+		throw(lcio::Exception("The sensor centre is smaller in z position than the predicted")); 	
+	}
+	double correct_zPosition = newPos.z() + (sensorCenter.z() - newPos.z());
+	if(sensorCenter.z() - newPos.z()> 0.050){
 		throw(lcio::Exception("The predicted z position is too much larger than the actual z position.")); 	
 	}
-	outputPosition[0]=newPos[0]; 				outputPosition[1]=newPos[1]; 				outputPosition[2]=sensorCenter.z();
+	//Note we must make up this distance to the correct intersection. Since tilted sensors will not have every point with a z position at the centre of the sensor.
+	outputPosition[0]=newPos[0]; 				outputPosition[1]=newPos[1]; 				outputPosition[2]=correct_zPosition;
 	outputMomentum[0]=newMomentum[0]; 				outputMomentum[1]=newMomentum[1]; 				outputMomentum[2]=newMomentum[2];
 	arcLength = solution;		
 	streamlog_out (DEBUG5) << "Solutions for arc length: " << std::setw(15) << sol[0] << std::setw(15) << sol[1] << " Final output arc length: " << arcLength <<std::endl;
