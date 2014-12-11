@@ -493,6 +493,7 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
 	//Create TGeoRotation object. 
 	//Translations are of course just positional changes in the global frame.
 	//Note that each subsequent rotation is using the new coordinate system of the last transformation all the way back to the global frame.
+	//The way to think about this is that each rotation is the multiplication of the last rotation matrix by a new one.
 	//The order is:
 	//Integer Z rotation and reflections.
 	//Z rotations specified by in degrees.

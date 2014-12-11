@@ -26,16 +26,16 @@ export dutPlanes="6 7" #Since the mimosa planes are always named the same but du
 export ExcludePlanes="7" #These planes are completely excluded from the analysis. The scattering from the plane however is still taken into account.
 export ResidualsRMax="1" #This is the window size on the next plane that we will accept hits from. This will increase if less than 1 track per event is found.
 export Verbosity="MESSAGE5"
-export r="0.01"; #Make resolution large so we begin with small chi2 and factor improvement to get to chi2/ndf=1 on next iteration. 
-export dutX=0.08 #Need to add duts resolution like this since in alignment we times this by some factor during the process.
-export dutY=1000000000000
+export r="0.010"; #Make resolution large so we begin with small chi2 and factor improvement to get to chi2/ndf=1 on next iteration. 
+export dutX=0.25 #Need to add duts resolution like this since in alignment we times this by some factor during the process.
+export dutY=100000000000000
 export dutXs="$dutX $dutX" #This is the resolution of the DUT in the x LOCAL direction taking into account the misalignment
 export dutYs="$dutY $dutY" #This is the resolution of the DUT in the y LOCAL direction taking into account the misalignment
-export allMimosaPlanesFixed="0 1 2 3 4 5" #These are the mimosa planes you will fix during alignment
-export MaxRecordNumber="50000" 
+export allMimosaPlanesFixed="1 2 3 4" #These are the mimosa planes you will fix during alignment
+export MaxRecordNumber="30000" 
 export inputGearInitial="gear-stripSensor-Aligned-With-noDUT.xml"
 #export inputGearInitial="gear-final-noDUT-${RUN}.xml"
-export outputIdentifier="final-DUT6-change-tandem-50k-R=0.5-noMimosaChange" #Use this string to identify final gear/histogram and all iterations before.
+export outputIdentifier="R=1-r=0.01-rx=0.25" #Use this string to identify final gear/histogram and all iterations before.
 
 
 $scriptsLocation/initialiseAndRun.sh
