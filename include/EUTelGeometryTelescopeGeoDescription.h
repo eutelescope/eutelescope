@@ -417,7 +417,7 @@ class EUTelGeometryTelescopeGeoDescription
 	/** Geometry manager global object */
 	TGeoManager* _geoManager;
 
-	int findNextPlaneEntrance(  double* ,  double *, int, float*  );
+	bool findNextPlaneEntrance(  TVector3 ,  TVector3, int, float*  );
 
 	int findNextPlane(  double* lpoint,  double* ldir,  float* newpoint );
 

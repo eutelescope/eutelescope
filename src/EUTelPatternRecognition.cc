@@ -64,7 +64,7 @@ void EUTelPatternRecognition::propagateForwardFromSeedState( EUTelState& stateIn
 		TVector3 momentumAtIntersection;
 		float arcLength;
 		int newSensorID = state->findIntersectionWithCertainID(geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i+1), globalIntersection, momentumAtIntersection, arcLength);
-		if(arcLength == 0 or arcLength < 0 ){ 
+		if(arcLength <= 0 ){ 
 			throw(lcio::Exception( "The arc length is less than or equal to zero. ")); 
 		}
 		if(firstLoop){

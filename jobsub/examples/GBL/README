@@ -53,6 +53,8 @@ TO DO: When we install the examples we should automatically set the place where 
 
 Note that the variables in the configuration file are set to work for an optimum setup after alignment.
 
+Note with this example we see that there is no difference fixing the aligned mimosa planes when we are trying to align the DUTs
+
 --No DUT example--
 
 This example contains a run taken with a 1T magnetic field, run 290. We must include this information in the gear file. The direction of the magnetic field is in the global coordinates for the telescope. However the global coordinates depend on how you define this in the gear file. Therefore you need to check the hitmap of the sensor in local coordinates to see how the hit shift due to the magnetic field. The make sure the transformation of the mimosa sensors from local to global, and the magnetic field direction in global coordinate. Both give you that shift on the sensors hitmap. This has already been done of course for this example but if another run is added this must be taken into account.

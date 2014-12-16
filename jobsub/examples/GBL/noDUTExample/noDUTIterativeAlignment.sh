@@ -14,7 +14,7 @@ if [  -z "$numberOfIterations" ]; then
 fi
 
 #VARIABLES. IMPORTANT CONSTANT VARIABLES THROUGH THE WHOLE ALIGNMENT PROCESS ARE SET HERE. IMPORTANT NOT ALL VARIABLES ARE HERE LOOK IN STEERING FILES/CONFIG
-export RUN="300" 
+export RUN="286" 
 export numberOfIterations="$numberOfIterations"
 export exampleLocation="/afs/phas.gla.ac.uk/user/a/amorton/ilcsoft/v01-17-05/Eutelescope/trunk/jobsub/examples/GBL/noDUTExample"
 export scriptsLocation="/afs/phas.gla.ac.uk/user/a/amorton/ilcsoft/v01-17-05/Eutelescope/trunk/GBL/iterativeAlignmentScripts"
@@ -31,9 +31,9 @@ export dutXs="" #This is the resolution of the DUT in the x LOCAL direction taki
 export dutYs="" #This is the resolution of the DUT in the y LOCAL direction taking into account the misalignment
 export allMimosaPlanesFixed="0 3 5" #These are the mimosa planes you will fix during alignment
 export MaxRecordNumber="50000" 
-export inputGearInitial="gear-0.5T.xml"
+export inputGearInitial="gear-1T.xml"
 #export inputGearInitial="gear-final-noDUT-${RUN}.xml"
-export outputIdentifier="BeamEnergy=3-R=0.5-Mag=0.5T" #Use this string to identify final gear/histogram and all iterations before.
+export outputIdentifier="Mag-XYZ-test" #Use this string to identify final gear/histogram and all iterations before.
 
 
 $scriptsLocation/initialiseAndRun.sh
