@@ -92,7 +92,13 @@ void EUTelProcessorPatternRecognition::init(){
 		geo::gGeometry().initializeTGeoDescription(name,false);//This create TGeo object that contains all the planes position and scattering information.
 		geo::gGeometry().initialisePlanesToExcluded(_excludePlanes);//We specify the excluded planes here since this is rather generic and can be used by other processors
 		geo::gGeometry().setInitialDisplacementToFirstPlane(_initialDisplacement);//We specify this here so we can access it throughout this processor. 
-		streamlog_out(DEBUG) << "Initialisation of track finder" << std::endl;
+		{ 
+			streamlog_out(MESSAGE5)<<endl<<"These are the planes you will create a state from. Mass inbetween states will be turned to scatterers in GBLTrackProcessor."<<endl;
+			for(int i =0 ; i < geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size(); ++i){
+				streamlog_out(MESSAGE5)<<geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)<<"  ";
+			}
+			streamlog_out(MESSAGE5) << std::endl;
+		}
 		EUTelPatternRecognition* Finder = new EUTelPatternRecognition();//This is the class that contains all the functions that do the actual work
 		if (!Finder) {
 			streamlog_out(ERROR) << "Can't allocate an instance of EUTelExhaustiveTrackFinder. Stopping ..." << std::endl;
@@ -227,35 +233,37 @@ void EUTelProcessorPatternRecognition::processEvent(LCEvent * evt) {
 void EUTelProcessorPatternRecognition::outputLCIO(LCEvent* evt, std::vector<EUTelTrack>& tracks){
 
 	streamlog_out( DEBUG4 ) << " ---------------- EUTelProcessorPatternRecognition::outputLCIO ---------- BEGIN ------------- " << std::endl;
+	//We only want to create a container if there is tracks to save. Otherwise it is just an empty event.
+	if(tracks.size() !=0 ){
+		//Create once per event    
+		LCCollectionVec * trkCandCollection = new LCCollectionVec(LCIO::TRACK);//This is for the track object
+		LCCollectionVec * stateCandCollection = new LCCollectionVec(LCIO::TRACK);// This is for the states which we attach to the track
 
-	//Create once per event    
-	LCCollectionVec * trkCandCollection = new LCCollectionVec(LCIO::TRACK);//This is for the track object
-	LCCollectionVec * stateCandCollection = new LCCollectionVec(LCIO::TRACK);// This is for the states which we attach to the track
+		// Prepare output collection. Must set that this is a track object bit to save this lcio file correctly.
+		LCFlagImpl flag(trkCandCollection->getFlag());
+		flag.setBit( LCIO::TRBIT_HITS );
+		trkCandCollection->setFlag( flag.getFlag( ) );
 
-	// Prepare output collection. Must set that this is a track object bit to save this lcio file correctly.
-	LCFlagImpl flag(trkCandCollection->getFlag());
-	flag.setBit( LCIO::TRBIT_HITS );
-	trkCandCollection->setFlag( flag.getFlag( ) );
+		LCFlagImpl flag2(stateCandCollection->getFlag());
+		flag2.setBit( LCIO::TRBIT_HITS );
+		stateCandCollection->setFlag( flag2.getFlag( ) );
 
-	LCFlagImpl flag2(stateCandCollection->getFlag());
-	flag2.setBit( LCIO::TRBIT_HITS );
-	stateCandCollection->setFlag( flag2.getFlag( ) );
+		//Loop through all tracks
+		for ( size_t i = 0 ; i < tracks.size(); ++i) {
+			EUTelTrack* trackheap = new  EUTelTrack(tracks[i]);
+			trackheap->print();
+			//For every track add this to the collection
+			trkCandCollection->push_back(static_cast<EVENT::Track*>(trackheap));
+			for(size_t j = 0;j < trackheap->getTracks().size();++j){
+				stateCandCollection->push_back(trackheap->getTracks().at(j) );
+			}
+		}//END TRACK LOOP
 
-	//Loop through all tracks
-	for ( size_t i = 0 ; i < tracks.size(); ++i) {
-		EUTelTrack* trackheap = new  EUTelTrack(tracks[i]);
-		trackheap->print();
-		//For every track add this to the collection
-		trkCandCollection->push_back(static_cast<EVENT::Track*>(trackheap));
-		for(size_t j = 0;j < trackheap->getTracks().size();++j){
-			stateCandCollection->push_back(trackheap->getTracks().at(j) );
-		}
-	}//END TRACK LOOP
-
-	//Now add this collection to the 
-	evt->addCollection(trkCandCollection, _trackCandidateHitsOutputCollectionName);
-	string stateString = _trackCandidateHitsOutputCollectionName + "_States"; 
-	evt->addCollection(stateCandCollection, stateString);
+		//Now add this collection to the 
+		evt->addCollection(trkCandCollection, _trackCandidateHitsOutputCollectionName);
+		string stateString = _trackCandidateHitsOutputCollectionName + "_States"; 
+		evt->addCollection(stateCandCollection, stateString);
+	}
 	streamlog_out( DEBUG4 ) << " ---------------- EUTelProcessorPatternRecognition::outputLCIO ---------- END ------------- " << std::endl;
 }
 //TO DO: find a more generic way to plot histograms

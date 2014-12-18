@@ -49,7 +49,7 @@
  <!--EUTelHitMaker is responsible to translate cluster centers from the local frame of reference to the external frame of reference using the GEAR geometry description-->
 
   <!--Input of Zero Suppressed data-->
-  <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> original_zsdata_m26 </parameter>
+  <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> original_zsdata_m26  </parameter>
 
   <!--Cluster (pulse) collection name-->
   <parameter name="PulseCollectionName" type="string" lcioInType="TrackerPulse"> cluster_m26_free </parameter>
@@ -86,7 +86,6 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
   <parameter name="Verbosity" type="string" value="@Verbosity@"/>
 </processor>
 
-
  <processor name="HitFilter_m26" type="EUTelProcessorFilteringHitFilter">
     <parameter name="HitInputCollectionName" type="string" lcioOutType="TrackerHit"> hit </parameter>
     <parameter name="HitOutputCollectionName" type="string" lcioOutType="TrackerHit"> hit_filtered_m26 </parameter>
@@ -102,7 +101,7 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
   <!--Minimum allowed cluster charge to be taken into account for the correlation plots (default = 2)-->
   <parameter name="ClusterChargeMinimum" type="int" value="0"/>
   <!--Dump the offset X and Y values calculated from the correlation bands (default = true)-->
-  <parameter name="Events" type="int" value="5000"/>
+  <parameter name="Events" type="int" value="10000"/>
   <!--SensorID of fixed plane-->
   <!--If there are more then this number of correlated hits (planes->track candidate) (default=5)-->
   <parameter name="MinNumberOfCorrelatedHits" type="int" value="5"/>

@@ -161,7 +161,7 @@ void EUTelGeometryTelescopeGeoDescription::initialisePlanesToExcluded(FloatVec p
 	}
 	//Check if the number of excluded planes set is the same as (total-number of plane IDs inputed that should be excluded)
 	if(geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() != (geo::gGeometry().sensorIDstoZOrder().size()-planeIDs.size())){
-		throw(lcio::Exception( "The number of Planes-Excluded is not correct. This could be a problem with geometry"));
+		throw(lcio::Exception( "The number of Planes-Excluded is not correct. This could be a problem with geometry."));
 	}else{
 		streamlog_out(DEBUG0) <<"The correct number of planes have been excluded" << std::endl;
 	}
@@ -454,7 +454,7 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::strin
 void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvolumeWorld, int SensorId ){
 	double xc, yc, zc;   // volume center position 
 	double alpha, beta, gamma;
-	double rot1, rot3; // for backward compatibility with previous GEAR. We only need 2 entries from gear file for fast z rotation function in TGeoRotations. 
+	double rotRef1, rotRef2, rotRef3, rotRef4; // for backward compatibility with previous GEAR. We only need 2 entries from gear file for fast z rotation function in TGeoRotations. 
 
 	std::stringstream strId;
 	strId << SensorId;
@@ -469,16 +469,19 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
 	beta  = siPlaneYRotation( SensorId ); // 
 	gamma = siPlaneZRotation( SensorId ); // 
 
-	rot1 = siPlaneRotation1( SensorId );
-	rot3 = siPlaneRotation3( SensorId );
-	//rot1=sin and rot=cos
-	//We must check that the input is correct. Since there is only 1 degree of freedom.
-	float	possibleUnit = sqrt(pow(rot1,2)+pow(rot3,2));
-	if(possibleUnit>1.1 or possibleUnit<0.9){//Check that the squares equal 1 and give some rounding error room. 
-		streamlog_out(ERROR5) << "SensorID: " << SensorId << ". Rot Squares sum =  " <<possibleUnit << std::endl;   
-		throw(lcio::Exception("The integer rotations do not represent a z rotation since there squares don't sum to 1. Note we have four variables in gear file as input BUT A SINGLE DEGREE OF FREEDOM!")); 	
+	rotRef1 = siPlaneRotation1( SensorId );
+	rotRef2 = siPlaneRotation2( SensorId );
+	rotRef3 = siPlaneRotation3( SensorId );
+	rotRef4 = siPlaneRotation4( SensorId );
+
+	//We must check that the input is correct. Since this is a combination of initial rotations and reflections the determinate must be 1 or -1
+	float	determinant = rotRef1*rotRef4 - rotRef2*rotRef3  ;
+	if(determinant==1 or determinant==-1){ 
+		streamlog_out(MESSAGE5) << "SensorID: " << SensorId << ". Determinant =  " <<determinant <<"  This is the correct determinate for this transformation." << std::endl;   
+	}else{
+		streamlog_out(ERROR5) << "SensorID: " << SensorId << ". Determinant =  " <<determinant << std::endl;   
+		throw(lcio::Exception("The initial rotation and reflection matrix does not have determinant of 1 or -1. Gear file input must be wrong.")); 	
 	}
-	double integerRotations[2]={rot3,rot1};
 	//Create spatial TGeoTranslation object.
 	std::string stTranslationName = "matrixTranslationSensor";
 	stTranslationName.append( strId.str() );
@@ -490,22 +493,24 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
 	//Create TGeoRotation object. 
 	//Translations are of course just positional changes in the global frame.
 	//Note that each subsequent rotation is using the new coordinate system of the last transformation all the way back to the global frame.
+	//The way to think about this is that each rotation is the multiplication of the last rotation matrix by a new one.
 	//The order is:
-	//Integer Z rotation. This only uses the top left element. This for future gear types should be removed.
+	//Integer Z rotation and reflections.
 	//Z rotations specified by in degrees.
 	//X rotations 
 	//Y rotations
-	TGeoRotation * pMatrixRotCombined = new TGeoRotation();
-	pMatrixRotCombined->FastRotZ(integerRotations);//Z Rotation (Integer). This will rotate a vector around the z axis using the right hand rule
-	pMatrixRotCombined->RotateZ(gamma);//Z Rotation (degrees)//This will again rotate a vector around z axis usign the right hand rule.  
-	pMatrixRotCombined->RotateX(alpha);//X Rotations (degrees)//This will rotate a vector usign the right hand rule round the x-axis
-	pMatrixRotCombined->RotateY(beta);//Y Rotations (degrees)//Same again for Y axis 
-	pMatrixRotCombined->RegisterYourself();//We must allow the matrix to be used by the TGeo manager.
+	TGeoRotation * pMatrixRotRefCombined = new TGeoRotation();
+	double integerRotationsAndReflections[9]={rotRef1,rotRef2,0,rotRef3,rotRef4,0,0,0,1};
+	pMatrixRotRefCombined->SetMatrix(integerRotationsAndReflections);
+	pMatrixRotRefCombined->RotateZ(gamma);//Z Rotation (degrees)//This will again rotate a vector around z axis usign the right hand rule.  
+	pMatrixRotRefCombined->RotateX(alpha);//X Rotations (degrees)//This will rotate a vector usign the right hand rule round the x-axis
+	pMatrixRotRefCombined->RotateY(beta);//Y Rotations (degrees)//Same again for Y axis 
+	pMatrixRotRefCombined->RegisterYourself();//We must allow the matrix to be used by the TGeo manager.
 	// Combined translation and orientation
-	TGeoCombiTrans* combi = new TGeoCombiTrans( *pMatrixTrans, *pMatrixRotCombined );
+	TGeoCombiTrans* combi = new TGeoCombiTrans( *pMatrixTrans, *pMatrixRotRefCombined );
 	//This is to print to screen the rotation and translation matrices used to transform from local to global frame.
 	streamlog_out(MESSAGE9) << "THESE MATRICES ARE USED TO TAKE A POINT IN THE LOCAL FRAME AND MOVE IT TO THE GLOBAL FRAME."  << std::endl;   
-	streamlog_out(MESSAGE9) << "SensorID: " << SensorId << " Rotation matrix for this object."  << std::endl;   
+	streamlog_out(MESSAGE9) << "SensorID: " << SensorId << " Rotation/Reflection matrix for this object."  << std::endl;   
 	const double* rotationMatrix =  combi->GetRotationMatrix();	
 	streamlog_out(MESSAGE9) << std::setw(10) <<rotationMatrix[0]<<"  "<<rotationMatrix[1]<<"   "<<rotationMatrix[2]<< std::endl;
 	streamlog_out(MESSAGE9) << std::setw(10) <<rotationMatrix[3]<<"  "<<rotationMatrix[4]<<"   "<<rotationMatrix[5]<< std::endl;
@@ -731,6 +736,7 @@ Eigen::Matrix3d EUTelGeometryTelescopeGeoDescription::getFlipMatrix(int sensorID
  * @param globalPos 3D point in global reference frame
  * @return sensorID or -999 if the point in outside of sensor volume
  */
+//MUST OUTPUT -999 TO SIGNIFY THAT NO SENSOR HAS BEEN FOUND. SINCE USED IN PATTERN RECOGNITION THIS WAY.
 int EUTelGeometryTelescopeGeoDescription::getSensorID( const float globalPos[] ) const {
     streamlog_out(DEBUG5) << "EUTelGeometryTelescopeGeoDescription::getSensorID() " << std::endl;
     
@@ -1135,114 +1141,117 @@ float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double 
 //
 // straight line - shashlyk plane assembler
 //
-int EUTelGeometryTelescopeGeoDescription::findNextPlane(  double* lpoint,  double* ldir, float* newpoint )
-{
-// 
-   if(newpoint==0)
-   {
-      streamlog_out( ERROR0 ) << "::findNextPlane;  newpoint array is void, can not continue..."<< std::endl;
-      return -100;
-   }
+int EUTelGeometryTelescopeGeoDescription::findNextPlane(  double* lpoint,  double* ldir, float* newpoint ){
+	if(newpoint==NULL)
+	{
+		throw(lcio::Exception("You have passed a NULL pointer to findNextPlane.")); 	
+	}
+	//Here we set the normalised direction and starting point.
+	double normdir = TMath::Sqrt(ldir[0]*ldir[0]+ldir[1]*ldir[1]+ldir[2]*ldir[2]); 
+	streamlog_out( DEBUG0 ) << "::findNextPlane lpoint: "  << lpoint[0] << " " << lpoint[1] << " "<< lpoint[2] << " " << std::endl;
+	ldir[0] = ldir[0]/normdir; 
+	ldir[1] = ldir[1]/normdir; 
+	ldir[2] = ldir[2]/normdir;
+	streamlog_out( DEBUG0 ) << "::findNextPlane ldir  : "  << ldir  [0] << " " << ldir  [1] << " "<< ldir  [2] << " " << std::endl;
 
-   double normdir = TMath::Sqrt(ldir[0]*ldir[0]+ldir[1]*ldir[1]+ldir[2]*ldir[2]); 
-   streamlog_out( DEBUG0 ) << "::findNextPlane lpoint: "  << lpoint[0] << " " << lpoint[1] << " "<< lpoint[2] << " " << std::endl;
-   ldir[0] = ldir[0]/normdir; 
-   ldir[1] = ldir[1]/normdir; 
-   ldir[2] = ldir[2]/normdir;
-   streamlog_out( DEBUG0 ) << "::findNextPlane ldir  : "  << ldir  [0] << " " << ldir  [1] << " "<< ldir  [2] << " " << std::endl;
- 
-   for(int ip=0;ip<3;ip++) 
-   {
-     newpoint[ip] = static_cast<float> (lpoint[ip]);
-   }  
-   int currentSensorID = getSensorID(newpoint); 
-   
-   gGeoManager->InitTrack( lpoint, ldir );
-   TGeoNode *node = gGeoManager->GetCurrentNode( );
+	for(int ip=0;ip<3;ip++) 
+	{
+	 newpoint[ip] = static_cast<float> (lpoint[ip]);
+	}  
+	int currentSensorID = getSensorID(newpoint); 
+	//initialise the track.
+	gGeoManager->InitTrack( lpoint, ldir );
+	TGeoNode *node = gGeoManager->GetCurrentNode( );
 
-   Int_t inode    = node->GetIndex();
-   Int_t i        = 0;
+	Int_t inode    = node->GetIndex();
+	Int_t i        = 0;
 
-   streamlog_out( DEBUG0 ) << "::findNextPlane look for next node, starting at node: " << node << " id: " << inode  << " currentSensorID: " << currentSensorID << std::endl;
- 
-//   double kStep = 1e-03;
-   while(( node = gGeoManager->FindNextBoundaryAndStep() ))
-   {
-       inode = node->GetIndex();
-       streamlog_out( DEBUG0 ) << "::findNextPlane found next node: " << node << " id: " << inode << std::endl;
-       const double* point = gGeoManager->GetCurrentPoint();
-       const double* dir   = gGeoManager->GetCurrentDirection();
-       double ipoint[3] ;
-       double idir[3]   ;
+	streamlog_out( DEBUG0 ) << "::findNextPlane look for next node, starting at node: " << node << " id: " << inode  << " currentSensorID: " << currentSensorID << std::endl;
 
-       for(int ip=0;ip<3;ip++) 
-       {
-         ipoint[ip] = point[ip];
-         idir[ip]   = dir[ip];
-         if(ip==2) ipoint[ip]+=0.01 ; // assumption !!! step by one um into the new volume // new volume is thicker than 1 um
-         newpoint[ip] = static_cast<float> (ipoint[ip]);
-       }  
-       int sensorID = getSensorID(newpoint); 
-       i++;     
-      
-       gGeoManager->SetCurrentPoint( ipoint);
-       gGeoManager->SetCurrentDirection( idir);
- 
-       streamlog_out( DEBUG0 ) << "::findNextPlane i=" << i  << " " << inode << " " << ipoint[0]  << " " << ipoint[1] << " " << ipoint[2]  << " sensorID:" << sensorID <<  std::endl;
-       if(sensorID >= 0 && sensorID != currentSensorID ) return sensorID;
-   }
+	//   double kStep = 1e-03;
+	while(( node = gGeoManager->FindNextBoundaryAndStep() ))
+	{
+		 inode = node->GetIndex();
+		 streamlog_out( DEBUG0 ) << "::findNextPlane found next node: " << node << " id: " << inode << std::endl;
+		 const double* point = gGeoManager->GetCurrentPoint();
+		 const double* dir   = gGeoManager->GetCurrentDirection();
+		 double ipoint[3] ;
+		 double idir[3]   ;
 
- 
-   return -100;
+		 for(int ip=0;ip<3;ip++) 
+		 {
+			 ipoint[ip] = point[ip];
+			 idir[ip]   = dir[ip];
+			 if(ip==2) ipoint[ip]+=0.01 ; // assumption !!! step by one um into the new volume // new volume is thicker than 1 um
+			 newpoint[ip] = static_cast<float> (ipoint[ip]);
+		 }  
+		 int sensorID = getSensorID(newpoint); 
+		 i++;     
+		
+		 gGeoManager->SetCurrentPoint( ipoint);
+		 gGeoManager->SetCurrentDirection( idir);
+
+		 streamlog_out( DEBUG0 ) << "::findNextPlane i=" << i  << " " << inode << " " << ipoint[0]  << " " << ipoint[1] << " " << ipoint[2]  << " sensorID:" << sensorID <<  std::endl;
+		 if(sensorID >= 0 && sensorID != currentSensorID ) return sensorID;
+	}
+
+
+	return -100;
 }
-//This will take in a global coordinate and direction and output the new global point on the next sensor. Also it outputs the sesnorID if it matches output or -100 if not.
-int EUTelGeometryTelescopeGeoDescription::findNextPlaneEntrance(  double* lpoint,  double* ldir, int nextSensorID, float* newpoint )
-{
-   if(newpoint==0)
-   {
-      streamlog_out( ERROR0 ) << "::findNextPlaneEntrance newpoint array is void, can not continue..."<< std::endl;
-      return -100;
-   }
-   
+//This will take in a global coordinate and direction and output the new global point on the next sensor. 
+bool EUTelGeometryTelescopeGeoDescription::findNextPlaneEntrance(  TVector3 lpoint,  TVector3 ldir, int nextSensorID, float* newpoint ){
+	streamlog_out(DEBUG5) << "EUTelGeometryTelescopeGeoDescription::findNextPlaneEntrance()------BEGIN" << std::endl;
+	if(newpoint==NULL)
+	{
+		throw(lcio::Exception("You have passed a NULL pointer to findNextPlane.")); 	
+	}
 	//initialise direction and location in global telescope coordinates
-   _geoManager->InitTrack( lpoint, ldir );
- 
-   TGeoNode *node = _geoManager->GetCurrentNode( ); //Return the volume i.e 'node' that contains that point.
-   Int_t inode =  node->GetIndex();
-   Int_t i=0;
+	double dlPoint[3];
+	dlPoint[0] = lpoint[0];	dlPoint[1] = lpoint[1];	dlPoint[2] = lpoint[2];
+	double dlDir[3];
+	dlDir[0] = ldir[0];	dlDir[1] = ldir[1];	dlDir[2] = ldir[2];
 
-   streamlog_out( DEBUG0 ) << "::findNextPlaneEntrance node: " << node << " id: " << inode << std::endl;
- 
+	_geoManager->InitTrack( dlPoint, dlDir );
+
+	TGeoNode *node = _geoManager->GetCurrentNode( ); //Return the volume i.e 'node' that contains that point.
+	Int_t inode =  node->GetIndex();
+	Int_t stepNumber=0;
+
+	streamlog_out( DEBUG0 ) << "findNextPlaneEntrance node: " << node << " id: " << inode << std::endl;
+
 	//Keep looping until you have left this plane volume and are at another. Note FindNextBoundaryAndStep will only take you to the next volume 'node' it will not enter it.
-   while(( node = _geoManager->FindNextBoundaryAndStep() ))
-   {
-       inode = node->GetIndex();
-       const double* point = _geoManager->GetCurrentPoint(); //This will be the new global coordinates after the move
-       const double* dir   = _geoManager->GetCurrentDirection(); //This will be the same direction. If there was magnetic field then this would change automatically. However may need Geant4 for this to work. ???
-       double ipoint[3] ;
-       double idir[3]   ;
+	while(( node = _geoManager->FindNextBoundaryAndStep() )){
+		inode = node->GetIndex();
+		const double* point = _geoManager->GetCurrentPoint(); //This will be the new global coordinates after the move
+		const double* dir   = _geoManager->GetCurrentDirection(); //This will be the same direction. Since we will only travel in a straight line.  
+		double ipoint[3] ;
+		double idir[3]   ;
+		//Here we set the coordinates and move into the volume in the z direction.
+		for(int ip=0;ip<3;ip++){
+			ipoint[ip] = point[ip];
+			idir[ip]   = dir[ip];
+			if(ip==2){ 
+				ipoint[ip]+=0.001 ; // assumption !!! step by one um into the new volume // new volume is thicker than 1 um
+			}
+			newpoint[ip] = static_cast<float> (ipoint[ip]);
+		}  
+		int sensorID = getSensorID(newpoint); 
 
-       for(int ip=0;ip<3;ip++) 
-       {
-         ipoint[ip] = point[ip];
-         idir[ip]   = dir[ip];
-         if(ip==2) ipoint[ip]+=0.001 ; // assumption !!! step by one um into the new volume // new volume is thicker than 1 um
-         newpoint[ip] = static_cast<float> (ipoint[ip]);
-       }  
-       int sensorID = getSensorID(newpoint); 
-       i++;     
-      
-       _geoManager->SetCurrentPoint( ipoint);
-       _geoManager->SetCurrentDirection( idir);
- 
-       streamlog_out( DEBUG0 ) << "Loop number" << i  << ". Index: " << inode << ". Current global point: " << ipoint[0]  << " " << ipoint[1] << " " << ipoint[2]  << " sensorID: " << sensorID << ". Input of expect next sensor: " << nextSensorID << std::endl;
-       //if( sensorID <0 ) continue;  
-       if( sensorID == nextSensorID ) return sensorID;
-   }
- 
-   streamlog_out( DEBUG0 ) << "::findNextPlaneEntrance node: " << node << " id: " << inode << " sensorID= " << nextSensorID << " not found" << " returning: 0" << std::endl;
- 
-   return -100;
+		_geoManager->SetCurrentPoint( ipoint);
+		_geoManager->SetCurrentDirection( idir);
+
+		streamlog_out( DEBUG0 ) << "Loop number: " << stepNumber  << ". Index of next boundary: " << inode << ". Current global point: " << ipoint[0]  << " " << ipoint[1] << " " << ipoint[2]  << " sensorID: " << sensorID << ". Input of expect next sensor: " << nextSensorID << std::endl;
+		streamlog_out(DEBUG5) << "EUTelGeometryTelescopeGeoDescription::findNextPlaneEntrance()------END" << std::endl;
+
+		if( sensorID == nextSensorID ){
+			return true;
+		}
+		//We return false to say we have not found intersection on the plane.
+		if(stepNumber == 10){
+			return false;
+		}
+		stepNumber++;     
+	}
 
 }
 
@@ -1315,20 +1324,48 @@ streamlog_out(DEBUG5) << "EUTelGeometryTelescopeGeoDescription::findIntersection
 			
 	//Determine the global position from arc length.             
   TVector3 newPos;
-
 	TVector3 newMomentum;
 	newPos = getXYZfromArcLength(trkVec,pVec,beamQ,solution);
 	newMomentum = getXYZMomentumfromArcLength(pVec, trkVec, beamQ, solution);
-	outputPosition[0]=newPos[0]; 				outputPosition[1]=newPos[1]; 				outputPosition[2]=newPos[2];
 	outputMomentum[0]=newMomentum[0]; 				outputMomentum[1]=newMomentum[1]; 				outputMomentum[2]=newMomentum[2];
+	//Is the new point within the sensor. If not then we may have to propagate a little bit further to enter.
+ 	const float pos[3]={newPos[0],newPos[1],newPos[2]};
+	int sensorIDCheck = getSensorID(pos); 
+	bool foundIntersection = false;
+	if(sensorIDCheck == nextPlaneID){
+		streamlog_out( DEBUG3 ) << "INTERSECTION FOUND! " << std::endl;
+		foundIntersection = true;
+		outputPosition[0]=newPos[0];outputPosition[1]=newPos[1];outputPosition[2]=newPos[2];
+	}
+	if(!foundIntersection){
+		streamlog_out( DEBUG3 ) << "INTERSECTION NOT FOUND. LOOK A BIT FURTHER USING TGEO BOUNDARY FINDER. " << std::endl;
+		foundIntersection = findNextPlaneEntrance( newPos,  newMomentum, nextPlaneID, outputPosition);
+		streamlog_out( DEBUG3 ) << "SEARCH FORWARD DIRECTION SUCCESSFUL: "<< std::boolalpha << foundIntersection << std::endl;
+		streamlog_out( DEBUG3 ) << "The slightly wrong output position: "<< newPos[0]<<","<<newPos[1]<<","<<newPos[2]  << std::endl;
+		streamlog_out( DEBUG3 ) << "The corrected position is: "<< outputPosition[0]<<","<<outputPosition[1]<<","<<outputPosition[2]  << std::endl;
+	}
+	if(!foundIntersection){
+		streamlog_out( DEBUG3 ) << "WE HAVE NOT FOUND THE INTERSECTION GOING IN POSITIVE DIRECTION. SO TRY THE OTHER WAY. " << std::endl;
+		foundIntersection = findNextPlaneEntrance( newPos,  -newMomentum, nextPlaneID, outputPosition);
+		streamlog_out( DEBUG3 ) << "SEARCH BACKWARDS DIRECTION SUCCESSFUL: "<< std::boolalpha << foundIntersection << std::endl;
+		streamlog_out( DEBUG3 ) << "The slightly wrong output position: "<< newPos[0]<<","<<newPos[1]<<","<<newPos[2]  << std::endl;
+		streamlog_out( DEBUG3 ) << "The corrected position is: "<< outputPosition[0]<<","<<outputPosition[1]<<","<<outputPosition[2]  << std::endl;
+	}
 	arcLength = solution;		
-	streamlog_out (DEBUG5) << "Solutions for arc length: " << std::setw(15) << sol[0] << std::setw(15) << sol[1] << " Final output arc length: " << arcLength <<std::endl;
+	streamlog_out( DEBUG3 ) << "THE FINAL OUTPUT SOLUTION TO INTERSECTION ON PLANE ARE " << std::endl;
+	streamlog_out (DEBUG5) << "Final output arc length: " << arcLength <<std::endl;
 	streamlog_out (DEBUG5) << "Final Solution momentum(X,Y,Z): " << std::setw(15) << outputMomentum[0]  << std::setw(15) << outputMomentum[1]  << std::setw(15) << outputMomentum[2] << std::endl;
 	streamlog_out (DEBUG5) << "Final solution (X,Y,Z): " << std::setw(15) << outputPosition[0]  << std::setw(15) << outputPosition[1]  << std::setw(15) << outputPosition[2] << std::endl;
-        
+
+	if(!foundIntersection){//We have still not found intersection
+		streamlog_out( DEBUG3 ) << "FINAL: NO INTERSECTION FOUND. " << std::endl;
+		return -999;
+	}else{
+		streamlog_out( DEBUG3 ) << "FINAL:INTERSECTION FOUND. " << std::endl;
+		return nextPlaneID;
+	}
   streamlog_out(DEBUG2) << "-------------------------EUTelGeometryTelescopeGeoDescription::findIntersection()--------------------------" << std::endl;
-        
-  return nextPlaneID;
+
 }
 //This will calculate the momentum at a arc length away given initial parameters.
 TVector3 EUTelGeometryTelescopeGeoDescription::getXYZMomentumfromArcLength(TVector3 momentum, TVector3 globalPositionStart, float charge, float arcLength ){
@@ -1450,16 +1487,28 @@ TMatrixD EUTelGeometryTelescopeGeoDescription::getLocalToCurvilinearTransformMat
 
 	///This is the EUTelescope local z direction.//////////////////////////// 
 	streamlog_out(DEBUG0)<<"Set Z(I) with correct sensor rotation. Plane: "<< planeID  << std::endl; 
-	ITelescopeFrame = geo::gGeometry().siPlaneNormal( planeID  );       
+	if(planeID != 314){ //314 is the number we chose to specify a scattering plane.
+		ITelescopeFrame = geo::gGeometry().siPlaneNormal( planeID  );       
+	}else{
+		ITelescopeFrame[0]=0; ITelescopeFrame[1]=0;	ITelescopeFrame[2]=1;
+	}
 	I[0]=ITelescopeFrame[2];I[1]=ITelescopeFrame[1];I[2]=ITelescopeFrame[0];
 	//////////////////////////////////////////////////////////////////////////////
 	//This is the EUTelescope local Y direction////////////////////////////////////////
 	streamlog_out(DEBUG0)<<"Set Y(K) with correct sensor rotation. Plane: "<< planeID  << std::endl; 
-	KTelescopeFrame = geo::gGeometry().siPlaneYAxis( planeID  ); //This is the y direction of the local frame in global coordinates.      
+	if(planeID != 314){ //314 is the number we chose to specify a scattering plane.
+		KTelescopeFrame = geo::gGeometry().siPlaneYAxis( planeID  ); //This is the y direction of the local frame in global coordinates.      
+	}else{
+		KTelescopeFrame[0]=0; KTelescopeFrame[1]=1;	KTelescopeFrame[2]=0;
+	}
 	K[0]=KTelescopeFrame[2];K[1]=KTelescopeFrame[1];K[2]=KTelescopeFrame[0];
 	//This is the EUTelescope local x direction//////////////////////////////////
 	streamlog_out(DEBUG0)<<"Set X(J) with correct sensor rotation. Plane: "<< planeID  << std::endl; 
-	JTelescopeFrame  = geo::gGeometry().siPlaneXAxis( planeID  ); //X direction      
+	if(planeID != 314){ //314 is the number we chose to specify a scattering plane.
+		JTelescopeFrame  = geo::gGeometry().siPlaneXAxis( planeID  ); //X direction      
+	}else{
+		JTelescopeFrame[0]=1; JTelescopeFrame[1]=0;	JTelescopeFrame[2]=0;
+	}
 	J[0]=JTelescopeFrame[2];J[1]=JTelescopeFrame[1];J[2]=JTelescopeFrame[0];
 	///////////////////////////////////////////////////////////////////
 	streamlog_out(DEBUG0)<<"The Z(J) axis of local system in the global curvilinear system"<< std::endl; 

@@ -64,7 +64,7 @@ void EUTelPatternRecognition::propagateForwardFromSeedState( EUTelState& stateIn
 		TVector3 momentumAtIntersection;
 		float arcLength;
 		int newSensorID = state->findIntersectionWithCertainID(geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i+1), globalIntersection, momentumAtIntersection, arcLength);
-		if(arcLength == 0 or arcLength < 0 ){ 
+		if(arcLength <= 0 ){ 
 			throw(lcio::Exception( "The arc length is less than or equal to zero. ")); 
 		}
 		if(firstLoop){
@@ -76,16 +76,17 @@ void EUTelPatternRecognition::propagateForwardFromSeedState( EUTelState& stateIn
 		//cout<<"HERE1: "<<state->getPosition()[0]<<","<<state->getPosition()[1]<<","<<state->getPosition()[2]<<","<<state->getLocation()<<endl;
 		int sensorIntersection = geo::gGeometry( ).getSensorID(globalIntersection);
 		if(newSensorID < 0 or sensorIntersection < 0 ){
-			streamlog_out ( MESSAGE5 ) << "Intersection point on infinite plane: " <<  globalIntersection[0]<<" , "<<globalIntersection[1] <<" , "<<globalIntersection[2]<<std::endl;
-			streamlog_out ( MESSAGE5 ) << "Momentum on next plane: " <<  momentumAtIntersection[0]<<" , "<<momentumAtIntersection[1] <<" , "<<momentumAtIntersection[2]<<std::endl;
-			streamlog_out(MESSAGE5) <<" From ID= " <<  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)<< " to " <<  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i+1)  <<std::endl;
-			streamlog_out(MESSAGE5)<<"Was there intersection on plane: "<<newSensorID<<" Was there intersection in sensitive area: "<< sensorIntersection <<std::endl;
-			streamlog_out(MESSAGE5) << "No intersection found moving on plane. Move to next plane and look again."<<std::endl; 
-			streamlog_out(MESSAGE5)<<"This is for event number " <<getEventNumber()<<std::endl;
+			streamlog_out ( DEBUG5 ) << "INTERSECTION NOT FOUND! Intersection point on infinite plane: " <<  globalIntersection[0]<<" , "<<globalIntersection[1] <<" , "<<globalIntersection[2]<<std::endl;
+			streamlog_out ( DEBUG5 ) << "Momentum on next plane: " <<  momentumAtIntersection[0]<<" , "<<momentumAtIntersection[1] <<" , "<<momentumAtIntersection[2]<<std::endl;
+			streamlog_out(DEBUG5) <<" From ID= " <<  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)<< " to " <<  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i+1)  <<std::endl;
+			streamlog_out(DEBUG5)<<"Was there intersection on plane: "<<newSensorID<<" Was there intersection in sensitive area: "<< sensorIntersection <<std::endl;
+			streamlog_out(DEBUG5) << "No intersection found moving on plane. Move to next plane and look again."<<std::endl; 
+			streamlog_out(DEBUG5)<<"This is for event number " <<getEventNumber()<<std::endl;
 			continue;//So if there is no intersection look on the next plane. Important since two planes could be at the same z position
 		}
-		streamlog_out ( DEBUG0 ) << "Intersection point on infinite plane: " <<  globalIntersection[0]<<" , "<<globalIntersection[1] <<" , "<<globalIntersection[2]<<std::endl;
-		streamlog_out ( DEBUG0 ) << "Momentum on next plane: " <<  momentumAtIntersection[0]<<" , "<<momentumAtIntersection[1] <<" , "<<momentumAtIntersection[2]<<std::endl;
+		streamlog_out(DEBUG5) <<"INTERSECTION FOUND! From ID= " <<  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)<< " to " <<  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i+1)  <<std::endl;
+		streamlog_out ( DEBUG5 ) << "Intersection point on infinite plane: " <<  globalIntersection[0]<<" , "<<globalIntersection[1] <<" , "<<globalIntersection[2]<<std::endl;
+		streamlog_out ( DEBUG5 ) << "Momentum on next plane: " <<  momentumAtIntersection[0]<<" , "<<momentumAtIntersection[1] <<" , "<<momentumAtIntersection[2]<<std::endl;
 
 		//So we have intersection lets create a new state
 		EUTelState *newState = new EUTelState();//Need to create this since we save the pointer and we would be out of scope when we leave this function. Destroying this object. 
@@ -101,8 +102,14 @@ void EUTelPatternRecognition::propagateForwardFromSeedState( EUTelState& stateIn
 			continue;
 		}
 		EVENT::TrackerHit* closestHit = const_cast< EVENT::TrackerHit* > ( findClosestHit( *newState )); //This will look for the closest hit but not if it is within the excepted range		
-		const double* hitPosition = closestHit->getPosition();
-		const double distance = sqrt(computeResidual(*newState, closestHit ).Norm2Sqr()); //Determine the residual of state and hit  //Distance is in mm. Norm2Sqr does not square root for some reason
+		double distance;
+		if(newState->getDimensionSize() == 2){
+			distance = sqrt(computeResidual( *newState, closestHit ).Norm2Sqr());//This distance could be 2D or 1D depending on if you have a strip or pixel sensor. Norm2Sqr does not square toot for some reason.
+		}else if(newState->getDimensionSize() == 1){
+			distance = computeResidual( *newState, closestHit )[0];//If strip sensor then use only displacement along strips. Which should be x axis.
+		}else{
+			throw(lcio::Exception( "The closest hit is not on a pixel or strip sensor. Since the dimensionality if less than 1 or greater than 2."));
+		}
 		const double DCA = getXYPredictionPrecision( *newState ); //This does nothing but return a number specified by user. In the future this should use convariance matrix information TO DO: FIX
 		streamlog_out ( DEBUG1 ) <<"At plane: "<<newState->getLocation() << ". Distance between state and hit: "<< distance <<" Must be less than: "<<DCA<< endl;
 		streamlog_out(DEBUG0) <<"Closest hit position: " << closestHit->getPosition()[0]<<" "<< closestHit->getPosition()[1]<<"  "<< closestHit->getPosition()[2]<<endl;
@@ -492,7 +499,14 @@ const EVENT::TrackerHit* EUTelPatternRecognition::findClosestHit(EUTelState & st
 	EVENT::TrackerHitVec::const_iterator itHit;
 	streamlog_out(DEBUG0) << "N hits in plane " << state.getLocation() << ": " << hitInPlane.size() << std::endl;
 	for ( itHit = hitInPlane.begin(); itHit != hitInPlane.end(); ++itHit ) {
-		const double distance = computeResidual( state, *itHit ).Norm2Sqr();//This distance could be 2D or 1D depending on if you have a strip or pixel sensor.
+		double distance;
+		if(state.getDimensionSize() == 2){
+			distance = sqrt(computeResidual( state, *itHit ).Norm2Sqr());//This distance could be 2D or 1D depending on if you have a strip or pixel sensor. Norm2Sqr does not square toot for some reason.
+		}else if(state.getDimensionSize() == 1){
+			distance = computeResidual( state, *itHit )[0];//If strip sensor then use only displacement along strips. Which should be x axis.
+		}else{
+			throw(lcio::Exception( "When finding the closest hit to predicted state we find a hit which is not a strip or pixel sensor. Since the dimensionality if less than 1 or greater than 2."));
+		}
 		streamlog_out(DEBUG0) << "Distance^2 between hit and track intersection: " << distance << std::endl;
 		if ( distance < maxDistance ) {
 			itClosestHit = itHit;

@@ -83,11 +83,10 @@ method inversion 5 0.1 \\
   <parameter name="TrackCandidatesInputCollectionName" type="string" lcioInType="TrackerHit"> @inputCollectionName@ </parameter>
 	<parameter name="xResolutionPlane" type="FloatVec" value="@xResolutionPlane@" />
 	<parameter name="yResolutionPlane" type="FloatVec" value="@yResolutionPlane@" />
-	<parameter name="MilleMaxChi2Cut" type="double"> @chi2Cut@ </parameter>
 	<parameter name = "GBLMEstimatorType" type="int"> @GBLMEstimatorType@ </parameter>
   <parameter name="TracksOutputCollectionName" type="string" lcioOutType="Track"> Alignment </parameter>
 	<parameter name="CreateBinary" type="bool" value="true"/>
-	<parameter name="ExcludePlanes" type="string" lcioOutType="FloatVec">  </parameter>
+	<parameter name="ExcludePlanes" type="string" lcioOutType="FloatVec"> @excludeplanes@  </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
  </processor>
 

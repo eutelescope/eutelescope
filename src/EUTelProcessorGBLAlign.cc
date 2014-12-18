@@ -11,14 +11,11 @@ _milleResultFileName("millepede.res"),
 _gear_aligned_file("gear-00001-aligned.xml"),
 _nProcessedRuns(0),
 _nProcessedEvents(0),
-_alignmentMode(0),
 _beamQ(-1),
 _eBeam(4),
-_maxChi2Cut(1000),
-_createBinary(true),
-_mEstimatorType()
-{
-
+_mEstimatorType(),
+_alignmentMode(0),
+_createBinary(true){
   // TrackerHit input collection
   registerInputCollection(LCIO::TRACK, "TrackCandidatesInputCollectionName", "Input track candidate collection name",_trackCandidatesInputCollectionName,std::string("TrackCandidatesCollection"));
 
@@ -42,7 +39,6 @@ _mEstimatorType()
 
   registerOptionalParameter("GBLMEstimatorType", "GBL outlier down-weighting option (t,h,c)", _mEstimatorType, string() );
 
-  registerOptionalParameter("MilleMaxChi2Cut", "Maximum chi2 of a track candidate that goes into millepede", _maxChi2Cut, double(1000.));
   registerOptionalParameter("CreateBinary", "Should we create a binary file for millepede containing the data that millepede needs  ", _createBinary, bool(true));
 
   registerOptionalParameter("xResolutionPlane", "x resolution of planes given in Planes", _SteeringxResolutions, FloatVec());
@@ -153,7 +149,6 @@ void EUTelProcessorGBLAlign::processRunHeader(LCRunHeader * run) {
   	}
     
 	_nProcessedRuns++;
-	_chi2PassCount=0;
 	_totalTrackCount=0;	
 }
 
@@ -188,14 +183,6 @@ void EUTelProcessorGBLAlign::processEvent(LCEvent * evt){
 						streamlog_out(MESSAGE5)<<"Chi: "<<chi<<" ndf: "<<ndf<<endl;
 						throw(lcio::Exception("The track has either no degrees of freedom or chi2 is zero.")); 	
 					}
-					if(_totalTrackCount % 1000 == 0){
-						streamlog_out(MESSAGE9)<<"The percentage of tracks that made chi2 cut of "<<_maxChi2Cut<<" was : "<<(static_cast<float>(_chi2PassCount)/static_cast<float>(_totalTrackCount))*100<<endl;
-					}
-					if((chi/ndf)>_maxChi2Cut){
-						continue; //Do not use this track in the fit.
-					}
-//					cout<<"...More tracks that passed cut here is the chi/ndf: "<< chi/ndf <<" with cut "<< _maxChi2Cut  <<endl;
-					_chi2PassCount++;
 					std::vector< gbl::GblPoint > pointList;//This is the GBL points. These contain the state information, scattering and alignment jacobian. All the information that the mille binary will get.
 					_trackFitter->setInformationForGBLPointList(track, pointList);//We create all the GBL points with scatterer inbetween both planes. This is identical to creating GBL tracks
 					_trackFitter->setPairMeasurementStateAndPointLabelVec(pointList);
@@ -240,8 +227,10 @@ void EUTelProcessorGBLAlign::processEvent(LCEvent * evt){
 void EUTelProcessorGBLAlign::check(LCEvent * evt){}
 
 void EUTelProcessorGBLAlign::end(){
-	streamlog_out (MESSAGE9) << "The total fraction of tracks that have been passed to millepede is " << (static_cast<float>(_chi2PassCount)/static_cast<float>(_totalTrackCount)) <<" Total number of tracks: "<< _totalTrackCount << endl;
-
+	streamlog_out (MESSAGE9) <<"TOTAL NUMBER OF TRACKS PASSED TO ALIGNMENT: "<< _totalTrackCount << endl;
+	if(_totalTrackCount<1000){
+		streamlog_out(WARNING5)<<"You are trying to align with fewer than 1000 tracks. This could be too small a number." <<endl;
+	}
 	_Mille->writeMilleSteeringFile(_pedeSteerAddCmds);
 	_Mille->runPede();
 	_Mille->parseMilleOutput(_alignmentConstantLCIOFile, _gear_aligned_file);

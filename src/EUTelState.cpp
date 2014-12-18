@@ -220,6 +220,7 @@ void EUTelState::setIntersectionLocalXZ(float directionXZ){
 void EUTelState::setPositionLocal(float position[]){
 	setReferencePoint(position);
 }
+//TO D0: This does nothing at the moment but should be implimented for high radiation enviroments.
 void EUTelState::setKinks(TVectorD kinks){
 	EVENT::FloatVec kinksInput;
 	kinksInput.push_back(kinks[0]);
@@ -281,7 +282,7 @@ void EUTelState::initialiseCurvature(){
 }
 //find
 int EUTelState::findIntersectionWithCertainID(int nextSensorID, float intersectionPoint[], TVector3& momentumAtIntersection, float& arcLength ){
-	streamlog_out(DEBUG5) << "-EUTelState::findIntersectionWithCertainID---------------------------BEGIN" << std::endl;
+	streamlog_out(DEBUG5) << "EUTelState::findIntersectionWithCertainID---------------------------BEGIN" << std::endl;
 	TVector3 pVec = computeCartesianMomentum();
 	streamlog_out(DEBUG5) << "Momentum (Global): " << pVec[0]<<","<<pVec[1]<<","<<pVec[2]<<","<<" Position (local): "<<getPosition()[0]<<","<<getPosition()[1]<<","<<getPosition()[2]<< std::endl;
 	if(pVec.Mag() == 0){
@@ -292,7 +293,7 @@ int EUTelState::findIntersectionWithCertainID(int nextSensorID, float intersecti
 	geo::gGeometry().local2Master(getLocation() , posLocal, temp);//IMPORTANT:For strip sensors this will make the hit strip look like a pixel at (Xstriplocal,somevalue,somevalue).
 	float posGlobal[] = { static_cast<float>(temp[0]), static_cast<float>(temp[1]), static_cast<float>(temp[2]) };
 	int sensorID = geo::gGeometry().findIntersectionWithCertainID(posGlobal[0] ,  posGlobal[1] , posGlobal[2], pVec[0],pVec[1],pVec[2], getBeamCharge(), nextSensorID, intersectionPoint, momentumAtIntersection, arcLength ); 
-	streamlog_out(DEBUG5) << "-EUTelState::findIntersectionWithCertainID--------------------------END" << std::endl;
+	streamlog_out(DEBUG5) << "EUTelState::findIntersectionWithCertainID--------------------------END" << std::endl;
 	return sensorID;
 }
 

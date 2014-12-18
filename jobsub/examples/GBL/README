@@ -1,0 +1,34 @@
+-----README-----
+
+------How to Run noDUTExample------
+1)First change all the configuration paths to your location TO DO: This should be made automatic.
+The places to change these are in the noDUTExample/config/config.cfg at the top. Also you will need to change the paths in noDUTIterativeAlignment.sh. 
+
+2)After this you can place your run in runlist the same as the examples. 
+
+3)Within noDUTIterativeAlignment.sh you must add a few more parameters. This is done here since we need to change these parameters through the whole alignment process. 
+For this example, most often the only parameters that should be changed are:
+inputGearInitial=> This should be changed to your initial misaligned gear. Note you should make sure that each plane is within ~1mm of the first plane in x/y axis. This can be done via the correlator. TO DO: Need Pre-alignment to write directly to gear to automate this procedure.  
+allPlanesFixed=> For no magnetic field this should be two planes. For magnetic field this should be 3 since we have 3 degrees of freedom. 
+Note if you have dead material between the planes and want to determine the kink from this then you must exclude the dead material plane during alignment but include it in the final track fit after alignment. Note that if the plane is excluded then it's radiation length is still taken into account. You exclude planes in config, PatternRecogntion.
+
+4)Now run the alignment scripts like so 
+./noDUTIterativeAlignment.sh -n <number of iterations> -i <identifier> -r <RUN NUMBER>
+example:
+./noDUTIterativeAlignment.sh -n 1 -i test-old-config -r 286
+
+n=> Number of iterations. A single iteration aligns with x/y shifts and z rotations. For non magnetic field runs all other alignment modes are weak modes.  
+
+i=>identifier. After each x/y shift and z rotation we produce a tracks so the user can see the result of the alignment so far. These tracks will be placed in a histogram named
+run<number>-Alignment-<alignmentType>-<identifier>-Iteration.root 
+within output/histograms. Note that each stage also produced a gear file with the same name in geometry.  
+
+r=>Run number. 
+
+5)Now check the final alignment histogram after all alignment steps complete. If this looks ok then you can set this gear to be used to produce final tracks by placing it in the runlist. 
+Now run
+./patRecAndTrackFitUsingConfigurationFile.sh -r <RUN NUMBER> -h <output histogram name (Same as identifer but no gear produced)>
+This will run pattern recogntion and GBLTrack for for you using the setting in config and runlist. Note if you have a plane of dead material and you want to determine the kink angle then you must include this as a DUT but allow the plane to have no hit. So do not exclude this plane as you did in alignment.  
+
+The final LCIO file should be named as in config file via LCIO output collection name
+
