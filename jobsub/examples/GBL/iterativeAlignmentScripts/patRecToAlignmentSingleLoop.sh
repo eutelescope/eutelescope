@@ -13,7 +13,7 @@ echo "Output gear: $outputGear"
 echo "This is the resolutions X/Y:  $xres/$yres."
 for x in {1..10}; do
 	echo "PATTERN RECOGNTION ATTEMPT $x ON ITERATION $number"
-	$do jobsub.py -c $CONFIG -csv $RUNLIST -o MaxMissingHitsPerTrack="$MaxMissingHitsPerTrack" -o AllowedSharedHitsOnTrackCandidate="$AllowedSharedHitsOnTrackCandidate" -o ResidualsRMax="$ResidualsRMax" -o Verbosity="$Verbosity" -o planeDimensions="${planeDimensions}" -o MaxRecordNumber="$MaxRecordNumber" -o GearFile="$inputGear"  -o ExcludePlanes="$ExcludePlanes" $PatRec $RUN  
+	$do jobsub.py -c $CONFIG -csv $RUNLIST  -o ResidualsRMax="$ResidualsRMax" -o GearFile="$inputGear"  $PatRec $RUN  
 
 	fileName="$PatRec-${RUN}.zip"
 	fullPath="$directory/$fileName"
@@ -38,7 +38,7 @@ for x in {1..10}; do
 done
 #THIS IS PART (2)
 echo "GBLTRACKS CREATED FOR ALIGNMENT ON ITERATION $number"
-$do jobsub.py  -c $CONFIG -csv $RUNLIST -o Verbosity="$Verbosity" -o GearFile="$inputGear" -o MaxRecordNumber="$MaxRecordNumber" -o ExcludePlanes="$ExcludePlanes" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" $TrackFit  $RUN  
+$do jobsub.py  -c $CONFIG -csv $RUNLIST  -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" -o GearFile="$inputGear"  $TrackFit  $RUN  
 
 #fileName="$TrackFit-${RUN}.zip"
 #fullPath="$directory/$fileName"
@@ -49,8 +49,6 @@ $do jobsub.py  -c $CONFIG -csv $RUNLIST -o Verbosity="$Verbosity" -o GearFile="$
 #	echo "ERROR!!!!!!!!! string for chi2 GBL not found. Check output log file is in the correct place. Furthermore check the string is there. "
 #  exit
 #fi
-export pede="chiscut 5  3" #! denotes a comment in the steering file we remove this to activate this functionality. TO DO: Must comment below as well must fix
-export outlierdownweighting="outlierdownweighting 4"
 
 
 #THIS IS PART (3)
@@ -62,8 +60,7 @@ tooManyRejectsExitLoopBool=false
 for x in {1..20}; do
 	echo "GBLALIGN ATTEMPT $x ON ITERATION $number"
 	echo "THE NUMBER OF FAILED ALIGNMENT ATTEMPTS $numberRejectedAlignmentAttempts"
-	echo "The pede input string is:  $pede"
-	$do jobsub.py -c $CONFIG -csv $RUNLIST -o Verbosity="$Verbosity" -o lcioInputName="GBLtracks" -o inputCollectionName="tracks" -o MaxRecordNumber="$MaxRecordNumber" -o ExcludePlanes="$ExcludePlanes" -o GearFile="$inputGear" -o GearAlignedFile="$outputGear" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" -o AlignmentMode="$amode"   -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o pede="$pede" -o outlierdownweighting="$outlierdownweighting"  $Align  $RUN 
+	$do jobsub.py -c $CONFIG -csv $RUNLIST -o GearFile="$inputGear" -o GearAlignedFile="$outputGear" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres"  -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}"  $Align  $RUN 
 	#Check that we have not seg fault within millepede.
 	error=`unzip  -p  $fileAlign |grep "Backtrace for this error:" | awk '{ print $NF }'`;
 	if [[ $error != "" ]];then

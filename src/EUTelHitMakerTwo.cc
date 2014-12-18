@@ -105,7 +105,7 @@ _histogramSwitch(true)
                             _3DHistoSwitch, static_cast<bool> ( true ) );
   
   registerOptionalParameter("EnableLocalCoordidates","Hit coordinates are calculated in local reference frame of sensor",
-                            _wantLocalCoordinates, static_cast<bool> ( true ) );
+                            _wantLocalCoordinates, static_cast<bool> ( false ) );
 
   registerOptionalParameter("OffsetDBFile","This is the name of the LCIO file name with the output offset db (add .slcio)",
                             _offsetDBFile, static_cast< string > ( "offset-db.slcio" ) );

@@ -1,18 +1,9 @@
 #!/bin/bash
-#VARIABLES TO INITIALISE. THERE IS NO NEED TO CHANGE THESE.
-export CONFIG="$exampleLocation/config/config.cfg"
-export RUNLIST="$exampleLocation/runlist/runlist.csv"
-export directory="$exampleLocation/output/logs"
-export outputGearFinal="gear-${outputIdentifier}-${RUN}.xml" #This is name of the gear after all iterations of alignment. 
-export histoNameInputFinal="Alignment-Runs-${outputIdentifier}-${RUN}" #This is the name of the histograms which will use the final gear to produce the tracks.
-export xres="$r $r $r $dutXs $r $r $r";
-export yres="$r $r $r $dutYs $r $r $r";
-export amode="7";
-export patRecMultiplicationFactor=2 #This is the factor which we increase the window of acceptance by if too few tracks found.
-export PatRec=patternRecognition #This is the name of the pattern recognition steering file
-export TrackFit=GBLTrackFit #This is the name of the GBLTrack fitting steering file.
-export Align=GBLAlign #This is the alignment steering file name
-
+#Check if python exists
+if [ -z `which python`  ]; then 
+	echo "Python not installed"; 
+	exit;	
+fi;
 
 #FUNCTIONS.
 #THIS FUNCTION WILL ADD THE CORRECT NUMBER OF ZEROS TO THE END OF THE NUMBER
@@ -44,6 +35,20 @@ function adding_zeros_to_RUN {
 	 fi
  echo $RUN_After
 }
+
+#VARIABLES TO INITIALISE. THERE IS NO NEED TO CHANGE THESE.
+export CONFIG="$exampleLocation/config/config.cfg"
+export RUNLIST="$exampleLocation/runlist/runlist.csv"
+export directory="$exampleLocation/output/logs"
+export outputGearFinal="gear-${outputIdentifier}-${RUN}.xml" #This is name of the gear after all iterations of alignment. 
+export histoNameInputFinal="Alignment-Runs-${outputIdentifier}-${RUN}" #This is the name of the histograms which will use the final gear to produce the tracks.
+export xres="$r $r $r $dutXs $r $r $r";
+export yres="$r $r $r $dutYs $r $r $r";
+export amode="7";
+export patRecMultiplicationFactor=2 #This is the factor which we increase the window of acceptance by if too few tracks found.
+export PatRec=patternRecognition #This is the name of the pattern recognition steering file
+export TrackFit=GBLTrackFit #This is the name of the GBLTrack fitting steering file.
+export Align=GBLAlign #This is the alignment steering file name
 
 export RUN=$(adding_zeros_to_RUN $RUN)
 #CHECK INPUT

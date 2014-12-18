@@ -1,8 +1,8 @@
-RunNumber,BeamEnergy,Threshold,GearGeoFile
-97,5,7.0,gear-good-example-97.xml
-241,4.8,7.0,gear-0T.xml
-273,5,7.0,gear-1T.xml
-286,3,7.0,gear-aligned-286.xml
-290,4.8,6,gear-Hold-three-R0.2-290.xml
-294,4.8,7.0,gear-0.5T.xml
-300,3,7.0,gear-0.5T.xml
+RunNumber,BeamEnergy,GearGeoFile
+97,5,gear-good-example-97.xml
+241,4.8,gear-0T.xml
+273,5,gear-1T.xml
+286,3,gear-aligned-286.xml
+290,4.8,gear-Hold-three-R0.2-290.xml
+294,4.8,gear-0.5T.xml
+300,3,gear-0.5T.xml
