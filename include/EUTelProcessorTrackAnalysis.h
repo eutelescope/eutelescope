@@ -71,7 +71,7 @@ namespace eutelescope {
 		map< int,  AIDA::IProfile2D* > _mapFromSensorIDToHistogramY;
 		map< int,   AIDA::IHistogram1D *> _mapFromSensorIDToKinkXZ;
 		map< int,  AIDA::IHistogram1D * > _mapFromSensorIDToKinkYZ;
-
+		AIDA::IHistogram1D * _beamEnergy;
 	};
 
     EUTelProcessorTrackAnalysis gEUTelProcessorTrackAnalysis;

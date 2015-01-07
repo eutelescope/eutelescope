@@ -540,14 +540,20 @@ namespace eutelescope {
 			for(size_t j=0 ; j< _vectorOfPairsStatesAndLabels.size();++j){
 				if(_vectorOfPairsStatesAndLabels.at(j).first == *state){
 					streamlog_out(DEBUG0)<<"The loop number for states with measurements is: " << j << ". The label is: " << _vectorOfPairsStatesAndLabels.at(j).second <<endl; 
-		//				if(getLabelToPoint(pointList,_vectorOfPairsStatesAndLabels.at(j).second).hasMeasurement() == 0){//TO DO: Some states will not have hits in the future so should remove. Leave for now to test
-		//					throw(lcio::Exception("This point does not contain a measurements. Labeling of the state must be wrong "));
-		//				} 
 					streamlog_out(DEBUG0)<<"To update track we use label: "<<_vectorOfPairsStatesAndLabels.at(j).second<<std::endl; 
 					traj->getResults(_vectorOfPairsStatesAndLabels.at(j).second, corrections, correctionsCov );
 					streamlog_out(DEBUG3) << endl << "State before we have added corrections: " << std::endl;
 					state->print();
 					TVectorD newStateVec(5);
+					streamlog_out(DEBUG0)<<"-----------------------Corrections----------------------"<<std::endl;
+					streamlog_out(DEBUG0)<< setw(20)<<"State number "<< i <<" of "  << track.getStatesPointers().size() << std::endl;  
+					streamlog_out(DEBUG0)<< setw(20)<<"Track Parameter"<<setw(20)<<"| Intial value |" <<setw(20)<<"| correction to add |"  << std::endl;  
+					streamlog_out(DEBUG0)<<setw(20)<<"Omega(Charge/Energy) "<<setw(15)<<state->getOmega()<<setw(20)<< corrections[0]<<std::endl;
+					streamlog_out(DEBUG0)<<setw(20)<<"Intersection XY "<<setw(15)<<state->getIntersectionLocalXZ() <<setw(20)<< corrections[1]<<std::endl;
+					streamlog_out(DEBUG0)<<setw(20)<<"Intersection YZ "<<setw(15)<<state->getIntersectionLocalYZ() <<setw(20)<< corrections[2]<<std::endl;
+					streamlog_out(DEBUG0)<<setw(20)<<"PositionX "<<setw(15)<<state->getPosition()[0] <<setw(20)<< corrections[3]<<std::endl;
+					streamlog_out(DEBUG0)<<setw(20)<<"PositionY "<<setw(15)<<state->getPosition()[1] <<setw(20)<< corrections[4]<<std::endl;
+
 					newStateVec[0] = state->getOmega() + corrections[0];
 					newStateVec[1] = state->getIntersectionLocalXZ()+corrections[1];
 					newStateVec[2] = state->getIntersectionLocalYZ()+corrections[2];

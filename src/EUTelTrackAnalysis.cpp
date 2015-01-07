@@ -1,10 +1,11 @@
 #include "EUTelTrackAnalysis.h"
 using namespace eutelescope;
-EUTelTrackAnalysis::EUTelTrackAnalysis(map< int,  AIDA::IProfile2D*> mapFromSensorIDToHistogramX, map< int,  AIDA::IProfile2D*> mapFromSensorIDToHistogramY, map< int,   AIDA::IHistogram1D *> mapFromSensorIDToKinkXZ,map< int,   AIDA::IHistogram1D *> mapFromSensorIDToKinkYZ){
+EUTelTrackAnalysis::EUTelTrackAnalysis(map< int,  AIDA::IProfile2D*> mapFromSensorIDToHistogramX, map< int,  AIDA::IProfile2D*> mapFromSensorIDToHistogramY, map< int,   AIDA::IHistogram1D *> mapFromSensorIDToKinkXZ,map< int,   AIDA::IHistogram1D *> mapFromSensorIDToKinkYZ,  AIDA::IHistogram1D * beamEnergy){
 setSensorIDTo2DResidualHistogramX(mapFromSensorIDToHistogramX);
 setSensorIDTo2DResidualHistogramY(mapFromSensorIDToHistogramY);
 setSensorIDToIncidenceAngleXZ(mapFromSensorIDToKinkXZ);
 setSensorIDToIncidenceAngleYZ(mapFromSensorIDToKinkYZ);
+setBeamEnergy(beamEnergy);
 
 } 
 
@@ -45,6 +46,16 @@ void EUTelTrackAnalysis::plotResidualVsPosition(EUTelTrack track){
 		}
 	} 
   streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotResidualVsPosition------------------------------END"<< std::endl;
+}
+
+void EUTelTrackAnalysis::plotBeamEnergy(EUTelTrack track){
+  streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotBeamEnergy------------------------------BEGIN"<< std::endl;
+	std::vector<EUTelState> states = track.getStates();
+	EUTelState state  = states.at(0);
+	state.print();
+	float omega = state.getOmega();	
+	_beamEnergy-> fill(state.getBeamCharge()/omega );
+  streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotBeamEnergy------------------------------END"<< std::endl;
 }
 
 void EUTelTrackAnalysis::plotIncidenceAngles(EUTelTrack track){

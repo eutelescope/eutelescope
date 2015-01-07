@@ -15,7 +15,7 @@ Processor("EUTelProcessorTrackAnalysis"){
 
 void EUTelProcessorTrackAnalysis::init(){
 	initialiseResidualVsPositionHistograms();
-	EUTelTrackAnalysis*	analysis = new EUTelTrackAnalysis(_mapFromSensorIDToHistogramX,_mapFromSensorIDToHistogramY,_mapFromSensorIDToKinkXZ,_mapFromSensorIDToKinkYZ) ;
+	EUTelTrackAnalysis*	analysis = new EUTelTrackAnalysis(_mapFromSensorIDToHistogramX,_mapFromSensorIDToHistogramY,_mapFromSensorIDToKinkXZ,_mapFromSensorIDToKinkYZ,_beamEnergy) ;
 	_analysis = analysis;
 }
 
@@ -47,6 +47,9 @@ void EUTelProcessorTrackAnalysis::processEvent(LCEvent * evt){
 			EUTelTrack track = *(static_cast<EUTelTrack*> (eventCollection->getElementAt(iTrack)));
 			_analysis->plotResidualVsPosition(track);	
 			_analysis->plotIncidenceAngles(track);
+			if(track.getChi2()/track.getNdf() < 5.0){
+				_analysis->plotBeamEnergy(track);
+			}
 		}
 
 	}	
@@ -188,4 +191,7 @@ void	EUTelProcessorTrackAnalysis::initialiseResidualVsPositionHistograms(){
 		sstm.str(std::string(""));
 	}
 	/////////////////////////////////////////////////////////////////////////////////////// 
+	///////////////////////////////////////////////////////////////////////////////////////////////////////Beam Energy
+	_beamEnergy  = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("BeamEnergy", 1000, 0, 6); 
+
 }

@@ -7,13 +7,10 @@ setBeamEnergy(5.0);
 } 
 
 EUTelState::EUTelState(EUTelState *state){
-	//cout<<"Entering the copy constructor"<<endl;
 	setDimensionSize(state->getDimensionSize());
 	setLocation(state->getLocation());//This stores the location as a float in Z0 since no location for track LCIO. This is preferable to problems with storing hits.  
-	//cout<<"HEREoldstate: "<<state->getPosition()[0]<<","<<state->getPosition()[1]<<","<<state->getPosition()[2]<<","<<state->getLocation()<<endl;
 	float position[] = {state->getPosition()[0],state->getPosition()[1],state->getPosition()[2]};//Z position is not a state parameter but should add here for use later. 
 	setPositionLocal(position);//This will automatically take cartesian coordinate system and save it to reference point. //This is different from most LCIO applications since each track will have own reference point. 	
-	//cout<<"HEREnewstate: "<<getPosition()[0]<<","<<getPosition()[1]<<","<<getPosition()[2]<<","<<getLocation()<<endl;
 	setIntersectionLocalXZ(state->getIntersectionLocalXZ());    
 	setIntersectionLocalYZ(state->getIntersectionLocalYZ());  
 	setBeamCharge(state->getBeamCharge());//this is set for each state. to do: is there a more efficient way of doing this since we only need this stored once?

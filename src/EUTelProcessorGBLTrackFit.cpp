@@ -184,8 +184,10 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent * evt){
 				map< int, map< float, float > >  SensorResidual; 
 				map< int, map< float, float > >  SensorResidualError; 
 				_trackFitter->getResidualOfTrackandHits(traj, pointList,track, SensorResidual, SensorResidualError);
-				plotResidual(SensorResidual,SensorResidualError, _first_time);//TO DO: Need to fix how we histogram.
-				_first_time = false;
+				if(chi2/static_cast<float>(ndf) < 5){
+					plotResidual(SensorResidual,SensorResidualError, _first_time);//TO DO: Need to fix how we histogram.
+					_first_time = false;
+				}
 			}else{
 				streamlog_out(DEBUG5) << "Ierr is: " << ierr << " Do not update track information " << endl;
 				static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_fitsuccessHistName ] ) -> fill(0.0);
