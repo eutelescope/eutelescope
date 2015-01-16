@@ -95,6 +95,8 @@ EUTelPreAlign::EUTelPreAlign () :Processor("EUTelPreAlign") {
 
   registerOptionalParameter("HistogramFilling","Switch on or off the histogram filling",_fillHistos, static_cast< bool > ( true ) );
 
+  registerOptionalParameter("ExcludedPlanes", "The list of sensor IDs that shall be excluded.",_ExcludedPlanes, std::vector<int> () );
+
 }
 
 
@@ -523,23 +525,27 @@ void EUTelPreAlign::end() {
 
 
   for(size_t ii = 0 ; ii < _preAligners.size(); ii++){
-    EUTelAlignmentConstant* constant = new EUTelAlignmentConstant();
-
-    if( abs( _preAligners.at(ii).getPeakX() ) < 1000. )
-      constant->setXOffset( -1.0 * _preAligners.at(ii).getPeakX() );
-    else
-      constant->setXOffset( -1.0 * 0.0                           );
- 
-    if( abs( _preAligners.at(ii).getPeakY() ) < 1000. )
-      constant->setYOffset( -1.0 * _preAligners.at(ii).getPeakY() );
-    else
-      constant->setYOffset( -1.0 * 0.0                           );
- 
-    int sensorID = _preAligners.at(ii).getIden();
-    constant->setSensorID( sensorID );
-    constantsCollection->push_back( constant );
-    streamlog_out ( MESSAGE5 ) << (*constant) << endl;
+	int sensorID = _preAligners.at(ii).getIden();
+	__gnu_cxx::__normal_iterator<int*, std::vector<int> > it = find(_ExcludedPlanes.begin(),_ExcludedPlanes.end(),sensorID);
+	EUTelAlignmentConstant* constant = new EUTelAlignmentConstant();
+	if(it == _ExcludedPlanes.end()){
+	    if( abs( _preAligners.at(ii).getPeakX() ) < 1000. )
+	      constant->setXOffset( -1.0 * _preAligners.at(ii).getPeakX() );
+	    else
+	      constant->setXOffset( -1.0                            );
+	 
+	    if( abs( _preAligners.at(ii).getPeakY() ) < 1000. )
+	      constant->setYOffset( -1.0 * _preAligners.at(ii).getPeakY() );
+	    else
+	      constant->setYOffset( -1.0                            );
+	}else{
+	    constant->setXOffset(0.0); constant->setYOffset(0.0);
+	}
+	constant->setSensorID( sensorID );
+	constantsCollection->push_back( constant );
+	streamlog_out ( MESSAGE5 ) << (*constant) << endl;
   }
+
 
   streamlog_out( DEBUG5 ) << " adding Collection " << "alignment " << endl;
  

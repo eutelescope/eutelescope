@@ -234,7 +234,8 @@ namespace eutelescope {
     gear::SiPlanesParameters * _siPlanesParameters;
     gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
     std::vector<PreAligner> _preAligners;
-  };
+    std::vector<int> _ExcludedPlanes;  
+};
   //! A global instance of the processor
   EUTelPreAlign gEUTelPreAlign;
 
