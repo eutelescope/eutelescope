@@ -532,12 +532,12 @@ void EUTelPreAlign::end() {
 	    if( abs( _preAligners.at(ii).getPeakX() ) < 1000. )
 	      constant->setXOffset( -1.0 * _preAligners.at(ii).getPeakX() );
 	    else
-	      constant->setXOffset( 1.0                            );
+	      constant->setXOffset( 0.0                            );
 	 
 	    if( abs( _preAligners.at(ii).getPeakY() ) < 1000. )
 	      constant->setYOffset( -1.0 * _preAligners.at(ii).getPeakY() );
 	    else
-	      constant->setYOffset( 1.0                            );
+	      constant->setYOffset( 0.0                            );
 	}else{
 	    constant->setXOffset(0.0); constant->setYOffset(0.0);
 	}
