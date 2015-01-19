@@ -526,18 +526,18 @@ void EUTelPreAlign::end() {
 
   for(size_t ii = 0 ; ii < _preAligners.size(); ii++){
 	int sensorID = _preAligners.at(ii).getIden();
-	__gnu_cxx::__normal_iterator<int*, std::vector<int> > it = find(_ExcludedPlanes.begin(),_ExcludedPlanes.end(),sensorID);
+	std::vector<int>::iterator it = find(_ExcludedPlanes.begin(),_ExcludedPlanes.end(),sensorID);
 	EUTelAlignmentConstant* constant = new EUTelAlignmentConstant();
 	if(it == _ExcludedPlanes.end()){
 	    if( abs( _preAligners.at(ii).getPeakX() ) < 1000. )
 	      constant->setXOffset( -1.0 * _preAligners.at(ii).getPeakX() );
 	    else
-	      constant->setXOffset( -1.0                            );
+	      constant->setXOffset( 1.0                            );
 	 
 	    if( abs( _preAligners.at(ii).getPeakY() ) < 1000. )
 	      constant->setYOffset( -1.0 * _preAligners.at(ii).getPeakY() );
 	    else
-	      constant->setYOffset( -1.0                            );
+	      constant->setYOffset( 1.0                            );
 	}else{
 	    constant->setXOffset(0.0); constant->setYOffset(0.0);
 	}
