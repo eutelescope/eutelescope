@@ -152,8 +152,8 @@ void EUTelMillepede::computeAlignmentToMeasurementJacobian( float x,float y, flo
                 || _alignmentMode == Utility::XYShiftYZRotXYRot
                 || _alignmentMode == Utility::XYShiftXZRotYZRotXYRot
                 || _alignmentMode == Utility::XYZShiftXZRotYZRotXYRot) {
-		_jacobian[0][2] =  -y; // dxh/rotzs   rotzs => rotation of sensor around z axis
-		_jacobian[1][2] =  x; // dyh/rotzs
+		_jacobian[0][2] =  y; // dxh/rotzs   rotzs => rotation of sensor around z axis
+		_jacobian[1][2] =  -x; // dyh/rotzs
 	}
 	///////////////////////////////////////////////////////////////////////////////////////////////////////END
 
@@ -161,14 +161,14 @@ void EUTelMillepede::computeAlignmentToMeasurementJacobian( float x,float y, flo
 	if (_alignmentMode == Utility::XYZShiftXYRot
                 || _alignmentMode == Utility::XYZShiftXZRotYZRotXYRot) {
   	_jacobian[0][3] =   -slopeXvsZ; // dxh/dzs
-    _jacobian[1][3] =   -slopeYvsZ; // dyh/dzs
+    _jacobian[1][3] =   slopeYvsZ; // dyh/dzs
   }
 	///////////////////////////////////////////////////////////////////////////////////////////END
 
 		
 	///////////////////////////////////////////////////////////////Rotations around x and y axis. Only do this if you want to move everything. WHY NOT ALSO PARTIAL SHIFTS?????? BEGIN.
 	if (_alignmentMode == Utility::XYZShiftXZRotYZRotXYRot) {
-  	_jacobian[0][4] =   x*slopeXvsZ; // dxh/rotys
+  	_jacobian[0][4] =   -x*slopeXvsZ; // dxh/rotys
     _jacobian[1][4] =   x*slopeYvsZ; // dyh/rotys
     _jacobian[0][5] =  -y*slopeXvsZ; // dxh/rotxs          
     _jacobian[1][5] =  -y*slopeYvsZ; // dyh/rotxs         
@@ -179,7 +179,7 @@ void EUTelMillepede::computeAlignmentToMeasurementJacobian( float x,float y, flo
 //This part is if there is only partial alignment. Therefore you need to overwrite some parts of the full size matrix we have just filled BEGIN
 	/////////////////////////////rotation around y axis BEGIN
 	if (_alignmentMode == Utility::XYShiftXZRotXYRot) {
-		_jacobian[0][3] = x*slopeXvsZ; // dxh/rotys
+		_jacobian[0][3] = -x*slopeXvsZ; // dxh/rotys
    	_jacobian[1][3] = x*slopeYvsZ; // dyh/rotys
   }
 	///////////////////////////////////////////////////////////////////////Rotation around x axis BEGIN
@@ -191,7 +191,7 @@ void EUTelMillepede::computeAlignmentToMeasurementJacobian( float x,float y, flo
 
  	///////////////This does all rotations but not z shift////////////////////////BEGIN
 	if (_alignmentMode == Utility::XYShiftXZRotYZRotXYRot) {
-		_jacobian[0][3] =  x*slopeXvsZ; // dxh/rotys
+		_jacobian[0][3] =  -x*slopeXvsZ; // dxh/rotys
 		_jacobian[1][3] =  x*slopeYvsZ; // dyh/rotys
 		_jacobian[0][4] = -y*slopeXvsZ; // dxh/rotxs
 		_jacobian[1][4] = -y*slopeYvsZ; // dyh/rotxs
