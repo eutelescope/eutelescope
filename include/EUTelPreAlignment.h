@@ -146,14 +146,7 @@ namespace eutelescope {
      * this collection is saved in a db file to be used at the clustering level
      */
     std::string _hotPixelCollectionName;
- 
-    //! reference HitCollection name 
-    /*!
-     */
-    std::string      _referenceHitCollectionName;
-    bool             _useReferenceHitCollection;
-    LCCollectionVec* _referenceHitVec;    
-    
+
     //! map of vectors, keeps record of hit pixels 
     /*! 
      *  For each Detector a vector is stored in a map.
