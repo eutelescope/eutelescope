@@ -609,7 +609,7 @@ void EUTelCorrelator::end() {
  
     if( _hasHitCollection)
     {
-        streamlog_out( MESSAGE5 ) << "The input CollectionVec contains HitCollection, calculating offest values " << endl;
+        streamlog_out( MESSAGE5 ) << "The input CollectionVec contains HitCollection, calculating offset values " << endl;
  
         for ( size_t exx = 0 ; exx < geo::gGeometry().nPlanes(); exx++ ) 
         {           
