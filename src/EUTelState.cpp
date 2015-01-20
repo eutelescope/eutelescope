@@ -245,6 +245,7 @@ void EUTelState::setLocalXZAndYZIntersectionAndCurvatureUsingGlobalMomentum(TVec
 	geo::gGeometry().master2LocalVec(getLocation(), momentum, localMomentum );
 	//In the LOCAL coordinates this is just dx/dz and dy/dz in the LOCAL frame
 	streamlog_out(DEBUG5) << "The local momentum (x,y,z) is: "<< localMomentum[0]<<","<< localMomentum[1] <<"," <<localMomentum[2] << std::endl;
+	//Note must be defined like this since we determine the deltaX to the next plane via deltaX = incidenceX*deltaZ
 	setIntersectionLocalXZ(localMomentum[0]/localMomentum[2]);
 	setIntersectionLocalYZ(localMomentum[1]/localMomentum[2]);
 	streamlog_out(DEBUG5) << "The XZ tilt is: "<< getIntersectionLocalXZ()<<" The YZ tilt is: "<<  getIntersectionLocalYZ()<< std::endl;

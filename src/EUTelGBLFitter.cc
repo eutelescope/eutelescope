@@ -90,7 +90,7 @@ namespace eutelescope {
 		streamlog_message( DEBUG0, precisionMatrix.Print();, std::endl; );
 		point.addScatterer(scat, precisionMatrix);
 		streamlog_out(DEBUG1) << "  setScattererGBL  ------------- END ----------------- " << std::endl;
-		}
+	}
 		//This is used when the we know the radiation length already
 		void EUTelGBLFitter::setScattererGBL(gbl::GblPoint& point,EUTelState & state, float  percentageRadiationLength) {
 		streamlog_out(MESSAGE1) << " setScattererGBL ------------- BEGIN --------------  " << std::endl;
