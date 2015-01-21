@@ -98,6 +98,7 @@ namespace eutelescope {
 			void setExcludeFromFitPlanes(const std::vector<int>&);
 			void setMEstimatorType( const std::string& _mEstimatorType );
 			//GET
+			float getPositionOfSecondScatter(float start, float end);
 			gbl::GblPoint getLabelToPoint(std::vector<gbl::GblPoint> & pointList, int label);
 			void getResidualOfTrackandHits(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint > pointList, EUTelTrack& track, map< int, map< float, float > > & SensorResidual, map< int, map< float, float > >& sensorResidualError);
 			inline int getAlignmentMode() const {

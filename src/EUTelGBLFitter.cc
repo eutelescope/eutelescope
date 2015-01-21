@@ -476,7 +476,7 @@ namespace eutelescope {
 		int locationEnd = 314; //This will create a scatterer with normal in beam direction
 		const gear::BField&   Bfield = geo::gGeometry().getMagneticField();
 		gear::Vector3D vectorGlobal(position[0],position[1],position[1]);//Since field is homogeneous this seems silly but we need to specify a position to geometry to get B-field.
-		const double Bx = (Bfield.at( vectorGlobal ).x());//We times bu 0.3 due to units of other variables. See paper. Must be Tesla
+		const double Bx = (Bfield.at( vectorGlobal ).x());
 		const double By = (Bfield.at( vectorGlobal ).y());
 		const double Bz = (Bfield.at( vectorGlobal ).z());
 		TVector3 B;
@@ -517,12 +517,19 @@ namespace eutelescope {
 		_scattererPositions.clear();	
 		float arcLength = state.getArcLengthToNextState();
 		streamlog_out(DEBUG1) << "The arc length to the next state is: " << arcLength << std::endl;
-		float distance1 =arcLength/2 - arcLength/sqrt(12); 
-		_scattererPositions.push_back(distance1);//Z position of 1st scatter	
-		float distance2 = arcLength/2 + arcLength/sqrt(12);//Z position of 2nd scatter 
-		_scattererPositions.push_back(distance2);
-		_scattererPositions.push_back(arcLength); 
+		//We place the first scatter to model the air just after the plane
+		float start = 0.6; //This is 600 micron from the centre of the sensor. 
+		_scattererPositions.push_back(start);//Z position of 1st scatterer	
+		float secondScatterPosition = getPositionOfSecondScatter(start, arcLength);
+		_scattererPositions.push_back(secondScatterPosition);//Z position of 2nd scatterer
+		_scattererPositions.push_back(arcLength-secondScatterPosition); 
 		streamlog_out(DEBUG1) << "  findScattersZPositionBetweenTwoStates------------- END --------------  " << std::endl;
+	}
+	float EUTelGBLFitter::getPositionOfSecondScatter(float start, float end){
+		float normalMean = 0.5*(pow(end,2)-pow(start,2));
+		float normalVariance = (1/3)*pow(normalMean,2)*(pow(end,3)-pow(start,3))-normalMean*(pow(end,2)-pow(start,2))+pow(normalMean,2)*(end-start);
+		float position = normalMean + normalVariance/(normalMean-start);
+		return position;
 	}
 	void EUTelGBLFitter::resetPerTrack() {
 		_counter_num_pointer=1;

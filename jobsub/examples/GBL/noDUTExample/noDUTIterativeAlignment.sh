@@ -19,7 +19,7 @@ export exampleLocation="/afs/phas.gla.ac.uk/user/a/amorton/ilcsoft/v01-17-05/Eut
 export scriptsLocation="/afs/phas.gla.ac.uk/user/a/amorton/ilcsoft/v01-17-05/Eutelescope/trunk/GBL/iterativeAlignmentScripts"
 
 #VARIABLES WHICH VARY THROUGH ALIGNMENT ARE SET HERE. IMPORTANT NOT ALL VARIABLES ARE HERE LOOK IN CONFIG-ALIGNMENT.
-export r="1"; #Make resolution large so we begin with small chi2 and factor improvement to get to chi2/ndf=1 on next iteration. 
+export r="0.02"; #Make resolution large so we begin with small chi2 and factor improvement to get to chi2/ndf=1 on next iteration. 
 export dutXs="" #This is the resolution of the DUT in the x LOCAL direction taking into account the misalignment
 export dutYs="" #This is the resolution of the DUT in the y LOCAL direction taking into account the misalignment
 export minTracksPerEventAcceptance=0.001 #This is the number of tracks that is needed per event before we stop pattern recognition. Note value should depend on other cuts. 
