@@ -92,11 +92,11 @@ namespace eutelescope {
 		streamlog_out(DEBUG1) << "  setScattererGBL  ------------- END ----------------- " << std::endl;
 		}
 		//This is used when the we know the radiation length already
-		void EUTelGBLFitter::setScattererGBL(gbl::GblPoint& point,EUTelState & state, float  percentageRadiationLength) {
+		void EUTelGBLFitter::setScattererGBL(gbl::GblPoint& point,EUTelState & state, float variance) {
 		streamlog_out(MESSAGE1) << " setScattererGBL ------------- BEGIN --------------  " << std::endl;
 		TVectorD scat(2); 
 		scat[0] = 0.0; scat[1]=0.0;  
-		TMatrixDSym precisionMatrix =  state.getScatteringVarianceInLocalFrame(percentageRadiationLength);
+		TMatrixDSym precisionMatrix =  state.getScatteringVarianceInLocalFrame(variance);
 		streamlog_out(MESSAGE1) << "The precision matrix being used for the scatter:  " << std::endl;
 		streamlog_message( DEBUG0, precisionMatrix.Print();, std::endl; );
 		point.addScatterer(scat, precisionMatrix);
@@ -170,7 +170,7 @@ namespace eutelescope {
 		}
 	}
 	//This creates the scatters point to simulate the passage through air. 
-	void EUTelGBLFitter::setPointListWithNewScatterers(std::vector< gbl::GblPoint >& pointList,EUTelState & state, float  percentageRadiationLength){
+	void EUTelGBLFitter::setPointListWithNewScatterers(std::vector< gbl::GblPoint >& pointList,EUTelState & state, vector<float>  variance){
 		if(_scattererJacobians.size() != _scattererPositions.size()){
 			throw(lcio::Exception("The size of the scattering positions and jacobians is different.")); 	
 		}
@@ -178,9 +178,18 @@ namespace eutelescope {
 			gbl::GblPoint point(_scattererJacobians[i]);
 			point.setLabel(_counter_num_pointer);
 			_counter_num_pointer++;
-			setScattererGBL(point,state, percentageRadiationLength/2);//TO DO:Simply dividing by 2 will work when there is only two planes
+			setScattererGBL(point,state, variance.at(i));//TO DO:Simply dividing by 2 will work when there is only two planes
 			pointList.push_back(point);
 		}
+	}
+	vector<float> EUTelGBLFitter::computeVarianceForEachScatterer(EUTelState & state , float percentageRadiationLength){
+		const double scatteringVariance  = pow(Utility::getThetaRMSHighland(state.getBeamEnergy(), percentageRadiationLength),2);
+		vector<float> variance;
+		float powMeanStart=pow((_normalMean - _start),2);
+		float denominator=_normalVariance - powMeanStart;
+		variance.push_back(_normalVariance/denominator);
+		variance.push_back(powMeanStart/denominator);
+		return variance;
 	}
 	//This set the estimate resolution for each plane in the X direction.
 	void EUTelGBLFitter::setParamterIdXResolutionVec( const std::vector<float>& vector)
@@ -355,9 +364,11 @@ namespace eutelescope {
 					streamlog_out(MESSAGE9)<<"End: "<<globalPosSensor2[0]<<" "<<globalPosSensor2[1]<<" "<<globalPosSensor2[2]<<endl;
 					throw(lcio::Exception("The provides radiation length to create scatterers it zero.")); 	
 				} 
-				findScattersZPositionBetweenTwoStates(state);//We use the exact arc length between the two states to place the scatterers. 
+				setMomentsAndStartEndScattering(state);
+				findScattersZPositionBetweenTwoStates();//We use the exact arc length between the two states to place the scatterers. 
 				jacPointToPoint=findScattersJacobians(state,nextState);
-				setPointListWithNewScatterers(pointList,state, percentageRadiationLength);//We assume that on all scattering planes the incidence angle is the same as on the last measurement state. Not a terrible approximation and will be corrected by GBL anyway.
+				vector<float> variance =  computeVarianceForEachScatterer(state ,percentageRadiationLength);
+				setPointListWithNewScatterers(pointList,state, variance);//We assume that on all scattering planes the incidence angle is the same as on the last measurement state. Not a terrible approximation and will be corrected by GBL anyway.
 			}else{
 				streamlog_out(DEBUG3)<<"We have reached the last plane"<<std::endl;
 			}
@@ -512,25 +523,25 @@ namespace eutelescope {
 	}
 	//The distance from the first state to the next scatterer and then from that scatterer to the next all the way to the next state. 
 	//TO DO: This uses the optimum positions as described by Claus.  However for non homogeneous material distribution this might not be the case.
-	void EUTelGBLFitter::findScattersZPositionBetweenTwoStates(EUTelState& state){
+	void EUTelGBLFitter::findScattersZPositionBetweenTwoStates(){
 		streamlog_out(DEBUG1) << "  findScattersZPositionBetweenTwoStates------------- BEGIN --------------  " << std::endl;
 		_scattererPositions.clear();	
-		float arcLength = state.getArcLengthToNextState();
-		streamlog_out(DEBUG1) << "The arc length to the next state is: " << arcLength << std::endl;
+		streamlog_out(DEBUG1) << "The arc length to the next state is: " << _end << std::endl;
 		//We place the first scatter to model the air just after the plane
-		float start = 0.6; //This is 600 micron from the centre of the sensor. 
-		_scattererPositions.push_back(start);//Z position of 1st scatterer	
-		float secondScatterPosition = getPositionOfSecondScatter(start, arcLength);
+		_scattererPositions.push_back(_start);//Z position of 1st scatterer	
+		float secondScatterPosition = _normalMean + _normalVariance/(_normalMean-_start);
 		_scattererPositions.push_back(secondScatterPosition);//Z position of 2nd scatterer
-		_scattererPositions.push_back(arcLength-secondScatterPosition); 
+		_scattererPositions.push_back(_end-secondScatterPosition); 
 		streamlog_out(DEBUG1) << "  findScattersZPositionBetweenTwoStates------------- END --------------  " << std::endl;
 	}
-	float EUTelGBLFitter::getPositionOfSecondScatter(float start, float end){
-		float normalMean = 0.5*(pow(end,2)-pow(start,2));
-		float normalVariance = (1/3)*pow(normalMean,2)*(pow(end,3)-pow(start,3))-normalMean*(pow(end,2)-pow(start,2))+pow(normalMean,2)*(end-start);
-		float position = normalMean + normalVariance/(normalMean-start);
-		return position;
+
+	void EUTelGBLFitter::setMomentsAndStartEndScattering(EUTelState& state){
+		_start = 0.6; //This is 600 micron from the centre of the sensor. 
+		_end = state.getArcLengthToNextState();
+		_normalMean = 0.5*(pow(_end,2)-pow(_start,2));
+		_normalVariance = (1/3)*pow(_normalMean,2)*(pow(_end,3)-pow(_start,3))-_normalMean*(pow(_end,2)-pow(_start,2))+pow(_normalMean,2)*(_end-_start);
 	}
+
 	void EUTelGBLFitter::resetPerTrack() {
 		_counter_num_pointer=1;
 		_measurementStatesInOrder.clear();
