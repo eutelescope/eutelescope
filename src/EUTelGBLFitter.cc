@@ -90,7 +90,7 @@ namespace eutelescope {
 		streamlog_message( DEBUG0, precisionMatrix.Print();, std::endl; );
 		point.addScatterer(scat, precisionMatrix);
 		streamlog_out(DEBUG1) << "  setScattererGBL  ------------- END ----------------- " << std::endl;
-		}
+	}
 		//This is used when the we know the radiation length already
 		void EUTelGBLFitter::setScattererGBL(gbl::GblPoint& point,EUTelState & state, float variance) {
 		streamlog_out(MESSAGE1) << " setScattererGBL ------------- BEGIN --------------  " << std::endl;
@@ -254,9 +254,10 @@ namespace eutelescope {
 		std::vector<unsigned int> labels;
 		traj->getLabels(labels);
 		for(size_t i=0; i<_statesInOrder.size();++i){
-			int threeiPlus1 = 3*i; //This is done since we always have two scatters between states
-			streamlog_out(DEBUG0)<<"Pair (state,label)  ("<<  &(_statesInOrder.at(i))<<","<<labels.at(threeiPlus1)<<")"<<std::endl; 
-			_vectorOfPairsStatesAndLabels.push_back(make_pair(_statesInOrder.at(i), labels.at(threeiPlus1)));	
+			//We don't add +1 since this is taken into account by the labels.
+			int threei = 3*i; //This is done since we always have two scatters between states
+			streamlog_out(DEBUG0)<<"Pair (state,label)  ("<<  &(_statesInOrder.at(i))<<","<<labels.at(threei)<<")"<<std::endl; 
+			_vectorOfPairsStatesAndLabels.push_back(make_pair(_statesInOrder.at(i), labels.at(threei)));	
 		}
 		streamlog_out ( DEBUG4 ) << " EUTelGBLFitter::setPairAnyStateAndPointLabelVec- END " << endl;
 	}
@@ -284,18 +285,16 @@ namespace eutelescope {
 	}
 	//TO DO:This at the moment does nothing. However in the future it should be fixed to work for high radiation enviroments.
 	//As a track passes through a scatterer it will be kinked. The initial guessed trajectory has to provide GBL this information from pattern recognition. These come effectively from the states at each plane and can be calculated from these. However we store these number in the lcio file since the calculation is rather arduous
-	void EUTelGBLFitter::setKinkInformationToTrack(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint >& pointList,EUTelTrack &track){
+	void EUTelGBLFitter::getKinkInformationToTrack(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint >& pointList,EUTelTrack &track){
 		streamlog_out ( DEBUG4 ) << " EUTelGBLFitter::setKinkInformationToTrack-- BEGIN " << endl;
-		for(size_t i=0;i < track.getStatesPointers().size(); i++){//We get the pointers no since we want to change the track state contents		
+		for(size_t i=0;i < track.getStatesPointers().size(); i++){//We get the pointers now since we want to change the track state contents		
 			EUTelState* state = track.getStatesPointers().at(i);
 			TVectorD corrections(5);
 			TMatrixDSym correctionsCov(5,5);
 			for(size_t j=0 ; j< _vectorOfPairsStatesAndLabels.size();++j){
+				//We know that the labels will look like 1,3,5... from GBL so
 				if(_vectorOfPairsStatesAndLabels.at(j).first == *state){
 					streamlog_out(DEBUG0)<<"The loop number for states with measurements for kink update is: " << j << ". The label is: " << _vectorOfPairsStatesAndLabels.at(j).second <<endl; 
-					if(getLabelToPoint(pointList,_vectorOfPairsStatesAndLabels.at(j).second).hasMeasurement() == 0){//TO DO: Some states will not have hits in the future so should remove. Leave for now to test
-						throw(lcio::Exception("This point does not contain a measurements. So can not add kink information. Labeling of the state must be wrong"));
-					} 
 					streamlog_out(DEBUG0)<<"To update track kink we use label: "<<_vectorOfPairsStatesAndLabels.at(j).second<<std::endl; 
 					unsigned int numData; //Not sure what this is used for??????
 					TVectorD aResidualsKink(2);//Measurement - Prediction
@@ -558,14 +557,21 @@ namespace eutelescope {
 			for(size_t j=0 ; j< _vectorOfPairsStatesAndLabels.size();++j){
 				if(_vectorOfPairsStatesAndLabels.at(j).first == *state){
 					streamlog_out(DEBUG0)<<"The loop number for states with measurements is: " << j << ". The label is: " << _vectorOfPairsStatesAndLabels.at(j).second <<endl; 
-		//				if(getLabelToPoint(pointList,_vectorOfPairsStatesAndLabels.at(j).second).hasMeasurement() == 0){//TO DO: Some states will not have hits in the future so should remove. Leave for now to test
-		//					throw(lcio::Exception("This point does not contain a measurements. Labeling of the state must be wrong "));
-		//				} 
 					streamlog_out(DEBUG0)<<"To update track we use label: "<<_vectorOfPairsStatesAndLabels.at(j).second<<std::endl; 
+					//This part gets the track parameters.//////////////////////////////////////////////////////////////////////////
 					traj->getResults(_vectorOfPairsStatesAndLabels.at(j).second, corrections, correctionsCov );
 					streamlog_out(DEBUG3) << endl << "State before we have added corrections: " << std::endl;
 					state->print();
 					TVectorD newStateVec(5);
+					streamlog_out(DEBUG0)<<"-----------------------Corrections----------------------"<<std::endl;
+					streamlog_out(DEBUG0)<< setw(20)<<"State number "<< i <<" of "  << track.getStatesPointers().size() << std::endl;  
+					streamlog_out(DEBUG0)<< setw(20)<<"Track Parameter"<<setw(20)<<"| Intial value |" <<setw(20)<<"| correction to add |"  << std::endl;  
+					streamlog_out(DEBUG0)<<setw(20)<<"Omega(Charge/Energy) "<<setw(15)<<state->getOmega()<<setw(20)<< corrections[0]<<std::endl;
+					streamlog_out(DEBUG0)<<setw(20)<<"Intersection XY "<<setw(15)<<state->getIntersectionLocalXZ() <<setw(20)<< corrections[1]<<std::endl;
+					streamlog_out(DEBUG0)<<setw(20)<<"Intersection YZ "<<setw(15)<<state->getIntersectionLocalYZ() <<setw(20)<< corrections[2]<<std::endl;
+					streamlog_out(DEBUG0)<<setw(20)<<"PositionX "<<setw(15)<<state->getPosition()[0] <<setw(20)<< corrections[3]<<std::endl;
+					streamlog_out(DEBUG0)<<setw(20)<<"PositionY "<<setw(15)<<state->getPosition()[1] <<setw(20)<< corrections[4]<<std::endl;
+
 					newStateVec[0] = state->getOmega() + corrections[0];
 					newStateVec[1] = state->getIntersectionLocalXZ()+corrections[1];
 					newStateVec[2] = state->getIntersectionLocalYZ()+corrections[2];
@@ -586,7 +592,17 @@ namespace eutelescope {
 					correctionVec.push_back(corrections[4]);	
 
 					mapSensorIDToCorrectionVec[state->getLocation()] = correctionVec;
+					////////////////////////////////////////////////////////////////////////////////////////////////
 					state->setStateVec(newStateVec);
+					//Note that this says meas but it simple means that the states you access must be a scatterer. Since all our planes are scatterers then we can access all of them.
+					//However the only planes we are interest in are the ones that don't simply model the air.
+					unsigned int numData;
+					TVectorD aResidualsKink(2);//Measurement - Prediction
+					TVectorD aMeasErrorsKink(2);
+					TVectorD aResErrorsKink(2);
+					TVectorD aDownWeightsKink(2); 
+					traj->getScatResults( _vectorOfPairsStatesAndLabels.at(j).second, numData, aResidualsKink, aMeasErrorsKink, aResErrorsKink, aDownWeightsKink);
+					state->setKinks(aResidualsKink);
 					streamlog_out(DEBUG3) << endl << "State after we have added corrections: " << std::endl;
 					state->print();
 					break;

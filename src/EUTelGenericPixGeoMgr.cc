@@ -128,6 +128,13 @@ void EUTelGenericPixGeoMgr::addPlane(int planeID, std::string geoName, std::stri
 			_geoDescriptions.insert( std::make_pair(planeID, pixgeodescrptr) );
 			_pixelDescriptions.insert ( std::make_pair(geoName, pixgeodescrptr) );
 		}
+		else if(geoName == "FEI4FourChipUK_G4.so")
+		{
+			pixgeodescrptr = new FEI4FourChipUK_G4();
+			streamlog_out( MESSAGE3 ) << "Inserting " << planeID << " into map" << std::endl;
+			_geoDescriptions.insert( std::make_pair(planeID, pixgeodescrptr) );
+			_pixelDescriptions.insert ( std::make_pair(geoName, pixgeodescrptr) );
+		}
 		//Unknown, TERMINATE!
 		else
 		{

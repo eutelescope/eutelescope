@@ -2,7 +2,7 @@
   <!--GEAR file for DATURA Telescope in DESY TB 21 - Nov. 2012 -->
   <!-- z was fixed to 150 mm between all sensors -->
   <global detectorName="EUTelescope"/>
-  <BField type="ConstantBField" x="-1" y="0.0" z="0.0"/>
+  <BField type="ConstantBField" x="0" y="-1.0" z="0.0"/>
   <detectors>
     <detector name="SiPlanes" geartype="SiPlanesParameters">
     <parameter name="Geometry" type="StringVec" value="Mimosa26.so Mimosa26.so Mimosa26.so Mimosa26.so Mimosa26.so Mimosa26.so"/>
@@ -15,7 +15,7 @@
 	<layer>
 	  <ladder 	ID="0"
 			positionX="0.00"	positionY="0.00"	positionZ="0.00"
-			rotationZY="0.00"	rotationZX="0.0"	rotationXY="-90.0" 
+			rotationZY="0.00"	rotationZX="0.0"	rotationXY="0.0" 
 			sizeX="21.2"		sizeY="10.6"		thickness="0.036"
 			radLength="93.660734"
 			/>
@@ -33,7 +33,7 @@
 	<layer>
 	  <ladder 	ID="1" 
 			positionX="0.00"	positionY="0.00"	positionZ="30.0" 
-			rotationZY="0.0"	rotationZX="0.0"	rotationXY="-90.0" 
+			rotationZY="0.0"	rotationZX="0.0"	rotationXY="0.0" 
 			sizeX="21.2"		sizeY="10.6"		thickness="0.036" 
 			radLength="93.660734"
 			/>
@@ -51,7 +51,7 @@
 	<layer>
 	  <ladder 	ID="2" 
 			positionX="0.00"	positionY="0.00"	positionZ="60.0" 
-			rotationZY="0.0"	rotationZX="0.0"	rotationXY="-90.0" 
+			rotationZY="0.0"	rotationZX="0.0"	rotationXY="0.0" 
 			sizeX="21.2"		sizeY="10.6"		thickness="0.036" 
 			radLength="93.660734"
 			/>
@@ -69,7 +69,7 @@
         <layer>
           <ladder         ID="3"
                           positionX="0.00"        positionY="0.00"        positionZ="260.00"
-                          rotationZY="0.00"       rotationZX="0.0"        rotationXY="-90.0" 
+                          rotationZY="0.00"       rotationZX="0.0"        rotationXY="0.0" 
                           sizeX="21.2"            sizeY="10.6"            thickness="0.036"
                           radLength="93.660734"
                           />
@@ -87,7 +87,7 @@
         <layer>
           <ladder         ID="4"
                           positionX="0.00"        positionY="0.00"        positionZ="285.00"
-                          rotationZY="0.00"       rotationZX="0.0"        rotationXY="-90.0" 
+                          rotationZY="0.00"       rotationZX="0.0"        rotationXY="0.0" 
                           sizeX="21.2"            sizeY="10.6"            thickness="0.036"
                           radLength="93.660734"
                           />
@@ -105,7 +105,7 @@
         <layer>
           <ladder         ID="5"
                           positionX="0.00"        positionY="0.00"        positionZ="310.00"
-                          rotationZY="0.00"       rotationZX="0.0"        rotationXY="-90.0" 
+                          rotationZY="0.00"       rotationZX="0.0"        rotationXY="0.0" 
                           sizeX="21.2"            sizeY="10.6"            thickness="0.036"
                           radLength="93.660734"
                           />

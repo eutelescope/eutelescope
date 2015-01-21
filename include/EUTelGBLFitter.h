@@ -66,7 +66,7 @@ namespace eutelescope {
 			void setMomentsAndStartEndScattering(EUTelState& state);
 			void setInformationForGBLPointList(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList);
 			void setMeasurementGBL(gbl::GblPoint& point, const double *hitPos, double statePos[3], double combinedCov[4], TMatrixD projection);
-			void setKinkInformationToTrack(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint >& pointList,EUTelTrack &track);
+			void getKinkInformationToTrack(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint >& pointList,EUTelTrack &track);
 			void setPointVec( std::vector< gbl::GblPoint >& pointList, gbl::GblPoint& point);
 			void setPairAnyStateAndPointLabelVec(std::vector< gbl::GblPoint >& pointList, gbl::GblTrajectory*);
 			void setPairMeasurementStateAndPointLabelVec(std::vector< gbl::GblPoint >& pointList);

@@ -4,6 +4,7 @@
     <BField type="ConstantBField" x="0.000000000e+00" y="0.000000000e+00" z="0.000000000e+00" />
     <detectors>
         <detector name="SiPlanes" geartype="SiPlanesParameters">
+					<parameter name="Geometry" type="StringVec" value="Mimosa26.so Mimosa26.so Mimosa26.so FEI4FourChipUK_G4.so FEI4Single.so Mimosa26.so Mimosa26.so Mimosa26.so "/>
             <siplanesID ID="39" />
             <siplanesType type="TelescopeWithoutDUT" />
             <siplanesNumber number="8" />
@@ -21,8 +22,8 @@
                     <sensitive ID="2" positionX="0.000000000e+00" positionY="0.000000000e+00" positionZ="4.400000000e+01" sizeX="2.120000000e+01" sizeY="1.060000000e+01" thickness="2.000000000e-02" npixelX="1152" npixelY="576" pitchX="1.840277800e-02" pitchY="1.840277800e-02" resolution="4.500000000e-03" rotation1="1.000000000e+00" rotation2="0.000000000e+00" rotation3="0.000000000e+00" rotation4="1.000000000e+00" radLength="9.366073400e+01" />
                 </layer>
                 <layer>
-                    <ladder ID="21" positionX="-1.000000000e+01" positionY="10.500000000" positionZ="1.470000000e+02" rotationXY="0.0000000" rotationZX="0.000000000e+00" rotationZY="0.000000000e+00" sizeX="4.040000000e+01" sizeY="3.518000000e+01" thickness="3.000000000e-01" radLength="9.366073400e+01" />
-                    <sensitive ID="21" positionX="-1.000000000e+01" positionY="1.400000000e+01" positionZ="1.470000000e+02" sizeX="4.040000000e+01" sizeY="3.518000000e+01" thickness="2.500000000e-02" npixelX="160" npixelY="680" pitchX="2.500000000e-01" pitchY="5.000000000e-02" resolution="1.000000000e+00" rotation1="1.000000000e+00" rotation2="0.000000000e+00" rotation3="0.000000000e+00" rotation4="1.000000000e+00" radLength="9.366073400e+01" />
+                    <ladder ID="21" positionX="1.250000000e+01" positionY="-10.00000000" positionZ="1.470000000e+02" rotationXY="90.0000000" rotationZX="0.000000000e+00" rotationZY="0.000000000e+00" sizeX="4.040000000e+01" sizeY="3.518000000e+01" thickness="3.000000000e-01" radLength="9.366073400e+01" />
+                    <sensitive ID="21" positionX="-1.000000000e+01" positionY="1.400000000e+01" positionZ="1.470000000e+02" sizeX="4.040000000e+01" sizeY="3.518000000e+01" thickness="2.500000000e-02" npixelX="160" npixelY="680" pitchX="2.500000000e-01" pitchY="5.000000000e-02" resolution="1.000000000e+00" rotation1="1.000000000e+00" rotation2="0.000000000e+00" rotation3="0.000000000e+00" rotation4="-1.000000000e+00" radLength="9.366073400e+01" />
                 </layer>
                 <layer>
                     <ladder ID="20" positionX="2.348844000e+00" positionY="3.369835000e+00" positionZ="1.830000000e+02" rotationXY="9.041018622e+01" rotationZX="0.000000000e+00" rotationZY="0.000000000e+00" sizeX="2.030000000e+01" sizeY="1.680000000e+01" thickness="3.000000000e-01" radLength="9.366073400e+01" />

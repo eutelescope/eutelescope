@@ -28,19 +28,22 @@ namespace eutelescope {
         
     public:
 
-    EUTelTrackAnalysis(map< int,  AIDA::IProfile2D*> mapFromSensorIDToHistogramX, map< int,  AIDA::IProfile2D*> mapFromSensorIDToHistogramY, map< int,   AIDA::IHistogram1D *> mapFromSensorIDToKinkXZ,map< int,   AIDA::IHistogram1D *> mapFromSensorIDToKinkYZ);
+    EUTelTrackAnalysis(map< int,  AIDA::IProfile2D*> mapFromSensorIDToHistogramX, map< int,  AIDA::IProfile2D*> mapFromSensorIDToHistogramY, map< int,   AIDA::IHistogram1D *> mapFromSensorIDToKinkXZ,map< int,   AIDA::IHistogram1D *> mapFromSensorIDToKinkYZ, AIDA::IHistogram1D * beamEnergy );
 
 		void plotResidualVsPosition(EUTelTrack);
+		void plotBeamEnergy(EUTelTrack);
 		void plotIncidenceAngles(EUTelTrack track);
 		void setSensorIDTo2DResidualHistogramX(map< int,  AIDA::IProfile2D*> mapFromSensorIDToHistogramX){_mapFromSensorIDToHistogramX=mapFromSensorIDToHistogramX;}
 		void setSensorIDTo2DResidualHistogramY(map< int,  AIDA::IProfile2D*> mapFromSensorIDToHistogramY){_mapFromSensorIDToHistogramY=mapFromSensorIDToHistogramY;}
 		void setSensorIDToIncidenceAngleXZ( map< int,  AIDA::IHistogram1D * > mapFromSensorIDToKinkXZ){_mapFromSensorIDToIncidenceXZ=mapFromSensorIDToKinkXZ;}
 		void setSensorIDToIncidenceAngleYZ( map< int,  AIDA::IHistogram1D * > mapFromSensorIDToKinkYZ){_mapFromSensorIDToIncidenceYZ=mapFromSensorIDToKinkYZ;}
+		void setBeamEnergy(AIDA::IHistogram1D * beamEnergy){_beamEnergy=beamEnergy;}
 
 		map< int, AIDA::IProfile2D* > _mapFromSensorIDToHistogramX;
 		map< int, AIDA::IProfile2D* > _mapFromSensorIDToHistogramY;
 		map< int,   AIDA::IHistogram1D *> _mapFromSensorIDToIncidenceXZ;
 		map< int,  AIDA::IHistogram1D * > _mapFromSensorIDToIncidenceYZ;
+		AIDA::IHistogram1D * _beamEnergy;
 
 
 	};
