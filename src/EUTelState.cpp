@@ -111,7 +111,7 @@ TMatrixDSym EUTelState::getScatteringVarianceInLocalFrame(){
 TMatrixDSym EUTelState::getScatteringVarianceInLocalFrame(float  variance){
 	streamlog_out( DEBUG1 ) << "EUTelState::getScatteringVarianceInLocalFrame(Scatter)----------------------------BEGIN" << std::endl;
 	streamlog_out(DEBUG5)<<"The scattering variance in radians: " <<  variance <<std::endl; 
-	float scatPrecisionSqrt = 1.0 /variance;
+	float scatPrecision = 1.0 /variance;
 	//We need the track direction in the direction of x/y in the local frame. 
 	//This will be the same as unitMomentum in the x/y direction
 	TVector3 unitMomentumLocalFrame =	getIncidenceUnitMomentumVectorInLocalFrame();
@@ -119,7 +119,7 @@ TMatrixDSym EUTelState::getScatteringVarianceInLocalFrame(float  variance){
 	float c1 = 	unitMomentumLocalFrame[0]; float c2 = 	unitMomentumLocalFrame[1];
 	streamlog_out( DEBUG1 ) << "The component in the x/y direction: "<< c1 <<"  "<<c2 << std::endl;
 	TMatrixDSym precisionMatrix(2);
-	float factor = pow(scatPrecisionSqrt,2)/pow((1-pow(c1,2)-pow(c2,2)),2);
+	float factor = scatPrecision/pow((1-pow(c1,2)-pow(c2,2)),2);
 	streamlog_out( DEBUG1 ) << "The factor: "<< factor << std::endl;
 	precisionMatrix[0][0]=factor*(1-pow(c2,2));
   precisionMatrix[1][0]=factor*c1*c2;				precisionMatrix[1][1]=factor*(1-pow(c1,2));

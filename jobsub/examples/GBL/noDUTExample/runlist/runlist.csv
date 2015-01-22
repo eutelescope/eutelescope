@@ -1,5 +1,5 @@
 RunNumber,BeamEnergy,GearGeoFile
-97,5,gear_desy2012_150mm.xml
+97,5,gear-good-example-97.xml
 241,4.8,gear-0T.xml
 273,5,gear-1T.xml
 286,3,gear-1T.xml

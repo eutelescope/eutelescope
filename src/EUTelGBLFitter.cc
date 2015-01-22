@@ -178,7 +178,11 @@ namespace eutelescope {
 			gbl::GblPoint point(_scattererJacobians[i]);
 			point.setLabel(_counter_num_pointer);
 			_counter_num_pointer++;
-			setScattererGBL(point,state, variance.at(i));//TO DO:Simply dividing by 2 will work when there is only two planes
+			if(variance.at(i) == 0){
+				throw(lcio::Exception("Variance is 0 for the scattering plane."));
+			}
+
+			setScattererGBL(point,state, variance.at(i));//TO DO:This will only work for homogeneous distributions.
 			pointList.push_back(point);
 		}
 	}
@@ -186,9 +190,9 @@ namespace eutelescope {
 		const double scatteringVariance  = pow(Utility::getThetaRMSHighland(state.getBeamEnergy(), percentageRadiationLength),2);
 		vector<float> variance;
 		float powMeanStart=pow((_normalMean - _start),2);
-		float denominator=_normalVariance - powMeanStart;
-		variance.push_back(_normalVariance/denominator);
-		variance.push_back(powMeanStart/denominator);
+		float denominator=_normalVariance + powMeanStart;
+		variance.push_back(scatteringVariance*(_normalVariance/denominator));
+		variance.push_back(scatteringVariance*(powMeanStart/denominator));
 		return variance;
 	}
 	//This set the estimate resolution for each plane in the X direction.
@@ -528,8 +532,16 @@ namespace eutelescope {
 		streamlog_out(DEBUG1) << "The arc length to the next state is: " << _end << std::endl;
 		//We place the first scatter to model the air just after the plane
 		_scattererPositions.push_back(_start);//Z position of 1st scatterer	
-		float secondScatterPosition = _normalMean + _normalVariance/(_normalMean-_start);
+		float secondScatterPosition = _normalMean +_normalVariance/(_normalMean-_start);
+//		cout<<"Scat position " << secondScatterPosition <<endl;
+		if(secondScatterPosition < _start){
+			throw(lcio::Exception("The distance of the second scatterer is smaller than the start. "));
+		}
 		_scattererPositions.push_back(secondScatterPosition);//Z position of 2nd scatterer
+		if(secondScatterPosition > _end){
+			streamlog_out(MESSAGE5) << "The second scatter distance: "<< secondScatterPosition <<". The distance of the arc length: " << _end  << std::endl;
+			throw(lcio::Exception("The distance of the second scatterer is larger than the next plane. "));
+		}
 		_scattererPositions.push_back(_end-secondScatterPosition); 
 		streamlog_out(DEBUG1) << "  findScattersZPositionBetweenTwoStates------------- END --------------  " << std::endl;
 	}
@@ -537,8 +549,19 @@ namespace eutelescope {
 	void EUTelGBLFitter::setMomentsAndStartEndScattering(EUTelState& state){
 		_start = 0.6; //This is 600 micron from the centre of the sensor. 
 		_end = state.getArcLengthToNextState();
-		_normalMean = 0.5*(pow(_end,2)-pow(_start,2));
-		_normalVariance = (1/3)*pow(_normalMean,2)*(pow(_end,3)-pow(_start,3))-_normalMean*(pow(_end,2)-pow(_start,2))+pow(_normalMean,2)*(_end-_start);
+		if(_end == 0){
+			throw(lcio::Exception("The size of arc length to the next plane is 0"));
+		}
+		_normalMean = 0.5*(_end-_start);
+//		cout<<"normal mean: " << _normalMean <<endl;
+		if(_normalMean == 0){
+			throw(lcio::Exception("The mean of the scattering integral is zero. "));
+		}
+		_normalVariance = ((1.0/3.0)*(pow(_end,3)-pow(_start,3))-_normalMean*(pow(_end,2)-pow(_start,2))+pow(_normalMean,2)*(_end-_start))/(_end-_start);
+//		cout<<"normal variance: " << _normalVariance <<endl;
+		if(_normalVariance == 0){
+			throw(lcio::Exception("The variance of the scattering integral is zero. "));
+		}
 	}
 
 	void EUTelGBLFitter::resetPerTrack() {
