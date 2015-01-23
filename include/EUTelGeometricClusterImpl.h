@@ -23,7 +23,7 @@ class EUTelGeometricClusterImpl : public EUTelGenericSparseClusterImpl<EUTelGeom
 	EUTelGeometricClusterImpl(IMPL::TrackerDataImpl* data);
 
 	//! Destructor
-	virtual ~EUTelGeometricClusterImpl(){};
+	virtual ~EUTelGeometricClusterImpl();
 
 	void getClusterGeomInfo(float& xPos, float& yPos, float& xSize, float& ySize) const;
 

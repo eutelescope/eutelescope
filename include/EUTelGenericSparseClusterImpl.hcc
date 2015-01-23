@@ -72,7 +72,7 @@ class EUTelGenericSparseClusterImpl : public EUTelSimpleVirtualCluster
 	/*!
 	 *  @return The total integrated charge
 	 */
-	float getTotalCharge() const ;
+	virtual float getTotalCharge() const ;
 
 	//! Return a pointer to the TrackerDataImpl
 	/*! This method is used to expose to the public the

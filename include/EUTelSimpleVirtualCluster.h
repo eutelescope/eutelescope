@@ -44,11 +44,9 @@ public:
      */ 
     virtual void getClusterSize(int& xSize, int& ySize) const = 0;
 
-    virtual void getClusterInfo(int& xPos, int& yPos, int& xSize, int& ySize) const = 0;
-
     virtual void getCenterOfGravity(float& xCoG, float& yCoG) const = 0;
 
-    virtual unsigned int size() const = 0;
+    //virtual unsigned int size() const = 0;
 
     //! Return the total charge
     /*!

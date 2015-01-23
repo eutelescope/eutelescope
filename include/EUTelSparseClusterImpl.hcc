@@ -104,6 +104,7 @@ namespace eutelescope {
      */ 
     virtual void getClusterSize(int& xSize, int& ySize) const ;
 
+    virtual void getClusterInfo(int& xPos, int& yPos, int& xSize, int& ySize) const;
 
     //! Return the cluster quality
     /*! It returns the cluster quality using the ClusterQuality enum.

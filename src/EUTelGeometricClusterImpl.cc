@@ -8,6 +8,11 @@ EUTelGeometricClusterImpl::EUTelGeometricClusterImpl(IMPL::TrackerDataImpl* data
 /*nothing else to do*/
 } 
 
+EUTelGeometricClusterImpl::~EUTelGeometricClusterImpl()
+{
+
+}
+
 void EUTelGeometricClusterImpl::getClusterGeomInfo(float& xPos, float& yPos, float& xSize, float& ySize) const 
 {
 	float xMin = std::numeric_limits<float>::max(); 	//stores the largest possible value every pixel will be lower, 

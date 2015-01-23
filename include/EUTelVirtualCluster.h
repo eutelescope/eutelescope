@@ -12,6 +12,7 @@
 
 // personal includes ".h"
 #include "EUTELESCOPE.h"
+#include "EUTelSimpleVirtualCluster.h"
 
 // lcio includes <.h>
 #include <IMPL/TrackerDataImpl.h>
@@ -34,11 +35,11 @@ namespace eutelescope {
    *  @version $Id$
    */
 
-  class EUTelVirtualCluster {
+  class EUTelVirtualCluster : public EUTelSimpleVirtualCluster {
 
   public:
     //! Default constructor
-    EUTelVirtualCluster(IMPL::TrackerDataImpl* data) : _trackerData(data) { } 
+    EUTelVirtualCluster(IMPL::TrackerDataImpl* data) : EUTelSimpleVirtualCluster(data) { } 
 
     //! Default destructor
     virtual ~EUTelVirtualCluster() {;}
