@@ -44,13 +44,9 @@ public:
      */ 
     virtual void getClusterSize(int& xSize, int& ySize) const = 0;
 
-    virtual void getClusterInfo(int& xPos, int& yPos, int& xSize, int& ySize) const = 0;
+    virtual void getCenterOfGravity(float& xCoG, float& yCoG) const = 0;
 
-    virtual void getClusterGeomInfo(float& xPos, float& yPos, float& xSize, float& ySize) const = 0;
-
-    virtual void getCoG(float& xCoG, float& yCoG) const = 0;
-
-    virtual unsigned int size() const = 0;
+    //virtual unsigned int size() const = 0;
 
     //! Return the total charge
     /*!
@@ -86,15 +82,7 @@ public:
     friend  std::ostream& operator<< (std::ostream& os , const EUTelSimpleVirtualCluster & clu )  { clu.print(os); return os; }
 
 private:
-	#ifndef DISALLOW_COPY_AND_ASSIGN 
-	//Following #define stops the accidental creation of a copy or assignment operator by causing a link error. 
-	//Copy and Assignment operators not allowed because they are unnecessary and the cause of many bugs
-	#define DISALLOW_COPY_AND_ASSIGN(EUTelSimpleVirtualCluster) \
-	EUTelVirtualCluster(const EUTelSimpleVirtualCluster&); \
-	void operator=(const EUTelSimpleVirtualCluster&);
-	#endif
-  	//Private Functions
-	DISALLOW_COPY_AND_ASSIGN(EUTelSimpleVirtualCluster)//See #define just above
+	DISALLOW_COPY_AND_ASSIGN(EUTelSimpleVirtualCluster)
 
 protected:
     //! The tracker data member

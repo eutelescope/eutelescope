@@ -10,7 +10,7 @@ namespace eutelescope {
 	class EUTelHistogram{
         
 		private:
-  	DISALLOW_COPY_AND_ASSIGN(EUTelHistogram)        // prevent users from making (default) copies of processors
+		DISALLOW_COPY_AND_ASSIGN(EUTelHistogram)        // prevent users from making (default) copies of processors
       
 		public:
 		EUTelHistogram(std::string name, std::string);

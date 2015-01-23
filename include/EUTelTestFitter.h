@@ -9,10 +9,11 @@
  *
  */
 
-#ifndef EUTelTestFitter_h
-#define EUTelTestFitter_h 1
+#ifndef EUTELTESTFITTER_H
+#define EUTELTESTFITTER_H
 
 // eutelescope includes ".h"
+#include "EUTELESCOPE.h"
 #include "EUTelAlignmentConstant.h"
 
 #include "marlin/Processor.h"
@@ -364,16 +365,7 @@ namespace eutelescope {
     virtual void end() ;
 
   private:
-
-  #ifndef DISALLOW_COPY_AND_ASSIGN
-  //Following #define stops the accidental creation of a copy or assignment operator by causing a link error. Copy and Assignment operators not allowed because they are unnecessary and the cause of many bugs
-  #define DISALLOW_COPY_AND_ASSIGN(EUTelTestFitter) \
-  EUTelTestFitter(const EUTelTestFitter&); \
-  void operator=(const EUTelTestFitter&);
-
-  //Private Functions
-  DISALLOW_COPY_AND_ASSIGN(EUTelTestFitter)//See #define just above
-  #endif
+	DISALLOW_COPY_AND_ASSIGN(EUTelTestFitter)//See #define just above
 
     //! 
     /*!

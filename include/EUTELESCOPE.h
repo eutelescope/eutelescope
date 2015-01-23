@@ -7,6 +7,15 @@
  *
  */
 
+//Following #define stops the accidental creation of a copy or assignment operator by causing a link error. 
+//Copy and Assignment operators not allowed because they are unnecessary and the cause of many bugs
+#ifndef DISALLOW_COPY_AND_ASSIGN 
+	#define DISALLOW_COPY_AND_ASSIGN(type) \
+	type(const type&); \
+	void operator=(const type&);
+#endif
+
+
 #ifndef EUTELESCOPE_NAMESPACE_H
 #define EUTELESCOPE_NAMESPACE_H
 

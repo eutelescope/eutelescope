@@ -12,6 +12,7 @@
 
 // personal includes ".h"
 #include "EUTELESCOPE.h"
+#include "EUTelSimpleVirtualCluster.h"
 
 // lcio includes <.h>
 #include <IMPL/TrackerDataImpl.h>
@@ -34,11 +35,11 @@ namespace eutelescope {
    *  @version $Id$
    */
 
-  class EUTelVirtualCluster {
+  class EUTelVirtualCluster : public EUTelSimpleVirtualCluster {
 
   public:
     //! Default constructor
-    EUTelVirtualCluster(IMPL::TrackerDataImpl* data) : _trackerData(data) { } 
+    EUTelVirtualCluster(IMPL::TrackerDataImpl* data) : EUTelSimpleVirtualCluster(data) { } 
 
     //! Default destructor
     virtual ~EUTelVirtualCluster() {;}
@@ -297,15 +298,7 @@ namespace eutelescope {
     friend std::ostream& operator<< (std::ostream& os , const EUTelVirtualCluster & clu )  { clu.print(os); return os; }
 
 private:
-
-  #ifndef DISALLOW_COPY_AND_ASSIGN 
-  //Following #define stops the accidental creation of a copy or assignment operator by causing a link error. Copy and Assignment operators not allowed because they are unnecessary and the cause of many bugs
-  #define DISALLOW_COPY_AND_ASSIGN(EUTelVirtualCluster) \
-  EUTelVirtualCluster(const EUTelVirtualCluster&); \
-  void operator=(const EUTelVirtualCluster&);
-  #endif
-  //Private Functions
-  DISALLOW_COPY_AND_ASSIGN(EUTelVirtualCluster)//See #define just above
+  DISALLOW_COPY_AND_ASSIGN(EUTelVirtualCluster)
 
 protected:
  

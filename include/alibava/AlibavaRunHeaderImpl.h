@@ -11,6 +11,7 @@
 
 // personal includes ".h"
 #include "ALIBAVA.h"
+#include "EUTELESCOPE.h"
 
 // marlin includes ".h"
 
@@ -231,19 +232,9 @@ namespace alibava {
     //! returns the LCRunHeaderImpl underlying object
     inline IMPL::LCRunHeaderImpl * lcRunHeader() { return  _lcHeader ; }
 
-  private:
-  #ifndef DISALLOW_COPY_AND_ASSIGN
-      //Following #define stops the accidental creation of a copy or assignment operator by causing a link error. Copy and Assignment operators not allowed because they are unnecessary and the cause of many bugs
-  #define DISALLOW_COPY_AND_ASSIGN(AlibavaRunHeaderImpl) \
-  AlibavaRunHeaderImpl(const AlibavaRunHeaderImpl&); \
-  void operator=(const AlibavaRunHeaderImpl&);
-
-  //Private Functions
-  DISALLOW_COPY_AND_ASSIGN(AlibavaRunHeaderImpl)//See #define just above
-  #endif
-
-    IMPL::LCRunHeaderImpl * _lcHeader;
-
+	private:
+  		DISALLOW_COPY_AND_ASSIGN(AlibavaRunHeaderImpl)
+		IMPL::LCRunHeaderImpl * _lcHeader;
   };                           // end of AlibavaRunHeaderImpl
 }     //end of alibava namespace
 #endif // ALIBAVARUNHEADERIMPL

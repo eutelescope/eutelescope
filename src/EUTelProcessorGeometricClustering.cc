@@ -22,6 +22,7 @@
 //eutel data specific
 #include "EUTelTrackerDataInterfacerImpl.h"
 #include "EUTelGenericSparseClusterImpl.h"
+#include "EUTelGeometricClusterImpl.h"
 
 //eutel geometry
 #include "EUTelGeometryTelescopeGeoDescription.h"
@@ -568,11 +569,11 @@ void EUTelProcessorGeometricClustering::fillHistos (LCEvent * evt)
 			int detectorID = static_cast<int>( cellDecoder(pulse)["sensorID"] ); 
 			//TODO: do we need this check?
 			//SparsePixelType pixelType = static_cast<SparsePixelType> (0);
-			EUTelSimpleVirtualCluster* cluster;
+			EUTelGeometricClusterImpl* cluster;
 	
 			if( type == kEUTelGenericSparseClusterImpl ) 
 			{
-		    	cluster = new EUTelGenericSparseClusterImpl<EUTelGeometricPixel> ( static_cast<TrackerDataImpl*> ( pulse->getTrackerData() ) );
+		    	cluster = new EUTelGeometricClusterImpl ( static_cast<TrackerDataImpl*> ( pulse->getTrackerData() ) );
 			}	 
 			else 
 			{
