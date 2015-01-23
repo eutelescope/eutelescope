@@ -468,7 +468,7 @@ int detectorID    = -99; // it's a non sense
 
 		float xPos = 0;
 		float yPos = 0;
-		cluster->getCoG(xPos, yPos);
+		cluster->getCenterOfGravity(xPos, yPos);
    
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 		string tempHistoName;

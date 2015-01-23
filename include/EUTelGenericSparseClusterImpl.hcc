@@ -66,7 +66,7 @@ class EUTelGenericSparseClusterImpl : public EUTelSimpleVirtualCluster
 	 *  @param xCoG The cog along x
 	 *  @param yCoG The cog along y
 	 */ 
-	virtual void getCoG(float& xCoG, float& yCoG) const;
+	virtual void getCenterOfGravity(float& xCoG, float& yCoG) const;
 
 	 //!TODO: Tobias: write docu here
 	 virtual void getClusterGeomInfo(float& xPos, float& yPos, float& xSize, float& ySize) const;

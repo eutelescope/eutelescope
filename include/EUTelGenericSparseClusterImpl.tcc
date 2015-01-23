@@ -163,7 +163,7 @@ void EUTelGenericSparseClusterImpl<EUTelGeometricPixel>::getClusterGeomInfo(floa
   
 
 template<class PixelType>
-void EUTelGenericSparseClusterImpl<PixelType>::getCoG(float& xCoG, float& yCoG) const
+void EUTelGenericSparseClusterImpl<PixelType>::getCenterOfGravity(float& xCoG, float& yCoG) const
 {
 	xCoG = 0;
 	yCoG = 0;

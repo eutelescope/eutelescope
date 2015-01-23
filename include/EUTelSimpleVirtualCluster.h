@@ -48,7 +48,7 @@ public:
 
     virtual void getClusterGeomInfo(float& xPos, float& yPos, float& xSize, float& ySize) const = 0;
 
-    virtual void getCoG(float& xCoG, float& yCoG) const = 0;
+    virtual void getCenterOfGravity(float& xCoG, float& yCoG) const = 0;
 
     virtual unsigned int size() const = 0;
 
