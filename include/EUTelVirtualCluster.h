@@ -308,7 +308,7 @@ protected:
      *  already existing TrackerData object, this is assigned to
      *  _trackerData by the constructor. 
      */ 
-    IMPL::TrackerDataImpl * _trackerData;
+    //IMPL::TrackerDataImpl * _trackerData;
 
   };
 
