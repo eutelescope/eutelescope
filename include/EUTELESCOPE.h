@@ -420,7 +420,8 @@ namespace eutelescope
     kTaki              = 104,
     kAPIX              = 105,
     kFortis            = 106,
-    kTimepix           = 107
+    kTimepix           = 107,
+    kCMSPixel          = 108
   } ;
 
   //! Readout mode
