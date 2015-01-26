@@ -102,6 +102,14 @@ namespace eutelescope {
 		point.addScatterer(scat, precisionMatrix);
 		streamlog_out(MESSAGE1) << "  setScattererGBL  ------------- END ----------------- " << std::endl;
 	}
+	void EUTelGBLFitter::setLocalDerivativesToPoint(gbl::GblPoint& point, EUTelState & state, float distanceFromKinkTargetToNextPlane){
+		TMatrixD derivatives(2,2);
+		derivatives.Zero();
+		//The derivative is the distance since the change in the measurements is  deltaX = distanceFromkink*(Angle of kink)
+		derivatives[0][0] = distanceFromKinkTargetToNextPlane; 
+		derivatives[1][1] = distanceFromKinkTargetToNextPlane; 
+		point.addLocals(derivatives);
+	}
 	//This will add measurement information to the GBL point
 	//Note that if we have a strip sensor then y will be ignored using projection matrix.
 	void EUTelGBLFitter::setMeasurementGBL(gbl::GblPoint& point, const double *hitPos,  double statePos[3], double combinedCov[4], TMatrixD projection){
@@ -327,16 +335,31 @@ namespace eutelescope {
 		streamlog_out(DEBUG4)<<"EUTelGBLFitter::setInformationForGBLPointList-------------------------------------BEGIN"<<endl;
 		TMatrixD jacPointToPoint(5, 5);
 		jacPointToPoint.UnitMatrix();
+		//We place this variable here since we want to set it every new track to false and then true again after we get to the scattering plane.
+		bool kinkAnglePlaneEstimationAddedNow=false;
+		float distanceFromKinkTargetToNextPlane=0;
 		for(size_t i=0;i < track.getStates().size(); i++){		
 			streamlog_out(DEBUG3) << "The jacobian to get to this state jacobian on state number: " << i<<" Out of a total of states "<<track.getStates().size() << std::endl;
 			streamlog_message( DEBUG0, jacPointToPoint.Print();, std::endl; );
 			gbl::GblPoint point(jacPointToPoint);
 			EUTelState state = track.getStates().at(i);
+			//Here we set if we want to add local derivatives to points after we have found the plane we want to determine it's kink angle.
+			if(kinkAnglePlaneEstimationAddedNow){
+				setLocalDerivativesToPoint(point,state,distanceFromKinkTargetToNextPlane); 
+				//We add the distance to the next plane so we get the total distance to the target.
+				distanceFromKinkTargetToNextPlane=distanceFromKinkTargetToNextPlane + state.getArcLengthToNextState();
+			}
 			EUTelState nextState;
 			if(i != (track.getStates().size()-1)){//Since we don't want to propagate from the last state.
 				nextState = track.getStates().at(i+1);
 			}
-			setScattererGBL(point,state);//Every sensor will have scattering due to itself. 
+			if(state.getLocation() == 271){
+				kinkAnglePlaneEstimationAddedNow=true;
+				//We set the distance to the next plane to use to set the local derivatives for the next point.
+				distanceFromKinkTargetToNextPlane=state.getArcLengthToNextState();
+			}else{
+				setScattererGBL(point,state);//Every sensor will have scattering due to itself. 
+			}
 			_statesInOrder.push_back(state);//This is list of measurements states in the correct order. This is used later to associate ANY states with point labels
 			if(state.getTrackerHits().size() == 0 ){
 				streamlog_out(DEBUG3)  << "This state does not have a hit."<<std::endl;
@@ -617,17 +640,45 @@ namespace eutelescope {
 					mapSensorIDToCorrectionVec[state->getLocation()] = correctionVec;
 					////////////////////////////////////////////////////////////////////////////////////////////////
 					state->setStateVec(newStateVec);
-					//Note that this says meas but it simple means that the states you access must be a scatterer. Since all our planes are scatterers then we can access all of them.
-					//However the only planes we are interest in are the ones that don't simply model the air.
-					unsigned int numData;
-					TVectorD aResidualsKink(2);//Measurement - Prediction
-					TVectorD aMeasErrorsKink(2);
-					TVectorD aResErrorsKink(2);
-					TVectorD aDownWeightsKink(2); 
-					traj->getScatResults( _vectorOfPairsStatesAndLabels.at(j).second, numData, aResidualsKink, aMeasErrorsKink, aResErrorsKink, aDownWeightsKink);
-					state->setKinks(aResidualsKink);
-					streamlog_out(DEBUG3) << endl << "State after we have added corrections: " << std::endl;
-					state->print();
+					//If the state is just a normal scatterer then we get the scattering results from the getScatResults() function. Otherwise we use the local derivative to determine the kink angles.
+					if(state->getLocation() != 271){
+						//Note that this says meas but it simple means that the states you access must be a scatterer. Since all our planes are scatterers then we can access all of them.
+						//However the only planes we are interest in are the ones that don't simply model the air.
+						unsigned int numData;
+						TVectorD aResidualsKink(2);//Measurement - Prediction
+						TVectorD aMeasErrorsKink(2);
+						TVectorD aResErrorsKink(2);
+						TVectorD aDownWeightsKink(2); 
+						traj->getScatResults( _vectorOfPairsStatesAndLabels.at(j).second, numData, aResidualsKink, aMeasErrorsKink, aResErrorsKink, aDownWeightsKink);
+						state->setKinks(aResidualsKink);
+						streamlog_out(DEBUG3) << endl << "State after we have added corrections: " << std::endl;
+						state->print();
+					}else{
+						vector<float> kinksX;
+						vector<float> kinksY;
+						float beforeKinkX=0;
+						float beforeKinkY=0;
+						for(int k=1 ; k<4 ; k++){
+							//TO DO: This will only work for 3 planes in the forward region for scattering measurements.
+							traj->getResults(_vectorOfPairsStatesAndLabels.at(j+k).second, corrections, correctionsCov );
+							kinksX.push_back(corrections[5]);
+							kinksY.push_back(corrections[6]);	
+						}
+						for(int k=0 ; k<kinksX.size();k++){
+							if(k != 0 and beforeKinkX != kinksX.at(k)){
+								throw(lcio::Exception("The estimated kink angle from each planes local derivative in the X direction is different. "));
+							}
+							if(k != 0 and beforeKinkY != kinksY.at(k)){
+								throw(lcio::Exception("The estimated kink angle from each planes local derivative in the Y direction is different. "));
+							}
+							beforeKinkX = kinksX.at(k);
+							beforeKinkY = kinksY.at(k);
+						}
+						TVectorD kinks(2);//Measurement - Prediction
+						kinks[0] = kinksX.at(0);
+						kinks[1] = kinksY.at(0);
+						state->setKinks(kinks);
+					}
 					break;
 				}
 			}//END of loop of all states with hits	

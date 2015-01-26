@@ -73,6 +73,7 @@ namespace eutelescope {
 			void setAlignmentToMeasurementJacobian(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList);
 			void setScattererGBL(gbl::GblPoint& point,EUTelState & state );
 			void setScattererGBL(gbl::GblPoint& point,EUTelState & state,  float  percentageRadiationLength);
+			void setLocalDerivativesToPoint(gbl::GblPoint& point, EUTelState & state, float distanceFromKinkTargetToNextPlane );
 			void setPointListWithNewScatterers(std::vector< gbl::GblPoint >& pointList,EUTelState & state, vector<float> variance );
 			void setMeasurementCov(EUTelState& state);
 			inline void setAlignmentMode( int number) {
