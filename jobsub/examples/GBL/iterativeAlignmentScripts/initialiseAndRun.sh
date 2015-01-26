@@ -67,4 +67,4 @@ echo "This is the resolutions X/Y:  $xres/$yres."
 
 #THIS WILL RUN THE ALIGNMENT PROCESS AS MANY TIME AS YOU LIKE TO IMPROVE ALIGNMENT
 $scriptsLocation/howManyIterationsDecider.sh -n "$numberOfIterations"
-$scriptsLocation/patRecAndTrackFit.sh -i "$outputGearFinal" -h "$histoNameInputFinal"  
+#$scriptsLocation/patRecAndTrackFit.sh -i "$outputGearFinal" -h "$histoNameInputFinal"  

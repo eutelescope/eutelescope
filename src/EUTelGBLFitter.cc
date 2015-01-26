@@ -576,7 +576,7 @@ namespace eutelescope {
 		for(size_t i=0;i < track.getStatesPointers().size(); i++){//We get the pointers no since we want to change the track state contents		
 			EUTelState* state = track.getStatesPointers().at(i);
 			TVectorD corrections(5);
-			TMatrixDSym correctionsCov(5,5);
+			TMatrixDSym correctionsCov(5);
 			for(size_t j=0 ; j< _vectorOfPairsStatesAndLabels.size();++j){
 				if(_vectorOfPairsStatesAndLabels.at(j).first == *state){
 					streamlog_out(DEBUG0)<<"The loop number for states with measurements is: " << j << ". The label is: " << _vectorOfPairsStatesAndLabels.at(j).second <<endl; 

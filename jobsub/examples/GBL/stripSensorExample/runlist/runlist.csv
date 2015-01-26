@@ -1,2 +1,4 @@
-RunNumber,BeamEnergy,Threshold,GearGeoFile
-613,4.4,6,gear-R=1-r=0.01-rx=0.25-613.xml
+RunNumber,PedestalRunNumber,TelescopeRunNumber,BeamEnergy,GearGeoFile
+613,000602,001057,4.4,gear-stripSensor.xml
+602,000602,,,gear-stripSensor.xml
+
