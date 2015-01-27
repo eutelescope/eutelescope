@@ -343,12 +343,6 @@ namespace eutelescope {
 			streamlog_message( DEBUG0, jacPointToPoint.Print();, std::endl; );
 			gbl::GblPoint point(jacPointToPoint);
 			EUTelState state = track.getStates().at(i);
-			//Here we set if we want to add local derivatives to points after we have found the plane we want to determine it's kink angle.
-			if(kinkAnglePlaneEstimationAddedNow){
-				setLocalDerivativesToPoint(point,state,distanceFromKinkTargetToNextPlane); 
-				//We add the distance to the next plane so we get the total distance to the target.
-				distanceFromKinkTargetToNextPlane=distanceFromKinkTargetToNextPlane + state.getArcLengthToNextState();
-			}
 			EUTelState nextState;
 			if(i != (track.getStates().size()-1)){//Since we don't want to propagate from the last state.
 				nextState = track.getStates().at(i+1);
@@ -370,6 +364,12 @@ namespace eutelescope {
 				double cov[4] ;
 				state.getCombinedHitAndStateCovMatrixInLocalFrame(cov);
 				setMeasurementGBL(point, state.getTrackerHits()[0]->getPosition(),  localPositionForState,  cov, state.getProjectionMatrix());
+				//Here we set if we want to add local derivatives to points after we have found the plane we want to determine it's kink angle.
+				if(kinkAnglePlaneEstimationAddedNow){
+					setLocalDerivativesToPoint(point,state,distanceFromKinkTargetToNextPlane); 
+					//We add the distance to the next plane so we get the total distance to the target.
+					distanceFromKinkTargetToNextPlane=distanceFromKinkTargetToNextPlane + state.getArcLengthToNextState();
+				}
 				_measurementStatesInOrder.push_back(state);//This is list of measurements states in the correct order. This is used later to associate MEASUREMENT states with point labels in alignment
 				setPointVec(pointList, point);
 			}//End of else statement if there is a hit.
@@ -661,6 +661,10 @@ namespace eutelescope {
 						for(int k=1 ; k<4 ; k++){
 							//TO DO: This will only work for 3 planes in the forward region for scattering measurements.
 							traj->getResults(_vectorOfPairsStatesAndLabels.at(j+k).second, corrections, correctionsCov );
+							if(corrections.GetNrows() != 7 ){
+								streamlog_out(MESSAGE9) << "The size of the corrections is: "<<corrections.GetNrows() << std::endl;
+								throw(lcio::Exception("The fitter is not creating the correct number of output parameters for correction to predict scattering angles."));
+							}
 							kinksX.push_back(corrections[5]);
 							kinksY.push_back(corrections[6]);	
 						}
