@@ -654,19 +654,23 @@ namespace eutelescope {
 						streamlog_out(DEBUG3) << endl << "State after we have added corrections: " << std::endl;
 						state->print();
 					}else{
+
 						vector<float> kinksX;
 						vector<float> kinksY;
 						float beforeKinkX=0;
 						float beforeKinkY=0;
+						TVectorD correctionsKinks(7);
+						TMatrixDSym correctionsCovKinks(7);
+
 						for(int k=1 ; k<4 ; k++){
 							//TO DO: This will only work for 3 planes in the forward region for scattering measurements.
-							traj->getResults(_vectorOfPairsStatesAndLabels.at(j+k).second, corrections, correctionsCov );
-							if(corrections.GetNrows() != 7 ){
-								streamlog_out(MESSAGE9) << "The size of the corrections is: "<<corrections.GetNrows() << std::endl;
+							traj->getResults(_vectorOfPairsStatesAndLabels.at(j+k).second, correctionsKinks, correctionsCovKinks );
+							if(correctionsKinks.GetNrows() != 7 ){
+								streamlog_out(MESSAGE9) << "The size of the corrections is: "<<correctionsKinks.GetNrows() << std::endl;
 								throw(lcio::Exception("The fitter is not creating the correct number of output parameters for correction to predict scattering angles."));
 							}
-							kinksX.push_back(corrections[5]);
-							kinksY.push_back(corrections[6]);	
+							kinksX.push_back(correctionsKinks[5]);
+							kinksY.push_back(correctionsKinks[6]);	
 						}
 						for(int k=0 ; k<kinksX.size();k++){
 							if(k != 0 and beforeKinkX != kinksX.at(k)){
@@ -679,6 +683,9 @@ namespace eutelescope {
 							beforeKinkY = kinksY.at(k);
 						}
 						TVectorD kinks(2);//Measurement - Prediction
+						cout << "X: " <<kinksX.at(0) <<endl;
+						cout << "Y: " <<kinksY.at(0) <<endl;
+
 						kinks[0] = kinksX.at(0);
 						kinks[1] = kinksY.at(0);
 						state->setKinks(kinks);
