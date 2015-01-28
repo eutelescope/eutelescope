@@ -661,8 +661,6 @@ namespace eutelescope {
 						TVectorD kinks(2);//Measurement - Prediction
 						kinks[0] = correctionsKinks[5];
 						kinks[1] = correctionsKinks[6];
-						cout << "X: " <<kinks[0] <<endl;
-						cout << "Y: " <<kinks[1] <<endl;
 
 						state->setKinks(kinks);
 					}
