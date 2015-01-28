@@ -163,6 +163,7 @@ void EUTelState::getCombinedHitAndStateCovMatrixInLocalFrame( double (&cov)[4] )
 	cov[3] = _covCombinedMatrix[3];
 }
 //TO DO:This matrix will only work for no tilted sensors. Must determine the generic projection matrix
+//This is not quite true since we deal with the jacobian in the local frame. This TO DO is old but must check.
 TMatrixD EUTelState::getProjectionMatrix() const {
 	TMatrixD projection(5,5);
 	projection.Zero();
