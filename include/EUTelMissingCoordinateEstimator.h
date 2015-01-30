@@ -149,6 +149,12 @@ namespace eutelescope {
         std::string _missingCoordinate;
         
         
+        //! Clone Hit
+        /*! This method is used to clone TrackerHitImpl object
+         */
+        TrackerHitImpl* cloneHit(TrackerHitImpl *inputHit);
+        
+        
     private:
         
         //! Run number

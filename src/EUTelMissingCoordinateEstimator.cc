@@ -194,8 +194,7 @@ void EUTelMissingCoordinateEstimator::processEvent (LCEvent * event) {
         
         
         // Store all hits in the new collection
-//        outputHitCollection->push_back(inputHit);
-        
+        outputHitCollection->push_back( cloneHit(inputHit) );
 
         
         
@@ -254,6 +253,49 @@ void EUTelMissingCoordinateEstimator::processEvent (LCEvent * event) {
     
     if ( isFirstEvent() ) _isFirstEvent = false;
 }
+
+TrackerHitImpl* EUTelMissingCoordinateEstimator::cloneHit(TrackerHitImpl *inputHit){
+    TrackerHitImpl * newHit = new TrackerHitImpl;
+    
+    // copy hit position
+    double hitPos[3];
+    hitPos = inputHit->getPosition();
+    newHit->setPosition( &hitPos[0] );
+    
+    // copy cov. matrix
+    float cov[TRKHITNCOVMATRIX] = {0.,0.,0.,0.,0.,0.};
+    cov = inputHit->getCovMatrix();
+    newHit->setCovMatrix( cov );
+    
+    // copy type
+    int type = inputHit->getType();
+    newHit->setType( type );
+    
+    // copy rawhits
+    LCObjectVec clusterVec = inputHit->getRawHits();
+    newHit->rawHits() = clusterVec;
+   
+    // lets try if we can copy cellIDs easyly TODO::delete this after checking
+    int cellIDs;
+    cellIDs = inputHit->getCellID0();
+    newHit->setCellID0(cellIDs);
+    cellIDs = inputHit->getCellID1();
+    newHit->setCellID1(cellIDs);
+    
+    
+/*    // Determine sensorID from the cluster data.
+    idHitEncoder["sensorID"] =  sensorID ;
+    
+    // set the local/global bit flag property for the hit
+    idHitEncoder["properties"] = 0; // init
+    if (!_wantLocalCoordinates) idHitEncoder["properties"] = kHitInGlobalCoord;
+    
+    // store values
+    idHitEncoder.setCellID( hit );
+ */
+    return newHit;
+}
+
 
 void EUTelMissingCoordinateEstimator::end()
 {
