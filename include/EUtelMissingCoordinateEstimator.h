@@ -8,28 +8,13 @@
 #ifndef EUTELMISSINGCOORDINATEESTIMATOR_H
 #define EUTELMISSINGCOORDINATEESTIMATOR_H
 
-// built only if GEAR is available
-#ifdef USE_GEAR
-// eutelescope includes ".h"
-#include "EUTelUtility.h"
-
 // marlin includes ".h"
 #include "marlin/Processor.h"
-
-// gear includes <.h>
-#include <gear/SiPlanesParameters.h>
-#include <gear/SiPlanesLayerLayout.h>
 
 // lcio includes <.h>
 #include <EVENT/LCRunHeader.h>
 #include <EVENT/LCEvent.h>
 #include <EVENT/LCCollection.h>
-
-// AIDA includes <.h>
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-#include <AIDA/IBaseHistogram.h>
-#endif
-
 #include <IMPL/LCCollectionVec.h>
 
 
@@ -174,5 +159,4 @@ namespace eutelescope {
     EUTelMissingCoordinateEstimator gEUTelMissingCoordinateEstimator;
     
 }
-#endif
 #endif
