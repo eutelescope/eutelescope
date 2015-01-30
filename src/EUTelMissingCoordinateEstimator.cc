@@ -174,73 +174,38 @@ void EUTelMissingCoordinateEstimator::processEvent (LCEvent * event) {
     vector<int> referencePlaneHits2;
     vector<int> dutPlaneHits;
 
+    // Here identify which hits come from reference planes or DUT
     for ( int iInputHits = 0; iInputHits < inputHitCollection->getNumberOfElements(); iInputHits++ )
     {
         TrackerHitImpl * inputHit = dynamic_cast<TrackerHitImpl*> ( inputHitCollection->getElementAt( iInputHits ) );
 
         int sensorID    = inputCellIDDecoder(inputHit)["sensorID"];
 
+        bool isDUTHit = false;
         // store the reference plane hits
         if (sensorID == _referencePlanes[0]) referencePlaneHits1.push_back(iInputHits);
         if (sensorID == _referencePlanes[1]) referencePlaneHits2.push_back(iInputHits);
         for (unsigned int i=0; i<_dutPlanes.size(); i++) {
-            if (sensorID == _dutPlanes[i]) dutPlaneHits.push_back(iInputHits);
+            if (sensorID == _dutPlanes[i]) {
+                dutPlaneHits.push_back(iInputHits);
+                isDUTHit = true;
+            }
         }
         
-        
-        //HERE
-        
-        
-        
-        
-        // Store all hits in the new collection
-        outputHitCollection->push_back( cloneHit(inputHit) );
-
-        
-        
-        
-//        TODO:: Not sure if I need to create new hit?
-        /*
-         
-         double telPos[3];
-
-         
-        // create the new hit
-        TrackerHitImpl * newHit = new TrackerHitImpl;
-        
-        hit->setPosition( &telPos[0] );
-        float cov[TRKHITNCOVMATRIX] = {0.,0.,0.,0.,0.,0.};
-        double resx = resolutionX;
-        double resy = resolutionY;
-        cov[0] = resx * resx; // cov(x,x)
-        cov[2] = resy * resy; // cov(y,y)
-        hit->setCovMatrix( cov );
-        hit->setType( clusterType  );
-        
-        // prepare a LCObjectVec to store the current cluster
-        LCObjectVec clusterVec;
-        clusterVec.push_back( channelList );
-        
-        // add the clusterVec to the hit
-        hit->rawHits() = clusterVec;
-        
-        // Determine sensorID from the cluster data.
-        idHitEncoder["sensorID"] =  sensorID ;
-        
-        // set the local/global bit flag property for the hit
-        idHitEncoder["properties"] = 0; // init
-        if (!_wantLocalCoordinates) idHitEncoder["properties"] = kHitInGlobalCoord;
-        
-        // store values
-        idHitEncoder.setCellID( hit );
-        
-        // add the new hit to the hit collection
-        hitCollection->push_back( hit );
-        
-        */
-        
-        
+        // Store all telescope hits in the new collection, we will store DUT hits after updating its position
+        if (!isDUTHit) {
+            outputHitCollection->push_back( cloneHit(inputHit) );
+        }
       }
+    
+    
+    
+    //HERE
+    
+    // now using reference planes fins the missing coordinate
+    
+    
+    
     
     try
     {
@@ -262,35 +227,34 @@ TrackerHitImpl* EUTelMissingCoordinateEstimator::cloneHit(TrackerHitImpl *inputH
     newHit->setPosition( &hitPos[0] );
     
     // copy cov. matrix
-    EVENT::FloatVec cov = inputHit->getCovMatrix();
-    newHit->setCovMatrix( cov );
+    newHit->setCovMatrix( inputHit->getCovMatrix() );
     
     // copy type
-    int type = inputHit->getType();
-    newHit->setType( type );
+    newHit->setType( inputHit->getType() );
     
     // copy rawhits
     LCObjectVec clusterVec = inputHit->getRawHits();
     newHit->rawHits() = clusterVec;
    
-    // lets try if we can copy cellIDs easyly TODO::delete this after checking
-    int cellIDs;
-    cellIDs = inputHit->getCellID0();
-    newHit->setCellID0(cellIDs);
-    cellIDs = inputHit->getCellID1();
-    newHit->setCellID1(cellIDs);
+    // copy cell IDs
+    newHit->setCellID0( inputHit->getCellID0() );
+    newHit->setCellID1( inputHit->getCellID1() );
     
+    // copy dEdX
+    newHit->setdEdx( inputHit->getdEdx() );
     
-/*    // Determine sensorID from the cluster data.
-    idHitEncoder["sensorID"] =  sensorID ;
+    // copy EDep
+    newHit->setEDep( inputHit->getEDep() );
+
+    // copy EDepError
+    newHit->setEDepError( inputHit->getEDepError() );
     
-    // set the local/global bit flag property for the hit
-    idHitEncoder["properties"] = 0; // init
-    if (!_wantLocalCoordinates) idHitEncoder["properties"] = kHitInGlobalCoord;
+    // copy Time
+    newHit->setTime( inputHit->getTime() );
     
-    // store values
-    idHitEncoder.setCellID( hit );
- */
+    // copy Quality
+    newHit->setQuality( inputHit->getQuality() );
+
     return newHit;
 }
 
