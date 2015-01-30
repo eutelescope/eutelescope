@@ -240,9 +240,6 @@ TrackerHitImpl* EUTelMissingCoordinateEstimator::cloneHit(TrackerHitImpl *inputH
     newHit->setCellID0( inputHit->getCellID0() );
     newHit->setCellID1( inputHit->getCellID1() );
     
-    // copy dEdX
-    newHit->setdEdx( inputHit->getdEdx() );
-    
     // copy EDep
     newHit->setEDep( inputHit->getEDep() );
 
