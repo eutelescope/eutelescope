@@ -26,6 +26,7 @@
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/TrackerHitImpl.h>
 #include <UTIL/CellIDDecoder.h>
+#include <UTIL/CellIDEncoder.h>
 
 // system includes <>
 #include <string>
@@ -48,7 +49,7 @@ _inputHitCollectionName(),
 _outputHitCollectionName(),
 _referencePlanes(),
 _dutPlanes(),
-_missingCoordinate("X"),
+_missingCoordinate(),
 _iRun(0),
 _iEvt(0)
 {
@@ -63,7 +64,7 @@ _iEvt(0)
     
     registerProcessorParameter("DUTPlanes","This is the list of sensorIDs that missing coordinate of their hits needs to be found. Notice that if the specified coordinate already exists it will be overwritten", _dutPlanes, EVENT::IntVec() );
     
-    registerProcessorParameter("MissingCoordinate","The coordinate axis that needs to be estimated. You have to set this to either X or Y.", _missingCoordinate, char("X") );
+    registerProcessorParameter("MissingCoordinate","The coordinate axis that needs to be estimated. You have to set this to either X or Y.", _missingCoordinate, string("X") );
     
     
 }
@@ -86,11 +87,12 @@ void EUTelMissingCoordinateEstimator::init() {
     
     // check if _missingCoordinate is valid
     // if it is given as lowercase make them uppercase letters
-    if (_missingCoordinate == "x") _missingCoordinate = "X";
-    if (_missingCoordinate == "y") _missingCoordinate = "Y";
+    if (_missingCoordinate == string("x")) _missingCoordinate = string("X");
+    if (_missingCoordinate == string("y")) _missingCoordinate = string("Y");
     
-    if (_missingCoordinate == "X" || _missingCoordinate == "Y")
+    if (_missingCoordinate == string("X") || _missingCoordinate == string("Y") ) {
         streamlog_out (DEBUG4) << "MissingCoordinate value set as: "<< _missingCoordinate << std::endl;
+}
     else {
         streamlog_out (ERROR4) << "MissingCoordinate value ("<<_missingCoordinate<<") is not valid!"<< std::endl;
         exit(-1);
@@ -192,7 +194,7 @@ void EUTelMissingCoordinateEstimator::processEvent (LCEvent * event) {
         
         
         // Store all hits in the new collection
-        outputHitCollection->push_back(inputHit);
+//        outputHitCollection->push_back(inputHit);
         
 
         

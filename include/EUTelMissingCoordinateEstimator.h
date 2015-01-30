@@ -8,6 +8,10 @@
 #ifndef EUTELMISSINGCOORDINATEESTIMATOR_H
 #define EUTELMISSINGCOORDINATEESTIMATOR_H
 
+// eutelescope includes ".h"
+#include "EUTelUtility.h"
+
+
 // marlin includes ".h"
 #include "marlin/Processor.h"
 
@@ -142,7 +146,7 @@ namespace eutelescope {
         /*! The coordinate axis that needs to be estimated. 
          *  You have to set this to either X or Y.
          */
-        char _missingCoordinate;
+        std::string _missingCoordinate;
         
         
     private:
