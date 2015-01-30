@@ -258,13 +258,11 @@ TrackerHitImpl* EUTelMissingCoordinateEstimator::cloneHit(TrackerHitImpl *inputH
     TrackerHitImpl * newHit = new TrackerHitImpl;
     
     // copy hit position
-    double hitPos[3];
-    hitPos = inputHit->getPosition();
+    const double* hitPos = inputHit->getPosition();
     newHit->setPosition( &hitPos[0] );
     
     // copy cov. matrix
-    float cov[TRKHITNCOVMATRIX] = {0.,0.,0.,0.,0.,0.};
-    cov = inputHit->getCovMatrix();
+    EVENT::FloatVec cov = inputHit->getCovMatrix();
     newHit->setCovMatrix( cov );
     
     // copy type
