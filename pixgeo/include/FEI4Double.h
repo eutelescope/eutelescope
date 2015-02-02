@@ -38,6 +38,11 @@ class FEI4Double : public EUTelGenericPixGeoDescr {
 
 };
 
+extern "C"
+{
+	EUTelGenericPixGeoDescr* maker();
+};
+
 } //namespace geo
 } //namespace eutelescope
 

@@ -75,8 +75,14 @@ std::string FEI4Double::getPixName(int x , int y)
 	return std::string( buffer ); 
 }
 
-	//TODO: parse the path to a pixel number!
-	std::pair<int, int>  FEI4Double::getPixIndex(char const*){return std::make_pair(0,0); }
+//TODO: parse the path to a pixel number!
+std::pair<int, int>  FEI4Double::getPixIndex(char const*){return std::make_pair(0,0); }
+
+EUTelGenericPixGeoDescr* maker()
+{
+	FEI4Double* mPixGeoDescr = new FEI4Double();
+	return dynamic_cast<EUTelGenericPixGeoDescr*>(mPixGeoDescr);
+}
 
 } //namespace geo
 } //namespace eutelescope

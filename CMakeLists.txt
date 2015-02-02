@@ -154,6 +154,7 @@ ADD_DEFINITIONS("-DDO_TESTING")
 # include directories
 INCLUDE_DIRECTORIES( ./include )
 INCLUDE_DIRECTORIES( ./include/alibava )
+INCLUDE_DIRECTORIES( ./pixgeo/include/ )
 
 # definitions to pass to the compiler
 ADD_DEFINITIONS( "-Wall -ansi -pedantic -Wextra" )
@@ -171,6 +172,19 @@ AUX_SOURCE_DIRECTORY( ./src/alibava library_sources )
 ADD_SHARED_LIBRARY( ${libname} ${library_sources} )
 INSTALL_SHARED_LIBRARY( ${libname} DESTINATION lib )
 #INSTALL_SHARED_LIBRARY( GBL DESTINATION lib )
+
+#Pixel Geometry Shared Libraries
+ADD_LIBRARY( FEI4Single SHARED ./pixgeo/src/FEI4Single.cc)
+ADD_LIBRARY( FEI4Double SHARED ./pixgeo/src/FEI4Double.cc)
+ADD_LIBRARY( FEI4FourChip SHARED ./pixgeo/src/FEI4FourChip.cc)
+ADD_LIBRARY( Mimosa26 SHARED ./pixgeo/src/Mimosa26.cc)
+
+INSTALL_SHARED_LIBRARY( FEI4Single DESTINATION ./pixgeo/lib )
+INSTALL_SHARED_LIBRARY( FEI4Double DESTINATION ./pixgeo/lib )
+INSTALL_SHARED_LIBRARY( FEI4FourChip DESTINATION ./pixgeo/lib )
+INSTALL_SHARED_LIBRARY( Mimosa26 DESTINATION ./pixgeo/lib )
+
+
 
 # Properly add the CMSPixelDecoder external dependency:
 ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}/external/CMSPixelDecoder)
