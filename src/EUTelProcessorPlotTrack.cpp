@@ -17,20 +17,10 @@ _tracksOutputCollectionName("Default_output"){
   registerOutputCollection(LCIO::TRACK,"TracksOutputCollectionName","Output tracks collection name",_tracksOutputCollectionName,std::string("TrackCollection"));
 
   registerOptionalParameter("HistogramInfoFilename", "Name of histogram info xml file", _histoInfoFileName, std::string("histoinfo.xml"));
-
-
-
-
-
-
 }
 
 
 void EUTelProcessorPlotTrack::init(){
-	streamlog_out(DEBUG5) << "Book Histograms!" << std::endl;
-	EUTelHistogram histo("GBLFit", _histoInfoFileName);
-
-
 }
 
 void EUTelProcessorPlotTrack::processRunHeader(LCRunHeader * run) {}
