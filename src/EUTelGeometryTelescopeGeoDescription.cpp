@@ -57,7 +57,6 @@ EUTelGeometryTelescopeGeoDescription& EUTelGeometryTelescopeGeoDescription::getI
 	}
 	
 	instance.counter();
-
 	return instance;
 }
 
@@ -143,27 +142,28 @@ TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneYAxis( int planeID )
 }
 
 /**TODO: Replace me: NOP*/
-void EUTelGeometryTelescopeGeoDescription::initialisePlanesToExcluded(FloatVec planeIDs ){
+void EUTelGeometryTelescopeGeoDescription::initialisePlanesToExcluded(FloatVec planeIDs)
+{
 	int counter=0;
 	for(size_t i = 0 ; i <_sensorZOrderToIDMap.size(); ++i){
-		bool excluded=false;
-		for(size_t j =0; j< planeIDs.size(); ++j){
-			if(_sensorZOrderToIDMap[i] == planeIDs[j]){
-				excluded=true;
-				break;
-			} 
-		}
-		if(!excluded){
-			_sensorIDToZOrderWithoutExcludedPlanes[_sensorZOrderToIDMap[i]] =  counter;
-			_sensorZOrderToIDWithoutExcludedPlanes[counter]=_sensorZOrderToIDMap[i];
-			counter++;
-		}
+			bool excluded=false;
+			for(size_t j =0; j< planeIDs.size(); ++j){
+					if(_sensorZOrderToIDMap[i] == planeIDs[j]){
+							excluded=true;
+							break;
+					} 
+			}
+			if(!excluded){
+					_sensorIDToZOrderWithoutExcludedPlanes[_sensorZOrderToIDMap[i]] =  counter;
+					_sensorZOrderToIDWithoutExcludedPlanes[counter]=_sensorZOrderToIDMap[i];
+					counter++;
+			}
 	}
 	//Check if the number of excluded planes set is the same as (total-number of plane IDs inputed that should be excluded)
 	if(geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() != (geo::gGeometry().sensorIDstoZOrder().size()-planeIDs.size())){
-		throw(lcio::Exception( "The number of Planes-Excluded is not correct. This could be a problem with geometry."));
+			throw(lcio::Exception( "The number of Planes-Excluded is not correct. This could be a problem with geometry."));
 	}else{
-		streamlog_out(DEBUG0) <<"The correct number of planes have been excluded" << std::endl;
+			streamlog_out(DEBUG0) <<"The correct number of planes have been excluded" << std::endl;
 	}
 }
 
@@ -372,19 +372,19 @@ void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout()
 
 EUTelGeometryTelescopeGeoDescription::EUTelGeometryTelescopeGeoDescription() :
 _gearManager( marlin::Global::GEAR ),
-_siPlanesDefined (false),
-_telPlanesDefined (false),
-_siPlanesParameters(0),
-_siPlanesLayerLayout(0),
-_trackerPlanesParameters(0),
-_trackerPlanesLayerLayout(0),
+_siPlanesDefined(false),
+_telPlanesDefined(false),
+_siPlanesParameters(nullptr),
+_siPlanesLayerLayout(nullptr),
+_trackerPlanesParameters(nullptr),
+_trackerPlanesLayerLayout(nullptr),
 _sensorIDVec(),
 _sensorIDVecMap(),
 _sensorZOrderToIDMap(),
 _sensorIDtoZOrderMap(),
 _nPlanes(0),
 _isGeoInitialized(false),
-_geoManager(0)
+_geoManager(nullptr)
 {
 	//Set ROOTs verbosity to only display error messages or higher (so info will not be streamed to stderr)
 	gErrorIgnoreLevel =  kError;  
@@ -393,43 +393,52 @@ _geoManager(0)
 	_pixGeoMgr = new EUTelGenericPixGeoMgr();
 }
 
-void EUTelGeometryTelescopeGeoDescription::readGear() {
-	
-    if ( _gearManager == 0 ) {
+void EUTelGeometryTelescopeGeoDescription::readGear()
+{
+    if( _gearManager == nullptr )
+	{
         streamlog_out(ERROR2) << "The GearMgr is not available, for an unknown reason." << std::endl;
         throw eutelescope::InvalidGeometryException("GEAR manager is not initialised");
     }
 
-    _siPlanesDefined = false;
-    _telPlanesDefined = false;
-
-    try{
+    try
+	{
       _siPlanesParameters = const_cast< gear::SiPlanesParameters*> (&(_gearManager->getSiPlanesParameters()));
       streamlog_out(MESSAGE1)  << "gear::SiPlanes : " << _siPlanesParameters << std::endl;
       _siPlanesDefined = true;
-    }catch(...){
-      streamlog_out(WARNING)   << "gear::SiPlanes NOT found " << std::endl;
+    }
+	catch(...)
+	{
+		streamlog_out(WARNING)   << "gear::SiPlanes NOT found " << std::endl;
+    }
+    try
+	{
+		_trackerPlanesParameters = const_cast< gear::TrackerPlanesParameters*> (&(_gearManager->getTrackerPlanesParameters()));
+		streamlog_out(MESSAGE1)  << "gear::TrackerPlanes : " << _trackerPlanesParameters << std::endl;
+		_telPlanesDefined = true;
+	}
+	catch(...)
+	{
+		streamlog_out(WARNING)   << "gear::TrackerPlanes NOT found "  << std::endl;
     }
 
-    try{
-      _trackerPlanesParameters = const_cast< gear::TrackerPlanesParameters*> (&(_gearManager->getTrackerPlanesParameters()));
-      streamlog_out(MESSAGE1)  << "gear::TrackerPlanes : " << _trackerPlanesParameters << std::endl;
-      _telPlanesDefined = true;
-    }catch(...){
-      streamlog_out(WARNING)   << "gear::TrackerPlanes NOT found "  << std::endl;
-
+    if( _siPlanesDefined )
+	{
+		readSiPlanesLayout();
     }
-
-    if( _siPlanesDefined ){
-      readSiPlanesLayout();
+    else if( _telPlanesDefined )
+	{
+		readTrackerPlanesLayout();
     }
-    else if( _telPlanesDefined ){
-      readTrackerPlanesLayout();
-    }
-
+	else
+	{
+		streamlog_out(ERROR5) << "Your GEAR file neither contains SiPlanes nor TrackerPlanes and thus is not valid" << std::endl;
+		throw eutelescope::InvalidGeometryException("GEAR file invalid, does not contain SiPlanes nor TrackerPlanes");
+	}
 }
 
-EUTelGeometryTelescopeGeoDescription::~EUTelGeometryTelescopeGeoDescription() {
+EUTelGeometryTelescopeGeoDescription::~EUTelGeometryTelescopeGeoDescription()
+{
 	delete _geoManager;
 	delete _pixGeoMgr;
 }
