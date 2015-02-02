@@ -99,7 +99,7 @@ namespace eutelescope {
 			void setMEstimatorType( const std::string& _mEstimatorType );
 			//GET
 			gbl::GblPoint getLabelToPoint(std::vector<gbl::GblPoint> & pointList, int label);
-			void getResidualOfTrackandHits(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint > pointList, EUTelTrack& track, map< int, map< float, float > > & SensorResidual, map< int, map< float, float > >& sensorResidualError);
+			void getResidualOfTrackandHits(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint > pointList, EUTelTrack& track, std::map< int, std::map< float, float > > & SensorResidual, std::map< int, std::map< float, float > >& sensorResidualError);
 			inline int getAlignmentMode() const {
 				return _alignmentMode;
 			}
@@ -129,8 +129,8 @@ namespace eutelescope {
 			void resetPerTrack();
 			void findScattersZPositionBetweenTwoStates(EUTelState& state);
 			TMatrixD findScattersJacobians(EUTelState state, EUTelState nextTrack);
-			void updateTrackFromGBLTrajectory(gbl::GblTrajectory* traj,std::vector< gbl::GblPoint >& pointList, EUTelTrack & track, map<int, vector<double> > &  mapSensorIDToCorrectionVec );
-			void prepareLCIOTrack( gbl::GblTrajectory*, vector<const IMPL::TrackImpl*>::const_iterator&, double, int); 
+			void updateTrackFromGBLTrajectory(gbl::GblTrajectory* traj, std::vector<gbl::GblPoint>& pointList, EUTelTrack& track, std::map<int,std::vector<double> >& mapSensorIDToCorrectionVec );
+			void prepareLCIOTrack( gbl::GblTrajectory*, std::vector<const IMPL::TrackImpl*>::const_iterator&, double, int); 
 			void prepareMilleOut( gbl::GblTrajectory* );
 
 			//VARIABLES
@@ -170,8 +170,8 @@ namespace eutelescope {
 			std::map<int,int> _parameterIdYRotationsMap;
 			/** Parameter ids */
 			std::map<int,int> _parameterIdZRotationsMap;
-			std::vector< pair< EUTelState, int> > _vectorOfPairsMeasurementStatesAndLabels;//This is used within alignment since you need to associate MEASUREMENT states to  labels
-			std::vector< pair< EUTelState, int> > _vectorOfPairsStatesAndLabels;//This is used in track fit since you want to associate ANY states to labels.
+			std::vector< std::pair< EUTelState, int> > _vectorOfPairsMeasurementStatesAndLabels;//This is used within alignment since you need to associate MEASUREMENT states to  labels
+			std::vector< std::pair< EUTelState, int> > _vectorOfPairsStatesAndLabels;//This is used in track fit since you want to associate ANY states to labels.
 			unsigned int _counter_num_pointer;
 			EUTelMillepede* _MilleInterface;
         

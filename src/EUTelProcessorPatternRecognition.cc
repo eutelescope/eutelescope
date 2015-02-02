@@ -12,6 +12,9 @@
  */
 //If you are using static variables then for the most part you are doing something wrong. 
 //TO DO: Create new Histograming procedure! 
+
+using namespace eutelescope;
+
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 std::string EUTelProcessorPatternRecognition::_histName::_numberTracksCandidatesHistName = "NumberTracksCandidates";
 std::string EUTelProcessorPatternRecognition::_histName::_numberOfHitOnTrackCandidateHistName = "NumberOfHitsOnTrackCandidate";
@@ -93,7 +96,7 @@ void EUTelProcessorPatternRecognition::init(){
 		geo::gGeometry().initialisePlanesToExcluded(_excludePlanes);//We specify the excluded planes here since this is rather generic and can be used by other processors
 		geo::gGeometry().setInitialDisplacementToFirstPlane(_initialDisplacement);//We specify this here so we can access it throughout this processor. 
 		{ 
-			streamlog_out(MESSAGE5)<<endl<<"These are the planes you will create a state from. Mass inbetween states will be turned to scatterers in GBLTrackProcessor."<<endl;
+			streamlog_out(MESSAGE5)<<std::endl<<"These are the planes you will create a state from. Mass inbetween states will be turned to scatterers in GBLTrackProcessor."<<std::endl;
 			for(int i =0 ; i < geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size(); ++i){
 				streamlog_out(MESSAGE5)<<geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)<<"  ";
 			}
@@ -121,22 +124,22 @@ void EUTelProcessorPatternRecognition::init(){
 	}
 	catch(std::string &e){
 		streamlog_out(MESSAGE9) << e << std::endl;
-		throw StopProcessingException( this ) ;
+		throw marlin::StopProcessingException( this ) ;
 	}
 	catch(lcio::Exception& e){
-		streamlog_out(MESSAGE9) << e.what() <<endl;
-		throw StopProcessingException( this ) ;
+		streamlog_out(MESSAGE9) << e.what() <<std::endl;
+		throw marlin::StopProcessingException( this ) ;
 
 	}
 	catch(...){
-		streamlog_out(MESSAGE9)<<"Unknown exception in init function of pattern recognition" <<endl;
-		throw StopProcessingException( this ) ;
+		streamlog_out(MESSAGE9)<<"Unknown exception in init function of pattern recognition" <<std::endl;
+		throw marlin::StopProcessingException( this ) ;
 	}
 }
 
 void EUTelProcessorPatternRecognition::processRunHeader(LCRunHeader* run) {
 
-	auto_ptr<EUTelRunHeaderImpl> header(new EUTelRunHeaderImpl(run));
+	std::auto_ptr<EUTelRunHeaderImpl> header(new EUTelRunHeaderImpl(run));
 	header->addProcessor(type());//Add what processor has acted to collection here. 
 
 	// this is the right place also to check the geometry ID. This is a
@@ -145,14 +148,14 @@ void EUTelProcessorPatternRecognition::processRunHeader(LCRunHeader* run) {
 	// in the xml file. If the numbers are different, warn the user.
 
 	if (header->getGeoID() == 0)
-		streamlog_out(WARNING0) << "The geometry ID in the run header is set to zero." << endl
-		<< "This may mean that the GeoID parameter was not set" << endl;
+		streamlog_out(WARNING0) << "The geometry ID in the run header is set to zero." << std::endl
+		<< "This may mean that the GeoID parameter was not set" << std::endl;
 
 
 	if ((unsigned int)header->getGeoID() != geo::gGeometry().getSiPlanesLayoutID()) {
-		streamlog_out(WARNING5) << "Error during the geometry consistency check: " << endl
-				<< "The run header says the GeoID is " << header->getGeoID() << endl
-				<< "The GEAR description says is     " << geo::gGeometry().getSiPlanesLayoutID() << endl;
+		streamlog_out(WARNING5) << "Error during the geometry consistency check: " << std::endl
+				<< "The run header says the GeoID is " << header->getGeoID() << std::endl
+				<< "The GEAR description says is     " << geo::gGeometry().getSiPlanesLayoutID() << std::endl;
 	}
 	_trackFitter->clearEveryRun();//This just sets the counter for the total number of hits/total number of shared hits to zero. 		
 		_nProcessedRuns++;
@@ -191,7 +194,7 @@ void EUTelProcessorPatternRecognition::processEvent(LCEvent * evt) {
 		_trackFitter->setHitsVecPerPlane();//Create map Sensor ID(non excluded)->HitsVec (Using geometry)
 		streamlog_out(DEBUG2) << "Test hits on the planes" << std::endl;
 		_trackFitter->testHitsVecPerPlane();//tests the size of the map and does it contain hits
-		streamlog_out( DEBUG1 ) << "Trying to find tracks..." << endl;
+		streamlog_out( DEBUG1 ) << "Trying to find tracks..." << std::endl;
 		_trackFitter->initialiseSeeds();//Create first states from hits. TO DO: This will not work for strip sensors. Not a big deal since we should not seed from strip sensors.
 		_trackFitter->testInitialSeeds();//Check hits not NULL and size correct
 	// searching for hits along the expected track direction 
@@ -202,7 +205,7 @@ void EUTelProcessorPatternRecognition::processEvent(LCEvent * evt) {
 	// remove possible duplicates (the amount of commont hits on the split tracks is controled via the processor paraemter)
 		_trackFitter->findTrackCandidatesWithSameHitsAndRemove();//This will compare all tracks and if they have more than the allowed number of similar hits then remove. 
 		_trackFitter->testTrackQuality();//Here we test how many tracks we have after all cuts
-		streamlog_out( DEBUG1 ) << "Retrieving track candidates..." << endl;
+		streamlog_out( DEBUG1 ) << "Retrieving track candidates..." << std::endl;
 
 		std::vector<EUTelTrack>& tracks = _trackFitter->getTracks();//Get the tracks from the patternRecognition class. 
 
@@ -218,15 +221,15 @@ void EUTelProcessorPatternRecognition::processEvent(LCEvent * evt) {
 	}
 	catch(std::string &e){
 		streamlog_out(MESSAGE9) << e << std::endl;
-		throw StopProcessingException( this ) ;
+		throw marlin::StopProcessingException( this ) ;
 	}
 	catch(lcio::Exception& e){
-		streamlog_out(MESSAGE9) << e.what() <<endl;
-		throw StopProcessingException( this ) ;
+		streamlog_out(MESSAGE9) << e.what() <<std::endl;
+		throw marlin::StopProcessingException( this ) ;
 	}
 	catch(...){
-		streamlog_out(MESSAGE9)<<"Unknown exception in process function of pattern recognition" <<endl;
-		throw StopProcessingException( this ) ;
+		streamlog_out(MESSAGE9)<<"Unknown exception in process function of pattern recognition" <<std::endl;
+		throw marlin::StopProcessingException( this ) ;
 	}
 }
 
@@ -261,18 +264,18 @@ void EUTelProcessorPatternRecognition::outputLCIO(LCEvent* evt, std::vector<EUTe
 
 		//Now add this collection to the 
 		evt->addCollection(trkCandCollection, _trackCandidateHitsOutputCollectionName);
-		string stateString = _trackCandidateHitsOutputCollectionName + "_States"; 
+		std::string stateString = _trackCandidateHitsOutputCollectionName + "_States"; 
 		evt->addCollection(stateCandCollection, stateString);
 	}
 	streamlog_out( DEBUG4 ) << " ---------------- EUTelProcessorPatternRecognition::outputLCIO ---------- END ------------- " << std::endl;
 }
 //TO DO: find a more generic way to plot histograms
-void EUTelProcessorPatternRecognition::plotHistos( vector<EUTelTrack>& trackCandidates)  {
+void EUTelProcessorPatternRecognition::plotHistos( std::vector<EUTelTrack>& trackCandidates)  {
 
 	const int nTracks = trackCandidates.size( );
  
 	static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_numberTracksCandidatesHistName ] ) -> fill( nTracks );
-	streamlog_out( MESSAGE2 ) << "Event #" << _nProcessedEvents << endl;
+	streamlog_out( MESSAGE2 ) << "Event #" << _nProcessedEvents << std::endl;
 	int numberOfHits =0;
 	for (size_t i = 0; i< trackCandidates.size( ) ; ++i ) {//loop over all tracks
 		for(size_t j = 0; j <trackCandidates[i].getTracks().size(); ++j){//loop over all states 
@@ -293,7 +296,7 @@ void EUTelProcessorPatternRecognition::check(LCEvent * /*evt*/) {
 }
 
 void EUTelProcessorPatternRecognition::end() {
-    streamlog_out(MESSAGE9) <<"The average number of tracks per event: " << static_cast<float>(_trackFitter->getNumberOfTracksAfterPruneCut())/static_cast<float>(_nProcessedEvents) <<endl; 
+    streamlog_out(MESSAGE9) <<"The average number of tracks per event: " << static_cast<float>(_trackFitter->getNumberOfTracksAfterPruneCut())/static_cast<float>(_nProcessedEvents) <<std::endl; 
     delete _trackFitter;
     streamlog_out(MESSAGE9) << "EUTelProcessorPatternRecognition::end()  " << name()
             << " processed " << _nProcessedEvents << " events in " << _nProcessedRuns << " runs "
@@ -308,19 +311,19 @@ void EUTelProcessorPatternRecognition::bookHistograms() {
     try {
         streamlog_out(DEBUG) << "Booking histograms..." << std::endl;
 
-        auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
+        std::auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
         EUTelHistogramInfo    * histoInfo;
         bool                    isHistoManagerAvailable;
 
         try {
             isHistoManagerAvailable = histoMgr->init( );
-        } catch ( ios::failure& e ) {
+        } catch ( std::ios::failure& e ) {
             streamlog_out( ERROR5 ) << "I/O problem with " << _histoInfoFileName << "\n"
-                    << "Continuing without histogram manager using default settings"    << endl;
+                    << "Continuing without histogram manager using default settings"    << std::endl;
             isHistoManagerAvailable = false;
-        } catch ( ParseException& e ) {
+        } catch ( marlin::ParseException& e ) {
             streamlog_out( ERROR5 ) << e.what( ) << "\n"
-                    << "Continuing without histogram manager using default settings" << endl;
+                    << "Continuing without histogram manager using default settings" << std::endl;
             isHistoManagerAvailable = false;
         }
         
@@ -342,8 +345,8 @@ void EUTelProcessorPatternRecognition::bookHistograms() {
             numberTracksCandidates->setTitle("Number of track candidates;N tracks;N events");
             _aidaHistoMap1D.insert(make_pair(_histName::_numberTracksCandidatesHistName, numberTracksCandidates));
         } else {
-            streamlog_out(ERROR2) << "Problem booking the " << (_histName::_numberTracksCandidatesHistName) << endl;
-            streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+            streamlog_out(ERROR2) << "Problem booking the " << (_histName::_numberTracksCandidatesHistName) << std::endl;
+            streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << std::endl;
 	        }
 			const int chiNbins = 5000;
 			const double chiXmin = 0;
@@ -387,8 +390,8 @@ void EUTelProcessorPatternRecognition::bookHistograms() {
             numberHitsOnTrackCandidates->setTitle("Number of hits on track candidates;N hits;N tracks");
             _aidaHistoMap1D.insert(make_pair(_histName::_numberOfHitOnTrackCandidateHistName, numberHitsOnTrackCandidates));
         } else {
-            streamlog_out(ERROR2) << "Problem booking the " << (_histName::_numberOfHitOnTrackCandidateHistName) << endl;
-            streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+            streamlog_out(ERROR2) << "Problem booking the " << (_histName::_numberOfHitOnTrackCandidateHistName) << std::endl;
+            streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << std::endl;
         }
 
         const int    nhitsNBin = 40;
@@ -409,12 +412,12 @@ void EUTelProcessorPatternRecognition::bookHistograms() {
             HitsOnTrackCandidates->setTitle("hits on track candidates;N hits;N tracks");
             _aidaHistoMap1D.insert(make_pair(_histName::_HitOnTrackCandidateHistName, HitsOnTrackCandidates));
         } else {
-            streamlog_out(ERROR2) << "Problem booking the " << (_histName::_HitOnTrackCandidateHistName) << endl;
-            streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+            streamlog_out(ERROR2) << "Problem booking the " << (_histName::_HitOnTrackCandidateHistName) << std::endl;
+            streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << std::endl;
         }
        
     } catch (lcio::Exception& e) {
-        streamlog_out(WARNING2) << "Can't allocate histograms. Continue without histogramming" << endl;
+        streamlog_out(WARNING2) << "Can't allocate histograms. Continue without histogramming" << std::endl;
     }
 #endif // defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 }

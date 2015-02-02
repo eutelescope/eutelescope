@@ -11,18 +11,12 @@
 //EUTelescope
 #include "EUTelUtility.h"
 
-
-using namespace lcio;
-using namespace marlin;
-using namespace std;
-
-
 namespace eutelescope {
 
-	class  EUTelProcessorDefault : public Processor {
+	class  EUTelProcessorDefault : public marlin::Processor {
 
   	private:
-  	DISALLOW_COPY_AND_ASSIGN(EUTelProcessorDefault)      // prevent users from making (default) copies of processors
+  	DISALLOW_COPY_AND_ASSIGN(EUTelProcessorDefault)
         
     public:
 

@@ -28,10 +28,10 @@ void EUTelProcessorTrackAnalysis::processEvent(LCEvent * evt){
 	EUTelEventImpl * event = static_cast<EUTelEventImpl*> (evt); ///We change the class so we can use EUTelescope functions
 
 	if (event->getEventType() == kEORE) {
-		streamlog_out(DEBUG4) << "EORE found: nothing else to do." << endl;
+		streamlog_out(DEBUG4) << "EORE found: nothing else to do." << std::endl;
 		return;
 	}else if (event->getEventType() == kUNKNOWN) {
-		streamlog_out(WARNING2) << "Event number " << event->getEventNumber() << " in run " << event->getRunNumber() << " is of unknown type. Continue considering it as a normal Data Event." << endl;
+		streamlog_out(WARNING2) << "Event number " << event->getEventNumber() << " in run " << event->getRunNumber() << " is of unknown type. Continue considering it as a normal Data Event." << std::endl;
 	}
 	LCCollection* eventCollection = NULL;
 	try {
@@ -42,7 +42,7 @@ void EUTelProcessorTrackAnalysis::processEvent(LCEvent * evt){
 		throw marlin::SkipEventException(this);
 	}
 	if (eventCollection != NULL) {
-		streamlog_out(DEBUG2) << "Collection contains data! Continue!" << endl;
+		streamlog_out(DEBUG2) << "Collection contains data! Continue!" << std::endl;
 		for (int iTrack = 0; iTrack < eventCollection->getNumberOfElements(); ++iTrack){
 			EUTelTrack track = *(static_cast<EUTelTrack*> (eventCollection->getElementAt(iTrack)));
 			_analysis->plotResidualVsPosition(track);	
@@ -69,19 +69,19 @@ void	EUTelProcessorTrackAnalysis::initialiseResidualVsPositionHistograms(){
 	double MaxZ;
 
 	std::string _histoInfoFileName="histoInfo.xml";
-	auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
+	std::auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
 	EUTelHistogramInfo    * histoInfo;
 	bool                    isHistoManagerAvailable;
 
 	try {
 			isHistoManagerAvailable = histoMgr->init( );
-	} catch ( ios::failure& e ) {
+	} catch ( std::ios::failure& e ) {
 			streamlog_out( ERROR5 ) << "I/O problem with " << _histoInfoFileName << "\n"
-							<< "Continuing without histogram manager using default settings"    << endl;
+							<< "Continuing without histogram manager using default settings"    << std::endl;
 			isHistoManagerAvailable = false;
-	} catch ( ParseException& e ) {
+	} catch ( marlin::ParseException& e ) {
 			streamlog_out( ERROR5 ) << e.what( ) << "\n"
-							<< "Continuing without histogram manager using default settings" << endl;
+							<< "Continuing without histogram manager using default settings" << std::endl;
 			isHistoManagerAvailable = false;
 	}
 

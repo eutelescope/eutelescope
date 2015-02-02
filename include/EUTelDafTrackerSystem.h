@@ -14,13 +14,13 @@
 #include <cmath>
 #include <iostream>
 
-using namespace Eigen;
 namespace daffitter{
+
   class TrackEstimate{
   public:
     TrackEstimate():params(),cov(){;}
-    Vector4f params;
-    Matrix4f cov;
+    Eigen::Vector4f params;
+    Eigen::Matrix4f cov;
     void copy(TrackEstimate* e){
       this->cov = e->cov;
       this->params = e->params;
@@ -37,12 +37,12 @@ namespace daffitter{
   };
 
   class Measurement{
-    Vector2f m;
+    Eigen::Vector2f m;
     bool m_goodRegion;
     float zPos;
     size_t m_iden;
   public:
-    Vector2f getM() const { return(m); }
+    Eigen::Vector2f getM() const { return(m); }
     float getX() const { return(m(0)); }
     float getY() const { return(m(1)); }
     float getZ() const {return(zPos);}
@@ -63,7 +63,7 @@ namespace daffitter{
     //Measurement indexes for KF
     std::vector<int> indexes;
     //Weights for DAF
-    std::vector< VectorXf > weights;
+    std::vector< Eigen::VectorXf > weights;
     //Results from fit
     float chi2, ndof;
     std::vector<TrackEstimate*> estimates;
@@ -98,21 +98,21 @@ namespace daffitter{
     float zPosition;
     float measZ;
     // Uncertainties of measurements in this plane
-    Vector2f sigmas;
-    Vector2f variances;
+    Eigen::Vector2f sigmas;
+    Eigen::Vector2f variances;
     //Sum of DAF weights for all measurements
     float sumWeights;
     //Ref point
-    Vector3f ref0, ref1, ref2;
+    Eigen::Vector3f ref0, ref1, ref2;
     //Norm vector
-    Vector3f norm;
+    Eigen::Vector3f norm;
 
   public:
     //Measurements in plane
     std::vector<Measurement> meas;
     //Daf weights of measurements
-    VectorXf weights;
-    Vector2f invMeasVar;
+    Eigen::VectorXf weights;
+    Eigen::Vector2f invMeasVar;
 
     FitPlane(int sensorID, float zPos, float sigmaX, float sigmaY, float scatterVariance, bool excluded);
     int getSensorID()  const {return(this->sensorID); }
@@ -122,8 +122,8 @@ namespace daffitter{
     float getZpos()    const { return( this->zPosition); }
     float getSigmaX()  const { return(sigmas(0));}
     float getSigmaY()  const { return(sigmas(1));}
-    Vector2f getSigmas() const { return(sigmas);}
-    Vector2f getVars() const { return(variances);}
+    Eigen::Vector2f getSigmas() const { return(sigmas);}
+    Eigen::Vector2f getVars() const { return(variances);}
     void print();
     float getScatterThetaSqr() const {return(scatterThetaSqr);}
     void addMeasurement(float x, float y, float z, bool goodRegion, size_t measIden){ Measurement a(x,y, z, goodRegion, measIden); meas.push_back(a); }
@@ -133,15 +133,15 @@ namespace daffitter{
     float getMeasZ() const { return(measZ); }
     void setMeasZ(float z)  { measZ = z; }
     //ref points
-    Vector3f& getRef0()  { return(ref0); }
-    Vector3f& getRef1() { return(ref1); }
-    Vector3f& getRef2() { return(ref2); }
-    void setRef0(Vector3f point) { ref0 = point; }
-    void setRef1(Vector3f point) { ref1 = point; }
-    void setRef2(Vector3f point) { ref2 = point; }
+    Eigen::Vector3f& getRef0()  { return(ref0); }
+    Eigen::Vector3f& getRef1() { return(ref1); }
+    Eigen::Vector3f& getRef2() { return(ref2); }
+    void setRef0(Eigen::Vector3f point) { ref0 = point; }
+    void setRef1(Eigen::Vector3f point) { ref1 = point; }
+    void setRef2(Eigen::Vector3f point) { ref2 = point; }
     //Norm vector
-    Vector3f& getPlaneNorm() { return(norm); }
-    void setPlaneNorm(Vector3f n) { norm = n.normalized(); }
+    Eigen::Vector3f& getPlaneNorm() { return(norm); }
+    void setPlaneNorm(Eigen::Vector3f n) { norm = n.normalized(); }
     void scaleErrors(float scaleX, float scaleY){
       sigmas(0) *= scaleX; sigmas(1) *= scaleY;
       invMeasVar(0) = 1.0f / ( sigmas(0) * sigmas(0));
@@ -150,12 +150,12 @@ namespace daffitter{
   };
   class PlaneHit {
   private:
-    Vector2f xy;
+    Eigen::Vector2f xy;
     int plane, index;
   public:
   PlaneHit(float x, float y, int plane, int index): plane(plane), index(index){ xy(0) = x; xy(1) = y; }
-  PlaneHit(Vector2f xy, int plane, int index) : xy(xy), plane(plane), index(index) {}
-    const Vector2f& getM() { return(xy); }
+  PlaneHit(Eigen::Vector2f xy, int plane, int index) : xy(xy), plane(plane), index(index) {}
+    const Eigen::Vector2f& getM() { return(xy); }
     int getPlane() const {return(plane); }
     int getIndex() const{return(index); };
     void print() {
@@ -165,13 +165,13 @@ namespace daffitter{
 
   class EigenFitter{
     //Eigen recommends fixed size matrixes up to 4x4
-    Matrix4f transM, transMtranspose, tmp4x4, tmp4x4_2, tmp4x4_3;
-    Matrix2f tmp2x2, tmp2x2_2;
-    Matrix<float, 4, 2> tmp4x2, kalmanGain;
-    Matrix<float, 2, 4> tmp2x4, H;
-    Vector4f tmpState1, tmpState2;
-    Vector2f resids, chi2s, residsum;
-    Vector2f invScatterCov;
+    Eigen::Matrix4f transM, transMtranspose, tmp4x4, tmp4x4_2, tmp4x4_3;
+    Eigen::Matrix2f tmp2x2, tmp2x2_2;
+    Eigen::Matrix<float, 4, 2> tmp4x2, kalmanGain;
+    Eigen::Matrix<float, 2, 4> tmp2x4, H;
+    Eigen::Vector4f tmpState1, tmpState2;
+    Eigen::Vector2f resids, chi2s, residsum;
+    Eigen::Vector2f invScatterCov;
     //DAF temperature
     float tval;
   

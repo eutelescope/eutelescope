@@ -121,8 +121,6 @@ void EUTelHistogram::stringSplitting(std::string input, std::vector<std::string>
 	}
 }
 
-}
-
 void EUTelHistogram::pushStringTogether(std::string input1, std::string input2, std::string & output){
 
-}
+}}

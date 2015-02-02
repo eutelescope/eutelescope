@@ -13,18 +13,12 @@
 #include "EUTelEventImpl.h"
 #include "EUTelHistogram.h"
 
-
-using namespace lcio;
-using namespace marlin;
-using namespace std;
-
-
 namespace eutelescope {
 
-	class  EUTelProcessorPlotTrack : public Processor {
+	class  EUTelProcessorPlotTrack : public marlin::Processor {
 
   	private:
-  	DISALLOW_COPY_AND_ASSIGN(EUTelProcessorPlotTrack)      // prevent users from making (PlotTrack) copies of processors
+  	DISALLOW_COPY_AND_ASSIGN(EUTelProcessorPlotTrack)
         
     public:
 
@@ -54,10 +48,10 @@ namespace eutelescope {
 		protected:
 
     /** Input TrackerHit collection name */
-    string _trackCandidatesInputCollectionName;
+    std::string _trackCandidatesInputCollectionName;
 
    /** Output Tracks collection name */
-   string _tracksOutputCollectionName;
+   std::string _tracksOutputCollectionName;
 
    /** Histogram info file name */
 	std::string _histoInfoFileName;

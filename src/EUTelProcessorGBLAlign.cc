@@ -37,7 +37,7 @@ _createBinary(true){
 
   // Optional processor parameters that define finder settings
 
-  registerOptionalParameter("GBLMEstimatorType", "GBL outlier down-weighting option (t,h,c)", _mEstimatorType, string() );
+  registerOptionalParameter("GBLMEstimatorType", "GBL outlier down-weighting option (t,h,c)", _mEstimatorType, std::string() );
 
   registerOptionalParameter("CreateBinary", "Should we create a binary file for millepede containing the data that millepede needs  ", _createBinary, bool(true));
 
@@ -71,7 +71,7 @@ _createBinary(true){
     registerOptionalParameter("PedeSteeringAdditionalCmds","FOR EXPERTS: List of commands that should be included in the pede steering file. Use '\\' to seperate options and introduce a line break.",_pedeSteerAddCmds, StringVec());
 
 		registerOptionalParameter("AlignmentConstantLCIOFile","This is the name of the LCIO file name with the output alignment"
-                            "constants (add .slcio)",_alignmentConstantLCIOFile, static_cast< string > ( "alignment.slcio" ) );
+                            "constants (add .slcio)",_alignmentConstantLCIOFile, static_cast< std::string > ( "alignment.slcio" ) );
 		registerOptionalParameter("ExcludePlanes", "This is the planes that will not be included in analysis", _excludePlanes ,FloatVec());
 
 
@@ -121,20 +121,20 @@ void EUTelProcessorGBLAlign::init() {
 	}
 	catch(std::string &e){
 		streamlog_out(MESSAGE9) << e << std::endl;
-		throw StopProcessingException( this ) ;
+		throw marlin::StopProcessingException( this ) ;
 	}
 	catch(lcio::Exception& e){
-		streamlog_out(MESSAGE9) << e.what() <<endl;
-		throw StopProcessingException( this ) ;
+		streamlog_out(MESSAGE9) << e.what() <<std::endl;
+		throw marlin::StopProcessingException( this ) ;
 	}
 	catch(...){
-		streamlog_out(MESSAGE9)<<"Unknown exception in processEvent function of EUTelProcessorGBLTrackFit" <<endl;
-		throw StopProcessingException( this ) ;
+		streamlog_out(MESSAGE9)<<"Unknown exception in processEvent function of EUTelProcessorGBLTrackFit" <<std::endl;
+		throw marlin::StopProcessingException( this ) ;
 	}
 }
 
 void EUTelProcessorGBLAlign::processRunHeader(LCRunHeader * run) {
-	auto_ptr<EUTelRunHeaderImpl> header(new EUTelRunHeaderImpl(run));
+	std::auto_ptr<EUTelRunHeaderImpl> header(new EUTelRunHeaderImpl(run));
 	header->addProcessor(type());
 
 
@@ -143,9 +143,9 @@ void EUTelProcessorGBLAlign::processRunHeader(LCRunHeader * run) {
 	// beam test. The same number should be saved in the run header and
  	// in the xml file. If the numbers are different, warn the user.
 
-	if (header->getGeoID() == 0)	streamlog_out(WARNING0) << "The geometry ID in the run header is set to zero." << endl << "This may mean that the GeoID parameter was not set" << endl;
+	if (header->getGeoID() == 0)	streamlog_out(WARNING0) << "The geometry ID in the run header is set to zero." << std::endl << "This may mean that the GeoID parameter was not set" << std::endl;
   	if ((unsigned int)header->getGeoID() != geo::gGeometry().getSiPlanesLayoutID()) {  
-			streamlog_out(WARNING5) << "Error during the geometry consistency check: " << endl << "The run header says the GeoID is " << header->getGeoID() << endl << "The GEAR description says is     " << geo::gGeometry().getSiPlanesLayoutID() << endl;
+			streamlog_out(WARNING5) << "Error during the geometry consistency check: " << std::endl << "The run header says the GeoID is " << header->getGeoID() << std::endl << "The GEAR description says is     " << geo::gGeometry().getSiPlanesLayoutID() << std::endl;
   	}
     
 	_nProcessedRuns++;
@@ -158,10 +158,10 @@ void EUTelProcessorGBLAlign::processEvent(LCEvent * evt){
 			EUTelEventImpl * event = static_cast<EUTelEventImpl*> (evt); ///We change the class so we can use EUTelescope functions
 
 			if (event->getEventType() == kEORE) {
-				streamlog_out(DEBUG4) << "EORE found: nothing else to do." << endl;
+				streamlog_out(DEBUG4) << "EORE found: nothing else to do." << std::endl;
 				return;
 			}else if (event->getEventType() == kUNKNOWN) {
-				streamlog_out(WARNING2) << "Event number " << event->getEventNumber() << " in run " << event->getRunNumber() << " is of unknown type. Continue considering it as a normal Data Event." << endl;
+				streamlog_out(WARNING2) << "Event number " << event->getEventNumber() << " in run " << event->getRunNumber() << " is of unknown type. Continue considering it as a normal Data Event." << std::endl;
 			}
 			LCCollection* eventCollection = NULL;
 			try {
@@ -172,7 +172,7 @@ void EUTelProcessorGBLAlign::processEvent(LCEvent * evt){
 				throw marlin::SkipEventException(this);
 			}
 			if (eventCollection != NULL) {
-				streamlog_out(DEBUG2) << "Collection contains data! Continue!" << endl;
+				streamlog_out(DEBUG2) << "Collection contains data! Continue!" << std::endl;
 				for (int iTrack = 0; iTrack < eventCollection->getNumberOfElements(); ++iTrack) {
 					_totalTrackCount++;
 					_trackFitter->resetPerTrack(); //Here we reset the label that connects state to GBL point to 1 again. Also we set the list of states->labels to 0
@@ -180,7 +180,7 @@ void EUTelProcessorGBLAlign::processEvent(LCEvent * evt){
 					float chi = track.getChi2();
 					float ndf = static_cast<float>(track.getNdf());
 					if(chi == 0 or ndf == 0){
-						streamlog_out(MESSAGE5)<<"Chi: "<<chi<<" ndf: "<<ndf<<endl;
+						streamlog_out(MESSAGE5)<<"Chi: "<<chi<<" ndf: "<<ndf<<std::endl;
 						throw(lcio::Exception("The track has either no degrees of freedom or chi2 is zero.")); 	
 					}
 					std::vector< gbl::GblPoint > pointList;//This is the GBL points. These contain the state information, scattering and alignment jacobian. All the information that the mille binary will get.
@@ -198,7 +198,7 @@ void EUTelProcessorGBLAlign::processEvent(LCEvent * evt){
 					double chi2, loss;
 					int ndf2;
 					traj->fit(chi2, ndf2, loss, _mEstimatorType );
-					streamlog_out ( DEBUG0 ) << "This is the trajectory we are just about to fit: " << endl;
+					streamlog_out ( DEBUG0 ) << "This is the trajectory we are just about to fit: " << std::endl;
 					streamlog_message( DEBUG0, traj->printTrajectory(10);, std::endl; );
 						
 					traj->milleOut(*(_Mille->_milleGBL));
@@ -212,24 +212,24 @@ void EUTelProcessorGBLAlign::processEvent(LCEvent * evt){
 	}
 	catch(std::string &e){
 		streamlog_out(MESSAGE9) << e << std::endl;
-		throw StopProcessingException( this ) ;
+		throw marlin::StopProcessingException( this ) ;
 	}
 	catch(lcio::Exception& e){
-		streamlog_out(MESSAGE9) << e.what() <<endl;
-		throw StopProcessingException( this ) ;
+		streamlog_out(MESSAGE9) << e.what() <<std::endl;
+		throw marlin::StopProcessingException( this ) ;
 	}
 	catch(...){
-		streamlog_out(MESSAGE9)<<"Unknown exception in processEvent function of EUTelProcessorGBLAlign" <<endl;
-		throw StopProcessingException( this ) ;
+		streamlog_out(MESSAGE9)<<"Unknown exception in processEvent function of EUTelProcessorGBLAlign" <<std::endl;
+		throw marlin::StopProcessingException( this ) ;
 	}
 
 }
 void EUTelProcessorGBLAlign::check(LCEvent * evt){}
 
 void EUTelProcessorGBLAlign::end(){
-	streamlog_out (MESSAGE9) <<"TOTAL NUMBER OF TRACKS PASSED TO ALIGNMENT: "<< _totalTrackCount << endl;
+	streamlog_out (MESSAGE9) <<"TOTAL NUMBER OF TRACKS PASSED TO ALIGNMENT: "<< _totalTrackCount << std::endl;
 	if(_totalTrackCount<1000){
-		streamlog_out(WARNING5)<<"You are trying to align with fewer than 1000 tracks. This could be too small a number." <<endl;
+		streamlog_out(WARNING5)<<"You are trying to align with fewer than 1000 tracks. This could be too small a number." <<std::endl;
 	}
 	_Mille->writeMilleSteeringFile(_pedeSteerAddCmds);
 	_Mille->runPede();

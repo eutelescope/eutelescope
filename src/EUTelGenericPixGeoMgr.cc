@@ -3,6 +3,9 @@
 #include <sstream>
 #include <stdexcept>
 
+//System
+#include <dlfcn.h>
+
 //EUTelescope
 #include "EUTelGenericPixGeoMgr.h"
 
@@ -12,10 +15,6 @@
 
 //Geometry implementations
 #include "GEARPixGeoDescr.h"
-#include "Mimosa26GeoDescr.h"
-#include "FEI4Single.h"
-#include "FEI4Double.h"
-#include "FEI4FourChip.h"
 
 //ROOT includes
 #include "TGeoBBox.h"
@@ -95,45 +94,34 @@ void EUTelGenericPixGeoMgr::addPlane(int planeID, std::string geoName, std::stri
 	else
 	{
 		streamlog_out( MESSAGE3 ) << "Didnt find " << geoName << " yet, thus creating" << std::endl;
+		
+		//CMake will call shared libraried "lib"+LibraryName.so
+		std::string libName = std:: string("lib").append(geoName);
+		
+		//Load shared library, be sure to export the path of the lib to LD_LIBRARY_PATH!
+		void *hndl = dlopen(libName.c_str(), RTLD_NOW);
+		if(hndl == NULL)
+		{
+			streamlog_out(ERROR7) << "Loading of " << libName << " failed: " << dlerror() << std::endl;
+			throw std::runtime_error("dlopen could not open shared libraray");
+		}
 
-		//MIMOSA26
-		if(geoName == "Mimosa26.so")
+		try
 		{
-			pixgeodescrptr = new Mimosa26GeoDescr();
+			//Use maker() to create the instance of the description
+			void *mkr = dlsym(hndl, "maker");
+			pixgeodescrptr = reinterpret_cast<EUTelGenericPixGeoDescr*(*)()>(mkr)();
+
 			streamlog_out( MESSAGE3 ) << "Inserting " << planeID << " into map" << std::endl;
 			_geoDescriptions.insert( std::make_pair(planeID, pixgeodescrptr) );
-			_pixelDescriptions.insert ( std::make_pair(geoName, pixgeodescrptr) );
-		}		
-		//FE-I4 Single
-		else if(geoName == "FEI4Single.so")
-		{
-			pixgeodescrptr = new FEI4Single();
-			streamlog_out( MESSAGE3 ) << "Inserting " << planeID << " into map" << std::endl;
-			_geoDescriptions.insert( std::make_pair(planeID, pixgeodescrptr) );
-			_pixelDescriptions.insert ( std::make_pair(geoName, pixgeodescrptr) );
+			_pixelDescriptions.insert( std::make_pair(geoName, pixgeodescrptr) );
 		}
-		//FE-I4 Double
-		else if(geoName == "FEI4Double.so")
+		
+		catch(...)
 		{
-			pixgeodescrptr = new FEI4Double();
-			streamlog_out( MESSAGE3 ) << "Inserting " << planeID << " into map" << std::endl;
-			_geoDescriptions.insert( std::make_pair(planeID, pixgeodescrptr) );
-			_pixelDescriptions.insert ( std::make_pair(geoName, pixgeodescrptr) );
-		}
-		//FE-I4 FourChip
-		else if(geoName == "FEI4FourChip.so")
-		{
-			pixgeodescrptr = new FEI4FourChip();
-			streamlog_out( MESSAGE3 ) << "Inserting " << planeID << " into map" << std::endl;
-			_geoDescriptions.insert( std::make_pair(planeID, pixgeodescrptr) );
-			_pixelDescriptions.insert ( std::make_pair(geoName, pixgeodescrptr) );
-		}
-		//Unknown, TERMINATE!
-		else
-		{
-			streamlog_out( ERROR3 ) << "EUTelGenericPixGeoMgr: Unknown geometry library: " << geoName << " Terminating!" << std::endl;
+			streamlog_out( ERROR3 ) << "Could not retrieve pointer to EUTelGenericPixGeoDescr object, did you include a maker() function w/o C++ name mangling?" << std::endl;
 			//While runtime errors are not processed in Marlin, they will cause a controlled crash!
-			throw std::runtime_error("Unknown geometry library!");
+			throw std::runtime_error("Retrieval of EUTelGenericPixGeoDescr* failed");
 		}
 	}
 
@@ -142,7 +130,6 @@ void EUTelGenericPixGeoMgr::addPlane(int planeID, std::string geoName, std::stri
 	//Call the factory method to actually load the geoemtry!
 	pixgeodescrptr->createRootDescr(planeVolume);
 }
-
 
 EUTelGenericPixGeoDescr* EUTelGenericPixGeoMgr::getPixGeoDescr(int planeID)
 {

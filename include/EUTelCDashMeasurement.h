@@ -1,4 +1,3 @@
-/* $Id$ */
 /*
   Class for outputing variables in the format expected by CDash, the
   server hosting CTest results. See http://public.kitware.com/Dart/HTML/Tests.shtml
@@ -29,7 +28,6 @@
   CDashMeasurement meas4("pngfile_test","all_went_good.png");
   cout << meas4;
 
-
   Contact: Hanno Perrey <hanno.perrey@desy.de>
 
 */
@@ -39,7 +37,6 @@
 
 #include <iostream>
 #include <sstream>
-using namespace std;
 
 class CDashMeasurement
 {

@@ -151,13 +151,13 @@ namespace alibava {
 		// Polarity of the signal. Set this parameter to -1 for negative signals, any other value will be disregarded and the signal will be assumed to be positive
 		int _signalPolarity;
 		
-		string getHistoNameForChip(string histoName, int ichip);
+		std::string getHistoNameForChip(std::string histoName, int ichip);
 
 	protected:
 		
 		// Finds clusters in AlibavaCluster format and fills the histograms
 		// Then calls processCluster for each cluster
-		vector<AlibavaCluster> findClusters(TrackerDataImpl * trkdata);
+		std::vector<AlibavaCluster> findClusters(TrackerDataImpl * trkdata);
 
 		// to calculate Eta
 		float calculateEta(TrackerDataImpl * trkdata, int seedChan);
@@ -169,10 +169,10 @@ namespace alibava {
 		/////////////////////
 
 		// Eta histogram name for ClusterSize > 1
-		string _etaHistoName;
+		std::string _etaHistoName;
 		
 		// Cluster Size
-		string _clusterSizeHistoName;
+		std::string _clusterSizeHistoName;
 		
 		//
 		bool _isSensitiveAxisX;

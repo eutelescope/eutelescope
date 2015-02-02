@@ -26,26 +26,24 @@
 #include <list>
 #include <vector>
 
-using namespace std;
-
 namespace alibava {
 	
 	// Helper classes
 	class ReplaceXMLValues {
 	public:
 		ReplaceXMLValues();
-		string _histoName; // name of the histogram this will apply
-		string _variableName; // Hasto be one of these: xBin, xMin, xMax, yBin, yMin, yMax
+		std::string _histoName; // name of the histogram this will apply
+		std::string _variableName; // Hasto be one of these: xBin, xMin, xMax, yBin, yMin, yMax
 		float _newValue; // for xBin and yBin will changed to interger!
 	};
 
 	class InsertToXMLTitle {
 	public:
 		InsertToXMLTitle();
-		string _histoName; // name of the histogram this will apply
-		string _titleName; // Hasto be one of these: title, labelX, labelY
-		string _whichSide; // insert to left or right
-		string _stringToAdd; // what to insert
+		std::string _histoName; // name of the histogram this will apply
+		std::string _titleName; // Hasto be one of these: title, labelX, labelY
+		std::string _whichSide; // insert to left or right
+		std::string _stringToAdd; // what to insert
 	};
 	
 	class AlibavaBaseHistogramMaker : public alibava::AlibavaBaseProcessor   {
@@ -69,11 +67,11 @@ namespace alibava {
 		// Histo XML File //
 		////////////////////
 		// Path of the XML file containin the list of histograms
-		string _histoXMLFileName;
+		std::string _histoXMLFileName;
 		// Top tag in the XML file
-		string _topTag;
+		std::string _topTag;
 		// The tag (inside the top tag) that should be processed by this histogram maker
-		string _tagToProcess;
+		std::string _tagToProcess;
 		
 		// Reads and creates the histograms defined in _histoXMLFileName
 		void processHistoXMLFile();
@@ -121,23 +119,23 @@ namespace alibava {
 		// changeXMLVariable method is used to replace xBin, xMin, xMax, yBin, yMin, yMax
 		// so variableName has to be one of these: xBin, xMin, xMax, yBin, yMin, yMax (case sensitive)
 		// for xBin and yBin newValue will changed to integer
-		void changeXMLVariable(string histoName, string variableName, float newValue);
+		void changeXMLVariable(std::string histoName, std::string variableName, float newValue);
 		
 		// addToXMLTitle method is used to change title, labelX and labelY
 		// so titleName has to be one of these: title, labelX and labelY
-		// stringToAdd is the string that will added to the defined title
+		// std::stringToAdd is the std::string that will added to the defined title
 		// whichSide defines which side of the title you want to add the "stringToAdd",
-		//          if you set it "left":  title = stringToAdd + title
-		//          if you set it "right": title = title + stringToAdd
-		//          if you set it "all":   title = stringToAdd
+		//          if you set it "left":  title = std::stringToAdd + title
+		//          if you set it "right": title = title + std::stringToAdd
+		//          if you set it "all":   title = std::stringToAdd
 		
-		void addToXMLTitle(string histoName, string titleName, string whichSide, string stringToAdd);
+		void addToXMLTitle(std::string histoName, std::string titleName, std::string whichSide, std::string stringToAdd);
 		
 		// adds the histo name to the histogram check list
-		void addToHistoCheckList(string histoName);
+		void addToHistoCheckList(std::string histoName);
 
 		// adds the histo name per chip to the histogram check list
-		void addToHistoCheckList_PerChip(string histoName);
+		void addToHistoCheckList_PerChip(std::string histoName);
 		
 	protected:
 
@@ -181,7 +179,7 @@ namespace alibava {
 		// Others //
 		////////////
 		// Histogram lists that has to be defined in _histoXMLFileName
-		vector<string> _histoList;
+		std::vector<std::string> _histoList;
 
 		
 		//! If one wants to multiply signal by some number
@@ -190,14 +188,14 @@ namespace alibava {
 		// total number of event
 		int _totalNumberOfEvents;
 		
-		// just adding "_chip" and chipnumber to the end of string
-		string getHistoNameForChip(string histoName, int ichip);
+		// just adding "_chip" and chipnumber to the end of std::string
+		std::string getHistoNameForChip(std::string histoName, int ichip);
 
 		// To change XML variables
-		vector<InsertToXMLTitle> _insertToXMLTitle;
-		vector<ReplaceXMLValues> _replaceXMLValues;
+		std::vector<InsertToXMLTitle> _insertToXMLTitle;
+		std::vector<ReplaceXMLValues> _replaceXMLValues;
 
-		void updateXMLVariables(string histoName, int* xBin, float* xMin, float* xMax, int* yBin, float* yMin, float* yMax, string* title, string* labelX, string* labelY);
+		void updateXMLVariables(std::string histoName, int* xBin, float* xMin, float* xMax, int* yBin, float* yMin, float* yMax, std::string* title, std::string* labelX, std::string* labelY);
 	};
 		
 }

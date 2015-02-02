@@ -1,10 +1,6 @@
 #include "EUTelUtility.h"
 #include "marlin/tinyxml.h"
 
-using namespace std;
-using namespace marlin;
-using namespace eutelescope;
-
 namespace eutelescope {
 
 	class EUTelHistogram{

@@ -29,8 +29,6 @@
 #include <string>
 #include <list>
 
-using namespace std;
-
 namespace alibava {
 	
 	//! Pedestal and noise  processor for Marlin.
@@ -153,8 +151,8 @@ namespace alibava {
 		 */
 		void setChannelsToBeUsed();
 		
-		// decodes channel masking string
-		void decodeMaskingString(string istring, int *onchip, int *fromchannel, int *tochannel );
+		// decodes channel masking std::string
+		void decodeMaskingString(std::string istring, int *onchip, int *fromchannel, int *tochannel );
 		// checks if the decoded channel masking makes sense
 		bool isMaskingValid(int onchip, int fromchannel, int tochannel );
 		// prints channel masking
@@ -179,12 +177,12 @@ namespace alibava {
 		
 		
 		//! Input collection name.
-		/*! A string containing input collection name
+		/*! A std::string containing input collection name
 		 */
 		std::string _inputCollectionName;
 
 		//! Output collection name
-		/*! A string containing output collection name
+		/*! A std::string containing output collection name
 		 */
 		std::string _outputCollectionName;
 		
@@ -222,7 +220,7 @@ namespace alibava {
 		std::string _chargeCalCollectionName;
 
 		//! StringVec parameter for the processor to set the channels to be used
-		/*! The format of _channelsToBeUsed string parameter shoul be like $ChipNumber:StartChannel-EndChannel$
+		/*! The format of _channelsToBeUsed std::string parameter shoul be like $ChipNumber:StartChannel-EndChannel$
 		 *   ex. $0:5-20$ $0:30-100$ $1:50-70$ means from chip 0 channels between 5-20 and 30-100, from chip 1 channels between 50-70
 		 *    will be used (all numbers included).
 		 *   the rest will be masked and not used
