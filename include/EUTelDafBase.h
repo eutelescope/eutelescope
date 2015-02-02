@@ -134,7 +134,7 @@ namespace eutelescope {
     void printStats();
     //alignment stuff
     void gearRotate(size_t index, size_t gearIndex);
-    Vector3f applyAlignment(EUTelAlignmentConstant* alignment, Vector3f point);
+    Eigen::Vector3f applyAlignment(EUTelAlignmentConstant* alignment, Eigen::Vector3f point);
     void alignRotate(std::string collectionName, LCEvent* event);
     void getPlaneNorm(daffitter::FitPlane& pl);
 

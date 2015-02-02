@@ -106,7 +106,7 @@ void TrackerSystem::getChi2Kf(TrackCandidate *candidate){
 
 void TrackerSystem::getChi2Daf(TrackCandidate *candidate){
   float chi2(0.0), ndof(0.0);
-  Vector2f chi2v;
+  Eigen::Vector2f chi2v;
   for(int plane = 0; plane < static_cast< int >(planes.size()); plane++){
     FitPlane& p = planes.at(plane);
     if(p.isExcluded()){ continue;}
@@ -240,20 +240,20 @@ void TrackerSystem::intersect(){
     //Line intersects with plane where
     // d = (p0 - l0) . n / ( l . n )
     // p0 is refpoint in plane
-    Vector3f& refPoint = pl.getRef0();
+    Eigen::Vector3f& refPoint = pl.getRef0();
     // n is vector normal of plane
-    Vector3f& normVec = pl.getPlaneNorm();
+    Eigen::Vector3f& normVec = pl.getPlaneNorm();
     // l, point at line is defined by esimate x, y, and prev z
-    Vector3f linePoint= Vector3f( estim->getX(), estim->getY(), pl.getMeasZ() );
+    Eigen::Vector3f linePoint= Eigen::Vector3f( estim->getX(), estim->getY(), pl.getMeasZ() );
 //    printf(" refPoint: %5.3f %5.3f %5.3f \n", refPoint(0),refPoint(1), refPoint(2));
 //    printf(" normVec: %5.3f %5.3f %5.3f \n", normVec(0), normVec(1), normVec(2));
 //    printf(" linePoint: %5.3f %5.3f %5.3f \n", linePoint(0), linePoint(1), linePoint(2));
    // l, unit direction of line is normal of dx/dz, dy/dz, 1.0
-    Vector3f lineDir( estim->getXdz(), estim->getYdz(), 1.0f);
+    Eigen::Vector3f lineDir( estim->getXdz(), estim->getYdz(), 1.0f);
     lineDir = lineDir.normalized();
 //    printf(" lineDir  : %5.3f %5.3f %5.3f \n", lineDir(0), lineDir(1), lineDir(2));
     // p0 - l0
-    Vector3f distance = refPoint - linePoint;
+    Eigen::Vector3f distance = refPoint - linePoint;
     float d = distance.dot(normVec) / lineDir.dot(normVec);
     //Propagate along track to track/plane intersection
     //estim->params(0) += d * lineDir(0);
