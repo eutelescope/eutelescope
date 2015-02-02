@@ -1,9 +1,9 @@
-#include "Mimosa26GeoDescr.h"
+#include "Mimosa26.h"
 
 namespace eutelescope {
 namespace geo {
 
-Mimosa26GeoDescr::Mimosa26GeoDescr(): EUTelGenericPixGeoDescr(	21.2, 10.6, 0.02,		//size X, Y, Z
+Mimosa26::Mimosa26(): EUTelGenericPixGeoDescr(	21.2, 10.6, 0.02,		//size X, Y, Z
 																0, 1151, 0, 575,		//min max X,Y
 																93.660734 )				//rad length
 {
@@ -19,14 +19,14 @@ Mimosa26GeoDescr::Mimosa26GeoDescr(): EUTelGenericPixGeoDescr(	21.2, 10.6, 0.02,
 
 }
 
-Mimosa26GeoDescr::~ Mimosa26GeoDescr()
+Mimosa26::~ Mimosa26()
 {
 	//It appears that ROOT will take ownership and delete that stuff! 
 	//delete matSi,
 	//delete Si;
 }
 
-void  Mimosa26GeoDescr::createRootDescr(char const * planeVolume)
+void  Mimosa26::createRootDescr(char const * planeVolume)
 {
 	//Get the plane as provided by the EUTelGeometryTelescopeGeoDescription
 	TGeoVolume* topplane =_tGeoManager->GetVolume(planeVolume);
@@ -35,14 +35,20 @@ void  Mimosa26GeoDescr::createRootDescr(char const * planeVolume)
     
 }
 
-std::string Mimosa26GeoDescr::getPixName(int x , int y)
+std::string Mimosa26::getPixName(int x , int y)
 {
 	char buffer [100];
 	//return path to the pixel, don't forget to shift indices by +1+
 	snprintf( buffer, 100, "/sensarea_mimosa_1/mimorow_%d/mimopixel_%d", x+1, y+1);
 	return std::string( buffer ); 
 }
-	/*TODO*/ std::pair<int, int>  Mimosa26GeoDescr::getPixIndex(char const*){return std::make_pair(0,0); }
+	/*TODO*/ std::pair<int, int>  Mimosa26::getPixIndex(char const*){return std::make_pair(0,0); }
+
+EUTelGenericPixGeoDescr* maker()
+{
+	Mimosa26* mPixGeoDescr = new Mimosa26();
+	return dynamic_cast<EUTelGenericPixGeoDescr*>(mPixGeoDescr);
+}
 
 } //namespace geo
 } //namespace eutelescope
