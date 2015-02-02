@@ -11,7 +11,6 @@
 //EUTelescope
 #include "EUTelUtility.h"
 #include "EUTelEventImpl.h"
-#include "EUTelHistogram.h"
 
 namespace eutelescope {
 
