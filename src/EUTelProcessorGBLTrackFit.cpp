@@ -58,7 +58,7 @@ _mEstimatorType() //This is used by the GBL software for outliers down weighting
 
   registerProcessorParameter("BeamEnergy", "Beam energy [GeV]", _eBeam, static_cast<double> (4.0));
 	//This is the determines the how we down weight our outliers. This by default is set that each point will have the same weighting.
-  registerOptionalParameter("GBLMEstimatorType", "GBL outlier down-weighting option (t,h,c)", _mEstimatorType, string() );
+  registerOptionalParameter("GBLMEstimatorType", "GBL outlier down-weighting option (t,h,c)", _mEstimatorType, std::string() );
 
   registerOptionalParameter("HistogramInfoFilename", "Name of histogram info xml file", _histoInfoFileName, std::string("histoinfo.xml"));
 	//This is the estimated resolution of the planes and DUT in x/y direction
@@ -93,29 +93,29 @@ void EUTelProcessorGBLTrackFit::init() {
 	}	
 	catch(std::string &e){
 		streamlog_out(MESSAGE9) << e << std::endl;
-		throw StopProcessingException( this ) ;
+		throw marlin::StopProcessingException( this ) ;
 	}
 	catch(lcio::Exception& e){
-		streamlog_out(MESSAGE9) << e.what() <<endl;
-		throw StopProcessingException( this ) ;
+		streamlog_out(MESSAGE9) << e.what() <<std::endl;
+		throw marlin::StopProcessingException( this ) ;
 	}
 	catch(...){
 		streamlog_out(MESSAGE9)<< "Unknown exception in init function of EUTelProcessorGBLTrackFit." << std::endl;
-		throw StopProcessingException( this ) ;
+		throw marlin::StopProcessingException( this ) ;
 	}
 }
 
 void EUTelProcessorGBLTrackFit::processRunHeader(LCRunHeader * run) {
-	auto_ptr<EUTelRunHeaderImpl> header(new EUTelRunHeaderImpl(run));
+	std::auto_ptr<EUTelRunHeaderImpl> header(new EUTelRunHeaderImpl(run));
 	header->addProcessor(type());
 	// this is the right place also to check the geometry ID. This is a
 	// unique number identifying each different geometry used at the
 	// beam test. The same number should be saved in the run header and
  	// in the xml file. If the numbers are different, warn the user.
 	if (header->getGeoID() == 0)
- 		streamlog_out(WARNING0) << "The geometry ID in the run header is set to zero." << endl << "This may mean that the GeoID parameter was not set" << endl;
+ 		streamlog_out(WARNING0) << "The geometry ID in the run header is set to zero." << std::endl << "This may mean that the GeoID parameter was not set" << std::endl;
 	if ((unsigned int)header->getGeoID() != geo::gGeometry().getSiPlanesLayoutID()) {  
-		streamlog_out(WARNING5) << "Error during the geometry consistency check: " << endl << "The run header says the GeoID is " << header->getGeoID() << endl << "The GEAR description says is     " << geo::gGeometry().getSiPlanesLayoutID() << endl;
+		streamlog_out(WARNING5) << "Error during the geometry consistency check: " << std::endl << "The run header says the GeoID is " << header->getGeoID() << std::endl << "The GEAR description says is     " << geo::gGeometry().getSiPlanesLayoutID() << std::endl;
 	}
 	_chi2NdfVec.clear();//TO DO:This is needed to determine if the track is near chi2 of one. Do we need this however?
     
@@ -126,15 +126,15 @@ void EUTelProcessorGBLTrackFit::check(LCEvent * evt){}
 
 void EUTelProcessorGBLTrackFit::processEvent(LCEvent * evt){
 	try{
-		streamlog_out(DEBUG5) << "Start of event " << _nProcessedEvents << endl;
+		streamlog_out(DEBUG5) << "Start of event " << _nProcessedEvents << std::endl;
 
 		EUTelEventImpl * event = static_cast<EUTelEventImpl*> (evt); ///We change the class so we can use EUTelescope functions
 
 		if (event->getEventType() == kEORE) {
-			streamlog_out(DEBUG4) << "EORE found: nothing else to do." << endl;
+			streamlog_out(DEBUG4) << "EORE found: nothing else to do." << std::endl;
 			return;
 		}else if (event->getEventType() == kUNKNOWN) {
-			streamlog_out(WARNING2) << "Event number " << event->getEventNumber() << " in run " << event->getRunNumber() << " is of unknown type. Continue considering it as a normal Data Event." << endl;
+			streamlog_out(WARNING2) << "Event number " << event->getEventNumber() << " in run " << event->getRunNumber() << " is of unknown type. Continue considering it as a normal Data Event." << std::endl;
 		}
 		LCCollection* col = NULL;
 		col = evt->getCollection(_trackCandidatesInputCollectionName);
@@ -169,7 +169,7 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent * evt){
 			int ierr=0;
 			_trackFitter->computeTrajectoryAndFit(pointList,traj, &chi2,&ndf, ierr);//This will do the minimisation of the chi2 and produce the most probable trajectory.
 			if(ierr == 0 ){
-				streamlog_out(DEBUG5) << "Ierr is: " << ierr << " Entering loop to update track information " << endl;
+				streamlog_out(DEBUG5) << "Ierr is: " << ierr << " Entering loop to update track information " << std::endl;
 				static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_chi2CandidateHistName ] ) -> fill( (chi2)/(ndf));
 				static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_fitsuccessHistName ] ) -> fill(1.0);
 				if(chi2 ==0 or ndf ==0){
@@ -179,15 +179,15 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent * evt){
 				track.setChi2(chi2);
 				track.setNdf(ndf);
 				_chi2NdfVec.push_back(chi2/static_cast<float>(ndf));
-				map<int, vector<double> >  mapSensorIDToCorrectionVec;//This is not used now. However it maybe useful to be able to access the corrections that GBL makes to the original track. Since if this is too large then GBL may give th wrong trajectory. Since all the equations are only to first order. 
+				std::map<int, std::vector<double> >  mapSensorIDToCorrectionVec;//This is not used now. However it maybe useful to be able to access the corrections that GBL makes to the original track. Since if this is too large then GBL may give th wrong trajectory. Since all the equations are only to first order. 
 				_trackFitter->updateTrackFromGBLTrajectory(traj, pointList,track,mapSensorIDToCorrectionVec);
-				map< int, map< float, float > >  SensorResidual; 
-				map< int, map< float, float > >  SensorResidualError; 
+				std::map< int, std::map< float, float > >  SensorResidual; 
+				std::map< int, std::map< float, float > >  SensorResidualError; 
 				_trackFitter->getResidualOfTrackandHits(traj, pointList,track, SensorResidual, SensorResidualError);
 				plotResidual(SensorResidual,SensorResidualError, _first_time);//TO DO: Need to fix how we histogram.
 				_first_time = false;
 			}else{
-				streamlog_out(DEBUG5) << "Ierr is: " << ierr << " Do not update track information " << endl;
+				streamlog_out(DEBUG5) << "Ierr is: " << ierr << " Do not update track information " << std::endl;
 				static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_fitsuccessHistName ] ) -> fill(0.0);
 				continue;//We continue so we don't add an empty track
 			}	
@@ -195,7 +195,7 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent * evt){
 			}//END OF LOOP FOR ALL TRACKS IN AN EVENT
 			outputLCIO(evt, allTracksForThisEvent); 
 			allTracksForThisEvent.clear();//We clear this so we don't add the same track twice
-			streamlog_out(DEBUG5) << "End of event " << _nProcessedEvents << endl;
+			streamlog_out(DEBUG5) << "End of event " << _nProcessedEvents << std::endl;
 			_nProcessedEvents++;
 	}
 	catch (DataNotAvailableException e) {
@@ -204,26 +204,26 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent * evt){
 	}
 	catch(std::string &e){
 		streamlog_out(MESSAGE9) << e << std::endl;
-		throw StopProcessingException( this ) ;
+		throw marlin::StopProcessingException( this ) ;
 	}
 	catch(lcio::Exception& e){
-		streamlog_out(MESSAGE9) << e.what() <<endl;
-		throw StopProcessingException( this ) ;
+		streamlog_out(MESSAGE9) << e.what() <<std::endl;
+		throw marlin::StopProcessingException( this ) ;
 	}
 	catch(...){
-		streamlog_out(MESSAGE9)<<"Unknown exception in processEvent function of EUTelProcessorGBLTrackFit" <<endl;
-		throw StopProcessingException( this ) ;
+		streamlog_out(MESSAGE9)<<"Unknown exception in processEvent function of EUTelProcessorGBLTrackFit" <<std::endl;
+		throw marlin::StopProcessingException( this ) ;
 	}
 	
 }
 
 
 //TO DO:This is a very stupid way to histogram but will add new class to do this is long run 
-void EUTelProcessorGBLTrackFit::plotResidual(map< int, map<float, float > >  & sensorResidual, map< int, map<float, float > >  & sensorResidualError, bool &first_time){
+void EUTelProcessorGBLTrackFit::plotResidual(std::map< int, std::map<float, float > >  & sensorResidual, std::map< int, std::map<float, float > >  & sensorResidualError, bool &first_time){
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Residual plot
-	std::map< int, map< float, float > >::iterator sensor_residual_it;
+	std::map< int, std::map< float, float > >::iterator sensor_residual_it;
 	for(sensor_residual_it = sensorResidual.begin(); sensor_residual_it != sensorResidual.end(); sensor_residual_it++) {
-		map<float, float> map = sensor_residual_it->second;
+		std::map<float, float> map = sensor_residual_it->second;
 		if( !map.empty()){
 			float res = map.begin()->first;	
 			if( sensor_residual_it->first == 0){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX0 ] ) -> fill(res);}
@@ -253,10 +253,10 @@ void EUTelProcessorGBLTrackFit::plotResidual(map< int, map<float, float > >  & s
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Residual Error plot
-	std::map< int, map< float, float > >::iterator sensor_residualerror_it;
+	std::map< int, std::map< float, float > >::iterator sensor_residualerror_it;
 	for(sensor_residualerror_it = sensorResidualError.begin(); sensor_residualerror_it != sensorResidualError.end(); sensor_residualerror_it++) {
-			map<float, float> maperror = sensor_residualerror_it->second;
-			map<float, float> mapres = sensorResidual.at(sensor_residualerror_it->first);
+			std::map<float, float> maperror = sensor_residualerror_it->second;
+			std::map<float, float> mapres = sensorResidual.at(sensor_residualerror_it->first);
 
 			if( !maperror.empty()){
 				float res = mapres.begin()->first;	
@@ -293,11 +293,11 @@ void EUTelProcessorGBLTrackFit::end() {
 	}
 	//TO DO: We really should have a better way to look track per track	and see if the correction is too large. 
 	std::vector<double> correctionTotal = _trackFitter->getCorrectionsTotal();
-	streamlog_out(MESSAGE9)<<"This is the average correction for omega: " <<correctionTotal.at(0)/sizeFittedTracks<<endl;	
-	streamlog_out(MESSAGE9)<<"This is the average correction for local xz inclination: " <<correctionTotal.at(1)/sizeFittedTracks<<endl;	
-	streamlog_out(MESSAGE9)<<"This is the average correction for local yz inclination: " <<correctionTotal.at(2)/sizeFittedTracks<<endl;	
-	streamlog_out(MESSAGE9)<<"This is the average correction for local x: " <<correctionTotal.at(3)/sizeFittedTracks<<endl;	
-	streamlog_out(MESSAGE9)<<"This is the average correction for local y: " <<correctionTotal.at(4)/sizeFittedTracks<<endl;	
+	streamlog_out(MESSAGE9)<<"This is the average correction for omega: " <<correctionTotal.at(0)/sizeFittedTracks<<std::endl;	
+	streamlog_out(MESSAGE9)<<"This is the average correction for local xz inclination: " <<correctionTotal.at(1)/sizeFittedTracks<<std::endl;	
+	streamlog_out(MESSAGE9)<<"This is the average correction for local yz inclination: " <<correctionTotal.at(2)/sizeFittedTracks<<std::endl;	
+	streamlog_out(MESSAGE9)<<"This is the average correction for local x: " <<correctionTotal.at(3)/sizeFittedTracks<<std::endl;	
+	streamlog_out(MESSAGE9)<<"This is the average correction for local y: " <<correctionTotal.at(4)/sizeFittedTracks<<std::endl;	
 
   float average = total/sizeFittedTracks;
 	streamlog_out(MESSAGE9) << "This is the average chi2 -"<< average <<std::endl;
@@ -340,7 +340,7 @@ void EUTelProcessorGBLTrackFit::outputLCIO(LCEvent* evt, std::vector<EUTelTrack>
 
 	//Now add this collection to the 
 	evt->addCollection(trkCandCollection, _tracksOutputCollectionName);
-	string name = _tracksOutputCollectionName + "_GBLstates" ;
+	std::string name = _tracksOutputCollectionName + "_GBLstates" ;
 	evt->addCollection(stateCandCollection, name);
 
 	streamlog_out( DEBUG4 ) << " ---------------- EUTelProcessorGBLTrackFit::outputLCIO ---------- END ------------- " << std::endl;
@@ -351,7 +351,7 @@ void EUTelProcessorGBLTrackFit::bookHistograms() {
  try {
         streamlog_out(DEBUG) << "Booking histograms..." << std::endl;
 
-        auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
+        std::auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
         EUTelHistogramInfo    * histoInfo;
         bool                    isHistoManagerAvailable;
 
@@ -586,7 +586,7 @@ void EUTelProcessorGBLTrackFit::bookHistograms() {
 
 }
 catch (lcio::Exception& e) {
-        streamlog_out(WARNING2) << "Can't allocate histograms. Continue without histogramming" << endl;
+        streamlog_out(WARNING2) << "Can't allocate histograms. Continue without histogramming" << std::endl;
 }
 #endif // defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 

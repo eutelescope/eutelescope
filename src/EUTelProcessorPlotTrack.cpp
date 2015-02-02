@@ -44,10 +44,10 @@ void EUTelProcessorPlotTrack::processEvent(LCEvent * evt){
 	
 	//////////////////////////////////////////////////////////////////////// Do not process last events
 	if (event->getEventType() == kEORE) {
-		streamlog_out(DEBUG4) << "EORE found: nothing else to do." << endl;
+		streamlog_out(DEBUG4) << "EORE found: nothing else to do." << std::endl;
 		return;
   }else if (event->getEventType() == kUNKNOWN) {
-  	streamlog_out(WARNING2) << "Event number " << event->getEventNumber() << " in run " << event->getRunNumber() << " is of unknown type. Continue considering it as a normal Data Event." << endl;
+  	streamlog_out(WARNING2) << "Event number " << event->getEventNumber() << " in run " << event->getRunNumber() << " is of unknown type. Continue considering it as a normal Data Event." << std::endl;
   }
 	////////////////////////////////////////////////////////////////////////
 	

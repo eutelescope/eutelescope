@@ -349,17 +349,17 @@ TMatrix EUTelState::computePropagationJacobianFromLocalStateToNextLocalState(TVe
 }
 //print
 void EUTelState::print(){
-	streamlog_out(DEBUG2) << "The state vector//////////////////////////////////////////////////////" << endl;
+	streamlog_out(DEBUG2) << "The state vector//////////////////////////////////////////////////////" << std::endl;
 	TVectorD stateVec = getStateVec();
 	streamlog_message( DEBUG0, stateVec.Print();, std::endl; );
 	TVectorD kinks = getKinks();
 	streamlog_out(DEBUG1) <<"The kink of this state is: "<< kinks[0] <<" ,  " << kinks[1]<<std::endl;
-	streamlog_out(DEBUG2) << "/////////////////////////////////////////////////////" << endl;
+	streamlog_out(DEBUG2) << "/////////////////////////////////////////////////////" << std::endl;
 	streamlog_out(DEBUG1) <<"State memory location "<< this << " The sensor location of the state " <<getLocation()<<std::endl;
 	if(getIsThereAHit()){
 			streamlog_out(DEBUG1) <<"The hit ID of the state is "<<getTrackerHits().at(0)->id()<<std::endl;
 	}else{
-		streamlog_out(DEBUG1) <<"This state has no hit " <<endl;
+		streamlog_out(DEBUG1) <<"This state has no hit " << std::endl;
 	}
 }	
 //Overload operators.

@@ -48,11 +48,6 @@
 #include "EUTelDFFClusterImpl.h"
 #include "EUTelFFClusterImpl.h"
 //namespaces
-using namespace lcio;
-using namespace std;
-using namespace marlin;
-using namespace eutelescope;
-
 
 namespace eutelescope {
 
@@ -96,7 +91,7 @@ namespace eutelescope {
 		/** Histogram booking */
 		void bookHistograms();
 
-		void plotHistos( vector<EUTelTrack>&  trackCandidates );
+		void plotHistos( std::vector<EUTelTrack>&  trackCandidates );
 
 		void outputLCIO(LCEvent* evt,std::vector< EUTelTrack >&);
 		//Here we define all things to do with histogramming.
@@ -113,10 +108,10 @@ namespace eutelescope {
 
 		/** Names of histograms */
 		struct _histName {
-			static string _numberTracksCandidatesHistName;
-			static string _numberOfHitOnTrackCandidateHistName;
-			static string _HitOnTrackCandidateHistName;
-			static string _chi2CandidateHistName;
+			static std::string _numberTracksCandidatesHistName;
+			static std::string _numberOfHitOnTrackCandidateHistName;
+			static std::string _HitOnTrackCandidateHistName;
+			static std::string _chi2CandidateHistName;
 		};
 		#endif // defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
@@ -127,7 +122,7 @@ namespace eutelescope {
 		std::string _hitInputCollectionName;
 
 		/** Output Tracker collection name */
-		string _trackCandidateHitsOutputCollectionName;
+		std::string _trackCandidateHitsOutputCollectionName;
 
 		/* Histogram info file name */
 		std::string _histoInfoFileName;

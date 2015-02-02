@@ -1,12 +1,8 @@
 
 #include "EUTelUtility.h"
 
-using namespace lcio;
-using namespace marlin;
-using namespace std;
-
-namespace eutelescope {
-
+namespace eutelescope 
+{
 	class  EUTelDefault {
 
   	private:
@@ -14,7 +10,6 @@ namespace eutelescope {
     public:
 
     EUTelDefault();
-
 	};
 
 }

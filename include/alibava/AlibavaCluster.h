@@ -18,15 +18,12 @@
 // system includes <>
 #include <vector>
 
-using namespace std;
-using namespace lcio;
-
 namespace alibava
 {
 	
 	class AlibavaCluster {
-		vector<int> _channums;
-		vector<float> _signals;
+		std::vector<int> _channums;
+		std::vector<float> _signals;
 		float _eta;
 		int _chipNum;
 		int _seedChanNum;
@@ -36,7 +33,7 @@ namespace alibava
 		
 	public:
 		AlibavaCluster();
-		AlibavaCluster(TrackerDataImpl* trkdata);
+		AlibavaCluster(lcio::TrackerDataImpl* trkdata);
 		~AlibavaCluster();
 		
 		int getChanNum(int imember);
@@ -52,7 +49,7 @@ namespace alibava
 		
 		float getCenterOfGravity();
 		
-		void createTrackerData(TrackerDataImpl * alibavaCluster);
+		void createTrackerData(lcio::TrackerDataImpl * alibavaCluster);
 		
 		///////////////////////
 		// Setters - Getters //
