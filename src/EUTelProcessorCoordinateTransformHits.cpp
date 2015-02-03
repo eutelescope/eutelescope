@@ -104,26 +104,26 @@ void EUTelProcessorCoordinateTransformHits::processEvent(LCEvent* event)
 
 		LCCollectionVec * outputCollection = NULL;
 		try{
-				hitCollectionOutput  = static_cast<LCCollectionVec*> (event->getCollection( _hitCollectionNameOutput ));
+				outputCollection  = static_cast<LCCollectionVec*> (event->getCollection( _hitCollectionNameOutput ));
 		}
 		catch(...){
-				hitCollectionOutput = new LCCollectionVec(LCIO::TRACKERHIT);
+				outputCollection = new LCCollectionVec(LCIO::TRACKERHIT);
 				streamlog_out ( DEBUG5 ) << "Collection does not exist. Create new collection."<<endl;
 		}
 		UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );   
 		//Now get each individual hit LOOP OVER!
-		for (int iHit = 0; iHit < collection->getNumberOfElements(); ++iHit) {  
-				TrackerHitImpl*	hit_input = static_cast<TrackerHitImpl*>(collection->getElementAt(iHit)); //This will return a LCObject. Must cast to specify which type
+		for (int iHit = 0; iHit < inputCollection->getNumberOfElements(); ++iHit) {  
+				TrackerHitImpl*	hit_input = static_cast<TrackerHitImpl*>(inputCollection->getElementAt(iHit)); //This will return a LCObject. Must cast to specify which type
 				TrackerHitImpl* hit_output = new IMPL::TrackerHitImpl; 
 				//Call the local2masterHit/master2localHit function defined int EUTelGeometryTelescopeDescription
 				int properties = hitDecoder(static_cast< IMPL::TrackerHitImpl* >(hit_input))["properties"];
 				if(properties == kHitInGlobalCoord){
 						streamlog_out(DEBUG5) << " The properties cell ID is global. So will now change to local" << std::endl;
-						geo::gGeometry().master2localHit(hit_input, hit_output, hitCollectionOutput);
+						geo::gGeometry().master2localHit(hit_input, hit_output, outputCollection);
 				}
 				else{
 						streamlog_out(DEBUG5) << " The properties cell ID is not set so assume local. So will change to global now" << std::endl;
-						geo::gGeometry().local2masterHit(hit_input, hit_output, hitCollectionOutput);
+						geo::gGeometry().local2masterHit(hit_input, hit_output, outputCollection);
 				}
 				streamlog_out ( DEBUG5 )  << "New hit "<< iHit << " for event  "<< evt->getEventNumber() <<" created" << std::endl;
 
@@ -138,12 +138,12 @@ void EUTelProcessorCoordinateTransformHits::processEvent(LCEvent* event)
 				catch(...){
 						streamlog_out ( DEBUG5 )  << "There is a problem opening the new hit_output object" << std::endl;
 				}
-				hitCollectionOutput->push_back(hit_output);
+				outputCollection->push_back(hit_output);
 		}
 		streamlog_out ( DEBUG5 )  << "ALL HITS ON COLLECTIONVEC: Now for event "<< evt->getEventNumber() <<" push onto collection" << std::endl;
 		//Now push the hit for this event onto the collection
 		try{	
-				event->addCollection(hitCollectionOutput, _hitCollectionNameOutput );
+				event->addCollection(outputCollection, _hitCollectionNameOutput );
 				streamlog_out ( DEBUG5 )  << "Pushed onto collection: " << _hitCollectionNameOutput <<endl;	
 		}
 		catch(...){
