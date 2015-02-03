@@ -1263,7 +1263,7 @@ streamlog_out(DEBUG5) << "EUTelGeometryTelescopeGeoDescription::findIntersection
   TVector3 newPos;
 	TVector3 newMomentum;
 	newPos = EUTelNav::getXYZfromArcLength(trkVec,pVec,beamQ,solution);
-	newMomentum = getXYZMomentumfromArcLength(pVec, trkVec, beamQ, solution);
+	newMomentum = EUTelNav::getXYZMomentumfromArcLength(pVec, trkVec, beamQ, solution);
 	outputMomentum[0]=newMomentum[0]; 				outputMomentum[1]=newMomentum[1]; 				outputMomentum[2]=newMomentum[2];
 	//Is the new point within the sensor. If not then we may have to propagate a little bit further to enter.
  	const float pos[3]={newPos[0],newPos[1],newPos[2]};
@@ -1304,33 +1304,7 @@ streamlog_out(DEBUG5) << "EUTelGeometryTelescopeGeoDescription::findIntersection
   streamlog_out(DEBUG2) << "-------------------------EUTelGeometryTelescopeGeoDescription::findIntersection()--------------------------" << std::endl;
 
 }
-//This will calculate the momentum at a arc length away given initial parameters.
-TVector3 EUTelGeometryTelescopeGeoDescription::getXYZMomentumfromArcLength(TVector3 momentum, TVector3 globalPositionStart, float charge, float arcLength ){
-	float mm= 1000;
-	TVector3 T = momentum.Unit();//This is one coordinate axis of curvilinear coordinate system.	
-	const gear::BField&   Bfield = geo::gGeometry().getMagneticField();
-	gear::Vector3D vectorGlobal(globalPositionStart[0],globalPositionStart[1],globalPositionStart[2]);//Since field is homogeneous this seems silly but we need to specify a position to geometry to get B-field.
-	const double Bx = (Bfield.at( vectorGlobal ).x());//We times bu 0.3 due to units of other variables. See paper. Must be Tesla
-	const double By = (Bfield.at( vectorGlobal ).y());
-	const double Bz = (Bfield.at( vectorGlobal ).z());
-	TVector3 B;
-	B[0]=Bx*0.3; B[1]=By*0.3; B[2]=Bz*0.3;
-	TVector3 H = (B.Unit());
-	const float alpha = (H.Cross(T)).Mag();
-	const float gamma = H.Dot(T);
-	const float Q = -(B.Mag())*(charge/(momentum.Mag()));//You could use end momentum since it must be constant
-	float theta = (Q*arcLength)/mm;//divide by 1000 to convert to metres 
-	TVector3 N = (H.Cross(T)).Unit();
-	const float cosTheta = cos(theta);
-	const float sinTheta = sin(theta);
-	const float oneMinusCosTheta = (1-cos(theta));
-	TVector3 momentumEndUnit = gamma*oneMinusCosTheta*H+cosTheta*T+alpha*sinTheta*N;
-	streamlog_out ( DEBUG0 ) << "Momentum direction (Unit Vector): " <<  momentumEndUnit[0]<<" , "<<momentumEndUnit[1] <<" , "<<momentumEndUnit[2]<<std::endl;
-	TVector3 momentumEnd = momentumEndUnit*(momentum.Mag());
-	streamlog_out ( DEBUG0 ) << "Momentum: " <<  momentumEnd[0]<<" , "<<momentumEnd[1] <<" , "<<momentumEnd[2]<<std::endl;
 
-	return momentumEnd;
-}
 //This function will intake position and direction. Then using the gear file and magnetic field will output position and sensor ID in correct order of intersection. 
 //We need to introduce the idea of:
 //sensitive volume => data and state to be created

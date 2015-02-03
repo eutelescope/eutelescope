@@ -207,9 +207,6 @@ TMatrixD EUTelNav::getLocalToCurvilinearTransformMatrix(TVector3 globalMomentum,
 		return jacobian;
 }
 
-
-
-
 /* Note that the curvilinear frame that this jacobian has been derived in does not work for particles moving in z-direction.
  * This is due to a construction that assumes tha beam pipe is in the z-direction. Since it is used for collider experiements. 
  * We therefore have to change to the coordinate system used in paper before we apply this jacobian.
@@ -404,7 +401,42 @@ TVector3 EUTelNav::getXYZfromArcLength(TVector3 pos, TVector3 pVec, float beamQ,
 		return pos;
 }
 
+//This will calculate the momentum at a arc length away given initial parameters.
+TVector3 EUTelNav::getXYZMomentumfromArcLength(TVector3 momentum, TVector3 globalPositionStart, float charge, float arcLength)
+{
+		//This is one coordinate axis of curvilinear coordinate system.	
+		TVector3 T = momentum.Unit();
 
+		const gear::BField&   Bfield = geo::gGeometry().getMagneticField();
+		//Since field is homogeneous this seems silly but we need to specify a position to geometry to get B-field.
+		gear::Vector3D vectorGlobal(globalPositionStart[0],globalPositionStart[1],globalPositionStart[2]);
 
+		const double Bx = (Bfield.at( vectorGlobal ).x());//We times bu 0.3 due to units of other variables. See paper. Must be Tesla
+		const double By = (Bfield.at( vectorGlobal ).y());
+		const double Bz = (Bfield.at( vectorGlobal ).z());
+
+		TVector3 B(Bx*0.3, By*0.3, Bz*0.3 );
+		TVector3 H = (B.Unit());
+		
+		const float alpha = (H.Cross(T)).Mag();
+		const float gamma = H.Dot(T);
+
+		//You could use end momentum since it must be constant
+		const float Q = -(B.Mag())*(charge/(momentum.Mag()));
+		//divide by 1000 to convert to meters 
+		float theta = (Q*arcLength)/1000;
+
+		TVector3 N = (H.Cross(T)).Unit();
+		const float cosTheta = cos(theta);
+		const float sinTheta = sin(theta);
+		const float oneMinusCosTheta = (1-cos(theta));
+		TVector3 momentumEndUnit = gamma*oneMinusCosTheta*H+cosTheta*T+alpha*sinTheta*N;
+		TVector3 momentumEnd = momentumEndUnit*(momentum.Mag());
+		
+		streamlog_out( DEBUG0 ) << "Momentum direction (Unit Vector): " << momentumEndUnit[0] << " , " << momentumEndUnit[1] << " , " << momentumEndUnit[2] << std::endl;
+		streamlog_out( DEBUG0 ) << "Momentum: " <<  momentumEnd[0] << " , " << momentumEnd[1] << " , " << momentumEnd[2] << std::endl;
+
+		return momentumEnd;
+}
 
 } //namespace eutelescope

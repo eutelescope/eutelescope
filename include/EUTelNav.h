@@ -16,8 +16,9 @@ class EUTelNav
 		static TMatrixD getLocalToCurvilinearTransformMatrix(TVector3 globalMomentum, int  planeID, float charge);
 		static TMatrixD getPropagationJacobianCurvilinear(float ds, float qbyp, TVector3 t1w, TVector3 t2w);
 		static TVector3 getXYZfromArcLength(TVector3 pos, TVector3 pVec, float beamQ, double s);
-
-  	private:
+		static TVector3 getXYZMomentumfromArcLength(TVector3 momentum, TVector3 globalPositionStart, float charge, float arcLength);
+  	
+	private:
 		EUTelNav();
 };
 
