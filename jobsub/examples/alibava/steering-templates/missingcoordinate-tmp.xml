@@ -45,19 +45,24 @@
 
  <processor name="MyEUTelMissingCoordinateEstimator" type="EUTelMissingCoordinateEstimator">
   <!--EUTelMissingCoordinateEstimator As the name suggest this processor is finds the position of the missing coordinate on your How it works is simple, it gets the hits from specified two finds the closest hit pairs, make a straight line out of it and the estimated position in one axis on your sensor you want. No promises that this will work with tilted sensors and/or with magnetic field. One needs to used this with merged hits and after pre-alignment-->
-    <!--Input hit collection name. Hits should be in global coordinates and pre-aligned-->
-  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit">merged_hits </parameter>
-    <!--Output hit collection name-->
-  <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit">hits </parameter>
   <!--This is the list of sensorIDs that missing coordinate of their hits needs to be found. Notice that if the specified coordinate already exists it will be overwritten-->
-  <parameter name="DUTPlanes" type="IntVec"> 6 7  </parameter>
+  <parameter name="DUTPlanes" type="IntVec"> 6 7 </parameter>
+    <!--Input hit collection name. Hits should be in global coordinates and pre-aligned-->
+  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> merged_hits </parameter>
+    <!--This processor will look for a closest hits (in known coordinate) to determine if the hits are correlated. The hits will be considered as correlated if the residual is smaller than MaxResidual-->
+  <parameter name="MaxResidual" type="float">0.100 </parameter>
     <!--The coordinate axis that needs to be estimated. You have to set this to either X or Y.-->
   <parameter name="MissingCoordinate" type="string">Y </parameter>
+    <!--Output hit collection name-->
+  <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> hits </parameter>
     <!--This is the list of sensorIDs that their hits will be used to estimate the missing coordinate on your DUT. You have to give exactly 2 sensorIDs. For better results use the ones that are closest to your DUT-->
-  <parameter name="ReferencePlanes" type="IntVec"> 2 3 </parameter>
+  <parameter name="ReferencePlanes" type="IntVec"> 2 3  </parameter>
     <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
 </processor>
+
+
+
 
  <processor name="EUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">
   <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->

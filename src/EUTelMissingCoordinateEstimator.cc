@@ -230,17 +230,17 @@ void EUTelMissingCoordinateEstimator::processEvent (LCEvent * event) {
 
     
     // loop over first reference plane hits
-    for (unsigned int iHitRefPlane1; iHitRefPlane1<referencePlaneHits1.size(); iHitRefPlane1++) {
+    for (unsigned int iHitRefPlane1=0; iHitRefPlane1<referencePlaneHits1.size(); iHitRefPlane1++) {
         TrackerHitImpl * refHit1 = dynamic_cast<TrackerHitImpl*> ( inputHitCollection->getElementAt( referencePlaneHits1[iHitRefPlane1] ) );
         const double* refHit1Pos = refHit1->getPosition();
         
         // loop over second reference plane hits
-        for (unsigned int iHitRefPlane2; iHitRefPlane2<referencePlaneHits2.size(); iHitRefPlane2++) {
+        for (unsigned int iHitRefPlane2=0; iHitRefPlane2<referencePlaneHits2.size(); iHitRefPlane2++) {
             TrackerHitImpl * refHit2 = dynamic_cast<TrackerHitImpl*> ( inputHitCollection->getElementAt( referencePlaneHits2[iHitRefPlane2] ) );
             const double* refHit2Pos = refHit2->getPosition();
             
             // loop over second dut plane hits
-            for (unsigned int iDutHit; iDutHit<dutPlaneHits.size(); iDutHit++) {
+            for (unsigned int iDutHit=0; iDutHit<dutPlaneHits.size(); iDutHit++) {
                 TrackerHitImpl * dutHit = dynamic_cast<TrackerHitImpl*> ( inputHitCollection->getElementAt( dutPlaneHits[iDutHit] ) );
                 const double* dutHitPos = dutHit->getPosition();
                 double newDutHitPos[3];
@@ -267,7 +267,8 @@ void EUTelMissingCoordinateEstimator::processEvent (LCEvent * event) {
                     // now store new hit position in the TrackerHit, copy and store in the collection
                     
                     TrackerHitImpl * newHit = cloneHit(dutHit);
-                    newHit->setPosition( &newDutHitPos );
+			const double* hitpos = newDutHitPos;
+                    newHit->setPosition( &hitpos[0] );
                     outputHitCollection->push_back(newHit);
 
                     // count new created hits
