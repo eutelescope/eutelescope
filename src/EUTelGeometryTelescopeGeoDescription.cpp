@@ -21,7 +21,6 @@
 // EUTELESCOPE
 #include "EUTelExceptions.h"
 #include "EUTelGenericPixGeoMgr.h"
-#include "CellIDReencoder.h"
 
 // ROOT
 #include "TGeoManager.h"
