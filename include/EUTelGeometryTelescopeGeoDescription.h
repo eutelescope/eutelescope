@@ -9,9 +9,6 @@
 #include <map>
 #include <string>
 
-// LCIO includes
-#include "LCIOSTLTypes.h"
-
 // MARLIN
 #include "marlin/Global.h"
 
@@ -370,10 +367,6 @@ class EUTelGeometryTelescopeGeoDescription
 	int getSensorID( const float globalPos[] ) const;
 
 	void local2Master( int, const double[], double[] );
-
-	void local2masterHit(IMPL::TrackerHitImpl* hit_input, IMPL::TrackerHitImpl* hit_output, LCCollection* hitCollectionOutput);
-
-	void master2localHit(IMPL::TrackerHitImpl* hit_input, IMPL::TrackerHitImpl* hit_output, LCCollection* hitCollectionOutput);
 
 	void master2Local( const double[], double[] );
 
