@@ -13,6 +13,7 @@
 #include "EUTelGeometryTelescopeGeoDescription.h"
 #include "EUTelUtilityRungeKutta.h"
 #include "EUTELESCOPE.h"
+#include "EUTelNav.h"
 
 // marlin util includes
 #include "mille/Mille.h"
@@ -483,13 +484,13 @@ namespace eutelescope {
 		B[0]=Bx; B[1]=By; B[2]=Bz;
 		for(size_t i=0;i<_scattererPositions.size();i++){
 			newMomentum = geo::gGeometry().getXYZMomentumfromArcLength(momentum, position,state.getBeamCharge(), _scattererPositions[i] );
-			TMatrixD curvilinearJacobian = geo::gGeometry().getPropagationJacobianCurvilinear(_scattererPositions[i], state.getOmega(), momentum.Unit(),newMomentum.Unit());
+			TMatrixD curvilinearJacobian = EUTelNav::getPropagationJacobianCurvilinear(_scattererPositions[i], state.getOmega(), momentum.Unit(),newMomentum.Unit());
 			streamlog_out(DEBUG0)<<"This is the curvilinear jacobian at sensor : " << location << " or scatter: "<< i << std::endl; 
 			streamlog_message( DEBUG0, curvilinearJacobian.Print();, std::endl; );
-			TMatrixD localToCurvilinearJacobianStart =  geo::gGeometry().getLocalToCurvilinearTransformMatrix(momentum, location ,state.getBeamCharge() );
+			TMatrixD localToCurvilinearJacobianStart =  EUTelNav::getLocalToCurvilinearTransformMatrix(momentum, location ,state.getBeamCharge() );
 			streamlog_out(DEBUG0)<<"This is the local to curvilinear jacobian at sensor : " << location << " or scatter: "<< i << std::endl; 
 			streamlog_message( DEBUG0, localToCurvilinearJacobianStart.Print();, std::endl; );
-			TMatrixD localToCurvilinearJacobianEnd =  geo::gGeometry().getLocalToCurvilinearTransformMatrix(newMomentum,locationEnd ,state.getBeamCharge() );
+			TMatrixD localToCurvilinearJacobianEnd =  EUTelNav::getLocalToCurvilinearTransformMatrix(newMomentum,locationEnd ,state.getBeamCharge() );
 			streamlog_out(DEBUG0)<<"This is the local to curvilinear jacobian at sensor : " << locationEnd << " or scatter: "<< i << std::endl; 
 			streamlog_message( DEBUG0, localToCurvilinearJacobianEnd.Print();, std::endl; );
 			TMatrixD curvilinearToLocalJacobianEnd = localToCurvilinearJacobianEnd.Invert();

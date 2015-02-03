@@ -9,7 +9,7 @@
 namespace eutelescope 
 {
 
-static class EUTelNav
+class EUTelNav
 {
 	public: 
 		static TMatrix getPropagationJacobianF( float x0, float y0, float z0, float px, float py, float pz, float beamQ, float dz);

@@ -382,14 +382,6 @@ class EUTelGeometryTelescopeGeoDescription
 
 	float getInitialDisplacementToFirstPlane() const { return _initialDisplacement; };
 
-	TVector3 getXYZfromArcLength( TVector3 pos,TVector3 pVec , float _beamQ, double s) const;
-
-	TMatrixD getPropagationJacobianCurvilinear(float ds, float qbyp, TVector3 t1, TVector3 t2);
-
-	TMatrixD getLocalToCurvilinearTransformMatrix(TVector3 globalMomentum, int  planeID, float charge);
-
-	TMatrix getPropagationJacobianF( float x0, float y0, float z0, float px, float py, float pz, float _beamQ, float dz );
-
 	const TGeoHMatrix* getHMatrix( const double globalPos[] );
 
 	/** Magnetic field */
