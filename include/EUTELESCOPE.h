@@ -15,6 +15,7 @@
 	void operator=(const type&);
 #endif
 
+#define nullptr NULL
 
 #ifndef EUTELESCOPE_NAMESPACE_H
 #define EUTELESCOPE_NAMESPACE_H
