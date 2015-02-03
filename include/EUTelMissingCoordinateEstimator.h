@@ -148,6 +148,13 @@ namespace eutelescope {
          */
         std::string _missingCoordinate;
         
+        //! Max Residual
+        /*! This processor will look for a closest hits (in known coordinate)
+         *  to determine if the hits are correlated
+         *  The hits will be considered as correlated if the residual is smaller
+         *  than MaxResidual
+         */
+        float _maxResidual;
         
         //! Clone Hit
         /*! This method is used to clone TrackerHitImpl object
@@ -162,6 +169,18 @@ namespace eutelescope {
         
         //! Event number
         int _iEvt;
+        
+        //! Missing hit position
+        unsigned int _missingHitPos;
+
+        //! Known hit position
+        unsigned int _knownHitPos;
+        
+        //! Number of DUT hits
+        unsigned int _nDutHits;
+        
+        //! Number of Dut hits created
+        unsigned int _nDutHitsCreated;
         
     };
     

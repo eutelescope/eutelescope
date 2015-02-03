@@ -50,8 +50,13 @@ _outputHitCollectionName(),
 _referencePlanes(),
 _dutPlanes(),
 _missingCoordinate(),
+_maxResidual(0),
 _iRun(0),
-_iEvt(0)
+_iEvt(0),
+_missingHitPos(0),
+_knownHitPos(0),
+_nDutHits(0),
+_nDutHitsCreated(0)
 {
     // modify processor description
     _description =  "EUTelMissingCoordinateEstimator As the name suggest this processor is finds the position of the missing coordinate on your How it works is simple, it gets the hits from specified two finds the closest hit pairs, make a straight line out of it and the estimated position in one axis on your sensor you want. No promises that this will work with tilted sensors and/or with magnetic field. One needs to used this with merged hits and after pre-alignment";
@@ -66,6 +71,7 @@ _iEvt(0)
     
     registerProcessorParameter("MissingCoordinate","The coordinate axis that needs to be estimated. You have to set this to either X or Y.", _missingCoordinate, string("X") );
     
+    registerProcessorParameter("MaxResidual","This processor will look for a closest hits (in known coordinate) to determine if the hits are correlated. The hits will be considered as correlated if the residual is smaller than MaxResidual", _maxResidual, float(0) );
     
 }
 
@@ -92,12 +98,26 @@ void EUTelMissingCoordinateEstimator::init() {
     
     if (_missingCoordinate == string("X") || _missingCoordinate == string("Y") ) {
         streamlog_out (DEBUG4) << "MissingCoordinate value set as: "<< _missingCoordinate << std::endl;
-}
+    }
     else {
         streamlog_out (ERROR4) << "MissingCoordinate value ("<<_missingCoordinate<<") is not valid!"<< std::endl;
         exit(-1);
     }
     
+    // now set missing and known hit position variables
+    if (_missingCoordinate == string("X")) {
+        _missingHitPos = 0;
+        _knownHitPos = 1;
+    }
+    if (_missingCoordinate == string("Y")) {
+        _missingHitPos = 1;
+        _knownHitPos = 0;
+    }
+    
+    
+    // set counters to zero
+    _nDutHits = 0;
+    _nDutHitsCreated = 0;
 }
 
 
@@ -189,6 +209,7 @@ void EUTelMissingCoordinateEstimator::processEvent (LCEvent * event) {
             if (sensorID == _dutPlanes[i]) {
                 dutPlaneHits.push_back(iInputHits);
                 isDUTHit = true;
+                _nDutHits++;
             }
         }
         
@@ -198,11 +219,69 @@ void EUTelMissingCoordinateEstimator::processEvent (LCEvent * event) {
         }
       }
     
+    /*
+     The line that passes through 2 points can be written as L(t)= P1 + V*t
+     where V is the displacement vector and P1 is the starting point
+     so L(t) becomes: L(t) = (x1,y1,z1) + (x2-x1, y2-y1, z2-z1)*t
+     * x=x1+(x2−x1)t
+     * y=y1+(y2−y1)t
+     * z=z1+(z2−z1)t
+     */
+
     
-    
-    //HERE
-    
-    // now using reference planes fins the missing coordinate
+    // loop over first reference plane hits
+    for (unsigned int iHitRefPlane1; iHitRefPlane1<referencePlaneHits1.size(); iHitRefPlane1++) {
+        TrackerHitImpl * refHit1 = dynamic_cast<TrackerHitImpl*> ( inputHitCollection->getElementAt( referencePlaneHits1[iHitRefPlane1] ) );
+        const double* refHit1Pos = refHit1->getPosition();
+        
+        // loop over second reference plane hits
+        for (unsigned int iHitRefPlane2; iHitRefPlane2<referencePlaneHits2.size(); iHitRefPlane2++) {
+            TrackerHitImpl * refHit2 = dynamic_cast<TrackerHitImpl*> ( inputHitCollection->getElementAt( referencePlaneHits2[iHitRefPlane2] ) );
+            const double* refHit2Pos = refHit2->getPosition();
+            
+            // loop over second dut plane hits
+            for (unsigned int iDutHit; iDutHit<dutPlaneHits.size(); iDutHit++) {
+                TrackerHitImpl * dutHit = dynamic_cast<TrackerHitImpl*> ( inputHitCollection->getElementAt( dutPlaneHits[iDutHit] ) );
+                const double* dutHitPos = dutHit->getPosition();
+                double newDutHitPos[3];
+                
+                // find t value of the Z position of DUT
+                // t = (z-z1)/(z2-z1)
+                double t = ( dutHitPos[2] - refHit1Pos[2] ) / ( refHit2Pos[2] - refHit1Pos[2] );
+                
+                // find the known coordinate value correcponds to that z on the line
+                double knownHitPosOnLine = refHit1Pos[_knownHitPos] + (refHit2Pos[_knownHitPos] - refHit1Pos[_knownHitPos]) * t;
+                
+                // if knownHitPosOnLine is close to the knownHitPos
+                if (knownHitPosOnLine - dutHitPos[_knownHitPos] < _maxResidual) {
+                    // first copy old DUT hit position to the new one
+                    newDutHitPos[0] = dutHitPos[0];
+                    newDutHitPos[1] = dutHitPos[1];
+                    newDutHitPos[2] = dutHitPos[2];
+                    
+                    // then replace the unknown one with the estimated one
+                    double estimatedHitPos = refHit1Pos[_missingHitPos] + (refHit2Pos[_missingHitPos] - refHit1Pos[_missingHitPos]) * t;
+                    
+                    newDutHitPos[_missingHitPos] = estimatedHitPos;
+                    
+                    // now store new hit position in the TrackerHit, copy and store in the collection
+                    
+                    TrackerHitImpl * newHit = cloneHit(dutHit);
+                    newHit->setPosition( &newDutHitPos );
+                    outputHitCollection->push_back(newHit);
+
+                    // count new created hits
+                    _nDutHitsCreated++;
+                    //HERE
+                    //TODO:: also check if this hit used twice
+
+                }
+                
+            } // end of loop over first dut plane hits
+            
+            
+        } // end of loop over second reference plane hits
+    } // end of loop over first reference plane hits
     
     
     
@@ -218,6 +297,7 @@ void EUTelMissingCoordinateEstimator::processEvent (LCEvent * event) {
     
     if ( isFirstEvent() ) _isFirstEvent = false;
 }
+
 
 TrackerHitImpl* EUTelMissingCoordinateEstimator::cloneHit(TrackerHitImpl *inputHit){
     TrackerHitImpl * newHit = new TrackerHitImpl;
@@ -258,7 +338,10 @@ TrackerHitImpl* EUTelMissingCoordinateEstimator::cloneHit(TrackerHitImpl *inputH
 
 void EUTelMissingCoordinateEstimator::end()
 {
+    streamlog_out ( MESSAGE4 )  << "Number of hits you had from all DUTs "<< _nDutHits << endl;
+    streamlog_out ( MESSAGE4 )  << "Number of hits created with the estimated missing coordinate "<< _nDutHitsCreated << endl;
     streamlog_out ( MESSAGE4 )  << "Successfully finished" << endl;
+    
 }
 
 void EUTelMissingCoordinateEstimator::bookHistos() {
