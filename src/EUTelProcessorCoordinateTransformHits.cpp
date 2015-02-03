@@ -154,6 +154,8 @@ void EUTelProcessorCoordinateTransformHits::processEvent(LCEvent* event)
 			outputHit->setTime( inputHit->getTime() );
 			outputHit->setCellID0( inputHit->getCellID0() );
 			outputHit->setCellID1( inputHit->getCellID1() );
+			outputHit->setQuality( inputHit->getQuality() );
+			outputHit->rawHits() = inputHit->getRawHits();
 
 			cellReencoder.readValues(outputHit);
 			//^= is a bitwise XOR i.e. we will switch the coordinate sytsem
