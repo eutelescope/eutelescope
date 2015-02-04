@@ -18,12 +18,13 @@
    <execute>
       <processor name="AIDA"/>
       <processor name="MyEUTelMissingCoordinateEstimator"/>
+      <processor name="MyAlibavaCorrelator"/>
       <processor name="Save"/>
       <processor name="EUTelUtilityPrintEventNumber"/>
    </execute>
 
    <global>
-      <parameter name="LCIOInputFiles"> @ResultsPath@/@MergedOutputFormat@-hitmaker.slcio </parameter>
+      <parameter name="LCIOInputFiles"> @ResultsPath@/@MergedOutputFormat@-hitmaker2.slcio </parameter>
       <parameter name="GearXMLFile" value="@GearFile@"/>
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
@@ -36,7 +37,7 @@
   <!-- compression of output file 0: false >0: true (default) -->
   <parameter name="Compress" type="int" value="1"/>
   <!-- filename without extension-->
-  <parameter name="FileName" type="string" value="@HistogramPath@/@MergedOutputFormat@-hitmaker"/>
+  <parameter name="FileName" type="string" value="@HistogramPath@/@MergedOutputFormat@-missingcoordinate"/>
   <!-- type of output file root (default) or xml )-->
   <parameter name="FileType" type="string" value="root"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
@@ -50,7 +51,7 @@
     <!--Input hit collection name. Hits should be in global coordinates and pre-aligned-->
   <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> merged_hits </parameter>
     <!--This processor will look for a closest hits (in known coordinate) to determine if the hits are correlated. The hits will be considered as correlated if the residual is smaller than MaxResidual-->
-  <parameter name="MaxResidual" type="float">0.100 </parameter>
+  <parameter name="MaxResidual" type="float"> @MaxResidual@ </parameter>
     <!--The coordinate axis that needs to be estimated. You have to set this to either X or Y.-->
   <parameter name="MissingCoordinate" type="string">Y </parameter>
     <!--Output hit collection name-->
@@ -73,6 +74,24 @@
     <!--print the event timestamp as read from LCIO-->
   <!--parameter name="printTimestamp" type="bool">false </parameter-->
  </processor>
+
+
+ <processor name="MyAlibavaCorrelator" type="AlibavaCorrelator">
+          <!--AlibavaCorrelator gets hit collection and plots correlation histograms -->
+         <!--The list of detector IDs-->
+         <parameter name="DetectorIDs" type="IntVec"> 0 1 2 3 4 5 6 7 </parameter>
+                  <!--The path of XML file where the histograms are defined-->
+         <parameter name="HistoXMLFile" type="string"> @AlibavaHistoInfo@ </parameter>
+                  <!--Input raw data collection name-->
+         <parameter name="InputCollectionName" type="string" lcioInType="TrackerHit"> hits</parameter>
+                  <!--The tag in TopTagInXMLFile. This processor will only consider the histogram definitions inside this tag. This tag should be inside <TopTagInXMLFile> ... <TopTagInXMLFile/>-->
+         <parameter name="TagToProcess" type="string">myAlibavaCorrelator </parameter>
+                  <!--The top tag in HistoXMLFile-->
+         <parameter name="TopTagInXMLFile" type="string">AlibavaHistoList </parameter>
+                  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+         <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+ </processor>
+
 
 
  <processor name="Save" type="EUTelOutputProcessor">
