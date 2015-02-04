@@ -253,7 +253,7 @@ void EUTelMissingCoordinateEstimator::processEvent (LCEvent * event) {
                 double knownHitPosOnLine = refHit1Pos[_knownHitPos] + (refHit2Pos[_knownHitPos] - refHit1Pos[_knownHitPos]) * t;
                 
                 // if knownHitPosOnLine is close to the knownHitPos
-                if (knownHitPosOnLine - dutHitPos[_knownHitPos] < _maxResidual) {
+                if ( fabs( knownHitPosOnLine - dutHitPos[_knownHitPos] ) < _maxResidual) {
                     // first copy old DUT hit position to the new one
                     newDutHitPos[0] = dutHitPos[0];
                     newDutHitPos[1] = dutHitPos[1];
