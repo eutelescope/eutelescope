@@ -462,7 +462,7 @@ void EUTelProcessorGeometricClustering::geometricClustering(LCEvent * evt, LCCol
 				{
 					// set the ID for this zsCluster
 					idZSClusterEncoder["sensorID"]  = sensorID;
-					idZSClusterEncoder["sparsePixelType"] = static_cast<int>( type );
+					idZSClusterEncoder["sparsePixelType"] = static_cast<int>( kEUTelGeometricPixel );
 					idZSClusterEncoder["quality"] = 0;
 					idZSClusterEncoder.setCellID( zsCluster.get() );
 

@@ -37,8 +37,8 @@
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
  </processor>
 
- <processor name="HitMakerM26" type="EUTelHitMakerTwo">
- <!--EUTelHitMakerTwo is responsible to translate cluster centers from the local frame of reference to the external frame of reference using the GEAR geometry description-->
+ <processor name="HitMakerM26" type="EUTelProcessorHitMaker">
+ <!--EUTelProcessorHitMaker is responsible to translate cluster centers from the local frame of reference to the external frame of reference using the GEAR geometry description-->
   <!--If true a 3D histo will be filled. It may require large memory-->
   <!--parameter name="Enable3DHisto" type="bool">true </parameter-->
   <!--Hit coordinates are calculated in local reference frame of sensor-->
@@ -57,8 +57,8 @@
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
  </processor>
 
- <processor name="HitMakerAPIX" type="EUTelHitMakerTwo">
- <!--EUTelHitMakerTwo is responsible to translate cluster centers from the local frame of reference to the external frame of reference using the GEAR geometry description-->
+ <processor name="HitMakerAPIX" type="EUTelProcessorHitMaker">
+ <!--EUTelProcessorHitMaker is responsible to translate cluster centers from the local frame of reference to the external frame of reference using the GEAR geometry description-->
   <!--If true a 3D histo will be filled. It may require large memory-->
   <!--parameter name="Enable3DHisto" type="bool">true </parameter-->
   <!--Hit coordinates are calculated in local reference frame of sensor-->
@@ -68,7 +68,7 @@
   <!--This is the name of the LCIO file name with the output offset db (add .slcio)-->
   <!--parameter name="OffsetDBFile" type="string">offset-db.slcio </parameter-->
   <!--Cluster (pulse) collection name-->
-  <parameter name="PulseCollectionName" type="string" lcioInType="TrackerPulse">cluster_apix</parameter>
+  <parameter name="PulseCollectionName" type="string" lcioInType="TrackerPulse">cluster_apix_free</parameter>
   <!--This is the name of the reference hit collection initialized in this processor. This collection provides the reference vector to correctly determine a plane corresponding to a global hit coordiante.-->
   <!--parameter name="ReferenceCollection" type="string">referenceHit </parameter-->
   <!--This is the file where the reference hit collection is stored-->
