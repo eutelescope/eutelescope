@@ -63,3 +63,28 @@ void EUTelGeometricClusterImpl::getClusterGeomInfo(float& xPos, float& yPos, flo
 	yPos = yMax + yMaxBoundary - 0.5 *ySize;
 delete pixel;
 }
+
+void EUTelGeometricClusterImpl::getGeometricCenterOfGravity(float& xCoG, float& yCoG) const
+{
+	xCoG = 0;
+	yCoG = 0;
+	
+	double totalCharge = 0;
+	
+	EUTelGeometricPixel* pixel = new EUTelGeometricPixel;
+	for( unsigned int index = 0; index < size() ; index++ ) 
+	{
+		getSparsePixelAt( index , pixel);
+
+		double curSignal = pixel->getSignal();
+		xCoG += (pixel->getPosX())*curSignal;
+		yCoG += (pixel->getPosY())*curSignal;
+		totalCharge += curSignal;
+	} 
+
+	xCoG /= totalCharge;
+	yCoG /= totalCharge;
+	delete pixel;
+}
+
+

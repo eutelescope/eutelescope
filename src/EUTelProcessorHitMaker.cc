@@ -301,8 +301,8 @@ void EUTelProcessorHitMaker::processEvent (LCEvent * event) {
 
     // prepare an encoder for the hit collection
     CellIDEncoder<TrackerHitImpl> idHitEncoder(EUTELESCOPE::HITENCODING, hitCollection);
-    CellIDDecoder<TrackerPulseImpl>  clusterCellDecoder(pulseCollection);
-    CellIDDecoder<TrackerDataImpl>   cellDecoder(pulseCollection);
+    CellIDDecoder<TrackerPulseImpl> clusterCellDecoder(pulseCollection);
+    CellIDDecoder<TrackerDataImpl> cellDecoder(EUTELESCOPE::ZSDATADEFAULTENCODING);
 
     int oldDetectorID = -100;
 
@@ -362,37 +362,35 @@ void EUTelProcessorHitMaker::processEvent (LCEvent * event) {
 			
 			if(clusterType == kEUTelGenericSparseClusterImpl)
 			{
-				EUTelSimpleVirtualCluster* cluster = nullptr;
-				
 				float xPos = 0;
 				float yPos = 0;
 
 				//in the case of genericSparseCluster we need to know the underlying pixel type
 				if(pixelType == kEUTelGenericSparsePixel)
 				{
-					cluster = new EUTelGenericSparseClusterImpl<EUTelGenericSparsePixel>(trackerData);
-					cluster->getCenterOfGravity(xPos, yPos);
+					EUTelGenericSparseClusterImpl<EUTelGenericSparsePixel> cluster (trackerData);
+					cluster.getCenterOfGravity(xPos, yPos);
 
 					//For non geometric clusters, getCenterOfGravity will return it in pixel indices space, i.e.
 					//we still have to transform into mm via the dimensions
 					xPos = (xPos + 0.5) * xPitch - xSize/2.;
 					yPos = (yPos + 0.5) * yPitch - ySize/2.;
+		
 				}
+
 				else if(pixelType == kEUTelGeometricPixel)
 				{
 					
-					cluster = new EUTelGeometricClusterImpl(trackerData);
-					cluster->getCenterOfGravity(xPos, yPos);
+					EUTelGeometricClusterImpl cluster(trackerData);
+					cluster.getGeometricCenterOfGravity(xPos, yPos);
 				}
+
 				else
 				{
 					//ERROR
 					streamlog_out( ERROR4 ) << "We do not support pixel type: " << pixelType << " for kEUTelGenericSparseClusterImpl" << std::endl;
 					throw UnknownDataTypeException("Pixel type not supported for kEUTelGenericSparseClusterImpl");
 				}
-
-				delete cluster;
-				cluster = nullptr;
 
 				telPos[0] = xPos;
 				telPos[1] = yPos;
