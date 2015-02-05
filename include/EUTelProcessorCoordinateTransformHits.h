@@ -80,6 +80,7 @@ namespace eutelescope {
 		//Collection names
 		std::string _hitCollectionNameInput;
 		std::string _hitCollectionNameOutput;
+		bool _undoAlignment;
 
 	};//close class declaration
 

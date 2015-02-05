@@ -8,14 +8,14 @@
  *
  */
 
-#include "EUTelProcessorCoordinateTransformHits.h"
-
 // eutelescope includes ".h"
+#include "EUTelProcessorCoordinateTransformHits.h"
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelEventImpl.h"
 #include "EUTELESCOPE.h"
 #include "EUTelExceptions.h"
 #include "EUTelGeometryTelescopeGeoDescription.h"
+#include "CellIDReencoder.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -28,33 +28,32 @@
 #include <UTIL/CellIDEncoder.h>
 #include <UTIL/CellIDDecoder.h>
 
-
-using namespace std;
-using namespace marlin;
 using namespace eutelescope;
 
 EUTelProcessorCoordinateTransformHits::EUTelProcessorCoordinateTransformHits():
 Processor("EUTelProcessorCoordinateTransformHits"),
 _hitCollectionNameInput(), 
-_hitCollectionNameOutput()
+_hitCollectionNameOutput(),
+_undoAlignment(false)
 {
-		// modify processor description
 		_description ="EUTelLocaltoGlobalHitMaker is responsible to change local coordinates to global. This is done using the EUTelGeometryClass";
 
 		registerInputCollection(LCIO::TRACKERHIT, "hitCollectionNameInput", "Local input hit collection name", _hitCollectionNameInput, std::string("local_hit"));
 
 		registerOutputCollection(LCIO::TRACKERHIT,"hitCollectionNameOutput", "Global output hit collection name", _hitCollectionNameOutput, std::string ("global_hit"));
+
+		registerOptionalParameter("Undo Alignment (boolean)", "Set to true to undo the alignment instead", _undoAlignment, bool(false));
 }
 
 void EUTelProcessorCoordinateTransformHits::init()
 {
-		std::string name("telescope_geometry.root");
-		geo::gGeometry().initializeTGeoDescription(name,false);
+		std::string geoFilename = EUTELESCOPE::GEOFILENAME;
+		geo::gGeometry().initializeTGeoDescription(geoFilename, false);
 }
 
 void EUTelProcessorCoordinateTransformHits::processRunHeader(LCRunHeader* rdr)
 {
-		auto_ptr<EUTelRunHeaderImpl> header( new EUTelRunHeaderImpl(rdr) );
+		std::auto_ptr<EUTelRunHeaderImpl> header( new EUTelRunHeaderImpl(rdr) );
 
 		// this is the right place also to check the geometry ID. This is a
 		// unique number identifying each different geometry used at the
@@ -91,7 +90,7 @@ void EUTelProcessorCoordinateTransformHits::processEvent(LCEvent* event)
 		}
 
 		//Opens collection for input.
-		LCCollection* inputCollection;
+		LCCollection* inputCollection = nullptr;
 		try
 		{
 				inputCollection = evt->getCollection(_hitCollectionNameInput);
@@ -102,54 +101,79 @@ void EUTelProcessorCoordinateTransformHits::processEvent(LCEvent* event)
 				return;
 		}
 
-		LCCollectionVec * outputCollection = NULL;
-		try{
+		LCCollectionVec* outputCollection = nullptr;
+		try
+		{
 				outputCollection  = static_cast<LCCollectionVec*> (event->getCollection( _hitCollectionNameOutput ));
 		}
-		catch(...){
+		catch(...)
+		{
 				outputCollection = new LCCollectionVec(LCIO::TRACKERHIT);
-				streamlog_out ( DEBUG5 ) << "Collection does not exist. Create new collection."<<endl;
 		}
-		UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );   
+
+		std::string encoding = inputCollection->getParameters().getStringVal( LCIO::CellIDEncoding );
+
+		lcio::CellIDDecoder<TrackerHitImpl> hitDecoder ( encoding );
+		lcio::UTIL::CellIDReencoder<TrackerHitImpl> cellReencoder( encoding, outputCollection );
+
 		//Now get each individual hit LOOP OVER!
-		for (int iHit = 0; iHit < inputCollection->getNumberOfElements(); ++iHit) {  
-				TrackerHitImpl*	hit_input = static_cast<TrackerHitImpl*>(inputCollection->getElementAt(iHit)); //This will return a LCObject. Must cast to specify which type
-				TrackerHitImpl* hit_output = new IMPL::TrackerHitImpl; 
-				//Call the local2masterHit/master2localHit function defined int EUTelGeometryTelescopeDescription
-				int properties = hitDecoder(static_cast< IMPL::TrackerHitImpl* >(hit_input))["properties"];
-				if(properties == kHitInGlobalCoord){
-						streamlog_out(DEBUG5) << " The properties cell ID is global. So will now change to local" << std::endl;
-						geo::gGeometry().master2localHit(hit_input, hit_output, outputCollection);
-				}
-				else{
-						streamlog_out(DEBUG5) << " The properties cell ID is not set so assume local. So will change to global now" << std::endl;
-						geo::gGeometry().local2masterHit(hit_input, hit_output, outputCollection);
-				}
-				streamlog_out ( DEBUG5 )  << "New hit "<< iHit << " for event  "<< evt->getEventNumber() <<" created" << std::endl;
+		for(int iHit = 0; iHit < inputCollection->getNumberOfElements(); ++iHit)
+		{  
+			TrackerHitImpl*	inputHit = static_cast<TrackerHitImpl*>(inputCollection->getElementAt(iHit));
+			TrackerHitImpl* outputHit = new IMPL::TrackerHitImpl(); 
 
-				try{
-						streamlog_out ( DEBUG5 )  << "HIT OUTPUT CONTAINS!!!!!!!!!!!!!!!!!!!!" << std::endl;
-						streamlog_out ( DEBUG5 )  << "Hit position: "<<*(hit_output->getPosition())<<" , " << *(hit_output->getPosition()+1)<<" , " << *(hit_output->getPosition()+2) << std::endl;
-						streamlog_out ( DEBUG5 )  << "Type: "<< 	hit_output->getType() <<endl;
-						UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
-						streamlog_out ( DEBUG5 )  << "Sensor ID: " << 	hitDecoder(static_cast< IMPL::TrackerHitImpl* >(hit_output))["sensorID"] <<endl;
-						streamlog_out ( DEBUG5 )  << "Properties: " << hitDecoder(static_cast< IMPL::TrackerHitImpl* >(hit_output))["properties"] <<endl;
-				}
-				catch(...){
-						streamlog_out ( DEBUG5 )  << "There is a problem opening the new hit_output object" << std::endl;
-				}
-				outputCollection->push_back(hit_output);
+			//Call the local2masterHit/master2localHit function defined int EUTelGeometryTelescopeDescription
+			int properties = hitDecoder(inputHit)["properties"];
+			int sensorID = hitDecoder(inputHit)["sensorID"];
+			
+			const double* inputPos = inputHit->getPosition();
+			double outputPos[3];
+
+			if(( properties == !kHitInGlobalCoord) && !_undoAlignment )
+			{
+				streamlog_out(DEBUG5) << "Transforming hit from local to global!" << std::endl;
+				geo::gGeometry().local2Master(sensorID, inputPos, outputPos);
+			}
+			else if(( properties == kHitInGlobalCoord) && _undoAlignment )
+			{
+				streamlog_out(DEBUG5) << "Transforming hit from global to local!" << std::endl;
+				geo::gGeometry().master2Local(inputPos, outputPos);
+			}
+			else
+			{
+				std::string errMsg;
+				if(!_undoAlignment) errMsg = "Provided global hit, but trying to transform into global. Something is wrong!";
+				else errMsg = "Provided local hit, but trying to transform into local. Something is wrong!";
+				throw InvalidGeometryException(errMsg);
+			}
+	
+			//Fill the new outputHit with information
+			outputHit->setPosition(outputPos);
+			outputHit->setCovMatrix( inputHit->getCovMatrix());
+			outputHit->setType( inputHit->getType() );
+			outputHit->setTime( inputHit->getTime() );
+			outputHit->setCellID0( inputHit->getCellID0() );
+			outputHit->setCellID1( inputHit->getCellID1() );
+			outputHit->setQuality( inputHit->getQuality() );
+			outputHit->rawHits() = inputHit->getRawHits();
+
+			cellReencoder.readValues(outputHit);
+			//^= is a bitwise XOR i.e. we will switch the coordinate sytsem
+			cellReencoder["properties"] = properties ^= kHitInGlobalCoord;
+			cellReencoder.setCellID(outputHit);
+
+			outputCollection->push_back(outputHit);
 		}
-		streamlog_out ( DEBUG5 )  << "ALL HITS ON COLLECTIONVEC: Now for event "<< evt->getEventNumber() <<" push onto collection" << std::endl;
+	
 		//Now push the hit for this event onto the collection
-		try{	
+		try
+		{	
 				event->addCollection(outputCollection, _hitCollectionNameOutput );
-				streamlog_out ( DEBUG5 )  << "Pushed onto collection: " << _hitCollectionNameOutput <<endl;	
 		}
-		catch(...){
-				streamlog_out ( MESSAGE5 )  << "Problem with pushing collection onto event"<<endl;
+		catch(...)
+		{
+				streamlog_out ( WARNING5 )  << "Problem with pushing collection onto event" << std::endl;
 		}
-
 }
 
 void EUTelProcessorCoordinateTransformHits::end()

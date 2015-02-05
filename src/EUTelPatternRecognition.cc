@@ -1,5 +1,6 @@
 //This class contains all the pattern recognition functions. These are used within EUTelProcessorPatternRecogntion. They use basic input about the particles flight. So the particle charge, the magnetic field strength and beam energy. This combined with seeds states on the first plane (Can be others but the first by default) determined what set of hits come from a single track. 
 #include "EUTelPatternRecognition.h"
+#include "EUTelNav.h"
 namespace eutelescope {
     
 	EUTelPatternRecognition::EUTelPatternRecognition() :  
@@ -337,7 +338,7 @@ TVector3 EUTelPatternRecognition::computeInitialMomentumGlobal(){
 	TVector3 position(0,0,0);//The position we start from does not matter since the magnetic field is homogeneous.
 	TVector3 momentum(0,0,_beamE);//Assume the beam starts in a straight line
 	float arcLength= geo::gGeometry().getInitialDisplacementToFirstPlane();
-	TVector3 momentumEnd = geo::gGeometry().getXYZMomentumfromArcLength(momentum, position, _beamQ, arcLength);
+	TVector3 momentumEnd = EUTelNav::getXYZMomentumfromArcLength(momentum, position, _beamQ, arcLength);
 	streamlog_out(DEBUG2) << "Momentum on the first sensor: px,py,pz "<<momentumEnd[0] <<","<<momentumEnd[1]<<","<<momentumEnd[2]<<","<<"At an arc length of "<<arcLength<<std::endl;
 	return momentumEnd;
 }
