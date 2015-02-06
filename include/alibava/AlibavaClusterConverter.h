@@ -82,9 +82,9 @@ namespace alibava {
 		
 		// cluster collection names for EUTel
 		// The collection name of cluster pulse
-		string _pulseCollectionName;
+		std::string _pulseCollectionName;
 		// The collection name of sparse cluster
-		string _sparseCollectionName;
+		std::string _sparseCollectionName;
 		
 		
 		// SensorID

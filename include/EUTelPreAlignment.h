@@ -1,4 +1,3 @@
-// Version: $Id$
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -7,13 +6,10 @@
  *   header with author names in all development based on this file.
  *
  */
-// built only if USE_GEAR
-#if defined(USE_GEAR)
 #ifndef EUTELPREALIGNMENT_H
 #define EUTELPREALIGNMENT_H
 
 // eutelescope includes ".h"
-//#include "TrackerHitImpl2.h"
 #include "EUTelReferenceHit.h"
 
 //ROOT includes
@@ -218,7 +214,7 @@ namespace eutelescope {
   protected:
     std::string _inputHitCollectionName;
     std::string _alignmentConstantLCIOFile;
- 
+ 	std::string _GEARFileSuffix;
  
     int _iRun;
     int _iEvt;
@@ -227,6 +223,8 @@ namespace eutelescope {
     gear::SiPlanesParameters * _siPlanesParameters;
     gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
     std::vector<PreAligner> _preAligners;
+    std::vector<int> _ExcludedPlanesXCoord;  
+    std::vector<int> _ExcludedPlanesYCoord;  
     std::vector<int> _ExcludedPlanes;  
 };
   //! A global instance of the processor
@@ -234,4 +232,3 @@ namespace eutelescope {
 
 }
 #endif
-#endif // GEAR

@@ -23,7 +23,6 @@
 
 using namespace std;
 using namespace lcio;
-using namespace marlin;
 using namespace alibava;
 
 AlibavaCluster::AlibavaCluster() :
@@ -89,7 +88,7 @@ AlibavaCluster::~AlibavaCluster(){
 	
 }
 
-void AlibavaCluster::createTrackerData(TrackerDataImpl * alibavaCluster){
+void AlibavaCluster::createTrackerData(lcio::TrackerDataImpl * alibavaCluster){
 	// put channel information in TrackerData
 	// first number we put is channel number then signal
 	FloatVec dataToStore;

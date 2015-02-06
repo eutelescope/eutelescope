@@ -17,17 +17,15 @@
 
 namespace eutelescope {
 
-  class EUTelTrackImpl;
-  /**Vector of (pointers to) Tracks.*/
-  typedef std::vector<EUTelTrackImpl*> EUTelTrackVec;
+class EUTelTrackImpl;
 
-//  class EUTelTrackStateImpl ;
-  /**Vector of (pointers to) TrackStates.*/
-  typedef std::vector<EUTelTrackStateImpl*> EUTelTrackStateVec ;
+/**Vector of (pointers to) Tracks.*/
+typedef std::vector<EUTelTrackImpl*> EUTelTrackVec;
+/**Vector of (pointers to) TrackStates.*/
+typedef std::vector<EUTelTrackStateImpl*> EUTelTrackStateVec ;
   
-  using namespace std;
-
-  class EUTelTrackImpl : public EVENT::LCObject, public IMPL::AccessChecked {
+class EUTelTrackImpl : public EVENT::LCObject, public IMPL::AccessChecked
+{
     
   public: 
     
@@ -56,8 +54,8 @@ IMPL::TrackImpl* CreateLCIOTrack();
     virtual void Print(){
 //      PrintTrackStates();   
       for(unsigned int i=0; i < this->getTrackStates().size() ; i++) {    
-        streamlog_out(MESSAGE0) << "track " << id() << " state:" << i  << " id: " << setw(5) << (getTrackStates().at(i))->id() << " location: " ;
-         streamlog_out(MESSAGE0) << setw(3) << (getTrackStates().at(i))->getLocation() << " at "<< getTrackStates().at(i) ;
+        streamlog_out(MESSAGE0) << "track " << id() << " state:" << i  << " id: " << std::setw(5) << (getTrackStates().at(i))->id() << " location: " ;
+         streamlog_out(MESSAGE0) << std::setw(3) << (getTrackStates().at(i))->getLocation() << " at "<< getTrackStates().at(i) ;
          streamlog_out(MESSAGE0) << " at Tx: " << getTx(i) << " at Ty: " << getTy(i) << " getX() " << getX(i) << " getY() " << getY(i) << " "  ;
         const float*   point = (getTrackStates().at(i))->getReferencePoint();
         streamlog_out(MESSAGE0) << std::setw(7) << point[0] << " " << std::setw(7) << point[1] << " " << std::setw(7) << point[2] ;

@@ -160,7 +160,7 @@ namespace alibava {
 		int _numberOfMaskedEvents;
 		
 		// The name of the histogram which contains event number of masked events
-		string _hMaskedEventsNumberName;
+		std::string _hMaskedEventsNumberName;
 		
 	};
 	

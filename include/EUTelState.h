@@ -14,11 +14,6 @@
 #include "IMPL/TrackImpl.h"
 #include "EUTelGeometryTelescopeGeoDescription.h"
 
-
-using namespace lcio;
-using namespace marlin;
-using namespace std;
-
 namespace eutelescope {
 
 	class  EUTelState : public IMPL::TrackImpl{

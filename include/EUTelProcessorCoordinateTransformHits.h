@@ -7,11 +7,8 @@
  *   header with author names in all development based on this file.
  *
  */
-
-
 #ifndef EUTELCOORDINATETRANSFORMHITS_H
 #define EUTELCOORDINATETRANSFORMHITS_H
-
 
 // built only if GEAR is available
 #ifdef USE_GEAR
@@ -31,7 +28,6 @@
 #include <EVENT/LCRunHeader.h>
 #include <EVENT/LCEvent.h>
 #include <EVENT/LCCollection.h>
-
 
 // AIDA includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -74,12 +70,9 @@ namespace eutelescope {
 	
 		//Called every event.
   	virtual void processEvent (LCEvent * event);
-		//Called every event
-		virtual void check(LCEvent *event);
+
 		//Called at the end of the job
   	virtual void end();
-
-		protected:
 
 		private:
     
@@ -87,6 +80,7 @@ namespace eutelescope {
 		//Collection names
 		std::string _hitCollectionNameInput;
 		std::string _hitCollectionNameOutput;
+		bool _undoAlignment;
 
 	};//close class declaration
 

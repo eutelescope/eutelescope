@@ -36,8 +36,8 @@
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
  </processor>
 
- <processor name="HitMakerM26" type="EUTelHitMakerTwo">
- <!--EUTelHitMakerTwo is responsible to translate cluster centers from the local frame of reference to the external frame of reference using the GEAR geometry description-->
+ <processor name="HitMakerM26" type="EUTelProcessorHitMaker">
+ <!--EUTelProcessorHitMaker is responsible to translate cluster centers from the local frame of reference to the external frame of reference using the GEAR geometry description-->
   <!--If true a 3D histo will be filled. It may require large memory-->
   <!--parameter name="Enable3DHisto" type="bool">true </parameter-->
   <!--Hit coordinates are calculated in local reference frame of sensor-->

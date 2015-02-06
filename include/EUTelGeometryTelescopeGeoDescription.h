@@ -9,9 +9,6 @@
 #include <map>
 #include <string>
 
-// LCIO includes
-#include "LCIOSTLTypes.h"
-
 // MARLIN
 #include "marlin/Global.h"
 
@@ -371,10 +368,6 @@ class EUTelGeometryTelescopeGeoDescription
 
 	void local2Master( int, const double[], double[] );
 
-	void local2masterHit(IMPL::TrackerHitImpl* hit_input, IMPL::TrackerHitImpl* hit_output, LCCollection* hitCollectionOutput);
-
-	void master2localHit(IMPL::TrackerHitImpl* hit_input, IMPL::TrackerHitImpl* hit_output, LCCollection* hitCollectionOutput);
-
 	void master2Local( const double[], double[] );
 
 	void master2Localtwo(int, const double[], double[] );
@@ -388,14 +381,6 @@ class EUTelGeometryTelescopeGeoDescription
 	TVector3 getXYZMomentumfromArcLength(TVector3 momentum, TVector3 globalPositionStart, float charge, float  arcLength );
 
 	float getInitialDisplacementToFirstPlane() const { return _initialDisplacement; };
-
-	TVector3 getXYZfromArcLength( TVector3 pos,TVector3 pVec , float _beamQ, double s) const;
-
-	TMatrixD getPropagationJacobianCurvilinear(float ds, float qbyp, TVector3 t1, TVector3 t2);
-
-	TMatrixD getLocalToCurvilinearTransformMatrix(TVector3 globalMomentum, int  planeID, float charge);
-
-	TMatrix getPropagationJacobianF( float x0, float y0, float z0, float px, float py, float pz, float _beamQ, float dz );
 
 	const TGeoHMatrix* getHMatrix( const double globalPos[] );
 

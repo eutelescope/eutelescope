@@ -27,6 +27,8 @@ class EUTelGeometricClusterImpl : public EUTelGenericSparseClusterImpl<EUTelGeom
 
 	void getClusterGeomInfo(float& xPos, float& yPos, float& xSize, float& ySize) const;
 
+	void getGeometricCenterOfGravity(float& xCoG, float& yCoG) const;
+
   private:
 	DISALLOW_COPY_AND_ASSIGN(EUTelGeometricClusterImpl)
 };

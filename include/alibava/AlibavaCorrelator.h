@@ -187,13 +187,13 @@ namespace alibava {
 		std::string getHistoNameForDetector(std::string name, int detID1, int detID2);
 
 		// clones TH1D Histogram for each detector
-		void createClones_hHitPos(string histoName);
+		void createClones_hHitPos(std::string histoName);
 
 		// clones Correlation Histogram for each detector combination
-		void createClones_hCor(string histoName);
+		void createClones_hCor(std::string histoName);
 
 		// clones Synchronisation Histogram for each detector combination
-		void createClones_hSync(string histoName);
+		void createClones_hSync(std::string histoName);
 
 		// checks if detID is in _detectorIDs list
 		bool isInDetectorIDsList(int detID);

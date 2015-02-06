@@ -15,6 +15,9 @@
 	void operator=(const type&);
 #endif
 
+#ifndef nullptr
+	#define nullptr NULL
+#endif 
 
 #ifndef EUTELESCOPE_NAMESPACE_H
 #define EUTELESCOPE_NAMESPACE_H
@@ -75,6 +78,9 @@ namespace eutelescope
 
     // PARAMETER NAMES USED IN THE HEADER IMPLEMENTATION
 
+	//! Parameter to store the telescope ROOT geometry file
+	static const std::string GEOFILENAME;
+	
     //! Parameter key to store/recall the header version number
     static const char * HEADERVERSION;
 

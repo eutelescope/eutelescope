@@ -20,9 +20,6 @@
 // system includes <>
 #include <string>
 
-using namespace std;
-using namespace lcio;
-
 namespace alibava {
 	
 	class AlibavaPedNoiCalIOManager{
@@ -31,34 +28,34 @@ namespace alibava {
 		AlibavaPedNoiCalIOManager();
 		~AlibavaPedNoiCalIOManager();
 		
-		void createFile(string filename, IMPL::LCRunHeaderImpl* runHeader);
+		void createFile(std::string filename, lcio::LCRunHeaderImpl* runHeader);
 		
-		void addToFile(string filename, string collectionName, int chipnum, EVENT::FloatVec datavec);
+		void addToFile(std::string filename, std::string collectionName, int chipnum, lcio::FloatVec datavec);
 		
-		EVENT::FloatVec getPedNoiCalForChip(string filename, string collectionName, unsigned int chipnum);
+		lcio::FloatVec getPedNoiCalForChip(std::string filename, std::string collectionName, unsigned int chipnum);
 		
 	private:
 		// gets data vector from an event
-		EVENT::FloatVec getDataFromEventForChip(LCEvent* evt, string collectionName, unsigned int chipnum);
+		lcio::FloatVec getDataFromEventForChip(lcio::LCEvent* evt, std::string collectionName, unsigned int chipnum);
 		
 		// returns true if the collection exists in the event
-		bool doesCollectionExist(LCEvent* evt, string collectionName);
+		bool doesCollectionExist(lcio::LCEvent* evt, std::string collectionName);
 		
 		// returns the element number of the TrackerData with the chosen chipnum in collection col.
 		// returns -1 if it doesn't exist.
-		int getElementNumberOfChip(LCCollectionVec* col, int chipnum);
+		int getElementNumberOfChip(lcio::LCCollectionVec* col, int chipnum);
 		
 		// checks if the file exists
-		bool doesFileExist(string astring);
+		bool doesFileExist(std::string astring);
 		
 		// to create a file with an empty runheader
-		void createFile(string filename);
+		void createFile(std::string filename);
 		
 		// returns a copy of runHeader of existing AlibavaPedNoiCalFile
-		LCRunHeaderImpl* getRunHeader(string filename);
+		lcio::LCRunHeaderImpl* getRunHeader(std::string filename);
 		
 		// returns a copy of lcevent of existing AlibavaPedNoiCalFile
-		LCEventImpl* getEvent(string filename);
+		lcio::LCEventImpl* getEvent(std::string filename);
 		
 		
 		

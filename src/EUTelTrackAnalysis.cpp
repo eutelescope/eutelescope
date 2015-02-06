@@ -1,6 +1,7 @@
 #include "EUTelTrackAnalysis.h"
 using namespace eutelescope;
-EUTelTrackAnalysis::EUTelTrackAnalysis(map< int,  AIDA::IProfile2D*> mapFromSensorIDToHistogramX, map< int,  AIDA::IProfile2D*> mapFromSensorIDToHistogramY, map< int,   AIDA::IHistogram1D *> mapFromSensorIDToKinkXZ,map< int,   AIDA::IHistogram1D *> mapFromSensorIDToKinkYZ){
+
+EUTelTrackAnalysis::EUTelTrackAnalysis(std::map< int,  AIDA::IProfile2D*> mapFromSensorIDToHistogramX, std::map< int,  AIDA::IProfile2D*> mapFromSensorIDToHistogramY, std::map< int,   AIDA::IHistogram1D *> mapFromSensorIDToKinkXZ,std::map< int,   AIDA::IHistogram1D *> mapFromSensorIDToKinkYZ){
 setSensorIDTo2DResidualHistogramX(mapFromSensorIDToHistogramX);
 setSensorIDTo2DResidualHistogramY(mapFromSensorIDToHistogramY);
 setSensorIDToIncidenceAngleXZ(mapFromSensorIDToKinkXZ);

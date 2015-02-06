@@ -120,8 +120,8 @@ void EUTelGenericSparseClusterImpl<PixelType>::getCenterOfGravity(float& xCoG, f
 		getSparsePixelAt( index , pixel);
 
 		double curSignal = pixel->getSignal();
-		xCoG += (pixel->getPosX())*curSignal;
-		yCoG += (pixel->getPosY())*curSignal;
+		xCoG += (pixel->getXCoord())*curSignal;
+		yCoG += (pixel->getYCoord())*curSignal;
 		totalCharge += curSignal;
 	} 
 

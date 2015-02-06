@@ -1,7 +1,7 @@
-#ifndef MIMOSA26GEODESCR_H
-#define	MIMOSA26GEODESCR_H
+#ifndef MIMOSA26_H
+#define	MIMOSA26_H
 
-  /** @class Mimosa26GeoDescr
+  /** @class Mimosa26
 	* This class is the implementation of  @class EUTelGenericPixGeoDescr
 	* for the Mimosa26 which is the standard telescope reference plane of
 	* the DESY pixel telescope.
@@ -24,11 +24,11 @@
 namespace eutelescope {
 namespace geo {
 
-class Mimosa26GeoDescr : public EUTelGenericPixGeoDescr {
+class Mimosa26 : public EUTelGenericPixGeoDescr {
 	
 	public:
-		Mimosa26GeoDescr();
-		~Mimosa26GeoDescr();
+		Mimosa26();
+		~Mimosa26();
 
 		void createRootDescr(char const *);
 		std::string getPixName(int, int);
@@ -40,7 +40,12 @@ class Mimosa26GeoDescr : public EUTelGenericPixGeoDescr {
 		TGeoVolume* plane;
 };
 
+extern "C"
+{
+	EUTelGenericPixGeoDescr* maker();
+}
+
 } //namespace geo
 } //namespace eutelescope
 
-#endif	//MIMOSA26GEODESCR_H
+#endif	//MIMOSA26_H

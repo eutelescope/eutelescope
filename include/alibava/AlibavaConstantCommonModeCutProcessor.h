@@ -149,7 +149,7 @@ namespace alibava {
 		//! Common Mode Ccollection Name
 		/*! The common mode collection name
 		 */
-		string _commonModeColName;
+		std::string _commonModeColName;
 
 		//! CommonModeCutMin
 		/*! The minimum common mode noise that is acceptable to use that Event
@@ -176,7 +176,7 @@ namespace alibava {
 		int _totalNumberOfEvents;
 
 		// The name of the histogram which contains event number of masked events
-		string _hMaskedEventsNumberName;
+		std::string _hMaskedEventsNumberName;
 		
 		
 		

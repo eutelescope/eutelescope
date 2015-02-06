@@ -91,8 +91,14 @@ std::string FEI4FourChip::getPixName(int x, int y)
 	return std::string( buffer ); 
 }
 
-	//TODO: parse the path to a pixel number!
-	std::pair<int, int>  FEI4FourChip::getPixIndex(char const*){return std::make_pair(0,0); }
+//TODO: parse the path to a pixel number!
+std::pair<int, int>  FEI4FourChip::getPixIndex(char const*){return std::make_pair(0,0); }
+
+EUTelGenericPixGeoDescr* maker()
+{
+	FEI4FourChip* mPixGeoDescr = new FEI4FourChip();
+	return dynamic_cast<EUTelGenericPixGeoDescr*>(mPixGeoDescr);
+}
 
 } //namespace geo
 } //namespace eutelescope

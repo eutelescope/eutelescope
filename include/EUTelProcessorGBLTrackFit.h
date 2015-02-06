@@ -45,15 +45,12 @@
 #include "EUTelTrackImpl.h"
 #include "EUTelHistogramManager.h"
 
-using namespace lcio;
-using namespace marlin;
-using namespace std;
 namespace eutelescope {
 
-	class EUTelProcessorGBLTrackFit : public Processor {
+	class EUTelProcessorGBLTrackFit : public marlin::Processor {
 
 		private:
-			DISALLOW_COPY_AND_ASSIGN(EUTelProcessorGBLTrackFit)      // prevent users from making (default) copies of processors
+			DISALLOW_COPY_AND_ASSIGN(EUTelProcessorGBLTrackFit)
 						
 		public:
 
@@ -102,10 +99,10 @@ namespace eutelescope {
 			std::vector<float> _chi2NdfVec;
 
 			/** Input TrackerHit collection name */
-			string _trackCandidatesInputCollectionName;
+			std::string _trackCandidatesInputCollectionName;
 
 			/** Output Tracks collection name */
-			string _tracksOutputCollectionName;
+			std::string _tracksOutputCollectionName;
 
 			/** Outlier downweighting option */
 			std::string _mEstimatorType;
@@ -126,7 +123,7 @@ namespace eutelescope {
 
 			void bookHistograms();
 
-			void plotResidual(map< int, map<float, float > >  & sensorResidual, map< int, map<float, float > >  & sensorResidualError, bool &first_time);
+			void plotResidual(std::map< int, std::map<float, float > >  & sensorResidual, std::map< int, std::map<float, float > >  & sensorResidualError, bool &first_time);
 				
 //TO DO: Fix all this histogramming stuff.
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -146,33 +143,33 @@ namespace eutelescope {
 	std::map< int, AIDA::IHistogram1D* > _mapSensorIDToHistogramCorrection4;
         /** Names of histograms */
         struct _histName {
-						static string _chi2CandidateHistName;
-						static string  _fitsuccessHistName;
-						static string _residGblFitHistNameX0;
-						static string _residGblFitHistNameX1;
-						static string _residGblFitHistNameX2;
-						static string _residGblFitHistNameX3;
-						static string _residGblFitHistNameX4;
-						static string _residGblFitHistNameX5;
-						static string _residGblFitHistNameY0;
-						static string _residGblFitHistNameY1;
-						static string _residGblFitHistNameY2;
-						static string _residGblFitHistNameY3;
-						static string _residGblFitHistNameY4;
-						static string _residGblFitHistNameY5;
+						static std::string _chi2CandidateHistName;
+						static std::string  _fitsuccessHistName;
+						static std::string _residGblFitHistNameX0;
+						static std::string _residGblFitHistNameX1;
+						static std::string _residGblFitHistNameX2;
+						static std::string _residGblFitHistNameX3;
+						static std::string _residGblFitHistNameX4;
+						static std::string _residGblFitHistNameX5;
+						static std::string _residGblFitHistNameY0;
+						static std::string _residGblFitHistNameY1;
+						static std::string _residGblFitHistNameY2;
+						static std::string _residGblFitHistNameY3;
+						static std::string _residGblFitHistNameY4;
+						static std::string _residGblFitHistNameY5;
 
-						static string _residGblFitHistNameX0p;
-						static string _residGblFitHistNameX1p;
-						static string _residGblFitHistNameX2p;
-						static string _residGblFitHistNameX3p;
-						static string _residGblFitHistNameX4p;
-						static string _residGblFitHistNameX5p;
-						static string _residGblFitHistNameY0p;
-						static string _residGblFitHistNameY1p;
-						static string _residGblFitHistNameY2p;
-						static string _residGblFitHistNameY3p;
-						static string _residGblFitHistNameY4p;
-						static string _residGblFitHistNameY5p;
+						static std::string _residGblFitHistNameX0p;
+						static std::string _residGblFitHistNameX1p;
+						static std::string _residGblFitHistNameX2p;
+						static std::string _residGblFitHistNameX3p;
+						static std::string _residGblFitHistNameX4p;
+						static std::string _residGblFitHistNameX5p;
+						static std::string _residGblFitHistNameY0p;
+						static std::string _residGblFitHistNameY1p;
+						static std::string _residGblFitHistNameY2p;
+						static std::string _residGblFitHistNameY3p;
+						static std::string _residGblFitHistNameY4p;
+						static std::string _residGblFitHistNameY5p;
 
         };
 

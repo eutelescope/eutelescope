@@ -1,4 +1,5 @@
 #include "EUTelState.h"
+#include "EUTelNav.h"
 
 using namespace eutelescope;
 EUTelState::EUTelState(){
@@ -326,15 +327,15 @@ TMatrix EUTelState::computePropagationJacobianFromLocalStateToNextLocalState(TVe
 	if(arcLength == 0 or arcLength < 0 ){ 
 		throw(lcio::Exception( "The arc length is less than or equal to zero.")); 
 	}
-	TMatrixD curvilinearJacobian = geo::gGeometry().getPropagationJacobianCurvilinear(arcLength,getOmega(), computeCartesianMomentum().Unit(),momentumEnd.Unit());
+	TMatrixD curvilinearJacobian = EUTelNav::getPropagationJacobianCurvilinear(arcLength,getOmega(), computeCartesianMomentum().Unit(),momentumEnd.Unit());
 	streamlog_out(DEBUG0)<<"This is the curvilinear jacobian at sensor:" << std::endl; 
 	streamlog_message( DEBUG0, curvilinearJacobian.Print();, std::endl; );
 	streamlog_out(DEBUG0)<<"The state vector that create the curvilinear system is:" << std::endl; 
 	print();
-	TMatrixD localToCurvilinearJacobianStart =  geo::gGeometry().getLocalToCurvilinearTransformMatrix(computeCartesianMomentum(),getLocation() ,getBeamCharge() );
+	TMatrixD localToCurvilinearJacobianStart =  EUTelNav::getLocalToCurvilinearTransformMatrix(computeCartesianMomentum(),getLocation() ,getBeamCharge() );
 	streamlog_out(DEBUG0)<<"This is the local to curvilinear jacobian at sensor : " << std::endl; 
 	streamlog_message( DEBUG0, localToCurvilinearJacobianStart.Print();, std::endl; );
-	TMatrixD localToCurvilinearJacobianEnd =  geo::gGeometry().getLocalToCurvilinearTransformMatrix(momentumEnd,nextPlaneID ,getBeamCharge() );
+	TMatrixD localToCurvilinearJacobianEnd =  EUTelNav::getLocalToCurvilinearTransformMatrix(momentumEnd,nextPlaneID ,getBeamCharge() );
 	streamlog_out(DEBUG0)<<"This is the local to curvilinear jacobian at sensor at last next sensor : " << std::endl; 
 	streamlog_message( DEBUG0, localToCurvilinearJacobianEnd.Print();, std::endl; );
 	TMatrixD curvilinearToLocalJacobianEnd = localToCurvilinearJacobianEnd.Invert();
@@ -349,17 +350,17 @@ TMatrix EUTelState::computePropagationJacobianFromLocalStateToNextLocalState(TVe
 }
 //print
 void EUTelState::print(){
-	streamlog_out(DEBUG2) << "The state vector//////////////////////////////////////////////////////" << endl;
+	streamlog_out(DEBUG2) << "The state vector//////////////////////////////////////////////////////" << std::endl;
 	TVectorD stateVec = getStateVec();
 	streamlog_message( DEBUG0, stateVec.Print();, std::endl; );
 	TVectorD kinks = getKinks();
 	streamlog_out(DEBUG1) <<"The kink of this state is: "<< kinks[0] <<" ,  " << kinks[1]<<std::endl;
-	streamlog_out(DEBUG2) << "/////////////////////////////////////////////////////" << endl;
+	streamlog_out(DEBUG2) << "/////////////////////////////////////////////////////" << std::endl;
 	streamlog_out(DEBUG1) <<"State memory location "<< this << " The sensor location of the state " <<getLocation()<<std::endl;
 	if(getIsThereAHit()){
 			streamlog_out(DEBUG1) <<"The hit ID of the state is "<<getTrackerHits().at(0)->id()<<std::endl;
 	}else{
-		streamlog_out(DEBUG1) <<"This state has no hit " <<endl;
+		streamlog_out(DEBUG1) <<"This state has no hit " << std::endl;
 	}
 }	
 //Overload operators.

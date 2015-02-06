@@ -11,7 +11,7 @@ EUTelTrack::EUTelTrack(const EUTelTrack& track): IMPL::TrackImpl(){
 }
 EUTelTrack::EUTelTrack(const EUTelTrack& track, bool copyContents){
 	if( track.getChi2()== 0 or track.getNdf() == 0){
-		streamlog_out(MESSAGE5)<<"Chi: "<<track.getChi2() <<" ndf: "<<track.getNdf() <<endl;
+		streamlog_out(MESSAGE5)<<"Chi: "<<track.getChi2() <<" ndf: "<<track.getNdf() << std::endl;
 		throw(lcio::Exception("You are trying to create a track that is empty. With another track that has not chi2 or degrees of freedom.")); 	
 	}
 	setChi2(track.getChi2());

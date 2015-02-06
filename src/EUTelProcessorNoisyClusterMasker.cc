@@ -135,8 +135,14 @@ void EUTelProcessorNoisyClusterMasker::processEvent(LCEvent * event)
 		{
 			sparseData =  auto_ptr<EUTelTrackerDataInterfacer>( new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>(trackerData) );
 		}
+		else if( pixelType == kEUTelGeometricPixel )
+		{
+		
+			sparseData =  auto_ptr<EUTelTrackerDataInterfacer>( new EUTelTrackerDataInterfacerImpl<EUTelGeometricPixel>(trackerData) );
+		}
 		else
-                {
+		{
+			streamlog_out( ERROR4 ) << "Pixel type: " << pixelType << " is unknown, this will cause a crash!" << endl;
 		}
 
 		bool noisy = false;

@@ -172,7 +172,7 @@ bool EUTelDafBase::defineSystemFromData()
       if( _nRef.at(plane) > 2){ gotPlane = true; continue; }
       if( _nRef.at(plane) == 0 )
       {
-	pl.setRef0( Vector3f(pl.meas.at(meas).getX(), pl.meas.at(meas).getY(), pl.meas.at(meas).getZ()));
+	pl.setRef0( Eigen::Vector3f(pl.meas.at(meas).getX(), pl.meas.at(meas).getY(), pl.meas.at(meas).getZ()));
 	_nRef.at(plane)++;
 	gotPlane = false;
  continue;
@@ -180,7 +180,7 @@ bool EUTelDafBase::defineSystemFromData()
       if( fabs(pl.meas.at(meas).getX() - pl.getRef0()(0) ) < 1500) { continue; }
       if( fabs(pl.meas.at(meas).getY() - pl.getRef0()(1) ) < 1500) { continue; }
       if( _nRef.at(plane) == 1 ){
-	pl.setRef1( Vector3f(pl.meas.at(meas).getX(), pl.meas.at(meas).getY(), pl.meas.at(meas).getZ()));
+	pl.setRef1( Eigen::Vector3f(pl.meas.at(meas).getX(), pl.meas.at(meas).getY(), pl.meas.at(meas).getZ()));
 	_nRef.at(plane)++;
 	gotPlane = false;
  continue;
@@ -188,7 +188,7 @@ bool EUTelDafBase::defineSystemFromData()
       if( fabs(pl.meas.at(meas).getX() - pl.getRef1()(0) ) < 1500) {  continue; }
       if( fabs(pl.meas.at(meas).getY() - pl.getRef1()(1) ) < 1500) {  continue; }
       if( _nRef.at(plane) == 2 ){
-	pl.setRef2( Vector3f(pl.meas.at(meas).getX(), pl.meas.at(meas).getY(), pl.meas.at(meas).getZ()));
+	pl.setRef2( Eigen::Vector3f(pl.meas.at(meas).getX(), pl.meas.at(meas).getY(), pl.meas.at(meas).getZ()));
 	_nRef.at(plane)++;
 	getPlaneNorm(pl);
 	pl.print();
@@ -242,9 +242,9 @@ void EUTelDafBase::gearRotate(size_t index, size_t gearIndex){
   }
 
 
-  pl.setRef0( Vector3f( ref0.X() * 1000.0f, ref0.Y() * 1000.0f, (ref0.Z() + nomZ) * 1000.0f ));
-  pl.setRef1( Vector3f( ref1.X() * 1000.0f, ref1.Y() * 1000.0f, (ref1.Z() + nomZ) * 1000.0f ));
-  pl.setRef2( Vector3f( ref2.X() * 1000.0f, ref2.Y() * 1000.0f, (ref2.Z() + nomZ) * 1000.0f ));
+  pl.setRef0( Eigen::Vector3f( ref0.X() * 1000.0f, ref0.Y() * 1000.0f, (ref0.Z() + nomZ) * 1000.0f ));
+  pl.setRef1( Eigen::Vector3f( ref1.X() * 1000.0f, ref1.Y() * 1000.0f, (ref1.Z() + nomZ) * 1000.0f ));
+  pl.setRef2( Eigen::Vector3f( ref2.X() * 1000.0f, ref2.Y() * 1000.0f, (ref2.Z() + nomZ) * 1000.0f ));
 
   //Tracks are propagated to glob xy plane => Errors are in glob xy plane. scales like cosine
   //Errors not corrected for xy rotation
@@ -252,8 +252,8 @@ void EUTelDafBase::gearRotate(size_t index, size_t gearIndex){
   getPlaneNorm(pl);
 } 
 
-Vector3f EUTelDafBase::applyAlignment(EUTelAlignmentConstant* alignment, Vector3f point){
-  Vector3f outpoint;
+Eigen::Vector3f EUTelDafBase::applyAlignment(EUTelAlignmentConstant* alignment, Eigen::Vector3f point){
+  Eigen::Vector3f outpoint;
   double alpha = alignment->getAlpha();
   double beta  = alignment->getBeta();  
   double gamma = alignment->getGamma();
@@ -307,8 +307,8 @@ void EUTelDafBase::alignRotate(std::string collectionName, LCEvent* event) {
   }
 }
 void EUTelDafBase::getPlaneNorm(daffitter::FitPlane& pl){
-  Vector3f l1 = pl.getRef1() - pl.getRef0();
-  Vector3f l2 = pl.getRef2() - pl.getRef0();
+  Eigen::Vector3f l1 = pl.getRef1() - pl.getRef0();
+  Eigen::Vector3f l2 = pl.getRef2() - pl.getRef0();
   //Calculate plane normal vector from ref points
   pl.setPlaneNorm( l2.cross(l1));
 }
