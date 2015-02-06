@@ -39,7 +39,7 @@ class FEI4Single : public EUTelGenericPixGeoDescr {
 extern "C"
 {
 	EUTelGenericPixGeoDescr* maker();
-};
+}
 
 } //namespace geo
 } //namespace eutelescope
