@@ -52,7 +52,7 @@ TVectorD EUTelState::getStateVec() const {
 	TVector3 momentum =	computeCartesianMomentum();
 	TVectorD stateVec(5);
 	const float lambda = asin(momentum[2]/(momentum.Mag()));//This will be in radians.
-	const float phi = asin(momentum[1]/(momentum.Mag())*cos(lambda));
+	//const float phi = asin(momentum[1]/(momentum.Mag())*cos(lambda));
 
 
 	stateVec[0] = getOmega();

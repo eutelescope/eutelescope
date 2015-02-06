@@ -22,11 +22,6 @@ namespace eutelescope {
 std::vector<EUTelTrack>& EUTelPatternRecognition::getTracks(){
 	return	_finalTracks; 
 }
-void EUTelPatternRecognition::clearEveryRun(){
-	int _totalNumberOfHits=0;
-	int _totalNumberOfSharedHits=0;
-}
-
 
 void EUTelPatternRecognition::testTrackCandidates(){
 	for(size_t i=0; i < _tracks.size(); ++i){
@@ -59,7 +54,7 @@ void EUTelPatternRecognition::propagateForwardFromSeedState( EUTelState& stateIn
 	track.addTrack(static_cast<EVENT::Track*>(firstState));//Note we do not have to create new since this object State is saved in class member scope
 	//Here we loop through all the planes not excluded. We begin at the seed which might not be the first. Then we stop before the last plane, since we do not want to propagate anymore
 	bool firstLoop =true;//TO DO:: This works but is very stupid. Must fix
-	for(int i = geo::gGeometry().sensorIDToZOrderWithoutExcludedPlanes().at(state->getLocation()); i < (geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()-1); ++i){
+	for(size_t i = geo::gGeometry().sensorIDToZOrderWithoutExcludedPlanes().at(state->getLocation()); i < (geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()-1); ++i){
 	
 		float globalIntersection[3];
 		TVector3 momentumAtIntersection;
@@ -143,7 +138,7 @@ void EUTelPatternRecognition::propagateForwardFromSeedState( EUTelState& stateIn
 }	
 void EUTelPatternRecognition::printTrackCandidates(){
 	streamlog_out ( DEBUG1 ) << "EUTelKalmanFilter::printTrackCandidates----BEGIN "<< std::endl;
-	for(int i = 0; i < _tracks.size();++i){
+	for(size_t i = 0; i < _tracks.size();++i){
 		streamlog_out(DEBUG5)<<"Track number "<<i<<" Out of " <<_tracks.size()<<std::endl; 
 		_tracks.at(i).print();
 	}
@@ -208,33 +203,42 @@ void EUTelPatternRecognition::findTrackCandidatesWithSameHitsAndRemove(){
 	//		cout<<"Increase track to: "<<j <<std::endl;
 			int hitscount=0;
 			std::vector<EUTelState> jStates = _tracksAfterEnoughHitsCut[j].getStates();
-			for(size_t i=0;i<iStates.size();i++){
-		//		cout<<"I top states "<< i<<std::endl;
-			
-				EVENT::TrackerHit* ihit;
-				if(!iStates[i].getTrackerHits().empty()){//Need since we could have tracks that have a state but no hits here.
-					ihit = iStates[i].getTrackerHits()[0];
-				}else{
-					continue;
-				}
-				int ic = ihit->id();
-				for(size_t j=0;j<jStates.size();j++){
-		//		cout<<"I bottom states "<< j<<std::endl;
-
-					EVENT::TrackerHit* jhit;
-					if(!jStates[j].getTrackerHits().empty()){//Need since we could have tracks that have a state but no hits here.
-						jhit = jStates[j].getTrackerHits()[0];
-					}else{
-						continue;
+			for(size_t i=0;i<iStates.size();i++)
+			{
+					EVENT::TrackerHit* ihit;
+					//Need since we could have tracks that have a state but no hits here.
+					if(!iStates[i].getTrackerHits().empty())
+					{
+							ihit = iStates[i].getTrackerHits()[0];
 					}
-					int jc = jhit->id();
-					if(ic == jc ){
-				//		cout<<"This is ic and jc " <<ic<<","<<jc<<std::endl;
-						_totalNumberOfSharedHits++;
-						hitscount++; 
-						streamlog_out(MESSAGE1) <<  "Hit number on track you are comparing all other to :" << i << ". Hit ID: " << ic << ". Hit number of comparison: " << j << ". Hit ID of this comparison : " << jc << ". Number of common hits: " << hitscount << std::endl; 
+					else
+					{
+							continue;
 					}
-				}
+					int ic = ihit->id();
+					
+					for(size_t j=0;j<jStates.size();j++)
+					{
+							EVENT::TrackerHit* jhit;
+							//Need since we could have tracks that have a state but no hits here.
+							if(!jStates[j].getTrackerHits().empty())
+							{
+									jhit = jStates[j].getTrackerHits()[0];
+							}
+							else
+							{
+									continue;
+							}
+							int jc = jhit->id();
+							if(ic == jc )
+							{
+									_totalNumberOfSharedHits++;
+									hitscount++; 
+									streamlog_out(MESSAGE1) <<  "Hit number on track you are comparing all other to: " << i << ". Hit ID: " 
+															<< ic << ". Hit number of comparison: " << j << ". Hit ID of this comparison : " << jc 
+															<< ". Number of common hits: " << hitscount << std::endl; 
+							}
+					}
 
 			} 
 			//If for any track we are comparing to the number of similar hits is to high then we move to the next track and do not add this track to the new list of tracks
@@ -319,8 +323,6 @@ void EUTelPatternRecognition::initialiseSeeds() {
 			}
 			state.setLocation(_createSeedsFromPlanes[iplane]);//This stores the location as a float in Z0 since no location for track LCIO. This is preferable to problems with storing hits.  
 			state.setPositionLocal(posLocal); //This will automatically take cartesian coordinate system and save it to reference point. //This is different from most LCIO applications since each track will have own reference point. 		
-			float xzDirection;
-			float yzDirection;
 			state.setBeamCharge(_beamQ);//this is set for each state. to do: is there a more efficient way of doing this since we only need this stored once?
 			TVector3 momentum = computeInitialMomentumGlobal(); 
 			state.setLocalXZAndYZIntersectionAndCurvatureUsingGlobalMomentum(momentum); 
@@ -400,7 +402,7 @@ void EUTelPatternRecognition::findTracksWithEnoughHits(){
 	for(size_t i = 0 ; i<_tracks.size(); ++i){
 		EUTelTrack& track = _tracks[i];
 		streamlog_out ( DEBUG2 ) << "Number of hits on the track: " <<track.getNumberOfHitsOnTrack()<<" Number needed: " <<  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() - _allowedMissingHits << std::endl;
-		if(track.getNumberOfHitsOnTrack()>= geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() - _allowedMissingHits){
+		if(track.getNumberOfHitsOnTrack() >= (int)geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() - _allowedMissingHits){
 			streamlog_out(DEBUG5) << "There are enough hits. So attach this track makes the cut!"<<std::endl;
 			_tracksAfterEnoughHitsCut.push_back(track);
 		}

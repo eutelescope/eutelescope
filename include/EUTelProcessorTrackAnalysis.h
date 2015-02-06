@@ -45,13 +45,8 @@ namespace eutelescope {
     */
     virtual void init();
 
-    /** Called for every run.*/
-    virtual void processRunHeader(LCRunHeader* run);
-
     /** Called for every event - the working horse.*/
     virtual void processEvent(LCEvent * evt);
-
-    virtual void check(LCEvent * evt);
 
    	/** Called after data processing for clean up. **/
 		virtual void end();

@@ -11,11 +11,12 @@ _milleResultFileName("millepede.res"),
 _gear_aligned_file("gear-00001-aligned.xml"),
 _nProcessedRuns(0),
 _nProcessedEvents(0),
+_alignmentMode(0),
 _beamQ(-1),
 _eBeam(4),
-_mEstimatorType(),
-_alignmentMode(0),
-_createBinary(true){
+_createBinary(true),
+_mEstimatorType()
+{
   // TrackerHit input collection
   registerInputCollection(LCIO::TRACK, "TrackCandidatesInputCollectionName", "Input track candidate collection name",_trackCandidatesInputCollectionName,std::string("TrackCandidatesCollection"));
 
@@ -224,7 +225,6 @@ void EUTelProcessorGBLAlign::processEvent(LCEvent * evt){
 	}
 
 }
-void EUTelProcessorGBLAlign::check(LCEvent * evt){}
 
 void EUTelProcessorGBLAlign::end(){
 	streamlog_out (MESSAGE9) <<"TOTAL NUMBER OF TRACKS PASSED TO ALIGNMENT: "<< _totalTrackCount << std::endl;

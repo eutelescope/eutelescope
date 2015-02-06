@@ -117,7 +117,6 @@ namespace eutelescope {
 		void testHitsVec();
 
 		//OTHER
-		void clearEveryRun();  
 		void printTrackCandidates();
 		void propagateForwardFromSeedState(EUTelState&, EUTelTrack& );
 		void testPlaneDimensions();

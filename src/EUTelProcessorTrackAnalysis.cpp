@@ -19,10 +19,6 @@ void EUTelProcessorTrackAnalysis::init(){
 	_analysis = analysis;
 }
 
-void EUTelProcessorTrackAnalysis::processRunHeader(LCRunHeader * run) {}
-
-void EUTelProcessorTrackAnalysis::check(LCEvent * evt){}
-
 void EUTelProcessorTrackAnalysis::processEvent(LCEvent * evt){
 
 	EUTelEventImpl * event = static_cast<EUTelEventImpl*> (evt); ///We change the class so we can use EUTelescope functions
