@@ -174,17 +174,14 @@ INSTALL_SHARED_LIBRARY( ${libname} DESTINATION lib )
 #INSTALL_SHARED_LIBRARY( GBL DESTINATION lib )
 
 #Pixel Geometry Shared Libraries
-ADD_LIBRARY( FEI4Single SHARED ./pixgeo/src/FEI4Single.cc)
-ADD_LIBRARY( FEI4Double SHARED ./pixgeo/src/FEI4Double.cc)
-ADD_LIBRARY( FEI4FourChip SHARED ./pixgeo/src/FEI4FourChip.cc)
-ADD_LIBRARY( Mimosa26 SHARED ./pixgeo/src/Mimosa26.cc)
+FILE(GLOB IMPL_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/pixgeo/src/*.cc)
 
-INSTALL_SHARED_LIBRARY( FEI4Single DESTINATION lib )
-INSTALL_SHARED_LIBRARY( FEI4Double DESTINATION lib )
-INSTALL_SHARED_LIBRARY( FEI4FourChip DESTINATION lib )
-INSTALL_SHARED_LIBRARY( Mimosa26 DESTINATION lib )
-
-
+FOREACH(impl_src ${IMPL_SRCS})
+    # Extract FileName from FileName.cc
+    GET_FILENAME_COMPONENT(basename ${impl_src} NAME_WE) 
+    ADD_LIBRARY( ${basename} SHARED ${impl_src} )
+	INSTALL_SHARED_LIBRARY( ${basename} DESTINATION lib )
+ENDFOREACH()  
 
 # Properly add the CMSPixelDecoder external dependency:
 ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}/external/CMSPixelDecoder)
