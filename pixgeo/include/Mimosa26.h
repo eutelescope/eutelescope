@@ -43,7 +43,7 @@ class Mimosa26 : public EUTelGenericPixGeoDescr {
 extern "C"
 {
 	EUTelGenericPixGeoDescr* maker();
-};
+}
 
 } //namespace geo
 } //namespace eutelescope

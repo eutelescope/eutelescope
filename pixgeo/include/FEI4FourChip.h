@@ -43,7 +43,7 @@ class FEI4FourChip : public EUTelGenericPixGeoDescr {
 extern "C"
 {
 	EUTelGenericPixGeoDescr* maker();
-};
+}
 
 }//nanespace geo
 } //namespace eutelescope
