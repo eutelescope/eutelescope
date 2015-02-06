@@ -44,7 +44,7 @@ int EUTelTrack::getNumberOfHitsOnTrack() const {
 	//streamlog_out(DEBUG0) <<"The number of states " << states.size()<<std::endl; 
 	for(size_t i =0; i< states.size();++i){
 		//streamlog_out(DEBUG0) <<"The states memory address for loop number "<<i<<" " << &states<<std::endl; 
-		const EVENT::TrackerHitVec& hit = states[i]->getTrackerHits();
+		//const EVENT::TrackerHitVec& hit = states[i]->getTrackerHits();
 		if(states[i]->getTrackerHits().size() == 0){
 			continue;
 		}

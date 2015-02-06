@@ -122,9 +122,7 @@ void EUTelProcessorGBLTrackFit::processRunHeader(LCRunHeader * run) {
 	_nProcessedRuns++;
 }
 
-void EUTelProcessorGBLTrackFit::check(LCEvent * evt){}
-
-void EUTelProcessorGBLTrackFit::processEvent(LCEvent * evt){
+void EUTelProcessorGBLTrackFit::processEvent(LCEvent* evt){
 	try{
 		streamlog_out(DEBUG5) << "Start of event " << _nProcessedEvents << std::endl;
 
@@ -288,7 +286,8 @@ void EUTelProcessorGBLTrackFit::plotResidual(std::map< int, std::map<float, floa
 void EUTelProcessorGBLTrackFit::end() {
 	float total = 0;
 	double sizeFittedTracks = _chi2NdfVec.size();
-	for(int i=0; i<_chi2NdfVec.size(); ++i){
+	for(size_t i=0; i<_chi2NdfVec.size(); ++i)
+	{
 		total= total + _chi2NdfVec.at(i);//TO DO: This is does not seem to output the correct average chi2. Plus do we really need this to fit?
 	}
 	//TO DO: We really should have a better way to look track per track	and see if the correction is too large. 
@@ -361,14 +360,14 @@ void EUTelProcessorGBLTrackFit::bookHistograms() {
         double MinX=-0.04;  //-0.2;
         double MaxX=0.04;
 
-
+/*
         EUTelHistogramInfo    *    histoInfo0  = histoMgr->getHistogramInfo( _histName::_residGblFitHistNameX0);
         EUTelHistogramInfo    *    histoInfo1  = histoMgr->getHistogramInfo( _histName::_residGblFitHistNameX1);
         EUTelHistogramInfo    *    histoInfo2  = histoMgr->getHistogramInfo( _histName::_residGblFitHistNameX2);
         EUTelHistogramInfo    *    histoInfo3  = histoMgr->getHistogramInfo( _histName::_residGblFitHistNameX3);
         EUTelHistogramInfo    *    histoInfo4  = histoMgr->getHistogramInfo( _histName::_residGblFitHistNameX4);
         EUTelHistogramInfo    *    histoInfo5  = histoMgr->getHistogramInfo( _histName::_residGblFitHistNameX5);
- 
+ */
         AIDA::IHistogram1D * residGblFit0X = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistNameX0, NBinX, MinX, MaxX); 
         AIDA::IHistogram1D * residGblFit1X = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistNameX1, NBinX, MinX, MaxX); 
         AIDA::IHistogram1D * residGblFit2X = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistNameX2, NBinX, MinX, MaxX); 
@@ -508,14 +507,14 @@ void EUTelProcessorGBLTrackFit::bookHistograms() {
         double MinXp=-10;
         double MaxXp=10;
 
-
+/*
         EUTelHistogramInfo    *    histoInfo0p  = histoMgr->getHistogramInfo( _histName::_residGblFitHistNameX0p);
         EUTelHistogramInfo    *    histoInfo1p  = histoMgr->getHistogramInfo( _histName::_residGblFitHistNameX1p);
         EUTelHistogramInfo    *    histoInfo2p  = histoMgr->getHistogramInfo( _histName::_residGblFitHistNameX2p);
         EUTelHistogramInfo    *    histoInfo3p  = histoMgr->getHistogramInfo( _histName::_residGblFitHistNameX3p);
         EUTelHistogramInfo    *    histoInfo4p  = histoMgr->getHistogramInfo( _histName::_residGblFitHistNameX4p);
         EUTelHistogramInfo    *    histoInfo5p  = histoMgr->getHistogramInfo( _histName::_residGblFitHistNameX5p);
- 
+ */
         AIDA::IHistogram1D * residGblFit0Xp = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistNameX0p, NBinp, MinXp, MaxXp); 
         AIDA::IHistogram1D * residGblFit1Xp = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistNameX1p, NBinp, MinXp, MaxXp); 
         AIDA::IHistogram1D * residGblFit2Xp = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistNameX2p, NBinp, MinXp, MaxXp); 

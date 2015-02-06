@@ -97,7 +97,7 @@ void EUTelProcessorPatternRecognition::init(){
 		geo::gGeometry().setInitialDisplacementToFirstPlane(_initialDisplacement);//We specify this here so we can access it throughout this processor. 
 		{ 
 			streamlog_out(MESSAGE5)<<std::endl<<"These are the planes you will create a state from. Mass inbetween states will be turned to scatterers in GBLTrackProcessor."<<std::endl;
-			for(int i =0 ; i < geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size(); ++i){
+			for(size_t i =0 ; i < geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size(); ++i){
 				streamlog_out(MESSAGE5)<<geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)<<"  ";
 			}
 			streamlog_out(MESSAGE5) << std::endl;
@@ -157,7 +157,6 @@ void EUTelProcessorPatternRecognition::processRunHeader(LCRunHeader* run) {
 				<< "The run header says the GeoID is " << header->getGeoID() << std::endl
 				<< "The GEAR description says is     " << geo::gGeometry().getSiPlanesLayoutID() << std::endl;
 	}
-	_trackFitter->clearEveryRun();//This just sets the counter for the total number of hits/total number of shared hits to zero. 		
 		_nProcessedRuns++;
 }
 
