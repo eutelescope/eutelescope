@@ -113,6 +113,11 @@ void EUTelProcessorCoordinateTransformHits::processEvent(LCEvent* event)
 
 		std::string encoding = inputCollection->getParameters().getStringVal( LCIO::CellIDEncoding );
 
+		if(encoding.empty())
+		{
+			encoding = EUTELESCOPE::HITENCODING;
+		}
+
 		lcio::CellIDDecoder<TrackerHitImpl> hitDecoder ( encoding );
 		lcio::UTIL::CellIDReencoder<TrackerHitImpl> cellReencoder( encoding, outputCollection );
 
@@ -129,18 +134,19 @@ void EUTelProcessorCoordinateTransformHits::processEvent(LCEvent* event)
 			const double* inputPos = inputHit->getPosition();
 			double outputPos[3];
 
-			if(( properties == !kHitInGlobalCoord) && !_undoAlignment )
+			if( !(properties & kHitInGlobalCoord) && !_undoAlignment )
 			{
 				streamlog_out(DEBUG5) << "Transforming hit from local to global!" << std::endl;
 				geo::gGeometry().local2Master(sensorID, inputPos, outputPos);
 			}
-			else if(( properties == kHitInGlobalCoord) && _undoAlignment )
+			else if( (properties & kHitInGlobalCoord) && _undoAlignment )
 			{
 				streamlog_out(DEBUG5) << "Transforming hit from global to local!" << std::endl;
 				geo::gGeometry().master2Local(inputPos, outputPos);
 			}
 			else
 			{
+				std::cout << "Properties: " << properties <<std::endl;
 				std::string errMsg;
 				if(!_undoAlignment) errMsg = "Provided global hit, but trying to transform into global. Something is wrong!";
 				else errMsg = "Provided local hit, but trying to transform into local. Something is wrong!";
