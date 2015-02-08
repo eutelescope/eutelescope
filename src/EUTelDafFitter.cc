@@ -215,7 +215,7 @@ void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate* track, LCCollectionVec
     int sensorID =  _system.planes.at(plane).getSensorID();
     idHitEncoder["sensorID"] = sensorID;
     // set the local/global bit flag property AND the FittedHit property for the hit
-    idHitEncoder["properties"] = kHitInGlobalCoord ^ kFittedHit;
+    idHitEncoder["properties"] = kHitInGlobalCoord | kFittedHit;
     double pos[3];
     pos[0]= estim->getX() / 1000.0;
     pos[1]= estim->getY() / 1000.0;
