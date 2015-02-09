@@ -397,39 +397,39 @@
 	# test depends on earlier steps
 	DEPENDS TestJobsubExampleDaturaNoDUTFitterRun
 	)
-
-    ADD_TEST( TestJobsubExampleDaturaNoDUTStatTestGblTrkSrch sh -c "PYTHONPATH=$ROOTSYS/lib:$PYTHONPATH ${executable} --cdash  -g${testdir}/output/stattest_report_tracksearchHelix.pdf ${referencedatadir}/StatTestConf_DaturaNoDUTGblTrkSrch.qa ${testdir}/output/histograms/run${PaddedRunNr}-tracksearchHelix.root ${referencedatadir}/run${PaddedRunNr}-tracksearchHelix.root" )
-    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTStatTestGblTrkSrch PROPERTIES
-        # test will pass if ALL of the following expressions are matched
-        PASS_REGULAR_EXPRESSION "${fit_pass_regex_1}"
-        # test will fail if ANY of the following expressions is matched 
-        FAIL_REGULAR_EXPRESSION "${fit_fail_regex}"
-	# test depends on earlier steps
-	DEPENDS TestJobsubExampleDaturaNoDUTGblTrkSrchRun
-	)
-
-
-    ADD_TEST( TestJobsubExampleDaturaNoDUTStatTestGblAlign sh -c "PYTHONPATH=$ROOTSYS/lib:$PYTHONPATH ${executable} --cdash  -g${testdir}/output/stattest_report_aligngbl.pdf ${referencedatadir}/StatTestConf_DaturaNoDUTGblAlign.qa ${testdir}/output/histograms/run${PaddedRunNr}-aligngbl.root ${referencedatadir}/run${PaddedRunNr}-aligngbl.root" )
-    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTStatTestGblAlign PROPERTIES
-        # test will pass if ALL of the following expressions are matched
-        PASS_REGULAR_EXPRESSION "${fit_pass_regex_1}"
-        # test will fail if ANY of the following expressions is matched 
-        FAIL_REGULAR_EXPRESSION "${fit_fail_regex}"
-	# test depends on earlier steps
-	DEPENDS TestJobsubExampleDaturaNoDUTGblAlignRun
-	)
-
-
-    ADD_TEST( TestJobsubExampleDaturaNoDUTStatTestGblFit sh -c "PYTHONPATH=$ROOTSYS/lib:$PYTHONPATH ${executable} --cdash  -g${testdir}/output/stattest_report_trackgbl.pdf ${referencedatadir}/StatTestConf_DaturaNoDUTGblFit.qa ${testdir}/output/histograms/run${PaddedRunNr}-trackgbl.root ${referencedatadir}/run${PaddedRunNr}-trackgbl.root" )
-    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTStatTestGblFit PROPERTIES
-        # test will pass if ALL of the following expressions are matched
-        PASS_REGULAR_EXPRESSION "${fit_pass_regex_1}"
-        # test will fail if ANY of the following expressions is matched 
-        FAIL_REGULAR_EXPRESSION "${fit_fail_regex}"
-	# test depends on earlier steps
-	DEPENDS TestJobsubExampleDaturaNoDUTGblFitRun
-	)
-
+#
+#    ADD_TEST( TestJobsubExampleDaturaNoDUTStatTestGblTrkSrch sh -c "PYTHONPATH=$ROOTSYS/lib:$PYTHONPATH ${executable} --cdash  -g${testdir}/output/stattest_report_tracksearchHelix.pdf ${referencedatadir}/StatTestConf_DaturaNoDUTGblTrkSrch.qa ${testdir}/output/histograms/run${PaddedRunNr}-tracksearchHelix.root ${referencedatadir}/run${PaddedRunNr}-tracksearchHelix.root" )
+#    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTStatTestGblTrkSrch PROPERTIES
+#        # test will pass if ALL of the following expressions are matched
+#        PASS_REGULAR_EXPRESSION "${fit_pass_regex_1}"
+#        # test will fail if ANY of the following expressions is matched 
+#        FAIL_REGULAR_EXPRESSION "${fit_fail_regex}"
+#	# test depends on earlier steps
+#	DEPENDS TestJobsubExampleDaturaNoDUTGblTrkSrchRun
+#	)
+#
+#
+#    ADD_TEST( TestJobsubExampleDaturaNoDUTStatTestGblAlign sh -c "PYTHONPATH=$ROOTSYS/lib:$PYTHONPATH ${executable} --cdash  -g${testdir}/output/stattest_report_aligngbl.pdf ${referencedatadir}/StatTestConf_DaturaNoDUTGblAlign.qa ${testdir}/output/histograms/run${PaddedRunNr}-aligngbl.root ${referencedatadir}/run${PaddedRunNr}-aligngbl.root" )
+#    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTStatTestGblAlign PROPERTIES
+#        # test will pass if ALL of the following expressions are matched
+#        PASS_REGULAR_EXPRESSION "${fit_pass_regex_1}"
+#        # test will fail if ANY of the following expressions is matched 
+#        FAIL_REGULAR_EXPRESSION "${fit_fail_regex}"
+#	# test depends on earlier steps
+#	DEPENDS TestJobsubExampleDaturaNoDUTGblAlignRun
+#	)
+#
+#
+#    ADD_TEST( TestJobsubExampleDaturaNoDUTStatTestGblFit sh -c "PYTHONPATH=$ROOTSYS/lib:$PYTHONPATH ${executable} --cdash  -g${testdir}/output/stattest_report_trackgbl.pdf ${referencedatadir}/StatTestConf_DaturaNoDUTGblFit.qa ${testdir}/output/histograms/run${PaddedRunNr}-trackgbl.root ${referencedatadir}/run${PaddedRunNr}-trackgbl.root" )
+#    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTStatTestGblFit PROPERTIES
+#        # test will pass if ALL of the following expressions are matched
+#        PASS_REGULAR_EXPRESSION "${fit_pass_regex_1}"
+#        # test will fail if ANY of the following expressions is matched 
+#        FAIL_REGULAR_EXPRESSION "${fit_fail_regex}"
+#	# test depends on earlier steps
+#	DEPENDS TestJobsubExampleDaturaNoDUTGblFitRun
+#	)
+#
 
 #
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

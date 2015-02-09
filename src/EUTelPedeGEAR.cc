@@ -363,15 +363,15 @@ void EUTelPedeGEAR::end() {
 				double xOff = 0;
 				double yOff = 0;
 				double zOff = 0;
-				double xOffErr = 0;
+			/*	double xOffErr = 0;
 				double yOffErr = 0;
-				double zOffErr = 0;
+				double zOffErr = 0;  */
 				double alpha = 0;
-				double alphaErr = 0;
 				double beta = 0;
-				double betaErr = 0;
 				double gamma = 0;
-				double gammaErr = 0;
+			/*	double alphaErr = 0;
+				double betaErr = 0;
+				double gammaErr = 0; */
 	
 				for( unsigned int iParam = 0 ; iParam < numpars ; ++iParam ) 
 				{
