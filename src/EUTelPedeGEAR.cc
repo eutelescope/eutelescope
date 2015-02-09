@@ -403,24 +403,25 @@ void EUTelPedeGEAR::end() {
 						goodLine = false;
 					}
 				
-					bool isFixed = (tokens.size() == 3);
+				//Remove comments to read in uncertainty
+				//	bool isFixed = (tokens.size() == 3);
 
 					if(_alignMode != 3)
 					{
 						if( iParam == 0 )
 						{
 							xOff			= tokens[1]/1000.;
-							if(!isFixed) xOffErr	= tokens[4]/1000.;
+				//			if(!isFixed) xOffErr	= tokens[4]/1000.;
 						}
 						if( iParam == 1 )
 						{
 							yOff			= tokens[1]/1000.;
-							if(!isFixed) yOffErr	= tokens[4]/1000.;
+				//			if(!isFixed) yOffErr	= tokens[4]/1000.;
 						}
 						if( iParam == 2 )
 						{
 							gamma			= tokens[1];
-							if(!isFixed) gammaErr	= tokens[4];
+				//			if(!isFixed) gammaErr	= tokens[4];
 						}
 					}
 					else
@@ -428,32 +429,32 @@ void EUTelPedeGEAR::end() {
 						if( iParam == 0 )
 						{
 							xOff			= tokens[1]/1000.;
-							if(!isFixed) xOffErr	= tokens[4]/1000.;                    
+				//			if(!isFixed) xOffErr	= tokens[4]/1000.;                    
 						}
 						if( iParam == 1 )
 						{
 							yOff 			= tokens[1]/1000.;
-							if(!isFixed) yOffErr	= tokens[4]/1000.;
+				//			if(!isFixed) yOffErr	= tokens[4]/1000.;
 						}
 						if( iParam == 2 )
 						{
 							zOff			= tokens[1]/1000.;
-							if(!isFixed) zOffErr	= tokens[4]/1000.;
+				//			if(!isFixed) zOffErr	= tokens[4]/1000.;
 						}
 						if( iParam == 3 )
 						{
 							alpha			= tokens[1];
-							if(!isFixed) alphaErr	= tokens[4];
+				//			if(!isFixed) alphaErr	= tokens[4];
 						} 
 						if( iParam == 4 )
 						{
 							beta			= tokens[1];
-							if(!isFixed) betaErr	= tokens[4];
+				//			if(!isFixed) betaErr	= tokens[4];
 						} 
 						if( iParam == 5 )
 						{
 							gamma			= tokens[1];
-							if(!isFixed) gammaErr	= tokens[4];
+				//			if(!isFixed) gammaErr	= tokens[4];
 						} 
 					}
 				}
