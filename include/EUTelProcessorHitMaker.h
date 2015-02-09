@@ -308,11 +308,7 @@ namespace eutelescope {
      */
     void bookHistos( int sensorID );
 
-
-    void addReferenceHitCollection(LCEvent *event, std::string referenceHitName);
-
   protected:
-
 
     //! TrackerPulse collection name
     /*! This is the name of the collection holding the pulse

@@ -104,32 +104,33 @@ _orderedSensorIDVec()
 }
 
 
-void EUTelProcessorHitMaker::init() {
-  // this method is called only once even when the rewind is active
-  // usually a good idea to
-  printParameters ();
+void EUTelProcessorHitMaker::init()
+{
+		printParameters ();
 
-  // set to zero the run and event counters
-  _iRun = 0;
-  _iEvt = 0;
+		// set to zero the run and event counters
+		_iRun = 0;
+		_iEvt = 0;
 
-  // Getting access to geometry description
-  std::string name("test.root");
-  geo::gGeometry().initializeTGeoDescription(name,false);
+		// Getting access to geometry description
+		std::string name = EUTELESCOPE::GEOFILENAME;
+		geo::gGeometry().initializeTGeoDescription(name, false);
 
-  // check if Marlin was built with GEAR support or not
 
-  _histogramSwitch = true;
+		_histogramSwitch = true;
 
-  DumpReferenceHitDB();
+		//only for global coord we need a refhit collection
+		if(!_wantLocalCoordinates)
+		{
+				DumpReferenceHitDB();
+		}
 }
 
 
 void EUTelProcessorHitMaker::DumpReferenceHitDB()
 {
-// create a reference hit collection file (DB)
-
-  LCWriter * lcWriter = LCFactory::getInstance()->createLCWriter();
+	// create a reference hit collection file (DB)
+  LCWriter* lcWriter = LCFactory::getInstance()->createLCWriter();
   try {
     lcWriter->open( _referenceHitLCIOFile, LCIO::WRITE_NEW    );
   } catch ( IOException& e ) {
@@ -209,39 +210,10 @@ void EUTelProcessorHitMaker::DumpReferenceHitDB()
 }
 
 
-
-void EUTelProcessorHitMaker::addReferenceHitCollection(LCEvent *event, std::string referenceHitName="referenceHit")
-{ 
-
-  LCCollectionVec * referenceHitCollection = new LCCollectionVec( LCIO::LCGENERICOBJECT );
- 
-  int Nlayers =  geo::gGeometry().nPlanes();
-  for(int ii = 0 ; ii <  Nlayers; ii++)
-  {
-    EUTelReferenceHit * refhit = new EUTelReferenceHit();
-    int sensorID = geo::gGeometry().sensorZOrderToID( ii );
-    refhit->setSensorID( sensorID );
-    refhit->setXOffset( 0.0 );
-    refhit->setYOffset( 0.0 );
-    refhit->setZOffset( 0.0 );
- 
-    refhit->setAlpha( 0.0 );
-    refhit->setBeta( 0.0 );
-    refhit->setGamma( 0.0 );
-    referenceHitCollection->push_back( refhit );
-  }
- 
-  event->addCollection( referenceHitCollection, referenceHitName );
-
-}
-
-
 void EUTelProcessorHitMaker::processRunHeader (LCRunHeader * rdr) {
-
 
   auto_ptr<EUTelRunHeaderImpl> header ( new EUTelRunHeaderImpl (rdr) );
   header->addProcessor( type() );
-
 
   // this is the right place also to check the geometry ID. This is a
   // unique number identifying each different geometry used at the
@@ -252,8 +224,6 @@ void EUTelProcessorHitMaker::processRunHeader (LCRunHeader * rdr) {
   if ( header->getGeoID() == 0 )
     streamlog_out ( WARNING0 ) <<  "The geometry ID in the run header is set to zero." << endl
                                <<  "This may mean that the GeoID parameter was not set" << endl;
-
-
 
   // increment the run counter
   ++_iRun;
@@ -356,8 +326,6 @@ void EUTelProcessorHitMaker::processEvent (LCEvent * event) {
 
 
 			// LOCAL coordinate system !!!!!!
-
-
 			double telPos[3];
 			
 			if(clusterType == kEUTelGenericSparseClusterImpl)
@@ -513,8 +481,6 @@ void EUTelProcessorHitMaker::processEvent (LCEvent * event) {
 
 			}
 #endif
-
-//TODO: Code below is OK!!
 
 			// create the new hit
 			TrackerHitImpl* hit = new TrackerHitImpl;
