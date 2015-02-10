@@ -1,3 +1,9 @@
+/* To create a new analysis follow the series of steps below:
+ * 1) Create a new set of histograms in this processor and link the histogram's pointers to the state's locations; i.e the plane number.
+ * 		Histograms are made using the input to the processor and then matched using the input from the states location.
+ * 2) Create a new input member function to set this in the class (EUTelTrackAnalysis).
+ * 3) Now pass the track from this processor to EUTelTrackAnalysis via a function as shown in processEvent below.
+ * 4)You now have the trackand histogram. Do the analysis and output to that histogram or anyone oyu want.   */
 #include "EUTelProcessorTrackAnalysis.h"
 
 using namespace eutelescope;
