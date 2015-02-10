@@ -25,7 +25,7 @@ void EUTelProcessorTrackAnalysis::init(){
 		//Some initialised in the constructor in part 2.
 		EUTelTrackAnalysis*	analysis = new EUTelTrackAnalysis(_mapFromSensorIDToHistogramX,_mapFromSensorIDToHistogramY,_mapFromSensorIDToKinkXZ,_mapFromSensorIDToKinkYZ) ;
 		//Others here.
-		_analysis->setSensorIDTo2DPValuesWithPosition(_mapFromSensorIDToPValueHisto);
+		analysis->setSensorIDTo2DPValuesWithPosition(_mapFromSensorIDToPValueHisto);
 
 		_analysis = analysis;
 	}catch(...){	
