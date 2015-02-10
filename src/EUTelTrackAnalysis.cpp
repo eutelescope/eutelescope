@@ -82,3 +82,30 @@ void EUTelTrackAnalysis::plotIncidenceAngles(EUTelTrack track){
   streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotIncidenceAngles------------------------------END"<< std::endl;
 }
 
+void EUTelTrackAnalysis::plotPValueWithPosition(EUTelTrack track){
+  streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotPValueWithPosition------------------------------BEGIN"<< std::endl;
+	float pValue = calculatePValueForChi2(track);
+	std::vector<EUTelState> states = track.getStates();
+	for(size_t i=0; i<states.size();++i){
+		EUTelState state  = states.at(i);
+		state.print();
+
+		float* statePosition = state.getPosition();
+		streamlog_out(DEBUG2) << "State position: " << statePosition[0]<<","<<statePosition[1]<<","<<statePosition[2]<< std::endl;
+
+		typedef std::map<int ,AIDA::IProfile2D*  >::iterator it_type;
+		for(it_type iterator = _mapFromSensorIDTo2DPValuesWithPosition.begin(); iterator != _mapFromSensorIDTo2DPValuesWithPosition.end(); iterator++) {
+			if(iterator->first == state.getLocation()){
+				_mapFromSensorIDTo2DPValuesWithPosition[ state.getLocation() ]  -> fill( statePosition[0], statePosition[1],pValue , 1 );
+				break;
+			}
+		} 
+	}
+  streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotPValueWithPosition------------------------------END"<< std::endl;
+}
+float EUTelTrackAnalysis::calculatePValueForChi2(EUTelTrack track){
+	boost::math::chi_squared mydist(track.getNdf());
+	float pValue = boost::math::cdf(mydist,track.getChi2());
+	return pValue;
+}
+

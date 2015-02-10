@@ -20,40 +20,53 @@ Processor("EUTelProcessorTrackAnalysis"){
 
 
 void EUTelProcessorTrackAnalysis::init(){
-	initialiseResidualVsPositionHistograms();
-	EUTelTrackAnalysis*	analysis = new EUTelTrackAnalysis(_mapFromSensorIDToHistogramX,_mapFromSensorIDToHistogramY,_mapFromSensorIDToKinkXZ,_mapFromSensorIDToKinkYZ) ;
-	_analysis = analysis;
+	try{
+		initialiseResidualVsPositionHistograms();
+		//Some initialised in the constructor in part 2.
+		EUTelTrackAnalysis*	analysis = new EUTelTrackAnalysis(_mapFromSensorIDToHistogramX,_mapFromSensorIDToHistogramY,_mapFromSensorIDToKinkXZ,_mapFromSensorIDToKinkYZ) ;
+		//Others here.
+		_analysis->setSensorIDTo2DPValuesWithPosition(_mapFromSensorIDToPValueHisto);
+
+		_analysis = analysis;
+	}catch(...){	
+		streamlog_out(MESSAGE9)<<"There is an unknown error in EUTelProcessorTrackAnalysis-init()" <<std::endl;
+		throw marlin::StopProcessingException( this ) ;
+	}
+
 }
 
 void EUTelProcessorTrackAnalysis::processEvent(LCEvent * evt){
+	try{
+		EUTelEventImpl * event = static_cast<EUTelEventImpl*> (evt); ///We change the class so we can use EUTelescope functions
 
-	EUTelEventImpl * event = static_cast<EUTelEventImpl*> (evt); ///We change the class so we can use EUTelescope functions
-
-	if (event->getEventType() == kEORE) {
-		streamlog_out(DEBUG4) << "EORE found: nothing else to do." << std::endl;
-		return;
-	}else if (event->getEventType() == kUNKNOWN) {
-		streamlog_out(WARNING2) << "Event number " << event->getEventNumber() << " in run " << event->getRunNumber() << " is of unknown type. Continue considering it as a normal Data Event." << std::endl;
-	}
-	LCCollection* eventCollection = NULL;
-	try {
-		eventCollection = evt->getCollection(_trackInputCollectionName);
-		streamlog_out(DEBUG1) << "collection : " << _trackInputCollectionName << " retrieved" << std::endl;
-	}catch (DataNotAvailableException e) {
-		streamlog_out(MESSAGE0) << _trackInputCollectionName << " collection not available" << std::endl;
-		throw marlin::SkipEventException(this);
-	}
-	if (eventCollection != NULL) {
-		streamlog_out(DEBUG2) << "Collection contains data! Continue!" << std::endl;
-		for (int iTrack = 0; iTrack < eventCollection->getNumberOfElements(); ++iTrack){
-			EUTelTrack track = *(static_cast<EUTelTrack*> (eventCollection->getElementAt(iTrack)));
-			_analysis->plotResidualVsPosition(track);	
-			_analysis->plotIncidenceAngles(track);
+		if (event->getEventType() == kEORE) {
+			streamlog_out(DEBUG4) << "EORE found: nothing else to do." << std::endl;
+			return;
+		}else if (event->getEventType() == kUNKNOWN) {
+			streamlog_out(WARNING2) << "Event number " << event->getEventNumber() << " in run " << event->getRunNumber() << " is of unknown type. Continue considering it as a normal Data Event." << std::endl;
 		}
+		LCCollection* eventCollection = NULL;
+		try {
+			eventCollection = evt->getCollection(_trackInputCollectionName);
+			streamlog_out(DEBUG1) << "collection : " << _trackInputCollectionName << " retrieved" << std::endl;
+		}catch (DataNotAvailableException e) {
+			streamlog_out(MESSAGE0) << _trackInputCollectionName << " collection not available" << std::endl;
+			throw marlin::SkipEventException(this);
+		}
+		if (eventCollection != NULL) {
+			streamlog_out(DEBUG2) << "Collection contains data! Continue!" << std::endl;
+			for (int iTrack = 0; iTrack < eventCollection->getNumberOfElements(); ++iTrack){
+				EUTelTrack track = *(static_cast<EUTelTrack*> (eventCollection->getElementAt(iTrack)));
+				_analysis->plotResidualVsPosition(track);	
+				_analysis->plotIncidenceAngles(track);
+				_analysis->plotPValueWithPosition(track);
+			}
 
-	}	
-	
-	
+		}	
+	}catch(...){	
+		streamlog_out(MESSAGE9)<<"There is an unknown error in EUTelProcessorTrackAnalysis-processEvent" <<std::endl;
+		throw marlin::StopProcessingException( this ) ;
+	}
 	
 	
 }
@@ -190,4 +203,33 @@ void	EUTelProcessorTrackAnalysis::initialiseResidualVsPositionHistograms(){
 		sstm.str(std::string(""));
 	}
 	/////////////////////////////////////////////////////////////////////////////////////// 
+	/////////////////////////////////////////////////////////////////////////////////////////p-value with position
+	for (size_t i = 0; i < _sensorIDs.size() ; ++i){
+		sstm << "P-value vs Position" << _sensorIDs.at(i);
+		residGblFitHistName = sstm.str();
+		sstm.str(std::string());
+		sstm << "P-value. Plane " <<  _sensorIDs.at(i);
+		histTitle = sstm.str();
+		sstm.str(std::string(""));
+		histoInfo = histoMgr->getHistogramInfo(residGblFitHistName);
+		NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 40;
+		MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin :-10 ;
+		MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 10;
+		NBinY = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yBin : 20;
+		MinY =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMin : -5;
+		MaxY =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMax : 5;
+		MinZ =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_zMin : -20;
+		MaxZ =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_zMax : 20;
+		AIDA::IProfile2D *  pValueHisto =	marlin::AIDAProcessor::histogramFactory(this)->createProfile2D(residGblFitHistName,  NBinX, MinX, MaxX, NBinY, MinY, MaxY, MinZ,MaxZ);
+		if (pValueHisto) {
+				pValueHisto->setTitle(histTitle);
+				_mapFromSensorIDToPValueHisto.insert(std::make_pair(_sensorIDs.at(i), pValueHisto));
+		} else {
+				streamlog_out(ERROR2) << "Problem booking the " << (residGblFitHistName) << std::endl;
+				streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << std::endl;
+		}
+		sstm.str(std::string(""));
+	}
+		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 }
