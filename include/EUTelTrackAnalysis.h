@@ -2,7 +2,7 @@
 #include "EUTelTrack.h"
 #include "EUTelState.h"
 #include "EUTelHistogramManager.h"
-
+#include "boost/math/distributions/chi_squared.hpp"
 // AIDA
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <AIDA/IBaseHistogram.h>
