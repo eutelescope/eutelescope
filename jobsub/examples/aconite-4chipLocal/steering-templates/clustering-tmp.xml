@@ -79,7 +79,7 @@
   <!--Switch on or off the histogram filling-->
   <parameter name="HistogramFilling" type="bool" value="true"/>
   <!--Time cut in time units of your sensor-->
-  <parameter name="TCut" type="float" value="3.40282e+38"/>
+  <!--parameter name="TCut" type="float" value="3.40282e+38"/-->
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
@@ -97,7 +97,7 @@
   <!--Switch on or off the histogram filling-->
   <parameter name="HistogramFilling" type="bool" value="true"/>
   <!--Time cut in time units of your sensor-->
-  <parameter name="TCut" type="float" value="3.40282e+38"/>
+  <!--parameter name="TCut" type="float" value="3.40282e+38"/-->
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
