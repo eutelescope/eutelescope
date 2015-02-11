@@ -81,6 +81,41 @@ void EUTelTrackAnalysis::plotIncidenceAngles(EUTelTrack track){
 	}
   streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotIncidenceAngles------------------------------END"<< std::endl;
 }
+void EUTelTrackAnalysis::plotPValueWithIncidenceAngles(EUTelTrack track){
+	streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotPValueWithIncidenceAngles------------------------------BEGIN"<< std::endl;
+	float pValue = calculatePValueForChi2(track);
+	std::vector<EUTelState> states = track.getStates();
+	for(size_t i=0; i<states.size();++i){
+		EUTelState state  = states.at(i);
+		state.print();
+		TVectorD stateVec = state.getStateVec();
+		float incidenceXZ = stateVec[1];
+		typedef std::map<int , AIDA::IProfile1D * >::iterator it_type;
+		for(it_type iterator =_mapFromSensorIDToPValuesVsIncidenceXZ.begin(); iterator != _mapFromSensorIDToPValuesVsIncidenceXZ.end(); iterator++) {
+			if(iterator->first == state.getLocation()){
+			streamlog_out(DEBUG2) << "Add incidence XZ : " << incidenceXZ  << std::endl;
+			_mapFromSensorIDToPValuesVsIncidenceXZ[ state.getLocation() ] ->fill(incidenceXZ, pValue);
+			break;
+			}
+		}
+	} 
+	for(size_t i=0; i<states.size();++i){
+		EUTelState state  = states.at(i);
+		state.print();
+		TVectorD stateVec = state.getStateVec();
+		float incidenceYZ = stateVec[2];
+		typedef std::map<int , AIDA::IProfile1D * >::iterator it_type;
+		for(it_type iterator =_mapFromSensorIDToPValuesVsIncidenceYZ.begin(); iterator != _mapFromSensorIDToPValuesVsIncidenceYZ.end(); iterator++) {
+			if(iterator->first == state.getLocation()){
+			streamlog_out(DEBUG2) << "Add incidence YZ : " << incidenceYZ  << std::endl;
+			_mapFromSensorIDToPValuesVsIncidenceYZ[ state.getLocation() ] ->fill(incidenceYZ, pValue);
+			break;
+			}
+		}
+	} 
+	streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotPValueWithIncidenceAngles------------------------------END"<< std::endl;
+}
+
 
 void EUTelTrackAnalysis::plotPValueWithPosition(EUTelTrack track){
   streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotPValueWithPosition------------------------------BEGIN"<< std::endl;
@@ -105,7 +140,7 @@ void EUTelTrackAnalysis::plotPValueWithPosition(EUTelTrack track){
 }
 float EUTelTrackAnalysis::calculatePValueForChi2(EUTelTrack track){
 	boost::math::chi_squared mydist(track.getNdf());
-	float pValue = boost::math::cdf(mydist,track.getChi2());
+	float pValue = 1 - boost::math::cdf(mydist,track.getChi2());
 	return pValue;
 }
 

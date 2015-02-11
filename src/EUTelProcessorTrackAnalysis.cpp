@@ -26,6 +26,8 @@ void EUTelProcessorTrackAnalysis::init(){
 		EUTelTrackAnalysis*	analysis = new EUTelTrackAnalysis(_mapFromSensorIDToHistogramX,_mapFromSensorIDToHistogramY,_mapFromSensorIDToKinkXZ,_mapFromSensorIDToKinkYZ) ;
 		//Others here.
 		analysis->setSensorIDTo2DPValuesWithPosition(_mapFromSensorIDToPValueHisto);
+		analysis->setSensorIDToPValuesVsIncidenceAngleYZ(_mapFromSensorIDToPValuesVsIncidenceYZ);
+		analysis->setSensorIDToPValuesVsIncidenceAngleXZ(_mapFromSensorIDToPValuesVsIncidenceXZ);
 
 		_analysis = analysis;
 	}catch(...){	
@@ -60,6 +62,7 @@ void EUTelProcessorTrackAnalysis::processEvent(LCEvent * evt){
 				_analysis->plotResidualVsPosition(track);	
 				_analysis->plotIncidenceAngles(track);
 				_analysis->plotPValueWithPosition(track);
+				_analysis->plotPValueWithIncidenceAngles(track);
 			}
 
 		}	
@@ -203,6 +206,53 @@ void	EUTelProcessorTrackAnalysis::initialiseResidualVsPositionHistograms(){
 		sstm.str(std::string(""));
 	}
 	/////////////////////////////////////////////////////////////////////////////////////// 
+	/////////////////////////////////////////////////////////////////////////////////////The profile of the p-values with incidence.
+	for(size_t i = 0; i < _sensorIDs.size() ; ++i){
+		sstm << " Profile of p-values Vs IncidenceXZ" << _sensorIDs.at(i);
+		residGblFitHistName = sstm.str();
+		sstm.str(std::string());
+		sstm << "Profile of p-values Vs Incidence Angle, local Tx (XZ plane). Plane " <<  _sensorIDs.at(i);
+		histTitle = sstm.str();
+		sstm.str(std::string(""));
+		histoInfo = histoMgr->getHistogramInfo(residGblFitHistName);
+		NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 40000;
+		MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin :-0.05 ;
+		MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 0.005;
+		AIDA::IProfile1D *pValueVsIncidenceXZ = marlin::AIDAProcessor::histogramFactory(this)->createProfile1D(residGblFitHistName, NBinX, MinX, MaxX, 0, 1); 
+
+		if (pValueVsIncidenceXZ){
+				pValueVsIncidenceXZ->setTitle(histTitle);
+				_mapFromSensorIDToPValuesVsIncidenceXZ.insert(std::make_pair(_sensorIDs.at(i), pValueVsIncidenceXZ));
+		} else {
+				streamlog_out(ERROR2) << "Problem booking the " << (residGblFitHistName) << std::endl;
+				streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << std::endl;
+		}
+		sstm.str(std::string(""));
+	}
+	for(size_t i = 0; i < _sensorIDs.size() ; ++i){
+		sstm << " Profile of p-values Vs IncidenceYZ" << _sensorIDs.at(i);
+		residGblFitHistName = sstm.str();
+		sstm.str(std::string());
+		sstm << "Profile of p-values Vs Incidence Angle, local Ty (YZ plane). Plane " <<  _sensorIDs.at(i);
+		histTitle = sstm.str();
+		sstm.str(std::string(""));
+		histoInfo = histoMgr->getHistogramInfo(residGblFitHistName);
+		NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 40;
+		MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin :-0.001 ;
+		MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 0.001;
+		AIDA::IProfile1D * pValueVsIncidenceYZ = marlin::AIDAProcessor::histogramFactory(this)->createProfile1D(residGblFitHistName, NBinX, MinX, MaxX, 0,1); 
+
+		if (pValueVsIncidenceYZ) {
+				pValueVsIncidenceYZ->setTitle(histTitle);
+			_mapFromSensorIDToPValuesVsIncidenceYZ.insert(std::make_pair(_sensorIDs.at(i), pValueVsIncidenceYZ));
+		} else {
+				streamlog_out(ERROR2) << "Problem booking the " << (residGblFitHistName) << std::endl;
+				streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << std::endl;
+		}
+		sstm.str(std::string(""));
+	}
+	/////////////////////////////////////////////////////////////////////////////////////// 
+
 	/////////////////////////////////////////////////////////////////////////////////////////p-value with position
 	for (size_t i = 0; i < _sensorIDs.size() ; ++i){
 		sstm << "P-value vs Position" << _sensorIDs.at(i);
