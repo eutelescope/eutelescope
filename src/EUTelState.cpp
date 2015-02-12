@@ -230,9 +230,8 @@ void EUTelState::setKinks(TVectorD kinks){
 }
 void EUTelState::setPositionGlobal(float positionGlobal[]){
 	double localPosition [3];
-	//TO DO:Fix master2Localtwo so that is is the only one. This is currently a hack
 	const double referencePoint[]	= {positionGlobal[0], positionGlobal[1],positionGlobal[2]};//Need this since geometry works with const doubles not floats 
-	geo::gGeometry().master2Localtwo( getLocation(), referencePoint, localPosition );
+	geo::gGeometry().master2Local( getLocation(), referencePoint, localPosition );
 	float posLocal[] = { static_cast<float>(localPosition[0]), static_cast<float>(localPosition[1]), static_cast<float>(localPosition[2]) };
 	setReferencePoint(posLocal);
 }
