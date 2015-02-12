@@ -820,24 +820,11 @@ void EUTelGeometryTelescopeGeoDescription::local2Master( int sensorID, const dou
  * Coordinate transformation from global reference frame to local reference frame.
  * Corresponding volume is determined automatically.
  * 
+ * @param sensorID Id of the sensor (specifies local coordinate system)
  * @param globalPos (x,y,z) in global coordinate system
  * @param localPos (x,y,z) in local coordinate system
  */
-void EUTelGeometryTelescopeGeoDescription::master2Local( const double globalPos[], double localPos[] ) {
-    streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::master2Local() " << std::endl;
-
-		_geoManager->GetMother(1);
-		_geoManager->GetCurrentNode()->MasterToLocal( globalPos, localPos );
-    
-    streamlog_out(DEBUG0) << std::fixed;
-    streamlog_out(DEBUG0) << "Global coordinates:" << std::endl;
-    streamlog_out(DEBUG0) << std::setw(10) << std::setprecision(5) << globalPos[0] << std::setw(10) << std::setprecision(5) << globalPos[1] << std::setw(10) << std::setprecision(5) << globalPos[2] << std::endl;
-    streamlog_out(DEBUG0) << "Local coordinates: " << std::endl;
-    streamlog_out(DEBUG0) << std::setw(10) << std::setprecision(5) << localPos[0] << std::setw(10) << std::setprecision(5) << localPos[1] << std::setw(10) << std::setprecision(5) << localPos[2] << std::endl;
-}
-
-
-void EUTelGeometryTelescopeGeoDescription::master2Localtwo(int sensorID, const double globalPos[], double localPos[] ) {
+void EUTelGeometryTelescopeGeoDescription::master2Local(int sensorID, const double globalPos[], double localPos[] ) {
     streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::master2Local()--BEGIN " << std::endl;
 
     _geoManager->cd( _planePath[sensorID].c_str() );
