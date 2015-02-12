@@ -63,16 +63,18 @@ namespace eutelescope {
 			EUTelGBLFitter();
 			~EUTelGBLFitter();
 			//SET
+			void setMomentsAndStartEndScattering(EUTelState& state);
 			void setInformationForGBLPointList(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList);
 			void setMeasurementGBL(gbl::GblPoint& point, const double *hitPos, double statePos[3], double combinedCov[4], TMatrixD projection);
-			void setKinkInformationToTrack(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint >& pointList,EUTelTrack &track);
+			void getKinkInformationToTrack(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint >& pointList,EUTelTrack &track);
 			void setPointVec( std::vector< gbl::GblPoint >& pointList, gbl::GblPoint& point);
 			void setPairAnyStateAndPointLabelVec(std::vector< gbl::GblPoint >& pointList, gbl::GblTrajectory*);
 			void setPairMeasurementStateAndPointLabelVec(std::vector< gbl::GblPoint >& pointList);
 			void setAlignmentToMeasurementJacobian(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList);
 			void setScattererGBL(gbl::GblPoint& point,EUTelState & state );
 			void setScattererGBL(gbl::GblPoint& point,EUTelState & state,  float  percentageRadiationLength);
-			void setPointListWithNewScatterers(std::vector< gbl::GblPoint >& pointList,EUTelState & state, float  percentageRadiationLength);
+			void setLocalDerivativesToPoint(gbl::GblPoint& point, EUTelState & state, float distanceFromKinkTargetToNextPlane );
+			void setPointListWithNewScatterers(std::vector< gbl::GblPoint >& pointList,EUTelState & state, std::vector<float> variance );
 			void setMeasurementCov(EUTelState& state);
 			inline void setAlignmentMode( int number) {
 				this->_alignmentMode = number;
@@ -98,6 +100,7 @@ namespace eutelescope {
 			void setExcludeFromFitPlanes(const std::vector<int>&);
 			void setMEstimatorType( const std::string& _mEstimatorType );
 			//GET
+			float getPositionOfSecondScatter(float start, float end);
 			gbl::GblPoint getLabelToPoint(std::vector<gbl::GblPoint> & pointList, int label);
 			void getResidualOfTrackandHits(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint > pointList, EUTelTrack& track, std::map< int, std::map< float, float > > & SensorResidual, std::map< int, std::map< float, float > >& sensorResidualError);
 			inline int getAlignmentMode() const {
@@ -125,9 +128,10 @@ namespace eutelescope {
 			void testDistanceBetweenPoints(double* position1,double* position2);
 			//COMPUTE
 			void computeTrajectoryAndFit(std::vector< gbl::GblPoint >& pointList,  gbl::GblTrajectory* traj, double* chi2, int* ndf, int & ierr);
+			std::vector<float> computeVarianceForEachScatterer(EUTelState & state , float percentageRadiationLength );
 			//OTHER FUNCTIONS
 			void resetPerTrack();
-			void findScattersZPositionBetweenTwoStates(EUTelState& state);
+			void findScattersZPositionBetweenTwoStates();
 			TMatrixD findScattersJacobians(EUTelState state, EUTelState nextTrack);
 			void updateTrackFromGBLTrajectory(gbl::GblTrajectory* traj, std::vector<gbl::GblPoint>& pointList, EUTelTrack& track, std::map<int,std::vector<double> >& mapSensorIDToCorrectionVec );
 			void prepareLCIOTrack( gbl::GblTrajectory*, std::vector<const IMPL::TrackImpl*>::const_iterator&, double, int); 
@@ -144,6 +148,10 @@ namespace eutelescope {
 			double _localPosYCorrections;
 			double _beamQ;
 			double _eBeam;
+			float _normalMean;
+			float _normalVariance;
+			float _start; //This is the first scatterer location
+			float _end; //This is arc length from the first plane to the second.
 			/** Outlier downweighting option */
 			std::string _mEstimatorType;
 			/** Milipede binary file handle */

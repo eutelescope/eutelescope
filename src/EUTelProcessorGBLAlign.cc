@@ -187,7 +187,7 @@ void EUTelProcessorGBLAlign::processEvent(LCEvent * evt){
 					std::vector< gbl::GblPoint > pointList;//This is the GBL points. These contain the state information, scattering and alignment jacobian. All the information that the mille binary will get.
 					_trackFitter->setInformationForGBLPointList(track, pointList);//We create all the GBL points with scatterer inbetween both planes. This is identical to creating GBL tracks
 					_trackFitter->setPairMeasurementStateAndPointLabelVec(pointList);
-					_trackFitter->setAlignmentToMeasurementJacobian(track, pointList); //This is place in GBLFitter since millepede has not idea about states and points. Only GBLFitter know about that
+					_trackFitter->setAlignmentToMeasurementJacobian(track, pointList); //This is place in GBLFitter since millepede has no idea about states and points. Only GBLFitter know about that
 					const gear::BField& B = geo::gGeometry().getMagneticField();
 					const double Bmag = B.at( TVector3(0.,0.,0.) ).r2();
 					gbl::GblTrajectory* traj = 0;

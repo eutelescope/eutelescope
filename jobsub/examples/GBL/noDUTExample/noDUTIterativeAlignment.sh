@@ -23,10 +23,10 @@ export r="1"; #Make resolution large so we begin with small chi2 and factor impr
 export dutXs="" #This is the resolution of the DUT in the x LOCAL direction taking into account the misalignment
 export dutYs="" #This is the resolution of the DUT in the y LOCAL direction taking into account the misalignment
 export minTracksPerEventAcceptance=0.001 #This is the number of tracks that is needed per event before we stop pattern recognition. Note value should depend on other cuts. 
-export ResidualsRMax="0.5" #This is the window size on the next plane that we will accept hits from. This will increase if less than 1 track per event is found.
-export inputGearInitial="gear_desy2012_150mm.xml" #Note the gear file changes through the process so must be placed here.
+export ResidualsRMax="1" #This is the window size on the next plane that we will accept hits from. This will increase if less than 1 track per event is found.
+export inputGearInitial="gear-1T.xml" #Note the gear file changes through the process so must be placed here.
 export dutPlanes=""
-export allPlanesFixed="0  5"  
+export allPlanesFixed="0 3 5"  
 
 
 #Export input variables to other bash files.  

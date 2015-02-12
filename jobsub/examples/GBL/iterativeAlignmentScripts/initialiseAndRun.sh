@@ -42,6 +42,8 @@ export RUNLIST="$exampleLocation/runlist/runlist.csv"
 export directory="$exampleLocation/output/logs"
 export outputGearFinal="gear-${outputIdentifier}-${RUN}.xml" #This is name of the gear after all iterations of alignment. 
 export histoNameInputFinal="Alignment-Runs-${outputIdentifier}-${RUN}" #This is the name of the histograms which will use the final gear to produce the tracks.
+export dutXs="$dutX $dutX"
+export dutYs="$dutY $dutY" #TO DO: Must make this useful for any number of DUTs. Also need to change this in the bash fit file itself.
 export xres="$r $r $r $dutXs $r $r $r";
 export yres="$r $r $r $dutYs $r $r $r";
 export amode="7";
@@ -65,4 +67,4 @@ echo "This is the resolutions X/Y:  $xres/$yres."
 
 #THIS WILL RUN THE ALIGNMENT PROCESS AS MANY TIME AS YOU LIKE TO IMPROVE ALIGNMENT
 $scriptsLocation/howManyIterationsDecider.sh -n "$numberOfIterations"
-$scriptsLocation/patRecAndTrackFit.sh -i "$outputGearFinal" -h "$histoNameInputFinal"  
+#$scriptsLocation/patRecAndTrackFit.sh -i "$outputGearFinal" -h "$histoNameInputFinal"  
