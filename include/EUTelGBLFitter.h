@@ -138,6 +138,7 @@ namespace eutelescope {
 			void prepareMilleOut( gbl::GblTrajectory* );
 
 			//VARIABLES
+			bool _kinkAngleEstimation; //This used to determine if the correction matrix from the GBL fit is 5 or 7 elements long. 
 			int _alignmentMode;
 			std::vector<EUTelState> _measurementStatesInOrder;
 			std::vector<EUTelState> _statesInOrder;

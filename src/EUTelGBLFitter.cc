@@ -57,7 +57,8 @@ namespace eutelescope {
 	_parameterIdXRotationsMap(),
 	_parameterIdYRotationsMap(),
 	_parameterIdZRotationsMap(),
-	_counter_num_pointer(1)
+	_counter_num_pointer(1),
+	_kinkAngleEstimation(false) //This used to determine if the correction matrix from the GBL fit is 5 or 7 elements long. 
 	{}
 
 	EUTelGBLFitter::~EUTelGBLFitter() {
@@ -565,10 +566,15 @@ namespace eutelescope {
 	//This function will take the estimate track from pattern recognition and add a correction to it. This estimated track + correction is you final GBL track.
 	void EUTelGBLFitter::updateTrackFromGBLTrajectory (gbl::GblTrajectory* traj, std::vector< gbl::GblPoint >& pointList,EUTelTrack &track, std::map<int, std::vector<double> > &  mapSensorIDToCorrectionVec){
 		streamlog_out ( DEBUG4 ) << " EUTelGBLFitter::UpdateTrackFromGBLTrajectory-- BEGIN " << std::endl;
+		
 		for(size_t i=0;i < track.getStatesPointers().size(); i++){//We get the pointers no since we want to change the track state contents		
 			EUTelState* state = track.getStatesPointers().at(i);
-			TVectorD corrections(7);
-			TMatrixDSym correctionsCov(7);
+			TVectorD corrections(5);
+			TMatrixDSym correctionsCov(5);
+			if(_kinkAngleEstimation){
+				corrections.ResizeTo(7);
+				correctionsCov.ResizeTo(7,7);
+			}
 			for(size_t j=0 ; j< _vectorOfPairsStatesAndLabels.size();++j){
 				if(_vectorOfPairsStatesAndLabels.at(j).first == *state){
 					streamlog_out(DEBUG0)<<"The loop number for states with measurements is: " << j << ". The label is: " << _vectorOfPairsStatesAndLabels.at(j).second <<std::endl; 
@@ -623,8 +629,12 @@ namespace eutelescope {
 						streamlog_out(DEBUG3) << std::endl << "State after we have added corrections: " << std::endl;
 						state->print();
 					}else{
-						TVectorD correctionsKinks(7);
-						TMatrixDSym correctionsCovKinks(7);
+						TVectorD correctionsKinks(5);
+						TMatrixDSym correctionsCovKinks(5);
+						if(_kinkAngleEstimation){
+							corrections.ResizeTo(7);
+							correctionsCov.ResizeTo(7,7);
+						}
 						//TO DO: This will only work for 3 planes in the forward region for scattering measurements.
 						traj->getResults(_vectorOfPairsStatesAndLabels.at(j+1).second, correctionsKinks, correctionsCovKinks );
 						TVectorD kinks(2);//Measurement - Prediction
