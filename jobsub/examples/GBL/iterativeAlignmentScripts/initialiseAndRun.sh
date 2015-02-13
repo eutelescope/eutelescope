@@ -40,6 +40,7 @@ function adding_zeros_to_RUN {
 export CONFIG="$exampleLocation/config/config.cfg"
 export RUNLIST="$exampleLocation/runlist/runlist.csv"
 export directory="$exampleLocation/output/logs"
+export pythonLocation="$scriptsLocation/pythonScripts"
 export outputGearFinal="gear-${outputIdentifier}-${RUN}.xml" #This is name of the gear after all iterations of alignment. 
 export histoNameInputFinal="Alignment-Runs-${outputIdentifier}-${RUN}" #This is the name of the histograms which will use the final gear to produce the tracks.
 export amode="7";

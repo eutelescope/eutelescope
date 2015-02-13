@@ -81,13 +81,8 @@ for x in {1..20}; do
 		export xresWorking=$xres; #Must be set before the new resolution is set which may cause too many rejects
 		export yresWorking=$yres;
 		echo "Factor word found! Resolution must increase by $factor."
-		r=$(echo "scale=4;$r*$factor"|bc);
-		dutX=$(echo "scale=4;$dutX*$factor"|bc);
-		dutY=$(echo "scale=4;$dutY*$factor"|bc);
-		dutXs="$dutX $dutX" #This is the resolution of the DUT in the x LOCAL direction taking into account the misalignment
-		dutYs="$dutY $dutY" #This is the resolution of the DUT in the x LOCAL direction taking into account the misalignment
-		xres="$r $r $r $dutXs $r $r $r";
-		yres="$r $r $r $dutYs $r $r $r";
+		xres=`python $pythonLocation/multiplyResolutionsByFactor.py $xres /$allPlanesFixed / 0 1 2 3 4 5 $dutPlanes / $factor`
+		yres=`python $pythonLocation/multiplyResolutionsByFactor.py $yres /$allPlanesFixed / 0 1 2 3 4 5 $dutPlanes / $factor`
 		echo "New resolutions are for (X/Y):" $xres"/"$yres
 	fi
 	rejected=`unzip  -p  $fileAlign |grep "Too many rejects" |cut -d '-' -f2`; 
@@ -98,13 +93,8 @@ for x in {1..20}; do
 	if [[ $numberRejectedAlignmentAttempts -eq 1 ]] && [[ $rejected != "" ]] #We add the 2nd condition to make sure we don't enter on a loop with factor term. 
 	then
 		echo "Too many rejects. Resolution must increase by factor 10."
-		r=$(echo "scale=4;$r*5"|bc);
-		dutX=$(echo "scale=4;$dutX*5"|bc);
-		dutY=$(echo "scale=4;$dutY*5"|bc);
-		dutXs="$dutX $dutX" #This is the resolution of the DUT in the x LOCAL direction taking into account the misalignment
-		dutYs="$dutY $dutY" #This is the resolution of the DUT in the x LOCAL direction taking into account the misalignment
-		xres="$r $r $r $dutXs $r $r $r";
-		yres="$r $r $r $dutYs $r $r $r";
+		xres=`python $pythonLocation/multiplyResolutionsByFactor.py $xres /$allPlanesFixed / 0 1 2 3 4 5 $dutPlanes / 5`
+		yres=`python $pythonLocation/multiplyResolutionsByFactor.py $yres /$allPlanesFixed / 0 1 2 3 4 5 $dutPlanes / 5`
 		echo "New resolutions are for (X/Y):" $xres"/"$yres
 	elif [[ $numberRejectedAlignmentAttempts -eq 1 ]]
 	then
