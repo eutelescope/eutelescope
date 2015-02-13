@@ -213,7 +213,7 @@ void EUTelProcessorGBLAlign::processEvent(LCEvent * evt){
 	}
 	catch(std::string &e){
 		streamlog_out(MESSAGE9) << e << std::endl;
-		throw marlin::StopProcessingException( this ) ;
+		throw marlin::SkipEventException( this ) ;
 	}
 	catch(lcio::Exception& e){
 		streamlog_out(MESSAGE9) << e.what() <<std::endl;

@@ -356,7 +356,8 @@ namespace eutelescope {
 					streamlog_out(MESSAGE9)<<"The positions between the scatterers are: "<<std::endl;
 					streamlog_out(MESSAGE9)<<"Start: "<<globalPosSensor1[0]<<" "<<globalPosSensor1[1]<<" "<<globalPosSensor1[2]<<std::endl;
 					streamlog_out(MESSAGE9)<<"End: "<<globalPosSensor2[0]<<" "<<globalPosSensor2[1]<<" "<<globalPosSensor2[2]<<std::endl;
-					throw(lcio::Exception("The provides radiation length to create scatterers it zero.")); 	
+					//We will not use events that have a radiation length of zero. 
+					throw std::string("The radiation length was precisely zero. This is bad!");
 				} 
 				setMomentsAndStartEndScattering(state);
 				findScattersZPositionBetweenTwoStates();//We use the exact arc length between the two states to place the scatterers. 

@@ -203,13 +203,13 @@ void EUTelPatternRecognition::findTrackCandidatesWithSameHitsAndRemove(){
 	//		cout<<"Increase track to: "<<j <<std::endl;
 			int hitscount=0;
 			std::vector<EUTelState> jStates = _tracksAfterEnoughHitsCut[j].getStates();
-			for(size_t i=0;i<iStates.size();i++)
+			for(size_t k=0;k<iStates.size();k++)
 			{
 					EVENT::TrackerHit* ihit;
 					//Need since we could have tracks that have a state but no hits here.
-					if(!iStates[i].getTrackerHits().empty())
+					if(!iStates[k].getTrackerHits().empty())
 					{
-							ihit = iStates[i].getTrackerHits()[0];
+							ihit = iStates[k].getTrackerHits()[0];
 					}
 					else
 					{
@@ -217,13 +217,13 @@ void EUTelPatternRecognition::findTrackCandidatesWithSameHitsAndRemove(){
 					}
 					int ic = ihit->id();
 					
-					for(size_t j=0;j<jStates.size();j++)
+					for(size_t l=0;l<jStates.size();l++)
 					{
 							EVENT::TrackerHit* jhit;
 							//Need since we could have tracks that have a state but no hits here.
-							if(!jStates[j].getTrackerHits().empty())
+							if(!jStates[l].getTrackerHits().empty())
 							{
-									jhit = jStates[j].getTrackerHits()[0];
+									jhit = jStates[l].getTrackerHits()[0];
 							}
 							else
 							{
