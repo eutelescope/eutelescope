@@ -296,40 +296,7 @@ namespace eutelescope {
 		}
 		streamlog_out ( DEBUG4 ) << " EUTelGBLFitter::setPairMeasurementStateAndPointLabelVec------------ END " << std::endl;
 	}
-	//TO DO:This at the moment does nothing. However in the future it should be fixed to work for high radiation enviroments.
-	//As a track passes through a scatterer it will be kinked. The initial guessed trajectory has to provide GBL this information from pattern recognition. These come effectively from the states at each plane and can be calculated from these. However we store these number in the lcio file since the calculation is rather arduous
-	void EUTelGBLFitter::getKinkInformationToTrack(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint >& pointList,EUTelTrack &track){
-		streamlog_out ( DEBUG4 ) << " EUTelGBLFitter::setKinkInformationToTrack-- BEGIN " << std::endl;
-		for(size_t i=0;i < track.getStatesPointers().size(); i++){//We get the pointers now since we want to change the track state contents		
-			EUTelState* state = track.getStatesPointers().at(i);
-			TVectorD corrections(5);
-			TMatrixDSym correctionsCov(5);
-			for(size_t j=0 ; j< _vectorOfPairsStatesAndLabels.size();++j){
-				//We know that the labels will look like 1,3,5... from GBL so
-				if(_vectorOfPairsStatesAndLabels.at(j).first == *state){
-					streamlog_out(DEBUG0)<<"The loop number for states with measurements for kink update is: " << j << ". The label is: " << _vectorOfPairsStatesAndLabels.at(j).second <<std::endl; 
-					streamlog_out(DEBUG0)<<"To update track kink we use label: "<<_vectorOfPairsStatesAndLabels.at(j).second<<std::endl; 
-					unsigned int numData; //Not sure what this is used for??????
-					TVectorD aResidualsKink(2);//Measurement - Prediction
-					TVectorD aMeasErrorsKink(2);
-					TVectorD aResErrorsKink(2);
-					TVectorD aDownWeightsKink(2); 
-					traj->getMeasResults(_vectorOfPairsMeasurementStatesAndLabels.at(j).second, numData, aResidualsKink, aMeasErrorsKink, aResErrorsKink, aDownWeightsKink);
-					streamlog_out(DEBUG3) << std::endl << "State before we have added corrections: " << std::endl;
-					state->print();
-					TVectorD kinks = state->getKinks();	
-					TVectorD updateKinks(2);
-					updateKinks(0) = kinks(0);
-					updateKinks(1) = kinks(1);
-					state->setKinks(updateKinks);
-					streamlog_out(DEBUG3) << std::endl << "State after we have added corrections: " << std::endl;
-					state->print();
-					break;
-				}
-			}//END of loop of all states with hits	
-		}//END of loop of all states
-		streamlog_out ( DEBUG4 ) << " EUTelGBLFitter::setKinkInformationToTrack-- END " << std::endl;
-	}
+
 	// Convert input TrackCandidates and TrackStates into a GBL Trajectory
 	// This is done using the geometry setup, the scattering and the hits + predicted states.
 	void EUTelGBLFitter::setInformationForGBLPointList(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList){
