@@ -51,7 +51,7 @@
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
  </processor>
  
- <processor name="ClusteringMimosa" type="EUTelProcessorGeometricClustering">
+ <processor name="ClusteringMimosa" type="EUTelProcessorSparseClustering">
  <!--EUTelProcessorGeometricClustering is looking for clusters into a calibrated pixel matrix.-->
   <!--The list of sensor ids that have to be excluded from the clustering.-->
   <!--parameter name="ExcludedPlanes" type="IntVec"> </parameter-->

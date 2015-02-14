@@ -267,14 +267,14 @@ void	EUTelProcessorTrackAnalysis::initialiseResidualVsPositionHistograms(){
 		histTitle = sstm.str();
 		sstm.str(std::string(""));
 		histoInfo = histoMgr->getHistogramInfo(residGblFitHistName);
-		NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 40;
-		MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin :-10 ;
-		MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 10;
-		NBinY = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yBin : 20;
-		MinY =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMin : -5;
-		MaxY =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMax : 5;
-		MinZ =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_zMin : -20;
-		MaxZ =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_zMax : 20;
+		NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 288;
+		MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin :-10.6;
+		MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 10.6;
+		NBinY = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yBin : 144;
+		MinY =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMin : -5.3;
+		MaxY =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMax : 5.3;
+		MinZ =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_zMin : 0;
+		MaxZ =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_zMax : 1;
 		AIDA::IProfile2D *  pValueHisto =	marlin::AIDAProcessor::histogramFactory(this)->createProfile2D(residGblFitHistName,  NBinX, MinX, MaxX, NBinY, MinY, MaxY, MinZ,MaxZ);
 		if (pValueHisto) {
 				pValueHisto->setTitle(histTitle);

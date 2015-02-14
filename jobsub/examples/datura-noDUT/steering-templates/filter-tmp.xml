@@ -45,32 +45,6 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="Mimosa26EUTelAutoPedestalNoiseProcessor" type="EUTelAutoPedestalNoiseProcessor">
- <!--EUTelAutoPedestalNoiseProcessor produces initial pedestal / noise / status with user provided values-->
-  <!--Noise local collection-->
-  <parameter name="NoiseCollectionName" type="string" lcioOutType="TrackerData"> m26_noise </parameter>
-  <!--Pedestal local collection-->
-  <parameter name="PedestalCollectionName" type="string" lcioOutType="TrackerData"> m26_pedestal </parameter>
-  <!--Pixel status collection-->
-  <parameter name="StatusCollectionName" type="string" lcioOutType="TrackerRawData"> m26_status </parameter>
-  <!--The initial value of noise (one value for detector)-->
-  <parameter name="InitNoiseValue" type="FloatVec"> 1 1 1 1 1 1 </parameter>
-  <!--The initial value of pedestal (one value for detector)-->
-  <parameter name="InitPedestalValue" type="FloatVec"> 0 0 0 0 0 0 </parameter>
-  <!--The maximum pixel along x (default 255, one value per detector)-->
-  <parameter name="MaxXVector" type="IntVec"> 1151 1151 1151 1151 1151 1151 </parameter>
-  <!--The maximum pixel along y (default 255, one value per detector)-->
-  <parameter name="MaxYVector" type="IntVec"> 575 575 575 575 575 575 </parameter>
-  <!--The minimum pixel along x (default 0, one value per detector)-->
-  <parameter name="MinXVector" type="IntVec"> 0 0 0 0 0 0 </parameter>
-  <!--The minimum pixel along y (default 0, one value per detector)-->
-  <parameter name="MinYVector" type="IntVec"> 0 0 0 0 0 0 </parameter>
-  <!--The sensorID for the generated collection (one per detector)-->
-  <parameter name="SensorIDVec" type="IntVec"> 0 1 2 3 4 5 </parameter>
-  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <!--parameter name="Verbosity" type="string" value=""/-->
-</processor>
-
  <processor name="Filter" type="EUTelClusterFilter">
  <!--EUTelClusterFilter is a very powerful tool. It allows to select among an input collection of TrackerPulse
 only the clusters fulfilling a certain set of selection criteria.

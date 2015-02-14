@@ -8,9 +8,6 @@
       <siplanesID ID="0"/>
       <siplanesType type="TelescopeWithoutDUT"/>
       <siplanesNumber number="6"/>
-      <parameter name="Geometry" 
-                 type="StringVec" 
-                 value="Mimosa26.so Mimosa26.so Mimosa26.so Mimosa26.so Mimosa26.so Mimosa26.so"/>
 
       <!-- z along beam -->
       <layers>
