@@ -81,8 +81,13 @@ for x in {1..20}; do
 		export xresWorking=$xres; #Must be set before the new resolution is set which may cause too many rejects
 		export yresWorking=$yres;
 		echo "Factor word found! Resolution must increase by $factor."
-		xres=`python $pythonLocation/multiplyResolutionsByFactor.py $xres /$allPlanesFixed / 0 1 2 3 4 5 $dutPlanes / $factor`
-		yres=`python $pythonLocation/multiplyResolutionsByFactor.py $yres /$allPlanesFixed / 0 1 2 3 4 5 $dutPlanes / $factor`
+		#for some reason the output of python will not overwrite the xres or yres? So must unset then set.
+		xInput=$xres
+		yInput=$yres
+		unset xres;
+		unset yres;
+		xres=`python $pythonLocation/multiplyResolutionsByFactor.py $xInput / $allPlanesFixed / $allPlanes / $factor`
+		yres=`python $pythonLocation/multiplyResolutionsByFactor.py $yInput / $allPlanesFixed / $allPlanes / $factor`
 		echo "New resolutions are for (X/Y):" $xres"/"$yres
 	fi
 	rejected=`unzip  -p  $fileAlign |grep "Too many rejects" |cut -d '-' -f2`; 
@@ -93,8 +98,12 @@ for x in {1..20}; do
 	if [[ $numberRejectedAlignmentAttempts -eq 1 ]] && [[ $rejected != "" ]] #We add the 2nd condition to make sure we don't enter on a loop with factor term. 
 	then
 		echo "Too many rejects. Resolution must increase by factor 10."
-		xres=`python $pythonLocation/multiplyResolutionsByFactor.py $xres /$allPlanesFixed / 0 1 2 3 4 5 $dutPlanes / 5`
-		yres=`python $pythonLocation/multiplyResolutionsByFactor.py $yres /$allPlanesFixed / 0 1 2 3 4 5 $dutPlanes / 5`
+		xInput=$xres;
+		yInput=$yres;
+		unset xres;
+		unset yres;
+		xres=`python $pythonLocation/multiplyResolutionsByFactor.py $xInput / $allPlanesFixed / $allPlanes / 5`
+		yres=`python $pythonLocation/multiplyResolutionsByFactor.py $yInput / $allPlanesFixed / $allPlanes / 5`
 		echo "New resolutions are for (X/Y):" $xres"/"$yres
 	elif [[ $numberRejectedAlignmentAttempts -eq 1 ]]
 	then

@@ -29,12 +29,12 @@ if [  -z "$number" ]; then
 fi
 export number="$number" #We export this to echo in single loop bash script.
 #THESE VARIABLES ARE ALSO CHANGED BELOW TO ALIGN WITH DIFFERENT SHIFTS AND ROTATIONS. DOES NOT HAVE TO BE IN Z-ORDERING.
-export Fxr="0 1 2 3 4 5 $dutPlanes" #This is the fixed planes for rotations round the x axis. Note we use dutPlanes since rotation round x axis always fixed parameter.
+export Fxr="$allPlanes" #This is the fixed planes for rotations round the x axis. Note we use dutPlanes since rotation round x axis always fixed parameter.
 export Fxs="$allPlanesFixed" #This is the fixed planes for shifts in the x axis. Note we use exclude planes here so we can sometimes let dut alignment parameters free
-export Fyr="0 1 2 3 4 5 $dutPlanes" #This is the fixed planes for rotations round the y axis
+export Fyr="$allPlanes" #This is the fixed planes for rotations round the y axis
 export Fys="$allPlanesFixed" #This is the fixed planes for shifts in the y axis
-export Fzr="0 1 2 3 4 5 $dutPlanes" #This is the fixed planes for rotations round the z axis
-export Fzs="0 1 2 3 4 5 $dutPlanes" #This is the fixed planes for shifts in the z axis
+export Fzr="$allPlanes" #This is the fixed planes for rotations round the z axis
+export Fzs="$allPlanes" #This is the fixed planes for shifts in the z axis
 #First input gear comes from the input of the bash script. IMPORTANT: If you edit this file then the first alignment must use the inital gear.
 export inputGear="$inputGear"
 export outputGear="gear-XYShift-${outputIdentifier}-Iteration-$number-${RUN}.xml"
@@ -42,18 +42,18 @@ export histoNameInput="Alignment-XYShift-${outputIdentifier}-Iteration-$number-$
 #This is the loop to produce the new gear file for x/y shifts. 
 $scriptsLocation/patRecToAlignmentSingleLoop.sh
 $scriptsLocation/patRecAndTrackFit.sh -i "$outputGear" -h "$histoNameInput"  
-#echo "We have produced new histogram $histoNameInput"
-#export Fxr="0 1 2 3 4 5 $dutPlanes" #This is the fixed planes for rotations round the x axis
-#export Fxs="$allPlanesFixed" #This is the fixed planes for shifts in the x axis
-#export Fyr="0 1 2 3 4 5 $dutPlanes" #This is the fixed planes for rotations round the y axis
-#export Fys="$allPlanesFixed" #This is the fixed planes for shifts in the y axis
-#export Fzr="$allPlanesFixed" #This is the fixed planes for rotations round the z axis
-#export Fzs="0 1 2 3 4 5 $dutPlanes" #This is the fixed planes for shifts in the z axis
-#export inputGear="$outputGear" #We now use the gear file produced from the last iteration.
-#export outputGear="gear-ZRotations-XYShift-${outputIdentifier}-Iteration-$number-${RUN}.xml"  
-#export histoNameInput="Alignment-ZRotations-XYShifts-${outputIdentifier}-Iteration-$number-${RUN}"
-#$scriptsLocation/patRecToAlignmentSingleLoop.sh
-#$scriptsLocation/patRecAndTrackFit.sh -i "$outputGear" -h "$histoNameInput"  
+echo "We have produced new histogram $histoNameInput"
+export Fxr="$allPlanes" #This is the fixed planes for rotations round the x axis
+export Fxs="$allPlanesFixed" #This is the fixed planes for shifts in the x axis
+export Fyr="$allPlanes" #This is the fixed planes for rotations round the y axis
+export Fys="$allPlanesFixed" #This is the fixed planes for shifts in the y axis
+export Fzr="$allPlanesFixed" #This is the fixed planes for rotations round the z axis
+export Fzs="$allPlanes" #This is the fixed planes for shifts in the z axis
+export inputGear="$outputGear" #We now use the gear file produced from the last iteration.
+export outputGear="gear-ZRotations-XYShift-${outputIdentifier}-Iteration-$number-${RUN}.xml"  
+export histoNameInput="Alignment-ZRotations-XYShifts-${outputIdentifier}-Iteration-$number-${RUN}"
+$scriptsLocation/patRecToAlignmentSingleLoop.sh
+$scriptsLocation/patRecAndTrackFit.sh -i "$outputGear" -h "$histoNameInput"  
 
 ##We keep all fixed and free z-shifts. Otherwise we find that we can not find a sensible solution to the z shifts.
 #echo "We have produced new histogram $histoNameInput"
