@@ -15,7 +15,7 @@
    </execute>
 
    <global>
-      <parameter name="LCIOInputFiles"> @LcioPath@/run@RunNumber@-converter.slcio </parameter>
+      <parameter name="LCIOInputFiles"> @LcioRawPath@/run@RunNumber@-converter.slcio </parameter>
       <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
@@ -28,7 +28,7 @@
   <!-- compression of output file 0: false >0: true (default) -->
   <parameter name="Compress" type="int">1 </parameter>
   <!-- filename without extension-->
-  <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-clustering"/>
+  <parameter name="FileName" type="string" value="@HistogramPath@/run@RunNumber@-clustering"/>
   <!-- type of output file root (default) or xml )-->
   <parameter name="FileType" type="string">root </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
@@ -100,7 +100,7 @@
   <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
   <!--parameter name="KeepCollectionNames" type="StringVec">MyPreciousSimTrackerHits  </parameter-->
   <!-- name of output file -->
-  <parameter name="LCIOOutputFile" type="string" value="@LcioPath@/run@RunNumber@-clustering.slcio"/>
+  <parameter name="LCIOOutputFile" type="string" value="@LcioRawPath@/run@RunNumber@-clustering.slcio"/>
   <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
   <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   <!--Set it to true to remove intermediate EORE in merged runs-->
