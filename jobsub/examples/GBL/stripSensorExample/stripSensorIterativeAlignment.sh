@@ -19,13 +19,15 @@ export exampleLocation="/afs/phas.gla.ac.uk/user/a/amorton/ilcsoft/v01-17-05/Eut
 export scriptsLocation="/afs/phas.gla.ac.uk/user/a/amorton/ilcsoft/v01-17-05/Eutelescope/trunk/GBL/iterativeAlignmentScripts"
 
 #VARIABLES WHICH VARY THROUGH ALIGNMENT ARE SET HERE. IMPORTANT NOT ALL VARIABLES ARE HERE LOOK IN CONFIG-ALIGNMENT.
-export r="1"; #Make resolution large so we begin with small chi2 and factor improvement to get to chi2/ndf=1 on next iteration. 
-export dutX=2.5 #Need to add duts resolution like this since in alignment we times this by some factor during the process.
-export dutY=0.5
+export r="0.05"; #Make resolution large so we begin with small chi2 and factor improvement to get to chi2/ndf=1 on next iteration. 
+export dutX="0.2"
+export dutY="100000000"
+export xres="0.05 $r $r $dutX $dutX  $r $r 0.05";
+export yres="0.05 $r $r $dutY $dutY  $r $r 0.05";
 export minTracksPerEventAcceptance=0.001 #This is the number of tracks that is needed per event before we stop pattern recognition. Note value should depend on other cuts. 
 export ResidualsRMax="1" #This is the window size on the next plane that we will accept hits from. This will increase if less than 1 track per event is found.
 export inputGearInitial="gear-stripSensor.xml" #Note the gear file changes through the process so must be placed here.
-export dutPlanes="6 7"
+export allPlanes="0 1 2 3 4 5 6 7"
 export allPlanesFixed="0  5 6 7"  
 
 

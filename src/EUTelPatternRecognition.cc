@@ -60,15 +60,6 @@ void EUTelPatternRecognition::propagateForwardFromSeedState( EUTelState& stateIn
 		TVector3 momentumAtIntersection;
 		float arcLength;
 		int newSensorID = state->findIntersectionWithCertainID(geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i+1), globalIntersection, momentumAtIntersection, arcLength);
-		if(arcLength <= 0 ){ 
-			throw(lcio::Exception( "The arc length is less than or equal to zero. ")); 
-		}
-		if(firstLoop){
-			firstState->setArcLengthToNextState(arcLength); 
-			firstLoop =false;
-		}else{
-			state->setArcLengthToNextState(arcLength);
-		}
 		//cout<<"HERE1: "<<state->getPosition()[0]<<","<<state->getPosition()[1]<<","<<state->getPosition()[2]<<","<<state->getLocation()<<std::endl;
 		int sensorIntersection = geo::gGeometry( ).getSensorID(globalIntersection);
 		if(newSensorID < 0 or sensorIntersection < 0 ){
@@ -83,7 +74,16 @@ void EUTelPatternRecognition::propagateForwardFromSeedState( EUTelState& stateIn
 		streamlog_out(DEBUG5) <<"INTERSECTION FOUND! From ID= " <<  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)<< " to " <<  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i+1)  <<std::endl;
 		streamlog_out ( DEBUG5 ) << "Intersection point on infinite plane: " <<  globalIntersection[0]<<" , "<<globalIntersection[1] <<" , "<<globalIntersection[2]<<std::endl;
 		streamlog_out ( DEBUG5 ) << "Momentum on next plane: " <<  momentumAtIntersection[0]<<" , "<<momentumAtIntersection[1] <<" , "<<momentumAtIntersection[2]<<std::endl;
-
+		//We add the arc length so plane 0 contains the distance to plane 1 and so on. We only want to store this information when we have an actual intersection. 
+		if(arcLength <= 0 ){ 
+			throw(lcio::Exception( "The arc length is less than or equal to zero. ")); 
+		}
+		if(firstLoop){
+			firstState->setArcLengthToNextState(arcLength); 
+			firstLoop =false;
+		}else{
+			state->setArcLengthToNextState(arcLength);
+		}
 		//So we have intersection lets create a new state
 		EUTelState *newState = new EUTelState();//Need to create this since we save the pointer and we would be out of scope when we leave this function. Destroying this object. 
 		newState->setDimensionSize(_planeDimensions[newSensorID]);//We set this since we need this information for later processors
