@@ -7,6 +7,10 @@
             <siplanesID ID="0" />
             <siplanesType type="TelescopeWithoutDUT" />
             <siplanesNumber number="6" />
+      <parameter name="Geometry" 
+                 type="StringVec" 
+                 value="Mimosa26.so Mimosa26.so Mimosa26.so Mimosa26.so Mimosa26.so Mimosa26.so"/>
+
             <layers>
                 <layer>
                     <ladder ID="0" positionX="0.000000000e+00" positionY="0.000000000e+00" positionZ="0.000000000e+00" rotationXY="4.500000000e+01" rotationZX="0.000000000e+00" rotationZY="0.000000000e+00" sizeX="2.120000000e+01" sizeY="1.060000000e+01" thickness="3.600000000e-02" radLength="9.366073400e+01" />

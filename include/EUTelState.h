@@ -38,7 +38,7 @@ namespace eutelescope {
 			TMatrixD getProjectionMatrix() const;
 			TVector3 getIncidenceUnitMomentumVectorInLocalFrame();
 			TMatrixDSym getScatteringVarianceInLocalFrame();
-			TMatrixDSym getScatteringVarianceInLocalFrame(float percentageRadiationLength);
+			TMatrixDSym getScatteringVarianceInLocalFrame(float variance);
 			TVectorD getKinks();
 			//setters
 			void setDimensionSize(int dimension);

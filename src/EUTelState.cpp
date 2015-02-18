@@ -8,13 +8,10 @@ setBeamEnergy(5.0);
 } 
 
 EUTelState::EUTelState(EUTelState *state){
-	//cout<<"Entering the copy constructor"<<endl;
 	setDimensionSize(state->getDimensionSize());
 	setLocation(state->getLocation());//This stores the location as a float in Z0 since no location for track LCIO. This is preferable to problems with storing hits.  
-	//cout<<"HEREoldstate: "<<state->getPosition()[0]<<","<<state->getPosition()[1]<<","<<state->getPosition()[2]<<","<<state->getLocation()<<endl;
 	float position[] = {state->getPosition()[0],state->getPosition()[1],state->getPosition()[2]};//Z position is not a state parameter but should add here for use later. 
 	setPositionLocal(position);//This will automatically take cartesian coordinate system and save it to reference point. //This is different from most LCIO applications since each track will have own reference point. 	
-	//cout<<"HEREnewstate: "<<getPosition()[0]<<","<<getPosition()[1]<<","<<getPosition()[2]<<","<<getLocation()<<endl;
 	setIntersectionLocalXZ(state->getIntersectionLocalXZ());    
 	setIntersectionLocalYZ(state->getIntersectionLocalYZ());  
 	setBeamCharge(state->getBeamCharge());//this is set for each state. to do: is there a more efficient way of doing this since we only need this stored once?
@@ -112,11 +109,10 @@ TMatrixDSym EUTelState::getScatteringVarianceInLocalFrame(){
 	streamlog_out( DEBUG1 ) << "EUTelState::getScatteringVarianceInLocalFrame(Sensor)----------------------------END" << std::endl;
 	return precisionMatrix;
 }
-TMatrixDSym EUTelState::getScatteringVarianceInLocalFrame(float  percentageOfRadiationLength){
+TMatrixDSym EUTelState::getScatteringVarianceInLocalFrame(float  variance){
 	streamlog_out( DEBUG1 ) << "EUTelState::getScatteringVarianceInLocalFrame(Scatter)----------------------------BEGIN" << std::endl;
-	const double scatteringVariance  = Utility::getThetaRMSHighland(getBeamEnergy(), percentageOfRadiationLength);
-	streamlog_out(DEBUG5)<<"The scattering variance in radians: " <<  scatteringVariance <<std::endl; 
-	float scatPrecisionSqrt = 1.0 /scatteringVariance;
+	streamlog_out(DEBUG5)<<"The scattering variance in radians: " <<  variance <<std::endl; 
+	float scatPrecision = 1.0 /variance;
 	//We need the track direction in the direction of x/y in the local frame. 
 	//This will be the same as unitMomentum in the x/y direction
 	TVector3 unitMomentumLocalFrame =	getIncidenceUnitMomentumVectorInLocalFrame();
@@ -124,7 +120,7 @@ TMatrixDSym EUTelState::getScatteringVarianceInLocalFrame(float  percentageOfRad
 	float c1 = 	unitMomentumLocalFrame[0]; float c2 = 	unitMomentumLocalFrame[1];
 	streamlog_out( DEBUG1 ) << "The component in the x/y direction: "<< c1 <<"  "<<c2 << std::endl;
 	TMatrixDSym precisionMatrix(2);
-	float factor = pow(scatPrecisionSqrt,2)/pow((1-pow(c1,2)-pow(c2,2)),2);
+	float factor = scatPrecision/pow((1-pow(c1,2)-pow(c2,2)),2);
 	streamlog_out( DEBUG1 ) << "The factor: "<< factor << std::endl;
 	precisionMatrix[0][0]=factor*(1-pow(c2,2));
   precisionMatrix[1][0]=factor*c1*c2;				precisionMatrix[1][1]=factor*(1-pow(c1,2));
@@ -168,6 +164,7 @@ void EUTelState::getCombinedHitAndStateCovMatrixInLocalFrame( double (&cov)[4] )
 	cov[3] = _covCombinedMatrix[3];
 }
 //TO DO:This matrix will only work for no tilted sensors. Must determine the generic projection matrix
+//This is not quite true since we deal with the jacobian in the local frame. This TO DO is old but must check.
 TMatrixD EUTelState::getProjectionMatrix() const {
 	TMatrixD projection(5,5);
 	projection.Zero();
@@ -248,6 +245,7 @@ void EUTelState::setLocalXZAndYZIntersectionAndCurvatureUsingGlobalMomentum(TVec
 	geo::gGeometry().master2LocalVec(getLocation(), momentum, localMomentum );
 	//In the LOCAL coordinates this is just dx/dz and dy/dz in the LOCAL frame
 	streamlog_out(DEBUG5) << "The local momentum (x,y,z) is: "<< localMomentum[0]<<","<< localMomentum[1] <<"," <<localMomentum[2] << std::endl;
+	//Note must be defined like this since we determine the deltaX to the next plane via deltaX = incidenceX*deltaZ
 	setIntersectionLocalXZ(localMomentum[0]/localMomentum[2]);
 	setIntersectionLocalYZ(localMomentum[1]/localMomentum[2]);
 	streamlog_out(DEBUG5) << "The XZ tilt is: "<< getIntersectionLocalXZ()<<" The YZ tilt is: "<<  getIntersectionLocalYZ()<< std::endl;

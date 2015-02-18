@@ -40,10 +40,9 @@ function adding_zeros_to_RUN {
 export CONFIG="$exampleLocation/config/config.cfg"
 export RUNLIST="$exampleLocation/runlist/runlist.csv"
 export directory="$exampleLocation/output/logs"
+export pythonLocation="$scriptsLocation/pythonScripts"
 export outputGearFinal="gear-${outputIdentifier}-${RUN}.xml" #This is name of the gear after all iterations of alignment. 
 export histoNameInputFinal="Alignment-Runs-${outputIdentifier}-${RUN}" #This is the name of the histograms which will use the final gear to produce the tracks.
-export xres="$r $r $r $dutXs $r $r $r";
-export yres="$r $r $r $dutYs $r $r $r";
 export amode="7";
 export patRecMultiplicationFactor=2 #This is the factor which we increase the window of acceptance by if too few tracks found.
 export PatRec=patternRecognition #This is the name of the pattern recognition steering file
@@ -65,4 +64,4 @@ echo "This is the resolutions X/Y:  $xres/$yres."
 
 #THIS WILL RUN THE ALIGNMENT PROCESS AS MANY TIME AS YOU LIKE TO IMPROVE ALIGNMENT
 $scriptsLocation/howManyIterationsDecider.sh -n "$numberOfIterations"
-$scriptsLocation/patRecAndTrackFit.sh -i "$outputGearFinal" -h "$histoNameInputFinal"  
+#$scriptsLocation/patRecAndTrackFit.sh -i "$outputGearFinal" -h "$histoNameInputFinal"  

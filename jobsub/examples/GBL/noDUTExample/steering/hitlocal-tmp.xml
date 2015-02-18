@@ -25,7 +25,7 @@
    </execute>
 
    <global>
-      <parameter name="LCIOInputFiles"> @LcioPath@/@FilePrefix@-clustering.slcio </parameter>
+      <parameter name="LCIOInputFiles"> @LcioPath@/@FilePrefix@-clustering-filtered.slcio </parameter>
       <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
@@ -52,7 +52,7 @@
   <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> original_zsdata_m26  </parameter>
 
   <!--Cluster (pulse) collection name-->
-  <parameter name="PulseCollectionName" type="string" lcioInType="TrackerPulse"> cluster_m26_free </parameter>
+  <parameter name="PulseCollectionName" type="string" lcioInType="TrackerPulse"> filtered_cluster_m26 </parameter>
 
   <!--Hit collection name-->
   <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit </parameter>

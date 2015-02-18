@@ -182,8 +182,10 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent* evt){
 				std::map< int, std::map< float, float > >  SensorResidual; 
 				std::map< int, std::map< float, float > >  SensorResidualError; 
 				_trackFitter->getResidualOfTrackandHits(traj, pointList,track, SensorResidual, SensorResidualError);
-				plotResidual(SensorResidual,SensorResidualError, _first_time);//TO DO: Need to fix how we histogram.
-				_first_time = false;
+				if(chi2/static_cast<float>(ndf) < 5){
+					plotResidual(SensorResidual,SensorResidualError, _first_time);//TO DO: Need to fix how we histogram.
+					_first_time = false;
+				}
 			}else{
 				streamlog_out(DEBUG5) << "Ierr is: " << ierr << " Do not update track information " << std::endl;
 				static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_fitsuccessHistName ] ) -> fill(0.0);
@@ -202,7 +204,7 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent* evt){
 	}
 	catch(std::string &e){
 		streamlog_out(MESSAGE9) << e << std::endl;
-		throw marlin::StopProcessingException( this ) ;
+		throw marlin::SkipEventException( this ) ;
 	}
 	catch(lcio::Exception& e){
 		streamlog_out(MESSAGE9) << e.what() <<std::endl;
@@ -230,8 +232,8 @@ void EUTelProcessorGBLTrackFit::plotResidual(std::map< int, std::map<float, floa
 			if( sensor_residual_it->first == 3){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX3 ] ) -> fill(res);}
 			if( sensor_residual_it->first == 4){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX4 ] ) -> fill(res);}
 			if( sensor_residual_it->first == 5){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX5 ] ) -> fill(res);}
-			if( sensor_residual_it->first == 20){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ "Residual6X" ] ) -> fill(res);}
-			if( sensor_residual_it->first == 21){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ "Residual7X" ] ) -> fill(res);}
+			if( sensor_residual_it->first == 6){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ "Residual6X" ] ) -> fill(res);}
+			if( sensor_residual_it->first == 7){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ "Residual7X" ] ) -> fill(res);}
 
 		}else{
 			streamlog_out(DEBUG5) << "The map is NULL" <<std::endl;
@@ -244,8 +246,8 @@ void EUTelProcessorGBLTrackFit::plotResidual(std::map< int, std::map<float, floa
 			if( sensor_residual_it->first == 3){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY3 ] ) -> fill(res2);}
 			if( sensor_residual_it->first == 4){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY4 ] ) -> fill(res2);}
 			if( sensor_residual_it->first == 5){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY5 ] ) -> fill(res2);}
-			if( sensor_residual_it->first == 20){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ "Residual6Y" ] ) -> fill(res2);}
-			if( sensor_residual_it->first == 21){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ "Residual7Y" ] ) -> fill(res2);}
+			if( sensor_residual_it->first == 6){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ "Residual6Y" ] ) -> fill(res2);}
+			if( sensor_residual_it->first == 7){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ "Residual7Y" ] ) -> fill(res2);}
 
 				
 	}
