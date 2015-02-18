@@ -60,7 +60,7 @@ numberRejectedAlignmentAttempts=0 #We set this since we do not want to fall in a
 tooManyRejectsExitLoopBool=false
 #We use the last successful attempt when we have two rejected otherwise if we have one then we increase the resolution and continue.
 # TO DO: Must change this to while loop since we exit down below as well. 
-for x in {1..10}; do 
+for x in {1..1}; do 
 	echo "GBLALIGN ATTEMPT $x ON ITERATION $number"
 	echo "THE NUMBER OF FAILED ALIGNMENT ATTEMPTS $numberRejectedAlignmentAttempts"
 	$do jobsub.py -c $CONFIG -csv $RUNLIST -o lcioInputName="$lcioInputName" -o inputCollectionName="$inputCollectionName"  -o GearFile="$inputGear" -o GearAlignedFile="$outputGear" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres"  -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}"  $Align  $RUN 
