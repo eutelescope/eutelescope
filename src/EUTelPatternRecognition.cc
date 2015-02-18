@@ -2,24 +2,25 @@
 #include "EUTelPatternRecognition.h"
 #include "EUTelNav.h"
 namespace eutelescope {
-    
-	EUTelPatternRecognition::EUTelPatternRecognition() :  
-	_totalNumberOfHits(0),
-	_totalNumberOfSharedHits(0),
-	_firstExecution(true),
-	_numberOfTracksTotal(0),
-	_numberOfTracksAfterHitCut(0),
-	_numberOfTracksAfterPruneCut(0),
-	_allowedMissingHits(0),
-	_AllowedSharedHitsOnTrackCandidate(0),
-	_beamE(-1.),
-	_beamQ(-1.)
-	{}
 
-	EUTelPatternRecognition::~EUTelPatternRecognition() { 
-	}
- 
-std::vector<EUTelTrack>& EUTelPatternRecognition::getTracks(){
+EUTelPatternRecognition::EUTelPatternRecognition():  
+_totalNumberOfHits(0),
+_totalNumberOfSharedHits(0),
+_firstExecution(true),
+_numberOfTracksTotal(0),
+_numberOfTracksAfterHitCut(0),
+_numberOfTracksAfterPruneCut(0),
+_allowedMissingHits(0),
+_AllowedSharedHitsOnTrackCandidate(0),
+_beamE(-1.),
+_beamQ(-1.)
+{}
+
+EUTelPatternRecognition::~EUTelPatternRecognition() { 
+}
+
+std::vector<EUTelTrack>& EUTelPatternRecognition::getTracks()
+{
 	return	_finalTracks; 
 }
 
@@ -59,31 +60,42 @@ void EUTelPatternRecognition::propagateForwardFromSeedState( EUTelState& stateIn
 		float globalIntersection[3];
 		TVector3 momentumAtIntersection;
 		float arcLength;
-		int newSensorID = state->findIntersectionWithCertainID(geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i+1), globalIntersection, momentumAtIntersection, arcLength);
-		//cout<<"HERE1: "<<state->getPosition()[0]<<","<<state->getPosition()[1]<<","<<state->getPosition()[2]<<","<<state->getLocation()<<std::endl;
-		int sensorIntersection = geo::gGeometry( ).getSensorID(globalIntersection);
-		if(newSensorID < 0 or sensorIntersection < 0 ){
-			streamlog_out ( DEBUG5 ) << "INTERSECTION NOT FOUND! Intersection point on infinite plane: " <<  globalIntersection[0]<<" , "<<globalIntersection[1] <<" , "<<globalIntersection[2]<<std::endl;
-			streamlog_out ( DEBUG5 ) << "Momentum on next plane: " <<  momentumAtIntersection[0]<<" , "<<momentumAtIntersection[1] <<" , "<<momentumAtIntersection[2]<<std::endl;
-			streamlog_out(DEBUG5) <<" From ID= " <<  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)<< " to " <<  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i+1)  <<std::endl;
-			streamlog_out(DEBUG5)<<"Was there intersection on plane: "<<newSensorID<<" Was there intersection in sensitive area: "<< sensorIntersection <<std::endl;
-			streamlog_out(DEBUG5) << "No intersection found moving on plane. Move to next plane and look again."<<std::endl; 
-			streamlog_out(DEBUG5)<<"This is for event number " <<getEventNumber()<<std::endl;
-			continue;//So if there is no intersection look on the next plane. Important since two planes could be at the same z position
+		int newSensorID = 0;
+		
+		bool foundNextIntersection = state->findIntersectionWithCertainID(	geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i+1), 
+											globalIntersection, momentumAtIntersection, arcLength, newSensorID);
+
+		if(!foundNextIntersection)
+		{
+			streamlog_out(DEBUG5) 	<< "INTERSECTION NOT FOUND! Intersection point on infinite plane: " 
+						<<  globalIntersection[0] << ", " <<globalIntersection[1] << ", " << globalIntersection[2] << std::endl
+						<< "Momentum on next plane: " 
+						<<  momentumAtIntersection[0] << ", " << momentumAtIntersection[1] << ", " << momentumAtIntersection[2] << std::endl
+						<< "From ID: " << geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i) << " to " 
+						<<  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i+1) << std::endl
+						<< "This is for event number: " << getEventNumber() << std::endl;
+			//So if there is no intersection look on the next plane.
+			//Important since two planes could be at the same z position
+			continue;
 		}
-		streamlog_out(DEBUG5) <<"INTERSECTION FOUND! From ID= " <<  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)<< " to " <<  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i+1)  <<std::endl;
-		streamlog_out ( DEBUG5 ) << "Intersection point on infinite plane: " <<  globalIntersection[0]<<" , "<<globalIntersection[1] <<" , "<<globalIntersection[2]<<std::endl;
-		streamlog_out ( DEBUG5 ) << "Momentum on next plane: " <<  momentumAtIntersection[0]<<" , "<<momentumAtIntersection[1] <<" , "<<momentumAtIntersection[2]<<std::endl;
-		//We add the arc length so plane 0 contains the distance to plane 1 and so on. We only want to store this information when we have an actual intersection. 
-		if(arcLength <= 0 ){ 
-			throw(lcio::Exception( "The arc length is less than or equal to zero. ")); 
-		}
-		if(firstLoop){
+
+		streamlog_out(DEBUG5) 	<< "INTERSECTION FOUND! From ID: " << geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)
+					<< " to " << geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i+1) << std::endl
+					<< "Intersection point on infinite plane: " 
+					<<  globalIntersection[0] << ", " << globalIntersection[1] << ", " << globalIntersection[2] << std::endl
+					<< "Momentum on next plane: " 
+					<<  momentumAtIntersection[0]<< ", "<<momentumAtIntersection[1] << ", " << momentumAtIntersection[2] << std::endl;
+
+		if(firstLoop)
+		{
 			firstState->setArcLengthToNextState(arcLength); 
 			firstLoop =false;
-		}else{
+		}
+		else
+		{
 			state->setArcLengthToNextState(arcLength);
 		}
+		
 		//So we have intersection lets create a new state
 		EUTelState *newState = new EUTelState();//Need to create this since we save the pointer and we would be out of scope when we leave this function. Destroying this object. 
 		newState->setDimensionSize(_planeDimensions[newSensorID]);//We set this since we need this information for later processors
@@ -91,8 +103,9 @@ void EUTelPatternRecognition::propagateForwardFromSeedState( EUTelState& stateIn
 		newState->setLocation(newSensorID);
 		newState->setPositionGlobal(globalIntersection);
 		newState->setLocalXZAndYZIntersectionAndCurvatureUsingGlobalMomentum(momentumAtIntersection);
-		if(_mapHitsVecPerPlane[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i+1)].size() == 0){
-			streamlog_out(DEBUG5) << "There are no hits on the plane with this state. Add state to track as it is and move on ";
+
+		if(_mapHitsVecPerPlane[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i+1)].empty()){
+			streamlog_out(DEBUG5) << "There are no hits on the plane with this state. Add state to track as it is and move on." << std::endl;
 			track.addTrack(static_cast<EVENT::Track*>(newState));//Need to return this to LCIO object. Loss functionality but retain information 
 			state = newState;
 			continue;

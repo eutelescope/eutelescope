@@ -1182,114 +1182,113 @@ bool EUTelGeometryTelescopeGeoDescription::findNextPlaneEntrance(  TVector3 lpoi
 /**
 * Find closest surface intersected by the track and return the position
 */
-int EUTelGeometryTelescopeGeoDescription::findIntersectionWithCertainID( float x0, float y0, float z0, float px, float py, float pz, float beamQ, int nextPlaneID, float outputPosition[],TVector3& outputMomentum, float& arcLength) {
-streamlog_out(DEBUG5) << "EUTelGeometryTelescopeGeoDescription::findIntersectionWithCertainID()------BEGIN" << std::endl;
+bool EUTelGeometryTelescopeGeoDescription::findIntersectionWithCertainID(	float x0, float y0, float z0, 
+										float px, float py, float pz, 
+										float beamQ, int nextPlaneID, float outputPosition[],
+										TVector3& outputMomentum, float& arcLength, int& newNextPlaneID)
+{
 	//positions are in mm
-  TVector3 trkVec(x0,y0,z0);
+	TVector3 trkVec(x0,y0,z0);
 	TVector3 pVec(px,py,pz);
-	streamlog_out(DEBUG5) << "  Global positions (Input): "<< x0 <<"  "<< y0 <<"  "<< z0 << " Momentum: "<< px<<","<<py<<","<<pz<< std::endl;
- 
-  // Find magnetic field at that point and then the components/////////////////////////////////// 
-  gear::Vector3D vectorGlobal( x0, y0, z0 );        // assuming uniform magnetic field running along X direction. Why do we need this assumption. Equations of motion do not seem to dictate this.
-  const gear::BField&   B = geo::gGeometry().getMagneticField();
+
+	//Assuming uniform magnetic field running along X direction. 
+	//Why do we need this assumption? Equations of motion do not seem to dictate this.
+	gear::Vector3D vectorGlobal( x0, y0, z0 );      
+	const gear::BField& B	= geo::gGeometry().getMagneticField();
 	const double bx         = B.at( vectorGlobal ).x();
 	const double by         = B.at( vectorGlobal ).y();
 	const double bz         = B.at( vectorGlobal ).z();
-	streamlog_out (DEBUG5) << "The magnetic field vector (x,y,z): "<<bx<<","<<by<<","<<bz << std::endl;
-	streamlog_out (DEBUG5) << "Beam charge: "<<beamQ<< std::endl;
 
 	//B field is in units of Tesla
-  TVector3 hVec(bx,by,bz);
+	TVector3 hVec(bx,by,bz);
 	const double H = hVec.Mag();
 
-  // Calculate track momentum from track parameters and fill some useful variables///////////////////////////////////////////////////////////
-  const double p = pVec.Mag();
-	const double constant =  -0.299792458; //This is a constant used in the derivation of this equation. This is the distance light travels in a nano second    
+	//Calculate track momentum from track parameters and fill some useful variables
+	const double p = pVec.Mag();
+	//This is a constant used in the derivation of this equation. This is the distance light travels in a nano second    
+	const double constant =  -0.299792458; 
 	const double mm = 1000;
 	const double combineConstantsAndMagneticField = (constant*beamQ*H)/mm;
-  const double rho = combineConstantsAndMagneticField/p; 
-  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////       
+	const double rho = combineConstantsAndMagneticField/p; 
 				      
 	//Determine geometry of sensor to be used to determine the point of intersection.//////////////////////////////////////
-  TVector3 norm = geo::gGeometry().siPlaneNormal( nextPlaneID  );       
+	TVector3 norm = geo::gGeometry().siPlaneNormal( nextPlaneID  );       
 	streamlog_out (DEBUG5) << "The normal of the plane is (x,y,z): "<<norm[0]<<","<<norm[1]<<","<<norm[2]<< std::endl;
-  TVector3 sensorCenter( geo::gGeometry().siPlaneXPosition( nextPlaneID  ), geo::gGeometry().siPlaneYPosition( nextPlaneID  ), geo::gGeometry().siPlaneZPosition( nextPlaneID  ) );
+	TVector3 sensorCenter( geo::gGeometry().siPlaneXPosition( nextPlaneID  ), geo::gGeometry().siPlaneYPosition( nextPlaneID  ), geo::gGeometry().siPlaneZPosition( nextPlaneID  ) );
 	streamlog_out (DEBUG5) << "The sensor centre (x,y,z): "<<sensorCenter[0]<<","<<sensorCenter[1]<<","<<sensorCenter[2] << std::endl;
-  TVector3 delta = (trkVec - sensorCenter);//Must be in mm since momentum is.
-  TVector3 pVecCrosH = pVec.Cross(hVec.Unit());
-	////////////////////////////////////////////////////////////////////////////////////////////////////////
+	TVector3 delta = (trkVec - sensorCenter);//Must be in mm since momentum is.
+	TVector3 pVecCrosH = pVec.Cross(hVec.Unit());
 
-
-  if ( streamlog_level(DEBUG5) ) {
+/*
+	if( streamlog_level(DEBUG5) )
+	{
 		streamlog_out(DEBUG5) << "-------------------------------------------" << std::endl;
-	  streamlog_out(DEBUG5) << "Current point (X,Y,Z): " << std::setw(15) << x0  << std::setw(15) << y0 << std::setw(15) << z0 << std::endl;
-	  streamlog_out(DEBUG5) << "Next PlaneID : " << nextPlaneID << std::endl;
-	  streamlog_out(DEBUG5) << "Normal vector" << std::endl;
-	  norm.Print();
-	  streamlog_out(DEBUG5) << "P x H vector" << std::endl;
-	  pVecCrosH.Print();
-	  streamlog_out (DEBUG5) << "Rho: " << rho << std::endl;
-	  streamlog_out (DEBUG5) << "P: " << p << std::endl;
-	  streamlog_out (DEBUG5) << "Delta "<< std::endl;
-		delta.Print();
-  }
-	//Solution to the plane equation and the curved line intersection will be an quadratic with the coefficients. The solution is the arc length along the curve
+		streamlog_out(DEBUG5) << "Current point (X,Y,Z): " << std::setw(15) << x0  << std::setw(15) << y0 << std::setw(15) << z0 << std::endl;
+		streamlog_out(DEBUG5) << "Next PlaneID : " << nextPlaneID << std::endl;
+		streamlog_out(DEBUG5) << "Normal vector" << std::endl; norm.Print();
+		streamlog_out(DEBUG5) << "Sensor centre" << std::endl; sensorCenter.Print();
+      		streamlog_out(DEBUG5) << "P x H vector" << std::endl; pVecCrosH.Print();
+		streamlog_out (DEBUG5) << "Rho: " << rho << " P: " << p << " Delta: " << std::endl; delta.Print();
+ 	}
+*/
+
+	//Solution to the plane equation and the curved line intersection will be an 
+	//quadratic with the coefficients. The solution is the arc length along the curve
 	const double a = -0.5 * rho * ( norm.Dot( pVecCrosH ) ) / p;
-  const double b = norm.Dot( pVec ) / p;
-  const double c = norm.Dot( delta );
-	//////////////////////////////////////////////////////////////////////////////////////////////////////// 
-  //Solution must be in femto metres 
-  std::vector< double > sol = Utility::solveQuadratic(a,b,c); // solutions are sorted in ascending order. This is a vector of arc length
-	double solution = ( sol[0] > 0. ) ? sol[0] : ( ( sol[0] < 0. && sol[1] > 0. ) ? sol[1] : -1. ); //choose solution with minimum arc length
-	if(solution < 0){
-		streamlog_out( DEBUG3 ) << "Track intersection was not found" << std::endl;
-		return -999;
+	const double b = norm.Dot( pVec ) / p;
+	const double c = norm.Dot( delta );
+
+	//Solution must be in femto metres, vector of arc length
+	std::vector<double> sol = Utility::solveQuadratic(a,b,c); 
+	//solutions are sorted in ascending order, choose minimum arc length
+	double solution = ( sol[0] > 0. ) ? sol[0] : ( ( sol[0] < 0. && sol[1] > 0. ) ? sol[1] : -1. );
+	if(solution < 0)
+	{
+		return false;
 	}
 			
 	//Determine the global position from arc length.             
-  TVector3 newPos;
+	TVector3 newPos;
 	TVector3 newMomentum;
 	newPos = EUTelNav::getXYZfromArcLength(trkVec,pVec,beamQ,solution);
 	newMomentum = EUTelNav::getXYZMomentumfromArcLength(pVec, trkVec, beamQ, solution);
-	outputMomentum[0]=newMomentum[0]; 				outputMomentum[1]=newMomentum[1]; 				outputMomentum[2]=newMomentum[2];
+	outputMomentum[0] = newMomentum[0];
+	outputMomentum[1] = newMomentum[1];
+	outputMomentum[2] = newMomentum[2];
+
 	//Is the new point within the sensor. If not then we may have to propagate a little bit further to enter.
- 	const float pos[3]={newPos[0],newPos[1],newPos[2]};
+ 	const float pos[3] = {newPos[0],newPos[1],newPos[2]};
 	int sensorIDCheck = getSensorID(pos); 
 	bool foundIntersection = false;
 	if(sensorIDCheck == nextPlaneID){
 		streamlog_out( DEBUG3 ) << "INTERSECTION FOUND! " << std::endl;
 		foundIntersection = true;
-		outputPosition[0]=newPos[0];outputPosition[1]=newPos[1];outputPosition[2]=newPos[2];
+		outputPosition[0] = newPos[0];
+		outputPosition[1] = newPos[1];
+		outputPosition[2] = newPos[2];
 	}
-	if(!foundIntersection){
-		streamlog_out( DEBUG3 ) << "INTERSECTION NOT FOUND. LOOK A BIT FURTHER USING TGEO BOUNDARY FINDER. " << std::endl;
+	if(!foundIntersection)
+	{
 		foundIntersection = findNextPlaneEntrance( newPos,  newMomentum, nextPlaneID, outputPosition);
-		streamlog_out( DEBUG3 ) << "SEARCH FORWARD DIRECTION SUCCESSFUL: "<< std::boolalpha << foundIntersection << std::endl;
-		streamlog_out( DEBUG3 ) << "The slightly wrong output position: "<< newPos[0]<<","<<newPos[1]<<","<<newPos[2]  << std::endl;
-		streamlog_out( DEBUG3 ) << "The corrected position is: "<< outputPosition[0]<<","<<outputPosition[1]<<","<<outputPosition[2]  << std::endl;
 	}
-	if(!foundIntersection){
-		streamlog_out( DEBUG3 ) << "WE HAVE NOT FOUND THE INTERSECTION GOING IN POSITIVE DIRECTION. SO TRY THE OTHER WAY. " << std::endl;
+	if(!foundIntersection)
+	{
 		foundIntersection = findNextPlaneEntrance( newPos,  -newMomentum, nextPlaneID, outputPosition);
-		streamlog_out( DEBUG3 ) << "SEARCH BACKWARDS DIRECTION SUCCESSFUL: "<< std::boolalpha << foundIntersection << std::endl;
-		streamlog_out( DEBUG3 ) << "The slightly wrong output position: "<< newPos[0]<<","<<newPos[1]<<","<<newPos[2]  << std::endl;
-		streamlog_out( DEBUG3 ) << "The corrected position is: "<< outputPosition[0]<<","<<outputPosition[1]<<","<<outputPosition[2]  << std::endl;
 	}
+
 	arcLength = solution;		
-	streamlog_out( DEBUG3 ) << "THE FINAL OUTPUT SOLUTION TO INTERSECTION ON PLANE ARE " << std::endl;
-	streamlog_out (DEBUG5) << "Final output arc length: " << arcLength <<std::endl;
-	streamlog_out (DEBUG5) << "Final Solution momentum(X,Y,Z): " << std::setw(15) << outputMomentum[0]  << std::setw(15) << outputMomentum[1]  << std::setw(15) << outputMomentum[2] << std::endl;
-	streamlog_out (DEBUG5) << "Final solution (X,Y,Z): " << std::setw(15) << outputPosition[0]  << std::setw(15) << outputPosition[1]  << std::setw(15) << outputPosition[2] << std::endl;
 
-	if(!foundIntersection){//We have still not found intersection
+	//We have still not found intersection
+	if(!foundIntersection)
+	{
 		streamlog_out( DEBUG3 ) << "FINAL: NO INTERSECTION FOUND. " << std::endl;
-		return -999;
-	}else{
-		streamlog_out( DEBUG3 ) << "FINAL:INTERSECTION FOUND. " << std::endl;
-		return nextPlaneID;
+		return false;
 	}
-  streamlog_out(DEBUG2) << "-------------------------EUTelGeometryTelescopeGeoDescription::findIntersection()--------------------------" << std::endl;
-
+	else
+	{
+		newNextPlaneID = nextPlaneID;
+		return true;
+	}
 }
 
 //This function will intake position and direction. Then using the gear file and magnetic field will output position and sensor ID in correct order of intersection. 
