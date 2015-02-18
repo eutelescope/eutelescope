@@ -45,13 +45,8 @@ namespace eutelescope {
     */
     virtual void init();
 
-    /** Called for every run.*/
-    virtual void processRunHeader(LCRunHeader* run);
-
     /** Called for every event - the working horse.*/
     virtual void processEvent(LCEvent * evt);
-
-    virtual void check(LCEvent * evt);
 
    	/** Called after data processing for clean up. **/
 		virtual void end();
@@ -62,8 +57,12 @@ namespace eutelescope {
 		IntVec _sensorIDs;
 		std::map< int,  AIDA::IProfile2D* > _mapFromSensorIDToHistogramX;
 		std::map< int,  AIDA::IProfile2D* > _mapFromSensorIDToHistogramY;
+		std::map< int,  AIDA::IProfile2D* > _mapFromSensorIDToPValueHisto;
 		std::map< int,   AIDA::IHistogram1D *> _mapFromSensorIDToKinkXZ;
 		std::map< int,  AIDA::IHistogram1D * > _mapFromSensorIDToKinkYZ;
+		std::map< int,  AIDA::IProfile1D* > _mapFromSensorIDToPValuesVsIncidenceXZ;
+		std::map< int,  AIDA::IProfile1D* > _mapFromSensorIDToPValuesVsIncidenceYZ;
+		AIDA::IHistogram1D * _beamEnergy;
 
 	};
 

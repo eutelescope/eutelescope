@@ -263,95 +263,95 @@
     ADD_TEST( TestJobsubExampleDaturaNoDUTHitlocalOutput sh -c "[ -f ${testdir}/output/lcio/run${PaddedRunNr}-hitlocal.slcio ] && lcio_check_col_elements -a --expelements 23 hit ${testdir}/output/lcio/run${PaddedRunNr}-hitlocal.slcio" )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTHitlocalOutput PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTHitlocalRun)
 
-
 #
-# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#  STEP 6: GBL TRACKSEARCH
-# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+##
+## +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+##  STEP 6: GBL TRACKSEARCH
+## +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+##
+#     ADD_TEST( NAME TestJobsubExampleDaturaNoDUTGblTrkSrchRun 
+#               WORKING_DIRECTORY ${testdir} 
+# 	      COMMAND ${executable} ${jobsubOptions} tracksearchHelix ${RunNr} )
+#     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTGblTrkSrchRun PROPERTIES
+#        # test will pass if ALL of the following expressions are matched
+#         PASS_REGULAR_EXPRESSION "${jobsub_pass_regex_1}.*${marlin_pass_regex_1}.*${jobsub_pass_regex_2}"
+#         # test will fail if ANY of the following expressions is matched 
+#         FAIL_REGULAR_EXPRESSION "${generic_fail_regex}"
+#	# test depends on earlier steps
+#	DEPENDS TestJobsubExampleDaturaNoDUTHitlocalRun
+#	)
+#    # now check if the expected output files exist and look ok
+#    ADD_TEST( TestJobsubExampleDaturaNoDUTGblTrkSrchLog sh -c "[ -f ${testdir}/output/logs/tracksearchHelix-${PaddedRunNr}.zip ]" )
+#    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTGblTrkSrchLog PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTGblTrkSrchRun)
 #
-     ADD_TEST( NAME TestJobsubExampleDaturaNoDUTGblTrkSrchRun 
-               WORKING_DIRECTORY ${testdir} 
- 	      COMMAND ${executable} ${jobsubOptions} tracksearchHelix ${RunNr} )
-     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTGblTrkSrchRun PROPERTIES
-        # test will pass if ALL of the following expressions are matched
-         PASS_REGULAR_EXPRESSION "${jobsub_pass_regex_1}.*${marlin_pass_regex_1}.*${jobsub_pass_regex_2}"
-         # test will fail if ANY of the following expressions is matched 
-         FAIL_REGULAR_EXPRESSION "${generic_fail_regex}"
-	# test depends on earlier steps
-	DEPENDS TestJobsubExampleDaturaNoDUTHitlocalRun
-	)
-    # now check if the expected output files exist and look ok
-    ADD_TEST( TestJobsubExampleDaturaNoDUTGblTrkSrchLog sh -c "[ -f ${testdir}/output/logs/tracksearchHelix-${PaddedRunNr}.zip ]" )
-    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTGblTrkSrchLog PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTGblTrkSrchRun)
-
-    ADD_TEST( TestJobsubExampleDaturaNoDUTGblTrkSrchHisto sh -c "[ -f ${testdir}/output/histograms/run${PaddedRunNr}-tracksearchHelix.root ]" )
-    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTGblTrkSrchHisto PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTGblTrkSrchRun)
-
-    # we expect to see between 1 and 3 tracks in every event 
-    # but tolerate if this is not the case in 40% of the events (empty events are counted)
-    ADD_TEST( TestJobsubExampleDaturaNoDUTGblTrkSrchOutput sh -c "[ -f ${testdir}/output/lcio/run${PaddedRunNr}-trackcand.slcio ] && lcio_check_col_elements --pedantic --expelements 2 --abselementerror 1 --releventerror .40 track0 ${testdir}/output/lcio/run${PaddedRunNr}-track.slcio" )
-    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTGblTrkSrchOutput PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTGblTrkSrchRun)
-
-
+#    ADD_TEST( TestJobsubExampleDaturaNoDUTGblTrkSrchHisto sh -c "[ -f ${testdir}/output/histograms/run${PaddedRunNr}-tracksearchHelix.root ]" )
+#    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTGblTrkSrchHisto PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTGblTrkSrchRun)
 #
-# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#  STEP 7: GBL ALIGN
-# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#    # we expect to see between 1 and 3 tracks in every event 
+#    # but tolerate if this is not the case in 40% of the events (empty events are counted)
+#    ADD_TEST( TestJobsubExampleDaturaNoDUTGblTrkSrchOutput sh -c "[ -f ${testdir}/output/lcio/run${PaddedRunNr}-trackcand.slcio ] && lcio_check_col_elements --pedantic --expelements 2 --abselementerror 1 --releventerror .40 track0 ${testdir}/output/lcio/run${PaddedRunNr}-track.slcio" )
+#    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTGblTrkSrchOutput PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTGblTrkSrchRun)
 #
-    ADD_TEST( NAME TestJobsubExampleDaturaNoDUTGblAlignRun 
-              WORKING_DIRECTORY ${testdir} 
-	      COMMAND ${executable} ${jobsubOptions} aligngbl ${RunNr} )
-    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTGblAlignRun PROPERTIES
-        # test will pass if ALL of the following expressions are matched
-        PASS_REGULAR_EXPRESSION "${jobsub_pass_regex_1}.*${marlin_pass_regex_1}.*${jobsub_pass_regex_2}"
-        # test will fail if ANY of the following expressions is matched 
-        FAIL_REGULAR_EXPRESSION "${generic_fail_regex}"
-	# test depends on earlier steps
-	DEPENDS TestJobsubExampleDaturaNoDUTHitlocalRun
-	)
-    # now check if the expected output files exist and look ok
-    ADD_TEST( TestJobsubExampleDaturaNoDUTGblAlignLog sh -c "[ -f ${testdir}/output/logs/aligngbl-${PaddedRunNr}.zip ]" )
-    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTGblAlignLog PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTGblAlignRun)
-
-    ADD_TEST( TestJobsubExampleDaturaNoDUTGblAlignHisto sh -c "[ -f ${testdir}/output/histograms/run${PaddedRunNr}-aligngbl.root ]" )
-    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTGblAlignHisto PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTGblAlignRun)
-
-    # we expect to see between 1 and 3 tracks in every event 
-    # but tolerate if this is not the case in 40% of the events (empty events are counted)
-    ADD_TEST( TestJobsubExampleDaturaNoDUTGblAlignOutput sh -c "[ -f ${testdir}/output/lcio/run${PaddedRunNr}-trackcand.slcio ] && lcio_check_col_elements --pedantic --expelements 2 --abselementerror 1 --releventerror .40 track0 ${testdir}/output/lcio/run${PaddedRunNr}-track.slcio" )
-    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTGblAlignOutput PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTGblAlignRun)
-
-
-
 #
-# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#  STEP 8: GBL FIT
-# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+##
+## +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+##  STEP 7: GBL ALIGN
+## +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+##
+#    ADD_TEST( NAME TestJobsubExampleDaturaNoDUTGblAlignRun 
+#              WORKING_DIRECTORY ${testdir} 
+#	      COMMAND ${executable} ${jobsubOptions} aligngbl ${RunNr} )
+#    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTGblAlignRun PROPERTIES
+#        # test will pass if ALL of the following expressions are matched
+#        PASS_REGULAR_EXPRESSION "${jobsub_pass_regex_1}.*${marlin_pass_regex_1}.*${jobsub_pass_regex_2}"
+#        # test will fail if ANY of the following expressions is matched 
+#        FAIL_REGULAR_EXPRESSION "${generic_fail_regex}"
+#	# test depends on earlier steps
+#	DEPENDS TestJobsubExampleDaturaNoDUTHitlocalRun
+#	)
+#    # now check if the expected output files exist and look ok
+#    ADD_TEST( TestJobsubExampleDaturaNoDUTGblAlignLog sh -c "[ -f ${testdir}/output/logs/aligngbl-${PaddedRunNr}.zip ]" )
+#    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTGblAlignLog PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTGblAlignRun)
 #
-    ADD_TEST( NAME TestJobsubExampleDaturaNoDUTGblFitRun 
-              WORKING_DIRECTORY ${testdir} 
-	      COMMAND ${executable} ${jobsubOptions} trackgbl ${RunNr} )
-    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTGblFitRun PROPERTIES
-        # test will pass if ALL of the following expressions are matched
-        PASS_REGULAR_EXPRESSION "${jobsub_pass_regex_1}.*${marlin_pass_regex_1}.*${jobsub_pass_regex_2}"
-        # test will fail if ANY of the following expressions is matched 
-        FAIL_REGULAR_EXPRESSION "${generic_fail_regex}"
-	# test depends on earlier steps
-	DEPENDS TestJobsubExampleDaturaNoDUTHitlocalRun
-	)
-    # now check if the expected output files exist and look ok
-    ADD_TEST( TestJobsubExampleDaturaNoDUTGblFitLog sh -c "[ -f ${testdir}/output/logs/trackgbl-${PaddedRunNr}.zip ]" )
-    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTGblFitLog PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTGblFitRun)
-
-    ADD_TEST( TestJobsubExampleDaturaNoDUTGblFitHisto sh -c "[ -f ${testdir}/output/histograms/run${PaddedRunNr}-trackgbl.root ]" )
-    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTGblFitHisto PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTGblFitRun)
-
-    # we expect to see between 1 and 3 tracks in every event 
-    # but tolerate if this is not the case in 40% of the events (empty events are counted)
-    ADD_TEST( TestJobsubExampleDaturaNoDUTGblFitOutput sh -c "[ -f ${testdir}/output/lcio/run${PaddedRunNr}-trackcand.slcio ] && lcio_check_col_elements --pedantic --expelements 2 --abselementerror 1 --releventerror .40 track0 ${testdir}/output/lcio/run${PaddedRunNr}-track.slcio" )
-    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTGblFitOutput PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTGblFitRun)
-
-
+#    ADD_TEST( TestJobsubExampleDaturaNoDUTGblAlignHisto sh -c "[ -f ${testdir}/output/histograms/run${PaddedRunNr}-aligngbl.root ]" )
+#    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTGblAlignHisto PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTGblAlignRun)
+#
+#    # we expect to see between 1 and 3 tracks in every event 
+#    # but tolerate if this is not the case in 40% of the events (empty events are counted)
+#    ADD_TEST( TestJobsubExampleDaturaNoDUTGblAlignOutput sh -c "[ -f ${testdir}/output/lcio/run${PaddedRunNr}-trackcand.slcio ] && lcio_check_col_elements --pedantic --expelements 2 --abselementerror 1 --releventerror .40 track0 ${testdir}/output/lcio/run${PaddedRunNr}-track.slcio" )
+#    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTGblAlignOutput PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTGblAlignRun)
+#
+#
+#
+##
+## +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+##  STEP 8: GBL FIT
+## +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+##
+#    ADD_TEST( NAME TestJobsubExampleDaturaNoDUTGblFitRun 
+#              WORKING_DIRECTORY ${testdir} 
+#	      COMMAND ${executable} ${jobsubOptions} trackgbl ${RunNr} )
+#    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTGblFitRun PROPERTIES
+#        # test will pass if ALL of the following expressions are matched
+#        PASS_REGULAR_EXPRESSION "${jobsub_pass_regex_1}.*${marlin_pass_regex_1}.*${jobsub_pass_regex_2}"
+#        # test will fail if ANY of the following expressions is matched 
+#        FAIL_REGULAR_EXPRESSION "${generic_fail_regex}"
+#	# test depends on earlier steps
+#	DEPENDS TestJobsubExampleDaturaNoDUTHitlocalRun
+#	)
+#    # now check if the expected output files exist and look ok
+#    ADD_TEST( TestJobsubExampleDaturaNoDUTGblFitLog sh -c "[ -f ${testdir}/output/logs/trackgbl-${PaddedRunNr}.zip ]" )
+#    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTGblFitLog PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTGblFitRun)
+#
+#    ADD_TEST( TestJobsubExampleDaturaNoDUTGblFitHisto sh -c "[ -f ${testdir}/output/histograms/run${PaddedRunNr}-trackgbl.root ]" )
+#    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTGblFitHisto PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTGblFitRun)
+#
+#    # we expect to see between 1 and 3 tracks in every event 
+#    # but tolerate if this is not the case in 40% of the events (empty events are counted)
+#    ADD_TEST( TestJobsubExampleDaturaNoDUTGblFitOutput sh -c "[ -f ${testdir}/output/lcio/run${PaddedRunNr}-trackcand.slcio ] && lcio_check_col_elements --pedantic --expelements 2 --abselementerror 1 --releventerror .40 track0 ${testdir}/output/lcio/run${PaddedRunNr}-track.slcio" )
+#    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTGblFitOutput PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTGblFitRun)
+#
+#
 
 #
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -397,39 +397,39 @@
 	# test depends on earlier steps
 	DEPENDS TestJobsubExampleDaturaNoDUTFitterRun
 	)
-
-    ADD_TEST( TestJobsubExampleDaturaNoDUTStatTestGblTrkSrch sh -c "PYTHONPATH=$ROOTSYS/lib:$PYTHONPATH ${executable} --cdash  -g${testdir}/output/stattest_report_tracksearchHelix.pdf ${referencedatadir}/StatTestConf_DaturaNoDUTGblTrkSrch.qa ${testdir}/output/histograms/run${PaddedRunNr}-tracksearchHelix.root ${referencedatadir}/run${PaddedRunNr}-tracksearchHelix.root" )
-    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTStatTestGblTrkSrch PROPERTIES
-        # test will pass if ALL of the following expressions are matched
-        PASS_REGULAR_EXPRESSION "${fit_pass_regex_1}"
-        # test will fail if ANY of the following expressions is matched 
-        FAIL_REGULAR_EXPRESSION "${fit_fail_regex}"
-	# test depends on earlier steps
-	DEPENDS TestJobsubExampleDaturaNoDUTGblTrkSrchRun
-	)
-
-
-    ADD_TEST( TestJobsubExampleDaturaNoDUTStatTestGblAlign sh -c "PYTHONPATH=$ROOTSYS/lib:$PYTHONPATH ${executable} --cdash  -g${testdir}/output/stattest_report_aligngbl.pdf ${referencedatadir}/StatTestConf_DaturaNoDUTGblAlign.qa ${testdir}/output/histograms/run${PaddedRunNr}-aligngbl.root ${referencedatadir}/run${PaddedRunNr}-aligngbl.root" )
-    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTStatTestGblAlign PROPERTIES
-        # test will pass if ALL of the following expressions are matched
-        PASS_REGULAR_EXPRESSION "${fit_pass_regex_1}"
-        # test will fail if ANY of the following expressions is matched 
-        FAIL_REGULAR_EXPRESSION "${fit_fail_regex}"
-	# test depends on earlier steps
-	DEPENDS TestJobsubExampleDaturaNoDUTGblAlignRun
-	)
-
-
-    ADD_TEST( TestJobsubExampleDaturaNoDUTStatTestGblFit sh -c "PYTHONPATH=$ROOTSYS/lib:$PYTHONPATH ${executable} --cdash  -g${testdir}/output/stattest_report_trackgbl.pdf ${referencedatadir}/StatTestConf_DaturaNoDUTGblFit.qa ${testdir}/output/histograms/run${PaddedRunNr}-trackgbl.root ${referencedatadir}/run${PaddedRunNr}-trackgbl.root" )
-    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTStatTestGblFit PROPERTIES
-        # test will pass if ALL of the following expressions are matched
-        PASS_REGULAR_EXPRESSION "${fit_pass_regex_1}"
-        # test will fail if ANY of the following expressions is matched 
-        FAIL_REGULAR_EXPRESSION "${fit_fail_regex}"
-	# test depends on earlier steps
-	DEPENDS TestJobsubExampleDaturaNoDUTGblFitRun
-	)
-
+#
+#    ADD_TEST( TestJobsubExampleDaturaNoDUTStatTestGblTrkSrch sh -c "PYTHONPATH=$ROOTSYS/lib:$PYTHONPATH ${executable} --cdash  -g${testdir}/output/stattest_report_tracksearchHelix.pdf ${referencedatadir}/StatTestConf_DaturaNoDUTGblTrkSrch.qa ${testdir}/output/histograms/run${PaddedRunNr}-tracksearchHelix.root ${referencedatadir}/run${PaddedRunNr}-tracksearchHelix.root" )
+#    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTStatTestGblTrkSrch PROPERTIES
+#        # test will pass if ALL of the following expressions are matched
+#        PASS_REGULAR_EXPRESSION "${fit_pass_regex_1}"
+#        # test will fail if ANY of the following expressions is matched 
+#        FAIL_REGULAR_EXPRESSION "${fit_fail_regex}"
+#	# test depends on earlier steps
+#	DEPENDS TestJobsubExampleDaturaNoDUTGblTrkSrchRun
+#	)
+#
+#
+#    ADD_TEST( TestJobsubExampleDaturaNoDUTStatTestGblAlign sh -c "PYTHONPATH=$ROOTSYS/lib:$PYTHONPATH ${executable} --cdash  -g${testdir}/output/stattest_report_aligngbl.pdf ${referencedatadir}/StatTestConf_DaturaNoDUTGblAlign.qa ${testdir}/output/histograms/run${PaddedRunNr}-aligngbl.root ${referencedatadir}/run${PaddedRunNr}-aligngbl.root" )
+#    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTStatTestGblAlign PROPERTIES
+#        # test will pass if ALL of the following expressions are matched
+#        PASS_REGULAR_EXPRESSION "${fit_pass_regex_1}"
+#        # test will fail if ANY of the following expressions is matched 
+#        FAIL_REGULAR_EXPRESSION "${fit_fail_regex}"
+#	# test depends on earlier steps
+#	DEPENDS TestJobsubExampleDaturaNoDUTGblAlignRun
+#	)
+#
+#
+#    ADD_TEST( TestJobsubExampleDaturaNoDUTStatTestGblFit sh -c "PYTHONPATH=$ROOTSYS/lib:$PYTHONPATH ${executable} --cdash  -g${testdir}/output/stattest_report_trackgbl.pdf ${referencedatadir}/StatTestConf_DaturaNoDUTGblFit.qa ${testdir}/output/histograms/run${PaddedRunNr}-trackgbl.root ${referencedatadir}/run${PaddedRunNr}-trackgbl.root" )
+#    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTStatTestGblFit PROPERTIES
+#        # test will pass if ALL of the following expressions are matched
+#        PASS_REGULAR_EXPRESSION "${fit_pass_regex_1}"
+#        # test will fail if ANY of the following expressions is matched 
+#        FAIL_REGULAR_EXPRESSION "${fit_fail_regex}"
+#	# test depends on earlier steps
+#	DEPENDS TestJobsubExampleDaturaNoDUTGblFitRun
+#	)
+#
 
 #
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

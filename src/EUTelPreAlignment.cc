@@ -83,6 +83,8 @@ EUTelPreAlign::EUTelPreAlign(): Processor("EUTelPreAlign")
 
   registerOptionalParameter("HistogramFilling", "Switch on or off the histogram filling", _fillHistos, bool(true) );
   
+  registerOptionalParameter("DumpGEAR", "Dump alignment into GEAR file instead of prealignment database", _dumpGEAR, bool(false) );
+  
   registerOptionalParameter("NewGEARSuffix", "Suffix for the new GEAR file, set to empty string (this is not default!) to overwrite old GEAR file", _GEARFileSuffix, std::string("_pre") );
 
   registerOptionalParameter("ExcludedPlanes", "The list of sensor IDs that shall be excluded.", _ExcludedPlanes, std::vector<int>() );
@@ -455,104 +457,111 @@ bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit)
   return 0;
 }
       
-void EUTelPreAlign::end() {
-  LCWriter * lcWriter = LCFactory::getInstance()->createLCWriter();
-  try {
-    lcWriter->open( _alignmentConstantLCIOFile, LCIO::WRITE_NEW    );
-  } catch ( IOException& e ) {
-    streamlog_out ( ERROR4 ) << e.what() << endl;
-    exit(-1);
-  }
+void EUTelPreAlign::end()
+{
+		LCCollectionVec * constantsCollection = new LCCollectionVec( LCIO::LCGENERICOBJECT );
 
-  streamlog_out ( MESSAGE5 ) << "Writing to " << _alignmentConstantLCIOFile << endl;
-
-  LCRunHeaderImpl * lcHeader  = new LCRunHeaderImpl;
-  lcHeader->setRunNumber( 0 );
-  lcWriter->writeRunHeader(lcHeader);
-  delete lcHeader;
-  LCEventImpl * event = new LCEventImpl;
-  event->setRunNumber( 0 );
-  event->setEventNumber( 0 );
-  LCTime * now = new LCTime;
-  event->setTimeStamp( now->timeStamp() );
-  delete now;
-
-  LCCollectionVec * constantsCollection = new LCCollectionVec( LCIO::LCGENERICOBJECT );
-
-
-  for(size_t ii=0; ii<_sensorIDVec.size(); ii++)
-    {
-      bool ifound = false;
-      for(size_t jj=0; jj< _preAligners.size(); jj++)
-	{
-	  int sensorID = _preAligners.at(jj).getIden();
-	  if( _sensorIDVec[ii] == sensorID ) { ifound = true; break; }
-	}
-      if( ifound == false)
-	{
-	  EUTelAlignmentConstant* constant = new EUTelAlignmentConstant();
-	  constant->setXOffset( 0.0 );
-	  constant->setYOffset( 0.0 );
-	  constant->setSensorID( _sensorIDVec[ii] );
-	  constantsCollection->push_back( constant );
-	  streamlog_out ( MESSAGE5 ) << (*constant) << endl;
-	  continue; 
-	}
-    }
+		for(size_t ii=0; ii<_sensorIDVec.size(); ii++)
+		{
+				bool ifound = false;
+				for(size_t jj=0; jj< _preAligners.size(); jj++)
+				{
+						int sensorID = _preAligners.at(jj).getIden();
+						if( _sensorIDVec[ii] == sensorID ) { ifound = true; break; }
+				}
+				if( ifound == false)
+				{
+						EUTelAlignmentConstant* constant = new EUTelAlignmentConstant();
+						constant->setXOffset( 0.0 );
+						constant->setYOffset( 0.0 );
+						constant->setSensorID( _sensorIDVec[ii] );
+						constantsCollection->push_back( constant );
+						streamlog_out ( MESSAGE5 ) << (*constant) << endl;
+						continue; 
+				}
+		}
 
 
-  for(size_t ii = 0 ; ii < _preAligners.size(); ii++){
-	int sensorID = _preAligners.at(ii).getIden();
-	std::vector<int>::iterator it = find(_ExcludedPlanes.begin(),_ExcludedPlanes.end(),sensorID);
-	std::vector<int>::iterator itXCoord = find(_ExcludedPlanesXCoord.begin(),_ExcludedPlanesXCoord.end(),sensorID);
-	std::vector<int>::iterator itYCoord = find(_ExcludedPlanesYCoord.begin(),_ExcludedPlanesYCoord.end(),sensorID);
-	
-	EUTelAlignmentConstant* constant = new EUTelAlignmentConstant();
+		for(size_t ii = 0 ; ii < _preAligners.size(); ii++){
+				int sensorID = _preAligners.at(ii).getIden();
+				std::vector<int>::iterator it = find(_ExcludedPlanes.begin(),_ExcludedPlanes.end(),sensorID);
+				std::vector<int>::iterator itXCoord = find(_ExcludedPlanesXCoord.begin(),_ExcludedPlanesXCoord.end(),sensorID);
+				std::vector<int>::iterator itYCoord = find(_ExcludedPlanesYCoord.begin(),_ExcludedPlanesYCoord.end(),sensorID);
 
-	if(it == _ExcludedPlanes.end())
-	{
-	    if( itXCoord == _ExcludedPlanesXCoord.end() && abs( _preAligners.at(ii).getPeakX() ) < 1000 )
-	      constant->setXOffset( -1.0* _preAligners.at(ii).getPeakX() );
-	    else
-	      constant->setXOffset( 0.0 );
-	 
-	    if(  itYCoord == _ExcludedPlanesYCoord.end() && abs( _preAligners.at(ii).getPeakY() ) < 1000. )
-	      constant->setYOffset( -1.0 * _preAligners.at(ii).getPeakY() );
-	    else
-	      constant->setYOffset( 0.0 );
-	}
-	else
-	{
-	    constant->setXOffset(0.0);
-		constant->setYOffset(0.0);
-	}
+				EUTelAlignmentConstant* constant = new EUTelAlignmentConstant();
 
-	constant->setSensorID( sensorID );
-	constantsCollection->push_back( constant );
+				if(it == _ExcludedPlanes.end())
+				{
+						if( itXCoord == _ExcludedPlanesXCoord.end() && abs( _preAligners.at(ii).getPeakX() ) < 1000 )
+								constant->setXOffset( -1.0* _preAligners.at(ii).getPeakX() );
+						else
+								constant->setXOffset( 0.0 );
 
-    //Also update the EUTelGeometry descr.
-    double updatedXOff = geo::gGeometry().siPlaneXPosition(sensorID) + _preAligners.at(ii).getPeakX();
-    double updatedYOff = geo::gGeometry().siPlaneYPosition(sensorID) + _preAligners.at(ii).getPeakY();
-    
-    geo::gGeometry().setPlaneXPosition(sensorID, updatedXOff);
-    geo::gGeometry().setPlaneYPosition(sensorID, updatedYOff);
+						if(  itYCoord == _ExcludedPlanesYCoord.end() && abs( _preAligners.at(ii).getPeakY() ) < 1000. )
+								constant->setYOffset( -1.0 * _preAligners.at(ii).getPeakY() );
+						else
+								constant->setYOffset( 0.0 );
+				}
+				else
+				{
+						constant->setXOffset(0.0);
+						constant->setYOffset(0.0);
+				}
 
-	streamlog_out ( MESSAGE5 ) << (*constant) << endl;
-  }
+				constant->setSensorID( sensorID );
+				constantsCollection->push_back( constant );
+
+				//Also update the EUTelGeometry descr.
+				double updatedXOff = geo::gGeometry().siPlaneXPosition(sensorID) + _preAligners.at(ii).getPeakX();
+				double updatedYOff = geo::gGeometry().siPlaneYPosition(sensorID) + _preAligners.at(ii).getPeakY();
+
+				geo::gGeometry().setPlaneXPosition(sensorID, updatedXOff);
+				geo::gGeometry().setPlaneYPosition(sensorID, updatedYOff);
+
+				streamlog_out ( MESSAGE5 ) << (*constant) << endl;
+		}
+
+		//if we dont dump into the new gear file, we write out the old database
+		if(!_dumpGEAR)
+		{
+				LCWriter* lcWriter = LCFactory::getInstance()->createLCWriter();
+				try {
+						lcWriter->open( _alignmentConstantLCIOFile, LCIO::WRITE_NEW    );
+				} catch ( IOException& e ) {
+						streamlog_out ( ERROR4 ) << e.what() << endl;
+						exit(-1);
+				}
+
+				streamlog_out ( MESSAGE5 ) << "Writing to " << _alignmentConstantLCIOFile << endl;
+
+				LCRunHeaderImpl * lcHeader  = new LCRunHeaderImpl;
+				lcHeader->setRunNumber( 0 );
+				lcWriter->writeRunHeader(lcHeader);
+				delete lcHeader;
+				LCEventImpl * event = new LCEventImpl;
+				event->setRunNumber( 0 );
+				event->setEventNumber( 0 );
+				LCTime * now = new LCTime;
+				event->setTimeStamp( now->timeStamp() );
+				delete now;
 
 
-  streamlog_out( DEBUG5 ) << " adding Collection " << "alignment " << endl;
- 
-  event->addCollection( constantsCollection, "alignment" );
-  lcWriter->writeEvent( event );
-  delete event;
-  lcWriter->close();
+				streamlog_out( DEBUG5 ) << " adding Collection " << "alignment " << endl;
 
+				event->addCollection( constantsCollection, "alignment" );
+				lcWriter->writeEvent( event );
+				delete event;
+				lcWriter->close();
+		}
+		else
+		{
+				//Write updated GEAR file
+				marlin::StringParameters* MarlinStringParams = marlin::Global::parameters;
+				std::string outputFilename = (MarlinStringParams->getStringVal("GearXMLFile")).substr(0, (MarlinStringParams->getStringVal("GearXMLFile")).size()-4);
+				streamlog_out(MESSAGE5) << "Writing updated GEAR file with filename: " << outputFilename+"_pre.xml" << std::endl;
+				geo::gGeometry().writeGEARFile(outputFilename+_GEARFileSuffix+".xml");
 
-  //Write updated GEAR file ("oldname_pre.xml")
-  marlin::StringParameters* MarlinStringParams = marlin::Global::parameters;
-  std::string outputFilename = (MarlinStringParams->getStringVal("GearXMLFile")).substr(0, (MarlinStringParams->getStringVal("GearXMLFile")).size()-4);
-  streamlog_out(MESSAGE5) << "Writing updated GEAR file with filename: " << outputFilename+"_pre.xml" << std::endl;
-  geo::gGeometry().writeGEARFile(outputFilename+_GEARFileSuffix+".xml");
-
+				//in case we don't write out the collection, we need to delete ourself as we don't pass the collection to LCIO
+				delete constantsCollection;
+		}
 }

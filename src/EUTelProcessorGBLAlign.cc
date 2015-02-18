@@ -11,11 +11,12 @@ _milleResultFileName("millepede.res"),
 _gear_aligned_file("gear-00001-aligned.xml"),
 _nProcessedRuns(0),
 _nProcessedEvents(0),
+_alignmentMode(0),
 _beamQ(-1),
 _eBeam(4),
-_mEstimatorType(),
-_alignmentMode(0),
-_createBinary(true){
+_createBinary(true),
+_mEstimatorType()
+{
   // TrackerHit input collection
   registerInputCollection(LCIO::TRACK, "TrackCandidatesInputCollectionName", "Input track candidate collection name",_trackCandidatesInputCollectionName,std::string("TrackCandidatesCollection"));
 
@@ -186,7 +187,7 @@ void EUTelProcessorGBLAlign::processEvent(LCEvent * evt){
 					std::vector< gbl::GblPoint > pointList;//This is the GBL points. These contain the state information, scattering and alignment jacobian. All the information that the mille binary will get.
 					_trackFitter->setInformationForGBLPointList(track, pointList);//We create all the GBL points with scatterer inbetween both planes. This is identical to creating GBL tracks
 					_trackFitter->setPairMeasurementStateAndPointLabelVec(pointList);
-					_trackFitter->setAlignmentToMeasurementJacobian(track, pointList); //This is place in GBLFitter since millepede has not idea about states and points. Only GBLFitter know about that
+					_trackFitter->setAlignmentToMeasurementJacobian(track, pointList); //This is place in GBLFitter since millepede has no idea about states and points. Only GBLFitter know about that
 					const gear::BField& B = geo::gGeometry().getMagneticField();
 					const double Bmag = B.at( TVector3(0.,0.,0.) ).r2();
 					gbl::GblTrajectory* traj = 0;
@@ -212,7 +213,7 @@ void EUTelProcessorGBLAlign::processEvent(LCEvent * evt){
 	}
 	catch(std::string &e){
 		streamlog_out(MESSAGE9) << e << std::endl;
-		throw marlin::StopProcessingException( this ) ;
+		throw marlin::SkipEventException( this ) ;
 	}
 	catch(lcio::Exception& e){
 		streamlog_out(MESSAGE9) << e.what() <<std::endl;
@@ -224,7 +225,6 @@ void EUTelProcessorGBLAlign::processEvent(LCEvent * evt){
 	}
 
 }
-void EUTelProcessorGBLAlign::check(LCEvent * evt){}
 
 void EUTelProcessorGBLAlign::end(){
 	streamlog_out (MESSAGE9) <<"TOTAL NUMBER OF TRACKS PASSED TO ALIGNMENT: "<< _totalTrackCount << std::endl;

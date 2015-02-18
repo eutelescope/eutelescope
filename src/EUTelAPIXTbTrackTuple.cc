@@ -67,7 +67,6 @@ EUTelAPIXTbTrackTuple::EUTelAPIXTbTrackTuple()
 
   registerInputCollection(LCIO::TRACK, "InputTrackCollectionName", "Name of the input Track collection",
 		  		_inputTrackColName, std::string("fittracks"));
-
   	   
   registerInputCollection( LCIO::TRACKERHIT, "InputTrackerHitCollectionName", "Name of the plane-wide hit-data hit collection"  ,
 		_inputTrackerHitColName, std::string("fitpoints") );
@@ -111,58 +110,6 @@ void EUTelAPIXTbTrackTuple::init()
 
 		_xSensSize[*it] = xSize;
 		_ySensSize[*it] = ySize;
-		
-		//Also GEAR rotations need to be undone, we only support +-1 entries, diagonal or off-diagonal!
-		float r1, r2, r3 , r4;
-		r1 = geo::gGeometry().siPlaneRotation1(*it);
-		r2 = geo::gGeometry().siPlaneRotation2(*it);
-		r3 = geo::gGeometry().siPlaneRotation3(*it);
-		r4 = geo::gGeometry().siPlaneRotation4(*it);
-		
-		rotMat normRot;
-		rotMat invRot;
-		
-		//Check if we only have integer entries (no check if +-1, but if you messed up your GEAR file like that...)
-		if( 
-			ceil(r1) == r1 &&
-			ceil(r2) == r2 &&
-			ceil(r3) == r3 &&
-			ceil(r4) == r4 )
-		{
-			normRot.r1 = (int)r1;
-			normRot.r2 = (int)r2;
-			normRot.r3 = (int)r3;
-			normRot.r4 = (int)r4;
-		}
-		else
-		{
-        		streamlog_out ( ERROR5 ) << "Rotation matrix from GEAR [" << r1 << "," << r2 << "|" << r3 << "," << r4 << "] must only contain +-1!" << std::endl;       
-			throw InvalidGeometryException("Rotation matrix from GEAR must only contain +-1!");
-			return;
-		}
-
-		//Check if we have diagonal matrix
-		if( r1 != 0 && r2 == 0 && r3 == 0 && r4 != 0)
-		{
-			//since we're only dealing with +-1 integers
-			invRot = normRot;
-		}
-		//offdiagonal matrix
-		else if( r1 == 0 && r2 != 0 && r3 != 0 && r4 == 4) 
-		{
-			invRot.r1 = 0;
-			invRot.r2 = 1/invRot.r3;
-			invRot.r3 = 1/invRot.r2;
-			invRot.r4 = 0;
-		}
-		else
-		{
-        		streamlog_out ( ERROR5 ) << "Rotation matrix from GEAR [" << r1 << "," << r2 << "|" << r3 << "," << r4 << "] must be diagonal or off-diagonal!" << std::endl;       
-			throw InvalidGeometryException("Rotation matrix from GEAR must be diagonal or off-diagonal!");
-			invRot = normRot;
-		}
-
-		_invDUTRot[*it] = invRot;
 	}
 }
 
@@ -262,18 +209,10 @@ bool EUTelAPIXTbTrackTuple::readHits( std::string hitColName, LCEvent* event )
     		double x = pos[0];
     		double y = pos[1];
     		double z = pos[2];
-  			
-		//undo GEAR rotations
-		rotMat rot = _invDUTRot.at(sensorID);
-		double xUnRot = rot.r1*x + rot.r2*y;
-		double yUnRot = rot.r3*x + rot.r4*y;
- 
+
 	       	//offset by half sensor/sensitive size
-		xUnRot += _xSensSize.at(sensorID)/2.0;
-		yUnRot += _ySensSize.at(sensorID)/2.0;
-		
-    		_hitXPos->push_back(xUnRot);
-    		_hitYPos->push_back(yUnRot);
+			_hitXPos->push_back(x + _xSensSize.at(sensorID)/2.0);
+    		_hitYPos->push_back(y + _ySensSize.at(sensorID)/2.0);
     		_hitZPos->push_back(z);
     		_hitSensorId->push_back(sensorID);
 	}

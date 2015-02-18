@@ -215,7 +215,8 @@ namespace eutelescope {
     std::string _inputHitCollectionName;
     std::string _alignmentConstantLCIOFile;
  	std::string _GEARFileSuffix;
- 
+	bool _dumpGEAR;
+
     int _iRun;
     int _iEvt;
     int _fixedID;

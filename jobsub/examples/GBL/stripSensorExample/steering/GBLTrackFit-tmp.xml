@@ -26,7 +26,7 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
   </execute>
 
    <global>
-      <parameter name="LCIOInputFiles"> @LcioPath@/@FilePrefix@-@lcioInputName@.slcio </parameter>
+      <parameter name="LCIOInputFiles"> @LcioRawPath@/run@RunNumber@-@lcioInputName@.slcio </parameter>
       <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
@@ -46,7 +46,7 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
     <parameter name="Compress" type="int" value="1"/>
 
     <!-- filename without extension-->
-    <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-@histoName@"/>
+    <parameter name="FileName" type="string" value="@HistogramPath@/run@RunNumber@-@histoName@"/>
 
     <!-- type of output file xml (default) or root ( only OpenScientist)-->
     <parameter name="FileType" type="string" value="root"/>
@@ -83,7 +83,7 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
   <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
   <!--parameter name="KeepCollectionNames" type="StringVec" value="MyPreciousSimTrackerHits"/-->
   <!-- name of output file -->
-  <parameter name="LCIOOutputFile" type="string" value="@LcioPath@/@FilePrefix@-@lcioOutputName@.slcio"/>
+  <parameter name="LCIOOutputFile" type="string" value="@LcioRawPath@/run@RunNumber@-@lcioOutputName@.slcio"/>
   <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
   <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   <!--Set it to true to remove intermediate EORE in merged runs-->

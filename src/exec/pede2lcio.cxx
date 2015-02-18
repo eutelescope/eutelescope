@@ -105,9 +105,9 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
 	    invR.RotateZ( zrot );
 	    invR.Invert();
 	
-	    const double dalpha = ((*itrAlignmentConstant).second->getAlpha())*(180/M_PI);
-            const double dbeta  = ((*itrAlignmentConstant).second->getBeta())*(180/M_PI);
-            const double dgamma = ((*itrAlignmentConstant).second->getGamma())*(180/M_PI);
+	    const double dalpha = ((*itrAlignmentConstant).second->getAlpha());
+			const double dbeta  = ((*itrAlignmentConstant).second->getBeta());
+			const double dgamma = ((*itrAlignmentConstant).second->getGamma());
 
 	    TRotation invDeltaR;
 	    invDeltaR.RotateX((*itrAlignmentConstant).second->getAlpha());
@@ -144,9 +144,9 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
             geo::gGeometry().setPlaneXPosition(sensorID,  xplane  + delta_r0[0]  ) ;
             geo::gGeometry().setPlaneYPosition(sensorID,  yplane  + delta_r0[1]  ) ;
             geo::gGeometry().setPlaneZPosition(sensorID,  zplane  + delta_r0[2]  ) ;
-            geo::gGeometry().setPlaneXRotation(sensorID, (xrot  - angleLocalDiff[0])  ) ;
-            geo::gGeometry().setPlaneYRotation(sensorID, (yrot  - angleLocalDiff[1] )  ) ;
-            geo::gGeometry().setPlaneZRotation(sensorID, (zrot  - angleLocalDiff[2])  ) ;
+            geo::gGeometry().setPlaneXRotation(sensorID, (xrot  + delta_angle[0]*(180/M_PI) )  ) ;//Gear expressed in degrees so must convert from radians to degrees.
+            geo::gGeometry().setPlaneYRotation(sensorID, (yrot  + delta_angle[1]*(180/M_PI) )  ) ;
+            geo::gGeometry().setPlaneZRotation(sensorID, (zrot  + delta_angle[2]*(180/M_PI))  ) ;
 //#endif
 //#endif       
 					 streamlog_out(MESSAGE9) << "Input and output alignment shift (translations) for sensor: "<<sensorID << std::endl;
