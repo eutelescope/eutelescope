@@ -11,7 +11,7 @@ echo "The input to single loop on iteration $number"
 echo "Input gear: $inputGear" 
 echo "Output gear: $outputGear"
 echo "This is the resolutions X/Y:  $xres/$yres."
-for x in {1..10}; do
+for x in {1..10}; do 
 	echo "PATTERN RECOGNTION ATTEMPT $x ON ITERATION $number"
 	$do jobsub.py -c $CONFIG -csv $RUNLIST  -o ResidualsRMax="$ResidualsRMax" -o GearFile="$inputGear"  $PatRec $RUN  
 
@@ -57,7 +57,7 @@ numberRejectedAlignmentAttempts=0 #We set this since we do not want to fall in a
 tooManyRejectsExitLoopBool=false
 #We use the last successful attempt when we have two rejected otherwise if we have one then we increase the resolution and continue.
 # TO DO: Must change this to while loop since we exit down below as well. 
-for x in {1..20}; do
+for x in {1..10}; do 
 	echo "GBLALIGN ATTEMPT $x ON ITERATION $number"
 	echo "THE NUMBER OF FAILED ALIGNMENT ATTEMPTS $numberRejectedAlignmentAttempts"
 	$do jobsub.py -c $CONFIG -csv $RUNLIST -o GearFile="$inputGear" -o GearAlignedFile="$outputGear" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres"  -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}"  $Align  $RUN 
@@ -86,8 +86,8 @@ for x in {1..20}; do
 		yInput=$yres
 		unset xres;
 		unset yres;
-		xres=`python $pythonLocation/multiplyResolutionsByFactor.py $xInput / $allPlanesFixed / $allPlanes / $factor`
-		yres=`python $pythonLocation/multiplyResolutionsByFactor.py $yInput / $allPlanesFixed / $allPlanes / $factor`
+		xres=`python $pythonLocation/multiplyResolutionsByFactor.py $xInput / 6 7 / $allPlanes / $factor`
+		yres=`python $pythonLocation/multiplyResolutionsByFactor.py $yInput / 6 7   / $allPlanes / $factor`
 		echo "New resolutions are for (X/Y):" $xres"/"$yres
 	fi
 	rejected=`unzip  -p  $fileAlign |grep "Too many rejects" |cut -d '-' -f2`; 
@@ -102,8 +102,8 @@ for x in {1..20}; do
 		yInput=$yres;
 		unset xres;
 		unset yres;
-		xres=`python $pythonLocation/multiplyResolutionsByFactor.py $xInput / $allPlanesFixed / $allPlanes / 5`
-		yres=`python $pythonLocation/multiplyResolutionsByFactor.py $yInput / $allPlanesFixed / $allPlanes / 5`
+		xres=`python $pythonLocation/multiplyResolutionsByFactor.py $xInput / 6 7  / $allPlanes / 5` #TO DO: This script breaks if you provide no fixed planes
+		yres=`python $pythonLocation/multiplyResolutionsByFactor.py $yInput / 6 7  / $allPlanes / 5`
 		echo "New resolutions are for (X/Y):" $xres"/"$yres
 	elif [[ $numberRejectedAlignmentAttempts -eq 1 ]]
 	then
