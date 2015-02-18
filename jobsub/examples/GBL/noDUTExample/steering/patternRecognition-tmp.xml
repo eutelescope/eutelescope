@@ -70,7 +70,7 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
   <!--parameter name="MaxNTracksPerEvent" type="int">100 </parameter-->
   <!--Output track candidates hits collection name-->
 	<parameter name = "AllowedSharedHitsOnTrackCandidate" type="int"> @AllowedSharedHitsOnTrackCandidate@ </parameter>	
-  <parameter name="TrackCandHitOutputCollectionName" type="string" lcioOutType="Track"> track_candidates </parameter>
+  <parameter name="TrackCandHitOutputCollectionName" type="string" lcioOutType="Track"> @TrackCandHitOutputCollectionName@  </parameter>
 	<parameter name="planeDimensions" type="IntVec" > @planeDimensions@ </parameter>
 	<parameter name="ExcludePlanes" type="string" lcioOutType="FloatVec"> @excludeplanes@ </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->

@@ -1,8 +1,9 @@
 RunNumber,BeamEnergy,GearGeoFile
 97,5,gear-good-example-97.xml
 241,4.8,gear-0T.xml
-273,5,gear-1T.xml
-286,3,gear-aligned-286.xml
+273,5,gear-ZRotations-XYShift-claus-Iteration-1-000273.xml
+286,3,gear-ZRotations-XYShift-claus-test-10k-Iteration-1-000286.xml
 290,4.8,gear-Hold-three-R0.2-290.xml
 294,4.8,gear-0.5T.xml
 300,3,gear-0.5T.xml
+1057,3,gear-1T.xml

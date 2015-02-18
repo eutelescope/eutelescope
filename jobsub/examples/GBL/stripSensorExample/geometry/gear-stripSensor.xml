@@ -67,7 +67,7 @@ radLength="93.660734"
 <!-- DUT 1 -->
 <layer>
 <ladder         ID="6"
-positionX="-6.5"        positionY="0.00"        positionZ="270.00"
+positionX="-65"        positionY="0.00"        positionZ="270.00"
 rotationZY="0.00"       rotationZX="0.0"        rotationXY="0.0" 
 sizeX="9.536"           sizeY="8.0"             thickness="0.300"
 radLength="93.660734"
