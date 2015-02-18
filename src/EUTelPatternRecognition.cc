@@ -2,24 +2,25 @@
 #include "EUTelPatternRecognition.h"
 #include "EUTelNav.h"
 namespace eutelescope {
-    
-	EUTelPatternRecognition::EUTelPatternRecognition() :  
-	_totalNumberOfHits(0),
-	_totalNumberOfSharedHits(0),
-	_firstExecution(true),
-	_numberOfTracksTotal(0),
-	_numberOfTracksAfterHitCut(0),
-	_numberOfTracksAfterPruneCut(0),
-	_allowedMissingHits(0),
-	_AllowedSharedHitsOnTrackCandidate(0),
-	_beamE(-1.),
-	_beamQ(-1.)
-	{}
 
-	EUTelPatternRecognition::~EUTelPatternRecognition() { 
-	}
- 
-std::vector<EUTelTrack>& EUTelPatternRecognition::getTracks(){
+EUTelPatternRecognition::EUTelPatternRecognition():  
+_totalNumberOfHits(0),
+_totalNumberOfSharedHits(0),
+_firstExecution(true),
+_numberOfTracksTotal(0),
+_numberOfTracksAfterHitCut(0),
+_numberOfTracksAfterPruneCut(0),
+_allowedMissingHits(0),
+_AllowedSharedHitsOnTrackCandidate(0),
+_beamE(-1.),
+_beamQ(-1.)
+{}
+
+EUTelPatternRecognition::~EUTelPatternRecognition() { 
+}
+
+std::vector<EUTelTrack>& EUTelPatternRecognition::getTracks()
+{
 	return	_finalTracks; 
 }
 
@@ -59,19 +60,27 @@ void EUTelPatternRecognition::propagateForwardFromSeedState( EUTelState& stateIn
 		float globalIntersection[3];
 		TVector3 momentumAtIntersection;
 		float arcLength;
-		int newSensorID = state->findIntersectionWithCertainID(geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i+1), globalIntersection, momentumAtIntersection, arcLength);
-		if(arcLength <= 0 ){ 
+		int newSensorID = 0;
+		
+		bool foundNextIntersection = state->findIntersectionWithCertainID(	geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i+1), 
+											globalIntersection, momentumAtIntersection, arcLength, newSensorID);
+
+		if(arcLength <= 0 )
+		{ 
 			throw(lcio::Exception( "The arc length is less than or equal to zero. ")); 
 		}
-		if(firstLoop){
+		if(firstLoop)
+		{
 			firstState->setArcLengthToNextState(arcLength); 
 			firstLoop =false;
-		}else{
+		}
+		else
+		{
 			state->setArcLengthToNextState(arcLength);
 		}
-		//cout<<"HERE1: "<<state->getPosition()[0]<<","<<state->getPosition()[1]<<","<<state->getPosition()[2]<<","<<state->getLocation()<<std::endl;
+		
 		int sensorIntersection = geo::gGeometry( ).getSensorID(globalIntersection);
-		if(newSensorID < 0 or sensorIntersection < 0 ){
+		if(!foundNextIntersection or sensorIntersection < 0 ){
 			streamlog_out ( DEBUG5 ) << "INTERSECTION NOT FOUND! Intersection point on infinite plane: " <<  globalIntersection[0]<<" , "<<globalIntersection[1] <<" , "<<globalIntersection[2]<<std::endl;
 			streamlog_out ( DEBUG5 ) << "Momentum on next plane: " <<  momentumAtIntersection[0]<<" , "<<momentumAtIntersection[1] <<" , "<<momentumAtIntersection[2]<<std::endl;
 			streamlog_out(DEBUG5) <<" From ID= " <<  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)<< " to " <<  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i+1)  <<std::endl;

@@ -374,7 +374,10 @@ class EUTelGeometryTelescopeGeoDescription
 
 	void master2LocalVec( int, const double[], double[] );
 
-	int findIntersectionWithCertainID( float x0, float y0, float z0, float px, float py, float pz, float beamQ, int nextPlaneID, float outputPosition[],TVector3& outputMomentum, float& arcLength );
+	bool findIntersectionWithCertainID(	float x0, float y0, float z0, 
+						float px, float py, float pz, 
+						float beamQ, int nextPlaneID, float outputPosition[],
+						TVector3& outputMomentum, float& arcLength, int& newNextPlaneID );
 
 	TVector3 getXYZMomentumfromArcLength(TVector3 momentum, TVector3 globalPositionStart, float charge, float  arcLength );
 
