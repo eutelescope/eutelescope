@@ -181,10 +181,12 @@ void AlibavaClusterCollectionMerger::readDataSource(int /* numEvents */) {
 		for (int i=0; i<_eventIDDiff; i++)
 			alibavaEvent = static_cast<AlibavaEventImpl*> ( alibava_lcReader->readNextEvent() );
 	}
-
+	
+	bool noCollectionFound = false;
 	while( ((telescopeEvent = static_cast<EUTelEventImpl*> ( telescope_lcReader->readNextEvent())) != 0 )
 			&& ((alibavaEvent = static_cast<AlibavaEventImpl*> (alibava_lcReader->readNextEvent())) != 0 ) )
 	{
+		noCollectionFound = false;
 		if (telescopeEvent->getEventType() == kEORE){ 
 			streamlog_out ( MESSAGE5 ) << "Reached EORE of telescope data"<< endl;
 			break;		
@@ -202,32 +204,32 @@ void AlibavaClusterCollectionMerger::readDataSource(int /* numEvents */) {
 			alibavaPulseColVec = dynamic_cast< LCCollectionVec * > ( alibavaEvent->getCollection( _alibavaPulseCollectionName ) ) ;
 			alibavaSparseColVec = dynamic_cast< LCCollectionVec * > ( alibavaEvent->getCollection( _alibavaSparseCollectionName ) ) ;
 			
-			
-		} catch ( IOException& e) {
-			// do nothing again
-			streamlog_out( ERROR5 ) << e.what() << endl;
+		} catch ( DataNotAvailableException& e ) {
+			noCollectionFound = true;
+			streamlog_out( WARNING5 ) <<"No input collection " << _alibavaPulseCollectionName << " or "<< _alibavaSparseCollectionName << " found on alibava event " << alibavaEvent->getEventNumber() << endl;
 		}
-		
+			
 		try
 		{
 			// get telescope collections
 			telescopePulseColVec = dynamic_cast< LCCollectionVec * > ( telescopeEvent->getCollection( _telescopePulseCollectionName ) ) ;
 			telescopeSparseColVec = dynamic_cast< LCCollectionVec * > ( telescopeEvent->getCollection( _telescopeSparseCollectionName ) ) ;
 			
-		} catch ( IOException& e) {
-			// do nothing again
-			streamlog_out( ERROR5 ) << e.what() << endl;
+		} catch ( DataNotAvailableException& e ) {
+			noCollectionFound = true;
+			streamlog_out( WARNING5 ) <<"No input collection " << _telescopePulseCollectionName << " or "<< _telescopeSparseCollectionName << " found on telescope event " << telescopeEvent->getEventNumber() << endl;
 		}
 		
 		// create output collections
 		LCCollectionVec * outputPulseColVec = new LCCollectionVec(LCIO::TRACKERPULSE);
 		LCCollectionVec * outputSparseColVec = new LCCollectionVec(LCIO::TRACKERDATA);
 		
-		// copy telescope clusters
-		copyClustersInCollection(outputPulseColVec, outputSparseColVec, telescopePulseColVec, telescopeSparseColVec);
-		// copy alibava cluster
-		copyClustersInCollection(outputPulseColVec, outputSparseColVec, alibavaPulseColVec, alibavaSparseColVec);
-		
+		if ( !noCollectionFound ) {
+			// copy telescope clusters
+			copyClustersInCollection(outputPulseColVec, outputSparseColVec, telescopePulseColVec, telescopeSparseColVec);
+			// copy alibava cluster
+			copyClustersInCollection(outputPulseColVec, outputSparseColVec, alibavaPulseColVec, alibavaSparseColVec);
+		}
 		try
 		{
 			AlibavaEventImpl* outputEvent = new AlibavaEventImpl();
@@ -245,10 +247,12 @@ void AlibavaClusterCollectionMerger::readDataSource(int /* numEvents */) {
 				outputEvent->maskEvent();
 			else
 				outputEvent->unmaskEvent();
-						
-			outputEvent->addCollection(outputPulseColVec, _outputPulseCollectionName);
-			outputEvent->addCollection(outputSparseColVec, _outputSparseCollectionName);
-			
+
+	                if ( !noCollectionFound ) {
+	
+				outputEvent->addCollection(outputPulseColVec, _outputPulseCollectionName);
+				outputEvent->addCollection(outputSparseColVec, _outputSparseCollectionName);
+			}
 			ProcessorMgr::instance()->processEvent( static_cast<LCEventImpl*> ( outputEvent ) ) ;
 			// delete outputEvent;
 			//	streamlog_out ( MESSAGE1 ) << "Successfully copied Alibava collections to output event" << endl ;
