@@ -118,9 +118,9 @@ for x in {1..10}; do
 		export yres=$yresWorking;
 		tooManyRejectsExitLoopBool=true
 	fi
-	#If the loop passes after 2 attempts with a small number of reject use this. 
+	#If the loop passes after 5 attempts with a small number of reject use this. 
 	#Otherwise we use the millepede esitmation to guide our fit.
-	if [[ $numberRejectedAlignmentAttempts -lt 2 ]] && [[ $rejected == "" ]];then
+	if [[ $numberRejectedAlignmentAttempts -lt 5 ]] && [[ $rejected == "" ]];then
 		echo "Enough have passed the chi2 cut. Use this iteration to update gear parameters"
 		break
 	elif [[ $factor == "" ]] && [[ $rejected == "" ]];then
