@@ -120,12 +120,10 @@ for x in {1..10}; do
 	fi
 	#If the loop passes after 2 attempts with a small number of reject use this. 
 	#Otherwise we use the millepede esitmation to guide our fit.
-	if [[ $numberRejectedAlignmentAttempts -lt 2 ]] && [[ $rejected == "" ]]
-	then
+	if [[ $numberRejectedAlignmentAttempts -lt 2 ]] && [[ $rejected == "" ]];then
 		echo "Enough have passed the chi2 cut. Use this iteration to update gear parameters"
 		break
 	elif [[ $factor == "" ]] && [[ $rejected == "" ]];then
-	then
 		echo "Mille chi2 is non existant. Here it is: $averageChi2Mille"
 		echo "We can not find this or factor or rejects. Break alignment loop."
 		break
