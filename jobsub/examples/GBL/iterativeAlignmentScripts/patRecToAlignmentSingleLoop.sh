@@ -61,7 +61,7 @@ tooManyRejectsExitLoopBool=false
 dry="--dry-run"
 #We use the last successful attempt when we have two rejected otherwise if we have one then we increase the resolution and continue.
 # TO DO: Must change this to while loop since we exit down below as well. 
-for x in {1..1}; do 
+for x in {1..10}; do 
 	echo "GBLALIGN ATTEMPT $x ON ITERATION $number"
 	echo "THE NUMBER OF FAILED ALIGNMENT ATTEMPTS $numberRejectedAlignmentAttempts"
 	$do jobsub.py -c $CONFIG -csv $RUNLIST -o GearFile="$inputGear" -o GearAlignedFile="$outputGear" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres"  -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}"  $Align  $RUN  
@@ -90,50 +90,44 @@ for x in {1..1}; do
 		yInput=$yres
 		unset xres;
 		unset yres;
-		xres=`python $pythonLocation/multiplyResolutionsByFactor.py $xInput / $allPlanes$ / $allPlanes / $factor`
-		yres=`python $pythonLocation/multiplyResolutionsByFactor.py $yInput / $allPlanes$   / $allPlanes / $factor`
+		xres=`python $pythonLocation/multiplyResolutionsByFactor.py $xInput / / $allPlanes / $factor`
+		yres=`python $pythonLocation/multiplyResolutionsByFactor.py $yInput / / $allPlanes / $factor`
 		echo "New resolutions are for (X/Y):" $xres"/"$yres
 	fi
 	rejected=`unzip  -p  $fileAlign |grep "Too many rejects" |cut -d '-' -f2`; 
 	echo "Rejects word:  $rejected "
 	if [[ $rejected != "" ]];then #This makes sure that we do not cut too many tracks.
 		export	numberRejectedAlignmentAttempts=$(($numberRejectedAlignmentAttempts+1))
-	fi
-	if [[ $numberRejectedAlignmentAttempts -eq 1 ]] && [[ $rejected != "" ]] #We add the 2nd condition to make sure we don't enter on a loop with factor term. 
-	then
 		echo "Too many rejects. Resolution must increase by factor 10."
 		xInput=$xres;
 		yInput=$yres;
 		unset xres;
 		unset yres;
-		xres=`python $pythonLocation/multiplyResolutionsByFactor.py $xInput / $allPlanes$  / $allPlanes / 5` #TO DO: This script breaks if you provide no fixed planes
-		yres=`python $pythonLocation/multiplyResolutionsByFactor.py $yInput / $allPlanes$  / $allPlanes / 5`
+		xres=`python $pythonLocation/multiplyResolutionsByFactor.py $xInput /   / $allPlanes / 2` #TO DO: This script breaks if you provide no fixed planes
+		yres=`python $pythonLocation/multiplyResolutionsByFactor.py $yInput /   / $allPlanes / 2`
 		echo "New resolutions are for (X/Y):" $xres"/"$yres
-	elif [[ $numberRejectedAlignmentAttempts -eq 1 ]]
+	fi
+	if [[ $numberRejectedAlignmentAttempts -eq 10 ]]
 	then
 		echo "We have already rejected $numberRejectedAlignmentAttempts times. However have found the factor $factor to improve alignment to continue."
-	elif [ $numberRejectedAlignmentAttempts -eq 2 ]   
+	fi
+	if [ $numberRejectedAlignmentAttempts -eq 10 ]   
 	then
 		echo "Too many rejects found set x/y resolution to last working alignment fit, run, then exit."
 		export xres=$xresWorking;
 		export yres=$yresWorking;
 		tooManyRejectsExitLoopBool=true
-	elif [ $numberRejectedAlignmentAttempts -eq 0 ]
-	then 
-	 echo "The number of rejected iterative alignment steps is $numberRejectedAlignmentAttempts."
-	else
-	 echo "ERROR YOU HAVE TRIED TOO MANY ITERATIONS. MUST BE A PROBLEM IN ITERATIVE ALIGNMENT SORRY."
 	fi
-
-	#If there is no suggested factor and we have enough tracks passing cut then we assume we have fitted as close to the correct resolution for this fit. 
-	if [[ $factor == "" ]] && [[ $rejected == "" ]];then
+	#If the loop passes after 2 attempts with a small number of reject use this. 
+	#Otherwise we use the millepede esitmation to guide our fit.
+	if [[ $numberRejectedAlignmentAttempts -lt 2 ]] && [[ $rejected == "" ]]
+	then
+		echo "Enough have passed the chi2 cut. Use this iteration to update gear parameters"
+		break
+	elif [[ $factor == "" ]] && [[ $rejected == "" ]];then
+	then
 		echo "Mille chi2 is non existant. Here it is: $averageChi2Mille"
 		echo "We can not find this or factor or rejects. Break alignment loop."
 		break
-	fi
-	#We must make this large so we can get close as possible to chi2 = 1.
-	if [[ $x -eq 20 ]];then
-		echo "We are are iteration $x and still have not found enough tracks in pattern recogntion"
-		exit
 	fi
 done 
