@@ -24,8 +24,12 @@ jobsub -c config.cfg -csv runlist.csv telescope-filter <TelescopeRunNum>
 Now it is time to merge telescope and alibava cluster collections
 jobsub -c config.cfg -csv runlist.csv merger <SourceRunNum>
 
-And finally run hitmaker ;)
-jobsub -c config.cfg -csv runlist.csv hitmaker <SourceRunNum>
+And run hitmaker 
+jobsub -c config.cfg -csv runlist.csv hitmaker-local <SourceRunNum>
+
+If you want to find the missing coordinate values of your hits run missingcoodinate
+jobsub -c config.cfg -csv runlist.csv missingcoordinate <SourceRunNum>
+
 
 Notes:
 <PedRunNum> : Alibava pedestal data run number
