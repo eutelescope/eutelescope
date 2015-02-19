@@ -20,6 +20,7 @@
       <processor name="LocaltoGlobal"/>
       <processor name="MyEUTelMissingCoordinateEstimator"/>
       <processor name="MyAlibavaCorrelator"/>
+      <processor name="GlobaltoLocal"/>
       <processor name="Save"/>
       <processor name="MyEUTelUtilityPrintEventNumber"/>
    </execute>
@@ -56,7 +57,7 @@
       <!--The coordinate axis that needs to be estimated. You have to set this to either X or Y.-->
   <parameter name="MissingCoordinate" type="string">Y </parameter>
       <!--Output hit collection name-->
-  <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> hits </parameter>
+  <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> hits_global </parameter>
       <!--This is the list of sensorIDs that their hits will be used to estimate the missing coordinate on your DUT. You have to give exactly 2 sensorIDs. For better results use the ones that are closest to your DUT-->
   <parameter name="ReferencePlanes" type="IntVec"> 2 3  </parameter>
       <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
@@ -67,7 +68,7 @@
  <processor name="Correlator" type="EUTelCorrelator">
  <!--EUTelCorrelator fills histograms with correlation plots-->
   <!--Hit collection name-->
-  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hits </parameter>
+  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hits_global </parameter>
   <!--Minimum allowed cluster charge to be taken into account for the correlation plots (default = 2)-->
   <parameter name="ClusterChargeMinimum" type="int" value="2"/>
   <!--Dump the offset X and Y values calculated from the correlation bands (default = true)-->
@@ -110,7 +111,7 @@
                   <!--The path of XML file where the histograms are defined-->
          <parameter name="HistoXMLFile" type="string"> @AlibavaHistoInfo@ </parameter>
                   <!--Input raw data collection name-->
-         <parameter name="InputCollectionName" type="string" lcioInType="TrackerHit"> hits </parameter>
+         <parameter name="InputCollectionName" type="string" lcioInType="TrackerHit"> hits_global </parameter>
                   <!--The tag in TopTagInXMLFile. This processor will only consider the histogram definitions inside this tag. This tag should be inside <TopTagInXMLFile> ... <TopTagInXMLFile/>-->
          <parameter name="TagToProcess" type="string">myAlibavaCorrelator </parameter>
                   <!--The top tag in HistoXMLFile-->
@@ -122,9 +123,29 @@
 
 
 <processor name="LocaltoGlobal" type="EUTelProcessorCoordinateTransformHits">
+    <!--EUTelLocaltoGlobalHitMaker is responsible to change local coordinates to global. This is done using the EUTelGeometryClass-->
+  <!--Set to true to undo the alignment instead-->
+  <!--parameter name="Undo Alignment (boolean)" type="bool"> false </parameter-->
+    <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+  <!--Local input hit collection name-->
   <parameter name="hitCollectionNameInput" type="string" lcioInType="TrackerHit"> merged_hits </parameter>
+      <!--Global output hit collection name-->
   <parameter name="hitCollectionNameOutput" type="string" lcioOutType="TrackerHit"> merged_hits_global </parameter>
 </processor>
+
+ <processor name="GlobaltoLocal" type="EUTelProcessorCoordinateTransformHits">
+   <!--EUTelLocaltoGlobalHitMaker is responsible to change local coordinates to global. This is done using the EUTelGeometryClass-->
+  <!--Set to true to undo the alignment instead-->
+  <parameter name="Undo Alignment (boolean)" type="bool"> true </parameter>
+    <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+  <!--Local input hit collection name-->
+  <parameter name="hitCollectionNameInput" type="string" lcioInType="TrackerHit"> hits_global </parameter>
+      <!--Global output hit collection name-->
+  <parameter name="hitCollectionNameOutput" type="string" lcioOutType="TrackerHit">hits_local </parameter>
+    </processor>
+
 
 
 
