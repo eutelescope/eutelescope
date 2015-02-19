@@ -1,6 +1,10 @@
-//This class contains all the pattern recognition functions. These are used within EUTelProcessorPatternRecogntion. They use basic input about the particles flight. So the particle charge, the magnetic field strength and beam energy. This combined with seeds states on the first plane (Can be others but the first by default) determined what set of hits come from a single track. 
+//This class contains all the pattern recognition functions. These are used within EUTelProcessorPatternRecogntion. 
+//They use basic input about the particles flight. So the particle charge, the magnetic field strength and beam energy. 
+//This combined with seeds states on the first plane (Can be others but the first by default) determined what set 
+//of hits come from a single track. 
 #include "EUTelPatternRecognition.h"
 #include "EUTelNav.h"
+
 namespace eutelescope {
 
 EUTelPatternRecognition::EUTelPatternRecognition():  
@@ -15,9 +19,6 @@ _AllowedSharedHitsOnTrackCandidate(0),
 _beamE(-1.),
 _beamQ(-1.)
 {}
-
-EUTelPatternRecognition::~EUTelPatternRecognition() { 
-}
 
 std::vector<EUTelTrack>& EUTelPatternRecognition::getTracks()
 {
@@ -112,7 +113,7 @@ void EUTelPatternRecognition::propagateForwardFromSeedState(EUTelState& stateInp
 			state = newState;
 			continue;
 		}
-		EVENT::TrackerHit* closestHit = const_cast< EVENT::TrackerHit* > ( findClosestHit( *newState )); //This will look for the closest hit but not if it is within the excepted range		
+		EVENT::TrackerHit* closestHit = const_cast<EVENT::TrackerHit*>( findClosestHit(*newState)); //This will look for the closest hit but not if it is within the excepted range		
 		double distance;
 		if(newState->getDimensionSize() == 2)
 		{
@@ -167,35 +168,36 @@ void EUTelPatternRecognition::printTrackCandidates(){
 	streamlog_out ( DEBUG1 ) << "EUTelKalmanFilter::printTrackCandidates----END "<< std::endl;
 }
 void EUTelPatternRecognition::clearFinalTracks(){
-	if(!_finalTracks.empty()){
-		_finalTracks.clear();
-	}
+	_finalTracks.clear();
 }
-//It is important to note what the output of this tells you. If your get that 25% of tracks passed pruning this does not mean that only 25% of events had a track. It simply means that out of all tracks that began from seed hit. Only 25% made a full track in the end.
-void EUTelPatternRecognition::testTrackQuality(){
+
+//It is important to note what the output of this tells you. If your get that 25% of tracks passed pruning,
+//this does not mean that only 25% of events had a track. It simply means that out of all tracks that began 
+//from seed hit, only 25% made a full track in the end.
+void EUTelPatternRecognition::testTrackQuality()
+{
 	_numberOfTracksTotal = _numberOfTracksTotal + _tracks.size();
 	_numberOfTracksAfterHitCut = _numberOfTracksAfterHitCut + _tracksAfterEnoughHitsCut.size();
 	_numberOfTracksAfterPruneCut =_numberOfTracksAfterPruneCut + 	_finalTracks.size();
 
-	if(_numberOfTracksTotal % 1000 == 0){
-		streamlog_out(MESSAGE5)<<"///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////"<<std::endl;
-		streamlog_out(MESSAGE5)<<" Total Tracks "<<" Pass Hit Cut " <<"                           Pass Prune Cut " <<std::endl;
-		streamlog_out(MESSAGE5)<<"    "<<_numberOfTracksTotal<<"    "<<"    "<<_numberOfTracksAfterHitCut<<"                                                     "<<_numberOfTracksAfterPruneCut<<std::endl;
+	if(_numberOfTracksTotal % 1000 == 0)
+	{
 		float percentAfterHitCut = (static_cast<float>(_numberOfTracksAfterHitCut)/static_cast<float>(_numberOfTracksTotal))*100;
 		float percentAfterPruneCut = (static_cast<float>(_numberOfTracksAfterPruneCut)/static_cast<float>(_numberOfTracksTotal))*100;
-		streamlog_out(MESSAGE5)<<"               "<<percentAfterHitCut<<"                                                      "<<percentAfterPruneCut<<std::endl;
 		float averageNumberOfHitsOnTrack = static_cast<float>(_totalNumberOfHits)/static_cast<float>(_numberOfTracksTotal);
 		float averageNumberOfSharedHitsOnTrack = static_cast<float>(_totalNumberOfSharedHits)/static_cast<float>( _numberOfTracksTotal);
-		streamlog_out(MESSAGE5)<<"The average number of hits on a track: "<< averageNumberOfHitsOnTrack<<std::endl;
-		streamlog_out(MESSAGE5)<<"The average number of shared hits on a track with other tracks: "<< averageNumberOfSharedHitsOnTrack<<std::endl;//Note this can change with cust since we remove tracks before we have counted all similar hits. To see all similar hits make cut very large and then run
-		if(percentAfterHitCut < 0.1){
-			streamlog_out(MESSAGE5)<< "The percentage of track making the hit cut is very low at the moment "<<std::endl;
-		}
-		if(percentAfterPruneCut < 0.1){
-			streamlog_out(MESSAGE5)<< "The percentage of track making the prune cut is very low at the moment "<<std::endl;
-		}	
+		streamlog_out(MESSAGE5) << "//////////////////////////////////////////////////////////////////////////////////////////////////////////////" << std::endl
+				<< "Total Tracks: " << _numberOfTracksTotal << " Pass Hit Cut: " <<  _numberOfTracksAfterHitCut << " Pass Prune Cut: " << _numberOfTracksAfterPruneCut << std::endl
+				<< "Percentage after Hit Cut: " << percentAfterHitCut << " Percentage after Prune Cut: " << percentAfterPruneCut << std::endl
+				<< "The average number of hits on a track: " << averageNumberOfHitsOnTrack << std::endl
+				<< "The average number of shared hits on a track with other tracks: " << averageNumberOfSharedHitsOnTrack << std::endl;
+				//(Note this can change with cust since we remove tracks before we have counted all similar hits. To see all similar hits make cut very large and then run)
+	
+		if(percentAfterHitCut < 0.1) streamlog_out(MESSAGE5)<< "The percentage of track making the hit cut is very low at the moment "<<std::endl;
+		if(percentAfterPruneCut < 0.1)streamlog_out(MESSAGE5)<< "The percentage of track making the prune cut is very low at the moment "<<std::endl;
 	}
 }
+
 //I have observed a difference of just over 6 microns between the two methods over 20 cm distance. So we will set the maximum distance to 10 microns difference
 void EUTelPatternRecognition::testPositionEstimation(float position1[], float position2[]){
 	streamlog_out(DEBUG0) << " The distance between the jacobain methods and simple equations of motion are for the x direction " <<  position1[0] -position2[0] << std::endl;
@@ -306,12 +308,6 @@ void EUTelPatternRecognition::testUserInput() {
 	}
 	testPlaneDimensions();
 }	
-void  EUTelPatternRecognition::testHitsVec(){
-	if(_allHitsVec.size() == 0){
-		throw(lcio::Exception( "The hit input is wrong!"));
-	}
-
-}
 
 /** 
 *   Using a list of planes use the hits on those planes to create the initial seeds. 
@@ -321,11 +317,11 @@ void  EUTelPatternRecognition::testHitsVec(){
 //TO DO:This will not work with a strip sensor creating a seed. Since the strip sensor creates a line of possible hit positions not just a single point. Therefore you need to loop through  all points on the line and determine its trajectory and then see if the intersection is close enough to the hit on the next plane to add that hit on the track. This is a lot of work for something which is not that important.   
 //There is no way round this since the strip give a range of possible positions in 2D/3D space.      //To allow strip sensor to be seed would involve major change to how this is done. For now just don't do it  
 
-void EUTelPatternRecognition::initialiseSeeds() {
-	streamlog_out(DEBUG2) << "EUTelPatternRecognition::initialiseSeeds()" << std::endl;
+void EUTelPatternRecognition::initialiseSeeds()
+{
 	_mapSensorIDToSeedStatesVec.clear();
-	for( size_t iplane = 0; iplane < _createSeedsFromPlanes.size() ; iplane++) {
-
+	for( size_t iplane = 0; iplane < _createSeedsFromPlanes.size(); iplane++) 
+	{
 		streamlog_out(DEBUG1) << "We are using plane: " <<  _createSeedsFromPlanes[iplane] << " to create seeds" << std::endl;
 
 		EVENT::TrackerHitVec& hitFirstLayer = _mapHitsVecPerPlane[_createSeedsFromPlanes[iplane]];
@@ -333,6 +329,7 @@ void EUTelPatternRecognition::initialiseSeeds() {
 		if(hitFirstLayer.size()== 0){
 			continue;
 		}
+
 		std::vector<EUTelState> stateVec;
 		EVENT::TrackerHitVec::iterator itHit;
 		for ( itHit = hitFirstLayer.begin(); itHit != hitFirstLayer.end(); ++itHit ) {
@@ -355,7 +352,6 @@ void EUTelPatternRecognition::initialiseSeeds() {
 		}
 		_mapSensorIDToSeedStatesVec[_createSeedsFromPlanes[iplane]] = stateVec; 
 	}
-	streamlog_out(DEBUG2) << "--------------------------------EUTelPatternRecognition::initialiseSeeds()---------------------------" << std::endl;
 }
 TVector3 EUTelPatternRecognition::computeInitialMomentumGlobal(){
 	//We assume that the arc length is the displacement in the z direction. The assumption should be a valid one in most cases
@@ -434,28 +430,34 @@ void EUTelPatternRecognition::findTracksWithEnoughHits(){
 }
 //This creates map between plane ID and hits on that plane. 
 //We also order the map correcly with geometry.
-void EUTelPatternRecognition::setHitsVecPerPlane(){
-	streamlog_out(DEBUG0) <<"EUTelPatternRecognition::setHitsVecPerPlane()----------------------------BEGIN" <<std::endl;
+void EUTelPatternRecognition::setHitsVecPerPlane()
+{
 	_mapHitsVecPerPlane.clear();
-	int numberOfPlanes = geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size();//Note should not make this a class data member since we call this by reference in geometry so defacto it is already accessed directly each time. By this I mean we do not create a new copy each time we call the function. 
-	streamlog_out(DEBUG0) <<"The number of planes that we will add hits to: "<< numberOfPlanes  <<std::endl;
-	if(numberOfPlanes == 0){
+	int numberOfPlanes = geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size();
+	
+	if(numberOfPlanes == 0)
+	{
 		throw(lcio::Exception( "The number of planes is 0 to get hits from."));
 	}
-	if( _allHitsVec.size()== 0){
+	if( _allHitsVec.size()== 0)
+	{
 		throw(lcio::Exception( "The number of hits is zero."));
 	}
-	for(int i=0 ; i<numberOfPlanes;++i){
+
+	for(int i=0 ; i<numberOfPlanes;++i)
+	{
 		EVENT::TrackerHitVec tempHitsVecPlaneX; 
-		for(size_t j=0 ; j<_allHitsVec.size();++j){
-			if(Utility::getSensorIDfromHit( static_cast<IMPL::TrackerHitImpl*>(_allHitsVec[j]) ) ==  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)){
+		for(size_t j=0 ; j<_allHitsVec.size();++j)
+		{
+			if(Utility::getSensorIDfromHit( static_cast<IMPL::TrackerHitImpl*>(_allHitsVec[j]) ) ==  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i))
+			{
 				tempHitsVecPlaneX.push_back(_allHitsVec.at(j));
 			}
-		}		
-	_mapHitsVecPerPlane[ geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)] = 	tempHitsVecPlaneX;
+		}
+		_mapHitsVecPerPlane[ geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)] = 	tempHitsVecPlaneX;
 	}	
-	streamlog_out(DEBUG0) <<"EUTelPatternRecognition::setHitsVecPerPlane()----------------------------END" <<std::endl;
 }
+
 //Note loop through all planes. Even the excluded. This is easier since you don't have to change this input each time then.
 //TO DO: sensors z position as used here only works if there is sufficient difference between planes. In the order of 1mm in gear file. This is too large.
 void EUTelPatternRecognition::setPlaneDimensionsVec(EVENT::IntVec planeDimensions){
@@ -586,19 +588,6 @@ TVectorD EUTelPatternRecognition::computeResidual(EUTelState& state, const EVENT
 			residual.Print();
 	}
 	return residual;
-}
-
-	
-void EUTelPatternRecognition::findHitsOrderVec(LCCollection* lcCollection,EVENT::TrackerHitVec& hitsOrderVec) {
-	for (int iHit = 0; iHit < lcCollection->getNumberOfElements(); iHit++) {
-		TrackerHitImpl * hit = static_cast<TrackerHitImpl*> (lcCollection->getElementAt(iHit));
-
-		//TO DO:The determination of HitID is inefficient. Since you create a decoder for each event.
-		const int localSensorID = Utility::getSensorIDfromHit( static_cast<IMPL::TrackerHitImpl*> (hit) );
-		if ( localSensorID >= 0 ) hitsOrderVec.push_back( hit );
-
-	} // end loop over all hits in lcCollection
-
 }
 
 void EUTelPatternRecognition::printHits()
