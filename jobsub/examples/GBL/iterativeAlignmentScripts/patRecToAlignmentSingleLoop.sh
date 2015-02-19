@@ -61,7 +61,7 @@ tooManyRejectsExitLoopBool=false
 dry="--dry-run"
 #We use the last successful attempt when we have two rejected otherwise if we have one then we increase the resolution and continue.
 # TO DO: Must change this to while loop since we exit down below as well. 
-for x in {1..1}; do 
+for x in {1..10}; do 
 	echo "GBLALIGN ATTEMPT $x ON ITERATION $number"
 	echo "THE NUMBER OF FAILED ALIGNMENT ATTEMPTS $numberRejectedAlignmentAttempts"
 	$do jobsub.py -c $CONFIG -csv $RUNLIST -o GearFile="$inputGear" -o GearAlignedFile="$outputGear" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres"  -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}"  $Align  $RUN  
@@ -99,26 +99,29 @@ for x in {1..1}; do
 	if [[ $rejected != "" ]];then #This makes sure that we do not cut too many tracks.
 		export	numberRejectedAlignmentAttempts=$(($numberRejectedAlignmentAttempts+1))
 	fi
-	if [[ $numberRejectedAlignmentAttempts -eq 1 ]] && [[ $rejected != "" ]] #We add the 2nd condition to make sure we don't enter on a loop with factor term. 
+	if [[ $rejected != "" ]] #We add the 2nd condition to make sure we don't enter loop with factor term. 
 	then
 		echo "Too many rejects. Resolution must increase by factor 10."
 		xInput=$xres;
 		yInput=$yres;
 		unset xres;
 		unset yres;
-		xres=`python $pythonLocation/multiplyResolutionsByFactor.py $xInput /$allPlanes$  / $allPlanes / 5` #TO DO: This script breaks if you provide no fixed planes
-		yres=`python $pythonLocation/multiplyResolutionsByFactor.py $yInput /$allPlanes$  / $allPlanes / 5`
+		xres=`python $pythonLocation/multiplyResolutionsByFactor.py $xInput / 10  / $allPlanes / 1.2` #TO DO: This script breaks if you provide no fixed planes
+		yres=`python $pythonLocation/multiplyResolutionsByFactor.py $yInput / 10  / $allPlanes / 1.2`
 		echo "New resolutions are for (X/Y):" $xres"/"$yres
-	elif [[ $numberRejectedAlignmentAttempts -eq 1 ]]
+	fi
+	if [[ $numberRejectedAlignmentAttempts -eq 10 ]]
 	then
 		echo "We have already rejected $numberRejectedAlignmentAttempts times. However have found the factor $factor to improve alignment to continue."
-	elif [ $numberRejectedAlignmentAttempts -eq 2 ]   
+	fi
+	if [ $numberRejectedAlignmentAttempts -eq 10 ]   
 	then
 		echo "Too many rejects found set x/y resolution to last working alignment fit, run, then exit."
 		export xres=$xresWorking;
 		export yres=$yresWorking;
 		tooManyRejectsExitLoopBool=true
-	elif [ $numberRejectedAlignmentAttempts -eq 0 ]
+	fi
+	if [ $numberRejectedAlignmentAttempts -eq 10 ]
 	then 
 	 echo "The number of rejected iterative alignment steps is $numberRejectedAlignmentAttempts."
 	else
