@@ -58,12 +58,13 @@ done
 fileAlign="$directory/$Align-${RUN}.zip"
 numberRejectedAlignmentAttempts=0 #We set this since we do not want to fall in a loop were chi<1 the rejects then chi<1 .....
 tooManyRejectsExitLoopBool=false
+dry="--dry-run"
 #We use the last successful attempt when we have two rejected otherwise if we have one then we increase the resolution and continue.
 # TO DO: Must change this to while loop since we exit down below as well. 
 for x in {1..1}; do 
 	echo "GBLALIGN ATTEMPT $x ON ITERATION $number"
 	echo "THE NUMBER OF FAILED ALIGNMENT ATTEMPTS $numberRejectedAlignmentAttempts"
-	$do jobsub.py -c $CONFIG -csv $RUNLIST -o lcioInputName="$lcioInputName" -o inputCollectionName="$inputCollectionName"  -o GearFile="$inputGear" -o GearAlignedFile="$outputGear" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres"  -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}"  $Align  $RUN 
+	$do jobsub.py -c $CONFIG -csv $RUNLIST -o lcioInputName="$lcioInputName" -o inputCollectionName="$inputCollectionName"  -o GearFile="$inputGear" -o GearAlignedFile="$outputGear" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres"  -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}"  $Align  $RUN  $dry
 	#Check that we have not seg fault within millepede.
 	error=`unzip  -p  $fileAlign |grep "Backtrace for this error:" | awk '{ print $NF }'`;
 	if [[ $error != "" ]];then
@@ -89,8 +90,8 @@ for x in {1..1}; do
 		yInput=$yres
 		unset xres;
 		unset yres;
-		xres=`python $pythonLocation/multiplyResolutionsByFactor.py $xInput / 6 7 / $allPlanes / $factor`
-		yres=`python $pythonLocation/multiplyResolutionsByFactor.py $yInput / 6 7   / $allPlanes / $factor`
+		xres=`python $pythonLocation/multiplyResolutionsByFactor.py $xInput / $allPlanes$ / $allPlanes / $factor`
+		yres=`python $pythonLocation/multiplyResolutionsByFactor.py $yInput / $allPlanes$   / $allPlanes / $factor`
 		echo "New resolutions are for (X/Y):" $xres"/"$yres
 	fi
 	rejected=`unzip  -p  $fileAlign |grep "Too many rejects" |cut -d '-' -f2`; 
@@ -105,8 +106,8 @@ for x in {1..1}; do
 		yInput=$yres;
 		unset xres;
 		unset yres;
-		xres=`python $pythonLocation/multiplyResolutionsByFactor.py $xInput / 6 7  / $allPlanes / 5` #TO DO: This script breaks if you provide no fixed planes
-		yres=`python $pythonLocation/multiplyResolutionsByFactor.py $yInput / 6 7  / $allPlanes / 5`
+		xres=`python $pythonLocation/multiplyResolutionsByFactor.py $xInput /$allPlanes$  / $allPlanes / 5` #TO DO: This script breaks if you provide no fixed planes
+		yres=`python $pythonLocation/multiplyResolutionsByFactor.py $yInput /$allPlanes$  / $allPlanes / 5`
 		echo "New resolutions are for (X/Y):" $xres"/"$yres
 	elif [[ $numberRejectedAlignmentAttempts -eq 1 ]]
 	then
