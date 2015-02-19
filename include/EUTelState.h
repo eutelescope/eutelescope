@@ -57,7 +57,7 @@ namespace eutelescope {
 			//initialise
 			void initialiseCurvature();
 			//find
-			int findIntersectionWithCertainID(int nextsensorID, float intersectionPoint[],TVector3 & momentumAtIntersection, float & arcLength );
+			bool findIntersectionWithCertainID(int nextsensorID, float intersectionPoint[], TVector3& momentumAtIntersection, float& arcLength, int& newNextPlaneID );
 			//compute
 			TVector3 computeCartesianMomentum() const ;
 			TMatrix computePropagationJacobianFromLocalStateToNextLocalState(TVector3 positionEnd, TVector3 momentumEnd, float arcLength,float nextPlaneID);
