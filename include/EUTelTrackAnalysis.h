@@ -38,7 +38,7 @@ namespace eutelescope {
 		void plotPValueWithIncidenceAngles(EUTelTrack track);
 		void plotPValueVsBeamEnergy(EUTelTrack track);
 		void setBeamEnergy(AIDA::IHistogram1D *  beamEnergy){ _beamEnergy = beamEnergy; }
-		void setPValueBeamEnergy(AIDA::IProfile1D *  pValueBeamEnergy){ _pValueBeamEnergy = pValueBeamEnergy; }
+		void setPValueBeamEnergy(AIDA::IProfile1D *  pValueVsBeamEnergy){ _pValueVsBeamEnergy = pValueVsBeamEnergy; }
 		void setSensorIDTo2DResidualHistogramX(std::map< int,  AIDA::IProfile2D*> mapFromSensorIDToHistogramX){_mapFromSensorIDToHistogramX=mapFromSensorIDToHistogramX;}
 		void setSensorIDTo2DResidualHistogramY(std::map< int,  AIDA::IProfile2D*> mapFromSensorIDToHistogramY){_mapFromSensorIDToHistogramY=mapFromSensorIDToHistogramY;}
 		void setSensorIDTo2DPValuesWithPosition(std::map< int,  AIDA::IProfile2D*> mapFromSensorIDTo2DPValuesWithPosition){_mapFromSensorIDTo2DPValuesWithPosition=mapFromSensorIDTo2DPValuesWithPosition;}
