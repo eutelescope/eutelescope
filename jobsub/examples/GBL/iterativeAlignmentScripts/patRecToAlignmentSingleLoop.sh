@@ -106,8 +106,8 @@ for x in {1..1}; do
 		yInput=$yres;
 		unset xres;
 		unset yres;
-		xres=`python $pythonLocation/multiplyResolutionsByFactor.py $xInput /$allPlanes$  / $allPlanes / 5` #TO DO: This script breaks if you provide no fixed planes
-		yres=`python $pythonLocation/multiplyResolutionsByFactor.py $yInput /$allPlanes$  / $allPlanes / 5`
+		xres=`python $pythonLocation/multiplyResolutionsByFactor.py $xInput / $allPlanes$  / $allPlanes / 5` #TO DO: This script breaks if you provide no fixed planes
+		yres=`python $pythonLocation/multiplyResolutionsByFactor.py $yInput / $allPlanes$  / $allPlanes / 5`
 		echo "New resolutions are for (X/Y):" $xres"/"$yres
 	elif [[ $numberRejectedAlignmentAttempts -eq 1 ]]
 	then
