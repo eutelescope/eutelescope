@@ -63,7 +63,7 @@ namespace eutelescope {
 		std::map< int,  AIDA::IProfile1D* > _mapFromSensorIDToPValuesVsIncidenceXZ;
 		std::map< int,  AIDA::IProfile1D* > _mapFromSensorIDToPValuesVsIncidenceYZ;
 		AIDA::IHistogram1D * _beamEnergy;
-
+		AIDA::IProfile1D *_pValueVsBeamEnergy;
 	};
 
     EUTelProcessorTrackAnalysis gEUTelProcessorTrackAnalysis;

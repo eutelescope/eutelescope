@@ -39,9 +39,9 @@ done
 #THIS IS PART (2)
 #This part should analyse the output of pattern recogntion and remove tracks which are clearly poor quality. This is difficult with the systematic problems due to misalignment. 
 #Should be a separate processor so we can possible compare pattern recognition techniques or chain. Future work. 
-#At the moment we link the pattern recogntion directly to the alignment processor.
+#At the moment we just run this through the GBL fitter to improve the tracks. 
 #echo "GBLTRACKS CREATED FOR ALIGNMENT ON ITERATION $number"
-#$do jobsub.py  -c $CONFIG -csv $RUNLIST  -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" -o GearFile="$inputGear"  $TrackFit  $RUN  
+$do jobsub.py  -c $CONFIG -csv $RUNLIST  -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" -o GearFile="$inputGear"  $TrackFit  $RUN  
 
 #fileName="$TrackFit-${RUN}.zip"
 #fullPath="$directory/$fileName"
@@ -64,7 +64,7 @@ dry="--dry-run"
 for x in {1..1}; do 
 	echo "GBLALIGN ATTEMPT $x ON ITERATION $number"
 	echo "THE NUMBER OF FAILED ALIGNMENT ATTEMPTS $numberRejectedAlignmentAttempts"
-	$do jobsub.py -c $CONFIG -csv $RUNLIST -o lcioInputName="$lcioInputName" -o inputCollectionName="$inputCollectionName"  -o GearFile="$inputGear" -o GearAlignedFile="$outputGear" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres"  -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}"  $Align  $RUN  $dry
+	$do jobsub.py -c $CONFIG -csv $RUNLIST -o GearFile="$inputGear" -o GearAlignedFile="$outputGear" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres"  -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}"  $Align  $RUN  
 	#Check that we have not seg fault within millepede.
 	error=`unzip  -p  $fileAlign |grep "Backtrace for this error:" | awk '{ print $NF }'`;
 	if [[ $error != "" ]];then
