@@ -233,7 +233,9 @@ install (CODE
     EXECUTE_PROCESS(COMMAND ln -sf ${PROJECT_SOURCE_DIR}/jobsub/jobsub.py ${PROJECT_SOURCE_DIR}/bin/jobsub.py)
     EXECUTE_PROCESS(COMMAND ln -sf ${PROJECT_SOURCE_DIR}/tools/pyroplot/pyroplot.py ${PROJECT_SOURCE_DIR}/bin/pyroplot.py)
     EXECUTE_PROCESS(COMMAND ln -sf ${PROJECT_SOURCE_DIR}/tools/pyroplot/pyroplot.py ${PROJECT_SOURCE_DIR}/bin/pyroplot)
-    EXECUTE_PROCESS(COMMAND ln -sf ${PROJECT_SOURCE_DIR}/tools/parsepede/parsemilleout.sh ${PROJECT_SOURCE_DIR}/bin/parsemilleout.sh)"
+    EXECUTE_PROCESS(COMMAND ln -sf ${PROJECT_SOURCE_DIR}/tools/parsepede/parsemilleout.sh ${PROJECT_SOURCE_DIR}/bin/parsemilleout.sh)
+    EXECUTE_PROCESS(COMMAND ln -sf ${PROJECT_SOURCE_DIR}/tools/resIntoSteer.py ${PROJECT_SOURCE_DIR}/bin/resIntoSteer.py)"
+
 )
 
 #  _            _       
