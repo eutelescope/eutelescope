@@ -501,12 +501,27 @@ bool EUTelMillepede::findTooManyRejects(std::string output){
 		return true;
 	}
 }
-void EUTelMillepede::editSteertxtUsingResTxt(){}
+void EUTelMillepede::editSteerUsingRes(){
+	ifstream file( _milleResultFileName.c_str() );
+	if ( !file.good( ) ) {
+		throw(lcio::Exception("Can not open millepede results file."));
+	}
+	const string command = "resIntoSteer.py " + _milleSteeringFilename + " " + _milleResultFileName;
+	streamlog_out ( MESSAGE5 ) << "Results fill used to create new steering file: " << endl;
+	streamlog_out ( MESSAGE5 ) << command << endl;
+	// run pede and create a streambuf that reads its stdout and stderr
+	redi::ipstream parsepede( command.c_str( ), redi::pstreams::pstdout | redi::pstreams::pstderr );
+
+
+}
 
 bool EUTelMillepede::converge(){
-	editSteertxtUsingResTxt();
-	runPede();	
-	bool converged = checkConverged();
+	for(int i=0; i<2 ; i++){
+		editSteerUsingRes();
+		runPede();	
+	}
+//	bool converged = checkConverged(); //TO DO: Must introduce check.
+	return true;
 }
 
 bool EUTelMillepede::checkConverged(){}

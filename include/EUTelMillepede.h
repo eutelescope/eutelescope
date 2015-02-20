@@ -63,7 +63,7 @@ namespace eutelescope {
 				bool parseMilleOutput(std::string alignmentConstantLCIOFile, std::string gear_aligned_file);
 				bool converge();
 				bool checkConverged();
-				void editSteertxtUsingResTxt();
+				void editSteerUsingRes();
 
 
 				void testUserInput();
