@@ -57,6 +57,18 @@ void EUTelTrackAnalysis::plotBeamEnergy(EUTelTrack track){
 	_beamEnergy-> fill(state.getBeamCharge()/omega );
   streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotBeamEnergy------------------------------END"<< std::endl;
 }
+void EUTelTrackAnalysis::plotPValueVsBeamEnergy(EUTelTrack track){
+  streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotPValueVsBeamEnergy------------------------------BEGIN"<< std::endl;
+	std::vector<EUTelState> states = track.getStates();
+	EUTelState state  = states.at(0);
+	state.print();
+	float omega = state.getOmega();	
+	float pValue = calculatePValueForChi2(track);
+	_pValueVsBeamEnergy->fill(state.getBeamCharge()/omega, pValue);
+
+  streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotPValueVsBeamEnergy------------------------------END"<< std::endl;
+}
+
 
 void EUTelTrackAnalysis::plotIncidenceAngles(EUTelTrack track){
   streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotIncidenceAngles------------------------------BEGIN"<< std::endl;
@@ -148,9 +160,9 @@ void EUTelTrackAnalysis::plotPValueWithPosition(EUTelTrack track){
 	}
   streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotPValueWithPosition------------------------------END"<< std::endl;
 }
+
 float EUTelTrackAnalysis::calculatePValueForChi2(EUTelTrack track){
-	boost::math::chi_squared mydist(track.getNdf());
-	float pValue = 1 - boost::math::cdf(mydist,track.getChi2());
+	float pValue=0
 	return pValue;
 }
 

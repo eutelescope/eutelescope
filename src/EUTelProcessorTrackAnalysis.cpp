@@ -29,7 +29,7 @@ void EUTelProcessorTrackAnalysis::init(){
 		analysis->setSensorIDTo2DPValuesWithPosition(_mapFromSensorIDToPValueHisto);
 		analysis->setSensorIDToPValuesVsIncidenceAngleYZ(_mapFromSensorIDToPValuesVsIncidenceYZ);
 		analysis->setSensorIDToPValuesVsIncidenceAngleXZ(_mapFromSensorIDToPValuesVsIncidenceXZ);
-
+		analysis->setPValueBeamEnergy(_pValueVsBeamEnergy);
 		_analysis = analysis;
 	}catch(...){	
 		streamlog_out(MESSAGE9)<<"There is an unknown error in EUTelProcessorTrackAnalysis-init()" <<std::endl;
@@ -64,6 +64,7 @@ void EUTelProcessorTrackAnalysis::processEvent(LCEvent * evt){
 				_analysis->plotIncidenceAngles(track);
 				if(track.getChi2()/track.getNdf() < 5.0){
 					_analysis->plotBeamEnergy(track);
+					_analysis->plotPValueVsBeamEnergy(track);
 				}
 
 				_analysis->plotPValueWithPosition(track);
@@ -288,5 +289,7 @@ void	EUTelProcessorTrackAnalysis::initialiseResidualVsPositionHistograms(){
 		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////////////////////Beam Energy
 	_beamEnergy  = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("BeamEnergy", 1000, 0, 6); 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////P-value with energy
+	_pValueVsBeamEnergy = marlin::AIDAProcessor::histogramFactory(this)->createProfile1D("p-Value Vs Beam Energy", 50, 0, 6, 0,1); 
 
 }
