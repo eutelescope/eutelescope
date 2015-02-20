@@ -21,11 +21,13 @@
 #include "EUTelExceptions.h"
 #include "EUTelReferenceHit.h"
 // for cluster operations:
-#include "EUTelVirtualCluster.h"
+#include "EUTelSimpleVirtualCluster.h"
 #include "EUTelFFClusterImpl.h"
 #include "EUTelDFFClusterImpl.h"
 #include "EUTelBrickedClusterImpl.h"
 #include "EUTelSparseClusterImpl.h"
+#include "EUTelGenericSparseClusterImpl.h"
+#include "EUTelGeometricClusterImpl.h"
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <marlin/AIDAProcessor.h>
@@ -1814,7 +1816,7 @@ int EUTelDUTHistograms::getClusterSize(int sensorID, TrackerHit * hit, int& size
         {
             LCObjectVec clusterVector = hit->getRawHits();
 
-            EUTelVirtualCluster * cluster=0;
+            EUTelSimpleVirtualCluster * cluster=0;
 
             if ( hit->getType() == kEUTelBrickedClusterImpl ) {
 
@@ -1839,6 +1841,21 @@ int EUTelDUTHistograms::getClusterSize(int sensorID, TrackerHit * hit, int& size
             {
                cluster = new EUTelSparseClusterImpl< EUTelGenericSparsePixel > ( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
             }
+	    else if ( hit->getType() ==	kEUTelGenericSparseClusterImpl )
+	{
+		//CellIDDecoder<TrackerHit> cellDecoder (EUTELESCOPE::HITENCODING);
+		//SparsePixelType   type   = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder(hit)["sparsePixelType"]) );
+		
+		//if(type == kEUTelGenericSparsePixel )
+		//{
+			cluster = new EUTelGenericSparseClusterImpl<EUTelGenericSparsePixel>( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
+		//}
+		/*else if(type == kEUTelGeometricPixel )
+		{
+
+			cluster = new EUTelGeometricClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
+		}*/
+	}
 
             if(cluster != 0)
             {
