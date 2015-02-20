@@ -501,7 +501,15 @@ bool EUTelMillepede::findTooManyRejects(std::string output){
 		return true;
 	}
 }
+void EUTelMillepede::editSteertxtUsingResTxt(){}
 
+bool EUTelMillepede::converge(){
+	editSteertxtUsingResTxt();
+	runPede();	
+	bool converged = checkConverged();
+}
+
+bool EUTelMillepede::checkConverged(){}
 //This part using the output of millepede will create a new gear file based on the alignment parameters that have just been determined
 //It will also create LCIO file that will hold the alignment constants
 bool EUTelMillepede::parseMilleOutput(std::string alignmentConstantLCIOFile, std::string gear_aligned_file){
