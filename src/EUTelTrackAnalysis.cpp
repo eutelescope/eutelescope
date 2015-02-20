@@ -162,8 +162,7 @@ void EUTelTrackAnalysis::plotPValueWithPosition(EUTelTrack track){
 }
 
 float EUTelTrackAnalysis::calculatePValueForChi2(EUTelTrack track){
-	boost::math::chi_squared mydist(track.getNdf());
-	float pValue = 1 - boost::math::cdf(mydist,track.getChi2());
+	float pValue=0
 	return pValue;
 }
 
