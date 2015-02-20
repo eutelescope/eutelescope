@@ -439,7 +439,7 @@ void EUTelMillepede::writeMilleSteeringFile(lcio::StringVec pedeSteerAddCmds){
 //This function will use the mille binary file and steering and execute pede. Pede is the work horse of millepede. It does the actual minimisation procedure.
 //It also write the results of this into a log file. This is very important since we need the information that this log file provides to determine what is the next step in out iterative alignment
 //By this I mean if too many tracks were rejected by millepede then on the next iteration we need to increase increase the chi2 cut and increase the hit residual.
-int EUTelMillepede::runPede(){
+bool EUTelMillepede::runPede(){
 	std::string command = "pede " + _milleSteeringFilename;//This is just the same as running a command line command pede <steering file> the minimisation would still be done.
 	streamlog_out ( MESSAGE5 ) << "Starting pede...: " << command.c_str( ) << endl;
   redi::ipstream pede( command.c_str( ), redi::pstreams::pstdout | redi::pstreams::pstderr );// run pede and create a streambuf that reads its stdout and stderr
@@ -483,11 +483,25 @@ int EUTelMillepede::runPede(){
 			}
 		}
 		pede.close( );
+		std::string output = pedeoutput.str();
+		bool found = findTooManyRejects(output);
 		//TO DO: Surely we can just specify the directory that we want this placed in. Need to check     
 		//  if ( parseMilleOutput( "millepede.res" ) ) //moveMilleResultFile( "millepede.res", _milleResultFileName );
+		return found;
 	}//END OF IF STATEMENT
-return 0;
 }
+bool EUTelMillepede::findTooManyRejects(std::string output){
+	int found = output.find("Too many rejects (>33.3%)");
+	if (found != std::string::npos){
+		streamlog_out(MESSAGE5)<<endl<<"Number of rejects low. Continue with alignment."<<endl;
+		return false;
+
+	}else{
+		streamlog_out(MESSAGE5)<<endl<<"Number of rejects high. We can't use this binary for alignment"<<endl;
+		return true;
+	}
+}
+
 //This part using the output of millepede will create a new gear file based on the alignment parameters that have just been determined
 //It will also create LCIO file that will hold the alignment constants
 bool EUTelMillepede::parseMilleOutput(std::string alignmentConstantLCIOFile, std::string gear_aligned_file){

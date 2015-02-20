@@ -101,7 +101,7 @@ void EUTelProcessorGBLAlign::init() {
 		_Mille->setResultsFileName(_milleResultFileName);
 		_Mille->testUserInput();
 		_Mille->printFixedPlanes();
-		Fitter->setMEstimatorType(_mEstimatorType);//This I am not too sure about. As far as I understand it specifies the procedure that Millepede will use to deal with outliers. Outliers are hits that are far from any state. So their impact to alignemt should be down weighted.
+		Fitter->setMEstimatorType(_mEstimatorType);//Outliers are hits that do not appear to follow errors which are Gaussian. We want to downweight the effect these hits have on the fit.
 		Fitter->setParamterIdXResolutionVec(_SteeringxResolutions);//We set the accuracy of the residual information since we have no correct hit error analysis yet.
 		Fitter->setParamterIdYResolutionVec(_SteeringyResolutions);
 		Fitter->setMillepede(_Mille);//We need to have a connection between GBL and Millepede since GBL knows nothing about sensor orientations.
@@ -223,8 +223,10 @@ void EUTelProcessorGBLAlign::end(){
 		streamlog_out(WARNING5)<<"You are trying to align with fewer than 1000 tracks. This could be too small a number." <<std::endl;
 	}
 	_Mille->writeMilleSteeringFile(_pedeSteerAddCmds);
-	_Mille->runPede();
-	_Mille->parseMilleOutput(_alignmentConstantLCIOFile, _gear_aligned_file);
+	bool tooManyRejects = 	_Mille->runPede();
+	if(!tooManyRejects){
+		_Mille->parseMilleOutput(_alignmentConstantLCIOFile, _gear_aligned_file);
+	}
 }
 
 void EUTelProcessorGBLAlign::printPointsInformation(std::vector<gbl::GblPoint>& pointList){

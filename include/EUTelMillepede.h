@@ -58,7 +58,7 @@ namespace eutelescope {
 
 				void writeMilleSteeringFile(lcio::StringVec pedeSteerAddCmds);
 
-				int runPede();
+				bool runPede();
 	
 				bool parseMilleOutput(std::string alignmentConstantLCIOFile, std::string gear_aligned_file);
 
@@ -80,6 +80,9 @@ namespace eutelescope {
 				///////////////////////////////////////////get stuff
 				TMatrixD& getAlignmentJacobian()  { return _jacobian; }
 				std::vector<int> getGlobalParameters() { return _globalLabels; }
+				///////find stuff
+				bool findTooManyRejects(std::string output);
+
 
 				gbl::MilleBinary * _milleGBL;
 
