@@ -311,7 +311,7 @@ class EUTelGeometryTelescopeGeoDescription
 
 	TVector3 siPlaneYAxis( int );
 
-	void initialisePlanesToExcluded(FloatVec planeIDs );
+	void initialisePlanesToExcluded(IntVec planeIDs );
 
 	/** Map from sensor ID to number along Z */
 	const std::map<int, int>& sensorZOrdertoIDs() const { return _sensorZOrderToIDMap; };
