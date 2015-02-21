@@ -162,7 +162,7 @@ void EUTelTrackAnalysis::plotPValueWithPosition(EUTelTrack track){
 }
 
 float EUTelTrackAnalysis::calculatePValueForChi2(EUTelTrack track){
-	float pValue=0
+	float pValue=0;
 	return pValue;
 }
 
