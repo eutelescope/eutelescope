@@ -20,11 +20,12 @@
       <processor name="MyAlibavaPedestalSubtraction"/>
       <processor name="MyAlibavaConstantCommonModeProcessor"/>
       <processor name="MyAlibavaCommonModeSubtraction"/>
+      <processor name="PrintEventNumber"/>
       <processor name="Save"/>
    </execute>
 
    <global>
-      <parameter name="LCIOInputFiles"> @LcioRawPath@/@AlibavaOutputFormat@-converter.slcio </parameter>
+      <parameter name="LCIOInputFiles"> @LcioPath@/@AlibavaOutputFormat@-converter.slcio </parameter>
       <parameter name="GearXMLFile" value="@GearFile@"/>      
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
@@ -106,13 +107,24 @@
   <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
   <!--parameter name="KeepCollectionNames" type="StringVec" value="MyPreciousSimTrackerHits"/-->
   <!-- name of output file -->
-  <parameter name="LCIOOutputFile" type="string" value="@ResultsPath@/@AlibavaOutputFormat@-commonmode.slcio"/>
+  <parameter name="LCIOOutputFile" type="string" value="@LcioPath@/@AlibavaOutputFormat@-commonmode.slcio"/>
   <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
   <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   <!--will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW-->
   <!--parameter name="SplitFileSizekB" type="int" value="1992294"/-->
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
+</processor>
+
+
+<processor name="PrintEventNumber" type="EUTelUtilityPrintEventNumber">
+ <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
+  <!--Print event number for every n-th event-->
+  <parameter name="EveryNEvents" type="int" value="2500"/>
+      <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string" value=""/-->
+  <!--print the event timestamp as read from LCIO-->
+  <!--parameter name="printTimestamp" type="bool" value="false"/-->
 </processor>
 
 </marlin>
