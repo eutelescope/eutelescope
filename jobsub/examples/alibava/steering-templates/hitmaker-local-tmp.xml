@@ -22,11 +22,11 @@
       <processor name="LocaltoGlobal"/>
       <processor name="PreAligner"/>
       <processor name="Save"/>
-      <processor name="MyEUTelUtilityPrintEventNumber"/>
+      <processor name="PrintEventNumber"/>
    </execute>
 
    <global>
-      <parameter name="LCIOInputFiles"> @ResultsPath@/@MergedOutputFormat@-merger.slcio </parameter>
+      <parameter name="LCIOInputFiles"> @LcioPath@/@MergedOutputFormat@-merger.slcio </parameter>
       <parameter name="GearXMLFile" value="@GearFile@"/>
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
@@ -137,7 +137,7 @@
   <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
   <!--parameter name="KeepCollectionNames" type="StringVec" value="MyPreciousSimTrackerHits"/-->
   <!-- name of output file -->
-  <parameter name="LCIOOutputFile" type="string" value="@ResultsPath@/@MergedOutputFormat@-hitmaker-local.slcio"/>
+  <parameter name="LCIOOutputFile" type="string" value="@LcioPath@/@MergedOutputFormat@-hitmaker-local.slcio"/>
   <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
   <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   <!--Set it to true to remove intermediate EORE in merged runs-->
@@ -148,7 +148,7 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="MyEUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">
+ <processor name="PrintEventNumber" type="EUTelUtilityPrintEventNumber">
  <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
   <!--Print event number for every n-th event-->
   <parameter name="EveryNEvents" type="int" value="2500"/>

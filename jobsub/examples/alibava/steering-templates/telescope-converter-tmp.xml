@@ -20,7 +20,7 @@
       <processor name="UniversalNativeReader"/>
       <processor name="HotPixelMasker"/>
       <processor name="Save"/>
-      <processor name="MyEUTelUtilityPrintEventNumber"/>
+      <processor name="PrintEventNumber"/>
    </execute>
 
    <global>
@@ -107,7 +107,7 @@ within the selected number of event per cycle-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="MyEUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">
+ <processor name="PrintEventNumber" type="EUTelUtilityPrintEventNumber">
  <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
   <!--Print event number for every n-th event-->
   <parameter name="EveryNEvents" type="int" value="2500"/>
