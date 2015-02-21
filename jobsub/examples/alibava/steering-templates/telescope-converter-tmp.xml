@@ -57,7 +57,7 @@
   <!--The geometry identification number-->
   <parameter name="GeoID" type="int">0 </parameter>
   <!--This is the input file name-->
-  <parameter name="InputFileName" type="string" value="@TelescopeNativeFolder@/run@RunNumber@.raw  "/>
+  <parameter name="InputFileName" type="string" value="@NativeFolder@/run@RunNumber@.raw  "/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
  </processor>

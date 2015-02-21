@@ -52,7 +52,7 @@
   <!--The geometry identification number-->
   <parameter name="GeoID" type="int" value="99"/>
   <!--This is the input file name-->
-  <parameter name="InputFileName" type="string" value="@AlibavaNativeFolder@/@AlibavaRawDataFormat@"/>
+  <parameter name="InputFileName" type="string" value="@NativeFolder@/@AlibavaRawDataFormat@"/>
   <!--Alibava read channels from right to left if you want to revert this i.e. make it from left to right set this parameter to true. CAUTION: This will be applied first!-->
   <parameter name="ReadChannelsReverse" type="bool" value="@ReadChannelsReverse@"/>
   <!--Run number of file (formatted)-->
