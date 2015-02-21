@@ -96,7 +96,7 @@ within the selected number of event per cycle-->
   <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
   <!--parameter name="KeepCollectionNames" type="StringVec" value="MyPreciousSimTrackerHits"/-->
   <!-- name of output file -->
-  <parameter name="LCIOOutputFile" type="string" value="@LcioRawPath@/@TelescopeOutputFormat@-converter.slcio"/>
+  <parameter name="LCIOOutputFile" type="string" value="@LcioPath@/@TelescopeOutputFormat@-converter.slcio"/>
   <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
   <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   <!--Set it to true to remove intermediate EORE in merged runs-->
