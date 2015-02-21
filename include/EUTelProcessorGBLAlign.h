@@ -137,7 +137,7 @@ namespace eutelescope {
         /** y Resolution of planes in PlaneIds */
         FloatVec _SteeringyResolutions;
 
-				FloatVec _excludePlanes;
+	IntVec _excludePlanes;
 };
 
     /** A global instance of the processor */
