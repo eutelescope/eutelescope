@@ -24,7 +24,9 @@ namespace eutelescope {
 	_milleGBL(NULL),
 	_alignmentMode(Utility::noAlignment),
 	_jacobian(5,5),
-	_globalLabels(5)
+	_globalLabels(5),
+	_milleSteeringFilename("Steer.txt"),
+	_milleSteerNameOldFormat("SteerOldFormat.txt")
 	{
 	SetAlignmentMode(alignmentMode);
 	FillMilleParametersLabels();
@@ -435,7 +437,33 @@ void EUTelMillepede::writeMilleSteeringFile(lcio::StringVec pedeSteerAddCmds){
 	steerFile << endl;
 	steerFile << "end" << endl;
 	steerFile.close();
+	copyFile(_milleSteeringFilename, _milleSteerNameOldFormat);
 }
+void EUTelMillepede::copyFile(std::string _milleSteeringFilename, std::string _milleSteerNameOldFormat){
+	std::ifstream infile (_milleSteeringFilename.c_str(),std::ifstream::binary);
+	std::ofstream outfile (_milleSteerNameOldFormat.c_str() ,std::ofstream::binary);
+
+	// get size of file
+	infile.seekg (0,infile.end);
+	long size = infile.tellg();
+	infile.seekg (0);
+
+	// allocate memory for file content
+	char* buffer = new char[size];
+
+	// read content of infile
+	infile.read (buffer,size);
+
+	// write to outfile
+	outfile.write (buffer,size);
+
+	// release dynamically-allocated memory
+	delete[] buffer;
+
+	outfile.close();
+	infile.close();
+}
+
 //This function will use the mille binary file and steering and execute pede. Pede is the work horse of millepede. It does the actual minimisation procedure.
 //It also write the results of this into a log file. This is very important since we need the information that this log file provides to determine what is the next step in out iterative alignment
 //By this I mean if too many tracks were rejected by millepede then on the next iteration we need to increase increase the chi2 cut and increase the hit residual.
@@ -492,7 +520,7 @@ bool EUTelMillepede::runPede(){
 }
 bool EUTelMillepede::findTooManyRejects(std::string output){
 	int found = output.find("Too many rejects (>33.3%)");
-	if (found != std::string::npos){
+	if (found == std::string::npos){
 		streamlog_out(MESSAGE5)<<endl<<"Number of rejects low. Continue with alignment."<<endl;
 		return false;
 
@@ -504,7 +532,7 @@ bool EUTelMillepede::findTooManyRejects(std::string output){
 void EUTelMillepede::editSteerUsingRes(){
 	ifstream file( _milleResultFileName.c_str() );
 	if ( !file.good( ) ) {
-		throw(lcio::Exception("Can not open millepede results file."));
+		throw(lcio::Exception("Can not open millepede results file. In editSteerUsingRes()"));
 	}
 	const string command = "resIntoSteer.py " + _milleSteeringFilename + " " + _milleResultFileName;
 	streamlog_out ( MESSAGE5 ) << "Results fill used to create new steering file: " << endl;
@@ -516,7 +544,7 @@ void EUTelMillepede::editSteerUsingRes(){
 }
 
 bool EUTelMillepede::converge(){
-	for(int i=0; i<2 ; i++){
+	for(int i=0; i<1 ; i++){
 		editSteerUsingRes();
 		runPede();	
 	}
@@ -530,9 +558,9 @@ bool EUTelMillepede::checkConverged(){}
 bool EUTelMillepede::parseMilleOutput(std::string alignmentConstantLCIOFile, std::string gear_aligned_file){
 	ifstream file( _milleResultFileName.c_str() );
 	if ( !file.good( ) ) {
-		throw(lcio::Exception("Can not open millepede results file."));
+		throw(lcio::Exception("Can not open millepede results file. checkConverged()"));
 	}
-	const string command = "parsemilleout.sh " + _milleSteeringFilename + " " + _milleResultFileName + " " + alignmentConstantLCIOFile + 
+	const string command = "parsemilleout.sh " + _milleSteerNameOldFormat + " " + _milleResultFileName + " " + alignmentConstantLCIOFile + 
 												 " " + Global::parameters->getStringVal("GearXMLFile" ) + " " + gear_aligned_file;
 	streamlog_out ( MESSAGE5 ) << "Converting millepede results to LCIO collections... " << endl;
 	streamlog_out ( MESSAGE5 ) << command << endl;

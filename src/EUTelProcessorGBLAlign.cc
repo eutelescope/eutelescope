@@ -228,8 +228,11 @@ void EUTelProcessorGBLAlign::end(){
 	_Mille->writeMilleSteeringFile(_pedeSteerAddCmds);//This will create the initial steering file. This can then be accessed via the string member variable:_milleSteeringFilename
 	bool tooManyRejects = 	_Mille->runPede();//This will run millepede and create the initial results file. We automatically line to this through the string variable._milleResultFileName.
 	if(!tooManyRejects){//Check that the intial input fit is successful. We need this for the initial reasonable results file.
+		streamlog_out (MESSAGE9) <<"FIRST ATTEMPT WITH INITIAL INPUT PARAMETERS. NOW TRY TO CONVERGE.......................................  "<< std::endl;
 		bool converged =	_Mille->converge();//This will iteratively run millepede over mutiple results file, during this process it also checks that the solution converges.
 		_Mille->parseMilleOutput(_alignmentConstantLCIOFile, _gear_aligned_file);
+	}else{
+		streamlog_out (MESSAGE9) <<"THE NUMBER OF REJECTED TRACKS IS NOT LARGE."<< std::endl;
 	}
 }
 

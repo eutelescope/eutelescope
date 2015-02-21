@@ -33,7 +33,7 @@ for x in {1..10}; do
 	#Did we find the correct number of track within x=10 iterations.
 	if [[ $x -eq 10 ]];then
 		echo "We are are iteration 10 and still have not found enough tracks in pattern recogntion"
-		exit
+		exit 1
 	fi
 done
 #THIS IS PART (2)
@@ -43,89 +43,82 @@ done
 #echo "GBLTRACKS CREATED FOR ALIGNMENT ON ITERATION $number"
 $do jobsub.py  -c $CONFIG -csv $RUNLIST  -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" -o GearFile="$inputGear"  $TrackFit  $RUN  
 
-#fileName="$TrackFit-${RUN}.zip"
-#fullPath="$directory/$fileName"
-#echo "The full path to the log file is: $fullPath" 
-#averageChi2=`unzip  -p  $fullPath |grep "This is the average chi2 -" |cut -d '-' -f2`; 
-#echo "The average chi2ndf from the log is :  $averageChi2"
-#if [[ $averageChi2 == "" ]]; then
-#	echo "ERROR!!!!!!!!! string for chi2 GBL not found. Check output log file is in the correct place. Furthermore check the string is there. "
-#  exit
-#fi
-
-
 #THIS IS PART (3)
+upperLimit=1 #So we only accept decreases in resolution form millepede. 
+#if there is a estimate of -90%, an increase in resolution, then use this result. 
 fileAlign="$directory/$Align-${RUN}.zip"
 numberRejectedAlignmentAttempts=0 #We set this since we do not want to fall in a loop were chi<1 the rejects then chi<1 .....
-tooManyRejectsExitLoopBool=false
 dry="--dry-run"
-#We use the last successful attempt when we have two rejected otherwise if we have one then we increase the resolution and continue.
-# TO DO: Must change this to while loop since we exit down below as well. 
-for x in {1..10}; do 
-	echo "GBLALIGN ATTEMPT $x ON ITERATION $number"
+alignment=false
+rejectFactor=2
+chi2Cut=10
+echo "Enter while loop here"
+while [ "$alignment" == "false" ]; do 
 	echo "THE NUMBER OF FAILED ALIGNMENT ATTEMPTS $numberRejectedAlignmentAttempts"
 	$do jobsub.py -c $CONFIG -csv $RUNLIST -o GearFile="$inputGear" -o GearAlignedFile="$outputGear" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres"  -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}"  $Align  $RUN  
-	#Check that we have not seg fault within millepede.
-	error=`unzip  -p  $fileAlign |grep "Backtrace for this error:" | awk '{ print $NF }'`;
-	if [[ $error != "" ]];then
-		echo "We have a segfault" 
-		exit
-	fi
-	#What overall chi2 did we get from the fit. This is different from the chi2 of the individual tracks. 
-	averageChi2Mille=`unzip -p $fileAlign |grep "Chi^2/Ndf" | awk '{ print $(NF-5) }'`;
-	echo "The chi2/ndf of the fit is $averageChi2Mille" 
-	if $tooManyRejectsExitLoopBool;then
-		echo "WE HAVE TOO MANY REJECTED ATTEMPTS AND NOW HAVE USED THE LAST WORKING EXAMPLE AND EXITING"
-		exit
-	fi
-	factor=`unzip  -p  $fileAlign |grep "multiply all input standard deviations by factor" | awk '{ print $NF }'`;
-	factor=`echo ${factor} | sed -e 's/[eE]+*/\\*10\\^/'`
-	echo "factor word: " $factor
-	if [[ $factor != "" ]];then
-		export xresWorking=$xres; #Must be set before the new resolution is set which may cause too many rejects
-		export yresWorking=$yres;
-		echo "Factor word found! Resolution must increase by $factor."
-		#for some reason the output of python will not overwrite the xres or yres? So must unset then set.
-		xInput=$xres
-		yInput=$yres
-		unset xres;
-		unset yres;
-		xres=`python $pythonLocation/multiplyResolutionsByFactor.py $xInput / / $allPlanes / $factor`
-		yres=`python $pythonLocation/multiplyResolutionsByFactor.py $yInput / / $allPlanes / $factor`
-		echo "New resolutions are for (X/Y):" $xres"/"$yres
-	fi
+	#Fill variables.
+	error1=`unzip  -p  $fileAlign |grep "Backtrace for this error:" | awk '{ print $NF }'`;
+	error2=`unzip  -p  $fileAlign |grep "This is the entire stack" | awk '{ print $NF }'`;
 	rejected=`unzip  -p  $fileAlign |grep "Too many rejects" |cut -d '-' -f2`; 
-	echo "Rejects word:  $rejected "
-	if [[ $rejected != "" ]];then #This makes sure that we do not cut too many tracks.
+	averageChi2Mille=`unzip -p $fileAlign |grep "Chi^2/Ndf" | awk '{ print $(NF-5) }'`;
+	factor=`unzip  -p  $fileAlign |grep "multiply all input standard deviations by factor" | awk '{ print $NF }'`;
+	#We need to remove the factor for second round of iterations.
+	factor=$(echo $factor | cut -f1 -d' ')
+	factor=`echo ${factor} | sed -e 's/[eE]+*/\\*10\\^/'`
+	noCut=`expr "$averageChi2Mille" '<' "$chi2Cut"` #Do not want to decrease the resolution too much
+	notUnderEstimated=`expr "$averageChi2Mille" '>' "1"` #Do not under estimate the errors.
+
+	#We can either have a error, rejected, factor, or nothing.
+	echo $error1 $error2
+	if [ "$error1" != "" ] || [ "$error2" != "" ];then #Must put quotes if we expect error1/2 to be empty
+		echo "We have a segfault" 
+		break
+	elif [ "$rejected" != "" ];then
 		export	numberRejectedAlignmentAttempts=$(($numberRejectedAlignmentAttempts+1))
-		echo "Too many rejects. Resolution must increase by factor 10."
+		echo "Too many rejects. Resolution must increase by factor $rejectFactor."
 		xInput=$xres;
 		yInput=$yres;
 		unset xres;
 		unset yres;
-		xres=`python $pythonLocation/multiplyResolutionsByFactor.py $xInput /   / $allPlanes / 2` #TO DO: This script breaks if you provide no fixed planes
-		yres=`python $pythonLocation/multiplyResolutionsByFactor.py $yInput /   / $allPlanes / 2`
+		echo "Rejection factor is: $rejectFactor"
+		xres=`python $pythonLocation/multiplyResolutionsByFactor.py $xInput /   / $allPlanes / $rejectFactor` 
+		yres=`python $pythonLocation/multiplyResolutionsByFactor.py $yInput /   / $allPlanes / $rejectFactor`
 		echo "New resolutions are for (X/Y):" $xres"/"$yres
+	elif [ "$noCut" == "1" ] && [ "$notUnderEstimated" == "1" ];then
+		echo "Chi2: $averageChi2Mille and boolean: $noCut $notUnderEstimated"
+		#If the factor word is out of range then we use this fit anyway.
+		alignment=true
+		echo "Set alignment to equal: $alignment"
+	else
+		echo "Chi2: $averageChi2Mille and boolean: $noCut $notUnderEstimated"
+		if [[ "$factor" != "" ]];then
+			echo "Here is the factor: $factor " 
+			passUpper=`expr "$factor" '<' "$upperLimit"` #Do not want to decrease the resolution too much
+			echo $passUpper
+			if [ "$passUpper" -ne "0"  ];then
+				echo "Factor word found! Resolution must increase by $factor."
+				#for some reason the output of python will not overwrite the xres or yres? So must unset then set.
+				xInput=$xres
+				yInput=$yres
+				unset xres;
+				unset yres;
+				xres=`python $pythonLocation/multiplyResolutionsByFactor.py $xInput / / $allPlanes / $factor`
+				yres=`python $pythonLocation/multiplyResolutionsByFactor.py $yInput / / $allPlanes / $factor`
+				echo "New resolutions are for (X/Y):" $xres"/"$yres
+				#Also decrease the rejection factor since we must be close to a fit.
+				rejectFactor=1.01
+			fi
+		else
+			break
+		fi
 	fi
 	if [[ $numberRejectedAlignmentAttempts -eq 10 ]]
 	then
-		echo "We have already rejected $numberRejectedAlignmentAttempts times. However have found the factor $factor to improve alignment to continue."
-	fi
-	if [ $numberRejectedAlignmentAttempts -eq 10 ]   
-	then
-		echo "Too many rejects found set x/y resolution to last working alignment fit, run, then exit."
-		export xres=$xresWorking;
-		export yres=$yresWorking;
-		tooManyRejectsExitLoopBool=true
-	fi
-	#If the loop passes after 5 attempts with a small number of reject use this. 
-	#Otherwise we use the millepede esitmation to guide our fit.
-	if [[ $numberRejectedAlignmentAttempts -lt 5 ]] && [[ $rejected == "" ]];then
-		echo "Enough have passed the chi2 cut. Use this iteration to update gear parameters"
-		break
-	elif [[ $factor == "" ]] && [[ $rejected == "" ]];then
-		echo "Mille chi2 is non existant. Here it is: $averageChi2Mille"
-		echo "We can not find this or factor or rejects. Break alignment loop."
+		echo "We have already rejected $numberRejectedAlignmentAttempts times."
 		break
 	fi
 done 
+#We exit with an error if no alignment.
+if [ "$alignment" == "false" ];then
+	exit 1
+fi

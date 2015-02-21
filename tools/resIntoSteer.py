@@ -22,10 +22,10 @@ def main():
 	for lineSteer in  steer:
 		if(counter < 3):
 			temp.write(lineSteer)
-		elif( counter >= 3 and counter < 39):
+		elif( counter >= 3 and counter < 40):
 			temp.write(resultLines[resultLineCounter])
 			resultLineCounter += 1
-		elif( counter >= 39):
+		elif( counter >= 40):
 			temp.write(lineSteer)
 		else:
 			print "Some thing is wrong in resToSteer python script"

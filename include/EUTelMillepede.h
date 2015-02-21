@@ -19,6 +19,7 @@
 
 // system includes <>
 #include <map>
+#include <fstream>      // std::ifstream, std::ofstream
 #include <string>
 #include <utility>
 #include <vector>
@@ -64,6 +65,7 @@ namespace eutelescope {
 				bool converge();
 				bool checkConverged();
 				void editSteerUsingRes();
+				void copyFile(std::string input, std::string output);
 
 
 				void testUserInput();
@@ -107,6 +109,8 @@ void CreateBinary();
 
         /** Mille steering filename */
 				std::string _milleSteeringFilename;
+				
+				std::string _milleSteerNameOldFormat;
 
 				std::string _milleBinaryFilename;
 				//the results file
