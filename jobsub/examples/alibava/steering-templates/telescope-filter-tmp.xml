@@ -25,7 +25,7 @@
    </execute>
 
    <global>
-      <parameter name="LCIOInputFiles"> @ResultsPath@/@TelescopeOutputFormat@-clustering.slcio </parameter>
+      <parameter name="LCIOInputFiles"> @LcioPath@/@TelescopeOutputFormat@-clustering.slcio </parameter>
       <parameter name="GearXMLFile" value="@GearFile@"/>
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
@@ -182,7 +182,7 @@ there are no cluster left.-->
   <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
   <!--parameter name="KeepCollectionNames" type="StringVec" value="MyPreciousSimTrackerHits"/-->
   <!-- name of output file -->
-  <parameter name="LCIOOutputFile" type="string" value="@ResultsPath@/@TelescopeOutputFormat@-filter.slcio"/>
+  <parameter name="LCIOOutputFile" type="string" value="@LcioPath@/@TelescopeOutputFormat@-filter.slcio"/>
   <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
   <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   <!--Set it to true to remove intermediate EORE in merged runs-->

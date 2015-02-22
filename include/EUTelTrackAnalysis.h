@@ -2,7 +2,6 @@
 #include "EUTelTrack.h"
 #include "EUTelState.h"
 #include "EUTelHistogramManager.h"
-#include "boost/math/distributions/chi_squared.hpp" //TO DO: Does cmake install this automatically?
 // AIDA
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <AIDA/IBaseHistogram.h>
@@ -36,7 +35,9 @@ namespace eutelescope {
 		void plotIncidenceAngles(EUTelTrack track);
 		void plotPValueWithPosition(EUTelTrack track);
 		void plotPValueWithIncidenceAngles(EUTelTrack track);
+		void plotPValueVsBeamEnergy(EUTelTrack track);
 		void setBeamEnergy(AIDA::IHistogram1D *  beamEnergy){ _beamEnergy = beamEnergy; }
+		void setPValueBeamEnergy(AIDA::IProfile1D *  pValueVsBeamEnergy){ _pValueVsBeamEnergy = pValueVsBeamEnergy; }
 		void setSensorIDTo2DResidualHistogramX(std::map< int,  AIDA::IProfile2D*> mapFromSensorIDToHistogramX){_mapFromSensorIDToHistogramX=mapFromSensorIDToHistogramX;}
 		void setSensorIDTo2DResidualHistogramY(std::map< int,  AIDA::IProfile2D*> mapFromSensorIDToHistogramY){_mapFromSensorIDToHistogramY=mapFromSensorIDToHistogramY;}
 		void setSensorIDTo2DPValuesWithPosition(std::map< int,  AIDA::IProfile2D*> mapFromSensorIDTo2DPValuesWithPosition){_mapFromSensorIDTo2DPValuesWithPosition=mapFromSensorIDTo2DPValuesWithPosition;}
@@ -44,8 +45,10 @@ namespace eutelescope {
 		void setSensorIDToIncidenceAngleYZ( std::map< int,  AIDA::IHistogram1D * > mapFromSensorIDToKinkYZ){_mapFromSensorIDToIncidenceYZ=mapFromSensorIDToKinkYZ;}
 		void setSensorIDToPValuesVsIncidenceAngleXZ( std::map< int,  AIDA::IProfile1D * > mapFromSensorIDToPValuesVsIncidenceXZ){_mapFromSensorIDToPValuesVsIncidenceXZ=mapFromSensorIDToPValuesVsIncidenceXZ;}
 		void setSensorIDToPValuesVsIncidenceAngleYZ( std::map< int,  AIDA::IProfile1D * > mapFromSensorIDToPValuesVsIncidenceYZ){_mapFromSensorIDToPValuesVsIncidenceYZ=mapFromSensorIDToPValuesVsIncidenceYZ;}
-		AIDA::IHistogram1D * _beamEnergy;
 
+		AIDA::IHistogram1D * _beamEnergy;
+		AIDA::IProfile1D   * _pValueBeamEnergy;
+		AIDA::IProfile1D * _pValueVsBeamEnergy;
 		float calculatePValueForChi2(EUTelTrack track);
 
 

@@ -148,9 +148,6 @@ void AlibavaConstantCommonModeProcessor::processRunHeader (LCRunHeader * rdr) {
 
 void AlibavaConstantCommonModeProcessor::processEvent (LCEvent * anEvent) {
 
-	if ( anEvent->getEventNumber() % 1000 == 0 )
-		streamlog_out ( MESSAGE4 ) << "Looping events "<<anEvent->getEventNumber() << endl;
-	
 	AlibavaEventImpl * alibavaEvent = static_cast<AlibavaEventImpl*> (anEvent);
 	
 	if (_skipMaskedEvents && (alibavaEvent->isEventMasked()) ) {

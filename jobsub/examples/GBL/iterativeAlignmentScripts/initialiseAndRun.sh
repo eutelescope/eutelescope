@@ -48,7 +48,8 @@ export patRecMultiplicationFactor=2 #This is the factor which we increase the wi
 export PatRec=patternRecognition #This is the name of the pattern recognition steering file
 export TrackFit=GBLTrackFit #This is the name of the GBLTrack fitting steering file.
 export Align=GBLAlign #This is the alignment steering file name
-
+export inputCollectionName="track_candidates"
+export lcioInputName="trackcand"
 export RUN=$(adding_zeros_to_RUN $RUN)
 #CHECK INPUT
 if [ ! -d "$directory" ]; then

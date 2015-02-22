@@ -165,13 +165,7 @@ void EUTelProcessorGBLAlign::processEvent(LCEvent * evt){
 				streamlog_out(WARNING2) << "Event number " << event->getEventNumber() << " in run " << event->getRunNumber() << " is of unknown type. Continue considering it as a normal Data Event." << std::endl;
 			}
 			LCCollection* eventCollection = NULL;
-			try {
-				eventCollection = evt->getCollection(_trackCandidatesInputCollectionName);
-				streamlog_out(DEBUG1) << "collection : " << _trackCandidatesInputCollectionName << " retrieved" << std::endl;
-			}catch (DataNotAvailableException e) {
-				streamlog_out(MESSAGE0) << _trackCandidatesInputCollectionName << " collection not available" << std::endl;
-				throw marlin::SkipEventException(this);
-			}
+			eventCollection = evt->getCollection(_trackCandidatesInputCollectionName);
 			if (eventCollection != NULL) {
 				streamlog_out(DEBUG2) << "Collection contains data! Continue!" << std::endl;
 				for (int iTrack = 0; iTrack < eventCollection->getNumberOfElements(); ++iTrack) {
@@ -180,10 +174,6 @@ void EUTelProcessorGBLAlign::processEvent(LCEvent * evt){
 					EUTelTrack track = *(static_cast<EUTelTrack*> (eventCollection->getElementAt(iTrack)));
 					float chi = track.getChi2();
 					float ndf = static_cast<float>(track.getNdf());
-					if(chi == 0 or ndf == 0){
-						streamlog_out(MESSAGE5)<<"Chi: "<<chi<<" ndf: "<<ndf<<std::endl;
-						throw(lcio::Exception("The track has either no degrees of freedom or chi2 is zero.")); 	
-					}
 					std::vector< gbl::GblPoint > pointList;//This is the GBL points. These contain the state information, scattering and alignment jacobian. All the information that the mille binary will get.
 					_trackFitter->setInformationForGBLPointList(track, pointList);//We create all the GBL points with scatterer inbetween both planes. This is identical to creating GBL tracks
 					_trackFitter->setPairMeasurementStateAndPointLabelVec(pointList);
@@ -209,7 +199,8 @@ void EUTelProcessorGBLAlign::processEvent(LCEvent * evt){
 	}
 	catch (DataNotAvailableException e) {
 		streamlog_out(MESSAGE0) << _trackCandidatesInputCollectionName << " collection not available" << std::endl;
-		throw marlin::SkipEventException(this);
+	//	throw marlin::SkipEventException(this);
+	return;
 	}
 	catch(std::string &e){
 		streamlog_out(MESSAGE9) << e << std::endl;
