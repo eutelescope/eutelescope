@@ -20,15 +20,15 @@ export scriptsLocation="/afs/phas.gla.ac.uk/user/a/amorton/ilcsoft/v01-17-05/Eut
 
 #VARIABLES WHICH VARY THROUGH ALIGNMENT ARE SET HERE. IMPORTANT NOT ALL VARIABLES ARE HERE LOOK IN CONFIG-ALIGNMENT.
 export r="0.006"; #Make resolution large so we begin with small chi2 and factor improvement to get to chi2/ndf=1 on next iteration. 
-export dutX="0.2"
+export dutX="0.02"
 export dutY="100000000"
 export xres="0.006 $r $r $dutX $dutX  $r $r 0.006";
 export yres="0.006 $r $r $dutY $dutY  $r $r 0.006";
 export minTracksPerEventAcceptance=0.001 #This is the number of tracks that is needed per event before we stop pattern recognition. Note value should depend on other cuts. 
-export ResidualsRMax="0.2" #This is the window size on the next plane that we will accept hits from. This will increase if less than 1 track per event is found.
-export inputGearInitial="gear-ZRotations-XYShift-filtered-alignment-Iteration-1-000613.xml" #Note the gear file changes through the process so must be placed here.
+export ResidualsRMax="0.5" #This is the window size on the next plane that we will accept hits from. This will increase if less than 1 track per event is found.
+export inputGearInitial="gear-XYShift-new-alignment-R=0.5-three-Iteration-2-000613.xml" #Note the gear file changes through the process so must be placed here.
 export allPlanes="0 1 2 6 7 3 4 5" #Must be in the correct z-ordering here.
-export allPlanesFixed="1     4  6 7"  
+export allPlanesFixed="0     5  6 "  
 
 
 #Export input variables to other bash files.  
