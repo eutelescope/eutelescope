@@ -73,7 +73,7 @@ _mEstimatorType()
 
 		registerOptionalParameter("AlignmentConstantLCIOFile","This is the name of the LCIO file name with the output alignment"
                             "constants (add .slcio)",_alignmentConstantLCIOFile, static_cast< std::string > ( "alignment.slcio" ) );
-		registerOptionalParameter("ExcludePlanes", "This is the planes that will not be included in analysis", _excludePlanes ,FloatVec());
+		registerOptionalParameter("ExcludePlanes", "This is the planes that will not be included in analysis", _excludePlanes ,IntVec());
 
 
 }

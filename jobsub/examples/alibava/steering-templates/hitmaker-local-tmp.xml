@@ -17,7 +17,7 @@
 
    <execute>
       <processor name="AIDA"/>
-      <processor name="LoadRefHitDB"/>
+      <!--processor name="LoadRefHitDB"/-->
       <processor name="HitMakerM26"/>
       <processor name="LocaltoGlobal"/>
       <processor name="PreAligner"/>
@@ -73,7 +73,7 @@
 		<!--This is the name of the reference hit collection initialized in this processor. This collection provides the reference vector to correctly determine a plane corresponding to a global hit coordiante.-->
 	<!--parameter name="ReferenceCollection" type="string">referenceHit </parameter-->
 	<!--This is the file where the reference hit collection is stored-->
-	<parameter name="ReferenceHitFile" type="string"> @DatabasePath@/@MergedOutputFormat@-referencehit.slcio </parameter>
+	<!--parameter name="ReferenceHitFile" type="string"> @DatabasePath@/@MergedOutputFormat@-referencehit.slcio </parameter-->
 		<!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
 	<!--parameter name="Verbosity" type="string">DEBUG </parameter-->
 </processor>

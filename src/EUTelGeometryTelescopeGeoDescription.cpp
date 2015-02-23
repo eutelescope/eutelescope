@@ -139,7 +139,7 @@ TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneYAxis( int planeID )
 }
 
 /**TODO: Replace me: NOP*/
-void EUTelGeometryTelescopeGeoDescription::initialisePlanesToExcluded(FloatVec planeIDs)
+void EUTelGeometryTelescopeGeoDescription::initialisePlanesToExcluded(IntVec planeIDs)
 {
 	int counter=0;
 	for(size_t i = 0 ; i <_sensorZOrderToIDMap.size(); ++i){
