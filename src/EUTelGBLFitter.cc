@@ -150,7 +150,7 @@ namespace eutelescope {
 					} 
 					_MilleInterface->computeAlignmentToMeasurementJacobian(state);//We calculate the jacobian. 
 					_MilleInterface->setGlobalLabels(state); //Get the correct label for the sensors x,y,z shift and rotations. Depending on alignment mode and sensor the plane is on 
-					TMatrixD&  alignmentJacobian = _MilleInterface->getAlignmentJacobian();//Return what was calculated by computeAlignmentToMeasurementJacobian
+					TMatrixD const&  alignmentJacobian = _MilleInterface->getAlignmentJacobian();//Return what was calculated by computeAlignmentToMeasurementJacobian
 					std::vector<int> labels =  _MilleInterface->getGlobalParameters();//Return what was set by setGlobalLabels
 					streamlog_out(DEBUG0)<<"The state associated with this alignment jacobian:  "<<std::endl;
 					streamlog_message( DEBUG0, state.print() ;, std::endl; );

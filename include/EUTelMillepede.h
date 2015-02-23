@@ -62,27 +62,25 @@ namespace eutelescope {
 
 				void testUserInput();
 				void printFixedPlanes();
-				/////////////////////////set stuff!
-				void setXShiftFixed(lcio::IntVec xfixed);
-				void setYShiftFixed(lcio::IntVec yfixed);
-				void setZShiftFixed(lcio::IntVec zfixed);
-				void setXRotationsFixed(lcio::IntVec xRotfixed);
-				void setYRotationsFixed(lcio::IntVec yRotfixed);
-				void setZRotationsFixed(lcio::IntVec zRotfixed);
-				void setPlanesExclude(lcio::IntVec exclude);
-				void setSteeringFileName(std::string name);
-				void setBinaryFileName(std::string binary);
-				void setResultsFileName(std::string name);
 
+				//Various Setters
+				void setXShiftFixed(lcio::IntVec xfixed){ _fixedAlignmentXShfitPlaneIds = xfixed; }
+				void setYShiftFixed(lcio::IntVec yfixed){ _fixedAlignmentYShfitPlaneIds = yfixed; }
+				void setZShiftFixed(lcio::IntVec zfixed){ _fixedAlignmentZShfitPlaneIds = zfixed; }
+				void setXRotationsFixed(lcio::IntVec xRotfixed){ _fixedAlignmentXRotationPlaneIds = xRotfixed; }
+				void setYRotationsFixed(lcio::IntVec yRotfixed){ _fixedAlignmentYRotationPlaneIds = yRotfixed; }
+				void setZRotationsFixed(lcio::IntVec zRotfixed){ _fixedAlignmentZRotationPlaneIds = zRotfixed; }
+				void setPlanesExclude(lcio::IntVec exclude){ _alignmentPlaneIdsExclude = exclude; }
+				void setBinaryFileName(std::string binary){ _milleBinaryFilename = binary; }
+				void setSteeringFileName(std::string name){ _milleSteeringFilename = name; }
+				void setResultsFileName(std::string name){ _milleResultFileName = name; }
 
-				///////////////////////////////////////////get stuff
-				TMatrixD& getAlignmentJacobian()  { return _jacobian; }
-				std::vector<int> getGlobalParameters() { return _globalLabels; }
-
+				//Various Getters
+				TMatrixD const& getAlignmentJacobian(){ return _jacobian; }
+				std::vector<int> getGlobalParameters(){ return _globalLabels; }
 				gbl::MilleBinary * _milleGBL;
 
-
-void CreateBinary();
+				void CreateBinary();
 
 		protected:
 				Utility::AlignmentMode _alignmentMode;
