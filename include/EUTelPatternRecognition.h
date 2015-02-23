@@ -80,7 +80,7 @@ namespace eutelescope {
 		void setHitsVecPerPlane();
 
 		void setHitsVec(EVENT::TrackerHitVec& allHitsVec){
-			allHitsVec = allHitsVec;
+			_allHitsVec = allHitsVec;
 		}
 
 		void setEventNumber(int eventNumber){
