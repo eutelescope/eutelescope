@@ -11,11 +11,11 @@
       <processor name="NoisyClusterMasker"/>
       <processor name="NoisyClusterRemover"/>
       <processor name="Save"/>
-      <processor name="EUTelUtilityPrintEventNumber"/>
+      <processor name="PrintEventNumber"/>
    </execute>
 
    <global>
-      <parameter name="LCIOInputFiles"> @LcioRawPath@/@TelescopeOutputFormat@-converter.slcio </parameter>
+      <parameter name="LCIOInputFiles"> @LcioPath@/@TelescopeOutputFormat@-converter.slcio </parameter>
       <parameter name="GearXMLFile" value="@GearFile@"/>
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
@@ -100,7 +100,7 @@
   <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
   <!--parameter name="KeepCollectionNames" type="StringVec">MyPreciousSimTrackerHits  </parameter-->
   <!-- name of output file -->
-  <parameter name="LCIOOutputFile" type="string" value="@ResultsPath@/@TelescopeOutputFormat@-clustering.slcio"/>
+  <parameter name="LCIOOutputFile" type="string" value="@LcioPath@/@TelescopeOutputFormat@-clustering.slcio"/>
   <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
   <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   <!--Set it to true to remove intermediate EORE in merged runs-->
@@ -111,7 +111,7 @@
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
  </processor>
 
- <processor name="EUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">
+ <processor name="PrintEventNumber" type="EUTelUtilityPrintEventNumber">
  <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
   <!--Print event number for every n-th event-->
   <parameter name="EveryNEvents" type="int">2500 </parameter>

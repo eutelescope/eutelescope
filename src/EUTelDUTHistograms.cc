@@ -21,11 +21,13 @@
 #include "EUTelExceptions.h"
 #include "EUTelReferenceHit.h"
 // for cluster operations:
-#include "EUTelVirtualCluster.h"
+#include "EUTelSimpleVirtualCluster.h"
 #include "EUTelFFClusterImpl.h"
 #include "EUTelDFFClusterImpl.h"
 #include "EUTelBrickedClusterImpl.h"
 #include "EUTelSparseClusterImpl.h"
+#include "EUTelGenericSparseClusterImpl.h"
+#include "EUTelGeometricClusterImpl.h"
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <marlin/AIDAProcessor.h>
@@ -1812,9 +1814,9 @@ int EUTelDUTHistograms::getClusterSize(int sensorID, TrackerHit * hit, int& size
 
         try
         {
-            LCObjectVec clusterVector = hit->getRawHits();
+            TrackerDataImpl* clusterVector = static_cast<TrackerDataImpl*>( hit->getRawHits()[0]);
 
-            EUTelVirtualCluster * cluster=0;
+            EUTelSimpleVirtualCluster * cluster=0;
 
             if ( hit->getType() == kEUTelBrickedClusterImpl ) {
 
@@ -1822,23 +1824,38 @@ int EUTelDUTHistograms::getClusterSize(int sensorID, TrackerHit * hit, int& size
                //  can come from
                //  both RAW and ZS data
    
-                cluster = new EUTelBrickedClusterImpl(static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
+                cluster = new EUTelBrickedClusterImpl( clusterVector );
                 
             } else if ( hit->getType() == kEUTelDFFClusterImpl ) {
               
               // fixed cluster implementation. Remember it can come from
               // both RAW and ZS data
-              cluster = new EUTelDFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
+              cluster = new EUTelDFFClusterImpl( clusterVector );
             } else if ( hit->getType() == kEUTelFFClusterImpl ) {
               
               // fixed cluster implementation. Remember it can come from
               // both RAW and ZS data
-              cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
+              cluster = new EUTelFFClusterImpl( clusterVector );
             }
             else if ( hit->getType() == kEUTelSparseClusterImpl ) 
             {
-               cluster = new EUTelSparseClusterImpl< EUTelGenericSparsePixel > ( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
+               cluster = new EUTelSparseClusterImpl< EUTelGenericSparsePixel > ( clusterVector );
             }
+	    else if ( hit->getType() ==	kEUTelGenericSparseClusterImpl )
+	{
+
+		CellIDDecoder<TrackerDataImpl> cellDecoder (EUTELESCOPE::ZSDATADEFAULTENCODING);
+		SparsePixelType   type   = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( clusterVector )["sparsePixelType"]) );
+		
+		if(type == kEUTelGenericSparsePixel )
+		{
+			cluster = new EUTelGenericSparseClusterImpl<EUTelGenericSparsePixel>( clusterVector );
+		}
+		else if(type == kEUTelGeometricPixel )
+		{
+			cluster = new EUTelGenericSparseClusterImpl<EUTelGeometricPixel>( clusterVector );
+		}
+	}
 
             if(cluster != 0)
             {

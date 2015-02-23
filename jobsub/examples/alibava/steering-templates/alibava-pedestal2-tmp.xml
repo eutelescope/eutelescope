@@ -18,11 +18,12 @@
    <execute>
       <processor name="AIDA"/>
       <processor name="MyAlibavaPedestalNoiseProcessor"/>
+      <processor name="PrintEventNumber"/>
       <processor name="Save"/>
    </execute>
 
    <global>
-      <parameter name="LCIOInputFiles"> @ResultsPath@/@AlibavaOutputFormat@-commonmode.slcio </parameter>
+      <parameter name="LCIOInputFiles"> @LcioPath@/@AlibavaOutputFormat@-commonmode.slcio </parameter>
       <parameter name="GearXMLFile" value="@GearFile@"/>
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
@@ -40,7 +41,7 @@ ending order and there should be no space between two $ character-->
  <processor name="AIDA" type="AIDAProcessor">
  <!--Processor that handles AIDA files. Creates on directory per processor.  Processors only need to create and fill the histograms, clouds and tuples. Needs to be the first ActiveProcessor-->
   <!-- compression of output file 0: false >0: true (default) -->
-  <parameter name="Compress" type="int" value="1"/>
+name="Compress" type="int" value="1"/>
   <!-- filename without extension-->
   <parameter name="FileName" type="string" value="@HistogramPath@/@AlibavaOutputFormat@-pedestal2"/>
   <!-- type of output file root (default) or xml )-->
@@ -74,7 +75,7 @@ ending order and there should be no space between two $ character-->
   <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
   <!--parameter name="KeepCollectionNames" type="StringVec" value="MyPreciousSimTrackerHits"/-->
   <!-- name of output file -->
-  <parameter name="LCIOOutputFile" type="string" value="@ResultsPath@/@AlibavaOutputFormat@-pedestal2.slcio"/>
+  <parameter name="LCIOOutputFile" type="string" value="@LcioPath@/@AlibavaOutputFormat@-pedestal2.slcio"/>
   <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
   <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   <!--will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW-->
@@ -82,5 +83,16 @@ ending order and there should be no space between two $ character-->
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
+
+<processor name="PrintEventNumber" type="EUTelUtilityPrintEventNumber">
+ <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
+  <!--Print event number for every n-th event-->
+  <parameter name="EveryNEvents" type="int" value="2500"/>
+      <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string" value=""/-->
+  <!--print the event timestamp as read from LCIO-->
+  <!--parameter name="printTimestamp" type="bool" value="false"/-->
+</processor>
+
 
 </marlin>

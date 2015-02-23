@@ -156,7 +156,7 @@ namespace eutelescope {
 		double _qBeam;
 		
 		EVENT::IntVec _createSeedsFromPlanes;
-		EVENT::FloatVec _excludePlanes;         
+		EVENT::IntVec _excludePlanes;         
 		EVENT::IntVec _planeDimension;
 
 		private:
