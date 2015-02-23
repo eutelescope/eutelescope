@@ -141,7 +141,7 @@ void EUTelTrackAnalysis::plotPValueWithIncidenceAngles(EUTelTrack track){
 
 void EUTelTrackAnalysis::plotPValueWithPosition(EUTelTrack track){
   streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotPValueWithPosition------------------------------BEGIN"<< std::endl;
-	float pValue = calculatePValueForChi2(track);
+	float pValue = 1;   //  calculatePValueForChi2(track);
 	std::vector<EUTelState> states = track.getStates();
 	for(size_t i=0; i<states.size();++i){
 		EUTelState state  = states.at(i);
@@ -162,35 +162,28 @@ void EUTelTrackAnalysis::plotPValueWithPosition(EUTelTrack track){
 }
 
 float EUTelTrackAnalysis::calculatePValueForChi2(EUTelTrack track){
+  streamlog_out(DEBUG2) << " EUTelTrackAnalysis::calculatePValueForChi2------------------------------BEGIN"<< std::endl;
+
 	float chi2Float=track.getChi2();
 	int   ndfInt = track.getNdf();
 	std::string chi2 = numberToString(chi2Float);
 	std::string ndf = numberToString(ndfInt);
 	float pValue=0;
+//	std::cout << "Chi2: " << chi2 <<" and ndf " << ndf <<std::endl;
 	const std::string command = "calculatePValue.py " + chi2 + " " + ndf;
-	redi::ipstream pValueStream( command.c_str( ), redi::pstreams::pstdout | redi::pstreams::pstderr );
+	redi::ipstream pValueStream( command.c_str( ));
 	if ( !pValueStream.is_open( )){
 		throw(lcio::Exception("Could not open the pValue file. "));
 	}else{
-		char buf[1024];
-		std::streamsize n;
-		std::stringstream parsepedeoutput; // store stdout to parse later
-		streamlog_out(DEBUG2) << "Here is the p-value of the fit:"<< std::endl;
-		bool finished = false;
-		if ( !finished ) {
-			while ( ( n = pValueStream.out( ).readsome( buf, sizeof (buf ) ) ) > 0 ) {
-				streamlog_out( MESSAGE9 ).write( buf, n ).flush( );
-				std::string output ( buf, n ); //Need this line here since we do not know the size of the string till after.
-				parsepedeoutput << output;
-			}
-			if ( pValueStream.eof( ) ) {
-				finished = true;
-			}
+		std::string str;
+		while (pValueStream >> str) {
+//		std::cout << str << std::endl;
+		pValue = std::atof(str.c_str());
 		}
-	pValueStream.close( );
-	parsepedeoutput >> pValue;
 	}
-
+	pValueStream.close( );
+  streamlog_out(DEBUG2) << " EUTelTrackAnalysis::calculatePValueForChi2------------------------------END"<< std::endl;
+//	std::cout<<"Here is the p-value: " <<pValue <<std::endl;
 	return pValue;
 }
 template<typename T>
