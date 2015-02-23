@@ -19,6 +19,9 @@ _AllowedSharedHitsOnTrackCandidate(0),
 _beamE(-1.),
 _beamQ(-1.)
 {}
+EUTelPatternRecognition::~EUTelPatternRecognition()  
+{}
+
 
 std::vector<EUTelTrack>& EUTelPatternRecognition::getTracks()
 {
