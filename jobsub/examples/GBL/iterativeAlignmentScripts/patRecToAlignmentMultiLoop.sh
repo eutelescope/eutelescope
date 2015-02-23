@@ -60,7 +60,7 @@ export Fys="$allPlanesFixed" #This is the fixed planes for shifts in the y axis
 export Fzr="$allPlanesFixed" #This is the fixed planes for rotations round the z axis
 export Fzs="$allPlanes" #This is the fixed planes for shifts in the z axis
 export inputGear="$outputGear" #We now use the gear file produced from the last iteration.
-export outputGear="gear-ZRotations-XYShift-${outputIdentifier}-Iteration-$number-${RUN}.xml"  
+export outputGear="$outputGearLast" #IMPORTANT: The last alignment must output the new gear to the output gear name specified.
 export histoNameInput="Alignment-ZRotations-XYShifts-${outputIdentifier}-Iteration-$number-${RUN}"
 $scriptsLocation/patRecToAlignmentSingleLoop.sh
 if [ $? -ne 0 ]

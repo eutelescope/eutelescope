@@ -66,6 +66,7 @@ namespace eutelescope {
 				bool checkConverged();
 				void editSteerUsingRes();
 				void copyFile(std::string input, std::string output);
+				void outputSteeringFiles();
 
 
 				void testUserInput();
@@ -97,6 +98,7 @@ void CreateBinary();
 
 		protected:
 				int alignmentMode;
+				int _iteration;
 				Utility::AlignmentMode _alignmentMode;
 				TMatrixD _jacobian; //Remember you need to create the object before you point ot it
 				std::vector<int> _globalLabels;

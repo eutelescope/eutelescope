@@ -25,8 +25,9 @@ namespace eutelescope {
 	_alignmentMode(Utility::noAlignment),
 	_jacobian(5,5),
 	_globalLabels(5),
-	_milleSteeringFilename("Steer.txt"),
-	_milleSteerNameOldFormat("SteerOldFormat.txt")
+	_milleSteeringFilename("steer.txt"),
+	_milleSteerNameOldFormat("steer-iteration-0.txt"),
+	_iteration(1)
 	{
 	SetAlignmentMode(alignmentMode);
 	FillMilleParametersLabels();
@@ -544,22 +545,40 @@ void EUTelMillepede::editSteerUsingRes(){
 }
 
 bool EUTelMillepede::converge(){
-	for(int i=0; i<1 ; i++){
+	for(int i=0; i<2 ; i++){
 		editSteerUsingRes();
+		bool converged = checkConverged();//Will simply output the steering files used in each iteration. 
 		runPede();	
 	}
-//	bool converged = checkConverged(); //TO DO: Must introduce check.
+	//We do this to create a new steering file from all the iterations but do not run pede.
+	editSteerUsingRes();
+	bool converged = checkConverged();//Will simply output the steering files used in each iteration. 
 	return true;
 }
 
-bool EUTelMillepede::checkConverged(){}
+bool EUTelMillepede::checkConverged(){
+	outputSteeringFiles();
+}
+void EUTelMillepede::outputSteeringFiles(){
+	std::stringstream output;
+	output << "steer-iteration-" << _iteration <<".txt";
+	std:: string outputName = output.str();
+	copyFile(_milleSteeringFilename, outputName);
+	_iteration++;
+
+};
 //This part using the output of millepede will create a new gear file based on the alignment parameters that have just been determined
 //It will also create LCIO file that will hold the alignment constants
 bool EUTelMillepede::parseMilleOutput(std::string alignmentConstantLCIOFile, std::string gear_aligned_file){
 	ifstream file( _milleResultFileName.c_str() );
 	if ( !file.good( ) ) {
-		throw(lcio::Exception("Can not open millepede results file. checkConverged()"));
+		throw(lcio::Exception("Can not open millepede results file. parseMilleOutput()"));
 	}
+	ifstream file2( _milleSteerNameOldFormat.c_str() );
+	if ( !file2.good( ) ) {
+		throw(lcio::Exception("Can not open millepede old steer file. parseMilleOutput()"));
+	}
+
 	const string command = "parsemilleout.sh " + _milleSteerNameOldFormat + " " + _milleResultFileName + " " + alignmentConstantLCIOFile + 
 												 " " + Global::parameters->getStringVal("GearXMLFile" ) + " " + gear_aligned_file;
 	streamlog_out ( MESSAGE5 ) << "Converting millepede results to LCIO collections... " << endl;

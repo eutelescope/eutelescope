@@ -51,7 +51,6 @@ numberRejectedAlignmentAttempts=0 #We set this since we do not want to fall in a
 dry="--dry-run"
 alignment=false
 rejectFactor=2
-chi2Cut=10
 echo "Enter while loop here"
 while [ "$alignment" == "false" ]; do 
 	echo "THE NUMBER OF FAILED ALIGNMENT ATTEMPTS $numberRejectedAlignmentAttempts"
@@ -61,13 +60,12 @@ while [ "$alignment" == "false" ]; do
 	error2=`unzip  -p  $fileAlign |grep "This is the entire stack" | awk '{ print $NF }'`;
 	rejected=`unzip  -p  $fileAlign |grep "Too many rejects" |cut -d '-' -f2`; 
 	averageChi2Mille=`unzip -p $fileAlign |grep "Chi^2/Ndf" | awk '{ print $(NF-5) }'`;
+	averageChi2Mille=$(echo $averageChi2Mille | cut -f1 -d' ')
 	factor=`unzip  -p  $fileAlign |grep "multiply all input standard deviations by factor" | awk '{ print $NF }'`;
-	#We need to remove the factor for second round of iterations.
 	factor=$(echo $factor | cut -f1 -d' ')
-	factor=`echo ${factor} | sed -e 's/[eE]+*/\\*10\\^/'`
-	noCut=`expr "$averageChi2Mille" '<' "$chi2Cut"` #Do not want to decrease the resolution too much
-	notUnderEstimated=`expr "$averageChi2Mille" '>' "1"` #Do not under estimate the errors.
-
+	factor=`echo ${factor} | sed -e 's/[eE]+*/\\*10\\^/'`;
+	noCut=`echo " $averageChi2Mille < 10.0" | bc`; #Do not want to decrease the resolution too much
+	notUnderEstimated=`echo " $averageChi2Mille > 1.0" | bc ` #Do not under estimate the errors.
 	#We can either have a error, rejected, factor, or nothing.
 	echo $error1 $error2
 	if [ "$error1" != "" ] || [ "$error2" != "" ];then #Must put quotes if we expect error1/2 to be empty
@@ -84,7 +82,7 @@ while [ "$alignment" == "false" ]; do
 		xres=`python $pythonLocation/multiplyResolutionsByFactor.py $xInput /   / $allPlanes / $rejectFactor` 
 		yres=`python $pythonLocation/multiplyResolutionsByFactor.py $yInput /   / $allPlanes / $rejectFactor`
 		echo "New resolutions are for (X/Y):" $xres"/"$yres
-	elif [ "$noCut" == "1" ] && [ "$notUnderEstimated" == "1" ];then
+	elif [ "$noCut" == "1" ] && [ "$notUnderEstimated" == "1" ];then #Chi2 cut and must not understimate. Range [0,10]
 		echo "Chi2: $averageChi2Mille and boolean: $noCut $notUnderEstimated"
 		#If the factor word is out of range then we use this fit anyway.
 		alignment=true
@@ -107,9 +105,11 @@ while [ "$alignment" == "false" ]; do
 				echo "New resolutions are for (X/Y):" $xres"/"$yres
 				#Also decrease the rejection factor since we must be close to a fit.
 				rejectFactor=1.01
+			else
+				alignment=true
 			fi
 		else
-			break
+			alignment=true
 		fi
 	fi
 	if [[ $numberRejectedAlignmentAttempts -eq 10 ]]
