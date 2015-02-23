@@ -24,7 +24,7 @@
    </execute>
 
    <global>
-      <parameter name="LCIOInputFiles"> @LcioRawPath@/run@RunNumber@-hitlocal.slcio </parameter>
+      <parameter name="LCIOInputFiles"> @LcioRawPath@/run@RunNumber@-hitmaker.slcio </parameter>
       <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
