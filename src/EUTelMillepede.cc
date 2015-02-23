@@ -9,105 +9,79 @@ using namespace eutelescope;
 //TO DO: The last alignment mode does not work. I.e alignment mode 7. This is not a big deal since we will never align all degrees of freedom in one go.
 namespace eutelescope {
 
-	//This constructor is useful for running the binary files execution
-	EUTelMillepede::EUTelMillepede() : 
-	_milleGBL(NULL),
-	_alignmentMode(Utility::noAlignment),
-	_jacobian(5,5),
-	_globalLabels(5)
- 	{
-	FillMilleParametersLabels();
-	}
-
-	//This constructor useful for mille binary output part
-	EUTelMillepede::EUTelMillepede(int alignmentMode) :
-	_milleGBL(NULL),
-	_alignmentMode(Utility::noAlignment),
-	_jacobian(5,5),
-	_globalLabels(5)
-	{
-	SetAlignmentMode(alignmentMode);
+//This constructor useful for mille binary output part
+EUTelMillepede::EUTelMillepede(Utility::AlignmentMode alignmentMode):
+_milleGBL(NULL),
+_alignmentMode(alignmentMode),
+_jacobian(5,5),
+_globalLabels(5)
+{
 	FillMilleParametersLabels();
 	CreateBinary();
-	}
 
-	EUTelMillepede::~EUTelMillepede(){}
-
-	//Depending on the number alignmentMode(This tell us what shift/rotation we can do), we create the alignment jacobain here with the correct dimensions. 
-	//Furthermore we determine the size of the labels per plane.
-	//Note this is used for all sensors but we can still fix some alignement parameters independent of this.
-	void EUTelMillepede::SetAlignmentMode(int alignmentMode){
-
-		//This is important since we need to know how millepede numbers theres axis. I think this is the reason for this step. Also set the matrix size //////BEGIN        
-		if (alignmentMode==0) {
-			streamlog_out(WARNING1) << "No alignment was chosen "<< std::endl;	
-			_alignmentMode = Utility::noAlignment;
-		} else if (alignmentMode==1) {
-    	_alignmentMode = Utility::XYShift;
+	//This is important since we need to know how millepede numbers theres axis. 
+	switch(_alignmentMode)
+	{
+		case Utility::noAlignment:
+			streamlog_out(WARNING1) << "No alignment was chosen" << std::endl;
+			break;
+		case Utility::XYShift:
 			_globalLabels.resize(2);
-    	_jacobian.ResizeTo(2, 2);
-    } else if (alignmentMode==2) {
-    	_alignmentMode = Utility::XYShiftXYRot;
-  		_globalLabels.resize(3);
-    	_jacobian.ResizeTo(2, 3);
- 
-    } else if (alignmentMode==3) {
-    	_alignmentMode = Utility::XYZShiftXYRot;
-  	_globalLabels.resize(4);
-    _jacobian.ResizeTo(2, 4);
-
-   	} else if (alignmentMode==4) {
-    	_alignmentMode = Utility::XYShiftYZRotXYRot;
-		_globalLabels.resize(4);
-		_jacobian.ResizeTo(2, 4);
-
-   	} else if (alignmentMode==5) {
-			_alignmentMode = Utility::XYShiftXZRotXYRot;
-		_globalLabels.resize(4);
-		_jacobian.ResizeTo(2, 4);
-
-    } else if (alignmentMode==6) {
-    	_alignmentMode = Utility::XYShiftXZRotYZRotXYRot;
-		_globalLabels.resize(5);
-		_jacobian.ResizeTo(2, 5);
-
-    } else if (alignmentMode==7) {
-    	_alignmentMode = Utility::XYZShiftXZRotYZRotXYRot;
-		_globalLabels.resize(6);
- 		_jacobian.ResizeTo(2, 6);
-
-    }else {
-			throw(lcio::Exception("Alignment mode was not recognized."));
-    }
-  	_jacobian.Zero();
-		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////END	
+			_jacobian.ResizeTo(2,2);
+			break;
+		case Utility::XYShiftXYRot:
+			_globalLabels.resize(3);
+			_jacobian.ResizeTo(2,3);
+			break;
+		case Utility::XYZShiftXYRot:
+			_globalLabels.resize(4);
+			_jacobian.ResizeTo(2,4);
+			break;
+		case Utility::XYShiftYZRotXYRot:
+			_globalLabels.resize(4);
+			_jacobian.ResizeTo(2,4);
+			break;
+		case Utility::XYShiftXZRotXYRot:
+			_globalLabels.resize(4);
+			_jacobian.ResizeTo(2,4);
+			break;
+		case Utility::XYShiftXZRotYZRotXYRot:
+			_globalLabels.resize(5);
+			_jacobian.ResizeTo(2,5);
+			break;
+		case Utility::XYZShiftXZRotYZRotXYRot:
+			_globalLabels.resize(6);
+			_jacobian.ResizeTo(2,6);
+			break;
+		default:
+			streamlog_out(ERROR5) << "Unknown alignment was chosen" << std::endl;
+			throw lcio::Exception("Unknown alignment was chosen");
+			break;
+	}	
+	_jacobian.Zero();
 }
+
+EUTelMillepede::~EUTelMillepede(){}
 
 //Note here we label sensors and every alignment degree of freedom uniquely. Note that even if the sensor is to remain fixed. The fixing is done latter.
-void EUTelMillepede::FillMilleParametersLabels() {
-
-    int currentLabel = 0;
-    const IntVec sensorIDsVec = geo::gGeometry().sensorIDsVec();
-    IntVec::const_iterator itr;
-    for( itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {//sensor 0 to 5 will have numbers 1 to 6 for this x shift
-        _xShiftsMap.insert( make_pair(*itr, ++currentLabel) );
-    }
-    for( itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {// sensor 0 to 5 will have numbers 7 to 12 for this y shift
-        _yShiftsMap.insert( make_pair(*itr, ++currentLabel) );
-    }
-    for( itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {// sensor 0 to 5 will have numbers 13 to 18 for this z shift
-        _zShiftsMap.insert( make_pair(*itr, ++currentLabel) );
-    }
-    for( itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {// sensor 0 to 5 will have numbers 19 to 24  for this x rotation 
-        _xRotationsMap.insert( make_pair(*itr, ++currentLabel) );
-    }
-    for( itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {// sensor 0 to 5 will have numbers 25 to 30  for this y rotation 
-        _yRotationsMap.insert( make_pair(*itr, ++currentLabel) );
-    }
-    for( itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {// sensor 0 to 5 will have numbers 31 to 36  for this z rotation 
-        _zRotationsMap.insert( make_pair(*itr, ++currentLabel) );
-    }
+void EUTelMillepede::FillMilleParametersLabels() 
+{
+	int currentLabel = 1;
+	const IntVec sensorIDsVec = geo::gGeometry().sensorIDsVec();
+	int noOfSensors = sensorIDsVec.size();
+	
+	for(IntVec::const_iterator itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr )
+	{
+		_xShiftsMap.insert( make_pair(*itr, currentLabel) );
+		_yShiftsMap.insert( make_pair(*itr, noOfSensors+currentLabel) );
+		_zShiftsMap.insert( make_pair(*itr, 2*noOfSensors+currentLabel) );
+		_xRotationsMap.insert( make_pair(*itr, 3*noOfSensors+currentLabel) );
+		_yRotationsMap.insert( make_pair(*itr, 4*noOfSensors+currentLabel) );
+		_zRotationsMap.insert( make_pair(*itr, 5*noOfSensors+currentLabel) );
+		currentLabel++;
+	}
 }
+
 //This function calculates the alignment jacobain in the local frame of the telescope. Using the state parameters
 void EUTelMillepede::computeAlignmentToMeasurementJacobian( EUTelState &state){
 	if(_alignmentMode == Utility::noAlignment){
@@ -127,82 +101,108 @@ void EUTelMillepede::computeAlignmentToMeasurementJacobian( EUTelState &state){
 
 //This function does the leg work of all the calculation for each state to determine the alignment jacobian
 // _jacobian from below looks like //   (-1   0  -y   -dx/dz   x*dx/dz   -y*dx/dz)( x local )
-																  //   (0  -1 	x   -dy/dz   x*dy/dz   -y*dy/dz )( y local )
-                                  //                                             ( anti clockwise rotation around z) ?? Strange but whatever
-                                  //                                             (moving the plane in the z direction)
-																	//                                             (this is clockwise rotation look in + y direction )
-																	// 	                                           (this is clockwise rotations in the x direction  )
-void EUTelMillepede::computeAlignmentToMeasurementJacobian( float x,float y, float slopeXvsZ, float slopeYvsZ){
+//   (0  -1 	x   -dy/dz   x*dy/dz   -y*dy/dz )( y local )
+//                                             ( anti clockwise rotation around z) ?? Strange but whatever
+//                                             (moving the plane in the z direction)
+//                                             (this is clockwise rotation look in + y direction )
+// 	                                           (this is clockwise rotations in the x direction  )
+/*	The Jacobian is calculated as follows:
+ *
+ * 	J_j = Grad_p(epsilon_j(p))  where p = (\Delta u, \Delta v, \Delta \gamma, \Delta w, \Delta \alpha, \Delta \beta)
+ *
+ * 	where \Delta u, v, w are the three position parameters (corresponding to shifts in local x, y and z)
+ *	and \Delta \alpha, \beta, \gamma are the orientations (aroung x-, y- and z-axis)
+ *
+ *	The Jacobian is then:
+ *
+ *		-1		 0
+ *		 0		-1
+ *		 v_x		-u_x
+ *	J =	 tan \psi	 tan \theta
+ *		 v_x tan \psi	 v_x tan \theta
+ *		 u_x tan \psi	 u_x tan \theta 
+ *
+ *
+ *	Where \psi is the angle between the track and vw-plane (\theta between track and uw-plane)
+ *
+ *	This is based upon following: V. Karimaeki et al., Sensor Alignment by Tracks, CHEP03, La Jolla California, March 24-28, 2003
+ *	But note that p is orderes slightly differently for us (\Delta \gamma is moved to the third position), this has no physical/mathematical reason
+ *
+ *	Of course, if certain parameters are fixed, p will shrink and the corresponding lines of the Jacobian have to be removed. I.e. the Jacobial above is
+ *	case of all parameters free and thus the most general case.
+ */
+void EUTelMillepede::computeAlignmentToMeasurementJacobian( float x,float y, float slopeXvsZ, float slopeYvsZ)
+{
 	_jacobian.Zero();
-	streamlog_out(DEBUG0) << "This is the empty Alignment Jacobian" << std::endl;
-	streamlog_message( DEBUG0, _jacobian.Print();, std::endl; );			
-		
-	//////////////////////////////////////Moving the sensor in x and y. Obviously if the sensor move right the hit will appear to move left. Always create this!!!! BEGIN
+
+	//Moving the sensor in x and y. As this is the case for all alignment modes, we set it in any case
 	_jacobian[0][0] = -1.0; // dxh/dxs      dxh => change in hit position         dxs => Change in sensor position
 	_jacobian[0][1] = 0.0; // dxh/dys     
 	_jacobian[1][0] = 0.0; // dyh/dxs
 	_jacobian[1][1] = -1.0; // dyh/dys
-	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////END
 
+	switch(_alignmentMode)
+	{
+		case Utility::XYShift:
+			break;
 
-	//////////////////////////////////////////////////////////////Rotations around the z axis of sensor. Only create this if you want rotations around z. BEGIN
-	if (_alignmentMode == Utility::XYShiftXYRot
-                || _alignmentMode == Utility::XYZShiftXYRot
-                || _alignmentMode == Utility::XYShiftXZRotXYRot
-                || _alignmentMode == Utility::XYShiftYZRotXYRot
-                || _alignmentMode == Utility::XYShiftXZRotYZRotXYRot
-                || _alignmentMode == Utility::XYZShiftXZRotYZRotXYRot) {
-		_jacobian[0][2] =  y; // dxh/rotzs   rotzs => rotation of sensor around z axis
-		_jacobian[1][2] =  -x; // dyh/rotzs
-	}
-	///////////////////////////////////////////////////////////////////////////////////////////////////////END
+		case Utility::XYShiftXYRot:
+			_jacobian[0][2] = y;		//XYRot (gamma)
+			_jacobian[1][2] = -x; 		//XYRot
+			break;
 
-	///////////////////////////////////////////////////Moving the sensor in the z axis. Only create this if you want shifts in z BEGIN
-	if (_alignmentMode == Utility::XYZShiftXYRot
-                || _alignmentMode == Utility::XYZShiftXZRotYZRotXYRot) {
-  	_jacobian[0][3] =   slopeXvsZ; // dxh/dzs
-    _jacobian[1][3] =   slopeYvsZ; // dyh/dzs
-  }
-	///////////////////////////////////////////////////////////////////////////////////////////END
+		case Utility::XYZShiftXYRot:
+			_jacobian[0][2] = y; 		//XYRot (gamma)
+			_jacobian[1][2] = -x; 		//XYRot
+			_jacobian[0][3] = slopeXvsZ; 	//ZShift (zshift)
+			_jacobian[1][3] = slopeYvsZ; 	//ZShift
+			break;
 
+		case Utility::XYShiftYZRotXYRot:
+			_jacobian[0][2] = y; 		//XYRot (gamma)
+			_jacobian[1][2] = -x; 		//XYRot
+			_jacobian[0][3] = y*slopeXvsZ; 	//YZRot (alpha)
+			_jacobian[1][3] = y*slopeYvsZ; 	//YZRot
+			break;
+
+		case Utility::XYShiftXZRotXYRot:
+			_jacobian[0][2] = y; 		//XYRot (gamma)
+			_jacobian[1][2] = -x; 		//XYRot
+			_jacobian[0][3] = x*slopeXvsZ;	//YZRot (beta)
+			_jacobian[1][3] = x*slopeYvsZ;	//YZRot
+			break;
+
+		case Utility::XYShiftXZRotYZRotXYRot:
+			_jacobian[0][2] = y; 		//XYRot (gamma)
+			_jacobian[1][2] = -x; 		//XYRot
+			_jacobian[0][3] = y*slopeXvsZ; 	//YZRot (alpha)
+			_jacobian[1][3] = y*slopeYvsZ; 	//YZRot
+			_jacobian[0][4] = x*slopeXvsZ;	//YZRot (beta)
+			_jacobian[1][4] = x*slopeYvsZ;	//YZRot
+			break;
 		
-	///////////////////////////////////////////////////////////////Rotations around x and y axis. Only do this if you want to move everything. WHY NOT ALSO PARTIAL SHIFTS?????? BEGIN.
-	if (_alignmentMode == Utility::XYZShiftXZRotYZRotXYRot) {
-  	_jacobian[0][4] =   x*slopeXvsZ; // dxh/rotys
-    _jacobian[1][4] =   x*slopeYvsZ; // dyh/rotys
-    _jacobian[0][5] =  y*slopeXvsZ; // dxh/rotxs          
-    _jacobian[1][5] =  y*slopeYvsZ; // dyh/rotxs         
-  }
-	///////////////////////////////////////////////////////////////////////////////////END
+		case Utility::XYZShiftXZRotYZRotXYRot:
+			_jacobian[0][2] = y; 		//XYRot (gamma)
+			_jacobian[1][2] = -x; 		//XYRot
+			_jacobian[0][3] = slopeXvsZ; 	//ZShift (zshift)
+			_jacobian[1][3] = slopeYvsZ; 	//ZShift	
+			_jacobian[0][4] = y*slopeXvsZ; 	//YZRot (alpha)
+			_jacobian[1][4] = y*slopeYvsZ; 	//YZRot
+			_jacobian[0][5] = x*slopeXvsZ;	//YZRot (beta)
+			_jacobian[1][5] = x*slopeYvsZ;	//YZRot
+			break;
 
-
-//This part is if there is only partial alignment. Therefore you need to overwrite some parts of the full size matrix we have just filled BEGIN
-	/////////////////////////////rotation around y axis BEGIN
-	if (_alignmentMode == Utility::XYShiftXZRotXYRot) {
-		_jacobian[0][3] = x*slopeXvsZ; // dxh/rotys
-   	_jacobian[1][3] = x*slopeYvsZ; // dyh/rotys
-  }
-	///////////////////////////////////////////////////////////////////////Rotation around x axis BEGIN
-	if (_alignmentMode == Utility::XYShiftYZRotXYRot) {
-  	_jacobian[0][3] = y*slopeXvsZ; // dxh/rotxs  //Note if changed  the signs here since they were wrong I think. Should match smae calculation above
-    _jacobian[1][3] = y*slopeYvsZ; // dyh/rotxs  
-  }
-	///////////////////////////////////////////////////////////////////////////////////////////END
-
- 	///////////////This does all rotations but not z shift////////////////////////BEGIN
-	if (_alignmentMode == Utility::XYShiftXZRotYZRotXYRot) {
-		_jacobian[0][3] =  x*slopeXvsZ; // dxh/rotys
-		_jacobian[1][3] =  x*slopeYvsZ; // dyh/rotys
-		_jacobian[0][4] = y*slopeXvsZ; // dxh/rotxs
-		_jacobian[1][4] = y*slopeYvsZ; // dyh/rotxs
-  }
-	/////////////////////////////////////////////////////////////////////////////END
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////END OF PARTIAL MATRIX FILL		
+		default:
+			break;
+	}	
 }
 
+
+// noAlignment, XYShift, XYShiftXYRot, XYZShiftXYRot, XYShiftYZRotXYRot, XYShiftXZRotXYRot, XYShiftXZRotYZRotXYRot, XYZShiftXZRotYZRotXYRot
 void EUTelMillepede::setGlobalLabels(EUTelState& state){
 	setGlobalLabels( state.getLocation());
 }
+
 //Here depending on the palne the states is on we return a particular label for x shift, y shift.....
 void EUTelMillepede::setGlobalLabels( int iPlane){
 	//We alway add these to the first to places in the alignment matrix
@@ -288,8 +288,6 @@ void EUTelMillepede::setBinaryFileName(std::string binary){
 	_milleBinaryFilename = binary;
 }
 
-
-
 void EUTelMillepede::setSteeringFileName(std::string name){
 
 	_milleSteeringFilename = name;
@@ -301,10 +299,6 @@ void EUTelMillepede::setResultsFileName(std::string name){
 
 }
 
-
-
-
-  
 void EUTelMillepede::writeMilleSteeringFile(lcio::StringVec pedeSteerAddCmds){
 	streamlog_out(DEBUG2) << "EUTelMillepede::writeMilleSteeringFile------------------------------------BEGIN" << endl;
 
@@ -540,22 +534,24 @@ bool EUTelMillepede::parseMilleOutput(std::string alignmentConstantLCIOFile, std
 	return true;
 }
 
-void EUTelMillepede::CreateBinary(){
-        streamlog_out(DEBUG0) << "Initialising Mille..." << std::endl;
-				streamlog_out(DEBUG0) << "Millepede binary:" << _milleBinaryFilename << endl;
+void EUTelMillepede::CreateBinary()
+{
+	streamlog_out(DEBUG0) << "Initialising Mille..." << std::endl;
+	streamlog_out(DEBUG0) << "Millepede binary:" << _milleBinaryFilename << endl;
+	const unsigned int reserveSize = 80000;
+	std::string string = "millepede.bin"; //TO DO:need to fix this. Not reading it correctly
 
-        const unsigned int reserveSize = 80000;
-				std::string string = "millepede.bin"; //TO DO:need to fix this. Not reading it correctly
-        _milleGBL = new gbl::MilleBinary(string, reserveSize);
+	_milleGBL = new gbl::MilleBinary(string, reserveSize);
 
-        if (_milleGBL == NULL) {
-            streamlog_out(ERROR) << "Can't allocate an instance of mMilleBinary. Stopping ..." << std::endl;
-            throw UnknownDataTypeException("MilleBinary was not created");
-        }
+	if (_milleGBL == NULL) {
+		streamlog_out(ERROR) << "Can't allocate an instance of MilleBinary. Stopping ..." << std::endl;
+		throw lcio::Exception("MilleBinary was not created");
+	}
 }
 
 void EUTelMillepede::testUserInput(){
 	bool fixedGood=true;
+
 	if(_fixedAlignmentXShfitPlaneIds.size()== 0){
 		streamlog_out(MESSAGE9) <<	"You have not fixed any X shifts. This is ill advised ." << std::endl;
 		fixedGood=false;
@@ -584,6 +580,7 @@ void EUTelMillepede::testUserInput(){
 		streamlog_out(MESSAGE9) <<	"For all alignment parameters each has one fixed. GOOD! ." << std::endl;
 	}
 }
+
 void EUTelMillepede::printFixedPlanes(){
 	streamlog_out(MESSAGE5)<<"These are the planes what have X shifts fixed"<<endl;
 	for(size_t i=0;i<_fixedAlignmentXShfitPlaneIds.size();++i){

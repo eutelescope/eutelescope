@@ -36,15 +36,13 @@ namespace eutelescope {
         
     private:
         DISALLOW_COPY_AND_ASSIGN(EUTelMillepede)        // prevent users from making (default) copies of processors
+        EUTelMillepede();
 
    public:
-        EUTelMillepede();
-				EUTelMillepede(int alignmentMode);
+				EUTelMillepede(Utility::AlignmentMode alignmentMode);
 
-        ~EUTelMillepede();
+        			virtual ~EUTelMillepede();
 
-				//This set the number given by the processor to a aligment mode string
-				void SetAlignmentMode(int alignmentMode);
 				//This take a state and outputs a its alignment jacobian given the alignment mode
 				void computeAlignmentToMeasurementJacobian( EUTelState& state);
 
@@ -87,7 +85,6 @@ namespace eutelescope {
 void CreateBinary();
 
 		protected:
-				int alignmentMode;
 				Utility::AlignmentMode _alignmentMode;
 				TMatrixD _jacobian; //Remember you need to create the object before you point ot it
 				std::vector<int> _globalLabels;
