@@ -308,9 +308,6 @@ bool AlibavaCorrelator::isInDetectorIDsList(int detID){
 
 void AlibavaCorrelator::processEvent (LCEvent * anEvent) {
 	
-	if ( anEvent->getEventNumber() % 1000 == 0 )
-		streamlog_out ( DEBUG1 ) << "Looping events "<<anEvent->getEventNumber() << endl;
-	
 	AlibavaEventImpl * alibavaEvent = static_cast<AlibavaEventImpl*> (anEvent);
 	int eventnum = alibavaEvent->getEventNumber();
 	
@@ -321,6 +318,18 @@ void AlibavaCorrelator::processEvent (LCEvent * anEvent) {
 	unsigned int noOfHits;
 	try{
 		collectionVec = dynamic_cast< LCCollectionVec * > ( alibavaEvent->getCollection( getInputCollectionName() ) ) ;
+} catch (DataNotAvailableException& e  ) 
+
+    {
+
+      streamlog_out  ( MESSAGE2 ) <<  "No input collection " << getInputCollectionName() << " found on event " << alibavaEvent->getEventNumber()
+
+                                  << " in run " << alibavaEvent->getRunNumber() << endl;
+
+      return ;
+
+    }
+	try{
 		CellIDDecoder<TrackerHitImpl> hitDecoder ( eutelescope::EUTELESCOPE::HITENCODING );
 		
 		noOfHits = collectionVec->getNumberOfElements();
