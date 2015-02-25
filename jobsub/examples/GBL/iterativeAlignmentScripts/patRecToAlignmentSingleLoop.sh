@@ -106,6 +106,7 @@ while [ "$alignment" == "false" ]; do
 				#Also decrease the rejection factor since we must be close to a fit.
 				rejectFactor=1.01
 			else
+				#If there is no factor to decrease resolution then just use this fit.
 				alignment=true
 			fi
 		else
