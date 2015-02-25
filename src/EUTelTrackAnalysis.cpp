@@ -141,7 +141,7 @@ void EUTelTrackAnalysis::plotPValueWithIncidenceAngles(EUTelTrack track){
 
 void EUTelTrackAnalysis::plotPValueWithPosition(EUTelTrack track){
   streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotPValueWithPosition------------------------------BEGIN"<< std::endl;
-	float pValue = 1;   //  calculatePValueForChi2(track);
+	float pValue = calculatePValueForChi2(track);
 	std::vector<EUTelState> states = track.getStates();
 	for(size_t i=0; i<states.size();++i){
 		EUTelState state  = states.at(i);
@@ -163,7 +163,7 @@ void EUTelTrackAnalysis::plotPValueWithPosition(EUTelTrack track){
 
 float EUTelTrackAnalysis::calculatePValueForChi2(EUTelTrack track){
   streamlog_out(DEBUG2) << " EUTelTrackAnalysis::calculatePValueForChi2------------------------------BEGIN"<< std::endl;
-
+/*
 	float chi2Float=track.getChi2();
 	int   ndfInt = track.getNdf();
 	std::string chi2 = numberToString(chi2Float);
@@ -193,4 +193,6 @@ std::string EUTelTrackAnalysis::numberToString(T number){
 	convert << number;   
 	Result = convert.str();
 	return Result;
+	*/
+	return 1.0;
 }
