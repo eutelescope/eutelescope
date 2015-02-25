@@ -26,9 +26,9 @@ export xres="0.006 $r $r $dutX $dutX  $r $r 0.006";
 export yres="0.006 $r $r $dutY $dutY  $r $r 0.006";
 export minTracksPerEventAcceptance=0.001 #This is the number of tracks that is needed per event before we stop pattern recognition. Note value should depend on other cuts. 
 export ResidualsRMax="0.5" #This is the window size on the next plane that we will accept hits from. This will increase if less than 1 track per event is found.
-export inputGearInitial="gear-stripSensor.xml" #Note the gear file changes through the process so must be placed here.
+export inputGearInitial="gear-no-DUT-why-not-working-613.xml" #Note the gear file changes through the process so must be placed here.
 export allPlanes="0 1 2 6 7 3 4 5" #Must be in the correct z-ordering here.
-export allPlanesFixed="0     5  6 7"  
+export allPlanesFixed="0 1 2 3 4 5 6 "  
 
 
 #Export input variables to other bash files.  
