@@ -119,6 +119,11 @@
 		<histo name="hClusterSize" perEachChip="true" type="TH1D"
 		xBin="15" xMin="0" xMax="15"
 		title="Cluster Size" labelX="Cluster Size" labelY="Number of Entries" />
+			
+		<!-- Hit Amplitude-->
+		<histo name="hHitAmplitude" perEachChip="true" type="TH1D"
+		xBin="1000" xMin="0" xMax="500"
+		title="Hit Amplitude" labelX="Signal (ADCs)" labelY="Number of Entries" />
 		
 		<!-- Eta distribution -->
 		<histo name="hEta" perEachChip="true" type="TH1D"
