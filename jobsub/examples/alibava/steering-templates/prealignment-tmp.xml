@@ -17,13 +17,13 @@
 
    <execute>
       <processor name="AIDA"/>
-      <processor name="LoadRefHitDB"/>
+      <!--processor name="LoadRefHitDB"/-->
       <processor name="PreAligner"/>
       <processor name="EUTelUtilityPrintEventNumber"/>
    </execute>
 
    <global>
-      <parameter name="LCIOInputFiles"> @ResultsPath@/@MergedOutputFormat@-missingcoordinate.slcio </parameter>
+      <parameter name="LCIOInputFiles"> @LcioPath@/@MergedOutputFormat@-missingcoordinate.slcio </parameter>
       <parameter name="GearXMLFile" value="@GearFile@"/>
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>

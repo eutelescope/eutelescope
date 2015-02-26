@@ -17,7 +17,7 @@
 
    <execute>
       <processor name="AIDA"/>
-      <processor name="LoadRefHitDB"/>
+      <!--processor name="LoadRefHitDB"/-->
       <processor name="LoadPreAlignment"/>
       <processor name="ApplyPreAlignment"/>
       <processor name="DafFitter"/>
@@ -26,7 +26,7 @@
    </execute>
 
    <global>
-      <parameter name="LCIOInputFiles"> @ResultsPath@/@MergedOutputFormat@-missingcoordinate.slcio </parameter>
+      <parameter name="LCIOInputFiles"> @LcioPath@/@MergedOutputFormat@-missingcoordinate.slcio </parameter>
       <parameter name="GearXMLFile" value="@GearFile@"/>
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
@@ -271,7 +271,7 @@
   <!--Execute the pede program using the generated steering file.-->
   <parameter name="RunPede" type="bool" value="@RunPede@"/>
   <!--(default) Resolution of the telescope for Millepede (sigma_x=sigma_y) used only if plane dependent resolution is set inconsistently.-->
-  <parameter name="TelescopeResolution" type="float" value="10"/>
+  <parameter name="TelescopeResolution" type="float" value="20"/>
   <!--Rotation around the x axis of the sensors in test mode (to be determined by the alignment).-->
   <!--parameter name="TestModeSensorAlpha" type="FloatVec"> 0 0 0 0 0 0 </parameter-->
   <!--Rotation around the y axis of the sensors in test mode (to be determined by the alignment).-->
