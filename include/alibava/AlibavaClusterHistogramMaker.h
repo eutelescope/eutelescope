@@ -171,9 +171,12 @@ namespace alibava {
 		
 		// Eta histogram name for ClusterSize > 5
 		std::string _etaHistoNameCSgt5;
-		
+			
 		// Cluster Size
 		std::string _clusterSizeHistoName;
+		
+		// Hit Amplitude 
+		std::string _hitAmplitudeHistoName;
 		
 		// Eta vs Center of gravity
 		std::string _etaVSCoG;

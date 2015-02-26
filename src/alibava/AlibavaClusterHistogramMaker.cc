@@ -68,6 +68,7 @@ _etaHistoNameCS4("hEtaCS4"),
 _etaHistoNameCS5("hEtaCS5"),
 _etaHistoNameCSgt5("hEtaCSgt5"),
 _clusterSizeHistoName("hClusterSize"),
+_hitAmplitudeHistoName("hHitAmplitude"),
 _etaVSCoG("hEta_vs_CoG"),
 _etaVSClusterSize("hEta_vs_ClusterSize")
 {
@@ -183,7 +184,7 @@ void AlibavaClusterHistogramMaker::createRulesToChangeXMLValues(){
 		signalMultipliedby = to_string(_multiplySignalby);
 		signalMultipliedby = string(" (")+signalMultipliedby+string(") ");
 		
-		//	addToXMLTitle(_someHistoName, "labelY", "left", signalMultipliedby);
+		addToXMLTitle(_hitAmplitudeHistoName, "labelX", "left", signalMultipliedby);
 	}
 	
 }
@@ -235,6 +236,7 @@ void AlibavaClusterHistogramMaker::fillListOfHistos(){
 	addToHistoCheckList_PerChip(_etaHistoNameCS5);
 	addToHistoCheckList_PerChip(_etaHistoNameCSgt5);
 	addToHistoCheckList_PerChip(_clusterSizeHistoName);
+	addToHistoCheckList_PerChip(_hitAmplitudeHistoName);
 	addToHistoCheckList_PerChip(_etaVSCoG);
 	addToHistoCheckList_PerChip(_etaVSClusterSize);
 	
@@ -300,7 +302,7 @@ void AlibavaClusterHistogramMaker::processEvent (LCEvent * anEvent) { // HERE lo
 	
 	
 	/////////////////////////////
-	// Now loop ever detectors //
+	// Now loop over detectors //
 	LCCollectionVec * collectionVec;
 	unsigned int noOfChip;
 	try{
@@ -347,6 +349,10 @@ void AlibavaClusterHistogramMaker::fillHistos(TrackerDataImpl * trkdata ){
 	
 	TH1D * histo;
 	TProfile * profile;
+		
+	// Lets fill Hit Amplitude histogram
+	histo = dynamic_cast<TH1D*> (_rootObjectMap[getHistoNameForChip(_hitAmplitudeHistoName,ichip)]);
+	histo->Fill( _multiplySignalby * anAlibavaCluster.getTotalSignal());
 	
 	// Lets fill Cluster size histogram
 	int clusterSize = anAlibavaCluster.getClusterSize();
