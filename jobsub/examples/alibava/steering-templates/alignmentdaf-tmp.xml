@@ -158,7 +158,7 @@
   <!--Maximum allowed global chi2/ndof-->
   <parameter name="MaxChi2OverNdof" type="float" value="100"/>
   <!--How many DUT hits do we need in order to accept track?-->
-  <parameter name="NDutHits" type="int" value="1"/>
+  <parameter name="NDutHits" type="int" value="0"/>
   <!--dx/dz assumed by track finder-->
   <parameter name="NominalDxdz" type="float" value="0.0"/>
   <!--dy/dz assumed by track finder-->
@@ -168,7 +168,7 @@
   <!--reference hit collection name -->
   <parameter name="ReferenceCollection" type="string" value="refhit"/>
   <!--How many telescope planes do we require to be included in the fit?-->
-  <parameter name="RequireNTelPlanes" type="float" value="6"/>
+  <parameter name="RequireNTelPlanes" type="float" value="5"/>
   <!--Scale thickness of DUT planes-->
   <!--parameter name="ScaleScattering" type="float" value="1"/-->
   <!--Sigma of telescope resolution in the global X plane,-->
@@ -203,7 +203,7 @@
   <!--This is the name of the LCIO file name with the output alignmentconstants (add .slcio)-->
   <parameter name="AlignmentConstantLCIOFile" type="string" value="@DatabasePath@/@MergedOutputFormat@-alignment.slcio"/>
   <!--Set how many hits (=planes) can be missing on a track candidate.-->
-  <parameter name="AllowedMissingHits" type="int" value="2"/>
+  <parameter name="AllowedMissingHits" type="int" value="3"/>
   <!--Name of the Millepede binary file.-->
   <parameter name="BinaryFilename" type="string" value="@DatabasePath@/@MergedOutputFormat@-align-mille.bin"/>
   <!--Maximal allowed distance between hits entering the fit per 10 cm space between the planes.-->
