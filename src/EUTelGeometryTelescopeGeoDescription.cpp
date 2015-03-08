@@ -1061,6 +1061,22 @@ float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double 
     
     return rad;
 }
+//This will output the X/X0 of the the full detector system. This is needed to calculate the for each individual scatter the proper correction. 
+//Note we can not determine this correction for each scatterer individually since this correction would introduce a non linear term which would be unphysical. 
+float EUTelGeometryTelescopeGeoDescription::calculateTotalRadiationLength(){
+	streamlog_out(DEBUG1) << "calculateTotalRadiationLength()------------------------------BEGIN" <<std::endl;
+	std::map<int,EUTelPlane>::reverse_iterator lastPlane =_planeSetup.rbegin();
+	float zPos = lastPlane->second.zPos;
+	std::cout << "here the zPos" << zPos << std::endl;
+	const double start[] = {0,0,0};
+	const double end[]   = {0,0,zPos};
+	float perRad =	findRadLengthIntegral( start,end , true ); 
+	std::cout << "here the rad" << perRad << std::endl;
+
+	streamlog_out(DEBUG1) << "calculateTotalRadiationLength()------------------------------BEGIN" <<std::endl;
+
+}
+
 
 //
 // straight line - shashlyk plane assembler

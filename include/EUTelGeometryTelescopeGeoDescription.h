@@ -380,6 +380,9 @@ class EUTelGeometryTelescopeGeoDescription
 						TVector3& outputMomentum, float& arcLength, int& newNextPlaneID );
 
 	TVector3 getXYZMomentumfromArcLength(TVector3 momentum, TVector3 globalPositionStart, float charge, float  arcLength );
+	//This outputs the total percentage radiation length for the full detector system. 
+	float calculateTotalRadiationLength();
+
 
 	float getInitialDisplacementToFirstPlane() const { return _initialDisplacement; };
 
