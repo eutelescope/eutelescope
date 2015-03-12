@@ -259,8 +259,9 @@ namespace eutelescope {
          * @param p momentum of the particle [GeV/c]
          * @param x thickness of the material in units of radiation lenght
          */
+				//The highland formula correction must be calculated for the whole telescope system. 
         double getThetaRMSHighland( double p, double x ) {
-            double tet = (0.0136 * sqrt(x) / p * (1 + 0.038 * std::log(x)));
+            double tet = ((0.0136 * sqrt(x)) / p)*(1.0+0.038*std::log(x)) ;
             return tet;
         }
         

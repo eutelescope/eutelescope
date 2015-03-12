@@ -185,6 +185,8 @@ private:
 
 		void setNewState(float position[],float momentum[],  EUTelState& newState);
 		
+		void setRadLengths(EUTelTrack & track,std::map<const int,double>  mapSensor, std::map<const int ,double>  mapAir, double rad );
+
 
 		void UpdateStateUsingHitInformation(EUTelTrackStateImpl*,EVENT::TrackerHit* , const TMatrixD&, TMatrixD &, TMatrixD &);
 

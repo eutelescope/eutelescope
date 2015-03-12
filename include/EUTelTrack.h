@@ -22,9 +22,12 @@ namespace eutelescope {
 			EUTelTrack( const EUTelTrack& track);
 			EUTelTrack( const EUTelTrack& track,bool);
 			//getters
+			float getTotalVariance(){ return getPhi();}
 			int getNumberOfHitsOnTrack() const;
 			std::vector<EUTelState> getStates();
 			std::vector<EUTelState*> getStatesPointers();
+			//setters
+			void setTotalVariance(double rad);
 			//print
 			void print();
 

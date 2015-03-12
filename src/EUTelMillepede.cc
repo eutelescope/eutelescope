@@ -6,17 +6,14 @@ using namespace marlin;
 using namespace eutelescope;
 
 
-//TO DO: The last alignment mode does not work. I.e alignment mode 7. This is not a big deal since we will never align all degrees of freedom in one go.
 namespace eutelescope {
 
-	//This constructor is useful for running the binary files execution
+	//This constructor is useful for producing the binary file for track fit only.
+	//We do not need any global derivative information.
 	EUTelMillepede::EUTelMillepede() : 
-	_milleGBL(NULL),
-	_alignmentMode(Utility::noAlignment),
-	_jacobian(5,5),
-	_globalLabels(5)
+	_milleGBL(NULL)
  	{
-	FillMilleParametersLabels();
+		CreateBinary();
 	}
 
 	//This constructor useful for mille binary output part

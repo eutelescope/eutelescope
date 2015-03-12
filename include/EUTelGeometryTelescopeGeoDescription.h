@@ -23,6 +23,14 @@
 // EUTELESCOPE
 #include "EUTelUtility.h"
 #include "EUTelGenericPixGeoMgr.h"
+#include "EUTelState.h"
+
+//LCIO
+#include "lcio.h"
+#include "IMPL/TrackerHitImpl.h"
+#include "IMPL/TrackImpl.h"
+#include <UTIL/LCTOOLS.h>
+
 
 // ROOT
 #if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
@@ -362,9 +370,11 @@ class EUTelGeometryTelescopeGeoDescription
 	void initializeTGeoDescription( std::string& geomName, bool dumpRoot );
 
 	// Geometry operations
-	float findRadLengthIntegral( const double[], const double[], bool );
+	float findRadLengthIntegral( const double[], const double[], bool, 	std::map< const int, double> &sensors,	std::map< const int, double> &air );
 
 	int getSensorID( const float globalPos[] ) const;
+	int getSensorIDFromManager();
+
 
 	void local2Master( int, const double[], double[] );
 
@@ -380,8 +390,11 @@ class EUTelGeometryTelescopeGeoDescription
 						TVector3& outputMomentum, float& arcLength, int& newNextPlaneID );
 
 	TVector3 getXYZMomentumfromArcLength(TVector3 momentum, TVector3 globalPositionStart, float charge, float  arcLength );
+	void testOutput(std::map<const int,double> & mapSensor, std::map<const int, double> & mapAir);
+
 	//This outputs the total percentage radiation length for the full detector system. 
-	float calculateTotalRadiationLength();
+	float calculateTotalRadiationLengthAndWeights(const double startD[3],const double endD[3], std::map<const int,double>&, std::map<const int,double> & );
+	void mapWeightsToSensor(std::map<const int,double> sensor,std::map<const int,double> air,  std::map< const  int, double > & mapSen,std::map< const  int, double > & mapAir  );
 
 
 	float getInitialDisplacementToFirstPlane() const { return _initialDisplacement; };

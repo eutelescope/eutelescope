@@ -71,30 +71,11 @@ TVectorD EUTelState::getStateVec() const {
 }
 TMatrixDSym EUTelState::getScatteringVarianceInLocalFrame(){
 	streamlog_out( DEBUG1 ) << "EUTelState::getScatteringVarianceInLocalFrame(Sensor)----------------------------BEGIN" << std::endl;
-	//TO DO:Should make the reading for any planes not just si. 
-	const double x0  = geo::gGeometry().siPlaneRadLength(getLocation());//This is in mm.
-	const double thickness        = geo::gGeometry().siPlaneZSize(getLocation());//TO DO: Need to get the correct thickness
-	streamlog_out(DEBUG5)<<"The radiation length for the sensor is: " << x0 <<std::endl; 
-	if( x0== 0){
-		throw(lcio::Exception("Radiation length is zero.")); 	
+	streamlog_out(DEBUG1) << "Variance (Sensor):  " << std::scientific << getRadFrac()[0] << "  Plane: " << getLocation()  << std::endl;
+	if(getRadFrac()[0] == 0){
+		throw(std::string("Radiation of sensor is zero. Something is wrong with radiation length calculation."));
 	}
-	streamlog_out(DEBUG5)<<"The thickness for the sensor is: " << thickness <<std::endl; 
-	if(thickness == 0 ){ 
-		throw(lcio::Exception("thickness is zero")); 	
-	}
-	const double percentageOfRadiationLength  = thickness / x0; 
-	streamlog_out(DEBUG5)<<"The  percentageOfRadiationLength for the sensor is: " <<  percentageOfRadiationLength<<std::endl; 
-	if( percentageOfRadiationLength== 0){
-		streamlog_out(MESSAGE0)<<"The thickness: " << thickness << "The radiation length is: "<< x0 <<std::endl; 
-		throw(lcio::Exception("percentageOfRadiationLength is zero for the plane itself.")); 	
-	}
-	if(getBeamEnergy() == 0 ){ 
-		throw(lcio::Exception("Beam energy is zero")); 	
-	}
-	const double scatteringVariance  = Utility::getThetaRMSHighland(getBeamEnergy(), percentageOfRadiationLength);
-	streamlog_out(DEBUG5)<<"The scattering variance in radians: " <<  scatteringVariance <<std::endl; 
-
-	float scatPrecisionSqrt = 1.0/scatteringVariance;
+	float scatPrecision = 1.0/getRadFrac()[0];
 	//We need the track direction in the direction of x/y in the local frame. 
 	//This will be the same as unitMomentum in the x/y direction
 	TVector3 unitMomentumLocalFrame =	getIncidenceUnitMomentumVectorInLocalFrame();
@@ -102,7 +83,7 @@ TMatrixDSym EUTelState::getScatteringVarianceInLocalFrame(){
 	float c1 = 	unitMomentumLocalFrame[0]; float c2 =	unitMomentumLocalFrame[1];
 	streamlog_out( DEBUG1 ) << "The component in the x/y direction: "<< c1 <<"  "<<c2 << std::endl;
 	TMatrixDSym precisionMatrix(2);
-	float factor = pow(scatPrecisionSqrt,2)/pow((1-pow(c1,2)-pow(c2,2)),2);
+	float factor = scatPrecision/pow((1-pow(c1,2)-pow(c2,2)),2);
 	streamlog_out( DEBUG1 ) << "The factor: "<< factor << std::endl;
 	precisionMatrix[0][0]=factor*(1-pow(c2,2));
   precisionMatrix[1][0]=factor*c1*c2;				precisionMatrix[1][1]=factor*(1-pow(c1,2));
@@ -111,7 +92,7 @@ TMatrixDSym EUTelState::getScatteringVarianceInLocalFrame(){
 }
 TMatrixDSym EUTelState::getScatteringVarianceInLocalFrame(float  variance){
 	streamlog_out( DEBUG1 ) << "EUTelState::getScatteringVarianceInLocalFrame(Scatter)----------------------------BEGIN" << std::endl;
-	streamlog_out(DEBUG5)<<"The scattering variance in radians: " <<  variance <<std::endl; 
+	streamlog_out(DEBUG5)<<"Variance (AIR Fraction): " <<std::scientific  <<  variance <<std::endl; 
 	float scatPrecision = 1.0 /variance;
 	//We need the track direction in the direction of x/y in the local frame. 
 	//This will be the same as unitMomentum in the x/y direction
@@ -192,6 +173,15 @@ TVectorD EUTelState::getKinks(){
 	kinks(1) = kinksVec.at(1);
 	return kinks;
 }
+TVectorD EUTelState::getRadFrac(){
+	EVENT::FloatVec kinkRad = getCovMatrix();
+	TVectorD rad(2);
+	rad(0) = kinkRad.at(2);
+	rad(1) = kinkRad.at(3);
+	return rad;
+}
+
+
 //setters
 void EUTelState::setDimensionSize(int dimension){
 	setD0(static_cast<float>(dimension));
@@ -223,6 +213,11 @@ void EUTelState::setKinks(TVectorD kinks){
 	EVENT::FloatVec kinksInput;
 	kinksInput.push_back(kinks[0]);
 	kinksInput.push_back(kinks[1]);
+	//TO DO: Must save this again since we want both pieces of information. MUST FIX
+	EVENT::FloatVec kinksRad = getCovMatrix();
+	kinksInput.push_back(kinksRad[2]);
+	kinksInput.push_back(kinksRad[3]);
+
 	setCovMatrix(kinksInput);
 }
 void EUTelState::setPositionGlobal(float positionGlobal[]){
@@ -266,6 +261,18 @@ void EUTelState::setStateVec(TVectorD stateVec){
 	setIntersectionLocalYZ(stateVec[2]);
 	setOmega(stateVec[0]);
 
+}
+void EUTelState::setRadFrac(double plane, double air){
+	//TO DO: Must rearrange how we save variables.
+	//Must save this again to save the radiation length
+	TVectorD kinks = getKinks();
+	EVENT::FloatVec input;
+	input.push_back(kinks[0]);
+	input.push_back(kinks[1]);
+	input.push_back(plane);
+	input.push_back(air);
+
+	setCovMatrix(input);
 }
 ///initialise
 void EUTelState::initialiseCurvature(){
@@ -353,6 +360,34 @@ TMatrix EUTelState::computePropagationJacobianFromLocalStateToNextLocalState(TVe
 	streamlog_out(DEBUG2) << "-------------------------------EUTelState::computePropagationJacobianFromStateToThisZLocation()-------------------------END" << std::endl;
 	return localToNextLocalJacobian;
 }
+//THIS WILL RETURN THE TOTAL RADIATION LENGTH OF THE TELESCOPE SYSTEM STARTING AT THE STATE AND MOVING FORWARD. 
+//WE ALSO GET THE FRACTION OF RADIATION LENGTH THAT EACH PLANE AND VOLUME OF AIR SHOULD GET. 
+//THIS IS ASSOCIATED SO THE AIR INFRONT OF A SENSOR IS ASSOCIATED WITH IT.
+//EXCLUDED PLANES ARE REDUCED TO MORE RADIATION LENGTH IN FRONT OF A NON EXCLUDED PLANE.
+float EUTelState::computeRadLengthsToEnd( std::map<const int,double> & mapSensor, std::map<const int ,double> & mapAir){
+	//Get the ID of the last sensor
+	int lastPlaneID = 	geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at( geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()-1 );
+	float intersectionPoint[3];
+	TVector3 momentumAtIntersection;
+	float arcLength;
+	int holder; //This is used to return the plane which is found.
+	//DETERMINE INTERSECTION ON LAST PLANE USING STATE INFORMATION.
+//	std::cout<< "Last sensor ID: " << lastPlaneID <<std::endl;
+	findIntersectionWithCertainID(lastPlaneID, intersectionPoint, momentumAtIntersection,arcLength,holder );
+	TVector3 gPos =  getPositionGlobal();
+//	std::cout << "gPos: " << gPos[0] << ","<<gPos[1]<<","<<gPos[2]<<std::endl;
+//	std::cout << "Intersection: " << intersectionPoint[0] << ","<<intersectionPoint[1]<<","<<intersectionPoint[2]<<std::endl;
+
+	const double start[] = {gPos[0],gPos[1],-0.025+gPos[2]};
+	const double end[]   = {intersectionPoint[0],intersectionPoint[1],intersectionPoint[2]+0.025};
+//	std::cout << "intersection point " << intersectionPoint[2] <<std::endl;
+	//NOW WE CALCULATE THE RADIATION LENGTH FOR THE FULL FLIGHT AND THEN SPLIT THESE INTO LINEAR  COMMPONENTS FOR SCATTERING ESTIMATION. 
+	//We will return the radiation lengths associate with the planes and air. Note excluded planes volume should be added to the air in front of non excluded planes. 
+	float rad =	geo::gGeometry().calculateTotalRadiationLengthAndWeights( start,end,  mapSensor, mapAir);
+	return rad;
+}
+
+
 //print
 void EUTelState::print(){
 	streamlog_out(DEBUG2) << "The state vector//////////////////////////////////////////////////////" << std::endl;

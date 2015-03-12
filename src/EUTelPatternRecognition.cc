@@ -53,10 +53,15 @@ void EUTelPatternRecognition::testTrackCandidates(){
 //This is the work horse of the class. Using seeds it propagates the track forward using equations of motion. This can be with or without magnetic field.
 void EUTelPatternRecognition::propagateForwardFromSeedState(EUTelState& stateInput, EUTelTrack& track)
 {
+	std::map<const int,double>  mapSensor;
+	std::map<const int ,double>  mapAir;
+	double rad =	stateInput.computeRadLengthsToEnd(mapSensor, mapAir);
+
 	EUTelState* state = &stateInput;//Make it a pointer so we can change this to newState after.
 	
 	//TO DO: To delete this in smart way. 
 	EUTelState *firstState = new EUTelState(stateInput);//Need to create an initial state that will not be deleted outside this scope  
+	//Here we determine the radiation lengths associated with this track and the weights for each scatterer. 
 	streamlog_out(DEBUG2) << "This is the memory location of the state: "<< firstState << std::endl;
 	track.addTrack(static_cast<EVENT::Track*>(firstState));//Note we do not have to create new since this object State is saved in class member scope
 	//Here we loop through all the planes not excluded. We begin at the seed which might not be the first. Then we stop before the last plane, since we do not want to propagate anymore
@@ -160,7 +165,25 @@ void EUTelPatternRecognition::propagateForwardFromSeedState(EUTelState& stateInp
 		state = newState;
 		streamlog_out ( DEBUG1 ) << "End of loop "<< std::endl;
 	}
+	//NOW WE ASSOCIATE THE STATES TO A SCATTERING LENGTH.
+
+	setRadLengths(track, mapSensor, mapAir, rad);
 }
+//setRadLengths: This will determine the variance fraction each scatterer will get. Note this comes in two parts. The first is the plane and the next scattering from the air.    
+void EUTelPatternRecognition::setRadLengths(EUTelTrack & track,	std::map<const int,double>  mapSensor, std::map<const int ,double>  mapAir, double rad ){
+	//THE FINAL WEIGHT WE HAVE WILL BE A FRACTION PERCENTAGE OF THE TOTAL RADIATION LENGTH
+	std::vector<EUTelState*> states = track.getStatesPointers();
+//	std::cout << "Rad " << rad << std::endl;
+	const double var  = pow( Utility::getThetaRMSHighland(states.at(0)->getBeamEnergy(), rad) , 2);
+//	std::cout << "Here is the var: " << var << std::endl;
+	for(size_t i =0; i < track.getStates().size();++i){ //LOOP over all track again.
+		streamlog_out(DEBUG0) << " Values placed in RMS using Highland formula corrected. (SENSOR) : " << (mapSensor[states.at(i)->getLocation()]/rad)*var << "  (PLANE)  " << (mapAir[states.at(i)->getLocation()]/rad)*var <<std::endl;
+		states.at(i)->setRadFrac((mapSensor[states.at(i)->getLocation()]/rad)*var,(mapAir[states.at(i)->getLocation()]/rad)*var);//We input the fraction percentage.
+	}
+	//NOW DETERMINE THE VARIANCE DUE TO THE RADIATION LENGTH. THIS IN THE END WILL BE DIVIDED AMOUNG THE SCATTERERS.
+	track.setTotalVariance(var);
+}
+
 
 void EUTelPatternRecognition::printTrackCandidates(){
 	streamlog_out ( DEBUG1 ) << "EUTelKalmanFilter::printTrackCandidates----BEGIN "<< std::endl;
@@ -189,15 +212,15 @@ void EUTelPatternRecognition::testTrackQuality()
 		float percentAfterPruneCut = (static_cast<float>(_numberOfTracksAfterPruneCut)/static_cast<float>(_numberOfTracksTotal))*100;
 		float averageNumberOfHitsOnTrack = static_cast<float>(_totalNumberOfHits)/static_cast<float>(_numberOfTracksTotal);
 		float averageNumberOfSharedHitsOnTrack = static_cast<float>(_totalNumberOfSharedHits)/static_cast<float>( _numberOfTracksTotal);
-		streamlog_out(MESSAGE5) << "//////////////////////////////////////////////////////////////////////////////////////////////////////////////" << std::endl
+		streamlog_out(DEBUG5) << "//////////////////////////////////////////////////////////////////////////////////////////////////////////////" << std::endl
 				<< "Total Tracks: " << _numberOfTracksTotal << " Pass Hit Cut: " <<  _numberOfTracksAfterHitCut << " Pass Prune Cut: " << _numberOfTracksAfterPruneCut << std::endl
 				<< "Percentage after Hit Cut: " << percentAfterHitCut << " Percentage after Prune Cut: " << percentAfterPruneCut << std::endl
 				<< "The average number of hits on a track: " << averageNumberOfHitsOnTrack << std::endl
 				<< "The average number of shared hits on a track with other tracks: " << averageNumberOfSharedHitsOnTrack << std::endl;
 				//(Note this can change with cust since we remove tracks before we have counted all similar hits. To see all similar hits make cut very large and then run)
 	
-		if(percentAfterHitCut < 0.1) streamlog_out(MESSAGE5)<< "The percentage of track making the hit cut is very low at the moment "<<std::endl;
-		if(percentAfterPruneCut < 0.1)streamlog_out(MESSAGE5)<< "The percentage of track making the prune cut is very low at the moment "<<std::endl;
+		if(percentAfterHitCut < 0.1) streamlog_out(DEBUG5)<< "The percentage of track making the hit cut is very low at the moment "<<std::endl;
+		if(percentAfterPruneCut < 0.1)streamlog_out(DEBUG5)<< "The percentage of track making the prune cut is very low at the moment "<<std::endl;
 	}
 }
 

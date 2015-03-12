@@ -88,6 +88,9 @@ void EUTelProcessorGBLTrackFit::init() {
 		if (!_trackFitter) {
 			throw(lcio::Exception("Could not create instance of fitter class."));
 		}
+		//Create millepede output
+		_Mille  = new EUTelMillepede(); 
+
 		bookHistograms();//TO DO: Remove this and replace with generic histogram class 
 		streamlog_out(DEBUG2) << "EUTelProcessorGBLTrackFit::init( )---------------------------------------------END" << std::endl;
 	}	
@@ -168,12 +171,13 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent* evt){
 			_trackFitter->computeTrajectoryAndFit(pointList,traj, &chi2,&ndf, ierr);//This will do the minimisation of the chi2 and produce the most probable trajectory.
 			if(ierr == 0 ){
 				streamlog_out(DEBUG5) << "Ierr is: " << ierr << " Entering loop to update track information " << std::endl;
+				//If the fit succeeded then write into the binary file.
+				traj->milleOut(*(_Mille->_milleGBL));
 				static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_chi2CandidateHistName ] ) -> fill( (chi2)/(ndf));
 				static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_fitsuccessHistName ] ) -> fill(1.0);
 				if(chi2 ==0 or ndf ==0){
-				throw(lcio::Exception("Your fitted track has zero degrees of freedom or a chi2 of 0.")); 	
-				}
-
+					throw(lcio::Exception("Your fitted track has zero degrees of freedom or a chi2 of 0.")); 	
+					}
 				track.setChi2(chi2);
 				track.setNdf(ndf);
 				_chi2NdfVec.push_back(chi2/static_cast<float>(ndf));

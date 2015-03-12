@@ -483,7 +483,7 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
 	//We must check that the input is correct. Since this is a combination of initial rotations and reflections the determinate must be 1 or -1
 	float	determinant = rotRef1*rotRef4 - rotRef2*rotRef3  ;
 	if(determinant==1 or determinant==-1){ 
-		streamlog_out(MESSAGE5) << "SensorID: " << SensorId << ". Determinant =  " <<determinant <<"  This is the correct determinate for this transformation." << std::endl;   
+		streamlog_out(DEBUG5) << "SensorID: " << SensorId << ". Determinant =  " <<determinant <<"  This is the correct determinate for this transformation." << std::endl;   
 	}else{
 		streamlog_out(ERROR5) << "SensorID: " << SensorId << ". Determinant =  " <<determinant << std::endl;   
 		throw(lcio::Exception("The initial rotation and reflection matrix does not have determinant of 1 or -1. Gear file input must be wrong.")); 	
@@ -627,7 +627,8 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::strin
     // Create air mixture
     // see http://pdg.lbl.gov/2013/AtomicNuclearProperties/HTML_PAGES/104.html
     double air_density = 1.2e-3;         // g/cm^3
-    double air_radlen  = 36.62;          // g/cm^2
+    double air_radlen  = 36.62;          // g/cm^2 //Must be -ve to use this value rather than internal one calculated.
+
     TGeoMixture* pMatAir = new TGeoMixture("AIR",3,air_density);
     pMatAir->DefineElement(0, 14.007, 7.,  0.755267 );     //Nitrogen
     pMatAir->DefineElement(1, 15.999, 8.,  0.231781 );     //Oxygen
@@ -737,6 +738,36 @@ Eigen::Matrix3d EUTelGeometryTelescopeGeoDescription::getFlipMatrix(int sensorID
 	return flipMat;
 }
 
+int EUTelGeometryTelescopeGeoDescription::getSensorIDFromManager()  {
+    streamlog_out(DEBUG5) << "EUTelGeometryTelescopeGeoDescription::getSensorIDFromManager() " << std::endl;
+    std::vector<std::string> split;
+ 
+    int sensorID = -999;
+
+  	int levelStart =	geo::gGeometry()._geoManager->GetLevel();
+//		std::cout <<"level : " << levelStart << std::endl;
+    while( _geoManager->GetLevel() > 0 ) { 
+      const char* volName = const_cast < char* > ( geo::gGeometry( )._geoManager->GetCurrentVolume( )->GetName( ) );
+      split = Utility::stringSplit( std::string( volName ), "/", false);
+      if ( split.size() > 0 && split[0].length() > 16 && (split[0].substr(0,16) == "volume_SensorID:") ) {
+         int strLength = split[0].length(); 
+         sensorID = strtol( (split[0].substr(16, strLength )).c_str(), NULL, 10 );
+         break;
+      }
+      _geoManager->CdUp();	////////////////////////////////////////THIS NEEDS TO BE FIXED. If partice falls in the pixel volume and to find sensor ID you need to be on the sensor volume
+    }
+  	int levelEnd =	geo::gGeometry()._geoManager->GetLevel();
+
+//		std::cout <<" node level end : " << _geoManager->GetLevel() <<std::endl;
+
+		//Must return the manager pointing to the same node before we looked for the sensorID
+		for(int i =0 ; i < (levelStart - levelEnd); i++ ){
+			geo::gGeometry()._geoManager->CdDown(0);
+		}
+//		std::cout <<" node level re : " << _geoManager->GetLevel() <<std::endl;
+
+	return sensorID;
+}
 /** Determine id of the sensor in which point is locate
  * 
  * @param globalPos 3D point in global reference frame
@@ -928,7 +959,7 @@ const TGeoHMatrix* EUTelGeometryTelescopeGeoDescription::getHMatrix( const doubl
  * 
  * @return radiation length in units of X0
  */
-float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double globalPosStart[], const double globalPosFinish[], bool skipBoundaryPonitsVolumes ) {
+float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double globalPosStart[], const double globalPosFinish[], bool skipBoundaryPonitsVolumes, 	std::map< const int, double> &sensors, 	std::map< const int, double> &air ) {
 
     streamlog_out(DEBUG1) << "EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral()" << std::endl;
     
@@ -943,6 +974,16 @@ float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double 
     const double stepLenght2 = ( globalPosFinish[0] - globalPosStart[0] )*( globalPosFinish[0] - globalPosStart[0] ) +
                                ( globalPosFinish[1] - globalPosStart[1] )*( globalPosFinish[1] - globalPosStart[1] ) +
                                ( globalPosFinish[2] - globalPosStart[2] )*( globalPosFinish[2] - globalPosStart[2] );
+    streamlog_out(DEBUG5) << "/////////////////////////////////////////////////////////////////////////////////////////////////// " << std::endl;
+    streamlog_out(DEBUG5) << "/////////////////////////////////////////////////////////////////////////////////////////////////// " << std::endl;
+    streamlog_out(DEBUG5) << "              CALCULATING THE TOTAL RADIATION LENGTH BETWEEN TWO POINTS.                            " << std::endl;
+    streamlog_out(DEBUG5) << "                                 POINTS GO FROM:                            " << std::endl;
+    streamlog_out(DEBUG5) << "              ("<< globalPosStart[0] << ","  << globalPosStart[1]<<","<<globalPosStart[2]<<")"<< "-------------------------------------> ("<< globalPosFinish[0] << ","  << globalPosFinish[1]<<","<<globalPosFinish[2]<<")" << std::endl;
+
+		streamlog_out( DEBUG5 ) << "                  JOURNEY OF PARTICLE TO CALCULATE RADIATION LENGTH:                                     "  <<std::endl;
+
+
+
     
 		//This is the distance between the start and final position
     const double stepLenght  = TMath::Sqrt( stepLenght2 );
@@ -952,17 +993,15 @@ float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double 
     const double yp  = ( globalPosFinish[1] - globalPosStart[1] )/stepLenght;
     const double zp  = ( globalPosFinish[2] - globalPosStart[2] )/stepLenght;
 
-    streamlog_out(DEBUG0) << "Start point (x,y,z):" << globalPosStart[0] << "," << globalPosStart[1] << "," << globalPosStart[2] << std::endl;
-    streamlog_out(DEBUG0) << "Finish point (x,y,z):" << globalPosFinish[0] << "," << globalPosFinish[1] << "," << globalPosFinish[2] << std::endl;
-    streamlog_out(DEBUG0) << "Direction (nx,ny,nz):" << xp << "," << yp << "," << zp << std::endl;
-    
+		int lastPlaneID = 	geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at( geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()-1 );
     double snext;
     double pt[3], loc[3];
-    double epsil = 1.E-2; //1.E-7; //This number must be in the order of 10s of microns to make sure you leave the starting volume everytime.
+    double epsil = 1.E-7; 
     double lastrad = 0.;
     int ismall       = 0;
     int nbound       = 0;
     float length     = 0.;
+		int sensorLeftSide=0;
     TGeoMedium *med;
     TGeoShape *shape;
     
@@ -973,6 +1012,10 @@ float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double 
     double currentStep = stepLenght /*mm*/;  //This is total distance we are going to travel
     // Loop over all, encountered during the propagation, volumes 
     while ( nextnode ) {
+//			std::cout <<" node level : " << _geoManager->GetLevel() <<std::endl;
+			int sensorID = getSensorIDFromManager();
+//	std::cout << "Sensor Id (start) : " << sensorID << std::endl;
+
         med = NULL;
         
 	// Check if current point is inside silicon sensor. Radiation length of silicon sensors is accounted in thin scatterers of GBL.
@@ -986,8 +1029,13 @@ float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double 
         shape = nextnode->GetVolume()->GetShape();
         
         // make a step to the next intersection point
-        if ( currentStep > 1.e-9 /*mm*/ ) nextnode = gGeoManager->FindNextBoundaryAndStep( currentStep /*mm*/ ); //Now move to the next volume if the step is above 0. If not then return the already calculated rad to that point 
-        else return rad;
+	//			std::cout<<"Here is current: " <<currentStep <<std::endl;
+        if ( currentStep > 1.e-9 /*mm*/ ){
+					nextnode = gGeoManager->FindNextBoundaryAndStep( currentStep /*mm*/ ); //Now move to the next volume if the step is above 0. If not then return the already calculated rad to that point 
+				}else{
+					streamlog_out( DEBUG5 ) << "Can not find next boundary so must be at the end with radiation length: " << rad <<std::endl;
+					return rad;
+				}
         
         snext  = gGeoManager->GetStep() /*mm*/; //This will output the distance traveled by FindNextBoundaryAndStep
         
@@ -998,6 +1046,7 @@ float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double 
             // Terminate calculation if too many small steps done
             if ( ismall > 3 ) {
                 streamlog_out( WARNING1 ) << "ERROR: Small steps in: " << gGeoManager->GetPath() << " shape=" << shape->ClassName() << std::endl;
+								streamlog_out( DEBUG5 ) << "We do not seem to be incrementing correctly! Final result:" << rad <<std::endl;
                 return rad;
             }
 
@@ -1007,17 +1056,28 @@ float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double 
             for ( Int_t i = 0; i < 3; i++ ) pt[i] += epsil * dir[i]; //Move the current point slightly in the direction of motion. 
             snext = epsil; //Now set the change in distance to the epsil. This is done since snext is used to calculate the total raditaion length. NOTE epsil is just a small number since we assume we are within a substance
             length += snext; //Change the length traveled not by epsil.
+						streamlog_out( DEBUG5 ) << "We are moving a total distance:   " << length <<std::endl;
+
             
             // Ignore start and finish volumes if required
             if ( skipBoundaryPonitsVolumes && isBoundaryVolume ) {//Now if it is not the last of first boundary
                 rad += 0.;
+								streamlog_out( DEBUG5 ) << "Ignore the very outer boundary (Small Steps): " << rad <<std::endl;
+
             } else {
+								//This is just lastrad=1/X0 and snext=X
                 rad += lastrad*snext; //This is the calculated (rad per distance x distance)
+								streamlog_out( DEBUG5 ) << "Dont ignore this boundary change (Small Steps): " << rad << "      ADDED TO RAD: " << lastrad*snext <<std::endl;
+
             }
             
             gGeoManager->CdTop( ); //This moves the current node to the top one. Which should be the world_volume
             nextnode = gGeoManager->FindNode( pt[0], pt[1], pt[2] );    // Check if particle is crossed the boundary with the new incrementally moved position
-            if ( gGeoManager->IsOutside() ) return rad;                 // This checks if the particle is still with the geometry. If not then just return the current calculated radiation length
+						// This checks if the particle is still with the geometry. If not then just return the current calculated radiation length
+            if ( gGeoManager->IsOutside() ){
+							streamlog_out( DEBUG5 ) << "Fell outside. Return: " << rad <<std::endl;
+						 	return rad;                
+						}
             TGeoMatrix *mat = gGeoManager->GetCurrentMatrix(); //This matrix is the transform from global to local coordinates              
             mat->MasterToLocal( pt, loc );                     //Now transform the global coordinates of pt to local coordinates loc.
             if ( !gGeoManager->GetCurrentVolume()->Contains( loc ) ) { //If then point is not in the volume then we must not be at the top so move up again and then set that to the current node
@@ -1032,30 +1092,58 @@ float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double 
         // Normal steps case
         nbound++;
         length += snext;
+				streamlog_out( DEBUG5 ) << "We are moving a total distance:   " << length <<std::endl;
+
         currentStep -= snext;
         if ( med ) { //If medium is not NULL
             double radlen = med->GetMaterial()->GetRadLen() /*cm*/;
+//						std::cout<< "rad length: " << radlen << std::endl;
             if ( radlen > 1.e-9 && radlen < 1.e10 ) {
                 
-                lastrad = 1. / radlen * mm2cm; //calculate 1/radiationlength per cm
+                lastrad = 1. / radlen * mm2cm; //calculate 1/radiationlength per cm. This will transform radlen to mm
                 
                 // Ignore start and finish volumes if required
                 if ( skipBoundaryPonitsVolumes && isBoundaryVolume ) { //Do the same which is done in small volume approximation. Add the radiation length if it is not the first or last volume
-                    rad += 0.;
+									rad += 0.;
+									streamlog_out( DEBUG5 ) << "Ignore the boundary (Larg steps): " << rad <<std::endl;
                 } else {
-                    rad += lastrad*snext; 
+
+									double add = lastrad*snext;
+									rad += add; 
+									//ADD SENSOR SCAT TO SENSOR. THEN ADD ALL NON SENSOR MATERIAL TO AIR AFTER SENSOR.
+									if(sensorID != lastPlaneID){
+										if(sensorID != -999){
+											sensors[sensorID] = add;
+											sensorLeftSide =sensorID;
+											air[sensorID] = 0 ;
+											streamlog_out( DEBUG5 ) << "FOUND SENSOR: " << sensorID <<std::endl;
+
+										}else{
+												streamlog_out( DEBUG5 ) << "ADD MORE AIR" <<std::endl;
+
+												air[sensorLeftSide] = air[sensorLeftSide] +  add;
+										}
+									}else{//IF WE HAVE REACHED THE FINAL SENSOR THEN DO NOT LOOK FOR ANYMORE RADIATION LENGTH
+										sensors[sensorID] = add;
+										break;
+									}
+									streamlog_out( DEBUG5 ) << "Dont ignore this boundary change (Large Steps): " << rad << "      ADDED TO RAD: " << lastrad*snext <<std::endl;
                 }
                 
             } else {
                 lastrad = 0.;
             }
-            streamlog_out( DEBUG0 ) << "STEP #" << nbound << std::endl;
-            streamlog_out( DEBUG0 ) << "   step[mm]=" << snext << "   length[mm]=" << length
-                    << " rad[X0]=" << snext * mm2cm / radlen << " " << med->GetName( ) 
-                    << " rho[g/cm^3]=" << med->GetMaterial()->GetDensity() <<" radlen[cm]=" << radlen << " Boundary:" << (isBoundaryVolume?"yes":"no")
-		    << std::endl;
+//            streamlog_out( DEBUG0 ) << "STEP #" << nbound << std::endl;
+  //          streamlog_out( DEBUG0 ) << "   step[mm]=" << snext << "   length[mm]=" << length
+    //                << " rad[X0]=" << snext * mm2cm / radlen << " " << med->GetName( ) 
+      //              << " rho[g/cm^3]=" << med->GetMaterial()->GetDensity() <<" radlen[cm]=" << radlen << " Boundary:" << (isBoundaryVolume?"yes":"no")
+		  //  << std::endl;
         }//END OF IF MEDIUM NOT NULL
     }
+    streamlog_out(DEBUG5) << "              END OF JOURNEY OF TRACK                            " << std::endl;
+    streamlog_out(DEBUG5) << "/////////////////////////////////////////////////////////////////////////////////////////////////// " << std::endl;
+    streamlog_out(DEBUG5) << "/////////////////////////////////////////////////////////////////////////////////////////////////// " << std::endl;
+
     
     streamlog_out(DEBUG1) << "--------EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral()--------" << std::endl;
     
@@ -1063,21 +1151,81 @@ float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double 
 }
 //This will output the X/X0 of the the full detector system. This is needed to calculate the for each individual scatter the proper correction. 
 //Note we can not determine this correction for each scatterer individually since this correction would introduce a non linear term which would be unphysical. 
-float EUTelGeometryTelescopeGeoDescription::calculateTotalRadiationLength(){
+float EUTelGeometryTelescopeGeoDescription::calculateTotalRadiationLengthAndWeights(const double start[3]  ,const double end[3],  std::map<const int,double> & mapSensor, std::map<const int ,double> & mapAir){
 	streamlog_out(DEBUG1) << "calculateTotalRadiationLength()------------------------------BEGIN" <<std::endl;
-	std::map<int,EUTelPlane>::reverse_iterator lastPlane =_planeSetup.rbegin();
-	float zPos = lastPlane->second.zPos;
-	std::cout << "here the zPos" << zPos << std::endl;
-	const double start[] = {0,0,0};
-	const double end[]   = {0,0,zPos};
-	float perRad =	findRadLengthIntegral( start,end , true ); 
-	std::cout << "here the rad" << perRad << std::endl;
-
-	streamlog_out(DEBUG1) << "calculateTotalRadiationLength()------------------------------BEGIN" <<std::endl;
+	std::map<const int, double> sensors; //This will store all the sensor scattering.
+	std::map<const int, double> air; //This will store the air directly infront of one plane
+	//THIS WILL RETURN THE TOTAL RADIATION LENGTH FOUND AND THE FRACTION FOR AIR AND PLANES.
+	//This will be for non excluded planes. This is sorted in mapWeightsToSensor(...)
+	float perRad =	findRadLengthIntegral( start,end , false, sensors, air ); 
+	streamlog_out(DEBUG0) << "X/X0 (TOTAL SYSTEM) : " << perRad <<std::endl;
+	//NOW WE REDUCE EXCLUDED PLANES TO DEAD MATERIAL. THIS IS ABSORBED IN THE AIR OF THE PLANES NOT EXCLUDED.
+	//First two with excluded. The last two without.
+	mapWeightsToSensor(sensors,air, mapSensor,mapAir);
+	testOutput(mapSensor, mapAir);
+//	std::cout << "here the rad" << perRad << std::endl;
+	return perRad;
+	streamlog_out(DEBUG1) << "calculateTotalRadiationLength()------------------------------END" <<std::endl;
 
 }
+	void EUTelGeometryTelescopeGeoDescription::testOutput(std::map< const int,double> & mapSensor,std::map<const int,double> & mapAir){
+//		std::cout <<"Here is the number of sensor scat/ air: " << mapSensor.size()<< "," << mapAir.size() <<std::endl;
+
+	//TEST ONE SENSOR ONE SCATTERER AFTER.
+	if((mapSensor.size()-1) != mapAir.size()){ //last plane does not contain any air scattering information.
+		throw(std::string("We did not determine the radiation along the track correctly! Sensor != Air"));
+	}
+	//TEST SAME NUMBER AS EXCLUDED SENSORS
+		if( (geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()-1) != mapAir.size()){
+		throw(std::string("We do not have a scatterer for each plane included "));
+	}
+		streamlog_out(DEBUG5) << "/////////////////////////////////////////////////////////////////////////////////////////////////// " << std::endl;
+		streamlog_out(DEBUG5) << "                 THIS IS WHAT WE WILL CONSTRUCT THE PLANES AND SCATTERING FROM           " << std::endl;
+		for(int i = 0 ; i<geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() ; i++){
+			streamlog_out(DEBUG5) << "Sensor ID:   "<< geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)<< " X/X0: " << mapSensor[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i) ] <<" Mass in front of sensor X/X0: "  << mapAir[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i) ] << std::endl;
+		}
+		streamlog_out(DEBUG5) << "/////////////////////////////////////////////////////////////////////////////////////////////////// " << std::endl;
+		streamlog_out(DEBUG5) << "/////////////////////////////////////////////////////////////////////////////////////////////////// " << std::endl;
 
 
+	}
+
+//TO DO: Can not exclude thie first plane from pattern recognition. This could also be a problem in general. So we will need to look into pattern recognition.
+void EUTelGeometryTelescopeGeoDescription::mapWeightsToSensor(std::map<const int,double> sensor,std::map<const int,double> air,  std::map< const  int, double > & mapSen, std::map< const  int, double > & mapAir ){
+//	std::cout<< "sensor size: " << sensor.size() <<std::endl;
+//	std::cout<< "air size: " << air.size() <<std::endl;
+
+	int i =0, j=0;
+	double ExcPlaneScat=0;
+	int beforeExcPos=0;
+	bool addMore=false;
+	int counter=0;
+	for(i; i<_sensorZOrderToIDMap.size() ; i++){
+		const int sensorID = _sensorZOrderToIDMap[i];
+
+		//Here we check if we have added all the scatterers due to excluded planes. 
+		if(_sensorZOrderToIDWithoutExcludedPlanes[j] == _sensorZOrderToIDMap[i], addMore){
+			const int sensorIDBefore = _sensorZOrderToIDWithoutExcludedPlanes[beforeExcPos];
+			//Do not need to add plane scattering again.
+			mapAir[sensorIDBefore] = mapAir[sensorIDBefore]+ExcPlaneScat ;	//Add the same air before and the new plane and air.
+			addMore=false;
+			ExcPlaneScat=0;
+		}
+
+		if(_sensorZOrderToIDWithoutExcludedPlanes[j] == _sensorZOrderToIDMap[i]){//Add the scatterers as normal.
+			const int sensorID = _sensorZOrderToIDWithoutExcludedPlanes[j];
+			mapSen[sensorID] = sensor[sensorID];	
+			if(_sensorZOrderToIDWithoutExcludedPlanes.size() - 1 != j){ //Do not add the last scatterer since not scattering beyond last plane.
+				mapAir[sensorID] = air[sensorID];	
+			}
+			beforeExcPos=j;
+			j++;
+		}else{
+			ExcPlaneScat=ExcPlaneScat + sensor[sensorID] + air[sensorID]; //Add plane and air for excluded plane.
+			addMore=true;
+		}
+	}
+}
 //
 // straight line - shashlyk plane assembler
 //

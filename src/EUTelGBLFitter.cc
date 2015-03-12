@@ -196,8 +196,12 @@ namespace eutelescope {
 			pointList.push_back(point);
 		}
 	}
-	std::vector<float> EUTelGBLFitter::computeVarianceForEachScatterer(EUTelState & state , float percentageRadiationLength){
-		const double scatteringVariance  = pow(Utility::getThetaRMSHighland(state.getBeamEnergy(), percentageRadiationLength),2);
+	std::vector<float> EUTelGBLFitter::computeVarianceForEachScatterer(EUTelState & state){
+		const double scatteringVariance  = state.getRadFrac()[1];//What we get out is the RMS and need the variance.
+		streamlog_out(DEBUG0) << "Variance (AIR Total):  " << std::scientific << scatteringVariance  << "  Plane: " << state.getLocation() << std::endl;
+		if(scatteringVariance == 0){
+			throw(std::string("scatteringVariance for air is zero. Something is wrong with radiation length calculation."));
+		}
 		std::vector<float> variance;
 		float powMeanStart=pow((_normalMean - _start),2);
 		float denominator=_normalVariance + powMeanStart;
@@ -307,6 +311,7 @@ namespace eutelescope {
 		//We place this variable here since we want to set it every new track to false and then true again after we get to the scattering plane.
 		bool kinkAnglePlaneEstimationAddedNow=false;
 		float distanceFromKinkTargetToNextPlane=0;
+		float totVar = track.getTotalVariance(); 
 		for(size_t i=0;i < track.getStates().size(); i++){		
 			streamlog_out(DEBUG3) << "The jacobian to get to this state jacobian on state number: " << i<<" Out of a total of states "<<track.getStates().size() << std::endl;
 			streamlog_message( DEBUG0, jacPointToPoint.Print();, std::endl; );
@@ -344,26 +349,10 @@ namespace eutelescope {
 			}//End of else statement if there is a hit.
 
 			if(i != (track.getStates().size()-1)){//We do not produce scatterers after the last plane
-				//Note here to determine the scattering we use a straight line approximation between the two points the particle will travel through. However to determine were to place the scatterer we use the exact arc length. We do this since to change the TGeo radiation length would be a lot of work for a very small change. 
-				const double stateReferencePoint[] = {state.getPosition()[0], state.getPosition()[1],state.getPosition()[2]};
-				double globalPosSensor1[3];
-				geo::gGeometry().local2Master(state.getLocation(),stateReferencePoint , globalPosSensor1 );
-				const double nextStateReferencePoint[] = {nextState.getPosition()[0], nextState.getPosition()[1],nextState.getPosition()[2]};
-				double globalPosSensor2[3];
-				geo::gGeometry().local2Master(nextState.getLocation(),nextStateReferencePoint , globalPosSensor2 );
-				testDistanceBetweenPoints(globalPosSensor1,globalPosSensor2);
-				float percentageRadiationLength  = geo::gGeometry().findRadLengthIntegral(globalPosSensor1,globalPosSensor2, false );//TO DO: This adds the radiation length of the plane again. If you chose true the some times it returns 0. The could be the reason for the slightly small residuals. 
-				if(percentageRadiationLength == 0){
-					streamlog_out(MESSAGE9)<<"The positions between the scatterers are: "<<std::endl;
-					streamlog_out(MESSAGE9)<<"Start: "<<globalPosSensor1[0]<<" "<<globalPosSensor1[1]<<" "<<globalPosSensor1[2]<<std::endl;
-					streamlog_out(MESSAGE9)<<"End: "<<globalPosSensor2[0]<<" "<<globalPosSensor2[1]<<" "<<globalPosSensor2[2]<<std::endl;
-					//We will not use events that have a radiation length of zero. 
-					throw std::string("The radiation length was precisely zero. This is bad!");
-				} 
 				setMomentsAndStartEndScattering(state);
 				findScattersZPositionBetweenTwoStates();//We use the exact arc length between the two states to place the scatterers. 
 				jacPointToPoint=findScattersJacobians(state,nextState);
-				std::vector<float> variance =  computeVarianceForEachScatterer(state ,percentageRadiationLength);
+				std::vector<float> variance =  computeVarianceForEachScatterer(state);
 				setPointListWithNewScatterers(pointList,state, variance);//We assume that on all scattering planes the incidence angle is the same as on the last measurement state. Not a terrible approximation and will be corrected by GBL anyway.
 			}else{
 				streamlog_out(DEBUG3)<<"We have reached the last plane"<<std::endl;
