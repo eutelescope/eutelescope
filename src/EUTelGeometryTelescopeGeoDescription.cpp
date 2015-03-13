@@ -996,7 +996,8 @@ float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double 
 		int lastPlaneID = 	geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at( geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()-1 );
     double snext;
     double pt[3], loc[3];
-    double epsil = 1.E-7; 
+//    double epsil = 1.E-7; 
+		double epsil = 0.005; // Move by 5 micron to get out of boundary.
     double lastrad = 0.;
     int ismall       = 0;
     int nbound       = 0;
@@ -1044,10 +1045,11 @@ float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double 
             ismall++;
             
             // Terminate calculation if too many small steps done
-            if ( ismall > 3 ) {
+            if ( ismall > 10 ) {
                 streamlog_out( WARNING1 ) << "ERROR: Small steps in: " << gGeoManager->GetPath() << " shape=" << shape->ClassName() << std::endl;
-								streamlog_out( DEBUG5 ) << "We do not seem to be incrementing correctly! Final result:" << rad <<std::endl;
-                return rad;
+                streamlog_out( WARNING1 ) << "ERROR! Track propagation failed to find all planes on trajectory. "  << std::endl;
+
+                return 0;
             }
 
             // increase step size (epsilon) and advance along the particle direction
@@ -1065,8 +1067,28 @@ float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double 
 								streamlog_out( DEBUG5 ) << "Ignore the very outer boundary (Small Steps): " << rad <<std::endl;
 
             } else {
-								//This is just lastrad=1/X0 and snext=X
-                rad += lastrad*snext; //This is the calculated (rad per distance x distance)
+							//This is just lastrad=1/X0 and snext=X
+							rad += lastrad*snext; //This is the calculated (rad per distance x distance)
+							double add = lastrad*snext;
+							rad += add; 
+							//ADD SENSOR SCAT TO SENSOR. THEN ADD ALL NON SENSOR MATERIAL TO AIR AFTER SENSOR.
+							if(sensorID != lastPlaneID){
+								if(sensorID != -999){
+									sensors[sensorID] = sensors[sensorID] +  add;
+									sensorLeftSide =sensorID;
+									air[sensorID] = 0 ;
+									streamlog_out( DEBUG5 ) << "FOUND SENSOR: " << sensorID <<std::endl;
+
+								}else{
+										streamlog_out( DEBUG5 ) << "ADD MORE AIR" <<std::endl;
+
+										air[sensorLeftSide] = air[sensorLeftSide] +  add;
+								}
+							}else{//IF WE HAVE REACHED THE FINAL SENSOR THEN DO NOT LOOK FOR ANYMORE RADIATION LENGTH
+								sensors[sensorID] = sensors[sensorID] + add;
+								//Do not end here since we need multiple iteration to cover the full volume
+							}
+
 								streamlog_out( DEBUG5 ) << "Dont ignore this boundary change (Small Steps): " << rad << "      ADDED TO RAD: " << lastrad*snext <<std::endl;
 
             }
@@ -1113,7 +1135,7 @@ float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double 
 									//ADD SENSOR SCAT TO SENSOR. THEN ADD ALL NON SENSOR MATERIAL TO AIR AFTER SENSOR.
 									if(sensorID != lastPlaneID){
 										if(sensorID != -999){
-											sensors[sensorID] = add;
+											sensors[sensorID] = sensors[sensorID] +  add;
 											sensorLeftSide =sensorID;
 											air[sensorID] = 0 ;
 											streamlog_out( DEBUG5 ) << "FOUND SENSOR: " << sensorID <<std::endl;
@@ -1124,8 +1146,8 @@ float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double 
 												air[sensorLeftSide] = air[sensorLeftSide] +  add;
 										}
 									}else{//IF WE HAVE REACHED THE FINAL SENSOR THEN DO NOT LOOK FOR ANYMORE RADIATION LENGTH
-										sensors[sensorID] = add;
-										break;
+										sensors[sensorID] = sensors[sensorID] + add;
+										//Do not end here since we need multiple iteration to cover the full volume
 									}
 									streamlog_out( DEBUG5 ) << "Dont ignore this boundary change (Large Steps): " << rad << "      ADDED TO RAD: " << lastrad*snext <<std::endl;
                 }
@@ -1162,13 +1184,17 @@ float EUTelGeometryTelescopeGeoDescription::calculateTotalRadiationLengthAndWeig
 	//NOW WE REDUCE EXCLUDED PLANES TO DEAD MATERIAL. THIS IS ABSORBED IN THE AIR OF THE PLANES NOT EXCLUDED.
 	//First two with excluded. The last two without.
 	mapWeightsToSensor(sensors,air, mapSensor,mapAir);
-	testOutput(mapSensor, mapAir);
+	int pass = 	testOutput(mapSensor, mapAir);
+	if( pass == 0){
+		return pass;
+	}
 //	std::cout << "here the rad" << perRad << std::endl;
 	return perRad;
 	streamlog_out(DEBUG1) << "calculateTotalRadiationLength()------------------------------END" <<std::endl;
 
 }
-	void EUTelGeometryTelescopeGeoDescription::testOutput(std::map< const int,double> & mapSensor,std::map<const int,double> & mapAir){
+	int EUTelGeometryTelescopeGeoDescription::testOutput(std::map< const int,double> & mapSensor,std::map<const int,double> & mapAir){
+		bool foundRadZero = false;
 //		std::cout <<"Here is the number of sensor scat/ air: " << mapSensor.size()<< "," << mapAir.size() <<std::endl;
 
 	//TEST ONE SENSOR ONE SCATTERER AFTER.
@@ -1183,12 +1209,17 @@ float EUTelGeometryTelescopeGeoDescription::calculateTotalRadiationLengthAndWeig
 		streamlog_out(DEBUG5) << "                 THIS IS WHAT WE WILL CONSTRUCT THE PLANES AND SCATTERING FROM           " << std::endl;
 		for(int i = 0 ; i<geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() ; i++){
 			streamlog_out(DEBUG5) << "Sensor ID:   "<< geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)<< " X/X0: " << mapSensor[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i) ] <<" Mass in front of sensor X/X0: "  << mapAir[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i) ] << std::endl;
+			if(mapSensor[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i) ] == 0 or (mapAir[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i) ] == 0 and i != geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() -1 )){
+				foundRadZero = true;
+			}
 		}
 		streamlog_out(DEBUG5) << "/////////////////////////////////////////////////////////////////////////////////////////////////// " << std::endl;
 		streamlog_out(DEBUG5) << "/////////////////////////////////////////////////////////////////////////////////////////////////// " << std::endl;
+		if(foundRadZero){
+			return 0;
+		}
 
-
-	}
+}
 
 //TO DO: Can not exclude thie first plane from pattern recognition. This could also be a problem in general. So we will need to look into pattern recognition.
 void EUTelGeometryTelescopeGeoDescription::mapWeightsToSensor(std::map<const int,double> sensor,std::map<const int,double> air,  std::map< const  int, double > & mapSen, std::map< const  int, double > & mapAir ){

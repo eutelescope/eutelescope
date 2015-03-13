@@ -390,7 +390,7 @@ class EUTelGeometryTelescopeGeoDescription
 						TVector3& outputMomentum, float& arcLength, int& newNextPlaneID );
 
 	TVector3 getXYZMomentumfromArcLength(TVector3 momentum, TVector3 globalPositionStart, float charge, float  arcLength );
-	void testOutput(std::map<const int,double> & mapSensor, std::map<const int, double> & mapAir);
+	int testOutput(std::map<const int,double> & mapSensor, std::map<const int, double> & mapAir);
 
 	//This outputs the total percentage radiation length for the full detector system. 
 	float calculateTotalRadiationLengthAndWeights(const double startD[3],const double endD[3], std::map<const int,double>&, std::map<const int,double> & );

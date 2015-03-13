@@ -529,7 +529,7 @@ namespace eutelescope {
 	}
 
 	void EUTelGBLFitter::setMomentsAndStartEndScattering(EUTelState& state){
-		_start = 0.6; //This is 600 micron from the centre of the sensor. 
+		_start = 0.025; //This is 25 micron from the centre of the sensor. This is the boundary of the mimosa but not DUT. This should be a perfectly fine approximation.
 		_end = state.getArcLengthToNextState();
 		if(_end == 0){
 			throw(lcio::Exception("The size of arc length to the next plane is 0"));

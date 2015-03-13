@@ -64,6 +64,9 @@ void EUTelPatternRecognition::propagateForwardFromSeedState(EUTelState& stateInp
 	//Here we determine the radiation lengths associated with this track and the weights for each scatterer. 
 	streamlog_out(DEBUG2) << "This is the memory location of the state: "<< firstState << std::endl;
 	track.addTrack(static_cast<EVENT::Track*>(firstState));//Note we do not have to create new since this object State is saved in class member scope
+	if(rad == 0 ){ //If the estimated radiation length is 0 then we do not use the track.
+		return;
+	}
 	//Here we loop through all the planes not excluded. We begin at the seed which might not be the first. Then we stop before the last plane, since we do not want to propagate anymore
 	bool firstLoop =true;//TO DO:: This works but is very stupid. Must fix
 	for(size_t i = geo::gGeometry().sensorIDToZOrderWithoutExcludedPlanes().at(state->getLocation()); i < (geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()-1); ++i){

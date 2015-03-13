@@ -379,7 +379,7 @@ float EUTelState::computeRadLengthsToEnd( std::map<const int,double> & mapSensor
 //	std::cout << "Intersection: " << intersectionPoint[0] << ","<<intersectionPoint[1]<<","<<intersectionPoint[2]<<std::endl;
 
 	const double start[] = {gPos[0],gPos[1],-0.025+gPos[2]};
-	const double end[]   = {intersectionPoint[0],intersectionPoint[1],intersectionPoint[2]+0.025};
+	const double end[]   = {intersectionPoint[0],intersectionPoint[1],intersectionPoint[2]+0.1};//Must make sure we add all silicon.
 //	std::cout << "intersection point " << intersectionPoint[2] <<std::endl;
 	//NOW WE CALCULATE THE RADIATION LENGTH FOR THE FULL FLIGHT AND THEN SPLIT THESE INTO LINEAR  COMMPONENTS FOR SCATTERING ESTIMATION. 
 	//We will return the radiation lengths associate with the planes and air. Note excluded planes volume should be added to the air in front of non excluded planes. 
