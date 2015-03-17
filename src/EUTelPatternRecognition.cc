@@ -176,11 +176,11 @@ void EUTelPatternRecognition::propagateForwardFromSeedState(EUTelState& stateInp
 void EUTelPatternRecognition::setRadLengths(EUTelTrack & track,	std::map<const int,double>  mapSensor, std::map<const int ,double>  mapAir, double rad ){
 	//THE FINAL WEIGHT WE HAVE WILL BE A FRACTION PERCENTAGE OF THE TOTAL RADIATION LENGTH
 	std::vector<EUTelState*> states = track.getStatesPointers();
-//	std::cout << "Rad " << rad << std::endl;
+	std::cout << "Rad " << rad << std::endl;
 	const double var  = pow( Utility::getThetaRMSHighland(states.at(0)->getBeamEnergy(), rad) , 2);
-//	std::cout << "Here is the var: " << var << std::endl;
+	std::cout << "Here is the var: " << var << std::endl;
 	for(size_t i =0; i < track.getStates().size();++i){ //LOOP over all track again.
-		streamlog_out(DEBUG0) << " Values placed in RMS using Highland formula corrected. (SENSOR) : " << (mapSensor[states.at(i)->getLocation()]/rad)*var << "  (PLANE)  " << (mapAir[states.at(i)->getLocation()]/rad)*var <<std::endl;
+		streamlog_out(DEBUG0)<< std::scientific << " Values placed in variance using Highland formula corrected. (SENSOR) : " << (mapSensor[states.at(i)->getLocation()]/rad)*var << "  (AIR)  " << (mapAir[states.at(i)->getLocation()]/rad)*var <<std::endl;
 		states.at(i)->setRadFrac((mapSensor[states.at(i)->getLocation()]/rad)*var,(mapAir[states.at(i)->getLocation()]/rad)*var);//We input the fraction percentage.
 	}
 	//NOW DETERMINE THE VARIANCE DUE TO THE RADIATION LENGTH. THIS IN THE END WILL BE DIVIDED AMOUNG THE SCATTERERS.

@@ -1177,13 +1177,18 @@ float EUTelGeometryTelescopeGeoDescription::calculateTotalRadiationLengthAndWeig
 	streamlog_out(DEBUG1) << "calculateTotalRadiationLength()------------------------------BEGIN" <<std::endl;
 	std::map<const int, double> sensors; //This will store all the sensor scattering.
 	std::map<const int, double> air; //This will store the air directly infront of one plane
+	int lastPlaneID = 	geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at( geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()-1 );
+//	std::cout<<"Reached here" <<std::endl;
+//	std::cout << " Here is the position: " <<_planeSetup[lastPlaneID].zPos  <<std::endl; 
+	const double endUpdate[] = {end[0],end[1],_planeSetup[lastPlaneID].zPos +0.025};//Must make sure we add all silicon.
 	//THIS WILL RETURN THE TOTAL RADIATION LENGTH FOUND AND THE FRACTION FOR AIR AND PLANES.
 	//This will be for non excluded planes. This is sorted in mapWeightsToSensor(...)
-	float perRad =	findRadLengthIntegral( start,end , false, sensors, air ); 
+	float perRad =	findRadLengthIntegral( start,endUpdate , false, sensors, air ); 
 	streamlog_out(DEBUG0) << "X/X0 (TOTAL SYSTEM) : " << perRad <<std::endl;
 	//NOW WE REDUCE EXCLUDED PLANES TO DEAD MATERIAL. THIS IS ABSORBED IN THE AIR OF THE PLANES NOT EXCLUDED.
 	//First two with excluded. The last two without.
 	mapWeightsToSensor(sensors,air, mapSensor,mapAir);
+	addKapton(mapSensor);
 	int pass = 	testOutput(mapSensor, mapAir);
 	if( pass == 0){
 		return pass;
@@ -1191,6 +1196,12 @@ float EUTelGeometryTelescopeGeoDescription::calculateTotalRadiationLengthAndWeig
 //	std::cout << "here the rad" << perRad << std::endl;
 	return perRad;
 	streamlog_out(DEBUG1) << "calculateTotalRadiationLength()------------------------------END" <<std::endl;
+
+}
+void EUTelGeometryTelescopeGeoDescription::addKapton(std::map<const int, double> & mapSensor){
+	for(int i = 0 ; i<geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() ; i++){
+		mapSensor[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)] = mapSensor[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)] + 0.0002;
+	}
 
 }
 	int EUTelGeometryTelescopeGeoDescription::testOutput(std::map< const int,double> & mapSensor,std::map<const int,double> & mapAir){

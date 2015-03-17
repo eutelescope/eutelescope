@@ -395,6 +395,7 @@ class EUTelGeometryTelescopeGeoDescription
 	//This outputs the total percentage radiation length for the full detector system. 
 	float calculateTotalRadiationLengthAndWeights(const double startD[3],const double endD[3], std::map<const int,double>&, std::map<const int,double> & );
 	void mapWeightsToSensor(std::map<const int,double> sensor,std::map<const int,double> air,  std::map< const  int, double > & mapSen,std::map< const  int, double > & mapAir  );
+	void addKapton(std::map<const int, double> & mapSensor);
 
 
 	float getInitialDisplacementToFirstPlane() const { return _initialDisplacement; };

@@ -13,7 +13,7 @@ echo "Output gear: $outputGear"
 echo "This is the resolutions X/Y:  $xres/$yres."
 for x in {1..10}; do 
 	echo "PATTERN RECOGNTION ATTEMPT $x ON ITERATION $number"
-	$do jobsub.py -c $CONFIG -csv $RUNLIST  -o ResidualsRMax="$ResidualsRMax" -o GearFile="$inputGear"  $PatRec $RUN  
+	$do jobsub.py -c $CONFIG -csv $RUNLIST  -o ResidualsRMax="$ResidualsRMax" -o GearFile="$inputGear" -o TrackCandHitOutputCollectionName="$PatOutGBLIn" $PatRec $RUN  
 
 	fileName="$PatRec-${RUN}.zip"
 	fullPath="$directory/$fileName"
@@ -39,9 +39,8 @@ done
 #THIS IS PART (2)
 #This part should analyse the output of pattern recogntion and remove tracks which are clearly poor quality. This is difficult with the systematic problems due to misalignment. 
 #Should be a separate processor so we can possible compare pattern recognition techniques or chain. Future work. 
-#At the moment we just run this through the GBL fitter to improve the tracks. 
 #echo "GBLTRACKS CREATED FOR ALIGNMENT ON ITERATION $number"
-$do jobsub.py  -c $CONFIG -csv $RUNLIST  -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" -o GearFile="$inputGear"  $TrackFit  $RUN  
+#$do jobsub.py  -c $CONFIG -csv $RUNLIST  -o xResolutionPlane="$xres" -o yResolutionPlane="$yres" -o GearFile="$inputGear"  $TrackFit  $RUN  
 
 #THIS IS PART (3)
 upperLimit=1 #So we only accept decreases in resolution form millepede. 
@@ -54,7 +53,7 @@ rejectFactor=2
 echo "Enter while loop here"
 while [ "$alignment" == "false" ]; do 
 	echo "THE NUMBER OF FAILED ALIGNMENT ATTEMPTS $numberRejectedAlignmentAttempts"
-	$do jobsub.py -c $CONFIG -csv $RUNLIST -o GearFile="$inputGear" -o GearAlignedFile="$outputGear" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres"  -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}"  $Align  $RUN  
+	$do jobsub.py -c $CONFIG -csv $RUNLIST -o GearFile="$inputGear" -o GearAlignedFile="$outputGear" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres"  -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o lcioInputName="trackcand" -o inputCollectionName="$PatOutGBLIn" $Align  $RUN  
 	#Fill variables.
 	error1=`unzip  -p  $fileAlign |grep "Backtrace for this error:" | awk '{ print $NF }'`;
 	error2=`unzip  -p  $fileAlign |grep "This is the entire stack" | awk '{ print $NF }'`;

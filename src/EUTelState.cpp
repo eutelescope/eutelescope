@@ -377,9 +377,10 @@ float EUTelState::computeRadLengthsToEnd( std::map<const int,double> & mapSensor
 	TVector3 gPos =  getPositionGlobal();
 //	std::cout << "gPos: " << gPos[0] << ","<<gPos[1]<<","<<gPos[2]<<std::endl;
 //	std::cout << "Intersection: " << intersectionPoint[0] << ","<<intersectionPoint[1]<<","<<intersectionPoint[2]<<std::endl;
-
+	//TO DO: At the moment we just use a straight through the sensor in all enviroments. The code is designed to extend this to any straight line but we see some addition of extra radiation length beyond what is expect. This will have to be looked into but not a huge issue at the moment.
+	//NOTE THE Z VALUE FOR THESE ARE NOT USED IN calculateTotalRadiationLengthAndWeights
 	const double start[] = {gPos[0],gPos[1],-0.025+gPos[2]};
-	const double end[]   = {intersectionPoint[0],intersectionPoint[1],intersectionPoint[2]+0.1};//Must make sure we add all silicon.
+	const double end[]   = {gPos[0],gPos[1],gPos[2]+0.025};//Must make sure we add all silicon.
 //	std::cout << "intersection point " << intersectionPoint[2] <<std::endl;
 	//NOW WE CALCULATE THE RADIATION LENGTH FOR THE FULL FLIGHT AND THEN SPLIT THESE INTO LINEAR  COMMPONENTS FOR SCATTERING ESTIMATION. 
 	//We will return the radiation lengths associate with the planes and air. Note excluded planes volume should be added to the air in front of non excluded planes. 
