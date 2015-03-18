@@ -1184,11 +1184,11 @@ float EUTelGeometryTelescopeGeoDescription::calculateTotalRadiationLengthAndWeig
 	//THIS WILL RETURN THE TOTAL RADIATION LENGTH FOUND AND THE FRACTION FOR AIR AND PLANES.
 	//This will be for non excluded planes. This is sorted in mapWeightsToSensor(...)
 	float perRad =	findRadLengthIntegral( start,endUpdate , false, sensors, air ); 
-	streamlog_out(DEBUG0) << "X/X0 (TOTAL SYSTEM) : " << perRad <<std::endl;
 	//NOW WE REDUCE EXCLUDED PLANES TO DEAD MATERIAL. THIS IS ABSORBED IN THE AIR OF THE PLANES NOT EXCLUDED.
 	//First two with excluded. The last two without.
 	mapWeightsToSensor(sensors,air, mapSensor,mapAir);
-	addKapton(mapSensor);
+	perRad = perRad +	addKapton(mapSensor);
+	streamlog_out(DEBUG0) << "X/X0 (TOTAL SYSTEM) : " << perRad <<std::endl;
 	int pass = 	testOutput(mapSensor, mapAir);
 	if( pass == 0){
 		return pass;
@@ -1198,10 +1198,11 @@ float EUTelGeometryTelescopeGeoDescription::calculateTotalRadiationLengthAndWeig
 	streamlog_out(DEBUG1) << "calculateTotalRadiationLength()------------------------------END" <<std::endl;
 
 }
-void EUTelGeometryTelescopeGeoDescription::addKapton(std::map<const int, double> & mapSensor){
+double EUTelGeometryTelescopeGeoDescription::addKapton(std::map<const int, double> & mapSensor){
 	for(int i = 0 ; i<geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() ; i++){
 		mapSensor[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)] = mapSensor[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)] + 0.0002;
 	}
+	return  2*geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()*0.0001;
 
 }
 	int EUTelGeometryTelescopeGeoDescription::testOutput(std::map< const int,double> & mapSensor,std::map<const int,double> & mapAir){

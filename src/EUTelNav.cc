@@ -234,10 +234,13 @@ TMatrixD EUTelNav::getPropagationJacobianCurvilinear(float ds, float qbyp, TVect
 
 		//Must also change the magnetic field to be in the correct coordinate system
 		//We times but 0.3 due to units of other variables. See paper. Must be Tesla
-		const double Bx = (Bfield.at( vectorGlobal ).z())*0.3*pow(10,-3); 
-		const double By = (Bfield.at( vectorGlobal ).y())*0.3*pow(10,-3);
-		const double Bz = (Bfield.at( vectorGlobal ).x())*0.3*pow(10,-3);
-		
+//		const double Bx = (Bfield.at( vectorGlobal ).z())*0.3*pow(10,-3); 
+//		const double By = (Bfield.at( vectorGlobal ).y())*0.3*pow(10,-3);
+//		const double Bz = (Bfield.at( vectorGlobal ).x())*0.3*pow(10,-3);
+		const double Bx = (Bfield.at( vectorGlobal ).z())*pow(10,1);     ////////HERE CHANGE TO EXPRESS THE FIELD IN KGAUSS. CHANGE! 
+		const double By = (Bfield.at( vectorGlobal ).y())*pow(10,1);
+		const double Bz = (Bfield.at( vectorGlobal ).x())*pow(10,1);
+	
 		TVector3 b(Bx, By, Bz);
 		
 		streamlog_out( DEBUG2 ) << "EUTelGeometryTelescopeGeoDescription::getPropagationJacobianCurvilinear()------BEGIN" << std::endl;
@@ -253,11 +256,12 @@ TMatrixD EUTelNav::getPropagationJacobianCurvilinear(float ds, float qbyp, TVect
 		
 		TMatrixD ajac(5, 5);
 		//This is b*c. speed of light in 1 nanosecond
-		TVector3 bc = b;
+		TVector3 bc = b*0.3*pow(10,-3);     //CHANGE HERE.
 		ajac.UnitMatrix(); 
 		
 		// -|B*c|
 		const double qp = -bc.Mag();
+
 		// Q
 		const double q = qp * qbyp;
 		
@@ -279,7 +283,9 @@ TMatrixD EUTelNav::getPropagationJacobianCurvilinear(float ds, float qbyp, TVect
 				// (signed) momentum
 				const double pav = 1.0 / qbyp;
 				
-				const double theta = q * ds;
+//				const double theta = q * ds;
+				const double theta = q * ds*0.1;//CONVERT DS TO CENTIMETRES. CHANGE!!!!!!!!!!!
+
 				const double sint = sin(theta);
 				const double cost = cos(theta);
 				// H*T
