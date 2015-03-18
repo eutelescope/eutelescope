@@ -1,2 +1,3 @@
 RunNumber,BeamEnergy,Threshold,GearGeoFile
 105,4.4,6,gear-quad-partialAlign-correlator.xml
+252,4,6,gear_250x50_Indium.xml
