@@ -1,4 +1,15 @@
-#include "EUTelNav.h"
+//ALL X,Y,Z ARE THE EUTEL X,Y,Z EVEN WHEN WE WRITE THE CURVILINEAR SYSTEM LOCAL OR GLOBAL AS (Z,X,Y). 
+//THE PROCEDURE TO USE THE CURVILINEAR SYSTEM WITHIN EUTELESCOPE:
+//1) EUTEL GLOABL -> CURVILINEAR GLOBAL
+//	This is simply writing EUTel global (x,y,z)g as (z,x,y)g    ( g or l) => local/global
+//2) EUTEL LOCAL -> CURVILINEAR GLOBAL (CURVILINEAR GLOBAL IS THE IMPLICIT GLOBAL SYSTEM THE CURVILINEAR SYSTEM NEED TO BE DEFINED)
+//	This is simply writting EUTel local (x,y,z)l as (z,x,y)l   
+//3) LINK THE LOCAL AND GLOBAL CURVILINEAR SYSTEMS TO PROPAGATE FROM ONE LOCAL CURVILNEAR TO ANOTHER
+//	This is simply doing a bunch of dot/cross porduct to connect them
+//4) COMBINE THESE TO DO THE PROPAGATION 
+//5) THE CORRECTIONS RESULT WILL BE IN THE LOCAL CURVILINEAR SYSTEM (HOWEVER DO NOT NEED TO TRANSFORM BACK)
+//	Since the correction will return the local curvilinear frame state (q/p, incidence x, incidence y, x,y ). This is the correct state for EUTel local so we do not need to transform back. 		  	
+#include "EUTelNav.h"	
 
 namespace eutelescope 
 {
@@ -103,7 +114,7 @@ TMatrixD EUTelNav::getLocalToCurvilinearTransformMatrix(TVector3 globalMomentum,
 		gear::Vector3D vectorGlobal(0.1,0.1,0.1);
 		
 		//Magnetic field must be changed to curvilinear coordinate system, as this is used in the curvilinear jacobian
-		//We times bu 0.3 due to units of other variables. See paper. Must be Tesla
+		//We times bu 0.3 due to units of other variables. It is related to the speed of light over 1 ns.  See paper. Must be Tesla
 		const double Bx = (Bfield.at( vectorGlobal ).z())*0.3;
 		const double By = (Bfield.at( vectorGlobal ).y())*0.3;
 		const double Bz = (Bfield.at( vectorGlobal ).x())*0.3;
@@ -206,7 +217,60 @@ TMatrixD EUTelNav::getLocalToCurvilinearTransformMatrix(TVector3 globalMomentum,
 		
 		return jacobian;
 }
+//This jacobian is the same as getPropagationJacobianCurvilinear() but in the limit Q->0 
+//Note all x,y,z are just the x,y,z of the local and global EUTel systems. The new coordinate systems are these just rearranged.
+//Due to us using a jacobian for colider physics we can not use the usual X Y Z system of EUTel. We use Z X Y for the local and global systems. 
+//SEE TOP OF FILE FOR GENERAL DESCRIPTION OF THE WORKING OF THE NAVIGATION.
+//Input ds => arclength mm. qbyp => q/p 1/GeV . t1w => global momentum vector.
+TMatrixD EUTelNav::getPropagationJacobianCurvilinearLimit(float ds, float qbyp, TVector3 t1w, TVector3 t2w)
+{
+	TVector3 curvGlobMomUnit(t1w[2],t1w[0],t1w[1]); //Coordinate system transform.  
+	curvGlobMomUnit.Unit();
+	std::vector<double> slope;
+	slope.push_back(curvGlobMomUnit[1]/curvGlobMomUnit[0]); slope.push_back(curvGlobMomUnit[2]/curvGlobMomUnit[0]);
+	double norm = std::sqrt(pow(slope.at(0),2) + pow(slope.at(1),2) + 1);//not this works since we have in the curvinlinear frame (dx/dz)^2 +(dy/dz)^2 +1 so time through by dz^2
+	TVector3 direction;
+	direction[0] = (slope.at(0)/norm); direction[1] =(slope.at(1)/norm);	direction[2] = (1.0/norm);
+	double sinLambda = direction[2]; 
+	const gear::BField& Bfield = geo::gGeometry().getMagneticField();
+	gear::Vector3D vectorGlobal(0.1,0.1,0.1);
 
+
+	const double Bx = (Bfield.at( vectorGlobal ).z());  
+	const double By = (Bfield.at( vectorGlobal ).x());
+	const double Bz = (Bfield.at( vectorGlobal ).y());
+
+	TVector3 b(Bx, By, Bz);
+	TVector3 BxT = b.Cross(direction);
+	std::cout << "BxT" << BxT[0] << "  ,  " <<  BxT[1] <<"   ,  " <<BxT[2] << std::endl;
+	TMatrixD xyDir(2, 3);
+	xyDir[0][0] = 1; xyDir[0][1]=0.0; xyDir[0][2]=-slope.at(0);  
+	xyDir[1][0] = 0; xyDir[1][1]=1.0; xyDir[1][2]=-slope.at(1);  
+
+	TMatrixD bFac(2,1);
+	TMatrixD BxTMatrix(3,1);
+	BxTMatrix.Zero();
+	BxTMatrix[0][0] =BxT[0];	BxTMatrix[1][0] =BxT[1];	BxTMatrix[2][0] =BxT[2]; 
+ 
+	bFac = -0.0002998 * (xyDir*BxTMatrix); 
+	std::cout << "bFac" << bFac[0][0] << "  ,  " <<  bFac[1][0] << std::endl;
+	TMatrixD ajac(5, 5);
+	ajac.UnitMatrix();
+	if(b.Mag() < 0.001 ){
+			ajac[3][2] = ds * std::sqrt(curvGlobMomUnit[0] * curvGlobMomUnit[0] + curvGlobMomUnit[2] * curvGlobMomUnit[2]);
+			ajac[4][1] = ds;
+	}else{
+		ajac[1][0] = bFac[0][0]*ds/sinLambda;
+		ajac[2][0] = bFac[1][0]*ds/sinLambda;
+		ajac[3][0] = 0.5*bFac[0][0]*ds*ds;
+		ajac[4][0] = 0.5*bFac[1][0]*ds*ds;
+		ajac[3][1] = ds*sinLambda; 
+		ajac[4][2] = ds*sinLambda; 
+	}
+	return ajac;
+}
+
+//TO DO: This used Z Y X system while claus and other limit jacobian uses Z X Y. 
 /* Note that the curvilinear frame that this jacobian has been derived in does not work for particles moving in z-direction.
  * This is due to a construction that assumes tha beam pipe is in the z-direction. Since it is used for collider experiements. 
  * We therefore have to change to the coordinate system used in paper before we apply this jacobian.
