@@ -479,7 +479,7 @@ namespace eutelescope {
 		B[0]=Bx; B[1]=By; B[2]=Bz;
 		for(size_t i=0;i<_scattererPositions.size();i++){
 			newMomentum = EUTelNav::getXYZMomentumfromArcLength(momentum, position,state.getBeamCharge(), _scattererPositions[i] );
-			TMatrixD curvilinearJacobian = EUTelNav::getPropagationJacobianCurvilinear(_scattererPositions[i], state.getOmega(), momentum.Unit(),newMomentum.Unit());
+			TMatrixD curvilinearJacobian = EUTelNav::getPropagationJacobianCurvilinearLimit(_scattererPositions[i], state.getOmega(), momentum.Unit(),newMomentum.Unit());
 			streamlog_out(DEBUG0)<<"This is the curvilinear jacobian at sensor : " << location << " or scatter: "<< i << std::endl; 
 			streamlog_message( DEBUG0, curvilinearJacobian.Print();, std::endl; );
 			TMatrixD localToCurvilinearJacobianStart =  EUTelNav::getLocalToCurvilinearTransformMatrix(momentum, location ,state.getBeamCharge() );
