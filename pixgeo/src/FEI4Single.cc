@@ -27,8 +27,8 @@ FEI4Single::FEI4Single(): EUTelGenericPixGeoDescr(	20.30, 16.8, 0.025,		//size X
 
         //And place them to make a singlechip
 	plane->AddNode(centreregion, 1, new TGeoTranslation( 0.00 , 0 , 0) );
-	plane->AddNode(edgeregion,   2, new TGeoTranslation(-9.95 , 0 , 0) );
-	plane->AddNode(edgeregion,   3, new TGeoTranslation( 9.95 , 0 , 0) );
+	plane->AddNode(edgeregion,   1, new TGeoTranslation(-9.95 , 0 , 0) );
+	plane->AddNode(edgeregion,   2, new TGeoTranslation( 9.95 , 0 , 0) );
 
 }
 
