@@ -32,11 +32,13 @@
 #include "EUTelGeometryTelescopeGeoDescription.h"
 #include "EUTelTrack.h"
 #include "EUTelState.h"
+
 //LCIO
 #include "lcio.h"
 #include "IMPL/TrackerHitImpl.h"
 #include "IMPL/TrackImpl.h"
 #include <UTIL/LCTOOLS.h>
+
 //other
 #include "streamlog/streamlog.h"
 #include "gear/gearimpl/Vector3D.h"
@@ -50,22 +52,26 @@ namespace eutelescope {
 		~EUTelPatternRecognition();
 		//GETTERS
 		std::vector<EUTelTrack>& getTracks();
+
 		inline int getEventNumber()	const {
 			return _eventNumber;
 		}
 
 		inline int getAllowedMissingHits() const {
-				return _allowedMissingHits;
-		};
-		inline double getWindowSize() const {
-				return _residualsRMax;
+			return _allowedMissingHits;
 		}
-			inline double getBeamMomentum() const {
-				return _beamE;
+
+		inline double getWindowSize() const {
+			return _residualsRMax;
+		}
+
+		inline double getBeamMomentum() const {
+			return _beamE;
 		}
 		inline double getBeamCharge() const {
-				return _beamQ;
+			return _beamQ;
 		}
+
 		inline int getNumberOfTracksAfterPruneCut(){
 			return _numberOfTracksAfterPruneCut;
 		}
@@ -73,24 +79,27 @@ namespace eutelescope {
 		//SETTERS
 		void setHitsVecPerPlane();
 
-		void	setHitsVec(EVENT::TrackerHitVec& allHitsVec){ _allHitsVec = allHitsVec;}
-		void setEventNumber(int eventNumber){ 
+		void setHitsVec(EVENT::TrackerHitVec& allHitsVec){
+			allHitsVec = allHitsVec;
+		}
+
+		void setEventNumber(int eventNumber){
 			_eventNumber = eventNumber;
 		}
-		inline void setAllowedSharedHitsOnTrackCandidate( int AllowedSharedHitsOnTrackCandidate) {
-				this->_AllowedSharedHitsOnTrackCandidate = AllowedSharedHitsOnTrackCandidate;
+		inline void setAllowedSharedHitsOnTrackCandidate( int AllowedSharedHitsOnTrackCandidate){
+			this->_AllowedSharedHitsOnTrackCandidate = AllowedSharedHitsOnTrackCandidate;
 		};
 
 		inline void setAllowedMissingHits(unsigned int allowedMissingHits) {
-				this->_allowedMissingHits = allowedMissingHits;
+			this->_allowedMissingHits = allowedMissingHits;
 		}
 
 		inline void setWindowSize(double window) {
-				this->_residualsRMax = window;
+			this->_residualsRMax = window;
 		}
 
 		inline void setBeamMomentum(double beam) {
-				this->_beamE = beam;
+			this->_beamE = beam;
 		}
 
 		inline  void setPlanesToCreateSeedsFrom(EVENT::IntVec createSeedsFromPlanes){
@@ -98,7 +107,7 @@ namespace eutelescope {
 		}
 
 		inline void setBeamCharge(double q) {
-				this->_beamQ = q;
+			this->_beamQ = q;
 		}
 		
 		//Here if the user does not set a create seeds from planes x. The we set it automatically to the first plane travelling as the beam travels. 
@@ -114,15 +123,13 @@ namespace eutelescope {
 		//TEST
 		void testUserInput();
 		void testTrackCandidates();
-		void testHitsVec();
-
+		
 		//OTHER
 		void printTrackCandidates();
 		void propagateForwardFromSeedState(EUTelState&, EUTelTrack& );
 		void testPlaneDimensions();
 		void testHitsVecPerPlane();
 		void testPositionEstimation(float position1[], float position2[]);
-		void findHitsOrderVec(LCCollection* lcCollection,EVENT::TrackerHitVec& hitsOrderVec); 
 		void findTracksWithEnoughHits();
 		void findTrackCandidatesWithSameHitsAndRemove();
 		void findTrackCandidates(); 
@@ -160,9 +167,6 @@ const TMatrixD& getPropagationJacobianF( const EUTelTrackStateImpl*, double );
 
 		/** Propagate track state */
 		void propagateTrackState( EUTelState& );
-		
-		/** Construct LCIO track object from internal track data */
-		void prepareLCIOTrack();
 
 		/** Sort hits according to particles propagation direction */
 		bool sortHitsByMeasurementLayers( const EVENT::TrackerHitVec& );
