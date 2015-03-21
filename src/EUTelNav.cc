@@ -1,14 +1,3 @@
-//ALL X,Y,Z ARE THE EUTEL X,Y,Z EVEN WHEN WE WRITE THE CURVILINEAR SYSTEM LOCAL OR GLOBAL AS (Z,X,Y). 
-//THE PROCEDURE TO USE THE CURVILINEAR SYSTEM WITHIN EUTELESCOPE:
-//1) EUTEL GLOABL -> CURVILINEAR GLOBAL
-//	This is simply writing EUTel global (x,y,z)g as (z,x,y)g    ( g or l) => local/global
-//2) EUTEL LOCAL -> CURVILINEAR GLOBAL (CURVILINEAR GLOBAL IS THE IMPLICIT GLOBAL SYSTEM THE CURVILINEAR SYSTEM NEED TO BE DEFINED)
-//	This is simply writting EUTel local (x,y,z)l as (z,x,y)l   
-//3) LINK THE LOCAL AND GLOBAL CURVILINEAR SYSTEMS TO PROPAGATE FROM ONE LOCAL CURVILNEAR TO ANOTHER
-//	This is simply doing a bunch of dot/cross porduct to connect them
-//4) COMBINE THESE TO DO THE PROPAGATION 
-//5) THE CORRECTIONS RESULT WILL BE IN THE LOCAL CURVILINEAR SYSTEM (HOWEVER DO NOT NEED TO TRANSFORM BACK)
-//	Since the correction will return the local curvilinear frame state (q/p, incidence x, incidence y, x,y ). This is the correct state for EUTel local so we do not need to transform back. 		  	
 #include "EUTelNav.h"	
 
 namespace eutelescope 
@@ -96,7 +85,6 @@ TMatrix EUTelNav::getPropagationJacobianF( float x0, float y0, float z0, float p
 
 }   
 
-
 /* Here we define the transformation between the curvilinear and the local frame. Note the local frame we have is defined as the local frame of the telescope. 
  * We do this since the local frame is arbitrary. However, we must describe the local frame in the curvilinear frame, since we connect the two frames via the same global frame. 
  * The transformations are the same as described below. This is unlike the curvilinear frame which can not have the particles moving in z due to construction. 
@@ -115,21 +103,26 @@ TMatrixD EUTelNav::getLocalToCurvilinearTransformMatrix(TVector3 globalMomentum,
 		
 		//Magnetic field must be changed to curvilinear coordinate system, as this is used in the curvilinear jacobian
 		//We times bu 0.3 due to units of other variables. It is related to the speed of light over 1 ns.  See paper. Must be Tesla
-		const double Bx = (Bfield.at( vectorGlobal ).z())*0.3;
-		const double By = (Bfield.at( vectorGlobal ).y())*0.3;
-		const double Bz = (Bfield.at( vectorGlobal ).x())*0.3;
-		
+		//TO DO: CHECK THAT I CAN REMOVE THIS 0.3 TERM FROM B FIELDS NOW WITH CLAUS'S JACOBIAN LIMIT
+//		const double Bx = (Bfield.at( vectorGlobal ).z())*0.3;
+//		const double By = (Bfield.at( vectorGlobal ).y())*0.3;
+//		const double Bz = (Bfield.at( vectorGlobal ).x())*0.3;
+		const double Bx = (Bfield.at( vectorGlobal ).z());
+		const double By = (Bfield.at( vectorGlobal ).x());
+		const double Bz = (Bfield.at( vectorGlobal ).y());
+	
 		TVector3 B(Bx, By, Bz);
 		TVector3 H = B.Unit();
 
 		//We transform the momentum to curvilinear frame, as this is what is used to describe the curvilinear frame
-		TVector3 curvilinearGlobalMomentum(globalMomentum[2], globalMomentum[1], globalMomentum[0]);
+		TVector3 curvilinearGlobalMomentum(globalMomentum[2], globalMomentum[0], globalMomentum[1]);
 		//With no magnetic field this will point in z direction.	
 		TVector3 T = curvilinearGlobalMomentum.Unit();
-		
+		//Note here we create the curvilinear frame using the implicit global frame which with zGlobalNormal. Note T,U, V is the actual curvilnear frame.	
+		//TO DO: I did not change T[1] here. Do in need to? Not sure. I assume not since it should be equivalent to T[2]
 		const float cosLambda = sqrt(T[0]*T[0] + T[1]*T[1]);
 		//We use the global curvilinear frame z direction to create the other unit axis
-		TVector3 zGlobalNormal(0, 0, 1);
+		TVector3 zGlobalNormal(0, 0, 1); 
 		TVector3 U = (zGlobalNormal.Cross(T)).Unit(); 
 		TVector3 V = (T.Cross(U));
  	
@@ -149,14 +142,14 @@ TMatrixD EUTelNav::getLocalToCurvilinearTransformMatrix(TVector3 globalMomentum,
 		if(planeID != 314)
 		{ 
 				ITelescopeFrame = geo::gGeometry().siPlaneNormal(planeID);       
-				KTelescopeFrame = geo::gGeometry().siPlaneYAxis(planeID);	
-				JTelescopeFrame = geo::gGeometry().siPlaneXAxis(planeID);
+				KTelescopeFrame = geo::gGeometry().siPlaneXAxis(planeID);	
+				JTelescopeFrame = geo::gGeometry().siPlaneYAxis(planeID);
 		}
 		else
 		{
 				ITelescopeFrame.SetXYZ(0,0,1);
-				KTelescopeFrame.SetXYZ(0,1,0);
-				JTelescopeFrame.SetXYZ(1,0,0);
+				KTelescopeFrame.SetXYZ(1,0,0);
+				JTelescopeFrame.SetXYZ(0,1,0);
 		}
 
 		TVector3 I(ITelescopeFrame[2], ITelescopeFrame[1], ITelescopeFrame[0]);
@@ -217,10 +210,16 @@ TMatrixD EUTelNav::getLocalToCurvilinearTransformMatrix(TVector3 globalMomentum,
 		
 		return jacobian;
 }
-//This jacobian is the same as getPropagationJacobianCurvilinear() but in the limit Q->0 
+TMatrixD EUTelNav::getMeasToLocal(TVector3 globalMomentum, int  planeID, float charge)
+{
+	TMatrix jacobian(5,5);
+	
+		return jacobian;
+}
+//TO DO: Should rename as this now takes you from one local frame to another. By local we mean some constant frame defined by the telescope and track. We still need to move into the measurement frame of each telescope plane as before. 
+//This jacobian is the same as getPropagationJacobianCurvilinear() but in the limit Q->0 and local to local jacobian combines so JxyJcurJ'xy 
 //Note all x,y,z are just the x,y,z of the local and global EUTel systems. The new coordinate systems are these just rearranged.
 //Due to us using a jacobian for colider physics we can not use the usual X Y Z system of EUTel. We use Z X Y for the local and global systems. 
-//SEE TOP OF FILE FOR GENERAL DESCRIPTION OF THE WORKING OF THE NAVIGATION.
 //Input ds => arclength mm. qbyp => q/p 1/GeV . t1w => global momentum vector.
 TMatrixD EUTelNav::getPropagationJacobianCurvilinearLimit(float ds, float qbyp, TVector3 t1w, TVector3 t2w)
 {
@@ -242,7 +241,7 @@ TMatrixD EUTelNav::getPropagationJacobianCurvilinearLimit(float ds, float qbyp, 
 
 	TVector3 b(Bx, By, Bz);
 	TVector3 BxT = b.Cross(direction);
-	std::cout << "BxT" << BxT[0] << "  ,  " <<  BxT[1] <<"   ,  " <<BxT[2] << std::endl;
+//	std::cout << "BxT" << BxT[0] << "  ,  " <<  BxT[1] <<"   ,  " <<BxT[2] << std::endl;
 	TMatrixD xyDir(2, 3);
 	xyDir[0][0] = 1; xyDir[0][1]=0.0; xyDir[0][2]=-slope.at(0);  
 	xyDir[1][0] = 0; xyDir[1][1]=1.0; xyDir[1][2]=-slope.at(1);  
@@ -253,7 +252,7 @@ TMatrixD EUTelNav::getPropagationJacobianCurvilinearLimit(float ds, float qbyp, 
 	BxTMatrix[0][0] =BxT[0];	BxTMatrix[1][0] =BxT[1];	BxTMatrix[2][0] =BxT[2]; 
  
 	bFac = -0.0002998 * (xyDir*BxTMatrix); 
-	std::cout << "bFac" << bFac[0][0] << "  ,  " <<  bFac[1][0] << std::endl;
+//	std::cout << "bFac" << bFac[0][0] << "  ,  " <<  bFac[1][0] << std::endl;
 	TMatrixD ajac(5, 5);
 	ajac.UnitMatrix();
 	if(b.Mag() < 0.001 ){

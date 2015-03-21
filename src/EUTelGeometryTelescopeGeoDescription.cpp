@@ -946,6 +946,20 @@ const TGeoHMatrix* EUTelGeometryTelescopeGeoDescription::getHMatrix( const doubl
     return globalH;
 }
 
+const double* EUTelGeometryTelescopeGeoDescription::getRotMatrix( int sensorID ) {
+    streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::getRotMatrix()--------BEGIN " << std::endl;
+		const double local[] = {0,0,0};
+		double global[3];
+		local2Master( sensorID,local, global ) {
+
+    _geoManager->FindNode( global[0], global[1], global[2] );    
+    const TGeoHMatrix* globalH = _geoManager->GetCurrentMatrix();
+		const double* rotMatrix = _geoManager->GetRotationMatrix();
+    streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::getRotMatrix()----END " << std::endl;
+    return rotMatrix;
+}
+
+
 /**
  * Calculate effective radiation length traversed by particle traveling between two points
  * along straight line.

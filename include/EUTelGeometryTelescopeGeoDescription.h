@@ -401,6 +401,7 @@ class EUTelGeometryTelescopeGeoDescription
 	float getInitialDisplacementToFirstPlane() const { return _initialDisplacement; };
 
 	const TGeoHMatrix* getHMatrix( const double globalPos[] );
+	const double* getRotMatrix( int sensorID );
 
 	/** Magnetic field */
 	const gear::BField& getMagneticField() const { return _gearManager->getBField(); };
