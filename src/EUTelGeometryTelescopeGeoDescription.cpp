@@ -946,18 +946,32 @@ const TGeoHMatrix* EUTelGeometryTelescopeGeoDescription::getHMatrix( const doubl
     return globalH;
 }
 
-const double* EUTelGeometryTelescopeGeoDescription::getRotMatrix( int sensorID ) {
-    streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::getRotMatrix()--------BEGIN " << std::endl;
-		const double local[] = {0,0,0};
-		double global[3];
-		local2Master( sensorID,local, global ) {
+TMatrixD EUTelGeometryTelescopeGeoDescription::getRotMatrix( int sensorID ) {
+	streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::getRotMatrix()--------BEGIN " << std::endl;
+	const double local[] = {0,0,0};
+	double global[3];
+	std::cout << "Sensor ID " << sensorID << std::endl;
+	TMatrixD TRotMatrix(3,3);
+	if(sensorID != 314){
+		local2Master( sensorID,local, global );
+		_geoManager->FindNode( global[0], global[1], global[2] );    
+		const TGeoHMatrix* globalH = _geoManager->GetCurrentMatrix();
+		const double* rotMatrix = globalH->GetRotationMatrix();
+		TRotMatrix[0][0] = *rotMatrix; TRotMatrix[0][1] = *(rotMatrix+1);TRotMatrix[0][2] = *(rotMatrix+2);
+		TRotMatrix[1][0] = *(rotMatrix+3); TRotMatrix[1][1] = *(rotMatrix+4);TRotMatrix[1][2] = *(rotMatrix+5);
+		TRotMatrix[2][0] = *(rotMatrix+6); TRotMatrix[2][1] = *(rotMatrix+7);TRotMatrix[2][2] = *(rotMatrix+8);
+	}else{
+		TRotMatrix.UnitMatrix();
+	}
+		std::cout<< "Here is the first element of rotation matrix: " << TRotMatrix[0][0]<<std::endl;
+		std::cout<< "Here is the last element of rotation matrix: " << TRotMatrix[2][2]<<std::endl;
 
-    _geoManager->FindNode( global[0], global[1], global[2] );    
-    const TGeoHMatrix* globalH = _geoManager->GetCurrentMatrix();
-		const double* rotMatrix = _geoManager->GetRotationMatrix();
+    return TRotMatrix;
     streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::getRotMatrix()----END " << std::endl;
-    return rotMatrix;
+
 }
+
+
 
 
 /**

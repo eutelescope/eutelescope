@@ -210,11 +210,33 @@ TMatrixD EUTelNav::getLocalToCurvilinearTransformMatrix(TVector3 globalMomentum,
 		
 		return jacobian;
 }
-TMatrixD EUTelNav::getMeasToLocal(TVector3 globalMomentum, int  planeID, float charge)
+TMatrixD EUTelNav::getMeasToLocal(TVector3 t1w, int  planeID, float charge)
 {
-	TMatrix jacobian(5,5);
-	
-		return jacobian;
+	TMatrixD transM2l(5,5);
+	transM2l.UnitMatrix();
+	std::vector<double> slope;
+	slope.push_back(t1w[0]/t1w[2]); slope.push_back(t1w[1]/t1w[2]);
+	double norm = std::sqrt(pow(slope.at(0),2) + pow(slope.at(1),2) + 1);//not this works since we have in the curvinlinear frame (dx/dz)^2 +(dy/dz)^2 +1 so time through by dz^2
+	TVector3 direction;
+	direction[0] = (slope.at(0)/norm); direction[1] =(slope.at(1)/norm);	direction[2] = (1.0/norm);
+	TMatrixD xyDir(2, 3);
+	xyDir[0][0] = 1; xyDir[0][1]=0.0; xyDir[0][2]=-slope.at(0);  
+	xyDir[1][0] = 0; xyDir[1][1]=1.0; xyDir[1][2]=-slope.at(1);  
+	TMatrixD TRotMatrix(3,3);
+	TRotMatrix	=  geo::gGeometry().getRotMatrix( planeID );
+	TVector3 normalVec;
+	normalVec[0] = TRotMatrix[0][2];	normalVec[1] = TRotMatrix[1][2];	normalVec[2] = TRotMatrix[2][2];
+	double cosInc = direction*normalVec;
+	std::cout<<"Here is cosInc " << cosInc <<std::endl;
+	TMatrixD measDir(3,2);
+	measDir[0][0] = TRotMatrix[0][0];	measDir[0][1] = TRotMatrix[0][1];
+	measDir[1][0] = TRotMatrix[1][0];	measDir[1][1] = TRotMatrix[1][1];
+	measDir[2][0] = TRotMatrix[2][0];	measDir[2][1] = TRotMatrix[2][1];
+	TMatrixD proM2l(2,2);
+	proM2l = xyDir*measDir; 
+	transM2l.SetSub(1,1,proM2l*(cosInc/direction[2]));
+	transM2l.SetSub(3,3,proM2l);
+	return transM2l;
 }
 //TO DO: Should rename as this now takes you from one local frame to another. By local we mean some constant frame defined by the telescope and track. We still need to move into the measurement frame of each telescope plane as before. 
 //This jacobian is the same as getPropagationJacobianCurvilinear() but in the limit Q->0 and local to local jacobian combines so JxyJcurJ'xy 
@@ -223,10 +245,9 @@ TMatrixD EUTelNav::getMeasToLocal(TVector3 globalMomentum, int  planeID, float c
 //Input ds => arclength mm. qbyp => q/p 1/GeV . t1w => global momentum vector.
 TMatrixD EUTelNav::getPropagationJacobianCurvilinearLimit(float ds, float qbyp, TVector3 t1w, TVector3 t2w)
 {
-	TVector3 curvGlobMomUnit(t1w[2],t1w[0],t1w[1]); //Coordinate system transform.  
-	curvGlobMomUnit.Unit();
+	t1w.Unit();
 	std::vector<double> slope;
-	slope.push_back(curvGlobMomUnit[1]/curvGlobMomUnit[0]); slope.push_back(curvGlobMomUnit[2]/curvGlobMomUnit[0]);
+	slope.push_back(t1w[0]/t1w[2]); slope.push_back(t1w[1]/t1w[2]);
 	double norm = std::sqrt(pow(slope.at(0),2) + pow(slope.at(1),2) + 1);//not this works since we have in the curvinlinear frame (dx/dz)^2 +(dy/dz)^2 +1 so time through by dz^2
 	TVector3 direction;
 	direction[0] = (slope.at(0)/norm); direction[1] =(slope.at(1)/norm);	direction[2] = (1.0/norm);
@@ -256,7 +277,7 @@ TMatrixD EUTelNav::getPropagationJacobianCurvilinearLimit(float ds, float qbyp, 
 	TMatrixD ajac(5, 5);
 	ajac.UnitMatrix();
 	if(b.Mag() < 0.001 ){
-			ajac[3][2] = ds * std::sqrt(curvGlobMomUnit[0] * curvGlobMomUnit[0] + curvGlobMomUnit[2] * curvGlobMomUnit[2]);
+			ajac[3][2] = ds * std::sqrt(t1w[0] * t1w[0] + t1w[2] * t1w[2]);
 			ajac[4][1] = ds;
 	}else{
 		ajac[1][0] = bFac[0][0]*ds/sinLambda;
