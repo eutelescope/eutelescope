@@ -276,7 +276,12 @@ def runMarlin(filenamebase, jobtask, silent):
                 try:  
                     line = qout.get_nowait() # or q.get(timeout=.1)
                     if not silent:
-                        log.info(line.strip())
+                        if "WARNING" in line.strip():
+                            log.warning(line.strip())
+                        elif "ERROR" in line.strip():
+                            log.error(line.strip())
+                        else:
+                            log.info(line.strip())
                     log_file.write(line)
                 except Empty:
                     pass
