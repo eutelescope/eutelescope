@@ -14,8 +14,6 @@
 
 // eutelescope includes ".h"
 #include "EUTelUtility.h"
-#include "EUTelUtilityRungeKutta.h"
-#include "EUTelEquationsOfMotion.h"
 #include "EUTelTrackStateImpl.h"
 #include "EUTelTrack.h"
 #include "EUTelState.h"
