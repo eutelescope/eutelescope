@@ -287,10 +287,10 @@ class EUTelGeometryTelescopeGeoDescription
 	double siPlaneYPitch(int sensorID){ return _planeSetup.at(sensorID).yPitch; };
 
 	/** Sensor X side size in pixels */
-	double siPlaneXNpixels(int sensorID){ return _planeSetup.at(sensorID).xPixelNo; };
+	int siPlaneXNpixels(int sensorID){ return _planeSetup.at(sensorID).xPixelNo; };
 
 	/** Sensor Y side size in pixels */
-	double siPlaneYNpixels(int sensorID){ return _planeSetup.at(sensorID).yPixelNo; };
+	int siPlaneYNpixels(int sensorID){ return _planeSetup.at(sensorID).yPixelNo; };
 
 	/** Sensor X side size in pixels */
 	double siPlaneXResolution(int sensorID){ return _planeSetup.at(sensorID).xRes; };

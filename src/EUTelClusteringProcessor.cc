@@ -30,10 +30,6 @@
 #include "EUTelTrackerDataInterfacerImpl.h"
 #include "EUTelSparseClusterImpl.h"
 
-// gear includes <.h>
-#include <gear/GearMgr.h>
-#include <gear/SiPlanesParameters.h>
-
 // marlin includes ".h"
 #include "marlin/Processor.h"
 #include "marlin/AIDAProcessor.h"
@@ -118,11 +114,7 @@ EUTelClusteringProcessor::EUTelClusteringProcessor ()
   _clusterSNR_NHistos(),
   _clusterSignal_NxNHistos(),
   _clusterSNR_NxNHistos(),
-  _siPlanesParameters(NULL),
-  _siPlanesLayerLayout(NULL),
   _isGeometryReady(false),
-  _layerIndexMap(),
-  _dutLayerIndexMap(),
   _ancillaryIndexMap(),
   _orderedSensorIDVec(),
   _sensorIDVec(),
@@ -376,34 +368,6 @@ void EUTelClusteringProcessor::initializeGeometry( LCEvent * event ) throw ( mar
     streamlog_out( DEBUG5 ) << "_zsDataCollectionName " << _zsDataCollectionName.c_str() << " not found " << endl; 
   }
 
-
-  _siPlanesParameters  = const_cast< gear::SiPlanesParameters*  > ( &(Global::GEAR->getSiPlanesParameters()));
-  _siPlanesLayerLayout = const_cast< gear::SiPlanesLayerLayout* > ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
-
-  // now let's build a map relating the position in the layerindex
-  // with the sensorID.
-  _layerIndexMap.clear();
-  for ( int iLayer = 0; iLayer < _siPlanesLayerLayout->getNLayers(); ++iLayer ) 
-  {
-      streamlog_out( DEBUG1) << 
-          "Telescope: iLayer " << iLayer <<
-          "["<< _siPlanesLayerLayout->getNLayers() << 
-          "], getID:" <<  _siPlanesLayerLayout->getID( iLayer ) << endl;
-      _layerIndexMap.insert( make_pair( _siPlanesLayerLayout->getID( iLayer ), iLayer ) );
-  }
-
-  // check if there is a DUT section or not
-  _dutLayerIndexMap.clear();
-  if( _siPlanesParameters->getSiPlanesType() == _siPlanesParameters->TelescopeWithDUT )    {
-
-    // for the time being this is quite useless since, if there is a
-    // DUT this is just one, but anyway it will become useful in a
-    // short time.
-    streamlog_out( DEBUG1) << "DUT:  getID: " << _siPlanesLayerLayout->getDUTID() << endl;
-    _dutLayerIndexMap.insert( make_pair( _siPlanesLayerLayout->getDUTID(), 0 ) );
-  }
-
-
   // now another map relating the position in the ancillary
   // collections (noise, pedestal and status) with the sensorID
   _ancillaryIndexMap.clear();
@@ -471,7 +435,7 @@ void EUTelClusteringProcessor::initializeHotPixelMapVec(  )
         if(foundexcludedsensor)  continue;
 
  
-        if ( _layerIndexMap.find( sensorID ) == _layerIndexMap.end()   )
+        if (std::find(geo::gGeometry().sensorIDsVec().begin(), geo::gGeometry().sensorIDsVec().end(), sensorID) == geo::gGeometry().sensorIDsVec().end())
         {
             streamlog_out( DEBUG5 ) << "Sensor " << sensorID << " not found in the present data, skipping its hotPixel information." << endl;
             continue;
@@ -901,15 +865,6 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
     //the noise map. we only need this map for decoding issues.
     noise  = dynamic_cast<TrackerDataImpl*>   (noiseCollectionVec->getElementAt( _ancillaryIndexMap[ sensorID ] ));
 
-
-//    if( _dataFormatType == EUTELESCOPE::BINARY )
-//    {
-//        if ( isFirstEvent() ) 
-//        {
-//            status->adcValues().clear();
-//        }
-//    }
-
     // reset the status
 
     // now that we know which is the sensorID, we can ask to GEAR
@@ -918,25 +873,7 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
     _minX = 0;
     _minY = 0;
 
-    // this sensorID can be either a reference plane or a DUT, do it
-    // differently...
-    if ( _layerIndexMap.find( sensorID ) != _layerIndexMap.end() ){
-      // this is a reference plane
-      _maxX = _siPlanesLayerLayout->getSensitiveNpixelX( _layerIndexMap[ sensorID ] ) - 1;
-      _maxY = _siPlanesLayerLayout->getSensitiveNpixelY( _layerIndexMap[ sensorID ] ) - 1;
-      
-    } else if ( _dutLayerIndexMap.find( sensorID ) != _dutLayerIndexMap.end() ) {
-      // ok it is a DUT plane
-      _maxX = _siPlanesLayerLayout->getDUTSensitiveNpixelX() - 1;
-      _maxY = _siPlanesLayerLayout->getDUTSensitiveNpixelY() - 1;
-
-    } else {
-      // this is not a reference plane neither a DUT... what's that?
-//      throw  InvalidGeometryException ("Unknown sensorID " + to_string( sensorID ));
-//      exit(-1);
-        streamlog_out( ERROR5 ) << "Unknown sensorID " << sensorID << ", perhaps your GEAR file is incomplete." << endl;
-        continue;
-    }
+    getMaxPixels(sensorID, _maxX, _maxY);
 
     //todo: declare a vector of sensormatrizes as a class member in
     //order to not allocate a new object for each loop iteration.
@@ -1428,23 +1365,8 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
     int minX, minY, maxX, maxY;
     minX = 0;
     minY = 0;
-
-    // this sensorID can be either a reference plane or a DUT, do it
-    // differently...
-    if ( _layerIndexMap.find( sensorID ) != _layerIndexMap.end() ){
-      // this is a reference plane
-      maxX = _siPlanesLayerLayout->getSensitiveNpixelX( _layerIndexMap[ sensorID ] ) - 1;
-      maxY = _siPlanesLayerLayout->getSensitiveNpixelY( _layerIndexMap[ sensorID ] ) - 1;
-    } else if ( _dutLayerIndexMap.find( sensorID ) != _dutLayerIndexMap.end() ) {
-      // ok it is a DUT plane
-      maxX = _siPlanesLayerLayout->getDUTSensitiveNpixelX() - 1;
-      maxY = _siPlanesLayerLayout->getDUTSensitiveNpixelY() - 1;
-    } else {
-      // this is not a reference plane neither a DUT... what's that?
-//      throw  InvalidGeometryException ("Unknown sensorID " + to_string( sensorID ));
-      streamlog_out( ERROR5 ) << "Unknown sensorID " << sensorID << ", perhaps your GEAR file is incomplete." << endl;
-      continue;
-    }
+    
+    getMaxPixels(sensorID, maxX, maxY); 
 
     // reset the cluster counter for the clusterID
     int clusterID = 0;
@@ -1720,27 +1642,7 @@ void EUTelClusteringProcessor::zsBrickedClustering(LCEvent * evt, LCCollectionVe
       minX = 0;
       minY = 0;
 
-      // this sensorID can be either a reference plane or a DUT, do it
-      // differently...
-      if ( _layerIndexMap.find( sensorID ) != _layerIndexMap.end() )
-        {
-          // this is a reference plane
-          maxX = _siPlanesLayerLayout->getSensitiveNpixelX( _layerIndexMap[ sensorID ] ) - 1;
-          maxY = _siPlanesLayerLayout->getSensitiveNpixelY( _layerIndexMap[ sensorID ] ) - 1;
-        }
-      else if ( _dutLayerIndexMap.find( sensorID ) != _dutLayerIndexMap.end() )
-        {
-          // ok it is a DUT plane
-          maxX = _siPlanesLayerLayout->getDUTSensitiveNpixelX() - 1;
-          maxY = _siPlanesLayerLayout->getDUTSensitiveNpixelY() - 1;
-        }
-      else
-        {
-          // this is not a reference plane neither a DUT... what's that?
-//          throw  InvalidGeometryException ("Unknown sensorID " + to_string( sensorID ));
-          streamlog_out( ERROR5 ) << "Unknown sensorID " << sensorID << ", perhaps your GEAR file is incomplete." << endl;
-          continue;
-        }
+      getMaxPixels(sensorID, maxX, maxY);
 
       // reset the cluster counter for the clusterID
       int clusterID = 0;
@@ -2379,22 +2281,7 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
     minX = 0;
     minY = 0;
 
-    // this sensorID can be either a reference plane or a DUT, do it
-    // differently...
-    if ( _layerIndexMap.find( sensorID ) != _layerIndexMap.end() ){
-      // this is a reference plane
-      maxX = _siPlanesLayerLayout->getSensitiveNpixelX( _layerIndexMap[ sensorID ] ) - 1;
-      maxY = _siPlanesLayerLayout->getSensitiveNpixelY( _layerIndexMap[ sensorID ] ) - 1;
-    } else if ( _dutLayerIndexMap.find( sensorID ) != _dutLayerIndexMap.end() ) {
-      // ok it is a DUT plane
-      maxX = _siPlanesLayerLayout->getDUTSensitiveNpixelX() - 1;
-      maxY = _siPlanesLayerLayout->getDUTSensitiveNpixelY() - 1;
-    } else {
-      // this is not a reference plane neither a DUT... what's that?
-//      throw  InvalidGeometryException ("Unknown sensorID " + to_string( sensorID ));
-      streamlog_out( ERROR5 ) << "Unknown sensorID " << sensorID << ", perhaps your GEAR file is incomplete." << endl;
-      continue;
-    }
+    getMaxPixels(sensorID, maxX, maxY);
 
     streamlog_out ( DEBUG0 ) << "  Working on detector " << sensorID << endl;
 
@@ -2653,27 +2540,7 @@ void EUTelClusteringProcessor::nzsBrickedClustering(LCEvent * evt, LCCollectionV
       minX = 0;
       minY = 0;
 
-      // this sensorID can be either a reference plane or a DUT, do it
-      // differently...
-      if ( _layerIndexMap.find( sensorID ) != _layerIndexMap.end() )
-        {
-          // this is a reference plane
-          maxX = _siPlanesLayerLayout->getSensitiveNpixelX( _layerIndexMap[ sensorID ] ) - 1;
-          maxY = _siPlanesLayerLayout->getSensitiveNpixelY( _layerIndexMap[ sensorID ] ) - 1;
-        }
-      else if ( _dutLayerIndexMap.find( sensorID ) != _dutLayerIndexMap.end() )
-        {
-          // ok it is a DUT plane
-          maxX = _siPlanesLayerLayout->getDUTSensitiveNpixelX() - 1;
-          maxY = _siPlanesLayerLayout->getDUTSensitiveNpixelY() - 1;
-        }
-      else
-        {
-          // this is not a reference plane neither a DUT... what's that?
-//          throw  InvalidGeometryException ("Unknown sensorID " + to_string( sensorID ));
-          streamlog_out( ERROR5 ) << "Unknown sensorID " << sensorID << ", perhaps your GEAR file is incomplete." << endl;
-          continue;
-        }
+      getMaxPixels(sensorID, maxX, maxY);
 
       // get the noise and the status matrix with the right detectorID
       TrackerDataImpl    * noise  = dynamic_cast<TrackerDataImpl*>   (noiseCollectionVec->getElementAt( _ancillaryIndexMap[ sensorID ] ));
@@ -3134,24 +3001,9 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
       int minX, minY, maxX, maxY;
       minX = 0;
       minY = 0;
-
-      // this sensorID can be either a reference plane or a DUT, do it
-      // differently...
-      if ( _layerIndexMap.find( detectorID ) != _layerIndexMap.end() ){
-        // this is a reference plane
-        maxX = _siPlanesLayerLayout->getSensitiveNpixelX( _layerIndexMap[ detectorID ] ) - 1;
-        maxY = _siPlanesLayerLayout->getSensitiveNpixelY( _layerIndexMap[ detectorID ] ) - 1;
-      } else if ( _dutLayerIndexMap.find( detectorID ) != _dutLayerIndexMap.end() ) {
-        // ok it is a DUT plane
-        maxX = _siPlanesLayerLayout->getDUTSensitiveNpixelX() - 1;
-        maxY = _siPlanesLayerLayout->getDUTSensitiveNpixelY() - 1;
-      } else {
-        // this is not a reference plane neither a DUT... what's that?
-//        throw  InvalidGeometryException ("Unknown sensorID " + to_string( detectorID ));
-        streamlog_out( ERROR5 ) << "Unknown sensorID " << detectorID << ", perhaps your GEAR file is incomplete." << endl;
-        continue;
-      }
-
+     
+      getMaxPixels(detectorID, maxX, maxY); 
+    
       vector<float > noiseValues;
       //! not sure if this is 100% correct for bricked clusters here
       if ( type == kEUTelFFClusterImpl || type == kEUTelBrickedClusterImpl ) {
@@ -3309,23 +3161,8 @@ void EUTelClusteringProcessor::bookHistos() {
     minX = 0;
     minY = 0;
 
-    // this sensorID can be either a reference plane or a DUT, do it
-    // differently...
-    if ( _layerIndexMap.find( sensorID ) != _layerIndexMap.end() ){
-      // this is a reference plane
-      maxX = _siPlanesLayerLayout->getSensitiveNpixelX( _layerIndexMap[ sensorID ] ) - 1;
-      maxY = _siPlanesLayerLayout->getSensitiveNpixelY( _layerIndexMap[ sensorID ] ) - 1;
-    } else if ( _dutLayerIndexMap.find( sensorID )  != _dutLayerIndexMap.end() ) {
-      // ok it is a DUT plane
-      maxX = _siPlanesLayerLayout->getDUTSensitiveNpixelX() - 1;
-      maxY = _siPlanesLayerLayout->getDUTSensitiveNpixelY() - 1;
-    } else {
-      // this is not a reference plane neither a DUT... what's that?
-//      throw  InvalidGeometryException ("Unknown sensorID " + to_string( sensorID ));
-      streamlog_out( ERROR5 ) << "Unknown sensorID " << sensorID << ", perhaps your GEAR file is incomplete." << endl;
-      continue;
-    }
-
+    getMaxPixels(sensorID, maxX, maxY);
+  
     basePath = "detector_" + to_string( sensorID );
     AIDAProcessor::tree(this)->mkdir(basePath.c_str());
     basePath.append("/");
@@ -3612,6 +3449,23 @@ void EUTelClusteringProcessor::bookHistos() {
 
   }
   streamlog_out ( DEBUG5 )  << "end of Booking histograms " << endl;
+}
+
+
+void EUTelClusteringProcessor::getMaxPixels(int sensorID, int& maxX, int& maxY)
+{
+      try
+        {
+          maxX =  geo::gGeometry().siPlaneXNpixels(sensorID)-1;
+          maxY =  geo::gGeometry().siPlaneYNpixels(sensorID)-1;
+        }
+
+      catch(...)
+        {
+	// throw  InvalidGeometryException ("Unknown sensorID " + to_string( sensorID ));
+          streamlog_out( ERROR5 ) << "Unknown sensorID " << sensorID << ", perhaps your GEAR file is incomplete." << endl;
+          return;
+        }
 }
 
 #endif
