@@ -24,8 +24,6 @@
 
 // EUTELESCOPE
 #include "EUTelUtility.h"
-#include "EUTelUtilityRungeKutta.h"
-#include "EUTelEquationsOfMotion.h"
 #include "EUTelTrackFitter.h"
 #include "EUTelTrackStateImpl.h"
 #include "EUTelTrackImpl.h"
@@ -252,18 +250,6 @@ TMatrixD _jacobianF;
 		TMatrixD _residualCovR;
 		
 private:
-		/** ODE integrator for equations of motion */
-		EUTelUtilityRungeKutta* _eomIntegrator;
-		
-		/** ODE integrator for Kalman propagation jacobian */
-		EUTelUtilityRungeKutta* _jacobianIntegrator;
-		
-		/** ODE for equations of motion */
-		ODE* _eomODE;
-		
-		/** ODE for Kalman propagation jacobian */
-		ODE* _jacobianODE;
-		
 	};
 
 } // namespace eutelescope
