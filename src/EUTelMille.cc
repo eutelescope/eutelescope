@@ -29,8 +29,6 @@
 #include "EUTelCDashMeasurement.h"
 #include "EUTelGeometryTelescopeGeoDescription.h"
 
-
-
 // marlin includes ".h"
 #include "marlin/Processor.h"
 #include "marlin/Global.h"
@@ -39,10 +37,6 @@
 
 // marlin util includes
 #include "mille/Mille.h"
-
-// gear includes <.h>
-#include <gear/GearMgr.h>
-#include <gear/SiPlanesParameters.h>
 
 // aida includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -334,57 +328,18 @@ void EUTelMille::init() {
     std::string name("test.root");
     geo::gGeometry().initializeTGeoDescription(name,false);
 
-
-  // check if the GEAR manager pointer is not null!
-  if ( Global::GEAR == 0x0 ) {
-    streamlog_out ( ERROR2 ) << "The GearMgr is not available, for an unknown reason." << endl;
-    throw InvalidGeometryException("GEAR manager is not initialised");
-  }
-
-//  sensor-planes in geometry navigation:
-  _siPlanesParameters  = const_cast<gear::SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
-  _siPlanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
-
-  // clear the sensor ID vector
   _sensorIDVec.clear();
-
-  // clear the sensor ID map
   _sensorIDVecMap.clear();
-  _sensorIDtoZOrderMap.clear();
-
-  // clear the sensor ID vector (z-axis order)
-  _sensorIDVecZOrder.clear();
-
-// copy-paste from another class (should be ideally part of GEAR!)
-   double*   keepZPosition = new double[ _siPlanesLayerLayout->getNLayers() ];
-   for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); iPlane++ ) 
+	//TODO: get this directly
+   for ( size_t i = 0; i < geo::gGeometry().sensorIDsVec().size(); i++) 
    {
-    int sensorID = _siPlanesLayerLayout->getID( iPlane );
-        keepZPosition[ iPlane ] = _siPlanesLayerLayout->getLayerPositionZ(iPlane);
-
-    _sensorIDVec.push_back( sensorID );
-    _sensorIDVecMap.insert( make_pair( sensorID, iPlane ) );
-
-    // count number of the sensors to the left of the current one:
-    int _sensors_to_the_left = 0;
-    for ( int jPlane = 0 ; jPlane < _siPlanesLayerLayout->getNLayers(); jPlane++ ) 
-    {
-        if( _siPlanesLayerLayout->getLayerPositionZ(jPlane) + 1e-06 <     keepZPosition[ iPlane ] )
-        {
-            _sensors_to_the_left++;
-        }
-    }
-
-    _sensorIDVecZOrder.push_back( _sensors_to_the_left );
-    _sensorIDtoZOrderMap.insert(make_pair( sensorID, _sensors_to_the_left));
+	int sensorID = geo::gGeometry().sensorIDsVec().at(i);
+    	_sensorIDVec.push_back( sensorID );
+    	_sensorIDVecMap.insert( make_pair( sensorID, i ) );
    }
    
-   delete [] keepZPosition;
-
-
   _histogramSwitch = true;
-
-  _referenceHitVec = 0;
+  _referenceHitVec = NULL;
 
   //lets guess the number of planes
   if(_inputMode == 0 || _inputMode == 2) 

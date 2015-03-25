@@ -24,10 +24,6 @@
 // marlin util includes
 #include "mille/Mille.h"
 
-// gear includes <.h>
-#include <gear/SiPlanesParameters.h>
-#include <gear/SiPlanesLayerLayout.h>
-
 // lcio includes <.h>
 #include <EVENT/LCRunHeader.h>
 #include <EVENT/LCEvent.h>
@@ -405,16 +401,7 @@ namespace eutelescope {
 
     //! Sensor ID map (inverse sensorIDVec) 
     std::map< int, int > _sensorIDVecMap;
-    //! Sensor ID vector, 
-    /*! it's position along Z axis
-     */ 
-    IntVec _sensorIDVecZOrder;
-    //! sensor ID to position along Z id
-    /*!
-     */
-    std::map<int, int> _sensorIDtoZOrderMap;
-
-
+ 
     // parameters
 
     float _distanceMax;

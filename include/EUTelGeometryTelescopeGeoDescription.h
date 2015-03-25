@@ -330,7 +330,7 @@ class EUTelGeometryTelescopeGeoDescription
 	int sensorZOrderToID( int ) const;
 
 	/** Vector of all sensor IDs */
-	const EVENT::IntVec& sensorIDsVec() const { return _sensorIDVec; };
+	const std::vector<int> sensorIDsVec() const { return _sensorIDVec; };
 
 	Eigen::Vector3d getRotationAnglesFromMatrix( Eigen::Matrix3d rotMat );
 
