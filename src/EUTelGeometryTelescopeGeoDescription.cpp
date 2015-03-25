@@ -950,7 +950,7 @@ TMatrixD EUTelGeometryTelescopeGeoDescription::getRotMatrix( int sensorID ) {
 	streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::getRotMatrix()--------BEGIN " << std::endl;
 	const double local[] = {0,0,0};
 	double global[3];
-	std::cout << "Sensor ID " << sensorID << std::endl;
+//	std::cout << "Sensor ID " << sensorID << std::endl;
 	TMatrixD TRotMatrix(3,3);
 	if(sensorID != 314){
 		local2Master( sensorID,local, global );
@@ -963,8 +963,8 @@ TMatrixD EUTelGeometryTelescopeGeoDescription::getRotMatrix( int sensorID ) {
 	}else{
 		TRotMatrix.UnitMatrix();
 	}
-		std::cout<< "Here is the first element of rotation matrix: " << TRotMatrix[0][0]<<std::endl;
-		std::cout<< "Here is the last element of rotation matrix: " << TRotMatrix[2][2]<<std::endl;
+	//	std::cout<< "Here is the first element of rotation matrix: " << TRotMatrix[0][0]<<std::endl;
+	//	std::cout<< "Here is the last element of rotation matrix: " << TRotMatrix[2][2]<<std::endl;
 
     return TRotMatrix;
     streamlog_out(DEBUG2) << "EUTelGeometryTelescopeGeoDescription::getRotMatrix()----END " << std::endl;

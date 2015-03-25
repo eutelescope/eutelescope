@@ -227,7 +227,7 @@ TMatrixD EUTelNav::getMeasToLocal(TVector3 t1w, int  planeID, float charge)
 	TVector3 normalVec;
 	normalVec[0] = TRotMatrix[0][2];	normalVec[1] = TRotMatrix[1][2];	normalVec[2] = TRotMatrix[2][2];
 	double cosInc = direction*normalVec;
-	std::cout<<"Here is cosInc " << cosInc <<std::endl;
+//	std::cout<<"Here is cosInc " << cosInc <<std::endl;
 	TMatrixD measDir(3,2);
 	measDir[0][0] = TRotMatrix[0][0];	measDir[0][1] = TRotMatrix[0][1];
 	measDir[1][0] = TRotMatrix[1][0];	measDir[1][1] = TRotMatrix[1][1];
@@ -256,15 +256,15 @@ TMatrixD EUTelNav::getPropagationJacobianCurvilinearLimit(float ds, float qbyp, 
 	gear::Vector3D vectorGlobal(0.1,0.1,0.1);
 
 
-	const double Bx = (Bfield.at( vectorGlobal ).z());  
-	const double By = (Bfield.at( vectorGlobal ).x());
-	const double Bz = (Bfield.at( vectorGlobal ).y());
+	const double Bx = (Bfield.at( vectorGlobal ).x());  
+	const double By = (Bfield.at( vectorGlobal ).y());
+	const double Bz = (Bfield.at( vectorGlobal ).z());
 
 	TVector3 b(Bx, By, Bz);
 	TVector3 BxT = b.Cross(direction);
 //	std::cout << "BxT" << BxT[0] << "  ,  " <<  BxT[1] <<"   ,  " <<BxT[2] << std::endl;
 	TMatrixD xyDir(2, 3);
-	xyDir[0][0] = 1; xyDir[0][1]=0.0; xyDir[0][2]=-slope.at(0);  
+	xyDir[0][0] = 1.0; xyDir[0][1]=0.0; xyDir[0][2]=-slope.at(0);  
 	xyDir[1][0] = 0; xyDir[1][1]=1.0; xyDir[1][2]=-slope.at(1);  
 
 	TMatrixD bFac(2,1);
@@ -281,11 +281,19 @@ TMatrixD EUTelNav::getPropagationJacobianCurvilinearLimit(float ds, float qbyp, 
 			ajac[4][1] = ds;
 	}else{
 		ajac[1][0] = bFac[0][0]*ds/sinLambda;
+		std::cout<<"Jacobian entries;" << ajac[1][0] << std::endl;
+		std::cout<<"1,0 " << ajac[1][0] << std::endl;
 		ajac[2][0] = bFac[1][0]*ds/sinLambda;
+		std::cout<<"2,0 " << ajac[2][0] << std::endl;
 		ajac[3][0] = 0.5*bFac[0][0]*ds*ds;
+		std::cout<<"3,0 " << ajac[3][0] << std::endl;
 		ajac[4][0] = 0.5*bFac[1][0]*ds*ds;
+		std::cout<<"4,0 " << ajac[4][0] << std::endl;
 		ajac[3][1] = ds*sinLambda; 
+		std::cout<<"3,1 " << ajac[3][1] << std::endl;
 		ajac[4][2] = ds*sinLambda; 
+		std::cout<<"4,2 " << ajac[4][2] << std::endl;
+
 	}
 	return ajac;
 }

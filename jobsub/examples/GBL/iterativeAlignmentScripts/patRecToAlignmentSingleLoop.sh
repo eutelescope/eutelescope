@@ -57,6 +57,8 @@ while [ "$alignment" == "false" ]; do
 	#Fill variables.
 	error1=`unzip  -p  $fileAlign |grep "Backtrace for this error:" | awk '{ print $NF }'`;
 	error2=`unzip  -p  $fileAlign |grep "This is the entire stack" | awk '{ print $NF }'`;
+	error3=`unzip  -p  $fileAlign |grep "problem with stream or EOF reading" | awk '{ print $NF }'`;
+
 	rejected=`unzip  -p  $fileAlign |grep "Too many rejects" |cut -d '-' -f2`; 
 	averageChi2Mille=`unzip -p $fileAlign |grep "Chi^2/Ndf" | awk '{ print $(NF-5) }'`;
 	averageChi2Mille=$(echo $averageChi2Mille | cut -f1 -d' ')
@@ -66,8 +68,8 @@ while [ "$alignment" == "false" ]; do
 	noCut=`echo " $averageChi2Mille < 10.0" | bc`; #Do not want to decrease the resolution too much
 	notUnderEstimated=`echo " $averageChi2Mille > 1.0" | bc ` #Do not under estimate the errors.
 	#We can either have a error, rejected, factor, or nothing.
-	echo $error1 $error2
-	if [ "$error1" != "" ] || [ "$error2" != "" ];then #Must put quotes if we expect error1/2 to be empty
+	echo $error1 $error2 $error3
+	if [ "$error1" != "" ] || [ "$error2" != "" ] || [ "$error3" != "" ];then #Must put quotes if we expect error1/2 to be empty
 		echo "We have a segfault" 
 		break
 	elif [ "$rejected" != "" ];then
