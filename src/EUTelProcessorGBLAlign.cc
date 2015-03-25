@@ -11,7 +11,7 @@ _milleResultFileName("millepede.res"),
 _gear_aligned_file("gear-00001-aligned.xml"),
 _nProcessedRuns(0),
 _nProcessedEvents(0),
-_alignmentMode(0),
+_alignmentMode(7),
 _beamQ(-1),
 _eBeam(4),
 _createBinary(true),
@@ -55,7 +55,7 @@ _mEstimatorType()
             "5 - Alignment of XY shifts + rotations around Y and Z\n"
             "6 - Alignment of XY shifts + rotations around X,Y and Z\n"
             "7 - Alignment of XYZ shifts + rotations around X,Y and Z\n",
-            _alignmentMode, static_cast<int> (1));
+            _alignmentMode, static_cast<int> (7));
 
     registerOptionalParameter("FixedAlignmentPlanesXshift", "Ids of planes for which X shift will be fixed during millepede call", _fixedAlignmentXShfitPlaneIds, IntVec());
     

@@ -74,6 +74,7 @@ namespace eutelescope {
     } else if (alignmentMode==7) {
     	_alignmentMode = Utility::XYZShiftXZRotYZRotXYRot;
 		_globalLabels.resize(6);
+		std::cout<<"HHHHHHHHHHHHHHHHEEEEEEEEEEERRRRRRREEEEEE" <<std::endl;
  		_jacobian.ResizeTo(2, 6);
 
     }else {
