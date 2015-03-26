@@ -331,13 +331,18 @@ void EUTelMille::init() {
   _sensorIDVec.clear();
   _sensorIDVecMap.clear();
 	//TODO: get this directly
-   for ( size_t i = 0; i < geo::gGeometry().sensorIDsVec().size(); i++) 
+
+  // an associative map for getting also the sensorID ordered
+  map< double, int > sensorIDMap;
+
+  for ( size_t i = 0; i < geo::gGeometry().sensorIDsVec().size(); i++) 
    {
 	int sensorID = geo::gGeometry().sensorIDsVec().at(i);
     	_sensorIDVec.push_back( sensorID );
     	_sensorIDVecMap.insert( make_pair( sensorID, i ) );
+    	sensorIDMap.insert( make_pair( geo::gGeometry().siPlaneZPosition(sensorID), sensorID ) );
    }
-   
+     
   _histogramSwitch = true;
   _referenceHitVec = NULL;
 
@@ -389,20 +394,7 @@ void EUTelMille::init() {
       streamlog_out ( ERROR2 ) << "unknown input mode " << _inputMode << endl;
       throw InvalidParameterException("unknown input mode");
     }
-  
-  // an associative map for getting also the sensorID ordered
-  map< double, int > sensorIDMap;
-  //lets create an array with the z positions of each layer
-  for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); iPlane++ ) {
-    _siPlaneZPosition.push_back(_siPlanesLayerLayout->getLayerPositionZ(iPlane));
-    sensorIDMap.insert( make_pair( _siPlanesLayerLayout->getLayerPositionZ(iPlane), _siPlanesLayerLayout->getID(iPlane) ) );
-  }
 
-
-  //lets sort the array with increasing z
-  sort(_siPlaneZPosition.begin(), _siPlaneZPosition.end());
-
-  
   //the user is giving sensor ids for the planes to be excluded. this
   //sensor ids have to be converted to a local index according to the
   //planes positions along the z axis.
@@ -455,15 +447,6 @@ void EUTelMille::init() {
     ++iter;
     ++counter;
   }
-  //
-
-
-  //consistency
-  if(_siPlaneZPosition.size() != _nPlanes)
-    {
-      streamlog_out ( ERROR2 ) << "the number of detected planes is " << _nPlanes << " but only " << _siPlaneZPosition.size() << " layer z positions were found!"  << endl;
-      throw InvalidParameterException("number of layers and layer z positions mismatch");
-    }
 
   // this method is called only once even when the rewind is active
   // usually a good idea to
@@ -2125,17 +2108,8 @@ void EUTelMille::processEvent (LCEvent * event) {
                 }
 
                 if (excluded == 0) {
-                  //     cout << "--" << endl;
                   int helphelp = help - nExcluded; // index of plane after
-                  // excluded planes have
-                  // been removed
 
-                  //local parameters: b0, b1, c0, c1
-//                  const double la = lambda[help];
-
-//                  double z_sensor = _siPlanesLayerLayout -> getSensitivePositionZ(help) + 0.5 * _siPlanesLayerLayout->getSensitiveThickness( help );
-//                  z_sensor *= 1000;		// in microns
-						// reset all derivatives to zero!
 		  for (int i = 0; i < nGL; i++ ) 
                   {
 		    derGL[i] = 0.000;
