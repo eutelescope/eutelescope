@@ -181,7 +181,7 @@ void EUTelProcessorGBLAlign::processEvent(LCEvent * evt){
 					const gear::BField& B = geo::gGeometry().getMagneticField();
 					const double Bmag = B.at( TVector3(0.,0.,0.) ).r2();
 					gbl::GblTrajectory* traj = 0;
-					printPointsInformation(pointList);
+//					printPointsInformation(pointList);
 					if ( Bmag < 1.E-6 ) {
 						traj = new gbl::GblTrajectory( pointList, false ); //Must make sure this is not a memory leak
 					} else {
@@ -194,6 +194,8 @@ void EUTelProcessorGBLAlign::processEvent(LCEvent * evt){
 					streamlog_message( DEBUG0, traj->printTrajectory(10);, std::endl; );
 					std::cout<<"WRITE TO MILLEPEDE. EVENT: " << 	event->getEventNumber() << "  Total number of tracks: " << _totalTrackCount << std::endl;	
 					traj->milleOut(*(_Mille->_milleGBL));
+					double size =	printSize("millepede.bin");
+					std::cout<<"Binary after track addition " << size << " This is the size per track: " << size/_totalTrackCount << std::endl;
 				}//END OF LOOP FOR ALL TRACKS IN AN EVENT
 			}//END OF COLLECTION IS NOT NULL LOOP	
 		}
@@ -252,3 +254,13 @@ void EUTelProcessorGBLAlign::printPointsInformation(std::vector<gbl::GblPoint>& 
 
 	}
 }	
+double  EUTelProcessorGBLAlign::printSize(const std::string& address) {
+	std::fstream motd(address.c_str(), std::ios::binary|std::ios::in|std::ios::ate);
+	if(motd) {
+		std::fstream::pos_type size = motd.tellg();
+		return size;
+	} else {
+		perror(address.c_str());
+		return 0.0;
+	}
+}
