@@ -11,31 +11,31 @@ echo "The input to single loop on iteration $number"
 echo "Input gear: $inputGear" 
 echo "Output gear: $outputGear"
 echo "This is the resolutions X/Y:  $xres/$yres."
-for x in {1..10}; do 
-	echo "PATTERN RECOGNTION ATTEMPT $x ON ITERATION $number"
+#for x in {1..10}; do 
+#	echo "PATTERN RECOGNTION ATTEMPT $x ON ITERATION $number"
 	$do jobsub.py -c $CONFIG -csv $RUNLIST  -o ResidualsRMax="$ResidualsRMax" -o GearFile="$inputGear" -o TrackCandHitOutputCollectionName="$PatOutGBLIn" $PatRec $RUN  
 
-	fileName="$PatRec-${RUN}.zip"
-	fullPath="$directory/$fileName"
-	echo "The full path to the log file is: $fullPath" 
-	averageTracksPerEvent=`unzip  -p  $fullPath |grep "The average number of tracks per event: " |cut -d ':' -f2`; 
-	echo "The average number of tracks per event from the log file is $averageTracksPerEvent"
-	if [[ $averageTracksPerEvent == "" ]];then
-		echo "averagetrackPerEvent variable is empty"		
-	fi
-	if [[ $(echo "$averageTracksPerEvent >$minTracksPerEventAcceptance "|bc) -eq 1 ]]; then
-		break
-	fi
+#	fileName="$PatRec-${RUN}.zip"
+#	fullPath="$directory/$fileName"
+#	echo "The full path to the log file is: $fullPath" 
+#	averageTracksPerEvent=`unzip  -p  $fullPath |grep "The average number of tracks per event: " |cut -d ':' -f2`; 
+#	echo "The average number of tracks per event from the log file is $averageTracksPerEvent"
+#	if [[ $averageTracksPerEvent == "" ]];then
+#		echo "averagetrackPerEvent variable is empty"		
+#	fi
+#	if [[ $(echo "$averageTracksPerEvent >$minTracksPerEventAcceptance "|bc) -eq 1 ]]; then
+#		break
+#	fi
 	#If we reach this part of the code we need to increase the window size.
-	echo "$ResidualsRMax is the size of the radius of acceptance in this iteration"
-	export ResidualsRMax=$(echo "scale=4;$ResidualsRMax*$patRecMultiplicationFactor"|bc)    
-	echo "$ResidualsRMax is the size of the radius of acceptance in the next iteration"
+#	echo "$ResidualsRMax is the size of the radius of acceptance in this iteration"
+#	export ResidualsRMax=$(echo "scale=4;$ResidualsRMax*$patRecMultiplicationFactor"|bc)    
+#	echo "$ResidualsRMax is the size of the radius of acceptance in the next iteration"
 	#Did we find the correct number of track within x=10 iterations.
-	if [[ $x -eq 10 ]];then
-		echo "We are are iteration 10 and still have not found enough tracks in pattern recogntion"
-		exit 1
-	fi
-done
+#	if [[ $x -eq 10 ]];then
+#		echo "We are are iteration 10 and still have not found enough tracks in pattern recogntion"
+#		exit 1
+#	fi
+#done
 #THIS IS PART (2)
 #This part should analyse the output of pattern recogntion and remove tracks which are clearly poor quality. This is difficult with the systematic problems due to misalignment. 
 #Should be a separate processor so we can possible compare pattern recognition techniques or chain. Future work. 
@@ -58,6 +58,7 @@ while [ "$alignment" == "false" ]; do
 	error1=`unzip  -p  $fileAlign |grep "Backtrace for this error:" | awk '{ print $NF }'`;
 	error2=`unzip  -p  $fileAlign |grep "This is the entire stack" | awk '{ print $NF }'`;
 	error3=`unzip  -p  $fileAlign |grep "problem with stream or EOF reading" | awk '{ print $NF }'`;
+	error4=`unzip  -p  $fileAlign |grep "STOP STOP" | awk '{ print $NF }'`;
 
 	rejected=`unzip  -p  $fileAlign |grep "Too many rejects" |cut -d '-' -f2`; 
 	averageChi2Mille=`unzip -p $fileAlign |grep "Chi^2/Ndf" | awk '{ print $(NF-5) }'`;
@@ -69,7 +70,7 @@ while [ "$alignment" == "false" ]; do
 	notUnderEstimated=`echo " $averageChi2Mille > 1.0" | bc ` #Do not under estimate the errors.
 	#We can either have a error, rejected, factor, or nothing.
 	echo $error1 $error2 $error3
-	if [ "$error1" != "" ] || [ "$error2" != "" ] || [ "$error3" != "" ];then #Must put quotes if we expect error1/2 to be empty
+	if [ "$error1" != "" ] || [ "$error2" != "" ] || [ "$error3" != "" ] || [ "$error4" != "" ]  ;then #Must put quotes if we expect error1/2 to be empty
 		echo "We have a segfault" 
 		break
 	elif [ "$rejected" != "" ];then

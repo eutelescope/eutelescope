@@ -74,7 +74,6 @@ namespace eutelescope {
     } else if (alignmentMode==7) {
     	_alignmentMode = Utility::XYZShiftXZRotYZRotXYRot;
 		_globalLabels.resize(6);
-		std::cout<<"HHHHHHHHHHHHHHHHEEEEEEEEEEERRRRRRREEEEEE" <<std::endl;
  		_jacobian.ResizeTo(2, 6);
 
     }else {
@@ -626,7 +625,8 @@ void EUTelMillepede::CreateBinary(){
         streamlog_out(DEBUG0) << "Initialising Mille..." << std::endl;
 				streamlog_out(DEBUG0) << "Millepede binary:" << _milleBinaryFilename << endl;
 
-        const unsigned int reserveSize = 80000;
+        const unsigned int reserveSize = 0;//This is the number of elements the vector will have as start for alignment parameters and derivatives.
+				//Can still push more onto the vector.
 				std::string string = "millepede.bin"; //TO DO:need to fix this. Not reading it correctly
         _milleGBL = new gbl::MilleBinary(string, reserveSize);
 

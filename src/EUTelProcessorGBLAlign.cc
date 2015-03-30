@@ -181,6 +181,7 @@ void EUTelProcessorGBLAlign::processEvent(LCEvent * evt){
 					const gear::BField& B = geo::gGeometry().getMagneticField();
 					const double Bmag = B.at( TVector3(0.,0.,0.) ).r2();
 					gbl::GblTrajectory* traj = 0;
+					printPointsInformation(pointList);
 					if ( Bmag < 1.E-6 ) {
 						traj = new gbl::GblTrajectory( pointList, false ); //Must make sure this is not a memory leak
 					} else {
@@ -191,16 +192,15 @@ void EUTelProcessorGBLAlign::processEvent(LCEvent * evt){
 					traj->fit(chi2, ndf2, loss, _mEstimatorType );
 					streamlog_out ( DEBUG0 ) << "This is the trajectory we are just about to fit: " << std::endl;
 					streamlog_message( DEBUG0, traj->printTrajectory(10);, std::endl; );
-						
+					std::cout<<"WRITE TO MILLEPEDE. EVENT: " << 	event->getEventNumber() << "  Total number of tracks: " << _totalTrackCount << std::endl;	
 					traj->milleOut(*(_Mille->_milleGBL));
 				}//END OF LOOP FOR ALL TRACKS IN AN EVENT
 			}//END OF COLLECTION IS NOT NULL LOOP	
 		}
 	}
 	catch (DataNotAvailableException e) {
-		streamlog_out(MESSAGE0) << _trackCandidatesInputCollectionName << " collection not available" << std::endl;
-	//	throw marlin::SkipEventException(this);
-	return;
+		streamlog_out(MESSAGE9) << "Data not avaliable skip event. " << std::endl;
+		throw marlin::SkipEventException(this);
 	}
 	catch(std::string &e){
 		streamlog_out(MESSAGE9) << e << std::endl;
@@ -238,13 +238,16 @@ void EUTelProcessorGBLAlign::end(){
 
 void EUTelProcessorGBLAlign::printPointsInformation(std::vector<gbl::GblPoint>& pointList){
 	typedef std::vector<gbl::GblPoint>::iterator IteratorType;
+	streamlog_out(MESSAGE5) << "THE START OF THE TRACK POINTS///////////////" <<std::endl;
 	for(IteratorType point = pointList.begin(); point != pointList.end(); point++){
-		streamlog_out(DEBUG1) << "Global derivative for point: " << point->getLabel()<<std::endl;
-		streamlog_message( DEBUG0, point->getGlobalDerivatives().Print();, std::endl; );
+		streamlog_out(MESSAGE5)<<"Point label: " << point->getLabel()<<std::endl;
+		streamlog_out(MESSAGE5) << "GLOBAL DERIVATIVE MATRIX"<<std::endl;
+		streamlog_message( MESSAGE5, point->getGlobalDerivatives().Print();, std::endl; );
 		std::vector<int> label = point->getGlobalLabels();
-		streamlog_out(DEBUG1) << "Global labels for point: " << point->getLabel() << "Global label size "<<label.size() <<std::endl;
+//		streamlog_out(MESSAGE5)<<"Size  of : "<<label.size() <<std::endl;
+		streamlog_out(MESSAGE5) << "GLOBAL LABELS: " <<std::endl;
 		for( std::vector<int>::const_iterator i = label.begin(); i != label.end(); ++i){
-			streamlog_out(DEBUG1) << *i << ' ';
+			streamlog_out(MESSAGE5) << *i << ' ';
 		}
 
 	}

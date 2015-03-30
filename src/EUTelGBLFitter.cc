@@ -164,7 +164,7 @@ namespace eutelescope {
 						streamlog_out(DEBUG0)<<"Label just before adding: "<<labels.at(k) <<std::endl;
 					}
 					pointList.at(j).addGlobals(labels, alignmentJacobian);
-					streamlog_out(DEBUG0)<<"The number of global parameters for this point are "<<pointList[i].getNumGlobals()<<std::endl;
+					streamlog_out(DEBUG0)<<"The number of global parameters for this point are "<<pointList[j].getNumGlobals()<<std::endl;
 					for(size_t k=0; k<pointList.at(j).getGlobalLabels().size();++k){
 						streamlog_out(DEBUG0)<<"Label just after adding: "<<pointList.at(j).getGlobalLabels().at(k) <<std::endl;
 					}
