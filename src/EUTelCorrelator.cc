@@ -49,10 +49,6 @@
 #include <AIDA/IAxis.h>
 #endif
 
-// gear includes <.h>
-#include <gear/GearMgr.h>
-#include <gear/SiPlanesParameters.h>
-
 // lcio includes <.h>
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/TrackerPulseImpl.h>
