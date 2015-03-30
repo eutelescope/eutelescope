@@ -2,7 +2,7 @@ RunNumber,BeamEnergy,GearGeoFile
 97,5,gear-CLAUS-RUN97.xml
 241,4.4,gear-FORCLAUS-AFTER-FIX-241.xml
 273,5,gear-possible-correct-jacobian-273.xml
-286,3,gear-ZRotations-XYShift-R=0.3-r=0.006-Iteration-1-000286.xml
+286,3,gear-FORCLAUS-AFTER-FIX-286.xml 
 290,4.8,gear-Hold-three-R0.2-290.xml
 294,4.8,gear-0.5T.xml
 300,3,gear-0.5T.xml

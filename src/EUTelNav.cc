@@ -212,6 +212,7 @@ TMatrixD EUTelNav::getLocalToCurvilinearTransformMatrix(TVector3 globalMomentum,
 }
 TMatrixD EUTelNav::getMeasToLocal(TVector3 t1w, int  planeID, float charge)
 {
+//	std::cout<<"Plane ID " << planeID <<std::endl;
 	TMatrixD transM2l(5,5);
 	transM2l.UnitMatrix();
 	std::vector<double> slope;
@@ -248,9 +249,11 @@ TMatrixD EUTelNav::getPropagationJacobianCurvilinearLimit(float ds, float qbyp, 
 	t1w.Unit();
 	std::vector<double> slope;
 	slope.push_back(t1w[0]/t1w[2]); slope.push_back(t1w[1]/t1w[2]);
+//	std::cout <<"Here is slope xz and yz plane: "<< slope.at(0) <<"   " <<slope.at(1) <<std::endl;
 	double norm = std::sqrt(pow(slope.at(0),2) + pow(slope.at(1),2) + 1);//not this works since we have in the curvinlinear frame (dx/dz)^2 +(dy/dz)^2 +1 so time through by dz^2
 	TVector3 direction;
 	direction[0] = (slope.at(0)/norm); direction[1] =(slope.at(1)/norm);	direction[2] = (1.0/norm);
+//	std::cout <<"DIRECTION: "<< direction[0] <<"   " << direction[1]<< "  "<< direction[2] <<std::endl;
 	double sinLambda = direction[2]; 
 	const gear::BField& Bfield = geo::gGeometry().getMagneticField();
 	gear::Vector3D vectorGlobal(0.1,0.1,0.1);
@@ -273,7 +276,7 @@ TMatrixD EUTelNav::getPropagationJacobianCurvilinearLimit(float ds, float qbyp, 
 	BxTMatrix[0][0] =BxT[0];	BxTMatrix[1][0] =BxT[1];	BxTMatrix[2][0] =BxT[2]; 
  
 	bFac = -0.0002998 * (xyDir*BxTMatrix); 
-//	std::cout << "bFac" << bFac[0][0] << "  ,  " <<  bFac[1][0] << std::endl;
+//	std::cout <<std::scientific<< "bFac" << bFac[0][0] << "  ,  " <<  bFac[1][0] << std::endl;
 	TMatrixD ajac(5, 5);
 	ajac.UnitMatrix();
 	if(b.Mag() < 0.001 ){
@@ -281,18 +284,18 @@ TMatrixD EUTelNav::getPropagationJacobianCurvilinearLimit(float ds, float qbyp, 
 			ajac[4][1] = ds;
 	}else{
 		ajac[1][0] = bFac[0][0]*ds/sinLambda;
-		std::cout<<"Jacobian entries;" << ajac[1][0] << std::endl;
-		std::cout<<"1,0 " << ajac[1][0] << std::endl;
+//		std::cout<<"Jacobian entries;" << ajac[1][0] << std::endl;
+//		std::cout<<"1,0 " << ajac[1][0] << std::endl;
 		ajac[2][0] = bFac[1][0]*ds/sinLambda;
-		std::cout<<"2,0 " << ajac[2][0] << std::endl;
+//		std::cout<< std::scientific <<"2,0 " << ajac[2][0] << std::endl;
 		ajac[3][0] = 0.5*bFac[0][0]*ds*ds;
-		std::cout<<"3,0 " << ajac[3][0] << std::endl;
+//		std::cout<<"3,0 " << ajac[3][0] << std::endl;
 		ajac[4][0] = 0.5*bFac[1][0]*ds*ds;
-		std::cout<<"4,0 " << ajac[4][0] << std::endl;
+//		std::cout<< std::scientific  <<"4,0 " << ajac[4][0] << std::endl;
 		ajac[3][1] = ds*sinLambda; 
-		std::cout<<"3,1 " << ajac[3][1] << std::endl;
+//		std::cout<<"3,1 " << ajac[3][1] << std::endl;
 		ajac[4][2] = ds*sinLambda; 
-		std::cout<<"4,2 " << ajac[4][2] << std::endl;
+//		std::cout<<"4,2 " << ajac[4][2] << std::endl;
 
 	}
 	return ajac;
@@ -498,6 +501,22 @@ TVector3 EUTelNav::getXYZfromArcLength(TVector3 pos, TVector3 pVec, float beamQ,
 		}
 		return pos;
 }
+TVector3 EUTelNav::getMomentumfromArcLengthLocal(TVector3 pVec, TVector3 pos, float beamQ, float s, int planeID)
+{
+	TVector3	newMomentum = EUTelNav::getXYZMomentumfromArcLength(pVec, pos,beamQ,s);
+	TVector3 pVecUnitLocal;
+	//TO DO: This transform is used also in state. Can make generic transform like this for both.
+	double globalVec[] = { newMomentum[0],newMomentum[1],newMomentum[2] };
+	double localVec[3];
+	if(planeID != 314){
+	geo::gGeometry().master2LocalVec( planeID ,globalVec, localVec );
+	pVecUnitLocal[0] = localVec[0]; 	pVecUnitLocal[1] = localVec[1]; 	pVecUnitLocal[2] = localVec[2]; 
+	}else{
+		pVecUnitLocal[0] = pVec[0]; 	pVecUnitLocal[1] = pVec[1]; 	pVecUnitLocal[2] = pVec[2]; 
+	}
+	return pVecUnitLocal;
+}
+
 
 //This will calculate the momentum at a arc length away given initial parameters.
 TVector3 EUTelNav::getXYZMomentumfromArcLength(TVector3 momentum, TVector3 globalPositionStart, float charge, float arcLength)

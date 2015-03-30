@@ -466,7 +466,7 @@ namespace eutelescope {
 	TMatrixD EUTelGBLFitter::findScattersJacobians(EUTelState state, EUTelState nextState){
 		_scattererJacobians.clear();
 		TVector3 position = state.getPositionGlobal();
-		TVector3 momentum = state.computeCartesianMomentum();
+		TVector3 momentum = state.getIncidenceUnitMomentumVectorInLocalFrame();
 		TVector3 newMomentum;
 		int location = state.getLocation();
 		int locationEnd = 314; //This will create a scatterer with normal in beam direction
@@ -478,7 +478,7 @@ namespace eutelescope {
 		TVector3 B;
 		B[0]=Bx; B[1]=By; B[2]=Bz;
 		for(size_t i=0;i<_scattererPositions.size();i++){
-			newMomentum = EUTelNav::getXYZMomentumfromArcLength(momentum, position,state.getBeamCharge(), _scattererPositions[i] );
+			newMomentum = EUTelNav::getMomentumfromArcLengthLocal(momentum, position,state.getBeamCharge(), _scattererPositions[i], location );
 			TMatrixD curvilinearJacobian = EUTelNav::getPropagationJacobianCurvilinearLimit(_scattererPositions[i], state.getOmega(), momentum.Unit(),newMomentum.Unit());
 			streamlog_out(DEBUG0)<<"This is the curvilinear jacobian at sensor : " << location << " or scatter: "<< i << std::endl; 
 			streamlog_message( DEBUG0, curvilinearJacobian.Print();, std::endl; );
