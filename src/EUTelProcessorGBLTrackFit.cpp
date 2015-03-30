@@ -89,7 +89,7 @@ void EUTelProcessorGBLTrackFit::init() {
 			throw(lcio::Exception("Could not create instance of fitter class."));
 		}
 		//Create millepede output
-		_Mille  = new EUTelMillepede(); 
+//		_Mille  = new EUTelMillepede(); 
 
 		bookHistograms();//TO DO: Remove this and replace with generic histogram class 
 		streamlog_out(DEBUG2) << "EUTelProcessorGBLTrackFit::init( )---------------------------------------------END" << std::endl;
@@ -172,7 +172,7 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent* evt){
 			if(ierr == 0 ){
 				streamlog_out(DEBUG5) << "Ierr is: " << ierr << " Entering loop to update track information " << std::endl;
 				//If the fit succeeded then write into the binary file.
-				traj->milleOut(*(_Mille->_milleGBL));
+//				traj->milleOut(*(_Mille->_milleGBL));
 				static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_chi2CandidateHistName ] ) -> fill( (chi2)/(ndf));
 				static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_fitsuccessHistName ] ) -> fill(1.0);
 				if(chi2 ==0 or ndf ==0){

@@ -192,16 +192,17 @@ void EUTelProcessorGBLAlign::processEvent(LCEvent * evt){
 					traj->fit(chi2, ndf2, loss, _mEstimatorType );
 					streamlog_out ( DEBUG0 ) << "This is the trajectory we are just about to fit: " << std::endl;
 					streamlog_message( DEBUG0, traj->printTrajectory(10);, std::endl; );
-					std::cout<<"WRITE TO MILLEPEDE. EVENT: " << 	event->getEventNumber() << "  Total number of tracks: " << _totalTrackCount << std::endl;	
+	//				std::cout<<"WRITE TO MILLEPEDE. EVENT: " << 	event->getEventNumber() << "  Total number of tracks: " << _totalTrackCount << std::endl;	
 					traj->milleOut(*(_Mille->_milleGBL));
-					double size =	printSize("millepede.bin");
-					std::cout<<"Binary after track addition " << size << " This is the size per track: " << size/_totalTrackCount << std::endl;
 				}//END OF LOOP FOR ALL TRACKS IN AN EVENT
 			}//END OF COLLECTION IS NOT NULL LOOP	
+//			if(event->getEventNumber() == 1){
+//				throw marlin::StopProcessingException( this ) ;
+//			}
 		}
 	}
 	catch (DataNotAvailableException e) {
-		streamlog_out(MESSAGE9) << "Data not avaliable skip event. " << std::endl;
+//		streamlog_out(MESSAGE9) << "Data not avaliable skip event. " << std::endl;
 		throw marlin::SkipEventException(this);
 	}
 	catch(std::string &e){
@@ -220,6 +221,10 @@ void EUTelProcessorGBLAlign::processEvent(LCEvent * evt){
 }
 
 void EUTelProcessorGBLAlign::end(){
+	_Mille->_milleGBL->closeBinary();
+//	double size =	printSize("millepede.bin");
+//	std::cout<<"Binary after track addition " << size << " This is the size per track: " << size/_totalTrackCount << std::endl;
+
 	streamlog_out (MESSAGE9) <<"TOTAL NUMBER OF TRACKS PASSED TO ALIGNMENT: "<< _totalTrackCount << std::endl;
 	if(_totalTrackCount<1000){
 		streamlog_out(WARNING5)<<"You are trying to align with fewer than 1000 tracks. This could be too small a number." <<std::endl;
@@ -242,7 +247,7 @@ void EUTelProcessorGBLAlign::printPointsInformation(std::vector<gbl::GblPoint>& 
 	typedef std::vector<gbl::GblPoint>::iterator IteratorType;
 	streamlog_out(MESSAGE5) << "THE START OF THE TRACK POINTS///////////////" <<std::endl;
 	for(IteratorType point = pointList.begin(); point != pointList.end(); point++){
-		streamlog_out(MESSAGE5)<<"Point label: " << point->getLabel()<<std::endl;
+		streamlog_out(MESSAGE5)<<std::endl <<"Point label: " << point->getLabel()<<std::endl;
 		streamlog_out(MESSAGE5) << "GLOBAL DERIVATIVE MATRIX"<<std::endl;
 		streamlog_message( MESSAGE5, point->getGlobalDerivatives().Print();, std::endl; );
 		std::vector<int> label = point->getGlobalLabels();
