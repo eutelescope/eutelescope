@@ -205,15 +205,8 @@ protected:
     std::string _inputRecHitColName ;
     std::string _inputFitHitColName ;
 
-
-
-    //! Flag for manual DUT selection
-
-    bool _useManualDUT;
-
     //! Id of telescope layer which should be used as DUT
-
-    int _manualDUTid;
+    int _iDUT;
 
     // Internal processor variables
     // ----------------------------
@@ -221,7 +214,6 @@ protected:
 
     int _nRun ;
 
-    int _iDUT;
     double _zDUT;
     double _distMax;
 
