@@ -1022,6 +1022,8 @@ float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double 
     const double zp  = ( globalPosFinish[2] - globalPosStart[2] )/stepLenght;
 
 		int lastPlaneID = 	geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at( geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()-1 );
+		int firstPlaneID = 	geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(0);
+
     double snext;
     double pt[3], loc[3];
 //    double epsil = 1.E-7; 
@@ -1037,12 +1039,18 @@ float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double 
     // Get starting node
     gGeoManager->InitTrack( globalPosStart[0]/*mm*/, globalPosStart[1]/*mm*/, globalPosStart[2]/*mm*/, xp, yp, zp ); //This the start point and direction
     TGeoNode *nextnode = gGeoManager->GetCurrentNode( );
-    
+		bool foundFirstPlane=false;
     double currentStep = stepLenght /*mm*/;  //This is total distance we are going to travel
     // Loop over all, encountered during the propagation, volumes 
     while ( nextnode ) {
 //			std::cout <<" node level : " << _geoManager->GetLevel() <<std::endl;
 			int sensorID = getSensorIDFromManager();
+			if(sensorID == firstPlaneID){ //We want to make sure to add radiation length from first plane to last plane only;
+				foundFirstPlane = true;
+			}
+
+						
+
 //	std::cout << "Sensor Id (start) : " << sensorID << std::endl;
 
         med = NULL;
@@ -1100,7 +1108,7 @@ float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double 
 							double add = lastrad*snext;
 							rad += add; 
 							//ADD SENSOR SCAT TO SENSOR. THEN ADD ALL NON SENSOR MATERIAL TO AIR AFTER SENSOR.
-							if(sensorID != lastPlaneID){
+							if(sensorID != lastPlaneID and foundFirstPlane){
 								if(sensorID != -999){
 									sensors[sensorID] = sensors[sensorID] +  add;
 									sensorLeftSide =sensorID;
@@ -1117,7 +1125,7 @@ float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double 
 								//Do not end here since we need multiple iteration to cover the full volume
 							}
 
-								streamlog_out( DEBUG5 ) << "Dont ignore this boundary change (Small Steps): " << rad << "      ADDED TO RAD: " << lastrad*snext <<std::endl;
+								streamlog_out( DEBUG5 ) <<std::scientific <<  "Dont ignore this boundary change (Small Steps): " << rad << "      ADDED TO RAD: " << lastrad*snext <<" lastrad " <<lastrad <<std::endl;
 
             }
             
@@ -1148,7 +1156,7 @@ float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double 
         if ( med ) { //If medium is not NULL
             double radlen = med->GetMaterial()->GetRadLen() /*cm*/;
 //						std::cout<< "rad length: " << radlen << std::endl;
-            if ( radlen > 1.e-9 && radlen < 1.e10 ) {
+            if ( radlen > 0.0 && radlen < 1.e10 ) {
                 
                 lastrad = 1. / radlen * mm2cm; //calculate 1/radiationlength per cm. This will transform radlen to mm
                 
@@ -1161,7 +1169,7 @@ float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double 
 									double add = lastrad*snext;
 									rad += add; 
 									//ADD SENSOR SCAT TO SENSOR. THEN ADD ALL NON SENSOR MATERIAL TO AIR AFTER SENSOR.
-									if(sensorID != lastPlaneID){
+									if(sensorID != lastPlaneID and foundFirstPlane ){
 										if(sensorID != -999){
 											sensors[sensorID] = sensors[sensorID] +  add;
 											sensorLeftSide =sensorID;
@@ -1177,10 +1185,11 @@ float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double 
 										sensors[sensorID] = sensors[sensorID] + add;
 										//Do not end here since we need multiple iteration to cover the full volume
 									}
-									streamlog_out( DEBUG5 ) << "Dont ignore this boundary change (Large Steps): " << rad << "      ADDED TO RAD: " << lastrad*snext <<std::endl;
+									streamlog_out( DEBUG5 ) << std::scientific << "Dont ignore this boundary change (Large Steps): " << rad << "      ADDED TO RAD: " << lastrad*snext <<" lastrad " << lastrad <<  std::endl;
                 }
                 
             } else {
+								std::cout<<"RADIATION LENGTH IS EITHER HUGE OR NEGITIVE! Lastrad is: "<<lastrad <<std::endl; 
                 lastrad = 0.;
             }
 //            streamlog_out( DEBUG0 ) << "STEP #" << nbound << std::endl;
