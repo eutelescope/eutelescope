@@ -295,10 +295,10 @@ class EUTelGeometryTelescopeGeoDescription
 	double siPlaneYPitch(int sensorID){ return _planeSetup.at(sensorID).yPitch; };
 
 	/** Sensor X side size in pixels */
-	double siPlaneXNpixels(int sensorID){ return _planeSetup.at(sensorID).xPixelNo; };
+	int siPlaneXNpixels(int sensorID){ return _planeSetup.at(sensorID).xPixelNo; };
 
 	/** Sensor Y side size in pixels */
-	double siPlaneYNpixels(int sensorID){ return _planeSetup.at(sensorID).yPixelNo; };
+	int siPlaneYNpixels(int sensorID){ return _planeSetup.at(sensorID).yPixelNo; };
 
 	/** Sensor X side size in pixels */
 	double siPlaneXResolution(int sensorID){ return _planeSetup.at(sensorID).xRes; };
@@ -338,7 +338,7 @@ class EUTelGeometryTelescopeGeoDescription
 	int sensorZOrderToID( int ) const;
 
 	/** Vector of all sensor IDs */
-	const EVENT::IntVec& sensorIDsVec() const { return _sensorIDVec; };
+	const std::vector<int>& sensorIDsVec() const { return _sensorIDVec; };
 
 	Eigen::Vector3d getRotationAnglesFromMatrix( Eigen::Matrix3d rotMat );
 

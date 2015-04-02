@@ -24,10 +24,6 @@
 // marlin util includes
 #include "mille/Mille.h"
 
-// gear includes <.h>
-#include <gear/SiPlanesParameters.h>
-#include <gear/SiPlanesLayerLayout.h>
-
 // lcio includes <.h>
 #include <EVENT/LCRunHeader.h>
 #include <EVENT/LCEvent.h>
@@ -405,16 +401,7 @@ namespace eutelescope {
 
     //! Sensor ID map (inverse sensorIDVec) 
     std::map< int, int > _sensorIDVecMap;
-    //! Sensor ID vector, 
-    /*! it's position along Z axis
-     */ 
-    IntVec _sensorIDVecZOrder;
-    //! sensor ID to position along Z id
-    /*!
-     */
-    std::map<int, int> _sensorIDtoZOrderMap;
-
-
+ 
     // parameters
 
     float _distanceMax;
@@ -512,28 +499,6 @@ namespace eutelescope {
      *  layerindex.
      */
     std::map< int, int > _conversionIdMap;
-
-    //! Silicon planes parameters as described in GEAR
-    /*! This structure actually contains the following:
-     *  @li A reference to the telescope geoemtry and layout
-     *  @li An integer number saying if the telescope is w/ or w/o DUT
-     *  @li An integer number saying the number of planes in the
-     *  telescope.
-     *
-     *  This object is provided by GEAR during the init() phase and
-     *  stored here for local use.
-     */
-    gear::SiPlanesParameters * _siPlanesParameters;
-
-    //! Silicon plane layer layout
-    /*! This is the real geoemetry description. For each layer
-     *  composing the telescope the relevant information are
-     *  available.
-     *
-     *  This object is taken from the _siPlanesParameters during the
-     *  init() phase and stored for local use
-     */
-    gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     //! AIDA histogram map

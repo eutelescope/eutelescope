@@ -29,8 +29,6 @@
 #include "EUTelCDashMeasurement.h"
 #include "EUTelGeometryTelescopeGeoDescription.h"
 
-
-
 // marlin includes ".h"
 #include "marlin/Processor.h"
 #include "marlin/Global.h"
@@ -39,10 +37,6 @@
 
 // marlin util includes
 #include "mille/Mille.h"
-
-// gear includes <.h>
-#include <gear/GearMgr.h>
-#include <gear/SiPlanesParameters.h>
 
 // aida includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -334,57 +328,23 @@ void EUTelMille::init() {
     std::string name("test.root");
     geo::gGeometry().initializeTGeoDescription(name,false);
 
-
-  // check if the GEAR manager pointer is not null!
-  if ( Global::GEAR == 0x0 ) {
-    streamlog_out ( ERROR2 ) << "The GearMgr is not available, for an unknown reason." << endl;
-    throw InvalidGeometryException("GEAR manager is not initialised");
-  }
-
-//  sensor-planes in geometry navigation:
-  _siPlanesParameters  = const_cast<gear::SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
-  _siPlanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
-
-  // clear the sensor ID vector
   _sensorIDVec.clear();
-
-  // clear the sensor ID map
   _sensorIDVecMap.clear();
-  _sensorIDtoZOrderMap.clear();
+	//TODO: get this directly
 
-  // clear the sensor ID vector (z-axis order)
-  _sensorIDVecZOrder.clear();
+  // an associative map for getting also the sensorID ordered
+  map< double, int > sensorIDMap;
 
-// copy-paste from another class (should be ideally part of GEAR!)
-   double*   keepZPosition = new double[ _siPlanesLayerLayout->getNLayers() ];
-   for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); iPlane++ ) 
+  for ( size_t i = 0; i < geo::gGeometry().sensorIDsVec().size(); i++) 
    {
-    int sensorID = _siPlanesLayerLayout->getID( iPlane );
-        keepZPosition[ iPlane ] = _siPlanesLayerLayout->getLayerPositionZ(iPlane);
-
-    _sensorIDVec.push_back( sensorID );
-    _sensorIDVecMap.insert( make_pair( sensorID, iPlane ) );
-
-    // count number of the sensors to the left of the current one:
-    int _sensors_to_the_left = 0;
-    for ( int jPlane = 0 ; jPlane < _siPlanesLayerLayout->getNLayers(); jPlane++ ) 
-    {
-        if( _siPlanesLayerLayout->getLayerPositionZ(jPlane) + 1e-06 <     keepZPosition[ iPlane ] )
-        {
-            _sensors_to_the_left++;
-        }
-    }
-
-    _sensorIDVecZOrder.push_back( _sensors_to_the_left );
-    _sensorIDtoZOrderMap.insert(make_pair( sensorID, _sensors_to_the_left));
+	int sensorID = geo::gGeometry().sensorIDsVec().at(i);
+    	_sensorIDVec.push_back( sensorID );
+    	_sensorIDVecMap.insert( make_pair( sensorID, i ) );
+    	sensorIDMap.insert( make_pair( geo::gGeometry().siPlaneZPosition(sensorID), sensorID ) );
    }
-   
-   delete [] keepZPosition;
-
-
+     
   _histogramSwitch = true;
-
-  _referenceHitVec = 0;
+  _referenceHitVec = NULL;
 
   //lets guess the number of planes
   if(_inputMode == 0 || _inputMode == 2) 
@@ -434,20 +394,7 @@ void EUTelMille::init() {
       streamlog_out ( ERROR2 ) << "unknown input mode " << _inputMode << endl;
       throw InvalidParameterException("unknown input mode");
     }
-  
-  // an associative map for getting also the sensorID ordered
-  map< double, int > sensorIDMap;
-  //lets create an array with the z positions of each layer
-  for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); iPlane++ ) {
-    _siPlaneZPosition.push_back(_siPlanesLayerLayout->getLayerPositionZ(iPlane));
-    sensorIDMap.insert( make_pair( _siPlanesLayerLayout->getLayerPositionZ(iPlane), _siPlanesLayerLayout->getID(iPlane) ) );
-  }
 
-
-  //lets sort the array with increasing z
-  sort(_siPlaneZPosition.begin(), _siPlaneZPosition.end());
-
-  
   //the user is giving sensor ids for the planes to be excluded. this
   //sensor ids have to be converted to a local index according to the
   //planes positions along the z axis.
@@ -500,15 +447,6 @@ void EUTelMille::init() {
     ++iter;
     ++counter;
   }
-  //
-
-
-  //consistency
-  if(_siPlaneZPosition.size() != _nPlanes)
-    {
-      streamlog_out ( ERROR2 ) << "the number of detected planes is " << _nPlanes << " but only " << _siPlaneZPosition.size() << " layer z positions were found!"  << endl;
-      throw InvalidParameterException("number of layers and layer z positions mismatch");
-    }
 
   // this method is called only once even when the rewind is active
   // usually a good idea to
@@ -662,22 +600,6 @@ void EUTelMille::processRunHeader (LCRunHeader * rdr) {
     streamlog_out ( ERROR2 ) << "Error during the geometry consistency check: " << endl;
     streamlog_out ( ERROR2 ) << "The run header says the GeoID is " << header->getGeoID() << endl;
     streamlog_out ( ERROR2 ) << "The GEAR description says is     " << geo::gGeometry().getSiPlanesLayoutID() << endl;
-
-#ifdef EUTEL_INTERACTIVE
-    string answer;
-    while (true) {
-      streamlog_out ( ERROR2 ) << "Type Q to quit now or C to continue using the actual GEAR description anyway [Q/C]" << endl;
-      cin >> answer;
-      // put the answer in lower case before making the comparison.
-      transform( answer.begin(), answer.end(), answer.begin(), ::tolower );
-      if ( answer == "q" ) {
-        exit(-1);
-      } else if ( answer == "c" ) {
-        break;
-      }
-    }
-#endif
-
   }
 
   // increment the run counter
@@ -2170,17 +2092,8 @@ void EUTelMille::processEvent (LCEvent * event) {
                 }
 
                 if (excluded == 0) {
-                  //     cout << "--" << endl;
                   int helphelp = help - nExcluded; // index of plane after
-                  // excluded planes have
-                  // been removed
 
-                  //local parameters: b0, b1, c0, c1
-//                  const double la = lambda[help];
-
-//                  double z_sensor = _siPlanesLayerLayout -> getSensitivePositionZ(help) + 0.5 * _siPlanesLayerLayout->getSensitiveThickness( help );
-//                  z_sensor *= 1000;		// in microns
-						// reset all derivatives to zero!
 		  for (int i = 0; i < nGL; i++ ) 
                   {
 		    derGL[i] = 0.000;
