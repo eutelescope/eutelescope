@@ -1036,12 +1036,12 @@ float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double 
             ismall++;
             
             // Terminate calculation if too many small steps done
-            if ( ismall > 10 ) {
+          /*  if ( ismall > 10 ) {
                 streamlog_out( WARNING1 ) << "ERROR: Small steps in: " << gGeoManager->GetPath() << " shape=" << shape->ClassName() << std::endl;
                 streamlog_out( WARNING1 ) << "ERROR! Track propagation failed to find all planes on trajectory. "  << std::endl;
 
                 return 0;
-            }
+            }*/
 
             // increase step size (epsilon) and advance along the particle direction
             memcpy( pt, gGeoManager->GetCurrentPoint(), 3 * sizeof (double) );
@@ -1058,29 +1058,33 @@ float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double 
 								streamlog_out( DEBUG5 ) << "Ignore the very outer boundary (Small Steps): " << rad <<std::endl;
 
             } else {
-							//This is just lastrad=1/X0 and snext=X
-							rad += lastrad*snext; //This is the calculated (rad per distance x distance)
-							double add = lastrad*snext;
-							rad += add; 
-							//ADD SENSOR SCAT TO SENSOR. THEN ADD ALL NON SENSOR MATERIAL TO AIR AFTER SENSOR.
-							if(sensorID != lastPlaneID and foundFirstPlane){
-								if(sensorID != -999){
-									sensors[sensorID] = sensors[sensorID] +  add;
-									sensorLeftSide =sensorID;
-									air[sensorID] = 0 ;
-									streamlog_out( DEBUG5 ) << "FOUND SENSOR: " << sensorID <<std::endl;
+                double add=0;
+                if(foundFirstPlane){
+                    //This is just lastrad=1/X0 and snext=X
+                    rad += lastrad*snext; //This is the calculated (rad per distance x distance)
+                    add = lastrad*snext;
+                    rad += add; 
+                }
+                    //ADD SENSOR SCAT TO SENSOR. THEN ADD ALL NON SENSOR MATERIAL TO AIR AFTER SENSOR.
+                if(foundFirstPlane){
+                    if(sensorID != lastPlaneID){
+                        if(sensorID != -999){
+                            sensors[sensorID] = sensors[sensorID] +  add;
+                            sensorLeftSide =sensorID;
+                            air[sensorID] = 0 ;
+                            streamlog_out( DEBUG5 ) << "FOUND SENSOR: " << sensorID <<std::endl;
 
-								}else{
-										streamlog_out( DEBUG5 ) << "ADD MORE AIR" <<std::endl;
+                        }else{
+                            streamlog_out( DEBUG5 ) << "ADD MORE AIR" <<std::endl;
+                            air[sensorLeftSide] = air[sensorLeftSide] +  add;
+                        }
+                    }else{//IF WE HAVE REACHED THE FINAL SENSOR THEN DO NOT LOOK FOR ANYMORE RADIATION LENGTH
+                        sensors[sensorID] = sensors[sensorID] + add;
+                        //Do not end here since we need multiple iteration to cover the full volume
+                    }
+                }
 
-										air[sensorLeftSide] = air[sensorLeftSide] +  add;
-								}
-							}else{//IF WE HAVE REACHED THE FINAL SENSOR THEN DO NOT LOOK FOR ANYMORE RADIATION LENGTH
-								sensors[sensorID] = sensors[sensorID] + add;
-								//Do not end here since we need multiple iteration to cover the full volume
-							}
-
-								streamlog_out( DEBUG5 ) <<std::scientific <<  "Dont ignore this boundary change (Small Steps): " << rad << "      ADDED TO RAD: " << lastrad*snext <<" lastrad " <<lastrad <<std::endl;
+                    streamlog_out( DEBUG5 ) <<std::scientific <<  "Dont ignore this boundary change (Small Steps): " << rad << "      ADDED TO RAD: " << lastrad*snext <<" lastrad " <<lastrad <<std::endl;
 
             }
             
@@ -1120,11 +1124,14 @@ float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double 
 									rad += 0.;
 									streamlog_out( DEBUG5 ) << "Ignore the boundary (Larg steps): " << rad <<std::endl;
                 } else {
-
-									double add = lastrad*snext;
+                                double add;
+                                if(foundFirstPlane){
+									add = lastrad*snext;
 									rad += add; 
+                                }
 									//ADD SENSOR SCAT TO SENSOR. THEN ADD ALL NON SENSOR MATERIAL TO AIR AFTER SENSOR.
-									if(sensorID != lastPlaneID and foundFirstPlane ){
+                                  if(foundFirstPlane){
+									if(sensorID != lastPlaneID){
 										if(sensorID != -999){
 											sensors[sensorID] = sensors[sensorID] +  add;
 											sensorLeftSide =sensorID;
@@ -1140,6 +1147,7 @@ float EUTelGeometryTelescopeGeoDescription::findRadLengthIntegral( const double 
 										sensors[sensorID] = sensors[sensorID] + add;
 										//Do not end here since we need multiple iteration to cover the full volume
 									}
+                                  }
 									streamlog_out( DEBUG5 ) << std::scientific << "Dont ignore this boundary change (Large Steps): " << rad << "      ADDED TO RAD: " << lastrad*snext <<" lastrad " << lastrad <<  std::endl;
                 }
                 
