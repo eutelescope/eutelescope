@@ -65,7 +65,7 @@ void EUTelPatternRecognition::propagateForwardFromSeedState(EUTelState& stateInp
 	streamlog_out(DEBUG2) << "This is the memory location of the state: "<< firstState << std::endl;
 	track.addTrack(static_cast<EVENT::Track*>(firstState));//Note we do not have to create new since this object State is saved in class member scope
 	if(rad == 0 ){ //If the estimated radiation length is 0 then we do not use the track.
-		std::cout<<"HEREEEEEEEEEEEEE WE MAKE A MISTAKE" << std::endl;
+//		std::cout<<"HEREEEEEEEEEEEEE WE MAKE A MISTAKE" << std::endl;
 		return;
 	}
 	//Here we loop through all the planes not excluded. We begin at the seed which might not be the first. Then we stop before the last plane, since we do not want to propagate anymore

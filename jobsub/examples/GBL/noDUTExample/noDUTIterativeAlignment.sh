@@ -24,9 +24,9 @@ export xres="0.006 $r $r $r $r 0.006";
 export yres="0.006 $r $r $r $r 0.006";
 export minTracksPerEventAcceptance=0.00 #This is the number of tracks that is needed per event before we stop pattern recognition. Note value should depend on other cuts. 
 export ResidualsRMax="0.5" #This is the window size on the next plane that we will accept hits from. This will increase if less than 1 track per event is found.
-export inputGearInitial="gear-1T.xml" #Note the gear file changes through the process so must be placed here.
+export inputGearInitial="gear_desy2012_150mm.xml" #Note the gear file changes through the process so must be placed here.
 export allPlanes="0 1 2 3 4 5"
-export allPlanesFixed="0 3 5"  
+export allPlanesFixed="0  5"  
 
 
 #Export input variables to other bash files.  
