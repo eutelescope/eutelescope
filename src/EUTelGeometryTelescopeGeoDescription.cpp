@@ -984,8 +984,8 @@ float EUTelGeometryTelescopeGeoDescription::findRad( const double globalPosStart
             nextnode = gGeoManager->FindNextBoundaryAndStep( stepLength /*mm*/ );  
             double snext  = gGeoManager->GetStep() /*mm*/; //This will output the distance traveled by FindNextBoundaryAndStep
             double rad = 0; //This is the calculated (rad per distance x distance)
-            double delta = 0.05;//This is the minimum block size 
-            streamlog_out(DEBUG5) << "DECISION: Step size over min?  "  <<" Block width: " << snext << " delta: " << delta  << std::endl;
+            double delta = 0.01;//This is the minimum block size 
+            streamlog_out(DEBUG5)<<std::endl <<std::endl  << "DECISION: Step size over min?  "  <<" Block width: " << snext << " delta: " << delta  << std::endl;
             if(snext < delta){
                streamlog_out(DEBUG5) << "INCREASE TO MINIMUM DISTANCE!" << std::endl;
                 snext = delta;
@@ -1002,7 +1002,7 @@ float EUTelGeometryTelescopeGeoDescription::findRad( const double globalPosStart
                 rad = lastrad*snext; //This is the calculated (rad per distance x distance)
            }
             total = total + rad;
-            streamlog_out(DEBUG5) << "NEW BLOCK:SensorID: " << sensorID   <<" Block width: " << snext << " Radiation length: " << rad << " Block end position: " << blockEnd  << std::endl;
+            streamlog_out(DEBUG5) << "NEW BLOCK:SensorID: " << sensorID   <<" Block width: " << snext << " Radiation total/per unit length: " << rad<<"/"<< 1.0/lastrad << " Block end position: " << blockEnd  << std::endl;
             streamlog_out(DEBUG5) << "DECISION: Where should block be placed?"  << std::endl;
 
             //Now we have the block. We place it in the planes or in the air if excluded.
@@ -1267,6 +1267,8 @@ float EUTelGeometryTelescopeGeoDescription::calculateTotalRadiationLengthAndWeig
 	streamlog_out(DEBUG1) << "calculateTotalRadiationLength()------------------------------END" <<std::endl;
 
 }
+//This function wil not add kapton to excluded planes.
+//TO DO: The found planes will be different from the excluded. Since sometimes we will miss a plane if there are two DUT for example. Must keep a note of these since we will be still adding radiation length incorrectly if not accounted for. These track are removed at the moment since some entries of radiation length will zero.
 double EUTelGeometryTelescopeGeoDescription::addKapton(std::map<const int, double> & mapSensor){
 	for(int i = 0 ; i<geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() ; i++){
 		mapSensor[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)] = mapSensor[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)] + 0.0002;
