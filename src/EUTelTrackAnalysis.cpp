@@ -170,7 +170,7 @@ float EUTelTrackAnalysis::calculatePValueForChi2(EUTelTrack track){
 	std::string ndf = numberToString(ndfInt);
 	float pValue=0;
 //	std::cout << "Chi2: " << chi2 <<" and ndf " << ndf <<std::endl;
-	const std::string command = "calculatePValue.py " + chi2 + " " + ndf;
+	const std::string command = "calculatePValue.pyc " + chi2 + " " + ndf;
 	redi::ipstream pValueStream( command.c_str( ));
 	if ( !pValueStream.is_open( )){
 		throw(lcio::Exception("Could not open the pValue file. "));
@@ -192,7 +192,7 @@ std::string EUTelTrackAnalysis::numberToString(T number){
 	std::ostringstream convert;
 	convert << number;   
 	Result = convert.str();
-	return Result;
-	*/
+    */
+//	return Result;
 	return 1.0;
 }

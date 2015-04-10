@@ -243,7 +243,7 @@ TMatrixD EUTelNav::getMeasToLocal(TVector3 t1w, int  planeID, float charge)
 //This jacobian is the same as getPropagationJacobianCurvilinear() but in the limit Q->0 and local to local jacobian combines so JxyJcurJ'xy 
 //Note all x,y,z are just the x,y,z of the local and global EUTel systems. The new coordinate systems are these just rearranged.
 //Due to us using a jacobian for colider physics we can not use the usual X Y Z system of EUTel. We use Z X Y for the local and global systems. 
-//Input ds => arclength mm. qbyp => q/p 1/GeV . t1w => global momentum vector.
+//Input ds => arclength mm. qbyp => q/p 1/GeV . t1w => local momentum vector.
 TMatrixD EUTelNav::getPropagationJacobianCurvilinearLimit(float ds, float qbyp, TVector3 t1w, TVector3 t2w)
 {
 	t1w.Unit();
