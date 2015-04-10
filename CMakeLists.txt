@@ -235,7 +235,10 @@ install (CODE
     EXECUTE_PROCESS(COMMAND ln -sf ${PROJECT_SOURCE_DIR}/tools/pyroplot/pyroplot.py ${PROJECT_SOURCE_DIR}/bin/pyroplot)
     EXECUTE_PROCESS(COMMAND ln -sf ${PROJECT_SOURCE_DIR}/tools/parsepede/parsemilleout.sh ${PROJECT_SOURCE_DIR}/bin/parsemilleout.sh)
     EXECUTE_PROCESS(COMMAND ln -sf ${PROJECT_SOURCE_DIR}/tools/resIntoSteer.py ${PROJECT_SOURCE_DIR}/bin/resIntoSteer.py)
-    EXECUTE_PROCESS(COMMAND ln -sf ${PROJECT_SOURCE_DIR}/tools/calculatePValue.py ${PROJECT_SOURCE_DIR}/bin/calculatePValue.py )"
+    EXECUTE_PROCESS(COMMAND ln -sf ${PROJECT_SOURCE_DIR}/tools/calculatePValue.py ${PROJECT_SOURCE_DIR}/bin/calculatePValue.py )
+    EXECUTE_PROCESS(COMMAND ln -sf ${PROJECT_SOURCE_DIR}/tools/calculatePValue.pyc ${PROJECT_SOURCE_DIR}/bin/calculatePValue.pyc )
+    EXECUTE_PROCESS(COMMAND ln -sf ${PROJECT_SOURCE_DIR}/tools/iterAlign.py ${PROJECT_SOURCE_DIR}/bin/iterAlign )"
+
 
 
 )
