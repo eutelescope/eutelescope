@@ -1,5 +1,5 @@
 RunNumber,BeamEnergy,Threshold,GearGeoFile
-105,4.4,6,gear-NEWJAC-DUT-105.xml
-252,4,6,gear-252-begin.xml
+105,4.4,6,gear-single-Quad-partial-correlator-align.xml
+252,4,6,gear_250x50_Indium-k.xml 
 650,4,6,gear_250x50_Indium.xml
 

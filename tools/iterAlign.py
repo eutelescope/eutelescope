@@ -54,6 +54,7 @@ def main():
     parser.add_argument('-n', help="The number of iterations", default=1)
     parser.add_argument('-i', help="This is the string to identify the output histograms and geometry files",default="DEFAULT" )
     parser.add_argument('-r', help="The run number to align",default="DEFAULT")
+    parser.add_argument('-o', help="option: End after single run with only XYShifts. 1/0",default="0")
     args = parser.parse_args()
     if args.r == "DEFAULT":
         print "No run number given"
@@ -67,6 +68,7 @@ def main():
     os.environ["RUN"] = args.r
     os.environ["numberOfIterations"] = args.n
     os.environ["outputIdentifier"] = args.i
+    os.environ["singleLoop"] = args.o
     #Get the scripts which will actually do the work and location of the example and add to the system path.
     itScriptLoc=findIterScripts()
     itScriptLocPython=itScriptLoc + "/pythonScripts"

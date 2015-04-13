@@ -125,3 +125,8 @@ done
 if [ "$alignment" == "false" ];then
 	exit 1
 fi
+
+if [ $singleLoop == 1 ];then
+    echo "You have asked for a single complete run."
+    exit 1
+fi
