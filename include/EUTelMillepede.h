@@ -36,15 +36,13 @@ namespace eutelescope {
         
     private:
         DISALLOW_COPY_AND_ASSIGN(EUTelMillepede)        // prevent users from making (default) copies of processors
+        EUTelMillepede();
 
    public:
-        EUTelMillepede();
-				EUTelMillepede(int alignmentMode);
+				EUTelMillepede(Utility::AlignmentMode alignmentMode);
 
-        ~EUTelMillepede();
+        			virtual ~EUTelMillepede();
 
-				//This set the number given by the processor to a aligment mode string
-				void SetAlignmentMode(int alignmentMode);
 				//This take a state and outputs a its alignment jacobian given the alignment mode
 				void computeAlignmentToMeasurementJacobian( EUTelState& state);
 
@@ -64,30 +62,27 @@ namespace eutelescope {
 
 				void testUserInput();
 				void printFixedPlanes();
-				/////////////////////////set stuff!
-				void setXShiftFixed(lcio::IntVec xfixed);
-				void setYShiftFixed(lcio::IntVec yfixed);
-				void setZShiftFixed(lcio::IntVec zfixed);
-				void setXRotationsFixed(lcio::IntVec xRotfixed);
-				void setYRotationsFixed(lcio::IntVec yRotfixed);
-				void setZRotationsFixed(lcio::IntVec zRotfixed);
-				void setPlanesExclude(lcio::IntVec exclude);
-				void setSteeringFileName(std::string name);
-				void setBinaryFileName(std::string binary);
-				void setResultsFileName(std::string name);
 
+				//Various Setters
+				void setXShiftFixed(lcio::IntVec xfixed){ _fixedAlignmentXShfitPlaneIds = xfixed; }
+				void setYShiftFixed(lcio::IntVec yfixed){ _fixedAlignmentYShfitPlaneIds = yfixed; }
+				void setZShiftFixed(lcio::IntVec zfixed){ _fixedAlignmentZShfitPlaneIds = zfixed; }
+				void setXRotationsFixed(lcio::IntVec xRotfixed){ _fixedAlignmentXRotationPlaneIds = xRotfixed; }
+				void setYRotationsFixed(lcio::IntVec yRotfixed){ _fixedAlignmentYRotationPlaneIds = yRotfixed; }
+				void setZRotationsFixed(lcio::IntVec zRotfixed){ _fixedAlignmentZRotationPlaneIds = zRotfixed; }
+				void setPlanesExclude(lcio::IntVec exclude){ _alignmentPlaneIdsExclude = exclude; }
+				void setBinaryFileName(std::string binary){ _milleBinaryFilename = binary; }
+				void setSteeringFileName(std::string name){ _milleSteeringFilename = name; }
+				void setResultsFileName(std::string name){ _milleResultFileName = name; }
 
-				///////////////////////////////////////////get stuff
-				TMatrixD& getAlignmentJacobian()  { return _jacobian; }
-				std::vector<int> getGlobalParameters() { return _globalLabels; }
-
+				//Various Getters
+				TMatrixD const& getAlignmentJacobian(){ return _jacobian; }
+				std::vector<int> getGlobalParameters(){ return _globalLabels; }
 				gbl::MilleBinary * _milleGBL;
 
-
-void CreateBinary();
+				void CreateBinary();
 
 		protected:
-				int alignmentMode;
 				Utility::AlignmentMode _alignmentMode;
 				TMatrixD _jacobian; //Remember you need to create the object before you point ot it
 				std::vector<int> _globalLabels;

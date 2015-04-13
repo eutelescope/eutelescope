@@ -89,7 +89,7 @@ void EUTelProcessorGBLAlign::init() {
 
 		// Initialize GBL fitter
 		EUTelGBLFitter* Fitter = new EUTelGBLFitter();
-		_Mille  = new EUTelMillepede(_alignmentMode);//The sets the size of alignment jacobian and labels to identify global variables for millepede 
+		_Mille  = new EUTelMillepede(static_cast<Utility::AlignmentMode>(_alignmentMode));//The sets the size of alignment jacobian and labels to identify global variables for millepede 
 		_Mille->setSteeringFileName(_milleSteeringFilename);// The steering file will store the labels for global variables in text file, along with errors and seeds guess.
 		_Mille->setXShiftFixed(_fixedAlignmentXShfitPlaneIds);
 		_Mille->setYShiftFixed(_fixedAlignmentYShfitPlaneIds);
