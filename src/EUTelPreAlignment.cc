@@ -83,7 +83,7 @@ EUTelPreAlign::EUTelPreAlign(): Processor("EUTelPreAlign")
 
   registerOptionalParameter("HistogramFilling", "Switch on or off the histogram filling", _fillHistos, bool(true) );
   
-  registerOptionalParameter("DumpGEAR", "Dump alignment into GEAR file instead of prealignment database", _dumpGEAR, bool(true) );
+  registerOptionalParameter("DumpGEAR", "Dump alignment into GEAR file instead of prealignment database", _dumpGEAR, bool(false) );
   
   registerOptionalParameter("NewGEARSuffix", "Suffix for the new GEAR file, set to empty string (this is not default!) to overwrite old GEAR file", _GEARFileSuffix, std::string("_pre") );
 
