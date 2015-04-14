@@ -465,7 +465,7 @@ namespace eutelescope {
 	TMatrixD EUTelGBLFitter::findScattersJacobians(EUTelState state, EUTelState nextState){
 		_scattererJacobians.clear();
 		TVector3 position = state.getPositionGlobal();
-		TVector3 momentum = state.getIncidenceUnitMomentumVectorInLocalFrame();
+		TVector3 momentum = state.computeCartesianMomentum();
 		TVector3 newMomentum;
 		int location = state.getLocation();
 		int locationEnd = 314; //This will create a scatterer with normal in beam direction
