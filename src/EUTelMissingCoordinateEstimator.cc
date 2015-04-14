@@ -56,7 +56,9 @@ _iEvt(0),
 _missingHitPos(0),
 _knownHitPos(0),
 _nDutHits(0),
-_nDutHitsCreated(0)
+_nDutHitsCreated(0),
+_maxExpectedCreatedHitPerDUTHit(10),
+_numberOfCreatedHitPerDUTHit()
 {
     // modify processor description
     _description =  "EUTelMissingCoordinateEstimator As the name suggest this processor is finds the position of the missing coordinate on your How it works is simple, it gets the hits from specified two finds the closest hit pairs, make a straight line out of it and the estimated position in one axis on your sensor you want. No promises that this will work with tilted sensors and/or with magnetic field. One needs to used this with merged hits and after pre-alignment";
@@ -118,6 +120,10 @@ void EUTelMissingCoordinateEstimator::init() {
     // set counters to zero
     _nDutHits = 0;
     _nDutHitsCreated = 0;
+
+   for (unsigned int i=0; i < _maxExpectedCreatedHitPerDUTHit+1; i++){
+    	_numberOfCreatedHitPerDUTHit.push_back(0);
+   }
 }
 
 
@@ -228,7 +234,13 @@ void EUTelMissingCoordinateEstimator::processEvent (LCEvent * event) {
      * z=z1+(z2−z1)t
      */
 
-    
+    // with countCreatedDutHits vector we will count how many hits we create out of one DUT hit
+    vector<int> countCreatedDutHits;
+    countCreatedDutHits.clear();
+	for (unsigned int iDutHit=0; iDutHit<dutPlaneHits.size(); iDutHit++){
+		countCreatedDutHits.push_back(0);
+	}
+ 
     // loop over first reference plane hits
     for (unsigned int iHitRefPlane1=0; iHitRefPlane1<referencePlaneHits1.size(); iHitRefPlane1++) {
         TrackerHitImpl * refHit1 = dynamic_cast<TrackerHitImpl*> ( inputHitCollection->getElementAt( referencePlaneHits1[iHitRefPlane1] ) );
@@ -273,9 +285,9 @@ void EUTelMissingCoordinateEstimator::processEvent (LCEvent * event) {
 
                     // count new created hits
                     _nDutHitsCreated++;
-                    //HERE
-                    //TODO:: also check if this hit used twice
 
+		    // increase the created DUT hits
+		    countCreatedDutHits[iDutHit] ++;
                 }
                 
             } // end of loop over first dut plane hits
@@ -284,7 +296,14 @@ void EUTelMissingCoordinateEstimator::processEvent (LCEvent * event) {
         } // end of loop over second reference plane hits
     } // end of loop over first reference plane hits
     
-    
+    for (unsigned int iDutHit=0; iDutHit<dutPlaneHits.size(); iDutHit++){
+	if(_maxExpectedCreatedHitPerDUTHit < countCreatedDutHits[iDutHit]){
+		_numberOfCreatedHitPerDUTHit[_maxExpectedCreatedHitPerDUTHit] ++;
+	}
+	else {
+    		_numberOfCreatedHitPerDUTHit[countCreatedDutHits[iDutHit]] ++;
+    	}
+    }
     
     
     try
@@ -339,8 +358,15 @@ TrackerHitImpl* EUTelMissingCoordinateEstimator::cloneHit(TrackerHitImpl *inputH
 
 void EUTelMissingCoordinateEstimator::end()
 {
+    
     streamlog_out ( MESSAGE4 )  << "Number of hits you had from all DUTs "<< _nDutHits << endl;
     streamlog_out ( MESSAGE4 )  << "Number of hits created with the estimated missing coordinate "<< _nDutHitsCreated << endl;
+    for (unsigned int i=0; i<_numberOfCreatedHitPerDUTHit.size(); i++){
+	
+  	streamlog_out ( MESSAGE4 )  << "You created "<< i ;
+	if(i==_maxExpectedCreatedHitPerDUTHit) streamlog_out ( MESSAGE4 )  << " or more";
+	streamlog_out ( MESSAGE4 )  << " hits per DUT hit "<< _numberOfCreatedHitPerDUTHit[i] <<" many times"<<endl;
+    }
     streamlog_out ( MESSAGE4 )  << "Successfully finished" << endl;
     
 }
