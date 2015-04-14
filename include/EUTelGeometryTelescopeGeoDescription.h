@@ -23,13 +23,6 @@
 // EUTELESCOPE
 #include "EUTelUtility.h"
 #include "EUTelGenericPixGeoMgr.h"
-#include "EUTelState.h"
-
-//LCIO
-#include "lcio.h"
-#include "IMPL/TrackerHitImpl.h"
-#include "IMPL/TrackImpl.h"
-#include <UTIL/LCTOOLS.h>
 
 
 // ROOT

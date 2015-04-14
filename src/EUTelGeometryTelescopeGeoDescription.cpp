@@ -35,6 +35,8 @@
 #include "TMath.h"
 #include "TError.h"
 
+#define  SCATTER_IDENTIFIER 314
+
 using namespace eutelescope;
 using namespace geo;
 
@@ -906,7 +908,7 @@ TMatrixD EUTelGeometryTelescopeGeoDescription::getRotMatrix( int sensorID ) {
 	double global[3];
 //	std::cout << "Sensor ID " << sensorID << std::endl;
 	TMatrixD TRotMatrix(3,3);
-	if(sensorID != 314){
+	if(sensorID != SCATTER_IDENTIFIER){
 		local2Master( sensorID,local, global );
 		_geoManager->FindNode( global[0], global[1], global[2] );    
 		const TGeoHMatrix* globalH = _geoManager->GetCurrentMatrix();
