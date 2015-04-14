@@ -54,6 +54,10 @@ echo "Enter while loop here"
 while [ "$alignment" == "false" ]; do 
 	echo "THE NUMBER OF FAILED ALIGNMENT ATTEMPTS $numberRejectedAlignmentAttempts"
 	$do jobsub.py -c $CONFIG -csv $RUNLIST -o GearFile="$inputGear" -o GearAlignedFile="$outputGear" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres"  -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o lcioInputName="trackcand" -o inputCollectionName="$PatOutGBLIn" $Align  $RUN  
+    if [ $singleLoop == 1 ];then
+        echo "You have asked for a single for debugging purposes."
+        exit 1
+    fi
 	#Fill variables.
 	error1=`unzip  -p  $fileAlign |grep "Backtrace for this error:" | awk '{ print $NF }'`;
 	error2=`unzip  -p  $fileAlign |grep "This is the entire stack" | awk '{ print $NF }'`;
@@ -126,7 +130,3 @@ if [ "$alignment" == "false" ];then
 	exit 1
 fi
 
-if [ $singleLoop == 1 ];then
-    echo "You have asked for a single complete run."
-    exit 1
-fi
