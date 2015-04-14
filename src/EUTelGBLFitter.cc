@@ -11,7 +11,6 @@
 
 // eutelescope includes ".h"
 #include "EUTelGeometryTelescopeGeoDescription.h"
-#include "EUTelUtilityRungeKutta.h"
 #include "EUTELESCOPE.h"
 #include "EUTelNav.h"
 

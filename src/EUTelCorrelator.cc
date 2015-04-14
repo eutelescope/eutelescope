@@ -49,10 +49,6 @@
 #include <AIDA/IAxis.h>
 #endif
 
-// gear includes <.h>
-#include <gear/GearMgr.h>
-#include <gear/SiPlanesParameters.h>
-
 // lcio includes <.h>
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/TrackerPulseImpl.h>
@@ -211,22 +207,6 @@ void EUTelCorrelator::processRunHeader (LCRunHeader * rdr) {
                              << "The run header says the GeoID is " << runHeader->getGeoID() << endl
                              << "The GEAR description says is     " << geo::gGeometry().getSiPlanesLayoutID()
                              << endl;
-
-#ifdef EUTEL_INTERACTIVE
-    string answer;
-    while (true) {
-      streamlog_out ( ERROR1 ) << "Type Q to quit now or C to continue using the actual GEAR description anyway [Q/C]" << endl;
-      cin >> answer;
-      // put the answer in lower case before making the comparison.
-      transform( answer.begin(), answer.end(), answer.begin(), ::tolower );
-      if ( answer == "q" ) {
-        exit(-1);
-      } else if ( answer == "c" ) {
-        break;
-      }
-    }
-
-#endif // EUTEL_INTERACTIVE
   }
 
   delete runHeader;

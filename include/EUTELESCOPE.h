@@ -15,10 +15,6 @@
 	void operator=(const type&);
 #endif
 
-#ifndef nullptr
-	#define nullptr NULL
-#endif 
-
 #ifndef EUTELESCOPE_NAMESPACE_H
 #define EUTELESCOPE_NAMESPACE_H
 
@@ -40,6 +36,11 @@ namespace eutelescope {}
 # include <sstream>
 # include <exception>
 # include <stdexcept>
+#include <cstddef>
+
+#ifndef nullptr
+	#define nullptr NULL
+#endif 
 
 #ifdef USE_MARLIN
 // streamlog include

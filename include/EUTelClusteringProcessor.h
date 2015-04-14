@@ -16,15 +16,12 @@
 // eutelescope includes ".h"
 #include "EUTelExceptions.h"
 #include "EUTELESCOPE.h"
+#include "EUTelGeometryTelescopeGeoDescription.h"
 
 // marlin includes ".h"
 #include "marlin/EventModifier.h"
 #include "marlin/Processor.h"
 #include "marlin/Exceptions.h"
-
-// gear includes <.h>
-#include <gear/SiPlanesParameters.h>
-#include <gear/SiPlanesLayerLayout.h>
 
 // aida includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -739,6 +736,8 @@ namespace eutelescope {
   private:
 	DISALLOW_COPY_AND_ASSIGN(EUTelClusteringProcessor)
 
+    void getMaxPixels(int sensorID, int& maxX, int& maxY);
+
     //! read secondary collections
     /*!
      */
@@ -823,29 +822,6 @@ namespace eutelescope {
 
 #endif
 
-    // gear stuff goes in here
-    //! Silicon planes parameters as described in GEAR
-    /*! This structure actually contains the following:
-     *  @li A reference to the telescope geoemtry and layout
-     *  @li An integer number saying if the telescope is w/ or w/o DUT
-     *  @li An integer number saying the number of planes in the
-     *  telescope.
-     *
-     *  This object is provided by GEAR during the init() phase and
-     *  stored here for local use.
-     */
-    gear::SiPlanesParameters * _siPlanesParameters;
-
-    //! Silicon plane layer layout
-    /*! This is the real geoemetry description. For each layer
-     *  composing the telescope the relevant information are
-     *  available.
-     *
-     *  This object is taken from the _siPlanesParameters during the
-     *  init() phase and stored for local use
-     */
-    gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
-
     //! Geometry ready switch
     /*! This boolean reveals if the geometry has been properly
      *  initialized or not.
@@ -857,18 +833,6 @@ namespace eutelescope {
      *  position of such a sensorID in the GEAR description.
      */
     std::map< int , int > _layerIndexMap;
-
-    //! Map relating the DUT layer index and sensorID
-    /*! The first element is the sensor ID, while the second is the
-     *  position of such a sensorID in the DUT section of the GEAR
-     *  description.
-     *  So far, the DUT section had no more than one entry, but in the
-     *  future this could be extended.
-     *
-     *  For the time being this map is created and properly filled but
-     *  not yet used.
-     */
-    std::map< int, int > _dutLayerIndexMap;
 
     //! Map relating ancillary collection position and sensorID
     /*! The first element is the sensor ID, while the second is the
