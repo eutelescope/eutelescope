@@ -927,9 +927,6 @@ TMatrixD EUTelGeometryTelescopeGeoDescription::getRotMatrix( int sensorID ) {
 
 }
 
-
-
-
 /**
  * Calculate effective radiation length traversed by particle traveling between two points
  * along straight line.
@@ -939,12 +936,11 @@ TMatrixD EUTelGeometryTelescopeGeoDescription::getRotMatrix( int sensorID ) {
  * 
  * @param globalPosStart starting point in the global coordinate system
  * @param globalPosFinish ending point in the global coordinate system
- * @param skipBoundaryVolumes if true subtract rad length of the volumes containing start and finish points
  * 
  * @return radiation length in units of X0
  */
 
-float EUTelGeometryTelescopeGeoDescription::findRad( const double globalPosStart[], const double globalPosFinish[], bool skipBoundaryPonitsVolumes, 	std::map< const int, double> &sensors, 	std::map< const int, double> &air ){
+float EUTelGeometryTelescopeGeoDescription::findRad( const double globalPosStart[], const double globalPosFinish[], std::map< const int, double> &sensors, 	std::map< const int, double> &air ){
     streamlog_out(DEBUG5) << "/////////////////////////////////////////////////////////////////////////////////////////////////// " << std::endl;
     streamlog_out(DEBUG5) << "/////////////////////////////////////////////////////////////////////////////////////////////////// " << std::endl;
     streamlog_out(DEBUG5) << "              CALCULATING THE TOTAL RADIATION LENGTH BETWEEN TWO POINTS.                            " << std::endl;
@@ -1039,7 +1035,7 @@ float EUTelGeometryTelescopeGeoDescription::calculateTotalRadiationLengthAndWeig
 	const double endUpdate[] = {end[0],end[1],_planeSetup[lastPlaneID].zPos +0.025};//Must make sure we add all silicon.
 	//THIS WILL RETURN THE TOTAL RADIATION LENGTH FOUND AND THE FRACTION FOR AIR AND PLANES.
 	//This will be for non excluded planes. This is sorted in mapWeightsToSensor(...)
-	float perRad =	findRad( start,endUpdate , false, sensors, air ); 
+	float perRad =	findRad( start,endUpdate, sensors, air ); 
 	//NOW WE REDUCE EXCLUDED PLANES TO DEAD MATERIAL. THIS IS ABSORBED IN THE AIR OF THE PLANES NOT EXCLUDED.
 	//First two with excluded. The last two without.
 	mapWeightsToSensor(sensors,air, mapSensor,mapAir);

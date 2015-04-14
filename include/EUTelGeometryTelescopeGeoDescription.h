@@ -363,8 +363,7 @@ class EUTelGeometryTelescopeGeoDescription
 	void initializeTGeoDescription( std::string& geomName, bool dumpRoot );
 
 	// Geometry operations
-	float findRadLengthIntegral( const double[], const double[], bool, 	std::map< const int, double> &sensors,	std::map< const int, double> &air );
-    float findRad( const double globalPosStart[], const double globalPosFinish[], bool skipBoundaryPonitsVolumes, 	std::map< const int, double> &sensors, 	std::map< const int, double> &air );
+    float findRad( const double globalPosStart[], const double globalPosFinish[], std::map< const int, double> &sensors, 	std::map< const int, double> &air );
 	int getSensorID( const float globalPos[] ) const;
 	int getSensorIDFromManager();
 
