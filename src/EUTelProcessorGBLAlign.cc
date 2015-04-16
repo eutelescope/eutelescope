@@ -221,7 +221,7 @@ void EUTelProcessorGBLAlign::processEvent(LCEvent * evt){
 }
 
 void EUTelProcessorGBLAlign::end(){
-	_Mille->_milleGBL->closeBinary();
+	_Mille->_milleGBL->~MilleBinary();
 //	double size =	printSize("millepede.bin");
 //	std::cout<<"Binary after track addition " << size << " This is the size per track: " << size/_totalTrackCount << std::endl;
 
