@@ -41,7 +41,17 @@ export outputGear="gear-XYShift-${outputIdentifier}-Iteration-$number-${RUN}.xml
 export histoNameInput="Alignment-XYShift-${outputIdentifier}-Iteration-$number-${RUN}" 
 #This is the loop to produce the new gear file for x/y shifts. 
 $scriptsLocation/patRecToAlignmentSingleLoop.sh
+if [ $? -ne 0 ]
+then        
+	echo "patRecAndTrackFit exited with a code that was not zero, ending patRecMultiLoop.sh" 1>&2
+	exit 1
+fi
 $scriptsLocation/patRecAndTrackFit.sh -i "$outputGear" -h "$histoNameInput"  
+if [ $? -ne 0 ]
+then        
+	echo "patRecAndTrackFit exited with a code that was not zero, ending patRecMultiLoop.sh" 1>&2
+	exit 1
+fi
 echo "We have produced new histogram $histoNameInput"
 export Fxr="$allPlanes" #This is the fixed planes for rotations round the x axis
 export Fxs="$allPlanesFixed" #This is the fixed planes for shifts in the x axis
@@ -50,10 +60,20 @@ export Fys="$allPlanesFixed" #This is the fixed planes for shifts in the y axis
 export Fzr="$allPlanesFixed" #This is the fixed planes for rotations round the z axis
 export Fzs="$allPlanes" #This is the fixed planes for shifts in the z axis
 export inputGear="$outputGear" #We now use the gear file produced from the last iteration.
-export outputGear="gear-ZRotations-XYShift-${outputIdentifier}-Iteration-$number-${RUN}.xml"  
+export outputGear="$outputGearLast" #IMPORTANT: The last alignment must output the new gear to the output gear name specified.
 export histoNameInput="Alignment-ZRotations-XYShifts-${outputIdentifier}-Iteration-$number-${RUN}"
 $scriptsLocation/patRecToAlignmentSingleLoop.sh
+if [ $? -ne 0 ]
+then        
+	echo "patRecAndTrackFit exited with a code that was not zero, ending patRecMultiLoop.sh" 1>&2
+	exit 1
+fi
 $scriptsLocation/patRecAndTrackFit.sh -i "$outputGear" -h "$histoNameInput"  
+if [ $? -ne 0 ]
+then        
+	echo "patRecAndTrackFit exited with a code that was not zero, ending patRecMultiLoop.sh" 1>&2
+	exit 1
+fi
 
 ##We keep all fixed and free z-shifts. Otherwise we find that we can not find a sensible solution to the z shifts.
 #echo "We have produced new histogram $histoNameInput"

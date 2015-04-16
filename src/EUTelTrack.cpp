@@ -72,3 +72,9 @@ void EUTelTrack::print(){
 	streamlog_out(DEBUG1) <<"TRACK INFORMATION///////////////////////////////////////////////////////////////////////////////END"<<std::endl;
 
 }
+//Setters
+void EUTelTrack::setTotalVariance(double rad){
+setPhi(rad);
+
+};
+

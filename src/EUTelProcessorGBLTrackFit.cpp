@@ -88,6 +88,9 @@ void EUTelProcessorGBLTrackFit::init() {
 		if (!_trackFitter) {
 			throw(lcio::Exception("Could not create instance of fitter class."));
 		}
+		//Create millepede output
+//		_Mille  = new EUTelMillepede(); 
+
 		bookHistograms();//TO DO: Remove this and replace with generic histogram class 
 		streamlog_out(DEBUG2) << "EUTelProcessorGBLTrackFit::init( )---------------------------------------------END" << std::endl;
 	}	
@@ -168,12 +171,13 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent* evt){
 			_trackFitter->computeTrajectoryAndFit(pointList,traj, &chi2,&ndf, ierr);//This will do the minimisation of the chi2 and produce the most probable trajectory.
 			if(ierr == 0 ){
 				streamlog_out(DEBUG5) << "Ierr is: " << ierr << " Entering loop to update track information " << std::endl;
+				//If the fit succeeded then write into the binary file.
+//				traj->milleOut(*(_Mille->_milleGBL));
 				static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_chi2CandidateHistName ] ) -> fill( (chi2)/(ndf));
 				static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_fitsuccessHistName ] ) -> fill(1.0);
 				if(chi2 ==0 or ndf ==0){
-				throw(lcio::Exception("Your fitted track has zero degrees of freedom or a chi2 of 0.")); 	
-				}
-
+					throw(lcio::Exception("Your fitted track has zero degrees of freedom or a chi2 of 0.")); 	
+					}
 				track.setChi2(chi2);
 				track.setNdf(ndf);
 				_chi2NdfVec.push_back(chi2/static_cast<float>(ndf));
@@ -232,8 +236,8 @@ void EUTelProcessorGBLTrackFit::plotResidual(std::map< int, std::map<float, floa
 			if( sensor_residual_it->first == 3){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX3 ] ) -> fill(res);}
 			if( sensor_residual_it->first == 4){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX4 ] ) -> fill(res);}
 			if( sensor_residual_it->first == 5){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX5 ] ) -> fill(res);}
-			if( sensor_residual_it->first == 6){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ "Residual6X" ] ) -> fill(res);}
-			if( sensor_residual_it->first == 7){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ "Residual7X" ] ) -> fill(res);}
+			if( sensor_residual_it->first == 20){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ "Residual6X" ] ) -> fill(res);}
+			if( sensor_residual_it->first == 21){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ "Residual7X" ] ) -> fill(res);}
 
 		}else{
 			streamlog_out(DEBUG5) << "The map is NULL" <<std::endl;
@@ -246,8 +250,8 @@ void EUTelProcessorGBLTrackFit::plotResidual(std::map< int, std::map<float, floa
 			if( sensor_residual_it->first == 3){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY3 ] ) -> fill(res2);}
 			if( sensor_residual_it->first == 4){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY4 ] ) -> fill(res2);}
 			if( sensor_residual_it->first == 5){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY5 ] ) -> fill(res2);}
-			if( sensor_residual_it->first == 6){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ "Residual6Y" ] ) -> fill(res2);}
-			if( sensor_residual_it->first == 7){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ "Residual7Y" ] ) -> fill(res2);}
+			if( sensor_residual_it->first == 20){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ "Residual6Y" ] ) -> fill(res2);}
+			if( sensor_residual_it->first == 21){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ "Residual7Y" ] ) -> fill(res2);}
 
 				
 	}
@@ -362,14 +366,7 @@ void EUTelProcessorGBLTrackFit::bookHistograms() {
         double MinX=-0.04;  //-0.2;
         double MaxX=0.04;
 
-/*
-        EUTelHistogramInfo    *    histoInfo0  = histoMgr->getHistogramInfo( _histName::_residGblFitHistNameX0);
-        EUTelHistogramInfo    *    histoInfo1  = histoMgr->getHistogramInfo( _histName::_residGblFitHistNameX1);
-        EUTelHistogramInfo    *    histoInfo2  = histoMgr->getHistogramInfo( _histName::_residGblFitHistNameX2);
-        EUTelHistogramInfo    *    histoInfo3  = histoMgr->getHistogramInfo( _histName::_residGblFitHistNameX3);
-        EUTelHistogramInfo    *    histoInfo4  = histoMgr->getHistogramInfo( _histName::_residGblFitHistNameX4);
-        EUTelHistogramInfo    *    histoInfo5  = histoMgr->getHistogramInfo( _histName::_residGblFitHistNameX5);
- */
+
         AIDA::IHistogram1D * residGblFit0X = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistNameX0, NBinX, MinX, MaxX); 
         AIDA::IHistogram1D * residGblFit1X = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistNameX1, NBinX, MinX, MaxX); 
         AIDA::IHistogram1D * residGblFit2X = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistNameX2, NBinX, MinX, MaxX); 
@@ -411,112 +408,12 @@ void EUTelProcessorGBLTrackFit::bookHistograms() {
               _aidaHistoMap1D.insert(std::make_pair(_histName::_residGblFitHistNameY4, residGblFit4Y));
               _aidaHistoMap1D.insert(std::make_pair(_histName::_residGblFitHistNameY5, residGblFit5Y));
 
-			//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////??Corrections		
-/*				NBinX=300;
-        MinX=-0.0001;  //-0.2;
-        MaxX=0.0001;
-
-        AIDA::IHistogram1D * correction0Plane0 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Correction0 Plane0", NBinX, MinX, MaxX); 
-        AIDA::IHistogram1D * correction1Plane0 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Correction1 Plane0", NBinX, MinX, MaxX); 
-        AIDA::IHistogram1D * correction2Plane0 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Correction2 Plane0", NBinX, MinX, MaxX); 
-        AIDA::IHistogram1D * correction3Plane0 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Correction3 Plane0", NBinX, MinX, MaxX); 
-        AIDA::IHistogram1D * correction4Plane0 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Correction4 Plane0", NBinX, MinX, MaxX); 
-
-				_mapSensorIDToHistogramCorrection0.insert(std::make_pair(0,correction0Plane0));
-				_mapSensorIDToHistogramCorrection1.insert(std::make_pair(0,correction1Plane0));
-				_mapSensorIDToHistogramCorrection2.insert(std::make_pair(0,correction2Plane0));
-				_mapSensorIDToHistogramCorrection3.insert(std::make_pair(0,correction3Plane0));
-				_mapSensorIDToHistogramCorrection4.insert(std::make_pair(0,correction4Plane0));
-
-        AIDA::IHistogram1D * correction0Plane1 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Correction0 Plane1", NBinX, MinX, MaxX); 
-        AIDA::IHistogram1D * correction1Plane1 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Correction1 Plane1", NBinX, MinX, MaxX); 
-        AIDA::IHistogram1D * correction2Plane1 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Correction2 Plane1", NBinX, MinX, MaxX); 
-        AIDA::IHistogram1D * correction3Plane1 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Correction3 Plane1", NBinX, MinX, MaxX); 
-        AIDA::IHistogram1D * correction4Plane1 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Correction4 Plane1", NBinX, MinX, MaxX); 
-
-				_mapSensorIDToHistogramCorrection0.insert(std::make_pair(1,correction0Plane1));
-				_mapSensorIDToHistogramCorrection1.insert(std::make_pair(1,correction1Plane1));
-				_mapSensorIDToHistogramCorrection2.insert(std::make_pair(1,correction2Plane1));
-				_mapSensorIDToHistogramCorrection3.insert(std::make_pair(1,correction3Plane1));
-				_mapSensorIDToHistogramCorrection4.insert(std::make_pair(1,correction4Plane1));
-
-        AIDA::IHistogram1D * correction0Plane2 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Correction0 Plane2", NBinX, MinX, MaxX); 
-        AIDA::IHistogram1D * correction1Plane2 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Correction1 Plane2", NBinX, MinX, MaxX); 
-        AIDA::IHistogram1D * correction2Plane2 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Correction2 Plane2", NBinX, MinX, MaxX); 
-        AIDA::IHistogram1D * correction3Plane2 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Correction3 Plane2", NBinX, MinX, MaxX); 
-        AIDA::IHistogram1D * correction4Plane2 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Correction4 Plane2", NBinX, MinX, MaxX); 
-
-				_mapSensorIDToHistogramCorrection0.insert(std::make_pair(2,correction0Plane2));
-				_mapSensorIDToHistogramCorrection1.insert(std::make_pair(2,correction1Plane2));
-				_mapSensorIDToHistogramCorrection2.insert(std::make_pair(2,correction2Plane2));
-				_mapSensorIDToHistogramCorrection3.insert(std::make_pair(2,correction3Plane2));
-				_mapSensorIDToHistogramCorrection4.insert(std::make_pair(2,correction4Plane2));
-
-        AIDA::IHistogram1D * correction0Plane3 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Correction0 Plane3", NBinX, MinX, MaxX); 
-        AIDA::IHistogram1D * correction1Plane3 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Correction1 Plane3", NBinX, MinX, MaxX); 
-        AIDA::IHistogram1D * correction2Plane3 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Correction2 Plane3", NBinX, MinX, MaxX); 
-        AIDA::IHistogram1D * correction3Plane3 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Correction3 Plane3", NBinX, MinX, MaxX); 
-        AIDA::IHistogram1D * correction4Plane3 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Correction4 Plane3", NBinX, MinX, MaxX); 
-
-				_mapSensorIDToHistogramCorrection0.insert(std::make_pair(3,correction0Plane3));
-				_mapSensorIDToHistogramCorrection1.insert(std::make_pair(3,correction1Plane3));
-				_mapSensorIDToHistogramCorrection2.insert(std::make_pair(3,correction2Plane3));
-				_mapSensorIDToHistogramCorrection3.insert(std::make_pair(3,correction3Plane3));
-				_mapSensorIDToHistogramCorrection4.insert(std::make_pair(3,correction4Plane3));
-
-        AIDA::IHistogram1D * correction0Plane4 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Correction0 Plane4", NBinX, MinX, MaxX); 
-        AIDA::IHistogram1D * correction1Plane4 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Correction1 Plane4", NBinX, MinX, MaxX); 
-        AIDA::IHistogram1D * correction2Plane4 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Correction2 Plane4", NBinX, MinX, MaxX); 
-        AIDA::IHistogram1D * correction3Plane4 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Correction3 Plane4", NBinX, MinX, MaxX); 
-        AIDA::IHistogram1D * correction4Plane4 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Correction4 Plane4", NBinX, MinX, MaxX); 
-
-				_mapSensorIDToHistogramCorrection0.insert(std::make_pair(4,correction0Plane4));
-				_mapSensorIDToHistogramCorrection1.insert(std::make_pair(4,correction1Plane4));
-				_mapSensorIDToHistogramCorrection2.insert(std::make_pair(4,correction2Plane4));
-				_mapSensorIDToHistogramCorrection3.insert(std::make_pair(4,correction3Plane4));
-				_mapSensorIDToHistogramCorrection4.insert(std::make_pair(4,correction4Plane4));
-
-        AIDA::IHistogram1D * correction0Plane5 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Correction0 Plane5", NBinX, MinX, MaxX); 
-        AIDA::IHistogram1D * correction1Plane5 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Correction1 Plane5", NBinX, MinX, MaxX); 
-        AIDA::IHistogram1D * correction2Plane5 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Correction2 Plane5", NBinX, MinX, MaxX); 
-        AIDA::IHistogram1D * correction3Plane5 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Correction3 Plane5", NBinX, MinX, MaxX); 
-        AIDA::IHistogram1D * correction4Plane5 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Correction4 Plane5", NBinX, MinX, MaxX); 
-
-				_mapSensorIDToHistogramCorrection0.insert(std::make_pair(5,correction0Plane5));
-				_mapSensorIDToHistogramCorrection1.insert(std::make_pair(5,correction1Plane5));
-				_mapSensorIDToHistogramCorrection2.insert(std::make_pair(5,correction2Plane5));
-				_mapSensorIDToHistogramCorrection3.insert(std::make_pair(5,correction3Plane5));
-				_mapSensorIDToHistogramCorrection4.insert(std::make_pair(5,correction4Plane5));
-
-       AIDA::IHistogram1D * correction0Plane20 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Correction0 Plane20", NBinX, MinX, MaxX); 
-        AIDA::IHistogram1D * correction1Plane20 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Correction1 Plane20", NBinX, MinX, MaxX); 
-        AIDA::IHistogram1D * correction2Plane20 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Correction2 Plane20", NBinX, MinX, MaxX); 
-        AIDA::IHistogram1D * correction3Plane20 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Correction3 Plane20", NBinX, MinX, MaxX); 
-        AIDA::IHistogram1D * correction4Plane20 = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Correction4 Plane20", NBinX, MinX, MaxX); 
-
-				_mapSensorIDToHistogramCorrection0.insert(std::make_pair(20,correction0Plane20));
-				_mapSensorIDToHistogramCorrection1.insert(std::make_pair(20,correction1Plane20));
-				_mapSensorIDToHistogramCorrection2.insert(std::make_pair(20,correction2Plane20));
-				_mapSensorIDToHistogramCorrection3.insert(std::make_pair(20,correction3Plane20));
-				_mapSensorIDToHistogramCorrection4.insert(std::make_pair(20,correction4Plane20));
-*/
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////The average residual plots per plane
-//			AIDA::ICloud2D* plotAverageResidual = 	marlin::AIDAProcessor::histogramFactory(this)->createCloud2D("aveRes", "The Average residual with plane number"); 				
-	//		plotAverageResidual->fill(1,10,1);
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Pull plots											
         int NBinp=120;
         double MinXp=-10;
         double MaxXp=10;
 
-/*
-        EUTelHistogramInfo    *    histoInfo0p  = histoMgr->getHistogramInfo( _histName::_residGblFitHistNameX0p);
-        EUTelHistogramInfo    *    histoInfo1p  = histoMgr->getHistogramInfo( _histName::_residGblFitHistNameX1p);
-        EUTelHistogramInfo    *    histoInfo2p  = histoMgr->getHistogramInfo( _histName::_residGblFitHistNameX2p);
-        EUTelHistogramInfo    *    histoInfo3p  = histoMgr->getHistogramInfo( _histName::_residGblFitHistNameX3p);
-        EUTelHistogramInfo    *    histoInfo4p  = histoMgr->getHistogramInfo( _histName::_residGblFitHistNameX4p);
-        EUTelHistogramInfo    *    histoInfo5p  = histoMgr->getHistogramInfo( _histName::_residGblFitHistNameX5p);
- */
+
         AIDA::IHistogram1D * residGblFit0Xp = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistNameX0p, NBinp, MinXp, MaxXp); 
         AIDA::IHistogram1D * residGblFit1Xp = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistNameX1p, NBinp, MinXp, MaxXp); 
         AIDA::IHistogram1D * residGblFit2Xp = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistNameX2p, NBinp, MinXp, MaxXp); 

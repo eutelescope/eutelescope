@@ -40,6 +40,7 @@ namespace eutelescope {
 			TMatrixDSym getScatteringVarianceInLocalFrame();
 			TMatrixDSym getScatteringVarianceInLocalFrame(float variance);
 			TVectorD getKinks();
+			TVectorD getRadFrac();
 			//setters
 			void setDimensionSize(int dimension);
 			void setLocation(int location);
@@ -54,6 +55,8 @@ namespace eutelescope {
 			void setStateVec(TVectorD stateVec);
 			void setArcLengthToNextState(float arcLength){setChi2(arcLength);} 
 			void setKinks(TVectorD kinks);
+			void setRadFrac(double plane, double air);
+
 			//initialise
 			void initialiseCurvature();
 			//find
@@ -61,6 +64,8 @@ namespace eutelescope {
 			//compute
 			TVector3 computeCartesianMomentum() const ;
 			TMatrix computePropagationJacobianFromLocalStateToNextLocalState(TVector3 positionEnd, TVector3 momentumEnd, float arcLength,float nextPlaneID);
+			float computeRadLengthsToEnd( std::map<const int,double> & mapSensor, std::map<const int ,double> & mapAir );
+
 			//print
 			void print();
 			bool operator<(const EUTelState compareState ) const;

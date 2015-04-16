@@ -19,6 +19,7 @@
 
 // system includes <>
 #include <map>
+#include <fstream>      // std::ifstream, std::ofstream
 #include <string>
 #include <utility>
 #include <vector>
@@ -58,9 +59,15 @@ namespace eutelescope {
 
 				void writeMilleSteeringFile(lcio::StringVec pedeSteerAddCmds);
 
-				int runPede();
+				bool runPede();
 	
 				bool parseMilleOutput(std::string alignmentConstantLCIOFile, std::string gear_aligned_file);
+				bool converge();
+				bool checkConverged();
+				void editSteerUsingRes();
+				void copyFile(std::string input, std::string output);
+				void outputSteeringFiles();
+
 
 				void testUserInput();
 				void printFixedPlanes();
@@ -80,6 +87,9 @@ namespace eutelescope {
 				///////////////////////////////////////////get stuff
 				TMatrixD& getAlignmentJacobian()  { return _jacobian; }
 				std::vector<int> getGlobalParameters() { return _globalLabels; }
+				///////find stuff
+				bool findTooManyRejects(std::string output);
+
 
 				gbl::MilleBinary * _milleGBL;
 
@@ -88,6 +98,7 @@ void CreateBinary();
 
 		protected:
 				int alignmentMode;
+				int _iteration;
 				Utility::AlignmentMode _alignmentMode;
 				TMatrixD _jacobian; //Remember you need to create the object before you point ot it
 				std::vector<int> _globalLabels;
@@ -100,6 +111,8 @@ void CreateBinary();
 
         /** Mille steering filename */
 				std::string _milleSteeringFilename;
+				
+				std::string _milleSteerNameOldFormat;
 
 				std::string _milleBinaryFilename;
 				//the results file

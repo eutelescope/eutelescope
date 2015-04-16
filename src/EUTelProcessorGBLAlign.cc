@@ -11,7 +11,7 @@ _milleResultFileName("millepede.res"),
 _gear_aligned_file("gear-00001-aligned.xml"),
 _nProcessedRuns(0),
 _nProcessedEvents(0),
-_alignmentMode(0),
+_alignmentMode(7),
 _beamQ(-1),
 _eBeam(4),
 _createBinary(true),
@@ -55,7 +55,7 @@ _mEstimatorType()
             "5 - Alignment of XY shifts + rotations around Y and Z\n"
             "6 - Alignment of XY shifts + rotations around X,Y and Z\n"
             "7 - Alignment of XYZ shifts + rotations around X,Y and Z\n",
-            _alignmentMode, static_cast<int> (1));
+            _alignmentMode, static_cast<int> (7));
 
     registerOptionalParameter("FixedAlignmentPlanesXshift", "Ids of planes for which X shift will be fixed during millepede call", _fixedAlignmentXShfitPlaneIds, IntVec());
     
@@ -101,7 +101,7 @@ void EUTelProcessorGBLAlign::init() {
 		_Mille->setResultsFileName(_milleResultFileName);
 		_Mille->testUserInput();
 		_Mille->printFixedPlanes();
-		Fitter->setMEstimatorType(_mEstimatorType);//This I am not too sure about. As far as I understand it specifies the procedure that Millepede will use to deal with outliers. Outliers are hits that are far from any state. So their impact to alignemt should be down weighted.
+		Fitter->setMEstimatorType(_mEstimatorType);//Outliers are hits that do not appear to follow errors which are Gaussian. We want to downweight the effect these hits have on the fit.
 		Fitter->setParamterIdXResolutionVec(_SteeringxResolutions);//We set the accuracy of the residual information since we have no correct hit error analysis yet.
 		Fitter->setParamterIdYResolutionVec(_SteeringyResolutions);
 		Fitter->setMillepede(_Mille);//We need to have a connection between GBL and Millepede since GBL knows nothing about sensor orientations.
@@ -181,6 +181,7 @@ void EUTelProcessorGBLAlign::processEvent(LCEvent * evt){
 					const gear::BField& B = geo::gGeometry().getMagneticField();
 					const double Bmag = B.at( TVector3(0.,0.,0.) ).r2();
 					gbl::GblTrajectory* traj = 0;
+//					printPointsInformation(pointList);
 					if ( Bmag < 1.E-6 ) {
 						traj = new gbl::GblTrajectory( pointList, false ); //Must make sure this is not a memory leak
 					} else {
@@ -191,16 +192,18 @@ void EUTelProcessorGBLAlign::processEvent(LCEvent * evt){
 					traj->fit(chi2, ndf2, loss, _mEstimatorType );
 					streamlog_out ( DEBUG0 ) << "This is the trajectory we are just about to fit: " << std::endl;
 					streamlog_message( DEBUG0, traj->printTrajectory(10);, std::endl; );
-						
+	//				std::cout<<"WRITE TO MILLEPEDE. EVENT: " << 	event->getEventNumber() << "  Total number of tracks: " << _totalTrackCount << std::endl;	
 					traj->milleOut(*(_Mille->_milleGBL));
 				}//END OF LOOP FOR ALL TRACKS IN AN EVENT
 			}//END OF COLLECTION IS NOT NULL LOOP	
+//			if(event->getEventNumber() == 1){
+//				throw marlin::StopProcessingException( this ) ;
+//			}
 		}
 	}
 	catch (DataNotAvailableException e) {
-		streamlog_out(MESSAGE0) << _trackCandidatesInputCollectionName << " collection not available" << std::endl;
-	//	throw marlin::SkipEventException(this);
-	return;
+//		streamlog_out(MESSAGE9) << "Data not avaliable skip event. " << std::endl;
+		throw marlin::SkipEventException(this);
 	}
 	catch(std::string &e){
 		streamlog_out(MESSAGE9) << e << std::endl;
@@ -218,25 +221,51 @@ void EUTelProcessorGBLAlign::processEvent(LCEvent * evt){
 }
 
 void EUTelProcessorGBLAlign::end(){
+	_Mille->_milleGBL->~MilleBinary();
+//	double size =	printSize("millepede.bin");
+//	std::cout<<"Binary after track addition " << size << " This is the size per track: " << size/_totalTrackCount << std::endl;
+
 	streamlog_out (MESSAGE9) <<"TOTAL NUMBER OF TRACKS PASSED TO ALIGNMENT: "<< _totalTrackCount << std::endl;
 	if(_totalTrackCount<1000){
 		streamlog_out(WARNING5)<<"You are trying to align with fewer than 1000 tracks. This could be too small a number." <<std::endl;
 	}
-	_Mille->writeMilleSteeringFile(_pedeSteerAddCmds);
-	_Mille->runPede();
-	_Mille->parseMilleOutput(_alignmentConstantLCIOFile, _gear_aligned_file);
+	//TO DO: We automatically create the millepede output file in the directory of execution. We should be able to move these to another folder to stop the clutter in this directory.
+	//The millepede class contains all the functions related to manipulation of steering files, results files from millepede and the scripts related to editing these file.
+	//It also controls the running of millepede. 
+	_Mille->writeMilleSteeringFile(_pedeSteerAddCmds);//This will create the initial steering file. This can then be accessed via the string member variable:_milleSteeringFilename
+	bool tooManyRejects = 	_Mille->runPede();//This will run millepede and create the initial results file. We automatically line to this through the string variable._milleResultFileName.
+	if(!tooManyRejects){//Check that the intial input fit is successful. We need this for the initial reasonable results file.
+		streamlog_out (MESSAGE9) <<"FIRST ATTEMPT WITH INITIAL INPUT PARAMETERS. NOW TRY TO CONVERGE.......................................  "<< std::endl;
+		bool converged =	_Mille->converge();//This will iteratively run millepede over mutiple results file, during this process it also checks that the solution converges.
+		_Mille->parseMilleOutput(_alignmentConstantLCIOFile, _gear_aligned_file);
+	}else{
+		streamlog_out (MESSAGE9) <<"THE NUMBER OF REJECTED TRACKS IS NOT LARGE."<< std::endl;
+	}
 }
 
 void EUTelProcessorGBLAlign::printPointsInformation(std::vector<gbl::GblPoint>& pointList){
 	typedef std::vector<gbl::GblPoint>::iterator IteratorType;
+	streamlog_out(MESSAGE5) << "THE START OF THE TRACK POINTS///////////////" <<std::endl;
 	for(IteratorType point = pointList.begin(); point != pointList.end(); point++){
-		streamlog_out(DEBUG1) << "Global derivative for point: " << point->getLabel()<<std::endl;
-		streamlog_message( DEBUG0, point->getGlobalDerivatives().Print();, std::endl; );
+		streamlog_out(MESSAGE5)<<std::endl <<"Point label: " << point->getLabel()<<std::endl;
+		streamlog_out(MESSAGE5) << "GLOBAL DERIVATIVE MATRIX"<<std::endl;
+		streamlog_message( MESSAGE5, point->getGlobalDerivatives().Print();, std::endl; );
 		std::vector<int> label = point->getGlobalLabels();
-		streamlog_out(DEBUG1) << "Global labels for point: " << point->getLabel() << "Global label size "<<label.size() <<std::endl;
+//		streamlog_out(MESSAGE5)<<"Size  of : "<<label.size() <<std::endl;
+		streamlog_out(MESSAGE5) << "GLOBAL LABELS: " <<std::endl;
 		for( std::vector<int>::const_iterator i = label.begin(); i != label.end(); ++i){
-			streamlog_out(DEBUG1) << *i << ' ';
+			streamlog_out(MESSAGE5) << *i << ' ';
 		}
 
 	}
 }	
+double  EUTelProcessorGBLAlign::printSize(const std::string& address) {
+	std::fstream motd(address.c_str(), std::ios::binary|std::ios::in|std::ios::ate);
+	if(motd) {
+		std::fstream::pos_type size = motd.tellg();
+		return size;
+	} else {
+		perror(address.c_str());
+		return 0.0;
+	}
+}

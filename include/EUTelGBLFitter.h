@@ -126,7 +126,7 @@ namespace eutelescope {
 			void testDistanceBetweenPoints(double* position1,double* position2);
 			//COMPUTE
 			void computeTrajectoryAndFit(std::vector< gbl::GblPoint >& pointList,  gbl::GblTrajectory* traj, double* chi2, int* ndf, int & ierr);
-			std::vector<float> computeVarianceForEachScatterer(EUTelState & state , float percentageRadiationLength );
+			std::vector<float> computeVarianceForEachScatterer(EUTelState & state);
 			//OTHER FUNCTIONS
 			void resetPerTrack();
 			void findScattersZPositionBetweenTwoStates();

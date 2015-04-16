@@ -1,7 +1,10 @@
 #include "EUTelUtility.h"
+#include <fstream>      // std::ifstream, std::ofstream
+#include <iostream>
 #include "EUTelTrack.h"
 #include "EUTelState.h"
 #include "EUTelHistogramManager.h"
+#include "EUTelMillepede.h"
 // AIDA
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <AIDA/IBaseHistogram.h>
@@ -30,6 +33,8 @@ namespace eutelescope {
 
     EUTelTrackAnalysis(std::map< int,  AIDA::IProfile2D*> mapFromSensorIDToHistogramX, std::map< int,  AIDA::IProfile2D*> mapFromSensorIDToHistogramY, std::map< int,   AIDA::IHistogram1D *> mapFromSensorIDToKinkXZ,std::map< int,   AIDA::IHistogram1D *> mapFromSensorIDToKinkYZ, AIDA::IHistogram1D * beamEnergy );
 
+		template<typename T>
+		std::string numberToString(T number);
 		void plotResidualVsPosition(EUTelTrack);
 		void plotBeamEnergy(EUTelTrack);
 		void plotIncidenceAngles(EUTelTrack track);

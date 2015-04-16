@@ -2,7 +2,7 @@
   <!--GEAR file for DATURA Telescope in DESY TB 21 - Nov. 2012 -->
   <!-- z was fixed to 150 mm between all sensors -->
   <global detectorName="EUTelescope"/>
-  <BField type="ConstantBField" x="0" y="-1.0" z="0.0"/>
+  <BField type="ConstantBField" x="0" y="0.0" z="0.0"/>
   <detectors>
     <detector name="SiPlanes" geartype="SiPlanesParameters">
     <parameter name="Geometry" type="StringVec" value="Mimosa26.so Mimosa26.so Mimosa26.so Mimosa26.so Mimosa26.so Mimosa26.so"/>

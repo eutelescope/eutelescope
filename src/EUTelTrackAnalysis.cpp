@@ -162,7 +162,37 @@ void EUTelTrackAnalysis::plotPValueWithPosition(EUTelTrack track){
 }
 
 float EUTelTrackAnalysis::calculatePValueForChi2(EUTelTrack track){
+  streamlog_out(DEBUG2) << " EUTelTrackAnalysis::calculatePValueForChi2------------------------------BEGIN"<< std::endl;
+/*
+	float chi2Float=track.getChi2();
+	int   ndfInt = track.getNdf();
+	std::string chi2 = numberToString(chi2Float);
+	std::string ndf = numberToString(ndfInt);
 	float pValue=0;
+//	std::cout << "Chi2: " << chi2 <<" and ndf " << ndf <<std::endl;
+	const std::string command = "calculatePValue.pyc " + chi2 + " " + ndf;
+	redi::ipstream pValueStream( command.c_str( ));
+	if ( !pValueStream.is_open( )){
+		throw(lcio::Exception("Could not open the pValue file. "));
+	}else{
+		std::string str;
+		while (pValueStream >> str) {
+//		std::cout << str << std::endl;
+		pValue = std::atof(str.c_str());
+		}
+	}
+	pValueStream.close( );
+  streamlog_out(DEBUG2) << " EUTelTrackAnalysis::calculatePValueForChi2------------------------------END"<< std::endl;
+//	std::cout<<"Here is the p-value: " <<pValue <<std::endl;
 	return pValue;
 }
-
+template<typename T>
+std::string EUTelTrackAnalysis::numberToString(T number){
+	std::string Result;        
+	std::ostringstream convert;
+	convert << number;   
+	Result = convert.str();
+    */
+//	return Result;
+	return 1.0;
+}
