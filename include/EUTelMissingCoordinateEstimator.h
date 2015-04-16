@@ -181,7 +181,12 @@ namespace eutelescope {
         
         //! Number of Dut hits created
         unsigned int _nDutHitsCreated;
-        
+	       
+ 	//! Number of Expected created hit per DUT hit
+ 	unsigned int _maxExpectedCreatedHitPerDUTHit;
+	
+	//! Count number of created hit per DUT Hit
+	std::vector<unsigned int> _numberOfCreatedHitPerDUTHit; 
     };
     
     //! A global instance of the processor
