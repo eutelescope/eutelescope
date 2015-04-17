@@ -382,9 +382,7 @@ void EUTelProcessorGBLTrackFit::bookHistograms() {
         AIDA::IHistogram1D * residGblFit3X = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistNameX3, NBinX, MinX, MaxX); 
         AIDA::IHistogram1D * residGblFit4X = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistNameX4, NBinX, MinX, MaxX); 
         AIDA::IHistogram1D * residGblFit5X = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistNameX5, NBinX, MinX, MaxX); 
-
-        AIDA::IHistogram1D * residGblFit6X = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Residual6X" , 300, -0.4, 0.4); 
-        //AIDA::IHistogram1D * residGblFit6Y = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Residual6Y" , NBinX, MinX, MaxX); 
+	AIDA::IHistogram1D * residGblFit6X = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistNameX6, NBinX, -0.4, 0.4);
         AIDA::IHistogram1D * residGblFit7X = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Residual7X" , NBinX, MinX, MaxX); 
         AIDA::IHistogram1D * residGblFit7Y = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Residual7Y" , NBinX, MinX, MaxX); 
 
@@ -396,9 +394,8 @@ void EUTelProcessorGBLTrackFit::bookHistograms() {
               _aidaHistoMap1D.insert(std::make_pair(_histName::_residGblFitHistNameX3, residGblFit3X));
               _aidaHistoMap1D.insert(std::make_pair(_histName::_residGblFitHistNameX4, residGblFit4X));
               _aidaHistoMap1D.insert(std::make_pair(_histName::_residGblFitHistNameX5, residGblFit5X));
-              _aidaHistoMap1D.insert(std::make_pair("Residual6X", residGblFit6X));
-	      // _aidaHistoMap1D.insert(std::make_pair("Residual6Y", residGblFit6Y));
-              _aidaHistoMap1D.insert(std::make_pair("Residual7X", residGblFit7X));
+	      _aidaHistoMap1D.insert(std::make_pair(_histName::_residGblFitHistNameX6, residGblFit6X));
+	      _aidaHistoMap1D.insert(std::make_pair("Residual7X", residGblFit7X));
               _aidaHistoMap1D.insert(std::make_pair("Residual7Y", residGblFit7Y));
 
 											
@@ -408,7 +405,7 @@ void EUTelProcessorGBLTrackFit::bookHistograms() {
         AIDA::IHistogram1D * residGblFit3Y = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistNameY3, NBinX, MinX, MaxX); 
         AIDA::IHistogram1D * residGblFit4Y = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistNameY4, NBinX, MinX, MaxX); 
         AIDA::IHistogram1D * residGblFit5Y = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistNameY5, NBinX, MinX, MaxX); 
-	AIDA::IHistogram1D * residGblFit6Y = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistNameY6, NBinX, MinX, MaxX); 
+	AIDA::IHistogram1D * residGblFit6Y = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistNameY6, NBinX, -0.4, 0.4); 
 
               _aidaHistoMap1D.insert(std::make_pair(_histName::_residGblFitHistNameY0, residGblFit0Y));
               _aidaHistoMap1D.insert(std::make_pair(_histName::_residGblFitHistNameY1, residGblFit1Y));
