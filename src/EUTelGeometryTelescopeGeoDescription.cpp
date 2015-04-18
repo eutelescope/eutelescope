@@ -1009,6 +1009,7 @@ float EUTelGeometryTelescopeGeoDescription::findRad( const double globalPosStart
             }
         }
     }
+    return 0; //Return 0 if no nextnode to remove track 
 }
 //This will output the X/X0 of the the full detector system. This is needed to calculate the for each individual scatter the proper correction. 
 //Note we can not determine this correction for each scatterer individually since this correction would introduce a non linear term which would be unphysical. 
