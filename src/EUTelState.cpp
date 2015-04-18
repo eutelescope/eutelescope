@@ -250,7 +250,7 @@ void EUTelState::setCombinedHitAndStateCovMatrixInLocalFrame(double cov[4]){
 }
 
 void EUTelState::setStateVec(TVectorD stateVec){
-	float referencePoint[] = {stateVec[3],stateVec[4],0};
+	double referencePoint[] = {stateVec[3],stateVec[4],0};
 	setPositionLocal(referencePoint);
 	setIntersectionLocalXZ(stateVec[1]);
 	setIntersectionLocalYZ(stateVec[2]);
@@ -329,7 +329,7 @@ float tx = getIntersectionLocalXZ();float ty= getIntersectionLocalYZ(); float cu
         
   return TVector3(momentum[0],momentum[1],momentum[2]);
 }
-TMatrix EUTelState::computePropagationJacobianFromLocalStateToNextLocalState(TVector3 positionEnd, TVector3 momentumEnd, float arcLength,float nextPlaneID) {
+TMatrix EUTelState::computePropagationJacobianFromLocalStateToNextLocalState(TVector3 momentumEnd, float arcLength,float nextPlaneID) {
 	streamlog_out(DEBUG2) << "-------------------------------EUTelState::computePropagationJacobianFromStateToThisZLocation()-------------------------BEGIN" << std::endl;
 	if(arcLength == 0 or arcLength < 0 ){ 
 		throw(lcio::Exception( "The arc length is less than or equal to zero.")); 
