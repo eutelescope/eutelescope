@@ -1225,7 +1225,7 @@ bool EUTelGeometryTelescopeGeoDescription::findNextPlaneEntrance(  TVector3 lpoi
 		}
 		stepNumber++;     
 	}
-
+    return false; //If the correct sensor ID is not found by this point then we have failed to find the intersection
 }
 
 /**
