@@ -172,8 +172,8 @@ void EUTelProcessorGBLAlign::processEvent(LCEvent * evt){
 					_totalTrackCount++;
 					_trackFitter->resetPerTrack(); //Here we reset the label that connects state to GBL point to 1 again. Also we set the list of states->labels to 0
 					EUTelTrack track = *(static_cast<EUTelTrack*> (eventCollection->getElementAt(iTrack)));
-					float chi = track.getChi2();
-					float ndf = static_cast<float>(track.getNdf());
+		//			float chi = track.getChi2();
+	//				float ndf = static_cast<float>(track.getNdf());
 					std::vector< gbl::GblPoint > pointList;//This is the GBL points. These contain the state information, scattering and alignment jacobian. All the information that the mille binary will get.
 					_trackFitter->setInformationForGBLPointList(track, pointList);//We create all the GBL points with scatterer inbetween both planes. This is identical to creating GBL tracks
 					_trackFitter->setPairMeasurementStateAndPointLabelVec(pointList);
@@ -237,6 +237,12 @@ void EUTelProcessorGBLAlign::end(){
 	if(!tooManyRejects){//Check that the intial input fit is successful. We need this for the initial reasonable results file.
 		streamlog_out (MESSAGE9) <<"FIRST ATTEMPT WITH INITIAL INPUT PARAMETERS. NOW TRY TO CONVERGE.......................................  "<< std::endl;
 		bool converged =	_Mille->converge();//This will iteratively run millepede over mutiple results file, during this process it also checks that the solution converges.
+        if(converged){
+            streamlog_out (MESSAGE9) <<"Converge:Successful! "<< std::endl;
+        }else{
+            streamlog_out (MESSAGE9) <<"Converge:Fail! "<< std::endl;
+        }
+
 		_Mille->parseMilleOutput(_alignmentConstantLCIOFile, _gear_aligned_file);
 	}else{
 		streamlog_out (MESSAGE9) <<"THE NUMBER OF REJECTED TRACKS IS NOT LARGE."<< std::endl;
