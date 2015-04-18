@@ -827,10 +827,6 @@ int EUTelGeometryTelescopeGeoDescription::getSensorID( const float globalPos[] )
  * @param globalPos (x,y,z) in global coordinate system
  */
 void EUTelGeometryTelescopeGeoDescription::local2Master( int sensorID, const double localPos[], double globalPos[] ) {
-    const double sensorCenterX = siPlaneXPosition( sensorID );
-    const double sensorCenterY = siPlaneYPosition( sensorID );
-    const double sensorCenterZ = siPlaneZPosition( sensorID );
-
     _geoManager->cd( _planePath[sensorID].c_str() );
     _geoManager->GetCurrentNode()->LocalToMaster( localPos, globalPos );
 }
@@ -856,10 +852,6 @@ void EUTelGeometryTelescopeGeoDescription::master2Local(int sensorID, const doub
  * @param localVec (x,y,z) in local coordinate system
  */
 void EUTelGeometryTelescopeGeoDescription::local2MasterVec( int sensorID, const double localVec[], double globalVec[] ) {
-    const double sensorCenterX = siPlaneXPosition( sensorID );
-    const double sensorCenterY = siPlaneYPosition( sensorID );
-    const double sensorCenterZ = siPlaneZPosition( sensorID );
-    
     _geoManager->cd( _planePath[sensorID].c_str() );
     _geoManager->GetCurrentNode()->LocalToMasterVect( localVec, globalVec );
 }
@@ -873,15 +865,10 @@ void EUTelGeometryTelescopeGeoDescription::local2MasterVec( int sensorID, const 
  * @param localVec (x,y,z) in local coordinate system
  */
 void EUTelGeometryTelescopeGeoDescription::master2LocalVec( int sensorID, const double globalVec[], double localVec[] ) {
-    const double sensorCenterX = siPlaneXPosition( sensorID );
-    const double sensorCenterY = siPlaneYPosition( sensorID );
-    const double sensorCenterZ = siPlaneZPosition( sensorID );
     
     _geoManager->cd( _planePath[sensorID].c_str() );
     _geoManager->GetCurrentNode()->MasterToLocalVect( globalVec, localVec );
 
-//    _geoManager->FindNode( sensorCenterX, sensorCenterY, sensorCenterZ );    
-//    _geoManager->MasterToLocalVect( globalVec, localVec );
 }
 
 /**
@@ -1053,7 +1040,7 @@ float EUTelGeometryTelescopeGeoDescription::calculateTotalRadiationLengthAndWeig
 //This function wil not add kapton to excluded planes.
 //TO DO: The found planes will be different from the excluded. Since sometimes we will miss a plane if there are two DUT for example. Must keep a note of these since we will be still adding radiation length incorrectly if not accounted for. These track are removed at the moment since some entries of radiation length will zero.
 double EUTelGeometryTelescopeGeoDescription::addKapton(std::map<const int, double> & mapSensor){
-	for(int i = 0 ; i<geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() ; i++){
+	for(unsigned int i = 0 ; i<geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() ; i++){
 		mapSensor[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)] = mapSensor[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)] + 0.0002;
 	}
 	return  2*geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()*0.0001;
@@ -1073,7 +1060,7 @@ double EUTelGeometryTelescopeGeoDescription::addKapton(std::map<const int, doubl
 	}
 		streamlog_out(DEBUG5) << "/////////////////////////////////////////////////////////////////////////////////////////////////// " << std::endl;
 		streamlog_out(DEBUG5) << "                 THIS IS WHAT WE WILL CONSTRUCT THE PLANES AND SCATTERING FROM           " << std::endl;
-		for(int i = 0 ; i<geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() ; i++){
+		for(unsigned int i = 0 ; i<geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() ; i++){
 			streamlog_out(DEBUG5) << "Sensor ID:   "<< geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)<< " X/X0: " << mapSensor[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i) ] <<" Mass in front of sensor X/X0: "  << mapAir[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i) ] << std::endl;
 			if(mapSensor[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i) ] == 0 or (mapAir[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i) ] == 0 and i != geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() -1 )){
 				foundRadZero = true;
@@ -1092,16 +1079,15 @@ void EUTelGeometryTelescopeGeoDescription::mapWeightsToSensor(std::map<const int
 //	std::cout<< "sensor size: " << sensor.size() <<std::endl;
 //	std::cout<< "air size: " << air.size() <<std::endl;
 
-	int i =0, j=0;
+	unsigned int j=0;
 	double ExcPlaneScat=0;
 	int beforeExcPos=0;
 	bool addMore=false;
-	int counter=0;
-	for(i; i<_sensorZOrderToIDMap.size() ; i++){
+	for(unsigned int  i; i<_sensorZOrderToIDMap.size() ; i++){
 		const int sensorID = _sensorZOrderToIDMap[i];
 
 		//Here we check if we have added all the scatterers due to excluded planes. 
-		if(_sensorZOrderToIDWithoutExcludedPlanes[j] == _sensorZOrderToIDMap[i], addMore){
+		if(_sensorZOrderToIDWithoutExcludedPlanes[j] == _sensorZOrderToIDMap[i] and  addMore){
 			const int sensorIDBefore = _sensorZOrderToIDWithoutExcludedPlanes[beforeExcPos];
 			//Do not need to add plane scattering again.
 			mapAir[sensorIDBefore] = mapAir[sensorIDBefore]+ExcPlaneScat ;	//Add the same air before and the new plane and air.
@@ -1318,7 +1304,7 @@ bool EUTelGeometryTelescopeGeoDescription::findIntersectionWithCertainID(	float 
 	outputMomentum[2] = newMomentum[2];
 
 	//Is the new point within the sensor. If not then we may have to propagate a little bit further to enter.
- 	const float pos[3] = {newPos[0],newPos[1],newPos[2]};
+ 	const double pos[3] = {newPos[0],newPos[1],newPos[2]};
 	int sensorIDCheck = getSensorID(pos); 
 	bool foundIntersection = false;
 	if(sensorIDCheck == nextPlaneID){
