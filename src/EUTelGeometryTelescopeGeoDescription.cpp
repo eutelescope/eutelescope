@@ -1029,9 +1029,9 @@ float EUTelGeometryTelescopeGeoDescription::calculateTotalRadiationLengthAndWeig
 	mapWeightsToSensor(sensors,air, mapSensor,mapAir);
 	perRad = perRad +	addKapton(mapSensor);
 	streamlog_out(DEBUG0) << "X/X0 (TOTAL SYSTEM) : " << perRad <<std::endl;
-	int pass = 	testOutput(mapSensor, mapAir);
-	if( pass == 0){
-		return pass;
+	bool pass = testOutput(mapSensor, mapAir);
+	if(!pass){
+		return 0;
 	}
 //	std::cout << "here the rad" << perRad << std::endl;
 	return perRad;
@@ -1047,31 +1047,32 @@ double EUTelGeometryTelescopeGeoDescription::addKapton(std::map<const int, doubl
 	return  2*geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()*0.0001;
 
 }
-	int EUTelGeometryTelescopeGeoDescription::testOutput(std::map< const int,double> & mapSensor,std::map<const int,double> & mapAir){
-		bool foundRadZero = false;
-//		std::cout <<"Here is the number of sensor scat/ air: " << mapSensor.size()<< "," << mapAir.size() <<std::endl;
+bool EUTelGeometryTelescopeGeoDescription::testOutput(std::map< const int,double> & mapSensor,std::map<const int,double> & mapAir){
+    bool foundRadZero = false;
 
 	//TEST ONE SENSOR ONE SCATTERER AFTER.
 	if((mapSensor.size()-1) != mapAir.size()){ //last plane does not contain any air scattering information.
 		throw(std::string("We did not determine the radiation along the track correctly! Sensor != Air"));
 	}
 	//TEST SAME NUMBER AS EXCLUDED SENSORS
-		if( (geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()-1) != mapAir.size()){
+    if( (geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()-1) != mapAir.size()){
 		throw(std::string("We do not have a scatterer for each plane included "));
 	}
-		streamlog_out(DEBUG5) << "/////////////////////////////////////////////////////////////////////////////////////////////////// " << std::endl;
-		streamlog_out(DEBUG5) << "                 THIS IS WHAT WE WILL CONSTRUCT THE PLANES AND SCATTERING FROM           " << std::endl;
-		for(unsigned int i = 0 ; i<geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() ; i++){
-			streamlog_out(DEBUG5) << "Sensor ID:   "<< geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)<< " X/X0: " << mapSensor[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i) ] <<" Mass in front of sensor X/X0: "  << mapAir[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i) ] << std::endl;
-			if(mapSensor[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i) ] == 0 or (mapAir[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i) ] == 0 and i != geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() -1 )){
-				foundRadZero = true;
-			}
-		}
-		streamlog_out(DEBUG5) << "/////////////////////////////////////////////////////////////////////////////////////////////////// " << std::endl;
-		streamlog_out(DEBUG5) << "/////////////////////////////////////////////////////////////////////////////////////////////////// " << std::endl;
-		if(foundRadZero){
-			return 0;
-		}
+    streamlog_out(DEBUG5) << "/////////////////////////////////////////////////////////////////////////////////////////////////// " << std::endl;
+    streamlog_out(DEBUG5) << "                 THIS IS WHAT WE WILL CONSTRUCT THE PLANES AND SCATTERING FROM           " << std::endl;
+    for(unsigned int i = 0 ; i<geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() ; i++){
+        streamlog_out(DEBUG5) << "Sensor ID:   "<< geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)<< " X/X0: " << mapSensor[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i) ] <<" Mass in front of sensor X/X0: "  << mapAir[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i) ] << std::endl;
+        if(mapSensor[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i) ] == 0 or (mapAir[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i) ] == 0 and i != geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() -1 )){
+            foundRadZero = true;
+        }
+    }
+    streamlog_out(DEBUG5) << "/////////////////////////////////////////////////////////////////////////////////////////////////// " << std::endl;
+    streamlog_out(DEBUG5) << "/////////////////////////////////////////////////////////////////////////////////////////////////// " << std::endl;
+    if(foundRadZero){
+        return false;
+    }else{
+        return true;
+    }
 
 }
 
