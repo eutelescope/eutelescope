@@ -235,7 +235,7 @@ void EUTelMissingCoordinateEstimator::processEvent (LCEvent * event) {
      */
 
     // with countCreatedDutHits vector we will count how many hits we create out of one DUT hit
-    vector<int> countCreatedDutHits;
+    vector<unsigned int> countCreatedDutHits;
     countCreatedDutHits.clear();
 	for (unsigned int iDutHit=0; iDutHit<dutPlaneHits.size(); iDutHit++){
 		countCreatedDutHits.push_back(0);
