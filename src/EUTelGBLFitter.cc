@@ -478,13 +478,13 @@ namespace eutelescope {
 		B[0]=Bx; B[1]=By; B[2]=Bz;
 		for(size_t i=0;i<_scattererPositions.size();i++){
 			newMomentum = EUTelNav::getMomentumfromArcLengthLocal(momentum, position,state.getBeamCharge(), _scattererPositions[i], location );
-			TMatrixD curvilinearJacobian = EUTelNav::getPropagationJacobianCurvilinearLimit(_scattererPositions[i], state.getOmega(), momentum.Unit(),newMomentum.Unit());
+			TMatrixD curvilinearJacobian = EUTelNav::getPropagationJacobianCurvilinearLimit(_scattererPositions[i], momentum.Unit());
 			streamlog_out(DEBUG0)<<"This is the curvilinear jacobian at sensor : " << location << " or scatter: "<< i << std::endl; 
 			streamlog_message( DEBUG0, curvilinearJacobian.Print();, std::endl; );
-			TMatrixD localToCurvilinearJacobianStart =  EUTelNav::getMeasToLocal(momentum, location ,state.getBeamCharge() );
+			TMatrixD localToCurvilinearJacobianStart =  EUTelNav::getMeasToLocal(momentum, location);
 			streamlog_out(DEBUG0)<<"This is the local to curvilinear jacobian at sensor : " << location << " or scatter: "<< i << std::endl; 
 			streamlog_message( DEBUG0, localToCurvilinearJacobianStart.Print();, std::endl; );
-			TMatrixD localToCurvilinearJacobianEnd =  EUTelNav::getMeasToLocal(newMomentum,locationEnd ,state.getBeamCharge() );
+			TMatrixD localToCurvilinearJacobianEnd =  EUTelNav::getMeasToLocal(newMomentum,locationEnd );
 			streamlog_out(DEBUG0)<<"This is the local to curvilinear jacobian at sensor : " << locationEnd << " or scatter: "<< i << std::endl; 
 			streamlog_message( DEBUG0, localToCurvilinearJacobianEnd.Print();, std::endl; );
 			TMatrixD curvilinearToLocalJacobianEnd = localToCurvilinearJacobianEnd.Invert();
