@@ -519,7 +519,7 @@ bool EUTelMillepede::runPede(){
 	}//END OF IF STATEMENT
 }
 bool EUTelMillepede::findTooManyRejects(std::string output){
-	int found = output.find("Too many rejects (>33.3%)");
+	unsigned int found = output.find("Too many rejects (>33.3%)");
 	if (found == std::string::npos){
 		streamlog_out(MESSAGE5)<<endl<<"Number of rejects low. Continue with alignment."<<endl;
 		return false;
@@ -544,19 +544,21 @@ void EUTelMillepede::editSteerUsingRes(){
 }
 
 bool EUTelMillepede::converge(){
-	for(int i=0; i<2 ; i++){
+    bool converged
+    for(int i=0; i<2 ; i++){
 		editSteerUsingRes();
-		bool converged = checkConverged();//Will simply output the steering files used in each iteration. 
+		converged = checkConverged();//Will simply output the steering files used in each iteration. 
 		runPede();	
 	}
 	//We do this to create a new steering file from all the iterations but do not run pede.
 	editSteerUsingRes();
-	bool converged = checkConverged();//Will simply output the steering files used in each iteration. 
-	return true;
+	converged = checkConverged();//Will simply output the steering files used in each iteration. 
+	return converged;
 }
 
 bool EUTelMillepede::checkConverged(){
 	outputSteeringFiles();
+    return true;
 }
 void EUTelMillepede::outputSteeringFiles(){
 	std::stringstream output;
@@ -565,7 +567,7 @@ void EUTelMillepede::outputSteeringFiles(){
 	copyFile(_milleSteeringFilename, outputName);
 	_iteration++;
 
-};
+}
 //This part using the output of millepede will create a new gear file based on the alignment parameters that have just been determined
 //It will also create LCIO file that will hold the alignment constants
 bool EUTelMillepede::parseMilleOutput(std::string alignmentConstantLCIOFile, std::string gear_aligned_file){

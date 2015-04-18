@@ -98,7 +98,6 @@ void CreateBinary();
 
 		protected:
 				int alignmentMode;
-				int _iteration;
 				Utility::AlignmentMode _alignmentMode;
 				TMatrixD _jacobian; //Remember you need to create the object before you point ot it
 				std::vector<int> _globalLabels;
@@ -113,6 +112,7 @@ void CreateBinary();
 				std::string _milleSteeringFilename;
 				
 				std::string _milleSteerNameOldFormat;
+				int _iteration;
 
 				std::string _milleBinaryFilename;
 				//the results file
