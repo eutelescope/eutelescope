@@ -46,12 +46,7 @@ TVector3 EUTelState::getPositionGlobal() const {
 }
 TVectorD EUTelState::getStateVec() const { 
 	streamlog_out( DEBUG1 ) << "EUTelState::getTrackStateVec()------------------------BEGIN" << std::endl;
-	TVector3 momentum =	computeCartesianMomentum();
 	TVectorD stateVec(5);
-	const float lambda = asin(momentum[2]/(momentum.Mag()));//This will be in radians.
-	//const float phi = asin(momentum[1]/(momentum.Mag())*cos(lambda));
-
-
 	stateVec[0] = getOmega();
 	stateVec[1] = getIntersectionLocalXZ();
 	stateVec[2] = getIntersectionLocalYZ(); 

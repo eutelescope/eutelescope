@@ -253,6 +253,8 @@ void EUTelMillepede::setGlobalLabels( int iPlane){
 			for( std::vector<int>::const_iterator i = _globalLabels.begin(); i != _globalLabels.end(); ++i){
     		streamlog_out(DEBUG1) << *i << ' ';
 			}
+    		streamlog_out(DEBUG1) << endl;
+
 
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////All these functions are used after binary file creation.
