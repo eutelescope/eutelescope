@@ -2,7 +2,6 @@
 #define	EUTELMILLEPEDE_H
 
 #include "EUTelUtility.h"
-#include "EUTelTrackStateImpl.h"
 #include "EUTelTrack.h"
 #include "EUTelState.h"
 

@@ -519,7 +519,7 @@ bool EUTelMillepede::runPede(){
 	}//END OF IF STATEMENT
 }
 bool EUTelMillepede::findTooManyRejects(std::string output){
-	unsigned int found = output.find("Too many rejects (>33.3%)");
+	int found = output.find("Too many rejects (>33.3%)");
 	if (found == std::string::npos){
 		streamlog_out(MESSAGE5)<<endl<<"Number of rejects low. Continue with alignment."<<endl;
 		return false;
@@ -544,12 +544,14 @@ void EUTelMillepede::editSteerUsingRes(){
 }
 
 bool EUTelMillepede::converge(){
-    bool converged
-    for(int i=0; i<2 ; i++){
+    bool converged;
+    bool rejectsHigh;
+    for(unsigned int i=0; i<2 ; i++){
 		editSteerUsingRes();
 		converged = checkConverged();//Will simply output the steering files used in each iteration. 
-		runPede();	
+		rejectsHigh = runPede();	
 	}
+	streamlog_out ( MESSAGE5 ) << "The number if rejects pass/fail: " << rejectsHigh  << endl;
 	//We do this to create a new steering file from all the iterations but do not run pede.
 	editSteerUsingRes();
 	converged = checkConverged();//Will simply output the steering files used in each iteration. 
