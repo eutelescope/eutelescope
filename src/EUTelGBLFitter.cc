@@ -103,7 +103,7 @@ namespace eutelescope {
 		point.addScatterer(scat, precisionMatrix);
 		streamlog_out(MESSAGE1) << "  setScattererGBL  ------------- END ----------------- " << std::endl;
 	}
-	void EUTelGBLFitter::setLocalDerivativesToPoint(gbl::GblPoint& point, EUTelState & state, float distanceFromKinkTargetToNextPlane){
+	void EUTelGBLFitter::setLocalDerivativesToPoint(gbl::GblPoint& point, float distanceFromKinkTargetToNextPlane){
 		TMatrixD derivatives(2,2);
 		derivatives.Zero();
 		//The derivative is the distance since the change in the measurements is  deltaX = distanceFromkink*(Angle of kink)
@@ -135,7 +135,7 @@ namespace eutelescope {
 	}
 
 	//This function calculates the alignment jacobian and labels and attaches this to the point
-	void EUTelGBLFitter::setAlignmentToMeasurementJacobian(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList ){
+	void EUTelGBLFitter::setAlignmentToMeasurementJacobian(std::vector< gbl::GblPoint >& pointList ){
 		for (size_t i = 0;i<_vectorOfPairsMeasurementStatesAndLabels.size() ;++i ){
 			if(_vectorOfPairsMeasurementStatesAndLabels.at(i).first.getTrackerHits().empty()){
 				throw(lcio::Exception("One of the points on the list of measurements states has no hit."));
@@ -264,7 +264,7 @@ namespace eutelescope {
 	//We create them when creating the points. However trajectory will overwrite these. However what we write should be the same as trajectory.
 	//Note this is used by track fitting so we need to associate ANY state to the correct GBL point.
 	//It is important to note the different between  setPairAnyStateAndPointLabelVec and setPairMeasurementStateAndPointLabelVec. One is for any state even if it has no hit and the other is used only for states that have a hit.
-	void EUTelGBLFitter::setPairAnyStateAndPointLabelVec(std::vector< gbl::GblPoint >& pointList, gbl::GblTrajectory* traj){
+	void EUTelGBLFitter::setPairAnyStateAndPointLabelVec(gbl::GblTrajectory* traj){
 		streamlog_out ( DEBUG4 ) << " EUTelGBLFitter::setPairAnyStateAndPointLabelVec-- BEGIN " << std::endl;
 		_vectorOfPairsStatesAndLabels.clear();
 		streamlog_out(DEBUG5)<<"The number of states is: "<< _statesInOrder.size()<<std::endl;
@@ -310,7 +310,7 @@ namespace eutelescope {
 		//We place this variable here since we want to set it every new track to false and then true again after we get to the scattering plane.
 		bool kinkAnglePlaneEstimationAddedNow=false;
 		float distanceFromKinkTargetToNextPlane=0;
-		float totVar = track.getTotalVariance(); 
+//		float totVar = track.getTotalVariance(); 
 		for(size_t i=0;i < track.getStates().size(); i++){		
 			streamlog_out(DEBUG3) << "The jacobian to get to this state jacobian on state number: " << i<<" Out of a total of states "<<track.getStates().size() << std::endl;
 			streamlog_message( DEBUG0, jacPointToPoint.Print();, std::endl; );
@@ -339,7 +339,7 @@ namespace eutelescope {
 				setMeasurementGBL(point, state.getTrackerHits()[0]->getPosition(),  localPositionForState,  cov, state.getProjectionMatrix());
 				//Here we set if we want to add local derivatives to points after we have found the plane we want to determine it's kink angle.
 				if(kinkAnglePlaneEstimationAddedNow){
-					setLocalDerivativesToPoint(point,state,distanceFromKinkTargetToNextPlane); 
+					setLocalDerivativesToPoint(point,distanceFromKinkTargetToNextPlane); 
 					//We add the distance to the next plane so we get the total distance to the target.
 					distanceFromKinkTargetToNextPlane=distanceFromKinkTargetToNextPlane + state.getArcLengthToNextState();
 				}
@@ -362,7 +362,7 @@ namespace eutelescope {
 	}
 
 	//THIS IS THE GETTERS
-	gbl::GblPoint EUTelGBLFitter::getLabelToPoint(std::vector<gbl::GblPoint> & pointList, int label)
+	gbl::GblPoint EUTelGBLFitter::getLabelToPoint(std::vector<gbl::GblPoint> & pointList, unsigned int label)
 	{
 		for(size_t i = 0; i< pointList.size();++i)
 		{
@@ -376,7 +376,7 @@ namespace eutelescope {
 		throw(lcio::Exception("There is no point with this label"));
 	}
 	//This used after trackfit will fill a map between (sensor ID and residualx/y). 
-	void EUTelGBLFitter::getResidualOfTrackandHits(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint > pointList,EUTelTrack& track, std::map< int, std::map< float, float > > &  SensorResidual, std::map< int, std::map< float, float > >& sensorResidualError ){
+	void EUTelGBLFitter::getResidualOfTrackandHits(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint > pointList, std::map< int, std::map< float, float > > &  SensorResidual, std::map< int, std::map< float, float > >& sensorResidualError ){
 		for(size_t j=0 ; j< _vectorOfPairsMeasurementStatesAndLabels.size();j++){
 			EUTelState state = _vectorOfPairsMeasurementStatesAndLabels.at(j).first;
 			if(getLabelToPoint(pointList,_vectorOfPairsMeasurementStatesAndLabels.at(j).second).hasMeasurement() == 0){
@@ -403,7 +403,7 @@ namespace eutelescope {
 			return _mEstimatorType;
 	}
 	//COMPUTE
-	void EUTelGBLFitter::computeTrajectoryAndFit(std::vector< gbl::GblPoint >& pointList,  gbl::GblTrajectory* traj, double* chi2, int* ndf, int & ierr){
+	void EUTelGBLFitter::computeTrajectoryAndFit(gbl::GblTrajectory* traj, double* chi2, int* ndf, int & ierr){
 		streamlog_out ( DEBUG4 ) << " EUTelGBLFitter::computeTrajectoryAndFit-- BEGIN " << std::endl;
 		double loss = 0.;
 		streamlog_out ( DEBUG0 ) << "This is the trajectory we are just about to fit: " << std::endl;
@@ -552,7 +552,7 @@ namespace eutelescope {
 
 	}
 	//This function will take the estimate track from pattern recognition and add a correction to it. This estimated track + correction is you final GBL track.
-	void EUTelGBLFitter::updateTrackFromGBLTrajectory (gbl::GblTrajectory* traj, std::vector< gbl::GblPoint >& pointList,EUTelTrack &track, std::map<int, std::vector<double> > &  mapSensorIDToCorrectionVec){
+	void EUTelGBLFitter::updateTrackFromGBLTrajectory (gbl::GblTrajectory* traj,EUTelTrack &track, std::map<int, std::vector<double> > &  mapSensorIDToCorrectionVec){
 		streamlog_out ( DEBUG4 ) << " EUTelGBLFitter::UpdateTrackFromGBLTrajectory-- BEGIN " << std::endl;
 		
 		for(size_t i=0;i < track.getStatesPointers().size(); i++){//We get the pointers no since we want to change the track state contents		

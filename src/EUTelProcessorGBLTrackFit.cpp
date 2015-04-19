@@ -38,7 +38,6 @@ std::string EUTelProcessorGBLTrackFit::_histName::_residGblFitHistNameY5p = "Res
 
 EUTelProcessorGBLTrackFit::EUTelProcessorGBLTrackFit() :
 Processor("EUTelProcessorGBLTrackFit"),
-_first_time(true),
 _nProcessedRuns(0),
 _nProcessedEvents(0),
 _beamQ(-1),
@@ -164,11 +163,11 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent* evt){
 			}else {
 				traj = new gbl::GblTrajectory( pointList, true );
 			}
-			_trackFitter->setPairAnyStateAndPointLabelVec(pointList,traj);//This will create a link between any state and it's GBL point label. 
+			_trackFitter->setPairAnyStateAndPointLabelVec(traj);//This will create a link between any state and it's GBL point label. 
 			double  chi2=0; 
 			int ndf=0;
 			int ierr=0;
-			_trackFitter->computeTrajectoryAndFit(pointList,traj, &chi2,&ndf, ierr);//This will do the minimisation of the chi2 and produce the most probable trajectory.
+			_trackFitter->computeTrajectoryAndFit(traj, &chi2,&ndf, ierr);//This will do the minimisation of the chi2 and produce the most probable trajectory.
 			if(ierr == 0 ){
 				streamlog_out(DEBUG5) << "Ierr is: " << ierr << " Entering loop to update track information " << std::endl;
 				//If the fit succeeded then write into the binary file.
@@ -182,13 +181,12 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent* evt){
 				track.setNdf(ndf);
 				_chi2NdfVec.push_back(chi2/static_cast<float>(ndf));
 				std::map<int, std::vector<double> >  mapSensorIDToCorrectionVec;//This is not used now. However it maybe useful to be able to access the corrections that GBL makes to the original track. Since if this is too large then GBL may give th wrong trajectory. Since all the equations are only to first order. 
-				_trackFitter->updateTrackFromGBLTrajectory(traj, pointList,track,mapSensorIDToCorrectionVec);
+				_trackFitter->updateTrackFromGBLTrajectory(traj,track,mapSensorIDToCorrectionVec);
 				std::map< int, std::map< float, float > >  SensorResidual; 
 				std::map< int, std::map< float, float > >  SensorResidualError; 
-				_trackFitter->getResidualOfTrackandHits(traj, pointList,track, SensorResidual, SensorResidualError);
+				_trackFitter->getResidualOfTrackandHits(traj, pointList, SensorResidual, SensorResidualError);
 //				if(chi2/static_cast<float>(ndf) < 5){
-					plotResidual(SensorResidual,SensorResidualError, _first_time);//TO DO: Need to fix how we histogram.
-					_first_time = false;
+					plotResidual(SensorResidual,SensorResidualError);//TO DO: Need to fix how we histogram.
 //				}
 			}else{
 				streamlog_out(DEBUG5) << "Ierr is: " << ierr << " Do not update track information " << std::endl;
@@ -223,7 +221,7 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent* evt){
 
 
 //TO DO:This is a very stupid way to histogram but will add new class to do this is long run 
-void EUTelProcessorGBLTrackFit::plotResidual(std::map< int, std::map<float, float > >  & sensorResidual, std::map< int, std::map<float, float > >  & sensorResidualError, bool &first_time){
+void EUTelProcessorGBLTrackFit::plotResidual(std::map< int, std::map<float, float > >  & sensorResidual, std::map< int, std::map<float, float > >  & sensorResidualError){
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Residual plot
 	std::map< int, std::map< float, float > >::iterator sensor_residual_it;
 	for(sensor_residual_it = sensorResidual.begin(); sensor_residual_it != sensorResidual.end(); sensor_residual_it++) {
