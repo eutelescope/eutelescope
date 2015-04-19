@@ -49,7 +49,12 @@ namespace eutelescope {
 			void setIntersectionLocalYZ(float directionYZ);
 			void setIntersectionLocalXZ(float directionXZ);
 			void setLocalXZAndYZIntersectionAndCurvatureUsingGlobalMomentum(TVector3 momentumIn);
-			void setPositionLocal(float position[]);
+            //!Template input for setting local position of hit  
+            /*!
+             * @param position of hit on plane
+             */
+            template<class number>
+			void setPositionLocal(number position[]);
 			void setPositionGlobal(float positionGlobal[]);
 			void setCombinedHitAndStateCovMatrixInLocalFrame(double cov[4]);
 			void setStateVec(TVectorD stateVec);
@@ -74,6 +79,6 @@ namespace eutelescope {
   	private:
 			float _covCombinedMatrix[4];
 	};
-
+    #include "EUTelState.tcc"
 }
 #endif

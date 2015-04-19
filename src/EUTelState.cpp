@@ -10,7 +10,7 @@ setBeamEnergy(5.0);
 EUTelState::EUTelState(EUTelState *state){
 	setDimensionSize(state->getDimensionSize());
 	setLocation(state->getLocation());//This stores the location as a float in Z0 since no location for track LCIO. This is preferable to problems with storing hits.  
-	float position[] = {state->getPosition()[0],state->getPosition()[1],state->getPosition()[2]};//Z position is not a state parameter but should add here for use later. 
+	double position[] = {state->getPosition()[0],state->getPosition()[1],state->getPosition()[2]};//Z position is not a state parameter but should add here for use later. 
 	setPositionLocal(position);//This will automatically take cartesian coordinate system and save it to reference point. //This is different from most LCIO applications since each track will have own reference point. 	
 	setIntersectionLocalXZ(state->getIntersectionLocalXZ());    
 	setIntersectionLocalYZ(state->getIntersectionLocalYZ());  
@@ -200,9 +200,9 @@ void EUTelState::setIntersectionLocalYZ(float directionYZ){
 void EUTelState::setIntersectionLocalXZ(float directionXZ){
 	setPhi(directionXZ);//This is only a container. So hold inverseTan(Phi)
 }
-void EUTelState::setPositionLocal(float position[]){
-	setReferencePoint(position);
-}
+//void EUTelState::setPositionLocal(double position[]){
+//	setReferencePoint(static_cast<float*>(position));
+//}
 //TO D0: This does nothing at the moment but should be implimented for high radiation enviroments.
 void EUTelState::setKinks(TVectorD kinks){
 	EVENT::FloatVec kinksInput;

@@ -34,9 +34,9 @@ std::vector<EUTelState*> EUTelTrack::getStatesPointers(){//This will return the 
 	}
 	return states;
 }
-int EUTelTrack::getNumberOfHitsOnTrack() const {
+unsigned int EUTelTrack::getNumberOfHitsOnTrack() const {
 	//streamlog_out( DEBUG1 ) << "EUTelTrack::EUTelTrack::getNumberOfHitsOnTrack()---------------------------BEGIN" << std::endl;
-	int numberOfHitsOnTrack =0;
+	unsigned int numberOfHitsOnTrack =0;
 	const EVENT::TrackVec& states = getTracks();
 	if(states.size() == 0){
 		throw(lcio::Exception("The number of states is 0.")); 	
