@@ -39,7 +39,6 @@
 #include "EUTelEventImpl.h"
 #include "EUTelUtility.h"
 #include "EUTelGeometryTelescopeGeoDescription.h"
-#include "EUTelTrackImpl.h"
 #include "EUTelPatternRecognition.h"
 
 // Cluster types

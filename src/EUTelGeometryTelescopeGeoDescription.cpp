@@ -1037,7 +1037,7 @@ void EUTelGeometryTelescopeGeoDescription::mapWeightsToSensor(std::map<const int
 	double ExcPlaneScat=0;
 	int beforeExcPos=0;
 	bool addMore=false;
-	for(unsigned int  i; i<_sensorZOrderToIDMap.size() ; i++){
+	for(unsigned int  i=0; i<_sensorZOrderToIDMap.size() ; i++){
 		const int sensorID = _sensorZOrderToIDMap[i];
 
 		//Here we check if we have added all the scatterers due to excluded planes. 
