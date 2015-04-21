@@ -22,6 +22,9 @@ class EUTelNav
 		static TVector3 getXYZfromArcLength(TVector3 pos, TVector3 pVec, float beamQ, double s);
 		static TVector3 getXYZMomentumfromArcLength(TVector3 momentum, TVector3 globalPositionStart, float charge, float arcLength);
 		static TVector3 getMomentumfromArcLengthLocal(TVector3 pVec, TVector3 pos, float beamQ, float s, int  planeID);
+        static bool findIntersectionWithCertainID(	float x0, float y0, float z0, float px, float py, float pz, float beamQ, int nextPlaneID, float outputPosition[],
+TVector3& outputMomentum, float& arcLength, int& newNextPlaneID);
+
 	
 	private:
 		EUTelNav();

@@ -555,4 +555,126 @@ TVector3 EUTelNav::getXYZMomentumfromArcLength(TVector3 momentum, TVector3 globa
 		return momentumEnd;
 }
 
+/**
+* Find closest surface intersected by the track and return the position
+*/
+bool EUTelNav::findIntersectionWithCertainID(	float x0, float y0, float z0, 
+										float px, float py, float pz, 
+										float beamQ, int nextPlaneID, float outputPosition[],
+										TVector3& outputMomentum, float& arcLength, int& newNextPlaneID)
+{
+	//positions are in mm
+	TVector3 trkVec(x0,y0,z0);
+	TVector3 pVec(px,py,pz);
+
+	//Assuming uniform magnetic field running along X direction. 
+	//Why do we need this assumption? Equations of motion do not seem to dictate this.
+	gear::Vector3D vectorGlobal( x0, y0, z0 );      
+	const gear::BField& B	= geo::gGeometry().getMagneticField();
+	const double bx         = B.at( vectorGlobal ).x();
+	const double by         = B.at( vectorGlobal ).y();
+	const double bz         = B.at( vectorGlobal ).z();
+
+	//B field is in units of Tesla
+	TVector3 hVec(bx,by,bz);
+	const double H = hVec.Mag();
+
+	//Calculate track momentum from track parameters and fill some useful variables
+	const double p = pVec.Mag();
+	//This is a constant used in the derivation of this equation. This is the distance light travels in a nano second    
+	const double constant =  -0.299792458; 
+	const double mm = 1000;
+	const double combineConstantsAndMagneticField = (constant*beamQ*H)/mm;
+	const double rho = combineConstantsAndMagneticField/p; 
+				      
+	//Determine geometry of sensor to be used to determine the point of intersection.//////////////////////////////////////
+    TVector3 norm = geo::gGeometry().siPlaneNormal( nextPlaneID  );       
+	streamlog_out (DEBUG5) << "The normal of the plane is (x,y,z): "<<norm[0]<<","<<norm[1]<<","<<norm[2]<< std::endl;
+	TVector3 sensorCenter( geo::gGeometry().siPlaneXPosition( nextPlaneID  ), geo::gGeometry().siPlaneYPosition( nextPlaneID  ), geo::gGeometry().siPlaneZPosition( nextPlaneID  ) );
+//	streamlog_out (DEBUG5) << "The sensor centre (x,y,z): "<<sensorCenter[0]<<","<<sensorCenter[1]<<","<<sensorCenter[2] << std::endl;
+	TVector3 delta = (trkVec - sensorCenter);//Must be in mm since momentum is.
+	TVector3 pVecCrosH = pVec.Cross(hVec.Unit());
+
+	{
+
+		streamlog_out(DEBUG5) << "PROPAGATE FROM (" << trkVec[0] <<","<<trkVec[1]<<","<<trkVec[2]<<") USING: " << std::endl;
+		streamlog_out(DEBUG5) << "INPUT: -------------------------------------------" << std::endl;
+		streamlog_out(DEBUG5) << "STATE AND ENVIROMENT:---------------------------- " << std::endl;
+		streamlog_out(DEBUG5) << "Magnetic field                      :(" << hVec[0] <<","<< hVec[1] <<","<< hVec[2] <<")"<< std::endl;
+		streamlog_out(DEBUG5) << "Momentum                            :(" << pVec[0] <<","<< pVec[1] <<","<< pVec[2] <<")"<< std::endl;
+		streamlog_out(DEBUG5) << "INFINITE PLANE WE ARE AIMING AT:---------------------------- " << std::endl;
+		streamlog_out(DEBUG5) << "Sensor Centre:                      :(" << sensorCenter[0] <<","<< sensorCenter[1] <<","<< sensorCenter[2] <<")"<< std::endl;
+		streamlog_out(DEBUG5) << "Normal vector                       :(" << norm[0] <<","<< norm[1] <<","<< norm[2] <<")"<< std::endl;
+		streamlog_out(DEBUG5) << "CALCULATE.... " << std::endl;
+
+		streamlog_out(DEBUG5) << "Rho [ (charge.magnetic)/momentum  ] :" << rho << std::endl;
+      	streamlog_out(DEBUG5) << "Momentum x Magnetic Field           :(" << pVecCrosH[0] <<","<< pVecCrosH[1] <<","<< pVecCrosH[2] <<")"<< std::endl;
+		streamlog_out(DEBUG5) << "Delta(start - sensor centre)        :(" << delta[0] <<","<< delta[1] <<","<< delta[2] <<")"<< std::endl;
+ 	}
+
+	//Solution to the plane equation and the curved line intersection will be an 
+	//quadratic with the coefficients. The solution is the arc length along the curve
+	const double a = -0.5 * rho * ( norm.Dot( pVecCrosH ) ) / p;
+	const double b = norm.Dot( pVec ) / p;
+	const double c = norm.Dot( delta );
+
+	//Solution must be in femto metres, vector of arc length
+	std::vector<double> sol = Utility::solveQuadratic(a,b,c); 
+	//solutions are sorted in ascending order, choose minimum arc length
+	double solution = ( sol[0] > 0. ) ? sol[0] : ( ( sol[0] < 0. && sol[1] > 0. ) ? sol[1] : -1. );
+    {
+		streamlog_out(DEBUG5) << "FORM QUADRATIC AND SOLVE TO FIND DISTANCE TO INTERSECTION.... " << std::endl;
+		streamlog_out(DEBUG5) << "Quadratic coefficients              :(" << a<<","<<b<<","<<c<<")" << std::endl;
+      	streamlog_out(DEBUG5) << "Both Possible arc lengths           :(" <<  sol.at(0) <<","<< sol.at(1) <<")"<< std::endl;
+		streamlog_out(DEBUG5) << "FINAL ARCLENGTH:                    :("<< solution << std::endl;
+    }
+	if(solution < 0)
+	{
+		return false;
+	}
+			
+	//Determine the global position from arc length.             
+	TVector3 newPos;
+	TVector3 newMomentum;
+	newPos = EUTelNav::getXYZfromArcLength(trkVec,pVec,beamQ,solution);
+	newMomentum = EUTelNav::getXYZMomentumfromArcLength(pVec, trkVec, beamQ, solution);
+	outputMomentum[0] = newMomentum[0];
+	outputMomentum[1] = newMomentum[1];
+	outputMomentum[2] = newMomentum[2];
+
+	//Is the new point within the sensor. If not then we may have to propagate a little bit further to enter.
+ 	const double pos[3] = {newPos[0],newPos[1],newPos[2]};
+	int sensorIDCheck = geo::gGeometry().getSensorID(pos); 
+	bool foundIntersection = false;
+	if(sensorIDCheck == nextPlaneID){
+		streamlog_out( DEBUG3 ) << "INTERSECTION FOUND! " << std::endl;
+		foundIntersection = true;
+		outputPosition[0] = newPos[0];
+		outputPosition[1] = newPos[1];
+		outputPosition[2] = newPos[2];
+	}
+	if(!foundIntersection)
+	{
+		foundIntersection = geo::gGeometry().findNextPlaneEntrance( newPos,  newMomentum, nextPlaneID, outputPosition);
+	}
+	if(!foundIntersection)
+	{
+		foundIntersection = geo::gGeometry().findNextPlaneEntrance( newPos,  -newMomentum, nextPlaneID, outputPosition);
+	}
+
+	arcLength = solution;		
+
+	//We have still not found intersection
+	if(!foundIntersection)
+	{
+		streamlog_out( DEBUG3 ) << "FINAL: NO INTERSECTION FOUND. " << std::endl;
+		return false;
+	}
+	else
+	{
+		newNextPlaneID = nextPlaneID;
+		return true;
+	}
+}
+
 } //namespace eutelescope
