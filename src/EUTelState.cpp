@@ -225,7 +225,6 @@ void EUTelState::setPositionGlobal(float positionGlobal[]){
 //This sets the LOCAL frame intersection. Not the curvilinear frames intersection
 void EUTelState::setLocalXZAndYZIntersectionAndCurvatureUsingGlobalMomentum(TVector3 momentumIn){
 	streamlog_out(DEBUG5) << "EUTelState::setLocalXZAndYZIntersectionAndCurvatureUsingGlobalMomentum--------------------------BEGIN" << std::endl;
-
 	//set the beam energy and curvature
 	setBeamEnergy(momentumIn.Mag());
 	initialiseCurvature();//You must set beam charge before you call this.
@@ -233,6 +232,10 @@ void EUTelState::setLocalXZAndYZIntersectionAndCurvatureUsingGlobalMomentum(TVec
 	const double momentum[]	= {momentumIn[0], momentumIn[1],momentumIn[2]};//Need this since geometry works with const doubles not floats 
 	double localMomentum [3];
 	geo::gGeometry().master2LocalVec(getLocation(), momentum, localMomentum );
+    //Set relative direction in setBeamCharge
+    if(localMomentum[2] < 0 ){
+        setBeamCharge(-1*getBeamCharge());
+    }
 	//In the LOCAL coordinates this is just dx/dz and dy/dz in the LOCAL frame
 	streamlog_out(DEBUG5) << "The local momentum (x,y,z) is: "<< localMomentum[0]<<","<< localMomentum[1] <<"," <<localMomentum[2] << std::endl;
 	//Note must be defined like this since we determine the deltaX to the next plane via deltaX = incidenceX*deltaZ
@@ -299,7 +302,7 @@ bool EUTelState::findIntersectionWithCertainID(int nextSensorID, float intersect
 	geo::gGeometry().local2Master(getLocation() , posLocal, temp);
 
 	float posGlobal[] = { static_cast<float>(temp[0]), static_cast<float>(temp[1]), static_cast<float>(temp[2]) };
-	return  geo::gGeometry().findIntersectionWithCertainID(	posGlobal[0], posGlobal[1], posGlobal[2], 
+	return  EUTelNav::findIntersectionWithCertainID(	posGlobal[0], posGlobal[1], posGlobal[2], 
 								pVec[0], pVec[1], pVec[2], getBeamCharge(),
 								nextSensorID, intersectionPoint, 
 								momentumAtIntersection, arcLength, newNextPlaneID); 
