@@ -100,7 +100,7 @@ namespace eutelescope {
 			//GET
 			float getPositionOfSecondScatter(float start, float end);
 			gbl::GblPoint getLabelToPoint(std::vector<gbl::GblPoint> & pointList, int label);
-			void getResidualOfTrackandHits(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint > pointList, EUTelTrack& track, std::map< int, std::map< float, float > > & SensorResidual, std::map< int, std::map< float, float > >& sensorResidualError);
+			void getResidualOfTrackandHits(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint > pointList, EUTelTrack& track, std::map< int, std::map< float, float > > & SensorResidual, std::map< int, std::map< float, float > >& sensorResidualError, std::map< int, int> & planes);
 			inline int getAlignmentMode() const {
 				return _alignmentMode;
 			}

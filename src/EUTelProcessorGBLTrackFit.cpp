@@ -191,9 +191,10 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent* evt){
 				_trackFitter->updateTrackFromGBLTrajectory(traj, pointList,track,mapSensorIDToCorrectionVec);
 				std::map< int, std::map< float, float > >  SensorResidual; 
 				std::map< int, std::map< float, float > >  SensorResidualError; 
-				_trackFitter->getResidualOfTrackandHits(traj, pointList,track, SensorResidual, SensorResidualError);
+				std::map< int, int> planes;
+				_trackFitter->getResidualOfTrackandHits(traj, pointList,track, SensorResidual, SensorResidualError, planes);
 				if(chi2/static_cast<float>(ndf) < 5){
-					plotResidual(SensorResidual,SensorResidualError, _first_time);//TO DO: Need to fix how we histogram.
+				  plotResidual(SensorResidual,SensorResidualError, _first_time, planes);//TO DO: Need to fix how we histogram.
 					_first_time = false;
 				}
 			}else{
@@ -229,44 +230,51 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent* evt){
 
 
 //TO DO:This is a very stupid way to histogram but will add new class to do this is long run 
-void EUTelProcessorGBLTrackFit::plotResidual(std::map< int, std::map<float, float > >  & sensorResidual, std::map< int, std::map<float, float > >  & sensorResidualError, bool &first_time){
+void EUTelProcessorGBLTrackFit::plotResidual(std::map< int, std::map<float, float > >  & sensorResidual, std::map< int, std::map<float, float > >  & sensorResidualError, bool &first_time, std::map< int, int > & planes){
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Residual plot
+	/* Obtain DUT IDs */
+        std::map< int, int>::iterator planes_it;
+	int dut1 = -10;
+	int dut2 = -10;
+	bool flag = false;
+	for ( planes_it = planes.begin(); planes_it != planes.end(); planes_it++) {
+	  if (planes_it->second > 9 && flag == true) {
+	    dut2 = planes_it->second;
+	  }
+	  if (planes_it->second > 9) {
+	    dut1 = planes_it->second;
+	    flag = true;
+	  }
+	  
+	}
+	/* Fill histograms */
 	std::map< int, std::map< float, float > >::iterator sensor_residual_it;
-	for(sensor_residual_it = sensorResidual.begin(); sensor_residual_it != sensorResidual.end(); sensor_residual_it++) {
-		std::map<float, float> map = sensor_residual_it->second;
-		if( !map.empty()){
-			float res = map.begin()->first;
-			int dut1 = 100;
-			if( sensor_residual_it->first == 0){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX0 ] ) -> fill(res);}
-			if( sensor_residual_it->first == 1){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX1 ] ) -> fill(res);}
-			if( sensor_residual_it->first == 2){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX2 ] ) -> fill(res);}
-			if( sensor_residual_it->first == 3){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX3 ] ) -> fill(res);}
-			if( sensor_residual_it->first == 4){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX4 ] ) -> fill(res);}
-			if( sensor_residual_it->first == 5){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX5 ] ) -> fill(res);}
-			if( sensor_residual_it->first > 9){
-			  static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameXDut1 ] ) -> fill(res);
-			  dut1 = sensor_residual_it->first;
-			}
-			if( sensor_residual_it->first > 9 && sensor_residual_it->first > dut1 ){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameXDut2 ] ) -> fill(res);}
 
+	for(sensor_residual_it = sensorResidual.begin(); sensor_residual_it != sensorResidual.end(); sensor_residual_it++) {
+	  std::map<float, float> map = sensor_residual_it->second;
+	  if( !map.empty()){
+	    float res = map.begin()->first;
+	    if( sensor_residual_it->first == 0 ){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX0 ] ) -> fill(res);}
+	    if( sensor_residual_it->first == 1 ){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX1 ] ) -> fill(res);}
+	    if( sensor_residual_it->first == 2 ){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX2 ] ) -> fill(res);}
+	    if( sensor_residual_it->first == 3 ){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX3 ] ) -> fill(res);}
+	    if( sensor_residual_it->first == 4 ){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX4 ] ) -> fill(res);}
+	    if( sensor_residual_it->first == 5 ){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX5 ] ) -> fill(res);}
+	    if( sensor_residual_it->first == dut1 ){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameXDut1 ] ) -> fill(res);}
+	    if( sensor_residual_it->first == dut2 ){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameXDut2 ] ) -> fill(res);}
+	    
 		}else{
 			streamlog_out(DEBUG5) << "The map is NULL" <<std::endl;
 		}
 			float res2 = map.begin()->second;
-			int dut1 = 100;
 			if( sensor_residual_it->first == 0){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY0 ] ) -> fill(res2);}
 			if( sensor_residual_it->first == 1){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY1 ] ) -> fill(res2);}
 			if( sensor_residual_it->first == 2){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY2 ] ) -> fill(res2);}
 			if( sensor_residual_it->first == 3){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY3 ] ) -> fill(res2);}
 			if( sensor_residual_it->first == 4){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY4 ] ) -> fill(res2);}
 			if( sensor_residual_it->first == 5){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY5 ] ) -> fill(res2);}
-			if( sensor_residual_it->first > 9){
-			  static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameYDut1 ] ) -> fill(res2);
-			  dut1 = sensor_residual_it->first;
-			}
-			if( sensor_residual_it->first > 9 && sensor_residual_it->first > dut1 ){
-			  static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameYDut2 ] ) -> fill(res2);
-			}
+			if( sensor_residual_it->first == dut1){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameYDut1 ] ) -> fill(res2);}
+			if( sensor_residual_it->first == dut2){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameYDut2 ] ) -> fill(res2);}
 
 				
 	}
@@ -280,39 +288,27 @@ void EUTelProcessorGBLTrackFit::plotResidual(std::map< int, std::map<float, floa
 	  if( !maperror.empty()){
 	    float res = mapres.begin()->first;	
 	    float reserror = maperror.begin()->first;
-	    int dut1 = 100;
 	    if( sensor_residualerror_it->first == 0){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX0p ] ) -> fill(res/reserror);}
 	    if( sensor_residualerror_it->first == 1){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX1p ] ) -> fill(res/reserror);}
 	    if( sensor_residualerror_it->first == 2){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX2p ] ) -> fill(res/reserror);}
 	    if( sensor_residualerror_it->first == 3){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX3p ] ) -> fill(res/reserror);}
 	    if( sensor_residualerror_it->first == 4){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX4p ] ) -> fill(res/reserror);}
 	    if( sensor_residualerror_it->first == 5){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX5p ] ) -> fill(res/reserror);}
-	    if( sensor_residualerror_it->first > 9){
-	      static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameXDut1p ] ) -> fill(res/reserror);
-	      dut1 = sensor_residualerror_it->first;
-	    }
-	    if( sensor_residual_it->first > 9 && sensor_residual_it->first > dut1 ){ 
-	      static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameXDut2p ] ) -> fill(res/reserror);
-	    }
+	    if( sensor_residualerror_it->first == dut1){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameXDut1p ] ) -> fill(res/reserror);}
+	    if( sensor_residualerror_it->first == dut2){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameXDut2p ] ) -> fill(res/reserror);}
 	  }else{
 	    streamlog_out(DEBUG5) << "The map is NULL" <<std::endl;
 	  }
 	  float res2 = mapres.begin()->second;
 	  float res2error = maperror.begin()->second;
-	  int dut1 = 100;
 	  if( sensor_residualerror_it->first == 0){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY0p ] ) -> fill(res2/res2error);}
 	  if( sensor_residualerror_it->first == 1){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY1p ] ) -> fill(res2/res2error);}
 	  if( sensor_residualerror_it->first == 2){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY2p ] ) -> fill(res2/res2error);}
 	  if( sensor_residualerror_it->first == 3){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY3p ] ) -> fill(res2/res2error);}
 	  if( sensor_residualerror_it->first == 4){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY4p ] ) -> fill(res2/res2error);}
 	  if( sensor_residualerror_it->first == 5){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY5p ] ) -> fill(res2/res2error);}
-	  if( sensor_residualerror_it->first > 9){
-	    static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameYDut1p ] ) -> fill(res2/res2error);
-	    dut1 = sensor_residualerror_it->first;
-	  }
-	  if( sensor_residual_it->first > 9 && sensor_residual_it->first > dut1 ){ 
-	    static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameYDut2p ] ) -> fill(res2/res2error);
-	  }
+	  if( sensor_residualerror_it->first == dut1){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameYDut1p ] ) -> fill(res2/res2error);}
+	  if( sensor_residualerror_it->first == dut2){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameYDut2p ] ) -> fill(res2/res2error);}
 	}
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
