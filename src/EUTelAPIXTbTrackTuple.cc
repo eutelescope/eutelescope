@@ -249,7 +249,8 @@ bool EUTelAPIXTbTrackTuple::readTracks(LCEvent* event)
 		double dxdz = fittrack->getOmega();
 		double dydz = fittrack->getPhi();
 
- 		//Get the (fitted) hits belonging to this track, they are in local frame!
+ 		/* Get the (fitted) hits belonging to this track, 
+		   they are in global frame when coming from the straight track fitter */
 		for(unsigned int ihit=0; ihit< trackhits.size(); ihit++)
 	       	{
       			TrackerHitImpl* fittedHit = dynamic_cast<TrackerHitImpl*>( trackhits.at(ihit) );
@@ -270,8 +271,13 @@ bool EUTelAPIXTbTrackTuple::readTracks(LCEvent* event)
 
       			nTrackParams++;
       			
-				double x = pos[0];
-      			double y = pos[1];
+			/* Transform to local coordinates */
+			double pos_loc[3];
+			geo::gGeometry().master2Local(sensorID, pos, pos_loc);
+			
+			double x = pos_loc[0];
+			double y = pos_loc[1];
+			
       			//double z = pos[2]; //not used!
 			
 				//eutrack tree
