@@ -310,9 +310,9 @@ bool EUTelState::findIntersectionWithCertainID(int nextSensorID, float intersect
 
 //compute
 TVector3 EUTelState::computeCartesianMomentum() const {
-	streamlog_out(DEBUG2) << "EUTelState::computeCartesianMomentum()-------------------------BEGIN" << std::endl;
+	streamlog_out(DEBUG9) << "EUTelState::computeCartesianMomentum()-------------------------BEGIN" << std::endl;
 float tx = getIntersectionLocalXZ();float ty= getIntersectionLocalYZ(); float curvature = getOmega(); 
-	streamlog_out(DEBUG2) << "Input parameters: tx,ty, beamq,invp "<<tx <<","<<ty<<","<<getBeamCharge()<<","<<curvature<<std::endl;
+	streamlog_out(DEBUG9) << "Input parameters: tx,ty, beamq,invp "<<tx <<","<<ty<<","<<getBeamCharge()<<","<<curvature<<std::endl;
 	if(getBeamCharge() == 0){
 		throw(lcio::Exception( "The beam charge is 0.")); 
 	}
@@ -326,9 +326,9 @@ float tx = getIntersectionLocalXZ();float ty= getIntersectionLocalYZ(); float cu
 	const double input[3]={px,py,pz};
 	double momentum[3];
 	geo::gGeometry().local2MasterVec(getLocation(),input,momentum);
-	streamlog_out(DEBUG2) << "output global momentum: px,py, pz "<<momentum[0] <<","<<momentum[1]<<","<<momentum[2]<<","<<std::endl;
+	streamlog_out(DEBUG9) << "output global momentum: px,py, pz "<<momentum[0] <<","<<momentum[1]<<","<<momentum[2]<<","<<std::endl;
         
-  streamlog_out(DEBUG2) << "-------------------------------EUTelState::computeCartesianMomentum()-------------------------END" << std::endl;
+  streamlog_out(DEBUG9) << "-------------------------------EUTelState::computeCartesianMomentum()-------------------------END" << std::endl;
         
   return TVector3(momentum[0],momentum[1],momentum[2]);
 }

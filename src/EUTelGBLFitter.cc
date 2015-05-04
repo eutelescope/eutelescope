@@ -459,43 +459,29 @@ namespace eutelescope {
 			throw(lcio::Exception("The distance between the planes is over 1m.")); 	
 		}
 	}
+    ///This will create the jacobains needed for: plane->scatter->scatter->plane 
+    //This wll use the _scatterPositions to determine each jacobian and save them to _scatterJacobian. The last jacobain to the next sensor is returned.
+    /**
+     * \param [in] initial state 
+     * \param [in] final state 
+     * \return Jacobain 5x5  from scatter->plane 
+     */
 
-	//OTHER FUNCTIONS
-	//We want to create a jacobain from (Plane1 -> scatterer1) then (scatterer1->scatterer2) then (scatter2->plane2). We return the last jacobain
 	TMatrixD EUTelGBLFitter::findScattersJacobians(EUTelState state, EUTelState nextState){
+		streamlog_out(DEBUG1) << "CREATE JACOBIAN LINKS: Plane->scatter->scatter->plane  " << std::endl;
+
+        double min = 1e-4;
 		_scattererJacobians.clear();
-		TVector3 position = state.getPositionGlobal();
-		TVector3 momentum = state.computeCartesianMomentum();
-		TVector3 newMomentum;
-		int location = state.getLocation();
-		int locationEnd = 314; //This will create a scatterer with normal in beam direction
-		const gear::BField&   Bfield = geo::gGeometry().getMagneticField();
-		gear::Vector3D vectorGlobal(position[0],position[1],position[1]);//Since field is homogeneous this seems silly but we need to specify a position to geometry to get B-field.
-		const double Bx = (Bfield.at( vectorGlobal ).x());
-		const double By = (Bfield.at( vectorGlobal ).y());
-		const double Bz = (Bfield.at( vectorGlobal ).z());
-		TVector3 B;
-		B[0]=Bx; B[1]=By; B[2]=Bz;
+		TVector3 momStart = state.computeCartesianMomentum();
+		TVector3 momEnd;
+		int locationStart = state.getLocation();
+        int locationEnd=locationStart;
 		for(size_t i=0;i<_scattererPositions.size();i++){
-			newMomentum = EUTelNav::getMomentumfromArcLengthLocal(momentum, position,state.getBeamCharge(), _scattererPositions[i], location );
-			TMatrixD curvilinearJacobian = EUTelNav::getPropagationJacobianCurvilinearLimit(_scattererPositions[i], momentum.Unit());
-			streamlog_out(DEBUG0)<<"This is the curvilinear jacobian at sensor : " << location << " or scatter: "<< i << std::endl; 
-			streamlog_message( DEBUG0, curvilinearJacobian.Print();, std::endl; );
-			TMatrixD localToCurvilinearJacobianStart =  EUTelNav::getMeasToLocal(momentum, location);
-			streamlog_out(DEBUG0)<<"This is the local to curvilinear jacobian at sensor : " << location << " or scatter: "<< i << std::endl; 
-			streamlog_message( DEBUG0, localToCurvilinearJacobianStart.Print();, std::endl; );
-			TMatrixD localToCurvilinearJacobianEnd =  EUTelNav::getMeasToLocal(newMomentum,locationEnd );
-			streamlog_out(DEBUG0)<<"This is the local to curvilinear jacobian at sensor : " << locationEnd << " or scatter: "<< i << std::endl; 
-			streamlog_message( DEBUG0, localToCurvilinearJacobianEnd.Print();, std::endl; );
-			TMatrixD curvilinearToLocalJacobianEnd = localToCurvilinearJacobianEnd.Invert();
-			streamlog_out(DEBUG0)<<"This is the curvilinear to local jacobian at sensor : " << locationEnd << " or scatter: "<< i << std::endl; 
-			streamlog_message( DEBUG0, curvilinearToLocalJacobianEnd.Print();, std::endl; );
-			TMatrixD localToNextLocalJacobian = curvilinearToLocalJacobianEnd*curvilinearJacobian*localToCurvilinearJacobianStart;
-			streamlog_out(DEBUG0)<<"This is the full jacobian : " << locationEnd << " or scatter: "<< i << std::endl; 
-			streamlog_message( DEBUG0, localToNextLocalJacobian.Print();, std::endl; );
-			_scattererJacobians.push_back(localToNextLocalJacobian);//To DO if scatter then plane is always parallel to z axis
-			momentum[0]=newMomentum[0]; momentum[1]=newMomentum[1];	momentum[2]=newMomentum[2];
-			location = 314;//location will always be a scatter after first loop.  
+			momEnd = EUTelNav::getMomentumfromArcLength(momStart,state.getBeamCharge(), _scattererPositions[i]);
+            //Input in global and linked to local internally. Output jacobian Local to local link. 
+            TMatrixD jac = getFullJacobian(momStart,momEnd,locationStart,locationEnd, _scattererPositions[i],min);
+			_scattererJacobians.push_back(jac);
+			momStart[0]=momEnd[0]; momStart[1]=momEnd[1];	momStart[2]=momEnd[2];
 			if(i == (_scattererPositions.size()-2)){//On the last loop we want to create the jacobain to the next plane
 				locationEnd = nextState.getLocation();
 			}
@@ -505,6 +491,53 @@ namespace eutelescope {
 		}
 		return _scattererJacobians.back();//return the last jacobian so the next state can use this
 	}
+    ///Ths function will create a jacobain from one local frame to another 
+    /**
+     * \param [in] momStart The momentum at the initial state. 
+     * \param [in] momEnd The momentum on the final state 
+     * \param [in] locationStart This is a sensorID. This is needed to define the transformation from global to local coordinates.
+     * \param [in] locationEnd This is a sensorID. This is needed to define the transformation from global to local coordinates.
+     * \param [in] distance The distance between the two states, i.e the arc length.  
+     * \return 5x5 Jacobian which links two GBL points or states in EUTelescope speak.
+     */
+
+    TMatrixD EUTelGBLFitter::getFullJacobian(TVector3 momStart, TVector3 momEnd, int locationStart, int locationEnd, double distance, double min ){
+            streamlog_out(DEBUG1) <<"CREATE JACOBIAN WITH THE FOLLOWING PORPERTIES  " << std::endl;
+            streamlog_out(DEBUG1) <<"Intital momentum (Global) "<<momStart[0]<<","<<momStart[1]<<","<<momStart[2] <<" Final momentum "  <<momEnd[0]<<","<<momEnd[1]<<","<<momEnd[2]<< std::endl;
+            streamlog_out(DEBUG1) <<"Local Systems are defined via the sensors "<< locationStart <<" " <<locationEnd << std::endl;
+            streamlog_out(DEBUG1) <<"Distance between states "<<distance << std::endl;
+
+        TMatrixD curvilinearJacobian = EUTelNav::getPropagationJacobianGlobalToGlobal(distance, momStart.Unit());
+        streamlog_message( DEBUG0, curvilinearJacobian.Print();, std::endl; );
+        TVector3 momStartLocal = transVecGlobalToLocal(momStart, locationStart);
+        TMatrixD localToCurvilinearJacobianStart =  EUTelNav::getMeasToGlobal(momStartLocal, locationStart);
+    //    streamlog_out(DEBUG0)<<"This is the local to curvilinear jacobian at sensor : " << location << " or scatter: "<< i << std::endl; 
+//        streamlog_message( DEBUG0, localToCurvilinearJacobianStart.Print();, std::endl; );
+         TVector3 momEndLocal = transVecGlobalToLocal(momEnd, locationEnd);
+        TMatrixD localToCurvilinearJacobianEnd =  EUTelNav::getMeasToGlobal(momEndLocal,locationEnd );
+  //      streamlog_message( DEBUG0, localToCurvilinearJacobianEnd.Print();, std::endl; );
+        TMatrixD curvilinearToLocalJacobianEnd = localToCurvilinearJacobianEnd.Invert();
+ //       streamlog_message( DEBUG0, curvilinearToLocalJacobianEnd.Print();, std::endl; );
+        TMatrixD localToNextLocalJacobian = curvilinearToLocalJacobianEnd*curvilinearJacobian*localToCurvilinearJacobianStart;
+        streamlog_out(DEBUG1) <<"Jacobian before min derivative removal: " << std::endl;
+        streamlog_message( DEBUG1, localToNextLocalJacobian.Print();, std::endl; );
+        localToNextLocalJacobian = Utility::setPrecision(localToNextLocalJacobian ,min);
+        streamlog_out(DEBUG1) <<"OUTPUT JACOBAIN: " << std::endl;
+        streamlog_message( DEBUG1, localToNextLocalJacobian.Print();, std::endl; );
+        return localToNextLocalJacobian;
+    }
+    TVector3 EUTelGBLFitter::transVecGlobalToLocal(TVector3 input, int location){
+        double globalVec[] = { input[0],input[1],input[2] };
+        double localVec[3];
+        geo::gGeometry().master2LocalVec( location ,globalVec, localVec );
+        TVector3 pVecUnitLocal;
+        pVecUnitLocal[0] = localVec[0]; 	pVecUnitLocal[1] = localVec[1]; 	pVecUnitLocal[2] = localVec[2]; 
+        return pVecUnitLocal;
+    }
+
+
+
+
 	//The distance from the first state to the next scatterer and then from that scatterer to the next all the way to the next state. 
 	//TO DO: This uses the optimum positions as described by Claus.  However for non homogeneous material distribution this might not be the case.
 	void EUTelGBLFitter::findScattersZPositionBetweenTwoStates(){

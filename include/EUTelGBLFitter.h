@@ -63,6 +63,7 @@ namespace eutelescope {
 			void setInformationForGBLPointList(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList);
 			void setMeasurementGBL(gbl::GblPoint& point, const double *hitPos, double statePos[3], double combinedCov[4], TMatrixD projection);
 			void getKinkInformationToTrack(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint >& pointList,EUTelTrack &track);
+            TMatrixD getFullJacobian(TVector3 momStart, TVector3 momEnd, int locationStart, int locationEnd, double distance, double min );
 			void setPointVec( std::vector< gbl::GblPoint >& pointList, gbl::GblPoint& point);
 			void setPairAnyStateAndPointLabelVec(gbl::GblTrajectory*);
 			void setPairMeasurementStateAndPointLabelVec(std::vector< gbl::GblPoint >& pointList);
@@ -132,6 +133,7 @@ namespace eutelescope {
 			void updateTrackFromGBLTrajectory(gbl::GblTrajectory* traj, EUTelTrack& track, std::map<int,std::vector<double> >& mapSensorIDToCorrectionVec );
 			void prepareLCIOTrack( gbl::GblTrajectory*, std::vector<const IMPL::TrackImpl*>::const_iterator&, double, int); 
 			void prepareMilleOut( gbl::GblTrajectory* );
+            TVector3 transVecGlobalToLocal(TVector3 input, int location);
 
 			//VARIABLES
 			int _alignmentMode;
