@@ -26,6 +26,7 @@
 // aida includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <AIDA/IBaseHistogram.h>
+#include <AIDA/IHistogram1D.h>
 #endif
 
 // lcio includes <.h>
@@ -39,6 +40,8 @@
 #include <vector>
 #include <list>
 
+#include "cluster.h"
+#include "TH1.h"
 namespace eutelescope {
 
   //! Clustering processor for the EUTelescope
@@ -184,7 +187,7 @@ namespace eutelescope {
         createarray();
         for(unsigned int i =0; i < size_x*size_y; ++i)
           array[i] = a.array[i];
-        return *this;  
+        return *this;
       }
       T at(const int i, const int j) const
       {
@@ -213,12 +216,12 @@ namespace eutelescope {
         int index = j * size_x + i;
         array[index] = value;
       }
-  
+
       ~dim2array()
       {
         delete [] array;
       }
-  
+
     private:
       void createarray()
       {
@@ -245,7 +248,7 @@ namespace eutelescope {
       unsigned int x;
       unsigned int y;
     };
-    
+
     //class of seed candidates
     class seed
     {
@@ -261,16 +264,16 @@ namespace eutelescope {
       //criteria is the number of neighbouring pixels and then the
       //second criteria is the number of fired pixel in a cluster
       //around the seed
-      bool operator<(const seed& b) const 
+      bool operator<(const seed& b) const
       {
         //return (measuredZ < b.measuredZ);
         bool r = true;
         if(neighbours == b.neighbours)
-          {   
+          {
             if(p < b.p)
               r = false;
           }
-        else 
+        else
           if(neighbours < b.neighbours)
             r = false;
         return r;
@@ -352,6 +355,8 @@ namespace eutelescope {
      */
     virtual void end();
 
+    bool emptyMiddle(vector<vector<int> > pixVector);
+
     //! Reset the status map
     /*! This method is called at the beginning of the clustering
      *  procedure because it is possibly containing the position of
@@ -413,13 +418,13 @@ namespace eutelescope {
      * hot pixels get status FiringPixel
      */
     void initializeStatusCollection();
-   
+
     //! initialize HotPixelMapVec
     /*! values from hotpixel DB file are read into a vector of mapped
      * unique pixel index
      */
     void initializeHotPixelMapVec();
- 
+
   protected:
 
     //! Method for fixed frame clustering
@@ -486,12 +491,12 @@ namespace eutelescope {
 
     //! Method for zs Fixed Frame Clustering
     /*! This method is called by the processEvent method in the case
-     */ 
+     */
     void zsFixedFrameClustering(LCEvent * evt, LCCollectionVec * pulse);
 
     //! Method for digital Fixed Frame Clustering
     /*! This method is called by the processEvent method in the case
-     */ 
+     */
     void digitalFixedFrameClustering(LCEvent * evt, LCCollectionVec * pulse);
 
 
@@ -562,7 +567,7 @@ namespace eutelescope {
      */
     std::string _hotPixelCollectionName;
 
- 
+
     //! Pulse collection size
     size_t _initialPulseCollectionSize;
 
@@ -643,8 +648,8 @@ namespace eutelescope {
      *  some regular step.
      *
      *  \li <b>Binary</b>: The data from the sensors is binary.
-     *  Implies: there are only two values of the signal possible - 0 and 1. 
-     *  
+     *  Implies: there are only two values of the signal possible - 0 and 1.
+     *
      */
     std::string _dataFormatType;
 
@@ -744,9 +749,9 @@ namespace eutelescope {
     void readCollections(LCEvent *evt);
 
     //! The seed candidate pixel map.
-    /*! This is a vector which stores the seed index and the size of the signal. The signal is the floating point and the unsigned integer is the 
+    /*! This is a vector which stores the seed index and the size of the signal. The signal is the floating point and the unsigned integer is the
      */
-    std::vector< std::pair<float,unsigned int> > _seedCandidateMap;    
+    std::vector< std::pair<float,unsigned int> > _seedCandidateMap;
 
     //! Total cluster found
     /*! This is a map correlating the sensorID number and the
@@ -760,7 +765,7 @@ namespace eutelescope {
      *  the run header
      */
     int _noOfDetector;
-    
+
     //! List of excluded planes.
     /*! This vector contains a list of sensor ids for planes that have
      *   to be excluded from the clustering.
@@ -790,27 +795,32 @@ namespace eutelescope {
     //! Map for pointer to Cluster signal histogram (size along Y).
     std::map<int,AIDA::IBaseHistogram*> _clusterSizeYHistos;
 
-     //! Map for pointer to Seed pixel signal histo 
+     //! Map for pointer to Seed pixel signal histo
     std::map<int,AIDA::IBaseHistogram*> _seedSignalHistos;
 
-    //! Map for pointer to Hit map histogram 
+    //! Map for pointer to Hit map histogram
      std::map<int,AIDA::IBaseHistogram*> _hitMapHistos;
 
-    //! Map for pointer to Seed pixel SNR 
+    //! Map for pointer to Seed pixel SNR
     std::map<int,AIDA::IBaseHistogram*> _seedSNRHistos;
 
-    //! Map for pointer to Cluster noise histogram 
+    //! Map for pointer to Cluster noise histogram
     std::map<int,AIDA::IBaseHistogram*> _clusterNoiseHistos;
 
-    //! Map for pointer to Cluster SNR histogram 
+    //! Map for pointer to Cluster SNR histogram
     std::map<int,AIDA::IBaseHistogram*> _clusterSNRHistos;
 
-    //! Map for pointer to Cluster vs Seed SNR histogram 
+    //! Map for pointer to Cluster vs Seed SNR histogram
     std::map<int,AIDA::IBaseHistogram*> _cluster_vs_seedSNRHistos;
 
-    //! Map for pointer to Event multiplicity histogram 
+    //! Map for pointer to Event multiplicity histogram
     std::map<int,AIDA::IBaseHistogram*> _eventMultiplicityHistos;
+    std::map<int,AIDA::IBaseHistogram*> _nClusterHistos;
+    std::map<int,AIDA::IBaseHistogram*> _ClusterSizeHistos;
 
+    AIDA::IHistogram1D* _trgTimeHisto;
+    TH1* _timeStampHisto;
+    AIDA::IHistogram1D* _timeStampLineHisto;
     //! Map (of maps) for pointers to histograms with cluster spectra with the X most significant pixels
     std::map<int, std::map<int,AIDA::IBaseHistogram*> > _clusterSignal_NHistos;
 
@@ -819,7 +829,11 @@ namespace eutelescope {
 
     std::map<int, std::map<int,AIDA::IBaseHistogram*> > _clusterSignal_NxNHistos;
     std::map<int, std::map<int,AIDA::IBaseHistogram*> > _clusterSNR_NxNHistos;
-
+    std::map<int,AIDA::IBaseHistogram*> circularClusterHistos;
+    std::map<int,AIDA::IBaseHistogram*> largeClusterHistos;
+    std::map<int,AIDA::IBaseHistogram*> tooLargeClusterHistos;
+    std::map<int,AIDA::IBaseHistogram*> lineCheckHistos;
+    std::map<int,AIDA::IBaseHistogram*> MSBCheckHistos;
 #endif
 
     //! Geometry ready switch
@@ -855,43 +869,43 @@ namespace eutelescope {
     //
     //! Zero Suppressed Data Collection
     LCCollectionVec *zsInputDataCollectionVec;
- 
+
     //
     //! Non Zero Suppressed Data Collection
     LCCollectionVec *nzsInputDataCollectionVec;
-    
+
     //
-    //! pulse Collection 
+    //! pulse Collection
     LCCollectionVec *pulseCollectionVec;
-    
+
     //
-    //! noise Collection 
+    //! noise Collection
     LCCollectionVec *noiseCollectionVec;
-    
+
     //
-    //! status Collection 
+    //! status Collection
     LCCollectionVec *statusCollectionVec;
 
 
 
-    //! Hot Pixel Collection 
+    //! Hot Pixel Collection
     LCCollectionVec *hotPixelCollectionVec;
 
     //! keep what we have: Non ZS data (true/false)
     bool hasNZSData;
- 
+
     //! keep what we have: ZS data (true/false)
     bool hasZSData;
-  
-    //! Vector of map arrays, keeps record of hit pixels 
+
+    //! Vector of map arrays, keeps record of hit pixels
     /*! The vector elements are sorted by Detector ID
-     *  For each Detector unique ID element a map of pixels is created. 
+     *  For each Detector unique ID element a map of pixels is created.
      *  Key <int> is the sequential (counter) id of a hit,
      *  Value <int> - always status value = firing pixel
      */
 
-    std::vector< std::map< int, int > > _hitIndexMapVec;          
-    
+    std::vector< std::map< int, int > > _hitIndexMapVec;
+
   };
 
   //! A global instance of the processor
