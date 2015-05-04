@@ -24,6 +24,29 @@ using namespace std;
 namespace eutelescope {
 
     namespace Utility {
+        /** This function will set the  
+
+        * @param mat input with arbitrary precision
+
+        * @param pre precision to set the new matrix to  */
+
+        TMatrixD setPrecision( TMatrixD mat, double mod){
+
+            for(int i=0; i < mat.GetNrows(); i++){
+
+                for(int j=0; j < mat.GetNcols(); j++){
+                    if(abs(mat[j][i]) < mod){
+                        mat[j][i] = 0;
+                    }
+
+                }
+
+            }
+
+            return mat;
+
+        }
+
 
         /**
          * Fills indices of not excluded planes
