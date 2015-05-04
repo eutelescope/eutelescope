@@ -210,7 +210,14 @@ TMatrixD EUTelNav::getLocalToCurvilinearTransformMatrix(TVector3 globalMomentum,
 		
 		return jacobian;
 }
-TMatrixD EUTelNav::getMeasToLocal(TVector3 t1w, int  planeID)
+///This will relate infintesimal changes in the local state vector to the global one. 
+/**
+ * \param [in] t1w Momentum of the state
+ * \return Jacobain 5x5 which links the local and global states.
+ */
+
+
+TMatrixD EUTelNav::getMeasToGlobal(TVector3 t1w, int  planeID)
 {
 //	std::cout<<"Plane ID " << planeID <<std::endl;
 	TMatrixD transM2l(5,5);
@@ -233,22 +240,44 @@ TMatrixD EUTelNav::getMeasToLocal(TVector3 t1w, int  planeID)
 	measDir[0][0] = TRotMatrix[0][0];	measDir[0][1] = TRotMatrix[0][1];
 	measDir[1][0] = TRotMatrix[1][0];	measDir[1][1] = TRotMatrix[1][1];
 	measDir[2][0] = TRotMatrix[2][0];	measDir[2][1] = TRotMatrix[2][1];
+    streamlog_out( DEBUG0 ) << "CALCULATE LOCAL TO GLOBAL STATE TRANSFORMATION... " << std::endl;
+    streamlog_out( DEBUG0 ) << "Input... " << std::endl;
+
+    streamlog_out( DEBUG0 ) << "The (X,Y)-axis of the global frame relative to the local  " << std::endl;
+    streamlog_message( DEBUG0, measDir.Print();, std::endl; );
+    streamlog_out( DEBUG0 ) << "The propagator (Dx,Dy)   " << std::endl;
+    streamlog_message( DEBUG0, xyDir.Print();, std::endl; );
+    double scaleFactor = cosInc/direction[2];
+    streamlog_out( DEBUG0 ) << "Scale factor (s) " << scaleFactor << std::endl;
 	TMatrixD proM2l(2,2);
 	proM2l = xyDir*measDir; 
-	transM2l.SetSub(1,1,proM2l*(cosInc/direction[2]));
+    streamlog_out( DEBUG0 ) << "Propagators... " << std::endl;
+
+    streamlog_out( DEBUG0 ) << "PROJECTION MATRIX (shifts) (Dx,Dy)x(X,Y)" << std::endl;
+    streamlog_message( DEBUG0, proM2l.Print();, std::endl; );
+    streamlog_out( DEBUG0 ) << "PROJECTION MATRIX (incidence) s(Dx,Dy)x(X,Y) " << std::endl;
+    TMatrixD proM2lInc = scaleFactor*proM2l;
+    streamlog_message( DEBUG0, proM2lInc.Print();, std::endl; );
+
+	transM2l.SetSub(1,1,proM2lInc);
 	transM2l.SetSub(3,3,proM2l);
+    streamlog_out( DEBUG0 ) << "OUTPUT:(Local to Global): " << std::endl;
+    streamlog_message( DEBUG0, transM2l.Print();, std::endl; );
+
 	return transM2l;
 }
-//TO DO: Should rename as this now takes you from one local frame to another. By local we mean some constant frame defined by the telescope and track. We still need to move into the measurement frame of each telescope plane as before. 
-//This jacobian is the same as getPropagationJacobianCurvilinear() but in the limit Q->0 and local to local jacobian combines so JxyJcurJ'xy 
-//Note all x,y,z are just the x,y,z of the local and global EUTel systems. The new coordinate systems are these just rearranged.
-//Due to us using a jacobian for colider physics we can not use the usual X Y Z system of EUTel. We use Z X Y for the local and global systems. 
-TMatrixD EUTelNav::getPropagationJacobianCurvilinearLimit(float ds, TVector3 t1w)
+///This function creates a jacobain which links one state to another in the EUTelGlobal frame. 
+/**
+ * \param [in] ds Arc length between two states. 
+ * \param [in] t1w Momentum on the initial states 
+ * \return Jacobain 5x5 which links the two states 
+ */
+
+TMatrixD EUTelNav::getPropagationJacobianGlobalToGlobal(float ds, TVector3 t1w)
 {
 	t1w.Unit();
 	std::vector<double> slope;
 	slope.push_back(t1w[0]/t1w[2]); slope.push_back(t1w[1]/t1w[2]);
-//	std::cout <<"Here is slope xz and yz plane: "<< slope.at(0) <<"   " <<slope.at(1) <<std::endl;
 	double norm = std::sqrt(pow(slope.at(0),2) + pow(slope.at(1),2) + 1);//not this works since we have in the curvinlinear frame (dx/dz)^2 +(dy/dz)^2 +1 so time through by dz^2
 	TVector3 direction;
 	direction[0] = (slope.at(0)/norm); direction[1] =(slope.at(1)/norm);	direction[2] = (1.0/norm);
@@ -266,8 +295,13 @@ TMatrixD EUTelNav::getPropagationJacobianCurvilinearLimit(float ds, TVector3 t1w
 	TVector3 BxT = b.Cross(direction);
 //	std::cout << "BxT" << BxT[0] << "  ,  " <<  BxT[1] <<"   ,  " <<BxT[2] << std::endl;
 	TMatrixD xyDir(2, 3);
+    streamlog_out( DEBUG0 ) << "CALCULATE GLOBAL TO GLOBAL STATE TRANSFORMATION... " << std::endl;
+
 	xyDir[0][0] = 1.0; xyDir[0][1]=0.0; xyDir[0][2]=-slope.at(0);  
 	xyDir[1][0] = 0; xyDir[1][1]=1.0; xyDir[1][2]=-slope.at(1);  
+    streamlog_out( DEBUG0 ) << "The propagator (Dx,Dy)   " << std::endl;
+    streamlog_message( DEBUG0, xyDir.Print();, std::endl; );
+
 
 	TMatrixD bFac(2,1);
 	TMatrixD BxTMatrix(3,1);
@@ -452,7 +486,7 @@ TMatrixD EUTelNav::getPropagationJacobianCurvilinear(float ds, float qbyp, TVect
 }
 
 //This function determined the xyz position in global coordinates using the state and arc length of the track s.
-TVector3 EUTelNav::getXYZfromArcLength(TVector3 pos, TVector3 pVec, float beamQ, double s)
+TVector3 EUTelNav::getPositionfromArcLength(TVector3 pos, TVector3 pVec, float beamQ, double s)
 {
 
 		// Get magnetic field vector, assuming uniform magnetic field running along X direction
@@ -502,7 +536,7 @@ TVector3 EUTelNav::getXYZfromArcLength(TVector3 pos, TVector3 pVec, float beamQ,
 }
 TVector3 EUTelNav::getMomentumfromArcLengthLocal(TVector3 pVec, TVector3 pos, float beamQ, float s, int planeID)
 {
-	TVector3	newMomentum = EUTelNav::getXYZMomentumfromArcLength(pVec, pos,beamQ,s);
+	TVector3	newMomentum = EUTelNav::getMomentumfromArcLength(pVec,beamQ,s);
 	TVector3 pVecUnitLocal;
 	//TO DO: This transform is used also in state. Can make generic transform like this for both.
 	double globalVec[] = { newMomentum[0],newMomentum[1],newMomentum[2] };
@@ -518,18 +552,17 @@ TVector3 EUTelNav::getMomentumfromArcLengthLocal(TVector3 pVec, TVector3 pos, fl
 
 
 //This will calculate the momentum at a arc length away given initial parameters.
-TVector3 EUTelNav::getXYZMomentumfromArcLength(TVector3 momentum, TVector3 globalPositionStart, float charge, float arcLength)
+TVector3 EUTelNav::getMomentumfromArcLength(TVector3 momentum, float charge, float arcLength)
 {
 		//This is one coordinate axis of curvilinear coordinate system.	
 		TVector3 T = momentum.Unit();
 
 		const gear::BField&   Bfield = geo::gGeometry().getMagneticField();
 		//Since field is homogeneous this seems silly but we need to specify a position to geometry to get B-field.
-		gear::Vector3D vectorGlobal(globalPositionStart[0],globalPositionStart[1],globalPositionStart[2]);
 
-		const double Bx = (Bfield.at( vectorGlobal ).x());//We times bu 0.3 due to units of other variables. See paper. Must be Tesla
-		const double By = (Bfield.at( vectorGlobal ).y());
-		const double Bz = (Bfield.at( vectorGlobal ).z());
+		const double Bx = (Bfield.at( TVector3(1,1,1) ).x());//We times bu 0.3 due to units of other variables. See paper. Must be Tesla
+		const double By = (Bfield.at( TVector3(1,1,1) ).y());
+		const double Bz = (Bfield.at( TVector3(1,1,1) ).z());
 
 		TVector3 B(Bx*0.3, By*0.3, Bz*0.3 );
 		TVector3 H = (B.Unit());
@@ -636,8 +669,8 @@ bool EUTelNav::findIntersectionWithCertainID(	float x0, float y0, float z0,
 	//Determine the global position from arc length.             
 	TVector3 newPos;
 	TVector3 newMomentum;
-	newPos = EUTelNav::getXYZfromArcLength(trkVec,pVec,beamQ,solution);
-	newMomentum = EUTelNav::getXYZMomentumfromArcLength(pVec, trkVec, beamQ, solution);
+	newPos = EUTelNav::getPositionfromArcLength(trkVec,pVec,beamQ,solution);
+	newMomentum = EUTelNav::getMomentumfromArcLength(pVec, beamQ, solution);
 	outputMomentum[0] = newMomentum[0];
 	outputMomentum[1] = newMomentum[1];
 	outputMomentum[2] = newMomentum[2];
