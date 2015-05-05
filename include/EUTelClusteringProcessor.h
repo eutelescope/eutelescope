@@ -26,7 +26,6 @@
 // aida includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <AIDA/IBaseHistogram.h>
-//#include <AIDA/IHistogram1D.h> // TO BE REMOVED
 #endif
 
 // lcio includes <.h>
@@ -40,8 +39,6 @@
 #include <vector>
 #include <list>
 
-//#include "cluster.h" // TO BE REMOVED
-//#include "TH1.h"     // TO BE REMOVED
 namespace eutelescope {
 
   //! Clustering processor for the EUTelescope
@@ -354,8 +351,6 @@ namespace eutelescope {
      *  prints only a goodbye message
      */
     virtual void end();
-
-    //bool emptyMiddle(vector<vector<int> > pixVector); // TO BE REMOVED
 
     //! Reset the status map
     /*! This method is called at the beginning of the clustering
@@ -814,12 +809,7 @@ namespace eutelescope {
 
     //! Map for pointer to Event multiplicity histogram
     std::map<int,AIDA::IBaseHistogram*> _eventMultiplicityHistos;
-    //std::map<int,AIDA::IBaseHistogram*> _nClusterHistos; // TO BE REMOVED
-    //std::map<int,AIDA::IBaseHistogram*> _ClusterSizeHistos; // TO BE REMOVED
 
-    //AIDA::IHistogram1D* _trgTimeHisto; // TO BE REMOVED
-    //TH1* _timeStampHisto; // TO BE REMOVED
-    //AIDA::IHistogram1D* _timeStampLineHisto; // TO BE REMOVED
     //! Map (of maps) for pointers to histograms with cluster spectra with the X most significant pixels
     std::map<int, std::map<int,AIDA::IBaseHistogram*> > _clusterSignal_NHistos;
 
@@ -828,11 +818,6 @@ namespace eutelescope {
 
     std::map<int, std::map<int,AIDA::IBaseHistogram*> > _clusterSignal_NxNHistos;
     std::map<int, std::map<int,AIDA::IBaseHistogram*> > _clusterSNR_NxNHistos;
-    //std::map<int,AIDA::IBaseHistogram*> circularClusterHistos; // TO BE REMOVED
-    //std::map<int,AIDA::IBaseHistogram*> largeClusterHistos; // TO BE REMOVED
-    //std::map<int,AIDA::IBaseHistogram*> tooLargeClusterHistos; // TO BE REMOVED
-    //std::map<int,AIDA::IBaseHistogram*> lineCheckHistos; // TO BE REMOVED
-    //std::map<int,AIDA::IBaseHistogram*> MSBCheckHistos; // TO BE REMOVED
 #endif
 
     //! Geometry ready switch

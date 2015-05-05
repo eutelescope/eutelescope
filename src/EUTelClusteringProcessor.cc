@@ -110,7 +110,6 @@ EUTelClusteringProcessor::EUTelClusteringProcessor ()
       _clusterSNRHistos(),
       _cluster_vs_seedSNRHistos(),
       _eventMultiplicityHistos(),
-      //_nClusterHistos(), // TO BE REMOVED
       _clusterSignal_NHistos(),
       _clusterSNR_NHistos(),
       _clusterSignal_NxNHistos(),
@@ -704,7 +703,6 @@ void EUTelClusteringProcessor::processEvent (LCEvent * event)
     }
 #endif
 
-    //_timeStampHisto->Fill(event->getTimeStamp()); // TO BE REMOVED
     EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
     if ( evt->getEventType() == kEORE )
     {
@@ -1987,10 +1985,6 @@ void EUTelClusteringProcessor::zsBrickedClustering(LCEvent * evt, LCCollectionVe
 
 void EUTelClusteringProcessor::sparseClustering(LCEvent* evt, LCCollectionVec* pulseCollection)
 {
-    /* TO BE REMOVED
-    bool timeStampHistoFilled = false;
-    vector<vector<Cluster> > clusterVec;
-    */
     //only for noise
     CellIDDecoder<TrackerDataImpl> noiseDecoder( noiseCollectionVec );
 
@@ -2162,116 +2156,6 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent* evt, LCCollectionVec* p
                     int xSeed, ySeed, xSize, ySize;
                     sparseCluster->getSeedCoord(xSeed, ySeed);
                     sparseCluster->getClusterSize(xSize, ySize);
-                    /* // TO BE REMOVED
-                    if (xSize > 31 || ySize > 31)
-                    {
-                        // TODO:
-                        // flagging event is fine, removing cluster not!
-                        // lists not available anymore, cluster has size() function + getSparsePixelAt -> works, too!
-                        evt->parameters().setValue("FLAG",100);
-//						streamlog_out ( WARNING1 ) << "In run " << evt->getEventNumber() << ": cluster too big (x: " << xSize << ", y: " << ySize << "), skipping it!" << endl;
-                        ++listOfListIter;
-                        list<unsigned int >::iterator listIter = currentList.begin();
-                        while ( listIter != currentList.end() )
-                        {
-                            sparseData->getSparsePixelAt( (*listIter ), pixel );
-                            (dynamic_cast<AIDA::IHistogram2D*>(tooLargeClusterHistos[sensorID]))->fill(pixel->getXCoord(),pixel->getYCoord());
-                            ++listIter;
-                        }
-                        continue;
-                    }
-                    vector<vector<int> > pixVector;
-                    vector<int> xVec;
-                    vector<int> yVec;
-                    list<unsigned int >::iterator listIter = currentList.begin();
-                    while ( listIter != currentList.end() )
-                    {
-                        sparseData->getSparsePixelAt( (*listIter ), pixel );
-                        vector<int> pix;
-                        pix.push_back(pixel->getXCoord());
-                        pix.push_back(pixel->getYCoord());
-                        xVec.push_back(pixel->getXCoord());
-                        yVec.push_back(pixel->getYCoord());
-                        pixVector.push_back(pix);
-                        ++listIter;
-                    }
-                    Cluster cluster;
-                    cluster.set_values(xVec.size(),xVec,yVec);
-                    float centerX, centerY;
-                    cluster.getCenterOfGravity(centerX,centerY);
-                    if (centerY > 251 && centerY < 260 && clusterVecPrev.size() !=0)
-                    {
-                        for (unsigned int iCluster=0; iCluster<clusterVecPrev[iDetectorTmp].size(); iCluster++)
-                        {
-                            float centerXPrev, centerYPrev;
-                            clusterVecPrev[iDetectorTmp][iCluster].getCenterOfGravity(centerXPrev,centerYPrev);
-                            if (abs(centerXPrev-centerX)<2)
-                            {
-                                vector<int> xPrev = clusterVecPrev[iDetectorTmp][iCluster].getX();
-                                vector<int> yPrev = clusterVecPrev[iDetectorTmp][iCluster].getY();
-                                for (unsigned int iX=0; iX<xPrev.size(); iX++)
-                                    (dynamic_cast<AIDA::IHistogram2D*>(lineCheckHistos[sensorID]))->fill(xPrev[iX],yPrev[iX]);
-                                for (unsigned int iX=0; iX<xVec.size(); iX++)
-                                    (dynamic_cast<AIDA::IHistogram2D*>(lineCheckHistos[sensorID]))->fill(xVec[iX],yVec[iX]);
-                                if (!timeStampHistoFilled)
-                                {
-                                    _timeStampLineHisto->fill(evt->getTimeStamp());
-                                    timeStampHistoFilled = true;
-                                }
-                                if (clusterVecPrevPrev.size() != 0 && clusterVecPrevPrev[iDetectorTmp].size() != 0)
-                                {
-                                    bool first = true;
-                                    for (unsigned int jCluster=0; jCluster<iCluster; jCluster++)
-                                    {
-                                        float centerXPrev2, centerYPrev2;
-                                        clusterVecPrev[iDetectorTmp][jCluster].getCenterOfGravity(centerXPrev2,centerYPrev2);
-                                        if (abs(centerXPrev-centerXPrev2)<2)
-                                        {
-                                            first = false;
-                                            break;
-                                        }
-                                    }
-                                    if (!first) continue;
-                                    for (int iPrevPrev=clusterVecPrevPrev[iDetectorTmp].size()-1; iPrevPrev>=0; iPrevPrev--)
-                                    {
-                                        float centerXPrevPrev, centerYPrevPrev;
-                                        clusterVecPrevPrev[iDetectorTmp][iPrevPrev].getCenterOfGravity(centerXPrevPrev,centerYPrevPrev);
-                                        if (abs(centerXPrevPrev-centerXPrev)<2)
-                                        {
-                                            vector<int> xPrevPrev = clusterVecPrevPrev[iDetectorTmp][iPrevPrev].getX();
-                                            vector<int> yPrevPrev = clusterVecPrevPrev[iDetectorTmp][iPrevPrev].getY();
-                                            for (unsigned int iX=0; iX<xPrevPrev.size(); iX++)
-                                                (dynamic_cast<AIDA::IHistogram2D*>(MSBCheckHistos[sensorID]))->fill(xPrevPrev[iX],yPrevPrev[iX]);
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    clusterVecLayer.push_back(cluster);
-                    if ((xSize > 3 || ySize > 3) && !emptyMiddle(pixVector))
-                    {
-                        list<unsigned int >::iterator listIter = currentList.begin();
-                        while ( listIter != currentList.end() )
-                        {
-                            sparseData->getSparsePixelAt( (*listIter ), pixel );
-                            (dynamic_cast<AIDA::IHistogram2D*>(largeClusterHistos[sensorID]))->fill(pixel->getXCoord(),pixel->getYCoord());
-                            ++listIter;
-                        }
-                    }
-
-                    if (emptyMiddle(pixVector))
-                    {
-                        list<unsigned int >::iterator listIter = currentList.begin();
-                        while ( listIter != currentList.end() )
-                        {
-                            sparseData->getSparsePixelAt( (*listIter ), pixel );
-                            (dynamic_cast<AIDA::IHistogram2D*>(circularClusterHistos[sensorID]))->fill(pixel->getXCoord(),pixel->getYCoord());
-                            ++listIter;
-                        }
-                    }
-                    */
                     // set the ID for this zsCluster
                     idZSClusterEncoder["sensorID"] = sensorID;
                     idZSClusterEncoder["sparsePixelType"] = static_cast<int>( type );
@@ -2975,7 +2859,6 @@ void EUTelClusteringProcessor::check (LCEvent * /* evt */) {
 
 void EUTelClusteringProcessor::end() {
 
-    //streamlog_out ( MESSAGE4 ) << "Maximum of the time stamp histo is at " << _timeStampHisto->GetBinCenter(_timeStampHisto->GetMaximumBin()) << endl; // TO BE REMOVED
     streamlog_out ( MESSAGE2 ) <<  "Successfully finished" << endl;
 
     map< int, int >::iterator iter = _totClusterMap.begin();
@@ -3560,23 +3443,6 @@ void EUTelClusteringProcessor::bookHistos() {
         _hitMapHistos.insert(make_pair(sensorID, hitMapHisto));
         hitMapHisto->setTitle("Hit map");
 
-        /* TO BE REMOVED
-        tempHistoName = "tooLargeCluster_d" + to_string( sensorID );
-        tooLargeClusterHistos.insert( make_pair(sensorID,
-                                                AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName).c_str(),xBin, xMin, xMax,yBin, yMin, yMax)));
-        tempHistoName = "largeCluster_d" + to_string( sensorID );
-        largeClusterHistos.insert( make_pair(sensorID,
-                                             AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName).c_str(),xBin, xMin, xMax,yBin, yMin, yMax)));
-        tempHistoName = "lineCheck_d" + to_string( sensorID );
-        lineCheckHistos.insert( make_pair(sensorID,
-                                          AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName).c_str(),xBin, xMin, xMax,yBin, yMin, yMax)));
-        tempHistoName = "MSBCheck_d" + to_string( sensorID );
-        MSBCheckHistos.insert( make_pair(sensorID,
-                                         AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName).c_str(),xBin, xMin, xMax,yBin, yMin, yMax)));
-        tempHistoName = "circularCluster_d" + to_string( sensorID );
-        circularClusterHistos.insert( make_pair(sensorID,
-                                                AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName).c_str(),xBin, xMin, xMax,yBin, yMin, yMax)));
-        */
         tempHistoName = _eventMultiplicityHistoName + "_d" + to_string( sensorID );
         int     eventMultiNBin  = 60;
         double  eventMultiMin   =  0.;
@@ -3597,24 +3463,7 @@ void EUTelClusteringProcessor::bookHistos() {
                                                                       eventMultiNBin, eventMultiMin, eventMultiMax);
         _eventMultiplicityHistos.insert( make_pair(sensorID, eventMultiHisto) );
         eventMultiHisto->setTitle( eventMultiTitle.c_str() );
-        /* // TO BE REMOVED
-        AIDA::IHistogram1D * nClusterHisto =
-            AIDAProcessor::histogramFactory(this)->createHistogram1D(basePath + "nClusterHisto",50,0,50);
-        _nClusterHistos.insert( make_pair(sensorID, nClusterHisto) );
-        nClusterHisto->setTitle("Distribution of the number of clusters in the plane");
-        AIDA::IHistogram1D * ClusterSizeHisto =
-            AIDAProcessor::histogramFactory(this)->createHistogram1D(basePath + "ClusterSizeHisto",50,0,50);
-        _ClusterSizeHistos.insert( make_pair(sensorID, ClusterSizeHisto) );
-        ClusterSizeHisto->setTitle("Distribution of the size of the clusters in the plane");
-        */
     }
-    /* TO BE REMOVED
-    _trgTimeHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D("trgTimeHisto",100,0,10000);
-    _trgTimeHisto->setTitle("Distribution of the trigger time of the clusters");
-    _timeStampHisto = new TH1I("timeStampHisto","Distribution of the time stamp of the events",1000,0,50000);
-    _timeStampLineHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D("timeStampLineHisto",10000,0,50000);
-    _timeStampLineHisto->setTitle("Distribution of the time stamp of the events with clusters on the line");
-    */
     streamlog_out ( DEBUG5 )  << "end of Booking histograms " << endl;
 }
 
@@ -3633,46 +3482,6 @@ void EUTelClusteringProcessor::getMaxPixels(int sensorID, int& maxX, int& maxY)
         return;
     }
 }
-
-/* // TO BE REMOVED
-bool EUTelClusteringProcessor::emptyMiddle(vector<vector<int> > pixVector)
-{
-    bool holeX = false;
-    bool holeY = false;
-    for (unsigned int i=0; i<pixVector.size(); i++)
-    {
-//    EUTelSimpleSparsePixel * pixel = pixVector[i];
-        bool touchingX = false;
-        bool lastX = true;
-        for (unsigned int j=0; j<pixVector.size(); j++)
-        {
-            if (i==j) continue;
-//      cerr << pixVector[i][0] << "\t" << pixVector[i][1] << "\t" << pixVector[j][0] << "\t" << pixVector[j][1] << endl;
-            if (pixVector[i][1] != pixVector[j][1]) continue;
-            if (pixVector[i][0]+1 == pixVector[j][0]) { touchingX = true; break;} // cerr << "Touching in x" << endl
-            if (pixVector[i][0] <  pixVector[j][0]) { lastX  = false;} // cerr << "Smaller in x"  << endl;
-        }
-        if (!touchingX && !lastX) { holeX = true; break;} // cerr << "Hole in X" << endl;
-    }
-    for (unsigned int i=0; i<pixVector.size(); i++)
-    {
-//    EUTelSimpleSparsePixel * pixel = pixVector[i];
-        bool touchingY = false;
-        bool lastY = true;
-        for (unsigned int j=0; j<pixVector.size(); j++)
-        {
-            if (i==j) continue;
-//      cerr << pixVector[i][0] << "\t" << pixVector[i][1] << "\t" << pixVector[j][0] << "\t" << pixVector[j][1] << endl;
-            if (pixVector[i][0] != pixVector[j][0]) continue;
-            if (pixVector[i][1]+1 == pixVector[j][1]) { touchingY = true; break;} // cerr << "Touching in y" << endl;
-            if (pixVector[i][1] <  pixVector[j][1]) { lastY  = false;} // cerr << "Smaller in y"  << endl;
-        }
-        if (!touchingY && !lastY) { holeY = true; break;} // "Hole in Y" << endl;
-    }
-    if (holeX && holeY) return true;
-    else return false;
-}
-*/
 
 #endif
 #endif // USE_GEAR
