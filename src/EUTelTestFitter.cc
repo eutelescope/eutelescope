@@ -1935,6 +1935,7 @@ if(jhit>=0){
             //
             if( meshit != 0 ) 
             {
+              fitpoint->setType(meshit->getTime());
               corrhit->setType(meshit->getType());
               corrhit->setTime(meshit->getTime());
               corrhit->setEDep(meshit->getEDep());
@@ -1944,6 +1945,7 @@ if(jhit>=0){
             }
             else if( simhit != 0 )
             {
+              fitpoint->setType(simhit->getTime());
               corrhit->setType(0);
               corrhit->setTime(simhit->getTime());
               corrhit->setEDep(simhit->getEDep());
