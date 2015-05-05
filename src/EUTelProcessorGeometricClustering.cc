@@ -73,6 +73,7 @@ EUTelProcessorGeometricClustering::EUTelProcessorGeometricClustering():
   _fillHistos(false),
   _histoInfoFileName(""),
   _cutT(0.0),
+  _cutNPixels(1000.),
   _totClusterMap(),
   _noOfDetector(0),
   _ExcludedPlanes(),
@@ -110,6 +111,9 @@ EUTelProcessorGeometricClustering::EUTelProcessorGeometricClustering():
 
   registerOptionalParameter("ExcludedPlanes", "The list of sensor ids that have to be excluded from the clustering.",
                              _ExcludedPlanes, std::vector<int> () );
+
+  registerProcessorParameter("CutNPixels","Max number of hits per sensor",
+                             _cutNPixels, static_cast<float > ( 1000 ) );
 
   		_isFirstEvent = true;
 }
@@ -334,6 +338,12 @@ void EUTelProcessorGeometricClustering::geometricClustering(LCEvent * evt, LCCol
 			std::auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel > > sparseData( new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> ( zsData ) );
 
 			streamlog_out ( DEBUG2 ) << "Processing sparse data on detector " << sensorID << " with " << sparseData->size() << " pixels " << std::endl;
+			
+			// check for number of hits per sensor
+			if( sparseData->size() > _cutNPixels ) {
+			  streamlog_out ( MESSAGE3 ) << "Not processing event " << evt->getEventNumber() << ", more than " << _cutNPixels << " pixels" << std::endl;
+			  continue;
+			}
 
 			int hitPixelsInEvent = sparseData->size();
 			std::vector<EUTelGeometricPixel> hitPixelVec;

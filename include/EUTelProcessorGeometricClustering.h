@@ -274,6 +274,9 @@ protected:
 
 	//! The time cut value as provided by the user.
 	float _cutT;
+	
+	//! The number of hits per sensor cut, provided by the user
+	float _cutNPixels;
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(EUTelProcessorGeometricClustering)
