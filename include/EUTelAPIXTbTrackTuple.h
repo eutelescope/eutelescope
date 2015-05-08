@@ -72,7 +72,7 @@ namespace eutelescope {
     int _nPixHits;
     std::vector<int> *p_col;
     std::vector<int> *p_row;
-    std::vector<int> *p_tot;
+    std::vector<double> *p_tot;
     std::vector<int> *p_iden;
     std::vector<int> *p_lv1;
     std::vector<int> *p_chip;
