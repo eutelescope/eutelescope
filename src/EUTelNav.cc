@@ -241,11 +241,11 @@ TMatrixD EUTelNav::getMeasToGlobal(TVector3 t1w, int  planeID)
 	measDir[1][0] = TRotMatrix[1][0];	measDir[1][1] = TRotMatrix[1][1];
 	measDir[2][0] = TRotMatrix[2][0];	measDir[2][1] = TRotMatrix[2][1];
     streamlog_out( DEBUG0 ) << "CALCULATE LOCAL TO GLOBAL STATE TRANSFORMATION... " << std::endl;
-    streamlog_out( DEBUG0 ) << "Input... " << std::endl;
+    streamlog_out( DEBUG0 ) << "Inputs... " << std::endl;
 
     streamlog_out( DEBUG0 ) << "The (X,Y)-axis of the global frame relative to the local  " << std::endl;
     streamlog_message( DEBUG0, measDir.Print();, std::endl; );
-    streamlog_out( DEBUG0 ) << "The propagator (Dx,Dy)   " << std::endl;
+    streamlog_out( DEBUG0 ) << "The propagator (unit axis) (Dx,Dy)   " << std::endl;
     streamlog_message( DEBUG0, xyDir.Print();, std::endl; );
     double scaleFactor = cosInc/direction[2];
     streamlog_out( DEBUG0 ) << "Scale factor (s) " << scaleFactor << std::endl;
@@ -295,12 +295,12 @@ TMatrixD EUTelNav::getPropagationJacobianGlobalToGlobal(float ds, TVector3 t1w)
 	TVector3 BxT = b.Cross(direction);
 //	std::cout << "BxT" << BxT[0] << "  ,  " <<  BxT[1] <<"   ,  " <<BxT[2] << std::endl;
 	TMatrixD xyDir(2, 3);
-    streamlog_out( DEBUG0 ) << "CALCULATE GLOBAL TO GLOBAL STATE TRANSFORMATION... " << std::endl;
+//    streamlog_out( DEBUG0 ) << "CALCULATE GLOBAL TO GLOBAL STATE TRANSFORMATION... " << std::endl;
 
 	xyDir[0][0] = 1.0; xyDir[0][1]=0.0; xyDir[0][2]=-slope.at(0);  
 	xyDir[1][0] = 0; xyDir[1][1]=1.0; xyDir[1][2]=-slope.at(1);  
-    streamlog_out( DEBUG0 ) << "The propagator (Dx,Dy)   " << std::endl;
-    streamlog_message( DEBUG0, xyDir.Print();, std::endl; );
+//    streamlog_out( DEBUG0 ) << "The propagator (Dx,Dy)   " << std::endl;
+ //   streamlog_message( DEBUG0, xyDir.Print();, std::endl; );
 
 
 	TMatrixD bFac(2,1);
@@ -331,6 +331,8 @@ TMatrixD EUTelNav::getPropagationJacobianGlobalToGlobal(float ds, TVector3 t1w)
 //		std::cout<<"4,2 " << ajac[4][2] << std::endl;
 
 	}
+    streamlog_out( DEBUG0 ) << "Global to Global jacobian: " << std::endl;
+    streamlog_message( DEBUG0, ajac.Print();, std::endl; );
 	return ajac;
 }
 

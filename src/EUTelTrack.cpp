@@ -59,17 +59,12 @@ unsigned int EUTelTrack::getNumberOfHitsOnTrack() const {
 }
 
 void EUTelTrack::print(){
-	streamlog_out(DEBUG1) <<"TRACK INFORMATION//////////////////////////////////////////////////////////////////////////START"<<std::endl;
-	streamlog_out(DEBUG1) << "Track contains " << getTracks().size() << " states " << std::endl;
-	for(size_t i=0; i < getTracks().size(); ++i){
-		const  EVENT::Track* state = getTracks().at(i);
-		//Z0 contains the location. Need to static cast to EUTelState to use getLocation
-		streamlog_out(DEBUG1) <<"State memory location "<< state << " The sensor location of the state " <<state->getZ0()<<std::endl;
-		if(!state->getTrackerHits().empty()){
-			streamlog_out(DEBUG1) <<"The hit ID of the state is "<<state->getTrackerHits().at(0)->id()<<std::endl;
-		}
+	streamlog_out(DEBUG1) <<"TRACK==>"<< " Chi: "<<getChi2() <<" ndf: "<<getNdf() << std::endl; 
+    std::vector<EUTelState> states = getStates();
+	streamlog_out(DEBUG1) <<"STATES:"<<std::endl;
+	for(unsigned int i=0; i < states.size(); ++i){
+        states.at(i).print();
 	}	
-	streamlog_out(DEBUG1) <<"TRACK INFORMATION///////////////////////////////////////////////////////////////////////////////END"<<std::endl;
 
 }
 //Setters

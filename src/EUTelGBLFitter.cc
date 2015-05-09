@@ -78,6 +78,7 @@ namespace eutelescope {
 		else{//Default in case you have not specified a variance  
 			throw(lcio::Exception("There is no measurement variance specified.")); 	
 		}
+		streamlog_out(DEBUG0) << "SET COVARIANCE: State: " << state.getLocation() << "  Covariance X/Y  : " << hitcov[0] << " " <<hitcov[3] <<std::endl; 
 		state.setCombinedHitAndStateCovMatrixInLocalFrame(hitcov);
 	}
 	//TO DO: Kinks are set to zero as inital guess this is ol for low radiation length enviroments.
@@ -124,7 +125,7 @@ namespace eutelescope {
 		measPrec[0] = 1. / combinedCov[0];	// cov(x,x)
 		measPrec[1] = 1. / combinedCov[3];	// cov(y,y)
 		streamlog_out(DEBUG4) << "This is what we add to the measured point:" << std::endl;
-		streamlog_out(DEBUG4) << "Residuals and covariant matrix for the hit:" << std::endl;
+		streamlog_out(DEBUG4) << "Residuals and precision matrix for the hit:" << std::endl;
 		streamlog_out(DEBUG4) << "X:" << std::setw(20) << meas[0] << std::setw(20) << measPrec[0] <<"," << std::endl;
 		streamlog_out(DEBUG4) << "Y:" << std::setw(20) << meas[1] << std::setw(20)  <<"," << measPrec[1] << std::endl;
 		streamlog_out(DEBUG4) << "This H matrix:" << std::endl;
@@ -472,12 +473,13 @@ namespace eutelescope {
 
         double min = 1e-4;
 		_scattererJacobians.clear();
-		TVector3 momStart = state.computeCartesianMomentum();
+		TVector3 momStart = state.getMomGlobal();
 		TVector3 momEnd;
 		int locationStart = state.getLocation();
         int locationEnd=locationStart;
+        int charge = -1;
 		for(size_t i=0;i<_scattererPositions.size();i++){
-			momEnd = EUTelNav::getMomentumfromArcLength(momStart,state.getBeamCharge(), _scattererPositions[i]);
+			momEnd = EUTelNav::getMomentumfromArcLength(momStart,charge, _scattererPositions[i]);
             //Input in global and linked to local internally. Output jacobian Local to local link. 
             TMatrixD jac = getFullJacobian(momStart,momEnd,locationStart,locationEnd, _scattererPositions[i],min);
 			_scattererJacobians.push_back(jac);
@@ -502,27 +504,26 @@ namespace eutelescope {
      */
 
     TMatrixD EUTelGBLFitter::getFullJacobian(TVector3 momStart, TVector3 momEnd, int locationStart, int locationEnd, double distance, double min ){
-            streamlog_out(DEBUG1) <<"CREATE JACOBIAN WITH THE FOLLOWING PORPERTIES  " << std::endl;
+            streamlog_out(DEBUG1) <<"CREATE JACOBIAN WITH THE FOLLOWING PROPERTIES  " << std::endl;
             streamlog_out(DEBUG1) <<"Intital momentum (Global) "<<momStart[0]<<","<<momStart[1]<<","<<momStart[2] <<" Final momentum "  <<momEnd[0]<<","<<momEnd[1]<<","<<momEnd[2]<< std::endl;
             streamlog_out(DEBUG1) <<"Local Systems are defined via the sensors "<< locationStart <<" " <<locationEnd << std::endl;
             streamlog_out(DEBUG1) <<"Distance between states "<<distance << std::endl;
+            streamlog_out(DEBUG1) <<"Minimum value of jacobian accepted "<<min << std::endl;
 
-        TMatrixD curvilinearJacobian = EUTelNav::getPropagationJacobianGlobalToGlobal(distance, momStart.Unit());
-        streamlog_message( DEBUG0, curvilinearJacobian.Print();, std::endl; );
+        TMatrixD simpleJacobian = EUTelNav::getPropagationJacobianGlobalToGlobal(distance, momStart.Unit());
         TVector3 momStartLocal = transVecGlobalToLocal(momStart, locationStart);
-        TMatrixD localToCurvilinearJacobianStart =  EUTelNav::getMeasToGlobal(momStartLocal, locationStart);
-    //    streamlog_out(DEBUG0)<<"This is the local to curvilinear jacobian at sensor : " << location << " or scatter: "<< i << std::endl; 
-//        streamlog_message( DEBUG0, localToCurvilinearJacobianStart.Print();, std::endl; );
-         TVector3 momEndLocal = transVecGlobalToLocal(momEnd, locationEnd);
-        TMatrixD localToCurvilinearJacobianEnd =  EUTelNav::getMeasToGlobal(momEndLocal,locationEnd );
-  //      streamlog_message( DEBUG0, localToCurvilinearJacobianEnd.Print();, std::endl; );
-        TMatrixD curvilinearToLocalJacobianEnd = localToCurvilinearJacobianEnd.Invert();
- //       streamlog_message( DEBUG0, curvilinearToLocalJacobianEnd.Print();, std::endl; );
-        TMatrixD localToNextLocalJacobian = curvilinearToLocalJacobianEnd*curvilinearJacobian*localToCurvilinearJacobianStart;
+        TMatrixD localToGlobalJacobianStart =  EUTelNav::getMeasToGlobal(momStartLocal, locationStart);
+        TVector3 momEndLocal = transVecGlobalToLocal(momEnd, locationEnd);
+        TMatrixD localToGlobalJacobianEnd =  EUTelNav::getMeasToGlobal(momEndLocal,locationEnd );
+        streamlog_out( DEBUG0 ) << "Invert local matrix... " << std::endl;
+        TMatrixD globalToLocalJacobianEnd = localToGlobalJacobianEnd.Invert();
+        streamlog_out( DEBUG0 ) << "Global to local: " << std::endl;
+        streamlog_message( DEBUG0, globalToLocalJacobianEnd.Print();, std::endl; );
+        TMatrixD localToNextLocalJacobian = globalToLocalJacobianEnd*simpleJacobian*localToGlobalJacobianStart;
         streamlog_out(DEBUG1) <<"Jacobian before min derivative removal: " << std::endl;
         streamlog_message( DEBUG1, localToNextLocalJacobian.Print();, std::endl; );
         localToNextLocalJacobian = Utility::setPrecision(localToNextLocalJacobian ,min);
-        streamlog_out(DEBUG1) <<"OUTPUT JACOBAIN: " << std::endl;
+        streamlog_out(DEBUG1) <<"OUTPUT JACOBAIN  " <<locationStart<<"->"<<locationEnd <<":"  << std::endl;
         streamlog_message( DEBUG1, localToNextLocalJacobian.Print();, std::endl; );
         return localToNextLocalJacobian;
     }
@@ -603,39 +604,10 @@ namespace eutelescope {
 					//This part gets the track parameters.//////////////////////////////////////////////////////////////////////////
 					traj->getResults(_vectorOfPairsStatesAndLabels.at(j).second, corrections, correctionsCov );
 					streamlog_out(DEBUG3) << std::endl << "State before we have added corrections: " << std::endl;
-					state->print();
-					TVectorD newStateVec(5);
-					streamlog_out(DEBUG0)<<"-----------------------Corrections----------------------"<<std::endl;
-					streamlog_out(DEBUG0)<< std::setw(20)<<"State number "<< i <<" of "  << track.getStatesPointers().size() << std::endl;  
-					streamlog_out(DEBUG0)<< std::setw(20)<<"Track Parameter"<<std::setw(20)<<"| Intial value |" <<std::setw(20)<<"| correction to add |"  << std::endl;  
-					streamlog_out(DEBUG0)<<std::setw(20)<<"Omega(Charge/Energy) "<<std::setw(15)<<state->getOmega()<<std::setw(20)<< corrections[0]<<std::endl;
-					streamlog_out(DEBUG0)<<std::setw(20)<<"Intersection XY "<<std::setw(15)<<state->getIntersectionLocalXZ() <<std::setw(20)<< corrections[1]<<std::endl;
-					streamlog_out(DEBUG0)<<std::setw(20)<<"Intersection YZ "<<std::setw(15)<<state->getIntersectionLocalYZ() <<std::setw(20)<< corrections[2]<<std::endl;
-					streamlog_out(DEBUG0)<<std::setw(20)<<"PositionX "<<std::setw(15)<<state->getPosition()[0] <<std::setw(20)<< corrections[3]<<std::endl;
-					streamlog_out(DEBUG0)<<std::setw(20)<<"PositionY "<<std::setw(15)<<state->getPosition()[1] <<std::setw(20)<< corrections[4]<<std::endl;
-
-					newStateVec[0] = state->getOmega() + corrections[0];
-					newStateVec[1] = state->getIntersectionLocalXZ()+corrections[1];
-					newStateVec[2] = state->getIntersectionLocalYZ()+corrections[2];
-					newStateVec[3] = state->getPosition()[0]+corrections[3];
-					newStateVec[4] = state->getPosition()[1]+corrections[4]; 
-					//Here we collect the total correction for every track and state. This we use to work out an average to make sure that on each iteration the track corrections are reducing
-					_omegaCorrections = _omegaCorrections + corrections[0];	
-					_intersectionLocalXZCorrections= _intersectionLocalXZCorrections+ corrections[1];	
-					_intersectionLocalYZCorrections = _intersectionLocalYZCorrections + corrections[2];	
-					_localPosXCorrections = _localPosXCorrections + corrections[3];
-					_localPosYCorrections = _localPosYCorrections + corrections[4];
-
-					std::vector<double> correctionVec;
-					correctionVec.push_back(corrections[0]);	
-					correctionVec.push_back(corrections[1]);	
-					correctionVec.push_back(corrections[2]);	
-					correctionVec.push_back(corrections[3]);	
-					correctionVec.push_back(corrections[4]);	
-
-					mapSensorIDToCorrectionVec[state->getLocation()] = correctionVec;
+//					mapSensorIDToCorrectionVec[state->getLocation()] = correctionVec;
 					////////////////////////////////////////////////////////////////////////////////////////////////
-					state->setStateVec(newStateVec);
+					state->setStateUsingCorrection(corrections);
+                    std::cout<<"Here"<<std::endl;
 					//If the state is just a normal scatterer then we get the scattering results from the getScatResults() function. Otherwise we use the local derivative to determine the kink angles.
 					if(state->getLocation() != 271){
 						//Note that this says meas but it simple means that the states you access must be a scatterer. Since all our planes are scatterers then we can access all of them.

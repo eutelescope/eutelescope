@@ -114,10 +114,9 @@ void EUTelPatternRecognition::propagateForwardFromSeedState(EUTelState& stateInp
 		//So we have intersection lets create a new state
 		EUTelState* newState = new EUTelState();//Need to create this since we save the pointer and we would be out of scope when we leave this function. Destroying this object. 
 		newState->setDimensionSize(_planeDimensions[newSensorID]);//We set this since we need this information for later processors
-		newState->setBeamCharge(_beamQ);
 		newState->setLocation(newSensorID);
 		newState->setPositionGlobal(globalIntersection);
-		newState->setLocalXZAndYZIntersectionAndCurvatureUsingGlobalMomentum(momentumAtIntersection);
+		newState->setLocalMomentumGlobalMomentum(momentumAtIntersection);
 
 		if(_mapHitsVecPerPlane[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i+1)].empty()){
 			streamlog_out(DEBUG5) << "There are no hits on the plane with this state. Add state to track as it is and move on." << std::endl;
@@ -178,7 +177,7 @@ void EUTelPatternRecognition::setRadLengths(EUTelTrack & track,	std::map<const i
 	//THE FINAL WEIGHT WE HAVE WILL BE A FRACTION PERCENTAGE OF THE TOTAL RADIATION LENGTH
 	std::vector<EUTelState*> states = track.getStatesPointers();
 //	std::cout << "Rad " << rad << std::endl;
-	const double var  = pow( Utility::getThetaRMSHighland(states.at(0)->getBeamEnergy(), rad) , 2);
+	const double var  = pow( Utility::getThetaRMSHighland(states.at(0)->getMomLocal().Mag(), rad) , 2);
 //	std::cout << "Here is the var: " << var << std::endl;
 	for(size_t i =0; i < track.getStates().size();++i){ //LOOP over all track again.
 		streamlog_out(DEBUG0)<< std::scientific << " Values placed in variance using Highland formula corrected. (SENSOR) : " << (mapSensor[states.at(i)->getLocation()]/rad)*var << "  (AIR)  " << (mapAir[states.at(i)->getLocation()]/rad)*var <<std::endl;
@@ -372,9 +371,8 @@ void EUTelPatternRecognition::initialiseSeeds()
 			}
 			state.setLocation(_createSeedsFromPlanes[iplane]);//This stores the location as a float in Z0 since no location for track LCIO. This is preferable to problems with storing hits.  
 			state.setPositionLocal(posLocal); //This will automatically take cartesian coordinate system and save it to reference point. //This is different from most LCIO applications since each track will have own reference point. 		
-			state.setBeamCharge(_beamQ);//this is set for each state. to do: is there a more efficient way of doing this since we only need this stored once?
 			TVector3 momentum = computeInitialMomentumGlobal(); 
-			state.setLocalXZAndYZIntersectionAndCurvatureUsingGlobalMomentum(momentum); 
+			state.setLocalMomentumGlobalMomentum(momentum); 
 			state.addHit(*itHit);
 			_totalNumberOfHits++;//This is used for test of the processor later.   
 			state.setDimensionSize(_planeDimensions[state.getLocation()]);
@@ -486,6 +484,74 @@ void EUTelPatternRecognition::setHitsVecPerPlane()
 		}
 		_mapHitsVecPerPlane[ geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)] = 	tempHitsVecPlaneX;
 	}	
+}
+
+std::vector<EUTelTrack> EUTelPatternRecognition::getSeedTracks(){
+    std::vector<EUTelTrack> seededTracks;
+    std::vector<EUTelTrack> tracksOriginal = _finalTracks; //Must make copy here so we do not change _finalTracks
+    for(unsigned int i=0 ; i <tracksOriginal.size(); i++ ){
+        streamlog_out(DEBUG1) <<"Track before seed running:  "  <<std::endl;
+        tracksOriginal.at(i).print();
+        bool found=true;
+        EUTelTrack trackOut;
+        found = seedTrackOuterHits(tracksOriginal.at(i), trackOut );
+        if(found){
+            streamlog_out(DEBUG1) <<"Track before seed:  "  <<std::endl;
+            _finalTracks.at(i).print();
+            streamlog_out(DEBUG1) <<"Track after seed:  "  <<std::endl;
+            trackOut.print();
+            seededTracks.push_back(trackOut);
+        }
+
+    }
+    return seededTracks;
+}
+bool EUTelPatternRecognition::seedTrackOuterHits(EUTelTrack track,EUTelTrack & trackOut){
+    //Deterimine last state with hit//
+    int lastStateWithHit=0;
+    for(unsigned int i=0 ; i < track.getStates().size() ; i++){
+      if(track.getStates().at(i).getIsThereAHit()){
+          lastStateWithHit=i;
+      }
+    }
+
+    EUTelState firstState = track.getStates().at(0);
+    const double * firstPos = firstState.getTrackerHits()[0]->getPosition();
+    double firstPosGlobal[3];
+	geo::gGeometry().local2Master(firstState.getLocation() ,firstPos,firstPosGlobal);
+
+    EUTelState lastState = track.getStates().at(lastStateWithHit);
+    const double * lastPos = lastState.getTrackerHits()[0]->getPosition();
+    double lastPosGlobal[3];
+	geo::gGeometry().local2Master(lastState.getLocation() ,lastPos,lastPosGlobal);
+
+    float incidenceXZ = (lastPosGlobal[0] - firstPosGlobal[0])/(lastPosGlobal[2] - firstPosGlobal[2]);
+    float incidenceYZ = (lastPosGlobal[1] - firstPosGlobal[1])/(lastPosGlobal[2] - firstPosGlobal[2]);
+//    std::cout<< "Incidence : " << incidenceXZ <<"  "<< incidenceYZ <<std::endl;
+
+    TVector3 momGlobal;
+    momGlobal[0] = (track.getStates().at(0).getMomLocal().Mag())*incidenceXZ;  
+    momGlobal[1] = (track.getStates().at(0).getMomLocal().Mag())*incidenceYZ;  
+
+    momGlobal[2] = sqrt(pow(track.getStates().at(0).getMomLocal().Mag(),2) - pow(track.getStates().at(0).getMomLocalX(),2) - pow(track.getStates().at(0).getMomLocalY(),2));
+  //  std::cout<<"Here momGlobal "<<momGlobal[0]<<" "<<momGlobal[1]<<" "<<momGlobal[2]<<std::endl;
+    for(unsigned int i=0 ; i < track.getStates().size() ; i++){
+        track.getStatesPointers().at(i)->setLocalMomentumGlobalMomentum(momGlobal);
+   //     std::cout <<"Momentum " <<track.getStates().at(i).getMomLocalX() <<" "<<track.getStates().at(i).getMomLocalY() << "  " << track.getStates().at(i).getMomLocalZ()<<std::endl; 
+    }
+    for(unsigned int i=0 ; i < (track.getStates().size()-1) ; i++){
+        float intersectionPoint[3];
+        TVector3 momentumAtIntersection;
+        float arcLength;
+        int holder; //This is used to return the plane which is found.
+        bool found =track.getStates().at(i).findIntersectionWithCertainID(track.getStates().at(i+1).getLocation(), intersectionPoint, momentumAtIntersection,arcLength,holder );
+        if(!found){
+            return false; //DO NOT NEED TO RETURN TRUE. TRUE BY DEFAULT
+        }
+        track.getStatesPointers().at(i+1)->setPositionGlobal(intersectionPoint);
+    }
+    trackOut = EUTelTrack(track);
+
 }
 
 //Note loop through all planes. Even the excluded. This is easier since you don't have to change this input each time then.
