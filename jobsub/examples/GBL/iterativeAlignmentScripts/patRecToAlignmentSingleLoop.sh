@@ -21,7 +21,7 @@ numberRejectedAlignmentAttempts=0 #We set this since we do not want to fall in a
 dry="--dry-run"
 alignment=false
 rejectFactor=2
-echo "Enter while loop here"
+echo "Initial resolutions are for (X/Y):" $xres"/"$yres
 while [ "$alignment" == "false" ]; do 
 	echo "THE NUMBER OF FAILED ALIGNMENT ATTEMPTS $numberRejectedAlignmentAttempts"
 	$do jobsub.py -c $CONFIG -csv $RUNLIST -o GearFile="$inputGear" -o GearAlignedFile="$outputGear" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres"  -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o lcioInputName="trackcand" -o inputCollectionName="$PatOutGBLIn" $Align  $RUN  
@@ -58,6 +58,7 @@ while [ "$alignment" == "false" ]; do
 		echo "Rejection factor is: $rejectFactor"
 		xres=`python $pythonLocation/multiplyResolutionsByFactor.py $xInput /   / $allPlanes / $rejectFactor` 
 		yres=`python $pythonLocation/multiplyResolutionsByFactor.py $yInput /   / $allPlanes / $rejectFactor`
+        source xres
 		echo "New resolutions are for (X/Y):" $xres"/"$yres
 	elif [ "$noCut" == "1" ] && [ "$notUnderEstimated" == "1" ];then #Chi2 cut and must not understimate. Range [0,10]
 		echo "Chi2: $averageChi2Mille and boolean: $noCut $notUnderEstimated"
