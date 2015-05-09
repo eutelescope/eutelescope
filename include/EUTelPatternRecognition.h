@@ -105,6 +105,9 @@ namespace eutelescope {
 		inline void setBeamCharge(double q) {
 			this->_beamQ = q;
 		}
+        std::vector<EUTelTrack> getSeedTracks();
+        bool seedTrackOuterHits(EUTelTrack track, EUTelTrack & trackOut);
+
 		
 		//Here if the user does not set a create seeds from planes x. The we set it automatically to the first plane travelling as the beam travels. 
 		//This has the best of both world. No reduction on functionality. User does not even know this is here. 	
@@ -145,6 +148,7 @@ namespace eutelescope {
 		std::vector<EUTelTrack> _tracks;
 		std::vector<EUTelTrack> _tracksAfterEnoughHitsCut;
 		std::vector<EUTelTrack>	_finalTracks;
+
 		int _numberOfTracksTotal;
 		int _numberOfTracksAfterHitCut;
 		int _numberOfTracksAfterPruneCut;

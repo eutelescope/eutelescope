@@ -25,11 +25,13 @@ namespace eutelescope {
 			int getDimensionSize() const ;
 			int	getLocation() const;
 			TMatrixDSym getStateCov() const;
-			TVectorD getStateVec() const ;
-			inline float  getBeamCharge() const  { return getdEdxError();}
-			inline float  getBeamEnergy() const {return getdEdx();}
-			float getIntersectionLocalXZ() const {return getPhi();}
-			float getIntersectionLocalYZ() const {return getTanLambda();}
+			TVectorD getStateVec();
+            TVector3 getMomLocal();
+			float getMomLocalX() const {return getdEdx();}
+			float getMomLocalY() const {return getTanLambda();}
+			float getMomLocalZ() const {return getPhi();}
+			TVector3 getMomGlobal() const ;
+
 			float getArcLengthToNextState() const {return getChi2();} 
 			float* getPosition() const; 
 			TVector3 getPositionGlobal() const; 
@@ -44,11 +46,10 @@ namespace eutelescope {
 			//setters
 			void setDimensionSize(int dimension);
 			void setLocation(int location);
-			void setBeamEnergy(float beamE);
-			void setBeamCharge(float beamQ);
-			void setIntersectionLocalYZ(float directionYZ);
-			void setIntersectionLocalXZ(float directionXZ);
-			void setLocalXZAndYZIntersectionAndCurvatureUsingGlobalMomentum(TVector3 momentumIn);
+			void setMomLocalX(float momX);
+			void setMomLocalY(float momY);
+			void setMomLocalZ(float momZ);
+			void setLocalMomentumGlobalMomentum(TVector3 momentumIn);
             //!Template input for setting local position of hit  
             /*!
              * @param position of hit on plane
@@ -57,7 +58,7 @@ namespace eutelescope {
 			void setPositionLocal(number position[]);
 			void setPositionGlobal(float positionGlobal[]);
 			void setCombinedHitAndStateCovMatrixInLocalFrame(double cov[4]);
-			void setStateVec(TVectorD stateVec);
+			void setStateUsingCorrection(TVectorD stateVec);
 			void setArcLengthToNextState(float arcLength){setChi2(arcLength);} 
 			void setKinks(TVectorD kinks);
 			void setRadFrac(double plane, double air);
@@ -67,8 +68,7 @@ namespace eutelescope {
 			//find
 			bool findIntersectionWithCertainID(int nextsensorID, float intersectionPoint[], TVector3& momentumAtIntersection, float& arcLength, int& newNextPlaneID );
 			//compute
-			TVector3 computeCartesianMomentum() const ;
-			TMatrix computePropagationJacobianFromLocalStateToNextLocalState(TVector3 momentumEnd, float arcLength,float nextPlaneID);
+//			TMatrix computePropagationJacobianFromLocalStateToNextLocalState(TVector3 momentumEnd, float arcLength,float nextPlaneID);
 			float computeRadLengthsToEnd( std::map<const int,double> & mapSensor, std::map<const int ,double> & mapAir );
 
 			//print

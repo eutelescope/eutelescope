@@ -215,8 +215,8 @@ void EUTelProcessorPatternRecognition::processEvent(LCEvent* evt)
 		_trackFitter->testTrackQuality();//Here we test how many tracks we have after all cuts
 		streamlog_out( DEBUG1 ) << "Retrieving track candidates..." << std::endl;
 
-		std::vector<EUTelTrack>& tracks = _trackFitter->getTracks();//Get the tracks from the patternRecognition class. 
-
+//		std::vector<EUTelTrack>& tracks = _trackFitter->getTracks();//Get the tracks from the patternRecognition class. 
+        std::vector<EUTelTrack> tracks = _trackFitter->getSeedTracks();
 		plotHistos(tracks);
 
 		outputLCIO(evt,tracks);
@@ -259,6 +259,7 @@ void EUTelProcessorPatternRecognition::outputLCIO(LCEvent* evt, std::vector<EUTe
 		stateCandCollection->setFlag( flag2.getFlag( ) );
 
 		//Loop through all tracks
+		streamlog_out(DEBUG1)<<"Add track to lcio: " <<std::endl;
 		for ( size_t i = 0 ; i < tracks.size(); ++i) {
 			EUTelTrack* trackheap = new  EUTelTrack(tracks[i]);
 			trackheap->print();
