@@ -330,9 +330,7 @@ bool EUTelAPIXTbTrackTuple::readZsHits( std::string colName, LCEvent* event)
 				p_iden->push_back( sensorID );
 				p_row->push_back( apixPixel.getYCoord() );
 				p_col->push_back( apixPixel.getXCoord() );
-				float trigger = apixPixel.getTime();
-				int32_t trigger_int = *(int32_t*)( ( &( trigger ) ) );
-				p_tot->push_back( trigger_int );
+				p_tot->push_back( (apixPixel.getSignal()) );
 				p_lv1->push_back( (apixPixel.getTime()) );
      		}
     	}
@@ -412,7 +410,7 @@ void EUTelAPIXTbTrackTuple::prepareTree()
 	_zstree->Branch("euEvt",    &_nEvt);
 	_zstree->Branch("col",      &p_col);
 	_zstree->Branch("row",      &p_row);
-	_zstree->Branch("tot", "std::vector<int>", &p_tot);
+	_zstree->Branch("tot",      &p_tot);
 	_zstree->Branch("lv1",      &p_lv1);
 	_zstree->Branch("iden",     &p_iden);
 	
