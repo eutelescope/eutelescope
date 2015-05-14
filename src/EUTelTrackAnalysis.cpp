@@ -161,9 +161,9 @@ void EUTelTrackAnalysis::plotPValueWithPosition(EUTelTrack track){
   streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotPValueWithPosition------------------------------END"<< std::endl;
 }
 float EUTelTrackAnalysis::calculatePValueForChi2(EUTelTrack track){
-    boost::math::chi_squared mydist(track.getNdf());
-    float pValue = 1 - boost::math::cdf(mydist,track.getChi2());
-    return pValue;
+//    boost::math::chi_squared mydist(track.getNdf());
+//    float pValue = 1 - boost::math::cdf(mydist,track.getChi2());
+    return 1.0;
 }
 
 //FLOAT EUTelTrackAnalysis::calculatePValueForChi2(EUTelTrack track){
