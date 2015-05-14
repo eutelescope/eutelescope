@@ -81,23 +81,18 @@ namespace eutelescope {
 		streamlog_out(DEBUG0) << "SET COVARIANCE: State: " << state.getLocation() << "  Covariance X/Y  : " << hitcov[0] << " " <<hitcov[3] <<std::endl; 
 		state.setCombinedHitAndStateCovMatrixInLocalFrame(hitcov);
 	}
-	//TO DO: Kinks are set to zero as inital guess this is ol for low radiation length enviroments.
 	//Note that we take the planes themselfs at scatters and also add scatterers to simulate the medium inbetween. 
 	void EUTelGBLFitter::setScattererGBL(gbl::GblPoint& point, EUTelState & state ) {
 		streamlog_out(DEBUG1) << " setScattererGBL ------------- BEGIN --------------  " << std::endl;
-		TVectorD scat(2); 
-		scat[0] = 0.0; scat[1]=0.0;//TO DO: This will depend on if the initial track guess has kinks. Only important if we reiterate GBL track in high radiation length enviroments  
 		TMatrixDSym precisionMatrix =  state.getScatteringVarianceInLocalFrame();
 		streamlog_out(MESSAGE1) << "The precision matrix being used for the sensor  "<<state.getLocation()<<":" << std::endl;
 		streamlog_message( DEBUG0, precisionMatrix.Print();, std::endl; );
-		point.addScatterer(scat, precisionMatrix);
+		point.addScatterer(state.getKinks(), precisionMatrix);
 		streamlog_out(DEBUG1) << "  setScattererGBL  ------------- END ----------------- " << std::endl;
 	}
 		//This is used when the we know the radiation length already
-		void EUTelGBLFitter::setScattererGBL(gbl::GblPoint& point,EUTelState & state, float variance) {
+		void EUTelGBLFitter::setScattererGBL(gbl::GblPoint& point,EUTelState & state, float variance,TVectorD scat ) {
 		streamlog_out(MESSAGE1) << " setScattererGBL ------------- BEGIN --------------  " << std::endl;
-		TVectorD scat(2); 
-		scat[0] = 0.0; scat[1]=0.0;  
 		TMatrixDSym precisionMatrix =  state.getScatteringVarianceInLocalFrame(variance);
 		streamlog_out(MESSAGE1) << "The precision matrix being used for the scatter:  " << std::endl;
 		streamlog_message( DEBUG0, precisionMatrix.Print();, std::endl; );
@@ -138,7 +133,7 @@ namespace eutelescope {
 	//This function calculates the alignment jacobian and labels and attaches this to the point
 	void EUTelGBLFitter::setAlignmentToMeasurementJacobian(std::vector< gbl::GblPoint >& pointList ){
 		for (size_t i = 0;i<_vectorOfPairsMeasurementStatesAndLabels.size() ;++i ){
-			if(_vectorOfPairsMeasurementStatesAndLabels.at(i).first.getTrackerHits().empty()){
+			if(!_vectorOfPairsMeasurementStatesAndLabels.at(i).first.getStateHasHit()){
 				throw(lcio::Exception("One of the points on the list of measurements states has no hit."));
 			}
 			for(size_t j = 0; j < pointList.size(); ++j){
@@ -154,7 +149,7 @@ namespace eutelescope {
 					std::vector<int> labels =  _MilleInterface->getGlobalParameters();//Return what was set by setGlobalLabels
 					streamlog_out(DEBUG0)<<"The state associated with this alignment jacobian:  "<<std::endl;
 					streamlog_message( DEBUG0, state.print() ;, std::endl; );
-					if(!state.getIsThereAHit()){
+					if(!state.getStateHasHit()){
 						throw(lcio::Exception("You are just about to use a state with no hit to determine alignment jacobian."));
 					}
 					streamlog_out(DEBUG0)<<"This is the alignment jacobian we are about to add to the point at location "<<state.getLocation()<<std::endl;
@@ -184,6 +179,7 @@ namespace eutelescope {
 		if(_scattererJacobians.size() != _scattererPositions.size()){
 			throw(lcio::Exception("The size of the scattering positions and jacobians is different.")); 	
 		}
+        TVectorD kinksMedium[2] = {state.getKinksMedium1(),state.getKinksMedium2()};
 		for(size_t i = 0 ;i < _scattererJacobians.size()-1;++i){//The last jacobain is used to get to the plane! So only loop over to (_scatterJacobians-1)
 			gbl::GblPoint point(_scattererJacobians[i]);
 			point.setLabel(_counter_num_pointer);
@@ -191,13 +187,16 @@ namespace eutelescope {
 			if(variance.at(i) == 0){
 				throw(lcio::Exception("Variance is 0 for the scattering plane."));
 			}
+			if(i > 1){
+				throw(lcio::Exception("Trying to add more than 2 scattering planes "));
+			}
 
-			setScattererGBL(point,state, variance.at(i));//TO DO:This will only work for homogeneous distributions.
+			setScattererGBL(point,state, variance.at(i),kinksMedium[i]);//TO DO:This will only work for homogeneous distributions.
 			pointList.push_back(point);
 		}
 	}
 	std::vector<float> EUTelGBLFitter::computeVarianceForEachScatterer(EUTelState & state){
-		const double scatteringVariance  = state.getRadFrac()[1];//What we get out is the RMS and need the variance.
+		const double scatteringVariance  = state.getRadFracAir();//What we get out is the RMS and need the variance.
 		streamlog_out(DEBUG0) << "Variance (AIR Total):  " << std::scientific << scatteringVariance  << "  Plane: " << state.getLocation() << std::endl;
 		if(scatteringVariance == 0){
 			throw(std::string("scatteringVariance for air is zero. Something is wrong with radiation length calculation."));
@@ -329,7 +328,7 @@ namespace eutelescope {
 				setScattererGBL(point,state);//Every sensor will have scattering due to itself. 
 			}
 			_statesInOrder.push_back(state);//This is list of measurements states in the correct order. This is used later to associate ANY states with point labels
-			if(state.getTrackerHits().size() == 0 ){
+			if(!state.getStateHasHit()){
 				streamlog_out(DEBUG3)  << "This state does not have a hit."<<std::endl;
 				setPointVec(pointList, point);//This creates the vector of points and keeps a link between states and the points they created
 			}else{
@@ -337,7 +336,7 @@ namespace eutelescope {
 				setMeasurementCov(state);
 				double cov[4] ;
 				state.getCombinedHitAndStateCovMatrixInLocalFrame(cov);
-				setMeasurementGBL(point, state.getTrackerHits()[0]->getPosition(),  localPositionForState,  cov, state.getProjectionMatrix());
+				setMeasurementGBL(point, state.getHit().getPosition(),  localPositionForState,  cov, state.getProjectionMatrix());
 				//Here we set if we want to add local derivatives to points after we have found the plane we want to determine it's kink angle.
 				if(kinkAnglePlaneEstimationAddedNow){
 					setLocalDerivativesToPoint(point,distanceFromKinkTargetToNextPlane); 
@@ -383,7 +382,7 @@ namespace eutelescope {
 			if(getLabelToPoint(pointList,_vectorOfPairsMeasurementStatesAndLabels.at(j).second).hasMeasurement() == 0){
 				throw(lcio::Exception("This point does not contain a measurements. Labeling of the state must be wrong "));
 			} 
-			streamlog_out(DEBUG0) << std::endl << "There is a hit on the state. Hit pointer: "<< state.getTrackerHits()[0]<<" Find updated Residuals!" << std::endl;
+//			streamlog_out(DEBUG0) << std::endl << "There is a hit on the state. Hit pointer: "<< state.getTrackerHits()[0]<<" Find updated Residuals!" << std::endl;
 			unsigned int numData; //Not sure what this is used for??????
 			TVectorD aResiduals(2);
 			TVectorD aMeasErrors(2);
@@ -548,7 +547,6 @@ namespace eutelescope {
 		//We place the first scatter to model the air just after the plane
 		_scattererPositions.push_back(_start);//Z position of 1st scatterer	
 		float secondScatterPosition = _normalMean +_normalVariance/(_normalMean-_start);
-//		cout<<"Scat position " << secondScatterPosition <<endl;
 		if(secondScatterPosition < _start){
 			throw(lcio::Exception("The distance of the second scatterer is smaller than the start. "));
 		}
@@ -568,12 +566,10 @@ namespace eutelescope {
 			throw(lcio::Exception("The size of arc length to the next plane is 0"));
 		}
 		_normalMean = 0.5*(_end-_start);
-//		cout<<"normal mean: " << _normalMean <<endl;
 		if(_normalMean == 0){
 			throw(lcio::Exception("The mean of the scattering integral is zero. "));
 		}
 		_normalVariance = ((1.0/3.0)*(pow(_end,3)-pow(_start,3))-_normalMean*(pow(_end,2)-pow(_start,2))+pow(_normalMean,2)*(_end-_start))/(_end-_start);
-//		cout<<"normal variance: " << _normalVariance <<endl;
 		if(_normalVariance == 0){
 			throw(lcio::Exception("The variance of the scattering integral is zero. "));
 		}
@@ -589,8 +585,8 @@ namespace eutelescope {
 	void EUTelGBLFitter::updateTrackFromGBLTrajectory (gbl::GblTrajectory* traj,EUTelTrack &track, std::map<int, std::vector<double> > &  mapSensorIDToCorrectionVec){
 		streamlog_out ( DEBUG4 ) << " EUTelGBLFitter::UpdateTrackFromGBLTrajectory-- BEGIN " << std::endl;
 		
-		for(size_t i=0;i < track.getStatesPointers().size(); i++){//We get the pointers no since we want to change the track state contents		
-			EUTelState* state = track.getStatesPointers().at(i);
+		for(size_t i=0;i < track.getStates().size(); i++){//We get the pointers no since we want to change the track state contents		
+			EUTelState& state = track.getStates().at(i);
 			TVectorD corrections(5);
 			TMatrixDSym correctionsCov(5);
 			if(_kinkAngleEstimation){
@@ -598,18 +594,21 @@ namespace eutelescope {
 				correctionsCov.ResizeTo(7,7);
 			}
 			for(size_t j=0 ; j< _vectorOfPairsStatesAndLabels.size();++j){
-				if(_vectorOfPairsStatesAndLabels.at(j).first == *state){
+				if(_vectorOfPairsStatesAndLabels.at(j).first == state){
 					streamlog_out(DEBUG0)<<"The loop number for states with measurements is: " << j << ". The label is: " << _vectorOfPairsStatesAndLabels.at(j).second <<std::endl; 
 					streamlog_out(DEBUG0)<<"To update track we use label: "<<_vectorOfPairsStatesAndLabels.at(j).second<<std::endl; 
 					//This part gets the track parameters.//////////////////////////////////////////////////////////////////////////
 					traj->getResults(_vectorOfPairsStatesAndLabels.at(j).second, corrections, correctionsCov );
 					streamlog_out(DEBUG3) << std::endl << "State before we have added corrections: " << std::endl;
+                    state.print();
+					streamlog_out(DEBUG3) << std::endl << "Correction: " << std::endl;
+                    streamlog_message( DEBUG3, corrections.Print();, std::endl; );			
+
 //					mapSensorIDToCorrectionVec[state->getLocation()] = correctionVec;
 					////////////////////////////////////////////////////////////////////////////////////////////////
-					state->setStateUsingCorrection(corrections);
-                    std::cout<<"Here"<<std::endl;
+					state.setStateUsingCorrection(corrections);
 					//If the state is just a normal scatterer then we get the scattering results from the getScatResults() function. Otherwise we use the local derivative to determine the kink angles.
-					if(state->getLocation() != 271){
+					if(state.getLocation() != 271){
 						//Note that this says meas but it simple means that the states you access must be a scatterer. Since all our planes are scatterers then we can access all of them.
 						//However the only planes we are interest in are the ones that don't simply model the air.
 						unsigned int numData;
@@ -617,10 +616,15 @@ namespace eutelescope {
 						TVectorD aMeasErrorsKink(2);
 						TVectorD aResErrorsKink(2);
 						TVectorD aDownWeightsKink(2); 
+                        //Get the scatterer for the planes and the medium in front of the state.
 						traj->getScatResults( _vectorOfPairsStatesAndLabels.at(j).second, numData, aResidualsKink, aMeasErrorsKink, aResErrorsKink, aDownWeightsKink);
-						state->setKinks(aResidualsKink);
+						state.setKinks(aResidualsKink);
+//						traj->getScatResults( _vectorOfPairsStatesAndLabels.at(j).second + 1, numData, aResidualsKink, aMeasErrorsKink, aResErrorsKink, aDownWeightsKink);
+//						state.setKinksMedium1(aResidualsKink);
+//						traj->getScatResults( _vectorOfPairsStatesAndLabels.at(j).second + 2, numData, aResidualsKink, aMeasErrorsKink, aResErrorsKink, aDownWeightsKink);
+//						state.setKinksMedium2(aResidualsKink);
 						streamlog_out(DEBUG3) << std::endl << "State after we have added corrections: " << std::endl;
-						state->print();
+						state.print();
 					}else{
 						TVectorD correctionsKinks(5);
 						TMatrixDSym correctionsCovKinks(5);
@@ -634,7 +638,7 @@ namespace eutelescope {
 						kinks[0] = correctionsKinks[5];
 						kinks[1] = correctionsKinks[6];
 
-						state->setKinks(kinks);
+						state.setKinks(kinks);
 					}
 					break;
 				}

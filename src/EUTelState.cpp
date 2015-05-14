@@ -2,38 +2,66 @@
 #include "EUTelNav.h"
 
 using namespace eutelescope;
-EUTelState::EUTelState(){
+EUTelState::EUTelState()
+{
+     _kinks.ResizeTo(2);
+    _kinks[0]=0;
+    _kinks[1]=0;
+    _kinksMedium1.ResizeTo(2);
+    _kinksMedium1[0]=0;
+    _kinksMedium1[1]=0;
+    _kinksMedium2.ResizeTo(2);
+    _kinksMedium2[0]=0;
+    _kinksMedium2[1]=0;
+
+
+    _stateHasHit = false;
 } 
 
 EUTelState::EUTelState(EUTelState *state){
+     _kinks.ResizeTo(2);
+     _kinks = state->getKinks();
+    _kinksMedium1.ResizeTo(2);
+    _kinksMedium1 = state->getKinksMedium1();
+    _kinksMedium2.ResizeTo(2);
+    _kinksMedium2 = state->getKinksMedium2();
+    _stateHasHit = false;
 	setDimensionSize(state->getDimensionSize());
-	setLocation(state->getLocation());//This stores the location as a float in Z0 since no location for track LCIO. This is preferable to problems with storing hits.  
-	double position[] = {state->getPosition()[0],state->getPosition()[1],state->getPosition()[2]};//Z position is not a state parameter but should add here for use later. 
-	setPositionLocal(position);//This will automatically take cartesian coordinate system and save it to reference point. //This is different from most LCIO applications since each track will have own reference point. 	
+    setArcLengthToNextState(state->getArcLengthToNextState());
+	setLocation(state->getLocation());  
+	double position[] = {state->getPosition()[0],state->getPosition()[1],state->getPosition()[2]}; 
+	setPositionLocal(position); 	
 	setMomLocalX(state->getMomLocalX()); 
 	setMomLocalY(state->getMomLocalY());    
 	setMomLocalZ(state->getMomLocalZ());  
-	if(getIsThereAHit()){
-		addHit(const_cast<EVENT::TrackerHit*>(state->getTrackerHits().at(0)));
+    setRadFrac(state->getRadFracSensor(), state->getRadFracAir());
+	if(state->getStateHasHit()){
+		setHit(state->getHit());
 	}
 }
 //getters
-EVENT::TrackerHit* EUTelState::getHit(){
-	return	const_cast<EVENT::TrackerHit*>(getTrackerHits().at(0));
+double EUTelState::getRadFracAir() const{
+    return _radFracAir;
+}
+
+double EUTelState::getRadFracSensor() const {
+    return _radFracSensor;
+}
+
+EUTelHit EUTelState::getHit(){
+	return _hit;
 }
 int EUTelState::getDimensionSize() const {
-	int dimension = static_cast<int>(getD0());
-	return dimension;
+	return _dimension;
 }
 int EUTelState::getLocation() const {
-	int location = static_cast<int>(getZ0());
-	return location;
+	return _location;
 }
-float* EUTelState::getPosition() const {
-	return const_cast<float*>(getReferencePoint());
+const float* EUTelState::getPosition() const {
+	return &_position[0];
 }
 TVector3 EUTelState::getPositionGlobal() const {
-	float* local =  const_cast<float*>(getReferencePoint());
+	const float* local =  getPosition();
 	const double posLocal[3] = {local[0],local[1],local[2]};
   double posGlobal[3];
 	geo::gGeometry().local2Master(getLocation() ,posLocal,posGlobal);
@@ -49,10 +77,6 @@ TVectorD EUTelState::getStateVec(){
 	stateVec[3] = getPosition()[0]; 
 	stateVec[4] = getPosition()[1];
 			
-//	if ( streamlog_level(DEBUG0) ){
-//		streamlog_out( DEBUG0 ) << "Track state:" << std::endl;
-//		stateVec.Print();
-//	}
 	if(stateVec[0] == INFINITY or stateVec[0] == NAN ){
 		throw(lcio::Exception("Passing a state vector where curvature is not defined")); 
 	}
@@ -62,11 +86,11 @@ TVectorD EUTelState::getStateVec(){
 }
 TMatrixDSym EUTelState::getScatteringVarianceInLocalFrame(){
 	streamlog_out( DEBUG1 ) << "EUTelState::getScatteringVarianceInLocalFrame(Sensor)----------------------------BEGIN" << std::endl;
-	streamlog_out(DEBUG1) << "Variance (Sensor):  " << std::scientific << getRadFrac()[0] << "  Plane: " << getLocation()  << std::endl;
-	if(getRadFrac()[0] == 0){
+	streamlog_out(DEBUG1) << "Variance (Sensor):  " << std::scientific << getRadFracSensor() << "  Plane: " << getLocation()  << std::endl;
+	if(getRadFracSensor() == 0){
 		throw(std::string("Radiation of sensor is zero. Something is wrong with radiation length calculation."));
 	}
-	float scatPrecision = 1.0/getRadFrac()[0];
+	float scatPrecision = 1.0/getRadFracSensor();
 	//We need the track direction in the direction of x/y in the local frame. 
 	//This will be the same as unitMomentum in the x/y direction
 	TVector3 unitMomentumLocalFrame =	getMomLocal().Unit();
@@ -102,31 +126,27 @@ TMatrixDSym EUTelState::getScatteringVarianceInLocalFrame(float  variance){
 }
 TMatrixDSym EUTelState::getStateCov() const {
 
-	streamlog_out( DEBUG1 ) << "EUTelState::getTrackStateCov()----------------------------BEGIN" << std::endl;
+//	streamlog_out( DEBUG1 ) << "EUTelState::getTrackStateCov()----------------------------BEGIN" << std::endl;
 	TMatrixDSym C(5);   
-	const EVENT::FloatVec& trkCov = getCovMatrix();        
+//	const EVENT::FloatVec& trkCov = getCovMatrix();        
 	C.Zero();
             
-	C[0][0] = trkCov[0]; 
-	C[1][0] = trkCov[1];  C[1][1] = trkCov[2]; 
-	C[2][0] = trkCov[3];  C[2][1] = trkCov[4];  C[2][2] = trkCov[5]; 
-	C[3][0] = trkCov[6];  C[3][1] = trkCov[7];  C[3][2] = trkCov[8];  C[3][3] = trkCov[9]; 
-	C[4][0] = trkCov[10]; C[4][1] = trkCov[11]; C[4][2] = trkCov[12]; C[4][3] = trkCov[13]; C[4][4] = trkCov[14]; 
-        
-	if ( streamlog_level(DEBUG0) ){
-		streamlog_out( DEBUG0 ) << "Track state covariance matrix:" << std::endl;
-		C.Print();
-	}
-        
+//	C[0][0] = trkCov[0]; 
+//	C[1][0] = trkCov[1];  C[1][1] = trkCov[2]; 
+//	C[2][0] = trkCov[3];  C[2][1] = trkCov[4];  C[2][2] = trkCov[5]; 
+//	C[3][0] = trkCov[6];  C[3][1] = trkCov[7];  C[3][2] = trkCov[8];  C[3][3] = trkCov[9]; 
+//	C[4][0] = trkCov[10]; C[4][1] = trkCov[11]; C[4][2] = trkCov[12]; C[4][3] = trkCov[13]; C[4][4] = trkCov[14]; 
+//        
+//	if ( streamlog_level(DEBUG0) ){
+//		streamlog_out( DEBUG0 ) << "Track state covariance matrix:" << std::endl;
+//		C.Print();
+//	}
+//        
 	return C;
-	streamlog_out( DEBUG1 ) << "EUTelState::getTrackStateCov()----------------------------END" << std::endl;
+//	streamlog_out( DEBUG1 ) << "EUTelState::getTrackStateCov()----------------------------END" << std::endl;
 }
-bool EUTelState::getIsThereAHit() const {
-	if(!getTrackerHits().empty()){
-		return true;
-	}else{
-		return false;
-	}
+bool EUTelState::getStateHasHit() const {
+    return _stateHasHit;
 }
 
 void EUTelState::getCombinedHitAndStateCovMatrixInLocalFrame( double (&cov)[4] ) const {
@@ -148,67 +168,70 @@ TVector3 EUTelState::getMomLocal(){
 	pVecUnitLocal[0] = getMomLocalX(); 	pVecUnitLocal[1] = getMomLocalY(); 	pVecUnitLocal[2] = getMomLocalZ(); 
 	return pVecUnitLocal;
 }
-TVectorD EUTelState::getKinks(){
-	EVENT::FloatVec kinksVec = getCovMatrix();
-	TVectorD kinks(2);
-	kinks(0) = kinksVec.at(0);
-	kinks(1) = kinksVec.at(1);
-	return kinks;
+TVectorD EUTelState::getKinks() const {
+	return _kinks;
 }
-TVectorD EUTelState::getRadFrac(){
-	EVENT::FloatVec kinkRad = getCovMatrix();
-	TVectorD rad(2);
-	rad(0) = kinkRad.at(2);
-	rad(1) = kinkRad.at(3);
-	return rad;
+TVectorD EUTelState::getKinksMedium1() const {
+	return _kinksMedium1;
 }
-
+TVectorD EUTelState::getKinksMedium2() const {
+	return _kinksMedium2;
+}
 
 //setters
+void EUTelState::setHit(EUTelHit hit){
+    _stateHasHit=true;
+    _hit = hit;
+}
+//Can set the hit using EUTelHit or LCIO hit.
+void EUTelState::setHit(EVENT::TrackerHit* hit){
+    _stateHasHit=true;
+    const double * pos = hit->getPosition();
+    _hit.setPosition(pos);
+    _hit.setID(hit->id());
+}
+
 void EUTelState::setDimensionSize(int dimension){
-	setD0(static_cast<float>(dimension));
+    _dimension = dimension;
 }
 void EUTelState::setLocation(int location){
-	float locationFloat = static_cast<float>(location);
-	setZ0(locationFloat);
+    _location = location;
 }
 void EUTelState::setMomLocalX(float momX){
-  //  std::cout<<"INside" <<std::endl;
-	setdEdx(momX);
-  //  std::cout<<"after" <<std::endl;
+    _momLocalX = momX;
 }
 
 //Note this is dy/dz in the LOCAL frame
 void EUTelState::setMomLocalY(float momY){
-	setTanLambda(momY);
+    _momLocalY = momY;
 }	
 //Note this is the dx/dz in the LOCAL frame
 void EUTelState::setMomLocalZ(float momZ){
-	setPhi(momZ);
+    _momLocalZ = momZ;
 }
-//void EUTelState::setPositionLocal(double position[]){
-//	setReferencePoint(static_cast<float*>(position));
-//}
-//TO D0: This does nothing at the moment but should be implimented for high radiation enviroments.
+//This variable is the RESIDUAL (Measurements - Prediction) of the kink angle. 
+//Our measurement is assumed 0 in all cases.
 void EUTelState::setKinks(TVectorD kinks){
-	EVENT::FloatVec kinksInput;
-	kinksInput.push_back(kinks[0]);
-	kinksInput.push_back(kinks[1]);
-	//TO DO: Must save this again since we want both pieces of information. MUST FIX
-	EVENT::FloatVec kinksRad = getCovMatrix();
-	kinksInput.push_back(kinksRad[2]);
-	kinksInput.push_back(kinksRad[3]);
-
-	setCovMatrix(kinksInput);
+    _kinks = kinks;
 }
+void EUTelState::setKinksMedium1(TVectorD kinks){
+    _kinksMedium1 = kinks;
+}
+void EUTelState::setKinksMedium2(TVectorD kinks){
+    _kinksMedium2 = kinks;
+}
+
 void EUTelState::setPositionGlobal(float positionGlobal[]){
 	double localPosition [3];
 	const double referencePoint[]	= {positionGlobal[0], positionGlobal[1],positionGlobal[2]};//Need this since geometry works with const doubles not floats 
 	geo::gGeometry().master2Local( getLocation(), referencePoint, localPosition );
 	float posLocal[] = { static_cast<float>(localPosition[0]), static_cast<float>(localPosition[1]), static_cast<float>(localPosition[2]) };
-	setReferencePoint(posLocal);
+    _position[0] = posLocal[0];
+    _position[1] = posLocal[1];
+    _position[2] = posLocal[2];
+
+
 }
-//This sets the LOCAL frame intersection. Not the curvilinear frames intersection
 void EUTelState::setLocalMomentumGlobalMomentum(TVector3 momentumIn){
 	//Now calculate the momentum in LOCAL coordinates.
 	const double momentum[]	= {momentumIn[0], momentumIn[1],momentumIn[2]};//Need this since geometry works with const doubles not floats 
@@ -232,25 +255,29 @@ void EUTelState::setStateUsingCorrection(TVectorD corrections){
 	double referencePoint[] = { getPosition()[0]+corrections[3],getPosition()[1]+corrections[4],0};
 	setPositionLocal(referencePoint);
     float charge = -1.0;
-    float newEnergy = getMomLocal().Mag() + charge/corrections[0]; 
-    std::cout << " Here is the momX " << getMomLocalX() <<std::endl;
-    setMomLocalX( (1.0/newEnergy)*(getMomLocalX()/getMomLocalZ() + corrections[1]));  
-    setMomLocalY( (1.0/newEnergy)*(getMomLocalY()/getMomLocalZ() + corrections[2]));  
-    setMomLocalZ(sqrt(pow(newEnergy,2) - pow(getMomLocalX(),2) - pow(getMomLocalY(),2)));
+    float omegaNew =  charge/getMomLocal().Mag() + corrections[0];
+    float newMom = charge/omegaNew; 
+ //   std::cout << "Here " << getMomLocalX() << " " << getMomLocalY()<< " " << getMomLocalZ() <<"New mom " << newMom<<std::endl;
+    setMomLocalX( newMom*(getMomLocalX()/getMomLocalZ() + corrections[1]));  
+    setMomLocalY( newMom*(getMomLocalY()/getMomLocalZ() + corrections[2]));  
+    setMomLocalZ(sqrt(pow(newMom,2) - pow(getMomLocalX(),2) - pow(getMomLocalY(),2)));
 
 }
 void EUTelState::setRadFrac(double plane, double air){
-	//TO DO: Must rearrange how we save variables.
-	//Must save this again to save the radiation length
-	TVectorD kinks = getKinks();
-	EVENT::FloatVec input;
-	input.push_back(kinks[0]);
-	input.push_back(kinks[1]);
-	input.push_back(plane);
-	input.push_back(air);
-
-	setCovMatrix(input);
+    _radFracAir = air;
+    _radFracSensor = plane;
 }
+void EUTelState::setPositionLocal(float position[]){
+    setPositionLocal(position);
+}
+
+void EUTelState::setPositionLocal(double position[]){
+    float pos[3] = {position[0],position[1],position[2]};
+    _position[0] = pos[0];
+    _position[1] = pos[1];
+    _position[2] = pos[2];
+}
+
 //find
 bool EUTelState::findIntersectionWithCertainID(int nextSensorID, float intersectionPoint[], TVector3& momentumAtIntersection, float& arcLength, int& newNextPlaneID )
 {
@@ -320,16 +347,12 @@ float EUTelState::computeRadLengthsToEnd( std::map<const int,double> & mapSensor
 	float arcLength;
 	int holder; //This is used to return the plane which is found.
 	//DETERMINE INTERSECTION ON LAST PLANE USING STATE INFORMATION.
-//	std::cout<< "Last sensor ID: " << lastPlaneID <<std::endl;
 	findIntersectionWithCertainID(lastPlaneID, intersectionPoint, momentumAtIntersection,arcLength,holder );
 	TVector3 gPos =  getPositionGlobal();
-//	std::cout << "gPos: " << gPos[0] << ","<<gPos[1]<<","<<gPos[2]<<std::endl;
-//	std::cout << "Intersection: " << intersectionPoint[0] << ","<<intersectionPoint[1]<<","<<intersectionPoint[2]<<std::endl;
 	//TO DO: At the moment we just use a straight through the sensor in all enviroments. The code is designed to extend this to any straight line but we see some addition of extra radiation length beyond what is expect. This will have to be looked into but not a huge issue at the moment.
 	//NOTE THE Z VALUE FOR THESE ARE NOT USED IN calculateTotalRadiationLengthAndWeights
 	const double start[] = {gPos[0],gPos[1],-0.025+gPos[2]};
 	const double end[]   = {gPos[0],gPos[1],gPos[2]+0.025};//Must make sure we add all silicon.
-//	std::cout << "intersection point " << intersectionPoint[2] <<std::endl;
 	//NOW WE CALCULATE THE RADIATION LENGTH FOR THE FULL FLIGHT AND THEN SPLIT THESE INTO LINEAR  COMMPONENTS FOR SCATTERING ESTIMATION. 
 	//We will return the radiation lengths associate with the planes and air. Note excluded planes volume should be added to the air in front of non excluded planes. 
 	float rad =	geo::gGeometry().calculateTotalRadiationLengthAndWeights( start,end,  mapSensor, mapAir);
@@ -340,20 +363,41 @@ float EUTelState::computeRadLengthsToEnd( std::map<const int,double> & mapSensor
 //print
 void EUTelState::print(){
 	streamlog_out(DEBUG1)<< std::scientific << "STATE VECTOR:" << std::endl;
-	streamlog_out(DEBUG1)<< std::scientific <<"State memory location "<< this << " The sensor location of the state " <<getLocation()<<std::endl;
+	streamlog_out(DEBUG1)<< std::scientific <<"State memory location "<< this << " The location  " <<getLocation() <<" Distance to next state: " <<getArcLengthToNextState() <<std::endl;
+	streamlog_out(DEBUG1)<< std::scientific <<"(Radiation fraction of full system)*(track Variance)    Plane: "<< getRadFracSensor() <<" Air:  " <<getRadFracAir() <<std::endl;
+
     streamlog_out(DEBUG1)<< std::scientific <<"Position local (X,Y,Z): "<< getPosition()[0] << " " <<  getPosition()[1]<< " " <<  getPosition()[2]<<" Global: "<<getPositionGlobal()[0]<<"  "<<getPositionGlobal()[1]<<" "<<getPositionGlobal()[2]<<std::endl;
     streamlog_out(DEBUG1)<< std::scientific <<"Momentum local (X,Y,Z): "<< getMomLocal()[0] << " " << getMomLocal()[1] << " " << getMomLocal()[2]<<" Global: "<< getMomGlobal()[0]<<" "<<getMomGlobal()[1]<<" "<<getMomGlobal()[2] <<std::endl;
     streamlog_out(DEBUG1)<< std::scientific <<"Incidence local (dx/dz,dy/dz): "<< getMomLocal()[0]/getMomLocal()[2]<< " " << getMomLocal()[1]/getMomLocal()[2] <<std::endl;
-	TVectorD kinks = getKinks();
-	streamlog_out(DEBUG1)<< std::scientific <<"Kinks local (d(dx/dz),d(dy/dz)) "<< kinks[0] <<" ,  " << kinks[1]<<std::endl;
-	if(getIsThereAHit()){
-        streamlog_out(DEBUG1)<< std::scientific<<"The hit ID of the state is "<<getTrackerHits().at(0)->id()<<std::endl;
-        streamlog_out(DEBUG1)<< std::scientific<<"Position hit local (X,Y,Z): "<<getTrackerHits().at(0)->getPosition()[0]<<" "<<getTrackerHits().at(0)->getPosition()[1]<<getTrackerHits().at(0)->getPosition()[2]<<std::endl;
+	streamlog_out(DEBUG1)<< std::scientific <<"Kinks local (d(dx/dz),d(dy/dz)) "<< _kinks[0] <<" ,  " << _kinks[1]<<std::endl;
+	streamlog_out(DEBUG1)<< std::scientific <<"Kinks local Medium1 (d(dx/dz),d(dy/dz)) "<< _kinksMedium1[0] <<" ,  " << _kinksMedium1[1]<<std::endl;
+	streamlog_out(DEBUG1)<< std::scientific <<"Kinks local Medium2 (d(dx/dz),d(dy/dz)) "<< _kinksMedium2[0] <<" ,  " << _kinksMedium2[1]<<std::endl;
+
+	if(getStateHasHit()){
+        streamlog_out(DEBUG1)<< std::scientific<<"The hit ID of the state is "<<getHit().getID()<<std::endl;
+        streamlog_out(DEBUG1)<< std::scientific<<"Position hit local (X,Y,Z): "<<getHit().getPosition()[0]<<" "<<getHit().getPosition()[1]<<getHit().getPosition()[2]<<std::endl;
 
 	}else{
 		streamlog_out(DEBUG1) <<"This state has no hit " << std::endl;
 	}
 }	
+//clear all contain so can be reused. This is needed in pattern recognition. 
+void EUTelState::clear(){
+    _kinks[0]=0;
+    _kinks[1]=0;
+    _stateHasHit = false;
+   //Remove hit information.
+	setDimensionSize(0);
+    setArcLengthToNextState(0);
+	setLocation(0);  
+	double position[] = {0,0,0}; 
+	setPositionLocal(position); 	
+	setMomLocalX(0); 
+	setMomLocalY(0);    
+	setMomLocalZ(0);  
+    setRadFrac(0,0);
+}
+
 //Overload operators.
 bool EUTelState::operator<(const EUTelState compareState ) const {
 	return getPosition()[2]<compareState.getPosition()[2];
@@ -368,4 +412,56 @@ bool EUTelState::operator==(const EUTelState compareState ) const {
 }
 
 
+std::vector<double> EUTelState::getLCIOOutput(){
+    std::vector<double> output;
+    output.push_back(getDimensionSize());
+    output.push_back(getLocation());
+    output.push_back(_momLocalX);
+    output.push_back(_momLocalY);
+    output.push_back(_momLocalZ);
+    output.push_back(getArcLengthToNextState());
+    output.push_back(getPosition()[0]);
+    output.push_back(getPosition()[1]);
+    output.push_back(getPosition()[2]);
+    if(getStateHasHit()){
+        output.push_back(1);
+    }else{
+        output.push_back(0);
+    }
+    output.push_back(getKinks()[0]);
+    output.push_back(getKinks()[1]);
+    output.push_back(getRadFracAir());
+    output.push_back(getRadFracSensor());
+		//	TMatrixDSym getStateCov() const;
+    output.push_back(getKinksMedium1()[0]);
+    output.push_back(getKinksMedium1()[1]);
+    output.push_back(getKinksMedium2()[0]);
+    output.push_back(getKinksMedium2()[1]);
 
+    return output;
+
+}
+void EUTelState::setTrackFromLCIOVec(std::vector<double> input){
+    setDimensionSize(input.at(0));
+    setLocation(input.at(1));
+    setMomLocalX(input.at(2));
+    setMomLocalY(input.at(3));
+    setMomLocalZ(input.at(4));
+    setArcLengthToNextState(input.at(5)); 
+    double pos[3] = {input.at(6),input.at(7),input.at(8)};
+    setPositionLocal(pos);
+    TVectorD kinks(2);
+    kinks[0] = input.at(10);
+    kinks[1] = input.at(11);
+    setKinks(kinks);
+    setRadFrac(input.at(13), input.at(12));
+    TVectorD kinksMedium1(2);
+    kinksMedium1[0] = input.at(14);
+    kinksMedium1[1] = input.at(15);
+    setKinksMedium1(kinksMedium1);
+    TVectorD kinksMedium2(2);
+    kinksMedium2[0] = input.at(16);
+    kinksMedium2[1] = input.at(17);
+    setKinksMedium2(kinksMedium2);
+
+}

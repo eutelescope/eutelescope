@@ -42,6 +42,7 @@
 #include "EUTelExceptions.h"
 #include "EUTelEventImpl.h"
 #include "EUTelHistogramManager.h"
+#include "EUTelReaderGenericLCIO.h"
 
 namespace eutelescope {
 

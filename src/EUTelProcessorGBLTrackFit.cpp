@@ -136,20 +136,15 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent* evt){
 		}else if (event->getEventType() == kUNKNOWN) {
 			streamlog_out(WARNING2) << "Event number " << event->getEventNumber() << " in run " << event->getRunNumber() << " is of unknown type. Continue considering it as a normal Data Event." << std::endl;
 		}
-		LCCollection* col = NULL;
-		col = evt->getCollection(_trackCandidatesInputCollectionName);
-		streamlog_out(DEBUG1) << "collection : " << _trackCandidatesInputCollectionName << " retrieved" << std::endl;
-
-		if (col == NULL) {
-			streamlog_out(MESSAGE0)<< "The collection is NULL for this event." << std::endl;
-			throw marlin::SkipEventException(this);
-		}
+        EUTelReaderGenericLCIO reader = EUTelReaderGenericLCIO();
+        std::vector<EUTelTrack> tracks = reader.getTracks(evt, _trackCandidatesInputCollectionName );
 		std::vector<EUTelTrack> allTracksForThisEvent;//GBL will analysis the track one at a time. However we want to save to lcio per event.
-		for (int iCol = 0; iCol < col->getNumberOfElements(); iCol++) {
-			//TO DO: Make sure that the original input collection is not changed by this.
-			EUTelTrack track =  EUTelTrack(*(static_cast<EUTelTrack*> (col->getElementAt(iCol))));//TO DO: Is there a more elegant way to copy this?
+		for (int iTrack = 0; iTrack < tracks.size(); iTrack++) {
+			EUTelTrack track = tracks.at(iTrack); 
+            streamlog_out(DEBUG1)<<"Found "<<tracks.size()<<" tracks for event " << evt->getEventNumber() << "  This is track:  " << iTrack <<std::endl;
+            track.print();
+			streamlog_out(DEBUG1) << "//////////////////////////////////// " << std::endl;
 			_trackFitter->resetPerTrack(); //Here we reset the label that connects state to GBL point to 1 again. Also we set the list of states->labels to 0
-			track.print();//Print the track use for debugging
 			_trackFitter->testTrack(track);//Check the track has states and hits  
 			std::vector< gbl::GblPoint > pointList;
 			_trackFitter->setInformationForGBLPointList(track, pointList);//Here we describe the whole setup. Geometry, scattering, data...
@@ -309,44 +304,15 @@ void EUTelProcessorGBLTrackFit::end() {
 
 #endif // USE_GBL
 
-//TO DO: If you have a missing hit from a state this does not seem to work. However you can exclude planes which produces no hit which is fine
 void EUTelProcessorGBLTrackFit::outputLCIO(LCEvent* evt, std::vector<EUTelTrack>& tracks){
-
-	streamlog_out( DEBUG4 ) << " ---------------- EUTelProcessorGBLTrackFit::outputLCIO ---------- BEGIN ------------- " << std::endl;
-
-	//Create once per event//Note that this will not cause a memory leak since lcio will delete the memory automatically for you    
-	//Should create a new track and state in lcio memory. So we don't change the old stuff.
-	LCCollectionVec * trkCandCollection = new LCCollectionVec(LCIO::TRACK);
-	LCCollectionVec * stateCandCollection = new LCCollectionVec(LCIO::TRACK);
-
-	// Prepare output collection
-	LCFlagImpl flag(trkCandCollection->getFlag());
-	flag.setBit( LCIO::TRBIT_HITS );
-	trkCandCollection->setFlag( flag.getFlag( ) );
-
-	LCFlagImpl flag2(stateCandCollection->getFlag());
-	flag2.setBit( LCIO::TRBIT_HITS );
-	stateCandCollection->setFlag( flag2.getFlag( ) );
-
-	//Loop through all tracks
-	for (size_t i = 0 ; i < tracks.size(); ++i){
-		EUTelTrack* trackheap = new  EUTelTrack(tracks.at(i), false); //We dont want to copy contents so set to false. We only want the track object but not the states or hits. Since the states should have there own place in memory before saving.
-		trackheap->print();
-		//For every track add this to the collection
-		for( size_t j = 0;j < tracks.at(i).getStates().size();++j){
-			EUTelState* stateheap = new EUTelState(tracks.at(i).getStates().at(j));
-			trackheap->addTrack(stateheap);
-			stateCandCollection->push_back(static_cast<EVENT::Track*>(stateheap));
-		}
-		trkCandCollection->push_back(static_cast<EVENT::Track*>(trackheap));
-	}//END TRACK LOOP
-
-	//Now add this collection to the 
-	evt->addCollection(trkCandCollection, _tracksOutputCollectionName);
-	std::string name = _tracksOutputCollectionName + "_GBLstates" ;
-	evt->addCollection(stateCandCollection, name);
-
-	streamlog_out( DEBUG4 ) << " ---------------- EUTelProcessorGBLTrackFit::outputLCIO ---------- END ------------- " << std::endl;
+    if(!tracks.empty()){
+        for(unsigned int i=0 ; i< tracks.size(); i++){
+            streamlog_out(DEBUG1)<<"Found "<<tracks.size()<<" track for event " << evt->getEventNumber() <<".  Track number  " << i <<std::endl;
+            tracks.at(i).print();
+        }
+        EUTelReaderGenericLCIO reader = EUTelReaderGenericLCIO();
+        reader.getColVec(tracks, evt,_tracksOutputCollectionName);
+    }
 }
 
 void EUTelProcessorGBLTrackFit::bookHistograms() {

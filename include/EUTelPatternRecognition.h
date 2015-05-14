@@ -108,7 +108,8 @@ namespace eutelescope {
         std::vector<EUTelTrack> getSeedTracks();
         bool seedTrackOuterHits(EUTelTrack track, EUTelTrack & trackOut);
 
-		
+		TVector3 getGlobalMomBetweenStates(EUTelState firstState, EUTelState lastState);
+
 		//Here if the user does not set a create seeds from planes x. The we set it automatically to the first plane travelling as the beam travels. 
 		//This has the best of both world. No reduction on functionality. User does not even know this is here. 	
 		inline 	void setAutoPlanestoCreateSeedsFrom(){
@@ -121,7 +122,7 @@ namespace eutelescope {
 		TVector3 computeInitialMomentumGlobal();
 		//TEST
 		void testUserInput();
-		void testTrackCandidates();
+//		void testTrackCandidates();
 		
 		//OTHER
 		void printTrackCandidates();

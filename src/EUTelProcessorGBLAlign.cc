@@ -164,38 +164,35 @@ void EUTelProcessorGBLAlign::processEvent(LCEvent * evt){
 			}else if (event->getEventType() == kUNKNOWN) {
 				streamlog_out(WARNING2) << "Event number " << event->getEventNumber() << " in run " << event->getRunNumber() << " is of unknown type. Continue considering it as a normal Data Event." << std::endl;
 			}
-			LCCollection* eventCollection = NULL;
-			eventCollection = evt->getCollection(_trackCandidatesInputCollectionName);
-			if (eventCollection != NULL) {
-				streamlog_out(DEBUG2) << "Collection contains data! Continue!" << std::endl;
-				for (int iTrack = 0; iTrack < eventCollection->getNumberOfElements(); ++iTrack) {
-					_totalTrackCount++;
-					_trackFitter->resetPerTrack(); //Here we reset the label that connects state to GBL point to 1 again. Also we set the list of states->labels to 0
-					EUTelTrack track = *(static_cast<EUTelTrack*> (eventCollection->getElementAt(iTrack)));
-		//			float chi = track.getChi2();
-	//				float ndf = static_cast<float>(track.getNdf());
-					std::vector< gbl::GblPoint > pointList;//This is the GBL points. These contain the state information, scattering and alignment jacobian. All the information that the mille binary will get.
-					_trackFitter->setInformationForGBLPointList(track, pointList);//We create all the GBL points with scatterer inbetween both planes. This is identical to creating GBL tracks
-					_trackFitter->setPairMeasurementStateAndPointLabelVec(pointList);
-					_trackFitter->setAlignmentToMeasurementJacobian(pointList); //This is place in GBLFitter since millepede has no idea about states and points. Only GBLFitter know about that
-					const gear::BField& B = geo::gGeometry().getMagneticField();
-					const double Bmag = B.at( TVector3(0.,0.,0.) ).r2();
-					gbl::GblTrajectory* traj = 0;
+            EUTelReaderGenericLCIO reader = EUTelReaderGenericLCIO();
+            std::vector<EUTelTrack> tracks = reader.getTracks(evt, _trackCandidatesInputCollectionName);
+            for (int iTrack = 0; iTrack < tracks.size(); ++iTrack) {
+                _totalTrackCount++;
+                _trackFitter->resetPerTrack(); //Here we reset the label that connects state to GBL point to 1 again. Also we set the list of states->labels to 0
+                EUTelTrack track = tracks.at(iTrack);
+    //			float chi = track.getChi2();
+//				float ndf = static_cast<float>(track.getNdf());
+                std::vector< gbl::GblPoint > pointList;//This is the GBL points. These contain the state information, scattering and alignment jacobian. All the information that the mille binary will get.
+                _trackFitter->setInformationForGBLPointList(track, pointList);//We create all the GBL points with scatterer inbetween both planes. This is identical to creating GBL tracks
+                _trackFitter->setPairMeasurementStateAndPointLabelVec(pointList);
+                _trackFitter->setAlignmentToMeasurementJacobian(pointList); //This is place in GBLFitter since millepede has no idea about states and points. Only GBLFitter know about that
+                const gear::BField& B = geo::gGeometry().getMagneticField();
+                const double Bmag = B.at( TVector3(0.,0.,0.) ).r2();
+                gbl::GblTrajectory* traj = 0;
 //					printPointsInformation(pointList);
-					if ( Bmag < 1.E-6 ) {
-						traj = new gbl::GblTrajectory( pointList, false ); //Must make sure this is not a memory leak
-					} else {
-						traj = new gbl::GblTrajectory( pointList, true );
-					}
-					double chi2, loss;
-					int ndf2;
-					traj->fit(chi2, ndf2, loss, _mEstimatorType );
-					streamlog_out ( DEBUG0 ) << "This is the trajectory we are just about to fit: " << std::endl;
-					streamlog_message( DEBUG0, traj->printTrajectory(10);, std::endl; );
-	//				std::cout<<"WRITE TO MILLEPEDE. EVENT: " << 	event->getEventNumber() << "  Total number of tracks: " << _totalTrackCount << std::endl;	
-					traj->milleOut(*(_Mille->_milleGBL));
-				}//END OF LOOP FOR ALL TRACKS IN AN EVENT
-			}//END OF COLLECTION IS NOT NULL LOOP	
+                if ( Bmag < 1.E-6 ) {
+                    traj = new gbl::GblTrajectory( pointList, false ); //Must make sure this is not a memory leak
+                } else {
+                    traj = new gbl::GblTrajectory( pointList, true );
+                }
+                double chi2, loss;
+                int ndf2;
+                traj->fit(chi2, ndf2, loss, _mEstimatorType );
+                streamlog_out ( DEBUG0 ) << "This is the trajectory we are just about to fit: " << std::endl;
+                streamlog_message( DEBUG0, traj->printTrajectory(10);, std::endl; );
+//				std::cout<<"WRITE TO MILLEPEDE. EVENT: " << 	event->getEventNumber() << "  Total number of tracks: " << _totalTrackCount << std::endl;	
+                traj->milleOut(*(_Mille->_milleGBL));
+            }//END OF LOOP FOR ALL TRACKS IN AN EVENT
 //			if(event->getEventNumber() == 1){
 //				throw marlin::StopProcessingException( this ) ;
 //			}

@@ -117,7 +117,7 @@ void EUTelMillepede::computeAlignmentToMeasurementJacobian( EUTelState &state){
 	state.print();
 	float TxLocal =  state.getMomLocalX()/state.getMomLocalZ();
 	float TyLocal =  state.getMomLocalY()/state.getMomLocalZ();
-	float* localpos = state.getPosition();
+	const float* localpos = state.getPosition();
 	streamlog_out( DEBUG0 ) << "This is px/pz, py/pz (local) "<< TxLocal <<","<< TyLocal << std::endl;
 	streamlog_out( DEBUG0 ) << "Local frame position "<< *localpos<<","<<*(localpos+1)<<","<<*(localpos+2) << std::endl;
 	computeAlignmentToMeasurementJacobian( *localpos,*(localpos+1), TxLocal, TyLocal);
@@ -168,10 +168,10 @@ void EUTelMillepede::computeAlignmentToMeasurementJacobian( float x,float y, flo
 		
 	///////////////////////////////////////////////////////////////Rotations around x and y axis. Only do this if you want to move everything. WHY NOT ALSO PARTIAL SHIFTS?????? BEGIN.
 	if (_alignmentMode == Utility::XYZShiftXZRotYZRotXYRot) {
-  	_jacobian[0][4] =   x*slopeXvsZ; // dxh/rotys
-    _jacobian[1][4] =   x*slopeYvsZ; // dyh/rotys
-    _jacobian[0][5] =  y*slopeXvsZ; // dxh/rotxs          
-    _jacobian[1][5] =  y*slopeYvsZ; // dyh/rotxs         
+  	_jacobian[0][4] =   -x*slopeXvsZ; // dxh/rotyr
+    _jacobian[1][4] =  -x*slopeYvsZ; // dyh/rotyr
+    _jacobian[0][5] =  -y*slopeXvsZ; // dxh/rotxr          
+    _jacobian[1][5] =  -y*slopeYvsZ; // dyh/rotxr         
   }
 	///////////////////////////////////////////////////////////////////////////////////END
 
@@ -179,22 +179,22 @@ void EUTelMillepede::computeAlignmentToMeasurementJacobian( float x,float y, flo
 //This part is if there is only partial alignment. Therefore you need to overwrite some parts of the full size matrix we have just filled BEGIN
 	/////////////////////////////rotation around y axis BEGIN
 	if (_alignmentMode == Utility::XYShiftXZRotXYRot) {
-		_jacobian[0][3] = x*slopeXvsZ; // dxh/rotys
-   	_jacobian[1][3] = x*slopeYvsZ; // dyh/rotys
+		_jacobian[0][3] = -x*slopeXvsZ; // dxh/rotyr
+   	_jacobian[1][3] = -x*slopeYvsZ; // dyh/rotyr
   }
 	///////////////////////////////////////////////////////////////////////Rotation around x axis BEGIN
 	if (_alignmentMode == Utility::XYShiftYZRotXYRot) {
-  	_jacobian[0][3] = y*slopeXvsZ; // dxh/rotxs  //Note if changed  the signs here since they were wrong I think. Should match smae calculation above
-    _jacobian[1][3] = y*slopeYvsZ; // dyh/rotxs  
+  	_jacobian[0][3] = -y*slopeXvsZ; // dxh/rotxr 
+    _jacobian[1][3] = -y*slopeYvsZ; // dyh/rotxr  
   }
 	///////////////////////////////////////////////////////////////////////////////////////////END
 
  	///////////////This does all rotations but not z shift////////////////////////BEGIN
 	if (_alignmentMode == Utility::XYShiftXZRotYZRotXYRot) {
-		_jacobian[0][3] =  x*slopeXvsZ; // dxh/rotys
-		_jacobian[1][3] =  x*slopeYvsZ; // dyh/rotys
-		_jacobian[0][4] = y*slopeXvsZ; // dxh/rotxs
-		_jacobian[1][4] = y*slopeYvsZ; // dyh/rotxs
+		_jacobian[0][3] =  -x*slopeXvsZ; // dxh/rotyr
+		_jacobian[1][3] =  -x*slopeYvsZ; // dyh/rotyr
+		_jacobian[0][4] = -y*slopeXvsZ; // dxh/rotxr
+		_jacobian[1][4] = -y*slopeYvsZ; // dyh/rotxr
   }
 	/////////////////////////////////////////////////////////////////////////////END
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////END OF PARTIAL MATRIX FILL		
