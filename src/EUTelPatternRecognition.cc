@@ -373,7 +373,6 @@ void EUTelPatternRecognition::initialiseSeeds()
 		if(hitFirstLayer.size()== 0){
 			continue;
 		}
-
 		std::vector<EUTelState> stateVec;
 		EVENT::TrackerHitVec::iterator itHit;
 		for ( itHit = hitFirstLayer.begin(); itHit != hitFirstLayer.end(); ++itHit ) {
@@ -385,15 +384,15 @@ void EUTelPatternRecognition::initialiseSeeds()
 				streamlog_out(MESSAGE5) << "The local position of the hit is " << posLocal[0]<<","<< posLocal[1]<<","<< posLocal[2]<<","<<std::endl;
 				throw(lcio::Exception("The position of this local coordinate in the z direction is non 0")); 	
 			}
-			state.setLocation(_createSeedsFromPlanes[iplane]);//This stores the location as a float in Z0 since no location for track LCIO. This is preferable to problems with storing hits.  
-			state.setPositionLocal(posLocal); //This will automatically take cartesian coordinate system and save it to reference point. //This is different from most LCIO applications since each track will have own reference point. 		
+			state.setLocation(_createSeedsFromPlanes[iplane]);  
+			state.setPositionLocal(posLocal);  		
 			TVector3 momentum = computeInitialMomentumGlobal(); 
 			state.setLocalMomentumGlobalMomentum(momentum); 
 			state.setHit(*itHit);
-
 			_totalNumberOfHits++;//This is used for test of the processor later.   
 			state.setDimensionSize(_planeDimensions[state.getLocation()]);
 			stateVec.push_back(state);
+
 		}
         streamlog_out(DEBUG0) << "States to create tracks from: "<< std::endl;       
         for(unsigned int i = 0; i<stateVec.size(); i++){

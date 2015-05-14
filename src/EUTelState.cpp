@@ -268,7 +268,8 @@ void EUTelState::setRadFrac(double plane, double air){
     _radFracSensor = plane;
 }
 void EUTelState::setPositionLocal(float position[]){
-    setPositionLocal(position);
+    double pos[3] = {position[0],position[1],position[2]};
+    setPositionLocal(static_cast<double*>(pos));
 }
 
 void EUTelState::setPositionLocal(double position[]){
@@ -408,6 +409,13 @@ bool EUTelState::operator==(const EUTelState compareState ) const {
 		return true;
 	}else{
 		return false;
+	}
+}
+bool EUTelState::operator!=(const EUTelState compareState ) const {
+	if(getLocation() == compareState.getLocation() and 	getPosition()[0] == compareState.getPosition()[0] and	getPosition()[1] == compareState.getPosition()[1] and 	getPosition()[2] == compareState.getPosition()[2]){
+		return false;
+	}else{
+		return true;
 	}
 }
 

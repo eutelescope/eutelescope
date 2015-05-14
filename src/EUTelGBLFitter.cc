@@ -619,10 +619,12 @@ namespace eutelescope {
                         //Get the scatterer for the planes and the medium in front of the state.
 						traj->getScatResults( _vectorOfPairsStatesAndLabels.at(j).second, numData, aResidualsKink, aMeasErrorsKink, aResErrorsKink, aDownWeightsKink);
 						state.setKinks(aResidualsKink);
-//						traj->getScatResults( _vectorOfPairsStatesAndLabels.at(j).second + 1, numData, aResidualsKink, aMeasErrorsKink, aResErrorsKink, aDownWeightsKink);
-//						state.setKinksMedium1(aResidualsKink);
-//						traj->getScatResults( _vectorOfPairsStatesAndLabels.at(j).second + 2, numData, aResidualsKink, aMeasErrorsKink, aResErrorsKink, aDownWeightsKink);
-//						state.setKinksMedium2(aResidualsKink);
+                        if(state != track.getStates().at(track.getStates().size()-1)){
+                            traj->getScatResults( _vectorOfPairsStatesAndLabels.at(j).second + 1, numData, aResidualsKink, aMeasErrorsKink, aResErrorsKink, aDownWeightsKink);
+                            state.setKinksMedium1(aResidualsKink);
+                            traj->getScatResults( _vectorOfPairsStatesAndLabels.at(j).second + 2, numData, aResidualsKink, aMeasErrorsKink, aResErrorsKink, aDownWeightsKink);
+                            state.setKinksMedium2(aResidualsKink);
+                        }
 						streamlog_out(DEBUG3) << std::endl << "State after we have added corrections: " << std::endl;
 						state.print();
 					}else{

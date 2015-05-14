@@ -866,7 +866,8 @@ TMatrixD EUTelGeometryTelescopeGeoDescription::getRotMatrix( int sensorID ) {
 
 }
 int EUTelGeometryTelescopeGeoDescription::getSensorID( float globalPos[] ) const {
-    getSensorID(globalPos);
+    double pos[3] = {globalPos[0],globalPos[1],globalPos[2]};
+    getSensorID(pos);
 }
 /** Determine id of the sensor in which point is locate
  *  * 
