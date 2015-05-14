@@ -1,9 +1,5 @@
 #!/bin/bash
 #This is the bash script that performs a single iteration of alignment. 
-#The steps are: 
-#1) It will run pattern recognition and check that the number of found track candidates is reasonable if not then it will widen its acceptance window and try again.
-#2) With these tracks we then use this to align. Alignment uses 2 different kinds of cuts. We cut tracks with high chi2 before alignment procedure and during.   
-#3) If our chi2/ndf is not rougly equal to 1 or we have a high number of rejects then we run again with a different resolution.  
 #THIS IS PART (1)
 echo "The input to single loop on iteration $number"
 echo "Input gear: $inputGear" 
