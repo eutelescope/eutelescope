@@ -364,8 +364,8 @@ class EUTelGeometryTelescopeGeoDescription
 
 	// Geometry operations
     float findRad( const double globalPosStart[], const double globalPosFinish[], std::map< const int, double> &sensors, 	std::map< const int, double> &air );
-    template<class number>
-	int getSensorID(number globalPos[] ) const;
+	int getSensorID(float globalPos[] ) const;
+	int getSensorID(double globalPos[] ) const;
 	int getSensorIDFromManager();
 
 
@@ -443,7 +443,6 @@ inline EUTelGeometryTelescopeGeoDescription& gGeometry( gear::GearMgr* _g = marl
 {
 	return EUTelGeometryTelescopeGeoDescription::getInstance( _g ); 
 }
-#include "EUTelGeometryTelescopeGeoDescription.tcc"
 } // namespace geo
 } // namespace eutelescope
 #endif  // USE_GEAR 
