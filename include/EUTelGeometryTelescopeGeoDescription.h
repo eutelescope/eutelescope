@@ -366,6 +366,7 @@ class EUTelGeometryTelescopeGeoDescription
     float findRad( const double globalPosStart[], const double globalPosFinish[], std::map< const int, double> &sensors, 	std::map< const int, double> &air );
 	int getSensorID(float globalPos[] ) const;
 	int getSensorID(double globalPos[] ) const;
+
 	int getSensorIDFromManager();
 
 

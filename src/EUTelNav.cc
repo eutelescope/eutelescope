@@ -678,7 +678,7 @@ bool EUTelNav::findIntersectionWithCertainID(	float x0, float y0, float z0,
 	outputMomentum[2] = newMomentum[2];
 
 	//Is the new point within the sensor. If not then we may have to propagate a little bit further to enter.
- 	const double pos[3] = {newPos[0],newPos[1],newPos[2]};
+ 	double pos[3] = {newPos[0],newPos[1],newPos[2]};
 	int sensorIDCheck = geo::gGeometry().getSensorID(pos); 
 	bool foundIntersection = false;
 	if(sensorIDCheck == nextPlaneID){
