@@ -46,7 +46,7 @@
 #include "EUTelBrickedClusterImpl.h"
 #include "EUTelDFFClusterImpl.h"
 #include "EUTelFFClusterImpl.h"
-//namespaces
+#include "EUTelReaderGenericLCIO.h"
 
 namespace eutelescope {
 

@@ -28,56 +28,61 @@ std::vector<EUTelTrack>& EUTelPatternRecognition::getTracks()
 	return	_finalTracks; 
 }
 
-void EUTelPatternRecognition::testTrackCandidates(){
-	for(size_t i=0; i < _tracks.size(); ++i){
-		int idBefore=-999;
-		for(size_t j = 0; j<_tracks.at(i).getTracks().size();++j){
-			if(_tracks.at(i).getTracks().at(j)->getTrackerHits().size() > 1){
-				throw(lcio::Exception( "The number of hits for each state is greater than 1"));
-			}
-			if(!_tracks.at(i).getTracks().at(j)->getTrackerHits().empty()){//Since some states will have not hits
-				const EVENT::TrackerHit* hit =  _tracks.at(i).getTracks().at(j)->getTrackerHits().at(0);
-				int id = hit->id();
-				if(j>1 and id == idBefore){
-					streamlog_out(MESSAGE5) << "The IDs of the hits are: " <<id <<" and before  "<<idBefore<<std::endl; 
-					//note z0 stores the position of the state.
-					streamlog_out(MESSAGE5) << "The state locations are " << _tracks.at(i).getTracks().at(j)->getZ0() <<" and  "<<_tracks.at(i).getTracks().at(j-1)->getZ0()<<std::endl; 
-					throw(lcio::Exception( "Some states have the same hits. "));
-				}
-				idBefore=id;
-			}
-		}
-	}
-}
+//void EUTelPatternRecognition::testTrackCandidates(){
+//	for(size_t i=0; i < _tracks.size(); ++i){
+//		int idBefore=-999;
+//		for(size_t j = 0; j<_tracks.at(i).getStates().size();++j){
+//			if(_tracks.at(i).getStates().at(j)->getIsThereAHit()){//Since some states will have not hits
+//				EUTelHit hit =  _tracks.at(i).getStates().at(j)->getHit();
+//				int id = hit->id();
+//				if(j>1 and id == idBefore){
+//					streamlog_out(MESSAGE5) << "The IDs of the hits are: " <<id <<" and before  "<<idBefore<<std::endl; 
+//					//note z0 stores the position of the state.
+//					streamlog_out(MESSAGE5) << "The state locations are " << _tracks.at(i).getTracks().at(j)->getZ0() <<" and  "<<_tracks.at(i).getTracks().at(j-1)->getZ0()<<std::endl; 
+//					throw(lcio::Exception( "Some states have the same hits. "));
+//				}
+//				idBefore=id;
+//			}
+//		}
+//	}
+//}
 
 //This is the work horse of the class. Using seeds it propagates the track forward using equations of motion. This can be with or without magnetic field.
 void EUTelPatternRecognition::propagateForwardFromSeedState(EUTelState& stateInput, EUTelTrack& track)
 {
+    streamlog_out ( DEBUG1 ) << "Initial Seed: "<< std::endl;
+    stateInput.print();
+
 	std::map<const int,double>  mapSensor;
 	std::map<const int ,double>  mapAir;
 	double rad =	stateInput.computeRadLengthsToEnd(mapSensor, mapAir);
-
-	EUTelState* state = &stateInput;//Make it a pointer so we can change this to newState after.
+	EUTelState state = stateInput;
 	
-	//TO DO: To delete this in smart way. 
-	EUTelState *firstState = new EUTelState(stateInput);//Need to create an initial state that will not be deleted outside this scope  
-	//Here we determine the radiation lengths associated with this track and the weights for each scatterer. 
-	streamlog_out(DEBUG2) << "This is the memory location of the state: "<< firstState << std::endl;
-	track.addTrack(static_cast<EVENT::Track*>(firstState));//Note we do not have to create new since this object State is saved in class member scope
 	if(rad == 0 ){ //If the estimated radiation length is 0 then we do not use the track.
-//		std::cout<<"HEREEEEEEEEEEEEE WE MAKE A MISTAKE" << std::endl;
 		return;
 	}
 	//Here we loop through all the planes not excluded. We begin at the seed which might not be the first. Then we stop before the last plane, since we do not want to propagate anymore
-	bool firstLoop =true;//TO DO:: This works but is very stupid. Must fix
-	for(size_t i = geo::gGeometry().sensorIDToZOrderWithoutExcludedPlanes().at(state->getLocation()); i < (geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()-1); ++i){
+	bool firstLoop =true;//This is needed so we get the arclength to the next state on the first. Completing the state and adding.
+    bool calcDirection =true;// This is used to have an estimate of the direction of the particle using the first two hits associated together. 
+    EUTelState newState; //Must exist after exiting loop. 
+	for(size_t i = geo::gGeometry().sensorIDToZOrderWithoutExcludedPlanes().at(state.getLocation()); i < (geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()); ++i){
+        //Loop one more than the last plane to add the last plane on the next loop then end 
+        if(i == geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()-1){
+            //Do not add arclength to the last plane 
+            track.setState(newState); 
+            newState.clear();
+            streamlog_out ( DEBUG1 ) << "ADD STATES (Add scattering later)  Event number: "<<getEventNumber() << std::endl;
+            streamlog_out ( DEBUG1 ) << "Finished track!"<< std::endl;
+            track.print();
+            break;
+        }
+
 	
 		float globalIntersection[3];
 		TVector3 momentumAtIntersection;
 		float arcLength;
 		int newSensorID = 0;
-		
-		bool foundNextIntersection = state->findIntersectionWithCertainID(	geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i+1), 
+		bool foundNextIntersection = state.findIntersectionWithCertainID(	geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i+1), 
 											globalIntersection, momentumAtIntersection, arcLength, newSensorID);
 
 		if(!foundNextIntersection)
@@ -100,57 +105,63 @@ void EUTelPatternRecognition::propagateForwardFromSeedState(EUTelState& stateInp
 					<<  globalIntersection[0] << ", " << globalIntersection[1] << ", " << globalIntersection[2] << std::endl
 					<< "Momentum on next plane: " 
 					<<  momentumAtIntersection[0]<< ", "<<momentumAtIntersection[1] << ", " << momentumAtIntersection[2] << std::endl;
-
-		if(firstLoop)
+        streamlog_out ( DEBUG1 ) << "ADD STATES (Add scattering later)  Event number: "<<getEventNumber() << std::endl;
+		if(firstLoop)//This is where we add the state with hit collected on first entry to the loop.
 		{
-			firstState->setArcLengthToNextState(arcLength); 
+			state.setArcLengthToNextState(arcLength); 
+            track.setState(state);//All we need to add to the first state is the arclength to the next plane.
+            streamlog_out ( DEBUG1 ) << "Begin by adding first state... "<< std::endl;
+            track.print();
 			firstLoop =false;
 		}
 		else
 		{
-			state->setArcLengthToNextState(arcLength);
+			newState.setArcLengthToNextState(arcLength);//This variable must be calculated one loop after all other variables.
+			track.setState(newState); 
+            newState.clear();
+            streamlog_out ( DEBUG1 ) << "Update track to..."<< std::endl;
+            track.print();
 		}
-		
 		//So we have intersection lets create a new state
-		EUTelState* newState = new EUTelState();//Need to create this since we save the pointer and we would be out of scope when we leave this function. Destroying this object. 
-		newState->setDimensionSize(_planeDimensions[newSensorID]);//We set this since we need this information for later processors
-		newState->setLocation(newSensorID);
-		newState->setPositionGlobal(globalIntersection);
-		newState->setLocalMomentumGlobalMomentum(momentumAtIntersection);
+		newState.setDimensionSize(_planeDimensions[newSensorID]);//We set this since we need this information for later processors
+		newState.setLocation(newSensorID);
+		newState.setPositionGlobal(globalIntersection);
+		newState.setLocalMomentumGlobalMomentum(momentumAtIntersection);
+        state = newState;//Set state here ready to propagate. It does not need hit information to do this.
 
 		if(_mapHitsVecPerPlane[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i+1)].empty()){
 			streamlog_out(DEBUG5) << "There are no hits on the plane with this state. Add state to track as it is and move on." << std::endl;
-			track.addTrack(static_cast<EVENT::Track*>(newState));//Need to return this to LCIO object. Loss functionality but retain information 
-			state = newState;
+//			track.setState(newState); 
+//			state = newState;
 			continue;
 		}
-		EVENT::TrackerHit* closestHit = const_cast<EVENT::TrackerHit*>( findClosestHit(*newState)); //This will look for the closest hit but not if it is within the excepted range		
+		EVENT::TrackerHit* closestHit = const_cast<EVENT::TrackerHit*>( findClosestHit(newState)); //This will look for the closest hit but not if it is within the excepted range		
 		double distance;
-		if(newState->getDimensionSize() == 2)
+		if(newState.getDimensionSize() == 2)
 		{
 			//This distance could be 2D or 1D depending on if you have a strip or pixel sensor. 
 			//Norm2Sqr does not square root for some reason.
-			distance = sqrt(computeResidual( *newState, closestHit ).Norm2Sqr());
+			distance = sqrt(computeResidual( newState, closestHit ).Norm2Sqr());
 		}
-		else if(newState->getDimensionSize() == 1)
+		else if(newState.getDimensionSize() == 1)
 		{
 			//If strip sensor then use only displacement along strips, which should be x axis.
-			distance = computeResidual( *newState, closestHit )[0];
+			distance = computeResidual( newState, closestHit )[0];
 		}
 		else
 		{
 			throw(lcio::Exception( "The closest hit is not on a pixel or strip sensor. Since the dimensionality if less than 1 or greater than 2."));
 		}
 
-		const double DCA = getXYPredictionPrecision(*newState);
+		const double DCA = getXYPredictionPrecision(newState);
 
-		streamlog_out ( DEBUG1 ) <<"At plane: "<<newState->getLocation() << ". Distance between state and hit: "<< distance <<" Must be less than: "<<DCA<< std::endl;
+		streamlog_out ( DEBUG1 ) <<"At plane: "<<newState.getLocation() << ". Distance between state and hit: "<< distance <<" Must be less than: "<<DCA<< std::endl;
 		streamlog_out(DEBUG0) <<"Closest hit position: " << closestHit->getPosition()[0]<<" "<< closestHit->getPosition()[1]<<"  "<< closestHit->getPosition()[2]<<std::endl;
 
 		if ( distance > DCA ) {
 			streamlog_out ( DEBUG1 ) << "Closest hit is outside of search window." << std::endl;
-			track.addTrack(static_cast<EVENT::Track*>(newState));//Need to return this to LCIO object. Loss functionality but retain information 
-			state = newState;
+//			track.setState(newState); 
+//			state = newState;
 			continue;
 		}	
 		if(closestHit == NULL){
@@ -158,30 +169,38 @@ void EUTelPatternRecognition::propagateForwardFromSeedState(EUTelState& stateInp
 		}
 
 		streamlog_out ( DEBUG1 ) << "Found a hit with memory address: " << closestHit<<" and ID of " <<closestHit->id() <<" At a Distance: "<< distance<<" from state." << std::endl;
-		newState->addHit(closestHit);
+		newState.setHit(closestHit);
+        if(calcDirection){//Here we update the direction of the track from now on. This will be correct when we have the full track.
+            TVector3 momGlobal = getGlobalMomBetweenStates(stateInput,newState);
+          //  momGlobal.Print();
+            state.setLocalMomentumGlobalMomentum(momGlobal);
+            calcDirection=false;
+        }
 		_totalNumberOfHits++;//This is used for test of the processor later.   
-		streamlog_out(DEBUG2) << "This is the memory location of the state: "<< newState << std::endl;
+//		streamlog_out(DEBUG2) << "This is the memory location of the state: "<< newState << std::endl;
 
-		track.addTrack(static_cast<EVENT::Track*>(newState));//Need to return this to LCIO object. Loss functionality but retain information 
-		track.print();
+//		track.setState(newState);//Need to return this to LCIO object. Loss functionality but retain information 
+//		track.print();
 		streamlog_out ( DEBUG1 ) << "The number of hits on the track now is "<< track.getNumberOfHitsOnTrack()<< std::endl;
-		state = newState;
+//		state = newState;
 		streamlog_out ( DEBUG1 ) << "End of loop "<< std::endl;
+
 	}
 	//NOW WE ASSOCIATE THE STATES TO A SCATTERING LENGTH.
 
 	setRadLengths(track, mapSensor, mapAir, rad);
+    streamlog_out ( DEBUG1 ) << "ADD SCATTERING TO TRACKS: "<< std::endl;
+    track.print();
+
 }
 //setRadLengths: This will determine the variance fraction each scatterer will get. Note this comes in two parts. The first is the plane and the next scattering from the air.    
 void EUTelPatternRecognition::setRadLengths(EUTelTrack & track,	std::map<const int,double>  mapSensor, std::map<const int ,double>  mapAir, double rad ){
 	//THE FINAL WEIGHT WE HAVE WILL BE A FRACTION PERCENTAGE OF THE TOTAL RADIATION LENGTH
-	std::vector<EUTelState*> states = track.getStatesPointers();
-//	std::cout << "Rad " << rad << std::endl;
-	const double var  = pow( Utility::getThetaRMSHighland(states.at(0)->getMomLocal().Mag(), rad) , 2);
-//	std::cout << "Here is the var: " << var << std::endl;
+	std::vector<EUTelState>& states = track.getStates();
+	const double var  = pow( Utility::getThetaRMSHighland(states.at(0).getMomLocal().Mag(), rad) , 2);
 	for(size_t i =0; i < track.getStates().size();++i){ //LOOP over all track again.
-		streamlog_out(DEBUG0)<< std::scientific << " Values placed in variance using Highland formula corrected. (SENSOR) : " << (mapSensor[states.at(i)->getLocation()]/rad)*var << "  (AIR)  " << (mapAir[states.at(i)->getLocation()]/rad)*var <<std::endl;
-		states.at(i)->setRadFrac((mapSensor[states.at(i)->getLocation()]/rad)*var,(mapAir[states.at(i)->getLocation()]/rad)*var);//We input the fraction percentage.
+		streamlog_out(DEBUG0)<< std::scientific << " Values placed in variance using Highland formula corrected. (SENSOR) : " << (mapSensor[states.at(i).getLocation()]/rad)*var << "  (AIR)  " << (mapAir[states.at(i).getLocation()]/rad)*var <<std::endl;
+		states.at(i).setRadFrac((mapSensor[states.at(i).getLocation()]/rad)*var,(mapAir[states.at(i).getLocation()]/rad)*var);//We input the fraction percentage.
 	}
 	//NOW DETERMINE THE VARIANCE DUE TO THE RADIATION LENGTH. THIS IN THE END WILL BE DIVIDED AMOUNG THE SCATTERERS.
 	track.setTotalVariance(var);
@@ -215,7 +234,7 @@ void EUTelPatternRecognition::testTrackQuality()
 		float percentAfterPruneCut = (static_cast<float>(_numberOfTracksAfterPruneCut)/static_cast<float>(_numberOfTracksTotal))*100;
 		float averageNumberOfHitsOnTrack = static_cast<float>(_totalNumberOfHits)/static_cast<float>(_numberOfTracksTotal);
 		float averageNumberOfSharedHitsOnTrack = static_cast<float>(_totalNumberOfSharedHits)/static_cast<float>( _numberOfTracksTotal);
-		streamlog_out(DEBUG5) << "//////////////////////////////////////////////////////////////////////////////////////////////////////////////" << std::endl
+		streamlog_out(MESSAGE5) << "//////////////////////////////////////////////////////////////////////////////////////////////////////////////" << std::endl
 				<< "Total Tracks: " << _numberOfTracksTotal << " Pass Hit Cut: " <<  _numberOfTracksAfterHitCut << " Pass Prune Cut: " << _numberOfTracksAfterPruneCut << std::endl
 				<< "Percentage after Hit Cut: " << percentAfterHitCut << " Percentage after Prune Cut: " << percentAfterPruneCut << std::endl
 				<< "The average number of hits on a track: " << averageNumberOfHitsOnTrack << std::endl
@@ -253,36 +272,35 @@ void EUTelPatternRecognition::findTrackCandidatesWithSameHitsAndRemove(){
 		std::vector<EUTelState> iStates = _tracksAfterEnoughHitsCut.at(i).getStates();
 		//Now loop through all tracks one ahead of the original track itTrk. This is done since we want to compare all the track to each other to if they have similar hits     
 		for(size_t j =i+1; j < _tracksAfterEnoughHitsCut.size();++j){ //LOOP over all track again.
-	//		cout<<"Increase track to: "<<j <<std::endl;
 			int hitscount=0;
 			std::vector<EUTelState> jStates = _tracksAfterEnoughHitsCut[j].getStates();
 			for(size_t k=0;k<iStates.size();k++)
 			{
-					EVENT::TrackerHit* ihit;
+					EUTelHit ihit;
 					//Need since we could have tracks that have a state but no hits here.
-					if(!iStates[k].getTrackerHits().empty())
+					if(iStates.at(k).getStateHasHit())
 					{
-							ihit = iStates[k].getTrackerHits()[0];
+							ihit = iStates[k].getHit();
 					}
 					else
 					{
 							continue;
 					}
-					int ic = ihit->id();
+					int ic = ihit.getID();
 					
 					for(size_t l=0;l<jStates.size();l++)
 					{
-							EVENT::TrackerHit* jhit;
+							EUTelHit jhit;
 							//Need since we could have tracks that have a state but no hits here.
-							if(!jStates[l].getTrackerHits().empty())
+							if(jStates.at(l).getStateHasHit())
 							{
-									jhit = jStates[l].getTrackerHits()[0];
+									jhit = jStates.at(l).getHit();
 							}
 							else
 							{
 									continue;
 							}
-							int jc = jhit->id();
+							int jc = jhit.getID();
 							if(ic == jc )
 							{
 									_totalNumberOfSharedHits++;
@@ -295,20 +313,17 @@ void EUTelPatternRecognition::findTrackCandidatesWithSameHitsAndRemove(){
 
 			} 
 			//If for any track we are comparing to the number of similar hits is to high then we move to the next track and do not add this track to the new list of tracks
-	//		cout<<"Number of hits: " <<hitscount<<" allowed: " <<_AllowedSharedHitsOnTrackCandidate<<std::endl;
 			if(hitscount > _AllowedSharedHitsOnTrackCandidate) {   
 				streamlog_out(DEBUG1)<<"Tracks has too many similar hits remove "<<std::endl;
 				break;
 			}
 			if(j == (_tracksAfterEnoughHitsCut.size()-1)){//If we have loop through all and not breaked then track must be good.
-	//			cout<<"Enter the addition of track"<<std::endl;
 				_finalTracks.push_back(_tracksAfterEnoughHitsCut[i]);
 				streamlog_out(DEBUG1)<<"Track made prune tracks cut"<<std::endl;
 			}
 		}
 		//We need to add the last track here since the inner loop j+1 will never be entered. We always add the last track since if it has similar hits to past tracks then those tracks have been removed.
 		if(i == (_tracksAfterEnoughHitsCut.size()-1)){//If we have loop through all and not breaked then track must be good.
-//		cout<<"Enter the last addition of track"<<std::endl;
 		_finalTracks.push_back(_tracksAfterEnoughHitsCut[i]);
 	//	streamlog_out(DEBUG1)<<"Track made prune tracks cut"<<std::endl;
 		}
@@ -365,6 +380,7 @@ void EUTelPatternRecognition::initialiseSeeds()
 			EUTelState state;//Here we create a track state. This is a point on a track that we can give a position,momentum and direction. We combine these to create a track. 
 			double temp[] = { (*itHit)->getPosition()[0], (*itHit)->getPosition()[1], (*itHit)->getPosition()[2] };
 			float posLocal[] = { static_cast<float>(temp[0]), static_cast<float>(temp[1]), static_cast<float>(temp[2]) };
+
 			if( posLocal[2] != 0){//TO DO:This should be in test hits
 				streamlog_out(MESSAGE5) << "The local position of the hit is " << posLocal[0]<<","<< posLocal[1]<<","<< posLocal[2]<<","<<std::endl;
 				throw(lcio::Exception("The position of this local coordinate in the z direction is non 0")); 	
@@ -373,11 +389,16 @@ void EUTelPatternRecognition::initialiseSeeds()
 			state.setPositionLocal(posLocal); //This will automatically take cartesian coordinate system and save it to reference point. //This is different from most LCIO applications since each track will have own reference point. 		
 			TVector3 momentum = computeInitialMomentumGlobal(); 
 			state.setLocalMomentumGlobalMomentum(momentum); 
-			state.addHit(*itHit);
+			state.setHit(*itHit);
+
 			_totalNumberOfHits++;//This is used for test of the processor later.   
 			state.setDimensionSize(_planeDimensions[state.getLocation()]);
 			stateVec.push_back(state);
 		}
+        streamlog_out(DEBUG0) << "States to create tracks from: "<< std::endl;       
+        for(unsigned int i = 0; i<stateVec.size(); i++){
+            stateVec.at(i).print();
+        }
 		_mapSensorIDToSeedStatesVec[_createSeedsFromPlanes[iplane]] = stateVec; 
 	}
 }
@@ -399,8 +420,8 @@ void EUTelPatternRecognition::testInitialSeeds(){
 	for(size_t i = 0 ; i < _mapSensorIDToSeedStatesVec.size(); ++i){
 		std::vector<EUTelState> StatesVec =  _mapSensorIDToSeedStatesVec[_createSeedsFromPlanes[i]]; 	
 		for(size_t j = 0 ; j < StatesVec.size() ; ++j){
-			if(StatesVec[j].getTrackerHits()[0] == NULL ){
-				throw(lcio::Exception("The hit is NULL. All seeds must have hits.")); 	
+			if(!StatesVec[j].getStateHasHit()){
+				throw(lcio::Exception("The hit is not on first state. All seeds must have hits.")); 	
 			}
 		}
 	}
@@ -418,9 +439,9 @@ void EUTelPatternRecognition::findTrackCandidates() {
 		for(size_t j = 0 ; j < statesVec.size() ; ++j){
 			EUTelTrack track;
 			propagateForwardFromSeedState(statesVec[j], track);
-			streamlog_out ( DEBUG1 ) << "Before adding track to vector "<< std::endl;
+//			streamlog_out ( DEBUG1 ) << "Before adding track to vector "<< std::endl;
 			_tracks.push_back(track);//Here we create a long list of possible tracks
-			streamlog_out ( DEBUG1 ) << "After adding track to vector "<< std::endl;
+//			streamlog_out ( DEBUG1 ) << "After adding track to vector "<< std::endl;
 
 
 		}
@@ -431,7 +452,7 @@ void EUTelPatternRecognition::findTrackCandidates() {
 //We need to delete the states AND the track. Since we have allocated memory to store the state.
 void EUTelPatternRecognition::clearTrackAndTrackStates(){
 	for(size_t i=0; i < _tracks.size(); ++i){
-		for(size_t j=0; j< _tracks.at(i).getTracks().size(); ++j){   
+		for(size_t j=0; j< _tracks.at(i).getStates().size(); ++j){   
 		//	delete [] _tracks.at(i).getTracks().at(j); TO DO: Delete memory properly 
 		}
 	}
@@ -490,8 +511,8 @@ std::vector<EUTelTrack> EUTelPatternRecognition::getSeedTracks(){
     std::vector<EUTelTrack> seededTracks;
     std::vector<EUTelTrack> tracksOriginal = _finalTracks; //Must make copy here so we do not change _finalTracks
     for(unsigned int i=0 ; i <tracksOriginal.size(); i++ ){
-        streamlog_out(DEBUG1) <<"Track before seed running:  "  <<std::endl;
-        tracksOriginal.at(i).print();
+//        streamlog_out(DEBUG1) <<"Track before seed running:  "  <<std::endl;
+//        tracksOriginal.at(i).print();
         bool found=true;
         EUTelTrack trackOut;
         found = seedTrackOuterHits(tracksOriginal.at(i), trackOut );
@@ -510,34 +531,17 @@ bool EUTelPatternRecognition::seedTrackOuterHits(EUTelTrack track,EUTelTrack & t
     //Deterimine last state with hit//
     int lastStateWithHit=0;
     for(unsigned int i=0 ; i < track.getStates().size() ; i++){
-      if(track.getStates().at(i).getIsThereAHit()){
+      if(track.getStates().at(i).getStateHasHit()){
           lastStateWithHit=i;
       }
     }
 
     EUTelState firstState = track.getStates().at(0);
-    const double * firstPos = firstState.getTrackerHits()[0]->getPosition();
-    double firstPosGlobal[3];
-	geo::gGeometry().local2Master(firstState.getLocation() ,firstPos,firstPosGlobal);
-
     EUTelState lastState = track.getStates().at(lastStateWithHit);
-    const double * lastPos = lastState.getTrackerHits()[0]->getPosition();
-    double lastPosGlobal[3];
-	geo::gGeometry().local2Master(lastState.getLocation() ,lastPos,lastPosGlobal);
 
-    float incidenceXZ = (lastPosGlobal[0] - firstPosGlobal[0])/(lastPosGlobal[2] - firstPosGlobal[2]);
-    float incidenceYZ = (lastPosGlobal[1] - firstPosGlobal[1])/(lastPosGlobal[2] - firstPosGlobal[2]);
-//    std::cout<< "Incidence : " << incidenceXZ <<"  "<< incidenceYZ <<std::endl;
-
-    TVector3 momGlobal;
-    momGlobal[0] = (track.getStates().at(0).getMomLocal().Mag())*incidenceXZ;  
-    momGlobal[1] = (track.getStates().at(0).getMomLocal().Mag())*incidenceYZ;  
-
-    momGlobal[2] = sqrt(pow(track.getStates().at(0).getMomLocal().Mag(),2) - pow(track.getStates().at(0).getMomLocalX(),2) - pow(track.getStates().at(0).getMomLocalY(),2));
-  //  std::cout<<"Here momGlobal "<<momGlobal[0]<<" "<<momGlobal[1]<<" "<<momGlobal[2]<<std::endl;
+    TVector3 momGlobal = getGlobalMomBetweenStates(firstState, lastState);
     for(unsigned int i=0 ; i < track.getStates().size() ; i++){
-        track.getStatesPointers().at(i)->setLocalMomentumGlobalMomentum(momGlobal);
-   //     std::cout <<"Momentum " <<track.getStates().at(i).getMomLocalX() <<" "<<track.getStates().at(i).getMomLocalY() << "  " << track.getStates().at(i).getMomLocalZ()<<std::endl; 
+        track.getStates().at(i).setLocalMomentumGlobalMomentum(momGlobal);
     }
     for(unsigned int i=0 ; i < (track.getStates().size()-1) ; i++){
         float intersectionPoint[3];
@@ -548,11 +552,29 @@ bool EUTelPatternRecognition::seedTrackOuterHits(EUTelTrack track,EUTelTrack & t
         if(!found){
             return false; //DO NOT NEED TO RETURN TRUE. TRUE BY DEFAULT
         }
-        track.getStatesPointers().at(i+1)->setPositionGlobal(intersectionPoint);
+        track.getStates().at(i+1).setPositionGlobal(intersectionPoint);
     }
     trackOut = EUTelTrack(track);
 
 }
+TVector3 EUTelPatternRecognition::getGlobalMomBetweenStates(EUTelState firstState, EUTelState lastState){
+    const double * firstPos = firstState.getHit().getPosition();
+    double firstPosGlobal[3];
+	geo::gGeometry().local2Master(firstState.getLocation() ,firstPos,firstPosGlobal);
+    const double * lastPos = lastState.getHit().getPosition();
+    double lastPosGlobal[3];
+	geo::gGeometry().local2Master(lastState.getLocation() ,lastPos,lastPosGlobal);
+
+    float incidenceXZ = (lastPosGlobal[0] - firstPosGlobal[0])/(lastPosGlobal[2] - firstPosGlobal[2]);
+    float incidenceYZ = (lastPosGlobal[1] - firstPosGlobal[1])/(lastPosGlobal[2] - firstPosGlobal[2]);
+
+    TVector3 momGlobal;
+    momGlobal[0] = (firstState.getMomLocal().Mag())*incidenceXZ;  
+    momGlobal[1] = (firstState.getMomLocal().Mag())*incidenceYZ;  
+    momGlobal[2] = sqrt(pow(firstState.getMomLocal().Mag(),2) - pow(firstState.getMomLocalX(),2) - pow(firstState.getMomLocalY(),2));
+    return momGlobal;
+}
+
 
 //Note loop through all planes. Even the excluded. This is easier since you don't have to change this input each time then.
 //TO DO: sensors z position as used here only works if there is sufficient difference between planes. In the order of 1mm in gear file. This is too large.
