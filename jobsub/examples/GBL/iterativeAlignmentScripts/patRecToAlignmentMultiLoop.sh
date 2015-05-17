@@ -77,11 +77,11 @@ fi
 
 #Free x/y-rotations. 
 echo "We have produced new histogram $histoNameInput"
-export Fxr="$allPlanesFixed" #This is the fixed planes for rotations round the x axis
-export Fxs="$allPlanesFixed" #This is the fixed planes for shifts in the x axis
-export Fyr="$allPlanesFixed" #This is the fixed planes for rotations round the y axis
-export Fys="$allPlanesFixed" #This is the fixed planes for shifts in the y axis
-export Fzr="$allPlanesFixed" #This is the fixed planes for rotations round the z axis
+export Fxr="$allPlanes" #This is the fixed planes for rotations round the x axis
+export Fxs="$allPlanes" #This is the fixed planes for shifts in the x axis
+export Fyr="$allPlanes" #This is the fixed planes for rotations round the y axis
+export Fys="$allPlanes" #This is the fixed planes for shifts in the y axis
+export Fzr="$allPlanes" #This is the fixed planes for rotations round the z axis
 export Fzs="$allPlanesFixed" #This is the fixed planes for shifts in the z axis
 export inputGear="$outputGear"
 export outputGear="gear-YZRotations-XYShift-${outputIdentifier}-Iteration-$number-${RUN}.xml" 

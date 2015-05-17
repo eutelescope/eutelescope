@@ -224,7 +224,7 @@ TMatrixD EUTelNav::getMeasToGlobal(TVector3 t1w, int  planeID)
 	transM2l.UnitMatrix();
 	std::vector<double> slope;
 	slope.push_back(t1w[0]/t1w[2]); slope.push_back(t1w[1]/t1w[2]);
-	double norm = std::sqrt(pow(slope.at(0),2) + pow(slope.at(1),2) + 1);//not this works since we have in the curvinlinear frame (dx/dz)^2 +(dy/dz)^2 +1 so time through by dz^2
+	double norm = std::sqrt(pow(slope.at(0),2) + pow(slope.at(1),2) + 1);//This works since we have in the curvinlinear frame (dx/dz)^2 +(dy/dz)^2 +1 so time through by dz^2
 	TVector3 direction;
 	direction[0] = (slope.at(0)/norm); direction[1] =(slope.at(1)/norm);	direction[2] = (1.0/norm);
 	TMatrixD xyDir(2, 3);

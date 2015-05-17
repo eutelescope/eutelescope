@@ -100,6 +100,7 @@ namespace eutelescope {
 
 			bool operator<(const EUTelState compareState ) const;
 			bool operator==(const EUTelState compareState ) const;
+			bool operator!=(const EUTelState compareState ) const;
 
   	private:
 			float _covCombinedMatrix[4];
