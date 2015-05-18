@@ -156,11 +156,16 @@ void EUTelPatRecTriplets::createTriplets()
                     float y1 = hitPos[1] - 0.5*curvY*pow(hitPos[2] - initDis, 2);
                     double delX = doublet.pos.at(0) - x1;
                     double delY = doublet.pos.at(1) - y1;
-                    //triplet cut here 
+                    if(abs(delX) >  _doubletCenDistCut.at(0) or abs(delY) >  _doubletCenDistCut.at(1) ){
+                        continue;
+                    }
                     triplets triplet;
                     triplet.hits.push_back(EUTelHit(*itHitLeft));
                     triplet.hits.push_back(EUTelHit(*itHit));
                     triplet.hits.push_back(EUTelHit(*itHitRight));
+                    triplet.pos.push_back(doublet.pos.at(0));
+                    triplet.pos.push_back(doublet.pos.at(1));
+                    triplet.pos.push_back(doublet.pos.at(2));
                     triplet.cenPlane = cenID;
                     triplet.slope.push_back(doublet.slope.at(0));
                     triplet.slope.push_back(doublet.slope.at(1));
@@ -191,13 +196,29 @@ std::vector<EUTelTrack> EUTelPatRecTriplets::getTracks( ){
             if(abs(itRightTriplet->slope.at(0) - itLeftTriplet->slope.at(0)) > _tripletSlopeCuts.at(0)  or abs(itRightTriplet->slope.at(1) - itLeftTriplet->slope.at(1)) >_tripletSlopeCuts.at(1)  ){
                 continue;
             }
+            //Do we have a DUT. We will only add one DUT at the moment this must be updated to add multiple DUTs 
+            if(geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() - 6 != 0 ){
+            }else{
+                //No DUT use average 
+                float aveZPosTrip = (itLeftTriplet->pos.at(2)+ itRightTriplet->pos.at(2))/2.0;
+                std::vector<float> posLeftAtZ = getTripPosAtZ(*itLeftTriplet,aveZPosTrip); 
+                std::vector<float> posRightAtZ = getTripPosAtZ(*itRightTriplet,aveZPosTrip); 
+                if(abs(posLeftAtZ.at(0)- posRightAtZ.at(0)) > _tripletConnectDistCut.at(0) or abs(posLeftAtZ.at(0)- posRightAtZ.at(0)) > _tripletConnectDistCut.at(0)){
+                    continue;
+                }
 
-
+            }
         }
     }
 
-
-
+}
+std::vector<float>  EUTelPatRecTriplets::getTripPosAtZ(triplets trip, float posZ ){
+    float dz = posZ - trip.pos.at(2);
+    float x = trip.pos.at(0) + trip.slope.at(0)*dz;
+    float y = trip.pos.at(1) + trip.slope.at(1)*dz;
+    std::vector<float> position;
+    position.push_back(x);position.push_back(y);position.push_back(posZ);
+    return position;
 }
 
 

@@ -54,10 +54,8 @@ _qBeam(-1.)
 	_tripletSlopeCuts, FloatVec());
 
 	//This cut is used during the search for hits. If we propagate to a plane and the nearest hit to the point of intersection is greater than this number then we assume the hit can not come from this track. 
-	registerOptionalParameter("ResidualsRMax", "Maximal allowed distance between hits entering the recognition step "
-	"per 10 cm space between the planes. One value for each neighbor planes. "
-	"DistanceMax will be used for each pair if this vector is empty. Units are mm.",
-	_residualsRMax, static_cast<double> (10));
+	registerOptionalParameter("DoubletCenDistCut","Doublet hit acceptance distance for central plane ", _doubletCenDistCut,FloatVec() );
+	registerOptionalParameter("TripletConnectDistCut","The distance cut to allow the triplets to be associated with each other", _tripletConnectDistCut,FloatVec() );
 
 	//This is need if we have a magnetic field to determine curvature
 	registerOptionalParameter("BeamEnergy", "Beam energy [GeV]", _eBeam, static_cast<double> (4.0));
@@ -104,7 +102,8 @@ void EUTelProcessorPatRecTriplets::init(){
 		
 		_trackFitter->setDoubletDistCut(_doubletDistCut);
 		_trackFitter->setTripletSlopeCuts(_tripletSlopeCuts);
-		_trackFitter->setWindowSize(_residualsRMax);//This is the max distance between hit and predicted track position on plane that we will accept.
+		_trackFitter->setDoubletCenDistCut(_doubletCenDistCut);
+        _trackFitter->setTripletConnectDistCut(_tripletConnectDistCut);
 		_trackFitter->setPlanesToCreateSeedsFrom(_createSeedsFromPlanes);
 		_trackFitter->setBeamMomentum(_eBeam);
 		_trackFitter->setBeamCharge(_qBeam);

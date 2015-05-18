@@ -64,6 +64,8 @@ namespace eutelescope {
 
         //doublet distance cut
         std::vector<float> _doubletDistCut;
+        std::vector<float> _doubletCenDistCut;
+        std::vector<float> _tripletConnectDistCut;
 
 		void createTriplets();
         std::vector<EUTelTrack> getTracks( );
@@ -91,6 +93,7 @@ namespace eutelescope {
 		inline int getNumberOfTracksAfterPruneCut(){
 			return _numberOfTracksAfterPruneCut;
 		}
+        std::vector<float>  getTripPosAtZ(triplets trip, float posZ );
 
 		//SETTERS
 		void setHitsVecPerPlane();
@@ -110,8 +113,11 @@ namespace eutelescope {
 			this->_doubletDistCut = cuts;
 		}
 
-		inline void setWindowSize(double window) {
-			this->_residualsRMax = window;
+		inline void setTripletConnectDistCut(std::vector<float> cuts) {
+			this->_tripletConnectDistCut = cuts;
+		}
+		inline void setDoubletCenDistCut(std::vector<float> cuts) {
+			this->_tripletConnectDistCut = cuts;
 		}
 
 		inline void setBeamMomentum(double beam) {
