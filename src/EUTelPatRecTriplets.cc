@@ -177,16 +177,25 @@ void EUTelPatRecTriplets::testUserInput() {
 	}
 }	
 
-std::vector<EUTelTrack> EUTelPatRecTriplets::getTracks()
+std::vector<EUTelTrack> EUTelPatRecTriplets::getTriplets()
 {
-
+    float omega = -1.0/_beamE;
+	const gear::BField& Bfield = geo::gGeometry().getMagneticField();
+	gear::Vector3D vectorGlobal(0.1,0.1,0.1);
+	const double Bx = (Bfield.at( vectorGlobal ).x());  
+	const double By = (Bfield.at( vectorGlobal ).y());
+	const double Bz = (Bfield.at( vectorGlobal ).z());
+    double curvX = 0.0003*Bx*omega; 
+    double curvY = 0.0003*By*omega; 
     std::vector<unsigned int > cenPlane(1,4);
 
     for(std::vector<unsigned int>::iterator cenPlaneID = cenPlane.begin(); cenPlaneID != cenPlane.end(); ++cenPlaneID) {
         unsigned int cenID = *cenPlaneID; 
+        EVENT::TrackerHitVec& hitCentre = _mapHitsVecPerPlane[cenID];
         EVENT::TrackerHitVec& hitCentreLeft = _mapHitsVecPerPlane[cenID - 1];
         EVENT::TrackerHitVec& hitCentreRight = _mapHitsVecPerPlane[cenID + 1];
 
+		EVENT::TrackerHitVec::iterator itHit;
 		EVENT::TrackerHitVec::iterator itHitLeft;
 		EVENT::TrackerHitVec::iterator itHitRight;
 		for ( itHitLeft = hitCentreLeft.begin(); itHitLeft != hitCentreLeft.end(); ++itHitLeft ) {
@@ -200,61 +209,36 @@ std::vector<EUTelTrack> EUTelPatRecTriplets::getTracks()
                 double hitRightPosGlobal[3];
                 geo::gGeometry().local2Master(hitRightLoc ,hitRightPos,hitRightPosGlobal);
                 doublets doublet;
-                doublet = getDoublet(hitLeftPosGlobal,hitRightPosGlobal);
+                doublet = getDoublet(hitLeftPosGlobal,hitRightPosGlobal,curvX,curvY);
+                //doublet cut here
+                //Now loop through all hits on plane between two hits which create doublets. 
+                for ( itHit = hitCentre.begin(); itHit != hitCentre.end(); ++itHit ) {
+                    const int hitLoc = Utility::getSensorIDfromHit( static_cast<IMPL::TrackerHitImpl*> (*itHit) );
+                    double hitPos[] = { (*itHit)->getPosition()[0], (*itHit)->getPosition()[1], (*itHit)->getPosition()[2] };
+                    double hitPosGlobal[3];
+                    geo::gGeometry().local2Master(hitLoc ,hitPos,hitPosGlobal);
+                    float initDis = geo::gGeometry().getInitialDisplacementToFirstPlane();
+                    float x1 = hitPos[0] - 0.5*curvX*pow(hitPos[2] - initDis, 2);
+                    float y1 = hitPos[1] - 0.5*curvY*pow(hitPos[2] - initDis, 2);
+                    double delX = doublet.pos.at(0) - x1;
+                    double delY = doublet.pos.at(1) - y1;
+                    //triplet cut here 
+                    triplets triplet;
+                    triplet.hits.push_back(EUTelHit(*itHitLeft));
+                    triplet.hits.push_back(EUTelHit(*itHit));
+                    triplet.hits.push_back(EUTelHit(*itHitRight));
+                    triplet.cenPlane = cenID;
+                    triplet.slope.push_back(doublet.slope.at(0));
+                    triplet.slope.push_back(doublet.slope.at(1));
+                    _tripletsVec.push_back(triplet); 
+                }
             }
         }
-
     }
-	for( size_t iplane = 0; iplane < _createSeedsFromPlanes.size(); iplane++) 
-	{
-		streamlog_out(DEBUG1) << "We are using plane: " <<  _createSeedsFromPlanes[iplane] << " to create seeds" << std::endl;
-
-		EVENT::TrackerHitVec& hitFirstLayer = _mapHitsVecPerPlane[_createSeedsFromPlanes[iplane]];
-		streamlog_out(DEBUG1) << "N hits on sensor : " << hitFirstLayer.size() << std::endl;
-		if(hitFirstLayer.size()== 0){
-			continue;
-		}
-		std::vector<EUTelState> stateVec;
-		EVENT::TrackerHitVec::iterator itHit;
-		for ( itHit = hitFirstLayer.begin(); itHit != hitFirstLayer.end(); ++itHit ) {
-			EUTelState state;//Here we create a track state. This is a point on a track that we can give a position,momentum and direction. We combine these to create a track. 
-			double temp[] = { (*itHit)->getPosition()[0], (*itHit)->getPosition()[1], (*itHit)->getPosition()[2] };
-			float posLocal[] = { static_cast<float>(temp[0]), static_cast<float>(temp[1]), static_cast<float>(temp[2]) };
-
-			if( posLocal[2] != 0){//TO DO:This should be in test hits
-				streamlog_out(MESSAGE5) << "The local position of the hit is " << posLocal[0]<<","<< posLocal[1]<<","<< posLocal[2]<<","<<std::endl;
-				throw(lcio::Exception("The position of this local coordinate in the z direction is non 0")); 	
-			}
-			state.setLocation(_createSeedsFromPlanes[iplane]);  
-			state.setPositionLocal(posLocal);  		
-			TVector3 momentum = computeInitialMomentumGlobal(); 
-			state.setLocalMomentumGlobalMomentum(momentum); 
-			state.setHit(*itHit);
-			_totalNumberOfHits++;//This is used for test of the processor later.   
-			state.setDimensionSize(_planeDimensions[state.getLocation()]);
-			stateVec.push_back(state);
-
-		}
-        streamlog_out(DEBUG0) << "States to create tracks from: "<< std::endl;       
-        for(unsigned int i = 0; i<stateVec.size(); i++){
-            stateVec.at(i).print();
-        }
-		_mapSensorIDToSeedStatesVec[_createSeedsFromPlanes[iplane]] = stateVec; 
-	}
-
 }
 
-EUTelPatRecTriplets::doublets EUTelPatRecTriplets::getDoublet(double hitLeftPos[3], double hitRightPos[3] )
+EUTelPatRecTriplets::doublets EUTelPatRecTriplets::getDoublet(double hitLeftPos[3], double hitRightPos[3],double curvX,double curvY )
 {
-    float omega = -1.0/_beamE;
-	const gear::BField& Bfield = geo::gGeometry().getMagneticField();
-	gear::Vector3D vectorGlobal(0.1,0.1,0.1);
-	const double Bx = (Bfield.at( vectorGlobal ).x());  
-	const double By = (Bfield.at( vectorGlobal ).y());
-	const double Bz = (Bfield.at( vectorGlobal ).z());
-
-    float curvX = 0.0003*Bx*omega; 
-    float curvY = 0.0003*By*omega; 
     float initDis = geo::gGeometry().getInitialDisplacementToFirstPlane();
     //Remove the curvature as a factor between hits. Therefore only the slope will displace the hit position from plane to plane.
     float x1 = hitLeftPos[0] - 0.5*curvX*pow(hitLeftPos[2] - initDis, 2);

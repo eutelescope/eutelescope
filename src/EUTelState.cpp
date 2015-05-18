@@ -186,9 +186,7 @@ void EUTelState::setHit(EUTelHit hit){
 //Can set the hit using EUTelHit or LCIO hit.
 void EUTelState::setHit(EVENT::TrackerHit* hit){
     _stateHasHit=true;
-    const double * pos = hit->getPosition();
-    _hit.setPosition(pos);
-    _hit.setID(hit->id());
+    _hit = EUTelHit(hit);
 }
 
 void EUTelState::setDimensionSize(int dimension){

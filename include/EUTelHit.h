@@ -16,6 +16,7 @@ namespace eutelescope {
 		public: 
 			EUTelHit();
 			EUTelHit(EUTelHit* hit);
+			EUTelHit(EVENT::TrackerHit* hit);
             void setPosition(const double * position);
             void setID(int id);
             void setTrackFromLCIOVec(std::vector<double> input);

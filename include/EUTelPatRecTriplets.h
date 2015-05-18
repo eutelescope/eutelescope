@@ -48,6 +48,13 @@ namespace eutelescope {
         std::vector<float> slope;
         std::vector<float> diff;
     }; 
+    struct triplets {
+        unsigned cenPlane;
+        std::vector<float> pos;
+        std::vector<float> slope;
+        std::vector<float> diff;
+        std::vector<EUTelHit> hits;
+    }; 
 
 	private:
 		DISALLOW_COPY_AND_ASSIGN(EUTelPatRecTriplets) // prevent users from making (default) copies of processors
@@ -55,7 +62,7 @@ namespace eutelescope {
 		EUTelPatRecTriplets();
 		~EUTelPatRecTriplets();
 		//GETTERS
-		std::vector<EUTelTrack> getTracks();
+		std::vector<EUTelTrack> getTriplets();
 
 		inline int getEventNumber()	const {
 			return _eventNumber;
@@ -134,7 +141,7 @@ namespace eutelescope {
 		void testPositionEstimation(float position1[], float position2[]);
 		void findTracksWithEnoughHits();
 		void findTrackCandidatesWithSameHitsAndRemove();
-	    doublets getDoublet( double hitLeftPos[3], double hitRightPos[3] );
+	    doublets getDoublet( double hitLeftPos[3], double hitRightPos[3],double curvX,double curvY );
 		void testTrackQuality();
 		void clearTrackAndTrackStates();
 		void clearFinalTracks();
@@ -146,6 +153,8 @@ namespace eutelescope {
 		bool _firstExecution;
 		EVENT::IntVec _createSeedsFromPlanes;
 		EVENT::FloatVec _excludePlanes;         
+        std::vector<triplets> _tripletsVec;
+
 		std::vector<EUTelTrack> _tracks;
 		std::vector<EUTelTrack> _tracksAfterEnoughHitsCut;
 		std::vector<EUTelTrack>	_finalTracks;

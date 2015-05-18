@@ -11,6 +11,13 @@ EUTelHit::EUTelHit(EUTelHit* hit){
     _id = hit->getID();
 } 
 
+EUTelHit::EUTelHit(EVENT::TrackerHit* hit){
+    _position[0] = hit->getPosition()[0];
+    _position[1] = hit->getPosition()[1];
+    _position[2] = hit->getPosition()[2];
+    _id = hit->id();
+} 
+
 const double* EUTelHit::getPosition() const {
     return &_position[0];
 }
