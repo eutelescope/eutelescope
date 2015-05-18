@@ -199,7 +199,8 @@ std::vector<EUTelTrack> EUTelPatRecTriplets::getTracks()
                 double hitRightPos[] = { (*itHitRight)->getPosition()[0], (*itHitRight)->getPosition()[1], (*itHitRight)->getPosition()[2] };
                 double hitRightPosGlobal[3];
                 geo::gGeometry().local2Master(hitRightLoc ,hitRightPos,hitRightPosGlobal);
-                getDoublet(hitLeftPosGlobal,hitRightPosGlobal);
+                doublets doublet;
+                doublet = getDoublet(hitLeftPosGlobal,hitRightPosGlobal);
             }
         }
 
@@ -243,7 +244,7 @@ std::vector<EUTelTrack> EUTelPatRecTriplets::getTracks()
 
 }
 
-void EUTelPatRecTriplets::getDoublet(double hitLeftPos[3], double hitRightPos[3] )
+EUTelPatRecTriplets::doublets EUTelPatRecTriplets::getDoublet(double hitLeftPos[3], double hitRightPos[3] )
 {
     float omega = -1.0/_beamE;
 	const gear::BField& Bfield = geo::gGeometry().getMagneticField();
@@ -273,6 +274,7 @@ void EUTelPatRecTriplets::getDoublet(double hitLeftPos[3], double hitRightPos[3]
     doublet.slope.push_back( doublet.diff.at(0)/doublet.diff.at(2)); 
     doublet.diff.push_back( doublet.diff.at(1)/doublet.diff.at(2)); 
 
+    return doublet;
 }
 
 TVector3 EUTelPatRecTriplets::computeInitialMomentumGlobal(){

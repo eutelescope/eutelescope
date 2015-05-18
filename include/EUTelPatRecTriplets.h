@@ -134,7 +134,7 @@ namespace eutelescope {
 		void testPositionEstimation(float position1[], float position2[]);
 		void findTracksWithEnoughHits();
 		void findTrackCandidatesWithSameHitsAndRemove();
-		void getDoublet( double hitLeftPos[3], double hitRightPos[3] );
+	    doublets getDoublet( double hitLeftPos[3], double hitRightPos[3] );
 		void testTrackQuality();
 		void clearTrackAndTrackStates();
 		void clearFinalTracks();
