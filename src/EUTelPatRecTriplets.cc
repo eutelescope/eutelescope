@@ -245,6 +245,33 @@ std::vector<EUTelTrack> EUTelPatRecTriplets::getTracks()
 
 void EUTelPatRecTriplets::getDoublet(double hitLeftPos[3], double hitRightPos[3] )
 {
+    float omega = -1.0/_beamE;
+	const gear::BField& Bfield = geo::gGeometry().getMagneticField();
+	gear::Vector3D vectorGlobal(0.1,0.1,0.1);
+	const double Bx = (Bfield.at( vectorGlobal ).x());  
+	const double By = (Bfield.at( vectorGlobal ).y());
+	const double Bz = (Bfield.at( vectorGlobal ).z());
+
+    float curvX = 0.0003*Bx*omega; 
+    float curvY = 0.0003*By*omega; 
+    float initDis = geo::gGeometry().getInitialDisplacementToFirstPlane();
+    //Remove the curvature as a factor between hits. Therefore only the slope will displace the hit position from plane to plane.
+    float x1 = hitLeftPos[0] - 0.5*curvX*pow(hitLeftPos[2] - initDis, 2);
+    float y1 = hitLeftPos[1] - 0.5*curvY*pow(hitLeftPos[2] - initDis, 2);
+    float x2 = hitRightPos[0] - 0.5*curvX*pow(hitRightPos[2] - initDis, 2);
+    float y2 = hitRightPos[1] - 0.5*curvY*pow(hitRightPos[2] - initDis, 2);
+
+    doublets doublet;
+    doublet.pos.push_back((x2 + x1)/2.0);
+    doublet.pos.push_back((y2 + y1)/2.0);
+    doublet.pos.push_back((hitRightPos[2] + hitLeftPos[2])/2.0);
+
+    doublet.diff.push_back(x2 - x1);
+    doublet.diff.push_back(y2 - y1);
+    doublet.diff.push_back( hitRightPos[2] - hitLeftPos[2]);
+
+    doublet.slope.push_back( doublet.diff.at(0)/doublet.diff.at(2)); 
+    doublet.diff.push_back( doublet.diff.at(1)/doublet.diff.at(2)); 
 
 }
 
