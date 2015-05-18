@@ -10,7 +10,7 @@
 #include <gear/SiPlanesLayerLayout.h>
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/TrackerDataImpl.h>
-#include "EUTelSparseDataImpl.h"
+#include "EUTelSparseClusterImpl.h"
 
 #include "TH1.h"
 #include "TH2.h"

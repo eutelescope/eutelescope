@@ -4,7 +4,7 @@
 #include "EUTelHistogramManager.h"
 #include "EUTelAlignmentConstant.h"
 #include "EUTelGeometryTelescopeGeoDescription.h"
-#include "EUTelSparseData2Impl.h"
+#include "EUTelTrackerDataInterfacerImpl.h"
 
 #include "marlin/Global.h"
 #include "marlin/AIDAProcessor.h"
@@ -272,7 +272,7 @@ void AnalysisPALPIDEfs::processEvent(LCEvent *evt)
     if (_hotpixelAvailable)
     {
       hotData = dynamic_cast< TrackerDataImpl * > ( hotPixelCollectionVec->getElementAt( layerIndex ) );
-      auto_ptr<EUTelSparseDataImpl<EUTelSimpleSparsePixel > >  sparseData(new EUTelSparseDataImpl<EUTelSimpleSparsePixel> ( hotData ));
+      auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel > >  sparseData(new EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel> ( hotData ));
       for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ ) 
       {
         EUTelSimpleSparsePixel *sparsePixel =  new EUTelSimpleSparsePixel() ;
@@ -310,7 +310,7 @@ void AnalysisPALPIDEfs::processEvent(LCEvent *evt)
     if (_deadColumnAvailable)
     {
       deadColumn = dynamic_cast< TrackerDataImpl * > ( deadColumnCollectionVec->getElementAt( layerIndex ) );
-      auto_ptr<EUTelSparseDataImpl<EUTelSimpleSparsePixel > >  sparseData(new EUTelSparseDataImpl<EUTelSimpleSparsePixel> (deadColumn));
+      auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel > >  sparseData(new EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel> (deadColumn));
       for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ ) 
       {
         EUTelSimpleSparsePixel *sparsePixel =  new EUTelSimpleSparsePixel() ;
@@ -448,7 +448,7 @@ void AnalysisPALPIDEfs::processEvent(LCEvent *evt)
         if (index == -1) continue;
         if (_hotpixelAvailable)
         {
-          auto_ptr<EUTelSparseDataImpl<EUTelSimpleSparsePixel > >  sparseData(new EUTelSparseDataImpl<EUTelSimpleSparsePixel> ( hotData ));
+          auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel > >  sparseData(new EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel> ( hotData ));
           bool hotpixel = false;
           for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ ) 
           {
@@ -479,7 +479,7 @@ void AnalysisPALPIDEfs::processEvent(LCEvent *evt)
         }
         if (_deadColumnAvailable)
         {
-          auto_ptr<EUTelSparseDataImpl<EUTelSimpleSparsePixel > >  sparseData(new EUTelSparseDataImpl<EUTelSimpleSparsePixel> ( deadColumn ));
+          auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel > >  sparseData(new EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel> ( deadColumn ));
           bool dead = false;
           for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ ) 
           {
@@ -643,8 +643,8 @@ void AnalysisPALPIDEfs::processEvent(LCEvent *evt)
                       Cluster cluster;
                       if ( type == kEUTelSimpleSparsePixel )
                       {
-                        auto_ptr<EUTelSparseDataImpl<EUTelSimpleSparsePixel > >
-                          sparseData(new EUTelSparseDataImpl<EUTelSimpleSparsePixel> ( zsData ));
+                        auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel > >
+                          sparseData(new EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel> ( zsData ));
                         list<list< unsigned int> > listOfList = sparseData->findNeighborPixels( 1 );
                         EUTelSimpleSparsePixel * pixel = new EUTelSimpleSparsePixel;
                         list<list< unsigned int> >::iterator listOfListIter = listOfList.begin();
@@ -814,8 +814,8 @@ void AnalysisPALPIDEfs::processEvent(LCEvent *evt)
           SparsePixelType   type   = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( zsData )["sparsePixelType"]) );
           if ( type == kEUTelSimpleSparsePixel )
           {
-            auto_ptr<EUTelSparseDataImpl<EUTelSimpleSparsePixel > >
-              sparseData(new EUTelSparseDataImpl<EUTelSimpleSparsePixel> ( zsData ));
+            auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel > >
+              sparseData(new EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel> ( zsData ));
             list<list< unsigned int> > listOfList = sparseData->findNeighborPixels( 1 );
             EUTelSimpleSparsePixel * pixel = new EUTelSimpleSparsePixel;
             list<list< unsigned int> >::iterator listOfListIter = listOfList.begin();
@@ -877,8 +877,8 @@ void AnalysisPALPIDEfs::processEvent(LCEvent *evt)
         SparsePixelType   type   = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( zsData )["sparsePixelType"]) );
         if ( type == kEUTelSimpleSparsePixel )
         {
-          auto_ptr<EUTelSparseDataImpl<EUTelSimpleSparsePixel > >
-            sparseData(new EUTelSparseDataImpl<EUTelSimpleSparsePixel> ( zsData ));
+          auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel > >
+            sparseData(new EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel> ( zsData ));
           list<list< unsigned int> > listOfList = sparseData->findNeighborPixels( 1 );
           EUTelSimpleSparsePixel * pixel = new EUTelSimpleSparsePixel;
           list<list< unsigned int> >::iterator listOfListIter = listOfList.begin();

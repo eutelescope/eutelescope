@@ -1,7 +1,8 @@
 #ifdef USE_GEAR
-
-#include "AnalysisNoise.h"
 #include "EUTELESCOPE.h"
+#include "EUTelTrackerDataInterfacerImpl.h"
+#include "EUTelGenericSparsePixel.h"
+#include "AnalysisNoise.h"
 
 #include "marlin/Global.h"
 
@@ -119,10 +120,10 @@ void AnalysisNoise::processEvent(LCEvent *evt)
   for ( unsigned int iDetector = 0 ; iDetector < zsInputDataCollectionVec->size(); iDetector++ )
   {
     TrackerDataImpl * zsData = dynamic_cast< TrackerDataImpl * > ( zsInputDataCollectionVec->getElementAt( iDetector ) );
-    auto_ptr<EUTelSparseDataImpl<EUTelSimpleSparsePixel > >  sparseData(new EUTelSparseDataImpl<EUTelSimpleSparsePixel> ( zsData ));
+    auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel > >  sparseData(new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> ( zsData ));
     for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
     {
-      EUTelSimpleSparsePixel *sparsePixel =  new EUTelSimpleSparsePixel() ; 
+      EUTelGenericSparsePixel *sparsePixel =  new EUTelGenericSparsePixel() ; 
       sparseData->getSparsePixelAt( iPixel, sparsePixel );
       noiseMap[iDetector]->Fill(sparsePixel->getXCoord(),sparsePixel->getYCoord());
       for (int iSector=0; iSector<4; iSector++)
