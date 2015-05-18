@@ -130,10 +130,9 @@ namespace eutelescope {
 		EUTelPatRecTriplets* _trackFitter;
 
 		/** Maximal amount of missing hits per track candidate */
-		int _maxMissingHitsPerTrackCand;
-
+        std::vector<float> _doubletDistCut;
 		//The number of allowed similar hits on track candidates of a single event
-		int _AllowedSharedHitsOnTrackCandidate;
+        std::vector<float> _tripletSlopeCuts;
 
 		/** Number of events processed */
 		int _nProcessedRuns;

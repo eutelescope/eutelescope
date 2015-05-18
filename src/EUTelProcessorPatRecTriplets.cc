@@ -30,8 +30,8 @@ _hitInputCollectionName("HitCollection"),
 _trackCandidateHitsOutputCollectionName("TrackCandidatesCollection"),
 _histoInfoFileName("histoinfo.xml"),
 _trackFitter(0),
-_maxMissingHitsPerTrackCand(0),
-_AllowedSharedHitsOnTrackCandidate(0),
+_doubletDistCut(0,0),
+_tripletSlopeCuts(0,0),
 _nProcessedRuns(0),
 _nProcessedEvents(0),
 _eBeam(-1.),
@@ -46,15 +46,12 @@ _qBeam(-1.)
 	// Track candidate hits output collection
 	registerOutputCollection(LCIO::TRACK,"TrackCandHitOutputCollectionName","Output track candidates hits collection name",_trackCandidateHitsOutputCollectionName,std::string("TrackCandidateHitCollection"));
 
-	//This is a cut that is done after we find the hits we suspect comes from a single particle
-	//If the number of hits found is less than this number then the track is discarded. 
-	registerOptionalParameter("MaxMissingHitsPerTrack", "Maximal number of missing hits on a track candidate",
-	_maxMissingHitsPerTrackCand, static_cast<int> (0)); // Search full-length tracks by default
+	registerOptionalParameter("DoubletDistCut", "Doublet distance cuts", _doubletDistCut, FloatVec()); 
 
 	//This is a another cut we do after we find the suspected track from a single particle
 	//If this number of hits are shared with another possible track then we discard one of the tracks. 
-	registerOptionalParameter("AllowedSharedHitsOnTrackCandidate", "The number of similar hit a track candidate can have to another track candidate, within the same event.",
-	_AllowedSharedHitsOnTrackCandidate, static_cast<int> (0));
+	registerOptionalParameter("TripletSlopeCuts", "Triplet slope difference which is allowed to create track ",
+	_tripletSlopeCuts, FloatVec());
 
 	//This cut is used during the search for hits. If we propagate to a plane and the nearest hit to the point of intersection is greater than this number then we assume the hit can not come from this track. 
 	registerOptionalParameter("ResidualsRMax", "Maximal allowed distance between hits entering the recognition step "
@@ -105,8 +102,8 @@ void EUTelProcessorPatRecTriplets::init(){
 
 		_trackFitter = new EUTelPatRecTriplets();//This is the class that contains all the functions that do the actual work
 		
-		_trackFitter->setAllowedMissingHits(_maxMissingHitsPerTrackCand);
-		_trackFitter->setAllowedSharedHitsOnTrackCandidate(_AllowedSharedHitsOnTrackCandidate);
+		_trackFitter->setDoubletDistCut(_doubletDistCut);
+		_trackFitter->setTripletSlopeCuts(_tripletSlopeCuts);
 		_trackFitter->setWindowSize(_residualsRMax);//This is the max distance between hit and predicted track position on plane that we will accept.
 		_trackFitter->setPlanesToCreateSeedsFrom(_createSeedsFromPlanes);
 		_trackFitter->setBeamMomentum(_eBeam);
@@ -202,12 +199,12 @@ void EUTelProcessorPatRecTriplets::processEvent(LCEvent* evt)
 
 		_trackFitter->testHitsVecPerPlane();//tests the size of the map and does it contain hits
 		streamlog_out( DEBUG1 ) << "Trying to find tracks..." << std::endl;
-        std::vector<EUTelTrack> tracks =  _trackFitter->getTriplets();
+        _trackFitter->createTriplets();
 
 
-		plotHistos(tracks);
+//		plotHistos(tracks);
 
-		outputLCIO(evt,tracks);
+//		outputLCIO(evt,tracks);
 
 		_nProcessedEvents++;
 	}

@@ -11,7 +11,7 @@ _numberOfTracksTotal(0),
 _numberOfTracksAfterHitCut(0),
 _numberOfTracksAfterPruneCut(0),
 _allowedMissingHits(0),
-_AllowedSharedHitsOnTrackCandidate(0),
+_tripletSlopeCuts(0,0),
 _beamE(-1.),
 _beamQ(-1.)
 {}
@@ -87,75 +87,6 @@ void EUTelPatRecTriplets::testPositionEstimation(float position1[], float positi
 	} 
 }
 
-     // Perform track pruning this removes tracks that have the same hits used to create the track on some planes
-		//TO DO: consider a better approach. Since we could remove tracks that have a better residual to hits just because that have came first. For example was will always add the final track in the list. Could this introduce bias? 
-		//TO DO:We compare all states to all other states on a track. We don't need to do that since hits on differents planes must be different.
-void EUTelPatRecTriplets::findTrackCandidatesWithSameHitsAndRemove(){
-	streamlog_out(MESSAGE1) << "EUTelPatRecTriplets::findTrackCandidatesWithSameHitsAndRemove----BEGIN" << std::endl;
-	for(size_t i =0; i < _tracksAfterEnoughHitsCut.size();++i){//LOOP through all tracks 
-		streamlog_out(DEBUG1) <<  "Loop at track number: " <<  i <<". Must loop over " << _tracksAfterEnoughHitsCut.size()<<" tracks in total."   << std::endl;
-		std::vector<EUTelState> iStates = _tracksAfterEnoughHitsCut.at(i).getStates();
-		//Now loop through all tracks one ahead of the original track itTrk. This is done since we want to compare all the track to each other to if they have similar hits     
-		for(size_t j =i+1; j < _tracksAfterEnoughHitsCut.size();++j){ //LOOP over all track again.
-			int hitscount=0;
-			std::vector<EUTelState> jStates = _tracksAfterEnoughHitsCut[j].getStates();
-			for(size_t k=0;k<iStates.size();k++)
-			{
-					EUTelHit ihit;
-					//Need since we could have tracks that have a state but no hits here.
-					if(iStates.at(k).getStateHasHit())
-					{
-							ihit = iStates[k].getHit();
-					}
-					else
-					{
-							continue;
-					}
-					int ic = ihit.getID();
-					
-					for(size_t l=0;l<jStates.size();l++)
-					{
-							EUTelHit jhit;
-							//Need since we could have tracks that have a state but no hits here.
-							if(jStates.at(l).getStateHasHit())
-							{
-									jhit = jStates.at(l).getHit();
-							}
-							else
-							{
-									continue;
-							}
-							int jc = jhit.getID();
-							if(ic == jc )
-							{
-									_totalNumberOfSharedHits++;
-									hitscount++; 
-									streamlog_out(MESSAGE1) <<  "Hit number on track you are comparing all other to: " << i << ". Hit ID: " 
-															<< ic << ". Hit number of comparison: " << j << ". Hit ID of this comparison : " << jc 
-															<< ". Number of common hits: " << hitscount << std::endl; 
-							}
-					}
-
-			} 
-			//If for any track we are comparing to the number of similar hits is to high then we move to the next track and do not add this track to the new list of tracks
-			if(hitscount > _AllowedSharedHitsOnTrackCandidate) {   
-				streamlog_out(DEBUG1)<<"Tracks has too many similar hits remove "<<std::endl;
-				break;
-			}
-			if(j == (_tracksAfterEnoughHitsCut.size()-1)){//If we have loop through all and not breaked then track must be good.
-				_finalTracks.push_back(_tracksAfterEnoughHitsCut[i]);
-				streamlog_out(DEBUG1)<<"Track made prune tracks cut"<<std::endl;
-			}
-		}
-		//We need to add the last track here since the inner loop j+1 will never be entered. We always add the last track since if it has similar hits to past tracks then those tracks have been removed.
-		if(i == (_tracksAfterEnoughHitsCut.size()-1)){//If we have loop through all and not breaked then track must be good.
-		_finalTracks.push_back(_tracksAfterEnoughHitsCut[i]);
-	//	streamlog_out(DEBUG1)<<"Track made prune tracks cut"<<std::endl;
-		}
-
-	}
-	streamlog_out(MESSAGE1) << "------------------------------EUTelPatRecTriplets::findTrackCandidatesWithSameHitsAndRemove()---------------------------------END" << std::endl;
-}
 //This function is used to check that the input data is as expect. If not then we end the processor by throwing a exception.
 ////TO DO: should check if seed planes are also excluded	
 void EUTelPatRecTriplets::testUserInput() {
@@ -177,8 +108,9 @@ void EUTelPatRecTriplets::testUserInput() {
 	}
 }	
 
-std::vector<EUTelTrack> EUTelPatRecTriplets::getTriplets()
+void EUTelPatRecTriplets::createTriplets()
 {
+    _tripletsVec.clear();
     float omega = -1.0/_beamE;
 	const gear::BField& Bfield = geo::gGeometry().getMagneticField();
 	gear::Vector3D vectorGlobal(0.1,0.1,0.1);
@@ -210,7 +142,9 @@ std::vector<EUTelTrack> EUTelPatRecTriplets::getTriplets()
                 geo::gGeometry().local2Master(hitRightLoc ,hitRightPos,hitRightPosGlobal);
                 doublets doublet;
                 doublet = getDoublet(hitLeftPosGlobal,hitRightPosGlobal,curvX,curvY);
-                //doublet cut here
+                if(abs(doublet.diff.at(0)) >  _doubletDistCut.at(0) or abs(doublet.diff.at(1)) >  _doubletDistCut.at(1) ){
+                    continue;
+                }
                 //Now loop through all hits on plane between two hits which create doublets. 
                 for ( itHit = hitCentre.begin(); itHit != hitCentre.end(); ++itHit ) {
                     const int hitLoc = Utility::getSensorIDfromHit( static_cast<IMPL::TrackerHitImpl*> (*itHit) );
@@ -236,6 +170,36 @@ std::vector<EUTelTrack> EUTelPatRecTriplets::getTriplets()
         }
     }
 }
+std::vector<EUTelTrack> EUTelPatRecTriplets::getTracks( ){
+    std::vector<triplets>::iterator itTriplet;
+    std::vector<triplets> leftTriplets;
+    std::vector<triplets> rightTriplets;
+
+    for(itTriplet = _tripletsVec.begin();itTriplet != _tripletsVec.end();  itTriplet++){
+        if(itTriplet->cenPlane == 1 ){
+            leftTriplets.push_back(*itTriplet);
+        }else if(itTriplet->cenPlane == 4){
+            rightTriplets.push_back(*itTriplet);
+        }else{
+            throw(lcio::Exception( "Triplet are not from the left anre right arms!"  ));
+        }
+    }
+    std::vector<triplets>::iterator itLeftTriplet;
+    std::vector<triplets>::iterator itRightTriplet;
+    for(itLeftTriplet = leftTriplets.begin();itLeftTriplet != leftTriplets.end();  itLeftTriplet++){
+        for(itRightTriplet = rightTriplets.begin();itRightTriplet != rightTriplets.end();  itRightTriplet++){
+            if(abs(itRightTriplet->slope.at(0) - itLeftTriplet->slope.at(0)) > _tripletSlopeCuts.at(0)  or abs(itRightTriplet->slope.at(1) - itLeftTriplet->slope.at(1)) >_tripletSlopeCuts.at(1)  ){
+                continue;
+            }
+
+
+        }
+    }
+
+
+
+}
+
 
 EUTelPatRecTriplets::doublets EUTelPatRecTriplets::getDoublet(double hitLeftPos[3], double hitRightPos[3],double curvX,double curvY )
 {
