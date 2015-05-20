@@ -199,11 +199,12 @@ void EUTelProcessorPatRecTriplets::processEvent(LCEvent* evt)
 		_trackFitter->testHitsVecPerPlane();//tests the size of the map and does it contain hits
 		streamlog_out( DEBUG1 ) << "Trying to find tracks..." << std::endl;
         _trackFitter->createTriplets();
-
+        std::vector<EUTelTrack> tracks = _trackFitter->getTracks();
+        _trackFitter->testTrackQuality();
 
 //		plotHistos(tracks);
 
-//		outputLCIO(evt,tracks);
+		outputLCIO(evt,tracks);
 
 		_nProcessedEvents++;
 	}
@@ -264,13 +265,12 @@ void EUTelProcessorPatRecTriplets::check(LCEvent * /*evt*/) {
 }
 
 void EUTelProcessorPatRecTriplets::end() {
-    streamlog_out(MESSAGE9) <<"The average number of tracks per event: " << static_cast<float>(_trackFitter->getNumberOfTracksAfterPruneCut())/static_cast<float>(_nProcessedEvents) <<std::endl; 
-    delete _trackFitter;
     streamlog_out(MESSAGE9) << "EUTelProcessorPatRecTriplets::end()  " << name()
             << " processed " << _nProcessedEvents << " events in " << _nProcessedRuns << " runs "
-            << " av.tracks : " << static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_numberTracksCandidatesHistName ] ) -> mean()
-            << " track candidates : " << static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_numberOfHitOnTrackCandidateHistName ] ) -> allEntries()
+            << " av.tracks : " << static_cast<float>(_trackFitter->_numberOfTracksTotal)/static_cast<float>(_nProcessedEvents)
             << std::endl;
+            delete _trackFitter;
+
 }
 //TO DO: Create a better way of booking histograms.
 void EUTelProcessorPatRecTriplets::bookHistograms() {

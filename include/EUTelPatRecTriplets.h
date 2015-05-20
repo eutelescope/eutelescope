@@ -16,8 +16,6 @@
 #include <iostream>
 #include <functional>
 #include <algorithm>
-#include <cmath>
-#include <math.h>
 #include <string>
 #include <vector>
 #include <cmath>
@@ -53,7 +51,7 @@ namespace eutelescope {
         std::vector<float> pos;
         std::vector<float> slope;
         std::vector<float> diff;
-        std::vector<EUTelHit> hits;
+        std::vector<EUTelState> states;
     }; 
 
 	private:
@@ -69,6 +67,11 @@ namespace eutelescope {
 
 		void createTriplets();
         std::vector<EUTelTrack> getTracks( );
+        void setScattering();
+        void setTrackStatesHits();
+        EUTelTrack getTrack(triplets tripLeft,triplets tripRight);
+        EUTelTrack getTrack(triplets tripLeft,triplets tripRight,EUTelState stateDUT );
+        void setStraightLineFit();
 
 
 		inline int getEventNumber()	const {
@@ -117,7 +120,7 @@ namespace eutelescope {
 			this->_tripletConnectDistCut = cuts;
 		}
 		inline void setDoubletCenDistCut(std::vector<float> cuts) {
-			this->_tripletConnectDistCut = cuts;
+			this->_doubletCenDistCut = cuts;
 		}
 
 		inline void setBeamMomentum(double beam) {

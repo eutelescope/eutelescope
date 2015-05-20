@@ -50,24 +50,10 @@ void EUTelPatRecTriplets::clearFinalTracks(){
 void EUTelPatRecTriplets::testTrackQuality()
 {
 	_numberOfTracksTotal = _numberOfTracksTotal + _tracks.size();
-	_numberOfTracksAfterHitCut = _numberOfTracksAfterHitCut + _tracksAfterEnoughHitsCut.size();
-	_numberOfTracksAfterPruneCut =_numberOfTracksAfterPruneCut + 	_finalTracks.size();
 
 	if(_numberOfTracksTotal % 1000 == 0)
 	{
-		float percentAfterHitCut = (static_cast<float>(_numberOfTracksAfterHitCut)/static_cast<float>(_numberOfTracksTotal))*100;
-		float percentAfterPruneCut = (static_cast<float>(_numberOfTracksAfterPruneCut)/static_cast<float>(_numberOfTracksTotal))*100;
-		float averageNumberOfHitsOnTrack = static_cast<float>(_totalNumberOfHits)/static_cast<float>(_numberOfTracksTotal);
-		float averageNumberOfSharedHitsOnTrack = static_cast<float>(_totalNumberOfSharedHits)/static_cast<float>( _numberOfTracksTotal);
-		streamlog_out(MESSAGE5) << "//////////////////////////////////////////////////////////////////////////////////////////////////////////////" << std::endl
-				<< "Total Tracks: " << _numberOfTracksTotal << " Pass Hit Cut: " <<  _numberOfTracksAfterHitCut << " Pass Prune Cut: " << _numberOfTracksAfterPruneCut << std::endl
-				<< "Percentage after Hit Cut: " << percentAfterHitCut << " Percentage after Prune Cut: " << percentAfterPruneCut << std::endl
-				<< "The average number of hits on a track: " << averageNumberOfHitsOnTrack << std::endl
-				<< "The average number of shared hits on a track with other tracks: " << averageNumberOfSharedHitsOnTrack << std::endl;
-				//(Note this can change with cust since we remove tracks before we have counted all similar hits. To see all similar hits make cut very large and then run)
-	
-		if(percentAfterHitCut < 0.1) streamlog_out(DEBUG5)<< "The percentage of track making the hit cut is very low at the moment "<<std::endl;
-		if(percentAfterPruneCut < 0.1)streamlog_out(DEBUG5)<< "The percentage of track making the prune cut is very low at the moment "<<std::endl;
+        streamlog_out(MESSAGE5) << "Number of tracks per event: " << static_cast<float>(_numberOfTracksTotal)/static_cast<float>(getEventNumber() )<< std::endl;
 	}
 }
 
@@ -110,6 +96,8 @@ void EUTelPatRecTriplets::testUserInput() {
 
 void EUTelPatRecTriplets::createTriplets()
 {
+	 streamlog_out(DEBUG0) << "Create triplets..." << std::endl;
+
     _tripletsVec.clear();
     float omega = -1.0/_beamE;
 	const gear::BField& Bfield = geo::gGeometry().getMagneticField();
@@ -117,15 +105,20 @@ void EUTelPatRecTriplets::createTriplets()
 	const double Bx = (Bfield.at( vectorGlobal ).x());  
 	const double By = (Bfield.at( vectorGlobal ).y());
 	const double Bz = (Bfield.at( vectorGlobal ).z());
-    double curvX = 0.0003*Bx*omega; 
-    double curvY = 0.0003*By*omega; 
-    std::vector<unsigned int > cenPlane(1,4);
-
-    for(std::vector<unsigned int>::iterator cenPlaneID = cenPlane.begin(); cenPlaneID != cenPlane.end(); ++cenPlaneID) {
-        unsigned int cenID = *cenPlaneID; 
-        EVENT::TrackerHitVec& hitCentre = _mapHitsVecPerPlane[cenID];
-        EVENT::TrackerHitVec& hitCentreLeft = _mapHitsVecPerPlane[cenID - 1];
-        EVENT::TrackerHitVec& hitCentreRight = _mapHitsVecPerPlane[cenID + 1];
+    TVector3 B(Bx, By, Bz );
+    TVector3 H = (B.Unit());
+    TVector3 curv = H.Cross(TVector3(0,0,1));
+    //Note the cross product
+    double curvX = 0.0003*curv[0]*omega; 
+    double curvY = 0.0003*curv[1]*omega; 
+    std::vector<unsigned int> cenID;
+    cenID.push_back(1);
+    cenID.push_back(4);
+    for(unsigned int i=0 ; i< cenID.size(); i++){
+        streamlog_out(DEBUG0) << "Centre sensor ID: " << cenID.at(i)  << std::endl;
+        EVENT::TrackerHitVec& hitCentre = _mapHitsVecPerPlane[cenID.at(i)];
+        EVENT::TrackerHitVec& hitCentreLeft = _mapHitsVecPerPlane[cenID.at(i) - 1];
+        EVENT::TrackerHitVec& hitCentreRight = _mapHitsVecPerPlane[cenID.at(i) + 1];
 
 		EVENT::TrackerHitVec::iterator itHit;
 		EVENT::TrackerHitVec::iterator itHitLeft;
@@ -135,47 +128,140 @@ void EUTelPatRecTriplets::createTriplets()
             double hitLeftPos[] = { (*itHitLeft)->getPosition()[0], (*itHitLeft)->getPosition()[1], (*itHitLeft)->getPosition()[2] };
             double hitLeftPosGlobal[3];
             geo::gGeometry().local2Master(hitLeftLoc ,hitLeftPos,hitLeftPosGlobal);
+            EUTelState stateLeft;
+            stateLeft.setLocation(hitLeftLoc);
+            stateLeft.setPositionGlobal(hitLeftPosGlobal);
+            stateLeft.setHit(*itHitLeft);
             for ( itHitRight = hitCentreRight.begin(); itHitRight != hitCentreRight.end(); ++itHitRight ) {
                 const int hitRightLoc = Utility::getSensorIDfromHit( static_cast<IMPL::TrackerHitImpl*> (*itHitRight) );
                 double hitRightPos[] = { (*itHitRight)->getPosition()[0], (*itHitRight)->getPosition()[1], (*itHitRight)->getPosition()[2] };
                 double hitRightPosGlobal[3];
                 geo::gGeometry().local2Master(hitRightLoc ,hitRightPos,hitRightPosGlobal);
+
+                EUTelState stateRight;
+                stateRight.setLocation(hitRightLoc);
+                stateRight.setPositionGlobal(hitRightPosGlobal);
+                stateRight.setHit(*itHitRight);
                 doublets doublet;
                 doublet = getDoublet(hitLeftPosGlobal,hitRightPosGlobal,curvX,curvY);
-                if(abs(doublet.diff.at(0)) >  _doubletDistCut.at(0) or abs(doublet.diff.at(1)) >  _doubletDistCut.at(1) ){
+                //Add State slopes after doublet creation.
+                stateLeft.setMomGlobalIncEne(doublet.slope,getBeamMomentum() );
+                stateRight.setMomGlobalIncEne(doublet.slope,getBeamMomentum());
+                streamlog_out(DEBUG0) << "Doublet delta X: "<< std::abs(doublet.diff.at(0)) << " Cut X: "<<_doubletDistCut.at(0) <<" Delta Y: " << doublet.diff.at(1)<< " Cut Y: " << _doubletDistCut.at(1)  << std::endl;
+
+                if(fabs(doublet.diff.at(0)) >  _doubletDistCut.at(0) or fabs(doublet.diff.at(1)) >  _doubletDistCut.at(1) ){
                     continue;
                 }
+                streamlog_out(DEBUG0) << "PASS 1!! " << std::endl;
+
                 //Now loop through all hits on plane between two hits which create doublets. 
                 for ( itHit = hitCentre.begin(); itHit != hitCentre.end(); ++itHit ) {
                     const int hitLoc = Utility::getSensorIDfromHit( static_cast<IMPL::TrackerHitImpl*> (*itHit) );
                     double hitPos[] = { (*itHit)->getPosition()[0], (*itHit)->getPosition()[1], (*itHit)->getPosition()[2] };
                     double hitPosGlobal[3];
                     geo::gGeometry().local2Master(hitLoc ,hitPos,hitPosGlobal);
+                    EUTelState state;
+                    state.setLocation(hitLoc);
+                    state.setPositionGlobal(hitPosGlobal);
+                    state.setHit(*itHit);
+                    state.setMomGlobalIncEne(doublet.slope,getBeamMomentum());
                     float initDis = geo::gGeometry().getInitialDisplacementToFirstPlane();
                     float x1 = hitPos[0] - 0.5*curvX*pow(hitPos[2] - initDis, 2);
                     float y1 = hitPos[1] - 0.5*curvY*pow(hitPos[2] - initDis, 2);
+                //    streamlog_out(DEBUG0) << "Centre Doublet/Hit positions: "<<doublet.pos.at(0)<<"/" <<x1<<"  " <<doublet.pos.at(1)<<"/"<<y1 << std::endl;
                     double delX = doublet.pos.at(0) - x1;
                     double delY = doublet.pos.at(1) - y1;
-                    if(abs(delX) >  _doubletCenDistCut.at(0) or abs(delY) >  _doubletCenDistCut.at(1) ){
+                    streamlog_out(DEBUG0) << "Doublet delta X to centre hit: "<< delX << " Cut X: "<<_doubletCenDistCut.at(0) <<" Distance Y: " << delY<< " Cut Y: " << _doubletCenDistCut.at(1)  << std::endl;
+
+                    if(fabs(delX) >  _doubletCenDistCut.at(0) or fabs(delY) >  _doubletCenDistCut.at(1) ){
                         continue;
                     }
+                    streamlog_out(DEBUG0) << "PASS 2!! " << std::endl;
+
+                    //Set distance
+//                    TVector3 vectorDist = state.getPositionGlobal()-stateLeft.getPositionGlobal();
+                  //  float dist = sqrt(pow(state.getPositionGlobal()[0]-stateLeft.getPositionGlobal()[0],2)+pow(state.getPositionGlobal()[1]-stateLeft.getPositionGlobal()[1],2)+pow(state.getPositionGlobal()[2]-stateLeft.getPositionGlobal()[2],2));
+                    float dist = (state.getPositionGlobal() - stateLeft.getPositionGlobal()).Mag();
+                    stateLeft.setArcLengthToNextState(dist);
+                    dist = (stateRight.getPositionGlobal() - state.getPositionGlobal()).Mag();
+                    state.setArcLengthToNextState(dist);
+                    streamlog_out(DEBUG0) << "LEFT: " << cenID.at(i)  << std::endl;
+                    stateLeft.print();
+                    streamlog_out(DEBUG0) << "CENTRE: " << cenID.at(i)  << std::endl;
+                    state.print();
+                    streamlog_out(DEBUG0) << "RIGHT: " << cenID.at(i)  << std::endl;
+                    stateRight.print();
                     triplets triplet;
-                    triplet.hits.push_back(EUTelHit(*itHitLeft));
-                    triplet.hits.push_back(EUTelHit(*itHit));
-                    triplet.hits.push_back(EUTelHit(*itHitRight));
+                    triplet.states.push_back(stateLeft);
+                    triplet.states.push_back(state);
+                    triplet.states.push_back(stateRight);
                     triplet.pos.push_back(doublet.pos.at(0));
                     triplet.pos.push_back(doublet.pos.at(1));
                     triplet.pos.push_back(doublet.pos.at(2));
-                    triplet.cenPlane = cenID;
+                    triplet.cenPlane = cenID.at(i);
                     triplet.slope.push_back(doublet.slope.at(0));
                     triplet.slope.push_back(doublet.slope.at(1));
                     _tripletsVec.push_back(triplet); 
                 }
             }
         }
+        if(cenID.size()-1 == i and _tripletsVec.size() == 0){
+            streamlog_out(DEBUG0) << "FOUND NO TRIPLETS FOR EVENT: " << getEventNumber()  << std::endl;
+            break;
+        }
     }
 }
 std::vector<EUTelTrack> EUTelPatRecTriplets::getTracks( ){
+    _tracks.clear();
+    setTrackStatesHits();
+    setScattering();
+    setStraightLineFit(); //Must create straight line fit since kink angle estimations are not calculated here.
+    return _tracks;
+}
+void EUTelPatRecTriplets::setStraightLineFit(){
+    std::vector<EUTelTrack>::iterator itTrack;
+    for(itTrack = _tracks.begin(); itTrack != _tracks.end();itTrack++){
+        EUTelState State1 = itTrack->getStates().at(1);
+        EUTelState State2 = itTrack->getStates().at(4);
+        double localAveX = (State1.getMomLocalX() + State2.getMomLocalX())/2.0;
+        double localAveY = (State1.getMomLocalY() + State2.getMomLocalY())/2.0;
+        double localAveZ = (State1.getMomLocalZ() + State2.getMomLocalZ())/2.0;
+        itTrack->getStates().at(0).setMomLocalX(localAveX);
+        itTrack->getStates().at(0).setMomLocalY(localAveY);
+        itTrack->getStates().at(0).setMomLocalZ(localAveZ);
+
+        for(unsigned int i =0 ; i < itTrack->getStates().size()-1; i++){
+            float intersectionPoint[3];
+            TVector3 momentumAtIntersection;
+            float arcLength;
+            int holder; //This is used to return the plane which is found.
+            bool found =itTrack->getStates().at(i).findIntersectionWithCertainID(itTrack->getStates().at(i+1).getLocation(), intersectionPoint, momentumAtIntersection,arcLength,holder );
+            itTrack->getStates().at(i).setArcLengthToNextState(arcLength);
+            itTrack->getStates().at(i+1).setPositionGlobal(intersectionPoint);
+			itTrack->getStates().at(i+1).setLocalMomentumGlobalMomentum(momentumAtIntersection); 
+
+
+        }
+    }
+
+}
+
+void EUTelPatRecTriplets::setScattering(){
+    std::vector<EUTelTrack>::iterator itTrack;
+    for(itTrack = _tracks.begin(); itTrack != _tracks.end();itTrack++){
+        std::map<const int,double>  mapSensor;
+        std::map<const int ,double>  mapAir;
+        double rad =	itTrack->getStates().at(0).computeRadLengthsToEnd(mapSensor, mapAir);
+        setRadLengths(*itTrack, mapSensor, mapAir, rad);
+
+    }
+
+
+}
+
+void EUTelPatRecTriplets::setTrackStatesHits(){
+    streamlog_out(DEBUG0) << "Set track states and hits... " << std::endl;
+
     std::vector<triplets>::iterator itTriplet;
     std::vector<triplets> leftTriplets;
     std::vector<triplets> rightTriplets;
@@ -191,27 +277,105 @@ std::vector<EUTelTrack> EUTelPatRecTriplets::getTracks( ){
     }
     std::vector<triplets>::iterator itLeftTriplet;
     std::vector<triplets>::iterator itRightTriplet;
+    streamlog_out(DEBUG0) << "Use triplets... " << std::endl;
     for(itLeftTriplet = leftTriplets.begin();itLeftTriplet != leftTriplets.end();  itLeftTriplet++){
         for(itRightTriplet = rightTriplets.begin();itRightTriplet != rightTriplets.end();  itRightTriplet++){
-            if(abs(itRightTriplet->slope.at(0) - itLeftTriplet->slope.at(0)) > _tripletSlopeCuts.at(0)  or abs(itRightTriplet->slope.at(1) - itLeftTriplet->slope.at(1)) >_tripletSlopeCuts.at(1)  ){
+                    streamlog_out(DEBUG0) << "Triplet slope delta match Cut: " <<"X delta: " << fabs(itRightTriplet->slope.at(0) - itLeftTriplet->slope.at(0)) <<" Cut: " << _tripletSlopeCuts.at(0) << " Y delta: " <<  fabs(itRightTriplet->slope.at(1) - itLeftTriplet->slope.at(1))<<" Cut: " <<  _tripletSlopeCuts.at(1)  << std::endl;
+
+            if(fabs(itRightTriplet->slope.at(0) - itLeftTriplet->slope.at(0)) > _tripletSlopeCuts.at(0)  or fabs(itRightTriplet->slope.at(1) - itLeftTriplet->slope.at(1)) >_tripletSlopeCuts.at(1)  ){
                 continue;
             }
+            streamlog_out(DEBUG0) << "PASS 3!! " << std::endl;
+
             //Do we have a DUT. We will only add one DUT at the moment this must be updated to add multiple DUTs 
             if(geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() - 6 != 0 ){
+            unsigned int dutNum = geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() - 6;
+            //Loop through each plane inbetween the arms
+            for(unsigned int i = 0 ; i < dutNum ; i++){
+                EVENT::TrackerHitVec& hitDUT = _mapHitsVecPerPlane[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(2+i)];
+                EVENT::TrackerHitVec::iterator itHitDUT;
+                for ( itHitDUT = hitDUT.begin(); itHitDUT != hitDUT.end(); ++itHitDUT ) {
+                    const int hitDUTLoc = Utility::getSensorIDfromHit( static_cast<IMPL::TrackerHitImpl*> (*itHitDUT) );
+                    double hitDUTPos[] = { (*itHitDUT)->getPosition()[0], (*itHitDUT)->getPosition()[1], (*itHitDUT)->getPosition()[2] };
+                    double hitDUTPosGlobal[3];
+                    geo::gGeometry().local2Master(hitDUTLoc ,hitDUTPos,hitDUTPosGlobal);
+                    std::vector<float> posLeftAtDUT = getTripPosAtZ(*itLeftTriplet,hitDUTPosGlobal[2]); 
+                    std::vector<float> posRightAtDUT = getTripPosAtZ(*itRightTriplet,hitDUTPosGlobal[2]); 
+                    streamlog_out(DEBUG0) << "Triplet DUT Match Cut (Left): " <<"X delta: " << fabs(posLeftAtDUT.at(0)-hitDUTPosGlobal[0]) <<" Cut: " <<  _tripletConnectDistCut.at(0) << " Y delta: " << fabs(posLeftAtDUT.at(1)- hitDUTPosGlobal[1]) <<" Cut: " <<  _tripletConnectDistCut.at(1)  << std::endl;
+                    streamlog_out(DEBUG0) << "Triplet DUT Match Cut (Right): " <<"X delta: " << fabs(posRightAtDUT.at(0)-hitDUTPosGlobal[0]) <<" Cut: " <<  _tripletConnectDistCut.at(0) << " Y delta: " << fabs(posRightAtDUT.at(1)- hitDUTPosGlobal[1]) <<" Cut: " <<  _tripletConnectDistCut.at(1)  << std::endl;
+                    if(fabs(posLeftAtDUT.at(0)-hitDUTPosGlobal[0]) > _tripletConnectDistCut.at(0) or fabs(posLeftAtDUT.at(1)- hitDUTPosGlobal[1]) > _tripletConnectDistCut.at(1)){
+                        continue;
+                    }
+                    if(fabs(posRightAtDUT.at(0)-hitDUTPosGlobal[0]) > _tripletConnectDistCut.at(0) or fabs(posRightAtDUT.at(1)- hitDUTPosGlobal[1]) > _tripletConnectDistCut.at(1)){
+                        continue;
+                    }
+                    streamlog_out(DEBUG0) << "PASS 4!! " << std::endl;
+
+
+                    EUTelState stateDUT;
+                    stateDUT.setLocation(hitDUTLoc);
+                    stateDUT.setPositionGlobal(hitDUTPosGlobal);
+                    stateDUT.setHit(*itHitDUT);
+                    float dist = (stateDUT.getPositionGlobal() - itLeftTriplet->states.at(2).getPositionGlobal()).Mag();
+                    itLeftTriplet->states.at(2).setArcLengthToNextState(dist);
+                    dist = (itRightTriplet->states.at(0).getPositionGlobal() -stateDUT.getPositionGlobal() ).Mag();
+                    stateDUT.setArcLengthToNextState(dist);
+                    _tracks.push_back(getTrack(*itLeftTriplet,*itRightTriplet,stateDUT));
+                }
+
+            }
+
             }else{
                 //No DUT use average 
                 float aveZPosTrip = (itLeftTriplet->pos.at(2)+ itRightTriplet->pos.at(2))/2.0;
                 std::vector<float> posLeftAtZ = getTripPosAtZ(*itLeftTriplet,aveZPosTrip); 
                 std::vector<float> posRightAtZ = getTripPosAtZ(*itRightTriplet,aveZPosTrip); 
-                if(abs(posLeftAtZ.at(0)- posRightAtZ.at(0)) > _tripletConnectDistCut.at(0) or abs(posLeftAtZ.at(0)- posRightAtZ.at(0)) > _tripletConnectDistCut.at(0)){
+                streamlog_out(DEBUG0) << "Predicted position of triplet1/triplet2 " << posLeftAtZ.at(0) <<"/"<<posRightAtZ.at(0) << "  " << posLeftAtZ.at(1) <<"/"<<posRightAtZ.at(1)<< "  " << posLeftAtZ.at(2) <<"/"<<posRightAtZ.at(2) <<std::endl;
+                streamlog_out(DEBUG0) << "Delta between Triplets X: "<< fabs(posLeftAtZ.at(0)- posRightAtZ.at(0)) <<" Cut X: " << _tripletConnectDistCut.at(0) << " Delta Y: " << fabs(posLeftAtZ.at(1)- posRightAtZ.at(1)) << " Cut Y: " << _tripletConnectDistCut.at(1) << std::endl;
+                if(fabs(posLeftAtZ.at(0)- posRightAtZ.at(0)) > _tripletConnectDistCut.at(0) or fabs(posLeftAtZ.at(1)- posRightAtZ.at(1)) > _tripletConnectDistCut.at(1)){
                     continue;
                 }
+                //Pass without DUT
+                streamlog_out(DEBUG0) << "PASS 4!! " << std::endl;
+
+                float dist = (itRightTriplet->states.at(0).getPositionGlobal() - itLeftTriplet->states.at(2).getPositionGlobal()).Mag();
+                itLeftTriplet->states.at(2).setArcLengthToNextState(dist);
+                _tracks.push_back(getTrack(*itLeftTriplet,*itRightTriplet));
 
             }
         }
     }
+}
+EUTelTrack EUTelPatRecTriplets::getTrack(triplets tripLeft,triplets tripRight){
+    std::vector<EUTelState> statesLeft = tripLeft.states;
+    std::vector<EUTelState>::iterator itState;
+    EUTelTrack track;
+    for(itState = statesLeft.begin();itState != statesLeft.end();  itState++){
+        track.setState(*itState);
+    }
+    std::vector<EUTelState> statesRight = tripRight.states;
+    for(itState = statesRight.begin();itState != statesRight.end();  itState++){
+        track.setState(*itState);
+    }
+    return track;
 
 }
+EUTelTrack EUTelPatRecTriplets::getTrack(triplets tripLeft,triplets tripRight,EUTelState stateDUT ){
+    std::vector<EUTelState> statesLeft = tripLeft.states;
+    std::vector<EUTelState>::iterator itState;
+    EUTelTrack track;
+    for(itState = statesLeft.begin();itState != statesLeft.end();  itState++){
+        track.setState(*itState);
+    }
+    track.setState(stateDUT);
+    std::vector<EUTelState> statesRight = tripRight.states;
+    for(itState = statesRight.begin();itState != statesRight.end();  itState++){
+        track.setState(*itState);
+    }
+    return track;
+
+}
+
 std::vector<float>  EUTelPatRecTriplets::getTripPosAtZ(triplets trip, float posZ ){
     float dz = posZ - trip.pos.at(2);
     float x = trip.pos.at(0) + trip.slope.at(0)*dz;
@@ -241,7 +405,7 @@ EUTelPatRecTriplets::doublets EUTelPatRecTriplets::getDoublet(double hitLeftPos[
     doublet.diff.push_back( hitRightPos[2] - hitLeftPos[2]);
 
     doublet.slope.push_back( doublet.diff.at(0)/doublet.diff.at(2)); 
-    doublet.diff.push_back( doublet.diff.at(1)/doublet.diff.at(2)); 
+    doublet.slope.push_back( doublet.diff.at(1)/doublet.diff.at(2)); 
 
     return doublet;
 }

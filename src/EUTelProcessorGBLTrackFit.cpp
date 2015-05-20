@@ -291,12 +291,6 @@ void EUTelProcessorGBLTrackFit::end() {
 	}
 	//TO DO: We really should have a better way to look track per track	and see if the correction is too large. 
 	std::vector<double> correctionTotal = _trackFitter->getCorrectionsTotal();
-	streamlog_out(MESSAGE9)<<"This is the average correction for omega: " <<correctionTotal.at(0)/sizeFittedTracks<<std::endl;	
-	streamlog_out(MESSAGE9)<<"This is the average correction for local xz inclination: " <<correctionTotal.at(1)/sizeFittedTracks<<std::endl;	
-	streamlog_out(MESSAGE9)<<"This is the average correction for local yz inclination: " <<correctionTotal.at(2)/sizeFittedTracks<<std::endl;	
-	streamlog_out(MESSAGE9)<<"This is the average correction for local x: " <<correctionTotal.at(3)/sizeFittedTracks<<std::endl;	
-	streamlog_out(MESSAGE9)<<"This is the average correction for local y: " <<correctionTotal.at(4)/sizeFittedTracks<<std::endl;	
-
   float average = total/sizeFittedTracks;
 	streamlog_out(MESSAGE9) << "This is the average chi2 -"<< average <<std::endl;
 

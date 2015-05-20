@@ -100,8 +100,8 @@ TMatrixDSym EUTelState::getScatteringVarianceInLocalFrame(){
 	TMatrixDSym precisionMatrix(2);
 	float factor = scatPrecision/pow((1-pow(c1,2)-pow(c2,2)),2);
 	streamlog_out( DEBUG1 ) << "The factor: "<< factor << std::endl;
-	precisionMatrix[0][0]=factor*(1-pow(c2,2));
-  precisionMatrix[1][0]=factor*c1*c2;				precisionMatrix[1][1]=factor*(1-pow(c1,2));
+	precisionMatrix[0][0]=factor*(1-pow(c2,2));precisionMatrix[0][1]=factor*c1*c2;
+    precisionMatrix[1][0]=factor*c1*c2;				precisionMatrix[1][1]=factor*(1-pow(c1,2));
 	streamlog_out( DEBUG1 ) << "EUTelState::getScatteringVarianceInLocalFrame(Sensor)----------------------------END" << std::endl;
 	return precisionMatrix;
 }
@@ -118,7 +118,7 @@ TMatrixDSym EUTelState::getScatteringVarianceInLocalFrame(float  variance){
 	TMatrixDSym precisionMatrix(2);
 	float factor = scatPrecision/pow((1-pow(c1,2)-pow(c2,2)),2);
 	streamlog_out( DEBUG1 ) << "The factor: "<< factor << std::endl;
-	precisionMatrix[0][0]=factor*(1-pow(c2,2));
+	precisionMatrix[0][0]=factor*(1-pow(c2,2));precisionMatrix[0][1]=factor*c1*c2;
   precisionMatrix[1][0]=factor*c1*c2;				precisionMatrix[1][1]=factor*(1-pow(c1,2));
 	streamlog_out( DEBUG1 ) << "EUTelState::getScatteringVarianceInLocalFrame(Scatter)----------------------------END" << std::endl;
 
@@ -195,6 +195,25 @@ void EUTelState::setDimensionSize(int dimension){
 void EUTelState::setLocation(int location){
     _location = location;
 }
+void EUTelState::setMomGlobalIncEne(std::vector<float> slopes, float energy){
+    setMomGlobalIncEne(slopes, static_cast<double>(energy));
+}
+
+void EUTelState::setMomGlobalIncEne(std::vector<float> slopes, double energy){
+    float incidenceXZ = slopes.at(0);
+    float incidenceYZ = slopes.at(1);
+    double momGlobal[3];
+    momGlobal[0] = energy*incidenceXZ;  
+    momGlobal[1] = energy*incidenceYZ;  
+    momGlobal[2] = sqrt(pow(energy,2) - pow(momGlobal[1],2) - pow(momGlobal[0],2));
+
+	const double momentum[]	= {momGlobal[0], momGlobal[1],momGlobal[2]}; 
+	double localMomentum [3];
+	geo::gGeometry().master2LocalVec(getLocation(), momentum, localMomentum );
+	setMomLocalX(localMomentum[0]);
+	setMomLocalY(localMomentum[1]);
+	setMomLocalZ(localMomentum[2]);
+}
 void EUTelState::setMomLocalX(float momX){
     _momLocalX = momX;
 }
@@ -218,6 +237,11 @@ void EUTelState::setKinksMedium1(TVectorD kinks){
 void EUTelState::setKinksMedium2(TVectorD kinks){
     _kinksMedium2 = kinks;
 }
+void EUTelState::setPositionGlobal(double positionGlobal[]){
+    float pos[] = { static_cast<float>(positionGlobal[0]), static_cast<float>(positionGlobal[1]), static_cast<float>(positionGlobal[2]) };
+    setPositionGlobal(pos);
+}
+
 
 void EUTelState::setPositionGlobal(float positionGlobal[]){
 	double localPosition [3];

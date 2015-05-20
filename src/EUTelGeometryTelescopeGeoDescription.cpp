@@ -160,7 +160,8 @@ void EUTelGeometryTelescopeGeoDescription::initialisePlanesToExcluded(IntVec pla
 	}
 	//Check if the number of excluded planes set is the same as (total-number of plane IDs inputed that should be excluded)
 	if(geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() != (geo::gGeometry().sensorIDstoZOrder().size()-planeIDs.size())){
-			throw(lcio::Exception( "The number of Planes-Excluded is not correct. This could be a problem with geometry."));
+        streamlog_out(MESSAGE) <<"Number of planes not excluded: "<< geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() <<" All sensor number " << geo::gGeometry().sensorIDstoZOrder().size()<<" Planes to exclude " << planeIDs.size()<< std::endl;
+        throw(lcio::Exception( "The number of Planes-Excluded is not correct. This could be a problem with geometry."));
 	}else{
 			streamlog_out(DEBUG0) <<"The correct number of planes have been excluded" << std::endl;
 	}

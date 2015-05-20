@@ -53,6 +53,9 @@ namespace eutelescope {
 			void setMomLocalX(float momX);
 			void setMomLocalY(float momY);
 			void setMomLocalZ(float momZ);
+            void setMomGlobalIncEne(std::vector<float> slopes, float energy);
+            void setMomGlobalIncEne(std::vector<float> slopes, double energy);
+
 			void setLocalMomentumGlobalMomentum(TVector3 momentumIn);
             void setTrackFromLCIOVec(std::vector<double> input);
             //!Template input for setting local position of hit  
@@ -62,6 +65,7 @@ namespace eutelescope {
 			void setPositionLocal(float position[]);
 			void setPositionLocal(double position[]);
 			void setPositionGlobal(float positionGlobal[]);
+            void setPositionGlobal(double positionGlobal[]);
 			void setCombinedHitAndStateCovMatrixInLocalFrame(double cov[4]);
 			void setStateUsingCorrection(TVectorD stateVec);
 			void setArcLengthToNextState(float arcLength){_arcLength = arcLength;} 
