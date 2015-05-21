@@ -1203,7 +1203,6 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                             TrackerPulseImpl * pulse = new TrackerPulseImpl;
                             CellIDEncoder<TrackerPulseImpl> idPulseEncoder(EUTELESCOPE::PULSEDEFAULTENCODING, pulseCollection);
                             idPulseEncoder["sensorID"]      = _sensorID;
-                            idPulseEncoder["clusterID"]     = clusterID;
                             idPulseEncoder["xSeed"]         = seedX;
                             idPulseEncoder["ySeed"]         = seedY;
                             idPulseEncoder["xCluSize"]      = _ffXClusterSize;
@@ -1214,7 +1213,6 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                             TrackerDataImpl * cluster = new TrackerDataImpl;
                             CellIDEncoder<TrackerDataImpl> idClusterEncoder(EUTELESCOPE::CLUSTERDEFAULTENCODING, sparseClusterCollectionVec);
                             idClusterEncoder["sensorID"]      = _sensorID;
-                            idClusterEncoder["clusterID"]     = clusterID;
                             idClusterEncoder["xSeed"]         = seedX;
                             idClusterEncoder["ySeed"]         = seedY;
                             idClusterEncoder["xCluSize"]      = _ffXClusterSize;
@@ -1512,7 +1510,6 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
                         // TrackerPulseImpl in order to be algorithm independent
                         TrackerPulseImpl * pulse = new TrackerPulseImpl;
                         idPulseEncoder["sensorID"]      = sensorID;
-                        idPulseEncoder["clusterID"]     = clusterID;
                         idPulseEncoder["xSeed"]         = seedX;
                         idPulseEncoder["ySeed"]         = seedY;
                         idPulseEncoder["xCluSize"]      = _ffXClusterSize;
@@ -1522,7 +1519,6 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
 
                         TrackerDataImpl * cluster = new TrackerDataImpl;
                         idClusterEncoder["sensorID"]      = sensorID;
-                        idClusterEncoder["clusterID"]     = clusterID;
                         idClusterEncoder["xSeed"]         = seedX;
                         idClusterEncoder["ySeed"]         = seedY;
                         idClusterEncoder["xCluSize"]      = _ffXClusterSize;
@@ -1843,7 +1839,6 @@ void EUTelClusteringProcessor::zsBrickedClustering(LCEvent * evt, LCCollectionVe
                     TrackerPulseImpl* pulse = new TrackerPulseImpl; //this will be deleted if the candidate does NOT make it through the cluster cut check, otherwise it will be added to a collection
                     CellIDEncoder<TrackerPulseImpl> idPulseEncoder(EUTELESCOPE::PULSEDEFAULTENCODING, pulseCollection);
                     idPulseEncoder["sensorID"]      = sensorID;
-                    idPulseEncoder["clusterID"]     = clusterID;
                     idPulseEncoder["xSeed"]         = seedX;
                     idPulseEncoder["ySeed"]         = seedY;
                     idPulseEncoder["xCluSize"]      = _ffXClusterSize;
@@ -1855,7 +1850,6 @@ void EUTelClusteringProcessor::zsBrickedClustering(LCEvent * evt, LCCollectionVe
                     TrackerDataImpl* clusterData = new TrackerDataImpl; //this will be deleted if the candidate does NOT make it through the cluster cut check, otherwise it will be added to a collection
                     CellIDEncoder<TrackerDataImpl> idClusterEncoder(EUTELESCOPE::CLUSTERDEFAULTENCODING, sparseClusterCollectionVec );
                     idClusterEncoder["sensorID"]      = sensorID;
-                    idClusterEncoder["clusterID"]     = clusterID;
                     idClusterEncoder["xSeed"]         = seedX;
                     idClusterEncoder["ySeed"]         = seedY;
                     idClusterEncoder["xCluSize"]      = _ffXClusterSize;
@@ -2174,7 +2168,6 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent* evt, LCCollectionVec* p
                     // prepare a pulse for this cluster
                     auto_ptr<TrackerPulseImpl> zsPulse ( new TrackerPulseImpl );
                     idZSPulseEncoder["sensorID"] = sensorID;
-//                    idZSPulseEncoder["clusterID"] = clusterID;
                     idZSPulseEncoder["xSeed"]     = xSeed;
                     idZSPulseEncoder["ySeed"]     = ySeed;
                     idZSPulseEncoder["xCluSize"]  = xSize;
