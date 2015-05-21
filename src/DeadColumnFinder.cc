@@ -2,6 +2,8 @@
 
 #include "DeadColumnFinder.h"
 #include "EUTELESCOPE.h"
+#include "EUTelTrackerDataInterfacerImpl.h"
+#include "EUTelGenericSparsePixel.h"
 
 #include "marlin/Global.h"
 
@@ -83,15 +85,15 @@ void DeadColumnFinder::processEvent(LCEvent *evt)
   for ( unsigned int iDetector = 0 ; iDetector < zsInputDataCollectionVec->size(); iDetector++ )
   {
     TrackerDataImpl * zsData = dynamic_cast< TrackerDataImpl * > ( zsInputDataCollectionVec->getElementAt( iDetector ) );
-    auto_ptr<EUTelSparseDataImpl<EUTelSimpleSparsePixel > >  sparseData(new EUTelSparseDataImpl<EUTelSimpleSparsePixel> ( zsData ));
+    auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel > >  sparseData(new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> ( zsData ));
     for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
     {
-      EUTelSimpleSparsePixel *sparsePixel =  new EUTelSimpleSparsePixel() ; 
+      EUTelGenericSparsePixel *sparsePixel =  new EUTelGenericSparsePixel() ; 
       sparseData->getSparsePixelAt( iPixel, sparsePixel );
       hitMap[iDetector]->Fill(sparsePixel->getXCoord(),sparsePixel->getYCoord());
       if (iPixel != sparseData->size()-1)
       {
-        EUTelSimpleSparsePixel *sparsePixel2 =  new EUTelSimpleSparsePixel() ; 
+        EUTelGenericSparsePixel *sparsePixel2 =  new EUTelGenericSparsePixel() ; 
         sparseData->getSparsePixelAt( iPixel+1, sparsePixel2 );
         if (sparsePixel->getXCoord() == sparsePixel2->getXCoord() && sparsePixel->getYCoord() == sparsePixel2->getYCoord())
         {
@@ -151,10 +153,10 @@ void DeadColumnFinder::end()
   {
     CellIDEncoder< TrackerDataImpl > deadColumnEncoder  ( eutelescope::EUTELESCOPE::ZSDATADEFAULTENCODING, deadColumnCollection);
     deadColumnEncoder["sensorID"] = iLayer;
-    deadColumnEncoder["sparsePixelType"] = eutelescope::kEUTelSimpleSparsePixel;
+    deadColumnEncoder["sparsePixelType"] = eutelescope::kEUTelGenericSparsePixel;
     std::auto_ptr<lcio::TrackerDataImpl > currentFrame( new lcio::TrackerDataImpl );
     deadColumnEncoder.setCellID( currentFrame.get() );
-    std::auto_ptr< eutelescope::EUTelSparseDataImpl< eutelescope::EUTelSimpleSparsePixel > > sparseFrame(new eutelescope::EUTelSparseDataImpl< eutelescope::EUTelSimpleSparsePixel > (currentFrame.get()));
+    std::auto_ptr< eutelescope::EUTelTrackerDataInterfacerImpl< eutelescope::EUTelGenericSparsePixel > > sparseFrame(new eutelescope::EUTelTrackerDataInterfacerImpl< eutelescope::EUTelGenericSparsePixel > (currentFrame.get()));
     int hitPixels[hitMap[iLayer]->GetNbinsX()];
     for (int x=0; x<hitMap[iLayer]->GetNbinsX(); x++)
       hitPixels[x] = 0;
@@ -202,7 +204,7 @@ void DeadColumnFinder::end()
       {
         for (int y=0; y<_yPixel[iLayer]; y++)
         {
-          EUTelSimpleSparsePixel *sparsePixel =  new EUTelSimpleSparsePixel();
+          EUTelGenericSparsePixel *sparsePixel =  new EUTelGenericSparsePixel();
           sparsePixel->setXCoord(x);
           sparsePixel->setYCoord(y);
           sparsePixel->setSignal(1);

@@ -11,7 +11,7 @@
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/TrackerDataImpl.h>
 //#include "IMPL/TrackerHitImpl.h"
-#include "EUTelSparseDataImpl.h"
+//#include "EUTelSparseDataImpl.h"
 //#include <EVENT/LCRunHeader.h>
 //#include <EVENT/LCEvent.h> 
 #include "EUTelRunHeaderImpl.h"
