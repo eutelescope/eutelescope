@@ -70,7 +70,7 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="pALPIDEfsHotPixelKiller" type="EUTelHotPixelKiller">
+ <processor name="pALPIDEfsHotPixelKiller" type="EUTelProcessorHotPixelFinder">
   <!--EUTelHotPixelKiller periodically check for pixel singing loud too often and remove them from the analysis-->
   <!--Noise (input) collection name-->
   <parameter name="NoiseCollectionName" type="string" lcioInType="TrackerData"> pALPIDEfs_noise </parameter>

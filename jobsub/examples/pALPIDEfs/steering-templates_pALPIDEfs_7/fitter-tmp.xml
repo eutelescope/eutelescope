@@ -209,7 +209,7 @@ WARNING: - Please be aware that comments made in the original steering file were
   <!--The name of the output hit collection-->
   <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit">alignedHit1 </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <parameter name="Verbosity" type="string">DEBUG0</parameter>
+  <!--parameter name="Verbosity" type="string">DEBUG0</parameter-->
 </processor>
 
 <processor name="LoadAlignment1" type="ConditionsProcessor">
@@ -225,7 +225,7 @@ WARNING: - Please be aware that comments made in the original steering file were
   <!--Initialization of a simple conditions file handler-->
   <parameter name="SimpleFileHandler" type="StringVec"> alignment1 @DatabasePath@/@FilePrefix@-alignment1.slcio alignment1</parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <!--parameter name="Verbosity" type="string" value=""/-->
+  <!--parameter name="Verbosity" type="string" value="SILENT"/-->
 </processor>
 
 <processor name="MyEUTelAPIXApplyAlignment1" type="EUTelProcessorApplyAlignment">
@@ -401,7 +401,7 @@ WARNING: - Please be aware that comments made in the original steering file were
   <!--Use expected track direction to constraint number of considered hit combinations (track preselection).-->
   <parameter name="UseSlope" type="bool" value="true"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <!--parameter name="Verbosity" type="string" value=""/-->
+  <!--parameter name="Verbosity" type="string" value="SILENT"/-->
   <!--Ids of layers for which position window cut are applied-->
   <!--parameter name="WindowLayerIDs" type="IntVec"> </parameter-->
   <!--Upper window edge in X-->
