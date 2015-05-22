@@ -238,10 +238,10 @@ void EUTelProcessorGBLTrackFit::plotResidual(std::map< int, std::map<float, floa
 	int dut2 = -10;
 	bool flag = false;
 	for ( planes_it = planes.begin(); planes_it != planes.end(); planes_it++) {
-	  if (planes_it->second > 9 && flag == true) {
+	  if (planes_it->second > 5 && flag == true) {
 	    dut2 = planes_it->second;
 	  }
-	  if (planes_it->second > 9) {
+	  if (planes_it->second > 5) {
 	    dut1 = planes_it->second;
 	    flag = true;
 	  }
