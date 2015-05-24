@@ -548,7 +548,7 @@ namespace eutelescope {
 		_scattererPositions.push_back(_start);//Z position of 1st scatterer	
 		float secondScatterPosition = _normalMean +_normalVariance/(_normalMean-_start);
 		if(secondScatterPosition < _start){
-			throw(lcio::Exception("The distance of the second scatterer is smaller than the start. "));
+			throw(std::string("The distance of the second scatterer is smaller than the start. "));
 		}
 		_scattererPositions.push_back(secondScatterPosition);//Z position of 2nd scatterer
 		if(secondScatterPosition > _end){

@@ -9,6 +9,7 @@
 #include "TMatrixD.h"
 #include "TMatrixDSym.h"
 #endif
+#include "EUTelGeometryTelescopeGeoDescription.h"
 
 namespace eutelescope {
 

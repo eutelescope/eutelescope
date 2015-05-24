@@ -104,10 +104,10 @@ void EUTelProcessorPatRecTriplets::init(){
 		_trackFitter->setTripletSlopeCuts(_tripletSlopeCuts);
 		_trackFitter->setDoubletCenDistCut(_doubletCenDistCut);
         _trackFitter->setTripletConnectDistCut(_tripletConnectDistCut);
-		_trackFitter->setPlanesToCreateSeedsFrom(_createSeedsFromPlanes);
 		_trackFitter->setBeamMomentum(_eBeam);
 		_trackFitter->setBeamCharge(_qBeam);
 		_trackFitter->setAutoPlanestoCreateSeedsFrom();//If the user has not specified which planes to seed from the the first plane is used
+        _trackFitter->setPlaneDimensionsVec(_planeDimension);
 		_trackFitter->testUserInput();//Here we check that the user has provided the correct data. This is the most likey place to throw and exception.
 		bookHistograms();		// Book histograms. Yet again this should be replaced. TO DO:Create better histogram method.
 	}
@@ -189,7 +189,7 @@ void EUTelProcessorPatRecTriplets::processEvent(LCEvent* evt)
 
 		_trackFitter->setHitsVec(allHitsVec);//Will set data member of class _trackFitter. TO DO: We could do this within findHitsOrdervec.  
 
-//		_trackFitter->printHits();//We print the hits to screen for debugging
+		_trackFitter->printHits();//We print the hits to screen for debugging
 //		streamlog_out(DEBUG2) << "Now map hits to planes" << std::endl;
 
 		_trackFitter->setHitsVecPerPlane();//Create map Sensor ID(non excluded)->HitsVec (Using geometry)
@@ -198,7 +198,6 @@ void EUTelProcessorPatRecTriplets::processEvent(LCEvent* evt)
 
 		_trackFitter->testHitsVecPerPlane();//tests the size of the map and does it contain hits
 		streamlog_out( DEBUG1 ) << "Trying to find tracks..." << std::endl;
-        _trackFitter->createTriplets();
         std::vector<EUTelTrack> tracks = _trackFitter->getTracks();
         _trackFitter->testTrackQuality();
 

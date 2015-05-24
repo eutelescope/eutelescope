@@ -21,6 +21,7 @@ EUTelHit::EUTelHit(EVENT::TrackerHit* hit){
 const double* EUTelHit::getPosition() const {
     return &_position[0];
 }
+
 void EUTelHit::setPosition(const double * position){
     _position[0] = position[0];
     _position[1] = position[1];

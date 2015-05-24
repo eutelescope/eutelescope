@@ -2,15 +2,15 @@
 #include "EUTelNav.h"
 
 using namespace eutelescope;
-EUTelState::EUTelState()
+EUTelState::EUTelState():
+    _kinks(2),
+    _kinksMedium1(2),
+    _kinksMedium2(2)
 {
-     _kinks.ResizeTo(2);
     _kinks[0]=0;
     _kinks[1]=0;
-    _kinksMedium1.ResizeTo(2);
     _kinksMedium1[0]=0;
     _kinksMedium1[1]=0;
-    _kinksMedium2.ResizeTo(2);
     _kinksMedium2[0]=0;
     _kinksMedium2[1]=0;
 
@@ -18,12 +18,13 @@ EUTelState::EUTelState()
     _stateHasHit = false;
 } 
 
-EUTelState::EUTelState(EUTelState *state){
-     _kinks.ResizeTo(2);
+EUTelState::EUTelState(EUTelState *state):
+    _kinks(2),
+    _kinksMedium1(2),
+    _kinksMedium2(2)
+{
      _kinks = state->getKinks();
-    _kinksMedium1.ResizeTo(2);
     _kinksMedium1 = state->getKinksMedium1();
-    _kinksMedium2.ResizeTo(2);
     _kinksMedium2 = state->getKinksMedium2();
     _stateHasHit = false;
 	setDimensionSize(state->getDimensionSize());
@@ -68,6 +69,16 @@ TVector3 EUTelState::getPositionGlobal() const {
 	TVector3 posGlobalVec(posGlobal[0],posGlobal[1],posGlobal[2]);
 	return posGlobalVec;
 }
+//We need the location of the hit to get the global position. Therefore must be done through the state object.
+TVector3 EUTelState::getHitPositionGlobal() const {
+	const double* local =  _hit.getPosition();
+	const double posLocal[3] = {local[0],local[1],local[2]};
+  double posGlobal[3];
+	geo::gGeometry().local2Master(getLocation() ,posLocal,posGlobal);
+	TVector3 posGlobalVec(posGlobal[0],posGlobal[1],posGlobal[2]);
+	return posGlobalVec;
+}
+
 TVectorD EUTelState::getStateVec(){ 
 	streamlog_out( DEBUG1 ) << "EUTelState::getTrackStateVec()------------------------BEGIN" << std::endl;
 	TVectorD stateVec(5);
@@ -203,6 +214,7 @@ void EUTelState::setMomGlobalIncEne(std::vector<float> slopes, double energy){
     float incidenceXZ = slopes.at(0);
     float incidenceYZ = slopes.at(1);
     double momGlobal[3];
+//    std::cout<<"Slopes "<< incidenceXZ << " " << incidenceYZ << " " << energy <<std::endl;
     momGlobal[0] = energy*incidenceXZ;  
     momGlobal[1] = energy*incidenceYZ;  
     momGlobal[2] = sqrt(pow(energy,2) - pow(momGlobal[1],2) - pow(momGlobal[0],2));
@@ -279,7 +291,6 @@ void EUTelState::setStateUsingCorrection(TVectorD corrections){
     float charge = -1.0;
     float omegaNew =  charge/getMomLocal().Mag() + corrections[0];
     float newMom = charge/omegaNew; 
- //   std::cout << "Here " << getMomLocalX() << " " << getMomLocalY()<< " " << getMomLocalZ() <<"New mom " << newMom<<std::endl;
     setMomLocalX( newMom*(getMomLocalX()/getMomLocalZ() + corrections[1]));  
     setMomLocalY( newMom*(getMomLocalY()/getMomLocalZ() + corrections[2]));  
     setMomLocalZ(sqrt(pow(newMom,2) - pow(getMomLocalX(),2) - pow(getMomLocalY(),2)));
@@ -309,7 +320,7 @@ bool EUTelState::findIntersectionWithCertainID(int nextSensorID, float intersect
 	//TODO: better exception
 	if(pVec.Mag() == 0)
 	{
-		throw(lcio::Exception( "The momentum is 0")); 
+		throw(std::string("The momentum was set to zero")); 
 	}
 
 	double posLocal[] =  {getPosition()[0],getPosition()[1],getPosition()[2] };

@@ -171,7 +171,7 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent* evt){
 				static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_fitsuccessHistName ] ) -> fill(1.0);
 				if(chi2 ==0 or ndf ==0){
 					throw(lcio::Exception("Your fitted track has zero degrees of freedom or a chi2 of 0.")); 	
-					}
+                }
 				track.setChi2(chi2);
 				track.setNdf(ndf);
 				_chi2NdfVec.push_back(chi2/static_cast<float>(ndf));
@@ -287,11 +287,11 @@ void EUTelProcessorGBLTrackFit::end() {
 	double sizeFittedTracks = _chi2NdfVec.size();
 	for(size_t i=0; i<_chi2NdfVec.size(); ++i)
 	{
-		total= total + _chi2NdfVec.at(i);//TO DO: This is does not seem to output the correct average chi2. Plus do we really need this to fit?
+		total= total + _chi2NdfVec.at(i);
 	}
-	//TO DO: We really should have a better way to look track per track	and see if the correction is too large. 
 	std::vector<double> correctionTotal = _trackFitter->getCorrectionsTotal();
   float average = total/sizeFittedTracks;
+	streamlog_out(MESSAGE9) << "The number of GBL tracks "<< _chi2NdfVec.size() <<std::endl;
 	streamlog_out(MESSAGE9) << "This is the average chi2 -"<< average <<std::endl;
 
 }

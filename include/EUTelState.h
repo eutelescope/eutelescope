@@ -34,6 +34,7 @@ namespace eutelescope {
 			float getArcLengthToNextState() const {return _arcLength;} 
 			const float* getPosition() const ; 
 			TVector3 getPositionGlobal() const; 
+            TVector3 getHitPositionGlobal() const; 
 			void getCombinedHitAndStateCovMatrixInLocalFrame(double (&cov)[4]) const;
 			bool getStateHasHit() const;
 			TMatrixD getProjectionMatrix() const;
@@ -67,7 +68,7 @@ namespace eutelescope {
 			void setPositionGlobal(float positionGlobal[]);
             void setPositionGlobal(double positionGlobal[]);
 			void setCombinedHitAndStateCovMatrixInLocalFrame(double cov[4]);
-			void setStateUsingCorrection(TVectorD stateVec);
+			void setStateUsingCorrection(TVectorD corrections);
 			void setArcLengthToNextState(float arcLength){_arcLength = arcLength;} 
 			void setKinks(TVectorD kinks);
 			void setKinksMedium1(TVectorD kinks);

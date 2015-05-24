@@ -67,11 +67,15 @@ namespace eutelescope {
 
 		void createTriplets();
         std::vector<EUTelTrack> getTracks( );
+        EUTelTrack getTrackDUTHit(std::vector<EUTelTrack>::iterator itTrack, EUTelState stateDUT );
+
         void setScattering();
-        void setTrackStatesHits();
+        void findTrackFromTriplets();
         EUTelTrack getTrack(triplets tripLeft,triplets tripRight);
         EUTelTrack getTrack(triplets tripLeft,triplets tripRight,EUTelState stateDUT );
         void setStraightLineFit();
+        void setPlaneDimensionsVec(EVENT::IntVec planeDimensions);
+
 
 
 		inline int getEventNumber()	const {
@@ -169,6 +173,7 @@ namespace eutelescope {
         std::vector<triplets> _tripletsVec;
 
 		std::vector<EUTelTrack> _tracks;
+		std::vector<EUTelTrack> _tracksWithDUTHit;
 		std::vector<EUTelTrack> _tracksAfterEnoughHitsCut;
 		std::vector<EUTelTrack>	_finalTracks;
 
@@ -176,6 +181,8 @@ namespace eutelescope {
 		int _numberOfTracksAfterHitCut;
 		int _numberOfTracksAfterPruneCut;
 		void printHits();
+        EUTelTrack printTrack(std::vector<EUTelTrack>& tracks);
+
 private:
 
 
@@ -201,7 +208,8 @@ private:
 		 * from track's ref. point*/
 
 		void setNewState(float position[],float momentum[],  EUTelState& newState);
-		
+		void getDUTHit();
+
 		void setRadLengths(EUTelTrack & track,std::map<const int,double>  mapSensor, std::map<const int ,double>  mapAir, double rad );
 
 
