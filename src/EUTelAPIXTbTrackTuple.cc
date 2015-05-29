@@ -382,7 +382,7 @@ void EUTelAPIXTbTrackTuple::prepareTree()
 
 	p_col = new std::vector<int>();
 	p_row = new std::vector<int>();
-	p_tot = new std::vector<int>();
+	p_tot = new std::vector<double>();
 	p_iden = new std::vector<int>();
 	p_lv1 = new std::vector<int>();
 
@@ -410,7 +410,7 @@ void EUTelAPIXTbTrackTuple::prepareTree()
 	_zstree->Branch("euEvt",    &_nEvt);
 	_zstree->Branch("col",      &p_col);
 	_zstree->Branch("row",      &p_row);
-	_zstree->Branch("tot",      &p_tot);
+	_zstree->Branch("tot",   "std::vector<double>",   &p_tot);
 	_zstree->Branch("lv1",      &p_lv1);
 	_zstree->Branch("iden",     &p_iden);
 	
