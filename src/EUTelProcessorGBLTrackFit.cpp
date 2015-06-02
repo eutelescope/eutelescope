@@ -40,6 +40,7 @@ EUTelProcessorGBLTrackFit::EUTelProcessorGBLTrackFit() :
 Processor("EUTelProcessorGBLTrackFit"),
 _nProcessedRuns(0),
 _nProcessedEvents(0),
+_nTrackCand(0),
 _beamQ(-1),
 _eBeam(4),
 _trackCandidatesInputCollectionName("Default_input"),
@@ -140,6 +141,7 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent* evt){
         std::vector<EUTelTrack> tracks = reader.getTracks(evt, _trackCandidatesInputCollectionName );
 		std::vector<EUTelTrack> allTracksForThisEvent;//GBL will analysis the track one at a time. However we want to save to lcio per event.
 		for (int iTrack = 0; iTrack < tracks.size(); iTrack++) {
+            _nTrackCand++;
 			EUTelTrack track = tracks.at(iTrack); 
             streamlog_out(DEBUG1)<<"Found "<<tracks.size()<<" tracks for event " << evt->getEventNumber() << "  This is track:  " << iTrack <<std::endl;
             track.print();
@@ -291,7 +293,7 @@ void EUTelProcessorGBLTrackFit::end() {
 	}
 	std::vector<double> correctionTotal = _trackFitter->getCorrectionsTotal();
   float average = total/sizeFittedTracks;
-	streamlog_out(MESSAGE9) << "The number of GBL tracks "<< _chi2NdfVec.size() <<std::endl;
+	streamlog_out(MESSAGE9) << "The number of GBL tracks "<< _chi2NdfVec.size() <<" Number of original candidates "<< _nTrackCand <<std::endl;
 	streamlog_out(MESSAGE9) << "This is the average chi2 -"<< average <<std::endl;
 
 }

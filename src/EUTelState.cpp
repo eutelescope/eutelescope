@@ -49,8 +49,12 @@ double EUTelState::getRadFracSensor() const {
     return _radFracSensor;
 }
 
-EUTelHit EUTelState::getHit(){
-	return _hit;
+EUTelHit& EUTelState::getHit(){
+    if(_stateHasHit){
+        return _hit;
+    }else{
+        throw(std::string("Trying to access a hit which is not there "));
+    }
 }
 int EUTelState::getDimensionSize() const {
 	return _dimension;
@@ -63,15 +67,6 @@ const float* EUTelState::getPosition() const {
 }
 TVector3 EUTelState::getPositionGlobal() const {
 	const float* local =  getPosition();
-	const double posLocal[3] = {local[0],local[1],local[2]};
-  double posGlobal[3];
-	geo::gGeometry().local2Master(getLocation() ,posLocal,posGlobal);
-	TVector3 posGlobalVec(posGlobal[0],posGlobal[1],posGlobal[2]);
-	return posGlobalVec;
-}
-//We need the location of the hit to get the global position. Therefore must be done through the state object.
-TVector3 EUTelState::getHitPositionGlobal() const {
-	const double* local =  _hit.getPosition();
 	const double posLocal[3] = {local[0],local[1],local[2]};
   double posGlobal[3];
 	geo::gGeometry().local2Master(getLocation() ,posLocal,posGlobal);
@@ -174,11 +169,14 @@ TMatrixD EUTelState::getProjectionMatrix() const {
 	projection.SetSub(3, 3, proM2l);
 	return proM2l;
 }
-TVector3 EUTelState::getMomLocal(){
+TVector3 EUTelState::getMomLocal() const {
 	TVector3 pVecUnitLocal;
 	pVecUnitLocal[0] = getMomLocalX(); 	pVecUnitLocal[1] = getMomLocalY(); 	pVecUnitLocal[2] = getMomLocalZ(); 
 	return pVecUnitLocal;
 }
+float EUTelState::getSlopeX() const {return _momLocalX/getMomLocal().Mag();}
+float EUTelState::getSlopeY() const {return _momLocalY/getMomLocal().Mag();}
+
 TVectorD EUTelState::getKinks() const {
 	return _kinks;
 }
@@ -408,8 +406,8 @@ void EUTelState::print(){
 	streamlog_out(DEBUG1)<< std::scientific <<"Kinks local Medium2 (d(dx/dz),d(dy/dz)) "<< _kinksMedium2[0] <<" ,  " << _kinksMedium2[1]<<std::endl;
 
 	if(getStateHasHit()){
-        streamlog_out(DEBUG1)<< std::scientific<<"The hit ID of the state is "<<getHit().getID()<<std::endl;
-        streamlog_out(DEBUG1)<< std::scientific<<"Position hit local (X,Y,Z): "<<getHit().getPosition()[0]<<" "<<getHit().getPosition()[1]<<getHit().getPosition()[2]<<std::endl;
+		streamlog_out(DEBUG1) <<"This state has hit: " << std::endl;
+        getHit().print();
 
 	}else{
 		streamlog_out(DEBUG1) <<"This state has no hit " << std::endl;

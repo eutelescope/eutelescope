@@ -64,8 +64,8 @@ void EUTelMillepede::FillMilleParametersLabels() {
 void EUTelMillepede::computeAlignmentToMeasurementJacobian( EUTelState &state){
 	streamlog_out(DEBUG3) <<"State we arew about to add: "<< state.getLocation()<<endl; 
 	state.print();
-	float TxLocal =  state.getMomLocalX()/state.getMomLocalZ();
-	float TyLocal =  state.getMomLocalY()/state.getMomLocalZ();
+	float TxLocal =  state.getSlopeX();
+	float TyLocal =  state.getSlopeY();
 	const float* localpos = state.getPosition();
 	streamlog_out( DEBUG0 ) << "This is px/pz, py/pz (local) "<< TxLocal <<","<< TyLocal << std::endl;
 	streamlog_out( DEBUG0 ) << "Local frame position "<< *localpos<<","<<*(localpos+1)<<","<<*(localpos+2) << std::endl;

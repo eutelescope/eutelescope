@@ -47,7 +47,10 @@ namespace eutelescope {
         std::vector<float> diff;
     }; 
     struct triplets {
-        unsigned cenPlane;
+        unsigned int cenPlane;
+        unsigned int matches;
+        unsigned int fitID;
+
         std::vector<float> pos;
         std::vector<float> slope;
         std::vector<float> diff;
@@ -67,12 +70,20 @@ namespace eutelescope {
 
 		void createTriplets();
         std::vector<EUTelTrack> getTracks( );
-        EUTelTrack getTrackDUTHit(std::vector<EUTelTrack>::iterator itTrack, EUTelState stateDUT );
+        std::vector<double>  getCurvXY();
+        std::vector<double>  getCurvXYCorrected();
+        TVector3  getBFac();
 
-        void setScattering();
-        void findTrackFromTriplets();
+        void  setCurvXYCorrected(std::vector<double> curv);
+
+        EUTelTrack getTrackDUTHit(std::vector<EUTelTrack>::iterator itTrack, EUTelState stateDUT );
+        EUTelTrack getTrack(std::vector<EUTelHit> hits);
+        EUTelTrack getTrack(std::vector<EUTelHit> hits, std::vector<double> offset, std::vector<double> trackSlope );
         EUTelTrack getTrack(triplets tripLeft,triplets tripRight);
         EUTelTrack getTrack(triplets tripLeft,triplets tripRight,EUTelState stateDUT );
+        void getTrackAvePara(EUTelHit firstHit, EUTelHit endHit, std::vector<double>& offset, std::vector<double>& trackSlope);
+
+        void setScattering();
         void setStraightLineFit();
         void setPlaneDimensionsVec(EVENT::IntVec planeDimensions);
 
@@ -97,8 +108,8 @@ namespace eutelescope {
 			return _beamQ;
 		}
 
-		inline int getNumberOfTracksAfterPruneCut(){
-			return _numberOfTracksAfterPruneCut;
+		inline int getNumberDoublets(){
+			return _numberDoublets;
 		}
         std::vector<float>  getTripPosAtZ(triplets trip, float posZ );
 
@@ -157,6 +168,7 @@ namespace eutelescope {
 		void printTrackCandidates();
 		void testHitsVecPerPlane();
 		void testPositionEstimation(float position1[], float position2[]);
+        void findTrackFromTriplets();
 		void findTracksWithEnoughHits();
 	    doublets getDoublet( double hitLeftPos[3], double hitRightPos[3],double curvX,double curvY );
 		void testTrackQuality();
@@ -177,9 +189,10 @@ namespace eutelescope {
 		std::vector<EUTelTrack> _tracksAfterEnoughHitsCut;
 		std::vector<EUTelTrack>	_finalTracks;
 
-		int _numberOfTracksTotal;
-		int _numberOfTracksAfterHitCut;
-		int _numberOfTracksAfterPruneCut;
+		unsigned int _numberOfTracksTotal;
+		unsigned int _numberTripletsLeft;
+		unsigned int _numberTripletsRight;
+		unsigned int _numberDoublets;
 		void printHits();
         EUTelTrack printTrack(std::vector<EUTelTrack>& tracks);
 
@@ -252,7 +265,9 @@ private:
 
 		/** Beam energy spread [%] */
 		double _beamEnergyUncertainty;
-		
+        std::vector<double> _curvCorrected;
+        std::vector<double> _curv;
+	
 		/** Beam angular spread (horizontal,vertical) [mr] */
 		EVENT::FloatVec _beamAngularSpread;
 

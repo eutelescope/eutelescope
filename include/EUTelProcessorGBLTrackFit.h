@@ -82,6 +82,8 @@ namespace eutelescope {
 			int _nProcessedRuns;
 			/** Number of runs processed */
 			int _nProcessedEvents;
+			/** Number of runs processed */
+			int _nTrackCand;
 
 			/** Beam charge in [e] */
 			double _beamQ;

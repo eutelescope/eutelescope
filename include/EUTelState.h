@@ -20,21 +20,23 @@ namespace eutelescope {
 			EUTelState();
 			EUTelState(EUTelState *state);
 			//getters
-			EUTelHit getHit();
+			EUTelHit& getHit();
 			int getDimensionSize() const ;
 			int	getLocation() const;
 			TMatrixDSym getStateCov() const;
 			TVectorD getStateVec();
-            TVector3 getMomLocal();
+            TVector3 getMomLocal() const ;
 			float getMomLocalX() const {return _momLocalX;}
 			float getMomLocalY() const {return _momLocalY;}
 			float getMomLocalZ() const {return _momLocalZ;}
+			float getSlopeX() const; 
+			float getSlopeY() const; 
+
 			TVector3 getMomGlobal() const ;
             std::vector<double> getLCIOOutput();
 			float getArcLengthToNextState() const {return _arcLength;} 
 			const float* getPosition() const ; 
 			TVector3 getPositionGlobal() const; 
-            TVector3 getHitPositionGlobal() const; 
 			void getCombinedHitAndStateCovMatrixInLocalFrame(double (&cov)[4]) const;
 			bool getStateHasHit() const;
 			TMatrixD getProjectionMatrix() const;
