@@ -15,7 +15,7 @@ _tripletSlopeCuts(0,0),
 _beamE(-1.),
 _beamQ(-1.),
 _curvCorrected(2),
-_curv(2)
+_curv(0)
 {}
 EUTelPatRecTriplets::~EUTelPatRecTriplets()  
 {}
@@ -122,11 +122,16 @@ std::vector<double>  EUTelPatRecTriplets::getCurvXY(){
     const double Bz = (Bfield.at( vectorGlobal ).z());
     TVector3 B(Bx, By, Bz );
     TVector3 H = (B.Unit());
+    streamlog_out(DEBUG0) << "H field unit: " << H[0] << "  " << H[1] <<"  "<< H[2] << std::endl;
+
     TVector3 bFac = H.Cross(TVector3(0,0,1));
+    streamlog_out(DEBUG0) << "BFac field unit: " << bFac[0] << "  " << bFac[1] <<"  "<< bFac[2] << "  Omega: " << omega << std::endl;
     //Note the cross product
     double curvX = 0.0003*bFac[0]*omega; 
     double curvY = 0.0003*bFac[1]*omega; 
     _curv.push_back(curvX); _curv.push_back(curvY);
+    streamlog_out(DEBUG0) << "The curvature calculated: " << _curv.at(0) << "  " << _curv.at(1) << std::endl;
+
     return _curv;
 
 }
