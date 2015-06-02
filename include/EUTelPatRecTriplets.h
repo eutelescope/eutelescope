@@ -266,7 +266,6 @@ private:
 		/** Beam energy spread [%] */
 		double _beamEnergyUncertainty;
         std::vector<double> _curvCorrected;
-        std::vector<double> _curv;
 	
 		/** Beam angular spread (horizontal,vertical) [mr] */
 		EVENT::FloatVec _beamAngularSpread;
