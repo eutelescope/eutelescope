@@ -5,10 +5,10 @@ echo "The input to single loop on iteration $number"
 echo "Input gear: $inputGear" 
 echo "Output gear: $outputGear"
 echo "This is the resolutions X/Y:  $xres/$yres."
-#for x in {1..10}; do 
-#	echo "PATTERN RECOGNTION ATTEMPT $x ON ITERATION $number"
-	$do jobsub.py -c $CONFIG -csv $RUNLIST  -o ResidualsRMax="$ResidualsRMax" -o GearFile="$inputGear" -o TrackCandHitOutputCollectionName="$PatOutGBLIn" $PatRec $RUN  
 
+$do jobsub.py -c $CONFIG -csv $RUNLIST  -o ResidualsRMax="$ResidualsRMax" -o GearFile="$inputGear" $PatRec $RUN  
+#Use the intrinsic resolution of the detector.
+$do jobsub.py  -c $CONFIG -csv $RUNLIST -o GearFile="$inputGear"  $TrackFit  $RUN 
 #THIS IS PART (2)
 upperLimit=1 #So we only accept decreases in resolution form millepede. 
 #if there is a estimate of -90%, an increase in resolution, then use this result. 
@@ -20,7 +20,7 @@ rejectFactor=2
 echo "Initial resolutions are for (X/Y):" $xres"/"$yres
 while [ "$alignment" == "false" ]; do 
 	echo "THE NUMBER OF FAILED ALIGNMENT ATTEMPTS $numberRejectedAlignmentAttempts"
-	$do jobsub.py -c $CONFIG -csv $RUNLIST -o GearFile="$inputGear" -o GearAlignedFile="$outputGear" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres"  -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o lcioInputName="trackcand" -o inputCollectionName="$PatOutGBLIn" $Align  $RUN  
+	$do jobsub.py -c $CONFIG -csv $RUNLIST -o GearFile="$inputGear" -o GearAlignedFile="$outputGear" -o xResolutionPlane="$xres" -o yResolutionPlane="$yres"  -o FixXrot="${Fxr}" -o FixXshifts="${Fxs}"  -o FixYrot="${Fyr}" -o FixYshifts="${Fys}" -o FixZrot="${Fzr}" -o FixZshifts="${Fzs}" -o lcioInputName="GBLtracks" -o inputCollectionName="tracks" $Align  $RUN  
     if [ $singleLoop == 1 ];then
         echo "You have asked for a single for debugging purposes."
         exit 1

@@ -19,6 +19,9 @@ def readConfig(base):
             end=i
          #   print "Here is the line number we end on ", end, " Line: ", line
             break
+    if not found:
+        print "YOU HAVE NOT ADDED ITERATIVE ALIGNMENT TO THE CONFIG FILE CORRECTLY"
+        exit(-1)
 
  #   print "Here are the variables between: ", start," ",end
     for i in range(start+1,end):

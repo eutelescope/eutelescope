@@ -208,14 +208,23 @@ void EUTelProcessorPatternRecognition::processEvent(LCEvent* evt)
 	// searching for hits along the expected track direction 
 		_trackFitter->findTrackCandidates();//Find tracks from seeds. No cuts made here
 		_trackFitter->printTrackCandidates();
-		_trackFitter->testTrackCandidates();//Check that there is most 1 hit per state and each state has a unique hit.
+//		_trackFitter->testTrackCandidates();//Check that there is most 1 hit per state and each state has a unique hit.
 		_trackFitter->findTracksWithEnoughHits();//This will remove all tracks with hits less than specified by the cut.
 	// remove possible duplicates (the amount of commont hits on the split tracks is controled via the processor paraemter)
 		_trackFitter->findTrackCandidatesWithSameHitsAndRemove();//This will compare all tracks and if they have more than the allowed number of similar hits then remove. 
 		_trackFitter->testTrackQuality();//Here we test how many tracks we have after all cuts
 		streamlog_out( DEBUG1 ) << "Retrieving track candidates..." << std::endl;
 
-		std::vector<EUTelTrack>& tracks = _trackFitter->getTracks();//Get the tracks from the patternRecognition class. 
+        //If magnetic field then do not tilt the track for initial seed. 
+        //TO DO: Must determine incidence parallel to magnetic field, hence perpendicular ot Lorentz force. 
+        std::vector<EUTelTrack> tracks;
+        const gear::BField& B = geo::gGeometry().getMagneticField();
+        const double Bmag = B.at( TVector3(0.,0.,0.) ).r2();
+        if ( Bmag < 1.E-6 ) {
+            tracks = _trackFitter->getSeedTracks();
+        }else {
+            tracks = _trackFitter->getTracks();
+        }
 
 		plotHistos(tracks);
 
@@ -224,7 +233,7 @@ void EUTelProcessorPatternRecognition::processEvent(LCEvent* evt)
 		_nProcessedEvents++;
 	}
 	catch (DataNotAvailableException e) {
-		streamlog_out(WARNING2) << _hitInputCollectionName << " collection not available" << std::endl;
+		streamlog_out(WARNING2) << " Collection not available" << std::endl;
 		throw marlin::SkipEventException(this);
 	}
 	catch(std::string &e){
@@ -243,37 +252,14 @@ void EUTelProcessorPatternRecognition::processEvent(LCEvent* evt)
 
 void EUTelProcessorPatternRecognition::outputLCIO(LCEvent* evt, std::vector<EUTelTrack>& tracks)
 {
-	//We only want to create a container if there is tracks to save. Otherwise it is just an empty event.
-	if(tracks.size() !=0 ){
-		//Create once per event    
-		LCCollectionVec * trkCandCollection = new LCCollectionVec(LCIO::TRACK);//This is for the track object
-		LCCollectionVec * stateCandCollection = new LCCollectionVec(LCIO::TRACK);// This is for the states which we attach to the track
-
-		// Prepare output collection. Must set that this is a track object bit to save this lcio file correctly.
-		LCFlagImpl flag(trkCandCollection->getFlag());
-		flag.setBit( LCIO::TRBIT_HITS );
-		trkCandCollection->setFlag( flag.getFlag( ) );
-
-		LCFlagImpl flag2(stateCandCollection->getFlag());
-		flag2.setBit( LCIO::TRBIT_HITS );
-		stateCandCollection->setFlag( flag2.getFlag( ) );
-
-		//Loop through all tracks
-		for ( size_t i = 0 ; i < tracks.size(); ++i) {
-			EUTelTrack* trackheap = new  EUTelTrack(tracks[i]);
-			trackheap->print();
-			//For every track add this to the collection
-			trkCandCollection->push_back(static_cast<EVENT::Track*>(trackheap));
-			for(size_t j = 0;j < trackheap->getTracks().size();++j){
-				stateCandCollection->push_back(trackheap->getTracks().at(j) );
-			}
-		}//END TRACK LOOP
-
-		//Now add this collection to the 
-		evt->addCollection(trkCandCollection, _trackCandidateHitsOutputCollectionName);
-		std::string stateString = _trackCandidateHitsOutputCollectionName + "_States"; 
-		evt->addCollection(stateCandCollection, stateString);
-	}
+    if(!tracks.empty()){
+        for(unsigned int i=0 ; i< tracks.size(); i++){
+            streamlog_out(DEBUG1)<<"Found "<<tracks.size()<<" track for event " << evt->getEventNumber() <<".  Track number  " << i <<std::endl;
+            tracks.at(i).print();
+        }
+        EUTelReaderGenericLCIO reader = EUTelReaderGenericLCIO();
+        reader.getColVec(tracks, evt, _trackCandidateHitsOutputCollectionName);
+    }
 }
 
 //TO DO: find a more generic way to plot histograms
@@ -285,12 +271,12 @@ void EUTelProcessorPatternRecognition::plotHistos( std::vector<EUTelTrack>& trac
 	streamlog_out( MESSAGE2 ) << "Event #" << _nProcessedEvents << std::endl;
 	int numberOfHits =0;
 	for (size_t i = 0; i< trackCandidates.size( ) ; ++i ) {//loop over all tracks
-		for(size_t j = 0; j <trackCandidates[i].getTracks().size(); ++j){//loop over all states 
-			if(!trackCandidates[i].getStates()[j].getTrackerHits().empty()){//We only ever store on hit per state
+		for(size_t j = 0; j <trackCandidates[i].getStates().size(); ++j){//loop over all states 
+			if(!trackCandidates[i].getStates()[j].getStateHasHit()){//We only ever store on hit per state
 				continue;
 			}
 			numberOfHits++;
-			int sensorID = static_cast<int>(trackCandidates[i].getTracks()[j]->getZ0());//since we store sensor ID in Z0
+			int sensorID = static_cast<int>(trackCandidates[i].getStates().at(j).getLocation());//since we store sensor ID in Z0
 			static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_HitOnTrackCandidateHistName ] ) -> fill( sensorID );
 		}
 	streamlog_out( MESSAGE1 ) << "Track hits end:==============" << std::endl;

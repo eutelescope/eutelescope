@@ -15,6 +15,8 @@
 #include <AIDA/IHistogramFactory.h>
 #include <AIDA/IProfile2D.h>
 #endif // MARLIN_USE_AIDA
+#include "EUTelHit.h"
+//#include <boost/math/distributions/chi_squared.hpp> 
 
 #include <map>
 
@@ -50,11 +52,13 @@ namespace eutelescope {
 		void setSensorIDToIncidenceAngleYZ( std::map< int,  AIDA::IHistogram1D * > mapFromSensorIDToKinkYZ){_mapFromSensorIDToIncidenceYZ=mapFromSensorIDToKinkYZ;}
 		void setSensorIDToPValuesVsIncidenceAngleXZ( std::map< int,  AIDA::IProfile1D * > mapFromSensorIDToPValuesVsIncidenceXZ){_mapFromSensorIDToPValuesVsIncidenceXZ=mapFromSensorIDToPValuesVsIncidenceXZ;}
 		void setSensorIDToPValuesVsIncidenceAngleYZ( std::map< int,  AIDA::IProfile1D * > mapFromSensorIDToPValuesVsIncidenceYZ){_mapFromSensorIDToPValuesVsIncidenceYZ=mapFromSensorIDToPValuesVsIncidenceYZ;}
+//		void setHistName(std::string histName){  _histoInfoFileName = histName; }
 
 		AIDA::IHistogram1D * _beamEnergy;
 		AIDA::IProfile1D   * _pValueBeamEnergy;
 		AIDA::IProfile1D * _pValueVsBeamEnergy;
 		float calculatePValueForChi2(EUTelTrack track);
+ //       std::string _histoInfoFileName;
 
 
 	};

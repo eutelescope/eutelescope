@@ -33,6 +33,7 @@
 #include "EUTelMillepede.h"
 #include "EUTelTrack.h"
 #include "EUTelState.h"
+#include "EUTelReaderGenericLCIO.h"
 
 namespace eutelescope {
 

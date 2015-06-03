@@ -24,6 +24,29 @@ using namespace std;
 namespace eutelescope {
 
     namespace Utility {
+        /** This function will set the  
+
+        * @param mat input with arbitrary precision
+
+        * @param pre precision to set the new matrix to  */
+
+        TMatrixD setPrecision( TMatrixD mat, double mod){
+
+            for(int i=0; i < mat.GetNrows(); i++){
+
+                for(int j=0; j < mat.GetNcols(); j++){
+                    if(abs(mat[j][i]) < mod){
+                        mat[j][i] = 0;
+                    }
+
+                }
+
+            }
+
+            return mat;
+
+        }
+
 
         /**
          * Fills indices of not excluded planes
@@ -303,8 +326,8 @@ namespace eutelescope {
          * @return vector of solution sorted in descending order
          */
         vector< double > solveQuadratic( double a, double b, double c) {
-		streamlog_out( DEBUG1 ) << "Solving quadratic equation with coefficients:\na: " 
-		<< a << "\nb: " << b << "\nc:" << c << std::endl;
+//		streamlog_out( DEBUG1 ) << "Solving quadratic equation with coefficients:\na: " 
+//		<< a << "\nb: " << b << "\nc:" << c << std::endl;
                 //Solutions
                 vector< double > X;              //initialise with two doubles equal 0.
 

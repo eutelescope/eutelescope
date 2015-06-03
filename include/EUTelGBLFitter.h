@@ -14,10 +14,8 @@
 
 // eutelescope includes ".h"
 #include "EUTelUtility.h"
-#include "EUTelTrackStateImpl.h"
 #include "EUTelTrack.h"
 #include "EUTelState.h"
-#include "EUTelTrackImpl.h"
 #include "EUTelMillepede.h"
 
 // EVENT includes
@@ -65,13 +63,14 @@ namespace eutelescope {
 			void setInformationForGBLPointList(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList);
 			void setMeasurementGBL(gbl::GblPoint& point, const double *hitPos, double statePos[3], double combinedCov[4], TMatrixD projection);
 			void getKinkInformationToTrack(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint >& pointList,EUTelTrack &track);
+            TMatrixD getFullJacobian(TVector3 momStart, TVector3 momEnd, int locationStart, int locationEnd, double distance, double min );
 			void setPointVec( std::vector< gbl::GblPoint >& pointList, gbl::GblPoint& point);
-			void setPairAnyStateAndPointLabelVec(std::vector< gbl::GblPoint >& pointList, gbl::GblTrajectory*);
+			void setPairAnyStateAndPointLabelVec(gbl::GblTrajectory*);
 			void setPairMeasurementStateAndPointLabelVec(std::vector< gbl::GblPoint >& pointList);
-			void setAlignmentToMeasurementJacobian(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList);
+			void setAlignmentToMeasurementJacobian(std::vector< gbl::GblPoint >& pointList);
 			void setScattererGBL(gbl::GblPoint& point,EUTelState & state );
-			void setScattererGBL(gbl::GblPoint& point,EUTelState & state,  float  percentageRadiationLength);
-			void setLocalDerivativesToPoint(gbl::GblPoint& point, EUTelState & state, float distanceFromKinkTargetToNextPlane );
+			void setScattererGBL(gbl::GblPoint& point,EUTelState & state,  float variance, TVectorD scat );
+			void setLocalDerivativesToPoint(gbl::GblPoint& point, float distanceFromKinkTargetToNextPlane );
 			void setPointListWithNewScatterers(std::vector< gbl::GblPoint >& pointList,EUTelState & state, std::vector<float> variance );
 			void setMeasurementCov(EUTelState& state);
 			inline void setAlignmentMode( int number) {
@@ -99,8 +98,8 @@ namespace eutelescope {
 			void setMEstimatorType( const std::string& _mEstimatorType );
 			//GET
 			float getPositionOfSecondScatter(float start, float end);
-			gbl::GblPoint getLabelToPoint(std::vector<gbl::GblPoint> & pointList, int label);
-			void getResidualOfTrackandHits(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint > pointList, EUTelTrack& track, std::map< int, std::map< float, float > > & SensorResidual, std::map< int, std::map< float, float > >& sensorResidualError);
+			gbl::GblPoint getLabelToPoint(std::vector<gbl::GblPoint> & pointList, unsigned int label);
+			void getResidualOfTrackandHits(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint > pointList, std::map< int, std::map< float, float > > & SensorResidual, std::map< int, std::map< float, float > >& sensorResidualError);
 			inline int getAlignmentMode() const {
 				return _alignmentMode;
 			}
@@ -125,18 +124,18 @@ namespace eutelescope {
 			void testTrack(EUTelTrack& track);
 			void testDistanceBetweenPoints(double* position1,double* position2);
 			//COMPUTE
-			void computeTrajectoryAndFit(std::vector< gbl::GblPoint >& pointList,  gbl::GblTrajectory* traj, double* chi2, int* ndf, int & ierr);
+			void computeTrajectoryAndFit(gbl::GblTrajectory* traj, double* chi2, int* ndf, int & ierr);
 			std::vector<float> computeVarianceForEachScatterer(EUTelState & state);
 			//OTHER FUNCTIONS
 			void resetPerTrack();
 			void findScattersZPositionBetweenTwoStates();
 			TMatrixD findScattersJacobians(EUTelState state, EUTelState nextTrack);
-			void updateTrackFromGBLTrajectory(gbl::GblTrajectory* traj, std::vector<gbl::GblPoint>& pointList, EUTelTrack& track, std::map<int,std::vector<double> >& mapSensorIDToCorrectionVec );
+			void updateTrackFromGBLTrajectory(gbl::GblTrajectory* traj, EUTelTrack& track, std::map<int,std::vector<double> >& mapSensorIDToCorrectionVec );
 			void prepareLCIOTrack( gbl::GblTrajectory*, std::vector<const IMPL::TrackImpl*>::const_iterator&, double, int); 
 			void prepareMilleOut( gbl::GblTrajectory* );
+            TVector3 transVecGlobalToLocal(TVector3 input, int location);
 
 			//VARIABLES
-			bool _kinkAngleEstimation; //This used to determine if the correction matrix from the GBL fit is 5 or 7 elements long. 
 			int _alignmentMode;
 			std::vector<EUTelState> _measurementStatesInOrder;
 			std::vector<EUTelState> _statesInOrder;
@@ -177,9 +176,10 @@ namespace eutelescope {
 			std::map<int,int> _parameterIdYRotationsMap;
 			/** Parameter ids */
 			std::map<int,int> _parameterIdZRotationsMap;
-			std::vector< std::pair< EUTelState, int> > _vectorOfPairsMeasurementStatesAndLabels;//This is used within alignment since you need to associate MEASUREMENT states to  labels
+			std::vector< std::pair< EUTelState, unsigned int> > _vectorOfPairsMeasurementStatesAndLabels;//This is used within alignment since you need to associate MEASUREMENT states to  labels
 			std::vector< std::pair< EUTelState, int> > _vectorOfPairsStatesAndLabels;//This is used in track fit since you want to associate ANY states to labels.
 			unsigned int _counter_num_pointer;
+			bool _kinkAngleEstimation; //This used to determine if the correction matrix from the GBL fit is 5 or 7 elements long. 
 			EUTelMillepede* _MilleInterface;
         
     };
