@@ -50,8 +50,8 @@ void EUTelProcessorTrackAnalysis::processEvent(LCEvent * evt){
 			streamlog_out(WARNING2) << "Event number " << event->getEventNumber() << " in run " << event->getRunNumber() << " is of unknown type. Continue considering it as a normal Data Event." << std::endl;
 		}
         streamlog_out(DEBUG2) << "Collection contains data! Continue!" << std::endl;
-        EUTelReaderGenericLCIO reader = EUTelReaderGenericLCIO();
-        std::vector<EUTelTrack> tracks = reader.getTracks(evt, _trackInputCollectionName);
+        EUTelReaderGenericLCIO reader = EUTelReaderGenericLCIO(); streamlog_out(DEBUG2) << "Collection contains data! Continue! line 53" << std::endl;
+        std::vector<EUTelTrack> tracks = reader.getTracks(evt, _trackInputCollectionName);streamlog_out(DEBUG2) << "Collection contains data! Continue! line 54" << std::endl;
         for (int iTrack = 0; iTrack < tracks.size(); ++iTrack){
             EUTelTrack track = tracks.at(iTrack); 
             _analysis->plotResidualVsPosition(track);	
