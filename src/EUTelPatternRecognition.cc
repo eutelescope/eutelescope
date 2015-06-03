@@ -395,7 +395,7 @@ void EUTelPatternRecognition::initialiseSeeds()
 
 		}
         streamlog_out(DEBUG0) << "States to create tracks from: "<< std::endl;       
-        for(unsigned int i = 0; i<stateVec.size(); i++){
+        for(size_t i = 0; i<stateVec.size(); i++){
             stateVec.at(i).print();
         }
 		_mapSensorIDToSeedStatesVec[_createSeedsFromPlanes[iplane]] = stateVec; 
@@ -509,7 +509,7 @@ void EUTelPatternRecognition::setHitsVecPerPlane()
 std::vector<EUTelTrack> EUTelPatternRecognition::getSeedTracks(){
     std::vector<EUTelTrack> seededTracks;
     std::vector<EUTelTrack> tracksOriginal = _finalTracks; //Must make copy here so we do not change _finalTracks
-    for(unsigned int i=0 ; i <tracksOriginal.size(); i++ ){
+    for(size_t i=0 ; i <tracksOriginal.size(); i++ ){
 //        streamlog_out(DEBUG1) <<"Track before seed running:  "  <<std::endl;
 //        tracksOriginal.at(i).print();
         bool found=true;
@@ -529,7 +529,7 @@ std::vector<EUTelTrack> EUTelPatternRecognition::getSeedTracks(){
 bool EUTelPatternRecognition::seedTrackOuterHits(EUTelTrack track,EUTelTrack & trackOut){
     //Deterimine last state with hit//
     int lastStateWithHit=0;
-    for(unsigned int i=0 ; i < track.getStates().size() ; i++){
+    for(size_t i=0 ; i < track.getStates().size() ; i++){
       if(track.getStates().at(i).getStateHasHit()){
           lastStateWithHit=i;
       }
@@ -539,10 +539,10 @@ bool EUTelPatternRecognition::seedTrackOuterHits(EUTelTrack track,EUTelTrack & t
     EUTelState lastState = track.getStates().at(lastStateWithHit);
 
     TVector3 momGlobal = getGlobalMomBetweenStates(firstState, lastState);
-    for(unsigned int i=0 ; i < track.getStates().size() ; i++){
+    for(size_t i=0 ; i < track.getStates().size() ; i++){
         track.getStates().at(i).setLocalMomentumGlobalMomentum(momGlobal);
     }
-    for(unsigned int i=0 ; i < (track.getStates().size()-1) ; i++){
+    for(size_t i=0 ; i < (track.getStates().size()-1) ; i++){
         float intersectionPoint[3];
         TVector3 momentumAtIntersection;
         float arcLength;

@@ -13,10 +13,10 @@ void EUTelReaderGenericLCIO::getColVec(std::vector<EUTelTrack> tracks,LCEvent* e
     LCCollectionVec* relStateHitVec = new LCCollectionVec(LCIO::LCRELATION);
 
 
-    for(unsigned int i=0 ; i < tracks.size(); i++){
+    for(size_t i=0 ; i < tracks.size(); i++){
         IMPL::LCGenericObjectImpl* conTrack = new  IMPL::LCGenericObjectImpl();  
         //Save everything as double and down cast later.
-        for(unsigned int j=0; j < tracks.at(i).getLCIOOutput().size(); j++){
+        for(size_t j=0; j < tracks.at(i).getLCIOOutput().size(); j++){
             streamlog_out(DEBUG1)<<"Fill number: " << j << " Value " << tracks.at(i).getLCIOOutput().at(j) <<std::endl;
             conTrack->setDoubleVal (j, tracks.at(i).getLCIOOutput().at(j));
         }
@@ -24,11 +24,11 @@ void EUTelReaderGenericLCIO::getColVec(std::vector<EUTelTrack> tracks,LCEvent* e
         colTrackVec->push_back(static_cast<EVENT::LCGenericObject*>(conTrack));
         streamlog_out(DEBUG1)<<"Tracks filled" <<std::endl;
         std::vector<EUTelState> states = tracks.at(i).getStates();
-        for(unsigned int j=0 ; j < states.size(); j++){
+        for(size_t j=0 ; j < states.size(); j++){
             streamlog_out(DEBUG1)<<"Fill all state information " << " state location " << states.at(j).getLocation() <<std::endl;
             IMPL::LCGenericObjectImpl* conState = new  IMPL::LCGenericObjectImpl();  
             streamlog_out(DEBUG1)<<"Empty state container created" <<std::endl;
-            for(unsigned int k=0 ; k < states.at(j).getLCIOOutput().size(); k++){
+            for(size_t k=0 ; k < states.at(j).getLCIOOutput().size(); k++){
                 streamlog_out(DEBUG1)<<"Fill number: " << k << " Value " << tracks.at(i).getStates().at(j).getLCIOOutput().at(k) <<std::endl;
                 conState->setDoubleVal (k,states.at(j).getLCIOOutput().at(k));
             }
@@ -37,7 +37,7 @@ void EUTelReaderGenericLCIO::getColVec(std::vector<EUTelTrack> tracks,LCEvent* e
             relTrackStateVec->push_back(static_cast<EVENT::LCRelation*>(relTrackState));
             if(states.at(j).getStateHasHit()){
                 IMPL::LCGenericObjectImpl* conHit = new  IMPL::LCGenericObjectImpl();  
-                for(unsigned int k=0 ; k < states.at(j).getHit().getLCIOOutput().size(); k++){
+                for(size_t k=0 ; k < states.at(j).getHit().getLCIOOutput().size(); k++){
                     conHit->setDoubleVal (k, states.at(j).getHit().getLCIOOutput().at(k));
                 }
                 IMPL::LCRelationImpl *relStateHit = new IMPL::LCRelationImpl(conState,conHit); 

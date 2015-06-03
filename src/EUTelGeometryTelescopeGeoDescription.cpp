@@ -865,16 +865,16 @@ TMatrixD EUTelGeometryTelescopeGeoDescription::getRotMatrix( int sensorID ) {
     streamlog_out(DEBUG0) << "EUTelGeometryTelescopeGeoDescription::getRotMatrix()----END " << std::endl;
 
 }
-int EUTelGeometryTelescopeGeoDescription::getSensorID( float globalPos[] ) const {
+int EUTelGeometryTelescopeGeoDescription::getSensorID( float const globalPos[] ) const {
     double pos[3] = {globalPos[0],globalPos[1],globalPos[2]};
-    getSensorID(pos);
+    return getSensorID(pos);
 }
 /** Determine id of the sensor in which point is locate
  *  * 
  *  * @param globalPos 3D point in global reference frame
  *  * @return sensorID or -999 if the point in outside of sensor volume
  *  */
-int EUTelGeometryTelescopeGeoDescription::getSensorID( double globalPos[] ) const {
+int EUTelGeometryTelescopeGeoDescription::getSensorID( double const globalPos[] ) const {
     streamlog_out(DEBUG5) << "EUTelGeometryTelescopeGeoDescription::getSensorID() " << std::endl;
     const float constPos[3] = {globalPos[0],globalPos[1],globalPos[2]};
     _geoManager->FindNode( constPos[0], constPos[1], constPos[2] );
