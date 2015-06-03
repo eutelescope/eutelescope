@@ -75,7 +75,7 @@ std::vector<EUTelTrack> EUTelReaderGenericLCIO::getTracks( LCEvent* evt, std::st
             //If track is new enter here.
             trackIDVec.push_back(trackID);
             std::vector<double> trackInput;
-            for(unsigned i =0 ; i < track->getNDouble(); i++){
+            for(int i =0 ; i < track->getNDouble(); i++){
                 trackInput.push_back(track->getDoubleVal(i)); 
             }
             EUTelTrack track;
@@ -87,7 +87,7 @@ std::vector<EUTelTrack> EUTelReaderGenericLCIO::getTracks( LCEvent* evt, std::st
                 if(trackCheck->id() == trackID){//If this is true then the state must be part of this track.
                     int stateID = state->id();
                     std::vector<double> stateInput;
-                    for(unsigned i =0 ; i < state->getNDouble(); i++){
+                    for(int i =0 ; i < state->getNDouble(); i++){
                         stateInput.push_back(state->getDoubleVal(i)); 
                     }
                     EUTelState state;
@@ -99,7 +99,7 @@ std::vector<EUTelTrack> EUTelReaderGenericLCIO::getTracks( LCEvent* evt, std::st
                         if(stateCheck->id() == stateID){//If this is true then you have the correct hit.
                             streamlog_out(DEBUG1)<<"Found correct ID. Add hit now..." <<std::endl;
                             std::vector<double> hitInput;
-                            for(unsigned i =0 ; i < hit->getNDouble(); i++){
+                            for(int i =0 ; i < hit->getNDouble(); i++){
                                 hitInput.push_back(hit->getDoubleVal(i)); 
                             }
                             EUTelHit hit;

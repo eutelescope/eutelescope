@@ -52,7 +52,7 @@ void EUTelProcessorTrackAnalysis::processEvent(LCEvent * evt){
         streamlog_out(DEBUG2) << "Collection contains data! Continue!" << std::endl;
         EUTelReaderGenericLCIO reader = EUTelReaderGenericLCIO();
         std::vector<EUTelTrack> tracks = reader.getTracks(evt, _trackInputCollectionName);
-        for (int iTrack = 0; iTrack < tracks.size(); ++iTrack){
+        for (size_t iTrack = 0; iTrack < tracks.size(); ++iTrack){
             EUTelTrack track = tracks.at(iTrack); 
             _analysis->plotResidualVsPosition(track);	
             _analysis->plotIncidenceAngles(track);

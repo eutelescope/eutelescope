@@ -166,7 +166,7 @@ void EUTelProcessorGBLAlign::processEvent(LCEvent * evt){
 			}
             EUTelReaderGenericLCIO reader = EUTelReaderGenericLCIO();
             std::vector<EUTelTrack> tracks = reader.getTracks(evt, _trackCandidatesInputCollectionName);
-            for (int iTrack = 0; iTrack < tracks.size(); ++iTrack) {
+            for (size_t iTrack = 0; iTrack < tracks.size(); ++iTrack) {
                 _totalTrackCount++;
                 _trackFitter->resetPerTrack(); //Here we reset the label that connects state to GBL point to 1 again. Also we set the list of states->labels to 0
                 EUTelTrack track = tracks.at(iTrack);

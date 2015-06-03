@@ -139,7 +139,7 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent* evt){
         EUTelReaderGenericLCIO reader = EUTelReaderGenericLCIO();
         std::vector<EUTelTrack> tracks = reader.getTracks(evt, _trackCandidatesInputCollectionName );
 		std::vector<EUTelTrack> allTracksForThisEvent;//GBL will analysis the track one at a time. However we want to save to lcio per event.
-		for (int iTrack = 0; iTrack < tracks.size(); iTrack++) {
+		for (size_t iTrack = 0; iTrack < tracks.size(); iTrack++) {
 			EUTelTrack track = tracks.at(iTrack); 
             streamlog_out(DEBUG1)<<"Found "<<tracks.size()<<" tracks for event " << evt->getEventNumber() << "  This is track:  " << iTrack <<std::endl;
             track.print();
