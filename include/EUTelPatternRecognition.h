@@ -25,8 +25,6 @@
 // EUTELESCOPE
 #include "EUTelUtility.h"
 #include "EUTelTrackFitter.h"
-#include "EUTelTrackStateImpl.h"
-#include "EUTelTrackImpl.h"
 #include "EUTelGeometryTelescopeGeoDescription.h"
 #include "EUTelTrack.h"
 #include "EUTelState.h"
@@ -107,7 +105,11 @@ namespace eutelescope {
 		inline void setBeamCharge(double q) {
 			this->_beamQ = q;
 		}
-		
+        std::vector<EUTelTrack> getSeedTracks();
+        bool seedTrackOuterHits(EUTelTrack track, EUTelTrack & trackOut);
+
+		TVector3 getGlobalMomBetweenStates(EUTelState firstState, EUTelState lastState);
+
 		//Here if the user does not set a create seeds from planes x. The we set it automatically to the first plane travelling as the beam travels. 
 		//This has the best of both world. No reduction on functionality. User does not even know this is here. 	
 		inline 	void setAutoPlanestoCreateSeedsFrom(){
@@ -120,7 +122,7 @@ namespace eutelescope {
 		TVector3 computeInitialMomentumGlobal();
 		//TEST
 		void testUserInput();
-		void testTrackCandidates();
+//		void testTrackCandidates();
 		
 		//OTHER
 		void printTrackCandidates();
@@ -147,6 +149,7 @@ namespace eutelescope {
 		std::vector<EUTelTrack> _tracks;
 		std::vector<EUTelTrack> _tracksAfterEnoughHitsCut;
 		std::vector<EUTelTrack>	_finalTracks;
+
 		int _numberOfTracksTotal;
 		int _numberOfTracksAfterHitCut;
 		int _numberOfTracksAfterPruneCut;
@@ -156,10 +159,8 @@ private:
 
 
 		/** Update track state and it's cov matrix */
-		double updateTrackState( EUTelTrackStateImpl*, const EVENT::TrackerHit* );
 	
 		/** Update track propagation matrix for a given step */
-const TMatrixD& getPropagationJacobianF( const EUTelTrackStateImpl*, double );
 		
 		/** Update Kalman gain matrix */
 
@@ -173,35 +174,25 @@ const TMatrixD& getPropagationJacobianF( const EUTelTrackStateImpl*, double );
 private:
 		
 		/** Calculate track momentum from track parameters */
-		TVector3 getPfromCartesianParameters( const EUTelTrackStateImpl* ) const;
 		
 		/** Calculate position of the track in global 
 		 * coordinate system for given arc length starting
 		 * from track's ref. point*/
-		TVector3 getXYZfromArcLength( const EUTelTrackStateImpl*, double ) const;
-		TVector3 getXYZfromArcLength1( const EUTelTrackStateImpl*, double ) const;
 
 		void setNewState(float position[],float momentum[],  EUTelState& newState);
 		
 		void setRadLengths(EUTelTrack & track,std::map<const int,double>  mapSensor, std::map<const int ,double>  mapAir, double rad );
 
 
-		void UpdateStateUsingHitInformation(EUTelTrackStateImpl*,EVENT::TrackerHit* , const TMatrixD&, TMatrixD &, TMatrixD &);
-
-		void UpdateTrackUsingHitInformation( EUTelTrackStateImpl* input,const EVENT::TrackerHit* hit, EUTelTrackImpl* track, const TMatrixD& jacobian, TMatrixD & KGain, TMatrixD & HMatrix);
 		
 		/** Calculate position of the track in global 
 		 * coordinate system for given arc length starting
 		 * from track's ref. point */
-		TVector3 getXYZfromDzNum( const EUTelTrackStateImpl*, double ) const;
 
 double getXYPredictionPrecision(EUTelState& ts ) const;
 		
 		/** Get residual vector */
 		TVectorD computeResidual(  EUTelState &, const EVENT::TrackerHit* ) const;
-		
-		/** Convert EUTelTrackImpl to TrackImpl */
-		IMPL::TrackImpl* cartesian2LCIOTrack( EUTelTrackImpl* ) const;
 		
 		/** Find hit closest to the track */
 		const EVENT::TrackerHit* findClosestHit(EUTelState&);
@@ -211,7 +202,6 @@ double getXYPredictionPrecision(EUTelState& ts ) const;
 private:       
 		
 		/** Final set of tracks in cartesian parameterisation */
-		std::vector< EUTelTrackImpl* > _tracksCartesian;
 		std::map<int, std::vector<EUTelState> > _mapSensorIDToSeedStatesVec;
 
 		// User supplied configuration of the fitter

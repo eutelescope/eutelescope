@@ -38,7 +38,6 @@ std::string EUTelProcessorGBLTrackFit::_histName::_residGblFitHistNameY5p = "Res
 
 EUTelProcessorGBLTrackFit::EUTelProcessorGBLTrackFit() :
 Processor("EUTelProcessorGBLTrackFit"),
-_first_time(true),
 _nProcessedRuns(0),
 _nProcessedEvents(0),
 _beamQ(-1),
@@ -137,20 +136,15 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent* evt){
 		}else if (event->getEventType() == kUNKNOWN) {
 			streamlog_out(WARNING2) << "Event number " << event->getEventNumber() << " in run " << event->getRunNumber() << " is of unknown type. Continue considering it as a normal Data Event." << std::endl;
 		}
-		LCCollection* col = NULL;
-		col = evt->getCollection(_trackCandidatesInputCollectionName);
-		streamlog_out(DEBUG1) << "collection : " << _trackCandidatesInputCollectionName << " retrieved" << std::endl;
-
-		if (col == NULL) {
-			streamlog_out(MESSAGE0)<< "The collection is NULL for this event." << std::endl;
-			throw marlin::SkipEventException(this);
-		}
+        EUTelReaderGenericLCIO reader = EUTelReaderGenericLCIO();
+        std::vector<EUTelTrack> tracks = reader.getTracks(evt, _trackCandidatesInputCollectionName );
 		std::vector<EUTelTrack> allTracksForThisEvent;//GBL will analysis the track one at a time. However we want to save to lcio per event.
-		for (int iCol = 0; iCol < col->getNumberOfElements(); iCol++) {
-			//TO DO: Make sure that the original input collection is not changed by this.
-			EUTelTrack track =  EUTelTrack(*(static_cast<EUTelTrack*> (col->getElementAt(iCol))));//TO DO: Is there a more elegant way to copy this?
+		for (size_t iTrack = 0; iTrack < tracks.size(); iTrack++) {
+			EUTelTrack track = tracks.at(iTrack); 
+            streamlog_out(DEBUG1)<<"Found "<<tracks.size()<<" tracks for event " << evt->getEventNumber() << "  This is track:  " << iTrack <<std::endl;
+            track.print();
+			streamlog_out(DEBUG1) << "//////////////////////////////////// " << std::endl;
 			_trackFitter->resetPerTrack(); //Here we reset the label that connects state to GBL point to 1 again. Also we set the list of states->labels to 0
-			track.print();//Print the track use for debugging
 			_trackFitter->testTrack(track);//Check the track has states and hits  
 			std::vector< gbl::GblPoint > pointList;
 			_trackFitter->setInformationForGBLPointList(track, pointList);//Here we describe the whole setup. Geometry, scattering, data...
@@ -164,11 +158,11 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent* evt){
 			}else {
 				traj = new gbl::GblTrajectory( pointList, true );
 			}
-			_trackFitter->setPairAnyStateAndPointLabelVec(pointList,traj);//This will create a link between any state and it's GBL point label. 
+			_trackFitter->setPairAnyStateAndPointLabelVec(traj);//This will create a link between any state and it's GBL point label. 
 			double  chi2=0; 
 			int ndf=0;
 			int ierr=0;
-			_trackFitter->computeTrajectoryAndFit(pointList,traj, &chi2,&ndf, ierr);//This will do the minimisation of the chi2 and produce the most probable trajectory.
+			_trackFitter->computeTrajectoryAndFit(traj, &chi2,&ndf, ierr);//This will do the minimisation of the chi2 and produce the most probable trajectory.
 			if(ierr == 0 ){
 				streamlog_out(DEBUG5) << "Ierr is: " << ierr << " Entering loop to update track information " << std::endl;
 				//If the fit succeeded then write into the binary file.
@@ -182,14 +176,13 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent* evt){
 				track.setNdf(ndf);
 				_chi2NdfVec.push_back(chi2/static_cast<float>(ndf));
 				std::map<int, std::vector<double> >  mapSensorIDToCorrectionVec;//This is not used now. However it maybe useful to be able to access the corrections that GBL makes to the original track. Since if this is too large then GBL may give th wrong trajectory. Since all the equations are only to first order. 
-				_trackFitter->updateTrackFromGBLTrajectory(traj, pointList,track,mapSensorIDToCorrectionVec);
+				_trackFitter->updateTrackFromGBLTrajectory(traj,track,mapSensorIDToCorrectionVec);
 				std::map< int, std::map< float, float > >  SensorResidual; 
 				std::map< int, std::map< float, float > >  SensorResidualError; 
-				_trackFitter->getResidualOfTrackandHits(traj, pointList,track, SensorResidual, SensorResidualError);
-				if(chi2/static_cast<float>(ndf) < 5){
-					plotResidual(SensorResidual,SensorResidualError, _first_time);//TO DO: Need to fix how we histogram.
-					_first_time = false;
-				}
+				_trackFitter->getResidualOfTrackandHits(traj, pointList, SensorResidual, SensorResidualError);
+//				if(chi2/static_cast<float>(ndf) < 5){
+					plotResidual(SensorResidual,SensorResidualError);//TO DO: Need to fix how we histogram.
+//				}
 			}else{
 				streamlog_out(DEBUG5) << "Ierr is: " << ierr << " Do not update track information " << std::endl;
 				static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_fitsuccessHistName ] ) -> fill(0.0);
@@ -223,7 +216,7 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent* evt){
 
 
 //TO DO:This is a very stupid way to histogram but will add new class to do this is long run 
-void EUTelProcessorGBLTrackFit::plotResidual(std::map< int, std::map<float, float > >  & sensorResidual, std::map< int, std::map<float, float > >  & sensorResidualError, bool &first_time){
+void EUTelProcessorGBLTrackFit::plotResidual(std::map< int, std::map<float, float > >  & sensorResidual, std::map< int, std::map<float, float > >  & sensorResidualError){
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Residual plot
 	std::map< int, std::map< float, float > >::iterator sensor_residual_it;
 	for(sensor_residual_it = sensorResidual.begin(); sensor_residual_it != sensorResidual.end(); sensor_residual_it++) {
@@ -236,8 +229,8 @@ void EUTelProcessorGBLTrackFit::plotResidual(std::map< int, std::map<float, floa
 			if( sensor_residual_it->first == 3){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX3 ] ) -> fill(res);}
 			if( sensor_residual_it->first == 4){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX4 ] ) -> fill(res);}
 			if( sensor_residual_it->first == 5){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX5 ] ) -> fill(res);}
-			if( sensor_residual_it->first == 20){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ "Residual6X" ] ) -> fill(res);}
-			if( sensor_residual_it->first == 21){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ "Residual7X" ] ) -> fill(res);}
+			if( sensor_residual_it->first == 20 or sensor_residual_it->first == 6){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ "Residual6X" ] ) -> fill(res);}
+			if( sensor_residual_it->first == 21 or sensor_residual_it->first == 7 ){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ "Residual7X" ] ) -> fill(res);}
 
 		}else{
 			streamlog_out(DEBUG5) << "The map is NULL" <<std::endl;
@@ -250,8 +243,8 @@ void EUTelProcessorGBLTrackFit::plotResidual(std::map< int, std::map<float, floa
 			if( sensor_residual_it->first == 3){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY3 ] ) -> fill(res2);}
 			if( sensor_residual_it->first == 4){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY4 ] ) -> fill(res2);}
 			if( sensor_residual_it->first == 5){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameY5 ] ) -> fill(res2);}
-			if( sensor_residual_it->first == 20){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ "Residual6Y" ] ) -> fill(res2);}
-			if( sensor_residual_it->first == 21){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ "Residual7Y" ] ) -> fill(res2);}
+			if( sensor_residual_it->first == 20 or sensor_residual_it->first == 6){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ "Residual6Y" ] ) -> fill(res2);}
+			if( sensor_residual_it->first == 21 or sensor_residual_it->first == 7){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ "Residual7Y" ] ) -> fill(res2);}
 
 				
 	}
@@ -311,44 +304,15 @@ void EUTelProcessorGBLTrackFit::end() {
 
 #endif // USE_GBL
 
-//TO DO: If you have a missing hit from a state this does not seem to work. However you can exclude planes which produces no hit which is fine
 void EUTelProcessorGBLTrackFit::outputLCIO(LCEvent* evt, std::vector<EUTelTrack>& tracks){
-
-	streamlog_out( DEBUG4 ) << " ---------------- EUTelProcessorGBLTrackFit::outputLCIO ---------- BEGIN ------------- " << std::endl;
-
-	//Create once per event//Note that this will not cause a memory leak since lcio will delete the memory automatically for you    
-	//Should create a new track and state in lcio memory. So we don't change the old stuff.
-	LCCollectionVec * trkCandCollection = new LCCollectionVec(LCIO::TRACK);
-	LCCollectionVec * stateCandCollection = new LCCollectionVec(LCIO::TRACK);
-
-	// Prepare output collection
-	LCFlagImpl flag(trkCandCollection->getFlag());
-	flag.setBit( LCIO::TRBIT_HITS );
-	trkCandCollection->setFlag( flag.getFlag( ) );
-
-	LCFlagImpl flag2(stateCandCollection->getFlag());
-	flag2.setBit( LCIO::TRBIT_HITS );
-	stateCandCollection->setFlag( flag2.getFlag( ) );
-
-	//Loop through all tracks
-	for (size_t i = 0 ; i < tracks.size(); ++i){
-		EUTelTrack* trackheap = new  EUTelTrack(tracks.at(i), false); //We dont want to copy contents so set to false. We only want the track object but not the states or hits. Since the states should have there own place in memory before saving.
-		trackheap->print();
-		//For every track add this to the collection
-		for( size_t j = 0;j < tracks.at(i).getStates().size();++j){
-			EUTelState* stateheap = new EUTelState(tracks.at(i).getStates().at(j));
-			trackheap->addTrack(stateheap);
-			stateCandCollection->push_back(static_cast<EVENT::Track*>(stateheap));
-		}
-		trkCandCollection->push_back(static_cast<EVENT::Track*>(trackheap));
-	}//END TRACK LOOP
-
-	//Now add this collection to the 
-	evt->addCollection(trkCandCollection, _tracksOutputCollectionName);
-	std::string name = _tracksOutputCollectionName + "_GBLstates" ;
-	evt->addCollection(stateCandCollection, name);
-
-	streamlog_out( DEBUG4 ) << " ---------------- EUTelProcessorGBLTrackFit::outputLCIO ---------- END ------------- " << std::endl;
+    if(!tracks.empty()){
+        for(unsigned int i=0 ; i< tracks.size(); i++){
+            streamlog_out(DEBUG1)<<"Found "<<tracks.size()<<" track for event " << evt->getEventNumber() <<".  Track number  " << i <<std::endl;
+            tracks.at(i).print();
+        }
+        EUTelReaderGenericLCIO reader = EUTelReaderGenericLCIO();
+        reader.getColVec(tracks, evt,_tracksOutputCollectionName);
+    }
 }
 
 void EUTelProcessorGBLTrackFit::bookHistograms() {
@@ -362,9 +326,9 @@ void EUTelProcessorGBLTrackFit::bookHistograms() {
 
 ////////////////////////////////////////////////////////This is for the residual//Thi si a hack must fix so can accept any number of planes. Really should be a separate processor
 
-        int NBinX=300;
-        double MinX=-0.04;  //-0.2;
-        double MaxX=0.04;
+        int NBinX=2000;
+        double MinX=-0.5;  //-0.2;
+        double MaxX=0.5;
 
 
         AIDA::IHistogram1D * residGblFit0X = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistNameX0, NBinX, MinX, MaxX); 
@@ -374,7 +338,7 @@ void EUTelProcessorGBLTrackFit::bookHistograms() {
         AIDA::IHistogram1D * residGblFit4X = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistNameX4, NBinX, MinX, MaxX); 
         AIDA::IHistogram1D * residGblFit5X = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_residGblFitHistNameX5, NBinX, MinX, MaxX); 
 
-        AIDA::IHistogram1D * residGblFit6X = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Residual6X" , 300, -0.4, 0.4); 
+        AIDA::IHistogram1D * residGblFit6X = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Residual6X" , NBinX,MinX, MaxX); 
         AIDA::IHistogram1D * residGblFit6Y = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Residual6Y" , NBinX, MinX, MaxX); 
         AIDA::IHistogram1D * residGblFit7X = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Residual7X" , NBinX, MinX, MaxX); 
         AIDA::IHistogram1D * residGblFit7Y = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D("Residual7Y" , NBinX, MinX, MaxX); 

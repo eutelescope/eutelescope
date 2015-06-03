@@ -24,6 +24,7 @@
 #include <AIDA/IHistogramFactory.h>
 #include <AIDA/IProfile2D.h>
 #endif // MARLIN_USE_AIDA
+#include "EUTelReaderGenericLCIO.h"
 
 namespace eutelescope {
 
@@ -64,6 +65,7 @@ namespace eutelescope {
 		std::map< int,  AIDA::IProfile1D* > _mapFromSensorIDToPValuesVsIncidenceYZ;
 		AIDA::IHistogram1D * _beamEnergy;
 		AIDA::IProfile1D *_pValueVsBeamEnergy;
+        std::string _histoInfoFileName;
 	};
 
     EUTelProcessorTrackAnalysis gEUTelProcessorTrackAnalysis;

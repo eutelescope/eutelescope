@@ -74,7 +74,7 @@
   <!--parameter name="LCIOWriteMode" type="string">WRITE_NEW </parameter-->
   <!--This float number [0,1] represents the maximum allowed firing frequency
 within the selected number of event per cycle-->
-  <parameter name="MaxAllowedFiringFreq" type="float"> 0.001 </parameter>
+  <parameter name="MaxAllowedFiringFreq" type="float"> 0.0003 </parameter>
   <!--The number of events to be considered for each update cycle-->
   <parameter name="NoOfEvents" type="int"> 9999 </parameter>
   <!--The sensorID for the generated collection (one per detector)-->

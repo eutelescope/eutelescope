@@ -2,7 +2,6 @@
 #define	EUTELMILLEPEDE_H
 
 #include "EUTelUtility.h"
-#include "EUTelTrackStateImpl.h"
 #include "EUTelTrack.h"
 #include "EUTelState.h"
 
@@ -40,12 +39,9 @@ namespace eutelescope {
 
    public:
         EUTelMillepede();
-				EUTelMillepede(int alignmentMode);
 
         ~EUTelMillepede();
 
-				//This set the number given by the processor to a aligment mode string
-				void SetAlignmentMode(int alignmentMode);
 				//This take a state and outputs a its alignment jacobian given the alignment mode
 				void computeAlignmentToMeasurementJacobian( EUTelState& state);
 
@@ -97,9 +93,6 @@ namespace eutelescope {
 void CreateBinary();
 
 		protected:
-				int alignmentMode;
-				int _iteration;
-				Utility::AlignmentMode _alignmentMode;
 				TMatrixD _jacobian; //Remember you need to create the object before you point ot it
 				std::vector<int> _globalLabels;
 				std::map<int, int> _xShiftsMap;
@@ -113,6 +106,7 @@ void CreateBinary();
 				std::string _milleSteeringFilename;
 				
 				std::string _milleSteerNameOldFormat;
+				int _iteration;
 
 				std::string _milleBinaryFilename;
 				//the results file
