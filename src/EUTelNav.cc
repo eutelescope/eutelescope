@@ -1,4 +1,4 @@
-#include "EUTelNav.h"
+#include "EUTelNav.h"	
 
 namespace eutelescope 
 {
@@ -85,7 +85,6 @@ TMatrix EUTelNav::getPropagationJacobianF( float x0, float y0, float z0, float p
 
 }   
 
-
 /* Here we define the transformation between the curvilinear and the local frame. Note the local frame we have is defined as the local frame of the telescope. 
  * We do this since the local frame is arbitrary. However, we must describe the local frame in the curvilinear frame, since we connect the two frames via the same global frame. 
  * The transformations are the same as described below. This is unlike the curvilinear frame which can not have the particles moving in z due to construction. 
@@ -103,22 +102,27 @@ TMatrixD EUTelNav::getLocalToCurvilinearTransformMatrix(TVector3 globalMomentum,
 		gear::Vector3D vectorGlobal(0.1,0.1,0.1);
 		
 		//Magnetic field must be changed to curvilinear coordinate system, as this is used in the curvilinear jacobian
-		//We times bu 0.3 due to units of other variables. See paper. Must be Tesla
-		const double Bx = (Bfield.at( vectorGlobal ).z())*0.3;
-		const double By = (Bfield.at( vectorGlobal ).y())*0.3;
-		const double Bz = (Bfield.at( vectorGlobal ).x())*0.3;
-		
+		//We times bu 0.3 due to units of other variables. It is related to the speed of light over 1 ns.  See paper. Must be Tesla
+		//TO DO: CHECK THAT I CAN REMOVE THIS 0.3 TERM FROM B FIELDS NOW WITH CLAUS'S JACOBIAN LIMIT
+//		const double Bx = (Bfield.at( vectorGlobal ).z())*0.3;
+//		const double By = (Bfield.at( vectorGlobal ).y())*0.3;
+//		const double Bz = (Bfield.at( vectorGlobal ).x())*0.3;
+		const double Bx = (Bfield.at( vectorGlobal ).z());
+		const double By = (Bfield.at( vectorGlobal ).x());
+		const double Bz = (Bfield.at( vectorGlobal ).y());
+	
 		TVector3 B(Bx, By, Bz);
 		TVector3 H = B.Unit();
 
 		//We transform the momentum to curvilinear frame, as this is what is used to describe the curvilinear frame
-		TVector3 curvilinearGlobalMomentum(globalMomentum[2], globalMomentum[1], globalMomentum[0]);
+		TVector3 curvilinearGlobalMomentum(globalMomentum[2], globalMomentum[0], globalMomentum[1]);
 		//With no magnetic field this will point in z direction.	
 		TVector3 T = curvilinearGlobalMomentum.Unit();
-		
+		//Note here we create the curvilinear frame using the implicit global frame which with zGlobalNormal. Note T,U, V is the actual curvilnear frame.	
+		//TO DO: I did not change T[1] here. Do in need to? Not sure. I assume not since it should be equivalent to T[2]
 		const float cosLambda = sqrt(T[0]*T[0] + T[1]*T[1]);
 		//We use the global curvilinear frame z direction to create the other unit axis
-		TVector3 zGlobalNormal(0, 0, 1);
+		TVector3 zGlobalNormal(0, 0, 1); 
 		TVector3 U = (zGlobalNormal.Cross(T)).Unit(); 
 		TVector3 V = (T.Cross(U));
  	
@@ -138,14 +142,14 @@ TMatrixD EUTelNav::getLocalToCurvilinearTransformMatrix(TVector3 globalMomentum,
 		if(planeID != 314)
 		{ 
 				ITelescopeFrame = geo::gGeometry().siPlaneNormal(planeID);       
-				KTelescopeFrame = geo::gGeometry().siPlaneYAxis(planeID);	
-				JTelescopeFrame = geo::gGeometry().siPlaneXAxis(planeID);
+				KTelescopeFrame = geo::gGeometry().siPlaneXAxis(planeID);	
+				JTelescopeFrame = geo::gGeometry().siPlaneYAxis(planeID);
 		}
 		else
 		{
 				ITelescopeFrame.SetXYZ(0,0,1);
-				KTelescopeFrame.SetXYZ(0,1,0);
-				JTelescopeFrame.SetXYZ(1,0,0);
+				KTelescopeFrame.SetXYZ(1,0,0);
+				JTelescopeFrame.SetXYZ(0,1,0);
 		}
 
 		TVector3 I(ITelescopeFrame[2], ITelescopeFrame[1], ITelescopeFrame[0]);
@@ -206,7 +210,133 @@ TMatrixD EUTelNav::getLocalToCurvilinearTransformMatrix(TVector3 globalMomentum,
 		
 		return jacobian;
 }
+///This will relate infintesimal changes in the local state vector to the global one. 
+/**
+ * \param [in] t1w Momentum of the state
+ * \return Jacobain 5x5 which links the local and global states.
+ */
 
+
+TMatrixD EUTelNav::getMeasToGlobal(TVector3 t1w, int  planeID)
+{
+//	std::cout<<"Plane ID " << planeID <<std::endl;
+	TMatrixD transM2l(5,5);
+	transM2l.UnitMatrix();
+	std::vector<double> slope;
+	slope.push_back(t1w[0]/t1w[2]); slope.push_back(t1w[1]/t1w[2]);
+	double norm = std::sqrt(pow(slope.at(0),2) + pow(slope.at(1),2) + 1);//This works since we have in the curvinlinear frame (dx/dz)^2 +(dy/dz)^2 +1 so time through by dz^2
+	TVector3 direction;
+	direction[0] = (slope.at(0)/norm); direction[1] =(slope.at(1)/norm);	direction[2] = (1.0/norm);
+	TMatrixD xyDir(2, 3);
+	xyDir[0][0] = 1; xyDir[0][1]=0.0; xyDir[0][2]=-slope.at(0);  
+	xyDir[1][0] = 0; xyDir[1][1]=1.0; xyDir[1][2]=-slope.at(1);  
+	TMatrixD TRotMatrix(3,3);
+	TRotMatrix	=  geo::gGeometry().getRotMatrix( planeID );
+	TVector3 normalVec;
+	normalVec[0] = TRotMatrix[0][2];	normalVec[1] = TRotMatrix[1][2];	normalVec[2] = TRotMatrix[2][2];
+	double cosInc = direction*normalVec;
+//	std::cout<<"Here is cosInc " << cosInc <<std::endl;
+	TMatrixD measDir(3,2);
+	measDir[0][0] = TRotMatrix[0][0];	measDir[0][1] = TRotMatrix[0][1];
+	measDir[1][0] = TRotMatrix[1][0];	measDir[1][1] = TRotMatrix[1][1];
+	measDir[2][0] = TRotMatrix[2][0];	measDir[2][1] = TRotMatrix[2][1];
+    streamlog_out( DEBUG0 ) << "CALCULATE LOCAL TO GLOBAL STATE TRANSFORMATION... " << std::endl;
+    streamlog_out( DEBUG0 ) << "Inputs... " << std::endl;
+
+    streamlog_out( DEBUG0 ) << "The (X,Y)-axis of the global frame relative to the local  " << std::endl;
+    streamlog_message( DEBUG0, measDir.Print();, std::endl; );
+    streamlog_out( DEBUG0 ) << "The propagator (unit axis) (Dx,Dy)   " << std::endl;
+    streamlog_message( DEBUG0, xyDir.Print();, std::endl; );
+    double scaleFactor = cosInc/direction[2];
+    streamlog_out( DEBUG0 ) << "Scale factor (s) " << scaleFactor << std::endl;
+	TMatrixD proM2l(2,2);
+	proM2l = xyDir*measDir; 
+    streamlog_out( DEBUG0 ) << "Propagators... " << std::endl;
+
+    streamlog_out( DEBUG0 ) << "PROJECTION MATRIX (shifts) (Dx,Dy)x(X,Y)" << std::endl;
+    streamlog_message( DEBUG0, proM2l.Print();, std::endl; );
+    streamlog_out( DEBUG0 ) << "PROJECTION MATRIX (incidence) s(Dx,Dy)x(X,Y) " << std::endl;
+    TMatrixD proM2lInc = scaleFactor*proM2l;
+    streamlog_message( DEBUG0, proM2lInc.Print();, std::endl; );
+
+	transM2l.SetSub(1,1,proM2lInc);
+	transM2l.SetSub(3,3,proM2l);
+    streamlog_out( DEBUG0 ) << "OUTPUT:(Local to Global): " << std::endl;
+    streamlog_message( DEBUG0, transM2l.Print();, std::endl; );
+
+	return transM2l;
+}
+///This function creates a jacobain which links one state to another in the EUTelGlobal frame. 
+/**
+ * \param [in] ds Arc length between two states. 
+ * \param [in] t1w Momentum on the initial states 
+ * \return Jacobain 5x5 which links the two states 
+ */
+
+TMatrixD EUTelNav::getPropagationJacobianGlobalToGlobal(float ds, TVector3 t1w)
+{
+	t1w.Unit();
+	std::vector<double> slope;
+	slope.push_back(t1w[0]/t1w[2]); slope.push_back(t1w[1]/t1w[2]);
+	double norm = std::sqrt(pow(slope.at(0),2) + pow(slope.at(1),2) + 1);//not this works since we have in the curvinlinear frame (dx/dz)^2 +(dy/dz)^2 +1 so time through by dz^2
+	TVector3 direction;
+	direction[0] = (slope.at(0)/norm); direction[1] =(slope.at(1)/norm);	direction[2] = (1.0/norm);
+//	std::cout <<"DIRECTION: "<< direction[0] <<"   " << direction[1]<< "  "<< direction[2] <<std::endl;
+	double sinLambda = direction[2]; 
+	const gear::BField& Bfield = geo::gGeometry().getMagneticField();
+	gear::Vector3D vectorGlobal(0.1,0.1,0.1);
+
+
+	const double Bx = (Bfield.at( vectorGlobal ).x());  
+	const double By = (Bfield.at( vectorGlobal ).y());
+	const double Bz = (Bfield.at( vectorGlobal ).z());
+
+	TVector3 b(Bx, By, Bz);
+	TVector3 BxT = b.Cross(direction);
+//	std::cout << "BxT" << BxT[0] << "  ,  " <<  BxT[1] <<"   ,  " <<BxT[2] << std::endl;
+	TMatrixD xyDir(2, 3);
+//    streamlog_out( DEBUG0 ) << "CALCULATE GLOBAL TO GLOBAL STATE TRANSFORMATION... " << std::endl;
+
+	xyDir[0][0] = 1.0; xyDir[0][1]=0.0; xyDir[0][2]=-slope.at(0);  
+	xyDir[1][0] = 0; xyDir[1][1]=1.0; xyDir[1][2]=-slope.at(1);  
+//    streamlog_out( DEBUG0 ) << "The propagator (Dx,Dy)   " << std::endl;
+ //   streamlog_message( DEBUG0, xyDir.Print();, std::endl; );
+
+
+	TMatrixD bFac(2,1);
+	TMatrixD BxTMatrix(3,1);
+	BxTMatrix.Zero();
+	BxTMatrix[0][0] =BxT[0];	BxTMatrix[1][0] =BxT[1];	BxTMatrix[2][0] =BxT[2]; 
+ 
+	bFac = -0.0002998 * (xyDir*BxTMatrix); 
+//	std::cout <<std::scientific<< "bFac" << bFac[0][0] << "  ,  " <<  bFac[1][0] << std::endl;
+	TMatrixD ajac(5, 5);
+	ajac.UnitMatrix();
+	if(b.Mag() < 0.001 ){
+			ajac[3][2] = ds * std::sqrt(t1w[0] * t1w[0] + t1w[2] * t1w[2]);
+			ajac[4][1] = ds;
+	}else{
+		ajac[1][0] = bFac[0][0]*ds/sinLambda;
+//		std::cout<<"Jacobian entries;" << ajac[1][0] << std::endl;
+//		std::cout<<"1,0 " << ajac[1][0] << std::endl;
+		ajac[2][0] = bFac[1][0]*ds/sinLambda;
+//		std::cout<< std::scientific <<"2,0 " << ajac[2][0] << std::endl;
+		ajac[3][0] = 0.5*bFac[0][0]*ds*ds;
+//		std::cout<<"3,0 " << ajac[3][0] << std::endl;
+		ajac[4][0] = 0.5*bFac[1][0]*ds*ds;
+//		std::cout<< std::scientific  <<"4,0 " << ajac[4][0] << std::endl;
+		ajac[3][1] = ds*sinLambda; 
+//		std::cout<<"3,1 " << ajac[3][1] << std::endl;
+		ajac[4][2] = ds*sinLambda; 
+//		std::cout<<"4,2 " << ajac[4][2] << std::endl;
+
+	}
+    streamlog_out( DEBUG0 ) << "Global to Global jacobian: " << std::endl;
+    streamlog_message( DEBUG0, ajac.Print();, std::endl; );
+	return ajac;
+}
+
+//TO DO: This used Z Y X system while claus and other limit jacobian uses Z X Y. 
 /* Note that the curvilinear frame that this jacobian has been derived in does not work for particles moving in z-direction.
  * This is due to a construction that assumes tha beam pipe is in the z-direction. Since it is used for collider experiements. 
  * We therefore have to change to the coordinate system used in paper before we apply this jacobian.
@@ -234,10 +364,13 @@ TMatrixD EUTelNav::getPropagationJacobianCurvilinear(float ds, float qbyp, TVect
 
 		//Must also change the magnetic field to be in the correct coordinate system
 		//We times but 0.3 due to units of other variables. See paper. Must be Tesla
-		const double Bx = (Bfield.at( vectorGlobal ).z())*0.3*pow(10,-3); 
-		const double By = (Bfield.at( vectorGlobal ).y())*0.3*pow(10,-3);
-		const double Bz = (Bfield.at( vectorGlobal ).x())*0.3*pow(10,-3);
-		
+//		const double Bx = (Bfield.at( vectorGlobal ).z())*0.3*pow(10,-3); 
+//		const double By = (Bfield.at( vectorGlobal ).y())*0.3*pow(10,-3);
+//		const double Bz = (Bfield.at( vectorGlobal ).x())*0.3*pow(10,-3);
+		const double Bx = (Bfield.at( vectorGlobal ).z())*pow(10,1);     ////////HERE CHANGE TO EXPRESS THE FIELD IN KGAUSS. CHANGE! 
+		const double By = (Bfield.at( vectorGlobal ).y())*pow(10,1);
+		const double Bz = (Bfield.at( vectorGlobal ).x())*pow(10,1);
+	
 		TVector3 b(Bx, By, Bz);
 		
 		streamlog_out( DEBUG2 ) << "EUTelGeometryTelescopeGeoDescription::getPropagationJacobianCurvilinear()------BEGIN" << std::endl;
@@ -253,11 +386,12 @@ TMatrixD EUTelNav::getPropagationJacobianCurvilinear(float ds, float qbyp, TVect
 		
 		TMatrixD ajac(5, 5);
 		//This is b*c. speed of light in 1 nanosecond
-		TVector3 bc = b;
+		TVector3 bc = b*0.3*pow(10,-3);     //CHANGE HERE.
 		ajac.UnitMatrix(); 
 		
 		// -|B*c|
 		const double qp = -bc.Mag();
+
 		// Q
 		const double q = qp * qbyp;
 		
@@ -279,7 +413,9 @@ TMatrixD EUTelNav::getPropagationJacobianCurvilinear(float ds, float qbyp, TVect
 				// (signed) momentum
 				const double pav = 1.0 / qbyp;
 				
-				const double theta = q * ds;
+//				const double theta = q * ds;
+				const double theta = q * ds*0.1;//CONVERT DS TO CENTIMETRES. CHANGE!!!!!!!!!!!
+
 				const double sint = sin(theta);
 				const double cost = cos(theta);
 				// H*T
@@ -352,7 +488,7 @@ TMatrixD EUTelNav::getPropagationJacobianCurvilinear(float ds, float qbyp, TVect
 }
 
 //This function determined the xyz position in global coordinates using the state and arc length of the track s.
-TVector3 EUTelNav::getXYZfromArcLength(TVector3 pos, TVector3 pVec, float beamQ, double s)
+TVector3 EUTelNav::getPositionfromArcLength(TVector3 pos, TVector3 pVec, float beamQ, double s)
 {
 
 		// Get magnetic field vector, assuming uniform magnetic field running along X direction
@@ -400,20 +536,35 @@ TVector3 EUTelNav::getXYZfromArcLength(TVector3 pos, TVector3 pVec, float beamQ,
 		}
 		return pos;
 }
+TVector3 EUTelNav::getMomentumfromArcLengthLocal(TVector3 pVec, TVector3 pos, float beamQ, float s, int planeID)
+{
+	TVector3	newMomentum = EUTelNav::getMomentumfromArcLength(pVec,beamQ,s);
+	TVector3 pVecUnitLocal;
+	//TO DO: This transform is used also in state. Can make generic transform like this for both.
+	double globalVec[] = { newMomentum[0],newMomentum[1],newMomentum[2] };
+	double localVec[3];
+	if(planeID != 314){
+	geo::gGeometry().master2LocalVec( planeID ,globalVec, localVec );
+	pVecUnitLocal[0] = localVec[0]; 	pVecUnitLocal[1] = localVec[1]; 	pVecUnitLocal[2] = localVec[2]; 
+	}else{
+		pVecUnitLocal[0] = pVec[0]; 	pVecUnitLocal[1] = pVec[1]; 	pVecUnitLocal[2] = pVec[2]; 
+	}
+	return pVecUnitLocal;
+}
+
 
 //This will calculate the momentum at a arc length away given initial parameters.
-TVector3 EUTelNav::getXYZMomentumfromArcLength(TVector3 momentum, TVector3 globalPositionStart, float charge, float arcLength)
+TVector3 EUTelNav::getMomentumfromArcLength(TVector3 momentum, float charge, float arcLength)
 {
 		//This is one coordinate axis of curvilinear coordinate system.	
 		TVector3 T = momentum.Unit();
 
 		const gear::BField&   Bfield = geo::gGeometry().getMagneticField();
 		//Since field is homogeneous this seems silly but we need to specify a position to geometry to get B-field.
-		gear::Vector3D vectorGlobal(globalPositionStart[0],globalPositionStart[1],globalPositionStart[2]);
 
-		const double Bx = (Bfield.at( vectorGlobal ).x());//We times bu 0.3 due to units of other variables. See paper. Must be Tesla
-		const double By = (Bfield.at( vectorGlobal ).y());
-		const double Bz = (Bfield.at( vectorGlobal ).z());
+		const double Bx = (Bfield.at( TVector3(1,1,1) ).x());//We times bu 0.3 due to units of other variables. See paper. Must be Tesla
+		const double By = (Bfield.at( TVector3(1,1,1) ).y());
+		const double Bz = (Bfield.at( TVector3(1,1,1) ).z());
 
 		TVector3 B(Bx*0.3, By*0.3, Bz*0.3 );
 		TVector3 H = (B.Unit());
@@ -437,6 +588,128 @@ TVector3 EUTelNav::getXYZMomentumfromArcLength(TVector3 momentum, TVector3 globa
 		streamlog_out( DEBUG0 ) << "Momentum: " <<  momentumEnd[0] << " , " << momentumEnd[1] << " , " << momentumEnd[2] << std::endl;
 
 		return momentumEnd;
+}
+
+/**
+* Find closest surface intersected by the track and return the position
+*/
+bool EUTelNav::findIntersectionWithCertainID(	float x0, float y0, float z0, 
+										float px, float py, float pz, 
+										float beamQ, int nextPlaneID, float outputPosition[],
+										TVector3& outputMomentum, float& arcLength, int& newNextPlaneID)
+{
+	//positions are in mm
+	TVector3 trkVec(x0,y0,z0);
+	TVector3 pVec(px,py,pz);
+
+	//Assuming uniform magnetic field running along X direction. 
+	//Why do we need this assumption? Equations of motion do not seem to dictate this.
+	gear::Vector3D vectorGlobal( x0, y0, z0 );      
+	const gear::BField& B	= geo::gGeometry().getMagneticField();
+	const double bx         = B.at( vectorGlobal ).x();
+	const double by         = B.at( vectorGlobal ).y();
+	const double bz         = B.at( vectorGlobal ).z();
+
+	//B field is in units of Tesla
+	TVector3 hVec(bx,by,bz);
+	const double H = hVec.Mag();
+
+	//Calculate track momentum from track parameters and fill some useful variables
+	const double p = pVec.Mag();
+	//This is a constant used in the derivation of this equation. This is the distance light travels in a nano second    
+	const double constant =  -0.299792458; 
+	const double mm = 1000;
+	const double combineConstantsAndMagneticField = (constant*beamQ*H)/mm;
+	const double rho = combineConstantsAndMagneticField/p; 
+				      
+	//Determine geometry of sensor to be used to determine the point of intersection.//////////////////////////////////////
+    TVector3 norm = geo::gGeometry().siPlaneNormal( nextPlaneID  );       
+	streamlog_out (DEBUG5) << "The normal of the plane is (x,y,z): "<<norm[0]<<","<<norm[1]<<","<<norm[2]<< std::endl;
+	TVector3 sensorCenter( geo::gGeometry().siPlaneXPosition( nextPlaneID  ), geo::gGeometry().siPlaneYPosition( nextPlaneID  ), geo::gGeometry().siPlaneZPosition( nextPlaneID  ) );
+//	streamlog_out (DEBUG5) << "The sensor centre (x,y,z): "<<sensorCenter[0]<<","<<sensorCenter[1]<<","<<sensorCenter[2] << std::endl;
+	TVector3 delta = (trkVec - sensorCenter);//Must be in mm since momentum is.
+	TVector3 pVecCrosH = pVec.Cross(hVec.Unit());
+
+	{
+
+		streamlog_out(DEBUG5) << "PROPAGATE FROM (" << trkVec[0] <<","<<trkVec[1]<<","<<trkVec[2]<<") USING: " << std::endl;
+		streamlog_out(DEBUG5) << "INPUT: -------------------------------------------" << std::endl;
+		streamlog_out(DEBUG5) << "STATE AND ENVIROMENT:---------------------------- " << std::endl;
+		streamlog_out(DEBUG5) << "Magnetic field                      :(" << hVec[0] <<","<< hVec[1] <<","<< hVec[2] <<")"<< std::endl;
+		streamlog_out(DEBUG5) << "Momentum                            :(" << pVec[0] <<","<< pVec[1] <<","<< pVec[2] <<")"<< std::endl;
+		streamlog_out(DEBUG5) << "INFINITE PLANE WE ARE AIMING AT:---------------------------- " << std::endl;
+		streamlog_out(DEBUG5) << "Sensor Centre:                      :(" << sensorCenter[0] <<","<< sensorCenter[1] <<","<< sensorCenter[2] <<")"<< std::endl;
+		streamlog_out(DEBUG5) << "Normal vector                       :(" << norm[0] <<","<< norm[1] <<","<< norm[2] <<")"<< std::endl;
+		streamlog_out(DEBUG5) << "CALCULATE.... " << std::endl;
+
+		streamlog_out(DEBUG5) << "Rho [ (charge.magnetic)/momentum  ] :" << rho << std::endl;
+      	streamlog_out(DEBUG5) << "Momentum x Magnetic Field           :(" << pVecCrosH[0] <<","<< pVecCrosH[1] <<","<< pVecCrosH[2] <<")"<< std::endl;
+		streamlog_out(DEBUG5) << "Delta(start - sensor centre)        :(" << delta[0] <<","<< delta[1] <<","<< delta[2] <<")"<< std::endl;
+ 	}
+
+	//Solution to the plane equation and the curved line intersection will be an 
+	//quadratic with the coefficients. The solution is the arc length along the curve
+	const double a = -0.5 * rho * ( norm.Dot( pVecCrosH ) ) / p;
+	const double b = norm.Dot( pVec ) / p;
+	const double c = norm.Dot( delta );
+
+	//Solution must be in femto metres, vector of arc length
+	std::vector<double> sol = Utility::solveQuadratic(a,b,c); 
+	//solutions are sorted in ascending order, choose minimum arc length
+	double solution = ( sol[0] > 0. ) ? sol[0] : ( ( sol[0] < 0. && sol[1] > 0. ) ? sol[1] : -1. );
+    {
+		streamlog_out(DEBUG5) << "FORM QUADRATIC AND SOLVE TO FIND DISTANCE TO INTERSECTION.... " << std::endl;
+		streamlog_out(DEBUG5) << "Quadratic coefficients              :(" << a<<","<<b<<","<<c<<")" << std::endl;
+      	streamlog_out(DEBUG5) << "Both Possible arc lengths           :(" <<  sol.at(0) <<","<< sol.at(1) <<")"<< std::endl;
+		streamlog_out(DEBUG5) << "FINAL ARCLENGTH:                    :("<< solution << std::endl;
+    }
+	if(solution < 0)
+	{
+		return false;
+	}
+			
+	//Determine the global position from arc length.             
+	TVector3 newPos;
+	TVector3 newMomentum;
+	newPos = EUTelNav::getPositionfromArcLength(trkVec,pVec,beamQ,solution);
+	newMomentum = EUTelNav::getMomentumfromArcLength(pVec, beamQ, solution);
+	outputMomentum[0] = newMomentum[0];
+	outputMomentum[1] = newMomentum[1];
+	outputMomentum[2] = newMomentum[2];
+
+	//Is the new point within the sensor. If not then we may have to propagate a little bit further to enter.
+ 	double pos[3] = {newPos[0],newPos[1],newPos[2]};
+	int sensorIDCheck = geo::gGeometry().getSensorID(pos); 
+	bool foundIntersection = false;
+	if(sensorIDCheck == nextPlaneID){
+		streamlog_out( DEBUG3 ) << "INTERSECTION FOUND! " << std::endl;
+		foundIntersection = true;
+		outputPosition[0] = newPos[0];
+		outputPosition[1] = newPos[1];
+		outputPosition[2] = newPos[2];
+	}
+	if(!foundIntersection)
+	{
+		foundIntersection = geo::gGeometry().findNextPlaneEntrance( newPos,  newMomentum, nextPlaneID, outputPosition);
+	}
+	if(!foundIntersection)
+	{
+		foundIntersection = geo::gGeometry().findNextPlaneEntrance( newPos,  -newMomentum, nextPlaneID, outputPosition);
+	}
+
+	arcLength = solution;		
+
+	//We have still not found intersection
+	if(!foundIntersection)
+	{
+		streamlog_out( DEBUG3 ) << "FINAL: NO INTERSECTION FOUND. " << std::endl;
+		return false;
+	}
+	else
+	{
+		newNextPlaneID = nextPlaneID;
+		return true;
+	}
 }
 
 } //namespace eutelescope

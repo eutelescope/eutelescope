@@ -39,7 +39,6 @@
 #include "EUTelEventImpl.h"
 #include "EUTelUtility.h"
 #include "EUTelGeometryTelescopeGeoDescription.h"
-#include "EUTelTrackImpl.h"
 #include "EUTelPatternRecognition.h"
 
 // Cluster types
@@ -47,7 +46,7 @@
 #include "EUTelBrickedClusterImpl.h"
 #include "EUTelDFFClusterImpl.h"
 #include "EUTelFFClusterImpl.h"
-//namespaces
+#include "EUTelReaderGenericLCIO.h"
 
 namespace eutelescope {
 

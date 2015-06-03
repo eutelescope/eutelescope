@@ -2409,8 +2409,6 @@ TVector3 EUTelMille::Line2Plane(int iplane, const TVector3& lpoint, const TVecto
       
 bool EUTelMille::hitContainsHotPixels( TrackerHitImpl   * hit) 
 {
-  bool skipHit = false;
-
   try
     {
       try{
@@ -2442,14 +2440,9 @@ bool EUTelMille::hitContainsHotPixels( TrackerHitImpl   * hit)
 		    std::map<std::string, bool >::const_iterator z = _hotPixelMap.find(ix);
 		    if(z!=_hotPixelMap.end() && _hotPixelMap[ix] == true  )
 		      { 
-			skipHit = true;
 			streamlog_out(DEBUG3) << "Skipping hit as it was found in the hot pixel map." << endl;
 			return true; // if TRUE  this hit will be skipped
 		      }
-		    else
-		      { 
-			skipHit = false; 	      
-		      } 
 		} 
 	      }
 

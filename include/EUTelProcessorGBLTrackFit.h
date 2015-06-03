@@ -41,9 +41,8 @@
 #include "EUTelGBLFitter.h"
 #include "EUTelExceptions.h"
 #include "EUTelEventImpl.h"
-#include "EUTelTrackStateImpl.h"
-#include "EUTelTrackImpl.h"
 #include "EUTelHistogramManager.h"
+#include "EUTelReaderGenericLCIO.h"
 
 namespace eutelescope {
 
@@ -79,7 +78,6 @@ namespace eutelescope {
 
     protected:
 
-			bool _first_time;
 			/** Number of events processed */
 			int _nProcessedRuns;
 			/** Number of runs processed */
@@ -95,6 +93,9 @@ namespace eutelescope {
 			double _maxChi2Cut;
 
 			std::vector<float> _chi2NdfVec;
+			//Pointer to access millepede object..
+			EUTelMillepede* _Mille;
+
 
 			/** Input TrackerHit collection name */
 			std::string _trackCandidatesInputCollectionName;
@@ -121,7 +122,7 @@ namespace eutelescope {
 
 			void bookHistograms();
 
-			void plotResidual(std::map< int, std::map<float, float > >  & sensorResidual, std::map< int, std::map<float, float > >  & sensorResidualError, bool &first_time);
+			void plotResidual(std::map< int, std::map<float, float > >  & sensorResidual, std::map< int, std::map<float, float > >  & sensorResidualError);
 				
 //TO DO: Fix all this histogramming stuff.
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)

@@ -60,7 +60,7 @@ namespace eutelescope {
       //Get weighted position from 3 neighboring bins
       // as long as we are not on the edges of our histogram:
       if(maxBin== 0 || maxBin== static_cast< int >(histo.size())){ 
-	streamlog_out( WARNING3 ) << "At least one sensor frame might be empty or heavily misaligned. Please check the GEAR file!" << std::endl; 
+	streamlog_out( WARNING3 ) << "At least one sensor frame might be empty or heavily misaligned. Please check the GEAR file!" << " MaxBin: " << maxBin << " histo.size(): " << histo.size()  << std::endl; 
 	return static_cast< float >(maxBin);
       }
       float weight(0.0);

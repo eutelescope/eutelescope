@@ -48,6 +48,7 @@ export patRecMultiplicationFactor=2 #This is the factor which we increase the wi
 export PatRec=patternRecognition #This is the name of the pattern recognition steering file
 export TrackFit=GBLTrackFit #This is the name of the GBLTrack fitting steering file.
 export Align=GBLAlign #This is the alignment steering file name
+export PatOutGBLIn="track_cand"
 export inputCollectionName="track_candidates"
 export lcioInputName="trackcand"
 export RUN=$(adding_zeros_to_RUN $RUN)
@@ -65,4 +66,9 @@ echo "This is the resolutions X/Y:  $xres/$yres."
 
 #THIS WILL RUN THE ALIGNMENT PROCESS AS MANY TIME AS YOU LIKE TO IMPROVE ALIGNMENT
 $scriptsLocation/howManyIterationsDecider.sh -n "$numberOfIterations"
+if [ $? -ne 0 ]
+then        
+	echo "patRecAndTrackFit exited with a code that was not zero, ending patRecMultiLoop.sh" 1>&2
+	exit 1
+fi
 #$scriptsLocation/patRecAndTrackFit.sh -i "$outputGearFinal" -h "$histoNameInputFinal"  

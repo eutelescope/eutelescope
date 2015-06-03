@@ -13,6 +13,7 @@ Processor("EUTelProcessorTrackAnalysis"){
 	
 	registerInputCollection(LCIO::TRACK, "TrackInputCollectionName", "Input track collection name",_trackInputCollectionName,std::string("TrackCandidatesCollection"));
 	registerOptionalParameter("SensorIDs", "A vector of the sensor IDs to plot",_sensorIDs,IntVec());
+    registerOptionalParameter("HistogramInfoFilename", "Name of histogram info xml file", _histoInfoFileName, std::string("histoinfo.xml"));
 
 	
 	
@@ -48,30 +49,22 @@ void EUTelProcessorTrackAnalysis::processEvent(LCEvent * evt){
 		}else if (event->getEventType() == kUNKNOWN) {
 			streamlog_out(WARNING2) << "Event number " << event->getEventNumber() << " in run " << event->getRunNumber() << " is of unknown type. Continue considering it as a normal Data Event." << std::endl;
 		}
-		LCCollection* eventCollection = NULL;
-		try {
-			eventCollection = evt->getCollection(_trackInputCollectionName);
-			streamlog_out(DEBUG1) << "collection : " << _trackInputCollectionName << " retrieved" << std::endl;
-		}catch (DataNotAvailableException e) {
-			streamlog_out(MESSAGE0) << _trackInputCollectionName << " collection not available" << std::endl;
-			throw marlin::SkipEventException(this);
-		}
-		if (eventCollection != NULL) {
-			streamlog_out(DEBUG2) << "Collection contains data! Continue!" << std::endl;
-			for (int iTrack = 0; iTrack < eventCollection->getNumberOfElements(); ++iTrack){
-				EUTelTrack track = *(static_cast<EUTelTrack*> (eventCollection->getElementAt(iTrack)));
-				_analysis->plotResidualVsPosition(track);	
-				_analysis->plotIncidenceAngles(track);
-				if(track.getChi2()/track.getNdf() < 5.0){
-					_analysis->plotBeamEnergy(track);
-					_analysis->plotPValueVsBeamEnergy(track);
-				}
+        streamlog_out(DEBUG2) << "Collection contains data! Continue!" << std::endl;
+        EUTelReaderGenericLCIO reader = EUTelReaderGenericLCIO();
+        std::vector<EUTelTrack> tracks = reader.getTracks(evt, _trackInputCollectionName);
+        for (size_t iTrack = 0; iTrack < tracks.size(); ++iTrack){
+            EUTelTrack track = tracks.at(iTrack); 
+            _analysis->plotResidualVsPosition(track);	
+            _analysis->plotIncidenceAngles(track);
+            if(track.getChi2()/track.getNdf() < 5.0){
+                _analysis->plotBeamEnergy(track);
+                _analysis->plotPValueVsBeamEnergy(track);
+            }
 
-				_analysis->plotPValueWithPosition(track);
-				_analysis->plotPValueWithIncidenceAngles(track);
-			}
+            _analysis->plotPValueWithPosition(track);
+            _analysis->plotPValueWithIncidenceAngles(track);
+        }
 
-		}	
 	}catch(...){	
 		streamlog_out(MESSAGE9)<<"There is an unknown error in EUTelProcessorTrackAnalysis-processEvent" <<std::endl;
 		throw marlin::StopProcessingException( this ) ;
@@ -92,11 +85,9 @@ void	EUTelProcessorTrackAnalysis::initialiseResidualVsPositionHistograms(){
 	double MinZ;
 	double MaxZ;
 
-	std::string _histoInfoFileName="histoInfo.xml";
 	std::auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
 	EUTelHistogramInfo    * histoInfo;
-	bool                    isHistoManagerAvailable;
-
+    bool isHistoManagerAvailable;
 	try {
 			isHistoManagerAvailable = histoMgr->init( );
 	} catch ( std::ios::failure& e ) {
@@ -108,6 +99,8 @@ void	EUTelProcessorTrackAnalysis::initialiseResidualVsPositionHistograms(){
 							<< "Continuing without histogram manager using default settings" << std::endl;
 			isHistoManagerAvailable = false;
 	}
+	isHistoManagerAvailable = false;
+
 
 	std::stringstream sstm;
 	std::string residGblFitHistName;
@@ -175,9 +168,9 @@ void	EUTelProcessorTrackAnalysis::initialiseResidualVsPositionHistograms(){
 		histTitle = sstm.str();
 		sstm.str(std::string(""));
 		histoInfo = histoMgr->getHistogramInfo(residGblFitHistName);
-		NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 40000;
+		NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 60;
 		MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin :-0.05 ;
-		MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 0.005;
+		MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 0.01;
 		AIDA::IHistogram1D * incidenceGblFitXZ = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(residGblFitHistName, NBinX, MinX, MaxX); 
 
 		if (incidenceGblFitXZ){
@@ -197,9 +190,9 @@ void	EUTelProcessorTrackAnalysis::initialiseResidualVsPositionHistograms(){
 		histTitle = sstm.str();
 		sstm.str(std::string(""));
 		histoInfo = histoMgr->getHistogramInfo(residGblFitHistName);
-		NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 40;
-		MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin :-0.001 ;
-		MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 0.001;
+		NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 60;
+		MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin :-0.05 ;
+		MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 0.01;
 		AIDA::IHistogram1D * incidenceGblFitYZ = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(residGblFitHistName, NBinX, MinX, MaxX); 
 
 		if (incidenceGblFitYZ) {
@@ -221,9 +214,9 @@ void	EUTelProcessorTrackAnalysis::initialiseResidualVsPositionHistograms(){
 		histTitle = sstm.str();
 		sstm.str(std::string(""));
 		histoInfo = histoMgr->getHistogramInfo(residGblFitHistName);
-		NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 40000;
+		NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 60;
 		MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin :-0.05 ;
-		MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 0.005;
+		MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 0.01;
 		AIDA::IProfile1D *pValueVsIncidenceXZ = marlin::AIDAProcessor::histogramFactory(this)->createProfile1D(residGblFitHistName, NBinX, MinX, MaxX, 0, 1); 
 
 		if (pValueVsIncidenceXZ){
@@ -243,9 +236,9 @@ void	EUTelProcessorTrackAnalysis::initialiseResidualVsPositionHistograms(){
 		histTitle = sstm.str();
 		sstm.str(std::string(""));
 		histoInfo = histoMgr->getHistogramInfo(residGblFitHistName);
-		NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 40;
-		MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin :-0.001 ;
-		MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 0.001;
+		NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 60;
+		MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin :-0.05 ;
+		MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 0.01;
 		AIDA::IProfile1D * pValueVsIncidenceYZ = marlin::AIDAProcessor::histogramFactory(this)->createProfile1D(residGblFitHistName, NBinX, MinX, MaxX, 0,1); 
 
 		if (pValueVsIncidenceYZ) {
@@ -268,10 +261,10 @@ void	EUTelProcessorTrackAnalysis::initialiseResidualVsPositionHistograms(){
 		histTitle = sstm.str();
 		sstm.str(std::string(""));
 		histoInfo = histoMgr->getHistogramInfo(residGblFitHistName);
-		NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 288;
+		NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 20;
 		MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin :-10.6;
 		MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 10.6;
-		NBinY = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yBin : 144;
+		NBinY = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yBin : 10;
 		MinY =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMin : -5.3;
 		MaxY =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMax : 5.3;
 		MinZ =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_zMin : 0;

@@ -2,7 +2,6 @@
 #define	EUTELMILLEPEDE_H
 
 #include "EUTelUtility.h"
-#include "EUTelTrackStateImpl.h"
 #include "EUTelTrack.h"
 #include "EUTelState.h"
 
@@ -19,6 +18,7 @@
 
 // system includes <>
 #include <map>
+#include <fstream>      // std::ifstream, std::ofstream
 #include <string>
 #include <utility>
 #include <vector>
@@ -39,12 +39,9 @@ namespace eutelescope {
 
    public:
         EUTelMillepede();
-				EUTelMillepede(int alignmentMode);
 
         ~EUTelMillepede();
 
-				//This set the number given by the processor to a aligment mode string
-				void SetAlignmentMode(int alignmentMode);
 				//This take a state and outputs a its alignment jacobian given the alignment mode
 				void computeAlignmentToMeasurementJacobian( EUTelState& state);
 
@@ -58,9 +55,15 @@ namespace eutelescope {
 
 				void writeMilleSteeringFile(lcio::StringVec pedeSteerAddCmds);
 
-				int runPede();
+				bool runPede();
 	
 				bool parseMilleOutput(std::string alignmentConstantLCIOFile, std::string gear_aligned_file);
+				bool converge();
+				bool checkConverged();
+				void editSteerUsingRes();
+				void copyFile(std::string input, std::string output);
+				void outputSteeringFiles();
+
 
 				void testUserInput();
 				void printFixedPlanes();
@@ -80,6 +83,9 @@ namespace eutelescope {
 				///////////////////////////////////////////get stuff
 				TMatrixD& getAlignmentJacobian()  { return _jacobian; }
 				std::vector<int> getGlobalParameters() { return _globalLabels; }
+				///////find stuff
+				bool findTooManyRejects(std::string output);
+
 
 				gbl::MilleBinary * _milleGBL;
 
@@ -87,8 +93,6 @@ namespace eutelescope {
 void CreateBinary();
 
 		protected:
-				int alignmentMode;
-				Utility::AlignmentMode _alignmentMode;
 				TMatrixD _jacobian; //Remember you need to create the object before you point ot it
 				std::vector<int> _globalLabels;
 				std::map<int, int> _xShiftsMap;
@@ -100,6 +104,9 @@ void CreateBinary();
 
         /** Mille steering filename */
 				std::string _milleSteeringFilename;
+				
+				std::string _milleSteerNameOldFormat;
+				int _iteration;
 
 				std::string _milleBinaryFilename;
 				//the results file

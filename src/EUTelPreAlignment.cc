@@ -371,7 +371,6 @@ void EUTelPreAlign::processEvent(LCEvent* event)
 
 bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit) 
 {
-  bool skipHit = false;
 
   // if no hot pixel map was loaded, just return here
   if( _hotPixelMap.size() == 0) return 0;
@@ -397,7 +396,6 @@ bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit)
 				_hotPixelMap.at(sensorID).end(),
 				std::make_pair(m26Pixel.getXCoord(),m26Pixel.getYCoord()))
 		      != _hotPixelMap.at(sensorID).end()){ 
-		    skipHit = true; 	      
 		    delete cluster;                        			  
 		    return true; // if TRUE  this hit will be skipped
 		  }

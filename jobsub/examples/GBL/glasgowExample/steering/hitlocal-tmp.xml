@@ -146,7 +146,7 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
  <processor name="Correlator" type="EUTelCorrelator">
  <!--EUTelCorrelator fills histograms with correlation plots-->
   <!--Hit collection name-->
-  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit_filtered_m26_apix </parameter>
+  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> @HitOutputCollectionName@ </parameter>
   <!--Minimum allowed cluster charge to be taken into account for the correlation plots (default = 2)-->
   <parameter name="ClusterChargeMinimum" type="int" value="0"/>
   <!--Dump the offset X and Y values calculated from the correlation bands (default = true)-->
