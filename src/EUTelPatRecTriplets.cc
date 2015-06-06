@@ -549,7 +549,7 @@ void EUTelPatRecTriplets::getDUTHit(){
         offset.push_back(itTrack->getStates().at(0).getHit().getPositionGlobal()[1]); 
         offset.push_back(itTrack->getStates().at(0).getHit().getPositionGlobal()[2]); 
         offset.push_back(itTrack->getStates().at(5).getHit().getPositionGlobal()[2]); 
-        double dz;
+        double dz = offset.at(3) - offset.at(2);;
         std::vector<double> trackSlope; trackSlope.push_back((itTrack->getStates().at(5).getHit().getPositionGlobal()[0] - offset.at(0))/dz);trackSlope.push_back((itTrack->getStates().at(5).getHit().getPositionGlobal()[1] - offset.at(1))/dz);
         //Loop through each hit and match the closest one to the track
         double distBest=10000000;
@@ -568,13 +568,15 @@ void EUTelPatRecTriplets::getDUTHit(){
                         streamlog_out(DEBUG0) << "DUT hit."  << std::endl;
                         EUTelHit hit = EUTelHit(*itHit);
                         EUTelState state;
-                        double dz = hit.getPositionGlobal()[2] - 0.5*( offset.at(2)+ offset.at(3));
+                        double dzToHit = hit.getPositionGlobal()[2] - 0.5*( offset.at(2)+ offset.at(3));
                         std::vector<double> offset;
                         std::vector<double> trackSlope; 
                         getTrackAvePara(itTrack->getStates().at(0).getHit(), itTrack->getStates().at(5).getHit(), offset, trackSlope);
+//                        std::cout<<"Corrected curve :  X:" << getCurvXYCorrected()[0] << " Y: " << getCurvXYCorrected()[1] <<std::endl;
+
                         std::vector<float> slope;
-                        slope.push_back(trackSlope.at(0) + dz*getCurvXYCorrected()[0]);
-                        slope.push_back(trackSlope.at(1) + dz*getCurvXYCorrected()[1]);
+                        slope.push_back(trackSlope.at(0) + dzToHit*getCurvXY()[0]);
+                        slope.push_back(trackSlope.at(1) + dzToHit*getCurvXY()[1]);
                         state.setMomGlobalIncEne(slope,getBeamMomentum());
                         TVector3 hitPosGlo = hit.getPositionGlobal();
                         double dz1 = hit.getPositionGlobal()[2] - offset.at(2);
@@ -587,9 +589,11 @@ void EUTelPatRecTriplets::getDUTHit(){
                         state.setPositionGlobal(intersectionPoint);
                         double dist=1000000;
                         if(_planeDimensions[hit.getLocation()] == 2){ 
+//                            std::cout<<"posX: " << posX << " hitPosGlo " << hitPosGlo[0] <<std::endl;
                             streamlog_out(DEBUG0) << "Triplet DUT Match Cut Pixel: " <<"X delta: " << fabs(posX-hitPosGlo[0]) << " Y delta: " << fabs(posY - hitPosGlo[1]) << std::endl;
                             double dist = sqrt(pow(posX-hitPosGlo[0],2)+pow(posY-hitPosGlo[1],2));
                         }else if(_planeDimensions[hit.getLocation()] == 1){
+//                            std::cout<<"posX: " << posX << " hitPosGlo " << hitPosGlo[0] <<std::endl;
                             streamlog_out(DEBUG0) << "Triplet DUT Match Cut Strip: " <<"X delta: " << fabs(posX-hitPosGlo[0]) << std::endl;
                             dist = sqrt(pow(posX-hitPosGlo[0],2));
 
