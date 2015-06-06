@@ -50,6 +50,7 @@ EUTelProcessorGBLTrackFit::EUTelProcessorGBLTrackFit() :
 Processor("EUTelProcessorGBLTrackFit"),
 _nProcessedRuns(0),
 _nProcessedEvents(0),
+_nTrackCand(0),
 _beamQ(-1),
 _eBeam(4),
 _trackCandidatesInputCollectionName("Default_input"),
@@ -150,6 +151,7 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent* evt){
         std::vector<EUTelTrack> tracks = reader.getTracks(evt, _trackCandidatesInputCollectionName );
 		std::vector<EUTelTrack> allTracksForThisEvent;//GBL will analysis the track one at a time. However we want to save to lcio per event.
 		for (size_t iTrack = 0; iTrack < tracks.size(); iTrack++) {
+            _nTrackCand++;
 			EUTelTrack track = tracks.at(iTrack); 
             streamlog_out(DEBUG1)<<"Found "<<tracks.size()<<" tracks for event " << evt->getEventNumber() << "  This is track:  " << iTrack <<std::endl;
             track.print();
@@ -181,7 +183,7 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent* evt){
 				static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_fitsuccessHistName ] ) -> fill(1.0);
 				if(chi2 ==0 or ndf ==0){
 					throw(lcio::Exception("Your fitted track has zero degrees of freedom or a chi2 of 0.")); 	
-					}
+                }
 				track.setChi2(chi2);
 				track.setNdf(ndf);
 				_chi2NdfVec.push_back(chi2/static_cast<float>(ndf));
@@ -317,17 +319,11 @@ void EUTelProcessorGBLTrackFit::end() {
 	double sizeFittedTracks = _chi2NdfVec.size();
 	for(size_t i=0; i<_chi2NdfVec.size(); ++i)
 	{
-		total= total + _chi2NdfVec.at(i);//TO DO: This is does not seem to output the correct average chi2. Plus do we really need this to fit?
+		total= total + _chi2NdfVec.at(i);
 	}
-	//TO DO: We really should have a better way to look track per track	and see if the correction is too large. 
 	std::vector<double> correctionTotal = _trackFitter->getCorrectionsTotal();
-	streamlog_out(MESSAGE9)<<"This is the average correction for omega: " <<correctionTotal.at(0)/sizeFittedTracks<<std::endl;	
-	streamlog_out(MESSAGE9)<<"This is the average correction for local xz inclination: " <<correctionTotal.at(1)/sizeFittedTracks<<std::endl;	
-	streamlog_out(MESSAGE9)<<"This is the average correction for local yz inclination: " <<correctionTotal.at(2)/sizeFittedTracks<<std::endl;	
-	streamlog_out(MESSAGE9)<<"This is the average correction for local x: " <<correctionTotal.at(3)/sizeFittedTracks<<std::endl;	
-	streamlog_out(MESSAGE9)<<"This is the average correction for local y: " <<correctionTotal.at(4)/sizeFittedTracks<<std::endl;	
-
   float average = total/sizeFittedTracks;
+	streamlog_out(MESSAGE9) << "The number of GBL tracks "<< _chi2NdfVec.size() <<" Number of original candidates "<< _nTrackCand <<std::endl;
 	streamlog_out(MESSAGE9) << "This is the average chi2 -"<< average <<std::endl;
 
 }

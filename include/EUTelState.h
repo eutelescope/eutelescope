@@ -20,15 +20,18 @@ namespace eutelescope {
 			EUTelState();
 			EUTelState(EUTelState *state);
 			//getters
-			EUTelHit getHit();
+			EUTelHit& getHit();
 			int getDimensionSize() const ;
 			int	getLocation() const;
 			TMatrixDSym getStateCov() const;
 			TVectorD getStateVec();
-            TVector3 getMomLocal();
+            TVector3 getMomLocal() const ;
 			float getMomLocalX() const {return _momLocalX;}
 			float getMomLocalY() const {return _momLocalY;}
 			float getMomLocalZ() const {return _momLocalZ;}
+			float getSlopeX() const; 
+			float getSlopeY() const; 
+
 			TVector3 getMomGlobal() const ;
             std::vector<double> getLCIOOutput();
 			float getArcLengthToNextState() const {return _arcLength;} 
@@ -53,6 +56,9 @@ namespace eutelescope {
 			void setMomLocalX(float momX);
 			void setMomLocalY(float momY);
 			void setMomLocalZ(float momZ);
+            void setMomGlobalIncEne(std::vector<float> slopes, float energy);
+            void setMomGlobalIncEne(std::vector<float> slopes, double energy);
+
 			void setLocalMomentumGlobalMomentum(TVector3 momentumIn);
             void setTrackFromLCIOVec(std::vector<double> input);
             //!Template input for setting local position of hit  
@@ -62,8 +68,9 @@ namespace eutelescope {
 			void setPositionLocal(float position[]);
 			void setPositionLocal(double position[]);
 			void setPositionGlobal(float positionGlobal[]);
+            void setPositionGlobal(double positionGlobal[]);
 			void setCombinedHitAndStateCovMatrixInLocalFrame(double cov[4]);
-			void setStateUsingCorrection(TVectorD stateVec);
+			void setStateUsingCorrection(TVectorD corrections);
 			void setArcLengthToNextState(float arcLength){_arcLength = arcLength;} 
 			void setKinks(TVectorD kinks);
 			void setKinksMedium1(TVectorD kinks);

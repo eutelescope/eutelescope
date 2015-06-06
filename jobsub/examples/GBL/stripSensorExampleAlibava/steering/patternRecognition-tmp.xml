@@ -21,11 +21,12 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
     <processor name="AIDA"/>
     <processor name="MyEUTelUtilityPrintEventNumber"/>
     <processor name="TrackSearch"/>
+    <processor name="TrackAnalysis"/>
     <processor name="Save"/>
   </execute>
 
    <global>
-      <parameter name="LCIOInputFiles"> @LcioPath@/run@RunNumber@-hitlocal.slcio </parameter>
+      <parameter name="LCIOInputFiles"> @LcioRawPath@/run@RunNumber@-hitmaker-fromEda.slcio </parameter>
       <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
@@ -78,6 +79,11 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
     <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
  </processor>
 
+	<processor name="TrackAnalysis" type="EUTelProcessorTrackAnalysis">
+		<parameter name="TrackInputCollectionName" type="string" lcioInType="Track"> @TrackCandHitOutputCollectionName@  </parameter>
+		<parameter name="SensorIDs" type="IntVec"> @Planes@ </parameter>
+	</processor>
+
 
  <processor name="Save" type="EUTelOutputProcessor">
   <!--Writes the current event to the specified LCIO outputfile. Eventually it adds a EORE at the of the file if it was missing Needs to be the last ActiveProcessor.-->
@@ -90,7 +96,7 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
   <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
   <!--parameter name="KeepCollectionNames" type="StringVec" value="MyPreciousSimTrackerHits"/-->
   <!-- name of output file -->
-  <parameter name="LCIOOutputFile" type="string" value="@LcioPath@/run@RunNumber@-trackcand.slcio"/>
+  <parameter name="LCIOOutputFile" type="string" value="@LcioRawPath@/run@RunNumber@-trackcand.slcio"/>
   <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
   <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   <!--Set it to true to remove intermediate EORE in merged runs-->

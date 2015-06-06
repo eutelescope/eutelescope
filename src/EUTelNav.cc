@@ -692,10 +692,6 @@ bool EUTelNav::findIntersectionWithCertainID(	float x0, float y0, float z0,
 	{
 		foundIntersection = geo::gGeometry().findNextPlaneEntrance( newPos,  newMomentum, nextPlaneID, outputPosition);
 	}
-	if(!foundIntersection)
-	{
-		foundIntersection = geo::gGeometry().findNextPlaneEntrance( newPos,  -newMomentum, nextPlaneID, outputPosition);
-	}
 
 	arcLength = solution;		
 
