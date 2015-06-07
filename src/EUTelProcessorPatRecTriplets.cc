@@ -208,7 +208,7 @@ void EUTelProcessorPatRecTriplets::processEvent(LCEvent* evt)
 		_nProcessedEvents++;
 	}
 	catch (DataNotAvailableException e) {
-		streamlog_out(WARNING2) << " Collection not available" << std::endl;
+//		streamlog_out(WARNING2) << " Collection not available" << std::endl;
 		throw marlin::SkipEventException(this);
 	}
 	catch(std::string &e){
