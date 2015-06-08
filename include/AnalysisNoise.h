@@ -18,11 +18,7 @@
 #include <vector>
 #include <fstream> 
 
-using namespace std;
-using namespace lcio ;
-using namespace marlin;
-
-class AnalysisNoise : public Processor { 
+class AnalysisNoise : public marlin::Processor { 
 public: 
   virtual Processor* newProcessor() {return new AnalysisNoise;} 
   AnalysisNoise();
@@ -41,18 +37,18 @@ protected:
 private:
   bool _isFirstEvent;
   int _nEvent;
-  vector<vector<int> > _nFiredPixel;
+  std::vector<std::vector<int> > _nFiredPixel;
   int _nLayer;
-  vector<int> _xPixel;
-  vector<int> _yPixel;
+  std::vector<int> _xPixel;
+  std::vector<int> _yPixel;
   gear::SiPlanesParameters * _siPlanesParameters;
   gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
   double _energy;
   EVENT::StringVec _chipID;
   EVENT::StringVec _irradiation;
   EVENT::StringVec _dutIDs;
-  string _rate;
-  string _outputSettingsFolderName;
+  std::string _rate;
+  std::string _outputSettingsFolderName;
   ofstream settingsFile[3];
   std::map<int,TH2I*> noiseMap;
   std::map<int,TH1F*> noiseOccupancy;

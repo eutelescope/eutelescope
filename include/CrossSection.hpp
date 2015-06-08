@@ -18,8 +18,6 @@
 #include "TMath.h"
 #include "TDirectory.h"
 
-using namespace std;
-
 class CrossSection: public TObject {
 
     private:
@@ -30,7 +28,7 @@ class CrossSection: public TObject {
         TH1F *fHcsBorder;       // cross section along border of 2D histogram
         TH1F *fHcsDiag;         // cross section along central diagonal of 2D histogram
 
-        vector< TH1F* > fVcs;
+        std::vector< TH1F* > fVcs;
     
         TLegend *fLeg;            // legend
 
@@ -50,7 +48,7 @@ class CrossSection: public TObject {
         void CreateCrossSections();                     // get vector with histograms for the three sections
         void RecreateCrossSections();                     // get vector with histograms for the three sections
 
-        vector< TH1F* > GetCrossSections();                     // get vector with histograms for the three sections
+        std::vector< TH1F* > GetCrossSections();                     // get vector with histograms for the three sections
         TLegend *GetLegend();                                 
 
         void DrawCrossSection(TString option="", Bool_t create_canvas=kFALSE);     // draw the histrograms 

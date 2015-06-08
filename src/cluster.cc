@@ -2,6 +2,8 @@
 
 #include "cluster.h"
 
+using namespace std;
+
 Cluster aCluster;
 
 Cluster::Cluster()

@@ -22,11 +22,7 @@
 #include "TH1.h"
 #include "TH2.h"
 
-using namespace std;
-using namespace lcio ;
-using namespace marlin;
-
-class DeadColumnFinder : public Processor { 
+class DeadColumnFinder : public marlin::Processor { 
 public: 
   virtual Processor* newProcessor() {return new DeadColumnFinder;} 
   DeadColumnFinder();
@@ -47,12 +43,12 @@ protected:
 private:
   bool _isFirstEvent;
   int _nLayer;
-  vector<int> _xPixel;
-  vector<int> _yPixel;
+  std::vector<int> _xPixel;
+  std::vector<int> _yPixel;
   gear::SiPlanesParameters * _siPlanesParameters;
   gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
   int _nEvent;
-  vector<vector<bool> > isDead;
+  std::vector<std::vector<bool> > isDead;
   std::map<int,TH2I*> hitMap;
 };
 #endif

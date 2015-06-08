@@ -29,11 +29,7 @@
 #include "cluster.h"
 #include "CrossSection.hpp"
 
-using namespace std;
-using namespace lcio ;
-using namespace marlin ;
-
-class AnalysisPALPIDEfs : public Processor {
+class AnalysisPALPIDEfs : public marlin::Processor {
 public:
   virtual Processor* newProcessor() {return new AnalysisPALPIDEfs;}
   AnalysisPALPIDEfs();
@@ -52,7 +48,7 @@ public:
   void bookHistos();
 #endif
   virtual void end();
-  bool emptyMiddle(vector<vector<int> > pixVector);
+  bool emptyMiddle(std::vector<std::vector<int> > pixVector);
   bool RemoveAlign(LCCollectionVec * preAlignmentCollectionVec, LCCollectionVec * alignmentCollectionVec, LCCollectionVec * alignmentPAlpideCollectionVec, double* fitpos, double& xposfit, double& yposfit);
 protected:
   //! Fill histogram switch
@@ -87,11 +83,11 @@ protected:
   double _energy;
   bool _writeShapes;
   std::string _shapeOutputFileName;
-  string _outputSettingsFolderName;
+  std::string _outputSettingsFolderName;
   ofstream settingsFile;
   EVENT::StringVec _chipID;
   EVENT::StringVec _irradiation;
-  string _rate;
+  std::string _rate;
   bool _oneAlignmentCollection;
   bool _clusterAvailable;
   bool _hotpixelAvailable;
@@ -101,10 +97,10 @@ protected:
   int layerIndex;
   double dutZ;
   FloatVec chi2Max;
-  vector<Cluster> clusterVec;
+  std::vector<Cluster> clusterVec;
   std::map<int,int> xPairs;
   std::map<int,int> yPairs;
-  vector< vector<int> > symmetryGroups;
+  std::vector< std::vector<int> > symmetryGroups;
   double zDistance;
   int _nEvents;
   int _nEventsWithTrack;
@@ -115,16 +111,16 @@ private:
   gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
   IntVec nTracks;
   IntVec nTracksPAlpide;
-  vector<int> nFakeWithTrack;
-  vector<int> nFakeWithoutTrack;
-  vector<int> nFake;
-  vector<int> nFakeWithTrackCorrected;
+  std::vector<int> nFakeWithTrack;
+  std::vector<int> nFakeWithoutTrack;
+  std::vector<int> nFake;
+  std::vector<int> nFakeWithTrackCorrected;
   int nDUThits;
   int nNoPAlpideHit;
   int nWrongPAlpideHit;
   int nPlanesWithTooManyHits;
-  vector<int> noiseMaskX;
-  vector<int> noiseMaskY;
+  std::vector<int> noiseMaskX;
+  std::vector<int> noiseMaskY;
   double xZero;
   double yZero;
   double xPitch;
@@ -197,8 +193,8 @@ private:
   std::map<int,TH2F*> tracksPixel2by2Histo;
   std::map<int,TH2F*> tracksPAlpidePixelHisto;
   std::map<int,TH2F*> tracksPAlpidePixel2by2Histo;
-  std::map<int, vector<TH1F*> > efficiencyPixelCrossSection;
-  std::map<int, vector<TH1F*> > clusterSizeCrossSection;
+  std::map<int, std::vector<TH1F*> > efficiencyPixelCrossSection;
+  std::map<int, std::vector<TH1F*> > clusterSizeCrossSection;
   std::map<int,TH1D*> tracksProjection;
   std::map<int,TH1D*> tracksPAlpideProjection;
   std::map<int,TH1D*> efficiencyProjection;
