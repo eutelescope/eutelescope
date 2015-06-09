@@ -73,12 +73,13 @@ namespace eutelescope {
         std::vector<double>  getCurvXY();
         std::vector<double>  getCurvXYCorrected();
         TVector3  getBFac();
+        std::vector<EUTelHit> getDUTHitsOrder(EUTelTrack track, std::vector<EUTelHit> dutHit );
 
         void  setCurvXYCorrected(std::vector<double> curv);
 
         EUTelTrack getTrackDUTHit(std::vector<EUTelTrack>::iterator itTrack, EUTelState stateDUT );
         EUTelTrack getTrack(std::vector<EUTelHit> hits);
-        EUTelTrack getTrack(std::vector<EUTelHit> hits, std::vector<double> offset, std::vector<double> trackSlope );
+        EUTelTrack getTrack(std::vector<EUTelHit> hits, std::vector<double> offset, std::vector<double> trackSlope,std::vector<double> curvCorr );
         EUTelTrack getTrack(triplets tripLeft,triplets tripRight);
         EUTelTrack getTrack(triplets tripLeft,triplets tripRight,EUTelState stateDUT );
         void getTrackAvePara(EUTelHit firstHit, EUTelHit endHit, std::vector<double>& offset, std::vector<double>& trackSlope);
