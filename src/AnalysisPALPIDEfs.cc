@@ -272,10 +272,10 @@ void AnalysisPALPIDEfs::processEvent(LCEvent *evt)
     if (_hotpixelAvailable)
     {
       hotData = dynamic_cast< TrackerDataImpl * > ( hotPixelCollectionVec->getElementAt( layerIndex ) );
-      auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel > >  sparseData(new EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel> ( hotData ));
+      auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel > >  sparseData(new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> ( hotData ));
       for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ ) 
       {
-        EUTelSimpleSparsePixel *sparsePixel =  new EUTelSimpleSparsePixel() ;
+        EUTelGenericSparsePixel *sparsePixel =  new EUTelGenericSparsePixel() ;
         sparseData->getSparsePixelAt( iPixel, sparsePixel );
         hotpixelHisto->Fill(sparsePixel->getXCoord()*xPitch+xPitch/2.,sparsePixel->getYCoord()*yPitch+yPitch/2.); 
         delete sparsePixel;
@@ -310,10 +310,10 @@ void AnalysisPALPIDEfs::processEvent(LCEvent *evt)
     if (_deadColumnAvailable)
     {
       deadColumn = dynamic_cast< TrackerDataImpl * > ( deadColumnCollectionVec->getElementAt( layerIndex ) );
-      auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel > >  sparseData(new EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel> (deadColumn));
+      auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel > >  sparseData(new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> (deadColumn));
       for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ ) 
       {
-        EUTelSimpleSparsePixel *sparsePixel =  new EUTelSimpleSparsePixel() ;
+        EUTelGenericSparsePixel *sparsePixel =  new EUTelGenericSparsePixel() ;
         sparseData->getSparsePixelAt( iPixel, sparsePixel );
         deadColumnHisto->Fill(sparsePixel->getXCoord()*xPitch+xPitch/2.,sparsePixel->getYCoord()*yPitch+yPitch/2.);
         delete sparsePixel;
@@ -448,11 +448,11 @@ void AnalysisPALPIDEfs::processEvent(LCEvent *evt)
         if (index == -1) continue;
         if (_hotpixelAvailable)
         {
-          auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel > >  sparseData(new EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel> ( hotData ));
+          auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel > >  sparseData(new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> ( hotData ));
           bool hotpixel = false;
           for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ ) 
           {
-            EUTelSimpleSparsePixel *sparsePixel =  new EUTelSimpleSparsePixel() ;
+            EUTelGenericSparsePixel *sparsePixel =  new EUTelGenericSparsePixel() ;
             sparseData->getSparsePixelAt( iPixel, sparsePixel );
             if (abs(xposfit-(sparsePixel->getXCoord()*xPitch+xPitch/2.)) < limit && abs(yposfit-(sparsePixel->getYCoord()*yPitch+yPitch/2.)) < limit) 
             {
@@ -479,11 +479,11 @@ void AnalysisPALPIDEfs::processEvent(LCEvent *evt)
         }
         if (_deadColumnAvailable)
         {
-          auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel > >  sparseData(new EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel> ( deadColumn ));
+          auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel > >  sparseData(new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> ( deadColumn ));
           bool dead = false;
           for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ ) 
           {
-            EUTelSimpleSparsePixel *sparsePixel =  new EUTelSimpleSparsePixel() ;
+            EUTelGenericSparsePixel *sparsePixel =  new EUTelGenericSparsePixel() ;
             sparseData->getSparsePixelAt( iPixel, sparsePixel );
             if (abs(xposfit-(sparsePixel->getXCoord()*xPitch+xPitch/2.)) < limit) 
             {
@@ -637,38 +637,12 @@ void AnalysisPALPIDEfs::processEvent(LCEvent *evt)
                     {
                       nClusterAssociatedToTrackPerEvent++;
                       clusterAssosiatedToTrack.push_back(zsData->getTime());
-                      int clusterSize = zsData->getChargeValues().size()/3;
+                      int clusterSize = zsData->getChargeValues().size()/4;
                       vector<int> X(clusterSize);
                       vector<int> Y(clusterSize);
                       Cluster cluster;
-                      if ( type == kEUTelSimpleSparsePixel )
+                      if ( type == kEUTelGenericSparsePixel )
                       {
-/*                        auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel > >
-                          sparseData(new EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel> ( zsData ));
-                        list<list< unsigned int> > listOfList = sparseData->findNeighborPixels( 1 );
-                        EUTelSimpleSparsePixel * pixel = new EUTelSimpleSparsePixel;
-                        list<list< unsigned int> >::iterator listOfListIter = listOfList.begin();
-                        vector<vector<int> > pixVector;
-                        while ( listOfListIter != listOfList.end() ) 
-                        {
-                          list<unsigned int > currentList = (*listOfListIter);
-                          list<unsigned int >::iterator listIter = currentList.begin();
-                          while ( listIter != currentList.end() )
-                          {
-                            sparseData->getSparsePixelAt( (*listIter ), pixel );
-                            X[iCluster] = pixel->getXCoord();
-                            Y[iCluster] = pixel->getYCoord();
-                            vector<int> pix;
-                            pix.push_back(X[iCluster]);
-                            pix.push_back(Y[iCluster]);
-                            pixVector.push_back(pix);
-                            iCluster++;
-                            ++listIter;
-                          }
-                          ++listOfListIter;
-                        }
-                        delete pixel;
-*/
                         vector<vector<int> > pixVector;
                         auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel > > sparseData( new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> ( zsData ) );
                         EUTelGenericSparsePixel* pixel = new EUTelGenericSparsePixel;
@@ -826,40 +800,10 @@ void AnalysisPALPIDEfs::processEvent(LCEvent *evt)
         {
           int index = -1;
           SparsePixelType   type   = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( zsData )["sparsePixelType"]) );
-          if ( type == kEUTelSimpleSparsePixel )
+          if ( type == kEUTelGenericSparsePixel )
           {
-/*            auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel > >
-              sparseData(new EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel> ( zsData ));
-            list<list< unsigned int> > listOfList = sparseData->findNeighborPixels( 1 );
-            EUTelSimpleSparsePixel * pixel = new EUTelSimpleSparsePixel;
-            list<list< unsigned int> >::iterator listOfListIter = listOfList.begin();
-            vector<vector<int> > pixVector;
             Cluster cluster;
-            int clusterSize = zsData->getChargeValues().size()/3;
-            vector<int> X(clusterSize);
-            vector<int> Y(clusterSize);
-            int iCluster = 0;
-            while ( listOfListIter != listOfList.end() ) 
-            {
-              list<unsigned int > currentList = (*listOfListIter);
-              list<unsigned int >::iterator listIter = currentList.begin();
-              while ( listIter != currentList.end() )
-              {
-                sparseData->getSparsePixelAt( (*listIter ), pixel );
-                X[iCluster] = pixel->getXCoord();
-                Y[iCluster] = pixel->getYCoord();
-                if (!fitHitAvailable) nFakeWithoutTrackHitmapHisto->Fill(X[iCluster],Y[iCluster]);
-                else nFakeWithTrackHitmapHisto->Fill(X[iCluster],Y[iCluster]);
-                nFakeHitmapHisto->Fill(X[iCluster],Y[iCluster]);
-                iCluster++;
-                ++listIter;
-              }
-              ++listOfListIter;
-            }
-            delete pixel;
-*///          vector<vector<int> > pixVector;
-            Cluster cluster;
-            int clusterSize = zsData->getChargeValues().size()/3;
+            int clusterSize = zsData->getChargeValues().size()/4;
             vector<int> X(clusterSize);
             vector<int> Y(clusterSize);
             auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel > > sparseData( new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> ( zsData ) );
@@ -869,6 +813,9 @@ void AnalysisPALPIDEfs::processEvent(LCEvent *evt)
               sparseData->getSparsePixelAt( iPixel, pixel );
               X[iPixel] = pixel->getXCoord();
               Y[iPixel] = pixel->getYCoord();
+              if (!fitHitAvailable) nFakeWithoutTrackHitmapHisto->Fill(X[iPixel],Y[iPixel]);
+              else nFakeWithTrackHitmapHisto->Fill(X[iPixel],Y[iPixel]);
+              nFakeHitmapHisto->Fill(X[iPixel],Y[iPixel]);
             }
             delete pixel;
             cluster.set_values(clusterSize,X,Y);
@@ -903,10 +850,10 @@ void AnalysisPALPIDEfs::processEvent(LCEvent *evt)
       if (sensorID == _dutID)
       {
         SparsePixelType   type   = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( zsData )["sparsePixelType"]) );
-        if ( type == kEUTelSimpleSparsePixel )
+        if ( type == kEUTelGenericSparsePixel )
         {
           Cluster cluster;
-          int clusterSize = zsData->getChargeValues().size()/3;
+          int clusterSize = zsData->getChargeValues().size()/4;
           vector<int> X(clusterSize);
           vector<int> Y(clusterSize);
           vector<vector<int> > pixVector;
