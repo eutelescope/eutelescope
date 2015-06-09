@@ -2147,14 +2147,6 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent* evt, LCCollectionVec* p
                 //Now we need to process the found cluster
                 if ( (sparseCluster->size() > 0) && (sparseCluster->getSeedSNR() >= _sparseSeedCut) && (sparseCluster->getClusterSNR() >= _sparseClusterCut) )
                 {
-                    int xSeed, ySeed, xSize, ySize;
-                    sparseCluster->getSeedCoord(xSeed, ySeed);
-                    sparseCluster->getClusterSize(xSize, ySize);
-                    if (xSize > 31 || ySize > 31)
-                    { 
-                      evt->parameters().setValue("FLAG",100);
-                      continue; 
-                    }
                     // set the ID for this zsCluster
                     idZSClusterEncoder["sensorID"] = sensorID;
                     idZSClusterEncoder["sparsePixelType"] = static_cast<int>( type );
@@ -2168,10 +2160,6 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent* evt, LCCollectionVec* p
                     // prepare a pulse for this cluster
                     auto_ptr<TrackerPulseImpl> zsPulse ( new TrackerPulseImpl );
                     idZSPulseEncoder["sensorID"] = sensorID;
-                    idZSPulseEncoder["xSeed"]     = xSeed;
-                    idZSPulseEncoder["ySeed"]     = ySeed;
-                    idZSPulseEncoder["xCluSize"]  = xSize;
-                    idZSPulseEncoder["yCluSize"]  = ySize;
                     idZSPulseEncoder["type"] = static_cast<int>(kEUTelSparseClusterImpl);
                     idZSPulseEncoder.setCellID( zsPulse.get() );
 
