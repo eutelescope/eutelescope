@@ -122,7 +122,7 @@ namespace eutelescope {
 
 			void bookHistograms();
 
-			void plotResidual(std::map< int, std::map<float, float > >  & sensorResidual, std::map< int, std::map<float, float > >  & sensorResidualError);
+			void plotResidual(std::map< int, std::map<float, float > >  & sensorResidual, std::map< int, std::map<float, float > >  & sensorResidualError, std::map< int, int > & planes);
 				
 //TO DO: Fix all this histogramming stuff.
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -150,12 +150,16 @@ namespace eutelescope {
 						static std::string _residGblFitHistNameX3;
 						static std::string _residGblFitHistNameX4;
 						static std::string _residGblFitHistNameX5;
-						static std::string _residGblFitHistNameY0;
+	                                        static std::string _residGblFitHistNameXDut1;
+	  	                                static std::string _residGblFitHistNameXDut2;
+	  					static std::string _residGblFitHistNameY0;
 						static std::string _residGblFitHistNameY1;
 						static std::string _residGblFitHistNameY2;
 						static std::string _residGblFitHistNameY3;
 						static std::string _residGblFitHistNameY4;
 						static std::string _residGblFitHistNameY5;
+	                                        static std::string _residGblFitHistNameYDut1;
+	                                        static std::string _residGblFitHistNameYDut2;
 
 						static std::string _residGblFitHistNameX0p;
 						static std::string _residGblFitHistNameX1p;
@@ -163,12 +167,16 @@ namespace eutelescope {
 						static std::string _residGblFitHistNameX3p;
 						static std::string _residGblFitHistNameX4p;
 						static std::string _residGblFitHistNameX5p;
+	                                        static std::string _residGblFitHistNameXDut1p;
+	                                        static std::string _residGblFitHistNameXDut2p;
 						static std::string _residGblFitHistNameY0p;
 						static std::string _residGblFitHistNameY1p;
 						static std::string _residGblFitHistNameY2p;
 						static std::string _residGblFitHistNameY3p;
 						static std::string _residGblFitHistNameY4p;
 						static std::string _residGblFitHistNameY5p;
+	                                        static std::string _residGblFitHistNameYDut1p;
+	                                        static std::string _residGblFitHistNameYDut2p;
 
         };
 
