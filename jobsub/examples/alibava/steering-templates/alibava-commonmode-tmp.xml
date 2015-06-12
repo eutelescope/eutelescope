@@ -26,7 +26,7 @@
 
    <global>
       <parameter name="LCIOInputFiles"> @LcioPath@/@AlibavaOutputFormat@-converter.slcio </parameter>
-      <parameter name="GearXMLFile" value="@GearFile@"/>      
+      <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>      
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
       <parameter name="SupressCheck" value="false"/>
