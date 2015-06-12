@@ -51,25 +51,28 @@ void EUTelProcessorTrackAnalysis::processEvent(LCEvent * evt){
 		}
         streamlog_out(DEBUG2) << "Collection contains data! Continue!" << std::endl;
         EUTelReaderGenericLCIO reader = EUTelReaderGenericLCIO(); streamlog_out(DEBUG2) << "Collection contains data! Continue! line 53" << std::endl;
-        std::vector<EUTelTrack> tracks = reader.getTracks(evt, _trackInputCollectionName);streamlog_out(DEBUG2) << "Collection contains data! Continue! line 54" << std::endl;
-        for (int iTrack = 0; iTrack < tracks.size(); ++iTrack){
-            EUTelTrack track = tracks.at(iTrack); 
-            _analysis->plotResidualVsPosition(track);	
-            _analysis->plotIncidenceAngles(track);
-            if(track.getChi2()/track.getNdf() < 5.0){
-                _analysis->plotBeamEnergy(track);
-                _analysis->plotPValueVsBeamEnergy(track);
-            }
-
+	streamlog_out(DEBUG2) << "_trackInputCollectionName = " <<_trackInputCollectionName<<std::endl;
+	//if(reader.getTracks(evt, _trackInputCollectionName)){
+	  std::vector<EUTelTrack> tracks = reader.getTracks(evt, _trackInputCollectionName);
+	  streamlog_out(DEBUG2) << "Collection contains data! Continue! line 54" << std::endl;
+	  for (int iTrack = 0; iTrack < tracks.size(); ++iTrack){
+	    EUTelTrack track = tracks.at(iTrack); 
+	    _analysis->plotResidualVsPosition(track);	
+	    _analysis->plotIncidenceAngles(track);
+	    if(track.getChi2()/track.getNdf() < 5.0){
+	      _analysis->plotBeamEnergy(track);
+	      _analysis->plotPValueVsBeamEnergy(track);
+	    }//if(track.getChi2()/track.getNdf() < 5.0){
             _analysis->plotPValueWithPosition(track);
             _analysis->plotPValueWithIncidenceAngles(track);
-        }
-
+	  }//for (int iTrack = 0; iTrack < tracks.size(); ++iTrack){
+	  //	}//if(reader.getTracks(evt, _trackInputCollectionName)){
 	}catch(...){	
-		streamlog_out(MESSAGE9)<<"There is an unknown error in EUTelProcessorTrackAnalysis-processEvent" <<std::endl;
-		throw marlin::StopProcessingException( this ) ;
+	  streamlog_out(MESSAGE9)<<"There is an unknown error in EUTelProcessorTrackAnalysis-processEvent" <<std::endl;
+	  throw marlin::StopProcessingException( this ) ;
 	}
 	
+
 	
 }
 

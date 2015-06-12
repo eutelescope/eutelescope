@@ -68,15 +68,15 @@ void EUTelPatRecTriplets::testTrackQuality()
 	_numberOfTracksTotal = _numberOfTracksTotal + _tracks.size();
 	_numberOfTracksTotalWithDUT = _numberOfTracksTotalWithDUT + _tracksWithDUTHit.size();
 
-	//	if(_numberOfTracksTotalWithDUT % 10 == 0)
-	//	{
+	if(_numberOfTracksTotalWithDUT % 100 == 0)
+	  {
         streamlog_out(MESSAGE5) << "Number of tracks per event: " << static_cast<float>(_numberOfTracksTotal)/static_cast<float>(getEventNumber() +1)<< std::endl;
 	streamlog_out(MESSAGE5) << "Number of tracks with DUT hits per event: " << static_cast<float>(_numberOfTracksTotalWithDUT)/static_cast<float>(getEventNumber() +1)<< std::endl;
         streamlog_out(MESSAGE5) << "Number of left arm triplets per event: " << static_cast<float>(_numberTripletsLeft)/static_cast<float>(getEventNumber() +1)<< std::endl;
         streamlog_out(MESSAGE5) << "Number of right arm triplets per event: " << static_cast<float>(_numberTripletsRight)/static_cast<float>(getEventNumber() +1)<< std::endl;
 
 
-	//	}
+	  }
 }
 
 //I have observed a difference of just over 6 microns between the two methods over 20 cm distance. So we will set the maximum distance to 10 microns difference
@@ -308,6 +308,10 @@ std::vector<EUTelTrack> EUTelPatRecTriplets::getTracks( ){
 //    for(unsigned int i = 0 ; i < _tracksWithDUTHit.size();++i){
  //       _tracksWithDUTHit.at(i).print();
 //    }
+
+    //return _tracksWithDUTHit;
+    streamlog_out( DEBUG1 ) << "_tracksWithDUTHit.size() = "<<_tracksWithDUTHit.size()<<std::endl;
+    streamlog_out( DEBUG1 ) << "_tracks.size() = "<<_tracks.size()<<std::endl;
     return _tracksWithDUTHit;
 }
 void EUTelPatRecTriplets::setStraightLineFit(){
@@ -469,14 +473,14 @@ void EUTelPatRecTriplets::findTrackFromTriplets(){
             itLeftTriplet->matches = itLeftTriplet->matches + 1;
             itRightTriplet->matches = itRightTriplet->matches + 1;
             itLeftTriplet->fitID = fitID;
-            itRightTriplet->fitID = fitID;streamlog_out(DEBUG1) << "fitID = " <<fitID<< std::endl;streamlog_out(DEBUG1) << "confused:  itLeftTriplet->matches = " <<itLeftTriplet->matches<< "  itRightTriplet->matches = " <<itRightTriplet->matches<< std::endl;
+            itRightTriplet->fitID = fitID;//streamlog_out(DEBUG1) << "fitID = " <<fitID<< std::endl;streamlog_out(DEBUG1) << "confused:  itLeftTriplet->matches = " <<itLeftTriplet->matches<< "  itRightTriplet->matches = " <<itRightTriplet->matches<< std::endl;
             fitID++;
         }
     }
     for(itLeftTriplet = leftTriplets.begin();itLeftTriplet != leftTriplets.end();  itLeftTriplet++){streamlog_out(DEBUG1) << "1fitID = " <<fitID<< std::endl;
         for(itRightTriplet = rightTriplets.begin();itRightTriplet != rightTriplets.end();  itRightTriplet++){streamlog_out(DEBUG1) << "itLeftTriplet->fitID = " <<itLeftTriplet->fitID<< "   itRightTriplet->fitID = " <<itRightTriplet->fitID<< std::endl;
             if(itLeftTriplet->fitID == itRightTriplet->fitID){streamlog_out(DEBUG1) << "itLeftTriplet->matches = " <<itLeftTriplet->matches<< "  itRightTriplet->matches = " <<itRightTriplet->matches<< std::endl;
-	      if(itLeftTriplet->matches >= 1 and itRightTriplet->matches >= 1 ){
+	      if(itLeftTriplet->matches == 1 and itRightTriplet->matches == 1 ){
                     streamlog_out(DEBUG1) << "FOUND TRACK FROM TRIPLETS!" << std::endl;
 
                     _tracks.push_back(getTrack(*itLeftTriplet,*itRightTriplet));

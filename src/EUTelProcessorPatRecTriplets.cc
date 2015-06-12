@@ -201,7 +201,7 @@ void EUTelProcessorPatRecTriplets::processEvent(LCEvent* evt)
         std::vector<EUTelTrack> tracks = _trackFitter->getTracks();
         _trackFitter->testTrackQuality();
 
-//		plotHistos(tracks);
+		plotHistos(tracks);
 
 		outputLCIO(evt,tracks);
 
@@ -227,14 +227,15 @@ void EUTelProcessorPatRecTriplets::processEvent(LCEvent* evt)
 
 void EUTelProcessorPatRecTriplets::outputLCIO(LCEvent* evt, std::vector<EUTelTrack>& tracks)
 {
-    if(!tracks.empty()){
+  // if(!tracks.empty()){
         for(unsigned int i=0 ; i< tracks.size(); i++){
             streamlog_out(DEBUG1)<<"Found "<<tracks.size()<<" track for event " << evt->getEventNumber() <<".  Track number  " << i <<std::endl;
             tracks.at(i).print();
         }
         EUTelReaderGenericLCIO reader = EUTelReaderGenericLCIO();
         reader.getColVec(tracks, evt, _trackCandidateHitsOutputCollectionName);
-    }
+	//}
+    streamlog_out(DEBUG1)<<"tracks.empty() !!!!"<<std::endl;
 }
 
 //TO DO: find a more generic way to plot histograms
