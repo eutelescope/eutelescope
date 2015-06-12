@@ -27,7 +27,7 @@
 
    <global>
       <parameter name="LCIOInputFiles"> @LcioPath@/@MergedOutputFormat@-merger.slcio </parameter>
-      <parameter name="GearXMLFile" value="@GearFile@"/>
+      <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
       <parameter name="SupressCheck" value="false"/>
@@ -95,7 +95,7 @@
   <!--Name of LCIO db file where alignment constantds will be stored-->
   <!--parameter name="AlignmentConstantLCIOFile" type="string">alignment.slcio </parameter-->
   <!--Suffix for the new GEAR file, set to empty string (this is not default!) to overwrite old GEAR file-->
-  <parameter name="NewGEARSuffix" type="string">_pre </parameter>
+  <parameter name="NewGEARSuffix" type="string">_run@RunNumber@_pre </parameter>
   <!--SensorID of fixed plane-->
   <parameter name="FixedPlane" type="int">0 </parameter>
     <!--The list of sensor IDs that shall be excluded.-->
