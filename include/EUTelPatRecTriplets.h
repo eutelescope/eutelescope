@@ -191,6 +191,7 @@ namespace eutelescope {
 		std::vector<EUTelTrack>	_finalTracks;
 
 		unsigned int _numberOfTracksTotal;
+		unsigned int _numberOfTracksTotalWithDUT;
 		unsigned int _numberTripletsLeft;
 		unsigned int _numberTripletsRight;
 		unsigned int _numberDoublets;

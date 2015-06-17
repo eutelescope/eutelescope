@@ -60,9 +60,9 @@ void EUTelReaderGenericLCIO::getColVec(std::vector<EUTelTrack> tracks,LCEvent* e
 std::vector<EUTelTrack> EUTelReaderGenericLCIO::getTracks( LCEvent* evt, std::string colName){
     std::vector<EUTelTrack> tracks; 
     streamlog_out(DEBUG1)<<"Open Collections... " <<std::endl;
-
+LCCollection* relStatesHits =  evt->getCollection("StateHitFOR"+ colName);streamlog_out(DEBUG1)<<"Open Collections2... " <<std::endl;
     LCCollection* relTrackStates =  evt->getCollection("TrackStateFOR"+ colName);
-    LCCollection* relStatesHits =  evt->getCollection("StateHitFOR"+ colName);
+    
     streamlog_out(DEBUG1)<<"Open!" <<std::endl;
 
     std::vector<int> trackIDVec;
