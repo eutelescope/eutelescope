@@ -198,8 +198,9 @@ void EUTelProcessorPatRecTriplets::processEvent(LCEvent* evt)
 
 		_trackFitter->testHitsVecPerPlane();//tests the size of the map and does it contain hits
 		streamlog_out( DEBUG1 ) << "Trying to find tracks..." << std::endl;
-        std::vector<EUTelTrack> tracks = _trackFitter->getTracks();
-        _trackFitter->testTrackQuality();
+		std::vector<EUTelTrack> tracks = _trackFitter->getTracks();
+		streamlog_out( DEBUG1 ) << "Trying to find tracks...We have " << tracks.size()<<" tracks"<<std::endl;
+		_trackFitter->testTrackQuality();
 
 		plotHistos(tracks);
 

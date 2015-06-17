@@ -52,12 +52,15 @@ namespace eutelescope {
    	/** Called after data processing for clean up. **/
 		virtual void end();
 		void initialiseResidualVsPositionHistograms();
+		void initialiseEfficiencyVsPositionHistograms();
 		
 		std::string _trackInputCollectionName;
 		EUTelTrackAnalysis* _analysis;
 		IntVec _sensorIDs;
 		std::map< int,  AIDA::IProfile2D* > _mapFromSensorIDToHistogramX;
 		std::map< int,  AIDA::IProfile2D* > _mapFromSensorIDToHistogramY;
+		std::map< int,  AIDA::IProfile2D* > _mapFromSensorIDToEfficiencyX;
+		std::map< int,  AIDA::IProfile2D* > _mapFromSensorIDToEfficiencyY;
 		std::map< int,  AIDA::IProfile2D* > _mapFromSensorIDToPValueHisto;
 		std::map< int,   AIDA::IHistogram1D *> _mapFromSensorIDToKinkXZ;
 		std::map< int,  AIDA::IHistogram1D * > _mapFromSensorIDToKinkYZ;
