@@ -21,12 +21,13 @@ namespace eutelescope {
 			EUTelTrack();
 			EUTelTrack( const EUTelTrack& track);
 			EUTelTrack( const EUTelTrack& track,bool);
-			//getters
+			//getters//TRACK PARAMETERS
             float getChi2() const ;
             float getNdf() const;
 			float getTotalVariance() const { return _var;}
-			unsigned int getNumberOfHitsOnTrack() const;
+            //END OF TRACK PARAMETERS
             //Must return reference to change the contents.
+			unsigned int getNumberOfHitsOnTrack() const;
 			std::vector<EUTelState>& getStates();
             std::vector<EUTelState> getStatesCopy() const;
             std::vector<double> getLCIOOutput();
@@ -37,16 +38,15 @@ namespace eutelescope {
             void setChi2(float chi2);
             void setNdf(float nDF);
             void setTrackFromLCIOVec(std::vector<double> input);
-
 			//print
 			void print();
-            //
+  	private:
             std::vector<EUTelState> _states;
+
             double _var;
             float _chi2;
             float _nDF;
 
-  	private:
 	};
 
 }

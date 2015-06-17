@@ -22,26 +22,26 @@ namespace eutelescope {
             void setID(int id);
             void setTrackFromLCIOVec(std::vector<double> input);
 			void setLocation(int location);
-
             //get
-            int getID() const;
-            const double* getPosition() const; 
             TVector3 getPositionGlobal() const; 
 			int	getLocation() const;
-
+            //HIT PARAMETERS
+            const double* getPosition() const; 
+            int getID() const;
+            //END HIT PARAMETERS
 
             //print
             void print();
 
-
-		    double _position[3];	
-            int _location; 
-            int _locationKnown;
-            int _id; //This is used to keep a track of all the hits for track removal.
             std::vector<double> getLCIOOutput(); 
 			bool operator==(const EUTelHit compareHit ) const;
 
   	private:
+		    double _position[3];	
+            int _location; 
+            int _locationKnown;
+            int _id; //This is used to keep a track of all the hits for track removal.
+
 	};
 
 }
