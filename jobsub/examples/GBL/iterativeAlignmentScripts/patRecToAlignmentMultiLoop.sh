@@ -85,7 +85,7 @@ export Fzs="$allPlanesFixed" #This is the fixed planes for shifts in the z axis
 export inputGear="$outputGear"
 export outputGear="gear-ZRotations-XYZShift-${outputIdentifier}-Iteration-$number-${RUN}.xml" 
 export histoNameInput="Alignment-ZRotations-XYZShifts-${outputIdentifier}-Iteration-$number-${RUN}"
-. $scriptsLocation/patRecToAlignmentSingleLoopAcc.sh
+. $scriptsLocation/patRecToAlignmentSingleLoop.sh
 $scriptsLocation/patRecAndTrackFit.sh -i "$outputGear" -h "$histoNameInput"  
 
 echo "We have produced new histogram $histoNameInput"
@@ -98,7 +98,7 @@ export Fzs="$allPlanesFixed" #This is the fixed planes for shifts in the z axis
 export inputGear="$outputGear"
 export outputGear="gear-YZRotations-XYZShift-${outputIdentifier}-Iteration-$number-${RUN}.xml" 
 export histoNameInput="Alignment-YZRotations-XYZShifts-${outputIdentifier}-Iteration-$number-${RUN}"
-. $scriptsLocation/patRecToAlignmentSingleLoopAcc.sh
+. $scriptsLocation/patRecToAlignmentSingleLoop.sh
 $scriptsLocation/patRecAndTrackFit.sh -i "$outputGear" -h "$histoNameInput"  
 
 echo "We have produced new histogram $histoNameInput"
@@ -111,7 +111,7 @@ export Fzs="$allPlanesFixed" #This is the fixed planes for shifts in the z axis
 export inputGear="$outputGear"
 export outputGear="gear-XYZRotations-XYZShift-${outputIdentifier}-Iteration-$number-${RUN}.xml" 
 export histoNameInput="Alignment-XYZRotations-XYZShifts-${outputIdentifier}-Iteration-$number-${RUN}"
-. $scriptsLocation/patRecToAlignmentSingleLoopAcc.sh
+. $scriptsLocation/patRecToAlignmentSingleLoop.sh
 $scriptsLocation/patRecAndTrackFit.sh -i "$outputGear" -h "$histoNameInput"  
 
 exit 1; 
