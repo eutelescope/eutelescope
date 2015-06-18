@@ -515,43 +515,53 @@ EUTelTrack EUTelPatRecTriplets::getTrack(triplets tripLeft,triplets tripRight){
 EUTelTrack EUTelPatRecTriplets::getTrack(std::vector<EUTelHit> hits, std::vector<double> offset, std::vector<double> trackSlope){
     EUTelTrack track;
     //Calculate prediction using properties of hits only. 
-    for(unsigned int i = 0; i < hits.size(); ++i){
+    // loop around planes
+    // loop around hits -> if hit matched to plane record hit, if not record my intersection
+    for(unsigned int  j = 0; j < (geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()); ++j){
+      unsigned int sensorID = geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(j);
+      streamlog_out(DEBUG1) << "The Z position " << j << " sensor ID: " << sensorID  <<std::endl;
+      bool hitOnPlane=false;
+      
+      for(unsigned int i = 0; i < hits.size(); ++i){
         EUTelState state;
-        state.setLocation(hits.at(i).getLocation());
-        state.setHit(hits.at(i));
-        double dz1 = hits.at(i).getPositionGlobal()[2] - offset.at(2);
-        double dz2 = hits.at(i).getPositionGlobal()[2] - offset.at(3); 
-        double posX = offset.at(0) + dz1*trackSlope.at(0) + 0.5*dz1*dz2*getCurvXY()[0];
-        double posY = offset.at(1) + dz1*trackSlope.at(1) + 0.5*dz1*dz2*getCurvXY()[1];
-        double dz = (dz1 + dz2)/2.0;
-        std::vector<float> slope;
-        slope.push_back(trackSlope.at(0)+dz*getCurvXY()[0]);
-        slope.push_back(trackSlope.at(1)+dz*getCurvXY()[1]);
-        float intersectionPoint[3];
-        intersectionPoint[0] = posX;  intersectionPoint[1] = posY; intersectionPoint[2] = hits.at(i).getPositionGlobal()[2];
-        //intersection might not be inside a volume. 
-        state.setPositionGlobal(intersectionPoint);
-        state.setMomGlobalIncEne(slope,getBeamMomentum());
-        if(i != (hits.size() - 1)){
+	if(hits.at(i).getLocation()==sensorID){
+	  hitOnPlane=true;
+	  State.setLocation(hits.at(i).getLocation());
+	  state.setHit(hits.at(i));
+	  double dz1 = hits.at(i).getPositionGlobal()[2] - offset.at(2);
+	  double dz2 = hits.at(i).getPositionGlobal()[2] - offset.at(3); 
+	  double posX = offset.at(0) + dz1*trackSlope.at(0) + 0.5*dz1*dz2*getCurvXY()[0];
+	  double posY = offset.at(1) + dz1*trackSlope.at(1) + 0.5*dz1*dz2*getCurvXY()[1];
+	  double dz = (dz1 + dz2)/2.0;
+	  std::vector<float> slope;
+	  slope.push_back(trackSlope.at(0)+dz*getCurvXY()[0]);
+	  slope.push_back(trackSlope.at(1)+dz*getCurvXY()[1]);
+	  float intersectionPoint[3];
+	  intersectionPoint[0] = posX;  intersectionPoint[1] = posY; intersectionPoint[2] = hits.at(i).getPositionGlobal()[2];
+	  //intersection might not be inside a volume. 
+	  state.setPositionGlobal(intersectionPoint);
+	  state.setMomGlobalIncEne(slope,getBeamMomentum());
+	  if(i != (hits.size() - 1)){
             state.setArcLengthToNextState(hits.at(i+1).getPositionGlobal()[2] - hits.at(i).getPositionGlobal()[2]);
-        }
-        track.setState(state);
-    }
-   
-   
-    for(unsigned int  i = 0; i < (geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()); ++i){
-      unsigned int sensorID = geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i);
-      streamlog_out(DEBUG1) << "The Z position " << i << " sensor ID: " << sensorID  <<std::endl;
-      bool hitOnDut=false;
-      for(unsigned int h = 0; h < hits.size(); ++h){
-        EUTelState state;
-    	//match hit sensor to dut sensor
-    	if(hits[h].getLocation() == sensorID){ 
-    	  hitOnDut=true;
-    	}
-    	//if there is a hit on this dut i need to exit this loop
+	  }
+	  track.setState(state);
+	}
       }
-      if(hitOnDut){streamlog_out(DEBUG1) <<"this should already be recorded as there is a hit on sensor "<<sensorID<<std::endl;}
+   
+   
+      //for(unsigned int  i = 0; i < (geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()); ++i){
+      //unsigned int sensorID = geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i);
+      //streamlog_out(DEBUG1) << "The Z position " << i << " sensor ID: " << sensorID  <<std::endl;
+      //bool hitOnDut=false;
+      // for(unsigned int h = 0; h < hits.size(); ++h){
+      //   EUTelState state;
+      // 	//match hit sensor to dut sensor
+      // 	if(hits[h].getLocation() == sensorID){ 
+      // 	  hitOnDut=true;
+      // 	}
+      // 	//if there is a hit on this dut i need to exit this loop
+      // }
+      if(hitOnPlane){streamlog_out(DEBUG1) <<"this should already be recorded as there is a hit on sensor "<<sensorID<<std::endl;}
       else {
     	//if no hit match - find intersection
     	//loop over duts - loop over sensorid
@@ -583,22 +593,22 @@ EUTelTrack EUTelPatRecTriplets::getTrack(std::vector<EUTelHit> hits, std::vector
 	//if(i != (hits.size() - 1)){
 	// need z position of plane after dut.
 	//ith plane is dut
-	state.setArcLengthToNextState(geo::gGeometry().getOffsetVector(i+1)[2] - z_dut);
+	state.setArcLengthToNextState(geo::gGeometry().getOffsetVector(j+1)[2] - z_dut);
 	//}
 	track.setState(state);
 	
-      }
-    }
+      }//else
+    }//loop about planes, j iterator
     std::map<const int,double>  mapSensor;
     std::map<const int ,double>  mapAir;
     double rad =	track.getStates().at(0).computeRadLengthsToEnd(mapSensor, mapAir);
     if(rad == 0){
-        throw(std::string("Radiation length is zero for mimosa tracks."));
+      throw(std::string("Radiation length is zero for mimosa tracks."));
     }
     track.print();
     setRadLengths(track, mapSensor, mapAir, rad);
     return track;
-
+    
 }
 
 void EUTelPatRecTriplets::getDUTHit(){
