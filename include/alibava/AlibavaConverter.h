@@ -87,19 +87,15 @@ class AlibavaConverter : public marlin::DataSourceProcessor    {
 	int _runNumber;
 
 	//! The name of the collection
-	/*! The _rawDataCollectionName will be the base of the collection name that 
-	 *  raw data will be saved.
-	 *  For the collections created for each chip separately chip number information
-	 *  will be appended to this name 
-	 *
-	 *  Example: if ALIBAVA::NOOFCHIPS=2 and _rawDataCollectionName="rawdata"
-	 *  these collections will be created:
-	 *  rawdata            // containing all chips
-	 *  rawdata_chip0      // containing only first chip
-	 *  rawdata_chip1      // containing only second chip
+	/*! The _rawDataCollectionName will be the collection name that raw data will be saved.
 	 */
 	std::string _rawDataCollectionName;
-	
+
+    //! The name of the collection
+    /*! The _rawChipHeaderCollectionName will be the collection name that raw chip headers will be saved.
+     */
+    std::string _rawChipHeaderCollectionName;
+
 	/////////////////////////
 	// optional parameters //
 	/////////////////////////
