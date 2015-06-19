@@ -54,7 +54,6 @@ _tiltAngle(0.0),
 _sensorTemperature(111.111),
 _startEventNum(-1),
 _stopEventNum(-1),
-_readChannelsReverse(false),
 _storeHeaderPedestalNoise(false)
 {
 	
@@ -76,8 +75,6 @@ _storeHeaderPedestalNoise(false)
 	
 	
 	// now optional parameters
-	registerOptionalParameter("ReadChannelsReverse", "Alibava read channels from right to left if you want to revert this i.e. make it from left to right set this parameter to true. CAUTION: This will be applied first!",
-									  _readChannelsReverse, bool(false) );
 	
 	registerOptionalParameter("ChipSelection", "Selection of chip that you want to store data from. Chip numbers start from 0. If not set, all data (i.e. chip 0 and 1) will be stored",
 									  _chipSelection, EVENT::IntVec() );
@@ -106,13 +103,7 @@ AlibavaConverter * AlibavaConverter::newProcessor () {
 
 
 void AlibavaConverter::init () {
-	
-	// print out warning if _readChannelsReverse
-	if (_readChannelsReverse) {
-		streamlog_out( WARNING5 )<< "You select ReadChannelsReverse="<<_readChannelsReverse<<endl;
-		streamlog_out( WARNING5 )<<"This will be applied before chip selection and channel masking!"<<endl;
-	}
-	
+		
 	checkIfChipSelectionIsValid();
 	
 	
@@ -308,12 +299,8 @@ void AlibavaConverter::readDataSource(int /* numEvents */) {
 			infile.read(reinterpret_cast< char *> (chipHeader[ichip]), 16*sizeof(unsigned short));
 			for (int ichan=0; ichan<ALIBAVA::NOOFCHANNELS; ichan++) {
 				infile.read(reinterpret_cast< char *> (&tmp_short), sizeof(unsigned short));
-				if (_readChannelsReverse) {
-					it = all_data.begin();
-					all_data.insert(it, float(tmp_short));
-				}
-				else
-					all_data.push_back(float(tmp_short));
+                
+                all_data.push_back(float(tmp_short));
 			}
 		}
 		

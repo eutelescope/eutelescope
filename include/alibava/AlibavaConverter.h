@@ -131,13 +131,6 @@ class AlibavaConverter : public marlin::DataSourceProcessor    {
 	 *  Default value is -1, in this case it will store every event
 	 */
 	int _stopEventNum;
-
-	//! The read channels reverse option
-	/*! Alibava read channels from right to left
-	 *  if you want to revert this i.e. make it from left to right
-	 *  set this parameter to true
-	 */
-	bool _readChannelsReverse;
 	
 	//! An option to store pedestal and noise values stored in header of alibava data file
 	bool _storeHeaderPedestalNoise;
