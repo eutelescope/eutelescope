@@ -63,7 +63,6 @@ export inputGear="$inputGear" #We now use the gear file produced from the last i
 export outputGear="gear-ZRotations-XYShift-${outputIdentifier}-Iteration-$number-${RUN}.xml" #IMPORTANT: The last alignment must output the new gear to the output gear name specified.
 export histoNameInput="Alignment-ZRotations-XYShifts-${outputIdentifier}-Iteration-$number-${RUN}"
 $scriptsLocation/patRecToAlignmentSingleLoop.sh
-exit 0;
 if [ $? -ne 0 ]
 then        
 	echo "patRecAndTrackFit exited with a code that was not zero, ending patRecMultiLoop.sh" 1>&2
