@@ -139,7 +139,8 @@ namespace eutelescope {
 		int _nProcessedRuns;
 		/** Number of runs processed */
 		int _nProcessedEvents;
-
+        /** The number of skiped events due to data missing */
+        unsigned int _dataMissNumber;
 		/** Maximal amount of tracks per event */
 		int _maxNTracks;
 

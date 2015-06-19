@@ -35,7 +35,8 @@ _tripletSlopeCuts(0,0),
 _nProcessedRuns(0),
 _nProcessedEvents(0),
 _eBeam(-1.),
-_qBeam(-1.)
+_qBeam(-1.),
+_dataMissNumber(0)  
 {
 	//The standard description that comes with every processor 
 	_description = "EUTelProcessorPatRecTriplets preforms track pattern recognition.";
@@ -154,6 +155,7 @@ void EUTelProcessorPatRecTriplets::processEvent(LCEvent* evt)
 	UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
 
 	try{
+		_nProcessedEvents++;//Must be placed here so we record the event even if we have an exception.
 		EUTelEventImpl* event = static_cast<EUTelEventImpl*> (evt); //Change the LCIO object to EUTel object. This is a simple way to extend functionality of the object.
 		_trackFitter->setEventNumber(_nProcessedEvents);//This is so we can use the event number with this class. 
 		// Do not process last event. For unknown events just a warning will do. 
@@ -206,22 +208,27 @@ void EUTelProcessorPatRecTriplets::processEvent(LCEvent* evt)
 
 		outputLCIO(evt,tracks);
 
-		_nProcessedEvents++;
 	}
-	catch (DataNotAvailableException e) {
-//		streamlog_out(WARNING2) << " Collection not available" << std::endl;
+	catch (DataNotAvailableException e) {//We expect to get some data exceptions but should make sure we do not get under 5% of events with data.
+        _dataMissNumber++;
+        float diff = _nProcessedEvents-_dataMissNumber;
+        float event1 = _nProcessedEvents+1;
+        if(diff/event1 < 0.05 and _nProcessedEvents > 100){
+            streamlog_out(MESSAGE0) << "The number of events with data is under 5 percent after 100 events"  <<std::endl;
+            throw marlin::StopProcessingException( this ) ;
+        }
 		throw marlin::SkipEventException(this);
 	}
 	catch(std::string &e){
-		streamlog_out(MESSAGE9) << e << std::endl;
+		streamlog_out(MESSAGE0) << e << std::endl;
 		throw marlin::SkipEventException( this ) ;
 	}
 	catch(lcio::Exception& e){
-		streamlog_out(MESSAGE9) << e.what() <<std::endl;
+		streamlog_out(MESSAGE0) << e.what() <<std::endl;
 		throw marlin::StopProcessingException( this ) ;
 	}
 	catch(...){
-		streamlog_out(MESSAGE9)<<"Unknown exception in process function of pattern recognition" <<std::endl;
+		streamlog_out(MESSAGE0)<<"Unknown exception in process function of pattern recognition" <<std::endl;
 		throw marlin::StopProcessingException( this ) ;
 	}
 }

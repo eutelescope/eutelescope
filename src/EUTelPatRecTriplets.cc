@@ -533,18 +533,19 @@ EUTelTrack EUTelPatRecTriplets::getTrack(std::vector<EUTelHit> hits, std::vector
         track.setState(state);
     }
    
-   
+    //Loop through all planes and compare to tracks. 
     for(unsigned int  i = 0; i < (geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()); ++i){
       unsigned int sensorID = i;//geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i);
       streamlog_out(DEBUG1) << "The Z position " << i << " sensor ID: " << sensorID  <<std::endl;
       bool hitOnDut=false;
+      //Loop through hits and find if one is associated to a particular plane.
       for(unsigned int h = 0; h < hits.size(); ++h){
-        EUTelState state;
     	//match hit sensor to dut sensor
     	if(hits[h].getLocation() == i){ 
     	  hitOnDut=true;
+          //If we find a hit then move on to next plane.
+          break;
     	}
-    	//if there is a hit on this dut i need to exit this loop
       }
       if(hitOnDut){streamlog_out(DEBUG0) <<"this should already be recorded as there is a hit on sensor "<<sensorID<<std::endl;}
       else {
