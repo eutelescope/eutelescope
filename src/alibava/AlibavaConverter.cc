@@ -50,8 +50,6 @@ _formattedRunNumber("0"),
 _runNumber(-1),
 _rawDataCollectionName("rawdata"),
 _chipSelection(),
-_tiltAngle(0.0),
-_sensorTemperature(111.111),
 _startEventNum(-1),
 _stopEventNum(-1),
 _storeHeaderPedestalNoise(false)
@@ -78,12 +76,6 @@ _storeHeaderPedestalNoise(false)
 	
 	registerOptionalParameter("ChipSelection", "Selection of chip that you want to store data from. Chip numbers start from 0. If not set, all data (i.e. chip 0 and 1) will be stored",
 									  _chipSelection, EVENT::IntVec() );
-	
-	registerOptionalParameter("TiltAngle", "The tilt angle of the sensors",
-									  _tiltAngle, float(0.0) );
-	
-	registerOptionalParameter("SensorTemperature", "The temperature of the sensors",
-									  _sensorTemperature, float(111.111) );
 	
 	registerOptionalParameter("StartEventNum", "The event number that AlibavaConverter should start storing. Default value is -1, in this case it will store every event",
 									  _startEventNum, int(-1) );
@@ -217,8 +209,6 @@ void AlibavaConverter::readDataSource(int /* numEvents */) {
 		runHeader->setHeaderNoise(headerNoise);
 	}
 	runHeader->setRunNumber(_runNumber);
-	runHeader->setTiltAngle(_tiltAngle);
-	runHeader->setSensorTemperature(_sensorTemperature);
 	runHeader->setChipSelection(_chipSelection);
 	
 	// get number of events from header

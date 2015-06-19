@@ -110,16 +110,6 @@ class AlibavaConverter : public marlin::DataSourceProcessor    {
 	 */
 	EVENT::IntVec _chipSelection;
 	
-	//! The tilt angle
-	/*! The tilt angle of the detector can be stored here
-	 */
-	float _tiltAngle;
-
-	//! The sensor temperature
-	/*! The temperature of the sensor can be stored here
-	 */
-	float _sensorTemperature;
-
 	//! The start event number
 	/*! The event number that AlibavaConverter should start storing.
 	 *  Default value is -1, in this case it will store every event
