@@ -67,10 +67,23 @@ void EUTelProcessorTrackAnalysis::processEvent(LCEvent * evt){
             _analysis->plotPValueWithPosition(track);
             _analysis->plotPValueWithIncidenceAngles(track);
         }//for (int iTrack = 0; iTrack < tracks.size(); ++iTrack){
-    }catch(...){	
-        streamlog_out(MESSAGE9)<<"There is an unknown error in EUTelProcessorTrackAnalysis-processEvent" <<std::endl;
-        throw marlin::StopProcessingException( this ) ;
-    }
+        }catch (DataNotAvailableException e) {
+//		streamlog_out(WARNING2) << " Collection not available" << std::endl;
+		throw marlin::SkipEventException(this);
+	}
+	catch(std::string &e){
+		streamlog_out(MESSAGE9) << e << std::endl;
+		throw marlin::SkipEventException( this ) ;
+	}
+	catch(lcio::Exception& e){
+		streamlog_out(MESSAGE9) << e.what() <<std::endl;
+		throw marlin::StopProcessingException( this ) ;
+	}
+	catch(...){
+		streamlog_out(MESSAGE9)<<"Unknown exception in process function of track analysis" <<std::endl;
+		throw marlin::StopProcessingException( this ) ;
+	}
+
 	
 }
 
