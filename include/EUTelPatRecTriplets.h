@@ -43,17 +43,17 @@ namespace eutelescope {
 
     struct doublets {
         std::vector<float> pos;
-        std::vector<float> slope;
-        std::vector<float> diff;
+        std::vector<double> slope;
+        std::vector<double> diff;
     }; 
     struct triplets {
         unsigned int cenPlane;
         unsigned int matches;
         unsigned int fitID;
 
-        std::vector<float> pos;
-        std::vector<float> slope;
-        std::vector<float> diff;
+        std::vector<double> pos;
+        std::vector<double> slope;
+        std::vector<double> diff;
         std::vector<EUTelState> states;
     }; 
 
@@ -85,7 +85,7 @@ namespace eutelescope {
         void getTrackAvePara(EUTelHit firstHit, EUTelHit endHit, std::vector<double>& offset, std::vector<double>& trackSlope);
 
         void setScattering();
-        void setStraightLineFit();
+//        void setStraightLineFit();
         void setPlaneDimensionsVec(EVENT::IntVec planeDimensions);
 
 

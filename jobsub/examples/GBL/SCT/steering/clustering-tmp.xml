@@ -19,6 +19,7 @@
       <processor name="AIDA"/>
       <processor name="LoadHotPixelDB"/>
       <processor name="ClusteringMimosa"/>  
+      <processor name="NoisyClusterMaskerM26"/>  
       <processor name="NoisyClusterRemoverM26"/>  
       <xprocessor name="ClusteringStrip"/>
       <xprocessor name="SaveAsRoot"/>

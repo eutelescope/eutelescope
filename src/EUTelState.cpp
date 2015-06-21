@@ -32,9 +32,9 @@ EUTelState::EUTelState(EUTelState *state):
 	setLocation(state->getLocation());  
 	double position[] = {state->getPosition()[0],state->getPosition()[1],state->getPosition()[2]}; 
 	setPositionLocal(position); 	
-	setMomLocalX(state->getMomLocalX()); 
-	setMomLocalY(state->getMomLocalY());    
-	setMomLocalZ(state->getMomLocalZ());  
+	setDirLocalX(state->getDirLocalX()); 
+	setDirLocalY(state->getDirLocalY());    
+	setDirLocalZ(state->getDirLocalZ());  
     setRadFrac(state->getRadFracSensor(), state->getRadFracAir());
 	if(state->getStateHasHit()){
 		setHit(state->getHit());
@@ -62,11 +62,29 @@ int EUTelState::getDimensionSize() const {
 int EUTelState::getLocation() const {
 	return _location;
 }
-const float* EUTelState::getPosition() const {
+const double* EUTelState::getPosition() const {
 	return &_position[0];
 }
+TVector3 EUTelState::getDirLocal() const {
+    TVector3 vecLoc;
+    vecLoc[0] = _dirLocalX;
+    vecLoc[1] = _dirLocalY;
+    vecLoc[2] = _dirLocalZ;
+	return vecLoc;
+}
+TVector3 EUTelState::getDirGlobal() const {
+    const double dirLoc[3] = { _dirLocalX ,_dirLocalY, _dirLocalZ};
+	double dirGlo[3];
+	geo::gGeometry().local2MasterVec(getLocation(), dirLoc, dirGlo );
+    TVector3 vecLoc;
+    vecLoc[0] = dirGlo[0];
+    vecLoc[1] = dirGlo[1];
+    vecLoc[2] = dirGlo[2];
+	return vecLoc;
+}
+
 TVector3 EUTelState::getPositionGlobal() const {
-	const float* local =  getPosition();
+	const double* local =  getPosition();
 	const double posLocal[3] = {local[0],local[1],local[2]};
   double posGlobal[3];
 	geo::gGeometry().local2Master(getLocation() ,posLocal,posGlobal);
@@ -77,9 +95,9 @@ TVector3 EUTelState::getPositionGlobal() const {
 TVectorD EUTelState::getStateVec(){ 
 	streamlog_out( DEBUG1 ) << "EUTelState::getTrackStateVec()------------------------BEGIN" << std::endl;
 	TVectorD stateVec(5);
-	stateVec[0] = -1.0/getMomLocal().Mag();
-	stateVec[1] = getMomLocalX()/getMomLocalZ();
-	stateVec[2] = getMomLocalY()/getMomLocalZ(); 
+	stateVec[0] = 1.0;//This has been moved to track object.
+	stateVec[1] = getSlopeX();
+	stateVec[2] = getSlopeY(); 
 	stateVec[3] = getPosition()[0]; 
 	stateVec[4] = getPosition()[1];
 			
@@ -99,7 +117,7 @@ TMatrixDSym EUTelState::getScatteringVarianceInLocalFrame(){
 	float scatPrecision = 1.0/getRadFracSensor();
 	//We need the track direction in the direction of x/y in the local frame. 
 	//This will be the same as unitMomentum in the x/y direction
-	TVector3 unitMomentumLocalFrame =	getMomLocal().Unit();
+	TVector3 unitMomentumLocalFrame =	getDirGlobal().Unit();
 	//c1 and c2 come from Claus's paper GBL
 	float c1 = 	unitMomentumLocalFrame[0]; float c2 =	unitMomentumLocalFrame[1];
 	streamlog_out( DEBUG1 ) << "The component in the x/y direction: "<< c1 <<"  "<<c2 << std::endl;
@@ -115,9 +133,9 @@ TMatrixDSym EUTelState::getScatteringVarianceInLocalFrame(float  variance){
 	streamlog_out( DEBUG1 ) << "EUTelState::getScatteringVarianceInLocalFrame(Scatter)----------------------------BEGIN" << std::endl;
 	streamlog_out(DEBUG5)<<"Variance (AIR Fraction): " <<std::scientific  <<  variance <<std::endl; 
 	float scatPrecision = 1.0 /variance;
-	//We need the track direction in the direction of x/y in the local frame. 
+	//We need the track direction in the direction of x/y in the global frame. 
 	//This will be the same as unitMomentum in the x/y direction
-	TVector3 unitMomentumLocalFrame =	getMomLocal().Unit();
+	TVector3 unitMomentumLocalFrame =	getDirGlobal().Unit();
 	//c1 and c2 come from Claus's paper GBL
 	float c1 = 	unitMomentumLocalFrame[0]; float c2 = 	unitMomentumLocalFrame[1];
 	streamlog_out( DEBUG1 ) << "The component in the x/y direction: "<< c1 <<"  "<<c2 << std::endl;
@@ -169,13 +187,8 @@ TMatrixD EUTelState::getProjectionMatrix() const {
 	projection.SetSub(3, 3, proM2l);
 	return proM2l;
 }
-TVector3 EUTelState::getMomLocal() const {
-	TVector3 pVecUnitLocal;
-	pVecUnitLocal[0] = getMomLocalX(); 	pVecUnitLocal[1] = getMomLocalY(); 	pVecUnitLocal[2] = getMomLocalZ(); 
-	return pVecUnitLocal;
-}
-float EUTelState::getSlopeX() const {return _momLocalX/getMomLocal().Mag();}
-float EUTelState::getSlopeY() const {return _momLocalY/getMomLocal().Mag();}
+float EUTelState::getSlopeX() const {return _dirLocalX/_dirLocalZ;}
+float EUTelState::getSlopeY() const {return _dirLocalY/_dirLocalZ;}
 
 TVectorD EUTelState::getKinks() const {
 	return _kinks;
@@ -204,37 +217,39 @@ void EUTelState::setDimensionSize(int dimension){
 void EUTelState::setLocation(int location){
     _location = location;
 }
-void EUTelState::setMomGlobalIncEne(std::vector<float> slopes, float energy){
-    setMomGlobalIncEne(slopes, static_cast<double>(energy));
+void EUTelState::setDirFromGloSlope(std::vector<double> slopes){
+    double incX = slopes.at(0);
+    double incY = slopes.at(1);
+    double norm = sqrt(pow(incX,2)+pow(incX,2) + 1);
+    const double dirGlo[3] = {incX/norm  ,incY/norm, 1.0/norm};
+	double dirLoc[3];
+	geo::gGeometry().master2LocalVec(getLocation(), dirGlo, dirLoc );
+	setDirLocalX(dirLoc[0]);
+	setDirLocalY(dirLoc[1]);
+	setDirLocalZ(dirLoc[2]);
 }
 
-void EUTelState::setMomGlobalIncEne(std::vector<float> slopes, double energy){
-    float incidenceXZ = slopes.at(0);
-    float incidenceYZ = slopes.at(1);
-    double momGlobal[3];
-//    std::cout<<"Slopes "<< incidenceXZ << " " << incidenceYZ << " " << energy <<std::endl;
-    momGlobal[0] = energy*incidenceXZ;  
-    momGlobal[1] = energy*incidenceYZ;  
-    momGlobal[2] = sqrt(pow(energy,2) - pow(momGlobal[1],2) - pow(momGlobal[0],2));
-
-	const double momentum[]	= {momGlobal[0], momGlobal[1],momGlobal[2]}; 
-	double localMomentum [3];
-	geo::gGeometry().master2LocalVec(getLocation(), momentum, localMomentum );
-	setMomLocalX(localMomentum[0]);
-	setMomLocalY(localMomentum[1]);
-	setMomLocalZ(localMomentum[2]);
+void EUTelState::setDirFromLocSlope(std::vector<double> slopes){
+    double incX = slopes.at(0);
+    double incY = slopes.at(1);
+    double norm = sqrt(pow(incX,2)+pow(incX,2) + 1);
+    double dir[3] = {incX/norm,incY/norm, 1.0/norm};
+	setDirLocalX(dir[0]);
+	setDirLocalY(dir[1]);
+	setDirLocalZ(dir[2]);
 }
-void EUTelState::setMomLocalX(float momX){
-    _momLocalX = momX;
+
+void EUTelState::setDirLocalX(double dirX){
+    _dirLocalX = dirX;
 }
 
 //Note this is dy/dz in the LOCAL frame
-void EUTelState::setMomLocalY(float momY){
-    _momLocalY = momY;
+void EUTelState::setDirLocalY(double dirY){
+    _dirLocalY = dirY;
 }	
 //Note this is the dx/dz in the LOCAL frame
-void EUTelState::setMomLocalZ(float momZ){
-    _momLocalZ = momZ;
+void EUTelState::setDirLocalZ(double dirZ){
+    _dirLocalZ = dirZ;
 }
 //This variable is the RESIDUAL (Measurements - Prediction) of the kink angle. 
 //Our measurement is assumed 0 in all cases.
@@ -264,15 +279,15 @@ void EUTelState::setPositionGlobal(float positionGlobal[]){
 
 
 }
-void EUTelState::setLocalMomentumGlobalMomentum(TVector3 momentumIn){
-	//Now calculate the momentum in LOCAL coordinates.
-	const double momentum[]	= {momentumIn[0], momentumIn[1],momentumIn[2]};//Need this since geometry works with const doubles not floats 
-	double localMomentum [3];
-	geo::gGeometry().master2LocalVec(getLocation(), momentum, localMomentum );
-//	streamlog_out(DEBUG5) << "The local momentum (x,y,z) is: "<< localMomentum[0]<<","<< localMomentum[1] <<"," <<localMomentum[2] << std::endl;
-	setMomLocalX(localMomentum[0]);
-	setMomLocalY(localMomentum[1]);
-	setMomLocalZ(localMomentum[2]);
+void EUTelState::setLocalDirGlobalDir(TVector3 dirIn){
+	//Now calculate the dir in LOCAL coordinates.
+	const double dir[]	= {dirIn[0], dirIn[1],dirIn[2]};//Need this since geometry works with const doubles not floats 
+	double localDir[3];
+	geo::gGeometry().master2LocalVec(getLocation(), dir, localDir );
+//	streamlog_out(DEBUG5) << "The local dir (x,y,z) is: "<< localDir[0]<<","<< localDir[1] <<"," <<localDir[2] << std::endl;
+	setDirLocalX(localDir[0]);
+	setDirLocalY(localDir[1]);
+	setDirLocalZ(localDir[2]);
 
 }
 
@@ -286,13 +301,10 @@ void EUTelState::setCombinedHitAndStateCovMatrixInLocalFrame(double cov[4]){
 void EUTelState::setStateUsingCorrection(TVectorD corrections){
 	double referencePoint[] = { getPosition()[0]+corrections[3],getPosition()[1]+corrections[4],0};
 	setPositionLocal(referencePoint);
-    float charge = -1.0;
-    float omegaNew =  charge/getMomLocal().Mag() + corrections[0];
-    float newMom = charge/omegaNew; 
-    setMomLocalX( newMom*(getMomLocalX()/getMomLocalZ() + corrections[1]));  
-    setMomLocalY( newMom*(getMomLocalY()/getMomLocalZ() + corrections[2]));  
-    setMomLocalZ(sqrt(pow(newMom,2) - pow(getMomLocalX(),2) - pow(getMomLocalY(),2)));
-
+    std::vector<double> slopes;
+    slopes.push_back(getSlopeX() + corrections[1]);
+    slopes.push_back(getSlopeY() + corrections[2]);
+    setDirFromLocSlope(slopes);
 }
 void EUTelState::setRadFrac(double plane, double air){
     _radFracAir = air;
@@ -336,10 +348,10 @@ bool EUTelState::findIntersectionWithCertainID(int nextSensorID, float intersect
 
 //compute
 TVector3 EUTelState::getMomGlobal() const {
-    const double input[3]={getMomLocalX(),getMomLocalY(),getMomLocalZ()};
-    double momentum[3];
-    geo::gGeometry().local2MasterVec(getLocation(),input,momentum);
-    return TVector3(momentum[0],momentum[1],momentum[2]);
+    const double input[3]={getDirLocalX(),getDirLocalY(),getDirLocalZ()};
+    double output[3];
+    geo::gGeometry().local2MasterVec(getLocation(),input,output);
+    return TVector3(output[0],output[1],output[2]);
 }
 //TMatrix EUTelState::computePropagationJacobianFromLocalStateToNextLocalState(TVector3 momentumEnd, float arcLength,float nextPlaneID) {
 //	streamlog_out(DEBUG2) << "-------------------------------EUTelState::computePropagationJacobianFromStateToThisZLocation()-------------------------BEGIN" << std::endl;
@@ -399,8 +411,8 @@ void EUTelState::print(){
 	streamlog_out(DEBUG1)<< std::scientific <<"(Radiation fraction of full system)*(track Variance)    Plane: "<< getRadFracSensor() <<" Air:  " <<getRadFracAir() <<std::endl;
 
     streamlog_out(DEBUG1)<< std::scientific <<"Position local (X,Y,Z): "<< getPosition()[0] << " " <<  getPosition()[1]<< " " <<  getPosition()[2]<<" Global: "<<getPositionGlobal()[0]<<"  "<<getPositionGlobal()[1]<<" "<<getPositionGlobal()[2]<<std::endl;
-    streamlog_out(DEBUG1)<< std::scientific <<"Momentum local (X,Y,Z): "<< getMomLocal()[0] << " " << getMomLocal()[1] << " " << getMomLocal()[2]<<" Global: "<< getMomGlobal()[0]<<" "<<getMomGlobal()[1]<<" "<<getMomGlobal()[2] <<std::endl;
-    streamlog_out(DEBUG0)<< std::scientific <<"Incidence local (dx/dz,dy/dz): "<< getMomLocal()[0]/getMomLocal()[2]<< " " << getMomLocal()[1]/getMomLocal()[2] <<std::endl;
+    streamlog_out(DEBUG1)<< std::scientific <<"Direntum local (X,Y,Z): "<< getDirLocal()[0] << " " << getDirLocal()[1] << " " << getDirLocal()[2]<<" Global: "<< getDirGlobal()[0]<<" "<<getDirGlobal()[1]<<" "<<getDirGlobal()[2] <<std::endl;
+    streamlog_out(DEBUG0)<< std::scientific <<"Incidence local (dx/dz,dy/dz): "<< getDirLocal()[0]/getDirLocal()[2]<< " " << getDirLocal()[1]/getDirLocal()[2] <<std::endl;
 	streamlog_out(DEBUG0)<< std::scientific <<"Kinks local (d(dx/dz),d(dy/dz)) "<< _kinks[0] <<" ,  " << _kinks[1]<<std::endl;
 	streamlog_out(DEBUG0)<< std::scientific <<"Kinks local Medium1 (d(dx/dz),d(dy/dz)) "<< _kinksMedium1[0] <<" ,  " << _kinksMedium1[1]<<std::endl;
 	streamlog_out(DEBUG0)<< std::scientific <<"Kinks local Medium2 (d(dx/dz),d(dy/dz)) "<< _kinksMedium2[0] <<" ,  " << _kinksMedium2[1]<<std::endl;
@@ -424,9 +436,9 @@ void EUTelState::clear(){
 	setLocation(0);  
 	double position[] = {0,0,0}; 
 	setPositionLocal(position); 	
-	setMomLocalX(0); 
-	setMomLocalY(0);    
-	setMomLocalZ(0);  
+	setDirLocalX(0); 
+	setDirLocalY(0);    
+	setDirLocalZ(0);  
     setRadFrac(0,0);
 }
 
@@ -455,9 +467,9 @@ std::vector<double> EUTelState::getLCIOOutput(){
     std::vector<double> output;
     output.push_back(getDimensionSize());
     output.push_back(getLocation());
-    output.push_back(_momLocalX);
-    output.push_back(_momLocalY);
-    output.push_back(_momLocalZ);
+    output.push_back(_dirLocalX);
+    output.push_back(_dirLocalY);
+    output.push_back(_dirLocalZ);
     output.push_back(getArcLengthToNextState());
     output.push_back(getPosition()[0]);
     output.push_back(getPosition()[1]);
@@ -483,9 +495,9 @@ std::vector<double> EUTelState::getLCIOOutput(){
 void EUTelState::setTrackFromLCIOVec(std::vector<double> input){
     setDimensionSize(input.at(0));
     setLocation(input.at(1));
-    setMomLocalX(input.at(2));
-    setMomLocalY(input.at(3));
-    setMomLocalZ(input.at(4));
+    setDirLocalX(input.at(2));
+    setDirLocalY(input.at(3));
+    setDirLocalZ(input.at(4));
     setArcLengthToNextState(input.at(5)); 
     double pos[3] = {input.at(6),input.at(7),input.at(8)};
     setPositionLocal(pos);

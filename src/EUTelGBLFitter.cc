@@ -609,6 +609,7 @@ namespace eutelescope {
 //					mapSensorIDToCorrectionVec[state->getLocation()] = correctionVec;
 					////////////////////////////////////////////////////////////////////////////////////////////////
 					state.setStateUsingCorrection(corrections);
+                    track.setTrackUsingCorrection(corrections);
 					//If the state is just a normal scatterer then we get the scattering results from the getScatResults() function. Otherwise we use the local derivative to determine the kink angles.
 					if(state.getLocation() != 271){
 						//Note that this says meas but it simple means that the states you access must be a scatterer. Since all our planes are scatterers then we can access all of them.

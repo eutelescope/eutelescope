@@ -23,9 +23,6 @@ namespace eutelescope {
 			EUTelHit& getHit();
 			int getDimensionSize() const ;
 			TVectorD getStateVec();
-			float getMomLocalX() const {return _momLocalX;}
-			float getMomLocalY() const {return _momLocalY;}
-			float getMomLocalZ() const {return _momLocalZ;}
 			float getSlopeX() const; 
 			float getSlopeY() const; 
 			TVector3 getMomGlobal() const ;
@@ -40,26 +37,30 @@ namespace eutelescope {
 			TMatrixDSym getScatteringVarianceInLocalFrame(float variance);
 			double getRadFracAir() const ;
 			double getRadFracSensor() const ;
+            TVector3 getDirLocal() const; 
+            TVector3 getDirGlobal() const; 
             //STATE PARAMETERS:
 			TVectorD getKinks() const;
 			TVectorD getKinksMedium1() const;
 			TVectorD getKinksMedium2() const;
-			const float* getPosition() const ; 
-            TVector3 getMomLocal() const ;
+			const double* getPosition() const ; 
 			int	getLocation() const;
 			TMatrixDSym getStateCov() const;
+			float getDirLocalX() const {return _dirLocalX;}
+			float getDirLocalY() const {return _dirLocalY;}
+			float getDirLocalZ() const {return _dirLocalZ;}
             //END OF STATE PARAMETERS
 			//setters
             void setHit(EUTelHit hit);
             void setHit(EVENT::TrackerHit* hit);
 			void setDimensionSize(int dimension);
 			void setLocation(int location);
-			void setMomLocalX(float momX);
-			void setMomLocalY(float momY);
-			void setMomLocalZ(float momZ);
-            void setMomGlobalIncEne(std::vector<float> slopes, float energy);
-            void setMomGlobalIncEne(std::vector<float> slopes, double energy);
-			void setLocalMomentumGlobalMomentum(TVector3 momentumIn);
+			void setDirLocalX(double dirX);
+			void setDirLocalY(double dirY);
+			void setDirLocalZ(double dirZ);
+            void setDirFromGloSlope(std::vector<double> slopes);
+            void setDirFromLocSlope(std::vector<double> slopes);
+			void setLocalDirGlobalDir(TVector3 momentumIn);
             void setTrackFromLCIOVec(std::vector<double> input);
 			void setPositionLocal(float position[]);
 			void setPositionLocal(double position[]);
@@ -91,14 +92,14 @@ namespace eutelescope {
             EUTelHit _hit;
             int _dimension;
             int _location; 
-            float _position[3];
+            double _position[3];
             bool _stateHasHit;
             TVectorD _kinks;
             TVectorD _kinksMedium1;
             TVectorD _kinksMedium2;
-            float _momLocalX;
-            float _momLocalY;
-            float _momLocalZ; 
+            double _dirLocalX;
+            double _dirLocalY;
+            double _dirLocalZ; 
             double _radFracSensor;
             double _radFracAir;
             float _arcLength;

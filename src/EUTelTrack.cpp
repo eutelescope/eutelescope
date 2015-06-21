@@ -10,6 +10,8 @@ EUTelTrack::EUTelTrack(const EUTelTrack& track){
 	setNdf(track.getNdf());
     setStates(track.getStatesCopy());
     setTotalVariance(track.getTotalVariance());
+    setQOverP(getQOverP()); 
+
 
 }
 EUTelTrack::EUTelTrack(const EUTelTrack& track, bool copyContents){
@@ -87,6 +89,11 @@ std::vector<double> EUTelTrack::getLCIOOutput(){
 
 
 }
+void EUTelTrack::setTrackUsingCorrection(TVectorD corrections){
+   setQOverP(corrections[0] + getQOverP()); 
+}
+
+
 void EUTelTrack::setTrackFromLCIOVec(std::vector<double> input){
     setChi2(input.at(0));
     setNdf( input.at(1));

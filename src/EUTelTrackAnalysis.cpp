@@ -21,7 +21,7 @@ void EUTelTrackAnalysis::plotResidualVsPosition(EUTelTrack track){
 			continue;
 		}
 		EUTelHit hit = state.getHit();	
-		const float* statePosition = state.getPosition();
+		const double* statePosition = state.getPosition();
 		const double* hitPosition = hit.getPosition();
 		float residual[2];
 		streamlog_out(DEBUG2) << "State position: " << statePosition[0]<<","<<statePosition[1]<<","<<statePosition[2]<< std::endl;
@@ -55,7 +55,7 @@ void EUTelTrackAnalysis::plotEfficiencyVsPosition(EUTelTrack track){
 	for(size_t i=0; i<states.size();++i){
 		EUTelState state  = states.at(i);
 		state.print();
-		const float* statePosition = NULL;
+		const double* statePosition = NULL;
 		const double* hitPosition = NULL;
 		streamlog_out(DEBUG0) << " In state loop, "<<i<<" out of "<< states.size()<<" state.getStateHasHit() = "<<state.getStateHasHit()<<std::endl;
 		EUTelHit hit;
@@ -113,23 +113,14 @@ void EUTelTrackAnalysis::plotEfficiencyVsPosition(EUTelTrack track){
   streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotEfficiencyVsPosition------------------------------END"<< std::endl;
 }
 void EUTelTrackAnalysis::plotBeamEnergy(EUTelTrack track){
-  streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotBeamEnergy------------------------------BEGIN"<< std::endl;
-	std::vector<EUTelState> states = track.getStates();
-	EUTelState state  = states.at(0);
-	state.print();
-	float omega = -1.0/state.getMomLocal().Mag();	
-	_beamEnergy-> fill(-1.0/omega );
-  streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotBeamEnergy------------------------------END"<< std::endl;
+    streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotBeamEnergy------------------------------BEGIN"<< std::endl;
+    _beamEnergy-> fill(track.getBeamEnergy() );
+    streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotBeamEnergy------------------------------END"<< std::endl;
 }
 void EUTelTrackAnalysis::plotPValueVsBeamEnergy(EUTelTrack track){
   streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotPValueVsBeamEnergy------------------------------BEGIN"<< std::endl;
-	std::vector<EUTelState> states = track.getStates();
-	EUTelState state  = states.at(0);
-	state.print();
-	float omega = -1.0/state.getMomLocal().Mag();	
 	float pValue = calculatePValueForChi2(track);
-	_pValueVsBeamEnergy->fill(-1.0/omega, pValue);
-
+	_pValueVsBeamEnergy->fill(track.getBeamEnergy(), pValue);
   streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotPValueVsBeamEnergy------------------------------END"<< std::endl;
 }
 
@@ -211,7 +202,7 @@ void EUTelTrackAnalysis::plotPValueWithPosition(EUTelTrack track){
 		EUTelState state  = states.at(i);
 		state.print();
 
-		const float* statePosition = state.getPosition();
+		const double* statePosition = state.getPosition();
 		streamlog_out(DEBUG2) << "State position: " << statePosition[0]<<","<<statePosition[1]<<","<<statePosition[2]<< std::endl;
 
 		typedef std::map<int ,AIDA::IProfile2D*  >::iterator it_type;

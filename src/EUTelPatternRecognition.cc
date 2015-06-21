@@ -126,7 +126,7 @@ void EUTelPatternRecognition::propagateForwardFromSeedState(EUTelState& stateInp
 		newState.setDimensionSize(_planeDimensions[newSensorID]);//We set this since we need this information for later processors
 		newState.setLocation(newSensorID);
 		newState.setPositionGlobal(globalIntersection);
-		newState.setLocalMomentumGlobalMomentum(momentumAtIntersection);
+		newState.setLocalDirGlobalDir(momentumAtIntersection);
         state = newState;//Set state here ready to propagate. It does not need hit information to do this.
 
 		if(_mapHitsVecPerPlane[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i+1)].empty()){
@@ -173,7 +173,7 @@ void EUTelPatternRecognition::propagateForwardFromSeedState(EUTelState& stateInp
         if(calcDirection){//Here we update the direction of the track from now on. This will be correct when we have the full track.
             TVector3 momGlobal = getGlobalMomBetweenStates(stateInput,newState);
           //  momGlobal.Print();
-            state.setLocalMomentumGlobalMomentum(momGlobal);
+            state.setLocalDirGlobalDir(momGlobal);
             calcDirection=false;
         }
 		_totalNumberOfHits++;//This is used for test of the processor later.   
@@ -197,7 +197,7 @@ void EUTelPatternRecognition::propagateForwardFromSeedState(EUTelState& stateInp
 void EUTelPatternRecognition::setRadLengths(EUTelTrack & track,	std::map<const int,double>  mapSensor, std::map<const int ,double>  mapAir, double rad ){
 	//THE FINAL WEIGHT WE HAVE WILL BE A FRACTION PERCENTAGE OF THE TOTAL RADIATION LENGTH
 	std::vector<EUTelState>& states = track.getStates();
-	const double var  = pow( Utility::getThetaRMSHighland(states.at(0).getMomLocal().Mag(), rad) , 2);
+	const double var  = pow( Utility::getThetaRMSHighland(track.getBeamEnergy(), rad) , 2);
 	for(size_t i =0; i < track.getStates().size();++i){ //LOOP over all track again.
 		streamlog_out(DEBUG0)<< std::scientific << " Values placed in variance using Highland formula corrected. (SENSOR) : " << (mapSensor[states.at(i).getLocation()]/rad)*var << "  (AIR)  " << (mapAir[states.at(i).getLocation()]/rad)*var <<std::endl;
 		states.at(i).setRadFrac((mapSensor[states.at(i).getLocation()]/rad)*var,(mapAir[states.at(i).getLocation()]/rad)*var);//We input the fraction percentage.
@@ -387,7 +387,7 @@ void EUTelPatternRecognition::initialiseSeeds()
 			state.setLocation(_createSeedsFromPlanes[iplane]);  
 			state.setPositionLocal(posLocal);  		
 			TVector3 momentum = computeInitialMomentumGlobal(); 
-			state.setLocalMomentumGlobalMomentum(momentum); 
+			state.setLocalDirGlobalDir(momentum); 
 			state.setHit(*itHit);
 			_totalNumberOfHits++;//This is used for test of the processor later.   
 			state.setDimensionSize(_planeDimensions[state.getLocation()]);
@@ -540,7 +540,7 @@ bool EUTelPatternRecognition::seedTrackOuterHits(EUTelTrack track,EUTelTrack & t
 
     TVector3 momGlobal = getGlobalMomBetweenStates(firstState, lastState);
     for(size_t i=0 ; i < track.getStates().size() ; i++){
-        track.getStates().at(i).setLocalMomentumGlobalMomentum(momGlobal);
+        track.getStates().at(i).setLocalDirGlobalDir(momGlobal);
     }
     for(size_t i=0 ; i < (track.getStates().size()-1) ; i++){
         float intersectionPoint[3];
@@ -568,9 +568,9 @@ TVector3 EUTelPatternRecognition::getGlobalMomBetweenStates(EUTelState firstStat
     float incidenceYZ = (lastPosGlobal[1] - firstPosGlobal[1])/(lastPosGlobal[2] - firstPosGlobal[2]);
 
     TVector3 momGlobal;
-    momGlobal[0] = (firstState.getMomLocal().Mag())*incidenceXZ;  
-    momGlobal[1] = (firstState.getMomLocal().Mag())*incidenceYZ;  
-    momGlobal[2] = sqrt(pow(firstState.getMomLocal().Mag(),2) - pow(firstState.getMomLocalX(),2) - pow(firstState.getMomLocalY(),2));
+    momGlobal[0] = (firstState.getDirLocal().Mag())*incidenceXZ;  
+    momGlobal[1] = (firstState.getDirLocal().Mag())*incidenceYZ;  
+    momGlobal[2] = sqrt(pow(firstState.getDirLocal().Mag(),2) - pow(firstState.getDirLocalX(),2) - pow(firstState.getDirLocalY(),2));
     return momGlobal;
 }
 
