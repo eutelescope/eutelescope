@@ -474,7 +474,7 @@ namespace eutelescope {
 
         double min = 1e-4;
 		_scattererJacobians.clear();
-		TVector3 momStart = state.getMomGlobal();
+		TVector3 momStart = state.getDirGlobal();
 		TVector3 momEnd;
 		int locationStart = state.getLocation();
         int locationEnd=locationStart;

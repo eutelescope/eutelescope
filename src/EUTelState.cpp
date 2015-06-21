@@ -325,7 +325,7 @@ void EUTelState::setPositionLocal(double position[]){
 //find
 bool EUTelState::findIntersectionWithCertainID(int nextSensorID, float intersectionPoint[], TVector3& momentumAtIntersection, float& arcLength, int& newNextPlaneID )
 {
-	TVector3 pVec = getMomGlobal();
+	TVector3 pVec = getDirGlobal();
 
 	//TODO: better exception
 	if(pVec.Mag() == 0)
@@ -344,14 +344,6 @@ bool EUTelState::findIntersectionWithCertainID(int nextSensorID, float intersect
 								pVec[0], pVec[1], pVec[2], charge,
 								nextSensorID, intersectionPoint, 
 								momentumAtIntersection, arcLength, newNextPlaneID); 
-}
-
-//compute
-TVector3 EUTelState::getMomGlobal() const {
-    const double input[3]={getDirLocalX(),getDirLocalY(),getDirLocalZ()};
-    double output[3];
-    geo::gGeometry().local2MasterVec(getLocation(),input,output);
-    return TVector3(output[0],output[1],output[2]);
 }
 //TMatrix EUTelState::computePropagationJacobianFromLocalStateToNextLocalState(TVector3 momentumEnd, float arcLength,float nextPlaneID) {
 //	streamlog_out(DEBUG2) << "-------------------------------EUTelState::computePropagationJacobianFromStateToThisZLocation()-------------------------BEGIN" << std::endl;

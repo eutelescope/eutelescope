@@ -25,7 +25,6 @@ namespace eutelescope {
 			TVectorD getStateVec();
 			float getSlopeX() const; 
 			float getSlopeY() const; 
-			TVector3 getMomGlobal() const ;
             std::vector<double> getLCIOOutput();
 			float getArcLengthToNextState() const {return _arcLength;} 
 			TVector3 getPositionGlobal() const; 
