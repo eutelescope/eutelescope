@@ -300,7 +300,7 @@ def runMarlin(filenamebase, jobtask, silent):
         exit(1)
     return rcode
 
-def submitNAF(filenamebase, jobtask, runnr):
+def submitNAF(filenamebase, jobtask, qsubfile, runnr):
     """ Submits the Marlin job to NAF """
     import os
     from sys import exit # use sys.exit instead of built-in exit (latter raises exception)
@@ -317,7 +317,11 @@ def submitNAF(filenamebase, jobtask, runnr):
 
     # Add qsub parameters:
     #qsub -@ qsubParams.txt BIN
-    cmd = cmd+" -@ ../qsubparameters.txt -N \"Run"+runnr+"\" "
+    if not os.path.isfile(qsubfile):
+        log.critical("NAF submission parameters file '"+qsubfile+"' not found!")
+        exit(1)
+
+    cmd = cmd+" -@ "+qsubfile+" -N \"Run"+runnr+"\" "
     
     # check for Marlin executable
     marlin = check_program("Marlin")
@@ -414,13 +418,13 @@ def main(argv=None):
     parser.add_argument('--version', action='version', version='Revision: $Revision$, $LastChangedDate$')
     parser.add_argument('--option', '-o', action='append', metavar="NAME=VALUE", help="Specify further options such as 'beamenergy=5.3'. This switch be specified several times for multiple options or can parse a comma-separated list of options. This switch overrides any config file options.")
     parser.add_argument("-c", "--conf-file", "--config", help="Load specified config file with global and task specific variables", metavar="FILE")
+    parser.add_argument("-n", "--naf-file", "--naf", help="Specify qsub parameter file for NAF submission. Run NAF submission via qsub instead of calling Marlin directly", metavar="FILE")
     parser.add_argument("--concatenate", action="store_true", default=False, help="Modifies run range treatment: concatenate all runs into first run (e.g. to combine runs for alignment) by combining every options that includes the string '@RunRange@' multiple times, once for each run of the range specified.")
     parser.add_argument("-csv", "--csv-file", help="Load additional run-specific variables from table (text file in csv format)", metavar="FILE")
     parser.add_argument("--log-file", help="Save submission log to specified file", metavar="FILE")
     parser.add_argument("-l", "--log", default="info", help="Sets the verbosity of log messages during job submission where LEVEL is either debug, info, warning or error", metavar="LEVEL")
     parser.add_argument("-s", "--silent", action="store_true", default=False, help="Suppress non-error (stdout) Marlin output to console")
     parser.add_argument("--dry-run", action="store_true", default=False, help="Write steering files but skip actual Marlin execution")
-    parser.add_argument("--naf", action="store_true", default=False, help="Run NAF submission via qsub instead of calling Marlin directly")
     parser.add_argument("--subdir", action="store_true", default=False, help="Execute every job in its own subdirectory instead of all in the base path")
     parser.add_argument("--plain", action="store_true", default=False, help="Output written to stdout/stderr and log file in prefix-less format i.e. without time stamping")
     parser.add_argument("jobtask", help="Which task to submit (e.g. convert, hitmaker, align); task names are arbitrary and can be set up by the user; they determine e.g. the config section and default steering file names.")
@@ -642,8 +646,8 @@ def main(argv=None):
         # bail out if running a dry run
         if args.dry_run:
             log.info("Dry run: skipping Marlin execution. Steering file written to "+basefilename+'.xml')
-        elif args.naf:
-            rcode = submitNAF(basefilename, args.jobtask, runnr) # start NAF submission
+        elif args.naf_file:
+            rcode = submitNAF(basefilename, args.jobtask, args.naf_file, runnr) # start NAF submission
             if rcode == 0:
                 log.info("NAF job submitted")
             else:
