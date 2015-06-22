@@ -7,6 +7,7 @@
 #+begin_example
 usage: jobsub.py [-h] [--option NAME=VALUE] [-c FILE] [-csv FILE]
                  [--log-file FILE] [-l LEVEL] [-s] [--dry-run]
+		 [--naf FILE]
                  jobtask [runs [runs ...]]
 
 A tool for the convenient run-specific modification of Marlin steering files
@@ -45,6 +46,8 @@ optional arguments:
                         or error
   -s, --silent          Suppress non-error (stdout) Marlin output to console
   --dry-run             Write steering files but skip actual Marlin execution
+  --naf FILE            Do not execute Marlin directly but submit the job to NAF.
+                        The file contains parameters for the qsub utility.
 #+end_example
 * Preparation of Steering File Templates
   Steering file templates are valid Marlin steering files (in xml
