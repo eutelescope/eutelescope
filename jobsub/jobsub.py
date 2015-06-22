@@ -300,7 +300,7 @@ def runMarlin(filenamebase, jobtask, silent):
         exit(1)
     return rcode
 
-def submitNAF(filenamebase, jobtask, silent):
+def submitNAF(filenamebase, jobtask, runnr):
     """ Submits the Marlin job to NAF """
     import os
     from sys import exit # use sys.exit instead of built-in exit (latter raises exception)
@@ -317,7 +317,7 @@ def submitNAF(filenamebase, jobtask, silent):
 
     # Add qsub parameters:
     #qsub -@ qsubParams.txt BIN
-    cmd = cmd+" -@ ../qsubparameters.txt "
+    cmd = cmd+" -@ ../qsubparameters.txt -N \"Run"+runnr+"\" "
     
     # check for Marlin executable
     marlin = check_program("Marlin")
@@ -643,7 +643,7 @@ def main(argv=None):
         if args.dry_run:
             log.info("Dry run: skipping Marlin execution. Steering file written to "+basefilename+'.xml')
         elif args.naf:
-            rcode = submitNAF(basefilename, args.jobtask, args.silent) # start NAF submission
+            rcode = submitNAF(basefilename, args.jobtask, runnr) # start NAF submission
             if rcode == 0:
                 log.info("NAF job submitted")
             else:
