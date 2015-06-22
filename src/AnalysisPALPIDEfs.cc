@@ -570,6 +570,7 @@ void AnalysisPALPIDEfs::processEvent(LCEvent *evt)
               if (nDUThitsEvent > 1) nDUThits++;
               if (abs(xpos-xposfit) < limit && abs(ypos-yposfit) < limit )
               {
+                nAssociatedhits++;
                 for (int jhit=ihit+1; jhit< nHit ; jhit++)
                 {
                   TrackerHit * hitNext = dynamic_cast<TrackerHit*>( col->getElementAt(jhit) ) ;
@@ -604,6 +605,7 @@ void AnalysisPALPIDEfs::processEvent(LCEvent *evt)
                     double yposNext = (xPointing[0]*posNext[1]-yPointing[0]*posNext[0])/(yPointing[1]*xPointing[0]-yPointing[0]*xPointing[1]);
                     double xposNext = posNext[0]/xPointing[0] - xPointing[1]/xPointing[0]*yposNext;
                     if (abs(xposNext-xposfit) > limit || abs(yposNext-yposfit) > limit) continue;
+                    nAssociatedhits++;
                     if ((xpos-xposfit)*(xpos-xposfit)+(ypos-yposfit)*(ypos-yposfit)<(xposNext-xposfit)*(xposNext-xposfit)+(yposNext-yposfit)*(yposNext-yposfit)) 
                     {
                       ihit = jhit;
@@ -618,13 +620,9 @@ void AnalysisPALPIDEfs::processEvent(LCEvent *evt)
                     }
                   }
                 }
-                nAssociatedhits++;
                 if (nDUThitsEvent > 1 && nAssociatedhits == 1) {tmpHist->Fill(xposfitPrev,yposfitPrev); nWrongPAlpideHit--;}
                 if (nAssociatedhits > 1) 
-                {
-                  cerr << nAssociatedhits << " points for one track in DUT in event " << evt->getEventNumber() << "\t" << xposPrev << "\t" << yposPrev << "\t" << xpos << "\t" << ypos << " Fit: " << xposfit << "\t" << yposfit << " Number of planes with more than one hit: " << nPlanesWithMoreHits << endl;
-                  break;
-                }
+                  streamlog_out ( DEBUG )  << nAssociatedhits << " points for one track in DUT in event " << evt->getEventNumber() << "\t" << xposPrev << "\t" << yposPrev << "\t" << xpos << "\t" << ypos << " Fit: " << xposfit << "\t" << yposfit << " Number of planes with more than one hit: " << nPlanesWithMoreHits << endl;
                 if (_clusterAvailable)
                 {
                   for ( unsigned int idetector=0 ; idetector<zsInputDataCollectionVec->size(); idetector++)
