@@ -703,6 +703,7 @@ void EUTelClusteringProcessor::processEvent (LCEvent * event)
     }
 #endif
 
+    _timeStampHisto->Fill(event->getTimeStamp());
     EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
     if ( evt->getEventType() == kEORE )
     {
@@ -2844,7 +2845,7 @@ void EUTelClusteringProcessor::check (LCEvent * /* evt */) {
 
 
 void EUTelClusteringProcessor::end() {
-
+streamlog_out ( MESSAGE4 ) << "Maximum of the time stamp histo is at " << _timeStampHisto->GetBinCenter(_timeStampHisto->GetMaximumBin()) << endl;
     streamlog_out ( MESSAGE2 ) <<  "Successfully finished" << endl;
 
     map< int, int >::iterator iter = _totClusterMap.begin();
@@ -3450,6 +3451,7 @@ void EUTelClusteringProcessor::bookHistos() {
         _eventMultiplicityHistos.insert( make_pair(sensorID, eventMultiHisto) );
         eventMultiHisto->setTitle( eventMultiTitle.c_str() );
     }
+    _timeStampHisto = new TH1I("timeStampHisto","Distribution of the time stamp of the events",1000,0,50000);
     streamlog_out ( DEBUG5 )  << "end of Booking histograms " << endl;
 }
 
