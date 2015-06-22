@@ -32,8 +32,6 @@
 #include <IMPL/TrackerRawDataImpl.h>
 #include <IMPL/LCCollectionVec.h>
 
-#include "TH1.h"
-
 // system includes <>
 #include <string>
 #include <map>
@@ -813,7 +811,7 @@ namespace eutelescope {
     std::map<int,AIDA::IBaseHistogram*> _eventMultiplicityHistos;
 
     // Histogram for the timestamp of the events
-    TH1* _timeStampHisto;
+    AIDA::IBaseHistogram* _timeStampHisto;
     //! Map (of maps) for pointers to histograms with cluster spectra with the X most significant pixels
     std::map<int, std::map<int,AIDA::IBaseHistogram*> > _clusterSignal_NHistos;
 
