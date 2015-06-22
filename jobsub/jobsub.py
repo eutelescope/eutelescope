@@ -317,10 +317,6 @@ def submitNAF(filenamebase, jobtask, qsubfile, runnr):
 
     # Add qsub parameters:
     #qsub -@ qsubParams.txt BIN
-    if not os.path.isfile(qsubfile):
-        log.critical("NAF submission parameters file '"+qsubfile+"' not found!")
-        exit(1)
-
     cmd = cmd+" -@ "+qsubfile+" -N \"Run"+runnr+"\" "
     
     # check for Marlin executable
@@ -336,10 +332,9 @@ def submitNAF(filenamebase, jobtask, qsubfile, runnr):
     rcode = None # the return code that will be set by a later subprocess method
     try:
         # run process
-        log.info ("Now submitting Marlin job: "+os.getcwd()+"/"+filenamebase+".xml to NAF")
+        log.info ("Now submitting Marlin job: "+filenamebase+".xml to NAF")
         log.debug ("Executing: "+cmd)
         os.popen(cmd)
-        log.warning(cmd)
     except OSError, e:
         log.critical("Problem with NAF submission: Command '%s' resulted in error #%s, %s", cmd, e.errno, e.strerror)
         exit(1)
@@ -623,6 +618,12 @@ def main(argv=None):
         if not checkSteer(steeringString):
             return 1
 
+        if args.naf_file:
+            args.naf_file = os.path.abspath(args.naf_file)
+            if not os.path.isfile(args.naf_file):
+                log.critical("NAF submission parameters file '"+args.naf_file+"' not found!")
+                return 1
+
         log.debug ("Writing steering file for run number "+runnr)
         # When  running in subdirectories for every job, create it:
         if args.subdir:
@@ -660,11 +661,11 @@ def main(argv=None):
                 log.error("Marlin returned with error code "+str(rcode))
             zipLogs(parameters["logpath"], basefilename)
 
-    # Return to old directory:
-    if args.subdir:
-        os.chdir(savedPath)
+        # Return to old directory:
+        if args.subdir:
+            os.chdir(savedPath)
         
-    # return to the prvious signal handler
+    # return to the previous signal handler
     signal.signal(signal.SIGINT, prevINTHandler)
     if log.error.counter>0:
         log.warning("There were "+str(log.error.counter)+" error messages reported")
