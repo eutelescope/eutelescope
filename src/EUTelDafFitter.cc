@@ -146,10 +146,9 @@ void EUTelDafFitter::dafEvent (LCEvent * event) {
     _system.fitPlanesInfoDaf(_system.tracks.at(ii));
     //Check resids, intime, angles
     if(not checkTrack( _system.tracks.at(ii))) { continue;};
-    int inTimeHits = checkInTime();
+    int inTimeHits = checkInTime(_system.tracks.at(ii));
     if( inTimeHits < _nDutHits) { continue;}
  
-    dumpToAscii();
     //Fill plots
     if(_histogramSwitch){ 
       fillPlots( _system.tracks.at(ii) ); 
@@ -187,14 +186,14 @@ void EUTelDafFitter::dafEvent (LCEvent * event) {
 
 }
 
-void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate* track, LCCollectionVec *lcvec){
+void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate<float,4>* track, LCCollectionVec *lcvec){
   TrackImpl * fittrack = new TrackImpl();
   // Impact parameters are useless and set to 0
   fittrack->setD0(0.);        // impact paramter of the track in (r-phi)
   fittrack->setZ0(0.);        // impact paramter of the track in (r-z)
   fittrack->setTanLambda(0.); // dip angle of the track at reference point
 
-  daffitter::TrackEstimate* est = track->estimates.at(0);
+  daffitter::TrackEstimate<float,4>* est = track->estimates.at(0);
 
   //No good way of storing the track angles, so
   fittrack->setOmega( est->getXdz()); // Storing dxdz as Omega
@@ -208,8 +207,8 @@ void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate* track, LCCollectionVec
   float refpoint[3];
   
   for(size_t plane = 0; plane < _system.planes.size(); plane++){
-    daffitter::FitPlane& pl = _system.planes.at(plane);
-    daffitter::TrackEstimate* estim = track->estimates.at( plane );
+    daffitter::FitPlane<float>& pl = _system.planes.at(plane);
+    daffitter::TrackEstimate<float,4>* estim = track->estimates.at( plane );
     TrackerHitImpl * fitpoint = new TrackerHitImpl();
     // encode and store sensorID
     int sensorID =  _system.planes.at(plane).getSensorID();
@@ -249,7 +248,7 @@ void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate* track, LCCollectionVec
     }
     //Also add measurement point
     for(size_t mm = 0; mm < pl.meas.size(); mm++){
-      if( pl.weights(mm) < 0.5f){ continue; }
+      if( track->weights.at(plane)(mm) < 0.5f){ continue; }
       if( pl.isExcluded()) { continue; }
       TrackerHitImpl* meashit = static_cast<TrackerHitImpl*> ( _hitCollection->getElementAt( pl.meas.at(mm).getIden()) );
       fittrack->addHit(meashit);

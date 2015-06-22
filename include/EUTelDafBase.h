@@ -126,19 +126,18 @@ namespace eutelescope {
     void readHitCollection(LCEvent* event);
     void bookHistos();
     void bookDetailedHistos();
-    void dumpToAscii();
-    void fillPlots(daffitter::TrackCandidate* track);
-    void fillDetailPlots(daffitter::TrackCandidate* track);
-    bool checkTrack(daffitter::TrackCandidate * track);
-    int checkInTime();
+    void fillPlots(daffitter::TrackCandidate<float,4>* track);
+    void fillDetailPlots(daffitter::TrackCandidate<float,4>* track);
+    bool checkTrack(daffitter::TrackCandidate<float,4>* track);
+    int checkInTime(daffitter::TrackCandidate<float,4>* track);
     void printStats();
     //alignment stuff
     void gearRotate(size_t index, size_t gearIndex);
     Eigen::Vector3f applyAlignment(EUTelAlignmentConstant* alignment, Eigen::Vector3f point);
     void alignRotate(std::string collectionName, LCEvent* event);
-    void getPlaneNorm(daffitter::FitPlane& pl);
+    void getPlaneNorm(daffitter::FitPlane<float>& pl);
 
-    daffitter::TrackerSystem _system;
+    daffitter::TrackerSystem<float,4> _system;
     std::map<float, int> _zSort;
     std::map<int, int> _indexIDMap;
     std::string _asciiName;

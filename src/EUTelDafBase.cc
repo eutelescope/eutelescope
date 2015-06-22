@@ -165,7 +165,7 @@ bool EUTelDafBase::defineSystemFromData()
   bool gotPlane = false;
   for(size_t plane = 0; plane < _system.planes.size(); plane++)
   {
-    daffitter::FitPlane& pl = _system.planes.at(plane);
+    daffitter::FitPlane<float>& pl = _system.planes.at(plane);
     gotPlane = false;
     for(size_t meas = 0; meas < pl.meas.size(); meas++)
     {
@@ -203,7 +203,7 @@ bool EUTelDafBase::defineSystemFromData()
 }
 
 void EUTelDafBase::gearRotate(size_t index, size_t gearIndex){
-  daffitter::FitPlane& pl = _system.planes.at(index);
+  daffitter::FitPlane<float>& pl = _system.planes.at(index);
 
   double gRotation[3] = { 0., 0., 0.};
   gRotation[0] = _siPlanesLayerLayout->getLayerRotationXY(gearIndex); // Euler alpha ;
@@ -284,7 +284,7 @@ void EUTelDafBase::alignRotate(std::string collectionName, LCEvent* event) {
     throw runtime_error("Unable to open alignment collection " + collectionName);
   }
   for( size_t plane = 0; plane < _system.planes.size() ; plane++){
-    daffitter::FitPlane& pl = _system.planes.at(plane);
+    daffitter::FitPlane<float>& pl = _system.planes.at(plane);
     int iden = pl.getSensorID();
     for ( size_t ii = 0; ii < alignmentCollectionVec->size(); ++ii ) {
       try{
@@ -306,7 +306,7 @@ void EUTelDafBase::alignRotate(std::string collectionName, LCEvent* event) {
     }
   }
 }
-void EUTelDafBase::getPlaneNorm(daffitter::FitPlane& pl){
+void EUTelDafBase::getPlaneNorm(daffitter::FitPlane<float>& pl){
   Eigen::Vector3f l1 = pl.getRef1() - pl.getRef0();
   Eigen::Vector3f l2 = pl.getRef2() - pl.getRef0();
   //Calculate plane normal vector from ref points
@@ -522,10 +522,10 @@ void EUTelDafBase::readHitCollection(LCEvent* event)
   }
 }
 
-int EUTelDafBase::checkInTime(){
+int EUTelDafBase::checkInTime(daffitter::TrackCandidate<float, 4> * track){
   size_t nMatches(0);
   for( size_t ii = 0; ii < _system.planes.size() ; ii++){
-    daffitter::FitPlane& plane = _system.planes.at(ii);
+    daffitter::FitPlane<float>& plane = _system.planes.at(ii);
     int sensorID = plane.getSensorID();
     //Check if any DUT plane is "In time" with the 
     if( find(_dutPlanes.begin(), _dutPlanes.end(), sensorID) == _dutPlanes.end()){
@@ -533,9 +533,7 @@ int EUTelDafBase::checkInTime(){
     }
     //In timeness can be checked by seeing if the plane has assigned weight
     for(size_t w = 0; w < plane.meas.size(); w++){
-      if( plane.weights(w) < 0.5f ){
-        continue;
-      }
+      if( track->weights.at(ii)(w) < 0.5f ) {  continue; }
       nMatches++;
       break;
     }
@@ -607,7 +605,7 @@ void EUTelDafBase::processEvent(LCEvent * event){
   }
 }
 
-bool EUTelDafBase::checkTrack(daffitter::TrackCandidate * track){
+bool EUTelDafBase::checkTrack(daffitter::TrackCandidate<float,4> * track){
 
   if( track->ndof < _ndofMin) {n_failedNdof++; return(false); }
   n_passedNdof++;
@@ -619,38 +617,24 @@ bool EUTelDafBase::checkTrack(daffitter::TrackCandidate * track){
   return(true);
 }
 
-void EUTelDafBase::dumpToAscii(){
-  trackstream << _nTracks << endl;
-  for( size_t ii = 0; ii < _system.planes.size() ; ii++){
-    daffitter::FitPlane& plane = _system.planes.at(ii);
-    for(size_t w = 0; w < plane.meas.size(); w++){
-      if( plane.weights(w) < 0.5f ) {  continue; }
-      daffitter::Measurement& meas = plane.meas.at(w);
-      trackstream << meas.getX() << "\t" << meas.getY() << "\t"
-		  << plane.getMeasZ() << endl;
-    }
-  }
-  trackstream << endl;
-}
-
-void EUTelDafBase::fillPlots(daffitter::TrackCandidate *track){
+void EUTelDafBase::fillPlots(daffitter::TrackCandidate<float,4> *track){
   _aidaHistoMap["chi2"]->fill( track->chi2);
   _aidaHistoMap["logchi2"]->fill( std::log10(track->chi2));
   _aidaHistoMap["ndof"]->fill( track->ndof);
   _aidaHistoMap["chi2overndof"]->fill( track->chi2 / track->ndof);
   //Fill plots per plane
   for( size_t ii = 0; ii < _system.planes.size() ; ii++){
-    daffitter::FitPlane& plane = _system.planes.at(ii);
+    daffitter::FitPlane<float>& plane = _system.planes.at(ii);
     char iden[4];
     sprintf(iden, "%d", plane.getSensorID());
     string bname = static_cast< string >("pl") + iden + "_";
     //Plot resids, angles for all hits with > 50% includion in track.
     //This should be one measurement per track
 
-    daffitter::TrackEstimate* estim = track->estimates.at(ii);
+    daffitter::TrackEstimate<float,4>* estim = track->estimates.at(ii);
     for(size_t w = 0; w < plane.meas.size(); w++){
-      if( plane.weights(w) < 0.5f ) {  continue; }
-      daffitter::Measurement& meas = plane.meas.at(w);
+      if( track->weights.at(ii)(w) < 0.5f ) {  continue; }
+      daffitter::Measurement<float>& meas = plane.meas.at(w);
       //Resids 
       _aidaHistoMap[bname + "residualX"]->fill( (estim->getX() - meas.getX())*1e-3 );
       _aidaHistoMap[bname + "residualY"]->fill( (estim->getY() - meas.getY())*1e-3 );
@@ -683,11 +667,11 @@ void EUTelDafBase::fillPlots(daffitter::TrackCandidate *track){
   }
 }
 
-void EUTelDafBase::fillDetailPlots(daffitter::TrackCandidate *track){
+void EUTelDafBase::fillDetailPlots(daffitter::TrackCandidate<float,4> *track){
   for( size_t ii = 0; ii < _system.planes.size() ; ii++){
-    daffitter::FitPlane& plane = _system.planes.at(ii);
+    daffitter::FitPlane<float>& plane = _system.planes.at(ii);
 
-    daffitter::TrackEstimate* estim = track->estimates.at(ii);
+    daffitter::TrackEstimate<float,4>* estim = track->estimates.at(ii);
 
     char iden[4];
     sprintf(iden, "%d", plane.getSensorID());
@@ -696,8 +680,8 @@ void EUTelDafBase::fillDetailPlots(daffitter::TrackCandidate *track){
     //Plot resids, angles for all hits with > 50% includion in track.
     //This should be one measurement per track
     for(size_t w = 0; w < plane.meas.size(); w++){
-      daffitter::Measurement& meas = plane.meas.at(w);
-      if( plane.weights(w) < 0.5f) { continue; }
+      daffitter::Measurement<float>& meas = plane.meas.at(w);
+      if( track->weights.at(ii)(w) < 0.5f ) {  continue; }
       //Resids 
       float resX = ( estim->getX() - meas.getX() );
       resX *= resX;
@@ -744,7 +728,7 @@ void EUTelDafBase::bookHistos(){
 
   for( size_t ii = 0; ii < _system.planes.size() ; ii++)
   {
-    daffitter::FitPlane& plane = _system.planes.at(ii);
+    daffitter::FitPlane<float>& plane = _system.planes.at(ii);
     char iden[4];
     sprintf(iden, "%d", plane.getSensorID());
     string bname = static_cast< string >("pl") + iden + "_";
@@ -821,7 +805,7 @@ void EUTelDafBase::bookDetailedHistos(){
 
   for( size_t ii = 0; ii < _system.planes.size() ; ii++)
   {
-    daffitter::FitPlane& plane = _system.planes.at(ii);
+    daffitter::FitPlane<float>& plane = _system.planes.at(ii);
     char iden[4];
     sprintf(iden, "%d", plane.getSensorID());
     string bname = static_cast< string >("pl") + iden + "_";
@@ -909,7 +893,7 @@ void EUTelDafBase::end() {
   streamlog_out ( MESSAGE5 ) << "Number of fitted tracks: " << _nTracks << endl;
   streamlog_out ( MESSAGE5 ) << "Successfully finished" << endl;
   for( size_t ii = 0; ii < _system.planes.size() ; ii++){
-    daffitter::FitPlane& plane = _system.planes.at(ii);
+    daffitter::FitPlane<float>& plane = _system.planes.at(ii);
     char iden[4];
     sprintf(iden, "%d", plane.getSensorID());
     string bname = static_cast< string >("pl") + iden + "_";
