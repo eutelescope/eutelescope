@@ -14,8 +14,7 @@ _numberTripletsRight(0),
 _allowedMissingHits(0),
 _tripletSlopeCuts(0,0),
 _beamE(-1.),
-_beamQ(-1.),
-_curvCorrected(2)
+_beamQ(-1.)
 {}
 EUTelPatRecTriplets::~EUTelPatRecTriplets()  
 {}
@@ -143,13 +142,6 @@ TVector3  EUTelPatRecTriplets::getBFac(){
 }
 
 
-std::vector<double>  EUTelPatRecTriplets::getCurvXYCorrected(){
-    return _curvCorrected;
-}
-void  EUTelPatRecTriplets::setCurvXYCorrected(std::vector<double> curv){
-    _curvCorrected=curv;
-}
-
 void EUTelPatRecTriplets::createTriplets()
 {
 	 streamlog_out(DEBUG1) << "Create triplets..." << std::endl;
@@ -228,9 +220,9 @@ void EUTelPatRecTriplets::createTriplets()
 //                    TVector3 vectorDist = state.getPositionGlobal()-stateLeft.getPositionGlobal();
                   //  float dist = sqrt(pow(state.getPositionGlobal()[0]-stateLeft.getPositionGlobal()[0],2)+pow(state.getPositionGlobal()[1]-stateLeft.getPositionGlobal()[1],2)+pow(state.getPositionGlobal()[2]-stateLeft.getPositionGlobal()[2],2));
                     float dist = (state.getPositionGlobal() - stateLeft.getPositionGlobal()).Mag();
-                    stateLeft.setArcLengthToNextState(dist);
+//                    stateLeft.setArcLengthToNextState(dist);
                     dist = (stateRight.getPositionGlobal() - state.getPositionGlobal()).Mag();
-                    state.setArcLengthToNextState(dist);
+  //                  state.setArcLengthToNextState(dist);
                     streamlog_out(DEBUG1) << "LEFT: " << cenID.at(i)  << std::endl;
                     stateLeft.print();
                     streamlog_out(DEBUG1) << "CENTRE: " << cenID.at(i)  << std::endl;
@@ -282,6 +274,7 @@ std::vector<EUTelTrack> EUTelPatRecTriplets::getTracks( ){
     if(dutNum != 0){
         getDUTHit();
     }else{
+        streamlog_out(DEBUG1)<< "NO DUT: Use mimosa tracks." << std::endl;
         _tracksWithDUTHit = _tracks;
     }
     streamlog_out(DEBUG1) << _tracksWithDUTHit.size()<<" TRACKS AFTER: getDUTHit(). Event: " << getEventNumber()  << std::endl;
@@ -467,7 +460,7 @@ void EUTelPatRecTriplets::findTrackFromTriplets(){
             //Pass without DUT
             streamlog_out(DEBUG1) << "PASS 4!! " << std::endl;
             float dist = (itRightTriplet->states.at(0).getPositionGlobal() - itLeftTriplet->states.at(2).getPositionGlobal()).Mag();
-            itLeftTriplet->states.at(2).setArcLengthToNextState(dist);
+//            itLeftTriplet->states.at(2).setArcLengthToNextState(dist);
             itLeftTriplet->matches = itLeftTriplet->matches + 1;
             itRightTriplet->matches = itRightTriplet->matches + 1;
             itLeftTriplet->fitID = fitID;
@@ -518,30 +511,26 @@ EUTelTrack EUTelPatRecTriplets::getTrack(std::vector<EUTelHit> hits, std::vector
         unsigned int sensorID = geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(j);
         streamlog_out(DEBUG1) << "The Z position " << j << " sensor ID: " << sensorID  <<std::endl;
         bool hitOnPlane=false;
-
-        for(unsigned int i = 0; i < hits.size(); ++i){
-            EUTelState state;
+        EUTelState state; //Create a state for each plane included in the fit.
+        for(unsigned int i = 0; i < hits.size(); ++i){//Check the list of hits to see if we have one on this plane.
             if(hits.at(i).getLocation()==sensorID){
                 hitOnPlane=true;
                 state.setLocation(hits.at(i).getLocation());
                 state.setHit(hits.at(i));
                 double dz1 = hits.at(i).getPositionGlobal()[2] - offset.at(2);
                 double dz2 = hits.at(i).getPositionGlobal()[2] - offset.at(3); 
-                double posX = offset.at(0) + dz1*trackSlope.at(0) + 0.5*dz1*dz2*getCurvXY()[0];
-                double posY = offset.at(1) + dz1*trackSlope.at(1) + 0.5*dz1*dz2*getCurvXY()[1];
+                double posX = offset.at(0) + dz1*trackSlope.at(0) + 0.5*dz1*dz2*curvCorr[0];
+                double posY = offset.at(1) + dz1*trackSlope.at(1) + 0.5*dz1*dz2*curvCorr[1];
                 double dz = (dz1 + dz2)/2.0;
                 std::vector<double> slope;
-                slope.push_back(trackSlope.at(0)+dz*getCurvXY()[0]);
-                slope.push_back(trackSlope.at(1)+dz*getCurvXY()[1]);
+                slope.push_back(trackSlope.at(0)+dz*curvCorr[0]);
+                slope.push_back(trackSlope.at(1)+dz*curvCorr[1]);
                 float intersectionPoint[3];
                 intersectionPoint[0] = posX;  intersectionPoint[1] = posY; intersectionPoint[2] = hits.at(i).getPositionGlobal()[2];
                 //intersection might not be inside a volume. 
                 state.setPositionGlobal(intersectionPoint);
                 state.setDirFromGloSlope(slope);
-                if(i != (hits.size() - 1)){
-                    state.setArcLengthToNextState(hits.at(i+1).getPositionGlobal()[2] - hits.at(i).getPositionGlobal()[2]);
-                }
-            track.setState(state);
+                track.setState(state);
             }
         }
         if(hitOnPlane){streamlog_out(DEBUG1) <<"this should already be recorded as there is a hit on sensor "<<sensorID<<std::endl;}
@@ -550,19 +539,15 @@ EUTelTrack EUTelPatRecTriplets::getTrack(std::vector<EUTelHit> hits, std::vector
             //loop over duts - loop over sensorid
             //   //can i just add the global position to the track ?
             //think so, look at triplet creation
-            EUTelState state;
             double z_dut=geo::gGeometry().getOffsetVector(sensorID)[2];
-            double dz = z_dut - 0.5*( offset.at(2)+ offset.at(3));//how to rewrite this line?
-            //   std::vector<double> offset;
-            //   std::vector<double> trackSlope; 
-            //   getTrackAvePara(itTrack->getStates().at(0).getHit(), itTrack->getStates().at(5).getHit(), offset, trackSlope);
-            std::vector<double> slope;
-            slope.push_back(trackSlope.at(0) + dz*getCurvXYCorrected()[0]);
-            slope.push_back(trackSlope.at(1) + dz*getCurvXYCorrected()[1]);
-            state.setDirFromGloSlope(slope);
-            //   TVector3 hitPosGlo = hit.getPositionGlobal();
             double dz1 = z_dut - offset.at(2);
             double dz2 = z_dut - offset.at(3); 
+            double dz = (dz1+dz2)/2.0;//how to rewrite this line?
+            std::vector<double> slope;
+            slope.push_back(trackSlope.at(0) + dz*curvCorr[0]);
+            slope.push_back(trackSlope.at(1) + dz*curvCorr[1]);
+            state.setDirFromGloSlope(slope);
+            //   TVector3 hitPosGlo = hit.getPositionGlobal();
             double posX = offset.at(0) + dz1*trackSlope.at(0) + 0.5*dz1*dz2*getCurvXY()[0];
             double posY = offset.at(1) + dz1*trackSlope.at(1) + 0.5*dz1*dz2*getCurvXY()[1];
             float intersectionPoint[3];
@@ -573,15 +558,11 @@ EUTelTrack EUTelPatRecTriplets::getTrack(std::vector<EUTelHit> hits, std::vector
             //add arc length thingy
             state.setPositionGlobal(intersectionPoint);
             state.setLocation(sensorID);
-            //if(i != (hits.size() - 1)){
-            // need z position of plane after dut.
-            //ith plane is dut
-            state.setArcLengthToNextState(geo::gGeometry().getOffsetVector(j+1)[2] - z_dut);
-            //}
             track.setState(state);
 
         }//else
     }//loop about planes, j iterator
+    setArcLengths(track);
     std::map<const int,double>  mapSensor;
     std::map<const int ,double>  mapAir;
     double rad =	track.getStates().at(0).computeRadLengthsToEnd(mapSensor, mapAir);
@@ -591,6 +572,15 @@ EUTelTrack EUTelPatRecTriplets::getTrack(std::vector<EUTelHit> hits, std::vector
     track.print();
     setRadLengths(track, mapSensor, mapAir, rad);
     return track;
+}
+void EUTelPatRecTriplets::setArcLengths(EUTelTrack & track){
+    for(std::vector<EUTelState>::iterator itState = track.getStates().begin(); itState != --track.getStates().end(); itState++){
+        TVector3 gPos1 = itState->getPositionGlobal();
+        TVector3 gPos2 = (itState+1)->getPositionGlobal();
+        TVector3 diff = gPos2 - gPos1;
+        double arc = diff.Mag();
+        itState->setArcLengthToNextState(arc);
+    }
 }
 
 void EUTelPatRecTriplets::getDUTHit(){
@@ -649,10 +639,10 @@ void EUTelPatRecTriplets::getDUTHit(){
                             if(dist < distBest){
                                 streamlog_out(DEBUG0) << "Save track information"  << std::endl;
                                 if(itTrack == _tracks.begin()){
-                                    streamlog_out(DEBUG0) << "First hit used as initial DUT hit" << std::endl;
+                                    streamlog_out(DEBUG0) << "First track used!" << std::endl;
                                 }
                                 if(dist < distBest){
-                                    streamlog_out(DEBUG0) << "Improvement! Use this hit." << std::endl;
+                                    streamlog_out(DEBUG0) << "Improvement! Use this track." << std::endl;
                                 }
                                 bestTrack = *itTrack;
                             }
@@ -679,7 +669,9 @@ std::vector<EUTelHit> EUTelPatRecTriplets::getDUTHitsOrder(EUTelTrack track, std
             if(itState->getLocation() == sensorID){
                 streamlog_out(DEBUG0) << "Add mimosa hit " <<std::endl; 
                 itState->print();
-                finalHits.push_back(itState->getHit());
+                if(itState->getStateHasHit()){
+                    finalHits.push_back(itState->getHit());
+                }
                 streamlog_out(DEBUG0) << "Added! " <<std::endl; 
                 break;
             }

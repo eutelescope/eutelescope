@@ -570,11 +570,11 @@ void EUTelProcessorHitMaker::bookHistos(int sensorID) {
   int xBin         =  geo::gGeometry().siPlaneXNpixels( sensorID );
   int yBin         =  geo::gGeometry().siPlaneYNpixels( sensorID );
 
-  xMin = safetyFactor * ( xPosition - ( 0.5 * xSize ));
-  xMax = safetyFactor * ( xPosition + ( 0.5 * xSize ));
+  xMin = -20;  // safetyFactor * ( xPosition - ( 0.5 * xSize ));
+  xMax = 20; // safetyFactor * ( xPosition + ( 0.5 * xSize ));
 
-  yMin = safetyFactor * ( yPosition - ( 0.5 * ySize ));
-  yMax = safetyFactor * ( yPosition + ( 0.5 * ySize ));
+  yMin = -20; // safetyFactor * ( yPosition - ( 0.5 * ySize ));
+  yMax = 20; // safetyFactor * ( yPosition + ( 0.5 * ySize ));
 
   xNBin = static_cast< int > ( safetyFactor  * xBin );
   yNBin = static_cast< int > ( safetyFactor  * yBin );

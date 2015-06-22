@@ -3,6 +3,7 @@
 
 using namespace eutelescope;
 EUTelState::EUTelState():
+    _arcLength(0),
     _kinks(2),
     _kinksMedium1(2),
     _kinksMedium2(2)
@@ -19,6 +20,7 @@ EUTelState::EUTelState():
 } 
 
 EUTelState::EUTelState(EUTelState *state):
+    _arcLength(0),
     _kinks(2),
     _kinksMedium1(2),
     _kinksMedium2(2)

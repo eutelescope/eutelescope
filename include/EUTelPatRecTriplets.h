@@ -71,11 +71,9 @@ namespace eutelescope {
 		void createTriplets();
         std::vector<EUTelTrack> getTracks( );
         std::vector<double>  getCurvXY();
-        std::vector<double>  getCurvXYCorrected();
         TVector3  getBFac();
         std::vector<EUTelHit> getDUTHitsOrder(EUTelTrack track, std::vector<EUTelHit> dutHit );
 
-        void  setCurvXYCorrected(std::vector<double> curv);
 
         EUTelTrack getTrackDUTHit(std::vector<EUTelTrack>::iterator itTrack, EUTelState stateDUT );
         EUTelTrack getTrack(std::vector<EUTelHit> hits);
@@ -150,6 +148,7 @@ namespace eutelescope {
 		inline void setBeamCharge(double q) {
 			this->_beamQ = q;
 		}
+        void setArcLengths(EUTelTrack & track);
 
 
 		//Here if the user does not set a create seeds from planes x. The we set it automatically to the first plane travelling as the beam travels. 
@@ -267,7 +266,6 @@ private:
 
 		/** Beam energy spread [%] */
 		double _beamEnergyUncertainty;
-        std::vector<double> _curvCorrected;
 	
 		/** Beam angular spread (horizontal,vertical) [mr] */
 		EVENT::FloatVec _beamAngularSpread;
