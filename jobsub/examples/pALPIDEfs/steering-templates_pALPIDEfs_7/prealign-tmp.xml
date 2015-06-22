@@ -108,7 +108,7 @@
   <!--Minimal values of the hit residuals in the Y direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
   <parameter name="ResidualsYMin" type="FloatVec"> -5. -5. -5. -5. -5. -5. -5. </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <!--parameter name="Verbosity" type="string" value="SILENT"/-->
+  <parameter name="Verbosity" type="string" value="WARNING3"/>
 </processor>
 
  <processor name="Save" type="EUTelOutputProcessor">

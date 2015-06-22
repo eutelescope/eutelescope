@@ -99,7 +99,7 @@
     <!--The total number of hot pixel cycle-->
   <parameter name="TotalNoOfCycle" type="int" value="0"/>
     <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <!--parameter name="Verbosity" type="string" value=""/-->
+  <parameter name="Verbosity" type="string" value="MESSAGE6"/>
 </processor>
 
  <processor name="Save" type="EUTelOutputProcessor">
