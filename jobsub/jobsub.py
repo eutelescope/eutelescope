@@ -300,6 +300,53 @@ def runMarlin(filenamebase, jobtask, silent):
         exit(1)
     return rcode
 
+def submitNAF(directory, filenamebase, jobtask, silent):
+    """ Submits the Marlin job to NAF """
+    import os
+    from sys import exit # use sys.exit instead of built-in exit (latter raises exception)
+    log = logging.getLogger('jobsub.' + jobtask)
+
+    # We are running on NAF. Decend into subdirectory:
+    savedPath = os.getcwd()
+    os.chdir(directory)
+
+    # check for qsub executable
+    cmd = "qsub"#check_program("qsub")
+    if cmd:
+        log.debug("Found qsub executable: " + cmd)
+    else:
+        log.error("qsub executable not found in PATH!")
+        exit(1)
+
+    # Add qsub parameters:
+    #qsub -@ qsubParams.txt BIN
+    cmd = cmd+" -@ qsubparameters.txt "
+    
+    # check for Marlin executable
+    marlin = check_program("Marlin")
+    if marlin:
+        log.debug("Found Marlin executable: " + marlin)
+        cmd = cmd+" "+marlin
+    else:
+        log.error("Marlin executable not found in PATH!")
+        exit(1)
+
+    cmd = cmd+" "+filenamebase+".xml"
+    rcode = None # the return code that will be set by a later subprocess method
+    try:
+        # run process
+        log.info ("Now submitting Marlin job on "+filenamebase+".xml to NAF")
+        log.debug ("Executing: "+cmd)
+        #os.startfile(cmd)
+        log.warning(cmd)
+    except OSError, e:
+        log.critical("Problem with NAF submission: Command '%s' resulted in error #%s, %s", cmd, e.errno, e.strerror)
+        exit(1)
+
+    # Return to old directory:
+    os.chdir(savedPath)
+    return 0
+
 def zipLogs(path, filename):
     """  stores output from Marlin in zip file; enables compression if necessary module is available """
     import zipfile
@@ -379,6 +426,7 @@ def main(argv=None):
     parser.add_argument("-l", "--log", default="info", help="Sets the verbosity of log messages during job submission where LEVEL is either debug, info, warning or error", metavar="LEVEL")
     parser.add_argument("-s", "--silent", action="store_true", default=False, help="Suppress non-error (stdout) Marlin output to console")
     parser.add_argument("--dry-run", action="store_true", default=False, help="Write steering files but skip actual Marlin execution")
+    parser.add_argument("--naf", action="store_true", default=False, help="Run NAF submission via qsub instead of calling Marlin directly")
     parser.add_argument("--plain", action="store_true", default=False, help="Output written to stdout/stderr and log file in prefix-less format i.e. without time stamping")
     parser.add_argument("jobtask", help="Which task to submit (e.g. convert, hitmaker, align); task names are arbitrary and can be set up by the user; they determine e.g. the config section and default steering file names.")
     parser.add_argument("runs", help="The runs to be analyzed; can be a list of single runs and/or a range, e.g. 1056-1060.", nargs='*')
@@ -432,7 +480,7 @@ def main(argv=None):
 
     # dictionary keeping our parameters
     # here you can set some minimal default config values that will (possibly) be overwritten by the config file
-    parameters = {"templatepath":".", "templatefile":args.jobtask+"-tmp.xml", "logpath":"."}
+    parameters = {"templatepath":".", "templatefile":args.jobtask+"-tmp.xml", "logpath":".", "qsubconfig":"qsubparameters.txt"}
 
     # read in config file if specified on command line
     if args.conf_file:
@@ -577,8 +625,17 @@ def main(argv=None):
             return 1
 
         log.debug ("Writing steering file for run number "+runnr)
-        basefilename = args.jobtask+"-"+runnr
-        steeringFile = open(basefilename+".xml", "w")
+        # When running for NAF submission, create subfolder for each run:
+        if args.naf:
+            if not os.path.exists("run"+runnr):
+                os.makedirs("run"+runnr)
+            basedirectory = "run"+runnr
+            basefilename = args.jobtask+"-"+runnr
+            steeringFile = open(basedirectory+"/"+basefilename+".xml", "w")
+        else:
+            basefilename = args.jobtask+"-"+runnr
+            steeringFile = open(basefilename+".xml", "w")
+
         try:
             steeringFile.write(steeringString)
         finally:
@@ -587,6 +644,12 @@ def main(argv=None):
         # bail out if running a dry run
         if args.dry_run:
             log.info("Dry run: skipping Marlin execution. Steering file written to "+basefilename+'.xml')
+        elif args.naf:
+            rcode = submitNAF(basedirectory,basefilename, args.jobtask, args.silent) # start NAF submission
+            if rcode == 0:
+                log.info("NAF job submitted")
+            else:
+                log.error("NAF submission returned with error code "+str(rcode))
         else:
             rcode = runMarlin(basefilename, args.jobtask, args.silent) # start Marlin execution
             if rcode == 0:
