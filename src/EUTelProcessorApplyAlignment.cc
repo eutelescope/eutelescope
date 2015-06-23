@@ -157,7 +157,8 @@ void EUTelProcessorApplyAlign::processEvent (LCEvent * event) {
       outputHit->setCovMatrix( cov );
       outputHit->setCellID0( inputHit->getCellID0() );
       outputHit->setCellID1( inputHit->getCellID1() );
-      
+      outputHit->setTime( inputHit->getTime() );
+
       // now that we know at which sensor the hit belongs to, we can
       // get the corresponding alignment constants
       map< int , int >::iterator  positionIter = _lookUpTable.find( sensorID );

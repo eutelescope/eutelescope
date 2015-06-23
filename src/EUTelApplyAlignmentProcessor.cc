@@ -688,6 +688,7 @@ void EUTelApplyAlignmentProcessor::ApplyGear6D( LCEvent *event)
       outputHit->rawHits() = inputHit->getRawHits();
       outputHit->setCellID0( inputHit->getCellID0() );
       outputHit->setCellID1( inputHit->getCellID1() );
+      outputHit->setTime( inputHit->getTime() );
 
       double * inputPosition      = const_cast< double * > ( inputHit->getPosition() ) ;
       double   outputPosition[3]  = { 0., 0., 0. };
@@ -922,6 +923,7 @@ void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event)
       outputHit->rawHits() = inputHit->getRawHits();
       outputHit->setCellID0( inputHit->getCellID0() );
       outputHit->setCellID1( inputHit->getCellID1() );
+      outputHit->setTime( inputHit->getTime() );
 
       const double * inputPosition      = const_cast< const double * > ( inputHit->getPosition() ) ;
       double   outputPosition[3]  = { 0., 0., 0. };
@@ -1224,6 +1226,7 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
       outputHit->setCovMatrix( inputHit->getCovMatrix() );
       outputHit->setCellID0( inputHit->getCellID0() );
       outputHit->setCellID1( inputHit->getCellID1() );
+      outputHit->setTime( inputHit->getTime() );
 
       // hit coordinates in the center-of-the sensor frame (axis coincide with the global frame)
       const double *inputS = static_cast<const double*> ( inputHit->getPosition() ) ;
@@ -1560,6 +1563,7 @@ void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
       outputHit->rawHits() = inputHit->getRawHits();
       outputHit->setCellID0( inputHit->getCellID0() );
       outputHit->setCellID1( inputHit->getCellID1() );
+      outputHit->setTime( inputHit->getTime() );
 
       // now that we know at which sensor the hit belongs to, we can
       // get the corresponding alignment constants
