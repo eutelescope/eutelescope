@@ -158,7 +158,7 @@ AnalysisPALPIDEfs::AnalysisPALPIDEfs()
   registerOptionalParameter("Rate","Data taking rate",
                              _rate, static_cast< string > ( "" ) );
   registerProcessorParameter("MinTimeStamp", "This is minimum timestamp required to consider an event",
-                             _minTimeStamp, static_cast<int>( 0 ) );
+                             _minTimeStamp, static_cast<double>( 0 ) );
 
   _isFirstEvent = true;
 }

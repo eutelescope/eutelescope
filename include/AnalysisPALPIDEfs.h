@@ -104,7 +104,7 @@ protected:
   double zDistance;
   int _nEvents;
   int _nEventsWithTrack;
-  int _minTimeStamp;
+  double _minTimeStamp;
 private:
   bool _isFirstEvent;
   gear::SiPlanesParameters * _siPlanesParameters;
