@@ -179,6 +179,8 @@ WARNING: - Please be aware that comments made in the original steering file were
   <parameter name="ResidualsYMax" type="FloatVec"> 5. 5. 5. 5. 5. 5. 5. </parameter>
   <!--Minimal values of the hit residuals in the Y direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
   <parameter name="ResidualsYMin" type="FloatVec"> -5. -5. -5. -5. -5. -5. -5. </parameter>
+  <!--Name of histogram info xml file-->
+  <parameter name="HistogramInfoFilename" type="string" value="@HistoInfoFile@"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>

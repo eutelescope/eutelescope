@@ -703,6 +703,7 @@ void EUTelClusteringProcessor::processEvent (LCEvent * event)
     }
 #endif
 
+    (dynamic_cast<AIDA::IHistogram1D*> (_timeStampHisto))->fill(event->getTimeStamp());
     EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
     if ( evt->getEventType() == kEORE )
     {
@@ -2844,7 +2845,17 @@ void EUTelClusteringProcessor::check (LCEvent * /* evt */) {
 
 
 void EUTelClusteringProcessor::end() {
-
+    int max = 0, maxBin = -1;
+    for (int iBin=0; iBin<1000; iBin++)
+    {
+      int binEntry = (dynamic_cast<AIDA::IHistogram1D*> (_timeStampHisto))->binEntries(iBin);
+      if (binEntry > max)
+      {
+        max = binEntry;
+        maxBin = iBin;
+      }
+    }
+    streamlog_out ( MESSAGE4 ) << "Maximum of the time stamp histo is at " << (dynamic_cast<AIDA::IHistogram1D*> (_timeStampHisto))->binMean(maxBin) << endl;
     streamlog_out ( MESSAGE2 ) <<  "Successfully finished" << endl;
 
     map< int, int >::iterator iter = _totClusterMap.begin();
@@ -3450,6 +3461,8 @@ void EUTelClusteringProcessor::bookHistos() {
         _eventMultiplicityHistos.insert( make_pair(sensorID, eventMultiHisto) );
         eventMultiHisto->setTitle( eventMultiTitle.c_str() );
     }
+    _timeStampHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D("timeStampHisto",1000,0,50000);
+    _timeStampHisto->setTitle("Distribution of the time stamp of the events");
     streamlog_out ( DEBUG5 )  << "end of Booking histograms " << endl;
 }
 
