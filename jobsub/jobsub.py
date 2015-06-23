@@ -474,7 +474,7 @@ def main(argv=None):
 
     # dictionary keeping our parameters
     # here you can set some minimal default config values that will (possibly) be overwritten by the config file
-    parameters = {"templatepath":".", "templatefile":args.jobtask+"-tmp.xml", "logpath":".", "qsubconfig":"qsubparameters.txt"}
+    parameters = {"templatepath":".", "templatefile":args.jobtask+"-tmp.xml", "logpath":"."}
 
     # read in config file if specified on command line
     if args.conf_file:
