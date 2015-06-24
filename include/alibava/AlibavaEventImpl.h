@@ -119,17 +119,35 @@ namespace alibava {
 		  return acode;
 	  }
 
+      //! Set the Clock time (timestamp)
+      /*! This method is used to set the clock time
+       *  Avaliable in firmware version = 3
+       *  See alibava documentation for more detail
+       *
+       *  @param aclock The clock (timestamp)
+       */
+      virtual void setEventClock(float aclock);
+      //! Return the Clock time (timestamp)
+      /*! This method returns the clock time (timestamp)
+       *
+       *  @return the clock time (timestamp)
+       */
+      inline float getEventClock() const {
+          float aclock = _params.getFloatVal(ALIBAVA::EVENTCLOCK);
+          return aclock;
+      }
+
 	  //! Set the TDC time
 	  /*! This method is used to set the tdc time
 		*  See alibava documentation for more detail
 		*
-		*  @param aTIME The event size
+		*  @param atime The tdc time
 		*/
 	  virtual void setEventTime(float atime);
 	  //! Return the TDC time
-	  /*! This method returns the event size
+	  /*! This method returns the tdc time
 		*
-		*  @return The event time
+		*  @return The tdc time
 		*/
 	  inline float getEventTime() const {
 		  float atime = _params.getFloatVal(ALIBAVA::EVENTTIME);

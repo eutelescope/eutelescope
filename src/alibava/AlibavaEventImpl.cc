@@ -51,6 +51,12 @@ void AlibavaEventImpl::setEventCode(int acode) {
 	
 }
 
+void AlibavaEventImpl::setEventClock(float aclock) {
+    
+    _params.setValue(ALIBAVA::EVENTCLOCK, aclock);
+    
+}
+
 void AlibavaEventImpl::setEventTime(float atime) {
 	
 	_params.setValue(ALIBAVA::EVENTTIME, atime);

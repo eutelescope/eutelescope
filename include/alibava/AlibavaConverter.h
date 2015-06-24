@@ -87,19 +87,15 @@ class AlibavaConverter : public marlin::DataSourceProcessor    {
 	int _runNumber;
 
 	//! The name of the collection
-	/*! The _rawDataCollectionName will be the base of the collection name that 
-	 *  raw data will be saved.
-	 *  For the collections created for each chip separately chip number information
-	 *  will be appended to this name 
-	 *
-	 *  Example: if ALIBAVA::NOOFCHIPS=2 and _rawDataCollectionName="rawdata"
-	 *  these collections will be created:
-	 *  rawdata            // containing all chips
-	 *  rawdata_chip0      // containing only first chip
-	 *  rawdata_chip1      // containing only second chip
+	/*! The _rawDataCollectionName will be the collection name that raw data will be saved.
 	 */
 	std::string _rawDataCollectionName;
-	
+
+    //! The name of the collection
+    /*! The _rawChipHeaderCollectionName will be the collection name that raw chip headers will be saved.
+     */
+    std::string _rawChipHeaderCollectionName;
+
 	/////////////////////////
 	// optional parameters //
 	/////////////////////////
@@ -110,16 +106,6 @@ class AlibavaConverter : public marlin::DataSourceProcessor    {
 	 */
 	EVENT::IntVec _chipSelection;
 	
-	//! The tilt angle
-	/*! The tilt angle of the detector can be stored here
-	 */
-	float _tiltAngle;
-
-	//! The sensor temperature
-	/*! The temperature of the sensor can be stored here
-	 */
-	float _sensorTemperature;
-
 	//! The start event number
 	/*! The event number that AlibavaConverter should start storing.
 	 *  Default value is -1, in this case it will store every event
@@ -131,13 +117,6 @@ class AlibavaConverter : public marlin::DataSourceProcessor    {
 	 *  Default value is -1, in this case it will store every event
 	 */
 	int _stopEventNum;
-
-	//! The read channels reverse option
-	/*! Alibava read channels from right to left
-	 *  if you want to revert this i.e. make it from left to right
-	 *  set this parameter to true
-	 */
-	bool _readChannelsReverse;
 	
 	//! An option to store pedestal and noise values stored in header of alibava data file
 	bool _storeHeaderPedestalNoise;
