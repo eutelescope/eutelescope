@@ -48,6 +48,7 @@ void EUTelMillepede::computeAlignmentToMeasurementJacobian( EUTelState &state){
 	float TyLocal =  state.getSlopeY();
 	const double* localpos = state.getPosition();
 	streamlog_out( DEBUG0 ) << "This is px/pz, py/pz (local) "<< TxLocal <<","<< TyLocal << std::endl;
+	streamlog_out( DEBUG0 ) << "This is px/pz, py/pz (Global) "<< state.getDirGlobal()[0]/state.getDirGlobal()[2]<<","<< state.getDirGlobal()[1]/state.getDirGlobal()[2]<< std::endl;
 	streamlog_out( DEBUG0 ) << "Local frame position "<< *localpos<<","<<*(localpos+1)<<","<<*(localpos+2) << std::endl;
 	computeAlignmentToMeasurementJacobian( *localpos,*(localpos+1), TxLocal, TyLocal);
 } 

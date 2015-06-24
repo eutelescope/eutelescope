@@ -475,16 +475,22 @@ namespace eutelescope {
         double min = 1e-4;
 		_scattererJacobians.clear();
 		TVector3 momStart = state.getDirGlobal();
-		TVector3 momEnd;
+		TVector3 momLastPlane = nextState.getDirGlobal();
+        TVector3 momEnd;
 		int locationStart = state.getLocation();
         int locationEnd=locationStart;
         int charge = -1;
 		for(size_t i=0;i<_scattererPositions.size();i++){
-			momEnd = EUTelNav::getMomentumfromArcLength(momStart,charge, _scattererPositions[i]);
+//			momEnd = EUTelNav::getMomentumfromArcLength(momStart,charge, _scattererPositions[i]);
             //Input in global and linked to local internally. Output jacobian Local to local link. 
+            if(i == 0){
+                momEnd = momStart;
+            }else{
+                momEnd = momLastPlane;
+            }
             TMatrixD jac = getFullJacobian(momStart,momEnd,locationStart,locationEnd, _scattererPositions[i],min);
 			_scattererJacobians.push_back(jac);
-			momStart[0]=momEnd[0]; momStart[1]=momEnd[1];	momStart[2]=momEnd[2];
+//			momStart[0]=momEnd[0]; momStart[1]=momEnd[1];	momStart[2]=momEnd[2];
 			if(i == (_scattererPositions.size()-2)){//On the last loop we want to create the jacobain to the next plane
 				locationEnd = nextState.getLocation();
 			}
@@ -505,19 +511,26 @@ namespace eutelescope {
      */
 
     TMatrixD EUTelGBLFitter::getFullJacobian(TVector3 momStart, TVector3 momEnd, int locationStart, int locationEnd, double distance, double min ){
-            streamlog_out(DEBUG1) <<"CREATE JACOBIAN WITH THE FOLLOWING PROPERTIES  " << std::endl;
-            streamlog_out(DEBUG1) <<"Intital momentum (Global) "<<momStart[0]<<","<<momStart[1]<<","<<momStart[2] <<" Final momentum "  <<momEnd[0]<<","<<momEnd[1]<<","<<momEnd[2]<< std::endl;
-            streamlog_out(DEBUG1) <<"Local Systems are defined via the sensors "<< locationStart <<" " <<locationEnd << std::endl;
-            streamlog_out(DEBUG1) <<"Distance between states "<<distance << std::endl;
-            streamlog_out(DEBUG1) <<"Minimum value of jacobian accepted "<<min << std::endl;
+        streamlog_out(DEBUG1) <<"CREATE JACOBIAN WITH THE FOLLOWING PROPERTIES  " << std::endl;
+        streamlog_out(DEBUG1) <<"Intital momentum (Global) "<<momStart[0]<<","<<momStart[1]<<","<<momStart[2] <<" Final momentum "  <<momEnd[0]<<","<<momEnd[1]<<","<<momEnd[2]<< std::endl;
+        streamlog_out(DEBUG1) <<"Local Systems are defined via the sensors "<< locationStart <<" " <<locationEnd << std::endl;
+        streamlog_out(DEBUG1) <<"Distance between states "<<distance << std::endl;
+        streamlog_out(DEBUG1) <<"Minimum value of jacobian accepted "<<min << std::endl;
+
+        TMatrixD TRotMatrixStart(3,3);
+        TRotMatrixStart	=  geo::gGeometry().getRotMatrix( locationStart );
+        TMatrixD TRotMatrixEnd(3,3);
+        TRotMatrixEnd	=  geo::gGeometry().getRotMatrix( locationEnd );
 
         TMatrixD simpleJacobian = EUTelNav::getPropagationJacobianGlobalToGlobal(distance, momStart.Unit());
         TVector3 momStartLocal = transVecGlobalToLocal(momStart, locationStart);
-        TMatrixD localToGlobalJacobianStart =  EUTelNav::getMeasToGlobal(momStartLocal, locationStart);
-        TVector3 momEndLocal = transVecGlobalToLocal(momEnd, locationEnd);
-        TMatrixD localToGlobalJacobianEnd =  EUTelNav::getMeasToGlobal(momEndLocal,locationEnd );
+        //Local->Global. Use local incidence and local->global axis definition
+        TMatrixD localToGlobalJacobianStart =  EUTelNav::getMeasToGlobal(momStartLocal,TRotMatrixStart);
+//        TVector3 momEndLocal = transVecGlobalToLocal(momEnd, locationEnd);
+//        Global->local. Use global incidence and global->local axis definition.
+        TMatrixD localToGlobalJacobianEnd =  EUTelNav::getMeasToGlobal(momEnd,TRotMatrixEnd.Invert());
         streamlog_out( DEBUG0 ) << "Invert local matrix... " << std::endl;
-        TMatrixD globalToLocalJacobianEnd = localToGlobalJacobianEnd.Invert();
+        TMatrixD globalToLocalJacobianEnd = localToGlobalJacobianEnd; // .Invert();
         streamlog_out( DEBUG0 ) << "Global to local: " << std::endl;
         streamlog_message( DEBUG0, globalToLocalJacobianEnd.Print();, std::endl; );
         TMatrixD localToNextLocalJacobian = globalToLocalJacobianEnd*simpleJacobian*localToGlobalJacobianStart;

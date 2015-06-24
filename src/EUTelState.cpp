@@ -121,6 +121,7 @@ TMatrixDSym EUTelState::getScatteringVarianceInLocalFrame(){
 	//This will be the same as unitMomentum in the x/y direction
 	TVector3 unitMomentumLocalFrame =	getDirGlobal().Unit();
 	//c1 and c2 come from Claus's paper GBL
+    //In local frame, not need to transform to dot product with measurement axis.
 	float c1 = 	unitMomentumLocalFrame[0]; float c2 =	unitMomentumLocalFrame[1];
 	streamlog_out( DEBUG1 ) << "The component in the x/y direction: "<< c1 <<"  "<<c2 << std::endl;
 	TMatrixDSym precisionMatrix(2);
