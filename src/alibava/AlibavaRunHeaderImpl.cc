@@ -81,18 +81,6 @@ void AlibavaRunHeaderImpl::setHeaderNoise (EVENT::FloatVec v_noise) {
    _lcHeader->parameters().setValues (ALIBAVA::HEADERNOISE, v_noise);
 }
 
-void AlibavaRunHeaderImpl::setTiltAngle (float tiltAngle) {
-	// sets tilt angle of the sensors
-	
-   _lcHeader->parameters().setValue (ALIBAVA::TILTANGLE, tiltAngle);
-}
-
-void AlibavaRunHeaderImpl::setSensorTemperature (float sensorTemperature) {
-	// sets temperature of the sensors
-	
-   _lcHeader->parameters().setValue (ALIBAVA::SENSORTEMPERATURE, sensorTemperature);
-}
-
 void AlibavaRunHeaderImpl::setChipSelection (EVENT::IntVec achipselection) {
 	// sets if there is chip selection
 	
