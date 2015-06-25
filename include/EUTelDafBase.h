@@ -155,16 +155,6 @@ namespace eutelescope {
     LCCollectionVec* _referenceHitVec;    
     LCCollectionVec* _clusterVec;    
  
-    //Should probably make these options in steering file, but for now they can be hard coded here:
-    double minx;
-    double maxx;
-    double miny;
-    double maxy;
-    double binsizex;
-    double binsizey;
-
-    double minclustersize;
-
     //! Silicon planes parameters as described in GEAR
     gear::SiPlanesParameters * _siPlanesParameters;
     gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
@@ -184,14 +174,6 @@ namespace eutelescope {
     bool _histogramSwitch;
     //! LCIO switch
     bool _addToLCIO;
-
-    std::map< int, std::vector < double > > _xPositionForClustering;
-    std::map< int, std::vector < double > > _yPositionForClustering;
-    std::map< int, std::vector < double > > _Chi2sForAverage;
-    std::map< int, std::vector < double > > _resolutionXForClustering;
-    std::map< int, std::vector < double > > _resolutionYForClustering;
-    int MAXCLUSTERSIZE;   
-
   };
 }
 #endif

@@ -267,18 +267,15 @@ double EUTelDafFitter::getZfromRefHit(int plane, int sensorID, double *pos){
   TVector3 norm2Plane;
  
   //Name is misleading, is actually true if refHit is NOT set 
-  if( ReferenceHitVecIsSet() )
-  {
-  	hitInPlane.SetXYZ( geo::gGeometry().siPlaneXPosition(sensorID), geo::gGeometry().siPlaneYPosition(sensorID), geo::gGeometry().siPlaneZPosition(sensorID) );
-	norm2Plane = geo::gGeometry().siPlaneNormal(sensorID);
-  }
-  else
-  {
-  	EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(plane) ) ;
-  	hitInPlane.SetXYZ( refhit->getXOffset(), refhit->getYOffset(), refhit->getZOffset());
-	norm2Plane.SetXYZ( refhit->getAlpha(), refhit->getBeta(), refhit->getGamma() );
-	} 
-
+  if( ReferenceHitVecIsSet() ){
+    hitInPlane.SetXYZ( geo::gGeometry().siPlaneXPosition(sensorID), geo::gGeometry().siPlaneYPosition(sensorID), geo::gGeometry().siPlaneZPosition(sensorID) );
+    norm2Plane = geo::gGeometry().siPlaneNormal(sensorID);
+  } else {
+    EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(plane) ) ;
+    hitInPlane.SetXYZ( refhit->getXOffset(), refhit->getYOffset(), refhit->getZOffset());
+    norm2Plane.SetXYZ( refhit->getAlpha(), refhit->getBeta(), refhit->getGamma() );
+  } 
+  
   TVector3 point( 1.,1.,1. );
           
   double linecoord_numenator   = norm2Plane.Dot(hitInPlane-lpoint);
