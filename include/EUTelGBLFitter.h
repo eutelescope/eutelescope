@@ -64,6 +64,8 @@ namespace eutelescope {
 			void setMeasurementGBL(gbl::GblPoint& point, const double *hitPos, double statePos[3], double combinedCov[4], TMatrixD projection);
 			void getKinkInformationToTrack(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint >& pointList,EUTelTrack &track);
             TMatrixD getFullJacobian(TVector3 momStart, TVector3 momEnd, int locationStart, int locationEnd, double distance, double min );
+            TMatrixD getFullJacobian(TVector3 momStart,double distance, double min );
+
 			void setPointVec( std::vector< gbl::GblPoint >& pointList, gbl::GblPoint& point);
 			void setPairAnyStateAndPointLabelVec(gbl::GblTrajectory*);
 			void setPairMeasurementStateAndPointLabelVec(std::vector< gbl::GblPoint >& pointList);

@@ -21,7 +21,7 @@
       <processor name="ClusteringMimosa"/>  
       <processor name="NoisyClusterMaskerM26"/>  
       <processor name="NoisyClusterRemoverM26"/>  
-      <xprocessor name="ClusteringStrip"/>
+      <processor name="ClusteringStrip"/>
       <xprocessor name="SaveAsRoot"/>
       <processor name="Save"/>
       <processor name="EUTelUtilityPrintEventNumber"/>

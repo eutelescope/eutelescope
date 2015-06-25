@@ -307,6 +307,7 @@ class EUTelGeometryTelescopeGeoDescription
 
 	/** Plane normal vector (nx,ny,nz) */
 	TVector3 siPlaneNormal( int );
+    Eigen::Vector3d siPlaneNormalEig( int);
 
 	TVector3 siPlaneXAxis( int);
 
@@ -396,6 +397,7 @@ class EUTelGeometryTelescopeGeoDescription
 
 	const TGeoHMatrix* getHMatrix( const double globalPos[] );
 	TMatrixD getRotMatrix( int sensorID );
+    Eigen::Matrix3d getRotMatrixEig( int sensorID );
 
 	/** Magnetic field */
 	const gear::BField& getMagneticField() const { return _gearManager->getBField(); };

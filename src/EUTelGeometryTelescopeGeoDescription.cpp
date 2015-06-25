@@ -77,6 +77,15 @@ int EUTelGeometryTelescopeGeoDescription::sensorIDtoZOrder( int planeID ) const
 }
 
 //Note  that to determine these axis we MUST use the geometry class after initialisation. By this I mean directly from the root file create.
+Eigen::Vector3d EUTelGeometryTelescopeGeoDescription::siPlaneNormalEig( int planeID ){
+    TVector3 normal =  siPlaneNormal(planeID);
+    Eigen::Vector3d norEigen;
+    norEigen << normal[0] , normal[1] , normal[2];
+    return norEigen;
+}
+
+
+
 TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneNormal( int planeID )
 {
 	std::vector<int>::iterator it = std::find(_sensorIDVec.begin(), _sensorIDVec.end(), planeID);
@@ -841,6 +850,13 @@ const TGeoHMatrix* EUTelGeometryTelescopeGeoDescription::getHMatrix( const doubl
 		
     return globalH;
 }
+Eigen::Matrix3d EUTelGeometryTelescopeGeoDescription::getRotMatrixEig( int sensorID ) {
+    TMatrixD rot = getRotMatrix(sensorID);
+    Eigen::Matrix3d rotEig;
+    rotEig << rot[0][0], rot[0][1],rot[0][2],rot[1][0],rot[1][1],rot[1][2],rot[2][0] ,rot[2][1],rot[2][2];
+    return rotEig;
+}
+
 
 TMatrixD EUTelGeometryTelescopeGeoDescription::getRotMatrix( int sensorID ) {
 	streamlog_out(DEBUG0) << "EUTelGeometryTelescopeGeoDescription::getRotMatrix()--------BEGIN " << std::endl;

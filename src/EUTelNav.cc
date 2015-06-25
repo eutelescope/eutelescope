@@ -217,9 +217,8 @@ TMatrixD EUTelNav::getLocalToCurvilinearTransformMatrix(TVector3 globalMomentum,
  */
 
 
-TMatrixD EUTelNav::getMeasToGlobal(TVector3 t1w, int  planeID)
+TMatrixD EUTelNav::getMeasToGlobal(TVector3 t1w, TMatrixD TRotMatrix )
 {
-//	std::cout<<"Plane ID " << planeID <<std::endl;
 	TMatrixD transM2l(5,5);
 	transM2l.UnitMatrix();
 	std::vector<double> slope;
@@ -230,8 +229,6 @@ TMatrixD EUTelNav::getMeasToGlobal(TVector3 t1w, int  planeID)
 	TMatrixD xyDir(2, 3);
 	xyDir[0][0] = 1; xyDir[0][1]=0.0; xyDir[0][2]=-slope.at(0);  
 	xyDir[1][0] = 0; xyDir[1][1]=1.0; xyDir[1][2]=-slope.at(1);  
-	TMatrixD TRotMatrix(3,3);
-	TRotMatrix	=  geo::gGeometry().getRotMatrix( planeID );
 	TVector3 normalVec;
 	normalVec[0] = TRotMatrix[0][2];	normalVec[1] = TRotMatrix[1][2];	normalVec[2] = TRotMatrix[2][2];
 	double cosInc = direction*normalVec;
