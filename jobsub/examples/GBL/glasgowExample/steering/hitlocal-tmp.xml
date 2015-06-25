@@ -20,8 +20,8 @@
       <processor name="MyEUTelUtilityPrintEventNumber"/>
       <processor name="HitMakerM26"/>
       <processor name="HitMakerAPIX"/>
-      <processor name="HitFilter_m26"/> 
-      <processor name="HitFilter_apix"/> 
+      <processor name="LocaltoGlobal"/>
+      <processor name="PreAlign"/>
       <processor name="Correlator"/>
       <processor name="Save"/>
    </execute>
@@ -57,7 +57,7 @@
   <parameter name="PulseCollectionName" type="string" lcioInType="TrackerPulse"> cluster_m26_free </parameter>
 
   <!--Hit collection name-->
-  <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit </parameter>
+  <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> @HitOutputCollectionName@ </parameter>
 
   <!--Select here how the center of gravity should be calculated.
 FULL: using the full cluster
@@ -98,7 +98,7 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
   <parameter name="PulseCollectionName" type="string" lcioInType="TrackerPulse"> cluster_apix_free </parameter>
 
   <!--Hit collection name-->
-  <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit </parameter>
+  <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> @HitOutputCollectionName@ </parameter>
 
   <!--Select here how the center of gravity should be calculated.
 FULL: using the full cluster
@@ -129,28 +129,36 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
   <parameter name="Verbosity" type="string" value="@Verbosity@"/>
 </processor>
 
- <processor name="HitFilter_m26" type="EUTelProcessorFilteringHitFilter">
-    <parameter name="HitInputCollectionName" type="string" lcioOutType="TrackerHit"> hit </parameter>
-    <parameter name="HitOutputCollectionName" type="string" lcioOutType="TrackerHit"> @HitOutputCollectionName@  </parameter>
-    <parameter name="HotPixelCollectionName" type="string" lcioOutType="TrackerHit"> hotpixel_m26 </parameter>
- </processor>
+<processor name="LocaltoGlobal" type="EUTelProcessorCoordinateTransformHits">
+    <parameter name="hitCollectionNameInput" type="string" lcioInType="TrackerHit"> @HitOutputCollectionName@ </parameter>
+    <parameter name="hitCollectionNameOutput" type="string" lcioOutType="TrackerHit"> hit_global </parameter>
+</processor>
 
- <processor name="HitFilter_apix" type="EUTelProcessorFilteringHitFilter">
-    <parameter name="HitInputCollectionName" type="string" lcioOutType="TrackerHit"> hit </parameter>
-    <parameter name="HitOutputCollectionName" type="string" lcioOutType="TrackerHit"> @HitOutputCollectionName@  </parameter>
-    <parameter name="HotPixelCollectionName" type="string" lcioOutType="TrackerHit"> hotpixel_apix </parameter>
- </processor>
+
+<processor name="PreAlign" type="EUTelPreAlign">
+    <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit_global </parameter>
+    <parameter name="HotPixelCollectionName" type="string" lcioInType="TrackerData"> hotpixel_m26 </parameter>
+    <parameter name="Events" type="int"> 5000  </parameter>
+    <parameter name="DumpGEAR" type="bool" value="true" />
+    <parameter name="ExcludedPlanesYCoord" type="IntVec" >   </parameter>
+    <parameter name="ExcludedPlanes" type="IntVec" > 0  5 </parameter>
+    <parameter name="ResidualsXMax" type="FloatVec" value="@ResidualsXMax@"/>
+    <parameter name="ResidualsXMin" type="FloatVec" value="@ResidualsXMin@"/>
+    <parameter name="ResidualsYMax" type="FloatVec" value="@ResidualsYMax@"/>
+    <parameter name="ResidualsYMin" type="FloatVec" value="@ResidualsYMin@"/>
+
+</processor>
 
 
 
  <processor name="Correlator" type="EUTelCorrelator">
  <!--EUTelCorrelator fills histograms with correlation plots-->
   <!--Hit collection name-->
-  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> @HitOutputCollectionName@ </parameter>
+  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit_global </parameter>
   <!--Minimum allowed cluster charge to be taken into account for the correlation plots (default = 2)-->
   <parameter name="ClusterChargeMinimum" type="int" value="0"/>
   <!--Dump the offset X and Y values calculated from the correlation bands (default = true)-->
-  <parameter name="Events" type="int" value="10000"/>
+  <parameter name="Events" type="int" value="5000"/>
   <!--SensorID of fixed plane-->
   <!--If there are more then this number of correlated hits (planes->track candidate) (default=5)-->
   <parameter name="MinNumberOfCorrelatedHits" type="int" value="5"/>
