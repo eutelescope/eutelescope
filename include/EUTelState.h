@@ -12,6 +12,8 @@
 #endif
 #include "EUTelHit.h"
 #include "EUTelGeometryTelescopeGeoDescription.h"
+//Eigen
+#include <Eigen/Core>
 
 namespace eutelescope {
 
@@ -38,6 +40,7 @@ namespace eutelescope {
 			double getRadFracSensor() const ;
             TVector3 getDirLocal() const; 
             TVector3 getDirGlobal() const; 
+            Eigen::Vector3d getDirGlobalEig() const; 
             //STATE PARAMETERS:
 			TVectorD getKinks() const;
 			TVectorD getKinksMedium1() const;

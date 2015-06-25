@@ -84,6 +84,17 @@ TVector3 EUTelState::getDirGlobal() const {
     vecLoc[2] = dirGlo[2];
 	return vecLoc;
 }
+Eigen::Vector3d EUTelState::getDirGlobalEig() const {
+	streamlog_out( DEBUG1 ) << "EUTelState::getDirGlobalEig()------------------------BEGIN" << std::endl;
+
+    Eigen::Vector3d dirEigen;
+    TVector3 dir = getDirGlobal();
+    dirEigen << dir[0] , dir[1] , dir[2];
+	streamlog_out( DEBUG1 ) << "EUTelState::getDirGlobalEig()------------------------END" << std::endl;
+
+    return dirEigen;
+}
+
 
 TVector3 EUTelState::getPositionGlobal() const {
 	const double* local =  getPosition();
@@ -117,12 +128,13 @@ TMatrixDSym EUTelState::getScatteringVarianceInLocalFrame(){
 		throw(std::string("Radiation of sensor is zero. Something is wrong with radiation length calculation."));
 	}
 	float scatPrecision = 1.0/getRadFracSensor();
-	//We need the track direction in the direction of x/y in the local frame. 
-	//This will be the same as unitMomentum in the x/y direction
-	TVector3 unitMomentumLocalFrame =	getDirGlobal().Unit();
-	//c1 and c2 come from Claus's paper GBL
-    //In local frame, not need to transform to dot product with measurement axis.
-	float c1 = 	unitMomentumLocalFrame[0]; float c2 =	unitMomentumLocalFrame[1];
+    TMatrixD TRotMatrix = geo::gGeometry().getRotMatrix( getLocation() );
+	TVector3 axisX;
+	TVector3 axisY;
+	axisX[0] = TRotMatrix[0][0];	axisY[0] = TRotMatrix[0][1];
+	axisX[1] = TRotMatrix[1][0];	axisY[1] = TRotMatrix[1][1];
+	axisX[2] = TRotMatrix[2][0];	axisY[2] = TRotMatrix[2][1];
+	float c1 = getDirGlobal().Dot(axisX); float c2 = getDirGlobal().Dot(axisY);
 	streamlog_out( DEBUG1 ) << "The component in the x/y direction: "<< c1 <<"  "<<c2 << std::endl;
 	TMatrixDSym precisionMatrix(2);
 	float factor = scatPrecision/pow((1-pow(c1,2)-pow(c2,2)),2);
@@ -182,13 +194,28 @@ void EUTelState::getCombinedHitAndStateCovMatrixInLocalFrame( double (&cov)[4] )
 	cov[2] = _covCombinedMatrix[2];
 	cov[3] = _covCombinedMatrix[3];
 }
+//Global -> local(Measurement)
+//Calculate local to global and then invert.
 TMatrixD EUTelState::getProjectionMatrix() const {
-	TMatrixD projection(5,5);
-	projection.Zero();
-	TMatrixD proM2l(2, 2);
-	proM2l.UnitMatrix();
-	projection.SetSub(3, 3, proM2l);
-	return proM2l;
+    //incidence in local frame.
+	TMatrixD xyDir(2, 3);
+	xyDir[0][0] = 1; xyDir[0][1]=0.0; xyDir[0][2]=-1.0*getSlopeX();  
+	xyDir[1][0] = 0; xyDir[1][1]=1.0; xyDir[1][2]=-1.0*getSlopeY();  
+    //Rotation needed from local->global
+    TMatrixD TRotMatrix = geo::gGeometry().getRotMatrix( getLocation() );
+	TMatrixD measDir(3,2);
+	measDir[0][0] = TRotMatrix[0][0];	measDir[0][1] = TRotMatrix[0][1];
+	measDir[1][0] = TRotMatrix[1][0];	measDir[1][1] = TRotMatrix[1][1];
+	measDir[2][0] = TRotMatrix[2][0];	measDir[2][1] = TRotMatrix[2][1];
+    streamlog_out( DEBUG0 ) << "CALCULATE LOCAL TO GLOBAL STATE TRANSFORMATION... " << std::endl;
+    streamlog_out( DEBUG0 ) << "Inputs... " << std::endl;
+    streamlog_out( DEBUG0 ) << "The (X,Y)-axis of the local frame relative to the global  " << std::endl;
+    streamlog_message( DEBUG0, measDir.Print();, std::endl; );
+    streamlog_out( DEBUG0 ) << "The propagator (unit axis) (Dx,Dy)   " << std::endl;
+    streamlog_message( DEBUG0, xyDir.Print();, std::endl; );
+	TMatrixD proM2l(2,2);
+	proM2l = (xyDir*measDir).Invert(); 
+    return proM2l;
 }
 float EUTelState::getSlopeX() const {return _dirLocalX/_dirLocalZ;}
 float EUTelState::getSlopeY() const {return _dirLocalY/_dirLocalZ;}

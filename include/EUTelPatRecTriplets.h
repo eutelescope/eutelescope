@@ -1,16 +1,18 @@
-//  File:   EUTelPatRecTriplets.h
-//  Created on July 2, 2013, 12:53 PM
+//***************************************************
+//                  EUTelPatRecTriplets            //
+//This class create tracks using triplets formed   //
+//on the telescope planes. DUT hits are then added //
+//using the predicted track from the mimosas       //                                       
+//***********************************************  //
 
 #ifndef EUTelPatRecTriplets_H
 #define	EUTelPatRecTriplets_H
 
 // ROOT
-#if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
 #include "TVector3.h"
 #include "TVectorD.h"
 #include "TMatrixD.h"
 #include "TMatrixDSym.h"
-#endif
 
 // system includes <>
 #include <iostream>
@@ -68,7 +70,7 @@ namespace eutelescope {
         std::vector<float> _doubletCenDistCut;
         std::vector<float> _tripletConnectDistCut;
 
-		void createTriplets();
+        std::vector<EUTelPatRecTriplets::triplets> getTriplets();
         std::vector<EUTelTrack> getTracks( );
         std::vector<double>  getCurvXY();
         TVector3  getBFac();
@@ -80,11 +82,11 @@ namespace eutelescope {
         EUTelTrack getTrack(std::vector<EUTelHit> hits, std::vector<double> offset, std::vector<double> trackSlope,std::vector<double> curvCorr );
         EUTelTrack getTrack(triplets tripLeft,triplets tripRight);
         EUTelTrack getTrack(triplets tripLeft,triplets tripRight,EUTelState stateDUT );
-        void getTrackAvePara(EUTelHit firstHit, EUTelHit endHit, std::vector<double>& offset, std::vector<double>& trackSlope);
+        void getTrackAvePara(EUTelHit& firstHit, EUTelHit& endHit, std::vector<double>& offset, std::vector<double>& trackSlope);
+        triplets getTriplet(EUTelState & left, EUTelState & cen,EUTelState & right, doublets& doublet );
+        std::vector<double> getCorr(EUTelHit & hitArmOne1, EUTelHit & hitArmOne2, EUTelHit & hitArmTwo1, EUTelHit & hitArmTwo2);
 
-        void setScattering();
-//        void setStraightLineFit();
-        void setPlaneDimensionsVec(EVENT::IntVec planeDimensions);
+        void setPlaneDimensionsVec(EVENT::IntVec& planeDimensions);
 
 
 
@@ -167,13 +169,10 @@ namespace eutelescope {
 		//OTHER
 		void printTrackCandidates();
 		void testHitsVecPerPlane();
-		void testPositionEstimation(float position1[], float position2[]);
-        void findTrackFromTriplets();
+        std::vector<EUTelTrack>  findTrackFromTriplets(std::vector<EUTelPatRecTriplets::triplets>&);
 		void findTracksWithEnoughHits();
 	    doublets getDoublet( double hitLeftPos[3], double hitRightPos[3],double curvX,double curvY );
 		void testTrackQuality();
-		void clearTrackAndTrackStates();
-		void clearFinalTracks();
 		//VARIABLES
 		int _eventNumber;
 		int _totalNumberOfHits;
@@ -222,9 +221,9 @@ private:
 		 * from track's ref. point*/
 
 		void setNewState(float position[],float momentum[],  EUTelState& newState);
-		void getDUTHit();
+        std::vector<EUTelTrack>	getDUTHit( std::vector<EUTelTrack> &);
 
-		void setRadLengths(EUTelTrack & track,std::map<const int,double>  mapSensor, std::map<const int ,double>  mapAir, double rad );
+		void setRadLengths(EUTelTrack & track,std::map<const int,double>&  mapSensor, std::map<const int ,double>&  mapAir, double & rad );
 
 
 		

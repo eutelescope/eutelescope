@@ -78,7 +78,7 @@ while [ "$alignment" == "false" ]; do
 				yres=`python $pythonLocation/multiplyResolutionsByFactor.py $yInput / / $allPlanes / $factor`
 				echo "New resolutions are for (X/Y):" $xres"/"$yres
 				#Also decrease the rejection factor since we must be close to a fit.
-				rejectFactor=1.01
+				rejectFactor=2
 			else
 				#If there is no factor to decrease resolution then just use this fit.
 				alignment=true

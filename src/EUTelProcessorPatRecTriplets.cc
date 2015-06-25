@@ -177,8 +177,6 @@ void EUTelProcessorPatRecTriplets::processEvent(LCEvent* evt)
 
 		// Prepare hits for track finder
 		EVENT::TrackerHitVec allHitsVec;
-		_trackFitter->clearFinalTracks(); //This is to clear the vector of tracks from the last event.
-
 		for(int iHit = 0; iHit < hitMeasuredCollection->getNumberOfElements(); iHit++) 
 		{
 			TrackerHitImpl* hit = static_cast<TrackerHitImpl*>(hitMeasuredCollection->getElementAt(iHit));
