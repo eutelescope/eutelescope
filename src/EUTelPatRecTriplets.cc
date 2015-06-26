@@ -9,6 +9,7 @@ _totalNumberOfSharedHits(0),
 _firstExecution(true),
 _numberOfTracksTotal(0),
 _numberOfTracksTotalWithDUT(0),
+_tracksWithoutHit(0),
 _numberTripletsLeft(0),
 _numberTripletsRight(0),
 _allowedMissingHits(0),
@@ -49,27 +50,17 @@ void EUTelPatRecTriplets::setRadLengths(EUTelTrack & track,	std::map<const int,d
 }
 
 
-void EUTelPatRecTriplets::printTrackCandidates(){
-	streamlog_out ( DEBUG1 ) << "EUTelKalmanFilter::printTrackCandidates----BEGIN "<< std::endl;
-	for(size_t i = 0; i < _tracks.size();++i){
-		streamlog_out(DEBUG5)<<"Track number "<<i<<" Out of " <<_tracks.size()<<std::endl; 
-		_tracks.at(i).print();
-	}
-	streamlog_out ( DEBUG1 ) << "EUTelKalmanFilter::printTrackCandidates----END "<< std::endl;
-}
 
-void EUTelPatRecTriplets::testTrackQuality()
+void EUTelPatRecTriplets::testTrackQuality(std::vector<EUTelTrack>&  tracksWithDUTs )
 {
-	_numberOfTracksTotal = _numberOfTracksTotal + _tracks.size();
+	_numberOfTracksTotal = _numberOfTracksTotal + tracksWithDUTs.size();
 	_numberOfTracksTotalWithDUT = _numberOfTracksTotalWithDUT + _tracksWithDUTHit.size();
 
-	if(_numberOfTracksTotalWithDUT % 100 == 0){
+	if(_numberOfTracksTotal % 5000 == 0){
+        streamlog_out(MESSAGE5) << "Percentage tracks without DUT hit: " << static_cast<float>(_tracksWithoutHit)/static_cast<float>(_numberOfTracksTotal)<< std::endl;
         streamlog_out(MESSAGE5) << "Number of tracks per event: " << static_cast<float>(_numberOfTracksTotal)/static_cast<float>(getEventNumber() +1)<< std::endl;
-        streamlog_out(MESSAGE5) << "Number of tracks with DUT hits per event: " << static_cast<float>(_numberOfTracksTotalWithDUT)/static_cast<float>(getEventNumber() +1)<< std::endl;
         streamlog_out(MESSAGE5) << "Number of left arm triplets per event: " << static_cast<float>(_numberTripletsLeft)/static_cast<float>(getEventNumber() +1)<< std::endl;
         streamlog_out(MESSAGE5) << "Number of right arm triplets per event: " << static_cast<float>(_numberTripletsRight)/static_cast<float>(getEventNumber() +1)<< std::endl;
-
-
     }
 }
 void EUTelPatRecTriplets::testUserInput() {
@@ -199,13 +190,13 @@ std::vector<EUTelPatRecTriplets::triplets> EUTelPatRecTriplets::getTriplets()
                 }
             }
         }
-    //    if(cenID.size()-1 == i and _tripletsVec.size() == 0){
-     //       streamlog_out(DEBUG1) << "FOUND NO TRIPLETS FOR EVENT: " << getEventNumber()  << std::endl;
-      //      break;
-     //   }else{
-            return tripletsVec;
-    //    }
+        if(cenID.size()-1 == i and _tripletsVec.size() == 0){//If not triplets found on first plane end search.
+            streamlog_out(DEBUG1) << "FOUND NO TRIPLETS FOR EVENT: " << getEventNumber()  << std::endl;
+            break;
+        }
     }
+    return tripletsVec;
+
 }
 EUTelPatRecTriplets::triplets EUTelPatRecTriplets::getTriplet(EUTelState & left, EUTelState & cen,EUTelState & right, doublets& doublet ){
     streamlog_out(DEBUG1) << "LEFT: "  << std::endl;
@@ -243,6 +234,8 @@ std::vector<EUTelTrack> EUTelPatRecTriplets::getTracks( ){
     }
     //If we have dut planes then get hits. If not then just pass mimosa tracks.
     unsigned int  dutNum = geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() - 6;
+    streamlog_out(DEBUG1)<< "Number of DUTs: "<< dutNum << std::endl;
+
     std::vector<EUTelTrack> tracksWithDUTs;
     if(dutNum != 0){
        tracksWithDUTs = getDUTHit(tracks);
@@ -256,6 +249,7 @@ std::vector<EUTelTrack> EUTelPatRecTriplets::getTracks( ){
     }
     streamlog_out( DEBUG1 ) << "tracksWithDUTs.size() = "<<tracksWithDUTs.size()<<std::endl;
     streamlog_out( DEBUG1 ) << "tracks.size() = "<<tracks.size()<<std::endl;
+    testTrackQuality(tracksWithDUTs );
     return tracksWithDUTs;
 }
 
@@ -404,11 +398,6 @@ std::vector<EUTelTrack> EUTelPatRecTriplets::findTrackFromTriplets(std::vector<E
     }
     return tracks;
 }
-EUTelTrack EUTelPatRecTriplets::printTrack(std::vector<EUTelTrack>& tracks){
-    for(unsigned int i = 0; i < _tracks.size(); ++i){
-        _tracks.at(i).print();
-    }
-}
 EUTelTrack EUTelPatRecTriplets::getTrack(triplets tripLeft,triplets tripRight){
     std::vector<EUTelHit> hits;
 	streamlog_out(DEBUG1) << "Fill using left arm..."  << "    Number of states in left arm: " << tripLeft.states.size() << std::endl;
@@ -510,9 +499,9 @@ void EUTelPatRecTriplets::setArcLengths(EUTelTrack & track){
 
 std::vector<EUTelTrack> EUTelPatRecTriplets::getDUTHit(std::vector<EUTelTrack> & tracks){
     std::vector<EUTelTrack> tracksWithDUTHit;
-    if(_tracks.size() != 0 ){
+    if(tracks.size() != 0 ){
         std::map<int ,EVENT::TrackerHitVec> ::iterator itIDHit;
-        for(itIDHit = _mapHitsVecPerPlane.begin(); itIDHit != _mapHitsVecPerPlane.end(); ++itIDHit) {
+        for(itIDHit = _mapHitsVecPerPlane.begin(); itIDHit != _mapHitsVecPerPlane.end(); ++itIDHit) {//Should find a better way than this loop
             if(itIDHit->first <= 5){
                 streamlog_out(DEBUG1) << "Mimosa hit."  << std::endl;
                 continue;
@@ -532,7 +521,7 @@ std::vector<EUTelTrack> EUTelPatRecTriplets::getDUTHit(std::vector<EUTelTrack> &
                         //Find closest track.
                         EUTelTrack bestTrack;
                         std::vector<EUTelTrack>::iterator itTrack;
-                        for(itTrack = _tracks.begin(); itTrack != _tracks.end();itTrack++){
+                        for(itTrack = tracks.begin(); itTrack != tracks.end();itTrack++){//Need to allow more hits to be collected here.
                             //Get track information.
                             std::vector<double> offset;
                             std::vector<double> trackSlope; 
@@ -564,7 +553,7 @@ std::vector<EUTelTrack> EUTelPatRecTriplets::getDUTHit(std::vector<EUTelTrack> &
                             //Will enter always on the first loop if reached. Need to find intersection and hit on DUT.
                             if(dist < distBest){
                                 streamlog_out(DEBUG0) << "Save track information"  << std::endl;
-                                if(itTrack == _tracks.begin()){
+                                if(itTrack == tracks.begin()){
                                     streamlog_out(DEBUG0) << "First track used!" << std::endl;
                                 }
                                 if(dist < distBest){
@@ -580,6 +569,8 @@ std::vector<EUTelTrack> EUTelPatRecTriplets::getDUTHit(std::vector<EUTelTrack> &
                         hits = getDUTHitsOrder(bestTrack,dutHits);
                         tracksWithDUTHit.push_back(getTrack(hits));
                     }
+                }else{//If there are no hit on DUT plane.
+                    _tracksWithoutHit = _tracksWithoutHit + tracks.size();
                 }
             }
         }

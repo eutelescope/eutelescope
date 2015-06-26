@@ -137,12 +137,12 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
 //	    delta_r0 *= invR;
 
 //
-            geo::gGeometry().setPlaneXPosition(sensorID,  xplane  + dr0x  ) ;
-            geo::gGeometry().setPlaneYPosition(sensorID,  yplane  + dr0y  ) ;
-            geo::gGeometry().setPlaneZPosition(sensorID,  zplane  + dr0z  ) ;
-            geo::gGeometry().setPlaneXRotation(sensorID, (xrot  + dalpha *(180/M_PI) )  ) ;//Gear expressed in degrees so must convert from radians to degrees.
-            geo::gGeometry().setPlaneYRotation(sensorID, (yrot  +dbeta*(180/M_PI) )  ) ;
-            geo::gGeometry().setPlaneZRotation(sensorID, (zrot  +dgamma *(180/M_PI))  ) ;
+            geo::gGeometry().setPlaneXPosition(sensorID,  xplane  - dr0x  ) ;
+            geo::gGeometry().setPlaneYPosition(sensorID,  yplane  - dr0y  ) ;
+            geo::gGeometry().setPlaneZPosition(sensorID,  zplane  - dr0z  ) ;
+            geo::gGeometry().setPlaneXRotation(sensorID, (xrot  - dalpha *(180/M_PI) )  ) ;//Gear expressed in degrees so must convert from radians to degrees.
+            geo::gGeometry().setPlaneYRotation(sensorID, (yrot  - dbeta*(180/M_PI) )  ) ;
+            geo::gGeometry().setPlaneZRotation(sensorID, (zrot  - dgamma *(180/M_PI))  ) ;
 //#endif
 //#endif       
 //					 streamlog_out(MESSAGE9) << "Input and output alignment shift (translations) for sensor: "<<sensorID << std::endl;

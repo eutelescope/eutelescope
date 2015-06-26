@@ -53,12 +53,12 @@ export number="$number" #We export this to echo in single loop bash script.
 #	exit 1
 #fi
 echo "We have produced new histogram $histoNameInput"
-export Fxr="$allPlanesFixed" #This is the fixed planes for rotations round the x axis
+export Fxr="$allPlanes" #This is the fixed planes for rotations round the x axis
 export Fxs="$allPlanesFixed" #This is the fixed planes for shifts in the x axis
-export Fyr="$allPlanesFixed" #This is the fixed planes for rotations round the y axis
+export Fyr="$allPlanes" #This is the fixed planes for rotations round the y axis
 export Fys="$allPlanesFixed" #This is the fixed planes for shifts in the y axis
 export Fzr="$allPlanesFixed" #This is the fixed planes for rotations round the z axis
-export Fzs="$allPlanesFixed" #This is the fixed planes for shifts in the z axis
+export Fzs="$allPlanes" #This is the fixed planes for shifts in the z axis
 export inputGear="$inputGear" #We now use the gear file produced from the last iteration.
 export outputGear="gear-ZRotations-XYShift-${outputIdentifier}-Iteration-$number-${RUN}.xml" #IMPORTANT: The last alignment must output the new gear to the output gear name specified.
 export histoNameInput="Alignment-ZRotations-XYShifts-${outputIdentifier}-Iteration-$number-${RUN}"

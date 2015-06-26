@@ -54,7 +54,7 @@ while [ "$alignment" == "false" ]; do
 		echo "Rejection factor is: $rejectFactor"
 		xres=`python $pythonLocation/multiplyResolutionsByFactor.py $xInput /   / $allPlanes / $rejectFactor` 
 		yres=`python $pythonLocation/multiplyResolutionsByFactor.py $yInput /   / $allPlanes / $rejectFactor`
-        source xres
+      #  source xres
 		echo "New resolutions are for (X/Y):" $xres"/"$yres
 	elif [ "$noCut" == "1" ] && [ "$notUnderEstimated" == "1" ];then #Chi2 cut and must not understimate. Range [0,10]
 		echo "Chi2: $averageChi2Mille and boolean: $noCut $notUnderEstimated"

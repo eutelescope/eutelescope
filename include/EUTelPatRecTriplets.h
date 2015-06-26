@@ -167,12 +167,11 @@ namespace eutelescope {
 //		void testTrackCandidates();
 		
 		//OTHER
-		void printTrackCandidates();
 		void testHitsVecPerPlane();
         std::vector<EUTelTrack>  findTrackFromTriplets(std::vector<EUTelPatRecTriplets::triplets>&);
 		void findTracksWithEnoughHits();
 	    doublets getDoublet( double hitLeftPos[3], double hitRightPos[3],double curvX,double curvY );
-		void testTrackQuality();
+		void testTrackQuality( std::vector<EUTelTrack>&);
 		//VARIABLES
 		int _eventNumber;
 		int _totalNumberOfHits;
@@ -190,11 +189,11 @@ namespace eutelescope {
 
 		unsigned int _numberOfTracksTotal;
 		unsigned int _numberOfTracksTotalWithDUT;
+        unsigned int _tracksWithoutHit;
 		unsigned int _numberTripletsLeft;
 		unsigned int _numberTripletsRight;
 		unsigned int _numberDoublets;
 		void printHits();
-        EUTelTrack printTrack(std::vector<EUTelTrack>& tracks);
 
 private:
 

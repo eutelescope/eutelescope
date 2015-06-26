@@ -141,7 +141,7 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
     <parameter name="Events" type="int"> 5000  </parameter>
     <parameter name="DumpGEAR" type="bool" value="true" />
     <parameter name="ExcludedPlanesYCoord" type="IntVec" >   </parameter>
-    <parameter name="ExcludedPlanes" type="IntVec" > 0  5 </parameter>
+    <parameter name="ExcludedPlanes" type="IntVec" > @PreAlignIDFix@ </parameter>
     <parameter name="ResidualsXMax" type="FloatVec" value="@ResidualsXMax@"/>
     <parameter name="ResidualsXMin" type="FloatVec" value="@ResidualsXMin@"/>
     <parameter name="ResidualsYMax" type="FloatVec" value="@ResidualsYMax@"/>
