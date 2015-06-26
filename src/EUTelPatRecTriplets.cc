@@ -71,15 +71,6 @@ void EUTelPatRecTriplets::testUserInput() {
 	else{
 	 streamlog_out(DEBUG1) << "Beam energy is reasonable" << std::endl;
 	}
-	if(_createSeedsFromPlanes.size() == 0){
-		throw(lcio::Exception( "The number of planes to make seeds from is 0. We need at least one plane"));
-	}
-
-	if(_createSeedsFromPlanes.size() >= geo::gGeometry().sensorIDstoZOrder().size()){
-		throw(lcio::Exception( "You have specified all planes or more than that. This is too many planes for seeds"));
-	}else{
-		streamlog_out(DEBUG1) << "The number of planes to make seeds from is good " +  to_string(_createSeedsFromPlanes.size()) << std::endl;
-	}
 }	
 std::vector<double>  EUTelPatRecTriplets::getCurvXY(){
     //Defined the same as saved in track parameters.

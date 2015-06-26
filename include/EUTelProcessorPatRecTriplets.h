@@ -3,14 +3,12 @@
 #define EUTelProcessorPatRecTriplets_h 1
 
 // AIDA
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <AIDA/IBaseHistogram.h>
 #include <marlin/AIDAProcessor.h>
 #include <AIDA/IHistogram1D.h>
 #include <AIDA/IHistogram2D.h>
 #include <AIDA/IProfile1D.h>
 #include <AIDA/IHistogramFactory.h>
-#endif
 
 // C++
 #include <map>
@@ -50,11 +48,14 @@
 
 namespace eutelescope {
 
-	/** @class EUTelProcessorPatRecTriplets Pattern recognition processor
+	/** \class EUTelProcessorPatRecTriplets Pattern recognition processor
 	 * 
-	 *  This processor performs track pattern recognition step that is 
-	 *  necessary for two-step (track-search/fit) tracking, for example GBL.
-	 *  Pattern recognition uses simple equation of motion to estimate possible trajectory. 
+     *  If compiled with MARLIN_USE_AIDA 
+     *  This will do pattern recognition using a collection of LCIO::TRACKERHIT objects.
+     *  Triplets are formed from each arm of the telescope using some cuts DEPENDENT on geometry.
+     *  An initial track prediction is calculated using the 6 hits deemed a track.
+     *  Each DUT hit created is then associated to the closest track for each DUT. No cut applyed here.
+     *  MUST EXCLUDE A SENSOR IF ANOTHER IS SIDE BY SIDE WITH IT. 
 	 */
 	class EUTelProcessorPatRecTriplets : public marlin::Processor {
        
@@ -63,38 +64,26 @@ namespace eutelescope {
     virtual marlin::Processor* newProcessor() {
 			return new EUTelProcessorPatRecTriplets;
 		}
-
+        /// Create object to begin triplet creation. This can be used from any processor.
 		EUTelProcessorPatRecTriplets();
 
-		//Here we define the virtual function from marlin::Processor.
-		/** Called at the begin of the job before anything is read.
-		 * Use to initialize the processor, e.g. book histograms.
-		 */
+        /// Init objects for use in each event. Done once per jobsub.
 		virtual void init();
-
-		/** Called for every run.
-		 */
+        /// Initialise every run
 		virtual void processRunHeader(lcio::LCRunHeader* run);
-
-		/** Called for every event - the working horse.
-		 */
+        /// Run each event.
 		virtual void processEvent(lcio::LCEvent * evt);
-
+        /// Performed at the end of each event.
 		virtual void check(lcio::LCEvent * evt);
-
-		/** Called after data processing for clean up.
-		 */
+        ///called at the end of every run.
 		virtual void end();
 
-    //This is the function declarations.//////////////////////////////////////
-		/** Histogram booking */
+		/// Histogram booking 
 		void bookHistograms();
-
+        ///Place tracks in this function to plot the state parameters.
 		void plotHistos( std::vector<EUTelTrack>&  trackCandidates );
-
+        ///Use in each event to save these tracks to the lcio event.
 		void outputLCIO(LCEvent* evt,std::vector< EUTelTrack >&);
-		//Here we define all things to do with histogramming.
-		#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 		 /** AIDA histogram map
 		 *  Instead of putting several pointers to AIDA histograms as
 		 *  class members, histograms are booked in the init() method and
@@ -105,62 +94,55 @@ namespace eutelescope {
 		 */
 		std::map< std::string, AIDA::IHistogram1D* > _aidaHistoMap1D;
 
-		/** Names of histograms */
 		struct _histName {
 			static std::string _numberTracksCandidatesHistName;
 			static std::string _numberOfHitOnTrackCandidateHistName;
 			static std::string _HitOnTrackCandidateHistName;
 			static std::string _chi2CandidateHistName;
 		};
-		#endif // defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
 
     protected:
-		//This is variables being declared here/////////////////////
-		/** Input TrackerHit collection name */
+		/// Input TrackerHit collection name 
 		std::string _hitInputCollectionName;
 
-		/** Output Tracker collection name */
+		/// Output Tracker collection name 
 		std::string _trackCandidateHitsOutputCollectionName;
 
-		/* Histogram info file name */
+		/// Histogram info file name 
 		std::string _histoInfoFileName;
 
-		/** Track fitter*/
+		/// Track fitter
 		EUTelPatRecTriplets* _trackFitter;
 
+		/// Initial cut to create 2 hits associated.
         std::vector<float> _doubletDistCut;
-        std::vector<float> _tripletSlopeCuts;
-        std::vector<float> _tripletConnectDistCut;
+        /// Connect the central point to these two hits from the doublet.
         std::vector<float> _doubletCenDistCut;
+        /// Connect triplets if under this slope cut comparision. 
+        std::vector<float> _tripletSlopeCuts;
+        ///Connect triplets if extrapolation under this cut in location prediction
+        std::vector<float> _tripletConnectDistCut;
 
-		/** Maximal amount of missing hits per track candidate */
-		/** Number of events processed */
+		/// Number of events processed
 		int _nProcessedRuns;
-		/** Number of runs processed */
+		/// Number of runs processed 
 		int _nProcessedEvents;
-        /** The number of skiped events due to data missing */
+        /// The number of skiped events due to data missing
         unsigned int _dataMissNumber;
-		/** Maximal amount of tracks per event */
-		int _maxNTracks;
-
+        /// Initial displacement to estimate initial incidence at plane 0
 		float _initialDisplacement;        
-
-		/** Maximal distance in XY plane */
-		double _residualsRMax;
-		
-		/** Beam energy in [GeV] */
+		/// Beam energy in [GeV]
 		double _eBeam;
 
-		/** Beam charge in [e] */
+		/// Beam charge in [e] 
 		double _qBeam;
-		
-		EVENT::IntVec _createSeedsFromPlanes;
+	    /// Planes we have excluded.	
 		EVENT::IntVec _excludePlanes;         
-		EVENT::IntVec _planeDimension;
 
 		private:
-		DISALLOW_COPY_AND_ASSIGN(EUTelProcessorPatRecTriplets)   // prevent users from making (default) copies of processors
+        /// prevent users from making (default) copies of processors
+		DISALLOW_COPY_AND_ASSIGN(EUTelProcessorPatRecTriplets)   
      
 	};
 
