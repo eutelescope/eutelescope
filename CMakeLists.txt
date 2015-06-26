@@ -157,7 +157,7 @@ INCLUDE_DIRECTORIES( ./include/alibava )
 INCLUDE_DIRECTORIES( ./pixgeo/include/ )
 
 # definitions to pass to the compiler
-ADD_DEFINITIONS( "-Wall -ansi -pedantic -Wextra" )
+ADD_DEFINITIONS( "-Wall -pedantic -Wextra" )
 ADD_DEFINITIONS( "-Wno-long-long" )
 
 # debuging warnings and switches - only active if  CMAKE_BUILD_TYPE  is set to debug
@@ -241,6 +241,12 @@ install (CODE
 
 )
 
+option(utest "Build all tests." OFF)
+if(utest)
+  add_subdirectory(unittests)
+  ADD_DEFINITIONS( "-std=c++11" )
+endif()
+  
 #  _            _       
 # | |_ ___  ___| |_ ___ 
 # | __/ _ \/ __| __/ __|
