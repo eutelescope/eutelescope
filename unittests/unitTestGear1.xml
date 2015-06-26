@@ -11,60 +11,84 @@
 			<siplanesType type="TelescopeWithoutDUT"/>
 			<siplanesNumber number="8"/>
 			<layers>
-				<!--Eudet-Plane 0 - EUD0 -->
+
+				<!-- Test Plane 0: Arbitrary angles -->
 				<layer>
 					<ladder 	ID="0"
 						 	positionX="0.00"	positionY="0.00"	positionZ="0.00"
-							rotationZY="4.00"	rotationZX="-6.0"	rotationXY="2.0" 
-							sizeX="21.2"		sizeY="10.6"		thickness="0.030"
+							rotationZY="15.00"	rotationZX="-6.0"	rotationXY="2.0" 
+							sizeX="20"		sizeY="10"		thickness="0.10"
 							radLength="93.660734"
 					/>
 					<sensitive 	ID="0"
 							positionX="0.00"	positionY="0.00"	positionZ="0.00" 
-							sizeX="21.2"		sizeY="10.6"		thickness="0.02" 
-							npixelX="1152"		npixelY="576" 
-							pitchX="0.018402778"	pitchY="0.018402778" 	resolution="0.0045" 
-							rotation1="-1.0" 	rotation2="0.0" 
-							rotation3="0.0"		rotation4="-1.0" 
+							sizeX="20"		sizeY="10"		thickness="0.05" 
+							npixelX="1000"		npixelY="500" 
+							pitchX="0.02"		pitchY="0.02" 	resolution="0.0045" 
+							rotation1="1.0" 	rotation2="0.0" 
+							rotation3="0.0"		rotation4="1.0" 
 							radLength="93.660734"
 					/>
 				</layer>
-				<!--Eudet-Plane 1 - EUD1 -->
+				
+				<!-- Test Plane 1: At no specific position, but with rotation 45deg around Y-axis-->
 				<layer>
 					<ladder 	ID="1" 
-							positionX="0.00"	positionY="0.00"	positionZ="83.00" 
-							rotationZY="0.0"	rotationZX="0.0"	rotationXY="0.0" 
-							sizeX="21.2"		sizeY="10.6"		thickness="0.030" 
+							positionX="0.00"	positionY="0.00"	positionZ="10.00" 
+							rotationZY="0.0"	rotationZX="45" 	rotationXY="0.0" 
+							sizeX="20"		sizeY="10"		thickness="0.10" 
 							radLength="93.660734"
 					/>
 					<sensitive 	ID="1" 
-							positionX="0.00"	positionY="0.00"	positionZ="83.0" 
-							sizeX="21.2"		sizeY="10.6"		thickness="0.02" 
-							npixelX="1152"		npixelY="576" 
-							pitchX="0.018402778"	pitchY="0.018402778"	resolution="0.0045" 
-							rotation1="-1.0"	rotation2="0.0" 
-							rotation3="0.0"		rotation4="-1.0" 
+							positionX="0.00"	positionY="0.00"	positionZ="10.0" 
+							sizeX="20"		sizeY="10"		thickness="0.05" 
+							npixelX="1000"		npixelY="500" 
+							pitchX="0.02"		pitchY="0.02"		resolution="0.0045"
+							rotation1="1.0"		rotation2="0.0" 
+							rotation3="0.0"		rotation4="1.0" 
 							radLength="93.660734"
 					/>
 				</layer>
-				<!--Eudet-Plane 2 - EUD2 -->
+				
+				<!-- Test Plane 2: At no specific position, but with rotation 45deg around X-axis-->
 				<layer>
 					<ladder 	ID="2" 
-							positionX="0.00"	positionY="0.00"	positionZ="164.00" 
-							rotationZY="0.0"	rotationZX="0.0"	rotationXY="0.0" 
-							sizeX="21.2"		sizeY="10.6"		thickness="0.030" 
+							positionX="0.00"	positionY="0.00"	positionZ="20.00" 
+							rotationZY="45.0"	rotationZX="0.0"	rotationXY="0.0" 
+							sizeX="20"		sizeY="10"		thickness="0.1" 
 							radLength="93.660734"
 					/>
 					<sensitive 	ID="2" 
-							positionX="0.00"	positionY="0.00"	positionZ="164.00" 
-							sizeX="21.2"		sizeY="10.6"		thickness="0.02"
-							npixelX="1152"		npixelY="576"
-							pitchX="0.018402778" 	pitchY="0.018402778" 	resolution="0.0045"
-							rotation1="-1.0"	rotation2="0.0"
-							rotation3="0.0" 	rotation4="-1.0" 
+							positionX="0.00"	positionY="0.00"	positionZ="20.00" 
+							sizeX="20"		sizeY="10"		thickness="0.05"
+							npixelX="1000"		npixelY="500"
+							pitchX="0.02" 		pitchY="0.02"		resolution="0.0045"
+							rotation1="1.0"		rotation2="0.0"
+							rotation3="0.0" 	rotation4="1.0" 
 							radLength="93.660734"
 					/>
 				</layer>
+				
+				<!-- Test Plane 3: At no specific position, but with rotation 45deg around Z-axis-->
+				<layer>
+					<ladder 	ID="3" 
+							positionX="0.00"	positionY="0.00"	positionZ="30.00" 
+							rotationZY="0.0"	rotationZX="0.0"	rotationXY="45.0" 
+							sizeX="20"		sizeY="10"		thickness="0.1" 
+							radLength="93.660734"
+					/>
+					<sensitive 	ID="3" 
+							positionX="0.00"	positionY="0.00"	positionZ="30.00" 
+							sizeX="20"		sizeY="10"		thickness="0.05"
+							npixelX="1000"		npixelY="500"
+							pitchX="0.02" 		pitchY="0.02"		resolution="0.0045"
+							rotation1="1.0"		rotation2="0.0"
+							rotation3="0.0" 	rotation4="1.0" 
+							radLength="93.660734"
+					/>
+				</layer>
+
+
 				<!--APIX-Plane 1 - FE-I4 SCC91 -->
 				<layer>
 					<ladder 	ID="20"
@@ -101,25 +125,7 @@
 							radLength="93.660734"
 					/>
 				</layer>
-                                <!--Eudet-Plane 3 - EUD3 -->
-                                <layer>
-                                        <ladder         ID="3"
-                                                        positionX="0.00"        positionY="0.00"        positionZ="527.00"
-                                                        rotationZY="0.00"       rotationZX="0.0"        rotationXY="0.0" 
-                                                        sizeX="21.2"            sizeY="10.6"            thickness="0.030"
-                                                        radLength="93.660734"
-                                        />
-                                        <sensitive      ID="3"
-                                                        positionX="0.00"        positionY="0.00"        positionZ="527.00" 
-                                                        sizeX="21.2"            sizeY="10.6"            thickness="0.02" 
-                                                        npixelX="1152"          npixelY="576" 
-                                                        pitchX="0.018402778"    pitchY="0.018402778"    resolution="0.0045" 
-                                                        rotation1="-1.0"        rotation2="0.0" 
-                                                        rotation3="0.0"         rotation4="-1.0" 
-                                                        radLength="93.660734"
-                                        />
-                                </layer>
-                                <!--Eudet-Plane 4 - EUD4 -->
+                                               <!--Eudet-Plane 4 - EUD4 -->
                                 <layer>
                                         <ladder         ID="4"
                                                         positionX="0.00"        positionY="0.00"        positionZ="612.00"
