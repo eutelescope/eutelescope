@@ -1,20 +1,9 @@
 #include "EUTelProcessorPatRecTriplets.h"
-/**  EUTelProcessorPatRecTriplets
- * 
- *  If compiled with MARLIN_USE_AIDA 
- *  This will do pattern recognition using a collection of LCIO::TRACKERHIT objects.
- *  Triplets are formed from each arm of the telescope using some cuts DEPENDENT on geometry.
- *  An initial track prediction is calculated using the 6 hits deemed a track.
- *  Each DUT hit created is then associated to the closest track for each DUT. No cut applyed here.
- *  MUST EXCLUDE A SENSOR IF ANOTHER IS SIDE BY SIDE WITH IT. 
- * 
- */
 ///TO DO: Create new Histograming procedure! 
 
 using namespace eutelescope;
 
 std::string EUTelProcessorPatRecTriplets::_histName::_numberTracksCandidatesHistName = "NumberTracksCandidates";
-std::string EUTelProcessorPatRecTriplets::_histName::_numberOfHitOnTrackCandidateHistName = "NumberOfHitsOnTrackCandidate";
 std::string EUTelProcessorPatRecTriplets::_histName::_HitOnTrackCandidateHistName = "HitsOnTrackCandidate";
 std::string EUTelProcessorPatRecTriplets::_histName::_chi2CandidateHistName = "chi2CandidateHistName";
 
@@ -160,35 +149,27 @@ void EUTelProcessorPatRecTriplets::processEvent(LCEvent* evt)
 		for(int iHit = 0; iHit < hitMeasuredCollection->getNumberOfElements(); iHit++) 
 		{
 			TrackerHitImpl* hit = static_cast<TrackerHitImpl*>(hitMeasuredCollection->getElementAt(iHit));
-                	int sensorID = hitDecoder(static_cast<IMPL::TrackerHitImpl*>(hit))["sensorID"];
+            int sensorID = hitDecoder(static_cast<IMPL::TrackerHitImpl*>(hit))["sensorID"];
 			if ( sensorID >= 0 ) allHitsVec.push_back(hit);
 		}
-		//TODO: this should never happen
 		if(allHitsVec.empty()) throw lcio::Exception("No hits!");
-
-		_trackFitter->setHitsVec(allHitsVec);//Will set data member of class _trackFitter. TO DO: We could do this within findHitsOrdervec.  
-
-		_trackFitter->printHits();//We print the hits to screen for debugging
-//		streamlog_out(DEBUG2) << "Now map hits to planes" << std::endl;
-
-		_trackFitter->setHitsVecPerPlane();//Create map Sensor ID(non excluded)->HitsVec (Using geometry)
-
-//		streamlog_out(DEBUG2) << "Test hits on the planes" << std::endl;
-
-		_trackFitter->testHitsVecPerPlane();//tests the size of the map and does it contain hits
+		_trackFitter->setHitsVec(allHitsVec);  
+		_trackFitter->printHits();
+		_trackFitter->setHitsVecPerPlane();
+		_trackFitter->testHitsVecPerPlane();
 		streamlog_out( DEBUG1 ) << "Trying to find tracks..." << std::endl;
 		std::vector<EUTelTrack> tracks = _trackFitter->getTracks();
 		streamlog_out( DEBUG1 ) << "Trying to find tracks...We have " << tracks.size()<<" tracks"<<std::endl;
 
 		plotHistos(tracks);
-
 		outputLCIO(evt,tracks);
 
 	}
-	catch (DataNotAvailableException e) {//We expect to get some data exceptions but should make sure we do not get under 5% of events with data.
+	catch (DataNotAvailableException e) {
+        ///We expect to get some data exceptions but should make sure we do not get under 5% of events with data.
         _dataMissNumber++;
-        float diff = _nProcessedEvents-_dataMissNumber;
-        float event1 = _nProcessedEvents+1;
+        const float diff = _nProcessedEvents-_dataMissNumber;
+        const float event1 = _nProcessedEvents+1;
         if(diff/event1 < 0.05 and _nProcessedEvents > 100){
             streamlog_out(MESSAGE0) << "The number of events with data is under 5 percent after 100 events"  <<std::endl;
             throw marlin::StopProcessingException( this ) ;
@@ -212,7 +193,7 @@ void EUTelProcessorPatRecTriplets::processEvent(LCEvent* evt)
 void EUTelProcessorPatRecTriplets::outputLCIO(LCEvent* evt, std::vector<EUTelTrack>& tracks)
 {
    if(!tracks.empty()){
-        for(unsigned int i=0 ; i< tracks.size(); i++){
+        for(size_t i=0 ; i< tracks.size(); i++){
             streamlog_out(DEBUG1)<<"Found "<<tracks.size()<<" track for event " << evt->getEventNumber() <<".  Track number  " << i <<std::endl;
             tracks.at(i).print();
         }
@@ -241,7 +222,6 @@ void EUTelProcessorPatRecTriplets::plotHistos( std::vector<EUTelTrack>& trackCan
 			static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_HitOnTrackCandidateHistName ] ) -> fill( sensorID );
 		}
 	streamlog_out( MESSAGE1 ) << "Track hits end:==============" << std::endl;
-	static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_numberOfHitOnTrackCandidateHistName ] ) -> fill(numberOfHits);
 		}
 }
 
@@ -323,30 +303,6 @@ void EUTelProcessorPatRecTriplets::bookHistograms() {
             numberTracksCandidates->setTitle("Number of track candidates;N tracks;N events");
             _aidaHistoMap1D.insert(make_pair(_histName::_chi2CandidateHistName, chi2));
 				//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-				  
-				
-         
-        const int hitsNBin = 10;
-        const double hitsMin = -0.5;
-        const double hitsMax = 9.5;
-        
-        histoInfo = histoMgr->getHistogramInfo(_histName::_numberOfHitOnTrackCandidateHistName);        
-        NBin = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : hitsNBin;
-        XMin = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : hitsMin;
-        XMax = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : hitsMax;
-        
-        // Number of hit per track candidate
-        AIDA::IHistogram1D * numberHitsOnTrackCandidates =
-                marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_numberOfHitOnTrackCandidateHistName, NBin,
-                XMin, XMax);
-
-        if (numberHitsOnTrackCandidates) {
-            numberHitsOnTrackCandidates->setTitle("Number of hits on track candidates;N hits;N tracks");
-            _aidaHistoMap1D.insert(make_pair(_histName::_numberOfHitOnTrackCandidateHistName, numberHitsOnTrackCandidates));
-        } else {
-            streamlog_out(ERROR2) << "Problem booking the " << (_histName::_numberOfHitOnTrackCandidateHistName) << std::endl;
-            streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << std::endl;
-        }
 
         const int    nhitsNBin = 40;
         const double nhitsMin = -0.5;

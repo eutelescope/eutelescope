@@ -1,4 +1,15 @@
 // Version: $Id$
+/**  EUTelProcessorPatRecTriplets
+ * 
+ *  If compiled with MARLIN_USE_AIDA 
+ *  This will do pattern recognition using a collection of LCIO::TRACKERHIT objects.
+ *  Triplets are formed from each arm of the telescope using some cuts DEPENDENT on geometry.
+ *  An initial track prediction is calculated using the 6 hits deemed a track.
+ *  Each DUT hit created is then associated to the closest track for each DUT. No cut applyed here.
+ *  MUST EXCLUDE A SENSOR IF ANOTHER IS SIDE BY SIDE WITH IT. 
+ * 
+ */
+
 #ifndef EUTelProcessorPatRecTriplets_h
 #define EUTelProcessorPatRecTriplets_h 1
 
@@ -96,7 +107,6 @@ namespace eutelescope {
 
 		struct _histName {
 			static std::string _numberTracksCandidatesHistName;
-			static std::string _numberOfHitOnTrackCandidateHistName;
 			static std::string _HitOnTrackCandidateHistName;
 			static std::string _chi2CandidateHistName;
 		};
