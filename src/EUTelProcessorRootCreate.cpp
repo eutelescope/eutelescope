@@ -36,9 +36,8 @@ void EUTelProcessorRootCreate::processEvent(LCEvent * evt){
         EUTelReaderGenericLCIO reader = EUTelReaderGenericLCIO(); streamlog_out(DEBUG2) << "Collection contains data! Continue! line 53" << std::endl;
         streamlog_out(DEBUG2) << "_trackInputCollectionName = " <<_trackInputCollectionName<<std::endl;
         std::vector<EUTelTrack> tracks = reader.getTracks(evt, _trackInputCollectionName);
+        /** LCReader stuff goes here. **/
         for (size_t i = 0; i < tracks.size(); ++i){
-            //HERE GOES ROOT GIBBERISH. I am not sure how you want to do this but from here it is just 
-            //Tested with a print
             tracks.at(i).print();
         }
     }catch (DataNotAvailableException e) {
