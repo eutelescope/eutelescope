@@ -30,12 +30,19 @@ namespace eutelescope {
             std::vector<double> getLCIOOutput();
 			float getArcLengthToNextState() const {return _arcLength;} 
 			TVector3 getPositionGlobal() const; 
-			void getCombinedHitAndStateCovMatrixInLocalFrame(double (&cov)[4]) const;
+			void getHitCov(double (&cov)[4]) const;
 			bool getStateHasHit() const;
+            /// This will get the link between the local and global frames. 
+            /// GBL Fitter expects the link to be give from global to local. 
+            /// MUST INVERT FOR USE!!
+            /**
+             * \param [out] Projection Calculated using the incidence in the global frame and normal of the senso
+             */
+
 			TMatrixD getProjectionMatrix() const;
 			TVector3 getIncidenceUnitMomentumVectorInLocalFrame();
+			TMatrixDSym getHitCov();
 			TMatrixDSym getScatteringVarianceInLocalFrame();
-			TMatrixDSym getScatteringVarianceInLocalFrame(float variance);
 			double getRadFracAir() const ;
 			double getRadFracSensor() const ;
             TVector3 getDirLocal() const; 
@@ -68,7 +75,7 @@ namespace eutelescope {
 			void setPositionLocal(double position[]);
 			void setPositionGlobal(float positionGlobal[]);
             void setPositionGlobal(double positionGlobal[]);
-			void setCombinedHitAndStateCovMatrixInLocalFrame(double cov[4]);
+			void setHitCov(double cov[4]);
 			void setStateUsingCorrection(TVectorD corrections);
 			void setArcLengthToNextState(float arcLength){_arcLength = arcLength;} 
 			void setKinks(TVectorD kinks);

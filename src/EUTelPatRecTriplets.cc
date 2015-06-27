@@ -472,7 +472,7 @@ EUTelTrack EUTelPatRecTriplets::getTrack(std::vector<EUTelHit> hits, std::vector
     std::map<const int ,double>  mapAir;
     double rad =	track.getStates().at(0).computeRadLengthsToEnd(mapSensor, mapAir);
     if(rad == 0){
-    throw(std::string("Radiation length is zero for mimosa tracks."));
+        throw(std::string("Radiation length is zero for mimosa tracks."));
     }
     track.print();
     setRadLengths(track, mapSensor, mapAir, rad);

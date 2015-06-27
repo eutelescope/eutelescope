@@ -11,7 +11,6 @@ _milleResultFileName("millepede.res"),
 _gear_aligned_file("gear-00001-aligned.xml"),
 _nProcessedRuns(0),
 _nProcessedEvents(0),
-_alignmentMode(7),
 _beamQ(-1),
 _eBeam(4),
 _createBinary(true),
@@ -44,18 +43,6 @@ _mEstimatorType()
 
   registerOptionalParameter("xResolutionPlane", "x resolution of planes given in Planes", _SteeringxResolutions, FloatVec());
   registerOptionalParameter("yResolutionPlane", "y resolution of planes given in Planes", _SteeringyResolutions, FloatVec());
-
-    // MILLEPEDE specific parameters
-    registerOptionalParameter("AlignmentMode", "Alignment mode specifies alignment degrees of freedom to be considered\n"
-            "0 - No alignment at all. Simply fit tracks assuming that alignment is correct\n"
-            "1 - Alignment of XY shifts\n"
-            "2 - Alignment of XY shifts + rotations around Z\n"
-            "3 - Alignment of XYZ shifts + rotations around Z\n"
-            "4 - Alignment of XY shifts + rotations around X and Z\n"
-            "5 - Alignment of XY shifts + rotations around Y and Z\n"
-            "6 - Alignment of XY shifts + rotations around X,Y and Z\n"
-            "7 - Alignment of XYZ shifts + rotations around X,Y and Z\n",
-            _alignmentMode, static_cast<int> (7));
 
     registerOptionalParameter("FixedAlignmentPlanesXshift", "Ids of planes for which X shift will be fixed during millepede call", _fixedAlignmentXShfitPlaneIds, IntVec());
     
@@ -168,14 +155,15 @@ void EUTelProcessorGBLAlign::processEvent(LCEvent * evt){
             std::vector<EUTelTrack> tracks = reader.getTracks(evt, _trackCandidatesInputCollectionName);
             for (size_t iTrack = 0; iTrack < tracks.size(); ++iTrack) {
                 _totalTrackCount++;
-                _trackFitter->resetPerTrack(); //Here we reset the label that connects state to GBL point to 1 again. Also we set the list of states->labels to 0
                 EUTelTrack track = tracks.at(iTrack);
-    //			float chi = track.getChi2();
-//				float ndf = static_cast<float>(track.getNdf());
-                std::vector< gbl::GblPoint > pointList;//This is the GBL points. These contain the state information, scattering and alignment jacobian. All the information that the mille binary will get.
-                _trackFitter->setInformationForGBLPointList(track, pointList);//We create all the GBL points with scatterer inbetween both planes. This is identical to creating GBL tracks
-                _trackFitter->setPairMeasurementStateAndPointLabelVec(pointList);
-                _trackFitter->setAlignmentToMeasurementJacobian(pointList); //This is place in GBLFitter since millepede has no idea about states and points. Only GBLFitter know about that
+                std::vector< gbl::GblPoint > pointList;
+                std::map<  unsigned int,unsigned int >  linkGL;
+                std::map< unsigned int, unsigned int >  linkMeas;
+                ///This will create the initial GBL trajectory
+                _trackFitter->getGBLPointsFromTrack(track, pointList, linkGL,linkMeas);
+                ///NOTE: This is the only difference between a GBL track fit and alignment step with respect to GBL
+                /// The rest of the work come from reading this to the gear file and making sure the transformations are correct.
+                _trackFitter->getGloPar(pointList,track, linkMeas); 
                 const gear::BField& B = geo::gGeometry().getMagneticField();
                 const double Bmag = B.at( TVector3(0.,0.,0.) ).r2();
                 gbl::GblTrajectory* traj = 0;

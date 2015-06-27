@@ -144,25 +144,6 @@ TMatrixDSym EUTelState::getScatteringVarianceInLocalFrame(){
 	streamlog_out( DEBUG1 ) << "EUTelState::getScatteringVarianceInLocalFrame(Sensor)----------------------------END" << std::endl;
 	return precisionMatrix;
 }
-TMatrixDSym EUTelState::getScatteringVarianceInLocalFrame(float  variance){
-	streamlog_out( DEBUG1 ) << "EUTelState::getScatteringVarianceInLocalFrame(Scatter)----------------------------BEGIN" << std::endl;
-	streamlog_out(DEBUG5)<<"Variance (AIR Fraction): " <<std::scientific  <<  variance <<std::endl; 
-	float scatPrecision = 1.0 /variance;
-	//We need the track direction in the direction of x/y in the global frame. 
-	//This will be the same as unitMomentum in the x/y direction
-	TVector3 unitMomentumLocalFrame =	getDirGlobal().Unit();
-	//c1 and c2 come from Claus's paper GBL
-	float c1 = 	unitMomentumLocalFrame[0]; float c2 = 	unitMomentumLocalFrame[1];
-	streamlog_out( DEBUG1 ) << "The component in the x/y direction: "<< c1 <<"  "<<c2 << std::endl;
-	TMatrixDSym precisionMatrix(2);
-	float factor = scatPrecision/pow((1-pow(c1,2)-pow(c2,2)),2);
-	streamlog_out( DEBUG1 ) << "The factor: "<< factor << std::endl;
-	precisionMatrix[0][0]=factor*(1-pow(c2,2));precisionMatrix[0][1]=factor*c1*c2;
-  precisionMatrix[1][0]=factor*c1*c2;				precisionMatrix[1][1]=factor*(1-pow(c1,2));
-	streamlog_out( DEBUG1 ) << "EUTelState::getScatteringVarianceInLocalFrame(Scatter)----------------------------END" << std::endl;
-
-	return precisionMatrix;
-}
 TMatrixDSym EUTelState::getStateCov() const {
 
 //	streamlog_out( DEBUG1 ) << "EUTelState::getTrackStateCov()----------------------------BEGIN" << std::endl;
@@ -188,7 +169,7 @@ bool EUTelState::getStateHasHit() const {
     return _stateHasHit;
 }
 
-void EUTelState::getCombinedHitAndStateCovMatrixInLocalFrame( double (&cov)[4] ) const {
+void EUTelState::getHitCov( double (&cov)[4] ) const {
 	cov[0] = _covCombinedMatrix[0];
 	cov[1] = _covCombinedMatrix[1];
 	cov[2] = _covCombinedMatrix[2];
@@ -321,7 +302,7 @@ void EUTelState::setLocalDirGlobalDir(TVector3 dirIn){
 
 }
 
-void EUTelState::setCombinedHitAndStateCovMatrixInLocalFrame(double cov[4]){
+void EUTelState::setHitCov(double cov[4]){
 	_covCombinedMatrix[0] = cov[0];
 	_covCombinedMatrix[1] = cov[1];
 	_covCombinedMatrix[2] = cov[2];

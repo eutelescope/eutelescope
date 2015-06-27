@@ -1,11 +1,17 @@
-//Written by Alexander Morton, Denys Lontkovskyi and Igor Rubinskiy.
-//contact alexander.morton975@gmail.com
+/**  EUTelGBLFitter in action.
+* 
+*  This processor is an example of the use of the GBL fitter with EUTelescope. 
+*  Below shows the initialisation and running of the software. 
+*  Note that each processor has alot of over head to follow just the running of GBL so you can use this in whatever manner you see fit.
+*  More information in the header file of EUTelGBLFitter
+*  
+*/
+
 #ifdef USE_GBL   
 #include "EUTelProcessorGBLTrackFit.h"
 using namespace eutelescope;
-//TO DO:
-//This way of making histograms makes no sense to me. We should have a class that when called will book any histograms in xml file automatically. So you dont have to book in every processor. It should also return a vector of names to access these histograms. I began this but have not finished. Therefore the silly way of doing the residuals
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+///TO DO:
+///This way of making histograms makes no sense to me. We should have a class that when called will book any histograms in xml file automatically. So you dont have to book in every processor. It should also return a vector of names to access these histograms. I began this but have not finished. Therefore the silly way of doing the residuals
 std::string EUTelProcessorGBLTrackFit::_histName::_chi2CandidateHistName = "chi2HistName";
 std::string EUTelProcessorGBLTrackFit::_histName::_fitsuccessHistName = "FitSuccessfulHistName";
 std::string EUTelProcessorGBLTrackFit::_histName::_residGblFitHistNameX0 = "Residual0X";
@@ -44,7 +50,6 @@ std::string EUTelProcessorGBLTrackFit::_histName::_residGblFitHistNameY5p = "Res
 std::string EUTelProcessorGBLTrackFit::_histName::_residGblFitHistNameYDut1p = "ResidualDut1Ypull";
 std::string EUTelProcessorGBLTrackFit::_histName::_residGblFitHistNameYDut2p = "ResidualDut2Ypull";
 
-#endif // defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
 EUTelProcessorGBLTrackFit::EUTelProcessorGBLTrackFit() :
 Processor("EUTelProcessorGBLTrackFit"),
@@ -79,14 +84,16 @@ _mEstimatorType() //This is used by the GBL software for outliers down weighting
 void EUTelProcessorGBLTrackFit::init() {
 	try{
 		streamlog_out(DEBUG2) << "EUTelProcessorGBLTrackFit::init( )---------------------------------------------BEGIN" << std::endl;
-		streamlog_out(DEBUG2) << "Beam charge= " << _beamQ <<" Beam energy= " << _eBeam << std::endl;
-		// Reset counters
 		_nProcessedRuns = 0;
 		_nProcessedEvents = 0;
-		//Create TGeo description from the gear.
 		std::string name("test.root");
 		geo::gGeometry().initializeTGeoDescription(name,false);
-		// Initialize GBL fitter. This is the class that does all the work. Seems to me a good practice for the most part create a class that does the work. Since then you can use the same functions in another processor.
+        /**  EUTelGBLFitter in action.
+         * 
+         *  Below is the variables needed to initialise a GBLFitter object. This will then fit all your tracks in process event. 
+         *  
+         */
+
 		EUTelGBLFitter* Fitter = new EUTelGBLFitter();
 		Fitter->setBeamCharge(_beamQ);
 		Fitter->setBeamEnergy(_eBeam);
@@ -98,9 +105,6 @@ void EUTelProcessorGBLTrackFit::init() {
 		if (!_trackFitter) {
 			throw(lcio::Exception("Could not create instance of fitter class."));
 		}
-		//Create millepede output
-//		_Mille  = new EUTelMillepede(); 
-
 		bookHistograms();//TO DO: Remove this and replace with generic histogram class 
 		streamlog_out(DEBUG2) << "EUTelProcessorGBLTrackFit::init( )---------------------------------------------END" << std::endl;
 	}	
@@ -121,17 +125,7 @@ void EUTelProcessorGBLTrackFit::init() {
 void EUTelProcessorGBLTrackFit::processRunHeader(LCRunHeader * run) {
 	std::auto_ptr<EUTelRunHeaderImpl> header(new EUTelRunHeaderImpl(run));
 	header->addProcessor(type());
-	// this is the right place also to check the geometry ID. This is a
-	// unique number identifying each different geometry used at the
-	// beam test. The same number should be saved in the run header and
- 	// in the xml file. If the numbers are different, warn the user.
-	if (header->getGeoID() == 0)
- 		streamlog_out(WARNING0) << "The geometry ID in the run header is set to zero." << std::endl << "This may mean that the GeoID parameter was not set" << std::endl;
-	if ((unsigned int)header->getGeoID() != geo::gGeometry().getSiPlanesLayoutID()) {  
-		streamlog_out(WARNING5) << "Error during the geometry consistency check: " << std::endl << "The run header says the GeoID is " << header->getGeoID() << std::endl << "The GEAR description says is     " << geo::gGeometry().getSiPlanesLayoutID() << std::endl;
-	}
-	_chi2NdfVec.clear();//TO DO:This is needed to determine if the track is near chi2 of one. Do we need this however?
-    
+	_chi2NdfVec.clear();
 	_nProcessedRuns++;
 }
 
@@ -156,29 +150,34 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent* evt){
             streamlog_out(DEBUG1)<<"Found "<<tracks.size()<<" tracks for event " << evt->getEventNumber() << "  This is track:  " << iTrack <<std::endl;
             track.print();
 			streamlog_out(DEBUG1) << "//////////////////////////////////// " << std::endl;
-			_trackFitter->resetPerTrack(); //Here we reset the label that connects state to GBL point to 1 again. Also we set the list of states->labels to 0
-			_trackFitter->testTrack(track);//Check the track has states and hits  
+			_trackFitter->testTrack(track);  
+            /// Below we create each GBL track with a simple one line function
+            /**
+             *  This function is described in GBLFitter. 
+             *  It creates the initial trajectory ready for fit.
+             *  It also related the sensorID to the correct GBL labels to collect the corrections and residuals afterwards.
+             * 
+             */
 			std::vector< gbl::GblPoint > pointList;
-			_trackFitter->setInformationForGBLPointList(track, pointList);//Here we describe the whole setup. Geometry, scattering, data...
+            std::map<  unsigned int,unsigned int >  linkGL;
+            std::map< unsigned int, unsigned int >  linkMeas;
+            ///This will create the initial GBL trajectory
+			_trackFitter->getGBLPointsFromTrack(track, pointList, linkGL,linkMeas);
 			const gear::BField& B = geo::gGeometry().getMagneticField();//We need this to determine if we should fit a curve or a straight line.
 			const double Bmag = B.at( TVector3(0.,0.,0.) ).r2();
-			_trackFitter->setPairMeasurementStateAndPointLabelVec(pointList);//This will create a link between the states that have a hit associated with them and the GBL label that is associated with the state.
 			gbl::GblTrajectory* traj = 0;
-			//Here we create the trajectory from the points created by setInformationForGBLPointList. This will take the points and propagation jacobian and split this into smaller matrices to describe the problem in terms of offsets. Here is the difference between GBL and other fitting algorithms.  
 			if ( Bmag < 1.E-6 ) {
 				traj = new gbl::GblTrajectory( pointList, false ); 
 			}else {
 				traj = new gbl::GblTrajectory( pointList, true );
 			}
-			_trackFitter->setPairAnyStateAndPointLabelVec(traj);//This will create a link between any state and it's GBL point label. 
 			double  chi2=0; 
 			int ndf=0;
 			int ierr=0;
-			_trackFitter->computeTrajectoryAndFit(traj, &chi2,&ndf, ierr);//This will do the minimisation of the chi2 and produce the most probable trajectory.
+            ///Here the fit takes place. All corrections associated with trajectory.
+			_trackFitter->computeTrajectoryAndFit(traj, &chi2,&ndf, ierr);
 			if(ierr == 0 ){
 				streamlog_out(DEBUG5) << "Ierr is: " << ierr << " Entering loop to update track information " << std::endl;
-				//If the fit succeeded then write into the binary file.
-//				traj->milleOut(*(_Mille->_milleGBL));
 				static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_chi2CandidateHistName ] ) -> fill( (chi2)/(ndf));
 				static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_fitsuccessHistName ] ) -> fill(1.0);
 				if(chi2 ==0 or ndf ==0){
@@ -187,12 +186,14 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent* evt){
 				track.setChi2(chi2);
 				track.setNdf(ndf);
 				_chi2NdfVec.push_back(chi2/static_cast<float>(ndf));
-				std::map<int, std::vector<double> >  mapSensorIDToCorrectionVec;//This is not used now. However it maybe useful to be able to access the corrections that GBL makes to the original track. Since if this is too large then GBL may give th wrong trajectory. Since all the equations are only to first order. 
-				_trackFitter->updateTrackFromGBLTrajectory(traj,track,mapSensorIDToCorrectionVec);
+				std::map<int, std::vector<double> >  mapSensorIDToCorrectionVec; 
+                ///Here use the fitter to collect the corrections to the state/track.
+				_trackFitter->getCorr(traj,track, linkGL, mapSensorIDToCorrectionVec);
 				std::map< int, std::map< float, float > >  SensorResidual; 
 				std::map< int, std::map< float, float > >  SensorResidualError; 
-				std::map< int, int> planes;
-				_trackFitter->getResidualOfTrackandHits(traj, pointList,track, SensorResidual, SensorResidualError, planes);
+                ///Here collect the residuals and calcuated errors.
+				_trackFitter->getResLoc(traj,linkMeas, pointList, SensorResidual, SensorResidualError);
+				std::map< int, int> planes = geo::gGeometry().sensorZOrdertoIDs(); 
 				if(chi2/static_cast<float>(ndf) < 5){
 				  plotResidual(SensorResidual,SensorResidualError, planes);//TO DO: Need to fix how we histogram.
 				}
@@ -321,7 +322,6 @@ void EUTelProcessorGBLTrackFit::end() {
 	{
 		total= total + _chi2NdfVec.at(i);
 	}
-	std::vector<double> correctionTotal = _trackFitter->getCorrectionsTotal();
   float average = total/sizeFittedTracks;
 	streamlog_out(MESSAGE9) << "The number of GBL tracks "<< _chi2NdfVec.size() <<" Number of original candidates "<< _nTrackCand <<std::endl;
 	streamlog_out(MESSAGE9) << "This is the average chi2 -"<< average <<std::endl;
