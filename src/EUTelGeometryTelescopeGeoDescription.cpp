@@ -483,7 +483,7 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
 	rotRef4 = siPlaneRotation4( SensorId );
 
 	//We must check that the input is correct. Since this is a combination of initial rotations and reflections the determinate must be 1 or -1
-	float	determinant = rotRef1*rotRef4 - rotRef2*rotRef3  ;
+	float determinant = rotRef1*rotRef4 - rotRef2*rotRef3  ;
 	if(determinant==1 or determinant==-1){ 
 		streamlog_out(DEBUG5) << "SensorID: " << SensorId << ". Determinant =  " <<determinant <<"  This is the correct determinate for this transformation." << std::endl;   
 	}else{
@@ -508,9 +508,8 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
 	//X rotations 
 	//Y rotations
 	TGeoRotation* pMatrixRotRefCombined = new TGeoRotation();
-	//We have to ensure that we retain a right handed coordinate system, i.e. if we only flip the x or y axis, we have to also flip the z-axis. If we flip both we have to flip twice.
-	double signZ = sign<double>(rotRef1)*sign<double>(rotRef2)*sign<double>(rotRef3)*sign<double>(rotRef4);
-	double integerRotationsAndReflections[9]={rotRef1,rotRef2,0,rotRef3,rotRef4,0,0,0,signZ};
+	//We have to ensure that we retain a right handed coordinate system, i.e. if we only flip the x or y axis, we have to also flip the z-axis. If we flip both we have to flip twice.	
+	double integerRotationsAndReflections[9]={rotRef1,rotRef2,0,rotRef3,rotRef4,0,0,0, determinant};
 	pMatrixRotRefCombined->SetMatrix(integerRotationsAndReflections);
 	pMatrixRotRefCombined->RotateZ(gamma);//Z Rotation (degrees)//This will again rotate a vector around z axis usign the right hand rule.  
 	pMatrixRotRefCombined->RotateX(alpha);//X Rotations (degrees)//This will rotate a vector usign the right hand rule round the x-axis
