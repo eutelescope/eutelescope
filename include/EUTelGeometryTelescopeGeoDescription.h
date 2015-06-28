@@ -53,6 +53,12 @@
 namespace eutelescope {
 namespace geo{
 
+template <typename T>
+T sign(T t) { 
+	if(t < 0) return  T(-1);
+	return  T(1);
+}
+
 struct EUTelPlane
 {
 	/**Spatial location*/

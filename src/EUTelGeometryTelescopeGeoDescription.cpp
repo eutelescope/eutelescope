@@ -507,8 +507,10 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
 	//Z rotations specified by in degrees.
 	//X rotations 
 	//Y rotations
-	TGeoRotation * pMatrixRotRefCombined = new TGeoRotation();
-	double integerRotationsAndReflections[9]={rotRef1,rotRef2,0,rotRef3,rotRef4,0,0,0,1};
+	TGeoRotation* pMatrixRotRefCombined = new TGeoRotation();
+	//We have to ensure that we retain a right handed coordinate system, i.e. if we only flip the x or y axis, we have to also flip the z-axis. If we flip both we have to flip twice.
+	double signZ = sign<double>(rotRef1)*sign<double>(rotRef2)*sign<double>(rotRef3)*sign<double>(rotRef4);
+	double integerRotationsAndReflections[9]={rotRef1,rotRef2,0,rotRef3,rotRef4,0,0,0,signZ};
 	pMatrixRotRefCombined->SetMatrix(integerRotationsAndReflections);
 	pMatrixRotRefCombined->RotateZ(gamma);//Z Rotation (degrees)//This will again rotate a vector around z axis usign the right hand rule.  
 	pMatrixRotRefCombined->RotateX(alpha);//X Rotations (degrees)//This will rotate a vector usign the right hand rule round the x-axis
