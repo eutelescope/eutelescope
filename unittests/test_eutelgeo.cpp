@@ -1,10 +1,17 @@
+//STL
 #include <iostream>
 #include <random>
 #include <chrono>
 #include <cmath>
 
+//Eigen
+#include <Eigen/Core>
+#include <Eigen/Dense>
+
+//GTest
 #include "gtest/gtest.h"
 
+//EUTelescope
 #include "eutelgeotest.h"
 
 #define PI 3.14159265
@@ -49,6 +56,17 @@ protected:
 		rVec[1] = 0; 
 		rVec[2] = 0;
 
+		xVecN[0] = 1; 
+		xVecN[1] = 0; 
+		xVecN[2] = 0;
+
+		yVecN[0] = 0; 
+		yVecN[1] = 1;
+		yVecN[2] = 0;
+
+		zVecN[0] = 0; 
+		zVecN[1] = 0; 
+		zVecN[2] = 1; 
 		}
 
 	virtual void TearDown() {
@@ -63,11 +81,21 @@ protected:
 	double xVec [3];
 	double yVec [3];
 	double zVec [3];
+	
+	double xVecN [3];
+	double yVecN [3];
+	double zVecN [3];
+	
 	double rVec [3];
 };
 
 // Test case must be called the class above
 // Also note: use TEST_F instead of TEST to access the test fixture (from google test primer)
+
+/** This test will take randomly generated vectors, transform them into the global frame
+ *  and back into the local one again. This must return the original vector again. It is
+ *  done for every plance 100 times.
+ */ 
 TEST_F(eutelgeotestTest, RandomBackAndForthVectorTrans) {
 
 	auto sensorIdVec = eugeo::gGeometry().sensorIDsVec();
@@ -95,8 +123,10 @@ TEST_F(eutelgeotestTest, RandomBackAndForthVectorTrans) {
 		}	
 	}
 }
-
-TEST_F(eutelgeotestTest, RandomBackAndForthiPointTrans) {
+/** The same as the RandomBackAndForthVectorTrans test. but in this case we transform points
+ *  and not vectors.
+ */
+TEST_F(eutelgeotestTest, RandomBackAndForthPointTrans) {
 
 	auto sensorIdVec = eugeo::gGeometry().sensorIDsVec();
 
@@ -188,4 +218,34 @@ TEST_F(eutelgeotestTest, SpecificVectorTransZAxis) {
 	ASSERT_NEAR(rVec[1], zVec[1], abs_err);
 	ASSERT_NEAR(rVec[2], zVec[2], abs_err);	
 }
+
+TEST_F(eutelgeotestTest, NormalVectorTest) {
+
+	double const abs_err = 1e-8;
+	
+	auto sensorIDVec = eugeo::gGeometry().sensorIDsVec();
+	for( auto sensorID: sensorIDVec ) {
+		eugeo::gGeometry().local2MasterVec(sensorID, xVecN, rVec);
+		Eigen::Vector3d xV( rVec[0], rVec[1], rVec[2] );
+		
+		eugeo::gGeometry().local2MasterVec(sensorID, yVecN, rVec);
+		Eigen::Vector3d yV( rVec[0], rVec[1], rVec[2] );
+
+		eugeo::gGeometry().local2MasterVec(sensorID, zVecN, rVec);
+		Eigen::Vector3d zV( rVec[0], rVec[1], rVec[2] );
+		
+		Eigen::Vector3d zVComp = xV.cross(yV);
+
+		TVector3 normGeoFW = eugeo::gGeometry().siPlaneNormal( sensorID );
+
+		Eigen::Vector3d zVGeoFW ( normGeoFW[0], normGeoFW[1], normGeoFW[2] );
+		std::cout << "X: " << eugeo::gGeometry().siPlaneXAxis( sensorID )[0] << " Y: " << eugeo::gGeometry().siPlaneYAxis( sensorID )[1] << std::endl;
+		std::cout << sensorID << std::endl;
+		for(size_t i = 0; i < 3; i++) {
+			ASSERT_NEAR(zVGeoFW[i], zVComp[i], abs_err);	
+			ASSERT_NEAR(zVGeoFW[i], zV[i], abs_err);
+			ASSERT_NEAR(zVGeoFW.norm(), 1, abs_err);
+		}
+	}
+}	
 // }  // namespace - could surround eutelgeotestTest in a namespace
