@@ -49,12 +49,10 @@ _geoID(0),
 _formattedRunNumber("0"),
 _runNumber(-1),
 _rawDataCollectionName("rawdata"),
+_rawChipHeaderCollectionName("chipheader"),
 _chipSelection(),
-_tiltAngle(0.0),
-_sensorTemperature(111.111),
 _startEventNum(-1),
 _stopEventNum(-1),
-_readChannelsReverse(false),
 _storeHeaderPedestalNoise(false)
 {
 	
@@ -73,20 +71,16 @@ _storeHeaderPedestalNoise(false)
 	registerOutputCollection (LCIO::TRACKERDATA, "RawDataCollectionName",
 									  "Name of the collection",
 									  _rawDataCollectionName, string("rawdata") );
+
+    registerOutputCollection (LCIO::TRACKERDATA, "RawChipHeaderCollectionName",
+                              "Name of the collection",
+                              _rawChipHeaderCollectionName, string("chipheader") );
 	
 	
 	// now optional parameters
-	registerOptionalParameter("ReadChannelsReverse", "Alibava read channels from right to left if you want to revert this i.e. make it from left to right set this parameter to true. CAUTION: This will be applied first!",
-									  _readChannelsReverse, bool(false) );
 	
 	registerOptionalParameter("ChipSelection", "Selection of chip that you want to store data from. Chip numbers start from 0. If not set, all data (i.e. chip 0 and 1) will be stored",
 									  _chipSelection, EVENT::IntVec() );
-	
-	registerOptionalParameter("TiltAngle", "The tilt angle of the sensors",
-									  _tiltAngle, float(0.0) );
-	
-	registerOptionalParameter("SensorTemperature", "The temperature of the sensors",
-									  _sensorTemperature, float(111.111) );
 	
 	registerOptionalParameter("StartEventNum", "The event number that AlibavaConverter should start storing. Default value is -1, in this case it will store every event",
 									  _startEventNum, int(-1) );
@@ -106,13 +100,7 @@ AlibavaConverter * AlibavaConverter::newProcessor () {
 
 
 void AlibavaConverter::init () {
-	
-	// print out warning if _readChannelsReverse
-	if (_readChannelsReverse) {
-		streamlog_out( WARNING5 )<< "You select ReadChannelsReverse="<<_readChannelsReverse<<endl;
-		streamlog_out( WARNING5 )<<"This will be applied before chip selection and channel masking!"<<endl;
-	}
-	
+		
 	checkIfChipSelectionIsValid();
 	
 	
@@ -226,8 +214,6 @@ void AlibavaConverter::readDataSource(int /* numEvents */) {
 		runHeader->setHeaderNoise(headerNoise);
 	}
 	runHeader->setRunNumber(_runNumber);
-	runHeader->setTiltAngle(_tiltAngle);
-	runHeader->setSensorTemperature(_sensorTemperature);
 	runHeader->setChipSelection(_chipSelection);
 	
 	// get number of events from header
@@ -290,30 +276,52 @@ void AlibavaConverter::readDataSource(int /* numEvents */) {
 		delay = int(value) >> 16;
 		charge = charge * 1024;
 		
-		unsigned int tdcTime;
+        unsigned int clock; // timestamp
+        unsigned int tdcTime;
 		unsigned short temp;  // temperature measured on Daughter board
-		//  ifile->read((char *)&_t0, sizeof(time_t));
-		
+
+        
+        // Thomas 13.05.2015: Firmware 3 introduces the clock to the header!
+        // for now this is not stored...
+        if (version==3)
+        {
+            infile.read(reinterpret_cast< char *> (&clock), sizeof(unsigned int));
+        }
+
 		infile.read(reinterpret_cast< char *> (&tdcTime), sizeof(unsigned int));
 		infile.read(reinterpret_cast< char *> (&temp), sizeof(unsigned short));
 		
 		
-		unsigned short chipHeader[2][16];
+		unsigned short chipHeader[2][ALIBAVA::CHIPHEADERLENGTH];
 		short tmp_short;
-		FloatVec all_data;
+		// vector for data
+        FloatVec all_data;
 		all_data.reserve(ALIBAVA::NOOFCHIPS*ALIBAVA::NOOFCHANNELS);
+        // vector for chip header
+        FloatVec all_chipheaders;
+        all_chipheaders.reserve(ALIBAVA::NOOFCHIPS*ALIBAVA::CHIPHEADERLENGTH);
+        
+        // iterate over number of chips
 		FloatVec::iterator it;
 		for (int ichip=0; ichip<ALIBAVA::NOOFCHIPS; ichip++)
 		{
-			infile.read(reinterpret_cast< char *> (chipHeader[ichip]), 16*sizeof(unsigned short));
+			infile.read(reinterpret_cast< char *> (chipHeader[ichip]), ALIBAVA::CHIPHEADERLENGTH*sizeof(unsigned short));
+            
+            // store chip header in all_chipheaders vector
+            streamlog_out (DEBUG0) << "chip " << ichip << " header: " ;
+            for (int j = 0; j<ALIBAVA::CHIPHEADERLENGTH; j++)
+            {
+                streamlog_out (DEBUG0) << " " << chipHeader[ichip][j];
+                all_chipheaders.push_back(float(chipHeader[ichip][j]));
+            }
+            streamlog_out (DEBUG0) << endl;
+
+            
+            // store data in all_data vector
 			for (int ichan=0; ichan<ALIBAVA::NOOFCHANNELS; ichan++) {
 				infile.read(reinterpret_cast< char *> (&tmp_short), sizeof(unsigned short));
-				if (_readChannelsReverse) {
-					it = all_data.begin();
-					all_data.insert(it, float(tmp_short));
-				}
-				else
-					all_data.push_back(float(tmp_short));
+                
+                all_data.push_back(float(tmp_short));
 			}
 		}
 		
@@ -329,6 +337,9 @@ void AlibavaConverter::readDataSource(int /* numEvents */) {
 		anEvent->setEventType(eventTypeCode);
 		anEvent->setEventSize(eventSize);
 		anEvent->setEventValue(value);
+        if (version==3){
+            anEvent->setEventClock(clock);
+        }
 		anEvent->setEventTime(tdc_time(tdcTime));
 		anEvent->setEventTemp(get_temperature(temp));
 		anEvent->setCalCharge(charge);
@@ -336,25 +347,43 @@ void AlibavaConverter::readDataSource(int /* numEvents */) {
 		anEvent->unmaskEvent();
 		
 		
-		// creating LCCollection
+		// creating LCCollection for raw data
 		LCCollectionVec* rawDataCollection = new LCCollectionVec(LCIO::TRACKERDATA);
 		CellIDEncoder<TrackerDataImpl> chipIDEncoder(ALIBAVA::ALIBAVADATA_ENCODE,rawDataCollection);
-		
+ 
+        // creating LCCollection for raw chip header
+        LCCollectionVec* rawChipHeaderCollection = new LCCollectionVec(LCIO::TRACKERDATA);
+        CellIDEncoder<TrackerDataImpl> chipIDEncoder2(ALIBAVA::ALIBAVADATA_ENCODE,rawChipHeaderCollection);
+        
 		// for this to work the _chipselection has to be sorted in ascending order!!!
 		for (unsigned int ichip=0; ichip<_chipSelection.size(); ichip++) {
+            
+            // store raw data
 			FloatVec chipdata;
 			chipdata.clear();
-			
+			// separate data for each chip
 			chipdata.insert(chipdata.end(), all_data.begin()+_chipSelection[ichip]*ALIBAVA::NOOFCHANNELS, all_data.begin()+(_chipSelection[ichip]+1)*ALIBAVA::NOOFCHANNELS);
 			TrackerDataImpl * arawdata = new TrackerDataImpl();
 			arawdata->setChargeValues(chipdata);
 			chipIDEncoder[ALIBAVA::ALIBAVADATA_ENCODE_CHIPNUM] = _chipSelection[ichip];
 			chipIDEncoder.setCellID(arawdata);
 			rawDataCollection->push_back(arawdata);
+            
+            // store chip header
+            FloatVec chipHeader_vec;
+            chipHeader_vec.clear();
+            //separate chip headers for each chip
+            chipHeader_vec.insert(chipHeader_vec.end(), all_chipheaders.begin()+_chipSelection[ichip]*ALIBAVA::CHIPHEADERLENGTH, all_chipheaders.begin()+(_chipSelection[ichip]+1)*ALIBAVA::CHIPHEADERLENGTH);
+            TrackerDataImpl * achipheader = new TrackerDataImpl();
+            achipheader->setChargeValues(chipHeader_vec);
+            chipIDEncoder2[ALIBAVA::ALIBAVADATA_ENCODE_CHIPNUM] = _chipSelection[ichip];
+            chipIDEncoder2.setCellID(achipheader);
+            rawChipHeaderCollection->push_back(achipheader);
+            
 		}
 		
 		anEvent->addCollection(rawDataCollection, _rawDataCollectionName);
-		
+        anEvent->addCollection(rawChipHeaderCollection,_rawChipHeaderCollectionName);
 		
 		if (_startEventNum!=-1 && eventCounter<_startEventNum) {
 			streamlog_out( MESSAGE5 )<<" Skipping event "<<eventCounter<<". StartEventNum is set to "<<_startEventNum<<endl;

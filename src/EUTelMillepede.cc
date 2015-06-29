@@ -6,118 +6,47 @@ using namespace marlin;
 using namespace eutelescope;
 
 
-//TO DO: The last alignment mode does not work. I.e alignment mode 7. This is not a big deal since we will never align all degrees of freedom in one go.
 namespace eutelescope {
 
-	//This constructor is useful for running the binary files execution
-	EUTelMillepede::EUTelMillepede() : 
-	_milleGBL(NULL),
-	_alignmentMode(Utility::noAlignment),
-	_jacobian(5,5),
-	_globalLabels(5)
- 	{
-	FillMilleParametersLabels();
-	}
-
-	//This constructor useful for mille binary output part
-	EUTelMillepede::EUTelMillepede(int alignmentMode) :
-	_milleGBL(NULL),
-	_alignmentMode(Utility::noAlignment),
-	_jacobian(5,5),
-	_globalLabels(5)
-	{
-	SetAlignmentMode(alignmentMode);
+//This constructor useful for mille binary output part
+EUTelMillepede::EUTelMillepede() :
+_milleGBL(NULL),
+_jacobian(2,6),
+_globalLabels(6),
+_milleSteeringFilename("steer.txt"),
+_milleSteerNameOldFormat("steer-iteration-0.txt"),
+_iteration(1)
+{
 	FillMilleParametersLabels();
 	CreateBinary();
-	}
-
-	EUTelMillepede::~EUTelMillepede(){}
-
-	//Depending on the number alignmentMode(This tell us what shift/rotation we can do), we create the alignment jacobain here with the correct dimensions. 
-	//Furthermore we determine the size of the labels per plane.
-	//Note this is used for all sensors but we can still fix some alignement parameters independent of this.
-	void EUTelMillepede::SetAlignmentMode(int alignmentMode){
-
-		//This is important since we need to know how millepede numbers theres axis. I think this is the reason for this step. Also set the matrix size //////BEGIN        
-		if (alignmentMode==0) {
-			streamlog_out(WARNING1) << "No alignment was chosen "<< std::endl;	
-			_alignmentMode = Utility::noAlignment;
-		} else if (alignmentMode==1) {
-    	_alignmentMode = Utility::XYShift;
-			_globalLabels.resize(2);
-    	_jacobian.ResizeTo(2, 2);
-    } else if (alignmentMode==2) {
-    	_alignmentMode = Utility::XYShiftXYRot;
-  		_globalLabels.resize(3);
-    	_jacobian.ResizeTo(2, 3);
- 
-    } else if (alignmentMode==3) {
-    	_alignmentMode = Utility::XYZShiftXYRot;
-  	_globalLabels.resize(4);
-    _jacobian.ResizeTo(2, 4);
-
-   	} else if (alignmentMode==4) {
-    	_alignmentMode = Utility::XYShiftYZRotXYRot;
-		_globalLabels.resize(4);
-		_jacobian.ResizeTo(2, 4);
-
-   	} else if (alignmentMode==5) {
-			_alignmentMode = Utility::XYShiftXZRotXYRot;
-		_globalLabels.resize(4);
-		_jacobian.ResizeTo(2, 4);
-
-    } else if (alignmentMode==6) {
-    	_alignmentMode = Utility::XYShiftXZRotYZRotXYRot;
-		_globalLabels.resize(5);
-		_jacobian.ResizeTo(2, 5);
-
-    } else if (alignmentMode==7) {
-    	_alignmentMode = Utility::XYZShiftXZRotYZRotXYRot;
-		_globalLabels.resize(6);
- 		_jacobian.ResizeTo(2, 6);
-
-    }else {
-			throw(lcio::Exception("Alignment mode was not recognized."));
-    }
-  	_jacobian.Zero();
-		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////END	
 }
+
+EUTelMillepede::~EUTelMillepede(){}
 
 //Note here we label sensors and every alignment degree of freedom uniquely. Note that even if the sensor is to remain fixed. The fixing is done latter.
 void EUTelMillepede::FillMilleParametersLabels() {
 
-    int currentLabel = 0;
+    int currentLabel = 1;
     const IntVec sensorIDsVec = geo::gGeometry().sensorIDsVec();
-    IntVec::const_iterator itr;
-    for( itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {//sensor 0 to 5 will have numbers 1 to 6 for this x shift
-        _xShiftsMap.insert( make_pair(*itr, ++currentLabel) );
-    }
-    for( itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {// sensor 0 to 5 will have numbers 7 to 12 for this y shift
-        _yShiftsMap.insert( make_pair(*itr, ++currentLabel) );
-    }
-    for( itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {// sensor 0 to 5 will have numbers 13 to 18 for this z shift
-        _zShiftsMap.insert( make_pair(*itr, ++currentLabel) );
-    }
-    for( itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {// sensor 0 to 5 will have numbers 19 to 24  for this x rotation 
-        _xRotationsMap.insert( make_pair(*itr, ++currentLabel) );
-    }
-    for( itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {// sensor 0 to 5 will have numbers 25 to 30  for this y rotation 
-        _yRotationsMap.insert( make_pair(*itr, ++currentLabel) );
-    }
-    for( itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {// sensor 0 to 5 will have numbers 31 to 36  for this z rotation 
-        _zRotationsMap.insert( make_pair(*itr, ++currentLabel) );
+    size_t noOfSensors = sensorIDsVec.size(); 
+
+    for( IntVec::const_iterator itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {//sensor 0 to 5 will have numbers 1 to 6 for this x shift
+        _xShiftsMap.insert( make_pair(*itr, currentLabel) );
+        _yShiftsMap.insert( make_pair(*itr, noOfSensors+currentLabel) );
+        _zShiftsMap.insert( make_pair(*itr, 2*noOfSensors+currentLabel) );
+        _xRotationsMap.insert( make_pair(*itr, 3*noOfSensors+currentLabel) );
+        _yRotationsMap.insert( make_pair(*itr, 4*noOfSensors+currentLabel) );
+        _zRotationsMap.insert( make_pair(*itr, 5*noOfSensors+currentLabel) );
+	currentLabel++;
     }
 }
 //This function calculates the alignment jacobain in the local frame of the telescope. Using the state parameters
 void EUTelMillepede::computeAlignmentToMeasurementJacobian( EUTelState &state){
-	if(_alignmentMode == Utility::noAlignment){
-		throw(lcio::Exception("No alignment has been chosen.")); 	
-	}
 	streamlog_out(DEBUG3) <<"State we arew about to add: "<< state.getLocation()<<endl; 
 	state.print();
-	float TxLocal =  state.getIntersectionLocalXZ();
-	float TyLocal =  state.getIntersectionLocalYZ();
-	float* localpos = state.getPosition();
+	float TxLocal =  state.getMomLocalX()/state.getMomLocalZ();
+	float TyLocal =  state.getMomLocalY()/state.getMomLocalZ();
+	const float* localpos = state.getPosition();
 	streamlog_out( DEBUG0 ) << "This is px/pz, py/pz (local) "<< TxLocal <<","<< TyLocal << std::endl;
 	streamlog_out( DEBUG0 ) << "Local frame position "<< *localpos<<","<<*(localpos+1)<<","<<*(localpos+2) << std::endl;
 	computeAlignmentToMeasurementJacobian( *localpos,*(localpos+1), TxLocal, TyLocal);
@@ -137,67 +66,18 @@ void EUTelMillepede::computeAlignmentToMeasurementJacobian( float x,float y, flo
 	streamlog_out(DEBUG0) << "This is the empty Alignment Jacobian" << std::endl;
 	streamlog_message( DEBUG0, _jacobian.Print();, std::endl; );			
 		
-	//////////////////////////////////////Moving the sensor in x and y. Obviously if the sensor move right the hit will appear to move left. Always create this!!!! BEGIN
 	_jacobian[0][0] = -1.0; // dxh/dxs      dxh => change in hit position         dxs => Change in sensor position
-	_jacobian[0][1] = 0.0; // dxh/dys     
 	_jacobian[1][0] = 0.0; // dyh/dxs
+	_jacobian[0][1] = 0.0; // dxh/dys     
 	_jacobian[1][1] = -1.0; // dyh/dys
-	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////END
-
-
-	//////////////////////////////////////////////////////////////Rotations around the z axis of sensor. Only create this if you want rotations around z. BEGIN
-	if (_alignmentMode == Utility::XYShiftXYRot
-                || _alignmentMode == Utility::XYZShiftXYRot
-                || _alignmentMode == Utility::XYShiftXZRotXYRot
-                || _alignmentMode == Utility::XYShiftYZRotXYRot
-                || _alignmentMode == Utility::XYShiftXZRotYZRotXYRot
-                || _alignmentMode == Utility::XYZShiftXZRotYZRotXYRot) {
-		_jacobian[0][2] =  y; // dxh/rotzs   rotzs => rotation of sensor around z axis
-		_jacobian[1][2] =  -x; // dyh/rotzs
-	}
-	///////////////////////////////////////////////////////////////////////////////////////////////////////END
-
-	///////////////////////////////////////////////////Moving the sensor in the z axis. Only create this if you want shifts in z BEGIN
-	if (_alignmentMode == Utility::XYZShiftXYRot
-                || _alignmentMode == Utility::XYZShiftXZRotYZRotXYRot) {
-  	_jacobian[0][3] =   slopeXvsZ; // dxh/dzs
-    _jacobian[1][3] =   slopeYvsZ; // dyh/dzs
-  }
-	///////////////////////////////////////////////////////////////////////////////////////////END
-
-		
-	///////////////////////////////////////////////////////////////Rotations around x and y axis. Only do this if you want to move everything. WHY NOT ALSO PARTIAL SHIFTS?????? BEGIN.
-	if (_alignmentMode == Utility::XYZShiftXZRotYZRotXYRot) {
-  	_jacobian[0][4] =   x*slopeXvsZ; // dxh/rotys
-    _jacobian[1][4] =   x*slopeYvsZ; // dyh/rotys
-    _jacobian[0][5] =  y*slopeXvsZ; // dxh/rotxs          
-    _jacobian[1][5] =  y*slopeYvsZ; // dyh/rotxs         
-  }
-	///////////////////////////////////////////////////////////////////////////////////END
-
-
-//This part is if there is only partial alignment. Therefore you need to overwrite some parts of the full size matrix we have just filled BEGIN
-	/////////////////////////////rotation around y axis BEGIN
-	if (_alignmentMode == Utility::XYShiftXZRotXYRot) {
-		_jacobian[0][3] = x*slopeXvsZ; // dxh/rotys
-   	_jacobian[1][3] = x*slopeYvsZ; // dyh/rotys
-  }
-	///////////////////////////////////////////////////////////////////////Rotation around x axis BEGIN
-	if (_alignmentMode == Utility::XYShiftYZRotXYRot) {
-  	_jacobian[0][3] = y*slopeXvsZ; // dxh/rotxs  //Note if changed  the signs here since they were wrong I think. Should match smae calculation above
-    _jacobian[1][3] = y*slopeYvsZ; // dyh/rotxs  
-  }
-	///////////////////////////////////////////////////////////////////////////////////////////END
-
- 	///////////////This does all rotations but not z shift////////////////////////BEGIN
-	if (_alignmentMode == Utility::XYShiftXZRotYZRotXYRot) {
-		_jacobian[0][3] =  x*slopeXvsZ; // dxh/rotys
-		_jacobian[1][3] =  x*slopeYvsZ; // dyh/rotys
-		_jacobian[0][4] = y*slopeXvsZ; // dxh/rotxs
-		_jacobian[1][4] = y*slopeYvsZ; // dyh/rotxs
-  }
-	/////////////////////////////////////////////////////////////////////////////END
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////END OF PARTIAL MATRIX FILL		
+	_jacobian[0][2] = y; // dxh/rotzs   
+	_jacobian[1][2] = -x; // dyh/rotzs
+	_jacobian[0][3] = slopeXvsZ; // dxh/dzs
+	_jacobian[1][3] = slopeYvsZ; // dyh/dzs
+	_jacobian[0][4] = -x*slopeXvsZ; // dxh/rotyr
+	_jacobian[1][4] = -x*slopeYvsZ; // dyh/rotyr
+	_jacobian[0][5] = -y*slopeXvsZ; // dxh/rotxr          
+	_jacobian[1][5] = -y*slopeYvsZ; // dyh/rotxr         
 }
 
 void EUTelMillepede::setGlobalLabels(EUTelState& state){
@@ -208,119 +88,32 @@ void EUTelMillepede::setGlobalLabels( int iPlane){
 	//We alway add these to the first to places in the alignment matrix
 	_globalLabels[0] = _xShiftsMap[iPlane]; // dx
 	_globalLabels[1] = _yShiftsMap[iPlane]; // dy
-
-
-	if (_alignmentMode == Utility::XYShiftXYRot
-                || _alignmentMode == Utility::XYZShiftXYRot
-                || _alignmentMode == Utility::XYShiftXZRotXYRot
-                || _alignmentMode == Utility::XYShiftYZRotXYRot
-                || _alignmentMode == Utility::XYShiftXZRotYZRotXYRot
-                || _alignmentMode == Utility::XYZShiftXZRotYZRotXYRot) {
   	_globalLabels[2] = _zRotationsMap[iPlane]; // rot z
-  }
+    _globalLabels[3] = _zShiftsMap[iPlane]; // dz
+    _globalLabels[4] = _yRotationsMap[iPlane]; // drot y         
+    _globalLabels[5] = _xRotationsMap[iPlane]; // drot x  
 
-
-	if (_alignmentMode == Utility::XYZShiftXYRot
-                || _alignmentMode == Utility::XYZShiftXZRotYZRotXYRot) {
-		_globalLabels[3] = _zShiftsMap[iPlane]; // dz
-  }
-
-	if (_alignmentMode == Utility::XYZShiftXZRotYZRotXYRot) {
-		_globalLabels[4] = _yRotationsMap[iPlane]; // drot y  - actually X?       
-		_globalLabels[5] = _xRotationsMap[iPlane]; // drot x  - actually Y?
-  }
-
-
-// partial alignment 
-	if (_alignmentMode == Utility::XYShiftXZRotXYRot) {
-		_globalLabels[3] = _yRotationsMap[iPlane]; // drot y
-  }
-	if (_alignmentMode == Utility::XYShiftYZRotXYRot) {
-		_globalLabels[3] = _xRotationsMap[iPlane]; // drot x
-	}
- 
-	if (_alignmentMode == Utility::XYShiftXZRotYZRotXYRot) {
-		_globalLabels[3] = _yRotationsMap[iPlane]; // drot y
-		_globalLabels[4] = _xRotationsMap[iPlane]; // drot x
-  }
-
-	if (_alignmentMode == Utility::XYShiftXZRotYZRotXYRot) {
-		_globalLabels[3] = _yRotationsMap[iPlane]; // drot y
-		_globalLabels[4] = _xRotationsMap[iPlane]; // drot x
-  }
-
-			streamlog_out(DEBUG1) << "Output of global labels for plane "<<iPlane<<" The size of labels "<<_globalLabels.size() <<std::endl;
-			for( std::vector<int>::const_iterator i = _globalLabels.begin(); i != _globalLabels.end(); ++i){
-    		streamlog_out(DEBUG1) << *i << ' ';
-			}
+    streamlog_out(DEBUG1) << "Output of global labels for plane "<<iPlane<<" The size of labels "<<_globalLabels.size() <<std::endl;
+    for( std::vector<int>::const_iterator i = _globalLabels.begin(); i != _globalLabels.end(); ++i){
+    streamlog_out(DEBUG1) << *i << ' ';
+    }
+    streamlog_out(DEBUG1) << std::endl;
 
 }
-//////////////////////////////////////////////////////////////////////////////////////////////////////All these functions are used after binary file creation.
-void EUTelMillepede::setXShiftFixed(lcio::IntVec xfixed){
-	_fixedAlignmentXShfitPlaneIds = xfixed;
-}
-
-void EUTelMillepede::setYShiftFixed(lcio::IntVec yfixed){
-	_fixedAlignmentYShfitPlaneIds = yfixed;
-}
-
-void EUTelMillepede::setZShiftFixed(lcio::IntVec zfixed){
-	_fixedAlignmentZShfitPlaneIds = zfixed;
-}
-
-void EUTelMillepede::setXRotationsFixed(lcio::IntVec xRotfixed){
-	_fixedAlignmentXRotationPlaneIds = xRotfixed;
-}
-
-void EUTelMillepede::setYRotationsFixed(lcio::IntVec yRotfixed){
-	_fixedAlignmentYRotationPlaneIds = yRotfixed;
-}
-
-void EUTelMillepede::setZRotationsFixed(lcio::IntVec zRotfixed){
-	_fixedAlignmentZRotationPlaneIds = zRotfixed;
-}
-
-void EUTelMillepede::setPlanesExclude(lcio::IntVec exclude){
-	_alignmentPlaneIdsExclude = exclude;
-}
-
-void EUTelMillepede::setBinaryFileName(std::string binary){
-	_milleBinaryFilename = binary;
-}
-
-
-
-void EUTelMillepede::setSteeringFileName(std::string name){
-
-	_milleSteeringFilename = name;
-}
-
-void EUTelMillepede::setResultsFileName(std::string name){
-
-	_milleResultFileName = name;
-
-}
-
-
-
-
   
 void EUTelMillepede::writeMilleSteeringFile(lcio::StringVec pedeSteerAddCmds){
-	streamlog_out(DEBUG2) << "EUTelMillepede::writeMilleSteeringFile------------------------------------BEGIN" << endl;
+	streamlog_out(DEBUG2) << "EUTelMillepede::writeMilleSteeringFile------------------------------------BEGIN" << std::endl;
 
-	if(_alignmentMode == Utility::noAlignment){
-		throw(lcio::Exception("No alignment has been chosen.")); 	
-	}	
 	ofstream steerFile;
 	steerFile.open(_milleSteeringFilename.c_str());//We open the text file se we can add text to it.
 	if (!steerFile.is_open()) {
 		throw(lcio::Exception("Could not open steering file.")); 	
 	}
-	streamlog_out(DEBUG0) << "Millepede binary:" << _milleBinaryFilename << endl;
-	steerFile << "Cfiles" << endl;
-	steerFile << _milleBinaryFilename << endl;
-	steerFile << endl;
-	steerFile << "Parameter" << endl;
+	streamlog_out(DEBUG0) << "Millepede binary:" << _milleBinaryFilename << std::endl;
+	steerFile << "Cfiles" << std::endl;
+	steerFile << _milleBinaryFilename << std::endl;
+	steerFile << std::endl;
+	steerFile << "Parameter" << std::endl;
 	//TO DO: There should be a test that all planes that are used have a state associated with them and that state has a hit
 	for(size_t i =0 ; i < geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size(); ++i){
 		int sensorId = geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i); 
@@ -354,94 +147,66 @@ void EUTelMillepede::writeMilleSteeringFile(lcio::StringVec pedeSteerAddCmds){
 		*/          
 		//Here we fill the steering file with:What planes are fixed,initial shifts,the uncertainties.
 		const double initXshift =0; const double initYshift = 0;
-		if( _alignmentMode==Utility::XYZShiftXYRot ) {
-			steerFile << left << setw(25) << _xShiftsMap[sensorId] << setw(25) << -initXshift << setw(25) << initUncertaintyXShift
-								 << setw(25) << " ! X shift " << setw(25) << sensorId << endl;
-			steerFile << left << setw(25) << _yShiftsMap[sensorId] << setw(25) << -initYshift << setw(25) << initUncertaintyYShift
-								 << setw(25) << " ! Y shift " << setw(25) << sensorId << endl;
-			steerFile << left << setw(25) << _zShiftsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyZShift
-								 << setw(25) << " ! Z shift " << setw(25) << sensorId << endl;
-			steerFile << left << setw(25) << _zRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyZRotation
-								<< setw(25) << " ! XY rotation " << sensorId << endl;
-		} else if( _alignmentMode==Utility::XYShiftYZRotXYRot ) {
-			steerFile << left << setw(25) << _xShiftsMap[sensorId] << setw(25) << -initXshift << setw(25) << initUncertaintyXShift
-								<< setw(25) << " ! X shift " << sensorId << endl;
-			steerFile << left << setw(25) << _yShiftsMap[sensorId] << setw(25)  << -initYshift << setw(25) << initUncertaintyYShift
-								<< setw(25) << " ! Y shift " << sensorId << endl;
-			steerFile << left << setw(25) << _xRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyXRotation
-								<< setw(25) << " ! YZ rotation " << sensorId << endl;
-			steerFile << left << setw(25) << _zRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyZRotation
-								<< setw(25) << " ! XY rotation " << sensorId << endl;
-		} else if( _alignmentMode==Utility::XYShiftXZRotXYRot ) {
-			steerFile << left << setw(25) << _xShiftsMap[sensorId] << setw(25) << -initXshift << setw(25) << initUncertaintyXShift
-								<< setw(25) << " ! X shift " << sensorId << endl;
-			steerFile << left << setw(25) << _yShiftsMap[sensorId] << setw(25) << -initYshift << setw(25) << initUncertaintyYShift
-								<< setw(25) << " ! Y shift " << sensorId << endl;
-			steerFile << left << setw(25) << _yRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyYRotation
-								<< setw(25) << " ! XZ rotation " << sensorId << endl;
-			steerFile << left << setw(25) << _zRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyZRotation
-							 << setw(25)  << " ! XY rotation " << sensorId << endl;
-		} else if( _alignmentMode==Utility::XYShiftXZRotYZRotXYRot ) {
-			steerFile << left << setw(25) << _xShiftsMap[sensorId] << setw(25) << -initXshift << setw(25) << initUncertaintyXShift
-								<< setw(25) << " ! X shift " << sensorId << endl;
-			steerFile << left << setw(25) << _yShiftsMap[sensorId] << setw(25) << -initYshift << setw(25) << initUncertaintyYShift
-								<< setw(25) << " ! Y shift " << sensorId << endl;
-			steerFile << left << setw(25) << _yRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyYRotation
-								<< setw(25) << " ! XZ rotation " << sensorId << endl;
-			steerFile << left << setw(25) << _xRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyXRotation
-								<< setw(25) << " ! YZ rotation " << sensorId << endl;
-			steerFile << left << setw(25) << _zRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyZRotation
-						 << setw(25)  << " ! XY rotation " << sensorId << endl;
-		} else if( _alignmentMode==Utility::XYZShiftXZRotYZRotXYRot ) {
-			steerFile << left << setw(25) << _xShiftsMap[sensorId] << setw(25) << -initXshift << setw(25) << initUncertaintyXShift
-								<< setw(25) << " ! X shift " << sensorId << endl;
-			steerFile << left << setw(25) << _yShiftsMap[sensorId] << setw(25) << -initYshift << setw(25) << initUncertaintyYShift
-								<< setw(25) << " ! Y shift " << sensorId << endl;
-			steerFile << left << setw(25) << _zShiftsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyZShift
-								<< setw(25) << " ! Z shift " << sensorId << endl;
-			steerFile << left << setw(25) << _yRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyYRotation
-								<< setw(25) << " ! XZ rotation " << sensorId << endl;
-			steerFile << left << setw(25) << _xRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyXRotation
-								<< setw(25) << " ! YZ rotation " << sensorId << endl;
-			steerFile << left << setw(25) << _zRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyZRotation
-							 << setw(25)  << " ! XY rotation " << sensorId << endl;
-		} else if ( _alignmentMode==Utility::XYShiftXYRot ) {
-			steerFile << left << setw(25) << _xShiftsMap[sensorId] << setw(25) << -initXshift << setw(25) << initUncertaintyXShift
-								<< setw(25) << " ! X shift " << sensorId << endl;
-			steerFile << left << setw(25) << _yShiftsMap[sensorId] << setw(25) << -initYshift << setw(25) << initUncertaintyYShift
-								<< setw(25) << " ! Y shift " << sensorId << endl;
-			steerFile << left << setw(25) << _zRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyZRotation
-								<< setw(25) << " ! XY rotation " << sensorId << endl;
-		} else if ( _alignmentMode==Utility::XYShift ) {
-			steerFile << left << setw(25) << _xShiftsMap[sensorId] << setw(25) << -initXshift << setw(25) << initUncertaintyXShift
-								<< setw(25) << " ! X shift " << sensorId << endl;
-			steerFile << left << setw(25) << _yShiftsMap[sensorId] << setw(25) << -initYshift << setw(25) << initUncertaintyYShift
-								<< setw(25) << " ! Y shift " << sensorId << endl;
-			steerFile << left << setw(25) << _zRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << "-1.0"
-								<< setw(25) << " ! XY rotation fixed" << sensorId << endl;
-		}  
-
+        steerFile << left << setw(25) << _xShiftsMap[sensorId] << setw(25) << -initXshift << setw(25) << initUncertaintyXShift
+                            << setw(25) << " ! X shift " << sensorId << std::endl;
+        steerFile << left << setw(25) << _yShiftsMap[sensorId] << setw(25) << -initYshift << setw(25) << initUncertaintyYShift
+                            << setw(25) << " ! Y shift " << sensorId << std::endl;
+        steerFile << left << setw(25) << _zShiftsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyZShift
+                            << setw(25) << " ! Z shift " << sensorId << std::endl;
+        steerFile << left << setw(25) << _yRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyYRotation
+                            << setw(25) << " ! XZ rotation " << sensorId << std::endl;
+        steerFile << left << setw(25) << _xRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyXRotation
+                            << setw(25) << " ! YZ rotation " << sensorId << std::endl;
+        steerFile << left << setw(25) << _zRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyZRotation
+                         << setw(25)  << " ! XY rotation " << sensorId << std::endl;
+	
 	} // end loop over all planes
-	steerFile << endl;
+	steerFile << std::endl;
 	//Here we add some more paramter that millepede needs. This is involves: How is the solution found, How are outliers down weighted(These are hits that are very far from state hit) and chi2 cuts
 	for ( StringVec::iterator it = pedeSteerAddCmds.begin( ); it != pedeSteerAddCmds.end( ); ++it ) {
 		// two backslashes will be interpreted as newline
 		if ( *it == "\\\\" ){
-			steerFile << endl;
+			steerFile << std::endl;
 		}else{
 			steerFile << *it << " ";
 		}
 	}
-	steerFile << endl;
-	steerFile << "end" << endl;
+	steerFile << std::endl;
+	steerFile << "end" << std::endl;
 	steerFile.close();
+	copyFile(_milleSteeringFilename, _milleSteerNameOldFormat);
 }
+void EUTelMillepede::copyFile(std::string _milleSteeringFilename, std::string _milleSteerNameOldFormat){
+	std::ifstream infile (_milleSteeringFilename.c_str(),std::ifstream::binary);
+	std::ofstream outfile (_milleSteerNameOldFormat.c_str() ,std::ofstream::binary);
+
+	// get size of file
+	infile.seekg (0,infile.end);
+	long size = infile.tellg();
+	infile.seekg (0);
+
+	// allocate memory for file content
+	char* buffer = new char[size];
+
+	// read content of infile
+	infile.read (buffer,size);
+
+	// write to outfile
+	outfile.write (buffer,size);
+
+	// release dynamically-allocated memory
+	delete[] buffer;
+
+	outfile.close();
+	infile.close();
+}
+
 //This function will use the mille binary file and steering and execute pede. Pede is the work horse of millepede. It does the actual minimisation procedure.
 //It also write the results of this into a log file. This is very important since we need the information that this log file provides to determine what is the next step in out iterative alignment
 //By this I mean if too many tracks were rejected by millepede then on the next iteration we need to increase increase the chi2 cut and increase the hit residual.
-int EUTelMillepede::runPede(){
+bool EUTelMillepede::runPede(){
 	std::string command = "pede " + _milleSteeringFilename;//This is just the same as running a command line command pede <steering file> the minimisation would still be done.
-	streamlog_out ( MESSAGE5 ) << "Starting pede...: " << command.c_str( ) << endl;
+	streamlog_out ( MESSAGE5 ) << "Starting pede...: " << command.c_str( ) << std::endl;
   redi::ipstream pede( command.c_str( ), redi::pstreams::pstdout | redi::pstreams::pstderr );// run pede and create a streambuf that reads its stdout and stderr
 
 	if ( !pede.is_open( ) ) {
@@ -483,22 +248,81 @@ int EUTelMillepede::runPede(){
 			}
 		}
 		pede.close( );
+		std::string output = pedeoutput.str();
+		bool found = findTooManyRejects(output);
 		//TO DO: Surely we can just specify the directory that we want this placed in. Need to check     
 		//  if ( parseMilleOutput( "millepede.res" ) ) //moveMilleResultFile( "millepede.res", _milleResultFileName );
+		return found;
 	}//END OF IF STATEMENT
-return 0;
+}
+bool EUTelMillepede::findTooManyRejects(std::string output){
+	int found = output.find("Too many rejects (>33.3%)");
+	if (found == std::string::npos){
+		streamlog_out(MESSAGE5)<<endl<<"Number of rejects low. Continue with alignment."<<endl;
+		return false;
+
+	}else{
+		streamlog_out(MESSAGE5)<<endl<<"Number of rejects high. We can't use this binary for alignment"<<endl;
+		return true;
+	}
+}
+void EUTelMillepede::editSteerUsingRes(){
+	ifstream file( _milleResultFileName.c_str() );
+	if ( !file.good( ) ) {
+		throw(lcio::Exception("Can not open millepede results file. In editSteerUsingRes()"));
+	}
+	const string command = "resIntoSteer.py " + _milleSteeringFilename + " " + _milleResultFileName;
+	streamlog_out ( MESSAGE5 ) << "Results fill used to create new steering file: " << std::endl;
+	streamlog_out ( MESSAGE5 ) << command << std::endl;
+	// run pede and create a streambuf that reads its stdout and stderr
+	redi::ipstream parsepede( command.c_str( ), redi::pstreams::pstdout | redi::pstreams::pstderr );
+
+
+}
+
+bool EUTelMillepede::converge(){
+    bool converged;
+    bool rejectsHigh;
+    for(unsigned int i=0; i<2 ; i++){
+		editSteerUsingRes();
+		converged = checkConverged();//Will simply output the steering files used in each iteration. 
+		rejectsHigh = runPede();	
+	}
+	streamlog_out ( MESSAGE5 ) << "The number if rejects pass/fail: " << rejectsHigh  << std::endl;
+	//We do this to create a new steering file from all the iterations but do not run pede.
+	editSteerUsingRes();
+	converged = checkConverged();//Will simply output the steering files used in each iteration. 
+	return converged;
+}
+
+bool EUTelMillepede::checkConverged(){
+	outputSteeringFiles();
+    return true;
+}
+void EUTelMillepede::outputSteeringFiles(){
+	std::stringstream output;
+	output << "steer-iteration-" << _iteration <<".txt";
+	std:: string outputName = output.str();
+	copyFile(_milleSteeringFilename, outputName);
+	_iteration++;
+
 }
 //This part using the output of millepede will create a new gear file based on the alignment parameters that have just been determined
 //It will also create LCIO file that will hold the alignment constants
 bool EUTelMillepede::parseMilleOutput(std::string alignmentConstantLCIOFile, std::string gear_aligned_file){
 	ifstream file( _milleResultFileName.c_str() );
 	if ( !file.good( ) ) {
-		throw(lcio::Exception("Can not open millepede results file."));
+		throw(lcio::Exception("Can not open millepede results file. parseMilleOutput()"));
 	}
-	const string command = "parsemilleout.sh " + _milleSteeringFilename + " " + _milleResultFileName + " " + alignmentConstantLCIOFile + 
+	ifstream file2( _milleSteerNameOldFormat.c_str() );
+	if ( !file2.good( ) ) {
+		throw(lcio::Exception("Can not open millepede old steer file. parseMilleOutput()"));
+	}
+
+	const string command = "parsemilleout.sh " + _milleSteerNameOldFormat + " " + _milleResultFileName + " " + alignmentConstantLCIOFile + 
 												 " " + Global::parameters->getStringVal("GearXMLFile" ) + " " + gear_aligned_file;
-	streamlog_out ( MESSAGE5 ) << "Converting millepede results to LCIO collections... " << endl;
-	streamlog_out ( MESSAGE5 ) << command << endl;
+	streamlog_out ( MESSAGE5 ) << "Converting millepede results to LCIO collections... " << std::endl;
+	streamlog_out ( MESSAGE5 ) << command << std::endl;
 	// run pede and create a streambuf that reads its stdout and stderr
 	redi::ipstream parsepede( command.c_str( ), redi::pstreams::pstdout | redi::pstreams::pstderr );
 	if ( !parsepede.is_open( )){
@@ -542,9 +366,10 @@ bool EUTelMillepede::parseMilleOutput(std::string alignmentConstantLCIOFile, std
 
 void EUTelMillepede::CreateBinary(){
         streamlog_out(DEBUG0) << "Initialising Mille..." << std::endl;
-				streamlog_out(DEBUG0) << "Millepede binary:" << _milleBinaryFilename << endl;
+				streamlog_out(DEBUG0) << "Millepede binary:" << _milleBinaryFilename << std::endl;
 
-        const unsigned int reserveSize = 80000;
+        const unsigned int reserveSize = 0;//This is the number of elements the vector will have as start for alignment parameters and derivatives.
+				//Can still push more onto the vector.
 				std::string string = "millepede.bin"; //TO DO:need to fix this. Not reading it correctly
         _milleGBL = new gbl::MilleBinary(string, reserveSize);
 

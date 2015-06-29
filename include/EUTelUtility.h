@@ -34,6 +34,9 @@ namespace eutelescope {
 
     namespace Utility {
 
+        TMatrixD setPrecision( TMatrixD mat, double mod);
+
+
         class Hit;
 
         /**

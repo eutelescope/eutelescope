@@ -25,7 +25,7 @@
 
    <global>
       <parameter name="LCIOInputFiles"> </parameter>
-      <parameter name="GearXMLFile" value="@GearFile@"/>
+      <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
       <parameter name="SupressCheck" value="false"/>
@@ -57,7 +57,7 @@
   <!--The geometry identification number-->
   <parameter name="GeoID" type="int">0 </parameter>
   <!--This is the input file name-->
-  <parameter name="InputFileName" type="string" value="@NativeFolder@/run@RunNumber@.raw  "/>
+  <parameter name="InputFileName" type="string" value="@NativeFolder@/run@TelescopeRunNumber@.raw  "/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
  </processor>
@@ -69,7 +69,7 @@
   <!--This is the name of the hot pixel collection to be saved into the output slcio file-->
   <parameter name="HotPixelCollectionName" type="string" value="hotpixel_m26" />
   <!--This is the name of the LCIO file name with the output hotpixel db (add .slcio)-->
-  <parameter name="HotPixelDBFile" type="string" value="@DatabasePath@/@TelescopeOutputFormat@-hotpixel.slcio"/>
+  <parameter name="HotPixelDBFile" type="string" value="@DatabasePath@/@MergedOutputFormat@-hotpixel.slcio"/>
   <!--Write mode for HotPixelDB file:  WRITE_APPEND or WRITE_NEW-->
   <!--parameter name="LCIOWriteMode" type="string">WRITE_NEW </parameter-->
   <!--This float number [0,1] represents the maximum allowed firing frequency

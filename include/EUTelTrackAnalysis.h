@@ -1,7 +1,10 @@
 #include "EUTelUtility.h"
+#include <fstream>      // std::ifstream, std::ofstream
+#include <iostream>
 #include "EUTelTrack.h"
 #include "EUTelState.h"
 #include "EUTelHistogramManager.h"
+#include "EUTelMillepede.h"
 // AIDA
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <AIDA/IBaseHistogram.h>
@@ -12,6 +15,8 @@
 #include <AIDA/IHistogramFactory.h>
 #include <AIDA/IProfile2D.h>
 #endif // MARLIN_USE_AIDA
+#include "EUTelHit.h"
+//#include <boost/math/distributions/chi_squared.hpp> 
 
 #include <map>
 
@@ -30,6 +35,8 @@ namespace eutelescope {
 
     EUTelTrackAnalysis(std::map< int,  AIDA::IProfile2D*> mapFromSensorIDToHistogramX, std::map< int,  AIDA::IProfile2D*> mapFromSensorIDToHistogramY, std::map< int,   AIDA::IHistogram1D *> mapFromSensorIDToKinkXZ,std::map< int,   AIDA::IHistogram1D *> mapFromSensorIDToKinkYZ, AIDA::IHistogram1D * beamEnergy );
 
+		template<typename T>
+		std::string numberToString(T number);
 		void plotResidualVsPosition(EUTelTrack);
 		void plotBeamEnergy(EUTelTrack);
 		void plotIncidenceAngles(EUTelTrack track);
@@ -45,11 +52,13 @@ namespace eutelescope {
 		void setSensorIDToIncidenceAngleYZ( std::map< int,  AIDA::IHistogram1D * > mapFromSensorIDToKinkYZ){_mapFromSensorIDToIncidenceYZ=mapFromSensorIDToKinkYZ;}
 		void setSensorIDToPValuesVsIncidenceAngleXZ( std::map< int,  AIDA::IProfile1D * > mapFromSensorIDToPValuesVsIncidenceXZ){_mapFromSensorIDToPValuesVsIncidenceXZ=mapFromSensorIDToPValuesVsIncidenceXZ;}
 		void setSensorIDToPValuesVsIncidenceAngleYZ( std::map< int,  AIDA::IProfile1D * > mapFromSensorIDToPValuesVsIncidenceYZ){_mapFromSensorIDToPValuesVsIncidenceYZ=mapFromSensorIDToPValuesVsIncidenceYZ;}
+//		void setHistName(std::string histName){  _histoInfoFileName = histName; }
 
 		AIDA::IHistogram1D * _beamEnergy;
 		AIDA::IProfile1D   * _pValueBeamEnergy;
 		AIDA::IProfile1D * _pValueVsBeamEnergy;
 		float calculatePValueForChi2(EUTelTrack track);
+ //       std::string _histoInfoFileName;
 
 
 	};

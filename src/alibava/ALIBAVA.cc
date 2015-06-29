@@ -15,11 +15,6 @@
 using namespace alibava;
 using namespace std;
 
-// Alibava Readout system parameters
-// If you do change these, you might need to change things in AlibavaConverter processor
-// const int      ALIBAVA::NOOFCHIPS            = 2;
-// const int      ALIBAVA::NOOFCHANNELS         = 128;
-
 // Global Alibava Processor parameters
 const char *   ALIBAVA::CHANNELSTOBEUSED    = "ChannelsToBeUsed";
 const char *   ALIBAVA::SKIPMASKEDEVENTS    = "SkipMaskedEvents";
@@ -28,10 +23,6 @@ const char *   ALIBAVA::SKIPMASKEDEVENTS    = "SkipMaskedEvents";
 // General Parameters
 const char *   ALIBAVA::GEOID               = "GeoID";
 const char *   ALIBAVA::NOTSET              = "notset";
-
-// Optional Parameters
-const char *   ALIBAVA::TILTANGLE           = "TiltAngle";
-const char *   ALIBAVA::SENSORTEMPERATURE   = "SensorTemperature";
 
 // Run Header Parameters
 const char *   ALIBAVA::HEADER              = "Header";
@@ -50,7 +41,8 @@ const char *   ALIBAVA::EVENTTYPE           = "EventType";
 const char *   ALIBAVA::EVENTVALUE          = "EventValue";
 const char *   ALIBAVA::EVENTSIZE           = "EventSize";
 const char *   ALIBAVA::EVENTCODE           = "EventCode";
-const char *   ALIBAVA::EVENTTIME           = "EventTime";
+const char *   ALIBAVA::EVENTCLOCK          = "EventTimeStamp";
+const char *   ALIBAVA::EVENTTIME           = "EventTDCTime";
 const char *   ALIBAVA::EVENTTEMP           = "EventTemp";
 const char *   ALIBAVA::CALCHARGE           = "CalCharge";
 const char *   ALIBAVA::CALDELAY            = "CalDelay";

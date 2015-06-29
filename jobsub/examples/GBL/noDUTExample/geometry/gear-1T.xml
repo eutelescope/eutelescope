@@ -21,7 +21,7 @@
 			/>
 	  <sensitive 	ID="0"
 			positionX="0.00"	positionY="0.00"	positionZ="0.00" 
-			sizeX="21.2"		sizeY="10.6"		thickness="0.014"
+			sizeX="21.2"		sizeY="10.6"		thickness="0.05"
 			npixelX="1152"		npixelY="576" 
 			pitchX="0.018402778"	pitchY="0.018402778" 	resolution="0.0045" 
 			rotation1="1.0" 	rotation2="0.0" 
@@ -39,7 +39,7 @@
 			/>
 	  <sensitive 	ID="1" 
 			positionX="0.00"	positionY="0.00"	positionZ="30.0" 
-			sizeX="21.2"		sizeY="10.6"		thickness="0.014"
+			sizeX="21.2"		sizeY="10.6"		thickness="0.05"
 			npixelX="1152"		npixelY="576" 
 			pitchX="0.018402778"	pitchY="0.018402778"	resolution="0.0045" 
 			rotation1="1.0"	rotation2="0.0" 
@@ -57,7 +57,7 @@
 			/>
 	  <sensitive 	ID="2" 
 			positionX="0.00"	positionY="0.00"	positionZ="60.0" 
-			sizeX="21.2"		sizeY="10.6"		thickness="0.014"
+			sizeX="21.2"		sizeY="10.6"		thickness="0.05"
 			npixelX="1152"		npixelY="576"
 			pitchX="0.018402778" 	pitchY="0.018402778" 	resolution="0.0045"
 			rotation1="1.0"	rotation2="0.0"
@@ -75,7 +75,7 @@
                           />
           <sensitive      ID="3"
                           positionX="0.00"        positionY="0.00"        positionZ="260.00" 
-                          sizeX="21.2"            sizeY="10.6"            thickness="0.014"
+                          sizeX="21.2"            sizeY="10.6"            thickness="0.05"
                           npixelX="1152"          npixelY="576" 
                           pitchX="0.018402778"    pitchY="0.018402778"    resolution="0.0045" 
                           rotation1="1.0"        rotation2="0.0" 
@@ -93,7 +93,7 @@
                           />
           <sensitive      ID="4"
                           positionX="0.00"        positionY="0.00"        positionZ="285.00" 
-                          sizeX="21.2"            sizeY="10.6"            thickness="0.014"
+                          sizeX="21.2"            sizeY="10.6"            thickness="0.05"
                           npixelX="1152"          npixelY="576" 
                           pitchX="0.018402778"    pitchY="0.018402778"    resolution="0.0045" 
                           rotation1="1.0"        rotation2="0.0" 
@@ -111,7 +111,7 @@
                           />
           <sensitive      ID="5"
                           positionX="0.00"        positionY="0.00"        positionZ="310.00" 
-                          sizeX="21.2"            sizeY="10.6"            thickness="0.014"
+                          sizeX="21.2"            sizeY="10.6"            thickness="0.05"
                           npixelX="1152"          npixelY="576" 
                           pitchX="0.018402778"    pitchY="0.018402778"    resolution="0.0045" 
                           rotation1="1.0"        rotation2="0.0" 
