@@ -1,8 +1,5 @@
 RunNumber,BeamEnergy,Threshold,GearGeoFile
-000703,4.8,6,gear-ZRotations-XYShift-DUT-Iteration-1-000703.xml
-000775,4.8,6,gear-ZRotations-XYShift-DUT-Iteration-1-000703.xml
-000786,4.8,6,gear_desy2012_150mm.xml 
-002526,4,6,gear-strip002526_pre.xml 
+000703,4.8,6,gear-beforeAlign-000703_pre.xml 
 
 
 

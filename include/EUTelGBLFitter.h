@@ -113,7 +113,7 @@ namespace eutelescope {
              * \param [out] pointList This is the points which describe the EUTelTrack without any measurements (Scattering and residuals) 
              * \param [out] vecPairsMeasStatesAndLabels This is the link pointGBL.label->EUTelState.location (Denotes that GBL point has local->global transform) 
              */
-            void getBasicList( EUTelTrack& , std::map< unsigned int, std::vector<double> > & , std::vector< gbl::GblPoint >& pointList, std::map<  unsigned int, unsigned int>  & );   
+            void getBasicList( EUTelTrack& ,std::vector< gbl::GblPoint >& pointList, std::map<  unsigned int, unsigned int>  & );   
             /// This will create the needed GBL points from EUTelTracks.
             /// This will create the GBL points from the states and the needed scatterering points.  
             /**
@@ -194,6 +194,7 @@ namespace eutelescope {
 
 			void computeTrajectoryAndFit(gbl::GblTrajectory* traj, double* chi2, int* ndf, int & ierr);
     protected:
+            int _numberRadLoss;
 			double _beamQ;
 			double _eBeam;
 			/** Outlier downweighting option */

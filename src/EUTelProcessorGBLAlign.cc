@@ -191,7 +191,7 @@ void EUTelProcessorGBLAlign::processEvent(LCEvent * evt){
 		throw marlin::SkipEventException(this);
 	}
 	catch(std::string &e){
-		streamlog_out(MESSAGE9) << e << std::endl;
+//		streamlog_out(MESSAGE9) << e << std::endl;
 		throw marlin::SkipEventException( this ) ;
 	}
 	catch(lcio::Exception& e){
@@ -230,7 +230,7 @@ void EUTelProcessorGBLAlign::end(){
 
 		_Mille->parseMilleOutput(_alignmentConstantLCIOFile, _gear_aligned_file);
 	}else{
-		streamlog_out (MESSAGE9) <<"THE NUMBER OF REJECTED TRACKS IS NOT LARGE."<< std::endl;
+		streamlog_out (MESSAGE9) <<"THE NUMBER OF REJECTED TRACKS IS TOO LARGE."<< std::endl;
 	}
 }
 

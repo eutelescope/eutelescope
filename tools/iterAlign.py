@@ -4,9 +4,10 @@ import argparse
 import sys
 import os
 import subprocess
-"""
+'''
 iterAlign: Will run the iterative alignment procedure from any GBL directory. The directory must have required structure. See GBL examples.
-"""
+@author A Morton
+'''
 def checkDollar(var):
     """
     Replace input variables of bash symbols with actual values. 
@@ -46,10 +47,11 @@ def findIterScripts():
 
 
 def main():
-    """
-    This will take in the required arguments. Find the location of files needed and export all variables to be used in bash scripts
-    The it will run the first bash script to start the process.
-    """
+    ## Main
+    #
+    # This will take in the required arguments. Find the location of files needed and export all variables to be used in bash scripts
+    # The it will run the first bash script to start the process.
+    #
     parser = argparse.ArgumentParser()
     parser.add_argument('-n', help="The number of iterations", default=1)
     parser.add_argument('-i', help="This is the string to identify the output histograms and geometry files",default="DEFAULT" )
@@ -64,12 +66,12 @@ def main():
         print "No identifier given"
         print "Use the flag -h to see help"
         sys.exit(-1)
-    #Set the variables to export to bash scripts 
+    ##Set the variables to export to bash scripts 
     os.environ["RUN"] = args.r
     os.environ["numberOfIterations"] = args.n
     os.environ["outputIdentifier"] = args.i
     os.environ["singleLoop"] = args.o
-    #Get the scripts which will actually do the work and location of the example and add to the system path.
+    ##Get the scripts which will actually do the work and location of the example and add to the system path.
     itScriptLoc=findIterScripts()
     itScriptLocPython=itScriptLoc + "/pythonScripts"
     sys.path.append(itScriptLocPython)

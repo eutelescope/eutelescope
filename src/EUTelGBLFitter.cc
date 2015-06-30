@@ -107,10 +107,13 @@ namespace eutelescope {
 	}
     ///This function is the link between Millepede and the creation of global variable to the GBL points. 
 	void EUTelGBLFitter::getGloPar(std::vector< gbl::GblPoint >& pointList, EUTelTrack & track, std::map< unsigned int, unsigned int> & linkMeas ){
-        size_t j=0;
-        for(size_t j; j < track.getStates().size(); j++){
+        streamlog_out(DEBUG1) << "State measurement numbers: " << linkMeas.size()  << std::endl;
+        for(size_t j=0; j < track.getStates().size(); j++){
             EUTelState state = track.getStates().at(j);
-            if(linkMeas.find(state.getLocation()) != linkMeas.end()){ 
+            streamlog_out(DEBUG1) << "State location" << state.getLocation() << std::endl;
+            std::map<unsigned int, unsigned int>::iterator itLink = linkMeas.find(state.getLocation());
+            if(itLink != linkMeas.end()){ 
+                streamlog_out(DEBUG1) << "Add global derivatives" << std::endl;
                 ///Internally millepede will save a jacobian and the correct global labels for this setup
                 _MilleInterface->computeAlignmentGlobal(state); 
                 _MilleInterface->setGlobalLabels(state);  
@@ -119,6 +122,8 @@ namespace eutelescope {
                 std::vector<int> labels =  _MilleInterface->getGlobalParameters();
                 ///Now fill GBL point with global derivatives.
                 pointList.at(j).addGlobals(labels, alignmentJacobian);
+                streamlog_out(DEBUG0)<<"The alignment matrix after adding to point: "<<std::endl;
+                streamlog_message( DEBUG0, pointList.at(j).getGlobalDerivatives().Print() ;, std::endl; );
             }
         }
         
@@ -172,6 +177,7 @@ namespace eutelescope {
         //THE FINAL WEIGHT WE HAVE WILL BE A FRACTION PERCENTAGE OF THE TOTAL RADIATION LENGTH
         std::vector<EUTelState>& states = track.getStates();
         const double var  = pow( Utility::getThetaRMSHighland(track.getBeamEnergy(), rad) , 2);
+        streamlog_out(DEBUG5)<< std::scientific << "This is the total variance of the track and energy: " << var << track.getBeamEnergy() <<std::endl; 
         for(size_t i =0; i < track.getStates().size();++i){ 
             streamlog_out(DEBUG0)<< std::scientific << " Values placed in variance using Highland formula corrected. (SENSOR) : " << (mapSensor[states.at(i).getLocation()]/rad)*var << "  (AIR)  " << (mapAir[states.at(i).getLocation()]/rad)*var <<std::endl;
             states.at(i).setRadFrac((mapSensor[states.at(i).getLocation()]/rad)*var,(mapAir[states.at(i).getLocation()]/rad)*var);//We input the fraction percentage.
@@ -179,43 +185,64 @@ namespace eutelescope {
         track.setTotalVariance(var);
     }
     void EUTelGBLFitter::setRad(EUTelTrack & track){
+		streamlog_out(DEBUG2)<<"setRadLength--BEGIN"<<std::endl;
         ///Set radiation lengths
         std::map<const int,double>  mapSensor;
         std::map<const int ,double>  mapAir;
         double rad = track.getStates().at(0).computeRadLengthsToEnd(mapSensor, mapAir);
+		streamlog_out(DEBUG2)<<"Rad total: " << rad<<std::endl;
         if(rad == 0){
-            throw(std::string("Radiation length is zero for mimosa tracks."));
+      //      throw(std::string("Radiation length is zero for mimosa tracks."));
+              throw(std::string(""));
+
+            _numberRadLoss++;
         }
+		streamlog_out(DEBUG2)<<"Radiation lengths for this tracks geometry correcly allocated. Tracks lost:  " << _numberRadLoss <<std::endl;
+
         setRadLengths(track, mapSensor, mapAir, rad);
     }
 	std::map<  unsigned int, std::vector<double> > EUTelGBLFitter::getScatPos(EUTelTrack& track) const {}
 
-	void EUTelGBLFitter::getBasicList(EUTelTrack& track, std::map< unsigned int, std::vector<double> > & vectorScatPosAfterPlane, std::vector< gbl::GblPoint >& pointList, std::map<  unsigned int, unsigned int>  & linkGL){
+	void EUTelGBLFitter::getBasicList(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList, std::map<  unsigned int, unsigned int>  & linkGL){
         TMatrixD jac(5, 5);
         jac.UnitMatrix();
+        /// Label begins at one. 
         unsigned int label = 1;
+        gbl::GblPoint point(jac);
+        ///Set label, make pair, then increase. 
+        point.setLabel(label); // 1
+        linkGL.insert(std::make_pair(track.getStates().at(0).getLocation(), label));
+        label++;
+        pointList.push_back(point);
+        linkGL.insert(std::make_pair(track.getStates().at(0).getLocation(), label));
         for(size_t i=0;i < (track.getStates().size()-1); i++){		
             EUTelState state = track.getStates().at(i);
-            label = label + i;
+            ///Need this for the location.
+            EUTelState stateNext = track.getStates().at(i+1);
             streamlog_out(DEBUG5) << "The jacobian which will be used at label " << label << std::endl;
+            TMatrixD jac = EUTelNav::getPropagationJacobianGlobalToGlobal(state.getArcLengthToNextState(), state.getDirGlobal());
             streamlog_message( DEBUG0, jac.Print();, std::endl; );
             gbl::GblPoint point(jac);
             point.setLabel(label);
+            linkGL.insert(std::make_pair(stateNext.getLocation(), label));
+            label++;
             pointList.push_back(point);
-            linkGL.insert(std::make_pair(track.getStates().at(i).getLocation(), label));
-            TMatrixD jac = EUTelNav::getPropagationJacobianGlobalToGlobal(state.getArcLengthToNextState(), state.getDirGlobal());
         } 
-        streamlog_out(DEBUG4)<<"EUTelGBLFitter::setInformationForGBLPointList-------------------------------------END"<<std::endl;
     }   
 	void EUTelGBLFitter::getMeas(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList, std::map< unsigned int,unsigned int > & linkGL , std::map< unsigned int, unsigned int>  & linkMeas){
-        for(size_t i;i < track.getStates().size(); i++){		
+        for(size_t i=0;i < track.getStates().size(); i++){		
             EUTelState state = track.getStates().at(i);
             //Use state to get correct label
+            streamlog_out(DEBUG5) << "State location " << state.getLocation() << std::endl;
             if(state.getStateHasHit()){
+                streamlog_out(DEBUG5) << "State has hit" << std::endl;
                 unsigned int label = linkGL[state.getLocation()];
                 setMeasurementGBL(pointList.at(label-1), state );
+                linkMeas.insert(std::make_pair(state.getLocation(),label));
             }
         }
+        streamlog_out(DEBUG5) << "Link size: " << linkMeas.size() << std::endl;
+
     }
 	void EUTelGBLFitter::getScat(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList, std::map< unsigned int,unsigned int > & linkGL){
         for(size_t i;i < track.getStates().size(); i++){		
@@ -228,17 +255,22 @@ namespace eutelescope {
 
     ///This is the work horse of the GBL fitter. It creates GBL points from EUTelTracks and returns the relations between the two.
 	void EUTelGBLFitter::getGBLPointsFromTrack(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList, std::map<  unsigned int,unsigned int > & linkGL,std::map< unsigned int, unsigned int > & linkMeas ){
-		streamlog_out(DEBUG4)<<"EUTelGBLFitter::setInformationForGBLPointList-------------------------------------BEGIN"<<std::endl;
+		streamlog_out(DEBUG0)<<"EUTelGBLFitter::getGBLPointsFromTrack-------------------------------------BEGIN"<<std::endl;
         ///get radiation length of the track. This is added to the track internally.
         setRad(track);
         /// At the moment this does not pass anything
-        std::map<  unsigned int, std::vector<double> > scatPos = getScatPos(track);
+//        std::map<  unsigned int, std::vector<double> > scatPos = getScatPos(track);
         /// This is the minimum needed to create a GBL trajectory. It basically only relates each GBL point to each other at this stage.
-        getBasicList(track,scatPos,pointList,linkGL);
-        /// Now add measurement.  
+		streamlog_out(DEBUG0)<<"Create basic traj. "<<std::endl;
+        getBasicList(track,pointList,linkGL);
+        /// Now add measurement. Connect from local to global will be made here. 
+		streamlog_out(DEBUG0)<<"Add measurement. "<<std::endl;
         getMeas(track,pointList,linkGL,linkMeas);
         /// Now add scattering.  
+		streamlog_out(DEBUG0)<<"Add scattering information. "<<std::endl;
         getScat(track,pointList,linkGL);
+		streamlog_out(DEBUG0)<<"EUTelGBLFitter::getGBLPointsFromTrack-------------------------------------END"<<std::endl;
+
 	}
 
   void EUTelGBLFitter::getResLoc(gbl::GblTrajectory* traj, std::map< unsigned int, unsigned int> & linkMeas, std::vector< gbl::GblPoint > pointList,std::map< int, std::map< float, float > > &  SensorResidual, std::map< int, std::map< float, float > >& sensorResidualError){
@@ -278,7 +310,7 @@ namespace eutelescope {
 			streamlog_out(MESSAGE0) << "Fit failed!" << " Track error: "<< ierr << " and chi2: " << *chi2 << std::endl;
 		}
 		else{
-		streamlog_out(MESSAGE0) << "Fit Successful!" << " Track error; "<< ierr << " and chi2: " << *chi2 << std::endl;
+            streamlog_out(MESSAGE0) << "Fit Successful!" << " Track error; "<< ierr << " and chi2: " << *chi2 << std::endl;
 		}
 		streamlog_out ( DEBUG4 ) << " EUTelGBLFitter::computeTrajectoryAndFit -- END " << std::endl;
 	}

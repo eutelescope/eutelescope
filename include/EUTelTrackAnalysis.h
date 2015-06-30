@@ -53,8 +53,8 @@ namespace eutelescope {
 		void setSensorIDTo2DResidualEfficiencyX(std::map< int,  AIDA::IProfile2D*> mapFromSensorIDToEfficiencyX){_mapFromSensorIDToEfficiencyX=mapFromSensorIDToEfficiencyX;}
 		void setSensorIDTo2DResidualEfficiencyY(std::map< int,  AIDA::IProfile2D*> mapFromSensorIDToEfficiencyY){_mapFromSensorIDToEfficiencyY=mapFromSensorIDToEfficiencyY;}
 		void setSensorIDTo2DPValuesWithPosition(std::map< int,  AIDA::IProfile2D*> mapFromSensorIDTo2DPValuesWithPosition){_mapFromSensorIDTo2DPValuesWithPosition=mapFromSensorIDTo2DPValuesWithPosition;}
-		void setSensorIDToIncidenceAngleXZ( std::map< int,  AIDA::IHistogram1D * > mapFromSensorIDToKinkXZ){_mapFromSensorIDToIncidenceXZ=mapFromSensorIDToKinkXZ;}
-		void setSensorIDToIncidenceAngleYZ( std::map< int,  AIDA::IHistogram1D * > mapFromSensorIDToKinkYZ){_mapFromSensorIDToIncidenceYZ=mapFromSensorIDToKinkYZ;}
+		void setSensorIDToIncidenceAngleXZ( std::map< int,  AIDA::IHistogram1D * > mapFromSensorIDToGloIncXZ){_mapFromSensorIDToIncidenceXZ=mapFromSensorIDToGloIncXZ;}
+		void setSensorIDToIncidenceAngleYZ( std::map< int,  AIDA::IHistogram1D * > mapFromSensorIDToGloIncYZ){_mapFromSensorIDToIncidenceYZ=mapFromSensorIDToGloIncYZ;}
 		void setSensorIDToPValuesVsIncidenceAngleXZ( std::map< int,  AIDA::IProfile1D * > mapFromSensorIDToPValuesVsIncidenceXZ){_mapFromSensorIDToPValuesVsIncidenceXZ=mapFromSensorIDToPValuesVsIncidenceXZ;}
 		void setSensorIDToPValuesVsIncidenceAngleYZ( std::map< int,  AIDA::IProfile1D * > mapFromSensorIDToPValuesVsIncidenceYZ){_mapFromSensorIDToPValuesVsIncidenceYZ=mapFromSensorIDToPValuesVsIncidenceYZ;}
 //		void setHistName(std::string histName){  _histoInfoFileName = histName; }
