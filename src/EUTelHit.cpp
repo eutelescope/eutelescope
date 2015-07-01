@@ -48,7 +48,6 @@ int EUTelHit::getLocation() const {
 
 
 TVector3 EUTelHit::getPositionGlobal() const {
-    streamlog_out(DEBUG5)<<"getPositionGlobal"<<std::endl;
 	const double* local =  getPosition();
 	const double posLocal[3] = {local[0],local[1],local[2]};
   double posGlobal[3];
