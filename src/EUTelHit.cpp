@@ -5,6 +5,7 @@ EUTelHit::EUTelHit():
 _locationKnown(false),
 _cov(2,2)
 {
+    _cov.Zero();
 } 
 
 EUTelHit::EUTelHit(EUTelHit* hit):
@@ -14,7 +15,6 @@ _cov(2,2)
     _position[1] = hit->getPosition()[1];
     _position[2] = hit->getPosition()[2];
     _id = hit->getID();
-    std::cout<<"INside" << std::endl;
     if(hit->_locationKnown){
         _location = hit->getLocation();
         _locationKnown=true;
@@ -22,7 +22,8 @@ _cov(2,2)
         _locationKnown=false;
     }
     setCov(hit->getCov());
-
+    ///All hits must have clustering information 
+    _pulse = hit->getPulse();
 } 
 
 EUTelHit::EUTelHit(EVENT::TrackerHit* hit):
@@ -64,6 +65,9 @@ TVector3 EUTelHit::getPositionGlobal() const {
 int EUTelHit::getID() const {
     return _id;
 }
+EVENT::LCObjectVec EUTelHit::getPulse() const {
+    return _pulse;
+}
 void EUTelHit::getCov( double (&cov)[4] ) const {
 	cov[0] = _cov[0][0];
 	cov[1] = _cov[0][1];
@@ -87,6 +91,10 @@ void EUTelHit::setCov(const std::vector<float>& cov){
 void EUTelHit::setCov(TMatrixD cov){
     _cov = cov;
 }
+void EUTelHit::setPulse( EVENT::LCObjectVec& pulse){
+    _pulse = pulse;
+}
+
 void EUTelHit::setPosition(const double * position){
     _position[0] = position[0];
     _position[1] = position[1];

@@ -27,6 +27,8 @@ namespace eutelescope {
             void setCov(const std::vector<float> &);
             /// Set the covariance matrix from one state to another
             void setCov(TMatrixD );
+            void setPulse( EVENT::LCObjectVec&);
+
             //get
             void getCov(double (&)[4]) const;
             TMatrixD getCov() const {return _cov;};
@@ -35,8 +37,9 @@ namespace eutelescope {
             //HIT PARAMETERS
             const double* getPosition() const; 
             int getID() const;
+            ///This is the tracker pulse collection which you use to link the clustering information.
+            EVENT::LCObjectVec getPulse() const; 
             //END HIT PARAMETERS
-
             //print
             void print();
 
@@ -49,6 +52,7 @@ namespace eutelescope {
             int _locationKnown;
             int _id; //This is used to keep a track of all the hits for track removal.
 			TMatrixD _cov;
+            EVENT::LCObjectVec _pulse;
 
 
 	};
