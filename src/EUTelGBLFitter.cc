@@ -55,20 +55,20 @@ namespace eutelescope {
 	}
 	//THIS IS THE SETTERS. Not simple get function but the action of all these functions it in the end to set a member variable to something.	
 	void EUTelGBLFitter::setMeasurementCov(EUTelState& state){
-		double hitcov[]= {0,0,0,0};
+        std::vector<double> hitcov(4);
 		int izPlane = state.getLocation();
 		if( _parameterIdXResolutionVec.size() > 0 && _parameterIdYResolutionVec.size() > 0 ){
-			hitcov[0] = _parameterIdXResolutionVec[izPlane];
-			hitcov[3] = _parameterIdYResolutionVec[izPlane];
+			hitcov.at(0) = _parameterIdXResolutionVec[izPlane];
+			hitcov.at(3) = _parameterIdYResolutionVec[izPlane];
 
-			hitcov[0] *= hitcov[0]; 
-			hitcov[3] *= hitcov[3];
+			hitcov.at(0) *= hitcov.at(0); 
+			hitcov.at(3) *= hitcov.at(3);
 		}
 		else{//Default in case you have not specified a variance  
 			throw(lcio::Exception("There is no measurement variance specified.")); 	
 		}
 		streamlog_out(DEBUG0) << "SET COVARIANCE: State: " << state.getLocation() << "  Covariance X/Y  : " << hitcov[0] << " " <<hitcov[3] <<std::endl; 
-		state.setHitCov(hitcov);
+		state.getHit().setCov(hitcov);
 	}
 	//Note that we take the planes themselfs at scatters and also add scatterers to simulate the medium inbetween. 
 	void EUTelGBLFitter::setScattererGBL(gbl::GblPoint& point, EUTelState & state ) {
@@ -89,7 +89,7 @@ namespace eutelescope {
 		TVectorD measPrec(2); 
         setMeasurementCov(state);
         double cov[4];
-        state.getHitCov(cov);
+        state.getHit().getCov(cov);
 		measPrec[0] = 1. / cov[0];	// cov(x,x)
 		measPrec[1] = 1. / cov[3];	// cov(y,y)
 		streamlog_out(DEBUG4) << "This is what we add to the measured point:" << std::endl;
@@ -341,16 +341,17 @@ namespace eutelescope {
 		for(size_t i = 0;i < track.getStates().size(); i++){		
 			EUTelState& state = track.getStates().at(i);
 			TVectorD corrections(5);
-			TMatrixDSym correctionsCov(5);
+			TMatrixDSym cov(5);
             /// Get the corrections in the global frame!!!! 
             /// This is corrected internally by EUTelTrack and EUTelState.
-            traj->getResults(linkGL[state.getLocation()], corrections, correctionsCov );
+            traj->getResults(linkGL[state.getLocation()], corrections, cov );
             streamlog_out(DEBUG3) << std::endl << "State before we have added corrections: " << std::endl;
             state.print();
             streamlog_out(DEBUG3) << std::endl << "Correction: " << std::endl;
             streamlog_message( DEBUG3, corrections.Print();, std::endl; );			
             state.setStateUsingCorrection(corrections);
             track.setTrackUsingCorrection(corrections);
+            state.setCov(cov);
             unsigned int numData;
             /// Scattering is for every plane and is added here. 
             ///Measurement - Prediction is the residual. Initial M-P is always 0
