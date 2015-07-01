@@ -468,14 +468,14 @@ EUTelTrack EUTelPatRecTriplets::getTrack(std::vector<EUTelHit> hits, std::vector
         }//else
     }//loop about planes, j iterator
     setArcLengths(track);
-    std::map<const int,double>  mapSensor;
-    std::map<const int ,double>  mapAir;
-    double rad =	track.getStates().at(0).computeRadLengthsToEnd(mapSensor, mapAir);
-    if(rad == 0){
-    throw(std::string("Radiation length is zero for mimosa tracks."));
-    }
+//    std::map<const int,double>  mapSensor;
+ //   std::map<const int ,double>  mapAir;
+//    double rad =	track.getStates().at(0).computeRadLengthsToEnd(mapSensor, mapAir);
+ //   if(rad == 0){
+ //       throw(std::string("Radiation length is zero for mimosa tracks."));
+//    }
     track.print();
-    setRadLengths(track, mapSensor, mapAir, rad);
+//    setRadLengths(track, mapSensor, mapAir, rad);
     return track;
 }
 void EUTelPatRecTriplets::setArcLengths(EUTelTrack & track){

@@ -24,7 +24,6 @@
 
 // EUTELESCOPE
 #include "EUTelUtility.h"
-#include "EUTelTrackFitter.h"
 #include "EUTelGeometryTelescopeGeoDescription.h"
 #include "EUTelTrack.h"
 #include "EUTelState.h"

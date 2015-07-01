@@ -53,26 +53,23 @@ void EUTelMillepede::computeAlignmentToMeasurementJacobian( EUTelState &state){
 	computeAlignmentToMeasurementJacobian( *localpos,*(localpos+1), TxLocal, TyLocal);
 } 
 void EUTelMillepede::computeAlignmentGlobal( EUTelState &state){
-	streamlog_out(DEBUG3) <<"State we arew about to add: "<< state.getLocation()<<endl; 
+	streamlog_out(DEBUG3) <<"State we are about to add: "<< state.getLocation()<<endl; 
 	state.print();
-	float TxLocal =  state.getSlopeX();
-	float TyLocal =  state.getSlopeY();
-	const double* localpos = state.getPosition();
-	streamlog_out( DEBUG0 ) << "This is px/pz, py/pz (local) "<< TxLocal <<","<< TyLocal << std::endl;
-	streamlog_out( DEBUG0 ) << "This is px/pz, py/pz (Global) "<< state.getDirGlobal()[0]/state.getDirGlobal()[2]<<","<< state.getDirGlobal()[1]/state.getDirGlobal()[2]<< std::endl;
-	streamlog_out( DEBUG0 ) << "Local frame position "<< *localpos<<","<<*(localpos+1)<<","<<*(localpos+2) << std::endl;
+    /// Everything direction related defined in the global frame.
+    /// The position of the hits are before the offsets are taken into account. 
+    /// This allows the correct magnitude of rotation to be determined.
     Eigen::Vector3d normal  = geo::gGeometry().siPlaneNormalEig(state.getLocation());
     Eigen::Vector3d offset =  geo::gGeometry().getOffsetVector(state.getLocation());
     Eigen::Vector3d dir    = state.getDirGlobalEig();
+    ///Deduct offset to remove set from gear.
     double relX = state.getPositionGlobal()[0] - offset(0);
     double relY = state.getPositionGlobal()[1] - offset(1);
     double relZ = state.getPositionGlobal()[2] - offset(2);
-	streamlog_out( DEBUG0 ) << "rel pos: "<< std::endl;
     Eigen::MatrixXd I(3,3);
     I.setIdentity();
-	streamlog_out( DEBUG0 ) << "Find drldm... "<< std::endl;
     double factor =  dir.transpose()*normal;
     Eigen::MatrixXd drldm = I - (dir*normal.transpose())*(1.0/factor); //Residual change with change in global position 
+
 	streamlog_out( DEBUG0 ) << "drldm: "<< drldm << std::endl;
 
     //Change in global position with change in alignment parameters.  
@@ -84,8 +81,12 @@ void EUTelMillepede::computeAlignmentGlobal( EUTelState &state){
     Eigen::Matrix3d rotInv = rot.transpose();
     Eigen::MatrixXd gloMes = rotInv*drldm;
     Eigen::MatrixXd aliToLoc =  gloMes*dmdg;
-	streamlog_out( DEBUG0 ) << "aliToLoc: "<< aliToLoc << std::endl;
+	streamlog_out( DEBUG0 ) << "1)Align to global shifts: "<< endl<< dmdg << std::endl;
+	streamlog_out( DEBUG0 ) << "Relates motion of the global position to position on plane: "<< endl << drldm << std::endl;
+	streamlog_out( DEBUG0 ) << "2)Rotate plane to work in local coordinates: "<< endl << gloMes << std::endl;
+	streamlog_out( DEBUG0 ) << "Times (1)/(2) together and we get the relation between alignment and local residual "<< endl << aliToLoc << std::endl;
 
+	_jacobian.Zero();
     for(int i = 0 ; i < 6; ++i){
         _jacobian[0][i] = aliToLoc(0,i); 
         _jacobian[1][i] = aliToLoc(1,i); 

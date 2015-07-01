@@ -27,15 +27,23 @@ namespace eutelescope {
 			TVectorD getStateVec();
 			float getSlopeX() const; 
 			float getSlopeY() const; 
+            float getSlopeXGlobal() const; 
+            float getSlopeYGlobal() const; 
+
             std::vector<double> getLCIOOutput();
 			float getArcLengthToNextState() const {return _arcLength;} 
 			TVector3 getPositionGlobal() const; 
-			void getCombinedHitAndStateCovMatrixInLocalFrame(double (&cov)[4]) const;
 			bool getStateHasHit() const;
+            /// This will get the link between the local and global frames. 
+            /// GBL Fitter expects the link to be give from global to local. 
+            /// MUST INVERT FOR USE!!
+            /**
+             * \param [out] Projection Calculated using the incidence in the global frame and normal of the senso
+             */
+
 			TMatrixD getProjectionMatrix() const;
 			TVector3 getIncidenceUnitMomentumVectorInLocalFrame();
 			TMatrixDSym getScatteringVarianceInLocalFrame();
-			TMatrixDSym getScatteringVarianceInLocalFrame(float variance);
 			double getRadFracAir() const ;
 			double getRadFracSensor() const ;
             TVector3 getDirLocal() const; 
@@ -47,10 +55,10 @@ namespace eutelescope {
 			TVectorD getKinksMedium2() const;
 			const double* getPosition() const ; 
 			int	getLocation() const;
-			TMatrixDSym getStateCov() const;
 			float getDirLocalX() const {return _dirLocalX;}
 			float getDirLocalY() const {return _dirLocalY;}
 			float getDirLocalZ() const {return _dirLocalZ;}
+            TMatrixD getCov();
             //END OF STATE PARAMETERS
 			//setters
             void setHit(EUTelHit hit);
@@ -68,13 +76,14 @@ namespace eutelescope {
 			void setPositionLocal(double position[]);
 			void setPositionGlobal(float positionGlobal[]);
             void setPositionGlobal(double positionGlobal[]);
-			void setCombinedHitAndStateCovMatrixInLocalFrame(double cov[4]);
 			void setStateUsingCorrection(TVectorD corrections);
 			void setArcLengthToNextState(float arcLength){_arcLength = arcLength;} 
 			void setKinks(TVectorD kinks);
 			void setKinksMedium1(TVectorD kinks);
 			void setKinksMedium2(TVectorD kinks);
 			void setRadFrac(double plane, double air);
+            void setCov(TMatrixD cov);
+
 			//initialise
 			void initialiseCurvature();
 			//find
@@ -90,7 +99,7 @@ namespace eutelescope {
 			bool operator==(const EUTelState compareState ) const;
 			bool operator!=(const EUTelState compareState ) const;
 
-  	private:
+  	protected:
             EUTelHit _hit;
             int _dimension;
             int _location; 
@@ -99,6 +108,7 @@ namespace eutelescope {
             TVectorD _kinks;
             TVectorD _kinksMedium1;
             TVectorD _kinksMedium2;
+            TMatrixD _cov;
             double _dirLocalX;
             double _dirLocalY;
             double _dirLocalZ; 

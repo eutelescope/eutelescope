@@ -10,7 +10,7 @@ EUTelTrack::EUTelTrack(const EUTelTrack& track){
 	setNdf(track.getNdf());
     setStates(track.getStatesCopy());
     setTotalVariance(track.getTotalVariance());
-    setQOverP(getQOverP()); 
+    setQOverP(track.getQOverP()); 
 
 
 }
@@ -21,6 +21,8 @@ EUTelTrack::EUTelTrack(const EUTelTrack& track, bool copyContents){
 	setChi2(track.getChi2());
 	setNdf(track.getNdf());
     setTotalVariance(track.getTotalVariance());
+    setQOverP(track.getQOverP()); 
+
 }
 //getters
 float EUTelTrack::getChi2() const {
@@ -53,7 +55,7 @@ unsigned int EUTelTrack::getNumberOfHitsOnTrack() const {
 }
 
 void EUTelTrack::print(){
-	streamlog_out(DEBUG1) <<"TRACK==>"<< " Chi: "<<getChi2() <<" ndf: "<<getNdf() <<". Path total variance: " << _var << std::endl; 
+	streamlog_out(DEBUG1) <<"TRACK==>"<< " Chi: "<<getChi2() <<" ndf: "<<getNdf() <<". Path total variance: " << _var <<" OoverP:" << getQOverP()  << std::endl; 
     std::vector<EUTelState> states = getStates();
 	streamlog_out(DEBUG1) <<"STATES:"<<std::endl;
 	for(unsigned int i=0; i < states.size(); ++i){
@@ -85,6 +87,7 @@ std::vector<double> EUTelTrack::getLCIOOutput(){
     output.push_back(static_cast<double>(getChi2()));
     output.push_back(static_cast<double>(getNdf()));
     output.push_back(static_cast<double>(getTotalVariance()));
+    output.push_back(static_cast<double>(getQOverP()));
     return output;
 
 
@@ -98,6 +101,7 @@ void EUTelTrack::setTrackFromLCIOVec(std::vector<double> input){
     setChi2(input.at(0));
     setNdf( input.at(1));
     setTotalVariance(input.at(2));
+    setQOverP(input.at(3));
 
 }
 
