@@ -1,10 +1,3 @@
 RunNumber,BeamEnergy,GearGeoFile
-97,5,gear-no-rotation-97.xml
-241,4.4,alignedGear-moreStat-xyzShift-xyzRot-run000241.xml
-273,5,gear-NEWJAC-273.xml
-286,3,gear-286-good.xml 
-290,4.4,gear-CORRECTJACOBAIN-290.xml
-294,4.4,gear-CORRECTJACOBAIN-294.xml
-300,3,gear-CORRECTJACOBAIN-300.xml
-1057,3,gear-1T.xml
-2526,4.4,gear_desy2012_150mm.xml
+241,4.4,gear-0T.xml
+286,3,gear-1T.xml
