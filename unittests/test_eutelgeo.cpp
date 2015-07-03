@@ -123,7 +123,7 @@ TEST_F(eutelgeotestTest, RandomBackAndForthVectorTrans) {
 		}	
 	}
 }
-/** The same as the RandomBackAndForthVectorTrans test. but in this case we transform points
+/** The same as the RandomBackAndForthVectorTrans test, with the difference that here we transform points
  *  and not vectors.
  */
 TEST_F(eutelgeotestTest, RandomBackAndForthPointTrans) {
@@ -154,6 +154,10 @@ TEST_F(eutelgeotestTest, RandomBackAndForthPointTrans) {
 	}
 }
 
+/** Here we take a specific place which is rotatet around the y-axis by 45 degree. We check that the (scaled) vectors which span the
+ *  local system in global space are transformed correctly. I.e. the local (1,0,0), (0,1,0) and (0,0,1) times a random scale transform
+ *  correctly into the global frame.
+ */
 TEST_F(eutelgeotestTest, SpecificVectorTransYAxis) {
 
 	double const abs_err = 1e-8;
@@ -175,6 +179,8 @@ TEST_F(eutelgeotestTest, SpecificVectorTransYAxis) {
 	ASSERT_NEAR(rVec[2], zVec[2]*sin(45*PI/180), abs_err);	
 }
 
+/** Same as above but for x-axis
+ */
 TEST_F(eutelgeotestTest, SpecificVectorTransXAxis) {
 
 	double const abs_err = 1e-8;
@@ -197,6 +203,8 @@ TEST_F(eutelgeotestTest, SpecificVectorTransXAxis) {
 	ASSERT_NEAR(rVec[2], zVec[2]*cos(45*PI/180), abs_err);	
 }
 
+/** Same as above but for z-axis
+ */
 TEST_F(eutelgeotestTest, SpecificVectorTransZAxis) {
 
 	double const abs_err = 1e-8;
@@ -219,6 +227,12 @@ TEST_F(eutelgeotestTest, SpecificVectorTransZAxis) {
 	ASSERT_NEAR(rVec[2], zVec[2], abs_err);	
 }
 
+/** The normal vector of a plane can be determined by taking a local (0,0,1) vector and tranforming it into the global frame.
+ *  Also we can take the x- and y-vector which span the plane (in global frame) and take the cross product. Ultimately we can
+ *  ask teh FW to just give us the normal vector. All three should give us the same normal vector (a=b=c, we check a=b and a=c). 
+ *  Additionally, the vector must be normalised. As this must hold for every plane we check for all. In particular, this also
+ *  verifies that we maintain a right handed coordinate system.
+ */  
 TEST_F(eutelgeotestTest, NormalVectorTest) {
 
 	double const abs_err = 1e-8;
