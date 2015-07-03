@@ -37,7 +37,6 @@
 #include "EUTelUtility.h"
 #include "EUTelGeometryTelescopeGeoDescription.h"
 #include "EUTelRunHeaderImpl.h"
-#include "EUTelTrackFitter.h"
 #include "EUTelGBLFitter.h"
 #include "EUTelExceptions.h"
 #include "EUTelEventImpl.h"

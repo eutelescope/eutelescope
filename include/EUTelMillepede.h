@@ -39,6 +39,7 @@ public:
 
 	//This take a state and outputs a its alignment jacobian given the alignment mode
 	void computeAlignmentToMeasurementJacobian( EUTelState& state);
+	void computeAlignmentGlobal( EUTelState& state);
 	void computeAlignmentToMeasurementJacobian( float x,float y, float slopeXvsZ, float slopeYvsZ);
 
 	void setGlobalLabels(EUTelState& state);

@@ -9,6 +9,7 @@ _totalNumberOfSharedHits(0),
 _firstExecution(true),
 _numberOfTracksTotal(0),
 _numberOfTracksTotalWithDUT(0),
+_tracksWithoutHit(0),
 _numberTripletsLeft(0),
 _numberTripletsRight(0),
 _allowedMissingHits(0),
@@ -19,83 +20,49 @@ _beamQ(-1.)
 EUTelPatRecTriplets::~EUTelPatRecTriplets()  
 {}
 
-void EUTelPatRecTriplets::setPlaneDimensionsVec(EVENT::IntVec planeDimensions){
+void EUTelPatRecTriplets::setPlaneDimensionsVec(EVENT::IntVec& planeDimensions){
 	if(planeDimensions.size() != geo::gGeometry().sensorZOrdertoIDs().size()){
 		streamlog_out(ERROR) << "The size of planesDimensions input is: "<< planeDimensions.size()<<" The size of sensorZOrdertoIDs is: " << geo::gGeometry().sensorZOrdertoIDs().size()<< std::endl;
 		throw(lcio::Exception( "The input dimension vector not the same as the number of planes!"));
 	}
 	_planeDimensions.clear();
-	for(size_t i=0; i<geo::gGeometry().sensorZOrdertoIDs().size(); ++i){//Loop through each plane
-		int planeID = geo::gGeometry().sensorZOrdertoIDs().at(i);
+	for(size_t i=0; i<geo::gGeometry().sensorZOrdertoIDs().size(); ++i){
+		const int planeID = geo::gGeometry().sensorZOrdertoIDs().at(i);
 		if (_planeDimensions.find(planeID) == _planeDimensions.end()){//This is to check that we don't try to map the same sensor to two different plane dimensions.
 			_planeDimensions[planeID] = planeDimensions.at(i);
 		}else{
 			streamlog_out(ERROR5) <<"The z position is : "<< i <<" The plane ID is: " << planeID <<std::endl;
 			throw(lcio::Exception( "You are trying to map the same sensor ID to two different plane dimensions. There is something wrong with you gear file input. Make sure there is some distance between your planes in the gear file!"));
 		}
-	}//END of loop over planes
+	}
 }	    
 
-//setRadLengths: This will determine the variance fraction each scatterer will get. Note this comes in two parts. The first is the plane and the next scattering from the air.    
-void EUTelPatRecTriplets::setRadLengths(EUTelTrack & track,	std::map<const int,double>  mapSensor, std::map<const int ,double>  mapAir, double rad ){
+/*setRadLengths: This will determine the variance fraction each scatterer will get. Note this comes in two parts. The first is the plane and the next scattering from the air.   */
+void EUTelPatRecTriplets::setRadLengths(EUTelTrack & track,	std::map<const int,double>&  mapSensor, std::map<const int ,double>&  mapAir, double & rad ){
 	//THE FINAL WEIGHT WE HAVE WILL BE A FRACTION PERCENTAGE OF THE TOTAL RADIATION LENGTH
 	std::vector<EUTelState>& states = track.getStates();
 	const double var  = pow( Utility::getThetaRMSHighland(track.getBeamEnergy(), rad) , 2);
-	for(size_t i =0; i < track.getStates().size();++i){ //LOOP over all track again.
+	for(size_t i =0; i < track.getStates().size();++i){ 
 		streamlog_out(DEBUG0)<< std::scientific << " Values placed in variance using Highland formula corrected. (SENSOR) : " << (mapSensor[states.at(i).getLocation()]/rad)*var << "  (AIR)  " << (mapAir[states.at(i).getLocation()]/rad)*var <<std::endl;
 		states.at(i).setRadFrac((mapSensor[states.at(i).getLocation()]/rad)*var,(mapAir[states.at(i).getLocation()]/rad)*var);//We input the fraction percentage.
 	}
-	//NOW DETERMINE THE VARIANCE DUE TO THE RADIATION LENGTH. THIS IN THE END WILL BE DIVIDED AMOUNG THE SCATTERERS.
 	track.setTotalVariance(var);
 }
 
 
-void EUTelPatRecTriplets::printTrackCandidates(){
-	streamlog_out ( DEBUG1 ) << "EUTelKalmanFilter::printTrackCandidates----BEGIN "<< std::endl;
-	for(size_t i = 0; i < _tracks.size();++i){
-		streamlog_out(DEBUG5)<<"Track number "<<i<<" Out of " <<_tracks.size()<<std::endl; 
-		_tracks.at(i).print();
-	}
-	streamlog_out ( DEBUG1 ) << "EUTelKalmanFilter::printTrackCandidates----END "<< std::endl;
-}
-void EUTelPatRecTriplets::clearFinalTracks(){
-	_finalTracks.clear();
-}
 
-void EUTelPatRecTriplets::testTrackQuality()
+void EUTelPatRecTriplets::testTrackQuality(std::vector<EUTelTrack>&  tracksWithDUTs )
 {
-	_numberOfTracksTotal = _numberOfTracksTotal + _tracks.size();
+	_numberOfTracksTotal = _numberOfTracksTotal + tracksWithDUTs.size();
 	_numberOfTracksTotalWithDUT = _numberOfTracksTotalWithDUT + _tracksWithDUTHit.size();
 
-	if(_numberOfTracksTotalWithDUT % 100 == 0)
-	  {
+	if(_numberOfTracksTotal % 5000 == 0){
+        streamlog_out(MESSAGE5) << "Percentage tracks without DUT hit: " << static_cast<float>(_tracksWithoutHit)/static_cast<float>(_numberOfTracksTotal)<< std::endl;
         streamlog_out(MESSAGE5) << "Number of tracks per event: " << static_cast<float>(_numberOfTracksTotal)/static_cast<float>(getEventNumber() +1)<< std::endl;
-	streamlog_out(MESSAGE5) << "Number of tracks with DUT hits per event: " << static_cast<float>(_numberOfTracksTotalWithDUT)/static_cast<float>(getEventNumber() +1)<< std::endl;
         streamlog_out(MESSAGE5) << "Number of left arm triplets per event: " << static_cast<float>(_numberTripletsLeft)/static_cast<float>(getEventNumber() +1)<< std::endl;
         streamlog_out(MESSAGE5) << "Number of right arm triplets per event: " << static_cast<float>(_numberTripletsRight)/static_cast<float>(getEventNumber() +1)<< std::endl;
-
-
-	  }
+    }
 }
-
-//I have observed a difference of just over 6 microns between the two methods over 20 cm distance. So we will set the maximum distance to 10 microns difference
-void EUTelPatRecTriplets::testPositionEstimation(float position1[], float position2[]){
-	streamlog_out(DEBUG0) << " The distance between the jacobain methods and simple equations of motion are for the x direction " <<  position1[0] -position2[0] << std::endl;
-	if(fabs(position1[0] -position2[0]) > 0.01){ //in mm
-		throw(lcio::Exception( "The positions between the two methods is different in the x direction. ")); 
-	}
-	streamlog_out(DEBUG0) << " The distance between the jacobain methods and simple equations of motion are for the y direction " <<  position1[1] -position2[1] << std::endl;
-	if(fabs(position1[1] -position2[1]) > 0.01){ //in mm
-		throw(lcio::Exception( "The positions between the two methods is different in the y direction. ")); 
-	}
-	streamlog_out(DEBUG0) << " The distance between the jacobain methods and simple equations of motion are for the z  direction " <<  position1[2] -position2[2] << std::endl;
-	if(fabs(position1[2] -position2[2]) > 0.01){ //in mm
-		throw(lcio::Exception( "The positions between the two methods is different in the z direction. ")); 
-	} 
-}
-
-//This function is used to check that the input data is as expect. If not then we end the processor by throwing a exception.
-////TO DO: should check if seed planes are also excluded	
 void EUTelPatRecTriplets::testUserInput() {
 	streamlog_out(DEBUG2) << "EUTelPatRecTriplets::testUserInput()" << std::endl;
 	if ( _beamE < 1.E-6 ) {
@@ -104,24 +71,15 @@ void EUTelPatRecTriplets::testUserInput() {
 	else{
 	 streamlog_out(DEBUG1) << "Beam energy is reasonable" << std::endl;
 	}
-	if(_createSeedsFromPlanes.size() == 0){
-		throw(lcio::Exception( "The number of planes to make seeds from is 0. We need at least one plane"));
-	}
-
-	if(_createSeedsFromPlanes.size() >= geo::gGeometry().sensorIDstoZOrder().size()){
-		throw(lcio::Exception( "You have specified all planes or more than that. This is too many planes for seeds"));
-	}else{
-		streamlog_out(DEBUG1) << "The number of planes to make seeds from is good " +  to_string(_createSeedsFromPlanes.size()) << std::endl;
-	}
 }	
 std::vector<double>  EUTelPatRecTriplets::getCurvXY(){
     //Defined the same as saved in track parameters.
-    float omega = -1.0/_beamE;
+    const float omega = -1.0/_beamE;
     TVector3 bFac = getBFac();
     streamlog_out(DEBUG0) << "BFac field unit: " << bFac[0] << "  " << bFac[1] <<"  "<< bFac[2] << "  Omega: " << omega << std::endl;
     //Note the cross product
-    double curvX = bFac[0]*omega; 
-    double curvY = bFac[1]*omega; 
+    const double curvX = bFac[0]*omega; 
+    const double curvY = bFac[1]*omega; 
     std::vector<double> curv;
     curv.push_back(curvX); curv.push_back(curvY);
     //streamlog_out(DEBUG0) << "The curvature calculated: " << curv.at(0) << "  " << curv.at(1) << std::endl;
@@ -142,17 +100,16 @@ TVector3  EUTelPatRecTriplets::getBFac(){
 }
 
 
-void EUTelPatRecTriplets::createTriplets()
+std::vector<EUTelPatRecTriplets::triplets> EUTelPatRecTriplets::getTriplets()
 {
 	 streamlog_out(DEBUG1) << "Create triplets..." << std::endl;
-
-    _tripletsVec.clear();
-    double curvX = getCurvXY().at(0); 
-    double curvY = getCurvXY().at(1); 
+    std::vector<triplets> tripletsVec;
+    const double curvX = getCurvXY().at(0); 
+    const double curvY = getCurvXY().at(1); 
     std::vector<unsigned int> cenID;
     cenID.push_back(1);
     cenID.push_back(4);
-    for(unsigned int i=0 ; i< cenID.size(); i++){
+    for(size_t i=0 ; i< cenID.size(); i++){
         streamlog_out(DEBUG1) << "Centre sensor ID: " << cenID.at(i)  << std::endl;
         EVENT::TrackerHitVec& hitCentre = _mapHitsVecPerPlane[cenID.at(i)];
         EVENT::TrackerHitVec& hitCentreLeft = _mapHitsVecPerPlane[cenID.at(i) - 1];
@@ -163,7 +120,7 @@ void EUTelPatRecTriplets::createTriplets()
 		EVENT::TrackerHitVec::iterator itHitRight;
 		for ( itHitLeft = hitCentreLeft.begin(); itHitLeft != hitCentreLeft.end(); ++itHitLeft ) {
             const int hitLeftLoc = Utility::getSensorIDfromHit( static_cast<IMPL::TrackerHitImpl*> (*itHitLeft) );
-            double hitLeftPos[] = { (*itHitLeft)->getPosition()[0], (*itHitLeft)->getPosition()[1], (*itHitLeft)->getPosition()[2] };
+            const double hitLeftPos[] = { (*itHitLeft)->getPosition()[0], (*itHitLeft)->getPosition()[1], (*itHitLeft)->getPosition()[2] };
             double hitLeftPosGlobal[3];
             geo::gGeometry().local2Master(hitLeftLoc ,hitLeftPos,hitLeftPosGlobal);
             EUTelState stateLeft;
@@ -172,10 +129,9 @@ void EUTelPatRecTriplets::createTriplets()
             stateLeft.setHit(*itHitLeft);
             for ( itHitRight = hitCentreRight.begin(); itHitRight != hitCentreRight.end(); ++itHitRight ) {
                 const int hitRightLoc = Utility::getSensorIDfromHit( static_cast<IMPL::TrackerHitImpl*> (*itHitRight) );
-                double hitRightPos[] = { (*itHitRight)->getPosition()[0], (*itHitRight)->getPosition()[1], (*itHitRight)->getPosition()[2] };
+                const double hitRightPos[] = { (*itHitRight)->getPosition()[0], (*itHitRight)->getPosition()[1], (*itHitRight)->getPosition()[2] };
                 double hitRightPosGlobal[3];
                 geo::gGeometry().local2Master(hitRightLoc ,hitRightPos,hitRightPosGlobal);
-
                 EUTelState stateRight;
                 stateRight.setLocation(hitRightLoc);
                 stateRight.setPositionGlobal(hitRightPosGlobal);
@@ -195,7 +151,7 @@ void EUTelPatRecTriplets::createTriplets()
                 //Now loop through all hits on plane between two hits which create doublets. 
                 for ( itHit = hitCentre.begin(); itHit != hitCentre.end(); ++itHit ) {
                     const int hitLoc = Utility::getSensorIDfromHit( static_cast<IMPL::TrackerHitImpl*> (*itHit) );
-                    double hitPos[] = { (*itHit)->getPosition()[0], (*itHit)->getPosition()[1], (*itHit)->getPosition()[2] };
+                    const double hitPos[] = { (*itHit)->getPosition()[0], (*itHit)->getPosition()[1], (*itHit)->getPosition()[2] };
                     double hitPosGlobal[3];
                     geo::gGeometry().local2Master(hitLoc ,hitPos,hitPosGlobal);
                     EUTelState state;
@@ -203,144 +159,91 @@ void EUTelPatRecTriplets::createTriplets()
                     state.setPositionGlobal(hitPosGlobal);
                     state.setHit(*itHit);
                     state.setDirFromGloSlope(doublet.slope);
-                    float initDis = geo::gGeometry().getInitialDisplacementToFirstPlane();
-                    float x1 = hitPosGlobal[0] - 0.5*curvX*pow(hitPosGlobal[2] - initDis, 2);
-                    float y1 = hitPosGlobal[1] - 0.5*curvY*pow(hitPosGlobal[2] - initDis, 2);
+                    const float initDis = geo::gGeometry().getInitialDisplacementToFirstPlane();
+                    const float x1 = hitPosGlobal[0] - 0.5*curvX*pow(hitPosGlobal[2] - initDis, 2);
+                    const float y1 = hitPosGlobal[1] - 0.5*curvY*pow(hitPosGlobal[2] - initDis, 2);
                 //    streamlog_out(DEBUG1) << "Centre Doublet/Hit positions: "<<doublet.pos.at(0)<<"/" <<x1<<"  " <<doublet.pos.at(1)<<"/"<<y1 << std::endl;
-                    double delX = doublet.pos.at(0) - x1;
-                    double delY = doublet.pos.at(1) - y1;
+                    const double delX = doublet.pos.at(0) - x1;
+                    const double delY = doublet.pos.at(1) - y1;
                     streamlog_out(DEBUG1) << "Doublet delta X to centre hit: "<< delX << " Cut X: "<<_doubletCenDistCut.at(0) <<" Distance Y: " << delY<< " Cut Y: " << _doubletCenDistCut.at(1)  << std::endl;
 
                     if(fabs(delX) >  _doubletCenDistCut.at(0) or fabs(delY) >  _doubletCenDistCut.at(1) ){
                         continue;
                     }
                     streamlog_out(DEBUG1) << "PASS 2!! " << std::endl;
-
-                    //Set distance
-//                    TVector3 vectorDist = state.getPositionGlobal()-stateLeft.getPositionGlobal();
-                  //  float dist = sqrt(pow(state.getPositionGlobal()[0]-stateLeft.getPositionGlobal()[0],2)+pow(state.getPositionGlobal()[1]-stateLeft.getPositionGlobal()[1],2)+pow(state.getPositionGlobal()[2]-stateLeft.getPositionGlobal()[2],2));
-                    float dist = (state.getPositionGlobal() - stateLeft.getPositionGlobal()).Mag();
-//                    stateLeft.setArcLengthToNextState(dist);
-                    dist = (stateRight.getPositionGlobal() - state.getPositionGlobal()).Mag();
-  //                  state.setArcLengthToNextState(dist);
-                    streamlog_out(DEBUG1) << "LEFT: " << cenID.at(i)  << std::endl;
-                    stateLeft.print();
-                    streamlog_out(DEBUG1) << "CENTRE: " << cenID.at(i)  << std::endl;
-                    state.print();
-                    streamlog_out(DEBUG1) << "RIGHT: " << cenID.at(i)  << std::endl;
-                    stateRight.print();
-                    triplets triplet;
-                    triplet.matches = 0;
-                    triplet.fitID = -999;
-                    triplet.states.push_back(stateLeft);
-                    triplet.states.push_back(state);
-                    triplet.states.push_back(stateRight);
-                    triplet.pos.push_back(doublet.pos.at(0));
-                    triplet.pos.push_back(doublet.pos.at(1));
-                    triplet.pos.push_back(doublet.pos.at(2));
-                    triplet.cenPlane = cenID.at(i);
-                    triplet.slope.push_back(doublet.slope.at(0));
-                    triplet.slope.push_back(doublet.slope.at(1));
-                    if(triplet.cenPlane == 1){
+                    triplets triplet = getTriplet(stateLeft,state, stateRight,doublet);
+                     if(triplet.cenPlane == 1){
                         _numberTripletsLeft++;
                     }else if(triplet.cenPlane == 4){
                         _numberTripletsRight++;
                     }
-                    _tripletsVec.push_back(triplet); 
+                    tripletsVec.push_back(triplet); 
                 }
             }
         }
-        if(cenID.size()-1 == i and _tripletsVec.size() == 0){
+        if(cenID.size()-1 == i and _tripletsVec.size() == 0){//If not triplets found on first plane end search.
             streamlog_out(DEBUG1) << "FOUND NO TRIPLETS FOR EVENT: " << getEventNumber()  << std::endl;
             break;
         }
     }
+    return tripletsVec;
+
+}
+EUTelPatRecTriplets::triplets EUTelPatRecTriplets::getTriplet(EUTelState & left, EUTelState & cen,EUTelState & right, doublets& doublet ){
+    streamlog_out(DEBUG1) << "LEFT: "  << std::endl;
+    left.print();
+    streamlog_out(DEBUG1) << "CENTRE: " << std::endl;
+    cen.print();
+    streamlog_out(DEBUG1) << "RIGHT: " << std::endl;
+    right.print();
+    triplets triplet;
+    triplet.matches = 0;
+    triplet.fitID = -999;
+    triplet.states.push_back(left);
+    triplet.states.push_back(cen);
+    triplet.states.push_back(right);
+    triplet.pos.push_back(doublet.pos.at(0));
+    triplet.pos.push_back(doublet.pos.at(1));
+    triplet.pos.push_back(doublet.pos.at(2));
+    triplet.cenPlane = cen.getLocation();
+    triplet.slope.push_back(doublet.slope.at(0));
+    triplet.slope.push_back(doublet.slope.at(1));
+    streamlog_out(DEBUG1) << "triplet created." << std::endl;
+    return triplet;
+
 }
 
+/*This is the function which should be used in processEvent
+*/
 std::vector<EUTelTrack> EUTelPatRecTriplets::getTracks( ){
-    //Adding all the elements needed for track fitting.
-    _tracks.clear();
-    //Determine hits which form the track measured by telescope. Cuts are optimum at different values for different geometric setups. 
-    createTriplets();
-    //Link triplets to form the basis of EUTelTrack objects _tracks. Incomplete state, since scattering information must be added for GBL fit. 
-    findTrackFromTriplets();
-    _tracksWithDUTHit.clear();
-    streamlog_out(DEBUG1) << _tracks.size()<<" TRACKS AFTER: setTrackStatesHits(). Event: " << getEventNumber()  << std::endl;
-    for(unsigned int i = 0 ; i < _tracks.size();++i){
-        _tracks.at(i).print();
+    std::vector<EUTelPatRecTriplets::triplets> tripletVec = getTriplets();
+    streamlog_out(DEBUG1) << "Total number of triplets found:  " << tripletVec.size()  << std::endl;
+    std::vector<EUTelTrack>  tracks = findTrackFromTriplets(tripletVec);
+    streamlog_out(DEBUG1) << tracks.size()<<" TRACKS AFTER: setTrackStatesHits(). Event: " << getEventNumber()  << std::endl;
+    for(unsigned int i = 0 ; i < tracks.size();++i){
+        tracks.at(i).print();
     }
     //If we have dut planes then get hits. If not then just pass mimosa tracks.
     unsigned int  dutNum = geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() - 6;
+    streamlog_out(DEBUG1)<< "Number of DUTs: "<< dutNum << std::endl;
+
+    std::vector<EUTelTrack> tracksWithDUTs;
     if(dutNum != 0){
-        getDUTHit();
+       tracksWithDUTs = getDUTHit(tracks);
     }else{
         streamlog_out(DEBUG1)<< "NO DUT: Use mimosa tracks." << std::endl;
-        _tracksWithDUTHit = _tracks;
+        tracksWithDUTs = tracks;
     }
-    streamlog_out(DEBUG1) << _tracksWithDUTHit.size()<<" TRACKS AFTER: getDUTHit(). Event: " << getEventNumber()  << std::endl;
-    for(unsigned int i = 0 ; i < _tracksWithDUTHit.size();++i){
-        _tracksWithDUTHit.at(i).print();
+    streamlog_out(DEBUG1) << tracksWithDUTs.size()<<" TRACKS AFTER: getDUTHit(). Event: " << getEventNumber()  << std::endl;
+    for(size_t i = 0 ; i < tracksWithDUTs.size();++i){
+        tracksWithDUTs.at(i).print();
     }
-    //Determine the scattering for the particles trajectory.  
-//    setScattering();
-//    streamlog_out(DEBUG0) << "TRACKS AFTER: getScattering(). Event: " << getEventNumber()  << std::endl;
-//    for(unsigned int i = 0 ; i < _tracksWithDUTHit.size();++i){
-//        _tracksWithDUTHit.at(i).print();
-//    }
-//    setStraightLineFit(); //Must create straight line fit since kink angle estimations are not calculated here.
-//    streamlog_out(DEBUG0) << "TRACKS AFTER: getStraightLineFit(). Event: " << getEventNumber()  << std::endl;
-//    for(unsigned int i = 0 ; i < _tracksWithDUTHit.size();++i){
- //       _tracksWithDUTHit.at(i).print();
-//    }
-
-    //return _tracksWithDUTHit;
-    streamlog_out( DEBUG1 ) << "_tracksWithDUTHit.size() = "<<_tracksWithDUTHit.size()<<std::endl;
-    streamlog_out( DEBUG1 ) << "_tracks.size() = "<<_tracks.size()<<std::endl;
-    return _tracksWithDUTHit;
+    streamlog_out( DEBUG1 ) << "tracksWithDUTs.size() = "<<tracksWithDUTs.size()<<std::endl;
+    streamlog_out( DEBUG1 ) << "tracks.size() = "<<tracks.size()<<std::endl;
+    testTrackQuality(tracksWithDUTs );
+    return tracksWithDUTs;
 }
-//void EUTelPatRecTriplets::setStraightLineFit(){
-//    std::vector<EUTelTrack>::iterator itTrack;
-//    for(itTrack = _tracksWithDUTHit.begin(); itTrack != _tracksWithDUTHit.end();itTrack++){
-//        EUTelState State1 = itTrack->getStates().at(1);
-//        EUTelState State2 = itTrack->getStates().at(4);
-//        double localAveX = (State1.getMomLocalX() + State2.getMomLocalX())/2.0;
-//        double localAveY = (State1.getMomLocalY() + State2.getMomLocalY())/2.0;
-//        double localAveZ = (State1.getMomLocalZ() + State2.getMomLocalZ())/2.0;
-//        itTrack->getStates().at(0).setMomLocalX(localAveX);
-//        itTrack->getStates().at(0).setMomLocalY(localAveY);
-//        itTrack->getStates().at(0).setMomLocalZ(localAveZ);
-//
-//        for(unsigned int i =0 ; i < itTrack->getStates().size()-1; i++){
-//            float intersectionPoint[3];
-//            TVector3 momentumAtIntersection;
-//            float arcLength;
-//            int holder; //This is used to return the plane which is found.
-//            bool found =itTrack->getStates().at(i).findIntersectionWithCertainID(itTrack->getStates().at(i+1).getLocation(), intersectionPoint, momentumAtIntersection,arcLength,holder );
-//            itTrack->getStates().at(i).setArcLengthToNextState(arcLength);
-//            itTrack->getStates().at(i+1).setPositionGlobal(intersectionPoint);
-//			itTrack->getStates().at(i+1).setLocalMomentumGlobalMomentum(momentumAtIntersection); 
-//
-//
-//        }
-//    }
-//
-//}
 
-void EUTelPatRecTriplets::setScattering(){
-    std::vector<EUTelTrack>::iterator itTrack;
-    for(itTrack = _tracksWithDUTHit.begin(); itTrack != _tracksWithDUTHit.end();itTrack++){
-        std::map<const int,double>  mapSensor;
-        std::map<const int ,double>  mapAir;
-        double rad =	itTrack->getStates().at(0).computeRadLengthsToEnd(mapSensor, mapAir);
-        if(rad == 0){
-            throw(std::string("Radiation length is zero."));
-        }
-        itTrack->print();
-        setRadLengths(*itTrack, mapSensor, mapAir, rad);
-
-    }
-}
-//Assume hits are in correct z order.
 EUTelTrack EUTelPatRecTriplets::getTrack(std::vector<EUTelHit> hits ){
 	streamlog_out(DEBUG1) << "HITS TO FORM TRACK FROM: " << std::endl;
     std::vector<EUTelHit>::iterator itHit;
@@ -375,23 +278,7 @@ EUTelTrack EUTelPatRecTriplets::getTrack(std::vector<EUTelHit> hits ){
     if ( Bmag < 1.E-6 ){
         curvCorr.push_back(0.0); curvCorr.push_back(0.0);
     }else{
-        std::vector<double> slopesArmOne; 
-        slopesArmOne.push_back((hitArmOne2.getPositionGlobal()[0]-hitArmOne1.getPositionGlobal()[0])/(hitArmOne2.getPositionGlobal()[2]-hitArmOne1.getPositionGlobal()[2]));
-        slopesArmOne.push_back((hitArmOne2.getPositionGlobal()[1]-hitArmOne1.getPositionGlobal()[1])/(hitArmOne2.getPositionGlobal()[2]-hitArmOne1.getPositionGlobal()[2]));
-        std::vector<double> slopesArmTwo; 
-        slopesArmTwo.push_back((hitArmTwo2.getPositionGlobal()[0]-hitArmTwo1.getPositionGlobal()[0])/(hitArmTwo2.getPositionGlobal()[2]-hitArmTwo1.getPositionGlobal()[2]));
-        slopesArmTwo.push_back((hitArmTwo2.getPositionGlobal()[1]-hitArmTwo1.getPositionGlobal()[1])/(hitArmTwo2.getPositionGlobal()[2]-hitArmTwo1.getPositionGlobal()[2]));
-        
-        double averageDistArmOne = (hitArmOne2.getPositionGlobal()[2] +  hitArmOne1.getPositionGlobal()[2])/2.0;
-        double averageDistArmTwo = (hitArmTwo2.getPositionGlobal()[2] +  hitArmTwo1.getPositionGlobal()[2])/2.0;
-
-        //Slope change with curvature constant.
-        double dSlopeXDCurv = getBFac()[0]*(averageDistArmOne-averageDistArmTwo);  
-        double dSlopeYDCurv = getBFac()[1]*(averageDistArmOne-averageDistArmTwo);  
-        //correct curvature
-        double corr = (dSlopeXDCurv*(slopesArmOne.at(0)- slopesArmTwo.at(0)) + dSlopeYDCurv*(slopesArmOne.at(1)- slopesArmTwo.at(1)))/(pow(dSlopeXDCurv,2)+pow(dSlopeYDCurv,2));
-        curvCorr.push_back(getCurvXY()[0] + corr*getBFac()[0]); curvCorr.push_back(getCurvXY()[1] + corr*getBFac()[1]);
-        streamlog_out(DEBUG0) << "Correct curv X: " << curvCorr.at(0) << " Y: " << curvCorr.at(1) <<std::endl; 
+        curvCorr =  getCorr(hitArmOne1,hitArmOne2,hitArmTwo1,hitArmTwo2);
     }
     //NOW CREATE TRACK CANDIDATE
     std::vector<double> offset;
@@ -401,13 +288,35 @@ EUTelTrack EUTelPatRecTriplets::getTrack(std::vector<EUTelHit> hits ){
     return track;
 
 }
-void EUTelPatRecTriplets::getTrackAvePara(EUTelHit firstHit, EUTelHit endHit, std::vector<double>& offset, std::vector<double>& trackSlope){
+std::vector<double> EUTelPatRecTriplets::getCorr(EUTelHit & hitArmOne1, EUTelHit & hitArmOne2, EUTelHit & hitArmTwo1, EUTelHit & hitArmTwo2){
+    std::vector<double> curvCorr;
+    std::vector<double> slopesArmOne; 
+    slopesArmOne.push_back((hitArmOne2.getPositionGlobal()[0]-hitArmOne1.getPositionGlobal()[0])/(hitArmOne2.getPositionGlobal()[2]-hitArmOne1.getPositionGlobal()[2]));
+    slopesArmOne.push_back((hitArmOne2.getPositionGlobal()[1]-hitArmOne1.getPositionGlobal()[1])/(hitArmOne2.getPositionGlobal()[2]-hitArmOne1.getPositionGlobal()[2]));
+    std::vector<double> slopesArmTwo; 
+    slopesArmTwo.push_back((hitArmTwo2.getPositionGlobal()[0]-hitArmTwo1.getPositionGlobal()[0])/(hitArmTwo2.getPositionGlobal()[2]-hitArmTwo1.getPositionGlobal()[2]));
+    slopesArmTwo.push_back((hitArmTwo2.getPositionGlobal()[1]-hitArmTwo1.getPositionGlobal()[1])/(hitArmTwo2.getPositionGlobal()[2]-hitArmTwo1.getPositionGlobal()[2]));
+
+    double averageDistArmOne = (hitArmOne2.getPositionGlobal()[2] +  hitArmOne1.getPositionGlobal()[2])/2.0;
+    double averageDistArmTwo = (hitArmTwo2.getPositionGlobal()[2] +  hitArmTwo1.getPositionGlobal()[2])/2.0;
+
+    //Slope change with curvature constant.
+    double dSlopeXDCurv = getBFac()[0]*(averageDistArmOne-averageDistArmTwo);  
+    double dSlopeYDCurv = getBFac()[1]*(averageDistArmOne-averageDistArmTwo);  
+    //correct curvature
+    double corr = (dSlopeXDCurv*(slopesArmOne.at(0)- slopesArmTwo.at(0)) + dSlopeYDCurv*(slopesArmOne.at(1)- slopesArmTwo.at(1)))/(pow(dSlopeXDCurv,2)+pow(dSlopeYDCurv,2));
+    curvCorr.push_back(getCurvXY()[0] + corr*getBFac()[0]); curvCorr.push_back(getCurvXY()[1] + corr*getBFac()[1]);
+    streamlog_out(DEBUG0) << "Correct curv X: " << curvCorr.at(0) << " Y: " << curvCorr.at(1) <<std::endl; 
+    return curvCorr;
+}
+
+void EUTelPatRecTriplets::getTrackAvePara(EUTelHit & firstHit, EUTelHit & endHit, std::vector<double>& offset, std::vector<double>& trackSlope){
     //NOW CREATE TRACK CANDIDATE
     offset.push_back(firstHit.getPositionGlobal()[0]); 
     offset.push_back(firstHit.getPositionGlobal()[1]); 
     offset.push_back(firstHit.getPositionGlobal()[2]); 
     offset.push_back(endHit.getPositionGlobal()[2]); 
-    double dz = offset.at(3) - offset.at(2);
+    const double dz = offset.at(3) - offset.at(2);
     trackSlope.push_back((endHit.getPositionGlobal()[0] - offset.at(0))/dz);trackSlope.push_back((endHit.getPositionGlobal()[1] - offset.at(1))/dz);
 	streamlog_out(DEBUG1) << "Track average parameters: " << std::endl;
 	streamlog_out(DEBUG1) << "Offsets:  " << offset.at(0)<<" " << offset.at(1)<<" " << offset.at(2) <<" " <<offset.at(3) << std::endl;
@@ -416,14 +325,14 @@ void EUTelPatRecTriplets::getTrackAvePara(EUTelHit firstHit, EUTelHit endHit, st
 }
 
 
-void EUTelPatRecTriplets::findTrackFromTriplets(){
+std::vector<EUTelTrack> EUTelPatRecTriplets::findTrackFromTriplets(std::vector<EUTelPatRecTriplets::triplets>& tripletsVec){
     streamlog_out(DEBUG1) << "Set track states and hits... " << std::endl;
-
+    std::vector<EUTelTrack> tracks;
     std::vector<triplets>::iterator itTriplet;
     std::vector<triplets> leftTriplets;
     std::vector<triplets> rightTriplets;
     unsigned int fitID = 0;
-    for(itTriplet = _tripletsVec.begin();itTriplet != _tripletsVec.end();  itTriplet++){
+    for(itTriplet = tripletsVec.begin();itTriplet != tripletsVec.end();  itTriplet++){
       streamlog_out(DEBUG0) << "itTriplet->matches = " <<itTriplet->matches<< std::endl;
         if(itTriplet->cenPlane == 1 ){
             leftTriplets.push_back(*itTriplet);
@@ -446,7 +355,7 @@ void EUTelPatRecTriplets::findTrackFromTriplets(){
                 continue;
             }
             streamlog_out(DEBUG1) << "PASS 3!! " << std::endl;
-            float aveZPosTrip = (itLeftTriplet->pos.at(2)+ itRightTriplet->pos.at(2))/2.0;
+            const float aveZPosTrip = (itLeftTriplet->pos.at(2)+ itRightTriplet->pos.at(2))/2.0;
             streamlog_out(DEBUG1) << "Triplet Propagation..." <<std::endl;   
             streamlog_out(DEBUG1) << "LEFT" <<std::endl;   
             std::vector<float> posLeftAtZ = getTripPosAtZ(*itLeftTriplet,aveZPosTrip); 
@@ -459,12 +368,12 @@ void EUTelPatRecTriplets::findTrackFromTriplets(){
             }
             //Pass without DUT
             streamlog_out(DEBUG1) << "PASS 4!! " << std::endl;
-            float dist = (itRightTriplet->states.at(0).getPositionGlobal() - itLeftTriplet->states.at(2).getPositionGlobal()).Mag();
+            const float dist = (itRightTriplet->states.at(0).getPositionGlobal() - itLeftTriplet->states.at(2).getPositionGlobal()).Mag();
 //            itLeftTriplet->states.at(2).setArcLengthToNextState(dist);
             itLeftTriplet->matches = itLeftTriplet->matches + 1;
             itRightTriplet->matches = itRightTriplet->matches + 1;
             itLeftTriplet->fitID = fitID;
-            itRightTriplet->fitID = fitID;//streamlog_out(DEBUG1) << "fitID = " <<fitID<< std::endl;streamlog_out(DEBUG1) << "confused:  itLeftTriplet->matches = " <<itLeftTriplet->matches<< "  itRightTriplet->matches = " <<itRightTriplet->matches<< std::endl;
+            itRightTriplet->fitID = fitID;
             fitID++;
         }
     }
@@ -473,16 +382,12 @@ void EUTelPatRecTriplets::findTrackFromTriplets(){
             if(itLeftTriplet->fitID == itRightTriplet->fitID){streamlog_out(DEBUG1) << "itLeftTriplet->matches = " <<itLeftTriplet->matches<< "  itRightTriplet->matches = " <<itRightTriplet->matches<< std::endl;
                 if(itLeftTriplet->matches == 1 and itRightTriplet->matches == 1 ){
                     streamlog_out(DEBUG1) << "FOUND TRACK FROM TRIPLETS!" << std::endl;
-                    _tracks.push_back(getTrack(*itLeftTriplet,*itRightTriplet));
+                    tracks.push_back(getTrack(*itLeftTriplet,*itRightTriplet));
                 }
             }
         }
     }
-}
-EUTelTrack EUTelPatRecTriplets::printTrack(std::vector<EUTelTrack>& tracks){
-    for(unsigned int i = 0; i < _tracks.size(); ++i){
-        _tracks.at(i).print();
-    }
+    return tracks;
 }
 EUTelTrack EUTelPatRecTriplets::getTrack(triplets tripLeft,triplets tripRight){
     std::vector<EUTelHit> hits;
@@ -563,14 +468,14 @@ EUTelTrack EUTelPatRecTriplets::getTrack(std::vector<EUTelHit> hits, std::vector
         }//else
     }//loop about planes, j iterator
     setArcLengths(track);
-    std::map<const int,double>  mapSensor;
-    std::map<const int ,double>  mapAir;
-    double rad =	track.getStates().at(0).computeRadLengthsToEnd(mapSensor, mapAir);
-    if(rad == 0){
-    throw(std::string("Radiation length is zero for mimosa tracks."));
-    }
+//    std::map<const int,double>  mapSensor;
+ //   std::map<const int ,double>  mapAir;
+//    double rad =	track.getStates().at(0).computeRadLengthsToEnd(mapSensor, mapAir);
+ //   if(rad == 0){
+ //       throw(std::string("Radiation length is zero for mimosa tracks."));
+//    }
     track.print();
-    setRadLengths(track, mapSensor, mapAir, rad);
+//    setRadLengths(track, mapSensor, mapAir, rad);
     return track;
 }
 void EUTelPatRecTriplets::setArcLengths(EUTelTrack & track){
@@ -583,10 +488,11 @@ void EUTelPatRecTriplets::setArcLengths(EUTelTrack & track){
     }
 }
 
-void EUTelPatRecTriplets::getDUTHit(){
-    if(_tracks.size() != 0 ){
+std::vector<EUTelTrack> EUTelPatRecTriplets::getDUTHit(std::vector<EUTelTrack> & tracks){
+    std::vector<EUTelTrack> tracksWithDUTHit;
+    if(tracks.size() != 0 ){
         std::map<int ,EVENT::TrackerHitVec> ::iterator itIDHit;
-        for(itIDHit = _mapHitsVecPerPlane.begin(); itIDHit != _mapHitsVecPerPlane.end(); ++itIDHit) {
+        for(itIDHit = _mapHitsVecPerPlane.begin(); itIDHit != _mapHitsVecPerPlane.end(); ++itIDHit) {//Should find a better way than this loop
             if(itIDHit->first <= 5){
                 streamlog_out(DEBUG1) << "Mimosa hit."  << std::endl;
                 continue;
@@ -606,7 +512,7 @@ void EUTelPatRecTriplets::getDUTHit(){
                         //Find closest track.
                         EUTelTrack bestTrack;
                         std::vector<EUTelTrack>::iterator itTrack;
-                        for(itTrack = _tracks.begin(); itTrack != _tracks.end();itTrack++){
+                        for(itTrack = tracks.begin(); itTrack != tracks.end();itTrack++){//Need to allow more hits to be collected here.
                             //Get track information.
                             std::vector<double> offset;
                             std::vector<double> trackSlope; 
@@ -638,7 +544,7 @@ void EUTelPatRecTriplets::getDUTHit(){
                             //Will enter always on the first loop if reached. Need to find intersection and hit on DUT.
                             if(dist < distBest){
                                 streamlog_out(DEBUG0) << "Save track information"  << std::endl;
-                                if(itTrack == _tracks.begin()){
+                                if(itTrack == tracks.begin()){
                                     streamlog_out(DEBUG0) << "First track used!" << std::endl;
                                 }
                                 if(dist < distBest){
@@ -652,12 +558,15 @@ void EUTelPatRecTriplets::getDUTHit(){
                         dutHits.push_back(*itHit);
                         std::vector<EUTelHit> hits;
                         hits = getDUTHitsOrder(bestTrack,dutHits);
-                        _tracksWithDUTHit.push_back(getTrack(hits));
+                        tracksWithDUTHit.push_back(getTrack(hits));
                     }
+                }else{//If there are no hit on DUT plane.
+                    _tracksWithoutHit = _tracksWithoutHit + tracks.size();
                 }
             }
         }
     }
+    return tracksWithDUTHit;
 }
 std::vector<EUTelHit> EUTelPatRecTriplets::getDUTHitsOrder(EUTelTrack track, std::vector<EUTelHit> dutHits ){
     std::vector<EUTelHit> finalHits;
@@ -749,15 +658,8 @@ TVector3 EUTelPatRecTriplets::computeInitialMomentumGlobal(){
 	streamlog_out(DEBUG2) << "Momentum on the first sensor: px,py,pz "<<momentumEnd[0] <<","<<momentumEnd[1]<<","<<momentumEnd[2]<<","<<"At an arc length of "<<arcLength<<std::endl;
 	return momentumEnd;
 }
-
-
-//We need to delete the states AND the track. Since we have allocated memory to store the state.
-void EUTelPatRecTriplets::clearTrackAndTrackStates(){
-    _tracks.clear();
-}
-
-//This creates map between plane ID and hits on that plane. 
-//We also order the map correcly with geometry.
+/*This creates map between plane ID and hits on that plane.  We also order the map correcly with geometry.
+ */
 void EUTelPatRecTriplets::setHitsVecPerPlane()
 {
 	_mapHitsVecPerPlane.clear();

@@ -461,7 +461,10 @@ void EUTelProcessorHitMaker::processEvent (LCEvent * event) {
 					AIDA::IHistogram2D * histo2D = dynamic_cast<AIDA::IHistogram2D*> (_aidaHistoMap[ tempHistoName ] );
 					if ( histo2D )
 					{
-							histo2D->fill( telPos[0], telPos[1] );
+                            const double localPos[3] = { telPos[0], telPos[1], telPos[2] };
+                            double gloPos[3];
+                            geo::gGeometry().local2Master( sensorID, localPos, gloPos);
+							histo2D->fill( gloPos[0], gloPos[1] );
 					}
 					else 
 					{

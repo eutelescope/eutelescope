@@ -1,12 +1,12 @@
 #include "EUTelTrackAnalysis.h"
 using namespace eutelescope;
-EUTelTrackAnalysis::EUTelTrackAnalysis(std::map< int,  AIDA::IProfile2D*> mapFromSensorIDToHistogramX, std::map< int,  AIDA::IProfile2D*> mapFromSensorIDToHistogramY, std::map< int,  AIDA::IProfile2D*> mapFromSensorIDToEfficiencyX, std::map< int,  AIDA::IProfile2D*> mapFromSensorIDToEfficiencyY, std::map< int,   AIDA::IHistogram1D *> mapFromSensorIDToKinkXZ,std::map< int,   AIDA::IHistogram1D *> mapFromSensorIDToKinkYZ,  AIDA::IHistogram1D * beamEnergy){
+EUTelTrackAnalysis::EUTelTrackAnalysis(std::map< int,  AIDA::IProfile2D*> mapFromSensorIDToHistogramX, std::map< int,  AIDA::IProfile2D*> mapFromSensorIDToHistogramY, std::map< int,  AIDA::IProfile2D*> mapFromSensorIDToEfficiencyX, std::map< int,  AIDA::IProfile2D*> mapFromSensorIDToEfficiencyY, std::map< int,   AIDA::IHistogram1D *> mapFromSensorIDToGloIncXZ,std::map< int,   AIDA::IHistogram1D *> mapFromSensorIDToGloIncYZ,  AIDA::IHistogram1D * beamEnergy){
 setSensorIDTo2DResidualHistogramX(mapFromSensorIDToHistogramX);
 setSensorIDTo2DResidualHistogramY(mapFromSensorIDToHistogramY);
 setSensorIDTo2DResidualEfficiencyX(mapFromSensorIDToEfficiencyX);
 setSensorIDTo2DResidualEfficiencyY(mapFromSensorIDToEfficiencyY);
-setSensorIDToIncidenceAngleXZ(mapFromSensorIDToKinkXZ);
-setSensorIDToIncidenceAngleYZ(mapFromSensorIDToKinkYZ);
+setSensorIDToIncidenceAngleXZ(mapFromSensorIDToGloIncXZ);
+setSensorIDToIncidenceAngleYZ(mapFromSensorIDToGloIncYZ);
 setBeamEnergy(beamEnergy);
 
 } 
@@ -22,6 +22,7 @@ void EUTelTrackAnalysis::plotResidualVsPosition(EUTelTrack track){
 		}
 		EUTelHit hit = state.getHit();	
 		const double* statePosition = state.getPosition();
+		TVector3 statePositionGlobal = state.getPositionGlobal();
 		const double* hitPosition = hit.getPosition();
 		float residual[2];
 		streamlog_out(DEBUG2) << "State position: " << statePosition[0]<<","<<statePosition[1]<<","<<statePosition[2]<< std::endl;
@@ -30,17 +31,17 @@ void EUTelTrackAnalysis::plotResidualVsPosition(EUTelTrack track){
 		typedef std::map<int ,AIDA::IProfile2D*  >::iterator it_type;
 		for(it_type iterator = _mapFromSensorIDToHistogramX.begin(); iterator != _mapFromSensorIDToHistogramX.end(); iterator++) {
 			if(iterator->first == state.getLocation()){
-			residual[0]=statePosition[0]-hitPosition[0];
+			residual[0]=std::abs(statePosition[0]-hitPosition[0]);
 			streamlog_out(DEBUG2) << "Add residual X : " << residual[0]<< std::endl;
 
-			_mapFromSensorIDToHistogramX[ state.getLocation() ]  -> fill( statePosition[0], statePosition[1], residual[0], 1 );
+			_mapFromSensorIDToHistogramX[ state.getLocation() ]  -> fill( statePositionGlobal[0], statePositionGlobal[1], residual[0], 1 );
 			break;
 			}
 		}
 		for(it_type iterator = _mapFromSensorIDToHistogramY.begin(); iterator != _mapFromSensorIDToHistogramY.end(); iterator++) {
 			if(iterator->first == state.getLocation()){
 
-			residual[1]=statePosition[1]-hitPosition[1];
+			residual[1]=std::abs(statePosition[1]-hitPosition[1]);
 			streamlog_out(DEBUG2) << "Add residual Y : " << residual[1]<< std::endl;
 			_mapFromSensorIDToHistogramY[ state.getLocation() ]  -> fill( statePosition[0], statePosition[1], residual[1], 1 );
 			break;
@@ -131,8 +132,7 @@ void EUTelTrackAnalysis::plotIncidenceAngles(EUTelTrack track){
 	for(size_t i=0; i<states.size();++i){
 		EUTelState state  = states.at(i);
 		state.print();
-		TVectorD stateVec = state.getStateVec();
-		float incidenceXZ = stateVec[1];
+		float incidenceXZ = state.getSlopeXGlobal();
 		typedef std::map<int , AIDA::IHistogram1D * >::iterator it_type;
 		for(it_type iterator =_mapFromSensorIDToIncidenceXZ.begin(); iterator != _mapFromSensorIDToIncidenceXZ.end(); iterator++) {
 			if(iterator->first == state.getLocation()){
@@ -145,8 +145,7 @@ void EUTelTrackAnalysis::plotIncidenceAngles(EUTelTrack track){
 	for(size_t i=0; i<states.size();++i){
 		EUTelState state  = states.at(i);
 		state.print();
-		TVectorD stateVec = state.getStateVec();
-		float incidenceYZ = stateVec[2];
+		float incidenceYZ = state.getSlopeYGlobal();
 		typedef std::map<int , AIDA::IHistogram1D * >::iterator it_type;
 		for(it_type iterator =_mapFromSensorIDToIncidenceYZ.begin(); iterator != _mapFromSensorIDToIncidenceYZ.end(); iterator++) {
 			if(iterator->first == state.getLocation()){
@@ -165,8 +164,7 @@ void EUTelTrackAnalysis::plotPValueWithIncidenceAngles(EUTelTrack track){
 	for(size_t i=0; i<states.size();++i){
 		EUTelState state  = states.at(i);
 		state.print();
-		TVectorD stateVec = state.getStateVec();
-		float incidenceXZ = stateVec[1];
+		float incidenceXZ = state.getSlopeXGlobal();
 		typedef std::map<int , AIDA::IProfile1D * >::iterator it_type;
 		for(it_type iterator =_mapFromSensorIDToPValuesVsIncidenceXZ.begin(); iterator != _mapFromSensorIDToPValuesVsIncidenceXZ.end(); iterator++) {
 			if(iterator->first == state.getLocation()){
@@ -179,8 +177,7 @@ void EUTelTrackAnalysis::plotPValueWithIncidenceAngles(EUTelTrack track){
 	for(size_t i=0; i<states.size();++i){
 		EUTelState state  = states.at(i);
 		state.print();
-		TVectorD stateVec = state.getStateVec();
-		float incidenceYZ = stateVec[2];
+		float incidenceYZ = state.getSlopeYGlobal();
 		typedef std::map<int , AIDA::IProfile1D * >::iterator it_type;
 		for(it_type iterator =_mapFromSensorIDToPValuesVsIncidenceYZ.begin(); iterator != _mapFromSensorIDToPValuesVsIncidenceYZ.end(); iterator++) {
 			if(iterator->first == state.getLocation()){
@@ -202,7 +199,7 @@ void EUTelTrackAnalysis::plotPValueWithPosition(EUTelTrack track){
 		EUTelState state  = states.at(i);
 		state.print();
 
-		const double* statePosition = state.getPosition();
+		TVector3 statePosition = state.getPositionGlobal();
 		streamlog_out(DEBUG2) << "State position: " << statePosition[0]<<","<<statePosition[1]<<","<<statePosition[2]<< std::endl;
 
 		typedef std::map<int ,AIDA::IProfile2D*  >::iterator it_type;

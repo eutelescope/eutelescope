@@ -25,7 +25,7 @@ void EUTelProcessorTrackAnalysis::init(){
 		initialiseResidualVsPositionHistograms();
 		initialiseEfficiencyVsPositionHistograms();
 		//Some initialised in the constructor in part 2.
-		EUTelTrackAnalysis*	analysis = new EUTelTrackAnalysis(_mapFromSensorIDToHistogramX,_mapFromSensorIDToHistogramY,_mapFromSensorIDToEfficiencyX,_mapFromSensorIDToEfficiencyY,_mapFromSensorIDToKinkXZ,_mapFromSensorIDToKinkYZ,_beamEnergy); 
+		EUTelTrackAnalysis*	analysis = new EUTelTrackAnalysis(_mapFromSensorIDToHistogramX,_mapFromSensorIDToHistogramY,_mapFromSensorIDToEfficiencyX,_mapFromSensorIDToEfficiencyY,_mapFromSensorIDToGloIncXZ,_mapFromSensorIDToGloIncYZ,_beamEnergy); 
 
 		//Others here.
 		analysis->setSensorIDTo2DPValuesWithPosition(_mapFromSensorIDToPValueHisto);
@@ -174,51 +174,6 @@ void	EUTelProcessorTrackAnalysis::initialiseEfficiencyVsPositionHistograms(){
 		sstm.str(std::string(""));
 	}
 		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		/////////////////////////////////////////////////////////////////////////////////////The incidence angles for each plane
-	for(size_t i = 0; i < _sensorIDs.size() ; ++i){
-		sstm << "IncidenceXZ" << _sensorIDs.at(i);
-		effGblFitHistName = sstm.str();
-		sstm.str(std::string());
-		sstm << "Incidence local Tx (XZ plane). Plane " <<  _sensorIDs.at(i);
-		histTitle = sstm.str();
-		sstm.str(std::string(""));
-		histoInfo = histoMgr->getHistogramInfo(effGblFitHistName);
-		NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 60;
-		MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin :-0.05 ;
-		MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 0.01;
-		AIDA::IHistogram1D * incidenceGblFitXZ = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(effGblFitHistName, NBinX, MinX, MaxX); 
-
-		if (incidenceGblFitXZ){
-				incidenceGblFitXZ->setTitle(histTitle);
-				_mapFromSensorIDToKinkXZ.insert(std::make_pair(_sensorIDs.at(i), incidenceGblFitXZ));
-		} else {
-				streamlog_out(ERROR2) << "Problem booking the " << (effGblFitHistName) << std::endl;
-				streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << std::endl;
-		}
-		sstm.str(std::string(""));
-	}
-	for(size_t i = 0; i < _sensorIDs.size() ; ++i){
-		sstm << "IncidenceYZ" << _sensorIDs.at(i);
-		effGblFitHistName = sstm.str();
-		sstm.str(std::string());
-		sstm << "Incidence local Ty (YZ plane). Plane " <<  _sensorIDs.at(i);
-		histTitle = sstm.str();
-		sstm.str(std::string(""));
-		histoInfo = histoMgr->getHistogramInfo(effGblFitHistName);
-		NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 60;
-		MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin :-0.05 ;
-		MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 0.01;
-		AIDA::IHistogram1D * incidenceGblFitYZ = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(effGblFitHistName, NBinX, MinX, MaxX); 
-
-		if (incidenceGblFitYZ) {
-				incidenceGblFitYZ->setTitle(histTitle);
-				_mapFromSensorIDToKinkYZ.insert(std::make_pair(_sensorIDs.at(i), incidenceGblFitYZ));
-		} else {
-				streamlog_out(ERROR2) << "Problem booking the " << (effGblFitHistName) << std::endl;
-				streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << std::endl;
-		}
-		sstm.str(std::string(""));
-	}
 }
 void	EUTelProcessorTrackAnalysis::initialiseResidualVsPositionHistograms(){
 	int NBinX;
@@ -309,18 +264,18 @@ void	EUTelProcessorTrackAnalysis::initialiseResidualVsPositionHistograms(){
 		sstm << "IncidenceXZ" << _sensorIDs.at(i);
 		residGblFitHistName = sstm.str();
 		sstm.str(std::string());
-		sstm << "Incidence local Tx (XZ plane). Plane " <<  _sensorIDs.at(i);
+		sstm << "Incidence Global Tx (XZ plane). Plane " <<  _sensorIDs.at(i);
 		histTitle = sstm.str();
 		sstm.str(std::string(""));
 		histoInfo = histoMgr->getHistogramInfo(residGblFitHistName);
-		NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 60;
+		NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 180;
 		MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin :-0.05 ;
 		MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 0.01;
 		AIDA::IHistogram1D * incidenceGblFitXZ = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(residGblFitHistName, NBinX, MinX, MaxX); 
 
 		if (incidenceGblFitXZ){
 				incidenceGblFitXZ->setTitle(histTitle);
-				_mapFromSensorIDToKinkXZ.insert(std::make_pair(_sensorIDs.at(i), incidenceGblFitXZ));
+				_mapFromSensorIDToGloIncXZ.insert(std::make_pair(_sensorIDs.at(i), incidenceGblFitXZ));
 		} else {
 				streamlog_out(ERROR2) << "Problem booking the " << (residGblFitHistName) << std::endl;
 				streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << std::endl;
@@ -331,18 +286,18 @@ void	EUTelProcessorTrackAnalysis::initialiseResidualVsPositionHistograms(){
 		sstm << "IncidenceYZ" << _sensorIDs.at(i);
 		residGblFitHistName = sstm.str();
 		sstm.str(std::string());
-		sstm << "Incidence local Ty (YZ plane). Plane " <<  _sensorIDs.at(i);
+		sstm << "Incidence Global Ty (YZ plane). Plane " <<  _sensorIDs.at(i);
 		histTitle = sstm.str();
 		sstm.str(std::string(""));
 		histoInfo = histoMgr->getHistogramInfo(residGblFitHistName);
-		NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 60;
+		NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 180;
 		MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin :-0.05 ;
 		MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 0.01;
 		AIDA::IHistogram1D * incidenceGblFitYZ = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(residGblFitHistName, NBinX, MinX, MaxX); 
 
 		if (incidenceGblFitYZ) {
 				incidenceGblFitYZ->setTitle(histTitle);
-				_mapFromSensorIDToKinkYZ.insert(std::make_pair(_sensorIDs.at(i), incidenceGblFitYZ));
+				_mapFromSensorIDToGloIncYZ.insert(std::make_pair(_sensorIDs.at(i), incidenceGblFitYZ));
 		} else {
 				streamlog_out(ERROR2) << "Problem booking the " << (residGblFitHistName) << std::endl;
 				streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << std::endl;
@@ -355,7 +310,7 @@ void	EUTelProcessorTrackAnalysis::initialiseResidualVsPositionHistograms(){
 		sstm << " Profile of p-values Vs IncidenceXZ" << _sensorIDs.at(i);
 		residGblFitHistName = sstm.str();
 		sstm.str(std::string());
-		sstm << "Profile of p-values Vs Incidence Angle, local Tx (XZ plane). Plane " <<  _sensorIDs.at(i);
+		sstm << "Profile of p-values Vs Incidence Angle, global Tx (XZ plane). Plane " <<  _sensorIDs.at(i);
 		histTitle = sstm.str();
 		sstm.str(std::string(""));
 		histoInfo = histoMgr->getHistogramInfo(residGblFitHistName);
@@ -377,7 +332,7 @@ void	EUTelProcessorTrackAnalysis::initialiseResidualVsPositionHistograms(){
 		sstm << " Profile of p-values Vs IncidenceYZ" << _sensorIDs.at(i);
 		residGblFitHistName = sstm.str();
 		sstm.str(std::string());
-		sstm << "Profile of p-values Vs Incidence Angle, local Ty (YZ plane). Plane " <<  _sensorIDs.at(i);
+		sstm << "Profile of p-values Vs Incidence Angle, global Ty (YZ plane). Plane " <<  _sensorIDs.at(i);
 		histTitle = sstm.str();
 		sstm.str(std::string(""));
 		histoInfo = histoMgr->getHistogramInfo(residGblFitHistName);

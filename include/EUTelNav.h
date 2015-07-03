@@ -15,7 +15,7 @@ class EUTelNav
 		static TMatrix getPropagationJacobianF( float x0, float y0, float z0, float px, float py, float pz, float beamQ, float dz);
 		static TMatrixD getLocalToCurvilinearTransformMatrix(TVector3 globalMomentum, int  planeID, float charge);
 		static TMatrixD getLocalToCurvilinearTransformMatrixLimit(TVector3 globalMomentum, int  planeID, float charge);
-		static TMatrixD getMeasToGlobal(TVector3 t1w, int  planeID);
+		static TMatrixD getMeasToGlobal(TVector3 t1w, TMatrixD TRotMatrix);
 
 		static TMatrixD getPropagationJacobianCurvilinear(float ds, float qbyp, TVector3 t1w, TVector3 t2w);
 		static TMatrixD getPropagationJacobianGlobalToGlobal(float ds, TVector3 t1w);

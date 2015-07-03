@@ -119,46 +119,42 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
 	    const double dr0y = (*itrAlignmentConstant).second->getYOffset();
 	    const double dr0z = (*itrAlignmentConstant).second->getZOffset();
 	
-			const double posLocalDiff[3] = {dr0x,dr0y,dr0z};
-			double delta_r0[3];
-			geo::gGeometry().local2MasterVec(sensorID,posLocalDiff, delta_r0);//Here we transform the local alignment position offsets to global position offsets.
-			const double posTest[3]={1,0,0};
-			double posTestOutput[3];
-			geo::gGeometry().local2Master(sensorID,posTest, posTestOutput);
-			streamlog_out(MESSAGE9)<<"Here we have the test for sensor " << sensorID <<std::endl;
-			streamlog_out(MESSAGE9)<<posTestOutput[0]<<"  "<<posTestOutput[1]<<"  "<<posTestOutput[2]<<endl;	
-			const double angleLocalDiff[3]={dalpha,dbeta,dgamma};
-			double delta_angle[3];
-			//IMPORTANT:Note the transformation of the angles assumes that they transform like a vector. This is not true unless the angles are small.   
-			geo::gGeometry().local2MasterVec(sensorID,angleLocalDiff, delta_angle);//Here we transform the local alignment angle offsets to global angle offsets.
+//			const double posLocalDiff[3] = {dr0x,dr0y,dr0z};
+//			double delta_r0[3];
+//			geo::gGeometry().local2MasterVec(sensorID,posLocalDiff, delta_r0);//Here we transform the local alignment position offsets to global position offsets.
+//			const double posTest[3]={1,0,0};
+//			double posTestOutput[3];
+//	//		geo::gGeometry().local2Master(sensorID,posTest, posTestOutput);
+//			streamlog_out(MESSAGE9)<<"Here we have the test for sensor " << sensorID <<std::endl;
+//			streamlog_out(MESSAGE9)<<posTestOutput[0]<<"  "<<posTestOutput[1]<<"  "<<posTestOutput[2]<<endl;	
+//			const double angleLocalDiff[3]={dalpha,dbeta,dgamma};
+//			double delta_angle[3];
+//			//IMPORTANT:Note the transformation of the angles assumes that they transform like a vector. This is not true unless the angles are small.   
+//			geo::gGeometry().local2MasterVec(sensorID,angleLocalDiff, delta_angle);//Here we transform the local alignment angle offsets to global angle offsets.
 
  
            
 //	    delta_r0 *= invR;
 
-//#ifdef GEAR_MAJOR_VERSION 
-//#if GEAR_VERSION_GE( 17,4)  
-// ZY and ZX rotations are calculated wrongly yet, do not implement:
-// XYZ shifts and XY rotation seems to be correct
 //
-            geo::gGeometry().setPlaneXPosition(sensorID,  xplane  + delta_r0[0]  ) ;
-            geo::gGeometry().setPlaneYPosition(sensorID,  yplane  + delta_r0[1]  ) ;
-            geo::gGeometry().setPlaneZPosition(sensorID,  zplane  + delta_r0[2]  ) ;
-            geo::gGeometry().setPlaneXRotation(sensorID, (xrot  + delta_angle[0]*(180/M_PI) )  ) ;//Gear expressed in degrees so must convert from radians to degrees.
-            geo::gGeometry().setPlaneYRotation(sensorID, (yrot  + delta_angle[1]*(180/M_PI) )  ) ;
-            geo::gGeometry().setPlaneZRotation(sensorID, (zrot  + delta_angle[2]*(180/M_PI))  ) ;
+            geo::gGeometry().setPlaneXPosition(sensorID,  xplane  - dr0x  ) ;
+            geo::gGeometry().setPlaneYPosition(sensorID,  yplane  - dr0y  ) ;
+            geo::gGeometry().setPlaneZPosition(sensorID,  zplane  - dr0z  ) ;
+            geo::gGeometry().setPlaneXRotation(sensorID, (xrot  - dalpha *(180/M_PI) )  ) ;//Gear expressed in degrees so must convert from radians to degrees.
+            geo::gGeometry().setPlaneYRotation(sensorID, (yrot  - dbeta*(180/M_PI) )  ) ;
+            geo::gGeometry().setPlaneZRotation(sensorID, (zrot  - dgamma *(180/M_PI))  ) ;
 //#endif
 //#endif       
-					 streamlog_out(MESSAGE9) << "Input and output alignment shift (translations) for sensor: "<<sensorID << std::endl;
-            streamlog_out(MESSAGE4) << setw(10) << "Align Translations (Local) x,y,z  " << setw( 8) << " " ;
-            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) <<posLocalDiff[0] ;
-            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) <<posLocalDiff[1];
-            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) <<posLocalDiff[2]<<endl; 
-
-            streamlog_out(MESSAGE4) << setw(10) << "Align Translations (Global) x,y,z " << setw( 8) << " " ;
-            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) <<delta_r0[0];
-            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) <<delta_r0[1];
-            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) <<delta_r0[2]<<endl; 
+//					 streamlog_out(MESSAGE9) << "Input and output alignment shift (translations) for sensor: "<<sensorID << std::endl;
+//            streamlog_out(MESSAGE4) << setw(10) << "Align Translations (Local) x,y,z  " << setw( 8) << " " ;
+//            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) <<posLocalDiff[0] ;
+//            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) <<posLocalDiff[1];
+//            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) <<posLocalDiff[2]<<endl; 
+//
+//            streamlog_out(MESSAGE4) << setw(10) << "Align Translations (Global) x,y,z " << setw( 8) << " " ;
+//            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) <<delta_r0[0];
+//            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) <<delta_r0[1];
+//            streamlog_out(MESSAGE4) << setw(13) << setprecision(4) <<delta_r0[2]<<endl; 
 
             xplane = geo::gGeometry().siPlaneXPosition(sensorID) ; 
             yplane = geo::gGeometry().siPlaneYPosition(sensorID) ; 
