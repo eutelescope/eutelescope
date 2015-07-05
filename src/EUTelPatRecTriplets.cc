@@ -523,20 +523,25 @@ std::vector<EUTelTrack> EUTelPatRecTriplets::getDUTHit(std::vector<EUTelTrack> &
                             //TO DO: We use the old curv to find the tracks but the corrected in the parameterisation. Should use corrected here too.
                             slope.push_back(trackSlope.at(0) + dzToHit*getCurvXY()[0]);
                             slope.push_back(trackSlope.at(1) + dzToHit*getCurvXY()[1]);
-                            TVector3 hitPosGlo = hit.getPositionGlobal();
                             double dz1 = hit.getPositionGlobal()[2] - offset.at(2);
                             double dz2 = hit.getPositionGlobal()[2] - offset.at(3); 
                             double posX = offset.at(0) + dz1*trackSlope.at(0) + 0.5*dz1*dz2*getCurvXY()[0];
                             double posY = offset.at(1) + dz1*trackSlope.at(1) + 0.5*dz1*dz2*getCurvXY()[1];
                             double dist=1000000;
+                            /// Transform prediction to local frame of DUT. 
+                            /// This is done so the prediction and measured hit is compared in the correct axis.
+                            /// Since strip sensors will only have information about position in the local DUT x-axis by default. 
+                            double locPos [3];
+                            TVector3 hitPosGlo = hit.getPositionGlobal();
+                            const double referencePoint[]	= {posX,posY ,hit.getPositionGlobal()[2]};
+                            geo::gGeometry().master2Local( hit.getLocation(), referencePoint, locPos);
                             if(_planeDimensions[hit.getLocation()] == 2){ 
-        //                            std::cout<<"posX: " << posX << " hitPosGlo " << hitPosGlo[0] <<std::endl;
                                 streamlog_out(DEBUG0) << "Triplet DUT Match Cut Pixel: " <<"X delta: " << fabs(posX-hitPosGlo[0]) << " Y delta: " << fabs(posY - hitPosGlo[1]) << std::endl;
-                                double dist = sqrt(pow(posX-hitPosGlo[0],2)+pow(posY-hitPosGlo[1],2));
+                                double dist = sqrt(pow(locPos[0]-hit.getPosition()[0],2)+pow(locPos[1]-hit.getPosition()[1],2));
                             }else if(_planeDimensions[hit.getLocation()] == 1){
-        //                            std::cout<<"posX: " << posX << " hitPosGlo " << hitPosGlo[0] <<std::endl;
                                 streamlog_out(DEBUG0) << "Triplet DUT Match Cut Strip: " <<"X delta: " << fabs(posX-hitPosGlo[0]) << std::endl;
-                                dist = sqrt(pow(posX-hitPosGlo[0],2));
+                                ///Keep it positive, the distance that is!!!
+                                dist = sqrt(pow(locPos[0]-hit.getPosition()[0],2));
 
                             }else{
                                 throw(lcio::Exception( "This is not a strip or pixel sensor!"));

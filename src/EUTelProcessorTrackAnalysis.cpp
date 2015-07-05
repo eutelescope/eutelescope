@@ -56,6 +56,7 @@ void EUTelProcessorTrackAnalysis::processEvent(LCEvent * evt){
         std::vector<EUTelTrack> tracks = reader.getTracks(evt, _trackInputCollectionName);
         streamlog_out(DEBUG2) << "Collection contains data! Continue! line 54: tracks.size() = " << tracks.size()<<std::endl;
         for (int iTrack = 0; iTrack < tracks.size(); ++iTrack){
+   //         track.print();
             EUTelTrack track = tracks.at(iTrack); 
             _analysis->plotResidualVsPosition(track);	
             _analysis->plotEfficiencyVsPosition(track);	

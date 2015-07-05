@@ -219,6 +219,15 @@ private:
 		 * from track's ref. point*/
 
 		void setNewState(float position[],float momentum[],  EUTelState& newState);
+       /// This function will take tracks produced by findTrackFromTriplets and associate DUT tracks to the closest track to it.
+       /// Each track will only add one DUT hit per track. Need to do track comparison afterwards. 
+       /// Association is done in the local frame. So the track prediction is determined in the global frame and then transformed to the DUT local frame.
+       /// After this the the distance between the hit and tracks is determined (1 or 2 directions dependent on strip/pixel) with the closest track being taken as correct.
+        /**
+         * \param [in] tracks This is the tracks to look through when the you associate a DUT hit to the closest track
+         * \param [return] tracksDUT This is the full EUTelTrack with the hit attached.  
+         */
+
         std::vector<EUTelTrack>	getDUTHit( std::vector<EUTelTrack> &);
 
 		void setRadLengths(EUTelTrack & track,std::map<const int,double>&  mapSensor, std::map<const int ,double>&  mapAir, double & rad );
