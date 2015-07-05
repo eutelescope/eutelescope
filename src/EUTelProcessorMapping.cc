@@ -402,8 +402,37 @@ void EUTelProcessorMapping::hitMapping( LCEvent * evt , LCCollectionVec * unmapp
 		  int row = yPos, col = xPos;
 		  // MAPPING SECTION//
 		  int geoRow=-1, geoCol=-1;
+
+		  if(nCol==40 && nRow==672){
+		    streamlog_out ( DEBUG2 ) << "recognise mapping " << sensorID << std::endl;
+		    if(col%2==1){
+		      geoRow=row*2/1;
+		      geoCol=(col-1)*1/2;
+		    }
+		    else{
+		      geoRow=row*2/1 +1;
+		      geoCol=(col)*1/2;
+		    }
 		  
-		  if(nCol==120 && nRow==134){ //example mapping for 167x125 device (not universally applicable!)
+		   // streamlog_out ( DEBUG2 ) << "original x,y " << col << "," <<row <<std::endl;
+		   // streamlog_out ( DEBUG2 ) << "new x,y " << geoCol << "," << geoRow <<std::endl;
+		    
+		    }
+
+		  /*if(nCol==40 && nRow==672){
+		    streamlog_out ( DEBUG2 ) << "recognise mapping " << sensorID << std::endl;
+		    if(col%2==1){
+		      geoRow=row*2/1 +1;
+		      geoCol=(col-1)*1/2;
+		    }
+		    else{
+		      geoRow=row*2/1;
+		      geoCol=(col)*1/2;
+		    }
+
+		  }*/
+		  
+		  else if(nCol==120 && nRow==134){ //example mapping for 167x125 device (not universally applicable!)
 		    if( (col%4==0 || col%4==3) && (row%5==1 || row%5==3) ){ continue; }
 		    if(col%2==0){
 		      geoCol=col*3/2; //cout<<"geoCol: "<<geoCol<<endl;
@@ -754,3 +783,4 @@ void EUTelProcessorMapping::bookHistos() {
   streamlog_out ( DEBUG5 )  << "end of Booking histograms " << std::endl; 
 }
 #endif
+
