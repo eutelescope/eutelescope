@@ -106,8 +106,9 @@ After doing this we can free up another alignment parameter.
 #FixZrot=   0   5  
 
 You should never fix planes after they have been freed. This will produce a gear like so: alignedGear-xyzShift-zRot-DUT-xyShift-zRot-run000703.xml 
-
 Do the same again now free up z position and produce gear: alignedGear-xyzShift-zRot-DUT-xyzShift-zRot-run000703.xml
+Can repeat with new gear to check convergence: alignedGear-xyzShift-zRot-DUT-xyzShift-zRot-v2-run000703.xml  (v2 => run with the new gear file again,NOT NEEDED, JUST A CHECK)
+
 
 From here I get rotations of about 0.1 radians 5 deg with rotations ZX. Seems too large.  
 ####################################################################################################################

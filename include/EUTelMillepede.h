@@ -1,3 +1,10 @@
+/**  
+ *  EUTelMillepede
+ *  This class constains all the functions related to millepede. 
+ *  So creation of steering files, results and other interactions with millepede.
+ *  It also allows the running of millepede from any processor. 
+ */
+
 #ifndef EUTELMILLEPEDE_H
 #define	EUTELMILLEPEDE_H
 
@@ -45,13 +52,29 @@ public:
 	void setGlobalLabels(EUTelState& state);
 	void setGlobalLabels(int iPlane);
 	void FillMilleParametersLabels();
+    /// This function will create the initial steering file given the global parameters created when we initialised the EUTelMillepede object. 
+    /// This steering file is given the name: _milleSteeringFilename
+    /**
+     * \param [in] Commands This is solution method and chi2 cut.
+     */
+
 	void writeMilleSteeringFile(lcio::StringVec pedeSteerAddCmds);
+    /// The will run pede using the steering file created and linked to _milleSteeringFilename.  
+    /// Results file is linked to _milleResultFileName
+    /**
+     * \param[return] Correct Did pede run correctly
+     */
 
 	bool runPede();
 
 	bool parseMilleOutput(std::string alignmentConstantLCIOFile, std::string gear_aligned_file);
+    /// This will move the results to the steering file and run pede. This is repeated a set number of times.  
 	bool converge();
 	bool checkConverged();
+    /// This will copy the results file into the steering file  
+    /**
+     */
+
 	void editSteerUsingRes();
 	void copyFile(std::string input, std::string output);
 	void outputSteeringFiles();

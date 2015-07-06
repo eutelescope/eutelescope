@@ -207,21 +207,18 @@ void EUTelProcessorGBLAlign::processEvent(LCEvent * evt){
 
 void EUTelProcessorGBLAlign::end(){
 	_Mille->_milleGBL->~MilleBinary();
-//	double size =	printSize("millepede.bin");
-//	std::cout<<"Binary after track addition " << size << " This is the size per track: " << size/_totalTrackCount << std::endl;
-
 	streamlog_out (MESSAGE9) <<"TOTAL NUMBER OF TRACKS PASSED TO ALIGNMENT: "<< _totalTrackCount << std::endl;
 	if(_totalTrackCount<1000){
 		streamlog_out(WARNING5)<<"You are trying to align with fewer than 1000 tracks. This could be too small a number." <<std::endl;
 	}
-	//TO DO: We automatically create the millepede output file in the directory of execution. We should be able to move these to another folder to stop the clutter in this directory.
-	//The millepede class contains all the functions related to manipulation of steering files, results files from millepede and the scripts related to editing these file.
-	//It also controls the running of millepede. 
-	_Mille->writeMilleSteeringFile(_pedeSteerAddCmds);//This will create the initial steering file. This can then be accessed via the string member variable:_milleSteeringFilename
-	bool tooManyRejects = 	_Mille->runPede();//This will run millepede and create the initial results file. We automatically line to this through the string variable._milleResultFileName.
-	if(!tooManyRejects){//Check that the intial input fit is successful. We need this for the initial reasonable results file.
+    /// Create inital steering file
+	_Mille->writeMilleSteeringFile(_pedeSteerAddCmds);
+    /// This will run pede and link to the results file: _milleResultFileName
+	bool tooManyRejects = 	_Mille->runPede();
+	if(!tooManyRejects){
 		streamlog_out (MESSAGE9) <<"FIRST ATTEMPT WITH INITIAL INPUT PARAMETERS. NOW TRY TO CONVERGE.......................................  "<< std::endl;
-		bool converged =	_Mille->converge();//This will iteratively run millepede over mutiple results file, during this process it also checks that the solution converges.
+//		bool converged =	_Mille->converge(); //TAKE CONVERGENCE OUT FOR NOW. 
+        bool converged =true;
         if(converged){
             streamlog_out (MESSAGE9) <<"Converge:Successful! "<< std::endl;
         }else{

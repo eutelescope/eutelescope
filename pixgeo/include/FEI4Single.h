@@ -36,6 +36,24 @@ class FEI4Single : public EUTelGenericPixGeoDescr {
 
 };
 
+class FEI4Single250x50 : public EUTelGenericPixGeoDescr {
+	
+	public:
+		FEI4Single250x50();
+		~FEI4Single250x50();
+
+		void createRootDescr(char const *);
+		std::string getPixName(int, int);
+		std::pair<int, int> getPixIndex(char const *);
+
+	protected:
+		TGeoMaterial* matSi;
+		TGeoMedium* Si;
+		TGeoVolume* plane;
+
+};
+
+
 extern "C"
 {
 	EUTelGenericPixGeoDescr* maker();
