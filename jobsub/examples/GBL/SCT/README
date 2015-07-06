@@ -1,5 +1,5 @@
 ##This is the GBL fitter with a strip sensor DUT. 
-#Blue markings are running processors and changing things in the config
+#Blue(#) markings are running processors and changing things in the config
 TGeo reads the thickness of the sensors from the sensitive area of the gear.
 50 micron for mimosas, 300 micron for DUT
 Test with 10k events which was enough for alignment of DUT without XY rotations.

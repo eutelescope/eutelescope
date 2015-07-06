@@ -371,7 +371,7 @@ void EUTelState::print(){
 
     streamlog_out(DEBUG1)<< std::scientific <<"Position local (X,Y,Z): "<< getPosition()[0] << " " <<  getPosition()[1]<< " " <<  getPosition()[2]<<" Global: "<<getPositionGlobal()[0]<<"  "<<getPositionGlobal()[1]<<" "<<getPositionGlobal()[2]<<std::endl;
     streamlog_out(DEBUG1)<< std::scientific <<"Direntum local (X,Y,Z): "<< getDirLocal()[0] << " " << getDirLocal()[1] << " " << getDirLocal()[2]<<" Global: "<< getDirGlobal()[0]<<" "<<getDirGlobal()[1]<<" "<<getDirGlobal()[2] <<std::endl;
-    streamlog_out(DEBUG0)<< std::scientific <<"Incidence local (dx/dz,dy/dz): "<< getDirLocal()[0]/getDirLocal()[2]<< " " << getDirLocal()[1]/getDirLocal()[2] <<std::endl;
+    streamlog_out(DEBUG0)<< std::scientific <<"Incidence local (dx/dz,dy/dz): "<< getSlopeX()<< " " <<  getSlopeY()<< " Global: " << getSlopeXGlobal() << "  " << getSlopeYGlobal()  <<std::endl;
 	streamlog_out(DEBUG0)<< std::scientific <<"Kinks local (d(dx/dz),d(dy/dz)) "<< _kinks[0] <<" ,  " << _kinks[1]<<std::endl;
 	streamlog_out(DEBUG0)<< std::scientific <<"Kinks local Medium1 (d(dx/dz),d(dy/dz)) "<< _kinksMedium1[0] <<" ,  " << _kinksMedium1[1]<<std::endl;
 	streamlog_out(DEBUG0)<< std::scientific <<"Kinks local Medium2 (d(dx/dz),d(dy/dz)) "<< _kinksMedium2[0] <<" ,  " << _kinksMedium2[1]<<std::endl;
