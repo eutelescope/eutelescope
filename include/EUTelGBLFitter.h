@@ -1,7 +1,10 @@
 /**  EUTelGBLFitter
  * 
  *  This is the link between GBL and EUTelescope. 
- *  Everything you need to know about GBL can be found here. 
+ *  This is all the functions to create and analysis GBL trajectories directly.
+ *  Everything you need to know about the GBL functions can be found here: http://www.desy.de/~kleinwrt/GBL/doc/cpp/html/index.html 
+ *  The functions here describe how to create a GBL trajectory and then analysis the direct output. 
+ *  Further analysis of the EUTelTrack objects, GBL tracks saved in a generic LCIO container.
  *  An example of the use of this processor is in EUTelProcessorGBLFitter and EUTelProcessorGBLAlign.
  *  contact:alexander.morton975@gmail.com 
  */
@@ -218,6 +221,7 @@ namespace eutelescope {
 			/** Parameter ids */
 			std::map<int,int> _parameterIdZRotationsMap;
 			EUTelMillepede* _MilleInterface;
+
         
     };
 }

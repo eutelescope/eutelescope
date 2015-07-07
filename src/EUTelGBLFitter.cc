@@ -282,10 +282,10 @@ namespace eutelescope {
         TVectorD aDownWeights(2); 
         traj->getMeasResults(iter->second, numData, aResiduals, aMeasErrors, aResErrors, aDownWeights);
         streamlog_out(DEBUG0) <<"State location: "<<iter->first<<" The residual x " <<aResiduals[0]<<" The residual y " <<aResiduals[1]<<std::endl;
-        std::map<float, float> res; //This is create on the stack but will pass thisa by value to the new map so it 
+        std::map<float, float> res;  
         res.insert(std::make_pair(aResiduals[0],aResiduals[1]));
         SensorResidual.insert(std::make_pair(iter->first, res));		
-        std::map<float, float> resError; //This is create on the stack but will pass thisa by value to the new map so it 
+        std::map<float, float> resError; 
         resError.insert(std::make_pair(aResErrors[0],aResErrors[1]));
         sensorResidualError.insert(std::make_pair(iter->first, resError));	
 	}
