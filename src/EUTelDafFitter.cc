@@ -243,7 +243,6 @@ void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate<float,4>* track, LCColl
 
     streamlog_out(DEBUG3) << " hit : sensorID " << idHitEncoder["sensorID"] << " properties: " << idHitEncoder["properties"]  << std::endl;
 
-
     if(plane == 0){
       refpoint[0] = pos[0];
       refpoint[1] = pos[1];
