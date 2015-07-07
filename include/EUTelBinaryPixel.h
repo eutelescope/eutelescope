@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef EUTELGEOMETRICPIXEL_H
-#define EUTELGEOMETRICPIXEL_H
+#ifndef EUTELBINARYPIXEL_H
+#define EUTELBINARYPIXEL_H
 
 // personal includes ".h"
 #include "EUTelGenericSparsePixel.h"

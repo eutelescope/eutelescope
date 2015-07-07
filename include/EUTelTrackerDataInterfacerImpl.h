@@ -14,6 +14,7 @@
 #include "EUTelSimpleSparsePixel.h"
 #include "EUTelGenericSparsePixel.h"
 #include "EUTelGeometricPixel.h"
+#include "EUTelBinaryPixel.h"
 #include "EUTelTrackerDataInterfacer.h"
 
 #ifdef USE_MARLIN
