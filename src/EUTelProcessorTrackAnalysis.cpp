@@ -67,6 +67,8 @@ void EUTelProcessorTrackAnalysis::processEvent(LCEvent * evt){
             }//if(track.getChi2()/track.getNdf() < 5.0){
             _analysis->plotPValueWithPosition(track);
             _analysis->plotPValueWithIncidenceAngles(track);
+           _analysis->setTotNum(track);
+
         }//for (int iTrack = 0; iTrack < tracks.size(); ++iTrack){
         }catch (DataNotAvailableException e) {
 //		streamlog_out(WARNING2) << " Collection not available" << std::endl;
@@ -88,7 +90,10 @@ void EUTelProcessorTrackAnalysis::processEvent(LCEvent * evt){
 	
 }
 
-void EUTelProcessorTrackAnalysis::end(){}
+void EUTelProcessorTrackAnalysis::end(){
+    ///Will print the final results of the analysis
+    _analysis->print();
+}
 void	EUTelProcessorTrackAnalysis::initialiseEfficiencyVsPositionHistograms(){
 	int NBinX;
 	double MinX;
