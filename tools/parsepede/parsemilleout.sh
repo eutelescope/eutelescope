@@ -131,9 +131,3 @@ if [ $# == 5 ]; then
 fi
 rm tmp_parsepede_file1 tmp_parsepede_file2
 
-# WARNING
-echo ""
-echo "ATTENTION!ATTENTION!ATTENTION!ATTENTION!ATTENTION!"
-echo "Please, check the consitency of conversion step!"
-echo "ATTENTION!ATTENTION!ATTENTION!ATTENTION!ATTENTION!"
-echo ""
