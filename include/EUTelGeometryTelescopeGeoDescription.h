@@ -306,10 +306,6 @@ class EUTelGeometryTelescopeGeoDescription
 
 	TVector3 siPlaneYAxis( int );
 
-
-	/** Map from sensor ID to number along Z */
-	const std::map<int, int>& sensorZOrdertoIDs() const { return _sensorZOrderToIDMap; };
-
 	/** Map from sensor ID to number along Z */
 	const std::map<int, int>& sensorIDstoZOrder() const { return _sensorIDtoZOrderMap; };
 
