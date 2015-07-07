@@ -132,8 +132,8 @@ EUTelDafBase::EUTelDafBase(std::string name) : marlin::Processor(name) {
 
   //Material and resolution
   registerOptionalParameter("RadiationLengths","Radiation lengths of planes, ordered by z-pos..", _radLength, std::vector<float>());
-  // registerOptionalParameter("ResolutionX","Sigma resolution of planes, ordered by z-pos.", _sigmaX, std::vector<float>());
-  // registerOptionalParameter("ResolutionY","Sigma resolution of planes, ordered by z-pos.", _sigmaY, std::vector<float>());
+  registerOptionalParameter("ResolutionX","Sigma resolution of planes, ordered by z-pos.", _sigmaX, std::vector<float>());
+  registerOptionalParameter("ResolutionY","Sigma resolution of planes, ordered by z-pos.", _sigmaY, std::vector<float>());
 
   //alignment corrections
   // registerOptionalParameter("XShift","X translation of planes, ordered by z-pos..", _xShift, std::vector<float>());
@@ -206,9 +206,9 @@ void EUTelDafBase::gearRotate(size_t index, size_t gearIndex){
   daffitter::FitPlane<float>& pl = _system.planes.at(index);
 
   double gRotation[3] = { 0., 0., 0.};
-  gRotation[0] = _siPlanesLayerLayout->getLayerRotationXY(gearIndex); // Euler alpha ;
-  gRotation[1] = _siPlanesLayerLayout->getLayerRotationZX(gearIndex); // Euler alpha ;
-  gRotation[2] = _siPlanesLayerLayout->getLayerRotationZY(gearIndex); // Euler alpha ;
+  gRotation[0] = _siPlanesLayerLayout->getLayerRotationXY(gearIndex); // Euler alpha
+  gRotation[1] = _siPlanesLayerLayout->getLayerRotationZX(gearIndex); // Euler beta
+  gRotation[2] = _siPlanesLayerLayout->getLayerRotationZY(gearIndex); // Euler gamma
   // transform into radians
   gRotation[0] =  gRotation[0]*3.1415926/180.; 
   gRotation[1] =  gRotation[1]*3.1415926/180.; 
@@ -351,7 +351,10 @@ void EUTelDafBase::init() {
     streamlog_out ( MESSAGE5 ) << " sens rad:  " << _siPlanesLayerLayout->getSensitiveRadLength( (*zit).second ) << endl;
     if( _radLength.size() > index){
       radLength = _radLength.at(index);
+    } else {
+      _radLength.push_back(radLength);
     }
+
     float scatter = getScatterThetaVar( radLength );
     
     streamlog_out ( MESSAGE5 ) << " radlength: "<< radLength << endl;
@@ -367,15 +370,12 @@ void EUTelDafBase::init() {
     if( find(_dutPlanes.begin(), _dutPlanes.end(), sensorID) != _dutPlanes.end()){
       _nRef.at(index) = 0;
       errX = _dutResX; errY = _dutResY;
-      radLength = _scaleScatter * radLength;
       scatter = getScatterThetaVar( radLength );
     }
     //If plane is neither Tel nor Dut, all we need is the zpos and scatter amount.
 
     //Add plane to tracker system
     if(not excluded){ nActive++;}
-
-    std::cout << "Adding plane: " << sensorID << " (excluded: " << excluded << ")" << std::endl;
     _system.addPlane(sensorID, zPos , errX, errY, scatter, excluded);
     gearRotate(index, (*zit).second);
   }
@@ -481,7 +481,8 @@ void EUTelDafBase::readHitCollection(LCEvent* event){
           pos[0]=simpos[0];
           pos[1]=simpos[1];
           pos[2]=simpos[2];
-	  planeIndex = simHitDecoder(simhit)["sensorID"];
+	  int planeID = simHitDecoder(simhit)["sensorID"];
+	  planeIndex = _indexIDMap[planeID];
 	}
 	streamlog_out ( DEBUG5 ) << " SIM: simhit="<< ( simhit != 0 ) <<" add point [" << planeIndex << "] "<< 
 	  static_cast< float >(pos[0]) * 1000.0f << " " << static_cast< float >(pos[1]) * 1000.0f << " " <<  static_cast< float >(pos[2]) * 1000.0f << endl;
@@ -491,7 +492,8 @@ void EUTelDafBase::readHitCollection(LCEvent* event){
 	pos[1]=hitpos[1];
 	pos[2]=hitpos[2];
 	UTIL::CellIDDecoder<TrackerHitImpl> hitDecoder ( EUTELESCOPE::HITENCODING );
-	planeIndex = hitDecoder(hit)["sensorID"];
+	int planeID  = hitDecoder(hit)["sensorID"];
+	planeIndex = _indexIDMap[planeID];
 	streamlog_out ( DEBUG5 ) << " REAL: add point [" << planeIndex << "] "<< 
 	  static_cast< float >(pos[0]) * 1000.0f << " " << static_cast< float >(pos[1]) * 1000.0f << " " <<  static_cast< float >(pos[2]) * 1000.0f << endl;
       }
@@ -499,7 +501,10 @@ void EUTelDafBase::readHitCollection(LCEvent* event){
       if(planeIndex >=0 ){ 
 	streamlog_out ( DEBUG5 ) << " add point [" << planeIndex << "] "<< 
 	  static_cast< float >(pos[0]) * 1000.0f << " " << static_cast< float >(pos[1]) * 1000.0f << " " <<  static_cast< float >(pos[2]) * 1000.0f << endl;
-        _system.addMeasurement( _indexIDMap[planeIndex], static_cast< float >(pos[0]) * 1000.0f, static_cast< float >(pos[1]) * 1000.0f, static_cast< float >(pos[2]) * 1000.0f,  region, iHit);
+	_system.addMeasurement( planeIndex,
+				static_cast< float >( pos[0] ) * 1000.0f,
+				static_cast< float >( pos[1] ) * 1000.0f,
+				static_cast< float >( pos[2] ) * 1000.0f,  region, _system.planes.at(planeIndex).getSensorID());
       }
     }
   }
@@ -538,16 +543,31 @@ void EUTelDafBase::processEvent(LCEvent * event){
     return;
   }
   if( isFirstEvent() ){
+    //Resolution needs to be updated w.r.t. alignment and GEAR rotations.
     for(size_t ii = 0; ii < _alignColNames.size(); ii++){
       alignRotate(_alignColNames.at(ii), event);
     }
+    
+    //Use user defined resolutions if supplied.
+    if(_sigmaX.size() != _sigmaY.size()){
+      cout << "Differing lengths of resolution X and Y, only filling shortest vector. Check config." << endl;
+    }
+    size_t nResolutions = _sigmaX.size();
+    if(_sigmaY.size() < nResolutions){ nResolutions = _sigmaY.size(); }
+    
+    if(nResolutions > _system.planes.size()){
+      cout << "More resolutions than planes, check config." << endl;
+      nResolutions = _system.planes.size();
+    }
+    for(size_t ii = 0; ii < nResolutions; ii++){
+      _system.planes.at(ii).setSigmas( _sigmaX.at(ii), _sigmaY.at(ii));
+    }
   }
-
+  
   if ( _useReferenceHitCollection ){
     try {
       _referenceHitVec = dynamic_cast < LCCollectionVec * > (event->getCollection( _referenceHitCollectionName));
-    }
-    catch (...){
+    } catch (...){
       streamlog_out ( ERROR5 ) <<  "Reference Hit Collection " << _referenceHitCollectionName.c_str()
 			       << " could not be retrieved for event " << event->getEventNumber()
 			       << "! Please check your steering files! " << endl;
@@ -569,7 +589,18 @@ void EUTelDafBase::processEvent(LCEvent * event){
   
   //Dump hit collection to collection sorted by plane
   readHitCollection(event);
-
+  
+  if( not _initializedSystem ){
+    //If the system is not initialized, try to finish initialization from event data.
+    _initializedSystem = defineSystemFromData();
+    //If initialization is not done, we need data from more events.
+    if(not _initializedSystem) { return; }
+    streamlog_out(MESSAGE1) << "Initialized system at event " << event->getEventNumber() << std::endl;
+    for(size_t ii = 0; ii < _system.planes.size(); ii++){
+      _system.planes.at(ii).print();
+    }
+  }
+  
   //Run track finder
   _system.clusterTracker();
  

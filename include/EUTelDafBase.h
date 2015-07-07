@@ -140,8 +140,8 @@ namespace eutelescope {
     daffitter::TrackerSystem<float,4> _system;
     std::map<float, int> _zSort;
     std::map<int, int> _indexIDMap;
-    std::string _asciiName;
     std::vector<float> _radLength;
+    std::vector<float> _sigmaX, _sigmaY;
 
     //! Counters
     int _iRun, _iEvt, _nTracks, _nClusters, n_failedNdof, n_failedChi2OverNdof, n_failedIsnan, n_passedNdof, n_passedChi2OverNdof, n_passedIsnan;

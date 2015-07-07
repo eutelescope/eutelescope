@@ -220,8 +220,11 @@ void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate<float,4>* track, LCColl
     pos[1]= estim->getY() / 1000.0;
     pos[2]= pl.getMeasZ() / 1000.0;
 // overload z coordinate calculation -> important for proper sensor Identification by the hit coordinates based onthe refhit collection
-    pos[2] = getZfromRefHit(plane, sensorID, pos);    
-
+    if( fabs(pos[2] - getZfromRefHit(plane, sensorID, pos)) > 0.0002 ){
+      streamlog_out(WARNING) << "Fitted measurement is not in the plane! SensorID " << idHitEncoder["sensorID"] << std::endl;
+      pos[2] = getZfromRefHit(plane, sensorID, pos);    
+    }
+    
     fitpoint->setPosition(pos);
     // Covariance matrix of the fitted position
     // (stored as lower triangle matrix, i.e.  cov(xx),cov(y,x),cov(y,y) ).
