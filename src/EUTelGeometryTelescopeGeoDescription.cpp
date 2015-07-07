@@ -140,31 +140,6 @@ TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneYAxis( int planeID )
 	}
 }
 
-/**TODO: Replace me: NOP*/
-void EUTelGeometryTelescopeGeoDescription::initialisePlanesToExcluded(IntVec planeIDs)
-{
-	int counter=0;
-	for(size_t i = 0 ; i <_sensorZOrderToIDMap.size(); ++i){
-			bool excluded=false;
-			for(size_t j =0; j< planeIDs.size(); ++j){
-					if(_sensorZOrderToIDMap[i] == planeIDs[j]){
-							excluded=true;
-							break;
-					} 
-			}
-			if(!excluded){
-					_sensorIDToZOrderWithoutExcludedPlanes[_sensorZOrderToIDMap[i]] =  counter;
-					_sensorZOrderToIDWithoutExcludedPlanes[counter]=_sensorZOrderToIDMap[i];
-					counter++;
-			}
-	}
-	//Check if the number of excluded planes set is the same as (total-number of plane IDs inputed that should be excluded)
-	if(geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() != (geo::gGeometry().sensorIDstoZOrder().size()-planeIDs.size())){
-			throw(lcio::Exception( "The number of Planes-Excluded is not correct. This could be a problem with geometry."));
-	}else{
-			streamlog_out(DEBUG0) <<"The correct number of planes have been excluded" << std::endl;
-	}
-}
 
 /** Sensor ID vector ordered according to their position along the Z axis (beam axis)
  *  Numeration runs from 0 to nPlanes-1 */
@@ -928,7 +903,7 @@ int EUTelGeometryTelescopeGeoDescription::getSensorID( double const globalPos[] 
  * @return radiation length in units of X0
  */
 
-float EUTelGeometryTelescopeGeoDescription::findRad( const double globalPosStart[], const double globalPosFinish[], std::map< const int, double> &sensors, 	std::map< const int, double> &air ){
+float EUTelGeometryTelescopeGeoDescription::findRad( const std::map<int,int>& sensorIDToZOrderWithoutExcludedPlanes, const double globalPosStart[], const double globalPosFinish[], std::map< const int, double> &sensors, 	std::map< const int, double> &air ){
     streamlog_out(DEBUG5) << "/////////////////////////////////////////////////////////////////////////////////////////////////// " << std::endl;
     streamlog_out(DEBUG5) << "/////////////////////////////////////////////////////////////////////////////////////////////////// " << std::endl;
     streamlog_out(DEBUG5) << "              CALCULATING THE TOTAL RADIATION LENGTH BETWEEN TWO POINTS.                            " << std::endl;
@@ -954,7 +929,7 @@ float EUTelGeometryTelescopeGeoDescription::findRad( const double globalPosStart
     while ( nextnode ) {
         int sensorID = getSensorIDFromManager();
         //If not in the first plane then look forward.
-        if(sensorID == geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(0) or foundFirstPlane ){ //We want to make sure to add radiation length from first plane to last plane only;
+        if(sensorID == sensorIDToZOrderWithoutExcludedPlanes.at(0) or foundFirstPlane ){ //We want to make sure to add radiation length from first plane to last plane only;
             foundFirstPlane = true;
         }else{
             //nextnode is the next found and we can get the step using GetStep. stepLength is the max distance to travel before we find another node. 
@@ -993,8 +968,8 @@ float EUTelGeometryTelescopeGeoDescription::findRad( const double globalPosStart
 
             //Now we have the block. We place it in the planes or in the air if excluded.
             //Work Flow: Check we are at end. If not then set radiation length to sensor if included.Else attach the radiation length last one included and found. 
-            if(sensorID != geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at( geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()-1 )){
-                if(geo::gGeometry().sensorIDToZOrderWithoutExcludedPlanes().find(sensorID) !=  geo::gGeometry().sensorIDToZOrderWithoutExcludedPlanes().end()){
+            if(sensorID != sensorIDToZOrderWithoutExcludedPlanes.at( sensorIDToZOrderWithoutExcludedPlanes.size()-1 )){
+                if(sensorIDToZOrderWithoutExcludedPlanes.find(sensorID) !=  sensorIDToZOrderWithoutExcludedPlanes.end()){
                     sensors[sensorID] = sensors[sensorID] +  rad;
                     sensorLeftSide =sensorID;
                     air[sensorID] = 0 ;
@@ -1015,65 +990,68 @@ float EUTelGeometryTelescopeGeoDescription::findRad( const double globalPosStart
 //This will output the X/X0 of the the full detector system. This is needed to calculate the for each individual scatter the proper correction. 
 //Note we can not determine this correction for each scatterer individually since this correction would introduce a non linear term which would be unphysical. 
 float EUTelGeometryTelescopeGeoDescription::calculateTotalRadiationLengthAndWeights(const double start[3]  ,const double end[3],  std::map<const int,double> & mapSensor, std::map<const int ,double> & mapAir){
-	streamlog_out(DEBUG1) << "calculateTotalRadiationLength()------------------------------BEGIN" <<std::endl;
-	std::map<const int, double> sensors; //This will store all the sensor scattering.
-	std::map<const int, double> air; //This will store the air directly infront of one plane
-	int lastPlaneID = 	geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at( geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()-1 );
-//	std::cout<<"Reached here" <<std::endl;
-//	std::cout << " Here is the position: " <<_planeSetup[lastPlaneID].zPos  <<std::endl; 
-	const double endUpdate[] = {end[0],end[1],_planeSetup[lastPlaneID].zPos +0.025};//Must make sure we add all silicon.
-	//THIS WILL RETURN THE TOTAL RADIATION LENGTH FOUND AND THE FRACTION FOR AIR AND PLANES.
-	//This will be for non excluded planes. This is sorted in mapWeightsToSensor(...)
-	float perRad =	findRad( start,endUpdate, sensors, air ); 
-	//NOW WE REDUCE EXCLUDED PLANES TO DEAD MATERIAL. THIS IS ABSORBED IN THE AIR OF THE PLANES NOT EXCLUDED.
-	//First two with excluded. The last two without.
-	mapWeightsToSensor(sensors,air, mapSensor,mapAir);
-	perRad = perRad +	addKapton(mapSensor);
-	streamlog_out(DEBUG0) << "X/X0 (TOTAL SYSTEM) : " << perRad <<std::endl;
-	bool pass = testOutput(mapSensor, mapAir);
-	if(!pass){
-		return 0;
-	}
-//	std::cout << "here the rad" << perRad << std::endl;
-	return perRad;
-	streamlog_out(DEBUG1) << "calculateTotalRadiationLength()------------------------------END" <<std::endl;
+//	streamlog_out(DEBUG1) << "calculateTotalRadiationLength()------------------------------BEGIN" <<std::endl;
+//	std::map<const int, double> sensors; //This will store all the sensor scattering.
+//	std::map<const int, double> air; //This will store the air directly infront of one plane
+//	int lastPlaneID; // = 	geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at( geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()-1 );
+////	std::cout<<"Reached here" <<std::endl;
+////	std::cout << " Here is the position: " <<_planeSetup[lastPlaneID].zPos  <<std::endl; 
+//	const double endUpdate[] = {end[0],end[1],_planeSetup[lastPlaneID].zPos +0.025};//Must make sure we add all silicon.
+//	//THIS WILL RETURN THE TOTAL RADIATION LENGTH FOUND AND THE FRACTION FOR AIR AND PLANES.
+//	//This will be for non excluded planes. This is sorted in mapWeightsToSensor(...)
+//    const std::map<int,int>& sensorIDToZOrderWithoutExcludedPlanes;
+//	float perRad =	findRad( sensorIDToZOrderWithoutExcludedPlanes, start,endUpdate, sensors, air ); 
+//	//NOW WE REDUCE EXCLUDED PLANES TO DEAD MATERIAL. THIS IS ABSORBED IN THE AIR OF THE PLANES NOT EXCLUDED.
+//	//First two with excluded. The last two without.
+//	mapWeightsToSensor(sensors,air, mapSensor,mapAir);
+//	perRad = perRad +	addKapton(mapSensor);
+//	streamlog_out(DEBUG0) << "X/X0 (TOTAL SYSTEM) : " << perRad <<std::endl;
+//	bool pass = testOutput(mapSensor, mapAir);
+//	if(!pass){
+//		return 0;
+//	}
+////	std::cout << "here the rad" << perRad << std::endl;
+//	return perRad;
+//	streamlog_out(DEBUG1) << "calculateTotalRadiationLength()------------------------------END" <<std::endl;
+    return 1.0;
 
 }
 //This function wil not add kapton to excluded planes.
 //TO DO: The found planes will be different from the excluded. Since sometimes we will miss a plane if there are two DUT for example. Must keep a note of these since we will be still adding radiation length incorrectly if not accounted for. These track are removed at the moment since some entries of radiation length will zero.
 double EUTelGeometryTelescopeGeoDescription::addKapton(std::map<const int, double> & mapSensor){
-	for(unsigned int i = 0 ; i<geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() ; i++){
-		mapSensor[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)] = mapSensor[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)] + 0.0002;
-	}
-	return  2*geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()*0.0001;
+//	for(unsigned int i = 0 ; i<geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() ; i++){
+//		mapSensor[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)] = mapSensor[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)] + 0.0002;
+//	}
+	return 1.0;// 2*geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()*0.0001;
 
 }
 bool EUTelGeometryTelescopeGeoDescription::testOutput(std::map< const int,double> & mapSensor,std::map<const int,double> & mapAir){
-    bool foundRadZero = false;
-
-	//TEST ONE SENSOR ONE SCATTERER AFTER.
-	if((mapSensor.size()-1) != mapAir.size()){ //last plane does not contain any air scattering information.
-		throw(std::string("We did not determine the radiation along the track correctly! Sensor != Air"));
-	}
-	//TEST SAME NUMBER AS EXCLUDED SENSORS
-    if( (geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()-1) != mapAir.size()){
-		throw(std::string("We do not have a scatterer for each plane included "));
-	}
-    streamlog_out(DEBUG5) << "/////////////////////////////////////////////////////////////////////////////////////////////////// " << std::endl;
-    streamlog_out(DEBUG5) << "                 THIS IS WHAT WE WILL CONSTRUCT THE PLANES AND SCATTERING FROM           " << std::endl;
-    for(unsigned int i = 0 ; i<geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() ; i++){
-        streamlog_out(DEBUG5) << "Sensor ID:   "<< geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)<< " X/X0: " << mapSensor[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i) ] <<" Mass in front of sensor X/X0: "  << mapAir[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i) ] << std::endl;
-        if(mapSensor[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i) ] == 0 or (mapAir[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i) ] == 0 and i != geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() -1 )){
-            foundRadZero = true;
-        }
-    }
-    streamlog_out(DEBUG5) << "/////////////////////////////////////////////////////////////////////////////////////////////////// " << std::endl;
-    streamlog_out(DEBUG5) << "/////////////////////////////////////////////////////////////////////////////////////////////////// " << std::endl;
-    if(foundRadZero){
-        return false;
-    }else{
-        return true;
-    }
+//    bool foundRadZero = false;
+//
+//	//TEST ONE SENSOR ONE SCATTERER AFTER.
+//	if((mapSensor.size()-1) != mapAir.size()){ //last plane does not contain any air scattering information.
+//		throw(std::string("We did not determine the radiation along the track correctly! Sensor != Air"));
+//	}
+//	//TEST SAME NUMBER AS EXCLUDED SENSORS
+//    if( (geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()-1) != mapAir.size()){
+//		throw(std::string("We do not have a scatterer for each plane included "));
+//	}
+//    streamlog_out(DEBUG5) << "/////////////////////////////////////////////////////////////////////////////////////////////////// " << std::endl;
+//    streamlog_out(DEBUG5) << "                 THIS IS WHAT WE WILL CONSTRUCT THE PLANES AND SCATTERING FROM           " << std::endl;
+//    for(unsigned int i = 0 ; i<geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() ; i++){
+//        streamlog_out(DEBUG5) << "Sensor ID:   "<< geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)<< " X/X0: " << mapSensor[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i) ] <<" Mass in front of sensor X/X0: "  << mapAir[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i) ] << std::endl;
+//        if(mapSensor[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i) ] == 0 or (mapAir[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i) ] == 0 and i != geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() -1 )){
+//            foundRadZero = true;
+//        }
+//    }
+//    streamlog_out(DEBUG5) << "/////////////////////////////////////////////////////////////////////////////////////////////////// " << std::endl;
+//    streamlog_out(DEBUG5) << "/////////////////////////////////////////////////////////////////////////////////////////////////// " << std::endl;
+//    if(foundRadZero){
+//        return false;
+//    }else{
+//        return true;
+//    }
+       return true;
 
 }
 
@@ -1081,36 +1059,36 @@ bool EUTelGeometryTelescopeGeoDescription::testOutput(std::map< const int,double
 void EUTelGeometryTelescopeGeoDescription::mapWeightsToSensor(std::map<const int,double> sensor,std::map<const int,double> air,  std::map< const  int, double > & mapSen, std::map< const  int, double > & mapAir ){
 //	std::cout<< "sensor size: " << sensor.size() <<std::endl;
 //	std::cout<< "air size: " << air.size() <<std::endl;
-
-	unsigned int j=0;
-	double ExcPlaneScat=0;
-	int beforeExcPos=0;
-	bool addMore=false;
-	for(unsigned int  i=0; i<_sensorZOrderToIDMap.size() ; i++){
-		const int sensorID = _sensorZOrderToIDMap[i];
-
-		//Here we check if we have added all the scatterers due to excluded planes. 
-		if(_sensorZOrderToIDWithoutExcludedPlanes[j] == _sensorZOrderToIDMap[i] and  addMore){
-			const int sensorIDBefore = _sensorZOrderToIDWithoutExcludedPlanes[beforeExcPos];
-			//Do not need to add plane scattering again.
-			mapAir[sensorIDBefore] = mapAir[sensorIDBefore]+ExcPlaneScat ;	//Add the same air before and the new plane and air.
-			addMore=false;
-			ExcPlaneScat=0;
-		}
-
-		if(_sensorZOrderToIDWithoutExcludedPlanes[j] == _sensorZOrderToIDMap[i]){//Add the scatterers as normal.
-			const int sensorID = _sensorZOrderToIDWithoutExcludedPlanes[j];
-			mapSen[sensorID] = sensor[sensorID];	
-			if(_sensorZOrderToIDWithoutExcludedPlanes.size() - 1 != j){ //Do not add the last scatterer since not scattering beyond last plane.
-				mapAir[sensorID] = air[sensorID];	
-			}
-			beforeExcPos=j;
-			j++;
-		}else{
-			ExcPlaneScat=ExcPlaneScat + sensor[sensorID] + air[sensorID]; //Add plane and air for excluded plane.
-			addMore=true;
-		}
-	}
+//
+//	unsigned int j=0;
+//	double ExcPlaneScat=0;
+//	int beforeExcPos=0;
+//	bool addMore=false;
+//	for(unsigned int  i=0; i<_sensorZOrderToIDMap.size() ; i++){
+//		const int sensorID = _sensorZOrderToIDMap[i];
+//
+//		//Here we check if we have added all the scatterers due to excluded planes. 
+//		if(_sensorZOrderToIDWithoutExcludedPlanes[j] == _sensorZOrderToIDMap[i] and  addMore){
+//			const int sensorIDBefore = _sensorZOrderToIDWithoutExcludedPlanes[beforeExcPos];
+//			//Do not need to add plane scattering again.
+//			mapAir[sensorIDBefore] = mapAir[sensorIDBefore]+ExcPlaneScat ;	//Add the same air before and the new plane and air.
+//			addMore=false;
+//			ExcPlaneScat=0;
+//		}
+//
+//		if(_sensorZOrderToIDWithoutExcludedPlanes[j] == _sensorZOrderToIDMap[i]){//Add the scatterers as normal.
+//			const int sensorID = _sensorZOrderToIDWithoutExcludedPlanes[j];
+//			mapSen[sensorID] = sensor[sensorID];	
+//			if(_sensorZOrderToIDWithoutExcludedPlanes.size() - 1 != j){ //Do not add the last scatterer since not scattering beyond last plane.
+//				mapAir[sensorID] = air[sensorID];	
+//			}
+//			beforeExcPos=j;
+//			j++;
+//		}else{
+//			ExcPlaneScat=ExcPlaneScat + sensor[sensorID] + air[sensorID]; //Add plane and air for excluded plane.
+//			addMore=true;
+//		}
+//	}
 }
 //
 // straight line - shashlyk plane assembler
