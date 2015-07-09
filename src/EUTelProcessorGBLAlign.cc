@@ -76,7 +76,7 @@ void EUTelProcessorGBLAlign::init() {
 
 		// Initialize GBL fitter
 		EUTelGBLFitter* Fitter = new EUTelGBLFitter();
-		_Mille  = new EUTelMillepede(); 
+		_Mille  = new EUTelMillepede(_milleResultFileName, _gear_aligned_file); 
 		_Mille->setSteeringFileName(_milleSteeringFilename);// The steering file will store the labels for global variables in text file, along with errors and seeds guess.
 		_Mille->setXShiftFixed(_fixedAlignmentXShfitPlaneIds);
 		_Mille->setYShiftFixed(_fixedAlignmentYShfitPlaneIds);
@@ -225,7 +225,8 @@ void EUTelProcessorGBLAlign::end(){
             streamlog_out (MESSAGE9) <<"Converge:Fail! "<< std::endl;
         }
 
-		_Mille->parseMilleOutput(_alignmentConstantLCIOFile, _gear_aligned_file);
+	//	_Mille->parseMilleOutput(_alignmentConstantLCIOFile, _gear_aligned_file);
+        _Mille->getNewGear();
 	}else{
 		streamlog_out (MESSAGE9) <<"THE NUMBER OF REJECTED TRACKS IS TOO LARGE."<< std::endl;
 	}

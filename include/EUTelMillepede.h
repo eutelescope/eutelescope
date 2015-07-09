@@ -38,10 +38,10 @@ namespace eutelescope {
 class EUTelMillepede {
         
 private:
-	DISALLOW_COPY_AND_ASSIGN(EUTelMillepede)        // prevent users from making (default) copies of processors
+//	DISALLOW_COPY_AND_ASSIGN(EUTelMillepede)        // prevent users from making (default) copies of processors
 
 public:
-        EUTelMillepede();
+        EUTelMillepede(std::string&, std::string& );
         ~EUTelMillepede();
 
 	//This take a state and outputs a its alignment jacobian given the alignment mode
@@ -66,8 +66,21 @@ public:
      */
 
 	bool runPede();
-
+    /// Old parseMilleOut.  
+    /// This function is a old and complex way to update the the gear file and produce a LCIO file with alignment parameters 
+    /**
+     * \param [in] alignmentConstantLCIOFile This is the file which the alignment parameters will be saved in LCIO format.
+     * \param [in] gear_aligned_file This is the new gear which will be produced.  
+     */
 	bool parseMilleOutput(std::string alignmentConstantLCIOFile, std::string gear_aligned_file);
+    /// This function simply writes the results file into a new gear file  
+    /**
+     * \param [in] oldGear string pointing to old gear 
+     * \param [in] results A string pointing to millepede results file  
+     * \param [in] newGear string pointing to new gear
+     */
+
+    void getNewGear();
     /// This will move the results to the steering file and run pede. This is repeated a set number of times.  
 	bool converge();
 	bool checkConverged();
@@ -116,6 +129,8 @@ protected:
         /** Mille steering filename */
 	std::string _milleSteeringFilename;
 	std::string _milleSteerNameOldFormat;
+	std::string _newGear;
+
 	int _iteration;
 
 	std::string _milleBinaryFilename;

@@ -9,13 +9,16 @@ using namespace eutelescope;
 namespace eutelescope {
 
 //This constructor useful for mille binary output part
-EUTelMillepede::EUTelMillepede() :
+EUTelMillepede::EUTelMillepede(std::string& res, std::string& newGear) :
 _milleGBL(NULL),
 _jacobian(2,6),
 _globalLabels(6),
 _milleSteeringFilename("steer.txt"),
 _milleSteerNameOldFormat("steer-iteration-0.txt"),
-_iteration(1)
+_iteration(1),
+_newGear(newGear),
+_milleResultFileName(res)   
+    
 {
 	FillMilleParametersLabels();
 	CreateBinary();
@@ -371,6 +374,14 @@ void EUTelMillepede::outputSteeringFiles(){
 	_iteration++;
 
 }
+void EUTelMillepede::getNewGear(){
+    ///Must create string explicitly on right had side. Since c++ does not have + char operator.
+    const string command = std::string("updateGear ") + " -og " + Global::parameters->getStringVal("GearXMLFile" )  + " -r " + _milleSteeringFilename + " -ng " +  _newGear;
+	streamlog_out ( MESSAGE5 ) << command << std::endl;
+	redi::ipstream updateGear( command.c_str( ), redi::pstreams::pstdout | redi::pstreams::pstderr );
+
+};
+
 //This part using the output of millepede will create a new gear file based on the alignment parameters that have just been determined
 //It will also create LCIO file that will hold the alignment constants
 bool EUTelMillepede::parseMilleOutput(std::string alignmentConstantLCIOFile, std::string gear_aligned_file){
