@@ -150,12 +150,6 @@ class EUTelGeometryTelescopeGeoDescription
 	/** Map from sensor ID to number along Z */
 	std::map<int, int> _sensorIDtoZOrderMap;
 
-	/** Number of planes including DUT */
-	std::map<int,int> _sensorZOrderToIDWithoutExcludedPlanes;
-	
-	/** X coordinate of the sensors centers in global coordinate frame [mm]*/
-	std::map<int, int> _sensorIDToZOrderWithoutExcludedPlanes;
-
 	size_t _nPlanes;
 
 	/** Pointer to the pixel geometry manager */
@@ -313,17 +307,6 @@ class EUTelGeometryTelescopeGeoDescription
 
 	TVector3 siPlaneYAxis( int );
 
-	void initialisePlanesToExcluded(IntVec planeIDs );
-
-	/** Map from sensor ID to number along Z */
-	const std::map<int, int>& sensorZOrdertoIDs() const { return _sensorZOrderToIDMap; };
-
-	/**TODO: NOP*/
-	const std::map<int, int>& sensorZOrderToIDWithoutExcludedPlanes() const { return _sensorZOrderToIDWithoutExcludedPlanes; };
-
-	/**TODO: NOP*/
-	const std::map<int,int>& sensorIDToZOrderWithoutExcludedPlanes() const { return _sensorIDToZOrderWithoutExcludedPlanes; };
-
 	/** Map from sensor ID to number along Z */
 	const std::map<int, int>& sensorIDstoZOrder() const { return _sensorIDtoZOrderMap; };
 
@@ -364,7 +347,7 @@ class EUTelGeometryTelescopeGeoDescription
 	void initializeTGeoDescription( std::string& geomName, bool dumpRoot );
 
 	// Geometry operations
-    float findRad( const double globalPosStart[], const double globalPosFinish[], std::map< const int, double> &sensors, 	std::map< const int, double> &air );
+    float findRad(const std::map<int,int>& sensorIDToZOrderWithoutExcludedPlanes, const double globalPosStart[], const double globalPosFinish[], std::map< const int, double> &sensors, 	std::map< const int, double> &air );
 	int getSensorID(float const globalPos[] ) const;
 	int getSensorID(double const globalPos[] ) const;
 
@@ -385,12 +368,12 @@ class EUTelGeometryTelescopeGeoDescription
 						TVector3& outputMomentum, float& arcLength, int& newNextPlaneID );
 
 	TVector3 getXYZMomentumfromArcLength(TVector3 momentum, TVector3 globalPositionStart, float charge, float  arcLength );
-	bool testOutput(std::map<const int,double> & mapSensor, std::map<const int, double> & mapAir);
+	bool testOutput(const std::map<int, int> &, std::map<const int,double> & mapSensor, std::map<const int, double> & mapAir);
 
 	//This outputs the total percentage radiation length for the full detector system. 
-	float calculateTotalRadiationLengthAndWeights(const double startD[3],const double endD[3], std::map<const int,double>&, std::map<const int,double> & );
-	void mapWeightsToSensor(std::map<const int,double> sensor,std::map<const int,double> air,  std::map< const  int, double > & mapSen,std::map< const  int, double > & mapAir  );
-	double addKapton(std::map<const int, double> & mapSensor);
+	float calculateTotalRadiationLengthAndWeights(const std::map<int, int> &,   const double startD[3],const double endD[3], std::map<const int,double>&, std::map<const int,double> & );
+	void mapWeightsToSensor( const std::map<int, int> & , std::map<const int,double> sensor,std::map<const int,double> air,  std::map< const  int, double > & mapSen,std::map< const  int, double > & mapAir  );
+	double addKapton( const std::map<int, int> & , std::map<const int, double> & mapSensor);
 
 
 	float getInitialDisplacementToFirstPlane() const { return _initialDisplacement; };

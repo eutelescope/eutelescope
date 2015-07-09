@@ -20,14 +20,13 @@
 #include "IMPL/LCRelationImpl.h"
 #include "lcio.h"
 #include "marlin/Processor.h"
-//Found that pattern recognition needs to be included to stop arguments incomplete error. Strange!
-#include "EUTelPatternRecognition.h"
-
+#include <IMPL/LCCollectionVec.h>
 // MARLIN
 #include "marlin/Exceptions.h"
 #include "marlin/Global.h"
 #include "marlin/Processor.h"
 #include "marlin/VerbosityLevels.h"
+
 
 
 

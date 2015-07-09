@@ -68,15 +68,15 @@ void EUTelProcessorPatRecTriplets::init(){
 		_nProcessedEvents = 0;
 		std::string name = EUTELESCOPE::GEOFILENAME;
 		geo::gGeometry().initializeTGeoDescription(name,false);
-        geo::gGeometry().initialisePlanesToExcluded(_excludePlanes);
 		geo::gGeometry().setInitialDisplacementToFirstPlane(_initialDisplacement); 
 		streamlog_out(MESSAGE5) << "These are the planes you will create a state from. Mass inbetween states will be turned to scatterers in GBLTrackProcessor." << std::endl;
-		for(size_t i =0 ; i < geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size(); ++i)
-		{
-			streamlog_out(MESSAGE5) << geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i) << "  ";
-		}
+//		for(size_t i =0 ; i < geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size(); ++i)
+//		{
+//			streamlog_out(MESSAGE5) << geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i) << "  ";
+//		}
 		streamlog_out(MESSAGE5) << std::endl;
 		_trackFitter = new EUTelPatRecTriplets();
+        _trackFitter->setPlaneExclude(_excludePlanes);
 		_trackFitter->setDoubletDistCut(_doubletDistCut);
 		_trackFitter->setTripletSlopeCuts(_tripletSlopeCuts);
 		_trackFitter->setDoubletCenDistCut(_doubletCenDistCut);

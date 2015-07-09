@@ -86,6 +86,7 @@ namespace eutelescope {
         std::vector<double> getCorr(EUTelHit & hitArmOne1, EUTelHit & hitArmOne2, EUTelHit & hitArmTwo1, EUTelHit & hitArmTwo2);
 
         void setPlaneDimensionsVec(EVENT::IntVec& planeDimensions);
+        void setPlaneExclude(IntVec& planeIDs);  
 
 
 
@@ -93,13 +94,6 @@ namespace eutelescope {
 			return _eventNumber;
 		}
 
-		inline int getAllowedMissingHits() const {
-			return _allowedMissingHits;
-		}
-
-		inline double getWindowSize() const {
-			return _residualsRMax;
-		}
 
 		inline double getBeamMomentum() const {
 			return _beamE;
@@ -152,13 +146,6 @@ namespace eutelescope {
         void setArcLengths(EUTelTrack & track);
 
 
-		//Here if the user does not set a create seeds from planes x. The we set it automatically to the first plane travelling as the beam travels. 
-		//This has the best of both world. No reduction on functionality. User does not even know this is here. 	
-		inline 	void setAutoPlanestoCreateSeedsFrom(){
-			if(_createSeedsFromPlanes.size() == 0){
-				_createSeedsFromPlanes.push_back(geo::gGeometry().sensorZOrdertoIDs().at(0));
-			}
-		}	
 		//COMPUTE
 		TVector3 computeInitialMomentumGlobal();
 		//TEST
@@ -185,6 +172,7 @@ namespace eutelescope {
 		std::vector<EUTelTrack> _tracksWithDUTHit;
 		std::vector<EUTelTrack> _tracksAfterEnoughHitsCut;
 		std::vector<EUTelTrack>	_finalTracks;
+        std::map<int,int> _senZOrderToIDWithoutExcPla;
 
 		unsigned int _numberOfTracksTotal;
 		unsigned int _numberOfTracksTotalWithDUT;

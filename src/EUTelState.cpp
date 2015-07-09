@@ -348,7 +348,7 @@ bool EUTelState::findIntersectionWithCertainID(int nextSensorID, float intersect
 ///WE ALSO GET THE FRACTION OF RADIATION LENGTH THAT EACH PLANE AND VOLUME OF AIR SHOULD GET. 
 ///THIS IS ASSOCIATED SO THE AIR INFRONT OF A SENSOR IS ASSOCIATED WITH IT.
 ///EXCLUDED PLANES ARE REDUCED TO MORE RADIATION LENGTH IN FRONT OF A NON EXCLUDED PLANE.
-float EUTelState::computeRadLengthsToEnd( std::map<const int,double> & mapSensor, std::map<const int ,double> & mapAir){
+float EUTelState::computeRadLengthsToEnd(const std::map<int, int> & incPla,  std::map<const int,double> & mapSensor, std::map<const int ,double> & mapAir){
     streamlog_out(DEBUG3)<<"compute radiation..."<<std::endl;
 	TVector3 gPos =  getPositionGlobal();
 	///TO DO: At the moment we just use a straight through the sensor in all enviroments. The code is designed to extend this to any straight line but we see some addition of extra radiation length beyond what is expect. This will have to be looked into but not a huge issue at the moment.
@@ -358,7 +358,7 @@ float EUTelState::computeRadLengthsToEnd( std::map<const int,double> & mapSensor
 	///NOW WE CALCULATE THE RADIATION LENGTH FOR THE FULL FLIGHT AND THEN SPLIT THESE INTO LINEAR COMPONENTS FOR SCATTERING ESTIMATION. 
 	///We will return the radiation lengths associate with the planes and air. Note excluded planes volume should be added to the air in front of non excluded planes. 
     streamlog_out(DEBUG3)<<"Use TGeo now!"<<std::endl;
-	float rad =	geo::gGeometry().calculateTotalRadiationLengthAndWeights( start,end,  mapSensor, mapAir);
+	float rad =	geo::gGeometry().calculateTotalRadiationLengthAndWeights(incPla, start,end,  mapSensor, mapAir);
 	return rad;
 }
 

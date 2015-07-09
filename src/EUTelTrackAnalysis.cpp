@@ -10,8 +10,8 @@ EUTelTrackAnalysis::EUTelTrackAnalysis(std::map< int,  AIDA::IProfile2D*> mapFro
     setBeamEnergy(beamEnergy);
 
 
-    for(unsigned int  j = 0; j < (geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()); ++j){
-        unsigned int sensorID = geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(j);
+    for(unsigned int  j = 0; j < (geo::gGeometry().sensorIDsVec().size()); ++j){
+        unsigned int sensorID = geo::gGeometry().sensorIDsVec().at(j);
         _senResTotX[sensorID] = 0.0;
         _senResTotY[sensorID] = 0.0;
         _senResTotZ[sensorID] = 0.0;
@@ -230,9 +230,10 @@ float EUTelTrackAnalysis::calculatePValueForChi2(EUTelTrack track){
 }
 void EUTelTrackAnalysis::print(){
     streamlog_out(MESSAGE9) << "Analysis Results: " << std::endl;
-    for(size_t  j = 0; j < (geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()); ++j){
-        unsigned int sensorID = geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(j);
-        streamlog_out(MESSAGE9) <<"Sensor " << sensorID << " residual average X " <<  _senResTotX[sensorID]/static_cast<float>(_hitNum[sensorID]) << " residual average Y " <<  _senResTotY[sensorID]/static_cast<float>(_hitNum[sensorID])<< " hit number " << _hitNum[sensorID]<<std::endl;;
+    for(size_t  j = 0; j < (geo::gGeometry().sensorIDsVec().size()); ++j){
+        unsigned int sensorID = geo::gGeometry().sensorIDsVec().at(j);
+        ///Output all planes even if excluded. Add one to hit count so we do not divide by zero.
+        streamlog_out(MESSAGE9) <<"Sensor " << sensorID << " residual average X " <<  _senResTotX[sensorID]/static_cast<float>(_hitNum[sensorID]+1) << " residual average Y " <<  _senResTotY[sensorID]/static_cast<float>(_hitNum[sensorID]+1)<< " hit number " << _hitNum[sensorID]<<std::endl;;
 
     }
 }

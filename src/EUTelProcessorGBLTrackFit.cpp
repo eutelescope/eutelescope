@@ -88,18 +88,7 @@ void EUTelProcessorGBLTrackFit::init() {
 		_nProcessedEvents = 0;
 		std::string name("test.root");
 		geo::gGeometry().initializeTGeoDescription(name,false);
-        /// At the moment we do not pass an exclude planes variable for radiation length.
-        std::vector<int> v;
-        geo::gGeometry().initialisePlanesToExcluded(v);
-
-        /**  EUTelGBLFitter in action.
-         * 
-         *  Below is the variables needed to initialise a GBLFitter object. This will then fit all your tracks in process event. 
-         *  
-         */
-
 		EUTelGBLFitter* Fitter = new EUTelGBLFitter();
-		Fitter->setBeamCharge(_beamQ);
 		Fitter->setBeamEnergy(_eBeam);
 		Fitter->setMEstimatorType(_mEstimatorType);//As said before this is to do with how we deal with outliers and the function we use to weight them.
 		Fitter->setParamterIdXResolutionVec(_SteeringxResolutions);
@@ -201,9 +190,8 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent* evt){
 				std::map< int, std::map< float, float > >  SensorResidualError; 
                 ///Here collect the residuals and calcuated errors.
 				_trackFitter->getResLoc(traj,linkMeas, pointList, SensorResidual, SensorResidualError);
-				std::map< int, int> planes = geo::gGeometry().sensorZOrdertoIDs(); 
 				if(chi2/static_cast<float>(ndf) < 5){
-				  plotResidual(SensorResidual,SensorResidualError, planes);//TO DO: Need to fix how we histogram.
+				  plotResidual(SensorResidual,SensorResidualError);
 				}
 			}else{
 				streamlog_out(DEBUG5) << "Ierr is: " << ierr << " Do not update track information " << std::endl;
@@ -238,19 +226,19 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent* evt){
 
 
 //TO DO:This is a very stupid way to histogram but will add new class to do this is long run 
-void EUTelProcessorGBLTrackFit::plotResidual(std::map< int, std::map<float, float > >  & sensorResidual, std::map< int, std::map<float, float > >  & sensorResidualError, std::map< int, int > & planes){
+void EUTelProcessorGBLTrackFit::plotResidual(std::map< int, std::map<float, float > >  & sensorResidual, std::map< int, std::map<float, float > >  & sensorResidualError){
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Residual plot
 	/* Obtain DUT IDs */
         std::map< int, int>::iterator planes_it;
 	int dut1 = -10;
 	int dut2 = -10;
 	bool flag = false;
-	for ( planes_it = planes.begin(); planes_it != planes.end(); planes_it++) {
-	  if (planes_it->second > 5 && flag == true) {
-	    dut2 = planes_it->second;
+	for ( std::vector<int>::const_iterator itPla = geo::gGeometry().sensorIDsVec().begin(); itPla != geo::gGeometry().sensorIDsVec().end(); ++itPla) {
+	  if ( *itPla> 5 && flag == true) {
+	    dut2 = *itPla;
 	  }
-	  if (planes_it->second > 5) {
-	    dut1 = planes_it->second;
+	  if ( *itPla> 5) {
+	    dut1 = *itPla;
 	    flag = true;
 	  }
 	  

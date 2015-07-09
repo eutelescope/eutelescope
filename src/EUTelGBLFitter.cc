@@ -39,7 +39,6 @@
 namespace eutelescope {
 
 	EUTelGBLFitter::EUTelGBLFitter() :
-	_beamQ(-1),
 	_eBeam(4.),
 	_mEstimatorType(),
 	_mille(0),
@@ -133,23 +132,23 @@ namespace eutelescope {
 	void EUTelGBLFitter::setParamterIdXResolutionVec( const std::vector<float>& vector)
 	{
 		//We have a similar check after this to see that number of planes and elements in resolution vector are the same. We need this here since if they are different then it will just give an exception from the vector tryign to access a element that does not exist.
-		if ( geo::gGeometry().sensorZOrdertoIDs().size() != vector.size() ){
-			streamlog_out( ERROR5 ) << "The number of planes: "<< geo::gGeometry().sensorZOrdertoIDs().size()<<"  The size of input resolution vector: "<<vector.size()  << std::endl;
+		if ( geo::gGeometry().sensorIDsVec().size() != vector.size() ){
+			streamlog_out( ERROR5 ) << "The number of planes: "<< geo::gGeometry().sensorIDsVec().size()<<"  The size of input resolution vector: "<<vector.size()  << std::endl;
 			throw(lcio::Exception("The size of the resolution vector and the total number of planes is different for x axis."));
 		}
 
-		for(size_t i=0; i < geo::gGeometry().sensorZOrdertoIDs().size(); ++i){
+		for(size_t i=0; i < geo::gGeometry().sensorIDsVec().size(); ++i){
 			_parameterIdXResolutionVec[ geo::gGeometry().sensorZOrderToID(i)] = vector.at(i);
 		}
 	}
 	//This sets the estimated resolution for each plane in the Y direction.
 	void EUTelGBLFitter::setParamterIdYResolutionVec( const std::vector<float>& vector)
 	{
-		if ( geo::gGeometry().sensorZOrdertoIDs().size() != vector.size() ){
-			streamlog_out( ERROR5 ) << "The number of planes: "<< geo::gGeometry().sensorZOrdertoIDs().size()<<"  The size of input resolution vector: "<<vector.size()  << std::endl;
+		if ( geo::gGeometry().sensorIDsVec().size() != vector.size() ){
+			streamlog_out( ERROR5 ) << "The number of planes: "<< geo::gGeometry().sensorIDsVec().size()<<"  The size of input resolution vector: "<<vector.size()  << std::endl;
 			throw(lcio::Exception("The size of the resolution vector and the total number of planes is different for y axis."));
 		}
-		for(size_t i=0; i < geo::gGeometry().sensorZOrdertoIDs().size(); ++i){
+		for(size_t i=0; i < geo::gGeometry().sensorIDsVec().size(); ++i){
 			_parameterIdYResolutionVec[ geo::gGeometry().sensorZOrderToID(i)] = vector.at(i);
 		}
 	}
@@ -184,12 +183,40 @@ namespace eutelescope {
         }
         track.setTotalVariance(var);
     }
+    ///This code is similar to triplet finder setting excluded planes. However we should get excluded planes from track now. 
+    std::map<int,int> EUTelGBLFitter::getMap(EUTelTrack & track){
+        std::map<int,int> zToID;
+        unsigned  int counter=0;
+        for(std::vector<int>::const_iterator itID = geo::gGeometry().sensorIDsVec().begin(); itID != geo::gGeometry().sensorIDsVec().end(); ++itID){
+            bool excluded=false;
+            for(size_t j =0; j< track.getStates().size(); ++j){
+                if(*itID == track.getStates().at(j).getLocation()){
+                    excluded=true;
+                    break;
+                }   
+            }   
+            if(!excluded){
+             //   _senIDToZOrderWithoutExcPla[*itID] =  counter;
+                zToID[counter]= *itID;
+                counter++;
+            }   
+        }   
+        //Check if the number of excluded planes set is the same as (total-number of plane IDs inputed that should be excluded)
+        if(zToID.size() != (geo::gGeometry().sensorIDsVec().size()-track.getStates().size())){
+            throw(lcio::Exception( "The number of Planes-Excluded is not correct. This could be a problem with geometry."));
+        }else{
+            streamlog_out(DEBUG0) <<"The correct number of planes have been excluded" << std::endl;
+        }   
+        return zToID;
+    }
+
     void EUTelGBLFitter::setRad(EUTelTrack & track){
 		streamlog_out(DEBUG2)<<"setRadLength--BEGIN"<<std::endl;
         ///Set radiation lengths
         std::map<const int,double>  mapSensor;
         std::map<const int ,double>  mapAir;
-        double rad = track.getStates().at(0).computeRadLengthsToEnd(mapSensor, mapAir);
+        std::map <int,int> incPla = getMap(track); 
+        double rad = track.getStates().at(0).computeRadLengthsToEnd(incPla, mapSensor, mapAir);
 		streamlog_out(DEBUG2)<<"Rad total: " << rad<<std::endl;
         if(rad == 0){
       //      throw(std::string("Radiation length is zero for mimosa tracks."));

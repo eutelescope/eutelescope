@@ -123,7 +123,7 @@ namespace eutelescope {
 
 			void bookHistograms();
 
-			void plotResidual(std::map< int, std::map<float, float > >  & sensorResidual, std::map< int, std::map<float, float > >  & sensorResidualError, std::map< int, int > & planes);
+			void plotResidual(std::map< int, std::map<float, float > >  & sensorResidual, std::map< int, std::map<float, float > >  & sensorResidualError);
 				
 //TO DO: Fix all this histogramming stuff.
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)

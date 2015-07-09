@@ -87,18 +87,25 @@ namespace eutelescope {
             void setRad(EUTelTrack &);
             /// A simple way to set hits covariance matrix.
 			void setMeasurementCov(EUTelState& state);
-			inline void setBeamCharge(double beamQ) { this->_beamQ = beamQ; }
             inline void setBeamEnergy(double beamE) { this->_eBeam = beamE; }
             /// This links the binary created in millepede to GBLFitter.
-			void SetMilleBinary(gbl::MilleBinary* _mille) { this->_mille = _mille; }
+			void SetMilleBinary(gbl::MilleBinary* mille) { this->_mille = mille; }
             ///Links the EUTelMillepede class to EUTelGBLFitter.
-			void setMillepede( EUTelMillepede* Mille ) { _MilleInterface =  Mille; }
+			void setMillepede( EUTelMillepede* mille ) { _MilleInterface =  mille; }
             /// Resolution of the points in the local frame X/Y
 			void setParamterIdXResolutionVec( const std::vector<float>& );
 			void setParamterIdYResolutionVec( const std::vector<float>& );
+			/// GET
+            ///The function will return a map between z position and ID using the EUTelTrack object 
+            /**
+             * \param [in] track EUTelTrack object 
+             * \return  map   map between z position and ID  
+             */
+
+            std::map<int,int> getMap(EUTelTrack & track);
+
             /// This is the down weighting certain hits will get due to non Gaussian errors.
 			void setMEstimatorType( const std::string& );
-			/// GET
             ///This function will create the information needed to place the scatterers at the correct location and with the correct variance. 
             /**
              * \param [in] track 
@@ -198,7 +205,6 @@ namespace eutelescope {
 			void computeTrajectoryAndFit(gbl::GblTrajectory* traj, double* chi2, int* ndf, int & ierr);
     protected:
             int _numberRadLoss;
-			double _beamQ;
 			double _eBeam;
 			/** Outlier downweighting option */
 			std::string _mEstimatorType;

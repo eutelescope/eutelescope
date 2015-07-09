@@ -71,6 +71,10 @@ namespace alibava
 		static const int NOOFCHIPS = 2;
 		//! Parameter to store/recall number of channels in a chip in Alibava readout system
 		static const int NOOFCHANNELS = 128;
+        //! Parameter to store/recall length of header in a chip in Alibava readout system
+        static const int CHIPHEADERLENGTH = 16;
+        
+        
 		
 		/////////////////////////////////////////
 		// Global Alibava Processor parameters //
@@ -91,10 +95,6 @@ namespace alibava
 		////////////////////////
 		// Optional Parameters //
 		////////////////////////
-		//! Parameter to store/recall tilt angle of the sensor stored in Alibava run header
-		static const char * TILTANGLE;
-		//! Parameter to store/recall temperature of the sensor stored in Alibava run header
-		static const char * SENSORTEMPERATURE;
 		
 		////////////////////////////
 		// Data Header Parameters //
@@ -135,7 +135,9 @@ namespace alibava
 		static const char *   EVENTSIZE;
 		//! Parameter key to store/recall Event header code
 		static const char *   EVENTCODE;
-		//! Parameter key to store/recall TDC time (ns)
+        //! Parameter key to store/recall clock time (timestamp)
+        static const char *   EVENTCLOCK;
+        //! Parameter key to store/recall TDC time (ns)
 		static const char *   EVENTTIME;
 		//! Parameter key to store/recall Temperature in degrees
 		static const char *   EVENTTEMP;

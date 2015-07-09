@@ -20,14 +20,43 @@ _beamQ(-1.)
 EUTelPatRecTriplets::~EUTelPatRecTriplets()  
 {}
 
+// This function will determine the planes which are included in the final track. 
+/// To exclude a plane but still create a track then increase resolution to infinity.
+/// The hit will therefore have no pull on the track.
+/// I.e what planes will get position and incidence information
+/// Radiation length is still included in the scattering calculation
+void EUTelPatRecTriplets::setPlaneExclude(IntVec& planeIDs){   
+    unsigned  int counter=0;
+    for(std::vector<int>::const_iterator itID = geo::gGeometry().sensorIDsVec().begin(); itID != geo::gGeometry().sensorIDsVec().end(); ++itID){
+        bool excluded=false;
+        for(size_t j =0; j< planeIDs.size(); ++j){
+            if(*itID == planeIDs[j]){
+                excluded=true;
+                break;
+            }   
+        }   
+        if(!excluded){
+         //   _senIDToZOrderWithoutExcPla[*itID] =  counter;
+            _senZOrderToIDWithoutExcPla[counter]= *itID;
+            counter++;
+        }   
+    }   
+    //Check if the number of excluded planes set is the same as (total-number of plane IDs inputed that should be excluded)
+    if(_senZOrderToIDWithoutExcPla.size() != (geo::gGeometry().sensorIDsVec().size()-planeIDs.size())){
+        throw(lcio::Exception( "The number of Planes-Excluded is not correct. This could be a problem with geometry."));
+    }else{
+        streamlog_out(DEBUG0) <<"The correct number of planes have been excluded" << std::endl;
+    }   
+}  
+
 void EUTelPatRecTriplets::setPlaneDimensionsVec(EVENT::IntVec& planeDimensions){
-	if(planeDimensions.size() != geo::gGeometry().sensorZOrdertoIDs().size()){
-		streamlog_out(ERROR) << "The size of planesDimensions input is: "<< planeDimensions.size()<<" The size of sensorZOrdertoIDs is: " << geo::gGeometry().sensorZOrdertoIDs().size()<< std::endl;
+	if(planeDimensions.size() != geo::gGeometry().sensorIDsVec().size()){
+		streamlog_out(ERROR) << "The size of planesDimensions input is: "<< planeDimensions.size()<<" The size of sensorIDsVec is: " << geo::gGeometry().sensorIDsVec().size()<< std::endl;
 		throw(lcio::Exception( "The input dimension vector not the same as the number of planes!"));
 	}
 	_planeDimensions.clear();
-	for(size_t i=0; i<geo::gGeometry().sensorZOrdertoIDs().size(); ++i){
-		const int planeID = geo::gGeometry().sensorZOrdertoIDs().at(i);
+	for(size_t i=0; i<geo::gGeometry().sensorIDsVec().size(); ++i){
+		const int planeID = geo::gGeometry().sensorIDsVec().at(i);
 		if (_planeDimensions.find(planeID) == _planeDimensions.end()){//This is to check that we don't try to map the same sensor to two different plane dimensions.
 			_planeDimensions[planeID] = planeDimensions.at(i);
 		}else{
@@ -224,7 +253,7 @@ std::vector<EUTelTrack> EUTelPatRecTriplets::getTracks( ){
         tracks.at(i).print();
     }
     //If we have dut planes then get hits. If not then just pass mimosa tracks.
-    unsigned int  dutNum = geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() - 6;
+    unsigned int  dutNum = _senZOrderToIDWithoutExcPla.size() - 6;
     streamlog_out(DEBUG1)<< "Number of DUTs: "<< dutNum << std::endl;
 
     std::vector<EUTelTrack> tracksWithDUTs;
@@ -412,8 +441,8 @@ EUTelTrack EUTelPatRecTriplets::getTrack(std::vector<EUTelHit> hits, std::vector
     //Calculate prediction using properties of hits only. 
     // loop around planes
     // loop around hits -> if hit matched to plane record hit, if not record my intersection
-    for(unsigned int  j = 0; j < (geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()); ++j){
-        unsigned int sensorID = geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(j);
+    for(unsigned int  j = 0; j < (_senZOrderToIDWithoutExcPla.size()); ++j){
+        unsigned int sensorID = _senZOrderToIDWithoutExcPla.at(j);
         streamlog_out(DEBUG1) << "The Z position " << j << " sensor ID: " << sensorID  <<std::endl;
         bool hitOnPlane=false;
         EUTelState state; //Create a state for each plane included in the fit.
@@ -575,8 +604,8 @@ std::vector<EUTelTrack> EUTelPatRecTriplets::getDUTHit(std::vector<EUTelTrack> &
 }
 std::vector<EUTelHit> EUTelPatRecTriplets::getDUTHitsOrder(EUTelTrack track, std::vector<EUTelHit> dutHits ){
     std::vector<EUTelHit> finalHits;
-    for(unsigned int  i = 0; i < (geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()); ++i){
-        unsigned int sensorID = geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i);
+    for(unsigned int  i = 0; i < (_senZOrderToIDWithoutExcPla.size()); ++i){
+        unsigned int sensorID = _senZOrderToIDWithoutExcPla.at(i);
         streamlog_out(DEBUG0) << "The Z position " << i << " sensor ID: " << sensorID  <<std::endl;
         std::vector<EUTelState>::iterator itState;
         for( itState = track.getStates().begin(); itState != track.getStates().end(); ++itState){
@@ -668,7 +697,7 @@ TVector3 EUTelPatRecTriplets::computeInitialMomentumGlobal(){
 void EUTelPatRecTriplets::setHitsVecPerPlane()
 {
 	_mapHitsVecPerPlane.clear();
-	int numberOfPlanes = geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size();
+	int numberOfPlanes = _senZOrderToIDWithoutExcPla.size();
 	
 	if(numberOfPlanes == 0)
 	{
@@ -684,23 +713,23 @@ void EUTelPatRecTriplets::setHitsVecPerPlane()
 		EVENT::TrackerHitVec tempHitsVecPlaneX; 
 		for(size_t j=0 ; j<_allHitsVec.size();++j)
 		{
-			if(Utility::getSensorIDfromHit( static_cast<IMPL::TrackerHitImpl*>(_allHitsVec[j]) ) ==  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i))
+			if(Utility::getSensorIDfromHit( static_cast<IMPL::TrackerHitImpl*>(_allHitsVec[j]) ) ==  _senZOrderToIDWithoutExcPla.at(i))
 			{
 				tempHitsVecPlaneX.push_back(_allHitsVec.at(j));
 			}
 		}
-		_mapHitsVecPerPlane[ geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)] = 	tempHitsVecPlaneX;
+		_mapHitsVecPerPlane[ _senZOrderToIDWithoutExcPla.at(i)] = 	tempHitsVecPlaneX;
 	}	
 }
 
 void EUTelPatRecTriplets::testHitsVecPerPlane(){
-	if(_mapHitsVecPerPlane.size() !=  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()){
-		streamlog_out(ERROR0) <<"The size of the planes with hits " << _mapHitsVecPerPlane.size() <<"  Sensors from Geometry with no excluded planes: "<<  geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()<<std::endl;
+	if(_mapHitsVecPerPlane.size() !=  _senZOrderToIDWithoutExcPla.size()){
+		streamlog_out(ERROR0) <<"The size of the planes with hits " << _mapHitsVecPerPlane.size() <<"  Sensors from Geometry with no excluded planes: "<<  _senZOrderToIDWithoutExcPla.size()<<std::endl;
 		throw(lcio::Exception("The number of planes that could contain hits and the number of planes is different. Problem could be the gear file has to planes at the same z position.")); 	
 
 	}
 	for(size_t i=0 ;i<_mapHitsVecPerPlane.size();++i){
-		int planeID = geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i);
+		int planeID = _senZOrderToIDWithoutExcPla.at(i);
 		if(_mapHitsVecPerPlane.at(planeID).size() <= 0){
 			streamlog_out(DEBUG1) << "One plane has no hits at all. Is this correct?" << std::endl;
 		}
