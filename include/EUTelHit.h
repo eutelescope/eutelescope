@@ -20,6 +20,7 @@ namespace eutelescope {
 			EUTelHit(EVENT::TrackerHit* hit);
             void setPosition(const double * position);
             void setID(int id);
+	    void setTime(float time);
             void setTrackFromLCIOVec(std::vector<double> input);
 			void setLocation(int location);
             //get
@@ -28,6 +29,7 @@ namespace eutelescope {
             //HIT PARAMETERS
             const double* getPosition() const; 
             int getID() const;
+	    float getTime() const;
             //END HIT PARAMETERS
 
             //print
@@ -40,6 +42,7 @@ namespace eutelescope {
 		    double _position[3];	
             int _location; 
             int _locationKnown;
+	    float _time; 
             int _id; //This is used to keep a track of all the hits for track removal.
 
 	};

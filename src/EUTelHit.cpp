@@ -77,6 +77,13 @@ void EUTelHit::setID(int id){
     _id = id;
 }
 
+float EUTelHit::getTime() const {
+    return _time;
+}
+void EUTelHit::setTime(float time){
+    _time = time;
+}
+
 std::vector<double> EUTelHit::getLCIOOutput(){
     std::vector<double> output;
     output.push_back(getID());

@@ -237,7 +237,7 @@ void EUTelProcessorHitMaker::processEvent (LCEvent * event) {
     EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event) ;
 
     if ( evt->getEventType() == kEORE ) {
-      streamlog_out ( DEBUG4 ) << "EORE found: nothing else to do." << endl;
+      streamlog_out ( DEBUG4 ) << "EORE found: nothing else to do. Inside EUTelProcessorHitMaker::processEvent, line 240" << endl;
       return;
     } else if ( evt->getEventType() == kUNKNOWN ) {
       streamlog_out ( WARNING2 ) << "Event number " << evt->getEventNumber() << " in run " << evt->getRunNumber()
@@ -487,7 +487,7 @@ void EUTelProcessorHitMaker::processEvent (LCEvent * event) {
 			cov[2] = resy * resy; // cov(y,y)
 			hit->setCovMatrix( cov );
 			hit->setType( clusterType  );
-            hit->setTime( pulse->getTime() );
+			hit->setTime( pulse->getTime() );
 
 			// prepare a LCObjectVec to store the current cluster
 			LCObjectVec clusterVec;

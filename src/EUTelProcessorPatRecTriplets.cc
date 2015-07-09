@@ -5,6 +5,7 @@ using namespace eutelescope;
 
 std::string EUTelProcessorPatRecTriplets::_histName::_numberTracksCandidatesHistName = "NumberTracksCandidates";
 std::string EUTelProcessorPatRecTriplets::_histName::_HitOnTrackCandidateHistName = "HitsOnTrackCandidate";
+std::string EUTelProcessorPatRecTriplets::_histName::_HitOnTrackTimeHistName = "HitsOnTrackTime";
 std::string EUTelProcessorPatRecTriplets::_histName::_chi2CandidateHistName = "chi2CandidateHistName";
 
 /** Default constructor */
@@ -220,8 +221,9 @@ void EUTelProcessorPatRecTriplets::plotHistos( std::vector<EUTelTrack>& trackCan
 			numberOfHits++;
 			int sensorID = static_cast<int>(trackCandidates[i].getStates().at(j).getLocation());//since we store sensor ID in Z0
 			static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_HitOnTrackCandidateHistName ] ) -> fill( sensorID );
+			static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_HitOnTrackTimeHistName ] ) -> fill(trackCandidates[i].getStates()[j].getHit().getTime()  );
 		}
-	streamlog_out( MESSAGE1 ) << "Track hits end:==============" << std::endl;
+		streamlog_out( MESSAGE1 ) << "Track hits end:==============" << std::endl;
 		}
 }
 
@@ -323,6 +325,28 @@ void EUTelProcessorPatRecTriplets::bookHistograms() {
             _aidaHistoMap1D.insert(make_pair(_histName::_HitOnTrackCandidateHistName, HitsOnTrackCandidates));
         } else {
             streamlog_out(ERROR2) << "Problem booking the " << (_histName::_HitOnTrackCandidateHistName) << std::endl;
+            streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << std::endl;
+        }
+
+ const int    timeNBin = 40;
+        const double timeMin = -10.;
+        const double timeMax =10.;
+        
+        histoInfo = histoMgr->getHistogramInfo(_histName::_HitOnTrackTimeHistName);        
+        NBin = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : timeNBin;
+        XMin = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : timeMin;
+        XMax = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : timeMax;
+        
+        // Number of hit per track candidate
+        AIDA::IHistogram1D * HitsOnTrackTimes =
+                marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_HitOnTrackTimeHistName, NBin,
+                XMin, XMax);
+
+        if (HitsOnTrackTimes) {
+            HitsOnTrackTimes->setTitle("delta time on hit for track candidates;N hits;N tracks");
+            _aidaHistoMap1D.insert(make_pair(_histName::_HitOnTrackTimeHistName, HitsOnTrackTimes));
+        } else {
+            streamlog_out(ERROR2) << "Problem booking the " << (_histName::_HitOnTrackTimeHistName) << std::endl;
             streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << std::endl;
         }
        

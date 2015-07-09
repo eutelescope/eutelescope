@@ -537,10 +537,11 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
 	//streamlog_out(MESSAGE9) << std::setw(10) <<rotationMatrix[0] << std::setw(10) <<rotationMatrix[1]<< std::setw(10) <<rotationMatrix[2]<< std::setw(10)<< std::endl<< std::endl; 
 	//streamlog_out(MESSAGE9) << std::setw(10) <<rotationMatrix[3] << std::setw(10) <<rotationMatrix[4]<< std::setw(10) <<rotationMatrix[5]<< std::setw(10)<< std::endl<< std::endl; 
 	//streamlog_out(MESSAGE9) << std::setw(10) <<rotationMatrix[6] << std::setw(10) <<rotationMatrix[7]<< std::setw(10) <<rotationMatrix[8]<< std::setw(10)<< std::endl<< std::endl; 
+	streamlog_out(DEBUG2) << "SensorID: " << SensorId << " looking up translation matrix."  << std::endl;   
 	const double* translationMatrix =  combi->GetTranslation();	
 	streamlog_out(MESSAGE9) << "SensorID: " << SensorId << " Translation vector for this object."  << std::endl;   
 	streamlog_out(MESSAGE9) << std::setw(10) <<translationMatrix[0] << std::setw(10) <<translationMatrix[1]<< std::setw(10) <<translationMatrix[2]<< std::setw(10)<< std::endl; 
-
+	streamlog_out(DEBUG2) << "SensorID: " << SensorId << "combi->RegisterYourself(); "  << std::endl;   
 	combi->RegisterYourself();   
 	
 
@@ -594,7 +595,7 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
 	pvolumeWorld->AddNode(pvolumeSensor, 1/*(SensorId)*/, combi);
 
 	//this line tells the pixel geometry manager to load the pixel geometry into the plane			
-	streamlog_out(DEBUG1) << " sensorID: " << SensorId << " " << stVolName << std::endl;   
+	streamlog_out(DEBUG1) << "H sensorID: " << SensorId << " " << stVolName << std::endl;   
 	std::string name = geoLibName(SensorId);
 
 	if( name == "CAST" )
@@ -604,6 +605,7 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
 
 	else
 	{
+	  streamlog_out ( DEBUG2 ) << "sensorId = "<<SensorId<<", name = "<<name<<", stVolName = "<<stVolName<<std::endl;
 	_pixGeoMgr->addPlane( SensorId, name, stVolName);
 	}
 }

@@ -23,8 +23,8 @@ FEI4Single::FEI4Single(): EUTelGenericPixGeoDescr(	20.30, 16.8, 0.025,		//size X
 	//Divide the regions to create pixels
  	edgeregion->Divide("fei4edgepixel",   2, 336, 0, 1, 0, "N"); 
     //standard fei4 125x25
-	TGeoVolume* centrerow = centreregion->Divide("fei4centrerow", 2, 336/2, 0, 1, 0, "N");
-	centrerow ->Divide("fei4centrepixel", 1,  78/2, 0, 1, 0, "N"); 
+	TGeoVolume* centrerow = centreregion->Divide("fei4centrerow", 2, 336, 0, 1, 0, "N");
+	centrerow ->Divide("fei4centrepixel", 1,  78, 0, 1, 0, "N"); 
 
         //And place them to make a singlechip
 	plane->AddNode(centreregion, 1, new TGeoTranslation( 0.00 , 0 , 0) );

@@ -108,6 +108,7 @@ namespace eutelescope {
 		struct _histName {
 			static std::string _numberTracksCandidatesHistName;
 			static std::string _HitOnTrackCandidateHistName;
+			static std::string _HitOnTrackTimeHistName;
 			static std::string _chi2CandidateHistName;
 		};
 

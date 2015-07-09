@@ -420,6 +420,7 @@ EUTelTrack EUTelPatRecTriplets::getTrack(std::vector<EUTelHit> hits, std::vector
         for(unsigned int i = 0; i < hits.size(); ++i){//Check the list of hits to see if we have one on this plane.
             if(hits.at(i).getLocation()==sensorID){
                 hitOnPlane=true;
+		std::cout<<"hit on location "<<hits.at(i).getLocation()<<" has time "<<hits.at(i).getTime()<<std::endl;
                 state.setLocation(hits.at(i).getLocation());
                 state.setHit(hits.at(i));
                 double dz1 = hits.at(i).getPositionGlobal()[2] - offset.at(2);
@@ -432,6 +433,7 @@ EUTelTrack EUTelPatRecTriplets::getTrack(std::vector<EUTelHit> hits, std::vector
                 slope.push_back(trackSlope.at(1)+dz*curvCorr[1]);
                 float intersectionPoint[3];
                 intersectionPoint[0] = posX;  intersectionPoint[1] = posY; intersectionPoint[2] = hits.at(i).getPositionGlobal()[2];
+		streamlog_out(DEBUG1)<<"intersection point on sensorID "<<sensorID<<" = "<<	intersectionPoint[0]<<", "<<intersectionPoint[1]<<", "<<intersectionPoint[2]<<std::endl;
                 //intersection might not be inside a volume. 
                 state.setPositionGlobal(intersectionPoint);
                 state.setDirFromGloSlope(slope);
@@ -461,7 +463,7 @@ EUTelTrack EUTelPatRecTriplets::getTrack(std::vector<EUTelHit> hits, std::vector
             streamlog_out(DEBUG1)<<"intersection point on sensorID "<<sensorID<<" = "<<	intersectionPoint[0]<<", "<<intersectionPoint[1]<<", "<<intersectionPoint[2]<<std::endl;
             //add explicit check that it intersects with sensor?   but i want edge effects?   
             //add arc length thingy
-            state.setPositionGlobal(intersectionPoint);
+            state.setPositionGlobal(intersectionPoint);//is intersection point global or local?
             state.setLocation(sensorID);
             track.setState(state);
 
@@ -484,6 +486,7 @@ void EUTelPatRecTriplets::setArcLengths(EUTelTrack & track){
         TVector3 gPos2 = (itState+1)->getPositionGlobal();
         TVector3 diff = gPos2 - gPos1;
         double arc = diff.Mag();
+	streamlog_out(DEBUG1)<<"LengthToNextState (between locations " <<itState->getLocation() <<" and "<< (itState+1)->getLocation()<< " =  "<<gPos2[2]<< "- " << gPos1[2] <<" = "<<arc<<std::endl;
         itState->setArcLengthToNextState(arc);
     }
 }
@@ -529,6 +532,7 @@ std::vector<EUTelTrack> EUTelPatRecTriplets::getDUTHit(std::vector<EUTelTrack> &
                             double posX = offset.at(0) + dz1*trackSlope.at(0) + 0.5*dz1*dz2*getCurvXY()[0];
                             double posY = offset.at(1) + dz1*trackSlope.at(1) + 0.5*dz1*dz2*getCurvXY()[1];
                             double dist=1000000;
+			    streamlog_out(DEBUG0) << "_planeDimensions["<<hit.getLocation()<<"] = "<< _planeDimensions[hit.getLocation()] << std::endl;
                             if(_planeDimensions[hit.getLocation()] == 2){ 
         //                            std::cout<<"posX: " << posX << " hitPosGlo " << hitPosGlo[0] <<std::endl;
                                 streamlog_out(DEBUG0) << "Triplet DUT Match Cut Pixel: " <<"X delta: " << fabs(posX-hitPosGlo[0]) << " Y delta: " << fabs(posY - hitPosGlo[1]) << std::endl;
@@ -539,7 +543,9 @@ std::vector<EUTelTrack> EUTelPatRecTriplets::getDUTHit(std::vector<EUTelTrack> &
                                 dist = sqrt(pow(posX-hitPosGlo[0],2));
 
                             }else{
-                                throw(lcio::Exception( "This is not a strip or pixel sensor!"));
+			      streamlog_out(DEBUG0) << "Triplet DUT Match Cut Strip: " <<"X delta: " << fabs(posX-hitPosGlo[0]) << std::endl;
+			      dist = sqrt(pow(posX-hitPosGlo[0],2));
+			      //                                throw(lcio::Exception( "This is not a strip or pixel sensor!"));
                             }
                             //Will enter always on the first loop if reached. Need to find intersection and hit on DUT.
                             if(dist < distBest){

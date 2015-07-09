@@ -129,12 +129,12 @@ void	EUTelProcessorTrackAnalysis::initialiseEfficiencyVsPositionHistograms(){
 		histTitle = sstm.str();
 		sstm.str(std::string(""));
 		histoInfo = histoMgr->getHistogramInfo(effGblFitHistName);
-		NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 40;
-		MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin :-10 ;
-		MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 10;
-		NBinY = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yBin : 20;
-		MinY =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMin : -5;
-		MaxY =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMax : 5;
+		NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 200;
+		MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin :-50 ;
+		MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 50;
+		NBinY = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yBin : 200;
+		MinY =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMin : -50;
+		MaxY =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMax : 50;
 		MinZ =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_zMin : -20;
 		MaxZ =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_zMax : 20;
 		AIDA::IProfile2D *  residGblFitX =	marlin::AIDAProcessor::histogramFactory(this)->createProfile2D(effGblFitHistName,  NBinX, MinX, MaxX, NBinY, MinY, MaxY, MinZ,MaxZ);
@@ -285,12 +285,12 @@ void	EUTelProcessorTrackAnalysis::initialiseResidualVsPositionHistograms(){
 		histTitle = sstm.str();
 		sstm.str(std::string(""));
 		histoInfo = histoMgr->getHistogramInfo(residGblFitHistName);
-		NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 40;//every 500 micron there is a bin
-		MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin :-10 ;
-		MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 10;
-		NBinY = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yBin : 20;//every 500 micron there is a bin
-		MinY =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMin : -5;
-		MaxY =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMax : 5;
+		NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 200;//every 500 micron there is a bin
+		MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin :-50 ;
+		MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 50;
+		NBinY = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yBin : 200;//every 500 micron there is a bin
+		MinY =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMin : -50;
+		MaxY =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMax : 50;
 		MinZ =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_zMin : -20;
 		MaxZ =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_zMax : 20;
 		AIDA::IProfile2D *  residGblFitY =	marlin::AIDAProcessor::histogramFactory(this)->createProfile2D(residGblFitHistName,  NBinX, MinX, MaxX, NBinY, MinY, MaxY, MinZ,MaxZ);

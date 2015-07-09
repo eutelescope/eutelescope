@@ -68,6 +68,7 @@ void EUTelTrackAnalysis::plotEfficiencyVsPosition(EUTelTrack track){
 		}
 		else streamlog_out(DEBUG2) << " state.getStateHasHit() = "<<state.getStateHasHit()<<std::endl;
 		float residual[2];
+		streamlog_out(DEBUG2) << "Looking at location = "<<state.getLocation()<< std::endl;
 		streamlog_out(DEBUG2) << "State position: " << statePosition[0]<<","<<statePosition[1]<<","<<statePosition[2]<< std::endl;
 		if(state.getStateHasHit()){
 		streamlog_out(DEBUG2) << "Hit position: " << hitPosition[0]<<","<<hitPosition[1]<<","<<hitPosition[2]<< std::endl;
@@ -197,9 +198,11 @@ void EUTelTrackAnalysis::plotPValueWithIncidenceAngles(EUTelTrack track){
 
 void EUTelTrackAnalysis::plotPValueWithPosition(EUTelTrack track){
   streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotPValueWithPosition------------------------------BEGIN"<< std::endl;
+  streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotPValueWithPosition------------------------------BEGIN"<< std::endl;
 	float pValue = calculatePValueForChi2(track);
-	std::vector<EUTelState> states = track.getStates();
+	std::vector<EUTelState> states = track.getStates(); streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotPValueWithPosition------------------------------have states"<< std::endl;
 	for(size_t i=0; i<states.size();++i){
+	  streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotPValueWithPosition------------------------------inside loop i="<<i<< std::endl;
 		EUTelState state  = states.at(i);
 		state.print();
 
@@ -216,9 +219,11 @@ void EUTelTrackAnalysis::plotPValueWithPosition(EUTelTrack track){
 	}
   streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotPValueWithPosition------------------------------END"<< std::endl;
 }
-float EUTelTrackAnalysis::calculatePValueForChi2(EUTelTrack track){
-    boost::math::chi_squared mydist(track.getNdf());
-    float pValue = 1 - boost::math::cdf(mydist,track.getChi2());
+float EUTelTrackAnalysis::calculatePValueForChi2(EUTelTrack track){std::cout<<"pigeon"<<std::endl;
+  std::cout<<"pigeon = "<<track.getNdf()<<std::endl;
+  if(track.getNdf()==0) return 1;
+  boost::math::chi_squared mydist(track.getNdf());std::cout<<"pigeon2"<<std::endl;
+    float pValue = 1 - boost::math::cdf(mydist,track.getChi2());std::cout<<"pigeon3"<<std::endl;
     return pValue;
 }
 
