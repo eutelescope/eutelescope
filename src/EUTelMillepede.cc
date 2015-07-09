@@ -31,12 +31,12 @@ void EUTelMillepede::FillMilleParametersLabels() {
     size_t noOfSensors = sensorIDsVec.size(); 
 
     for( IntVec::const_iterator itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {//sensor 0 to 5 will have numbers 1 to 6 for this x shift
-        _xShiftsMap.insert( make_pair(*itr, currentLabel) );
-        _yShiftsMap.insert( make_pair(*itr, noOfSensors+currentLabel) );
-        _zShiftsMap.insert( make_pair(*itr, 2*noOfSensors+currentLabel) );
-        _xRotationsMap.insert( make_pair(*itr, 3*noOfSensors+currentLabel) );
-        _yRotationsMap.insert( make_pair(*itr, 4*noOfSensors+currentLabel) );
-        _zRotationsMap.insert( make_pair(*itr, 5*noOfSensors+currentLabel) );
+        _xShiftsMap.insert( make_pair(*itr, (*itr)*10 + 1) );
+        _yShiftsMap.insert( make_pair(*itr, (*itr)*10 + 2) );
+        _zShiftsMap.insert( make_pair(*itr, (*itr)*10 + 3) );
+        _xRotationsMap.insert( make_pair(*itr, (*itr)*10 + 4) );
+        _yRotationsMap.insert( make_pair(*itr, (*itr)*10 + 5) );
+        _zRotationsMap.insert( make_pair(*itr, (*itr)*10 + 6) );
 	currentLabel++;
     }
 }
