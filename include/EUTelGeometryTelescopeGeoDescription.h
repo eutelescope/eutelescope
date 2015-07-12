@@ -437,6 +437,8 @@ private:
 	/** housing for the above two */    
 	void readGear();
 
+	static bool sortIDbyZ(int i, int j);
+
 	void translateSiPlane2TGeo(TGeoVolume*,int );
 };
         

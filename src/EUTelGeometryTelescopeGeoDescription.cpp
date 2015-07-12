@@ -42,6 +42,8 @@ using namespace geo;
 
 unsigned EUTelGeometryTelescopeGeoDescription::_counter = 0;
 
+bool EUTelGeometryTelescopeGeoDescription::sortIDbyZ(int i, int j){ return gGeometry().siPlaneZPosition(i) < gGeometry().siPlaneZPosition(j); }
+
 /**TODO: Replace me: NOP*/
 EUTelGeometryTelescopeGeoDescription& EUTelGeometryTelescopeGeoDescription::getInstance( gear::GearMgr* _g )
 {
@@ -277,6 +279,7 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout()
 		_sensorIDtoZOrderMap.insert(std::make_pair(sensorID, sensorsToTheLeft));
 	}
 	_nPlanes = _siPlanesParameters->getSiPlanesNumber();
+	std::sort(_sensorIDVec.begin(), _sensorIDVec.end(), this->sortIDbyZ );
 }
 
 void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout()
@@ -350,6 +353,7 @@ void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout()
 		}
 	}
 
+	std::sort(_sensorIDVec.begin(), _sensorIDVec.end(), this->sortIDbyZ);
 	_nPlanes =  _sensorIDVec.size(); 
 
 	for(size_t i=0; i< _siPlaneZPosition.size(); i++)
@@ -821,7 +825,6 @@ void EUTelGeometryTelescopeGeoDescription::master2LocalVec( int sensorID, const 
     
     _geoManager->cd( _planePath[sensorID].c_str() );
     _geoManager->GetCurrentNode()->MasterToLocalVect( globalVec, localVec );
-
 }
 
 /**
