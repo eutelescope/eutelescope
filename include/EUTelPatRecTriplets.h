@@ -1,9 +1,12 @@
-//***************************************************
-//                  EUTelPatRecTriplets            //
-//This class create tracks using triplets formed   //
-//on the telescope planes. DUT hits are then added //
-//using the predicted track from the mimosas       //                                       
-//***********************************************  //
+/**  EUTelPaRecTriplet
+ *  This class performs pattern recognition in two ways. First triplets are formed from the full telescope system and then two hits on each track are used to propagate to the    *  DUT plane. Which two hit on the track can be selected in the steering file.  
+ *  This way will have a very low fake rate which could hurt your statistics. 
+ *
+ *  Therefore a less stringent pattern recognition can be used which two planes' hits are searched. Tracks are parameterised and if there are enough hit then this is taken as a  *  final track. This is a simple straight line fit for non magnetic field situations. 
+ *
+ *  States are create on planes if included in fit. DUT hits are excluded if outside some cut range. 
+ *  contact:alexander.morton975@gmail.com 
+ */
 
 #ifndef EUTelPatRecTriplets_H
 #define	EUTelPatRecTriplets_H
@@ -27,7 +30,7 @@
 #include "EUTelGeometryTelescopeGeoDescription.h"
 #include "EUTelTrack.h"
 #include "EUTelState.h"
-
+#include "EUTelNav.h"
 //LCIO
 #include "lcio.h"
 #include "IMPL/TrackerHitImpl.h"
@@ -41,12 +44,15 @@
 namespace eutelescope {
 
 	class EUTelPatRecTriplets {
-
+    ///Doublet. This is a relation between the two outer planes of each arm of the telescope. 
     struct doublets {
         std::vector<float> pos;
         std::vector<double> slope;
         std::vector<double> diff;
+        std::vector<EUTelHit> hits;
+
     }; 
+    ///Triplet. This is the relationship between three hits on each arm. 
     struct triplets {
         unsigned int cenPlane;
         unsigned int matches;
@@ -55,7 +61,7 @@ namespace eutelescope {
         std::vector<double> pos;
         std::vector<double> slope;
         std::vector<double> diff;
-        std::vector<EUTelState> states;
+        std::vector<EUTelHit> hits
     }; 
 
 	private:
@@ -63,37 +69,87 @@ namespace eutelescope {
 	public:
 		EUTelPatRecTriplets();
 		~EUTelPatRecTriplets();
+        /// Create vector internally with ID and hits vector. 
+        ///  
+        /**
+         * \param [in] allHitsVec a simple vector of hits 
+         */
 
-        //doublet distance cut
-        std::vector<float> _doubletDistCut;
-        std::vector<float> _doubletCenDistCut;
-        std::vector<float> _tripletConnectDistCut;
+		void setHitsVec(EVENT::TrackerHitVec& allHitsVec){
+			_allHitsVec = allHitsVec;
+		}
+        /// Create vector of triplets from hits passed to fitter. 
+        /// Hits are linked by removing the difference in position relative to curvature for doublet and triplet creation.
+        /// This is done assuming the particle begins to deflect out of the detector system. This initial start of the magnetic field is set with initial distance
+        /// in geometry. This is done in EUTelProcessorPatRecTriplets as an example. 
+        /// Cuts are performed on the distance between hits on planes. See GBL examples for more information. 
+        /// 
+        ///  
+        /**
+         * \return a vector of triplets which passed the cuts.
+         */
 
         std::vector<EUTelPatRecTriplets::triplets> getTriplets();
-        std::vector<EUTelTrack> getTracks( );
+        /// The triplets on each plane are passed. 
+        /// If they pass a extraplolated postion/slope comparison then form a track. 
+        /// If there are more than 1 match for a triplet remove triplet.  
+        /// No curvature information is used at this here. This was all input in the creation of the triplets. 
+        ///  
+        /**
+         * \return a vector of tracks. These tracks are ready to use for GBL fitting
+         */
+        std::map<int,std::vector<EUTelHit> >  getTrackHitsFromTriplets(std::vector<EUTelPatRecTriplets::triplets>&);
+
+        std::vector<EUTelTrack> getTracks();
+        ///Calculates the initial curvature fo the tracks. This is then passed to navigation.
         std::vector<double>  getCurvXY();
+        ///cZxB=>This is used in the calculation of curvature.
+        /// This is also needed for the determination of the update to the q/p parameter. All of which is dealt with in navigation (EUTelNav)
         TVector3  getBFac();
+        /// 
+        /// Will return hits in the correct z order. 
+        ///  
+        /**
+         * \param [in] hits not the correct in Z
+         * \return hits The correct order of hits returned. 
+         */
+
+        std::vector<EUTelHit> getCorrHitOrder(std::vector<EUTelHit> hits );
+
         std::vector<EUTelHit> getDUTHitsOrder(EUTelTrack track, std::vector<EUTelHit> dutHit );
 
+        ///  This function will take a vector with the planes 0,2,3,5 included as minimum. 
+        /// These four hits are then used to determine correction to curvature and parameterisation of the track.
+        /**
+         * \param [in] hits vector of 4 hits o track.
+         * \return track EUTelTreack object
+         */
 
-        EUTelTrack getTrackDUTHit(std::vector<EUTelTrack>::iterator itTrack, EUTelState stateDUT );
-        EUTelTrack getTrack(std::vector<EUTelHit> hits);
-        EUTelTrack getTrack(std::vector<EUTelHit> hits, std::vector<double> offset, std::vector<double> trackSlope,std::vector<double> curvCorr );
+        EUTelTrack getTrackFourHits(std::vector<EUTelHit> hits);
+        ///  The function needs no minimum of hits. It will create a track from the input and add hits and states are required by excluded planes. 
+        /**
+         * \param [in] hits any number of hits.
+         * \param [in] offset this is the (x,y,z) of first hit and z of last. 
+         * \param [in] trackSlope slope at centre point of offset.
+         * \param [in] curvCorr This is the co
+         */
+
+        EUTelTrack getTrack(std::vector<EUTelHit> hits, std::vector<double> offset, std::vector<double> trackSlope,double curvCorr );
         EUTelTrack getTrack(triplets tripLeft,triplets tripRight);
-        EUTelTrack getTrack(triplets tripLeft,triplets tripRight,EUTelState stateDUT );
         void getTrackAvePara(EUTelHit& firstHit, EUTelHit& endHit, std::vector<double>& offset, std::vector<double>& trackSlope);
-        triplets getTriplet(EUTelState & left, EUTelState & cen,EUTelState & right, doublets& doublet );
-        std::vector<double> getCorr(EUTelHit & hitArmOne1, EUTelHit & hitArmOne2, EUTelHit & hitArmTwo1, EUTelHit & hitArmTwo2);
+        bool getTriplet(doublets&, EUTelHit &, triplets&  );
+        std::vector<float>  getTripPosAtZ(triplets trip, float posZ );
+        std::vector<float>  getDoubPosAtZ(doublets doub, float posZ);
+        float getDistLocal(int location, std::vector<float> pos, TVector3 hitPosGlo);
+        bool getDoubHitOnTraj(const doublets doub, const std::vector<unsigned int> & sen,std::vector<EUTelHit>& newHits   );
+
 
         void setPlaneDimensionsVec(EVENT::IntVec& planeDimensions);
         void setPlaneExclude(IntVec& planeIDs);  
 
-
-
 		inline int getEventNumber()	const {
 			return _eventNumber;
 		}
-
 
 		inline double getBeamMomentum() const {
 			return _beamE;
@@ -105,14 +161,8 @@ namespace eutelescope {
 		inline int getNumberDoublets(){
 			return _numberDoublets;
 		}
-        std::vector<float>  getTripPosAtZ(triplets trip, float posZ );
-
 		//SETTERS
 		void setHitsVecPerPlane();
-
-		void setHitsVec(EVENT::TrackerHitVec& allHitsVec){
-			_allHitsVec = allHitsVec;
-		}
 
 		void setEventNumber(int eventNumber){
 			_eventNumber = eventNumber;
@@ -145,18 +195,14 @@ namespace eutelescope {
 		}
         void setArcLengths(EUTelTrack & track);
 
-
-		//COMPUTE
-		TVector3 computeInitialMomentumGlobal();
 		//TEST
 		void testUserInput();
 //		void testTrackCandidates();
 		
 		//OTHER
 		void testHitsVecPerPlane();
-        std::vector<EUTelTrack>  findTrackFromTriplets(std::vector<EUTelPatRecTriplets::triplets>&);
 		void findTracksWithEnoughHits();
-	    doublets getDoublet( double hitLeftPos[3], double hitRightPos[3],double curvX,double curvY );
+	    bool getDoublet( EUTelHit&, EUTelHit&,doublets& );
 		void testTrackQuality( std::vector<EUTelTrack>&);
 		//VARIABLES
 		int _eventNumber;
@@ -182,6 +228,14 @@ namespace eutelescope {
 		unsigned int _numberDoublets;
 		void printHits();
 
+
+        ///Member variables. public for now.
+        std::vector<float> _doubletDistCut;
+        std::vector<float> _doubletCenDistCut;
+        std::vector<float> _tripletConnectDistCut;
+        std::vector<float> _tripletSlopeCuts;
+
+        std::vector<int> _senNotExc;
 private:
 
 
@@ -228,7 +282,7 @@ private:
 
 		
 		/** Find hit closest to the track */
-		std::map<int ,EVENT::TrackerHitVec> _mapHitsVecPerPlane;
+		std::map<int ,std::vector<EUTelHit>> _mapHitsVecPerPlane;
 	protected:
 		EVENT::TrackerHitVec _allHitsVec;//This is all the hits for a single event. 
 private:       
@@ -243,8 +297,6 @@ private:
 
 		/** Maximum number of missing on a track candidate */
 		int _allowedMissingHits;
-
-        std::vector<float> _tripletSlopeCuts;
 
 		/** Maximum number of track candidates to be stored */
 		int _maxTrackCandidates;
