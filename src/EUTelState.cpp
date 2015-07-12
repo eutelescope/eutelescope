@@ -320,49 +320,6 @@ void EUTelState::setPositionLocal(double position[]){
     _position[1] = pos[1];
     _position[2] = pos[2];
 }
-
-//find
-bool EUTelState::findIntersectionWithCertainID(int nextSensorID, float intersectionPoint[], TVector3& momentumAtIntersection, float& arcLength, int& newNextPlaneID )
-{
-	TVector3 pVec = getDirGlobal();
-
-	//TODO: better exception
-	if(pVec.Mag() == 0)
-	{
-		throw(std::string("The momentum was set to zero")); 
-	}
-
-	double posLocal[] =  {getPosition()[0],getPosition()[1],getPosition()[2] };
-	double temp[] = {0.,0.,0.};
-
-	//IMPORTANT:For strip sensors this will make the hit strip look like a pixel at (Xstriplocal,somevalue,somevalue).
-	geo::gGeometry().local2Master(getLocation() , posLocal, temp);
-    int charge = -1;
-	float posGlobal[] = { static_cast<float>(temp[0]), static_cast<float>(temp[1]), static_cast<float>(temp[2]) };
-	return  EUTelNav::findIntersectionWithCertainID(	posGlobal[0], posGlobal[1], posGlobal[2], 
-								pVec[0], pVec[1], pVec[2], charge,
-								nextSensorID, intersectionPoint, 
-								momentumAtIntersection, arcLength, newNextPlaneID); 
-}
-///THIS WILL RETURN THE TOTAL RADIATION LENGTH OF THE TELESCOPE SYSTEM STARTING AT THE STATE AND MOVING FORWARD. 
-///WE ALSO GET THE FRACTION OF RADIATION LENGTH THAT EACH PLANE AND VOLUME OF AIR SHOULD GET. 
-///THIS IS ASSOCIATED SO THE AIR INFRONT OF A SENSOR IS ASSOCIATED WITH IT.
-///EXCLUDED PLANES ARE REDUCED TO MORE RADIATION LENGTH IN FRONT OF A NON EXCLUDED PLANE.
-float EUTelState::computeRadLengthsToEnd(const std::map<int, int> & incPla,  std::map<const int,double> & mapSensor, std::map<const int ,double> & mapAir){
-    streamlog_out(DEBUG3)<<"compute radiation..."<<std::endl;
-	TVector3 gPos =  getPositionGlobal();
-	///TO DO: At the moment we just use a straight through the sensor in all enviroments. The code is designed to extend this to any straight line but we see some addition of extra radiation length beyond what is expect. This will have to be looked into but not a huge issue at the moment.
-	//NOTE THE Z VALUE FOR THESE ARE NOT USED IN calculateTotalRadiationLengthAndWeights
-	const double start[] = {gPos[0],gPos[1],-0.025+gPos[2]};
-	const double end[]   = {gPos[0],gPos[1],gPos[2]+0.025};//Must make sure we add all silicon.
-	///NOW WE CALCULATE THE RADIATION LENGTH FOR THE FULL FLIGHT AND THEN SPLIT THESE INTO LINEAR COMPONENTS FOR SCATTERING ESTIMATION. 
-	///We will return the radiation lengths associate with the planes and air. Note excluded planes volume should be added to the air in front of non excluded planes. 
-    streamlog_out(DEBUG3)<<"Use TGeo now!"<<std::endl;
-	float rad =	geo::gGeometry().calculateTotalRadiationLengthAndWeights(incPla, start,end,  mapSensor, mapAir);
-	return rad;
-}
-
-
 //print
 void EUTelState::print(){
 	streamlog_out(DEBUG1)<< std::scientific << "STATE VECTOR:" << std::endl;

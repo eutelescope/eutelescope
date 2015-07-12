@@ -905,20 +905,7 @@ int EUTelGeometryTelescopeGeoDescription::getSensorID( double const globalPos[] 
     return sensorID;
 }
 
-/**
- * Calculate effective radiation length traversed by particle traveling between two points
- * along straight line.
- * 
- * Calculation is done according to the eq. (27.23)
- * @see http://pdg.lbl.gov/2006/reviews/passagerpp.pdf
- * 
- * @param globalPosStart starting point in the global coordinate system
- * @param globalPosFinish ending point in the global coordinate system
- * 
- * @return radiation length in units of X0
- */
-
-float EUTelGeometryTelescopeGeoDescription::findRad( const std::map<int,int>& sensorIDToZOrderWithoutExcludedPlanes, const double globalPosStart[], const double globalPosFinish[], std::map< const int, double> &sensors, 	std::map< const int, double> &air ){
+float EUTelGeometryTelescopeGeoDescription::findRad(const double globalPosStart[], const double globalPosFinish[], std::map< const int, double> &sensors, 	std::map< const int, double> &air ){
     streamlog_out(DEBUG5) << "/////////////////////////////////////////////////////////////////////////////////////////////////// " << std::endl;
     streamlog_out(DEBUG5) << "/////////////////////////////////////////////////////////////////////////////////////////////////// " << std::endl;
     streamlog_out(DEBUG5) << "              CALCULATING THE TOTAL RADIATION LENGTH BETWEEN TWO POINTS.                            " << std::endl;
@@ -943,8 +930,8 @@ float EUTelGeometryTelescopeGeoDescription::findRad( const std::map<int,int>& se
     TGeoNode *nextnode = gGeoManager->GetCurrentNode( );
     while ( nextnode ) {
         int sensorID = getSensorIDFromManager();
-        //If not in the first plane then look forward.
-        if(sensorID == sensorIDToZOrderWithoutExcludedPlanes.at(0) or foundFirstPlane ){ //We want to make sure to add radiation length from first plane to last plane only;
+        //If not in plane then we do not start. 
+        if(sensorID != -999 or foundFirstPlane ){ //We want to make sure to add radiation length from first plane to last plane only;
             foundFirstPlane = true;
         }else{
             //nextnode is the next found and we can get the step using GetStep. stepLength is the max distance to travel before we find another node. 
@@ -981,10 +968,15 @@ float EUTelGeometryTelescopeGeoDescription::findRad( const std::map<int,int>& se
             streamlog_out(DEBUG5) << "NEW BLOCK:SensorID: " << sensorID   <<" Block width: " << snext << " Radiation total/per unit length: " << rad<<"/"<< 1.0/lastrad << " Block end position: " << blockEnd  << std::endl;
             streamlog_out(DEBUG5) << "DECISION: Where should block be placed?"  << std::endl;
 
-            //Now we have the block. We place it in the planes or in the air if excluded.
-            //Work Flow: Check we are at end. If not then set radiation length to sensor if included.Else attach the radiation length last one included and found. 
-            if(sensorID != sensorIDToZOrderWithoutExcludedPlanes.at( sensorIDToZOrderWithoutExcludedPlanes.size()-1 )){
-                if(sensorIDToZOrderWithoutExcludedPlanes.find(sensorID) !=  sensorIDToZOrderWithoutExcludedPlanes.end()){
+            ///Now we have the block. We place it in the planes or in the air. Move through the full system. 
+            ///Work Flow: 1)Check we are at end.  
+            /// =>If the end attack the radiation length to the last sensor.
+            /// else
+            /// 2) check if inside sensor
+            /// =>If we are then attach this to the sensor.
+            ///else attach this radiation length to the link of the radiation length after the last sensor intersected.
+            if(sensorID !=  *(sensorIDsVec().rbegin()) and foundFirstPlane  ){
+                if(std::find(sensorIDsVec().begin(),  sensorIDsVec().end(), sensorID) !=  sensorIDsVec().end()){
                     sensors[sensorID] = sensors[sensorID] +  rad;
                     sensorLeftSide =sensorID;
                     air[sensorID] = 0 ;
@@ -1002,25 +994,14 @@ float EUTelGeometryTelescopeGeoDescription::findRad( const std::map<int,int>& se
     }
     return 0; //Return 0 if no nextnode to remove track 
 }
-//This will output the X/X0 of the the full detector system. This is needed to calculate the for each individual scatter the proper correction. 
-//Note we can not determine this correction for each scatterer individually since this correction would introduce a non linear term which would be unphysical. 
-float EUTelGeometryTelescopeGeoDescription::calculateTotalRadiationLengthAndWeights(const std::map<int,int>& incPla, const double start[3]  ,const double end[3],  std::map<const int,double> & mapSensor, std::map<const int ,double> & mapAir){
+float EUTelGeometryTelescopeGeoDescription::calculateTotalRadiationLengthAndWeights(const double start[3]  ,const double end[3],  std::map<const int,double> & senBlo, std::map<const int ,double> & airBlo){
 	streamlog_out(DEBUG1) << "calculateTotalRadiationLength()------------------------------BEGIN" <<std::endl;
-	std::map<const int, double> sensors; //This will store all the sensor scattering.
-	std::map<const int, double> air; //This will store the air directly infront of one plane
-	int lastPlaneID = incPla.rbegin()->second;
-//	std::cout<<"Reached here" <<std::endl;
-//	std::cout << " Here is the position: " <<_planeSetup[lastPlaneID].zPos  <<std::endl; 
-	const double endUpdate[] = {end[0],end[1],_planeSetup[lastPlaneID].zPos +0.025};//Must make sure we add all silicon.
-	//THIS WILL RETURN THE TOTAL RADIATION LENGTH FOUND AND THE FRACTION FOR AIR AND PLANES.
-	//This will be for non excluded planes. This is sorted in mapWeightsToSensor(...)
-	float perRad =	findRad(incPla, start,endUpdate, sensors, air ); 
-	//NOW WE REDUCE EXCLUDED PLANES TO DEAD MATERIAL. THIS IS ABSORBED IN THE AIR OF THE PLANES NOT EXCLUDED.
-	//First two with excluded. The last two without.
-	mapWeightsToSensor(incPla,sensors,air, mapSensor,mapAir);
-	perRad = perRad +	addKapton(incPla ,mapSensor);
+    ///Percentage radiation length returned.
+	float perRad =	findRad(start,end, senBlo, airBlo ); 
+//	mapWeightsToSensor(sensors,air, mapSensor,mapAir);
+	perRad = perRad + addKapton(senBlo);
 	streamlog_out(DEBUG5) << "X/X0 (TOTAL SYSTEM) : " << perRad <<std::endl;
-	bool pass = testOutput(incPla, mapSensor, mapAir);
+	bool pass = testOutput(senBlo, airBlo);
 	if(!pass){
 		return 0;
 	}
@@ -1029,32 +1010,41 @@ float EUTelGeometryTelescopeGeoDescription::calculateTotalRadiationLengthAndWeig
 	streamlog_out(DEBUG1) << "calculateTotalRadiationLength()------------------------------END" <<std::endl;
 
 }
-//This function wil not add kapton to excluded planes.
-//TO DO: The found planes will be different from the excluded. Since sometimes we will miss a plane if there are two DUT for example. Must keep a note of these since we will be still adding radiation length incorrectly if not accounted for. These track are removed at the moment since some entries of radiation length will zero.
-double EUTelGeometryTelescopeGeoDescription::addKapton( const std::map<int, int> & incPla, std::map<const int, double> & mapSensor){
-	for(unsigned int i = 0 ; i<incPla.size() ; i++){
-		mapSensor[incPla.at(i)] = mapSensor[incPla.at(i)] + 0.0002;
+/// TO DO: Should add kapton the gear file.
+double EUTelGeometryTelescopeGeoDescription::addKapton(std::map<const int, double> & mapSensor){
+    unsigned int num=0;
+	for( std::map<int, double>::iterator itMap = mapSensor.begin();  itMap != mapSensor.end(); ++itMap  ){
+        if(itMap->first < 6){
+            itMap->second = itMap->second + 0.0002;
+            num++;
+        }
 	}
-	 2*incPla.size()*0.0001;
-
+	 2*num*0.0001;
 }
-bool EUTelGeometryTelescopeGeoDescription::testOutput( const std::map<int, int> & incPla, std::map< const int,double> & mapSensor,std::map<const int,double> & mapAir){
+bool EUTelGeometryTelescopeGeoDescription::testOutput(std::map< const int,double> & mapSensor,std::map<const int,double> & mapAir){
     bool foundRadZero = false;
+    streamlog_out(DEBUG5) << "Size of maps: (Sensor) " << mapSensor.size() << " (Air) "<< mapAir.size()  << std::endl;
 
 	//TEST ONE SENSOR ONE SCATTERER AFTER.
 	if((mapSensor.size()-1) != mapAir.size()){ //last plane does not contain any air scattering information.
+        std::cout<< "Come on2" <<std::endl; 
 		throw(std::string("We did not determine the radiation along the track correctly! Sensor != Air"));
-	}
-	//TEST SAME NUMBER AS EXCLUDED SENSORS
-    if( (incPla.size()-1) != mapAir.size()){
-		throw(std::string("We do not have a scatterer for each plane included "));
 	}
     streamlog_out(DEBUG5) << "/////////////////////////////////////////////////////////////////////////////////////////////////// " << std::endl;
     streamlog_out(DEBUG5) << "                 THIS IS WHAT WE WILL CONSTRUCT THE PLANES AND SCATTERING FROM           " << std::endl;
-    for(unsigned int i = 0 ; i<incPla.size() ; i++){
-        streamlog_out(DEBUG5) << "Sensor ID:   "<< incPla.at(i)<< " X/X0: " << mapSensor[incPla.at(i) ] <<" Mass in front of sensor X/X0: "  << mapAir[incPla.at(i) ] << std::endl;
-        if(mapSensor[incPla.at(i) ] == 0 or (mapAir[incPla.at(i) ] == 0 and i != incPla.size() -1 )){
+    for(std::map<const int, double>::iterator itSen = mapSensor.begin() ; itSen != mapSensor.end() ; itSen++){
+        streamlog_out(DEBUG5) << "Sensor ID:   "<< itSen->first<< " X/X0: " << itSen->second; 
+        if(itSen->second == 0){
             foundRadZero = true;
+        }
+        if(itSen->first == *(sensorIDsVec().rbegin()) ){
+             streamlog_out(DEBUG5)       <<" No air here." << std::endl;
+        }else{
+             streamlog_out(DEBUG5)   <<" Mass in front of sensor X/X0: "  << mapAir[itSen->first ] << std::endl;
+
+            if(mapAir[itSen->first ] == 0 and itSen->first != *(sensorIDsVec().rbegin() )){
+                foundRadZero = true;
+            }
         }
     }
     streamlog_out(DEBUG5) << "/////////////////////////////////////////////////////////////////////////////////////////////////// " << std::endl;

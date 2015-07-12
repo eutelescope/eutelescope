@@ -114,4 +114,61 @@ From here I get rotations of about 0.1 radians 5 deg with rotations ZX. Seems to
 ####################################################################################################################
 Using this gear file with the almost complete alignment you can use the track selection processor and analysis. 
 
+##########################################################################################Update to improve poor alignment.
+This run is badly aligned from the start. This means that the global parameters for millepede are ill defined. 
+This will repeat the above process but will tweak a few parameters as we go. 
+
+First run the pattern recognition WITHOUT prealignment. This is ok, the pattern recognition should work independently of prealignment. This is true for all runs!!!!! 
+The number of tracks will be small:
+TrackSearch processed 9999 events in 1 runs  av.tracks : 0.0327033 total number of tracks: 327
+Cuts used:
+#DoubletDistCut = 3 3
+#DoubletCenDistCut = 3 3
+#TripletConnectDistCut = 2 2
+#TripletSlopeCuts = 1 1
+
+FixXshifts=0  5 8 
+FixYshifts=0  5 8 
+FixZshifts=0 1 2 3 4 5 8  
+FixXrot=   0 1 2 3 4 5 8 
+FixYrot=   0 1 2 3 4 5 8 
+FixZrot=   0 1 2 3 4 5 8
+##Estimate resolution to pass to millepede.
+# If alignment is off by quite a margin this will have to me increased.
+r = 0.5
+dutX=1000000
+dutY=100000000
+
+gear file produced:alignedGear-xyShift-Rot-noDUT-tripletPreAlign-run000703.xml
+16:01:05 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The alignment parameters to update with these corrections:
+16:01:05 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  1  Type:  positionX  Value:  0.63955
+16:01:05 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  1  Type:  positionY  Value:  -0.27705
+16:01:05 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  2  Type:  positionX  Value:  1.4136
+16:01:05 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  2  Type:  positionY  Value:  -0.21265
+16:01:05 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  3  Type:  positionX  Value:  0.91626
+16:01:05 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  3  Type:  positionY  Value:  -0.14446
+16:01:05 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  4  Type:  positionX  Value:  0.81859
+16:01:05 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  4  Type:  positionY  Value:  0.97867E-01
+
+Second iteration:alignedGear-xyShift-Rot-noDUT-tripletPreAlign-v2-run000703.xml
+16:03:09 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The alignment parameters to update with these corrections:
+16:03:09 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  1  Type:  positionX  Value:  0.26305
+16:03:09 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  1  Type:  positionY  Value:  -0.18393E-02
+16:03:09 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  2  Type:  positionX  Value:  0.50477
+16:03:09 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  2  Type:  positionY  Value:  -0.92626E-02
+16:03:09 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  3  Type:  positionX  Value:  0.93499E-01
+16:03:09 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  3  Type:  positionY  Value:  -0.48789E-01
+16:03:09 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  4  Type:  positionX  Value:  -0.14686
+16:03:09 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  4  Type:  positionY  Value:  -0.70475E-02
+Second iteration:alignedGear-xyShift-Rot-noDUT-tripletPreAlign-v3-run000703.xml
+16:04:45 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The alignment parameters to update with these corrections:
+16:04:45 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  1  Type:  positionX  Value:  0.87432E-01
+16:04:45 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  1  Type:  positionY  Value:  0.13630E-01
+16:04:45 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  2  Type:  positionX  Value:  0.17076
+16:04:45 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  2  Type:  positionY  Value:  0.19380E-01
+16:04:45 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  3  Type:  positionX  Value:  -0.93444E-01
+16:04:45 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  3  Type:  positionY  Value:  -0.24523E-01
+16:04:45 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  4  Type:  positionX  Value:  -0.76024E-01
+16:04:45 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  4  Type:  positionY  Value:  -0.52655E-02
+
 

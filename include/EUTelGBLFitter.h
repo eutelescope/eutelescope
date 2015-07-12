@@ -75,11 +75,14 @@ namespace eutelescope {
             /// Will fill track with information about the sensor and air radiation length 
             /**
              * \param [in] track 
-             * \param [in] mapSensor Link between sensorID and radiation length of sensor. 
-             * \param [in] mapAir Link between sensorID and radiation length of air after sensor.
+             * \param [out] mapSensor Link between sensorID and radiation length of sensor. 
+             * \param [out] mapAir Link between sensorID and radiation length of air after sensor.
+             * \para, [out] total radiation length
              */
             void setRadLengths(EUTelTrack & track,std::map<const int,double>&  mapSensor, std::map<const int ,double>&  mapAir, double & rad );
             /// Will take a track and fill it with information about it's radiation length 
+            /// This is split between radiation length of the included planes and radiation length in front of it.
+            /// Excluded planes are included in the radiation length in front of the included sensors. 
             /**
              * \param [in] track 
              */
@@ -96,13 +99,17 @@ namespace eutelescope {
 			void setParamterIdXResolutionVec( const std::vector<float>& );
 			void setParamterIdYResolutionVec( const std::vector<float>& );
 			/// GET
-            ///The function will return a map between z position and ID using the EUTelTrack object 
+            /// The total radiation length is calculated using the start and end position of the track.  
+            /// Each block (Air or sensor) is associated to a fixed radiation length. This is needed since the total radiation length must be used to calculated the variance.
+            /// This is then split between the objects using their radiation length relative to the total.
+            //
             /**
              * \param [in] track EUTelTrack object 
-             * \return  map   map between z position and ID  
+             * \param [out]  mapSensor   map between plane ID and radiation length 
+             * \param [out] mapAir map between plane ID and air radiation length in front of sensor
              */
 
-            std::map<int,int> getMap(EUTelTrack & track);
+            float getRadMap(EUTelTrack track,  std::map<const int,double> & mapSensor, std::map<const int ,double> & mapAir);
 
             /// This is the down weighting certain hits will get due to non Gaussian errors.
 			void setMEstimatorType( const std::string& );

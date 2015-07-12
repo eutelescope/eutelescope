@@ -44,6 +44,7 @@
 namespace eutelescope {
 
 	class EUTelPatRecTriplets {
+    public: 
     ///Doublet. This is a relation between the two outer planes of each arm of the telescope. 
     struct doublets {
         std::vector<float> pos;
@@ -61,7 +62,7 @@ namespace eutelescope {
         std::vector<double> pos;
         std::vector<double> slope;
         std::vector<double> diff;
-        std::vector<EUTelHit> hits
+        std::vector<EUTelHit> hits;
     }; 
 
 	private:
@@ -140,8 +141,8 @@ namespace eutelescope {
         bool getTriplet(doublets&, EUTelHit &, triplets&  );
         std::vector<float>  getTripPosAtZ(triplets trip, float posZ );
         std::vector<float>  getDoubPosAtZ(doublets doub, float posZ);
-        float getDistLocal(int location, std::vector<float> pos, TVector3 hitPosGlo);
-        bool getDoubHitOnTraj(const doublets doub, const std::vector<unsigned int> & sen,std::vector<EUTelHit>& newHits   );
+        float getDistLocal(std::vector<EUTelHit>::iterator itHit, std::vector<float>& pos);
+        bool getDoubHitOnTraj(doublets& doub, std::vector<unsigned int> & sen,std::vector<EUTelHit>& newHits   );
 
 
         void setPlaneDimensionsVec(EVENT::IntVec& planeDimensions);
@@ -254,35 +255,9 @@ private:
 		// Helper functions
 private:
 		
-		/** Calculate track momentum from track parameters */
-		
-		/** Calculate position of the track in global 
-		 * coordinate system for given arc length starting
-		 * from track's ref. point*/
-
-		void setNewState(float position[],float momentum[],  EUTelState& newState);
-       /// This function will take tracks produced by findTrackFromTriplets and associate DUT tracks to the closest track to it.
-       /// Each track will only add one DUT hit per track. Need to do track comparison afterwards. 
-       /// Association is done in the local frame. So the track prediction is determined in the global frame and then transformed to the DUT local frame.
-       /// After this the the distance between the hit and tracks is determined (1 or 2 directions dependent on strip/pixel) with the closest track being taken as correct.
-        /**
-         * \param [in] tracks This is the tracks to look through when the you associate a DUT hit to the closest track
-         * \param [return] tracksDUT This is the full EUTelTrack with the hit attached.  
-         */
-
-        std::vector<EUTelTrack>	getDUTHit( std::vector<EUTelTrack> &);
-
-		void setRadLengths(EUTelTrack & track,std::map<const int,double>&  mapSensor, std::map<const int ,double>&  mapAir, double & rad );
-
-
-		
-		/** Calculate position of the track in global 
-		 * coordinate system for given arc length starting
-		 * from track's ref. point */
-
 		
 		/** Find hit closest to the track */
-		std::map<int ,std::vector<EUTelHit>> _mapHitsVecPerPlane;
+		std::map<int ,std::vector<EUTelHit> > _mapHitsVecPerPlane;
 	protected:
 		EVENT::TrackerHitVec _allHitsVec;//This is all the hits for a single event. 
 private:       

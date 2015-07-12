@@ -86,10 +86,6 @@ namespace eutelescope {
 
 			//initialise
 			void initialiseCurvature();
-			//find
-			bool findIntersectionWithCertainID(int nextsensorID, float intersectionPoint[], TVector3& momentumAtIntersection, float& arcLength, int& newNextPlaneID );
-			//compute
-			float computeRadLengthsToEnd( const std::map<int, int> &,std::map<const int,double> & mapSensor, std::map<const int ,double> & mapAir );
 			//print
 			void print();
             //clear

@@ -36,6 +36,11 @@
 #include <iterator>
 #include <algorithm>
 
+#include "EUTelTrack.h"
+#include "EUTelState.h"
+#include "EUTelHit.h"
+
+
 namespace eutelescope {
 
 	EUTelGBLFitter::EUTelGBLFitter() :
@@ -183,40 +188,14 @@ namespace eutelescope {
         }
         track.setTotalVariance(var);
     }
-    ///This code is similar to triplet finder setting excluded planes. However we should get excluded planes from track now. 
-    std::map<int,int> EUTelGBLFitter::getMap(EUTelTrack & track){
-        std::map<int,int> zToID;
-        unsigned  int counter=0;
-        for(std::vector<int>::const_iterator itID = geo::gGeometry().sensorIDsVec().begin(); itID != geo::gGeometry().sensorIDsVec().end(); ++itID){
-            bool excluded=false;
-            for(size_t j =0; j< track.getStates().size(); ++j){
-                if(*itID == track.getStates().at(j).getLocation()){
-                    excluded=true;
-                    break;
-                }   
-            }   
-            if(!excluded){
-             //   _senIDToZOrderWithoutExcPla[*itID] =  counter;
-                zToID[counter]= *itID;
-                counter++;
-            }   
-        }   
-        //Check if the number of excluded planes set is the same as (total-number of plane IDs inputed that should be excluded)
-        if(zToID.size() != (geo::gGeometry().sensorIDsVec().size()-track.getStates().size())){
-            throw(lcio::Exception( "The number of Planes-Excluded is not correct. This could be a problem with geometry."));
-        }else{
-            streamlog_out(DEBUG0) <<"The correct number of planes have been excluded" << std::endl;
-        }   
-        return zToID;
-    }
 
     void EUTelGBLFitter::setRad(EUTelTrack & track){
 		streamlog_out(DEBUG2)<<"setRadLength--BEGIN"<<std::endl;
         ///Set radiation lengths
         std::map<const int,double>  mapSensor;
         std::map<const int ,double>  mapAir;
-        std::map <int,int> incPla = getMap(track); 
-        double rad = track.getStates().at(0).computeRadLengthsToEnd(incPla, mapSensor, mapAir);
+        ///Use the track start and end position to determine the radiation length of each block of material on the particles trajectory. 
+        double rad = getRadMap(track, mapSensor, mapAir);
 		streamlog_out(DEBUG2)<<"Rad total: " << rad<<std::endl;
         if(rad == 0){
       //      throw(std::string("Radiation length is zero for mimosa tracks."));
@@ -225,9 +204,26 @@ namespace eutelescope {
             _numberRadLoss++;
         }
 		streamlog_out(DEBUG2)<<"Radiation lengths for this tracks geometry correcly allocated. Tracks lost:  " << _numberRadLoss <<std::endl;
-
+        /// Associate radiation length to each block on particle trajectory.
+        /// This will split the radiation length between homogeneous mediums.
+        /// Air since large in size must be describe by two thin scatterers.
+        /// The sensor itself only needs a single scatterer.
         setRadLengths(track, mapSensor, mapAir, rad);
     }
+    float EUTelGBLFitter::getRadMap(EUTelTrack track,  std::map<const int,double> & mapSensor, std::map<const int ,double> & mapAir){
+        streamlog_out(DEBUG3)<<"compute radiation..."<<std::endl;
+        TVector3 gPosS =  track.getStates().at(0).getPositionGlobal();
+        TVector3 gPosE =  track.getStates().back().getPositionGlobal();
+        /// Take the start position just outside the first volume. So we include this in the calculation of radiaiton length.
+        /// The final sensor will be included even if the last global position is inside the sensor. TGeo automatically traverses the volume. 
+        const double start[] = {gPosS[0],gPosS[1],gPosS[2]-0.05};
+        const double end[]   = {gPosE[0],gPosE[1],gPosE[2]};
+        ///NOW WE CALCULATE THE RADIATION LENGTH FOR THE FULL FLIGHT AND THEN SPLIT THESE INTO LINEAR COMPONENTS FOR SCATTERING ESTIMATION. 
+        streamlog_out(DEBUG3)<<"Use TGeo now!"<<std::endl;
+        float rad =	geo::gGeometry().calculateTotalRadiationLengthAndWeights(start,end,  mapSensor, mapAir);
+        return rad;
+    }
+
 	std::map<  unsigned int, std::vector<double> > EUTelGBLFitter::getScatPos(EUTelTrack& track) const {}
 
 	void EUTelGBLFitter::getBasicList(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList, std::map<  unsigned int, unsigned int>  & linkGL){
