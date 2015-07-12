@@ -253,13 +253,16 @@ TEST_F(eutelgeotestTest, NormalVectorTest) {
 		TVector3 normGeoFW = eugeo::gGeometry().siPlaneNormal( sensorID );
 
 		Eigen::Vector3d zVGeoFW ( normGeoFW[0], normGeoFW[1], normGeoFW[2] );
-		std::cout << "X: " << eugeo::gGeometry().siPlaneXAxis( sensorID )[0] << " Y: " << eugeo::gGeometry().siPlaneYAxis( sensorID )[1] << std::endl;
-		std::cout << sensorID << std::endl;
 		for(size_t i = 0; i < 3; i++) {
 			ASSERT_NEAR(zVGeoFW[i], zVComp[i], abs_err);	
 			ASSERT_NEAR(zVGeoFW[i], zV[i], abs_err);
 			ASSERT_NEAR(zVGeoFW.norm(), 1, abs_err);
 		}
 	}
-}	
+}
+
+TEST_F(eutelgeotestTest, vectorOrderZTest) {
+	//auto sensorIDVec = eugeo::gGeometry().sensorIDtoZOrder();
+	//std::vector<>
+}
 // }  // namespace - could surround eutelgeotestTest in a namespace

@@ -125,44 +125,44 @@
 					/>
 				</layer>
 
-
-				<!--APIX-Plane 1 - FE-I4 SCC91 -->
+				<!-- Test Plane 6: Placed after Test Plane 7, to test ordering -->
 				<layer>
-					<ladder 	ID="20"
-                                                        positionX="0.00"       positionY="0.00"        positionZ="331.00" 
-                                                        rotationZY="0.0"        rotationZX="0.0"        rotationXY="0.0" 
-                                                        sizeX="40.4"            sizeY="35.18"            thickness="0.025" 
-                                                        radLength="93.660734"
-                                        />
-                                        <sensitive      ID="20" 
-                                                        positionX="0.00"       positionY="0.00"        positionZ="331.00" 
-                                                        sizeX="40.4"             sizeY="35.18"          thickness="0.025" 
-                                                        npixelX="160"            npixelY="672"
-                                                        pitchX="0.250"          pitchY="0.05"           resolution="1.0000" 
-                                                        rotation1="-1.0"        rotation2="0.0" 
-                                                        rotation3="0.0"         rotation4="1.0" 
-                                                        radLength="93.660734"
-					/>
-				</layer>
-				<!--APIX-Plane 2 - FE-I4 SCC148 -->
-				<layer>
-					<ladder 	ID="21" 
-							positionX="00.00" 	positionY="0.00" 	positionZ="441.00" 
-							rotationZY="0.0" 	rotationZX="0.0" 	rotationXY="0.0" 
-							sizeX="20.3" 		sizeY="16.8" 		thickness="0.025" 
+					<ladder 	ID="6" 
+							positionX="0.00"	positionY="0.00"	positionZ="70.00" 
+							rotationZY="0.0"	rotationZX="0.0"	rotationXY="0.0" 
+							sizeX="20"		sizeY="10"		thickness="0.1" 
 							radLength="93.660734"
 					/>
-					<sensitive 	ID="21" 
-							positionX="00.00" 	positionY="0.00" 	positionZ="441.00" 
-							sizeX="20.3" 		sizeY="16.8" 		thickness="0.025" 
-							npixelX="80" 		npixelY="336"
-							pitchX="0.250" 		pitchY="0.05" 		resolution="1.0000" 
-                                                        rotation1="-1.0"        rotation2="0.0" 
-                                                        rotation3="0.0"         rotation4="1.0" 
+					<sensitive 	ID="6" 
+							positionX="0.00"	positionY="0.00"	positionZ="70.00" 
+							sizeX="20"		sizeY="10"		thickness="0.05"
+							npixelX="1000"		npixelY="500"
+							pitchX="0.02" 		pitchY="0.02"		resolution="0.0045"
+							rotation1="1.0"		rotation2="0.0"
+							rotation3="0.0" 	rotation4="1.0" 
 							radLength="93.660734"
 					/>
 				</layer>
 
+
+				<!-- Test Plane 7: Placed before Test Plane 6, see comment there -->
+				<layer>
+					<ladder 	ID="7" 
+							positionX="0.00"	positionY="0.00"	positionZ="60.00" 
+							rotationZY="0.0"	rotationZX="0.0"	rotationXY="0.0" 
+							sizeX="20"		sizeY="10"		thickness="0.1" 
+							radLength="93.660734"
+					/>
+					<sensitive 	ID="7" 
+							positionX="0.00"	positionY="0.00"	positionZ="60.00" 
+							sizeX="20"		sizeY="10"		thickness="0.05"
+							npixelX="1000"		npixelY="500"
+							pitchX="0.02" 		pitchY="0.02"		resolution="0.0045"
+							rotation1="1.0"		rotation2="0.0"
+							rotation3="0.0" 	rotation4="1.0" 
+							radLength="93.660734"
+					/>
+				</layer>
 			</layers>
 		</detector>
 	</detectors>

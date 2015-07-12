@@ -571,9 +571,9 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
 	// Construct object shape
 	// Shape: Box type: TGeoBBox
 	// TGeo requires half-width of box side
-	Double_t dx = siPlaneXSize( SensorId ) / 2.;
-	Double_t dy = siPlaneYSize( SensorId ) / 2.;
-	Double_t dz = siPlaneZSize( SensorId ) / 2.;
+	double dx = siPlaneXSize( SensorId ) / 2.;
+	double dy = siPlaneYSize( SensorId ) / 2.;
+	double dz = siPlaneZSize( SensorId ) / 2.;
 	TGeoShape *pBoxSensor = new TGeoBBox( "BoxSensor", dx, dy, dz );
 	// Volume: volume_Sensor1
 
@@ -646,7 +646,7 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::strin
     TGeoMedium* pMedAir = new TGeoMedium("medium_World_AIR", 3, pMatAir );
 
     // The World is the 10 x 10m x 10m box filled with air mixture
-    Double_t dx,dy,dz;
+    double dx,dy,dz;
     dx = 5000.000000; // [mm]
     dy = 5000.000000; // [mm]
     dz = 5000.000000; // [mm]
@@ -745,32 +745,32 @@ Eigen::Matrix3d EUTelGeometryTelescopeGeoDescription::getFlipMatrix(int sensorID
 	return flipMat;
 }
 
-int EUTelGeometryTelescopeGeoDescription::getSensorIDFromManager()  {
-    std::vector<std::string> split;
- 
-    int sensorID = -999;
+int EUTelGeometryTelescopeGeoDescription::getSensorIDFromManager() {
 
-  	int levelStart =	geo::gGeometry()._geoManager->GetLevel();
-//		std::cout <<"level : " << levelStart << std::endl;
-    while( _geoManager->GetLevel() > 0 ) { 
-      const char* volName = const_cast < char* > ( geo::gGeometry( )._geoManager->GetCurrentVolume( )->GetName( ) );
-      split = Utility::stringSplit( std::string( volName ), "/", false);
-      if ( split.size() > 0 && split[0].length() > 16 && (split[0].substr(0,16) == "volume_SensorID:") ) {
-         int strLength = split[0].length(); 
-         sensorID = strtol( (split[0].substr(16, strLength )).c_str(), NULL, 10 );
-         break;
-      }
-      _geoManager->CdUp();	////////////////////////////////////////THIS NEEDS TO BE FIXED. If partice falls in the pixel volume and to find sensor ID you need to be on the sensor volume
-    }
-  	int levelEnd =	geo::gGeometry()._geoManager->GetLevel();
+	std::vector<std::string> split;
+	int sensorID = -999;
 
-//		std::cout <<" node level end : " << _geoManager->GetLevel() <<std::endl;
-
-		//Must return the manager pointing to the same node before we looked for the sensorID
-		for(int i =0 ; i < (levelStart - levelEnd); i++ ){
-			geo::gGeometry()._geoManager->CdDown(0);
+	int levelStart = geo::gGeometry()._geoManager->GetLevel();
+	
+	while( _geoManager->GetLevel() > 0 ) { 
+		const char* volName = const_cast<char*> ( geo::gGeometry()._geoManager->GetCurrentVolume()->GetName() );
+		split = Utility::stringSplit( std::string(volName), "/", false);
+		if ( split.size() > 0 && split[0].length() > 16 && (split[0].substr(0,16) == "volume_SensorID:") ) {
+			int strLength = split[0].length(); 
+			sensorID = strtol( (split[0].substr(16, strLength )).c_str(), NULL, 10 );
+			break;
 		}
-//		std::cout <<" node level re : " << _geoManager->GetLevel() <<std::endl;
+		_geoManager->CdUp();	////////////////////////////////////////THIS NEEDS TO BE FIXED. If partice falls in the pixel volume and to find sensor ID you need to be on the sensor volume
+	}
+	int levelEnd =	geo::gGeometry()._geoManager->GetLevel();
+
+	//		std::cout <<" node level end : " << _geoManager->GetLevel() <<std::endl;
+
+	//Must return the manager pointing to the same node before we looked for the sensorID
+	for(int i =0 ; i < (levelStart - levelEnd); i++ ){
+		geo::gGeometry()._geoManager->CdDown(0);
+	}
+	//		std::cout <<" node level re : " << _geoManager->GetLevel() <<std::endl;
 
 	return sensorID;
 }
@@ -835,14 +835,9 @@ void EUTelGeometryTelescopeGeoDescription::master2LocalVec( int sensorID, const 
  * @return 
  */
 const TGeoHMatrix* EUTelGeometryTelescopeGeoDescription::getHMatrix( const double globalPos[] ) {
-    _geoManager->FindNode( globalPos[0], globalPos[1], globalPos[2] );    
-    const TGeoHMatrix* globalH = _geoManager->GetCurrentMatrix();
-	//	if(streamlog_out(DEBUG2)){
-  //  streamlog_out(DEBUG2) << "Transformation matrix " << std::endl;
-	//	globalH->Print();
-	//	}
-		
-    return globalH;
+	_geoManager->FindNode( globalPos[0], globalPos[1], globalPos[2] );    
+	TGeoHMatrix const * globalH = _geoManager->GetCurrentMatrix();
+	return globalH;
 }
 
 TMatrixD EUTelGeometryTelescopeGeoDescription::getRotMatrix( int sensorID ) {
@@ -981,7 +976,7 @@ float EUTelGeometryTelescopeGeoDescription::findRad( const double globalPosStart
                 double pt[3];
                 memcpy( pt, gGeoManager->GetCurrentPoint(), 3 * sizeof (double) ); //Get global position
                 const double *dir = gGeoManager->GetCurrentDirection();//Direction vector
-                for ( Int_t i = 0; i < 3; i++ ) pt[i] += delta * dir[i]; //Move the current point slightly in the direction of motion. 
+                for ( int i = 0; i < 3; i++ ) pt[i] += delta * dir[i]; //Move the current point slightly in the direction of motion. 
                 nextnode = gGeoManager->FindNode( pt[0], pt[1], pt[2] );//Move to new node where we will begin to look for more radiation length   
                 rad=lastrad*snext; //Calculate radiation length for the increased block.
                 blockEnd += snext;
@@ -1140,12 +1135,11 @@ int EUTelGeometryTelescopeGeoDescription::findNextPlane(  double* lpoint,  doubl
 	gGeoManager->InitTrack( lpoint, ldir );
 	TGeoNode *node = gGeoManager->GetCurrentNode( );
 
-	Int_t inode    = node->GetIndex();
-	Int_t i        = 0;
+	int inode    = node->GetIndex();
+	int i        = 0;
 
 	streamlog_out( DEBUG0 ) << "::findNextPlane look for next node, starting at node: " << node << " id: " << inode  << " currentSensorID: " << currentSensorID << std::endl;
 
-	//   double kStep = 1e-03;
 	while(( node = gGeoManager->FindNextBoundaryAndStep() ))
 	{
 		 inode = node->GetIndex();
@@ -1191,8 +1185,8 @@ bool EUTelGeometryTelescopeGeoDescription::findNextPlaneEntrance(  TVector3 lpoi
 	_geoManager->InitTrack( dlPoint, dlDir );
 
 	TGeoNode *node = _geoManager->GetCurrentNode( ); //Return the volume i.e 'node' that contains that point.
-	Int_t inode =  node->GetIndex();
-	Int_t stepNumber=0;
+	int inode =  node->GetIndex();
+	int stepNumber=0;
 
 	streamlog_out( DEBUG0 ) << "findNextPlaneEntrance node: " << node << " id: " << inode << std::endl;
 
@@ -1232,112 +1226,74 @@ bool EUTelGeometryTelescopeGeoDescription::findNextPlaneEntrance(  TVector3 lpoi
     return false; //If the correct sensor ID is not found by this point then we have failed to find the intersection
 }
 
-
-//This function will intake position and direction. Then using the gear file and magnetic field will output position and sensor ID in correct order of intersection. 
-//We need to introduce the idea of:
-//sensitive volume => data and state to be created
-//scatter volume => state only to be created
-//volume => This will cause scattering but no state is to be created on this volume
-//At the moment everything in gear file is assumed to be sensitive volume
-
-//std::map<int,double> EUTelGeometryTelescopeGeoDescription::UsingStateReturnAllVolumesIntersected(){}
-
 void EUTelGeometryTelescopeGeoDescription::updateSiPlanesLayout() {
- streamlog_out( MESSAGE1 ) << "EUTelGeometryTelescopeGeoDescription::updateSiPlanesLayout() --- START ---- " << std::endl;
+	gear::SiPlanesParameters* siplanesParameters = const_cast<gear::SiPlanesParameters*> (&( _gearManager->getSiPlanesParameters()));
+	gear::SiPlanesLayerLayout* siplanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*> (&(_siPlanesParameters->getSiPlanesLayerLayout()));
 
-    gear::SiPlanesParameters*    siplanesParameters = const_cast< gear::SiPlanesParameters*> (&( _gearManager->getSiPlanesParameters()));
-    gear::SiPlanesLayerLayout*  siplanesLayerLayout = const_cast< gear::SiPlanesLayerLayout*> (&(_siPlanesParameters->getSiPlanesLayerLayout()));
+	_nPlanes = siplanesLayerLayout->getNLayers(); 
 
-    // data member::
-    _nPlanes = siplanesLayerLayout->getNLayers(); 
- 
-    // create an array with the z positions of each layer
-    for(size_t iPlane = 0; iPlane < _nPlanes; iPlane++)
-    {
-        int sensorID =  _sensorIDVec.at(iPlane);
-        
-	siplanesLayerLayout->setLayerPositionX( iPlane, siPlaneXPosition(sensorID) );
-        siplanesLayerLayout->setLayerPositionY(  iPlane, siPlaneYPosition(sensorID) );
-        siplanesLayerLayout->setLayerPositionZ(  iPlane, siPlaneZPosition(sensorID) );
-        siplanesLayerLayout->setLayerRotationZY( iPlane, siPlaneXRotation(sensorID) );
-        siplanesLayerLayout->setLayerRotationZX( iPlane, siPlaneYRotation(sensorID) );
-        siplanesLayerLayout->setLayerRotationXY( iPlane, siPlaneZRotation(sensorID) );
-    }
+	// create an array with the z positions of each layer
+	for(size_t iPlane = 0; iPlane < _nPlanes; iPlane++) {
+		int sensorID =  _sensorIDVec.at(iPlane);
 
-
-    // ------- add to GearMgr ----
-    if( _gearManager != 0 )
-    {
-      _gearManager->setSiPlanesParameters( siplanesParameters ) ;
-
-    }
- streamlog_out( MESSAGE1 ) << "EUTelGeometryTelescopeGeoDescription::updateSiPlanesLayout() --- OVER ---- " << std::endl;
+		siplanesLayerLayout->setLayerPositionX( iPlane, siPlaneXPosition(sensorID) );
+		siplanesLayerLayout->setLayerPositionY(  iPlane, siPlaneYPosition(sensorID) );
+		siplanesLayerLayout->setLayerPositionZ(  iPlane, siPlaneZPosition(sensorID) );
+		siplanesLayerLayout->setLayerRotationZY( iPlane, siPlaneXRotation(sensorID) );
+		siplanesLayerLayout->setLayerRotationZX( iPlane, siPlaneYRotation(sensorID) );
+		siplanesLayerLayout->setLayerRotationXY( iPlane, siPlaneZRotation(sensorID) );
+	}
+	if( _gearManager !=  nullptr ) {
+		_gearManager->setSiPlanesParameters( siplanesParameters ) ;
+	}
 }
 
 
 void EUTelGeometryTelescopeGeoDescription::updateTrackerPlanesLayout() {
+	gear::TrackerPlanesParameters* trackerplanesParameters  = const_cast< gear::TrackerPlanesParameters*>(&( _gearManager->getTrackerPlanesParameters() ));
+	gear::TrackerPlanesLayerLayout* trackerplanesLayerLayout = const_cast< gear::TrackerPlanesLayerLayout*>(&( trackerplanesParameters->getTrackerPlanesLayerLayout() ));
 
-    streamlog_out( MESSAGE1 ) << "EUTelGeometryTelescopeGeoDescription::updateTrackerPlanesLayout() --- START ---- " << std::endl;
+	trackerplanesParameters->setLayoutID( getSiPlanesLayoutID() ) ;
 
-    gear::TrackerPlanesParameters*  trackerplanesParameters  = const_cast< gear::TrackerPlanesParameters*>  (&( _gearManager->getTrackerPlanesParameters() ));
-    gear::TrackerPlanesLayerLayout* trackerplanesLayerLayout = const_cast< gear::TrackerPlanesLayerLayout*> (&(  trackerplanesParameters->getTrackerPlanesLayerLayout() ));
-    
-    trackerplanesParameters->setLayoutID( getSiPlanesLayoutID() ) ;
- 
+	// create an array with the z positions of each layer
+	int nLayers = trackerplanesLayerLayout->getNLayers();
+	for(int iLayer = 0; iLayer < nLayers; iLayer++) {
+		gear::TrackerPlanesLayerImpl* trackerplanesLayerImpl = const_cast<gear::TrackerPlanesLayerImpl*>( trackerplanesLayerLayout->getLayer(iLayer) );
+		int nsensitive =  trackerplanesLayerImpl->getNSensitiveLayers() ;
+		gear::TrackerPlanesSensitiveLayerImplVec& vector =  trackerplanesLayerImpl->getSensitiveLayerVec();
 
+		for(int iSensLayer = 0; iSensLayer < nsensitive; iSensLayer++) {       
+			gear::TrackerPlanesSensitiveLayerImpl& sensitiveLayer = vector.at(iSensLayer);
 
-    // create an array with the z positions of each layer
-    int nLayers = trackerplanesLayerLayout->getNLayers();
-    for (int iLayer = 0; iLayer < nLayers; iLayer++) {
-        gear::TrackerPlanesLayerImpl*  trackerplanesLayerImpl = const_cast< gear::TrackerPlanesLayerImpl*>  ( trackerplanesLayerLayout->getLayer( iLayer) );
-        int nsensitive =  trackerplanesLayerImpl->getNSensitiveLayers() ;
+			for( size_t iplane = 0; iplane < _sensorIDVec.size(); iplane++ ) {
+				int sensorID =  _sensorIDVec.at(iplane);
 
-        gear::TrackerPlanesSensitiveLayerImplVec& vector =  trackerplanesLayerImpl->getSensitiveLayerVec();
-       
-        for (int iSensLayer = 0; iSensLayer < nsensitive; iSensLayer++) {       
+				if( sensitiveLayer.getID() !=  _sensorIDVec.at( iplane) ) continue;  
 
-            gear::TrackerPlanesSensitiveLayerImpl& sensitiveLayer = vector.at(iSensLayer);
- 
-            for( size_t iplane = 0; iplane < _sensorIDVec.size(); iplane++ )
-	    {
-              int sensorID =  _sensorIDVec.at(iplane);
-            
-	      if( sensitiveLayer.getID() !=  _sensorIDVec.at( iplane) ) continue;  
-              
-	      sensitiveLayer.setPositionX( siPlaneXPosition(sensorID) );
-              sensitiveLayer.setPositionY( siPlaneYPosition(sensorID) );
-              sensitiveLayer.setPositionZ( siPlaneZPosition(sensorID) );
-
-              sensitiveLayer.setRotationZY( siPlaneXRotation(sensorID) );
-              sensitiveLayer.setRotationZX( siPlaneYRotation(sensorID) );
-              sensitiveLayer.setRotationXY( siPlaneZRotation(sensorID) );
-            }
-        }
-    }
-
-    // ------- add to GearMgr ----
-    if( _gearManager != 0 )
-    {
-   	 _gearManager->setTrackerPlanesParameters( trackerplanesParameters ) ;
-    }
-    streamlog_out( MESSAGE1 ) << "EUTelGeometryTelescopeGeoDescription::updateTrackerPlanesLayout() --- OVER ---- " << std::endl;
+				sensitiveLayer.setPositionX( siPlaneXPosition(sensorID) );
+				sensitiveLayer.setPositionY( siPlaneYPosition(sensorID) );
+				sensitiveLayer.setPositionZ( siPlaneZPosition(sensorID) );
+				sensitiveLayer.setRotationZY( siPlaneXRotation(sensorID) );
+				sensitiveLayer.setRotationZX( siPlaneYRotation(sensorID) );
+				sensitiveLayer.setRotationXY( siPlaneZRotation(sensorID) );
+			}
+		}
+	}
+	if( _gearManager != nullptr ) {
+		_gearManager->setTrackerPlanesParameters( trackerplanesParameters ) ;
+	}
 }
 
-void EUTelGeometryTelescopeGeoDescription::updateGearManager()
-{
-
-	if( _siPlanesDefined )
-	{
+void EUTelGeometryTelescopeGeoDescription::updateGearManager() {
+	if( _siPlanesDefined ) {
 		updateSiPlanesLayout();
 	}
-	else if( _telPlanesDefined )
-	{
+	else if( _telPlanesDefined ) {
 		updateTrackerPlanesLayout();
 	}
 }
 
-void EUTelGeometryTelescopeGeoDescription::writeGEARFile(std::string filename)
-{
+void EUTelGeometryTelescopeGeoDescription::writeGEARFile(std::string filename) {
 	updateGearManager();
 	gear::GearXML::createXMLFile(marlin::Global::GEAR, filename);
 }
