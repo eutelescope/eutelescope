@@ -85,6 +85,16 @@ const double RADIAN = PI/180.;
 
 class EUTelGeometryTelescopeGeoDescription
 {
+	struct doCompare
+	{
+		doCompare(EUTelGeometryTelescopeGeoDescription& eutelgeo ): m_eutelgeo(eutelgeo) {}
+		EUTelGeometryTelescopeGeoDescription& m_eutelgeo;
+		bool operator()(int i,int j)
+		{
+			return(m_eutelgeo.siPlaneZPosition(i) < m_eutelgeo.siPlaneZPosition(j));
+		}
+	};
+
   private:
 	/** */
 	EUTelGeometryTelescopeGeoDescription();
