@@ -59,23 +59,6 @@ EUTelGeometryTelescopeGeoDescription& EUTelGeometryTelescopeGeoDescription::getI
 	return instance;
 }
 
-/**TODO: Replace me: NOP*/
-int EUTelGeometryTelescopeGeoDescription::sensorIDtoZOrder( int planeID ) const
-{
-	std::map<int,int>::const_iterator it = _sensorIDtoZOrderMap.find(planeID);
-	if( it != _sensorIDtoZOrderMap.end() )
-	{
-		return it->second;
-	}
-	else
-	{
-		std::stringstream ss;
-		ss << planeID;
-		std::string errMsg = "EUTelGeometryTelescopeGeoDescription::sensorIDtoZOrder: Could not find planeID: " + ss.str(); 
-		throw InvalidGeometryException(errMsg);
-	}
-}
-
 //Note  that to determine these axis we MUST use the geometry class after initialisation. By this I mean directly from the root file create.
 TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneNormal( int planeID )
 {

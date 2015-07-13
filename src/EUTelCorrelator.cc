@@ -86,7 +86,8 @@ std::string EUTelCorrelator::_hitYCorrShiftProjectionHistoName   = "HitYCorrShif
 #endif
 
 EUTelCorrelator::EUTelCorrelator () : Processor("EUTelCorrelator"), 
-_histoInfoFileName("histoinfo.xml")
+_histoInfoFileName("histoinfo.xml"),
+_sensorIDVec( geo::gGeometry().sensorIDsVec() )
 {
 
   // modify processor description
@@ -131,6 +132,9 @@ _histoInfoFileName("histoinfo.xml")
 
   registerOptionalParameter("HistogramInfoFilename", "Name of histogram info xml file", _histoInfoFileName, string("histoinfo.xml"));
 
+  for(std::vector<int>::iterator it = _sensorIDVec.begin(); it != _sensorIDVec.end(); it++) {
+	_sensorIDtoZ.insert( std::make_pair( *it, static_cast<int>(it - _sensorIDVec.begin())) );
+  }
 }
 
 
@@ -163,7 +167,7 @@ void EUTelCorrelator::init() {
  
   for ( size_t iin = 0 ; iin < geo::gGeometry().nPlanes(); iin++ ) 
   {           
-    int sensorID = geo::gGeometry().sensorIDsVec().at( iin );
+    int sensorID = _sensorIDVec.at( iin );
  
     _minX[ sensorID ] = 0;
     _minY[ sensorID ] = 0;
@@ -417,7 +421,7 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 
           if ( ( internalSensorID != getFixedPlaneID() && externalSensorID == getFixedPlaneID() )
                   ||
-                  (  geo::gGeometry().sensorIDtoZOrder(internalSensorID) == geo::gGeometry().sensorIDtoZOrder(externalSensorID) + 1 )
+                  (  _sensorIDtoZ.at(internalSensorID) == _sensorIDtoZ.at(externalSensorID) + 1 )
                   ) 
           {
 
@@ -521,11 +525,11 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
           if ( 
                   ( internalSensorID != getFixedPlaneID() && externalSensorID == getFixedPlaneID() )
                    ||
-                  (  geo::gGeometry().sensorIDtoZOrder(internalSensorID) == geo::gGeometry().sensorIDtoZOrder(externalSensorID) + 1 )
+                  (  _sensorIDtoZ.at(internalSensorID) == _sensorIDtoZ.at(externalSensorID) + 1 )
               ) 
             {
 
-            int iz = geo::gGeometry().sensorIDtoZOrder( internalSensorID ) ;
+            int iz = _sensorIDtoZ.at( internalSensorID ) ;
 
             if(
                ((etrackPointGlobal[0]-itrackPointGlobal[0] ) < _residualsXMax[iz]) && (_residualsXMin[iz] < (etrackPointGlobal[0]-itrackPointGlobal[0] ))   
@@ -593,11 +597,11 @@ void EUTelCorrelator::end() {
  
         for ( size_t exx = 0 ; exx < geo::gGeometry().nPlanes(); exx++ ) 
         {           
-            int exPlaneID = geo::gGeometry().sensorIDsVec().at( exx );
+            int exPlaneID = _sensorIDVec.at( exx );
             if( exPlaneID != getFixedPlaneID() ) continue;
             for ( size_t inn = 0 ; inn < geo::gGeometry().nPlanes(); inn++ ) 
             {
-                int inPlaneID = geo::gGeometry().sensorIDsVec().at( inn );
+                int inPlaneID = _sensorIDVec.at( inn );
                 if( inPlaneID == getFixedPlaneID() ) continue;
 
                 if( _hitXCorrShiftMatrix[ exPlaneID ][ inPlaneID ] == 0 ) continue;
@@ -767,10 +771,10 @@ void EUTelCorrelator::bookHistos() {
     string tempHistoTitle = "";
 
 
-    for ( size_t r = 0 ; r < geo::gGeometry().sensorIDsVec().size(); ++r ) 
+    for ( size_t r = 0 ; r < _sensorIDVec.size(); ++r ) 
     {
 
-      int row = geo::gGeometry().sensorIDsVec().at( r );
+      int row = _sensorIDVec.at( r );
       
       map< unsigned int , AIDA::IHistogram2D * > innerMapXCluster;
       map< unsigned int , AIDA::IHistogram2D * > innerMapYCluster;
@@ -790,14 +794,14 @@ void EUTelCorrelator::bookHistos() {
 
 
 
-      for ( size_t c = 0 ; c < geo::gGeometry().sensorIDsVec().size(); ++c ) {
+      for ( size_t c = 0 ; c < _sensorIDVec.size(); ++c ) {
  
-        int col = geo::gGeometry().sensorIDsVec().at( c );
+        int col = _sensorIDVec.at( c );
 
          if ( 
                   ( col != getFixedPlaneID() && row == getFixedPlaneID() )
                   ||
-                  (  geo::gGeometry().sensorIDtoZOrder( col ) == geo::gGeometry().sensorIDtoZOrder( row ) + 1 )
+                  (  _sensorIDtoZ.at( col ) == _sensorIDtoZ.at( row ) + 1 )
                   ) 
           {
 

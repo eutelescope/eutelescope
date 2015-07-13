@@ -315,8 +315,6 @@ class EUTelGeometryTelescopeGeoDescription
 	/** Map from sensor ID to number along Z */
 	const std::map<int, int>& sensorIDstoZOrder() const { return _sensorIDtoZOrderMap; };
 
-	int sensorIDtoZOrder( int ) const;
-
 	/** Vector of all sensor IDs */
 	const std::vector<int>& sensorIDsVec() const { return _sensorIDVec; };
 
