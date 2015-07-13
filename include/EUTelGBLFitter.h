@@ -19,7 +19,7 @@
 #include "EUTelTrack.h"
 #include "EUTelState.h"
 #include "EUTelMillepede.h"
-
+#include "EUTelRadCal.h"
 // EVENT includes
 #include <IMPL/TrackerHitImpl.h>
 #include <EVENT/LCCollection.h>
@@ -72,14 +72,6 @@ namespace eutelescope {
              */
 
 			void setScattererGBL(gbl::GblPoint& point,EUTelState & state );
-            /// Will fill track with information about the sensor and air radiation length 
-            /**
-             * \param [in] track 
-             * \param [out] mapSensor Link between sensorID and radiation length of sensor. 
-             * \param [out] mapAir Link between sensorID and radiation length of air after sensor.
-             * \para, [out] total radiation length
-             */
-            void setRadLengths(EUTelTrack & track,std::map<const int,double>&  mapSensor, std::map<const int ,double>&  mapAir, double & rad );
             /// Will take a track and fill it with information about it's radiation length 
             /// This is split between radiation length of the included planes and radiation length in front of it.
             /// Excluded planes are included in the radiation length in front of the included sensors. 
@@ -100,18 +92,6 @@ namespace eutelescope {
             /// Resolution of the points in the local frame X/Y
 			void setParamterIdXResolutionVec( const std::vector<float>& );
 			void setParamterIdYResolutionVec( const std::vector<float>& );
-			/// GET
-            /// The total radiation length is calculated using the start and end position of the track.  
-            /// Each block (Air or sensor) is associated to a fixed radiation length. This is needed since the total radiation length must be used to calculated the variance.
-            /// This is then split between the objects using their radiation length relative to the total.
-            //
-            /**
-             * \param [in] track EUTelTrack object 
-             * \param [out]  mapSensor   map between plane ID and radiation length 
-             * \param [out] mapAir map between plane ID and air radiation length in front of sensor
-             */
-
-            float getRadMap(EUTelTrack track,  std::map<const int,double> & mapSensor, std::map<const int ,double> & mapAir);
             std::vector<double> getWeigMeanVar(double &, double &);
 
 

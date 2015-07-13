@@ -345,34 +345,6 @@ class EUTelGeometryTelescopeGeoDescription
 	void initializeTGeoDescription(std::string tgeofilename);
 
 	void initializeTGeoDescription( std::string& geomName, bool dumpRoot );
-    /// Find Radiation length with TGeo Volumes 
-    /// This will deterimine the radiation length between the start and end point. 
-    /// The radiation length of the track must be calculated in full and the variance determined by the Highland formula
-    /// The variance is then split between each object (plane/air) using each objects radition length relative to the total
-    /// The next step is translating the variance for each object to scattering points (See GBL scattering method). 
-    ///
-    /// Planes side by side will produce a map which can only be applied to certain tracks. 
-    /// This information is best associated to a track. Since each track has its own scattering variance.  
-    ///
-    /// To construct the radiation length maps the calcuation only begins when the first detector plane is impacted on the trajectory.
-    /// So the global hit position passed to this function should be taken just before the first plane to include all of it's radiation length. 
-    /// The final hit position will include all the radiation length bu default. Since TGeo will propagate through the final volume found.
-    /// Note the the start and end position only defines the direction. The full detector system is propagated and returned inside the map.
-    /// How this is distributed throughout the system is done in the GBL fitter.
-    ///
-    /// This function will calculate the radiation length for the planes and all the material in front of it
-    /// Calculation is done according to the eq. (27.23)
-    /// pdg.lbl.gov/2006/reviews/passagerpp.pdf
-
-    /**
-     * \param [in] globalPosStart Begin trajectory here. 
-     * \param [out] globalPosFinish This is the end of the trajectory 
-     * \param [out] sensors links between ID->Rad length 
-     * \param [out] air links material after certain sensor ID->Rad length after. (Do not access last sensor of air! Does not exist)
-     * \return perRad Percentage radiation length is returned for the full detector system.
-     */
-
-    float findRad(const double globalPosStart[], const double globalPosFinish[], std::map< const int, double> &sensors, 	std::map< const int, double> &air );
 	int getSensorID(float const globalPos[] ) const;
 	int getSensorID(double const globalPos[] ) const;
 
@@ -393,29 +365,6 @@ class EUTelGeometryTelescopeGeoDescription
 						TVector3& outputMomentum, float& arcLength, int& newNextPlaneID );
 
 	TVector3 getXYZMomentumfromArcLength(TVector3 momentum, TVector3 globalPositionStart, float charge, float  arcLength );
-	bool testOutput(std::map<const int,double> & mapSensor, std::map<const int, double> & mapAir);
-    /// Find Radiation length with TGeo Volumes 
-    /// This will deterimine the radiation length between the start and end point. 
-    /// The radiation length of the track must be calculated in full and the variance determined by the Highland formula
-    /// The variance is then split between each object (plane/air) using each objects radition length relative to the total
-    /// The next step is translating the variance for each object to scattering points (See GBL scattering method). 
-    ///
-    /// This function will calculate the radiation length for the planes and all the material in front of it
-    /// Calculation is done according to the eq. (27.23)
-    /// pdg.lbl.gov/2006/reviews/passagerpp.pdf
-
-    /**
-     * \param [in] globalPosStart Begin trajectory here. 
-     * \param [out] globalPosFinish This is the end of the trajectory 
-     * \param [out] sensors links between ID->Rad length 
-     * \para, [out] air links material after certain sensor ID->Rad length after. (Do not access last sensor of air! Does not exist)
-     */
-
-	float calculateTotalRadiationLengthAndWeights(const double startD[3],const double endD[3], std::map<const int,double>&, std::map<const int,double> & );
-	void mapWeightsToSensor( const std::map<int, int> & , std::map<const int,double> sensor,std::map<const int,double> air,  std::map< const  int, double > & mapSen,std::map< const  int, double > & mapAir  );
-	double addKapton(std::map<const int, double> & mapSensor);
-
-
 	float getInitialDisplacementToFirstPlane() const { return _initialDisplacement; };
 
 	const TGeoHMatrix* getHMatrix( const double globalPos[] );

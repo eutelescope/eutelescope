@@ -40,6 +40,15 @@ std::vector<EUTelState>& EUTelTrack::getStates(){
 std::vector<EUTelState> EUTelTrack::getStatesCopy() const {
 	return _states;
 }
+std::vector<int>  EUTelTrack::getPlaIDs() const {
+    std::vector<int> planes;
+    for(std::vector<EUTelState>::iterator itSt = this->getStatesCopy().begin(); itSt != this->getStatesCopy().end(); ++itSt){
+        planes.push_back(itSt->getLocation());
+    
+    }
+    return planes;
+}
+
 
 unsigned int EUTelTrack::getNumberOfHitsOnTrack() const {
 //	if(_states.size() == 0){

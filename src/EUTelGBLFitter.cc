@@ -177,50 +177,7 @@ namespace eutelescope {
 			streamlog_out( WARNING1 ) << "No M-estimator downweighting will be used" << std::endl;
 		}
 	}
-    void EUTelGBLFitter::setRadLengths(EUTelTrack & track,	std::map<const int,double>&  mapSensor, std::map<const int ,double>&  mapAir, double & rad ){
-        //THE FINAL WEIGHT WE HAVE WILL BE A FRACTION PERCENTAGE OF THE TOTAL RADIATION LENGTH
-        std::vector<EUTelState>& states = track.getStates();
-        const double var  = pow( Utility::getThetaRMSHighland(track.getBeamEnergy(), rad) , 2);
-        streamlog_out(DEBUG5)<< std::scientific << "This is the total variance of the track and energy: " << var << track.getBeamEnergy() <<std::endl; 
-        for(size_t i =0; i < track.getStates().size();++i){ 
-            streamlog_out(DEBUG0)<< std::scientific << " Values placed in variance using Highland formula corrected. (SENSOR) : " << (mapSensor[states.at(i).getLocation()]/rad)*var << "  (AIR)  " << (mapAir[states.at(i).getLocation()]/rad)*var <<std::endl;
-            states.at(i).setRadFrac((mapSensor[states.at(i).getLocation()]/rad)*var,(mapAir[states.at(i).getLocation()]/rad)*var);//We input the fraction percentage.
-        }
-        track.setTotalVariance(var);
-    }
 
-    double EUTelGBLFitter::getRad(EUTelTrack & track, std::map<const int,double>& mapSensor, std::map<const int,double>& mapAir){
-		streamlog_out(DEBUG2)<<"setRadLength--BEGIN"<<std::endl;
-        ///Use the track start and end position to determine the radiation length of each block of material on the particles trajectory. 
-        double rad = getRadMap(track, mapSensor, mapAir);
-		streamlog_out(DEBUG2)<<"Rad total: " << rad<<std::endl;
-        if(rad == 0){
-      //      throw(std::string("Radiation length is zero for mimosa tracks."));
-              throw(std::string(""));
-
-            _numberRadLoss++;
-        }
-		streamlog_out(DEBUG2)<<"Radiation lengths for this tracks geometry correcly allocated. Tracks lost:  " << _numberRadLoss <<std::endl;
-        /// Associate radiation length to each block on particle trajectory.
-        /// This will split the radiation length between homogeneous mediums.
-        /// Air since large in size must be describe by two thin scatterers.
-        /// The sensor itself only needs a single scatterer.
-        setRadLengths(track, mapSensor, mapAir, rad);
-        return rad;
-    }
-    float EUTelGBLFitter::getRadMap(EUTelTrack track,  std::map<const int,double> & mapSensor, std::map<const int ,double> & mapAir){
-        streamlog_out(DEBUG3)<<"compute radiation..."<<std::endl;
-        TVector3 gPosS =  track.getStates().at(0).getPositionGlobal();
-        TVector3 gPosE =  track.getStates().back().getPositionGlobal();
-        /// Take the start position just outside the first volume. So we include this in the calculation of radiaiton length.
-        /// The final sensor will be included even if the last global position is inside the sensor. TGeo automatically traverses the volume. 
-        const double start[] = {gPosS[0],gPosS[1],gPosS[2]-0.05};
-        const double end[]   = {gPosE[0],gPosE[1],gPosE[2]};
-        ///NOW WE CALCULATE THE RADIATION LENGTH FOR THE FULL FLIGHT AND THEN SPLIT THESE INTO LINEAR COMPONENTS FOR SCATTERING ESTIMATION. 
-        streamlog_out(DEBUG3)<<"Use TGeo now!"<<std::endl;
-        float rad =	geo::gGeometry().calculateTotalRadiationLengthAndWeights(start,end,  mapSensor, mapAir);
-        return rad;
-    }
 
 	std::map<  unsigned int, std::vector<double> > EUTelGBLFitter::getScatPos(EUTelTrack& track) const {}
 
@@ -273,16 +230,11 @@ namespace eutelescope {
             setScattererGBL(pointList.at(label-1),state ); 
         }
     }
-
     ///This is the work horse of the GBL fitter. It creates GBL points from EUTelTracks and returns the relations between the two.
 	void EUTelGBLFitter::getGBLPointsFromTrack(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList, std::map<  unsigned int,unsigned int > & linkGL,std::map< unsigned int, unsigned int > & linkMeas ){
 		streamlog_out(DEBUG0)<<"EUTelGBLFitter::getGBLPointsFromTrack-------------------------------------BEGIN"<<std::endl;
-        ///get radiation length of the track. This is added to the track internally.
-        std::map<const int,double>  mapSensor;
-        std::map<const int ,double>  mapAir;
-        double rad = getRad(track,mapSensor,mapAir);
-        /// At the moment this does not pass anything
-//        std::map<  unsigned int, std::vector<double> > scatPos = getScatPos(track);
+        EUTelRadCal radCal;
+        radCal.setRad(track);
         /// This is the minimum needed to create a GBL trajectory. It basically only relates each GBL point to each other at this stage.
 		streamlog_out(DEBUG0)<<"Create basic traj. "<<std::endl;
         getBasicList(track,pointList,linkGL);
