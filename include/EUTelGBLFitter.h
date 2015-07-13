@@ -87,7 +87,9 @@ namespace eutelescope {
              * \param [in] track 
              */
 
-            void setRad(EUTelTrack &);
+            double getRad(EUTelTrack &, std::map<const int,double>&, std::map<const int,double>&);
+            std::vector<double> getZPosScat(EUTelState &);
+
             /// A simple way to set hits covariance matrix.
 			void setMeasurementCov(EUTelState& state);
             inline void setBeamEnergy(double beamE) { this->_eBeam = beamE; }
@@ -110,6 +112,8 @@ namespace eutelescope {
              */
 
             float getRadMap(EUTelTrack track,  std::map<const int,double> & mapSensor, std::map<const int ,double> & mapAir);
+            std::vector<double> getWeigMeanVar(double &, double &);
+
 
             /// This is the down weighting certain hits will get due to non Gaussian errors.
 			void setMEstimatorType( const std::string& );
@@ -122,8 +126,8 @@ namespace eutelescope {
     		std::map< unsigned int, std::vector<double> > getScatPos(EUTelTrack&) const;
             /// This will create the point list which describes each points relation to one another.
             /// At this stage only the points with a local to global transform and the ones which do not must be saved. 
-            /// This is done using the position of the scatterers which is calculated before. 
-            /// There is no limit on the number of scatterers here since we can easily estimate the global direction at any position in the z axis.
+            /// This is done using the position of the scatterers which is calculated internally.
+            /// The scatterers are all assumed  
             /**
              * \param [in] track This is the measurement and scattering planes. These must have Local->Global relation. 
              * \param [in] vectorScatPosAfterPlane Z-positions of scatterers in relation to the scatterer before.

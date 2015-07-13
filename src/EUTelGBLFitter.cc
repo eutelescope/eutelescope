@@ -189,11 +189,8 @@ namespace eutelescope {
         track.setTotalVariance(var);
     }
 
-    void EUTelGBLFitter::setRad(EUTelTrack & track){
+    double EUTelGBLFitter::getRad(EUTelTrack & track, std::map<const int,double>& mapSensor, std::map<const int,double>& mapAir){
 		streamlog_out(DEBUG2)<<"setRadLength--BEGIN"<<std::endl;
-        ///Set radiation lengths
-        std::map<const int,double>  mapSensor;
-        std::map<const int ,double>  mapAir;
         ///Use the track start and end position to determine the radiation length of each block of material on the particles trajectory. 
         double rad = getRadMap(track, mapSensor, mapAir);
 		streamlog_out(DEBUG2)<<"Rad total: " << rad<<std::endl;
@@ -209,6 +206,7 @@ namespace eutelescope {
         /// Air since large in size must be describe by two thin scatterers.
         /// The sensor itself only needs a single scatterer.
         setRadLengths(track, mapSensor, mapAir, rad);
+        return rad;
     }
     float EUTelGBLFitter::getRadMap(EUTelTrack track,  std::map<const int,double> & mapSensor, std::map<const int ,double> & mapAir){
         streamlog_out(DEBUG3)<<"compute radiation..."<<std::endl;
@@ -280,7 +278,9 @@ namespace eutelescope {
 	void EUTelGBLFitter::getGBLPointsFromTrack(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList, std::map<  unsigned int,unsigned int > & linkGL,std::map< unsigned int, unsigned int > & linkMeas ){
 		streamlog_out(DEBUG0)<<"EUTelGBLFitter::getGBLPointsFromTrack-------------------------------------BEGIN"<<std::endl;
         ///get radiation length of the track. This is added to the track internally.
-        setRad(track);
+        std::map<const int,double>  mapSensor;
+        std::map<const int ,double>  mapAir;
+        double rad = getRad(track,mapSensor,mapAir);
         /// At the moment this does not pass anything
 //        std::map<  unsigned int, std::vector<double> > scatPos = getScatPos(track);
         /// This is the minimum needed to create a GBL trajectory. It basically only relates each GBL point to each other at this stage.
@@ -295,7 +295,46 @@ namespace eutelescope {
 		streamlog_out(DEBUG0)<<"EUTelGBLFitter::getGBLPointsFromTrack-------------------------------------END"<<std::endl;
 
 	}
-
+    std::vector<double> EUTelGBLFitter::getWeigMeanVar(double & start, double & end){
+        std::vector<double> weigPosVar;
+        if(end == 0){
+        throw(lcio::Exception("The size of arc length to the next plane is 0"));
+        }
+        double mean = 0.5*(end-start);
+        if(mean == 0){
+        throw(lcio::Exception("The mean of the scattering integral is zero. "));
+        }
+        /// Assume uniform medium. The this is the variance of arclength weighted to radiation length at each point
+        /// Does not depend on material if distribution is constant.
+         double weigVar = ((1.0/3.0)*(pow(end,3)-pow(start,3))-mean*(pow(end,2)-pow(start,2))+pow(mean,2)*(end-start))/(end-start);
+        if(weigVar == 0){
+            throw(lcio::Exception("The variance of the scattering integral is zero. "));
+        }
+        weigPosVar.push_back(mean);
+        weigPosVar.push_back(weigVar);
+        return weigPosVar;
+    }
+    std::vector<double> EUTelGBLFitter::getZPosScat(EUTelState & state){
+    streamlog_out(DEBUG1) << "  findScattersZPositionBetweenTwoStates------------- BEGIN --------------  " << std::endl;
+    ///Take first scatterer just off the surface. This will be along the particle trajectory.
+    double start = 0.05;
+    double end = state.getArcLengthToNextState();
+    std::vector<double> weigPar  = getWeigMeanVar(start,end);
+    std::vector<double> scatPos;
+    ///First scatter position
+    scatPos.push_back(start); 
+    if(scatPos.at(0) < start){
+        throw(lcio::Exception("The distance of the second scatterer is smaller than the start. "));
+    }
+    ///Second scatter position.
+    scatPos.push_back(weigPar.at(0) + weigPar.at(1)/(weigPar.at(0)-start));
+    if(scatPos.at(1) > end){
+        streamlog_out(MESSAGE5) << "The second scatter distance: "<< scatPos.at(1) <<". The distance of the arc length: " << end  << std::endl;
+        throw(lcio::Exception("The distance of the second scatterer is larger than the next plane. "));
+    }
+        streamlog_out(DEBUG1) << "  findScattersZPositionBetweenTwoStates------------- END --------------  " << std::endl;
+        return scatPos;
+    }
   void EUTelGBLFitter::getResLoc(gbl::GblTrajectory* traj, std::map< unsigned int, unsigned int> & linkMeas, std::vector< gbl::GblPoint > pointList,std::map< int, std::map< float, float > > &  SensorResidual, std::map< int, std::map< float, float > >& sensorResidualError){
     for(std::map<unsigned int, unsigned int>::iterator iter = linkMeas.begin(); iter != linkMeas.end(); ++iter){
         unsigned int numData; 
