@@ -279,7 +279,9 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout()
 		_sensorIDtoZOrderMap.insert(std::make_pair(sensorID, sensorsToTheLeft));
 	}
 	_nPlanes = _siPlanesParameters->getSiPlanesNumber();
-	std::sort(_sensorIDVec.begin(), _sensorIDVec.end(), this->sortIDbyZ );
+
+	//std::sort(_sensorIDVec.begin(), _sensorIDVec.end(), std::bind(&EUTelGeometryTelescopeGeoDescription::sortIDbyZ,this, _1, _2) );
+	std::sort(_sensorIDVec.begin(), _sensorIDVec.end(), doCompare(*this) );	
 }
 
 void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout()
@@ -353,7 +355,9 @@ void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout()
 		}
 	}
 
-	std::sort(_sensorIDVec.begin(), _sensorIDVec.end(), this->sortIDbyZ);
+	//std::sort(_sensorIDVec.begin(), _sensorIDVec.end(), std::bind(&EUTelGeometryTelescopeGeoDescription::sortIDbyZ,this,_1, _2) );
+	std::sort(_sensorIDVec.begin(), _sensorIDVec.end(), doCompare(*this) );
+	
 	_nPlanes =  _sensorIDVec.size(); 
 
 	for(size_t i=0; i< _siPlaneZPosition.size(); i++)
