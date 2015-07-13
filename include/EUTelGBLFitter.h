@@ -181,6 +181,7 @@ namespace eutelescope {
 			unsigned int _counter_num_pointer;
 			bool _kinkAngleEstimation; //This used to determine if the correction matrix from the GBL fit is 5 or 7 elements long. 
 			EUTelMillepede* _MilleInterface;
+			std::vector<int> _sensorIDVec;
         
     };
 }
