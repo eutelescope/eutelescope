@@ -262,7 +262,8 @@ TEST_F(eutelgeotestTest, NormalVectorTest) {
 }
 
 TEST_F(eutelgeotestTest, vectorOrderZTest) {
-	//auto sensorIDVec = eugeo::gGeometry().sensorIDtoZOrder();
-	//std::vector<>
+	auto sensorIDVec = eugeo::gGeometry().sensorIDsVec();
+	std::vector<int> referenceVec = {8,0,1,2,3,4,5,7,6};
+	ASSERT_TRUE( std::equal(referenceVec.begin(), referenceVec.end(), sensorIDVec.begin()) );
 }
 // }  // namespace - could surround eutelgeotestTest in a namespace

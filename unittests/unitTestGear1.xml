@@ -144,7 +144,6 @@
 					/>
 				</layer>
 
-
 				<!-- Test Plane 7: Placed before Test Plane 6, see comment there -->
 				<layer>
 					<ladder 	ID="7" 
@@ -163,7 +162,25 @@
 							radLength="93.660734"
 					/>
 				</layer>
-			</layers>
+
+				<!-- Test Plane 8: Placed before Test Plane 0, to test sorting for negative numbers -->
+				<layer>
+					<ladder 	ID="8" 
+							positionX="0.00"	positionY="0.00"	positionZ="-10.00" 
+							rotationZY="0.0"	rotationZX="0.0"	rotationXY="0.0" 
+							sizeX="20"		sizeY="10"		thickness="0.1" 
+							radLength="93.660734"
+					/>
+					<sensitive 	ID="8" 
+							positionX="0.00"	positionY="0.00"	positionZ="-10.00" 
+							sizeX="20"		sizeY="10"		thickness="0.05"
+							npixelX="1000"		npixelY="500"
+							pitchX="0.02" 		pitchY="0.02"		resolution="0.0045"
+							rotation1="1.0"		rotation2="0.0"
+							rotation3="0.0" 	rotation4="1.0" 
+							radLength="93.660734"
+					/>
+				</layer>		</layers>
 		</detector>
 	</detectors>
 </gear>

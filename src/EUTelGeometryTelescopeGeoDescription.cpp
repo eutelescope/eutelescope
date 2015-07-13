@@ -9,6 +9,7 @@
 #include <string>
 #include <cstring>
 #include <sstream>
+#include <functional>
 
 // MARLIN
 #include "marlin/Global.h"
@@ -39,15 +40,16 @@
 
 using namespace eutelescope;
 using namespace geo;
+using namespace std::placeholders;
 
 unsigned EUTelGeometryTelescopeGeoDescription::_counter = 0;
 
-bool EUTelGeometryTelescopeGeoDescription::sortIDbyZ(int i, int j){ return gGeometry().siPlaneZPosition(i) < gGeometry().siPlaneZPosition(j); }
+bool EUTelGeometryTelescopeGeoDescription::sortIDbyZ(int i, int j){ return _planeSetup.at(i).zPos < _planeSetup.at(j).zPos; }
 
 /**TODO: Replace me: NOP*/
 EUTelGeometryTelescopeGeoDescription& EUTelGeometryTelescopeGeoDescription::getInstance( gear::GearMgr* _g )
 {
-	static  EUTelGeometryTelescopeGeoDescription instance;
+	static EUTelGeometryTelescopeGeoDescription instance;
 	unsigned i = EUTelGeometryTelescopeGeoDescription::_counter;
 	
 	//do it only once!
@@ -279,7 +281,7 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout()
 		_sensorIDtoZOrderMap.insert(std::make_pair(sensorID, sensorsToTheLeft));
 	}
 	_nPlanes = _siPlanesParameters->getSiPlanesNumber();
-	std::sort(_sensorIDVec.begin(), _sensorIDVec.end(), this->sortIDbyZ );
+	std::sort(_sensorIDVec.begin(), _sensorIDVec.end(), std::bind(&EUTelGeometryTelescopeGeoDescription::sortIDbyZ,this, _1, _2) );
 }
 
 void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout()
@@ -353,7 +355,7 @@ void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout()
 		}
 	}
 
-	std::sort(_sensorIDVec.begin(), _sensorIDVec.end(), this->sortIDbyZ);
+	std::sort(_sensorIDVec.begin(), _sensorIDVec.end(), std::bind(&EUTelGeometryTelescopeGeoDescription::sortIDbyZ,this,_1, _2) );
 	_nPlanes =  _sensorIDVec.size(); 
 
 	for(size_t i=0; i< _siPlaneZPosition.size(); i++)
