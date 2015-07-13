@@ -58,7 +58,7 @@ namespace eutelescope {
 	_parameterIdZRotationsMap(),
 	_counter_num_pointer(1),
 	_kinkAngleEstimation(false), //This used to determine if the correction matrix from the GBL fit is 5 or 7 elements long. 
-	_sensorIDVec( geo::gGeometry().sensorIDsVec() )
+	_sensorIDVec(geo::gGeometry().sensorIDsVec())
 	{}
 
 	EUTelGBLFitter::~EUTelGBLFitter() {

@@ -87,7 +87,7 @@ std::string EUTelCorrelator::_hitYCorrShiftProjectionHistoName   = "HitYCorrShif
 
 EUTelCorrelator::EUTelCorrelator () : Processor("EUTelCorrelator"), 
 _histoInfoFileName("histoinfo.xml"),
-_sensorIDVec( geo::gGeometry().sensorIDsVec() )
+_sensorIDVec()
 {
 
   // modify processor description
@@ -132,9 +132,7 @@ _sensorIDVec( geo::gGeometry().sensorIDsVec() )
 
   registerOptionalParameter("HistogramInfoFilename", "Name of histogram info xml file", _histoInfoFileName, string("histoinfo.xml"));
 
-  for(std::vector<int>::iterator it = _sensorIDVec.begin(); it != _sensorIDVec.end(); it++) {
-	_sensorIDtoZ.insert( std::make_pair( *it, static_cast<int>(it - _sensorIDVec.begin())) );
-  }
+ 
 }
 
 
@@ -147,9 +145,11 @@ void EUTelCorrelator::init() {
   std::string name("test.root");
   geo::gGeometry().initializeTGeoDescription(name,false);
 
-
-  // clear the sensor ID vector
   _sensorIDVec.clear();
+  _sensorIDVec = geo::gGeometry().sensorIDsVec();
+   for(std::vector<int>::iterator it = _sensorIDVec.begin(); it != _sensorIDVec.end(); it++) {
+	_sensorIDtoZ.insert( std::make_pair( *it, static_cast<int>(it - _sensorIDVec.begin())) );
+  } 
 
   // clear the sensor ID map
   _sensorIDVecMap.clear();
