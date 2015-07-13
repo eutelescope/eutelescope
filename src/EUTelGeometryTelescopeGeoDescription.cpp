@@ -252,6 +252,7 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout()
 		_sensorIDtoZOrderMap.insert(std::make_pair(sensorID, sensorsToTheLeft));
 	}
 	_nPlanes = _siPlanesParameters->getSiPlanesNumber();
+	std::sort(_sensorIDVec.begin(), _sensorIDVec.end(), doCompare(*this) );	
 }
 
 void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout()
@@ -324,7 +325,8 @@ void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout()
 			streamlog_out(DEBUG1) << " iter: " << _sensorIDVec.at( _sensorIDVec.size()-1 ) << " " << sensorID << " " << sensitiveLayer.getInfo() .c_str() << std::endl; 
 		}
 	}
-
+	std::sort(_sensorIDVec.begin(), _sensorIDVec.end(), doCompare(*this) );
+	
 	_nPlanes =  _sensorIDVec.size(); 
 
 	for(size_t i=0; i< _siPlaneZPosition.size(); i++)
@@ -796,7 +798,6 @@ void EUTelGeometryTelescopeGeoDescription::master2LocalVec( int sensorID, const 
     
     _geoManager->cd( _planePath[sensorID].c_str() );
     _geoManager->GetCurrentNode()->MasterToLocalVect( globalVec, localVec );
-
 }
 
 /**
