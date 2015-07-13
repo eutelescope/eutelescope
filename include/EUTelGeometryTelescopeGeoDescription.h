@@ -134,7 +134,7 @@ class EUTelGeometryTelescopeGeoDescription
 	gear::SiPlanesLayerLayout* _siPlanesLayerLayout;
 
 	/** */
-	gear::TrackerPlanesParameters*  _trackerPlanesParameters;
+	gear::TrackerPlanesParameters* _trackerPlanesParameters;
 
 	/** */
 	gear::TrackerPlanesLayerLayout* _trackerPlanesLayerLayout;
@@ -145,16 +145,13 @@ class EUTelGeometryTelescopeGeoDescription
 	float _initialDisplacement; 
 
 	/** Vector of Sensor IDs */
-	EVENT::IntVec _sensorIDVec;
+	std::vector<int> _sensorIDVec;
 
 	/** Z coordinate of the sensors centers in global coordinate frame [mm]*/
-	EVENT::DoubleVec _siPlaneZPosition;
+	std::vector<double>  _siPlaneZPosition;
 
 	/** Sensor ID map (inverse sensorIDVec) */
 	std::map< int, int > _sensorIDVecMap;
-
-	/** Map from number along the Z axis (beam axis) to sensor ID */
-	std::map<int, int> _sensorZOrderToIDMap;
 
 	/** Map from sensor ID to number along Z */
 	std::map<int, int> _sensorIDtoZOrderMap;
@@ -320,8 +317,6 @@ class EUTelGeometryTelescopeGeoDescription
 
 	int sensorIDtoZOrder( int ) const;
 
-	int sensorZOrderToID( int ) const;
-
 	/** Vector of all sensor IDs */
 	const std::vector<int>& sensorIDsVec() const { return _sensorIDVec; };
 
@@ -383,10 +378,10 @@ class EUTelGeometryTelescopeGeoDescription
 	void mapWeightsToSensor(std::map<const int,double> sensor,std::map<const int,double> air,  std::map< const  int, double > & mapSen,std::map< const  int, double > & mapAir  );
 	double addKapton(std::map<const int, double> & mapSensor);
 
-
 	float getInitialDisplacementToFirstPlane() const { return _initialDisplacement; };
 
 	const TGeoHMatrix* getHMatrix( const double globalPos[] );
+
 	TMatrixD getRotMatrix( int sensorID );
 
 	/** Magnetic field */

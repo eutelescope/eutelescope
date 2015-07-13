@@ -140,25 +140,6 @@ TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneYAxis( int planeID )
 	}
 }
 
-
-/** Sensor ID vector ordered according to their position along the Z axis (beam axis)
- *  Numeration runs from 0 to nPlanes-1 */
-int EUTelGeometryTelescopeGeoDescription::sensorZOrderToID( int znumber ) const
-{
-	std::map<int,int>::const_iterator it = _sensorZOrderToIDMap.find( znumber );
-	if( it != _sensorZOrderToIDMap.end() )
-	{
-		return it->second;
-	}
-	else
-	{
-		std::stringstream ss;
-		ss << znumber;
-		std::string errMsg = "EUTelGeometryTelescopeGeoDescription::sensorZOrderToID: Could not find snumber: " + ss.str(); 
-		throw InvalidGeometryException(errMsg);
-	}
-}
-
 void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout()
 {
 	// sensor-planes in geometry navigation:
@@ -248,7 +229,6 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout()
 				sensorsToTheLeft++;
 			}
 		}
-		_sensorZOrderToIDMap.insert(std::make_pair(sensorsToTheLeft, sensorID));        
 		_sensorIDtoZOrderMap.insert(std::make_pair(sensorID, sensorsToTheLeft));
 	}
 	_nPlanes = _siPlanesParameters->getSiPlanesNumber();
@@ -341,7 +321,6 @@ void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout()
 				sensorsToTheLeft++;
 			}
 		}
-		_sensorZOrderToIDMap.insert(std::make_pair(sensorsToTheLeft, sensorID));        
 		_sensorIDtoZOrderMap.insert(std::make_pair(sensorID, sensorsToTheLeft));
 	}
 }
@@ -356,7 +335,6 @@ _trackerPlanesParameters(nullptr),
 _trackerPlanesLayerLayout(nullptr),
 _sensorIDVec(),
 _sensorIDVecMap(),
-_sensorZOrderToIDMap(),
 _sensorIDtoZOrderMap(),
 _nPlanes(0),
 _isGeoInitialized(false),
