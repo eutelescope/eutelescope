@@ -185,34 +185,12 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout()
 		_planeSetup[_siPlanesLayerLayout->getID(iPlane)] = thisPlane;
 	}
 
-
-	// sort the array with increasing z
-	std::sort(_siPlaneZPosition.begin(), _siPlaneZPosition.end());
-
-	// clear the sensor ID vector
 	_sensorIDVec.clear();
-
-	// clear the sensor ID map
-	_sensorIDVecMap.clear();
-	_sensorIDtoZOrderMap.clear();
 
 	for(int iPlane = 0; iPlane < _siPlanesLayerLayout->getNLayers(); iPlane++)
 	{
 		int sensorID = _siPlanesLayerLayout->getID(iPlane);
 		_sensorIDVec.push_back(sensorID);
-		_sensorIDVecMap.insert(std::make_pair(sensorID, iPlane));
-
-		// count number of the sensors to the left of the current one:
-		int sensorsToTheLeft = 0;
-		int kposition = _siPlanesLayerLayout->getSensitivePositionZ(iPlane);
-		for (int jPlane = 0; jPlane < _siPlanesLayerLayout->getNLayers(); jPlane++)
-		{
-			if(_siPlanesLayerLayout->getSensitivePositionZ(jPlane) + 1e-06 < kposition  )
-			{
-				sensorsToTheLeft++;
-			}
-		}
-		_sensorIDtoZOrderMap.insert(std::make_pair(sensorID, sensorsToTheLeft));
 	}
 	_nPlanes = _siPlanesParameters->getSiPlanesNumber();
 	std::sort(_sensorIDVec.begin(), _sensorIDVec.end(), doCompare(*this) );	
@@ -226,11 +204,7 @@ void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout()
 
 	setSiPlanesLayoutID( _trackerPlanesParameters->getLayoutID() ) ;
 
-	// clear the sensor ID vector
 	_sensorIDVec.clear();
-	// clear the sensor ID map
-	_sensorIDVecMap.clear();
-	_sensorIDtoZOrderMap.clear();
 	
 	//should be filled based on the length of the sensor vector after the loop
 	_nPlanes = 0; 
@@ -284,28 +258,11 @@ void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout()
 			_planeSetup[sensorID] = thisPlane;
 
 			_sensorIDVec.push_back(sensorID);
-			_sensorIDVecMap.insert(std::make_pair(sensorID, iLayer)); // what if there are more then 1 sensore per layer?
 			streamlog_out(DEBUG1) << " iter: " << _sensorIDVec.at( _sensorIDVec.size()-1 ) << " " << sensorID << " " << sensitiveLayer.getInfo() .c_str() << std::endl; 
 		}
 	}
 	std::sort(_sensorIDVec.begin(), _sensorIDVec.end(), doCompare(*this) );
-	
 	_nPlanes =  _sensorIDVec.size(); 
-
-	for(size_t i=0; i< _siPlaneZPosition.size(); i++)
-	{
-		int sensorsToTheLeft = 0;
-		int sensorID = _sensorIDVec.at(i);
-
-		for(size_t j=0; j< _siPlaneZPosition.size(); j++)
-		{ 
-			if( _siPlaneZPosition.at(j) < _siPlaneZPosition.at(i) - 1e-06 )
-			{
-				sensorsToTheLeft++;
-			}
-		}
-		_sensorIDtoZOrderMap.insert(std::make_pair(sensorID, sensorsToTheLeft));
-	}
 }
 
 EUTelGeometryTelescopeGeoDescription::EUTelGeometryTelescopeGeoDescription() :
@@ -317,8 +274,6 @@ _siPlanesLayerLayout(nullptr),
 _trackerPlanesParameters(nullptr),
 _trackerPlanesLayerLayout(nullptr),
 _sensorIDVec(),
-_sensorIDVecMap(),
-_sensorIDtoZOrderMap(),
 _nPlanes(0),
 _isGeoInitialized(false),
 _geoManager(nullptr)

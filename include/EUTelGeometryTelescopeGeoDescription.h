@@ -147,15 +147,6 @@ class EUTelGeometryTelescopeGeoDescription
 	/** Vector of Sensor IDs */
 	std::vector<int> _sensorIDVec;
 
-	/** Z coordinate of the sensors centers in global coordinate frame [mm]*/
-	std::vector<double>  _siPlaneZPosition;
-
-	/** Sensor ID map (inverse sensorIDVec) */
-	std::map< int, int > _sensorIDVecMap;
-
-	/** Map from sensor ID to number along Z */
-	std::map<int, int> _sensorIDtoZOrderMap;
-
 	size_t _nPlanes;
 
 	/** Pointer to the pixel geometry manager */
@@ -198,9 +189,6 @@ class EUTelGeometryTelescopeGeoDescription
 
 	/** Number of planes in the setup */
 	size_t nPlanes() const { return _nPlanes; };
-
-	/** Z coordinates of centers of planes */
-	const EVENT::DoubleVec& siPlanesZPositions() const { return _siPlaneZPosition; };
 
   /** set methods */
 	/** set X position  */
@@ -312,9 +300,6 @@ class EUTelGeometryTelescopeGeoDescription
 
 	TVector3 siPlaneYAxis( int );
 
-	/** Map from sensor ID to number along Z */
-	const std::map<int, int>& sensorIDstoZOrder() const { return _sensorIDtoZOrderMap; };
-
 	/** Vector of all sensor IDs */
 	const std::vector<int>& sensorIDsVec() const { return _sensorIDVec; };
 
@@ -353,7 +338,6 @@ class EUTelGeometryTelescopeGeoDescription
 	int getSensorID(double const globalPos[] ) const;
 
 	int getSensorIDFromManager();
-
 
 	void local2Master( int, const double[], double[] );
 
