@@ -40,11 +40,8 @@
 
 using namespace eutelescope;
 using namespace geo;
-//using namespace std::placeholders;
 
 unsigned EUTelGeometryTelescopeGeoDescription::_counter = 0;
-
-bool EUTelGeometryTelescopeGeoDescription::sortIDbyZ(int i, int j){ return _planeSetup.at(i).zPos < _planeSetup.at(j).zPos; }
 
 /**TODO: Replace me: NOP*/
 EUTelGeometryTelescopeGeoDescription& EUTelGeometryTelescopeGeoDescription::getInstance( gear::GearMgr* _g )
@@ -281,9 +278,7 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout()
 		_sensorIDtoZOrderMap.insert(std::make_pair(sensorID, sensorsToTheLeft));
 	}
 	_nPlanes = _siPlanesParameters->getSiPlanesNumber();
-	//std::sort(_sensorIDVec.begin(), _sensorIDVec.end(), std::bind(&EUTelGeometryTelescopeGeoDescription::sortIDbyZ,this, _1, _2) );
-	std::sort(_sensorIDVec.begin(), _sensorIDVec.end(), doCompare(*this) );
-	
+	std::sort(_sensorIDVec.begin(), _sensorIDVec.end(), doCompare(*this) );	
 }
 
 void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout()
@@ -356,8 +351,6 @@ void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout()
 			streamlog_out(DEBUG1) << " iter: " << _sensorIDVec.at( _sensorIDVec.size()-1 ) << " " << sensorID << " " << sensitiveLayer.getInfo() .c_str() << std::endl; 
 		}
 	}
-
-	//std::sort(_sensorIDVec.begin(), _sensorIDVec.end(), std::bind(&EUTelGeometryTelescopeGeoDescription::sortIDbyZ,this,_1, _2) );
 	std::sort(_sensorIDVec.begin(), _sensorIDVec.end(), doCompare(*this) );
 	_nPlanes =  _sensorIDVec.size(); 
 
