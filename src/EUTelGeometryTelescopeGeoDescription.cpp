@@ -40,7 +40,7 @@
 
 using namespace eutelescope;
 using namespace geo;
-using namespace std::placeholders;
+//using namespace std::placeholders;
 
 unsigned EUTelGeometryTelescopeGeoDescription::_counter = 0;
 
