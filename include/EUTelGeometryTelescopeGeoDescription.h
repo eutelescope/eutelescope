@@ -58,11 +58,11 @@ struct EUTelPlane
 	/**Spatial location*/
 	double xPos, yPos, zPos;
 	/**Spatial location errors/uncertainties*/
-	//double xPosErr, yPosErr, zPosErr;
+	double xPosErr, yPosErr, zPosErr;
 	/**Euler rotations*/
 	double alpha, beta, gamma;
 	/**Euler uncertainties*/
-	//double alphaErr, betaErr, gammaErr;
+	double alphaErr, betaErr, gammaErr;
 	/**Pixel geometry name*/
 	std::string pixGeoName;
 	/**2D flip entries*/
@@ -79,10 +79,9 @@ struct EUTelPlane
 	double xRes, yRes;
 };
 
-// Iterate over registered GEAR objects and construct their TGeo representation
-const Double_t PI     = 3.141592653589793;
-const Double_t DEG    = 180./PI; 
-const Double_t RADIAN = PI/180.; 
+const double PI     = 3.141592653589793;
+const double DEG    = 180./PI; 
+const double RADIAN = PI/180.; 
 
 class EUTelGeometryTelescopeGeoDescription
 {
@@ -99,8 +98,8 @@ class EUTelGeometryTelescopeGeoDescription
 	/** */
 	EUTelGeometryTelescopeGeoDescription();
 
-	/** */ 
-	DISALLOW_COPY_AND_ASSIGN(EUTelGeometryTelescopeGeoDescription)      // prevent users from making (default) copies of processors
+	/** prevent users from making (default) copies of processors */ 
+	DISALLOW_COPY_AND_ASSIGN(EUTelGeometryTelescopeGeoDescription)      
 
 	/** need only for pede2lcio*/
 	gear::GearMgr* _gearManager;
@@ -145,13 +144,13 @@ class EUTelGeometryTelescopeGeoDescription
 	float _initialDisplacement; 
 
 	/** Vector of Sensor IDs */
-	EVENT::IntVec _sensorIDVec;
+	std::vector<int> _sensorIDVec;
 
 	/** Z coordinate of the sensors centers in global coordinate frame [mm]*/
-	EVENT::DoubleVec _siPlaneZPosition;
+	std::vector<double> _siPlaneZPosition;
 
 	/** Sensor ID map (inverse sensorIDVec) */
-	std::map< int, int > _sensorIDVecMap;
+	std::map<int, int> _sensorIDVecMap;
 
 	/** Map from number along the Z axis (beam axis) to sensor ID */
 	std::map<int, int> _sensorZOrderToIDMap;
@@ -197,48 +196,47 @@ class EUTelGeometryTelescopeGeoDescription
 	void setInitialDisplacementToFirstPlane(float initialDisplacement){_initialDisplacement = initialDisplacement; };
 
 	/** needed only for pede2lcio*/ 
-	void setGearManager( gear::GearMgr* value ) { _gearManager = value ; }
+	inline void setGearManager( gear::GearMgr* value ) { _gearManager = value ; }
 
 	/** Number of planes in the setup */
 	inline size_t getSiPlanesLayoutID() const { return _siPlanesLayoutID; } ;
 
 	/** Number of planes in the setup */
-	void setSiPlanesLayoutID(size_t value) { _siPlanesLayoutID = value; } ;          
+	inline void setSiPlanesLayoutID(size_t value) { _siPlanesLayoutID = value; } ;          
 
 	/** Number of planes in the setup */
-	size_t nPlanes() const { return _nPlanes; };
+	inline size_t nPlanes() const { return _nPlanes; };
 
 	/** Z coordinates of centers of planes */
-	const EVENT::DoubleVec& siPlanesZPositions() const { return _siPlaneZPosition; };
+	inline const std::vector<double>& siPlanesZPositions() const { return _siPlaneZPosition; };
 
-  /** set methods */
 	/** set X position  */
-	void setPlaneXPosition(int sensorID, double value){ _planeSetup[sensorID].xPos = value; };
+	inline void setPlaneXPosition(int sensorID, double value){ _planeSetup[sensorID].xPos = value; };
 
 	/** set Y position  */
-	void setPlaneYPosition(int sensorID, double value){ _planeSetup[sensorID].yPos = value; };
+	inline void setPlaneYPosition(int sensorID, double value){ _planeSetup[sensorID].yPos = value; };
 
 	/** set Z position  */
-	void setPlaneZPosition(int sensorID, double value){ _planeSetup[sensorID].zPos = value; };
+	inline void setPlaneZPosition(int sensorID, double value){ _planeSetup[sensorID].zPos = value; };
 
 	/** set X rotation  */
-	void setPlaneXRotation(int sensorID, double value){ _planeSetup[sensorID].alpha = value; };
+	inline void setPlaneXRotation(int sensorID, double value){ _planeSetup[sensorID].alpha = value; };
 
 	/** set Y rotation  */
-	void setPlaneYRotation(int sensorID, double value){ _planeSetup[sensorID].beta = value; };
+	inline void setPlaneYRotation(int sensorID, double value){ _planeSetup[sensorID].beta = value; };
 
 	/** set Z rotation  */
-	void setPlaneZRotation(int sensorID, double value){ _planeSetup[sensorID].gamma = value; };
+	inline void setPlaneZRotation(int sensorID, double value){ _planeSetup[sensorID].gamma = value; };
 
-	/** set X rotation  */
-	void setPlaneXRotationRadians(int sensorID, double value /* in Radians */){ _planeSetup[sensorID].alpha = value*DEG; };
+	/** set X rotation in radians */
+	inline void setPlaneXRotationRadians(int sensorID, double value){ _planeSetup[sensorID].alpha = value*DEG; };
 
-	/** set Y rotation  */
-	void setPlaneYRotationRadians(int sensorID, double value /* in Radians */){ _planeSetup[sensorID].beta = value*DEG; };
+	/** set Y rotation in radians */
+	inline void setPlaneYRotationRadians(int sensorID, double value){ _planeSetup[sensorID].beta = value*DEG; };
 
-	/** set Z rotation  */
-	void setPlaneZRotationRadians(int sensorID, double value /* in Radians */){ _planeSetup[sensorID].gamma = value*DEG; };
-	//GETTER
+	/** set Z rotation in radians */
+	inline void setPlaneZRotationRadians(int sensorID, double value){ _planeSetup[sensorID].gamma = value*DEG; };
+
 	/** */ 
 	float siPlaneRotation1(int sensorID){ return _planeSetup.at(sensorID).r1; };
 
