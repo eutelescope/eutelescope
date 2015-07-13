@@ -90,8 +90,7 @@ class EUTelGeometryTelescopeGeoDescription
 	{
 		doCompare(EUTelGeometryTelescopeGeoDescription& eutelgeo ): m_eutelgeo(eutelgeo) {}
 		EUTelGeometryTelescopeGeoDescription& m_eutelgeo;
-		bool operator()(int i,int j)
-		{
+		bool operator()(int i,int j) {
 			return(m_eutelgeo.siPlaneZPosition(i) < m_eutelgeo.siPlaneZPosition(j));
 		}
 	};
@@ -446,8 +445,6 @@ private:
 
 	/** housing for the above two */    
 	void readGear();
-
-	static bool sortIDbyZ(int i, int j);
 
 	void translateSiPlane2TGeo(TGeoVolume*,int );
 };
