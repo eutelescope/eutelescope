@@ -1,5 +1,5 @@
 ##This is the GBL fitter with a strip sensor DUT. 
-#Blue markings are running processors and changing things in the config
+#Hash markings are running processors and changing things in the config
 TGeo reads the thickness of the sensors from the sensitive area of the gear.
 50 micron for mimosas, 300 micron for DUT
 Test with 10k events which was enough for alignment of DUT without XY-axis rotations.
@@ -112,8 +112,6 @@ Now you can run
 #js GBLTrackFit 703    >>>> output/histograms/GBLTracks.root
 OR 
 # ./patRecAndTrackFitUsingConfigurationFile.sh -r 703 -h <some name given to root file placed in output/histograms
-#
-#
 You should find from 10k event => 6.8k tracks.
 The DUT RMS without DUT included in fit 24 microns.
 
