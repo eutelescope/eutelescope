@@ -3,7 +3,7 @@
 namespace eutelescope {
 namespace geo {
 
-FEI4Single::FEI4Single(): EUTelGenericPixGeoDescr(	20.30, 16.8, 0.025,		//size X, Y, Z
+FEI4Single250x50::FEI4Single250x50(): EUTelGenericPixGeoDescr(	20.30, 16.8, 0.025,		//size X, Y, Z
 													0, 79, 0, 335,			//min max X,Y
 													93.660734 )				//rad length					
 {
@@ -22,7 +22,9 @@ FEI4Single::FEI4Single(): EUTelGenericPixGeoDescr(	20.30, 16.8, 0.025,		//size X
 
 	//Divide the regions to create pixels
  	edgeregion->Divide("fei4edgepixel",   2, 336, 0, 1, 0, "N"); 
+
     //standard fei4 125x25
+
 	TGeoVolume* centrerow = centreregion->Divide("fei4centrerow", 2, 336, 0, 1, 0, "N");
 	centrerow ->Divide("fei4centrepixel", 1,  78, 0, 1, 0, "N"); 
 
@@ -33,13 +35,13 @@ FEI4Single::FEI4Single(): EUTelGenericPixGeoDescr(	20.30, 16.8, 0.025,		//size X
 
 }
 
-FEI4Single::~FEI4Single()
+FEI4Single250x50::~FEI4Single250x50()
 {
 	//delete matSi;
 	//delete Si;
 }
 
-void  FEI4Single::createRootDescr(char const * planeVolume)
+void  FEI4Single250x50::createRootDescr(char const * planeVolume)
 {
 	//Get the plane as provided by the EUTelGeometryTelescopeGeoDescription
 	TGeoVolume* topplane =_tGeoManager->GetVolume(planeVolume);
@@ -47,7 +49,7 @@ void  FEI4Single::createRootDescr(char const * planeVolume)
 	topplane->AddNode(plane, 1);
 }
 
-std::string FEI4Single::getPixName(int x , int y)
+std::string FEI4Single250x50::getPixName(int x , int y)
 {
 	char buffer [100];
 
@@ -71,13 +73,13 @@ std::string FEI4Single::getPixName(int x , int y)
 	return std::string( buffer ); 
 }
 
-//TODO: parse the path to a pixel number!
-std::pair<int, int>  FEI4Single::getPixIndex(char const*){return std::make_pair(0,0); }
+	//TODO: parse the path to a pixel number!
+	std::pair<int, int>  FEI4Single250x50::getPixIndex(char const*){return std::make_pair(0,0); }
 
 EUTelGenericPixGeoDescr* maker()
 {
-	FEI4Single* mPixGeoDescr = new FEI4Single();
-	return dynamic_cast<EUTelGenericPixGeoDescr*>(mPixGeoDescr);
+FEI4Single250x50* mPixGeoDescr = new FEI4Single250x50();
+return dynamic_cast<EUTelGenericPixGeoDescr*>(mPixGeoDescr);
 }
 
 } //namespace geo

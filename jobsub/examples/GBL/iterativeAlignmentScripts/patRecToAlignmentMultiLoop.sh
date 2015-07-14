@@ -75,8 +75,6 @@ then
 	exit 1
 fi
 
-exit 1
-
 #echo "We have produced new histogram $histoNameInput"
 #export Fxr="$allPlanes" #This is the fixed planes for rotations round the x axis
 #export Fxs="$allPlanesFixed" #This is the fixed planes for shifts in the x axis

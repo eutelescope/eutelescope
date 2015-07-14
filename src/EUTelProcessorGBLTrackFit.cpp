@@ -88,6 +88,10 @@ void EUTelProcessorGBLTrackFit::init() {
 		_nProcessedEvents = 0;
 		std::string name("test.root");
 		geo::gGeometry().initializeTGeoDescription(name,false);
+        /// At the moment we do not pass an exclude planes variable for radiation length.
+        std::vector<int> v;
+        geo::gGeometry().initialisePlanesToExcluded(v);
+
         /**  EUTelGBLFitter in action.
          * 
          *  Below is the variables needed to initialise a GBLFitter object. This will then fit all your tracks in process event. 
@@ -162,7 +166,11 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent* evt){
             std::map<  unsigned int,unsigned int >  linkGL;
             std::map< unsigned int, unsigned int >  linkMeas;
             ///This will create the initial GBL trajectory
-			_trackFitter->getGBLPointsFromTrack(track, pointList, linkGL,linkMeas);
+            try{
+                _trackFitter->getGBLPointsFromTrack(track, pointList, linkGL,linkMeas);
+            }catch(std::string &e){
+                continue;
+            }
 			const gear::BField& B = geo::gGeometry().getMagneticField();//We need this to determine if we should fit a curve or a straight line.
 			const double Bmag = B.at( TVector3(0.,0.,0.) ).r2();
 			gbl::GblTrajectory* traj = 0;
@@ -214,7 +222,7 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent* evt){
 		throw marlin::SkipEventException(this);
 	}
 	catch(std::string &e){
-		streamlog_out(MESSAGE9) << e << std::endl;
+//		streamlog_out(MESSAGE9) << e << std::endl;
 		throw marlin::SkipEventException( this ) ;
 	}
 	catch(lcio::Exception& e){

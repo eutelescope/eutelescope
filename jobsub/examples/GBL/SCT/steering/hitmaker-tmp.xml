@@ -159,11 +159,11 @@ to the external frame of reference using the GEAR geometry description-->
   <!--How many events should be used for an approximation to the X,Y shifts (pre-alignment)? (default=50000)-->
   <parameter name="Events" type="int" value="@NoEvents@"/>
   <!--The list of sensor IDs that shall be excluded.-->
-  <!--parameter name="ExcludedPlanes" type="IntVec"> 8 </parameter-->
+  <parameter name="ExcludedPlanes" type="IntVec"> @ExcludedPlanes@ </parameter>
   <!--The list of sensor IDs for which the X coordinate shall be excluded.-->
-  <parameter name="ExcludedPlanesXCoord" type="IntVec"> 8 </parameter>
+  <parameter name="ExcludedPlanesXCoord" type="IntVec"> @ExcludedPlanesXCoord@ </parameter>
   <!--The list of sensor IDs for which the Y coordinate  shall be excluded.-->
-  <!--parameter name="ExcludedPlanesYCoord" type="IntVec"> </parameter-->
+  <parameter name="ExcludedPlanesYCoord" type="IntVec"> @ExcludedPlanesYCoord@  </parameter>
   <!--SensorID of fixed plane-->
   <!--parameter name="FixedPlane" type="int" value="0"/-->
   <!--Switch on or off the histogram filling-->
@@ -173,7 +173,7 @@ to the external frame of reference using the GEAR geometry description-->
   <!--If there are more then this number of correlated hits (planes->track candidate) (default=5)-->
   <!--parameter name="MinNumberOfCorrelatedHits" type="int" value="5"/-->
   <!--Suffix for the new GEAR file, set to empty string (this is not default!) to overwrite old GEAR file-->
-  <parameter name="NewGEARSuffix" type="string" value="@RunNumber@_pre"/>
+  <parameter name="NewGEARSuffix" type="string" value="_pre"/>
   <!--Maximal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
   <parameter name="ResidualsXMax" type="FloatVec" value="@ResidualsXMax@"/>
   <!--Minimal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->

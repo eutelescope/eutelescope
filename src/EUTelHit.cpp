@@ -2,28 +2,33 @@
 using namespace eutelescope;
 
 EUTelHit::EUTelHit():
-_locationKnown(false)
+_locationKnown(false),
+_cov(2,2)
 {
+    _cov.Zero();
 } 
 
-EUTelHit::EUTelHit(EUTelHit* hit){
+EUTelHit::EUTelHit(EUTelHit* hit):
+_cov(2,2)
+{
     _position[0] = hit->getPosition()[0];
     _position[1] = hit->getPosition()[1];
     _position[2] = hit->getPosition()[2];
     _id = hit->getID();
-    std::cout<<"INside" << std::endl;
     if(hit->_locationKnown){
         _location = hit->getLocation();
         _locationKnown=true;
     }else{
         _locationKnown=false;
     }
-    std::cout<<"INside2" << std::endl;
-
-
+    setCov(hit->getCov());
+    ///All hits must have clustering information 
+    _pulse = hit->getPulse();
 } 
 
-EUTelHit::EUTelHit(EVENT::TrackerHit* hit){
+EUTelHit::EUTelHit(EVENT::TrackerHit* hit):
+_cov(2,2)
+{
     _position[0] = hit->getPosition()[0];
     _position[1] = hit->getPosition()[1];
     _position[2] = hit->getPosition()[2];
@@ -31,6 +36,7 @@ EUTelHit::EUTelHit(EVENT::TrackerHit* hit){
     const int hitLoc = Utility::getSensorIDfromHit( static_cast<IMPL::TrackerHitImpl*> (hit) );
     _location = hitLoc;
     _locationKnown=true;
+    setCov(hit->getCovMatrix());
 
 } 
 
@@ -56,6 +62,38 @@ TVector3 EUTelHit::getPositionGlobal() const {
 	return posGlobalVec;
 }
 
+int EUTelHit::getID() const {
+    return _id;
+}
+EVENT::LCObjectVec EUTelHit::getPulse() const {
+    return _pulse;
+}
+void EUTelHit::getCov( double (&cov)[4] ) const {
+	cov[0] = _cov[0][0];
+	cov[1] = _cov[0][1];
+	cov[2] = _cov[1][0];
+	cov[3] = _cov[1][1];
+}
+
+void EUTelHit::setCov(const std::vector<double>& cov){
+	_cov[0][0] = cov.at(0);
+	_cov[0][1] = cov.at(1);
+	_cov[1][0] = cov.at(2);
+	_cov[1][1] = cov.at(3);
+}
+void EUTelHit::setCov(const std::vector<float>& cov){
+	_cov[0][0] = static_cast<double>(cov.at(0));
+	_cov[0][1] = static_cast<double>(cov.at(1));
+	_cov[1][0] = static_cast<double>(cov.at(2));
+	_cov[1][1] = static_cast<double>(cov.at(3));
+}
+
+void EUTelHit::setCov(TMatrixD cov){
+    _cov = cov;
+}
+void EUTelHit::setPulse( EVENT::LCObjectVec& pulse){
+    _pulse = pulse;
+}
 
 void EUTelHit::setPosition(const double * position){
     _position[0] = position[0];
@@ -69,10 +107,6 @@ void EUTelHit::setLocation(int location){
     _location = location;
 }
 
-
-int EUTelHit::getID() const {
-    return _id;
-}
 void EUTelHit::setID(int id){
     _id = id;
 }

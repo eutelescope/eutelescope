@@ -134,7 +134,8 @@ namespace eutelescope {
         std::vector<float> _tripletSlopeCuts;
         ///Connect triplets if extrapolation under this cut in location prediction
         std::vector<float> _tripletConnectDistCut;
-
+        ///the dimention vector.
+        IntVec _planeDimension;
 		/// Number of events processed
 		int _nProcessedRuns;
 		/// Number of runs processed 

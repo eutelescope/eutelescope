@@ -57,6 +57,8 @@ _dataMissNumber(0)
 
 	/// This initial distance to the first plane is needed if we are in a magnetic field. Since the particle will begin to curve before we reach the first plane. Therefore to accurately model the particles trajectory we need to take this into account. 
 	registerOptionalParameter("InitialDisplacement", "This is the initial distance the particle must travel to reach the first plane", _initialDisplacement ,float(0));
+    ///This specifies if the planes are strip or pixel sensors.
+      registerOptionalParameter("planeDimensions", "This is a number 1(strip sensor) or 2(pixel sensor) to identify the type of detector. Must be in z order and include all planes.", _planeDimension, IntVec());
 
 }
 //This is the inital function that Marlin will run only once when we run jobsub
@@ -82,6 +84,7 @@ void EUTelProcessorPatRecTriplets::init(){
         _trackFitter->setTripletConnectDistCut(_tripletConnectDistCut);
 		_trackFitter->setBeamMomentum(_eBeam);
 		_trackFitter->setBeamCharge(_qBeam);
+        _trackFitter->setPlaneDimensionsVec(_planeDimension);
 		_trackFitter->testUserInput();
 		bookHistograms();		
 	}
