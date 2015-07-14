@@ -25,12 +25,15 @@ void EUTelTrackAnalysis::plotResidualVsPosition(EUTelTrack track){
 		TVector3 statePositionGlobal = state.getPositionGlobal();
 		const double* hitPosition = hit.getPosition();
 		float residual[2];
+		streamlog_out(DEBUG2) << "	state.getLocation() = "<<	state.getLocation()<< std::endl;
 		streamlog_out(DEBUG2) << "State position: " << statePosition[0]<<","<<statePosition[1]<<","<<statePosition[2]<< std::endl;
 		streamlog_out(DEBUG2) << "Hit position: " << hitPosition[0]<<","<<hitPosition[1]<<","<<hitPosition[2]<< std::endl;
 
 		typedef std::map<int ,AIDA::IProfile2D*  >::iterator it_type;
 		for(it_type iterator = _mapFromSensorIDToHistogramX.begin(); iterator != _mapFromSensorIDToHistogramX.end(); iterator++) {
-			if(iterator->first == state.getLocation()){
+		  streamlog_out(DEBUG2) << "	state.getLocation() = "<<	state.getLocation()<< ", iterator->first = "<<iterator->first<<std::endl;	
+		  if(iterator->first == state.getLocation()){
+			 
 			residual[0]=std::abs(statePosition[0]-hitPosition[0]);
 			streamlog_out(DEBUG2) << "Add residual X : " << residual[0]<< std::endl;
 
@@ -56,11 +59,12 @@ void EUTelTrackAnalysis::plotEfficiencyVsPosition(EUTelTrack track){
 	for(size_t i=0; i<states.size();++i){
 		EUTelState state  = states.at(i);
 		state.print();
-		const double* statePosition = NULL;
+			const double* statePosition = state.getPosition();
 		const double* hitPosition = NULL;
 		streamlog_out(DEBUG0) << " In state loop, "<<i<<" out of "<< states.size()<<" state.getStateHasHit() = "<<state.getStateHasHit()<<std::endl;
 		EUTelHit hit;
-		statePosition = state.getPosition();
+		//statePosition = state.getPosition();
+		TVector3 statePositionGlobal = state.getPositionGlobal();
 		if(state.getStateHasHit()){
 		  hit = state.getHit();	
 		  hitPosition = hit.getPosition();
@@ -83,16 +87,17 @@ void EUTelTrackAnalysis::plotEfficiencyVsPosition(EUTelTrack track){
 			if(iterator->first == state.getLocation()){
 			  //check if hit near this location
 			  if(state.getStateHasHit()){
-			    //if((statePosition[0]-hitPosition[0]<0.5) and (statePosition[1]-hitPosition[1]<1)){
+
+			      if(std::abs(statePosition[0]-hitPosition[0])<0.5&&std::abs(statePosition[1]-hitPosition[1])<0.5){
 			      hasMatchedXHit=true;
 			      streamlog_out(DEBUG0) << "then we have hit!"<< std::endl;
-			      // }
+			       }
 			  }else streamlog_out(DEBUG0) << "!state.getStateHasHit()"<<std::endl;
 			
 			//residual[0]=statePosition[0]-hitPosition[0];
 			streamlog_out(DEBUG0) << "Add efficiency X : " << residual[0]<< std::endl;
 
-			_mapFromSensorIDToEfficiencyX[ state.getLocation() ]  -> fill( statePosition[0], statePosition[1], hasMatchedXHit, 1 );
+			_mapFromSensorIDToEfficiencyX[ state.getLocation() ]  -> fill( statePositionGlobal[0], statePositionGlobal[1], hasMatchedXHit, 1 );
 			break;
 			}
 		}
@@ -100,7 +105,7 @@ void EUTelTrackAnalysis::plotEfficiencyVsPosition(EUTelTrack track){
 		  bool hasMatchedYHit = false;
 			if(iterator->first == state.getLocation()){
 			  if(state.getStateHasHit()){
-			    if((statePosition[0]-hitPosition[0]<1)){
+			    if(fabs(statePosition[0]-hitPosition[0])<0.5&&fabs(statePosition[1]-hitPosition[1])<0.5){
 			      hasMatchedYHit=true;
 			      //then we have hit!
 			    }
@@ -219,11 +224,11 @@ void EUTelTrackAnalysis::plotPValueWithPosition(EUTelTrack track){
 	}
   streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotPValueWithPosition------------------------------END"<< std::endl;
 }
-float EUTelTrackAnalysis::calculatePValueForChi2(EUTelTrack track){std::cout<<"pigeon"<<std::endl;
-  std::cout<<"pigeon = "<<track.getNdf()<<std::endl;
+float EUTelTrackAnalysis::calculatePValueForChi2(EUTelTrack track){//std::cout<<"pigeon"<<std::endl;
+  //  std::cout<<"pigeon = "<<track.getNdf()<<std::endl;
   if(track.getNdf()==0) return 1;
-  boost::math::chi_squared mydist(track.getNdf());std::cout<<"pigeon2"<<std::endl;
-    float pValue = 1 - boost::math::cdf(mydist,track.getChi2());std::cout<<"pigeon3"<<std::endl;
+  boost::math::chi_squared mydist(track.getNdf());//std::cout<<"pigeon2"<<std::endl;
+  float pValue = 1 - boost::math::cdf(mydist,track.getChi2());//std::cout<<"pigeon3"<<std::endl;
     return pValue;
 }
 

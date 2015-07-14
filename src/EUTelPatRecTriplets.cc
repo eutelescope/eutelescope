@@ -420,7 +420,7 @@ EUTelTrack EUTelPatRecTriplets::getTrack(std::vector<EUTelHit> hits, std::vector
         for(unsigned int i = 0; i < hits.size(); ++i){//Check the list of hits to see if we have one on this plane.
             if(hits.at(i).getLocation()==sensorID){
                 hitOnPlane=true;
-		std::cout<<"hit on location "<<hits.at(i).getLocation()<<" has time "<<hits.at(i).getTime()<<std::endl;
+		streamlog_out(DEBUG4)<<"hit on location "<<hits.at(i).getLocation()<<" has time "<<hits.at(i).getTime()<<std::endl;
                 state.setLocation(hits.at(i).getLocation());
                 state.setHit(hits.at(i));
                 double dz1 = hits.at(i).getPositionGlobal()[2] - offset.at(2);
