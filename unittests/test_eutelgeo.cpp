@@ -266,4 +266,20 @@ TEST_F(eutelgeotestTest, vectorOrderZTest) {
 	std::vector<int> referenceVec = {8,0,1,2,3,4,5,7,6};
 	ASSERT_TRUE( std::equal(referenceVec.begin(), referenceVec.end(), sensorIDVec.begin()) );
 }
+
+TEST_F(eutelgeotestTest, radLengthTest1) {
+
+	Eigen::Vector3d begin = {0,0,-5};
+	Eigen::Vector3d end = {0,0,5};
+	std::cout << "Rad: " << eugeo::gGeometry().FindRad(begin, end) << std::endl;
+
+	Eigen::Vector3d begin2 = {0,0,3};
+	std::cout << "Rad: " << eugeo::gGeometry().FindRad(begin2, end) << std::endl;
+
+	Eigen::Vector3d begin3= {0,0,134};
+	Eigen::Vector3d end3 = {0,0,146};
+	std::cout << "Rad: " << eugeo::gGeometry().FindRad(begin3, end3) << std::endl;
+
+}
+
 // }  // namespace - could surround eutelgeotestTest in a namespace
