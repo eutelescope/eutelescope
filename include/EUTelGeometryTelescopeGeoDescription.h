@@ -219,8 +219,6 @@ class EUTelGeometryTelescopeGeoDescription
 	/** set Z rotation in radians */
 	inline void setPlaneZRotationRadians(int sensorID, double value){ _planeSetup[sensorID].gamma = value*DEG; this->clearMemoizedValues(); };
 
-	/** set Z rotation  */
-	void setPlaneZRotationRadians(int sensorID, double value /* in Radians */){ _planeSetup[sensorID].gamma = value*DEG; };
 	//GETTER
 	/** */ 
 	float siPlaneRotation1(int sensorID){ return _planeSetup.at(sensorID).r1; };
