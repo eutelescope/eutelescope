@@ -211,31 +211,31 @@ class EUTelGeometryTelescopeGeoDescription
 	inline const std::vector<double>& siPlanesZPositions() const { return _siPlaneZPosition; };
 
 	/** set X position  */
-	inline void setPlaneXPosition(int sensorID, double value){ _planeSetup[sensorID].xPos = value; };
+	inline void setPlaneXPosition(int sensorID, double value){ _planeSetup[sensorID].xPos = value; this->clearMemoizedValues(); };
 
 	/** set Y position  */
-	inline void setPlaneYPosition(int sensorID, double value){ _planeSetup[sensorID].yPos = value; };
+	inline void setPlaneYPosition(int sensorID, double value){ _planeSetup[sensorID].yPos = value; this->clearMemoizedValues(); };
 
 	/** set Z position  */
-	inline void setPlaneZPosition(int sensorID, double value){ _planeSetup[sensorID].zPos = value; };
+	inline void setPlaneZPosition(int sensorID, double value){ _planeSetup[sensorID].zPos = value; this->clearMemoizedValues(); };
 
 	/** set X rotation  */
-	inline void setPlaneXRotation(int sensorID, double value){ _planeSetup[sensorID].alpha = value; };
+	inline void setPlaneXRotation(int sensorID, double value){ _planeSetup[sensorID].alpha = value; this->clearMemoizedValues(); };
 
 	/** set Y rotation  */
-	inline void setPlaneYRotation(int sensorID, double value){ _planeSetup[sensorID].beta = value; };
+	inline void setPlaneYRotation(int sensorID, double value){ _planeSetup[sensorID].beta = value; this->clearMemoizedValues(); };
 
 	/** set Z rotation  */
-	inline void setPlaneZRotation(int sensorID, double value){ _planeSetup[sensorID].gamma = value; };
+	inline void setPlaneZRotation(int sensorID, double value){ _planeSetup[sensorID].gamma = value; this->clearMemoizedValues(); };
 
 	/** set X rotation in radians */
-	inline void setPlaneXRotationRadians(int sensorID, double value){ _planeSetup[sensorID].alpha = value*DEG; };
+	inline void setPlaneXRotationRadians(int sensorID, double value){ _planeSetup[sensorID].alpha = value*DEG; this->clearMemoizedValues(); };
 
 	/** set Y rotation in radians */
-	inline void setPlaneYRotationRadians(int sensorID, double value){ _planeSetup[sensorID].beta = value*DEG; };
+	inline void setPlaneYRotationRadians(int sensorID, double value){ _planeSetup[sensorID].beta = value*DEG; this->clearMemoizedValues(); };
 
 	/** set Z rotation in radians */
-	inline void setPlaneZRotationRadians(int sensorID, double value){ _planeSetup[sensorID].gamma = value*DEG; };
+	inline void setPlaneZRotationRadians(int sensorID, double value){ _planeSetup[sensorID].gamma = value*DEG; this->clearMemoizedValues(); };
 
 	/** */ 
 	float siPlaneRotation1(int sensorID){ return _planeSetup.at(sensorID).r1; };
@@ -446,6 +446,11 @@ private:
 	void readGear();
 
 	void translateSiPlane2TGeo(TGeoVolume*,int );
+
+	void clearMemoizedValues() { _planeNormalMap.clear(); _planeXMap.clear(); _planeYMap.clear(); }
+	std::map<int, TVector3> _planeNormalMap;
+	std::map<int, TVector3> _planeXMap;
+	std::map<int, TVector3> _planeYMap;
 };
         
 inline EUTelGeometryTelescopeGeoDescription& gGeometry( gear::GearMgr* _g = marlin::Global::GEAR )
