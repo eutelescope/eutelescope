@@ -85,7 +85,6 @@ void EUTelProcessorGBLAlign::init() {
 		_nProcessedEvents = 0;
 		std::string name("test.root");
 		geo::gGeometry().initializeTGeoDescription(name,false);
-		geo::gGeometry().initialisePlanesToExcluded(_excludePlanes);
 
 		// Initialize GBL fitter
 		EUTelGBLFitter* Fitter = new EUTelGBLFitter();

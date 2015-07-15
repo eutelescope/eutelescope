@@ -99,7 +99,7 @@ namespace eutelescope {
 			//GET
 			float getPositionOfSecondScatter(float start, float end);
 			gbl::GblPoint getLabelToPoint(std::vector<gbl::GblPoint> & pointList, unsigned  int label);
-			void getResidualOfTrackandHits(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint > pointList, EUTelTrack& track, std::map< int, std::map< float, float > > & SensorResidual, std::map< int, std::map< float, float > >& sensorResidualError, std::map< int, int> & planes);
+			void getResidualOfTrackandHits(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint > pointList, EUTelTrack& track, std::map< int, std::map< float, float > > & SensorResidual, std::map< int, std::map< float, float > >& sensorResidualError);
 			inline int getAlignmentMode() const {
 				return _alignmentMode;
 			}
@@ -181,6 +181,7 @@ namespace eutelescope {
 			unsigned int _counter_num_pointer;
 			bool _kinkAngleEstimation; //This used to determine if the correction matrix from the GBL fit is 5 or 7 elements long. 
 			EUTelMillepede* _MilleInterface;
+			std::vector<int> _sensorIDVec;
         
     };
 }
