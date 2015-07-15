@@ -24,53 +24,8 @@ float EUTelRadCal::setHomoBlocks(TVector3& start , TVector3& end ,std::vector<in
 float EUTelRadCal::setInHomoBlocks(std::map<int ,Block>& blocks, double beamEnergy){
     for(std::map<int, Block>::iterator itBl = blocks.begin(); itBl != blocks.end(); ++itBl){
         if(itBl->first < 0){///If block is medium then integrate.
-            TVector3 end(itBl->endPos.at(0), itBl->endPos.at(1), itBl->endPos.at(2)); 
-            TVector3 start(itBl->startPos.at(0), itBl->startPos.at(1), itBl->startPos.at(2)); 
-            TVector3 diff = end  - start;
-            diff.Unit();
-            static geo::EUTelGeometryTelescopeGeoDescription& geo = geo::gGeometry();
-            TGeoManager* gGeoManager = geo._geoManager;
-            gGeoManager->InitTrack( start[0]/*mm*/, start[1]/*mm*/, start[2]/*mm*/, diff[0], diff[1], diff[2] ); //Start point and direction
-            TGeoNode *node = gGeoManager->GetCurrentNode( );
-            double radTotal =0;
-            double distTotal=0;
-            double mean;
-            while ( node ) {
-                ///This will call the current node and get the ID. Silly to access this way but leave for now.
-                double rad,dist;
-                move(node,rad,dist);
-                radTotal = radTotal +rad; //Used as check at the end.
-                distTotal = distTotal + dist;//Keep total distance travelled since start
-                double var =  pow(getThetaRMSHighland( beamEnergy, rad ),2);
-                meanWeig =  distTotal*var;//Update where mean should be placed.
-                double pt[3];
-                memcpy( pt, gGeoManager->GetCurrentPoint(), 3 * sizeof (double) ); //Get global position
-                TVector3 newPos(pt[0], pt[1],pt[2] ); 
-                if((end - newPos) <0){
-                    break;
-                }
-            }
-            gGeoManager->InitTrack( start[0]/*mm*/, start[1]/*mm*/, start[2]/*mm*/, diff[0], diff[1], diff[2] ); //Start point and direction
-            TGeoNode *node = gGeoManager->GetCurrentNode( );
-            double radTotal =0;
-            double distTotal=0;
-            double mean;
-            while ( node ) {
-                ///This will call the current node and get the ID. Silly to access this way but leave for now.
-                double rad,dist;
-                move(node,rad,dist);
-                radTotal = radTotal +rad;
-                double var =  pow(getThetaRMSHighland( beamEnergy, rad ),2);
-                distTotal = distTotal + dist;
-                meanWeig =  distTotal*var;
-                double pt[3];
-                memcpy( pt, gGeoManager->GetCurrentPoint(), 3 * sizeof (double) ); //Get global position
-                TVector3 newPos(pt[0], pt[1],pt[2] ); 
-                if((end - newPos) <0){
-                    break;
-                }
-
-            }
+            getDistWeig(beamEnergy,itBl);
+            getVarWeig(beamEnergy,itBl);
         }
     }
 }
@@ -154,6 +109,80 @@ void EUTelRadCal::setRad(EUTelTrack& track){
     std::map<int ,Block> blocks;
     std::vector<int> pla = track.getPlaIDs();
     setHomoBlocks(start ,end ,pla,blocks );
+    setInHomoBlocks(blocks, track.getBeamEnergy());
+    _blocks =blocks;
+
+}
+void EUTelRadCal::getDistWeig(double& beamEnergy, std::map<int, Block>::iterator itBl){
+    TVector3 end(itBl->second.endPos.at(0), itBl->second.endPos.at(1), itBl->second.endPos.at(2)); 
+    TVector3 start(itBl->second.startPos.at(0), itBl->second.startPos.at(1), itBl->second.startPos.at(2)); 
+    TVector3 diff = end  - start;
+    diff.Unit();
+    static geo::EUTelGeometryTelescopeGeoDescription& geo = geo::gGeometry();
+    TGeoManager* gGeoManager = geo._geoManager;
+    gGeoManager->InitTrack( start[0]/*mm*/, start[1]/*mm*/, start[2]/*mm*/, diff[0], diff[1], diff[2] ); //Start point and direction
+    TGeoNode *node = gGeoManager->GetCurrentNode( );
+    double radTotal =0;
+    double distTotal=0;
+    double weigMean=0;
+    while ( node ) {
+        double rad,dist;
+        move(node,rad,dist);
+        radTotal = radTotal +rad; //Used as check at the end.
+        distTotal = distTotal + dist;//Keep total distance travelled since start
+        double var =  pow(Utility::getThetaRMSHighland( beamEnergy, rad ),2);
+        double weigMean = weigMean +  distTotal*var;//Update where mean should be placed.
+        double pt[3];
+        memcpy( pt, gGeoManager->GetCurrentPoint(), 3 * sizeof (double) ); //Get global position
+        TVector3 newPos(pt[0], pt[1],pt[2] ); 
+        if((end - newPos).Mag() ==  0){
+            break;
+        }
+    }
+    if(itBl->second.totalRad == radTotal){
+        double varTot =  pow(Utility::getThetaRMSHighland( beamEnergy, radTotal ),2);
+        itBl->second.weigMean = weigMean/varTot;
+    }else{
+        //Something must be wrong since the total radiation length should be the same as calculated in Homogenous block
+        throw(std::string("Radition lengths from iteration do not match"));
+    }
+
+}
+
+void EUTelRadCal::getVarWeig(double& beamEnergy, std::map<int, Block>::iterator itBl){
+    TVector3 end(itBl->second.endPos.at(0), itBl->second.endPos.at(1), itBl->second.endPos.at(2)); 
+    TVector3 start(itBl->second.startPos.at(0), itBl->second.startPos.at(1), itBl->second.startPos.at(2)); 
+    TVector3 diff = end  - start;
+    diff.Unit();
+    static geo::EUTelGeometryTelescopeGeoDescription& geo = geo::gGeometry();
+    TGeoManager* gGeoManager = geo._geoManager;
+    gGeoManager->InitTrack( start[0]/*mm*/, start[1]/*mm*/, start[2]/*mm*/, diff[0], diff[1], diff[2] ); //Start point and direction
+    TGeoNode *node = gGeoManager->GetCurrentNode( );
+    double radTotal =0;
+    double distTotal=0;
+    double weigVar=0;
+    while ( node ) {
+        double rad,dist;
+        move(node,rad,dist);
+        radTotal = radTotal +rad; //Used as check at the end.
+        distTotal = distTotal + dist;//Keep total distance travelled since start
+        double var =  pow(Utility::getThetaRMSHighland( beamEnergy, rad ),2);
+        double weigVar = weigVar +  pow(distTotal-itBl->second.weigMean ,2)*var;//Update where mean should be placed.
+        double pt[3];
+        memcpy( pt, gGeoManager->GetCurrentPoint(), 3 * sizeof (double) ); //Get global position
+        TVector3 newPos(pt[0], pt[1],pt[2] ); 
+        if((end - newPos).Mag() ==  0){
+            break;
+        }
+    }
+    if(itBl->second.totalRad == radTotal){
+        double varTot =  pow(Utility::getThetaRMSHighland( beamEnergy, radTotal ),2);
+
+        itBl->second.weigVar = weigVar/varTot;
+    }else{
+        //Something must be wrong since the total radiation length should be the same as calculated in Homogenous block
+        throw(std::string("Radition lengths from iteration do not match"));
+    }
 
 }
 
