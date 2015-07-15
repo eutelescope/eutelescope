@@ -49,8 +49,7 @@ EUTelGeometryTelescopeGeoDescription& EUTelGeometryTelescopeGeoDescription::getI
 	unsigned i = EUTelGeometryTelescopeGeoDescription::_counter;
 	
 	//do it only once!
-	if( i < 1 )
-	{
+	if( i < 1 ) {
 		instance.setGearManager(_g);
 		instance.readGear();
 	}
@@ -62,42 +61,48 @@ EUTelGeometryTelescopeGeoDescription& EUTelGeometryTelescopeGeoDescription::getI
 //Note  that to determine these axis we MUST use the geometry class after initialisation. By this I mean directly from the root file create.
 TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneNormal( int planeID )
 {
-	std::vector<int>::iterator it = std::find(_sensorIDVec.begin(), _sensorIDVec.end(), planeID);
-	if( it != _sensorIDVec.end() )
-	{
-		const double zAxisLocal[3]  = {0,0,1};
-		double zAxisGlobal[3]; 
-		local2MasterVec(planeID,zAxisLocal,zAxisGlobal); 
-		TVector3 normVec(zAxisGlobal[0],zAxisGlobal[1],zAxisGlobal[2]);
-		return normVec;
-	}
-	else
-	{
-		std::stringstream ss;
-		ss << planeID;
-		std::string errMsg = "EUTelGeometryTelescopeGeoDescription::siPlaneNormal: Could not find planeID: " + ss.str();
-		throw InvalidGeometryException(errMsg);
+	std::map<int, TVector3>::iterator mapIt = _planeNormalMap.find(planeID);
+	if( mapIt != _planeNormalMap.end() ) {
+		return mapIt->second;
+	} else {
+		std::vector<int>::iterator it = std::find(_sensorIDVec.begin(), _sensorIDVec.end(), planeID);
+		if( it != _sensorIDVec.end() ) {
+			const double zAxisLocal[3]  = {0,0,1};
+			double zAxisGlobal[3]; 
+			local2MasterVec(planeID,zAxisLocal,zAxisGlobal); 
+			TVector3 normVec(zAxisGlobal);
+			_planeNormalMap[planeID] = normVec;
+			return normVec;
+		} else {
+			std::stringstream ss;
+			ss << planeID;
+			std::string errMsg = "EUTelGeometryTelescopeGeoDescription::siPlaneNormal: Could not find planeID: " + ss.str();
+			throw InvalidGeometryException(errMsg);
+		}
 	}
 }
 
 /**TODO: Replace me: NOP*/
 TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneXAxis( int planeID )
 {
-	std::vector<int>::iterator it = std::find(_sensorIDVec.begin(), _sensorIDVec.end(), planeID);
-	if( it != _sensorIDVec.end() )
-	{
-		const double xAxisLocal[3]  = {1,0,0};
-		double xAxisGlobal[3]; 
-		local2MasterVec(planeID,xAxisLocal , xAxisGlobal ); 
-		TVector3 xVec(xAxisGlobal[0],xAxisGlobal[1],xAxisGlobal[2]);
-		return xVec;
-	}
-	else
-	{
-		std::stringstream ss;
-		ss << planeID;
-		std::string errMsg = "EUTelGeometryTelescopeGeoDescription::siPlaneXAxis: Could not find planeID: " + ss.str();
-		throw InvalidGeometryException(errMsg);
+	std::map<int, TVector3>::iterator mapIt = _planeXMap.find(planeID);
+	if( mapIt != _planeXMap.end() ) {
+		return mapIt->second;
+	} else {
+		std::vector<int>::iterator it = std::find(_sensorIDVec.begin(), _sensorIDVec.end(), planeID);
+		if( it != _sensorIDVec.end() ) {
+			const double xAxisLocal[3] = {1,0,0};
+			double xAxisGlobal[3]; 
+			local2MasterVec(planeID, xAxisLocal, xAxisGlobal); 
+			TVector3 xVec(xAxisGlobal);
+			_planeXMap[planeID] = xVec;
+			return xVec;
+		} else {
+			std::stringstream ss;
+			ss << planeID;
+			std::string errMsg = "EUTelGeometryTelescopeGeoDescription::siPlaneXAxis: Could not find planeID: " + ss.str();
+			throw InvalidGeometryException(errMsg);
+		}
 	}
 }
 
@@ -105,21 +110,24 @@ TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneXAxis( int planeID )
 /**TODO: Replace me: NOP*/
 TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneYAxis( int planeID )
 {
-	std::vector<int>::iterator it = std::find(_sensorIDVec.begin(), _sensorIDVec.end(), planeID);
-	if( it != _sensorIDVec.end() )
-	{
-		const double yAxisLocal[3]  = {0,1,0};
-		double yAxisGlobal[3]; 
-		local2MasterVec(planeID,yAxisLocal , yAxisGlobal ); 
-		TVector3 yVec(yAxisGlobal[0],yAxisGlobal[1],yAxisGlobal[2]);
-		return yVec;
-	}
-	else
-	{
-		std::stringstream ss;
-		ss << planeID;
-		std::string errMsg = "EUTelGeometryTelescopeGeoDescription::siPlaneYAxis: Could not find planeID: " + ss.str(); 
-		throw InvalidGeometryException(errMsg);
+	std::map<int, TVector3>::iterator mapIt = _planeYMap.find(planeID);
+	if( mapIt != _planeYMap.end() ) {
+		return mapIt->second;
+	} else {
+		std::vector<int>::iterator it = std::find(_sensorIDVec.begin(), _sensorIDVec.end(), planeID);
+		if( it != _sensorIDVec.end() ) {
+			const double yAxisLocal[3] = {0,1,0};
+			double yAxisGlobal[3]; 
+			local2MasterVec(planeID, yAxisLocal, yAxisGlobal); 
+			TVector3 yVec(yAxisGlobal);
+			_planeYMap[planeID] = yVec;
+			return yVec;
+		} else {
+			std::stringstream ss;
+			ss << planeID;
+			std::string errMsg = "EUTelGeometryTelescopeGeoDescription::siPlaneYAxis: Could not find planeID: " + ss.str(); 
+			throw InvalidGeometryException(errMsg);
+		}
 	}
 }
 
