@@ -339,6 +339,8 @@ class EUTelGeometryTelescopeGeoDescription
 
 	int getSensorIDFromManager();
 
+	double FindRad(Eigen::Vector3d const & startPt, Eigen::Vector3d const & endPt);
+
 	void local2Master( int, const double[], double[] );
 
 	void master2Local(int, const double[], double[] );
