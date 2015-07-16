@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <string>
 #include <cstring>
+#include <cmath>
 #include <sstream>
 
 // MARLIN
@@ -53,7 +54,6 @@ EUTelGeometryTelescopeGeoDescription& EUTelGeometryTelescopeGeoDescription::getI
 		instance.setGearManager(_g);
 		instance.readGear();
 	}
-	
 	instance.counter();
 	return instance;
 }
@@ -105,7 +105,6 @@ TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneXAxis( int planeID )
 		}
 	}
 }
-
 
 /**TODO: Replace me: NOP*/
 TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneYAxis( int planeID )
@@ -1005,6 +1004,30 @@ double EUTelGeometryTelescopeGeoDescription::FindRad(Eigen::Vector3d const & sta
 		propagatedDistance += snext; 
 	}
 	return rad;   
+}
+
+double EUTelGeometryTelescopeGeoDescription::planeRadLengthGlobalIncidence(int planeID, Eigen::Vector3d const & incidenceDir) {
+	
+	double normRad;
+	
+	TVector3 planeNormalT = siPlaneNormal(planeID);
+	Eigen::Vector3d planeNormal(planeNormalT(0), planeNormalT(1), planeNormalT(2));
+	
+	std::map<int, double>::iterator mapIt = _planeRadMap.find(planeID);
+	if( mapIt != _planeRadMap.end() ) {
+		normRad = mapIt->second;
+	} else {
+		Eigen::Vector3d planePosition(siPlaneXPosition(planeID), siPlaneYPosition(planeID), siPlaneZPosition(planeID));
+
+		Eigen::Vector3d startPoint = planePosition - 0.51*siPlaneZSize(planeID)*planeNormal;
+		Eigen::Vector3d endPoint = planePosition + 0.51*siPlaneZSize(planeID)*planeNormal;
+
+		normRad = FindRad(startPoint, endPoint);
+		_planeRadMap[planeID] = normRad;
+	}
+
+	double scale = std::abs(incidenceDir.dot(planeNormal));
+	return normRad/scale;
 }
 
 bool EUTelGeometryTelescopeGeoDescription::testOutput(std::map< const int,double> & mapSensor,std::map<const int,double> & mapAir){
