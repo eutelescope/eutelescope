@@ -234,7 +234,7 @@ namespace eutelescope {
 	void EUTelGBLFitter::getGBLPointsFromTrack(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList, std::map<  unsigned int,unsigned int > & linkGL,std::map< unsigned int, unsigned int > & linkMeas ){
 		streamlog_out(DEBUG0)<<"EUTelGBLFitter::getGBLPointsFromTrack-------------------------------------BEGIN"<<std::endl;
         EUTelRadCal radCal;
-        radCal.setRad(track);
+        radCal.getRad(track);
         /// This is the minimum needed to create a GBL trajectory. It basically only relates each GBL point to each other at this stage.
 		streamlog_out(DEBUG0)<<"Create basic traj. "<<std::endl;
         getBasicList(track,pointList,linkGL);
