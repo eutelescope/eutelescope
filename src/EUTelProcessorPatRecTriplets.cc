@@ -40,6 +40,7 @@ _dataMissNumber(0)
     ///abs(Triplet.Slo-Triplet.Slo)<cut. //Both triplets prediction of slope is compared.
 	registerOptionalParameter("TripletSlopeCuts", "Triplet slope difference which is allowed to create track ",
 	_tripletSlopeCuts, FloatVec());
+    registerOptionalParameter("minHits", "Minimum number of hits needed", _minHits ,int(6));
 
 	///This is needed if we have a magnetic field to determine curvature
 	registerOptionalParameter("BeamEnergy", "Beam energy [GeV]", _eBeam, static_cast<double> (4.0));
@@ -82,7 +83,6 @@ void EUTelProcessorPatRecTriplets::init(){
 		_trackFitter->setDoubletCenDistCut(_doubletCenDistCut);
         _trackFitter->setTripletConnectDistCut(_tripletConnectDistCut);
 		_trackFitter->setBeamMomentum(_eBeam);
-		_trackFitter->setBeamCharge(_qBeam);
         _trackFitter->setPlaneDimensionsVec(_planeDimension);
 		_trackFitter->testUserInput();
 		bookHistograms();		
