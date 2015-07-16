@@ -343,7 +343,8 @@ class EUTelGeometryTelescopeGeoDescription
 
 	double FindRad(Eigen::Vector3d const & startPt, Eigen::Vector3d const & endPt);
 
-	double planeRadLengthGlobalIncidence(int planeID, Eigen::Vector3d const & incidenceDir);
+	double planeRadLengthGlobalIncidence(int planeID, Eigen::Vector3d incidenceDir);
+	double planeRadLengthLocalIncidence(int planeID, Eigen::Vector3d incidenceDir);
 	
 	void local2Master( int, const double[], double[] );
 
