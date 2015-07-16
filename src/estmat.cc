@@ -280,11 +280,11 @@ void SDR::operator() (size_t offset, size_t stride){
       //I'm using an information filter, need explicit state and covariance
       TrackEstimate<FITTERTYPE, 4>* result = system.m_fitter->forward.at(pl);
       Measurement<FITTERTYPE>& meas = system.planes.at(pl).meas.at(0);
-      //Get residuals in x and y, squared
-      Eigen::Matrix<FITTERTYPE, 2, 1> resids = system.getResiduals(meas, result).array().square();
+      //Get residuals in x and y
+      Eigen::Matrix<FITTERTYPE, 2, 1> resids = system.getResiduals(meas, result);
       //Get variance of residuals in x and y
       Eigen::Matrix<FITTERTYPE, 2, 1> variance = system.getBiasedResidualErrors(system.planes.at(pl), result);
-      Eigen::Matrix<FITTERTYPE, 2, 1> pull2 = resids.array() / variance.array();
+      Eigen::Matrix<FITTERTYPE, 2, 1> pull2 = resids.array().square() / variance.array();
       sqrPullXFW.at(pl - 2) += pull2(0); 
       sqrPullYFW.at(pl - 2) += pull2(1); 
     }
@@ -292,9 +292,9 @@ void SDR::operator() (size_t offset, size_t stride){
     for(size_t pl = 0; pl < system.planes.size() - 2; pl++){
       TrackEstimate<FITTERTYPE, 4>* result = system.m_fitter->backward.at(pl);
       Measurement<FITTERTYPE>& meas = system.planes.at(pl).meas.at(0);
-      Eigen::Matrix<FITTERTYPE, 2, 1> resids = system.getResiduals(meas, result).array().square();
+      Eigen::Matrix<FITTERTYPE, 2, 1> resids = system.getResiduals(meas, result);
       Eigen::Matrix<FITTERTYPE, 2, 1> variance = system.getUnBiasedResidualErrors(system.planes.at(pl), result);
-      Eigen::Matrix<FITTERTYPE, 2, 1> pull2 = resids.array() / variance.array();
+      Eigen::Matrix<FITTERTYPE, 2, 1> pull2 = resids.array().square() / variance.array();
       sqrPullXBW.at(pl) += pull2(0);
       sqrPullYBW.at(pl) += pull2(1);
     }

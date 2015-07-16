@@ -215,7 +215,7 @@ void EUTelDafMaterial::dafEvent (LCEvent * /*event*/) {
     //int inTimeHits = checkInTime( _system.tracks.at(ii));
     for(size_t pl = 0 ; pl < _system.planes.size(); pl++){
       if( find(_dutPlanes.begin(), _dutPlanes.end(), _system.planes.at(pl).getSensorID()) != _dutPlanes.end()){ 
-    	_system.planes.at(pl).include(); 
+     	_system.planes.at(pl).include(); 
       }
     }
     _system.weightToIndex(_system.tracks.at(ii));
@@ -319,10 +319,9 @@ void EUTelDafMaterial::dafEnd() {
   //Minimizer* minimize = new FakeAbsDev(_matest);
   //_matest.simplexSearch(minimize, 3000, 30);
   
-  FwBw* minimize = new FwBw(_matest); //HYBR
+  FwBw* minimize = new FwBw(_matest);
   _matest.quasiNewtonHomeMade(minimize, 400);
-
-
+  
   //Use this for alignment only. 
   // Minimizer* minimize = new Chi2(_matest); //Alignment
   //_matest.quasiNewtonHomeMade(minimize, 1000);
