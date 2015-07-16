@@ -343,6 +343,8 @@ class EUTelGeometryTelescopeGeoDescription
 
 	double FindRad(Eigen::Vector3d const & startPt, Eigen::Vector3d const & endPt);
 
+	double planeRadLengthGlobalIncidence(int planeID, Eigen::Vector3d const & incidenceDir);
+	
 	void local2Master( int, const double[], double[] );
 
 	void master2Local(int, const double[], double[] );
@@ -412,10 +414,11 @@ private:
 
 	void translateSiPlane2TGeo(TGeoVolume*,int );
 
-	void clearMemoizedValues() { _planeNormalMap.clear(); _planeXMap.clear(); _planeYMap.clear(); }
+	void clearMemoizedValues() { _planeNormalMap.clear(); _planeXMap.clear(); _planeYMap.clear(); _planeRadMap.clear(); }
 	std::map<int, TVector3> _planeNormalMap;
 	std::map<int, TVector3> _planeXMap;
 	std::map<int, TVector3> _planeYMap;
+	std::map<int, double> _planeRadMap;
 };
         
 inline EUTelGeometryTelescopeGeoDescription& gGeometry( gear::GearMgr* _g = marlin::Global::GEAR )
