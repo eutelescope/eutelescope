@@ -158,8 +158,6 @@ void EUTelProcessorPatRecTriplets::processEvent(LCEvent* evt)
 		if(allHitsVec.empty()) throw lcio::Exception("No hits!");
 		_trackFitter->setHitsVec(allHitsVec);  
 		_trackFitter->printHits();
-		_trackFitter->setHitsVecPerPlane();
-		_trackFitter->testHitsVecPerPlane();
 		streamlog_out( DEBUG1 ) << "Trying to find tracks..." << std::endl;
 		std::vector<EUTelTrack> tracks = _trackFitter->getTracks();
 		streamlog_out( DEBUG1 ) << "Trying to find tracks...We have " << tracks.size()<<" tracks"<<std::endl;
