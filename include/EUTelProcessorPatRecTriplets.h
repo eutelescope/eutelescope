@@ -152,6 +152,8 @@ namespace eutelescope {
 		double _qBeam;
 	    /// Planes we have excluded.	
 		EVENT::IntVec _excludePlanes;         
+        int _mode;
+        int _hitNum;
 
 		private:
         /// prevent users from making (default) copies of processors

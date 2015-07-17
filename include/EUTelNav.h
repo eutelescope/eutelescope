@@ -32,6 +32,8 @@ class EUTelNav
 	public: 
         EUTelNav();
         ~EUTelNav();
+        static void init();
+
         /// This function will will produce a 5x5 matrix to propagate a local state to global. Incidence information is propagated here too.
         /// To define this tranform the incidence in the global frame and rotation matrix local->global is passed. 
         /**
@@ -52,13 +54,14 @@ class EUTelNav
          */
 
 		static TMatrixD getPropagationJacobianGlobalToGlobal(float ds, TVector3 t1w);
-        /// With two hits a basic straight line track can be parameterised. 
-        /// 
-        /**
-         * \param [in] hit1 hit z position less than 2 
-         * \param [in]  hit2 hit z position greater than 1
-         * \param [out] offset vector containing the x,y,z of hit 1 and z of hit 2 
-         * \param [out] trackSlope vector with the x and y slope of the hits fitted with a straight line track.
+        //! Parameterise track from two hits 
+        /*! This will get the needed information to describe a track from two hits.
+         *  Need 4 hits to determine qOverP change.  
+         *
+         *  @param[in] firstHit Plane upstream from endHit 
+         *  @param[in] endHit last hit on trajectory. 
+         *  @param[out] offset This is x,y,z of first hit and z of endHit. So (sx,sy,sz,ez) were s=>start and e => end.
+         *  @param[out] trackSlope This is the track slope in X/Y.
          */
 
         static void getTrackAvePara(EUTelHit &, EUTelHit &, std::vector<double>& offset, std::vector<double>& trackSlope);
@@ -73,6 +76,7 @@ class EUTelNav
          * \param [in] hit4
          * \return corr correction must be added to q/p. 
          */
+        static void getTrackPredictionFromParam( std::vector<double> const & offset, std::vector<double> const & trackSlope,double const & qOverP, double const & posZ, Eigen::Vector3d & posPred, std::vector<double>& slopePred);
 
         static double getCorr(EUTelHit &, EUTelHit &, EUTelHit &, EUTelHit &);
         static std::vector<double>  getCurvXY();
@@ -81,6 +85,7 @@ class EUTelNav
         static std::vector<double> _curv;
         static double _intBeamE;
 };
+
 
 }
 #endif

@@ -2,11 +2,12 @@
 using namespace eutelescope;
 
 
-void EUTelRadCal::getRad(EUTelTrack& track){
+std::map<int ,Block> EUTelRadCal::getRad(EUTelTrack& track){
     std::map<int ,Block> blocks;
     setIncSenBlocks(track,blocks);
-    getThicknessAndRad(track,blocks); 
-    getScatParam(blocks); 
+//    getThicknessAndRad(track,blocks); 
+//    getScatParam(blocks); 
+    return blocks;
 
 }
 void EUTelRadCal::setIncSenBlocks(EUTelTrack const & track, std::map<int, Block>& blocks){ 
@@ -15,6 +16,11 @@ void EUTelRadCal::setIncSenBlocks(EUTelTrack const & track, std::map<int, Block>
             double senSize =  geo::gGeometry().siPlaneZSize(itSt->getLocation());
             ///Must check values for this method of access
             blocks[itSt->getLocation()].senRadPer = senSize/senRad;
+            blocks.at(itSt->getLocation()).weigVar = 0;
+            blocks.at(itSt->getLocation()).weigMean = 0;
+            blocks.at(itSt->getLocation()).medRadPer = 0;
+
+
     }
 }
 

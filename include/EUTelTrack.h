@@ -38,6 +38,8 @@ namespace eutelescope {
 			//setters
             void setState(EUTelState state);
             void setStates(std::vector<EUTelState> states);
+            std::vector<EUTelHit> getHitsCopy() const; 
+
 			void setTotalVariance(double rad);
             void setChi2(float chi2);
             void setNdf(float nDF);

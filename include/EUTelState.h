@@ -23,6 +23,8 @@ namespace eutelescope {
 			EUTelState(EUTelState *state);
 			//getters
 			EUTelHit& getHit();
+            EUTelHit getHitCopy() const;
+
 			int getDimensionSize() const ;
 			TVectorD getStateVec();
 			float getSlopeX() const; 
@@ -43,7 +45,7 @@ namespace eutelescope {
 
 			TMatrixD getProjectionMatrix() const;
 			TVector3 getIncidenceUnitMomentumVectorInLocalFrame();
-			TMatrixDSym getScatteringVarianceInLocalFrame();
+			TMatrixDSym getScatteringVarianceInLocalFrame(double const & var );
 			double getRadFracAir() const ;
 			double getRadFracSensor() const ;
             TVector3 getDirLocal() const; 

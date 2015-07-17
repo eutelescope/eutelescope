@@ -153,6 +153,18 @@ double EUTelNav::getCorr(EUTelHit & hit1, EUTelHit & hit2, EUTelHit & hit3, EUTe
     streamlog_out(DEBUG0) << "Corrected q/p: " << corr  <<std::endl; 
     return corr;
 }
+void EUTelNav::getTrackPredictionFromParam(std::vector<double> const & offset, std::vector<double> const & trackSlope,double const & qOverP, double const & posZ, Eigen::Vector3d & posPred, std::vector<double>& slopePred){
+    std::vector<double> curvCorr; curvCorr.push_back(qOverP*_bFac[0]);curvCorr.push_back(qOverP*_bFac[1]);
+    double dz1 = posZ - offset.at(2);
+    double dz2 = posZ - offset.at(3); 
+    double dz = (dz1 + dz2)/2.0;
+    double posX = offset.at(0) + dz1*trackSlope.at(0) + 0.5*dz1*dz2*curvCorr.at(0);
+    double posY = offset.at(1) + dz1*trackSlope.at(1) + 0.5*dz1*dz2*curvCorr.at(1);
+    posPred << posX, posY, posZ ;
+    slopePred.push_back(trackSlope.at(0)+dz*curvCorr.at(0));
+    slopePred.push_back(trackSlope.at(1)+dz*curvCorr.at(1));
+}
+
 ///Curvature in x/y is passed to naviagation.
 std::vector<double>  EUTelNav::getCurvXY(){
     //Defined the same as saved in track parameters.
@@ -181,9 +193,13 @@ TVector3  EUTelNav::getBFac(){
     TVector3 bFac = 0.0003*(TVector3(0,0,1).Cross(H));
     return bFac;
 }
-
-TVector3 EUTelNav::_bFac = EUTelNav::getBFac();
-std::vector<double> EUTelNav::_curv = EUTelNav::getCurvXY();
-double EUTelNav::_intBeamE = 0;
+void EUTelNav::init(){
+    _bFac = getBFac();
+    _curv = getCurvXY();
+    _intBeamE = 0;
+}
+        TVector3 EUTelNav::_bFac;
+        std::vector<double> EUTelNav::_curv;
+        double EUTelNav::_intBeamE;
 
 } //namespace eutelescope

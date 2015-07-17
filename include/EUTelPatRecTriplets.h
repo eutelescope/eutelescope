@@ -134,6 +134,12 @@ namespace eutelescope {
     inline void setBeamMomentum(double beam) {
         this->_beamE = beam;
     }
+    inline void setMode(double mode) {
+        this->_mode = mode;
+    }
+    inline void setNumHits(double hitNum) {
+        this->_hitNum = hitNum;
+    }
 
     //get public
     
@@ -186,12 +192,13 @@ namespace eutelescope {
     /*! 
      * The doublet included all the information need to parameterise the track fro mthe two hits.
      *  @param[in] hit Hit on plane down stream 
+     *  @param[in] cuts Pass the cuts so this can be varied at different positions in code.
      *  @param[in] hit Hit on plane upstream.
      *  @param[out] doublet doublet constructed from hits.
      *  @return pass Has the cut been passed.
      */
 
-    bool getDoublet( EUTelHit&, EUTelHit&,doublets& );
+    bool getDoublet( EUTelHit const  &, EUTelHit const&, std::vector<float> const & doubletDistCut ,doublets&);
     //! Predict global position using triplet at certain z position.  
     /*! 
      *  
@@ -252,20 +259,31 @@ namespace eutelescope {
      *  A cut is made on the number of hits in the final track. If less than this the bool returned in false.
      *  @param[in] doub Doublet to parameterise track from.
      *  @param[in] sen list of sensor to collect hits from.
+     *  @param[in] hitNum Number of hits as minimum needed to pass.
      *  @param[out] newHits list of hits found. WILL NOT ATTACH ORIGINAL DOUBLET HITS
      *  @return pass If we have enough hits?
      */
-    bool getDoubHitOnTraj(doublets& doub, std::vector<unsigned int> & sen,std::vector<EUTelHit>& newHits   );
+    bool getDoubHitOnTraj( doublets const& doub, std::vector<unsigned int> const & sen,int const & hitNum, std::vector<EUTelHit>& newHits   );
 
 
-    //! Get all hits which the predicted doublet passes  
+    //! Return the distance between hit position and prediction.  
     /*! 
+     *  This comparision MUST be done in the local frame(WITH NO OFFSETS!). This is done since we only have x information in the local direction for strips sensors 
+     *  There we must rotate out frame to line up with the local frame.
      *  @param[in] itHit Iterator of hit object 
      *  @param[in] pos Position of prediction. 
      *  @return  dist This is the distance between the prediction and measurement in the local frame.
      */
 
     float getDistLocal(std::vector<EUTelHit>::iterator itHit, std::vector<float>& pos);
+    //! Will run the pattern recognition in alignment mode  
+    /*! 
+     *  @return tracks Tracks ready for use create using strict cuts for alignment. 
+     */
+    ///\todo DUT hits here are added using parameterisation without slope changes. This could be improved with use in magnetic fields.  
+
+    std::vector<EUTelTrack> getMinFakeTracks();
+
     inline double getBeamMomentum() const {
         return _beamE;
     }
@@ -294,6 +312,8 @@ namespace eutelescope {
     EVENT::TrackerHitVec _allHitsVec; 
     /** Beam momentum [GeV/c] */
     double _beamE;
+    int _mode;
+    int _hitNum;
     public:
     unsigned int _numberOfTracksTotal;
 

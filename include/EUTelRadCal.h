@@ -8,6 +8,7 @@
 #include "EUTelGeometryTelescopeGeoDescription.h"
 #include "EUTelGBLFitter.h"
 #include "TMath.h"
+#include "EUTelBlock.h"
 
 #include <map>
 
@@ -31,15 +32,6 @@ namespace eutelescope {
              *
              */
 
-            struct Block{
-                bool isSen;
-                double senRadPer;
-                double medRadPer;
-                double weigMean;
-                double weigVar;
-                std::vector<std::pair<double,double> > thicknessAndRad; 
-
-            };
             void setMeanWeight(Block & block);
             void setVarWeight(Block & block);
 
@@ -48,7 +40,7 @@ namespace eutelescope {
              *  @param [in] track
              */
 
-            void getRad(EUTelTrack& track);
+            std::map<int ,Block> getRad(EUTelTrack& track);
             void setIncSenBlocks(EUTelTrack const & track, std::map<int, Block>& blocks); 
             void getThicknessAndRad(EUTelTrack const & track, std::map<int, Block> & blocks);
             void getScatParam(std::map<int, Block> & blocks);
@@ -57,11 +49,6 @@ namespace eutelescope {
 
             void setBlockWithoutTrackInfo(EUTelTrack const  & track, std::map<int, Block>& blocks);
 
-
-        protected:
-
-
 	};
-
 }
 #endif	/* EUTELRADCAL */

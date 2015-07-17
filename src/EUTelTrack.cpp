@@ -37,6 +37,16 @@ float EUTelTrack::getNdf() const {
 std::vector<EUTelState>& EUTelTrack::getStates(){
 	return _states;
 }
+std::vector<EUTelHit> EUTelTrack::getHitsCopy() const {
+    std::vector<EUTelHit> hits;
+    for(std::vector<EUTelState>::const_iterator itSt = _states.begin(); itSt != _states.end(); ++itSt){
+        if(itSt->getStateHasHit()){
+            hits.push_back(itSt->getHitCopy());
+        }
+    }
+    return hits;
+}
+
 std::vector<EUTelState> EUTelTrack::getStatesCopy() const {
 	return _states;
 }

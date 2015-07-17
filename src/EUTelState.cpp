@@ -60,6 +60,14 @@ EUTelHit& EUTelState::getHit(){
         throw(std::string("Trying to access a hit which is not there "));
     }
 }
+EUTelHit EUTelState::getHitCopy() const {
+    if(_stateHasHit){
+        return _hit;
+    }else{
+        throw(std::string("Trying to access a hit which is not there "));
+    }
+}
+
 int EUTelState::getDimensionSize() const {
 	return _dimension;
 }
@@ -123,13 +131,12 @@ TVectorD EUTelState::getStateVec(){
 	streamlog_out( DEBUG1 ) << "EUTelState::getTrackStateVec()------------------------END" << std::endl;
  	return stateVec;
 }
-TMatrixDSym EUTelState::getScatteringVarianceInLocalFrame(){
+TMatrixDSym EUTelState::getScatteringVarianceInLocalFrame(double const& var ){
 	streamlog_out( DEBUG1 ) << "EUTelState::getScatteringVarianceInLocalFrame(Sensor)----------------------------BEGIN" << std::endl;
-	streamlog_out(DEBUG1) << "Variance (Sensor):  " << std::scientific << getRadFracSensor() << "  Plane: " << getLocation()  << std::endl;
-	if(getRadFracSensor() == 0){
-		throw(std::string("Radiation of sensor is zero. Something is wrong with radiation length calculation."));
+	if(var == 0){
+		throw(std::string("Variance passed is zero."));
 	}
-	float scatPrecision = 1.0/getRadFracSensor();
+	float scatPrecision = 1.0/var;
     TMatrixD TRotMatrix = geo::gGeometry().getRotMatrix( getLocation() );
 	TVector3 axisX;
 	TVector3 axisY;
