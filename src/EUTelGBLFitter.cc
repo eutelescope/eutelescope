@@ -47,6 +47,7 @@ namespace eutelescope {
 	_eBeam(4.),
 	_mEstimatorType(),
 	_mille(0),
+    _mode(1),
 	_parameterIdXShiftsMap(),
 	_parameterIdYShiftsMap(),
 	_parameterIdZShiftsMap(),
@@ -54,6 +55,8 @@ namespace eutelescope {
 	_parameterIdYRotationsMap(),
 	_parameterIdZRotationsMap()
 	{}
+    ///\todo Mode is set in only some processors. GBLAlign does not bother so it is set to internal parameterisation.  
+
 
 	EUTelGBLFitter::~EUTelGBLFitter() {
 	}
@@ -75,10 +78,9 @@ namespace eutelescope {
 		state.getHit().setCov(hitcov);
 	}
 	//Note that we take the planes themselfs at scatters and also add scatterers to simulate the medium inbetween. 
-	void EUTelGBLFitter::setScattererGBL(gbl::GblPoint& point,EUTelState & state, Block & block ) {
+	void EUTelGBLFitter::setScattererGBL(gbl::GblPoint& point,EUTelState & state, double& varSen ) {
 		streamlog_out(DEBUG1) << " setScattererGBL ------------- BEGIN --------------  " << std::endl;
-        double var =Utility::getThetaRMSHighland( _eBeam, block.senRadPer ); ///Should use beam energy from updated curvature.
-		TMatrixDSym precisionMatrix =  state.getScatteringVarianceInLocalFrame(var );
+		TMatrixDSym precisionMatrix =  state.getScatteringVarianceInLocalFrame(varSen );
 		streamlog_out(MESSAGE1) << "The precision matrix being used for the sensor  "<<state.getLocation()<<":" << std::endl;
 		streamlog_message( DEBUG0, precisionMatrix.Print();, std::endl; );
 		point.addScatterer(state.getKinks(), precisionMatrix);
@@ -103,7 +105,7 @@ namespace eutelescope {
 		streamlog_out(DEBUG4) << "Y:" << std::setw(20) << meas[1] << std::setw(20)  <<"," << measPrec[1] << std::endl;
 		streamlog_out(DEBUG4) << "This H matrix:" << std::endl;
 		streamlog_message( DEBUG0, state.getProjectionMatrix().Print();, std::endl; );
-		/// The gbl library creates 5 measurement vector and 5x5 propagation matrix automatically. If  
+		/// The gbl library creates 5 sized measurement vector and 5x5 propagation matrix automatically. If  
         /// Measurement is added in local frame. Defined as a plane in the GBL fit which contains only position information. 
         /// The projection matrix which is 5x5 is defined as the transform from the global to local frame. 
         /// The last zero is the minimum precision before this is set to 0. TO DO:Remove this magic number
@@ -111,13 +113,11 @@ namespace eutelescope {
 		streamlog_out(DEBUG1) << " setMeasurementsGBL ------------- END ----------------- " << std::endl;
 	}
     ///This function is the link between Millepede and the creation of global variable to the GBL points. 
-	void EUTelGBLFitter::getGloPar(std::vector< gbl::GblPoint >& pointList, EUTelTrack & track, std::map< unsigned int, unsigned int> & linkMeas ){
-        streamlog_out(DEBUG1) << "State measurement numbers: " << linkMeas.size()  << std::endl;
+	void EUTelGBLFitter::getGloPar(std::vector< gbl::GblPoint >& pointList, EUTelTrack& track){
         for(size_t j=0; j < track.getStates().size(); j++){
             EUTelState state = track.getStates().at(j);
             streamlog_out(DEBUG1) << "State location" << state.getLocation() << std::endl;
-            std::map<unsigned int, unsigned int>::iterator itLink = linkMeas.find(state.getLocation());
-            if(itLink != linkMeas.end()){ 
+            if(state.getStateHasHit()){ 
                 streamlog_out(DEBUG1) << "Add global derivatives" << std::endl;
                 ///Internally millepede will save a jacobian and the correct global labels for this setup
                 _MilleInterface->computeAlignmentGlobal(state); 
@@ -182,89 +182,78 @@ namespace eutelescope {
 
 	std::map<  unsigned int, std::vector<double> > EUTelGBLFitter::getScatPos(EUTelTrack& track) const {}
 
-	void EUTelGBLFitter::getBasicList(EUTelTrack const& track, std::vector< gbl::GblPoint >& pointList, std::map<int, Block>& blocks, std::map<  unsigned int, unsigned int>  & linkGL){
-        ///Assume no correct to be made to curvature. This is done in pattern recognition. 
+	void EUTelGBLFitter::getBasicList(EUTelTrack & track, std::vector< gbl::GblPoint >& pointList){
         TMatrixD jac(5, 5);
         jac.UnitMatrix();
         /// Label begins at one. 
         unsigned int label = 1;
         gbl::GblPoint point(jac);
         point.setLabel(label); // 1
-        linkGL.insert(std::make_pair(track.getStatesCopy().at(0).getLocation(), label));
+        track.getStates().at(0).GBLLabels.push_back(label);
         label++;
         pointList.push_back(point);
-        std::vector<double> offset;
-        std::vector<double> trackSlope;
-        EUTelNav::getTrackAvePara(*(track.getHitsCopy().begin()), *(track.getHitsCopy().rbegin()) ,offset,trackSlope );
-        for(size_t i=0;i < (track.getStatesCopy().size()-1); i++){		
-            EUTelState state1 = track.getStatesCopy().at(i);
-            EUTelHit hit1 = state1.getHit();
-            Eigen::Vector3d posPred1;
-            std::vector<double> slopePred1;
-            EUTelNav::getTrackPredictionFromParam(offset,trackSlope,track.getQOverP(), hit1.getPositionGlobal()[2],posPred1,slopePred1);
-            Block block =  blocks.at(state1.getLocation());//Should make this possible exception more obvious!
-            EUTelState state2 = track.getStatesCopy().at(i+1);
-            EUTelHit hit2 = state2.getHit();
-            Eigen::Vector3d posPred2;
-            std::vector<double> slopePred2;
-            EUTelNav::getTrackPredictionFromParam(offset,trackSlope,track.getQOverP(), hit2.getPositionGlobal()[2],posPred2,slopePred2);
-                ///If any of this information is missing can not create thick scatterer.
-                if(block.medRadPer == 0 or block.weigMean == 0 or block.weigVar == 0){
-                    Eigen::Vector3d diff = posPred2 - posPred1;
-                    double norm = sqrt(pow(slopePred1.at(0),2)+pow(slopePred1.at(1),2) + 1);
-                    TVector3 dir(slopePred1.at(0)/norm  , slopePred1.at(1)/norm, 1.0/norm);
-                    TMatrixD jac = EUTelNav::getPropagationJacobianGlobalToGlobal(diff.norm(), dir);
-                    gbl::GblPoint point(jac);
-                    point.setLabel(label);
-                    linkGL.insert(std::make_pair(state2.getLocation(), label));
-                    label++;
-                    pointList.push_back(point);
-                }else{
-                    ///thick scatter situation here.
-                }
+        ///IN GBL the propagation from plane 0 to 1 is stored in point 1 associated to plane 1. Strange but this is the convention.
+        ///This is done due to the decomposition of the jacobian within GBL.
+        for(std::vector<EUTelState>::iterator itSt = track.getStates().begin();itSt != (track.getStates().end()-1); ++itSt){		
+            Block block =  itSt->block; ///Block now used yet!! 
+            ///If any of this information is missing can not create thick scatterer.
+            if(block.medRadPer == 0 or block.weigMean == 0 or block.weigVar == 0){
+                TVector3 diff = (itSt+1)->getPositionGlobal() - (itSt)->getPositionGlobal();
+                TMatrixD jac = EUTelNav::getPropagationJacobianGlobalToGlobal(diff.Mag(), itSt->getDirGlobal());
+                gbl::GblPoint point(jac);
+                point.setLabel(label);
+                (itSt+1)->GBLLabels.push_back(label);
+                label++;
+                pointList.push_back(point);
+            }else{
+                ///thick scatter situation here.
+            }
         }
-
-
     }   
-	void EUTelGBLFitter::getMeas(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList, std::map< unsigned int,unsigned int > & linkGL , std::map< unsigned int, unsigned int>  & linkMeas){
+	void EUTelGBLFitter::getMeas(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList){
         for(size_t i=0;i < track.getStates().size(); i++){		
             EUTelState state = track.getStates().at(i);
             //Use state to get correct label
             streamlog_out(DEBUG5) << "State location " << state.getLocation() << std::endl;
             if(state.getStateHasHit()){
                 streamlog_out(DEBUG5) << "State has hit" << std::endl;
-                unsigned int label = linkGL[state.getLocation()];
-                setMeasurementGBL(pointList.at(label-1), state );
-                linkMeas.insert(std::make_pair(state.getLocation(),label));
+                unsigned int label = state.GBLLabels.at(0);///First entry is always the measurement label if there is a hit.
+                setMeasurementGBL(pointList.at(label-1), state );///-1 since GBL labels start at 1. 
             }
         }
-        streamlog_out(DEBUG5) << "Link size: " << linkMeas.size() << std::endl;
 
     }
-	void EUTelGBLFitter::getScat(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList, std::map<int ,Block> blocks, std::map< unsigned int,unsigned int > & linkGL){
+	void EUTelGBLFitter::getScat(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList){
         for(size_t i;i < track.getStates().size(); i++){		
             EUTelState state = track.getStates().at(i);
             //Use state to get correct label
-            unsigned int label = linkGL[state.getLocation()];
-            Block block = blocks.at(state.getLocation());
-            setScattererGBL(pointList.at(label-1),state, block ); 
+            unsigned int labelPlane = state.GBLLabels.at(0);
+            Block block = state.block;
+            double var =Utility::getThetaRMSHighland( track.getBeamEnergy(),track.getRadPerTotal()  ); 
+            double varSen = var*block.senRadPer; ///Get the fraction of variance for each point.
+            setScattererGBL(pointList.at(labelPlane-1),state, varSen ); 
         }
     }
     ///This is the work horse of the GBL fitter. It creates GBL points from EUTelTracks and returns the relations between the two.
-	void EUTelGBLFitter::getGBLPointsFromTrack(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList, std::map<  unsigned int,unsigned int > & linkGL,std::map< unsigned int, unsigned int > & linkMeas ){
+	void EUTelGBLFitter::getGBLPointsFromTrack(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList){
 		streamlog_out(DEBUG0)<<"EUTelGBLFitter::getGBLPointsFromTrack-------------------------------------BEGIN"<<std::endl;
-        setArcLengths(track);
+        //Do the parameterisartion internally. 
+        if(_mode == 1){
+            initNav();
+            track = EUTelTrackCreate::getTrackFourHits(track.getHitsCopy());
+        }
+      //  setArcLengths(track);
         EUTelRadCal radCal;
-        std::map<int ,Block> blocks = radCal.getRad(track);
+        radCal.setRad(track);
         /// This is the minimum needed to create a GBL trajectory. It basically only relates each GBL point to each other at this stage.
 		streamlog_out(DEBUG0)<<"Create basic traj. "<<std::endl;
-        getBasicList(track,pointList, blocks,linkGL);
+        getBasicList(track,pointList);
         /// Now add measurement. Connect from local to global will be made here. 
 		streamlog_out(DEBUG0)<<"Add measurement. "<<std::endl;
-        getMeas(track,pointList,linkGL,linkMeas);
+        getMeas(track,pointList);
         /// Now add scattering.  
 		streamlog_out(DEBUG0)<<"Add scattering information. "<<std::endl;
-        getScat(track,pointList,blocks,linkGL);
+        getScat(track,pointList);
 		streamlog_out(DEBUG0)<<"EUTelGBLFitter::getGBLPointsFromTrack-------------------------------------END"<<std::endl;
 
 	}
@@ -308,21 +297,28 @@ namespace eutelescope {
         streamlog_out(DEBUG1) << "  findScattersZPositionBetweenTwoStates------------- END --------------  " << std::endl;
         return scatPos;
     }
-  void EUTelGBLFitter::getResLoc(gbl::GblTrajectory* traj, std::map< unsigned int, unsigned int> & linkMeas, std::vector< gbl::GblPoint > pointList,std::map< int, std::map< float, float > > &  SensorResidual, std::map< int, std::map< float, float > >& sensorResidualError){
-    for(std::map<unsigned int, unsigned int>::iterator iter = linkMeas.begin(); iter != linkMeas.end(); ++iter){
-        unsigned int numData; 
-        TVectorD aResiduals(2);
-        TVectorD aMeasErrors(2);
-        TVectorD aResErrors(2);
-        TVectorD aDownWeights(2); 
-        traj->getMeasResults(iter->second, numData, aResiduals, aMeasErrors, aResErrors, aDownWeights);
-        streamlog_out(DEBUG0) <<"State location: "<<iter->first<<" The residual x " <<aResiduals[0]<<" The residual y " <<aResiduals[1]<<std::endl;
-        std::map<float, float> res;  
-        res.insert(std::make_pair(aResiduals[0],aResiduals[1]));
-        SensorResidual.insert(std::make_pair(iter->first, res));		
-        std::map<float, float> resError; 
-        resError.insert(std::make_pair(aResErrors[0],aResErrors[1]));
-        sensorResidualError.insert(std::make_pair(iter->first, resError));	
+    void EUTelGBLFitter::initNav(){
+        EUTelNav::init();
+        EUTelNav::_intBeamE = getBeamEnergy();
+    }
+
+    void EUTelGBLFitter::getResLoc(gbl::GblTrajectory* traj,EUTelTrack& track , std::vector< gbl::GblPoint > pointList,std::map< int, std::map< float, float > > &  SensorResidual, std::map< int, std::map< float, float > >& sensorResidualError){
+    for(std::vector<EUTelState>::iterator itSt = track.getStates().begin(); itSt != track.getStates().end(); ++itSt){
+        if(itSt->getStateHasHit()){
+            unsigned int numData; 
+            TVectorD aResiduals(2);
+            TVectorD aMeasErrors(2);
+            TVectorD aResErrors(2);
+            TVectorD aDownWeights(2); 
+            traj->getMeasResults(itSt->GBLLabels.at(0), numData, aResiduals, aMeasErrors, aResErrors, aDownWeights);
+            streamlog_out(DEBUG0) <<"State location: "<<itSt->getLocation()<<" The residual x " <<aResiduals[0]<<" The residual y " <<aResiduals[1]<<std::endl;
+            std::map<float, float> res;  
+            res.insert(std::make_pair(aResiduals[0],aResiduals[1]));
+            SensorResidual.insert(std::make_pair(itSt->getLocation(), res));		
+            std::map<float, float> resError; 
+            resError.insert(std::make_pair(aResErrors[0],aResErrors[1]));
+            sensorResidualError.insert(std::make_pair(itSt->getLocation(), resError));	
+        }
 	}
   }
 	std::string EUTelGBLFitter::getMEstimatorType( ) const {
@@ -371,7 +367,7 @@ namespace eutelescope {
 		streamlog_out(DEBUG4)<<"EUTelGBLFitter::testTrack------------------------------------END"<<std::endl;
 
 	} 
-	void EUTelGBLFitter::getCorr(gbl::GblTrajectory* traj,EUTelTrack &track, std::map<unsigned int ,unsigned int >& linkGL , std::map<int, std::vector<double> > &  mapSensorIDToCorrectionVec){
+	void EUTelGBLFitter::getCorr(gbl::GblTrajectory* traj,EUTelTrack &track, std::map<int, std::vector<double> > &  mapSensorIDToCorrectionVec){
         ///Only state which are created before will be updated. Scattering planes within GBL are not saved.
 		for(size_t i = 0;i < track.getStates().size(); i++){		
 			EUTelState& state = track.getStates().at(i);
@@ -379,7 +375,7 @@ namespace eutelescope {
 			TMatrixDSym cov(5);
             /// Get the corrections in the global frame!!!! 
             /// This is corrected internally by EUTelTrack and EUTelState.
-            traj->getResults(linkGL[state.getLocation()], corrections, cov );
+            traj->getResults(state.GBLLabels.at(0), corrections, cov );
             streamlog_out(DEBUG3) << std::endl << "State before we have added corrections: " << std::endl;
             state.print();
             streamlog_out(DEBUG3) << std::endl << "Correction: " << std::endl;
@@ -394,7 +390,7 @@ namespace eutelescope {
             TVectorD aMeasErrorsKink(2);
             TVectorD aResErrorsKink(2);
             TVectorD aDownWeightsKink(2); 
-            traj->getScatResults( linkGL[state.getLocation()], numData, aResidualsKink, aMeasErrorsKink, aResErrorsKink, aDownWeightsKink);
+            traj->getScatResults(state.GBLLabels.at(0), numData, aResidualsKink, aMeasErrorsKink, aResErrorsKink, aDownWeightsKink);
             state.setKinks(aResidualsKink);
         }
     }

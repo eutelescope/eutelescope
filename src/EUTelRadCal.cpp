@@ -2,26 +2,30 @@
 using namespace eutelescope;
 
 
-std::map<int ,Block> EUTelRadCal::getRad(EUTelTrack& track){
-    std::map<int ,Block> blocks;
-    setIncSenBlocks(track,blocks);
+void EUTelRadCal::setRad(EUTelTrack& track){
+    setIncSenBlocks(track);
 //    getThicknessAndRad(track,blocks); 
 //    getScatParam(blocks); 
-    return blocks;
 
 }
-void EUTelRadCal::setIncSenBlocks(EUTelTrack const & track, std::map<int, Block>& blocks){ 
-    for(std::vector<EUTelState>::iterator  itSt = track.getStatesCopy().begin(); itSt != track.getStatesCopy().end(); ++itSt){
+void EUTelRadCal::setIncSenBlocks(EUTelTrack & track){ 
+
+    for(std::vector<EUTelState>::iterator  itSt = track.getStates().begin(); itSt != track.getStates().end(); ++itSt){
+
             double senRad =  geo::gGeometry().siPlaneRadLength(itSt->getLocation());
             double senSize =  geo::gGeometry().siPlaneZSize(itSt->getLocation());
             ///Must check values for this method of access
-            blocks[itSt->getLocation()].senRadPer = senSize/senRad;
-            blocks.at(itSt->getLocation()).weigVar = 0;
-            blocks.at(itSt->getLocation()).weigMean = 0;
-            blocks.at(itSt->getLocation()).medRadPer = 0;
-
+            Block block;
+            double radPer = senSize/senRad;
+            block.senRadPer = radPer;
+            block.weigVar = 0;
+            block.weigMean = 0;
+            block.medRadPer = 0;
+            itSt->block = block;
+            track.setRadPerTotal(track.getRadPerTotal() + radPer);//VARIANCE MUST BE CALCULATED FROM THE TOTAL RADIATION LENGTH. Highland formula is non linear under addition.
 
     }
+
 }
 
 void EUTelRadCal::getThicknessAndRad(EUTelTrack const & track, std::map<int, Block> & blocks){ 

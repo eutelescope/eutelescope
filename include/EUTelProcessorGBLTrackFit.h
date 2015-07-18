@@ -42,6 +42,8 @@
 #include "EUTelEventImpl.h"
 #include "EUTelHistogramManager.h"
 #include "EUTelReaderGenericLCIO.h"
+#include "EUTelExcludedPlanes.h"
+
 
 namespace eutelescope {
 
@@ -76,6 +78,8 @@ namespace eutelescope {
 			virtual void end();
 
     protected:
+            EVENT::IntVec _excludePlanes;         
+            int _mode;
 
 			/** Number of events processed */
 			int _nProcessedRuns;

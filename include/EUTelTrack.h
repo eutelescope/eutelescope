@@ -24,7 +24,7 @@ namespace eutelescope {
 			//getters//TRACK PARAMETERS
             float getChi2() const ;
             float getNdf() const;
-			float getTotalVariance() const { return _var;}
+			double getRadPerTotal() const { return _radPerTotal;}
             float getQOverP() const { return _qOverP; }
             float getBeamEnergy() const { return -1.0/_qOverP; }
             std::vector<int>  getPlaIDs() const;
@@ -40,7 +40,7 @@ namespace eutelescope {
             void setStates(std::vector<EUTelState> states);
             std::vector<EUTelHit> getHitsCopy() const; 
 
-			void setTotalVariance(double rad);
+			void setRadPerTotal(double radPer){this->_radPerTotal = radPer;}
             void setChi2(float chi2);
             void setNdf(float nDF);
             void setTrackFromLCIOVec(std::vector<double> input);
@@ -51,7 +51,7 @@ namespace eutelescope {
   	private:
             std::vector<EUTelState> _states;
             double _qOverP;
-            double _var;
+            double _radPerTotal;
             float _chi2;
             float _nDF;
 

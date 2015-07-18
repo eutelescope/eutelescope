@@ -34,6 +34,8 @@ _mEstimatorType()
 
   // Necessary processor parameters that define fitter settings
   registerProcessorParameter("BeamEnergy", "Beam energy [GeV]", _eBeam, static_cast<double> (4.0));
+  registerOptionalParameter("ExcludePlanes", "This is the planes that will not be included in analysis", _excludePlanes ,IntVec());
+
 
   // Optional processor parameters that define finder settings
 
@@ -72,6 +74,7 @@ void EUTelProcessorGBLAlign::init() {
 		_nProcessedEvents = 0;
 		std::string name("test.root");
 		geo::gGeometry().initializeTGeoDescription(name,false);
+        EUTelExcludedPlanes::setRelativeComplementSet(_excludePlanes);///Only used if GBL will do the track parameterisation.
 
 		// Initialize GBL fitter
 		EUTelGBLFitter* Fitter = new EUTelGBLFitter();
@@ -159,10 +162,10 @@ void EUTelProcessorGBLAlign::processEvent(LCEvent * evt){
                 std::map<  unsigned int,unsigned int >  linkGL;
                 std::map< unsigned int, unsigned int >  linkMeas;
                 ///This will create the initial GBL trajectory
-                _trackFitter->getGBLPointsFromTrack(track, pointList, linkGL,linkMeas);
+                _trackFitter->getGBLPointsFromTrack(track, pointList);
                 ///NOTE: This is the only difference between a GBL track fit and alignment step with respect to GBL
                 /// The rest of the work come from reading this to the gear file and making sure the transformations are correct.
-                _trackFitter->getGloPar(pointList,track, linkMeas); 
+                _trackFitter->getGloPar(pointList,track); 
                 const gear::BField& B = geo::gGeometry().getMagneticField();
                 const double Bmag = B.at( TVector3(0.,0.,0.) ).r2();
                 gbl::GblTrajectory* traj = 0;

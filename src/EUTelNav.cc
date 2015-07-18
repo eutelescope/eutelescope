@@ -201,5 +201,6 @@ void EUTelNav::init(){
         TVector3 EUTelNav::_bFac;
         std::vector<double> EUTelNav::_curv;
         double EUTelNav::_intBeamE;
+        std::vector<int> EUTelNav::_senInc;
 
 } //namespace eutelescope

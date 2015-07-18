@@ -40,28 +40,40 @@ For mode 0 the cuts are like so and performed in this order:
 #DoubletCenDistCut = 1 1  <<< Extrapolate the doublet and collect all hits on the path under this abs(meas-pred) cut.
 #hitNum = 5 << Every track must have at least this number of hits. If so then form a final track.
 
-At this point it is good to note how this process is split between EUTelPatRecTriplet.cc and EUTelNav.cc. EUTelNav.cc contains all the information to create track parameterisations from hits. It also links state parameters (position, incidence, q/p) to other states on other planes. EUTelTriplet just uses this information in specific ways to link the correct hits together which form a track. 
+At this point it is good to note how this process is split between EUTelPatRecTriplet.cc and EUTelNav.cc. EUTelNav.cc contains all the information to create track parameterisations from hits. It also links state parameters (position, incidence, q/p) to other states on other planes, this is in the form of a jacobian 5x5 matrix. EUTelTriplet just uses this information in specific ways to link the correct hits together which form a track. There is one more class which is used EUTelTrackCreate, this will use EUTelNav to create parameterised track and then add the measured hits to this. 
 
 ##GBLFitting
 
 A track in EUTelescope with GBL is called EUTelTrack. This contains all the information track wide(chi2,degrees of freedom,charge/momentum).
 Inside EUTelTrack you can access a vector of EUTelState objects. Each EUTelState contains the predicted position and incidence on each plane. 
 Inside each EUTelState is a single EUTelHit object. EUTelHit is the measured hit position on each plane.
+In addition to this you also have what is known as a block in each EUTelState. This is simply a struct object which can easily be created by any class or processor. (See EUTelBlock.h). It contains information which is needed by each state to work out how to model radiation length. This is created in EUTelRadCal at the moment.
 
-
-This part should come after alignment but alignment uses the GBL tracks to fit so this is introduced now. The GBL tracker can take an EUTelTrack object composed only of hits. 
-It will then do the parameterisation of the track internally. This allows the minimum amount of work to be done to integrate a new pattern recognition. However it could be useful in the long run to be able to pass a track which has already been parameterised. An example would be a second iteration with GBL with kinks. This is also possible and to change between these two mode change:
+The GBL fitter can take an EUTelTrack object composed only of hits. 
+It will then do the parameterisation of the track internally. This allows the minimum amount of work to be done to integrate a new pattern recognition. However it could be useful in the long run to be able to pass a track which has already been parameterised. An example would be a second iteration with GBL with kinks. This is also possible and to change between these two modes change:
 
 #mode = 1 <<<1 mean the GBL fitter will do the work for you in creating a predicted track from the hits.  
 
-All planes included in the fit will have a state produce on them (So position and incidence). Planes excluded are removed from the fit but the radiation length is still included. Radiation length is described by blocks. So a single block is the radiation length of the included plane and the inhomogeneous mass infront of it until the next included plane. This mass would be air and excluded sensors but could include anything as long as it is in the gear. Note the block contains the information to describe the thick scatterer which is the inhomogenous mass after the sensor by only two scattering points. 
+All planes included in the fit will have a state produce on them (So position and incidence). Planes excluded are removed from the fit but the radiation length is still included. Radiation length is described by the block in EUTelState. So a single block is the radiation length of the included plane and the inhomogeneous mass infront of it until the next included plane. This mass would be air and excluded sensors but could include anything as long as it is in the gear. Note the block contains the information to describe the thick scatterers which is the inhomogenous mass after the sensor by only two scattering points. 
 
-The creation of a GBL track comes in 5 parts:
+With:
+1) A parameterised track. (Determined from hits)
+2) Z position of all points to be placed, including the scattering points( Point GBL slang for state)
+3)Measurements and their errors 
+4) Scattering and their errors
 
-1)The initial trajectory is created using the parameterised track and the blocks. This initial trajectory is nothing more than a series of positions/incidences at different z postions (on the planes) linked together. This linking is done via a jacobians which relates the change in position/incidence at one point to another. The blocks are needed NOT to add scattering (This is done in part 2). It is there since the position of the points to describe scattering depend on the material distribution. 
+You have all the information needed to create a GBL track this comes in 5 parts in the EUTelGBLFitter.
 
- GBL uses labels - starting at 1 then increasing - to identify points on the trajectory. So a map between the sensor ID and the GBL points labels is made. This allows us to access the GBL point at any point after the creation of the trajectory. This 
+1)The initial trajectory is created using the parameterised track and the blocks to determine the z positions of the scatterers. This initial trajectory is nothing more than a series of positions/incidences at different z postions (on the planes) linked together. This linking is done via a jacobians which relates the change in position/incidence at one point to another. The blocks are needed NOT to add scattering (This is done in part 2). It is there since the position of the points to describe scattering depend on the material distribution. 
 
-2)  
+ GBL uses labels - starting at 1 then increasing - to identify points on the trajectory. These labels are stored on the EUTelState. 3 point labels for each state, 1 for the plane itself, 2 for the scatterering points to describe the mass in front of that sensor. 
+
+2) The measurements + errors are then added to points which have a measurement. This is done using the label of the GBL points which are on a sensor and checking we have a hit to add.
+
+3) The kinks + errors are added to all points. In nearly all cases the kinks initial value is 0. The errors are determined from the radiation lengths in the block and the Highland formula.IMPORTANT: The Highland formula is non linear with addition. So the variance of the system as a whole is determined and split between each part weighted to the radiation length of each part relative to the total.
+
+4) USED FOR ALIGNMENT ONLY! This is where we add the global parameters which are the same for every track. This is used for alignment but could be anything. It is only a link between the residual and some parameter using a first order derivative.
+
+5) USED FOR KINK ESTIMATION ONLY! This is where we add the local parameters which vary from track to track (In contrast to global which is the same for all tracks). Keep in mind that global/local ALWAYS link some parameter to the residuals at that point on the track. An example with local parameters is the estimation of kink angle using this distance from the plane of interest to the planes downstream. Here the distance links the residuals downstream from the scatterer to the kink angle on the scatter. 
 
 

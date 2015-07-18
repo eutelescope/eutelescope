@@ -74,6 +74,9 @@ _mEstimatorType() //This is used by the GBL software for outliers down weighting
   registerProcessorParameter("BeamEnergy", "Beam energy [GeV]", _eBeam, static_cast<double> (4.0));
 	//This is the determines the how we down weight our outliers. This by default is set that each point will have the same weighting.
   registerOptionalParameter("GBLMEstimatorType", "GBL outlier down-weighting option (t,h,c)", _mEstimatorType, std::string() );
+  registerOptionalParameter("ExcludePlanes", "This is the planes that will not be included in analysis", _excludePlanes ,IntVec());
+  registerOptionalParameter("Mode", "Will this processor do the track parameterisation for you. 1 => yes 0 => no ", _mode ,int(1));
+
 
   registerOptionalParameter("HistogramInfoFilename", "Name of histogram info xml file", _histoInfoFileName, std::string("histoinfo.xml"));
 	//This is the estimated resolution of the planes and DUT in x/y direction
@@ -88,8 +91,11 @@ void EUTelProcessorGBLTrackFit::init() {
 		_nProcessedEvents = 0;
 		std::string name("test.root");
 		geo::gGeometry().initializeTGeoDescription(name,false);
+        EUTelExcludedPlanes::setRelativeComplementSet(_excludePlanes);///Only used if GBL will do the track parameterisation.
+
 		EUTelGBLFitter* Fitter = new EUTelGBLFitter();
 		Fitter->setBeamEnergy(_eBeam);
+		Fitter->setMode(_mode);
 		Fitter->setMEstimatorType(_mEstimatorType);//As said before this is to do with how we deal with outliers and the function we use to weight them.
 		Fitter->setParamterIdXResolutionVec(_SteeringxResolutions);
 		Fitter->setParamterIdYResolutionVec(_SteeringyResolutions);
@@ -156,7 +162,7 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent* evt){
             std::map< unsigned int, unsigned int >  linkMeas;
             ///This will create the initial GBL trajectory
             try{
-                _trackFitter->getGBLPointsFromTrack(track, pointList, linkGL,linkMeas);
+                _trackFitter->getGBLPointsFromTrack(track, pointList);
             }catch(std::string &e){
                 continue;
             }
@@ -185,11 +191,11 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent* evt){
 				_chi2NdfVec.push_back(chi2/static_cast<float>(ndf));
 				std::map<int, std::vector<double> >  mapSensorIDToCorrectionVec; 
                 ///Here use the fitter to collect the corrections to the state/track.
-				_trackFitter->getCorr(traj,track, linkGL, mapSensorIDToCorrectionVec);
+				_trackFitter->getCorr(traj,track, mapSensorIDToCorrectionVec);
 				std::map< int, std::map< float, float > >  SensorResidual; 
 				std::map< int, std::map< float, float > >  SensorResidualError; 
                 ///Here collect the residuals and calcuated errors.
-				_trackFitter->getResLoc(traj,linkMeas, pointList, SensorResidual, SensorResidualError);
+				_trackFitter->getResLoc(traj,track, pointList, SensorResidual, SensorResidualError);
 				if(chi2/static_cast<float>(ndf) < 5){
 				  plotResidual(SensorResidual,SensorResidualError);
 				}

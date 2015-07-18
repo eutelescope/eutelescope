@@ -80,7 +80,7 @@ void EUTelProcessorPatRecTriplets::init(){
 		_trackFitter = new EUTelPatRecTriplets();
         _trackFitter->setMode(_mode);
 		_trackFitter->setNumHits(_minHits);
-        _trackFitter->setPlaneExclude(_excludePlanes);
+        EUTelExcludedPlanes::setRelativeComplementSet(_excludePlanes);
 		_trackFitter->setDoubletDistCut(_doubletDistCut);
 		_trackFitter->setTripletSlopeCuts(_tripletSlopeCuts);
 		_trackFitter->setDoubletCenDistCut(_doubletCenDistCut);

@@ -15,29 +15,6 @@ _numberOfTracksTotal(0)
 EUTelPatRecTriplets::~EUTelPatRecTriplets()  
 {}
 
-void EUTelPatRecTriplets::setPlaneExclude(IntVec& planeIDs){   
-    unsigned  int counter=0;
-    for(std::vector<int>::const_iterator itID = geo::gGeometry().sensorIDsVec().begin(); itID != geo::gGeometry().sensorIDsVec().end(); ++itID){
-        bool excluded=false;
-        for(size_t j =0; j< planeIDs.size(); ++j){
-            if(*itID == planeIDs[j]){
-                excluded=true;
-                break;
-            }   
-        }   
-        if(!excluded){
-            _senZOrderToIDWithoutExcPla[counter]= *itID;
-            counter++;
-        }   
-    }   
-    //Check if the number of excluded planes set is the same as (total-number of plane IDs inputed that should be excluded)
-    if(_senZOrderToIDWithoutExcPla.size() != (geo::gGeometry().sensorIDsVec().size()-planeIDs.size())){
-        throw(lcio::Exception( "The number of Planes-Excluded is not correct. This could be a problem with geometry."));
-    }else{
-        streamlog_out(DEBUG0) <<"The correct number of planes have been excluded" << std::endl;
-    }   
-}  
-
 void EUTelPatRecTriplets::setPlaneDimensionsVec(EVENT::IntVec& planeDimensions){
 	if(planeDimensions.size() != geo::gGeometry().sensorIDsVec().size()){
 		streamlog_out(ERROR) << "The size of planesDimensions input is: "<< planeDimensions.size()<<" The size of sensorIDsVec is: " << geo::gGeometry().sensorIDsVec().size()<< std::endl;
@@ -60,6 +37,7 @@ void EUTelPatRecTriplets::setPlaneDimensionsVec(EVENT::IntVec& planeDimensions){
 std::vector<EUTelTrack> EUTelPatRecTriplets::getTracks(){
     EUTelNav::init();
     EUTelNav::_intBeamE = getBeamMomentum();
+    EUTelNav::_senInc =  EUTelExcludedPlanes::_senInc; ///This is not needed by EUTelNav but EUTelTrackCreate. However we need EUTelNav for EUTelTrackCreate.
     setHitsVecPerPlane();
     testHitsVecPerPlane();
     std::vector<EUTelTrack>  tracks;
@@ -76,57 +54,6 @@ std::vector<EUTelTrack> EUTelPatRecTriplets::getTracks(){
     printTrackQuality(tracks );
     return tracks;
 }
-EUTelTrack EUTelPatRecTriplets::getTrack(std::vector<EUTelHit> hits, std::vector<double> offset, std::vector<double> trackSlope,double qOverP){
-    EUTelTrack track;
-    track.setQOverP(qOverP);
-    std::vector<double> curvCorr; curvCorr.push_back(track.getQOverP()*EUTelNav::_bFac[0]);curvCorr.push_back(track.getQOverP()*EUTelNav::_bFac[1]);
-    // loop around planes
-    // loop around hits -> if hit matched to plane record hit, if not record my intersection
-    for(unsigned int  j = 0; j < (_senZOrderToIDWithoutExcPla.size()); ++j){
-        unsigned int sensorID = _senZOrderToIDWithoutExcPla.at(j);
-        streamlog_out(DEBUG1) << "The Z position " << j << " sensor ID: " << sensorID  <<std::endl;
-        bool hitOnPlane=false;
-        EUTelState state; //Create a state for each plane included in the fit.
-        for(unsigned int i = 0; i < hits.size(); ++i){//Check the list of hits to see if we have one on this plane.
-            if(hits.at(i).getLocation()==sensorID){
-                hitOnPlane=true;
-                Eigen::Vector3d posPred;
-                std::vector<double> slopePred;
-                EUTelNav::getTrackPredictionFromParam(offset,trackSlope,qOverP, hits.at(i).getPositionGlobal()[2],posPred,slopePred);
-                state.setLocation(hits.at(i).getLocation());
-                state.setHit(hits.at(i));
-                float intersectionPoint[3];
-                intersectionPoint[0] = posPred[0];  intersectionPoint[1] = posPred[1]; intersectionPoint[2] = hits.at(i).getPositionGlobal()[2];
-                //intersection might not be inside a volume. 
-                state.setPositionGlobal(intersectionPoint);
-                state.setDirFromGloSlope(slopePred);
-                track.setState(state);
-            }
-        }
-        if(hitOnPlane){streamlog_out(DEBUG1) <<"this should already be recorded as there is a hit on sensor "<<sensorID<<std::endl;}
-        else {
-            double z_dut=geo::gGeometry().getOffsetVector(sensorID)[2];
-            Eigen::Vector3d posPred;
-            std::vector<double> slopePred;
-            EUTelNav::getTrackPredictionFromParam(offset,trackSlope,qOverP, z_dut,posPred,slopePred);
-            state.setDirFromGloSlope(slopePred);
-            //   TVector3 hitPosGlo = hit.getPositionGlobal();
-            float intersectionPoint[3];
-            intersectionPoint[0] = posPred[0];  intersectionPoint[1] = posPred[1]; intersectionPoint[2] = z_dut;
-            //   //intersection might not be inside a volume. 
-            streamlog_out(DEBUG1)<<"intersection point on sensorID "<<sensorID<<" = "<<	intersectionPoint[0]<<", "<<intersectionPoint[1]<<", "<<intersectionPoint[2]<<std::endl;
-            //add explicit check that it intersects with sensor?   but i want edge effects?   
-            //add arc length thingy
-            state.setPositionGlobal(intersectionPoint);
-            state.setLocation(sensorID);
-            track.setState(state);
-
-        }//else
-    }//loop about planes, j iterator
-    track.print();
-    return track;
-}
-
 
 //get functions private
 EUTelTrack EUTelPatRecTriplets::getTrack(triplets tripLeft,triplets tripRight){
@@ -141,7 +68,7 @@ EUTelTrack EUTelPatRecTriplets::getTrack(triplets tripLeft,triplets tripRight){
     }
     streamlog_out(DEBUG1) << "Got hits from triplet." << std::endl;
 
-    EUTelTrack track = getTrackFourHits(hits);
+    EUTelTrack track = EUTelTrackCreate::getTrackFourHits(hits);
     return track;
 
 
@@ -296,8 +223,8 @@ std::map<int,std::vector<EUTelHit> > EUTelPatRecTriplets::getTrackHitsFromTriple
 }
 std::vector<EUTelHit> EUTelPatRecTriplets::getCorrHitOrder(std::vector<EUTelHit> hits ){
     std::vector<EUTelHit> finalHits;
-    for(unsigned int  i = 0; i < (_senZOrderToIDWithoutExcPla.size()); ++i){
-        unsigned int sensorID = _senZOrderToIDWithoutExcPla.at(i);
+    for(unsigned int  i = 0; i < (EUTelExcludedPlanes::_senInc.size()); ++i){
+        unsigned int sensorID = EUTelExcludedPlanes::_senInc.at(i);
         std::vector<EUTelHit>::iterator itHit;
         for(itHit = hits.begin(); itHit != hits.end(); ++itHit){
             itHit->print();
@@ -313,8 +240,8 @@ std::vector<EUTelHit> EUTelPatRecTriplets::getCorrHitOrder(std::vector<EUTelHit>
 }
 std::vector<EUTelHit> EUTelPatRecTriplets::getDUTHitsOrder(EUTelTrack track, std::vector<EUTelHit> dutHits ){
     std::vector<EUTelHit> finalHits;
-    for(unsigned int  i = 0; i < (_senZOrderToIDWithoutExcPla.size()); ++i){
-        unsigned int sensorID = _senZOrderToIDWithoutExcPla.at(i);
+    for(unsigned int  i = 0; i < (EUTelExcludedPlanes::_senInc.size()); ++i){
+        unsigned int sensorID = EUTelExcludedPlanes::_senInc.at(i);
         streamlog_out(DEBUG0) << "The Z position " << i << " sensor ID: " << sensorID  <<std::endl;
         std::vector<EUTelState>::iterator itState;
         for( itState = track.getStates().begin(); itState != track.getStates().end(); ++itState){
@@ -342,52 +269,6 @@ std::vector<EUTelHit> EUTelPatRecTriplets::getDUTHitsOrder(EUTelTrack track, std
         }
     }
     return finalHits;
-}
-///Must have hit on plane 0 2 3 5!
-EUTelTrack EUTelPatRecTriplets::getTrackFourHits(std::vector<EUTelHit> hits ){
-	streamlog_out(DEBUG1) << "HITS TO FORM TRACK FROM: " << std::endl;
-    std::vector<EUTelHit>::iterator itHit;
-    for(itHit = hits.begin(); itHit != hits.end(); itHit++){
-        itHit->print(); 
-    }
-    //Always use mimosa planes to create initial track parameterisation.
-    EUTelHit hitArmOne1;
-    EUTelHit hitArmOne2;
-    EUTelHit hitArmTwo1;
-    EUTelHit hitArmTwo2;
-
-    for(itHit = hits.begin(); itHit != hits.end(); itHit++){
-        if(itHit->getLocation() == 0){
-            hitArmOne1 = *itHit;
-        }
-        if(itHit->getLocation() == 2){
-            hitArmOne2 = *itHit;
-        }
-        if(itHit->getLocation() == 3){
-            hitArmTwo1 = *itHit;
-        }
-        if(itHit->getLocation() == 5){
-            hitArmTwo2 = *itHit;
-        }
-
-    }
-    double qOverPCorr;
-    //Find correction of curvature through slope change.
-    const gear::BField& B = geo::gGeometry().getMagneticField();
-    const double Bmag = B.at( TVector3(0.,0.,0.) ).r2();
-    if ( Bmag < 1.E-6 ){
-        qOverPCorr = 0;
-    }else{
-        qOverPCorr =  EUTelNav::getCorr(hitArmOne1,hitArmOne2,hitArmTwo1,hitArmTwo2);
-    }
-    double qOverP = -1.0/getBeamMomentum() + qOverPCorr;
-    //NOW CREATE TRACK CANDIDATE
-    std::vector<double> offset;
-    std::vector<double> trackSlope; 
-    EUTelNav::getTrackAvePara(hitArmOne1, hitArmTwo2, offset, trackSlope);
-    EUTelTrack track = getTrack(hits,offset,trackSlope,qOverP);
-    return track;
-
 }
 bool EUTelPatRecTriplets::getDoubHitOnTraj(doublets const& doub, std::vector<unsigned int> const & sen,int const & hitNum, std::vector<EUTelHit>& newHits   ){
     for(std::vector<unsigned int> ::const_iterator itID = sen.begin(); itID != sen.end(); ++itID){
@@ -470,10 +351,10 @@ std::vector<EUTelTrack> EUTelPatRecTriplets::getMinFakeTracks(){
         bool pass = getDoublet(*(itID_Hit->second.begin()),*(itID_Hit->second.rbegin()), cuts ,doub);
         std::vector<EUTelHit> newHits;
         std::vector< unsigned int> dut;
-        if(_senZOrderToIDWithoutExcPla.size() > 6 ){
-            for(size_t i = 0 ; i < _senZOrderToIDWithoutExcPla.size(); ++i){
-                if( _senZOrderToIDWithoutExcPla.at(i) > 5){
-                    dut.push_back( _senZOrderToIDWithoutExcPla.at(i));
+        if(EUTelExcludedPlanes::_senInc.size() > 6 ){
+            for(size_t i = 0 ; i < EUTelExcludedPlanes::_senInc.size(); ++i){
+                if(EUTelExcludedPlanes::_senInc.at(i) > 5){
+                    dut.push_back(EUTelExcludedPlanes::_senInc.at(i));
                 }
             }
             streamlog_out(DEBUG1) << "Got hit! "  << std::endl;
@@ -490,7 +371,7 @@ std::vector<EUTelTrack> EUTelPatRecTriplets::getMinFakeTracks(){
         streamlog_out(DEBUG1) <<" Combined! "  << std::endl;
 
         ///Hit order does not matter
-        tracks.push_back(getTrackFourHits(combineHits));
+        tracks.push_back(EUTelTrackCreate::getTrackFourHits(combineHits));
         return tracks;
     }
 }
@@ -585,7 +466,7 @@ std::vector<float>  EUTelPatRecTriplets::getDoubPosAtZ(doublets doub, float posZ
 void EUTelPatRecTriplets::setHitsVecPerPlane()
 {
 	_mapHitsVecPerPlane.clear();
-	int numberOfPlanes = _senZOrderToIDWithoutExcPla.size();
+	int numberOfPlanes = EUTelExcludedPlanes::_senInc.size();
 	
 	if(numberOfPlanes == 0)
 	{
@@ -601,12 +482,12 @@ void EUTelPatRecTriplets::setHitsVecPerPlane()
         std::vector<EUTelHit> tempHitsVecPlaneX; 
 		for(size_t j=0 ; j<_allHitsVec.size();++j)
 		{
-			if(Utility::getSensorIDfromHit( static_cast<IMPL::TrackerHitImpl*>(_allHitsVec[j]) ) ==  _senZOrderToIDWithoutExcPla.at(i))
+			if(Utility::getSensorIDfromHit( static_cast<IMPL::TrackerHitImpl*>(_allHitsVec[j]) ) ==  EUTelExcludedPlanes::_senInc.at(i))
 			{
 				tempHitsVecPlaneX.push_back(EUTelHit(_allHitsVec.at(j)));
 			}
 		}
-		_mapHitsVecPerPlane[ _senZOrderToIDWithoutExcPla.at(i)] = 	tempHitsVecPlaneX;
+		_mapHitsVecPerPlane[  EUTelExcludedPlanes::_senInc.at(i)] = 	tempHitsVecPlaneX;
 	}	
 }
 ///Other 
@@ -636,13 +517,13 @@ void EUTelPatRecTriplets::printHits()
 }
 
 void EUTelPatRecTriplets::testHitsVecPerPlane(){
-	if(_mapHitsVecPerPlane.size() !=  _senZOrderToIDWithoutExcPla.size()){
-		streamlog_out(ERROR0) <<"The size of the planes with hits " << _mapHitsVecPerPlane.size() <<"  Sensors from Geometry with no excluded planes: "<<  _senZOrderToIDWithoutExcPla.size()<<std::endl;
+	if(_mapHitsVecPerPlane.size() !=  EUTelExcludedPlanes::_senInc.size()){
+		streamlog_out(ERROR0) <<"The size of the planes with hits " << _mapHitsVecPerPlane.size() <<"  Sensors from Geometry with no excluded planes: "<<  EUTelExcludedPlanes::_senInc.size()<<std::endl;
 		throw(lcio::Exception("The number of planes that could contain hits and the number of planes is different. Problem could be the gear file has to planes at the same z position.")); 	
 
 	}
 	for(size_t i=0 ;i<_mapHitsVecPerPlane.size();++i){
-		int planeID = _senZOrderToIDWithoutExcPla.at(i);
+		int planeID = EUTelExcludedPlanes::_senInc.at(i);
 		if(_mapHitsVecPerPlane.at(planeID).size() <= 0){
 			streamlog_out(DEBUG1) << "One plane has no hits at all. Is this correct?" << std::endl;
 		}

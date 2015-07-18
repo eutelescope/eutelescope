@@ -2,25 +2,27 @@
 using namespace eutelescope;
 EUTelTrack::EUTelTrack(){
 } 
-EUTelTrack::EUTelTrack(const EUTelTrack& track){
-    _chi2=0;
-    _nDF=0;
-    _var=0;
+EUTelTrack::EUTelTrack(const EUTelTrack& track):
+_chi2(0),
+_nDF(0),
+_radPerTotal(0)
+{
 	setChi2(track.getChi2());
 	setNdf(track.getNdf());
     setStates(track.getStatesCopy());
-    setTotalVariance(track.getTotalVariance());
+    setRadPerTotal(track.getRadPerTotal());
     setQOverP(track.getQOverP()); 
 
 
 }
-EUTelTrack::EUTelTrack(const EUTelTrack& track, bool copyContents){
-    _chi2=0;
-    _nDF=0;
-    _var=0;
+EUTelTrack::EUTelTrack(const EUTelTrack& track, bool copyContents):
+_chi2(0),
+_nDF(0),
+_radPerTotal(0)
+{
 	setChi2(track.getChi2());
 	setNdf(track.getNdf());
-    setTotalVariance(track.getTotalVariance());
+    setRadPerTotal(track.getRadPerTotal());
     setQOverP(track.getQOverP()); 
 
 }
@@ -74,7 +76,7 @@ unsigned int EUTelTrack::getNumberOfHitsOnTrack() const {
 }
 
 void EUTelTrack::print(){
-	streamlog_out(DEBUG1) <<"TRACK==>"<< " Chi: "<<getChi2() <<" ndf: "<<getNdf() <<". Path total variance: " << _var <<" OoverP:" << getQOverP()  << std::endl; 
+	streamlog_out(DEBUG1) <<"TRACK==>"<< " Chi: "<<getChi2() <<" ndf: "<<getNdf() <<". Path total variance: " << _radPerTotal <<" OoverP:" << getQOverP()  << std::endl; 
     std::vector<EUTelState> states = getStates();
 	streamlog_out(DEBUG1) <<"STATES:"<<std::endl;
 	for(unsigned int i=0; i < states.size(); ++i){
@@ -90,10 +92,6 @@ void EUTelTrack::setNdf(float nDF){
     _nDF=nDF;
 }
 
-void EUTelTrack::setTotalVariance(double rad){
-_var = rad;
-
-}
 
 void EUTelTrack::setState(EUTelState state){
     _states.push_back(state);
@@ -105,7 +103,7 @@ std::vector<double> EUTelTrack::getLCIOOutput(){
     std::vector<double> output;
     output.push_back(static_cast<double>(getChi2()));
     output.push_back(static_cast<double>(getNdf()));
-    output.push_back(static_cast<double>(getTotalVariance()));
+    output.push_back(static_cast<double>(getRadPerTotal()));
     output.push_back(static_cast<double>(getQOverP()));
     return output;
 
@@ -119,7 +117,7 @@ void EUTelTrack::setTrackUsingCorrection(TVectorD corrections){
 void EUTelTrack::setTrackFromLCIOVec(std::vector<double> input){
     setChi2(input.at(0));
     setNdf( input.at(1));
-    setTotalVariance(input.at(2));
+    setRadPerTotal(input.at(2));
     setQOverP(input.at(3));
 
 }

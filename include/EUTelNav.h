@@ -84,6 +84,9 @@ class EUTelNav
         static TVector3 _bFac;
         static std::vector<double> _curv;
         static double _intBeamE;
+        static std::vector<int> _senInc;
+    ///\todo Need to initialised this in silly way. Problem is beam energy is passed to each processor. Should be the same for all
+
 };
 
 

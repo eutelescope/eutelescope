@@ -21,6 +21,8 @@
 #include "EUTelTrack.h"
 #include "EUTelState.h"
 #include "EUTelNav.h"
+#include "EUTelTrackCreate.h"
+#include "EUTelExcludedPlanes.h"
 //LCIO
 #include "lcio.h"
 #include "IMPL/TrackerHitImpl.h"
@@ -84,20 +86,12 @@ namespace eutelescope {
         std::vector<double> diff;
         std::vector<EUTelHit> hits;
     }; 
-    //! Set the planes which should be excluded from the search.  
-    /*! 
-     *  Only tracks without a hit on this plane will be created. 
-     *  Even if a hit is within the correct range of the cuts the hit is still not included.
-     *  @param[in] planeIDs Planes to exclude. 
-     */
-    ///\todo Could infer this from resolution. 
-
-    void setPlaneExclude(IntVec& planeIDs);  
     //! Set in the correct z order if we are dealing with a strip sensor or pixel sensor.  
     /*! 
      *  A strip sensor is 1 and pixel 2. See GBL example for use in EUTelescope.
      *  @param[in] planeDimenstions This is a vector of 1s and 2s. 1=>strip, 2=>pixel. 
      */
+    ///\todo Could infer this from resolution. 
 
     void setPlaneDimensionsVec(EVENT::IntVec& planeDimensions);
     inline int getEventNumber()	const {
@@ -151,23 +145,6 @@ namespace eutelescope {
      */
 
     std::vector<EUTelTrack> getTracks();
-    //! Create track with parameterisation.  
-    /*! It will create a track from the input and add hits and states as required by excluded planes. 
-     *  Offset and slope is defined from the hits at either end of the track. 
-     *  Slope for curved(With magnetic field) tracks is defined from the central point between the hits. The slope change is taken into account from that point.
-     *  
-     *  qOverP is the curvature term. Note this is dependent on (cZxB) BFac to get the actual curvature term. However BFac is a constant for each track so qOverP
-     *  is the variable of interest. This is calculated from the slope differences after the initial guessed curvature is deducted. 
-     *  The slope differences left must be due to more/less energetic particles.
-     *
-     * \param [in] hits any number of hits.
-     * \param [in] offset this is the (x,y,z) of first hit and z of last. 
-     * \param [in] trackSlope slope at centre point of offset.
-     * \param [in] qOverP This is the charge of the particle (-1 => electron) over the energy (GeV)
-     */
-
-    EUTelTrack getTrack(std::vector<EUTelHit> hits, std::vector<double> offset, std::vector<double> trackSlope,double qOverP );
-
     private:
     //! This will place DUT hit in track. 
     /*! 
@@ -244,15 +221,6 @@ namespace eutelescope {
      */
 
     std::vector<EUTelHit> getDUTHitsOrder(EUTelTrack track, std::vector<EUTelHit> dutHit );
-    ///  This function will take a vector with the planes 0,2,3,5 included as minimum. 
-    /// These four hits are then used to determine correction to curvature and parameterisation of the track.
-    /// HIT ORDER DOES NOT MATTER INTO THIS FUNCTION
-    /**
-     * \param [in] hits vector of 4 hits which form track a known track.
-     * \return track EUTelTrack
-     */
-
-    EUTelTrack getTrackFourHits(std::vector<EUTelHit> hits);
     //! Get all hits which the predicted doublet passes  
     /*! 
      *  A predicted track from the doublet is constructed. At each sensor the closest hit is taken if included in list in arguments.
@@ -299,7 +267,6 @@ namespace eutelescope {
     int _eventNumber;
     int _totalNumberOfHits;
     std::map< int, int > _planeDimensions;
-    std::map<int,int> _senZOrderToIDWithoutExcPla;
     unsigned int _numberTripletsLeft;
     unsigned int _numberTripletsRight;
     ///Member variables. public for now.

@@ -2,6 +2,7 @@
 #define	EUTELSTATE_H
 
 #include "EUTelUtility.h"
+#include "EUTelBlock.h"
 
 // ROOT
 #if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
@@ -19,6 +20,9 @@ namespace eutelescope {
 
 	class  EUTelState{
 		public: 
+            Block block;
+            std::vector<unsigned int> GBLLabels;
+
 			EUTelState();
 			EUTelState(EUTelState *state);
 			//getters

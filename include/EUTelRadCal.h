@@ -26,22 +26,16 @@ namespace eutelescope {
 
 	class  EUTelRadCal {
         public:
-            //! Struct object
-            /*! This stores the basic information for each block of radiation length.
-             *  Each block contains the information to model the scattering for the sensor and the material infront of it.  
-             *
-             */
-
             void setMeanWeight(Block & block);
             void setVarWeight(Block & block);
 
-            //! The function will take a track and return the radiation length blocks 
-            /*! The tracks are needed to determine which planes should be excluded. 
+            //! This will add the scattering information to each state on a track. This comes in the form of blocks. 
+            /*!  
              *  @param [in] track
              */
 
-            std::map<int ,Block> getRad(EUTelTrack& track);
-            void setIncSenBlocks(EUTelTrack const & track, std::map<int, Block>& blocks); 
+            void setRad(EUTelTrack& track);
+            void setIncSenBlocks(EUTelTrack & track); 
             void getThicknessAndRad(EUTelTrack const & track, std::map<int, Block> & blocks);
             void getScatParam(std::map<int, Block> & blocks);
 
