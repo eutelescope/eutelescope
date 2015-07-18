@@ -36,8 +36,8 @@ void EUTelRadCal::getThicknessAndRad(EUTelTrack const & track, std::map<int, Blo
     ///Should get this from TGeo. How??
     double radAir = 30326;
     for(std::map<int,Block>::iterator itBl = blocks.begin(); itBl != blocks.end(); ++itBl){//Loop over included sensors.
-        int zOrdStartInc =  geo::gGeometry().sensorIDtoZOrder( itBl->first );
-        int zOrdEndInc =  geo::gGeometry().sensorIDtoZOrder( (itBl++)->first );
+        int zOrdStartInc =find(geo::gGeometry().sensorIDsVec().begin(), geo::gGeometry().sensorIDsVec().end(), itBl->first ) - geo::gGeometry().sensorIDsVec().begin();
+        int zOrdEndInc =  find(geo::gGeometry().sensorIDsVec().begin(), geo::gGeometry().sensorIDsVec().end(), (itBl++)->first ) - geo::gGeometry().sensorIDsVec().begin();
         itBl--; //This is silly but map is not random access iterator. How should I do this?
         int diff= zOrdEndInc - zOrdStartInc - 1; 
         std::vector<std::pair<double,double> > thicknessAndRad; 

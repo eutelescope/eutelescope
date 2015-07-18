@@ -223,7 +223,7 @@ namespace eutelescope {
 			/** Parameter ids */
 			std::map<int,int> _parameterIdZRotationsMap;
 			EUTelMillepede* _MilleInterface;
-
+			std::vector<int> _sensorIDVec;
         
     };
 }

@@ -53,7 +53,8 @@ namespace eutelescope {
 	_parameterIdZShiftsMap(),
 	_parameterIdXRotationsMap(),
 	_parameterIdYRotationsMap(),
-	_parameterIdZRotationsMap()
+	_parameterIdZRotationsMap(),
+	_sensorIDVec(geo::gGeometry().sensorIDsVec())
 	{}
     ///\todo Mode is set in only some processors. GBLAlign does not bother so it is set to internal parameterisation.  
 
@@ -137,25 +138,26 @@ namespace eutelescope {
 	//This set the estimate resolution for each plane in the X direction.
 	void EUTelGBLFitter::setParamterIdXResolutionVec( const std::vector<float>& vector)
 	{
-		//We have a similar check after this to see that number of planes and elements in resolution vector are the same. We need this here since if they are different then it will just give an exception from the vector tryign to access a element that does not exist.
-		if ( geo::gGeometry().sensorIDsVec().size() != vector.size() ){
-			streamlog_out( ERROR5 ) << "The number of planes: "<< geo::gGeometry().sensorIDsVec().size()<<"  The size of input resolution vector: "<<vector.size()  << std::endl;
+		//We have a similar check after this to see that number of planes and elements in resolution vector are the same. We need this here since if 
+		//they are different then it will just give an exception from the vector tryign to access a element that does not exist.
+		if ( _sensorIDVec.size() != vector.size() ){
+			streamlog_out( ERROR5 ) << "The number of planes: " << _sensorIDVec.size() << " differs from the size of input resolution vector: " << vector.size() << std::endl;
 			throw(lcio::Exception("The size of the resolution vector and the total number of planes is different for x axis."));
 		}
-
-		for(size_t i=0; i < geo::gGeometry().sensorIDsVec().size(); ++i){
-			_parameterIdXResolutionVec[ geo::gGeometry().sensorZOrderToID(i)] = vector.at(i);
+		for( std::vector<int>::iterator it = _sensorIDVec.begin(); it != _sensorIDVec.end(); it++ ){
+			_parameterIdXResolutionVec[*it] = vector.at(it-_sensorIDVec.begin());
 		}
 	}
+
 	//This sets the estimated resolution for each plane in the Y direction.
 	void EUTelGBLFitter::setParamterIdYResolutionVec( const std::vector<float>& vector)
 	{
-		if ( geo::gGeometry().sensorIDsVec().size() != vector.size() ){
-			streamlog_out( ERROR5 ) << "The number of planes: "<< geo::gGeometry().sensorIDsVec().size()<<"  The size of input resolution vector: "<<vector.size()  << std::endl;
+		if ( _sensorIDVec.size() != vector.size() ){
+			streamlog_out( ERROR5 ) << "The number of planes: " << _sensorIDVec.size() << " differs from the size of input resolution vector: " << vector.size() << std::endl;
 			throw(lcio::Exception("The size of the resolution vector and the total number of planes is different for y axis."));
 		}
-		for(size_t i=0; i < geo::gGeometry().sensorIDsVec().size(); ++i){
-			_parameterIdYResolutionVec[ geo::gGeometry().sensorZOrderToID(i)] = vector.at(i);
+		for( std::vector<int>::iterator it = _sensorIDVec.begin(); it != _sensorIDVec.end(); it++ ){
+			_parameterIdYResolutionVec[*it] = vector.at( it-_sensorIDVec.begin() );
 		}
 	}
 
