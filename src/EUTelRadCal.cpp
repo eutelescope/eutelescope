@@ -14,9 +14,8 @@ void EUTelRadCal::setIncSenBlocks(EUTelTrack & track){
 
             double senRad =  geo::gGeometry().siPlaneRadLength(itSt->getLocation());
             double senSize =  geo::gGeometry().siPlaneZSize(itSt->getLocation());
-            ///Must check values for this method of access
+            double radPer = geo::gGeometry().planeRadLengthGlobalIncidence(itSt->getLocation(), itSt->getDirGlobalEig()); 
             Block block;
-            double radPer = senSize/senRad;
             block.senRadPer = radPer;
             block.weigVar = 0;
             block.weigMean = 0;

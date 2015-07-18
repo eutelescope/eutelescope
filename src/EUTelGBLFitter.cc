@@ -230,8 +230,8 @@ namespace eutelescope {
             //Use state to get correct label
             unsigned int labelPlane = state.GBLLabels.at(0);
             Block block = state.block;
-            double var =Utility::getThetaRMSHighland( track.getBeamEnergy(),track.getRadPerTotal()  ); 
-            double varSen = var*block.senRadPer; ///Get the fraction of variance for each point.
+            double var = pow(Utility::getThetaRMSHighland( track.getBeamEnergy(),track.getRadPerTotal()  ),2); 
+            double varSen = var*(block.senRadPer/track.getRadPerTotal()); ///Get the fraction of variance for each point.
             setScattererGBL(pointList.at(labelPlane-1),state, varSen ); 
         }
     }

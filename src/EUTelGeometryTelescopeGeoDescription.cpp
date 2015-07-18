@@ -602,7 +602,6 @@ Eigen::Vector3d EUTelGeometryTelescopeGeoDescription::globalYAxis(int sensorID)
 Eigen::Matrix3d EUTelGeometryTelescopeGeoDescription::rotationMatrixFromAngles(long double alpha, long double beta, long double gamma)
 {
 	//Eigen::IOFormat IO(6, 0, ", ", ";\n", "[", "]", "[", "]");
-	//std::cout << "alpha, beta, gamma: " << alpha << ", " << beta << ", " << gamma << std::endl;
 	long double cosA = cos(alpha);
 	long double sinA = sin(alpha);
 	long double cosB = cos(beta);
@@ -610,13 +609,11 @@ Eigen::Matrix3d EUTelGeometryTelescopeGeoDescription::rotationMatrixFromAngles(l
 	long double cosG = cos(gamma);
 	long double sinG = sin(gamma);
 
-	//std::cout << "trig" << cosA << ", " << cosB << ", " << cosG << ", " << sinA << ", " << sinB << ", " << sinG <<  std::endl;
 
 	Eigen::Matrix3d rotMat;
 	rotMat <<	(double)(cosB*cosG+sinA*sinB*sinG),	(double)(sinA*sinB*cosG-cosB*sinG),	(double)(cosA*sinB),
 	      		(double)(cosA*sinG),			(double)(cosA*cosG),			(double)(-sinA),
 			(double)(sinA*cosB*sinG-sinB*cosG),	(double)(sinA*cosB*cosG+sinB*sinG),	(double)(cosA*cosB);
-	//std::cout << rotMat.format(IO) << std::endl;
 	return rotMat;
 }
 
@@ -876,7 +873,8 @@ double EUTelGeometryTelescopeGeoDescription::FindRad(Eigen::Vector3d const & sta
 		if(med) {
 			double radlen = med->GetMaterial()->GetRadLen();
 			if (radlen > 1.e-5 && radlen < 1.e10) {
-				rad += snext/radlen;
+                const double mm2cm =0.1;///It appears the propagation distance is in mm but the radiaiton length is in cm.
+				rad += (snext*mm2cm)/radlen;
 			} 
 		}
 		propagatedDistance += snext; 
