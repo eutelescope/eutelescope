@@ -71,7 +71,7 @@ void EUTelProcessorTrackAnalysis::processEvent(LCEvent * evt){
 
         }//for (int iTrack = 0; iTrack < tracks.size(); ++iTrack){
         }catch (DataNotAvailableException e) {
-//		streamlog_out(WARNING2) << " Collection not available" << std::endl;
+		streamlog_out(WARNING2) << " Collection not available" << std::endl;
 		throw marlin::SkipEventException(this);
 	}
 	catch(std::string &e){

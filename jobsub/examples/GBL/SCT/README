@@ -1,8 +1,8 @@
 ##This is the GBL fitter with a strip sensor DUT. 
-#Blue(#) markings are running processors and changing things in the config
+#Hash markings are running processors and changing things in the config
 TGeo reads the thickness of the sensors from the sensitive area of the gear.
 50 micron for mimosas, 300 micron for DUT
-Test with 10k events which was enough for alignment of DUT without XY rotations.
+Test with 10k events which was enough for alignment of DUT without XY-axis rotations.
 
 The gear file used from the begining of the process: gear-beforeAlign-000703.xml.
 This has the correct correlations but offsets are not taken into account.
@@ -30,7 +30,7 @@ Create triplets from hits on each arm now.
 Predicted position at central point and slope must agree with the cuts given:
 #TripletConnectDistCut = 0.5 0.5
 #TripletSlopeCuts = 0.01 0.01
-These planes will not create a state. IMPORTANT:TO EXCLUDE A PLANE IN ALIGNMENT DO IT HERE. SO PASS TRACKS WITH NO PLANE 8 FOR INITIALI ALIGNMENT ATTEMPT WITHOUT DUT
+These planes will not create a state. IMPORTANT:TO EXCLUDE A PLANE IN ALIGNMENT DO IT HERE. SO PASS TRACKS WITH NO PLANE 8 FOR INITIAL ALIGNMENT ATTEMPT WITHOUT DUT
 #excludeplanes=  8  
 Plane dimension is needed to determine in what directions we should compare tracks and DUT hits
 #planeDimensions= 2 2 2 1 2 2 2 
@@ -56,63 +56,64 @@ This process is similar to Daffitter and definition of parameters will be given 
 Alignment is done using GBL tracks and millepede. 
 Millepede will try to find the minimum chi2 for a series of independent residuals (All residual assume a gaussian form). These residuals compose each measured hit and predicted track position. This is in the measurement frame, i.e the plane which the position of the hit and prediction would sit on the physical plane. This residual will change due to two different types of parameters:
  The local parameters: the parameters which describe the most likely track (Kink, incidence position). This is just changing the track we predicted.
- The global parameters: The position of the detector. You can think of this as keeping the track constant now and moving the detector planes.
+ The global parameters: The position of the detector. You can think of this as keeping the track constant and moving the detector planes.
 
- We are interest in the second type of parameter since we what to know the position of the detector. Therefore the first are taken as nuissance parameters and only the global is determined. This is done in a usual manner, with a least squares fit, since the problem is just minimising a chi2 distribution. The only difference is the linear algebra which makes the process efficient. 
+ We are interest in the second type of parameter since we what to know the position of the detector. Therefore the first are taken as nuissance parameters and only the global is determined. This is done in a usual manner, with a least squares fit, since the problem is just minimising a chi2 distribution. The only difference is the linear algebra which makes the process efficient. Plus outlier treatment on each iteration of millepede on the local parameter level. 
 
-The chi2 is cut internally by millepede. This is cut using the chi2 which corresponds to 0.27% p-value estimate. This of course will vary with resolution of hit which can easily lead to problems. Especially since the errors are the statistical and systematic errors combined.
+The chi2 is cut internally by millepede. This cut is the chi2 which corresponds to a 0.27% p-value estimate. This of course will vary with resolution of the hits which can easily lead to problems. Especially since the errors are the statistical and systematic errors combined.
 The 30 and 6 will increase the chi2 value which corresponds to 0.27% p-value by that multiple on the first and then second iteration of millepede.
-There is not much point changing this cut in most situations. Since by default the cut is large.
+There is not much point changing this cut in most situations. Since by default the cut is large. Should vary the resolutions instead to add systematic alignment error.
 #pede          = chiscut 30  6
 
 The planes which you can move while keeping the tracks produced constant for an initial mimosa without DUT fit are:
 
-#FixXshifts=0  5 8 
-#FixYshifts=0  5 8 
-#FixZshifts=0 1 2 3 4 5 8 
-#FixXrot=   0 1 2 3 4 5 8
-#FixYrot=   0 1 2 3 4 5 8
-#FixZrot=   0   5 8 
-
-The first and last plane must be fixed at this point in alignment. Prealignment has moved this plane to possibly ~0.5 mm precision. 
-The input errors are the uncertainty we should expect the gaussian distributions of each residual to have AFTER the fit. 
-Therefore if you can not align with errors close to that of the DUT then there must be a systematic error remaining afterwards.
-Otherwise the initial track descripition was so wrong that no solution could be found.
-
-Alignment from prealignment can be found setting the resolution to (All plane are fixed as above):
-
-#r = 0.03
-#dutX=0.05
-#dutY=100000000
-#
-The new output gear is stored as:
-#alignedGear-xyzShift-zRot-DUT-xyShift-zRot-run000703.xml
-
-#js GBLAlign 703
-
-The output gear for no DUT is(You can of course name it different when running): alignedGear-xyzShift-zRot-noDUT-run000703.xml   
-
-
-NEED TO CHANGE THE RUNLIST TO THE NEW OUTPUT GEAR!!!
-NOTE PATTERN RECOGNITION MUST BE RAN AGAIN BEFORE YOU RERUN ALIGNMENT!!!!!
-After doing this we can free up another alignment parameter. 
-
-
 #FixXshifts=0  5  
 #FixYshifts=0  5  
-#FixZshifts=0 1 2 3 4 5 8 
+#FixZshifts=0  5  
 #FixXrot=   0 1 2 3 4 5 8
 #FixYrot=   0 1 2 3 4 5 8
 #FixZrot=   0   5  
 
-You should never fix planes after they have been freed. This will produce a gear like so: alignedGear-xyzShift-zRot-DUT-xyShift-zRot-run000703.xml 
-Do the same again now free up z position and produce gear: alignedGear-xyzShift-zRot-DUT-xyzShift-zRot-run000703.xml
-Can repeat with new gear to check convergence: alignedGear-xyzShift-zRot-DUT-xyzShift-zRot-v2-run000703.xml  (v2 => run with the new gear file again,NOT NEEDED, JUST A CHECK)
+The first and last plane must be fixed at this point in alignment. Prealignment has moved the planes to possibly ~0.5 mm precision. 
+The input errors are the uncertainty we should expect the gaussian distributions of each residual to have AFTER the fit. 
+Therefore if you can not align with errors close to that of the DUT then there must be a systematic error remaining afterwards.
+Otherwise the initial track descripition was so wrong that no solution could be found in any case.
 
+Alignment from prealignment can be found setting the resolution to (All plane are fixed as above):
 
-From here I get rotations of about 0.1 radians 5 deg with rotations ZX. Seems too large.  
-####################################################################################################################
-Using this gear file with the almost complete alignment you can use the track selection processor and analysis. 
+#r = 0.01
+#dutX=0.07
+#dutY=100000000
+#
+You must set the output gear as you like in config:
+#GearAlignedFile = alignedGear-test00-%(FilePrefix)s.xml
+
+When I did this I get the gear file saved in geometry as: alignedGear-iter1-run000703.xml 
+
+Now you will find alignment shifts of ~ 1cm in z shifts! The gear is well off! This will effect the global parameters that millepede uses to determine the alignment so a number of iterations is needed. 
+
+To do a second iteration with a new gear: 1) Place new gear in runlist 2)Run pattern recognition to get new tracks 3)Run alignment again (Remember to change the name of the new output gear!!!!!!)
+
+This process produces a new gear:alignedGear-iter2-run000703.xml
+Note the value are converging. This is always a good sign. 
+Now we the measurement errors can have a large effect on the final solution. Reduce resolution value since we want this to be as small as possible.
+#r = 0.01
+#dutX=0.07
+#dutY=100000000
+
+Run another iteration, output gear example is geometry is:alignedGear-iter3-run000703.xml
+Note we have large shift again. This is just due to the measurement error change.
+Run a last iteration and example geometry file output should match:alignedGear-iter4-run000703.xml
+
+############
+#
+Now you can run 
+#js patternRecognition 703
+#js GBLTrackFit 703    >>>> output/histograms/GBLTracks.root
+OR 
+# ./patRecAndTrackFitUsingConfigurationFile.sh -r 703 -h <some name given to root file placed in output/histograms
+You should find from 10k event => 6.8k tracks.
+The DUT RMS without DUT included in fit 24 microns.
 
 ##########################################################################################Update to improve poor alignment.
 This run is badly aligned from the start. This means that the global parameters for millepede are ill defined. 
