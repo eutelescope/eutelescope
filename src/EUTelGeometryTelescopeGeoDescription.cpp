@@ -874,6 +874,7 @@ double EUTelGeometryTelescopeGeoDescription::FindRad(Eigen::Vector3d const & sta
 			double radlen = med->GetMaterial()->GetRadLen();
 			if (radlen > 1.e-5 && radlen < 1.e10) {
                 const double mm2cm =0.1;///It appears the propagation distance is in mm but the radiaiton length is in cm.
+             //   std::cout<<"radlen " << radlen << "  " << snext << "  " << rad <<std::endl; 
 				rad += (snext*mm2cm)/radlen;
 			} 
 		}
@@ -931,6 +932,26 @@ double EUTelGeometryTelescopeGeoDescription::planeRadLengthLocalIncidence(int pl
 	double scale = std::abs(incidenceDir(2));
 	return normRad/scale;
 }
+double EUTelGeometryTelescopeGeoDescription::airBetweenPlanesRadLengthGlobalIncidence(int planeIDStart,int planeIDEnd, Eigen::Vector3d incidenceDir, double& thickness) {
+	incidenceDir.normalize();
+	double normRad;
+    double startZPosAir =  siPlaneZPosition(planeIDStart) +  0.51*siPlaneZSize(planeIDStart);
+    double endZPosAir =  siPlaneZPosition(planeIDEnd) -  0.51*siPlaneZSize(planeIDEnd);
+	Eigen::Vector3d planeStartPos(0, 0, startZPosAir);
+	Eigen::Vector3d planeEndPos(0, 0, endZPosAir);
+ //   std::cout << "find rad" <<std::endl;
+    normRad = FindRad(planeStartPos, planeEndPos);
+ //   std::cout << "norm rad: " << normRad << " " << planeIDStart <<std::endl;
+	Eigen::Vector3d globalZ(0, 0, 1);
+    //I think this is the correct way of dealing with the incidence here.
+	double scale = std::abs(incidenceDir.dot(globalZ));
+ //   std::cout<<"Scale" << scale <<std::endl;
+    thickness =  ((planeEndPos - planeStartPos).norm())/scale;
+	return normRad/scale;
+}
+
+
+
 int EUTelGeometryTelescopeGeoDescription::findNextPlane(  double* lpoint,  double* ldir, float* newpoint ){
 	if(newpoint==NULL)
 	{

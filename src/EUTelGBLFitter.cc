@@ -86,6 +86,16 @@ namespace eutelescope {
 		point.addScatterer(state.getKinks(), precisionMatrix);
 		streamlog_out(DEBUG1) << "  setScattererGBL  ------------- END ----------------- " << std::endl;
 	}
+	void EUTelGBLFitter::setScattererMedGBL(gbl::GblPoint& point,TVectorD& kinks, double& varMed ) {
+		streamlog_out(DEBUG1) << " setScattererGBL ------------- BEGIN --------------  " << std::endl;
+        TMatrixDSym preMat(2); 
+        preMat[0][0] = 1.0/varMed;
+        preMat[1][1] = 1.0/varMed;
+		streamlog_message( DEBUG0, preMat.Print();, std::endl; );
+		point.addScatterer(kinks, preMat);
+		streamlog_out(DEBUG1) << "  setScattererGBL  ------------- END ----------------- " << std::endl;
+	}
+
 	/// This will add measurement information to the GBL point
 	void EUTelGBLFitter::setMeasurementGBL(gbl::GblPoint& point,EUTelState & state ){
 		streamlog_out(DEBUG1) << " setMeasurementGBL ------------- BEGIN --------------- " << std::endl;
@@ -196,18 +206,40 @@ namespace eutelescope {
         ///IN GBL the propagation from plane 0 to 1 is stored in point 1 associated to plane 1. Strange but this is the convention.
         ///This is done due to the decomposition of the jacobian within GBL.
         for(std::vector<EUTelState>::iterator itSt = track.getStates().begin();itSt != (track.getStates().end()-1); ++itSt){		
-            Block block =  itSt->block; ///Block now used yet!! 
+            Block block =  itSt->block;  
+            TVector3 diff = (itSt+1)->getPositionGlobal() - (itSt)->getPositionGlobal();
+         //   std::cout<<"states" <<std::endl;
+            itSt->print();
+            (itSt+1)->print();
+         //   std::cout<<"states//////" <<std::endl;
+
             ///If any of this information is missing can not create thick scatterer.
             if(block.medRadPer == 0 or block.weigMean == 0 or block.weigVar == 0){
-                TVector3 diff = (itSt+1)->getPositionGlobal() - (itSt)->getPositionGlobal();
                 TMatrixD jac = EUTelNav::getPropagationJacobianGlobalToGlobal(diff.Mag(), itSt->getDirGlobal());
                 gbl::GblPoint point(jac);
                 point.setLabel(label);
                 (itSt+1)->GBLLabels.push_back(label);
                 label++;
                 pointList.push_back(point);
-            }else{
-                ///thick scatter situation here.
+            }else{///If information is there for thick scatter create them using two points to model it.
+                double lastPos=0;
+                std::vector<double> pos = block.scatPos; pos.push_back(diff.Mag());//Add this so we get to the next included plane
+            //    std::cout<< "size pos: " << pos.size()  <<"  " << pos[0] << " " << pos[1] << "  " <<pos[2] <<std::endl;
+                for(std::vector<double>::iterator itPos = pos.begin();itPos != pos.end(); ++itPos){		
+                    double diff = *itPos -lastPos; 
+                    lastPos = *itPos;
+                    TMatrixD jac = EUTelNav::getPropagationJacobianGlobalToGlobal(diff, itSt->getDirGlobal());
+                    gbl::GblPoint point(jac);
+                    point.setLabel(label);
+                    if(itPos != (pos.end()-1)){///Attach scat labels to state it has come from. 
+                        itSt->GBLLabels.push_back(label);
+                    }else{///Attach the propagation from the last scatter to the next plane in the next sensor state 
+                        (itSt+1)->GBLLabels.push_back(label);
+                    }
+                    label++;
+                    pointList.push_back(point);
+                 //   std::cout<< "SIZE: " << pointList.size()  <<std::endl;
+                }
             }
         }
     }   
@@ -226,13 +258,20 @@ namespace eutelescope {
     }
 	void EUTelGBLFitter::getScat(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList){
         for(size_t i;i < track.getStates().size(); i++){		
-            EUTelState state = track.getStates().at(i);
+            EUTelState& state = track.getStates().at(i);
             //Use state to get correct label
             unsigned int labelPlane = state.GBLLabels.at(0);
-            Block block = state.block;
-            double var = pow(Utility::getThetaRMSHighland( track.getBeamEnergy(),track.getRadPerTotal()  ),2); 
-            double varSen = var*(block.senRadPer/track.getRadPerTotal()); ///Get the fraction of variance for each point.
-            setScattererGBL(pointList.at(labelPlane-1),state, varSen ); 
+            if(state.block.medRadPer == 0 or state.block.weigMean == 0 or state.block.weigVar == 0){ ///No thick scattering.
+                setScattererGBL(pointList.at(labelPlane-1),state, state.block.senVar); 
+            }else{
+                setScattererGBL(pointList.at(labelPlane-1),state, state.block.senVar); 
+                if(i != track.getStates().size()-1){//No scatterers after the last plane.
+                    TVectorD kink1 = state.getKinksMedium1();
+                    setScattererMedGBL(pointList.at(labelPlane),kink1 , state.block.scatVar.at(0) );
+                    TVectorD kink2 = state.getKinksMedium2();
+                    setScattererMedGBL(pointList.at(labelPlane+1),kink2 , state.block.scatVar.at(1) ); 
+                }
+            }
         }
     }
     ///This is the work horse of the GBL fitter. It creates GBL points from EUTelTracks and returns the relations between the two.

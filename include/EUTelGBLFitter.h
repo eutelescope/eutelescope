@@ -78,6 +78,8 @@ namespace eutelescope {
              */
 
 			void setScattererGBL(gbl::GblPoint& point,EUTelState & state,double & );
+            void setScattererMedGBL(gbl::GblPoint& point,TVectorD& kinks, double& varMed );
+
             /// Will take a track and fill it with information about it's radiation length 
             /// This is split between radiation length of the included planes and radiation length in front of it.
             /// Excluded planes are included in the radiation length in front of the included sensors. 

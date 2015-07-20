@@ -43,6 +43,7 @@ EUTelState::EUTelState(EUTelState *state):
 	if(state->getStateHasHit()){
 		setHit(state->getHit());
 	}
+    block = state->block;
 }
 //getters
 double EUTelState::getRadFracAir() const{
@@ -194,7 +195,7 @@ float EUTelState::getSlopeYGlobal() const {return getDirGlobal()[1]/getDirGlobal
 TVectorD EUTelState::getKinks() const {
 	return _kinks;
 }
-TVectorD EUTelState::getKinksMedium1() const {
+TVectorD EUTelState::getKinksMedium1() const  {
 	return _kinksMedium1;
 }
 TVectorD EUTelState::getKinksMedium2() const {

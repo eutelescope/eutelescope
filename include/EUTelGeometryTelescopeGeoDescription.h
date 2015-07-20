@@ -343,7 +343,8 @@ class EUTelGeometryTelescopeGeoDescription
 
 	double planeRadLengthGlobalIncidence(int planeID, Eigen::Vector3d incidenceDir);
 	double planeRadLengthLocalIncidence(int planeID, Eigen::Vector3d incidenceDir);
-	
+	double airBetweenPlanesRadLengthGlobalIncidence(int planeIDStart,int planeIDEnd, Eigen::Vector3d incidenceDir, double& thickness);
+
 	void local2Master( int, const double[], double[] );
 
 	void master2Local(int, const double[], double[] );

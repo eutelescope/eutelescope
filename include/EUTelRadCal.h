@@ -26,8 +26,8 @@ namespace eutelescope {
 
 	class  EUTelRadCal {
         public:
-            void setMeanWeight(Block & block);
-            void setVarWeight(Block & block);
+            void setMeanWeight(EUTelTrack & );
+            void setVarWeight(EUTelTrack & );
 
             //! This will add the scattering information to each state on a track. This comes in the form of blocks. 
             /*!  
@@ -36,12 +36,12 @@ namespace eutelescope {
 
             void setRad(EUTelTrack& track);
             void setIncSenBlocks(EUTelTrack & track); 
-            void getThicknessAndRad(EUTelTrack const & track, std::map<int, Block> & blocks);
-            void getScatParam(std::map<int, Block> & blocks);
+            void getThicknessAndRad(EUTelTrack & track);
+            void getRelativePosOfScatterers(EUTelState & state);
+            void setPosVar(EUTelTrack & track); 
+            void getVarForAllScatters(EUTelTrack & track );
 
 
-
-            void setBlockWithoutTrackInfo(EUTelTrack const  & track, std::map<int, Block>& blocks);
 
 	};
 }

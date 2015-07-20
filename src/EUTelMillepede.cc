@@ -63,9 +63,9 @@ void EUTelMillepede::computeAlignmentGlobal( EUTelState &state){
     Eigen::Vector3d offset =  geo::gGeometry().getOffsetVector(state.getLocation());
     Eigen::Vector3d dir    = state.getDirGlobalEig();
     ///Deduct offset to remove set from gear.
-    double relX = state.getPositionGlobal()[0] - offset(0);
-    double relY = state.getPositionGlobal()[1] - offset(1);
-    double relZ = state.getPositionGlobal()[2] - offset(2);
+    double relX = state.getPositionGlobal()[0];
+    double relY = state.getPositionGlobal()[1];
+    double relZ = state.getPositionGlobal()[2];
     Eigen::MatrixXd I(3,3);
     I.setIdentity();
     double factor =  dir.transpose()*normal;
