@@ -136,7 +136,8 @@ namespace eutelescope {
                 TMatrixD const& alignmentJacobian = _MilleInterface->getAlignmentJacobian();
                 std::vector<int> labels =  _MilleInterface->getGlobalParameters();
                 ///Now fill GBL point with global derivatives.
-                pointList.at(j).addGlobals(labels, alignmentJacobian);
+                int index = state.GBLLabels.at(0) - 1;
+                pointList.at(index).addGlobals(labels, alignmentJacobian);
                 streamlog_out(DEBUG0)<<"The alignment matrix after adding to point: "<<std::endl;
                 streamlog_message( DEBUG0, pointList.at(j).getGlobalDerivatives().Print() ;, std::endl; );
             }
