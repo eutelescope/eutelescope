@@ -279,6 +279,7 @@ namespace eutelescope {
 	void EUTelGBLFitter::getGBLPointsFromTrack(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList){
 		streamlog_out(DEBUG0)<<"EUTelGBLFitter::getGBLPointsFromTrack-------------------------------------BEGIN"<<std::endl;
         //Do the parameterisartion internally. 
+        EUTelExcludedPlanes::setPlaneInc(track.getPlaIDs());///Only used if GBL will do the track parameterisation.
         if(_mode == 1){
             initNav();
             track = EUTelTrackCreate::getTrackFourHits(track.getHitsCopy());

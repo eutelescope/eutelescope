@@ -53,19 +53,18 @@ std::vector<EUTelState> EUTelTrack::getStatesCopy() const {
 	return _states;
 }
 std::vector<int>  EUTelTrack::getPlaIDs() const {
+    //Using an iterator did not seem to work? 
     std::vector<int> planes;
-    for(std::vector<EUTelState>::iterator itSt = this->getStatesCopy().begin(); itSt != this->getStatesCopy().end(); ++itSt){
-        planes.push_back(itSt->getLocation());
-    
+    for(size_t i = 0; i < _states.size() ; ++i){
+        EUTelState state = _states.at(i);
+        planes.push_back(state.getLocation());
     }
+
     return planes;
 }
 
 
 unsigned int EUTelTrack::getNumberOfHitsOnTrack() const {
-//	if(_states.size() == 0){
-//		throw(lcio::Exception("The number of states is 0.")); 	
-//	}
     unsigned int numHits = 0;
 	for(unsigned int i = 0; i< _states.size();++i){
         if(_states.at(i).getStateHasHit()){

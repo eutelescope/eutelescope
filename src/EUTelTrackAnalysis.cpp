@@ -245,17 +245,17 @@ void EUTelTrackAnalysis::setTotNum(EUTelTrack& track){
 	std::vector<EUTelState> states = track.getStates();
 	for(size_t i=0; i<states.size();++i){
 		EUTelState state  = states.at(i);
-		state.print();
-        int ID = state.getLocation();
-        float resX = state.getPositionGlobal()[0] - state.getHit().getPositionGlobal()[0];
-        float resY = state.getPositionGlobal()[1] - state.getHit().getPositionGlobal()[1];
-        float resZ = state.getPositionGlobal()[2] - state.getHit().getPositionGlobal()[2];
-        _senResTotX[ID] = _senResTotX[ID] + resX; 
-        _senResTotY[ID] = _senResTotY[ID] + resY; 
-        _senResTotZ[ID] = _senResTotZ[ID] + resZ; 
-        _hitNum[ID] = _hitNum[ID] + 1; 
-
-
+		if(state.getStateHasHit()){
+            state.print();
+            int ID = state.getLocation();
+            float resX = state.getPositionGlobal()[0] - state.getHit().getPositionGlobal()[0];
+            float resY = state.getPositionGlobal()[1] - state.getHit().getPositionGlobal()[1];
+            float resZ = state.getPositionGlobal()[2] - state.getHit().getPositionGlobal()[2];
+            _senResTotX[ID] = _senResTotX[ID] + resX; 
+            _senResTotY[ID] = _senResTotY[ID] + resY; 
+            _senResTotZ[ID] = _senResTotZ[ID] + resZ; 
+            _hitNum[ID] = _hitNum[ID] + 1; 
+        }
 	} 
 }
 

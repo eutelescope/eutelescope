@@ -218,16 +218,6 @@ void EUTelProcessorGBLAlign::end(){
     /// This will run pede and link to the results file: _milleResultFileName
 	bool tooManyRejects = 	_Mille->runPede();
 	if(!tooManyRejects){
-		streamlog_out (MESSAGE9) <<"FIRST ATTEMPT WITH INITIAL INPUT PARAMETERS. NOW TRY TO CONVERGE.......................................  "<< std::endl;
-//		bool converged =	_Mille->converge(); //TAKE CONVERGENCE OUT FOR NOW. 
-        bool converged =true;
-        if(converged){
-            streamlog_out (MESSAGE9) <<"Converge:Successful! "<< std::endl;
-        }else{
-            streamlog_out (MESSAGE9) <<"Converge:Fail! "<< std::endl;
-        }
-
-	//	_Mille->parseMilleOutput(_alignmentConstantLCIOFile, _gear_aligned_file);
         _Mille->getNewGear();
 	}else{
 		streamlog_out (MESSAGE9) <<"THE NUMBER OF REJECTED TRACKS IS TOO LARGE."<< std::endl;

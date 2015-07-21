@@ -1,7 +1,2 @@
 RunNumber,BeamEnergy,Threshold,GearGeoFile
-105,4.4,6,gear-beforeAlign-quad.xml
-252,4,6,gear-252-start_pre.xml 
-650,4,6,gear_250x50_Indium.xml
-692,4,6,gear_500x25-good.xml
-186,4,2,alignedGear-xyShift-zRot-DUT-xyShift-zRot-iter3-run000186.xml 
-442,4,2,alignedGear-xyShift-zRot-DUT-xyShift-zRot-iter3-run000186.xml 
+186,4,2,alignedGear-TripPat-iter4-run000186.xml 

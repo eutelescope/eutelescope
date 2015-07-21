@@ -12,6 +12,7 @@ class EUTelExcludedPlanes
 		static std::vector<int> getExcludedPlaneIDVec(std::vector<int> const& planesToExclude);
 		static std::vector<int> getExcludedPlaneIDVecZSorted(std::vector<int> const& planesToExclude);
         static void setRelativeComplementSet(std::vector<int> const& planesToExclude);
+        static void setPlaneInc(std::vector<int> const& plaInc);
 
         static  std::vector<int>  _senInc;
  	

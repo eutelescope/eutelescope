@@ -61,17 +61,19 @@ void EUTelMillepede::computeAlignmentGlobal( EUTelState &state){
     /// This allows the correct magnitude of rotation to be determined.
     Eigen::Vector3d normal  = geo::gGeometry().siPlaneNormalEig(state.getLocation());
     Eigen::Vector3d offset =  geo::gGeometry().getOffsetVector(state.getLocation());
+	streamlog_out( DEBUG0 ) << "Offset: "<< offset[0] <<  " " << offset[1] << " " <<offset[2] << std::endl;
+
     Eigen::Vector3d dir    = state.getDirGlobalEig();
     ///Deduct offset to remove set from gear.
-    double relX = state.getPositionGlobal()[0];
-    double relY = state.getPositionGlobal()[1];
-    double relZ = state.getPositionGlobal()[2];
+    double relX = state.getPositionGlobal()[0] - offset[0];
+    double relY = state.getPositionGlobal()[1] - offset[1];
+    double relZ = state.getPositionGlobal()[2] - offset[2];
     Eigen::MatrixXd I(3,3);
     I.setIdentity();
     double factor =  dir.transpose()*normal;
     Eigen::MatrixXd drldm = I - (dir*normal.transpose())*(1.0/factor); //Residual change with change in global position 
 
-	streamlog_out( DEBUG0 ) << "drldm: "<< drldm << std::endl;
+	streamlog_out( DEBUG0 ) << "drldm: "<<endl <<  drldm << std::endl;
 
     //Change in global position with change in alignment parameters.  
     Eigen::MatrixXd dmdg(3,6);

@@ -49,6 +49,10 @@ void EUTelExcludedPlanes::setRelativeComplementSet(std::vector<int> const& plane
     _senInc = getRelativeComplementSet(planesToExclude);
 
 }
+void EUTelExcludedPlanes::setPlaneInc(std::vector<int> const& plaInc){
+    _senInc = plaInc;
+}
+
 
 
 bool EUTelExcludedPlanes::sortSensorIDByZPos(int i, int j)
