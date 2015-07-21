@@ -97,6 +97,14 @@ Run another iteration, output gear example is geometry is:alignedGear-iter3-run0
 Note we have large shift again. This is just due to the measurement error change.
 Run a last iteration and example geometry file output should match:alignedGear-iter4-run000703.xml
 
+This last iteration will leave about about a ~2 micron shift. This is small but can be corrected by doing more iterations with:
+
+#r = 0.005
+#dutX=0.02
+#dutY=100000000
+
+Gear file for this with improved alignment: iter5 and iter6 
+
 ############
 #
 Now you can run 
