@@ -18,7 +18,7 @@ With the prealigned gear use the cuts:
 #DoubletDistCut = 1 1
 #excludeplanes=    
 
-
+ONLY NEED TO RUN PATTERN RECOGNITION ONCE! Caveat: You are so badly aligned you would have associated the wrong hits to tracks.
 ###js GBLAlign 186######################################################################
 
 Align with prealigned gear and only mimosas
