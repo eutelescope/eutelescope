@@ -61,7 +61,14 @@ namespace eutelescope {
 		void setSensorIDToPValuesVsIncidenceAngleXZ( std::map< int,  AIDA::IProfile1D * > mapFromSensorIDToPValuesVsIncidenceXZ){_mapFromSensorIDToPValuesVsIncidenceXZ=mapFromSensorIDToPValuesVsIncidenceXZ;}
 		void setSensorIDToPValuesVsIncidenceAngleYZ( std::map< int,  AIDA::IProfile1D * > mapFromSensorIDToPValuesVsIncidenceYZ){_mapFromSensorIDToPValuesVsIncidenceYZ=mapFromSensorIDToPValuesVsIncidenceYZ;}
 //		void setHistName(std::string histName){  _histoInfoFileName = histName; }
+        void setTotNum(EUTelTrack & track);
+        void print();
 
+        protected:
+        std::map<int, float > _senResTotX;
+        std::map<int, float > _senResTotY;
+        std::map<int, float > _senResTotZ;
+        std::map<int, int >  _hitNum;
 		AIDA::IHistogram1D * _beamEnergy;
 		AIDA::IProfile1D   * _pValueBeamEnergy;
 		AIDA::IProfile1D * _pValueVsBeamEnergy;

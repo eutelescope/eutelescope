@@ -42,6 +42,8 @@
 #include "EUTelEventImpl.h"
 #include "EUTelHistogramManager.h"
 #include "EUTelReaderGenericLCIO.h"
+#include "EUTelExcludedPlanes.h"
+
 
 namespace eutelescope {
 
@@ -76,6 +78,8 @@ namespace eutelescope {
 			virtual void end();
 
     protected:
+            EVENT::IntVec _excludePlanes;         
+            int _mode;
 
 			/** Number of events processed */
 			int _nProcessedRuns;
@@ -123,7 +127,7 @@ namespace eutelescope {
 
 			void bookHistograms();
 
-			void plotResidual(std::map< int, std::map<float, float > >  & sensorResidual, std::map< int, std::map<float, float > >  & sensorResidualError, std::map< int, int > & planes);
+			void plotResidual(std::map< int, std::map<float, float > >  & sensorResidual, std::map< int, std::map<float, float > >  & sensorResidualError);
 				
 //TO DO: Fix all this histogramming stuff.
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)

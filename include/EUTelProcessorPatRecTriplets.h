@@ -134,6 +134,8 @@ namespace eutelescope {
         std::vector<float> _tripletSlopeCuts;
         ///Connect triplets if extrapolation under this cut in location prediction
         std::vector<float> _tripletConnectDistCut;
+        ///Min hits needed.
+        int _minHits;
         ///the dimention vector.
         IntVec _planeDimension;
 		/// Number of events processed
@@ -151,6 +153,8 @@ namespace eutelescope {
 		double _qBeam;
 	    /// Planes we have excluded.	
 		EVENT::IntVec _excludePlanes;         
+        int _mode;
+        int _hitNum;
 
 		private:
         /// prevent users from making (default) copies of processors

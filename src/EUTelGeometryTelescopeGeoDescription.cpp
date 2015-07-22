@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <string>
 #include <cstring>
+#include <cmath>
 #include <sstream>
 
 // MARLIN
@@ -21,7 +22,7 @@
 // EUTELESCOPE
 #include "EUTelExceptions.h"
 #include "EUTelGenericPixGeoMgr.h"
-#include "EUTelNav.h"
+//#include "EUTelNav.h"
 
 // ROOT
 #include "TGeoManager.h"
@@ -49,31 +50,12 @@ EUTelGeometryTelescopeGeoDescription& EUTelGeometryTelescopeGeoDescription::getI
 	unsigned i = EUTelGeometryTelescopeGeoDescription::_counter;
 	
 	//do it only once!
-	if( i < 1 )
-	{
+	if( i < 1 ) {
 		instance.setGearManager(_g);
 		instance.readGear();
 	}
-	
 	instance.counter();
 	return instance;
-}
-
-/**TODO: Replace me: NOP*/
-int EUTelGeometryTelescopeGeoDescription::sensorIDtoZOrder( int planeID ) const
-{
-	std::map<int,int>::const_iterator it = _sensorIDtoZOrderMap.find(planeID);
-	if( it != _sensorIDtoZOrderMap.end() )
-	{
-		return it->second;
-	}
-	else
-	{
-		std::stringstream ss;
-		ss << planeID;
-		std::string errMsg = "EUTelGeometryTelescopeGeoDescription::sensorIDtoZOrder: Could not find planeID: " + ss.str(); 
-		throw InvalidGeometryException(errMsg);
-	}
 }
 
 //Note  that to determine these axis we MUST use the geometry class after initialisation. By this I mean directly from the root file create.
@@ -88,109 +70,72 @@ Eigen::Vector3d EUTelGeometryTelescopeGeoDescription::siPlaneNormalEig( int plan
 
 TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneNormal( int planeID )
 {
-	std::vector<int>::iterator it = std::find(_sensorIDVec.begin(), _sensorIDVec.end(), planeID);
-	if( it != _sensorIDVec.end() )
-	{
-		const double zAxisLocal[3]  = {0,0,1};
-		double zAxisGlobal[3]; 
-		local2MasterVec(planeID,zAxisLocal,zAxisGlobal); 
-		TVector3 normVec(zAxisGlobal[0],zAxisGlobal[1],zAxisGlobal[2]);
-		return normVec;
-	}
-	else
-	{
-		std::stringstream ss;
-		ss << planeID;
-		std::string errMsg = "EUTelGeometryTelescopeGeoDescription::siPlaneNormal: Could not find planeID: " + ss.str();
-		throw InvalidGeometryException(errMsg);
+	std::map<int, TVector3>::iterator mapIt = _planeNormalMap.find(planeID);
+	if( mapIt != _planeNormalMap.end() ) {
+		return mapIt->second;
+	} else {
+		std::vector<int>::iterator it = std::find(_sensorIDVec.begin(), _sensorIDVec.end(), planeID);
+		if( it != _sensorIDVec.end() ) {
+			const double zAxisLocal[3]  = {0,0,1};
+			double zAxisGlobal[3]; 
+			local2MasterVec(planeID,zAxisLocal,zAxisGlobal); 
+			TVector3 normVec(zAxisGlobal);
+			_planeNormalMap[planeID] = normVec;
+			return normVec;
+		} else {
+			std::stringstream ss;
+			ss << planeID;
+			std::string errMsg = "EUTelGeometryTelescopeGeoDescription::siPlaneNormal: Could not find planeID: " + ss.str();
+			throw InvalidGeometryException(errMsg);
+		}
 	}
 }
 
 /**TODO: Replace me: NOP*/
 TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneXAxis( int planeID )
 {
-	std::vector<int>::iterator it = std::find(_sensorIDVec.begin(), _sensorIDVec.end(), planeID);
-	if( it != _sensorIDVec.end() )
-	{
-		const double xAxisLocal[3]  = {1,0,0};
-		double xAxisGlobal[3]; 
-		local2MasterVec(planeID,xAxisLocal , xAxisGlobal ); 
-		TVector3 xVec(xAxisGlobal[0],xAxisGlobal[1],xAxisGlobal[2]);
-		return xVec;
-	}
-	else
-	{
-		std::stringstream ss;
-		ss << planeID;
-		std::string errMsg = "EUTelGeometryTelescopeGeoDescription::siPlaneXAxis: Could not find planeID: " + ss.str();
-		throw InvalidGeometryException(errMsg);
+	std::map<int, TVector3>::iterator mapIt = _planeXMap.find(planeID);
+	if( mapIt != _planeXMap.end() ) {
+		return mapIt->second;
+	} else {
+		std::vector<int>::iterator it = std::find(_sensorIDVec.begin(), _sensorIDVec.end(), planeID);
+		if( it != _sensorIDVec.end() ) {
+			const double xAxisLocal[3] = {1,0,0};
+			double xAxisGlobal[3]; 
+			local2MasterVec(planeID, xAxisLocal, xAxisGlobal); 
+			TVector3 xVec(xAxisGlobal);
+			_planeXMap[planeID] = xVec;
+			return xVec;
+		} else {
+			std::stringstream ss;
+			ss << planeID;
+			std::string errMsg = "EUTelGeometryTelescopeGeoDescription::siPlaneXAxis: Could not find planeID: " + ss.str();
+			throw InvalidGeometryException(errMsg);
+		}
 	}
 }
-
 
 /**TODO: Replace me: NOP*/
 TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneYAxis( int planeID )
 {
-	std::vector<int>::iterator it = std::find(_sensorIDVec.begin(), _sensorIDVec.end(), planeID);
-	if( it != _sensorIDVec.end() )
-	{
-		const double yAxisLocal[3]  = {0,1,0};
-		double yAxisGlobal[3]; 
-		local2MasterVec(planeID,yAxisLocal , yAxisGlobal ); 
-		TVector3 yVec(yAxisGlobal[0],yAxisGlobal[1],yAxisGlobal[2]);
-		return yVec;
-	}
-	else
-	{
-		std::stringstream ss;
-		ss << planeID;
-		std::string errMsg = "EUTelGeometryTelescopeGeoDescription::siPlaneYAxis: Could not find planeID: " + ss.str(); 
-		throw InvalidGeometryException(errMsg);
-	}
-}
-
-/**TODO: Replace me: NOP*/
-void EUTelGeometryTelescopeGeoDescription::initialisePlanesToExcluded(IntVec planeIDs)
-{
-	int counter=0;
-	for(size_t i = 0 ; i <_sensorZOrderToIDMap.size(); ++i){
-			bool excluded=false;
-			for(size_t j =0; j< planeIDs.size(); ++j){
-					if(_sensorZOrderToIDMap[i] == planeIDs[j]){
-							excluded=true;
-							break;
-					} 
-			}
-			if(!excluded){
-					_sensorIDToZOrderWithoutExcludedPlanes[_sensorZOrderToIDMap[i]] =  counter;
-					_sensorZOrderToIDWithoutExcludedPlanes[counter]=_sensorZOrderToIDMap[i];
-					counter++;
-			}
-	}
-	//Check if the number of excluded planes set is the same as (total-number of plane IDs inputed that should be excluded)
-	if(geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() != (geo::gGeometry().sensorIDstoZOrder().size()-planeIDs.size())){
-        streamlog_out(MESSAGE) <<"Number of planes not excluded: "<< geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() <<" All sensor number " << geo::gGeometry().sensorIDstoZOrder().size()<<" Planes to exclude " << planeIDs.size()<< std::endl;
-        throw(lcio::Exception( "The number of Planes-Excluded is not correct. This could be a problem with geometry. Such as two planes having the same z position"));
-	}else{
-			streamlog_out(DEBUG5) <<"The correct number of planes have been excluded" << std::endl;
-	}
-}
-
-/** Sensor ID vector ordered according to their position along the Z axis (beam axis)
- *  Numeration runs from 0 to nPlanes-1 */
-int EUTelGeometryTelescopeGeoDescription::sensorZOrderToID( int znumber ) const
-{
-	std::map<int,int>::const_iterator it = _sensorZOrderToIDMap.find( znumber );
-	if( it != _sensorZOrderToIDMap.end() )
-	{
-		return it->second;
-	}
-	else
-	{
-		std::stringstream ss;
-		ss << znumber;
-		std::string errMsg = "EUTelGeometryTelescopeGeoDescription::sensorZOrderToID: Could not find snumber: " + ss.str(); 
-		throw InvalidGeometryException(errMsg);
+	std::map<int, TVector3>::iterator mapIt = _planeYMap.find(planeID);
+	if( mapIt != _planeYMap.end() ) {
+		return mapIt->second;
+	} else {
+		std::vector<int>::iterator it = std::find(_sensorIDVec.begin(), _sensorIDVec.end(), planeID);
+		if( it != _sensorIDVec.end() ) {
+			const double yAxisLocal[3] = {0,1,0};
+			double yAxisGlobal[3]; 
+			local2MasterVec(planeID, yAxisLocal, yAxisGlobal); 
+			TVector3 yVec(yAxisGlobal);
+			_planeYMap[planeID] = yVec;
+			return yVec;
+		} else {
+			std::stringstream ss;
+			ss << planeID;
+			std::string errMsg = "EUTelGeometryTelescopeGeoDescription::siPlaneYAxis: Could not find planeID: " + ss.str(); 
+			throw InvalidGeometryException(errMsg);
+		}
 	}
 }
 
@@ -256,37 +201,15 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout()
 		_planeSetup[_siPlanesLayerLayout->getID(iPlane)] = thisPlane;
 	}
 
-
-	// sort the array with increasing z
-	std::sort(_siPlaneZPosition.begin(), _siPlaneZPosition.end());
-
-	// clear the sensor ID vector
 	_sensorIDVec.clear();
-
-	// clear the sensor ID map
-	_sensorIDVecMap.clear();
-	_sensorIDtoZOrderMap.clear();
 
 	for(int iPlane = 0; iPlane < _siPlanesLayerLayout->getNLayers(); iPlane++)
 	{
 		int sensorID = _siPlanesLayerLayout->getID(iPlane);
 		_sensorIDVec.push_back(sensorID);
-		_sensorIDVecMap.insert(std::make_pair(sensorID, iPlane));
-
-		// count number of the sensors to the left of the current one:
-		int sensorsToTheLeft = 0;
-		int kposition = _siPlanesLayerLayout->getSensitivePositionZ(iPlane);
-		for (int jPlane = 0; jPlane < _siPlanesLayerLayout->getNLayers(); jPlane++)
-		{
-			if(_siPlanesLayerLayout->getSensitivePositionZ(jPlane) + 1e-06 < kposition  )
-			{
-				sensorsToTheLeft++;
-			}
-		}
-		_sensorZOrderToIDMap.insert(std::make_pair(sensorsToTheLeft, sensorID));        
-		_sensorIDtoZOrderMap.insert(std::make_pair(sensorID, sensorsToTheLeft));
 	}
 	_nPlanes = _siPlanesParameters->getSiPlanesNumber();
+	std::sort(_sensorIDVec.begin(), _sensorIDVec.end(), doCompare(*this) );	
 }
 
 void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout()
@@ -297,11 +220,7 @@ void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout()
 
 	setSiPlanesLayoutID( _trackerPlanesParameters->getLayoutID() ) ;
 
-	// clear the sensor ID vector
 	_sensorIDVec.clear();
-	// clear the sensor ID map
-	_sensorIDVecMap.clear();
-	_sensorIDtoZOrderMap.clear();
 	
 	//should be filled based on the length of the sensor vector after the loop
 	_nPlanes = 0; 
@@ -355,28 +274,11 @@ void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout()
 			_planeSetup[sensorID] = thisPlane;
 
 			_sensorIDVec.push_back(sensorID);
-			_sensorIDVecMap.insert(std::make_pair(sensorID, iLayer)); // what if there are more then 1 sensore per layer?
 			streamlog_out(DEBUG1) << " iter: " << _sensorIDVec.at( _sensorIDVec.size()-1 ) << " " << sensorID << " " << sensitiveLayer.getInfo() .c_str() << std::endl; 
 		}
 	}
-
+	std::sort(_sensorIDVec.begin(), _sensorIDVec.end(), doCompare(*this) );
 	_nPlanes =  _sensorIDVec.size(); 
-
-	for(size_t i=0; i< _siPlaneZPosition.size(); i++)
-	{
-		int sensorsToTheLeft = 0;
-		int sensorID = _sensorIDVec.at(i);
-
-		for(size_t j=0; j< _siPlaneZPosition.size(); j++)
-		{ 
-			if( _siPlaneZPosition.at(j) < _siPlaneZPosition.at(i) - 1e-06 )
-			{
-				sensorsToTheLeft++;
-			}
-		}
-		_sensorZOrderToIDMap.insert(std::make_pair(sensorsToTheLeft, sensorID));        
-		_sensorIDtoZOrderMap.insert(std::make_pair(sensorID, sensorsToTheLeft));
-	}
 }
 
 EUTelGeometryTelescopeGeoDescription::EUTelGeometryTelescopeGeoDescription() :
@@ -388,9 +290,6 @@ _siPlanesLayerLayout(nullptr),
 _trackerPlanesParameters(nullptr),
 _trackerPlanesLayerLayout(nullptr),
 _sensorIDVec(),
-_sensorIDVecMap(),
-_sensorZOrderToIDMap(),
-_sensorIDtoZOrderMap(),
 _nPlanes(0),
 _isGeoInitialized(false),
 _geoManager(nullptr)
@@ -493,7 +392,7 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
 	rotRef4 = siPlaneRotation4( SensorId );
 
 	//We must check that the input is correct. Since this is a combination of initial rotations and reflections the determinate must be 1 or -1
-	float	determinant = rotRef1*rotRef4 - rotRef2*rotRef3  ;
+	float determinant = rotRef1*rotRef4 - rotRef2*rotRef3  ;
 	if(determinant==1 or determinant==-1){ 
 		streamlog_out(DEBUG5) << "SensorID: " << SensorId << ". Determinant =  " <<determinant <<"  This is the correct determinate for this transformation." << std::endl;   
 	}else{
@@ -517,8 +416,9 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
 	//Z rotations specified by in degrees.
 	//X rotations 
 	//Y rotations
-	TGeoRotation * pMatrixRotRefCombined = new TGeoRotation();
-	double integerRotationsAndReflections[9]={rotRef1,rotRef2,0,rotRef3,rotRef4,0,0,0,1};
+	TGeoRotation* pMatrixRotRefCombined = new TGeoRotation();
+	//We have to ensure that we retain a right handed coordinate system, i.e. if we only flip the x or y axis, we have to also flip the z-axis. If we flip both we have to flip twice.	
+	double integerRotationsAndReflections[9]={rotRef1,rotRef2,0,rotRef3,rotRef4,0,0,0, determinant};
 	pMatrixRotRefCombined->SetMatrix(integerRotationsAndReflections);
 	pMatrixRotRefCombined->RotateZ(gamma);//Z Rotation (degrees)//This will again rotate a vector around z axis usign the right hand rule.  
 	pMatrixRotRefCombined->RotateX(alpha);//X Rotations (degrees)//This will rotate a vector usign the right hand rule round the x-axis
@@ -704,7 +604,6 @@ Eigen::Vector3d EUTelGeometryTelescopeGeoDescription::globalYAxis(int sensorID)
 Eigen::Matrix3d EUTelGeometryTelescopeGeoDescription::rotationMatrixFromAngles(long double alpha, long double beta, long double gamma)
 {
 	//Eigen::IOFormat IO(6, 0, ", ", ";\n", "[", "]", "[", "]");
-	//std::cout << "alpha, beta, gamma: " << alpha << ", " << beta << ", " << gamma << std::endl;
 	long double cosA = cos(alpha);
 	long double sinA = sin(alpha);
 	long double cosB = cos(beta);
@@ -712,13 +611,11 @@ Eigen::Matrix3d EUTelGeometryTelescopeGeoDescription::rotationMatrixFromAngles(l
 	long double cosG = cos(gamma);
 	long double sinG = sin(gamma);
 
-	//std::cout << "trig" << cosA << ", " << cosB << ", " << cosG << ", " << sinA << ", " << sinB << ", " << sinG <<  std::endl;
 
 	Eigen::Matrix3d rotMat;
 	rotMat <<	(double)(cosB*cosG+sinA*sinB*sinG),	(double)(sinA*sinB*cosG-cosB*sinG),	(double)(cosA*sinB),
 	      		(double)(cosA*sinG),			(double)(cosA*cosG),			(double)(-sinA),
 			(double)(sinA*cosB*sinG-sinB*cosG),	(double)(sinA*cosB*cosG+sinB*sinG),	(double)(cosA*cosB);
-	//std::cout << rotMat.format(IO) << std::endl;
 	return rotMat;
 }
 
@@ -832,7 +729,6 @@ void EUTelGeometryTelescopeGeoDescription::master2LocalVec( int sensorID, const 
     
     _geoManager->cd( _planePath[sensorID].c_str() );
     _geoManager->GetCurrentNode()->MasterToLocalVect( globalVec, localVec );
-
 }
 
 /**
@@ -932,207 +828,132 @@ int EUTelGeometryTelescopeGeoDescription::getSensorID( double const globalPos[] 
     }
     return sensorID;
 }
+double EUTelGeometryTelescopeGeoDescription::FindRad(Eigen::Vector3d const & startPt, Eigen::Vector3d const & endPt) {
 
-/**
- * Calculate effective radiation length traversed by particle traveling between two points
- * along straight line.
- * 
- * Calculation is done according to the eq. (27.23)
- * @see http://pdg.lbl.gov/2006/reviews/passagerpp.pdf
- * 
- * @param globalPosStart starting point in the global coordinate system
- * @param globalPosFinish ending point in the global coordinate system
- * 
- * @return radiation length in units of X0
- */
+	Eigen::Vector3d track = endPt-startPt;
+	double length = track.norm();
+	track.normalize();
 
-float EUTelGeometryTelescopeGeoDescription::findRad( const double globalPosStart[], const double globalPosFinish[], std::map< const int, double> &sensors, 	std::map< const int, double> &air ){
-    streamlog_out(DEBUG5) << "/////////////////////////////////////////////////////////////////////////////////////////////////// " << std::endl;
-    streamlog_out(DEBUG5) << "/////////////////////////////////////////////////////////////////////////////////////////////////// " << std::endl;
-    streamlog_out(DEBUG5) << "              CALCULATING THE TOTAL RADIATION LENGTH BETWEEN TWO POINTS.                            " << std::endl;
-    streamlog_out(DEBUG5) << "                                 POINTS GO FROM:                            " << std::endl;
-    streamlog_out(DEBUG5) << "              ("<< globalPosStart[0] << ","  << globalPosStart[1]<<","<<globalPosStart[2]<<")"<< "-------------------------------------> ("<< globalPosFinish[0] << ","  << globalPosFinish[1]<<","<<globalPosFinish[2]<<")" << std::endl;
-    const double mm2cm = 0.1;
-    bool foundFirstPlane=false;
-    double blockEnd=0;
-    double total=0;
-    int sensorLeftSide=0;
+	double snext;
+	Eigen::Vector3d point;
+	Eigen::Vector3d direction;
+	double epsil = 0.00001;
+	double rad    = 0.;
+	double propagatedDistance = 0;
+	bool reachedEnd = false;
 
-    //get direction from positions.
-    const double stepLength =TMath::Sqrt( ( globalPosFinish[0] - globalPosStart[0] )*( globalPosFinish[0] - globalPosStart[0] ) +
-                               ( globalPosFinish[1] - globalPosStart[1] )*( globalPosFinish[1] - globalPosStart[1] ) +
-                               ( globalPosFinish[2] - globalPosStart[2] )*( globalPosFinish[2] - globalPosStart[2] ));
+	TGeoMedium* med;
+	gGeoManager->InitTrack(startPt(0), startPt(1), startPt(2), track(0), track(1), track(2));
+	TGeoNode* nextnode = gGeoManager->GetCurrentNode();
 
-    const double xp  = ( globalPosFinish[0] - globalPosStart[0] )/stepLength;
-    const double yp  = ( globalPosFinish[1] - globalPosStart[1] )/stepLength;
-    const double zp  = ( globalPosFinish[2] - globalPosStart[2] )/stepLength;
-    //We get the object we are in currently on this track and begin to loop to each plane 
-    gGeoManager->InitTrack( globalPosStart[0]/*mm*/, globalPosStart[1]/*mm*/, globalPosStart[2]/*mm*/, xp, yp, zp ); //This the start point and direction
-    TGeoNode *nextnode = gGeoManager->GetCurrentNode( );
-    while ( nextnode ) {
-        int sensorID = getSensorIDFromManager();
-        //If not in the first plane then look forward.
-        if(sensorID == geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(0) or foundFirstPlane ){ //We want to make sure to add radiation length from first plane to last plane only;
-            foundFirstPlane = true;
-        }else{
-            //nextnode is the next found and we can get the step using GetStep. stepLength is the max distance to travel before we find another node. 
-            nextnode = gGeoManager->FindNextBoundaryAndStep( stepLength /*mm*/ );  
-        }
-        //Don't do anything until we find the first sensor.
-        if(foundFirstPlane){
-            TGeoMedium *med = NULL;
-            if ( nextnode ) med = nextnode->GetVolume()->GetMedium();
-            else return 0.; //We return 0 to get rid of the track but not the event.
-            double radlen = med->GetMaterial()->GetRadLen() /*cm*/;
-            double lastrad = 1. / radlen * mm2cm; //calculate 1/radiationlength per cm. This will transform radlen to mm
-            nextnode = gGeoManager->FindNextBoundaryAndStep( stepLength /*mm*/ );  
-            double snext  = gGeoManager->GetStep() /*mm*/; //This will output the distance traveled by FindNextBoundaryAndStep
-            double rad = 0; //This is the calculated (rad per distance x distance)
-            double delta = 0.01;//This is the minimum block size 
-            streamlog_out(DEBUG5)<<std::endl <<std::endl  << "DECISION: Step size over min?  "  <<" Block width: " << snext << " delta: " << delta  << std::endl;
-            if(snext < delta){
-               streamlog_out(DEBUG5) << "INCREASE TO MINIMUM DISTANCE!" << std::endl;
-                snext = delta;
-                double pt[3];
-                memcpy( pt, gGeoManager->GetCurrentPoint(), 3 * sizeof (double) ); //Get global position
-                const double *dir = gGeoManager->GetCurrentDirection();//Direction vector
-                for ( Int_t i = 0; i < 3; i++ ) pt[i] += delta * dir[i]; //Move the current point slightly in the direction of motion. 
-                nextnode = gGeoManager->FindNode( pt[0], pt[1], pt[2] );//Move to new node where we will begin to look for more radiation length   
-                rad=lastrad*snext; //Calculate radiation length for the increased block.
-                blockEnd += snext;
-           }else{
-                streamlog_out(DEBUG5) << "OVERMAX!" << std::endl;
-                blockEnd += snext;
-                rad = lastrad*snext; //This is the calculated (rad per distance x distance)
-           }
-            total = total + rad;
-            streamlog_out(DEBUG5) << "NEW BLOCK:SensorID: " << sensorID   <<" Block width: " << snext << " Radiation total/per unit length: " << rad<<"/"<< 1.0/lastrad << " Block end position: " << blockEnd  << std::endl;
-            streamlog_out(DEBUG5) << "DECISION: Where should block be placed?"  << std::endl;
+	while(nextnode && !reachedEnd) {
+		med = nullptr;
+		if (nextnode) med = nextnode->GetVolume()->GetMedium();
 
-            //Now we have the block. We place it in the planes or in the air if excluded.
-            //Work Flow: Check we are at end. If not then set radiation length to sensor if included.Else attach the radiation length last one included and found. 
-            if(sensorID != geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at( geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()-1 )){
-                if(geo::gGeometry().sensorIDToZOrderWithoutExcludedPlanes().find(sensorID) !=  geo::gGeometry().sensorIDToZOrderWithoutExcludedPlanes().end()){
-                    sensors[sensorID] = sensors[sensorID] +  rad;
-                    sensorLeftSide =sensorID;
-                    air[sensorID] = 0 ;
-                    streamlog_out( DEBUG5 ) << "Placed in sensor:: " << sensorID <<std::endl;
-                }else{
-                    air[sensorLeftSide] = air[sensorLeftSide] +  rad;
-                    streamlog_out( DEBUG5 ) << "Placed in air after sensor:: " << sensorLeftSide <<std::endl;
-                }
-            }else{//IF WE HAVE REACHED THE FINAL SENSOR THEN DO NOT LOOK FOR ANYMORE RADIATION LENGTH
-                sensors[sensorID] = sensors[sensorID] + rad;
-                streamlog_out( DEBUG5 ) << "FINISHED: Sensor: " <<sensorID << " Total Rad: " << total <<std::endl;
-                return total;
-            }
-        }
-    }
-    return 0; //Return 0 if no nextnode to remove track 
-}
-//This will output the X/X0 of the the full detector system. This is needed to calculate the for each individual scatter the proper correction. 
-//Note we can not determine this correction for each scatterer individually since this correction would introduce a non linear term which would be unphysical. 
-float EUTelGeometryTelescopeGeoDescription::calculateTotalRadiationLengthAndWeights(const double start[3]  ,const double end[3],  std::map<const int,double> & mapSensor, std::map<const int ,double> & mapAir){
-	streamlog_out(DEBUG1) << "calculateTotalRadiationLength()------------------------------BEGIN" <<std::endl;
-	std::map<const int, double> sensors; //This will store all the sensor scattering.
-	std::map<const int, double> air; //This will store the air directly infront of one plane
-	int lastPlaneID = 	geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at( geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()-1 );
-//	std::cout<<"Reached here" <<std::endl;
-//	std::cout << " Here is the position: " <<_planeSetup[lastPlaneID].zPos  <<std::endl; 
-	const double endUpdate[] = {end[0],end[1],_planeSetup[lastPlaneID].zPos +0.025};//Must make sure we add all silicon.
-	//THIS WILL RETURN THE TOTAL RADIATION LENGTH FOUND AND THE FRACTION FOR AIR AND PLANES.
-	//This will be for non excluded planes. This is sorted in mapWeightsToSensor(...)
-	float perRad =	findRad( start,endUpdate, sensors, air ); 
-	//NOW WE REDUCE EXCLUDED PLANES TO DEAD MATERIAL. THIS IS ABSORBED IN THE AIR OF THE PLANES NOT EXCLUDED.
-	//First two with excluded. The last two without.
-	mapWeightsToSensor(sensors,air, mapSensor,mapAir);
-	perRad = perRad +	addKapton(mapSensor);
-	streamlog_out(DEBUG5) << "X/X0 (TOTAL SYSTEM) : " << perRad <<std::endl;
-	bool pass = testOutput(mapSensor, mapAir);
-	if(!pass){
-		return 0;
-	}
-//	std::cout << "here the rad" << perRad << std::endl;
-	return perRad;
-	streamlog_out(DEBUG1) << "calculateTotalRadiationLength()------------------------------END" <<std::endl;
+		nextnode = gGeoManager->FindNextBoundaryAndStep(length);
+		snext  = gGeoManager->GetStep();
 
-}
-//This function wil not add kapton to excluded planes.
-//TO DO: The found planes will be different from the excluded. Since sometimes we will miss a plane if there are two DUT for example. Must keep a note of these since we will be still adding radiation length incorrectly if not accounted for. These track are removed at the moment since some entries of radiation length will zero.
-double EUTelGeometryTelescopeGeoDescription::addKapton(std::map<const int, double> & mapSensor){
-	for(unsigned int i = 0 ; i<geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() ; i++){
-		mapSensor[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)] = mapSensor[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)] + 0.0002;
-	}
-	return  2*geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()*0.0001;
-
-}
-bool EUTelGeometryTelescopeGeoDescription::testOutput(std::map< const int,double> & mapSensor,std::map<const int,double> & mapAir){
-    bool foundRadZero = false;
-
-	//TEST ONE SENSOR ONE SCATTERER AFTER.
-	if((mapSensor.size()-1) != mapAir.size()){ //last plane does not contain any air scattering information.
-		throw(std::string("We did not determine the radiation along the track correctly! Sensor != Air"));
-	}
-	//TEST SAME NUMBER AS EXCLUDED SENSORS
-    if( (geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()-1) != mapAir.size()){
-		throw(std::string("We do not have a scatterer for each plane included "));
-	}
-    streamlog_out(DEBUG5) << "/////////////////////////////////////////////////////////////////////////////////////////////////// " << std::endl;
-    streamlog_out(DEBUG5) << "                 THIS IS WHAT WE WILL CONSTRUCT THE PLANES AND SCATTERING FROM           " << std::endl;
-    for(unsigned int i = 0 ; i<geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() ; i++){
-        streamlog_out(DEBUG5) << "Sensor ID:   "<< geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)<< " X/X0: " << mapSensor[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i) ] <<" Mass in front of sensor X/X0: "  << mapAir[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i) ] << std::endl;
-        if(mapSensor[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i) ] == 0 or (mapAir[geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i) ] == 0 and i != geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size() -1 )){
-            foundRadZero = true;
-        }
-    }
-    streamlog_out(DEBUG5) << "/////////////////////////////////////////////////////////////////////////////////////////////////// " << std::endl;
-    streamlog_out(DEBUG5) << "/////////////////////////////////////////////////////////////////////////////////////////////////// " << std::endl;
-    if(foundRadZero){
-        return false;
-    }else{
-        return true;
-    }
-
-}
-
-//TO DO: Can not exclude thie first plane from pattern recognition. This could also be a problem in general. So we will need to look into pattern recognition.
-void EUTelGeometryTelescopeGeoDescription::mapWeightsToSensor(std::map<const int,double> sensor,std::map<const int,double> air,  std::map< const  int, double > & mapSen, std::map< const  int, double > & mapAir ){
-//	std::cout<< "sensor size: " << sensor.size() <<std::endl;
-//	std::cout<< "air size: " << air.size() <<std::endl;
-
-	unsigned int j=0;
-	double ExcPlaneScat=0;
-	int beforeExcPos=0;
-	bool addMore=false;
-	for(unsigned int  i=0; i<_sensorZOrderToIDMap.size() ; i++){
-		const int sensorID = _sensorZOrderToIDMap[i];
-
-		//Here we check if we have added all the scatterers due to excluded planes. 
-		if(_sensorZOrderToIDWithoutExcludedPlanes[j] == _sensorZOrderToIDMap[i] and  addMore){
-			const int sensorIDBefore = _sensorZOrderToIDWithoutExcludedPlanes[beforeExcPos];
-			//Do not need to add plane scattering again.
-			mapAir[sensorIDBefore] = mapAir[sensorIDBefore]+ExcPlaneScat ;	//Add the same air before and the new plane and air.
-			addMore=false;
-			ExcPlaneScat=0;
+		if( propagatedDistance+snext >= length ) {
+			snext = length - propagatedDistance;
+			reachedEnd = true;
 		}
+		//snext gets very small at a transition into a next node, in this case we need to manually propagate a small (epsil)
+		//step into the direction of propagation. This introduces a small systematic error, depending on the size of epsil as
+	    	if(snext < 1.e-8) {
+			const double * currDir = gGeoManager->GetCurrentDirection();
+			const double * currPt = gGeoManager->GetCurrentPoint();
 
-		if(_sensorZOrderToIDWithoutExcludedPlanes[j] == _sensorZOrderToIDMap[i]){//Add the scatterers as normal.
-			const int sensorID = _sensorZOrderToIDWithoutExcludedPlanes[j];
-			mapSen[sensorID] = sensor[sensorID];	
-			if(_sensorZOrderToIDWithoutExcludedPlanes.size() - 1 != j){ //Do not add the last scatterer since not scattering beyond last plane.
-				mapAir[sensorID] = air[sensorID];	
-			}
-			beforeExcPos=j;
-			j++;
-		}else{
-			ExcPlaneScat=ExcPlaneScat + sensor[sensorID] + air[sensorID]; //Add plane and air for excluded plane.
-			addMore=true;
+			direction(0) = currDir[0]; direction(1) = currDir[1]; direction(2) = currDir[2];
+			point(0) = currPt[0]; point(1) = currPt[1]; point(2) = currPt[2];
+
+			point = point + epsil*direction;
+
+			gGeoManager->CdTop();
+			nextnode = gGeoManager->FindNode(point(0),point(1),point(2));
+			snext = epsil;
+		}	
+		if(med) {
+			double radlen = med->GetMaterial()->GetRadLen();
+			if (radlen > 1.e-5 && radlen < 1.e10) {
+                const double mm2cm =0.1;///It appears the propagation distance is in mm but the radiaiton length is in cm.
+             //   std::cout<<"radlen " << radlen << "  " << snext << "  " << rad <<std::endl; 
+				rad += (snext*mm2cm)/radlen;
+			} 
 		}
+		propagatedDistance += snext; 
 	}
+	return rad;   
 }
-//
-// straight line - shashlyk plane assembler
-//
+
+double EUTelGeometryTelescopeGeoDescription::planeRadLengthGlobalIncidence(int planeID, Eigen::Vector3d incidenceDir) {
+	
+	incidenceDir.normalize();
+	double normRad;
+	
+	TVector3 planeNormalT = siPlaneNormal(planeID);
+	Eigen::Vector3d planeNormal(planeNormalT(0), planeNormalT(1), planeNormalT(2));
+	
+	std::map<int, double>::iterator mapIt = _planeRadMap.find(planeID);
+	if( mapIt != _planeRadMap.end() ) {
+		normRad = mapIt->second;
+	} else {
+		Eigen::Vector3d planePosition(siPlaneXPosition(planeID), siPlaneYPosition(planeID), siPlaneZPosition(planeID));
+
+		//We have to propagate halfway to to front and halfway back + a minor safety margin
+		Eigen::Vector3d startPoint = planePosition - 0.51*siPlaneZSize(planeID)*planeNormal;
+		Eigen::Vector3d endPoint = planePosition + 0.51*siPlaneZSize(planeID)*planeNormal;
+
+		normRad = FindRad(startPoint, endPoint);
+		_planeRadMap[planeID] = normRad;
+	}
+	double scale = std::abs(incidenceDir.dot(planeNormal));
+	return normRad/scale;
+}
+
+double EUTelGeometryTelescopeGeoDescription::planeRadLengthLocalIncidence(int planeID, Eigen::Vector3d incidenceDir) {
+	
+	incidenceDir.normalize();
+	double normRad;
+
+	std::map<int, double>::iterator mapIt = _planeRadMap.find(planeID);
+	if( mapIt != _planeRadMap.end() ) {
+		normRad = mapIt->second;
+	} else {
+		Eigen::Vector3d planePosition(siPlaneXPosition(planeID), siPlaneYPosition(planeID), siPlaneZPosition(planeID));
+
+		TVector3 planeNormalT = siPlaneNormal(planeID);
+		Eigen::Vector3d planeNormal(planeNormalT(0), planeNormalT(1), planeNormalT(2));
+	
+		//We have to propagate halfway to to front and halfway back + a minor safety margin
+		Eigen::Vector3d startPoint = planePosition - 0.51*siPlaneZSize(planeID)*planeNormal;
+		Eigen::Vector3d endPoint = planePosition + 0.51*siPlaneZSize(planeID)*planeNormal;
+
+		normRad = FindRad(startPoint, endPoint);
+		_planeRadMap[planeID] = normRad;
+	}
+	double scale = std::abs(incidenceDir(2));
+	return normRad/scale;
+}
+double EUTelGeometryTelescopeGeoDescription::airBetweenPlanesRadLengthGlobalIncidence(int planeIDStart,int planeIDEnd, Eigen::Vector3d incidenceDir, double& thickness) {
+	incidenceDir.normalize();
+	double normRad;
+    double startZPosAir =  siPlaneZPosition(planeIDStart) +  0.51*siPlaneZSize(planeIDStart);
+    double endZPosAir =  siPlaneZPosition(planeIDEnd) -  0.51*siPlaneZSize(planeIDEnd);
+	Eigen::Vector3d planeStartPos(0, 0, startZPosAir);
+	Eigen::Vector3d planeEndPos(0, 0, endZPosAir);
+ //   std::cout << "find rad" <<std::endl;
+    normRad = FindRad(planeStartPos, planeEndPos);
+ //   std::cout << "norm rad: " << normRad << " " << planeIDStart <<std::endl;
+	Eigen::Vector3d globalZ(0, 0, 1);
+    //I think this is the correct way of dealing with the incidence here.
+	double scale = std::abs(incidenceDir.dot(globalZ));
+ //   std::cout<<"Scale" << scale <<std::endl;
+    thickness =  ((planeEndPos - planeStartPos).norm())/scale;
+	return normRad/scale;
+}
+
+
+
 int EUTelGeometryTelescopeGeoDescription::findNextPlane(  double* lpoint,  double* ldir, float* newpoint ){
 	if(newpoint==NULL)
 	{

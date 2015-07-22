@@ -219,6 +219,7 @@ public:
 
     
     void hitMapping( LCEvent * evt,  LCCollectionVec * unmappedCollection , LCCollectionVec * mappedCollection );
+    void hitMasking( LCEvent * evt,  LCCollectionVec * unmaskedCollection , LCCollectionVec * maskedCollection );
 
 protected:
    
@@ -335,3 +336,4 @@ private:
 EUTelProcessorMapping gEUTelProcessorMapping;
 }
 #endif
+

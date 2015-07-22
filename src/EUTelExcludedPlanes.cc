@@ -25,22 +25,40 @@ std::vector<int> EUTelExcludedPlanes::getExcludedPlaneIDVecZSorted(std::vector<i
  * I.e. all sensors which are not excluded */
 std::vector<int> EUTelExcludedPlanes::getRelativeComplementSet(std::vector<int> const& planesToExclude)
 {
-        EVENT::IntVec const& sensorIDsVec = geo::gGeometry().sensorIDsVec();
-	std::vector<int> resultVec;
+    std::vector<int> resultVec;
+    const std::vector<int>& sensorIDsVec = geo::gGeometry().sensorIDsVec();
 
-	for(EVENT::IntVec::const_iterator it = sensorIDsVec.begin(); it != sensorIDsVec.end(); it++)
-	{
-		int currentSensorID = *it;
-		std::vector<int>::const_iterator pos = std::find(planesToExclude.begin(), planesToExclude.end(), currentSensorID);
-		if(pos == sensorIDsVec.end()) resultVec.push_back(currentSensorID);
-	}
+    if(planesToExclude.size() != 0){
+
+        for(std::vector<int>::const_iterator it = sensorIDsVec.begin(); it != sensorIDsVec.end(); it++)
+        {
+            int currentSensorID = *it;
+            std::vector<int>::const_iterator pos = std::find(planesToExclude.begin(), planesToExclude.end(), currentSensorID);
+            if(pos == planesToExclude.end()){ ///Not all end statements are create equal! :-)
+                resultVec.push_back(currentSensorID);
+            }
+        }
+    }else{
+        resultVec = sensorIDsVec;
+    }
 
 	return resultVec;
 }
+void EUTelExcludedPlanes::setRelativeComplementSet(std::vector<int> const& planesToExclude)
+{
+    _senInc = getRelativeComplementSet(planesToExclude);
+
+}
+void EUTelExcludedPlanes::setPlaneInc(std::vector<int> const& plaInc){
+    _senInc = plaInc;
+}
+
+
 
 bool EUTelExcludedPlanes::sortSensorIDByZPos(int i, int j)
 {
 	return geo::gGeometry().siPlaneZPosition(i) < geo::gGeometry().siPlaneZPosition(j);
 }
+    std::vector<int>  EUTelExcludedPlanes::_senInc;
 
 } //namespace eutelescope

@@ -12,7 +12,7 @@
 jobsub -c config.cfg -csv runlist.csv alibava-converter $1
 jobsub -c config.cfg -csv runlist.csv alibava-reco $1
 jobsub -c config.cfg -csv runlist.csv alibava-datahisto $1
-jobsub -c config.cfg alibava-commonmodecut $1
+jobsub -c config.cfg -csv runlist.csv alibava-commonmodecut $1
 jobsub -c config.cfg -csv runlist.csv alibava-seedclustering $1
 jobsub -c config.cfg -csv runlist.csv alibava-clusterhisto $1
 

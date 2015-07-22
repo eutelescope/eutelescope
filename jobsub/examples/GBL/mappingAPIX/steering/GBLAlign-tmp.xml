@@ -60,7 +60,6 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
 	<parameter name="MilleSteeringFilename" type="double"> @MilleSteeringFilename@ </parameter>
 	<parameter name="MilleResultFilename" type="double"> @MilleResultFilename@ </parameter>
 	<parameter name="GearAlignedFile" type="double"> @GearFilePath@/@GearAlignedFile@ </parameter>
-	<parameter name="AlignmentMode" type="double"> @AlignmentMode@ </parameter>
   <parameter name="FixedAlignmentPlanesXrotation" type="IntVec">@FixXrot@ </parameter>
   <!--Ids of planes for which X shift will be fixed during millepede call-->
   <parameter name="FixedAlignmentPlanesXshift" type="IntVec">@FixXshifts@ </parameter>

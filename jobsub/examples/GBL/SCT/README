@@ -14,7 +14,6 @@ js => jobsub -c config/config -csv runlist/runlist
 
 Prealignment will produce a gear called: gear-beforeAlign-000703_pre.xml 
 Note there is heavy misalignment in the last plane!!! 
-Prealignment of this plane has been done but is not adviced. 
 #####################################################################
 
 ###js patternRecognition 703########################################
@@ -28,10 +27,10 @@ The constrast with daf fitter pattern recognition which uses a clustering techni
 #DoubletCenDistCut = 1 1
 Create triplets from hits on each arm now.
 Predicted position at central point and slope must agree with the cuts given:
-#TripletConnectDistCut = 0.5 0.5
+#TripletConnectDistCut = 1 1
 #TripletSlopeCuts = 0.01 0.01
-These planes will not create a state. IMPORTANT:TO EXCLUDE A PLANE IN ALIGNMENT DO IT HERE. SO PASS TRACKS WITH NO PLANE 8 FOR INITIAL ALIGNMENT ATTEMPT WITHOUT DUT
-#excludeplanes=  8  
+These planes will not create a state. 
+#excludeplanes=   
 Plane dimension is needed to determine in what directions we should compare tracks and DUT hits
 #planeDimensions= 2 2 2 1 2 2 2 
 This is used to determine the initial curvature of the track at plane 0
@@ -39,14 +38,7 @@ This is used to determine the initial curvature of the track at plane 0
 
 Running the above pattern recognition with the prealigned gear (gear-beforeAlign-000703_pre.xml) should give:
 
-21:38:31 jobsub.patternRecognition(INFO): [ MESSAGE5 "TrackSearch"] Percentage tracks without DUT hit: 0.3724
-The number of tracks reconstructed by mimosas but a a corresponding hit on the DUT is not found. 
-Not cut is applied to a DUT hit. The same track can be associated to different DUT hits.
-21:38:31 jobsub.patternRecognition(INFO): [ MESSAGE5 "TrackSearch"] Number of tracks per event: 0.688516
-21:38:31 jobsub.patternRecognition(INFO): [ MESSAGE5 "TrackSearch"] Number of left arm triplets per event: 2.0683
-The total number of three hits close enough to form a triplet on the arm up stream
-21:38:31 jobsub.patternRecognition(INFO): [ MESSAGE5 "TrackSearch"] Number of right arm triplets per event: 1.95249
-Same but for down stream
+22:30:23 jobsub.patternRecognition(INFO): [ MESSAGE9 "TrackSearch"] EUTelProcessorPatRecTriplets::end()  TrackSearch processed 999 events in 1 runs  av.tracks : 0.621622 total number of tracks: 621
 #######################################################################
 
 #js GBLAlign 703 #####################################################
@@ -65,7 +57,7 @@ The 30 and 6 will increase the chi2 value which corresponds to 0.27% p-value by 
 There is not much point changing this cut in most situations. Since by default the cut is large. Should vary the resolutions instead to add systematic alignment error.
 #pede          = chiscut 30  6
 
-The planes which you can move while keeping the tracks produced constant for an initial mimosa without DUT fit are:
+Below this is the fixed planes used:
 
 #FixXshifts=0  5  
 #FixYshifts=0  5  
@@ -86,15 +78,15 @@ Alignment from prealignment can be found setting the resolution to (All plane ar
 #dutY=100000000
 #
 You must set the output gear as you like in config:
-#GearAlignedFile = alignedGear-test00-%(FilePrefix)s.xml
+#GearAlignedFile = alignedGear-iter1-run000703.xml <<<< JUST AN EXAMPLE NAME YOU WILL WANT TO CHANGE THIS TO NOT OVERWRITE THE GOOD GEAR I PRODUCED!
 
 When I did this I get the gear file saved in geometry as: alignedGear-iter1-run000703.xml 
 
 Now you will find alignment shifts of ~ 1cm in z shifts! The gear is well off! This will effect the global parameters that millepede uses to determine the alignment so a number of iterations is needed. 
 
-To do a second iteration with a new gear: 1) Place new gear in runlist 2)Run pattern recognition to get new tracks 3)Run alignment again (Remember to change the name of the new output gear!!!!!!)
+To do a second iteration with a new gear: 1) Place new gear in runlist 2)Remember to change the name of the new output gear in config.
 
-This process produces a new gear:alignedGear-iter2-run000703.xml
+This process produces a new gear:alignedGear-iter2-run000703.xml <<This is just the name I gave it.
 Note the value are converging. This is always a good sign. 
 Now we the measurement errors can have a large effect on the final solution. Reduce resolution value since we want this to be as small as possible.
 #r = 0.01
@@ -104,6 +96,14 @@ Now we the measurement errors can have a large effect on the final solution. Red
 Run another iteration, output gear example is geometry is:alignedGear-iter3-run000703.xml
 Note we have large shift again. This is just due to the measurement error change.
 Run a last iteration and example geometry file output should match:alignedGear-iter4-run000703.xml
+
+This last iteration will leave about about a ~2 micron shift. This is small but can be corrected by doing more iterations with:
+
+#r = 0.005
+#dutX=0.02
+#dutY=100000000
+
+Gear file for this with improved alignment: iter5 and iter6 
 
 ############
 #

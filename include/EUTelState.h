@@ -2,6 +2,7 @@
 #define	EUTELSTATE_H
 
 #include "EUTelUtility.h"
+#include "EUTelBlock.h"
 
 // ROOT
 #if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
@@ -19,10 +20,15 @@ namespace eutelescope {
 
 	class  EUTelState{
 		public: 
+            Block block;
+            std::vector<unsigned int> GBLLabels;
+
 			EUTelState();
 			EUTelState(EUTelState *state);
 			//getters
 			EUTelHit& getHit();
+            EUTelHit getHitCopy() const;
+
 			int getDimensionSize() const ;
 			TVectorD getStateVec();
 			float getSlopeX() const; 
@@ -43,7 +49,7 @@ namespace eutelescope {
 
 			TMatrixD getProjectionMatrix() const;
 			TVector3 getIncidenceUnitMomentumVectorInLocalFrame();
-			TMatrixDSym getScatteringVarianceInLocalFrame();
+			TMatrixDSym getScatteringVarianceInLocalFrame(double const & var );
 			double getRadFracAir() const ;
 			double getRadFracSensor() const ;
             TVector3 getDirLocal() const; 
@@ -86,10 +92,6 @@ namespace eutelescope {
 
 			//initialise
 			void initialiseCurvature();
-			//find
-			bool findIntersectionWithCertainID(int nextsensorID, float intersectionPoint[], TVector3& momentumAtIntersection, float& arcLength, int& newNextPlaneID );
-			//compute
-			float computeRadLengthsToEnd( std::map<const int,double> & mapSensor, std::map<const int ,double> & mapAir );
 			//print
 			void print();
             //clear

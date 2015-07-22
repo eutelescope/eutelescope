@@ -1,7 +1,10 @@
 /**  EUTelGBLFitter
  * 
  *  This is the link between GBL and EUTelescope. 
- *  Everything you need to know about GBL can be found here. 
+ *  This is all the functions to create and analysis GBL trajectories directly.
+ *  Everything you need to know about the GBL functions can be found here: http://www.desy.de/~kleinwrt/GBL/doc/cpp/html/index.html 
+ *  The functions here describe how to create a GBL trajectory and then analysis the direct output. 
+ *  Further analysis of the EUTelTrack objects, GBL tracks saved in a generic LCIO container.
  *  An example of the use of this processor is in EUTelProcessorGBLFitter and EUTelProcessorGBLAlign.
  *  contact:alexander.morton975@gmail.com 
  */
@@ -16,7 +19,10 @@
 #include "EUTelTrack.h"
 #include "EUTelState.h"
 #include "EUTelMillepede.h"
-
+#include "EUTelRadCal.h"
+#include "EUTelTrackCreate.h"
+#include "EUTelBlock.h"
+#include "EUTelExcludedPlanes.h"
 // EVENT includes
 #include <IMPL/TrackerHitImpl.h>
 #include <EVENT/LCCollection.h>
@@ -53,6 +59,9 @@ namespace eutelescope {
     public:
 			EUTelGBLFitter();
 			~EUTelGBLFitter();
+           void  initNav();
+           ///\todo Internal parameterisation will only work for tracks with a hits on 0,2,3,5 
+ 
             /// This function will add the measurement to the GBL point. 
             /// Internally a projection matrix is used to link the global frame to the local one. 
             /**
@@ -68,34 +77,36 @@ namespace eutelescope {
              * \param [in]  State  This is the EUTelState with measurement information
              */
 
-			void setScattererGBL(gbl::GblPoint& point,EUTelState & state );
-            /// Will fill track with information about the sensor and air radiation length 
-            /**
-             * \param [in] track 
-             * \param [in] mapSensor Link between sensorID and radiation length of sensor. 
-             * \param [in] mapAir Link between sensorID and radiation length of air after sensor.
-             */
-            void setRadLengths(EUTelTrack & track,std::map<const int,double>&  mapSensor, std::map<const int ,double>&  mapAir, double & rad );
+			void setScattererGBL(gbl::GblPoint& point,EUTelState & state,double & );
+            void setScattererMedGBL(gbl::GblPoint& point,TVectorD& kinks, double& varMed );
+
             /// Will take a track and fill it with information about it's radiation length 
+            /// This is split between radiation length of the included planes and radiation length in front of it.
+            /// Excluded planes are included in the radiation length in front of the included sensors. 
             /**
              * \param [in] track 
              */
 
-            void setRad(EUTelTrack &);
+            double getRad(EUTelTrack &, std::map<const int,double>&, std::map<const int,double>&);
+            std::vector<double> getZPosScat(EUTelState &);
+
             /// A simple way to set hits covariance matrix.
 			void setMeasurementCov(EUTelState& state);
-			inline void setBeamCharge(double beamQ) { this->_beamQ = beamQ; }
             inline void setBeamEnergy(double beamE) { this->_eBeam = beamE; }
+            inline void setMode(int mode) { this->_mode = mode; }
+
             /// This links the binary created in millepede to GBLFitter.
-			void SetMilleBinary(gbl::MilleBinary* _mille) { this->_mille = _mille; }
+			void SetMilleBinary(gbl::MilleBinary* mille) { this->_mille = mille; }
             ///Links the EUTelMillepede class to EUTelGBLFitter.
-			void setMillepede( EUTelMillepede* Mille ) { _MilleInterface =  Mille; }
+			void setMillepede( EUTelMillepede* mille ) { _MilleInterface =  mille; }
             /// Resolution of the points in the local frame X/Y
 			void setParamterIdXResolutionVec( const std::vector<float>& );
 			void setParamterIdYResolutionVec( const std::vector<float>& );
+            std::vector<double> getWeigMeanVar(double &, double &);
+
+
             /// This is the down weighting certain hits will get due to non Gaussian errors.
 			void setMEstimatorType( const std::string& );
-			/// GET
             ///This function will create the information needed to place the scatterers at the correct location and with the correct variance. 
             /**
              * \param [in] track 
@@ -105,25 +116,21 @@ namespace eutelescope {
     		std::map< unsigned int, std::vector<double> > getScatPos(EUTelTrack&) const;
             /// This will create the point list which describes each points relation to one another.
             /// At this stage only the points with a local to global transform and the ones which do not must be saved. 
-            /// This is done using the position of the scatterers which is calculated before. 
-            /// There is no limit on the number of scatterers here since we can easily estimate the global direction at any position in the z axis.
+            /// This is done using the position of the scatterers which is calculated internally.
+            /// The scatterers are all assumed  
             /**
              * \param [in] track This is the measurement and scattering planes. These must have Local->Global relation. 
-             * \param [in] vectorScatPosAfterPlane Z-positions of scatterers in relation to the scatterer before.
              * \param [out] pointList This is the points which describe the EUTelTrack without any measurements (Scattering and residuals) 
-             * \param [out] vecPairsMeasStatesAndLabels This is the link pointGBL.label->EUTelState.location (Denotes that GBL point has local->global transform) 
              */
-            void getBasicList( EUTelTrack& ,std::vector< gbl::GblPoint >& pointList, std::map<  unsigned int, unsigned int>  & );   
+            void getBasicList( EUTelTrack & ,std::vector< gbl::GblPoint >& pointList);   
             /// This will create the needed GBL points from EUTelTracks.
             /// This will create the GBL points from the states and the needed scatterering points.  
             /**
              * \param [in]   track EUTelTrack 
              * \param [out]  pointList vector of GBL points
-             * \param [out]  linkGL Link between points with local->global transform and GBL point
-             * \param [out]  linkMeas This is link between states with hits and GBL points. 
              */
 
-			void getGBLPointsFromTrack(EUTelTrack&, std::vector< gbl::GblPoint >&, std::map< unsigned int, unsigned int > &, std::map< unsigned int,unsigned int > & );
+			void getGBLPointsFromTrack(EUTelTrack&, std::vector< gbl::GblPoint >&);
             /// Add measurement to the trajectory. Measurement in local frame.
             /// Note local frame makes the description of the error easy to describe externally.  
             /**
@@ -133,7 +140,7 @@ namespace eutelescope {
              * \param [out]  linkMeas Link between states with a measurement for position and GBL point.
              */
 
-            void getMeas(EUTelTrack&, std::vector< gbl::GblPoint >&,  std::map< unsigned int,unsigned int> &, std::map< unsigned int, unsigned int> & );
+            void getMeas(EUTelTrack&, std::vector< gbl::GblPoint >&);
             /// Add Scattering information to GBL trajectories. Kinks are in local frame. 
             /// All planes with no global to local transforms will be assumed to have normal incidence on a plane. 
             /// Note here that kink angles are always measured in the local frame and therefore the precision matrix is also.
@@ -145,38 +152,35 @@ namespace eutelescope {
             /**
              * \param [in]   track EUTelTrack 
              * \param [in]  pointList vector of GBL points
-             * \param [in]  linkGL Link between points with local->global transform and GBL point 
              */
 
-            void getScat(EUTelTrack&, std::vector< gbl::GblPoint >&,  std::map< unsigned int,unsigned int> &);
+            void getScat(EUTelTrack&, std::vector< gbl::GblPoint >&);
             /// Get the corrections for the GBL trajectories for states. Also update track automatically. 
             ///   
             /**
              * \param [in]   GBLtraj GBL trajectory 
              * \param [in]   EUTelTrack track to update.
-             * \param [in]   linkGL link to states we want to update. 
              * \param [out]  corrections This is a map from sensor ID to vector. 
              */
-			void getCorr(gbl::GblTrajectory* , EUTelTrack& , std::map<unsigned int ,unsigned int >&  ,std::map<int,std::vector<double> >& );
+			void getCorr(gbl::GblTrajectory* , EUTelTrack& ,std::map<int,std::vector<double> >& );
             /// Get the corrections for the GBL trajectories for states. Also update track automatically. 
             ///   
             /**
              * \param [in]   GBLtraj GBL trajectory 
-             * \param [in]   linkGL link to states we want to update.
+             * \param [in]   track EUTeltrack so we know which points are from the planes
              * \param [in]   pointList used to check that this list is correct. 
              * \param [out]  residuals Residuals error associated to the correct sensor ID
              * \param [out]  error this is the residual error associated to that sensorID. 
              */
-			void getResLoc(gbl::GblTrajectory*, std::map< unsigned int, unsigned int> &, std::vector< gbl::GblPoint >, std::map< int, std::map< float, float > > & , std::map< int, std::map< float, float > >&);
+			void getResLoc(gbl::GblTrajectory*, EUTelTrack &, std::vector< gbl::GblPoint >, std::map< int, std::map< float, float > > & , std::map< int, std::map< float, float > >&);
              /// This is the function which links the GBL track to millepede.cc object. 
              /// Millepede has global labels internal. Jacobain is then calcualted and attached to point with labels . 
             /**
              * \param [in]   vector GBLpoints  
              * \param [in]   EUTelTrack track to update.
-             * \param [in]   linkGl map from EUTelStates with hits to GBL label.
              */
 
-			void getGloPar(std::vector< gbl::GblPoint >& , EUTelTrack&, std::map< unsigned int, unsigned int>  & );
+			void getGloPar(std::vector< gbl::GblPoint >& , EUTelTrack&);
 			inline double getBeamEnergy() const { return _eBeam; }
 			std::string getMEstimatorType() const;
 			///TEST
@@ -193,10 +197,13 @@ namespace eutelescope {
              */
 
 			void computeTrajectoryAndFit(gbl::GblTrajectory* traj, double* chi2, int* ndf, int & ierr);
+            void setArcLengths(EUTelTrack & track);
+
     protected:
             int _numberRadLoss;
-			double _beamQ;
 			double _eBeam;
+            int _mode;
+
 			/** Outlier downweighting option */
 			std::string _mEstimatorType;
 			/** Milipede binary file handle */

@@ -183,22 +183,6 @@ namespace alibava {
 			v_noise = _lcHeader->parameters().getFloatVals (ALIBAVA::HEADERNOISE, v_noise);
 			return v_noise;
 		}
-
-		//! Set tilt angle of the sensors
-		virtual void setTiltAngle (float tiltAngle);
-		
-		//! return tilt angle stored in run header
-		inline float getTiltAngle () const    {
-			return _lcHeader->parameters().getFloatVal (ALIBAVA::TILTANGLE);
-		}
-		
-		//! Set temperature of the sensors
-		virtual void setSensorTemperature (float sensorTemperature);
-		
-		//! return temperature ot the sensors stored in run header
-		inline float getSensorTemperature () const    {
-			return _lcHeader->parameters().getFloatVal (ALIBAVA::SENSORTEMPERATURE);
-		}
 		
 		//! Set selected chip numbers
 		virtual void setChipSelection (EVENT::IntVec achipselectionvec);

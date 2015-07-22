@@ -41,6 +41,8 @@ _dataMissNumber(0)
     ///abs(Triplet.Slo-Triplet.Slo)<cut. //Both triplets prediction of slope is compared.
 	registerOptionalParameter("TripletSlopeCuts", "Triplet slope difference which is allowed to create track ",
 	_tripletSlopeCuts, FloatVec());
+    registerOptionalParameter("minHits", "Minimum number of hits needed", _minHits ,int(6));
+    registerOptionalParameter("mode", "Alignment or basic track fitting. This is either 1 for alignment and 0 for basic track fitting. ", _mode ,int(1));
 
 	///This is needed if we have a magnetic field to determine curvature
 	registerOptionalParameter("BeamEnergy", "Beam energy [GeV]", _eBeam, static_cast<double> (4.0));
@@ -69,21 +71,22 @@ void EUTelProcessorPatRecTriplets::init(){
 		_nProcessedEvents = 0;
 		std::string name = EUTELESCOPE::GEOFILENAME;
 		geo::gGeometry().initializeTGeoDescription(name,false);
-        geo::gGeometry().initialisePlanesToExcluded(_excludePlanes);
 		geo::gGeometry().setInitialDisplacementToFirstPlane(_initialDisplacement); 
 		streamlog_out(MESSAGE5) << "These are the planes you will create a state from. Mass inbetween states will be turned to scatterers in GBLTrackProcessor." << std::endl;
-		for(size_t i =0 ; i < geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size(); ++i)
-		{
-			streamlog_out(MESSAGE5) << geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i) << "  ";
-		}
+//		for(size_t i =0 ; i < geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size(); ++i)
+//		{
+//			streamlog_out(MESSAGE5) << geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i) << "  ";
+//		}
 		streamlog_out(MESSAGE5) << std::endl;
 		_trackFitter = new EUTelPatRecTriplets();
+        _trackFitter->setMode(_mode);
+		_trackFitter->setNumHits(_minHits);
+        EUTelExcludedPlanes::setRelativeComplementSet(_excludePlanes);
 		_trackFitter->setDoubletDistCut(_doubletDistCut);
 		_trackFitter->setTripletSlopeCuts(_tripletSlopeCuts);
 		_trackFitter->setDoubletCenDistCut(_doubletCenDistCut);
         _trackFitter->setTripletConnectDistCut(_tripletConnectDistCut);
 		_trackFitter->setBeamMomentum(_eBeam);
-		_trackFitter->setBeamCharge(_qBeam);
         _trackFitter->setPlaneDimensionsVec(_planeDimension);
 		_trackFitter->testUserInput();
 		bookHistograms();		
@@ -159,8 +162,6 @@ void EUTelProcessorPatRecTriplets::processEvent(LCEvent* evt)
 		if(allHitsVec.empty()) throw lcio::Exception("No hits!");
 		_trackFitter->setHitsVec(allHitsVec);  
 		_trackFitter->printHits();
-		_trackFitter->setHitsVecPerPlane();
-		_trackFitter->testHitsVecPerPlane();
 		streamlog_out( DEBUG1 ) << "Trying to find tracks..." << std::endl;
 		std::vector<EUTelTrack> tracks = _trackFitter->getTracks();
 		streamlog_out( DEBUG1 ) << "Trying to find tracks...We have " << tracks.size()<<" tracks"<<std::endl;
