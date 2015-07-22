@@ -38,7 +38,7 @@ namespace eutelescope {
             //HIT PARAMETERS
             const double* getPosition() const; 
             int getID() const;
-
+	    EVENT::LCObjectVec getPulse() const;
 	    float getTime() const;
 
             //END HIT PARAMETERS
