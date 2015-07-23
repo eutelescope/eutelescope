@@ -187,7 +187,8 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout()
 		thisPlane.xRes	= _siPlanesLayerLayout->getSensitiveResolution(iPlane); //should be ResolutionX
 		thisPlane.yRes	= _siPlanesLayerLayout->getSensitiveResolution(iPlane); //should be ResolutionY
 
-		thisPlane.radLength	= _siPlanesLayerLayout->getSensitiveRadLength(iPlane);
+		//GEAR uses mm wheras TGeo will use cm
+		thisPlane.radLength	= _siPlanesLayerLayout->getSensitiveRadLength(iPlane)/10;
 
 		_planeSetup[_siPlanesLayerLayout->getID(iPlane)] = thisPlane;
 	}
@@ -260,7 +261,8 @@ void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout()
 			thisPlane.xRes	= sensitiveLayer.getResolutionX();
 			thisPlane.yRes	= sensitiveLayer.getResolutionY();
 
-			thisPlane.radLength	= sensitiveLayer.getRadLength();
+			//GEAR uses mm wheras TGeo will use cm
+			thisPlane.radLength	= sensitiveLayer.getRadLength()/10;
 
 			_planeSetup[sensorID] = thisPlane;
 
@@ -447,7 +449,7 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
 	double absl    = 45.753206;
 	std::string stMatName = "materialSensor";
 	stMatName.append( strId.str() );
-	TGeoMaterial* pMat = new TGeoMaterial( stMatName.c_str(), a, z, density, radl, absl );
+	TGeoMaterial* pMat = new TGeoMaterial( stMatName.c_str(), a, z, density, -radl, absl );
 	pMat->SetIndex( 1 );
 	// Medium: medium_Sensor_SILICON
 	int numed   = 0;  // medium number
@@ -996,9 +998,10 @@ double EUTelGeometryTelescopeGeoDescription::FindRad(Eigen::Vector3d const & sta
 			snext = epsil;
 		}	
 		if(med) {
+			//ROOT returns the rad length in cm while we use mm, therefore factor of 10
 			double radlen = med->GetMaterial()->GetRadLen();
 			if (radlen > 1.e-5 && radlen < 1.e10) {
-				rad += snext/radlen;
+				rad += snext/(radlen*10);
 			} 
 		}
 		propagatedDistance += snext; 
