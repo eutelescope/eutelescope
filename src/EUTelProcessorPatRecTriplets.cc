@@ -42,6 +42,7 @@ _dataMissNumber(0)
 	_tripletSlopeCuts, FloatVec());
     registerOptionalParameter("minHits", "Minimum number of hits needed", _minHits ,int(6));
     registerOptionalParameter("mode", "Alignment or basic track fitting. This is either 1 for alignment and 0 for basic track fitting. ", _mode ,int(1));
+    registerProcessorParameter("DUTWindow", "The distance the DUT hit must be from the track", _dutDistCut, static_cast<double> (10));
 
 	///This is needed if we have a magnetic field to determine curvature
 	registerOptionalParameter("BeamEnergy", "Beam energy [GeV]", _eBeam, static_cast<double> (4.0));
@@ -80,6 +81,8 @@ void EUTelProcessorPatRecTriplets::init(){
 		_trackFitter = new EUTelPatRecTriplets();
         _trackFitter->setMode(_mode);
 		_trackFitter->setNumHits(_minHits);
+		_trackFitter->setDUTCut(_dutDistCut);
+
         EUTelExcludedPlanes::setRelativeComplementSet(_excludePlanes);
 		_trackFitter->setDoubletDistCut(_doubletDistCut);
 		_trackFitter->setTripletSlopeCuts(_tripletSlopeCuts);

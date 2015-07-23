@@ -134,6 +134,7 @@ namespace eutelescope {
     inline void setNumHits(double hitNum) {
         this->_hitNum = hitNum;
     }
+    void setDUTCut(double cut){_dutDistCut = cut;}
 
     //get public
     
@@ -281,6 +282,7 @@ namespace eutelescope {
     double _beamE;
     int _mode;
     int _hitNum;
+    double _dutDistCut;
     public:
     unsigned int _numberOfTracksTotal;
 

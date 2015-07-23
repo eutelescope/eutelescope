@@ -35,9 +35,7 @@ void EUTelPatRecTriplets::setPlaneDimensionsVec(EVENT::IntVec& planeDimensions){
 /*This is the function which should be used in processEvent
 */
 std::vector<EUTelTrack> EUTelPatRecTriplets::getTracks(){
-    EUTelNav::init();
-    EUTelNav::_intBeamE = getBeamMomentum();
-    EUTelNav::_senInc =  EUTelExcludedPlanes::_senInc; ///This is not needed by EUTelNav but EUTelTrackCreate. However we need EUTelNav for EUTelTrackCreate.
+    EUTelNav::init(getBeamMomentum());
     setHitsVecPerPlane();
     testHitsVecPerPlane();
     std::vector<EUTelTrack>  tracks;
@@ -294,7 +292,7 @@ bool EUTelPatRecTriplets::getDoubHitOnTraj(doublets const& doub, std::vector<uns
                 distBest = dist;
             }
         }
-        if(distBest >  _doubletCenDistCut.at(0)){
+        if(distBest >  _dutDistCut){
             continue;
         }
         streamlog_out(DEBUG1) << "PASS Doublet cut!! " << std::endl;
@@ -345,13 +343,13 @@ std::vector<EUTelTrack> EUTelPatRecTriplets::getMinFakeTracks(){
     std::map<int,std::vector<EUTelHit> > id_Hits  = getTrackHitsFromTriplets(tripletVec);
     ///Loop over all hits which make up a track. 
     for(std::map<int, std::vector<EUTelHit> >::iterator itID_Hit = id_Hits.begin(); itID_Hit != id_Hits.end();++itID_Hit){
-        doublets doub;
-        ///We know this forms a track so increase cuts to infinity.
-        std::vector<float> cuts; cuts.push_back(1000000); cuts.push_back(100000);
-        bool pass = getDoublet(*(itID_Hit->second.begin()),*(itID_Hit->second.rbegin()), cuts ,doub);
         std::vector<EUTelHit> newHits;
-        std::vector< unsigned int> dut;
-        if(EUTelExcludedPlanes::_senInc.size() > 6 ){
+        if(EUTelExcludedPlanes::_senInc.size() > 6 ){///Only look for DUTs if we have more planes included.
+            doublets doub;
+            ///We know this forms a track so increase cuts to infinity.
+            std::vector<float> cuts; cuts.push_back(1000000); cuts.push_back(100000);
+            bool pass = getDoublet(*(itID_Hit->second.begin()),*(itID_Hit->second.rbegin()), cuts ,doub);
+            std::vector< unsigned int> dut;
             for(size_t i = 0 ; i < EUTelExcludedPlanes::_senInc.size(); ++i){
                 if(EUTelExcludedPlanes::_senInc.at(i) > 5){
                     dut.push_back(EUTelExcludedPlanes::_senInc.at(i));
@@ -360,9 +358,9 @@ std::vector<EUTelTrack> EUTelPatRecTriplets::getMinFakeTracks(){
             streamlog_out(DEBUG1) << "Got hit! "  << std::endl;
             int hitNum=1; //Need a minimum of 1 DUT hit to pass track.
             pass =  getDoubHitOnTraj(doub, dut,hitNum, newHits);
-        }
-        if(!pass){
-            continue;
+            if(!pass){
+                continue;
+            }
         }
         std::vector<EUTelHit> combineHits;
         combineHits.reserve( newHits.size() + itID_Hit->second.size() ); // preallocate memory
