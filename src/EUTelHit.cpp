@@ -15,6 +15,7 @@ _cov(2,2)
     _position[1] = hit->getPosition()[1];
     _position[2] = hit->getPosition()[2];
     _id = hit->getID();
+    _time = hit->getTime();
     if(hit->_locationKnown){
         _location = hit->getLocation();
         _locationKnown=true;
@@ -33,8 +34,10 @@ _cov(2,2)
     _position[1] = hit->getPosition()[1];
     _position[2] = hit->getPosition()[2];
     _id = hit->id();
+    _time = hit->getTime();
     const int hitLoc = Utility::getSensorIDfromHit( static_cast<IMPL::TrackerHitImpl*> (hit) );
     _location = hitLoc;
+    
     _locationKnown=true;
     setCov(hit->getCovMatrix());
 

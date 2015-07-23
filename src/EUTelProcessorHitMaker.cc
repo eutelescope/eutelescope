@@ -487,6 +487,7 @@ void EUTelProcessorHitMaker::processEvent (LCEvent * event) {
 			cov[2] = resy * resy; // cov(y,y)
 			hit->setCovMatrix( cov );
 			hit->setType( clusterType  );
+			streamlog_out(DEBUG1)<< " setting hit time" << pulse->getTime()  <<std::endl;
 			hit->setTime( pulse->getTime() );
 
 			// prepare a LCObjectVec to store the current cluster
