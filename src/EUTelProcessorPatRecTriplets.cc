@@ -225,7 +225,7 @@ void EUTelProcessorPatRecTriplets::plotHistos( std::vector<EUTelTrack>& trackCan
 			numberOfHits++;
 			int sensorID = static_cast<int>(trackCandidates[i].getStates().at(j).getLocation());//since we store sensor ID in Z0
 			static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_HitOnTrackCandidateHistName ] ) -> fill( sensorID );
-			static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_HitOnTrackTimeHistName ] ) -> fill(trackCandidates[i].getStates()[j].getHit().getTime()  );
+			//static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_HitOnTrackTimeHistName ] ) -> fill(trackCandidates[i].getStates()[j].getHit().getTime()  );
 		}
 		streamlog_out( MESSAGE1 ) << "Track hits end:==============" << std::endl;
 		}

@@ -86,7 +86,7 @@ void EUTelTrackAnalysis::plotHitMap(EUTelTrack track){
 		TVector3 statePositionGlobal = state.getPositionGlobal();
 		const double* hitPosition = hit.getPosition();
 		float residual[2];
-	
+		streamlog_out(DEBUG0) << "hit on sensor "<<state.getLocation()<<" has time "<<hit.getTime() <<std::endl; 
 	streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotHitMap------------------------------still here"<< std::endl;
 
 		typedef std::map<int ,AIDA::IHistogram2D*  >::iterator it_type;
@@ -133,6 +133,7 @@ void EUTelTrackAnalysis::plotEfficiencyVsPosition(EUTelTrack track, IntVec senso
 		TVector3 statePositionGlobal = state.getPositionGlobal();
 		if(state.getStateHasHit()){
 		  hit = state.getHit();	
+		  //streamlog_out(DEBUG2)<<"hit on location "<<state.getLocation()<<" has time "<<hit.getTime()<<std::endl;
 		  hitPosition = hit.getPosition();
 		  streamlog_out(DEBUG2) << " HELEN , hitPosition[0] = "<<hitPosition[0]<<"minhitx[state.getLocation()] = "<< minhitx[state.getLocation()]<<std::endl;
 		  if(hitPosition[0]<minhitx[state.getLocation()]){minhitx[state.getLocation()]=hitPosition[0];}
@@ -169,7 +170,7 @@ void EUTelTrackAnalysis::plotEfficiencyVsPosition(EUTelTrack track, IntVec senso
 			  //check if hit near this location
 			  if(state.getStateHasHit()){
 
-			    if(std::abs(statePosition[0]-hitPosition[0])<0.8/*&&std::abs(statePosition[1]-hitPosition[1])<0.5*/){
+			    if(std::abs(statePosition[0]-hitPosition[0])<0.2/*&&std::abs(statePosition[1]-hitPosition[1])<0.5*/){
 			      hasMatchedXHit=true;
 			      streamlog_out(DEBUG0) << "then we have hit!"<< std::endl;
 			       }

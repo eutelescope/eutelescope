@@ -1,4 +1,5 @@
 #include "EUTelPatRecTriplets.h"
+#include <IMPL/TrackerPulseImpl.h>
 namespace eutelescope {
 
 EUTelPatRecTriplets::EUTelPatRecTriplets():  
@@ -230,6 +231,7 @@ std::map<int,std::vector<EUTelHit> > EUTelPatRecTriplets::getTrackHitsFromTriple
     return fitID_Hits;
 }
 std::vector<EUTelHit> EUTelPatRecTriplets::getCorrHitOrder(std::vector<EUTelHit> hits ){
+  streamlog_out(DEBUG0) << "enters getCorrHitOrder" <<std::endl; 
     std::vector<EUTelHit> finalHits;
     for(unsigned int  i = 0; i < (EUTelExcludedPlanes::_senInc.size()); ++i){
         unsigned int sensorID = EUTelExcludedPlanes::_senInc.at(i);
@@ -249,6 +251,7 @@ std::vector<EUTelHit> EUTelPatRecTriplets::getCorrHitOrder(std::vector<EUTelHit>
 
 
 std::vector<EUTelHit> EUTelPatRecTriplets::getDUTHitsOrder(EUTelTrack track, std::vector<EUTelHit> dutHits ){
+ streamlog_out(DEBUG0) << "enters getDUTHitsOrder" <<std::endl; 
     std::vector<EUTelHit> finalHits;
     for(unsigned int  i = 0; i < (EUTelExcludedPlanes::_senInc.size()); ++i){
         unsigned int sensorID = EUTelExcludedPlanes::_senInc.at(i);
@@ -260,6 +263,7 @@ std::vector<EUTelHit> EUTelPatRecTriplets::getDUTHitsOrder(EUTelTrack track, std
                 itState->print();
                 if(itState->getStateHasHit()){
                     finalHits.push_back(itState->getHit());
+		    streamlog_out(DEBUG1) << "dut hit on sensor " <<sensorID <<" has time "<<itState->getHit().getTime()<<std::endl; 
                 }
                 streamlog_out(DEBUG0) << "Added! " <<std::endl; 
                 break;
@@ -271,7 +275,12 @@ std::vector<EUTelHit> EUTelPatRecTriplets::getDUTHitsOrder(EUTelTrack track, std
         for(itDUTHit = dutHits.begin(); itDUTHit != dutHits.end(); ++itDUTHit){
             itDUTHit->print();
             if(itDUTHit->getLocation() == sensorID){
-                streamlog_out(DEBUG0) << "Add DUT hit " <<std::endl; 
+	      // LCCollectionVec* _pulseCollectionVec = dynamic_cast<LCCollectionVec*>  (evt->getCollection(_pulseCollectionName));
+	      // CellIDDecoder<TrackerPulseImpl > cellDecoder(_pulseCollectionVec);
+
+	      // streamlog_out(DEBUG0) << "Add DUT hit for sensor " <<sensorID<<", time = itDUTHit->getTime"<<itDUTHit->getPulse()<<std::endl; 
+	      streamlog_out(DEBUG1) << "dut hit on sensor " <<sensorID <<" has time "<<itDUTHit->getTime()<<std::endl; 
+	      //CellIDEncoder<TrackerPulseImpl> idPulseEncoder();
                 finalHits.push_back(*itDUTHit);
                 streamlog_out(DEBUG0) << "Added! " <<std::endl; 
                 break;
@@ -305,9 +314,10 @@ bool EUTelPatRecTriplets::getDoubHitOnTraj(doublets const& doub, std::vector<uns
             }
         }
         if(distBest >  _doubletCenDistCut.at(0)){
+	  streamlog_out(DEBUG1) << "Doublet cut!! " << distBest <<">"<< _doubletCenDistCut.at(0)<<std::endl;
             continue;
         }
-        streamlog_out(DEBUG1) << "PASS Doublet cut!! " << std::endl;
+        streamlog_out(DEBUG1) << "PASS Doublet cut!! " << distBest <<"<"<< _doubletCenDistCut.at(0) << std::endl;
         newHits.push_back(hitBest);
     }
     if(newHits.size() < hitNum){
