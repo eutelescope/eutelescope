@@ -154,9 +154,9 @@ std::vector<EUTelPatRecTriplets::triplets> EUTelPatRecTriplets::getTriplets()
     return tripletsVec;
 
 }
-std::map<int,std::vector<EUTelHit> > EUTelPatRecTriplets::getTrackHitsFromTriplets(std::vector<EUTelPatRecTriplets::triplets>& tripletsVec){
+std::vector<std::vector<EUTelHit> > EUTelPatRecTriplets::getTrackHitsFromTriplets(std::vector<EUTelPatRecTriplets::triplets>& tripletsVec){
     streamlog_out(DEBUG1) << "Set track states and hits... " << std::endl;
-    std::map<int,std::vector<EUTelHit> > fitID_Hits;
+    std::vector<std::vector<EUTelHit> >  tracksHits;
     std::vector<triplets>::iterator itTriplet;
     std::vector<triplets> leftTriplets;
     std::vector<triplets> rightTriplets;
@@ -212,12 +212,12 @@ std::map<int,std::vector<EUTelHit> > EUTelPatRecTriplets::getTrackHitsFromTriple
                     std::vector<EUTelHit> hits;
                     hits.insert( hits.end(), itLeftTriplet->hits.begin(), itLeftTriplet->hits.end() );
                     hits.insert( hits.end(), itRightTriplet->hits.begin(), itRightTriplet->hits.end() );
-                    fitID_Hits[itLeftTriplet->fitID] = hits;
+                    tracksHits.push_back(hits);
                 }
             }
         }
     }
-    return fitID_Hits;
+    return tracksHits;
 }
 std::vector<EUTelHit> EUTelPatRecTriplets::getCorrHitOrder(std::vector<EUTelHit> hits ){
     std::vector<EUTelHit> finalHits;
@@ -282,6 +282,8 @@ bool EUTelPatRecTriplets::getDoubHitOnTraj(doublets const& doub, std::vector<uns
             std::vector<float>  pos = getDoubPosAtZ(doub, hitPosZ);/// Could calculate this once. Might be a bit off for tilted sensors.
 
             float dist = getDistLocal(itHit, pos);
+            std::cout<<"The distance: " << dist  << " Number of hits " << hits.size() << " location " << itHit->getLocation() << std::endl;
+
             if(itHit == hits.begin()){
                 hitBest = *itHit;
                 distBest = dist;
@@ -292,6 +294,7 @@ bool EUTelPatRecTriplets::getDoubHitOnTraj(doublets const& doub, std::vector<uns
                 distBest = dist;
             }
         }
+        std::cout<<"The best distance: " << distBest << std::endl;
         if(distBest >  _dutDistCut){
             continue;
         }
@@ -340,15 +343,18 @@ std::vector<EUTelTrack> EUTelPatRecTriplets::getMinFakeTracks(){
     std::vector<EUTelTrack> tracks;
     std::vector<EUTelPatRecTriplets::triplets> tripletVec = getTriplets();
     streamlog_out(DEBUG1) << "Total number of triplets found:  " << tripletVec.size()  << std::endl;
-    std::map<int,std::vector<EUTelHit> > id_Hits  = getTrackHitsFromTriplets(tripletVec);
+    std::vector<std::vector<EUTelHit> >  tracksHits= getTrackHitsFromTriplets(tripletVec);
     ///Loop over all hits which make up a track. 
-    for(std::map<int, std::vector<EUTelHit> >::iterator itID_Hit = id_Hits.begin(); itID_Hit != id_Hits.end();++itID_Hit){
+    std::vector< std::pair< std::vector<EUTelHit> , std::vector<EUTelHit> > > tracksAndDUTHits;
+    std::cout<<"TOTAL TRACKS: " << tracksHits.size() <<std::endl;
+
+    for(std::vector<std::vector<EUTelHit> >::iterator itTrack = tracksHits.begin(); itTrack != tracksHits.end();++itTrack){
         std::vector<EUTelHit> newHits;
         if(EUTelExcludedPlanes::_senInc.size() > 6 ){///Only look for DUTs if we have more planes included.
             doublets doub;
             ///We know this forms a track so increase cuts to infinity.
             std::vector<float> cuts; cuts.push_back(1000000); cuts.push_back(100000);
-            bool pass = getDoublet(*(itID_Hit->second.begin()),*(itID_Hit->second.rbegin()), cuts ,doub);
+            bool pass = getDoublet(*(itTrack->begin()),*(itTrack->rbegin()), cuts ,doub);
             std::vector< unsigned int> dut;
             for(size_t i = 0 ; i < EUTelExcludedPlanes::_senInc.size(); ++i){
                 if(EUTelExcludedPlanes::_senInc.at(i) > 5){
@@ -361,18 +367,98 @@ std::vector<EUTelTrack> EUTelPatRecTriplets::getMinFakeTracks(){
             if(!pass){
                 continue;
             }
+              std::cout<<"PASS"<<std::endl;
+            tracksAndDUTHits.push_back(make_pair(*itTrack,newHits));
         }
+    }
+    // Each track can only be associated to a single DUT hit on each plane. Must also make sure that a hit is not associated to multiple tracks.
+    // So you could have two tracks with the same DUT hit attached.
+          std::cout<<"eneter"<<std::endl;
+///////////////////////////////
+    for(size_t i =0 ; i < tracksAndDUTHits.size() ; ++i){///Loop through all tracks and vector of DUT hits
+        std::cout<<"Sensors:" <<std::endl;
+        for(size_t j = 0; j < tracksAndDUTHits.at(i).first.size(); ++j){///Loop through all hits attached to track
+            std::cout << tracksAndDUTHits.at(i).first.at(j).getLocation() << "  " << std::endl;
+        }
+        std::cout<<"DUTs:" <<std::endl;
+
+        for(size_t k = 0; k < tracksAndDUTHits.at(i).second.size(); ++k){///Loop through all hits attached to track
+            std::cout << tracksAndDUTHits.at(i).second.at(k).getLocation() << "  " << std::endl;
+        }
+    }
+
+////////////////////////////////////////
+    std::vector< std::pair< std::vector<EUTelHit> , std::vector<EUTelHit> > > tracksAndDUTHitsUnique = getUniqueMatches(tracksAndDUTHits);
+///////////////////////////////
+    std::cout <<"After" <<std::endl;
+    for(size_t i =0 ; i < tracksAndDUTHitsUnique.size() ; ++i){///Loop through all tracks and vector of DUT hits
+        std::cout<<"Sensors:" <<std::endl;
+        for(size_t j = 0; j < tracksAndDUTHitsUnique.at(i).first.size(); ++j){///Loop through all hits attached to track
+            std::cout << tracksAndDUTHitsUnique.at(i).first.at(j).getLocation() << "  " << std::endl;
+        }
+        std::cout<<"DUTs:" << std::endl;
+
+        for(size_t k = 0; k < tracksAndDUTHitsUnique.at(i).second.size(); ++k){///Loop through all hits attached to track
+            std::cout << tracksAndDUTHitsUnique.at(i).second.at(k).getLocation() << "  " << std::endl;
+        }
+    }
+
+////////////////////////////////////////
+
+    for(size_t i =0 ; i < tracksAndDUTHitsUnique.size() ; ++i){
+        std::vector<EUTelHit> track = tracksAndDUTHitsUnique.at(i).first;
+        std::vector<EUTelHit> dut = tracksAndDUTHitsUnique.at(i).second;
+
         std::vector<EUTelHit> combineHits;
-        combineHits.reserve( newHits.size() + itID_Hit->second.size() ); // preallocate memory
-        combineHits.insert( combineHits.end(), itID_Hit->second.begin(), itID_Hit->second.end() );
-        combineHits.insert( combineHits.end(), newHits.begin(), newHits.end() );
+        combineHits.reserve( tracks.size() + dut.size() ); // preallocate memory
+        combineHits.insert( combineHits.end(), track.begin(), track.end() );
+        combineHits.insert( combineHits.end(), dut.begin(), dut.end() );
         streamlog_out(DEBUG1) <<" Combined! "  << std::endl;
 
         ///Hit order does not matter
         tracks.push_back(EUTelTrackCreate::getTrackFourHits(combineHits));
-        return tracks;
     }
+        std::cout<<"///////////////////////////////////" << std::endl;
+
+        return tracks;
+
 }
+ std::vector< std::pair< std::vector<EUTelHit> , std::vector<EUTelHit> > > EUTelPatRecTriplets::getUniqueMatches( std::vector< std::pair< std::vector<EUTelHit> , std::vector<EUTelHit> > >& tracksAndDUTHits){
+    //This really could be improved! Too many for loops!
+    std::vector< std::pair< std::vector<EUTelHit> , std::vector<EUTelHit> > > tracksAndDUTHitsUnique;
+    for(size_t i =0 ; i < tracksAndDUTHits.size() ; ++i){///Loop through all tracks and vector of DUT hits
+        std::cout<<"1"<<std::endl;
+        std::vector<EUTelHit> uniHits;
+        for(size_t j = 0; j < tracksAndDUTHits.at(i).second.size(); ++j){///Loop through all hits attached to track
+            std::cout<<"2"<<std::endl;
+            EUTelHit hit = tracksAndDUTHits.at(i).second.at(j);///This is the hit we are comparing to.
+            bool unique = true;
+            for(size_t k =i+1 ; k < tracksAndDUTHits.size() ; ++k){///Loop through all after the one compared to.
+                std::cout<<"3"<<std::endl;
+
+                std::vector<EUTelHit>::iterator itHitMatch = std::find(tracksAndDUTHits.at(k).second.begin(),tracksAndDUTHits.at(k).second.end(),hit);
+                if(itHitMatch != tracksAndDUTHits.at(k).second.end()){///If this is not unique remove from this vector and continue search.
+                    std::cout<<"not uni"<<std::endl;
+                    tracksAndDUTHits.at(k).second.erase(itHitMatch);
+                    unique = false;
+                }
+            }
+            if(unique){///If unique add to vector. 
+                uniHits.push_back(hit);
+                std::cout<<"Unique"<<std::endl;
+            }
+            if(j == tracksAndDUTHits.at(i).second.size()-1  and unique){///If we are on the last hit of this track create track and add new unique hits. 
+                tracksAndDUTHitsUnique.push_back(std::make_pair(tracksAndDUTHits.at(i).first,uniHits));
+                std::cout<<"Add1"<<std::endl;
+
+            }
+        }
+    }
+    return tracksAndDUTHitsUnique;
+ }
+
+
+
 
 //EUTelTrack EUTelPatRecTriplets::getHitsOnTrack(std::vector<double>& offset, std::vector<double>& trackSlope,double& qOverP, std::vector<unsigned int> sen, std::vector<EUTelHit>& hits){
 //    std::vector<double> curvCorr; curvCorr.push_back(qOverP*EUTelNav::_bFac[0]);curvCorr.push_back(qOverP*EUTelNav::_bFac[1]);
