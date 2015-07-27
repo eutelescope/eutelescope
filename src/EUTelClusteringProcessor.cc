@@ -692,9 +692,6 @@ void EUTelClusteringProcessor::processEvent (LCEvent * event)
     //
     readCollections(event);
 
-
-
-
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     // book the histograms now
     if ( _fillHistos && isFirstEvent() )
@@ -703,7 +700,6 @@ void EUTelClusteringProcessor::processEvent (LCEvent * event)
     }
 #endif
 
-    (dynamic_cast<AIDA::IHistogram1D*> (_timeStampHisto))->fill(event->getTimeStamp());
     EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
     if ( evt->getEventType() == kEORE )
     {
@@ -716,6 +712,8 @@ void EUTelClusteringProcessor::processEvent (LCEvent * event)
                                    << " is of unknown type. Continue considering it as a normal Data Event." << endl;
     }
 
+    if(_fillHistos)(dynamic_cast<AIDA::IHistogram1D*> (_timeStampHisto))->fill(event->getTimeStamp());
+    
     // prepare a pulse collection to add all clusters found
     // this can be either a new collection or already existing in the
     // event
