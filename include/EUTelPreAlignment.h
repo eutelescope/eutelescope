@@ -167,28 +167,14 @@ namespace eutelescope {
     //! vector of Rotation Matrix elements
     std::vector< std::map<int,double> > _siPlanesRotations;
 
-    //! An array with the Z position of planes
-    double * _siPlaneZPosition;
-
     //! Sensor ID vector
     std::vector< int > _sensorIDVec;
 
-    //! Sensor ID map (inverse sensorIDVec) 
-    std::map< int, int > _sensorIDVecMap;
-    //! Sensor ID vector, 
-    /*! it's position along Z axis
-     */ 
-    std::vector< int > _sensorIDVecZOrder;
     //! map for sensor ID to position along Z id
     /*!
      */
     std::map<int, int> _sensorIDtoZOrderMap;
 
-    //! map for sensor position along Z to nominal ID in data stream 
-    /*!
-     */
-    std::map<int, int> _sensorIDinZordered;
- 
 // _residual cuts [relative to the first upstream plane!]
     //! vector of correlation band cuts in X (upper limit)
     std::vector< float  > _residualsXMax;
