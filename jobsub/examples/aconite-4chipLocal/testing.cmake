@@ -22,7 +22,6 @@
     # only needed in the last step to test the results of EUTel against a set of reference files:
     SET( stattestdir "$ENV{EUTELESCOPE}/test/stattest/bin" )
     SET( referencedatadir "/afs/desy.de/group/telescopes/EutelTestData/TestExampleAconiteQuadFEI4" )
-    # SET( referencedatadir "/home/ilcsoft/EutelTestData/TestExampleAnemone2FEI4" )
 
     SET( executable python -tt ${jobsubdir}/jobsub.py )
     # options: use config, use csv, change native path to central AFS location, reduce number of events to 200k
@@ -146,6 +145,8 @@
     #ADD_TEST( TestJobsubExampleAconite-4chipHitmakerOutput sh -c "[ -f ${testdir}/output/results/run${PaddedRunNr}-hit.slcio ] && lcio_check_col_elements -a --expelements 39 --relelementerror 0.1 hit ${testdir}/output/results/run${PaddedRunNr}-hit.slcio" )
     #SET_TESTS_PROPERTIES (TestJobsubExampleAconite-4chipHitmakerOutput PROPERTIES DEPENDS TestJobsubExampleAconite-4chipHitmakerRun)
 
+    ADD_TEST( TestJobsubExampleAconite-4chipHitmakerPrealignment diff "${testdir}/gear/gear001085_pre.xml" "${referencedatadir}/gear/gear001085_pre.xml")
+    SET_TESTS_PROPERTIES(TestJobsubExampleAconite-4chipHitmakerPrealignment PROPERTIES FAIL_REGULAR_EXPRESSION ".*")
 
 #
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
