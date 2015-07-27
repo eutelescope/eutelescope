@@ -30,11 +30,6 @@ Align with prealigned gear and only mimosas
 #FixYrot=   0 1 2 3 4 5 20 21
 #FixZrot=   0  5 20 21  
 
-
-
-
-
-
 21:20:11 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The alignment parameters to update with these corrections:
 21:20:11 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  1  Type:  positionX  Value:  -0.68900E-02
 21:20:11 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  1  Type:  positionY  Value:  0.31159E-02
@@ -140,4 +135,5 @@ Quite large shifts in z iteration with gear:alignedGear-TripPat-iter3-run000186.
 
 Last is iteration 4.
 
-
+Now to finish off the the full body alignment. Note before this was done the z position of plane 5 was freed up and 0 and 2 fix. 
+This changed the size of the system by 5 mm! Gearfiles are a nightmare!

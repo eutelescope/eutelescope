@@ -21,7 +21,7 @@
       <processor name="HitMakerM26"/>
       <processor name="LocaltoGlobal"/>
       <processor name="MyAlibavaCorrelator"/>
-      <processor name="PreAligner"/>
+      <xprocessor name="PreAligner"/>
       <processor name="Save"/>
       <processor name="PrintEventNumber"/>
    </execute>

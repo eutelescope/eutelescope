@@ -89,7 +89,7 @@ To do a second iteration with a new gear: 1) Place new gear in runlist 2)Remembe
 This process produces a new gear:alignedGear-iter2-run000703.xml <<This is just the name I gave it.
 Note the value are converging. This is always a good sign. 
 Now we the measurement errors can have a large effect on the final solution. Reduce resolution value since we want this to be as small as possible.
-#r = 0.01
+#r = 0.005
 #dutX=0.07
 #dutY=100000000
 

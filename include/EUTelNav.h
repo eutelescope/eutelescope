@@ -32,7 +32,7 @@ class EUTelNav
 	public: 
         EUTelNav();
         ~EUTelNav();
-        static void init();
+        static void init( double beamEnergy);
 
         /// This function will will produce a 5x5 matrix to propagate a local state to global. Incidence information is propagated here too.
         /// To define this tranform the incidence in the global frame and rotation matrix local->global is passed. 
@@ -84,7 +84,6 @@ class EUTelNav
         static TVector3 _bFac;
         static std::vector<double> _curv;
         static double _intBeamE;
-        static std::vector<int> _senInc;
     ///\todo Need to initialised this in silly way. Problem is beam energy is passed to each processor. Should be the same for all
 
 };

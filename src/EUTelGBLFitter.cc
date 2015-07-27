@@ -340,8 +340,7 @@ namespace eutelescope {
         return scatPos;
     }
     void EUTelGBLFitter::initNav(){
-        EUTelNav::init();
-        EUTelNav::_intBeamE = getBeamEnergy();
+        EUTelNav::init(getBeamEnergy());
     }
 
     void EUTelGBLFitter::getResLoc(gbl::GblTrajectory* traj,EUTelTrack& track , std::vector< gbl::GblPoint > pointList,std::map< int, std::map< float, float > > &  SensorResidual, std::map< int, std::map< float, float > >& sensorResidualError){

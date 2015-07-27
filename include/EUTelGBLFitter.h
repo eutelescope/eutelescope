@@ -203,7 +203,7 @@ namespace eutelescope {
             int _numberRadLoss;
 			double _eBeam;
             int _mode;
-
+            double _dutDistCut;
 			/** Outlier downweighting option */
 			std::string _mEstimatorType;
 			/** Milipede binary file handle */

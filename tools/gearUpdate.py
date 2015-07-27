@@ -16,7 +16,7 @@ import shutil
 #X/Y/Z rotations => parameterNumber (3,4,5)
 
 
-radianCutOff = 0.1 #5.7 degrees. This could be reduced. 
+radianCutOff = 0.1 #~5 degrees. This could be reduced. 
 
 ## Create results vector
 #

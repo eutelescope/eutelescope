@@ -76,7 +76,7 @@
 only the clusters fulfilling a certain set of selection criteria.
 The user can modify the switch on and off each selection cut and set the proper value for that via the processor parameter.-->
   <!--This is the input Tracker Pulse collection that should be filtered-->
-  <parameter name="InputPulseCollectionName" type="string" lcioInType="TrackerPulse"> cluster_m26 </parameter>
+  <parameter name="InputPulseCollectionName" type="string" lcioInType="TrackerPulse"> cluster_m26_free </parameter>
   <!--This is the name of the noise collection.
 The presence of this collection in the event is allowing all the noise based selection cuts-->
   <parameter name="NoiseCollectionName" type="string" lcioInType="TrackerData"> m26_noise </parameter>

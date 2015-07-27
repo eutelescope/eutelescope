@@ -3,11 +3,17 @@ using namespace eutelescope;
 
 
 void EUTelRadCal::setRad(EUTelTrack& track){
-    setIncSenBlocks(track);
-    getThicknessAndRad(track); 
-    setMeanWeight(track);
-    setVarWeight(track);
-    setPosVar(track);
+    bool _noMedium = true;
+    if(_noMedium){
+        setIncSenBlocks(track);
+        getVarForSensorScatterersOnly(track);
+
+    }else{
+        getThicknessAndRad(track); 
+        setMeanWeight(track);
+        setVarWeight(track);
+        setPosVar(track);
+    }
 
 }
 void EUTelRadCal::setIncSenBlocks(EUTelTrack & track){ 
@@ -116,6 +122,15 @@ void EUTelRadCal::getVarForAllScatters(EUTelTrack & track ){
         itSt->block.scatVar.push_back(incMedVar*(pow(itSt->block.weigMean - itSt->block.scatPos.at(0),2)/denom));
     }
 }
+void EUTelRadCal::getVarForSensorScatterersOnly(EUTelTrack & track ){ 
+    ///Get the total variance of the system.
+    double varTotal = pow(Utility::getThetaRMSHighland( track.getBeamEnergy(),track.getRadPerTotal()  ),2); 
+    for(std::vector<EUTelState>::iterator itSt = track.getStates().begin(); itSt != track.getStates().end(); ++itSt){
+        ///Included sensor fraction of variance.
+        itSt->block.senVar = varTotal*(itSt->block.senRadPer/track.getRadPerTotal()); 
+    }
+}
+
 
 
 

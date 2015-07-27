@@ -27,8 +27,12 @@
 
 // AIDA
 #ifdef MARLIN_USE_AIDA
+#include <AIDA/AIDA.h>
 #include <marlin/AIDAProcessor.h>
 #include <AIDA/IHistogramFactory.h>
+#include <AIDA/IPlotterFactory.h>
+#include <AIDA/IAnalysisFactory.h>
+#include <AIDA/IPlotter.h>
 #include <AIDA/IHistogram1D.h>
 #include <AIDA/IProfile2D.h>
 #endif // MARLIN_USE_AIDA
@@ -93,7 +97,6 @@ namespace eutelescope {
 
 			//Beam energy. 
 			double _eBeam;
-
 			//This is the maximum chi2 of a track that will be used in the millepede alignment fit
 			double _maxChi2Cut;
 

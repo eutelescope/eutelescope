@@ -72,6 +72,7 @@ _mEstimatorType() //This is used by the GBL software for outliers down weighting
   registerOptionalParameter("BeamCharge", "Beam charge [e]", _beamQ, static_cast<double> (-1));
 
   registerProcessorParameter("BeamEnergy", "Beam energy [GeV]", _eBeam, static_cast<double> (4.0));
+
 	//This is the determines the how we down weight our outliers. This by default is set that each point will have the same weighting.
   registerOptionalParameter("GBLMEstimatorType", "GBL outlier down-weighting option (t,h,c)", _mEstimatorType, std::string() );
   registerOptionalParameter("ExcludePlanes", "This is the planes that will not be included in analysis", _excludePlanes ,IntVec());
@@ -328,6 +329,19 @@ void EUTelProcessorGBLTrackFit::end() {
 	streamlog_out(MESSAGE9) << "The number of GBL tracks "<< _chi2NdfVec.size() <<" Number of original candidates "<< _nTrackCand <<std::endl;
 	streamlog_out(MESSAGE9) << "This is the average chi2 -"<< average <<std::endl;
 
+
+
+    ///Fit and make the plots more appealing 
+//    AIDA::IAnalysisFactory* anaFac = marlin::AIDAProcessor::GetIAnalysisFactory(this);
+//    AIDA::IPlotterFactory*  ploFac =   anaFac->createPlotterFactory();
+//    AIDA::IPlotterStyle* style = ploFac->createPlotterStyle();
+//    style->xAxisStyle().setLabel("Microns");
+//    style->dataStyle().fillStyle().setPattern("Solid");
+//
+//    AIDA::IPlotter* plotter =ploFac->create("Plot");
+//    plotter->region(0)->setTitle("Resolution");
+//
+//    plotter->region(0)->plot(*_aidaHistoMap1D[ _histName::_residGblFitHistNameX0 ]);
 }
 
 #endif // USE_GBL

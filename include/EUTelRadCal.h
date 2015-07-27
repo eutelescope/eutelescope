@@ -40,6 +40,7 @@ namespace eutelescope {
             void getRelativePosOfScatterers(EUTelState & state);
             void setPosVar(EUTelTrack & track); 
             void getVarForAllScatters(EUTelTrack & track );
+            void getVarForSensorScatterersOnly(EUTelTrack & track );
 
 
 
