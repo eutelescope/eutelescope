@@ -317,7 +317,7 @@ void EUTelTrackAnalysis::print(){
     for(size_t  j = 0; j < (geo::gGeometry().sensorIDsVec().size()); ++j){
         unsigned int sensorID = geo::gGeometry().sensorIDsVec().at(j);
         ///Output all planes even if excluded. Add one to hit count so we do not divide by zero.
-        streamlog_out(MESSAGE9) <<"Sensor " << sensorID << " residual average X " <<  _senResTotX[sensorID]/static_cast<float>(_hitNum[sensorID]+1) << " residual average Y " <<  _senResTotY[sensorID]/static_cast<float>(_hitNum[sensorID]+1)<< " hit number " << _hitNum[sensorID]<<std::endl;;
+        streamlog_out(MESSAGE9) <<"Sensor " << sensorID << " Absolute residual average X " <<  _senResTotX[sensorID]/static_cast<float>(_hitNum[sensorID]+1) << " residual average Y " <<  _senResTotY[sensorID]/static_cast<float>(_hitNum[sensorID]+1)<< " hit number " << _hitNum[sensorID]<<std::endl;;
 
     }
 }
@@ -335,9 +335,9 @@ void EUTelTrackAnalysis::setTotNum(EUTelTrack& track){
             float resX = state.getPositionGlobal()[0] - state.getHit().getPositionGlobal()[0];
             float resY = state.getPositionGlobal()[1] - state.getHit().getPositionGlobal()[1];
             float resZ = state.getPositionGlobal()[2] - state.getHit().getPositionGlobal()[2];
-            _senResTotX[ID] = _senResTotX[ID] + resX; 
-            _senResTotY[ID] = _senResTotY[ID] + resY; 
-            _senResTotZ[ID] = _senResTotZ[ID] + resZ; 
+            _senResTotX[ID] = _senResTotX[ID] + pow(resX,2); 
+            _senResTotY[ID] = _senResTotY[ID] + pow(resY,2); 
+            _senResTotZ[ID] = _senResTotZ[ID] + pow(resZ,2); 
             _hitNum[ID] = _hitNum[ID] + 1; 
         }
 	} 

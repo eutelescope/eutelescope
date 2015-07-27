@@ -167,8 +167,8 @@ bool EUTelState::getStateHasHit() const {
 TMatrixD EUTelState::getProjectionMatrix() const {
     //incidence in local frame.
 	TMatrixD xyDir(2, 3);
-	xyDir[0][0] = 1; xyDir[0][1]=0.0; xyDir[0][2]=-1.0*getSlopeX();  
-	xyDir[1][0] = 0; xyDir[1][1]=1.0; xyDir[1][2]=-1.0*getSlopeY();  
+	xyDir[0][0] = 1; xyDir[0][1]=0.0; xyDir[0][2]=-1.0*getSlopeXGlobal();  
+	xyDir[1][0] = 0; xyDir[1][1]=1.0; xyDir[1][2]=-1.0*getSlopeYGlobal();  
     //Rotation needed from local->global
     TMatrixD TRotMatrix = geo::gGeometry().getRotMatrix( getLocation() );
 	TMatrixD measDir(3,2);

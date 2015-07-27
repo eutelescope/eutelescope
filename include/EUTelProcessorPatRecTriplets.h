@@ -155,7 +155,7 @@ namespace eutelescope {
 		EVENT::IntVec _excludePlanes;         
         int _mode;
         int _hitNum;
-
+        double _dutDistCut;
 		private:
         /// prevent users from making (default) copies of processors
 		DISALLOW_COPY_AND_ASSIGN(EUTelProcessorPatRecTriplets)   

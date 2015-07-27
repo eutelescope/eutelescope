@@ -134,6 +134,7 @@ namespace eutelescope {
     inline void setNumHits(double hitNum) {
         this->_hitNum = hitNum;
     }
+    void setDUTCut(double cut){_dutDistCut = cut;}
 
     //get public
     
@@ -204,9 +205,9 @@ namespace eutelescope {
     /*! If they pass a extraplolated postion/slope comparison then form a track. 
      *  If there is more than 1 match for a triplet remove triplet.  
      *  @param[in] 
-     *  @return map Map of triplet fit ID and vector of hits.
+     *  @return tracksHits Return tracks formed. 
      */
-    std::map<int,std::vector<EUTelHit> >  getTrackHitsFromTriplets(std::vector<EUTelPatRecTriplets::triplets>&);
+    std::vector<std::vector<EUTelHit> > getTrackHitsFromTriplets(std::vector<EUTelPatRecTriplets::triplets>&);
     /// Will return hits in the correct z order. 
     /**
      * \param[in] hits Not correct in Z
@@ -251,6 +252,7 @@ namespace eutelescope {
     ///\todo DUT hits here are added using parameterisation without slope changes. This could be improved with use in magnetic fields.  
 
     std::vector<EUTelTrack> getMinFakeTracks();
+    std::vector< std::pair< std::vector<EUTelHit> , std::vector<EUTelHit> > > getUniqueMatches( std::vector< std::pair< std::vector<EUTelHit> , std::vector<EUTelHit> > >& trackAndDUTHits);
 
     inline double getBeamMomentum() const {
         return _beamE;
@@ -281,6 +283,7 @@ namespace eutelescope {
     double _beamE;
     int _mode;
     int _hitNum;
+    double _dutDistCut;
     public:
     unsigned int _numberOfTracksTotal;
 

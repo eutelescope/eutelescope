@@ -46,9 +46,9 @@
  <processor name="MyAlibavaClusterCollectionMerger" type="AlibavaClusterCollectionMerger">
 	 <!--Merges alibava and telescope cluster collections-->
 	 <!--This is the input file name that telescope cluster collections stored-->
-	 <parameter name="InputTelescopeFileName" type="string"> @LcioPath@/@TelescopeOutputFormat@-filter.slcio </parameter>
+	 <parameter name="InputTelescopeFileName" type="string"> @LcioPath@/@TelescopeOutputFormat@-clustering.slcio </parameter>
 	 <!--Name of the cluster pulse collection of telescope data-->
-	 <parameter name="TelescopeClusterPulseCollectionName" type="string" lcioInType="TrackerPulse"> filtered_cluster_m26 </parameter>
+	 <parameter name="TelescopeClusterPulseCollectionName" type="string" lcioInType="TrackerPulse"> cluster_m26_free </parameter>
 	 <!--Name of the sparse cluster collection of telescope data-->
 	 <parameter name="TelescopeSparseClusterCollectionName" type="string" lcioInType="TrackerData"> original_zsdata </parameter>
 	 <!--This is the input file name that alibava cluster collections stored-->

@@ -15,12 +15,15 @@ import shutil
 #X/Y/Z shifts => parameterNumber (0,1,2)
 #X/Y/Z rotations => parameterNumber (3,4,5)
 
+
+radianCutOff = 0.1 #~5 degrees. This could be reduced. 
+
 ## Create results vector
 #
-# This function will read in a results file and return a vector with alignment parameters and results   
+# This function will read in a results file and return a vector with alignment parameters,results and errors   
 #
 # @param[in] res Results file 
-# @return resLink Output [alignment parameter,results value]   
+# @return resLink Output [alignment parameter,results value,error]   
 #
 def getVector(res):
     vecParRes = []
@@ -33,7 +36,7 @@ def getVector(res):
     return vecParRes
 ## Get alignment parameters. 
 #
-# The function will return the alignment parameter and result if there is one on this line in the results file   
+# The function will return the alignment parameter, result and error if there is one on this line in the results file   
 # It will return nothing if the absolute value is zero
 #
 # @param[in] line  
@@ -45,7 +48,7 @@ def getParRes(line):
         ##Check the first string is an alignment parameter
         float(parts[0])
         if(abs(float(parts[1])) > 0):
-            return [parts[0],parts[1]]
+            return [parts[0],parts[1],parts[4]]  #alignment ID, result, error.
         else:
            return None 
     except ValueError:
@@ -78,7 +81,7 @@ def getInfo(resVec):
             else:
                 ID = ID + num
         ID = ID[::-1]
-        IDModeRes.append([ID,mode,res[1]]) 
+        IDModeRes.append([ID,mode,res[1],res[2]]) 
     return IDModeRes
 
 ## Update the gear  
@@ -86,7 +89,7 @@ def getInfo(resVec):
 #   The gear is read using a xml parse and the elements updated. 
 #   Copy the old gear then access the newgear which is a copied and updated
 #
-# @param[in] IDModeRes [ID,mode,result]
+# @param[in] IDModeRes [ID,mode,result,error]
 # @param[in] oldGear 
 # @return newGear Gear with added results returned   
 #
@@ -114,6 +117,30 @@ def updateGear(IDModeRes,oldGear,newGear):
                 ladder.setAttribute(str(imd[1]), str(newVal))
     g.writexml(open(newGear, 'w'))
 
+## Screen results for large rotations and small results compared to error. 
+#  These will be removed and not passed back via return.
+# @param[in] IDModeResErr [ID,mode,result,error]
+# @return   IDModeResErr [ID,mode,result,error] updated to remove large rotations and small result values
+#
+
+def screen(IDModeRes):
+    IDModeResUpdate = []
+    #This is a list of the strings we should check for large rotations. 
+    trans = [ "rotationZY","rotationZX","rotationXY"] 
+    for imd in IDModeRes:
+        if abs(float(imd[2])/float(imd[3])) > 1 : #Check the update is large than the error. Otherwise there is no point in saving.
+            if imd[1] in trans: #If a rotation then check size. Otherwise just add.
+                if abs(float(imd[2])) > radianCutOff:
+                    print "WARNING large rotation. ID: " , imd[0], " mode: ", imd[1], " result ", imd[2], " error ", imd[3], "    Removed! "  
+                else:
+                    IDModeResUpdate.append(imd) 
+            else:
+                IDModeResUpdate.append(imd) 
+
+        else:
+            print "INFO change smaller than error. ID: " , imd[0], " mode: ", imd[1], " result ", imd[2], " error ", imd[3], "    Removed! "  
+
+    return IDModeResUpdate
 
 #We might want to import this at some point. Remove this then.
 if __name__ == '__main__':
@@ -125,7 +152,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
     resVec = getVector(args.r)
     IDModeRes =  getInfo(resVec)
+    IDModeResCor =  screen(IDModeRes)
+
     print "The alignment parameters to update with these corrections:"
-    for imr in IDModeRes:
-        print "The sensor ID: ", imr[0] , " Type: ", imr[1], " Value: ", imr[2]
-    updateGear(IDModeRes,args.og,args.ng)
+    for imr in IDModeResCor:
+        print "The sensor ID: ", imr[0] , " Type: ", imr[1], " Value: ", imr[2] , " Error: ", imr[3]
+    updateGear(IDModeResCor,args.og,args.ng)

@@ -82,8 +82,8 @@ TMatrixD EUTelNav::getPropagationJacobianGlobalToGlobal(float ds, TVector3 t1w)
 
 	xyDir[0][0] = 1.0; xyDir[0][1]=0.0; xyDir[0][2]=-slope.at(0);  
 	xyDir[1][0] = 0; xyDir[1][1]=1.0; xyDir[1][2]=-slope.at(1);  
-//    streamlog_out( DEBUG0 ) << "The propagator (Dx,Dy)   " << std::endl;
- //   streamlog_message( DEBUG0, xyDir.Print();, std::endl; );
+    streamlog_out( DEBUG0 ) << "The propagator (Dx,Dy)   " << std::endl;
+    streamlog_message( DEBUG0, xyDir.Print();, std::endl; );
 
 
 	TMatrixD bFac(2,1);
@@ -193,14 +193,13 @@ TVector3  EUTelNav::getBFac(){
     TVector3 bFac = 0.0003*(TVector3(0,0,1).Cross(H));
     return bFac;
 }
-void EUTelNav::init(){
+void EUTelNav::init(double beamEnergy){
+    _intBeamE = beamEnergy;
     _bFac = getBFac();
     _curv = getCurvXY();
-    _intBeamE = 0;
 }
         TVector3 EUTelNav::_bFac;
         std::vector<double> EUTelNav::_curv;
         double EUTelNav::_intBeamE;
-        std::vector<int> EUTelNav::_senInc;
 
 } //namespace eutelescope
