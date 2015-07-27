@@ -158,15 +158,6 @@ namespace eutelescope {
      */
     int _events;
    
-    //! bool tag if PreAlign should run anyway or not;
-    /*! default 0
-     */   
-    bool _UsefullHotPixelCollectionFound;
-
-// maps and vectors to navigate along the geometry of the setup:
-    //! vector of Rotation Matrix elements
-    std::vector< std::map<int,double> > _siPlanesRotations;
-
     //! Sensor ID vector
     std::vector< int > _sensorIDVec;
 
