@@ -20,7 +20,7 @@ namespace eutelescope {
 			EUTelHit(EVENT::TrackerHit* hit);
             void setPosition(const double * position);
             void setID(int id);
-	    void setTime(float time);
+            void setTime(float time);
             void setTrackFromLCIOVec(std::vector<double> input);
 			void setLocation(int location);
             /// Used to set the covariance from processor input.
@@ -38,8 +38,8 @@ namespace eutelescope {
             //HIT PARAMETERS
             const double* getPosition() const; 
             int getID() const;
-	    EVENT::LCObjectVec getPulse() const;
-	    float getTime() const;
+            EVENT::LCObjectVec getPulse() const;
+            float getTime() const;
 
             //END HIT PARAMETERS
             //print

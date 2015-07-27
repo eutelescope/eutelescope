@@ -11,6 +11,7 @@ void EUTelReaderGenericLCIO::getColVec(std::vector<EUTelTrack> tracks,LCEvent* e
     LCCollectionVec* colHitVec = new LCCollectionVec(LCIO::LCGENERICOBJECT);
     LCCollectionVec* relTrackStateVec = new LCCollectionVec(LCIO::LCRELATION);
     LCCollectionVec* relStateHitVec = new LCCollectionVec(LCIO::LCRELATION);
+    LCCollectionVec* relHitClusterVec = new LCCollectionVec(LCIO::LCRELATION);
 
 
     for(size_t i=0 ; i < tracks.size(); i++){
@@ -42,7 +43,8 @@ void EUTelReaderGenericLCIO::getColVec(std::vector<EUTelTrack> tracks,LCEvent* e
                 }
                 IMPL::LCRelationImpl *relStateHit = new IMPL::LCRelationImpl(conState,conHit); 
                 colHitVec->push_back(static_cast<EVENT::LCGenericObject*>(conHit));
-                relStateHitVec->push_back(static_cast<EVENT::LCRelation*>(relStateHit));
+                IMPL::LCRelationImpl *relHitCluster = new IMPL::LCRelationImpl(conHit,states.at(j).getHit().getPulse().at(0)); 
+                relStateHitVec->push_back(static_cast<EVENT::LCRelation*>(relHitCluster));
 
             }
 
@@ -54,6 +56,8 @@ void EUTelReaderGenericLCIO::getColVec(std::vector<EUTelTrack> tracks,LCEvent* e
     evt->addCollection(colHitVec,"HitsFOR" + colName);
     evt->addCollection(relTrackStateVec,"TrackStateFOR" + colName);
     evt->addCollection(relStateHitVec,"StateHitFOR" + colName);
+    evt->addCollection(relHitClusterVec,"HitClusterFOR" + colName);
+
 
 } 
 
@@ -96,6 +100,10 @@ LCCollection* relStatesHits =  evt->getCollection("StateHitFOR"+ colName);stream
                         EVENT::LCRelation* relStateHit = static_cast<EVENT::LCRelation*>(relStatesHits->getElementAt(kCol));
                         EVENT::LCGenericObject* stateCheck  =  static_cast<EVENT::LCGenericObject*>(relStateHit->getFrom());
                         EVENT::LCGenericObject* hit  =  static_cast<EVENT::LCGenericObject*>(relStateHit->getTo());
+                        ///Now get the cluster info
+
+                        EVENT::LCRelation* relHitCluster = static_cast<EVENT::LCRelation*>(relStatesHits->getElementAt(kCol));
+
                         if(stateCheck->id() == stateID){//If this is true then you have the correct hit.
                             streamlog_out(DEBUG1)<<"Found correct ID. Add hit now..." <<std::endl;
                             std::vector<double> hitInput;

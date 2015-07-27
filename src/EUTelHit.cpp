@@ -37,7 +37,7 @@ _cov(2,2)
     _time = hit->getTime();
     const int hitLoc = Utility::getSensorIDfromHit( static_cast<IMPL::TrackerHitImpl*> (hit) );
     _location = hitLoc;
-    
+    _pulse =hit->getRawHits();    
     _locationKnown=true;
     setCov(hit->getCovMatrix());
 
