@@ -23,7 +23,7 @@ ONLY NEED TO RUN PATTERN RECOGNITION ONCE! Caveat: You are so badly aligned you 
 
 Align with prealigned gear and only mimosas
 
-#FixXshifts=0  5 20 21  
+#FixXshifts=0  5 20 21
 #FixYshifts=0  5 20 21 
 #FixZshifts=0  5 20 21   
 #FixXrot=   0 1 2 3 4 5 20 21

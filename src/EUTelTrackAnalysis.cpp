@@ -211,8 +211,9 @@ void EUTelTrackAnalysis::plotBeamEnergy(EUTelTrack track){
 void EUTelTrackAnalysis::plotPValueVsBeamEnergy(EUTelTrack track){
   streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotPValueVsBeamEnergy------------------------------BEGIN"<< std::endl;
 	float pValue = calculatePValueForChi2(track);
+	
 	_pValueVsBeamEnergy->fill(track.getBeamEnergy(), pValue);
-  streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotPValueVsBeamEnergy------------------------------END"<< std::endl;
+	streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotPValueVsBeamEnergy------------------------------END pvalue = "<< pValue<< std::endl;
 }
 
 
@@ -258,7 +259,7 @@ void EUTelTrackAnalysis::plotPValueWithIncidenceAngles(EUTelTrack track){
 		typedef std::map<int , AIDA::IProfile1D * >::iterator it_type;
 		for(it_type iterator =_mapFromSensorIDToPValuesVsIncidenceXZ.begin(); iterator != _mapFromSensorIDToPValuesVsIncidenceXZ.end(); iterator++) {
 			if(iterator->first == state.getLocation()){
-			streamlog_out(DEBUG2) << "Add incidence XZ : " << incidenceXZ  << std::endl;
+			  streamlog_out(DEBUG2) << "Add incidence XZ : " << incidenceXZ  << "pValue = "<<pValue<<std::endl;
 			_mapFromSensorIDToPValuesVsIncidenceXZ[ state.getLocation() ] ->fill(incidenceXZ, pValue);
 			break;
 			}

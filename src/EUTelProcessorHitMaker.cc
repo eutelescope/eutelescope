@@ -283,6 +283,7 @@ void EUTelProcessorHitMaker::processEvent (LCEvent * event) {
 	for( int iCluster = 0; iCluster < pulseCollection->getNumberOfElements(); iCluster++ ) 
 	{
 			TrackerPulseImpl* pulse = dynamic_cast<TrackerPulseImpl*>(pulseCollection->getElementAt(iCluster));
+			streamlog_out(DEBUG1)<< std::scientific <<"pulseCollection->getElementAt(iCluster)->getTime()   " << pulse->getTime()  <<std::endl;
 			TrackerDataImpl* trackerData  = dynamic_cast<TrackerDataImpl*>( pulse->getTrackerData());
 
 			int sensorID = clusterCellDecoder(pulse)["sensorID"];
@@ -549,8 +550,8 @@ void EUTelProcessorHitMaker::bookHistos(int sensorID) {
   double yMin = -(geo::gGeometry().siPlaneYSize ( sensorID )/2)-constant;
   double yMax = (geo::gGeometry().siPlaneYSize ( sensorID )/2)+constant; 
 
-  int xNBin =    geo::gGeometry().siPlaneXNpixels ( sensorID );
-  int yNBin =    geo::gGeometry().siPlaneYNpixels ( sensorID );
+  int xNBin =    2*geo::gGeometry().siPlaneXNpixels ( sensorID );
+  int yNBin =    2*geo::gGeometry().siPlaneYNpixels ( sensorID );
 
 
   AIDA::IHistogram2D * hitHistoLocal = AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName).c_str(),
@@ -572,8 +573,8 @@ void EUTelProcessorHitMaker::bookHistos(int sensorID) {
   double yPosition =  geo::gGeometry().siPlaneYPosition( sensorID );
   double xSize     =  geo::gGeometry().siPlaneXSize ( sensorID );
   double ySize     =  geo::gGeometry().siPlaneYSize ( sensorID );
-  int xBin         =  geo::gGeometry().siPlaneXNpixels( sensorID );
-  int yBin         =  geo::gGeometry().siPlaneYNpixels( sensorID );
+  int xBin         =  2*geo::gGeometry().siPlaneXNpixels( sensorID );
+  int yBin         =  2*geo::gGeometry().siPlaneYNpixels( sensorID );
 
   xMin = -20;  // safetyFactor * ( xPosition - ( 0.5 * xSize ));
   xMax = 20; // safetyFactor * ( xPosition + ( 0.5 * xSize ));
