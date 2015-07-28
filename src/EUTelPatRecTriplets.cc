@@ -1,7 +1,15 @@
 #include "EUTelPatRecTriplets.h"
+#include "EUTelNav.h"
+#include "EUTelGeometryTelescopeGeoDescription.h"
 namespace eutelescope {
 
-EUTelPatRecTriplets::EUTelPatRecTriplets():  
+  EUTelPatRecTriplets::EUTelPatRecTriplets()
+  {}
+
+EUTelPatRecTriplets::EUTelPatRecTriplets(AIDA::IHistogram1D * DoubletXseperationHistoRight, AIDA::IHistogram1D * DoubletYseperationHistoRight, AIDA::IHistogram1D * DoubletXseperationHistoLeft,
+					   AIDA::IHistogram1D * DoubletYseperationHistoLeft, AIDA::IHistogram1D * TripletXseperationHistoRight, AIDA::IHistogram1D * TripletYseperationHistoRight,
+					   AIDA::IHistogram1D * TripletXseperationHistoLeft, AIDA::IHistogram1D * TripletYseperationHistoLeft, AIDA::IHistogram1D * TripletDistCutXHisto,
+					   AIDA::IHistogram1D * TripletDistCutYHisto):  
 _eventNumber(0),
 _totalNumberOfHits(0),
 _numberTripletsLeft(0),
@@ -10,7 +18,17 @@ _tripletSlopeCuts(0,0),
 _beamE(-1.),
 _hitNum(6),
 _mode(1),
-_numberOfTracksTotal(0)
+_numberOfTracksTotal(0),
+_DoubletXseperationHistoRight(DoubletXseperationHistoRight),
+_DoubletYseperationHistoRight(DoubletYseperationHistoRight),
+_DoubletXseperationHistoLeft(DoubletXseperationHistoLeft),
+_DoubletYseperationHistoLeft(DoubletYseperationHistoLeft),
+_TripletXseperationHistoRight(TripletXseperationHistoRight),
+_TripletYseperationHistoRight(TripletYseperationHistoRight),
+_TripletXseperationHistoLeft(TripletXseperationHistoLeft),
+_TripletYseperationHistoLeft(TripletYseperationHistoLeft),
+_TripletDistCutXHisto(TripletDistCutXHisto),
+_TripletDistCutYHisto(TripletDistCutYHisto)
 {}
 EUTelPatRecTriplets::~EUTelPatRecTriplets()  
 {}
@@ -81,9 +99,22 @@ bool EUTelPatRecTriplets::getTriplet(doublets& doublet, EUTelHit& hitCen,triplet
     const double delY = pos.at(1) - y1;
     streamlog_out(DEBUG1) << "Doublet delta X to centre hit: "<< delX << " Cut X: "<<_doubletCenDistCut.at(0) <<" Distance Y: " << delY<< " Cut Y: " << _doubletCenDistCut.at(1)  << std::endl;
 
+
+		if(hitCen.getLocation() == 1){
+		  _TripletXseperationHistoLeft->fill(delX);
+		  _TripletYseperationHistoLeft->fill(delY);
+		}
+
+		else if(hitCen.getLocation() == 4){
+		  _TripletXseperationHistoRight->fill(delX);
+		  _TripletYseperationHistoRight->fill(delY);
+		}
+
     if(fabs(delX) >  _doubletCenDistCut.at(0) or fabs(delY) >  _doubletCenDistCut.at(1) ){
         return false;
     }
+
+
     streamlog_out(DEBUG1) << "PASS 2!! " << std::endl;
 
     triplet.matches = 0;
@@ -121,30 +152,43 @@ std::vector<EUTelPatRecTriplets::triplets> EUTelPatRecTriplets::getTriplets()
         std::vector<EUTelHit>& hitCentreLeft = _mapHitsVecPerPlane[cenID.at(i) - 1];
         std::vector<EUTelHit>& hitCentreRight = _mapHitsVecPerPlane[cenID.at(i) + 1];
 
-		std::vector<EUTelHit>::iterator itHit;
-		std::vector<EUTelHit>::iterator itHitLeft;
-		std::vector<EUTelHit>::iterator itHitRight;
-		for ( itHitLeft = hitCentreLeft.begin(); itHitLeft != hitCentreLeft.end(); ++itHitLeft ) {
-            for ( itHitRight = hitCentreRight.begin(); itHitRight != hitCentreRight.end(); ++itHitRight ) {
-                doublets doublet;
-                bool pass = getDoublet(*itHitLeft,*itHitRight,_doubletDistCut,doublet);
-                if(!pass) continue;
-                streamlog_out(DEBUG1) << "PASS 1!! " << std::endl;
-
-                //Now loop through all hits on plane between two hits which create doublets. 
-                for ( itHit = hitCentre.begin(); itHit != hitCentre.end(); ++itHit ) {
-                    triplets triplet;
-                    bool pass2 = getTriplet(doublet,*itHit, triplet);
-                    if(!pass2) continue;
-                    streamlog_out(DEBUG1) << "PASS 2!! " << std::endl;
-                     if(triplet.cenPlane == 1){
-                        _numberTripletsLeft++;
-                    }else if(triplet.cenPlane == 4){
-                        _numberTripletsRight++;
-                    }
-                    tripletsVec.push_back(triplet); 
-                }
-            }
+	std::vector<EUTelHit>::iterator itHit;
+	std::vector<EUTelHit>::iterator itHitLeft;
+	std::vector<EUTelHit>::iterator itHitRight;
+	for ( itHitLeft = hitCentreLeft.begin(); itHitLeft != hitCentreLeft.end(); ++itHitLeft ) {
+	  for ( itHitRight = hitCentreRight.begin(); itHitRight != hitCentreRight.end(); ++itHitRight ) {
+	    doublets doublet;
+	    getDoublet(*itHitLeft,*itHitRight,doublet);
+	    
+	    if (i ==0){
+	      _DoubletXseperationHistoLeft->fill(doublet.diff.at(0));
+	      _DoubletYseperationHistoLeft->fill(doublet.diff.at(1));
+	    }
+	    
+	    if(i==1){
+	      _DoubletXseperationHistoRight->fill(doublet.diff.at(0));
+	      _DoubletYseperationHistoRight->fill(doublet.diff.at(1));
+	    }
+	    
+	    if(fabs(doublet.diff.at(0)) >  _doubletDistCut.at(0) or fabs(doublet.diff.at(1)) >  _doubletDistCut.at(1) ){
+	      continue;
+	    }
+	    streamlog_out(DEBUG1) << "PASS 1!! " << std::endl;
+	    
+	    //Now loop through all hits on plane between two hits which create doublets. 
+	    for ( itHit = hitCentre.begin(); itHit != hitCentre.end(); ++itHit ) {
+	      triplets triplet;
+	      bool pass2 = getTriplet(doublet,*itHit, triplet);
+	      if(!pass2) continue;
+	      streamlog_out(DEBUG1) << "PASS 2!! " << std::endl;
+	      if(triplet.cenPlane == 1){
+		_numberTripletsLeft++;
+	      }else if(triplet.cenPlane == 4){
+		_numberTripletsRight++;
+	      }
+	      tripletsVec.push_back(triplet); 
+	    }
+	  }
         }
         if(cenID.size()-1 == i and tripletsVec.size() == 0){//If not triplets found on first plane end search.
             streamlog_out(DEBUG1) << "FOUND NO TRIPLETS FOR EVENT: " << getEventNumber()  << std::endl;
@@ -192,9 +236,15 @@ std::vector<std::vector<EUTelHit> > EUTelPatRecTriplets::getTrackHitsFromTriplet
             std::vector<float> posRightAtZ = getTripPosAtZ(*itRightTriplet,aveZPosTrip); 
             streamlog_out(DEBUG1) << "Predicted position of triplet1/triplet2 " << posLeftAtZ.at(0) <<"/"<<posRightAtZ.at(0) << "  " << posLeftAtZ.at(1) <<"/"<<posRightAtZ.at(1)<< "  " << posLeftAtZ.at(2) <<"/"<<posRightAtZ.at(2) <<std::endl;
             streamlog_out(DEBUG1) << "Delta between Triplets X: "<< fabs(posLeftAtZ.at(0)- posRightAtZ.at(0)) <<" Cut X: " << _tripletConnectDistCut.at(0) << " Delta Y: " << fabs(posLeftAtZ.at(1)- posRightAtZ.at(1)) << " Cut Y: " << _tripletConnectDistCut.at(1) << std::endl;
+
+	    _TripletDistCutXHisto->fill(posLeftAtZ.at(0)- posRightAtZ.at(0));
+	    _TripletDistCutYHisto->fill(posLeftAtZ.at(1)- posRightAtZ.at(1));
+
             if(fabs(posLeftAtZ.at(0)- posRightAtZ.at(0)) > _tripletConnectDistCut.at(0) or fabs(posLeftAtZ.at(1)- posRightAtZ.at(1)) > _tripletConnectDistCut.at(1)){
                 continue;
             }
+
+
             //Pass without DUT
             streamlog_out(DEBUG1) << "PASS 4!! " << std::endl;
             itLeftTriplet->matches = itLeftTriplet->matches + 1;
@@ -347,9 +397,7 @@ std::vector<EUTelTrack> EUTelPatRecTriplets::getMinFakeTracks(){
         std::vector<EUTelHit> newHits;
         if(EUTelExcludedPlanes::_senInc.size() > 6 ){///Only look for DUTs if we have more planes included.
             doublets doub;
-            ///We know this forms a track so increase cuts to infinity.
-            std::vector<float> cuts; cuts.push_back(1000000); cuts.push_back(100000);
-            bool pass = getDoublet(*(itTrack->begin()),*(itTrack->rbegin()), cuts ,doub);
+            getDoublet(*(itTrack->begin()),*(itTrack->rbegin()),doub);
             std::vector< unsigned int> dut;
             for(size_t i = 0 ; i < EUTelExcludedPlanes::_senInc.size(); ++i){
                 if(EUTelExcludedPlanes::_senInc.at(i) > 5){
@@ -358,7 +406,7 @@ std::vector<EUTelTrack> EUTelPatRecTriplets::getMinFakeTracks(){
             }
             streamlog_out(DEBUG1) << "Got hit! "  << std::endl;
             int hitNum=1; //Need a minimum of 1 DUT hit to pass track.
-            pass =  getDoubHitOnTraj(doub, dut,hitNum, newHits);
+            bool pass =  getDoubHitOnTraj(doub, dut,hitNum, newHits);
             if(!pass){
                 continue;
             }
@@ -453,7 +501,7 @@ std::vector<EUTelTrack> EUTelPatRecTriplets::getMinFakeTracks(){
 //}
 
 
-bool EUTelPatRecTriplets::getDoublet(EUTelHit const & hit1, EUTelHit const & hit2, std::vector<float> const & doubletDistCut,  doublets& doublet){
+void EUTelPatRecTriplets::getDoublet(EUTelHit const & hit1, EUTelHit const & hit2,  doublets& doublet){
     const double curvX = EUTelNav::_curv.at(0); 
     const double curvY =  EUTelNav::_curv.at(1); 
 
@@ -472,18 +520,12 @@ bool EUTelPatRecTriplets::getDoublet(EUTelHit const & hit1, EUTelHit const & hit
     doublet.diff.push_back(y2 - y1);
     doublet.diff.push_back( hit2.getPositionGlobal()[2] - hit1.getPositionGlobal()[2]);
 
-    streamlog_out(DEBUG1) << "Doublet delta X: "<< std::abs(doublet.diff.at(0)) << " Cut X: "<<doubletDistCut.at(0) <<" Delta Y: " << doublet.diff.at(1)<< " Cut Y: " << doubletDistCut.at(1)  << std::endl;
-
-    if(fabs(doublet.diff.at(0)) >  doubletDistCut.at(0) or fabs(doublet.diff.at(1)) >  doubletDistCut.at(1) ){
-        return false;
-    }
-
     doublet.slope.push_back( doublet.diff.at(0)/doublet.diff.at(2)); 
     doublet.slope.push_back( doublet.diff.at(1)/doublet.diff.at(2)); 
     doublet.hits.push_back(hit1);
     doublet.hits.push_back(hit2);
-    return true;
 }
+
 std::vector<float>  EUTelPatRecTriplets::getTripPosAtZ(triplets trip, float posZ ){
 	streamlog_out(DEBUG1) << "Slope x/y: " <<trip.slope.at(0) << "  " <<trip.slope.at(1) <<" Position ave: " <<trip.pos.at(0)<<" "<<trip.pos.at(1)<<" "<<trip.pos.at(2) <<std::endl;
     float dz = posZ - trip.pos.at(2);
