@@ -237,7 +237,6 @@ void EUTelProcessorGBLTrackFit::plotResidual(std::map< int, std::map<float, floa
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Residual plot
     std::vector<int> duts;
 	for ( std::vector<int>::const_iterator itPla = geo::gGeometry().sensorIDsVec().begin(); itPla != geo::gGeometry().sensorIDsVec().end(); ++itPla) {
-	  std::cout << *itPla << " itPla value" << std::endl;
         if(*itPla > 5){
             duts.push_back(*itPla);
         }
@@ -265,8 +264,8 @@ void EUTelProcessorGBLTrackFit::plotResidual(std::map< int, std::map<float, floa
 	    if( sensor_residual_it->first == 3 ){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX3 ] ) -> fill(res);}
 	    if( sensor_residual_it->first == 4 ){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX4 ] ) -> fill(res);}
 	    if( sensor_residual_it->first == 5 ){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameX5 ] ) -> fill(res);}
-	    if( sensor_residual_it->first == dut1 ){std::cout << dut1 << " dut 1 sensor ID" << std::endl; static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameXDut1 ] ) -> fill(res);}
-	    if( sensor_residual_it->first == dut2 ){std::cout << dut2 << " dut 2 sensor ID" << std::endl; static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameXDut2 ] ) -> fill(res);}
+	    if( sensor_residual_it->first == dut1 ){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameXDut1 ] ) -> fill(res);}
+	    if( sensor_residual_it->first == dut2 ){static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_residGblFitHistNameXDut2 ] ) -> fill(res);}
 	    
 		}else{
 			streamlog_out(DEBUG5) << "The map is NULL" <<std::endl;
