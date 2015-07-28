@@ -72,6 +72,8 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
   <!--Ids of planes for which Z shift will be fixed during millepede call-->
   <parameter name="FixedAlignmentPlanesZshift" type="IntVec">@FixZshifts@ </parameter>
   <parameter name="PedeSteeringAdditionalCmds" type="StringVec">
+    <parameter name = "IncMed" type="int"> @IncMed@ </parameter>
+
 method inversion 5 0.1 \\
 !method diagonalization 15 0.001 \\ 
 @outlierdownweighting@  \\ 
