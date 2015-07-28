@@ -33,6 +33,18 @@
 #include "streamlog/streamlog.h"
 #include "gear/gearimpl/Vector3D.h"
 
+// MARLIN
+#include <marlin/AIDAProcessor.h>
+#include "marlin/Exceptions.h"
+#include "marlin/Global.h"
+#include "marlin/Processor.h"
+#include "marlin/VerbosityLevels.h"
+
+// AIDA
+#include <AIDA/IBaseHistogram.h>
+#include <AIDA/IHistogram1D.h>
+#include <AIDA/IHistogramFactory.h>
+
 namespace eutelescope {
   //! Triplet/doublet finder class. 
   /*! The class performed pattern recognition using triplet and doublets constructed from mimosa hits 
@@ -56,6 +68,10 @@ namespace eutelescope {
     public: 
     EUTelPatRecTriplets();
     ~EUTelPatRecTriplets();
+    EUTelPatRecTriplets(AIDA::IHistogram1D * _DoubletXseperationHistoRight, AIDA::IHistogram1D * _DoubletYseperationHistoRight, AIDA::IHistogram1D * _DoubletXseperationHistoLeft,
+				    AIDA::IHistogram1D * _DoubletYseperationHistoLeft, AIDA::IHistogram1D * _TripletXseperationHistoRight, AIDA::IHistogram1D * _TripletYseperationHistoRight, 
+				    AIDA::IHistogram1D * _TripletXseperationHistoLeft, AIDA::IHistogram1D * _TripletYseperationHistoLeft, AIDA::IHistogram1D * _TripletDistCutXHisto,
+				    AIDA::IHistogram1D *_TripletDistCutYHisto);
 
     //! Struct object 
     /*! This contains the informtion needed to construct a track from two hits. 
@@ -166,17 +182,15 @@ namespace eutelescope {
      */
 
     bool getTriplet(doublets&, EUTelHit &, triplets&  );
-    //! Will create doublet from hits if passes distance cut.  
+    //! Will create doublet
     /*! 
      * The doublet included all the information need to parameterise the track fro mthe two hits.
      *  @param[in] hit Hit on plane down stream 
-     *  @param[in] cuts Pass the cuts so this can be varied at different positions in code.
      *  @param[in] hit Hit on plane upstream.
      *  @param[out] doublet doublet constructed from hits.
-     *  @return pass Has the cut been passed.
      */
 
-    bool getDoublet( EUTelHit const  &, EUTelHit const&, std::vector<float> const & doubletDistCut ,doublets&);
+    void getDoublet( EUTelHit const  &, EUTelHit const&,doublets&);
     //! Predict global position using triplet at certain z position.  
     /*! 
      *  
@@ -257,6 +271,20 @@ namespace eutelescope {
     inline double getBeamMomentum() const {
         return _beamE;
     }
+
+
+    AIDA::IHistogram1D * _DoubletXseperationHistoRight;
+    AIDA::IHistogram1D * _DoubletYseperationHistoRight;
+    AIDA::IHistogram1D * _DoubletXseperationHistoLeft;
+    AIDA::IHistogram1D * _DoubletYseperationHistoLeft;
+    AIDA::IHistogram1D * _TripletXseperationHistoRight;
+    AIDA::IHistogram1D * _TripletYseperationHistoRight;
+    AIDA::IHistogram1D * _TripletXseperationHistoLeft;
+    AIDA::IHistogram1D * _TripletYseperationHistoLeft;
+    AIDA::IHistogram1D * _TripletDistCutXHisto;
+    AIDA::IHistogram1D * _TripletDistCutYHisto;
+
+
     DISALLOW_COPY_AND_ASSIGN(EUTelPatRecTriplets) // prevent users from making (default) copies of processors
 	public:
     //OTHER
