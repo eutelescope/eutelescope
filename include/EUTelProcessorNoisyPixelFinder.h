@@ -144,7 +144,11 @@ public:
 
 
 protected:
-    std::string _lcioWriteMode ; 
+    std::string _lcioWriteMode ;
+    std::map<int, std::vector<EUTelGenericSparsePixel>  >_allPixelMap; 
+
+static std::string _firing2DHistoName_all;
+static std::string _firing1DHistoName_all;
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     //! Histogram with the firing frequency 2D distribution

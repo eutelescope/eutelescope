@@ -157,6 +157,18 @@ namespace eutelescope {
         int _hitNum;
         double _dutDistCut;
 		private:
+
+    AIDA::IHistogram1D * _DoubletXseperationHistoRight;
+    AIDA::IHistogram1D * _DoubletYseperationHistoRight;
+    AIDA::IHistogram1D * _DoubletXseperationHistoLeft;
+    AIDA::IHistogram1D * _DoubletYseperationHistoLeft;
+    AIDA::IHistogram1D * _TripletXseperationHistoRight;
+    AIDA::IHistogram1D * _TripletYseperationHistoRight;
+    AIDA::IHistogram1D * _TripletXseperationHistoLeft;
+    AIDA::IHistogram1D * _TripletYseperationHistoLeft;
+    AIDA::IHistogram1D * _TripletDistCutXHisto;
+    AIDA::IHistogram1D * _TripletDistCutYHisto;
+
         /// prevent users from making (default) copies of processors
 		DISALLOW_COPY_AND_ASSIGN(EUTelProcessorPatRecTriplets)   
      

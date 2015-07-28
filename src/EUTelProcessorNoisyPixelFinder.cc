@@ -59,6 +59,8 @@ using namespace eutelescope;
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 std::string EUTelProcessorNoisyPixelFinder::_firing2DHistoName = "Firing2D";
 std::string EUTelProcessorNoisyPixelFinder::_firing1DHistoName = "Firing1D";
+std::string EUTelProcessorNoisyPixelFinder::_firing2DHistoName_all = "Firing2D_all";
+std::string EUTelProcessorNoisyPixelFinder::_firing1DHistoName_all = "Firing1D_all";
 #endif
 
 
@@ -155,11 +157,13 @@ void EUTelProcessorNoisyPixelFinder::initializeHitMaps()
 
 			//collection to later hold the hot pixels
 			std::vector<EUTelGenericSparsePixel> hotPixelMap;
+			std::vector<EUTelGenericSparsePixel> allPixelMap; // KGW 21-11-14
 
 			//store all the collections/pointers in the corresponding maps
 		    	_sensorMap[*it] = thisSensor;
 			_hitVecMap[*it] = hitVecP;
 			_hotPixelMap[*it] = hotPixelMap;
+			_allPixelMap[*it] = allPixelMap; // KGW 21-11-14
 		}
 		catch(std::runtime_error& e)
 		{
@@ -257,7 +261,10 @@ void EUTelProcessorNoisyPixelFinder::HotPixelFinder(EUTelEventImpl* evt)
 				catch(std::out_of_range& e)
 				{
 					streamlog_out ( ERROR5 )  << "Pixel: " << genericPixel->getXCoord() << "|" <<  genericPixel->getYCoord() << " on plane: " << sensorID << " fired." << std::endl 
-					<< "This pixel is out of the range defined by the geometry. Either your data is corrupted or your pixel geometry not specified correctly!" << std::endl;
+                    << "This pixel is out of the range defined by the geometry. Either your data is corrupted or your pixel geometry not specified correctly!" << std::endl
+                    << "hitArray size x,y: " << hitArray->size() << "," << hitArray->at(0).size() << std::endl
+                    << "genericPixel x,y: " << genericPixel->getXCoord() << "," << genericPixel->getYCoord() << std::endl
+                    << "currentSensor x,y: " << currentSensor->offX << "," << currentSensor->offY << std::endl;
 				}
 		    }
 			delete genericPixel;
@@ -359,14 +366,19 @@ void EUTelProcessorNoisyPixelFinder::check(LCEvent* /*event*/ )
 				{
 					//compute the firing frequency
 					float fireFreq = (float)*yIt/(float)_iEvt;
+					EUTelGenericSparsePixel pixel; // KGW 21-11-14
+					pixel.setXCoord(xIt-hitVector->begin() + currentSensor->offX);
+					pixel.setYCoord(yIt - xIt->begin() + currentSensor->offY );
+					pixel.setSignal( 100*fireFreq );
+					_allPixelMap[it->first].push_back(pixel);
 					//if it is larger than the allowed one, we write this pixel into a collection
 					if(fireFreq > _maxAllowedFiringFreq)
 					{
 						streamlog_out ( MESSAGE4 ) << "Pixel: " << xIt-hitVector->begin() + currentSensor->offX << "|" << yIt - xIt->begin() + currentSensor->offY  << " fired " << fireFreq << std::endl;
-						EUTelGenericSparsePixel pixel;
-						pixel.setXCoord(xIt-hitVector->begin() + currentSensor->offX);
-						pixel.setYCoord(yIt - xIt->begin() + currentSensor->offY );
-						pixel.setSignal( ceil(100*fireFreq) );
+						//EUTelGenericSparsePixel pixel; // KGW 21-11-14
+						//pixel.setXCoord(xIt-hitVector->begin() + currentSensor->offX);
+						//pixel.setYCoord(yIt - xIt->begin() + currentSensor->offY );
+						//pixel.setSignal( ceil(100*fireFreq) );
 						//writing out is done here
 						_hotPixelMap[it->first].push_back(pixel);
 					}
@@ -521,7 +533,7 @@ void EUTelProcessorNoisyPixelFinder::bookAndFillHistos()
 {
 	streamlog_out ( MESSAGE1 ) << "Booking and filling histograms " << std::endl;
 
-	string tempHistoName, basePath;
+	string tempHistoName_all, tempHistoName, basePath;
 
 	for ( std::vector<int>::iterator it =  _sensorIDVec.begin() ; it !=  _sensorIDVec.end() ; ++it ) 
 	{   
@@ -556,9 +568,9 @@ void EUTelProcessorNoisyPixelFinder::bookAndFillHistos()
 		tempHistoName = _firing1DHistoName + "_d" + to_string( *it );
 
 		//range for 1D firing histo
-		int nBin = 101;
-		double min = -0.5;
-		double max = 100.5;
+		int nBin = 1001;
+		double min = 0.00;
+		double max = 100.0;
 
 		AIDA::IHistogram1D* firing1DHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),nBin, min, max );
 		firing1DHisto->setTitle("Firing frequency distribution of hot pixels (in percent, rounded to the next integer);Firing Frequency (%); Count (#)");
@@ -569,6 +581,30 @@ void EUTelProcessorNoisyPixelFinder::bookAndFillHistos()
 			firing2DHisto->fill(itt->getXCoord(), itt->getYCoord(), itt->getSignal() );
 			firing1DHisto->fill( itt->getSignal() );
 		}
+
+		// map of all pixel firing frequencies KGW 21-11-14
+		tempHistoName_all = _firing2DHistoName_all + "_d" + to_string( *it );
+		AIDA::IHistogram2D* firing2DHisto_all = AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName_all).c_str(), xBin, xMin, xMax,yBin, yMin, yMax);
+		firing2DHisto_all->setTitle("Firing frequency map of ALL pixels (in percent, rounded to the next integer); Pixel Index X; Pixel Index Y; Percent (%)");
+		tempHistoName_all = _firing1DHistoName_all + "_d" + to_string( *it );
+		AIDA::IHistogram1D* firing1DHisto_all = AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName_all).c_str(),nBin, min, max );
+		firing1DHisto_all->setTitle("Firing frequency distribution of ALL pixels (in percent, rounded to the next integer);Firing Frequency (%); Count (#)");
+
+	  
+		if( firing2DHisto_all == 0 )
+		{
+			streamlog_out ( ERROR5 ) << "CreateHistogram2D for " <<  (basePath + tempHistoName_all).c_str()  << " failed " << std::endl;
+		    streamlog_out ( ERROR5 ) << "Execution stopped, check that your path (" << basePath.c_str() << ")exists  " << std::endl;
+		    return;
+		}
+		//actually fill both histos for each detector
+		for ( std::vector<EUTelGenericSparsePixel>::iterator itt = _allPixelMap[*it].begin(); itt != _allPixelMap[*it].end(); ++itt)
+		{
+			firing2DHisto_all->fill(itt->getXCoord(), itt->getYCoord(), itt->getSignal() );
+			firing1DHisto_all->fill( itt->getSignal() );
+		}
+
+		
 	}//loop over dteectors
 }
 #endif
