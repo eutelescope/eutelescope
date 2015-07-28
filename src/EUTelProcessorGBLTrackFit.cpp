@@ -77,6 +77,7 @@ _mEstimatorType() //This is used by the GBL software for outliers down weighting
   registerOptionalParameter("GBLMEstimatorType", "GBL outlier down-weighting option (t,h,c)", _mEstimatorType, std::string() );
   registerOptionalParameter("ExcludePlanes", "This is the planes that will not be included in analysis", _excludePlanes ,IntVec());
   registerOptionalParameter("Mode", "Will this processor do the track parameterisation for you. 1 => yes 0 => no ", _mode ,int(1));
+  registerOptionalParameter("IncMed", "Do you want to include the medium as addtional scattering", _incMed ,int(0));
 
 
   registerOptionalParameter("HistogramInfoFilename", "Name of histogram info xml file", _histoInfoFileName, std::string("histoinfo.xml"));
@@ -95,6 +96,7 @@ void EUTelProcessorGBLTrackFit::init() {
 		EUTelGBLFitter* Fitter = new EUTelGBLFitter();
 		Fitter->setBeamEnergy(_eBeam);
 		Fitter->setMode(_mode);
+        Fitter->setIncMed(_incMed); 
 		Fitter->setMEstimatorType(_mEstimatorType);//As said before this is to do with how we deal with outliers and the function we use to weight them.
 		Fitter->setParamterIdXResolutionVec(_SteeringxResolutions);
 		Fitter->setParamterIdYResolutionVec(_SteeringyResolutions);

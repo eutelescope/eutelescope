@@ -2,12 +2,10 @@
 using namespace eutelescope;
 
 
-void EUTelRadCal::setRad(EUTelTrack& track){
-    bool _noMedium = true;
-    if(_noMedium){
-        setIncSenBlocks(track);
+void EUTelRadCal::setRad(EUTelTrack& track, int& mode){
+    setIncSenBlocks(track);
+    if(mode == 0){
         getVarForSensorScatterersOnly(track);
-
     }else{
         getThicknessAndRad(track); 
         setMeanWeight(track);

@@ -48,6 +48,7 @@ namespace eutelescope {
 	_mEstimatorType(),
 	_mille(0),
     _mode(1),
+    _incMed(0),
 	_parameterIdXShiftsMap(),
 	_parameterIdYShiftsMap(),
 	_parameterIdZShiftsMap(),
@@ -286,7 +287,7 @@ namespace eutelescope {
         }
       //  setArcLengths(track);
         EUTelRadCal radCal;
-        radCal.setRad(track);
+        radCal.setRad(track,_incMed);
         /// This is the minimum needed to create a GBL trajectory. It basically only relates each GBL point to each other at this stage.
 		streamlog_out(DEBUG0)<<"Create basic traj. "<<std::endl;
         getBasicList(track,pointList);

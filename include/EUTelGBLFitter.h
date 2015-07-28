@@ -94,6 +94,7 @@ namespace eutelescope {
 			void setMeasurementCov(EUTelState& state);
             inline void setBeamEnergy(double beamE) { this->_eBeam = beamE; }
             inline void setMode(int mode) { this->_mode = mode; }
+            inline void setIncMed(int incMed) { this->_incMed = incMed; }
 
             /// This links the binary created in millepede to GBLFitter.
 			void SetMilleBinary(gbl::MilleBinary* mille) { this->_mille = mille; }
@@ -203,6 +204,7 @@ namespace eutelescope {
             int _numberRadLoss;
 			double _eBeam;
             int _mode;
+            int _incMed;
             double _dutDistCut;
 			/** Outlier downweighting option */
 			std::string _mEstimatorType;

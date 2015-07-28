@@ -86,11 +86,10 @@ namespace eutelescope {
 
         /** Beam charge in [e] */
         double _beamQ;
-
-				//Beam energy. 
-				double _eBeam;
-
-				bool _createBinary;
+        //Beam energy. 
+        double _eBeam;
+        bool _createBinary;
+        int _incMed;
         /** Outlier downweighting option */
         std::string _mEstimatorType;
 

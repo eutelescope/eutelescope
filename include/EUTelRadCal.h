@@ -34,7 +34,7 @@ namespace eutelescope {
              *  @param [in] track
              */
 
-            void setRad(EUTelTrack& track);
+            void setRad(EUTelTrack& track, int& mode);
             void setIncSenBlocks(EUTelTrack & track); 
             void getThicknessAndRad(EUTelTrack & track);
             void getRelativePosOfScatterers(EUTelState & state);

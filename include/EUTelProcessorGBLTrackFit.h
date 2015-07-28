@@ -84,6 +84,7 @@ namespace eutelescope {
     protected:
             EVENT::IntVec _excludePlanes;         
             int _mode;
+            int _incMed;
 
 			/** Number of events processed */
 			int _nProcessedRuns;

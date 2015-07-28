@@ -40,6 +40,7 @@ _mEstimatorType()
   // Optional processor parameters that define finder settings
 
   registerOptionalParameter("GBLMEstimatorType", "GBL outlier down-weighting option (t,h,c)", _mEstimatorType, std::string() );
+  registerOptionalParameter("IncMed", "Do you want to include the medium as addtional scattering", _incMed ,int(0));
 
   registerOptionalParameter("CreateBinary", "Should we create a binary file for millepede containing the data that millepede needs  ", _createBinary, bool(true));
 
@@ -94,6 +95,7 @@ void EUTelProcessorGBLAlign::init() {
 		Fitter->setParamterIdXResolutionVec(_SteeringxResolutions);//We set the accuracy of the residual information since we have no correct hit error analysis yet.
 		Fitter->setParamterIdYResolutionVec(_SteeringyResolutions);
 		Fitter->setMillepede(_Mille);//We need to have a connection between GBL and Millepede since GBL knows nothing about sensor orientations.
+        Fitter->setIncMed(_incMed); 
 		Fitter->testUserInput();
 		_trackFitter = Fitter;
 
