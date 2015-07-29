@@ -375,13 +375,13 @@ void AlibavaDataHistogramMaker::fillOtherHistos(TrackerDataImpl * trkdata, float
 		if (isMasked(ichip,ichan)) continue;
 		
 		float data = _multiplySignalby*datavec[ichan];
-		float noise = noiseVec[ichan];
 		
 		histoSignal->Fill(data);
 		histoSignalVsTime->Fill(tdctime,data);
 		histoSignalVsTemp->Fill(temperature,data);
 		
-		if (isNoiseValid() && noise != 0){
+		if (isNoiseValid()){
+		float noise = noiseVec[ichan];
 			float snr = data/noise;
 			histoSNR->Fill(snr);
 			histoSNRVsTime->Fill(tdctime,snr);
