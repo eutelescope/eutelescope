@@ -53,7 +53,9 @@ def getParRes(line):
            return None 
     except ValueError:
         return None
-
+    except IndexError:
+        print "No error give for millepede!!!!! Check Steering file has solution method added"
+        return None
 
 ## Get information associated to this alignment parameter 
 #
@@ -95,27 +97,30 @@ def getInfo(resVec):
 #
 
 def updateGear(IDModeRes,oldGear,newGear):
-    #This is a list of the strings we should change from radians to degrees. 
-    trans = [ "rotationZY","rotationZX","rotationXY"] 
+    try:
+        #This is a list of the strings we should change from radians to degrees. 
+        trans = [ "rotationZY","rotationZX","rotationXY"] 
 
-    shutil.copyfile(oldGear, newGear)
-    g = parse(newGear)
+        shutil.copyfile(oldGear, newGear)
+        g = parse(newGear)
 
-    for imd in IDModeRes:
-        layers = g.getElementsByTagName("layer")
-        for i, layer in enumerate(layers):
-            ladder = layer.getElementsByTagName("ladder")[0]
-            id = int(ladder.getAttribute("ID")) 
-            if(int(id) == int(imd[0])):
-                val =  ladder.getAttribute(imd[1])
-                ##If the result is a rotation, multiply by 57.3(180/pi)
-                if imd[1] in trans:
-                    newVal = float(val) - float(imd[2])*57.3
-                else:
-                    newVal = float(val) - float(imd[2])
+        for imd in IDModeRes:
+            layers = g.getElementsByTagName("layer")
+            for i, layer in enumerate(layers):
+                ladder = layer.getElementsByTagName("ladder")[0]
+                id = int(ladder.getAttribute("ID")) 
+                if(int(id) == int(imd[0])):
+                    val =  ladder.getAttribute(imd[1])
+                    ##If the result is a rotation, multiply by 57.3(180/pi)
+                    if imd[1] in trans:
+                        newVal = float(val) - float(imd[2])*57.3
+                    else:
+                        newVal = float(val) - float(imd[2])
 
-                ladder.setAttribute(str(imd[1]), str(newVal))
-    g.writexml(open(newGear, 'w'))
+                    ladder.setAttribute(str(imd[1]), str(newVal))
+        g.writexml(open(newGear, 'w'))
+    except  shutil.Error:
+        print "ERROR: YOU ARE USING THE SAME FILE AS OUTPUT AS INPUT!!!!!!!!!!!!!!!!! GEAR FILE NOT UPDATED!!!!!!"
 
 ## Screen results for large rotations and small results compared to error. 
 #  These will be removed and not passed back via return.

@@ -55,7 +55,9 @@ namespace eutelescope {
 	_parameterIdXRotationsMap(),
 	_parameterIdYRotationsMap(),
 	_parameterIdZRotationsMap()
-	{}
+	{
+    EUTelExcludedPlanes();
+    }
     ///\todo Mode is set in only some processors. GBLAlign does not bother so it is set to internal parameterisation.  
 
 
@@ -151,24 +153,24 @@ namespace eutelescope {
 	{
 		//We have a similar check after this to see that number of planes and elements in resolution vector are the same. We need this here since if 
 		//they are different then it will just give an exception from the vector tryign to access a element that does not exist.
-		if (geo::gGeometry().sensorIDsVec().size() != vector.size() ){
-			streamlog_out( ERROR5 ) << "The number of planes: " <<geo::gGeometry().sensorIDsVec().size() << " differs from the size of input resolution vector: " << vector.size() << std::endl;
+		if (EUTelExcludedPlanes::_senNoDeadMaterial.size() != vector.size() ){
+			streamlog_out( ERROR5 ) << "The number of planes: " << EUTelExcludedPlanes::_senNoDeadMaterial.size()<< " differs from the size of input resolution vector: " << vector.size() << std::endl;
 			throw(lcio::Exception("The size of the resolution vector and the total number of planes is different for x axis."));
 		}
-		for( std::vector<int>::const_iterator it =geo::gGeometry().sensorIDsVec().begin(); it !=geo::gGeometry().sensorIDsVec().end(); it++ ){
-			_parameterIdXResolutionVec[*it] = vector.at(it-geo::gGeometry().sensorIDsVec().begin());
+		for( std::vector<int>::const_iterator it =EUTelExcludedPlanes::_senNoDeadMaterial.begin(); it !=EUTelExcludedPlanes::_senNoDeadMaterial.end(); it++ ){
+			_parameterIdXResolutionVec[*it] = vector.at(it-EUTelExcludedPlanes::_senNoDeadMaterial.begin());
 		}
 	}
 
 	//This sets the estimated resolution for each plane in the Y direction.
 	void EUTelGBLFitter::setParamterIdYResolutionVec( const std::vector<float>& vector)
 	{
-		if ( geo::gGeometry().sensorIDsVec().size() != vector.size() ){
-			streamlog_out( ERROR5 ) << "The number of planes: " << geo::gGeometry().sensorIDsVec().size() << " differs from the size of input resolution vector: " << vector.size() << std::endl;
+		if ( EUTelExcludedPlanes::_senNoDeadMaterial.size() != vector.size() ){
+			streamlog_out( ERROR5 ) << "The number of planes: " << EUTelExcludedPlanes::_senNoDeadMaterial.size() << " differs from the size of input resolution vector: " << vector.size() << std::endl;
 			throw(lcio::Exception("The size of the resolution vector and the total number of planes is different for y axis."));
 		}
-		for( std::vector<int>::const_iterator it =geo::gGeometry().sensorIDsVec().begin(); it != geo::gGeometry().sensorIDsVec().end(); it++ ){
-			_parameterIdYResolutionVec[*it] = vector.at( it-geo::gGeometry().sensorIDsVec().begin() );
+		for( std::vector<int>::const_iterator it =EUTelExcludedPlanes::_senNoDeadMaterial.begin(); it != EUTelExcludedPlanes::_senNoDeadMaterial.end(); it++ ){
+			_parameterIdYResolutionVec[*it] = vector.at( it-EUTelExcludedPlanes::_senNoDeadMaterial.begin() );
 		}
 	}
 
@@ -392,7 +394,7 @@ namespace eutelescope {
 		if(_parameterIdXResolutionVec.size() != _parameterIdYResolutionVec.size()){
 				throw(lcio::Exception("The vector for resolutions for X and Y are different sizes."));
 		}
-		if(_parameterIdXResolutionVec.size() != geo::gGeometry().nPlanes() ){
+		if(_parameterIdXResolutionVec.size() !=  EUTelExcludedPlanes::_senNoDeadMaterial.size()){
 				throw(lcio::Exception("The total number of planes and the resolution of the planes vector are different sizes."));
 		}
 	}

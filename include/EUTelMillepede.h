@@ -32,6 +32,7 @@
 
 #include "include/MilleBinary.h"
 #include "EUTelExceptions.h"
+#include "EUTelExcludedPlanes.h"
 
 namespace eutelescope {
 

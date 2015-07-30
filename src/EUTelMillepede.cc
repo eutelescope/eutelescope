@@ -29,7 +29,7 @@ EUTelMillepede::~EUTelMillepede(){}
 //Note here we label sensors and every alignment degree of freedom uniquely. Note that even if the sensor is to remain fixed. The fixing is done latter.
 void EUTelMillepede::FillMilleParametersLabels() {
 
-    const IntVec sensorIDsVec = geo::gGeometry().sensorIDsVec();
+    const std::vector<int> sensorIDsVec = EUTelExcludedPlanes::_senNoDeadMaterial;
     size_t noOfSensors = sensorIDsVec.size(); 
 
     for( IntVec::const_iterator itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {//sensor 0 to 5 will have numbers 1 to 6 for this x shift
@@ -180,8 +180,8 @@ void EUTelMillepede::writeMilleSteeringFile(lcio::StringVec pedeSteerAddCmds){
     steerFile << _milleBinaryFilename << std::endl;
     steerFile << std::endl;
     steerFile << "Parameter" << std::endl;
-    for(size_t i =0 ; i < geo::gGeometry().sensorIDsVec().size(); ++i){
-        int sensorId = geo::gGeometry().sensorIDsVec().at(i); 
+    for(size_t i =0 ; i < EUTelExcludedPlanes::_senNoDeadMaterial.size(); ++i){
+        int sensorId = EUTelExcludedPlanes::_senNoDeadMaterial.at(i); 
         const bool isFixedXShift = std::find(_fixedAlignmentXShfitPlaneIds.begin(), _fixedAlignmentXShfitPlaneIds.end(), sensorId) != _fixedAlignmentXShfitPlaneIds.end();
         const bool isFixedYShift = std::find(_fixedAlignmentYShfitPlaneIds.begin(), _fixedAlignmentYShfitPlaneIds.end(), sensorId) != _fixedAlignmentYShfitPlaneIds.end();
         const bool isFixedZShift = std::find(_fixedAlignmentZShfitPlaneIds.begin(), _fixedAlignmentZShfitPlaneIds.end(), sensorId) != _fixedAlignmentZShfitPlaneIds.end();
@@ -211,16 +211,18 @@ void EUTelMillepede::writeMilleSteeringFile(lcio::StringVec pedeSteerAddCmds){
 
     } 
     steerFile << std::endl;
-    //Here we add some more paramter that millepede needs. This is involves: How is the solution found, How are outliers down weighted(These are hits that are very far from state hit) and chi2 cuts
-    for ( StringVec::iterator it = pedeSteerAddCmds.begin( ); it != pedeSteerAddCmds.end( ); ++it ) {
+    //Here we add some more paramter that millepede needs. This involves: How is the solution found, How are outliers down weighted(These are hits that are very far from state hit) and chi2 cuts
+ //   for ( StringVec::iterator it = pedeSteerAddCmds.begin( ); it != pedeSteerAddCmds.end( ); ++it ) {
         // two backslashes will be interpreted as newline
-        if ( *it == "\\\\" ){
-            steerFile << std::endl;
-        }else{
-            steerFile << *it << " ";
-        }
-    }
-    steerFile << std::endl;
+//        if ( *it == "\\\\" ){
+//            steerFile << std::endl;
+ //       }else{
+  //          steerFile << *it << " ";
+   //     }
+ //   }
+    steerFile <<  "method inversion 5 0.1" <<std::endl;
+    steerFile <<  "outlierdownweighting 4" << std::endl; 
+    steerFile << "chiscut 30 6" <<std::endl; 
     steerFile << "end" << std::endl;
     steerFile.close();
 }

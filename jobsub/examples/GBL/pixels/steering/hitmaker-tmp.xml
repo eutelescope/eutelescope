@@ -159,9 +159,9 @@ to the external frame of reference using the GEAR geometry description-->
   <!--How many events should be used for an approximation to the X,Y shifts (pre-alignment)? (default=50000)-->
   <parameter name="Events" type="int" value="@NoEvents@"/>
   <!--The list of sensor IDs that shall be excluded.-->
-  <!--parameter name="ExcludedPlanes" type="IntVec"> 8 </parameter-->
+  <parameter name="ExcludedPlanes" type="IntVec" value="@ExcludedPlanes@" /> 
   <!--The list of sensor IDs for which the X coordinate shall be excluded.-->
-  <parameter name="ExcludedPlanesXCoord" type="IntVec"> 8 </parameter>
+  <!--parameter name="ExcludedPlanesXCoord" type="IntVec"> 8 </parameter-->
   <!--The list of sensor IDs for which the Y coordinate  shall be excluded.-->
   <!--parameter name="ExcludedPlanesYCoord" type="IntVec"> </parameter-->
   <!--SensorID of fixed plane-->

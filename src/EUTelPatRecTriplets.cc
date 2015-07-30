@@ -30,18 +30,21 @@ _TripletXseperationHistoLeft(TripletXseperationHistoLeft),
 _TripletYseperationHistoLeft(TripletYseperationHistoLeft),
 _TripletDistCutXHisto(TripletDistCutXHisto),
 _TripletDistCutYHisto(TripletDistCutYHisto)
-{}
+{
+    EUTelExcludedPlanes();
+
+}
 EUTelPatRecTriplets::~EUTelPatRecTriplets()  
 {}
 
 void EUTelPatRecTriplets::setPlaneDimensionsVec(EVENT::IntVec& planeDimensions){
-	if(planeDimensions.size() != geo::gGeometry().sensorIDsVec().size()){
-		streamlog_out(ERROR) << "The size of planesDimensions input is: "<< planeDimensions.size()<<" The size of sensorIDsVec is: " << geo::gGeometry().sensorIDsVec().size()<< std::endl;
+	if(planeDimensions.size() != EUTelExcludedPlanes::_senNoDeadMaterial.size()){
+		streamlog_out(ERROR) << "The size of planesDimensions input is: "<< planeDimensions.size()<<" The size of sensorIDsVec is: " << EUTelExcludedPlanes::_senNoDeadMaterial.size()<< std::endl;
 		throw(lcio::Exception( "The input dimension vector not the same as the number of planes!"));
 	}
 	_planeDimensions.clear();
-	for(size_t i=0; i<geo::gGeometry().sensorIDsVec().size(); ++i){
-		const int planeID = geo::gGeometry().sensorIDsVec().at(i);
+	for(size_t i=0; i<EUTelExcludedPlanes::_senNoDeadMaterial.size(); ++i){
+		const int planeID = EUTelExcludedPlanes::_senNoDeadMaterial.at(i);
 		if (_planeDimensions.find(planeID) == _planeDimensions.end()){//This is to check that we don't try to map the same sensor to two different plane dimensions.
 			_planeDimensions[planeID] = planeDimensions.at(i);
 		}else{
@@ -342,8 +345,11 @@ bool EUTelPatRecTriplets::getDoubHitOnTraj(doublets const& doub, std::vector<uns
         std::vector<EUTelHit> hits =  _mapHitsVecPerPlane.at(*itID);
         float distBest = 10000000;
         EUTelHit hitBest;
+//        std::cout<<"Hits Number " << hits.size() << " " << " ID " << *itID  << std::endl;
 
         for(std::vector<EUTelHit>::iterator itHit = hits.begin(); itHit != hits.end(); ++itHit){
+ //           std::cout<<"Hit location " << itHit->getLocation() << std::endl;
+
             double hitPosX = itHit->getPositionGlobal()[0]; 
             double hitPosY = itHit->getPositionGlobal()[1]; 
             double hitPosZ = itHit->getPositionGlobal()[2]; 
@@ -351,28 +357,38 @@ bool EUTelPatRecTriplets::getDoubHitOnTraj(doublets const& doub, std::vector<uns
             std::vector<float>  pos = getDoubPosAtZ(doub, hitPosZ);/// Could calculate this once. Might be a bit off for tilted sensors.
 
             float dist = getDistLocal(itHit, pos);
+  //          std::cout<<"Dist " << dist  << std::endl;
+
             if(itHit == hits.begin()){
                 hitBest = *itHit;
                 distBest = dist;
+   //             std::cout<<"DistBest begin " << distBest  << std::endl;
 
             }
             if(dist < distBest){
                 hitBest = *itHit;
                 distBest = dist;
+    //            std::cout<<"DistBest " << distBest  << std::endl;
             }
         }
 
         if(distBest >  _dutDistCut){
-	  streamlog_out(DEBUG1) << "Doublet cut!! " << distBest <<">"<< _dutDistCut<<std::endl;
+        //    std::cout<<"DistBest Fail!!!!! " << distBest  << std::endl;
 
+            streamlog_out(DEBUG1) << "Doublet cut!! " << distBest <<">"<< _dutDistCut<<std::endl;
             continue;
         }
+    //    std::cout<<"Pass "  << std::endl;
+
         streamlog_out(DEBUG1) << "PASS Doublet cut!! " << distBest <<"<"<< _doubletCenDistCut.at(0) << std::endl;
         newHits.push_back(hitBest);
     }
     if(newHits.size() < hitNum){
         return false;
+    //    std::cout<<"Fail number of hits "  << std::endl;
+
     }else{
+    //    std::cout<<"Pass hit number "  << std::endl;
         return true;
     }
 }
@@ -418,6 +434,7 @@ std::vector<EUTelTrack> EUTelPatRecTriplets::getMinFakeTracks(){
     for(std::vector<std::vector<EUTelHit> >::iterator itTrack = tracksHits.begin(); itTrack != tracksHits.end();++itTrack){
         std::vector<EUTelHit> newHits;
         if(EUTelExcludedPlanes::_senInc.size() > 6 ){///Only look for DUTs if we have more planes included.
+   //         std::cout<<"The # tracks: " << tracksHits.size() << std::endl;
             doublets doub;
             getDoublet(*(itTrack->begin()),*(itTrack->rbegin()),doub);
             std::vector< unsigned int> dut;
@@ -439,7 +456,10 @@ std::vector<EUTelTrack> EUTelPatRecTriplets::getMinFakeTracks(){
         // Each track can only be associated to a single DUT hit on each plane. Must also make sure that a hit is not associated to multiple tracks.
         // So you could have two tracks with the same DUT hit attached.
         std::vector< std::pair< std::vector<EUTelHit> , std::vector<EUTelHit> > > tracksAndDUTHitsUnique;
+//        std::cout<<" Tracks before unique: " << tracksAndDUTHits.size() << std::endl;
         tracksAndDUTHitsUnique = getUniqueMatches(tracksAndDUTHits);
+  //      std::cout<<" Tracks after unique " << tracksAndDUTHitsUnique.size() << std::endl;
+
         for(size_t i =0 ; i < tracksAndDUTHitsUnique.size() ; ++i){
             std::vector<EUTelHit> track = tracksAndDUTHitsUnique.at(i).first;
             std::vector<EUTelHit> dut = tracksAndDUTHitsUnique.at(i).second;
