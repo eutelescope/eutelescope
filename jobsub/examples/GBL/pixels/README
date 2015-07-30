@@ -1,0 +1,176 @@
+#This is the an example with two 250x50 FEI4 DUTs in a high radiation length enviroment. 
+#Note that planes with ID > 99 will be assumed to be radiation length and does not have to be included in the plane IDs for resolution and dimensions.
+#Radiation length of this system is well over 22%. 400 cm X0 poly and 5 cm width on both sides of the DUTs.
+#Using 10k but will increase this to 100k for the final alignment so use the full data set from the beginning.
+#Hotpixels for the APIX are not removed must load this into clustering. The data is clean and pattern recognition will remove this implicitly there. 
+#Number of tracks decreases at about 15k event. I would guess sync problems since there are still hits for these events.
+
+Gear used from the start is prealigned. However you should be able to start with a non prealigned gear and follow the same procedure
+Gear:gear_250x50AC_250x50DC000313_pre-AddPoly.xml
+
+#js converter 313
+
+#js clustering 313
+
+#js hitmaker 313
+
+Prealignment must have the additional IDs excluded and included in thew residual vector!!!!!
+#ResidualsXMax =  5000.  500.  5000.   100.   100.   500.  500.  500.  500.  500.
+#ResidualsXMin = -500. -500. -500.  -100.  -100.  -500. -500.   -500. -500. -500.
+#ResidualsYMax =  500.  500.  500.   100.   100.   500.  500.    500.  500.  500.
+#ResidualsYMin = -500. -500. -500.  -100.  -100.  -500. -500.   -500. -500. -500.
+#ExcludedPlanesXCoord=
+#ExcludedPlanesYCoord=
+#ExcludedPlanes=0 100 101 
+
+#js patternRecognition 313 
+
+
+#TripletConnectDistCut =  1 1 
+#TripletSlopeCuts = 0.01 0.01
+#DoubletCenDistCut = 1 1
+#DoubletDistCut = 1 1
+#DUTWindow= 1
+#excludeplanes=        
+
+
+Note the nuber of tracks with planes excluded in ~1 and 0.6 with DUTs added. This is due to the some of the triplets not causing the hit on the DUTs. 
+A less perfect track (Less hits) must have caused this. A less stringent pattern recognition is needed here.
+
+22:36:52 jobsub.patternRecognition(INFO): [ MESSAGE9 "TrackSearch"] EUTelProcessorPatRecTriplets::end()  TrackSearch processed 9999 events in 1 runs  av.tracks : 0.577258 total number of tracks: 5772
+#js GBLAlign 313
+
+#FixXshifts=0  5   20 21  
+#FixYshifts=0  5   20 21  
+#FixZshifts=0  5   20 21  
+#FixXrot=   0 1 2 3 4  5 20 21   
+#FixYrot=   0 1 2 3 4  5 20 21   
+#FixZrot=   0     20 21   
+###Estimate resolution to pass to millepede.
+##This will have to be increased if you have a large number of rejects.
+#r = 0.05
+##dutX=0.150
+##dutY=0.01
+#dutX=1000 
+#dutY=1000
+
+00:07:08 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] INFO change smaller than error. ID:  1  mode:  positionY  result  0.72254E-03  error  0.19174E-02     Removed!
+00:07:08 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] INFO change smaller than error. ID:  2  mode:  positionY  result  0.43639E-02  error  0.43720E-02     Removed!
+00:07:08 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] INFO change smaller than error. ID:  3  mode:  rotationXY  result  -0.12595E-03  error  0.21531E-02     Removed!
+00:07:08 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The alignment parameters to update with these corrections:
+00:07:08 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  1  Type:  positionX  Value:  -0.35162E-01  Error:  0.88054E-03
+00:07:08 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  1  Type:  positionZ  Value:  2.2000  Error:  0.82663E-01
+00:07:08 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  1  Type:  rotationXY  Value:  -0.10283E-02  Error:  0.45248E-03
+00:07:08 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  2  Type:  positionX  Value:  0.51846E-01  Error:  0.84073E-03
+00:07:08 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  2  Type:  positionZ  Value:  4.1669  Error:  0.78974E-01
+00:07:08 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  2  Type:  rotationXY  Value:  -0.38922E-02  Error:  0.78850E-03
+00:07:08 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  3  Type:  positionX  Value:  0.65280E-01  Error:  0.10897E-02
+00:07:08 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  3  Type:  positionY  Value:  -0.10623  Error:  0.45125E-02
+00:07:08 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  3  Type:  positionZ  Value:  3.9246  Error:  0.79030E-01
+00:07:08 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  4  Type:  positionX  Value:  0.14706  Error:  0.15689E-02
+00:07:08 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  4  Type:  positionY  Value:  -0.52506  Error:  0.30466E-02
+00:07:08 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  4  Type:  positionZ  Value:  1.9508  Error:  0.82553E-01
+00:07:08 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  4  Type:  rotationXY  Value:  0.30700E-02  Error:  0.24816E-02
+00:07:08 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  5  Type:  rotationXY  Value:  -0.59988E-02  Error:  0.28093E-02
+
+
+Gear file:alignedGear-iter1-AddPoly-run000313.xml
+
+
+#r = 0.02
+
+
+
+00:21:07 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] INFO change smaller than error. ID:  1  mode:  positionZ  result  0.11085E-01  error  0.33501E-01     Removed!
+00:21:07 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The alignment parameters to update with these corrections:
+00:21:07 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  1  Type:  positionX  Value:  0.38541E-03  Error:  0.35552E-03
+00:21:07 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  1  Type:  positionY  Value:  -0.20201E-02  Error:  0.72052E-03
+00:21:07 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  1  Type:  rotationXY  Value:  0.60362E-03  Error:  0.16622E-03
+00:21:07 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  2  Type:  positionX  Value:  0.94937E-03  Error:  0.34213E-03
+00:21:07 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  2  Type:  positionY  Value:  -0.28277E-02  Error:  0.15905E-02
+00:21:07 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  2  Type:  positionZ  Value:  0.55126E-01  Error:  0.32259E-01
+00:21:07 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  2  Type:  rotationXY  Value:  0.12136E-02  Error:  0.28192E-03
+00:21:07 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  3  Type:  positionX  Value:  0.19487E-02  Error:  0.38097E-03
+00:21:07 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  3  Type:  positionY  Value:  -0.64767E-02  Error:  0.18153E-02
+00:21:07 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  3  Type:  positionZ  Value:  0.11860  Error:  0.31849E-01
+00:21:07 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  3  Type:  rotationXY  Value:  0.25700E-02  Error:  0.83960E-03
+00:21:07 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  4  Type:  positionX  Value:  -0.93413E-03  Error:  0.35022E-03
+00:21:07 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  4  Type:  positionY  Value:  -0.46044E-02  Error:  0.13579E-02
+00:21:07 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  4  Type:  positionZ  Value:  0.57419E-01  Error:  0.33039E-01
+00:21:07 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  4  Type:  rotationXY  Value:  0.28583E-02  Error:  0.99210E-03
+00:21:07 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  5  Type:  rotationXY  Value:  0.29759E-02  Error:  0.11426E-02
+
+
+Gear file:alignedGear-iter2-AddPoly-run000313.xml
+
+
+Resolution can not be reduced beyond this 20 microns.  More stats needed increase to the full data set! Sync problems mean this is not possible at this time.
+
+#r = 0.02
+#dutX=0.5
+#dutY=0.1
+
+
+00:57:46 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] INFO change smaller than error. ID:  1  mode:  positionZ  result  0.17842E-01  error  0.23042E-01     Removed!
+00:57:46 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The alignment parameters to update with these corrections:
+00:57:46 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  1  Type:  positionX  Value:  -0.74905E-03  Error:  0.24425E-03
+00:57:46 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  1  Type:  positionY  Value:  0.17039E-02  Error:  0.49657E-03
+00:57:46 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  1  Type:  rotationXY  Value:  -0.25593E-03  Error:  0.11359E-03
+00:57:46 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  2  Type:  positionX  Value:  -0.13446E-02  Error:  0.23515E-03
+00:57:46 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  2  Type:  positionY  Value:  0.43934E-02  Error:  0.10747E-02
+00:57:46 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  2  Type:  positionZ  Value:  0.27141E-01  Error:  0.22199E-01
+00:57:46 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  2  Type:  rotationXY  Value:  -0.56470E-03  Error:  0.19015E-03
+00:57:46 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  3  Type:  positionX  Value:  -0.11333E-02  Error:  0.26060E-03
+00:57:46 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  3  Type:  positionY  Value:  0.34470E-02  Error:  0.12337E-02
+00:57:46 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  3  Type:  positionZ  Value:  0.70090E-01  Error:  0.21903E-01
+00:57:46 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  3  Type:  rotationXY  Value:  -0.11863E-02  Error:  0.56993E-03
+00:57:46 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  4  Type:  positionX  Value:  -0.37369E-03  Error:  0.24061E-03
+00:57:46 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  4  Type:  positionY  Value:  0.22760E-02  Error:  0.92024E-03
+00:57:46 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  4  Type:  positionZ  Value:  0.27175E-01  Error:  0.22720E-01
+00:57:46 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  4  Type:  rotationXY  Value:  -0.12167E-02  Error:  0.67197E-03
+00:57:46 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  5  Type:  rotationXY  Value:  -0.11986E-02  Error:  0.77238E-03
+00:57:46 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  20  Type:  positionX  Value:  -0.20541  Error:  0.50605E-02
+00:57:46 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  20  Type:  positionY  Value:  -0.96112E-02  Error:  0.98960E-03
+00:57:46 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  20  Type:  positionZ  Value:  7.4307  Error:  0.12626
+00:57:46 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  20  Type:  rotationXY  Value:  0.11408E-01  Error:  0.52935E-03
+00:57:46 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  21  Type:  positionX  Value:  -0.77693E-02  Error:  0.48772E-02
+00:57:46 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  21  Type:  positionY  Value:  -0.79374E-02  Error:  0.99287E-03
+00:57:46 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  21  Type:  positionZ  Value:  7.1373  Error:  0.12564
+00:57:46 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  21  Type:  rotationXY  Value:  0.58217E-02  Error:  0.56786E-03
+
+
+Gear file:alignedGear-iter3-AddPoly-run000313.xml
+
+r = 0.02
+dutX=0.4
+dutY=0.1
+
+
+01:01:32 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] INFO change smaller than error. ID:  1  mode:  positionX  result  0.59806E-04  error  0.24434E-03     Removed!
+01:01:32 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] INFO change smaller than error. ID:  1  mode:  positionY  result  -0.38615E-05  error  0.49612E-03     Removed!
+01:01:32 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] INFO change smaller than error. ID:  1  mode:  positionZ  result  0.18929E-01  error  0.23050E-01     Removed!
+01:01:32 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] INFO change smaller than error. ID:  1  mode:  rotationXY  result  -0.73513E-07  error  0.11346E-03     Removed!
+01:01:32 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] INFO change smaller than error. ID:  2  mode:  positionX  result  0.10770E-03  error  0.23554E-03     Removed!
+01:01:32 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] INFO change smaller than error. ID:  2  mode:  positionY  result  0.24445E-05  error  0.10718E-02     Removed!
+01:01:32 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] INFO change smaller than error. ID:  2  mode:  positionZ  result  0.53324E-02  error  0.22234E-01     Removed!
+01:01:32 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] INFO change smaller than error. ID:  2  mode:  rotationXY  result  0.41265E-05  error  0.18964E-03     Removed!
+01:01:32 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] INFO change smaller than error. ID:  3  mode:  positionX  result  0.19447E-04  error  0.26069E-03     Removed!
+01:01:32 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] INFO change smaller than error. ID:  3  mode:  positionY  result  -0.13956E-03  error  0.12291E-02     Removed!
+01:01:32 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] INFO change smaller than error. ID:  3  mode:  positionZ  result  0.60903E-02  error  0.21843E-01     Removed!
+01:01:32 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] INFO change smaller than error. ID:  3  mode:  rotationXY  result  0.55061E-04  error  0.56810E-03     Removed!
+01:01:32 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] INFO change smaller than error. ID:  4  mode:  positionX  result  -0.10750E-04  error  0.24041E-03     Removed!
+01:01:32 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] INFO change smaller than error. ID:  4  mode:  positionY  result  -0.11089E-03  error  0.91773E-03     Removed!
+01:01:32 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] INFO change smaller than error. ID:  4  mode:  positionZ  result  0.38768E-02  error  0.22704E-01     Removed!
+01:01:32 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] INFO change smaller than error. ID:  4  mode:  rotationXY  result  0.59490E-04  error  0.67019E-03     Removed!
+01:01:32 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] INFO change smaller than error. ID:  5  mode:  rotationXY  result  0.71910E-04  error  0.77052E-03     Removed!
+01:01:32 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] INFO change smaller than error. ID:  20  mode:  positionZ  result  0.17575E-01  error  0.12486     Removed!
+01:01:32 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] INFO change smaller than error. ID:  21  mode:  positionX  result  -0.24885E-02  error  0.39532E-02     Removed!
+01:01:32 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] INFO change smaller than error. ID:  21  mode:  positionY  result  -0.44602E-04  error  0.98722E-03     Removed!
+01:01:32 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] INFO change smaller than error. ID:  21  mode:  positionZ  result  -0.68258E-02  error  0.12421     Removed!
+01:01:32 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The alignment parameters to update with these corrections:
+01:01:32 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  20  Type:  positionX  Value:  0.77354E-02  Error:  0.41429E-02
+01:01:32 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  20  Type:  positionY  Value:  0.33291E-02  Error:  0.98911E-03
+01:01:32 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  20  Type:  rotationXY  Value:  0.23206E-01  Error:  0.49272E-03
+01:01:32 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  21  Type:  rotationXY  Value:  0.11914E-01  Error:  0.53042E-03
+
+Gear file:alignedGear-iter4-AddPoly-run000313.xml
