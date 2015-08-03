@@ -24,6 +24,7 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
     <processor name="SaveAsRoot"/>
     <processor name="TrackSelection"/>
     <processor name="TrackAnalysis"/>
+    <processor name="TrackDumper"/>
     <processor name="Save"/>
   </execute>
 
@@ -97,6 +98,17 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
         <parameter name="HistogramInfoFilename" type="string" value="@HistoInfoFile@"/>
 		<parameter name="SensorIDs" type="IntVec"> @Planes@ </parameter>
 	</processor>
+
+
+ <processor name="TrackDumper" type="EUTelAPIXTbTrackTupleGBL">
+  <!--Name of the input Track collection-->
+  <parameter name="InputTrackCollectionName" type="string" lcioInType="Track"> @outColSel@ </parameter>
+  <!--Path/File where root-file should be stored-->
+  <parameter name="OutputPath" type="string" value="@OutputPathROOT@"/>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string" value=""/-->
+</processor>
+
 
 
 
