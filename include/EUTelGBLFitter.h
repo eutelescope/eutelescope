@@ -182,6 +182,8 @@ namespace eutelescope {
              */
 
 			void getGloPar(std::vector< gbl::GblPoint >& , EUTelTrack&);
+            void getLocalKink(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList);
+
 			inline double getBeamEnergy() const { return _eBeam; }
 			std::string getMEstimatorType() const;
 			///TEST

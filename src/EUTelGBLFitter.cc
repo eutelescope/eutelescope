@@ -278,6 +278,29 @@ namespace eutelescope {
             }
         }
     }
+	void EUTelGBLFitter::getLocalKink(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList){
+        EUTelState stateScat;
+        bool addScat=false;
+        for(size_t i=0;i < track.getStates().size(); i++){		
+            EUTelState& state = track.getStates().at(i);
+            unsigned int labelPlane = state.GBLLabels.at(0);
+            if(addScat){
+                double distToKinkPlane = state.getPosition()[2] - stateScat.getPosition()[2];
+                TMatrixD derivatives(2,2);
+                derivatives.Zero();
+                //The derivative is the distance since the change in the measurements is  deltaX = distanceFromkink*(Angle of kink)
+                derivatives[0][0] = distToKinkPlane; 
+                derivatives[1][1] = distToKinkPlane; 
+                pointList.at(labelPlane-1).addLocals(derivatives);
+            }
+            ///Only add derivatives after found
+            if(state.getLocation() == 271){//No scatterers after the last plane.
+                stateScat = state;
+                addScat=true;
+            }
+        }
+    }
+
     ///This is the work horse of the GBL fitter. It creates GBL points from EUTelTracks and returns the relations between the two.
 	void EUTelGBLFitter::getGBLPointsFromTrack(EUTelTrack& track, std::vector< gbl::GblPoint >& pointList){
 		streamlog_out(DEBUG0)<<"EUTelGBLFitter::getGBLPointsFromTrack-------------------------------------BEGIN"<<std::endl;
@@ -413,8 +436,12 @@ namespace eutelescope {
 	} 
 	void EUTelGBLFitter::getCorr(gbl::GblTrajectory* traj,EUTelTrack &track, std::map<int, std::vector<double> > &  mapSensorIDToCorrectionVec){
         ///Only state which are created before will be updated. Scattering planes within GBL are not saved.
+        bool foundScat=false;
+        ///Needs to be a reference to add kink information.
+        EUTelState* scatSt;
 		for(size_t i = 0;i < track.getStates().size(); i++){		
 			EUTelState& state = track.getStates().at(i);
+            ///7 parameters for local derivatives for kinks if needed.
 			TVectorD corrections(5);
 			TMatrixDSym cov(5);
             /// Get the corrections in the global frame!!!! 
@@ -436,6 +463,20 @@ namespace eutelescope {
             TVectorD aDownWeightsKink(2); 
             traj->getScatResults(state.GBLLabels.at(0), numData, aResidualsKink, aMeasErrorsKink, aResErrorsKink, aDownWeightsKink);
             state.setKinks(aResidualsKink);
+            ///Get kinks for scat from next point and add to previous. Must be before find 271 if statement.
+            if(foundScat){
+                TVectorD kinks(2);//Measurement - Prediction
+                kinks[0] = corrections[5];
+                kinks[1] = corrections[6];
+                scatSt->setKinks(kinks);
+                foundScat=false;///Only add once.
+            }
+            if(state.getLocation() == 271){
+                corrections.ResizeTo(7);
+                cov.ResizeTo(7,7);
+                foundScat=true;
+                scatSt = &state;
+            }
         }
     }
     void EUTelGBLFitter::setArcLengths(EUTelTrack & track){

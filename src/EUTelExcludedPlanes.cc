@@ -48,8 +48,8 @@ std::vector<int> EUTelExcludedPlanes::getSensorsNotDeadMaterial()
 
     for(std::vector<int>::const_iterator it = sensorIDsVec.begin(); it != sensorIDsVec.end(); it++){
         int currentSensorID = *it;
-        if(currentSensorID <= 99){ 
-                resultVec.push_back(currentSensorID);
+        if(currentSensorID <= 99 and currentSensorID != 271){ 
+            resultVec.push_back(currentSensorID);
         }
     }
 	return resultVec;
