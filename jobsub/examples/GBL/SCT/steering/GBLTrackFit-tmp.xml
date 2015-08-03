@@ -70,19 +70,6 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
  </processor>
 
-    <processor name="SaveAsRoot" type="EUTelOutputTTree">
-        <parameter name="TrackCol" type="string" lcioInType="Track"> @outputCollectionName@  </parameter>
-
-      <!--EUTelProcessorNoisyClusterMasker masks pulses which contain hot pixels. For this, the quality field of pulses is used to encode the kNoisyCluster enum provided by EUTelescope.-->
-      <!--Input of zero suppressed data, still containing hot pixels-->
-
-      <parameter name="OutputPath" type="string" value="fitter.root"/>
-      <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-      <!--parameter name="Verbosity" type="string" value=""/-->
-    </processor>
-
-
-
 
     <processor name="TrackSelection" type="EUTelProcessorTrackSelection">
 		<parameter name="TrackInputCollectionName" type="string" lcioInType="Track"> @inColSel@  </parameter>
@@ -98,6 +85,18 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
         <parameter name="HistogramInfoFilename" type="string" value="@HistoInfoFile@"/>
 		<parameter name="SensorIDs" type="IntVec"> @Planes@ </parameter>
 	</processor>
+
+    <processor name="SaveAsRoot" type="EUTelOutputTTree">
+        <parameter name="TrackCol" type="string" lcioInType="Track"> @outColSel@  </parameter>
+
+      <!--EUTelProcessorNoisyClusterMasker masks pulses which contain hot pixels. For this, the quality field of pulses is used to encode the kNoisyCluster enum provided by EUTelescope.-->
+      <!--Input of zero suppressed data, still containing hot pixels-->
+
+      <parameter name="OutputPath" type="string" value="fitterCHECK.root"/>
+      <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+      <!--parameter name="Verbosity" type="string" value=""/-->
+    </processor>
+
 
 
  <processor name="TrackDumper" type="EUTelAPIXTbTrackTupleGBL">
