@@ -155,7 +155,7 @@ output::output(const std::string& name, const std::string& type) :m_event_nr(0),
 {
   if (!gFile_)
   {
-    std::cout << "create file with name: " << gStupitNameForShittyROOTFile << std::endl;
+  //  std::cout << "create file with name: " << gStupitNameForShittyROOTFile << std::endl;
     gFile_ = new TFile(gStupitNameForShittyROOTFile.c_str(), "RECREATE");
   }
 
@@ -173,7 +173,7 @@ output::~output()
 {
   if (m_tree)
   {
-    std::cout << "Write!!! " << m_name << " " << m_type  << std::endl;
+  //  std::cout << "Write!!! " << m_name << " " << m_type  << std::endl;
     m_tree->Write();
   }
 }
@@ -229,7 +229,7 @@ public:
   }
   ~GBL_trackOutput(){
     if (m_tree){
-        std::cout<<"Write GBL!! " << std::endl; 
+//        std::cout<<"Write GBL!! " << std::endl; 
       m_tree->Write();
     }
   }
@@ -237,7 +237,7 @@ public:
     beginEvent();
     try{
         std::vector<EUTelTrack> tr = lc_reader.getTracks(ev, "tracks");
-        std::cout<< "Track size: " <<tr.size() << std::endl;
+ //       std::cout<< "Track size: " <<tr.size() << std::endl;
 
         for (size_t i = 0; i < tr.size();++i)
         {
@@ -263,19 +263,19 @@ public:
 
   }
   void endEvent(){
-      std::cout<<"Fill GBL"<<std::endl;
+//      std::cout<<"Fill GBL"<<std::endl;
     m_tree->Fill();
   }
   void processTrack(EUTelTrack& trc){
-      std::cout<<"Track" <<std::endl;
+//      std::cout<<"Track" <<std::endl;
    
     std::vector<EUTelState>& planes = trc.getStates();
 
     chi2 = trc.getChi2();
     ndf = trc.getNdf();
-    std::cout<<"Planes size " << planes.size() << std::endl;
+//    std::cout<<"Planes size " << planes.size() << std::endl;
     for (size_t i = 0; i < planes.size(); ++i){
-     std::cout<<"Plane " << i  <<std::endl;
+//     std::cout<<"Plane " << i  <<std::endl;
    
       processPlanes(planes[i]);
     }
@@ -289,7 +289,7 @@ public:
 
    phi = pln.getDirLocalX() / pln.getDirLocalZ();
    theta = pln.getDirLocalY() / pln.getDirLocalZ();
-  std::cout<<"Push back" <<std::endl;
+//  std::cout<<"Push back" <<std::endl;
 
     
    pushHit();
@@ -574,7 +574,7 @@ void EUTelOutputTTree::processEvent(LCEvent * evt)
 //          std::cout<< "Collection name: "<< *name <<std::endl;
       if (ignoreNames::isIgnored(*name))
       {
-          std::cout<< "Collection name Ignored: "<< *name <<std::endl;
+//          std::cout<< "Collection name Ignored: "<< *name <<std::endl;
 
         continue;
       }
