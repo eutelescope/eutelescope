@@ -757,7 +757,6 @@ Eigen::Matrix3d EUTelGeometryTelescopeGeoDescription::getRotMatrixEig( int senso
 
 
 TMatrixD EUTelGeometryTelescopeGeoDescription::getRotMatrix( int sensorID ) {
-	streamlog_out(DEBUG5) << "EUTelGeometryTelescopeGeoDescription::getRotMatrix()--------BEGIN " << std::endl;
 	const double local[] = {0,0,0};
 	double global[3];
 //	std::cout << "Sensor ID " << sensorID << std::endl;
@@ -777,7 +776,6 @@ TMatrixD EUTelGeometryTelescopeGeoDescription::getRotMatrix( int sensorID ) {
 	//	std::cout<< "Here is the last element of rotation matrix: " << TRotMatrix[2][2]<<std::endl;
 
     return TRotMatrix;
-    streamlog_out(DEBUG5) << "EUTelGeometryTelescopeGeoDescription::getRotMatrix()----END " << std::endl;
 
 }
 int EUTelGeometryTelescopeGeoDescription::getSensorID( float const globalPos[] ) const {

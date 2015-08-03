@@ -72,10 +72,12 @@ EUTelTrack EUTelTrackCreate::getTrack(std::vector<EUTelHit> hits, std::vector<do
                 state.setPositionGlobal(intersectionPoint);
                 state.setDirFromGloSlope(slopePred);
                 track.setState(state);
+            //    std::cout<<"Added hit! " << " z pos: " << i  <<std::endl;
             }
         }
         if(hitOnPlane){streamlog_out(DEBUG1) <<"this should already be recorded as there is a hit on sensor "<<sensorID<<std::endl;}
         else {
+        //    std::cout<<"No hit ID " <<sensorID <<std::endl;
             double z_dut=geo::gGeometry().getOffsetVector(sensorID)[2];
             Eigen::Vector3d posPred;
             std::vector<double> slopePred;
@@ -88,8 +90,8 @@ EUTelTrack EUTelTrackCreate::getTrack(std::vector<EUTelHit> hits, std::vector<do
             streamlog_out(DEBUG1)<<"intersection point on sensorID "<<sensorID<<" = "<<	intersectionPoint[0]<<", "<<intersectionPoint[1]<<", "<<intersectionPoint[2]<<std::endl;
             //add explicit check that it intersects with sensor?   but i want edge effects?   
             //add arc length thingy
-            state.setPositionGlobal(intersectionPoint);
             state.setLocation(sensorID);
+            state.setPositionGlobal(intersectionPoint);
             track.setState(state);
 
         }//else

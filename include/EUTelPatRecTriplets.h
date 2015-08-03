@@ -228,14 +228,6 @@ namespace eutelescope {
      * \return -cZxB The correct order of hits returned. 
      */
     std::vector<EUTelHit> getCorrHitOrder(std::vector<EUTelHit> hits );
-    //! This will place DUT hit in track. 
-    /*! 
-     *  @param[in] track track without DUT hits. 
-     *  @param[in] hits DUT hits to add to hit.
-     *  @return hits Hits in the correct order with DUT hits. 
-     */
-
-    std::vector<EUTelHit> getDUTHitsOrder(EUTelTrack track, std::vector<EUTelHit> dutHit );
     //! Get all hits which the predicted doublet passes  
     /*! 
      *  A predicted track from the doublet is constructed. At each sensor the closest hit is taken if included in list in arguments.

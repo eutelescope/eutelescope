@@ -301,45 +301,6 @@ std::vector<EUTelHit> EUTelPatRecTriplets::getCorrHitOrder(std::vector<EUTelHit>
 }
 
 
-std::vector<EUTelHit> EUTelPatRecTriplets::getDUTHitsOrder(EUTelTrack track, std::vector<EUTelHit> dutHits ){
- streamlog_out(DEBUG0) << "enters getDUTHitsOrder" <<std::endl; 
-    std::vector<EUTelHit> finalHits;
-    for(unsigned int  i = 0; i < (EUTelExcludedPlanes::_senInc.size()); ++i){
-        unsigned int sensorID = EUTelExcludedPlanes::_senInc.at(i);
-        streamlog_out(DEBUG0) << "The Z position " << i << " sensor ID: " << sensorID  <<std::endl;
-        std::vector<EUTelState>::iterator itState;
-        for( itState = track.getStates().begin(); itState != track.getStates().end(); ++itState){
-            if(itState->getLocation() == sensorID){
-                streamlog_out(DEBUG0) << "Add mimosa hit " <<std::endl; 
-                itState->print();
-                if(itState->getStateHasHit()){
-                    finalHits.push_back(itState->getHit());
-		    streamlog_out(DEBUG1) << "dut hit on sensor " <<sensorID <<" has time "<<itState->getHit().getTime()<<std::endl; 
-                }
-                streamlog_out(DEBUG0) << "Added! " <<std::endl; 
-                break;
-            }
-
-        }
-        dutHits.at(0).print();
-        std::vector<EUTelHit>::iterator itDUTHit;
-        for(itDUTHit = dutHits.begin(); itDUTHit != dutHits.end(); ++itDUTHit){
-            itDUTHit->print();
-            if(itDUTHit->getLocation() == sensorID){
-	      // LCCollectionVec* _pulseCollectionVec = dynamic_cast<LCCollectionVec*>  (evt->getCollection(_pulseCollectionName));
-	      // CellIDDecoder<TrackerPulseImpl > cellDecoder(_pulseCollectionVec);
-
-	      // streamlog_out(DEBUG0) << "Add DUT hit for sensor " <<sensorID<<", time = itDUTHit->getTime"<<itDUTHit->getPulse()<<std::endl; 
-	      streamlog_out(DEBUG1) << "dut hit on sensor " <<sensorID <<" has time "<<itDUTHit->getTime()<<std::endl; 
-	      //CellIDEncoder<TrackerPulseImpl> idPulseEncoder();
-                finalHits.push_back(*itDUTHit);
-                streamlog_out(DEBUG0) << "Added! " <<std::endl; 
-                break;
-            }
-        }
-    }
-    return finalHits;
-}
 bool EUTelPatRecTriplets::getDoubHitOnTraj(doublets const& doub, std::vector<unsigned int> const & sen,int const & hitNum, std::vector<EUTelHit>& newHits   ){
     for(std::vector<unsigned int> ::const_iterator itID = sen.begin(); itID != sen.end(); ++itID){
         std::vector<EUTelHit> hits =  _mapHitsVecPerPlane.at(*itID);
@@ -348,7 +309,7 @@ bool EUTelPatRecTriplets::getDoubHitOnTraj(doublets const& doub, std::vector<uns
 //        std::cout<<"Hits Number " << hits.size() << " " << " ID " << *itID  << std::endl;
 
         for(std::vector<EUTelHit>::iterator itHit = hits.begin(); itHit != hits.end(); ++itHit){
- //           std::cout<<"Hit location " << itHit->getLocation() << std::endl;
+  //          std::cout<<"Hit location " << itHit->getLocation() << std::endl;
 
             double hitPosX = itHit->getPositionGlobal()[0]; 
             double hitPosY = itHit->getPositionGlobal()[1]; 
@@ -357,30 +318,30 @@ bool EUTelPatRecTriplets::getDoubHitOnTraj(doublets const& doub, std::vector<uns
             std::vector<float>  pos = getDoubPosAtZ(doub, hitPosZ);/// Could calculate this once. Might be a bit off for tilted sensors.
 
             float dist = getDistLocal(itHit, pos);
-  //          std::cout<<"Dist " << dist  << std::endl;
+    //        std::cout<<"Dist " << dist  << std::endl;
 
             if(itHit == hits.begin()){
                 hitBest = *itHit;
                 distBest = dist;
-   //             std::cout<<"DistBest begin " << distBest  << std::endl;
+      //          std::cout<<"DistBest begin " << distBest  << std::endl;
 
             }
             if(dist < distBest){
                 hitBest = *itHit;
                 distBest = dist;
-    //            std::cout<<"DistBest " << distBest  << std::endl;
+        //        std::cout<<"DistBest " << distBest  << std::endl;
             }
         }
 
         if(distBest >  _dutDistCut){
-        //    std::cout<<"DistBest Fail!!!!! " << distBest  << std::endl;
+   //         std::cout<<"DistBest Fail!!!!! " << distBest  << std::endl;
 
             streamlog_out(DEBUG1) << "Doublet cut!! " << distBest <<">"<< _dutDistCut<<std::endl;
             continue;
         }
     //    std::cout<<"Pass "  << std::endl;
 
-        streamlog_out(DEBUG1) << "PASS Doublet cut!! " << distBest <<"<"<< _doubletCenDistCut.at(0) << std::endl;
+        streamlog_out(DEBUG1) << "PASS Doublet cut!! " << distBest <<"<"<< _dutDistCut << std::endl;
         newHits.push_back(hitBest);
     }
     if(newHits.size() < hitNum){
@@ -409,10 +370,10 @@ float EUTelPatRecTriplets::getDistLocal(std::vector<EUTelHit>::iterator itHit, s
     local = rotInv*diff;
 
     if(_planeDimensions[itHit->getLocation()] == 2){ 
-        streamlog_out(DEBUG0) << "Triplet DUT Match Cut Pixel: " <<"X delta: " << fabs(local[0]) << " Y delta: " << fabs(local[1]) << std::endl;
+        streamlog_out(DEBUG0) <<"Pixel:  X delta: " << fabs(local[0]) << " Y delta: " << fabs(local[1]) << std::endl;
         dist = sqrt(pow(local[0],2)+pow(local[1],2));
     }else if(_planeDimensions[itHit->getLocation()] == 1){
-        streamlog_out(DEBUG0) << "Triplet DUT Match Cut Strip: " <<"X delta: " << fabs(local[0]) << std::endl;
+        streamlog_out(DEBUG0) << "Strip: " <<"X delta: " << fabs(local[0]) << std::endl;
         ///Keep it positive, the distance that is!!!
         dist = sqrt(pow(local[0],2));
     }else{

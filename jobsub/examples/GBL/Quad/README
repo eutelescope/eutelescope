@@ -156,6 +156,52 @@ Output gear file:alignedGear-iter3-run000105.xml
 
 
 Output gear file:alignedGear-iter4-run000105.xml
+This gear introduces rotation on 21 to -97.16243697 but this is too large to correct again.
+
+Track within 1mm even with outliers. Outlier have large radius from peak but small in number:
+20:26:49 jobsub.GBLTrackFit(INFO): [ MESSAGE9 "TrackAnalysis"] Analysis Results:
+20:26:49 jobsub.GBLTrackFit(INFO): [ MESSAGE9 "TrackAnalysis"] Sensor 0 Absolute residual average X 1.90454e-05 residual average Y 1.94926e-05 hit number 6416
+20:26:49 jobsub.GBLTrackFit(INFO): [ MESSAGE9 "TrackAnalysis"] Sensor 1 Absolute residual average X 7.83438e-06 residual average Y 8.00646e-06 hit number 6416
+20:26:49 jobsub.GBLTrackFit(INFO): [ MESSAGE9 "TrackAnalysis"] Sensor 2 Absolute residual average X 2.26104e-05 residual average Y 2.33012e-05 hit number 6416
+20:26:49 jobsub.GBLTrackFit(INFO): [ MESSAGE9 "TrackAnalysis"] Sensor 21 Absolute residual average X 0.219231 residual average Y 0.285356 hit number 146
+20:26:49 jobsub.GBLTrackFit(INFO): [ MESSAGE9 "TrackAnalysis"] Sensor 20 Absolute residual average X 0.00218662 residual average Y 0.00665505 hit number 6275
+20:26:49 jobsub.GBLTrackFit(INFO): [ MESSAGE9 "TrackAnalysis"] Sensor 3 Absolute residual average X 2.08969e-05 residual average Y 2.50219e-05 hit number 6416
+20:26:49 jobsub.GBLTrackFit(INFO): [ MESSAGE9 "TrackAnalysis"] Sensor 4 Absolute residual average X 1.03305e-05 residual average Y 1.20267e-05 hit number 6416
+20:26:49 jobsub.GBLTrackFit(INFO): [ MESSAGE9 "TrackAnalysis"] Sensor 5 Absolute residual average X 1.44928e-05 residual average Y 1.62786e-05 hit number 6416
+20:26:49 jobsub.GBLTrackFit(INFO): [ MESSAGE9 "TrackFit"] The number of GBL tracks 6416 Number of original candidates 6416
+
+Same again from pattern recognition before the GBL corrections. DUTs not included in fit so correction will only come from the change in parameterisation due to the mimosas.
+
+20:42:00 jobsub.patternRecognition(INFO): [ MESSAGE9 "TrackAnalysis"] Analysis Results:
+20:42:00 jobsub.patternRecognition(INFO): [ MESSAGE9 "TrackAnalysis"] Sensor 0 Absolute residual average X 6.65866e-15 residual average Y 4.64714e-15 hit number 6416
+20:42:00 jobsub.patternRecognition(INFO): [ MESSAGE9 "TrackAnalysis"] Sensor 1 Absolute residual average X 9.41974e-05 residual average Y 9.57565e-05 hit number 6416
+20:42:00 jobsub.patternRecognition(INFO): [ MESSAGE9 "TrackAnalysis"] Sensor 2 Absolute residual average X 0.00031523 residual average Y 0.000320204 hit number 6416
+20:42:00 jobsub.patternRecognition(INFO): [ MESSAGE9 "TrackAnalysis"] Sensor 21 Absolute residual average X 0.217365 residual average Y 0.285473 hit number 146
+20:42:00 jobsub.patternRecognition(INFO): [ MESSAGE9 "TrackAnalysis"] Sensor 20 Absolute residual average X 0.00473191 residual average Y 0.00938166 hit number 6275
+20:42:00 jobsub.patternRecognition(INFO): [ MESSAGE9 "TrackAnalysis"] Sensor 3 Absolute residual average X 0.000286734 residual average Y 0.000316243 hit number 6416
+20:42:00 jobsub.patternRecognition(INFO): [ MESSAGE9 "TrackAnalysis"] Sensor 4 Absolute residual average X 9.14657e-05 residual average Y 9.93117e-05 hit number 6416
+20:42:00 jobsub.patternRecognition(INFO): [ MESSAGE9 "TrackAnalysis"] Sensor 5 Absolute residual average X 1.69949e-14 residual average Y 5.55012e-15 hit number 6416
+20:42:00 jobsub.patternRecognition(INFO): [ MESSAGE9 "TrackSearch"] EUTelProcessorPatRecTriplets::end()  TrackSearch processed 9999 events in 1 runs  av.tracks : 0.641664 total number of tracks: 6416
+
+
+20 looks fine wrt correlations. 21 is shifted!!! Contradicts track residual!! 21 correlation shifts: X=-1 Y=-2 mm. 
+Clearly track number is to low. Increase cut values
+
+
+
+TripletConnectDistCut =  0.5  0.5
+TripletSlopeCuts = 0.01 0.01
+DoubletCenDistCut = 0.5 0.5
+DoubletDistCut =  0.5 0.5
+excludeplanes= 20    
+#We associate the closest hit to each track.
+DUTWindow= 3
+planeDimensions= 2 2 2 2 2 2 2 2 
+InitialDisplacement=0.0
+HitInputCollectionName=hit_filtered_m26_apix
+lcioOutputName = trackcand
+TrackCandHitOutputCollectionName=track_candidates
+Planes = 0 1 2 3 4 5 21 20
 
 
 Looking at the results we can see that 21 jumps about. The errors here are clearly not a reasonable estimation. However we find a solution near the expected errors. 

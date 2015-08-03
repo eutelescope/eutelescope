@@ -282,8 +282,12 @@ void EUTelState::setPositionGlobal(float positionGlobal[]){
     _position[0] = posLocal[0];
     _position[1] = posLocal[1];
     _position[2] = posLocal[2];
-
-
+    if(abs(_position[2])  >  1e-7){
+        streamlog_out(MESSAGE5) << "The local z position which is being set is not zero! " << std::endl;
+        streamlog_out(MESSAGE5) << "Global position: "<< positionGlobal[0] <<","<< positionGlobal[1] <<"," <<  positionGlobal[2] << "  ID " << this->getLocation() << std::endl;
+        streamlog_out(MESSAGE5) << "Local position: "<< _position[0] <<","<< _position[1] <<"," <<  _position[2] << std::endl;
+        throw(lcio::Exception("The corrections increase the local z postition"));
+    }
 }
 void EUTelState::setLocalDirGlobalDir(TVector3 dirIn){
 	//Now calculate the dir in LOCAL coordinates.
@@ -305,7 +309,7 @@ void EUTelState::setStateUsingCorrection(TVectorD corrections){
     /// Get position in global frame.
     TVector3 gPos =  getPositionGlobal();
     /// Add correction in global frame and transform back to local internally 
-	double corr[3] = { gPos[0]+corrections[3],gPos[1]+corrections[4],0};
+	double corr[3] = { gPos[0]+corrections[3],gPos[1]+corrections[4],gPos[2]};
     setPositionGlobal(corr);
     /// slopes in global frame corrected and transformed back
     std::vector<double> slopes;

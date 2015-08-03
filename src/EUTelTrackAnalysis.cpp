@@ -64,7 +64,7 @@ streamlog_out(DEBUG2) << "State position glo: " << statePositionGlobal[0]<<","<<
 
 			residual[1]=std::abs(statePosition[1]-hitPosition[1]);
 			streamlog_out(DEBUG2) << "Add residual Y : " << residual[1]<< std::endl;
-			_mapFromSensorIDToHistogramY[ state.getLocation() ]  -> fill( statePosition[0], statePosition[1], residual[1], 1 );
+			_mapFromSensorIDToHistogramY[ state.getLocation() ]  -> fill( statePositionGlobal[0], statePositionGlobal[1], residual[1], 1 );
 			break;
 			}
 		}
