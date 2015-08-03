@@ -28,7 +28,7 @@ namespace eutelescope {
             void setCov(const std::vector<float> &);
             /// Set the covariance matrix from one state to another
             void setCov(TMatrixD );
-            void setPulse( EVENT::LCObjectVec&);
+            void setPulse( EVENT::LCObject*);
 
             //get
             void getCov(double (&)[4]) const;
@@ -38,7 +38,7 @@ namespace eutelescope {
             //HIT PARAMETERS
             const double* getPosition() const; 
             int getID() const;
-            EVENT::LCObjectVec getPulse() const;
+            EVENT::LCObject* getPulse();
             float getTime() const;
 
             //END HIT PARAMETERS
@@ -55,7 +55,7 @@ namespace eutelescope {
 	    float _time; 
             int _id; //This is used to keep a track of all the hits for track removal.
 			TMatrixD _cov;
-            EVENT::LCObjectVec _pulse;
+            EVENT::LCObject* _pulse;
 
 
 	};

@@ -43,7 +43,7 @@ void EUTelReaderGenericLCIO::getColVec(std::vector<EUTelTrack> tracks,LCEvent* e
                 }
                 IMPL::LCRelationImpl *relStateHit = new IMPL::LCRelationImpl(conState,conHit); 
                 colHitVec->push_back(static_cast<EVENT::LCGenericObject*>(conHit));
-                IMPL::LCRelationImpl *relHitCluster = new IMPL::LCRelationImpl(conHit,states.at(j).getHit().getPulse().at(0)); 
+                IMPL::LCRelationImpl *relHitCluster = new IMPL::LCRelationImpl(conHit,states.at(j).getHit().getPulse()); 
                 relStateHitVec->push_back(static_cast<EVENT::LCRelation*>(relHitCluster));
 
             }
@@ -100,6 +100,8 @@ LCCollection* relStatesHits =  evt->getCollection("StateHitFOR"+ colName);stream
                         EVENT::LCRelation* relStateHit = static_cast<EVENT::LCRelation*>(relStatesHits->getElementAt(kCol));
                         EVENT::LCGenericObject* stateCheck  =  static_cast<EVENT::LCGenericObject*>(relStateHit->getFrom());
                         EVENT::LCGenericObject* hit  =  static_cast<EVENT::LCGenericObject*>(relStateHit->getTo());
+                        EVENT::LCObject* clu  =  static_cast<EVENT::LCGenericObject*>(relStateHit->getTo());
+
                         ///Now get the cluster info
 
                         EVENT::LCRelation* relHitCluster = static_cast<EVENT::LCRelation*>(relStatesHits->getElementAt(kCol));
@@ -112,6 +114,7 @@ LCCollection* relStatesHits =  evt->getCollection("StateHitFOR"+ colName);stream
                             }
                             EUTelHit hit;
                             hit.setTrackFromLCIOVec(hitInput);
+                            hit.setPulse(clu);
                             state.setHit(hit);
                             streamlog_out(DEBUG1)<<"Hit added." <<std::endl;
 
