@@ -418,31 +418,31 @@ std::vector<EUTelTrack> EUTelPatRecTriplets::getMinFakeTracks(){
             tracksAndDUTHits.push_back(make_pair(*itTrack,newHits));
         }
     }
-    if(EUTelExcludedPlanes::_senInc.size() > 6 ){
-        // Each track can only be associated to a single DUT hit on each plane. Must also make sure that a hit is not associated to multiple tracks.
-        // So you could have two tracks with the same DUT hit attached.
-        std::vector< std::pair< std::vector<EUTelHit> , std::vector<EUTelHit> > > tracksAndDUTHitsUnique;
-//        std::cout<<" Tracks before unique: " << tracksAndDUTHits.size() << std::endl;
-        tracksAndDUTHitsUnique = getUniqueMatches(tracksAndDUTHits);
-  //      std::cout<<" Tracks after unique " << tracksAndDUTHitsUnique.size() << std::endl;
-
-        for(size_t i =0 ; i < tracksAndDUTHitsUnique.size() ; ++i){
-            std::vector<EUTelHit> track = tracksAndDUTHitsUnique.at(i).first;
-            std::vector<EUTelHit> dut = tracksAndDUTHitsUnique.at(i).second;
-
-            std::vector<EUTelHit> combineHits;
-            combineHits.reserve( tracks.size() + dut.size() ); // preallocate memory
-            combineHits.insert( combineHits.end(), track.begin(), track.end() );
-            combineHits.insert( combineHits.end(), dut.begin(), dut.end() );
-            streamlog_out(DEBUG1) <<" Combined! "  << std::endl;
-            ///Hit order does not matter
-            tracks.push_back(EUTelTrackCreate::getTrackFourHits(combineHits));
-        }
-    }else{
-        for(size_t i =0 ; i < tracksHits.size() ; ++i){
-            tracks.push_back(EUTelTrackCreate::getTrackFourHits(tracksHits.at(i)));
-        }
+//    if(EUTelExcludedPlanes::_senInc.size() > 6 ){
+//        // Each track can only be associated to a single DUT hit on each plane. Must also make sure that a hit is not associated to multiple tracks.
+//        // So you could have two tracks with the same DUT hit attached.
+//        std::vector< std::pair< std::vector<EUTelHit> , std::vector<EUTelHit> > > tracksAndDUTHitsUnique;
+////        std::cout<<" Tracks before unique: " << tracksAndDUTHits.size() << std::endl;
+//        tracksAndDUTHitsUnique = getUniqueMatches(tracksAndDUTHits);
+//  //      std::cout<<" Tracks after unique " << tracksAndDUTHitsUnique.size() << std::endl;
+//
+//        for(size_t i =0 ; i < tracksAndDUTHitsUnique.size() ; ++i){
+//            std::vector<EUTelHit> track = tracksAndDUTHitsUnique.at(i).first;
+//            std::vector<EUTelHit> dut = tracksAndDUTHitsUnique.at(i).second;
+//
+//            std::vector<EUTelHit> combineHits;
+//            combineHits.reserve( tracks.size() + dut.size() ); // preallocate memory
+//            combineHits.insert( combineHits.end(), track.begin(), track.end() );
+//            combineHits.insert( combineHits.end(), dut.begin(), dut.end() );
+//            streamlog_out(DEBUG1) <<" Combined! "  << std::endl;
+//            ///Hit order does not matter
+//            tracks.push_back(EUTelTrackCreate::getTrackFourHits(combineHits));
+//        }
+//    }else{
+    for(size_t i =0 ; i < tracksHits.size() ; ++i){
+        tracks.push_back(EUTelTrackCreate::getTrackFourHits(tracksHits.at(i)));
     }
+//    }
     return tracks;
 
 }

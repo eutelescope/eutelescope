@@ -27,7 +27,7 @@ void EUTelProcessorTrackAnalysis::init(){
 		initialiseEfficiencyVsPositionHistograms();
 		
 		//Some initialised in the constructor in part 2.
-		EUTelTrackAnalysis*	analysis = new EUTelTrackAnalysis(_mapFromSensorIDToHistogramX,_mapFromSensorIDToHistogramY,_mapFromSensorHitMap,_mapFromSensorIDToEfficiencyX,_mapFromSensorIDToEfficiencyY,_mapFromSensorIDToGloIncXZ,_mapFromSensorIDToGloIncYZ,_beamEnergy); 
+		EUTelTrackAnalysis*	analysis = new EUTelTrackAnalysis(_mapFromSensorIDToHistogramX,_mapFromSensorIDToHistogramY,_mapFromSensorHitMap,_mapFromSensorIDToEfficiencyX,_mapFromSensorIDToEfficiencyY,_mapFromSensorIDToGloIncXZ,_mapFromSensorIDToGloIncYZ, _mapFromSensorKinksMap, _beamEnergy); 
 
 		//Others here.
 		analysis->setSensorIDTo2DPValuesWithPosition(_mapFromSensorIDToPValueHisto);
@@ -65,10 +65,12 @@ void EUTelProcessorTrackAnalysis::processEvent(LCEvent * evt){
 	    _analysis->plotHitMap(track);
             _analysis->plotEfficiencyVsPosition(track,_sensorIDs);	
             _analysis->plotIncidenceAngles(track);
-            if(track.getChi2()/track.getNdf() < 5.0){
+            _analysis->plotKinksVsPosition(track);
+
+        //    if(track.getChi2()/track.getNdf() < 5.0){
                 _analysis->plotBeamEnergy(track);
                 _analysis->plotPValueVsBeamEnergy(track);
-            }//if(track.getChi2()/track.getNdf() < 5.0){
+        //    }//if(track.getChi2()/track.getNdf() < 5.0){
             _analysis->plotPValueWithPosition(track);
             _analysis->plotPValueWithIncidenceAngles(track);
            _analysis->setTotNum(track);
@@ -491,6 +493,34 @@ void	EUTelProcessorTrackAnalysis::initialiseHitMapHistograms(){
 		}
 		sstm.str(std::string(""));
 	}
+	for (size_t i = 0; i < _sensorIDs.size() ; ++i){
+		/////////////////////////////////////////////////////////////////////////////Kinks with position.
+		sstm << "Kinks" << _sensorIDs.at(i);
+		residGblFitHistName = sstm.str();
+		sstm.str(std::string());
+		sstm << "Kinks. Plane " <<  _sensorIDs.at(i) << ";X direction; Y direction";
+		histTitle = sstm.str();
+		sstm.str(std::string(""));
+		histoInfo = histoMgr->getHistogramInfo(residGblFitHistName);
+		NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 80;
+		MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin :-15 ;
+		MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 15;
+		NBinY = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yBin : 80;
+		MinY =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMin : -15;
+		MaxY =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMax : 15;
+		MinZ =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_zMin : -20;
+		MaxZ =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_zMax : 20;
+        AIDA::IProfile2D*  kinksMap =	marlin::AIDAProcessor::histogramFactory(this)->createProfile2D(residGblFitHistName,  NBinX, MinX, MaxX, NBinY, MinY, MaxY);
+		if (kinksMap) {
+				kinksMap->setTitle(histTitle);
+				_mapFromSensorKinksMap.insert(std::make_pair(_sensorIDs.at(i), kinksMap));
+		} else {
+				streamlog_out(ERROR2) << "Problem booking the " << (residGblFitHistName) << std::endl;
+				streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << std::endl;
+		}
+		sstm.str(std::string(""));
+	}
+
 
 
 }

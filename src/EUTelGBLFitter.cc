@@ -300,10 +300,11 @@ namespace eutelescope {
             EUTelState& state = track.getStates().at(i);
             unsigned int labelPlane = state.GBLLabels.at(0);
             if(addScat){
-                double distToKinkPlane = state.getPosition()[2] - stateScat.getPosition()[2];
+                double distToKinkPlane = state.getPositionGlobal()[2] - stateScat.getPositionGlobal()[2];
                 TMatrixD derivatives(2,2);
                 derivatives.Zero();
                 //The derivative is the distance since the change in the measurements is  deltaX = distanceFromkink*(Angle of kink)
+//                std::cout<<"dist to plane " << distToKinkPlane <<std::endl;
                 derivatives[0][0] = distToKinkPlane; 
                 derivatives[1][1] = distToKinkPlane; 
                 pointList.at(labelPlane-1).addLocals(derivatives);
@@ -337,6 +338,8 @@ namespace eutelescope {
         /// Now add scattering.  
 		streamlog_out(DEBUG0)<<"Add scattering information. "<<std::endl;
         getScat(track,pointList);
+        getLocalKink(track, pointList);
+
 		streamlog_out(DEBUG0)<<"EUTelGBLFitter::getGBLPointsFromTrack-------------------------------------END"<<std::endl;
 
 	}
@@ -454,11 +457,17 @@ namespace eutelescope {
         bool foundScat=false;
         ///Needs to be a reference to add kink information.
         EUTelState* scatSt;
+        TVectorD corrections(5);
+        TMatrixDSym cov(5);
+
+        ///7 parameters for local derivatives for kinks if needed.
+        if(std::find(EUTelExcludedPlanes::_senNoDeadMaterial.begin(), EUTelExcludedPlanes::_senNoDeadMaterial.end(), 271) != EUTelExcludedPlanes::_senNoDeadMaterial.end() ){
+            corrections.ResizeTo(7);
+            cov.ResizeTo(7,7);
+        }
+
 		for(size_t i = 0;i < track.getStates().size(); i++){		
 			EUTelState& state = track.getStates().at(i);
-            ///7 parameters for local derivatives for kinks if needed.
-			TVectorD corrections(5);
-			TMatrixDSym cov(5);
             /// Get the corrections in the global frame!!!! 
             /// This is corrected internally by EUTelTrack and EUTelState.
             traj->getResults(state.GBLLabels.at(0), corrections, cov );
@@ -468,7 +477,7 @@ namespace eutelescope {
             streamlog_message( DEBUG3, corrections.Print();, std::endl; );			
             state.setStateUsingCorrection(corrections);
             track.setTrackUsingCorrection(corrections);
-            state.setCov(cov);
+          //  state.setCov(cov);
             unsigned int numData;
             /// Scattering is for every plane and is added here. 
             ///Measurement - Prediction is the residual. Initial M-P is always 0
@@ -483,15 +492,13 @@ namespace eutelescope {
                 TVectorD kinks(2);//Measurement - Prediction
                 kinks[0] = corrections[5];
                 kinks[1] = corrections[6];
-                std::cout<<"Kinks :" << kinks[0] << " " << kinks[1] <<std::endl;
-                scatSt->setKinks(kinks);
-                foundScat=false;///Only add once.
+//                std::cout<<"Kinks :" << kinks[0] << " " << kinks[1] <<std::endl;
+           //     scatSt->setKinks(kinks);
+            //    foundScat=false;///Only add once.
             }
-            std::cout<<"ID :" <<state.getLocation()  <<std::endl;
+//            std::cout<<"ID :" <<state.getLocation()  <<std::endl;
 
             if(state.getLocation() == 271){
-                corrections.ResizeTo(7);
-                cov.ResizeTo(7,7);
                 foundScat=true;
                 scatSt = &state;
             }

@@ -1,8 +1,9 @@
 #include "EUTelTrackAnalysis.h"
 using namespace eutelescope;
 
-EUTelTrackAnalysis::EUTelTrackAnalysis(std::map< int,  AIDA::IProfile2D*> mapFromSensorIDToHistogramX, std::map< int,  AIDA::IProfile2D*> mapFromSensorIDToHistogramY, std::map< int,  AIDA::IHistogram2D*> mapFromSensorIDHitMap, std::map< int,  AIDA::IProfile2D*> mapFromSensorIDToEfficiencyX, std::map< int,  AIDA::IProfile2D*> mapFromSensorIDToEfficiencyY, std::map< int,   AIDA::IHistogram1D *> mapFromSensorIDToGloIncXZ,std::map< int,   AIDA::IHistogram1D *> mapFromSensorIDToGloIncYZ,  AIDA::IHistogram1D * beamEnergy){
+EUTelTrackAnalysis::EUTelTrackAnalysis(std::map< int,  AIDA::IProfile2D*> mapFromSensorIDToHistogramX, std::map< int,  AIDA::IProfile2D*> mapFromSensorIDToHistogramY, std::map< int,  AIDA::IHistogram2D*> mapFromSensorIDHitMap, std::map< int,  AIDA::IProfile2D*> mapFromSensorIDToEfficiencyX, std::map< int,  AIDA::IProfile2D*> mapFromSensorIDToEfficiencyY, std::map< int,   AIDA::IHistogram1D *> mapFromSensorIDToGloIncXZ,std::map< int,   AIDA::IHistogram1D *> mapFromSensorIDToGloIncYZ, 		std::map< int,  AIDA::IProfile2D* > mapFromSensorKinksMap, AIDA::IHistogram1D * beamEnergy){
 setSensorIDTo2DHitMap(mapFromSensorIDHitMap);
+    _mapFromSensorKinksMap = mapFromSensorKinksMap;
 
     setSensorIDTo2DResidualHistogramX(mapFromSensorIDToHistogramX);
     setSensorIDTo2DResidualHistogramY(mapFromSensorIDToHistogramY);
@@ -25,6 +26,28 @@ setSensorIDTo2DHitMap(mapFromSensorIDHitMap);
 
 
 } 
+void EUTelTrackAnalysis::plotKinksVsPosition(EUTelTrack track){
+  streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotResidualVsPosition------------------------------BEGIN"<< std::endl;
+	std::vector<EUTelState> states = track.getStates();
+	for(size_t i=0; i<states.size();++i){
+		EUTelState state  = states.at(i);
+		state.print();
+		TVector3 statePositionGlobal = state.getPositionGlobal();
+		typedef std::map<int ,AIDA::IProfile2D*  >::iterator it_type;
+		for(it_type iterator = _mapFromSensorKinksMap.begin(); iterator != _mapFromSensorKinksMap.end(); iterator++) {
+		  streamlog_out(DEBUG2) << "	state.getLocation() = "<<	state.getLocation()<< ", iterator->first = "<<iterator->first<<std::endl;	
+		  if(iterator->first == state.getLocation()){
+            //  std::cout<<"ID: " << state.getLocation() << " pos  " << statePositionGlobal[0] << " " <<  statePositionGlobal[1] << " kink: " <<  state.getKinks()[0] <<std::endl;
+           //   if(state.getKinks()[0] < 0 ){
+                _mapFromSensorKinksMap[ state.getLocation() ]  -> fill( statePositionGlobal[0], statePositionGlobal[1], state.getKinks()[0] );
+           //   }
+			break;
+            }
+		}
+	} 
+  streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotResidualVsPosition------------------------------END"<< std::endl;
+}
+
 
 void EUTelTrackAnalysis::plotResidualVsPosition(EUTelTrack track){
   streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotResidualVsPosition------------------------------BEGIN"<< std::endl;

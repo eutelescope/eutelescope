@@ -59,6 +59,7 @@ namespace eutelescope {
 		EUTelTrackAnalysis* _analysis;
 		IntVec _sensorIDs;
 		std::map< int,  AIDA::IHistogram2D* > _mapFromSensorHitMap;
+		std::map< int,  AIDA::IProfile2D* > _mapFromSensorKinksMap;
 		std::map< int,  AIDA::IProfile2D* > _mapFromSensorIDToHistogramX;
 		std::map< int,  AIDA::IProfile2D* > _mapFromSensorIDToHistogramY;
 		std::map< int,  AIDA::IProfile2D* > _mapFromSensorIDToEfficiencyX;

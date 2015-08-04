@@ -34,7 +34,7 @@ std::vector<int> EUTelExcludedPlanes::getRelativeComplementSet(std::vector<int> 
     {
         int currentSensorID = *it;
         std::vector<int>::const_iterator pos = std::find(planesToExclude.begin(), planesToExclude.end(), currentSensorID);
-        if(pos == planesToExclude.end() and currentSensorID <= 99){ ///Not all end statements are create equal! :-)
+        if(pos == planesToExclude.end() and currentSensorID <= 99 or currentSensorID ==271){ ///Not all end statements are create equal! :-)
             resultVec.push_back(currentSensorID);
         }
     }
