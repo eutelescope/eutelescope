@@ -153,24 +153,39 @@ namespace eutelescope {
 	{
 		//We have a similar check after this to see that number of planes and elements in resolution vector are the same. We need this here since if 
 		//they are different then it will just give an exception from the vector tryign to access a element that does not exist.
-		if (EUTelExcludedPlanes::_senNoDeadMaterial.size() != vector.size() ){
+		if (EUTelExcludedPlanes::_senNoDeadMaterial.size() != vector.size() and std::find(EUTelExcludedPlanes::_senNoDeadMaterial.begin(), EUTelExcludedPlanes::_senNoDeadMaterial.end(), 271) == EUTelExcludedPlanes::_senNoDeadMaterial.end() ){
 			streamlog_out( ERROR5 ) << "The number of planes: " << EUTelExcludedPlanes::_senNoDeadMaterial.size()<< " differs from the size of input resolution vector: " << vector.size() << std::endl;
 			throw(lcio::Exception("The size of the resolution vector and the total number of planes is different for x axis."));
 		}
+        unsigned int scatCounter=0;
 		for( std::vector<int>::const_iterator it =EUTelExcludedPlanes::_senNoDeadMaterial.begin(); it !=EUTelExcludedPlanes::_senNoDeadMaterial.end(); it++ ){
-			_parameterIdXResolutionVec[*it] = vector.at(it-EUTelExcludedPlanes::_senNoDeadMaterial.begin());
-		}
+            if (_parameterIdXResolutionVec.find(*it) == _parameterIdXResolutionVec.end() and *it != 271){
+                _parameterIdXResolutionVec[*it] = vector.at(it-EUTelExcludedPlanes::_senNoDeadMaterial.begin() -scatCounter);
+            }
+            if(*it == 271){
+                _parameterIdXResolutionVec[*it] = 1000000;
+                scatCounter++;
+            }
+        }
 	}
 
 	//This sets the estimated resolution for each plane in the Y direction.
 	void EUTelGBLFitter::setParamterIdYResolutionVec( const std::vector<float>& vector)
 	{
-		if ( EUTelExcludedPlanes::_senNoDeadMaterial.size() != vector.size() ){
+		if ( EUTelExcludedPlanes::_senNoDeadMaterial.size() != vector.size() and std::find(EUTelExcludedPlanes::_senNoDeadMaterial.begin(), EUTelExcludedPlanes::_senNoDeadMaterial.end(), 271) == EUTelExcludedPlanes::_senNoDeadMaterial.end()){
 			streamlog_out( ERROR5 ) << "The number of planes: " << EUTelExcludedPlanes::_senNoDeadMaterial.size() << " differs from the size of input resolution vector: " << vector.size() << std::endl;
 			throw(lcio::Exception("The size of the resolution vector and the total number of planes is different for y axis."));
 		}
+        unsigned int scatCounter=0;
 		for( std::vector<int>::const_iterator it =EUTelExcludedPlanes::_senNoDeadMaterial.begin(); it != EUTelExcludedPlanes::_senNoDeadMaterial.end(); it++ ){
-			_parameterIdYResolutionVec[*it] = vector.at( it-EUTelExcludedPlanes::_senNoDeadMaterial.begin() );
+            if (_parameterIdYResolutionVec.find(*it) == _parameterIdYResolutionVec.end() and *it != 271){
+                _parameterIdYResolutionVec[*it] = vector.at( it-EUTelExcludedPlanes::_senNoDeadMaterial.begin() - scatCounter );
+            }
+            if(*it == 271){
+                _parameterIdYResolutionVec[*it] = 1000000;
+                scatCounter++;
+            }
+
 		}
 	}
 
@@ -468,9 +483,12 @@ namespace eutelescope {
                 TVectorD kinks(2);//Measurement - Prediction
                 kinks[0] = corrections[5];
                 kinks[1] = corrections[6];
+                std::cout<<"Kinks :" << kinks[0] << " " << kinks[1] <<std::endl;
                 scatSt->setKinks(kinks);
                 foundScat=false;///Only add once.
             }
+            std::cout<<"ID :" <<state.getLocation()  <<std::endl;
+
             if(state.getLocation() == 271){
                 corrections.ResizeTo(7);
                 cov.ResizeTo(7,7);

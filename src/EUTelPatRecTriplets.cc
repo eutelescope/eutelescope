@@ -38,19 +38,24 @@ EUTelPatRecTriplets::~EUTelPatRecTriplets()
 {}
 
 void EUTelPatRecTriplets::setPlaneDimensionsVec(EVENT::IntVec& planeDimensions){
-	if(planeDimensions.size() != EUTelExcludedPlanes::_senNoDeadMaterial.size()){
+	if(planeDimensions.size() != EUTelExcludedPlanes::_senNoDeadMaterial.size() and std::find(EUTelExcludedPlanes::_senNoDeadMaterial.begin(), EUTelExcludedPlanes::_senNoDeadMaterial.end(), 271) == EUTelExcludedPlanes::_senNoDeadMaterial.end() ){
 		streamlog_out(ERROR) << "The size of planesDimensions input is: "<< planeDimensions.size()<<" The size of sensorIDsVec is: " << EUTelExcludedPlanes::_senNoDeadMaterial.size()<< std::endl;
 		throw(lcio::Exception( "The input dimension vector not the same as the number of planes!"));
 	}
 	_planeDimensions.clear();
+    unsigned int scatCounter=0;
 	for(size_t i=0; i<EUTelExcludedPlanes::_senNoDeadMaterial.size(); ++i){
 		const int planeID = EUTelExcludedPlanes::_senNoDeadMaterial.at(i);
-		if (_planeDimensions.find(planeID) == _planeDimensions.end()){//This is to check that we don't try to map the same sensor to two different plane dimensions.
-			_planeDimensions[planeID] = planeDimensions.at(i);
+		if (_planeDimensions.find(planeID) == _planeDimensions.end() and planeID != 271){//This is to check that we don't try to map the same sensor to two different plane dimensions.
+			_planeDimensions[planeID] = planeDimensions.at(i-scatCounter);
 		}else{
-			streamlog_out(ERROR5) <<"The z position is : "<< i <<" The plane ID is: " << planeID <<std::endl;
-			throw(lcio::Exception( "You are trying to map the same sensor ID to two different plane dimensions. There is something wrong with you gear file input. Make sure there is some distance between your planes in the gear file!"));
+//			streamlog_out(ERROR5) <<"The z position is : "<< i <<" The plane ID is: " << planeID <<std::endl;
+//			throw(lcio::Exception( "You are trying to map the same sensor ID to two different plane dimensions. There is something wrong with you gear file input. Make sure there is some distance between your planes in the gear file!"));
 		}
+        if(planeID == 271){
+            _planeDimensions[planeID] = 2;
+            scatCounter++;
+        }
 	}
 }	    
 ///Public get functions
