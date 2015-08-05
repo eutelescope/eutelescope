@@ -1,8 +1,8 @@
-#ifdef USE_GEAR
+#include "EUTelProcessorAnalysisPALPIDEfsNoise.h"
 #include "EUTELESCOPE.h"
 #include "EUTelTrackerDataInterfacerImpl.h"
 #include "EUTelGenericSparsePixel.h"
-#include "AnalysisNoise.h"
+#include "EUTelGeometryTelescopeGeoDescription.h"
 
 #include "marlin/Global.h"
 
@@ -10,12 +10,11 @@ using namespace lcio;
 using namespace marlin;
 using namespace std;
 using namespace eutelescope;
-using namespace gear;
 
-AnalysisNoise aAnalysisNoise;
+EUTelProcessorAnalysisPALPIDEfsNoise aEUTelProcessorAnalysisPALPIDEfsNoise;
 
-AnalysisNoise::AnalysisNoise()
-: Processor("AnalysisNoise"),
+EUTelProcessorAnalysisPALPIDEfsNoise::EUTelProcessorAnalysisPALPIDEfsNoise()
+: Processor("EUTelProcessorAnalysisPALPIDEfsNoise"),
   _zsDataCollectionName(""),
   _fillHistos(false),
   _nEvent(0),
@@ -23,8 +22,6 @@ AnalysisNoise::AnalysisNoise()
   _nLayer(0),
   _xPixel(),
   _yPixel(),
-  _siPlanesParameters(0),
-  _siPlanesLayerLayout(0),
   _energy(6.0),
   _chipID(),
   _irradiation(),
@@ -54,24 +51,14 @@ AnalysisNoise::AnalysisNoise()
     _isFirstEvent = true;
   }
 
-void AnalysisNoise::init() {
+void EUTelProcessorAnalysisPALPIDEfsNoise::init() {
 
-#ifndef USE_GEAR
-  streamlog_out ( ERROR4 ) <<  "Marlin was not built with GEAR support." << endl <<  "You need to install GEAR and recompile Marlin with -DUSE_GEAR before continue." << endl;
-  exit(-1);
-#else
-  if ( Global::GEAR == 0x0 ) {
-    streamlog_out ( ERROR4 ) <<  "The GearMgr is not available, for an unknown reason." << endl;
-    exit(-1);
-  }                                                                                                  _siPlanesParameters  = const_cast<SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters())); 
-  _siPlanesLayerLayout = const_cast<SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
-#endif
-  _nLayer = _siPlanesLayerLayout->getNLayers();
+  _nLayer = geo::gGeometry().nPlanes();
   vector<int> tmp(4,0);
   for (int iLayer=0; iLayer<_nLayer; iLayer++ )
   {
-    _xPixel.push_back(_siPlanesLayerLayout->getSensitiveNpixelX(iLayer));
-    _yPixel.push_back(_siPlanesLayerLayout->getSensitiveNpixelY(iLayer));
+    _xPixel.push_back(geo::gGeometry().siPlaneXNpixels(iLayer));
+    _yPixel.push_back(geo::gGeometry().siPlaneYNpixels(iLayer));
     _nFiredPixel.push_back(tmp);
 //    cerr << iLayer << "\t" << nFiredPixel[0][iLayer] << endl;
   }
@@ -86,7 +73,7 @@ void AnalysisNoise::init() {
   }
 }
 
-void AnalysisNoise::processEvent(LCEvent *evt)
+void EUTelProcessorAnalysisPALPIDEfsNoise::processEvent(LCEvent *evt)
 {
 //  cerr << evt->getEventNumber() << endl;
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -109,9 +96,9 @@ void AnalysisNoise::processEvent(LCEvent *evt)
   timeStampHisto->Fill(evt->getTimeStamp());
 #endif
   try
-  { 
+  {
     zsInputDataCollectionVec = dynamic_cast< LCCollectionVec * > ( evt->getCollection( _zsDataCollectionName ) ) ;
-  } catch ( lcio::DataNotAvailableException ) 
+  } catch ( lcio::DataNotAvailableException )
   {
     cerr << "In event " << evt->getEventNumber() << "_zsDataCollectionName " << _zsDataCollectionName.c_str() << " not found " << endl;
     return;
@@ -123,7 +110,7 @@ void AnalysisNoise::processEvent(LCEvent *evt)
     auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel > >  sparseData(new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> ( zsData ));
     for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
     {
-      EUTelGenericSparsePixel *sparsePixel =  new EUTelGenericSparsePixel() ; 
+      EUTelGenericSparsePixel *sparsePixel =  new EUTelGenericSparsePixel() ;
       sparseData->getSparsePixelAt( iPixel, sparsePixel );
       noiseMap[iDetector]->Fill(sparsePixel->getXCoord(),sparsePixel->getYCoord());
       for (int iSector=0; iSector<4; iSector++)
@@ -138,7 +125,7 @@ void AnalysisNoise::processEvent(LCEvent *evt)
   }
 }
 
-void AnalysisNoise::bookHistos()
+void EUTelProcessorAnalysisPALPIDEfsNoise::bookHistos()
 {
   timeStampHisto = new TH1I("timeStampHisto","Distribution of the time stamp of the events; Time stamp (in 12.5 ns units)",1000,0,50000);
   for (int iLayer=0; iLayer<_nLayer; iLayer++ )
@@ -148,7 +135,7 @@ void AnalysisNoise::bookHistos()
   }
 }
 
-void AnalysisNoise::end()
+void EUTelProcessorAnalysisPALPIDEfsNoise::end()
 {
   cout << "Total number of events: " << _nEvent << endl;
   for (unsigned int i=0; i< _dutIDs.size(); i++)
@@ -164,4 +151,3 @@ void AnalysisNoise::end()
     }
   }
 }
-#endif // GEAR

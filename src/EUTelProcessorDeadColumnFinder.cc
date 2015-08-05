@@ -1,9 +1,8 @@
-#ifdef USE_GEAR
-
-#include "DeadColumnFinder.h"
+#include "EUTelProcessorDeadColumnFinder.h"
 #include "EUTELESCOPE.h"
 #include "EUTelTrackerDataInterfacerImpl.h"
 #include "EUTelGenericSparsePixel.h"
+#include "EUTelGeometryTelescopeGeoDescription.h"
 
 #include "marlin/Global.h"
 
@@ -13,17 +12,15 @@ using namespace std;
 using namespace eutelescope;
 using namespace gear;
 
-DeadColumnFinder aDeadColumnFinder;
+EUTelProcessorDeadColumnFinder aEUTelProcessorDeadColumnFinder;
 
-DeadColumnFinder::DeadColumnFinder()
-: Processor("DeadColumnFinder"),
+EUTelProcessorDeadColumnFinder::EUTelProcessorDeadColumnFinder()
+: Processor("EUTelProcessorDeadColumnFinder"),
   _zsDataCollectionName(""),
   _fillHistos(false),
   _nLayer(0),
   _xPixel(),
   _yPixel(),
-  _siPlanesParameters(0),
-  _siPlanesLayerLayout(0),
   _nEvent(0),
   isDead(0)
   {
@@ -39,45 +36,34 @@ DeadColumnFinder::DeadColumnFinder()
     _isFirstEvent = true;
   }
 
-void DeadColumnFinder::init() {
-
-#ifndef USE_GEAR
-  streamlog_out ( ERROR4 ) <<  "Marlin was not built with GEAR support." << endl <<  "You need to install GEAR and recompile Marlin with -DUSE_GEAR before continue." << endl;
-  exit(-1);
-#else
-  if ( Global::GEAR == 0x0 ) {
-    streamlog_out ( ERROR4 ) <<  "The GearMgr is not available, for an unknown reason." << endl;
-    exit(-1);
-  }
-  _siPlanesParameters  = const_cast<SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters())); 
-  _siPlanesLayerLayout = const_cast<SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
-#endif
-  _nLayer = _siPlanesLayerLayout->getNLayers();
+void EUTelProcessorDeadColumnFinder::init() {
+  _nLayer = geo::gGeometry().nPlanes();
+  vector<int> tmp(4,0);
   for (int iLayer=0; iLayer<_nLayer; iLayer++ )
   {
-    _xPixel.push_back(_siPlanesLayerLayout->getSensitiveNpixelX(iLayer));
-    _yPixel.push_back(_siPlanesLayerLayout->getSensitiveNpixelY(iLayer));
+    _xPixel.push_back(geo::gGeometry().siPlaneXNpixels(iLayer));
+    _yPixel.push_back(geo::gGeometry().siPlaneYNpixels(iLayer));
     vector<bool> isDeadTmp(_xPixel[iLayer],false);
     isDead.push_back(isDeadTmp);
 //    cerr << iLayer << "\t" << nFiredPixel[0][iLayer] << endl;
   }
 }
 
-void DeadColumnFinder::processEvent(LCEvent *evt)
+void EUTelProcessorDeadColumnFinder::processEvent(LCEvent *evt)
 {
   _nEvent++;
 //  cerr << evt->getEventNumber() << endl;
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
   if ( _fillHistos && _isFirstEvent )
-  { 
+  {
     bookHistos();
     _isFirstEvent = false;
   }
 #endif
   try
-  { 
+  {
     zsInputDataCollectionVec = dynamic_cast< LCCollectionVec * > ( evt->getCollection( _zsDataCollectionName ) ) ;
-  } catch ( lcio::DataNotAvailableException ) 
+  } catch ( lcio::DataNotAvailableException )
   {
 //    cerr << "_zsDataCollectionName " << _zsDataCollectionName.c_str() << " not found " << endl;
     return;
@@ -88,12 +74,12 @@ void DeadColumnFinder::processEvent(LCEvent *evt)
     auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel > >  sparseData(new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> ( zsData ));
     for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
     {
-      EUTelGenericSparsePixel *sparsePixel =  new EUTelGenericSparsePixel() ; 
+      EUTelGenericSparsePixel *sparsePixel =  new EUTelGenericSparsePixel() ;
       sparseData->getSparsePixelAt( iPixel, sparsePixel );
       hitMap[iDetector]->Fill(sparsePixel->getXCoord(),sparsePixel->getYCoord());
       if (iPixel != sparseData->size()-1)
       {
-        EUTelGenericSparsePixel *sparsePixel2 =  new EUTelGenericSparsePixel() ; 
+        EUTelGenericSparsePixel *sparsePixel2 =  new EUTelGenericSparsePixel() ;
         sparseData->getSparsePixelAt( iPixel+1, sparsePixel2 );
         if (sparsePixel->getXCoord() == sparsePixel2->getXCoord() && sparsePixel->getYCoord() == sparsePixel2->getYCoord())
         {
@@ -109,7 +95,7 @@ void DeadColumnFinder::processEvent(LCEvent *evt)
   }
 }
 
-void DeadColumnFinder::bookHistos()
+void EUTelProcessorDeadColumnFinder::bookHistos()
 {
   for (int iLayer=0; iLayer<_nLayer; iLayer++ )
   {
@@ -117,7 +103,7 @@ void DeadColumnFinder::bookHistos()
   }
 }
 
-void DeadColumnFinder::end()
+void EUTelProcessorDeadColumnFinder::end()
 {
   LCWriter * lcWriter = LCFactory::getInstance()->createLCWriter();
   try
@@ -165,7 +151,7 @@ void DeadColumnFinder::end()
 //      hitPixels[x-1] = 0;
       for (int y=1; y<hitMap[iLayer]->GetNbinsY()+1; y++)
       {
-        if (hitMap[iLayer]->GetBinContent(x,y) != 0) 
+        if (hitMap[iLayer]->GetBinContent(x,y) != 0)
         {
 //          if ( x == 1) cerr << iLayer << "\t" << y << "\t" << hitMap[iLayer]->GetBinContent(x,y) << endl;
           hitPixels[x-1]++;
@@ -178,26 +164,26 @@ void DeadColumnFinder::end()
     for (int x=0; x<hitMap[iLayer]->GetNbinsX(); x++)
     {
 //      bool deadColumn = false;
-      if (hitPixels[x] <=1 && hitPixels[x+1] <=1) 
+      if (hitPixels[x] <=1 && hitPixels[x+1] <=1)
       {
         isDead[iLayer][x] = true;
         isDead[iLayer][x+1] = true;
 //      deadColumn = true;
       }
-      else if (x > 0 && x < hitMap[iLayer]->GetNbinsX()-2 && hitPixels[x-1] > 100 && hitPixels[x+2] > 100 && (double)hitPixels[x]/hitPixels[x-1] < 0.7 && (double)hitPixels[x]/hitPixels[x+2] < 0.7 && (double)hitPixels[x+1]/hitPixels[x-1] < 0.7 && (double)hitPixels[x+1]/hitPixels[x+2] < 0.7) 
+      else if (x > 0 && x < hitMap[iLayer]->GetNbinsX()-2 && hitPixels[x-1] > 100 && hitPixels[x+2] > 100 && (double)hitPixels[x]/hitPixels[x-1] < 0.7 && (double)hitPixels[x]/hitPixels[x+2] < 0.7 && (double)hitPixels[x+1]/hitPixels[x-1] < 0.7 && (double)hitPixels[x+1]/hitPixels[x+2] < 0.7)
       {
         isDead[iLayer][x] = true;
         isDead[iLayer][x+1] = true;
 //      deadColumn = true;
       }
-/*      if (deadColumn) 
+/*      if (deadColumn)
       {
         cerr << "Dead double column found in layer " << iLayer << " at X=" << x << " and " << x+1 << endl;
 //        cerr << x-1 << "\t" << x << "\t" <<  x+1 << "\t" << x+2 << endl;
 //        cerr << hitPixels[x-1] << "\t" <<  hitPixels[x] << "\t" << hitPixels[x+1] << "\t" <<  hitPixels[x+2] << endl;
       }
 */    }
-    deadColumnCollection->push_back( currentFrame.release() ); 
+    deadColumnCollection->push_back( currentFrame.release() );
     for (int x=0; x<_xPixel[iLayer];x++)
     {
       if (isDead[iLayer][x])
@@ -220,4 +206,3 @@ void DeadColumnFinder::end()
   delete event;
   lcWriter->close();
 }
-#endif // GEAR

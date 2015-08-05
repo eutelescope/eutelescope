@@ -100,10 +100,10 @@
 </processor>
 
  <processor name="LoadDeadColumnDBPALPIDEfs" type="ConditionsProcessor">
-   <!--ConditionsProcessor provides access to conditions data  transparently from LCIO files or a databases, using LCCD-->  
+   <!--ConditionsProcessor provides access to conditions data  transparently from LCIO files or a databases, using LCCD-->
   <!--Initialization of a conditions database handler-->
   <!--parameter name="DBCondHandler" type="StringVec"> conditionsName /lccd/myfolder HEAD </parameter-->
-  <!--Initialization of a conditions db file handler--> 
+  <!--Initialization of a conditions db file handler-->
   <!--parameter name="DBFileHandler" type="StringVec"> conditionsName conditions.slcio collectionName</parameter-->
   <!--Initialization string for conditions database-->
   <parameter name="DBInit" type="string" value="localhost:lccd_test:calvin:hobbes"/>
@@ -116,10 +116,10 @@
 </processor>
 
  <processor name="LoadHotPixelDBPALPIDEfs" type="ConditionsProcessor">
-   <!--ConditionsProcessor provides access to conditions data  transparently from LCIO files or a databases, using LCCD-->  
+   <!--ConditionsProcessor provides access to conditions data  transparently from LCIO files or a databases, using LCCD-->
   <!--Initialization of a conditions database handler-->
   <!--parameter name="DBCondHandler" type="StringVec"> conditionsName /lccd/myfolder HEAD </parameter-->
-  <!--Initialization of a conditions db file handler--> 
+  <!--Initialization of a conditions db file handler-->
   <!--parameter name="DBFileHandler" type="StringVec"> conditionsName conditions.slcio collectionName</parameter-->
   <!--Initialization string for conditions database-->
   <parameter name="DBInit" type="string" value="localhost:lccd_test:calvin:hobbes"/>
@@ -131,7 +131,7 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
-<processor name="Analysis" type="AnalysisPALPIDEfs">
+<processor name="Analysis" type="EUTelProcessorAnalysisPALPIDEfs">
   <!--This is the name of the input collection for the fitted hits-->
   <parameter name="InputFittedHitName" type="StringVec"> fithits </parameter>
   <!--This is the name of the input collection of the hits-->
@@ -209,9 +209,9 @@
   <!--Print event number for every n-th event-->
   <parameter name="EveryNEvents" type="int" value="10000"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <!--parameter name="Verbosity" type="string" value=""/--> 
+  <!--parameter name="Verbosity" type="string" value=""/-->
   <!--print the event timestamp as read from LCIO-->
   <!--parameter name="printTimestamp" type="bool" value="false"/-->
-</processor> 
+</processor>
 
 </marlin>
