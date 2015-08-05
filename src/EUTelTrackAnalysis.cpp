@@ -1,8 +1,11 @@
 #include "EUTelTrackAnalysis.h"
 using namespace eutelescope;
 
-EUTelTrackAnalysis::EUTelTrackAnalysis(std::map< int,  AIDA::IProfile2D*> mapFromSensorIDToHistogramX, std::map< int,  AIDA::IProfile2D*> mapFromSensorIDToHistogramY, std::map< int,  AIDA::IHistogram2D*> mapFromSensorIDHitMap, std::map< int,  AIDA::IProfile2D*> mapFromSensorIDToEfficiencyX, std::map< int,  AIDA::IProfile2D*> mapFromSensorIDToEfficiencyY, std::map< int,   AIDA::IHistogram1D *> mapFromSensorIDToGloIncXZ,std::map< int,   AIDA::IHistogram1D *> mapFromSensorIDToGloIncYZ, 		std::map< int,  AIDA::IProfile2D* > mapFromSensorKinksMap, AIDA::IHistogram1D * beamEnergy){
+EUTelTrackAnalysis::EUTelTrackAnalysis(std::map< int,  AIDA::IProfile2D*> mapFromSensorIDToHistogramX, std::map< int,  AIDA::IProfile2D*> mapFromSensorIDToHistogramY, std::map< int,  AIDA::IHistogram2D*> mapFromSensorIDHitMap, std::map< int,  AIDA::IProfile2D*> mapFromSensorIDToEfficiencyX, std::map< int,  AIDA::IProfile2D*> mapFromSensorIDToEfficiencyY, std::map< int,   AIDA::IHistogram1D *> mapFromSensorIDToGloIncXZ,std::map< int,   AIDA::IHistogram1D *> mapFromSensorIDToGloIncYZ, 		 std::map< int,   AIDA::IHistogram1D *> mapKinksX, std::map< int,   AIDA::IHistogram1D *> mapKinksY, std::map< int,  AIDA::IProfile2D* > mapFromSensorKinksMap, AIDA::IHistogram1D * beamEnergy){
 setSensorIDTo2DHitMap(mapFromSensorIDHitMap);
+    _mapKinksX =mapKinksX;
+    _mapKinksY =mapKinksY;
+
     _mapFromSensorKinksMap = mapFromSensorKinksMap;
 
     setSensorIDTo2DResidualHistogramX(mapFromSensorIDToHistogramX);
@@ -271,6 +274,25 @@ void EUTelTrackAnalysis::plotIncidenceAngles(EUTelTrack track){
 	}
   streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotIncidenceAngles------------------------------END"<< std::endl;
 }
+void EUTelTrackAnalysis::plotKinks(EUTelTrack& track){
+  streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotIncidenceAngles------------------------------BEGIN"<< std::endl;
+	std::vector<EUTelState> states = track.getStates();
+	for(size_t i=0; i<states.size();++i){
+		EUTelState state  = states.at(i);
+		state.print();
+		float kinksX = state.getKinks()[0];
+		float kinksY = state.getKinks()[1];
+		typedef std::map<int , AIDA::IHistogram1D * >::iterator it_type;
+		for(it_type iterator =_mapKinksX.begin(); iterator != _mapKinksX.end(); iterator++) {
+			if(iterator->first == state.getLocation()){
+                _mapKinksX[ state.getLocation() ] ->fill(kinksX);
+                _mapKinksY[ state.getLocation() ] ->fill(kinksY);
+                break;
+			}
+		}
+	} 
+}
+
 void EUTelTrackAnalysis::plotPValueWithIncidenceAngles(EUTelTrack track){
 	streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotPValueWithIncidenceAngles------------------------------BEGIN"<< std::endl;
 	float pValue = calculatePValueForChi2(track);

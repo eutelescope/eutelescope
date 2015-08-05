@@ -27,7 +27,7 @@ void EUTelProcessorTrackAnalysis::init(){
 		initialiseEfficiencyVsPositionHistograms();
 		
 		//Some initialised in the constructor in part 2.
-		EUTelTrackAnalysis*	analysis = new EUTelTrackAnalysis(_mapFromSensorIDToHistogramX,_mapFromSensorIDToHistogramY,_mapFromSensorHitMap,_mapFromSensorIDToEfficiencyX,_mapFromSensorIDToEfficiencyY,_mapFromSensorIDToGloIncXZ,_mapFromSensorIDToGloIncYZ, _mapFromSensorKinksMap, _beamEnergy); 
+		EUTelTrackAnalysis*	analysis = new EUTelTrackAnalysis(_mapFromSensorIDToHistogramX,_mapFromSensorIDToHistogramY,_mapFromSensorHitMap,_mapFromSensorIDToEfficiencyX,_mapFromSensorIDToEfficiencyY,_mapFromSensorIDToGloIncXZ,_mapFromSensorIDToGloIncYZ, _mapKinksX, _mapKinksY, _mapFromSensorKinksMap,_beamEnergy); 
 
 		//Others here.
 		analysis->setSensorIDTo2DPValuesWithPosition(_mapFromSensorIDToPValueHisto);
@@ -66,6 +66,7 @@ void EUTelProcessorTrackAnalysis::processEvent(LCEvent * evt){
             _analysis->plotEfficiencyVsPosition(track,_sensorIDs);	
             _analysis->plotIncidenceAngles(track);
             _analysis->plotKinksVsPosition(track);
+            _analysis->plotKinks(track);
 
         //    if(track.getChi2()/track.getNdf() < 5.0){
                 _analysis->plotBeamEnergy(track);
@@ -520,6 +521,53 @@ void	EUTelProcessorTrackAnalysis::initialiseHitMapHistograms(){
 		}
 		sstm.str(std::string(""));
 	}
+    /////Kink angles
+	for(size_t i = 0; i < _sensorIDs.size() ; ++i){
+		sstm << "KinkX" << _sensorIDs.at(i);
+		residGblFitHistName = sstm.str();
+		sstm.str(std::string());
+		sstm << "Kinks local X Plane " <<  _sensorIDs.at(i);
+		histTitle = sstm.str();
+		sstm.str(std::string(""));
+		histoInfo = histoMgr->getHistogramInfo(residGblFitHistName);
+		NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 300;
+		MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin :-0.005 ;
+		MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 0.005;
+		AIDA::IHistogram1D * kinksX = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(residGblFitHistName, NBinX, MinX, MaxX); 
+
+		if (kinksX){
+				kinksX->setTitle(histTitle);
+				_mapKinksX.insert(std::make_pair(_sensorIDs.at(i), kinksX));
+		} else {
+				streamlog_out(ERROR2) << "Problem booking the " << (residGblFitHistName) << std::endl;
+				streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << std::endl;
+		}
+		sstm.str(std::string(""));
+	}
+	for(size_t i = 0; i < _sensorIDs.size() ; ++i){
+		sstm << "KinkY" << _sensorIDs.at(i);
+		residGblFitHistName = sstm.str();
+		sstm.str(std::string());
+		sstm << "Kinks local Y Plane " <<  _sensorIDs.at(i);
+		histTitle = sstm.str();
+		sstm.str(std::string(""));
+		histoInfo = histoMgr->getHistogramInfo(residGblFitHistName);
+		NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 500;
+		MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin :-0.002 ;
+		MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 0.002;
+		AIDA::IHistogram1D * kinksY = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(residGblFitHistName, NBinX, MinX, MaxX); 
+
+		if (kinksY){
+				kinksY->setTitle(histTitle);
+				_mapKinksY.insert(std::make_pair(_sensorIDs.at(i), kinksY));
+		} else {
+				streamlog_out(ERROR2) << "Problem booking the " << (residGblFitHistName) << std::endl;
+				streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << std::endl;
+		}
+		sstm.str(std::string(""));
+	}
+
+
 
 
 

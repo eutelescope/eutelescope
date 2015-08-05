@@ -60,6 +60,10 @@ void EUTelMillepede::computeAlignmentGlobal( EUTelState &state){
     /// The position of the hits are before the offsets are taken into account. 
     /// This allows the correct magnitude of rotation to be determined.
     Eigen::Vector3d normal  = geo::gGeometry().siPlaneNormalEig(state.getLocation());
+    ///Plane normal must be define along the beam direction.
+    if(normal[2] < 0){
+        normal = -1*normal;
+    }
     Eigen::Vector3d offset =  geo::gGeometry().getOffsetVector(state.getLocation());
 	streamlog_out( DEBUG0 ) << "Offset: "<< offset[0] <<  " " << offset[1] << " " <<offset[2] << std::endl;
 

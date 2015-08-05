@@ -37,6 +37,12 @@ This is the parameters I had set in the config:
 #dutX= 0.07 0.07
 #dutY=0.01   0.01
 #
+
+
+
+######################################################
+
+
 Use your own name and not iter or you will overwrite the example gears.
 This is the results I got:
 01:52:56 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  1  Type:  positionX  Value:  -0.70513E-02  Error:  0.63878E-04

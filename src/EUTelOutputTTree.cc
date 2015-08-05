@@ -237,7 +237,7 @@ public:
     beginEvent();
     try{
         std::vector<EUTelTrack> tr = lc_reader.getTracks(ev, "tracks");
- //       std::cout<< "Track size: " <<tr.size() << std::endl;
+      //  std::cout<< "Track size: " <<tr.size() << std::endl;
 
         for (size_t i = 0; i < tr.size();++i)
         {
