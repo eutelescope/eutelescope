@@ -8,6 +8,9 @@ that can be used as a basis for your own analysis:
 * datura-noDUT
      The Datura telescope with six planes of Mimosa26 without DUT
 
+* naf-submission
+     Example file for the qsub parameters needed for NAF job submission
+
 All examples are also being used for automated data-driven tests using
 the CMake/CTest framework to verify the correct functionality of
 EUTelescope; see 'datura-alone/testing.cmake' for an example setup for

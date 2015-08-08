@@ -9,7 +9,7 @@ GEARPixGeoDescr::GEARPixGeoDescr( int xPixel, int yPixel, double xSize, double y
 					radLength )			//rad length
 {
 	//Create the material for the sensor
-	matSi = new TGeoMaterial( "Si", 28.0855 , 14.0, 2.33, _radLength, 45.753206 );
+	matSi = new TGeoMaterial( "Si", 28.0855 , 14.0, 2.33, -_radLength, 45.753206 );
 	Si = new TGeoMedium("GenericSilicon",1, matSi);
 
 	//Create a plane for the sensitive area
