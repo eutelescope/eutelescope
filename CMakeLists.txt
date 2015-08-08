@@ -153,6 +153,8 @@ ADD_DEFINITIONS("-DDO_TESTING")
 
 # include directories
 INCLUDE_DIRECTORIES( ./include )
+INCLUDE_DIRECTORIES( ./include/alibava )
+INCLUDE_DIRECTORIES( ./pixgeo/include/ )
 
 # definitions to pass to the compiler
 ADD_DEFINITIONS( "-Wall -ansi -pedantic -Wextra" )
@@ -166,9 +168,20 @@ SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g -fdiagnostics-show-option -Weffc++ -W
 # add library
 SET( libname ${PROJECT_NAME} )
 AUX_SOURCE_DIRECTORY( ./src library_sources )
+AUX_SOURCE_DIRECTORY( ./src/alibava library_sources )
 ADD_SHARED_LIBRARY( ${libname} ${library_sources} )
 INSTALL_SHARED_LIBRARY( ${libname} DESTINATION lib )
 #INSTALL_SHARED_LIBRARY( GBL DESTINATION lib )
+
+#Pixel Geometry Shared Libraries
+FILE(GLOB IMPL_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/pixgeo/src/*.cc)
+
+FOREACH(impl_src ${IMPL_SRCS})
+    # Extract FileName from FileName.cc
+    GET_FILENAME_COMPONENT(basename ${impl_src} NAME_WE) 
+    ADD_LIBRARY( ${basename} SHARED ${impl_src} )
+	INSTALL_SHARED_LIBRARY( ${basename} DESTINATION lib )
+ENDFOREACH()  
 
 # Properly add the CMSPixelDecoder external dependency:
 ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}/external/CMSPixelDecoder)
@@ -220,7 +233,12 @@ install (CODE
     EXECUTE_PROCESS(COMMAND ln -sf ${PROJECT_SOURCE_DIR}/jobsub/jobsub.py ${PROJECT_SOURCE_DIR}/bin/jobsub.py)
     EXECUTE_PROCESS(COMMAND ln -sf ${PROJECT_SOURCE_DIR}/tools/pyroplot/pyroplot.py ${PROJECT_SOURCE_DIR}/bin/pyroplot.py)
     EXECUTE_PROCESS(COMMAND ln -sf ${PROJECT_SOURCE_DIR}/tools/pyroplot/pyroplot.py ${PROJECT_SOURCE_DIR}/bin/pyroplot)
-    EXECUTE_PROCESS(COMMAND ln -sf ${PROJECT_SOURCE_DIR}/tools/parsepede/parsemilleout.sh ${PROJECT_SOURCE_DIR}/bin/parsemilleout.sh)"
+    EXECUTE_PROCESS(COMMAND ln -sf ${PROJECT_SOURCE_DIR}/tools/parsepede/parsemilleout.sh ${PROJECT_SOURCE_DIR}/bin/parsemilleout.sh)
+    EXECUTE_PROCESS(COMMAND ln -sf ${PROJECT_SOURCE_DIR}/tools/resIntoSteer.py ${PROJECT_SOURCE_DIR}/bin/resIntoSteer.py)
+    EXECUTE_PROCESS(COMMAND ln -sf ${PROJECT_SOURCE_DIR}/tools/iterAlign.py ${PROJECT_SOURCE_DIR}/bin/iterAlign )"
+
+
+
 )
 
 #  _            _       
@@ -311,6 +329,8 @@ endif()
   INCLUDE(jobsub/examples/datura-noDUT/testing.cmake)
   INCLUDE(jobsub/examples/datura-alone/testing.cmake)
   INCLUDE(jobsub/examples/anemone-2FEI4/testing.cmake)
+  INCLUDE(jobsub/examples/aconite-4chip/testing.cmake)
+  INCLUDE(jobsub/examples/aconite-4chipLocal/testing.cmake)
 
   configure_file (
 	       ./CTestCustom.cmake.in   # set custom settings (e.g. tests to be skipped for valgrind)

@@ -43,7 +43,7 @@
 #include "EUTelVirtualCluster.h"
 #include "EUTelExceptions.h"
 #include "EUTelReferenceHit.h"
-
+#include "EUTelGeometryTelescopeGeoDescription.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -212,15 +212,16 @@ void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate* track, LCCollectionVec
     daffitter::TrackEstimate* estim = track->estimates.at( plane );
     TrackerHitImpl * fitpoint = new TrackerHitImpl();
     // encode and store sensorID
-    idHitEncoder["sensorID"] = _system.planes.at(plane).getSensorID();
+    int sensorID =  _system.planes.at(plane).getSensorID();
+    idHitEncoder["sensorID"] = sensorID;
     // set the local/global bit flag property AND the FittedHit property for the hit
-    idHitEncoder["properties"] = kHitInGlobalCoord ^ kFittedHit;
+    idHitEncoder["properties"] = kHitInGlobalCoord | kFittedHit;
     double pos[3];
     pos[0]= estim->getX() / 1000.0;
     pos[1]= estim->getY() / 1000.0;
     pos[2]= pl.getMeasZ() / 1000.0;
 // overload z coordinate calculation -> important for proper sensor Identification by the hit coordinates based onthe refhit collection
-    pos[2] = getZfromRefHit(plane, pos);    
+    pos[2] = getZfromRefHit(plane, sensorID, pos);    
 
     fitpoint->setPosition(pos);
     // Covariance matrix of the fitted position
@@ -258,31 +259,26 @@ void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate* track, LCCollectionVec
   _fittrackvec->addElement(fittrack);
 }
 
-double EUTelDafFitter::getZfromRefHit(int plane, double *pos){
+double EUTelDafFitter::getZfromRefHit(int plane, int sensorID, double *pos){
 
- try
- {
-   double doesNothing = pos[2];
-   doesNothing++;  //Stops a warning about unused variable
- }
- catch(...)
- {
-   printf(" input array pos{3} access error, perhaps it has less then 3 elements => check yoru input !! \n"); 
-   return 0.;
- }
-   
-  if( ReferenceHitVecIsSet() )
-  {
-    streamlog_out( MESSAGE5 ) << "_referenceHitVec is empty" << endl;
-    return 0;
-  }
-  
-  EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(plane) ) ;
-        
+         
   TVector3 lpoint( pos[0], pos[1], pos[2] );
   TVector3 lvector( 0., 0., 1. );
-  TVector3 hitInPlane( refhit->getXOffset(), refhit->getYOffset(), refhit->getZOffset());
-  TVector3 norm2Plane( refhit->getAlpha(), refhit->getBeta(), refhit->getGamma() );
+  TVector3 hitInPlane;
+  TVector3 norm2Plane;
+ 
+  //Name is misleading, is actually true if refHit is NOT set 
+  if( ReferenceHitVecIsSet() )
+  {
+  	hitInPlane.SetXYZ( geo::gGeometry().siPlaneXPosition(sensorID), geo::gGeometry().siPlaneYPosition(sensorID), geo::gGeometry().siPlaneZPosition(sensorID) );
+	norm2Plane = geo::gGeometry().siPlaneNormal(sensorID);
+  }
+  else
+  {
+  	EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(plane) ) ;
+  	hitInPlane.SetXYZ( refhit->getXOffset(), refhit->getYOffset(), refhit->getZOffset());
+	norm2Plane.SetXYZ( refhit->getAlpha(), refhit->getBeta(), refhit->getGamma() );
+	} 
 
   TVector3 point( 1.,1.,1. );
           

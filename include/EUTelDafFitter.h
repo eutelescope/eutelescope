@@ -57,7 +57,7 @@ namespace eutelescope {
     /* input - plane and pos[0] and pos[1]
      * output - pos[2] to be overwritten with the right value
      */
-    virtual double getZfromRefHit(int plane, double *pos);
+    virtual double getZfromRefHit(int plane,int sensorID, double *pos);
  
   protected:
     //! Output track collection name

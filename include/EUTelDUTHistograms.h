@@ -12,6 +12,8 @@
 #define EUTelDUTHistograms_h 1
 
 // eutelescope includes ".h"
+#include "EUTELESCOPE.h"
+
 //#include "TrackerHitImpl2.h"
 #include "IMPL/TrackerHitImpl.h"
 
@@ -153,15 +155,7 @@ namespace eutelescope {
     virtual void end() ;
 
 private:
-  #ifndef DISALLOW_COPY_AND_ASSIGN
-  //Following #define stops the accidental creation of a copy or assignment operator by causing a link error. Copy and Assignment operators not allowed because they are unnecessary and the cause of many bugs
-  #define DISALLOW_COPY_AND_ASSIGN(EUTelDUTHistograms) \
-  EUTelDUTHistograms(const EUTelDUTHistograms&); \
-  void operator=(const EUTelDUTHistograms&);
-
-  //Private Functions
-  DISALLOW_COPY_AND_ASSIGN(EUTelDUTHistograms)//See #define just above
-  #endif 
+  DISALLOW_COPY_AND_ASSIGN(EUTelDUTHistograms)
   
 protected:
     //! reference HitCollection name 
@@ -211,15 +205,8 @@ protected:
     std::string _inputRecHitColName ;
     std::string _inputFitHitColName ;
 
-
-
-    //! Flag for manual DUT selection
-
-    bool _useManualDUT;
-
     //! Id of telescope layer which should be used as DUT
-
-    int _manualDUTid;
+    int _iDUT;
 
     // Internal processor variables
     // ----------------------------
@@ -227,7 +214,6 @@ protected:
 
     int _nRun ;
 
-    int _iDUT;
     double _zDUT;
     double _distMax;
 

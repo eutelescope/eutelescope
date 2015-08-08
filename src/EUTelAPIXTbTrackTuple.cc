@@ -2,8 +2,13 @@
 #include "EUTelAPIXTbTrackTuple.h"
 #include "EUTELESCOPE.h"
 #include "EUTelEventImpl.h"
+#include "EUTelExceptions.h"
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelTrackerDataInterfacerImpl.h"
+
+// eutelescope geometry
+#include "EUTelGeometryTelescopeGeoDescription.h"
+#include "EUTelGenericPixGeoDescr.h"
 
 #include <EVENT/LCCollection.h>
 #include <EVENT/LCEvent.h>
@@ -62,7 +67,6 @@ EUTelAPIXTbTrackTuple::EUTelAPIXTbTrackTuple()
 
   registerInputCollection(LCIO::TRACK, "InputTrackCollectionName", "Name of the input Track collection",
 		  		_inputTrackColName, std::string("fittracks"));
-
   	   
   registerInputCollection( LCIO::TRACKERHIT, "InputTrackerHitCollectionName", "Name of the plane-wide hit-data hit collection"  ,
 		_inputTrackerHitColName, std::string("fitpoints") );
@@ -91,6 +95,22 @@ void EUTelAPIXTbTrackTuple::init()
 
 	// Prepare TTree/TFiles
 	prepareTree();
+
+	//init new geometry
+	std::string name("test.root");
+	geo::gGeometry().initializeTGeoDescription(name,true);
+
+
+	for(std::vector<int>::iterator it = _DUTIDs.begin(); it != _DUTIDs.end(); it++)
+	{
+		//Later we need to shift the sensor since in EUTel centre of sensor is 0|0 while in TBmon(II) it is in the lower left corner
+		geo::EUTelGenericPixGeoDescr* geoDescr = geo::gGeometry().getPixGeoDescr( *it ) ;
+		float xSize,ySize;
+		geoDescr->getSensitiveSize(xSize, ySize);
+
+		_xSensSize[*it] = xSize;
+		_ySensSize[*it] = ySize;
+	}
 }
 
 void EUTelAPIXTbTrackTuple::processRunHeader( LCRunHeader* runHeader) 
@@ -146,6 +166,9 @@ void EUTelAPIXTbTrackTuple::processEvent( LCEvent * event )
 
 void EUTelAPIXTbTrackTuple::end()
 {
+	//write version number
+	_versionNo->push_back(1.1);
+	_versionTree->Fill();
 	//Maybe some stats output?
 	_file->Write();
 }
@@ -186,9 +209,10 @@ bool EUTelAPIXTbTrackTuple::readHits( std::string hitColName, LCEvent* event )
     		double x = pos[0];
     		double y = pos[1];
     		double z = pos[2];
-    
-    		_hitXPos->push_back(x);
-    		_hitYPos->push_back(y);
+
+	       	//offset by half sensor/sensitive size
+			_hitXPos->push_back(x + _xSensSize.at(sensorID)/2.0);
+    		_hitYPos->push_back(y + _ySensSize.at(sensorID)/2.0);
     		_hitZPos->push_back(z);
     		_hitSensorId->push_back(sensorID);
 	}
@@ -246,11 +270,11 @@ bool EUTelAPIXTbTrackTuple::readTracks(LCEvent* event)
 
       			nTrackParams++;
       			
-			double x = pos[0];
+				double x = pos[0];
       			double y = pos[1];
       			//double z = pos[2]; //not used!
 			
-			//eutrack tree
+				//eutrack tree
       			_xPos->push_back(x);
       			_yPos->push_back(y);
       			_dxdz->push_back(dxdz);
@@ -302,8 +326,8 @@ bool EUTelAPIXTbTrackTuple::readZsHits( std::string colName, LCEvent* event)
 				p_col->push_back( apixPixel.getXCoord() );
 				p_tot->push_back( static_cast< int >(apixPixel.getSignal()) );
 				p_lv1->push_back( static_cast< int >(apixPixel.getTime()) );
-      			}
-    		}
+     		}
+    	}
 		else
 		{
 			//PANIC
@@ -314,28 +338,28 @@ bool EUTelAPIXTbTrackTuple::readZsHits( std::string colName, LCEvent* event)
 
 void EUTelAPIXTbTrackTuple::clear()
 {
-  /* Clear zsdata */
-  p_col->clear();
-  p_row->clear();
-  p_tot->clear();
-  p_iden->clear();
-  p_lv1->clear();
-  _nPixHits = 0;
-  /* Clear hittrack */
-  _xPos->clear();
-  _yPos->clear();
-  _dxdz->clear();
-  _dydz->clear();
-  _trackNum->clear();
-  _trackIden->clear();
-  _chi2->clear();
-  _ndof->clear();
-  //Clear hits
-  _hitXPos->clear();
-  _hitYPos->clear();
-  _hitZPos->clear();
-  _hitSensorId->clear();
- }
+	/* Clear zsdata */
+	p_col->clear();
+	p_row->clear();
+	p_tot->clear();
+	p_iden->clear();
+	p_lv1->clear();
+	_nPixHits = 0;
+	/* Clear hittrack */
+	_xPos->clear();
+	_yPos->clear();
+	_dxdz->clear();
+	_dydz->clear();
+	_trackNum->clear();
+	_trackIden->clear();
+	_chi2->clear();
+	_ndof->clear();
+	//Clear hits
+	_hitXPos->clear();
+	_hitYPos->clear();
+	_hitZPos->clear();
+	_hitSensorId->clear();
+}
 
 void EUTelAPIXTbTrackTuple::prepareTree()
 {
@@ -361,7 +385,13 @@ void EUTelAPIXTbTrackTuple::prepareTree()
 	_hitZPos = new std::vector<double>();
 	_hitSensorId  = new std::vector<int>();
 
+	_versionNo = new std::vector<double>();
+	_versionTree = new TTree("version","version");
+	_versionTree->Branch("no", &_versionNo);
+
 	_euhits = new TTree("fitpoints","fitpoints");
+	_euhits->SetAutoSave(1000000000);
+	
 	_euhits->Branch("nHits", &_nHits);
 	_euhits->Branch("xPos", &_hitXPos);
 	_euhits->Branch("yPos", &_hitYPos);
@@ -369,6 +399,7 @@ void EUTelAPIXTbTrackTuple::prepareTree()
 	_euhits->Branch("sensorId", &_hitSensorId);
 
 	_zstree = new TTree("rawdata", "rawdata");
+	_zstree->SetAutoSave(1000000000);
 	_zstree->Branch("nPixHits", &_nPixHits);
 	_zstree->Branch("euEvt",    &_nEvt);
 	_zstree->Branch("col",      &p_col);
@@ -379,6 +410,7 @@ void EUTelAPIXTbTrackTuple::prepareTree()
 
 	//Tree for storing all track param info
 	_eutracks = new TTree("tracks", "tracks");
+	_eutracks->SetAutoSave(1000000000);
 	_eutracks->Branch("nTrackParams", &_nTrackParams);
 	_eutracks->Branch("euEvt", &_nEvt);
 	_eutracks->Branch("xPos", &_xPos);
@@ -392,8 +424,4 @@ void EUTelAPIXTbTrackTuple::prepareTree()
 
 	_euhits->AddFriend(_zstree);
 	_euhits->AddFriend(_eutracks);
-
-	_versionVec = new TVectorD(1);
-	_versionVec[0] = 1.1;
-        _versionVec->Write("ver");
 }

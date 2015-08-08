@@ -1,4 +1,3 @@
-// Version: $Id$
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -7,13 +6,10 @@
  *   header with author names in all development based on this file.
  *
  */
-// built only if USE_GEAR
-#if defined(USE_GEAR)
 #ifndef EUTELPREALIGNMENT_H
 #define EUTELPREALIGNMENT_H
 
 // eutelescope includes ".h"
-//#include "TrackerHitImpl2.h"
 #include "EUTelReferenceHit.h"
 
 //ROOT includes
@@ -64,7 +60,7 @@ namespace eutelescope {
       //Get weighted position from 3 neighboring bins
       // as long as we are not on the edges of our histogram:
       if(maxBin== 0 || maxBin== static_cast< int >(histo.size())){ 
-	streamlog_out( WARNING3 ) << "At least one sensor frame might be empty or heavily misaligned. Please check the GEAR file!" << std::endl; 
+	streamlog_out( WARNING3 ) << "At least one sensor frame might be empty or heavily misaligned. Please check the GEAR file!" << " MaxBin: " << maxBin << " histo.size(): " << histo.size()  << std::endl; 
 	return static_cast< float >(maxBin);
       }
       float weight(0.0);
@@ -146,14 +142,7 @@ namespace eutelescope {
      * this collection is saved in a db file to be used at the clustering level
      */
     std::string _hotPixelCollectionName;
- 
-    //! reference HitCollection name 
-    /*!
-     */
-    std::string      _referenceHitCollectionName;
-    bool             _useReferenceHitCollection;
-    LCCollectionVec* _referenceHitVec;    
-    
+
     //! map of vectors, keeps record of hit pixels 
     /*! 
      *  For each Detector a vector is stored in a map.
@@ -169,37 +158,14 @@ namespace eutelescope {
      */
     int _events;
    
-    //! bool tag if PreAlign should run anyway or not;
-    /*! default 0
-     */   
-    bool _UsefullHotPixelCollectionFound;
-
-// maps and vectors to navigate along the geometry of the setup:
-    //! vector of Rotation Matrix elements
-    std::vector< std::map<int,double> > _siPlanesRotations;
-
-    //! An array with the Z position of planes
-    double * _siPlaneZPosition;
-
     //! Sensor ID vector
     std::vector< int > _sensorIDVec;
 
-    //! Sensor ID map (inverse sensorIDVec) 
-    std::map< int, int > _sensorIDVecMap;
-    //! Sensor ID vector, 
-    /*! it's position along Z axis
-     */ 
-    std::vector< int > _sensorIDVecZOrder;
     //! map for sensor ID to position along Z id
     /*!
      */
     std::map<int, int> _sensorIDtoZOrderMap;
 
-    //! map for sensor position along Z to nominal ID in data stream 
-    /*!
-     */
-    std::map<int, int> _sensorIDinZordered;
- 
 // _residual cuts [relative to the first upstream plane!]
     //! vector of correlation band cuts in X (upper limit)
     std::vector< float  > _residualsXMax;
@@ -225,8 +191,9 @@ namespace eutelescope {
   protected:
     std::string _inputHitCollectionName;
     std::string _alignmentConstantLCIOFile;
- 
- 
+ 	std::string _GEARFileSuffix;
+	bool _dumpGEAR;
+
     int _iRun;
     int _iEvt;
     int _fixedID;
@@ -234,10 +201,12 @@ namespace eutelescope {
     gear::SiPlanesParameters * _siPlanesParameters;
     gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
     std::vector<PreAligner> _preAligners;
-  };
+    std::vector<int> _ExcludedPlanesXCoord;  
+    std::vector<int> _ExcludedPlanesYCoord;  
+    std::vector<int> _ExcludedPlanes;  
+};
   //! A global instance of the processor
   EUTelPreAlign gEUTelPreAlign;
 
 }
 #endif
-#endif // GEAR

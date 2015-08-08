@@ -10,7 +10,6 @@
 #ifndef EUTELALIGNMENTCONSTANT_H
 #define EUTELALIGNMENTCONSTANT_H
 
-#define ALIGN_CONST_MAX_SIZE 20  //Can we change this to a global const int? Or put it somewhere else in the code...
 
 // lcio includes <.h>
 #include <lcio.h>

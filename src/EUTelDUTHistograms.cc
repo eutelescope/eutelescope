@@ -21,11 +21,14 @@
 #include "EUTelExceptions.h"
 #include "EUTelReferenceHit.h"
 // for cluster operations:
-#include "EUTelVirtualCluster.h"
+#include "EUTelSimpleVirtualCluster.h"
 #include "EUTelFFClusterImpl.h"
 #include "EUTelDFFClusterImpl.h"
 #include "EUTelBrickedClusterImpl.h"
 #include "EUTelSparseClusterImpl.h"
+#include "EUTelGenericSparseClusterImpl.h"
+#include "EUTelGeometricClusterImpl.h"
+#include "EUTelGeometryTelescopeGeoDescription.h"
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <marlin/AIDAProcessor.h>
@@ -53,7 +56,6 @@
 
 #endif
 
-
 #include <EVENT/LCCollection.h>
 #include <EVENT/LCEvent.h>
 #include <IMPL/LCCollectionVec.h>
@@ -80,30 +82,18 @@ using namespace lcio ;
 using namespace marlin ;
 using namespace eutelescope;
 
-// definition of static members mainly used to name histograms
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-
-
-
-#endif
-
-
 EUTelDUTHistograms::EUTelDUTHistograms() 
 : Processor("EUTelDUTHistograms"),
   _referenceHitCollectionName(""),
   _useReferenceHitCollection(false),
   _referenceHitVec(NULL),
-  _siPlanesParameters(),
-  _siPlanesLayerLayout(),
   _histoInfoFileName(""),
   _inputTrackColName(""),
   _inputHitColName(""),
   _inputRecHitColName(""),
   _inputFitHitColName(""),
-  _useManualDUT(false),
-  _manualDUTid(0),
-  _nRun(0),
   _iDUT(0),
+  _nRun(0),
   _zDUT(0.0),
   _distMax(0.0),
   _pitchX(0.0),
@@ -197,17 +187,11 @@ _PixelChargeSharingHisto ()
                            _inputFitHitColName,
                            std::string("dummy") ) ;
 
-
-
   // other processor parameters:
-
-  registerProcessorParameter ("UseManualDUT",
-                              "Flag for manual DUT selection",
-                              _useManualDUT,  static_cast < bool > (false));
 
   registerProcessorParameter ("ManualDUTid",
                               "Id of telescope layer which should be used as DUT",
-                              _manualDUTid,  static_cast < int > (0));
+                              _iDUT,  static_cast < int > (0));
 
   registerProcessorParameter ("DistMax",
                               "Maximum allowed distance between fit and matched DUT hit in [mm]",
@@ -255,81 +239,16 @@ void EUTelDUTHistograms::init() {
 
   // usually a good idea to
   printParameters() ;
-
   _nRun = 0 ;
-
   _referenceHitVec = 0;
-
   _maptrackid = 0;
 
-  // check if Marlin was built with GEAR support or not
-#ifndef USE_GEAR
-
-  message<ERROR5> ( "Marlin was not built with GEAR support." );
-  message<ERROR5> ( "You need to install GEAR and recompile Marlin with -DUSE_GEAR before continue.");
-
-  // I'm thinking if this is the case of throwing an exception or
-  // not. This is a really error and not something that can
-  // exceptionally happens. Still not sure what to do
-  exit(-1);
-
-#else
-
-  // check if the GEAR manager pointer is not null!
-  if ( Global::GEAR == 0x0 ) {
-    message<ERROR5> ( "The GearMgr is not available, for an unknown reason." );
-    exit(-1);
-  }
-
-  // Read geometry information from GEAR
-
-  message<MESSAGE5> ( log() << "Reading telescope geometry description from GEAR ") ;
-
-  _siPlanesParameters  = const_cast<gear::SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
-  _siPlanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
-
-#endif
-
-  if(_useManualDUT)
-    {
-      bool _manualOK=false;
-
-      for(int ipl=0; ipl <  _siPlanesLayerLayout->getNLayers(); ipl++)
-        if(_siPlanesLayerLayout->getID(ipl)==_manualDUTid)
-          {
-            _iDUT=_manualDUTid;
-            _zDUT=_siPlanesLayerLayout->getLayerPositionZ(ipl);
-            _manualOK=true;
-          }
-
-      if(!_manualOK)
-        {
-          message<ERROR5> ( log() << "Manual DUT flag set, layer not found ID = "
-                           << _manualDUTid
-                           << "\n Program will terminate! Correct geometry description!");
-          exit(-1);
-        }
-    }
-  else
-    if( _siPlanesParameters->getSiPlanesType()==_siPlanesParameters->TelescopeWithDUT )
-      {
-        _iDUT=_siPlanesLayerLayout->getDUTID();
-        _zDUT=_siPlanesLayerLayout->getDUTPositionZ();
-      }
-    else
-      {
-        message<ERROR5> ( log() << "DUT analysis initialized, but no DUT found in GEAR \n"
-                         << "Program will terminate! Correct geometry description!");
-        exit(-1);
-      }
-
+  _zDUT = geo::gGeometry().siPlaneZPosition(_iDUT);
 
 // Print out geometry information
 
   message<MESSAGE5> ( log() << "D.U.T. plane  ID = " << _iDUT
                      << "  at Z [mm] = " << _zDUT );
-
-
 
 // Book histograms
 
@@ -1812,9 +1731,9 @@ int EUTelDUTHistograms::getClusterSize(int sensorID, TrackerHit * hit, int& size
 
         try
         {
-            LCObjectVec clusterVector = hit->getRawHits();
+            TrackerDataImpl* clusterVector = static_cast<TrackerDataImpl*>( hit->getRawHits()[0]);
 
-            EUTelVirtualCluster * cluster=0;
+            EUTelSimpleVirtualCluster * cluster=0;
 
             if ( hit->getType() == kEUTelBrickedClusterImpl ) {
 
@@ -1822,23 +1741,38 @@ int EUTelDUTHistograms::getClusterSize(int sensorID, TrackerHit * hit, int& size
                //  can come from
                //  both RAW and ZS data
    
-                cluster = new EUTelBrickedClusterImpl(static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
+                cluster = new EUTelBrickedClusterImpl( clusterVector );
                 
             } else if ( hit->getType() == kEUTelDFFClusterImpl ) {
               
               // fixed cluster implementation. Remember it can come from
               // both RAW and ZS data
-              cluster = new EUTelDFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
+              cluster = new EUTelDFFClusterImpl( clusterVector );
             } else if ( hit->getType() == kEUTelFFClusterImpl ) {
               
               // fixed cluster implementation. Remember it can come from
               // both RAW and ZS data
-              cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
+              cluster = new EUTelFFClusterImpl( clusterVector );
             }
             else if ( hit->getType() == kEUTelSparseClusterImpl ) 
             {
-               cluster = new EUTelSparseClusterImpl< EUTelGenericSparsePixel > ( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
+               cluster = new EUTelSparseClusterImpl< EUTelGenericSparsePixel > ( clusterVector );
             }
+	    else if ( hit->getType() ==	kEUTelGenericSparseClusterImpl )
+	{
+
+		CellIDDecoder<TrackerDataImpl> cellDecoder (EUTELESCOPE::ZSDATADEFAULTENCODING);
+		SparsePixelType   type   = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( clusterVector )["sparsePixelType"]) );
+		
+		if(type == kEUTelGenericSparsePixel )
+		{
+			cluster = new EUTelGenericSparseClusterImpl<EUTelGenericSparsePixel>( clusterVector );
+		}
+		else if(type == kEUTelGeometricPixel )
+		{
+			cluster = new EUTelGenericSparseClusterImpl<EUTelGeometricPixel>( clusterVector );
+		}
+	}
 
             if(cluster != 0)
             {
@@ -1862,14 +1796,8 @@ int EUTelDUTHistograms::getSubMatrix(int detectorID, float xlocal)
 {
    // quarters : 0-287, 288-575, 576-863, 864-1151
    int fourlocal = static_cast<int>(xlocal*4.); 
-   for ( int iLayer = 0; iLayer < _siPlanesLayerLayout->getNLayers(); iLayer++ ) {
-      if ( _siPlanesLayerLayout->getID(iLayer) == detectorID ) {
-         int subquarter =  fourlocal/static_cast<int>(_siPlanesLayerLayout->getSensitiveNpixelX(iLayer)); 
-         return subquarter;       
-      }
-   }
-
-  return -1; 
+   int subquarter =  fourlocal/geo::gGeometry().siPlaneXNpixels(detectorID);
+   return subquarter;       
 }  
 
 // -------------------------------------------------------------------------------------------

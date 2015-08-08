@@ -49,10 +49,6 @@
 #include <AIDA/IAxis.h>
 #endif
 
-// gear includes <.h>
-#include <gear/GearMgr.h>
-#include <gear/SiPlanesParameters.h>
-
 // lcio includes <.h>
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/TrackerPulseImpl.h>
@@ -90,7 +86,8 @@ std::string EUTelCorrelator::_hitYCorrShiftProjectionHistoName   = "HitYCorrShif
 #endif
 
 EUTelCorrelator::EUTelCorrelator () : Processor("EUTelCorrelator"), 
-_histoInfoFileName("histoinfo.xml")
+_histoInfoFileName("histoinfo.xml"),
+_sensorIDVec()
 {
 
   // modify processor description
@@ -135,6 +132,7 @@ _histoInfoFileName("histoinfo.xml")
 
   registerOptionalParameter("HistogramInfoFilename", "Name of histogram info xml file", _histoInfoFileName, string("histoinfo.xml"));
 
+ 
 }
 
 
@@ -147,9 +145,11 @@ void EUTelCorrelator::init() {
   std::string name("test.root");
   geo::gGeometry().initializeTGeoDescription(name,false);
 
-
-  // clear the sensor ID vector
   _sensorIDVec.clear();
+  _sensorIDVec = geo::gGeometry().sensorIDsVec();
+   for(std::vector<int>::iterator it = _sensorIDVec.begin(); it != _sensorIDVec.end(); it++) {
+	_sensorIDtoZ.insert( std::make_pair( *it, static_cast<int>(it - _sensorIDVec.begin())) );
+  } 
 
   // clear the sensor ID map
   _sensorIDVecMap.clear();
@@ -167,7 +167,7 @@ void EUTelCorrelator::init() {
  
   for ( size_t iin = 0 ; iin < geo::gGeometry().nPlanes(); iin++ ) 
   {           
-    int sensorID = geo::gGeometry().sensorIDsVec().at( iin );
+    int sensorID = _sensorIDVec.at( iin );
  
     _minX[ sensorID ] = 0;
     _minY[ sensorID ] = 0;
@@ -206,27 +206,11 @@ void EUTelCorrelator::processRunHeader (LCRunHeader * rdr) {
                                <<  "This may mean that the GeoID parameter was not set" << endl;
 
 
-  if ( runHeader->getGeoID() != geo::gGeometry().getSiPlanesLayoutID() ) {
+  if ( (unsigned int)runHeader->getGeoID() != geo::gGeometry().getSiPlanesLayoutID() ) {
     streamlog_out ( WARNING5 ) <<  "Error during the geometry consistency check: " << endl
                              << "The run header says the GeoID is " << runHeader->getGeoID() << endl
                              << "The GEAR description says is     " << geo::gGeometry().getSiPlanesLayoutID()
                              << endl;
-
-#ifdef EUTEL_INTERACTIVE
-    string answer;
-    while (true) {
-      streamlog_out ( ERROR1 ) << "Type Q to quit now or C to continue using the actual GEAR description anyway [Q/C]" << endl;
-      cin >> answer;
-      // put the answer in lower case before making the comparison.
-      transform( answer.begin(), answer.end(), answer.begin(), ::tolower );
-      if ( answer == "q" ) {
-        exit(-1);
-      } else if ( answer == "c" ) {
-        break;
-      }
-    }
-
-#endif // EUTEL_INTERACTIVE
   }
 
   delete runHeader;
@@ -437,7 +421,7 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 
           if ( ( internalSensorID != getFixedPlaneID() && externalSensorID == getFixedPlaneID() )
                   ||
-                  (  geo::gGeometry().sensorIDtoZOrder(internalSensorID) == geo::gGeometry().sensorIDtoZOrder(externalSensorID) + 1 )
+                  (  _sensorIDtoZ.at(internalSensorID) == _sensorIDtoZ.at(externalSensorID) + 1 )
                   ) 
           {
 
@@ -541,11 +525,11 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
           if ( 
                   ( internalSensorID != getFixedPlaneID() && externalSensorID == getFixedPlaneID() )
                    ||
-                  (  geo::gGeometry().sensorIDtoZOrder(internalSensorID) == geo::gGeometry().sensorIDtoZOrder(externalSensorID) + 1 )
+                  (  _sensorIDtoZ.at(internalSensorID) == _sensorIDtoZ.at(externalSensorID) + 1 )
               ) 
             {
 
-            int iz = geo::gGeometry().sensorIDtoZOrder( internalSensorID ) ;
+            int iz = _sensorIDtoZ.at( internalSensorID ) ;
 
             if(
                ((etrackPointGlobal[0]-itrackPointGlobal[0] ) < _residualsXMax[iz]) && (_residualsXMin[iz] < (etrackPointGlobal[0]-itrackPointGlobal[0] ))   
@@ -578,7 +562,7 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
           indexPlane = 0; // should be always the first element, as it's filled in the externalID loop
  
           if( indexPlane >= 0 ) {
-            for(size_t i=0;i< trackX.size();i++)
+            for(int i = 0; i < (int)trackX.size();i++)
             {
               if( i == indexPlane ) continue; // skip as this one is not booked
               _hitXCorrelationMatrix[ iplane[ indexPlane ]        ] [ iplane[i]        ] -> fill ( trackX[ indexPlane ]          , trackX[i]           ) ;
@@ -609,15 +593,15 @@ void EUTelCorrelator::end() {
  
     if( _hasHitCollection)
     {
-        streamlog_out( MESSAGE5 ) << "The input CollectionVec contains HitCollection, calculating offest values " << endl;
+        streamlog_out( MESSAGE5 ) << "The input CollectionVec contains HitCollection, calculating offset values " << endl;
  
         for ( size_t exx = 0 ; exx < geo::gGeometry().nPlanes(); exx++ ) 
         {           
-            int exPlaneID = geo::gGeometry().sensorIDsVec().at( exx );
+            int exPlaneID = _sensorIDVec.at( exx );
             if( exPlaneID != getFixedPlaneID() ) continue;
             for ( size_t inn = 0 ; inn < geo::gGeometry().nPlanes(); inn++ ) 
             {
-                int inPlaneID = geo::gGeometry().sensorIDsVec().at( inn );
+                int inPlaneID = _sensorIDVec.at( inn );
                 if( inPlaneID == getFixedPlaneID() ) continue;
 
                 if( _hitXCorrShiftMatrix[ exPlaneID ][ inPlaneID ] == 0 ) continue;
@@ -625,7 +609,7 @@ void EUTelCorrelator::end() {
 
 
                 float _heighestBinX = 0.;
-                for( size_t ibin = 0; ibin < _hitXCorrShiftMatrix[ exPlaneID ][ inPlaneID ]->yAxis().bins(); ibin++)
+                for( int ibin = 0; ibin < _hitXCorrShiftMatrix[ exPlaneID ][ inPlaneID ]->yAxis().bins(); ibin++)
                 {
                     double xbin =  
                         _hitXCorrShiftProjection[ inPlaneID ]->axis().binLowerEdge(ibin)
@@ -643,7 +627,7 @@ void EUTelCorrelator::end() {
                 
                
                 float _heighestBinY = 0.;
-                for( size_t ibin = 0; ibin < _hitYCorrShiftMatrix[ exPlaneID ][ inPlaneID ]->yAxis().bins(); ibin++)
+                for( int ibin = 0; ibin < _hitYCorrShiftMatrix[ exPlaneID ][ inPlaneID ]->yAxis().bins(); ibin++)
                 {
                     double xbin =  
                         _hitYCorrShiftProjection[ inPlaneID ]->axis().binLowerEdge(ibin)
@@ -665,7 +649,7 @@ void EUTelCorrelator::end() {
                 double _correlationBandBinsX     = 0.;
                 double _correlationBandCenterX   = 0.;
 
-                for( size_t ibin = 0; ibin < _hitXCorrShiftProjection[ inPlaneID ]->axis().bins(); ibin++)
+                for( int ibin = 0; ibin < _hitXCorrShiftProjection[ inPlaneID ]->axis().bins(); ibin++)
                 {
                     double ybin =  _hitXCorrShiftProjection[ inPlaneID ]->binHeight(ibin); 
 
@@ -685,7 +669,7 @@ void EUTelCorrelator::end() {
                 double _correlationBandBinsY     = 0.;
                 double _correlationBandCenterY   = 0.;
 
-                for( size_t ibin = 0; ibin < _hitYCorrShiftMatrix[ exPlaneID ][ inPlaneID ]->yAxis().bins(); ibin++)
+                for( int ibin = 0; ibin < _hitYCorrShiftMatrix[ exPlaneID ][ inPlaneID ]->yAxis().bins(); ibin++)
                 {
                     double ybin =  _hitYCorrShiftProjection[ inPlaneID ]->binHeight(ibin); 
                     
@@ -787,10 +771,10 @@ void EUTelCorrelator::bookHistos() {
     string tempHistoTitle = "";
 
 
-    for ( size_t r = 0 ; r < geo::gGeometry().sensorIDsVec().size(); ++r ) 
+    for ( size_t r = 0 ; r < _sensorIDVec.size(); ++r ) 
     {
 
-      int row = geo::gGeometry().sensorIDsVec().at( r );
+      int row = _sensorIDVec.at( r );
       
       map< unsigned int , AIDA::IHistogram2D * > innerMapXCluster;
       map< unsigned int , AIDA::IHistogram2D * > innerMapYCluster;
@@ -810,14 +794,14 @@ void EUTelCorrelator::bookHistos() {
 
 
 
-      for ( size_t c = 0 ; c < geo::gGeometry().sensorIDsVec().size(); ++c ) {
+      for ( size_t c = 0 ; c < _sensorIDVec.size(); ++c ) {
  
-        int col = geo::gGeometry().sensorIDsVec().at( c );
+        int col = _sensorIDVec.at( c );
 
          if ( 
                   ( col != getFixedPlaneID() && row == getFixedPlaneID() )
                   ||
-                  (  geo::gGeometry().sensorIDtoZOrder( col ) == geo::gGeometry().sensorIDtoZOrder( row ) + 1 )
+                  (  _sensorIDtoZ.at( col ) == _sensorIDtoZ.at( row ) + 1 )
                   ) 
           {
 
@@ -825,7 +809,7 @@ void EUTelCorrelator::bookHistos() {
           //we create histograms for X and Y Cluster correlation
           if ( _hasClusterCollection && !_hasHitCollection) {
 
-            double safetyFactor = 1.0; // 2 should be enough because it
+            //double safetyFactor = 1.0; // 2 should be enough because it
             // means that the sensor is wrong
             // by all its size.
 
@@ -1032,7 +1016,7 @@ void EUTelCorrelator::bookHistos() {
             streamlog_out( DEBUG5 ) << "Booking histo " << tempHistoName << endl;
 
  
-            double safetyFactor = 1.0; // 2 should be enough because it
+            //double safetyFactor = 1.0; // 2 should be enough because it
             // means that the sensor is wrong
             // by all its size.
 

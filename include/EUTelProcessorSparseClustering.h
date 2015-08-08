@@ -276,16 +276,7 @@ protected:
 	float _cutT;
 
 private:
-  
-	#ifndef DISALLOW_COPY_AND_ASSIGN
-	//Following #define stops the accidental creation of a copy or assignment operator by causing a link error. 
-	//Copy and Assignment operators not allowed because they are unnecessary and the cause of many bugs
-	#define DISALLOW_COPY_AND_ASSIGN(EUTelProcessorSparseClustering) \
-	EUTelProcessorSparseClustering(const EUTelProcessorSparseClustering&); \
-	void operator=(const EUTelProcessorSparseClustering&);
-	//Private Functions
-	DISALLOW_COPY_AND_ASSIGN(EUTelProcessorSparseClustering)//See #define just above
-	#endif
+	DISALLOW_COPY_AND_ASSIGN(EUTelProcessorSparseClustering)
 
     //! read secondary collections
     void readCollections(LCEvent *evt);

@@ -22,6 +22,7 @@
 //eutel data specific
 #include "EUTelTrackerDataInterfacerImpl.h"
 #include "EUTelGenericSparseClusterImpl.h"
+#include "EUTelGeometricClusterImpl.h"
 
 //eutel geometry
 #include "EUTelGeometryTelescopeGeoDescription.h"
@@ -461,7 +462,7 @@ void EUTelProcessorGeometricClustering::geometricClustering(LCEvent * evt, LCCol
 				{
 					// set the ID for this zsCluster
 					idZSClusterEncoder["sensorID"]  = sensorID;
-					idZSClusterEncoder["sparsePixelType"] = static_cast<int>( type );
+					idZSClusterEncoder["sparsePixelType"] = static_cast<int>( kEUTelGeometricPixel );
 					idZSClusterEncoder["quality"] = 0;
 					idZSClusterEncoder.setCellID( zsCluster.get() );
 
@@ -568,11 +569,11 @@ void EUTelProcessorGeometricClustering::fillHistos (LCEvent * evt)
 			int detectorID = static_cast<int>( cellDecoder(pulse)["sensorID"] ); 
 			//TODO: do we need this check?
 			//SparsePixelType pixelType = static_cast<SparsePixelType> (0);
-			EUTelSimpleVirtualCluster* cluster;
+			EUTelGeometricClusterImpl* cluster;
 	
 			if( type == kEUTelGenericSparseClusterImpl ) 
 			{
-		    	cluster = new EUTelGenericSparseClusterImpl<EUTelGeometricPixel> ( static_cast<TrackerDataImpl*> ( pulse->getTrackerData() ) );
+		    	cluster = new EUTelGeometricClusterImpl ( static_cast<TrackerDataImpl*> ( pulse->getTrackerData() ) );
 			}	 
 			else 
 			{
@@ -692,9 +693,9 @@ void EUTelProcessorGeometricClustering::bookHistos() {
 			if ( histoInfo ) 
 			{
 				streamlog_out ( DEBUG2 ) << (* histoInfo ) << std::endl;
-				/* clusterNBin = histoInfo->_xBin;
+				clusterNBin = histoInfo->_xBin;
 				clusterMin  = histoInfo->_xMin;
-				clusterMax  = histoInfo->_xMax;*/
+				clusterMax  = histoInfo->_xMax;
 				if ( histoInfo->_title != "" ) clusterTitle = histoInfo->_title;
 			}
 		}
@@ -707,9 +708,9 @@ void EUTelProcessorGeometricClustering::bookHistos() {
 		  histoInfo = histoMgr->getHistogramInfo( _clusterSignalHistoName );
 		  if ( histoInfo ) {
 		    streamlog_out ( DEBUG2 ) << (* histoInfo ) << std::endl;
-		   /* clusterTotBin = histoInfo->_xBin;
+		    clusterTotBin = histoInfo->_xBin;
 		    clusterTotMin  = histoInfo->_xMin;
-		    clusterTotMax  = histoInfo->_xMax;*/
+		    clusterTotMax  = histoInfo->_xMax;
 		    if ( histoInfo->_title != "" ) clusterTotTitle = histoInfo->_title;
 		  }
 		}
@@ -722,9 +723,9 @@ void EUTelProcessorGeometricClustering::bookHistos() {
 		  histoInfo = histoMgr->getHistogramInfo( _clusterSizeXHistoName );
 		  if ( histoInfo ) {
 		    streamlog_out ( DEBUG2 ) << (* histoInfo ) << std::endl;
-		  /*  clusterXNBin = histoInfo->_xBin;
+		    clusterXNBin = histoInfo->_xBin;
 		    clusterXMin  = histoInfo->_xMin;
-		    clusterXMax  = histoInfo->_xMax;*/
+		    clusterXMax  = histoInfo->_xMax;
 		    if ( histoInfo->_title != "" ) clusterXTitle = histoInfo->_title;
 		  }
 		}
@@ -738,9 +739,9 @@ void EUTelProcessorGeometricClustering::bookHistos() {
 		  histoInfo = histoMgr->getHistogramInfo( _clusterSizeYHistoName );
 		  if ( histoInfo ) {
 		    streamlog_out ( DEBUG2 ) << (* histoInfo ) << std::endl;
-		   /* clusterXNBin = histoInfo->_xBin;
-		    clusterXMin  = histoInfo->_xMin;
-		    clusterXMax  = histoInfo->_xMax;*/
+		    clusterYNBin = histoInfo->_xBin;
+		    clusterYMin  = histoInfo->_xMin;
+		    clusterYMax  = histoInfo->_xMax;
 		    if ( histoInfo->_title != "" ) clusterYTitle = histoInfo->_title;
 		  }
 		}
@@ -808,9 +809,9 @@ void EUTelProcessorGeometricClustering::bookHistos() {
 		  histoInfo = histoMgr->getHistogramInfo(  _eventMultiplicityHistoName );
 		  if ( histoInfo ) {
 		    streamlog_out ( DEBUG2 ) << (* histoInfo ) << std::endl;
-		    /*eventMultiNBin  = histoInfo->_xBin;
+		    eventMultiNBin  = histoInfo->_xBin;
 		    eventMultiMin   = histoInfo->_xMin;
-		    eventMultiMax   = histoInfo->_xMax;*/
+		    eventMultiMax   = histoInfo->_xMax;
 		    if ( histoInfo->_title != "" ) eventMultiTitle = histoInfo->_title;
 		  }
 		}

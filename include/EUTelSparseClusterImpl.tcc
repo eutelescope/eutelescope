@@ -302,7 +302,35 @@ namespace eutelescope {
     delete pixel;
   }
   
-  
+   
+  template<class PixelType>
+  void EUTelSparseClusterImpl<PixelType>::getClusterInfo(int& xPos, int& yPos, int& xSize, int& ySize) const
+  {
+	int xMin = std::numeric_limits<int>::max();	//stores the largest possible value
+	int yMin = xMin;				//every pixel will be lower, so its OK for max
+	int xMax = -1;					//pixel index starts at 0, so thats also ok
+	int yMax = -1;
+	PixelType* pixel = new PixelType;
+	for ( unsigned int index = 0; index < size() ; index++ ) 
+	{
+		getSparsePixelAt( index , pixel);
+		short xCur = pixel->getXCoord();
+		short yCur = pixel->getYCoord();
+		if ( xCur < xMin ) xMin = xCur;
+		if ( xCur > xMax ) xMax = xCur;
+		if ( yCur < yMin ) yMin = yCur;
+		if ( yCur > yMax ) yMax = yCur;
+	}
+
+	xSize = xMax - xMin + 1;
+	ySize = yMax - yMin + 1;
+	
+	xPos =  static_cast<int>( std::floor ( static_cast<float>(xMax) - 0.5 * static_cast<float>(xSize) + 0.5 ) );
+	yPos =  static_cast<int>( std::floor ( static_cast<float>(yMax) - 0.5 * static_cast<float>(ySize) + 0.5 ) );
+
+	delete pixel;
+  }
+
   template<class PixelType>
   void EUTelSparseClusterImpl<PixelType>::getCenterCoord(int& xCenter, int& yCenter) const {
     // by definition, the cluster center is the pixel containing the
@@ -426,24 +454,6 @@ namespace eutelescope {
     }
     delete pixel;
     return charge;
-  }
-
-  template<class PixelType>
-  void EUTelSparseClusterImpl<PixelType>::setClusterQuality(eutelescope::ClusterQuality quality)  {
-    lcio::long64 cell0 = static_cast<lcio::long64> ( _trackerData->getCellID0() ); 
-    int rhs = 18;
-    lcio::long64 emptyMask     = ~( 0x1F << rhs );
-    lcio::long64 maskedQuality = ( (static_cast<int> ( quality ) & 0x1F ) << rhs );
-    
-    // first apply an empty mask for the quality bit ranges, that is
-    // to say reset the quality bit range but keep all the rest. 
-    cell0 = cell0 & emptyMask;
-    
-    // now apply the maskedQuality. 
-    cell0 = cell0 | maskedQuality;  
-
-    _trackerData->setCellID0(cell0);
-
   }
 
   template<class PixelType>

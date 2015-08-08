@@ -217,6 +217,7 @@ namespace eutelescope {
     void bookHistos();
 
     virtual    LCCollectionVec* CreateDummyReferenceHitCollection();
+
     virtual void CheckIOCollections(LCEvent* event);
 
   private:
@@ -230,23 +231,11 @@ namespace eutelescope {
      */
     std::map< int, int > _conversionIdMap;
 
-  #ifndef DISALLOW_COPY_AND_ASSIGN
-  //Following #define stops the accidental creation of a copy or assignment operator by causing a link error. Copy and Assignment operators not allowed because they are unnecessary and the cause of many bugs
-  #define DISALLOW_COPY_AND_ASSIGN(EUTelApplyAlignmentProcessor) \
-  EUTelApplyAlignmentProcessor(const EUTelApplyAlignmentProcessor&); \
-  void operator=(const EUTelApplyAlignmentProcessor&);
-
-  //Private Functions
-  DISALLOW_COPY_AND_ASSIGN(EUTelApplyAlignmentProcessor)//See #define just above
-  #endif
-
+  	DISALLOW_COPY_AND_ASSIGN(EUTelApplyAlignmentProcessor)
 
   protected:
 
     // Internal processor variables
-    // ----------------------------
-
-
     int _nRun ;
     int _nEvt ;
 

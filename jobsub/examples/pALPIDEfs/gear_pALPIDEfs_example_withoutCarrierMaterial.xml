@@ -1,0 +1,141 @@
+<gear>
+  <!--GEAR file for ITS upgrade pALPIDEfs usual setup (18 mm spacers between layers, meaning 19.6 mm distance not including material of carrier card) -->
+  <global detectorName="EUTelescope"/>
+  <BField type="ConstantBField" x="0.0" y="0.0" z="0.0"/>
+  <detectors>
+    <detector name="SiPlanes" geartype="SiPlanesParameters">
+      <siplanesID ID="0"/>
+      <siplanesType type="TelescopeWithoutDUT"/>
+      <siplanesNumber number="7"/>
+      <!-- z along beam -->
+      <layers>
+	<!--pALPIDEfs Plane 0 -->
+	<layer>
+	  <ladder 	ID="0" 
+			positionX="0.00"	positionY="0.00"	positionZ="0" 
+			rotationZY="0.0"	rotationZX="0.0"	rotationXY="0.0" 
+			sizeX="28.672"		sizeY="14.336"		thickness="0.432" 
+			radLength="93.660734"
+			/>
+	  <sensitive 	ID="0" 
+			positionX="0.00"	positionY="0.00"	positionZ="0" 
+			sizeX="28.672"		sizeY="14.336"		thickness="0.018"
+			npixelX="1024"		npixelY="512"
+			pitchX="0.028"		pitchY="0.028" 		resolution="0.0055"
+			rotation1="-1.0"	rotation2="0.0"
+			rotation3="0.0" 	rotation4="-1.0" 
+			radLength="93.660734"
+			/>
+	</layer>
+	<!--pALPIDEfs Plane 1 -->
+	<layer>
+	  <ladder 	ID="1" 
+			positionX="0"		positionY="0"		positionZ="19.6" 
+			rotationZY="0.0"	rotationZX="0.0"	rotationXY="0.0" 
+			sizeX="28.672"		sizeY="14.336"		thickness="0.032" 
+			radLength="93.660734"
+			/>
+	  <sensitive 	ID="1" 
+			positionX="0"		positionY="0"		positionZ="19.6" 
+			sizeX="28.672"		sizeY="14.336"		thickness="0.018"
+			npixelX="1024"		npixelY="512"
+			pitchX="0.028"		pitchY="0.028" 		resolution="0.0055"
+			rotation1="-1.0"	rotation2="0.0"
+			rotation3="0.0" 	rotation4="-1.0" 
+			radLength="93.660734"
+			/>
+	</layer>
+	<!--pALPIDEfs Plane 2 -->
+	<layer>
+	  <ladder 	ID="2" 
+			positionX="0"		positionY="0"		positionZ="39.2" 
+			rotationZY="0.0"	rotationZX="0.0"	rotationXY="0.0" 
+			sizeX="28.672"		sizeY="14.336"		thickness="0.032" 
+			radLength="93.660734"
+			/>
+	  <sensitive 	ID="2" 
+			positionX="0"		positionY="0"		positionZ="39.2" 
+			sizeX="28.672"		sizeY="14.336"		thickness="0.018"
+			npixelX="1024"		npixelY="512"
+			pitchX="0.028"		pitchY="0.028" 		resolution="0.0055"
+			rotation1="-1.0"	rotation2="0.0"
+			rotation3="0.0" 	rotation4="-1.0" 
+			radLength="93.660734"
+			/>
+	</layer>
+	<!--pALPIDEfs Plane 3 -->
+	<layer>
+	  <ladder 	ID="3" 
+			positionX="0"		positionY="0"		positionZ="58.8" 
+			rotationZY="0.0"	rotationZX="0.0"	rotationXY="0.0" 
+			sizeX="28.672"		sizeY="14.336"		thickness="0.032" 
+			radLength="93.660734"
+			/>
+	  <sensitive 	ID="3" 
+			positionX="0"   	positionY="0"		positionZ="58.8" 
+			sizeX="28.672"		sizeY="14.336"		thickness="0.018"
+			npixelX="1024"		npixelY="512"
+			pitchX="0.028"		pitchY="0.028" 		resolution="0.0055"
+			rotation1="-1.0"	rotation2="0.0"
+			rotation3="0.0" 	rotation4="-1.0" 
+			radLength="93.660734"
+			/>
+	</layer>
+	<!--pALPIDEfs Plane 4 -->
+	<layer>
+	  <ladder 	ID="4" 
+			positionX="0"		positionY="0"		positionZ="78.4" 
+			rotationZY="0.0"	rotationZX="0.0"	rotationXY="0.0" 
+			sizeX="28.672"		sizeY="14.336"		thickness="0.032" 
+			radLength="93.660734"
+			/>
+	  <sensitive 	ID="4" 
+			positionX="0"		positionY="0"		positionZ="78.4" 
+			sizeX="28.672"		sizeY="14.336"		thickness="0.018"
+			npixelX="1024"		npixelY="512"
+			pitchX="0.028"		pitchY="0.028" 		resolution="0.0055"
+			rotation1="-1.0"	rotation2="0.0"
+			rotation3="0.0" 	rotation4="-1.0" 
+			radLength="93.660734"
+			/>
+	</layer>
+	<!--pALPIDEfs Plane 5 -->
+	<layer>
+	  <ladder 	ID="5" 
+			positionX="0"		positionY="0"		positionZ="98" 
+			rotationZY="0.0"	rotationZX="0.0"	rotationXY="0.0" 
+			sizeX="28.672"		sizeY="14.336"		thickness="0.032" 
+			radLength="93.660734"
+			/>
+	  <sensitive 	ID="5" 
+			positionX="0"		positionY="0"		positionZ="98" 
+			sizeX="28.672"		sizeY="14.336"		thickness="0.018"
+			npixelX="1024"		npixelY="512"
+			pitchX="0.028"		pitchY="0.028" 		resolution="0.0055"
+			rotation1="-1.0"	rotation2="0.0"
+			rotation3="0.0" 	rotation4="-1.0" 
+			radLength="93.660734"
+			/>
+	</layer>
+	<!--pALPIDEfs Plane 6 -->
+	<layer>
+	  <ladder 	ID="6" 
+			positionX="0"		positionY="0"		positionZ="117.6" 
+			rotationZY="0.0"	rotationZX="0.0"	rotationXY="0.0" 
+			sizeX="28.672"		sizeY="14.336"		thickness="0.432" 
+			radLength="93.660734"
+			/>
+	  <sensitive 	ID="6" 
+			positionX="0"		positionY="0"		positionZ="117.6" 
+			sizeX="28.672"		sizeY="14.336"		thickness="0.018"
+			npixelX="1024"		npixelY="512"
+			pitchX="0.028"		pitchY="0.028" 		resolution="0.0055"
+			rotation1="-1.0"	rotation2="0.0"
+			rotation3="0.0" 	rotation4="-1.0" 
+			radLength="93.660734"
+			/>
+	</layer>
+      </layers>
+    </detector>
+  </detectors>
+</gear>

@@ -226,27 +226,6 @@ void EUTelFFClusterImpl::getCenterOfGravity(float& xCoG, float& yCoG) const {
 
 }
 
-
-void EUTelFFClusterImpl::setClusterQuality(ClusterQuality quality) {
-
-  lcio::long64 cell1 = static_cast<lcio::long64> (_trackerData->getCellID1()) ;
-
-  int rhs = 15;
-  lcio::long64  emptyMask = ~( 0x1F << rhs );
-  lcio::long64  maskedQuality = ( (static_cast<int> (quality) & 0x1F ) << rhs );
-
-  // first apply an empty mask for the quality bit ranges
-  cell1 = cell1 & emptyMask;
-
-  // now apply the maskedQuality
-  cell1 = cell1 | maskedQuality;
-
-  // apply the changes
-  _trackerData->setCellID1(cell1);
-
-}
-
-
 float EUTelFFClusterImpl::getSeedCharge() const {
 
   return *max_element( _trackerData->getChargeValues().begin(),
@@ -514,7 +493,6 @@ void EUTelFFClusterImpl::print(std::ostream& os ) const {
   int bigspacer = 23;
 
   os   <<  setw(bigspacer) << setiosflags(ios::left) << "Fixed frame cluster "<< "(" << xSize << ", " << ySize << ")\n"
-       <<  setw(bigspacer) <<  "Cluster ID " << getClusterID() << " on detector " << getDetectorID() << "\n"
        <<  setw(bigspacer) <<  "Cluster quality " << quality << "\n"
        <<  setw(bigspacer) <<  "Cluster total charge " << getTotalCharge() << "\n"
        <<  setw(bigspacer) <<  "Cluster charge (9) " << getClusterCharge(9) << "\n"

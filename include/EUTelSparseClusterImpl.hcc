@@ -104,6 +104,7 @@ namespace eutelescope {
      */ 
     virtual void getClusterSize(int& xSize, int& ySize) const ;
 
+    virtual void getClusterInfo(int& xPos, int& yPos, int& xSize, int& ySize) const;
 
     //! Return the cluster quality
     /*! It returns the cluster quality using the ClusterQuality enum.
@@ -222,13 +223,6 @@ namespace eutelescope {
      *  @param y CoG coordinate along y
      */ 
     virtual void  getCenterOfGravity(float& x, float& y) const;
-
-    //! Set the cluster quality
-    /*! Used to set the cluster quality using the ClusterQuality enum.
-     *  
-     *  @see eutelescope::ClusterQuality
-     */
-    virtual void setClusterQuality(ClusterQuality)  ;
 
     //! Get the pixel noise values
     /*! This method returns the pixel noise value vector if it was
@@ -378,17 +372,8 @@ namespace eutelescope {
     SparsePixelType _type;
 
   private:
-   #ifndef DISALLOW_COPY_AND_ASSIGN
-  //Following #define stops the accidental creation of a copy or assignment operator by causing a link error. Copy and Assignment operators not allowed because they are unnecessary and the cause of many bugs
-  #define DISALLOW_COPY_AND_ASSIGN(EUTelSparseClusterImpl) \
-  EUTelSparseClusterImpl(const EUTelSparseClusterImpl&); \
-  void operator=(const EUTelSparseClusterImpl&);
-
-  //Private Functions
   DISALLOW_COPY_AND_ASSIGN(EUTelSparseClusterImpl)//See #define just above
-  #endif
  
-  //Private Functions
     //! Noise values vector
     std::vector<float > _noiseValues;
 

@@ -31,7 +31,10 @@
 namespace eutelescope {
 
     class EUTelTrackFitter {
-      
+  
+    protected:
+        std::string _name;
+   
     private:
         DISALLOW_COPY_AND_ASSIGN(EUTelTrackFitter)        // prevent users from making (default) copies of processors
       
@@ -76,11 +79,7 @@ namespace eutelescope {
 
         /** */
         virtual IMPL::LCCollectionVec* getFitTrackVec() const {   return _LCIO_fittrackvec;     }
- 
-    protected:
-        std::string _name;
-
-    };
+     };
 
 }
 #endif	/* EUTELTRACKFITTER_H */

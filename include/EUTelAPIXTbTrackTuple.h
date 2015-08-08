@@ -13,7 +13,7 @@
 
 namespace eutelescope {
   class EUTelAPIXTbTrackTuple : public marlin::Processor {
-    
+  
   public:
     virtual Processor*  newProcessor() { return new EUTelAPIXTbTrackTuple; }
     
@@ -43,7 +43,9 @@ namespace eutelescope {
     std::string _path2file;
 
     std::vector<int> _DUTIDs;
- 
+    std::map<int, float> _xSensSize;
+    std::map<int, float> _ySensSize;
+
     // Internal processor variables
     // ----------------------------
     int _nRun ;
@@ -54,9 +56,8 @@ namespace eutelescope {
     bool _isFirstEvent;
     
     TFile* _file;
-    
+
     TTree* _eutracks;
-    
     int _nTrackParams;
     std::vector<double> *_xPos;
     std::vector<double> *_yPos;
@@ -83,7 +84,8 @@ namespace eutelescope {
     std::vector<double> *_hitZPos;
     std::vector<int>    *_hitSensorId;
 
-    TVectorD* _versionVec;
+    TTree* _versionTree;
+    std::vector<double>* _versionNo;
   };
 
   //! A global instance of the processor.

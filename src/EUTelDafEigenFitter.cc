@@ -1,7 +1,6 @@
 // Version: $Id$
 #include "EUTelDafTrackerSystem.h"
 #include <Eigen/Core>
-#include <Eigen/Array>
 #include <Eigen/LU>
 #include <Eigen/Cholesky>
 #include <float.h>
@@ -43,10 +42,10 @@ void EigenFitter::calculatePlaneWeight(FitPlane& plane, TrackEstimate* e, float 
   //Get the value exp( -chi2 / 2t) for each measurement
   for(size_t m = 0; m < nMeas ; m++){
     const Measurement &meas = plane.meas.at(m);
-    resids = e->params.start<2>() - meas.getM();
+    resids = e->params.head<2>() - meas.getM();
 //printf("%8.3f %8.3f <->%8.3f %8.3f \n", e->params(0),e->params(1), meas.getM()(0), meas.getM()(1) );
 
-    chi2s = resids.cwise().square();
+    chi2s = resids.array().square().matrix();
     chi2s(0) /= plane.getSigmaX() * plane.getSigmaX() + e->cov(0,0);
     chi2s(1) /= plane.getSigmaY() * plane.getSigmaY() + e->cov(1,1);
     //resids = plane.getVars() + Vector2f( e->cov(0,0), e->cov(1,1) );
@@ -110,22 +109,22 @@ void EigenFitter::updateInfo(const FitPlane &pl, const int index, TrackEstimate 
   const Measurement& m = pl.meas.at(index);
   //Weight matrix:
   //C = C + H'GH, with diagonal G
-  e->cov.diagonal().start<2>() += pl.invMeasVar;
+  e->cov.diagonal().head<2>() += pl.invMeasVar;
   //weight vector update
   // x = x + H'G M
-  e->params.start<2>() += m.getM().cwise() * pl.invMeasVar;
+  e->params.head<2>() += (m.getM().array() * pl.invMeasVar.array()).matrix();
 }
 
 void EigenFitter::updateInfoDaf(const FitPlane &pl, TrackEstimate* e){
   if(pl.isExcluded()) { return;}
   //Weight matrix:
   //C = C + H'GH
-  e->cov.diagonal().start<2>() += pl.invMeasVar * pl.getTotWeight();
+  e->cov.diagonal().head<2>() += pl.invMeasVar * pl.getTotWeight();
 
   //weight vector update
   // x = x + H'G M
   for(size_t ii = 0 ; ii < pl.meas.size(); ii++){
-    e->params.start<2>() += pl.weights(ii) * (pl.meas.at(ii).getM().cwise() * pl.invMeasVar);
+    e->params.head<2>() += pl.weights(ii) * (pl.meas.at(ii).getM().array() * pl.invMeasVar.array()).matrix();
   }
 }
 
@@ -137,7 +136,7 @@ void EigenFitter::smoothInfo(){
 
 void EigenFitter::getAvgInfo(TrackEstimate* e1, TrackEstimate* e2, TrackEstimate* result){
   tmp4x4 = e1->cov + e2->cov;
-  tmp4x4.computeInverse(&result->cov);
+  result->cov = tmp4x4.inverse();
   result->params = result->cov * ( e1->params + e2->params); 
   
   // std::cout << "Cov1:" << std::endl << e1->cov << std::endl << std::endl;

@@ -39,7 +39,7 @@ tar --strip-components 1 -C "$pypath/rootpy-dev" -xzf "$tempdir/${rootpyversion}
 echo "... done with rootpy python module"
 
 # Eigen -- linear algebra package
-eigenversion="2.0.17"
+eigenversion="3.2.2"
 wget --no-check-certificate --output-document="$tempdir/${eigenversion}.tar.gz" 'http://bitbucket.org/eigen/eigen/get/'${eigenversion}.tar.gz
 if [ ! -d "$extpath/Eigen" ]; then mkdir "$extpath/Eigen"; fi;
 echo "Extracting tar archive..."

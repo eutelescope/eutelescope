@@ -18,12 +18,12 @@
    <execute>
       <processor name="AIDA"/>
       <processor name="MyAlibavaPedestalNoiseProcessor"/>
-      <processor name="Save"/>
+      <processor name="PrintEventNumber"/>
    </execute>
 
    <global>
-      <parameter name="LCIOInputFiles"> @LcioRawPath@/@AlibavaOutputFormat@-converter.slcio </parameter>
-      <parameter name="GearXMLFile" value="@GearFile@"/>
+      <parameter name="LCIOInputFiles"> @LcioPath@/@AlibavaOutputFormat@-converter.slcio </parameter>
+      <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
       <parameter name="SupressCheck" value="false"/>
@@ -62,24 +62,14 @@ ending order and there should be no space between two $ character-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="Save" type="LCIOOutputProcessor">
- <!--Writes the current event to the specified LCIO outputfile. Needs to be the last ActiveProcessor.-->
-  <!--drops the named collections from the event-->
-  <!--parameter name="DropCollectionNames" type="StringVec"> TPCHits HCalHits </parameter-->
-  <!--drops all collections of the given type from the event-->
-  <!--parameter name="DropCollectionTypes" type="StringVec"> SimTrackerHit SimCalorimeterHit </parameter-->
-  <!-- write complete objects in subset collections to the file (i.e. ignore subset flag)-->
-  <!--parameter name="FullSubsetCollections" type="StringVec" value="MCParticlesSkimmed"/-->
-  <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
-  <!--parameter name="KeepCollectionNames" type="StringVec" value="MyPreciousSimTrackerHits"/-->
-  <!-- name of output file -->
-  <parameter name="LCIOOutputFile" type="string" value="@ResultsPath@/@AlibavaOutputFormat@-pedestal.slcio"/>
-  <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
-  <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
-  <!--will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW-->
-  <!--parameter name="SplitFileSizekB" type="int" value="1992294"/-->
-  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+<processor name="PrintEventNumber" type="EUTelUtilityPrintEventNumber">
+ <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
+  <!--Print event number for every n-th event-->
+  <parameter name="EveryNEvents" type="int" value="2500"/>
+    <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
+  <!--print the event timestamp as read from LCIO-->
+  <!--parameter name="printTimestamp" type="bool" value="false"/-->
 </processor>
 
 </marlin>

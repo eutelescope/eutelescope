@@ -29,8 +29,6 @@
 #include "EUTelCDashMeasurement.h"
 #include "EUTelGeometryTelescopeGeoDescription.h"
 
-
-
 // marlin includes ".h"
 #include "marlin/Processor.h"
 #include "marlin/Global.h"
@@ -39,10 +37,6 @@
 
 // marlin util includes
 #include "mille/Mille.h"
-
-// gear includes <.h>
-#include <gear/GearMgr.h>
-#include <gear/SiPlanesParameters.h>
 
 // aida includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -334,57 +328,23 @@ void EUTelMille::init() {
     std::string name("test.root");
     geo::gGeometry().initializeTGeoDescription(name,false);
 
-
-  // check if the GEAR manager pointer is not null!
-  if ( Global::GEAR == 0x0 ) {
-    streamlog_out ( ERROR2 ) << "The GearMgr is not available, for an unknown reason." << endl;
-    throw InvalidGeometryException("GEAR manager is not initialised");
-  }
-
-//  sensor-planes in geometry navigation:
-  _siPlanesParameters  = const_cast<gear::SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
-  _siPlanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
-
-  // clear the sensor ID vector
   _sensorIDVec.clear();
-
-  // clear the sensor ID map
   _sensorIDVecMap.clear();
-  _sensorIDtoZOrderMap.clear();
+	//TODO: get this directly
 
-  // clear the sensor ID vector (z-axis order)
-  _sensorIDVecZOrder.clear();
+  // an associative map for getting also the sensorID ordered
+  map< double, int > sensorIDMap;
 
-// copy-paste from another class (should be ideally part of GEAR!)
-   double*   keepZPosition = new double[ _siPlanesLayerLayout->getNLayers() ];
-   for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); iPlane++ ) 
+  for ( size_t i = 0; i < geo::gGeometry().sensorIDsVec().size(); i++) 
    {
-    int sensorID = _siPlanesLayerLayout->getID( iPlane );
-        keepZPosition[ iPlane ] = _siPlanesLayerLayout->getLayerPositionZ(iPlane);
-
-    _sensorIDVec.push_back( sensorID );
-    _sensorIDVecMap.insert( make_pair( sensorID, iPlane ) );
-
-    // count number of the sensors to the left of the current one:
-    int _sensors_to_the_left = 0;
-    for ( int jPlane = 0 ; jPlane < _siPlanesLayerLayout->getNLayers(); jPlane++ ) 
-    {
-        if( _siPlanesLayerLayout->getLayerPositionZ(jPlane) + 1e-06 <     keepZPosition[ iPlane ] )
-        {
-            _sensors_to_the_left++;
-        }
-    }
-
-    _sensorIDVecZOrder.push_back( _sensors_to_the_left );
-    _sensorIDtoZOrderMap.insert(make_pair( sensorID, _sensors_to_the_left));
+	int sensorID = geo::gGeometry().sensorIDsVec().at(i);
+    	_sensorIDVec.push_back( sensorID );
+    	_sensorIDVecMap.insert( make_pair( sensorID, i ) );
+    	sensorIDMap.insert( make_pair( geo::gGeometry().siPlaneZPosition(sensorID), sensorID ) );
    }
-   
-   delete [] keepZPosition;
-
-
+     
   _histogramSwitch = true;
-
-  _referenceHitVec = 0;
+  _referenceHitVec = NULL;
 
   //lets guess the number of planes
   if(_inputMode == 0 || _inputMode == 2) 
@@ -434,20 +394,7 @@ void EUTelMille::init() {
       streamlog_out ( ERROR2 ) << "unknown input mode " << _inputMode << endl;
       throw InvalidParameterException("unknown input mode");
     }
-  
-  // an associative map for getting also the sensorID ordered
-  map< double, int > sensorIDMap;
-  //lets create an array with the z positions of each layer
-  for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); iPlane++ ) {
-    _siPlaneZPosition.push_back(_siPlanesLayerLayout->getLayerPositionZ(iPlane));
-    sensorIDMap.insert( make_pair( _siPlanesLayerLayout->getLayerPositionZ(iPlane), _siPlanesLayerLayout->getID(iPlane) ) );
-  }
 
-
-  //lets sort the array with increasing z
-  sort(_siPlaneZPosition.begin(), _siPlaneZPosition.end());
-
-  
   //the user is giving sensor ids for the planes to be excluded. this
   //sensor ids have to be converted to a local index according to the
   //planes positions along the z axis.
@@ -500,15 +447,6 @@ void EUTelMille::init() {
     ++iter;
     ++counter;
   }
-  //
-
-
-  //consistency
-  if(_siPlaneZPosition.size() != _nPlanes)
-    {
-      streamlog_out ( ERROR2 ) << "the number of detected planes is " << _nPlanes << " but only " << _siPlaneZPosition.size() << " layer z positions were found!"  << endl;
-      throw InvalidParameterException("number of layers and layer z positions mismatch");
-    }
 
   // this method is called only once even when the rewind is active
   // usually a good idea to
@@ -658,26 +596,10 @@ void EUTelMille::processRunHeader (LCRunHeader * rdr) {
   // in the xml file. If the numbers are different, instead of barely
   // quitting ask the user what to do.
 
-  if ( header->getGeoID() != geo::gGeometry().getSiPlanesLayoutID() ) {
+  if ( (unsigned int)header->getGeoID() != geo::gGeometry().getSiPlanesLayoutID() ) {
     streamlog_out ( ERROR2 ) << "Error during the geometry consistency check: " << endl;
     streamlog_out ( ERROR2 ) << "The run header says the GeoID is " << header->getGeoID() << endl;
     streamlog_out ( ERROR2 ) << "The GEAR description says is     " << geo::gGeometry().getSiPlanesLayoutID() << endl;
-
-#ifdef EUTEL_INTERACTIVE
-    string answer;
-    while (true) {
-      streamlog_out ( ERROR2 ) << "Type Q to quit now or C to continue using the actual GEAR description anyway [Q/C]" << endl;
-      cin >> answer;
-      // put the answer in lower case before making the comparison.
-      transform( answer.begin(), answer.end(), answer.begin(), ::tolower );
-      if ( answer == "q" ) {
-        exit(-1);
-      } else if ( answer == "c" ) {
-        break;
-      }
-    }
-#endif
-
   }
 
   // increment the run counter
@@ -1237,7 +1159,7 @@ void EUTelMille::processEvent (LCEvent * event) {
   
   if( _nMilleTracks > _maxTrackCandidatesTotal )
   {
-      throw StopProcessingException(this);
+	return; //throw StopProcessingException(this);
   }
   
   // fill resolution arrays
@@ -1814,7 +1736,7 @@ void EUTelMille::processEvent (LCEvent * event) {
                   //calculate the lambda parameter
                   const double la = -1.0*b0*c0-b1*c1+c0*x+c1*y+sqrt(1-c0*c0-c1*c1)*z;
                   lambda.push_back(la);
-
+/*
 		  if (_referenceHitVec == 0){                  
                   //determine the residuals without reference vector
                   _waferResidX[help] = b0 + la*c0 - x;
@@ -1822,6 +1744,7 @@ void EUTelMille::processEvent (LCEvent * event) {
                   _waferResidZ[help] = la*sqrt(1.0 - c0*c0 - c1*c1) - z;
 
 		  } else {
+*/
 		    // use reference vector
 		    TVector3 vpoint(b0,b1,0.);
 		    TVector3 vvector(c0,c1,c2);
@@ -1841,7 +1764,9 @@ void EUTelMille::processEvent (LCEvent * event) {
 		      _waferResidY[help] = 0.;
 		      _waferResidZ[help] = 0.;
 		    }
-		  }
+		/*  
+		}
+		*/
                 }
             }
           delete gMinuit;
@@ -2167,17 +2092,8 @@ void EUTelMille::processEvent (LCEvent * event) {
                 }
 
                 if (excluded == 0) {
-                  //     cout << "--" << endl;
                   int helphelp = help - nExcluded; // index of plane after
-                  // excluded planes have
-                  // been removed
 
-                  //local parameters: b0, b1, c0, c1
-//                  const double la = lambda[help];
-
-//                  double z_sensor = _siPlanesLayerLayout -> getSensitivePositionZ(help) + 0.5 * _siPlanesLayerLayout->getSensitiveThickness( help );
-//                  z_sensor *= 1000;		// in microns
-						// reset all derivatives to zero!
 		  for (int i = 0; i < nGL; i++ ) 
                   {
 		    derGL[i] = 0.000;
@@ -2192,7 +2108,8 @@ void EUTelMille::processEvent (LCEvent * event) {
                   double y_sensor = 0.;
                   double z_sensor = 0.;
 
-		  if (_referenceHitVec != 0){
+		  if (_referenceHitVec != 0)
+{
 		    for(int ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
 		      {
 			EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
@@ -2203,7 +2120,15 @@ void EUTelMille::processEvent (LCEvent * event) {
 			    z_sensor =  refhit->getZOffset();
 			  } 
 		      }
-		  }
+}
+else
+{
+	int sensorID = _sensorIDVec[help];
+	x_sensor = geo::gGeometry().siPlaneXPosition(sensorID); 
+	y_sensor = geo::gGeometry().siPlaneYPosition(sensorID); 
+	z_sensor = geo::gGeometry().siPlaneZPosition(sensorID); 
+//std::cout << "Retrived: " << x_sensor << ", " << y_sensor << ", " << z_sensor << std::endl;
+}
                   x_sensor *= 1000.;
                   y_sensor *= 1000.;
                   z_sensor *= 1000.;
@@ -2451,25 +2376,29 @@ void EUTelMille::processEvent (LCEvent * event) {
 
 TVector3 EUTelMille::Line2Plane(int iplane, const TVector3& lpoint, const TVector3& lvector ) 
 {
-
-  if( _referenceHitVec == 0)
+  TVector3 hitInPlane;
+  TVector3 norm2Plane;
+ 
+  if( _referenceHitVec == 0 )
   {
-    streamlog_out(MESSAGE2) << "_referenceHitVec is empty" << endl;
-    return TVector3(0.,0.,0.);
-  }
+	int sensorID = _orderedSensorID[iplane];
+  	hitInPlane.SetXYZ( geo::gGeometry().siPlaneXPosition(sensorID)*1000, geo::gGeometry().siPlaneYPosition(sensorID)*1000, geo::gGeometry().siPlaneZPosition(sensorID)*1000 );
+	norm2Plane = geo::gGeometry().siPlaneNormal(sensorID);
 
-        EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(iplane) ) ;
-        
-        TVector3 hitInPlane( refhit->getXOffset()*1000., refhit->getYOffset()*1000., refhit->getZOffset()*1000.); // go back to mm
-        TVector3 norm2Plane( refhit->getAlpha(), refhit->getBeta(), refhit->getGamma() );
+//std::cout << "Retrived (offset): " << sensorID << ":" << hitInPlane(0) << ", " << hitInPlane(1) << ", " << hitInPlane(2) << std::endl;
+//std::cout << "Retrived (angle): "<< sensorID  << ":" << norm2Plane(0) << ", " << norm2Plane(1) << ", " << norm2Plane(2) << std::endl;
+  }
+  else
+  {
+  	EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(iplane) ) ;
+  	hitInPlane.SetXYZ( refhit->getXOffset()*1000, refhit->getYOffset()*1000, refhit->getZOffset()*1000);
+	norm2Plane.SetXYZ( refhit->getAlpha(), refhit->getBeta(), refhit->getGamma() );
+	} 
+
         TVector3 point( 1.,1.,1. );
           
         double linecoord_numenator   = norm2Plane.Dot(hitInPlane-lpoint);
         double linecoord_denumenator = norm2Plane.Dot(lvector);
-
-	//cout <<  "xoff: " << refhit->getXOffset()*1000. << ", yoff: " <<  refhit->getYOffset()*1000. << " zoff: " << refhit->getZOffset()*1000. << endl;
-
-	//cout << " linecoord_numenator: " << linecoord_numenator << ", linecoord_denumenator: " << linecoord_denumenator << ", ratio: " << linecoord_numenator/linecoord_denumenator << endl;
 
         point = (linecoord_numenator/linecoord_denumenator)*lvector + lpoint;
 
@@ -2480,8 +2409,6 @@ TVector3 EUTelMille::Line2Plane(int iplane, const TVector3& lpoint, const TVecto
       
 bool EUTelMille::hitContainsHotPixels( TrackerHitImpl   * hit) 
 {
-  bool skipHit = false;
-
   try
     {
       try{
@@ -2513,14 +2440,9 @@ bool EUTelMille::hitContainsHotPixels( TrackerHitImpl   * hit)
 		    std::map<std::string, bool >::const_iterator z = _hotPixelMap.find(ix);
 		    if(z!=_hotPixelMap.end() && _hotPixelMap[ix] == true  )
 		      { 
-			skipHit = true;
 			streamlog_out(DEBUG3) << "Skipping hit as it was found in the hot pixel map." << endl;
 			return true; // if TRUE  this hit will be skipped
 		      }
-		    else
-		      { 
-			skipHit = false; 	      
-		      } 
 		} 
 	      }
 

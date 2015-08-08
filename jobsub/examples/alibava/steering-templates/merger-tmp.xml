@@ -23,7 +23,7 @@
 
    <global>
       <parameter name="LCIOInputFiles"> </parameter>
-      <parameter name="GearXMLFile" value="@GearFile@"/>
+      <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
       <parameter name="SupressCheck" value="false"/>
@@ -35,7 +35,7 @@
   <!-- compression of output file 0: false >0: true (default) -->
   <parameter name="Compress" type="int" value="1"/>
   <!-- filename without extension-->
-  <parameter name="FileName" type="string" value="@HistogramPath@/@AlibavaOutputFormat@-converter"/>
+  <parameter name="FileName" type="string" value="@HistogramPath@/@MergedOutputFormat@-merger"/>
   <!-- type of output file root (default) or xml )-->
   <parameter name="FileType" type="string" value="root"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
@@ -46,13 +46,13 @@
  <processor name="MyAlibavaClusterCollectionMerger" type="AlibavaClusterCollectionMerger">
 	 <!--Merges alibava and telescope cluster collections-->
 	 <!--This is the input file name that telescope cluster collections stored-->
-	 <parameter name="InputTelescopeFileName" type="string"> @ResultsPath@/@TelescopeOutputFormat@-filter.slcio </parameter>
+	 <parameter name="InputTelescopeFileName" type="string"> @LcioPath@/@TelescopeOutputFormat@-filter.slcio </parameter>
 	 <!--Name of the cluster pulse collection of telescope data-->
 	 <parameter name="TelescopeClusterPulseCollectionName" type="string" lcioInType="TrackerPulse"> filtered_cluster_m26 </parameter>
 	 <!--Name of the sparse cluster collection of telescope data-->
 	 <parameter name="TelescopeSparseClusterCollectionName" type="string" lcioInType="TrackerData"> original_zsdata </parameter>
 	 <!--This is the input file name that alibava cluster collections stored-->
-	 <parameter name="InputAlibavaFileName" type="string"> @ResultsPath@/@AlibavaOutputFormat@-seedclustering.slcio </parameter>
+	 <parameter name="InputAlibavaFileName" type="string"> @LcioPath@/@AlibavaOutputFormat@-seedclustering.slcio </parameter>
     <!--Name of the cluster pulse collection of alibava data-->
 	 <parameter name="AlibavaClusterPulseCollectionName" type="string" lcioInType="TrackerPulse"> clustercollection </parameter>
 	 <!--Name of the sparse cluster collection of alibava data-->
@@ -62,7 +62,7 @@
 	 <!--Name of the merged/output sparse cluster collection. DO NOT Change this. This is hard coded in other  -->
 	 <parameter name="OutputSparseClusterCollectionName" type="string" lcioOutType="TrackerData">original_zsdata </parameter>
   <!--AlibavaEventNumber - TelescopeEventNumber-->
-  <parameter name="EventIDDifference" type="int">1 </parameter>
+  <parameter name="EventIDDifference" type="int"> @EventIDDifference@ </parameter>
 <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
 	 <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
  </processor>
@@ -79,7 +79,7 @@
   <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
   <!--parameter name="KeepCollectionNames" type="StringVec" value="MyPreciousSimTrackerHits"/-->
   <!-- name of output file -->
-  <parameter name="LCIOOutputFile" type="string" value="@ResultsPath@/@AlibavaOutputFormat@-merger.slcio"/>
+  <parameter name="LCIOOutputFile" type="string" value="@LcioPath@/@MergedOutputFormat@-merger.slcio"/>
   <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
   <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   <!--will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW-->

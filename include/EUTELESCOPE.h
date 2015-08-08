@@ -7,6 +7,14 @@
  *
  */
 
+//Following #define stops the accidental creation of a copy or assignment operator by causing a link error. 
+//Copy and Assignment operators not allowed because they are unnecessary and the cause of many bugs
+#ifndef DISALLOW_COPY_AND_ASSIGN 
+	#define DISALLOW_COPY_AND_ASSIGN(type) \
+	type(const type&); \
+	void operator=(const type&);
+#endif
+
 #ifndef EUTELESCOPE_NAMESPACE_H
 #define EUTELESCOPE_NAMESPACE_H
 
@@ -28,6 +36,11 @@ namespace eutelescope {}
 # include <sstream>
 # include <exception>
 # include <stdexcept>
+#include <cstddef>
+
+#ifndef nullptr
+	#define nullptr NULL
+#endif 
 
 #ifdef USE_MARLIN
 // streamlog include
@@ -66,6 +79,9 @@ namespace eutelescope
 
     // PARAMETER NAMES USED IN THE HEADER IMPLEMENTATION
 
+	//! Parameter to store the telescope ROOT geometry file
+	static const std::string GEOFILENAME;
+	
     //! Parameter key to store/recall the header version number
     static const char * HEADERVERSION;
 
@@ -404,7 +420,8 @@ namespace eutelescope
     kTaki              = 104,
     kAPIX              = 105,
     kFortis            = 106,
-    kTimepix           = 107
+    kTimepix           = 107,
+    kCMSPixel          = 108
   } ;
 
   //! Readout mode

@@ -17,20 +17,23 @@ jobsub -c config.cfg -csv runlist.csv alibava-datahisto <SourceRunNum>
 jobsub -c config.cfg -csv runlist.csv alibava-clusterhisto <SourceRunNum>
 
 At this point we have clusters from alibava data, lets get the ones from telescope too
-jobsub -c config.cfg -csv runlist.csv telescope-converter <TelescopeRunNum>
-jobsub -c config.cfg -csv runlist.csv telescope-clustering <TelescopeRunNum>
-jobsub -c config.cfg -csv runlist.csv telescope-filter <TelescopeRunNum>
+jobsub -c config.cfg -csv runlist.csv telescope-converter <SourceRunNum>
+jobsub -c config.cfg -csv runlist.csv telescope-clustering <SourceRunNum> 
+jobsub -c config.cfg -csv runlist.csv telescope-filter <SourceRunNum> 
 
 Now it is time to merge telescope and alibava cluster collections
 jobsub -c config.cfg -csv runlist.csv merger <SourceRunNum>
 
-And finally run hitmaker ;)
-jobsub -c config.cfg -csv runlist.csv hitmaker <SourceRunNum>
+And run hitmaker 
+jobsub -c config.cfg -csv runlist.csv hitmaker-local <SourceRunNum>
+
+If you want to find the missing coordinate values of your hits run missingcoodinate
+jobsub -c config.cfg -csv runlist.csv missingcoordinate <SourceRunNum>
+
 
 Notes:
 <PedRunNum> : Alibava pedestal data run number
 <SourceRunNum> : Alibava beam data run number
-<TelescopeRunNum> : Telescope run number
 
 
 

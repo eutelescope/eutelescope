@@ -66,16 +66,13 @@ class EUTelGenericSparseClusterImpl : public EUTelSimpleVirtualCluster
 	 *  @param xCoG The cog along x
 	 *  @param yCoG The cog along y
 	 */ 
-	virtual void getCoG(float& xCoG, float& yCoG) const;
-
-	 //!TODO: Tobias: write docu here
-	 virtual void getClusterGeomInfo(float& xPos, float& yPos, float& xSize, float& ySize) const;
+	virtual void getCenterOfGravity(float& xCoG, float& yCoG) const;
 
 	//! Return the total charge
 	/*!
 	 *  @return The total integrated charge
 	 */
-	float getTotalCharge() const ;
+	virtual float getTotalCharge() const ;
 
 	//! Return a pointer to the TrackerDataImpl
 	/*! This method is used to expose to the public the
@@ -165,15 +162,7 @@ class EUTelGenericSparseClusterImpl : public EUTelSimpleVirtualCluster
 	EUTelTrackerDataInterfacerImpl<PixelType> _rawDataInterfacer;
 
 private:
-	#ifndef DISALLOW_COPY_AND_ASSIGN
-	//Following #define stops the accidental creation of a copy or assignment operator by causing a link error. 
-	//Copy and Assignment operators not allowed because they are unnecessary and the cause of many bugs
-	#define DISALLOW_COPY_AND_ASSIGN(EUTelGenericSparseClusterImpl) \
-	EUTelGenericSparseClusterImpl(const EUTelGenericSparseClusterImpl&); \
-	void operator=(const EUTelGenericSparseClusterImpl&);
-	//Private Functions
-	DISALLOW_COPY_AND_ASSIGN(EUTelGenericSparseClusterImpl)//See #define just above
-	#endif
+	DISALLOW_COPY_AND_ASSIGN(EUTelGenericSparseClusterImpl)
 };
 } //namespace
 #endif
