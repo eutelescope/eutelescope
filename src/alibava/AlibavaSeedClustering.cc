@@ -288,7 +288,7 @@ vector<AlibavaCluster> AlibavaSeedClustering::findClusters(TrackerDataImpl * trk
 	}
 	
 	// sort seed channels according to their SNR, highest comes first!
-	for (unsigned int i=0; i+1<seedCandidates.size(); i++) {
+	for (int i=0; i+1<int(seedCandidates.size()); i++) {
 		int ichan = seedCandidates[i];
 		float isnr = (_signalPolarity*dataVec[ichan])/noiseVec[ichan];
 		int next_chan = seedCandidates[i+1];
@@ -297,7 +297,7 @@ vector<AlibavaCluster> AlibavaSeedClustering::findClusters(TrackerDataImpl * trk
 			seedCandidates[i] = next_chan;
 			seedCandidates[i+1] = ichan;
 			//start from beginning
-			i=0;
+            i=-1;
 		}
 	}
 	
@@ -313,7 +313,6 @@ vector<AlibavaCluster> AlibavaSeedClustering::findClusters(TrackerDataImpl * trk
 		AlibavaCluster acluster;
 		acluster.setChipNum(chipnum);
 		acluster.setSeedChanNum(seedChan);
-		acluster.setEta( calculateEta(trkdata,seedChan) );
 		acluster.setIsSensitiveAxisX(_isSensitiveAxisX);
 		acluster.setSignalPolarity(_signalPolarity);
 		acluster.setClusterID(clusterID);
@@ -409,8 +408,15 @@ vector<AlibavaCluster> AlibavaSeedClustering::findClusters(TrackerDataImpl * trk
 		// now if there is no neighbour not bonded
 		if(thereIsNonBondedChan == false){
 			// fill the histograms and add them to the cluster vector
-			fillHistos(acluster);
-			clusterVector.push_back(acluster);
+            if (acluster.getClusterSize()>1) {
+                acluster.setEta( calculateEta(trkdata,seedChan) );
+            }else {
+                acluster.setEta(-1);
+            }
+            
+            fillHistos(acluster);
+            
+            clusterVector.push_back(acluster);
 		}
 		
 	}
