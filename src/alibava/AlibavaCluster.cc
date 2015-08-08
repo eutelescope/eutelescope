@@ -33,7 +33,7 @@ _chipNum(-1),
 _seedChanNum(-1),
 _clusterID(-1),
 _isSensitiveAxisX(true),
-_signalPolarity(-1)
+_signalPolarity(-1.0)
 {
 // does nothing
 }
@@ -46,7 +46,7 @@ _chipNum(-1),
 _seedChanNum(-1),
 _clusterID(-1),
 _isSensitiveAxisX(true),
-_signalPolarity(-1)
+_signalPolarity(-1.0)
 {
 	CellIDDecoder<TrackerDataImpl> clusterIDDecoder(ALIBAVA::ALIBAVACLUSTER_ENCODE);
 	_clusterID = static_cast<int> ( clusterIDDecoder( trkdata )[ALIBAVA::ALIBAVACLUSTER_ENCODE_CLUSTERID] );
@@ -61,9 +61,9 @@ _signalPolarity(-1)
 		
 	int negSignal = static_cast<int> ( clusterIDDecoder( trkdata )[ALIBAVA::ALIBAVACLUSTER_ENCODE_ISSIGNALNEGATIVE] );
 	if (negSignal == 0)
-		_signalPolarity = 1;
+		_signalPolarity = 1.0;
 	else
-		_signalPolarity = -1;
+		_signalPolarity = -1.0;
 	
 	FloatVec data = trkdata->getChargeValues();
 	// first number is eta,
@@ -267,10 +267,10 @@ void AlibavaCluster::setMissingCorrdinateValue(int missingCorrdinateValue){
 }
 */
 // setter / getter for _signalPolarity
-int AlibavaCluster::getSignalPolarity(){
+double AlibavaCluster::getSignalPolarity(){
 	return _signalPolarity;
 }
-void AlibavaCluster::setSignalPolarity(int signalPolarity){
+void AlibavaCluster::setSignalPolarity(double signalPolarity){
 	_signalPolarity = signalPolarity;
 }
 
