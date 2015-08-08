@@ -105,29 +105,6 @@ void AlibavaCluster::createTrackerData(lcio::TrackerDataImpl * alibavaCluster){
 	// Cell ID encoding will done in the main processor
 	
 }
-/*
-float AlibavaCluster::getEta(){
-	// if clustersize is 1, nothing to calculate, returns -1 
-	if (getClusterSize()==1)
-		return -1;
-	
-	float leftNeighs = 0;
-	float rightNeighs = 0;
-	float centerOfGravity = getCenterOfGravity();
-	
-	for (int imember=0; imember<getClusterSize(); imember++) {
-		// since we will compare this number with float
-		float memberChanNum = float ( getChanNum(imember) );
-		if ( memberChanNum < centerOfGravity )
-			leftNeighs += getSignal(imember);
-		else if ( memberChanNum > centerOfGravity )
-			rightNeighs += getSignal(imember);
-	}
-	
-	float eta = leftNeighs/(leftNeighs+rightNeighs);
-	return eta;
-}
-*/
 
 float AlibavaCluster::getEta(){
 	return _eta;
@@ -249,23 +226,7 @@ void AlibavaCluster::setIsSensitiveAxisX(bool isSensitiveAxisX){
 bool AlibavaCluster::getIsSensitiveAxisX(){
 	return _isSensitiveAxisX;
 }
-/*
-// setter / getter for _sensorIDOffset
-int AlibavaCluster::getSensorIDOffset(){
-	return _sensorIDOffset;
-}
-void AlibavaCluster::setSensorIDOffset(int sensorIDOffset){
-	_sensorIDOffset = sensorIDOffset;
-}
 
-// setter / getter for _missingCorrdinateValue
-int AlibavaCluster::getMissingCorrdinateValue(){
-	return _missingCorrdinateValue;
-}
-void AlibavaCluster::setMissingCorrdinateValue(int missingCorrdinateValue){
-	_missingCorrdinateValue = missingCorrdinateValue;
-}
-*/
 // setter / getter for _signalPolarity
 double AlibavaCluster::getSignalPolarity(){
 	return _signalPolarity;

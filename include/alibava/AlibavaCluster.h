@@ -79,15 +79,6 @@ namespace alibava
 		double getSignalPolarity();
 		void setSignalPolarity(double signalPolarity);
 
-/*
-		// setter / getter for _sensorIDOffset
-		int getSensorIDOffset();
-		void setSensorIDOffset(int sensorIDOffset);
-		
-		// setter / getter for _missingCorrdinateValue
-		int getMissingCorrdinateValue();
-		void setMissingCorrdinateValue(int missingCorrdinateValue);
-*/
 	protected:
 		
 	};
