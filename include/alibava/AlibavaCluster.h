@@ -29,7 +29,7 @@ namespace alibava
 		int _seedChanNum;
 		int _clusterID;
 		bool _isSensitiveAxisX;
-		int _signalPolarity;
+		double _signalPolarity;
 		
 	public:
 		AlibavaCluster();
@@ -76,8 +76,8 @@ namespace alibava
 		bool getIsSensitiveAxisX();
 		
 		// setter / getter for _signalPolarity
-		int getSignalPolarity();
-		void setSignalPolarity(int signalPolarity);
+		double getSignalPolarity();
+		void setSignalPolarity(double signalPolarity);
 
 /*
 		// setter / getter for _sensorIDOffset

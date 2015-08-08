@@ -147,9 +147,10 @@ namespace alibava {
 		// The sensitive axis of the strip sensor(s) according to telescope. It has to set to either "X" ot "Y" any other value will be disregarded and sensitive axis will assumed to be "X" 
 		int _sensitiveAxisX;
 
+        
       // Signal Polarity
 		// Polarity of the signal. Set this parameter to -1 for negative signals, any other value will be disregarded and the signal will be assumed to be positive
-		int _signalPolarity;
+		double _signalPolarity;
 		
 		std::string getHistoNameForChip(std::string histoName, int ichip);
 
@@ -176,6 +177,7 @@ namespace alibava {
 		
 		//
 		bool _isSensitiveAxisX;
+        bool _isNegativeSignal;
 		
 	
 	};

@@ -55,11 +55,12 @@ AlibavaSeedClustering::AlibavaSeedClustering () :
 AlibavaBaseProcessor("AlibavaSeedClustering"),
 _seedCut(3),
 _neighCut(2),
-_sensitiveAxisX(1),
-_signalPolarity(-1),
+_sensitiveAxisX(1.0),
+_signalPolarity(-1.0),
 _etaHistoName("hEta"),
 _clusterSizeHistoName("hClusterSize"),
-_isSensitiveAxisX(true)
+_isSensitiveAxisX(true),
+_isNegativeSignal(true)
 {
 	
 	// modify processor description
@@ -101,9 +102,9 @@ _isSensitiveAxisX(true)
 										 _sensitiveAxisX, int(1));
 	
 	
-	registerProcessorParameter ("SignalPolarity",
-										 "Polarity of the signal. Set this parameter to -1 for negative signals, any other value will be disregarded and the signal will be assumed to be positive ",
-										 _signalPolarity, int (-1));
+	registerProcessorParameter ("IsNegativeSignal",
+										 "Set this parameter to true for negative signals, any other value will be disregarded and the signal will be assumed to be positive ",
+										 _isNegativeSignal, bool (true));
 	
 	
 }
@@ -137,8 +138,10 @@ void AlibavaSeedClustering::init () {
 	}
 	
 	// check signal Polarity
-	if (_signalPolarity != -1)
-		_signalPolarity = 1;
+	if (_isNegativeSignal == true)
+		_signalPolarity = -1.0;
+    else
+        _signalPolarity = 1.0;
 	
 	// check sensitive axis
 	if (_sensitiveAxisX == 0)
@@ -224,7 +227,7 @@ void AlibavaSeedClustering::processEvent (LCEvent * anEvent) {
 				else
 					clusterIDEncoder[ALIBAVA::ALIBAVACLUSTER_ENCODE_ISSENSITIVEAXISX] = 0;
 				// set signal polarity
-				if (acluster.getSignalPolarity() == -1)
+				if (acluster.getSignalPolarity() == -1.0)
 					clusterIDEncoder[ALIBAVA::ALIBAVACLUSTER_ENCODE_ISSIGNALNEGATIVE] = 1;
 				else
 					clusterIDEncoder[ALIBAVA::ALIBAVACLUSTER_ENCODE_ISSIGNALNEGATIVE] = 0;
