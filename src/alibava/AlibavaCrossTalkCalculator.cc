@@ -150,9 +150,6 @@ void AlibavaCrossTalkCalculator::processRunHeader (LCRunHeader * rdr) {
 
 void AlibavaCrossTalkCalculator::processEvent (LCEvent * anEvent) {
     
-    if ( anEvent->getEventNumber() % 1000 == 0 )
-        streamlog_out ( MESSAGE4 ) << "Looping events "<<anEvent->getEventNumber() << endl;
-    
     AlibavaEventImpl * alibavaEvent = static_cast<AlibavaEventImpl*> (anEvent);
     
     if (_skipMaskedEvents && (alibavaEvent->isEventMasked()) ) {
@@ -195,20 +192,20 @@ void AlibavaCrossTalkCalculator::processEvent (LCEvent * anEvent) {
                 // neighbour is left
                 leftSignal = neighSignal;
                 rightSignal = seedSignal;
-                histoName = string("b1_L_")+to_string(ichip);
+                histoName = string("b1_L_")+to_string(chipnum);
                 if ( TH1D * histo = dynamic_cast<TH1D*> (_rootObjectMap[histoName]) )
                     histo->Fill(leftSignal/seedSignal);
             }else{
                 rightSignal = neighSignal;
                 leftSignal = seedSignal;
-                histoName = string("b1_R_")+to_string(ichip);
+                histoName = string("b1_R_")+to_string(chipnum);
                 if ( TH1D * histo = dynamic_cast<TH1D*> (_rootObjectMap[histoName]) )
                     histo->Fill(rightSignal/seedSignal);
 
             }
             
             double eta= leftSignal /(leftSignal+rightSignal);
-            histoName = string("eta_")+to_string(ichip);
+            histoName = string("eta_")+to_string(chipnum);
             if ( TH1D * histo = dynamic_cast<TH1D*> (_rootObjectMap[histoName]) )
                 histo->Fill(eta);
 
@@ -216,7 +213,7 @@ void AlibavaCrossTalkCalculator::processEvent (LCEvent * anEvent) {
         
     } catch ( lcio::DataNotAvailableException ) {
         // do nothing again
-        streamlog_out( ERROR5 ) << "Collection ("<<getInputCollectionName()<<") not found! " << endl;
+//        streamlog_out( ERROR5 ) << "Collection ("<<getInputCollectionName()<<") not found! " << endl;
     }
     
 }
@@ -266,17 +263,17 @@ void AlibavaCrossTalkCalculator::bookHistos(){
         histoName = string("b1_L_")+to_string(ichip);
         TH1D * b1_L = new TH1D (histoName.c_str(),"", 100, -2.0,2.0);
         _rootObjectMap.insert(make_pair(histoName, 	b1_L));
-        pedestalHisto->SetTitle("left signal / seed signal;b1_L;Number of Entries");
+        b1_L->SetTitle("left signal / seed signal;b1_L;Number of Entries");
         
         histoName = string("b1_R_")+to_string(ichip);
         TH1D * b1_R = new TH1D (histoName.c_str(),"", 100, -2.0,2.0);
         _rootObjectMap.insert(make_pair(histoName, 	b1_R));
-        pedestalHisto->SetTitle("right signal / seed signal;b1_R;Number of Entries");
+        b1_R->SetTitle("right signal / seed signal;b1_R;Number of Entries");
         
         histoName = string("eta_")+to_string(ichip);
-        TH1D * b1_R = new TH1D (histoName.c_str(),"", 100, 0.0,1.0);
-        _rootObjectMap.insert(make_pair(histoName, 	b1_R));
-        pedestalHisto->SetTitle("eta;eta;Number of Entries");
+        TH1D * heta = new TH1D (histoName.c_str(),"", 100, 0.0,1.0);
+        _rootObjectMap.insert(make_pair(histoName, heta));
+        heta->SetTitle("eta;eta;Number of Entries");
         
     }
     

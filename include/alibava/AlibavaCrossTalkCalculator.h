@@ -20,6 +20,7 @@
 
 // ROOT includes <>
 #include "TObject.h"
+#include "TH1D.h"
 
 // system includes <>
 #include <string>
