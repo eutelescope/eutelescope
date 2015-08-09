@@ -53,7 +53,7 @@ using namespace alibava;
 
 AlibavaCrossTalkCalculator::AlibavaCrossTalkCalculator () :
 AlibavaBaseProcessor("AlibavaCrossTalkCalculator"),
-_recodataCollectionName("reco_data")
+_recodataCollectionName("recodata")
 {
     
     // modify processor description
@@ -72,23 +72,10 @@ _recodataCollectionName("reco_data")
                                 "The filename where the pedestal and noise values stored",
                                 _pedestalFile , string("pedestal.slcio"));
     
-    registerProcessorParameter ("CalibrationInputFile",
-                                "The filename where the calibration values stored",
-                                _calibrationFile , string("calibration.slcio"));
-    
-    
     // now the optional parameters
     registerProcessorParameter ("RecoDataCollectionName",
                                 "The collection name of reconstructed data",
-                                _recodataCollectionName, string ("reco_data"));
-    
-    registerProcessorParameter ("NoiseCollectionName",
-                                "Noise collection name, better not to change",
-                                _noiseCollectionName, string ("noise"));
-    
-    registerProcessorParameter ("ChargeCalibrationCollectionName",
-                                "Charge calibration collection name, better not to change",
-                                _chargeCalCollectionName, string ("chargeCal"));
+                                _recodataCollectionName, string ("recodata"));
     
 }
 
@@ -158,63 +145,111 @@ void AlibavaCrossTalkCalculator::processEvent (LCEvent * anEvent) {
         return;
     }
     string histoName;
-    LCCollectionVec * collectionVec;
+    LCCollectionVec * clusterColVec;
+    LCCollectionVec * recodataColVec;
     unsigned int noOfClusters;
+    unsigned int noOfChips;
     try
     {
-        collectionVec = dynamic_cast< LCCollectionVec * > ( alibavaEvent->getCollection( getInputCollectionName() ) ) ;
-        noOfClusters = collectionVec->getNumberOfElements();
+        clusterColVec = dynamic_cast< LCCollectionVec * > ( alibavaEvent->getCollection( getInputCollectionName() ) ) ;
+        recodataColVec = dynamic_cast< LCCollectionVec * > ( alibavaEvent->getCollection( _recodataCollectionName ) ) ;
+        
+        noOfClusters = clusterColVec->getNumberOfElements();
         CellIDDecoder<TrackerDataImpl> clusterIDDecoder(ALIBAVA::ALIBAVACLUSTER_ENCODE);
+        
+        noOfChips = recodataColVec->getNumberOfElements();
+        vector<FloatVec> recodataVec;
+        recodataVec.resize(noOfChips);
+        
+        for (unsigned int i=0; i< noOfChips; i++) {
+            TrackerDataImpl * recodata = dynamic_cast< TrackerDataImpl * > ( recodataColVec->getElementAt( i ) ) ;
+            int chipnum = getChipNum(recodata);
+            recodataVec[chipnum] = recodata->getChargeValues();
+        }
         
         for ( size_t i = 0; i < noOfClusters; ++i )
         {
-            TrackerDataImpl * trkdata = dynamic_cast< TrackerDataImpl * > ( collectionVec->getElementAt( i ) ) ;
-            AlibavaCluster anAlibavaCluster(trkdata);
+            TrackerDataImpl * clusterdata = dynamic_cast< TrackerDataImpl * > ( clusterColVec->getElementAt( i ) ) ;
+            AlibavaCluster anAlibavaCluster(clusterdata);
             int chipnum = anAlibavaCluster.getChipNum();
             int seedChan = anAlibavaCluster.getSeedChanNum();
             double signalPolarity = anAlibavaCluster.getSignalPolarity();
             
-            int neighChan=0;
-            double seedSignal=0.0, neighSignal=0.0;
             
-            // using only clusters with cluster size = 2
-            if (anAlibavaCluster.getClusterSize() == 2){
-                for (int imember=0; imember<anAlibavaCluster.getClusterSize(); imember++) {
-                    if (anAlibavaCluster.getChanNum(imember) == seedChan) {
-                        seedSignal =anAlibavaCluster.getSignal(imember);
-                    }else{
-                        neighChan=anAlibavaCluster.getChanNum(imember);
-                        neighSignal = anAlibavaCluster.getSignal(imember);
-                    }
-                }
-            }
-            double leftSignal =0 , rightSignal=0;
-            if (neighChan<seedChan) {
-                // neighbour is left
-                leftSignal = neighSignal;
-                rightSignal = seedSignal;
-                histoName = string("b1_L_")+to_string(chipnum);
-                if ( TH1D * histo = dynamic_cast<TH1D*> (_rootObjectMap[histoName]) )
-                    histo->Fill(leftSignal/seedSignal);
-            }else{
-                rightSignal = neighSignal;
-                leftSignal = seedSignal;
-                histoName = string("b1_R_")+to_string(chipnum);
-                if ( TH1D * histo = dynamic_cast<TH1D*> (_rootObjectMap[histoName]) )
-                    histo->Fill(rightSignal/seedSignal);
+            double seedSignal=0, leftSignal=0, rightSignal=0, leftleftSignal=0, rightrightSignal=0;
+            
+            seedSignal = recodataVec[chipnum].at(seedChan);
+            if (seedChan-1>0 && !isMasked(chipnum,seedChan-1))
+                leftSignal = recodataVec[chipnum].at(seedChan-1);
 
-            }
+            if (seedChan-2>0 && !isMasked(chipnum,seedChan-2))
+                leftleftSignal = recodataVec[chipnum].at(seedChan-2);
+
+            if (seedChan+1<recodataVec[chipnum].size() && !isMasked(chipnum,seedChan+1))
+                rightSignal = recodataVec[chipnum].at(seedChan+1);
+
+            if (seedChan+2<recodataVec[chipnum].size() && !isMasked(chipnum,seedChan+2))
+                rightrightSignal = recodataVec[chipnum].at(seedChan+2);
             
-            double eta= leftSignal /(leftSignal+rightSignal);
-            histoName = string("eta_")+to_string(chipnum);
+            histoName = string("b1_L_")+to_string(chipnum);
             if ( TH1D * histo = dynamic_cast<TH1D*> (_rootObjectMap[histoName]) )
-                histo->Fill(eta);
+                histo->Fill(leftSignal/seedSignal);
+            
+            histoName = string("b1_R_")+to_string(chipnum);
+            if ( TH1D * histo = dynamic_cast<TH1D*> (_rootObjectMap[histoName]) )
+                histo->Fill(rightSignal/seedSignal);
+            
+            histoName = string("b2_L_")+to_string(chipnum);
+            if ( TH1D * histo = dynamic_cast<TH1D*> (_rootObjectMap[histoName]) )
+                histo->Fill(leftleftSignal/seedSignal);
 
+            histoName = string("b2_R_")+to_string(chipnum);
+            if ( TH1D * histo = dynamic_cast<TH1D*> (_rootObjectMap[histoName]) )
+                histo->Fill(rightrightSignal/seedSignal);
+
+            
+            /*
+             int neighChan=0;
+             double seedSignal=0.0, neighSignal=0.0;
+             
+             // using only clusters with cluster size = 2
+             if (anAlibavaCluster.getClusterSize() == 2){
+             for (int imember=0; imember<anAlibavaCluster.getClusterSize(); imember++) {
+             if (anAlibavaCluster.getChanNum(imember) == seedChan) {
+             seedSignal =anAlibavaCluster.getSignal(imember);
+             }else{
+             neighChan=anAlibavaCluster.getChanNum(imember);
+             neighSignal = anAlibavaCluster.getSignal(imember);
+             }
+             }
+             }
+             double leftSignal =0 , rightSignal=0;
+             if (neighChan<seedChan) {
+             // neighbour is left
+             leftSignal = neighSignal;
+             rightSignal = seedSignal;
+             histoName = string("b1_L_")+to_string(chipnum);
+             if ( TH1D * histo = dynamic_cast<TH1D*> (_rootObjectMap[histoName]) )
+             histo->Fill(leftSignal/seedSignal);
+             }else{
+             rightSignal = neighSignal;
+             leftSignal = seedSignal;
+             histoName = string("b1_R_")+to_string(chipnum);
+             if ( TH1D * histo = dynamic_cast<TH1D*> (_rootObjectMap[histoName]) )
+             histo->Fill(rightSignal/seedSignal);
+             
+             }
+             
+             double eta= leftSignal /(leftSignal+rightSignal);
+             histoName = string("eta_")+to_string(chipnum);
+             if ( TH1D * histo = dynamic_cast<TH1D*> (_rootObjectMap[histoName]) )
+             histo->Fill(eta);
+             */
         }
         
     } catch ( lcio::DataNotAvailableException ) {
         // do nothing again
-//        streamlog_out( ERROR5 ) << "Collection ("<<getInputCollectionName()<<") not found! " << endl;
+        streamlog_out( DEBUG0 ) << "Collection ("<<getInputCollectionName()<<") not found in event number "<< alibavaEvent->getEventNumber()<< endl;
     }
     
 }
@@ -270,6 +305,16 @@ void AlibavaCrossTalkCalculator::bookHistos(){
         TH1D * b1_R = new TH1D (histoName.c_str(),"", 100, -2.0,2.0);
         _rootObjectMap.insert(make_pair(histoName, 	b1_R));
         b1_R->SetTitle("right signal / seed signal;b1_R;Number of Entries");
+
+        histoName = string("b2_L_")+to_string(ichip);
+        TH1D * b2_L = new TH1D (histoName.c_str(),"", 100, -2.0,2.0);
+        _rootObjectMap.insert(make_pair(histoName, 	b2_L));
+        b2_L->SetTitle("left left signal / seed signal;b2_L;Number of Entries");
+        
+        histoName = string("b2_R_")+to_string(ichip);
+        TH1D * b2_R = new TH1D (histoName.c_str(),"", 100, -2.0,2.0);
+        _rootObjectMap.insert(make_pair(histoName, 	b2_R));
+        b2_R->SetTitle("left left signal / seed signal;b2_R;Number of Entries");
         
         histoName = string("eta_")+to_string(ichip);
         TH1D * heta = new TH1D (histoName.c_str(),"", 100, 0.0,1.0);
