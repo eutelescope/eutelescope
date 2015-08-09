@@ -425,6 +425,39 @@ vector<AlibavaCluster> AlibavaSeedClustering::findClusters(TrackerDataImpl * trk
 	}
 	return clusterVector;
 }
+float AlibavaSeedClustering::calculateEtaAroundSeed(TrackerDataImpl *trkdata, int seedChan){
+	
+	// first get chip number
+	int chipnum = getChipNum(trkdata);
+	// then get the data vector
+	FloatVec dataVec;
+	dataVec = trkdata->getChargeValues();
+
+	// we will multiply all signal values by _signalPolarity to work on positive signal always
+	float seedSignal = _signalPolarity * dataVec.at(seedChan);
+	int leftChan = seedChan-1;
+	int rightChan = seedChan+1;
+	float leftSignal=0;
+	float rightSignal=0;
+	if(leftChan >= 0 && isMasked(chipnum,leftChan)==false ){
+		leftSignal = _signalPolarity * dataVec.at(leftChan);
+	} else {
+		leftSignal=0;
+	}
+
+	if ( rightChan < int( dataVec.size() ) && isMasked(chipnum, rightChan) == false ) {
+		rightSignal = _signalPolarity * dataVec.at(rightChan);
+	}else{
+		rightSignal=0;
+	}
+ 	//if (leftSignal<0) leftSignal=0;
+ 	//if (rightSignal<0) rightSignal=0;
+	
+	float eta = leftSignal/ (leftSignal+rightSignal);	
+	return eta;
+	
+}
+
 
 float AlibavaSeedClustering::calculateEta(TrackerDataImpl *trkdata, int seedChan){
 	

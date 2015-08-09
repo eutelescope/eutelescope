@@ -162,6 +162,7 @@ namespace alibava {
 
 		// to calculate Eta
 		float calculateEta(TrackerDataImpl * trkdata, int seedChan);
+		float calculateEtaAroundSeed(TrackerDataImpl * trkdata, int seedChan);
 		
 	//	void convertAlibavaCluster(AlibavaCluster alibavaCluster, LCCollectionVec * clusterColVec, LCCollectionVec * sparseClusterColVec);
 		
