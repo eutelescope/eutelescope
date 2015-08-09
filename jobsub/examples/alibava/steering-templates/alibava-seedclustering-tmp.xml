@@ -64,8 +64,8 @@
 	 <parameter name="NoiseInputFile" type="string"> @DatabasePath@/ped@PedestalRunNumber@-commonmode.slcio </parameter>
 	 <!--The signal/noise ratio that channels have to pass to be considered as seed channel-->
 	 <parameter name="SeedSNRCut" type="float"> @SeedSNRCut@ </parameter>
-	 <!--Polarity of the signal. Set this parameter to -1 for negative signals, any other value will be disregarded and the signal will be assumed to be positive -->
-	 <parameter name="SignalPolarity" type="int"> @SignalPolarity@ </parameter>
+	 <!--Set this parameter to true for negative signals, any other value will be disregarded and the signal will be assumed to be positive -->
+	 <parameter name="IsNegativeSignal" type="bool"> @IsNegativeSignal@ </parameter>
 	 <!--The default sensitive axis of the strip sensor(s) according to telescope is X. If sensitive axis is Y then set this parameter to zero (0). Any other value will be disregarded and sensitive axis will assumed to be "X" -->
 	 <parameter name="IsSensitiveAxisX" type="int"> @IsSensitiveAxisX@ </parameter>
 	 <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->

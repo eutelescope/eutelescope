@@ -300,10 +300,6 @@ namespace eutelescope {
     //! An array with the Z position of planes
     double * _siPlaneZPosition;
 
-
-    //! Sensor ID vector
-    std::vector< int > _sensorIDVec;
-
     //! Sensor ID map (inverse sensorIDVec) 
     std::map< int, int > _sensorIDVecMap;
 
@@ -391,6 +387,8 @@ namespace eutelescope {
     bool _hasClusterCollection;
     bool _hasHitCollection;
 
+    std::vector<int> _sensorIDVec;
+    std::map<int, int> _sensorIDtoZ;
   };
 
   //! A global instance of the processor

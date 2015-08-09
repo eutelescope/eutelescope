@@ -18,7 +18,7 @@
    <execute>
       <processor name="AIDA"/>
         <!--processor name="LoadHotPixelDBPALIPDEfs"/-->
-        <processor name="NoiseAnalysis"/> 
+        <processor name="NoiseAnalysis"/>
         <!--processor name="Save"/-->
       <processor name="MyEUTelUtilityPrintEventNumber"/>
    </execute>
@@ -60,12 +60,12 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="NoiseAnalysis" type="AnalysisNoise">
+ <processor name="NoiseAnalysis" type="EUTelProcessorAnalysisPALPIDEfsNoise">
   <!--parameter name="NZSDataCollectionName" type="string" lcioInType="TrackerData"> data </parameter-->
   <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> zsdata_pALPIDEfs </parameter>
   <!--Switch on or off the histogram filling-->
   <parameter name="HistogramFilling" type="bool" value="true"/>
-  <!--This many pixels will be removed from the noise--> 
+  <!--This many pixels will be removed from the noise-->
   <parameter name="nRemove" type="int" value="100"/>
   <!--Particle energy-->
   <parameter name="Energy" type="double" value="@BeamEnergy@"/>
@@ -77,7 +77,7 @@
   <parameter name="Rate" type="string" value="@Rate@"/>
   <!--ID of DUTs-->
   <parameter name="dutIDs" type="stringVec" value="@DUTNumbers@"/>
-  <!--Folder name where all the settings of each run will be saved (settings_DUTid.txt)--> 
+  <!--Folder name where all the settings of each run will be saved (settings_DUTid.txt)-->
   <parameter name="OutputSettingsFolderName" type="string" value="@LcioPath@/../"/>
 </processor>
 
@@ -105,10 +105,10 @@
 </processor>
 
 <processor name="MyEUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">
-  <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level--> 
-  <!--Print event number for every n-th event--> 
-  <parameter name="EveryNEvents" type="int" value="10000"/> 
-  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")--> 
+  <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
+  <!--Print event number for every n-th event-->
+  <parameter name="EveryNEvents" type="int" value="10000"/>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
   <!--print the event timestamp as read from LCIO-->
   <!--parameter name="printTimestamp" type="bool" value="false"/-->

@@ -1,6 +1,4 @@
-#ifdef USE_GEAR
-
-#include "AnalysisPALPIDEfs.h"
+#include "EUTelProcessorAnalysisPALPIDEfs.h"
 #include "EUTelHistogramManager.h"
 #include "EUTelAlignmentConstant.h"
 #include "EUTelGeometryTelescopeGeoDescription.h"
@@ -21,9 +19,6 @@
 #include <IMPL/TrackImpl.h>
 #include <IMPL/LCCollectionVec.h>
 
-#include <gear/GearMgr.h>
-#include <gear/SiPlanesParameters.h>
-
 #include "TVector3.h"
 #include "TFitResult.h"
 
@@ -37,10 +32,10 @@ using namespace std;
 using namespace eutelescope;
 using namespace gear;
 
-AnalysisPALPIDEfs aAnalysisPALPIDEfs;
+EUTelProcessorAnalysisPALPIDEfs aEUTelProcessorAnalysisPALPIDEfs;
 
-AnalysisPALPIDEfs::AnalysisPALPIDEfs()
-: Processor("AnalysisPALPIDEfs"),
+EUTelProcessorAnalysisPALPIDEfs::EUTelProcessorAnalysisPALPIDEfs()
+: Processor("EUTelProcessorAnalysisPALPIDEfs"),
   _fillHistos(false),
   _inputFittedHitName(""),
   _inputColName(""),
@@ -73,8 +68,6 @@ AnalysisPALPIDEfs::AnalysisPALPIDEfs()
   _nEvents(0),
   _nEventsWithTrack(0),
   _minTimeStamp(0),
-  _siPlanesParameters(0),
-  _siPlanesLayerLayout(0),
   nTracks(4),
   nTracksPAlpide(4),
   nFakeWithTrack(4,0),
@@ -163,55 +156,34 @@ AnalysisPALPIDEfs::AnalysisPALPIDEfs()
   _isFirstEvent = true;
 }
 
-void AnalysisPALPIDEfs::init() { 
+void EUTelProcessorAnalysisPALPIDEfs::init() {
   printParameters();
-#ifndef USE_GEAR
-
-  streamlog_out ( ERROR4 ) <<  "Marlin was not built with GEAR support." << endl
-                           <<  "You need to install GEAR and recompile Marlin with -DUSE_GEAR before continue." << endl;
-  exit(-1);
-
-#else
-
-  if ( Global::GEAR == 0x0 ) {
-    streamlog_out ( ERROR4 ) <<  "The GearMgr is not available, for an unknown reason." << endl;
-    exit(-1);
-  }
-
-  _siPlanesParameters  = const_cast<SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
-  _siPlanesLayerLayout = const_cast<SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
-#endif
-
-  int _nTelPlanes = _siPlanesLayerLayout->getNLayers();
-  _planeID  = new int[_nTelPlanes];
-  for(int iz=0; iz < _nTelPlanes ; iz++)
-  {
-    _planeID[iz]=_siPlanesLayerLayout->getID(iz);
-  }
+  int _nTelPlanes = geo::gGeometry().nPlanes();
+  const std::vector<int>& _planeID = geo::gGeometry().sensorIDsVec();
   for(int iz=0; iz < _nTelPlanes ; iz++)
     if(_planeID[iz]==_dutID)
     {
-      dutZ = _siPlanesLayerLayout->getSensitivePositionZ(iz);
+      dutZ = geo::gGeometry().siPlaneZPosition(iz);
       layerIndex = iz;
-      xSize = _siPlanesLayerLayout->getSensitiveSizeX(layerIndex);
-      ySize = _siPlanesLayerLayout->getSensitiveSizeY(layerIndex);
-      xZero        = _siPlanesLayerLayout->getSensitivePositionX(layerIndex); // mm
-      yZero        = _siPlanesLayerLayout->getSensitivePositionY(layerIndex); // mm
-      xSize        = _siPlanesLayerLayout->getSensitiveSizeX(layerIndex);     // mm
-      ySize        = _siPlanesLayerLayout->getSensitiveSizeY(layerIndex);     // mm
-      xPitch       = _siPlanesLayerLayout->getSensitivePitchX(layerIndex);    // mm
-      yPitch       = _siPlanesLayerLayout->getSensitivePitchY(layerIndex);    // mm
-      xPointing[0] = _siPlanesLayerLayout->getSensitiveRotation1(layerIndex); // was -1 ;
-      xPointing[1] = _siPlanesLayerLayout->getSensitiveRotation2(layerIndex); // was  0 ;
-      yPointing[0] = _siPlanesLayerLayout->getSensitiveRotation3(layerIndex); // was  0 ;
-      yPointing[1] = _siPlanesLayerLayout->getSensitiveRotation4(layerIndex); // was -1 ;
-      xPixel       = _siPlanesLayerLayout->getSensitiveNpixelX(layerIndex);
-      yPixel       = _siPlanesLayerLayout->getSensitiveNpixelY(layerIndex);
+      xSize = geo::gGeometry().siPlaneXSize(layerIndex);
+      ySize = geo::gGeometry().siPlaneYSize(layerIndex);
+      xZero        = geo::gGeometry().siPlaneXPosition(layerIndex); // mm
+      yZero        = geo::gGeometry().siPlaneYPosition(layerIndex); // mm
+      xSize        = geo::gGeometry().siPlaneXSize(layerIndex);     // mm
+      ySize        = geo::gGeometry().siPlaneYSize(layerIndex);     // mm
+      xPitch       = geo::gGeometry().siPlaneXPitch(layerIndex);    // mm
+      yPitch       = geo::gGeometry().siPlaneYPitch(layerIndex);    // mm
+      xPointing[0] = geo::gGeometry().siPlaneRotation1(layerIndex); // was -1 ;
+      xPointing[1] = geo::gGeometry().siPlaneRotation2(layerIndex); // was  0 ;
+      yPointing[0] = geo::gGeometry().siPlaneRotation3(layerIndex); // was  0 ;
+      yPointing[1] = geo::gGeometry().siPlaneRotation4(layerIndex); // was -1 ;
+      xPixel       = geo::gGeometry().siPlaneXNpixels(layerIndex);
+      yPixel       = geo::gGeometry().siPlaneYNpixels(layerIndex);
       try
       {
-        gRotation[0] = _siPlanesLayerLayout->getLayerRotationXY(layerIndex); // Euler gamma ;
-        gRotation[1] = _siPlanesLayerLayout->getLayerRotationZX(layerIndex); // Euler beta  ;
-        gRotation[2] = _siPlanesLayerLayout->getLayerRotationZY(layerIndex); // Euler alpha ;
+        gRotation[0] = geo::gGeometry().siPlaneZRotation(layerIndex); // Euler gamma ;
+        gRotation[1] = geo::gGeometry().siPlaneYRotation(layerIndex); // Euler beta  ;
+        gRotation[2] = geo::gGeometry().siPlaneXRotation(layerIndex); // Euler alpha ;
       }
       catch(...)
       {
@@ -219,7 +191,7 @@ void AnalysisPALPIDEfs::init() {
       }
       if ((gRotation[1] != 0 && gRotation[1] != 180) || (gRotation[2] != 0 && gRotation[2] != 180)) zDistance = sqrt(xSize*xSize+ySize*ySize);
       else zDistance  = 0.1;
-      gRotation[0] =  gRotation[0]*3.1415926/180.; // 
+      gRotation[0] =  gRotation[0]*3.1415926/180.; //
       gRotation[1] =  gRotation[1]*3.1415926/180.; //
       gRotation[2] =  gRotation[2]*3.1415926/180.; //
     }
@@ -245,7 +217,7 @@ void AnalysisPALPIDEfs::init() {
     if (newFile) settingsFile << "Run number;Energy;Chip ID;Irradiation level(0-nonIrradiated,1-2.5e12,2-1e13,3-700krad,4-combined:1e13+700krad);Rate;BB;Ithr;Idb;Vcasn;Vaux;Vcasp;Vreset;Threshold and their RMS for all four sectors;Noise and their RMS for all four sectors;Readout delay;Trigger delay;Strobe length;StrobeB length;Data (1) or noise (0);Number of events;Efficiency,Number of tracks,Number of tracks with associated hit for all sectors" << endl;
 }
 
-void AnalysisPALPIDEfs::processEvent(LCEvent *evt) 
+void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
 {
   if (evt->getParameters().getIntVal("FLAG") == 100) return; //Excluding events with too large clusters
   int nTrackPerEvent = 0, nClusterAssociatedToTrackPerEvent = 0, nClusterPerEvent = 0;
@@ -273,11 +245,11 @@ void AnalysisPALPIDEfs::processEvent(LCEvent *evt)
     {
       hotData = dynamic_cast< TrackerDataImpl * > ( hotPixelCollectionVec->getElementAt( layerIndex ) );
       auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel > >  sparseData(new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> ( hotData ));
-      for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ ) 
+      for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
       {
         EUTelGenericSparsePixel *sparsePixel =  new EUTelGenericSparsePixel() ;
         sparseData->getSparsePixelAt( iPixel, sparsePixel );
-        hotpixelHisto->Fill(sparsePixel->getXCoord()*xPitch+xPitch/2.,sparsePixel->getYCoord()*yPitch+yPitch/2.); 
+        hotpixelHisto->Fill(sparsePixel->getXCoord()*xPitch+xPitch/2.,sparsePixel->getYCoord()*yPitch+yPitch/2.);
         delete sparsePixel;
       }
     }
@@ -295,7 +267,7 @@ void AnalysisPALPIDEfs::processEvent(LCEvent *evt)
         hotpixelHisto->Fill(x*xPitch+xPitch/2.,y*yPitch+yPitch/2.);
       }
     }
-    else _noiseMaskAvailable = false; 
+    else _noiseMaskAvailable = false;
 
     deadColumnCollectionVec = 0;
     try
@@ -311,7 +283,7 @@ void AnalysisPALPIDEfs::processEvent(LCEvent *evt)
     {
       deadColumn = dynamic_cast< TrackerDataImpl * > ( deadColumnCollectionVec->getElementAt( layerIndex ) );
       auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel > >  sparseData(new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> (deadColumn));
-      for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ ) 
+      for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
       {
         EUTelGenericSparsePixel *sparsePixel =  new EUTelGenericSparsePixel() ;
         sparseData->getSparsePixelAt( iPixel, sparsePixel );
@@ -327,7 +299,7 @@ void AnalysisPALPIDEfs::processEvent(LCEvent *evt)
     settingsFile << evt->getParameters().getIntVal(Form("m_readout_delay_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("m_trigger_delay_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("m_strobe_length_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("m_strobeb_length_%d",layerIndex)) << ";1;";
     _isFirstEvent = false;
   }
-  timeStampHisto->Fill(evt->getTimeStamp()); 
+  timeStampHisto->Fill(evt->getTimeStamp());
   LCCollection* col;
   try
   {
@@ -356,10 +328,10 @@ void AnalysisPALPIDEfs::processEvent(LCEvent *evt)
     fitHitAvailable = false;
   }
   LCCollection* colTrack = NULL;
-  try 
+  try
   {
     colTrack = evt->getCollection(_trackCollectionName);
-  } catch (DataNotAvailableException e) 
+  } catch (DataNotAvailableException e)
   {
     fitHitAvailable = false;
   }
@@ -450,11 +422,11 @@ void AnalysisPALPIDEfs::processEvent(LCEvent *evt)
         {
           auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel > >  sparseData(new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> ( hotData ));
           bool hotpixel = false;
-          for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ ) 
+          for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
           {
             EUTelGenericSparsePixel *sparsePixel =  new EUTelGenericSparsePixel() ;
             sparseData->getSparsePixelAt( iPixel, sparsePixel );
-            if (abs(xposfit-(sparsePixel->getXCoord()*xPitch+xPitch/2.)) < limit && abs(yposfit-(sparsePixel->getYCoord()*yPitch+yPitch/2.)) < limit) 
+            if (abs(xposfit-(sparsePixel->getXCoord()*xPitch+xPitch/2.)) < limit && abs(yposfit-(sparsePixel->getYCoord()*yPitch+yPitch/2.)) < limit)
             {
               hotpixel = true;
               delete sparsePixel;
@@ -475,17 +447,17 @@ void AnalysisPALPIDEfs::processEvent(LCEvent *evt)
               break;
             }
           }
-          if (noisePixel) continue; 
+          if (noisePixel) continue;
         }
         if (_deadColumnAvailable)
         {
           auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel > >  sparseData(new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> ( deadColumn ));
           bool dead = false;
-          for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ ) 
+          for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
           {
             EUTelGenericSparsePixel *sparsePixel =  new EUTelGenericSparsePixel() ;
             sparseData->getSparsePixelAt( iPixel, sparsePixel );
-            if (abs(xposfit-(sparsePixel->getXCoord()*xPitch+xPitch/2.)) < limit) 
+            if (abs(xposfit-(sparsePixel->getXCoord()*xPitch+xPitch/2.)) < limit)
             {
               dead = true;
               delete sparsePixel;
@@ -494,7 +466,7 @@ void AnalysisPALPIDEfs::processEvent(LCEvent *evt)
             delete sparsePixel;
           }
           if (dead) continue;
-          
+
         }
         nTrackPerEvent++;
         int nAssociatedhits = 0;
@@ -532,18 +504,18 @@ void AnalysisPALPIDEfs::processEvent(LCEvent *evt)
               }
             }
             firstHit = false;
-            if (nPlanesWithMoreHits > _nPlanesWithMoreHits) {unfoundTrack = true; break;} 
+            if (nPlanesWithMoreHits > _nPlanesWithMoreHits) {unfoundTrack = true; break;}
             const double *pos0 = hit->getPosition();
             pos[0] = pos0[0];
             pos[1] = pos0[1];
             pos[2] = pos0[2];
             if (pos[2] >= dutZ-zDistance && pos[2] <= dutZ+zDistance )
             {
-              pAlpideHit = true; 
+              pAlpideHit = true;
               pos[0]    -= xZero;
               pos[1]    -= yZero;
               _EulerRotationBack( pos, gRotation );
- 
+
               double sign = 0;
               if      ( xPointing[0] < -0.7 )       sign = -1 ;
               else if ( xPointing[0] > 0.7 )       sign =  1 ;
@@ -606,7 +578,7 @@ void AnalysisPALPIDEfs::processEvent(LCEvent *evt)
                     double xposNext = posNext[0]/xPointing[0] - xPointing[1]/xPointing[0]*yposNext;
                     if (abs(xposNext-xposfit) > limit || abs(yposNext-yposfit) > limit) continue;
                     nAssociatedhits++;
-                    if ((xpos-xposfit)*(xpos-xposfit)+(ypos-yposfit)*(ypos-yposfit)<(xposNext-xposfit)*(xposNext-xposfit)+(yposNext-yposfit)*(yposNext-yposfit)) 
+                    if ((xpos-xposfit)*(xpos-xposfit)+(ypos-yposfit)*(ypos-yposfit)<(xposNext-xposfit)*(xposNext-xposfit)+(yposNext-yposfit)*(yposNext-yposfit))
                     {
                       ihit = jhit;
                     }
@@ -621,7 +593,7 @@ void AnalysisPALPIDEfs::processEvent(LCEvent *evt)
                   }
                 }
                 if (nDUThitsEvent > 1 && nAssociatedhits == 1) {tmpHist->Fill(xposfitPrev,yposfitPrev); nWrongPAlpideHit--;}
-                if (nAssociatedhits > 1) 
+                if (nAssociatedhits > 1)
                   streamlog_out ( DEBUG )  << nAssociatedhits << " points for one track in DUT in event " << evt->getEventNumber() << "\t" << xposPrev << "\t" << yposPrev << "\t" << xpos << "\t" << ypos << " Fit: " << xposfit << "\t" << yposfit << " Number of planes with more than one hit: " << nPlanesWithMoreHits << endl;
                 if (_clusterAvailable)
                 {
@@ -631,7 +603,7 @@ void AnalysisPALPIDEfs::processEvent(LCEvent *evt)
                     TrackerDataImpl * zsData = dynamic_cast< TrackerDataImpl * > ( zsInputDataCollectionVec->getElementAt(idetector) );
                     SparsePixelType   type   = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( zsData )["sparsePixelType"]) );
 //                    int iCluster = 0;
-                    if (hit->getTime() == zsData->getTime()) 
+                    if (hit->getTime() == zsData->getTime())
                     {
                       nClusterAssociatedToTrackPerEvent++;
                       clusterAssosiatedToTrack.push_back(zsData->getTime());
@@ -649,10 +621,10 @@ void AnalysisPALPIDEfs::processEvent(LCEvent *evt)
                           sparseData->getSparsePixelAt( iPixel, pixel );
                           X[iPixel] = pixel->getXCoord();
                           Y[iPixel] = pixel->getYCoord();
-                          vector<int> pix;           
+                          vector<int> pix;
                           pix.push_back(X[iPixel]);
                           pix.push_back(Y[iPixel]);
-                          pixVector.push_back(pix);  
+                          pixVector.push_back(pix);
                         }
                         delete pixel;
                         cluster.set_values(clusterSize,X,Y);
@@ -663,7 +635,7 @@ void AnalysisPALPIDEfs::processEvent(LCEvent *evt)
                         int yMax = *max_element(Y.begin(), Y.end());
                         int clusterWidthX = xMax - xMin + 1;
                         int clusterWidthY = yMax - yMin + 1;
- 
+
                         if ((clusterWidthX > 3 || clusterWidthY > 3) && !emptyMiddle(pixVector))
                           for (unsigned int iPixel=0; iPixel<pixVector.size(); iPixel++)
                             largeClusterHistos->Fill(pixVector[iPixel][0],pixVector[iPixel][1]);
@@ -688,7 +660,7 @@ void AnalysisPALPIDEfs::processEvent(LCEvent *evt)
                         nClusterSizeHisto[index]->Fill(fmod(xposfit,xPitch),fmod(yposfit,yPitch));
                         nClusterSize2by2Histo[index]->Fill(fmod(xposfit,2*xPitch),fmod(yposfit,2*yPitch));
                         int clusterShape = cluster.WhichClusterShape(cluster, clusterVec);
-                        if (clusterShape>=0) 
+                        if (clusterShape>=0)
                         {
                           clusterShapeHisto->Fill(clusterShape);
                           clusterShapeX[clusterShape]->Fill(xMin);
@@ -705,7 +677,7 @@ void AnalysisPALPIDEfs::processEvent(LCEvent *evt)
                   }
                 }
                 nTracksPAlpide[index]++;
-                TrackImpl* track = static_cast<TrackImpl*> (colTrack->getElementAt(ifit/7)); 
+                TrackImpl* track = static_cast<TrackImpl*> (colTrack->getElementAt(ifit/7));
                 float chi2 = track->getChi2();
                 chi22DHisto->Fill(xposfit,yposfit,chi2);
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -736,7 +708,7 @@ void AnalysisPALPIDEfs::processEvent(LCEvent *evt)
                     residualXPCBPAlpide[chi2Max[i]][index]->Fill(xpos-xposfit);
                     residualYPCBPAlpide[chi2Max[i]][index]->Fill(ypos-yposfit);
                     residualZPCBPAlpide[chi2Max[i]][index]->Fill(pos[2]-fitpos[2]);
-                    
+
                   }
                 }
                 tracksPAlpideHisto->Fill(xposfit,yposfit);
@@ -749,7 +721,7 @@ void AnalysisPALPIDEfs::processEvent(LCEvent *evt)
                 yposPrev = ypos;
                 xposPrev = xpos;
               }
-              else if (nAssociatedhits < 1 && nDUThitsEvent == 1) 
+              else if (nAssociatedhits < 1 && nDUThitsEvent == 1)
               {
                 hitmapWrongHitHisto->Fill(xposfit,yposfit);
                 nWrongPAlpideHit++;
@@ -787,14 +759,14 @@ void AnalysisPALPIDEfs::processEvent(LCEvent *evt)
       int sensorID = static_cast<int> (cellDecoder( zsData )["sensorID"]);
       if (sensorID == _dutID)
       {
-        bool isAssosiated = false; 
+        bool isAssosiated = false;
         for (unsigned int iAssociatedCluster=0; iAssociatedCluster<clusterAssosiatedToTrack.size(); iAssociatedCluster++)
           if (zsData->getTime() == clusterAssosiatedToTrack[iAssociatedCluster])
           {
             isAssosiated = true;
             break;
           }
-        if (!isAssosiated) 
+        if (!isAssosiated)
         {
           int index = -1;
           SparsePixelType   type   = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( zsData )["sparsePixelType"]) );
@@ -880,7 +852,7 @@ void AnalysisPALPIDEfs::processEvent(LCEvent *evt)
             {
               double xposfit=0, yposfit=0;
               RemoveAlign(preAlignmentCollectionVec,alignmentCollectionVec,alignmentPAlpideCollectionVec,fitpos,xposfit,yposfit);
-            
+
               if (abs(xposfit-(double)xCenter/xPixel*xSize)<limit && abs(yposfit-(double)yCenter/yPixel*ySize)<limit )
               {
                 isAssosiated = true;
@@ -907,7 +879,7 @@ void AnalysisPALPIDEfs::processEvent(LCEvent *evt)
         }
       }
     }
-  }  
+  }
   nTrackPerEventHisto->Fill(nTrackPerEvent);
   nClusterAssociatedToTrackPerEventHisto->Fill(nClusterAssociatedToTrackPerEvent);
   nClusterPerEventHisto->Fill(nClusterPerEvent);
@@ -915,7 +887,7 @@ void AnalysisPALPIDEfs::processEvent(LCEvent *evt)
 
 
 #ifdef MARLIN_USE_AIDA
-void AnalysisPALPIDEfs::bookHistos() 
+void EUTelProcessorAnalysisPALPIDEfs::bookHistos()
 {
   streamlog_out ( DEBUG1 )  << "Booking histograms " << endl;
   auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
@@ -1016,13 +988,13 @@ void AnalysisPALPIDEfs::bookHistos()
    clusterShape2D2by2[i] = new TH2I(Form("clusterShape2D2by2_%d",i),Form("Distribuition of clusters with shape ID %d within four pixels;X (mm);Y (mm)",i),(int)(xSize/xPixel*2000),0,2*xSize/xPixel,(int)(ySize/yPixel*2000),0,2*ySize/yPixel);
   }
   int tmp = 0;
-  for(map<int,int>::iterator it = xPairs.begin(); it != xPairs.end(); ++it) 
+  for(map<int,int>::iterator it = xPairs.begin(); it != xPairs.end(); ++it)
   {
     clusterShapeDiffX.insert(make_pair(tmp,new TH1I(Form("clusterShapeDiffX_%d_%d",it->first,xPairs[it->first]),Form("Difference of the distributions between %d and %d;X (pixel);a.u.",it->first,xPairs[it->first]),xPixel,0,xPixel)));
     clusterShapeDiffY.insert(make_pair(tmp,new TH1I(Form("clusterShapeDiffY_%d_%d",it->first,xPairs[it->first]),Form("Difference of the distributions between %d and %d;Y (pixel);a.u.",it->first,xPairs[it->first]),yPixel,0,yPixel)));
     tmp++;
   }
-  for(map<int,int>::iterator it = yPairs.begin(); it != yPairs.end(); ++it) 
+  for(map<int,int>::iterator it = yPairs.begin(); it != yPairs.end(); ++it)
   {
     clusterShapeDiffX.insert(make_pair(tmp,new TH1I(Form("clusterShapeDiffX_%d_%d",it->first,yPairs[it->first]),Form("Difference of the distributions between %d and %d;X (pixel);a.u.",it->first,yPairs[it->first]),xPixel,0,xPixel)));
     clusterShapeDiffY.insert(make_pair(tmp,new TH1I(Form("clusterShapeDiffY_%d_%d",it->first,yPairs[it->first]),Form("Difference of the distributions between %d and %d;Y (pixel);a.u.",it->first,yPairs[it->first]),yPixel,0,yPixel)));
@@ -1043,9 +1015,8 @@ void AnalysisPALPIDEfs::bookHistos()
 }
 #endif
 
-void AnalysisPALPIDEfs::end()
+void EUTelProcessorAnalysisPALPIDEfs::end()
 {
-  delete [] _planeID;
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
   efficiencyHisto->Divide(tracksHisto);
   for (int i=0; i<xPixel; i++)
@@ -1088,8 +1059,8 @@ void AnalysisPALPIDEfs::end()
   streamlog_out ( MESSAGE4 ) << "nEvents: " << _nEvents << endl;
   streamlog_out ( MESSAGE4 ) << "nEvents with tracks: " << _nEventsWithTrack << endl;
   streamlog_out ( MESSAGE4 ) << "nEvents without tracks: " << _nEvents-_nEventsWithTrack << endl;
-  settingsFile << _nEvents << ";"; 
-  
+  settingsFile << _nEvents << ";";
+
   hitmapWrongHitHisto->Add(tmpHist,-1.);
   if (_writeShapes)
   {
@@ -1177,7 +1148,7 @@ void AnalysisPALPIDEfs::end()
 //    for (int iBin=1; iBin<=chi2->GetNbinsX(); iBin++)
 //      if (chi2->GetBinContent(iBin) > 7.815) cerr << "Symmetry group: " << binName << " Bin: " << iBin<< " is assymetric, with chi2 = " << chi2->GetBinContent(iBin) << endl;
   }
-*/    
+*/
 #endif
   streamlog_out ( MESSAGE4 ) << nPlanesWithTooManyHits << " tracks had too many planes with more than one hit" << endl;
   streamlog_out ( MESSAGE4 ) << nNoPAlpideHit << " tracks didn't have a hit in the pALPIDEfs" << endl;
@@ -1193,7 +1164,7 @@ void AnalysisPALPIDEfs::end()
   streamlog_out ( MESSAGE4 )  << "Successfully finished" << endl;
 }
 
-void AnalysisPALPIDEfs::_EulerRotationBack(double* _telPos, double* _gRotation) {
+void EUTelProcessorAnalysisPALPIDEfs::_EulerRotationBack(double* _telPos, double* _gRotation) {
 
     double z = _telPos[2] - dutZ;
     TVector3 _RotatedSensorHit( _telPos[0], _telPos[1], z );
@@ -1218,7 +1189,7 @@ void AnalysisPALPIDEfs::_EulerRotationBack(double* _telPos, double* _gRotation) 
     _telPos[2] = _RotatedSensorHit.Z() + dutZ;
 }
 
-int AnalysisPALPIDEfs::AddressToColumn(int ARegion, int ADoubleCol, int AAddress)
+int EUTelProcessorAnalysisPALPIDEfs::AddressToColumn(int ARegion, int ADoubleCol, int AAddress)
 {
   int Column    = ARegion * 32 + ADoubleCol * 2;    // Double columns before ADoubleCol
   int LeftRight = ((AAddress % 4) < 2 ? 1:0);       // Left or right column within the double column
@@ -1226,7 +1197,7 @@ int AnalysisPALPIDEfs::AddressToColumn(int ARegion, int ADoubleCol, int AAddress
   return Column;
 }
 
-int AnalysisPALPIDEfs::AddressToRow(int AAddress)
+int EUTelProcessorAnalysisPALPIDEfs::AddressToRow(int AAddress)
 {
   // Ok, this will get ugly
   int Row = AAddress / 2;                // This is OK for the top-right and the bottom-left pixel within a group of 4
@@ -1235,22 +1206,22 @@ int AnalysisPALPIDEfs::AddressToRow(int AAddress)
   return Row;
 }
 
-bool AnalysisPALPIDEfs::emptyMiddle(vector<vector<int> > pixVector)
+bool EUTelProcessorAnalysisPALPIDEfs::emptyMiddle(vector<vector<int> > pixVector)
 {
   bool holeX = false;
   bool holeY = false;
   for (unsigned int i=0; i<pixVector.size(); i++)
   {
     bool touchingX = false;
-    bool lastX = true; 
+    bool lastX = true;
     for (unsigned int j=0; j<pixVector.size(); j++)
     {
       if (i==j) continue;
-      if (pixVector[i][1] != pixVector[j][1]) continue; 
+      if (pixVector[i][1] != pixVector[j][1]) continue;
       if (pixVector[i][0]+1 == pixVector[j][0]) {/*cerr << "Touching in x" << endl;*/ touchingX = true; break;}
-      if (pixVector[i][0] <  pixVector[j][0]) {/*cerr << "Smaller in x"  << endl;*/ lastX  = false;} 
+      if (pixVector[i][0] <  pixVector[j][0]) {/*cerr << "Smaller in x"  << endl;*/ lastX  = false;}
     }
-    if (!touchingX && !lastX) {/*cerr << "Hole in X" << endl;*/ holeX = true; break;} 
+    if (!touchingX && !lastX) {/*cerr << "Hole in X" << endl;*/ holeX = true; break;}
   }
   for (unsigned int i=0; i<pixVector.size(); i++)
   {
@@ -1263,24 +1234,24 @@ bool AnalysisPALPIDEfs::emptyMiddle(vector<vector<int> > pixVector)
       if (pixVector[i][1]+1 == pixVector[j][1]) {/*cerr << "Touching in y" << endl;*/ touchingY = true; break;}
       if (pixVector[i][1] <  pixVector[j][1]) {/*cerr << "Smaller in y"  << endl;*/ lastY  = false;}
     }
-    if (!touchingY && !lastY) {/*cerr << "Hole in Y" << endl;*/ holeY = true; break;} 
+    if (!touchingY && !lastY) {/*cerr << "Hole in Y" << endl;*/ holeY = true; break;}
   }
   if (holeX && holeY) return true;
   else return false;
 }
 
-bool AnalysisPALPIDEfs::RemoveAlign(LCCollectionVec * preAlignmentCollectionVec, LCCollectionVec * alignmentCollectionVec, LCCollectionVec * alignmentPAlpideCollectionVec, double* fitpos, double& xposfit, double& yposfit)
+bool EUTelProcessorAnalysisPALPIDEfs::RemoveAlign(LCCollectionVec * preAlignmentCollectionVec, LCCollectionVec * alignmentCollectionVec, LCCollectionVec * alignmentPAlpideCollectionVec, double* fitpos, double& xposfit, double& yposfit)
 {
       double xPlaneCenter    = geo::gGeometry().siPlaneXPosition(_dutID);
       double yPlaneCenter    = geo::gGeometry().siPlaneYPosition(_dutID);
       double zPlaneCenter    = geo::gGeometry().siPlaneZPosition(_dutID);
       TVector3 inputVec( fitpos[0] - xPlaneCenter, fitpos[1] - yPlaneCenter, fitpos[2] - zPlaneCenter);
-      EUTelAlignmentConstant * alignment = 0;       
+      EUTelAlignmentConstant * alignment = 0;
       bool alignExist = false;
-      EUTelAlignmentConstant * preAlignment = 0;    
+      EUTelAlignmentConstant * preAlignment = 0;
       bool prealignExist = false;
       EUTelAlignmentConstant * alignmentPAlpide = 0;
-      bool alignPAlpideExist = false;               
+      bool alignPAlpideExist = false;
       for (int iAlign=0; iAlign<preAlignmentCollectionVec->getNumberOfElements(); iAlign++)
       {
         preAlignment = static_cast< EUTelAlignmentConstant * > (preAlignmentCollectionVec->getElementAt(iAlign));
@@ -1364,5 +1335,3 @@ bool AnalysisPALPIDEfs::RemoveAlign(LCCollectionVec * preAlignmentCollectionVec,
       xposfit = fitpos[0]/xPointing[0] - xPointing[1]/xPointing[0]*yposfit;
   return 1;
 }
-
-#endif // GEAR
