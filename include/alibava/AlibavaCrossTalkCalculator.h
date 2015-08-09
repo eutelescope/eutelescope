@@ -128,7 +128,9 @@ namespace alibava {
 		 */
 		virtual void end();
 		
-		
+        
+        //The collection name of reconstructed data
+        std::string _recodataCollectionName;
 		
 	protected:
 			

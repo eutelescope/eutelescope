@@ -52,7 +52,8 @@ using namespace alibava;
 
 
 AlibavaCrossTalkCalculator::AlibavaCrossTalkCalculator () :
-AlibavaBaseProcessor("AlibavaCrossTalkCalculator")
+AlibavaBaseProcessor("AlibavaCrossTalkCalculator"),
+_recodataCollectionName("reco_data")
 {
     
     // modify processor description
@@ -62,8 +63,8 @@ AlibavaBaseProcessor("AlibavaCrossTalkCalculator")
     
     // first of register the input collection
     registerInputCollection (LCIO::TRACKERDATA, "InputCollectionName",
-                             "Input raw data collection name",
-                             _inputCollectionName, string("rawdata") );
+                             "Input collection name of alibava clusters",
+                             _inputCollectionName, string("alibava_clusters") );
     
     // if needed one can change these to optional parameters
     
@@ -77,9 +78,9 @@ AlibavaBaseProcessor("AlibavaCrossTalkCalculator")
     
     
     // now the optional parameters
-    registerProcessorParameter ("PedestalCollectionName",
-                                "Pedestal collection name, better not to change",
-                                _pedestalCollectionName, string ("pedestal"));
+    registerProcessorParameter ("RecoDataCollectionName",
+                                "The collection name of reconstructed data",
+                                _recodataCollectionName, string ("reco_data"));
     
     registerProcessorParameter ("NoiseCollectionName",
                                 "Noise collection name, better not to change",
