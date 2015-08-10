@@ -52,7 +52,7 @@
 	 <!--Name of the sparse cluster collection of telescope data-->
 	 <parameter name="TelescopeSparseClusterCollectionName" type="string" lcioInType="TrackerData"> original_zsdata </parameter>
 	 <!--This is the input file name that alibava cluster collections stored-->
-	 <parameter name="InputAlibavaFileName" type="string"> @LcioPath@/@AlibavaOutputFormat@-seedclustering.slcio </parameter>
+	 <parameter name="InputAlibavaFileName" type="string"> @LcioPath@/@AlibavaOutputFormat@-crosstalk-it3.slcio </parameter>
     <!--Name of the cluster pulse collection of alibava data-->
 	 <parameter name="AlibavaClusterPulseCollectionName" type="string" lcioInType="TrackerPulse"> clustercollection </parameter>
 	 <!--Name of the sparse cluster collection of alibava data-->
