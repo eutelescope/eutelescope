@@ -273,14 +273,14 @@ void AlibavaClusterHistogramMaker::processEvent (LCEvent * anEvent) { // HERE lo
 	int eventnum = alibavaEvent->getEventNumber();
 
 	bool printClusters = false;
-	if (eventnum == 7830) {
+/*	if (eventnum == 7830) {
 		printClusters = true;
 	}
 	if ( eventnum % 1000 == 0 ){
-		streamlog_out ( DEBUG1 ) << "Looping events "<<eventnum << endl;
+		streamlog_out ( DEBUG0 ) << "Looping events "<<eventnum << endl;
 		printClusters = true;
 	}
-	
+*/	
 	// if _skipMaskedEvents is set
 	if (_skipMaskedEvents && (alibavaEvent->isEventMasked()) ) {
 		_numberOfSkippedEvents++;

@@ -20,7 +20,6 @@
 
 // ROOT includes <>
 #include "TObject.h"
-#include "TH1D.h"
 
 // system includes <>
 #include <string>
@@ -132,9 +131,14 @@ namespace alibava {
         
         //The collection name of reconstructed data
         std::string _recodataCollectionName;
+        //The output collection name of reconstructed data with cross talk correction
+        std::string _outputDataCollectionName;
         //The collection name of crosstalk coefficients
         std::string _crosstalkCollectionName;
-		
+        //The data base file name 
+        std::string _databaseFile;
+	// max event number to be used for cross talk calculation
+	int _maxNEvent;	
 	protected:
 			
         FloatVec _crosstalkCoefficients[ALIBAVA::NOOFCHIPS];

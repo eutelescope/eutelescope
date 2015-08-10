@@ -39,6 +39,9 @@
 
 // ROOT includes ".h"
 #include "TF1.h"
+#include "TH1D.h"
+#include "TCanvas.h"
+
 // system includes <>
 #include <string>
 #include <iostream>
@@ -54,7 +57,9 @@ using namespace alibava;
 AlibavaCrossTalkCalculator::AlibavaCrossTalkCalculator () :
 AlibavaBaseProcessor("AlibavaCrossTalkCalculator"),
 _recodataCollectionName("recodata"),
-_crosstalkCollectionName("crosstalk")
+_outputDataCollectionName("recodata_xtalk"),
+_crosstalkCollectionName("crosstalk"),
+_maxNEvent(20000)
 {
     
     // modify processor description
@@ -78,10 +83,14 @@ _crosstalkCollectionName("crosstalk")
     registerProcessorParameter ("CrossTalkCollectionName",
                                 "The collection name of cross talk coefficients which will be stored in DatabaseFile",
                                 _crosstalkCollectionName, string ("crosstalk"));
+    
+    registerProcessorParameter ("MaxNEvent",
+                                "Max number of events to be used for cross talk calculation",
+                                _maxNEvent, int (20000));
     // Output collection name
-    registerOutputCollection (LCIO::TRACKERDATA, "OutputRecoDataCollectionName",
+    registerProcessorParameter("OutputRecoDataCollectionName",
                               "Output reconstructed data collection name which will be cross talk corrected",
-                              _outputCollectionName, string("reco_xtalk") );
+                              _outputDataCollectionName, string("reco_xtalk") );
  
     
     
@@ -158,7 +167,6 @@ void AlibavaCrossTalkCalculator::processEvent (LCEvent * anEvent) {
     CellIDEncoder<TrackerDataImpl> chipIDEncoder(ALIBAVA::ALIBAVADATA_ENCODE,newDataColVec);
 
     
-    unsigned int noOfClusters;
     unsigned int noOfChips;
     try
     {
@@ -254,8 +262,6 @@ void AlibavaCrossTalkCalculator::fillHistos () {
                 AlibavaCluster anAlibavaCluster(clusterdata);
                 int chipnum = anAlibavaCluster.getChipNum();
                 int seedChan = anAlibavaCluster.getSeedChanNum();
-                double signalPolarity = anAlibavaCluster.getSignalPolarity();
-                
                 
                 double seedSignal=0, leftSignal=0, rightSignal=0, leftleftSignal=0, rightrightSignal=0;
                 
@@ -267,10 +273,10 @@ void AlibavaCrossTalkCalculator::fillHistos () {
                 if (seedChan-2>0 && !isMasked(chipnum,seedChan-2))
                     leftleftSignal = recodataVec[chipnum].at(seedChan-2);
                 
-                if (seedChan+1<recodataVec[chipnum].size() && !isMasked(chipnum,seedChan+1))
+                if (seedChan+1<int(recodataVec[chipnum].size()) && !isMasked(chipnum,seedChan+1))
                     rightSignal = recodataVec[chipnum].at(seedChan+1);
                 
-                if (seedChan+2<recodataVec[chipnum].size() && !isMasked(chipnum,seedChan+2))
+                if (seedChan+2<int(recodataVec[chipnum].size()) && !isMasked(chipnum,seedChan+2))
                     rightrightSignal = recodataVec[chipnum].at(seedChan+2);
                 
                 histoName = string("b1_L_")+to_string(chipnum);
@@ -310,7 +316,8 @@ void AlibavaCrossTalkCalculator::check (LCEvent * /* evt */ ) {
 void AlibavaCrossTalkCalculator::end() {
 }
 void AlibavaCrossTalkCalculator::calculateCrossTalk() {
-    
+   	TCanvas *cc = new TCanvas("cc","cc",800,600);
+ 
     
     int nChips = getNumberOfChips();
     string histoName;
@@ -320,28 +327,28 @@ void AlibavaCrossTalkCalculator::calculateCrossTalk() {
         TH1D * hb1_L = dynamic_cast<TH1D*> (_rootObjectMap[histoName]);
         histoName+=string("fit");
         TF1 *hb1_L_Fit=dynamic_cast<TF1*> (_rootObjectMap[histoName]);
-        hb1_L->Fit(hb1_L_Fit,"Q");
+	hb1_L->Fit(hb1_L_Fit,"QR");
         double b1_L = hb1_L_Fit->GetParameter(1);
         
         histoName = string("b1_R_")+to_string(ichip);
         TH1D * hb1_R = dynamic_cast<TH1D*> (_rootObjectMap[histoName]);
         histoName+=string("fit");
         TF1 *hb1_R_Fit=dynamic_cast<TF1*> (_rootObjectMap[histoName]);
-        hb1_R->Fit(hb1_R_Fit,"Q");
+        hb1_R->Fit(hb1_R_Fit,"QR");
         double b1_R = hb1_R_Fit->GetParameter(1);
         
         histoName = string("b2_L_")+to_string(ichip);
         TH1D * hb2_L = dynamic_cast<TH1D*> (_rootObjectMap[histoName]);
         histoName+=string("fit");
         TF1 *hb2_L_Fit=dynamic_cast<TF1*> (_rootObjectMap[histoName]);
-        hb2_L->Fit(hb2_L_Fit,"Q");
+        hb2_L->Fit(hb2_L_Fit,"QR");
         double b2_L = hb2_L_Fit->GetParameter(1);
         
         histoName = string("b2_R_")+to_string(ichip);
         TH1D * hb2_R = dynamic_cast<TH1D*> (_rootObjectMap[histoName]);
         histoName+=string("fit");
         TF1 *hb2_R_Fit=dynamic_cast<TF1*> (_rootObjectMap[histoName]);
-        hb2_R->Fit(hb2_R_Fit,"Q");
+        hb2_R->Fit(hb2_R_Fit,"QR");
         double b2_R = hb2_R_Fit->GetParameter(1);
         
         double b1 = b1_L - b1_R;
@@ -357,7 +364,7 @@ void AlibavaCrossTalkCalculator::calculateCrossTalk() {
     if (_numberOfSkippedEvents > 0)
         streamlog_out ( MESSAGE5 ) << _numberOfSkippedEvents<<" events skipped since they are masked" << endl;
     streamlog_out ( MESSAGE4 ) << "Successfully finished" << endl;
-    
+delete cc;    
 }
 
 void AlibavaCrossTalkCalculator::fillHistos(TrackerDataImpl * /* trkdata */){
@@ -380,7 +387,8 @@ void AlibavaCrossTalkCalculator::bookHistos(){
         b1_L->SetTitle("left signal / seed signal;b1_L;Number of Entries");
         histoName+=string("fit");
         TF1 *b1_L_Fit= new TF1(histoName.c_str(),"gaus");
-        _rootObjectMap.insert(make_pair(histoName, b1_L_Fit));
+        b1_L_Fit->SetRange(-0.2,0.2);
+	_rootObjectMap.insert(make_pair(histoName, b1_L_Fit));
         
         histoName = string("b1_R_")+to_string(ichip);
         TH1D * b1_R = new TH1D (histoName.c_str(),"", 100, -2.0,2.0);
@@ -388,6 +396,7 @@ void AlibavaCrossTalkCalculator::bookHistos(){
         b1_R->SetTitle("right signal / seed signal;b1_R;Number of Entries");
         histoName+=string("fit");
         TF1 *b1_R_Fit= new TF1(histoName.c_str(),"gaus");
+        b1_R_Fit->SetRange(-0.2,0.2);
         _rootObjectMap.insert(make_pair(histoName, b1_R_Fit));
         
         histoName = string("b2_L_")+to_string(ichip);
@@ -396,6 +405,7 @@ void AlibavaCrossTalkCalculator::bookHistos(){
         b2_L->SetTitle("left left signal / seed signal;b2_L;Number of Entries");
         histoName+=string("fit");
         TF1 *b2_L_Fit= new TF1(histoName.c_str(),"gaus");
+        b2_L_Fit->SetRange(-0.2,0.2);
         _rootObjectMap.insert(make_pair(histoName, b2_L_Fit));
         
         histoName = string("b2_R_")+to_string(ichip);
@@ -404,6 +414,7 @@ void AlibavaCrossTalkCalculator::bookHistos(){
         b2_R->SetTitle("left left signal / seed signal;b2_R;Number of Entries");
         histoName+=string("fit");
         TF1 *b2_R_Fit= new TF1(histoName.c_str(),"gaus");
+        b2_R_Fit->SetRange(-0.2,0.2);
         _rootObjectMap.insert(make_pair(histoName, b2_R_Fit));
         
         histoName = string("eta_")+to_string(ichip);
