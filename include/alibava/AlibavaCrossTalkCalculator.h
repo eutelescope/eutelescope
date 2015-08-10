@@ -132,10 +132,15 @@ namespace alibava {
         
         //The collection name of reconstructed data
         std::string _recodataCollectionName;
+        //The collection name of crosstalk coefficients
+        std::string _crosstalkCollectionName;
 		
 	protected:
 			
-	
+        FloatVec _crosstalkCoefficients[ALIBAVA::NOOFCHIPS];
+        void fillHistos ();
+        void calculateCrossTalk ();
+        
 		
 	};
 	
