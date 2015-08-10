@@ -1,20 +1,34 @@
 Analysis chain:
 
+
+################# for the analysis steps below you can use pedestal.sh ###################
 To calculate Pedestals
 jobsub -c config.cfg -csv runlist.csv alibava-convert-ped <PedRunNum>
 jobsub -c config.cfg alibava-pedestal <PedRunNum>
 jobsub -c config.cfg -csv runlist.csv alibava-commonmode <PedRunNum>
 jobsub -c config.cfg alibava-pedestal2 <PedRunNum>
+##########################################################################################
 
+
+################# for the analysis steps below you can use reco.sh ###################
 To get pedestal subtracted and common mode corrected signal values
 jobsub -c config.cfg -csv runlist.csv alibava-converter <SourceRunNum>
 jobsub -c config.cfg -csv runlist.csv alibava-reco <SourceRunNum>
-jobsub -c config.cfg alibava-commonmodecut <SourceRunNum>
-jobsub -c config.cfg -csv runlist.csv alibava-seedclustering <SourceRunNum>
 
 To plot histograms for data before clustering 
 jobsub -c config.cfg -csv runlist.csv alibava-datahisto <SourceRunNum>
-jobsub -c config.cfg -csv runlist.csv alibava-clusterhisto <SourceRunNum>
+
+If you want to skip the events that has high common mode correction values you can use:
+jobsub -c config.cfg alibava-commonmodecut <SourceRunNum>
+
+Now do clustering this template also plots cluster histograms
+jobsub -c config.cfg -csv runlist.csv alibava-seedclustering <SourceRunNum>
+
+Do iterative cross talk correction, also plots cluster histograms in each step
+jobsub -c config.cfg -csv runlist.csv alibava-crosstalk-it1 <SourceRunNum>
+jobsub -c config.cfg -csv runlist.csv alibava-crosstalk-it2 <SourceRunNum>
+jobsub -c config.cfg -csv runlist.csv alibava-crosstalk-it3 <SourceRunNum>
+##########################################################################################
 
 At this point we have clusters from alibava data, lets get the ones from telescope too
 jobsub -c config.cfg -csv runlist.csv telescope-converter <SourceRunNum>
@@ -30,6 +44,11 @@ jobsub -c config.cfg -csv runlist.csv hitmaker-local <SourceRunNum>
 If you want to find the missing coordinate values of your hits run missingcoodinate
 jobsub -c config.cfg -csv runlist.csv missingcoordinate <SourceRunNum>
 
+At any point if you want to plot histograms for specific cluster collection you can use:
+jobsub -c config.cfg -csv runlist.csv alibava-clusterhisto <SourceRunNum>
+
+To plot histograms for any alibava data 
+jobsub -c config.cfg -csv runlist.csv alibava-datahisto <SourceRunNum>
 
 Notes:
 <PedRunNum> : Alibava pedestal data run number
