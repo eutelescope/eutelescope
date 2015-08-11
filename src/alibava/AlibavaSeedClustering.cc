@@ -434,7 +434,6 @@ float AlibavaSeedClustering::calculateEtaAroundSeed(TrackerDataImpl *trkdata, in
 	dataVec = trkdata->getChargeValues();
 
 	// we will multiply all signal values by _signalPolarity to work on positive signal always
-	float seedSignal = _signalPolarity * dataVec.at(seedChan);
 	int leftChan = seedChan-1;
 	int rightChan = seedChan+1;
 	float leftSignal=0;
