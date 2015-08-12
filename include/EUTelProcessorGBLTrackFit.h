@@ -100,6 +100,7 @@ namespace eutelescope {
 			double _eBeam;
 			//This is the maximum chi2 of a track that will be used in the millepede alignment fit
 			double _maxChi2Cut;
+            double _chi2Cut;
 
 			std::vector<float> _chi2NdfVec;
 			//Pointer to access millepede object..

@@ -62,6 +62,19 @@ std::vector<int>  EUTelTrack::getPlaIDs() const {
 
     return planes;
 }
+std::vector<int>  EUTelTrack::getPlaIDDUTs() const {
+    //Using an iterator did not seem to work? 
+    std::vector<int> planes;
+    for(size_t i = 0; i < _states.size() ; ++i){
+        EUTelState state = _states.at(i);
+        if(state.getLocation() > 5){
+            planes.push_back(state.getLocation());
+        }
+    }
+
+    return planes;
+}
+
 
 
 unsigned int EUTelTrack::getNumberOfHitsOnTrack() const {
@@ -109,7 +122,11 @@ std::vector<double> EUTelTrack::getLCIOOutput(){
 
 }
 void EUTelTrack::setTrackUsingCorrection(TVectorD corrections){
+//    std::cout<<"Q over P before: " << getQOverP() << std::endl;
+//    std::cout<<"Corr: " << corrections[0] << std::endl;
    setQOverP(corrections[0] + getQOverP()); 
+ //   std::cout<<"Q over P after: " << getQOverP() << std::endl;
+
 }
 
 

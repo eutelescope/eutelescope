@@ -461,9 +461,13 @@ namespace eutelescope {
         TMatrixDSym cov(5);
 
         ///7 parameters for local derivatives for kinks if needed.
-        if(std::find(EUTelExcludedPlanes::_senNoDeadMaterial.begin(), EUTelExcludedPlanes::_senNoDeadMaterial.end(), 271) != EUTelExcludedPlanes::_senNoDeadMaterial.end() ){
-            corrections.ResizeTo(7);
-            cov.ResizeTo(7,7);
+        for(size_t i = 0 ; i < track.getStates().size() ; i++){
+            EUTelState& state = track.getStates().at(i);
+            if(state.getLocation() == 271  ){ ///Find function for vectors with PlaID from EUTelTrack did not work.
+//                std::cout<<"Inside?" <<std::endl;
+                corrections.ResizeTo(7);
+                cov.ResizeTo(7,7);
+            }
         }
 
 		for(size_t i = 0;i < track.getStates().size(); i++){		
@@ -476,7 +480,9 @@ namespace eutelescope {
             streamlog_out(DEBUG3) << std::endl << "Correction: " << std::endl;
             streamlog_message( DEBUG3, corrections.Print();, std::endl; );			
             state.setStateUsingCorrection(corrections);
-            track.setTrackUsingCorrection(corrections);
+            if(state.getLocation() == 0 ){
+                track.setTrackUsingCorrection(corrections);
+            }
           //  state.setCov(cov);
             unsigned int numData;
             /// Scattering is for every plane and is added here. 
@@ -492,11 +498,11 @@ namespace eutelescope {
                 TVectorD kinks(2);//Measurement - Prediction
                 kinks[0] = corrections[5];
                 kinks[1] = corrections[6];
-//                std::cout<<"Kinks :" << kinks[0] << " " << kinks[1] <<std::endl;
-           //     scatSt->setKinks(kinks);
-            //    foundScat=false;///Only add once.
+   //             std::cout<<"Kinks :" << kinks[0] << " " << kinks[1] <<std::endl;
+                scatSt->setKinks(kinks);
+                foundScat=false;///Only add once.
             }
-//            std::cout<<"ID :" <<state.getLocation()  <<std::endl;
+ //           std::cout<<"ID :" <<state.getLocation()  <<std::endl;
 
             if(state.getLocation() == 271){
                 foundScat=true;

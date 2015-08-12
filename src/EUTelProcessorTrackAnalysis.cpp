@@ -530,9 +530,9 @@ void	EUTelProcessorTrackAnalysis::initialiseHitMapHistograms(){
 		histTitle = sstm.str();
 		sstm.str(std::string(""));
 		histoInfo = histoMgr->getHistogramInfo(residGblFitHistName);
-		NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 300;
-		MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin :-0.005 ;
-		MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 0.005;
+		NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 500;
+		MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin :-0.0005;
+		MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 0.0005;
 		AIDA::IHistogram1D * kinksX = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(residGblFitHistName, NBinX, MinX, MaxX); 
 
 		if (kinksX){
@@ -553,8 +553,8 @@ void	EUTelProcessorTrackAnalysis::initialiseHitMapHistograms(){
 		sstm.str(std::string(""));
 		histoInfo = histoMgr->getHistogramInfo(residGblFitHistName);
 		NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 500;
-		MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin :-0.002 ;
-		MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 0.002;
+		MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin :-0.0005 ;
+		MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 0.0005;
 		AIDA::IHistogram1D * kinksY = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(residGblFitHistName, NBinX, MinX, MaxX); 
 
 		if (kinksY){

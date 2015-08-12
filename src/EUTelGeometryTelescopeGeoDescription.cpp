@@ -902,9 +902,12 @@ double EUTelGeometryTelescopeGeoDescription::planeRadLengthGlobalIncidence(int p
 		Eigen::Vector3d endPoint = planePosition + 0.51*siPlaneZSize(planeID)*planeNormal;
 
 		normRad = FindRad(startPoint, endPoint);
+//        std::cout<<"NormRad: " << normRad <<std::endl;
+
 		_planeRadMap[planeID] = normRad;
 	}
 	double scale = std::abs(incidenceDir.dot(planeNormal));
+//    std::cout<<"Scale " << scale <<std::endl;
 	return normRad/scale;
 }
 
@@ -925,7 +928,6 @@ double EUTelGeometryTelescopeGeoDescription::planeRadLengthLocalIncidence(int pl
 		//We have to propagate halfway to to front and halfway back + a minor safety margin
 		Eigen::Vector3d startPoint = planePosition - 0.51*siPlaneZSize(planeID)*planeNormal;
 		Eigen::Vector3d endPoint = planePosition + 0.51*siPlaneZSize(planeID)*planeNormal;
-
 		normRad = FindRad(startPoint, endPoint);
 		_planeRadMap[planeID] = normRad;
 	}

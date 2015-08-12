@@ -116,6 +116,18 @@ TVector3 EUTelState::getPositionGlobal() const {
 	return posGlobalVec;
 }
 
+Eigen::Vector3d EUTelState::getPositionGlobalEig() const {
+	streamlog_out( DEBUG1 ) << "EUTelState::getDirGlobalEig()------------------------BEGIN" << std::endl;
+
+    Eigen::Vector3d posE;
+    TVector3 pos = getPositionGlobal();
+    posE << pos[0] , pos[1] , pos[2];
+	streamlog_out( DEBUG1 ) << "EUTelState::getDirGlobalEig()------------------------END" << std::endl;
+
+    return posE;
+}
+
+
 TVectorD EUTelState::getStateVec(){ 
 	streamlog_out( DEBUG1 ) << "EUTelState::getTrackStateVec()------------------------BEGIN" << std::endl;
 	TVectorD stateVec(5);
@@ -160,12 +172,7 @@ bool EUTelState::getStateHasHit() const {
 
 ///Global -> local(Measurement)
 ///Calculate local to global and then invert.
-///The propagator relates the movement of a plane and the intersection of the track with that plane.
-/// The plane can not rotate and only move by offsets.  
-///
-/// 
 TMatrixD EUTelState::getProjectionMatrix() const {
-    //incidence in local frame.
 	TMatrixD xyDir(2, 3);
 	xyDir[0][0] = 1; xyDir[0][1]=0.0; xyDir[0][2]=-1.0*getSlopeXGlobal();  
 	xyDir[1][0] = 0; xyDir[1][1]=1.0; xyDir[1][2]=-1.0*getSlopeYGlobal();  
@@ -283,10 +290,10 @@ void EUTelState::setPositionGlobal(float positionGlobal[]){
     _position[1] = posLocal[1];
     _position[2] = posLocal[2];
     if(abs(_position[2])  >  1e-7){
-        streamlog_out(MESSAGE5) << "The local z position which is being set is not zero! " << std::endl;
-        streamlog_out(MESSAGE5) << "Global position: "<< positionGlobal[0] <<","<< positionGlobal[1] <<"," <<  positionGlobal[2] << "  ID " << this->getLocation() << std::endl;
-        streamlog_out(MESSAGE5) << "Local position: "<< _position[0] <<","<< _position[1] <<"," <<  _position[2] << std::endl;
-        throw(lcio::Exception("The corrections increase the local z postition"));
+//        streamlog_out(MESSAGE5) << "The local z position which is being set is not zero! " << std::endl;
+ //       streamlog_out(MESSAGE5) << "Global position: "<< positionGlobal[0] <<","<< positionGlobal[1] <<"," <<  positionGlobal[2] << "  ID " << this->getLocation() << std::endl;
+  //      streamlog_out(MESSAGE5) << "Local position: "<< _position[0] <<","<< _position[1] <<"," <<  _position[2] << std::endl;
+        throw(std::string("The corrections increase the local z postition"));
     }
 }
 void EUTelState::setLocalDirGlobalDir(TVector3 dirIn){
@@ -307,9 +314,27 @@ void EUTelState::setCov(TMatrixD cov){
 
 void EUTelState::setStateUsingCorrection(TVectorD corrections){
     /// Get position in global frame.
-    TVector3 gPos =  getPositionGlobal();
+    Eigen::Vector3d  gPosCorr;
+    gPosCorr << corrections[3] , corrections[4] , 0; 
+//    std::cout<< "Corrections for global XY " << gPosCorr[0]  << " " << gPosCorr[1] << " " <<gPosCorr[2] << " Sensor " << this->getLocation()  <<std::endl;
+    Eigen::Vector3d normal  = geo::gGeometry().siPlaneNormalEig(this->getLocation());
+    if(normal[2] < 0){
+        normal = -1*normal;
+    }
+    Eigen::Vector3d dir    = this->getDirGlobalEig();
+    double factor =  dir.transpose()*normal;
+    Eigen::MatrixXd I(3,3);
+    I.setIdentity();
+    Eigen::MatrixXd drldm = I - (dir*normal.transpose())*(1.0/factor);  
+    Eigen::Matrix3d rot  =  geo::gGeometry().getRotMatrixEig(this->getLocation());
+    Eigen::Matrix3d rotInv = rot.transpose();
+    ///operates on global change in position to get change on plane defined in global frame. 
+    Eigen::Vector3d corrE = drldm*gPosCorr; 
+//    std::cout<< "Correction on plane " << corrE[0]  << " " << corrE[1] << " " <<corrE[2] << " Sensor " << this->getLocation()  <<std::endl;
+    Eigen::Vector3d  gPos = this->getPositionGlobalEig();
+    gPos = gPos + gPosCorr;
     /// Add correction in global frame and transform back to local internally 
-	double corr[3] = { gPos[0]+corrections[3],gPos[1]+corrections[4],gPos[2]};
+	double corr[3] = { gPos[0],gPos[1],gPos[2]};
     setPositionGlobal(corr);
     /// slopes in global frame corrected and transformed back
     std::vector<double> slopes;

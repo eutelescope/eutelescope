@@ -216,3 +216,20 @@ Looking at the results we can see that 21 jumps about. The errors here are clear
 If we look at the results from analysis:
 
 21 is off by 81/271 micron! The reference looks fine. The residuals are 72/26 micron for the reference. 26 seems too large.  
+
+
+
+
+#######Start from iteration:alignedGear-iter4-run000442.xml 
+
+#Using 21 plane only. Exclude 20.
+#FixXshifts=0  5  
+#FixYshifts=0  5    
+#FixZshifts=0  5     
+#FixXrot=   0  5 
+#FixYrot=   0  5
+#FixZrot=   0  5     
+#r = 0.005
+#dutX= 1 0.1
+#dutY=1  0.1
+

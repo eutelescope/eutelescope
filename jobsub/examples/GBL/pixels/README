@@ -174,3 +174,8 @@ dutY=0.1
 01:01:32 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  21  Type:  rotationXY  Value:  0.11914E-01  Error:  0.53042E-03
 
 Gear file:alignedGear-iter4-AddPoly-run000313.xml
+
+
+iter5 to iter8 full body mimosa only.
+
+Test without poly:alignedGear-iter8-NoPoly-run000313.xml

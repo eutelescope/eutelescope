@@ -104,24 +104,14 @@ void EUTelTrackAnalysis::plotHitMap(EUTelTrack track){
 	for(size_t i=0; i<states.size();++i){
 		EUTelState state  = states.at(i);
 		state.print();
-		if(!state.getStateHasHit()){
-			continue;
-		}
-		EUTelHit hit = state.getHit();	
 		const double* statePosition = state.getPosition();
 		TVector3 statePositionGlobal = state.getPositionGlobal();
-		const double* hitPosition = hit.getPosition();
-		float residual[2];
-		streamlog_out(DEBUG0) << "hit on sensor "<<state.getLocation()<<" has time "<<hit.getTime() <<std::endl; 
 	streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotHitMap------------------------------still here"<< std::endl;
 
 		typedef std::map<int ,AIDA::IHistogram2D*  >::iterator it_type;
 		for(it_type iterator = _mapFromSensorIDHitMap.begin(); iterator != _mapFromSensorIDHitMap.end(); iterator++) {
 		  streamlog_out(DEBUG2) << "	state.getLocation() = "<<	state.getLocation()<< ", iterator->first = "<<iterator->first<<std::endl;	
 		  if(iterator->first == state.getLocation()){
-			 
-			residual[0]=std::abs(statePosition[0]-hitPosition[0]);
-			streamlog_out(DEBUG2) << "Add residual X : " << residual[0]<< std::endl;
 
 			_mapFromSensorIDHitMap[ state.getLocation() ]  -> fill(statePositionGlobal[0], statePositionGlobal[1],1.);
 			break;
@@ -231,6 +221,7 @@ void EUTelTrackAnalysis::plotEfficiencyVsPosition(EUTelTrack track, IntVec senso
 }
 void EUTelTrackAnalysis::plotBeamEnergy(EUTelTrack track){
     streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotBeamEnergy------------------------------BEGIN"<< std::endl;
+//    std::cout << "Track energy: " << track.getBeamEnergy() << std::endl;
     _beamEnergy-> fill(track.getBeamEnergy() );
     streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotBeamEnergy------------------------------END"<< std::endl;
 }

@@ -28,6 +28,7 @@ namespace eutelescope {
             float getQOverP() const { return _qOverP; }
             float getBeamEnergy() const { return -1.0/_qOverP; }
             std::vector<int>  getPlaIDs() const;
+            std::vector<int>  getPlaIDDUTs() const; 
 
             //END OF TRACK PARAMETERS
             //Must return reference to change the contents.

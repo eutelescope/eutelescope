@@ -173,11 +173,14 @@ bool EUTelAPIXTbTrackTupleGBL::readHits( std::vector<EUTelTrack>& tracks )
  
   	for( std::vector<EUTelTrack>::iterator iTrack= tracks.begin() ; iTrack != tracks.end() ; iTrack++){
         for( std::vector<EUTelState>::iterator iState= iTrack->getStates().begin() ; iState != iTrack->getStates().end() ; iState++){
-    		TVector3 pos = iState->getHit().getPositionGlobal();	
-    		int sensorID = iState->getLocation();
+            int sensorID = iState->getLocation();
             //Only dump DUT hits
             if(  sensorID > 5 ){
-
+                TVector3 pos;
+                pos[0]=-999; pos[1]=-999; pos[2]=-999;
+                if(iState->getStateHasHit()){
+                    pos = iState->getHit().getPositionGlobal();	
+                }
                 double x = pos[0];
                 double y = pos[1];
                 double z = pos[2];

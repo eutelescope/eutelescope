@@ -237,7 +237,7 @@ public:
     beginEvent();
     try{
         std::vector<EUTelTrack> tr = lc_reader.getTracks(ev, "tracks");
-      //  std::cout<< "Track size: " <<tr.size() << std::endl;
+//        std::cout<< "Track size: " <<tr.size() << std::endl;
 
         for (size_t i = 0; i < tr.size();++i)
         {
@@ -263,7 +263,7 @@ public:
 
   }
   void endEvent(){
-//      std::cout<<"Fill GBL"<<std::endl;
+    //  std::cout<<"Fill GBL"<<std::endl;
     m_tree->Fill();
   }
   void processTrack(EUTelTrack& trc){
@@ -286,6 +286,7 @@ public:
    y = pln.getPosition()[1];
   
    ID = static_cast<double>(pln.getLocation());
+//   std::cout<<"ID " << ID <<std::endl;
 
    phi = pln.getDirLocalX() / pln.getDirLocalZ();
    theta = pln.getDirLocalY() / pln.getDirLocalZ();
