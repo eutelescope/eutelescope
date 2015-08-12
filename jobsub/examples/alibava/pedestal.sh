@@ -13,5 +13,5 @@
 TEMPLATELIST=('alibava-convert-ped' 'alibava-pedestal' 'alibava-commonmode' 'alibava-pedestal2')
 
 for TEMPLATE in $TEMPLATELIST; do
-jobsub -c config.cfg -csv runlist.csv $TEMPLATE $1
+	jobsub -c config.cfg -csv runlist.csv $TEMPLATE $@
 done

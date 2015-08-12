@@ -13,7 +13,7 @@
 TEMPLATELIST=('telescope-converter' 'telescope-clustering' 'telescope-filter')
 
 for TEMPLATE in $TEMPLATELIST; do
-jobsub -c config.cfg -csv runlist.csv $TEMPLATE $1
+jobsub -c config.cfg -csv runlist.csv $TEMPLATE $@
 done
 
 

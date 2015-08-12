@@ -13,7 +13,7 @@
 TEMPLATELIST=('alibava-converter' 'alibava-reco' 'alibava-datahisto' 'alibava-commonmodecut' 'alibava-seedclustering' 'alibava-crosstalk-it1' 'alibava-crosstalk-it2' 'alibava-crosstalk-it3')
 
 for TEMPLATE in $TEMPLATELIST; do
-jobsub -c config.cfg -csv runlist.csv $TEMPLATE $1
+jobsub -c config.cfg -csv runlist.csv $TEMPLATE $@
 done
 
 

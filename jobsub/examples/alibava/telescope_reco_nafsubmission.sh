@@ -13,7 +13,7 @@
 TEMPLATELIST=('telescope-converter' 'telescope-clustering' 'telescope-filter')
 
 for TEMPLATE in $TEMPLATELIST; do
-jobsub -c config.cfg -csv runlist.csv --subdir --naf qsubparameters.cfg $TEMPLATE $1
+jobsub -c config.cfg -csv runlist.csv --subdir --naf qsubparameters.cfg $TEMPLATE $@
 
 #check if there is any run submitted to the naf
 #if there is wait for them to be finished 

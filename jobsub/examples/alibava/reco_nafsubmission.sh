@@ -13,7 +13,7 @@
 TEMPLATELIST=('alibava-converter' 'alibava-reco' 'alibava-datahisto' 'alibava-commonmodecut' 'alibava-seedclustering' 'alibava-crosstalk-it1' 'alibava-crosstalk-it2' 'alibava-crosstalk-it3')
 
 for TEMPLATE in $TEMPLATELIST; do
-jobsub -c config.cfg -csv runlist.csv --subdir --naf qsubparameters.cfg $TEMPLATE $1
+jobsub -c config.cfg -csv runlist.csv --subdir --naf qsubparameters.cfg $TEMPLATE $@
 
 #check if there is any run submitted to the naf
 #if there is wait for them to be finished 
