@@ -6,7 +6,7 @@
 #                              #
 ################################
 
-# usage: source pedestal.sh runnumber(s)
+# usage: source pedestal_nafsubmission.sh runnumber(s)
 
 #To calculate Pedestals
 # you will need to run these templates
