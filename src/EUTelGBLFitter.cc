@@ -57,7 +57,8 @@ namespace eutelescope {
 	_parameterIdYRotationsMap(),
 	_parameterIdZRotationsMap(),
 	_counter_num_pointer(1),
-	_kinkAngleEstimation(false) //This used to determine if the correction matrix from the GBL fit is 5 or 7 elements long. 
+	_kinkAngleEstimation(false), //This used to determine if the correction matrix from the GBL fit is 5 or 7 elements long. 
+	_sensorIDVec(geo::gGeometry().sensorIDsVec())
 	{}
 
 	EUTelGBLFitter::~EUTelGBLFitter() {
@@ -208,28 +209,30 @@ namespace eutelescope {
 		variance.push_back(scatteringVariance*(powMeanStart/denominator));
 		return variance;
 	}
+
 	//This set the estimate resolution for each plane in the X direction.
 	void EUTelGBLFitter::setParamterIdXResolutionVec( const std::vector<float>& vector)
 	{
-		//We have a similar check after this to see that number of planes and elements in resolution vector are the same. We need this here since if they are different then it will just give an exception from the vector tryign to access a element that does not exist.
-		if ( geo::gGeometry().sensorZOrdertoIDs().size() != vector.size() ){
-			streamlog_out( ERROR5 ) << "The number of planes: "<< geo::gGeometry().sensorZOrdertoIDs().size()<<"  The size of input resolution vector: "<<vector.size()  << std::endl;
+		//We have a similar check after this to see that number of planes and elements in resolution vector are the same. We need this here since if 
+		//they are different then it will just give an exception from the vector tryign to access a element that does not exist.
+		if ( _sensorIDVec.size() != vector.size() ){
+			streamlog_out( ERROR5 ) << "The number of planes: " << _sensorIDVec.size() << " differs from the size of input resolution vector: " << vector.size() << std::endl;
 			throw(lcio::Exception("The size of the resolution vector and the total number of planes is different for x axis."));
 		}
-
-		for(size_t i=0; i < geo::gGeometry().sensorZOrdertoIDs().size(); ++i){
-			_parameterIdXResolutionVec[ geo::gGeometry().sensorZOrderToID(i)] = vector.at(i);
+		for( std::vector<int>::iterator it = _sensorIDVec.begin(); it != _sensorIDVec.end(); it++ ){
+			_parameterIdXResolutionVec[*it] = vector.at(it-_sensorIDVec.begin());
 		}
 	}
+
 	//This sets the estimated resolution for each plane in the Y direction.
 	void EUTelGBLFitter::setParamterIdYResolutionVec( const std::vector<float>& vector)
 	{
-		if ( geo::gGeometry().sensorZOrdertoIDs().size() != vector.size() ){
-			streamlog_out( ERROR5 ) << "The number of planes: "<< geo::gGeometry().sensorZOrdertoIDs().size()<<"  The size of input resolution vector: "<<vector.size()  << std::endl;
+		if ( _sensorIDVec.size() != vector.size() ){
+			streamlog_out( ERROR5 ) << "The number of planes: " << _sensorIDVec.size() << " differs from the size of input resolution vector: " << vector.size() << std::endl;
 			throw(lcio::Exception("The size of the resolution vector and the total number of planes is different for y axis."));
 		}
-		for(size_t i=0; i < geo::gGeometry().sensorZOrdertoIDs().size(); ++i){
-			_parameterIdYResolutionVec[ geo::gGeometry().sensorZOrderToID(i)] = vector.at(i);
+		for( std::vector<int>::iterator it = _sensorIDVec.begin(); it != _sensorIDVec.end(); it++ ){
+			_parameterIdYResolutionVec[*it] = vector.at( it-_sensorIDVec.begin() );
 		}
 	}
 
@@ -376,8 +379,7 @@ namespace eutelescope {
 		throw(lcio::Exception("There is no point with this label"));
 	}
 	//This used after trackfit will fill a map between (sensor ID and residualx/y). 
-  void EUTelGBLFitter::getResidualOfTrackandHits(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint > pointList,EUTelTrack& track, std::map< int, std::map< float, float > > &  SensorResidual, std::map< int, std::map< float, float > >& sensorResidualError, std::map<int, int> & planes){
-    planes = geo::gGeometry().sensorZOrdertoIDs(); 
+  void EUTelGBLFitter::getResidualOfTrackandHits(gbl::GblTrajectory* traj, std::vector< gbl::GblPoint > pointList,EUTelTrack& track, std::map< int, std::map< float, float > > &  SensorResidual, std::map< int, std::map< float, float > >& sensorResidualError){
 	  
 	       for(size_t j=0 ; j< _vectorOfPairsMeasurementStatesAndLabels.size();j++){
 			EUTelState state = _vectorOfPairsMeasurementStatesAndLabels.at(j).first;

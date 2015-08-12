@@ -20,10 +20,6 @@
 #include "marlin/Global.h"
 #include "marlin/StringParameters.h"
 
-// gear includes <.h>
-#include <gear/GearMgr.h>
-#include <gear/SiPlanesParameters.h>
-
 // lcio includes <.h>
 #include <Exceptions.h>
 
@@ -40,7 +36,7 @@
 using namespace marlin;
 using namespace eutelescope;
 
-EUTelPedeGEAR::EUTelPedeGEAR () : Processor("EUTelPedeGEAR") {
+EUTelPedeGEAR::EUTelPedeGEAR() : Processor("EUTelPedeGEAR") {
 
   // modify processor description
   _description = "EUTelPedeGEAR calls PEDE to process a MILLE binary file and create an updated GEAR file with the updated MILLEPEDE II alignment constants.";
@@ -60,8 +56,7 @@ EUTelPedeGEAR::EUTelPedeGEAR () : Processor("EUTelPedeGEAR") {
   registerOptionalParameter("NewGEARSuffix", "Suffix for the new GEAR file, set to empty string (this is not default!) to overwrite old GEAR file", _GEARFileSuffix, std::string("_aligned") );
 }
 
-void EUTelPedeGEAR::init()
-{
+void EUTelPedeGEAR::init() {
 	//this method is called only once even when the rewind is active usually a good idea to
 	printParameters ();
 
@@ -75,15 +70,10 @@ void EUTelPedeGEAR::init()
 
 
 	//check if the GEAR manager pointer is not null!
-	if( Global::GEAR == 0x0 )
-	{
+	if( Global::GEAR == 0x0 ) {
 		streamlog_out( ERROR2 ) << "The GearMgr is not available, for an unknown reason." << std::endl;
 		throw InvalidGeometryException("GEAR manager is not initialised");
 	}
-
-	//sensor-planes in geometry navigation:
-	_siPlanesParameters  = const_cast<gear::SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
-	_siPlanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
 
 	//the number of planes is got from the GEAR description and is
 	//the sum of the telescope reference planes and the DUT (if any)
@@ -91,28 +81,23 @@ void EUTelPedeGEAR::init()
   
 	//an associative std::map for getting also the sensorID ordered
 	std::map<double, int> sensorIDMap;
-
+	
+	std::vector<int> sensorIDVec = geo::gGeometry().sensorIDsVec();
 	//lets create an array with the z positions of each layer
-	for( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); iPlane++ )
-	{
-		_siPlaneZPosition.push_back(_siPlanesLayerLayout->getLayerPositionZ(iPlane));
-		sensorIDMap.insert( std::make_pair( _siPlanesLayerLayout->getLayerPositionZ(iPlane), _siPlanesLayerLayout->getID(iPlane) ) );
+	
+	for( std::vector<int>::iterator it = sensorIDVec.begin(); it != sensorIDVec.end(); it++) {
+		int sensorID = *it;
+		sensorIDMap.insert( std::make_pair( geo::gGeometry().siPlaneZPosition(sensorID), sensorID ) );
 	}
-
-	//lets sort the array with increasing z
-	std::sort(_siPlaneZPosition.begin(), _siPlaneZPosition.end());
-
+	
 	//the user is giving sensor ids for the planes to be excluded. this
 	//sensor ids have to be converted to a local index according to the
 	//planes positions along the z axis.
-	for(size_t i = 0; i < _FixedPlanes_sensorIDs.size(); i++)
-	{
+	for(size_t i = 0; i < _FixedPlanes_sensorIDs.size(); i++) {
 		std::map< double, int >::iterator iter = sensorIDMap.begin();
 		int counter = 0;
-		while( iter != sensorIDMap.end() )
-		{
-			if( iter->second == _FixedPlanes_sensorIDs[i])
-			{
+		while( iter != sensorIDMap.end() ) {
+			if( iter->second == _FixedPlanes_sensorIDs[i]) {
 				_FixedPlanes.push_back(counter);
 				break;
 			}
@@ -121,14 +106,11 @@ void EUTelPedeGEAR::init()
 		}
 	}
 
-	for(size_t i = 0; i < _excludePlanes_sensorIDs.size(); i++)
-	{
+	for(size_t i = 0; i < _excludePlanes_sensorIDs.size(); i++) {
 		std::map< double, int >::iterator iter = sensorIDMap.begin();
 		int counter = 0;
-		while( iter != sensorIDMap.end() )
-		{
-			if( iter->second == _excludePlanes_sensorIDs[i])
-			{
+		while( iter != sensorIDMap.end() ) {
+			if( iter->second == _excludePlanes_sensorIDs[i]) {
 				_excludePlanes.push_back(counter);
 				break;
 			}
@@ -140,19 +122,15 @@ void EUTelPedeGEAR::init()
 	//strip from the std::map the sensor id already sorted.
 	std::map< double, int >::iterator iter = sensorIDMap.begin();
 	unsigned int counter = 0;
-	while( iter != sensorIDMap.end() )
-	{
+	while( iter != sensorIDMap.end() ) {
 		bool excluded = false;
-		for(size_t i = 0; i < _excludePlanes.size(); i++)
-		{
-			if(_excludePlanes[i] == counter)
-			{
+		for(size_t i = 0; i < _excludePlanes.size(); i++) {
+			if(_excludePlanes[i] == counter) {
 				excluded = true;
 				break;
 			}
 		}
-		if(!excluded)
-			_orderedSensorID_wo_excluded.push_back( iter->second );
+		if(!excluded) _orderedSensorID_wo_excluded.push_back( iter->second );
 		_orderedSensorID.push_back( iter->second );
 
 		++iter;
@@ -160,8 +138,7 @@ void EUTelPedeGEAR::init()
 	}
 
 	//consistency
-	if(_siPlaneZPosition.size() != _nPlanes)
-	{
+	if(sensorIDVec.size() != _nPlanes) {
 		streamlog_out( ERROR2 ) << "the number of detected planes is " << _nPlanes << " but only " << _siPlaneZPosition.size() << " layer z positions were found!"  << std::endl;
 		throw InvalidParameterException("number of layers and layer z positions mismatch");
 	}
@@ -172,9 +149,7 @@ void EUTelPedeGEAR::init()
 	streamlog_out( MESSAGE4 ) << "End of initialisation" << std::endl;
 }
 
-void EUTelPedeGEAR::processRunHeader(LCRunHeader* rdr)
-{
-
+void EUTelPedeGEAR::processRunHeader(LCRunHeader* rdr) {
 	std::auto_ptr<EUTelRunHeaderImpl> header ( new EUTelRunHeaderImpl (rdr) );
 	header->addProcessor( type() ) ;
 
@@ -194,24 +169,17 @@ void EUTelPedeGEAR::processRunHeader(LCRunHeader* rdr)
 	++_iRun;
 }
 
-
-
 void EUTelPedeGEAR::processEvent(LCEvent* /*event*/) {
 	/*NOP NOP NOP*/
 }
 
-
 void EUTelPedeGEAR::end() {
-
 	//TODO:  check if steering file exists
 	std::ifstream pedeSteerFile(_pedeSteerfileName.c_str());
-	if(pedeSteerFile.good())
-	{
+	if(pedeSteerFile.good()) {
 		pedeSteerFile.close();
 		streamlog_out( MESSAGE2 ) << "Found pede steer file, continuing ..." << std::endl;
-	}
-	else
-	{
+	} else {
 		pedeSteerFile.close();
 		streamlog_out( ERROR5 ) << "Could not find pede steer file: " << _pedeSteerfileName << " EXITING!" << std::endl; 
 		return;
@@ -226,13 +194,10 @@ void EUTelPedeGEAR::end() {
 	//run pede and create a streambuf that reads its stdout and stderr
 	redi::ipstream pede( command.c_str(), redi::pstreams::pstdout|redi::pstreams::pstderr ); 
       
-	if(!pede.is_open())
-	{
+	if(!pede.is_open()) {
 		streamlog_out( ERROR5 ) << "Pede cannot be executed: command not found in the path" << std::endl;
 		encounteredError = true;	  
-	}
-	else
-	{
+	} else {
 		//output multiplexing: parse pede output in both stdout and stderr and echo messages accordingly
 		char buf[1024];
 		std::streamsize n;
@@ -240,34 +205,27 @@ void EUTelPedeGEAR::end() {
 		std::stringstream pedeerrors;
 		bool finished[2] = { false, false };
 		
-		while(!finished[0] || !finished[1])
-		{
-			if(!finished[0])
-			{
-				while( (n = pede.err().readsome(buf, sizeof(buf))) > 0 )
-				{
+		while(!finished[0] || !finished[1]) {
+			if(!finished[0]) {
+				while( (n = pede.err().readsome(buf, sizeof(buf))) > 0 ) {
 					streamlog_out( ERROR5 ).write(buf, n).flush();
 					std::string error(buf, n);
 					pedeerrors << error;
 					encounteredError = true;
 				}
-				if(pede.eof())
-				{
+				if(pede.eof()) {
 					finished[0] = true;
 					if(!finished[1]) pede.clear();
 				}
 			}
 
-			if(!finished[1])
-			{
-				while((n = pede.out().readsome(buf, sizeof(buf))) > 0)
-				{
+			if(!finished[1]) {
+				while((n = pede.out().readsome(buf, sizeof(buf))) > 0) {
 					streamlog_out( MESSAGE4 ).write(buf, n).flush();
 					std::string output (buf, n);
 					pedeoutput << output;
 				}
-				if(pede.eof())
-				{
+				if(pede.eof()) {
 					finished[1] = true;
 					if(!finished[0]) pede.clear();
 				}
@@ -277,22 +235,19 @@ void EUTelPedeGEAR::end() {
 		// pede does not return exit codes on some errors (in V03-04-00)
 		// check for some of those here by parsing the output
 		const char* pch = strstr(pedeoutput.str().data(),"Too many rejects");
-		if(pch)
-		{
+		if(pch) {
 			streamlog_out( ERROR5 ) << "Pede stopped due to the large number of rejects. " << std::endl;
 			encounteredError = true;
 		}
 	
 		const char* pch0 = strstr(pedeoutput.str().data(),"Sum(Chi^2)/Sum(Ndf) = ");
-		if(pch0 != 0)
-		{
+		if(pch0 != 0) {
 			streamlog_out( DEBUG5 ) << " Parsing pede output for final chi2/ndf result.. " << std::endl;
 			//search for the equal sign after which the result for chi2/ndf is stated within the next 80 chars 
 			//(with offset of 22 chars since pch points to beginning of "Sum(..." string just found)
 			char* pch = (char*)((memchr (pch0+22, '=', 180)));
 
-	    		if(pch != NULL)
-			{
+	    		if(pch != NULL) {
 				char str[16];
 				//now copy the numbers after the equal sign
 				strncpy( str, pch+1, 15 );
@@ -307,12 +262,9 @@ void EUTelPedeGEAR::end() {
 		pede.close();
 
 		//check the exit value of pede / react to previous errors
-		if( pede.rdbuf()->status() == 0 && !encounteredError) 
-		{
+		if( pede.rdbuf()->status() == 0 && !encounteredError) {
 			streamlog_out( MESSAGE7 ) << "Pede successfully finished" << std::endl;
-		}
-		else
-		{
+		} else {
 			streamlog_out( ERROR5 ) << "Problem during Pede execution, exit status: " << pede.rdbuf()->status() << ", error messages (repeated here): " << std::endl;
 			streamlog_out( ERROR5 ) << pedeerrors.str() << std::endl;
 			// TODO: decide what to do now; exit? and if, how?
@@ -330,12 +282,9 @@ void EUTelPedeGEAR::end() {
 		ifstream millepede( millepedeResFileName.c_str() );
 
 
-		if( millepede.bad() || !millepede.is_open() ) 
-		{
+		if( millepede.bad() || !millepede.is_open() ) {
 			streamlog_out( ERROR4 )	<< "Error opening the " << millepedeResFileName << std::endl;
-		}
-		else 
-		{
+		} else {
 			std::vector<double> tokens;
 			std::stringstream tokenizer;
 			std::string line;
@@ -346,17 +295,13 @@ void EUTelPedeGEAR::end() {
 			int counter = 0;
 			int sensorID = _orderedSensorID.at(counter); 
 
-			while( !millepede.eof() )
-			{
+			while( !millepede.eof() ) {
 				bool goodLine = true;
 				unsigned int numpars = 0;
 				
-				if(_alignMode != 3)
-				{
+				if(_alignMode != 3) {
 					numpars = 3;
-				}
-				else
-				{
+				} else {
 					numpars = 6;
 				}
 
@@ -373,12 +318,10 @@ void EUTelPedeGEAR::end() {
 				double betaErr = 0;
 				double gammaErr = 0; */
 	
-				for( unsigned int iParam = 0 ; iParam < numpars ; ++iParam ) 
-				{
+				for( unsigned int iParam = 0 ; iParam < numpars ; ++iParam ) {
 					std::getline( millepede, line );
 
-					if(line.empty())
-					{
+					if(line.empty()) {
 						goodLine = false;
 						continue;
 					}
@@ -389,70 +332,53 @@ void EUTelPedeGEAR::end() {
 
 					double buffer;
 					//check that all parts of the line are non zero
-					while( tokenizer >> buffer )
-					{
+					while( tokenizer >> buffer ) {
 						tokens.push_back( buffer ) ;
 					}
-
-					if( ( tokens.size() == 3 ) || ( tokens.size() == 6 ) || (tokens.size() == 5) )
-					{
+					if( ( tokens.size() == 3 ) || ( tokens.size() == 6 ) || (tokens.size() == 5) ) {
 						goodLine = true;
-					} 
-					else
-					{
+					} else {
 						goodLine = false;
 					}
 				
 				//Remove comments to read in uncertainty
 				//	bool isFixed = (tokens.size() == 3);
 
-					if(_alignMode != 3)
-					{
-						if( iParam == 0 )
-						{
+					if(_alignMode != 3) {
+						if( iParam == 0 ) {
 							xOff			= tokens[1]/1000.;
 				//			if(!isFixed) xOffErr	= tokens[4]/1000.;
 						}
-						if( iParam == 1 )
-						{
+						if( iParam == 1 ) {
 							yOff			= tokens[1]/1000.;
 				//			if(!isFixed) yOffErr	= tokens[4]/1000.;
 						}
-						if( iParam == 2 )
-						{
+						if( iParam == 2 ) {
 							gamma			= tokens[1];
 				//			if(!isFixed) gammaErr	= tokens[4];
 						}
-					}
-					else
-					{
-						if( iParam == 0 )
-						{
+					} else {
+						if( iParam == 0 ) {
 							xOff			= tokens[1]/1000.;
 				//			if(!isFixed) xOffErr	= tokens[4]/1000.;                    
 						}
-						if( iParam == 1 )
-						{
+						if( iParam == 1 ) {
 							yOff 			= tokens[1]/1000.;
 				//			if(!isFixed) yOffErr	= tokens[4]/1000.;
 						}
-						if( iParam == 2 )
-						{
+						if( iParam == 2 ) {
 							zOff			= tokens[1]/1000.;
 				//			if(!isFixed) zOffErr	= tokens[4]/1000.;
 						}
-						if( iParam == 3 )
-						{
+						if( iParam == 3 ) {
 							alpha			= tokens[1];
 				//			if(!isFixed) alphaErr	= tokens[4];
 						} 
-						if( iParam == 4 )
-						{
+						if( iParam == 4 ) {
 							beta			= tokens[1];
 				//			if(!isFixed) betaErr	= tokens[4];
 						} 
-						if( iParam == 5 )
-						{
+						if( iParam == 5 ) {
 							gamma			= tokens[1];
 				//			if(!isFixed) gammaErr	= tokens[4];
 						} 
@@ -460,8 +386,7 @@ void EUTelPedeGEAR::end() {
 				}
 
 				// right place to add the constant to the collection
-				if( goodLine )
-				{
+				if( goodLine ) {
 					sensorID = _orderedSensorID.at( counter );
 					std::cout 	<< "Alignment on sensor " << sensorID << " determined to be: xOff: " << xOff << ", yOff: " << yOff << ", zOff: " << zOff << ", alpha: " 
 							<< alpha << ", beta: " << beta << ", gamma: " << gamma << std::endl;

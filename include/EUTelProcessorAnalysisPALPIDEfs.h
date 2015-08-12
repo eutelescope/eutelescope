@@ -1,7 +1,5 @@
-#ifndef AnalysisPALPIDEfs_h
-#define AnalysisPALPIDEfs_h 1
-
-#ifdef USE_GEAR
+#ifndef EUTelProcessorAnalysisPALPIDEfs_h
+#define EUTelProcessorAnalysisPALPIDEfs_h 1
 
 #include "marlin/Processor.h"
 #include "lcio.h"
@@ -20,21 +18,18 @@
 
 #include <IMPL/TrackerDataImpl.h>
 
-#include <gear/SiPlanesParameters.h>
-#include <gear/SiPlanesLayerLayout.h>
-
 #include "TH1.h"
 #include "TH2.h"
 #include "TProfile2D.h"
 #include "cluster.h"
 #include "CrossSection.hpp"
 
-class AnalysisPALPIDEfs : public marlin::Processor {
+class EUTelProcessorAnalysisPALPIDEfs : public marlin::Processor {
 public:
-  virtual Processor* newProcessor() {return new AnalysisPALPIDEfs;}
-  AnalysisPALPIDEfs();
+  virtual Processor* newProcessor() {return new EUTelProcessorAnalysisPALPIDEfs;}
+  EUTelProcessorAnalysisPALPIDEfs();
   virtual void init() ;
-  virtual void processEvent( LCEvent * evt ) ; 
+  virtual void processEvent( LCEvent * evt ) ;
   void _EulerRotationBack(double* _telPos, double* _gRotation);
   int AddressToColumn(int ARegion, int ADoubleCol, int AAddress);
   int AddressToRow(int AAddress);
@@ -93,7 +88,6 @@ protected:
   bool _hotpixelAvailable;
   bool _noiseMaskAvailable;
   bool _deadColumnAvailable;
-  int * _planeID;
   int layerIndex;
   double dutZ;
   FloatVec chi2Max;
@@ -110,8 +104,6 @@ protected:
   bool _showFake;
 private:
   bool _isFirstEvent;
-  gear::SiPlanesParameters * _siPlanesParameters;
-  gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
   IntVec nTracks;
   IntVec nTracksFake;
   IntVec nTracksPAlpide;
@@ -239,5 +231,3 @@ private:
 };
 
 #endif
-#endif
-
