@@ -102,6 +102,7 @@ protected:
   int _nEventsWithEfficiency;
   double _minTimeStamp;
   bool _showFake;
+  bool _realAssociation;
 private:
   bool _isFirstEvent;
   IntVec nTracks;

@@ -49,8 +49,8 @@ EUTelProcessorAnalysisPALPIDEfs::EUTelProcessorAnalysisPALPIDEfs()
   limit(0.05),
   _dutID(6),
   _maxNumberOfPixels(3),
-  _nPlanesWithMoreHits(10),
-  _moreTracks(true),
+  _nPlanesWithMoreHits(4),
+  _moreTracks(false),
   _energy(6.0),
   _writeShapes(false),
   _shapeOutputFileName("./shapeDistribution.txt"),
@@ -69,6 +69,7 @@ EUTelProcessorAnalysisPALPIDEfs::EUTelProcessorAnalysisPALPIDEfs()
   _nEventsWithTrack(0),
   _minTimeStamp(0),
   _showFake(true),
+  _realAssociation(false),
   nTracks(4),
   nTracksFake(4),
   nTracksPAlpide(4),
@@ -130,9 +131,9 @@ EUTelProcessorAnalysisPALPIDEfs::EUTelProcessorAnalysisPALPIDEfs()
   registerProcessorParameter("MaxNumberOfPixels", "This is the maximum number of pixels in one cluster for the clustershape analysis",
                              _maxNumberOfPixels, static_cast<int>( 3 ) );
   registerProcessorParameter("nPlanesWithMoreHits", "This is the maximum number of planes that can have more than one hit",
-                             _nPlanesWithMoreHits, static_cast<int>( 10 /*4*/ ) );
+                             _nPlanesWithMoreHits, static_cast<int>( 4 ) );
   registerProcessorParameter("MoreTracks","More tracks are allowed in one event",
-                             _moreTracks, static_cast< bool > ( true ) );
+                             _moreTracks, static_cast< bool > ( false ) );
   registerOptionalParameter("HotPixelCollectionName","This is the name of the hotpixel collection of the pALPIDE",
                              _hotPixelCollectionName, static_cast< string > ( "" ) );
   registerOptionalParameter("DeadColumnCollectionName","This is the name of the collection containing the pixels belonging to a dead column",
@@ -160,6 +161,8 @@ EUTelProcessorAnalysisPALPIDEfs::EUTelProcessorAnalysisPALPIDEfs()
   _isFirstEvent = true;
   registerProcessorParameter("ShowFake","Show fake efficiency",
                               _showFake, static_cast< bool > ( true ) );
+  registerProcessorParameter("RealAssociation","Calculate track to hit association without allowing the tracks to share hits",
+                              _realAssociation, static_cast< bool > ( false ) );
 }
 
 void EUTelProcessorAnalysisPALPIDEfs::init() {
@@ -215,7 +218,8 @@ void EUTelProcessorAnalysisPALPIDEfs::init() {
     nTracksPAlpide[iSector] = 0;
     nTracksAssociation[iSector] = 0;
     nTracksPAlpideAssociation[iSector] = 0;
-    if(_showFake) {
+    if(_showFake)
+    {
       nTracksFake[iSector] = 0;
       nTracksPAlpideFake[iSector] = 0;
     }
@@ -397,12 +401,15 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
   pT = new std::vector< std::vector<double> >;
   pH = new std::vector< std::vector<double> >;
 
-  if(_showFake) {
+  if(_showFake)
+  {
     posFakeEvent = new std::vector< std::vector<double> >;  
     int nHit = col->getNumberOfElements();
-    for(int ihit=0; ihit< nHit; ihit++) {
+    for(int ihit=0; ihit< nHit; ihit++)
+    {
       TrackerHit *hit = dynamic_cast<TrackerHit*>( col->getElementAt(ihit) ) ;
-      if( hit != 0 ) {
+      if( hit != 0 )
+      {
         const double *pos = hit->getPosition();
         std::vector<double> posFakeHit;
         posFakeHit.push_back(pos[0]);
@@ -413,7 +420,8 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
     }
     posFake->insert(posFake->begin(),*posFakeEvent);          
     delete posFakeEvent;
-    if(posFake->size() > (unsigned)_nEventsFake) {
+    if(posFake->size() > (unsigned)_nEventsFake)
+    {
       posFakeTemp = posFake->back();
       posFake->pop_back();
     }
@@ -799,36 +807,42 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
         firstTrack = false;
         nHitsPerEvent->push_back(nPAlpideHits);
            
-        if(_showFake) {
-          if(posFake->size() >= (unsigned)_nEventsFake) {
+        if(_showFake)
+        {
+          if(posFake->size() >= (unsigned)_nEventsFake)
+          {
             int nHitFake = posFakeTemp.size();
-					  int nPlanesWithMoreHitsFake = 0;
-					  bool firstHitFake = true;
+	    int nPlanesWithMoreHitsFake = 0;
+	    bool firstHitFake = true;
 
-            for(int ihit=0; ihit< nHitFake ; ihit++) {
+            for(int ihit=0; ihit< nHitFake ; ihit++)
+            {
               bool hitOnSamePlane = false;
-					    double pos[3]={0.,0.,0.};
-				      for(int j=ihit; j<nHitFake && firstHitFake && nPlanesWithMoreHitsFake <= _nPlanesWithMoreHits; j++) {
-				        double poscheck1[3]={0.,0.,0.}; 
-				        poscheck1[0] = posFakeTemp.at(j).at(0);
-				        poscheck1[1] = posFakeTemp.at(j).at(1);
-				        poscheck1[2] = posFakeTemp.at(j).at(2);
-				        if (poscheck1[2]<=dutZ+zDistance && poscheck1[2]>=dutZ-zDistance) continue;
-				        for(int k=j+1; k<nHitFake && nPlanesWithMoreHitsFake <= _nPlanesWithMoreHits; k++) {
-				          double poscheck2[3]={0.,0.,0.}; 
-				          poscheck2[0] = posFakeTemp.at(k).at(0);
-				          poscheck2[1] = posFakeTemp.at(k).at(1);
-				          poscheck2[2] = posFakeTemp.at(k).at(2);					        
-				          if ((abs(poscheck1[2] - poscheck2[2]) < maxDistInPlane) && !hitOnSamePlane) {
-				            hitOnSamePlane = true;
-				            nPlanesWithMoreHitsFake++;
-				            break;
-								  }
-				          else if (k == j+1 && poscheck1[2] != poscheck2[2]) hitOnSamePlane = false;
-				        }
-				      }
-				      firstHitFake = false;
-				      if (nPlanesWithMoreHitsFake > _nPlanesWithMoreHits) {unfoundTrackFake = true; break;} 
+	      double pos[3]={0.,0.,0.};
+	      for(int j=ihit; j<nHitFake && firstHitFake && nPlanesWithMoreHitsFake <= _nPlanesWithMoreHits; j++)
+              {
+	        double poscheck1[3]={0.,0.,0.}; 
+	        poscheck1[0] = posFakeTemp.at(j).at(0);
+	        poscheck1[1] = posFakeTemp.at(j).at(1);
+	        poscheck1[2] = posFakeTemp.at(j).at(2);
+	        if (poscheck1[2]<=dutZ+zDistance && poscheck1[2]>=dutZ-zDistance) continue;
+	        for(int k=j+1; k<nHitFake && nPlanesWithMoreHitsFake <= _nPlanesWithMoreHits; k++)
+                {
+	          double poscheck2[3]={0.,0.,0.}; 
+	          poscheck2[0] = posFakeTemp.at(k).at(0);
+	          poscheck2[1] = posFakeTemp.at(k).at(1);
+	          poscheck2[2] = posFakeTemp.at(k).at(2);					        
+	          if ((abs(poscheck1[2] - poscheck2[2]) < maxDistInPlane) && !hitOnSamePlane)
+                  {
+		    hitOnSamePlane = true;
+		    nPlanesWithMoreHitsFake++;
+		    break;
+		  }
+		  else if (k == j+1 && poscheck1[2] != poscheck2[2]) hitOnSamePlane = false;
+		}
+              }
+	      firstHitFake = false;
+	      if (nPlanesWithMoreHitsFake > _nPlanesWithMoreHits) {unfoundTrackFake = true; break;} 
 				      
               double pos0[3] ={0.,0.,0.};
               pos0[0] = posFakeTemp.at(ihit).at(0);
@@ -838,7 +852,8 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
               pos[1] = pos0[1];
               pos[2] = pos0[2];        
              
-              if (pos[2] >= dutZ-zDistance && pos[2] <= dutZ+zDistance ) {
+              if (pos[2] >= dutZ-zDistance && pos[2] <= dutZ+zDistance )
+              {
                 pos[0]    -= xZero;
                 pos[1]    -= yZero;
                 _EulerRotationBack( pos, gRotation );
@@ -862,8 +877,10 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
                 double ypos = (xPointing[0]*pos[1]-yPointing[0]*pos[0])/(yPointing[1]*xPointing[0]-yPointing[0]*xPointing[1]);
                 double xpos = pos[0]/xPointing[0] - xPointing[1]/xPointing[0]*ypos;
 
-                if (abs(xpos-xposfit) < limit && abs(ypos-yposfit) < limit ) {
-                  for (int jhit=ihit+1; jhit< nHitFake ; jhit++) {       
+                if (abs(xpos-xposfit) < limit && abs(ypos-yposfit) < limit )
+                {
+                  for (int jhit=ihit+1; jhit< nHitFake ; jhit++)
+                  {
                     double posNext[3]={0.,0.,0.};
                     double pos0Next[3] ={0.,0.,0.};
                     pos0Next[0] = posFakeTemp.at(jhit).at(0);
@@ -896,10 +913,12 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
                     double yposNext = (xPointing[0]*posNext[1]-yPointing[0]*posNext[0])/(yPointing[1]*xPointing[0]-yPointing[0]*xPointing[1]);
                     double xposNext = posNext[0]/xPointing[0] - xPointing[1]/xPointing[0]*yposNext;
                     if (abs(xposNext-xposfit) > limit || abs(yposNext-yposfit) > limit) continue;
-                    if ((xpos-xposfit)*(xpos-xposfit)+(ypos-yposfit)*(ypos-yposfit)<(xposNext-xposfit)*(xposNext-xposfit)+(yposNext-yposfit)*(yposNext-yposfit)) {
+                    if ((xpos-xposfit)*(xpos-xposfit)+(ypos-yposfit)*(ypos-yposfit)<(xposNext-xposfit)*(xposNext-xposfit)+(yposNext-yposfit)*(yposNext-yposfit))
+                    {
                       ihit = jhit;
                     } 
-                    else {
+                    else
+                    {
                       xpos = xposNext;
                       ypos = yposNext;
                       pos[2] = posNext[2];
@@ -928,11 +947,10 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
           nTracks[index]++;
           if(!pAlpideHit) {hitmapNoHitHisto->Fill(xposfit,yposfit); nNoPAlpideHit++;}
         }
-        if(_showFake) {
+        if(_showFake)
+        {
           if (unfoundTrackFake) {break;}
-          else {
-            if(posFake->size() >= (unsigned)_nEventsFake) nTracksFake[index]++;
-          }
+          else if(posFake->size() >= (unsigned)_nEventsFake) nTracksFake[index]++;
         }
       } 
     }
@@ -951,7 +969,8 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
       CellIDDecoder<TrackerDataImpl> cellDecoder( zsInputDataCollectionVec );
       TrackerDataImpl * zsData = dynamic_cast< TrackerDataImpl * > ( zsInputDataCollectionVec->getElementAt(i) );
       int sensorID = static_cast<int> (cellDecoder( zsData )["sensorID"]);
-      if (sensorID == _dutID)  
+      if (sensorID == _dutID)
+      { 
         bool isAssosiated = false; 
         for (unsigned int iAssociatedCluster=0; iAssociatedCluster<clusterAssosiatedToTrack.size(); iAssociatedCluster++)
           if (zsData->getTime() == clusterAssosiatedToTrack[iAssociatedCluster])
@@ -1076,116 +1095,142 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
   nTrackPerEventHisto->Fill(nTrackPerEvent);
   nClusterAssociatedToTrackPerEventHisto->Fill(nClusterAssociatedToTrackPerEvent);
   nClusterPerEventHisto->Fill(nClusterPerEvent);
-    
-  int nH = pH->size();
-  int nT = pT->size(); 
-  int *aH = new int[nH]; 
-  int *aT = new int[nT]; 
-  for(int i=0; i<nH; i++) aH[i] = -1;
-  for(int i=0; i<nT; i++) aT[i] = -1;
-  int temp;
-  bool changed = true;
-  while(changed) {
-    changed = false;
-    for(int iT=0; iT<nT; iT++) {
-      if(aT[iT] == -1) {
-        int associations = 0;
-        for(int iH=0; iH<nH; iH++) {
-          if(aH[iH] == -1) {
-            if(abs(pH->at(iH).at(0)-pT->at(iT).at(0))<limit && abs(pH->at(iH).at(1)-pT->at(iT).at(1))<limit) {
-              associations++;
-              temp = iH;
-            }
-          }
-        }
-        if(associations == 1) {
-          changed = true;
-          aH[temp] = iT;
-          aT[iT] = temp;
-        }
-        if(associations == 0) {
-          aT[iT] = -2;
-        }
-      }
-    }
-  } 
-  int* aTFinal = new int[nT]; 
-  int* aHFinal = new int[nH]; 
-  std::vector<int> order;   
-  for(int iT=0; iT<nT; iT++) {
-    if(aT[iT]==-1) order.push_back(iT); 
-  }     
-  if(order.size() > 0 ) {
-    unsigned int maxAssociations = 0;
-    double minDistance = 1e10;             
-    bool run1 = true;
-    do {
-      double totaldistance = 0;
-      unsigned int associations = 0;
-      int* aTTemp = new int[nT]; 
-      int* aHTemp = new int[nH];   
-      for(int iT=0; iT<nT; iT++) aTTemp[iT] = aT[iT];
-      for(int iH=0; iH<nH; iH++) aHTemp[iH] = aH[iH];
-      bool run2 = true;
-      for(unsigned int i=0; i<order.size() && run2; i++) {
-        int iT = order[i];
-        double min = 1e10;
-        bool associated = false;
-        for(int iH=0; iH<nH; iH++) {
-          if(aHTemp[iH]== -1) {
-            if(abs(pH->at(iH).at(0)-pT->at(iT).at(0))<limit && abs(pH->at(iH).at(1)-pT->at(iT).at(1))<limit) {
-              double dist = sqrt(pow(abs(pH->at(iH).at(0)-pT->at(iT).at(0)),2)+pow(abs(pH->at(iH).at(1)-pT->at(iT).at(1)),2));
-              if(dist<min) {
-                min=dist;
+  if (_realAssociation)  // Different version of track to hit association written by Martijn Dietze. It maximizes the number of association while doesn't allow hits to be shared between tracks.
+  { 
+    int nH = pH->size();
+    int nT = pT->size(); 
+    int *aH = new int[nH]; 
+    int *aT = new int[nT]; 
+    for(int i=0; i<nH; i++) aH[i] = -1;
+    for(int i=0; i<nT; i++) aT[i] = -1;
+    int temp;
+    bool changed = true;
+    while(changed)
+    {
+      changed = false;
+      for(int iT=0; iT<nT; iT++)
+      {
+        if(aT[iT] == -1)
+        {
+          int associations = 0;
+          for(int iH=0; iH<nH; iH++)
+          {
+            if(aH[iH] == -1)
+            {
+              if(abs(pH->at(iH).at(0)-pT->at(iT).at(0))<limit && abs(pH->at(iH).at(1)-pT->at(iT).at(1))<limit)
+              {
+                associations++;
                 temp = iH;
-                associated = true;
               }
             }
           }
-        }
-        if(associated) {
-          associations++;
-          aHTemp[temp] = iT;
-          aTTemp[iT] = temp;
-          totaldistance += min;
-        }
-        if(totaldistance > minDistance) run2 = false;
-        if( ( i - associations + 1 ) > ( order.size() - maxAssociations ) ) run2 = false;
-      }
-      if(associations == order.size()) run1 = false;    
-      if(associations >= maxAssociations) {
-        if(totaldistance < minDistance) {
-          for(int iT=0; iT<nT; iT++) aTFinal[iT] = aTTemp[iT];
-          for(int iH=0; iH<nH; iH++) aHFinal[iH] = aHTemp[iH];
-          maxAssociations = associations;
-          minDistance = totaldistance;
+          if(associations == 1)
+          {
+            changed = true;
+            aH[temp] = iT;
+            aT[iT] = temp;
+          }
+          if(associations == 0)
+          {
+            aT[iT] = -2;
+          }
         }
       }
-      delete aTTemp;
-      delete aHTemp;         
-    } while ( std::next_permutation(order.begin(),order.end()) && run1 );
-  } else {
-    for(int iT=0; iT<nT; iT++) aTFinal[iT] = aT[iT];
-    for(int iH=0; iH<nH; iH++) aHFinal[iH] = aH[iH]; 
-  }
-  for(int iT=0; iT<nT; iT++) {
-    int index = -1;
-    for (int iSector=0; iSector<4; iSector++) {
-      if (pT->at(iT).at(0)>xSize/4.*iSector+(iSector==0?0:1)*(2.*xPitch+limit) && pT->at(iT).at(0)<xSize/4.*(iSector+1)-(iSector==3?0:1)*(2.*xPitch+limit)) {
-        index = iSector;
-        break;
-      }
+    } 
+    int* aTFinal = new int[nT]; 
+    int* aHFinal = new int[nH]; 
+    std::vector<int> order;   
+    for(int iT=0; iT<nT; iT++)
+    {
+      if(aT[iT]==-1) order.push_back(iT); 
+    }     
+    if(order.size() > 0 )
+    {
+      unsigned int maxAssociations = 0;
+      double minDistance = 1e10;             
+      bool run1 = true;
+      do
+      {
+        double totaldistance = 0;
+        unsigned int associations = 0;
+        int* aTTemp = new int[nT]; 
+        int* aHTemp = new int[nH];   
+        for(int iT=0; iT<nT; iT++) aTTemp[iT] = aT[iT];
+        for(int iH=0; iH<nH; iH++) aHTemp[iH] = aH[iH];
+        bool run2 = true;
+        for(unsigned int i=0; i<order.size() && run2; i++)
+        {
+          int iT = order[i];
+          double min = 1e10;
+          bool associated = false;
+          for(int iH=0; iH<nH; iH++)
+          {
+            if(aHTemp[iH]== -1)
+            {
+              if(abs(pH->at(iH).at(0)-pT->at(iT).at(0))<limit && abs(pH->at(iH).at(1)-pT->at(iT).at(1))<limit)
+              {
+                double dist = sqrt(pow(abs(pH->at(iH).at(0)-pT->at(iT).at(0)),2)+pow(abs(pH->at(iH).at(1)-pT->at(iT).at(1)),2));
+                if(dist<min)
+                {
+                  min=dist;
+                  temp = iH;
+                  associated = true;
+                }
+              }
+            }
+          }
+          if(associated)
+          {
+            associations++;
+            aHTemp[temp] = iT;
+            aTTemp[iT] = temp;
+            totaldistance += min;
+          }
+          if(totaldistance > minDistance) run2 = false;
+          if( ( i - associations + 1 ) > ( order.size() - maxAssociations ) ) run2 = false;
+        }
+        if(associations == order.size()) run1 = false;    
+        if(associations >= maxAssociations)
+        {
+          if(totaldistance < minDistance)
+          {
+            for(int iT=0; iT<nT; iT++) aTFinal[iT] = aTTemp[iT];
+            for(int iH=0; iH<nH; iH++) aHFinal[iH] = aHTemp[iH];
+            maxAssociations = associations;
+            minDistance = totaldistance;
+          }
+        }
+        delete aTTemp;
+        delete aHTemp;         
+      } while ( std::next_permutation(order.begin(),order.end()) && run1 );
     }
-    if (index == -1) continue;    
-    if(aTFinal[iT] >= 0) nTracksPAlpideAssociation[index]++;
-    nTracksAssociation[index]++;
-  }    
+    else
+    {
+      for(int iT=0; iT<nT; iT++) aTFinal[iT] = aT[iT];
+      for(int iH=0; iH<nH; iH++) aHFinal[iH] = aH[iH]; 
+    }
+    for(int iT=0; iT<nT; iT++)
+    {
+      int index = -1;
+      for (int iSector=0; iSector<4; iSector++)
+      {
+        if (pT->at(iT).at(0)>xSize/4.*iSector+(iSector==0?0:1)*(2.*xPitch+limit) && pT->at(iT).at(0)<xSize/4.*(iSector+1)-(iSector==3?0:1)*(2.*xPitch+limit))
+        {
+          index = iSector;
+          break;
+        }
+      }
+      if (index == -1) continue;    
+      if(aTFinal[iT] >= 0) nTracksPAlpideAssociation[index]++;
+      nTracksAssociation[index]++;
+    }    
+    delete aH;
+    delete aT;
+    delete aHFinal;
+    delete aTFinal;    
+  }
   delete pH;        
   delete pT;
-  delete aH;
-  delete aT;
-  delete aHFinal;
-  delete aTFinal;    
 }
 
 #ifdef MARLIN_USE_AIDA
@@ -1346,7 +1391,6 @@ void EUTelProcessorAnalysisPALPIDEfs::end()
   delete nHitsPerEvent;
   if(_showFake) delete posFake;  
   delete posFit;
-  delete [] _planeID;
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
   efficiencyHisto->Divide(tracksHisto);
@@ -1444,6 +1488,40 @@ void EUTelProcessorAnalysisPALPIDEfs::end()
       clusterShapeDiffY[tmp]->SetBinContent(i,TMath::Abs(clusterShapeY[it->first]->GetBinContent(i)-clusterShapeY[yPairs[it->first]]->GetBinContent(i)));
     tmp++;
   }
+/*  TH1I* nX = new TH1I("nX","n",xPixel,0,xPixel);
+  TH1I* nY = new TH1I("nY","n",yPixel,0,yPixel);
+  for (unsigned int i=0; i<symmetryGroups.size(); i++)
+  {
+    nX->Reset();
+    nY->Reset();
+    string binName;
+    double p = 1.0/symmetryGroups[i].size();
+    for (unsigned int j=0; j<symmetryGroups[i].size(); j++)
+    {
+      if (j<symmetryGroups[i].size()-1) binName += Form("%d-",symmetryGroups[i][j]);
+      else binName += Form("%d",symmetryGroups[i][j]);
+      for (int k=1; k<=clusterShapeX[j]->GetNbinsX(); k++)
+        nX->Fill(k-1,clusterShapeX[symmetryGroups[i][j]]->GetBinContent(k));
+      for (int k=1; k<=clusterShapeY[j]->GetNbinsX(); k++)
+        nY->Fill(k-1,clusterShapeY[symmetryGroups[i][j]]->GetBinContent(k));
+    }
+    chi2X.insert(make_pair(i, new TH1I(Form("chi2X_%s",(char*)binName.c_str()),"",xPixel,0,xPixel)));
+    chi2Y.insert(make_pair(i, new TH1I(Form("chi2Y_%s",(char*)binName.c_str()),"",yPixel,0,yPixel)));
+    for (unsigned int j=0; j<symmetryGroups[i].size(); j++)
+    {
+      for (int k=1; k<=clusterShapeX[j]->GetNbinsX(); k++)
+      {
+        if (nX->GetBinContent(k) == 0) continue;
+        chi2X[i]->Fill(k-1,(clusterShapeX[symmetryGroups[i][j]]->GetBinContent(k)-nX->GetBinContent(k)*p)*(clusterShapeX[symmetryGroups[i][j]]->GetBinContent(k)-nX->GetBinContent(k)*p)/nX->GetBinContent(k)/p);
+      }
+      for (int k=1; k<=clusterShapeY[j]->GetNbinsX(); k++)
+      {
+        if (nY->GetBinContent(k) == 0) continue;
+        chi2Y[i]->Fill(k-1,(clusterShapeY[symmetryGroups[i][j]]->GetBinContent(k)-nY->GetBinContent(k)*p)*(clusterShapeY[symmetryGroups[i][j]]->GetBinContent(k)-nY->GetBinContent(k)*p)/nY->GetBinContent(k)/p);
+      }
+    }
+  }
+*/
 
 #endif
   streamlog_out ( MESSAGE4 ) << nPlanesWithTooManyHits << " tracks had too many planes with more than one hit" << endl;
@@ -1465,11 +1543,14 @@ void EUTelProcessorAnalysisPALPIDEfs::end()
       settingsFile << (double)nTracksPAlpideFake[iSector]/nTracksFake[iSector] << ";" << nTracksFake[iSector] << ";" << nTracksPAlpideFake[iSector] << ";";
     }
   }
-  streamlog_out ( MESSAGE4 ) << "Overall associated efficiency of pALPIDEfs sectors: " << endl;
-  for (int iSector=0; iSector<4; iSector++)
+  if (_realAssociation)  // Different version of track to hit association written by Martijn Dietze. It maximizes the number of association while doesn't allow hits to be shared between tracks.
   {
-    streamlog_out ( MESSAGE4 ) << (double)nTracksPAlpideAssociation[iSector]/nTracksAssociation[iSector] << "\t" << nTracksAssociation[iSector] << "\t" << nTracksPAlpideAssociation[iSector] << endl;
-    settingsFile << (double)nTracksPAlpideAssociation[iSector]/nTracksAssociation[iSector] << ";" << nTracksAssociation[iSector] << ";" << nTracksPAlpideAssociation[iSector] << ";";
+    streamlog_out ( MESSAGE4 ) << "Overall efficiency of pALPIDEfs sectors without tracks sharing a hit: " << endl;
+    for (int iSector=0; iSector<4; iSector++)
+    {
+      streamlog_out ( MESSAGE4 ) << (double)nTracksPAlpideAssociation[iSector]/nTracksAssociation[iSector] << "\t" << nTracksAssociation[iSector] << "\t" << nTracksPAlpideAssociation[iSector] << endl;
+      settingsFile << (double)nTracksPAlpideAssociation[iSector]/nTracksAssociation[iSector] << ";" << nTracksAssociation[iSector] << ";" << nTracksPAlpideAssociation[iSector] << ";";
+    }
   }
   settingsFile << endl;
   streamlog_out ( MESSAGE4 )  << "Successfully finished" << endl;

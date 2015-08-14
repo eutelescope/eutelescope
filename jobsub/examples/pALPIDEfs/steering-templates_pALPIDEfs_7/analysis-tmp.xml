@@ -151,15 +151,15 @@
   <!--This is the name of the histogram information file-->
   <parameter name="HistoInfoFileName" type="string" value="@HistoInfoFile@"/>
   <!--This is the maximum distance between the fit and the hit to associate the hit with the track-->
-  <parameter name="Limit" type="double" value="0.2"/>
+  <parameter name="Limit" type="double" value="0.1"/>
   <!--This is the ID of the DUT-->
   <parameter name="dutID" type="int" value="@dutID@"/>
   <!--This is the maximum number of pixels in one cluster for the clustershape analysis-->
   <parameter name="MaxNumberOfPixels" type="int" value="3"/>
   <!--This is the maximum number of planes that can have more than one hit-->
-  <parameter name="nPlanesWithMoreHits" type="int" value="10"/>
+  <parameter name="nPlanesWithMoreHits" type="int" value="3"/>
   <!--More tracks are allowed in one event-->
-  <parameter name="MoreTracks" type="bool" value="true"/>
+  <parameter name="MoreTracks" type="bool" value="false"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value="MESSAGE2"/-->
     <!--This is the name of the hotpixel collection-->
@@ -180,6 +180,10 @@
   <parameter name="MinTimeStamp" type="double" value="@MinTimeStamp@"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value="MESSAGE1"/-->
+  <!--Show fake efficiency-->
+  <parameter name="ShowFake" type="bool" value="true"/>
+  <!--Calculate track to hit association without allowing the tracks to share hits-->
+  <parameter name="RealAssociation" type="bool" value="false"/>
 </processor>
 
 <processor name="Save" type="EUTelOutputProcessor">
