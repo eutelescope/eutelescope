@@ -239,13 +239,14 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent* evt){
 void EUTelProcessorGBLTrackFit::plotResidual(std::map< int, std::map<float, float > >  & sensorResidual, std::map< int, std::map<float, float > >  & sensorResidualError){
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Residual plot
     std::vector<int> duts;
-	for ( std::vector<int>::const_iterator itPla = geo::gGeometry().sensorIDsVec().begin(); itPla != geo::gGeometry().sensorIDsVec().end(); ++itPla) {
+	for ( std::vector<int>::const_iterator itPla = EUTelExcludedPlanes::_senNoDeadMaterial.begin(); itPla != EUTelExcludedPlanes::_senNoDeadMaterial.end(); ++itPla) {
         if(*itPla > 5){
             duts.push_back(*itPla);
         }
 	}
     int dut1 = -999; int dut2 =-999;
 	for ( std::vector<int>::iterator itPla = duts.begin(); itPla != duts.end(); ++itPla) {
+
         if( itPla == duts.begin()){
             dut1 = *itPla;
         }

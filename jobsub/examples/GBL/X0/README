@@ -9,12 +9,12 @@ Using gear from past alignment. You can perform this yourself from a non aligned
 #################################Run 5565
 Gear file used from the beginning:gear-PRE-ALIGNED-originalGear-R=0.5-afterHotPixelsRemoved-5565.xml
 Do not add scattering plane till after alignment!
-#js converter 5562
+#js converter 5565
 
-#js clustering 5562
+#js clustering 5565
 
 
-#js hitlocal 5562
+#js hitlocal 5565
 
 #js patternRecognition 5565.
 Still using gear from the start not prealigned.
