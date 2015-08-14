@@ -91,29 +91,30 @@ TMatrixD EUTelNav::getPropagationJacobianGlobalToGlobal(float ds, TVector3 t1w)
 	BxTMatrix.Zero();
 	BxTMatrix[0][0] =BxT[0];	BxTMatrix[1][0] =BxT[1];	BxTMatrix[2][0] =BxT[2]; 
  
-	bFac = -0.0002998 * (xyDir*BxTMatrix); 
+//	bFac = -0.0002998 * (xyDir*BxTMatrix); 
+	TVector3 bFacVec = getBFac();
 //	std::cout <<std::scientific<< "bFac" << bFac[0][0] << "  ,  " <<  bFac[1][0] << std::endl;
 	TMatrixD ajac(5, 5);
 	ajac.UnitMatrix();
-	if(b.Mag() < 0.001 ){
-			ajac[3][2] = ds * std::sqrt(t1w[0] * t1w[0] + t1w[2] * t1w[2]);
-			ajac[4][1] = ds;
-	}else{
-		ajac[1][0] = bFac[0][0]*ds/sinLambda;
+//	if(b.Mag() < 0.001 ){
+//			ajac[3][2] = ds * std::sqrt(t1w[0] * t1w[0] + t1w[2] * t1w[2]);
+//			ajac[4][1] = ds;
+//	}else{
+		ajac[1][0] = bFacVec[0]*ds/sinLambda;
 //		std::cout<<"Jacobian entries;" << ajac[1][0] << std::endl;
 //		std::cout<<"1,0 " << ajac[1][0] << std::endl;
-		ajac[2][0] = bFac[1][0]*ds/sinLambda;
+		ajac[2][0] = bFacVec[1]*ds/sinLambda;
 //		std::cout<< std::scientific <<"2,0 " << ajac[2][0] << std::endl;
-		ajac[3][0] = 0.5*bFac[0][0]*ds*ds;
+		ajac[3][0] = 0.5*bFacVec[0]*ds*ds;
 //		std::cout<<"3,0 " << ajac[3][0] << std::endl;
-		ajac[4][0] = 0.5*bFac[1][0]*ds*ds;
+		ajac[4][0] = 0.5*bFacVec[1]*ds*ds;
 //		std::cout<< std::scientific  <<"4,0 " << ajac[4][0] << std::endl;
 		ajac[3][1] = ds*sinLambda; 
 //		std::cout<<"3,1 " << ajac[3][1] << std::endl;
 		ajac[4][2] = ds*sinLambda; 
 //		std::cout<<"4,2 " << ajac[4][2] << std::endl;
 
-	}
+//	}
     streamlog_out( DEBUG0 ) << "Global to Global jacobian: " << std::endl;
     streamlog_message( DEBUG0, ajac.Print();, std::endl; );
 	return ajac;

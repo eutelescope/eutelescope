@@ -96,15 +96,15 @@ LCCollection* relStatesHits =  evt->getCollection("StateHitFOR"+ colName);stream
                         EVENT::LCRelation* relStateHit = static_cast<EVENT::LCRelation*>(relStatesHits->getElementAt(kCol));
                         EVENT::LCGenericObject* stateCheck  =  static_cast<EVENT::LCGenericObject*>(relStateHit->getFrom());
                         EVENT::LCGenericObject* hit  =  static_cast<EVENT::LCGenericObject*>(relStateHit->getTo());
-                        if(stateCheck->id() == stateID){//If this is true then you have the correct hit.
+                        if(stateCheck->id() == stateID and hit){//If this is true then you have the correct hit.
                             streamlog_out(DEBUG1)<<"Found correct ID. Add hit now..." <<std::endl;
                             std::vector<double> hitInput;
                             for(int i =0 ; i < hit->getNDouble(); i++){
                                 hitInput.push_back(hit->getDoubleVal(i)); 
                             }
-                            EUTelHit hit;
-                            hit.setTrackFromLCIOVec(hitInput);
-                            state.setHit(hit);
+                            EUTelHit euhit;
+                            euhit.setTrackFromLCIOVec(hitInput);
+                            state.setHit(euhit);
                             streamlog_out(DEBUG1)<<"Hit added." <<std::endl;
 
                         }
@@ -112,6 +112,7 @@ LCCollection* relStatesHits =  evt->getCollection("StateHitFOR"+ colName);stream
                     track.setState(state);
                 }
             }
+            track.print();
             tracks.push_back(track);
         }
     }

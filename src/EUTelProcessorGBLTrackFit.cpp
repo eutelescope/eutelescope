@@ -78,6 +78,7 @@ _mEstimatorType() //This is used by the GBL software for outliers down weighting
   registerOptionalParameter("ExcludePlanes", "This is the planes that will not be included in analysis", _excludePlanes ,IntVec());
   registerOptionalParameter("Mode", "Will this processor do the track parameterisation for you. 1 => yes 0 => no ", _mode ,int(1));
   registerOptionalParameter("IncMed", "Do you want to include the medium as addtional scattering", _incMed ,int(0));
+  registerOptionalParameter("chi2Cut", "Cut for output track.", _chi2Cut ,double(1000.0));
 
 
   registerOptionalParameter("HistogramInfoFilename", "Name of histogram info xml file", _histoInfoFileName, std::string("histoinfo.xml"));
@@ -197,7 +198,7 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent* evt){
 				std::map< int, std::map< float, float > >  SensorResidualError; 
                 ///Here collect the residuals and calcuated errors.
 				_trackFitter->getResLoc(traj,track, pointList, SensorResidual, SensorResidualError);
-				if(chi2/static_cast<float>(ndf) < 5){
+				if(chi2/static_cast<float>(ndf) < _chi2Cut){
 				  plotResidual(SensorResidual,SensorResidualError);
 				}
 			}else{
@@ -205,7 +206,9 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent* evt){
 				static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_fitsuccessHistName ] ) -> fill(0.0);
 				continue;//We continue so we don't add an empty track
 			}	
-			allTracksForThisEvent.push_back(track);
+            if(chi2/static_cast<float>(ndf) < _chi2Cut){
+                allTracksForThisEvent.push_back(track);
+            }
 			}//END OF LOOP FOR ALL TRACKS IN AN EVENT
 			outputLCIO(evt, allTracksForThisEvent); 
 			allTracksForThisEvent.clear();//We clear this so we don't add the same track twice
@@ -236,13 +239,14 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent* evt){
 void EUTelProcessorGBLTrackFit::plotResidual(std::map< int, std::map<float, float > >  & sensorResidual, std::map< int, std::map<float, float > >  & sensorResidualError){
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Residual plot
     std::vector<int> duts;
-	for ( std::vector<int>::const_iterator itPla = geo::gGeometry().sensorIDsVec().begin(); itPla != geo::gGeometry().sensorIDsVec().end(); ++itPla) {
+	for ( std::vector<int>::const_iterator itPla = EUTelExcludedPlanes::_senNoDeadMaterial.begin(); itPla != EUTelExcludedPlanes::_senNoDeadMaterial.end(); ++itPla) {
         if(*itPla > 5){
             duts.push_back(*itPla);
         }
 	}
     int dut1 = -999; int dut2 =-999;
 	for ( std::vector<int>::iterator itPla = duts.begin(); itPla != duts.end(); ++itPla) {
+
         if( itPla == duts.begin()){
             dut1 = *itPla;
         }

@@ -3,6 +3,7 @@ using namespace eutelescope;
 
 
 void EUTelRadCal::setRad(EUTelTrack& track, int& mode){
+//    std::cout<<"setRad!!!" <<std::endl; 
     setIncSenBlocks(track);
     if(mode == 0){
         getVarForSensorScatterersOnly(track);
@@ -123,6 +124,7 @@ void EUTelRadCal::getVarForAllScatters(EUTelTrack & track ){
 void EUTelRadCal::getVarForSensorScatterersOnly(EUTelTrack & track ){ 
     ///Get the total variance of the system.
     double varTotal = pow(Utility::getThetaRMSHighland( track.getBeamEnergy(),track.getRadPerTotal()  ),2); 
+//    std::cout<<"varTotal "<< varTotal << " Beam energy :" <<  track.getBeamEnergy() << " RadPer " << track.getRadPerTotal() <<std::endl; 
     for(std::vector<EUTelState>::iterator itSt = track.getStates().begin(); itSt != track.getStates().end(); ++itSt){
         ///Included sensor fraction of variance.
         itSt->block.senVar = varTotal*(itSt->block.senRadPer/track.getRadPerTotal()); 

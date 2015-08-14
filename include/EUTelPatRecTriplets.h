@@ -306,6 +306,8 @@ namespace eutelescope {
     double _dutDistCut;
     public:
     unsigned int _numberOfTracksTotal;
+    int _numberOfTracksDUTTotal;
+
 
 		
 	};
