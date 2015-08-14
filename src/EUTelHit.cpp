@@ -37,7 +37,7 @@ _cov(2,2)
     _time = hit->getTime();
     const int hitLoc = Utility::getSensorIDfromHit( static_cast<IMPL::TrackerHitImpl*> (hit) );
     _location = hitLoc;
-    
+    _pulse =hit->getRawHits().at(0);    
     _locationKnown=true;
     setCov(hit->getCovMatrix());
 
@@ -68,7 +68,7 @@ TVector3 EUTelHit::getPositionGlobal() const {
 int EUTelHit::getID() const {
     return _id;
 }
-EVENT::LCObjectVec EUTelHit::getPulse() const {
+EVENT::LCObject* EUTelHit::getPulse(){
     return _pulse;
 }
 void EUTelHit::getCov( double (&cov)[4] ) const {
@@ -94,7 +94,7 @@ void EUTelHit::setCov(const std::vector<float>& cov){
 void EUTelHit::setCov(TMatrixD cov){
     _cov = cov;
 }
-void EUTelHit::setPulse( EVENT::LCObjectVec& pulse){
+void EUTelHit::setPulse( EVENT::LCObject* pulse){
     _pulse = pulse;
 }
 

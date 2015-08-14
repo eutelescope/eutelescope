@@ -11,6 +11,7 @@ void EUTelReaderGenericLCIO::getColVec(std::vector<EUTelTrack> tracks,LCEvent* e
     LCCollectionVec* colHitVec = new LCCollectionVec(LCIO::LCGENERICOBJECT);
     LCCollectionVec* relTrackStateVec = new LCCollectionVec(LCIO::LCRELATION);
     LCCollectionVec* relStateHitVec = new LCCollectionVec(LCIO::LCRELATION);
+    LCCollectionVec* relHitClusterVec = new LCCollectionVec(LCIO::LCRELATION);
 
 
     for(size_t i=0 ; i < tracks.size(); i++){
@@ -23,7 +24,7 @@ void EUTelReaderGenericLCIO::getColVec(std::vector<EUTelTrack> tracks,LCEvent* e
         streamlog_out(DEBUG1)<<"Fill all track information...        Double number: "<< conTrack->getNDouble()  <<std::endl;
         colTrackVec->push_back(static_cast<EVENT::LCGenericObject*>(conTrack));
         streamlog_out(DEBUG1)<<"Tracks filled" <<std::endl;
-        std::vector<EUTelState> states = tracks.at(i).getStates();
+        std::vector<EUTelState>& states = tracks.at(i).getStates();
         for(size_t j=0 ; j < states.size(); j++){
             streamlog_out(DEBUG1)<<"Fill all state information " << " state location " << states.at(j).getLocation() <<std::endl;
             IMPL::LCGenericObjectImpl* conState = new  IMPL::LCGenericObjectImpl();  
@@ -36,13 +37,17 @@ void EUTelReaderGenericLCIO::getColVec(std::vector<EUTelTrack> tracks,LCEvent* e
             colStateVec->push_back(static_cast<EVENT::LCGenericObject*>(conState));
             relTrackStateVec->push_back(static_cast<EVENT::LCRelation*>(relTrackState));
             if(states.at(j).getStateHasHit()){
+                streamlog_out(DEBUG1)<<"State has a hit!" <<std::endl;
                 IMPL::LCGenericObjectImpl* conHit = new  IMPL::LCGenericObjectImpl();  
                 for(size_t k=0 ; k < states.at(j).getHit().getLCIOOutput().size(); k++){
                     conHit->setDoubleVal (k, states.at(j).getHit().getLCIOOutput().at(k));
                 }
                 IMPL::LCRelationImpl *relStateHit = new IMPL::LCRelationImpl(conState,conHit); 
                 colHitVec->push_back(static_cast<EVENT::LCGenericObject*>(conHit));
+                IMPL::LCRelationImpl *relHitCluster = new IMPL::LCRelationImpl(conHit,states.at(j).getHit().getPulse()); 
                 relStateHitVec->push_back(static_cast<EVENT::LCRelation*>(relStateHit));
+                relHitClusterVec->push_back(static_cast<EVENT::LCRelation*>(relHitCluster));
+
 
             }
 
@@ -54,13 +59,16 @@ void EUTelReaderGenericLCIO::getColVec(std::vector<EUTelTrack> tracks,LCEvent* e
     evt->addCollection(colHitVec,"HitsFOR" + colName);
     evt->addCollection(relTrackStateVec,"TrackStateFOR" + colName);
     evt->addCollection(relStateHitVec,"StateHitFOR" + colName);
+    streamlog_out(DEBUG1)<<"Add cluster" <<std::endl;
+    evt->addCollection(relHitClusterVec,"HitClusterFOR" + colName);
+
 
 } 
 
 std::vector<EUTelTrack> EUTelReaderGenericLCIO::getTracks( LCEvent* evt, std::string colName){
     std::vector<EUTelTrack> tracks; 
     streamlog_out(DEBUG1)<<"Open Collections... " <<std::endl;
-LCCollection* relStatesHits =  evt->getCollection("StateHitFOR"+ colName);streamlog_out(DEBUG1)<<"Open Collections2... " <<std::endl;
+    LCCollection* relStatesHits =  evt->getCollection("StateHitFOR"+ colName);streamlog_out(DEBUG1)<<"Open Collections2... " <<std::endl;
     LCCollection* relTrackStates =  evt->getCollection("TrackStateFOR"+ colName);
     
     streamlog_out(DEBUG1)<<"Open!" <<std::endl;
@@ -81,6 +89,8 @@ LCCollection* relStatesHits =  evt->getCollection("StateHitFOR"+ colName);stream
             EUTelTrack track;
             track.setTrackFromLCIOVec(trackInput);
             for (int jCol = 0; jCol < relTrackStates->getNumberOfElements(); jCol++) {//Loop through track->state look for state linked to that track
+                streamlog_out(DEBUG1)<<"Track state link!" <<std::endl;
+
                 EVENT::LCRelation* relTrackState = static_cast<EVENT::LCRelation*>(relTrackStates->getElementAt(jCol));
                 EVENT::LCGenericObject* state  =  static_cast<EVENT::LCGenericObject*>(relTrackState->getTo());
                 EVENT::LCGenericObject* trackCheck  =  static_cast<EVENT::LCGenericObject*>(relTrackState->getFrom());
@@ -93,18 +103,27 @@ LCCollection* relStatesHits =  evt->getCollection("StateHitFOR"+ colName);stream
                     EUTelState state;
                     state.setTrackFromLCIOVec(stateInput);
                     for (int kCol = 0; kCol < relStatesHits->getNumberOfElements(); kCol++) {//Loop through all state->hit link
+                        streamlog_out(DEBUG1)<<"State hit link!" <<std::endl;
+
                         EVENT::LCRelation* relStateHit = static_cast<EVENT::LCRelation*>(relStatesHits->getElementAt(kCol));
                         EVENT::LCGenericObject* stateCheck  =  static_cast<EVENT::LCGenericObject*>(relStateHit->getFrom());
                         EVENT::LCGenericObject* hit  =  static_cast<EVENT::LCGenericObject*>(relStateHit->getTo());
-                        if(stateCheck->id() == stateID and hit){//If this is true then you have the correct hit.
+                        EVENT::LCObject* clu  =  static_cast<EVENT::LCGenericObject*>(relStateHit->getTo());
+
+                        ///Now get the cluster info
+
+                        EVENT::LCRelation* relHitCluster = static_cast<EVENT::LCRelation*>(relStatesHits->getElementAt(kCol));
+
+                        if(stateCheck->id() == stateID){//If this is true then you have the correct hit.
                             streamlog_out(DEBUG1)<<"Found correct ID. Add hit now..." <<std::endl;
                             std::vector<double> hitInput;
                             for(int i =0 ; i < hit->getNDouble(); i++){
                                 hitInput.push_back(hit->getDoubleVal(i)); 
                             }
-                            EUTelHit euhit;
-                            euhit.setTrackFromLCIOVec(hitInput);
-                            state.setHit(euhit);
+                            EUTelHit hit;
+                            hit.setTrackFromLCIOVec(hitInput);
+                            hit.setPulse(clu);
+                            state.setHit(hit);
                             streamlog_out(DEBUG1)<<"Hit added." <<std::endl;
 
                         }
