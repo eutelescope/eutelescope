@@ -342,7 +342,7 @@ void EUTelTrackAnalysis::plotPValueWithPosition(EUTelTrack track){
   streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotPValueWithPosition------------------------------END"<< std::endl;
 }
 float EUTelTrackAnalysis::calculatePValueForChi2(EUTelTrack track){//std::cout<<"pigeon"<<std::endl;
-  //  std::cout<<"pigeon = "<<track.getNdf()<<std::endl;
+//  std::cout<<"pigeon = "<<track.getNdf()<<std::endl;
   if(track.getNdf()==0) return 1;
   boost::math::chi_squared mydist(track.getNdf());//std::cout<<"pigeon2"<<std::endl;
   float pValue = 1 - boost::math::cdf(mydist,track.getChi2());//std::cout<<"pigeon3"<<std::endl;
@@ -361,7 +361,6 @@ void EUTelTrackAnalysis::print(){
 
 
 void EUTelTrackAnalysis::setTotNum(EUTelTrack& track){
-	float pValue = calculatePValueForChi2(track);
 	std::vector<EUTelState> states = track.getStates();
 	for(size_t i=0; i<states.size();++i){
 		EUTelState state  = states.at(i);

@@ -66,7 +66,7 @@
 within the selected number of event per cycle-->
   <parameter name="MaxAllowedFiringFreq" type="float"> 0.001 </parameter>
   <!--The number of events to be considered for each update cycle-->
-  <parameter name="NoOfEvents" type="int"> 5000 </parameter>
+  <parameter name="NoOfEvents" type="int"> @NoOfEvents@ </parameter>
   <!--The sensorID for the generated collection (one per detector)-->
   <parameter name="SensorIDVec" type="IntVec"> 0 1 2 3 4 5</parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->

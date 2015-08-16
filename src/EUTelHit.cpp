@@ -141,7 +141,7 @@ void EUTelHit::print(){
 	streamlog_out(DEBUG1)<< std::scientific << "Hit Information:" << std::endl;
 	streamlog_out(DEBUG1)<< std::scientific <<"Position Local:  " << _position[0] << " " << _position[1] <<" " << _position[2] <<" Global: " << getPositionGlobal()[0] <<" " <<getPositionGlobal()[1] << " " << getPositionGlobal()[2] <<std::endl;
 	streamlog_out(DEBUG1)<< std::scientific <<"ID:  " << _id  <<std::endl;
-	streamlog_out(DEBUG1)<< std::scientific <<"Location:  " << _location  <<std::endl;
+	streamlog_out(DEBUG1)<< std::scientific <<"Location:  " << _location  << " Pulse " << _pulse <<std::endl;
 
 }
 bool EUTelHit::operator==(const EUTelHit compareHit ) const {

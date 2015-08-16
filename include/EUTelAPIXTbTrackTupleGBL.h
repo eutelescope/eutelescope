@@ -29,8 +29,7 @@ namespace eutelescope {
     //TbTrack additions
     void prepareTree();
     void clear();
-
-    bool readZsHits(std::string colName, LCEvent* event);
+    bool readZsHits( std::string colName, LCEvent* event);
     bool readTracks(std::vector<EUTelTrack>&);
     bool readHits( std::vector<EUTelTrack>& );
 
@@ -38,7 +37,7 @@ namespace eutelescope {
     std::string _inputTelPulseCollectionName;
     std::string _inputDutPulseCollectionName;
     std::string _telZsColName;
-
+    std::string _dutZsColName;
     std::string _path2file;
 
     std::map<int, float> _xSensSize;

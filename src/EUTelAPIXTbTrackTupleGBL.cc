@@ -64,6 +64,8 @@ EUTelAPIXTbTrackTupleGBL::EUTelAPIXTbTrackTupleGBL()
 
   registerInputCollection(LCIO::TRACK, "InputTrackCollectionName", "Name of the input Track collection",
 		  		_inputTrackColName, std::string("fittracks"));
+    registerProcessorParameter ("DutZsColName", "DUT zero surpressed data colection name",
+                         _dutZsColName, std::string("zsdata_apix"));
   	   
   registerProcessorParameter ("OutputPath", "Path/File where root-file should be stored",
 			      _path2file, std::string("NTuple.root"));
@@ -139,10 +141,10 @@ void EUTelAPIXTbTrackTupleGBL::processEvent( LCEvent * event )
 	}
   	
 	//read in raw data	
-//	if(!readZsHits( _dutZsColName , event )) 
-//	{ 
-//		return; 
-//	}
+    if(!readZsHits( _dutZsColName , event )) 
+	{ 
+		return; 
+	}
   
   	//read in tracks
 	if(!readTracks(tracks))
@@ -233,52 +235,49 @@ bool EUTelAPIXTbTrackTupleGBL::readTracks(std::vector<EUTelTrack>& tracks)
 	_nTrackParams = nTrackParams;
 	return true;
 }
-
-//Read in raw (zs) TrackerData(Impl) to later dump
 bool EUTelAPIXTbTrackTupleGBL::readZsHits( std::string colName, LCEvent* event)
 {
-	LCCollectionVec* zsInputCollectionVec = NULL;
- 
-	try
-	{
-		zsInputCollectionVec = dynamic_cast<LCCollectionVec*>( event->getCollection(colName) );
-  	}
-       	catch(DataNotAvailableException& e)
-	{
-		streamlog_out( DEBUG2 ) << "Raw ZS data collection " << colName << " not found in event " << event->getEventNumber()  << "!" << std::endl;
-    		return false;
-  	}
-	
-	UTIL::CellIDDecoder<TrackerDataImpl> cellDecoder( zsInputCollectionVec );
-	for( unsigned int plane = 0; plane < zsInputCollectionVec->size(); plane++ ) 
-	{
-		TrackerDataImpl* zsData = dynamic_cast< TrackerDataImpl * > ( zsInputCollectionVec->getElementAt( plane ) );
-		SparsePixelType type = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( zsData )["sparsePixelType"]) );
-    		int sensorID = cellDecoder( zsData )["sensorID"];
-    
-		if (type == kEUTelGenericSparsePixel  ) 
-		{
-			std::auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> > apixData( new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> ( zsData ));
-      			EUTelGenericSparsePixel apixPixel;
-      				
-			for( unsigned int iHit = 0; iHit < apixData->size(); iHit++ ) 
-			{
-				apixData->getSparsePixelAt( iHit, &apixPixel);
-				_nPixHits++;
-				p_iden->push_back( sensorID );
-				p_row->push_back( apixPixel.getYCoord() );
-				p_col->push_back( apixPixel.getXCoord() );
-				p_tot->push_back( static_cast< int >(apixPixel.getSignal()) );
-				p_lv1->push_back( static_cast< int >(apixPixel.getTime()) );
-     		}
-    	}
-		else
-		{
-			//PANIC
-		}
-  	}
-  	return true;
+    LCCollectionVec* zsInputCollectionVec = NULL;
+    try
+    {
+        zsInputCollectionVec = dynamic_cast<LCCollectionVec*>( event->getCollection(colName) );
+    }
+    catch(DataNotAvailableException& e)
+    {
+        streamlog_out( DEBUG2 ) << "Raw ZS data collection " << colName << " not found in event " << event->getEventNumber()  << "!" << std::endl;
+        return false;
+    }
+
+    UTIL::CellIDDecoder<TrackerDataImpl> cellDecoder( zsInputCollectionVec );
+    for( unsigned int plane = 0; plane < zsInputCollectionVec->size(); plane++ ) 
+    {
+        TrackerDataImpl* zsData = dynamic_cast< TrackerDataImpl * > ( zsInputCollectionVec->getElementAt( plane ) );
+        SparsePixelType type = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( zsData )["sparsePixelType"]) );
+        int sensorID = cellDecoder( zsData )["sensorID"];
+
+        if (type == kEUTelGenericSparsePixel  ) 
+        {
+            std::auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> > apixData( new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> ( zsData ));
+            EUTelGenericSparsePixel apixPixel;
+
+            for( unsigned int iHit = 0; iHit < apixData->size(); iHit++ ) 
+            {
+                apixData->getSparsePixelAt( iHit, &apixPixel);
+                _nPixHits++;
+                p_iden->push_back( sensorID );
+                p_row->push_back( apixPixel.getYCoord() );
+                p_col->push_back( apixPixel.getXCoord() );
+                p_tot->push_back( static_cast< int >(apixPixel.getSignal()) );
+                p_lv1->push_back( static_cast< int >(apixPixel.getTime()) );
+            }
+        }
+        else
+        {
+        }
+    }
+        return true;
 }
+
 
 void EUTelAPIXTbTrackTupleGBL::clear()
 {

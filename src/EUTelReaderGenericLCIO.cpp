@@ -44,11 +44,10 @@ void EUTelReaderGenericLCIO::getColVec(std::vector<EUTelTrack> tracks,LCEvent* e
                 }
                 IMPL::LCRelationImpl *relStateHit = new IMPL::LCRelationImpl(conState,conHit); 
                 colHitVec->push_back(static_cast<EVENT::LCGenericObject*>(conHit));
+//                std::cout<<"Here is the pulse: " << states.at(j).getHit().getPulse() << " Location " << states.at(j).getLocation() <<std::endl;
                 IMPL::LCRelationImpl *relHitCluster = new IMPL::LCRelationImpl(conHit,states.at(j).getHit().getPulse()); 
                 relStateHitVec->push_back(static_cast<EVENT::LCRelation*>(relStateHit));
                 relHitClusterVec->push_back(static_cast<EVENT::LCRelation*>(relHitCluster));
-
-
             }
 
         }

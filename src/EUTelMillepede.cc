@@ -60,10 +60,6 @@ void EUTelMillepede::computeAlignmentGlobal( EUTelState &state){
     /// The position of the hits are before the offsets are taken into account. 
     /// This allows the correct magnitude of rotation to be determined.
     Eigen::Vector3d normal  = geo::gGeometry().siPlaneNormalEig(state.getLocation());
-    ///Plane normal must be define along the beam direction.
-//    if(normal[2] < 0){
-//        normal = -1*normal;
-//    }
     Eigen::Vector3d offset =  geo::gGeometry().getOffsetVector(state.getLocation());
 	streamlog_out( DEBUG0 ) << "Offset: "<< offset[0] <<  " " << offset[1] << " " <<offset[2] << std::endl;
 
@@ -81,15 +77,9 @@ void EUTelMillepede::computeAlignmentGlobal( EUTelState &state){
 
     //Change in global position with change in alignment parameters.  
     Eigen::MatrixXd dmdg(3,6);
-    if(normal[2] > 0){
-        dmdg << 1 , 0,  0, 0,   relZ, -relY,
-                0 ,  1,  0,-relZ,  0,    relX,
-               0 ,   0,  1, relY, -relX, 0;
-    }else{
-    dmdg << 1 , 0,  0, 0,   -relZ, relY,
-            0 ,  1,  0,relZ,  0,    -relX,
-           0 ,   0,  1, -relY, relX, 0;
-    }
+    dmdg << 1 , 0,  0, 0,   relZ, -relY,
+            0 ,  1,  0,-relZ,  0,    relX,
+           0 ,   0,  1, relY, -relX, 0;
 
     Eigen::Matrix3d rot  =  geo::gGeometry().getRotMatrixEig(state.getLocation());
     Eigen::Matrix3d rotInv = rot.transpose();

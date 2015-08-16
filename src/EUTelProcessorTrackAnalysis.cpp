@@ -62,18 +62,18 @@ void EUTelProcessorTrackAnalysis::processEvent(LCEvent * evt){
    //         track.print();
             EUTelTrack track = tracks.at(iTrack); 
             _analysis->plotResidualVsPosition(track);
-	    _analysis->plotHitMap(track);
+            _analysis->plotHitMap(track);
             _analysis->plotEfficiencyVsPosition(track,_sensorIDs);	
             _analysis->plotIncidenceAngles(track);
             _analysis->plotKinksVsPosition(track);
             _analysis->plotKinks(track);
-
-        //    if(track.getChi2()/track.getNdf() < 5.0){
-                _analysis->plotBeamEnergy(track);
+            _analysis->plotBeamEnergy(track);
+            ///Only plot p-value if we have chi2 and ndf. If less than one then can not plot. 
+            if(track.getNdf() > 1 ){
                 _analysis->plotPValueVsBeamEnergy(track);
-        //    }//if(track.getChi2()/track.getNdf() < 5.0){
-            _analysis->plotPValueWithPosition(track);
-            _analysis->plotPValueWithIncidenceAngles(track);
+                _analysis->plotPValueWithPosition(track);
+                _analysis->plotPValueWithIncidenceAngles(track);
+            }
            _analysis->setTotNum(track);
 
         }//for (int iTrack = 0; iTrack < tracks.size(); ++iTrack){
