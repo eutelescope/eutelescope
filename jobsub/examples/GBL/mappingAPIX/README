@@ -1,6 +1,7 @@
 ##The is the GBL Fitter being used with an APIX example. The mapping step between channel number and geometric location is also used. 
 #Contact a.morton.2@research.gla.ac.uk
 #Contact Kenneth.Wraight@glasgow.ac.uk for more information concerning mapping
+#20k events used for alignment. Increase to full dataset for better results.
 js => jobsub -c config/config.cfg -csv runlist/runlist.csv 
 ###js converter 186 #########################################################################
 Must use gear_250x50.xml during this step
@@ -16,23 +17,30 @@ With the prealigned gear use the cuts:
 #TripletSlopeCuts = 0.01 0.01
 #DoubletCenDistCut = 1 1
 #DoubletDistCut = 1 1
-#excludeplanes=    
+#DUTWindow= 1
+#excludeplanes=      
 
 ONLY NEED TO RUN PATTERN RECOGNITION ONCE! Caveat: You are so badly aligned you would have associated the wrong hits to tracks.
 ###js GBLAlign 186######################################################################
 
-Align with prealigned gear and only mimosas
+#FixXshifts=0  5 
+#FixYshifts=0  5
+#FixZshifts=0  5  
+#FixXrot=   0  5   
+#FixYrot=   0  5 
+#FixZrot=   0  5   
 
-#FixXshifts=0  5 20 21  
-#FixYshifts=0  5 20 21 
-#FixZshifts=0  5 20 21   
-#FixXrot=   0 1 2 3 4 5 20 21  
-#FixYrot=   0 1 2 3 4 5 20 21
-#FixZrot=   0  5 20 21  
-#r = 0.005
+#r = 0.01
 #dutX=0.150
 #dutY=0.01
-#
+
+gear output: alignedGear-iter1-run000186.xml
+
+#r = 0.005
+
+gear output: alignedGear-iter2-run000186.xml
+
+#####################################################################################SLAC
 11:19:33 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  1  Type:  positionX  Value:  -0.63752E-02  Error:  0.86650E-04
 11:19:33 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  1  Type:  positionY  Value:  0.12941E-02  Error:  0.83586E-04
 11:19:33 jobsub.GBLAlign(INFO): [ MESSAGE9 "TrackAlign"] The sensor ID:  1  Type:  positionZ  Value:  1.8849  Error:  0.64090E-01
