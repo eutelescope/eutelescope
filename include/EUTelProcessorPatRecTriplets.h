@@ -168,6 +168,9 @@ namespace eutelescope {
     AIDA::IHistogram1D * _TripletYseperationHistoLeft;
     AIDA::IHistogram1D * _TripletDistCutXHisto;
     AIDA::IHistogram1D * _TripletDistCutYHisto;
+    AIDA::IHistogram1D * _TripletSlopeHistoX ;
+    AIDA::IHistogram1D * _TripletSlopeHistoY ;
+    AIDA::IHistogram1D * _DUTWindowHisto;
 
         /// prevent users from making (default) copies of processors
 		DISALLOW_COPY_AND_ASSIGN(EUTelProcessorPatRecTriplets)   

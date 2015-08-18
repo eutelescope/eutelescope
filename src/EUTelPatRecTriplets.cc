@@ -10,7 +10,7 @@ namespace eutelescope {
 EUTelPatRecTriplets::EUTelPatRecTriplets(AIDA::IHistogram1D * DoubletXseperationHistoRight, AIDA::IHistogram1D * DoubletYseperationHistoRight, AIDA::IHistogram1D * DoubletXseperationHistoLeft,
 					   AIDA::IHistogram1D * DoubletYseperationHistoLeft, AIDA::IHistogram1D * TripletXseperationHistoRight, AIDA::IHistogram1D * TripletYseperationHistoRight,
 					   AIDA::IHistogram1D * TripletXseperationHistoLeft, AIDA::IHistogram1D * TripletYseperationHistoLeft, AIDA::IHistogram1D * TripletDistCutXHisto,
-					   AIDA::IHistogram1D * TripletDistCutYHisto):  
+					   AIDA::IHistogram1D * TripletDistCutYHisto, AIDA::IHistogram1D * TripletSlopeHistoX, AIDA::IHistogram1D * TripletSlopeHistoY, AIDA::IHistogram1D * DUTWindowHisto ):  
 _eventNumber(0),
 _totalNumberOfHits(0),
 _numberTripletsLeft(0),
@@ -30,7 +30,10 @@ _TripletYseperationHistoRight(TripletYseperationHistoRight),
 _TripletXseperationHistoLeft(TripletXseperationHistoLeft),
 _TripletYseperationHistoLeft(TripletYseperationHistoLeft),
 _TripletDistCutXHisto(TripletDistCutXHisto),
-_TripletDistCutYHisto(TripletDistCutYHisto)
+_TripletDistCutYHisto(TripletDistCutYHisto),
+_TripletSlopeHistoX(TripletSlopeHistoX),
+_TripletSlopeHistoY(TripletSlopeHistoY),
+_DUTWindowHisto(DUTWindowHisto)
 {
     EUTelExcludedPlanes();
 
@@ -241,6 +244,8 @@ std::vector<std::vector<EUTelHit> > EUTelPatRecTriplets::getTrackHitsFromTriplet
 	  streamlog_out(DEBUG0) << "itLeftTriplet->matches = " <<itLeftTriplet->matches<< "  itRightTriplet->matches = " <<itRightTriplet->matches<< std::endl;
 
                     streamlog_out(DEBUG1) << "Triplet slope delta match Cut: " <<"X delta: " << fabs(itRightTriplet->slope.at(0) - itLeftTriplet->slope.at(0)) <<" Cut: " << _tripletSlopeCuts.at(0) << " Y delta: " <<  fabs(itRightTriplet->slope.at(1) - itLeftTriplet->slope.at(1))<<" Cut: " <<  _tripletSlopeCuts.at(1)  << std::endl;
+           _TripletSlopeHistoX ->fill(itRightTriplet->slope.at(0) - itLeftTriplet->slope.at(0));
+           _TripletSlopeHistoY ->fill(itRightTriplet->slope.at(1) - itLeftTriplet->slope.at(1));
 
             if(fabs(itRightTriplet->slope.at(0) - itLeftTriplet->slope.at(0)) > _tripletSlopeCuts.at(0)  or fabs(itRightTriplet->slope.at(1) - itLeftTriplet->slope.at(1)) >_tripletSlopeCuts.at(1)  ){
                 continue;
@@ -324,6 +329,7 @@ bool EUTelPatRecTriplets::getDoubHitOnTraj(doublets const& doub, std::vector<uns
             std::vector<float>  pos = getDoubPosAtZ(doub, hitPosZ);/// Could calculate this once. Might be a bit off for tilted sensors.
 
             float dist = getDistLocal(itHit, pos);
+
     //        std::cout<<"Dist " << dist  << std::endl;
 
             if(itHit == hits.begin()){
@@ -332,6 +338,10 @@ bool EUTelPatRecTriplets::getDoubHitOnTraj(doublets const& doub, std::vector<uns
       //          std::cout<<"DistBest begin " << distBest  << std::endl;
 
             }
+            if(itHit == hits.end()-1){
+               _DUTWindowHisto ->fill(distBest);
+            }
+
             if(dist < distBest){
                 hitBest = *itHit;
                 distBest = dist;
