@@ -186,21 +186,21 @@ void EUTelDafFitter::dafEvent (LCEvent * event) {
 
 }
 
-void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate<float,4>* track, LCCollectionVec *lcvec){
+void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate<float,4>& track, LCCollectionVec *lcvec){
   TrackImpl * fittrack = new TrackImpl();
   // Impact parameters are useless and set to 0
   fittrack->setD0(0.);        // impact paramter of the track in (r-phi)
   fittrack->setZ0(0.);        // impact paramter of the track in (r-z)
   fittrack->setTanLambda(0.); // dip angle of the track at reference point
 
-  daffitter::TrackEstimate<float,4>* est = track->estimates.at(0);
+  daffitter::TrackEstimate<float,4>& est = track.estimates.at(0);
 
   //No good way of storing the track angles, so
-  fittrack->setOmega( est->getXdz()); // Storing dxdz as Omega
-  fittrack->setPhi( est->getYdz() );   // Storing dx/dy as phi
+  fittrack->setOmega( est.getXdz()); // Storing dxdz as Omega
+  fittrack->setPhi( est.getYdz() );   // Storing dx/dy as phi
 
-  fittrack->setChi2(track->chi2);
-  fittrack->setNdf(int(track->ndof + 0.2f) );
+  fittrack->setChi2(track.chi2);
+  fittrack->setNdf(int( round(track.ndof)) );
   // prepare an encoder for the hit collection to store properties
   CellIDEncoder<TrackerHitImpl> idHitEncoder(EUTELESCOPE::HITENCODING, lcvec);
 
@@ -208,7 +208,7 @@ void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate<float,4>* track, LCColl
   
   for(size_t plane = 0; plane < _system.planes.size(); plane++){
     daffitter::FitPlane<float>& pl = _system.planes.at(plane);
-    daffitter::TrackEstimate<float,4>* estim = track->estimates.at( plane );
+    daffitter::TrackEstimate<float,4>& estim = track.estimates.at( plane );
     TrackerHitImpl * fitpoint = new TrackerHitImpl();
     // encode and store sensorID
     int sensorID =  _system.planes.at(plane).getSensorID();
@@ -216,8 +216,8 @@ void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate<float,4>* track, LCColl
     // set the local/global bit flag property AND the FittedHit property for the hit
     idHitEncoder["properties"] = kHitInGlobalCoord | kFittedHit;
     double pos[3];
-    pos[0]= estim->getX() / 1000.0;
-    pos[1]= estim->getY() / 1000.0;
+    pos[0]= estim.getX() / 1000.0;
+    pos[1]= estim.getY() / 1000.0;
     pos[2]= pl.getMeasZ() / 1000.0;
 // overload z coordinate calculation -> important for proper sensor Identification by the hit coordinates based onthe refhit collection
     if( fabs(pos[2] - getZfromRefHit(plane, sensorID, pos)) > 0.0002 ){
@@ -229,9 +229,9 @@ void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate<float,4>* track, LCColl
     // Covariance matrix of the fitted position
     // (stored as lower triangle matrix, i.e.  cov(xx),cov(y,x),cov(y,y) ).
     float cov[TRKHITNCOVMATRIX];
-    cov[0]= estim->cov(0,0);
-    cov[1]= estim->cov(0,1);
-    cov[2]= estim->cov(1,1);
+    cov[0]= estim.cov(0,0);
+    cov[1]= estim.cov(0,1);
+    cov[2]= estim.cov(1,1);
     //Error of z position of fit is unclear to me, this would be a systematic alignment
     //error. Set to 0 along with all covariances.
     cov[3]=cov[4]=cov[5]=0.;
@@ -250,7 +250,7 @@ void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate<float,4>* track, LCColl
     }
     //Also add measurement point
     for(size_t mm = 0; mm < pl.meas.size(); mm++){
-      if( track->weights.at(plane)(mm) < 0.5f){ continue; }
+      if( track.weights.at(plane)(mm) < 0.5f){ continue; }
       if( pl.isExcluded()) { continue; }
       TrackerHitImpl* meashit = static_cast<TrackerHitImpl*> ( _hitCollection->getElementAt( pl.meas.at(mm).getIden()) );
       fittrack->addHit(meashit);

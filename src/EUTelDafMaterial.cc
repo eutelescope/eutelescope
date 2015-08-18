@@ -156,7 +156,7 @@ void EUTelDafMaterial::dafInit() {
 }
 
 
-int EUTelDafMaterial::checkDutResids(daffitter::TrackCandidate<float, 4> * track){
+int EUTelDafMaterial::checkDutResids(daffitter::TrackCandidate<float, 4>& track){
   int nHits(0);
   for( size_t ii = 0; ii < _system.planes.size() ; ii++){
     daffitter::FitPlane<float>& plane = _system.planes.at(ii);
@@ -164,24 +164,24 @@ int EUTelDafMaterial::checkDutResids(daffitter::TrackCandidate<float, 4> * track
     if( find(_dutPlanes.begin(), _dutPlanes.end(), iden) == _dutPlanes.end()){ continue; }
     std::pair<float, float> resX = _resX[iden];
     std::pair<float, float> resY = _resY[iden];
-    track->indexes.at(ii) = -1;
+    track.indexes.at(ii) = -1;
 
     for(size_t w = 0; w < plane.meas.size(); w++){
       bool includeMeas = true;
       daffitter::Measurement<float>& meas = plane.meas.at(w);
-      daffitter::TrackEstimate<float, 4> * estim = track->estimates.at(ii);
-      track->weights.at(ii)(w) = 0.0;
+      daffitter::TrackEstimate<float, 4>& estim = track.estimates.at(ii);
+      track.weights.at(ii)(w) = 0.0;
       //Resids 
-      if( (estim->getX() - meas.getX()) < resX.first) { includeMeas = false; }
-      if( (estim->getX() - meas.getX()) > resX.second){ includeMeas = false; }
-      if( (estim->getY() - meas.getY()) < resY.first) { includeMeas = false; }
-      if( (estim->getY() - meas.getY()) > resY.second){ includeMeas = false; }
+      if( (estim.getX() - meas.getX()) < resX.first) { includeMeas = false; }
+      if( (estim.getX() - meas.getX()) > resX.second){ includeMeas = false; }
+      if( (estim.getY() - meas.getY()) < resY.first) { includeMeas = false; }
+      if( (estim.getY() - meas.getY()) > resY.second){ includeMeas = false; }
       if( includeMeas){
 	  //meas.goodRegion() ){
 	nHits++;
 	//std::cout << "GotHit!" << nHits << std::endl;
-	track->weights.at(ii)(w) = 1.0;
-	track->indexes.at(ii) = w;
+	track.weights.at(ii)(w) = 1.0;
+	track.indexes.at(ii) = w;
 	break;
       }
     }
@@ -222,8 +222,8 @@ void EUTelDafMaterial::dafEvent (LCEvent * /*event*/) {
     int inTimeHits = checkDutResids( _system.tracks.at(ii));
     if( inTimeHits >= _nDutHits) {
       std::vector<Measurement<float> > track;
-      for(size_t plane = 0; plane < _system.tracks.at(ii)->indexes.size(); plane++ ){
-	int hitIndex = _system.tracks.at(ii)->indexes.at(plane);
+      for(size_t plane = 0; plane < _system.tracks.at(ii).indexes.size(); plane++ ){
+	int hitIndex = _system.tracks.at(ii).indexes.at(plane);
 	if( hitIndex >= 0 ){
 	  Measurement<float> m = _system.planes.at(plane).meas.at(hitIndex);
 	  //if(m.goodRegion()){ track.push_back( Measurement<float>(m.getX(), m.getY(), _system.planes.at(plane).getMeasZ(), true, plane)); }
@@ -231,8 +231,8 @@ void EUTelDafMaterial::dafEvent (LCEvent * /*event*/) {
 	  //track.push_back( m );
 	}
 	if(plane ==  _system.planes.size()/2){
-	  _angleX += _system.tracks.at(ii)->estimates.at(plane)->getXdz();
-	  _angleY += _system.tracks.at(ii)->estimates.at(plane)->getYdz();
+	  _angleX += _system.tracks.at(ii).estimates.at(plane).getXdz();
+	  _angleY += _system.tracks.at(ii).estimates.at(plane).getYdz();
 	}
       }
       //Fill plots

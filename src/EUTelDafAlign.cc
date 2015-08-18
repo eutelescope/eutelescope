@@ -201,7 +201,7 @@ void EUTelDafAlign::dafInit() {
   }
 }
 
-int EUTelDafAlign::checkDutResids(daffitter::TrackCandidate<float,4>* track){
+int EUTelDafAlign::checkDutResids(daffitter::TrackCandidate<float,4>& track){
   int nHits(0);
   _dutMatches.clear();
   for( size_t ii = 0; ii < _system.planes.size() ; ii++){
@@ -214,17 +214,17 @@ int EUTelDafAlign::checkDutResids(daffitter::TrackCandidate<float,4>* track){
     for(size_t w = 0; w < plane.meas.size(); w++){
       float measWeight = 1.0f;
       daffitter::Measurement<float>& meas = plane.meas.at(w);
-      daffitter::TrackEstimate<float,4>* estim = track->estimates.at(ii);
+      daffitter::TrackEstimate<float,4>& estim = track.estimates.at(ii);
       //Resids 
-      if( (estim->getX() - meas.getX()) < resX.first) { measWeight = 0.0f;}
-      if( (estim->getX() - meas.getX()) > resX.second){ measWeight = 0.0f;}
-      if( (estim->getY() - meas.getY()) < resY.first) { measWeight = 0.0f;}
-      if( (estim->getY() - meas.getY()) > resY.second){ measWeight = 0.0f;}
+      if( (estim.getX() - meas.getX()) < resX.first) { measWeight = 0.0f;}
+      if( (estim.getX() - meas.getX()) > resX.second){ measWeight = 0.0f;}
+      if( (estim.getY() - meas.getY()) < resY.first) { measWeight = 0.0f;}
+      if( (estim.getY() - meas.getY()) > resY.second){ measWeight = 0.0f;}
       if(measWeight > 0.5){ 
 	nHits++; 
 	if( not meas.goodRegion() ){  measWeight = 0.0f;  }
       }
-      track->weights.at(ii)(w) = measWeight;
+      track.weights.at(ii)(w) = measWeight;
       if( measWeight > 0.5 ){
 	_dutMatches.push_back(ii);
       }
@@ -263,7 +263,7 @@ void EUTelDafAlign::dafEvent (LCEvent* /*event*/) {
   }
 }
 
-void EUTelDafAlign::addToMille(daffitter::TrackCandidate<float,4>* track){
+void EUTelDafAlign::addToMille(daffitter::TrackCandidate<float,4>& track){
   const int nLC = 4; //number of local parameters
   const int nGL = _system.planes.size() * 5; // number of global parameters
   
@@ -280,17 +280,17 @@ void EUTelDafAlign::addToMille(daffitter::TrackCandidate<float,4>* track){
   for(size_t ii = 0; ii < _system.planes.size(); ii++){
     daffitter::FitPlane<float>& pl = _system.planes.at(ii);
     if(pl.isExcluded() ) { continue; }
-    int index = track->indexes.at(ii);
+    int index = track.indexes.at(ii);
     //index < 0 means plane is excluded
     if( index < 0) { continue; }
     daffitter::Measurement<float>& meas = pl.meas.at(index);
-    daffitter::TrackEstimate<float,4>* estim = track->estimates.at(ii);
+    daffitter::TrackEstimate<float,4>& estim = track.estimates.at(ii);
     derGL[(ii * 5)    ] = -1; //Derivatives of residuals w.r.t. shift in x
     derGL[(ii * 5) + 2] = meas.getY(); //Derivatives of residuals w.r.t. z rotations
     derGL[(ii * 5) + 3] = meas.getX(); //Derivatives of residuals w.r.t. scale of x axis
     derLC[0] = 1; //Derivatives of fit pos w.r.t. x
     derLC[2] = pl.getMeasZ(); //Derivatives of fit pos w.r.t. dx/dz
-    _mille->mille(nLC, derLC, nGL, derGL, label, estim->getX()- meas.getX(), pl.getSigmaX());
+    _mille->mille(nLC, derLC, nGL, derGL, label, estim.getX()- meas.getX(), pl.getSigmaX());
 
     derGL[(ii * 5)]     = 0;
     derGL[(ii * 5) + 2] = 0;
@@ -305,7 +305,7 @@ void EUTelDafAlign::addToMille(daffitter::TrackCandidate<float,4>* track){
     derLC[1] = 1; //Derivatives of fit pos w.r.t. y
     derLC[3] = pl.getMeasZ(); //Derivatives of fit pos w.r.t. dy/dz
     
-    _mille->mille(nLC, derLC, nGL, derGL, label, estim->getY() - meas.getY(), pl.getSigmaY());
+    _mille->mille(nLC, derLC, nGL, derGL, label, estim.getY() - meas.getY(), pl.getSigmaY());
     
     derGL[(ii * 5) + 1] = 0;
     derGL[(ii * 5) + 2] = 0;

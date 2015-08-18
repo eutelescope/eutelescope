@@ -43,7 +43,7 @@ namespace eutelescope {
 
     std::vector<float>_resXMin, _resXMax, _resYMin, _resYMax;
     std::map<int, std::pair<float, float> > _resX, _resY;
-    int checkDutResids(daffitter::TrackCandidate<float, 4> * cnd);
+    int checkDutResids(daffitter::TrackCandidate<float, 4>& cnd);
 
     //Mat res
     std::vector<int> _radLengthIndex, _resXIndex, _resYIndex;    

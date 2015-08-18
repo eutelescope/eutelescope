@@ -510,7 +510,7 @@ void EUTelDafBase::readHitCollection(LCEvent* event){
   }
 }
 
-int EUTelDafBase::checkInTime(daffitter::TrackCandidate<float, 4> * track){
+int EUTelDafBase::checkInTime(daffitter::TrackCandidate<float, 4>& track){
   size_t nMatches(0);
   for( size_t ii = 0; ii < _system.planes.size() ; ii++){
     daffitter::FitPlane<float>& plane = _system.planes.at(ii);
@@ -521,7 +521,7 @@ int EUTelDafBase::checkInTime(daffitter::TrackCandidate<float, 4> * track){
     }
     //In timeness can be checked by seeing if the plane has assigned weight
     for(size_t w = 0; w < plane.meas.size(); w++){
-      if( track->weights.at(ii)(w) < 0.5f ) {  continue; }
+      if( track.weights.at(ii)(w) < 0.5f ) {  continue; }
       nMatches++;
       break;
     }
@@ -614,23 +614,23 @@ void EUTelDafBase::processEvent(LCEvent * event){
   }
 }
 
-bool EUTelDafBase::checkTrack(daffitter::TrackCandidate<float,4> * track){
+bool EUTelDafBase::checkTrack(daffitter::TrackCandidate<float,4>& track){
   //Check the track quality
-  if( track->ndof < _ndofMin) {n_failedNdof++; return(false); }
+  if( track.ndof < _ndofMin) {n_failedNdof++; return(false); }
   n_passedNdof++;
-  if( (track->chi2 / track->ndof) > _maxChi2 ) {n_failedChi2OverNdof++; return(false); }
+  if( (track.chi2 / track.ndof) > _maxChi2 ) {n_failedChi2OverNdof++; return(false); }
   n_passedChi2OverNdof++;
-  if( isnan(track->ndof)) {n_failedIsnan++; return(false); }
+  if( isnan(track.ndof)) {n_failedIsnan++; return(false); }
   n_passedIsnan++;
 
   return(true);
 }
 
-void EUTelDafBase::fillPlots(daffitter::TrackCandidate<float,4> *track){
-  _aidaHistoMap["chi2"]->fill( track->chi2);
-  _aidaHistoMap["logchi2"]->fill( std::log10(track->chi2));
-  _aidaHistoMap["ndof"]->fill( track->ndof);
-  _aidaHistoMap["chi2overndof"]->fill( track->chi2 / track->ndof);
+void EUTelDafBase::fillPlots(daffitter::TrackCandidate<float,4>& track){
+  _aidaHistoMap["chi2"]->fill( track.chi2);
+  _aidaHistoMap["logchi2"]->fill( std::log10(track.chi2));
+  _aidaHistoMap["ndof"]->fill( track.ndof);
+  _aidaHistoMap["chi2overndof"]->fill( track.chi2 / track.ndof);
   //Fill plots per plane
   for( size_t ii = 0; ii < _system.planes.size() ; ii++){
     daffitter::FitPlane<float>& plane = _system.planes.at(ii);
@@ -640,21 +640,21 @@ void EUTelDafBase::fillPlots(daffitter::TrackCandidate<float,4> *track){
     //Plot resids, angles for all hits with > 50% includion in track.
     //This should be one measurement per track
 
-    daffitter::TrackEstimate<float,4>* estim = track->estimates.at(ii);
+    daffitter::TrackEstimate<float,4>& estim = track.estimates.at(ii);
     for(size_t w = 0; w < plane.meas.size(); w++){
-      if( track->weights.at(ii)(w) < 0.5f ) {  continue; }
+      if( track.weights.at(ii)(w) < 0.5f ) {  continue; }
       daffitter::Measurement<float>& meas = plane.meas.at(w);
       //Resids 
-      _aidaHistoMap[bname + "residualX"]->fill( (estim->getX() - meas.getX())*1e-3 );
-      _aidaHistoMap[bname + "residualY"]->fill( (estim->getY() - meas.getY())*1e-3 );
+      _aidaHistoMap[bname + "residualX"]->fill( (estim.getX() - meas.getX())*1e-3 );
+      _aidaHistoMap[bname + "residualY"]->fill( (estim.getY() - meas.getY())*1e-3 );
 
       //Resids 
-      _aidaHistoMapProf1D[bname + "residualdXvsX"]->fill(estim->getX(), estim->getX() - meas.getX() );
-      _aidaHistoMapProf1D[bname + "residualdYvsX"]->fill(estim->getX(), estim->getY() - meas.getY() );
-      _aidaHistoMapProf1D[bname + "residualdXvsY"]->fill(estim->getY(), estim->getX() - meas.getX() );
-      _aidaHistoMapProf1D[bname + "residualdYvsY"]->fill(estim->getY(), estim->getY() - meas.getY() );
-      _aidaHistoMapProf1D[bname + "residualdZvsX"]->fill(estim->getX(), plane.getMeasZ() - meas.getZ()  );
-      _aidaHistoMapProf1D[bname + "residualdZvsY"]->fill(estim->getY(), plane.getMeasZ() - meas.getZ()  );
+      _aidaHistoMapProf1D[bname + "residualdXvsX"]->fill(estim.getX(), estim.getX() - meas.getX() );
+      _aidaHistoMapProf1D[bname + "residualdYvsX"]->fill(estim.getX(), estim.getY() - meas.getY() );
+      _aidaHistoMapProf1D[bname + "residualdXvsY"]->fill(estim.getY(), estim.getX() - meas.getX() );
+      _aidaHistoMapProf1D[bname + "residualdYvsY"]->fill(estim.getY(), estim.getY() - meas.getY() );
+      _aidaHistoMapProf1D[bname + "residualdZvsX"]->fill(estim.getX(), plane.getMeasZ() - meas.getZ()  );
+      _aidaHistoMapProf1D[bname + "residualdZvsY"]->fill(estim.getY(), plane.getMeasZ() - meas.getZ()  );
       _aidaHistoMap2D[bname + "residualmeasZvsmeasX"]->fill(  meas.getZ()/1000., meas.getX()  );
       _aidaHistoMap2D[bname + "residualmeasZvsmeasY"]->fill(  meas.getZ()/1000., meas.getY()  );
       _aidaHistoMap2D[bname + "residualfitZvsmeasX"]->fill( plane.getMeasZ()/1000., meas.getX() );
@@ -665,22 +665,22 @@ void EUTelDafBase::fillPlots(daffitter::TrackCandidate<float,4> *track){
       _aidaHistoMap2D[ "AllResidfitZvsmeasX"]->fill( plane.getMeasZ()/1000., meas.getX() );
       _aidaHistoMap2D[ "AllResidfitZvsmeasY"]->fill( plane.getMeasZ()/1000., meas.getY() );
       //Angles
-      _aidaHistoMap[bname + "dxdz"]->fill( estim->getXdz() );
-      _aidaHistoMap[bname + "dydz"]->fill( estim->getYdz() );
+      _aidaHistoMap[bname + "dxdz"]->fill( estim.getXdz() );
+      _aidaHistoMap[bname + "dydz"]->fill( estim.getYdz() );
       if( ii != 4) { continue; }
-      _aidaZvHitX->fill(estim->getX(), meas.getZ() - plane.getZpos());
-      _aidaZvFitX->fill(estim->getX(), (plane.getMeasZ() - plane.getZpos()) - (meas.getZ() - plane.getZpos()));
-      _aidaZvHitY->fill(estim->getY(), meas.getZ() - plane.getZpos());
-      _aidaZvFitY->fill(estim->getY(), (plane.getMeasZ() - plane.getZpos()) - (meas.getZ() - plane.getZpos()));
+      _aidaZvHitX->fill(estim.getX(), meas.getZ() - plane.getZpos());
+      _aidaZvFitX->fill(estim.getX(), (plane.getMeasZ() - plane.getZpos()) - (meas.getZ() - plane.getZpos()));
+      _aidaZvHitY->fill(estim.getY(), meas.getZ() - plane.getZpos());
+      _aidaZvFitY->fill(estim.getY(), (plane.getMeasZ() - plane.getZpos()) - (meas.getZ() - plane.getZpos()));
     }
   }
 }
 
-void EUTelDafBase::fillDetailPlots(daffitter::TrackCandidate<float,4> *track){
+void EUTelDafBase::fillDetailPlots(daffitter::TrackCandidate<float,4>& track){
   for( size_t ii = 0; ii < _system.planes.size() ; ii++){
     daffitter::FitPlane<float>& plane = _system.planes.at(ii);
 
-    daffitter::TrackEstimate<float,4>* estim = track->estimates.at(ii);
+    daffitter::TrackEstimate<float,4>& estim = track.estimates.at(ii);
 
     char iden[4];
     sprintf(iden, "%d", plane.getSensorID());
@@ -690,21 +690,21 @@ void EUTelDafBase::fillDetailPlots(daffitter::TrackCandidate<float,4> *track){
     //This should be one measurement per track
     for(size_t w = 0; w < plane.meas.size(); w++){
       daffitter::Measurement<float>& meas = plane.meas.at(w);
-      if( track->weights.at(ii)(w) < 0.5f ) {  continue; }
+      if( track.weights.at(ii)(w) < 0.5f ) {  continue; }
       //Resids 
-      float resX = ( estim->getX() - meas.getX() );
+      float resX = ( estim.getX() - meas.getX() );
       resX *= resX;
-      resX /= plane.getSigmaX() *  plane.getSigmaX() + estim->cov(0,0);
-      float resY = ( estim->getY() - meas.getY() );
+      resX /= plane.getSigmaX() *  plane.getSigmaX() + estim.cov(0,0);
+      float resY = ( estim.getY() - meas.getY() );
       resY *= resY;
-      resY /= plane.getSigmaY() *  plane.getSigmaY() + estim->cov(1,1);
+      resY /= plane.getSigmaY() *  plane.getSigmaY() + estim.cov(1,1);
       _aidaHistoMap[bname + "hitChi2"]->fill( resX + resY );
       
-      _aidaHistoMap[bname + "sigmaX"]->fill( sqrt(estim->cov(0,0)) );
-      _aidaHistoMap[bname + "sigmaY"]->fill( sqrt(estim->cov(1,1)) );
+      _aidaHistoMap[bname + "sigmaX"]->fill( sqrt(estim.cov(0,0)) );
+      _aidaHistoMap[bname + "sigmaY"]->fill( sqrt(estim.cov(1,1)) );
       
-      float pullX =  ( estim->getX() - meas.getX() ) / sqrt(plane.getSigmaX() * plane.getSigmaX() + estim->cov(0,0));
-      float pullY =  ( estim->getY() - meas.getY() ) / sqrt(plane.getSigmaY() * plane.getSigmaY() + estim->cov(1,1));
+      float pullX =  ( estim.getX() - meas.getX() ) / sqrt(plane.getSigmaX() * plane.getSigmaX() + estim.cov(0,0));
+      float pullY =  ( estim.getY() - meas.getY() ) / sqrt(plane.getSigmaY() * plane.getSigmaY() + estim.cov(1,1));
       _aidaHistoMap[bname + "pullX"]->fill( pullX );
       _aidaHistoMap[bname + "pullY"]->fill( pullY );
     }

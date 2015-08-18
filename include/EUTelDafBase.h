@@ -126,10 +126,10 @@ namespace eutelescope {
     void readHitCollection(LCEvent* event);
     void bookHistos();
     void bookDetailedHistos();
-    void fillPlots(daffitter::TrackCandidate<float,4>* track);
-    void fillDetailPlots(daffitter::TrackCandidate<float,4>* track);
-    bool checkTrack(daffitter::TrackCandidate<float,4>* track);
-    int checkInTime(daffitter::TrackCandidate<float,4>* track);
+    void fillPlots(daffitter::TrackCandidate<float,4>& track);
+    void fillDetailPlots(daffitter::TrackCandidate<float,4>& track);
+    bool checkTrack(daffitter::TrackCandidate<float,4>& track);
+    int checkInTime(daffitter::TrackCandidate<float,4>& track);
     void printStats();
     //alignment stuff
     void gearRotate(size_t index, size_t gearIndex);

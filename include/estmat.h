@@ -79,8 +79,8 @@ public:
   void plot(char* fname);
 
   //simulation
-  // void initSim(int nplanes);
-  // void simulate(int nTracks);
+  //void initSim(int nplanes);
+  //void simulate(int nTracks);
 
   //initialization
   void setPlane(int index, double sigmaX, double sigmaY, double radLength);
@@ -96,7 +96,7 @@ public:
   void readTracksToArray(float** measX, float** measY, int nTracks, int nPlanes);
   void readTracksToDoubleArray(float** measX, int nTracks, int nPlanes);
   void clear(){ tracks.clear(); }
-  void getExplicitEstimate(TrackEstimate<FITTERTYPE, 4>* estim);
+  void getExplicitEstimate(TrackEstimate<FITTERTYPE, 4>& estim);
   void printParams( char* name, std::vector<FITTERTYPE>& params, bool plot, const char* valString);
   void printAllFreeParams();
 };
@@ -113,6 +113,7 @@ public:
 #endif
   vector<TrackerSystem<FITTERTYPE, 4> > systems;
   
+  //Minimizer(EstMat& mat) : mat(mat) {;}
   Minimizer(EstMat& mat) : inited(false), mat(mat), nThreads(4) {;}
   virtual ~Minimizer(){;};
 
@@ -126,7 +127,7 @@ public:
 class Chi2: public Minimizer {
 public:
   Chi2(EstMat& mat) : Minimizer(mat) {;}
-  virtual void operator() (size_t offset, size_t stride);
+  virtual void operator() (size_t offset, size_t stride) ;
 };
 
 class FakeChi2: public Minimizer {
@@ -139,29 +140,29 @@ protected:
 public:
   FakeChi2(EstMat& mat) : Minimizer(mat), firstRun(false) {;}
   void calibrate(TrackerSystem<FITTERTYPE,4>& system);
-  virtual void init();
-  virtual void operator() (size_t offset, size_t stride);
+  virtual void init() ;
+  virtual void operator() (size_t offset, size_t stride) ;
 };
 
 class FakeAbsDev: public FakeChi2 {
 public:
   FakeAbsDev(EstMat& mat) : FakeChi2(mat) {;}
-  virtual void operator() (size_t offset, size_t stride);
+  virtual void operator() (size_t offset, size_t stride) ;
 };
 
 class SDR: public Minimizer {
 public:
   bool SDR1, SDR2, cholDec;
   SDR(bool SDR1, bool SDR2, bool cholDec,  EstMat& mat): Minimizer(mat), SDR1(SDR1), SDR2(SDR2), cholDec(cholDec) {;}
-  virtual void operator() (size_t offset, size_t stride);
+  virtual void operator() (size_t offset, size_t stride) ;
 };
 
 class FwBw: public Minimizer {
 public:
   vector <FITTERTYPE> results2;
   FwBw(EstMat& mat): Minimizer(mat), results2(vector<FITTERTYPE>(4,0.0)) {;}
-  virtual void operator() (size_t offset, size_t stride);
-  virtual bool twoRetVals() { return(true);}
+  virtual void operator() (size_t offset, size_t stride) ;
+  virtual bool twoRetVals() { return(true);};
 };
 
 #endif
