@@ -57,7 +57,7 @@ ending order and there should be no space between two $ character-->
   <!--Pedestal collection name, better not to change-->
   <parameter name="PedestalCollectionName" type="string" value="pedestal_notcmmd"/>
   <!--The filename to store the pedestal and noise values-->
-  <parameter name="PedestalOutputFile" type="string" value="@DatabasePath@/ped@RunNumber@-notcommonmode.slcio"/>
+  <parameter name="PedestalOutputFile" type="string" value="@DatabasePath@/ped@RunNumber@.slcio"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>

@@ -20,6 +20,7 @@
       <processor name="MyAlibavaPedestalSubtraction"/>
       <processor name="MyAlibavaConstantCommonModeProcessor"/>
       <processor name="MyAlibavaCommonModeSubtraction"/>
+      <processor name="MyAlibavaDataHistogramMaker"/>
       <processor name="Save"/>
       <processor name="PrintEventNumber"/>
    </execute>
@@ -96,10 +97,44 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
+ <processor name="MyAlibavaDataHistogramMaker" type="AlibavaDataHistogramMaker">
+  <!--AlibavaDataHistogramMaker takes TrackerData of Alibava data and produces histograms -->
+  <!--The filename where the calibration values stored-->
+  <!--parameter name="CalibrationInputFile" type="string">notset </parameter-->
+  <!--Charge calibration collection name, better not to change-->
+  <!--parameter name="ChargeCalibrationCollectionName" type="string">notset </parameter-->
+  <!--Input raw data collection name-->
+  <parameter name="InputCollectionName" type="string" lcioInType="TrackerData">recodata_cmmd </parameter>
+  <!--The path of XML file where the histograms are defined-->
+  <parameter name="HistoXMLFile" type="string"> @AlibavaHistoInfo@ </parameter>
+  <!--The top tag in HistoXMLFile-->
+  <parameter name="TopTagInXMLFile" type="string"> AlibavaHistoList </parameter>
+  <!--The tag in TopTagInXMLFile. This processor will only consider the histogram definitions inside this tag. This tag should be inside <TopTagInXMLFile> ... <TopTagInXMLFile/>-->
+  <parameter name="TagToProcess" type="string"> myAlibavaDataHistogramMaker </parameter>
+  <!--Noise collection name, better not to change-->
+  <parameter name="NoiseCollectionName" type="string"> noise_cmmd </parameter>
+  <!--Pedestal collection name, better not to change-->
+  <parameter name="PedestalCollectionName" type="string"> pedestal_cmmd </parameter>
+  <!--The filename where the pedestal and noise values stored-->
+  <parameter name="PedestalInputFile" type="string"> @DatabasePath@/ped@PedestalRunNumber@-commonmode.slcio </parameter>
+  <!--Choose if pedestal and noise should be plotted-->
+  <parameter name="PlotPedestalAndNoise" type="bool"> @PlotPedestalAndNoise@ </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <parameter name="Verbosity" type="string"> @Verbosity@ </parameter>
+  <!--Choose if pedestal and noise should be plotted. If you want to plot only noise or pedestal set this variable true and only set the noise or pedeatal collection name you want to be plotted.-->
+  <parameter name="EventsToPlot" type="IntVec"> @EventsToPlot@ </parameter>
+  <!--In case this variable is set, all signals will be multipled by this value.-->
+  <parameter name="MultiplySignalBy" type="float"> @MultiplySignalBy@ </parameter>
+  <!--In case this variable is set (say x), x percent of total events will be plotted randomly. The number should be between 0-100-->
+  <parameter name="PlotSomePercentOfEvents" type="float"> @PlotSomePercentOfEvents@ </parameter>
+
+</processor>
+
+
  <processor name="Save" type="LCIOOutputProcessor">
  <!--Writes the current event to the specified LCIO outputfile. Needs to be the last ActiveProcessor.-->
   <!--drops the named collections from the event-->
-  <!--parameter name="DropCollectionNames" type="StringVec"> TPCHits HCalHits </parameter-->
+  <parameter name="DropCollectionNames" type="StringVec"> rawdata chipheader recodata_notcmmd commonmode commonmodeerror  </parameter>
   <!--drops all collections of the given type from the event-->
   <!--parameter name="DropCollectionTypes" type="StringVec"> SimTrackerHit SimCalorimeterHit </parameter-->
   <!-- write complete objects in subset collections to the file (i.e. ignore subset flag)-->
