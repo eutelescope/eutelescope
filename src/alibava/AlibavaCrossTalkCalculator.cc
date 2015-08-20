@@ -353,6 +353,11 @@ void AlibavaCrossTalkCalculator::calculateCrossTalk() {
         
         double b1 = b1_L - b1_R;
         double b2 = b2_L - b2_R;
+        // we expect b1 and b2 to be negative
+        // so we save them multiplied by -1
+        b1 = -b1;
+        b2 = -b2;
+        
         streamlog_out ( MESSAGE5 ) << "Chip "<<ichip<<" b1 "<<b1<<" b2 "<<b2 << endl;
         _crosstalkCoefficients[ichip].push_back(b1);
         _crosstalkCoefficients[ichip].push_back(b2);
