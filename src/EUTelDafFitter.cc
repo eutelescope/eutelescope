@@ -213,12 +213,12 @@ void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate<float,4>& track, LCColl
 
     //Print z=positions
     if( pos[2] > 19.0 and pos[2] < 21.0){
-      streamlog_out(MESSAGE5) << "Fitted z-position: " << pos[2] << std::endl;
+      streamlog_out(WARNING) << "Fitted z-position: " << pos[2] << std::endl;
     }
 
     double refz = getZfromRefHit(plane, sensorID, pos);
     if( refz > 19.0 and refz < 21.0){
-      streamlog_out(MESSAGE5) << "Reference z-position: " << refz << std::endl;
+      streamlog_out(WARNING) << "Reference z-position: " << refz << std::endl;
     }
 
     // overload z coordinate calculation -> important for proper sensor Identification by the hit coordinates based onthe refhit collection
