@@ -192,7 +192,7 @@ bool EUTelDafBase::defineSystemFromData(){
 	pl.setRef2( Eigen::Matrix<float, 3, 1>(pl.meas.at(meas).getX(), pl.meas.at(meas).getY(), pl.meas.at(meas).getZ()));
 	_nRef.at(plane)++;
 	getPlaneNorm(pl);
-	cout << "Initialized plane " << pl.getSensorID() << endl;
+	streamlog_out ( MESSAGE5 ) << "Initialized plane " << pl.getSensorID() << endl;
 	gotPlane = true;
 	continue;
       }
@@ -550,13 +550,13 @@ void EUTelDafBase::processEvent(LCEvent * event){
     
     //Use user defined resolutions if supplied.
     if(_sigmaX.size() != _sigmaY.size()){
-      cout << "Differing lengths of resolution X and Y, only filling shortest vector. Check config." << endl;
+      streamlog_out ( MESSAGE )<< "Differing lengths of resolution X and Y, only filling shortest vector. Check config." << endl;
     }
     size_t nResolutions = _sigmaX.size();
     if(_sigmaY.size() < nResolutions){ nResolutions = _sigmaY.size(); }
     
     if(nResolutions > _system.planes.size()){
-      cout << "More resolutions than planes, check config." << endl;
+      streamlog_out ( MESSAGE ) << "More resolutions than planes, check config." << endl;
       nResolutions = _system.planes.size();
     }
     for(size_t ii = 0; ii < nResolutions; ii++){

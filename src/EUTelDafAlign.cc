@@ -194,8 +194,8 @@ void EUTelDafAlign::dafInit() {
     }  else{
       yMax = 9999999;
     }
-    cout << "xMin " << xMin << " " << xMax << endl;
-    cout << "yMin " << yMin << " " << yMax << endl;
+    streamlog_out ( MESSAGE5 ) << "xMin " << xMin << " " << xMax << endl;
+    streamlog_out ( MESSAGE5 ) << "yMin " << yMin << " " << yMax << endl;
     _resX[iden] = make_pair(xMin, xMax);
     _resY[iden] = make_pair(yMin, yMax);
   }

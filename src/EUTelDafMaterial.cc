@@ -138,8 +138,8 @@ void EUTelDafMaterial::dafInit() {
     int xMax = _resXMax.size() > ii ? _resXMax.at(ii) : 9999999;
     int yMin = _resYMin.size() > ii ? _resYMin.at(ii) : -9999999;
     int yMax = _resYMax.size() > ii ? _resYMax.at(ii) : 9999999;
-    cout << "xMin " << xMin << " " << xMax << endl;
-    cout << "yMin " << yMin << " " << yMax << endl;
+    streamlog_out ( MESSAGE5 ) << "xMin " << xMin << " " << xMax << endl;
+    streamlog_out ( MESSAGE5 ) << "yMin " << yMin << " " << yMax << endl;
     _resX[iden] = make_pair(xMin, xMax);
     _resY[iden] = make_pair(yMin, yMax);
   }
@@ -179,13 +179,11 @@ int EUTelDafMaterial::checkDutResids(daffitter::TrackCandidate<float, 4>& track)
       if( includeMeas){
 	  //meas.goodRegion() ){
 	nHits++;
-	//std::cout << "GotHit!" << nHits << std::endl;
 	track.weights.at(ii)(w) = 1.0;
 	track.indexes.at(ii) = w;
 	break;
       }
     }
-    //cout << "pl " << ii << " " << track->indexes.at(ii) << endl;
   }
   return(nHits);
 }
@@ -244,7 +242,8 @@ void EUTelDafMaterial::dafEvent (LCEvent * /*event*/) {
       _nTracks++;
       
       if(matAccept > 0){
-	cout << "Got more than one track with DUT match!" << endl;
+	streamlog_out ( MESSAGE5 ) << "Got more than one track with DUT match!"
+				   << endl;
 	matAccept++;
       }
     }
@@ -307,7 +306,8 @@ void EUTelDafMaterial::dafEnd() {
     _matest.resY.at(ii) = _system.planes.at(ii).getSigmaY();
   }
   
-  std::cout << "Starting estimation assuming beam energy of " << _eBeam << std::endl;
+  streamlog_out ( MESSAGE5 ) << "Starting estimation assuming beam energy of "
+			     << _eBeam << std::endl;
   _matest.plot((char*) "/home/haavagj/preestmat.root");
   
   //Start minimization

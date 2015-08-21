@@ -119,14 +119,9 @@ void EUTelDafFitter::dafInit() {
       }
     }
   }
-
 }
 
-
 void EUTelDafFitter::dafEvent (LCEvent * event) {
-
-  streamlog_out(MESSAGE3) << " dafEvent -- START --- " << std::endl;
-
 
   //Prepare track collection
   if(_addToLCIO){
@@ -180,10 +175,6 @@ void EUTelDafFitter::dafEvent (LCEvent * event) {
     }
     event->addCollection(_fitpointvec, sfitpoints );
   }
-
-  streamlog_out(MESSAGE3) << " dafEvent -- END --- " << std::endl;
-
-
 }
 
 void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate<float,4>& track, LCCollectionVec *lcvec){
