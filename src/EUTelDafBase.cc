@@ -223,7 +223,7 @@ void EUTelDafBase::gearRotate(size_t index, size_t gearIndex){
   double zZero        = _siPlanesLayerLayout->getSensitivePositionZ(gearIndex); // mm
   double zThickness   = _siPlanesLayerLayout->getSensitiveThickness(gearIndex); // mm
 
-  double nomZ = zZero + 0.5 * zThickness;
+  double nomZ = zZero;// + 0.5 * zThickness;
 
   if( TMath::Abs( gRotation[0] ) > 1e-6 ){
     ref0.RotateZ( gRotation[0] );
@@ -336,8 +336,8 @@ void EUTelDafBase::init() {
     _nRef.push_back(3);
     int sensorID = _siPlanesLayerLayout->getID( (*zit).second );
     //Read sensitive as 0, in case the two are different
-    float zPos  = _siPlanesLayerLayout->getSensitivePositionZ( (*zit).second )* 1000.0
-      + 0.5 * 1000.0 *  _siPlanesLayerLayout->getSensitiveThickness( (*zit).second) ; // um
+    float zPos  = _siPlanesLayerLayout->getSensitivePositionZ( (*zit).second )* 1000.0;
+    //+ 0.5 * 1000.0 *  _siPlanesLayerLayout->getSensitiveThickness( (*zit).second) ; // Do not move plane to center of plane, use front.
     //Figure out what kind of plane we are dealing with
     float errX(0.0f), errY(0.0f);
     bool excluded = true;
