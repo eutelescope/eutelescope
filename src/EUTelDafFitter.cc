@@ -210,7 +210,18 @@ void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate<float,4>& track, LCColl
     pos[0]= estim.getX() / 1000.0;
     pos[1]= estim.getY() / 1000.0;
     pos[2]= pl.getMeasZ() / 1000.0;
-// overload z coordinate calculation -> important for proper sensor Identification by the hit coordinates based onthe refhit collection
+
+    //Print z=positions
+    if( pos[2] > 19.0 and pos[2] < 21.0){
+      streamlog_out(MESSAGE5) << "Fitted z-position: " << pos[2] << std::endl;
+    }
+
+    double refz = getZfromRefHit(plane, sensorID, pos);
+    if( refz > 19.0 and refz < 21.0){
+      streamlog_out(MESSAGE5) << "Reference z-position: " << refz << std::endl;
+    }
+
+    // overload z coordinate calculation -> important for proper sensor Identification by the hit coordinates based onthe refhit collection
     if( fabs(pos[2] - getZfromRefHit(plane, sensorID, pos)) > 0.0002 ){
       streamlog_out(WARNING) << "Fitted measurement is not in the plane! SensorID " << idHitEncoder["sensorID"] << std::endl;
       pos[2] = getZfromRefHit(plane, sensorID, pos);    
@@ -252,7 +263,6 @@ void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate<float,4>& track, LCColl
 }
 
 double EUTelDafFitter::getZfromRefHit(int plane, int sensorID, double *pos){
-
          
   TVector3 lpoint( pos[0], pos[1], pos[2] );
   TVector3 lvector( 0., 0., 1. );

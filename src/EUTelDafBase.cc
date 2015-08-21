@@ -448,7 +448,6 @@ size_t EUTelDafBase::getPlaneIndex(float zPos){
   return(index);
 }
 
-
 void EUTelDafBase::readHitCollection(LCEvent* event){
   //Dump LCIO hit collection to tracker system
   //Extract hits from collection, add to tracker system
@@ -497,7 +496,12 @@ void EUTelDafBase::readHitCollection(LCEvent* event){
 	streamlog_out ( DEBUG5 ) << " REAL: add point [" << planeIndex << "] "<< 
 	  static_cast< float >(pos[0]) * 1000.0f << " " << static_cast< float >(pos[1]) * 1000.0f << " " <<  static_cast< float >(pos[2]) * 1000.0f << endl;
       }
-      
+
+      //Print z-pos for measurements
+      if( pos[2] > 19.0 and pos[2] < 21.0){
+	streamlog_out(MESSAGE5) << "Measured z-position: " << pos[2] << std::endl;
+      }
+
       if(planeIndex >=0 ){ 
 	streamlog_out ( DEBUG5 ) << " add point [" << planeIndex << "] "<< 
 	  static_cast< float >(pos[0]) * 1000.0f << " " << static_cast< float >(pos[1]) * 1000.0f << " " <<  static_cast< float >(pos[2]) * 1000.0f << endl;
