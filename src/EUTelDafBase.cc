@@ -498,9 +498,9 @@ void EUTelDafBase::readHitCollection(LCEvent* event){
       }
 
       //Print z-pos for measurements
-      if( pos[2] > 19.0 and pos[2] < 21.0){
-	streamlog_out(WARNING) << "Measured z-position: " << pos[2] << std::endl;
-      }
+      // if( pos[2] > 19.0 and pos[2] < 21.0){
+      // 	streamlog_out(WARNING) << "Measured z-position: " << pos[2] << std::endl;
+      // }
 
       if(planeIndex >=0 ){ 
 	streamlog_out ( DEBUG5 ) << " add point [" << planeIndex << "] "<< 
