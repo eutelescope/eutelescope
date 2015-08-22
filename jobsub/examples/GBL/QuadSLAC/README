@@ -19,7 +19,7 @@ DUT 21 has no correlation with any orientation. This might be a mistake but remo
 #DUTWindow= 1
 
 
-#js GBLAlign  361
+#js GBLAlign  365
 
 #FixXshifts=0  5  
 #FixYshifts=0  5    

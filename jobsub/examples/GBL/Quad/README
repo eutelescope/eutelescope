@@ -49,39 +49,4 @@ Final alignment good but error on weak mode alignment large. Increase stats will
 For final analysis tracks run:
 #js GBLTrackFit 105
 
-#########################################################SLAC 361 (MUST CHANGE RESOLUTION ORDER IN CONFIG. Note finished. 
-#Possible problem: Z position not precise. Would not expect this to be an issue however.
-Using 1k events which should be plenty for SLAC.
-Using gear:gear-beforeAlign-quad-361SLAC.xml  First and last z postion correct all others off. This is not a big deal since a very weak mode for SLAC due to tiny beam divergence. Furthermore if it became a factor then millepede would correct for it. 
-
-#js converter 361
-#js clustering 361
-#js hitlocal 361
-
-Note prealignment does not behave itself with DUTs after the last mimosa so do not use prealigned gear. Go straight to pattern recognition and apply the correct cuts.
-
-
-#js patternRecognition 361
-
-After looking a histograms I ran with these cuts:
-#TripletConnectDistCut =  1 1
-#TripletSlopeCuts = 0.01 0.01
-#DoubletCenDistCut = 0.5 0.5
-#DoubletDistCut =   0.5 0.5
-#excludeplanes=     
-#DUTWindow= 0.5
-
-Small number of track due to misalignment. Will have to run a pattern recognition again but first we should align.
-
-#js GBLAlign  361
-
-Rotations and z shifts must be fixed! Very small beam divergence.
-
-
-#FixXshifts=0  5  
-#FixYshifts=0  5     
-#FixZshifts=0 1 2 3 4 5 20 21    
-#FixXrot=   0 1 2 3 4 5 20 21 
-#FixYrot=   0 1 2 3 4 5 20 21
-#FixZrot=   0 5 
 
