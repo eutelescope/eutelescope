@@ -1,10 +1,10 @@
 #!/bin/zsh
 
-################################
-#                              #
-# ALiBaVa Analysis - Pedestal  #
-#                              #
-################################
+###########################################################
+#                                                         #
+# ALiBaVa Analysis - Signal Reconstruction and clustering #
+#                                                         #
+###########################################################
 
 # usage: source reco.sh runnumber(s)
 
@@ -13,7 +13,7 @@
 TEMPLATELIST=('alibava-converter' 'alibava-reco' 'alibava-seedclustering' 'alibava-crosstalk-it1' 'alibava-crosstalk-it2' 'alibava-crosstalk-it3')
 
 for TEMPLATE in $TEMPLATELIST; do
-jobsub -c config.cfg -csv runlist.csv $TEMPLATE $@
+	jobsub -c config/config.cfg -csv runlistfiles/runlist.csv $TEMPLATE $@
 done
 
 

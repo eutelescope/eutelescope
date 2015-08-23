@@ -97,6 +97,25 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
+
+ <processor name="MyAlibavaApplyCrossTalk" type="AlibavaApplyCrossTalk">
+  <!--AlibavaApplyCrossTalk does whatever it does :) -->
+  <!--The collection name of cross talk coefficients which will are stored in DatabaseFile-->
+  <parameter name="CrossTalkCollectionName" type="StringVec"> crosstalk_it1 crosstalk_it2 crosstalk_it3 </parameter>
+    <!--The filename where the cross talk coefficients are stored-->
+  <parameter name="DatabaseFile" type="string"> @DatabasePath@/run@PedestalRunNumber@-crosstalk.slcio  </parameter>
+    <!--Input collection name of reconstructed data-->
+  <parameter name="InputCollectionName" type="string" lcioInType="TrackerData">recodata_cmmd </parameter>
+    <!--Output collection name of cross talk corrected reconstructed data-->
+  <parameter name="OutputCollectionName" type="string" lcioOutType="TrackerData">recodata_xtalk </parameter>
+    <!--The cross talk correction will stop if the next channel crosstalk (b1) is smaller than StopCorrectionValue-->
+  <parameter name="StopCorrectionValue" type="float"> 0.0 </parameter>
+    <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+
+
  <processor name="MyAlibavaDataHistogramMaker" type="AlibavaDataHistogramMaker">
   <!--AlibavaDataHistogramMaker takes TrackerData of Alibava data and produces histograms -->
   <!--The filename where the calibration values stored-->

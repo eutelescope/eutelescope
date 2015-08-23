@@ -14,7 +14,7 @@ TEMPLATELIST=('alibava-convert-ped' 'alibava-pedestal' 'alibava-commonmode' 'ali
 
 
 for TEMPLATE in $TEMPLATELIST; do
-jobsub -c config.cfg -csv runlist.csv --subdir --naf qsubparameters.cfg $TEMPLATE $@
+	jobsub -c config/config.cfg -csv runlistfiles/runlist.csv --subdir --naf qsubparameters.cfg $TEMPLATE $@
 
 #check if there is any run submitted to the naf
 #if there is wait for them to be finished 

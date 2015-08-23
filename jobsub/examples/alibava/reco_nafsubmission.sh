@@ -1,10 +1,10 @@
 #!/bin/zsh
 
-################################
-#                              #
-# ALiBaVa Analysis - Pedestal  #
-#                              #
-################################
+###########################################################
+#                                                         #
+# ALiBaVa Analysis - Signal Reconstruction and clustering #
+#                                                         #
+###########################################################
 
 # usage: source reco_nafsubmission.sh runnumber(s)
 
@@ -13,7 +13,7 @@
 TEMPLATELIST=('alibava-converter' 'alibava-reco' 'alibava-seedclustering' 'alibava-crosstalk-it1' 'alibava-crosstalk-it2' 'alibava-crosstalk-it3')
 
 for TEMPLATE in $TEMPLATELIST; do
-jobsub -c config.cfg -csv runlist.csv --subdir --naf qsubparameters.cfg $TEMPLATE $@
+	jobsub -c config/config.cfg -csv runlistfiles/runlist.csv --subdir --naf qsubparameters.cfg $TEMPLATE $@
 
 #check if there is any run submitted to the naf
 #if there is wait for them to be finished 

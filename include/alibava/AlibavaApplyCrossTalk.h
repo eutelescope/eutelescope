@@ -139,6 +139,7 @@ namespace alibava {
         
         // The cross talk correction will stop if the next channel crosstalk (b1) is smaller than StopCorrectionValue
         float _stopCorrectionValue;
+	void getCrossTalkCoefficients();
 		
 	};
 	

@@ -56,9 +56,9 @@ using namespace alibava;
 
 AlibavaApplyCrossTalk::AlibavaApplyCrossTalk () :
 AlibavaBaseProcessor("AlibavaApplyCrossTalk"),
-_inputCollectionName("recodata"),
-_outputCollectionName("recodata_xtalk"),
-_crosstalkCollectionName(ALIBAVA::NOTSET),
+//_inputCollectionName("recodata"),
+//_outputCollectionName("recodata_xtalk"),
+_crosstalkCollectionName(),
 _databaseFile("database.slcio"),
 _stopCorrectionValue(0)
 {
@@ -83,7 +83,7 @@ _stopCorrectionValue(0)
     
     registerProcessorParameter ("CrossTalkCollectionName",
                                 "The collection name of cross talk coefficients which will are stored in DatabaseFile",
-                                _crosstalkCollectionName, EVENT::StringVec ("crosstalk"));
+                                _crosstalkCollectionName, EVENT::StringVec ());
     
     registerProcessorParameter ("StopCorrectionValue",
                                 "The cross talk correction will stop if the next channel crosstalk (b1) is smaller than StopCorrectionValue",
@@ -155,11 +155,11 @@ void AlibavaApplyCrossTalk::getCrossTalkCoefficients(){
         
         for (unsigned int ichip=0; ichip<used_chips.size(); ichip++) {
             int chipnum = used_chips[ichip];
-            EVENT::FloatVec vec_float = man.getPedNoiCalForChip(_databaseFile,_crosstalkCollectionName, chipnum);
+            EVENT::FloatVec vec_float = man.getPedNoiCalForChip(_databaseFile,_crosstalkCollectionName[icor], chipnum);
             
             // check if vector size is 2
-            if (vec_float != 2) {
-                streamlog_out(ERROR5)<<"Not enough values in the collection "<<_crosstalkCollectionName<< " in the database file "<<_databaseFile<<endl;
+            if (vec_float.size() != 2) {
+                streamlog_out(ERROR5)<<"Not enough values in the collection "<<_crosstalkCollectionName[icor]<< " in the database file "<<_databaseFile<<endl;
                 streamlog_out(ERROR5)<<"Either b1 or b2 is missing!"<<endl;
             }
             else if(vec_float[0] > _stopCorrectionValue){
