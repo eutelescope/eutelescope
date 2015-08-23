@@ -18,6 +18,7 @@
    <execute>
       <processor name="MyAIDAProcessor"/>
       <processor name="MyAlibavaCrossTalkCalculator"/>
+      <processor name="MyAlibavaApplyCrossTalk"/>
       <processor name="MyAlibavaSeedClustering"/>
       <processor name="MyAlibavaClusterHistogramMaker"/>
       <processor name="Save"/>
@@ -25,7 +26,7 @@
    </execute>
 
    <global>
-      <parameter name="LCIOInputFiles"> @LcioPath@/@AlibavaOutputFormat@-seedclustering.slcio </parameter>
+      <parameter name="LCIOInputFiles"> @LcioPath@/@AlibavaOutputFormat@-reco.slcio </parameter>
       <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
@@ -55,20 +56,39 @@
   <!--The collection name of cross talk coefficients which will be stored in DatabaseFile-->
   <parameter name="CrossTalkCollectionName" type="string">crosstalk_it1 </parameter>
     <!--The filename where the cross talk coefficients will be stored-->
-  <parameter name="DatabaseFile" type="string">@DatabasePath@/ped@PedestalRunNumber@-commonmode.slcio </parameter>
+  <parameter name="DatabaseFile" type="string">@DatabasePath@/run@RunNumber@-crosstalk.slcio </parameter>
     <!--Input collection name of alibava clusters-->
-  <parameter name="InputCollectionName" type="string" lcioInType="TrackerData">alibava_clusters_it0 </parameter>
+  <parameter name="InputCollectionName" type="string" lcioInType="TrackerData">alibava_clusters_notxtalk </parameter>
     <!--Max number of events to be used for cross talk calculation-->
   <parameter name="MaxNEvent" type="int">20000 </parameter>
     <!--Output reconstructed data collection name which will be cross talk corrected-->
-  <parameter name="OutputRecoDataCollectionName" type="string" lcioOutType="TrackerData">reco_xtalk_it1 </parameter>
+  <!--parameter name="OutputRecoDataCollectionName" type="string" lcioOutType="TrackerData">reco_xtalk_it1 </parameter-->
     <!--The collection name of reconstructed data-->
   <parameter name="RecoDataCollectionName" type="string">recodata_cmmd </parameter>
     <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
 </processor>
 
- 
+
+<processor name="MyAlibavaApplyCrossTalk" type="AlibavaApplyCrossTalk">
+    <!--AlibavaApplyCrossTalk does whatever it does :) -->
+    <!--The collection name of cross talk coefficients which will are stored in DatabaseFile-->
+    <parameter name="CrossTalkCollectionName" type="StringVec"> crosstalk_it1 </parameter>
+    <!--The filename where the cross talk coefficients are stored-->
+    <parameter name="DatabaseFile" type="string"> @DatabasePath@/run@RunNumber@-crosstalk.slcio  </parameter>
+    <!--Input collection name of reconstructed data-->
+    <parameter name="InputCollectionName" type="string" lcioInType="TrackerData">recodata_cmmd </parameter>
+    <!--Output collection name of cross talk corrected reconstructed data-->
+    <parameter name="OutputCollectionName" type="string" lcioOutType="TrackerData">recodata_xtalk_it1 </parameter>
+    <!--The cross talk correction will stop if the next channel crosstalk (b1) is smaller than StopCorrectionValue-->
+    <parameter name="StopCorrectionValue" type="float"> 0.0 </parameter>
+    <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+    <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+
+
+
  <processor name="MyAlibavaSeedClustering" type="AlibavaSeedClustering">
 	 <!--AlibavaSeedClustering finds clusters using seed and neighbour cuts -->
 	 <!--Input collection name, it should be pedestal subtracted-->

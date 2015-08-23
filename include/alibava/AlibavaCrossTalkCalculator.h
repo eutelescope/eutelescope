@@ -132,7 +132,7 @@ namespace alibava {
         //The collection name of reconstructed data
         std::string _recodataCollectionName;
         //The output collection name of reconstructed data with cross talk correction
-        std::string _outputDataCollectionName;
+//        std::string _outputDataCollectionName;
         //The collection name of crosstalk coefficients
         std::string _crosstalkCollectionName;
         //The data base file name 

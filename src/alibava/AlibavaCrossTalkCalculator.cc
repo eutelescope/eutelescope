@@ -88,10 +88,10 @@ _maxNEvent(20000)
                                 "Max number of events to be used for cross talk calculation",
                                 _maxNEvent, int (20000));
     // Output collection name
-    registerProcessorParameter("OutputRecoDataCollectionName",
+/*    registerProcessorParameter("OutputRecoDataCollectionName",
                               "Output reconstructed data collection name which will be cross talk corrected",
                               _outputDataCollectionName, string("reco_xtalk") );
- 
+ */
     
     
 }
@@ -155,7 +155,7 @@ void AlibavaCrossTalkCalculator::processRunHeader (LCRunHeader * rdr) {
     
 }
 void AlibavaCrossTalkCalculator::processEvent (LCEvent * anEvent) {
-    AlibavaEventImpl * alibavaEvent = static_cast<AlibavaEventImpl*> (anEvent);
+ /*   AlibavaEventImpl * alibavaEvent = static_cast<AlibavaEventImpl*> (anEvent);
     
     if (_skipMaskedEvents && (alibavaEvent->isEventMasked()) ) {
         _numberOfSkippedEvents++;
@@ -211,7 +211,7 @@ void AlibavaCrossTalkCalculator::processEvent (LCEvent * anEvent) {
         // do nothing again
         streamlog_out( DEBUG0 ) << "Collection ("<<getInputCollectionName()<<") not found in event number "<< alibavaEvent->getEventNumber()<< endl;
     }
-    
+  */
     
 }
 
