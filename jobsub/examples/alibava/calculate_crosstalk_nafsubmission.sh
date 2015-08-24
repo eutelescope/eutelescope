@@ -14,6 +14,18 @@ TEMPLATELIST=('alibava-converter' 'alibava-reco' 'alibava-crosstalk-it1' 'alibav
 
 for TEMPLATE in $TEMPLATELIST; do
 	jobsub -c config/config.cfg -csv runlistfiles/runlist.csv --subdir --naf qsubparameters.cfg $TEMPLATE $@
+
+#check if there is any run submitted to the naf
+#if there is wait for them to be finished 
+while [[ -n `qstat` ]]; do
+        echo Waiting for jobs to be finished
+        sleep 30
+done
+if [[ -z `qstat` ]];then
+        echo ready to start new job
+fi
+
+
 done
 
 
