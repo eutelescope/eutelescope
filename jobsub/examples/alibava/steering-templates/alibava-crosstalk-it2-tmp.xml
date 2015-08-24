@@ -61,10 +61,8 @@
         <parameter name="InputCollectionName" type="string" lcioInType="TrackerData">alibava_clusters_it1 </parameter>
         <!--Max number of events to be used for cross talk calculation-->
         <parameter name="MaxNEvent" type="int">20000 </parameter>
-        <!--Output reconstructed data collection name which will be cross talk corrected-->
-        <!--parameter name="OutputRecoDataCollectionName" type="string" lcioOutType="TrackerData">reco_xtalk_it2 </parameter-->
         <!--The collection name of reconstructed data-->
-        <parameter name="RecoDataCollectionName" type="string"> reco_xtalk_it1 </parameter>
+        <parameter name="RecoDataCollectionName" type="string"> recodata_xtalk_it1 </parameter>
         <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
         <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
     </processor>
@@ -89,7 +87,7 @@
     <processor name="MyAlibavaSeedClustering" type="AlibavaSeedClustering">
         <!--AlibavaSeedClustering finds clusters using seed and neighbour cuts -->
         <!--Input collection name, it should be pedestal subtracted-->
-        <parameter name="InputCollectionName" type="string" lcioInType="TrackerData">reco_xtalk_it2 </parameter>
+        <parameter name="InputCollectionName" type="string" lcioInType="TrackerData">recodata_xtalk_it2 </parameter>
         <!--Output data collection name-->
         <parameter name="OutputCollectionName" type="string" lcioOutType="TrackerData">alibava_clusters_it2 </parameter>
         <!--The signal/noise ratio that neigbour channels have to pass to be added to the cluster-->
@@ -131,7 +129,7 @@
         <!--In case this variable is set, all signals will be multipled by this value.-->
         <parameter name="MultiplySignalBy" type="float"> @MultiplySignalBy@ </parameter>
         <!--Choose if noise should be plotted. If you want to plot only noise set this variable true and set the noise collection name.-->
-        <parameter name="PlotNoise" type="bool"> @PlotNoise@ </parameter>
+        <parameter name="PlotNoise" type="bool"> @PlotPedestalAndNoise@ </parameter>
         <!--In case this variable is set (say x), x percent of total events will be plotted randomly. The number should be between 0-100-->
         <parameter name="PlotSomePercentOfEvents" type="float"> @PlotSomePercentOfEvents@ </parameter>
         <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
@@ -142,7 +140,7 @@
     <processor name="Save" type="LCIOOutputProcessor">
         <!--Writes the current event to the specified LCIO outputfile. Needs to be the last ActiveProcessor.-->
         <!--drops the named collections from the event-->
-        <parameter name="DropCollectionNames" type="StringVec"> alibava_clusters_it1 reco_xtalk_it1
+        <parameter name="DropCollectionNames" type="StringVec"> alibava_clusters_it1 recodata_xtalk_it1
         </parameter>
         <!--drops all collections of the given type from the event-->
         <!--parameter name="DropCollectionTypes" type="StringVec"> SimTrackerHit SimCalorimeterHit </parameter-->

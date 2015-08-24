@@ -57,7 +57,7 @@ using namespace alibava;
 AlibavaCrossTalkCalculator::AlibavaCrossTalkCalculator () :
 AlibavaBaseProcessor("AlibavaCrossTalkCalculator"),
 _recodataCollectionName("recodata"),
-_outputDataCollectionName("recodata_xtalk"),
+//_outputDataCollectionName("recodata_xtalk"),
 _crosstalkCollectionName("crosstalk"),
 _maxNEvent(20000)
 {

@@ -145,7 +145,8 @@ void AlibavaApplyCrossTalk::processRunHeader (LCRunHeader * rdr) {
     
     // set number of skipped events to zero (defined in AlibavaBaseProcessor)
     _numberOfSkippedEvents = 0;
-    
+   getCrossTalkCoefficients();
+ 
 }
 void AlibavaApplyCrossTalk::getCrossTalkCoefficients(){
     AlibavaPedNoiCalIOManager man;

@@ -179,7 +179,7 @@
         <!--In case this variable is set, all signals will be multipled by this value.-->
         <parameter name="MultiplySignalBy" type="float"> @MultiplySignalBy@ </parameter>
         <!--Choose if noise should be plotted. If you want to plot only noise set this variable true and set the noise collection name.-->
-        <parameter name="PlotNoise" type="bool"> @PlotNoise@ </parameter>
+        <parameter name="PlotNoise" type="bool"> @PlotPedestalAndNoise@ </parameter>
         <!--In case this variable is set (say x), x percent of total events will be plotted randomly. The number should be between 0-100-->
         <parameter name="PlotSomePercentOfEvents" type="float"> @PlotSomePercentOfEvents@ </parameter>
         <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
