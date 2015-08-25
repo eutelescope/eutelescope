@@ -67,7 +67,7 @@
         <!--Pedestal collection name, better not to change-->
         <parameter name="PedestalCollectionName" type="string"> pedestal_cmmd </parameter>
         <!--The filename where the pedestal and noise values stored-->
-        <parameter name="PedestalInputFile" type="string"> @DatabasePath@/ped@PedestalRunNumber@-commonmode.slcio </parameter>
+        <parameter name="PedestalInputFile" type="string"> @DatabasePath@/ped@PedestalRunNumber@.slcio </parameter>
         <!--Choose if pedestal and noise should be plotted-->
         <parameter name="PlotPedestalAndNoise" type="bool"> @PlotPedestalAndNoise@ </parameter>
         <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->

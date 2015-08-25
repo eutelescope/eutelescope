@@ -61,7 +61,7 @@
   <!--Pedestal collection name, better not to change-->
   <parameter name="PedestalCollectionName" type="string" value="pedestal_notcmmd"/>
   <!--The filename where the pedestal and noise values stored-->
-  <parameter name="PedestalInputFile" type="string" value="@DatabasePath@/ped@PedestalRunNumber@-notcommonmode.slcio"/>
+  <parameter name="PedestalInputFile" type="string" value="@DatabasePath@/ped@PedestalRunNumber@.slcio"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>

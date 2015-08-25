@@ -97,7 +97,7 @@
         <!--Noise collection name, better not to change-->
         <parameter name="NoiseCollectionName" type="string">noise_cmmd </parameter>
         <!--The filename where the pedestal and noise values stored-->
-        <parameter name="NoiseInputFile" type="string"> @DatabasePath@/ped@PedestalRunNumber@-commonmode.slcio </parameter>
+        <parameter name="NoiseInputFile" type="string"> @DatabasePath@/ped@PedestalRunNumber@.slcio </parameter>
         <!--The signal/noise ratio that channels have to pass to be considered as seed channel-->
         <parameter name="SeedSNRCut" type="float"> @SeedSNRCut@ </parameter>
         <!--Set this parameter to true for negative signals, any other value will be disregarded and the signal will be assumed to be positive -->
@@ -119,7 +119,7 @@
         <!--The tag in TopTagInXMLFile. This processor will only consider the histogram definitions inside this tag. This tag should be inside <TopTagInXMLFile> ... <TopTagInXMLFile/>-->
         <parameter name="TagToProcess" type="string">myAlibavaClusterHistogramMaker </parameter>
         <!--The filename where the pedestal and noise values stored-->
-        <parameter name="NoiseInputFile" type="string">@DatabasePath@/ped@PedestalRunNumber@-commonmode.slcio </parameter>
+        <parameter name="NoiseInputFile" type="string">@DatabasePath@/ped@PedestalRunNumber@.slcio </parameter>
         <!--Noise collection name, better not to change-->
         <parameter name="NoiseCollectionName" type="string"> noise_cmmd </parameter>
         <!--The filename where the calibration values stored-->
