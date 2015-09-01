@@ -1,57 +1,84 @@
+Here is how to analyze your data 
+
+First, copy the config and runlistfiles files to have your own 
+$ cp config/config.csv config/myconfig.csv
+$ cp runlistfiles/runlist.csv runlistfiles/myrunlist.csv
+$ cp gearfiles/gear.xml gearfiles/mygear.xml
+from now on you need to use config/myconfig.csv and runlistfiles/myrunlist.csv
+
+In config/myconfig.csv file 
+Change the "NativeFolder" parameter to the path your data files stored
+Go through the other parameters and change them like you desire
+
+In gearfiles/mygear.xml
+Change it according to your geometry
+
+In runlistfiles/myrunlist.csv
+You can delete the entries that are already there
+For pedestal run (say run number 100) you should put an entry like
+RunNumber, PedestalRunNumber, TelescopeRunNumber,BeamEnergy,MagneticField,Rotation,GearFileName
+100,000100,,,0,0,mygear
+
+For source run the entry should look like this
+Say alibava source runnumber is 101, corresponding pedestal runnumber is 100 and telescope run number is 1234
+RunNumber, PedestalRunNumber, TelescopeRunNumber,BeamEnergy,MagneticField,Rotation,GearFileName
+101,000100,001234,4.4,0,0,mygear
+
+Now you are ready to analyze your data!
 Analysis chain:
+Notes:
+<PedRunNum> : Alibava pedestal data run number
+<SourceRunNum> : Alibava beam data run number
 
 
 ################# for the analysis steps below you can use pedestal.sh ###################
 To calculate Pedestals
-jobsub -c config.cfg -csv runlist.csv alibava-convert-ped <PedRunNum>
-jobsub -c config.cfg alibava-pedestal <PedRunNum>
-jobsub -c config.cfg -csv runlist.csv alibava-commonmode <PedRunNum>
-jobsub -c config.cfg alibava-pedestal2 <PedRunNum>
+jobsub -c config/myconfig.cfg -csv runlistfiles/myrunlist.csv alibava-convert-ped <PedRunNum>
+jobsub -c config/myconfig.cfg -csv runlistfiles/myrunlist.csv alibava-pedestal <PedRunNum>
+jobsub -c config/myconfig.cfg -csv runlistfiles/myrunlist.csv alibava-commonmode <PedRunNum>
+jobsub -c config/myconfig.cfg -csv runlistfiles/myrunlist.csv alibava-pedestal2 <PedRunNum>
 ##########################################################################################
 
 
 ################# for the analysis steps below you can use reco.sh ###################
 To get pedestal subtracted and common mode corrected signal values
-jobsub -c config.cfg -csv runlist.csv alibava-converter <SourceRunNum>
-jobsub -c config.cfg -csv runlist.csv alibava-reco <SourceRunNum> # includes histogram maker for common mode corrected reco data
+jobsub -c config/myconfig.cfg -csv runlistfiles/myrunlist.csv alibava-converter <SourceRunNum>
+jobsub -c config/myconfig.cfg -csv runlistfiles/myrunlist.csv alibava-reco <SourceRunNum> # includes histogram maker for common mode corrected reco data
 
 Now do clustering this template also plots cluster histograms
-jobsub -c config.cfg -csv runlist.csv alibava-seedclustering <SourceRunNum>
+jobsub -c config/myconfig.cfg -csv runlistfiles/myrunlist.csv alibava-seedclustering <SourceRunNum>
 
 Do iterative cross talk correction, also plots cluster histograms in each step
-jobsub -c config.cfg -csv runlist.csv alibava-crosstalk-it1 <SourceRunNum>
-jobsub -c config.cfg -csv runlist.csv alibava-crosstalk-it2 <SourceRunNum>
-jobsub -c config.cfg -csv runlist.csv alibava-crosstalk-it3 <SourceRunNum>
+jobsub -c config/myconfig.cfg -csv runlistfiles/myrunlist.csv alibava-crosstalk-it1 <SourceRunNum>
+jobsub -c config/myconfig.cfg -csv runlistfiles/myrunlist.csv alibava-crosstalk-it2 <SourceRunNum>
+jobsub -c config/myconfig.cfg -csv runlistfiles/myrunlist.csv alibava-crosstalk-it3 <SourceRunNum>
 ##########################################################################################
 
 At this point we have clusters from alibava data, lets get the ones from telescope too
-jobsub -c config.cfg -csv runlist.csv telescope-converter <SourceRunNum>
-jobsub -c config.cfg -csv runlist.csv telescope-clustering <SourceRunNum> 
-jobsub -c config.cfg -csv runlist.csv telescope-filter <SourceRunNum> 
+jobsub -c config/myconfig.cfg -csv runlistfiles/myrunlist.csv telescope-converter <SourceRunNum>
+jobsub -c config/myconfig.cfg -csv runlistfiles/myrunlist.csv telescope-clustering <SourceRunNum> 
+jobsub -c config/myconfig.cfg -csv runlistfiles/myrunlist.csv telescope-filter <SourceRunNum> 
 
 Now it is time to merge telescope and alibava cluster collections
-jobsub -c config.cfg -csv runlist.csv merger <SourceRunNum>
+jobsub -c config/myconfig.cfg -csv runlistfiles/myrunlist.csv merger <SourceRunNum>
 
 And run hitmaker 
-jobsub -c config.cfg -csv runlist.csv hitmaker-local <SourceRunNum>
+jobsub -c config/myconfig.cfg -csv runlistfiles/myrunlist.csv hitmaker-local <SourceRunNum>
 
 
 ####################### OPTIONAL ########################
 If you want to find the missing coordinate values of your hits run missingcoodinate
-jobsub -c config.cfg -csv runlist.csv missingcoordinate <SourceRunNum>
+jobsub -c config/myconfig.cfg -csv runlistfiles/myrunlist.csv missingcoordinate <SourceRunNum>
 
 At any point if you want to plot histograms for specific cluster collection you can use:
-jobsub -c config.cfg -csv runlist.csv alibava-clusterhisto <SourceRunNum>
+jobsub -c config/myconfig.cfg -csv runlistfiles/myrunlist.csv alibava-clusterhisto <SourceRunNum>
 
 To plot histograms for any alibava data 
-jobsub -c config.cfg -csv runlist.csv alibava-datahisto <SourceRunNum>
+jobsub -c config/myconfig.cfg -csv runlistfiles/myrunlist.csv alibava-datahisto <SourceRunNum>
 
 If you want to skip the events that has high common mode correction values you can use:
-jobsub -c config.cfg alibava-commonmodecut <SourceRunNum>
+jobsub -c config/myconfig.cfg -csv runlistfiles/myrunlist.csv alibava-commonmodecut <SourceRunNum>
 
-Notes:
-<PedRunNum> : Alibava pedestal data run number
-<SourceRunNum> : Alibava beam data run number
 
 
 
