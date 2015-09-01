@@ -26,6 +26,7 @@ RunNumber, PedestalRunNumber, TelescopeRunNumber,BeamEnergy,MagneticField,Rotati
 
 Now you are ready to analyze your data!
 Analysis chain:
+This file still needs to be updated for reconstruction 
 Notes:
 <PedRunNum> : Alibava pedestal data run number
 <SourceRunNum> : Alibava beam data run number
