@@ -34,12 +34,6 @@
 #include <AIDA/ITree.h>
 #endif
 
-
-// gear includes <.h>
-#include "marlin/Global.h"
-#include <gear/GearMgr.h>
-#include <gear/SiPlanesParameters.h>
-
 // system includes <>
 #include <iostream>
 #include <iomanip>
@@ -92,113 +86,61 @@ EUTelPreAlign::EUTelPreAlign(): Processor("EUTelPreAlign")
   registerOptionalParameter("ExcludedPlanesXCoord", "The list of sensor IDs for which the X coordinate shall be excluded.", _ExcludedPlanesXCoord, std::vector<int>() );
 
   registerOptionalParameter("ExcludedPlanesYCoord", "The list of sensor IDs for which the Y coordinate  shall be excluded.", _ExcludedPlanesYCoord, std::vector<int>() );
-
 }
-
 
 void EUTelPreAlign::init () {
+	// this method is called only once even when the rewind is active
+	printParameters ();
 
-  // this method is called only once even when the rewind is active
-  printParameters ();
+	_iRun = 0;  _iEvt = 0;
 
-  // set to zero the run and event counters
-  _iRun = 0;  _iEvt = 0;
-
-  _UsefullHotPixelCollectionFound = 0; 
-
-  // clear the sensor ID vector
-  _sensorIDVec.clear();
-
-  // clear the sensor ID map
-  _sensorIDVecMap.clear();
-  _sensorIDtoZOrderMap.clear();
-
-  // clear the sensor ID vector (z-axis order)
-  _sensorIDVecZOrder.clear();
-
-  //
-  _siPlanesParameters  = const_cast<SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
-  _siPlanesLayerLayout = const_cast<SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
-
-  for( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); iPlane++ ) {
-
-    if(_siPlanesLayerLayout->getID(iPlane) == _fixedID ) { 
-      //Get Zpos of ref plane
-      _fixedZ = _siPlanesLayerLayout->getSensitivePositionZ(iPlane); 
-    } else {
-      //Get 
-      _preAligners.push_back( PreAligner( _siPlanesLayerLayout->getSensitivePitchX(iPlane) /10.,
-					  _siPlanesLayerLayout->getSensitivePitchY(iPlane) /10.,
-					  _siPlanesLayerLayout->getSensitivePositionZ(iPlane),
-					  _siPlanesLayerLayout->getID(iPlane)) );
-    }
-  }
-
-
-  _siPlaneZPosition = new double[ _siPlanesLayerLayout->getNLayers() ];
-  for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); iPlane++ ) 
-    {
-
-      _siPlaneZPosition[ iPlane ] = _siPlanesLayerLayout->getLayerPositionZ(iPlane);
-      int sensorID = _siPlanesLayerLayout->getID( iPlane );
-
-      _sensorIDVec.push_back( sensorID );
-      _sensorIDVecMap.insert( make_pair( sensorID, iPlane ) );
-
-      // count number of the sensors to the left of the current one:
-      int _sensors_to_the_left = 0;
-      for ( int jPlane = 0 ; jPlane < _siPlanesLayerLayout->getNLayers(); jPlane++ ) 
-	{
-	  if( _siPlanesLayerLayout->getLayerPositionZ(jPlane) + 1e-06 < _siPlaneZPosition[ iPlane ] )
-	    {
-	      _sensors_to_the_left++;
-	    }
+	_sensorIDVec = geo::gGeometry().sensorIDsVec();
+	_sensorIDtoZOrderMap.clear();
+	for(size_t index = 0; index < _sensorIDVec.size(); index++) {
+		_sensorIDtoZOrderMap.insert( std::make_pair(_sensorIDVec.at(index), (int)index) );
 	}
-      streamlog_out ( DEBUG5 ) << " iPlane " << iPlane << " sensor_#_along_Z_axis " << _sensors_to_the_left << "[z= " << setprecision (3) << _siPlaneZPosition[iPlane] << " ] [sensorID " << sensorID << " ]  " << endl;
 
-      _sensorIDVecZOrder.push_back( _sensors_to_the_left );
-      _sensorIDtoZOrderMap.insert( make_pair( sensorID, _sensors_to_the_left ) );
-    }
+	for( std::vector<int>::iterator it = _sensorIDVec.begin(); it != _sensorIDVec.end(); it++) {
+		int sensorID = *it;
+		if(sensorID == _fixedID) { 
+			_fixedZ = geo::gGeometry().siPlaneZPosition(sensorID); 
+		} else {
+			_preAligners.push_back( PreAligner(	geo::gGeometry().siPlaneXPitch(sensorID)/10.,
+					       			geo::gGeometry().siPlaneYPitch(sensorID)/10.,
+								geo::gGeometry().siPlaneZPosition(sensorID),
+								sensorID ) );	
+		}
+	}
 
-  for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); iPlane++ ) 
-    {
-      _siPlaneZPosition[ iPlane ] = _siPlanesLayerLayout->getLayerPositionZ(iPlane);
-      int sensorID = _siPlanesLayerLayout->getID( iPlane );
-      _sensorIDinZordered.insert( make_pair( _sensorIDtoZOrderMap[ sensorID ], sensorID ) );
-    }
+	#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+	std::string tempHistoName = "";
+	std::string basePath; 
 
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-  string tempHistoName = "";
-  string basePath; 
+	if( _fillHistos ) {
+		// Allow any plane to be the fixed reference:
+		for(size_t i = 0; i < _sensorIDVec.size(); i++) {
+			int sensorID = _sensorIDVec.at(i);
 
-  if( _fillHistos ) {
+			basePath = "plane_" + to_string( sensorID );
+			AIDAProcessor::tree(this)->mkdir(basePath.c_str());
+			basePath.append("/");
 
-    // Allow any plane to be the fixed reference:
-    for(unsigned int i = 0; i < _sensorIDVecZOrder.size(); i++)
-      {
-	int sensorID = _sensorIDinZordered[i];
+			tempHistoName = "hitXCorr_fixed_to_" + to_string( sensorID ) ;
+			AIDA::IHistogram1D * histo1Da = AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(), 100 , -10., 10.);
+			_hitXCorr.insert( make_pair( sensorID, histo1Da) );
 
-	basePath = "plane_" + to_string( sensorID );
-	AIDAProcessor::tree(this)->mkdir(basePath.c_str());
-	basePath.append("/");
- 
-	tempHistoName = "hitXCorr_fixed_to_" + to_string( sensorID ) ;
-	AIDA::IHistogram1D * histo1Da = AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(), 100 , -10., 10.);
-	_hitXCorr.insert( make_pair( sensorID, histo1Da) );
- 
-	tempHistoName = "hitYCorr_fixed_to_" + to_string( sensorID) ;
-	AIDA::IHistogram1D * histo1Db = AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(), 100 , -10., 10.) ;
-	_hitYCorr.insert( make_pair( sensorID, histo1Db) );
-      }
-  }
-#endif
-
+			tempHistoName = "hitYCorr_fixed_to_" + to_string( sensorID) ;
+			AIDA::IHistogram1D * histo1Db = AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(), 100 , -10., 10.) ;
+			_hitYCorr.insert( make_pair( sensorID, histo1Db) );
+		}
+	}
+	#endif
 }
 
-void EUTelPreAlign::processRunHeader (LCRunHeader * rdr) {
-  auto_ptr<EUTelRunHeaderImpl> runHeader ( new EUTelRunHeaderImpl( rdr ) ) ;
-  runHeader->addProcessor( type() );
-  ++_iRun;
+void EUTelPreAlign::processRunHeader(LCRunHeader* rdr) {
+	auto_ptr<EUTelRunHeaderImpl> runHeader ( new EUTelRunHeaderImpl(rdr) ) ;
+	runHeader->addProcessor( type() );
+	++_iRun;
 }
 
 
@@ -207,7 +149,7 @@ void  EUTelPreAlign::FillHotPixelMap(LCEvent *event)
 
   if( _hotPixelCollectionName.empty()) return;
 
-  LCCollectionVec *hotPixelCollectionVec = 0;
+  LCCollectionVec* hotPixelCollectionVec = nullptr;
   try 
     {
       hotPixelCollectionVec = static_cast< LCCollectionVec* > ( event->getCollection( _hotPixelCollectionName  ) );
@@ -226,7 +168,7 @@ void  EUTelPreAlign::FillHotPixelMap(LCEvent *event)
       TrackerDataImpl* hotPixelData = dynamic_cast< TrackerDataImpl *> ( hotPixelCollectionVec->getElementAt( i ) );
       SparsePixelType  type         = static_cast<SparsePixelType> (static_cast<int> (cellDecoder( hotPixelData )["sparsePixelType"]));
 
-      int sensorID              = static_cast<int > ( cellDecoder( hotPixelData )["sensorID"] );
+      int sensorID = static_cast<int>( cellDecoder( hotPixelData )["sensorID"] );
 
       if( type  ==  kEUTelGenericSparsePixel )
 	{  
@@ -252,10 +194,6 @@ void  EUTelPreAlign::FillHotPixelMap(LCEvent *event)
 		}
 	    }
 	}          
-      else
-	{
-	  _UsefullHotPixelCollectionFound = 0;
-	}  	
     }
 }
 
@@ -381,7 +319,7 @@ bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit)
       if ( hit->getType() == kEUTelSparseClusterImpl ) 
 	{
 	  TrackerDataImpl * clusterFrame = static_cast<TrackerDataImpl*> ( clusterVector[0] );
-	  eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelGenericSparsePixel > *cluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelGenericSparsePixel >(clusterFrame);
+	  eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelGenericSparsePixel >* cluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelGenericSparsePixel >(clusterFrame);
 
 	  int sensorID = cluster->getDetectorID();
 
@@ -407,7 +345,7 @@ bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit)
 	    }
 
 	  delete cluster;
-	  return 0;
+	  return false;
 	} 
       else if ( hit->getType() == kEUTelBrickedClusterImpl ) 
 	{

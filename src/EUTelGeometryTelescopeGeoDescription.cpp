@@ -44,8 +44,7 @@ using namespace geo;
 unsigned EUTelGeometryTelescopeGeoDescription::_counter = 0;
 
 /**TODO: Replace me: NOP*/
-EUTelGeometryTelescopeGeoDescription& EUTelGeometryTelescopeGeoDescription::getInstance( gear::GearMgr* _g )
-{
+EUTelGeometryTelescopeGeoDescription& EUTelGeometryTelescopeGeoDescription::getInstance( gear::GearMgr* _g ) {
 	static  EUTelGeometryTelescopeGeoDescription instance;
 	unsigned i = EUTelGeometryTelescopeGeoDescription::_counter;
 	
@@ -92,8 +91,7 @@ TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneNormal( int planeID )
 }
 
 /**TODO: Replace me: NOP*/
-TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneXAxis( int planeID )
-{
+TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneXAxis( int planeID ) {
 	std::map<int, TVector3>::iterator mapIt = _planeXMap.find(planeID);
 	if( mapIt != _planeXMap.end() ) {
 		return mapIt->second;
@@ -116,8 +114,7 @@ TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneXAxis( int planeID )
 }
 
 /**TODO: Replace me: NOP*/
-TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneYAxis( int planeID )
-{
+TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneYAxis( int planeID ) {
 	std::map<int, TVector3>::iterator mapIt = _planeYMap.find(planeID);
 	if( mapIt != _planeYMap.end() ) {
 		return mapIt->second;
@@ -139,26 +136,20 @@ TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneYAxis( int planeID )
 	}
 }
 
-void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout()
-{
+void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout() {
 	// sensor-planes in geometry navigation:
 	_siPlanesParameters = const_cast< gear::SiPlanesParameters*> (&( _gearManager->getSiPlanesParameters()));
 	_siPlanesLayerLayout = const_cast< gear::SiPlanesLayerLayout*> (&(_siPlanesParameters->getSiPlanesLayerLayout()));
-
 	_nPlanes = _siPlanesLayerLayout->getNLayers(); 
 
 	//read the geoemtry names from the "Geometry" StringVec section of the gear file
 	lcio::StringVec geometryNameParameters;
 
-	try
-	{
+	try {
 		geometryNameParameters  =  _siPlanesParameters->getStringVals("Geometry");
-	}
-	catch(gear::UnknownParameterException e)
-	{
+	} catch(gear::UnknownParameterException e) {
 		streamlog_out(MESSAGE6) << "No Geometry field found in GEAR file, assuming CAST for all planes" << std::endl;
-		for(size_t i = 0; i < _nPlanes; i++)
-		{
+		for(size_t i = 0; i < _nPlanes; i++) {
 			geometryNameParameters.push_back("CAST");
 		}
 	}
@@ -166,8 +157,7 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout()
 	setSiPlanesLayoutID( _siPlanesParameters->getSiPlanesID() ) ;
 
 	// create an array with the z positions of each layer
-	for (size_t iPlane = 0; iPlane < _nPlanes; iPlane++)
-	{
+	for (size_t iPlane = 0; iPlane < _nPlanes; iPlane++) {
 		EUTelPlane thisPlane;
 
 		thisPlane.xPos	= _siPlanesLayerLayout->getLayerPositionX(iPlane);
@@ -196,15 +186,15 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout()
 		thisPlane.xRes	= _siPlanesLayerLayout->getSensitiveResolution(iPlane); //should be ResolutionX
 		thisPlane.yRes	= _siPlanesLayerLayout->getSensitiveResolution(iPlane); //should be ResolutionY
 
-		thisPlane.radLength	= _siPlanesLayerLayout->getSensitiveRadLength(iPlane);
+		//GEAR uses mm wheras TGeo will use cm
+		thisPlane.radLength	= _siPlanesLayerLayout->getSensitiveRadLength(iPlane)/10;
 
 		_planeSetup[_siPlanesLayerLayout->getID(iPlane)] = thisPlane;
 	}
 
 	_sensorIDVec.clear();
 
-	for(int iPlane = 0; iPlane < _siPlanesLayerLayout->getNLayers(); iPlane++)
-	{
+	for(int iPlane = 0; iPlane < _siPlanesLayerLayout->getNLayers(); iPlane++) {
 		int sensorID = _siPlanesLayerLayout->getID(iPlane);
 		_sensorIDVec.push_back(sensorID);
 	}
@@ -212,8 +202,7 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout()
 	std::sort(_sensorIDVec.begin(), _sensorIDVec.end(), doCompare(*this) );	
 }
 
-void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout()
-{
+void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout() {
 	// sensor-planes in geometry navigation:
 	_trackerPlanesParameters = const_cast< gear::TrackerPlanesParameters*> (&( _gearManager->getTrackerPlanesParameters()));
 	_trackerPlanesLayerLayout = const_cast< gear::TrackerPlanesLayerLayout*> (&(_trackerPlanesParameters->getTrackerPlanesLayerLayout()));
@@ -227,16 +216,13 @@ void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout()
 
 	// create an array with the z positions of each layer
 	int nLayers = _trackerPlanesLayerLayout->getNLayers();
-	for (int iLayer = 0; iLayer < nLayers; iLayer++)
-	{
+	for (int iLayer = 0; iLayer < nLayers; iLayer++) {
 		gear::TrackerPlanesLayerImpl* _trackerPlanesLayerImpl = const_cast<gear::TrackerPlanesLayerImpl*>(_trackerPlanesLayerLayout->getLayer( iLayer));
 
 		int nsensitive = _trackerPlanesLayerImpl->getNSensitiveLayers();
 		gear::TrackerPlanesSensitiveLayerImplVec& vector = _trackerPlanesLayerImpl->getSensitiveLayerVec();
 
-		for(int iSensLayer = 0; iSensLayer < nsensitive; iSensLayer++)
-		{       
-
+		for(int iSensLayer = 0; iSensLayer < nsensitive; iSensLayer++) {
 			gear::TrackerPlanesSensitiveLayerImpl& sensitiveLayer = vector.at(iSensLayer);
 			int sensorID =   sensitiveLayer.getID();
 
@@ -269,7 +255,8 @@ void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout()
 			thisPlane.xRes	= sensitiveLayer.getResolutionX();
 			thisPlane.yRes	= sensitiveLayer.getResolutionY();
 
-			thisPlane.radLength	= sensitiveLayer.getRadLength();
+			//GEAR uses mm wheras TGeo will use cm
+			thisPlane.radLength	= sensitiveLayer.getRadLength()/10;
 
 			_planeSetup[sensorID] = thisPlane;
 
@@ -281,7 +268,7 @@ void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout()
 	_nPlanes =  _sensorIDVec.size(); 
 }
 
-EUTelGeometryTelescopeGeoDescription::EUTelGeometryTelescopeGeoDescription() :
+EUTelGeometryTelescopeGeoDescription::EUTelGeometryTelescopeGeoDescription():
 _gearManager( marlin::Global::GEAR ),
 _siPlanesDefined(false),
 _telPlanesDefined(false),
@@ -296,59 +283,45 @@ _geoManager(nullptr)
 {
 	//Set ROOTs verbosity to only display error messages or higher (so info will not be streamed to stderr)
 	gErrorIgnoreLevel =  kError;  
-
 	//Pixel Geometry manager creation
 	_pixGeoMgr = new EUTelGenericPixGeoMgr();
 }
 
-void EUTelGeometryTelescopeGeoDescription::readGear()
-{
-    if( _gearManager == nullptr )
-	{
-        streamlog_out(ERROR2) << "The GearMgr is not available, for an unknown reason." << std::endl;
-        throw eutelescope::InvalidGeometryException("GEAR manager is not initialised");
-    }
-
-    try
-	{
-      _siPlanesParameters = const_cast< gear::SiPlanesParameters*> (&(_gearManager->getSiPlanesParameters()));
-      streamlog_out(MESSAGE1)  << "gear::SiPlanes : " << _siPlanesParameters << std::endl;
-      _siPlanesDefined = true;
-    }
-	catch(...)
-	{
+void EUTelGeometryTelescopeGeoDescription::readGear() {
+	if( _gearManager == nullptr ) {
+		streamlog_out(ERROR2) << "The GearMgr is not available, for an unknown reason." << std::endl;
+		throw eutelescope::InvalidGeometryException("GEAR manager is not initialised");
+	} 
+	try {
+		_siPlanesParameters = const_cast< gear::SiPlanesParameters*> (&(_gearManager->getSiPlanesParameters()));
+		streamlog_out(MESSAGE1)  << "gear::SiPlanes : " << _siPlanesParameters << std::endl;
+		_siPlanesDefined = true;
+	} catch(...) {
 		streamlog_out(WARNING)   << "gear::SiPlanes NOT found " << std::endl;
-    }
-    try
-	{
+	}
+	try {
 		_trackerPlanesParameters = const_cast< gear::TrackerPlanesParameters*> (&(_gearManager->getTrackerPlanesParameters()));
 		streamlog_out(MESSAGE1)  << "gear::TrackerPlanes : " << _trackerPlanesParameters << std::endl;
 		_telPlanesDefined = true;
-	}
-	catch(...)
-	{
+	} catch(...) {
 		streamlog_out(WARNING)   << "gear::TrackerPlanes NOT found "  << std::endl;
-    }
+	}
 
-    if( _siPlanesDefined )
-	{
+	if( _siPlanesDefined ) {
 		readSiPlanesLayout();
-    }
-    else if( _telPlanesDefined )
-	{
+	} else if( _telPlanesDefined ) {
 		readTrackerPlanesLayout();
-    }
-	else
-	{
+	} else {
 		streamlog_out(ERROR5) << "Your GEAR file neither contains SiPlanes nor TrackerPlanes and thus is not valid" << std::endl;
 		throw eutelescope::InvalidGeometryException("GEAR file invalid, does not contain SiPlanes nor TrackerPlanes");
 	}
 }
 
-EUTelGeometryTelescopeGeoDescription::~EUTelGeometryTelescopeGeoDescription()
-{
+EUTelGeometryTelescopeGeoDescription::~EUTelGeometryTelescopeGeoDescription() {
 	delete _geoManager;
+	_geoManager = nullptr;
 	delete _pixGeoMgr;
+	_pixGeoMgr = nullptr;
 }
 
 /**
@@ -368,10 +341,10 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::strin
 /**
  *
  */
-void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvolumeWorld, int SensorId ){
+void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvolumeWorld, int SensorId ) {
 	double xc, yc, zc;   // volume center position 
 	double alpha, beta, gamma;
-	double rotRef1, rotRef2, rotRef3, rotRef4; // for backward compatibility with previous GEAR. We only need 2 entries from gear file for fast z rotation function in TGeoRotations. 
+	double rotRef1, rotRef2, rotRef3, rotRef4;
 
 	std::stringstream strId;
 	strId << SensorId;
@@ -393,9 +366,9 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
 
 	//We must check that the input is correct. Since this is a combination of initial rotations and reflections the determinate must be 1 or -1
 	float determinant = rotRef1*rotRef4 - rotRef2*rotRef3  ;
-	if(determinant==1 or determinant==-1){ 
+	if(determinant==1 or determinant==-1) { 
 		streamlog_out(DEBUG5) << "SensorID: " << SensorId << ". Determinant =  " <<determinant <<"  This is the correct determinate for this transformation." << std::endl;   
-	}else{
+	} else {
 		streamlog_out(ERROR5) << "SensorID: " << SensorId << ". Determinant =  " <<determinant << std::endl;   
 		throw(lcio::Exception("The initial rotation and reflection matrix does not have determinant of 1 or -1. Gear file input must be wrong.")); 	
 	}
@@ -444,11 +417,7 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
 	streamlog_out(DEBUG2) << "SensorID: " << SensorId << "combi->RegisterYourself(); "  << std::endl;   
 	combi->RegisterYourself();   
 	
-
-	// Construction of sensor objects
-
 	// Construct object medium. Required for radiation length determination
-
 	// assume SILICON, though all information except of radiation length is ignored
 	double a       = 28.085500;     
 	double z       = 14.000000;
@@ -457,7 +426,7 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
 	double absl    = 45.753206;
 	std::string stMatName = "materialSensor";
 	stMatName.append( strId.str() );
-	TGeoMaterial* pMat = new TGeoMaterial( stMatName.c_str(), a, z, density, radl, absl );
+	TGeoMaterial* pMat = new TGeoMaterial( stMatName.c_str(), a, z, density, -radl, absl );
 	pMat->SetIndex( 1 );
 	// Medium: medium_Sensor_SILICON
 	int numed   = 0;  // medium number
@@ -481,10 +450,8 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
 	Double_t dy = siPlaneYSize( SensorId ) / 2.;
 	Double_t dz = siPlaneZSize( SensorId ) / 2.;
 	TGeoShape *pBoxSensor = new TGeoBBox( "BoxSensor", dx, dy, dz );
-	// Volume: volume_Sensor1
 
-	// Geometry navigation package requires following names for objects that have an ID
-	// name:ID
+	// Geometry navigation package requires following names for objects that have an ID  name:ID
 	std::string stVolName = "volume_SensorID:";
 	stVolName.append( strId.str() );
 
@@ -498,15 +465,10 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
 	streamlog_out(DEBUG1) << "H sensorID: " << SensorId << " " << stVolName << std::endl;   
 	std::string name = geoLibName(SensorId);
 
-	if( name == "CAST" )
-	{
-	_pixGeoMgr->addCastedPlane( SensorId, siPlaneXNpixels(SensorId), siPlaneYNpixels(SensorId), siPlaneXSize(SensorId), siPlaneYSize(SensorId), siPlaneZSize(SensorId), siPlaneRadLength(SensorId), stVolName);
-	}
-
-	else
-	{
-	  streamlog_out ( DEBUG2 ) << "sensorId = "<<SensorId<<", name = "<<name<<", stVolName = "<<stVolName<<std::endl;
-	_pixGeoMgr->addPlane( SensorId, name, stVolName);
+	if( name == "CAST" ) {
+		_pixGeoMgr->addCastedPlane( SensorId, siPlaneXNpixels(SensorId), siPlaneYNpixels(SensorId), siPlaneXSize(SensorId), siPlaneYSize(SensorId), siPlaneZSize(SensorId), siPlaneRadLength(SensorId), stVolName);
+	} else {
+		_pixGeoMgr->addPlane( SensorId, name, stVolName);
 	}
 }
 
@@ -517,20 +479,14 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
  * @param dumpRoot dump automatically generated ROOT geometry file for further inspection
  */
 void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::string& geomName, bool dumpRoot = false ) {
-    // get access to ROOT's geometry manager
-    
-	if( _isGeoInitialized )
-	{
+	if( _isGeoInitialized ) {
 		streamlog_out( WARNING3 ) << "EUTelGeometryTelescopeGeoDescription: Geometry already initialized, using old initialization" << std::endl;
 		return;
-	}
-	else
-	{
+	} else {
     		_geoManager = new TGeoManager("Telescope", "v0.1");
 	}
 
-	if( !_geoManager )
-	{
+	if( !_geoManager ) {
 		streamlog_out( ERROR3 ) << "Can't instantiate ROOT TGeoManager " << std::endl;
 		return;
 	}
@@ -569,11 +525,8 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::strin
    
    IntVec::const_iterator itrPlaneId;
    for ( itrPlaneId = _sensorIDVec.begin(); itrPlaneId != _sensorIDVec.end(); ++itrPlaneId ) {
-       
        translateSiPlane2TGeo(pvolumeWorld, *itrPlaneId );
- 
-   } // loop over sensorID
-
+   }
     _geoManager->CloseGeometry();
     _isGeoInitialized = true;
     // Dump ROOT TGeo object into file
@@ -581,19 +534,16 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::strin
     return;
 }
 
-Eigen::Matrix3d EUTelGeometryTelescopeGeoDescription::rotationMatrixFromAngles(int sensorID)
-{
+Eigen::Matrix3d EUTelGeometryTelescopeGeoDescription::rotationMatrixFromAngles(int sensorID) {
 	return rotationMatrixFromAngles( (long double)siPlaneXRotationRadians(sensorID), (long double)siPlaneYRotationRadians(sensorID), (long double)siPlaneZRotationRadians(sensorID) );
 }
 
-Eigen::Vector3d EUTelGeometryTelescopeGeoDescription::globalXAxis(int sensorID)
-{
+Eigen::Vector3d EUTelGeometryTelescopeGeoDescription::globalXAxis(int sensorID) {
 	Eigen::Vector3d xAxis(1,0,0);
 	return rotationMatrixFromAngles(sensorID)*xAxis;
 }
 
-Eigen::Vector3d EUTelGeometryTelescopeGeoDescription::globalYAxis(int sensorID)
-{
+Eigen::Vector3d EUTelGeometryTelescopeGeoDescription::globalYAxis(int sensorID) {
 	Eigen::Vector3d yAxis(0,1,0);
 	return rotationMatrixFromAngles(sensorID)*yAxis;
 }
@@ -601,8 +551,7 @@ Eigen::Vector3d EUTelGeometryTelescopeGeoDescription::globalYAxis(int sensorID)
 /** Returns the rotation matrix for given angles
  *  It alpha rotation is around initial X axis, then beta around the new Y' axis
  *  and finally the gamam rotation around the new Z'' axis */
-Eigen::Matrix3d EUTelGeometryTelescopeGeoDescription::rotationMatrixFromAngles(long double alpha, long double beta, long double gamma)
-{
+Eigen::Matrix3d EUTelGeometryTelescopeGeoDescription::rotationMatrixFromAngles(long double alpha, long double beta, long double gamma) {
 	//Eigen::IOFormat IO(6, 0, ", ", ";\n", "[", "]", "[", "]");
 	long double cosA = cos(alpha);
 	long double sinA = sin(alpha);
@@ -619,8 +568,7 @@ Eigen::Matrix3d EUTelGeometryTelescopeGeoDescription::rotationMatrixFromAngles(l
 	return rotMat;
 }
 
-Eigen::Vector3d EUTelGeometryTelescopeGeoDescription::getRotationAnglesFromMatrix(Eigen::Matrix3d rotMat)
-{
+Eigen::Vector3d EUTelGeometryTelescopeGeoDescription::getRotationAnglesFromMatrix(Eigen::Matrix3d rotMat) {
 	long double alpha = asin((long double)(-rotMat(1,2)));
 	long double cosA = cos(alpha);
 
@@ -633,15 +581,13 @@ Eigen::Vector3d EUTelGeometryTelescopeGeoDescription::getRotationAnglesFromMatri
 	return vec;
 }
 
-Eigen::Vector3d EUTelGeometryTelescopeGeoDescription::getOffsetVector(int sensorID)
-{
+Eigen::Vector3d EUTelGeometryTelescopeGeoDescription::getOffsetVector(int sensorID) {
 	Eigen::Vector3d offsetVec;
 	offsetVec << siPlaneXPosition(sensorID), siPlaneYPosition(sensorID), siPlaneZPosition(sensorID); 
 	return offsetVec;
 }
 
-Eigen::Matrix3d EUTelGeometryTelescopeGeoDescription::getFlipMatrix(int sensorID)
-{
+Eigen::Matrix3d EUTelGeometryTelescopeGeoDescription::getFlipMatrix(int sensorID) {
 	Eigen::Matrix3d flipMat;
 	flipMat << 	siPlaneRotation1(sensorID),	siPlaneRotation2(sensorID),	0,
 			siPlaneRotation3(sensorID), 	siPlaneRotation4(sensorID),	0,
@@ -649,13 +595,12 @@ Eigen::Matrix3d EUTelGeometryTelescopeGeoDescription::getFlipMatrix(int sensorID
 	return flipMat;
 }
 
-int EUTelGeometryTelescopeGeoDescription::getSensorIDFromManager()  {
+int EUTelGeometryTelescopeGeoDescription::getSensorIDFromManager() {
     std::vector<std::string> split;
  
     int sensorID = -999;
 
   	int levelStart =	geo::gGeometry()._geoManager->GetLevel();
-//		std::cout <<"level : " << levelStart << std::endl;
     while( _geoManager->GetLevel() > 0 ) { 
       const char* volName = const_cast < char* > ( geo::gGeometry( )._geoManager->GetCurrentVolume( )->GetName( ) );
       split = Utility::stringSplit( std::string( volName ), "/", false);
@@ -726,7 +671,6 @@ void EUTelGeometryTelescopeGeoDescription::local2MasterVec( int sensorID, const 
  * @param localVec (x,y,z) in local coordinate system
  */
 void EUTelGeometryTelescopeGeoDescription::master2LocalVec( int sensorID, const double globalVec[], double localVec[] ) {
-    
     _geoManager->cd( _planePath[sensorID].c_str() );
     _geoManager->GetCurrentNode()->MasterToLocalVect( globalVec, localVec );
 }
@@ -761,7 +705,7 @@ TMatrixD EUTelGeometryTelescopeGeoDescription::getRotMatrix( int sensorID ) {
 	double global[3];
 //	std::cout << "Sensor ID " << sensorID << std::endl;
 	TMatrixD TRotMatrix(3,3);
-	if(sensorID != SCATTER_IDENTIFIER){
+	if(sensorID != SCATTER_IDENTIFIER) {
 		local2Master( sensorID,local, global );
 		_geoManager->FindNode( global[0], global[1], global[2] );    
 		const TGeoHMatrix* globalH = _geoManager->GetCurrentMatrix();
@@ -769,7 +713,7 @@ TMatrixD EUTelGeometryTelescopeGeoDescription::getRotMatrix( int sensorID ) {
 		TRotMatrix[0][0] = *rotMatrix; TRotMatrix[0][1] = *(rotMatrix+1);TRotMatrix[0][2] = *(rotMatrix+2);
 		TRotMatrix[1][0] = *(rotMatrix+3); TRotMatrix[1][1] = *(rotMatrix+4);TRotMatrix[1][2] = *(rotMatrix+5);
 		TRotMatrix[2][0] = *(rotMatrix+6); TRotMatrix[2][1] = *(rotMatrix+7);TRotMatrix[2][2] = *(rotMatrix+8);
-	}else{
+	} else {
 		TRotMatrix.UnitMatrix();
 	}
 	//	std::cout<< "Here is the first element of rotation matrix: " << TRotMatrix[0][0]<<std::endl;
@@ -871,11 +815,10 @@ double EUTelGeometryTelescopeGeoDescription::FindRad(Eigen::Vector3d const & sta
 			snext = epsil;
 		}	
 		if(med) {
+			//ROOT returns the rad length in cm while we use mm, therefore factor of 10
 			double radlen = med->GetMaterial()->GetRadLen();
 			if (radlen > 1.e-5 && radlen < 1.e10) {
-                const double mm2cm =0.1;///It appears the propagation distance is in mm but the radiaiton length is in cm.
-             //   std::cout<<"radlen " << radlen << "  " << snext << "  " << rad <<std::endl; 
-				rad += (snext*mm2cm)/radlen;
+				rad += snext/(radlen*10);
 			} 
 		}
 		propagatedDistance += snext; 
@@ -967,9 +910,8 @@ int EUTelGeometryTelescopeGeoDescription::findNextPlane(  double* lpoint,  doubl
 	ldir[2] = ldir[2]/normdir;
 	streamlog_out( DEBUG5 ) << "::findNextPlane ldir  : "  << ldir  [0] << " " << ldir  [1] << " "<< ldir  [2] << " " << std::endl;
 
-	for(int ip=0;ip<3;ip++) 
-	{
-	 newpoint[ip] = static_cast<float> (lpoint[ip]);
+	for(int ip=0;ip<3;ip++) {
+		newpoint[ip] = static_cast<float> (lpoint[ip]);
 	}  
 	int currentSensorID = getSensorID(newpoint); 
 	//initialise the track.
@@ -982,8 +924,7 @@ int EUTelGeometryTelescopeGeoDescription::findNextPlane(  double* lpoint,  doubl
 	streamlog_out( DEBUG5 ) << "::findNextPlane look for next node, starting at node: " << node << " id: " << inode  << " currentSensorID: " << currentSensorID << std::endl;
 
 	//   double kStep = 1e-03;
-	while(( node = gGeoManager->FindNextBoundaryAndStep() ))
-	{
+	while( node = gGeoManager->FindNextBoundaryAndStep() ) {
 		 inode = node->GetIndex();
 		 streamlog_out( DEBUG5 ) << "::findNextPlane found next node: " << node << " id: " << inode << std::endl;
 		 const double* point = gGeoManager->GetCurrentPoint();
@@ -991,8 +932,7 @@ int EUTelGeometryTelescopeGeoDescription::findNextPlane(  double* lpoint,  doubl
 		 double ipoint[3] ;
 		 double idir[3]   ;
 
-		 for(int ip=0;ip<3;ip++) 
-		 {
+		 for(int ip=0;ip<3;ip++) {
 			 ipoint[ip] = point[ip];
 			 idir[ip]   = dir[ip];
 			 if(ip==2) ipoint[ip]+=0.01 ; // assumption !!! step by one um into the new volume // new volume is thicker than 1 um
@@ -1014,8 +954,7 @@ int EUTelGeometryTelescopeGeoDescription::findNextPlane(  double* lpoint,  doubl
 //This will take in a global coordinate and direction and output the new global point on the next sensor. 
 bool EUTelGeometryTelescopeGeoDescription::findNextPlaneEntrance(  TVector3 lpoint,  TVector3 ldir, int nextSensorID, float* newpoint ){
 	streamlog_out(DEBUG5) << "EUTelGeometryTelescopeGeoDescription::findNextPlaneEntrance()------BEGIN" << std::endl;
-	if(newpoint==NULL)
-	{
+	if( newpoint == nullptr ) {
 		throw(lcio::Exception("You have passed a NULL pointer to findNextPlane.")); 	
 	}
 	//initialise direction and location in global telescope coordinates
@@ -1033,21 +972,21 @@ bool EUTelGeometryTelescopeGeoDescription::findNextPlaneEntrance(  TVector3 lpoi
 	streamlog_out( DEBUG5 ) << "findNextPlaneEntrance node: " << node << " id: " << inode << std::endl;
 
 	//Keep looping until you have left this plane volume and are at another. Note FindNextBoundaryAndStep will only take you to the next volume 'node' it will not enter it.
-	while(( node = _geoManager->FindNextBoundaryAndStep() )){
+	while( node = _geoManager->FindNextBoundaryAndStep() ) {
 		inode = node->GetIndex();
 		const double* point = _geoManager->GetCurrentPoint(); //This will be the new global coordinates after the move
 		const double* dir   = _geoManager->GetCurrentDirection(); //This will be the same direction. Since we will only travel in a straight line.  
 		double ipoint[3] ;
 		double idir[3]   ;
 		//Here we set the coordinates and move into the volume in the z direction.
-		for(int ip=0;ip<3;ip++){
+		for(int ip=0;ip<3;ip++) {
 			ipoint[ip] = point[ip];
 			idir[ip]   = dir[ip];
-			if(ip==2){ 
+			if(ip==2) { 
 				ipoint[ip]+=0.001 ; // assumption !!! step by one um into the new volume // new volume is thicker than 1 um
 			}
 			newpoint[ip] = static_cast<float> (ipoint[ip]);
-		}  
+		}
 		int sensorID = getSensorID(newpoint); 
 
 		_geoManager->SetCurrentPoint( ipoint);
@@ -1056,11 +995,11 @@ bool EUTelGeometryTelescopeGeoDescription::findNextPlaneEntrance(  TVector3 lpoi
 		streamlog_out( DEBUG5 ) << "Loop number: " << stepNumber  << ". Index of next boundary: " << inode << ". Current global point: " << ipoint[0]  << " " << ipoint[1] << " " << ipoint[2]  << " sensorID: " << sensorID << ". Input of expect next sensor: " << nextSensorID << std::endl;
 		streamlog_out(DEBUG5) << "EUTelGeometryTelescopeGeoDescription::findNextPlaneEntrance()------END" << std::endl;
 
-		if( sensorID == nextSensorID ){
+		if( sensorID == nextSensorID ) {
 			return true;
 		}
 		//We return false to say we have not found intersection on the plane.
-		if(stepNumber == 10){
+		if(stepNumber == 10) {
 			return false;
 		}
 		stepNumber++;     
@@ -1079,101 +1018,74 @@ bool EUTelGeometryTelescopeGeoDescription::findNextPlaneEntrance(  TVector3 lpoi
 //std::map<int,double> EUTelGeometryTelescopeGeoDescription::UsingStateReturnAllVolumesIntersected(){}
 
 void EUTelGeometryTelescopeGeoDescription::updateSiPlanesLayout() {
- streamlog_out( MESSAGE1 ) << "EUTelGeometryTelescopeGeoDescription::updateSiPlanesLayout() --- START ---- " << std::endl;
+	gear::SiPlanesParameters* siplanesParameters = const_cast< gear::SiPlanesParameters*> (&( _gearManager->getSiPlanesParameters()));
+	gear::SiPlanesLayerLayout* siplanesLayerLayout = const_cast< gear::SiPlanesLayerLayout*> (&(_siPlanesParameters->getSiPlanesLayerLayout()));
 
-    gear::SiPlanesParameters*    siplanesParameters = const_cast< gear::SiPlanesParameters*> (&( _gearManager->getSiPlanesParameters()));
-    gear::SiPlanesLayerLayout*  siplanesLayerLayout = const_cast< gear::SiPlanesLayerLayout*> (&(_siPlanesParameters->getSiPlanesLayerLayout()));
+	// data member::
+	_nPlanes = siplanesLayerLayout->getNLayers(); 
 
-    // data member::
-    _nPlanes = siplanesLayerLayout->getNLayers(); 
- 
-    // create an array with the z positions of each layer
-    for(size_t iPlane = 0; iPlane < _nPlanes; iPlane++)
-    {
-        int sensorID =  _sensorIDVec.at(iPlane);
-        
-	siplanesLayerLayout->setLayerPositionX( iPlane, siPlaneXPosition(sensorID) );
-        siplanesLayerLayout->setLayerPositionY(  iPlane, siPlaneYPosition(sensorID) );
-        siplanesLayerLayout->setLayerPositionZ(  iPlane, siPlaneZPosition(sensorID) );
-        siplanesLayerLayout->setLayerRotationZY( iPlane, siPlaneXRotation(sensorID) );
-        siplanesLayerLayout->setLayerRotationZX( iPlane, siPlaneYRotation(sensorID) );
-        siplanesLayerLayout->setLayerRotationXY( iPlane, siPlaneZRotation(sensorID) );
-    }
+	// create an array with the z positions of each layer
+	for(size_t iPlane = 0; iPlane < _nPlanes; iPlane++) {
+		int sensorID =  _sensorIDVec.at(iPlane);
+
+		siplanesLayerLayout->setLayerPositionX( iPlane, siPlaneXPosition(sensorID) );
+		siplanesLayerLayout->setLayerPositionY(  iPlane, siPlaneYPosition(sensorID) );
+		siplanesLayerLayout->setLayerPositionZ(  iPlane, siPlaneZPosition(sensorID) );
+		siplanesLayerLayout->setLayerRotationZY( iPlane, siPlaneXRotation(sensorID) );
+		siplanesLayerLayout->setLayerRotationZX( iPlane, siPlaneYRotation(sensorID) );
+		siplanesLayerLayout->setLayerRotationXY( iPlane, siPlaneZRotation(sensorID) );
+	}
 
 
-    // ------- add to GearMgr ----
-    if( _gearManager != 0 )
-    {
-      _gearManager->setSiPlanesParameters( siplanesParameters ) ;
-
-    }
- streamlog_out( MESSAGE1 ) << "EUTelGeometryTelescopeGeoDescription::updateSiPlanesLayout() --- OVER ---- " << std::endl;
+	// ------- add to GearMgr ----
+	if( _gearManager != nullptr ) {
+		_gearManager->setSiPlanesParameters( siplanesParameters ) ;
+	}
 }
-
 
 void EUTelGeometryTelescopeGeoDescription::updateTrackerPlanesLayout() {
+	gear::TrackerPlanesParameters* trackerplanesParameters  = const_cast< gear::TrackerPlanesParameters*>  (&( _gearManager->getTrackerPlanesParameters() ));
+	gear::TrackerPlanesLayerLayout* trackerplanesLayerLayout = const_cast< gear::TrackerPlanesLayerLayout*> (&(  trackerplanesParameters->getTrackerPlanesLayerLayout() ));
 
-    streamlog_out( MESSAGE1 ) << "EUTelGeometryTelescopeGeoDescription::updateTrackerPlanesLayout() --- START ---- " << std::endl;
+	trackerplanesParameters->setLayoutID( getSiPlanesLayoutID() );
 
-    gear::TrackerPlanesParameters*  trackerplanesParameters  = const_cast< gear::TrackerPlanesParameters*>  (&( _gearManager->getTrackerPlanesParameters() ));
-    gear::TrackerPlanesLayerLayout* trackerplanesLayerLayout = const_cast< gear::TrackerPlanesLayerLayout*> (&(  trackerplanesParameters->getTrackerPlanesLayerLayout() ));
-    
-    trackerplanesParameters->setLayoutID( getSiPlanesLayoutID() ) ;
- 
+	// create an array with the z positions of each layer
+	int nLayers = trackerplanesLayerLayout->getNLayers();
+	for (int iLayer = 0; iLayer < nLayers; iLayer++) {
+		gear::TrackerPlanesLayerImpl*  trackerplanesLayerImpl = const_cast< gear::TrackerPlanesLayerImpl*>  ( trackerplanesLayerLayout->getLayer( iLayer) );
+		int nsensitive =  trackerplanesLayerImpl->getNSensitiveLayers() ;
+		gear::TrackerPlanesSensitiveLayerImplVec& vector =  trackerplanesLayerImpl->getSensitiveLayerVec();
 
+		for (int iSensLayer = 0; iSensLayer < nsensitive; iSensLayer++) {       
+			gear::TrackerPlanesSensitiveLayerImpl& sensitiveLayer = vector.at(iSensLayer);
+			for( size_t iplane = 0; iplane < _sensorIDVec.size(); iplane++ ) {
+				int sensorID =  _sensorIDVec.at(iplane);
+				if( sensitiveLayer.getID() !=  _sensorIDVec.at( iplane) ) continue;  
+				sensitiveLayer.setPositionX( siPlaneXPosition(sensorID) );
+				sensitiveLayer.setPositionY( siPlaneYPosition(sensorID) );
+				sensitiveLayer.setPositionZ( siPlaneZPosition(sensorID) );
 
-    // create an array with the z positions of each layer
-    int nLayers = trackerplanesLayerLayout->getNLayers();
-    for (int iLayer = 0; iLayer < nLayers; iLayer++) {
-        gear::TrackerPlanesLayerImpl*  trackerplanesLayerImpl = const_cast< gear::TrackerPlanesLayerImpl*>  ( trackerplanesLayerLayout->getLayer( iLayer) );
-        int nsensitive =  trackerplanesLayerImpl->getNSensitiveLayers() ;
-
-        gear::TrackerPlanesSensitiveLayerImplVec& vector =  trackerplanesLayerImpl->getSensitiveLayerVec();
-       
-        for (int iSensLayer = 0; iSensLayer < nsensitive; iSensLayer++) {       
-
-            gear::TrackerPlanesSensitiveLayerImpl& sensitiveLayer = vector.at(iSensLayer);
- 
-            for( size_t iplane = 0; iplane < _sensorIDVec.size(); iplane++ )
-	    {
-              int sensorID =  _sensorIDVec.at(iplane);
-            
-	      if( sensitiveLayer.getID() !=  _sensorIDVec.at( iplane) ) continue;  
-              
-	      sensitiveLayer.setPositionX( siPlaneXPosition(sensorID) );
-              sensitiveLayer.setPositionY( siPlaneYPosition(sensorID) );
-              sensitiveLayer.setPositionZ( siPlaneZPosition(sensorID) );
-
-              sensitiveLayer.setRotationZY( siPlaneXRotation(sensorID) );
-              sensitiveLayer.setRotationZX( siPlaneYRotation(sensorID) );
-              sensitiveLayer.setRotationXY( siPlaneZRotation(sensorID) );
-            }
-        }
-    }
-
-    // ------- add to GearMgr ----
-    if( _gearManager != 0 )
-    {
-   	 _gearManager->setTrackerPlanesParameters( trackerplanesParameters ) ;
-    }
-    streamlog_out( MESSAGE1 ) << "EUTelGeometryTelescopeGeoDescription::updateTrackerPlanesLayout() --- OVER ---- " << std::endl;
+				sensitiveLayer.setRotationZY( siPlaneXRotation(sensorID) );
+				sensitiveLayer.setRotationZX( siPlaneYRotation(sensorID) );
+				sensitiveLayer.setRotationXY( siPlaneZRotation(sensorID) );
+			}
+		}
+	}
+	// ------- add to GearMgr ----
+	if( _gearManager != nullptr ) {
+		_gearManager->setTrackerPlanesParameters( trackerplanesParameters );
+	}
 }
 
-void EUTelGeometryTelescopeGeoDescription::updateGearManager()
-{
-
-	if( _siPlanesDefined )
-	{
+void EUTelGeometryTelescopeGeoDescription::updateGearManager() {
+	if( _siPlanesDefined ) {
 		updateSiPlanesLayout();
-	}
-	else if( _telPlanesDefined )
-	{
+	} else if( _telPlanesDefined ) {
 		updateTrackerPlanesLayout();
 	}
 }
 
-void EUTelGeometryTelescopeGeoDescription::writeGEARFile(std::string filename)
-{
+void EUTelGeometryTelescopeGeoDescription::writeGEARFile(std::string filename) {
 	updateGearManager();
 	gear::GearXML::createXMLFile(marlin::Global::GEAR, filename);
 }

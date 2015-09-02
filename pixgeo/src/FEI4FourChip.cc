@@ -4,12 +4,12 @@
 namespace eutelescope {
 namespace geo {
 
-FEI4FourChip::FEI4FourChip(): EUTelGenericPixGeoDescr(	40.4, 35.18, 0.025,		//size X, Y, Z
-														0, 159, 0, 671,			//min max X,Y
-														93.660734 )				//rad length					
+FEI4FourChip::FEI4FourChip(): EUTelGenericPixGeoDescr(	40.4, 35.18, 0.025,	//size X, Y, Z
+							0, 159, 0, 671,		//min max X,Y
+							9.3660734 )		//rad length					
 {
 	//Create the material for the sensor
-	matSi = new TGeoMaterial( "Si", 28.0855 , 14.0, 2.33, _radLength, 45.753206 );
+	matSi = new TGeoMaterial( "Si", 28.0855 , 14.0, 2.33, -_radLength, 45.753206 );
 	Si = new TGeoMedium("FEI4Silicon",1, matSi);
 
 	/* Make a box for the sensitive area
