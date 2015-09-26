@@ -13,7 +13,7 @@
 TEMPLATELIST=('merger' 'hitmaker-local')
 
 for TEMPLATE in $TEMPLATELIST; do
-jobsub -c config.cfg -csv runlist.csv $TEMPLATE $1
+jobsub -c config/config.cfg -csv runlistfiles/runlist.csv $TEMPLATE $1
 done
 
 
