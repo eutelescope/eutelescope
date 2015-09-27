@@ -1,0 +1,5 @@
+# ROOTSYS
+export ROOTSYS=/afs/desy.de/project/ilcsoft/sw/x86_64_gcc44_sl6/v01-17-06/root/5.34.18
+export LCIO=/afs/desy.de/project/ilcsoft/sw/x86_64_gcc44_sl6/v01-17-06/lcio/v02-05
+export PYTHONPATH=$ROOTSYS/lib:$LCIO/src/python:$PYTHONPATH
+export LD_LIBRARY_PATH=$ROOTSYS/lib:$LD_LIBRARY_PATH
