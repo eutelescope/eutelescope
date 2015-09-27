@@ -1,0 +1,92 @@
+GFORTRAN module version '0' created from minresModule.f90 on Tue Jul 28 14:01:57 2015
+MD5:7cbff8b20febcedb198da2ca616f9a48 -- If you edit this, you'll get what you deserve.
+
+
+(() () () () () () () () () () () () () () () () () () () () () () () ()
+() () ())
+
+()
+
+()
+
+()
+
+()
+
+(2 'dp' 'minresdatamodule' 'dp' 1 ((PARAMETER UNKNOWN-INTENT
+UNKNOWN-PROC UNKNOWN IMPLICIT-SAVE) (INTEGER 4 0 0 INTEGER ()) 0 0 () (
+CONSTANT (INTEGER 4 0 0 INTEGER ()) 0 '8') () 0 () () () 0 0)
+3 'minres' 'minresmodule' 'minres' 1 ((PROCEDURE UNKNOWN-INTENT
+MODULE-PROC DECL UNKNOWN SUBROUTINE) (UNKNOWN 0 0 0 UNKNOWN ()) 4 0 (5 6
+7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22) () 0 () () () 0 0)
+23 'minresdatamodule' 'minresdatamodule' 'minresdatamodule' 1 ((MODULE
+UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN UNKNOWN) (UNKNOWN 0 0 0 UNKNOWN ())
+0 0 () () 0 () () () 0 0)
+24 'minresmodule' 'minresmodule' 'minresmodule' 1 ((MODULE
+UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN UNKNOWN) (UNKNOWN 0 0 0 UNKNOWN ())
+0 0 () () 0 () () () 0 0)
+5 'n' '' 'n' 4 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN DUMMY) (
+INTEGER 4 0 0 INTEGER ()) 0 0 () () 0 () () () 0 0)
+6 'aprod' '' 'aprod' 4 ((PROCEDURE UNKNOWN-INTENT DUMMY-PROC BODY
+UNKNOWN DUMMY SUBROUTINE) (UNKNOWN 0 0 0 UNKNOWN ()) 25 0 (26 27 28) ()
+0 () () () 0 0)
+7 'msolve' '' 'msolve' 4 ((PROCEDURE UNKNOWN-INTENT DUMMY-PROC BODY
+UNKNOWN DUMMY SUBROUTINE) (UNKNOWN 0 0 0 UNKNOWN ()) 29 0 (30 31 32) ()
+0 () () () 0 0)
+8 'b' '' 'b' 4 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN DIMENSION
+DUMMY) (REAL 8 0 0 REAL ()) 0 0 () (1 EXPLICIT (CONSTANT (INTEGER 4 0 0
+INTEGER ()) 0 '1') (VARIABLE (INTEGER 4 0 0 INTEGER ()) 0 5 ())) 0 () ()
+() 0 0)
+9 'shift' '' 'shift' 4 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN DUMMY)
+(REAL 8 0 0 REAL ()) 0 0 () () 0 () () () 0 0)
+10 'checka' '' 'checka' 4 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN
+DUMMY) (LOGICAL 4 0 0 LOGICAL ()) 0 0 () () 0 () () () 0 0)
+11 'precon' '' 'precon' 4 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN
+DUMMY) (LOGICAL 4 0 0 LOGICAL ()) 0 0 () () 0 () () () 0 0)
+12 'x' '' 'x' 4 ((VARIABLE OUT UNKNOWN-PROC UNKNOWN UNKNOWN DIMENSION
+DUMMY) (REAL 8 0 0 REAL ()) 0 0 () (1 EXPLICIT (CONSTANT (INTEGER 4 0 0
+INTEGER ()) 0 '1') (VARIABLE (INTEGER 4 0 0 INTEGER ()) 0 5 ())) 0 () ()
+() 0 0)
+13 'itnlim' '' 'itnlim' 4 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN
+DUMMY) (INTEGER 4 0 0 INTEGER ()) 0 0 () () 0 () () () 0 0)
+14 'nout' '' 'nout' 4 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN DUMMY)
+(INTEGER 4 0 0 INTEGER ()) 0 0 () () 0 () () () 0 0)
+15 'rtol' '' 'rtol' 4 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN DUMMY)
+(REAL 8 0 0 REAL ()) 0 0 () () 0 () () () 0 0)
+16 'istop' '' 'istop' 4 ((VARIABLE OUT UNKNOWN-PROC UNKNOWN UNKNOWN
+DUMMY) (INTEGER 4 0 0 INTEGER ()) 0 0 () () 0 () () () 0 0)
+17 'itn' '' 'itn' 4 ((VARIABLE OUT UNKNOWN-PROC UNKNOWN UNKNOWN DUMMY) (
+INTEGER 4 0 0 INTEGER ()) 0 0 () () 0 () () () 0 0)
+18 'anorm' '' 'anorm' 4 ((VARIABLE OUT UNKNOWN-PROC UNKNOWN UNKNOWN
+DUMMY) (REAL 8 0 0 REAL ()) 0 0 () () 0 () () () 0 0)
+19 'acond' '' 'acond' 4 ((VARIABLE OUT UNKNOWN-PROC UNKNOWN UNKNOWN
+DUMMY) (REAL 8 0 0 REAL ()) 0 0 () () 0 () () () 0 0)
+20 'rnorm' '' 'rnorm' 4 ((VARIABLE OUT UNKNOWN-PROC UNKNOWN UNKNOWN
+DUMMY) (REAL 8 0 0 REAL ()) 0 0 () () 0 () () () 0 0)
+21 'arnorm' '' 'arnorm' 4 ((VARIABLE OUT UNKNOWN-PROC UNKNOWN UNKNOWN
+DUMMY) (REAL 8 0 0 REAL ()) 0 0 () () 0 () () () 0 0)
+22 'ynorm' '' 'ynorm' 4 ((VARIABLE OUT UNKNOWN-PROC UNKNOWN UNKNOWN
+DUMMY) (REAL 8 0 0 REAL ()) 0 0 () () 0 () () () 0 0)
+26 'n' '' 'n' 25 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN DUMMY) (
+INTEGER 4 0 0 INTEGER ()) 0 0 () () 0 () () () 0 0)
+27 'x' '' 'x' 25 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN DIMENSION
+DUMMY) (REAL 8 0 0 REAL ()) 0 0 () (1 EXPLICIT (CONSTANT (INTEGER 4 0 0
+INTEGER ()) 0 '1') (VARIABLE (INTEGER 4 0 0 INTEGER ()) 0 26 ())) 0 () ()
+() 0 0)
+28 'y' '' 'y' 25 ((VARIABLE OUT UNKNOWN-PROC UNKNOWN UNKNOWN DIMENSION
+DUMMY) (REAL 8 0 0 REAL ()) 0 0 () (1 EXPLICIT (CONSTANT (INTEGER 4 0 0
+INTEGER ()) 0 '1') (VARIABLE (INTEGER 4 0 0 INTEGER ()) 0 26 ())) 0 () ()
+() 0 0)
+30 'n' '' 'n' 29 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN DUMMY) (
+INTEGER 4 0 0 INTEGER ()) 0 0 () () 0 () () () 0 0)
+31 'x' '' 'x' 29 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN DIMENSION
+DUMMY) (REAL 8 0 0 REAL ()) 0 0 () (1 EXPLICIT (CONSTANT (INTEGER 4 0 0
+INTEGER ()) 0 '1') (VARIABLE (INTEGER 4 0 0 INTEGER ()) 0 30 ())) 0 () ()
+() 0 0)
+32 'y' '' 'y' 29 ((VARIABLE OUT UNKNOWN-PROC UNKNOWN UNKNOWN DIMENSION
+DUMMY) (REAL 8 0 0 REAL ()) 0 0 () (1 EXPLICIT (CONSTANT (INTEGER 4 0 0
+INTEGER ()) 0 '1') (VARIABLE (INTEGER 4 0 0 INTEGER ()) 0 30 ())) 0 () ()
+() 0 0)
+)
+
+('dp' 0 2 'minres' 0 3 'minresdatamodule' 0 23 'minresmodule' 0 24)

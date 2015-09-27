@@ -1,0 +1,240 @@
+GFORTRAN module version '0' created from mpdalc.f90 on Tue Jul 28 14:01:54 2015
+MD5:19d56995ec0548d3dae1f7505f0d107a -- If you edit this, you'll get what you deserve.
+
+(() () () () () () () () () () ()
+() () () () () () () () () () () () () () () ())
+
+()
+
+(('mpalloc' 'mpdalc' 2 3 4 5 6 7 8 9) ('mpdealloc' 'mpdalc' 10 11 12 13
+14 15 16 17))
+
+()
+
+()
+
+(18 '__convert_i4_i8' '(intrinsic)' '__convert_i4_i8' 1 ((PROCEDURE
+UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN UNKNOWN FUNCTION ELEMENTAL PURE) (
+INTEGER 8 0 0 INTEGER ()) 0 0 () () 0 () () () 0 0)
+19 'listitem' 'mpdef' 'listitem' 1 ((DERIVED UNKNOWN-INTENT UNKNOWN-PROC
+UNKNOWN UNKNOWN) (UNKNOWN 0 0 0 UNKNOWN ()) 0 0 () () 0 ((20 'label' (
+INTEGER 4 0 0 INTEGER ()) () (UNKNOWN-FL UNKNOWN-INTENT UNKNOWN-PROC
+UNKNOWN UNKNOWN) UNKNOWN-ACCESS ()) (21 'value' (REAL 8 0 0 REAL ()) ()
+(UNKNOWN-FL UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN UNKNOWN) UNKNOWN-ACCESS
+())) PUBLIC (() ()) () 0 0)
+22 'maxwordsalloc' 'mpdalc' 'maxwordsalloc' 1 ((VARIABLE UNKNOWN-INTENT
+UNKNOWN-PROC UNKNOWN EXPLICIT-SAVE) (INTEGER 8 0 0 INTEGER ()) 0 0 () ()
+0 () () () 0 0)
+23 'mpalloccheck' 'mpdalc' 'mpalloccheck' 1 ((PROCEDURE UNKNOWN-INTENT
+MODULE-PROC DECL UNKNOWN SUBROUTINE) (UNKNOWN 0 0 0 UNKNOWN ()) 24 0 (
+25 26 27) () 0 () () () 0 0)
+2 'mpalloccvec' 'mpdalc' 'mpalloccvec' 1 ((PROCEDURE UNKNOWN-INTENT
+MODULE-PROC DECL UNKNOWN SUBROUTINE ALWAYS_EXPLICIT) (UNKNOWN 0 0 0
+UNKNOWN ()) 28 0 (29 30 31) () 0 () () () 0 0)
+9 'mpallocdvec' 'mpdalc' 'mpallocdvec' 1 ((PROCEDURE UNKNOWN-INTENT
+MODULE-PROC DECL UNKNOWN SUBROUTINE ALWAYS_EXPLICIT) (UNKNOWN 0 0 0
+UNKNOWN ()) 32 0 (33 34 35) () 0 () () () 0 0)
+6 'mpallocfarr' 'mpdalc' 'mpallocfarr' 1 ((PROCEDURE UNKNOWN-INTENT
+MODULE-PROC DECL UNKNOWN SUBROUTINE ALWAYS_EXPLICIT) (UNKNOWN 0 0 0
+UNKNOWN ()) 36 0 (37 38 39 40) () 0 () () () 0 0)
+8 'mpallocfvec' 'mpdalc' 'mpallocfvec' 1 ((PROCEDURE UNKNOWN-INTENT
+MODULE-PROC DECL UNKNOWN SUBROUTINE ALWAYS_EXPLICIT) (UNKNOWN 0 0 0
+UNKNOWN ()) 41 0 (42 43 44) () 0 () () () 0 0)
+5 'mpallociarr' 'mpdalc' 'mpallociarr' 1 ((PROCEDURE UNKNOWN-INTENT
+MODULE-PROC DECL UNKNOWN SUBROUTINE ALWAYS_EXPLICIT) (UNKNOWN 0 0 0
+UNKNOWN ()) 45 0 (46 47 48 49) () 0 () () () 0 0)
+7 'mpallocivec' 'mpdalc' 'mpallocivec' 1 ((PROCEDURE UNKNOWN-INTENT
+MODULE-PROC DECL UNKNOWN SUBROUTINE ALWAYS_EXPLICIT) (UNKNOWN 0 0 0
+UNKNOWN ()) 50 0 (51 52 53) () 0 () () () 0 0)
+4 'mpalloclarr' 'mpdalc' 'mpalloclarr' 1 ((PROCEDURE UNKNOWN-INTENT
+MODULE-PROC DECL UNKNOWN SUBROUTINE ALWAYS_EXPLICIT) (UNKNOWN 0 0 0
+UNKNOWN ()) 54 0 (55 56 57 58) () 0 () () () 0 0)
+3 'mpalloclist' 'mpdalc' 'mpalloclist' 1 ((PROCEDURE UNKNOWN-INTENT
+MODULE-PROC DECL UNKNOWN SUBROUTINE ALWAYS_EXPLICIT) (UNKNOWN 0 0 0
+UNKNOWN ()) 59 0 (60 61 62) () 0 () () () 0 0)
+63 'mpd' 'mpdef' 'mpd' 1 ((PARAMETER UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN
+IMPLICIT-SAVE) (INTEGER 4 0 0 INTEGER ()) 0 0 () (CONSTANT (INTEGER 4 0
+0 INTEGER ()) 0 '8') () 0 () () () 0 0)
+64 'mpdalc' 'mpdalc' 'mpdalc' 1 ((MODULE UNKNOWN-INTENT UNKNOWN-PROC
+UNKNOWN UNKNOWN) (UNKNOWN 0 0 0 UNKNOWN ()) 0 0 () () 0 () () () 0 0)
+65 'mpdealloccheck' 'mpdalc' 'mpdealloccheck' 1 ((PROCEDURE
+UNKNOWN-INTENT MODULE-PROC DECL UNKNOWN SUBROUTINE) (UNKNOWN 0 0 0
+UNKNOWN ()) 66 0 (67 68) () 0 () () () 0 0)
+10 'mpdealloccvec' 'mpdalc' 'mpdealloccvec' 1 ((PROCEDURE UNKNOWN-INTENT
+MODULE-PROC DECL UNKNOWN SUBROUTINE ALWAYS_EXPLICIT) (UNKNOWN 0 0 0
+UNKNOWN ()) 69 0 (70) () 0 () () () 0 0)
+17 'mpdeallocdvec' 'mpdalc' 'mpdeallocdvec' 1 ((PROCEDURE UNKNOWN-INTENT
+MODULE-PROC DECL UNKNOWN SUBROUTINE ALWAYS_EXPLICIT) (UNKNOWN 0 0 0
+UNKNOWN ()) 71 0 (72) () 0 () () () 0 0)
+14 'mpdeallocfarr' 'mpdalc' 'mpdeallocfarr' 1 ((PROCEDURE UNKNOWN-INTENT
+MODULE-PROC DECL UNKNOWN SUBROUTINE ALWAYS_EXPLICIT) (UNKNOWN 0 0 0
+UNKNOWN ()) 73 0 (74) () 0 () () () 0 0)
+16 'mpdeallocfvec' 'mpdalc' 'mpdeallocfvec' 1 ((PROCEDURE UNKNOWN-INTENT
+MODULE-PROC DECL UNKNOWN SUBROUTINE ALWAYS_EXPLICIT) (UNKNOWN 0 0 0
+UNKNOWN ()) 75 0 (76) () 0 () () () 0 0)
+13 'mpdeallociarr' 'mpdalc' 'mpdeallociarr' 1 ((PROCEDURE UNKNOWN-INTENT
+MODULE-PROC DECL UNKNOWN SUBROUTINE ALWAYS_EXPLICIT) (UNKNOWN 0 0 0
+UNKNOWN ()) 77 0 (78) () 0 () () () 0 0)
+15 'mpdeallocivec' 'mpdalc' 'mpdeallocivec' 1 ((PROCEDURE UNKNOWN-INTENT
+MODULE-PROC DECL UNKNOWN SUBROUTINE ALWAYS_EXPLICIT) (UNKNOWN 0 0 0
+UNKNOWN ()) 79 0 (80) () 0 () () () 0 0)
+12 'mpdealloclarr' 'mpdalc' 'mpdealloclarr' 1 ((PROCEDURE UNKNOWN-INTENT
+MODULE-PROC DECL UNKNOWN SUBROUTINE ALWAYS_EXPLICIT) (UNKNOWN 0 0 0
+UNKNOWN ()) 81 0 (82) () 0 () () () 0 0)
+11 'mpdealloclist' 'mpdalc' 'mpdealloclist' 1 ((PROCEDURE UNKNOWN-INTENT
+MODULE-PROC DECL UNKNOWN SUBROUTINE ALWAYS_EXPLICIT) (UNKNOWN 0 0 0
+UNKNOWN ()) 83 0 (84) () 0 () () () 0 0)
+85 'mpdef' 'mpdef' 'mpdef' 1 ((MODULE UNKNOWN-INTENT UNKNOWN-PROC
+UNKNOWN UNKNOWN) (UNKNOWN 0 0 0 UNKNOWN ()) 0 0 () () 0 () () () 0 0)
+86 'mpi' 'mpdef' 'mpi' 1 ((PARAMETER UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN
+IMPLICIT-SAVE) (INTEGER 4 0 0 INTEGER ()) 0 0 () (CONSTANT (INTEGER 4 0
+0 INTEGER ()) 0 '4') () 0 () () () 0 0)
+87 'mpi4' 'mpdef' 'mpi4' 1 ((PARAMETER UNKNOWN-INTENT UNKNOWN-PROC
+UNKNOWN IMPLICIT-SAVE) (INTEGER 4 0 0 INTEGER ()) 0 0 () (CONSTANT (
+INTEGER 4 0 0 INTEGER ()) 0 '4') () 0 () () () 0 0)
+88 'mpi8' 'mpdef' 'mpi8' 1 ((PARAMETER UNKNOWN-INTENT UNKNOWN-PROC
+UNKNOWN IMPLICIT-SAVE) (INTEGER 4 0 0 INTEGER ()) 0 0 () (CONSTANT (
+INTEGER 4 0 0 INTEGER ()) 0 '8') () 0 () () () 0 0)
+89 'mpl' 'mpdef' 'mpl' 1 ((PARAMETER UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN
+IMPLICIT-SAVE) (INTEGER 4 0 0 INTEGER ()) 0 0 () (CONSTANT (INTEGER 4 0
+0 INTEGER ()) 0 '8') () 0 () () () 0 0)
+90 'mpr16' 'mpdef' 'mpr16' 1 ((PARAMETER UNKNOWN-INTENT UNKNOWN-PROC
+UNKNOWN IMPLICIT-SAVE) (INTEGER 4 0 0 INTEGER ()) 0 0 () (CONSTANT (
+INTEGER 4 0 0 INTEGER ()) 0 '-1') () 0 () () () 0 0)
+91 'mpr4' 'mpdef' 'mpr4' 1 ((PARAMETER UNKNOWN-INTENT UNKNOWN-PROC
+UNKNOWN IMPLICIT-SAVE) (INTEGER 4 0 0 INTEGER ()) 0 0 () (CONSTANT (
+INTEGER 4 0 0 INTEGER ()) 0 '4') () 0 () () () 0 0)
+92 'mpr8' 'mpdef' 'mpr8' 1 ((PARAMETER UNKNOWN-INTENT UNKNOWN-PROC
+UNKNOWN IMPLICIT-SAVE) (INTEGER 4 0 0 INTEGER ()) 0 0 () (CONSTANT (
+INTEGER 4 0 0 INTEGER ()) 0 '8') () 0 () () () 0 0)
+93 'mps' 'mpdef' 'mps' 1 ((PARAMETER UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN
+IMPLICIT-SAVE) (INTEGER 4 0 0 INTEGER ()) 0 0 () (CONSTANT (INTEGER 4 0
+0 INTEGER ()) 0 '4') () 0 () () () 0 0)
+94 'nummpalloc' 'mpdalc' 'nummpalloc' 1 ((VARIABLE UNKNOWN-INTENT
+UNKNOWN-PROC UNKNOWN EXPLICIT-SAVE) (INTEGER 4 0 0 INTEGER ()) 0 0 () ()
+0 () () () 0 0)
+95 'nummpdealloc' 'mpdalc' 'nummpdealloc' 1 ((VARIABLE UNKNOWN-INTENT
+UNKNOWN-PROC UNKNOWN EXPLICIT-SAVE) (INTEGER 4 0 0 INTEGER ()) 0 0 () ()
+0 () () () 0 0)
+96 'numwordsalloc' 'mpdalc' 'numwordsalloc' 1 ((VARIABLE UNKNOWN-INTENT
+UNKNOWN-PROC UNKNOWN EXPLICIT-SAVE) (INTEGER 8 0 0 INTEGER ()) 0 0 () ()
+0 () () () 0 0)
+97 'printflagalloc' 'mpdalc' 'printflagalloc' 1 ((VARIABLE
+UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN EXPLICIT-SAVE) (INTEGER 4 0 0
+INTEGER ()) 0 0 () () 0 () () () 0 0)
+98 'selected_int_kind' '(intrinsic)' 'selected_int_kind' 1 ((PROCEDURE
+UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN UNKNOWN INTRINSIC FUNCTION) (
+UNKNOWN 0 0 0 UNKNOWN ()) 0 0 () () 98 () () () 0 0)
+99 'selected_real_kind' '(intrinsic)' 'selected_real_kind' 1 ((
+PROCEDURE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN UNKNOWN INTRINSIC FUNCTION)
+(UNKNOWN 0 0 0 UNKNOWN ()) 0 0 () () 99 () () () 0 0)
+33 'array' '' 'array' 32 ((VARIABLE INOUT UNKNOWN-PROC UNKNOWN UNKNOWN
+ALLOCATABLE DIMENSION DUMMY) (REAL 8 0 0 REAL ()) 0 0 () (1 DEFERRED ()
+()) 0 () () () 0 0)
+34 'length' '' 'length' 32 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN
+DUMMY) (INTEGER 8 0 0 INTEGER ()) 0 0 () () 0 () () () 0 0)
+35 'text' '' 'text' 32 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN DUMMY)
+(CHARACTER 1 0 0 CHARACTER (())) 0 0 () () 0 () () () 0 0)
+42 'array' '' 'array' 41 ((VARIABLE INOUT UNKNOWN-PROC UNKNOWN UNKNOWN
+ALLOCATABLE DIMENSION DUMMY) (REAL 4 0 0 REAL ()) 0 0 () (1 DEFERRED ()
+()) 0 () () () 0 0)
+43 'length' '' 'length' 41 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN
+DUMMY) (INTEGER 8 0 0 INTEGER ()) 0 0 () () 0 () () () 0 0)
+44 'text' '' 'text' 41 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN DUMMY)
+(CHARACTER 1 0 0 CHARACTER (())) 0 0 () () 0 () () () 0 0)
+72 'array' '' 'array' 71 ((VARIABLE INOUT UNKNOWN-PROC UNKNOWN UNKNOWN
+ALLOCATABLE DIMENSION DUMMY) (REAL 8 0 0 REAL ()) 0 0 () (1 DEFERRED ()
+()) 0 () () () 0 0)
+51 'array' '' 'array' 50 ((VARIABLE INOUT UNKNOWN-PROC UNKNOWN UNKNOWN
+ALLOCATABLE DIMENSION DUMMY) (INTEGER 4 0 0 INTEGER ()) 0 0 () (1
+DEFERRED () ()) 0 () () () 0 0)
+52 'length' '' 'length' 50 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN
+DUMMY) (INTEGER 8 0 0 INTEGER ()) 0 0 () () 0 () () () 0 0)
+53 'text' '' 'text' 50 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN DUMMY)
+(CHARACTER 1 0 0 CHARACTER (())) 0 0 () () 0 () () () 0 0)
+37 'array' '' 'array' 36 ((VARIABLE INOUT UNKNOWN-PROC UNKNOWN UNKNOWN
+ALLOCATABLE DIMENSION DUMMY) (REAL 4 0 0 REAL ()) 0 0 () (2 DEFERRED ()
+() () ()) 0 () () () 0 0)
+38 'rows' '' 'rows' 36 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN DUMMY)
+(INTEGER 8 0 0 INTEGER ()) 0 0 () () 0 () () () 0 0)
+39 'cols' '' 'cols' 36 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN DUMMY)
+(INTEGER 8 0 0 INTEGER ()) 0 0 () () 0 () () () 0 0)
+40 'text' '' 'text' 36 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN DUMMY)
+(CHARACTER 1 0 0 CHARACTER (())) 0 0 () () 0 () () () 0 0)
+46 'array' '' 'array' 45 ((VARIABLE INOUT UNKNOWN-PROC UNKNOWN UNKNOWN
+ALLOCATABLE DIMENSION DUMMY) (INTEGER 4 0 0 INTEGER ()) 0 0 () (2
+DEFERRED () () () ()) 0 () () () 0 0)
+47 'rows' '' 'rows' 45 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN DUMMY)
+(INTEGER 8 0 0 INTEGER ()) 0 0 () () 0 () () () 0 0)
+48 'cols' '' 'cols' 45 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN DUMMY)
+(INTEGER 8 0 0 INTEGER ()) 0 0 () () 0 () () () 0 0)
+49 'text' '' 'text' 45 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN DUMMY)
+(CHARACTER 1 0 0 CHARACTER (())) 0 0 () () 0 () () () 0 0)
+55 'array' '' 'array' 54 ((VARIABLE INOUT UNKNOWN-PROC UNKNOWN UNKNOWN
+ALLOCATABLE DIMENSION DUMMY) (INTEGER 8 0 0 INTEGER ()) 0 0 () (2
+DEFERRED () () () ()) 0 () () () 0 0)
+56 'rows' '' 'rows' 54 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN DUMMY)
+(INTEGER 8 0 0 INTEGER ()) 0 0 () () 0 () () () 0 0)
+57 'cols' '' 'cols' 54 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN DUMMY)
+(INTEGER 8 0 0 INTEGER ()) 0 0 () () 0 () () () 0 0)
+58 'text' '' 'text' 54 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN DUMMY)
+(CHARACTER 1 0 0 CHARACTER (())) 0 0 () () 0 () () () 0 0)
+60 'array' '' 'array' 59 ((VARIABLE INOUT UNKNOWN-PROC UNKNOWN UNKNOWN
+ALLOCATABLE DIMENSION DUMMY) (DERIVED 19 0 0 DERIVED ()) 0 0 () (1
+DEFERRED () ()) 0 () () () 0 0)
+61 'length' '' 'length' 59 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN
+DUMMY) (INTEGER 8 0 0 INTEGER ()) 0 0 () () 0 () () () 0 0)
+62 'text' '' 'text' 59 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN DUMMY)
+(CHARACTER 1 0 0 CHARACTER (())) 0 0 () () 0 () () () 0 0)
+29 'array' '' 'array' 28 ((VARIABLE INOUT UNKNOWN-PROC UNKNOWN UNKNOWN
+ALLOCATABLE DIMENSION DUMMY) (CHARACTER 1 0 0 CHARACTER ((CONSTANT (
+INTEGER 4 0 0 INTEGER ()) 0 '1'))) 0 0 () (1 DEFERRED () ()) 0 () () ()
+0 0)
+30 'length' '' 'length' 28 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN
+DUMMY) (INTEGER 8 0 0 INTEGER ()) 0 0 () () 0 () () () 0 0)
+31 'text' '' 'text' 28 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN DUMMY)
+(CHARACTER 1 0 0 CHARACTER (())) 0 0 () () 0 () () () 0 0)
+25 'ifail' '' 'ifail' 24 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN
+DUMMY) (INTEGER 4 0 0 INTEGER ()) 0 0 () () 0 () () () 0 0)
+26 'numwords' '' 'numwords' 24 ((VARIABLE IN UNKNOWN-PROC UNKNOWN
+UNKNOWN DUMMY) (INTEGER 8 0 0 INTEGER ()) 0 0 () () 0 () () () 0 0)
+27 'text' '' 'text' 24 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN DUMMY)
+(CHARACTER 1 0 0 CHARACTER (())) 0 0 () () 0 () () () 0 0)
+76 'array' '' 'array' 75 ((VARIABLE INOUT UNKNOWN-PROC UNKNOWN UNKNOWN
+ALLOCATABLE DIMENSION DUMMY) (REAL 4 0 0 REAL ()) 0 0 () (1 DEFERRED ()
+()) 0 () () () 0 0)
+80 'array' '' 'array' 79 ((VARIABLE INOUT UNKNOWN-PROC UNKNOWN UNKNOWN
+ALLOCATABLE DIMENSION DUMMY) (INTEGER 4 0 0 INTEGER ()) 0 0 () (1
+DEFERRED () ()) 0 () () () 0 0)
+74 'array' '' 'array' 73 ((VARIABLE INOUT UNKNOWN-PROC UNKNOWN UNKNOWN
+ALLOCATABLE DIMENSION DUMMY) (REAL 4 0 0 REAL ()) 0 0 () (2 DEFERRED ()
+() () ()) 0 () () () 0 0)
+78 'array' '' 'array' 77 ((VARIABLE INOUT UNKNOWN-PROC UNKNOWN UNKNOWN
+ALLOCATABLE DIMENSION DUMMY) (INTEGER 4 0 0 INTEGER ()) 0 0 () (2
+DEFERRED () () () ()) 0 () () () 0 0)
+82 'array' '' 'array' 81 ((VARIABLE INOUT UNKNOWN-PROC UNKNOWN UNKNOWN
+ALLOCATABLE DIMENSION DUMMY) (INTEGER 8 0 0 INTEGER ()) 0 0 () (2
+DEFERRED () () () ()) 0 () () () 0 0)
+84 'array' '' 'array' 83 ((VARIABLE INOUT UNKNOWN-PROC UNKNOWN UNKNOWN
+ALLOCATABLE DIMENSION DUMMY) (DERIVED 19 0 0 DERIVED ()) 0 0 () (1
+DEFERRED () ()) 0 () () () 0 0)
+70 'array' '' 'array' 69 ((VARIABLE INOUT UNKNOWN-PROC UNKNOWN UNKNOWN
+ALLOCATABLE DIMENSION DUMMY) (CHARACTER 1 0 0 CHARACTER ((CONSTANT (
+INTEGER 4 0 0 INTEGER ()) 0 '1'))) 0 0 () (1 DEFERRED () ()) 0 () () ()
+0 0)
+67 'ifail' '' 'ifail' 66 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN
+DUMMY) (INTEGER 4 0 0 INTEGER ()) 0 0 () () 0 () () () 0 0)
+68 'numwords' '' 'numwords' 66 ((VARIABLE IN UNKNOWN-PROC UNKNOWN
+UNKNOWN DUMMY) (INTEGER 8 0 0 INTEGER ()) 0 0 () () 0 () () () 0 0)
+)
+
+('__convert_i4_i8' 0 18 'listitem' 0 19 'maxwordsalloc' 0 22
+'mpalloccheck' 0 23 'mpalloccvec' 0 2 'mpallocdvec' 0 9 'mpallocfarr' 0
+6 'mpallocfvec' 0 8 'mpallociarr' 0 5 'mpallocivec' 0 7 'mpalloclarr' 0
+4 'mpalloclist' 0 3 'mpd' 0 63 'mpdalc' 0 64 'mpdealloccheck' 0 65
+'mpdealloccvec' 0 10 'mpdeallocdvec' 0 17 'mpdeallocfarr' 0 14
+'mpdeallocfvec' 0 16 'mpdeallociarr' 0 13 'mpdeallocivec' 0 15
+'mpdealloclarr' 0 12 'mpdealloclist' 0 11 'mpdef' 0 85 'mpi' 0 86 'mpi4'
+0 87 'mpi8' 0 88 'mpl' 0 89 'mpr16' 0 90 'mpr4' 0 91 'mpr8' 0 92 'mps' 0
+93 'nummpalloc' 0 94 'nummpdealloc' 0 95 'numwordsalloc' 0 96
+'printflagalloc' 0 97 'selected_int_kind' 0 98 'selected_real_kind' 0 99)
