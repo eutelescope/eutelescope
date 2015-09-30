@@ -20,7 +20,7 @@
         <processor name="MyAlibavaApplyCrossTalk"/>
         <processor name="MyAlibavaSeedClustering"/>
         <processor name="MyAlibavaClusterHistogramMaker"/>
-        <processor name="MyAlibavaClusterTTreeMaker"/>
+        <!--processor name="MyAlibavaClusterTTreeMaker"/-->
         <processor name="MyAlibavaClusterConverter"/>
         <processor name="Save"/>
         <processor name="PrintEventNumber"/>
