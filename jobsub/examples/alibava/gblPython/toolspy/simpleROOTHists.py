@@ -59,7 +59,7 @@ class SimpleHists(object):
     for i, l in enumerate(self.__labels):
       entries = len(self.__hist[l])
       if entries > 1:
-        h = TH1F('h' + str(i), l, 100, min(self.__hist[l]), max(self.__hist[l]))
+        h = TH1F(str(l), l, 100, min(self.__hist[l]), max(self.__hist[l]))
         for x in self.__hist[l]:
           h.Fill(x)
         h.Write()    

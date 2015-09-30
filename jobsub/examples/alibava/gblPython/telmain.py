@@ -41,13 +41,13 @@ def main(argv):
   print 'Run number is "', runnumber
 
   # create output directory if it doesn't exist
-  outputdir = '/nfs/dust/atlas/user/yeda/ilcsoft/v01-17-05/Eutelescope/trunk/jobsub/examples/alibava/for-eda/output/run' + runnumber
+  outputdir = '/nfs/dust/atlas/user/yeda/ilcsoft/v01-17-05/Eutelescope/trunk/jobsub/examples/alibava/gblPython/output/run' + runnumber
   if not os.path.exists(outputdir):
     os.makedirs(outputdir)
 
   # maximum number of events
-  maxEvt = 50000
-  #maxEvt = 10000000
+  #maxEvt = 5000
+  maxEvt = 10000000
   # beam energy (*q)
   beamEnergy = -4.4  # 613
   # lcio data file
@@ -65,8 +65,9 @@ def main(argv):
 
   # estimated alignment error (mimosa, DUT)
   #alignmentError = (0.1, 0.05)
-  alignmentError = (0.005, 0.01)
+  #alignmentError = (0.005, 0.01)
   #alignmentError = (0.005, 0.1)
+  alignmentError = (0.005, 0.05)
   #alignmentError = (0.05, 1)
 
   # number of events to show event display
@@ -97,7 +98,7 @@ def main(argv):
   # don't combine DUTs
   #combDUT = None    
   steerfile = outputdir + '/steer.txt'
-  mp2.createSteering(steerfile.replace("XXXXXX",runnumber), detector, parMimosa, parDUT, combDUT)
+  mp2.createSteering(steerfile, detector, parMimosa, parDUT, combDUT)
   #
   # Cuts in (X,Y) for triplet finder, DUT matching 
   #   (peak from true, background from random matches; tail in bending plane for B<>0, electrons)
@@ -117,7 +118,9 @@ def main(argv):
   #cuts = ((1., 1.), (0.1 ,0.1), (0.01, 0.01), (0.5, 0.5), (0, 0)) 
   #cuts = ((0.5, 1.), (0.02,0.02), (0.01, 0.01), (0.1, 0.1), (0, 0))  
   #cuts = ((0.5, 0.5), (0.02,0.02), (0.01, 0.01), (0.1, 0.1), (0, 0))  
-  cuts = ((0.5, 0.5), (0.02,0.02), (0.01, 0.01), (0.1, 0.1), (0.2, 10))  
+  #cuts = ((0.5, 0.5), (0.02,0.02), (0.01, 0.01), (0.1, 0.1), (10.2, 10))  
+  cuts = ((0.2, 0.2), (0.01,0.01), (0.002, 0.002), (0.1, 0.1), (10.2, 10))  
+  #cuts = ((0.5, 0.5), (0.02,0.02), (0.01, 0.01), (0.1, 0.1), (0.2, 10))  
 
 
   # histograms for cut values
