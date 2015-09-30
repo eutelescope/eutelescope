@@ -127,6 +127,12 @@ float AlibavaCluster::getCenterOfGravity(){
 	
 	return weightedSum/totalsignal;
 }
+std::vector<int> AlibavaCluster::getChanNums(){
+    return _channums;
+}
+std::vector<float> AlibavaCluster::getSignals(){
+    return _signals;
+}
 
 int AlibavaCluster::getChanNum(int imember) {
 	if (imember >= getClusterSize()) {
@@ -154,6 +160,19 @@ float AlibavaCluster::getTotalSNR(FloatVec noiseVec) {
 		snr_total += getSignal(imember)/noiseVec[channel];
 	}
 	return snr_total * getSignalPolarity();
+}
+
+std::vector<float> AlibavaCluster::getSNRs(FloatVec noiseVec) {
+    std::vector<float> snrs;
+    for (int imember=0; imember<getClusterSize(); imember++) {
+        int channel = getChanNum(imember);
+        if (noiseVec[channel]==0) {
+            streamlog_out (ERROR5)<<"Channels noise is zero! Check this cluster! Returning zero!"<<endl;
+            return 0;
+        }
+        snrs.push_back( getSignalPolarity() * (getSignal(imember)/noiseVec[channel]) );
+    }
+    return snrs;
 }
 
 float AlibavaCluster::getTotalSignal() {

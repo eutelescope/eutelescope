@@ -40,7 +40,7 @@ namespace alibava
 		float getSignal(int imember);
 		float getTotalSignal();
 		float getTotalSNR(EVENT::FloatVec noiseVec);
-		
+		std::vector<float> getSNRs(EVENT::FloatVec noiseVec);
 		
 		void add(int achannum, float asignal);
 		int getClusterSize();
@@ -51,6 +51,10 @@ namespace alibava
 		
 		void createTrackerData(lcio::TrackerDataImpl * alibavaCluster);
 		
+        std::vector<int> getChanNums();
+        std::vector<float> getSignals();
+        
+        
 		///////////////////////
 		// Setters - Getters //
 		///////////////////////

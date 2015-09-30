@@ -5,8 +5,8 @@
  *  email:eda.yildirim@cern.ch
  */
 
-#ifndef ALIBAVACLUSTERHISTOGRAMMAKER_H
-#define ALIBAVACLUSTERHISTOGRAMMAKER_H 1
+#ifndef ALIBAVACLUSTERTTREEMAKER_H
+#define ALIBAVACLUSTERTTREEMAKER_H 1
 
 // alibava includes ".h"
 #include "AlibavaBaseHistogramMaker.h"
@@ -20,6 +20,7 @@
 
 // ROOT includes <>
 #include "TObject.h"
+#include "TTree.h"
 
 // system includes <>
 #include <string>
@@ -28,24 +29,24 @@
 
 namespace alibava {
 	
-	class AlibavaClusterHistogramMaker : public alibava::AlibavaBaseHistogramMaker   {
+    class AlibavaClusterTTreeMaker :  public alibava::AlibavaBaseProcessor  {
 		
 	public:
 		
 		
-		//! Returns a new instance of AlibavaClusterHistogramMaker
+		//! Returns a new instance of AlibavaClusterTTreeMaker
 		/*! This method returns an new instance of the this processor.  It
 		 *  is called by Marlin execution framework and it shouldn't be
 		 *  called/used by the final user.
 		 *
-		 *  @return a new AlibavaClusterHistogramMaker.
+		 *  @return a new AlibavaClusterTTreeMaker.
 		 */
 		virtual Processor * newProcessor () {
-			return new AlibavaClusterHistogramMaker;
+			return new AlibavaClusterTTreeMaker;
 		}
 		
 		//! Default constructor
-		AlibavaClusterHistogramMaker ();
+		AlibavaClusterTTreeMaker ();
 		
 		//! Called at the job beginning.
 		/*! This is executed only once in the whole execution. It prints
@@ -72,8 +73,8 @@ namespace alibava {
 		/*! Since the behavior of the PedestalNoise processor is different
 		 *  if this is the first or one of the following loop, this method
 		 *  is just calling
-		 *  AlibavaClusterHistogramMaker::firstLoop(LCEvent*) or
-		 *  AlibavaClusterHistogramMaker::otherLoop(LCEvent*)
+		 *  AlibavaClusterTTreeMaker::firstLoop(LCEvent*) or
+		 *  AlibavaClusterTTreeMaker::otherLoop(LCEvent*)
 		 *
 		 *  @param evt the current LCEvent event as passed by the
 		 *  ProcessMgr
@@ -99,15 +100,12 @@ namespace alibava {
 		 *  histograms. Histogram pointers are stored into
 		 *  AlibavaBaseProcessor::_rootObjectMap so that they can be
 		 *  recalled and filled from anywhere in the code.  Apart from the
-		 *  histograms listed in AlibavaClusterHistogramMaker::fillHistos()
+		 *  histograms listed in AlibavaClusterTTreeMaker::fillHistos()
 		 *  there is also a common mode histo described here below:
 		 *
-		 *  @see AlibavaClusterHistogramMaker::fillHistos() for the todos
+		 *  @see AlibavaClusterTTreeMaker::fillHistos() for the todos
 		 */
 		virtual void bookHistos();
-		
-		// Books histogram for the event
-		virtual void bookEventHisto(int eventnum);
 
 		//! Fill histograms
 		/*! This method is used to fill in histograms for each event.
@@ -127,66 +125,39 @@ namespace alibava {
 		 */
 		virtual void end();
 		
-		
-		// Fills the list of histogram names that has to be created
-		virtual void fillListOfHistos();
-
-    	///////////
-		// Event //
-		///////////
-		
-		// plots histogram for the event
-		void fillEventHisto(int eventnum, TrackerDataImpl * trkdata);
-				
-		////////////
-		// Others //
-		////////////
-		
-		void createRulesToChangeXMLValues();
-
-		// Creates alibava Event and prints it
-		void printAlibavaCluster(TrackerDataImpl * trkdata);
-		
+	
 	protected:
 
 
-		/////////////////////
-		// Histogram Names //
-		/////////////////////
+		///////////////
+		// Tree Name //
+		///////////////
 		
-		// Eta histogram name for ClusterSize > 1
-		std::string _etaHistoName;
+		 // Name of the tree
+		std::string _treeName;
+        
+        // TTree that will be created
+        TTree *_tree;
+        
+        // Tree branches
+        int _runnumber;
+        int _eventnumber;
+        int _chipNum;
+        int _clusterID;
+        int _clusterSize;
+        double _totalSignal;
+        double _totalSNR;
+        int _seedChanNum;
+        std::vector<int> _channums;
+        std::vector<float> _signals;
+        std::vector<float> _snrs;
+        bool _isSensitiveAxisX;
+        double _signalPolarity;
 		
-		// Eta histogram name for ClusterSize == 2
-		std::string _etaHistoNameCS2;
-		
-		// Eta histogram name for ClusterSize == 3
-		std::string _etaHistoNameCS3;
-		
-		// Eta histogram name for ClusterSize == 4
-		std::string _etaHistoNameCS4;
-		
-		// Eta histogram name for ClusterSize == 5
-		std::string _etaHistoNameCS5;
-		
-		// Eta histogram name for ClusterSize > 5
-		std::string _etaHistoNameCSgt5;
-			
-		// Cluster Size
-		std::string _clusterSizeHistoName;
-		
-		// Hit Amplitude 
-		std::string _hitAmplitudeHistoName;
-		
-		// Eta vs Center of gravity
-		std::string _etaVSCoG;
-
-		// Eta vs Cluster size
-		std::string _etaVSClusterSize;
 	};
 	
 	//! A global instance of the processor
-	AlibavaClusterHistogramMaker gAlibavaClusterHistogramMaker;
+	AlibavaClusterTTreeMaker gAlibavaClusterTTreeMaker;
 	
 }
 
