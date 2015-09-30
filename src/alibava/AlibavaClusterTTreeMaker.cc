@@ -8,6 +8,7 @@
 
 // alibava includes ".h"
 #include "AlibavaClusterTTreeMaker.h"
+#include "AlibavaBaseHistogramMaker.h"
 #include "AlibavaRunHeaderImpl.h"
 #include "AlibavaEventImpl.h"
 #include "ALIBAVA.h"
@@ -38,9 +39,9 @@
 
 
 // ROOT includes ".h"
-#include "TH1D.h"
-#include "TH2D.h"
-#include "TProfile.h"
+#include "TTree.h"
+#include "TROOT.h"
+#include "TBranch.h"
 
 // system includes <>
 #include <string>
@@ -49,6 +50,7 @@
 #include <memory>
 #include <cstdlib>
 #include <ctime>
+#include <vector>
 
 using namespace std;
 using namespace lcio;
@@ -68,9 +70,6 @@ _clusterSize(-1),
 _totalSignal(-1),
 _totalSNR(-1),
 _seedChanNum(-1),
-_channums(),
-_signals(),
-_snrs(),
 _isSensitiveAxisX(true),
 _signalPolarity(0)
 {
@@ -106,6 +105,7 @@ void AlibavaClusterTTreeMaker::init () {
 	printParameters ();
     
     _tree = new TTree(_treeName.c_str(), "a ROOT tree which stores cluster information");
+	
     _tree->Branch("runnumber",&_runnumber);
     _tree->Branch("eventnumber",&_eventnumber);
     _tree->Branch("chipNum",&_chipNum);
@@ -114,15 +114,18 @@ void AlibavaClusterTTreeMaker::init () {
     _tree->Branch("totalSignal",&_totalSignal);
     _tree->Branch("totalSNR",&_totalSNR);
     _tree->Branch("seedChanNum",&_seedChanNum);
+    _channums = new std::vector<int>();
     _tree->Branch("channums",&_channums);
+    _signals = new std::vector<float>();
     _tree->Branch("signals",&_signals);
+    _snrs = new std::vector<float>();
     _tree->Branch("snrs",&_snrs);
     _tree->Branch("isSensitiveAxisX",&_isSensitiveAxisX);
     _tree->Branch("signalPolarity",&_signalPolarity);
     
     _rootObjectMap.insert(make_pair(_treeName, _tree));
 
-    
+   gROOT->ProcessLine("#include <vector>"); 
 }
 
 
@@ -168,20 +171,34 @@ void AlibavaClusterTTreeMaker::processEvent (LCEvent * anEvent) { // HERE look f
 			TrackerDataImpl * trkdata = dynamic_cast< TrackerDataImpl * > ( collectionVec->getElementAt( i ) ) ;
 			
             AlibavaCluster anAlibavaCluster(trkdata);
-            EVENT::FloatVec getNoiseOfChip(int chipnum);
-
+		_channums->clear();
+		_signals->clear();
+		_snrs->clear();
             _chipNum = anAlibavaCluster.getChipNum();
             _clusterID = anAlibavaCluster.getClusterID();
             _clusterSize = anAlibavaCluster.getClusterSize();
             _totalSignal = anAlibavaCluster.getTotalSignal();
             _totalSNR = anAlibavaCluster.getTotalSNR(getNoiseOfChip(_chipNum));
             _seedChanNum = anAlibavaCluster.getSeedChanNum();
-            _channums = anAlibavaCluster.getChanNums();
+std::vector<float> SNRS = anAlibavaCluster.getSNRs(getNoiseOfChip(_chipNum));
+for (int i=0; i<_clusterSize; i++){
+_channums->push_back(anAlibavaCluster.getChanNum(i));
+_signals->push_back(anAlibavaCluster.getSignal(i));
+_snrs->push_back(SNRS[i]);
+}
+         /*   
+	_channums = anAlibavaCluster.getChanNums();
             _signals = anAlibavaCluster.getSignals();
             _snrs = anAlibavaCluster.getSNRs(getNoiseOfChip(_chipNum));
-            _isSensitiveAxisX = anAlibavaCluster.isSensitiveAxisX();
+	*/
+            _isSensitiveAxisX = anAlibavaCluster.getIsSensitiveAxisX();
             _signalPolarity = anAlibavaCluster.getSignalPolarity();
-			
+	    //TBranch *b_channums = (TBranch*)_tree->GetBranch("channums");
+	    //b_channums->SetAddress(&_channums);
+	    //TBranch *b_signals = (TBranch*)_tree->GetBranch("signals");
+	    //b_signals->SetAddress(&_signals);
+            //TBranch *b_snrs = (TBranch*)_tree->GetBranch("snrs");		
+            //b_snrs->SetAddress(&_snrs);		
             _tree->Fill();
 
 		}

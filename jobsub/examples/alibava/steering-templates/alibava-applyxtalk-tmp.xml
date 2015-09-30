@@ -20,6 +20,7 @@
         <processor name="MyAlibavaApplyCrossTalk"/>
         <processor name="MyAlibavaSeedClustering"/>
         <processor name="MyAlibavaClusterHistogramMaker"/>
+        <processor name="MyAlibavaClusterTTreeMaker"/>
         <processor name="MyAlibavaClusterConverter"/>
         <processor name="Save"/>
         <processor name="PrintEventNumber"/>
@@ -119,6 +120,17 @@
         <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
     </processor>
     
+ <processor name="MyAlibavaClusterTTreeMaker" type="AlibavaClusterTTreeMaker">
+  <!--AlibavaClusterTTreeMaker creates a ROOT tree which stores cluster information -->
+  <!--Input ALIBAVA Cluster collection name-->
+  <parameter name="InputCollectionName" type="string" lcioInType="TrackerData">alibava_clusters </parameter>
+    <!--Noise collection name-->
+  <parameter name="NoiseCollectionName" type="string"> noise_cmmd </parameter>
+  <!--The filename where the noise values stored-->
+  <parameter name="NoiseInputFile" type="string"> @DatabasePath@/ped@PedestalRunNumber@.slcio</parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
     
     <processor name="MyAlibavaClusterConverter" type="AlibavaClusterConverter">
         <!--AlibavaClusterConverter converts AlibavaClusters to EUTelSparseCluster and  :) -->

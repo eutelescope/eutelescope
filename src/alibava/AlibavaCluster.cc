@@ -164,11 +164,13 @@ float AlibavaCluster::getTotalSNR(FloatVec noiseVec) {
 
 std::vector<float> AlibavaCluster::getSNRs(FloatVec noiseVec) {
     std::vector<float> snrs;
+    snrs.clear();
     for (int imember=0; imember<getClusterSize(); imember++) {
         int channel = getChanNum(imember);
         if (noiseVec[channel]==0) {
             streamlog_out (ERROR5)<<"Channels noise is zero! Check this cluster! Returning zero!"<<endl;
-            return 0;
+            snrs.clear();
+	    return snrs;
         }
         snrs.push_back( getSignalPolarity() * (getSignal(imember)/noiseVec[channel]) );
     }

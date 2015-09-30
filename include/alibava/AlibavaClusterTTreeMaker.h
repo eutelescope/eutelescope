@@ -25,7 +25,7 @@
 // system includes <>
 #include <string>
 #include <list>
-
+#include <vector>
 
 namespace alibava {
 	
@@ -145,14 +145,14 @@ namespace alibava {
         int _chipNum;
         int _clusterID;
         int _clusterSize;
-        double _totalSignal;
-        double _totalSNR;
+        float _totalSignal;
+        float _totalSNR;
         int _seedChanNum;
-        std::vector<int> _channums;
-        std::vector<float> _signals;
-        std::vector<float> _snrs;
+        std::vector<int> *_channums;
+        std::vector<float> *_signals;
+        std::vector<float> *_snrs;
         bool _isSensitiveAxisX;
-        double _signalPolarity;
+        float _signalPolarity;
 		
 	};
 	
