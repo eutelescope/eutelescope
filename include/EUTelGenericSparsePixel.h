@@ -36,7 +36,7 @@ public:
     //! Default constructor with no args
     /*! Every value will be set to zero */
     EUTelGenericSparsePixel(); 
-    
+
     //! Destructor
     virtual ~EUTelGenericSparsePixel() { ; } 
 

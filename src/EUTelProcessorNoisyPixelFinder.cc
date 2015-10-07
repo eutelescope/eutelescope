@@ -235,7 +235,8 @@ void EUTelProcessorNoisyPixelFinder::HotPixelFinder(EUTelEventImpl* evt)
 
 		    // now prepare the EUTelescope interface to sparsified data.  
 		    auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel > >  sparseData (new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> ( zsData ));
-		    
+		    //auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelBinaryPixel > >  sparseData (new EUTelTrackerDataInterfacerImpl<EUTelBinaryPixel> ( zsData ));
+
 		    EUTelGenericSparsePixel* genericPixel =  new EUTelGenericSparsePixel();
 
 			// loop over all pixels in the sparseData object, these are the hit pixels!
@@ -248,7 +249,7 @@ void EUTelProcessorNoisyPixelFinder::HotPixelFinder(EUTelEventImpl* evt)
 				//has to be substracted (array index starts at 0)
 				int indexX = genericPixel->getXCoord() - currentSensor->offX;
 				int indexY = genericPixel->getYCoord() - currentSensor->offY;
-				
+		 		
 				try
 				{
 					//increment the hit counter for this pixel
