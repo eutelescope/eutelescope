@@ -254,5 +254,21 @@ namespace eutelescope {
 									));
 		}
 	}
+
+	template<>
+	inline void EUTelTrackerDataInterfacerImpl< EUTelBinaryPixel>::fillPixelVec()
+	{
+		for( unsigned int index = 0 ; index < _trackerData->getChargeValues().size() ; index += 6 )
+		{
+			_pixelVec.push_back(EUTelBinaryPixel(	static_cast<short>(_trackerData->getChargeValues()[ index ] ),
+								static_cast<short>(_trackerData->getChargeValues()[ index + 1 ]),
+								static_cast<float>(_trackerData->getChargeValues()[ index + 2 ]),
+								static_cast<short>(_trackerData->getChargeValues()[ index + 3 ]),
+								_trackerData->getChargeValues()[ index + 4 ],
+								_trackerData->getChargeValues()[ index + 5 ]
+								));
+		}
+	}
+
 } //namespace
 #endif
