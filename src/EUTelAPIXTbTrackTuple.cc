@@ -167,7 +167,7 @@ void EUTelAPIXTbTrackTuple::processEvent( LCEvent * event )
 void EUTelAPIXTbTrackTuple::end()
 {
 	//write version number
-	_versionNo->push_back(1.1);
+	_versionNo->push_back(1.2);
 	_versionTree->Fill();
 	//Maybe some stats output?
 	_file->Write();
