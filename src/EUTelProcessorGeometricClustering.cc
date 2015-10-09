@@ -338,10 +338,10 @@ void EUTelProcessorGeometricClustering::geometricClustering(LCEvent * evt, LCCol
 		  {
 		    sparseData =  std::auto_ptr<EUTelTrackerDataInterfacer>( new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>(zsData) );
 		  }
-		else if( type == kEUTelBinaryPixel )
+		else if( type == kEUTelMuPixel )
 		  {
 		    
-		    sparseData =  std::auto_ptr<EUTelTrackerDataInterfacer>( new EUTelTrackerDataInterfacerImpl<EUTelBinaryPixel>(zsData) );
+		    sparseData =  std::auto_ptr<EUTelTrackerDataInterfacer>( new EUTelTrackerDataInterfacerImpl<EUTelMuPixel>(zsData) );
 		  }
 		else
 		  {

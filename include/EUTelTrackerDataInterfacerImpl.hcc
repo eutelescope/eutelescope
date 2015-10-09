@@ -155,6 +155,21 @@ namespace eutelescope {
 		return pixel;
 	}
 
+	template<>
+	inline EUTelMuPixel* EUTelTrackerDataInterfacerImpl<EUTelMuPixel>::getSparsePixelAt(unsigned int index, EUTelMuPixel* pixel ) const
+	{
+		if ( index * _nElement + 5 > _trackerData->getChargeValues().size() ) return 0x0;
+		pixel->setXCoord( static_cast<short>( _trackerData->getChargeValues()[index * _nElement] ) );
+		pixel->setYCoord( static_cast<short>( _trackerData->getChargeValues()[index * _nElement + 1] ) );
+		pixel->setSignal( _trackerData->getChargeValues()[index * _nElement + 2] );
+		pixel->setTime(   static_cast<short>( _trackerData->getChargeValues()[index * _nElement + 3] ) );
+
+		pixel->setHitTime( _trackerData->getChargeValues()[index * _nElement + 4] );
+		pixel->setFrameTime( _trackerData->getChargeValues()[index * _nElement + 5] );
+		
+		return pixel;
+	}	
+
 	//! Template specialization for the addSparsePixel method
 	template<>
 	inline void EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel>::addSparsePixel(EUTelSimpleSparsePixel* pixel)
@@ -212,6 +227,28 @@ namespace eutelescope {
 								));
 	}
 
+	template<>
+	inline void EUTelTrackerDataInterfacerImpl<EUTelMuPixel>::addSparsePixel(EUTelMuPixel* pixel)
+	{
+		//add values to lcio charge vector
+		_trackerData->chargeValues().push_back( static_cast<float>(pixel->getXCoord()) );
+		_trackerData->chargeValues().push_back( static_cast<float>(pixel->getYCoord()) );
+		_trackerData->chargeValues().push_back( static_cast<float>(pixel->getSignal()) );
+		_trackerData->chargeValues().push_back( static_cast<float>(pixel->getTime()) );
+
+		_trackerData->chargeValues().push_back( pixel->getHitTime() );
+		_trackerData->chargeValues().push_back( pixel->getFrameTime() );
+
+		//add pixel to local pixel vector
+		_pixelVec.push_back(EUTelMuPixel(		static_cast<short>(pixel->getXCoord()),
+								static_cast<short>(pixel->getYCoord()),
+								static_cast<float>(pixel->getSignal()),
+								static_cast<short>(pixel->getTime() ),
+								pixel->getHitTime(),
+								pixel->getFrameTime()
+								));
+	}
+
 	//! Template specialization for the fillPixelVec method
 	template<>
 	inline void EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel>::fillPixelVec() 
@@ -256,11 +293,11 @@ namespace eutelescope {
 	}
 
 	template<>
-	inline void EUTelTrackerDataInterfacerImpl< EUTelBinaryPixel>::fillPixelVec()
+	inline void EUTelTrackerDataInterfacerImpl< EUTelMuPixel>::fillPixelVec()
 	{
 		for( unsigned int index = 0 ; index < _trackerData->getChargeValues().size() ; index += 6 )
 		{
-			_pixelVec.push_back(EUTelBinaryPixel(	static_cast<short>(_trackerData->getChargeValues()[ index ] ),
+			_pixelVec.push_back(EUTelMuPixel(	static_cast<short>(_trackerData->getChargeValues()[ index ] ),
 								static_cast<short>(_trackerData->getChargeValues()[ index + 1 ]),
 								static_cast<float>(_trackerData->getChargeValues()[ index + 2 ]),
 								static_cast<short>(_trackerData->getChargeValues()[ index + 3 ]),

@@ -339,10 +339,10 @@ bool EUTelAPIXTbTrackTuple::readZsHits( std::string colName, LCEvent* event)
 		     }
 		   
 		  }
-		else if( type == kEUTelBinaryPixel )
+		else if( type == kEUTelMuPixel )
 		  {
-		    sparseData =  std::auto_ptr<EUTelTrackerDataInterfacer>( new EUTelTrackerDataInterfacerImpl<EUTelBinaryPixel>(zsData) );
-		    EUTelBinaryPixel binaryPixel;
+		    sparseData =  std::auto_ptr<EUTelTrackerDataInterfacer>( new EUTelTrackerDataInterfacerImpl<EUTelMuPixel>(zsData) );
+		    EUTelMuPixel binaryPixel;
 		    
 		    for( unsigned int iHit = 0; iHit < sparseData->size(); iHit++ ) 
 		     {
