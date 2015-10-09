@@ -165,7 +165,9 @@ namespace eutelescope {
 		pixel->setTime(   static_cast<short>( _trackerData->getChargeValues()[index * _nElement + 3] ) );
 
 		pixel->setHitTime( _trackerData->getChargeValues()[index * _nElement + 4] );
-		pixel->setFrameTime( _trackerData->getChargeValues()[index * _nElement + 5] );
+		pixel->setFrameTime( (long unsigned)(_trackerData->getChargeValues()[index *
+		_nElement + 5]) | (  (long unsigned)(_trackerData->getChargeValues()[index *
+		_nElement + 6]) << 32  ) );
 		
 		return pixel;
 	}	
@@ -237,7 +239,10 @@ namespace eutelescope {
 		_trackerData->chargeValues().push_back( static_cast<float>(pixel->getTime()) );
 
 		_trackerData->chargeValues().push_back( pixel->getHitTime() );
-		_trackerData->chargeValues().push_back( pixel->getFrameTime() );
+		_trackerData->chargeValues().push_back(
+		(pixel->getFrameTime()) & 0xFFFFFFFF ); // first 32 bit of 64 bit wide frame time stamp
+		_trackerData->chargeValues().push_back	(
+		(pixel->getFrameTime()) >> 32 ) ; // last 32 bit of 64 bit wide frame time stamp
 
 		//add pixel to local pixel vector
 		_pixelVec.push_back(EUTelMuPixel(		static_cast<short>(pixel->getXCoord()),
@@ -302,7 +307,8 @@ namespace eutelescope {
 								static_cast<float>(_trackerData->getChargeValues()[ index + 2 ]),
 								static_cast<short>(_trackerData->getChargeValues()[ index + 3 ]),
 								_trackerData->getChargeValues()[ index + 4 ],
-								_trackerData->getChargeValues()[ index + 5 ]
+								(long unsigned)(_trackerData->getChargeValues()[
+	index + 5 ]) | ( (long unsigned)(_trackerData->getChargeValues()[ index + 6 ]) << 32 )
 								));
 		}
 	}

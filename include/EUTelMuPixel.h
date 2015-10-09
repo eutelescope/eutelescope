@@ -87,7 +87,7 @@ public:
   inline float getHitTime() const { return _hitTime; }
 
   //! Getter for the frame time stamp
-  inline float getFrameTime() const { return _frameTime; }
+  inline long unsigned getFrameTime() const { return _frameTime; }
   
  protected:
   //! hit time stamp
