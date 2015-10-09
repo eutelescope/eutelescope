@@ -156,7 +156,7 @@ namespace eutelescope {
 	}
 
 	template<>
-	inline EUTelBinaryPixel* EUTelTrackerDataInterfacerImpl<EUTelBinaryPixel>::getSparsePixelAt(unsigned int index, EUTelBinaryPixel* pixel ) const
+	inline EUTelMuPixel* EUTelTrackerDataInterfacerImpl<EUTelMuPixel>::getSparsePixelAt(unsigned int index, EUTelMuPixel* pixel ) const
 	{
 		if ( index * _nElement + 5 > _trackerData->getChargeValues().size() ) return 0x0;
 		pixel->setXCoord( static_cast<short>( _trackerData->getChargeValues()[index * _nElement] ) );
@@ -228,7 +228,7 @@ namespace eutelescope {
 	}
 
 	template<>
-	inline void EUTelTrackerDataInterfacerImpl<EUTelBinaryPixel>::addSparsePixel(EUTelBinaryPixel* pixel)
+	inline void EUTelTrackerDataInterfacerImpl<EUTelMuPixel>::addSparsePixel(EUTelMuPixel* pixel)
 	{
 		//add values to lcio charge vector
 		_trackerData->chargeValues().push_back( static_cast<float>(pixel->getXCoord()) );
@@ -240,7 +240,7 @@ namespace eutelescope {
 		_trackerData->chargeValues().push_back( pixel->getFrameTime() );
 
 		//add pixel to local pixel vector
-		_pixelVec.push_back(EUTelBinaryPixel(		static_cast<short>(pixel->getXCoord()),
+		_pixelVec.push_back(EUTelMuPixel(		static_cast<short>(pixel->getXCoord()),
 								static_cast<short>(pixel->getYCoord()),
 								static_cast<float>(pixel->getSignal()),
 								static_cast<short>(pixel->getTime() ),
@@ -293,11 +293,11 @@ namespace eutelescope {
 	}
 
 	template<>
-	inline void EUTelTrackerDataInterfacerImpl< EUTelBinaryPixel>::fillPixelVec()
+	inline void EUTelTrackerDataInterfacerImpl< EUTelMuPixel>::fillPixelVec()
 	{
 		for( unsigned int index = 0 ; index < _trackerData->getChargeValues().size() ; index += 6 )
 		{
-			_pixelVec.push_back(EUTelBinaryPixel(	static_cast<short>(_trackerData->getChargeValues()[ index ] ),
+			_pixelVec.push_back(EUTelMuPixel(	static_cast<short>(_trackerData->getChargeValues()[ index ] ),
 								static_cast<short>(_trackerData->getChargeValues()[ index + 1 ]),
 								static_cast<float>(_trackerData->getChargeValues()[ index + 2 ]),
 								static_cast<short>(_trackerData->getChargeValues()[ index + 3 ]),

@@ -27,28 +27,28 @@ namespace eutelescope {
    *  additionally stores information on the timestamp of individual hits
    *  and of events.
    *  If only the generic information is required, the
-   *  EUTelBinaryPixel can be easily cast to an
+   *  EUTelMuPixel can be easily cast to an
    *  EUTelGenericSparsePixel, which then can be stored in
    *  a collection.
    */ 
 
-class EUTelBinaryPixel : public EUTelGenericSparsePixel  {
+class EUTelMuPixel : public EUTelGenericSparsePixel  {
 
 public:
     //! Default constructor with all arguments (individually)
-  EUTelBinaryPixel(short xCoord, short yCoord, float signal, short time, double hit_time, double frame_time); 
+  EUTelMuPixel(short xCoord, short yCoord, float signal, short time, double hit_time, double frame_time); 
 
     //! Default constructor with all arguments (EUTelGenericSparsePixel, 2 additional time stamps)
-  EUTelBinaryPixel(EUTelGenericSparsePixel& genericPixel, double hit_time, double frame_time); 
+  EUTelMuPixel(EUTelGenericSparsePixel& genericPixel, double hit_time, double frame_time); 
   
   //! Default constructor with only arguments of a EUTelescopeGenericSparsePixel (geometry related values are set to 0)
-  EUTelBinaryPixel(EUTelGenericSparsePixel& genericPixel); 
+  EUTelMuPixel(EUTelGenericSparsePixel& genericPixel); 
   
   //! Default constructor with no args (all values are set to 0)
-  EUTelBinaryPixel(); 
+  EUTelMuPixel(); 
     
   //! Destructor
-  virtual ~EUTelBinaryPixel() {} 
+  virtual ~EUTelMuPixel() {} 
   
   //! Get the number of elements in the data structure
   /*! This method returns the number of elements the sparse pixel

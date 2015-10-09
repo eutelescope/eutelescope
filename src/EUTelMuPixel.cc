@@ -9,7 +9,7 @@
 
 // personal includes ".h"
 #include "EUTELESCOPE.h"
-#include "EUTelBinaryPixel.h"
+#include "EUTelMuPixel.h"
 
 // system includes <>
 #include <iostream>
@@ -18,59 +18,59 @@
 using namespace eutelescope;
 
 //Default constructor, returns pixel with all fields set to zero
-EUTelBinaryPixel::EUTelBinaryPixel():
+EUTelMuPixel::EUTelMuPixel():
 	EUTelGenericSparsePixel(),
 	_hitTime(0),
 	_frameTime(0)
 {
 	_noOfElementsDerived = 6;
-	_typeDerived = kEUTelBinaryPixel;
+	_typeDerived = kEUTelMuPixel;
 }
 
 //Constructor taking all possible six arguments
 // First four: same as GenericSparsePixel
 // Last two: additional arguments to store precise time information 
-EUTelBinaryPixel::EUTelBinaryPixel(short xCoord, short yCoord, float signal, short time, double hitTime, double frameTime):
+EUTelMuPixel::EUTelMuPixel(short xCoord, short yCoord, float signal, short time, double hitTime, double frameTime):
 	EUTelGenericSparsePixel(xCoord, yCoord, signal, time),
 	_hitTime(hitTime),
 	_frameTime(frameTime)
 {
 	_noOfElementsDerived = 6;
-	_typeDerived = kEUTelBinaryPixel;
+	_typeDerived = kEUTelMuPixel;
 }
 
 //Constructor taking a EUTelGenericSparsePixel, all geometry related entries are set to zero
-EUTelBinaryPixel::EUTelBinaryPixel(EUTelGenericSparsePixel& genericPixel):
+EUTelMuPixel::EUTelMuPixel(EUTelGenericSparsePixel& genericPixel):
 	EUTelGenericSparsePixel(genericPixel),
 	_hitTime(0),
 	_frameTime(0)
 {
 	_noOfElementsDerived = 6;
-	_typeDerived = kEUTelBinaryPixel;
+	_typeDerived = kEUTelMuPixel;
 }
 
 //Constructor taking a EUTelGenericSparsePixel and the two time stamps
-EUTelBinaryPixel::EUTelBinaryPixel(EUTelGenericSparsePixel& genericPixel, double hitTime, double frameTime):
+EUTelMuPixel::EUTelMuPixel(EUTelGenericSparsePixel& genericPixel, double hitTime, double frameTime):
 	EUTelGenericSparsePixel(genericPixel),
 	_hitTime(hitTime),
 	_frameTime(frameTime)
 {
 	_noOfElementsDerived = 6;
-	_typeDerived = kEUTelBinaryPixel;
+	_typeDerived = kEUTelMuPixel;
 }
 
 
-unsigned int EUTelBinaryPixel::getNoOfElements() const
+unsigned int EUTelMuPixel::getNoOfElements() const
 {
 	return _noOfElementsDerived;
 }
 
-SparsePixelType EUTelBinaryPixel::getSparsePixelType() const 
+SparsePixelType EUTelMuPixel::getSparsePixelType() const 
 {
 	return _typeDerived;
 }
 
-void EUTelBinaryPixel::print(std::ostream& os) const 
+void EUTelMuPixel::print(std::ostream& os) const 
 {
 	int bigWidth = 50;
 	for ( int i = 0 ; i < bigWidth ; ++i ) 

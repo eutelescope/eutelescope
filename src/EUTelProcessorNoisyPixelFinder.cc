@@ -242,10 +242,10 @@ void EUTelProcessorNoisyPixelFinder::HotPixelFinder(EUTelEventImpl* evt)
 		      {
 			sparseData =  auto_ptr<EUTelTrackerDataInterfacer>( new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>(zsData) );
 		      }
-		    else if( pixelType == kEUTelBinaryPixel )
+		    else if( pixelType == kEUTelMuPixel )
 		      {
 			
-			sparseData =  auto_ptr<EUTelTrackerDataInterfacer>( new EUTelTrackerDataInterfacerImpl<EUTelBinaryPixel>(zsData) );
+			sparseData =  auto_ptr<EUTelTrackerDataInterfacer>( new EUTelTrackerDataInterfacerImpl<EUTelMuPixel>(zsData) );
 		      }
 		    else
 		      {
