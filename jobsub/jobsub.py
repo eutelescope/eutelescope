@@ -340,6 +340,47 @@ def submitNAF(filenamebase, jobtask, qsubfile, runnr):
         exit(1)
     return 0
 
+def submitLXPLUS(filenamebase, jobtask, bsubfile, runnr):
+    """ Submits the Marlin job to LXPLUS """
+    import os
+    from sys import exit # use sys.exit instead of built-in exit (latter raises exception)
+    log = logging.getLogger('jobsub.' + jobtask)
+    # We are running on LXPLUS.
+
+    # check for bsub executable
+    cmd = check_program("bsub")
+    if cmd:
+        log.debug("Found bsub executable: " + cmd)
+    else:
+        log.error("bsub executable not found in PATH!")
+        exit(1)
+
+    # Add bsub parameters:
+    #bsub < bsubparams.txt BIN
+    cmd = cmd+" < "+bsubfile+" -J \"Run"+runnr+"\" "
+    
+    # check for Marlin executable
+    marlin = check_program("Marlin")
+    if marlin:
+        log.debug("Found Marlin executable: " + marlin)
+        cmd = cmd+" "+marlin
+    else:
+        log.error("Marlin executable not found in PATH!")
+        exit(1)
+
+    filename = os.path.abspath(filenamebase+".xml")
+    cmd = cmd+" "+filename
+    rcode = None # the return code that will be set by a later subprocess method
+    try:
+        # run process
+        log.info ("Now submitting Marlin job: "+filenamebase+".xml to LXPLUS")
+        log.debug ("Executing: "+cmd)
+        os.popen(cmd)
+    except OSError, e:
+        log.critical("Problem with LXPLUS submission: Command '%s' resulted in error #%s, %s", cmd, e.errno, e.strerror)
+        exit(1)
+    return 0
+
 def zipLogs(path, filename):
     """  stores output from Marlin in zip file; enables compression if necessary module is available """
     import zipfile
@@ -414,6 +455,7 @@ def main(argv=None):
     parser.add_argument('--option', '-o', action='append', metavar="NAME=VALUE", help="Specify further options such as 'beamenergy=5.3'. This switch be specified several times for multiple options or can parse a comma-separated list of options. This switch overrides any config file options.")
     parser.add_argument("-c", "--conf-file", "--config", help="Load specified config file with global and task specific variables", metavar="FILE")
     parser.add_argument("-n", "--naf-file", "--naf", help="Specify qsub parameter file for NAF submission. Run NAF submission via qsub instead of calling Marlin directly", metavar="FILE")
+    parser.add_argument("-lx", "--lxplus-file", "--lxplus", help="Specify bsub parameter file for LXPLUS submission. Run LXPLUS submission via bsub instead of calling Marlin directly", metavar="FILE")
     parser.add_argument("--concatenate", action="store_true", default=False, help="Modifies run range treatment: concatenate all runs into first run (e.g. to combine runs for alignment) by combining every options that includes the string '@RunRange@' multiple times, once for each run of the range specified.")
     parser.add_argument("-csv", "--csv-file", help="Load additional run-specific variables from table (text file in csv format)", metavar="FILE")
     parser.add_argument("--log-file", help="Save submission log to specified file", metavar="FILE")
@@ -618,10 +660,19 @@ def main(argv=None):
         if not checkSteer(steeringString):
             return 1
 
+        if args.naf_file and args.lxplus_file:
+            log.critical("Not possible to submit to both NAF and LXPLUS at the same time!")
+            return 1
+
         if args.naf_file:
             args.naf_file = os.path.abspath(args.naf_file)
             if not os.path.isfile(args.naf_file):
                 log.critical("NAF submission parameters file '"+args.naf_file+"' not found!")
+                return 1
+        elif args.lxplus_file:
+            args.lxplus_file = os.path.abspath(args.lxplus_file)
+            if not os.path.isfile(args.lxplus_file):
+                log.critical("LXPLUS submission parameters file '"+args.lxplus_file+"' not found!")
                 return 1
 
         log.debug ("Writing steering file for run number "+runnr)
@@ -653,6 +704,12 @@ def main(argv=None):
                 log.info("NAF job submitted")
             else:
                 log.error("NAF submission returned with error code "+str(rcode))
+        elif args.lxplus_file:
+            rcode = submitLXPLUS(basefilename, args.jobtask, args.lxplus_file, runnr) # start LXPLUS submission
+            if rcode == 0:
+                log.info("LXPLUS job submitted")
+            else:
+                log.error("LXPLUS submission returned with error code "+str(rcode))
         else:
             rcode = runMarlin(basefilename, args.jobtask, args.silent) # start Marlin execution
             if rcode == 0:

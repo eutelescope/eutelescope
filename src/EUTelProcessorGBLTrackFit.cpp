@@ -189,10 +189,9 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent* evt){
 				_trackFitter->updateTrackFromGBLTrajectory(traj,track,mapSensorIDToCorrectionVec);
 				std::map< int, std::map< float, float > >  SensorResidual; 
 				std::map< int, std::map< float, float > >  SensorResidualError; 
-				std::map< int, int> planes;
-				_trackFitter->getResidualOfTrackandHits(traj, pointList,track, SensorResidual, SensorResidualError, planes);
+				_trackFitter->getResidualOfTrackandHits(traj, pointList,track, SensorResidual, SensorResidualError);
 				if(chi2/static_cast<float>(ndf) < 5){
-				  plotResidual(SensorResidual,SensorResidualError, planes);//TO DO: Need to fix how we histogram.
+				  plotResidual(SensorResidual,SensorResidualError);
 				}
 			}else{
 				streamlog_out(DEBUG5) << "Ierr is: " << ierr << " Do not update track information " << std::endl;
@@ -227,19 +226,19 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent* evt){
 
 
 //TO DO:This is a very stupid way to histogram but will add new class to do this is long run 
-void EUTelProcessorGBLTrackFit::plotResidual(std::map< int, std::map<float, float > >  & sensorResidual, std::map< int, std::map<float, float > >  & sensorResidualError, std::map< int, int > & planes){
+void EUTelProcessorGBLTrackFit::plotResidual(std::map< int, std::map<float, float > >  & sensorResidual, std::map< int, std::map<float, float > >  & sensorResidualError){
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Residual plot
 	/* Obtain DUT IDs */
         std::map< int, int>::iterator planes_it;
 	int dut1 = -10;
 	int dut2 = -10;
 	bool flag = false;
-	for ( planes_it = planes.begin(); planes_it != planes.end(); planes_it++) {
-	  if (planes_it->second > 5 && flag == true) {
-	    dut2 = planes_it->second;
+	for ( std::vector<int>::const_iterator itPla = geo::gGeometry().sensorIDsVec().begin(); itPla != geo::gGeometry().sensorIDsVec().end(); ++itPla) {
+	  if ( *itPla> 5 && flag == true) {
+	    dut2 = *itPla;
 	  }
-	  if (planes_it->second > 5) {
-	    dut1 = planes_it->second;
+	  if ( *itPla> 5) {
+	    dut1 = *itPla;
 	    flag = true;
 	  }
 	  
