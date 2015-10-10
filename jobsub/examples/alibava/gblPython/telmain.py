@@ -18,6 +18,7 @@ from toolspy.simpleROOTHists import SimpleHists
 import time
 import sys, getopt
 import os
+import math
 
 def main(argv):
   start = time.clock()
@@ -46,8 +47,8 @@ def main(argv):
     os.makedirs(outputdir)
 
   # maximum number of events
-  #maxEvt = 5000
-  maxEvt = 10000000
+  maxEvt = 5000
+  #maxEvt = 10000000
   # beam energy (*q)
   beamEnergy = -4.4  # 613
   # lcio data file
@@ -64,11 +65,9 @@ def main(argv):
   mp2.open()  # open file for alignment
 
   # estimated alignment error (mimosa, DUT)
-  #alignmentError = (0.1, 0.05)
-  #alignmentError = (0.005, 0.01)
-  #alignmentError = (0.005, 0.1)
-  alignmentError = (0.005, 0.05)
-  #alignmentError = (0.05, 1)
+  #alignmentError = (0.005, 0.5)
+  alignmentError = (0.005, 0.01)
+  #alignmentError = (0.005, 1)
 
   # number of events to show event display
   displayEvents = 0
@@ -89,14 +88,24 @@ def main(argv):
   if bField[1] != 0.:
     # for B field in Y fix X position of plane 3 in addition
     parMimosa[3] = 'R11001'
+
+  #################
+  # DUT Alignment #
+  #################
   # for DUT determine positions and (all) rotations
   #parDUT = '111111'
+  # for DUT determine X,Z positions
+  #parDUT = '101000'
+  # for DUT determine X,Z positions and XZ,XY rotations
   parDUT = '101011'
+  # for DUT determine X,Z positions and XY rotations
   #parDUT = '101001'
+
   # combined alignment of DUTs (in common plane, need to have same intersection point with Z-axis in gear file)
   combDUT = (6, 7)
   # don't combine DUTs
   #combDUT = None    
+
   steerfile = outputdir + '/steer.txt'
   mp2.createSteering(steerfile, detector, parMimosa, parDUT, combDUT)
   #
@@ -118,15 +127,16 @@ def main(argv):
   #cuts = ((1., 1.), (0.1 ,0.1), (0.01, 0.01), (0.5, 0.5), (0, 0)) 
   #cuts = ((0.5, 1.), (0.02,0.02), (0.01, 0.01), (0.1, 0.1), (0, 0))  
   #cuts = ((0.5, 0.5), (0.02,0.02), (0.01, 0.01), (0.1, 0.1), (0, 0))  
-  #cuts = ((0.5, 0.5), (0.02,0.02), (0.01, 0.01), (0.1, 0.1), (10.2, 10))  
-  cuts = ((0.2, 0.2), (0.01,0.01), (0.002, 0.002), (0.1, 0.1), (10.2, 10))  
+  #cuts = ((0.5, 0.5), (0.02,0.02), (0.01, 0.01), (0.1, 0.1), (10.0, 10))  
+  #cuts = ((0.2, 0.2), (0.01,0.01), (0.002, 0.002), (0.1, 0.1), (10.2, 10))  
   #cuts = ((0.5, 0.5), (0.02,0.02), (0.01, 0.01), (0.1, 0.1), (0.2, 10))  
+  cuts = ((0.5, 0.5), (0.02,0.02), (0.01, 0.01), (0.1, 0.1), (2.2, 10))  
 
 
   # histograms for cut values
   #hists = None
   hists = SimpleHists(("doubletDx", "doubletDy", "tripletDx", "tripletDy", "dslopeX", "dslopeY", \
-                      "dposX", "dposY", "DUT-dx", "DUT-dy", "nTriplets", "nMatches", "match/triplet", "nSegments"))
+                      "dposX", "dposY", "DUT6-dx", "DUT6-dy", "DUT7-dx", "DUT7-dy", "nTriplets", "nMatches", "match/triplet", "nSegments"))
   #
   numEvt = 0
   numTrack = 0
@@ -146,6 +156,8 @@ def main(argv):
     # find tracks and match DUT hits
     event.findTracks(finder, -40.)
     numTrack += event.getNumTracks()
+    if numEvt % 1000 == 0:
+      print "Processing Event %i    Total Number of tracks = %i" % (numEvt, numTrack)
     # fit segments
     event.fitGBL(mp2.getBinaryFile())
     # display event and finder results

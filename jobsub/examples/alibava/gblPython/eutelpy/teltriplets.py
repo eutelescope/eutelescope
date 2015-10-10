@@ -320,9 +320,14 @@ class TelTriplets(object):
             h.addMatch()
             seg.addMatch()
             if self.__hists is not None:
-              self.__hists.addEntry("DUT-dx", x - px)
-              self.__hists.addEntry("DUT-dy", y - py)
-            
+              if h.getPlane() == 6:
+                self.__hists.addEntry("DUT6-dx", x - px)
+                self.__hists.addEntry("DUT6-dy", y - py)
+              elif h.getPlane() == 7:
+                self.__hists.addEntry("DUT7-dx", x - px)
+                self.__hists.addEntry("DUT7-dy", y - py)
+              else:
+                print "DUT not identified"
       for i, j in matches:
         h = hits[i]
         seg = self.__seg[j]
