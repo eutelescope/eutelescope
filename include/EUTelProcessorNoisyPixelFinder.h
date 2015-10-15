@@ -168,7 +168,7 @@ protected:
     /*! 
      * this collection is saved in a db file to be used at the clustering level
      */
-    std::string _hotPixelCollectionName;
+    std::string _noisyPixelCollectionName;
 
  
     //! The excluded planes list
@@ -202,7 +202,7 @@ protected:
     //! Map for storing the hot pixels in a std::vector as a value
     /*! The key is once again the sensorID.
      */
-    std::map<int, std::vector<EUTelGenericSparsePixel> > _hotPixelMap;
+    std::map<int, std::vector<EUTelGenericSparsePixel> > _noisyPixelMap;
 
     //! Current run number.
     /*! This number is used to store the current run number

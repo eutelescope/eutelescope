@@ -62,7 +62,7 @@ EUTelProcessorNoisyPixelFinder::EUTelProcessorNoisyPixelFinder():
   Processor("EUTelProcessorNoisyPixelFinder"),
   _lcioWriteMode(""),
   _zsDataCollectionName(""),
-  _hotPixelCollectionName(""),
+  _noisyPixelCollectionName(""),
   _ExcludedPlanes(),
   _noOfEvents(0),
   _maxAllowedFiringFreq(0.0),
@@ -90,7 +90,7 @@ EUTelProcessorNoisyPixelFinder::EUTelProcessorNoisyPixelFinder():
   registerOptionalParameter("ExcludedPlanes", "The list of sensor IDs that shall be excluded.", _ExcludedPlanes, std::vector<int> () );
 
   registerOptionalParameter("HotPixelCollectionName", "This is the name of the hot pixel collection to be saved into the output slcio file",
-                             _hotPixelCollectionName, std::string("hotpixel"));
+                             _noisyPixelCollectionName, std::string("hotpixel"));
 }
 
 void EUTelProcessorNoisyPixelFinder::initializeHitMaps() {
@@ -125,12 +125,12 @@ void EUTelProcessorNoisyPixelFinder::initializeHitMaps() {
 			}
 
 			//collection to later hold the hot pixels
-			std::vector<EUTelGenericSparsePixel> hotPixelMap;
+			std::vector<EUTelGenericSparsePixel> noisyPixelMap;
 
 			//store all the collections/pointers in the corresponding maps
 		    	_sensorMap[sensorID] = thisSensor;
 			_hitVecMap[sensorID] = hitVecP;
-			_hotPixelMap[sensorID] = hotPixelMap;
+			_noisyPixelMap[sensorID] = noisyPixelMap;
 		} catch(std::runtime_error& e) {
 			streamlog_out ( ERROR0 ) << "Noisy pixel masker could not retrieve plane " << sensorID << std::endl;
 			streamlog_out ( ERROR0 ) << e.what() << std::endl;
@@ -302,9 +302,9 @@ void EUTelProcessorNoisyPixelFinder::check(LCEvent* /*event*/ ) {
 						EUTelGenericSparsePixel pixel;
 						pixel.setXCoord(xIt-hitVector->begin() + currentSensor->offX);
 						pixel.setYCoord(yIt - xIt->begin() + currentSensor->offY );
-						pixel.setSignal( ceil(100*fireFreq) );
+						pixel.setSignal( fireFreq );
 						//writing out is done here
-						_hotPixelMap[sensorID].push_back(pixel);
+						_noisyPixelMap[sensorID].push_back(pixel);
 					}
 				}
 			}
@@ -350,29 +350,29 @@ void EUTelProcessorNoisyPixelFinder::HotPixelDBWriter() {
 	}
 
 	// create main collection to be saved into the db file 
-	LCCollectionVec* hotPixelCollection;
+	LCCollectionVec* noisyPixelCollection;
 	// create new or open existing hotpixel collection
 	try {
-		hotPixelCollection = static_cast< LCCollectionVec* > ( event->getCollection( _hotPixelCollectionName  ) );
-		std::cout << "hotPixelCollection: " << _hotPixelCollectionName << " found found with " << hotPixelCollection->getNumberOfElements() << " elements " <<  std::endl; 
-		hotPixelCollection->clear();
-		std::cout << "hotPixelCollection: " << _hotPixelCollectionName << " cleared: now " << hotPixelCollection->getNumberOfElements() << " elements " <<  std::endl; 
+		noisyPixelCollection = static_cast< LCCollectionVec* > ( event->getCollection( _noisyPixelCollectionName  ) );
+		std::cout << "noisyPixelCollection: " << _noisyPixelCollectionName << " found found with " << noisyPixelCollection->getNumberOfElements() << " elements " <<  std::endl; 
+		noisyPixelCollection->clear();
+		std::cout << "noisyPixelCollection: " << _noisyPixelCollectionName << " cleared: now " << noisyPixelCollection->getNumberOfElements() << " elements " <<  std::endl; 
 	} catch ( lcio::DataNotAvailableException& e ) {
-		hotPixelCollection = new LCCollectionVec( lcio::LCIO::TRACKERDATA );
-		event->addCollection( hotPixelCollection, _hotPixelCollectionName );
-		std::cout << "hotPixelCollection: " << _hotPixelCollectionName << " created" <<  std::endl; 
+		noisyPixelCollection = new LCCollectionVec( lcio::LCIO::TRACKERDATA );
+		event->addCollection( noisyPixelCollection, _noisyPixelCollectionName );
+		std::cout << "noisyPixelCollection: " << _noisyPixelCollectionName << " created" <<  std::endl; 
 	}
 
 	streamlog_out( MESSAGE5 ) << "Noisy Pixel Finder summary:" << std::endl;
-	//_hotPixelMap holds the sensor if (first) and a vector of noisy pixels (second)
-	for(auto& mapEntry: _hotPixelMap) {
-		CellIDEncoder< TrackerDataImpl > hotPixelEncoder  ( EUTELESCOPE::ZSDATADEFAULTENCODING, hotPixelCollection  );
-		hotPixelEncoder["sensorID"]        = mapEntry.first;
-		hotPixelEncoder["sparsePixelType"] = kEUTelGenericSparsePixel;
+	//_noisyPixelMap holds the sensor if (first) and a vector of noisy pixels (second)
+	for(auto& mapEntry: _noisyPixelMap) {
+		CellIDEncoder< TrackerDataImpl > noisyPixelEncoder  ( EUTELESCOPE::ZSDATADEFAULTENCODING, noisyPixelCollection  );
+		noisyPixelEncoder["sensorID"]        = mapEntry.first;
+		noisyPixelEncoder["sparsePixelType"] = kEUTelGenericSparsePixel;
 
 		// prepare a new TrackerData for the hot Pixel data
 		std::unique_ptr<lcio::TrackerDataImpl> currentFrame( new lcio::TrackerDataImpl );
-		hotPixelEncoder.setCellID( currentFrame.get() );
+		noisyPixelEncoder.setCellID( currentFrame.get() );
 
 		// this is the structure that will host the sparse pixel  
 		std::unique_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>
@@ -381,7 +381,7 @@ void EUTelProcessorNoisyPixelFinder::HotPixelDBWriter() {
 		for( auto& pixel: mapEntry.second) {
 			sparseFrame->addSparsePixel( &pixel );                
 		}
-		hotPixelCollection->push_back( currentFrame.release() );
+		noisyPixelCollection->push_back( currentFrame.release() );
 
 		streamlog_out( MESSAGE5 ) << "Found " << mapEntry.second.size() << " noisy pixels on sensor: " << mapEntry.first << std::endl;
 	}
@@ -434,7 +434,7 @@ void EUTelProcessorNoisyPixelFinder::bookAndFillHistos() {
 		firing1DHisto->setTitle("Firing frequency distribution of hot pixels (in percent, rounded to the next integer);Firing Frequency (%); Count (#)");
 
 		//actually fill both histos for each detector
-		for ( auto& pixel: _hotPixelMap[det]) {
+		for ( auto& pixel: _noisyPixelMap[det]) {
 			firing2DHisto->fill(pixel.getXCoord(), pixel.getYCoord(), pixel.getSignal());
 			firing1DHisto->fill(pixel.getSignal());
 		}
