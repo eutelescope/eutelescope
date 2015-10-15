@@ -60,16 +60,15 @@ std::string EUTelProcessorNoisyPixelFinder::_firing1DHistoName = "Firing1D";
 
 EUTelProcessorNoisyPixelFinder::EUTelProcessorNoisyPixelFinder(): 
   Processor("EUTelProcessorNoisyPixelFinder"),
-  _lcioWriteMode(""),
   _zsDataCollectionName(""),
   _noisyPixelCollectionName(""),
-  _ExcludedPlanes(),
+  _excludedPlanes(),
   _noOfEvents(0),
   _maxAllowedFiringFreq(0.0),
   _iRun(0),
   _iEvt(0),
   _sensorIDVec(),
-  _hotpixelDBFile(""),
+  _noisyPixelDBFile(""),
   _finished(false)
 {
   //processor description
@@ -84,13 +83,13 @@ EUTelProcessorNoisyPixelFinder::EUTelProcessorNoisyPixelFinder():
   registerProcessorParameter("MaxAllowedFiringFreq", "This float number [0,1] represents the maximum allowed firing frequency\n"
                              "within the selected number of event per cycle", _maxAllowedFiringFreq, static_cast<float>(0.2) );
 
-  registerOptionalParameter("HotPixelDBFile","This is the name of the LCIO file name with the output hotpixel db (add .slcio)",
-                             _hotpixelDBFile, std::string("hotpixel.slcio"));
+  registerOptionalParameter("HotPixelDBFile","This is the name of the LCIO file name with the output noisyPixel db (add .slcio)",
+                             _noisyPixelDBFile, std::string("noisyPixel.slcio"));
 
-  registerOptionalParameter("ExcludedPlanes", "The list of sensor IDs that shall be excluded.", _ExcludedPlanes, std::vector<int> () );
+  registerOptionalParameter("ExcludedPlanes", "The list of sensor IDs that shall be excluded.", _excludedPlanes, std::vector<int> () );
 
   registerOptionalParameter("HotPixelCollectionName", "This is the name of the hot pixel collection to be saved into the output slcio file",
-                             _noisyPixelCollectionName, std::string("hotpixel"));
+                             _noisyPixelCollectionName, std::string("noisyPixel"));
 }
 
 void EUTelProcessorNoisyPixelFinder::initializeHitMaps() {
@@ -162,7 +161,7 @@ void EUTelProcessorNoisyPixelFinder::processRunHeader(LCRunHeader* /*rdr*/) {
 	_iEvt = 0;
 }
 
-void EUTelProcessorNoisyPixelFinder::HotPixelFinder(EUTelEventImpl* evt) {
+void EUTelProcessorNoisyPixelFinder::noisyPixelFinder(EUTelEventImpl* evt) {
 	if (evt == nullptr) {
 		return; //exit(-1);
 	}
@@ -182,7 +181,7 @@ void EUTelProcessorNoisyPixelFinder::HotPixelFinder(EUTelEventImpl* evt) {
 
 			//if this is an excluded sensor go to the next element
 			bool foundexcludedsensor = false;
-			for(auto i : _ExcludedPlanes) {
+			for(auto i : _excludedPlanes) {
 				if(i == sensorID) {
 					foundexcludedsensor = true;
 				}
@@ -242,9 +241,9 @@ void EUTelProcessorNoisyPixelFinder::processEvent (LCEvent * event) {
 		streamlog_out ( WARNING2 ) << "Event number " << event->getEventNumber() << " is of unknown type. Continue considering it as a normal Data Event." << std::endl;
 	}
 
-	//if we don't skip the event, we pass it to HotPixelFinder() which does all the work
+	//if we don't skip the event, we pass it to NoisyPixelFinder() which does all the work
 	try {
-		HotPixelFinder(evt);
+		noisyPixelFinder(evt);
 	} catch (lcio::DataNotAvailableException& e ) {
 		streamlog_out ( WARNING2 )  << "Input collection not found in the current event. Skipping..." << e.what() << std::endl;
 		return;    
@@ -311,22 +310,22 @@ void EUTelProcessorNoisyPixelFinder::check(LCEvent* /*event*/ ) {
 		}
 
 		//write out the databases and histograms
-		HotPixelDBWriter();
+		noisyPixelDBWriter();
 		bookAndFillHistos();
 		//we reached enough events, wrote out noisy pixel db and are done now
 		_finished = true;
 	}
 }
 
-void EUTelProcessorNoisyPixelFinder::HotPixelDBWriter() {    
-	streamlog_out ( DEBUG5 ) << "Writing out hot pixel db into " << _hotpixelDBFile.c_str() << std::endl;
+void EUTelProcessorNoisyPixelFinder::noisyPixelDBWriter() {    
+	streamlog_out ( DEBUG5 ) << "Writing out hot pixel db into " << _noisyPixelDBFile.c_str() << std::endl;
 
 	// reopen the LCIO file this time in append mode
 	LCWriter* lcWriter = LCFactory::getInstance()->createLCWriter();
 	std::unique_ptr<LCEventImpl> event (new LCEventImpl);
 	// create new file if requested OR opening of existing file did not succeed
 	try {
-		lcWriter->open( _hotpixelDBFile, LCIO::WRITE_NEW );
+		lcWriter->open( _noisyPixelDBFile, LCIO::WRITE_NEW );
 		LCRunHeaderImpl lcHeader;
 		lcHeader.setRunNumber( 0 );
 		lcWriter->writeRunHeader(&lcHeader);
@@ -335,23 +334,23 @@ void EUTelProcessorNoisyPixelFinder::HotPixelDBWriter() {
 		event->setEventNumber( 0 );
 		event->setDetectorName("EUTelNoisyPixel");
 		
-		streamlog_out ( DEBUG5 ) << "HotPixelDB file: run header and event created ok"  << std::endl;       
+		streamlog_out ( DEBUG5 ) << "otPixelDB file: run header and event created ok"  << std::endl;       
 		LCTime now;
 		event->setTimeStamp( now.timeStamp() );        
 	} catch ( IOException& e ) {
-		streamlog_out ( ERROR4 ) << e.what() << std::endl << "Sorry, was not able to create new HotPixelDB file " << _hotpixelDBFile <<", will quit now. " << std::endl;
+		streamlog_out ( ERROR4 ) << e.what() << std::endl << "Sorry, was not able to create new NoisyPixelDB file " << _noisyPixelDBFile <<", will quit now. " << std::endl;
 		return;
 		//exit(-1);
 	}
 
 	if(event == nullptr) {
-		streamlog_out ( ERROR5 ) << "Problem opening HotPixelDB file, event is nullptr" << std::endl;
+		streamlog_out ( ERROR5 ) << "Problem opening NoisyPixelDB file, event is nullptr" << std::endl;
 		return;  
 	}
 
 	// create main collection to be saved into the db file 
 	LCCollectionVec* noisyPixelCollection;
-	// create new or open existing hotpixel collection
+	// create new or open existing noisyPixel collection
 	try {
 		noisyPixelCollection = static_cast< LCCollectionVec* > ( event->getCollection( _noisyPixelCollectionName  ) );
 		std::cout << "noisyPixelCollection: " << _noisyPixelCollectionName << " found found with " << noisyPixelCollection->getNumberOfElements() << " elements " <<  std::endl; 
