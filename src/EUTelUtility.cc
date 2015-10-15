@@ -24,29 +24,43 @@ using namespace std;
 namespace eutelescope {
 
     namespace Utility {
+
+	std::unique_ptr<EUTelTrackerDataInterfacer> getSparseData(IMPL::TrackerDataImpl* const data, int type) {
+		return getSparseData(data, static_cast<SparsePixelType>(type));
+	}
+	
+	std::unique_ptr<EUTelTrackerDataInterfacer> getSparseData(IMPL::TrackerDataImpl* const data, SparsePixelType type) {
+		switch( type ) {
+			case kEUTelSimpleSparsePixel:
+				return	std::unique_ptr<EUTelTrackerDataInterfacer>
+					( new EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel>(data) );
+			case kEUTelGenericSparsePixel:
+				return	std::unique_ptr<EUTelTrackerDataInterfacer>
+					( new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>(data) );
+			case kEUTelGeometricPixel:
+				return	std::unique_ptr<EUTelTrackerDataInterfacer>
+					( new EUTelTrackerDataInterfacerImpl<EUTelGeometricPixel>(data) );
+			case kEUTelMuPixel:
+				return	std::unique_ptr<EUTelTrackerDataInterfacer>
+					( new EUTelTrackerDataInterfacerImpl<EUTelMuPixel>(data) );
+			default:
+				throw UnknownDataTypeException("Unknown sparsified pixel");
+		}
+	}
+
         /** This function will set the  
-
         * @param mat input with arbitrary precision
-
         * @param pre precision to set the new matrix to  */
-
         TMatrixD setPrecision( TMatrixD mat, double mod){
-
             for(int i=0; i < mat.GetNrows(); i++){
-
                 for(int j=0; j < mat.GetNcols(); j++){
                     if(abs(mat[j][i]) < mod){
                         mat[j][i] = 0;
                     }
-
                 }
-
             }
-
             return mat;
-
         }
-
 
         /**
          * Fills indices of not excluded planes
@@ -73,7 +87,6 @@ namespace eutelescope {
          * @param nPlanes
          *              total number of planes
          */
-				
         void FillNotExcludedPlanesIndices( std::vector<int>& indexconverter, const std::vector<unsigned int >& excludePlanes,  unsigned int nPlanes ) {
             int icounter = 0;
             int nExcludePlanes = static_cast< int >( excludePlanes.size());

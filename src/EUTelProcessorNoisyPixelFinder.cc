@@ -235,23 +235,9 @@ void EUTelProcessorNoisyPixelFinder::HotPixelFinder(EUTelEventImpl* evt)
 
 		    // now prepare the EUTelescope interface to sparsified data.  
 		    EUTelBaseSparsePixel* pixel = NULL;
-		    auto_ptr<EUTelTrackerDataInterfacer> sparseData = auto_ptr<EUTelTrackerDataInterfacer>();
 		    int pixelType = cellDecoder(zsData)["sparsePixelType"];
-		    
-		    if( pixelType == kEUTelGenericSparsePixel )
-		      {
-			sparseData =  auto_ptr<EUTelTrackerDataInterfacer>( new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>(zsData) );
-		      }
-		    else if( pixelType == kEUTelMuPixel )
-		      {
-			
-			sparseData =  auto_ptr<EUTelTrackerDataInterfacer>( new EUTelTrackerDataInterfacerImpl<EUTelMuPixel>(zsData) );
-		      }
-		    else
-		      {
-			streamlog_out( ERROR4 ) << "Pixel type: " << pixelType << " is unknown, this will cause a crash!" << endl;
-		      }
-		    
+		   
+		    auto sparseData = Utility::getSparseData(zsData, pixelType);
 		    
 		    // loop over all pixels in the sparseData object, these are the hit pixels!
 		    for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ ) 
