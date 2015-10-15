@@ -84,7 +84,7 @@ public:
     EUTelProcessorNoisyPixelFinder();
 
     //! Default destructor
-    ~EUTelProcessorNoisyPixelFinder();
+    ~EUTelProcessorNoisyPixelFinder() = default;
 
     //! Called at the job beginning.
     /*! This is executed only once in the whole execution. It prints
@@ -197,7 +197,7 @@ protected:
      *  is no real overhead with using std::vectors instead of
      * arrays.
      */
-    std::map<int, std::vector<std::vector<int> >* > _hitVecMap;
+    std::map<int, std::vector<std::vector<int>>> _hitVecMap;
     
     //! Map for storing the hot pixels in a std::vector as a value
     /*! The key is once again the sensorID.
