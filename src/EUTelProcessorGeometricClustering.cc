@@ -18,6 +18,7 @@
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelEventImpl.h"
 #include "EUTelHistogramManager.h"
+#include "EUTelUtility.h"
 
 //eutel data specific
 #include "EUTelTrackerDataInterfacerImpl.h"
@@ -328,21 +329,7 @@ void EUTelProcessorGeometricClustering::geometricClustering(LCEvent * evt, LCCol
 		geoDescr->getPixelIndexRange( minX, maxX, minY, maxY );
 
 		// now prepare the EUTelescope interface to sparsified data.  
-		std::auto_ptr<EUTelTrackerDataInterfacer> sparseData = std::auto_ptr<EUTelTrackerDataInterfacer>();
-		
-    		if ( type == kEUTelGenericSparsePixel ) 
-		  {
-		    sparseData =  std::auto_ptr<EUTelTrackerDataInterfacer>( new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>(zsData) );
-		  }
-		else if( type == kEUTelMuPixel )
-		  {
-		    
-		    sparseData =  std::auto_ptr<EUTelTrackerDataInterfacer>( new EUTelTrackerDataInterfacerImpl<EUTelMuPixel>(zsData) );
-		  }
-		else
-		  {
-		    throw UnknownDataTypeException("Unknown sparsified pixel");
-		  }
+		auto  sparseData = Utility::getSparseData(zsData, type);
 		
 		streamlog_out ( DEBUG2 ) << "Processing sparse data on detector " << sensorID << " with " << sparseData->size() << " pixels " << std::endl;
 		
