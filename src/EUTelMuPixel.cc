@@ -23,19 +23,19 @@ EUTelMuPixel::EUTelMuPixel():
 	_hitTime(0),
 	_frameTime(0)
 {
-	_noOfElementsDerived = 6;
+	_noOfElementsDerived = 7;
 	_typeDerived = kEUTelMuPixel;
 }
 
 //Constructor taking all possible six arguments
 // First four: same as GenericSparsePixel
 // Last two: additional arguments to store precise time information 
-EUTelMuPixel::EUTelMuPixel(short xCoord, short yCoord, float signal, short time, double hitTime, double frameTime):
+EUTelMuPixel::EUTelMuPixel(short xCoord, short yCoord, float signal, short time, short hitTime, long long unsigned frameTime):
 	EUTelGenericSparsePixel(xCoord, yCoord, signal, time),
 	_hitTime(hitTime),
 	_frameTime(frameTime)
 {
-	_noOfElementsDerived = 6;
+	_noOfElementsDerived = 7;
 	_typeDerived = kEUTelMuPixel;
 }
 
@@ -45,17 +45,17 @@ EUTelMuPixel::EUTelMuPixel(EUTelGenericSparsePixel& genericPixel):
 	_hitTime(0),
 	_frameTime(0)
 {
-	_noOfElementsDerived = 6;
+	_noOfElementsDerived = 7;
 	_typeDerived = kEUTelMuPixel;
 }
 
 //Constructor taking a EUTelGenericSparsePixel and the two time stamps
-EUTelMuPixel::EUTelMuPixel(EUTelGenericSparsePixel& genericPixel, double hitTime, double frameTime):
+EUTelMuPixel::EUTelMuPixel(EUTelGenericSparsePixel& genericPixel, short hitTime, long long unsigned frameTime):
 	EUTelGenericSparsePixel(genericPixel),
 	_hitTime(hitTime),
 	_frameTime(frameTime)
 {
-	_noOfElementsDerived = 6;
+	_noOfElementsDerived = 7;
 	_typeDerived = kEUTelMuPixel;
 }
 
