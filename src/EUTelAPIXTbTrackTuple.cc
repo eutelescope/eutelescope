@@ -408,7 +408,7 @@ void EUTelAPIXTbTrackTuple::prepareTree()
 	p_tot = new std::vector<double>();
 	p_iden = new std::vector<int>();
 	p_lv1 = new std::vector<int>();
-	p_hitTime = new std::vector<double>();
+	p_hitTime = new std::vector<int>();
 	p_frameTime = new std::vector<double>();
 
 	_hitXPos = new std::vector<double>();

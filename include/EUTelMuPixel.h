@@ -36,10 +36,10 @@ class EUTelMuPixel : public EUTelGenericSparsePixel  {
 
 public:
     //! Default constructor with all arguments (individually)
-  EUTelMuPixel(short xCoord, short yCoord, float signal, short time, double hit_time, double frame_time); 
+  EUTelMuPixel(short xCoord, short yCoord, float signal, short time, short hit_time, long long unsigned frame_time); 
 
     //! Default constructor with all arguments (EUTelGenericSparsePixel, 2 additional time stamps)
-  EUTelMuPixel(EUTelGenericSparsePixel& genericPixel, double hit_time, double frame_time); 
+  EUTelMuPixel(EUTelGenericSparsePixel& genericPixel, short hit_time, long long unsigned frame_time); 
   
   //! Default constructor with only arguments of a EUTelescopeGenericSparsePixel (geometry related values are set to 0)
   EUTelMuPixel(EUTelGenericSparsePixel& genericPixel); 
@@ -78,23 +78,23 @@ public:
   virtual void print(std::ostream& os) const ;
   
   //! Setter for the hit time stamp (double precision)
-  void setHitTime(double hitTime) { _hitTime = hitTime; }
+  void setHitTime(short hitTime) { _hitTime = hitTime; }
 
   //! Setter for the frame time stamp
-  void setFrameTime(double frameTime) { _frameTime = frameTime; } 
+  void setFrameTime(long long unsigned frameTime) { _frameTime = frameTime; } 
 
   //! Getter for the hit time stamp
-  inline float getHitTime() const { return _hitTime; }
+  inline short getHitTime() const { return _hitTime; }
 
   //! Getter for the frame time stamp
-  inline long unsigned getFrameTime() const { return _frameTime; }
+  inline long long unsigned getFrameTime() const { return _frameTime; }
   
  protected:
   //! hit time stamp
-  double _hitTime;
+  short _hitTime;
   
   //! frame time stamp
-  double _frameTime;
+  long long unsigned _frameTime;
 
   //! The number of elements in the data structure
   unsigned int _noOfElementsDerived;

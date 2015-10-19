@@ -76,7 +76,7 @@ namespace eutelescope {
     std::vector<int> *p_iden;
     std::vector<int> *p_lv1;
     std::vector<int> *p_chip;
-    std::vector<double> *p_hitTime;
+    std::vector<int> *p_hitTime;
     std::vector<double> *p_frameTime;
 
     TTree* _euhits;
