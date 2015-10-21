@@ -8,6 +8,7 @@
 // C++
 #include <map>
 #include <string>
+#include <array>
 
 // MARLIN
 #include "marlin/Global.h"
@@ -331,14 +332,19 @@ class EUTelGeometryTelescopeGeoDescription
 	 * @see ROOT TGeoManager::Import
 	 */
 	void initializeTGeoDescription(std::string tgeofilename);
-
 	void initializeTGeoDescription( std::string& geomName, bool dumpRoot );
 
 	// Geometry operations
-    float findRad(const std::map<int,int>& sensorIDToZOrderWithoutExcludedPlanes, const double globalPosStart[], const double globalPosFinish[], std::map< const int, double> &sensors, 	std::map< const int, double> &air );
+	float findRad(	const std::map<int,int>& sensorIDToZOrderWithoutExcludedPlanes, 
+			const double globalPosStart[], const double globalPosFinish[], 
+			std::map<const int,double> &sensors, std::map<const int,double> &air );
+
 	int getSensorID(float const globalPos[] ) const;
 	int getSensorID(double const globalPos[] ) const;
 
+	int getSensorID(std::array<double,3> const globalPos) const;
+	int getSensorID(std::array<float,3> const globalPos) const;
+	
 	int getSensorIDFromManager();
 
 	double FindRad(Eigen::Vector3d const & startPt, Eigen::Vector3d const & endPt);
@@ -346,12 +352,14 @@ class EUTelGeometryTelescopeGeoDescription
 	double planeRadLengthGlobalIncidence(int planeID, Eigen::Vector3d incidenceDir);
 	double planeRadLengthLocalIncidence(int planeID, Eigen::Vector3d incidenceDir);
 	
+	void local2Master( int sensorID, std::array<double,3> const & localPos, std::array<double,3>& globalPos);
+	void master2Local( int sensorID, std::array<double,3> const & globalPos, std::array<double,3>& localPos);
+	void local2MasterVec( int sensorID, std::array<double,3> const & localVec, std::array<double,3>& globalVec);
+	void master2LocalVec( int sensorID, std::array<double,3> const & globalVec, std::array<double,3>& localVec);
+
 	void local2Master( int, const double[], double[] );
-
 	void master2Local(int, const double[], double[] );
-
 	void local2MasterVec( int, const double[], double[] );
-
 	void master2LocalVec( int, const double[], double[] );
 
 	bool findIntersectionWithCertainID(	float x0, float y0, float z0, 
@@ -359,8 +367,8 @@ class EUTelGeometryTelescopeGeoDescription
 						float beamQ, int nextPlaneID, float outputPosition[],
 						TVector3& outputMomentum, float& arcLength, int& newNextPlaneID );
 
-	TVector3 getXYZMomentumfromArcLength(TVector3 momentum, TVector3 globalPositionStart, float charge, float  arcLength );
-	bool testOutput(std::map<const int,double> & mapSensor, std::map<const int, double> & mapAir);
+	TVector3 getXYZMomentumfromArcLength(TVector3 momentum, TVector3 globalPositionStart, float charge, float arcLength);
+	bool testOutput(std::map<const int,double>& mapSensor, std::map<const int,double>& mapAir);
 
 	//This outputs the total percentage radiation length for the full detector system. 
 	float calculateTotalRadiationLengthAndWeights(const double startD[3],const double endD[3], std::map<const int,double>&, std::map<const int,double> & );
