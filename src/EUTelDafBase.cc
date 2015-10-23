@@ -144,11 +144,15 @@ EUTelDafBase::EUTelDafBase(std::string name) : marlin::Processor(name) {
   // registerOptionalParameter("ZPos","Z position of planes, ordered by gear z-pos..", _zPos, std::vector<float>());
 
   //Track finder options
-  registerOptionalParameter("FinderRadius","Track finding: The maximum allowed distance between to hits in the xy plane for inclusion in track candidate", _clusterRadius, static_cast<float>(300.0));
+  //registerOptionalParameter("FinderRadius","Track finding: The maximum allowed distance between to hits in the xy plane for inclusion in track candidate", _clusterRadius, static_cast<float>(300.0));
+  registerOptionalParameter("FinderRadius","Track finding: The maximum allowed normalized distance between to hits in the xy plane for inclusion in track candidate.", _normalizedRadius, static_cast<float>(300.0));
   registerOptionalParameter("Chi2Cutoff","DAF fitter: The cutoff value for a measurement to be included in the fit.", _chi2cutoff, static_cast<float>(300.0f));
   registerOptionalParameter("RequireNTelPlanes","How many telescope planes do we require to be included in the fit?",_nSkipMax ,static_cast <float> (0.0f));
   registerOptionalParameter("NominalDxdz", "dx/dz assumed by track finder", _nXdz, static_cast<float>(0.0f));
   registerOptionalParameter("NominalDydz", "dy/dz assumed by track finder", _nYdz, static_cast<float>(0.0f));
+  registerOptionalParameter("MaxXdxDeviance", "maximum devianve for dx/dz in CKF track finder", _nXdzMaxDeviance, static_cast<float>(0.01f));
+  registerOptionalParameter("MaxYdxDeviance", "maximum devianve for dy/dz in CKF track finder", _nYdzMaxDeviance, static_cast<float>(0.01f));
+
   
   //Track quality parameters
   registerOptionalParameter("MaxChi2OverNdof", "Maximum allowed global chi2/ndof", _maxChi2, static_cast<float> ( 9999.0));
@@ -221,7 +225,7 @@ void EUTelDafBase::gearRotate(size_t index, size_t gearIndex){
   TVector3 ref2 = TVector3(0.0, 10.0, 0.0);
 
   double zZero        = _siPlanesLayerLayout->getSensitivePositionZ(gearIndex); // mm
-  double zThickness   = _siPlanesLayerLayout->getSensitiveThickness(gearIndex); // mm
+  //double zThickness   = _siPlanesLayerLayout->getSensitiveThickness(gearIndex); // mm
 
   double nomZ = zZero;// + 0.5 * zThickness;
 
@@ -313,7 +317,7 @@ void EUTelDafBase::getPlaneNorm(daffitter::FitPlane<float>& pl){
 void EUTelDafBase::init() {
   printParameters ();
 
-  _iRun = 0; _iEvt = 0; _nTracks = 0; _nClusters =0;
+  _iRun = 0; _iEvt = 0; _nTracks = 0; _nCandidates =0;
   n_passedNdof =0; n_passedChi2OverNdof = 0; n_passedIsnan = 0;
   n_failedNdof =0; n_failedChi2OverNdof = 0; n_failedIsnan = 0;
   _initializedSystem = false;
@@ -381,9 +385,14 @@ void EUTelDafBase::init() {
   }
  
   //Prepare track finder
-  _system.setClusterRadius(_clusterRadius);
-  _system.setNominalXdz(_nXdz);
+  //_system.setClusterRadius(_normalizedRadius); //Really non-normalized. Please remove when done testing.
+  _system.setCKFChi2Cut(_normalizedRadius * _normalizedRadius);
+  _system.setNominalXdz(_nXdz); //What is the tangent angle of the beam? (Probably zero)
   _system.setNominalYdz(_nYdz);
+  _system.setXdzMaxDeviance(_nXdzMaxDeviance); //How far og the nominal angle can the first two measurements be?
+  _system.setYdzMaxDeviance(_nYdzMaxDeviance);
+
+
   //Prepare and preallocate memory for track fitter
   _system.setChi2OverNdofCut(_maxChi2);
   _system.setDAFChi2Cut(_chi2cutoff);
@@ -497,11 +506,6 @@ void EUTelDafBase::readHitCollection(LCEvent* event){
 	  static_cast< float >(pos[0]) * 1000.0f << " " << static_cast< float >(pos[1]) * 1000.0f << " " <<  static_cast< float >(pos[2]) * 1000.0f << endl;
       }
 
-      //Print z-pos for measurements
-      // if( pos[2] > 19.0 and pos[2] < 21.0){
-      // 	streamlog_out(WARNING) << "Measured z-position: " << pos[2] << std::endl;
-      // }
-
       if(planeIndex >=0 ){ 
 	streamlog_out ( DEBUG5 ) << " add point [" << planeIndex << "] "<< 
 	  static_cast< float >(pos[0]) * 1000.0f << " " << static_cast< float >(pos[1]) * 1000.0f << " " <<  static_cast< float >(pos[2]) * 1000.0f << endl;
@@ -606,7 +610,8 @@ void EUTelDafBase::processEvent(LCEvent * event){
   }
   
   //Run track finder
-  _system.clusterTracker();
+  //_system.clusterTracker(); //Please remove when done testing
+  _system.combinatorialKF();
  
   //Child specific actions
   dafEvent(event);
@@ -793,7 +798,7 @@ void EUTelDafBase::end() {
   dafEnd();
   
   streamlog_out ( MESSAGE5 ) << endl;
-  streamlog_out ( MESSAGE5 ) << "Number of found hit clusters: " << _nClusters << endl;
+  streamlog_out ( MESSAGE5 ) << "Number of found hit candidates: " << _nCandidates << endl;
   streamlog_out ( MESSAGE5 ) << "Tracks with ok ndof: " << n_passedNdof << endl;
   streamlog_out ( MESSAGE5 ) << "Tracks with BAD ndof: " << n_failedNdof << endl;
   streamlog_out ( MESSAGE5 ) << "Tracks with ok chi2/ndof: " << n_passedChi2OverNdof << endl;

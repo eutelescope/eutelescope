@@ -98,7 +98,7 @@ namespace eutelescope {
      * the z-axis, then running a cluster finder on these hits. This radius determines
      * whether a hit is included or not.
      */
-    float _clusterRadius;
+    float _normalizedRadius;
 
     //! Cutoff value for DAF
     /*!
@@ -106,7 +106,7 @@ namespace eutelescope {
      * measurement to be included in the fit.
      */
     float _chi2cutoff;
-    float _nXdz, _nYdz;
+    float _nXdz, _nYdz, _nXdzMaxDeviance, _nYdzMaxDeviance;
     int _nDutHits;
    
     float _nSkipMax;
@@ -144,7 +144,7 @@ namespace eutelescope {
     std::vector<float> _sigmaX, _sigmaY;
 
     //! Counters
-    int _iRun, _iEvt, _nTracks, _nClusters, n_failedNdof, n_failedChi2OverNdof, n_failedIsnan, n_passedNdof, n_passedChi2OverNdof, n_passedIsnan;
+    int _iRun, _iEvt, _nTracks, _nCandidates, n_failedNdof, n_failedChi2OverNdof, n_failedIsnan, n_passedNdof, n_passedChi2OverNdof, n_passedIsnan;
 
     //! reference HitCollection name 
     /*!

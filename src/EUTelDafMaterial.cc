@@ -203,7 +203,7 @@ void EUTelDafMaterial::dafEvent (LCEvent * /*event*/) {
   int matAccept(0);
   for(size_t ii = 0; ii < _system.getNtracks(); ii++ ){
     //run track fitte
-    _nClusters++;
+    _nCandidates++;
     _system.fitPlanesInfoDaf(_system.tracks.at(ii));
     _system.weightToIndex(_system.tracks.at(ii));
     _system.fitInfoFWBiased(_system.tracks.at(ii));
@@ -272,7 +272,7 @@ void EUTelDafMaterial::dafEnd() {
   _matest.system.setDAFChi2Cut( 100.0f);
   _matest.system.init();
       
-  _matest.plot((char*) "/home/haavagj/noalign.root");
+  //_matest.plot((char*) "/home/haavagj/noalign.root");
 
   //Initialize EstMat from configuration vectors. These are the alignment parameters
   // for(size_t ii = 0; ii < _xShift.size(); ii++){ _matest.xShift.at(ii) = _xShift.at(ii); }
@@ -308,7 +308,7 @@ void EUTelDafMaterial::dafEnd() {
   
   streamlog_out ( MESSAGE5 ) << "Starting estimation assuming beam energy of "
 			     << _eBeam << std::endl;
-  _matest.plot((char*) "/home/haavagj/preestmat.root");
+  //_matest.plot((char*) "/home/haavagj/preestmat.root");
   
   //Start minimization
   // Minimizer* minimize = new FwBw(_matest); //FWBW
@@ -327,6 +327,6 @@ void EUTelDafMaterial::dafEnd() {
   //_matest.quasiNewtonHomeMade(minimize, 1000);
   
   //Plot the resulting pulls, residuals, chi2s
-  _matest.plot((char*) "/home/haavagj/estmat.root");
+  //_matest.plot((char*) "/home/haavagj/estmat.root");
 }
 #endif // USE_GEAR

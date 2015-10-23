@@ -237,7 +237,7 @@ void EUTelDafAlign::dafEvent (LCEvent* /*event*/) {
   //Check found tracks
   for(size_t ii = 0; ii < _system.getNtracks(); ii++ ){
     //run track fitter
-    _nClusters++;
+    _nCandidates++;
     _system.fitPlanesInfoDaf(_system.tracks.at(ii));
     //Check resids, intime, angles
     if(not checkTrack( _system.tracks.at(ii))) { continue;};
