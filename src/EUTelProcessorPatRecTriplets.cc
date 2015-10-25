@@ -46,7 +46,7 @@ _TripletDistCutYHisto()
 	registerOptionalParameter("DoubletDistCut", "Doublet distance cuts", _doubletDistCut, FloatVec()); 
     ///abs(Pred-Hit(Centre))<cut. 
 	registerOptionalParameter("DoubletCenDistCut","Doublet hit acceptance distance from central plane ", _doubletCenDistCut,FloatVec() );
-	registerOptionalParameter("localDistDUT", "The local displacement before rotations ", _localDistDUT, std::vector<double>(2,0));
+	registerOptionalParameter("localDistDUT", "The local displacement before rotations ", _localDistDUT, FloatVec());
     ///abs(Triplet.Pred-Triplet.Pred)<cut. //Both triplets prediction of where the track would propagate to must be under this cut.
 	registerOptionalParameter("TripletConnectDistCut","The distance cut to allow the triplets to be associated with each other", _tripletConnectDistCut,FloatVec() );
     ///abs(Triplet.Slo-Triplet.Slo)<cut. //Both triplets prediction of slope is compared.

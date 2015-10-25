@@ -110,7 +110,7 @@ class EUTelGeometryTelescopeGeoDescription
 
 	/** */ 
 	bool _telPlanesDefined;
-	vector<double> _localDistDUT;
+    std::vector<float> _localDistDUT;
 	/** Silicon planes parameters as described in GEAR
 	 * This structure actually contains the following:
 	 *  @li A reference to the telescope geoemtry and layout
@@ -218,9 +218,10 @@ class EUTelGeometryTelescopeGeoDescription
 
 	/** set Z rotation in radians */
 	inline void setPlaneZRotationRadians(int sensorID, double value){ _planeSetup[sensorID].gamma = value*DEG; this->clearMemoizedValues(); };
-	void initializeLocalDistDUT(std::vector<double> localDistDUT) {
+	void initializeLocalDistDUT(std::vector<float> localDistDUT) {
 		_localDistDUT = localDistDUT;
 	}
+    std::vector<float> localDistDUT();
 
 	//GETTER
 	/** */ 

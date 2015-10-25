@@ -60,6 +60,9 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
     <parameter name="DoubletCenDistCut" type="Float" value="@DoubletCenDistCut@" />
     <parameter name="TripletSlopeCuts" type="Float" value="@TripletSlopeCuts@" />
     <parameter name="TripletConnectDistCut" type="Float" value="@TripletConnectDistCut@" />
+
+	<parameter name="localDistDUT" type="FloatVec" value="@localDistDUT@" />
+
     <parameter name="InitialDisplacement" type="Float" value="@InitialDisplacement@" />
     <!--Beam charge [GeV]-->
     <parameter name="BeamEnergy" type="double"> @BeamEnergy@ </parameter>
