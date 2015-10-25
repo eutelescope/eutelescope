@@ -65,7 +65,9 @@ Eigen::Vector3d EUTelGeometryTelescopeGeoDescription::siPlaneNormalEig( int plan
     return norEigen;
 }
 
-
+std::vector<double> EUTelGeometryTelescopeGeoDescription::localDistDUT() {
+	return _localDistDUT;
+}
 
 TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneNormal( int planeID )
 {

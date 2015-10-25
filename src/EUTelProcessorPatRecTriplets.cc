@@ -46,6 +46,7 @@ _TripletDistCutYHisto()
 	registerOptionalParameter("DoubletDistCut", "Doublet distance cuts", _doubletDistCut, FloatVec()); 
     ///abs(Pred-Hit(Centre))<cut. 
 	registerOptionalParameter("DoubletCenDistCut","Doublet hit acceptance distance from central plane ", _doubletCenDistCut,FloatVec() );
+	registerOptionalParameter("localDistDUT", "The local displacement before rotations ", _localDistDUT, std::vector<double>(2,0));
     ///abs(Triplet.Pred-Triplet.Pred)<cut. //Both triplets prediction of where the track would propagate to must be under this cut.
 	registerOptionalParameter("TripletConnectDistCut","The distance cut to allow the triplets to be associated with each other", _tripletConnectDistCut,FloatVec() );
     ///abs(Triplet.Slo-Triplet.Slo)<cut. //Both triplets prediction of slope is compared.
@@ -96,6 +97,7 @@ void EUTelProcessorPatRecTriplets::init(){
 		_nProcessedEvents = 0;
 		std::string name = EUTELESCOPE::GEOFILENAME;
 		geo::gGeometry().initializeTGeoDescription(name,false);
+		geo::gGeometry().initializeLocalDistDUT(_localDistDUT);
 		geo::gGeometry().setInitialDisplacementToFirstPlane(_initialDisplacement); 
 		streamlog_out(MESSAGE5) << "These are the planes you will create a state from. Mass inbetween states will be turned to scatterers in GBLTrackProcessor." << std::endl;
 //		for(size_t i =0 ; i < geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size(); ++i)

@@ -128,6 +128,7 @@ namespace eutelescope {
 
 		/// Initial cut to create 2 hits associated.
         std::vector<float> _doubletDistCut;
+		std::vector<float> _localDistDUT;
         /// Connect the central point to these two hits from the doublet.
         std::vector<float> _doubletCenDistCut;
         /// Connect triplets if under this slope cut comparision. 

@@ -1,0 +1,400 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{C4FF1A68-ADBA-4D47-95FD-7D73B9C9A09F}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <Optimization>Disabled</Optimization>
+    </ClCompile>
+    <Link>
+      <TargetMachine>MachineX86</TargetMachine>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <TargetMachine>MachineX86</TargetMachine>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="pixgeo\src\FEI4Double.cc" />
+    <ClCompile Include="pixgeo\src\FEI4FourChip.cc" />
+    <ClCompile Include="pixgeo\src\FEI4FourChipUK_G4.cc" />
+    <ClCompile Include="pixgeo\src\FEI4Single.cc" />
+    <ClCompile Include="pixgeo\src\FEI4Single250x50.cc" />
+    <ClCompile Include="pixgeo\src\Mimosa26.cc" />
+    <ClCompile Include="src\alibava\ALIBAVA.cc" />
+    <ClCompile Include="src\alibava\AlibavaBaseHistogramMaker.cc" />
+    <ClCompile Include="src\alibava\AlibavaBaseProcessor.cc" />
+    <ClCompile Include="src\alibava\AlibavaCluster.cc" />
+    <ClCompile Include="src\alibava\AlibavaClusterCollectionMerger.cc" />
+    <ClCompile Include="src\alibava\AlibavaClusterConverter.cc" />
+    <ClCompile Include="src\alibava\AlibavaClusterHistogramMaker.cc" />
+    <ClCompile Include="src\alibava\AlibavaCommonModeSubtraction.cc" />
+    <ClCompile Include="src\alibava\AlibavaConstantCommonModeCutProcessor.cc" />
+    <ClCompile Include="src\alibava\AlibavaConstantCommonModeProcessor.cc" />
+    <ClCompile Include="src\alibava\AlibavaConverter.cc" />
+    <ClCompile Include="src\alibava\AlibavaCorrelator.cc" />
+    <ClCompile Include="src\alibava\AlibavaDataHistogramMaker.cc" />
+    <ClCompile Include="src\alibava\AlibavaEventImpl.cc" />
+    <ClCompile Include="src\alibava\AlibavaPedestalNoiseProcessor.cc" />
+    <ClCompile Include="src\alibava\AlibavaPedestalSubtraction.cc" />
+    <ClCompile Include="src\alibava\AlibavaPedNoiCalIOManager.cc" />
+    <ClCompile Include="src\alibava\AlibavaRunHeaderImpl.cc" />
+    <ClCompile Include="src\alibava\AlibavaSeedClustering.cc" />
+    <ClCompile Include="src\alibava\AlibavaTimeCutProcessor.cc" />
+    <ClCompile Include="src\alibava\ExampleAlibavaHistogramMaker.cc" />
+    <ClCompile Include="src\alibava\ExampleAlibavaProcessor.cc" />
+    <ClCompile Include="src\anyoption.cc" />
+    <ClCompile Include="src\cluster.cc" />
+    <ClCompile Include="src\CMSPixelCalibrateEvent.cc" />
+    <ClCompile Include="src\CMSPixelClusteringProcessor.cc" />
+    <ClCompile Include="src\CrossSection.cpp" />
+    <ClCompile Include="src\EUTelAlign.cc" />
+    <ClCompile Include="src\EUTelAlignmentConstant.cc" />
+    <ClCompile Include="src\EUTelAPIXTbTrackTuple.cc" />
+    <ClCompile Include="src\EUTelAPIXTbTrackTupleGBL.cc" />
+    <ClCompile Include="src\EUTelApplyAlignmentProcessor.cc" />
+    <ClCompile Include="src\EUTelAutoPedestalNoiseProcessor.cc" />
+    <ClCompile Include="src\EUTelBaseSparsePixel.cc" />
+    <ClCompile Include="src\EUTelBrickedClusterImpl.cc" />
+    <ClCompile Include="src\EUTelCalculateEtaProcessor.cc" />
+    <ClCompile Include="src\EUTelCalibrateEventProcessor.cc" />
+    <ClCompile Include="src\EUTelClusterFilter.cc" />
+    <ClCompile Include="src\EUTelClusteringProcessor.cc" />
+    <ClCompile Include="src\EUTelClusterSeparationProcessor.cc" />
+    <ClCompile Include="src\EUTelCopyPedestalProcessor.cc" />
+    <ClCompile Include="src\EUTelCorrelator.cc" />
+    <ClCompile Include="src\EUTelDafAlign.cc" />
+    <ClCompile Include="src\EUTelDafBase.cc" />
+    <ClCompile Include="src\EUTelDafEigenFitter.cc" />
+    <ClCompile Include="src\EUTelDafFitter.cc" />
+    <ClCompile Include="src\EUTelDafTrackerSystem.cc" />
+    <ClCompile Include="src\EUTelDFFClusterImpl.cc" />
+    <ClCompile Include="src\EUTelDUTHistograms.cc" />
+    <ClCompile Include="src\EUTELESCOPE.cc" />
+    <ClCompile Include="src\EUTelEtaFunctionImpl.cc" />
+    <ClCompile Include="src\EUTelEUDRBReader.cc" />
+    <ClCompile Include="src\EUTelEventImpl.cc" />
+    <ClCompile Include="src\EUTelEventViewer.cc" />
+    <ClCompile Include="src\EUTelExampleProcessorCorrelator.cc" />
+    <ClCompile Include="src\EUTelExcludedPlanes.cc" />
+    <ClCompile Include="src\EUTelFFClusterImpl.cc" />
+    <ClCompile Include="src\EUTelFilter.cc" />
+    <ClCompile Include="src\EUTelFilterHitFilter.cpp" />
+    <ClCompile Include="src\EUTelFitHistograms.cc" />
+    <ClCompile Include="src\EUTelFitTuple.cc" />
+    <ClCompile Include="src\EUTelGBLFitter.cc" />
+    <ClCompile Include="src\EUTelGenericPixGeoDescr.cc" />
+    <ClCompile Include="src\EUTelGenericPixGeoMgr.cc" />
+    <ClCompile Include="src\EUTelGenericSparsePixel.cc" />
+    <ClCompile Include="src\EUTelGeometricClusterImpl.cc" />
+    <ClCompile Include="src\EUTelGeometricPixel.cc" />
+    <ClCompile Include="src\EUTelGeometryTelescopeGeoDescription.cpp" />
+    <ClCompile Include="src\EUTelHistogramMaker.cc" />
+    <ClCompile Include="src\EUTelHistogramManager.cc" />
+    <ClCompile Include="src\EUTelHit.cpp" />
+    <ClCompile Include="src\EUTelLineFit.cc" />
+    <ClCompile Include="src\EUTelMatrixDecoder.cc" />
+    <ClCompile Include="src\EUTelMille.cc" />
+    <ClCompile Include="src\EUTelMillepede.cc" />
+    <ClCompile Include="src\EUTelMissingCoordinateEstimator.cc" />
+    <ClCompile Include="src\EUTelNav.cc" />
+    <ClCompile Include="src\EUTelOutputProcessor.cc" />
+    <ClCompile Include="src\EUTelOutputTTree.cc" />
+    <ClCompile Include="src\EUTelPatRecTriplets.cc" />
+    <ClCompile Include="src\EUTelPedeGEAR.cc" />
+    <ClCompile Include="src\EUTelPedestalNoiseProcessor.cc" />
+    <ClCompile Include="src\EUTelPreAlignment.cc" />
+    <ClCompile Include="src\EUTelProcessorAnalysisPALPIDEfs.cc" />
+    <ClCompile Include="src\EUTelProcessorAnalysisPALPIDEfsNoise.cc" />
+    <ClCompile Include="src\EUTelProcessorApplyAlignment.cc" />
+    <ClCompile Include="src\EUTelProcessorCoordinateTransformHits.cpp" />
+    <ClCompile Include="src\EUTelProcessorDeadColumnFinder.cc" />
+    <ClCompile Include="src\EUTelProcessorFilteringHitFilter.cc" />
+    <ClCompile Include="src\EUTelProcessorGBLAlign.cc" />
+    <ClCompile Include="src\EUTelProcessorGBLTrackFit.cpp" />
+    <ClCompile Include="src\EUTelProcessorGeometricClustering.cc" />
+    <ClCompile Include="src\EUTelProcessorHitMaker.cc" />
+    <ClCompile Include="src\EUTelProcessorHotPixelFinder.cc" />
+    <ClCompile Include="src\EUTelProcessorMapping.cc" />
+    <ClCompile Include="src\EUTelProcessorNoisyClusterMasker.cc" />
+    <ClCompile Include="src\EUTelProcessorNoisyClusterRemover.cc" />
+    <ClCompile Include="src\EUTelProcessorNoisyPixelFinder.cc" />
+    <ClCompile Include="src\EUTelProcessorPatRecTriplets.cc" />
+    <ClCompile Include="src\EUTelProcessorRootCreate.cpp" />
+    <ClCompile Include="src\EUTelProcessorSparseClustering.cc" />
+    <ClCompile Include="src\EUTelProcessorTrackAnalysis.cpp" />
+    <ClCompile Include="src\EUTelProcessorTrackSelection.cpp" />
+    <ClCompile Include="src\EUTelPseudo1DHistogram.cc" />
+    <ClCompile Include="src\EUTelRadCal.cpp" />
+    <ClCompile Include="src\EUTelRawDataSparsifier.cc" />
+    <ClCompile Include="src\EUTelReaderGenericLCIO.cpp" />
+    <ClCompile Include="src\EUTelReferenceHit.cc" />
+    <ClCompile Include="src\EUTelROI.cc" />
+    <ClCompile Include="src\EUTelRunHeaderImpl.cc" />
+    <ClCompile Include="src\EUTelSimpleSparsePixel.cc" />
+    <ClCompile Include="src\EUTelSparseClusterImpl.cc" />
+    <ClCompile Include="src\EUTelState.cpp" />
+    <ClCompile Include="src\EUTelStrasMimoTelReader.cc" />
+    <ClCompile Include="src\EUTelSucimaImagerReader.cc" />
+    <ClCompile Include="src\EUTelTestFitter.cc" />
+    <ClCompile Include="src\EUTelTrack.cpp" />
+    <ClCompile Include="src\EUTelTrackAnalysis.cpp" />
+    <ClCompile Include="src\EUTelTrackCreate.cpp" />
+    <ClCompile Include="src\EUTelTrackSelection.cpp" />
+    <ClCompile Include="src\EUTelUpdatePedestalNoiseProcessor.cc" />
+    <ClCompile Include="src\EUTelUtility.cc" />
+    <ClCompile Include="src\EUTelUtilityPrintEventNumber.cc" />
+    <ClCompile Include="src\exec\pede2lcio.cxx" />
+    <ClCompile Include="src\exec\pedestalmerge.cxx" />
+    <ClCompile Include="src\GEARPixGeoDescr.cc" />
+    <ClCompile Include="src\TDSPixelsChargeMap.cc" />
+    <ClCompile Include="src\TDSPrecluster.cc" />
+    <ClCompile Include="test\autopede\autopedetest.cc" />
+    <ClCompile Include="test\cluster\clustertest.cc" />
+    <ClCompile Include="test\correlation\correlationAnalysis.C" />
+    <ClCompile Include="test\correlation\rootlogon.C" />
+    <ClCompile Include="test\eudrbtest\eudrb.cc" />
+    <ClCompile Include="test\histograms\eutelescopeHistos.C" />
+    <ClCompile Include="test\histograms\rootlogon.C" />
+    <ClCompile Include="test\noise\advancedNoiseAnalysis.C" />
+    <ClCompile Include="test\noise\rootlogon.C" />
+    <ClCompile Include="test\noise\Style_AdvNoise.C" />
+    <ClCompile Include="test\pedestal\pedetest.cc" />
+    <ClCompile Include="test\stattest\stattest.r1852.mod\example\createExampleFile.C" />
+    <ClCompile Include="tools\geant2lcio\geant2lcio.cc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\alibava\ALIBAVA.h" />
+    <ClInclude Include="include\alibava\AlibavaBaseHistogramMaker.h" />
+    <ClInclude Include="include\alibava\AlibavaBaseProcessor.h" />
+    <ClInclude Include="include\alibava\AlibavaCluster.h" />
+    <ClInclude Include="include\alibava\AlibavaClusterCollectionMerger.h" />
+    <ClInclude Include="include\alibava\AlibavaClusterConverter.h" />
+    <ClInclude Include="include\alibava\AlibavaClusterHistogramMaker.h" />
+    <ClInclude Include="include\alibava\AlibavaCommonModeSubtraction.h" />
+    <ClInclude Include="include\alibava\AlibavaConstantCommonModeCutProcessor.h" />
+    <ClInclude Include="include\alibava\AlibavaConstantCommonModeProcessor.h" />
+    <ClInclude Include="include\alibava\AlibavaConverter.h" />
+    <ClInclude Include="include\alibava\AlibavaCorrelator.h" />
+    <ClInclude Include="include\alibava\AlibavaDataHistogramMaker.h" />
+    <ClInclude Include="include\alibava\AlibavaEventImpl.h" />
+    <ClInclude Include="include\alibava\AlibavaPedestalNoiseProcessor.h" />
+    <ClInclude Include="include\alibava\AlibavaPedestalSubtraction.h" />
+    <ClInclude Include="include\alibava\AlibavaPedNoiCalIOManager.h" />
+    <ClInclude Include="include\alibava\AlibavaRunHeaderImpl.h" />
+    <ClInclude Include="include\alibava\AlibavaSeedClustering.h" />
+    <ClInclude Include="include\alibava\AlibavaTimeCutProcessor.h" />
+    <ClInclude Include="include\alibava\ExampleAlibavaHistogramMaker.h" />
+    <ClInclude Include="include\alibava\ExampleAlibavaProcessor.h" />
+    <ClInclude Include="include\anyoption.h" />
+    <ClInclude Include="include\CellIDReencoder.h" />
+    <ClInclude Include="include\cluster.h" />
+    <ClInclude Include="include\CMSPixelCalibrateEvent.h" />
+    <ClInclude Include="include\CMSPixelClusteringProcessor.h" />
+    <ClInclude Include="include\CrossSection.hpp" />
+    <ClInclude Include="include\EUTelAlign.h" />
+    <ClInclude Include="include\EUTelAlignmentConstant.h" />
+    <ClInclude Include="include\EUTelAPIXTbTrackTuple.h" />
+    <ClInclude Include="include\EUTelAPIXTbTrackTupleGBL.h" />
+    <ClInclude Include="include\EUTelApplyAlignmentProcessor.h" />
+    <ClInclude Include="include\EUTelAutoPedestalNoiseProcessor.h" />
+    <ClInclude Include="include\EUTelBaseSparsePixel.h" />
+    <ClInclude Include="include\EUTelBlock.h" />
+    <ClInclude Include="include\EUTelBrickedClusterImpl.h" />
+    <ClInclude Include="include\EUTelCalculateEtaProcessor.h" />
+    <ClInclude Include="include\EUTelCalibrateEventProcessor.h" />
+    <ClInclude Include="include\EUTelCDashMeasurement.h" />
+    <ClInclude Include="include\EUTelClusterFilter.h" />
+    <ClInclude Include="include\EUTelClusteringProcessor.h" />
+    <ClInclude Include="include\EUTelClusterSeparationProcessor.h" />
+    <ClInclude Include="include\EUTelCopyPedestalProcessor.h" />
+    <ClInclude Include="include\EUTelCorrelator.h" />
+    <ClInclude Include="include\EUTelDafAlign.h" />
+    <ClInclude Include="include\EUTelDafBase.h" />
+    <ClInclude Include="include\EUTelDafDutAlign.h" />
+    <ClInclude Include="include\EUTelDafFitter.h" />
+    <ClInclude Include="include\EUTelDafTrackerSystem.h" />
+    <ClInclude Include="include\EUTelDFFClusterImpl.h" />
+    <ClInclude Include="include\EUTelDUTHistograms.h" />
+    <ClInclude Include="include\EUTELESCOPE.h" />
+    <ClInclude Include="include\EUTelEtaFunctionImpl.h" />
+    <ClInclude Include="include\EUTelEUDRBReader.h" />
+    <ClInclude Include="include\EUTelEventImpl.h" />
+    <ClInclude Include="include\EUTelEventViewer.h" />
+    <ClInclude Include="include\EUTelExampleProcessorCorrelator.h" />
+    <ClInclude Include="include\EUTelExceptions.h" />
+    <ClInclude Include="include\EUTelExcludedPlanes.h" />
+    <ClInclude Include="include\EUTelFFClusterImpl.h" />
+    <ClInclude Include="include\EUTelFilter.h" />
+    <ClInclude Include="include\EUTelFilterHitFilter.h" />
+    <ClInclude Include="include\EUTelFitHistograms.h" />
+    <ClInclude Include="include\EUTelFitTuple.h" />
+    <ClInclude Include="include\EUTelGBLFitter.h" />
+    <ClInclude Include="include\EUTelGenericPixGeoDescr.h" />
+    <ClInclude Include="include\EUTelGenericPixGeoMgr.h" />
+    <ClInclude Include="include\EUTelGenericSparseClusterImpl.h" />
+    <ClInclude Include="include\EUTelGenericSparsePixel.h" />
+    <ClInclude Include="include\EUTelGeometricClusterImpl.h" />
+    <ClInclude Include="include\EUTelGeometricPixel.h" />
+    <ClInclude Include="include\EUTelGeometryTelescopeGeoDescription.h" />
+    <ClInclude Include="include\EUTelHistogramMaker.h" />
+    <ClInclude Include="include\EUTelHistogramManager.h" />
+    <ClInclude Include="include\EUTelHit.h" />
+    <ClInclude Include="include\EUTelLineFit.h" />
+    <ClInclude Include="include\EUTelMatrixDecoder.h" />
+    <ClInclude Include="include\EUTelMille.h" />
+    <ClInclude Include="include\EUTelMillepede.h" />
+    <ClInclude Include="include\EUTelMissingCoordinateEstimator.h" />
+    <ClInclude Include="include\EUTelNav.h" />
+    <ClInclude Include="include\EUTelOutputProcessor.h" />
+    <ClInclude Include="include\EUTelPatRecTriplets.h" />
+    <ClInclude Include="include\EUTelPatternRecognition.h" />
+    <ClInclude Include="include\EUTelPedeGEAR.h" />
+    <ClInclude Include="include\EUTelPedestalNoiseProcessor.h" />
+    <ClInclude Include="include\EUTelPreAlignment.h" />
+    <ClInclude Include="include\EUTelProcessorAnalysisPALPIDEfs.h" />
+    <ClInclude Include="include\EUTelProcessorAnalysisPALPIDEfsNoise.h" />
+    <ClInclude Include="include\EUTelProcessorApplyAlignment.h" />
+    <ClInclude Include="include\EUTelProcessorCoordinateTransformHits.h" />
+    <ClInclude Include="include\EUTelProcessorDeadColumnFinder.h" />
+    <ClInclude Include="include\EUTelProcessorFilteringHitFilter.h" />
+    <ClInclude Include="include\EUTelProcessorGBLAlign.h" />
+    <ClInclude Include="include\EUTelProcessorGBLTrackFit.h" />
+    <ClInclude Include="include\EUTelProcessorGeometricClustering.h" />
+    <ClInclude Include="include\EUTelProcessorHitMaker.h" />
+    <ClInclude Include="include\EUTelProcessorHotPixelFinder.h" />
+    <ClInclude Include="include\EUTelProcessorMapping.h" />
+    <ClInclude Include="include\EUTelProcessorNoisyClusterMasker.h" />
+    <ClInclude Include="include\EUTelProcessorNoisyClusterRemover.h" />
+    <ClInclude Include="include\EUTelProcessorNoisyPixelFinder.h" />
+    <ClInclude Include="include\EUTelProcessorPatRecTriplets.h" />
+    <ClInclude Include="include\EUTelProcessorRootCreate.h" />
+    <ClInclude Include="include\EUTelProcessorSparseClustering.h" />
+    <ClInclude Include="include\EUTelProcessorTrackAnalysis.h" />
+    <ClInclude Include="include\EUTelProcessorTrackSelection.h" />
+    <ClInclude Include="include\EUTelPseudo1DHistogram.h" />
+    <ClInclude Include="include\EUTelPStream.h" />
+    <ClInclude Include="include\EUTelRadCal.h" />
+    <ClInclude Include="include\EUTelRawDataSparsifier.h" />
+    <ClInclude Include="include\EUTelReaderGenericLCIO.h" />
+    <ClInclude Include="include\EUTelReferenceHit.h" />
+    <ClInclude Include="include\EUTelROI.h" />
+    <ClInclude Include="include\EUTelRunHeaderImpl.h" />
+    <ClInclude Include="include\EUTelSimpleSparsePixel.h" />
+    <ClInclude Include="include\EUTelSimpleVirtualCluster.h" />
+    <ClInclude Include="include\EUTelSparseClusterImpl.h" />
+    <ClInclude Include="include\EUTelState.h" />
+    <ClInclude Include="include\EUTelStrasMimoTelReader.h" />
+    <ClInclude Include="include\EUTelSucimaImagerReader.h" />
+    <ClInclude Include="include\EUTelTestFitter.h" />
+    <ClInclude Include="include\EUTelTrack.h" />
+    <ClInclude Include="include\EUTelTrackAnalysis.h" />
+    <ClInclude Include="include\EUTelTrackCreate.h" />
+    <ClInclude Include="include\EUTelTrackerDataInterfacer.h" />
+    <ClInclude Include="include\EUTelTrackerDataInterfacerImpl.h" />
+    <ClInclude Include="include\EUTelTrackSelection.h" />
+    <ClInclude Include="include\EUTelUpdatePedestalNoiseProcessor.h" />
+    <ClInclude Include="include\EUTelUtility.h" />
+    <ClInclude Include="include\EUTelUtilityPrintEventNumber.h" />
+    <ClInclude Include="include\EUTelVirtualCluster.h" />
+    <ClInclude Include="include\GEARPixGeoDescr.h" />
+    <ClInclude Include="include\TDSIntegrationStorage.h" />
+    <ClInclude Include="include\TDSPixel.h" />
+    <ClInclude Include="include\TDSPixelsChargeMap.h" />
+    <ClInclude Include="include\TDSPrecluster.h" />
+    <ClInclude Include="include\TDSStep.h" />
+    <ClInclude Include="pixgeo\include\FEI4Double.h" />
+    <ClInclude Include="pixgeo\include\FEI4FourChip.h" />
+    <ClInclude Include="pixgeo\include\FEI4Single.h" />
+    <ClInclude Include="pixgeo\include\Mimosa26.h" />
+    <ClInclude Include="test\histograms\eutelescopeHistos.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="doc\introduction.html" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
