@@ -88,7 +88,8 @@ void AlibavaDataTTreeMaker::init () {
     // this method is called only once even when the rewind is active
     // usually a good idea to
     printParameters ();
-    
+    _treeName = _inputCollectionName;
+    _treeName += string("_Tree");
     _tree = new TTree(_treeName.c_str(), "a ROOT tree which stores cluster information");
     
     _tree->Branch("runnumber",&_runnumber);
@@ -96,7 +97,8 @@ void AlibavaDataTTreeMaker::init () {
     _tree->Branch("tdctime",&_tdctime);
     _tree->Branch("temperature",&_temperature);
     _tree->Branch("chipNum",&_chipNum);
-    _data->Branch("data",_data);
+    _data = new std::vector<double>();
+    _tree->Branch("data",&_data);
     
     _rootObjectMap.insert(make_pair(_treeName, _tree));
     
@@ -140,17 +142,18 @@ void AlibavaDataTTreeMaker::processEvent (LCEvent * anEvent) { // HERE look for 
         for ( size_t i = 0; i < noOfChips; ++i ){
             TrackerDataImpl * trkdata = dynamic_cast< TrackerDataImpl * > ( collectionVec->getElementAt( i ) ) ;
             
+	    _chipNum = getChipNum(trkdata);
             FloatVec datavec;
             datavec = trkdata->getChargeValues();
-            
+            _data->clear();
             // check if trkdata has size of ALIBAVA::NOOFCHANNELS
-            if (datavec.size() != ALIBAVA::NOOFCHANNELS) {
-                streamlog_out( ERROR1 ) << "Collection ("<<getInputCollectionName()<<") doesn't have "<< ALIBAVA::NOOFCHANNELS<< "channels << endl;
+            if (datavec.size() != (unsigned int) ALIBAVA::NOOFCHANNELS) {
+                streamlog_out( ERROR1 ) << "Collection ("<<getInputCollectionName()<<") doesn't have "<< ALIBAVA::NOOFCHANNELS<< "channels "<< endl;
                 
             }
             else{
-                for (int i=0; i<ALIBAVA::NOOFCHANNELS; i++){
-                    _data[i] = datavec[i];
+                for (unsigned int i=0; i<datavec.size(); i++){
+                    _data->push_back(datavec[i]);
                     
                 }
                 
@@ -158,7 +161,7 @@ void AlibavaDataTTreeMaker::processEvent (LCEvent * anEvent) { // HERE look for 
                 
             }
             
-            
+        }    
         } catch ( lcio::DataNotAvailableException ) {
             // do nothing again
             streamlog_out( DEBUG1 ) << "Collection ("<<getInputCollectionName()<<") not found! " << endl;

@@ -146,8 +146,8 @@ namespace alibava {
         double _tdctime;
         double _temperature;
         int _chipNum;
-        double _data[ALIBAVA::NOOFCHANNELS];
-        
+        std::vector<double> *_data;
+ 	//double _data[ALIBAVA::NOOFCHANNELS];
     };
     
     //! A global instance of the processor

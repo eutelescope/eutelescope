@@ -17,7 +17,7 @@
 
    <execute>
       <processor name="MyAIDAProcessor"/>
-      <processor name="MyAlibavaClusterTTreeMaker"/>
+      <processor name="MyAlibavaDataTTreeMaker"/>
       <processor name="PrintEventNumber"/>
    </execute>
 
@@ -40,7 +40,7 @@
   <!-- compression of output file 0: false >0: true (default) -->
   <parameter name="Compress" type="int" value="1"/>
   <!-- filename without extension-->
-  <parameter name="FileName" type="string" value="@HistogramPath@/@AlibavaOutputFormat@-clustertree"/>
+  <parameter name="FileName" type="string" value="@HistogramPath@/@AlibavaOutputFormat@-datatree"/>
   <!-- type of output file root (default) or xml )-->
   <parameter name="FileType" type="string" value="root"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
@@ -48,18 +48,13 @@
 </processor>
  
 
- <processor name="MyAlibavaClusterTTreeMaker" type="AlibavaClusterTTreeMaker">
-  <!--AlibavaClusterTTreeMaker creates a ROOT tree which stores cluster information -->
-  <!--Input ALIBAVA Cluster collection name-->
-  <parameter name="InputCollectionName" type="string" lcioInType="TrackerData">alibava_clusters </parameter>
-    <!--Noise collection name-->
-  <parameter name="NoiseCollectionName" type="string"> noise_cmmd </parameter>
-  <!--The filename where the noise values stored-->
-  <parameter name="NoiseInputFile" type="string"> @DatabasePath@/ped@PedestalRunNumber@.slcio</parameter>
+ <processor name="MyAlibavaDataTTreeMaker" type="AlibavaDataTTreeMaker">
+ <!--AlibavaDataTTreeMaker creates a ROOT tree which stores data information -->
+  <!--Input Alibava data collection name-->
+  <parameter name="InputCollectionName" type="string" lcioInType="TrackerData"> recodata_xtalk </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
 </processor>
-
 
 
 
