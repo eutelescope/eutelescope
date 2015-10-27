@@ -149,8 +149,8 @@ namespace alibava {
         float _totalSNR;
         int _seedChanNum;
         std::vector<int> *_channums;
-        std::vector<float> *_signals;
-        std::vector<float> *_snrs;
+        std::vector<double> *_signals;
+        std::vector<double> *_snrs;
         bool _isSensitiveAxisX;
         float _signalPolarity;
         

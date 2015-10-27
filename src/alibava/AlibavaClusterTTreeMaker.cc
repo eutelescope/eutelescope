@@ -116,9 +116,9 @@ void AlibavaClusterTTreeMaker::init () {
     _tree->Branch("seedChanNum",&_seedChanNum);
     _channums = new std::vector<int>();
     _tree->Branch("channums",&_channums);
-    _signals = new std::vector<float>();
+    _signals = new std::vector<double>();
     _tree->Branch("signals",&_signals);
-    _snrs = new std::vector<float>();
+    _snrs = new std::vector<double>();
     _tree->Branch("snrs",&_snrs);
     _tree->Branch("isSensitiveAxisX",&_isSensitiveAxisX);
     _tree->Branch("signalPolarity",&_signalPolarity);
@@ -157,15 +157,16 @@ void AlibavaClusterTTreeMaker::processEvent (LCEvent * anEvent) { // HERE look f
     
     
     AlibavaEventImpl * alibavaEvent = static_cast<AlibavaEventImpl*> (anEvent);
-    _eventnumber = alibavaEvent->getEventNumber();
+    _eventnumber = alibavaEvent->getEventNumber();   
     
     /////////////////////////////
     // Now loop over clusters //
     LCCollectionVec * collectionVec;
-    unsigned int noOfCluster;
+    unsigned int noOfCluster;    
     try{
-        collectionVec = dynamic_cast< LCCollectionVec * > ( alibavaEvent->getCollection( getInputCollectionName() ) ) ;
-        noOfCluster = collectionVec->getNumberOfElements();
+        
+        collectionVec = dynamic_cast< LCCollectionVec * > ( alibavaEvent->getCollection( getInputCollectionName() ) ) ;        
+        noOfCluster = collectionVec->getNumberOfElements();	
         
         for ( size_t i = 0; i < noOfCluster; ++i ){
             TrackerDataImpl * trkdata = dynamic_cast< TrackerDataImpl * > ( collectionVec->getElementAt( i ) ) ;
@@ -182,15 +183,22 @@ void AlibavaClusterTTreeMaker::processEvent (LCEvent * anEvent) { // HERE look f
             _seedChanNum = anAlibavaCluster.getSeedChanNum();
             std::vector<float> SNRS = anAlibavaCluster.getSNRs(getNoiseOfChip(_chipNum));
             for (int i=0; i<_clusterSize; i++){
-                _channums->push_back(anAlibavaCluster.getChanNum(i));
+
+                //std::cout<<"anAlibavaCluster.getChanNum("<<i<<") = "<<anAlibavaCluster.getChanNum(i)<<std::endl;
+                //std::cout<<"anAlibavaCluster.getSignal("<<i<<") = "<<anAlibavaCluster.getSignal(i)<<std::endl;
+		//std::cout<<"SNRS["<<i<<"] = "<<SNRS[i]<<std::endl;
+                
+                _channums->push_back(anAlibavaCluster.getChanNum(i));		
                 _signals->push_back(anAlibavaCluster.getSignal(i));
                 _snrs->push_back(SNRS[i]);
             }
+
             /*
              _channums = anAlibavaCluster.getChanNums();
              _signals = anAlibavaCluster.getSignals();
              _snrs = anAlibavaCluster.getSNRs(getNoiseOfChip(_chipNum));
              */
+
             _isSensitiveAxisX = anAlibavaCluster.getIsSensitiveAxisX();
             _signalPolarity = anAlibavaCluster.getSignalPolarity();
             //TBranch *b_channums = (TBranch*)_tree->GetBranch("channums");
@@ -202,11 +210,13 @@ void AlibavaClusterTTreeMaker::processEvent (LCEvent * anEvent) { // HERE look f
             _tree->Fill();
             
         }
-        
+
+       
     } catch ( lcio::DataNotAvailableException ) {
         // do nothing again
-        streamlog_out( ERROR5 ) << "Collection ("<<getInputCollectionName()<<") not found! " << endl;
+        streamlog_out( DEBUG1 ) << "Collection ("<<getInputCollectionName()<<") not found! " << endl;
     }
+
     
 }
 
