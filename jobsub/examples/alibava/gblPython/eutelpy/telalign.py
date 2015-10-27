@@ -45,6 +45,7 @@ class TelMP2alignment(object):
     f.write("Cfiles ! C-type binary files\n%s\n\n" % (self.__fileName))
     f.write('* Global labels are plane-ID * 10 + 1..6 for\n* x-shift, y-shift, z-shift, x-rot, y-rot, z-rot\n\n')
     # check for 1D DUTs
+    DUTpar = list(parDUT)
     for planeID, plane in det.iteritems():
       if planeID < 6:
         continue
@@ -53,10 +54,23 @@ class TelMP2alignment(object):
       measDir = plane.getMeasDir()
       for i in range(2):
         if prec[i] == 0.:
-          f.write("Constraint  0. ! Fix missing measurement direction for plane %i\n" % (planeID))
+          jDir = None
           for j in range(3):
-            f.write(" %6i %f\n" % (planeID * 10 + j + 1, measDir[j][i]))
-          f.write('\n')
+            if abs(measDir[j][i]) == 1.:
+              jDir = j
+          # missing measurement is in some global direction?    
+          if jDir is not None:
+            if DUTpar[jDir] == '1':
+              f.write("Parameter ! Fix missing measurement direction for plane %i\n" % (planeID))
+              f.write(" %6i  0.  -1. ! Fixed\n" % (planeID * 10 + jDir + 1))   
+              f.write('\n')
+          else:   
+            f.write("Constraint  0. ! Fix missing measurement direction for plane %i\n" % (planeID))
+            for j in range(3):
+              if measDir[j][i] != 0. and DUTpar[j] != '1':
+                DUTpar[j] = '1'  #  ! forced on
+              f.write(" %6i %f\n" % (planeID * 10 + j + 1, measDir[j][i]))
+            f.write('\n')
     # combine 2 DUTs into a single plane
     if DUTpair is not None:
       # position (of planes)
@@ -65,13 +79,14 @@ class TelMP2alignment(object):
       f.write("! Force DUT %i and %i to be in the same plane\n" % (DUTpair[0], DUTpair[1]))
       # constraints for Z-shift, x-rot, y-rot
       for iCon, comment in enumerate(["z-shift", "x-rot", "y-rot"]):
-        f.write("Constraint  0. ! %s\n" % (comment))
-        f.write(" %6i %f\n %6i %f\n" % (DUTpair[0] * 10 + iCon + 3, 1., DUTpair[1] * 10 + iCon + 3, -1.))
-        if iCon == 0:
-          # same dZ in common system
-          f.write(" %6i %f\n %6i %f\n" % (DUTpair[0] * 10 + 4, -pos0[1], DUTpair[1] * 10 + 4, pos1[1]))
-          f.write(" %6i %f\n %6i %f\n" % (DUTpair[0] * 10 + 5, pos0[0], DUTpair[1] * 10 + 5, -pos1[0]))
-        f.write('\n')
+        if DUTpar[iCon + 2] == '1':
+          f.write("Constraint  0. ! %s\n" % (comment))
+          f.write(" %6i %f\n %6i %f\n" % (DUTpair[0] * 10 + iCon + 3, 1., DUTpair[1] * 10 + iCon + 3, -1.))
+          if iCon == 0:
+            # same dZ in common system
+            f.write(" %6i %f\n %6i %f\n" % (DUTpair[0] * 10 + 4, -pos0[1], DUTpair[1] * 10 + 4, pos1[1]))
+            f.write(" %6i %f\n %6i %f\n" % (DUTpair[0] * 10 + 5, pos0[0], DUTpair[1] * 10 + 5, -pos1[0]))
+          f.write('\n')
     # fix parameters in reference planes and undetermined degrees of freedoms
     f.write("Parameter ! fixed parameters\n") 
     for planeID in det.iterkeys():
@@ -85,7 +100,7 @@ class TelMP2alignment(object):
       else:
       # DUT  
         for i in range(6):  
-          if parDUT[i] != '1':
+          if DUTpar[i] != '1':
             f.write(" %6i  0.  -1. ! Unused\n" % (planeID * 10 + i + 1))   
     f.write('\n')  
     # pede commands

@@ -47,8 +47,8 @@ def main(argv):
     os.makedirs(outputdir)
 
   # maximum number of events
-  maxEvt = 5000
-  #maxEvt = 10000000
+  #maxEvt = 5000
+  maxEvt = 10000000
   # beam energy (*q)
   beamEnergy = -4.4  # 613
   # lcio data file
@@ -83,8 +83,8 @@ def main(argv):
   detector = g.getDetector()
   # create MP2 steering files
   # for mimosa planes determine positions and XY rotations, fix first plane and position of last as Reference
-  #parMimosa = ['RRRRRR', '111001', '111001', '111001', '111001', 'RRR001'] 
-  parMimosa = ['RRRRRR', '000000', '000000', '000000', '000000', 'RRRRRR'] 
+  parMimosa = ['RRRRRR', '111001', '111001', '111001', '111001', 'RRR001'] 
+  #parMimosa = ['RRRRRR', '000000', '000000', '000000', '000000', 'RRRRRR'] 
   if bField[1] != 0.:
     # for B field in Y fix X position of plane 3 in addition
     parMimosa[3] = 'R11001'
@@ -130,7 +130,8 @@ def main(argv):
   #cuts = ((0.5, 0.5), (0.02,0.02), (0.01, 0.01), (0.1, 0.1), (10.0, 10))  
   #cuts = ((0.2, 0.2), (0.01,0.01), (0.002, 0.002), (0.1, 0.1), (10.2, 10))  
   #cuts = ((0.5, 0.5), (0.02,0.02), (0.01, 0.01), (0.1, 0.1), (0.2, 10))  
-  cuts = ((0.5, 0.5), (0.02,0.02), (0.01, 0.01), (0.1, 0.1), (2.2, 10))  
+  cuts = ((0.5, 0.5), (0.02,0.02), (0.01, 0.01), (0.1, 0.1), (0, 0))  
+  #cuts = ((0.5, 0.5), (0.02,0.02), (0.01, 0.01), (0.1, 0.1), (2.2, 10))  
 
 
   # histograms for cut values
@@ -146,8 +147,8 @@ def main(argv):
     if not event.isValid():
       break
     # event read
-    #if event.getNumHits() <= 0:
-    if event.getNumDUThits() <= 0:
+    if event.getNumHits() <= 0:
+    #if event.getNumDUThits() <= 0:
       continue
     numEvt += 1 
     #event.dump()
