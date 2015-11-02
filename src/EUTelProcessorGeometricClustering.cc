@@ -244,6 +244,7 @@ void EUTelProcessorGeometricClustering::processEvent (LCEvent * event)
 	} 
 	catch ( lcio::DataNotAvailableException& e ) 
 	{
+	  streamlog_out ( DEBUG2 ) << "record pulse collection called "<<_pulseCollectionName<<std::endl;
 		pulseCollection = new LCCollectionVec(LCIO::TRACKERPULSE);
 	}
 
@@ -254,6 +255,7 @@ void EUTelProcessorGeometricClustering::processEvent (LCEvent * event)
 	if ( ! pulseCollectionExists && ( pulseCollection->size() != _initialPulseCollectionSize )) 
 	{
 		evt->addCollection( pulseCollection, _pulseCollectionName );
+		streamlog_out ( DEBUG2 ) << "adding event to pulse collection called "<<_pulseCollectionName<<std::endl;
 	}
   
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)

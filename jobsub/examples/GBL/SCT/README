@@ -1,0 +1,118 @@
+##This is the GBL fitter with a strip sensor DUT. 
+#Hash markings are running processors and changing things in the config
+TGeo reads the thickness of the sensors from the sensitive area of the gear.
+50 micron for mimosas, 300 micron for DUT
+Test with 10k events which was enough for alignment of DUT without XY-axis rotations.
+
+The gear file used from the begining of the process: gear-beforeAlign-000703.xml.
+This has the correct correlations but offsets are not taken into account.
+The sequence of steering files to run to create initial tracks.
+js => jobsub -c config/config -csv runlist/runlist
+###js converter 703
+###js clustering 703
+###js hitmaker 703   #################################################
+
+Prealignment will produce a gear called: gear-beforeAlign-000703_pre.xml 
+Note there is heavy misalignment in the last plane!!! 
+#####################################################################
+
+###js patternRecognition 703########################################
+Triplets are formed from hits on the three planes of each arm of the telescope. The three hits that form the triplet are just mini tracks which are extrapolated to a central point in the centre of the setup. This extrapolation is constant in incidence for non magnetic field runs. However incidence is a variable with curvature so this must be taken into account in that situation. See noDUTExample.
+
+The three planes which create each triplet are first searched in the first and last plane of the three for matching hits to form a doublet. If in the xy plane of the global frame they have a residual less than this (DoubletDistCut) cut then match the hits to form a doublet. 
+Incidence and curvature are taken into account in the matching here and throughout
+#DoubletDistCut = 1 1 << single # are cuts you will find in the config file
+Use the doublet to link hits on the central plane to itself. This is done using the information of the hits of the doublet
+The constrast with daf fitter pattern recognition which uses a clustering technique with an initial slope assumed. This does not use the information of the hit.
+#DoubletCenDistCut = 1 1
+Create triplets from hits on each arm now.
+Predicted position at central point and slope must agree with the cuts given:
+#TripletConnectDistCut = 1 1
+#TripletSlopeCuts = 0.01 0.01
+These planes will not create a state. 
+#excludeplanes=   
+Plane dimension is needed to determine in what directions we should compare tracks and DUT hits
+#planeDimensions= 2 2 2 1 2 2 2 
+This is used to determine the initial curvature of the track at plane 0
+#InitialDisplacement=0
+
+Running the above pattern recognition with the prealigned gear (gear-beforeAlign-000703_pre.xml) should give:
+
+22:30:23 jobsub.patternRecognition(INFO): [ MESSAGE9 "TrackSearch"] EUTelProcessorPatRecTriplets::end()  TrackSearch processed 999 events in 1 runs  av.tracks : 0.621622 total number of tracks: 621
+#######################################################################
+
+#js GBLAlign 703 #####################################################
+Without running iterAlign we can find the correct alignment parameters
+This process is similar to Daffitter and definition of parameters will be given below 
+
+Alignment is done using GBL tracks and millepede. 
+Millepede will try to find the minimum chi2 for a series of independent residuals (All residual assume a gaussian form). These residuals compose each measured hit and predicted track position. This is in the measurement frame, i.e the plane which the position of the hit and prediction would sit on the physical plane. This residual will change due to two different types of parameters:
+ The local parameters: the parameters which describe the most likely track (Kink, incidence position). This is just changing the track we predicted.
+ The global parameters: The position of the detector. You can think of this as keeping the track constant and moving the detector planes.
+
+ We are interest in the second type of parameter since we what to know the position of the detector. Therefore the first are taken as nuissance parameters and only the global is determined. This is done in a usual manner, with a least squares fit, since the problem is just minimising a chi2 distribution. The only difference is the linear algebra which makes the process efficient. Plus outlier treatment on each iteration of millepede on the local parameter level. 
+
+The chi2 is cut internally by millepede. This cut is the chi2 which corresponds to a 0.27% p-value estimate. This of course will vary with resolution of the hits which can easily lead to problems. Especially since the errors are the statistical and systematic errors combined.
+The 30 and 6 will increase the chi2 value which corresponds to 0.27% p-value by that multiple on the first and then second iteration of millepede.
+There is not much point changing this cut in most situations. Since by default the cut is large. Should vary the resolutions instead to add systematic alignment error.
+#pede          = chiscut 30  6
+
+Below this is the fixed planes used:
+
+#FixXshifts=0  5  
+#FixYshifts=0  5  
+#FixZshifts=0  5  
+#FixXrot=   0 1 2 3 4 5 8
+#FixYrot=   0 1 2 3 4 5 8
+#FixZrot=   0   5  
+
+The first and last plane must be fixed at this point in alignment. Prealignment has moved the planes to possibly ~0.5 mm precision. 
+The input errors are the uncertainty we should expect the gaussian distributions of each residual to have AFTER the fit. 
+Therefore if you can not align with errors close to that of the DUT then there must be a systematic error remaining afterwards.
+Otherwise the initial track descripition was so wrong that no solution could be found in any case.
+
+Alignment from prealignment can be found setting the resolution to (All plane are fixed as above):
+
+#r = 0.01
+#dutX=0.07
+#dutY=100000000
+#
+You must set the output gear as you like in config:
+#GearAlignedFile = alignedGear-iter1-run000703.xml <<<< JUST AN EXAMPLE NAME YOU WILL WANT TO CHANGE THIS TO NOT OVERWRITE THE GOOD GEAR I PRODUCED!
+
+When I did this I get the gear file saved in geometry as: alignedGear-iter1-run000703.xml 
+
+Now you will find alignment shifts of ~ 1cm in z shifts! The gear is well off! This will effect the global parameters that millepede uses to determine the alignment so a number of iterations is needed. 
+
+To do a second iteration with a new gear: 1) Place new gear in runlist 2)Remember to change the name of the new output gear in config.
+
+This process produces a new gear:alignedGear-iter2-run000703.xml <<This is just the name I gave it.
+Note the value are converging. This is always a good sign. 
+Now we the measurement errors can have a large effect on the final solution. Reduce resolution value since we want this to be as small as possible.
+#r = 0.005
+#dutX=0.07
+#dutY=100000000
+
+Run another iteration, output gear example is geometry is:alignedGear-iter3-run000703.xml
+Note we have large shift again. This is just due to the measurement error change.
+Run a last iteration and example geometry file output should match:alignedGear-iter4-run000703.xml
+
+This last iteration will leave about about a ~2 micron shift. This is small but can be corrected by doing more iterations with:
+
+#r = 0.005
+#dutX=0.02
+#dutY=100000000
+
+Gear file for this with improved alignment: iter5 and iter6 
+
+############
+#
+Now you can run 
+#js patternRecognition 703
+#js GBLTrackFit 703    >>>> output/histograms/GBLTracks.root
+OR 
+# ./patRecAndTrackFitUsingConfigurationFile.sh -r 703 -h <some name given to root file placed in output/histograms
+You should find from 10k event => 6.8k tracks.
+The DUT RMS without DUT included in fit 24 microns.
+
+

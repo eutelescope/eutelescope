@@ -237,7 +237,7 @@ void EUTelProcessorHitMaker::processEvent (LCEvent * event) {
     EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event) ;
 
     if ( evt->getEventType() == kEORE ) {
-      streamlog_out ( DEBUG4 ) << "EORE found: nothing else to do." << endl;
+      streamlog_out ( DEBUG4 ) << "EORE found: nothing else to do. Inside EUTelProcessorHitMaker::processEvent, line 240" << endl;
       return;
     } else if ( evt->getEventType() == kUNKNOWN ) {
       streamlog_out ( WARNING2 ) << "Event number " << evt->getEventNumber() << " in run " << evt->getRunNumber()
@@ -283,6 +283,7 @@ void EUTelProcessorHitMaker::processEvent (LCEvent * event) {
 	for( int iCluster = 0; iCluster < pulseCollection->getNumberOfElements(); iCluster++ ) 
 	{
 			TrackerPulseImpl* pulse = dynamic_cast<TrackerPulseImpl*>(pulseCollection->getElementAt(iCluster));
+			streamlog_out(DEBUG1)<< std::scientific <<"pulseCollection->getElementAt(iCluster)->getTime()   " << pulse->getTime()  <<std::endl;
 			TrackerDataImpl* trackerData  = dynamic_cast<TrackerDataImpl*>( pulse->getTrackerData());
 
 			int sensorID = clusterCellDecoder(pulse)["sensorID"];
@@ -461,7 +462,10 @@ void EUTelProcessorHitMaker::processEvent (LCEvent * event) {
 					AIDA::IHistogram2D * histo2D = dynamic_cast<AIDA::IHistogram2D*> (_aidaHistoMap[ tempHistoName ] );
 					if ( histo2D )
 					{
-							histo2D->fill( telPos[0], telPos[1] );
+                            const double localPos[3] = { telPos[0], telPos[1], telPos[2] };
+                            double gloPos[3];
+                            geo::gGeometry().local2Master( sensorID, localPos, gloPos);
+							histo2D->fill( gloPos[0], gloPos[1] );
 					}
 					else 
 					{
@@ -484,7 +488,8 @@ void EUTelProcessorHitMaker::processEvent (LCEvent * event) {
 			cov[2] = resy * resy; // cov(y,y)
 			hit->setCovMatrix( cov );
 			hit->setType( clusterType  );
-            hit->setTime( pulse->getTime() );
+			streamlog_out(DEBUG1)<< " setting hit time" << pulse->getTime()  <<std::endl;
+			hit->setTime( pulse->getTime() );
 
 			// prepare a LCObjectVec to store the current cluster
 			LCObjectVec clusterVec;
@@ -545,8 +550,8 @@ void EUTelProcessorHitMaker::bookHistos(int sensorID) {
   double yMin = -(geo::gGeometry().siPlaneYSize ( sensorID )/2)-constant;
   double yMax = (geo::gGeometry().siPlaneYSize ( sensorID )/2)+constant; 
 
-  int xNBin =    geo::gGeometry().siPlaneXNpixels ( sensorID );
-  int yNBin =    geo::gGeometry().siPlaneYNpixels ( sensorID );
+  int xNBin =    2*geo::gGeometry().siPlaneXNpixels ( sensorID );
+  int yNBin =    2*geo::gGeometry().siPlaneYNpixels ( sensorID );
 
 
   AIDA::IHistogram2D * hitHistoLocal = AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName).c_str(),
@@ -568,14 +573,14 @@ void EUTelProcessorHitMaker::bookHistos(int sensorID) {
   double yPosition =  geo::gGeometry().siPlaneYPosition( sensorID );
   double xSize     =  geo::gGeometry().siPlaneXSize ( sensorID );
   double ySize     =  geo::gGeometry().siPlaneYSize ( sensorID );
-  int xBin         =  geo::gGeometry().siPlaneXNpixels( sensorID );
-  int yBin         =  geo::gGeometry().siPlaneYNpixels( sensorID );
+  int xBin         =  2*geo::gGeometry().siPlaneXNpixels( sensorID );
+  int yBin         =  2*geo::gGeometry().siPlaneYNpixels( sensorID );
 
-  xMin = safetyFactor * ( xPosition - ( 0.5 * xSize ));
-  xMax = safetyFactor * ( xPosition + ( 0.5 * xSize ));
+  xMin = -20;  // safetyFactor * ( xPosition - ( 0.5 * xSize ));
+  xMax = 20; // safetyFactor * ( xPosition + ( 0.5 * xSize ));
 
-  yMin = safetyFactor * ( yPosition - ( 0.5 * ySize ));
-  yMax = safetyFactor * ( yPosition + ( 0.5 * ySize ));
+  yMin = -20; // safetyFactor * ( yPosition - ( 0.5 * ySize ));
+  yMax = 20; // safetyFactor * ( yPosition + ( 0.5 * ySize ));
 
   xNBin = static_cast< int > ( safetyFactor  * xBin );
   yNBin = static_cast< int > ( safetyFactor  * yBin );

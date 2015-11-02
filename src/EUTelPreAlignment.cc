@@ -257,7 +257,6 @@ void EUTelPreAlign::processEvent(LCEvent* event)
 								{
 
 										PreAligner& pa = _preAligners.at(ii);
-
 										if( pa.getIden() != iHitID  ) { continue; }
 
 										gotIt = true;
@@ -271,6 +270,7 @@ void EUTelPreAlign::processEvent(LCEvent* event)
 														(_residualsXMin[idZ] < correlationX ) && ( correlationX < _residualsXMax[idZ]) &&
 														(_residualsYMin[idZ] < correlationY ) && ( correlationY < _residualsYMax[idZ]) 
 										  ) {
+
 												residX.push_back( correlationX );
 												residY.push_back( correlationY );
 												prealign.push_back(&pa);
@@ -285,7 +285,6 @@ void EUTelPreAlign::processEvent(LCEvent* event)
 
 						if( prealign.size() > static_cast< unsigned int >(_minNumberOfCorrelatedHits) && residX.size() == residY.size() ) {
 								for( unsigned int ii = 0 ;ii < prealign.size(); ii++ ) {
-
 										prealign[ii]->addPoint( residX[ii], residY[ii] );
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -428,6 +427,7 @@ void EUTelPreAlign::end()
 
 				if(it == _ExcludedPlanes.end())
 				{
+                    std::cout<<"Sensor ID " << sensorID <<std::endl; 
 						if( itXCoord == _ExcludedPlanesXCoord.end() && abs( _preAligners.at(ii).getPeakX() ) < 1000 )
 								constant->setXOffset( -1.0* _preAligners.at(ii).getPeakX() );
 						else
@@ -446,11 +446,16 @@ void EUTelPreAlign::end()
 
 				constant->setSensorID( sensorID );
 				constantsCollection->push_back( constant );
-
+                double updatedXOff;
+                double updatedYOff;
 				//Also update the EUTelGeometry descr.
-				double updatedXOff = geo::gGeometry().siPlaneXPosition(sensorID) + _preAligners.at(ii).getPeakX();
-				double updatedYOff = geo::gGeometry().siPlaneYPosition(sensorID) + _preAligners.at(ii).getPeakY();
-
+				if(it == _ExcludedPlanes.end()){///Only want to update if needed. Otherwise we get a pointless warning
+                    updatedXOff = geo::gGeometry().siPlaneXPosition(sensorID) + _preAligners.at(ii).getPeakX();
+                    updatedYOff = geo::gGeometry().siPlaneYPosition(sensorID) + _preAligners.at(ii).getPeakY();
+                }else{
+                    updatedXOff=0;
+                    updatedYOff=0;
+                }
 				geo::gGeometry().setPlaneXPosition(sensorID, updatedXOff);
 				geo::gGeometry().setPlaneYPosition(sensorID, updatedYOff);
 

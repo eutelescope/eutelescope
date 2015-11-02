@@ -40,6 +40,24 @@ class FEI4FourChip : public EUTelGenericPixGeoDescr {
 
 };
 
+class FEI4FourChipUK_G4 : public EUTelGenericPixGeoDescr {
+	
+	public:
+		FEI4FourChipUK_G4();
+		~FEI4FourChipUK_G4();
+
+		void createRootDescr(char const *);
+		std::string getPixName(int, int);
+		std::pair<int, int> getPixIndex(char const *);
+
+	protected:
+		TGeoMaterial* matSi;
+		TGeoMedium* Si;
+		TGeoVolume* plane;
+
+};
+
+
 extern "C"
 {
 	EUTelGenericPixGeoDescr* maker();

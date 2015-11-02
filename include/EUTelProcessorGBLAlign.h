@@ -26,7 +26,6 @@
 #include "EUTelUtility.h"
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelExceptions.h"
-#include "EUTelTrackFitter.h"
 #include "EUTelGBLFitter.h"
 #include "EUTelGeometryTelescopeGeoDescription.h"
 #include "EUTelEventImpl.h"
@@ -87,11 +86,10 @@ namespace eutelescope {
 
         /** Beam charge in [e] */
         double _beamQ;
-
-				//Beam energy. 
-				double _eBeam;
-
-				bool _createBinary;
+        //Beam energy. 
+        double _eBeam;
+        bool _createBinary;
+        int _incMed;
         /** Outlier downweighting option */
         std::string _mEstimatorType;
 

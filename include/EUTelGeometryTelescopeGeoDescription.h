@@ -110,7 +110,7 @@ class EUTelGeometryTelescopeGeoDescription
 
 	/** */ 
 	bool _telPlanesDefined;
-
+    std::vector<float> _localDistDUT;
 	/** Silicon planes parameters as described in GEAR
 	 * This structure actually contains the following:
 	 *  @li A reference to the telescope geoemtry and layout
@@ -218,6 +218,10 @@ class EUTelGeometryTelescopeGeoDescription
 
 	/** set Z rotation in radians */
 	inline void setPlaneZRotationRadians(int sensorID, double value){ _planeSetup[sensorID].gamma = value*DEG; this->clearMemoizedValues(); };
+	void initializeLocalDistDUT(std::vector<float> localDistDUT) {
+		_localDistDUT = localDistDUT;
+	}
+    std::vector<float> localDistDUT();
 
 	//GETTER
 	/** */ 
@@ -297,6 +301,7 @@ class EUTelGeometryTelescopeGeoDescription
 
 	/** Plane normal vector (nx,ny,nz) */
 	TVector3 siPlaneNormal( int );
+    Eigen::Vector3d siPlaneNormalEig( int);
 
 	TVector3 siPlaneXAxis( int);
 
@@ -333,9 +338,6 @@ class EUTelGeometryTelescopeGeoDescription
 	void initializeTGeoDescription(std::string tgeofilename);
 
 	void initializeTGeoDescription( std::string& geomName, bool dumpRoot );
-
-	// Geometry operations
-    float findRad(const std::map<int,int>& sensorIDToZOrderWithoutExcludedPlanes, const double globalPosStart[], const double globalPosFinish[], std::map< const int, double> &sensors, 	std::map< const int, double> &air );
 	int getSensorID(float const globalPos[] ) const;
 	int getSensorID(double const globalPos[] ) const;
 
@@ -345,7 +347,8 @@ class EUTelGeometryTelescopeGeoDescription
 
 	double planeRadLengthGlobalIncidence(int planeID, Eigen::Vector3d incidenceDir);
 	double planeRadLengthLocalIncidence(int planeID, Eigen::Vector3d incidenceDir);
-	
+	double airBetweenPlanesRadLengthGlobalIncidence(int planeIDStart,int planeIDEnd, Eigen::Vector3d incidenceDir, double& thickness);
+
 	void local2Master( int, const double[], double[] );
 
 	void master2Local(int, const double[], double[] );
@@ -360,18 +363,12 @@ class EUTelGeometryTelescopeGeoDescription
 						TVector3& outputMomentum, float& arcLength, int& newNextPlaneID );
 
 	TVector3 getXYZMomentumfromArcLength(TVector3 momentum, TVector3 globalPositionStart, float charge, float  arcLength );
-	bool testOutput(std::map<const int,double> & mapSensor, std::map<const int, double> & mapAir);
-
-	//This outputs the total percentage radiation length for the full detector system. 
-	float calculateTotalRadiationLengthAndWeights(const double startD[3],const double endD[3], std::map<const int,double>&, std::map<const int,double> & );
-	void mapWeightsToSensor(std::map<const int,double> sensor,std::map<const int,double> air,  std::map< const  int, double > & mapSen,std::map< const  int, double > & mapAir  );
-	double addKapton(std::map<const int, double> & mapSensor);
-
 	float getInitialDisplacementToFirstPlane() const { return _initialDisplacement; };
 
 	const TGeoHMatrix* getHMatrix( const double globalPos[] );
 
 	TMatrixD getRotMatrix( int sensorID );
+    Eigen::Matrix3d getRotMatrixEig( int sensorID );
 
 	/** Magnetic field */
 	const gear::BField& getMagneticField() const { return _gearManager->getBField(); };

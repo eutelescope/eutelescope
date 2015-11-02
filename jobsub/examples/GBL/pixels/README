@@ -1,0 +1,56 @@
+#This is the an example with two 250x50 FEI4 DUTs in a high radiation length enviroment. 
+#Note that planes with ID > 99 will be assumed to be radiation length and does not have to be included in the plane IDs for resolution and dimensions.
+#Radiation length of this system is well over 22%. 400 cm X0 poly and 5 cm width on both sides of the DUTs.
+#Using 10k but will increase this to 100k for the final alignment so use the full data set from the beginning.
+#Hotpixels for the APIX are not removed must load this into clustering. The data is clean and pattern recognition will remove this implicitly there. 
+#Number of tracks decreases at about 15k event. I would guess sync problems since there are still hits for these events.
+
+Gear used from the start is prealigned. However you should be able to start with a non prealigned gear and follow the same procedure
+Gear:gear_250x50AC_250x50DC000313_pre-AddPoly.xml
+
+#js converter 313
+
+#js clustering 313
+
+#js hitmaker 313
+
+Prealignment must have the additional IDs excluded and included in thew residual vector!!!!!
+Note used for this run but for others could be. Millepede can also be used to do prealignment.
+#ResidualsXMax =  5000.  500.  5000.   100.   100.   500.  500.  500.  500.  500.
+#ResidualsXMin = -500. -500. -500.  -100.  -100.  -500. -500.   -500. -500. -500.
+#ResidualsYMax =  500.  500.  500.   100.   100.   500.  500.    500.  500.  500.
+#ResidualsYMin = -500. -500. -500.  -100.  -100.  -500. -500.   -500. -500. -500.
+#ExcludedPlanesXCoord=
+#ExcludedPlanesYCoord=
+#ExcludedPlanes=0 100 101 
+
+#js patternRecognition 313 
+
+#TripletConnectDistCut =  0.2 0.2 
+#TripletSlopeCuts = 0.01 0.01
+#DoubletCenDistCut = 1 1
+#DoubletDistCut = 1 1
+#DUTWindow= 0.5
+#excludeplanes=        
+
+#js GBLAlign 313 
+
+#FixXshifts=0  5     
+#FixYshifts=0  5    
+#FixZshifts=0  5 
+#FixXrot=   0   5    
+#FixYrot=   0   5 
+#FixZrot=   0 5    
+#r = 0.02
+#dutX=0.2
+#dutY=0.08
+
+
+output gear:alignedGear-iter1-AddPoly-run000313.xml
+
+Another iteration. Must be some addition radiation length in scatters since 20 micron resolution fit.
+#r = 0.02
+output gear:alignedGear-iter2-AddPoly-run000313.xml
+
+
+

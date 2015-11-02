@@ -27,8 +27,12 @@
 
 // AIDA
 #ifdef MARLIN_USE_AIDA
+#include <AIDA/AIDA.h>
 #include <marlin/AIDAProcessor.h>
 #include <AIDA/IHistogramFactory.h>
+#include <AIDA/IPlotterFactory.h>
+#include <AIDA/IAnalysisFactory.h>
+#include <AIDA/IPlotter.h>
 #include <AIDA/IHistogram1D.h>
 #include <AIDA/IProfile2D.h>
 #endif // MARLIN_USE_AIDA
@@ -37,12 +41,13 @@
 #include "EUTelUtility.h"
 #include "EUTelGeometryTelescopeGeoDescription.h"
 #include "EUTelRunHeaderImpl.h"
-#include "EUTelTrackFitter.h"
 #include "EUTelGBLFitter.h"
 #include "EUTelExceptions.h"
 #include "EUTelEventImpl.h"
 #include "EUTelHistogramManager.h"
 #include "EUTelReaderGenericLCIO.h"
+#include "EUTelExcludedPlanes.h"
+
 
 namespace eutelescope {
 
@@ -77,20 +82,25 @@ namespace eutelescope {
 			virtual void end();
 
     protected:
+            EVENT::IntVec _excludePlanes;         
+            int _mode;
+            int _incMed;
 
 			/** Number of events processed */
 			int _nProcessedRuns;
 			/** Number of runs processed */
 			int _nProcessedEvents;
+			/** Number of runs processed */
+			int _nTrackCand;
 
 			/** Beam charge in [e] */
 			double _beamQ;
 
 			//Beam energy. 
 			double _eBeam;
-
 			//This is the maximum chi2 of a track that will be used in the millepede alignment fit
 			double _maxChi2Cut;
+            double _chi2Cut;
 
 			std::vector<float> _chi2NdfVec;
 			//Pointer to access millepede object..

@@ -9,13 +9,16 @@ using namespace eutelescope;
 namespace eutelescope {
 
 //This constructor useful for mille binary output part
-EUTelMillepede::EUTelMillepede() :
+EUTelMillepede::EUTelMillepede(std::string& res, std::string& newGear) :
 _milleGBL(NULL),
 _jacobian(2,6),
 _globalLabels(6),
 _milleSteeringFilename("steer.txt"),
 _milleSteerNameOldFormat("steer-iteration-0.txt"),
-_iteration(1)
+_iteration(1),
+_newGear(newGear),
+_milleResultFileName(res)   
+    
 {
 	FillMilleParametersLabels();
 	CreateBinary();
@@ -26,32 +29,90 @@ EUTelMillepede::~EUTelMillepede(){}
 //Note here we label sensors and every alignment degree of freedom uniquely. Note that even if the sensor is to remain fixed. The fixing is done latter.
 void EUTelMillepede::FillMilleParametersLabels() {
 
-    int currentLabel = 1;
-    const IntVec sensorIDsVec = geo::gGeometry().sensorIDsVec();
+    const std::vector<int> sensorIDsVec = EUTelExcludedPlanes::_senNoDeadMaterial;
     size_t noOfSensors = sensorIDsVec.size(); 
 
     for( IntVec::const_iterator itr = sensorIDsVec.begin(); itr != sensorIDsVec.end(); ++itr ) {//sensor 0 to 5 will have numbers 1 to 6 for this x shift
-        _xShiftsMap.insert( make_pair(*itr, currentLabel) );
-        _yShiftsMap.insert( make_pair(*itr, noOfSensors+currentLabel) );
-        _zShiftsMap.insert( make_pair(*itr, 2*noOfSensors+currentLabel) );
-        _xRotationsMap.insert( make_pair(*itr, 3*noOfSensors+currentLabel) );
-        _yRotationsMap.insert( make_pair(*itr, 4*noOfSensors+currentLabel) );
-        _zRotationsMap.insert( make_pair(*itr, 5*noOfSensors+currentLabel) );
-	currentLabel++;
+        _xShiftsMap.insert( make_pair(*itr, (*itr)*10 + 1) );
+        _yShiftsMap.insert( make_pair(*itr, (*itr)*10 + 2) );
+        _zShiftsMap.insert( make_pair(*itr, (*itr)*10 + 3) );
+        _xRotationsMap.insert( make_pair(*itr, (*itr)*10 + 4) );
+        _yRotationsMap.insert( make_pair(*itr, (*itr)*10 + 5) );
+        _zRotationsMap.insert( make_pair(*itr, (*itr)*10 + 6) );
     }
 }
 //This function calculates the alignment jacobain in the local frame of the telescope. Using the state parameters
 void EUTelMillepede::computeAlignmentToMeasurementJacobian( EUTelState &state){
-	streamlog_out(DEBUG3) <<"State we arew about to add: "<< state.getLocation()<<endl; 
+	streamlog_out(DEBUG3) <<"State we are about to add: "<< state.getLocation()<<endl; 
 	state.print();
-	float TxLocal =  state.getMomLocalX()/state.getMomLocalZ();
-	float TyLocal =  state.getMomLocalY()/state.getMomLocalZ();
-	const float* localpos = state.getPosition();
+	float TxLocal =  state.getSlopeX();
+	float TyLocal =  state.getSlopeY();
+	const double* localpos = state.getPosition();
 	streamlog_out( DEBUG0 ) << "This is px/pz, py/pz (local) "<< TxLocal <<","<< TyLocal << std::endl;
+	streamlog_out( DEBUG0 ) << "This is px/pz, py/pz (Global) "<< state.getDirGlobal()[0]/state.getDirGlobal()[2]<<","<< state.getDirGlobal()[1]/state.getDirGlobal()[2]<< std::endl;
 	streamlog_out( DEBUG0 ) << "Local frame position "<< *localpos<<","<<*(localpos+1)<<","<<*(localpos+2) << std::endl;
 	computeAlignmentToMeasurementJacobian( *localpos,*(localpos+1), TxLocal, TyLocal);
 } 
+void EUTelMillepede::computeAlignmentGlobal( EUTelState &state){
+	streamlog_out(DEBUG3) <<"State we are about to add: "<< state.getLocation()<<endl; 
+	state.print();
+    /// Everything direction related defined in the global frame.
+    /// The position of the hits are before the offsets are taken into account. 
+    /// This allows the correct magnitude of rotation to be determined.
+    Eigen::Vector3d normal  = geo::gGeometry().siPlaneNormalEig(state.getLocation());
+    Eigen::Vector3d offset =  geo::gGeometry().getOffsetVector(state.getLocation());
+	streamlog_out( DEBUG0 ) << "Offset: "<< offset[0] <<  " " << offset[1] << " " <<offset[2] << std::endl;
 
+    Eigen::Vector3d dir    = state.getDirGlobalEig();
+    ///Deduct offset to remove set from gear.
+    double relX = state.getPositionGlobal()[0] - offset[0];
+    double relY = state.getPositionGlobal()[1] - offset[1];
+    double relZ = state.getPositionGlobal()[2] - offset[2];
+    Eigen::MatrixXd I(3,3);
+    I.setIdentity();
+    double factor =  dir.transpose()*normal;
+    Eigen::MatrixXd drldm = I - (dir*normal.transpose())*(1.0/factor); //Residual change with change in global position 
+
+	streamlog_out( DEBUG0 ) << "drldm: "<<endl <<  drldm << std::endl;
+
+    //Change in global position with change in alignment parameters.  
+    Eigen::MatrixXd dmdg(3,6);
+    dmdg << 1 , 0,  0, 0,   relZ, -relY,
+            0 ,  1,  0,-relZ,  0,    relX,
+           0 ,   0,  1, relY, -relX, 0;
+
+    Eigen::Matrix3d rot  =  geo::gGeometry().getRotMatrixEig(state.getLocation());
+    Eigen::Matrix3d rotInv = rot.transpose();
+    Eigen::MatrixXd gloMes = rotInv*drldm;
+    Eigen::MatrixXd aliToLoc =  gloMes*dmdg;
+	streamlog_out( DEBUG0 ) << "1)Align to global shifts: "<< endl<< dmdg << std::endl;
+	streamlog_out( DEBUG0 ) << "Relates motion of the global position to position on plane: "<< endl << drldm << std::endl;
+	streamlog_out( DEBUG0 ) << "2)Rotate plane to work in local coordinates: "<< endl << gloMes << std::endl;
+	streamlog_out( DEBUG0 ) << "Times (1)/(2) together and we get the relation between alignment and local residual "<< endl << aliToLoc << std::endl;
+
+	_jacobian.Zero();
+    for(int i = 0 ; i < 6; ++i){
+        _jacobian[0][i] = aliToLoc(0,i); 
+        _jacobian[1][i] = aliToLoc(1,i); 
+    }
+
+// dxh/dxs
+// dyh/dxs
+// dxh/dxs      
+// dyh/dxs
+// dxh/dys     
+// dyh/dys
+// dxh/rotzs   
+// dyh/rotzs
+// dxh/dzs
+// dyh/dzs
+// dxh/rotyr
+// dyh/rotyr
+// dxh/rotxr          
+// dyh/rotxr         
+
+
+} 
 
 
 //This function does the leg work of all the calculation for each state to determine the alignment jacobian
@@ -86,12 +147,19 @@ void EUTelMillepede::setGlobalLabels(EUTelState& state){
 //Here depending on the palne the states is on we return a particular label for x shift, y shift.....
 void EUTelMillepede::setGlobalLabels( int iPlane){
 	//We alway add these to the first to places in the alignment matrix
-	_globalLabels[0] = _xShiftsMap[iPlane]; // dx
-	_globalLabels[1] = _yShiftsMap[iPlane]; // dy
-  	_globalLabels[2] = _zRotationsMap[iPlane]; // rot z
-    _globalLabels[3] = _zShiftsMap[iPlane]; // dz
-    _globalLabels[4] = _yRotationsMap[iPlane]; // drot y         
-    _globalLabels[5] = _xRotationsMap[iPlane]; // drot x  
+//	_globalLabels[0] = _xShiftsMap[iPlane]; // dx
+//	_globalLabels[1] = _yShiftsMap[iPlane]; // dy
+//  	_globalLabels[2] = _zRotationsMap[iPlane]; // rot z
+//    _globalLabels[3] = _zShiftsMap[iPlane]; // dz
+//    _globalLabels[4] = _yRotationsMap[iPlane]; // drot y         
+//    _globalLabels[5] = _xRotationsMap[iPlane]; // drot x  
+//
+    _globalLabels[0] = _xShiftsMap[iPlane]; 
+    _globalLabels[1] = _yShiftsMap[iPlane]; 
+    _globalLabels[2] = _zShiftsMap[iPlane];    
+    _globalLabels[3] = _xRotationsMap[iPlane];     
+    _globalLabels[4] = _yRotationsMap[iPlane];   
+    _globalLabels[5] = _zRotationsMap[iPlane]; 
 
     streamlog_out(DEBUG1) << "Output of global labels for plane "<<iPlane<<" The size of labels "<<_globalLabels.size() <<std::endl;
     for( std::vector<int>::const_iterator i = _globalLabels.begin(); i != _globalLabels.end(); ++i){
@@ -102,6 +170,62 @@ void EUTelMillepede::setGlobalLabels( int iPlane){
 }
   
 void EUTelMillepede::writeMilleSteeringFile(lcio::StringVec pedeSteerAddCmds){
+    streamlog_out(DEBUG2) << "EUTelMillepede::writeMilleSteeringFile------------------------------------BEGIN" << std::endl;
+    ofstream steerFile;
+    steerFile.open(_milleSteeringFilename.c_str());//We open the text file se we can add text to it.
+    if (!steerFile.is_open()) {
+        throw(lcio::Exception("Could not open steering file."));    
+    }
+    streamlog_out(DEBUG0) << "Millepede binary:" << _milleBinaryFilename << std::endl;
+    steerFile << "Cfiles" << std::endl;
+    steerFile << _milleBinaryFilename << std::endl;
+    steerFile << std::endl;
+    steerFile << "Parameter" << std::endl;
+    for(size_t i =0 ; i < EUTelExcludedPlanes::_senNoDeadMaterial.size(); ++i){
+        int sensorId = EUTelExcludedPlanes::_senNoDeadMaterial.at(i); 
+        const bool isFixedXShift = std::find(_fixedAlignmentXShfitPlaneIds.begin(), _fixedAlignmentXShfitPlaneIds.end(), sensorId) != _fixedAlignmentXShfitPlaneIds.end();
+        const bool isFixedYShift = std::find(_fixedAlignmentYShfitPlaneIds.begin(), _fixedAlignmentYShfitPlaneIds.end(), sensorId) != _fixedAlignmentYShfitPlaneIds.end();
+        const bool isFixedZShift = std::find(_fixedAlignmentZShfitPlaneIds.begin(), _fixedAlignmentZShfitPlaneIds.end(), sensorId) != _fixedAlignmentZShfitPlaneIds.end();
+        const bool isFixedXRotation = std::find(_fixedAlignmentXRotationPlaneIds.begin(), _fixedAlignmentXRotationPlaneIds.end(), sensorId) != _fixedAlignmentXRotationPlaneIds.end();
+        const bool isFixedYRotation = std::find(_fixedAlignmentYRotationPlaneIds.begin(), _fixedAlignmentYRotationPlaneIds.end(), sensorId) != _fixedAlignmentYRotationPlaneIds.end();
+        const bool isFixedZRotation = std::find(_fixedAlignmentZRotationPlaneIds.begin(), _fixedAlignmentZRotationPlaneIds.end(), sensorId) != _fixedAlignmentZRotationPlaneIds.end();
+        const string initUncertaintyXShift = (isFixedXShift) ? "-1." : "1";//-1 means that this is fixed
+        const string initUncertaintyYShift = (isFixedYShift) ? "-1." : "1";
+        const string initUncertaintyZShift = (isFixedZShift) ? "-1." : "1";
+        const string initUncertaintyXRotation = (isFixedXRotation) ? "-1." : "1";
+        const string initUncertaintyYRotation = (isFixedYRotation) ? "-1." : "1";
+        const string initUncertaintyZRotation = (isFixedZRotation) ? "-1." : "1";
+
+        const double initXshift =0; const double initYshift = 0;
+        steerFile << left << setw(25) << _xShiftsMap[sensorId] << setw(25) << -initXshift << setw(25) << initUncertaintyXShift
+        << setw(25) << " ! X shift " << sensorId << std::endl;
+        steerFile << left << setw(25) << _yShiftsMap[sensorId] << setw(25) << -initYshift << setw(25) << initUncertaintyYShift
+        << setw(25) << " ! Y shift " << sensorId << std::endl;
+        steerFile << left << setw(25) << _zShiftsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyZShift
+        << setw(25) << " ! Z shift " << sensorId << std::endl;
+        steerFile << left << setw(25) << _yRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyYRotation
+        << setw(25) << " ! XZ rotation " << sensorId << std::endl;
+        steerFile << left << setw(25) << _xRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyXRotation
+        << setw(25) << " ! YZ rotation " << sensorId << std::endl;
+        steerFile << left << setw(25) << _zRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertaintyZRotation
+        << setw(25)  << " ! XY rotation " << sensorId << std::endl;
+
+    } 
+    steerFile << std::endl;
+    //Here we add some more paramter that millepede needs. This involves: How is the solution found, How are outliers down weighted(These are hits that are very far from state hit) and chi2 cuts
+ //   for ( StringVec::iterator it = pedeSteerAddCmds.begin( ); it != pedeSteerAddCmds.end( ); ++it ) {
+        // two backslashes will be interpreted as newline
+//        if ( *it == "\\\\" ){
+//            steerFile << std::endl;
+ //       }else{
+  //          steerFile << *it << " ";
+   //     }
+ //   }
+    steerFile <<  "method inversion 5 0.1" <<std::endl;
+    steerFile <<  "outlierdownweighting 4" << std::endl; 
+    steerFile << "chiscut 30 6" <<std::endl; 
+    steerFile << "end" << std::endl;
+    steerFile.close();
 }
 void EUTelMillepede::copyFile(std::string _milleSteeringFilename, std::string _milleSteerNameOldFormat){
 	std::ifstream infile (_milleSteeringFilename.c_str(),std::ifstream::binary);
@@ -234,6 +358,52 @@ void EUTelMillepede::outputSteeringFiles(){
 	_iteration++;
 
 }
+void EUTelMillepede::getNewGear(){
+    ///Must create string explicitly on right had side. Since c++ does not have + char operator.
+    const string command = std::string("gearUpdate ") + " -og " + Global::parameters->getStringVal("GearXMLFile" )  + " -r " + _milleResultFileName + " -ng " +  _newGear;
+	streamlog_out ( MESSAGE5 ) << command << std::endl;
+	redi::ipstream updateGear( command.c_str( ), redi::pstreams::pstdout | redi::pstreams::pstderr );
+
+	if ( !updateGear.is_open( )){
+		throw(lcio::Exception("Could not open the updateGear file. "));
+	}else{
+	// output multiplexing: parse updateGear output in both stdout and stderr and echo messages accordingly
+	char buf[1024];
+		std::streamsize n;
+		std::stringstream updateGearoutput; // store stdout to parse later
+		std::stringstream updateGearerrors;
+		bool finished[2] = { false, false };
+		while ( !finished[0] || !finished[1] ) {
+			if ( !finished[0] ) {
+				while ( ( n = updateGear.err( ).readsome( buf, sizeof (buf ) ) ) > 0 ) {
+					streamlog_out( ERROR5 ).write( buf, n ).flush( );
+					string error ( buf, n );
+					updateGearerrors << error;
+				}
+				if ( updateGear.eof( ) ) {
+					finished[0] = true;
+					if ( !finished[1] )	updateGear.clear( );
+				}
+			}
+
+			if ( !finished[1] ) {
+				while ( ( n = updateGear.out( ).readsome( buf, sizeof (buf ) ) ) > 0 ) {
+					streamlog_out( MESSAGE9 ).write( buf, n ).flush( );
+					string output ( buf, n );
+					updateGearoutput << output;
+				}
+				if ( updateGear.eof( ) ) {
+					finished[1] = true;
+					if ( !finished[0] ) updateGear.clear( );
+				}
+			}
+		}
+		updateGear.close( );
+	}
+
+
+};
+
 //This part using the output of millepede will create a new gear file based on the alignment parameters that have just been determined
 //It will also create LCIO file that will hold the alignment constants
 bool EUTelMillepede::parseMilleOutput(std::string alignmentConstantLCIOFile, std::string gear_aligned_file){
@@ -361,7 +531,7 @@ void EUTelMillepede::printFixedPlanes(){
 	for(size_t i=0;i<_fixedAlignmentZRotationPlaneIds.size();++i){
 		streamlog_out(MESSAGE5)<<_fixedAlignmentZRotationPlaneIds.at(i)<<"  ";
 	}
-	streamlog_out(MESSAGE5)<<endl<<"The planes we will align with are: "<<endl;
+//	streamlog_out(MESSAGE5)<<endl<<"The planes we will align with are: "<<endl;
 //	for(size_t i =0 ; i < geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size(); ++i){
 //		streamlog_out(MESSAGE5)<<geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().at(i)<<"  ";
 //	}

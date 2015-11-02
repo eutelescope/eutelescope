@@ -11,7 +11,6 @@ _milleResultFileName("millepede.res"),
 _gear_aligned_file("gear-00001-aligned.xml"),
 _nProcessedRuns(0),
 _nProcessedEvents(0),
-_alignmentMode(7),
 _beamQ(-1),
 _eBeam(4),
 _createBinary(true),
@@ -35,27 +34,18 @@ _mEstimatorType()
 
   // Necessary processor parameters that define fitter settings
   registerProcessorParameter("BeamEnergy", "Beam energy [GeV]", _eBeam, static_cast<double> (4.0));
+  registerOptionalParameter("ExcludePlanes", "This is the planes that will not be included in analysis", _excludePlanes ,IntVec());
+
 
   // Optional processor parameters that define finder settings
 
   registerOptionalParameter("GBLMEstimatorType", "GBL outlier down-weighting option (t,h,c)", _mEstimatorType, std::string() );
+  registerOptionalParameter("IncMed", "Do you want to include the medium as addtional scattering", _incMed ,int(0));
 
   registerOptionalParameter("CreateBinary", "Should we create a binary file for millepede containing the data that millepede needs  ", _createBinary, bool(true));
 
   registerOptionalParameter("xResolutionPlane", "x resolution of planes given in Planes", _SteeringxResolutions, FloatVec());
   registerOptionalParameter("yResolutionPlane", "y resolution of planes given in Planes", _SteeringyResolutions, FloatVec());
-
-    // MILLEPEDE specific parameters
-    registerOptionalParameter("AlignmentMode", "Alignment mode specifies alignment degrees of freedom to be considered\n"
-            "0 - No alignment at all. Simply fit tracks assuming that alignment is correct\n"
-            "1 - Alignment of XY shifts\n"
-            "2 - Alignment of XY shifts + rotations around Z\n"
-            "3 - Alignment of XYZ shifts + rotations around Z\n"
-            "4 - Alignment of XY shifts + rotations around X and Z\n"
-            "5 - Alignment of XY shifts + rotations around Y and Z\n"
-            "6 - Alignment of XY shifts + rotations around X,Y and Z\n"
-            "7 - Alignment of XYZ shifts + rotations around X,Y and Z\n",
-            _alignmentMode, static_cast<int> (7));
 
     registerOptionalParameter("FixedAlignmentPlanesXshift", "Ids of planes for which X shift will be fixed during millepede call", _fixedAlignmentXShfitPlaneIds, IntVec());
     
@@ -85,10 +75,11 @@ void EUTelProcessorGBLAlign::init() {
 		_nProcessedEvents = 0;
 		std::string name("test.root");
 		geo::gGeometry().initializeTGeoDescription(name,false);
+        EUTelExcludedPlanes::setRelativeComplementSet(_excludePlanes);///Only used if GBL will do the track parameterisation.
 
 		// Initialize GBL fitter
 		EUTelGBLFitter* Fitter = new EUTelGBLFitter();
-		_Mille  = new EUTelMillepede(); 
+		_Mille  = new EUTelMillepede(_milleResultFileName, _gear_aligned_file); 
 		_Mille->setSteeringFileName(_milleSteeringFilename);// The steering file will store the labels for global variables in text file, along with errors and seeds guess.
 		_Mille->setXShiftFixed(_fixedAlignmentXShfitPlaneIds);
 		_Mille->setYShiftFixed(_fixedAlignmentYShfitPlaneIds);
@@ -104,6 +95,7 @@ void EUTelProcessorGBLAlign::init() {
 		Fitter->setParamterIdXResolutionVec(_SteeringxResolutions);//We set the accuracy of the residual information since we have no correct hit error analysis yet.
 		Fitter->setParamterIdYResolutionVec(_SteeringyResolutions);
 		Fitter->setMillepede(_Mille);//We need to have a connection between GBL and Millepede since GBL knows nothing about sensor orientations.
+        Fitter->setIncMed(_incMed); 
 		Fitter->testUserInput();
 		_trackFitter = Fitter;
 
@@ -167,14 +159,15 @@ void EUTelProcessorGBLAlign::processEvent(LCEvent * evt){
             std::vector<EUTelTrack> tracks = reader.getTracks(evt, _trackCandidatesInputCollectionName);
             for (size_t iTrack = 0; iTrack < tracks.size(); ++iTrack) {
                 _totalTrackCount++;
-                _trackFitter->resetPerTrack(); //Here we reset the label that connects state to GBL point to 1 again. Also we set the list of states->labels to 0
                 EUTelTrack track = tracks.at(iTrack);
-    //			float chi = track.getChi2();
-//				float ndf = static_cast<float>(track.getNdf());
-                std::vector< gbl::GblPoint > pointList;//This is the GBL points. These contain the state information, scattering and alignment jacobian. All the information that the mille binary will get.
-                _trackFitter->setInformationForGBLPointList(track, pointList);//We create all the GBL points with scatterer inbetween both planes. This is identical to creating GBL tracks
-                _trackFitter->setPairMeasurementStateAndPointLabelVec(pointList);
-                _trackFitter->setAlignmentToMeasurementJacobian(pointList); //This is place in GBLFitter since millepede has no idea about states and points. Only GBLFitter know about that
+                std::vector< gbl::GblPoint > pointList;
+                std::map<  unsigned int,unsigned int >  linkGL;
+                std::map< unsigned int, unsigned int >  linkMeas;
+                ///This will create the initial GBL trajectory
+                _trackFitter->getGBLPointsFromTrack(track, pointList);
+                ///NOTE: This is the only difference between a GBL track fit and alignment step with respect to GBL
+                /// The rest of the work come from reading this to the gear file and making sure the transformations are correct.
+                _trackFitter->getGloPar(pointList,track); 
                 const gear::BField& B = geo::gGeometry().getMagneticField();
                 const double Bmag = B.at( TVector3(0.,0.,0.) ).r2();
                 gbl::GblTrajectory* traj = 0;
@@ -202,7 +195,7 @@ void EUTelProcessorGBLAlign::processEvent(LCEvent * evt){
 		throw marlin::SkipEventException(this);
 	}
 	catch(std::string &e){
-		streamlog_out(MESSAGE9) << e << std::endl;
+//		streamlog_out(MESSAGE9) << e << std::endl;
 		throw marlin::SkipEventException( this ) ;
 	}
 	catch(lcio::Exception& e){
@@ -218,30 +211,18 @@ void EUTelProcessorGBLAlign::processEvent(LCEvent * evt){
 
 void EUTelProcessorGBLAlign::end(){
 	_Mille->_milleGBL->~MilleBinary();
-//	double size =	printSize("millepede.bin");
-//	std::cout<<"Binary after track addition " << size << " This is the size per track: " << size/_totalTrackCount << std::endl;
-
 	streamlog_out (MESSAGE9) <<"TOTAL NUMBER OF TRACKS PASSED TO ALIGNMENT: "<< _totalTrackCount << std::endl;
 	if(_totalTrackCount<1000){
 		streamlog_out(WARNING5)<<"You are trying to align with fewer than 1000 tracks. This could be too small a number." <<std::endl;
 	}
-	//TO DO: We automatically create the millepede output file in the directory of execution. We should be able to move these to another folder to stop the clutter in this directory.
-	//The millepede class contains all the functions related to manipulation of steering files, results files from millepede and the scripts related to editing these file.
-	//It also controls the running of millepede. 
-	_Mille->writeMilleSteeringFile(_pedeSteerAddCmds);//This will create the initial steering file. This can then be accessed via the string member variable:_milleSteeringFilename
-	bool tooManyRejects = 	_Mille->runPede();//This will run millepede and create the initial results file. We automatically line to this through the string variable._milleResultFileName.
-	if(!tooManyRejects){//Check that the intial input fit is successful. We need this for the initial reasonable results file.
-		streamlog_out (MESSAGE9) <<"FIRST ATTEMPT WITH INITIAL INPUT PARAMETERS. NOW TRY TO CONVERGE.......................................  "<< std::endl;
-		bool converged =	_Mille->converge();//This will iteratively run millepede over mutiple results file, during this process it also checks that the solution converges.
-        if(converged){
-            streamlog_out (MESSAGE9) <<"Converge:Successful! "<< std::endl;
-        }else{
-            streamlog_out (MESSAGE9) <<"Converge:Fail! "<< std::endl;
-        }
-
-		_Mille->parseMilleOutput(_alignmentConstantLCIOFile, _gear_aligned_file);
+    /// Create inital steering file
+	_Mille->writeMilleSteeringFile(_pedeSteerAddCmds);
+    /// This will run pede and link to the results file: _milleResultFileName
+	bool tooManyRejects = 	_Mille->runPede();
+	if(!tooManyRejects){
+        _Mille->getNewGear();
 	}else{
-		streamlog_out (MESSAGE9) <<"THE NUMBER OF REJECTED TRACKS IS NOT LARGE."<< std::endl;
+		streamlog_out (MESSAGE9) <<"THE NUMBER OF REJECTED TRACKS IS TOO LARGE."<< std::endl;
 	}
 }
 

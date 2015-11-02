@@ -25,7 +25,7 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
   </execute>
 
    <global>
-      <parameter name="LCIOInputFiles"> @LcioPath@/@FilePrefix@-hitlocal.slcio </parameter>
+      <parameter name="LCIOInputFiles"> @LcioPath@/run@RunNumber@-hitlocal.slcio </parameter>
       <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
@@ -45,35 +45,32 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
     <parameter name="Compress" type="int" value="1"/>
 
     <!-- filename without extension-->
-    <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-tracksearchHelix"/>
+    <parameter name="FileName" type="string" value="@HistogramPath@/run@RunNumber@-patternRecognition"/>
 
     <!-- type of output file xml (default) or root ( only OpenScientist)-->
     <parameter name="FileType" type="string" value="root"/>
   </processor>
 
 
- <processor name="TrackSearch" type="EUTelProcessorPatternRecognition">
-  <!--EUTelProcessorTrackingHelixTrackSearch preforms track pattern recognition.-->
+ <processor name="TrackSearch" type="EUTelProcessorPatRecTriplets">
   <!--Beam charge [e]-->
-  <parameter name="BeamCharge" type="double">-1. </parameter>
-  <parameter name="ResidualsRMax" type="Float" value="@ResidualsRMax@" />
-  <parameter name="InitialDisplacement" type="Float" value="@InitialDisplacement@" />
-  <!--Beam charge [GeV]-->
-  <parameter name="BeamEnergy" type="double"> @BeamEnergy@ </parameter>
-  <!--Name of histogram info xml file-->
-  <parameter name="HistogramInfoFilename" type="string" value="@HistoInfoFile@"/>
-  <!--Input of Zero Suppressed data-->
-  <parameter name="HitInputCollectionName" type="string" lcioInType="TrackerHit"> @HitInputCollectionName@ </parameter>
-  <!--Maximal number of missing hits on a track candidate-->
-  <parameter name="MaxMissingHitsPerTrack" type="int"> @MaxMissingHitsPerTrack@ </parameter>
-  <!--Maximal number of track candidates to be found in events-->
-  <!--parameter name="MaxNTracksPerEvent" type="int">100 </parameter-->
-  <!--Output track candidates hits collection name-->
-	<parameter name = "AllowedSharedHitsOnTrackCandidate" type="int"> @AllowedSharedHitsOnTrackCandidate@ </parameter>	
-  <parameter name="TrackCandHitOutputCollectionName" type="string" lcioOutType="Track"> @TrackCandHitOutputCollectionName@  </parameter>
-	<parameter name="planeDimensions" type="IntVec" > @planeDimensions@ </parameter>
-	<parameter name="ExcludePlanes" type="string" lcioOutType="FloatVec"> @excludeplanes@ </parameter>
-  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+    <parameter name="BeamCharge" type="double">-1. </parameter>
+    <parameter name="DoubletDistCut" type="Float" value="@DoubletDistCut@" />
+    <parameter name="DoubletCenDistCut" type="Float" value="@DoubletCenDistCut@" />
+    <parameter name="TripletSlopeCuts" type="Float" value="@TripletSlopeCuts@" />
+    <parameter name="TripletConnectDistCut" type="Float" value="@TripletConnectDistCut@" />
+    <parameter name="InitialDisplacement" type="Float" value="@InitialDisplacement@" />
+    <!--Beam charge [GeV]-->
+    <parameter name="BeamEnergy" type="double"> @BeamEnergy@ </parameter>
+    <!--Name of histogram info xml file-->
+    <parameter name="HistogramInfoFilename" type="string" value="@HistoInfoFile@"/>
+    <!--Input of Zero Suppressed data-->
+    <parameter name="HitInputCollectionName" type="string" lcioInType="TrackerHit"> @HitInputCollectionName@ </parameter>
+    <!--Output track candidates hits collection name-->
+    <parameter name="TrackCandHitOutputCollectionName" type="string" lcioOutType="Track"> @TrackCandHitOutputCollectionName@ </parameter>
+    <parameter name="planeDimensions" type="IntVec" > @planeDimensions@ </parameter>
+    <parameter name="ExcludePlanes" type="string" lcioOutType="FloatVec"> @excludeplanes@ </parameter>
+    <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
  </processor>
 
 
@@ -88,7 +85,7 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
   <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
   <!--parameter name="KeepCollectionNames" type="StringVec" value="MyPreciousSimTrackerHits"/-->
   <!-- name of output file -->
-  <parameter name="LCIOOutputFile" type="string" value="@LcioPath@/@FilePrefix@-trackcand.slcio"/>
+  <parameter name="LCIOOutputFile" type="string" value="@LcioPath@/run@RunNumber@-trackcand.slcio"/>
   <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
   <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   <!--Set it to true to remove intermediate EORE in merged runs-->

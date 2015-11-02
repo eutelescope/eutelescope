@@ -12,6 +12,7 @@
 #include "EUTelTrack.h"
 // LCIO
 #include <EVENT/LCCollection.h>
+#include <IMPL/LCCollectionVec.h>
 #include <EVENT/TrackerHit.h>
 #include <IMPL/TrackImpl.h>
 #include "IMPL/TrackerHitImpl.h"

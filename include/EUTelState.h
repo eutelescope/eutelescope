@@ -2,6 +2,7 @@
 #define	EUTELSTATE_H
 
 #include "EUTelUtility.h"
+#include "EUTelBlock.h"
 
 // ROOT
 #if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
@@ -12,87 +13,86 @@
 #endif
 #include "EUTelHit.h"
 #include "EUTelGeometryTelescopeGeoDescription.h"
+//Eigen
+#include <Eigen/Core>
 
 namespace eutelescope {
 
 	class  EUTelState{
 		public: 
+            Block block;
+            std::vector<unsigned int> GBLLabels;
+
 			EUTelState();
 			EUTelState(EUTelState *state);
 			//getters
-			EUTelHit getHit();
+			EUTelHit& getHit();
+            EUTelHit getHitCopy() const;
+
 			int getDimensionSize() const ;
-			int	getLocation() const;
-			TMatrixDSym getStateCov() const;
 			TVectorD getStateVec();
-            TVector3 getMomLocal();
-			float getMomLocalX() const {return _momLocalX;}
-			float getMomLocalY() const {return _momLocalY;}
-			float getMomLocalZ() const {return _momLocalZ;}
-			TVector3 getMomGlobal() const ;
+			float getSlopeX() const; 
+			float getSlopeY() const; 
+            float getSlopeXGlobal() const; 
+            float getSlopeYGlobal() const; 
+
             std::vector<double> getLCIOOutput();
 			float getArcLengthToNextState() const {return _arcLength;} 
-			const float* getPosition() const ; 
 			TVector3 getPositionGlobal() const; 
-			void getCombinedHitAndStateCovMatrixInLocalFrame(double (&cov)[4]) const;
+            Eigen::Vector3d getPositionGlobalEig() const; 
 			bool getStateHasHit() const;
+            /// This will get the link between the local and global frames. 
+            /// GBL Fitter expects the link to be give from global to local. 
+            /// MUST INVERT FOR USE!!
+            /**
+             * \param [out] Projection Calculated using the incidence in the global frame and normal of the senso
+             */
+
 			TMatrixD getProjectionMatrix() const;
 			TVector3 getIncidenceUnitMomentumVectorInLocalFrame();
-			TMatrixDSym getScatteringVarianceInLocalFrame();
-			TMatrixDSym getScatteringVarianceInLocalFrame(float variance);
+			TMatrixDSym getScatteringVarianceInLocalFrame(double const & var );
+			double getRadFracAir() const ;
+			double getRadFracSensor() const ;
+            TVector3 getDirLocal() const; 
+            TVector3 getDirGlobal() const; 
+            Eigen::Vector3d getDirGlobalEig() const; 
+            //STATE PARAMETERS:
 			TVectorD getKinks() const;
 			TVectorD getKinksMedium1() const;
 			TVectorD getKinksMedium2() const;
-			double getRadFracAir() const ;
-			double getRadFracSensor() const ;
+			const double* getPosition() const ; 
+			int	getLocation() const;
+			float getDirLocalX() const {return _dirLocalX;}
+			float getDirLocalY() const {return _dirLocalY;}
+			float getDirLocalZ() const {return _dirLocalZ;}
+            TMatrixD getCov();
+            //END OF STATE PARAMETERS
 			//setters
             void setHit(EUTelHit hit);
             void setHit(EVENT::TrackerHit* hit);
 			void setDimensionSize(int dimension);
 			void setLocation(int location);
-			void setMomLocalX(float momX);
-			void setMomLocalY(float momY);
-			void setMomLocalZ(float momZ);
-			void setLocalMomentumGlobalMomentum(TVector3 momentumIn);
+			void setDirLocalX(double dirX);
+			void setDirLocalY(double dirY);
+			void setDirLocalZ(double dirZ);
+            void setDirFromGloSlope(std::vector<double> slopes);
+            void setDirFromLocSlope(std::vector<double> slopes);
+			void setLocalDirGlobalDir(TVector3 momentumIn);
             void setTrackFromLCIOVec(std::vector<double> input);
-            //!Template input for setting local position of hit  
-            /*!
-             * @param position of hit on plane
-             */
 			void setPositionLocal(float position[]);
 			void setPositionLocal(double position[]);
 			void setPositionGlobal(float positionGlobal[]);
-			void setCombinedHitAndStateCovMatrixInLocalFrame(double cov[4]);
-			void setStateUsingCorrection(TVectorD stateVec);
+            void setPositionGlobal(double positionGlobal[]);
+			void setStateUsingCorrection(TVectorD corrections);
 			void setArcLengthToNextState(float arcLength){_arcLength = arcLength;} 
 			void setKinks(TVectorD kinks);
 			void setKinksMedium1(TVectorD kinks);
 			void setKinksMedium2(TVectorD kinks);
 			void setRadFrac(double plane, double air);
+            void setCov(TMatrixD cov);
 
 			//initialise
 			void initialiseCurvature();
-			//find
-			bool findIntersectionWithCertainID(int nextsensorID, float intersectionPoint[], TVector3& momentumAtIntersection, float& arcLength, int& newNextPlaneID );
-			//compute
-//			TMatrix computePropagationJacobianFromLocalStateToNextLocalState(TVector3 momentumEnd, float arcLength,float nextPlaneID);
-			float computeRadLengthsToEnd( std::map<const int,double> & mapSensor, std::map<const int ,double> & mapAir );
-            //
-            EUTelHit _hit;
-            int _dimension;
-            int _location; 
-            float _position[3];
-            bool _stateHasHit;
-            TVectorD _kinks;
-            TVectorD _kinksMedium1;
-            TVectorD _kinksMedium2;
-            float _momLocalX;
-            float _momLocalY;
-            float _momLocalZ; 
-            double _radFracSensor;
-            double _radFracAir;
-            float _arcLength;
-
 			//print
 			void print();
             //clear
@@ -102,7 +102,22 @@ namespace eutelescope {
 			bool operator==(const EUTelState compareState ) const;
 			bool operator!=(const EUTelState compareState ) const;
 
-  	private:
+  	protected:
+            EUTelHit _hit;
+            int _dimension;
+            int _location; 
+            double _position[3];
+            bool _stateHasHit;
+            TVectorD _kinks;
+            TVectorD _kinksMedium1;
+            TVectorD _kinksMedium2;
+            TMatrixD _cov;
+            double _dirLocalX;
+            double _dirLocalY;
+            double _dirLocalZ; 
+            double _radFracSensor;
+            double _radFracAir;
+            float _arcLength;
 			float _covCombinedMatrix[4];
 	};
 }

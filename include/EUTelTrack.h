@@ -21,32 +21,41 @@ namespace eutelescope {
 			EUTelTrack();
 			EUTelTrack( const EUTelTrack& track);
 			EUTelTrack( const EUTelTrack& track,bool);
-			//getters
+			//getters//TRACK PARAMETERS
             float getChi2() const ;
             float getNdf() const;
-			float getTotalVariance() const { return _var;}
-			unsigned int getNumberOfHitsOnTrack() const;
+			double getRadPerTotal() const { return _radPerTotal;}
+            float getQOverP() const { return _qOverP; }
+            float getBeamEnergy() const { return -1.0/_qOverP; }
+            std::vector<int>  getPlaIDs() const;
+            std::vector<int>  getPlaIDDUTs() const; 
+
+            //END OF TRACK PARAMETERS
             //Must return reference to change the contents.
+			unsigned int getNumberOfHitsOnTrack() const;
 			std::vector<EUTelState>& getStates();
             std::vector<EUTelState> getStatesCopy() const;
             std::vector<double> getLCIOOutput();
 			//setters
             void setState(EUTelState state);
             void setStates(std::vector<EUTelState> states);
-			void setTotalVariance(double rad);
+            std::vector<EUTelHit> getHitsCopy() const; 
+
+			void setRadPerTotal(double radPer){this->_radPerTotal = radPer;}
             void setChi2(float chi2);
             void setNdf(float nDF);
             void setTrackFromLCIOVec(std::vector<double> input);
-
+            void setQOverP(double qOverP ){ _qOverP = qOverP; }
+			void setTrackUsingCorrection(TVectorD corrections);
 			//print
 			void print();
-            //
+  	private:
             std::vector<EUTelState> _states;
-            double _var;
+            double _qOverP;
+            double _radPerTotal;
             float _chi2;
             float _nDF;
 
-  	private:
 	};
 
 }
