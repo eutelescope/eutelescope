@@ -7,6 +7,7 @@ Created on Jun 8, 2015
 ## \file
 # telescope segment
 
+#import matplotlib.pyplot as plt          # remove to get rid of X11 error
 import numpy as np
 import math
 from eutelpy.telsystem import globalZXYsystem
@@ -37,14 +38,17 @@ class TelSegment(object):
     dz = self.__offset[3] - self.__offset[2]
     self.__slope = ((hits[-1].getX() - self.__offset[0]) / dz, (hits[-1].getY() - self.__offset[1]) / dz)
     ## curvature
-    self.__curv = curv
-    
-    #print " segment ", len(self.__hits), self.__offset[0], self.__offset[1], self.__offset[2], \
-                       #self.__offset[3], self.__slope[0], self.__slope[1], self.__curv[0], self.__curv[1]
-                       
+    self.__curv = (curv[0], curv[1])
     ## matches
     self.__matches = 0
+    
+    #self.dump()                      
   
+  ## Dump
+  def dump(self):
+    print " segment ", len(self.__hits), self.__offset[0], self.__offset[1], self.__offset[2], \
+                       self.__offset[3], self.__slope[0], self.__slope[1], self.__curv[0], self.__curv[1]  
+   
   ## Add match
   def addMatch(self):
     self.__matches += 1
@@ -99,7 +103,11 @@ class TelSegment(object):
   def getSlope(self, z):
     dz = z - 0.5 * (self.__offset[2] + self.__offset[3])
     return (self.__slope[0] + dz * self.__curv[0], self.__slope[1] + dz * self.__curv[1])      
-  
+
+  ## Get curvature.
+  def getCurvature(self):
+    return self.__curv      
+      
   ## Get direction.
   #
   # @param[in] z   z position
@@ -121,7 +129,7 @@ class TelSegment(object):
       dz2 = z - self.__offset[3]  # distance (in Z) to last hit
       px = self.__offset[0] + dz1 * self.__slope[0] + 0.5 * dz1 * dz2 * self.__curv[0] 
       py = self.__offset[1] + dz1 * self.__slope[1] + 0.5 * dz1 * dz2 * self.__curv[1]
-      #print " res ", h.getLayer(), x, px, y, py, self.__slope[0], self.__slope[1]
+      print " res ", h.getLayer(), x, px, y, py, self.__slope[0], self.__slope[1]
       
   ## Fit segment.
   #
@@ -132,9 +140,10 @@ class TelSegment(object):
   # @param[in] qbyp    assumed Q/P (e.g. from beam energy)
   # @param[in] bField  magnetic field
   # @param[in] milleFile   Millepede-II binary file
+  # @param[in] consBL    beam line constraint (for B=0)
   # @return GBL trajectory
   #
-  def fitSegment(self, det, qbyp, bField, milleFile):
+  def fitSegment(self, det, qbyp, bField, milleFile, consBL=None):
     # expand track at center
     refZ = self.getZCenter()
     refPos = self.getPosition(refZ)
@@ -147,6 +156,7 @@ class TelSegment(object):
     traj = GblTrajectory(bField[0] != 0. or bField[1] != 0.) 
     jacPointToPoint = np.eye(5)
     sOld = None
+    sDUT = None
     #X0Air = None
     X0Air = 304200.  # [mm]
     #
@@ -163,6 +173,29 @@ class TelSegment(object):
       measDir = plane.getMeasDir()
       # arc-length
       sArc = locsys.getArcLengthToPlane(position, normal)
+      # skip scattering in air ?
+      skipAir = False
+      # dummy point in front of first point for beam line constraint
+      # (slope with not change until first point: no bending, scattering in air) 
+      if consBL is not None and sOld is None:
+        skipAir = True
+        sOld = sArc - overlap - 1.
+        point = GblPoint(jacPointToPoint)
+        # for beam line constraint create 4D measurement (u', v', u, v)
+        meas4D = np.zeros(4)
+        prec4D = np.zeros(4)
+        if bField[0] == 0.:
+          # no bending in YZ
+          meas4D[1] = consBL[0][1] - self.__slope[1]
+          prec4D[1] = 1. / consBL[1][1] ** 2
+        if bField[1] == 0.:
+          # no bending in XZ
+          meas4D[0] = consBL[0][0] - self.__slope[0]
+          prec4D[0] = 1. / consBL[1][0] ** 2
+        #print " beam line constraint ", meas4D, prec4D          
+        point.addMeasurement([None, meas4D, prec4D]) 
+        # add point to trajectory      
+        iLabel = traj.addPoint(point)
       # except for the first point
       if sOld is not None:
         # skip too close by plane
@@ -170,7 +203,7 @@ class TelSegment(object):
           #print " skip ", planeID, sArc, sOld
           continue
         # scattering in air?
-        if X0Air is not None:
+        if (X0Air is not None) and (not skipAir):
           thickness = 0.05
           sAir = sArc - sOld - thickness
           XbyX0 = sAir / X0Air
@@ -197,7 +230,7 @@ class TelSegment(object):
         #print " jac2 ", s
         #print jacPointToPoint
 
-      sOld = sArc      
+      sOld = sArc 
       # Z position
       posZ = refZ + dZds * sArc
       # direction (on seed track)
@@ -219,10 +252,19 @@ class TelSegment(object):
         # global derivatives (in local = global ZXY system)
         labGlobal, derGlobal = plane.getGlobalDerivativesLoc(position, direction, '111111')
         point.addGlobals(labGlobal, derGlobal)
+        '''
+        # to measure scattering in DUT with additional local parameters
+        if sDUT is not None:
+          addDer = (sArc - sDUT) * proL2m
+          point.addLocals(addDer)
+
+      if planeID > 5:
+        sDUT = sArc
+      '''
       # scattering error
       XbyX0 = plane.getXbyX0()
       if XbyX0 > 0.:
-        scatP = plane.getScatPrecision(qbyp, direction, XbyX0) 
+        scatP = plane.getScatPrecision(qbyp, direction, XbyX0)
         scat = np.array([ 0., 0.]) 
         # add scatterer to point
         point.addScatterer([scat, scatP])
@@ -233,7 +275,8 @@ class TelSegment(object):
    
     # fit trajectory
     Chi2, Ndf = traj.fit()[:2]
-    #print " GBL: Chi2, Ndf ", Chi2, Ndf      
+    #print " GBL: Chi2, Ndf ", Chi2, Ndf
+
     if milleFile is not None:
       if Ndf > 0:
         traj.milleOut(milleFile)

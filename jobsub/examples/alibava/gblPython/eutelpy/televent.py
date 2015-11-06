@@ -10,6 +10,7 @@ Created on Jun 8, 2015
 # read from text or lcio file
 
 from eutelpy.telhit import TelHit
+# import matplotlib.pyplot as plt          # remove to get rid of X11 error
 import numpy as np
 
 ## telescope event
@@ -143,11 +144,12 @@ class TelEvent(object):
   ## Fit with GBL.
   #
   # @param[in] binaryFile   Millepede-II binary file
+  # @param[in] consBL       beam line constraint
   #
-  def fitGBL(self, binaryFile):
+  def fitGBL(self, binaryFile, consBL=None):
     # fit segments
     for track in self.__tracks:
-      self.__traj.append(track.fitSegment(self.__det, self.__qbyp, self.__bField, binaryFile))
+      self.__traj.append(track.fitSegment(self.__det, self.__qbyp, self.__bField, binaryFile, consBL))
 
   ## Analyze event.
   #
@@ -158,12 +160,11 @@ class TelEvent(object):
   def analyze(self, rootTree=None):
     for it, t in enumerate(self.__tracks):
       hits = t.getHits()
-      for p in range(6, 9):
-        if p in hits:
+      for p, h in hits.iteritems():
+        if p > 5:
           plane = self.__det[p]
           # from plane
           rot = plane.getRotation()
-          h = hits[p]
           # from hit
           z = h.getZ()
           locMeas = plane.transformGlobalToLocal(np.array(h.getPos()))
@@ -179,5 +180,59 @@ class TelEvent(object):
           #print " analyze %i %i %i %i %.4f %.4f %.4f %.4f %.4g %.4g" % (self.__runNumber, self.__eventNumber, h.getIndex(), p, locMeas[0], locMeas[1], locPos[0], locPos[1], locSlope[0], locSlope[1])
           #print "   channelVec ", h.getCluster()
           if rootTree is not None:
-            rootTree.fill(self.__runNumber, self.__eventNumber, h.getIndex(), h.getPlane(), locPos, locSlope, h.getCluster())
-          
+            rootTree.fill(self.__runNumber, self.__eventNumber, h.getIndex(), p, locPos, locSlope, h.getCluster())
+
+  ## Analyze event.
+  #
+  # Look at DUT scattering
+  #
+  # @param[in] hists  histograms
+  #
+  def analyzeScat(self, hists=None):
+    for t in self.__traj:
+      # local corrections at first point          
+      locCorr, locCov = t.getResults(1)
+      if locCorr.shape[0] > 6:
+        print " scatPar ", locCorr[5], locCorr[6], locCov[5, 5], locCov[6, 6]
+        if hists is not None:
+          hists.addEntry("xScat", locCorr[5])
+          hists.addEntry("yScat", locCorr[6])
+
+  ## Analyze event.
+  #
+  # Look at residuals
+  #
+  def analyzeRes(self):
+    for t in self.__traj:
+      # check residuals
+      for i in range(t.getNumPoints()):
+        numData, aResiduals, aMeasErr, aResErr, aDownWeight = t.getMeasResults(i + 1)
+        for j in range(numData):
+          print " measRes " , i, j, aResiduals[j], aMeasErr[j], aResErr[j], aDownWeight[j]
+        numData, aResiduals, aMeasErr, aResErr, aDownWeight = t.getScatResults(i + 1)
+        for j in range(numData):
+          print " scatRes " , i, j, aResiduals[j], aMeasErr[j], aResErr[j], aDownWeight[j]
+
+  ## Analyze event.
+  #
+  # Look at measured momentum
+  #
+  # @param[in] hists  histograms
+  #
+  def analyzeMom(self, hists):
+    bfac2 = self.__bfac[0] * self.__bfac[0] + self.__bfac[1] * self.__bfac[1]
+    if bfac2 <= 0.:
+      return
+    #  Bfield on
+    for it, t in enumerate(self.__tracks):
+      # q/p of segment (fron slope difference of triplets)
+      curv = t.getCurvature()
+      qbyp = (curv[0] * self.__bfac[0] + curv[1] * self.__bfac[1]) / bfac2
+      # correction from GBL fit
+      locCorr = self.__traj[it].getResults(1)[0]
+      dqbyp = locCorr[0]
+      print " q/p ", it, qbyp, dqbyp
+      if hists is not None:
+          hists.addEntry("Pseg", 1. / qbyp)
+          hists.addEntry("Pgbl", 1. / (qbyp + dqbyp))
+  
