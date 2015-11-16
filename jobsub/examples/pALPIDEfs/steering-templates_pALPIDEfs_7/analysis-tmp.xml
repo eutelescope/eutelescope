@@ -180,6 +180,9 @@
   <parameter name="MinTimeStamp" type="double" value="@MinTimeStamp@"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value="MESSAGE1"/-->
+  
+  <!--This is parameter for Chip Version that we are using for analysis, for palpiefs3, use 3-->
+  <parameter name="ChipVersion" type="int" value="@ChipVersion@"/>
 </processor>
 
 <processor name="Save" type="EUTelOutputProcessor">

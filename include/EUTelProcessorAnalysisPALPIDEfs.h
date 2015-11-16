@@ -99,6 +99,8 @@ protected:
   int _nEvents;
   int _nEventsWithTrack;
   double _minTimeStamp;
+  int _nSectors;
+  int _chipVersion;
 private:
   bool _isFirstEvent;
   IntVec nTracks;

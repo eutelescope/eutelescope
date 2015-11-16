@@ -68,12 +68,12 @@ EUTelProcessorAnalysisPALPIDEfs::EUTelProcessorAnalysisPALPIDEfs()
   _nEvents(0),
   _nEventsWithTrack(0),
   _minTimeStamp(0),
-  nTracks(4),
-  nTracksPAlpide(4),
-  nFakeWithTrack(4,0),
-  nFakeWithoutTrack(4,0),
-  nFake(4,0),
-  nFakeWithTrackCorrected(4,0),
+  nTracks(8),
+  nTracksPAlpide(8),
+  nFakeWithTrack(8,0),
+  nFakeWithoutTrack(8,0),
+  nFake(8,0),
+  nFakeWithTrackCorrected(8,0),
   nDUThits(0),
   nNoPAlpideHit(0),
   nWrongPAlpideHit(0),
@@ -84,7 +84,10 @@ EUTelProcessorAnalysisPALPIDEfs::EUTelProcessorAnalysisPALPIDEfs()
   ySize(0),
   xPixel(0),
   yPixel(0),
-  hotPixelCollectionVec(NULL)
+  hotPixelCollectionVec(NULL),
+  _chipVersion(3),
+  _nSectors(8)
+  
 {
   _description="Analysis of the fitted tracks";
   registerInputCollection( LCIO::TRACKERHIT,
@@ -152,6 +155,10 @@ EUTelProcessorAnalysisPALPIDEfs::EUTelProcessorAnalysisPALPIDEfs()
                              _rate, static_cast< string > ( "" ) );
   registerProcessorParameter("MinTimeStamp", "This is minimum timestamp required to consider an event",
                              _minTimeStamp, static_cast<double>( 0 ) );
+  registerOptionalParameter("ChipVersion", "Chip Version",
+                             _chipVersion, static_cast<int> (3) );
+  if (_chipVersion != 3) _nSectors = 4;
+  else _nSectors = 8;
 
   _isFirstEvent = true;
 }
@@ -204,7 +211,7 @@ void EUTelProcessorAnalysisPALPIDEfs::init() {
   xPairs = cluster.SymmetryPairs(clusterVec,"x");
   yPairs = cluster.SymmetryPairs(clusterVec,"y");
   symmetryGroups = cluster.sameShape(clusterVec);
-  for (int iSector=0; iSector<4; iSector++)
+  for (int iSector=0; iSector<_nSectors; iSector++)
   {
     nTracks[iSector] = 0;
     nTracksPAlpide[iSector] = 0;
@@ -214,7 +221,7 @@ void EUTelProcessorAnalysisPALPIDEfs::init() {
   if (!std::ifstream(_outputSettingsFileName.c_str()))
     newFile = true;
   settingsFile.open (_outputSettingsFileName.c_str(), ios::out | ios::app );
-    if (newFile) settingsFile << "Run number;Energy;Chip ID;Irradiation level(0-nonIrradiated,1-2.5e12,2-1e13,3-700krad,4-combined:1e13+700krad);Rate;BB;Ithr;Idb;Vcasn;Vaux;Vcasp;Vreset;Threshold and their RMS for all four sectors;Noise and their RMS for all four sectors;Readout delay;Trigger delay;Strobe length;StrobeB length;Data (1) or noise (0);Number of events;Efficiency,Number of tracks,Number of tracks with associated hit for all sectors" << endl;
+    if (newFile) settingsFile << "Run number;Energy;Chip ID;Irradiation level(0-nonIrradiated,1-2.5e12,2-1e13,3-700krad,4-combined:1e13+700krad);Rate;BB;Ithr;Idb;Vcasn;Vcasn2;Vclip;Vcasp;VresetP;VresetD;Threshold and their RMS for all eight sectors;Noise and their RMS for all eight sectors;Readout delay;Trigger delay;Strobe length;StrobeB length;Data (1) or noise (0);Number of events;Efficiency,Number of tracks,Number of tracks with associated hit for all sectors" << endl;
 }
 
 void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
@@ -291,10 +298,11 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
         delete sparsePixel;
       }
     }
-    settingsFile << evt->getRunNumber() << ";" << _energy << ";" << _chipID[layerIndex] << ";" << _irradiation[layerIndex] << ";" << _rate << ";" << evt->getParameters().getFloatVal("BackBiasVoltage") << ";" << evt->getParameters().getIntVal(Form("Ithr_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Idb_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Vcasn_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Vaux_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Vcasp_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Vreset_%d",layerIndex)) << ";";
-    for (int iSector=0; iSector<4; iSector++)
+    settingsFile << evt->getRunNumber() << ";" << _energy << ";" << _chipID[layerIndex] << ";" << _irradiation[layerIndex] << ";" << _rate << ";" << evt->getParameters().getFloatVal("BackBiasVoltage") << ";" << evt->getParameters().getIntVal(Form("Ithr_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Idb_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Vcasn_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Vcasn2_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Vclip_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Vcasp_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("VresetP_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("VresetD_%d",layerIndex)) << ";";
+
+    for (int iSector=0; iSector<_nSectors; iSector++)
       settingsFile << evt->getParameters().getFloatVal(Form("Thr_%d_%d",layerIndex,iSector)) << ";" << evt->getParameters().getFloatVal(Form("ThrRMS_%d_%d",layerIndex,iSector)) << ";";
-    for (int iSector=0; iSector<4; iSector++)
+    for (int iSector=0; iSector<_nSectors; iSector++)
       settingsFile << evt->getParameters().getFloatVal(Form("Noise_%d_%d",layerIndex,iSector)) << ";" << evt->getParameters().getFloatVal(Form("NoiseRMS_%d_%d",layerIndex,iSector)) << ";";
     settingsFile << evt->getParameters().getIntVal(Form("m_readout_delay_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("m_trigger_delay_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("m_strobe_length_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("m_strobeb_length_%d",layerIndex)) << ";1;";
     _isFirstEvent = false;
@@ -409,9 +417,9 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
       {
         if (xposfit < limit || xposfit > xSize-limit || yposfit < limit || yposfit > ySize-limit) continue;
         int index = -1;
-        for (int iSector=0; iSector<4; iSector++)
+        for (int iSector=0; iSector<_nSectors; iSector++)
         {
-          if (xposfit>xSize/4.*iSector+(iSector==0?0:1)*(2.*xPitch+limit) && xposfit<xSize/4.*(iSector+1)-(iSector==3?0:1)*(2.*xPitch+limit))
+          if (xposfit>xSize/(double)_nSectors*iSector+(iSector==0?0:1)*(2.*xPitch+limit) && xposfit<xSize/(double)_nSectors*(iSector+1)-(iSector==_nSectors-1?0:1)*(2.*xPitch+limit))
           {
             index = iSector;
             break;
@@ -791,9 +799,9 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
             cluster.set_values(clusterSize,X,Y);
             float xCenter, yCenter;
             cluster.getCenterOfGravity(xCenter,yCenter);
-            for (int iSector=0; iSector<4; iSector++)
+            for (int iSector=0; iSector<_nSectors; iSector++)
             {
-              if (xCenter>xPixel/4.*iSector && xCenter<xPixel/4.*(iSector+1))
+              if (xCenter>xPixel/(double)_nSectors*iSector && xCenter<xPixel/(double)_nSectors*(iSector+1))
               {
                 index = iSector;
                 break;
@@ -864,9 +872,9 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
           for (unsigned int iPixel=0; iPixel<X.size(); iPixel++)
             nFakeWithTrackHitmapCorrectedHisto->Fill(X[iPixel],Y[iPixel]);
           int index = -1;
-          for (int iSector=0; iSector<4; iSector++)
+          for (int iSector=0; iSector<_nSectors; iSector++)
           {
-            if (xCenter>xPixel/4.*iSector && xCenter<xPixel/4.*(iSector+1))
+            if (xCenter>xPixel/(double)_nSectors*iSector && xCenter<xPixel/(double)_nSectors*(iSector+1))
             {
               index = iSector;
               break;
@@ -928,7 +936,7 @@ void EUTelProcessorAnalysisPALPIDEfs::bookHistos()
   nTrackPerEventHisto = new TH1I("nTrackPerEventHisto","Number of tracks per event;Number of tracks;a.u.",30,0,30);
   nClusterAssociatedToTrackPerEventHisto = new TH1I("nClusterAssociatedToTrackPerEventHisto","Number of clusters associated to tracks per event;Number of clusters;a.u.",30,0,30);
   nClusterPerEventHisto = new TH1I("nClusterPerEventHisto","Number of clusters per event;Number of clusters;a.u.",30,0,30);
-  for (int iSector=0; iSector<4; iSector++)
+  for (int iSector=0; iSector<_nSectors; iSector++)
   {
     AIDAProcessor::tree(this)->mkdir(Form("Sector_%d",iSector));
     AIDAProcessor::tree(this)->cd(Form("Sector_%d",iSector));
@@ -1022,7 +1030,7 @@ void EUTelProcessorAnalysisPALPIDEfs::end()
   for (int i=0; i<xPixel; i++)
     for (int j=0; j<yPixel; j++)
       if (tracksPAlpideHisto->GetBinContent(i,j) > tracksHisto->GetBinContent(i,j)) cerr << "More hits in the pAlpide than number of traks" << endl;
-  for (int iSector=0; iSector<4; iSector++)
+  for (int iSector=0; iSector<_nSectors; iSector++)
   {
     efficiencyPixelHisto[iSector]->Divide(tracksPixelHisto[iSector]);
     efficiencyPixel2by2Histo[iSector]->Divide(tracksPixel2by2Histo[iSector]);
@@ -1042,16 +1050,16 @@ void EUTelProcessorAnalysisPALPIDEfs::end()
       residualXAveragePixel2by2[chi2Max[i]][iSector]->Divide(nResidualXPixel2by2[chi2Max[i]][iSector]);
       residualYAveragePixel2by2[chi2Max[i]][iSector]->Divide(nResidualYPixel2by2[chi2Max[i]][iSector]);
     }
-    nFakeHisto->SetBinContent(iSector+1,(double)nFake[iSector]/_nEvents/(xPixel/4*yPixel));
-    nFakeHisto->SetBinError(iSector+1,sqrt((double)nFake[iSector])/_nEvents/(xPixel/4*yPixel));
-    nFakeWithTrackHisto->SetBinContent(iSector+1,(double)nFakeWithTrack[iSector]/_nEventsWithTrack/(xPixel/4*yPixel));
-    nFakeWithTrackHisto->SetBinError(iSector+1,sqrt((double)nFakeWithTrack[iSector])/_nEventsWithTrack/(xPixel/4*yPixel));
-    nFakeWithTrackCorrectedHisto->SetBinContent(iSector+1,(double)nFakeWithTrackCorrected[iSector]/_nEventsWithTrack/(xPixel/4*yPixel));
-    nFakeWithTrackCorrectedHisto->SetBinError(iSector+1,sqrt((double)nFakeWithTrackCorrected[iSector])/_nEventsWithTrack/(xPixel/4*yPixel));
-    nFakeWithoutTrackHisto->SetBinContent(iSector+1,(double)nFakeWithoutTrack[iSector]/(_nEvents-_nEventsWithTrack)/(xPixel/4*yPixel));
-    nFakeWithoutTrackHisto->SetBinError(iSector+1,sqrt((double)nFakeWithoutTrack[iSector])/(_nEvents-_nEventsWithTrack)/(xPixel/4*yPixel));
-    tracksProjection[iSector] = tracksHisto->ProjectionY(Form("tracksProjection_%d",iSector),xPixel/4*iSector,xPixel/4*(iSector+1));
-    tracksPAlpideProjection[iSector] = tracksPAlpideHisto->ProjectionY(Form("tracksPAlpideProjection_%d",iSector),xPixel/4*iSector,xPixel/4*(iSector+1));
+    nFakeHisto->SetBinContent(iSector+1,(double)nFake[iSector]/_nEvents/(xPixel/_nSectors*yPixel));
+    nFakeHisto->SetBinError(iSector+1,sqrt((double)nFake[iSector])/_nEvents/(xPixel/_nSectors*yPixel));
+    nFakeWithTrackHisto->SetBinContent(iSector+1,(double)nFakeWithTrack[iSector]/_nEventsWithTrack/(xPixel/_nSectors*yPixel));
+    nFakeWithTrackHisto->SetBinError(iSector+1,sqrt((double)nFakeWithTrack[iSector])/_nEventsWithTrack/(xPixel/_nSectors*yPixel));
+    nFakeWithTrackCorrectedHisto->SetBinContent(iSector+1,(double)nFakeWithTrackCorrected[iSector]/_nEventsWithTrack/(xPixel/_nSectors*yPixel));
+    nFakeWithTrackCorrectedHisto->SetBinError(iSector+1,sqrt((double)nFakeWithTrackCorrected[iSector])/_nEventsWithTrack/(xPixel/_nSectors*yPixel));
+    nFakeWithoutTrackHisto->SetBinContent(iSector+1,(double)nFakeWithoutTrack[iSector]/(_nEvents-_nEventsWithTrack)/(xPixel/_nSectors*yPixel));
+    nFakeWithoutTrackHisto->SetBinError(iSector+1,sqrt((double)nFakeWithoutTrack[iSector])/(_nEvents-_nEventsWithTrack)/(xPixel/_nSectors*yPixel));
+    tracksProjection[iSector] = tracksHisto->ProjectionY(Form("tracksProjection_%d",iSector),xPixel/_nSectors*iSector,xPixel/_nSectors*(iSector+1));
+    tracksPAlpideProjection[iSector] = tracksPAlpideHisto->ProjectionY(Form("tracksPAlpideProjection_%d",iSector),xPixel/_nSectors*iSector,xPixel/_nSectors*(iSector+1));
     efficiencyProjection[iSector] = (TH1D*)tracksPAlpideProjection[iSector]->Clone(Form("efficiencyProjection_%d",iSector));
     efficiencyProjection[iSector]->Divide(tracksProjection[iSector]);
     efficiencyProjection[iSector]->SetTitle("Efficiency projection in Y");
@@ -1155,7 +1163,7 @@ void EUTelProcessorAnalysisPALPIDEfs::end()
   streamlog_out ( MESSAGE4 ) << "For " << nWrongPAlpideHit << " tracks the pALPIDEfs had a hit far from the track" << endl;
   streamlog_out ( MESSAGE4 ) << nDUThits << " hits in the DUT weren't associated to a track" << endl;
   streamlog_out ( MESSAGE4 ) << "Overall efficiency of pALPIDEfs sectors: " << endl;
-  for (int iSector=0; iSector<4; iSector++)
+  for (int iSector=0; iSector<_nSectors; iSector++)
   {
     streamlog_out ( MESSAGE4 ) << (double)nTracksPAlpide[iSector]/nTracks[iSector] << "\t" << nTracks[iSector] << "\t" << nTracksPAlpide[iSector] << endl;
     settingsFile << (double)nTracksPAlpide[iSector]/nTracks[iSector] << ";" << nTracks[iSector] << ";" << nTracksPAlpide[iSector] << ";";
