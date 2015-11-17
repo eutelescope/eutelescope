@@ -156,9 +156,7 @@ EUTelProcessorAnalysisPALPIDEfs::EUTelProcessorAnalysisPALPIDEfs()
   registerProcessorParameter("MinTimeStamp", "This is minimum timestamp required to consider an event",
                              _minTimeStamp, static_cast<double>( 0 ) );
   registerOptionalParameter("ChipVersion", "Chip Version",
-                             _chipVersion, static_cast<int> (3) );
-  if (_chipVersion != 3) _nSectors = 4;
-  else _nSectors = 8;
+                             _chipVersion, static_cast<int>(3) );
 
   _isFirstEvent = true;
 }
@@ -167,6 +165,10 @@ void EUTelProcessorAnalysisPALPIDEfs::init() {
   printParameters();
   int _nTelPlanes = geo::gGeometry().nPlanes();
   const std::vector<int>& _planeID = geo::gGeometry().sensorIDsVec();
+  
+  if (_chipVersion != 3) _nSectors = 4;
+  else _nSectors = 8;
+  
   for(int iz=0; iz < _nTelPlanes ; iz++)
     if(_planeID[iz]==_dutID)
     {
