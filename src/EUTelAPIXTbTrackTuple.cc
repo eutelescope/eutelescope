@@ -54,6 +54,8 @@ EUTelAPIXTbTrackTuple::EUTelAPIXTbTrackTuple()
   p_tot(NULL),
   p_iden(NULL),
   p_lv1(NULL),
+  p_hitTime(NULL),
+  p_frameTime(NULL),
   _euhits(NULL),
   _nHits(0),
   _hitXPos(NULL),
@@ -167,7 +169,7 @@ void EUTelAPIXTbTrackTuple::processEvent( LCEvent * event )
 void EUTelAPIXTbTrackTuple::end()
 {
 	//write version number
-	_versionNo->push_back(1.2);
+	_versionNo->push_back(1.3);
 	_versionTree->Fill();
 	//Maybe some stats output?
 	_file->Write();
@@ -314,28 +316,47 @@ bool EUTelAPIXTbTrackTuple::readZsHits( std::string colName, LCEvent* event)
 		TrackerDataImpl* zsData = dynamic_cast< TrackerDataImpl * > ( zsInputCollectionVec->getElementAt( plane ) );
 		SparsePixelType type = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( zsData )["sparsePixelType"]) );
     		int sensorID = cellDecoder( zsData )["sensorID"];
-    
+		
+		std::auto_ptr<EUTelTrackerDataInterfacer> sparseData = std::auto_ptr<EUTelTrackerDataInterfacer>();
+
 		if (type == kEUTelGenericSparsePixel  ) 
-		{
-			std::auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> > apixData( new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> ( zsData ));
-      			EUTelGenericSparsePixel apixPixel;
-      				
-			for( unsigned int iHit = 0; iHit < apixData->size(); iHit++ ) 
-			{
-				apixData->getSparsePixelAt( iHit, &apixPixel);
-				_nPixHits++;
-				p_iden->push_back( sensorID );
-				p_row->push_back( apixPixel.getYCoord() );
-				p_col->push_back( apixPixel.getXCoord() );
-				p_tot->push_back( static_cast< int >(apixPixel.getSignal()) );
-				p_lv1->push_back( static_cast< int >(apixPixel.getTime()) );
-     		}
-    	}
+		  {
+		   sparseData =  std::auto_ptr<EUTelTrackerDataInterfacer>( new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>(zsData) );
+		   EUTelGenericSparsePixel apixPixel;
+		   
+		   for( unsigned int iHit = 0; iHit < sparseData->size(); iHit++ ) 
+		     {
+		       sparseData->getSparsePixelAt( iHit, &apixPixel);
+		       _nPixHits++;
+		       p_iden->push_back( sensorID );
+		       p_row->push_back( apixPixel.getYCoord() );
+		       p_col->push_back( apixPixel.getXCoord() );
+		       p_tot->push_back( static_cast< int >(apixPixel.getSignal()) );
+		       p_lv1->push_back( static_cast< int >(apixPixel.getTime()) );
+		     }
+		   
+		  }
+		else if( type == kEUTelMuPixel )
+		  {
+		    sparseData =  std::auto_ptr<EUTelTrackerDataInterfacer>( new EUTelTrackerDataInterfacerImpl<EUTelMuPixel>(zsData) );
+		    EUTelMuPixel binaryPixel;
+		    
+		    for( unsigned int iHit = 0; iHit < sparseData->size(); iHit++ ) 
+		     {
+		       sparseData->getSparsePixelAt( iHit, &binaryPixel);
+		       _nPixHits++;
+		       p_iden->push_back( sensorID );
+		       p_row->push_back( binaryPixel.getYCoord() );
+		       p_col->push_back( binaryPixel.getXCoord() );
+		       p_hitTime->push_back( binaryPixel.getHitTime() );
+		       p_frameTime->push_back( binaryPixel.getFrameTime() );
+		     }
+		  }
 		else
-		{
-			//PANIC
-		}
-  	}
+		  {
+		    throw UnknownDataTypeException("Unknown sparsified pixel");
+		  }
+	}
   	return true;
 }
 
@@ -347,6 +368,8 @@ void EUTelAPIXTbTrackTuple::clear()
 	p_tot->clear();
 	p_iden->clear();
 	p_lv1->clear();
+	p_hitTime->clear();
+	p_frameTime->clear();
 	_nPixHits = 0;
 	/* Clear hittrack */
 	_xPos->clear();
@@ -382,6 +405,8 @@ void EUTelAPIXTbTrackTuple::prepareTree()
 	p_tot = new std::vector<int>();
 	p_iden = new std::vector<int>();
 	p_lv1 = new std::vector<int>();
+	p_hitTime = new std::vector<int>();
+	p_frameTime = new std::vector<double>();
 
 	_hitXPos = new std::vector<double>();
 	_hitYPos = new std::vector<double>();
@@ -410,6 +435,8 @@ void EUTelAPIXTbTrackTuple::prepareTree()
 	_zstree->Branch("tot",      &p_tot);
 	_zstree->Branch("lv1",      &p_lv1);
 	_zstree->Branch("iden",     &p_iden);
+	_zstree->Branch("hitTime",  &p_hitTime);
+	_zstree->Branch("frameTime",&p_frameTime);
 
 	//Tree for storing all track param info
 	_eutracks = new TTree("tracks", "tracks");

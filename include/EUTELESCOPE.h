@@ -611,6 +611,7 @@ namespace eutelescope
     kEUTelGenericSparsePixel = 2,
     kEUTelGeometricPixel = 3,
     // add here your implementation
+    kEUTelMuPixel = 4,
     kUnknownPixelType       = 31
   };
 

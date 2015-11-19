@@ -218,9 +218,9 @@ void EUTelProcessorNoisyPixelFinder::HotPixelFinder(EUTelEventImpl* evt)
 		    // get the TrackerData and guess which kind of sparsified data it contains.
 		    TrackerDataImpl* zsData = dynamic_cast< TrackerDataImpl* > ( zsInputCollectionVec->getElementAt( iDetector ) );
 		    int sensorID            = static_cast<int > ( cellDecoder( zsData )["sensorID"] );
-
-			sensor* currentSensor = &_sensorMap[sensorID];
-			std::vector<std::vector<int> >* hitArray = _hitVecMap[sensorID];
+		    
+		    sensor* currentSensor = &_sensorMap[sensorID];
+		    std::vector<std::vector<int> >* hitArray = _hitVecMap[sensorID];
 
 		    //if this is an excluded sensor go to the next element
 		    bool foundexcludedsensor = false;
@@ -234,20 +234,22 @@ void EUTelProcessorNoisyPixelFinder::HotPixelFinder(EUTelEventImpl* evt)
 		    if(foundexcludedsensor)  continue;
 
 		    // now prepare the EUTelescope interface to sparsified data.  
-		    auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel > >  sparseData (new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> ( zsData ));
+		    EUTelBaseSparsePixel* pixel = NULL;
+		    int pixelType = cellDecoder(zsData)["sparsePixelType"];
+		   
+		    auto sparseData = Utility::getSparseData(zsData, pixelType);
 		    
-		    EUTelGenericSparsePixel* genericPixel =  new EUTelGenericSparsePixel();
-
-			// loop over all pixels in the sparseData object, these are the hit pixels!
+		    // loop over all pixels in the sparseData object, these are the hit pixels!
 		    for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ ) 
 		    {
 				//get the pixel
-				sparseData->getSparsePixelAt( iPixel, genericPixel );
+				pixel = sparseData->getSparsePixelAt( iPixel, pixel );
+				
 
 				//compute the address in the array-like-structure, any offset
 				//has to be substracted (array index starts at 0)
-				int indexX = genericPixel->getXCoord() - currentSensor->offX;
-				int indexY = genericPixel->getYCoord() - currentSensor->offY;
+				int indexX = pixel->getXCoord() - currentSensor->offX;
+				int indexY = pixel->getYCoord() - currentSensor->offY;
 				
 				try
 				{
@@ -256,11 +258,11 @@ void EUTelProcessorNoisyPixelFinder::HotPixelFinder(EUTelEventImpl* evt)
 				}
 				catch(std::out_of_range& e)
 				{
-					streamlog_out ( ERROR5 )  << "Pixel: " << genericPixel->getXCoord() << "|" <<  genericPixel->getYCoord() << " on plane: " << sensorID << " fired." << std::endl 
+					streamlog_out ( ERROR5 )  << "Pixel: " << pixel->getXCoord() << "|" <<  pixel->getYCoord() << " on plane: " << sensorID << " fired." << std::endl 
 					<< "This pixel is out of the range defined by the geometry. Either your data is corrupted or your pixel geometry not specified correctly!" << std::endl;
 				}
 		    }
-			delete genericPixel;
+			delete pixel;
 		}    
 	}
 	catch (lcio::DataNotAvailableException& e ) 
