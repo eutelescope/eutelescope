@@ -131,83 +131,57 @@ void EUTelProcessorGeometricClustering::init() {
 	_isGeometryReady = false;
 }
 
-void EUTelProcessorGeometricClustering::processRunHeader (LCRunHeader * rdr) {
-
-	std::auto_ptr<EUTelRunHeaderImpl> runHeader( new EUTelRunHeaderImpl( rdr ) );
+void EUTelProcessorGeometricClustering::processRunHeader(LCRunHeader* rdr) {
+	std::unique_ptr<EUTelRunHeaderImpl> runHeader( new EUTelRunHeaderImpl( rdr ) );
 	runHeader->addProcessor( type() );
   	//increment the run counter
 	++_iRun;
 }
 
-void EUTelProcessorGeometricClustering::initializeGeometry( LCEvent * event ) throw ( marlin::SkipEventException ) {
-
+void EUTelProcessorGeometricClustering::initializeGeometry( LCEvent* event ) throw ( marlin::SkipEventException ) {
 	//set the total number of detector to zero. This number can be different from the one written in the gear description because
 	//the input collection can contain only a fraction of all the sensors.
 
 	_noOfDetector = 0;
 	_sensorIDVec.clear();
-
 	streamlog_out( DEBUG5 ) << "Initializing geometry" << std::endl;
 
-  	try 
-  	{
+  	try {
 		_zsInputDataCollectionVec = dynamic_cast<LCCollectionVec*>( event->getCollection(_zsDataCollectionName) );
 		_noOfDetector += _zsInputDataCollectionVec->getNumberOfElements();
 		CellIDDecoder<TrackerDataImpl> cellDecoder(_zsInputDataCollectionVec);
 
-		for ( size_t i = 0; i < _zsInputDataCollectionVec->size(); ++i ) 
-		{
-			TrackerDataImpl * data = dynamic_cast< TrackerDataImpl * > ( _zsInputDataCollectionVec->getElementAt( i ) ) ;
+		for ( size_t i = 0; i < _zsInputDataCollectionVec->size(); ++i ) {
+			TrackerDataImpl* data = dynamic_cast<TrackerDataImpl*>( _zsInputDataCollectionVec->getElementAt(i) );
 			_sensorIDVec.push_back( cellDecoder(data)["sensorID"] );
 			_totClusterMap.insert( std::make_pair( cellDecoder(data)["sensorID"], 0) );
 		}
-	} 
-
-	catch ( lcio::DataNotAvailableException ) 
-	{
+	} catch( lcio::DataNotAvailableException ) {
 		streamlog_out( DEBUG5 ) << "Could not find the input collection: " << _zsDataCollectionName.c_str() << " !" << std::endl;
 		return;
 	}
-
     _isGeometryReady = true;
 }
 
-void EUTelProcessorGeometricClustering::modifyEvent( LCEvent * /* event */ )
-{
+void EUTelProcessorGeometricClustering::modifyEvent( LCEvent * /* event */ ){
 	return;
 }
 
-void EUTelProcessorGeometricClustering::readCollections(LCEvent* event)
-{
-	try 
-	{
-		_zsInputDataCollectionVec = dynamic_cast< LCCollectionVec * > ( event->getCollection( _zsDataCollectionName ) ) ;
+void EUTelProcessorGeometricClustering::readCollections(LCEvent* event) {
+	try {
+		_zsInputDataCollectionVec = dynamic_cast<LCCollectionVec*>( event->getCollection( _zsDataCollectionName ) ) ;
         	streamlog_out ( DEBUG4 ) << "_zsInputDataCollectionVec: " << _zsDataCollectionName.c_str() << " found " << std::endl;
-	} 
-	catch ( lcio::DataNotAvailableException )   // do nothing
-	{
-		streamlog_out ( DEBUG4 ) << "_zsInputDataCollectionVec: " << _zsDataCollectionName.c_str() << " not found " << std::endl;
-	}
-
-	try 
-	{
-		event->getCollection( _zsDataCollectionName ) ;
-	} 
-	catch (lcio::DataNotAvailableException& e ) 
-	{
-		streamlog_out(MESSAGE2) << "The current event doesn't contain nZS data collections: skip # " << event->getEventNumber() << std::endl;
-		throw SkipEventException(this);
+	} catch ( lcio::DataNotAvailableException& e ) {
+		streamlog_out ( DEBUG4 ) << "_zsInputDataCollectionVec: " << _zsDataCollectionName.c_str() << " not found in event " << event->getEventNumber() << std::endl;
 	}
 }
 
-void EUTelProcessorGeometricClustering::processEvent (LCEvent * event) 
-{
+void EUTelProcessorGeometricClustering::processEvent(LCEvent* event) {
 	//increment event counter
 	++_iEvt;
 
 	//first of all we need to be sure that the geometry is properly initialized!
-	if ( !_isGeometryReady ) 
-	{
+	if ( !_isGeometryReady ) {
 		initializeGeometry( event );
 	}
 
@@ -216,35 +190,29 @@ void EUTelProcessorGeometricClustering::processEvent (LCEvent * event)
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 	// book the histograms now
-	if ( _fillHistos && isFirstEvent() ) 
-	{
+	if ( _fillHistos && isFirstEvent() ) {
 		bookHistos();
 	}
 #endif
 
 	EUTelEventImpl* evt = static_cast<EUTelEventImpl*> (event);
-	if ( evt->getEventType() == kEORE ) 
-  	{
+	if ( evt->getEventType() == kEORE ) {
 		streamlog_out ( DEBUG4 ) <<  "EORE found: nothing else to do." <<  std::endl;
 		return;
-	}
-	else if ( evt->getEventType() == kUNKNOWN ) 
-	{
+	} else if ( evt->getEventType() == kUNKNOWN ) {
 		streamlog_out ( WARNING2 ) << "Event number " << evt->getEventNumber() << " is of unknown type. Continue considering it as a normal Data Event." << std::endl;
 	}
 
 	// prepare a pulse collection to add all clusters found this can be either a new collection or already existing in the event
-	LCCollectionVec* pulseCollection;
+	LCCollectionVec* pulseCollection = nullptr;
 	bool pulseCollectionExists = false;
 	_initialPulseCollectionSize = 0;
-	try 
-	{
+
+	try {
 		pulseCollection = dynamic_cast< LCCollectionVec * > ( evt->getCollection( _pulseCollectionName ) );
 		pulseCollectionExists = true;
 		_initialPulseCollectionSize = pulseCollection->size();
-	} 
-	catch ( lcio::DataNotAvailableException& e ) 
-	{
+	} catch ( lcio::DataNotAvailableException& e ) {
 		pulseCollection = new LCCollectionVec(LCIO::TRACKERPULSE);
 	}
 
@@ -252,74 +220,62 @@ void EUTelProcessorGeometricClustering::processEvent (LCEvent * event)
 	geometricClustering(evt, pulseCollection);
 
 	// if the pulseCollection is not empty add it to the event
-	if ( ! pulseCollectionExists && ( pulseCollection->size() != _initialPulseCollectionSize )) 
-	{
+	if ( ! pulseCollectionExists && ( pulseCollection->size() != _initialPulseCollectionSize )) {
 		evt->addCollection( pulseCollection, _pulseCollectionName );
 	}
   
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-	if ( (pulseCollection->size() != _initialPulseCollectionSize) && (_fillHistos) ) 
-	{
+	if ( (pulseCollection->size() != _initialPulseCollectionSize) && (_fillHistos) ) {
 		fillHistos(event);
 	}
 #endif
 
-	if ( ! pulseCollectionExists && ( pulseCollection->size() == _initialPulseCollectionSize ) ) 
-	{
+	if ( ! pulseCollectionExists && ( pulseCollection->size() == _initialPulseCollectionSize ) ) {
 		delete pulseCollection;
 	}
 	_isFirstEvent = false;
 }
 
-void EUTelProcessorGeometricClustering::geometricClustering(LCEvent * evt, LCCollectionVec * pulseCollection) 
-{
+void EUTelProcessorGeometricClustering::geometricClustering(LCEvent * evt, LCCollectionVec * pulseCollection) {
 	// prepare some decoders
 	CellIDDecoder<TrackerDataImpl> cellDecoder( _zsInputDataCollectionVec );
 
 	bool isDummyAlreadyExisting = false;
-	LCCollectionVec* sparseClusterCollectionVec = NULL;
+	LCCollectionVec* sparseClusterCollectionVec = nullptr;
 
-	try 
-	{
+	try {
 		sparseClusterCollectionVec = dynamic_cast< LCCollectionVec* > ( evt->getCollection( "original_zsdata") );
 		isDummyAlreadyExisting = true ;
-	} 
-	catch (lcio::DataNotAvailableException& e) 
-	{
+	} catch (lcio::DataNotAvailableException& e) {
 		sparseClusterCollectionVec =  new LCCollectionVec(LCIO::TRACKERDATA);
 		isDummyAlreadyExisting = false;
 	}
 
 	CellIDEncoder<TrackerDataImpl> idZSClusterEncoder( EUTELESCOPE::ZSCLUSTERDEFAULTENCODING, sparseClusterCollectionVec  );
-
 	// prepare an encoder also for the pulse collection
 	CellIDEncoder<TrackerPulseImpl> idZSPulseEncoder(EUTELESCOPE::PULSEDEFAULTENCODING, pulseCollection);
 
 	// in the _zsInputDataCollectionVec we should have one TrackerData for each 
 	// detector working in ZS mode. We need to loop over all of them
-	for ( unsigned int idetector = 0 ; idetector < _zsInputDataCollectionVec->size(); idetector++ ) 
-	{
+	for ( unsigned int idetector = 0 ; idetector < _zsInputDataCollectionVec->size(); idetector++ ) {
 		// get the TrackerData and guess which kind of sparsified data it contains.
 		TrackerDataImpl * zsData = dynamic_cast< TrackerDataImpl * > ( _zsInputDataCollectionVec->getElementAt( idetector ) );
 		SparsePixelType   type   = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( zsData )["sparsePixelType"]) );
 		int sensorID             = static_cast<int > ( cellDecoder( zsData )["sensorID"] );
-    
+
 		//get alle the plane relevant geo information, that is the plane name and the plane pix geometry
 		std::string planePath = geo::gGeometry().getPlanePath( sensorID );
 		geo::EUTelGenericPixGeoDescr* geoDescr =  ( geo::gGeometry().getPixGeoDescr( sensorID ) );
 
 		//if this is an excluded sensor go to the next element
 		bool foundexcludedsensor = false;
-		for(size_t iexclude = 0; iexclude < _ExcludedPlanes.size(); ++iexclude)
-		{
-		    if(_ExcludedPlanes[iexclude] == sensorID)
-		    {
-		        foundexcludedsensor = true;
-		    }
+		for(size_t iexclude = 0; iexclude < _ExcludedPlanes.size(); ++iexclude) {
+			if(_ExcludedPlanes[iexclude] == sensorID){
+				foundexcludedsensor = true;
+			}
 		}
 
-		if(foundexcludedsensor)       
-		{		
+		if(foundexcludedsensor) {		
 			continue;
 		}
 

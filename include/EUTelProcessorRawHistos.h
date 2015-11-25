@@ -6,8 +6,8 @@
  *   header with author names in all development based on this file.
  *
  */
-#ifndef EUTELPROCESSORNOISYPIXELFINDER_H
-#define EUTELPROCESSORNOISYPIXELFINDER_H
+#ifndef EUTELPROCESSORRAWHISTOS_H
+#define EUTELPROCESSORRAWHISTOS_H
 
 // eutelescope includes ".h"
 #include "EUTelEventImpl.h"
@@ -21,13 +21,11 @@
 #include <IMPL/LCCollectionVec.h>
 
 // AIDA includes <.h>
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <AIDA/IBaseHistogram.h>
-#endif
+#include <AIDA/IHistogram1D.h>
 
 // system includes <>
 #include <map>
-
 
 namespace eutelescope {
 
@@ -66,25 +64,25 @@ struct sensor {
  *
  *  @param HotPixelCollectionName The name of the collection in the output file
  */
-class EUTelProcessorNoisyPixelFinder : public marlin::Processor {
+class EUTelProcessorRawHistos : public marlin::Processor {
 
 public:
-    //! Returns a new instance of EUTelProcessorNoisyPixelFinder
+    //! Returns a new instance of EUTelProcessorRawHistos
     /*! This method returns an new instance of the this processor.  It
      *  is called by Marlin execution framework and it shouldn't be
      *  called/used by the final user.
      *
-     *  @return a new EUTelProcessorNoisyPixelFinder.
+     *  @return a new EUTelProcessorRawHistos.
      */
     virtual Processor* newProcessor() {
-      return new EUTelProcessorNoisyPixelFinder;
+      return new EUTelProcessorRawHistos;
     }
 
     //! Default constructor
-    EUTelProcessorNoisyPixelFinder();
+    EUTelProcessorRawHistos();
 
     //! Default destructor
-    ~EUTelProcessorNoisyPixelFinder() = default;
+    ~EUTelProcessorRawHistos() = default;
 
     //! Called at the job beginning.
     /*! This is executed only once in the whole execution. It prints
@@ -116,16 +114,6 @@ public:
      */
     virtual void processEvent(LCEvent * evt);
 
-    //! Initialize geometry
-    /*! Set the number of detectors in the setup and their boundaries.
-     *
-     *  @param evt The LCIO event
-     */
-    void initializeHitMaps() ;
-
-    //! HotPixelFinder
-    void noisyPixelFinder(EUTelEventImpl *input);
-    
     //! Check call back
     /*! This method is called every event just after the processEvent
      *  one. For the time being it is just calling the pixel
@@ -134,7 +122,7 @@ public:
      *  @param evt the current LCEvent event as passed by the
      *  ProcessMgr
      */
-    virtual void check( LCEvent* event );
+    //virtual void check( LCEvent* event );
 
     //! Called after data processing.
     /*! This method is called when the loop on events is
@@ -144,44 +132,30 @@ public:
 
 
 protected:
-
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-    //! Histogram with the firing frequency 2D distribution
-    static std::string _firing2DHistoName;
-
-    //! Histogram with the firing cumulative 1D distribution
-    static std::string _firing1DHistoName;
-
     //! book histogram method
-    void bookAndFillHistos();
-#endif
+    void bookHistos();
 
-    //! Input collection name for ZS data
+	std::map<int,AIDA::IHistogram1D*> _countHisto;
+	std::map<int,AIDA::IHistogram1D*> _chargeHisto;
+	std::map<int,AIDA::IHistogram1D*> _timeHisto;
+
+    
+
+	std::map<int,AIDA::IHistogram1D*> _countHistoNoNoise;
+	std::map<int,AIDA::IHistogram1D*> _chargeHistoNoNoise;
+	std::map<int,AIDA::IHistogram1D*> _timeHistoNoNoise;
+	//! Input collection name for ZS data
     /*! The input collection is the calibrated data one coming from
      *  the input data file. It is, usually, called
      *  "zsdata" and it is a collection of TrackerData
      */
     std::string _zsDataCollectionName;
-
-    //! Hot pixel collection name.
-    /*! 
-     * this collection is saved in a db file to be used at the clustering level
-     */
-    std::string _noisyPixelCollectionName;
-
- 
-    //! The excluded planes list
-    /*! This is a list of sensor ids for planes that have to be
-     *   excluded from the clustering.
-     */
-    std::vector<int> _excludedPlanes;
-
+	std::string _noisyPixCollectionName;
     //! Number of events for update cycle
     int _noOfEvents;
+   	
+   bool _treatNoise;
 
-    //! Maximum allowed firing frequency
-    float _maxAllowedFiringFreq;
-    
     //! Vector of map arrays, keeps record of hit pixels 
     /*! The vector elements are sorted by Detector ID
      *  For each Detector unique ID element a map of pixels is created. 
@@ -189,19 +163,6 @@ protected:
      *  _inverse_hitIndexMapVec)
      */
     std::map<int, sensor> _sensorMap;
-
-    //! Map holding the 2D-"array" which counts the hits
-    /*! The key is the sensorID and the array is implemented as
-     *  a vector of vectors. They are resized initially so there 
-     *  is no real overhead with using std::vectors instead of
-     * arrays.
-     */
-    std::map<int, std::vector<std::vector<int>>> _hitVecMap;
-    
-    //! Map for storing the hot pixels in a std::vector as a value
-    /*! The key is once again the sensorID.
-     */
-    std::map<int, std::vector<EUTelGenericSparsePixel>> _noisyPixelMap;
 
     //! Current run number.
     /*! This number is used to store the current run number
@@ -220,18 +181,15 @@ protected:
      */
     std::vector<int> _sensorIDVec;
 
-    //! Hot Pixel DB output file
-    std::string _noisyPixelDBFile;
+	int cantorEncode(int x, int y);
 
-    //! write out the list of hot pixels
-    void noisyPixelDBWriter();
+	void initialiseNoisyPixels( LCCollectionVec* const);
 
-    //! Flag which will be set once we're done finding noisy pixels
-    bool _finished;
+	std::map<int, std::vector<int>> _noisyPixelVecMap;
 };
 
 //! A global instance of the processor
-EUTelProcessorNoisyPixelFinder gEUTelProcessorNoisyPixelFinder;
+EUTelProcessorRawHistos gEUTelProcessorRawHistos;
 
 }
 #endif

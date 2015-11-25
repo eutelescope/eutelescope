@@ -117,6 +117,8 @@ class EUTelProcessorNoisyClusterRemover : public marlin::Processor {
 	/*! Key is the sensorID, value the removed pulses from that plane*/
 	std::map<int,int> _removedNoisyPulses;
 
+	//! Static bool flag to mark if any instance of this processor has printed out generla info
+	static bool _staticPrintedSummary;
 };
 
 //! A global instance of the processor
