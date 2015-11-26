@@ -931,10 +931,10 @@ void EUTelProcessorAnalysisPALPIDEfs::bookHistos()
   largeClusterHistos = new TH2I("largeClusterHisto","Clusters with more than 3 pixels;X (mm);Y (mm)",xPixel,0,xPixel,yPixel,0,yPixel);
   circularClusterHistos = new TH2I("circularClusterHisto","Circular clusters (with missing hits in the middle);X (mm);Y (mm)",xPixel,0,xPixel,yPixel,0,yPixel);
   timeStampHisto = new TH1I("timeStampHisto","Distribution of the time stamp of the events; Time stamp (in 12.5 ns units)",1000,0,50000);
-  nFakeHisto = new TH1F("nFakeHisto","Noise occupancy per sector for all events;Sector;Noise occupancy (/event/pixel)",4,0,4);
-  nFakeWithTrackHisto = new TH1F("nFakeWithTrackHisto","Noise occupancy per sector for events with track;Sector;Noise occupancy (/event/pixel)",4,0,4);
-  nFakeWithTrackCorrectedHisto = new TH1F("nFakeWithTrackCorrectedHisto","Corrected noise occupancy per sector for events with track;Sector;Noise occupancy (/event/pixel)",4,0,4);
-  nFakeWithoutTrackHisto = new TH1F("nFakeWithoutTrackHisto","Noise occupancy per sector for events without track;Sector;Noise occupancy (/event/pixel)",4,0,4);
+  nFakeHisto = new TH1F("nFakeHisto","Noise occupancy per sector for all events;Sector;Noise occupancy (/event/pixel)",_nSectors,0,_nSectors);
+  nFakeWithTrackHisto = new TH1F("nFakeWithTrackHisto","Noise occupancy per sector for events with track;Sector;Noise occupancy (/event/pixel)",_nSectors,0,_nSectors);
+  nFakeWithTrackCorrectedHisto = new TH1F("nFakeWithTrackCorrectedHisto","Corrected noise occupancy per sector for events with track;Sector;Noise occupancy (/event/pixel)",_nSectors,0,_nSectors);
+  nFakeWithoutTrackHisto = new TH1F("nFakeWithoutTrackHisto","Noise occupancy per sector for events without track;Sector;Noise occupancy (/event/pixel)",_nSectors,0,_nSectors);
   nTrackPerEventHisto = new TH1I("nTrackPerEventHisto","Number of tracks per event;Number of tracks;a.u.",30,0,30);
   nClusterAssociatedToTrackPerEventHisto = new TH1I("nClusterAssociatedToTrackPerEventHisto","Number of clusters associated to tracks per event;Number of clusters;a.u.",30,0,30);
   nClusterPerEventHisto = new TH1I("nClusterPerEventHisto","Number of clusters per event;Number of clusters;a.u.",30,0,30);
