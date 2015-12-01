@@ -223,7 +223,10 @@ void EUTelProcessorAnalysisPALPIDEfs::init() {
   if (!std::ifstream(_outputSettingsFileName.c_str()))
     newFile = true;
   settingsFile.open (_outputSettingsFileName.c_str(), ios::out | ios::app );
-    if (newFile) settingsFile << "Run number;Energy;Chip ID;Chip Version;Irradiation level(0-nonIrradiated,1-2.5e12,2-1e13,3-700krad,4-combined:1e13+700krad);Rate;BB;Ithr;Idb;Vcasn;Vcasn2;Vclip;Vcasp;VresetP;VresetD;Threshold and their RMS for all eight sectors;Noise and their RMS for all eight sectors;Readout delay;Trigger delay;Strobe length;StrobeB length;Data (1) or noise (0);Number of events;Efficiency,Number of tracks,Number of tracks with associated hit for all sectors" << endl;
+    if (newFile && _chipVersion == 3) settingsFile << "Run number;Energy;Chip ID;Chip Version;Irradiation level(0-nonIrradiated,1-2.5e12,2-1e13,3-700krad,4-combined:1e13+700krad);Rate;BB;Ithr;Idb;Vcasn;Vcasn2;Vclip;Vcasp;VresetP;VresetD;Threshold and their RMS for all eight sectors;Noise and their RMS for all eight sectors;Readout delay;Trigger delay;Strobe length;StrobeB length;Data (1) or noise (0);Number of events;Efficiency,Number of tracks,Number of tracks with associated hit for all sectors" << endl;
+    else if (newFile && ( _chipVersion == 2 || _chipVersion == 1)) {
+      settingsFile << "Run number;Energy;Chip ID;Irradiation level(0-nonIrradiated,1-2.5e12,2-1e13,3-700krad,4-combined:1e13+700krad);Rate;BB;Ithr;Idb;Vcasn;Vaux;Vcasp;Vreset;Threshold and their RMS for all four sectors;Noise and their RMS for all four sectors;Readout delay;Trigger delay;Strobe length;StrobeB length;Data (1) or noise (0);Number of events;Efficiency,Number of tracks,Number of tracks with associated hit for all sectors" << endl; 
+    }
 }
 
 void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
@@ -300,7 +303,12 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
         delete sparsePixel;
       }
     }
-    settingsFile << evt->getRunNumber() << ";" << _energy << ";" << _chipID[layerIndex] << ";" << _chipVersion << ";" << _irradiation[layerIndex] << ";" << _rate << ";" << evt->getParameters().getFloatVal("BackBiasVoltage") << ";" << evt->getParameters().getIntVal(Form("Ithr_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Idb_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Vcasn_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Vcasn2_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Vclip_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Vcasp_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("VresetP_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("VresetD_%d",layerIndex)) << ";";
+    if (_chipVersion == 3) {
+      settingsFile << evt->getRunNumber() << ";" << _energy << ";" << _chipID[layerIndex] << ";" << _chipVersion << ";" << _irradiation[layerIndex] << ";" << _rate << ";" << evt->getParameters().getFloatVal("BackBiasVoltage") << ";" << evt->getParameters().getIntVal(Form("Ithr_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Idb_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Vcasn_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Vcasn2_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Vclip_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Vcasp_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("VresetP_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("VresetD_%d",layerIndex)) << ";";
+    }
+    else if (_chipVersion == 2 || _chipVersion == 1) {
+      settingsFile << evt->getRunNumber() << ";" << _energy << ";" << _chipID[layerIndex] << ";" << _irradiation[layerIndex] << ";" << _rate << ";" << evt->getParameters().getFloatVal("BackBiasVoltage") << ";" << evt->getParameters().getIntVal(Form("Ithr_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Idb_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Vcasn_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Vaux_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Vcasp_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("VresetP_%d",layerIndex)) << ";";
+    }
 
     for (int iSector=0; iSector<_nSectors; iSector++)
       settingsFile << evt->getParameters().getFloatVal(Form("Thr_%d_%d",layerIndex,iSector)) << ";" << evt->getParameters().getFloatVal(Form("ThrRMS_%d_%d",layerIndex,iSector)) << ";";
