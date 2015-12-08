@@ -71,8 +71,8 @@ namespace eutelescope {
     std::vector<int> _dutMatches;
     //function
     //bool checkClusterRegion(lcio::TrackerHitImpl* hit);
-    int checkDutResids(daffitter::TrackCandidate* cnd);
-    void addToMille(daffitter::TrackCandidate* track);
+    int checkDutResids(daffitter::TrackCandidate<float,4>& cnd);
+    void addToMille(daffitter::TrackCandidate<float,4>& track);
     void runPede();
     void generatePedeSteeringFile();
     void steerLine(std::ofstream &steerFile, int label, int iden, std::vector<int> idens);

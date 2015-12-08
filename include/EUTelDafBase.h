@@ -98,7 +98,7 @@ namespace eutelescope {
      * the z-axis, then running a cluster finder on these hits. This radius determines
      * whether a hit is included or not.
      */
-    float _clusterRadius;
+    float _normalizedRadius;
 
     //! Cutoff value for DAF
     /*!
@@ -106,7 +106,7 @@ namespace eutelescope {
      * measurement to be included in the fit.
      */
     float _chi2cutoff;
-    float _nXdz, _nYdz;
+    float _nXdz, _nYdz, _nXdzMaxDeviance, _nYdzMaxDeviance;
     int _nDutHits;
    
     float _nSkipMax;
@@ -126,26 +126,25 @@ namespace eutelescope {
     void readHitCollection(LCEvent* event);
     void bookHistos();
     void bookDetailedHistos();
-    void dumpToAscii();
-    void fillPlots(daffitter::TrackCandidate* track);
-    void fillDetailPlots(daffitter::TrackCandidate* track);
-    bool checkTrack(daffitter::TrackCandidate * track);
-    int checkInTime();
+    void fillPlots(daffitter::TrackCandidate<float,4>& track);
+    void fillDetailPlots(daffitter::TrackCandidate<float,4>& track);
+    bool checkTrack(daffitter::TrackCandidate<float,4>& track);
+    int checkInTime(daffitter::TrackCandidate<float,4>& track);
     void printStats();
     //alignment stuff
     void gearRotate(size_t index, size_t gearIndex);
     Eigen::Vector3f applyAlignment(EUTelAlignmentConstant* alignment, Eigen::Vector3f point);
     void alignRotate(std::string collectionName, LCEvent* event);
-    void getPlaneNorm(daffitter::FitPlane& pl);
+    void getPlaneNorm(daffitter::FitPlane<float>& pl);
 
-    daffitter::TrackerSystem _system;
+    daffitter::TrackerSystem<float,4> _system;
     std::map<float, int> _zSort;
     std::map<int, int> _indexIDMap;
-    std::string _asciiName;
     std::vector<float> _radLength;
+    std::vector<float> _sigmaX, _sigmaY;
 
     //! Counters
-    int _iRun, _iEvt, _nTracks, _nClusters, n_failedNdof, n_failedChi2OverNdof, n_failedIsnan, n_passedNdof, n_passedChi2OverNdof, n_passedIsnan;
+    int _iRun, _iEvt, _nTracks, _nCandidates, n_failedNdof, n_failedChi2OverNdof, n_failedIsnan, n_passedNdof, n_passedChi2OverNdof, n_passedIsnan;
 
     //! reference HitCollection name 
     /*!
@@ -156,16 +155,6 @@ namespace eutelescope {
     LCCollectionVec* _referenceHitVec;    
     LCCollectionVec* _clusterVec;    
  
-    //Should probably make these options in steering file, but for now they can be hard coded here:
-    double minx;
-    double maxx;
-    double miny;
-    double maxy;
-    double binsizex;
-    double binsizey;
-
-    double minclustersize;
-
     //! Silicon planes parameters as described in GEAR
     gear::SiPlanesParameters * _siPlanesParameters;
     gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
@@ -185,14 +174,6 @@ namespace eutelescope {
     bool _histogramSwitch;
     //! LCIO switch
     bool _addToLCIO;
-
-    std::map< int, std::vector < double > > _xPositionForClustering;
-    std::map< int, std::vector < double > > _yPositionForClustering;
-    std::map< int, std::vector < double > > _Chi2sForAverage;
-    std::map< int, std::vector < double > > _resolutionXForClustering;
-    std::map< int, std::vector < double > > _resolutionYForClustering;
-    int MAXCLUSTERSIZE;   
-
   };
 }
 #endif

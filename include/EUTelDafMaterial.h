@@ -1,11 +1,11 @@
-// Version: $Id$
 //! Author Havard Gjersdal <haavagj@fys.uio.no>
+// -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  */
 
-#ifndef EUTELDAF_H
-#define EUTELDAF_H
+#ifndef EUTELDAFMATERIAL_H
+#define EUTELDAFMATERIAL_H
 
 // built only if GEAR is available
 #ifdef USE_GEAR
@@ -34,17 +34,30 @@
 #include <map>
 
 #include "EUTelDafBase.h"
-
+#include "estmat.h"
 namespace eutelescope {
-  class EUTelDafFitter : EUTelDafBase{
+  class EUTelDafMaterial : EUTelDafBase{
+  private:
+    double _angleX, _angleY;
+    EstMat _matest;
+
+    std::vector<float>_resXMin, _resXMax, _resYMin, _resYMax;
+    std::map<int, std::pair<float, float> > _resX, _resY;
+    int checkDutResids(daffitter::TrackCandidate<float, 4>& cnd);
+
+    //Mat res
+    std::vector<int> _radLengthIndex, _resXIndex, _resYIndex;    
+    //Alignment
+    std::vector<int> _shiftXIndex, _shiftYIndex, _scaleXIndex, _scaleYIndex, _zRotIndex, _zPosIndex; 
+    
   public:
     // Marlin processor interface funtions
-    //! Returns a new instance of EUTelDafFitter
+    //! Returns a new instance of EUTelDafMaterial
     virtual Processor * newProcessor() {
-      return new EUTelDafFitter;
+      return new EUTelDafMaterial;
     }
     //! Default constructor
-    EUTelDafFitter ();
+    EUTelDafMaterial ();
     //! Called at the job beginning.
     virtual void dafInit ();
     //! Called every event
@@ -53,25 +66,9 @@ namespace eutelescope {
     virtual void dafEnd();
     //! Set fitter specific params
     virtual void dafParams();
-    //! Calculate Z coordinate for a pair X:Y on a plane define by refhit collection and "plane" id 
-    /* input - plane and pos[0] and pos[1]
-     * output - pos[2] to be overwritten with the right value
-     */
-    virtual double getZfromRefHit(int plane,int sensorID, double *pos);
- 
-  protected:
-    //! Output track collection name
-    std::string _trackCollectionName;
-    //! Output track collection
-    LCCollectionVec     * _fittrackvec;
-    LCCollectionVec     * _fitpointvec;
-    void addToLCIO(daffitter::TrackCandidate<float,4>& track, LCCollectionVec *lcvec);
-    //! LCIO switch
-    bool _addToLCIO, _fitDuts;
-
   };
   //! A global instance of the processor
-  EUTelDafFitter gEUTelDafFitter;
+  EUTelDafMaterial gEUTelDafMaterial;
 }
 #endif
 #endif
