@@ -279,7 +279,7 @@ void EUTelPedeGEAR::end() {
 		streamlog_out( MESSAGE6 ) 	<< "Reading back the " << millepedeResFileName << std::endl;
 
 		//open the millepede ASCII output file
-		ifstream millepede( millepedeResFileName.c_str() );
+		std::ifstream millepede( millepedeResFileName.c_str() );
 
 
 		if( millepede.bad() || !millepede.is_open() ) {
