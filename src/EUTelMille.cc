@@ -2769,7 +2769,7 @@ void EUTelMille::end() {
   streamlog_out ( MESSAGE7 ) << "Number of tracks used: " << _nMilleTracks << endl;
 
   // monitor the number of tracks in CDash when running tests
-  CDashMeasurement meas_ntracks("ntracks",_nMilleTracks);  cout << meas_ntracks;  // output only if DO_TESTING is set
+  CDashMeasurement meas_ntracks("ntracks",_nMilleTracks); // cout << meas_ntracks;  // output only if DO_TESTING is set
 
   // if running pede using the generated steering file
   if (_runPede == 1) {
@@ -2854,7 +2854,8 @@ void EUTelMille::end() {
 	      strncpy ( str, pch+1, 15 );
 	      str[15] = '\0';   /* null character manually added */
 	      // monitor the chi2/ndf in CDash when running tests
-	      CDashMeasurement meas_chi2ndf("chi2_ndf",atof(str));  cout << meas_chi2ndf; // output only if DO_TESTING is set
+	      CDashMeasurement meas_chi2ndf("chi2_ndf",atof(str));  
+		  //std::cout << meas_chi2ndf; // output only if DO_TESTING is set
 	      streamlog_out ( MESSAGE6 ) << "Final Sum(Chi^2)/Sum(Ndf) = " << str << endl;
 	    }	    
 	  }

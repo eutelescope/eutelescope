@@ -156,7 +156,7 @@ void CMSPixelCalibrateEventProcessor::initializeCalibration() throw ( marlin::St
 
         std::ifstream* file = new std::ifstream(calibrationFile);
 
-        if ( *file == 0 ){
+        if ( !file->is_open() ){
             streamlog_out( WARNING ) << "Unable to initialize calibration for ROC" << i << " - could not open file!" << endl;
             throw StopProcessingException( this ) ;
         }
@@ -215,7 +215,7 @@ void CMSPixelCalibrateEventProcessor::initializeGaintanhCalibration() throw ( ma
 
         std::ifstream* file = new std::ifstream(calibrationFile);
 
-        if ( *file == 0 ){
+        if ( !file->is_open() ){
             streamlog_out( WARNING ) << "Unable to initialize calibration for ROC" << i << " - could not open file!" << endl;
             throw StopProcessingException( this ) ;
         }
