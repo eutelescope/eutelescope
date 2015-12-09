@@ -70,7 +70,7 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="pALPIDEfsHotPixelKiller" type="EUTelProcessorHotPixelFinder">
+ <processor name="pALPIDEfsHotPixelKiller" type="EUTelProcessorNoisyPixelFinder">
   <!--EUTelHotPixelKiller periodically check for pixel singing loud too often and remove them from the analysis-->
   <!--Noise (input) collection name-->
   <parameter name="NoiseCollectionName" type="string" lcioInType="TrackerData"> pALPIDEfs_noise </parameter>
@@ -98,6 +98,8 @@
   <parameter name="NoOfEventPerCycle" type="int" value="@nEventsForHotpixel@"/>
     <!--The total number of hot pixel cycle-->
   <parameter name="TotalNoOfCycle" type="int" value="0"/>
+    <!--The sensorID for the generated collection (one per detector)-->
+  <parameter name="SensorIDVec" type="IntVec"> 0 1 2 3 4 5 6 </parameter>
     <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <parameter name="Verbosity" type="string" value="MESSAGE6"/>
 </processor>
