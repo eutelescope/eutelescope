@@ -1210,7 +1210,11 @@ void EUTelProcessorAnalysisPALPIDEfs::_EulerRotationBack(double* _telPos, double
 int EUTelProcessorAnalysisPALPIDEfs::AddressToColumn(int ARegion, int ADoubleCol, int AAddress)
 {
   int Column    = ARegion * 32 + ADoubleCol * 2;    // Double columns before ADoubleCol
-  int LeftRight = ((AAddress % 4) < 2 ? 1:0);       // Left or right column within the double column
+  if (_chipVersion == 3) {
+    int LeftRight = ((((AAddress % 4) == 1) || ((AAddress % 4) == 2))? 1:0);       // Left or right column within the double column
+  } else {
+    int LeftRight = ((AAddress % 4) < 2 ? 1:0);       // Left or right column within the double column
+  }
   Column += LeftRight;
   return Column;
 }
@@ -1219,8 +1223,10 @@ int EUTelProcessorAnalysisPALPIDEfs::AddressToRow(int AAddress)
 {
   // Ok, this will get ugly
   int Row = AAddress / 2;                // This is OK for the top-right and the bottom-left pixel within a group of 4
-  if ((AAddress % 4) == 3) Row -= 1;      // adjust the top-left pixel
-  if ((AAddress % 4) == 0) Row += 1;      // adjust the bottom-right pixel
+  if (_chipVersion !=3) {
+    if ((AAddress % 4) == 3) Row -= 1;      // adjust the top-left pixel
+    if ((AAddress % 4) == 0) Row += 1;      // adjust the bottom-right pixel
+  }
   return Row;
 }
 
