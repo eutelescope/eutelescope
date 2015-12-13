@@ -512,7 +512,7 @@ void EUTelDafBase::readHitCollection(LCEvent* event){
 	_system.addMeasurement( planeIndex,
 				static_cast< float >( pos[0] ) * 1000.0f,
 				static_cast< float >( pos[1] ) * 1000.0f,
-				static_cast< float >( pos[2] ) * 1000.0f,  region, _system.planes.at(planeIndex).getSensorID());
+				static_cast< float >( pos[2] ) * 1000.0f,  region, iHit );
       }
     }
   }
