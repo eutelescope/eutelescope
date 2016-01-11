@@ -1,0 +1,42 @@
+#########################################################SLAC 365  
+#js converter 365
+#js clustering 365
+#js hitlocal 365
+Do prealignment with bot DUTs in the centre and then move back in _pre. Only have to do this once for each new geometry.
+MUST MAKE SURE PREALIGNMENT HAS WORKED CHECK HISTOGRAMS: Prealignment works by looking for a peak in matching the global X/Y axis of each sensor to the first.
+If there are many peaks in this distribution then the wrong position will be chosen. This will lead to the wrong hits been selected on the DUT by pattern recognition.
+The DUT window histogram should have a peak near 0. If not then the prealignment could be wrong which is a particular problem for SLAC. If you find the right hits then the rest can be taken care of in millepede and GBL.
+Gear output by prealignment(Correct for plane 20 at end):gear-beforeAlign-quad-365SLAC_pre.xml
+#js patternRecognition 365
+#
+DUT 21 has no correlation with any orientation. This might be a mistake but remove from fit since we are interest in the QUAD.
+
+#TripletConnectDistCut = 1 1
+#TripletSlopeCuts = 0.1 0.1
+#DoubletCenDistCut = 1 1
+#DoubletDistCut =    1 1
+#excludeplanes= 20  
+#DUTWindow= 1
+
+
+#js GBLAlign  365
+
+#FixXshifts=0  5  
+#FixYshifts=0  5    
+#FixZshifts=0 1 2 3 4 5 20 21    
+#FixXrot=   0 1 2 3 4 5 20 21
+#FixYrot=   0 1 2 3 4 5 20 21
+#FixZrot=   0 5 
+#r = 0.005
+#dutXQuad= 0.1
+#dutYQuad=0.1
+#dutXref= 10000
+#dutYref=10000
+
+Alignment in one iteration. So change gear to:alignedGear-iter1-run000365.xml (Note this is what I called it. Use another name)
+
+#js GBLTrackFit 365
+About 1 track per event found. This is not the same of the other runs were 8 tracks are found. 
+This will produce GBL trajectories and ROOT NTuple.
+
+A small track multiplicity. Need to combine data or loosen up pattern recognition if you need more statistics.
