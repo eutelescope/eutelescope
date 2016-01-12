@@ -253,10 +253,10 @@ void EUTelProcessorGBLTrackFit::plotResidual(std::map< int, std::map<float, floa
         }
 	}
 	int dut1 = -999, dut2 =-999, dut3 = -999, dut4 =-999;
-	streamlog_out(MESSAGE9)<<"DUTs recognised: " <<duts.size() <<std::endl;
+	streamlog_out(MESSAGE5)<<"DUTs recognised: " <<duts.size() <<std::endl;
 	
 	for ( std::vector<int>::iterator itPla = duts.begin(); itPla != duts.end(); ++itPla) {
-	streamlog_out(MESSAGE9)<<"DUTs found : " << *itPla <<std::endl;
+	streamlog_out(MESSAGE5)<<"DUTs found : " << *itPla <<std::endl;
 
         if( itPla == duts.begin()){
             dut1 = *itPla;

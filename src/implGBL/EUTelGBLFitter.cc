@@ -479,7 +479,9 @@ namespace eutelescope {
             state.print();
             streamlog_out(DEBUG3) << std::endl << "Correction: " << std::endl;
             streamlog_message( DEBUG3, corrections.Print();, std::endl; );			
-            state.setStateUsingCorrection(corrections);
+            state.setStateUsingCorrection(corrections);//1)Add cov to state here.
+            //2)Add hit error and place update here.
+            //3)Create kink object and add to state with uncertainty
             if(state.getLocation() == 0 ){
                 track.setTrackUsingCorrection(corrections);
             }
