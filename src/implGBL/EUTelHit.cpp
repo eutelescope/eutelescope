@@ -100,9 +100,20 @@ void EUTelHit::setCov(const std::vector<float>& cov){
 	_cov[1][1] = static_cast<double>(cov.at(3));
 }
 
+void EUTelHit::setCov(const TVectorD& cov){
+	_cov[0][0] = static_cast<double>(cov[0]);
+	_cov[1][1] = static_cast<double>(cov[1]);
+}
+
 void EUTelHit::setCov(TMatrixD cov){
     _cov = cov;
 }
+
+void EUTelHit::setWeight(const TVectorD& wei){
+	_weight.push_back(static_cast<double>(wei[0]));
+	_weight.push_back(static_cast<double>(wei[1]));
+}
+
 void EUTelHit::setPulse( EVENT::LCObject* pulse){
     _pulse = pulse;
 }
@@ -122,13 +133,17 @@ void EUTelHit::setLocation(int location){
 void EUTelHit::setID(int id){
     _id = id;
 }
+void EUTelHit::setTime(float time){
+    _time = time;
+}
 
- float EUTelHit::getTime() const {
-     return _time;
- }
- void EUTelHit::setTime(float time){
-     _time = time;
- }
+std::vector<double> EUTelHit::getWeight(){
+    return _weight;
+}
+
+float EUTelHit::getTime() const {
+    return _time;
+}
 
 std::vector<double> EUTelHit::getLCIOOutput(){
     std::vector<double> output;
@@ -137,6 +152,15 @@ std::vector<double> EUTelHit::getLCIOOutput(){
     output.push_back(getPosition()[1]);
     output.push_back(getPosition()[2]);
     output.push_back(getLocation());
+    ///Pass the error matrix.
+    output.push_back(_cov[0][0]);
+    output.push_back(_cov[0][1]);
+    output.push_back(_cov[1][0]);
+    output.push_back(_cov[1][1]);
+    output.push_back(_weight.at(0));
+    output.push_back(_weight.at(1));
+    ///
+
 
     return output;
 }
@@ -145,6 +169,16 @@ void EUTelHit::setTrackFromLCIOVec(std::vector<double> input){
     const double pos[3] = {input.at(1),input.at(2),input.at(3)};
     setPosition(pos);
     setLocation(input.at(4));
+    if(input.size() > 5){
+        _cov[0][0] = input.at(5); 
+        _cov[0][1] = input.at(6); 
+        _cov[1][0] = input.at(7); 
+        _cov[1][1] = input.at(8); 
+    }
+    if(input.size() > 9){
+        _weight.push_back(input.at(9)); 
+        _weight.push_back(input.at(10)); 
+    }
 }
 void EUTelHit::print(){
 	streamlog_out(DEBUG1)<< std::scientific << "Hit Information:" << std::endl;

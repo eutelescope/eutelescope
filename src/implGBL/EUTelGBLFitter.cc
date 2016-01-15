@@ -477,16 +477,26 @@ namespace eutelescope {
             traj->getResults(state.GBLLabels.at(0), corrections, cov );
             streamlog_out(DEBUG3) << std::endl << "State before we have added corrections: " << std::endl;
             state.print();
-            streamlog_out(DEBUG3) << std::endl << "Correction: " << std::endl;
+            streamlog_out(DEBUG3) << std::endl << "Correction and cov: " << std::endl;
             streamlog_message( DEBUG3, corrections.Print();, std::endl; );			
-            state.setStateUsingCorrection(corrections);//1)Add cov to state here.
+            streamlog_message( DEBUG3, cov.Print();, std::endl; );			
+            state.setStateUsingCorrection(corrections,cov);//1)Add cov to state here.
             //2)Add hit error and place update here.
             //3)Create kink object and add to state with uncertainty
             if(state.getLocation() == 0 ){
                 track.setTrackUsingCorrection(corrections);
             }
-          //  state.setCov(cov);
-            unsigned int numData;
+            ///Get the measurement information now for hits and kinks/////////
+            unsigned int numData; 
+            TVectorD aResiduals(2);
+            TVectorD aMeasErrors(2);
+            TVectorD aResErrors(2);
+            TVectorD aDownWeights(2); 
+            traj->getMeasResults(state.GBLLabels.at(0), numData, aResiduals, aMeasErrors, aResErrors, aDownWeights);
+            streamlog_out(DEBUG3) << std::endl << "Meas error: " << std::endl;
+            streamlog_message( DEBUG3, aMeasErrors.Print();, std::endl; );			
+            state.getHit().setCov(aResErrors);
+            state.getHit().setWeight(aDownWeights);
             /// Scattering is for every plane and is added here. 
             ///Measurement - Prediction is the residual. Initial M-P is always 0
             TVectorD aResidualsKink(2);

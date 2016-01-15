@@ -13,6 +13,7 @@ Processor("EUTelProcessorTrackAnalysis"){
 	
 	registerInputCollection(LCIO::TRACK, "TrackInputCollectionName", "Input track collection name",_trackInputCollectionName,std::string("TrackCandidatesCollection"));
 	registerOptionalParameter("SensorIDs", "A vector of the sensor IDs to plot",_sensorIDs,IntVec());
+    registerOptionalParameter("outhist", "Name and location of output histogram ", _outHist, std::string("analysis.root"));
     registerOptionalParameter("HistogramInfoFilename", "Name of histogram info xml file", _histoInfoFileName, std::string("histoinfo.xml"));
 
 	
@@ -27,7 +28,8 @@ void EUTelProcessorTrackAnalysis::init(){
 		initialiseEfficiencyVsPositionHistograms();
 		
 		//Some initialised in the constructor in part 2.
-		EUTelTrackAnalysis*	analysis = new EUTelTrackAnalysis(_mapFromSensorIDToHistogramX,_mapFromSensorIDToHistogramY,_mapFromSensorHitMap,_mapFromSensorIDToEfficiencyX,_mapFromSensorIDToEfficiencyY,_mapFromSensorIDToGloIncXZ,_mapFromSensorIDToGloIncYZ, _mapKinksX, _mapKinksY, _mapFromSensorKinksMap,_beamEnergy); 
+        TFile*  outfile = new TFile(_outHist.c_str(),"RECREATE");
+		EUTelTrackAnalysis*	analysis = new EUTelTrackAnalysis(_mapFromSensorIDToHistogramX,_mapFromSensorIDToHistogramY,_mapFromSensorHitMap,_mapFromSensorIDToEfficiencyX,_mapFromSensorIDToEfficiencyY,_mapFromSensorIDToGloIncXZ,_mapFromSensorIDToGloIncYZ, _mapKinksX, _mapKinksY, _mapFromSensorKinksMap,_beamEnergy,outfile); 
 
 		//Others here.
 		analysis->setSensorIDTo2DPValuesWithPosition(_mapFromSensorIDToPValueHisto);
@@ -68,6 +70,9 @@ void EUTelProcessorTrackAnalysis::processEvent(LCEvent * evt){
             _analysis->plotKinksVsPosition(track);
             _analysis->plotKinks(track);
             _analysis->plotBeamEnergy(track);
+            _analysis->plotCov(track);
+            _analysis->plotResErr(track);
+            _analysis->plotWeights(track);
             ///Only plot p-value if we have chi2 and ndf. If less than one then can not plot. 
             if(track.getNdf() > 1 ){
                 _analysis->plotPValueVsBeamEnergy(track);
@@ -134,6 +139,7 @@ void EUTelProcessorTrackAnalysis::end(){
 
     ///Will print the final results of the analysis
     _analysis->print();
+    delete _analysis;
 
 }
 void	EUTelProcessorTrackAnalysis::initialiseEfficiencyVsPositionHistograms(){

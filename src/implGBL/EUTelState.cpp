@@ -7,7 +7,7 @@ EUTelState::EUTelState():
     _kinks(2),
     _kinksMedium1(2),
     _kinksMedium2(2),
-    _cov(5,5)
+    _cov(5)
 {
     _kinks[0]=0;
     _kinks[1]=0;
@@ -24,7 +24,7 @@ EUTelState::EUTelState(EUTelState *state):
     _kinks(2),
     _kinksMedium1(2),
     _kinksMedium2(2),
-    _cov(5,5)
+    _cov(5)
 {
      _kinks = state->getKinks();
     _kinksMedium1 = state->getKinksMedium1();
@@ -260,7 +260,7 @@ void EUTelState::setDirLocalY(double dirY){
 void EUTelState::setDirLocalZ(double dirZ){
     _dirLocalZ = dirZ;
 }
-TMatrixD EUTelState::getCov(){
+TMatrixDSym EUTelState::getCov(){
     return _cov;
 }
 
@@ -308,11 +308,12 @@ void EUTelState::setLocalDirGlobalDir(TVector3 dirIn){
 
 }
 
-void EUTelState::setCov(TMatrixD cov){
+void EUTelState::setCov(TMatrixDSym cov){
     _cov = cov;
 }
 
-void EUTelState::setStateUsingCorrection(TVectorD corrections){
+void EUTelState::setStateUsingCorrection(TVectorD& corrections, TMatrixDSym& cov){
+    this->setCov(cov);
     /// Get position in global frame.
     Eigen::Vector3d  gPosCorr;
     gPosCorr << corrections[3] , corrections[4] , 0; 
@@ -441,6 +442,44 @@ std::vector<double> EUTelState::getLCIOOutput(){
     output.push_back(getKinksMedium1()[1]);
     output.push_back(getKinksMedium2()[0]);
     output.push_back(getKinksMedium2()[1]);
+    ///Pass the error matrix.
+ //   std::cout << "output!!!"<<std::endl; 
+ //   std::cout <<_cov[0][0] <<std::endl; 
+ //   std::cout <<_cov[0][1] <<std::endl; 
+ //   std::cout <<_cov[0][2]<<std::endl; 
+ //   std::cout <<_cov[0][3]<<std::endl; 
+ //   std::cout <<_cov[0][4]<<std::endl; 
+    ///
+    output.push_back(_cov[0][0]);
+    output.push_back(_cov[0][1]);
+    output.push_back(_cov[0][2]);
+    output.push_back(_cov[0][3]);
+    output.push_back(_cov[0][4]);
+    ///
+    output.push_back(_cov[1][0]);
+    output.push_back(_cov[1][1]);
+    output.push_back(_cov[1][2]);
+    output.push_back(_cov[1][3]);
+    output.push_back(_cov[1][4]);
+    ///
+    output.push_back(_cov[2][0]);
+    output.push_back(_cov[2][1]);
+    output.push_back(_cov[2][2]);
+    output.push_back(_cov[2][3]);
+    output.push_back(_cov[2][4]);
+    ///
+    output.push_back(_cov[3][0]);
+    output.push_back(_cov[3][1]);
+    output.push_back(_cov[3][2]);
+    output.push_back(_cov[3][3]);
+    output.push_back(_cov[3][4]);
+    ///
+    output.push_back(_cov[4][0]);
+    output.push_back(_cov[4][1]);
+    output.push_back(_cov[4][2]);
+    output.push_back(_cov[4][3]);
+    output.push_back(_cov[4][4]);
+    ///
 
     return output;
 
@@ -467,5 +506,65 @@ void EUTelState::setTrackFromLCIOVec(std::vector<double> input){
     kinksMedium2[0] = input.at(16);
     kinksMedium2[1] = input.at(17);
     setKinksMedium2(kinksMedium2);
-
+    if(input.size() > 18){
+        ///Set cov
+        _cov[0][0] = input.at(18); 
+        _cov[0][1] = input.at(19); 
+        _cov[0][2] = input.at(20); 
+        _cov[0][3] = input.at(21); 
+        _cov[0][4] = input.at(22); 
+        ///
+        _cov[1][0] = input.at(23); 
+        _cov[1][1] = input.at(24); 
+        _cov[1][2] = input.at(25); 
+        _cov[1][3] = input.at(26); 
+        _cov[1][4] = input.at(27); 
+        ///
+        _cov[2][0] = input.at(28); 
+        _cov[2][1] = input.at(29); 
+        _cov[2][2] = input.at(30); 
+        _cov[2][3] = input.at(31); 
+        _cov[2][4] = input.at(32); 
+        ///
+        _cov[3][0] = input.at(33); 
+        _cov[3][1] = input.at(34); 
+        _cov[3][2] = input.at(35); 
+        _cov[3][3] = input.at(36); 
+        _cov[3][4] = input.at(37); 
+        ///
+        _cov[4][0] = input.at(38); 
+        _cov[4][1] = input.at(39); 
+        _cov[4][2] = input.at(40); 
+        _cov[4][3] = input.at(41); 
+        _cov[4][4] = input.at(42); 
+        ///
+        ///Print
+   //     std::cout << "INput!!!"<<std::endl; 
+   //     std::cout << input.at(18)<<std::endl; 
+   //     std::cout << input.at(19)<<std::endl; 
+   //     std::cout << input.at(20)<<std::endl; 
+   //     std::cout << input.at(21)<<std::endl; 
+   //     std::cout << input.at(22)<<std::endl; 
+   //     std::cout << input.at(23)<<std::endl; 
+   //     std::cout << input.at(24)<<std::endl; 
+   //     std::cout << input.at(25)<<std::endl; 
+   //     std::cout << input.at(26)<<std::endl; 
+   //     std::cout << input.at(27)<<std::endl; 
+   //     std::cout << input.at(28)<<std::endl; 
+   //     std::cout << input.at(29)<<std::endl; 
+   //     std::cout << input.at(30)<<std::endl; 
+   //     std::cout << input.at(31)<<std::endl; 
+   //     std::cout << input.at(32)<<std::endl; 
+   //     std::cout << input.at(33)<<std::endl; 
+   //     std::cout << input.at(34)<<std::endl; 
+   //     std::cout << input.at(35)<<std::endl; 
+   //     std::cout << input.at(36)<<std::endl; 
+   //     std::cout << input.at(37)<<std::endl; 
+   //     std::cout << input.at(38)<<std::endl; 
+   //     std::cout << input.at(39)<<std::endl; 
+   //     std::cout << input.at(40)<<std::endl; 
+   //     std::cout << input.at(41)<<std::endl; 
+   //     std::cout << input.at(42)<<std::endl; 
+        ///
+    }
 }

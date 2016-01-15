@@ -1,8 +1,45 @@
 #include "EUTelTrackAnalysis.h"
 using namespace eutelescope;
 
-EUTelTrackAnalysis::EUTelTrackAnalysis(std::map< int,  AIDA::IProfile2D*> mapFromSensorIDToHistogramX, std::map< int,  AIDA::IProfile2D*> mapFromSensorIDToHistogramY, std::map< int,  AIDA::IHistogram2D*> mapFromSensorIDHitMap, std::map< int,  AIDA::IProfile2D*> mapFromSensorIDToEfficiencyX, std::map< int,  AIDA::IProfile2D*> mapFromSensorIDToEfficiencyY, std::map< int,   AIDA::IHistogram1D *> mapFromSensorIDToGloIncXZ,std::map< int,   AIDA::IHistogram1D *> mapFromSensorIDToGloIncYZ, 		 std::map< int,   AIDA::IHistogram1D *> mapKinksX, std::map< int,   AIDA::IHistogram1D *> mapKinksY, std::map< int,  AIDA::IProfile2D* > mapFromSensorKinksMap, AIDA::IHistogram1D * beamEnergy){
+EUTelTrackAnalysis::EUTelTrackAnalysis(std::map< int,  AIDA::IProfile2D*> mapFromSensorIDToHistogramX, std::map< int,  AIDA::IProfile2D*> mapFromSensorIDToHistogramY, std::map< int,  AIDA::IHistogram2D*> mapFromSensorIDHitMap, std::map< int,  AIDA::IProfile2D*> mapFromSensorIDToEfficiencyX, std::map< int,  AIDA::IProfile2D*> mapFromSensorIDToEfficiencyY, std::map< int,   AIDA::IHistogram1D *> mapFromSensorIDToGloIncXZ,std::map< int,   AIDA::IHistogram1D *> mapFromSensorIDToGloIncYZ, 		 std::map< int,   AIDA::IHistogram1D *> mapKinksX, std::map< int,   AIDA::IHistogram1D *> mapKinksY, std::map< int,  AIDA::IProfile2D* > mapFromSensorKinksMap, AIDA::IHistogram1D * beamEnergy, TFile* outFile){
 setSensorIDTo2DHitMap(mapFromSensorIDHitMap);
+    std::vector<int> none = {};
+    EUTelExcludedPlanes::setRelativeComplementSet(none);
+    _outFile = outFile;
+    _outFile->cd();
+    TDirectory* coDir = (TDirectory*) _outFile->mkdir("Covariance");
+    coDir->cd();
+    std::vector <std::string> covLabel{"#sigma_{Sx}#sigma_{Sx}","#sigma_{Sx}#sigma_{Sy}","#sigma_{Sx}#sigma_{x}", "#sigma_{Sx}#sigma_{y}", "#sigma_{Sy}#sigma_{Sy}","#sigma_{Sy}#sigma_{x}", "#sigma_{Sy}#sigma_{y}", "#sigma_{x}#sigma_{x}", "#sigma_{x}#sigma_{y}", "#sigma_{y}#sigma_{y}"};
+    for(size_t i = 0 ; i < EUTelExcludedPlanes::_senInc.size(); ++i){
+        for(size_t j = 0; j < covLabel.size() ; ++j){ 
+            std::string title = "CovarianceState" + '_' + std::to_string(EUTelExcludedPlanes::_senInc.at(i)) + '_' + covLabel.at(j);
+            TH1F* covHist = new TH1F(title.c_str(),title.c_str(), 100,0,0);//Make min and max same for auto range set. 
+            _mapNameCovHist[title] = covHist;
+        }
+    }
+    _outFile->cd();
+    TDirectory* resErrDir = (TDirectory*) _outFile->mkdir("ResError");
+    for(size_t i = 0 ; i < EUTelExcludedPlanes::_senInc.size(); ++i){
+        std::string title = "ResidualError" + '_' + std::to_string(EUTelExcludedPlanes::_senInc.at(i)) + "_X";
+        TH1F* resErrHistX = new TH1F(title.c_str(),title.c_str(), 100,0,0);//Make min and max same for auto range set. 
+        _mapNameResErrHist[title] = resErrHistX;
+        title = "ResidualError" + '_' + std::to_string(EUTelExcludedPlanes::_senInc.at(i)) + "_Y";
+        TH1F* resErrHistY = new TH1F(title.c_str(),title.c_str(), 100,0,0);//Make min and max same for auto range set. 
+        _mapNameResErrHist[title] = resErrHistY;
+
+    }
+    _outFile->cd();
+    TDirectory* weiDir = (TDirectory*) _outFile->mkdir("Weights");
+    for(size_t i = 0 ; i < EUTelExcludedPlanes::_senInc.size(); ++i){
+        std::string title = "Weights" + '_' + std::to_string(EUTelExcludedPlanes::_senInc.at(i)) + "_X";
+        TH1F* weiHistX = new TH1F(title.c_str(),title.c_str(), 100,0,0);//Make min and max same for auto range set. 
+        _mapNameWeiHist[title] = weiHistX;
+        title = "Weights" + '_' + std::to_string(EUTelExcludedPlanes::_senInc.at(i)) + "_Y";
+        TH1F* weiHistY = new TH1F(title.c_str(),title.c_str(), 100,0,0);//Make min and max same for auto range set. 
+        _mapNameWeiHist[title] = weiHistY;
+
+    }
+
     _mapKinksX =mapKinksX;
     _mapKinksY =mapKinksY;
 
@@ -29,6 +66,25 @@ setSensorIDTo2DHitMap(mapFromSensorIDHitMap);
 
 
 } 
+EUTelTrackAnalysis::~EUTelTrackAnalysis(){
+    _outFile->cd();
+    _outFile->cd("Covariance");
+    for(auto map : _mapNameCovHist){
+        TGaxis::SetMaxDigits(2);
+        map.second->Write();
+    }
+    _outFile->cd("ResError");
+    for(auto map : _mapNameResErrHist){
+        TGaxis::SetMaxDigits(2);
+        map.second->Write();
+    }
+    _outFile->cd("Weights");
+    for(auto map : _mapNameWeiHist){
+        TGaxis::SetMaxDigits(2);
+        map.second->Write();
+    }
+}
+
 void EUTelTrackAnalysis::plotKinksVsPosition(EUTelTrack track){
   streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotResidualVsPosition------------------------------BEGIN"<< std::endl;
 	std::vector<EUTelState> states = track.getStates();
@@ -341,12 +397,80 @@ void EUTelTrackAnalysis::plotPValueWithPosition(EUTelTrack track){
 	}
   streamlog_out(DEBUG2) << " EUTelTrackAnalysis::plotPValueWithPosition------------------------------END"<< std::endl;
 }
+void EUTelTrackAnalysis::plotCov(EUTelTrack & track){
+    streamlog_out(DEBUG2) << "EUTelTrackAnalysis::plotCov---------------START"<< std::endl;
+    ///Repeat this vector above. Should have all in one.
+    std::vector <std::string> covLabel{"#sigma_{Sx}#sigma_{Sx}","#sigma_{Sx}#sigma_{Sy}","#sigma_{Sx}#sigma_{x}", "#sigma_{Sx}#sigma_{y}", "#sigma_{Sy}#sigma_{Sy}","#sigma_{Sy}#sigma_{x}", "#sigma_{Sy}#sigma_{y}", "#sigma_{x}#sigma_{x}", "#sigma_{x}#sigma_{y}", "#sigma_{y}#sigma_{y}"};
+  //  _outFile->cd();
+  //  _outFile->cd("Covariance");
+	std::vector<EUTelState> states = track.getStates();
+	for(size_t i=0; i<states.size();++i){
+        EUTelState& state = states.at(i);
+        TMatrixDSym cov =  state.getCov();
+        std::string title = "CovarianceState" + '_' + std::to_string(states.at(i).getLocation()) + '_' + covLabel.at(0);
+        streamlog_out(DEBUG5) << "Fill 1 " << cov[1][1] <<  std::endl;
+        _mapNameCovHist[title]->Fill(cov[1][1]);
+        title = "CovarianceState" + '_' + std::to_string(states.at(i).getLocation()) + '_' + covLabel.at(1);
+        _mapNameCovHist[title]->Fill(cov[1][2]);
+        title = "CovarianceState" + '_' + std::to_string(states.at(i).getLocation()) + '_' + covLabel.at(2);
+        _mapNameCovHist[title]->Fill(cov[1][3]);
+        title = "CovarianceState" + '_' + std::to_string(states.at(i).getLocation()) + '_' + covLabel.at(3);
+        _mapNameCovHist[title]->Fill(cov[1][4]);
+        title = "CovarianceState" + '_' + std::to_string(states.at(i).getLocation()) + '_' + covLabel.at(4);
+        _mapNameCovHist[title]->Fill(cov[2][2]);
+        title = "CovarianceState" + '_' + std::to_string(states.at(i).getLocation()) + '_' + covLabel.at(5);
+        _mapNameCovHist[title]->Fill(cov[2][3]);
+        title = "CovarianceState" + '_' + std::to_string(states.at(i).getLocation()) + '_' + covLabel.at(6);
+        _mapNameCovHist[title]->Fill(cov[2][4]);
+        title = "CovarianceState" + '_' + std::to_string(states.at(i).getLocation()) + '_' + covLabel.at(7);
+        _mapNameCovHist[title]->Fill(cov[3][3]);
+        title = "CovarianceState" + '_' + std::to_string(states.at(i).getLocation()) + '_' + covLabel.at(8);
+        _mapNameCovHist[title]->Fill(cov[3][4]);
+        title = "CovarianceState" + '_' + std::to_string(states.at(i).getLocation()) + '_' + covLabel.at(9);
+        _mapNameCovHist[title]->Fill(cov[4][4]);
+    }
+    streamlog_out(DEBUG2) << "EUTelTrackAnalysis::plotCov---------------END"<< std::endl;
+
+}
+void EUTelTrackAnalysis::plotResErr(EUTelTrack & track){
+    streamlog_out(DEBUG2) << "EUTelTrackAnalysis::plotCov---------------START"<< std::endl;
+    ///Repeat this vector above. Should have all in one.
+ //   _outFile->cd();
+//    _outFile->cd("ResError");
+	std::vector<EUTelState> states = track.getStates();
+	for(size_t i=0; i<states.size();++i){
+        std::string title = "ResidualError" + '_' + std::to_string(states.at(i).getLocation()) + "_X";
+        _mapNameResErrHist[title]->Fill(states.at(i).getHit().getCov()[0][0]);
+         title = "ResidualError" + '_' + std::to_string(states.at(i).getLocation()) + "_Y";
+        _mapNameResErrHist[title]->Fill(states.at(i).getHit().getCov()[1][1]);
+
+    }
+    streamlog_out(DEBUG2) << "EUTelTrackAnalysis::plotCov---------------END"<< std::endl;
+
+}
+void EUTelTrackAnalysis::plotWeights(EUTelTrack & track){
+    streamlog_out(DEBUG2) << "EUTelTrackAnalysis::plotCov---------------START"<< std::endl;
+    ///Repeat this vector above. Should have all in one.
+ //   _outFile->cd();
+//    _outFile->cd("ResError");
+	std::vector<EUTelState> states = track.getStates();
+	for(size_t i=0; i<states.size();++i){
+        std::string title = "Weights" + '_' + std::to_string(EUTelExcludedPlanes::_senInc.at(i)) + "_X";
+        _mapNameWeiHist[title]->Fill(states.at(i).getHit().getWeight().at(0));
+        title = "Weights" + '_' + std::to_string(EUTelExcludedPlanes::_senInc.at(i)) + "_Y";
+        _mapNameWeiHist[title]->Fill(states.at(i).getHit().getWeight().at(1));
+    }
+    streamlog_out(DEBUG2) << "EUTelTrackAnalysis::plotCov---------------END"<< std::endl;
+}
+
+
+
 float EUTelTrackAnalysis::calculatePValueForChi2(EUTelTrack track){//std::cout<<"pigeon"<<std::endl;
 //  std::cout<<"pigeon = "<<track.getNdf()<<std::endl;
   if(track.getNdf()==0) return 1;
-  boost::math::chi_squared mydist(track.getNdf());//std::cout<<"pigeon2"<<std::endl;
-  float pValue = 1 - boost::math::cdf(mydist,track.getChi2());//std::cout<<"pigeon3"<<std::endl;
-    return pValue;
+//  boost::math::chi_squared mydist(track.getNdf());//std::cout<<"pigeon2"<<std::endl;
+//  float pValue = 1 - boost::math::cdf(mydist,track.getChi2());//std::cout<<"pigeon3"<<std::endl;
+    return 0;
 }
 void EUTelTrackAnalysis::print(){
     streamlog_out(MESSAGE9) << "Analysis Results: " << std::endl;
@@ -377,7 +501,6 @@ void EUTelTrackAnalysis::setTotNum(EUTelTrack& track){
         }
 	} 
 }
-
 
 //FLOAT EUTelTrackAnalysis::calculatePValueForChi2(EUTelTrack track){
 //  streamlog_out(DEBUG2) << " EUTelTrackAnalysis::calculatePValueForChi2------------------------------BEGIN"<< std::endl;
