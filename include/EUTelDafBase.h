@@ -43,6 +43,7 @@
 #include <map>
 
 namespace eutelescope {
+
   class EUTelDafBase : public marlin::Processor {
   public:
     // Marlin processor interface funtions
@@ -65,6 +66,8 @@ namespace eutelescope {
     
     virtual inline bool ReferenceHitVecIsSet(){ return _referenceHitVec==0; }    
 
+    enum DafTrackFinder { simpleCluster, combinatorialKF };
+
   protected:
     std::ofstream trackstream;
     //! Input hit collection name
@@ -78,8 +81,6 @@ namespace eutelescope {
     EVENT::StringVec		_mcCollectionExample;
     LCCollection*               _mcCollection;
 
-
-
     std::vector<int> _colMin, _colMax, _rowMin, _rowMax;
     std::map<int, std::pair<int,int> > _rowMinMax, _colMinMax;
 
@@ -91,8 +92,13 @@ namespace eutelescope {
     float _telResX, _telResY, _dutResX, _dutResY;
     //! Nominal beam energy
     float _eBeam;
-    
-    //! Radius for track finder finder
+
+	//! Type of track finder used (e.g. cluster or KF)
+    //DafTrackFinder _trackFinderType = combinatorialKF;
+    DafTrackFinder _trackFinderType = simpleCluster;
+    std::string _clusterFinderName;
+   
+	//! Radius for track finder finder
     /*! 
      * Track finder works by projecting all hits into plane 0, assuming a beam parallel to
      * the z-axis, then running a cluster finder on these hits. This radius determines

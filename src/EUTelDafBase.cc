@@ -107,9 +107,10 @@ EUTelDafBase::EUTelDafBase(std::string name) : marlin::Processor(name) {
   HitCollectionNameVecExample.push_back("hit");
   registerProcessorParameter( "HitCollectionName", "Names of input hit collections", _hitCollectionName,HitCollectionNameVecExample);
   EVENT::StringVec _mcCollectionExample;
-  registerProcessorParameter ("mccollections",
-			      "List of hit collections. First one is INPUT collection, every subsequent corresponds to applying alignment collection",
+  registerProcessorParameter ("mccollections", "List of hit collections. First one is INPUT collection, every subsequent corresponds to applying alignment collection",
 			      _mcCollectionStr, _mcCollectionExample );
+  registerProcessorParameter ("clusterfinder", "Name of the clusterfinder which should be used, available are: simpleCluster and combinatorialKF",
+				 _clusterFinderName, std::string("simpleCluster"));
   registerOptionalParameter("AlignmentCollectionNames", "Names of alignment collections, should be in same order as application",
 			    _alignColNames, std::vector<std::string>());
 
@@ -322,6 +323,15 @@ void EUTelDafBase::init() {
   n_failedNdof =0; n_failedChi2OverNdof = 0; n_failedIsnan = 0;
   _initializedSystem = false;
 
+  //Set-uo the cluster finder
+  if(_clusterFinderName == "simpleCluster") {
+	_trackFinderType = simpleCluster;
+  } else if(_clusterFinderName == "combinatorialKF") {
+	_trackFinderType = combinatorialKF;
+  } else {
+	throw std::runtime_error("DAF-Fitter: Choosen cluster finder: "+_clusterFinderName+"does not exist");
+  }
+
   //Geometry description
   _siPlanesParameters  = const_cast<gear::SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
   _siPlanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
@@ -385,13 +395,14 @@ void EUTelDafBase::init() {
   }
  
   //Prepare track finder
-  //_system.setClusterRadius(_normalizedRadius); //Really non-normalized. Please remove when done testing.
-  _system.setCKFChi2Cut(_normalizedRadius * _normalizedRadius);
+  switch( _trackFinderType ) {
+	case combinatorialKF: _system.setCKFChi2Cut(_normalizedRadius*_normalizedRadius); break;
+	case simpleCluster: _system.setClusterRadius(_normalizedRadius); break;
+  }
   _system.setNominalXdz(_nXdz); //What is the tangent angle of the beam? (Probably zero)
   _system.setNominalYdz(_nYdz);
   _system.setXdzMaxDeviance(_nXdzMaxDeviance); //How far og the nominal angle can the first two measurements be?
   _system.setYdzMaxDeviance(_nYdzMaxDeviance);
-
 
   //Prepare and preallocate memory for track fitter
   _system.setChi2OverNdofCut(_maxChi2);
@@ -610,8 +621,10 @@ void EUTelDafBase::processEvent(LCEvent * event){
   }
   
   //Run track finder
-  //_system.clusterTracker(); //Please remove when done testing
-  _system.combinatorialKF();
+  switch( _trackFinderType ) {
+	case combinatorialKF: _system.combinatorialKF(); break;
+	case simpleCluster: _system.clusterTracker(); break;
+  }
  
   //Child specific actions
   dafEvent(event);
