@@ -523,6 +523,18 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::strin
     if ( dumpRoot ) _geoManager->Export( geomName.c_str() );
     return;
 }
+Eigen::Matrix3d EUTelGeometryTelescopeGeoDescription::getRotMatrixEig( int sensorID ) {
+    TMatrixD rot = getRotMatrix(sensorID);
+    Eigen::Matrix3d rotEig;
+    rotEig << rot[0][0], rot[0][1],rot[0][2],rot[1][0],rot[1][1],rot[1][2],rot[2][0] ,rot[2][1],rot[2][2];
+    return rotEig;
+}
+Eigen::Vector3d EUTelGeometryTelescopeGeoDescription::siPlaneNormalEig( int planeID ){
+    TVector3 normal =  siPlaneNormal(planeID);
+    Eigen::Vector3d norEigen;
+    norEigen << normal[0] , normal[1] , normal[2];
+    return norEigen;
+}
 
 Eigen::Matrix3d EUTelGeometryTelescopeGeoDescription::rotationMatrixFromAngles(int sensorID) {
 	return rotationMatrixFromAngles( (long double)siPlaneXRotationRadians(sensorID), (long double)siPlaneYRotationRadians(sensorID), (long double)siPlaneZRotationRadians(sensorID) );
@@ -911,6 +923,24 @@ double EUTelGeometryTelescopeGeoDescription::addKapton(std::map<const int, doubl
 //	}
 	return 1.0;// 2*geo::gGeometry().sensorZOrderToIDWithoutExcludedPlanes().size()*0.0001;
 
+}
+
+double EUTelGeometryTelescopeGeoDescription::airBetweenPlanesRadLengthGlobalIncidence(int planeIDStart,int planeIDEnd, Eigen::Vector3d incidenceDir, double& thickness) {
+    incidenceDir.normalize();
+    double normRad;
+    double startZPosAir =  siPlaneZPosition(planeIDStart) +  0.51*siPlaneZSize(planeIDStart);
+    double endZPosAir =  siPlaneZPosition(planeIDEnd) -  0.51*siPlaneZSize(planeIDEnd);
+    Eigen::Vector3d planeStartPos(0, 0, startZPosAir);
+    Eigen::Vector3d planeEndPos(0, 0, endZPosAir);
+    std::cout << "find rad" <<std::endl;
+    normRad = FindRad(planeStartPos, planeEndPos);
+    //   std::cout << "norm rad: " << normRad << " " << planeIDStart <<std::endl;
+    Eigen::Vector3d globalZ(0, 0, 1);
+    //I think this is the correct way of dealing with the incidence here.
+    double scale = std::abs(incidenceDir.dot(globalZ));
+    //   std::cout<<"Scale" << scale <<std::endl;
+    thickness =  ((planeEndPos - planeStartPos).norm())/scale;
+    return normRad/scale;
 }
 
 

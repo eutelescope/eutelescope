@@ -155,6 +155,7 @@ ADD_DEFINITIONS("-DDO_TESTING")
 INCLUDE_DIRECTORIES( ./include )
 INCLUDE_DIRECTORIES( ./include/alibava )
 INCLUDE_DIRECTORIES( ./pixgeo/include/ )
+INCLUDE_DIRECTORIES( ./include/implGBL )
 
 # definitions to pass to the compiler
 ADD_DEFINITIONS( "-Wall -std=c++11 -pedantic -Wextra" )
@@ -169,6 +170,7 @@ SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g -fdiagnostics-show-option -Weffc++ -W
 SET( libname ${PROJECT_NAME} )
 AUX_SOURCE_DIRECTORY( ./src library_sources )
 AUX_SOURCE_DIRECTORY( ./src/alibava library_sources )
+AUX_SOURCE_DIRECTORY( ./src/implGBL library_sources )
 ADD_SHARED_LIBRARY( ${libname} ${library_sources} )
 INSTALL_SHARED_LIBRARY( ${libname} DESTINATION lib )
 #INSTALL_SHARED_LIBRARY( GBL DESTINATION lib )
@@ -235,6 +237,7 @@ install (CODE
     EXECUTE_PROCESS(COMMAND ln -sf ${PROJECT_SOURCE_DIR}/tools/pyroplot/pyroplot.py ${PROJECT_SOURCE_DIR}/bin/pyroplot)
     EXECUTE_PROCESS(COMMAND ln -sf ${PROJECT_SOURCE_DIR}/tools/parsepede/parsemilleout.sh ${PROJECT_SOURCE_DIR}/bin/parsemilleout.sh)
     EXECUTE_PROCESS(COMMAND ln -sf ${PROJECT_SOURCE_DIR}/tools/resIntoSteer.py ${PROJECT_SOURCE_DIR}/bin/resIntoSteer.py)
+    EXECUTE_PROCESS(COMMAND ln -sf ${PROJECT_SOURCE_DIR}/tools/gearUpdate.py ${PROJECT_SOURCE_DIR}/bin/gearUpdate.py)
     EXECUTE_PROCESS(COMMAND ln -sf ${PROJECT_SOURCE_DIR}/tools/iterAlign.py ${PROJECT_SOURCE_DIR}/bin/iterAlign )"
 
 
