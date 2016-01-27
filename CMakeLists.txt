@@ -44,7 +44,8 @@ FIND_PACKAGE( LCCD  REQUIRED )
 
 # search for Eigen (linear algebra) library
 FIND_PACKAGE( Eigen2 REQUIRED)
-INCLUDE_DIRECTORIES( ${EIGEN2_INCLUDE_DIR} )
+# include them as SYSTEM include directories, this will supress all warnings from them
+INCLUDE_DIRECTORIES( SYSTEM ${EIGEN2_INCLUDE_DIR} )
 
 # development mode:
 
@@ -152,10 +153,12 @@ ADD_DEFINITIONS("-DDO_TESTING")
 
 
 # include directories
+include_directories(SYSTEM ./external)
 INCLUDE_DIRECTORIES( ./include )
 INCLUDE_DIRECTORIES( ./include/alibava )
 INCLUDE_DIRECTORIES( ./pixgeo/include/ )
 
+ 
 # definitions to pass to the compiler
 ADD_DEFINITIONS( "-Wall -std=c++11 -pedantic -Wextra" )
 ADD_DEFINITIONS( "-Wno-long-long" )
@@ -206,6 +209,7 @@ ENDMACRO()
 
 ADD_EUTELESCOPE_TOOL( pede2lcio )
 ADD_EUTELESCOPE_TOOL( pedestalmerge )
+
 
 
 # !RELEASE: REMOVE FOR RELEASE VERSIONS
