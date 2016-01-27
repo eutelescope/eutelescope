@@ -133,9 +133,8 @@ void EUTelProcessorGBLAlign::init() {
 }
 
 void EUTelProcessorGBLAlign::processRunHeader(LCRunHeader * run) {
-	std::auto_ptr<EUTelRunHeaderImpl> header(new EUTelRunHeaderImpl(run));
+	std::unique_ptr<EUTelRunHeaderImpl> header = std::make_unique<EUTelRunHeaderImpl>(run);
 	header->addProcessor(type());
-
 
 	// this is the right place also to check the geometry ID. This is a
 	// unique number identifying each different geometry used at the

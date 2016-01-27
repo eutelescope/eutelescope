@@ -148,7 +148,7 @@ void EUTelPedeGEAR::init() {
 }
 
 void EUTelPedeGEAR::processRunHeader(LCRunHeader* rdr) {
-	std::auto_ptr<EUTelRunHeaderImpl> header ( new EUTelRunHeaderImpl (rdr) );
+	auto header = std::make_unique<EUTelRunHeaderImpl>(rdr);
 	header->addProcessor( type() ) ;
 
 	// this is the right place also to check the geometry ID. This is a

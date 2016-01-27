@@ -51,7 +51,7 @@ void EUTelProcessorCoordinateTransformHits::init() {
 
 void EUTelProcessorCoordinateTransformHits::processRunHeader(LCRunHeader* rdr)
 {
-		std::auto_ptr<EUTelRunHeaderImpl> header( new EUTelRunHeaderImpl(rdr) );
+		std::unique_ptr<EUTelRunHeaderImpl> header = std::make_unique<EUTelRunHeaderImpl>(rdr);
 
 		// this is the right place also to check the geometry ID. This is a
 		// unique number identifying each different geometry used at the

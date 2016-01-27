@@ -114,7 +114,7 @@ void EUTelProcessorNoisyClusterRemover::processEvent(LCEvent* event) {
 		//if the kNoisyCluster flag is NOT set, we add the pulse to the output collection
 		if(!(quality & kNoisyCluster)) {
 			//TrackerPulseImpl for the output collection
-			std::unique_ptr<TrackerPulseImpl> outputPulse (new TrackerPulseImpl );
+			std::unique_ptr<TrackerPulseImpl> outputPulse = std::make_unique<TrackerPulseImpl>();
 
 			//copy the information which is the same
 			outputPulse->setCellID0( inputPulse->getCellID0() );
@@ -142,7 +142,7 @@ void EUTelProcessorNoisyClusterRemover::processEvent(LCEvent* event) {
 	if ( !outputCollectionExists && ( outputCollection->size() == _initialOutputCollectionSize )) {
 		delete outputCollection;
 	}	
-//rest of memory cleaned up by auto_ptrs
+//rest of memory cleaned up by smart ptrs
 }
 
 void EUTelProcessorNoisyClusterRemover::end() {

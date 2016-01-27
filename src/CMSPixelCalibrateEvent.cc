@@ -279,13 +279,9 @@ void CMSPixelCalibrateEventProcessor::init () {
 
 
 void CMSPixelCalibrateEventProcessor::processRunHeader (LCRunHeader * rdr) {
-
-    auto_ptr<EUTelRunHeaderImpl> runHeader( new EUTelRunHeaderImpl( rdr ) );
-    runHeader->addProcessor( type() );
-
-    // Increment the run counter
+	std::unique_ptr<EUTelRunHeaderImpl> runHeader = std::make_unique<EUTelRunHeaderImpl>(rdr);    
+	runHeader->addProcessor(type());
     ++_iRun;
-
 }
 
 
@@ -321,11 +317,11 @@ void CMSPixelCalibrateEventProcessor::processEvent (LCEvent * event) {
 
             EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>  correctedData( corrected ) ;
 
-            auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> > pixelData( new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>( sparseData ));
+            std::unique_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>> pixelData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(sparseData);
 
             // Loop over all pixels in the sparseData object.
             EUTelGenericSparsePixel Pixel;
-            auto_ptr<EUTelGenericSparsePixel> correctedPixel( new EUTelGenericSparsePixel );
+            std::unique_ptr<EUTelGenericSparsePixel> correctedPixel = std::make_unique<EUTelGenericSparsePixel>();
 
             for ( unsigned int iPixel = 0; iPixel < pixelData->size(); iPixel++ ) {
                 pixelData->getSparsePixelAt( iPixel, &Pixel);

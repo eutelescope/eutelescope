@@ -107,10 +107,10 @@ void EUTelProcessorRawHistos::initialiseNoisyPixels( LCCollectionVec* const nois
 		//And get the corresponding noise vector for that plane
 		std::vector<int>* noiseSensorVector = &(_noisyPixelVecMap[sensorID]);
 
-		unique_ptr<EUTelTrackerDataInterfacer> noisyPixelData = auto_ptr<EUTelTrackerDataInterfacer>();
+		std::unique_ptr<EUTelTrackerDataInterfacer> noisyPixelData = std::unique_ptr<EUTelTrackerDataInterfacer>();
 
 		if( pixelType == kEUTelGenericSparsePixel ) {
-			noisyPixelData =  unique_ptr<EUTelTrackerDataInterfacer>( new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>(noisyTrackerData) );
+			noisyPixelData =  std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(noisyTrackerData);
 		}
 		//Store all the noisy pixels in the noise vector, use the provided encoding to map two int's to an unique int
 		for ( unsigned int iPixel = 0; iPixel < noisyPixelData->size(); iPixel++ ) {

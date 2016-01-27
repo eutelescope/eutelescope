@@ -203,9 +203,8 @@ void EUTelProcessorHitMaker::DumpReferenceHitDB() {
 
 
 void EUTelProcessorHitMaker::processRunHeader (LCRunHeader * rdr) {
-
-  auto_ptr<EUTelRunHeaderImpl> header ( new EUTelRunHeaderImpl (rdr) );
-  header->addProcessor( type() );
+  std::unique_ptr<EUTelRunHeaderImpl> header = std::make_unique<EUTelRunHeaderImpl>(rdr);
+  header->addProcessor(type());
 
   // this is the right place also to check the geometry ID. This is a
   // unique number identifying each different geometry used at the

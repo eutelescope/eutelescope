@@ -163,14 +163,11 @@ void EUTelCalculateEtaProcessor::init () {
 }
 
 void EUTelCalculateEtaProcessor::processRunHeader (LCRunHeader * rdr) {
-
-  auto_ptr<EUTelRunHeaderImpl> runHeader ( new EUTelRunHeaderImpl( rdr ) );
-
+  std::unique_ptr<EUTelRunHeaderImpl> runHeader = std::make_unique<EUTelRunHeaderImpl>(rdr);
   runHeader->addProcessor( type() );
 
   _noOfDetector = runHeader->getNoOfDetector();
   _detectorName = runHeader->lcRunHeader()->getDetectorName();
-
 
   int tempEvent;
   if ( Global::parameters->getIntVal("MaxRecordNumber") == 0 ) {

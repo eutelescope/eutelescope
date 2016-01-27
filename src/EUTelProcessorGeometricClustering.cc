@@ -349,9 +349,9 @@ void EUTelProcessorGeometricClustering::geometricClustering(LCEvent * evt, LCCol
 		while( !hitPixelVec.empty() )
 		  {
 		    // prepare a TrackerData to store the cluster candidate
-		    std::auto_ptr< TrackerDataImpl > zsCluster ( new TrackerDataImpl );
+		    std::unique_ptr<TrackerDataImpl> zsCluster = std::make_unique<TrackerDataImpl>();
 		    // prepare a reimplementation of sparsified cluster
-		    std::auto_ptr<EUTelGenericSparseClusterImpl<EUTelGeometricPixel > > sparseCluster ( new EUTelGenericSparseClusterImpl<EUTelGeometricPixel >( zsCluster.get() ) );
+		    std::unique_ptr<EUTelGenericSparseClusterImpl<EUTelGeometricPixel>> sparseCluster = std::make_unique<EUTelGenericSparseClusterImpl<EUTelGeometricPixel>>(zsCluster.get());
 		    
 		    //First we need to take any pixel, so let's take the first one
 		    //Add it to the cluster as well as the newly added pixels
@@ -426,7 +426,7 @@ void EUTelProcessorGeometricClustering::geometricClustering(LCEvent * evt, LCCol
 			//sparseCluster->getClusterInfo(xSeed, ySeed, xSize, ySize);
 			
 			// prepare a pulse for this cluster
-			std::auto_ptr<TrackerPulseImpl> zsPulse ( new TrackerPulseImpl );
+			std::unique_ptr<TrackerPulseImpl> zsPulse = std::make_unique<TrackerPulseImpl>();
 			idZSPulseEncoder["sensorID"]  = sensorID;
 			//idZSPulseEncoder["xSeed"]     = xSeed;
 			//idZSPulseEncoder["ySeed"]     = ySeed;
@@ -446,7 +446,7 @@ void EUTelProcessorGeometricClustering::geometricClustering(LCEvent * evt, LCCol
 		    else 
 		      {
 			//in the case the cluster candidate is not passing the threshold ...
-			//forget about them, the memory should be automatically cleaned by std::auto_ptr's
+			//forget about them, the memory should be automatically cleaned by smart ptr's
 		      }
 		  } //loop over all found clusters
 		
@@ -586,7 +586,7 @@ void EUTelProcessorGeometricClustering::bookHistos() {
 
   // histograms are grouped in loops and detectors
   streamlog_out ( DEBUG5 )  << "Booking histograms " << std::endl;
-  std::auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ) );
+  std::unique_ptr<EUTelHistogramManager> histoMgr = std::make_unique<EUTelHistogramManager>(_histoInfoFileName);
   EUTelHistogramInfo* histoInfo;
   bool isHistoManagerAvailable;
 

@@ -708,7 +708,7 @@ void EUTelCorrelator::bookHistos() {
 
     streamlog_out ( DEBUG5 ) <<  "Booking histograms" << endl;
 
-        auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
+        std::unique_ptr<EUTelHistogramManager> histoMgr = std::make_unique<EUTelHistogramManager>(_histoInfoFileName);
         EUTelHistogramInfo    * histoInfo;
         bool                    isHistoManagerAvailable;
 

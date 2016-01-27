@@ -100,8 +100,8 @@ void EUTelSucimaImagerReader::readDataSource (int numEvents) {
       
       // in the case it is the first run so we need to process and
       // write out the run header.
-      auto_ptr<IMPL::LCRunHeaderImpl> lcHeader  ( new IMPL::LCRunHeaderImpl );
-      auto_ptr<EUTelRunHeaderImpl>    runHeader ( new EUTelRunHeaderImpl (lcHeader.get()) );
+      auto lcHeader = std::make_unique<IMPL::LCRunHeaderImpl>();
+      auto runHeader = std::make_unique<EUTelRunHeaderImpl>(lcHeader.get());
       runHeader->addProcessor( type() );
       runHeader->lcRunHeader()->setDescription(" Events read from SUCIMA Imager ASCII input file: " + _fileName);
       runHeader->lcRunHeader()->setRunNumber (runNumber);

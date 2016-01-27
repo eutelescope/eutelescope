@@ -127,17 +127,9 @@ void EUTelAutoPedestalNoiseProcessor::init () {
 }
 
 void EUTelAutoPedestalNoiseProcessor::processRunHeader (LCRunHeader * rdr) {
-
-  // increment the run counter
   ++_iRun;
-
-  auto_ptr<EUTelRunHeaderImpl> runHeader ( new EUTelRunHeaderImpl( rdr ) );
-
+  std::unique_ptr<EUTelRunHeaderImpl> runHeader = std::make_unique<EUTelRunHeaderImpl>(rdr);
   runHeader->addProcessor( type() ) ;
-
-
-
-
 }
 
 

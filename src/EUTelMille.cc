@@ -585,9 +585,8 @@ void EUTelMille::init() {
 }
 
 void EUTelMille::processRunHeader (LCRunHeader * rdr) {
-
-  auto_ptr<EUTelRunHeaderImpl> header ( new EUTelRunHeaderImpl (rdr) );
-  header->addProcessor( type() ) ;
+  std::unique_ptr<EUTelRunHeaderImpl> header = std::make_unique<EUTelRunHeaderImpl>(rdr);
+  header->addProcessor(type());
 
   // this is the right place also to check the geometry ID. This is a
   // unique number identifying each different geometry used at the
@@ -1021,9 +1020,8 @@ void  EUTelMille::FillHotPixelMap(LCEvent *event)
 
 	   int sensorID              = static_cast<int > ( cellDecoder( hotPixelData )["sensorID"] );
 
-           if( type  ==  kEUTelGenericSparsePixel )
-           {  
-              auto_ptr<EUTelSparseClusterImpl< EUTelGenericSparsePixel > > m26Data( new EUTelSparseClusterImpl< EUTelGenericSparsePixel >   ( hotPixelData ) );
+           if( type  ==  kEUTelGenericSparsePixel ) {  
+				std::unique_ptr<EUTelSparseClusterImpl<EUTelGenericSparsePixel>> m26Data = std::make_unique<EUTelSparseClusterImpl<EUTelGenericSparsePixel>>(hotPixelData);
 
               std::vector<EUTelGenericSparsePixel*> m26PixelVec;
 	      EUTelGenericSparsePixel m26Pixel;

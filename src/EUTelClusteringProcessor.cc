@@ -305,18 +305,10 @@ void EUTelClusteringProcessor::init() {
     _isGeometryReady = false;
 }
 
-
-
 void EUTelClusteringProcessor::processRunHeader (LCRunHeader * rdr) {
-
-
-    auto_ptr<EUTelRunHeaderImpl> runHeader( new EUTelRunHeaderImpl( rdr ) );
-
+    auto runHeader = std::make_unique<EUTelRunHeaderImpl>(rdr);
     runHeader->addProcessor( type() );
-
-    // increment the run counter
     ++_iRun;
-
 }
 
 void EUTelClusteringProcessor::initializeGeometry( LCEvent * event ) throw ( marlin::SkipEventException ) {
@@ -449,7 +441,7 @@ void EUTelClusteringProcessor::initializeHotPixelMapVec(  )
         EUTelMatrixDecoder matrixDecoder( noiseDecoder , noise );
 
         // now prepare the EUTelescope interface to sparsified data.
-        auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel > >  sparseData(new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> ( hotData ));
+        auto sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(hotData);
 
         streamlog_out ( DEBUG1 ) << "Processing sparse data on detector " << sensorID << " with "
                                  << sparseData->size() << " pixels " << endl;
@@ -536,7 +528,7 @@ void EUTelClusteringProcessor::initializeStatusCollection(  )
         EUTelMatrixDecoder matrixDecoder( noiseDecoder , noise );
 
         // now prepare the EUTelescope interface to sparsified data.
-        auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel > >  sparseData(new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> ( zsData ));
+        auto sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(zsData);
 
         streamlog_out ( DEBUG1 ) << "Processing sparse data on detector " << sensorID << " with "
                                  << sparseData->size() << " pixels " << endl;
@@ -811,7 +803,6 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
 
 
 
-    //auto_ptr<LCCollectionVec > sparseClusterCollectionVec ( new  LCCollectionVec(LCIO::TRACKERDATA) );
     CellIDEncoder<TrackerDataImpl> idZSClusterEncoder( EUTELESCOPE::CLUSTERDEFAULTENCODING, sparseClusterCollectionVec  );
     // prepare an encoder also for the pulse collection
     CellIDEncoder<TrackerPulseImpl> idZSPulseEncoder(EUTELESCOPE::PULSEDEFAULTENCODING, pulseCollection);
@@ -907,13 +898,13 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
         if ( type == kEUTelGenericSparsePixel )
         {
             // now prepare the EUTelescope interface to sparsified data.
-            auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> > sparseData(new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>( zsData ));
+            auto sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(zsData);
 
             streamlog_out ( DEBUG1 ) << "Processing sparse data on detector " << _sensorID << " with "
                                      << sparseData->size() << " pixels " << endl;
 
             // loop over all pixels in the sparseData object.
-            auto_ptr<EUTelGenericSparsePixel > sparsePixel( new EUTelGenericSparsePixel );
+            auto sparsePixel = std::make_unique<EUTelGenericSparsePixel>();
             for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
             {
 
@@ -1388,13 +1379,13 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
         if ( type == kEUTelGenericSparsePixel ) {
 
             // now prepare the EUTelescope interface to sparsified data.
-            auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> > sparseData(new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>( zsData ));
+            auto sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(zsData);
 
             streamlog_out ( DEBUG1 ) << "Processing sparse data on detector " << sensorID << " with "
                                      << sparseData->size() << " pixels " << endl;
 
             // loop over all pixels in the sparseData object.
-            auto_ptr<EUTelGenericSparsePixel > sparsePixel( new EUTelGenericSparsePixel );
+            auto sparsePixel = std::make_unique<EUTelGenericSparsePixel>();
             for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ ) {
                 sparseData->getSparsePixelAt( iPixel, sparsePixel.get() );
                 int   index  = matrixDecoder.getIndexFromXY( sparsePixel->getXCoord(), sparsePixel->getYCoord() );
@@ -1668,13 +1659,13 @@ void EUTelClusteringProcessor::zsBrickedClustering(LCEvent * evt, LCCollectionVe
         {
 
             // now prepare the EUTelescope interface to sparsified data.
-            auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> > sparseData(new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>( zsData ));
+            auto sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(zsData);
 
             streamlog_out ( DEBUG1 ) << "Processing sparse data on detector " << sensorID << " with "
                                      << sparseData->size() << " pixels " << endl;
 
             // loop over all pixels in the sparseData object.
-            auto_ptr<EUTelGenericSparsePixel > sparsePixel( new EUTelGenericSparsePixel );
+            auto sparsePixel = std::make_unique<EUTelGenericSparsePixel>();
             for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
             {
                 sparseData->getSparsePixelAt( iPixel, sparsePixel.get() );
@@ -2036,7 +2027,7 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent* evt, LCCollectionVec* p
         {
 
             // now prepare the EUTelescope interface to sparsified data.
-            auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel > > sparseData( new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> ( zsData ) );
+            auto sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(zsData);
 
             streamlog_out ( DEBUG2 ) << "Processing sparse data on detector " << sensorID << " with " << sparseData->size() << " pixels " << endl;
 
@@ -2060,9 +2051,9 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent* evt, LCCollectionVec* p
             while( !hitPixelVec.empty() )
             {
                 // prepare a TrackerData to store the cluster candidate
-                auto_ptr< TrackerDataImpl > zsCluster ( new TrackerDataImpl );
+                auto zsCluster = std::make_unique<TrackerDataImpl>();
                 // prepare a reimplementation of sparsified cluster
-                auto_ptr<EUTelSparseClusterImpl<EUTelGenericSparsePixel > > sparseCluster ( new EUTelSparseClusterImpl<EUTelGenericSparsePixel>( zsCluster.get() ) );
+                auto sparseCluster = std::make_unique<EUTelSparseClusterImpl<EUTelGenericSparsePixel>>(zsCluster.get());
 
                 std::vector<EUTelGenericSparsePixel> cluCandidate;
 
@@ -2157,7 +2148,7 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent* evt, LCCollectionVec* p
                     sparseClusterCollectionVec->push_back( zsCluster.get() );
 
                     // prepare a pulse for this cluster
-                    auto_ptr<TrackerPulseImpl> zsPulse ( new TrackerPulseImpl );
+                    auto zsPulse = std::make_unique<TrackerPulseImpl>();
                     idZSPulseEncoder["sensorID"] = sensorID;
                     idZSPulseEncoder["type"] = static_cast<int>(kEUTelSparseClusterImpl);
                     idZSPulseEncoder.setCellID( zsPulse.get() );
@@ -2176,7 +2167,7 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent* evt, LCCollectionVec* p
                 else
                 {
                     //in the case the cluster candidate is not passing the threshold ...
-                    //forget about them, the memory should be automatically cleaned by auto_ptr's
+                    //forget about them, the memory should be automatically cleaned by  smart ptr's
                 }
             } //loop over all found clusters
 
@@ -3041,7 +3032,7 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
                 }
             } else if ( type == kEUTelSparseClusterImpl ) {
                 if ( pixelType == kEUTelGenericSparsePixel ) {
-                    auto_ptr<EUTelGenericSparsePixel> pixel ( new EUTelGenericSparsePixel );
+                    auto pixel = std::make_unique<EUTelGenericSparsePixel>();
                     // this recasting is due to have access to sparse cluster
                     // specific methods.
                     EUTelSparseClusterImpl<EUTelGenericSparsePixel>* recasted =
@@ -3133,7 +3124,7 @@ void EUTelClusteringProcessor::bookHistos() {
 
     // histograms are grouped in loops and detectors
     streamlog_out ( DEBUG5 )  << "Booking histograms " << endl;
-    auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
+    auto histoMgr = std::make_unique<EUTelHistogramManager>( _histoInfoFileName);
     EUTelHistogramInfo    * histoInfo;
     bool                    isHistoManagerAvailable;
 

@@ -38,10 +38,6 @@ namespace eutelescope {}
 # include <stdexcept>
 #include <cstddef>
 
-#ifndef nullptr
-	#define nullptr NULL
-#endif 
-
 #ifdef USE_MARLIN
 // streamlog include
 #include "streamlog/streamlog.h"
@@ -51,6 +47,8 @@ namespace eutelescope {}
 #include <iostream>
 #include <string>
 #include <vector>
+
+#include "make_unique.h"
 
 namespace eutelescope
 {
