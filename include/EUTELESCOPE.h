@@ -81,8 +81,11 @@ namespace eutelescope
 
 	//! Parameter to store the telescope ROOT geometry file
 	static const std::string GEOFILENAME;
-	
-    //! Parameter key to store/recall the header version number
+
+	//! Parameter to specify if dumping of the geo ROOT file is desired
+	static const bool DUMPGEOROOT;
+    
+	//! Parameter key to store/recall the header version number
     static const char * HEADERVERSION;
 
     //! Parameter key to store/recall the data type

@@ -65,9 +65,7 @@ void EUTelPedeGEAR::init() {
 	_iEvt = 0;
 
 	//Getting access to geometry description
-	std::string name("test.root");
-	geo::gGeometry().initializeTGeoDescription(name,false);
-
+	geo::gGeometry().initializeTGeoDescription(EUTELESCOPE::GEOFILENAME, EUTELESCOPE::DUMPGEOROOT);
 
 	//check if the GEAR manager pointer is not null!
 	if( Global::GEAR == 0x0 ) {

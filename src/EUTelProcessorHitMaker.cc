@@ -103,32 +103,24 @@ _orderedSensorIDVec()
   registerOptionalParameter("ReferenceHitFile","This is the file where the reference hit collection is stored", _referenceHitLCIOFile, std::string("reference.slcio") );
 }
 
+void EUTelProcessorHitMaker::init(){
+	printParameters ();
 
-void EUTelProcessorHitMaker::init()
-{
-		printParameters ();
+	// set to zero the run and event counters
+	_iRun = 0;
+	_iEvt = 0;
 
-		// set to zero the run and event counters
-		_iRun = 0;
-		_iEvt = 0;
+	geo::gGeometry().initializeTGeoDescription(EUTELESCOPE::GEOFILENAME, EUTELESCOPE::DUMPGEOROOT);
 
-		// Getting access to geometry description
-		std::string name = EUTELESCOPE::GEOFILENAME;
-		geo::gGeometry().initializeTGeoDescription(name, false);
+	_histogramSwitch = true;
 
-
-		_histogramSwitch = true;
-
-		//only for global coord we need a refhit collection
-		if(!_wantLocalCoordinates)
-		{
+	//only for global coord we need a refhit collection
+	if(!_wantLocalCoordinates) {
 				DumpReferenceHitDB();
-		}
+	}
 }
 
-
-void EUTelProcessorHitMaker::DumpReferenceHitDB()
-{
+void EUTelProcessorHitMaker::DumpReferenceHitDB() {
 	// create a reference hit collection file (DB)
   LCWriter* lcWriter = LCFactory::getInstance()->createLCWriter();
   try {

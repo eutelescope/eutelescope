@@ -95,23 +95,18 @@ void EUTelAPIXTbTrackTuple::init()
 	_nRun = 0;
 	_nEvt = 0;
 
-	// Prepare TTree/TFiles
 	prepareTree();
 
-	//init new geometry
-	std::string name("test.root");
-	geo::gGeometry().initializeTGeoDescription(name,true);
+    geo::gGeometry().initializeTGeoDescription(EUTELESCOPE::GEOFILENAME, EUTELESCOPE::DUMPGEOROOT);
 
-
-	for(std::vector<int>::iterator it = _DUTIDs.begin(); it != _DUTIDs.end(); it++)
-	{
+	for(auto dutID: _DUTIDs) {
 		//Later we need to shift the sensor since in EUTel centre of sensor is 0|0 while in TBmon(II) it is in the lower left corner
-		geo::EUTelGenericPixGeoDescr* geoDescr = geo::gGeometry().getPixGeoDescr( *it ) ;
+		geo::EUTelGenericPixGeoDescr* geoDescr = geo::gGeometry().getPixGeoDescr(dutID) ;
 		float xSize,ySize;
 		geoDescr->getSensitiveSize(xSize, ySize);
 
-		_xSensSize[*it] = xSize;
-		_ySensSize[*it] = ySize;
+		_xSensSize[dutID] = xSize;
+		_ySensSize[dutID] = ySize;
 	}
 }
 

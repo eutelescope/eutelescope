@@ -123,8 +123,7 @@ void EUTelProcessorSparseClustering::init() {
 	printParameters ();
 
 	//init new geometry
-	std::string name("test.root");
-	geo::gGeometry().initializeTGeoDescription(name,true);
+	geo::gGeometry().initializeTGeoDescription(EUTELESCOPE::GEOFILENAME, EUTELESCOPE::DUMPGEOROOT);
 
 	//set to zero the run and event counters
 	_iRun = 0;

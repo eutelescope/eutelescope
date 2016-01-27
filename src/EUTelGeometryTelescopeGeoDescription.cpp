@@ -319,7 +319,7 @@ EUTelGeometryTelescopeGeoDescription::~EUTelGeometryTelescopeGeoDescription() {
  * Initialise ROOT geometry objects from external .root file
  * @param tgeofilename name of .root file
  */
-void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::string tgeofilename ) {
+void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::string  tgeofilename ) {
     
     _geoManager = TGeoManager::Import( tgeofilename.c_str() );
     if( !_geoManager ) {
@@ -468,7 +468,7 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
  * @param geomName name of ROOT geometry object
  * @param dumpRoot dump automatically generated ROOT geometry file for further inspection
  */
-void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::string& geomName, bool dumpRoot = false ) {
+void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::string const & geomName, bool dumpRoot = false ) {
 	if( _isGeoInitialized ) {
 		streamlog_out( WARNING3 ) << "EUTelGeometryTelescopeGeoDescription: Geometry already initialized, using old initialization" << std::endl;
 		return;

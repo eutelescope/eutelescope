@@ -141,9 +141,7 @@ void EUTelCorrelator::init() {
   // usually a good idea to
   printParameters ();
 
-  // Getting access to geometry description
-  std::string name("test.root");
-  geo::gGeometry().initializeTGeoDescription(name,false);
+  geo::gGeometry().initializeTGeoDescription(EUTELESCOPE::GEOFILENAME, EUTELESCOPE::DUMPGEOROOT);
 
   _sensorIDVec.clear();
   _sensorIDVec = geo::gGeometry().sensorIDsVec();

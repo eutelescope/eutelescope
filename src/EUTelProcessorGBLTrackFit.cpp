@@ -82,9 +82,9 @@ void EUTelProcessorGBLTrackFit::init() {
 		// Reset counters
 		_nProcessedRuns = 0;
 		_nProcessedEvents = 0;
-		//Create TGeo description from the gear.
-		std::string name("test.root");
-		geo::gGeometry().initializeTGeoDescription(name,false);
+        
+        geo::gGeometry().initializeTGeoDescription(EUTELESCOPE::GEOFILENAME, EUTELESCOPE::DUMPGEOROOT);
+		
 		// Initialize GBL fitter. This is the class that does all the work. Seems to me a good practice for the most part create a class that does the work. Since then you can use the same functions in another processor.
 		EUTelGBLFitter* Fitter = new EUTelGBLFitter();
 		Fitter->setBeamCharge(_beamQ);

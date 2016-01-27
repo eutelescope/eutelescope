@@ -45,10 +45,8 @@ _undoAlignment(false)
 		registerOptionalParameter("Undo Alignment (boolean)", "Set to true to undo the alignment instead", _undoAlignment, bool(false));
 }
 
-void EUTelProcessorCoordinateTransformHits::init()
-{
-		std::string geoFilename = EUTELESCOPE::GEOFILENAME;
-		geo::gGeometry().initializeTGeoDescription(geoFilename, false);
+void EUTelProcessorCoordinateTransformHits::init() {
+		geo::gGeometry().initializeTGeoDescription(EUTELESCOPE::GEOFILENAME, EUTELESCOPE::DUMPGEOROOT);
 }
 
 void EUTelProcessorCoordinateTransformHits::processRunHeader(LCRunHeader* rdr)
