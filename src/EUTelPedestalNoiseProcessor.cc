@@ -256,7 +256,7 @@ void EUTelPedestalNoiseProcessor::processRunHeader (LCRunHeader * rdr) {
   _detectorName = rdr->getDetectorName();
 
   // to make things easier re-cast the input header to the EUTelRunHeaderImpl
-  auto_ptr<EUTelRunHeaderImpl> runHeader ( new EUTelRunHeaderImpl(rdr)) ;
+  std::unique_ptr<EUTelRunHeaderImpl> runHeader = std::make_unique<EUTelRunHeaderImpl>(rdr);
   runHeader->addProcessor( type() );
 
   // increment the run counter
@@ -1273,7 +1273,7 @@ void EUTelPedestalNoiseProcessor::bookHistos() {
   // histograms are grouped in loops and detectors
   streamlog_out ( MESSAGE2 ) << "Booking histograms " << endl;
 
-  auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
+  std::unique_ptr<EUTelHistogramManager> histoMgr = std::make_unique<EUTelHistogramManager>(_histoInfoFileName);
   EUTelHistogramInfo    * histoInfo;
   bool                    isHistoManagerAvailable;
 

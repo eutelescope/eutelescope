@@ -215,7 +215,7 @@ void ExampleAlibavaHistogramMaker::processRunHeader (LCRunHeader * rdr) {
 	streamlog_out ( MESSAGE4 ) << "Running processRunHeader" << endl;
 
 	// Add processor name to the runheader
-	auto_ptr<AlibavaRunHeaderImpl> arunHeader ( new AlibavaRunHeaderImpl(rdr)) ;
+	auto arunHeader = std::make_unique<AlibavaRunHeaderImpl>(rdr);
 	arunHeader->addProcessor(type());
 
 	// set total number of events in this run

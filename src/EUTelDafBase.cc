@@ -439,8 +439,8 @@ void EUTelDafBase::init() {
 }
 
 void EUTelDafBase::processRunHeader (LCRunHeader * rdr) {
-  auto_ptr<EUTelRunHeaderImpl> header ( new EUTelRunHeaderImpl (rdr) );
-  header->addProcessor( type() ) ;
+  std::unique_ptr<EUTelRunHeaderImpl> header = std::make_unique<EUTelRunHeaderImpl>(rdr);
+  header->addProcessor(type());
   ++_iRun;
 }
 

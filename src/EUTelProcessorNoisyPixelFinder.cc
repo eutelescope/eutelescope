@@ -146,9 +146,7 @@ void EUTelProcessorNoisyPixelFinder::init() {
 	_iRun = 0;
 	_iEvt = 0;
 
-	//init new geometry
-	std::string name("test.root");
-	geo::gGeometry().initializeTGeoDescription(name,true);
+	geo::gGeometry().initializeTGeoDescription(EUTELESCOPE::GEOFILENAME, EUTELESCOPE::DUMPGEOROOT);
 
 	//and use it to prepare the hit maps
 	initializeHitMaps();

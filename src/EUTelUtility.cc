@@ -194,32 +194,22 @@ namespace eutelescope {
          * @param hit 
          * @return raw data cluster information
          */
-	std::auto_ptr<EUTelVirtualCluster> GetClusterFromHit( const IMPL::TrackerHitImpl* hit ) 
-	{
-            
-            LCObjectVec clusterVector = hit->getRawHits();
-            
-            if (hit->getType() == kEUTelBrickedClusterImpl) 
-	    {
-            	return std::auto_ptr<EUTelVirtualCluster>( new EUTelBrickedClusterImpl(static_cast<TrackerDataImpl*>(clusterVector[0])) );
-            } 
-	    else if (hit->getType() == kEUTelDFFClusterImpl) 
-	    {
-		    return std::auto_ptr<EUTelVirtualCluster>( new EUTelDFFClusterImpl(static_cast<TrackerDataImpl*>(clusterVector[0])) );
-            } 
-	    else if (hit->getType() == kEUTelFFClusterImpl) 
-	    {
-		    return std::auto_ptr<EUTelVirtualCluster>( new EUTelFFClusterImpl(static_cast<TrackerDataImpl*>(clusterVector[0])) );
-	    } 
-	    else if (hit->getType() == kEUTelSparseClusterImpl) 
-	    {
-		    return std::auto_ptr<EUTelVirtualCluster>( new EUTelSparseClusterImpl<EUTelGenericSparsePixel>(static_cast<TrackerDataImpl*>(clusterVector[0])) );
-            }
-	    else 
-	    {
-		    streamlog_out(WARNING2) << "Unknown cluster type: " << hit->getType() << std::endl;
-                    return std::auto_ptr<EUTelVirtualCluster>();
-	    }
+		std::unique_ptr<EUTelVirtualCluster> GetClusterFromHit( const IMPL::TrackerHitImpl* hit ) {       
+			LCObjectVec clusterVector = hit->getRawHits();
+         
+			if (hit->getType() == kEUTelBrickedClusterImpl) {
+            	return std::make_unique<EUTelBrickedClusterImpl>(static_cast<TrackerDataImpl*>(clusterVector[0]));
+			} else if (hit->getType() == kEUTelDFFClusterImpl) {
+		    	return  std::make_unique<EUTelDFFClusterImpl>(static_cast<TrackerDataImpl*>(clusterVector[0]) );
+            } else if (hit->getType() == kEUTelFFClusterImpl) {
+				return std::make_unique<EUTelFFClusterImpl>(static_cast<TrackerDataImpl*>(clusterVector[0]) );
+			} else if (hit->getType() == kEUTelSparseClusterImpl) {
+				return std::make_unique<EUTelSparseClusterImpl<EUTelGenericSparsePixel>>(static_cast<TrackerDataImpl*>(clusterVector[0]) );
+            } else {
+				streamlog_out(WARNING2) << "Unknown cluster type: " << hit->getType() << std::endl;
+				//Not sure this is a good idea
+				return std::unique_ptr<EUTelVirtualCluster>();
+	    	}
         }
 
         /**
@@ -268,8 +258,8 @@ namespace eutelescope {
                 int sensorID = static_cast<int> (cellDecoder(hotPixelData)["sensorID"]);
 
                 if (type == kEUTelGenericSparsePixel) {
-                    std::auto_ptr< EUTelSparseClusterImpl< EUTelGenericSparsePixel > > m26Data(new EUTelSparseClusterImpl< EUTelGenericSparsePixel > (hotPixelData));
-                    std::vector< EUTelGenericSparsePixel* > m26PixelVec;
+                    std::unique_ptr<EUTelSparseClusterImpl<EUTelGenericSparsePixel>> m26Data = std::make_unique<EUTelSparseClusterImpl<EUTelGenericSparsePixel>>(hotPixelData);
+                    std::vector<EUTelGenericSparsePixel*> m26PixelVec;
                     EUTelGenericSparsePixel m26Pixel;
 
                     //Push all single Pixels of one plane in the m26PixelVec
@@ -385,18 +375,13 @@ namespace eutelescope {
          */
 
         void getClusterSize(const IMPL::TrackerHitImpl * hit, int& sizeX, int& sizeY ) {
-        // rewrite from EUTelAXPITbTrackTuple:
-         if(hit==0)
-         {
-            streamlog_out( ERROR5 ) << "An invalid hit pointer supplied! will exit now\n" << endl;
-            return ;
-         }
-
-	  std::auto_ptr<EUTelVirtualCluster> cluster = GetClusterFromHit( hit ) ;
-
-	       if(cluster.get() != NULL )  cluster->getClusterSize(sizeX, sizeY);
- 
-        }
+        	if(!hit){
+				streamlog_out( ERROR5 ) << "An invalid hit pointer supplied! will exit now\n" << endl;
+            	return ;
+         	}
+			std::unique_ptr<EUTelVirtualCluster> cluster = GetClusterFromHit( hit ) ;
+			if(cluster.get())  cluster->getClusterSize(sizeX, sizeY);
+ 		}
   
  	void copyLCCollectionHitVec(  IMPL::LCCollectionVec* input, LCCollectionVec* output ) {
 

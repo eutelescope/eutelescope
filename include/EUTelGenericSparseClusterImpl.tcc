@@ -22,7 +22,7 @@ EUTelGenericSparseClusterImpl<PixelType>::EUTelGenericSparseClusterImpl(IMPL::Tr
 	_type(kUnknownPixelType),
 	_rawDataInterfacer(data)
 {
-	std::auto_ptr<PixelType> pixel( new PixelType);
+	auto pixel = std::make_unique<PixelType>();
 	_nElement = pixel->getNoOfElements();
 	_type = pixel->getSparsePixelType();
 }

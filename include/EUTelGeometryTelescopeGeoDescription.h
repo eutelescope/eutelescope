@@ -332,7 +332,7 @@ class EUTelGeometryTelescopeGeoDescription
 	 * @see ROOT TGeoManager::Import
 	 */
 	void initializeTGeoDescription(std::string tgeofilename);
-	void initializeTGeoDescription( std::string& geomName, bool dumpRoot );
+	void initializeTGeoDescription( std::string const & geomName, bool dumpRoot );
 
 	// Geometry operations
 	float findRad(	const std::map<int,int>& sensorIDToZOrderWithoutExcludedPlanes, 

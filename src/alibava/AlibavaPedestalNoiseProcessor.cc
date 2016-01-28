@@ -120,7 +120,7 @@ void AlibavaPedestalNoiseProcessor::init () {
 void AlibavaPedestalNoiseProcessor::processRunHeader (LCRunHeader * rdr) {
 	streamlog_out ( MESSAGE4 ) << "Running processRunHeader" << endl;
 
-	auto_ptr<AlibavaRunHeaderImpl> arunHeader ( new AlibavaRunHeaderImpl(rdr)) ;
+	auto arunHeader = std::make_unique<AlibavaRunHeaderImpl>(rdr);
 	arunHeader->addProcessor(type());
 	setChipSelection( arunHeader->getChipSelection() );
 	setChannelsToBeUsed();

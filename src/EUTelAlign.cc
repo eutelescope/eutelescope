@@ -208,8 +208,7 @@ void EUTelAlign::init() {
 
 void EUTelAlign::processRunHeader (LCRunHeader * rdr) {
 
-  auto_ptr<EUTelRunHeaderImpl> header( new EUTelRunHeaderImpl( rdr ) );
-
+  auto header = std::make_unique<EUTelRunHeaderImpl>(rdr);
 
   // The run header contains the number of detectors. This number
   // should be in principle the same as the number of layers in the

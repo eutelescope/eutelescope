@@ -192,7 +192,7 @@ namespace eutelescope {
 
         bool HitContainsHotPixels(const IMPL::TrackerHitImpl * hit, const std::map<std::string, bool >& hotPixelMap);
 
-	std::auto_ptr<EUTelVirtualCluster> GetClusterFromHit(const IMPL::TrackerHitImpl*);
+		std::unique_ptr<EUTelVirtualCluster> GetClusterFromHit(const IMPL::TrackerHitImpl*);
 
         int getSensorIDfromHit( EVENT::TrackerHit* hit);
 

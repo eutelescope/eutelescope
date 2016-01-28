@@ -95,29 +95,23 @@ void EUTelAPIXTbTrackTuple::init()
 	_nRun = 0;
 	_nEvt = 0;
 
-	// Prepare TTree/TFiles
 	prepareTree();
 
-	//init new geometry
-	std::string name("test.root");
-	geo::gGeometry().initializeTGeoDescription(name,true);
+    geo::gGeometry().initializeTGeoDescription(EUTELESCOPE::GEOFILENAME, EUTELESCOPE::DUMPGEOROOT);
 
-
-	for(std::vector<int>::iterator it = _DUTIDs.begin(); it != _DUTIDs.end(); it++)
-	{
+	for(auto dutID: _DUTIDs) {
 		//Later we need to shift the sensor since in EUTel centre of sensor is 0|0 while in TBmon(II) it is in the lower left corner
-		geo::EUTelGenericPixGeoDescr* geoDescr = geo::gGeometry().getPixGeoDescr( *it ) ;
+		geo::EUTelGenericPixGeoDescr* geoDescr = geo::gGeometry().getPixGeoDescr(dutID) ;
 		float xSize,ySize;
 		geoDescr->getSensitiveSize(xSize, ySize);
 
-		_xSensSize[*it] = xSize;
-		_ySensSize[*it] = ySize;
+		_xSensSize[dutID] = xSize;
+		_ySensSize[dutID] = ySize;
 	}
 }
 
-void EUTelAPIXTbTrackTuple::processRunHeader( LCRunHeader* runHeader) 
-{
-	std::auto_ptr<EUTelRunHeaderImpl> eutelHeader( new EUTelRunHeaderImpl ( runHeader ) );
+void EUTelAPIXTbTrackTuple::processRunHeader( LCRunHeader* runHeader) {
+	auto eutelHeader = std::make_unique<EUTelRunHeaderImpl>(runHeader);
 	eutelHeader->addProcessor( type() );
 	_nRun++;
 	
@@ -317,11 +311,11 @@ bool EUTelAPIXTbTrackTuple::readZsHits( std::string colName, LCEvent* event)
 		SparsePixelType type = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( zsData )["sparsePixelType"]) );
     		int sensorID = cellDecoder( zsData )["sensorID"];
 		
-		std::auto_ptr<EUTelTrackerDataInterfacer> sparseData = std::auto_ptr<EUTelTrackerDataInterfacer>();
+		auto sparseData = std::unique_ptr<EUTelTrackerDataInterfacer>();
 
 		if (type == kEUTelGenericSparsePixel  ) 
 		  {
-		   sparseData =  std::auto_ptr<EUTelTrackerDataInterfacer>( new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>(zsData) );
+		   sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(zsData);
 		   EUTelGenericSparsePixel apixPixel;
 		   
 		   for( unsigned int iHit = 0; iHit < sparseData->size(); iHit++ ) 
@@ -338,7 +332,7 @@ bool EUTelAPIXTbTrackTuple::readZsHits( std::string colName, LCEvent* event)
 		  }
 		else if( type == kEUTelMuPixel )
 		  {
-		    sparseData =  std::auto_ptr<EUTelTrackerDataInterfacer>( new EUTelTrackerDataInterfacerImpl<EUTelMuPixel>(zsData) );
+		    sparseData =  std::unique_ptr<EUTelTrackerDataInterfacer>( new EUTelTrackerDataInterfacerImpl<EUTelMuPixel>(zsData) );
 		    EUTelMuPixel binaryPixel;
 		    
 		    for( unsigned int iHit = 0; iHit < sparseData->size(); iHit++ ) 

@@ -700,8 +700,8 @@ void EUTelClusterFilter::processRunHeader (LCRunHeader * rdr) {
   ++_iRun;
 
   if ( isFirstEvent() ) {
-    auto_ptr<EUTelRunHeaderImpl> runHeader ( new EUTelRunHeaderImpl( rdr ) ) ;
-    runHeader->addProcessor( type() ) ;
+    unique_ptr<EUTelRunHeaderImpl> runHeader = std::make_unique<EUTelRunHeaderImpl>(rdr) ;
+    runHeader->addProcessor(type());
   }
 
 }
@@ -944,7 +944,7 @@ void EUTelClusterFilter::processEvent (LCEvent * event) {
                             TrackerDataImpl    * noiseMatrix = dynamic_cast<TrackerDataImpl *> ( noiseCollectionVec->getElementAt( detectorPos ));
                             EUTelMatrixDecoder   noiseMatrixDecoder( noiseDecoder, noiseMatrix ) ;
 
-                            auto_ptr<EUTelGenericSparsePixel>  sparsePixel(new EUTelGenericSparsePixel);
+                            std::unique_ptr<EUTelGenericSparsePixel> sparsePixel = std::make_unique<EUTelGenericSparsePixel>();
                             vector<float > noiseValues;
                             for ( unsigned int iPixel = 0 ; iPixel < recasted->size() ; iPixel++ )
                             {

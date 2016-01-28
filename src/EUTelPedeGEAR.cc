@@ -65,9 +65,7 @@ void EUTelPedeGEAR::init() {
 	_iEvt = 0;
 
 	//Getting access to geometry description
-	std::string name("test.root");
-	geo::gGeometry().initializeTGeoDescription(name,false);
-
+	geo::gGeometry().initializeTGeoDescription(EUTELESCOPE::GEOFILENAME, EUTELESCOPE::DUMPGEOROOT);
 
 	//check if the GEAR manager pointer is not null!
 	if( Global::GEAR == 0x0 ) {
@@ -150,7 +148,7 @@ void EUTelPedeGEAR::init() {
 }
 
 void EUTelPedeGEAR::processRunHeader(LCRunHeader* rdr) {
-	std::auto_ptr<EUTelRunHeaderImpl> header ( new EUTelRunHeaderImpl (rdr) );
+	auto header = std::make_unique<EUTelRunHeaderImpl>(rdr);
 	header->addProcessor( type() ) ;
 
 	// this is the right place also to check the geometry ID. This is a
