@@ -2834,6 +2834,8 @@ void EUTelClusteringProcessor::check (LCEvent * /* evt */) {
 
 
 void EUTelClusteringProcessor::end() {
+
+if(_fillHistos) {
     int max = 0, maxBin = -1;
     for (int iBin=0; iBin<1000; iBin++)
     {
@@ -2846,7 +2848,7 @@ void EUTelClusteringProcessor::end() {
     }
     streamlog_out ( MESSAGE4 ) << "Maximum of the time stamp histo is at " << (dynamic_cast<AIDA::IHistogram1D*> (_timeStampHisto))->binMean(maxBin) << endl;
     streamlog_out ( MESSAGE2 ) <<  "Successfully finished" << endl;
-
+}
     map< int, int >::iterator iter = _totClusterMap.begin();
     while ( iter != _totClusterMap.end() ) {
 
