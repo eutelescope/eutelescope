@@ -245,6 +245,12 @@ install (CODE
 
 )
 
+option(utest "Build all tests." OFF)
+if(utest)
+  add_subdirectory(unittests)
+  ADD_DEFINITIONS( "-std=c++11" )
+endif()
+  
 #  _            _       
 # | |_ ___  ___| |_ ___ 
 # | __/ _ \/ __| __/ __|
