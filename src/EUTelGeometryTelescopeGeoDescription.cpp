@@ -309,8 +309,7 @@ void EUTelGeometryTelescopeGeoDescription::readGear() {
 }
 
 EUTelGeometryTelescopeGeoDescription::~EUTelGeometryTelescopeGeoDescription() {
-	delete _geoManager;
-	_geoManager = nullptr;
+	_geoManager.release();
 	delete _pixGeoMgr;
 	_pixGeoMgr = nullptr;
 }
@@ -321,8 +320,9 @@ EUTelGeometryTelescopeGeoDescription::~EUTelGeometryTelescopeGeoDescription() {
  */
 void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::string  tgeofilename ) {
     
-    _geoManager = TGeoManager::Import( tgeofilename.c_str() );
-    if( !_geoManager ) {
+    _geoManager = std::unique_ptr<TGeoManager>(TGeoManager::Import(tgeofilename.c_str()));
+    _geoManager->SetBit(kCanDelete);
+	if( !_geoManager ) {
         streamlog_out( WARNING ) << "Can't read file " << tgeofilename << std::endl;
     }
 
@@ -473,7 +473,8 @@ void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::strin
 		streamlog_out( WARNING3 ) << "EUTelGeometryTelescopeGeoDescription: Geometry already initialized, using old initialization" << std::endl;
 		return;
 	} else {
-    		_geoManager = new TGeoManager("Telescope", "v0.1");
+    		_geoManager = std::make_unique<TGeoManager>("Telescope", "v0.1");
+			_geoManager->SetBit(kCanDelete);
 	}
 
 	if( !_geoManager ) {
