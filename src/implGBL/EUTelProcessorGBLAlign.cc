@@ -126,7 +126,7 @@ void EUTelProcessorGBLAlign::init() {
 }
 
 void EUTelProcessorGBLAlign::processRunHeader(LCRunHeader * run) {
-	std::auto_ptr<EUTelRunHeaderImpl> header(new EUTelRunHeaderImpl(run));
+	std::unique_ptr<EUTelRunHeaderImpl> header(new EUTelRunHeaderImpl(run));
 	header->addProcessor(type());
 
 

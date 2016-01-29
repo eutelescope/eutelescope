@@ -103,7 +103,7 @@ void EUTelProcessorTrackAnalysis::end(){
   
   //test i can add stuff here
   //1D histogram of efficiency value - one per sensor
-  std::auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
+  std::unique_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
 	EUTelHistogramInfo    * histoInfo;
   bool isHistoManagerAvailable;
   std::stringstream sstm;
@@ -146,7 +146,7 @@ void	EUTelProcessorTrackAnalysis::initialiseEfficiencyVsPositionHistograms(){
 	double MinZ;
 	double MaxZ;
 
-	std::auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
+	std::unique_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
 	EUTelHistogramInfo    * histoInfo;
     bool isHistoManagerAvailable;
 	try {
@@ -233,7 +233,7 @@ void	EUTelProcessorTrackAnalysis::initialiseResidualVsPositionHistograms(){
 	double MinZ;
 	double MaxZ;
 
-	std::auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
+	std::unique_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
 	EUTelHistogramInfo    * histoInfo;
     bool isHistoManagerAvailable;
 	try {
@@ -447,7 +447,7 @@ void	EUTelProcessorTrackAnalysis::initialiseHitMapHistograms(){
 	double MinZ;
 	double MaxZ;
 
-	std::auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
+	std::unique_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
 	EUTelHistogramInfo    * histoInfo;
     bool isHistoManagerAvailable;
 	try {

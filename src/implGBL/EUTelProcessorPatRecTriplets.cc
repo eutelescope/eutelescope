@@ -137,7 +137,7 @@ void EUTelProcessorPatRecTriplets::init(){
 
 void EUTelProcessorPatRecTriplets::processRunHeader(LCRunHeader* run) {
 
-	std::auto_ptr<EUTelRunHeaderImpl> header(new EUTelRunHeaderImpl(run));
+	std::unique_ptr<EUTelRunHeaderImpl> header(new EUTelRunHeaderImpl(run));
 	header->addProcessor(type());//Add what processor has acted to collection here. 
 
 	// this is the right place also to check the geometry ID. This is a
@@ -281,7 +281,7 @@ void EUTelProcessorPatRecTriplets::bookHistograms() {
     try {
         streamlog_out(DEBUG) << "Booking histograms..." << std::endl;
 
-        std::auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
+        std::unique_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
         EUTelHistogramInfo    * histoInfo;
         bool                    isHistoManagerAvailable;
 

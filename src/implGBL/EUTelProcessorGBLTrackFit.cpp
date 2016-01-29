@@ -132,7 +132,7 @@ void EUTelProcessorGBLTrackFit::init() {
 }
 
 void EUTelProcessorGBLTrackFit::processRunHeader(LCRunHeader * run) {
-	std::auto_ptr<EUTelRunHeaderImpl> header(new EUTelRunHeaderImpl(run));
+	std::unique_ptr<EUTelRunHeaderImpl> header(new EUTelRunHeaderImpl(run));
 	header->addProcessor(type());
 	_chi2NdfVec.clear();
 	_nProcessedRuns++;
@@ -407,7 +407,7 @@ void EUTelProcessorGBLTrackFit::bookHistograms() {
  try {
         streamlog_out(DEBUG) << "Booking histograms..." << std::endl;
 
-        std::auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
+        std::unique_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
         EUTelHistogramInfo    * histoInfo;
         bool                    isHistoManagerAvailable;
 
