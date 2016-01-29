@@ -9,6 +9,7 @@
 #include <map>
 #include <string>
 #include <array>
+#include <memory>
 
 // MARLIN
 #include "marlin/Global.h"
@@ -397,7 +398,7 @@ class EUTelGeometryTelescopeGeoDescription
 	 */
 
 	/** Geometry manager global object */
-	TGeoManager* _geoManager;
+	std::unique_ptr<TGeoManager> _geoManager = nullptr;
 
 	bool findNextPlaneEntrance(  TVector3 ,  TVector3, int, float*  );
 
