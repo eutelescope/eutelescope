@@ -3,13 +3,17 @@ using namespace eutelescope;
 
 EUTelHit::EUTelHit():
 _locationKnown(false),
-_cov(2,2)
+_cov(2,2),
+_weight(2)
 {
     _cov.Zero();
+    _weight[0]=0;
+    _weight[1]=0;
 } 
 
 EUTelHit::EUTelHit(EUTelHit* hit):
-_cov(2,2)
+_cov(2,2),
+_weight(2)    
 {
     streamlog_out(DEBUG0) << "Position...."   << std::endl;
     _position[0] = hit->getPosition()[0];
@@ -30,10 +34,14 @@ _cov(2,2)
     setCov(hit->getCov());
     ///All hits must have clustering information 
     _pulse = hit->getPulse();
+    ///All hits should have a default weight
+    _weight[0] = hit->getWeight().at(0);
+    _weight[1] = hit->getWeight().at(1);
 } 
 
 EUTelHit::EUTelHit(EVENT::TrackerHit* hit):
-_cov(2,2)
+_cov(2,2),
+_weight(2)    
 {
     streamlog_out(DEBUG0) << "Position(TrackerHit)...."   << std::endl;
     _position[0] = hit->getPosition()[0];
@@ -49,7 +57,8 @@ _cov(2,2)
     _pulse =hit->getRawHits().at(0);    
     _locationKnown=true;
     setCov(hit->getCovMatrix());
-
+    _weight[0]=0;
+    _weight[1]=0;
 } 
 
 const double* EUTelHit::getPosition() const {
