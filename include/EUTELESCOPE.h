@@ -38,10 +38,6 @@ namespace eutelescope {}
 # include <stdexcept>
 #include <cstddef>
 
-#ifndef nullptr
-	#define nullptr NULL
-#endif 
-
 #ifdef USE_MARLIN
 // streamlog include
 #include "streamlog/streamlog.h"
@@ -51,6 +47,8 @@ namespace eutelescope {}
 #include <iostream>
 #include <string>
 #include <vector>
+
+#include "make_unique.h"
 
 namespace eutelescope
 {
@@ -81,8 +79,11 @@ namespace eutelescope
 
 	//! Parameter to store the telescope ROOT geometry file
 	static const std::string GEOFILENAME;
-	
-    //! Parameter key to store/recall the header version number
+
+	//! Parameter to specify if dumping of the geo ROOT file is desired
+	static const bool DUMPGEOROOT;
+    
+	//! Parameter key to store/recall the header version number
     static const char * HEADERVERSION;
 
     //! Parameter key to store/recall the data type
@@ -611,6 +612,7 @@ namespace eutelescope
     kEUTelGenericSparsePixel = 2,
     kEUTelGeometricPixel = 3,
     // add here your implementation
+    kEUTelMuPixel = 4,
     kUnknownPixelType       = 31
   };
 

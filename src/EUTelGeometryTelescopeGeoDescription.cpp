@@ -66,10 +66,10 @@ TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneNormal( int planeID )
 	} else {
 		std::vector<int>::iterator it = std::find(_sensorIDVec.begin(), _sensorIDVec.end(), planeID);
 		if( it != _sensorIDVec.end() ) {
-			const double zAxisLocal[3]  = {0,0,1};
-			double zAxisGlobal[3]; 
-			local2MasterVec(planeID,zAxisLocal,zAxisGlobal); 
-			TVector3 normVec(zAxisGlobal);
+			std::array<double,3> const zAxisLocal {{0,0,1}};
+			std::array<double,3> zAxisGlobal; 
+			local2MasterVec(planeID, zAxisLocal, zAxisGlobal); 
+			TVector3 normVec(zAxisGlobal.data());
 			_planeNormalMap[planeID] = normVec;
 			return normVec;
 		} else {
@@ -89,10 +89,10 @@ TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneXAxis( int planeID ) {
 	} else {
 		std::vector<int>::iterator it = std::find(_sensorIDVec.begin(), _sensorIDVec.end(), planeID);
 		if( it != _sensorIDVec.end() ) {
-			const double xAxisLocal[3] = {1,0,0};
-			double xAxisGlobal[3]; 
+			std::array<double,3> const xAxisLocal {{1,0,0}};
+			std::array<double,3> xAxisGlobal; 
 			local2MasterVec(planeID, xAxisLocal, xAxisGlobal); 
-			TVector3 xVec(xAxisGlobal);
+			TVector3 xVec(xAxisGlobal.data());
 			_planeXMap[planeID] = xVec;
 			return xVec;
 		} else {
@@ -112,10 +112,10 @@ TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneYAxis( int planeID ) {
 	} else {
 		std::vector<int>::iterator it = std::find(_sensorIDVec.begin(), _sensorIDVec.end(), planeID);
 		if( it != _sensorIDVec.end() ) {
-			const double yAxisLocal[3] = {0,1,0};
-			double yAxisGlobal[3]; 
+			std::array<double,3> const yAxisLocal {{0,1,0}};
+			std::array<double,3> yAxisGlobal; 
 			local2MasterVec(planeID, yAxisLocal, yAxisGlobal); 
-			TVector3 yVec(yAxisGlobal);
+			TVector3 yVec(yAxisGlobal.data());
 			_planeYMap[planeID] = yVec;
 			return yVec;
 		} else {
@@ -309,8 +309,7 @@ void EUTelGeometryTelescopeGeoDescription::readGear() {
 }
 
 EUTelGeometryTelescopeGeoDescription::~EUTelGeometryTelescopeGeoDescription() {
-	delete _geoManager;
-	_geoManager = nullptr;
+	_geoManager.release();
 	delete _pixGeoMgr;
 	_pixGeoMgr = nullptr;
 }
@@ -319,10 +318,11 @@ EUTelGeometryTelescopeGeoDescription::~EUTelGeometryTelescopeGeoDescription() {
  * Initialise ROOT geometry objects from external .root file
  * @param tgeofilename name of .root file
  */
-void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::string tgeofilename ) {
+void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::string  tgeofilename ) {
     
-    _geoManager = TGeoManager::Import( tgeofilename.c_str() );
-    if( !_geoManager ) {
+    _geoManager = std::unique_ptr<TGeoManager>(TGeoManager::Import(tgeofilename.c_str()));
+    _geoManager->SetBit(kCanDelete);
+	if( !_geoManager ) {
         streamlog_out( WARNING ) << "Can't read file " << tgeofilename << std::endl;
     }
 
@@ -468,12 +468,13 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
  * @param geomName name of ROOT geometry object
  * @param dumpRoot dump automatically generated ROOT geometry file for further inspection
  */
-void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::string& geomName, bool dumpRoot = false ) {
+void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( std::string const & geomName, bool dumpRoot = false ) {
 	if( _isGeoInitialized ) {
 		streamlog_out( WARNING3 ) << "EUTelGeometryTelescopeGeoDescription: Geometry already initialized, using old initialization" << std::endl;
 		return;
 	} else {
-    		_geoManager = new TGeoManager("Telescope", "v0.1");
+    		_geoManager = std::make_unique<TGeoManager>("Telescope", "v0.1");
+			_geoManager->SetBit(kCanDelete);
 	}
 
 	if( !_geoManager ) {
@@ -655,7 +656,6 @@ void EUTelGeometryTelescopeGeoDescription::local2MasterVec( int sensorID, const 
     _geoManager->GetCurrentNode()->LocalToMasterVect( localVec, globalVec );
 }
 
-
 /**
  * Vector coordinate transformation from global reference frame to local reference frame.
  * Corresponding volume is determined automatically.
@@ -666,6 +666,19 @@ void EUTelGeometryTelescopeGeoDescription::local2MasterVec( int sensorID, const 
 void EUTelGeometryTelescopeGeoDescription::master2LocalVec( int sensorID, const double globalVec[], double localVec[] ) {
     _geoManager->cd( _planePath[sensorID].c_str() );
     _geoManager->GetCurrentNode()->MasterToLocalVect( globalVec, localVec );
+}
+
+void EUTelGeometryTelescopeGeoDescription::local2Master( int sensorID, std::array<double,3> const & localPos, std::array<double,3>& globalPos) {
+	this->local2Master(sensorID, localPos.data(), globalPos.data());
+}
+void EUTelGeometryTelescopeGeoDescription::master2Local(int sensorID, std::array<double,3> const & globalPos, std::array<double,3>& localPos) {
+	this->master2Local(sensorID, globalPos.data(), localPos.data());
+}
+void EUTelGeometryTelescopeGeoDescription::local2MasterVec( int sensorID, std::array<double,3> const & localVec, std::array<double,3>& globalVec) {
+	this->local2MasterVec(sensorID, localVec.data(), globalVec.data());
+}
+void EUTelGeometryTelescopeGeoDescription::master2LocalVec( int sensorID, std::array<double,3> const & globalVec, std::array<double,3>& localVec) {
+	this->master2LocalVec(sensorID, globalVec.data(), localVec.data());
 }
 
 /**
@@ -688,12 +701,12 @@ const TGeoHMatrix* EUTelGeometryTelescopeGeoDescription::getHMatrix( const doubl
 
 TMatrixD EUTelGeometryTelescopeGeoDescription::getRotMatrix( int sensorID ) {
 	streamlog_out(DEBUG0) << "EUTelGeometryTelescopeGeoDescription::getRotMatrix()--------BEGIN " << std::endl;
-	const double local[] = {0,0,0};
-	double global[3];
+	std::array<double,3> const local {{0,0,0}};
+	std::array<double,3> global;
 //	std::cout << "Sensor ID " << sensorID << std::endl;
 	TMatrixD TRotMatrix(3,3);
 	if(sensorID != SCATTER_IDENTIFIER) {
-		local2Master( sensorID,local, global );
+		local2Master( sensorID, local, global );
 		_geoManager->FindNode( global[0], global[1], global[2] );    
 		const TGeoHMatrix* globalH = _geoManager->GetCurrentMatrix();
 		const double* rotMatrix = globalH->GetRotationMatrix();
@@ -759,7 +772,13 @@ int EUTelGeometryTelescopeGeoDescription::getSensorID( double const globalPos[] 
     return sensorID;
 }
 
-/**
+int EUTelGeometryTelescopeGeoDescription::getSensorID(std::array<double,3> const globalPos) const {
+	return this->getSensorID(globalPos.data());
+}
+int EUTelGeometryTelescopeGeoDescription::getSensorID(std::array<float,3> const globalPos) const {
+	return this->getSensorID(globalPos.data());
+}
+	/**
  * Calculate effective radiation length traversed by particle traveling between two points
  * along straight line.
  * 

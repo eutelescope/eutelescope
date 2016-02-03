@@ -43,7 +43,7 @@ private:
   EVENT::StringVec _dutIDs;
   std::string _rate;
   std::string _outputSettingsFolderName;
-  ofstream settingsFile[3];
+  std::ofstream settingsFile[3];
   std::map<int,TH2I*> noiseMap;
   std::map<int,TH1F*> noiseOccupancy;
   TH1I* timeStampHisto;

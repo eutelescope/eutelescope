@@ -79,7 +79,7 @@ protected:
   bool _writeShapes;
   std::string _shapeOutputFileName;
   std::string _outputSettingsFolderName;
-  ofstream settingsFile;
+  std::ofstream settingsFile;
   EVENT::StringVec _chipID;
   EVENT::StringVec _irradiation;
   std::string _rate;

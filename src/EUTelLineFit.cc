@@ -192,10 +192,8 @@ void EUTelLineFit::init() {
 }
 
 void EUTelLineFit::processRunHeader (LCRunHeader * rdr) {
-
-
-  auto_ptr<EUTelRunHeaderImpl> header ( new EUTelRunHeaderImpl (rdr) );
-  header->addProcessor( type() ) ;
+  std::unique_ptr<EUTelRunHeaderImpl> header = std::make_unique<EUTelRunHeaderImpl>(rdr);
+  header->addProcessor(type());
 
   // the run header contains the number of detectors. This number
   // should be in principle the same as the number of layers in the

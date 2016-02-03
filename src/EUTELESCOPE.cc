@@ -18,6 +18,8 @@
 using namespace eutelescope;
 
 const std::string EUTELESCOPE::GEOFILENAME		= "telescope_geometry.root";
+const bool EUTELESCOPE::DUMPGEOROOT				= true;
+
 const char *   EUTELESCOPE::HEADERVERSION       = "HeaderVersion";
 const char *   EUTELESCOPE::NOOFEVENT           = "NoOfEvent";
 const char *   EUTELESCOPE::DATATYPE            = "DataType";

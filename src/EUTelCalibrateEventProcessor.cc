@@ -136,14 +136,9 @@ void EUTelCalibrateEventProcessor::init () {
 }
 
 void EUTelCalibrateEventProcessor::processRunHeader (LCRunHeader * rdr) {
-
-  auto_ptr<EUTelRunHeaderImpl> runHeader( new EUTelRunHeaderImpl( rdr ) );
-
+  std::unique_ptr<EUTelRunHeaderImpl> runHeader = std::make_unique<EUTelRunHeaderImpl>(rdr);
   runHeader->addProcessor( type());
-
-  // increment the run counter
   ++_iRun;
-
 }
 
 void EUTelCalibrateEventProcessor::initializeGeometry(LCEvent * event) throw ( marlin::SkipEventException ) {
@@ -241,7 +236,7 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
         basePath = "detector_" + to_string( sensorID ) + "/";
 
         // prepare the histogram manager
-        auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
+        std::unique_ptr<EUTelHistogramManager> histoMgr = std::make_unique<EUTelHistogramManager>(_histoInfoFileName);
         EUTelHistogramInfo    * histoInfo;
         bool                    isHistoManagerAvailable;
 

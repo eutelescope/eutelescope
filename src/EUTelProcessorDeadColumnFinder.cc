@@ -70,8 +70,8 @@ void EUTelProcessorDeadColumnFinder::processEvent(LCEvent *evt)
   }
   for ( unsigned int iDetector = 0 ; iDetector < zsInputDataCollectionVec->size(); iDetector++ )
   {
-    TrackerDataImpl * zsData = dynamic_cast< TrackerDataImpl * > ( zsInputDataCollectionVec->getElementAt( iDetector ) );
-    auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel > >  sparseData(new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> ( zsData ));
+    TrackerDataImpl* zsData = dynamic_cast<TrackerDataImpl*>(zsInputDataCollectionVec->getElementAt(iDetector));
+    auto sparseData = std::make_unique< EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(zsData);
     for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
     {
       EUTelGenericSparsePixel *sparsePixel =  new EUTelGenericSparsePixel() ;
@@ -140,9 +140,9 @@ void EUTelProcessorDeadColumnFinder::end()
     CellIDEncoder< TrackerDataImpl > deadColumnEncoder  ( eutelescope::EUTELESCOPE::ZSDATADEFAULTENCODING, deadColumnCollection);
     deadColumnEncoder["sensorID"] = iLayer;
     deadColumnEncoder["sparsePixelType"] = eutelescope::kEUTelGenericSparsePixel;
-    std::auto_ptr<lcio::TrackerDataImpl > currentFrame( new lcio::TrackerDataImpl );
+    auto currentFrame = std::make_unique<lcio::TrackerDataImpl>();
     deadColumnEncoder.setCellID( currentFrame.get() );
-    std::auto_ptr< eutelescope::EUTelTrackerDataInterfacerImpl< eutelescope::EUTelGenericSparsePixel > > sparseFrame(new eutelescope::EUTelTrackerDataInterfacerImpl< eutelescope::EUTelGenericSparsePixel > (currentFrame.get()));
+    auto sparseFrame = std::make_unique<eutelescope::EUTelTrackerDataInterfacerImpl<eutelescope::EUTelGenericSparsePixel>>(currentFrame.get());
     int hitPixels[hitMap[iLayer]->GetNbinsX()];
     for (int x=0; x<hitMap[iLayer]->GetNbinsX(); x++)
       hitPixels[x] = 0;

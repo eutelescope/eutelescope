@@ -82,9 +82,9 @@ void EUTelProcessorGBLTrackFit::init() {
 		// Reset counters
 		_nProcessedRuns = 0;
 		_nProcessedEvents = 0;
-		//Create TGeo description from the gear.
-		std::string name("test.root");
-		geo::gGeometry().initializeTGeoDescription(name,false);
+        
+        geo::gGeometry().initializeTGeoDescription(EUTELESCOPE::GEOFILENAME, EUTELESCOPE::DUMPGEOROOT);
+		
 		// Initialize GBL fitter. This is the class that does all the work. Seems to me a good practice for the most part create a class that does the work. Since then you can use the same functions in another processor.
 		EUTelGBLFitter* Fitter = new EUTelGBLFitter();
 		Fitter->setBeamCharge(_beamQ);
@@ -118,7 +118,7 @@ void EUTelProcessorGBLTrackFit::init() {
 }
 
 void EUTelProcessorGBLTrackFit::processRunHeader(LCRunHeader * run) {
-	std::auto_ptr<EUTelRunHeaderImpl> header(new EUTelRunHeaderImpl(run));
+	std::unique_ptr<EUTelRunHeaderImpl> header = std::make_unique<EUTelRunHeaderImpl>(run);
 	header->addProcessor(type());
 	// this is the right place also to check the geometry ID. This is a
 	// unique number identifying each different geometry used at the
@@ -349,7 +349,7 @@ void EUTelProcessorGBLTrackFit::bookHistograms() {
  try {
         streamlog_out(DEBUG) << "Booking histograms..." << std::endl;
 
-        std::auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
+        std::unique_ptr<EUTelHistogramManager> histoMgr = std::make_unique<EUTelHistogramManager>(_histoInfoFileName);
         EUTelHistogramInfo    * histoInfo;
         bool                    isHistoManagerAvailable;
 

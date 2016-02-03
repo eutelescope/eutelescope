@@ -119,14 +119,9 @@ void EUTelDafFitter::dafInit() {
       }
     }
   }
-
 }
 
-
 void EUTelDafFitter::dafEvent (LCEvent * event) {
-
-  streamlog_out(MESSAGE3) << " dafEvent -- START --- " << std::endl;
-
 
   //Prepare track collection
   if(_addToLCIO){
@@ -142,14 +137,14 @@ void EUTelDafFitter::dafEvent (LCEvent * event) {
   //Check found tracks
   for(size_t ii = 0; ii < _system.getNtracks(); ii++ ){
     //run track fitte
-    _nClusters++;
+    _nCandidates++;
+    //Prepare track for DAF fit
     _system.fitPlanesInfoDaf(_system.tracks.at(ii));
     //Check resids, intime, angles
     if(not checkTrack( _system.tracks.at(ii))) { continue;};
-    int inTimeHits = checkInTime();
+    int inTimeHits = checkInTime(_system.tracks.at(ii));
     if( inTimeHits < _nDutHits) { continue;}
  
-    dumpToAscii();
     //Fill plots
     if(_histogramSwitch){ 
       fillPlots( _system.tracks.at(ii) ); 
@@ -181,35 +176,31 @@ void EUTelDafFitter::dafEvent (LCEvent * event) {
     }
     event->addCollection(_fitpointvec, sfitpoints );
   }
-
-  streamlog_out(MESSAGE3) << " dafEvent -- END --- " << std::endl;
-
-
 }
 
-void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate* track, LCCollectionVec *lcvec){
+void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate<float,4>& track, LCCollectionVec *lcvec){
   TrackImpl * fittrack = new TrackImpl();
   // Impact parameters are useless and set to 0
   fittrack->setD0(0.);        // impact paramter of the track in (r-phi)
   fittrack->setZ0(0.);        // impact paramter of the track in (r-z)
   fittrack->setTanLambda(0.); // dip angle of the track at reference point
 
-  daffitter::TrackEstimate* est = track->estimates.at(0);
+  daffitter::TrackEstimate<float,4>& est = track.estimates.at(0);
 
   //No good way of storing the track angles, so
-  fittrack->setOmega( est->getXdz()); // Storing dxdz as Omega
-  fittrack->setPhi( est->getYdz() );   // Storing dx/dy as phi
+  fittrack->setOmega( est.getXdz()); // Storing dxdz as Omega
+  fittrack->setPhi( est.getYdz() );   // Storing dx/dy as phi
 
-  fittrack->setChi2(track->chi2);
-  fittrack->setNdf(int(track->ndof + 0.2f) );
+  fittrack->setChi2(track.chi2);
+  fittrack->setNdf(int( round(track.ndof)) );
   // prepare an encoder for the hit collection to store properties
   CellIDEncoder<TrackerHitImpl> idHitEncoder(EUTELESCOPE::HITENCODING, lcvec);
 
   float refpoint[3];
   
   for(size_t plane = 0; plane < _system.planes.size(); plane++){
-    daffitter::FitPlane& pl = _system.planes.at(plane);
-    daffitter::TrackEstimate* estim = track->estimates.at( plane );
+    daffitter::FitPlane<float>& pl = _system.planes.at(plane);
+    daffitter::TrackEstimate<float,4>& estim = track.estimates.at( plane );
     TrackerHitImpl * fitpoint = new TrackerHitImpl();
     // encode and store sensorID
     int sensorID =  _system.planes.at(plane).getSensorID();
@@ -217,19 +208,23 @@ void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate* track, LCCollectionVec
     // set the local/global bit flag property AND the FittedHit property for the hit
     idHitEncoder["properties"] = kHitInGlobalCoord | kFittedHit;
     double pos[3];
-    pos[0]= estim->getX() / 1000.0;
-    pos[1]= estim->getY() / 1000.0;
+    pos[0]= estim.getX() / 1000.0;
+    pos[1]= estim.getY() / 1000.0;
     pos[2]= pl.getMeasZ() / 1000.0;
-// overload z coordinate calculation -> important for proper sensor Identification by the hit coordinates based onthe refhit collection
-    pos[2] = getZfromRefHit(plane, sensorID, pos);    
 
+    // overload z coordinate calculation -> important for proper sensor Identification by the hit coordinates based onthe refhit collection
+    // if( fabs(pos[2] - getZfromRefHit(plane, sensorID, pos)) > 0.0002 ){
+    //   streamlog_out(WARNING) << "Fitted measurement is not in the plane! SensorID " << idHitEncoder["sensorID"] << std::endl;
+    //   pos[2] = getZfromRefHit(plane, sensorID, pos);    
+    // }
+    
     fitpoint->setPosition(pos);
     // Covariance matrix of the fitted position
     // (stored as lower triangle matrix, i.e.  cov(xx),cov(y,x),cov(y,y) ).
     float cov[TRKHITNCOVMATRIX];
-    cov[0]= estim->cov(0,0);
-    cov[1]= estim->cov(0,1);
-    cov[2]= estim->cov(1,1);
+    cov[0]= estim.cov(0,0);
+    cov[1]= estim.cov(0,1);
+    cov[2]= estim.cov(1,1);
     //Error of z position of fit is unclear to me, this would be a systematic alignment
     //error. Set to 0 along with all covariances.
     cov[3]=cov[4]=cov[5]=0.;
@@ -241,7 +236,6 @@ void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate* track, LCCollectionVec
 
     streamlog_out(DEBUG3) << " hit : sensorID " << idHitEncoder["sensorID"] << " properties: " << idHitEncoder["properties"]  << std::endl;
 
-
     if(plane == 0){
       refpoint[0] = pos[0];
       refpoint[1] = pos[1];
@@ -249,7 +243,7 @@ void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate* track, LCCollectionVec
     }
     //Also add measurement point
     for(size_t mm = 0; mm < pl.meas.size(); mm++){
-      if( pl.weights(mm) < 0.5f){ continue; }
+      if( track.weights.at(plane)(mm) < 0.5f){ continue; }
       if( pl.isExcluded()) { continue; }
       TrackerHitImpl* meashit = static_cast<TrackerHitImpl*> ( _hitCollection->getElementAt( pl.meas.at(mm).getIden()) );
       fittrack->addHit(meashit);
@@ -260,7 +254,6 @@ void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate* track, LCCollectionVec
 }
 
 double EUTelDafFitter::getZfromRefHit(int plane, int sensorID, double *pos){
-
          
   TVector3 lpoint( pos[0], pos[1], pos[2] );
   TVector3 lvector( 0., 0., 1. );
@@ -268,18 +261,15 @@ double EUTelDafFitter::getZfromRefHit(int plane, int sensorID, double *pos){
   TVector3 norm2Plane;
  
   //Name is misleading, is actually true if refHit is NOT set 
-  if( ReferenceHitVecIsSet() )
-  {
-  	hitInPlane.SetXYZ( geo::gGeometry().siPlaneXPosition(sensorID), geo::gGeometry().siPlaneYPosition(sensorID), geo::gGeometry().siPlaneZPosition(sensorID) );
-	norm2Plane = geo::gGeometry().siPlaneNormal(sensorID);
-  }
-  else
-  {
-  	EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(plane) ) ;
-  	hitInPlane.SetXYZ( refhit->getXOffset(), refhit->getYOffset(), refhit->getZOffset());
-	norm2Plane.SetXYZ( refhit->getAlpha(), refhit->getBeta(), refhit->getGamma() );
-	} 
-
+  if( ReferenceHitVecIsSet() ){
+    hitInPlane.SetXYZ( geo::gGeometry().siPlaneXPosition(sensorID), geo::gGeometry().siPlaneYPosition(sensorID), geo::gGeometry().siPlaneZPosition(sensorID) );
+    norm2Plane = geo::gGeometry().siPlaneNormal(sensorID);
+  } else {
+    EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(plane) ) ;
+    hitInPlane.SetXYZ( refhit->getXOffset(), refhit->getYOffset(), refhit->getZOffset());
+    norm2Plane.SetXYZ( refhit->getAlpha(), refhit->getBeta(), refhit->getGamma() );
+  } 
+  
   TVector3 point( 1.,1.,1. );
           
   double linecoord_numenator   = norm2Plane.Dot(hitInPlane-lpoint);
