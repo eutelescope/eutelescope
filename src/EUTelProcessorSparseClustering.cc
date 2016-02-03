@@ -123,8 +123,7 @@ void EUTelProcessorSparseClustering::init() {
 	printParameters ();
 
 	//init new geometry
-	std::string name("test.root");
-	geo::gGeometry().initializeTGeoDescription(name,true);
+	geo::gGeometry().initializeTGeoDescription(EUTELESCOPE::GEOFILENAME, EUTELESCOPE::DUMPGEOROOT);
 
 	//set to zero the run and event counters
 	_iRun = 0;
@@ -135,10 +134,8 @@ void EUTelProcessorSparseClustering::init() {
 }
 
 void EUTelProcessorSparseClustering::processRunHeader (LCRunHeader * rdr) {
-
-	std::auto_ptr<EUTelRunHeaderImpl> runHeader( new EUTelRunHeaderImpl( rdr ) );
-	runHeader->addProcessor( type() );
-  	//increment the run counter
+	std::unique_ptr<EUTelRunHeaderImpl> runHeader = std::make_unique<EUTelRunHeaderImpl>(rdr);
+	runHeader->addProcessor(type());
 	++_iRun;
 }
 
@@ -329,7 +326,7 @@ void EUTelProcessorSparseClustering::sparseClustering(LCEvent* evt, LCCollection
 		{
 
 			// now prepare the EUTelescope interface to sparsified data.
-			std::auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel > > sparseData( new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> ( zsData ) );
+			std::unique_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>> sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(zsData);
 
 			int hitPixelsInEvent = sparseData->size();
 			std::vector<EUTelGenericSparsePixel> hitPixelVec;
@@ -351,9 +348,9 @@ void EUTelProcessorSparseClustering::sparseClustering(LCEvent* evt, LCCollection
 			while( !hitPixelVec.empty() )
 			{
                            	// prepare a TrackerData to store the cluster candidate
-				std::auto_ptr< TrackerDataImpl > zsCluster ( new TrackerDataImpl );
+				std::unique_ptr<TrackerDataImpl> zsCluster = std::make_unique<TrackerDataImpl>();
 				// prepare a reimplementation of sparsified cluster
-				std::auto_ptr<EUTelSparseClusterImpl<EUTelGenericSparsePixel > > sparseCluster ( new EUTelSparseClusterImpl<EUTelGenericSparsePixel>( zsCluster.get() ) );
+				std::unique_ptr<EUTelSparseClusterImpl<EUTelGenericSparsePixel>> sparseCluster = std::make_unique<EUTelSparseClusterImpl<EUTelGenericSparsePixel>>(zsCluster.get());
 
 				//First we need to take any pixel, so let's take the first one
 				//Add it to the cluster as well as the newly added pixels
@@ -416,7 +413,7 @@ void EUTelProcessorSparseClustering::sparseClustering(LCEvent* evt, LCCollection
 					sparseClusterCollectionVec->push_back( zsCluster.get() );
 
 					// prepare a pulse for this cluster
-					std::auto_ptr<TrackerPulseImpl> zsPulse ( new TrackerPulseImpl );
+					std::unique_ptr<TrackerPulseImpl> zsPulse = std::make_unique<TrackerPulseImpl>();
 					idZSPulseEncoder["sensorID"] = sensorID;
 					idZSPulseEncoder["type"] = static_cast<int>(kEUTelSparseClusterImpl);
 					idZSPulseEncoder.setCellID( zsPulse.get() );
@@ -432,7 +429,7 @@ void EUTelProcessorSparseClustering::sparseClustering(LCEvent* evt, LCCollection
 				else
 				{
 					//in the case the cluster candidate is not passing the threshold ...
-					//forget about them, the memory should be automatically cleaned by std::auto_ptr's
+					//forget about them, the memory should be automatically cleaned by smart ptr's
 				}
 			} //loop over all found clusters
 
@@ -578,7 +575,7 @@ void EUTelProcessorSparseClustering::bookHistos() {
 
   // histograms are grouped in loops and detectors
   streamlog_out ( DEBUG5 )  << "Booking histograms " << std::endl;
-  std::auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ) );
+  std::unique_ptr<EUTelHistogramManager> histoMgr = std::make_unique<EUTelHistogramManager>(_histoInfoFileName);
   EUTelHistogramInfo* histoInfo;
   bool isHistoManagerAvailable;
 

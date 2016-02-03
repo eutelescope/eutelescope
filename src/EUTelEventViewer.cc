@@ -129,10 +129,8 @@ void EUTelEventViewer::init() {
 
 
 void EUTelEventViewer::processRunHeader( LCRunHeader * rdr ) {
-
-  auto_ptr<EUTelRunHeaderImpl> runHeader ( new EUTelRunHeaderImpl( rdr ) );
-  runHeader->addProcessor( type() );
-
+  std::unique_ptr<EUTelRunHeaderImpl> runHeader = std::make_unique<EUTelRunHeaderImpl>(rdr);
+  runHeader->addProcessor(type());
 }
 
 void EUTelEventViewer::processEvent( LCEvent * evt ) {

@@ -100,7 +100,7 @@ void EUTelProcessorApplyAlign::init () {
 }
 
 void EUTelProcessorApplyAlign::processRunHeader (LCRunHeader * rdr) {
-  auto_ptr<EUTelRunHeaderImpl> runHeader ( new EUTelRunHeaderImpl( rdr ) ) ;
+  std::unique_ptr<EUTelRunHeaderImpl> runHeader = std::make_unique<EUTelRunHeaderImpl>(rdr);
   runHeader->addProcessor( type() );
   ++_iRun;
 }

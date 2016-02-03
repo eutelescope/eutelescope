@@ -357,11 +357,9 @@ void EUTelApplyAlignmentProcessor::CheckIOCollections(LCEvent* event)
   }
 }
 
-void EUTelApplyAlignmentProcessor::processRunHeader (LCRunHeader * runHeader)
-{
-  auto_ptr<EUTelRunHeaderImpl> eutelHeader( new EUTelRunHeaderImpl ( runHeader ) );
+void EUTelApplyAlignmentProcessor::processRunHeader (LCRunHeader * runHeader) {
+  auto eutelHeader = std::make_unique<EUTelRunHeaderImpl>(runHeader);
   eutelHeader->addProcessor( type() );
-// increment the run counter
   _nRun++ ;
 
   // Decode and print out Run Header information - just a check

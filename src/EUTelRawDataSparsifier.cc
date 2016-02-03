@@ -92,15 +92,10 @@ void EUTelRawDataSparsifier::init () {
 }
 
 void EUTelRawDataSparsifier::processRunHeader (LCRunHeader * rdr) {
-
-  auto_ptr<EUTelRunHeaderImpl> runHeader (new EUTelRunHeaderImpl(rdr) );
-  runHeader->addProcessor( type() );
-
-  // increment the run counter
+  auto runHeader = std::make_unique<EUTelRunHeaderImpl>(rdr);
+  runHeader->addProcessor(type());
   ++_iRun;
-
 }
-
 
 void EUTelRawDataSparsifier::processEvent (LCEvent * event) {
 
@@ -213,7 +208,7 @@ void EUTelRawDataSparsifier::processEvent (LCEvent * event) {
             float data      = (*rawIter) - (*pedIter);
             float threshold = sigmaCut * (*noiseIter);
             if ( data > threshold  ) {
-              auto_ptr<EUTelGenericSparsePixel> sparsePixel( new EUTelGenericSparsePixel );
+              auto sparsePixel = std::make_unique<EUTelGenericSparsePixel>();
               sparsePixel->setXCoord( matrixDecoder.getXFromIndex(iPixel) );
               sparsePixel->setYCoord( matrixDecoder.getYFromIndex(iPixel) );
               sparsePixel->setSignal( static_cast<short> ( data ) );

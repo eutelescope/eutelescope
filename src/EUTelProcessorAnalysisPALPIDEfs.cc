@@ -256,7 +256,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
     if (_hotpixelAvailable)
     {
       hotData = dynamic_cast< TrackerDataImpl * > ( hotPixelCollectionVec->getElementAt( layerIndex ) );
-      auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel > >  sparseData(new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> ( hotData ));
+      std::unique_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>> sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(hotData);
       for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
       {
         EUTelGenericSparsePixel *sparsePixel =  new EUTelGenericSparsePixel() ;
@@ -294,7 +294,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
     if (_deadColumnAvailable)
     {
       deadColumn = dynamic_cast< TrackerDataImpl * > ( deadColumnCollectionVec->getElementAt( layerIndex ) );
-      auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel > >  sparseData(new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> (deadColumn));
+      std::unique_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>> sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(deadColumn);
       for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
       {
         EUTelGenericSparsePixel *sparsePixel =  new EUTelGenericSparsePixel() ;
@@ -438,7 +438,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
         if (index == -1) continue;
         if (_hotpixelAvailable)
         {
-          auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel > >  sparseData(new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> ( hotData ));
+          std::unique_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>> sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(hotData);
           bool hotpixel = false;
           for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
           {
@@ -469,7 +469,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
         }
         if (_deadColumnAvailable)
         {
-          auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel > >  sparseData(new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> ( deadColumn ));
+          auto sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(deadColumn);
           bool dead = false;
           for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
           {
@@ -632,7 +632,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
                       if ( type == kEUTelGenericSparsePixel )
                       {
                         vector<vector<int> > pixVector;
-                        auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel > > sparseData( new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> ( zsData ) );
+                        std::unique_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>> sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(zsData);
                         EUTelGenericSparsePixel* pixel = new EUTelGenericSparsePixel;
                         for(unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
                         {
@@ -794,7 +794,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
             int clusterSize = zsData->getChargeValues().size()/4;
             vector<int> X(clusterSize);
             vector<int> Y(clusterSize);
-            auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel > > sparseData( new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> ( zsData ) );
+            auto sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(zsData);
             EUTelGenericSparsePixel* pixel = new EUTelGenericSparsePixel;
             for(unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
             {
@@ -845,7 +845,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
           vector<int> X(clusterSize);
           vector<int> Y(clusterSize);
           vector<vector<int> > pixVector;
-          auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel > > sparseData( new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> ( zsData ) );
+          auto sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(zsData);
           EUTelGenericSparsePixel* pixel = new EUTelGenericSparsePixel;
           for(unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
           {
@@ -908,7 +908,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
 void EUTelProcessorAnalysisPALPIDEfs::bookHistos()
 {
   streamlog_out ( DEBUG1 )  << "Booking histograms " << endl;
-  auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
+  auto histoMgr = std::make_unique<EUTelHistogramManager>(_histoInfoFileName);
 
   try {
     histoMgr->init();

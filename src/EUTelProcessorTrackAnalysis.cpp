@@ -85,7 +85,7 @@ void	EUTelProcessorTrackAnalysis::initialiseResidualVsPositionHistograms(){
 	double MinZ;
 	double MaxZ;
 
-	std::auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
+	auto histoMgr = std::make_unique<EUTelHistogramManager>(_histoInfoFileName);
 	EUTelHistogramInfo    * histoInfo;
     bool isHistoManagerAvailable;
 	try {

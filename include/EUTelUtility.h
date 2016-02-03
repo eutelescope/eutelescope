@@ -19,6 +19,7 @@
 #include "IMPL/TrackerHitImpl.h"
 #include "IMPL/TrackImpl.h"
 #include "EVENT/LCEvent.h"
+#include <IMPL/TrackerDataImpl.h>
 
 // ROOT
 #include "TVectorD.h" 
@@ -184,12 +185,14 @@ namespace eutelescope {
         /*! Reads hotpixel information from hotPixelCollection into hotPixelMap
          * to be used in the sensor exclusion area logic 
          */
+	std::unique_ptr<EUTelTrackerDataInterfacer> getSparseData(IMPL::TrackerDataImpl* const data, SparsePixelType type);
+	std::unique_ptr<EUTelTrackerDataInterfacer> getSparseData(IMPL::TrackerDataImpl* const data, int type);
 
         std::map<std::string, bool > FillHotPixelMap(EVENT::LCEvent *event, const std::string& hotPixelCollectionName);
 
         bool HitContainsHotPixels(const IMPL::TrackerHitImpl * hit, const std::map<std::string, bool >& hotPixelMap);
 
-	std::auto_ptr<EUTelVirtualCluster> GetClusterFromHit(const IMPL::TrackerHitImpl*);
+		std::unique_ptr<EUTelVirtualCluster> GetClusterFromHit(const IMPL::TrackerHitImpl*);
 
         int getSensorIDfromHit( EVENT::TrackerHit* hit);
 

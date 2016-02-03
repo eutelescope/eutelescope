@@ -24,29 +24,43 @@ using namespace std;
 namespace eutelescope {
 
     namespace Utility {
+
+	std::unique_ptr<EUTelTrackerDataInterfacer> getSparseData(IMPL::TrackerDataImpl* const data, int type) {
+		return getSparseData(data, static_cast<SparsePixelType>(type));
+	}
+	
+	std::unique_ptr<EUTelTrackerDataInterfacer> getSparseData(IMPL::TrackerDataImpl* const data, SparsePixelType type) {
+		switch( type ) {
+			case kEUTelSimpleSparsePixel:
+				return	std::unique_ptr<EUTelTrackerDataInterfacer>
+					( new EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel>(data) );
+			case kEUTelGenericSparsePixel:
+				return	std::unique_ptr<EUTelTrackerDataInterfacer>
+					( new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>(data) );
+			case kEUTelGeometricPixel:
+				return	std::unique_ptr<EUTelTrackerDataInterfacer>
+					( new EUTelTrackerDataInterfacerImpl<EUTelGeometricPixel>(data) );
+			case kEUTelMuPixel:
+				return	std::unique_ptr<EUTelTrackerDataInterfacer>
+					( new EUTelTrackerDataInterfacerImpl<EUTelMuPixel>(data) );
+			default:
+				throw UnknownDataTypeException("Unknown sparsified pixel");
+		}
+	}
+
         /** This function will set the  
-
         * @param mat input with arbitrary precision
-
         * @param pre precision to set the new matrix to  */
-
         TMatrixD setPrecision( TMatrixD mat, double mod){
-
             for(int i=0; i < mat.GetNrows(); i++){
-
                 for(int j=0; j < mat.GetNcols(); j++){
                     if(abs(mat[j][i]) < mod){
                         mat[j][i] = 0;
                     }
-
                 }
-
             }
-
             return mat;
-
         }
-
 
         /**
          * Fills indices of not excluded planes
@@ -73,7 +87,6 @@ namespace eutelescope {
          * @param nPlanes
          *              total number of planes
          */
-				
         void FillNotExcludedPlanesIndices( std::vector<int>& indexconverter, const std::vector<unsigned int >& excludePlanes,  unsigned int nPlanes ) {
             int icounter = 0;
             int nExcludePlanes = static_cast< int >( excludePlanes.size());
@@ -181,32 +194,22 @@ namespace eutelescope {
          * @param hit 
          * @return raw data cluster information
          */
-	std::auto_ptr<EUTelVirtualCluster> GetClusterFromHit( const IMPL::TrackerHitImpl* hit ) 
-	{
-            
-            LCObjectVec clusterVector = hit->getRawHits();
-            
-            if (hit->getType() == kEUTelBrickedClusterImpl) 
-	    {
-            	return std::auto_ptr<EUTelVirtualCluster>( new EUTelBrickedClusterImpl(static_cast<TrackerDataImpl*>(clusterVector[0])) );
-            } 
-	    else if (hit->getType() == kEUTelDFFClusterImpl) 
-	    {
-		    return std::auto_ptr<EUTelVirtualCluster>( new EUTelDFFClusterImpl(static_cast<TrackerDataImpl*>(clusterVector[0])) );
-            } 
-	    else if (hit->getType() == kEUTelFFClusterImpl) 
-	    {
-		    return std::auto_ptr<EUTelVirtualCluster>( new EUTelFFClusterImpl(static_cast<TrackerDataImpl*>(clusterVector[0])) );
-	    } 
-	    else if (hit->getType() == kEUTelSparseClusterImpl) 
-	    {
-		    return std::auto_ptr<EUTelVirtualCluster>( new EUTelSparseClusterImpl<EUTelGenericSparsePixel>(static_cast<TrackerDataImpl*>(clusterVector[0])) );
-            }
-	    else 
-	    {
-		    streamlog_out(WARNING2) << "Unknown cluster type: " << hit->getType() << std::endl;
-                    return std::auto_ptr<EUTelVirtualCluster>();
-	    }
+		std::unique_ptr<EUTelVirtualCluster> GetClusterFromHit( const IMPL::TrackerHitImpl* hit ) {       
+			LCObjectVec clusterVector = hit->getRawHits();
+         
+			if (hit->getType() == kEUTelBrickedClusterImpl) {
+            	return std::make_unique<EUTelBrickedClusterImpl>(static_cast<TrackerDataImpl*>(clusterVector[0]));
+			} else if (hit->getType() == kEUTelDFFClusterImpl) {
+		    	return  std::make_unique<EUTelDFFClusterImpl>(static_cast<TrackerDataImpl*>(clusterVector[0]) );
+            } else if (hit->getType() == kEUTelFFClusterImpl) {
+				return std::make_unique<EUTelFFClusterImpl>(static_cast<TrackerDataImpl*>(clusterVector[0]) );
+			} else if (hit->getType() == kEUTelSparseClusterImpl) {
+				return std::make_unique<EUTelSparseClusterImpl<EUTelGenericSparsePixel>>(static_cast<TrackerDataImpl*>(clusterVector[0]) );
+            } else {
+				streamlog_out(WARNING2) << "Unknown cluster type: " << hit->getType() << std::endl;
+				//Not sure this is a good idea
+				return std::unique_ptr<EUTelVirtualCluster>();
+	    	}
         }
 
         /**
@@ -255,8 +258,8 @@ namespace eutelescope {
                 int sensorID = static_cast<int> (cellDecoder(hotPixelData)["sensorID"]);
 
                 if (type == kEUTelGenericSparsePixel) {
-                    std::auto_ptr< EUTelSparseClusterImpl< EUTelGenericSparsePixel > > m26Data(new EUTelSparseClusterImpl< EUTelGenericSparsePixel > (hotPixelData));
-                    std::vector< EUTelGenericSparsePixel* > m26PixelVec;
+                    std::unique_ptr<EUTelSparseClusterImpl<EUTelGenericSparsePixel>> m26Data = std::make_unique<EUTelSparseClusterImpl<EUTelGenericSparsePixel>>(hotPixelData);
+                    std::vector<EUTelGenericSparsePixel*> m26PixelVec;
                     EUTelGenericSparsePixel m26Pixel;
 
                     //Push all single Pixels of one plane in the m26PixelVec
@@ -372,18 +375,13 @@ namespace eutelescope {
          */
 
         void getClusterSize(const IMPL::TrackerHitImpl * hit, int& sizeX, int& sizeY ) {
-        // rewrite from EUTelAXPITbTrackTuple:
-         if(hit==0)
-         {
-            streamlog_out( ERROR5 ) << "An invalid hit pointer supplied! will exit now\n" << endl;
-            return ;
-         }
-
-	  std::auto_ptr<EUTelVirtualCluster> cluster = GetClusterFromHit( hit ) ;
-
-	       if(cluster.get() != NULL )  cluster->getClusterSize(sizeX, sizeY);
- 
-        }
+        	if(!hit){
+				streamlog_out( ERROR5 ) << "An invalid hit pointer supplied! will exit now\n" << endl;
+            	return ;
+         	}
+			std::unique_ptr<EUTelVirtualCluster> cluster = GetClusterFromHit( hit ) ;
+			if(cluster.get())  cluster->getClusterSize(sizeX, sizeY);
+ 		}
   
  	void copyLCCollectionHitVec(  IMPL::LCCollectionVec* input, LCCollectionVec* output ) {
 

@@ -156,7 +156,7 @@ void CMSPixelClusteringProcessor::init () {
 
 void CMSPixelClusteringProcessor::processRunHeader (LCRunHeader * rdr) {
 	streamlog_out( MESSAGE4 ) << "Processing Run Header" << endl;
-	auto_ptr<EUTelRunHeaderImpl> runHeader( new EUTelRunHeaderImpl( rdr ) );
+	std::unique_ptr<EUTelRunHeaderImpl> runHeader = std::make_unique<EUTelRunHeaderImpl>(rdr);
 	runHeader->addProcessor( type() );
 	++_iRun;
 }
@@ -233,7 +233,7 @@ void CMSPixelClusteringProcessor::initializeHotPixelMapVec(  )
         EUTelMatrixDecoder matrixDecoder( _siPlanesLayerLayout , iDetector );
 
         // now prepare the EUTelescope interface to sparsified data.  
-        auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> > sparseData(new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>( hotData ));
+        std::unique_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>> sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(hotData);
 
         streamlog_out ( MESSAGE1 ) << "Processing hotpixel data on detector " << sensorID << " with "
                                  << sparseData->size() << " pixels " << endl;
@@ -379,7 +379,7 @@ void CMSPixelClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * cl
         EUTelMatrixDecoder matrixDecoder( _siPlanesLayerLayout , sensorID );
 		
 		if (type == kEUTelGenericSparsePixel  ) {
-		    auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> > pixelData( new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>( zsData ));
+		    std::unique_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>> pixelData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(zsData);
 			streamlog_out ( DEBUG5 ) << "Processing data on detector " << sensorID << ", " << pixelData->size() << " pixels " << endl;
 
 			// Loop over all pixels in the sparseData object.

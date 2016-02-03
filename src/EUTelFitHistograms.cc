@@ -325,10 +325,8 @@ void EUTelFitHistograms::init() {
 }
 
 void EUTelFitHistograms::processRunHeader( LCRunHeader* runHeader) {
-
-  auto_ptr<EUTelRunHeaderImpl> eutelHeader( new EUTelRunHeaderImpl ( runHeader ) );
-  eutelHeader->addProcessor( type() );
-
+  std::unique_ptr<EUTelRunHeaderImpl> eutelHeader = std::make_unique<EUTelRunHeaderImpl>(runHeader);
+  eutelHeader->addProcessor(type());
   _nRun++ ;
 
   // Decode and print out Run Header information - just a check
@@ -858,7 +856,7 @@ void EUTelFitHistograms::bookHistos()
 
   streamlog_out ( MESSAGE5 ) << "Histogram information searched in " << _histoInfoFileName << endl;
 
-  auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
+  std::unique_ptr<EUTelHistogramManager> histoMgr = std::make_unique<EUTelHistogramManager>(_histoInfoFileName);
   EUTelHistogramInfo    * histoInfo;
   bool                    isHistoManagerAvailable;
 

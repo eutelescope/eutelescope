@@ -80,13 +80,9 @@ void EUTelClusterSeparationProcessor::init () {
 }
 
 void EUTelClusterSeparationProcessor::processRunHeader (LCRunHeader * rdr) {
-
-  auto_ptr<EUTelRunHeaderImpl > runHeader ( new EUTelRunHeaderImpl( rdr ) ) ;
+  std::unique_ptr<EUTelRunHeaderImpl> runHeader = std::make_unique<EUTelRunHeaderImpl>(rdr);
   runHeader->addProcessor( type() );
-
-  // increment the run counter
   ++_iRun;
-
 }
 
 

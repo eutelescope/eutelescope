@@ -45,15 +45,13 @@ _undoAlignment(false)
 		registerOptionalParameter("Undo Alignment (boolean)", "Set to true to undo the alignment instead", _undoAlignment, bool(false));
 }
 
-void EUTelProcessorCoordinateTransformHits::init()
-{
-		std::string geoFilename = EUTELESCOPE::GEOFILENAME;
-		geo::gGeometry().initializeTGeoDescription(geoFilename, false);
+void EUTelProcessorCoordinateTransformHits::init() {
+		geo::gGeometry().initializeTGeoDescription(EUTELESCOPE::GEOFILENAME, EUTELESCOPE::DUMPGEOROOT);
 }
 
 void EUTelProcessorCoordinateTransformHits::processRunHeader(LCRunHeader* rdr)
 {
-		std::auto_ptr<EUTelRunHeaderImpl> header( new EUTelRunHeaderImpl(rdr) );
+		std::unique_ptr<EUTelRunHeaderImpl> header = std::make_unique<EUTelRunHeaderImpl>(rdr);
 
 		// this is the right place also to check the geometry ID. This is a
 		// unique number identifying each different geometry used at the

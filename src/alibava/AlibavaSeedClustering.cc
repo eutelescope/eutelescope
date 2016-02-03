@@ -156,7 +156,7 @@ void AlibavaSeedClustering::processRunHeader (LCRunHeader * rdr) {
 	streamlog_out ( MESSAGE4 ) << "Running processRunHeader" << endl;
 	
 	// Add processor name to the runheader
-	auto_ptr<AlibavaRunHeaderImpl> arunHeader ( new AlibavaRunHeaderImpl(rdr)) ;
+	auto arunHeader = std::make_unique<AlibavaRunHeaderImpl>(rdr);
 	arunHeader->addProcessor(type());
 	
 	// get and set selected chips

@@ -138,7 +138,7 @@ void EUTelHistogramMaker::init () {
 void EUTelHistogramMaker::processRunHeader (LCRunHeader * rdr) {
 
   // to make things easier re-cast the input header to the EUTelRunHeaderImpl
-  auto_ptr<EUTelRunHeaderImpl> runHeader (new EUTelRunHeaderImpl(rdr));
+  std::unique_ptr<EUTelRunHeaderImpl> runHeader = std::make_unique<EUTelRunHeaderImpl>(rdr);
   runHeader->addProcessor( type() );
 
   // increment the run counter
@@ -437,7 +437,7 @@ void EUTelHistogramMaker::processEvent (LCEvent * evt) {
                 EUTelSparseClusterImpl<EUTelGenericSparsePixel > * recasted =
                   dynamic_cast< EUTelSparseClusterImpl<EUTelGenericSparsePixel > * > ( cluster );
                 
-                auto_ptr<EUTelGenericSparsePixel> sparsePixel( new EUTelGenericSparsePixel );
+                std::unique_ptr<EUTelGenericSparsePixel> sparsePixel = std::make_unique<EUTelGenericSparsePixel>();
                 for ( unsigned int iPixel = 0; iPixel < recasted->size() ; iPixel++ ) {
                   recasted->getSparsePixelAt( iPixel, sparsePixel.get() ) ;
                   int index = noiseMatrixDecoder.getIndexFromXY( sparsePixel->getXCoord(), sparsePixel->getYCoord() );
@@ -544,7 +544,7 @@ void EUTelHistogramMaker::bookHistos() {
   // histograms are grouped in loops and detectors
   streamlog_out ( MESSAGE4 )  << "Booking histograms " << endl;
 
-  auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
+  std::unique_ptr<EUTelHistogramManager> histoMgr = std::make_unique<EUTelHistogramManager>(_histoInfoFileName);
   EUTelHistogramInfo    * histoInfo;
   bool                    isHistoManagerAvailable;
 

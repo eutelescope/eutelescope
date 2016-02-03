@@ -107,7 +107,7 @@ void EUTelProcessorAnalysisPALPIDEfsNoise::processEvent(LCEvent *evt)
   for ( unsigned int iDetector = 0 ; iDetector < zsInputDataCollectionVec->size(); iDetector++ )
   {
     TrackerDataImpl * zsData = dynamic_cast< TrackerDataImpl * > ( zsInputDataCollectionVec->getElementAt( iDetector ) );
-    auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel > >  sparseData(new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> ( zsData ));
+    auto sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(zsData);
     for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
     {
       EUTelGenericSparsePixel *sparsePixel =  new EUTelGenericSparsePixel() ;
