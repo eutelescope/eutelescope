@@ -184,6 +184,7 @@
   <parameter name="ShowFake" type="bool" value="true"/>
   <!--Calculate track to hit association without allowing the tracks to share hits-->
   <parameter name="RealAssociation" type="bool" value="false"/>
+  <parameter name="WriteShapes" type="bool" value="false"/>
 </processor>
 
 <processor name="Save" type="EUTelOutputProcessor">
