@@ -309,7 +309,11 @@ void EUTelGeometryTelescopeGeoDescription::readGear() {
 }
 
 EUTelGeometryTelescopeGeoDescription::~EUTelGeometryTelescopeGeoDescription() {
-	delete _geoManager;
+    if(_geoManager){
+        streamlog_out(ERROR5) << "Nothing to delete..." << std::endl;
+    }else{
+        delete _geoManager;
+    }
 	_geoManager = nullptr;
 	delete _pixGeoMgr;
 	_pixGeoMgr = nullptr;
