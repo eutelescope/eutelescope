@@ -206,17 +206,17 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent* evt){
 				std::map< int, std::map< float, float > >  SensorResidualError; 
                 ///Here collect the residuals and calcuated errors.
 				_trackFitter->getResLoc(traj,track, pointList, SensorResidual, SensorResidualError);
-				if(chi2/static_cast<float>(ndf) < _chi2Cut){
-				  plotResidual(SensorResidual,SensorResidualError);
-				}
+//				if(chi2/static_cast<float>(ndf) < _chi2Cut){
+                plotResidual(SensorResidual,SensorResidualError);
+//				}
 			}else{
 				streamlog_out(DEBUG5) << "Ierr is: " << ierr << " Do not update track information " << std::endl;
 				static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_fitsuccessHistName ] ) -> fill(0.0);
 				continue;//We continue so we don't add an empty track
 			}	
-            if(chi2/static_cast<float>(ndf) < _chi2Cut){
+      //      if(chi2/static_cast<float>(ndf) < _chi2Cut){
                 allTracksForThisEvent.push_back(track);
-            }
+       //     }
 			}//END OF LOOP FOR ALL TRACKS IN AN EVENT
 			outputLCIO(evt, allTracksForThisEvent); 
 			allTracksForThisEvent.clear();//We clear this so we don't add the same track twice

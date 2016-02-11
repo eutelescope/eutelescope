@@ -166,7 +166,7 @@ TMatrixDSym EUTelState::getScatteringVarianceInLocalFrame(double const& var ){
 	streamlog_out( DEBUG1 ) << "EUTelState::getScatteringVarianceInLocalFrame(Sensor)----------------------------END" << std::endl;
 	return precisionMatrix;
 }
-bool EUTelState::getStateHasHit() const {
+const bool EUTelState::getStateHasHit() const {
     return _stateHasHit;
 }
 

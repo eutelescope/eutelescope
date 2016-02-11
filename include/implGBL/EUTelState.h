@@ -40,7 +40,7 @@ namespace eutelescope {
 			float getArcLengthToNextState() const {return _arcLength;} 
 			TVector3 getPositionGlobal() const; 
             Eigen::Vector3d getPositionGlobalEig() const; 
-			bool getStateHasHit() const;
+			const bool getStateHasHit() const;
             /// This will get the link between the local and global frames. 
             /// GBL Fitter expects the link to be give from global to local. 
             /// MUST INVERT FOR USE!!
@@ -66,6 +66,7 @@ namespace eutelescope {
 			float getDirLocalY() const {return _dirLocalY;}
 			float getDirLocalZ() const {return _dirLocalZ;}
             TMatrixDSym getCov();
+            std::vector<double> getRes(){return std::vector<double>{this->getPosition()[0] - this->getHit().getPosition()[0],this->getPosition()[1] - this->getHit().getPosition()[1]};}
             //END OF STATE PARAMETERS
 			//setters
             void setHit(EUTelHit hit);

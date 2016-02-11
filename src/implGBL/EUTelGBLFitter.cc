@@ -191,20 +191,21 @@ namespace eutelescope {
 
 	//This is used to deal with downweighting of ouliers. You must provide as input t,h or c. This specifies the function that will be used to do the downweigting.
 	//TO DO: Check that this function works as expected since it has never been used. 
-	void EUTelGBLFitter::setMEstimatorType( const std::string& mEstimatorType ) {
-		std::string mEstimatorTypeLowerCase = mEstimatorType;
-		std::transform( mEstimatorType.begin(), mEstimatorType.end(), mEstimatorTypeLowerCase.begin(), ::tolower);//Make the character lower case
-		if ( mEstimatorType.size() != 1 ) {
+	void EUTelGBLFitter::setMEstimatorType( const std::string& estimatorType ) {
+		std::string estimatorTypeLowerCase = estimatorType;
+		std::transform( estimatorType.begin(), estimatorType.end(), estimatorTypeLowerCase.begin(), ::tolower);//Make the character lower case
+		if ( estimatorType.size() != 1 ) {
 			streamlog_out( WARNING1 ) << "More than one character supplied as M-estimator option" << std::endl;
 			streamlog_out( WARNING1 ) << "No M-estimator downweighting will be used" << std::endl;
 			return;
 		}
 		//Compare character to the ones that are accepted and if one is the same then set out member variable equal to it.
-		if ( mEstimatorTypeLowerCase.compare("t") == 0 ||
-			mEstimatorTypeLowerCase.compare("h") == 0 ||
-			mEstimatorTypeLowerCase.compare("c") == 0   ) this->_mEstimatorType = _mEstimatorType;
-		else {
-			streamlog_out( WARNING1 ) << "M-estimator option " << mEstimatorType << " was not recognized" << std::endl;
+		if ( estimatorTypeLowerCase.compare("t") == 0 || estimatorTypeLowerCase.compare("h") == 0 || estimatorTypeLowerCase.compare("c") == 0   ){
+			streamlog_out( MESSAGE5 ) << "M-estimator: " << estimatorTypeLowerCase << std::endl;
+
+            this->_mEstimatorType = estimatorTypeLowerCase;
+        }else {
+			streamlog_out( WARNING1 ) << "M-estimator option " <<  estimatorTypeLowerCase<< " was not recognized" << std::endl;
 			streamlog_out( WARNING1 ) << "No M-estimator downweighting will be used" << std::endl;
 		}
 	}
@@ -419,9 +420,14 @@ namespace eutelescope {
 		streamlog_message( DEBUG0, traj->printPoints(10);, std::endl; );
 
 
-		if ( !_mEstimatorType.empty( ) ) ierr = traj->fit( *chi2, *ndf, loss, _mEstimatorType );
-		else ierr = traj->fit( *chi2, *ndf, loss );
+		if ( !_mEstimatorType.empty( ) ){
+			streamlog_out(DEBUG5) << "M-estimator found! " << _mEstimatorType << std::endl;
 
+            ierr = traj->fit( *chi2, *ndf, loss, _mEstimatorType );
+        }else{
+			streamlog_out(DEBUG5) << "M-estimator not found! " << std::endl;
+            ierr = traj->fit( *chi2, *ndf, loss );
+        }
 		if( ierr != 0 ){
 			streamlog_out(MESSAGE0) << "Fit failed!" << " Track error: "<< ierr << " and chi2: " << *chi2 << std::endl;
 		}
@@ -496,7 +502,10 @@ namespace eutelescope {
             streamlog_out(DEBUG3) << std::endl << "Meas error: " << std::endl;
             streamlog_message( DEBUG3, aMeasErrors.Print();, std::endl; );			
             state.getHit().setCov(aResErrors);
+//            std::cout << "The weights: "<< aDownWeights[0] << " " <<aDownWeights[1] <<std::endl;
             state.getHit().setWeight(aDownWeights);
+//            std::cout << "Print the track after passing weights " <<std::endl;
+            track.print();
             /// Scattering is for every plane and is added here. 
             ///Measurement - Prediction is the residual. Initial M-P is always 0
             TVectorD aResidualsKink(2);

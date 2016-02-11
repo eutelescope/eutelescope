@@ -36,7 +36,6 @@ namespace eutelescope {
         
 	public:
     EUTelTrackSelection();
-    bool removeTracksWithHitsOnPlane(EUTelTrack track,std::vector<int> sensors); 
+        bool removeTracksWithHitsOnPlane(EUTelTrack track,std::vector<int> sensors); 
 	};
-
 }

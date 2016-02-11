@@ -4,16 +4,14 @@ using namespace eutelescope;
 EUTelHit::EUTelHit():
 _locationKnown(false),
 _cov(2,2),
-_weight(2)
+_weight()
 {
     _cov.Zero();
-    _weight[0]=0;
-    _weight[1]=0;
 } 
 
 EUTelHit::EUTelHit(EUTelHit* hit):
 _cov(2,2),
-_weight(2)    
+_weight()    
 {
     streamlog_out(DEBUG0) << "Position...."   << std::endl;
     _position[0] = hit->getPosition()[0];
@@ -35,13 +33,15 @@ _weight(2)
     ///All hits must have clustering information 
     _pulse = hit->getPulse();
     ///All hits should have a default weight
-    _weight[0] = hit->getWeight().at(0);
-    _weight[1] = hit->getWeight().at(1);
+    if(hit->getWeight().size() != 0){
+        _weight.push_back(hit->getWeight().at(0));
+        _weight.push_back(hit->getWeight().at(1));
+    }
 } 
 
 EUTelHit::EUTelHit(EVENT::TrackerHit* hit):
 _cov(2,2),
-_weight(2)    
+_weight()    
 {
     streamlog_out(DEBUG0) << "Position(TrackerHit)...."   << std::endl;
     _position[0] = hit->getPosition()[0];
@@ -57,8 +57,6 @@ _weight(2)
     _pulse =hit->getRawHits().at(0);    
     _locationKnown=true;
     setCov(hit->getCovMatrix());
-    _weight[0]=0;
-    _weight[1]=0;
 } 
 
 const double* EUTelHit::getPosition() const {
@@ -119,8 +117,10 @@ void EUTelHit::setCov(TMatrixD cov){
 }
 
 void EUTelHit::setWeight(const TVectorD& wei){
-	_weight.push_back(static_cast<double>(wei[0]));
-	_weight.push_back(static_cast<double>(wei[1]));
+	_weight.push_back(wei[0]);
+	_weight.push_back(wei[1]);
+//    std::cout << "The weights Set: "<< _weight.at(0) << " " <<_weight.at(1) << " Size " << _weight.size() << " In " << wei[0]<< " "<< wei[1] <<std::endl;
+
 }
 
 void EUTelHit::setPulse( EVENT::LCObject* pulse){
@@ -166,8 +166,12 @@ std::vector<double> EUTelHit::getLCIOOutput(){
     output.push_back(_cov[0][1]);
     output.push_back(_cov[1][0]);
     output.push_back(_cov[1][1]);
-    output.push_back(_weight.at(0));
-    output.push_back(_weight.at(1));
+ //   std::cout <<"Weights size getLCIO:  " << _weight.size() <<std::endl; 
+    if(_weight.size() > 0){
+        output.push_back(_weight.at(0));
+        output.push_back(_weight.at(1));
+    }
+//    std::cout <<"get weights : "<< _weight.at(0) << " " << _weight.at(1) <<std::endl; 
     ///
 
 
@@ -185,6 +189,7 @@ void EUTelHit::setTrackFromLCIOVec(std::vector<double> input){
         _cov[1][1] = input.at(8); 
     }
     if(input.size() > 9){
+//        std::cout <<"Set weights : "<< input.at(9) << " " << input.at(10) <<std::endl; 
         _weight.push_back(input.at(9)); 
         _weight.push_back(input.at(10)); 
     }
@@ -194,6 +199,7 @@ void EUTelHit::print(){
 	streamlog_out(DEBUG1)<< std::scientific <<"Position Local:  " << _position[0] << " " << _position[1] <<" " << _position[2] <<" Global: " << getPositionGlobal()[0] <<" " <<getPositionGlobal()[1] << " " << getPositionGlobal()[2] <<std::endl;
 	streamlog_out(DEBUG1)<< std::scientific <<"ID:  " << _id  <<std::endl;
 	streamlog_out(DEBUG1)<< std::scientific <<"Location:  " << _location  << " Pulse " << _pulse <<std::endl;
+	streamlog_out(DEBUG1)<< std::scientific <<"Weights:  " << _weight.at(0)  << "  " << _weight.at(1) <<std::endl;
 
 }
 bool EUTelHit::operator==(const EUTelHit compareHit ) const {
