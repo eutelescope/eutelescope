@@ -21,6 +21,9 @@
       <processor name="ClusteringMimosa"/>  
       <processor name="NoisyClusterMaskerM26"/>  
       <processor name="NoisyClusterRemoverM26"/>  
+      <processor name="ClusteringAPIX"/>
+      <processor name="NoisyClusterMaskerAPIX"/>
+      <processor name="NoisyClusterRemoverAPIX"/>
       <xprocessor name="SaveAsRoot"/>
       <processor name="Save"/>
       <processor name="EUTelUtilityPrintEventNumber"/>

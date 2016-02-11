@@ -18,6 +18,7 @@
    <execute>
       <processor name="AIDA"/>
       <processor name="HitMakerM26"/>
+      <processor name="HitMakerAPIX"/>
       <processor name="HitLocalToGlobal"/>
       <processor name="Correlator"/>
       <processor name="PreAligner"/>
@@ -52,24 +53,6 @@
 to the external frame of reference using the GEAR geometry description-->
   <!--Input cluster collection name-->
   <parameter name="PulseCollectionName" type="string" lcioInType="TrackerPulse"> cluster_m26_free </parameter>
-  <!--Output hit collection name-->
-  <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> local_hit </parameter>
-  <!--Hit coordinates are calculated in local reference frame of sensor-->
-  <parameter name="EnableLocalCoordidates" type="bool" value="true"/>
-  <!--This is the name of the reference hit collection initialized in this processor. This collection provides the reference vector to correctly determine a plane corresponding to a global hit coordiante.-->
-  <!--parameter name="ReferenceCollection" type="string" value="referenceHit"/-->
-  <!--This is the file where the reference hit collection is stored-->
-  <parameter name="ReferenceHitFile" type="string" value="@DatabasePath@/@FilePrefix@-refhit-db.slcio"/>
-  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <!--parameter name="Verbosity" type="string" value=""/-->
-</processor>
-
-
- <processor name="HitMakerStrip" type="EUTelProcessorHitMaker">
- <!--EUTelProcessorHitMaker is responsible to translate cluster centers from the local frame of reference 
-to the external frame of reference using the GEAR geometry description-->
-  <!--Input cluster collection name-->
-  <parameter name="PulseCollectionName" type="string" lcioInType="TrackerPulse"> cluster_strip </parameter>
   <!--Output hit collection name-->
   <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> local_hit </parameter>
   <!--Hit coordinates are calculated in local reference frame of sensor-->
