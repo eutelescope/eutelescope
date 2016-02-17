@@ -42,7 +42,7 @@
   <!-- compression of output file 0: false >0: true (default) -->
   <parameter name="Compress" type="int" value="1"/>
   <!-- filename without extension-->
-  <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-daffitter-alignGBL"/>
+  <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-daffitter_fixedAlign-alignGBL"/>
   <!-- type of output file root (default) or xml )-->
   <parameter name="FileType" type="string" value="root"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
@@ -73,9 +73,9 @@
   <parameter name="SimpleFileHandler" type="StringVec"> refhit42 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit </parameter>
   <parameter name="SimpleFileHandler" type="StringVec"> refhit51 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit </parameter>
   <parameter name="SimpleFileHandler" type="StringVec"> refhit52 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit </parameter>
-  <parameter name="SimpleFileHandler" type="StringVec"> prealign  @DatabasePath@/@FilePrefix@-prealignment.slcio alignment </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> prealign  @DatabasePath@/run000116-prealignment.slcio alignment </parameter>
   <!--parameter name="SimpleFileHandler" type="StringVec" default="prealign  @DatabasePath@/@FilePrefix@-prealignment.slcio alignment"> overwritePreAlign@</parameter-->
-  <parameter name="SimpleFileHandler" type="StringVec"> align  @DatabasePath@/@FilePrefix@-alignmentGBL.slcio alignment </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> align  @DatabasePath@/run000116-alignmentGBL.slcio alignment </parameter>
   <!--parameter name="SimpleFileHandler" type="StringVec" default="align @DatabasePath@/@FilePrefix@-alignment.slcio alignment"> overwriteAlign@</parameter-->
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
@@ -247,11 +247,11 @@
 
 <group name="TelDUTFitter" >
   <!--Should plots be made and filled?-->
-  <parameter name="AddToLCIO" type="bool" value="@AddToLCIO@"/>
+  <parameter name="AddToLCIO" type="bool" value="true"/>
   <!--Names of alignment collections, should be in same order as application-->
   <parameter name="AlignmentCollectionNames" type="StringVec" value="prealign align"/>
   <!--DAF fitter: The cutoff value for a measurement to be included in the fit.-->
-  <parameter name="Chi2Cutoff" type="float" value="@Chi2Cutoff@"/>
+  <parameter name="Chi2Cutoff" type="float" value="100"/>
   <!--List of sensor IDs for the DUT planes. Used to make the decision on whether ro accept the track or not. These planes are not used in track finder, and not in the track fitter unless option 'useDutsInFit' is set.-->
   <!--parameter name="DutPlanes" type="IntVec"> </parameter-->
   <!--Sigma of telescope resolution in the global X plane,-->
@@ -261,16 +261,16 @@
   <!--Beam energy [GeV], used to calculate amount of scatter-->
   <parameter name="Ebeam" type="float" value="@BeamEnergy@"/>
   <!--Track finding: The maximum allowed distance between to hits in the xy plane for inclusion in track candidate-->
-  <parameter name="FinderRadius" type="float" value="@FinderRadius@"/>
+  <parameter name="FinderRadius" type="float" value="1500"/>
   <!--Set this to true if you want DUTs to be included in the track fit-->
-  <parameter name="FitDuts" type="bool" value="@FitDuts@"/>
+  <parameter name="FitDuts" type="bool" value="false"/>
   <!--Names of input hit collections-->
   <parameter name="HitCollectionName" type="StringVec" value="alignedHit"/>
   <!--parameter name="TrackCollectionName" type="string" lcioInType="Track"> track </parameter-->
   <!--Should plots be made and filled?-->
-  <parameter name="MakePlots" type="bool" value="@MakePlots@"/>
+  <parameter name="MakePlots" type="bool" value="true"/>
   <!--Maximum allowed global chi2/ndof-->
-  <parameter name="MaxChi2OverNdof" type="float" value="@MaxChi2OverNdof@"/>
+  <parameter name="MaxChi2OverNdof" type="float" value="10"/>
   <!--How many DUT hits do we need in order to accept track?-->
   <parameter name="NDutHits" type="int" value="0"/>
   <!--dx/dz assumed by track finder-->
