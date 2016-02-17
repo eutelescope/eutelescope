@@ -261,8 +261,8 @@ void EUTelDUTHistograms::init() {
 
 void EUTelDUTHistograms::processRunHeader( LCRunHeader* runHeader) {
 
-  auto_ptr<EUTelRunHeaderImpl> eutelHeader( new EUTelRunHeaderImpl ( runHeader ) );
-  eutelHeader->addProcessor( type() );
+  auto eutelHeader = std::make_unique<EUTelRunHeaderImpl>(runHeader);
+  eutelHeader->addProcessor(type());
 
   _nRun++ ;
 
@@ -678,7 +678,7 @@ void EUTelDUTHistograms::bookHistos()
 
   message<MESSAGE5> ( log() << "Histogram information searched in " << _histoInfoFileName);
 
-  auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
+  auto histoMgr = std::make_unique<EUTelHistogramManager>( _histoInfoFileName);
   EUTelHistogramInfo    * histoInfo;
   bool                    isHistoManagerAvailable;
 

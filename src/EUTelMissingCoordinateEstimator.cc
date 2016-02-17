@@ -130,11 +130,8 @@ void EUTelMissingCoordinateEstimator::init() {
 
 
 void EUTelMissingCoordinateEstimator::processRunHeader (LCRunHeader * rdr) {
-    
-    
-    auto_ptr<EUTelRunHeaderImpl> header ( new EUTelRunHeaderImpl (rdr) );
-    header->addProcessor( type() );
-    
+    std::unique_ptr<EUTelRunHeaderImpl> header = std::make_unique<EUTelRunHeaderImpl>(rdr);
+    header->addProcessor(type());
     
     // this is the right place also to check the geometry ID. This is a
     // unique number identifying each different geometry used at the
@@ -145,8 +142,6 @@ void EUTelMissingCoordinateEstimator::processRunHeader (LCRunHeader * rdr) {
     if ( header->getGeoID() == 0 )
         streamlog_out ( WARNING0 ) <<  "The geometry ID in the run header is set to zero." << endl
         <<  "This may mean that the GeoID parameter was not set" << endl;
-    
-    
     
     // increment the run counter
     ++_iRun;

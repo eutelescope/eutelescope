@@ -43,7 +43,6 @@ namespace eutelescope {
    *  If the original collection should be dumped, specify so in the 
    *  EUTelOutputProcessor ("Save")
    */
-
 class EUTelProcessorNoisyClusterMasker : public marlin::Processor {
 
   public:
@@ -53,7 +52,7 @@ class EUTelProcessorNoisyClusterMasker : public marlin::Processor {
      *  is called by Marlin execution framework and it shouldn't be
      *  called/used by the final user.
      *
-     *  @return a new EUTelHotPixelKiller.
+     *  @return a new EUTelNoisyPixelKiller.
      */
     virtual Processor * newProcessor() {
       return new EUTelProcessorNoisyClusterMasker;
@@ -101,7 +100,7 @@ class EUTelProcessorNoisyClusterMasker : public marlin::Processor {
 
   protected:
 
-	void readHotPixelList (LCEvent * event); 
+	void readNoisyPixelList (LCEvent * event); 
 
 	//! Encoding function to encode the two pixel indices in a unique way
 	/*! Uses Cantor's pairing function */ 
@@ -114,7 +113,7 @@ class EUTelProcessorNoisyClusterMasker : public marlin::Processor {
 	std::string _outputCollectionName; 
 
 	//! Name of the hot pixel collection
-	std::string _hotPixelCollectionName;
+	std::string _noisyPixelCollectionName;
 
 	//! Integer to track the collection size
 	/*! Used to monitor if anything changed and the collection needs
@@ -144,10 +143,13 @@ class EUTelProcessorNoisyClusterMasker : public marlin::Processor {
 	bool  _wrongDataFormat;
 
 	//! Map linking the noise vectors of each plane to the plane ID
-	std::map<int, std::vector<int> > _hotPixelMap;
+	std::map<int, std::vector<int> > _noisyPixelMap;
 
 	//! Map counting the removed hot pixels per plane
 	std::map<int, int> _maskedNoisyClusters;
+
+	//! Static bool flag to mark if any instance of this processor has printed out generla info
+	static bool _staticPrintedSummary;
 };
 
 //! A global instance of the processor

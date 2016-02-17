@@ -846,13 +846,9 @@ void EUTelTestFitter::init() {
 }
 
 void EUTelTestFitter::processRunHeader( LCRunHeader* runHeader) {
-
-  auto_ptr<EUTelRunHeaderImpl> eutelHeader( new EUTelRunHeaderImpl ( runHeader ) );
+  auto eutelHeader = std::make_unique<EUTelRunHeaderImpl>(runHeader);
   eutelHeader->addProcessor( type() );
-
   _nRun++ ;
-
-  // Decode and print out Run Header information - just a check
 
   int runNr = runHeader->getRunNumber();
 
@@ -2155,7 +2151,7 @@ void EUTelTestFitter::bookHistos()
   streamlog_out ( MESSAGE2 ) <<  "Booking histograms " << endl;
   streamlog_out ( MESSAGE2 ) << "Histogram information searched in " << _histoInfoFileName << endl;
 
-  auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
+  auto histoMgr = std::make_unique<EUTelHistogramManager>(_histoInfoFileName);
   EUTelHistogramInfo    * histoInfo;
   bool                    isHistoManagerAvailable;
 

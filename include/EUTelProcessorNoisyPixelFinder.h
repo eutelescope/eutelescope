@@ -84,7 +84,7 @@ public:
     EUTelProcessorNoisyPixelFinder();
 
     //! Default destructor
-    ~EUTelProcessorNoisyPixelFinder();
+    ~EUTelProcessorNoisyPixelFinder() = default;
 
     //! Called at the job beginning.
     /*! This is executed only once in the whole execution. It prints
@@ -124,7 +124,7 @@ public:
     void initializeHitMaps() ;
 
     //! HotPixelFinder
-    void HotPixelFinder(EUTelEventImpl *input);
+    void noisyPixelFinder(EUTelEventImpl *input);
     
     //! Check call back
     /*! This method is called every event just after the processEvent
@@ -144,7 +144,6 @@ public:
 
 
 protected:
-    std::string _lcioWriteMode ; 
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     //! Histogram with the firing frequency 2D distribution
@@ -168,14 +167,14 @@ protected:
     /*! 
      * this collection is saved in a db file to be used at the clustering level
      */
-    std::string _hotPixelCollectionName;
+    std::string _noisyPixelCollectionName;
 
  
     //! The excluded planes list
     /*! This is a list of sensor ids for planes that have to be
      *   excluded from the clustering.
      */
-    std::vector<int> _ExcludedPlanes;
+    std::vector<int> _excludedPlanes;
 
     //! Number of events for update cycle
     int _noOfEvents;
@@ -197,12 +196,12 @@ protected:
      *  is no real overhead with using std::vectors instead of
      * arrays.
      */
-    std::map<int, std::vector<std::vector<int> >* > _hitVecMap;
+    std::map<int, std::vector<std::vector<int>>> _hitVecMap;
     
     //! Map for storing the hot pixels in a std::vector as a value
     /*! The key is once again the sensorID.
      */
-    std::map<int, std::vector<EUTelGenericSparsePixel> > _hotPixelMap;
+    std::map<int, std::vector<EUTelGenericSparsePixel>> _noisyPixelMap;
 
     //! Current run number.
     /*! This number is used to store the current run number
@@ -219,13 +218,13 @@ protected:
     /*! Passed as a argument via the steering file, here you
      *  specify for which sensors hot pixels should be determined
      */
-    EVENT::IntVec _sensorIDVec;
+    std::vector<int> _sensorIDVec;
 
     //! Hot Pixel DB output file
-    std::string _hotpixelDBFile;
+    std::string _noisyPixelDBFile;
 
     //! write out the list of hot pixels
-    void HotPixelDBWriter();
+    void noisyPixelDBWriter();
 
     //! Flag which will be set once we're done finding noisy pixels
     bool _finished;

@@ -121,8 +121,8 @@ void EUTelStrasMimoTelReader::readDataSource (int numEvents) {
     message<MESSAGE5> ( log() << "Reading the run header\n" << _runHeader );
     runHeaderFile.close();
 
-    auto_ptr<IMPL::LCRunHeaderImpl> lcHeader ( new IMPL::LCRunHeaderImpl );
-    auto_ptr<EUTelRunHeaderImpl>    eutelRunHeader ( new EUTelRunHeaderImpl (lcHeader.get() ));
+    auto lcHeader = std::make_unique<IMPL::LCRunHeaderImpl>();
+    auto eutelRunHeader = std::make_unique<EUTelRunHeaderImpl>(lcHeader.get());
     eutelRunHeader->addProcessor( type() );
     eutelRunHeader->lcRunHeader()->setRunNumber( _runNumber );
     eutelRunHeader->setDataType( EUTELESCOPE::CONVDATA );

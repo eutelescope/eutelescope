@@ -1,0 +1,209 @@
+<gear>
+	<!--
+		IBL testbeam June 2011
+	-->
+	<global detectorName="EUTelescope"/>
+	<BField type="ConstantBField" x="0.0" y="0.0" z="0.0"/>
+	<detectors>
+		<detector name="SiPlanes" geartype="SiPlanesParameters">
+			<siplanesID ID="95"/>
+			<siplanesType type="TelescopeWithoutDUT"/>
+			<siplanesNumber number="8"/>
+			<layers>
+
+				<!-- Test Plane 0: Arbitrary angles -->
+				<layer>
+					<ladder 	ID="0"
+						 	positionX="0.00"	positionY="0.00"	positionZ="0.00"
+							rotationZY="15.00"	rotationZX="-6.0"	rotationXY="2.0" 
+							sizeX="20"		sizeY="10"		thickness="0.1"
+							radLength="93.660734"
+					/>
+					<sensitive 	ID="0"
+							positionX="0.00"	positionY="0.00"	positionZ="0.00" 
+							sizeX="20"		sizeY="10"		thickness="0.05" 
+							npixelX="1000"		npixelY="500" 
+							pitchX="0.02"		pitchY="0.02" 	resolution="0.0045" 
+							rotation1="1.0" 	rotation2="0.0" 
+							rotation3="0.0"		rotation4="1.0" 
+							radLength="93.660734"
+					/>
+				</layer>
+				
+				<!-- Test Plane 1: At no specific position, but with rotation 45deg around Y-axis-->
+				<layer>
+					<ladder 	ID="1" 
+							positionX="0.00"	positionY="0.00"	positionZ="10.00" 
+							rotationZY="0.0"	rotationZX="45" 	rotationXY="0.0" 
+							sizeX="20"		sizeY="10"		thickness="0.10" 
+							radLength="93.660734"
+					/>
+					<sensitive 	ID="1" 
+							positionX="0.00"	positionY="0.00"	positionZ="10.0" 
+							sizeX="20"		sizeY="10"		thickness="0.05" 
+							npixelX="1000"		npixelY="500" 
+							pitchX="0.02"		pitchY="0.02"		resolution="0.0045"
+							rotation1="1.0"		rotation2="0.0" 
+							rotation3="0.0"		rotation4="1.0" 
+							radLength="93.660734"
+					/>
+				</layer>
+				
+				<!-- Test Plane 2: At no specific position, but with rotation 45deg around X-axis-->
+				<layer>
+					<ladder 	ID="2" 
+							positionX="0.00"	positionY="0.00"	positionZ="20.00" 
+							rotationZY="45.0"	rotationZX="0.0"	rotationXY="0.0" 
+							sizeX="20"		sizeY="10"		thickness="0.1" 
+							radLength="93.660734"
+					/>
+					<sensitive 	ID="2" 
+							positionX="0.00"	positionY="0.00"	positionZ="20.00" 
+							sizeX="20"		sizeY="10"		thickness="0.05"
+							npixelX="1000"		npixelY="500"
+							pitchX="0.02" 		pitchY="0.02"		resolution="0.0045"
+							rotation1="1.0"		rotation2="0.0"
+							rotation3="0.0" 	rotation4="1.0" 
+							radLength="93.660734"
+					/>
+				</layer>
+				
+				<!-- Test Plane 3: At no specific position, but with rotation 45deg around Z-axis-->
+				<layer>
+					<ladder 	ID="3" 
+							positionX="0.00"	positionY="0.00"	positionZ="30.00" 
+							rotationZY="0.0"	rotationZX="0.0"	rotationXY="45.0" 
+							sizeX="20"		sizeY="10"		thickness="0.1" 
+							radLength="93.660734"
+					/>
+					<sensitive 	ID="3" 
+							positionX="0.00"	positionY="0.00"	positionZ="30.00" 
+							sizeX="20"		sizeY="10"		thickness="0.05"
+							npixelX="1000"		npixelY="500"
+							pitchX="0.02" 		pitchY="0.02"		resolution="0.0045"
+							rotation1="1.0"		rotation2="0.0"
+							rotation3="0.0" 	rotation4="1.0" 
+							radLength="93.660734"
+					/>
+				</layer>
+
+				<!-- Test Plane 4: At no specific position, no rotations but rot1 = -1 -->
+				<layer>
+					<ladder 	ID="4" 
+							positionX="0.00"	positionY="0.00"	positionZ="40.00" 
+							rotationZY="0.0"	rotationZX="0.0"	rotationXY="0.0" 
+							sizeX="20"		sizeY="10"		thickness="0.1" 
+							radLength="93.660734"
+					/>
+					<sensitive 	ID="4" 
+							positionX="0.00"	positionY="0.00"	positionZ="40.00" 
+							sizeX="20"		sizeY="10"		thickness="0.05"
+							npixelX="1000"		npixelY="500"
+							pitchX="0.02" 		pitchY="0.02"		resolution="0.0045"
+							rotation1="-1.0"	rotation2="0.0"
+							rotation3="0.0" 	rotation4="1.0" 
+							radLength="93.660734"
+					/>
+				</layer>
+
+				<!-- Test Plane 5: At no specific position, no rotations but x and y axis flipped -->
+				<layer>
+					<ladder 	ID="5" 
+							positionX="0.00"	positionY="0.00"	positionZ="50.00" 
+							rotationZY="0.0"	rotationZX="0.0"	rotationXY="0.0" 
+							sizeX="20"		sizeY="10"		thickness="0.1" 
+							radLength="93.660734"
+					/>
+					<sensitive 	ID="5" 
+							positionX="0.00"	positionY="0.00"	positionZ="50.00" 
+							sizeX="20"		sizeY="10"		thickness="0.05"
+							npixelX="1000"		npixelY="500"
+							pitchX="0.02" 		pitchY="0.02"		resolution="0.0045"
+							rotation1="0.0"		rotation2="1.0"
+							rotation3="1.0" 	rotation4="0.0" 
+							radLength="93.660734"
+					/>
+				</layer>
+
+				<!-- Test Plane 6: Placed after Test Plane 7, to test ordering -->
+				<layer>
+					<ladder 	ID="6" 
+							positionX="0.00"	positionY="0.00"	positionZ="70.00" 
+							rotationZY="0.0"	rotationZX="0.0"	rotationXY="0.0" 
+							sizeX="20"		sizeY="10"		thickness="0.1" 
+							radLength="93.660734"
+					/>
+					<sensitive 	ID="6" 
+							positionX="0.00"	positionY="0.00"	positionZ="70.00" 
+							sizeX="20"		sizeY="10"		thickness="0.05"
+							npixelX="1000"		npixelY="500"
+							pitchX="0.02" 		pitchY="0.02"		resolution="0.0045"
+							rotation1="1.0"		rotation2="0.0"
+							rotation3="0.0" 	rotation4="1.0" 
+							radLength="93.660734"
+					/>
+				</layer>
+
+				<!-- Test Plane 7: Placed before Test Plane 6, see comment there -->
+				<layer>
+					<ladder 	ID="7" 
+							positionX="0.00"	positionY="0.00"	positionZ="60.00" 
+							rotationZY="0.0"	rotationZX="0.0"	rotationXY="0.0" 
+							sizeX="20"		sizeY="10"		thickness="0.1" 
+							radLength="93.660734"
+					/>
+					<sensitive 	ID="7" 
+							positionX="0.00"	positionY="0.00"	positionZ="60.00" 
+							sizeX="20"		sizeY="10"		thickness="0.05"
+							npixelX="1000"		npixelY="500"
+							pitchX="0.02" 		pitchY="0.02"		resolution="0.0045"
+							rotation1="1.0"		rotation2="0.0"
+							rotation3="0.0" 	rotation4="1.0" 
+							radLength="93.660734"
+					/>
+				</layer>
+
+				<!-- Test Plane 8: Placed before Test Plane 0, to test sorting for negative numbers -->
+				<layer>
+					<ladder 	ID="8" 
+							positionX="0.00"	positionY="0.00"	positionZ="-10.00" 
+							rotationZY="0.0"	rotationZX="0.0"	rotationXY="0.0" 
+							sizeX="20"		sizeY="10"		thickness="0.1" 
+							radLength="93.660734"
+					/>
+					<sensitive 	ID="8" 
+							positionX="0.00"	positionY="0.00"	positionZ="-10.00" 
+							sizeX="20"		sizeY="10"		thickness="0.05"
+							npixelX="1000"		npixelY="500"
+							pitchX="0.02" 		pitchY="0.02"		resolution="0.0045"
+							rotation1="1.0"		rotation2="0.0"
+							rotation3="0.0" 	rotation4="1.0" 
+							radLength="93.660734"
+					/>
+				</layer>		
+
+				<!-- Test Plane 0: Arbitrary angles -->
+				<layer>
+					<ladder 	ID="9"
+						 	positionX="0.00"	positionY="0.00"	positionZ="140.00"
+							rotationZY="0.00"	rotationZX="0.0"	rotationXY="0.0" 
+							sizeX="2000"		sizeY="1000"		thickness="9.366"
+							radLength="93.660734"
+					/>
+					<sensitive 	ID="9"
+							positionX="0.00"	positionY="0.00"	positionZ="140.00" 
+							sizeX="2000"		sizeY="1000"		thickness="9.366" 
+							npixelX="1000"		npixelY="500" 
+							pitchX="0.02"		pitchY="0.02" 	resolution="0.0045" 
+							rotation1="1.0" 	rotation2="0.0" 
+							rotation3="0.0"		rotation4="1.0" 
+							radLength="93.660734"
+					/>
+				</layer>
+				
+	
+	
+	</layers>
+		</detector>
+	</detectors>
+</gear>

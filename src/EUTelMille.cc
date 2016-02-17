@@ -324,9 +324,8 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
 
 void EUTelMille::init() {
 
-    // Getting access to geometry description
-    std::string name("test.root");
-    geo::gGeometry().initializeTGeoDescription(name,false);
+	// Getting access to geometry description
+	geo::gGeometry().initializeTGeoDescription(EUTELESCOPE::GEOFILENAME, EUTELESCOPE::DUMPGEOROOT);
 
   _sensorIDVec.clear();
   _sensorIDVecMap.clear();
@@ -586,9 +585,8 @@ void EUTelMille::init() {
 }
 
 void EUTelMille::processRunHeader (LCRunHeader * rdr) {
-
-  auto_ptr<EUTelRunHeaderImpl> header ( new EUTelRunHeaderImpl (rdr) );
-  header->addProcessor( type() ) ;
+  std::unique_ptr<EUTelRunHeaderImpl> header = std::make_unique<EUTelRunHeaderImpl>(rdr);
+  header->addProcessor(type());
 
   // this is the right place also to check the geometry ID. This is a
   // unique number identifying each different geometry used at the
@@ -1022,9 +1020,8 @@ void  EUTelMille::FillHotPixelMap(LCEvent *event)
 
 	   int sensorID              = static_cast<int > ( cellDecoder( hotPixelData )["sensorID"] );
 
-           if( type  ==  kEUTelGenericSparsePixel )
-           {  
-              auto_ptr<EUTelSparseClusterImpl< EUTelGenericSparsePixel > > m26Data( new EUTelSparseClusterImpl< EUTelGenericSparsePixel >   ( hotPixelData ) );
+           if( type  ==  kEUTelGenericSparsePixel ) {  
+				std::unique_ptr<EUTelSparseClusterImpl<EUTelGenericSparsePixel>> m26Data = std::make_unique<EUTelSparseClusterImpl<EUTelGenericSparsePixel>>(hotPixelData);
 
               std::vector<EUTelGenericSparsePixel*> m26PixelVec;
 	      EUTelGenericSparsePixel m26Pixel;
@@ -2769,7 +2766,7 @@ void EUTelMille::end() {
   streamlog_out ( MESSAGE7 ) << "Number of tracks used: " << _nMilleTracks << endl;
 
   // monitor the number of tracks in CDash when running tests
-  CDashMeasurement meas_ntracks("ntracks",_nMilleTracks);  cout << meas_ntracks;  // output only if DO_TESTING is set
+  CDashMeasurement meas_ntracks("ntracks",_nMilleTracks); // cout << meas_ntracks;  // output only if DO_TESTING is set
 
   // if running pede using the generated steering file
   if (_runPede == 1) {
@@ -2854,7 +2851,8 @@ void EUTelMille::end() {
 	      strncpy ( str, pch+1, 15 );
 	      str[15] = '\0';   /* null character manually added */
 	      // monitor the chi2/ndf in CDash when running tests
-	      CDashMeasurement meas_chi2ndf("chi2_ndf",atof(str));  cout << meas_chi2ndf; // output only if DO_TESTING is set
+	      CDashMeasurement meas_chi2ndf("chi2_ndf",atof(str));  
+		  //std::cout << meas_chi2ndf; // output only if DO_TESTING is set
 	      streamlog_out ( MESSAGE6 ) << "Final Sum(Chi^2)/Sum(Ndf) = " << str << endl;
 	    }	    
 	  }

@@ -15,7 +15,7 @@ namespace eutelescope {
 	template<class PixelType>
 	EUTelTrackerDataInterfacerImpl<PixelType>::EUTelTrackerDataInterfacerImpl(IMPL::TrackerDataImpl* data): _trackerData(data), _nElement(), _type(), _pixelVec()
 	{
-		std::auto_ptr<PixelType> pixel ( new PixelType );
+		auto pixel = std::make_unique<PixelType>();
 		_nElement = pixel->getNoOfElements();
 		_type = pixel->getSparsePixelType();
 		_pixelVec.clear();

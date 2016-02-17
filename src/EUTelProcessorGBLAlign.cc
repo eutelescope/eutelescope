@@ -83,8 +83,8 @@ void EUTelProcessorGBLAlign::init() {
 		streamlog_out(DEBUG2) << "EUTelProcessorGBLAlign::init( )---------------------------------------------BEGIN" << std::endl;
 		_nProcessedRuns = 0;
 		_nProcessedEvents = 0;
-		std::string name("test.root");
-		geo::gGeometry().initializeTGeoDescription(name,false);
+		
+		geo::gGeometry().initializeTGeoDescription(EUTELESCOPE::GEOFILENAME, EUTELESCOPE::DUMPGEOROOT);
 
 		// Initialize GBL fitter
 		EUTelGBLFitter* Fitter = new EUTelGBLFitter();
@@ -106,7 +106,6 @@ void EUTelProcessorGBLAlign::init() {
 		Fitter->setMillepede(_Mille);//We need to have a connection between GBL and Millepede since GBL knows nothing about sensor orientations.
 		Fitter->testUserInput();
 		_trackFitter = Fitter;
-
 
 		if (!_trackFitter) {
 			streamlog_out(ERROR) << "Can't allocate an instance of EUTelGBLFitter. Stopping ..." << std::endl;
@@ -134,9 +133,8 @@ void EUTelProcessorGBLAlign::init() {
 }
 
 void EUTelProcessorGBLAlign::processRunHeader(LCRunHeader * run) {
-	std::auto_ptr<EUTelRunHeaderImpl> header(new EUTelRunHeaderImpl(run));
+	std::unique_ptr<EUTelRunHeaderImpl> header = std::make_unique<EUTelRunHeaderImpl>(run);
 	header->addProcessor(type());
-
 
 	// this is the right place also to check the geometry ID. This is a
 	// unique number identifying each different geometry used at the

@@ -54,6 +54,8 @@ EUTelAPIXTbTrackTuple::EUTelAPIXTbTrackTuple()
   p_tot(NULL),
   p_iden(NULL),
   p_lv1(NULL),
+  p_hitTime(NULL),
+  p_frameTime(NULL),
   _euhits(NULL),
   _nHits(0),
   _hitXPos(NULL),
@@ -93,29 +95,23 @@ void EUTelAPIXTbTrackTuple::init()
 	_nRun = 0;
 	_nEvt = 0;
 
-	// Prepare TTree/TFiles
 	prepareTree();
 
-	//init new geometry
-	std::string name("test.root");
-	geo::gGeometry().initializeTGeoDescription(name,true);
+    geo::gGeometry().initializeTGeoDescription(EUTELESCOPE::GEOFILENAME, EUTELESCOPE::DUMPGEOROOT);
 
-
-	for(std::vector<int>::iterator it = _DUTIDs.begin(); it != _DUTIDs.end(); it++)
-	{
+	for(auto dutID: _DUTIDs) {
 		//Later we need to shift the sensor since in EUTel centre of sensor is 0|0 while in TBmon(II) it is in the lower left corner
-		geo::EUTelGenericPixGeoDescr* geoDescr = geo::gGeometry().getPixGeoDescr( *it ) ;
+		geo::EUTelGenericPixGeoDescr* geoDescr = geo::gGeometry().getPixGeoDescr(dutID) ;
 		float xSize,ySize;
 		geoDescr->getSensitiveSize(xSize, ySize);
 
-		_xSensSize[*it] = xSize;
-		_ySensSize[*it] = ySize;
+		_xSensSize[dutID] = xSize;
+		_ySensSize[dutID] = ySize;
 	}
 }
 
-void EUTelAPIXTbTrackTuple::processRunHeader( LCRunHeader* runHeader) 
-{
-	std::auto_ptr<EUTelRunHeaderImpl> eutelHeader( new EUTelRunHeaderImpl ( runHeader ) );
+void EUTelAPIXTbTrackTuple::processRunHeader( LCRunHeader* runHeader) {
+	auto eutelHeader = std::make_unique<EUTelRunHeaderImpl>(runHeader);
 	eutelHeader->addProcessor( type() );
 	_nRun++;
 	
@@ -167,7 +163,7 @@ void EUTelAPIXTbTrackTuple::processEvent( LCEvent * event )
 void EUTelAPIXTbTrackTuple::end()
 {
 	//write version number
-	_versionNo->push_back(1.1);
+	_versionNo->push_back(1.3);
 	_versionTree->Fill();
 	//Maybe some stats output?
 	_file->Write();
@@ -249,7 +245,8 @@ bool EUTelAPIXTbTrackTuple::readTracks(LCEvent* event)
 		double dxdz = fittrack->getOmega();
 		double dydz = fittrack->getPhi();
 
- 		//Get the (fitted) hits belonging to this track, they are in local frame!
+ 		/* Get the (fitted) hits belonging to this track, 
+		   they are in global frame when coming from the straight track fitter */
 		for(unsigned int ihit=0; ihit< trackhits.size(); ihit++)
 	       	{
       			TrackerHitImpl* fittedHit = dynamic_cast<TrackerHitImpl*>( trackhits.at(ihit) );
@@ -269,12 +266,14 @@ bool EUTelAPIXTbTrackTuple::readTracks(LCEvent* event)
 			}
 
       			nTrackParams++;
-      			
-				double x = pos[0];
-      			double y = pos[1];
-      			//double z = pos[2]; //not used!
+      			/* Transform to local coordinates */
+			double pos_loc[3];
+			geo::gGeometry().master2Local(sensorID, pos, pos_loc);
 			
-				//eutrack tree
+			double x = pos_loc[0];
+			double y = pos_loc[1];
+
+			//eutrack tree
       			_xPos->push_back(x);
       			_yPos->push_back(y);
       			_dxdz->push_back(dxdz);
@@ -311,28 +310,47 @@ bool EUTelAPIXTbTrackTuple::readZsHits( std::string colName, LCEvent* event)
 		TrackerDataImpl* zsData = dynamic_cast< TrackerDataImpl * > ( zsInputCollectionVec->getElementAt( plane ) );
 		SparsePixelType type = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( zsData )["sparsePixelType"]) );
     		int sensorID = cellDecoder( zsData )["sensorID"];
-    
+		
+		auto sparseData = std::unique_ptr<EUTelTrackerDataInterfacer>();
+
 		if (type == kEUTelGenericSparsePixel  ) 
-		{
-			std::auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> > apixData( new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> ( zsData ));
-      			EUTelGenericSparsePixel apixPixel;
-      				
-			for( unsigned int iHit = 0; iHit < apixData->size(); iHit++ ) 
-			{
-				apixData->getSparsePixelAt( iHit, &apixPixel);
-				_nPixHits++;
-				p_iden->push_back( sensorID );
-				p_row->push_back( apixPixel.getYCoord() );
-				p_col->push_back( apixPixel.getXCoord() );
-				p_tot->push_back( static_cast< int >(apixPixel.getSignal()) );
-				p_lv1->push_back( static_cast< int >(apixPixel.getTime()) );
-     		}
-    	}
+		  {
+		   sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(zsData);
+		   EUTelGenericSparsePixel apixPixel;
+		   
+		   for( unsigned int iHit = 0; iHit < sparseData->size(); iHit++ ) 
+		     {
+		       sparseData->getSparsePixelAt( iHit, &apixPixel);
+		       _nPixHits++;
+		       p_iden->push_back( sensorID );
+		       p_row->push_back( apixPixel.getYCoord() );
+		       p_col->push_back( apixPixel.getXCoord() );
+		       p_tot->push_back( static_cast< int >(apixPixel.getSignal()) );
+		       p_lv1->push_back( static_cast< int >(apixPixel.getTime()) );
+		     }
+		   
+		  }
+		else if( type == kEUTelMuPixel )
+		  {
+		    sparseData =  std::unique_ptr<EUTelTrackerDataInterfacer>( new EUTelTrackerDataInterfacerImpl<EUTelMuPixel>(zsData) );
+		    EUTelMuPixel binaryPixel;
+		    
+		    for( unsigned int iHit = 0; iHit < sparseData->size(); iHit++ ) 
+		     {
+		       sparseData->getSparsePixelAt( iHit, &binaryPixel);
+		       _nPixHits++;
+		       p_iden->push_back( sensorID );
+		       p_row->push_back( binaryPixel.getYCoord() );
+		       p_col->push_back( binaryPixel.getXCoord() );
+		       p_hitTime->push_back( binaryPixel.getHitTime() );
+		       p_frameTime->push_back( binaryPixel.getFrameTime() );
+		     }
+		  }
 		else
-		{
-			//PANIC
-		}
-  	}
+		  {
+		    throw UnknownDataTypeException("Unknown sparsified pixel");
+		  }
+	}
   	return true;
 }
 
@@ -344,6 +362,8 @@ void EUTelAPIXTbTrackTuple::clear()
 	p_tot->clear();
 	p_iden->clear();
 	p_lv1->clear();
+	p_hitTime->clear();
+	p_frameTime->clear();
 	_nPixHits = 0;
 	/* Clear hittrack */
 	_xPos->clear();
@@ -379,6 +399,8 @@ void EUTelAPIXTbTrackTuple::prepareTree()
 	p_tot = new std::vector<int>();
 	p_iden = new std::vector<int>();
 	p_lv1 = new std::vector<int>();
+	p_hitTime = new std::vector<int>();
+	p_frameTime = new std::vector<double>();
 
 	_hitXPos = new std::vector<double>();
 	_hitYPos = new std::vector<double>();
@@ -407,6 +429,8 @@ void EUTelAPIXTbTrackTuple::prepareTree()
 	_zstree->Branch("tot",      &p_tot);
 	_zstree->Branch("lv1",      &p_lv1);
 	_zstree->Branch("iden",     &p_iden);
+	_zstree->Branch("hitTime",  &p_hitTime);
+	_zstree->Branch("frameTime",&p_frameTime);
 
 	//Tree for storing all track param info
 	_eutracks = new TTree("tracks", "tracks");

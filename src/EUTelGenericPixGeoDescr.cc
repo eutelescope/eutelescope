@@ -6,7 +6,7 @@ using namespace geo;
 
 
 EUTelGenericPixGeoDescr::EUTelGenericPixGeoDescr(double sizeX, double sizeY, double sizeZ, int minX, int maxX, int minY, int maxY, double radLen): 
-				_tGeoManager( gGeometry()._geoManager ),
+				_tGeoManager( gGeometry()._geoManager.get() ),
 				_sizeSensitiveAreaX(sizeX),
 				_sizeSensitiveAreaY(sizeY),
 				_sizeSensitiveAreaZ(sizeZ),

@@ -24,7 +24,7 @@ namespace eutelescope {
     _noiseSetSwitch(false)
   {
 
-    std::auto_ptr<PixelType> pixel( new PixelType);
+    auto pixel = std::make_unique<PixelType>();
     _nElement       = pixel->getNoOfElements();
     _type           = pixel->getSparsePixelType();
     _noiseValues.clear();
