@@ -160,11 +160,6 @@ namespace alibava {
 		// Then calls processCluster for each cluster
 		std::vector<AlibavaCluster> findClusters(TrackerDataImpl * trkdata);
 
-		// to calculate Eta
-		float calculateEta(TrackerDataImpl * trkdata, int seedChan);
-		float calculateEtaAroundSeed(TrackerDataImpl * trkdata, int seedChan);
-		
-	//	void convertAlibavaCluster(AlibavaCluster alibavaCluster, LCCollectionVec * clusterColVec, LCCollectionVec * sparseClusterColVec);
 		
 		/////////////////////
 		// Histogram Names //

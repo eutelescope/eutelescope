@@ -314,7 +314,7 @@ void AlibavaPedestalNoiseProcessor::bookHistos(){
 			tempHistoName = getChanDataHistoName(ichip,ichan);
 			tempFitName = getChanDataFitName(ichip,ichan);
 			stringstream tempHistoTitle;
-			tempHistoTitle<<tempHistoName<<";ADCs;NumberofEntries";
+			tempHistoTitle<<tempHistoName<<";ADCs;Number of Entries";
 			
 			TH1D * chanDataHisto =
 			new TH1D (tempHistoName.c_str(),"",1000,0,1000);

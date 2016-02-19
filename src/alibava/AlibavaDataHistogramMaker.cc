@@ -411,7 +411,15 @@ void AlibavaDataHistogramMaker::bookEventHisto(int eventnum){
 		TH1D * eventHisto = new TH1D (getEventHistoName(eventnum,ichip).c_str(),"",ALIBAVA::NOOFCHANNELS, -0.5, ALIBAVA::NOOFCHANNELS-0.5);
 		
 		stringstream sp; //title string for histogram
-		sp<< "Event "<< eventnum <<" (chip "<<ichip<<");Channel Number;Signal (ADCs)";
+		if (_multiplySignalby != 1.0){
+			string signalMultipliedby;
+			signalMultipliedby = to_string(_multiplySignalby);
+			signalMultipliedby = string(" (")+signalMultipliedby+string(") ");
+			sp<< "Event "<< eventnum <<" (chip "<<ichip<<");Channel Number;"<<signalMultipliedby<<"Signal (ADCs)";
+		}
+		else{
+			sp<< "Event "<< eventnum <<" (chip "<<ichip<<");Channel Number;Signal (ADCs)";
+		}
 		eventHisto->SetTitle((sp.str()).c_str());
 		
 		_rootObjectMap.insert(make_pair(getEventHistoName(eventnum,ichip), eventHisto));

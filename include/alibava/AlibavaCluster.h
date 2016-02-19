@@ -20,17 +20,15 @@
 
 namespace alibava
 {
-    
+   const float _unrealisticSignal = -1000000;
     class AlibavaCluster {
         std::vector<int> _channums;
         std::vector<float> _signals;
-        float _eta;
         int _chipNum;
         int _seedChanNum;
         int _clusterID;
         bool _isSensitiveAxisX;
         double _signalPolarity;
-        
     public:
         AlibavaCluster();
         AlibavaCluster(lcio::TrackerDataImpl* trkdata);
@@ -46,7 +44,8 @@ namespace alibava
         int getClusterSize();
         bool has_seed();
         void print();
-        
+       
+	float getSignalOnChannel(int channelnum); 
         float getCenterOfGravity();
         
         void createTrackerData(lcio::TrackerDataImpl * alibavaCluster);
@@ -55,13 +54,12 @@ namespace alibava
         std::vector<float> getSignals();
         
         
+        float getEta();
+
         ///////////////////////
         // Setters - Getters //
         ///////////////////////
         
-        // setter / getter for _eta
-        float getEta();
-        void setEta(float eta);
         
         // setter / getter for _chipNum
         int getChipNum();

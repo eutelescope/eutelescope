@@ -28,7 +28,6 @@ using namespace alibava;
 AlibavaCluster::AlibavaCluster() :
 _channums(),
 _signals(),
-_eta(-1),
 _chipNum(-1),
 _seedChanNum(-1),
 _clusterID(-1),
@@ -41,7 +40,6 @@ _signalPolarity(-1.0)
 AlibavaCluster::AlibavaCluster(TrackerDataImpl* trkdata) :
 _channums(),
 _signals(),
-_eta(-1),
 _chipNum(-1),
 _seedChanNum(-1),
 _clusterID(-1),
@@ -69,12 +67,11 @@ _signalPolarity(-1.0)
     // first number is eta,
     // then it goes like channel number, signal // see createTrackerData
     // So data size has to be odd! (because of eta)
-    if (data.size() % 2 != 1)
+    if (data.size() % 2 != 0)
         streamlog_out (ERROR5) << "Size in TrackerData that stores cluster information is not even! Either channel number or signal information is missing!"<< endl;
     
-    // first number is eta, others are channel number and corresponding signal
-    setEta(data.at(0));
-    for (unsigned int imember=1; imember<data.size(); imember++) {
+    // numbers are channel number and corresponding signal
+    for (unsigned int imember=0; imember<data.size(); imember++) {
         _channums.push_back( int(data[imember]) );
         imember++;
         _signals.push_back( data[imember] );
@@ -93,8 +90,6 @@ void AlibavaCluster::createTrackerData(lcio::TrackerDataImpl * alibavaCluster){
     // first number we put is channel number then signal
     FloatVec dataToStore;
     
-    // first store eta
-    dataToStore.push_back(getEta());
     // then channel number and signal for each member
     for (int imember=0; imember<getClusterSize(); imember++) {
         dataToStore.push_back( float(getChanNum(imember)) );
@@ -105,14 +100,58 @@ void AlibavaCluster::createTrackerData(lcio::TrackerDataImpl * alibavaCluster){
     // Cell ID encoding will done in the main processor
     
 }
+float AlibavaCluster::getSignalOnChannel(int channelnum){
+	for (int imember=0; imember<getClusterSize(); imember++ ){
+		if(getChanNum(imember)==channelnum) return getSignal(imember);
+	}
+	
+	// if reaches here, this means that the channel number is not in the cluster
+	return _unrealisticSignal;
+}
 
 float AlibavaCluster::getEta(){
-    return _eta;
+	 
+	if (getClusterSize() == 1) return -1;	
+
+	int seedChan = getSeedChanNum();
+	int leftChan = seedChan - 1;
+	int rightChan = seedChan+1;
+	
+	// we will multiply all signal values by _signalPolarity to work on positive signal always
+	float seedSignal = _signalPolarity * getSignalOnChannel(seedChan);
+	float leftSignal = getSignalOnChannel(leftChan);
+	float rightSignal = getSignalOnChannel(rightChan);
+	
+	if (leftSignal != _unrealisticSignal) leftSignal = _signalPolarity * leftSignal;
+	if (rightSignal!= _unrealisticSignal) rightSignal= _signalPolarity * rightSignal;
+
+	// if both right anf left channel is masked. Simply return -1
+	// this case should not be saved by clustering algorithm anyways
+	if (rightSignal == _unrealisticSignal && leftSignal == _unrealisticSignal ) {
+		streamlog_out (WARNING3) << "Both neighbours are masked!"<<endl;
+		return -1;
+	}
+	
+	float eta = -1;
+	// compare left and right signals
+	// here both signal has to be positive (if not noise)
+	// if one of the channel is masked, since it will be set to unrealisticSignal other signal will always be higher then the masked one.
+
+	// Eta calculation: chargeOnLeftChannel / (chargeOnLeftChannel + chargeOnRightChannel)
+	if ( leftSignal > rightSignal) {
+		// then seed channel is on the right
+		eta = leftSignal / ( leftSignal + seedSignal );
+	}
+	else {
+		// seed channel is on the left
+		eta = seedSignal / (seedSignal + rightSignal);
+	}
+		
+	return eta;
+	
 }
 
-void AlibavaCluster::setEta(float eta){
-    _eta = eta;
-}
+
 
 float AlibavaCluster::getCenterOfGravity(){
     if (getClusterSize()==1)
@@ -257,21 +296,21 @@ void AlibavaCluster::setSignalPolarity(double signalPolarity){
 }
 
 void AlibavaCluster::print(){
-    streamlog_out(MESSAGE1)<<"************ Cluster ************"<<endl;
-    streamlog_out(MESSAGE1)<<"ClusterID: "<< getClusterID()<< " ChipNum: "<<getChipNum()<<endl;
+    streamlog_out(MESSAGE5)<<"************ Cluster ************"<<endl;
+    streamlog_out(MESSAGE5)<<"ClusterID: "<< getClusterID()<< " ChipNum: "<<getChipNum()<<endl;
     
     string axis;
     if (getIsSensitiveAxisX()) axis = string("X");
     else axis = string("Y");
-    streamlog_out(MESSAGE1)<<"SensitiveAxis: "<< axis << " SignalPolarity: "<<getSignalPolarity()<<endl;
+    streamlog_out(MESSAGE5)<<"SensitiveAxis: "<< axis << " SignalPolarity: "<<getSignalPolarity()<<endl;
     
-    streamlog_out(MESSAGE1)<<"SeedChannel: "<< getSeedChanNum() << " ClusterSize: "<<getClusterSize()<< " Eta: " <<getEta() <<endl;
-    streamlog_out(MESSAGE1)<<"ClusterMembers: channelNum, signal";
-    streamlog_out(MESSAGE1)<<"           ";
+    streamlog_out(MESSAGE5)<<"SeedChannel: "<< getSeedChanNum() << " ClusterSize: "<<getClusterSize()<< " Eta: " <<getEta() <<endl;
+    streamlog_out(MESSAGE5)<<"ClusterMembers: channelNum, signal";
+    streamlog_out(MESSAGE5)<<"           ";
     for (int imember=0; imember<getClusterSize(); imember++)
-        streamlog_out(MESSAGE1)<<getChanNum(imember)<<", "<<getSignal(imember)<< ", ";
-    streamlog_out(MESSAGE1)<<endl;
-    streamlog_out(MESSAGE1)<<"***********************************"<<endl;
+        streamlog_out(MESSAGE5)<<getChanNum(imember)<<", "<<getSignal(imember)<< ", ";
+    streamlog_out(MESSAGE5)<<endl;
+    streamlog_out(MESSAGE5)<<"***********************************"<<endl;
     
     
     

@@ -44,6 +44,10 @@ class TelEvent(object):
     self.__traj = []
     ## valid event
     self.__valid = False
+    ## momentum
+    self.__Pseg = []
+    self.__Pgbl = []
+
 
   ## Read event from file.
   #
@@ -179,8 +183,14 @@ class TelEvent(object):
           locPos = (locPos[0] + locCorr[3], locPos[1] + locCorr[4])
           #print " analyze %i %i %i %i %.4f %.4f %.4f %.4f %.4g %.4g" % (self.__runNumber, self.__eventNumber, h.getIndex(), p, locMeas[0], locMeas[1], locPos[0], locPos[1], locSlope[0], locSlope[1])
           #print "   channelVec ", h.getCluster()
+          if self.__bField[0] == 0 and self.__bField[1] == 0 and self.__bField[2] == 0: 
+            pseg = 0 
+            pgbl = 0
+          else:
+            pseg = self.__Pseg[it] 
+            pgbl = self.__Pgbl[it] 
           if rootTree is not None:
-            rootTree.fill(self.__runNumber, self.__eventNumber, h.getIndex(), p, locPos, locSlope, h.getCluster())
+            rootTree.fill(self.__runNumber, self.__eventNumber, pseg, pgbl, h.getIndex(), p, locPos, locSlope, h.getCluster())
 
   ## Analyze event.
   #
@@ -231,8 +241,11 @@ class TelEvent(object):
       # correction from GBL fit
       locCorr = self.__traj[it].getResults(1)[0]
       dqbyp = locCorr[0]
-      print " q/p ", it, qbyp, dqbyp
+      #print " q/p ", it, qbyp, dqbyp
+      self.__Pseg.append(1. / qbyp)
+      self.__Pgbl.append(1. / (qbyp + dqbyp))
+
       if hists is not None:
-          hists.addEntry("Pseg", 1. / qbyp)
-          hists.addEntry("Pgbl", 1. / (qbyp + dqbyp))
+          hists.addEntry("Pseg", self.__Pseg[it])
+          hists.addEntry("Pgbl", self.__Pgbl[it])
   

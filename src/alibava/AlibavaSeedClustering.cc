@@ -411,110 +411,13 @@ vector<AlibavaCluster> AlibavaSeedClustering::findClusters(TrackerDataImpl * trk
 		// now if there is no neighbour not bonded
 		if(thereIsNonBondedChan == false){
 			// fill the histograms and add them to the cluster vector
-            if (acluster.getClusterSize()>1) {
-                acluster.setEta( calculateEta(trkdata,seedChan) );
-            }else {
-                acluster.setEta(-1);
-            }
-            
-            fillHistos(acluster);
-            
-            clusterVector.push_back(acluster);
+           	 	fillHistos(acluster);
+            		clusterVector.push_back(acluster);
 		}
 		
 	}
 	return clusterVector;
 }
-float AlibavaSeedClustering::calculateEtaAroundSeed(TrackerDataImpl *trkdata, int seedChan){
-	
-	// first get chip number
-	int chipnum = getChipNum(trkdata);
-	// then get the data vector
-	FloatVec dataVec;
-	dataVec = trkdata->getChargeValues();
-
-	// we will multiply all signal values by _signalPolarity to work on positive signal always
-	int leftChan = seedChan-1;
-	int rightChan = seedChan+1;
-	float leftSignal=0;
-	float rightSignal=0;
-	if(leftChan >= 0 && isMasked(chipnum,leftChan)==false ){
-		leftSignal = _signalPolarity * dataVec.at(leftChan);
-	} else {
-		leftSignal=0;
-	}
-
-	if ( rightChan < int( dataVec.size() ) && isMasked(chipnum, rightChan) == false ) {
-		rightSignal = _signalPolarity * dataVec.at(rightChan);
-	}else{
-		rightSignal=0;
-	}
- 	//if (leftSignal<0) leftSignal=0;
- 	//if (rightSignal<0) rightSignal=0;
-	
-	float eta = leftSignal/ (leftSignal+rightSignal);	
-	return eta;
-	
-}
-
-
-float AlibavaSeedClustering::calculateEta(TrackerDataImpl *trkdata, int seedChan){
-	
-	// first get chip number
-	int chipnum = getChipNum(trkdata);
-	// then get the data vector
-	FloatVec dataVec;
-	dataVec = trkdata->getChargeValues();
-
-	// we will multiply all signal values by _signalPolarity to work on positive signal always
-	float seedSignal = _signalPolarity * dataVec.at(seedChan);
-
-	// now we make an unrealistic signal
-	float unrealisticSignal = -10000; // you cannot get this signal from alibava
-	
-	int leftChan = seedChan - 1;
-	float leftSignal = unrealisticSignal;
-	// check if the channel on the left is masked
-	if ( leftChan >= 0 && isMasked(chipnum,leftChan)==false ) {
-		leftSignal = _signalPolarity * dataVec.at(leftChan);
-	}
-	
-	int rightChan = seedChan+1;
-	float rightSignal = unrealisticSignal;
-	// check if the channel on the right is masked
-	if ( rightChan < int( dataVec.size() ) && isMasked(chipnum, rightChan) == false ) {
-		rightSignal = _signalPolarity * dataVec.at(rightChan);
-	}
-	
-	// now compare right and left channel to see which one is higher
-
-	// if both right anf left channel is masked. Simply return -1
-	// this case should not be saved by clustering algorithm anyways
-	if (rightSignal == unrealisticSignal && leftSignal == unrealisticSignal ) {
-		streamlog_out (DEBUG1) << "Both neighbours are masked!"<<endl;
-		return -1;
-	}
-	
-	float eta = -1;
-	// compare left and right signals
-	// here both signal has to be positive (if not noise)
-	// if one of the channel is masked, since it will be set to unrealisticSignal other signal will always be higher then the masked one.
-
-	if ( leftSignal > rightSignal) {
-		// then seed channel is on the right
-		eta = leftSignal / ( leftSignal + seedSignal );
-	}
-	else {
-		// seed channel is on the left
-		eta = seedSignal / (seedSignal + rightSignal);
-	}
-	
-	// Eta calculation: chargeOnLeftChannel / (chargeOnLeftChannel + chargeOnRightChannel)
-
-	return eta;
-	
-}
-
 
 void AlibavaSeedClustering::check (LCEvent * /* evt */ ) {
 	// nothing to check here - could be used to fill check plots in reconstruction processor
@@ -556,14 +459,14 @@ void AlibavaSeedClustering::bookHistos(){
 		// Clustersize histogram
 		histoName = getHistoNameForChip(_clusterSizeHistoName,ichip);
 		TH1D * hClusterSize = new TH1D (histoName.c_str(),"",10, 0, 10);
-		title = string("Cluster Size (chip ") +to_string(ichip)+string(");Number of Entries;Cluster Size");
+		title = string("Cluster Size (chip ") +to_string(ichip)+string(");Cluster Size;Number of Entries");
 		hClusterSize->SetTitle(title.c_str());
 		_rootObjectMap.insert(make_pair(histoName, hClusterSize));
 		
 		// Eta histogram ClusterSize > 1
 		histoName = getHistoNameForChip(_etaHistoName,ichip);
 		TH1D * hEta = new TH1D (histoName.c_str(),"",100, -0.1, 1.1);
-		title = string("Eta distribution ClusterSize > 1 (chip ") +to_string(ichip)+string(");Number of Entries;Eta");
+		title = string("Eta distribution ClusterSize > 1 (chip ") +to_string(ichip)+string(");Eta;Number of Entries");
 		hEta->SetTitle(title.c_str());
 		_rootObjectMap.insert(make_pair(histoName, hEta));
 		

@@ -23,7 +23,7 @@ class TelTree(object):
   # @param[in] fileName        ROOT file name
   # @param[in] maxClusterSize  maximal cluster size
   #
-  def __init__(self, fileName, maxClusterSize=10):
+  def __init__(self, fileName, maxClusterSize=20):
     ## max cluster Size
     self.__maxSize = maxClusterSize
     ## TFile
@@ -34,6 +34,10 @@ class TelTree(object):
     self.__run = array('i', [ 0 ])
     ## array for event number
     self.__evt = array('i', [ 0 ])
+    ## array for Pseg 
+    self.__Pseg = array('f', [ 0 ])
+    ## array for Pgbl
+    self.__Pgbl = array('f', [ 0 ])
     ## array for hit number
     self.__hit = array('i', [ 0 ])
     ## array for dut id number
@@ -57,6 +61,8 @@ class TelTree(object):
     # add branches
     self.__tTree.Branch('runnum', self.__run, 'runum/I')
     self.__tTree.Branch('evtnum', self.__evt, 'evtnum/I')
+    self.__tTree.Branch('Pseg', self.__Pseg, 'Pseg/F')
+    self.__tTree.Branch('Pgbl', self.__Pgbl, 'Pgbl/F')
     self.__tTree.Branch('hitnum', self.__hit, 'hitnum/I')
     self.__tTree.Branch('dutID', self.__dutID, 'dutID/I')
     self.__tTree.Branch('locxpos', self.__locXpos, 'locxpos/F')
@@ -77,10 +83,12 @@ class TelTree(object):
   # @param[in] locSlope local slope
   # @param[in] cluster  cluster information
   #
-  def fill(self, run , evt, hit, dutID, locPos, locSlope, cluster):
+  def fill(self, run , evt, pseg, pgbl, hit, dutID, locPos, locSlope, cluster):
     # fill arrays
     self.__run[0] = run
     self.__evt[0] = evt
+    self.__Pseg[0] = pseg
+    self.__Pgbl[0] = pgbl
     self.__hit[0] = hit
     self.__dutID[0] = dutID
     self.__locXpos[0] = locPos[0]

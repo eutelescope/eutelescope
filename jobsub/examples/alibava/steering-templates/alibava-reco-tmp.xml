@@ -152,7 +152,7 @@
         <!--The default sensitive axis of the strip sensor(s) according to telescope is X. If sensitive axis is Y then set this parameter to zero (0). Any other value will be disregarded and sensitive axis will assumed to be "X" -->
         <parameter name="IsSensitiveAxisX" type="int"> @IsSensitiveAxisX@ </parameter>
         <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-        <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+        <parameter name="Verbosity" type="string"> @Verbosity@ </parameter>
     </processor>
     
     

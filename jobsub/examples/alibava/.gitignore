@@ -1,0 +1,7 @@
+# Ignore everything in this directory
+ForHara/
+pdfs/
+
+# Except this file
+!.gitignore
+
