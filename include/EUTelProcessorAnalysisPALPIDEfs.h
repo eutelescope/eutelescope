@@ -222,13 +222,10 @@ private:
   TH1I* nClusterPerEventHisto;
   TH1I* nAssociatedhitsHisto;
   TH1I* nAssociatedtracksHisto;
-  std::vector< std::vector< std::vector<double> > > *posFake;
-  std::vector< std::vector< std::vector<double> > > *posFit;
-  std::vector< std::vector<double> > *posFakeEvent;
-  std::vector< std::vector<double> > *pT;
-  std::vector< std::vector<double> > *pH; 
+  std::vector< std::vector< std::vector<double> > > posFake;
+  std::vector< std::vector< std::vector<double> > > posFit;
   std::vector< std::vector<double> > posFakeTemp;
-  std::vector< int > *nHitsPerEvent; 
+  std::vector< int > nHitsPerEvent; 
 };
 
 #endif

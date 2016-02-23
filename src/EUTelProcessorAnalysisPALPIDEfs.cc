@@ -230,9 +230,6 @@ void EUTelProcessorAnalysisPALPIDEfs::init() {
     newFile = true;
   settingsFile.open (_outputSettingsFileName.c_str(), ios::out | ios::app );
     if (newFile) settingsFile << "Run number;Energy;Chip ID;Irradiation level(0-nonIrradiated,1-2.5e12,2-1e13,3-700krad,4-combined:1e13+700krad);Rate;BB;Ithr;Idb;Vcasn;Vaux;Vcasp;Vreset;Threshold and their RMS for all four sectors;Noise and their RMS for all four sectors;Readout delay;Trigger delay;Strobe length;StrobeB length;Data (1) or noise (0);Number of events;Efficiency,Number of tracks,Number of tracks with associated hit for all sectors" << endl;
-  if(_showFake) posFake = new std::vector< std::vector< std::vector<double> > >;
-  posFit = new std::vector< std::vector< std::vector<double> > >;
-  nHitsPerEvent = new std::vector < int >;
 }
 
 void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
@@ -265,10 +262,9 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
       std::unique_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>> sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(hotData);
       for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
       {
-        EUTelGenericSparsePixel *sparsePixel =  new EUTelGenericSparsePixel() ;
-        sparseData->getSparsePixelAt( iPixel, sparsePixel );
+        auto sparsePixel = std::make_unique<EUTelGenericSparsePixel>();
+        sparseData->getSparsePixelAt( iPixel, sparsePixel.get() );
         hotpixelHisto->Fill(sparsePixel->getXCoord()*xPitch+xPitch/2.,sparsePixel->getYCoord()*yPitch+yPitch/2.);
-        delete sparsePixel;
       }
     }
     ifstream noiseMaskFile(_noiseMaskFileName.c_str());
@@ -303,10 +299,9 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
       std::unique_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>> sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(deadColumn);
       for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
       {
-        EUTelGenericSparsePixel *sparsePixel =  new EUTelGenericSparsePixel() ;
-        sparseData->getSparsePixelAt( iPixel, sparsePixel );
+        auto sparsePixel = std::make_unique<EUTelGenericSparsePixel>();
+        sparseData->getSparsePixelAt( iPixel, sparsePixel.get() );
         deadColumnHisto->Fill(sparsePixel->getXCoord()*xPitch+xPitch/2.,sparsePixel->getYCoord()*yPitch+yPitch/2.);
-        delete sparsePixel;
       }
     }
     settingsFile << evt->getRunNumber() << ";" << _energy << ";" << _chipID[layerIndex] << ";" << _irradiation[layerIndex] << ";" << _rate << ";" << evt->getParameters().getFloatVal("BackBiasVoltage") << ";" << evt->getParameters().getIntVal(Form("Ithr_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Idb_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Vcasn_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Vaux_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Vcasp_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Vreset_%d",layerIndex)) << ";";
@@ -398,12 +393,12 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
   if (fitHitAvailable)  nFitHit = colFit->getNumberOfElements();
   bool hitmapFilled = false;
   vector<int> clusterAssosiatedToTrack;
-  pT = new std::vector< std::vector<double> >;
-  pH = new std::vector< std::vector<double> >;
+  std::vector< std::vector<double> > pT;
+  std::vector< std::vector<double> > pH;
 
   if(_showFake)
   {
-    posFakeEvent = new std::vector< std::vector<double> >;  
+    std::vector< std::vector<double> > posFakeEvent;
     int nHit = col->getNumberOfElements();
     for(int ihit=0; ihit< nHit; ihit++)
     {
@@ -415,15 +410,14 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
         posFakeHit.push_back(pos[0]);
         posFakeHit.push_back(pos[1]);
         posFakeHit.push_back(pos[2]);
-        posFakeEvent->push_back(posFakeHit);
+        posFakeEvent.push_back(posFakeHit);
       }      
     }
-    posFake->insert(posFake->begin(),*posFakeEvent);          
-    delete posFakeEvent;
-    if(posFake->size() > (unsigned)_nEventsFake)
+    posFake.insert(posFake.begin(),posFakeEvent); 
+    if(posFake.size() > (unsigned)_nEventsFake)
     {
-      posFakeTemp = posFake->back();
-      posFake->pop_back();
+      posFakeTemp = posFake.back();
+      posFake.pop_back();
     }
   }
   
@@ -474,15 +468,13 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
           bool hotpixel = false;
           for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
           {
-            EUTelGenericSparsePixel *sparsePixel =  new EUTelGenericSparsePixel() ;
-            sparseData->getSparsePixelAt( iPixel, sparsePixel );
+            auto sparsePixel = std::make_unique<EUTelGenericSparsePixel>();
+            sparseData->getSparsePixelAt( iPixel, sparsePixel.get() );
             if (abs(xposfit-(sparsePixel->getXCoord()*xPitch+xPitch/2.)) < limit && abs(yposfit-(sparsePixel->getYCoord()*yPitch+yPitch/2.)) < limit)
             {
               hotpixel = true;
-              delete sparsePixel;
               break;
             }
-            delete sparsePixel;
           }
           if (hotpixel) continue;
         }
@@ -505,15 +497,13 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
           bool dead = false;
           for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
           {
-            EUTelGenericSparsePixel *sparsePixel =  new EUTelGenericSparsePixel() ;
-            sparseData->getSparsePixelAt( iPixel, sparsePixel );
+            auto sparsePixel = std::make_unique<EUTelGenericSparsePixel>();
+            sparseData->getSparsePixelAt( iPixel, sparsePixel.get() );
             if (abs(xposfit-(sparsePixel->getXCoord()*xPitch+xPitch/2.)) < limit)
             {
               dead = true;
-              delete sparsePixel;
               break;
             }
-            delete sparsePixel;
           }
           if (dead) continue;
 
@@ -534,7 +524,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
         std::vector<double> posFitHit;
         posFitHit.push_back(xposfit);
         posFitHit.push_back(yposfit);
-        pT->push_back(posFitHit); 
+        pT.push_back(posFitHit); 
 
         for(int ihit=0; ihit< nHit ; ihit++)
         {
@@ -606,7 +596,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
                 std::vector<double> posHitHit;
                 posHitHit.push_back(xpos);
                 posHitHit.push_back(ypos);
-                pH->push_back(posHitHit); 
+                pH.push_back(posHitHit); 
               }
 
               if (abs(xpos-xposfit) < limit && abs(ypos-yposfit) < limit )
@@ -683,10 +673,10 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
                       {
                         vector<vector<int> > pixVector;
                         std::unique_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>> sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(zsData);
-                        EUTelGenericSparsePixel* pixel = new EUTelGenericSparsePixel;
+                        auto pixel = std::make_unique<EUTelGenericSparsePixel>();
                         for(unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
                         {
-                          sparseData->getSparsePixelAt( iPixel, pixel );
+                          sparseData->getSparsePixelAt( iPixel, pixel.get() );
                           X[iPixel] = pixel->getXCoord();
                           Y[iPixel] = pixel->getYCoord();
                           vector<int> pix;
@@ -694,7 +684,6 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
                           pix.push_back(Y[iPixel]);
                           pixVector.push_back(pix);
                         }
-                        delete pixel;
                         cluster.set_values(clusterSize,X,Y);
                         clusterSizeHisto[index]->Fill(clusterSize);
                         int xMin = *min_element(X.begin(), X.end());
@@ -805,11 +794,11 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
         }
         
         firstTrack = false;
-        nHitsPerEvent->push_back(nPAlpideHits);
+        nHitsPerEvent.push_back(nPAlpideHits);
            
         if(_showFake)
         {
-          if(posFake->size() >= (unsigned)_nEventsFake)
+          if(posFake.size() >= (unsigned)_nEventsFake)
           {
             int nHitFake = posFakeTemp.size();
 	    int nPlanesWithMoreHitsFake = 0;
@@ -950,14 +939,14 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
         if(_showFake)
         {
           if (unfoundTrackFake) {break;}
-          else if(posFake->size() >= (unsigned)_nEventsFake) nTracksFake[index]++;
+          else if(posFake.size() >= (unsigned)_nEventsFake) nTracksFake[index]++;
         }
       } 
     }
     else continue;
   }
   
-  posFit->push_back(*pT);
+  posFit.push_back(pT);
     
   _nEvents++;
   if (fitHitAvailable) _nEventsWithTrack++;
@@ -989,17 +978,16 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
             vector<int> X(clusterSize);
             vector<int> Y(clusterSize);
             auto sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(zsData);
-            EUTelGenericSparsePixel* pixel = new EUTelGenericSparsePixel;
+            auto pixel = std::make_unique<EUTelGenericSparsePixel>();
             for(unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
             {
-              sparseData->getSparsePixelAt( iPixel, pixel );
+              sparseData->getSparsePixelAt( iPixel, pixel.get() );
               X[iPixel] = pixel->getXCoord();
               Y[iPixel] = pixel->getYCoord();
               if (!fitHitAvailable) nFakeWithoutTrackHitmapHisto->Fill(X[iPixel],Y[iPixel]);
               else nFakeWithTrackHitmapHisto->Fill(X[iPixel],Y[iPixel]);
               nFakeHitmapHisto->Fill(X[iPixel],Y[iPixel]);
             }
-            delete pixel;
             cluster.set_values(clusterSize,X,Y);
             float xCenter, yCenter;
             cluster.getCenterOfGravity(xCenter,yCenter);         
@@ -1040,14 +1028,13 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
           vector<int> Y(clusterSize);
           vector<vector<int> > pixVector;
           auto sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(zsData);
-          EUTelGenericSparsePixel* pixel = new EUTelGenericSparsePixel;
+          auto pixel = std::make_unique<EUTelGenericSparsePixel>();
           for(unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
           {
-            sparseData->getSparsePixelAt( iPixel, pixel );
+            sparseData->getSparsePixelAt( iPixel, pixel.get() );
             X[iPixel] = pixel->getXCoord();
             Y[iPixel] = pixel->getYCoord();
           }
-          delete pixel;
           cluster.set_values(clusterSize,X,Y);
           float xCenter, yCenter;
           cluster.getCenterOfGravity(xCenter,yCenter);
@@ -1097,10 +1084,10 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
   nClusterPerEventHisto->Fill(nClusterPerEvent);
   if (_realAssociation)  // Different version of track to hit association written by Martijn Dietze. It maximizes the number of association while doesn't allow hits to be shared between tracks.
   { 
-    int nH = pH->size();
-    int nT = pT->size(); 
-    int *aH = new int[nH]; 
-    int *aT = new int[nT]; 
+    int nH = pH.size();
+    int nT = pT.size(); 
+    std::vector<int> aH(nH); 
+    std::vector<int> aT(nT); 
     for(int i=0; i<nH; i++) aH[i] = -1;
     for(int i=0; i<nT; i++) aT[i] = -1;
     int temp;
@@ -1117,7 +1104,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
           {
             if(aH[iH] == -1)
             {
-              if(abs(pH->at(iH).at(0)-pT->at(iT).at(0))<limit && abs(pH->at(iH).at(1)-pT->at(iT).at(1))<limit)
+              if(abs(pH.at(iH).at(0)-pT.at(iT).at(0))<limit && abs(pH.at(iH).at(1)-pT.at(iT).at(1))<limit)
               {
                 associations++;
                 temp = iH;
@@ -1137,8 +1124,8 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
         }
       }
     } 
-    int* aTFinal = new int[nT]; 
-    int* aHFinal = new int[nH]; 
+    std::vector<int> aTFinal(nT); 
+    std::vector<int> aHFinal(nH); 
     std::vector<int> order;   
     for(int iT=0; iT<nT; iT++)
     {
@@ -1153,8 +1140,8 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
       {
         double totaldistance = 0;
         unsigned int associations = 0;
-        int* aTTemp = new int[nT]; 
-        int* aHTemp = new int[nH];   
+        std::vector<int> aTTemp(nT); 
+        std::vector<int> aHTemp(nH);   
         for(int iT=0; iT<nT; iT++) aTTemp[iT] = aT[iT];
         for(int iH=0; iH<nH; iH++) aHTemp[iH] = aH[iH];
         bool run2 = true;
@@ -1167,9 +1154,9 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
           {
             if(aHTemp[iH]== -1)
             {
-              if(abs(pH->at(iH).at(0)-pT->at(iT).at(0))<limit && abs(pH->at(iH).at(1)-pT->at(iT).at(1))<limit)
+              if(abs(pH.at(iH).at(0)-pT.at(iT).at(0))<limit && abs(pH.at(iH).at(1)-pT.at(iT).at(1))<limit)
               {
-                double dist = sqrt(pow(abs(pH->at(iH).at(0)-pT->at(iT).at(0)),2)+pow(abs(pH->at(iH).at(1)-pT->at(iT).at(1)),2));
+                double dist = sqrt(pow(abs(pH.at(iH).at(0)-pT.at(iT).at(0)),2)+pow(abs(pH.at(iH).at(1)-pT.at(iT).at(1)),2));
                 if(dist<min)
                 {
                   min=dist;
@@ -1200,8 +1187,6 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
             minDistance = totaldistance;
           }
         }
-        delete aTTemp;
-        delete aHTemp;         
       } while ( std::next_permutation(order.begin(),order.end()) && run1 );
     }
     else
@@ -1214,7 +1199,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
       int index = -1;
       for (int iSector=0; iSector<4; iSector++)
       {
-        if (pT->at(iT).at(0)>xSize/4.*iSector+(iSector==0?0:1)*(2.*xPitch+limit) && pT->at(iT).at(0)<xSize/4.*(iSector+1)-(iSector==3?0:1)*(2.*xPitch+limit))
+        if (pT.at(iT).at(0)>xSize/4.*iSector+(iSector==0?0:1)*(2.*xPitch+limit) && pT.at(iT).at(0)<xSize/4.*(iSector+1)-(iSector==3?0:1)*(2.*xPitch+limit))
         {
           index = iSector;
           break;
@@ -1224,13 +1209,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
       if(aTFinal[iT] >= 0) nTracksPAlpideAssociation[index]++;
       nTracksAssociation[index]++;
     }    
-    delete aH;
-    delete aT;
-    delete aHFinal;
-    delete aTFinal;    
   }
-  delete pH;        
-  delete pT;
 }
 
 #ifdef MARLIN_USE_AIDA
@@ -1368,18 +1347,18 @@ void EUTelProcessorAnalysisPALPIDEfs::end()
 {
 #ifdef MARLIN_USE_AIDA
   AIDAProcessor::tree(this)->cd("Analysis");
-  nHitsPerEventHistoTime = new TH1I("nHitsPerEventHistoTime","The amount of hits as a function of time",nHitsPerEvent->size(),0,nHitsPerEvent->size());
+  nHitsPerEventHistoTime = new TH1I("nHitsPerEventHistoTime","The amount of hits as a function of time",nHitsPerEvent.size(),0,nHitsPerEvent.size());
   nHitsPerEventHisto = new TH1I("nHitsPerEventHisto","The amount of hits as a function of events",200,0,200);
-  for(unsigned int i=0; i < nHitsPerEvent->size(); i++) {
-    nHitsPerEventHistoTime->SetBinContent(i,nHitsPerEvent->at(i));
-    nHitsPerEventHisto->Fill(nHitsPerEvent->at(i));
+  for(unsigned int i=0; i < nHitsPerEvent.size(); i++) {
+    nHitsPerEventHistoTime->SetBinContent(i,nHitsPerEvent.at(i));
+    nHitsPerEventHisto->Fill(nHitsPerEvent.at(i));
   }
   
-  for(unsigned int event=0; event < posFit->size() ; event++) {
-    for(unsigned int ifit = 0; ifit < posFit->at(event).size(); ifit++) {
+  for(unsigned int event=0; event < posFit.size() ; event++) {
+    for(unsigned int ifit = 0; ifit < posFit.at(event).size(); ifit++) {
       int nAssociatedTracks = 0;
-      for(int unsigned i=ifit+1; i< posFit->at(event).size() ; i++) {
-        if (abs(posFit->at(event).at(ifit).at(0) - posFit->at(event).at(i).at(0)) < limit && abs(posFit->at(event).at(ifit).at(1) - posFit->at(event).at(i).at(1)) < limit) { 
+      for(int unsigned i=ifit+1; i< posFit.at(event).size() ; i++) {
+        if (abs(posFit.at(event).at(ifit).at(0) - posFit.at(event).at(i).at(0)) < limit && abs(posFit.at(event).at(ifit).at(1) - posFit.at(event).at(i).at(1)) < limit) { 
           nAssociatedTracks++; 
         }
       }
@@ -1387,10 +1366,6 @@ void EUTelProcessorAnalysisPALPIDEfs::end()
     }
   }
 #endif  
-
-  delete nHitsPerEvent;
-  if(_showFake) delete posFake;  
-  delete posFit;
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
   efficiencyHisto->Divide(tracksHisto);
