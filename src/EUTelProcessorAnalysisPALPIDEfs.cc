@@ -64,12 +64,18 @@ EUTelProcessorAnalysisPALPIDEfs::EUTelProcessorAnalysisPALPIDEfs()
   _noiseMaskAvailable(true),
   _deadColumnAvailable(true),
   chi2Max(1),
-//  chi2Max(8),
   _nEvents(0),
+  _nEventsFake(5),
   _nEventsWithTrack(0),
   _minTimeStamp(0),
+  _showFake(true),
+  _realAssociation(false),
   nTracks(4),
+  nTracksFake(4),
   nTracksPAlpide(4),
+  nTracksPAlpideFake(4),
+  nTracksAssociation(4),
+  nTracksPAlpideAssociation(4),
   nFakeWithTrack(4,0),
   nFakeWithoutTrack(4,0),
   nFake(4,0),
@@ -152,8 +158,11 @@ EUTelProcessorAnalysisPALPIDEfs::EUTelProcessorAnalysisPALPIDEfs()
                              _rate, static_cast< string > ( "" ) );
   registerProcessorParameter("MinTimeStamp", "This is minimum timestamp required to consider an event",
                              _minTimeStamp, static_cast<double>( 0 ) );
-
   _isFirstEvent = true;
+  registerProcessorParameter("ShowFake","Show fake efficiency",
+                              _showFake, static_cast< bool > ( true ) );
+  registerProcessorParameter("RealAssociation","Calculate track to hit association without allowing the tracks to share hits",
+                              _realAssociation, static_cast< bool > ( false ) );
 }
 
 void EUTelProcessorAnalysisPALPIDEfs::init() {
@@ -195,7 +204,6 @@ void EUTelProcessorAnalysisPALPIDEfs::init() {
       gRotation[1] =  gRotation[1]*3.1415926/180.; //
       gRotation[2] =  gRotation[2]*3.1415926/180.; //
     }
-//  float chi2MaxTemp[8] = {4,6,8,10,15,20,25,30};
   float chi2MaxTemp[1] = {30};
   for (unsigned int i=0; i<chi2Max.size(); i++)
     chi2Max[i] = chi2MaxTemp[i];
@@ -208,6 +216,13 @@ void EUTelProcessorAnalysisPALPIDEfs::init() {
   {
     nTracks[iSector] = 0;
     nTracksPAlpide[iSector] = 0;
+    nTracksAssociation[iSector] = 0;
+    nTracksPAlpideAssociation[iSector] = 0;
+    if(_showFake)
+    {
+      nTracksFake[iSector] = 0;
+      nTracksPAlpideFake[iSector] = 0;
+    }
   }
   bool newFile = false;
   string _outputSettingsFileName = _outputSettingsFolderName + Form("settings_DUT%d",_dutID) + ".txt";
@@ -247,10 +262,9 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
       std::unique_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>> sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(hotData);
       for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
       {
-        EUTelGenericSparsePixel *sparsePixel =  new EUTelGenericSparsePixel() ;
-        sparseData->getSparsePixelAt( iPixel, sparsePixel );
+        auto sparsePixel = std::make_unique<EUTelGenericSparsePixel>();
+        sparseData->getSparsePixelAt( iPixel, sparsePixel.get() );
         hotpixelHisto->Fill(sparsePixel->getXCoord()*xPitch+xPitch/2.,sparsePixel->getYCoord()*yPitch+yPitch/2.);
-        delete sparsePixel;
       }
     }
     ifstream noiseMaskFile(_noiseMaskFileName.c_str());
@@ -285,10 +299,9 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
       std::unique_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>> sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(deadColumn);
       for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
       {
-        EUTelGenericSparsePixel *sparsePixel =  new EUTelGenericSparsePixel() ;
-        sparseData->getSparsePixelAt( iPixel, sparsePixel );
+        auto sparsePixel = std::make_unique<EUTelGenericSparsePixel>();
+        sparseData->getSparsePixelAt( iPixel, sparsePixel.get() );
         deadColumnHisto->Fill(sparsePixel->getXCoord()*xPitch+xPitch/2.,sparsePixel->getYCoord()*yPitch+yPitch/2.);
-        delete sparsePixel;
       }
     }
     settingsFile << evt->getRunNumber() << ";" << _energy << ";" << _chipID[layerIndex] << ";" << _irradiation[layerIndex] << ";" << _rate << ";" << evt->getParameters().getFloatVal("BackBiasVoltage") << ";" << evt->getParameters().getIntVal(Form("Ithr_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Idb_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Vcasn_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Vaux_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Vcasp_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Vreset_%d",layerIndex)) << ";";
@@ -376,11 +389,40 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
     streamlog_out ( ERROR4 ) << "Detector DUT has a singular rotation matrix. Sorry for quitting" << endl;
   }
 
-
   int nFitHit = 0;
   if (fitHitAvailable)  nFitHit = colFit->getNumberOfElements();
   bool hitmapFilled = false;
   vector<int> clusterAssosiatedToTrack;
+  std::vector< std::vector<double> > pT;
+  std::vector< std::vector<double> > pH;
+
+  if(_showFake)
+  {
+    std::vector< std::vector<double> > posFakeEvent;
+    int nHit = col->getNumberOfElements();
+    for(int ihit=0; ihit< nHit; ihit++)
+    {
+      TrackerHit *hit = dynamic_cast<TrackerHit*>( col->getElementAt(ihit) ) ;
+      if( hit != 0 )
+      {
+        const double *pos = hit->getPosition();
+        std::vector<double> posFakeHit;
+        posFakeHit.push_back(pos[0]);
+        posFakeHit.push_back(pos[1]);
+        posFakeHit.push_back(pos[2]);
+        posFakeEvent.push_back(posFakeHit);
+      }      
+    }
+    posFake.insert(posFake.begin(),posFakeEvent); 
+    if(posFake.size() > (unsigned)_nEventsFake)
+    {
+      posFakeTemp = posFake.back();
+      posFake.pop_back();
+    }
+  }
+  
+  bool firstTrack = true;        
+           
   for(int ifit=0; ifit< nFitHit ; ifit++)
   {
     TrackerHit * fithit = dynamic_cast<TrackerHit*>( colFit->getElementAt(ifit) ) ;
@@ -389,10 +431,12 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
     fitpos[0] = fitpos0[0];
     fitpos[1] = fitpos0[1];
     fitpos[2] = fitpos0[2];
-    bool twoTracks = false;
+
+    bool twoTracks = false;    
     double yposfitPrev = 0.;
     double xposfitPrev = 0.;
     double maxDistInPlane = 0.1;
+      
     for(int i=ifit+1; i< nFitHit ; i++)
     {
       TrackerHit * fithitcheck = dynamic_cast<TrackerHit*>( colFit->getElementAt(i) ) ;
@@ -424,15 +468,13 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
           bool hotpixel = false;
           for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
           {
-            EUTelGenericSparsePixel *sparsePixel =  new EUTelGenericSparsePixel() ;
-            sparseData->getSparsePixelAt( iPixel, sparsePixel );
+            auto sparsePixel = std::make_unique<EUTelGenericSparsePixel>();
+            sparseData->getSparsePixelAt( iPixel, sparsePixel.get() );
             if (abs(xposfit-(sparsePixel->getXCoord()*xPitch+xPitch/2.)) < limit && abs(yposfit-(sparsePixel->getYCoord()*yPitch+yPitch/2.)) < limit)
             {
               hotpixel = true;
-              delete sparsePixel;
               break;
             }
-            delete sparsePixel;
           }
           if (hotpixel) continue;
         }
@@ -455,15 +497,13 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
           bool dead = false;
           for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
           {
-            EUTelGenericSparsePixel *sparsePixel =  new EUTelGenericSparsePixel() ;
-            sparseData->getSparsePixelAt( iPixel, sparsePixel );
+            auto sparsePixel = std::make_unique<EUTelGenericSparsePixel>();
+            sparseData->getSparsePixelAt( iPixel, sparsePixel.get() );
             if (abs(xposfit-(sparsePixel->getXCoord()*xPitch+xPitch/2.)) < limit)
             {
               dead = true;
-              delete sparsePixel;
               break;
             }
-            delete sparsePixel;
           }
           if (dead) continue;
 
@@ -476,11 +516,19 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
         double xposPrev = 0.;
         int nPlanesWithMoreHits = 0;
         bool unfoundTrack = false;
+        bool unfoundTrackFake = false;
         bool pAlpideHit = false;
         bool firstHit = true;
+        int nPAlpideHits = 0;
+        
+        std::vector<double> posFitHit;
+        posFitHit.push_back(xposfit);
+        posFitHit.push_back(yposfit);
+        pT.push_back(posFitHit); 
+
         for(int ihit=0; ihit< nHit ; ihit++)
         {
-          TrackerHit        * hit = dynamic_cast<TrackerHit*>( col->getElementAt(ihit) ) ;
+          TrackerHit * hit = dynamic_cast<TrackerHit*>( col->getElementAt(ihit) ) ;         
           bool hitOnSamePlane = false;
           double pos[3]={0.,0.,0.};
           if( hit != 0 )
@@ -499,19 +547,22 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
                   hitOnSamePlane = true;
                   nPlanesWithMoreHits++;
                   break;
-		}
+                }       
                 else if (k == j+1 && poscheck1[2] != poscheck2[2]) hitOnSamePlane = false;
               }
             }
             firstHit = false;
-            if (nPlanesWithMoreHits > _nPlanesWithMoreHits) {unfoundTrack = true; break;}
-            const double *pos0 = hit->getPosition();
+            if (nPlanesWithMoreHits > _nPlanesWithMoreHits) {unfoundTrack = true; break;} 
+            const double *pos0 = hit->getPosition();   
             pos[0] = pos0[0];
             pos[1] = pos0[1];
             pos[2] = pos0[2];
+
             if (pos[2] >= dutZ-zDistance && pos[2] <= dutZ+zDistance )
             {
               pAlpideHit = true;
+              nPAlpideHits++; 
+
               pos[0]    -= xZero;
               pos[1]    -= yZero;
               _EulerRotationBack( pos, gRotation );
@@ -534,12 +585,20 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
 
               double ypos = (xPointing[0]*pos[1]-yPointing[0]*pos[0])/(yPointing[1]*xPointing[0]-yPointing[0]*xPointing[1]);
               double xpos = pos[0]/xPointing[0] - xPointing[1]/xPointing[0]*ypos;
+
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
               if (!hitmapFilled) hitmapHisto->Fill(xpos,ypos);
 #endif
-
               nDUThitsEvent++;
               if (nDUThitsEvent > 1) nDUThits++;
+
+              if(firstTrack) {
+                std::vector<double> posHitHit;
+                posHitHit.push_back(xpos);
+                posHitHit.push_back(ypos);
+                pH.push_back(posHitHit); 
+              }
+
               if (abs(xpos-xposfit) < limit && abs(ypos-yposfit) < limit )
               {
                 nAssociatedhits++;
@@ -602,8 +661,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
                     CellIDDecoder<TrackerDataImpl> cellDecoder( zsInputDataCollectionVec );
                     TrackerDataImpl * zsData = dynamic_cast< TrackerDataImpl * > ( zsInputDataCollectionVec->getElementAt(idetector) );
                     SparsePixelType   type   = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( zsData )["sparsePixelType"]) );
-//                    int iCluster = 0;
-                    if (hit->getTime() == zsData->getTime())
+                    if (hit->getTime() == zsData->getTime()) 
                     {
                       nClusterAssociatedToTrackPerEvent++;
                       clusterAssosiatedToTrack.push_back(zsData->getTime());
@@ -615,10 +673,10 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
                       {
                         vector<vector<int> > pixVector;
                         std::unique_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>> sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(zsData);
-                        EUTelGenericSparsePixel* pixel = new EUTelGenericSparsePixel;
+                        auto pixel = std::make_unique<EUTelGenericSparsePixel>();
                         for(unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
                         {
-                          sparseData->getSparsePixelAt( iPixel, pixel );
+                          sparseData->getSparsePixelAt( iPixel, pixel.get() );
                           X[iPixel] = pixel->getXCoord();
                           Y[iPixel] = pixel->getYCoord();
                           vector<int> pix;
@@ -626,7 +684,6 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
                           pix.push_back(Y[iPixel]);
                           pixVector.push_back(pix);
                         }
-                        delete pixel;
                         cluster.set_values(clusterSize,X,Y);
                         clusterSizeHisto[index]->Fill(clusterSize);
                         int xMin = *min_element(X.begin(), X.end());
@@ -675,9 +732,11 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
                       break;
                     }
                   }
-                }
+                }       
                 nTracksPAlpide[index]++;
-                TrackImpl* track = static_cast<TrackImpl*> (colTrack->getElementAt(ifit/7));
+               
+                TrackImpl* track = static_cast<TrackImpl*> (colTrack->getElementAt(ifit/7)); 
+
                 float chi2 = track->getChi2();
                 chi22DHisto->Fill(xposfit,yposfit,chi2);
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -728,8 +787,141 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
                 xposfitPrev = xposfit;
                 yposfitPrev = yposfit;
               }
+              nAssociatedhitsHisto->Fill(nAssociatedhits);
             }
             else continue;
+          }
+        }
+        
+        firstTrack = false;
+        nHitsPerEvent.push_back(nPAlpideHits);
+           
+        if(_showFake)
+        {
+          if(posFake.size() >= (unsigned)_nEventsFake)
+          {
+            int nHitFake = posFakeTemp.size();
+	    int nPlanesWithMoreHitsFake = 0;
+	    bool firstHitFake = true;
+
+            for(int ihit=0; ihit< nHitFake ; ihit++)
+            {
+              bool hitOnSamePlane = false;
+	      double pos[3]={0.,0.,0.};
+	      for(int j=ihit; j<nHitFake && firstHitFake && nPlanesWithMoreHitsFake <= _nPlanesWithMoreHits; j++)
+              {
+	        double poscheck1[3]={0.,0.,0.}; 
+	        poscheck1[0] = posFakeTemp.at(j).at(0);
+	        poscheck1[1] = posFakeTemp.at(j).at(1);
+	        poscheck1[2] = posFakeTemp.at(j).at(2);
+	        if (poscheck1[2]<=dutZ+zDistance && poscheck1[2]>=dutZ-zDistance) continue;
+	        for(int k=j+1; k<nHitFake && nPlanesWithMoreHitsFake <= _nPlanesWithMoreHits; k++)
+                {
+	          double poscheck2[3]={0.,0.,0.}; 
+	          poscheck2[0] = posFakeTemp.at(k).at(0);
+	          poscheck2[1] = posFakeTemp.at(k).at(1);
+	          poscheck2[2] = posFakeTemp.at(k).at(2);					        
+	          if ((abs(poscheck1[2] - poscheck2[2]) < maxDistInPlane) && !hitOnSamePlane)
+                  {
+		    hitOnSamePlane = true;
+		    nPlanesWithMoreHitsFake++;
+		    break;
+		  }
+		  else if (k == j+1 && poscheck1[2] != poscheck2[2]) hitOnSamePlane = false;
+		}
+              }
+	      firstHitFake = false;
+	      if (nPlanesWithMoreHitsFake > _nPlanesWithMoreHits) {unfoundTrackFake = true; break;} 
+				      
+              double pos0[3] ={0.,0.,0.};
+              pos0[0] = posFakeTemp.at(ihit).at(0);
+              pos0[1] = posFakeTemp.at(ihit).at(1);
+              pos0[2] = posFakeTemp.at(ihit).at(2);
+              pos[0] = pos0[0];
+              pos[1] = pos0[1];
+              pos[2] = pos0[2];        
+             
+              if (pos[2] >= dutZ-zDistance && pos[2] <= dutZ+zDistance )
+              {
+                pos[0]    -= xZero;
+                pos[1]    -= yZero;
+                _EulerRotationBack( pos, gRotation );
+
+                double sign = 0;
+                if      ( xPointing[0] < -0.7 )      sign = -1 ;
+                else if ( xPointing[0] > 0.7 )       sign =  1 ;
+                else {
+                  if       ( xPointing[1] < -0.7 )   sign = -1 ;
+                  else if  ( xPointing[1] > 0.7 )    sign =  1 ;
+                }
+                pos[0]    -=  ( -1 ) * sign * xSize / 2;
+                if      ( yPointing[0] < -0.7 )      sign = -1 ;
+                else if ( yPointing[0] > 0.7 )       sign =  1 ;
+                else {
+                  if       ( yPointing[1] < -0.7 )   sign = -1 ;
+                  else if  ( yPointing[1] > 0.7 )    sign =  1 ;
+                }
+                pos[1]    -= ( -1 ) * sign * ySize / 2;
+
+                double ypos = (xPointing[0]*pos[1]-yPointing[0]*pos[0])/(yPointing[1]*xPointing[0]-yPointing[0]*xPointing[1]);
+                double xpos = pos[0]/xPointing[0] - xPointing[1]/xPointing[0]*ypos;
+
+                if (abs(xpos-xposfit) < limit && abs(ypos-yposfit) < limit )
+                {
+                  for (int jhit=ihit+1; jhit< nHitFake ; jhit++)
+                  {
+                    double posNext[3]={0.,0.,0.};
+                    double pos0Next[3] ={0.,0.,0.};
+                    pos0Next[0] = posFakeTemp.at(jhit).at(0);
+                    pos0Next[1] = posFakeTemp.at(jhit).at(1);
+                    pos0Next[2] = posFakeTemp.at(jhit).at(2);
+                    posNext[0] = pos0Next[0];
+                    posNext[1] = pos0Next[1];
+                    posNext[2] = pos0Next[2];
+                    if (posNext[2] < dutZ-zDistance || posNext[2] > dutZ+zDistance ) continue;
+                    posNext[0]    -= xZero;
+                    posNext[1]    -= yZero;
+
+                    _EulerRotationBack( posNext, gRotation );
+
+                    if      ( xPointing[0] < -0.7 )       sign = -1 ;
+                    else if ( xPointing[0] > 0.7 )       sign =  1 ;
+                    else {
+                      if       ( xPointing[1] < -0.7 )    sign = -1 ;
+                      else if  ( xPointing[1] > 0.7 )    sign =  1 ;
+                    }
+                    posNext[0]    -=  ( -1 ) * sign * xSize / 2;
+                    if      ( yPointing[0] < -0.7 )       sign = -1 ;
+                    else if ( yPointing[0] > 0.7 )       sign =  1 ;
+                    else {
+                      if       ( yPointing[1] < -0.7 )    sign = -1 ;
+                      else if  ( yPointing[1] > 0.7 )    sign =  1 ;
+                    }
+                    posNext[1]    -= ( -1 ) * sign * ySize / 2;
+
+                    double yposNext = (xPointing[0]*posNext[1]-yPointing[0]*posNext[0])/(yPointing[1]*xPointing[0]-yPointing[0]*xPointing[1]);
+                    double xposNext = posNext[0]/xPointing[0] - xPointing[1]/xPointing[0]*yposNext;
+                    if (abs(xposNext-xposfit) > limit || abs(yposNext-yposfit) > limit) continue;
+                    if ((xpos-xposfit)*(xpos-xposfit)+(ypos-yposfit)*(ypos-yposfit)<(xposNext-xposfit)*(xposNext-xposfit)+(yposNext-yposfit)*(yposNext-yposfit))
+                    {
+                      ihit = jhit;
+                    } 
+                    else
+                    {
+                      xpos = xposNext;
+                      ypos = yposNext;
+                      pos[2] = posNext[2];
+                      pos0[0] = pos0Next[0];
+                      pos0[1] = pos0Next[1];
+                      pos0[2] = pos0Next[2];                      
+                      ihit = jhit;
+                    }
+                  }
+                  nTracksPAlpideFake[index]++;
+                }
+              }
+              else continue;
+            }
           }
         }
         hitmapFilled = true;
@@ -742,14 +934,23 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
           tracksPixel2by2Histo[index]->Fill(fmod(xposfit,2*xPitch),fmod(yposfit,2*yPitch));
 #endif
           nTracks[index]++;
+          if(!pAlpideHit) {hitmapNoHitHisto->Fill(xposfit,yposfit); nNoPAlpideHit++;}
         }
-        if(!pAlpideHit) {hitmapNoHitHisto->Fill(xposfit,yposfit); nNoPAlpideHit++;}
-      }
+        if(_showFake)
+        {
+          if (unfoundTrackFake) {break;}
+          else if(posFake.size() >= (unsigned)_nEventsFake) nTracksFake[index]++;
+        }
+      } 
     }
     else continue;
   }
+  
+  posFit.push_back(pT);
+    
   _nEvents++;
   if (fitHitAvailable) _nEventsWithTrack++;
+
   if (_clusterAvailable)
   {
     for ( unsigned int i=0 ; i<zsInputDataCollectionVec->size(); i++)
@@ -758,8 +959,8 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
       TrackerDataImpl * zsData = dynamic_cast< TrackerDataImpl * > ( zsInputDataCollectionVec->getElementAt(i) );
       int sensorID = static_cast<int> (cellDecoder( zsData )["sensorID"]);
       if (sensorID == _dutID)
-      {
-        bool isAssosiated = false;
+      { 
+        bool isAssosiated = false; 
         for (unsigned int iAssociatedCluster=0; iAssociatedCluster<clusterAssosiatedToTrack.size(); iAssociatedCluster++)
           if (zsData->getTime() == clusterAssosiatedToTrack[iAssociatedCluster])
           {
@@ -777,20 +978,19 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
             vector<int> X(clusterSize);
             vector<int> Y(clusterSize);
             auto sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(zsData);
-            EUTelGenericSparsePixel* pixel = new EUTelGenericSparsePixel;
+            auto pixel = std::make_unique<EUTelGenericSparsePixel>();
             for(unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
             {
-              sparseData->getSparsePixelAt( iPixel, pixel );
+              sparseData->getSparsePixelAt( iPixel, pixel.get() );
               X[iPixel] = pixel->getXCoord();
               Y[iPixel] = pixel->getYCoord();
               if (!fitHitAvailable) nFakeWithoutTrackHitmapHisto->Fill(X[iPixel],Y[iPixel]);
               else nFakeWithTrackHitmapHisto->Fill(X[iPixel],Y[iPixel]);
               nFakeHitmapHisto->Fill(X[iPixel],Y[iPixel]);
             }
-            delete pixel;
             cluster.set_values(clusterSize,X,Y);
             float xCenter, yCenter;
-            cluster.getCenterOfGravity(xCenter,yCenter);
+            cluster.getCenterOfGravity(xCenter,yCenter);         
             for (int iSector=0; iSector<4; iSector++)
             {
               if (xCenter>xPixel/4.*iSector && xCenter<xPixel/4.*(iSector+1))
@@ -828,14 +1028,13 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
           vector<int> Y(clusterSize);
           vector<vector<int> > pixVector;
           auto sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(zsData);
-          EUTelGenericSparsePixel* pixel = new EUTelGenericSparsePixel;
+          auto pixel = std::make_unique<EUTelGenericSparsePixel>();
           for(unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
           {
-            sparseData->getSparsePixelAt( iPixel, pixel );
+            sparseData->getSparsePixelAt( iPixel, pixel.get() );
             X[iPixel] = pixel->getXCoord();
             Y[iPixel] = pixel->getYCoord();
           }
-          delete pixel;
           cluster.set_values(clusterSize,X,Y);
           float xCenter, yCenter;
           cluster.getCenterOfGravity(xCenter,yCenter);
@@ -879,12 +1078,139 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
         }
       }
     }
-  }
+  }    
   nTrackPerEventHisto->Fill(nTrackPerEvent);
   nClusterAssociatedToTrackPerEventHisto->Fill(nClusterAssociatedToTrackPerEvent);
   nClusterPerEventHisto->Fill(nClusterPerEvent);
+  if (_realAssociation)  // Different version of track to hit association written by Martijn Dietze. It maximizes the number of association while doesn't allow hits to be shared between tracks.
+  { 
+    int nH = pH.size();
+    int nT = pT.size(); 
+    std::vector<int> aH(nH); 
+    std::vector<int> aT(nT); 
+    for(int i=0; i<nH; i++) aH[i] = -1;
+    for(int i=0; i<nT; i++) aT[i] = -1;
+    int temp;
+    bool changed = true;
+    while(changed)
+    {
+      changed = false;
+      for(int iT=0; iT<nT; iT++)
+      {
+        if(aT[iT] == -1)
+        {
+          int associations = 0;
+          for(int iH=0; iH<nH; iH++)
+          {
+            if(aH[iH] == -1)
+            {
+              if(abs(pH.at(iH).at(0)-pT.at(iT).at(0))<limit && abs(pH.at(iH).at(1)-pT.at(iT).at(1))<limit)
+              {
+                associations++;
+                temp = iH;
+              }
+            }
+          }
+          if(associations == 1)
+          {
+            changed = true;
+            aH[temp] = iT;
+            aT[iT] = temp;
+          }
+          if(associations == 0)
+          {
+            aT[iT] = -2;
+          }
+        }
+      }
+    } 
+    std::vector<int> aTFinal(nT); 
+    std::vector<int> aHFinal(nH); 
+    std::vector<int> order;   
+    for(int iT=0; iT<nT; iT++)
+    {
+      if(aT[iT]==-1) order.push_back(iT); 
+    }     
+    if(order.size() > 0 )
+    {
+      unsigned int maxAssociations = 0;
+      double minDistance = 1e10;             
+      bool run1 = true;
+      do
+      {
+        double totaldistance = 0;
+        unsigned int associations = 0;
+        std::vector<int> aTTemp(nT); 
+        std::vector<int> aHTemp(nH);   
+        for(int iT=0; iT<nT; iT++) aTTemp[iT] = aT[iT];
+        for(int iH=0; iH<nH; iH++) aHTemp[iH] = aH[iH];
+        bool run2 = true;
+        for(unsigned int i=0; i<order.size() && run2; i++)
+        {
+          int iT = order[i];
+          double min = 1e10;
+          bool associated = false;
+          for(int iH=0; iH<nH; iH++)
+          {
+            if(aHTemp[iH]== -1)
+            {
+              if(abs(pH.at(iH).at(0)-pT.at(iT).at(0))<limit && abs(pH.at(iH).at(1)-pT.at(iT).at(1))<limit)
+              {
+                double dist = sqrt(pow(abs(pH.at(iH).at(0)-pT.at(iT).at(0)),2)+pow(abs(pH.at(iH).at(1)-pT.at(iT).at(1)),2));
+                if(dist<min)
+                {
+                  min=dist;
+                  temp = iH;
+                  associated = true;
+                }
+              }
+            }
+          }
+          if(associated)
+          {
+            associations++;
+            aHTemp[temp] = iT;
+            aTTemp[iT] = temp;
+            totaldistance += min;
+          }
+          if(totaldistance > minDistance) run2 = false;
+          if( ( i - associations + 1 ) > ( order.size() - maxAssociations ) ) run2 = false;
+        }
+        if(associations == order.size()) run1 = false;    
+        if(associations >= maxAssociations)
+        {
+          if(totaldistance < minDistance)
+          {
+            for(int iT=0; iT<nT; iT++) aTFinal[iT] = aTTemp[iT];
+            for(int iH=0; iH<nH; iH++) aHFinal[iH] = aHTemp[iH];
+            maxAssociations = associations;
+            minDistance = totaldistance;
+          }
+        }
+      } while ( std::next_permutation(order.begin(),order.end()) && run1 );
+    }
+    else
+    {
+      for(int iT=0; iT<nT; iT++) aTFinal[iT] = aT[iT];
+      for(int iH=0; iH<nH; iH++) aHFinal[iH] = aH[iH]; 
+    }
+    for(int iT=0; iT<nT; iT++)
+    {
+      int index = -1;
+      for (int iSector=0; iSector<4; iSector++)
+      {
+        if (pT.at(iT).at(0)>xSize/4.*iSector+(iSector==0?0:1)*(2.*xPitch+limit) && pT.at(iT).at(0)<xSize/4.*(iSector+1)-(iSector==3?0:1)*(2.*xPitch+limit))
+        {
+          index = iSector;
+          break;
+        }
+      }
+      if (index == -1) continue;    
+      if(aTFinal[iT] >= 0) nTracksPAlpideAssociation[index]++;
+      nTracksAssociation[index]++;
+    }    
+  }
 }
-
 
 #ifdef MARLIN_USE_AIDA
 void EUTelProcessorAnalysisPALPIDEfs::bookHistos()
@@ -928,6 +1254,8 @@ void EUTelProcessorAnalysisPALPIDEfs::bookHistos()
   nTrackPerEventHisto = new TH1I("nTrackPerEventHisto","Number of tracks per event;Number of tracks;a.u.",30,0,30);
   nClusterAssociatedToTrackPerEventHisto = new TH1I("nClusterAssociatedToTrackPerEventHisto","Number of clusters associated to tracks per event;Number of clusters;a.u.",30,0,30);
   nClusterPerEventHisto = new TH1I("nClusterPerEventHisto","Number of clusters per event;Number of clusters;a.u.",30,0,30);
+  nAssociatedhitsHisto = new TH1I("nAssociatedhitsHisto","Number of hits in search region of track per event;Number of hits in search region of track;a.u.",30,0,30);
+  nAssociatedtracksHisto = new TH1I("nAssociatedtracksHisto","Number of tracks in search region of track per event;Number of tracks in search region of track;a.u.",30,0,30);
   for (int iSector=0; iSector<4; iSector++)
   {
     AIDAProcessor::tree(this)->mkdir(Form("Sector_%d",iSector));
@@ -1017,6 +1345,28 @@ void EUTelProcessorAnalysisPALPIDEfs::bookHistos()
 
 void EUTelProcessorAnalysisPALPIDEfs::end()
 {
+#ifdef MARLIN_USE_AIDA
+  AIDAProcessor::tree(this)->cd("Analysis");
+  nHitsPerEventHistoTime = new TH1I("nHitsPerEventHistoTime","The amount of hits as a function of time",nHitsPerEvent.size(),0,nHitsPerEvent.size());
+  nHitsPerEventHisto = new TH1I("nHitsPerEventHisto","The amount of hits as a function of events",200,0,200);
+  for(unsigned int i=0; i < nHitsPerEvent.size(); i++) {
+    nHitsPerEventHistoTime->SetBinContent(i,nHitsPerEvent.at(i));
+    nHitsPerEventHisto->Fill(nHitsPerEvent.at(i));
+  }
+  
+  for(unsigned int event=0; event < posFit.size() ; event++) {
+    for(unsigned int ifit = 0; ifit < posFit.at(event).size(); ifit++) {
+      int nAssociatedTracks = 0;
+      for(int unsigned i=ifit+1; i< posFit.at(event).size() ; i++) {
+        if (abs(posFit.at(event).at(ifit).at(0) - posFit.at(event).at(i).at(0)) < limit && abs(posFit.at(event).at(ifit).at(1) - posFit.at(event).at(i).at(1)) < limit) { 
+          nAssociatedTracks++; 
+        }
+      }
+      nAssociatedtracksHisto->Fill(nAssociatedTracks);
+    }
+  }
+#endif  
+
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
   efficiencyHisto->Divide(tracksHisto);
   for (int i=0; i<xPixel; i++)
@@ -1145,10 +1495,9 @@ void EUTelProcessorAnalysisPALPIDEfs::end()
         chi2Y[i]->Fill(k-1,(clusterShapeY[symmetryGroups[i][j]]->GetBinContent(k)-nY->GetBinContent(k)*p)*(clusterShapeY[symmetryGroups[i][j]]->GetBinContent(k)-nY->GetBinContent(k)*p)/nY->GetBinContent(k)/p);
       }
     }
-//    for (int iBin=1; iBin<=chi2->GetNbinsX(); iBin++)
-//      if (chi2->GetBinContent(iBin) > 7.815) cerr << "Symmetry group: " << binName << " Bin: " << iBin<< " is assymetric, with chi2 = " << chi2->GetBinContent(iBin) << endl;
   }
 */
+
 #endif
   streamlog_out ( MESSAGE4 ) << nPlanesWithTooManyHits << " tracks had too many planes with more than one hit" << endl;
   streamlog_out ( MESSAGE4 ) << nNoPAlpideHit << " tracks didn't have a hit in the pALPIDEfs" << endl;
@@ -1160,12 +1509,30 @@ void EUTelProcessorAnalysisPALPIDEfs::end()
     streamlog_out ( MESSAGE4 ) << (double)nTracksPAlpide[iSector]/nTracks[iSector] << "\t" << nTracks[iSector] << "\t" << nTracksPAlpide[iSector] << endl;
     settingsFile << (double)nTracksPAlpide[iSector]/nTracks[iSector] << ";" << nTracks[iSector] << ";" << nTracksPAlpide[iSector] << ";";
   }
+  if(_showFake) 
+  {
+    streamlog_out ( MESSAGE4 ) << "Overall fake efficiency of pALPIDEfs sectors: " << endl;
+    for (int iSector=0; iSector<4; iSector++)
+    {
+      streamlog_out ( MESSAGE4 ) << (double)nTracksPAlpideFake[iSector]/nTracksFake[iSector] << "\t" << nTracksFake[iSector] << "\t" << nTracksPAlpideFake[iSector] << endl;
+      settingsFile << (double)nTracksPAlpideFake[iSector]/nTracksFake[iSector] << ";" << nTracksFake[iSector] << ";" << nTracksPAlpideFake[iSector] << ";";
+    }
+  }
+  if (_realAssociation)  // Different version of track to hit association written by Martijn Dietze. It maximizes the number of association while doesn't allow hits to be shared between tracks.
+  {
+    streamlog_out ( MESSAGE4 ) << "Overall efficiency of pALPIDEfs sectors without tracks sharing a hit: " << endl;
+    for (int iSector=0; iSector<4; iSector++)
+    {
+      streamlog_out ( MESSAGE4 ) << (double)nTracksPAlpideAssociation[iSector]/nTracksAssociation[iSector] << "\t" << nTracksAssociation[iSector] << "\t" << nTracksPAlpideAssociation[iSector] << endl;
+      settingsFile << (double)nTracksPAlpideAssociation[iSector]/nTracksAssociation[iSector] << ";" << nTracksAssociation[iSector] << ";" << nTracksPAlpideAssociation[iSector] << ";";
+    }
+  }
   settingsFile << endl;
   streamlog_out ( MESSAGE4 )  << "Successfully finished" << endl;
 }
 
-void EUTelProcessorAnalysisPALPIDEfs::_EulerRotationBack(double* _telPos, double* _gRotation) {
 
+void EUTelProcessorAnalysisPALPIDEfs::_EulerRotationBack(double* _telPos, double* _gRotation) {
     double z = _telPos[2] - dutZ;
     TVector3 _RotatedSensorHit( _telPos[0], _telPos[1], z );
     TVector3 _Xaxis( 1.0, 0.0, 0.0 );
