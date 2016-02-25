@@ -182,6 +182,11 @@
   <parameter name="MinTimeStamp" type="double" value="@MinTimeStamp@"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value="MESSAGE1"/-->
+  <!--Show fake efficiency-->
+  <parameter name="ShowFake" type="bool" value="false"/>
+  <!--Calculate track to hit association without allowing the tracks to share hits-->
+  <parameter name="RealAssociation" type="bool" value="false"/>
+  <parameter name="WriteShapes" type="bool" value="false"/>
 </processor>
 
 <processor name="Save" type="EUTelOutputProcessor">
