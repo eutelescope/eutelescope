@@ -72,11 +72,11 @@ EUTelProcessorAnalysisPALPIDEfs::EUTelProcessorAnalysisPALPIDEfs()
   _realAssociation(false),
   nTracks(8),
   nTracksPAlpide(8),
-  nTracksFake(4),
-  nTracksPAlpide(4),
-  nTracksPAlpideFake(4),
-  nTracksAssociation(4),
-  nTracksPAlpideAssociation(4),
+  nTracksFake(8),
+  nTracksPAlpide(8),
+  nTracksPAlpideFake(8),
+  nTracksAssociation(8),
+  nTracksPAlpideAssociation(8),
   nFakeWithTrack(8,0),
   nFakeWithoutTrack(8,0),
   nFake(8,0),
@@ -1216,9 +1216,9 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
     for(int iT=0; iT<nT; iT++)
     {
       int index = -1;
-      for (int iSector=0; iSector<4; iSector++)
+      for (int iSector=0; iSector<_nSectors; iSector++)
       {
-        if (pT.at(iT).at(0)>xSize/4.*iSector+(iSector==0?0:1)*(2.*xPitch+limit) && pT.at(iT).at(0)<xSize/4.*(iSector+1)-(iSector==3?0:1)*(2.*xPitch+limit))
+        if (pT.at(iT).at(0)>xSize/(double)_nSectors*iSector+(iSector==0?0:1)*(2.*xPitch+limit) && pT.at(iT).at(0)<xSize/(double)_nSectors*(iSector+1)-(iSector==_nSectors?0:1)*(2.*xPitch+limit))
         {
           index = iSector;
           break;
@@ -1531,7 +1531,7 @@ void EUTelProcessorAnalysisPALPIDEfs::end()
   if(_showFake) 
   {
     streamlog_out ( MESSAGE4 ) << "Overall fake efficiency of pALPIDEfs sectors: " << endl;
-    for (int iSector=0; iSector<4; iSector++)
+    for (int iSector=0; iSector<_nSectors; iSector++)
     {
       streamlog_out ( MESSAGE4 ) << (double)nTracksPAlpideFake[iSector]/nTracksFake[iSector] << "\t" << nTracksFake[iSector] << "\t" << nTracksPAlpideFake[iSector] << endl;
       settingsFile << (double)nTracksPAlpideFake[iSector]/nTracksFake[iSector] << ";" << nTracksFake[iSector] << ";" << nTracksPAlpideFake[iSector] << ";";
@@ -1540,7 +1540,7 @@ void EUTelProcessorAnalysisPALPIDEfs::end()
   if (_realAssociation)  // Different version of track to hit association written by Martijn Dietze. It maximizes the number of association while doesn't allow hits to be shared between tracks.
   {
     streamlog_out ( MESSAGE4 ) << "Overall efficiency of pALPIDEfs sectors without tracks sharing a hit: " << endl;
-    for (int iSector=0; iSector<4; iSector++)
+    for (int iSector=0; iSector<_nSectors; iSector++)
     {
       streamlog_out ( MESSAGE4 ) << (double)nTracksPAlpideAssociation[iSector]/nTracksAssociation[iSector] << "\t" << nTracksAssociation[iSector] << "\t" << nTracksPAlpideAssociation[iSector] << endl;
       settingsFile << (double)nTracksPAlpideAssociation[iSector]/nTracksAssociation[iSector] << ";" << nTracksAssociation[iSector] << ";" << nTracksPAlpideAssociation[iSector] << ";";
