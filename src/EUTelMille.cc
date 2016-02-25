@@ -3066,12 +3066,12 @@ void EUTelMille::bookHistos() {
     const int    tracksNBin = 20  ;
     const double tracksMin  = -0.5;
     const double tracksMax  = 19.5;
-    const int    Chi2NBin = 1000 ;
+    const int    Chi2NBin = 200 ;
     const double Chi2Min  =   0.;
-    const double Chi2Max  = 1000.;
-    const int    NBin =   4000;
-    const double Min  = -2000.;
-    const double Max  =  2000.;
+    const double Chi2Max  = 20.;
+    const int    NBin =   150;
+    const double Min  = -75.;
+    const double Max  =  75.;
 
     AIDA::IHistogram1D * numberTracksLocal =
       AIDAProcessor::histogramFactory(this)->createHistogram1D(_numberTracksLocalname,tracksNBin,tracksMin,tracksMax);
