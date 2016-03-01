@@ -182,6 +182,10 @@
   <parameter name="MinTimeStamp" type="double" value="@MinTimeStamp@"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value="MESSAGE1"/-->
+  <!--Assign the size of the hole, minimum X, maximum X (in mm) -->
+  <parameter name="HoleSizeX" type="FloatVec"> 1.0 29.0 </parameter>
+  <!--Assign the size of the hole, minimum Y, maximum Y (in mm) -->
+  <parameter name="HoleSizeY" type="FloatVec"> 9.0 12.5 </parameter>
   <!--Show fake efficiency-->
   <parameter name="ShowFake" type="bool" value="false"/>
   <!--Calculate track to hit association without allowing the tracks to share hits-->

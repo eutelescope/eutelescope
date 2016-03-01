@@ -71,7 +71,6 @@ EUTelProcessorAnalysisPALPIDEfs::EUTelProcessorAnalysisPALPIDEfs()
   _showFake(true),
   _realAssociation(false),
   nTracks(8),
-  nTracksPAlpide(8),
   nTracksFake(8),
   nTracksPAlpide(8),
   nTracksPAlpideFake(8),
@@ -164,6 +163,10 @@ EUTelProcessorAnalysisPALPIDEfs::EUTelProcessorAnalysisPALPIDEfs()
                              _minTimeStamp, static_cast<double>( 0 ) );
   registerOptionalParameter("ChipVersion", "Chip Version",
                              _chipVersion, static_cast<int>(3) );
+  registerOptionalParameter("HoleSizeX", "Size of the hole in X axis (mm)", 
+                             _holesizeX, std::vector<float> {1, 29} );
+  registerOptionalParameter("HoleSizeY", "Size of the hole in Y axis (mm)", 
+                             _holesizeY, std::vector<float> {9, 12.5} );
   _isFirstEvent = true;
   registerProcessorParameter("ShowFake","Show fake efficiency",
                               _showFake, static_cast< bool > ( true ) );
@@ -763,7 +766,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
                 scatteringAngleHisto->Fill(xposfit,yposfit,abs(xpos-xposfit));
                 for (unsigned int i=0; i<chi2Max.size(); i++)
                 {
-                  if (chi2 < chi2Max[i] && yposfit < 12.2 && yposfit > 9.7 && xposfit < 26.2+1.3 && xposfit > 2.5 -1.3)
+                  if (chi2 < chi2Max[i] && yposfit < _holesizeY[1] && yposfit > _holesizeY[0] && xposfit < _holesizeX[1] && xposfit > _holesizeX[0])
                   {
                     residualXPAlpide[chi2Max[i]][index]->Fill(xpos-xposfit);
                     residualYPAlpide[chi2Max[i]][index]->Fill(ypos-yposfit);
@@ -781,7 +784,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
                     nResidualXPixel2by2[chi2Max[i]][index]->Fill(fmod(xposfit,2*xPitch),fmod(yposfit,2*yPitch));
                     nResidualYPixel2by2[chi2Max[i]][index]->Fill(fmod(xposfit,2*xPitch),fmod(yposfit,2*yPitch));
                   }
-                  else if (chi2 < chi2Max[i] && (yposfit < 9.2 || yposfit > 12.7 || xposfit > 27.4+1.3 || xposfit < 1.2 - 0.2))
+                  else if (chi2 < chi2Max[i] && (yposfit < _holesizeY[0] || yposfit > _holesizeY[1] || xposfit > _holesizeX[1] || xposfit < _holesizeX[0]))
                   {
                     residualXPCBPAlpide[chi2Max[i]][index]->Fill(xpos-xposfit);
                     residualYPCBPAlpide[chi2Max[i]][index]->Fill(ypos-yposfit);
