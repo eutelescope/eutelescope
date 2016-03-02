@@ -165,12 +165,25 @@ class TelEvent(object):
     for it, t in enumerate(self.__tracks):
       hits = t.getHits()
       for p, h in hits.iteritems():
+	if p == 0:
+	  globalPos_0 = np.array(h.getPos())
+	if p == 1:
+	  globalPos_1 = np.array(h.getPos())
+	if p == 2:
+	  globalPos_2 = np.array(h.getPos())
+	if p == 3:
+	  globalPos_3 = np.array(h.getPos())
+	if p == 4:
+	  globalPos_4 = np.array(h.getPos())
+	if p == 5:
+	  globalPos_5 = np.array(h.getPos())
         if p > 5:
           plane = self.__det[p]
           # from plane
           rot = plane.getRotation()
           # from hit
           z = h.getZ()
+	  globalPosDUT = np.array(h.getPos())
           locMeas = plane.transformGlobalToLocal(np.array(h.getPos()))
           # from seed track
           position = t.getPosition(z)
@@ -190,7 +203,7 @@ class TelEvent(object):
             pseg = self.__Pseg[it] 
             pgbl = self.__Pgbl[it] 
           if rootTree is not None:
-            rootTree.fill(self.__runNumber, self.__eventNumber, pseg, pgbl, h.getIndex(), p, locPos, locSlope, h.getCluster())
+            rootTree.fill(self.__runNumber, self.__eventNumber, pseg, pgbl, globalPos_0, globalPos_1, globalPos_2, globalPos_3, globalPos_4, globalPos_5, globalPosDUT, h.getIndex(), p, locPos, locSlope, h.getCluster())
 
   ## Analyze event.
   #

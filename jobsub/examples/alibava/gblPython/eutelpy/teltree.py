@@ -38,6 +38,20 @@ class TelTree(object):
     self.__Pseg = array('f', [ 0 ])
     ## array for Pgbl
     self.__Pgbl = array('f', [ 0 ])
+    ## array for tel plane global pos
+    self.__tel_globalPos_0 = array('f', 3 * [ 0 ])
+    ## array for tel plane global pos
+    self.__tel_globalPos_1 = array('f', 3 * [ 0 ])
+    ## array for tel plane global pos
+    self.__tel_globalPos_2 = array('f', 3 * [ 0 ])
+    ## array for tel plane global pos
+    self.__tel_globalPos_3 = array('f', 3 * [ 0 ])
+    ## array for tel plane global pos
+    self.__tel_globalPos_4 = array('f', 3 * [ 0 ])
+    ## array for tel plane global pos
+    self.__tel_globalPos_5 = array('f', 3 * [ 0 ])
+    ## array for dut plane global pos
+    self.__dut_globalPos = array('f', 3 * [ 0 ])
     ## array for hit number
     self.__hit = array('i', [ 0 ])
     ## array for dut id number
@@ -63,6 +77,13 @@ class TelTree(object):
     self.__tTree.Branch('evtnum', self.__evt, 'evtnum/I')
     self.__tTree.Branch('Pseg', self.__Pseg, 'Pseg/F')
     self.__tTree.Branch('Pgbl', self.__Pgbl, 'Pgbl/F')
+    self.__tTree.Branch('tel_globalPos_0', self.__tel_globalPos_0, 'tel_globalPos_0[3]/F')
+    self.__tTree.Branch('tel_globalPos_1', self.__tel_globalPos_1, 'tel_globalPos_1[3]/F')
+    self.__tTree.Branch('tel_globalPos_2', self.__tel_globalPos_2, 'tel_globalPos_2[3]/F')
+    self.__tTree.Branch('tel_globalPos_3', self.__tel_globalPos_3, 'tel_globalPos_3[3]/F')
+    self.__tTree.Branch('tel_globalPos_4', self.__tel_globalPos_4, 'tel_globalPos_4[3]/F')
+    self.__tTree.Branch('tel_globalPos_5', self.__tel_globalPos_5, 'tel_globalPos_5[3]/F')
+    self.__tTree.Branch('dut_globalPos', self.__dut_globalPos, 'dut_globalPos[3]/F')
     self.__tTree.Branch('hitnum', self.__hit, 'hitnum/I')
     self.__tTree.Branch('dutID', self.__dutID, 'dutID/I')
     self.__tTree.Branch('locxpos', self.__locXpos, 'locxpos/F')
@@ -83,12 +104,20 @@ class TelTree(object):
   # @param[in] locSlope local slope
   # @param[in] cluster  cluster information
   #
-  def fill(self, run , evt, pseg, pgbl, hit, dutID, locPos, locSlope, cluster):
+  def fill(self, run , evt, pseg, pgbl, globalPos_0, globalPos_1, globalPos_2, globalPos_3, globalPos_4, globalPos_5, globalPosDUT, hit, dutID, locPos, locSlope, cluster):
     # fill arrays
     self.__run[0] = run
     self.__evt[0] = evt
     self.__Pseg[0] = pseg
     self.__Pgbl[0] = pgbl
+    for i in range(0,3):
+      self.__tel_globalPos_0[i] = globalPos_0[i]
+      self.__tel_globalPos_1[i] = globalPos_1[i]
+      self.__tel_globalPos_2[i] = globalPos_2[i]
+      self.__tel_globalPos_3[i] = globalPos_3[i]
+      self.__tel_globalPos_4[i] = globalPos_4[i]
+      self.__tel_globalPos_5[i] = globalPos_5[i]
+      self.__dut_globalPos[i] = globalPosDUT[i] 
     self.__hit[0] = hit
     self.__dutID[0] = dutID
     self.__locXpos[0] = locPos[0]

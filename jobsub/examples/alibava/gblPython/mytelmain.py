@@ -56,12 +56,13 @@ def main(argv):
     os.makedirs(outputdir)
 
   # maximum number of events
-  #maxEvt = 5000
-  maxEvt = 10000000
+  maxEvt = 5000
+  #maxEvt = 10000000
   # beam energy (*q)
   #beamEnergy = -4.4  # 613
   # lcio data file
-  lciofile = '/nfs/dust/atlas/user/yeda/EUTelescopeOutput/cce-noxtalk-output/lcio/runXXXXXX-hitmaker-local.slcio'
+  #lciofile = '/nfs/dust/atlas/user/yeda/EUTelescopeOutput/cce-noxtalk-output/lcio/runXXXXXX-hitmaker-local.slcio'
+  lciofile = '/nfs/dust/atlas/user/yeda/EUTelescopeOutput/output/lcio/runXXXXXX-hitmaker-local.slcio'
   dataFile = TelFile(lciofile.replace("XXXXXX",runnumber), 'merged_hits')
   dataFile.open() 
   
