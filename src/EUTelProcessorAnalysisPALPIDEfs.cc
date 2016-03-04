@@ -57,6 +57,8 @@ EUTelProcessorAnalysisPALPIDEfs::EUTelProcessorAnalysisPALPIDEfs()
   _outputSettingsFolderName("./"),
   _chipID(),
   _irradiation(),
+  _holesizeX(),
+  _holesizeY(),
   _rate(""),
   _oneAlignmentCollection(false),
   _clusterAvailable(true),
