@@ -59,6 +59,7 @@ using namespace eutelescope;
 
 // definition of static members mainly used to name histograms
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+std::string EUTelHistogramMaker::_clusterSizeHistoName        = "clusterSize";
 std::string EUTelHistogramMaker::_clusterSignalHistoName      = "clusterSignal";
 std::string EUTelHistogramMaker::_seedSignalHistoName         = "seedSignal";
 std::string EUTelHistogramMaker::_hitMapHistoName             = "hitMap";
@@ -291,7 +292,13 @@ void EUTelHistogramMaker::processEvent (LCEvent * evt) {
       // increment of one unit the event counter for this plane
       eventCounterMap[detectorID]++;
 
-      string tempHistoName = _clusterSignalHistoName + "_d" + to_string( detectorID );
+      int xSize, ySize;
+      cluster->getClusterSize(xSize,ySize);
+
+      string tempHistoName = _clusterSizeHistoName + "_d" + to_string( detectorID );
+      (dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]))->fill(xSize*ySize);
+
+      tempHistoName = _clusterSignalHistoName + "_d" + to_string( detectorID );
       (dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]))->fill(cluster->getTotalCharge());
 
       if(type == kEUTelDFFClusterImpl ) {
@@ -568,12 +575,32 @@ void EUTelHistogramMaker::bookHistos() {
     AIDAProcessor::tree(this)->mkdir(basePath.c_str());
     basePath.append("/");
 
+    tempHistoName =  _clusterSizeHistoName + "_d" + to_string( _sensorIDVec.at( iDetector ) ) ;
+    int    clusterNBin  = 100;
+    double clusterMin   = 0.;
+    double clusterMax   = 100.;
+    string clusterTitle = "Cluster size after removing hot clusters";
+    /*if ( isHistoManagerAvailable ) {
+      histoInfo = histoMgr->getHistogramInfo(_clusterSignalHistoName);
+      if ( histoInfo ) {
+        streamlog_out ( DEBUG1 )  << (* histoInfo ) << endl;
+        clusterNBin = histoInfo->_xBin;
+        clusterMin  = histoInfo->_xMin;
+        clusterMax  = histoInfo->_xMax;
+        if ( histoInfo->_title != "" ) clusterTitle = histoInfo->_title;
+      }
+    }*/
+    AIDA::IHistogram1D * clusterSizeHisto =
+      AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
+                                                                clusterNBin,clusterMin,clusterMax);
+    _aidaHistoMap.insert(make_pair(tempHistoName, clusterSizeHisto));
+    clusterSizeHisto->setTitle(clusterTitle.c_str());
 
     tempHistoName =  _clusterSignalHistoName + "_d" + to_string( _sensorIDVec.at( iDetector ) ) ;
-    int    clusterNBin  = 1000;
-    double clusterMin   = 0.;
-    double clusterMax   = 1000.;
-    string clusterTitle = "Cluster spectrum with all pixels";
+    clusterNBin  = 1000;
+    clusterMin   = 0.;
+    clusterMax   = 1000.;
+    clusterTitle = "Cluster spectrum with all pixels";
     if ( isHistoManagerAvailable ) {
       histoInfo = histoMgr->getHistogramInfo(_clusterSignalHistoName);
       if ( histoInfo ) {
