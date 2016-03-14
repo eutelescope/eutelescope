@@ -42,7 +42,7 @@
   <parameter name="Compress" type="int" value="1"/>
   <!-- filename without extension-->
   <!--parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-GBLfitter-alignGBL_wAir"/-->
-  <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-GBLfitter-fixedAlign-alignGBL_wAir_thickSensIT3"/>
+  <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-GBLfitter-fixedAlign-alignGBL_wAir_thickSensIT3_unb"/>
   <!-- type of output file root (default) or xml )-->
   <parameter name="FileType" type="string" value="root"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
@@ -340,8 +340,7 @@
   <parameter name="slope_cut_x" type="double"> 0.002 </parameter>
   <parameter name="slope_cut_y" type="double"> 0.002 </parameter>
 
-  <parameter name="kappaSi" type="double" value="@KappaSi@"/>
-  <parameter name="kappaAir" type="double" value="@KappaAir@"/>
+  <parameter name="kappa" type="double" value="@Kappa@"/>
 
   <parameter name="probchi2_cut" type="double" value="@Probchi2_cut@"/>
 
