@@ -70,6 +70,8 @@ protected:
   std::string _hotPixelCollectionName;
   std::string _deadColumnCollectionName;
   std::string _noiseMaskFileName;
+  std::vector<float> _holesizeX;
+  std::vector<float> _holesizeY;
   double limit;
   int _dutID;
   int _maxNumberOfPixels;
