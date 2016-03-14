@@ -26,7 +26,7 @@
    <global>
       <parameter name="LCIOInputFiles"> @LcioPath@/@FilePrefix@-converter.slcio </parameter>
       <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
-      <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
+      <parameter name="MaxRecordNumber" value=20000/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
       <parameter name="SupressCheck" value="false"/>
       <parameter name="Verbosity" value="@Verbosity@"/>

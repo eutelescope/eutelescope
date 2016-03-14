@@ -68,6 +68,8 @@ EUTelProcessorAnalysisPALPIDEfs::EUTelProcessorAnalysisPALPIDEfs()
   _nEventsFake(5),
   _nEventsWithTrack(0),
   _minTimeStamp(0),
+  _nSectors(8),
+  _chipVersion(3),
   _showFake(true),
   _realAssociation(false),
   nTracks(8),
@@ -90,9 +92,7 @@ EUTelProcessorAnalysisPALPIDEfs::EUTelProcessorAnalysisPALPIDEfs()
   ySize(0),
   xPixel(0),
   yPixel(0),
-  hotPixelCollectionVec(NULL),
-  _chipVersion(3),
-  _nSectors(8)
+  hotPixelCollectionVec(NULL)
   
 {
   _description="Analysis of the fitted tracks";
