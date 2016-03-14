@@ -1004,6 +1004,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
       streamlog_out(DEBUG4) << " ilab[0] = " << ilab[0] << std::endl;
       streamlog_out(DEBUG4) << "rx[0] = " << rx[0] << " aCorrection[3] = " << aCorrection[3] << " -> rx[0] - aCorr = " << rx[0] - aCorrection[3] << std::endl;
       streamlog_out(DEBUG4) << "aResiduals[0] = " << aResiduals[0] << " aResError[0] = " << aResErrors[0] << std::endl;
+      streamlog_out(DEBUG4) << "biased ResError by hand = " << sqrt(_resolution[0]*_resolution[0] - aCovariance(3,3)) << std::endl;
       gblax0Histo->fill( aCorrection[1]*1E3 ); // angle x [mrad]
       gbldx0Histo->fill( aCorrection[3]*1E3 ); // shift x [um]
       gblrx0Histo->fill( ( rx[0] - aCorrection[3] ) * 1E3 ); // residual x [um]
