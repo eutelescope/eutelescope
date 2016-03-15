@@ -70,8 +70,6 @@ protected:
   std::string _hotPixelCollectionName;
   std::string _deadColumnCollectionName;
   std::string _noiseMaskFileName;
-  std::vector<float> _holesizeX;
-  std::vector<float> _holesizeY;
   double limit;
   int _dutID;
   int _maxNumberOfPixels;
@@ -84,6 +82,8 @@ protected:
   std::ofstream settingsFile;
   EVENT::StringVec _chipID;
   EVENT::StringVec _irradiation;
+  std::vector<float> _holesizeX;
+  std::vector<float> _holesizeY;
   std::string _rate;
   bool _oneAlignmentCollection;
   bool _clusterAvailable;

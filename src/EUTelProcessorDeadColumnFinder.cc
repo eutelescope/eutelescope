@@ -143,9 +143,9 @@ void EUTelProcessorDeadColumnFinder::end()
     auto currentFrame = std::make_unique<lcio::TrackerDataImpl>();
     deadColumnEncoder.setCellID( currentFrame.get() );
     auto sparseFrame = std::make_unique<eutelescope::EUTelTrackerDataInterfacerImpl<eutelescope::EUTelGenericSparsePixel>>(currentFrame.get());
-    int hitPixels[hitMap[iLayer]->GetNbinsX()];
-    for (int x=0; x<hitMap[iLayer]->GetNbinsX(); x++)
-      hitPixels[x] = 0;
+    vector<int> hitPixels(hitMap[iLayer]->GetNbinsX(),0) ;
+//    for (int x=0; x<hitMap[iLayer]->GetNbinsX(); x++)
+//      hitPixels[x] = 0;
     for (int x=1; x<hitMap[iLayer]->GetNbinsX()+1; x++)
     {
 //      hitPixels[x-1] = 0;
