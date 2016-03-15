@@ -26,7 +26,7 @@
    <global>
       <parameter name="LCIOInputFiles"> @LcioPath@/@FilePrefix@-converter.slcio </parameter>
       <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
-      <parameter name="MaxRecordNumber" value=20000/>
+      <parameter name="MaxRecordNumber" value="20000"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
       <parameter name="SupressCheck" value="false"/>
       <parameter name="Verbosity" value="@Verbosity@"/>
@@ -73,13 +73,13 @@
  <processor name="pALPIDEfsHotPixelKiller" type="EUTelProcessorNoisyPixelFinder">
   <!--EUTelHotPixelKiller periodically check for pixel singing loud too often and remove them from the analysis-->
   <!--Noise (input) collection name-->
-  <parameter name="NoiseCollectionName" type="string" lcioInType="TrackerData"> pALPIDEfs_noise </parameter>
+<!--  <parameter name="NoiseCollectionName" type="string" lcioInType="TrackerData"> pALPIDEfs_noise </parameter>-->
     <!--Pixel status (input) collection name-->
-  <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData"> pALPIDEfs_status </parameter>
+<!--  <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData"> pALPIDEfs_status </parameter> -->
     <!--Input of Zero Suppressed data-->
   <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> zsdata_pALPIDEfs </parameter>
     <!--This flag is used to initialise simple data decoding and hot pixel finder (0-no, 1-yes)-->
-  <parameter name="BuildHotPixelDatabase" type="int" value="1"/>
+<!--  <parameter name="BuildHotPixelDatabase" type="int" value="1"/> -->
     <!--The list of sensor ids that have to be excluded from the clustering.-->
   <!--parameter name="ExcludedPlanes" type="IntVec"> </parameter-->
   <!--This is the name of the hot pixel collection to be saved into the output slcio file-->
@@ -89,19 +89,20 @@
   <parameter name="HotPixelDBFile" type="string" value="@DatabasePath@/run@RunNumber@-hotpixelPALPIDEfs.slcio"/>
     <!--Write mode for HotPixelDB file:  WRITE_APPEND or WRITE_NEW-->
   <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
+    <!--The number of events to be considered for each update cycle-->
+
+  <parameter name="NoOfEvents" type="int" value="@nEventsForHotpixel@"/>
     <!--This float number [0,1] represents the maximum allowed firing frequency
          within the selected number of event per cycle-->
   <!--parameter name="MaxAllowedFiringFreq" type="float" value="1"/-->
   <!--parameter name="MaxAllowedFiringFreq" type="float" value="0.001"/-->
   <parameter name="MaxAllowedFiringFreq" type="float" value="@MaxAllowedFiringFreq@"/>
-    <!--The number of events to be considered for each update cycle-->
-  <parameter name="NoOfEvents" type="int" value="@nEventsForHotpixel@"/>
     <!--The total number of hot pixel cycle-->
 <!--  <parameter name="TotalNoOfCycle" type="int" value="0"/> -->
     <!--The sensorID for the generated collection (one per detector)-->
   <parameter name="SensorIDVec" type="IntVec"> 0 1 2 3 4 5 6 </parameter>
     <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <parameter name="Verbosity" type="string" value="MESSAGE6"/>
+  <parameter name="Verbosity" type="string" value="MESSAGE3"/>
 </processor>
 
  <processor name="Save" type="EUTelOutputProcessor">
