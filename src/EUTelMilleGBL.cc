@@ -1067,10 +1067,10 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	  double dx = _hitsArray[i4][j4].measuredX - xs;
 	  double dy = _hitsArray[i4][j4].measuredY - ys;
 
-	  if( abs(dy) < _triCut ) dridxHist->fill( dx );
-	  if( abs(dx) < _triCut ) dridyHist->fill( dy );
+	  if( abs(dy) < _driCut ) dridxHist->fill( dx );
+	  if( abs(dx) < _driCut ) dridyHist->fill( dy );
 
-	  if( abs(dx) < _triCut  && abs(dy) < _triCut ) {
+	  if( abs(dx) < _driCut  && abs(dy) < _driCut ) {
 
 	    if( ndri < 99 ) {
 	      xmB[ndri] = avx;
