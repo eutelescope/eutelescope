@@ -365,6 +365,8 @@ namespace eutelescope {
 
     std::map< unsigned int , std::map< unsigned int , AIDA::IHistogram2D* > > _hitXCorrelationMatrix;
     std::map< unsigned int , std::map< unsigned int , AIDA::IHistogram2D* > > _hitYCorrelationMatrix;
+    std::map< unsigned int , std::map< unsigned int , AIDA::IHistogram2D* > > _hitXYCorrelationMatrix;
+    std::map< unsigned int , std::map< unsigned int , AIDA::IHistogram2D* > > _hitYXCorrelationMatrix;
     std::map< unsigned int , std::map< unsigned int , AIDA::IHistogram2D* > > _hitXCorrShiftMatrix;
     std::map< unsigned int , std::map< unsigned int , AIDA::IHistogram2D* > > _hitYCorrShiftMatrix;
     std::map< unsigned int , AIDA::IHistogram1D*  > _hitXCorrShiftProjection;
@@ -381,6 +383,8 @@ namespace eutelescope {
     
     static std::string _hitXCorrelationHistoName;
     static std::string _hitYCorrelationHistoName;
+    static std::string _hitXYCorrelationHistoName;
+    static std::string _hitYXCorrelationHistoName;
     static std::string _hitXCorrShiftHistoName;
     static std::string _hitYCorrShiftHistoName;
     static std::string _hitXCorrShiftProjectionHistoName;

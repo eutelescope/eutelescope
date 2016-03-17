@@ -275,6 +275,7 @@ void EUTelProcessorNoisyPixelFinder::processEvent (LCEvent * event)
 	//if we are over the number of events we need we just skip
 	if(_noOfEvents < _iEvt)
 	{
+	  // std::cout << "At event " << _iEvt << std::endl;
 		++_iEvt;
 		return;
 	}

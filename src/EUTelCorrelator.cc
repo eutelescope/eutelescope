@@ -76,6 +76,8 @@ std::string EUTelCorrelator::_clusterXCorrelationHistoName   = "ClusterXCorrelat
 std::string EUTelCorrelator::_clusterYCorrelationHistoName   = "ClusterYCorrelation";
 std::string EUTelCorrelator::_hitXCorrelationHistoName       = "HitXCorrelation";
 std::string EUTelCorrelator::_hitYCorrelationHistoName       = "HitYCorrelation";
+std::string EUTelCorrelator::_hitXYCorrelationHistoName      = "HitXYCorrelation";
+std::string EUTelCorrelator::_hitYXCorrelationHistoName      = "HitYXCorrelation";
 
 
 std::string EUTelCorrelator::_hitXCorrShiftHistoName             = "HitXCorrShift";
@@ -563,6 +565,8 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
               if( i == indexPlane ) continue; // skip as this one is not booked
               _hitXCorrelationMatrix[ iplane[ indexPlane ]        ] [ iplane[i]        ] -> fill ( trackX[ indexPlane ]          , trackX[i]           ) ;
               _hitYCorrelationMatrix[ iplane[ indexPlane ]        ] [ iplane[i]        ] -> fill ( trackY[ indexPlane ]          , trackY[i]           ) ;
+	      _hitXYCorrelationMatrix[ iplane[ indexPlane ]        ] [ iplane[i]        ] -> fill ( trackX[ indexPlane ]          , trackY[i]           ) ;
+	      _hitYXCorrelationMatrix[ iplane[ indexPlane ]        ] [ iplane[i]        ] -> fill ( trackY[ indexPlane ]          , trackX[i]           ) ;
               // assume all rotations have been done in the hitmaker processor:
               _hitXCorrShiftMatrix[ iplane[ indexPlane ]        ][ iplane[i]        ]->fill( trackX[ indexPlane ]          , trackX[ indexPlane ]          - trackX[i]          );
               _hitYCorrShiftMatrix[ iplane[ indexPlane ]        ][ iplane[i]        ]->fill( trackY[ indexPlane ]          , trackY[ indexPlane ]          - trackY[i]         );
@@ -782,6 +786,8 @@ void EUTelCorrelator::bookHistos() {
 
       map< unsigned int , AIDA::IHistogram2D * > innerMapXHit;
       map< unsigned int , AIDA::IHistogram2D * > innerMapYHit;
+      map< unsigned int , AIDA::IHistogram2D * > innerMapXYHit;
+      map< unsigned int , AIDA::IHistogram2D * > innerMapYXHit;
 
       map< unsigned int , AIDA::IHistogram2D * > innerMapXHitShift;
       map< unsigned int , AIDA::IHistogram2D * > innerMapYHitShift;
@@ -830,6 +836,7 @@ void EUTelCorrelator::bookHistos() {
             histo2D->setTitle( tempHistoTitle.c_str() );
             innerMapXCluster[ col  ] =  histo2D ;
 
+	   
             /////////////////////////////////////////////////
             // book Y
             tempHistoName =  "ClusterY/" +  _clusterYCorrelationHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
@@ -890,6 +897,26 @@ void EUTelCorrelator::bookHistos() {
 
             innerMapXHit[ col  ] =  histo2D ;
 
+	    // XY correlation plot
+	    tempHistoName  =  "HitX/" +  _hitXYCorrelationHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
+            streamlog_out( DEBUG5 ) << "Booking histo " << tempHistoName << endl;
+            tempHistoTitle =  "HitX/" +  _hitXYCorrelationHistoName + "_d" + to_string( row ) + "_d" +  to_string( col );
+
+	    histoInfo = histoMgr->getHistogramInfo(_hitXYCorrelationHistoName);
+            colNBin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 100   ;    
+            colMin   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : -0.5* geo::gGeometry().siPlaneXSize(row);
+            colMax   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax :  0.5* geo::gGeometry().siPlaneXSize(row);
+            rowNBin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yBin : 100   ;    
+            rowMin   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMin : -0.5* geo::gGeometry().siPlaneXSize(col);
+            rowMax   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMax :  0.5* geo::gGeometry().siPlaneXSize(col);
+
+	    histo2D =
+              AIDAProcessor::histogramFactory( this )->createHistogram2D( tempHistoName.c_str(), 
+                      rowNBin, rowMin, rowMax, colNBin, colMin, colMax );
+            
+	    histo2D->setTitle( tempHistoTitle.c_str() );
+
+	    innerMapXYHit[ col  ] =  histo2D ;
 
             // now the hit on the Y direction
             colNBin = _maxY[col];
@@ -920,6 +947,26 @@ void EUTelCorrelator::bookHistos() {
 
             innerMapYHit[ col ] =  histo2D ;
 
+	    // YX correlation plot
+	    tempHistoName  =  "HitY/" +  _hitYXCorrelationHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
+            streamlog_out( DEBUG5 ) << "Booking histo " << tempHistoName << endl;
+            tempHistoTitle =  "HitY/" +  _hitYXCorrelationHistoName + "_d" + to_string( row ) + "_d" +  to_string( col );
+
+	    histoInfo = histoMgr->getHistogramInfo(_hitYXCorrelationHistoName);
+            colNBin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 100   ;    
+            colMin   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : -0.5* geo::gGeometry().siPlaneXSize(row);
+            colMax   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax :  0.5* geo::gGeometry().siPlaneXSize(row);
+            rowNBin  =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yBin : 100   ;    
+            rowMin   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMin : -0.5* geo::gGeometry().siPlaneXSize(col);
+            rowMax   =      ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMax :  0.5* geo::gGeometry().siPlaneXSize(col);
+
+	    histo2D =
+              AIDAProcessor::histogramFactory( this )->createHistogram2D( tempHistoName.c_str(), 
+                      rowNBin, rowMin, rowMax, colNBin, colMin, colMax );
+            
+	    histo2D->setTitle( tempHistoTitle.c_str() );
+
+	    innerMapYXHit[ col  ] =  histo2D ;
            
             // book special histos to calculate sensors initial offsets in X and Y
             // book X
@@ -977,6 +1024,8 @@ void EUTelCorrelator::bookHistos() {
           if ( _hasHitCollection ) {
             innerMapXHit[ col ] = NULL ;
             innerMapYHit[ col ] = NULL ;
+	    innerMapXYHit[ col ] = NULL ;
+            innerMapYXHit[ col ] = NULL ;
  
             innerMapXHitShift[ col ] = NULL ;
             innerMapYHitShift[ col ] = NULL ;            
@@ -1001,6 +1050,8 @@ void EUTelCorrelator::bookHistos() {
       {
          _hitXCorrelationMatrix[ row ] = innerMapXHit;
          _hitYCorrelationMatrix[ row ] = innerMapYHit;
+	 _hitXYCorrelationMatrix[ row ] = innerMapXYHit;
+         _hitYXCorrelationMatrix[ row ] = innerMapYXHit;
 
          _hitXCorrShiftMatrix[ row ]   = innerMapXHitShift  ;
          _hitYCorrShiftMatrix[ row ]   = innerMapYHitShift  ;        
