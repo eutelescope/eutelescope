@@ -2235,13 +2235,13 @@ void EUTelTestFitter::bookHistos()
     string bname = iden.str();
  
 
-    int   limitXN  = 100;
-    int   limitYN  = 100;
-    int   limitZN  = 100;
+    int   limitXN  = 500;
+    int   limitYN  = 500;
+    int   limitZN  = 500;
     float limitY   = 10.0;
     float limitX   = 10.0; 
-    float limitYr  = 0.1;
-    float limitXr  = 0.1; 
+    float limitYr  = 0.5;
+    float limitXr  = 0.5; 
     //float limitZ   = 50.0; 
     float limitZr  = 50.0; 
    //Resids 
