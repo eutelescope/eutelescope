@@ -113,7 +113,7 @@ EUTelProcessorGeometricClustering::EUTelProcessorGeometricClustering():
                              _ExcludedPlanes, std::vector<int> () );
 
   registerProcessorParameter("CutNPixels","Max number of hits per sensor",
-                             _cutNPixels, static_cast<float > ( 1000 ) );
+                             _cutNPixels, static_cast<float > ( 100000 ) );
 
   		_isFirstEvent = true;
 }
