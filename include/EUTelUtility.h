@@ -185,6 +185,11 @@ namespace eutelescope {
         /*! Reads hotpixel information from hotPixelCollection into hotPixelMap
          * to be used in the sensor exclusion area logic 
          */
+
+
+	int cantorEncode(int X, int Y);
+	std::map<int, std::vector<int>> readNoisyPixelList(LCEvent* event, std::string const & noisyPixelCollectionName);
+	
 	std::unique_ptr<EUTelTrackerDataInterfacer> getSparseData(IMPL::TrackerDataImpl* const data, SparsePixelType type);
 	std::unique_ptr<EUTelTrackerDataInterfacer> getSparseData(IMPL::TrackerDataImpl* const data, int type);
 
