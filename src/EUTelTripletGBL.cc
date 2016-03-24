@@ -423,7 +423,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
   for( std::vector<triplet>::iterator drip = downstream_triplets.begin(); drip != downstream_triplets.end(); drip++ ){
 
     // Fill some histograms for downstream triplets:
-    dridxHisto->fill( (*drip).getdx(4)*1E3 ); //sig = 7 um at 5 GeV
+    dridxHisto->fill( (*drip).getdx(4)*1E3 ); 
     dridxvsx->fill( (*drip).base().x, (*drip).getdx(4)*1E3 ); // check for rot
     dridxvsy->fill( (*drip).base().y, (*drip).getdx(4)*1E3 );
     dridxvstx->fill( (*drip).slope().x*1E3, (*drip).getdx(4)*1E3 ); // check for z shift
@@ -705,8 +705,9 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
     scat.Zero(); //mean is zero
 
     double p = _eBeam; // beam momentum
-    double X0Si = -1;
-    double X0_Air_frac = -1.; // define later when dz is known
+    double epsSi = -1;
+    double epsAir = -1.; // define later when dz is known
+    double sumeps = 0.0;
     double tetSi = -1;
     double tetAir = -1.;
 
@@ -732,9 +733,20 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
     double step = 0.;
     s = -10.;
 
+    // loop over all scatterers first to calculate sumeps
+    for( int ipl = 0; ipl < 6; ++ipl ){
+      epsSi = _thickness[ipl]/ 93.66 + 0.050 / 285.6; // Si + Kapton (Kapton ist 2 * 25  = 50 um thick, but has 1/3 rad length = 17 um)
+      sumeps += epsSi;
+      if( ipl < 5) {
+	double distplane = _planePosition[ipl+1] - _planePosition[ipl];
+	epsAir =   distplane  / 304200.; 
+        sumeps += epsAir;
+      }
+
+    }
+
     int DUT_label;
     for( int ipl = 0; ipl < 6; ++ipl ){
-
       if(ipl == 0){
 	// one dummy point:
 
@@ -798,8 +810,8 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
       //meas[0] = trackhit.x;
       //meas[1] = trackhit.y;
 
-      X0Si = (_thickness[ipl] + 0.017) / 94; // Si + Kapton (Kapton ist 2 * 25  = 50 um thick, but has 1/3 rad length = 17 um)
-      tetSi = _kappa * 0.0136 * sqrt(X0Si) / p * ( 1 + 0.038*std::log(X0Si) );
+      epsSi = (_thickness[ipl] + 0.017) / 94; // Si + Kapton (Kapton ist 2 * 25  = 50 um thick, but has 1/3 rad length = 17 um)
+      tetSi = _kappa * 0.0136 * sqrt(epsSi) / p * ( 1 + 0.038*std::log(sumeps) );
 
       wscatSi[0] = 1.0 / ( tetSi * tetSi ); //weight
       wscatSi[1] = 1.0 / ( tetSi * tetSi );
@@ -833,8 +845,8 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 	double distplane = _planePosition[ipl+1] - _planePosition[ipl];
 
 	step = 0.21*distplane;
-	X0_Air_frac =   0.5*distplane  / 304200.; 
-	tetAir = _kappa * 0.0136 * sqrt(X0_Air_frac) / p * ( 1 + 0.038*std::log(X0_Air_frac) ); // add 10% for trial
+	epsAir =   0.5*distplane  / 304200.; 
+	tetAir = _kappa * 0.0136 * sqrt(epsAir) / p * ( 1 + 0.038*std::log(sumeps) ); // add 10% for trial
 
 	wscatAir[0] = 1.0 / ( tetAir * tetAir ); // weight
 	wscatAir[1] = 1.0 / ( tetAir * tetAir ); 
