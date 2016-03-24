@@ -602,7 +602,7 @@ namespace eutelescope {
   };
 
   //! A global instance of the processor:
-  EUTelTripletGBL aEUTelTripletGBL;
+  //EUTelTripletGBL aEUTelTripletGBL;
 
 
 }
