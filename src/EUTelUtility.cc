@@ -25,6 +25,71 @@ namespace eutelescope {
 
     namespace Utility {
 
+
+	int cantorEncode(int X, int Y) {
+		//Cantor pairing function
+		return static_cast<int>( 0.5*(X+Y)*(X+Y+1)+Y );
+	} 
+
+
+	std::map<int, std::vector<int>> readNoisyPixelList(LCEvent* event, std::string const & noisyPixelCollectionName) {
+	
+		//Preapare pointer to hot pixel collection
+		LCCollectionVec* noisyPixelCollectionVec = nullptr;
+
+		//Try to obtain the collection
+		try {
+			noisyPixelCollectionVec = static_cast<LCCollectionVec*>( event->getCollection(noisyPixelCollectionName) );
+		} catch (...) {
+			if (!noisyPixelCollectionName.empty()) {
+				streamlog_out ( WARNING1 ) << "noisyPixelCollectionName " << noisyPixelCollectionName.c_str() << " not found" << std::endl;
+				streamlog_out ( WARNING1 ) << "READ CAREFULLY: This means that no noisy pixels will be removed, despite the processor successfully running!" << std::endl;
+			}
+			return std::map<int, std::vector<int>>();
+		}
+
+		//Decoder to get sensor ID
+		CellIDDecoder<TrackerDataImpl> cellDecoder( noisyPixelCollectionVec );
+		EUTelBaseSparsePixel* pixel = nullptr;
+
+		std::map<int, std::vector<int>> noisyPixelMap;
+		
+		//Loop over all hot pixels
+		for(int i=0; i<  noisyPixelCollectionVec->getNumberOfElements(); i++) {
+			//Get the TrackerData for the sensor ID
+			TrackerDataImpl* noisyPixelData = dynamic_cast< TrackerDataImpl *> ( noisyPixelCollectionVec->getElementAt( i ) );
+			int sensorID = cellDecoder( noisyPixelData )["sensorID"];
+			int pixelType = cellDecoder( noisyPixelData )["sparsePixelType"];
+			
+
+			//And get the corresponding noise vector for that plane
+			std::vector<int>* noiseSensorVector = &(noisyPixelMap[sensorID]);
+			std::unique_ptr<EUTelTrackerDataInterfacer> noisyPixelDataInterface;
+
+			if( pixelType == kEUTelGenericSparsePixel ) {
+				noisyPixelDataInterface =  std::unique_ptr<EUTelTrackerDataInterfacer>( new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>(noisyPixelData) );
+			} else {
+				streamlog_out( ERROR5 ) << "The noisy pixel collection is corrupted, it does not contain the right pixel type. Something is wrong!" << std::endl;
+			}
+			
+			//Store all the noisy pixels in the noise vector, use the provided encoding to map two int's to an unique int
+			for ( unsigned int iPixel = 0; iPixel < noisyPixelDataInterface->size(); iPixel++ ) {
+				pixel = noisyPixelDataInterface->getSparsePixelAt( iPixel, pixel);
+				noiseSensorVector->push_back( cantorEncode(pixel->getXCoord(), pixel->getYCoord()) );
+
+			}
+		}
+		delete pixel;
+
+		for( std::map<int, std::vector<int> >::iterator it = noisyPixelMap.begin(); it != noisyPixelMap.end(); ++it) {
+			//Sort the noisy pixel maps
+			std::sort( (it->second).begin(), (it->second).end() );
+			streamlog_out( MESSAGE4) << "Read in " << (it->second).size() << " noisy pixels on plane " << (it->first) << std::endl;
+		}
+
+		return noisyPixelMap;
+	}
+
 	std::unique_ptr<EUTelTrackerDataInterfacer> getSparseData(IMPL::TrackerDataImpl* const data, int type) {
 		return getSparseData(data, static_cast<SparsePixelType>(type));
 	}

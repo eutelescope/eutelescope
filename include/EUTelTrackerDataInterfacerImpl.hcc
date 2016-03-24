@@ -29,6 +29,8 @@ namespace eutelescope {
      * new pixel with all the pieces of information.
      */
     void addSparsePixel(PixelType* pixel);
+    
+    void addSparsePixel(EUTelBaseSparsePixel* pixel);
 
     //! Get one of the sparse pixel
     /*! This method is used to get one of the sparse pixel contained
@@ -64,7 +66,7 @@ namespace eutelescope {
      * @return the size of TrackerData measured in sparse
      * pixels.
      */
-    unsigned int size() const ;
+    size_t size() const ;
 
     //! Expose the TrackerDataImpl to the public
     /*! This method is used to allow a direct and public access to the
