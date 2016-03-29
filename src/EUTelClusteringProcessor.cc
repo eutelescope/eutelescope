@@ -2127,7 +2127,7 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent* evt, LCCollectionVec* p
                     }
                     else
                     {
-                        sparseCluster->addSparsePixel( &pixel );
+                        sparseCluster->addSparsePixel( pixel );
                         noiseValueVec.push_back(noise->getChargeValues()[ index ]);
                     }
                 }

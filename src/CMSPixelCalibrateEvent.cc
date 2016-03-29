@@ -355,7 +355,7 @@ void CMSPixelCalibrateEventProcessor::processEvent (LCEvent * event) {
                     // This event contains pixel that cannot be calibrated and has to be skipped.
                     throw SkipEventException(this);  
                 }
-                correctedData.addSparsePixel( correctedPixel.get() );			
+                correctedData.addSparsePixel( *correctedPixel.get() );			
                 
             }
             correctedDataCollection->push_back( corrected );

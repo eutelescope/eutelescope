@@ -199,7 +199,8 @@ void AlibavaClusterConverter::processEvent (LCEvent * anEvent) {
 				}
 				eutelPixel.setSignal( memberSignal ); // EUTelGenericSparsePixel::setSignal() gets float
 				eutelPixel.setTime(0); // there is no time info for channels in Alibava
-				eutelPixelCluster->addSparsePixel( new EUTelGenericSparsePixel(eutelPixel) );
+				auto newPix = EUTelGenericSparsePixel(eutelPixel);
+				eutelPixelCluster->addSparsePixel( newPix );
 			}
 			
 			// Now we have a EUTelSparseCluster

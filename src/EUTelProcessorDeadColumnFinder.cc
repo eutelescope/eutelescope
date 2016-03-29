@@ -190,12 +190,11 @@ void EUTelProcessorDeadColumnFinder::end()
       {
         for (int y=0; y<_yPixel[iLayer]; y++)
         {
-          EUTelGenericSparsePixel *sparsePixel =  new EUTelGenericSparsePixel();
-          sparsePixel->setXCoord(x);
-          sparsePixel->setYCoord(y);
-          sparsePixel->setSignal(1);
+          EUTelGenericSparsePixel sparsePixel;
+          sparsePixel.setXCoord(x);
+          sparsePixel.setYCoord(y);
+          sparsePixel.setSignal(1);
           sparseFrame->addSparsePixel(sparsePixel);
-          delete sparsePixel;
          }
          streamlog_out ( MESSAGE5 ) << "Dead double column found in layer " << iLayer << " at X=" << x << endl;
        }

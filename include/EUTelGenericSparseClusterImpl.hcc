@@ -146,7 +146,7 @@ class EUTelGenericSparseClusterImpl : public EUTelSimpleVirtualCluster
 	/*! This method is used to add to the current TrackerDataImpl a
 	 *  new sparse pixel with all the pieces of information.
 	 */
-	void addSparsePixel(PixelType* pixel)
+	void addSparsePixel(PixelType const & pixel)
 	{
 		_rawDataInterfacer.addSparsePixel(pixel);
 	}

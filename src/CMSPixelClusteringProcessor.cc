@@ -499,7 +499,7 @@ void CMSPixelClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * cl
 				for (unsigned int i=0;i< PixelVec.size();i++) {
 					if(clusterNumber.at(i)== *it) { 
 					    // Put only these pixels in that ClusterCollection that belong to that cluster
-						pixelCluster->addSparsePixel(PixelVec.at(i));
+						pixelCluster->addSparsePixel(*PixelVec.at(i));
 						streamlog_out( DEBUG5 ) << "Adding Pixel " << i << " to cluster " << clusterNumber.at(i) << endl;
 					}
 				}

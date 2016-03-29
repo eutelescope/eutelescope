@@ -28,7 +28,7 @@ namespace eutelescope {
     /*! This method is used to add to the current TrackerDataImpl a
      * new pixel with all the pieces of information.
      */
-    void addSparsePixel(PixelType* pixel);
+    void addSparsePixel(PixelType const & pixel);
 
     //! Get one of the sparse pixel
     /*! This method is used to get one of the sparse pixel contained
@@ -176,84 +176,84 @@ namespace eutelescope {
 
 	//! Template specialization for the addSparsePixel method
 	template<>
-	inline void EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel>::addSparsePixel(EUTelSimpleSparsePixel* pixel)
+	inline void EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel>::addSparsePixel(EUTelSimpleSparsePixel const & pixel)
 	{
 
-		_trackerData->chargeValues().push_back( static_cast<float> (pixel->getXCoord()) );
-		_trackerData->chargeValues().push_back( static_cast<float> (pixel->getYCoord()) );
-		_trackerData->chargeValues().push_back( static_cast<float> (pixel->getSignal()) );
+		_trackerData->chargeValues().push_back( static_cast<float> (pixel.getXCoord()) );
+		_trackerData->chargeValues().push_back( static_cast<float> (pixel.getYCoord()) );
+		_trackerData->chargeValues().push_back( static_cast<float> (pixel.getSignal()) );
 
-		_pixelVec.push_back (EUTelSimpleSparsePixel(	static_cast<short>(pixel->getXCoord()), 
-								static_cast<short>(pixel->getYCoord()), 
-								static_cast<float>(pixel->getSignal()) 
+		_pixelVec.push_back (EUTelSimpleSparsePixel(	static_cast<short>(pixel.getXCoord()), 
+								static_cast<short>(pixel.getYCoord()), 
+								static_cast<float>(pixel.getSignal()) 
 								));
 	}
   
 	template<>
-	inline void EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>::addSparsePixel(EUTelGenericSparsePixel* pixel)
+	inline void EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>::addSparsePixel(EUTelGenericSparsePixel const & pixel)
 	{
 		//add values to lcio charge vector
-		_trackerData->chargeValues().push_back( static_cast<float>(pixel->getXCoord()) );
-		_trackerData->chargeValues().push_back( static_cast<float>(pixel->getYCoord()) );
-		_trackerData->chargeValues().push_back( static_cast<float>(pixel->getSignal()) );
-		_trackerData->chargeValues().push_back( static_cast<float>(pixel->getTime()) );
+		_trackerData->chargeValues().push_back( static_cast<float>(pixel.getXCoord()) );
+		_trackerData->chargeValues().push_back( static_cast<float>(pixel.getYCoord()) );
+		_trackerData->chargeValues().push_back( static_cast<float>(pixel.getSignal()) );
+		_trackerData->chargeValues().push_back( static_cast<float>(pixel.getTime()) );
 		//add pixel to local pixel vector
-		_pixelVec.push_back(EUTelGenericSparsePixel(	static_cast<short>(pixel->getXCoord()),
-								static_cast<short>(pixel->getYCoord()),
-								static_cast<float>(pixel->getSignal()),
-								static_cast<short>(pixel->getTime() )
+		_pixelVec.push_back(EUTelGenericSparsePixel(	static_cast<short>(pixel.getXCoord()),
+								static_cast<short>(pixel.getYCoord()),
+								static_cast<float>(pixel.getSignal()),
+								static_cast<short>(pixel.getTime() )
 								));
 	}
 	
 	template<>
-	inline void EUTelTrackerDataInterfacerImpl<EUTelGeometricPixel>::addSparsePixel(EUTelGeometricPixel* pixel)
+	inline void EUTelTrackerDataInterfacerImpl<EUTelGeometricPixel>::addSparsePixel(EUTelGeometricPixel const & pixel)
 	{
 		//add values to lcio charge vector
-		_trackerData->chargeValues().push_back( static_cast<float>(pixel->getXCoord()) );
-		_trackerData->chargeValues().push_back( static_cast<float>(pixel->getYCoord()) );
-		_trackerData->chargeValues().push_back( static_cast<float>(pixel->getSignal()) );
-		_trackerData->chargeValues().push_back( static_cast<float>(pixel->getTime()) );
+		_trackerData->chargeValues().push_back( static_cast<float>(pixel.getXCoord()) );
+		_trackerData->chargeValues().push_back( static_cast<float>(pixel.getYCoord()) );
+		_trackerData->chargeValues().push_back( static_cast<float>(pixel.getSignal()) );
+		_trackerData->chargeValues().push_back( static_cast<float>(pixel.getTime()) );
 
-		_trackerData->chargeValues().push_back( pixel->getPosX() );
-		_trackerData->chargeValues().push_back( pixel->getPosY() );
-		_trackerData->chargeValues().push_back( pixel->getBoundaryX() );
-		_trackerData->chargeValues().push_back( pixel->getBoundaryY() );
+		_trackerData->chargeValues().push_back( pixel.getPosX() );
+		_trackerData->chargeValues().push_back( pixel.getPosY() );
+		_trackerData->chargeValues().push_back( pixel.getBoundaryX() );
+		_trackerData->chargeValues().push_back( pixel.getBoundaryY() );
 
 		//add pixel to local pixel vector
-		_pixelVec.push_back(EUTelGeometricPixel(	static_cast<short>(pixel->getXCoord()),
-								static_cast<short>(pixel->getYCoord()),
-								static_cast<float>(pixel->getSignal()),
-								static_cast<short>(pixel->getTime() ),
-								pixel->getPosX(),
-								pixel->getPosY(),
-								pixel->getBoundaryX(),
-								pixel->getBoundaryY()
+		_pixelVec.push_back(EUTelGeometricPixel(	static_cast<short>(pixel.getXCoord()),
+								static_cast<short>(pixel.getYCoord()),
+								static_cast<float>(pixel.getSignal()),
+								static_cast<short>(pixel.getTime() ),
+								pixel.getPosX(),
+								pixel.getPosY(),
+								pixel.getBoundaryX(),
+								pixel.getBoundaryY()
 								));
 	}
 
 	template<>
-	inline void EUTelTrackerDataInterfacerImpl<EUTelMuPixel>::addSparsePixel(EUTelMuPixel* pixel)
+	inline void EUTelTrackerDataInterfacerImpl<EUTelMuPixel>::addSparsePixel(EUTelMuPixel const & pixel)
 	{
 		//add values to lcio charge vector
-		_trackerData->chargeValues().push_back( static_cast<float>(pixel->getXCoord()) );
-		_trackerData->chargeValues().push_back( static_cast<float>(pixel->getYCoord()) );
-		_trackerData->chargeValues().push_back( static_cast<float>(pixel->getSignal()) );
-		_trackerData->chargeValues().push_back( static_cast<float>(pixel->getTime()) );
-		_trackerData->chargeValues().push_back(	static_cast<float>(pixel->getHitTime()) );
+		_trackerData->chargeValues().push_back( static_cast<float>(pixel.getXCoord()) );
+		_trackerData->chargeValues().push_back( static_cast<float>(pixel.getYCoord()) );
+		_trackerData->chargeValues().push_back( static_cast<float>(pixel.getSignal()) );
+		_trackerData->chargeValues().push_back( static_cast<float>(pixel.getTime()) );
+		_trackerData->chargeValues().push_back(	static_cast<float>(pixel.getHitTime()) );
 		_trackerData->chargeValues().push_back(	static_cast<float>(static_cast<long
-		long unsigned>(pixel->getFrameTime() )  & 0xFFFFFFFF ) );
+		long unsigned>(pixel.getFrameTime() )  & 0xFFFFFFFF ) );
 		_trackerData->chargeValues().push_back(	static_cast<float>(static_cast<long
-		long unsigned>(pixel->getFrameTime() ) >> 32 ) );
+		long unsigned>(pixel.getFrameTime() ) >> 32 ) );
 				
 
 		//add pixel to local pixel vector
-		_pixelVec.push_back(EUTelMuPixel(		static_cast<short>(pixel->getXCoord()),
- 								static_cast<short>(pixel->getYCoord()),
- 								static_cast<float>(pixel->getSignal()),
- 								static_cast<short>(pixel->getTime() ),
- 								static_cast<short>(pixel->getHitTime()),
+		_pixelVec.push_back(EUTelMuPixel(		static_cast<short>(pixel.getXCoord()),
+ 								static_cast<short>(pixel.getYCoord()),
+ 								static_cast<float>(pixel.getSignal()),
+ 								static_cast<short>(pixel.getTime() ),
+ 								static_cast<short>(pixel.getHitTime()),
  								static_cast<long
- 								long unsigned>(pixel->getFrameTime())
+ 								long unsigned>(pixel.getFrameTime())
  								));
 								
 	}
