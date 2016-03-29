@@ -60,7 +60,10 @@ class EUTelTrackerDataInterfacer{
      * @return the size of TrackerData measured in sparse
      * pixels.
      */
-    virtual unsigned int size() const = 0;
+    virtual size_t size() const = 0;
+
+
+    virtual void addSparsePixel(EUTelBaseSparsePixel* pixel) = 0;
 
     //! Expose the TrackerDataImpl to the public
     /*! This method is used to allow a direct and public access to the
