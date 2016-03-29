@@ -82,6 +82,8 @@ protected:
   std::ofstream settingsFile;
   EVENT::StringVec _chipID;
   EVENT::StringVec _irradiation;
+  std::vector<float> _holesizeX;
+  std::vector<float> _holesizeY;
   std::string _rate;
   bool _oneAlignmentCollection;
   bool _clusterAvailable;
@@ -101,6 +103,8 @@ protected:
   int _nEventsWithTrack;
   int _nEventsWithEfficiency;
   double _minTimeStamp;
+  int _nSectors;
+  int _chipVersion;
   bool _showFake;
   bool _realAssociation;
 private:

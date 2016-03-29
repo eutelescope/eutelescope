@@ -17,16 +17,14 @@
 
    <execute>
       <processor name="AIDA"/>
-      <processor name="pALPIDEfsEUTelAutoPedestalNoiseProcessor"/>
       <processor name="pALPIDEfsHotPixelKiller"/>
       <processor name="MyEUTelUtilityPrintEventNumber"/>
-      <!--processor name="Save"/-->
    </execute>
 
    <global>
       <parameter name="LCIOInputFiles"> @LcioPath@/@FilePrefix@-converter.slcio </parameter>
       <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
-      <parameter name="MaxRecordNumber" value="@nEventsForHotpixel@"/>
+      <parameter name="MaxRecordNumber" value="20000"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
       <parameter name="SupressCheck" value="false"/>
       <parameter name="Verbosity" value="@Verbosity@"/>
@@ -44,38 +42,12 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="pALPIDEfsEUTelAutoPedestalNoiseProcessor" type="EUTelAutoPedestalNoiseProcessor">
-  <!--EUTelAutoPedestalNoiseProcessor produces initial pedestal / noise / status with user provided values-->
-  <!--Noise local collection-->
-  <parameter name="NoiseCollectionName" type="string" lcioOutType="TrackerData"> pALPIDEfs_noise </parameter>
-    <!--Pedestal local collection-->
-  <parameter name="PedestalCollectionName" type="string" lcioOutType="TrackerData"> pALPIDEfs_pedestal </parameter>
-    <!--Pixel status collection-->
-  <parameter name="StatusCollectionName" type="string" lcioOutType="TrackerRawData"> pALPIDEfs_status </parameter>
-    <!--The initial value of noise (one value for detector)-->
-  <parameter name="InitNoiseValue" type="FloatVec"> 1 1 1 1 1 1 1 </parameter>
-    <!--The initial value of pedestal (one value for detector)-->
-  <parameter name="InitPedestalValue" type="FloatVec"> 0 0 0 0 0 0 0 </parameter>
-    <!--The maximum pixel along x (default 255, one value per detector)-->
-  <parameter name="MaxXVector" type="IntVec"> 1023 1023 1023 1023 1023 1023 1023 </parameter>
-    <!--The maximum pixel along y (default 255, one value per detector)-->
-  <parameter name="MaxYVector" type="IntVec"> 511 511 511 511 511 511 511 </parameter>
-    <!--The minimum pixel along x (default 0, one value per detector)-->
-  <parameter name="MinXVector" type="IntVec"> 0 0 0 0 0 0 0 </parameter>
-    <!--The minimum pixel along y (default 0, one value per detector)-->
-  <parameter name="MinYVector" type="IntVec"> 0 0 0 0 0 0 0 </parameter>
-    <!--The sensorID for the generated collection (one per detector)-->
-  <parameter name="SensorIDVec" type="IntVec"> 0 1 2 3 4 5 6 </parameter>
-    <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <!--parameter name="Verbosity" type="string" value=""/-->
-</processor>
-
- <processor name="pALPIDEfsHotPixelKiller" type="EUTelProcessorHotPixelFinder">
+ <processor name="pALPIDEfsHotPixelKiller" type="EUTelProcessorNoisyPixelFinder">
   <!--EUTelHotPixelKiller periodically check for pixel singing loud too often and remove them from the analysis-->
   <!--Noise (input) collection name-->
-  <parameter name="NoiseCollectionName" type="string" lcioInType="TrackerData"> pALPIDEfs_noise </parameter>
+  <!--parameter name="NoiseCollectionName" type="string" lcioInType="TrackerData"> pALPIDEfs_noise </parameter-->
     <!--Pixel status (input) collection name-->
-  <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData"> pALPIDEfs_status </parameter>
+  <!--parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData"> pALPIDEfs_status </parameter-->
     <!--Input of Zero Suppressed data-->
   <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> zsdata_pALPIDEfs </parameter>
     <!--This flag is used to initialise simple data decoding and hot pixel finder (0-no, 1-yes)-->
@@ -95,9 +67,11 @@
   <!--parameter name="MaxAllowedFiringFreq" type="float" value="0.001"/-->
   <parameter name="MaxAllowedFiringFreq" type="float" value="@MaxAllowedFiringFreq@"/>
     <!--The number of events to be considered for each update cycle-->
-  <parameter name="NoOfEventPerCycle" type="int" value="@nEventsForHotpixel@"/>
+  <parameter name="NoOfEvents" type="int" value="@nEventsForHotpixel@"/>
     <!--The total number of hot pixel cycle-->
-  <parameter name="TotalNoOfCycle" type="int" value="0"/>
+<!--  <parameter name="TotalNoOfCycle" type="int" value="0"/> -->
+    <!--The sensorID for the generated collection (one per detector)-->
+  <parameter name="SensorIDVec" type="IntVec"> 0 1 2 3 4 5 6 </parameter>
     <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <parameter name="Verbosity" type="string" value="MESSAGE6"/>
 </processor>

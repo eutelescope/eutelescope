@@ -174,12 +174,18 @@
   <parameter name="Irradiation" type="stringVec" value="@IrradiationLevel@"/>
   <!--Data taking rate-->
   <parameter name="Rate" type="string" value="@Rate@"/>
+  <!--This is parameter for Chip Version that we are using for analysis, for palpiefs3, use 3-->
+  <parameter name="ChipVersion" type="int" value="@ChipVersion@"/>
   <!--Folder name where all the settings of each run will be saved (settings_DUTid.txt)-->
   <parameter name="OutputSettingsFolderName" type="string" value="@LcioPath@/../"/>
   <!--This is minimum timestamp required to consider an event-->
   <parameter name="MinTimeStamp" type="double" value="@MinTimeStamp@"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value="MESSAGE1"/-->
+  <!--Assign the size of the hole, minimum X, maximum X (in mm) -->
+  <parameter name="HoleSizeX" type="FloatVec"> 1.0 29.0 </parameter>
+  <!--Assign the size of the hole, minimum Y, maximum Y (in mm) -->
+  <parameter name="HoleSizeY" type="FloatVec"> 9.0 12.5 </parameter>
   <!--Show fake efficiency-->
   <parameter name="ShowFake" type="bool" value="false"/>
   <!--Calculate track to hit association without allowing the tracks to share hits-->
