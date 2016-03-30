@@ -318,7 +318,7 @@ namespace eutelescope {
      *  @return the size of TrackerData measured in sparse
      *  pixels. 
      */ 
-    unsigned int size() const ;
+    size_t size() const ;
     
     //! Get the type of sparsified pixel
     /*! This method is used to get the type of sparsified pixel
@@ -366,6 +366,10 @@ namespace eutelescope {
     {
 	_rawDataInterfacer.addSparsePixel(pixel);
     }
+
+   std::vector<PixelType> const & getPixels() const {
+	return _rawDataInterfacer.getPixels();
+   } 
 
   protected:
     

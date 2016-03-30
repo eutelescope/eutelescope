@@ -96,8 +96,7 @@ void EUTelProcessorRawHistos::initialiseNoisyPixels( LCCollectionVec* const nois
 
 	//Decoder to get sensor ID
 	CellIDDecoder<TrackerDataImpl> cellDecoder( noisyPixCollectionVec );
-        auto pixel = std::unique_ptr<EUTelBaseSparsePixel>(nullptr);
-
+	
 	//Loop over all hot pixels
 	for(int i=0; i<  noisyPixCollectionVec->getNumberOfElements(); i++) {
 		//Get the TrackerData for the sensor ID
@@ -107,16 +106,14 @@ void EUTelProcessorRawHistos::initialiseNoisyPixels( LCCollectionVec* const nois
 		//And get the corresponding noise vector for that plane
 		std::vector<int>* noiseSensorVector = &(_noisyPixelVecMap[sensorID]);
 
-		std::unique_ptr<EUTelTrackerDataInterfacer> noisyPixelData = std::unique_ptr<EUTelTrackerDataInterfacer>();
-
 		if( pixelType == kEUTelGenericSparsePixel ) {
-			noisyPixelData =  std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(noisyTrackerData);
-		}
-		//Store all the noisy pixels in the noise vector, use the provided encoding to map two int's to an unique int
-		for ( unsigned int iPixel = 0; iPixel < noisyPixelData->size(); iPixel++ ) {
-			noisyPixelData->getSparsePixelAt( iPixel, pixel);
-			noiseSensorVector->push_back( cantorEncode(pixel->getXCoord(), pixel->getYCoord()) );
-		}
+			auto noisyPixelData =  std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(noisyTrackerData);
+			auto pixelVec = noisyPixelData->getPixels();
+			//Store all the noisy pixels in the noise vector, use the provided encoding to map two int's to an unique int
+			for( auto& pixel: pixelVec ) {	
+				noiseSensorVector->push_back( cantorEncode(pixel.getXCoord(), pixel.getYCoord()) );
+			}
+		} else { /*PANIC*/ }
 	}
 
 	for(auto& i: _noisyPixelVecMap) {
@@ -182,32 +179,27 @@ void EUTelProcessorRawHistos::processEvent (LCEvent* event) {
 			int sensorID            = static_cast<int > ( cellDecoder( zsData )["sensorID"] );
 
 			// now prepare the EUTelescope interface to sparsified data.  
-			unique_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel > >  sparseData (new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> ( zsData ));
-			
-			auto genericPixel = std::make_unique<EUTelGenericSparsePixel>();
+			auto sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>( zsData );
+			auto pixelVec = sparseData->getPixels();
 
-			// loop over all pixels in the sparseData object, these are the hit pixels!
-			for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ ) {
+			for( auto& genericPixel: pixelVec ) {
 				bool isNoisy = false;
-			
-				//get the pixel
-				sparseData->getSparsePixelAt( iPixel, genericPixel );
 				
-				int xCo = genericPixel->getXCoord(); 
-				int yCo = genericPixel->getYCoord();
+				int xCo = genericPixel.getXCoord(); 
+				int yCo = genericPixel.getYCoord();
 				int encoded = cantorEncode(xCo, yCo);
 
 				if (_treatNoise) isNoisy = std::binary_search(_noisyPixelVecMap.at(sensorID).begin(), _noisyPixelVecMap.at(sensorID).end(), encoded );
 
 
 				rawHitsPerPlane[sensorID]++;
-				_chargeHisto.at(sensorID)->fill(genericPixel->getSignal());
-				_timeHisto.at(sensorID)->fill(genericPixel->getTime());		
+				_chargeHisto.at(sensorID)->fill(genericPixel.getSignal());
+				_timeHisto.at(sensorID)->fill(genericPixel.getTime());		
 		
 				if(!isNoisy) {	
 					rawHitsPerPlaneNoNoise[sensorID]++;
-					_chargeHistoNoNoise.at(sensorID)->fill(genericPixel->getSignal());
-					_timeHistoNoNoise.at(sensorID)->fill(genericPixel->getTime());		
+					_chargeHistoNoNoise.at(sensorID)->fill(genericPixel.getSignal());
+					_timeHistoNoNoise.at(sensorID)->fill(genericPixel.getTime());		
 				}
 			}
 		}

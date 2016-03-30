@@ -86,7 +86,7 @@ namespace eutelescope {
     IMPL::TrackerDataImpl* trackerData();
 
    std::vector<PixelType> const & getPixels() const {
-	return &_pixelVec;
+	return _pixelVec;
    } 
   protected:
     //! Internal method to fill the local copy of all the pixels

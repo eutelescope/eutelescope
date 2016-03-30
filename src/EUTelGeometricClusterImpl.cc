@@ -3,18 +3,13 @@
 
 using namespace eutelescope;
 
-EUTelGeometricClusterImpl::EUTelGeometricClusterImpl(IMPL::TrackerDataImpl* data): EUTelGenericSparseClusterImpl<EUTelGeometricPixel>(data)
-{
-/*nothing else to do*/
+EUTelGeometricClusterImpl::EUTelGeometricClusterImpl(IMPL::TrackerDataImpl* data): EUTelGenericSparseClusterImpl<EUTelGeometricPixel>(data) {
 } 
 
-EUTelGeometricClusterImpl::~EUTelGeometricClusterImpl()
-{
-
+EUTelGeometricClusterImpl::~EUTelGeometricClusterImpl() {
 }
 
-void EUTelGeometricClusterImpl::getClusterGeomInfo(float& xPos, float& yPos, float& xSize, float& ySize) const 
-{
+void EUTelGeometricClusterImpl::getClusterGeomInfo(float& xPos, float& yPos, float& xSize, float& ySize) const {
 	float xMin = std::numeric_limits<float>::max(); 	//stores the largest possible value every pixel will be lower, 
 	float yMin = xMin;					//so its OK for max 
 	float xMax = -xMin;								
@@ -24,34 +19,25 @@ void EUTelGeometricClusterImpl::getClusterGeomInfo(float& xPos, float& yPos, flo
 	float yMinBoundary = 0;
 	float yMaxBoundary = 0;
 
-	auto pixel = EUTelGeometricPixel();
-	//Loop over all the pixels in the cluster
-	for( size_t index = 0; index < size() ; index++ ) 
-	{
-		//Get the pixel
-		getSparsePixelAt( index , pixel);
-
+	auto pixelVec = getPixels();
+	for( auto& pixel: pixelVec ) {
 		//And its position
 		float xCur = pixel.getPosX();
 		float yCur = pixel.getPosY();
 
-		if( xCur < xMin )
-		{
+		if( xCur < xMin ) {
 			xMin = xCur;
 			xMinBoundary = pixel.getBoundaryX();
 		}
-		if ( xCur > xMax ) 
-		{
+		if ( xCur > xMax ) {
 			xMax = xCur;
 			xMaxBoundary = pixel.getBoundaryX();
 		}
-		if ( yCur < yMin )
-		{
+		if ( yCur < yMin ) {
 			yMin = yCur;
 			yMinBoundary = pixel.getBoundaryY();
 		}
-		if ( yCur > yMax ) 
-		{
+		if ( yCur > yMax ) {
 			yMax = yCur;
 			yMaxBoundary = pixel.getBoundaryY();
 		}
@@ -63,26 +49,19 @@ void EUTelGeometricClusterImpl::getClusterGeomInfo(float& xPos, float& yPos, flo
 	yPos = yMax + yMaxBoundary - 0.5 *ySize;
 }
 
-void EUTelGeometricClusterImpl::getGeometricCenterOfGravity(float& xCoG, float& yCoG) const
-{
+void EUTelGeometricClusterImpl::getGeometricCenterOfGravity(float& xCoG, float& yCoG) const {
 	xCoG = 0;
 	yCoG = 0;
 	
 	double totalCharge = 0;
-	
-	auto pixel = EUTelGeometricPixel();
-	for( unsigned int index = 0; index < size() ; index++ ) 
-	{
-		getSparsePixelAt( index , pixel);
 
+	auto pixelVec = getPixels();
+	for( auto& pixel: pixelVec ) {
 		double curSignal = pixel.getSignal();
 		xCoG += (pixel.getPosX())*curSignal;
 		yCoG += (pixel.getPosY())*curSignal;
 		totalCharge += curSignal;
 	} 
-
 	xCoG /= totalCharge;
 	yCoG /= totalCharge;
 }
-
-

@@ -435,11 +435,10 @@ void EUTelHistogramMaker::processEvent (LCEvent * evt) {
               if ( pixelType == kEUTelGenericSparsePixel ) {
                 
                 auto recasted = dynamic_cast<EUTelSparseClusterImpl<EUTelGenericSparsePixel>*> ( cluster );
-                auto sparsePixel = std::make_unique<EUTelGenericSparsePixel>();
+		auto pixelVec = recasted->getPixels();
 
-                for ( size_t iPixel = 0; iPixel < recasted->size() ; iPixel++ ) {
-                  recasted->getSparsePixelAt( iPixel, sparsePixel ) ;
-                  int index = noiseMatrixDecoder.getIndexFromXY( sparsePixel->getXCoord(), sparsePixel->getYCoord() );
+		for( auto& sparsePixel: pixelVec ) {
+                  int index = noiseMatrixDecoder.getIndexFromXY( sparsePixel.getXCoord(), sparsePixel.getYCoord() );
                   noiseValues.push_back( noiseMatrix->getChargeValues()[ index ] );
                 }
               }

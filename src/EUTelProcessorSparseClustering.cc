@@ -326,22 +326,9 @@ void EUTelProcessorSparseClustering::sparseClustering(LCEvent* evt, LCCollection
 		{
 
 			// now prepare the EUTelescope interface to sparsified data.
-			std::unique_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>> sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(zsData);
+			auto sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(zsData);
 
-			int hitPixelsInEvent = sparseData->size();
-			std::vector<EUTelGenericSparsePixel> hitPixelVec;
-			auto pixel = std::make_unique<EUTelGenericSparsePixel>();
-
-			//This for-loop loads all the hits of the given event and detector plane and stores them
-			for(int i = 0; i < hitPixelsInEvent; ++i )
-			{
-				//Load the information of the hit pixel into genericPixel
-				sparseData->getSparsePixelAt( i, pixel );
-				EUTelGenericSparsePixel hitPixel( *pixel.get());
-
-				//and push this pixel back
-				hitPixelVec.push_back( hitPixel );
-			}	
+			std::vector<EUTelGenericSparsePixel> hitPixelVec = sparseData->getPixels();
 
 			std::vector<EUTelGenericSparsePixel> newlyAdded;
 			//We now cluster those hits together
