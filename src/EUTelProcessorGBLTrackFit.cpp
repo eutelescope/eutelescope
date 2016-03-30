@@ -191,9 +191,9 @@ void EUTelProcessorGBLTrackFit::processEvent(LCEvent* evt){
 				std::map< int, std::map< float, float > >  SensorResidualError; 
 				std::map< int, int> planes;
 				_trackFitter->getResidualOfTrackandHits(traj, pointList,track, SensorResidual, SensorResidualError, planes);
-				if(chi2/static_cast<float>(ndf) < 5){
+				//if(chi2/static_cast<float>(ndf) < 5){
 				  plotResidual(SensorResidual,SensorResidualError, planes);//TO DO: Need to fix how we histogram.
-				}
+				  //}
 			}else{
 				streamlog_out(DEBUG5) << "Ierr is: " << ierr << " Do not update track information " << std::endl;
 				static_cast < AIDA::IHistogram1D* > ( _aidaHistoMap1D[ _histName::_fitsuccessHistName ] ) -> fill(0.0);
@@ -447,9 +447,9 @@ void EUTelProcessorGBLTrackFit::bookHistograms() {
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////Chi2 create plot.
 
-	const int chiNbins = 100;
-	const double chiXmin = 0;
-	const double chiXmax = 10;	
+	const int chiNbins = 1000;
+	const double chiXmin = -500;
+	const double chiXmax = 500;	
   histoInfo = histoMgr->getHistogramInfo(_histName::_chi2CandidateHistName);
 
   int NBin = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : chiNbins;
