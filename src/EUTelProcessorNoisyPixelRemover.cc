@@ -128,12 +128,12 @@ void EUTelProcessorNoisyPixelRemover::processEvent(LCEvent* event) {
 
 		//IMPORTANT: if we pass a nullptr to EUTelBaseSparsePixel* getSparsePixelAt( int index, EUTelBaseSparsePixel* pixel)
 		//where pixel=nullptr, this method will return a pointer to a new pixel of derived type. YOU have to delete it!
-		EUTelBaseSparsePixel* pixel = nullptr;
+		auto pixel = std::unique_ptr<EUTelBaseSparsePixel>(nullptr);
 
-		for ( size_t iPixel = 0; iPixel < sparseDataInterface->size(); iPixel++ ) {
-		        pixel = sparseDataInterface->getSparsePixelAt( iPixel, pixel );
+		for( size_t iPixel = 0; iPixel < sparseDataInterface->size(); iPixel++ ) {
+		        sparseDataInterface->getSparsePixelAt( iPixel, pixel );
 			if(!std::binary_search( noiseVector->begin(), noiseVector->end(), Utility::cantorEncode(pixel->getXCoord(), pixel->getYCoord()) )) {
-					sparseOutputData->addSparsePixel(pixel);
+					sparseOutputData->addSparsePixel(*pixel);
 			}
 		}
 	}	
