@@ -137,10 +137,20 @@ class EUTelGenericSparseClusterImpl : public EUTelSimpleVirtualCluster
 	 *  @param pixel A pointer to the retrieved pixel.
 	 *  @return A pointer to the retrieved pixel same as @c pixel
 	 */ 
-	PixelType* getSparsePixelAt(unsigned int index, PixelType* pixel) const
+	void getSparsePixelAt(size_t index, PixelType& pixel) const
 	{
-		return _rawDataInterfacer.getSparsePixelAt(index, pixel);
+		_rawDataInterfacer.getSparsePixelAt(index, pixel);
 	}
+
+	void getSparsePixelAt(size_t index, std::unique_ptr<PixelType>& pixel) const
+	{
+		if(!pixel){
+			pixel = std::make_unique<PixelType>();
+		}
+
+		_rawDataInterfacer.getSparsePixelAt(index, pixel);
+	}
+
 
 	//! Add a sparse pixel via a pointer to the pixel
 	/*! This method is used to add to the current TrackerDataImpl a

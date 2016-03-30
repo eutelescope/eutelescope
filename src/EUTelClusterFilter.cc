@@ -948,7 +948,7 @@ void EUTelClusterFilter::processEvent (LCEvent * event) {
                             vector<float > noiseValues;
                             for ( unsigned int iPixel = 0 ; iPixel < recasted->size() ; iPixel++ )
                             {
-                                recasted->getSparsePixelAt( iPixel, sparsePixel.get() ) ;
+                                recasted->getSparsePixelAt( iPixel, *sparsePixel.get() ) ;
                                 int index = noiseMatrixDecoder.getIndexFromXY( sparsePixel->getXCoord(), sparsePixel->getYCoord() );
                                 noiseValues.push_back( noiseMatrix->getChargeValues()[ index ] );
                             }

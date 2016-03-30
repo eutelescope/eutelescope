@@ -181,7 +181,7 @@ void  EUTelPreAlign::FillHotPixelMap(LCEvent *event)
 	  for(  unsigned int iPixel = 0; iPixel < m26Data->size(); iPixel++ ) 
 	    {
               std::vector<int> m26ColVec();
-              m26Data->getSparsePixelAt( iPixel, &m26Pixel);
+              m26Data->getSparsePixelAt( iPixel, m26Pixel);
 
               try
 		{
@@ -327,7 +327,7 @@ bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit)
 	  for ( unsigned int iPixel = 0; iPixel < cluster->size(); iPixel++ ) 
 	    {
 	      EUTelGenericSparsePixel m26Pixel;
-	      cluster->getSparsePixelAt( iPixel, &m26Pixel);
+	      cluster->getSparsePixelAt( iPixel, m26Pixel);
 	      {
 		try{
 		  if( std::find(_hotPixelMap.at(sensorID).begin(), 

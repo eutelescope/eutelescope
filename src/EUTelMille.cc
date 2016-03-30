@@ -1030,7 +1030,7 @@ void  EUTelMille::FillHotPixelMap(LCEvent *event)
              for ( unsigned int iPixel = 0; iPixel < m26Data->size(); iPixel++ ) 
              {
               IntVec m26ColVec();
-              m26Data->getSparsePixelAt( iPixel, &m26Pixel);
+              m26Data->getSparsePixelAt( iPixel, m26Pixel);
               streamlog_out ( DEBUG3 ) << iPixel << " of " << m26Data->size() << " HotPixelInfo:  " << m26Pixel.getXCoord() << " " << m26Pixel.getYCoord() << " " << m26Pixel.getSignal() << endl;
               try
               {
@@ -2426,7 +2426,7 @@ bool EUTelMille::hitContainsHotPixels( TrackerHitImpl   * hit)
 	    for ( unsigned int iPixel = 0; iPixel < cluster->size(); iPixel++ ) 
               {
                 EUTelGenericSparsePixel m26Pixel;
-                cluster->getSparsePixelAt( iPixel, &m26Pixel);
+                cluster->getSparsePixelAt( iPixel, m26Pixel);
                 int pixelX, pixelY;
                 pixelX = m26Pixel.getXCoord();
                 pixelY = m26Pixel.getYCoord();

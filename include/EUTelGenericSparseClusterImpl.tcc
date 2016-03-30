@@ -47,7 +47,7 @@ float EUTelGenericSparseClusterImpl<PixelType>::getTotalCharge() const
 	PixelType* pixel = new PixelType;
     for( unsigned int index = 0; index < size() ; index++ )
 	{    
-		getSparsePixelAt( index, pixel );
+		getSparsePixelAt( index, *pixel );
 		charge += pixel->getSignal();
     }
     delete pixel;
@@ -64,7 +64,7 @@ void EUTelGenericSparseClusterImpl<PixelType>::getClusterSize(int& xSize, int& y
 	PixelType* pixel = new PixelType;
 	for( unsigned int index = 0; index < size() ; index++ ) 
 	{
-		getSparsePixelAt( index , pixel);
+		getSparsePixelAt( index , *pixel);
 		short xCur = pixel->getXCoord();
 		short yCur = pixel->getYCoord();
 		if ( xCur < xMin ) xMin = xCur;
@@ -88,7 +88,7 @@ void EUTelGenericSparseClusterImpl<PixelType>::getClusterInfo(int& xPos, int& yP
 	PixelType* pixel = new PixelType;
 	for ( unsigned int index = 0; index < size() ; index++ ) 
 	{
-		getSparsePixelAt( index , pixel);
+		getSparsePixelAt( index , *pixel);
 		short xCur = pixel->getXCoord();
 		short yCur = pixel->getYCoord();
 		if ( xCur < xMin ) xMin = xCur;
@@ -117,7 +117,7 @@ void EUTelGenericSparseClusterImpl<PixelType>::getCenterOfGravity(float& xCoG, f
 	PixelType* pixel = new PixelType;
 	for( unsigned int index = 0; index < size() ; index++ ) 
 	{
-		getSparsePixelAt( index , pixel);
+		getSparsePixelAt( index , *pixel);
 
 		double curSignal = pixel->getSignal();
 		xCoG += (pixel->getXCoord())*curSignal;
@@ -154,7 +154,7 @@ void EUTelGenericSparseClusterImpl<PixelType>::print(std::ostream& os) const {
     PixelType * pixel = new PixelType;
     for ( unsigned int iPixel = 0 ; iPixel < size() ; iPixel++ ) 
 	{
-		getSparsePixelAt( iPixel, pixel );
+		getSparsePixelAt( iPixel, *pixel );
 		os << "Pixel number = " << iPixel << std::endl
 	 	   << ( * pixel ) << std::endl;
     }

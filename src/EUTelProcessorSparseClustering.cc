@@ -330,14 +330,14 @@ void EUTelProcessorSparseClustering::sparseClustering(LCEvent* evt, LCCollection
 
 			int hitPixelsInEvent = sparseData->size();
 			std::vector<EUTelGenericSparsePixel> hitPixelVec;
-			EUTelGenericSparsePixel* pixel = new EUTelGenericSparsePixel;
+			auto pixel = std::make_unique<EUTelGenericSparsePixel>();
 
 			//This for-loop loads all the hits of the given event and detector plane and stores them
 			for(int i = 0; i < hitPixelsInEvent; ++i )
 			{
 				//Load the information of the hit pixel into genericPixel
 				sparseData->getSparsePixelAt( i, pixel );
-				EUTelGenericSparsePixel hitPixel( *pixel );
+				EUTelGenericSparsePixel hitPixel( *pixel.get());
 
 				//and push this pixel back
 				hitPixelVec.push_back( hitPixel );
@@ -432,8 +432,6 @@ void EUTelProcessorSparseClustering::sparseClustering(LCEvent* evt, LCCollection
 					//forget about them, the memory should be automatically cleaned by smart ptr's
 				}
 			} //loop over all found clusters
-
-			delete pixel;
 		}
 		else
 		{

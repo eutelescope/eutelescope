@@ -449,7 +449,7 @@ void EUTelClusteringProcessor::initializeHotPixelMapVec(  )
         for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
         {
             // loop over all pixels in the sparseData object.
-            EUTelGenericSparsePixel *sparsePixel =  new EUTelGenericSparsePixel() ;
+            auto sparsePixel = std::make_unique<EUTelGenericSparsePixel>();
 
             sparseData->getSparsePixelAt( iPixel, sparsePixel );
             int decoded_XY_index = matrixDecoder.getIndexFromXY( sparsePixel->getXCoord(), sparsePixel->getYCoord() ); // unique pixel index !!
@@ -536,7 +536,7 @@ void EUTelClusteringProcessor::initializeStatusCollection(  )
         for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
         {
             // loop over all pixels in the sparseData object.
-            EUTelGenericSparsePixel *sparsePixel =  new EUTelGenericSparsePixel() ;
+            auto sparsePixel = std::make_unique<EUTelGenericSparsePixel>();
 
             sparseData->getSparsePixelAt( iPixel, sparsePixel );
             int decoded_XY_index = matrixDecoder.getIndexFromXY( sparsePixel->getXCoord(), sparsePixel->getYCoord() ); // unique pixel index !!
@@ -908,7 +908,7 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
             for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
             {
 
-                sparseData->getSparsePixelAt( iPixel, sparsePixel.get() );
+                sparseData->getSparsePixelAt( iPixel, sparsePixel );
                 int index = matrixDecoder.getIndexFromXY( sparsePixel->getXCoord(), sparsePixel->getYCoord() );
 
                 if(static_cast<int>(_hitIndexMapVec.size()) > sensorID ){
@@ -1387,7 +1387,7 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
             // loop over all pixels in the sparseData object.
             auto sparsePixel = std::make_unique<EUTelGenericSparsePixel>();
             for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ ) {
-                sparseData->getSparsePixelAt( iPixel, sparsePixel.get() );
+                sparseData->getSparsePixelAt( iPixel, sparsePixel );
                 int   index  = matrixDecoder.getIndexFromXY( sparsePixel->getXCoord(), sparsePixel->getYCoord() );
                 float signal = sparsePixel->getSignal();
                 dataVec[ index  ] = signal;
@@ -1668,7 +1668,7 @@ void EUTelClusteringProcessor::zsBrickedClustering(LCEvent * evt, LCCollectionVe
             auto sparsePixel = std::make_unique<EUTelGenericSparsePixel>();
             for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
             {
-                sparseData->getSparsePixelAt( iPixel, sparsePixel.get() );
+                sparseData->getSparsePixelAt( iPixel, sparsePixel );
                 int   index  = matrixDecoder.getIndexFromXY( sparsePixel->getXCoord(), sparsePixel->getYCoord() );
                 float signal = sparsePixel->getSignal();
                 dataVec[ index ] = signal;
@@ -2033,7 +2033,7 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent* evt, LCCollectionVec* p
 
             int hitPixelsInEvent = sparseData->size();
             std::vector<EUTelGenericSparsePixel> hitPixelVec;
-            EUTelGenericSparsePixel* pixel = new EUTelGenericSparsePixel;
+            auto pixel = std::make_unique<EUTelGenericSparsePixel>();
 
             //This for-loop loads all the hits of the given event and detector plane and stores them
             for(int i = 0; i < hitPixelsInEvent; ++i )
@@ -2171,7 +2171,6 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent* evt, LCCollectionVec* p
                 }
             } //loop over all found clusters
 
-            delete pixel;
         }
         else
         {
@@ -3040,7 +3039,7 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
                     EUTelSparseClusterImpl<EUTelGenericSparsePixel>* recasted =
                         dynamic_cast<EUTelSparseClusterImpl<EUTelGenericSparsePixel>* > (cluster);
                     for ( unsigned int iPixel = 0 ; iPixel < recasted->size() ; iPixel++ ) {
-                        recasted->getSparsePixelAt( iPixel , pixel.get() );
+                        recasted->getSparsePixelAt( iPixel , pixel );
                         int index = noiseMatrixDecoder.getIndexFromXY( pixel->getXCoord(), pixel->getYCoord() );
                         noiseValues.push_back( noiseMatrix->getChargeValues() [ index ] );
 

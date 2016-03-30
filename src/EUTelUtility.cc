@@ -50,7 +50,7 @@ namespace eutelescope {
 
 		//Decoder to get sensor ID
 		CellIDDecoder<TrackerDataImpl> cellDecoder( noisyPixelCollectionVec );
-		EUTelBaseSparsePixel* pixel = nullptr;
+		auto pixel = std::unique_ptr<EUTelBaseSparsePixel>(nullptr);
 
 		std::map<int, std::vector<int>> noisyPixelMap;
 		
@@ -74,12 +74,10 @@ namespace eutelescope {
 			
 			//Store all the noisy pixels in the noise vector, use the provided encoding to map two int's to an unique int
 			for ( unsigned int iPixel = 0; iPixel < noisyPixelDataInterface->size(); iPixel++ ) {
-				pixel = noisyPixelDataInterface->getSparsePixelAt( iPixel, pixel);
+				noisyPixelDataInterface->getSparsePixelAt( iPixel, pixel);
 				noiseSensorVector->push_back( cantorEncode(pixel->getXCoord(), pixel->getYCoord()) );
-
 			}
 		}
-		delete pixel;
 
 		for( std::map<int, std::vector<int> >::iterator it = noisyPixelMap.begin(); it != noisyPixelMap.end(); ++it) {
 			//Sort the noisy pixel maps
@@ -197,7 +195,7 @@ namespace eutelescope {
 
                         for (unsigned int iPixel = 0; iPixel < cluster->size(); iPixel++) {
                             EUTelGenericSparsePixel m26Pixel;
-                            cluster->getSparsePixelAt(iPixel, &m26Pixel);
+                            cluster->getSparsePixelAt(iPixel, m26Pixel);
                             {
                                 char ix[100];
                                 sprintf(ix, "%d,%d,%d", sensorID, m26Pixel.getXCoord(), m26Pixel.getYCoord());
@@ -330,7 +328,7 @@ namespace eutelescope {
                     //Push all single Pixels of one plane in the m26PixelVec
                     for (unsigned int iPixel = 0; iPixel < m26Data->size(); iPixel++) {
                         std::vector<int> m26ColVec();
-                        m26Data->getSparsePixelAt(iPixel, &m26Pixel);
+                        m26Data->getSparsePixelAt(iPixel, m26Pixel);
                         streamlog_out(DEBUG0) << iPixel << " of " << m26Data->size() << " HotPixelInfo:  " << m26Pixel.getXCoord() << " " << m26Pixel.getYCoord() << " " << m26Pixel.getSignal() << std::endl;
                         try {
                             char ix[100];

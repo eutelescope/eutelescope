@@ -124,12 +124,12 @@ void EUTelProcessorNoisyClusterMasker::processEvent(LCEvent * event) {
 
 		//IMPORTANT: if we pass a nullptr to EUTelBaseSparsePixel* getSparsePixelAt( int index, EUTelBaseSparsePixel* pixel)
 		//where pixel=NULL, this method will return a pointer to a new pixel of derived type. YOU have to delete it!
-		EUTelBaseSparsePixel* pixel = nullptr;
+		auto pixel = std::unique_ptr<EUTelBaseSparsePixel>(nullptr);
 
 		//Loop over all hits!
 		for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ ) {
 			//IF pixel=NULL this yields a new pixel
-		        pixel = sparseData->getSparsePixelAt( iPixel, pixel );
+		        sparseData->getSparsePixelAt( iPixel, pixel );
 			if(std::binary_search( noiseVector->begin(), noiseVector->end(), Utility::cantorEncode(pixel->getXCoord(), pixel->getYCoord()) )) {
 				noisy=true;
 				break;
@@ -147,7 +147,6 @@ void EUTelProcessorNoisyClusterMasker::processEvent(LCEvent * event) {
 			cellReencoder.setCellID(pulseData);
 			_maskedNoisyClusters[sensorID]++;
 		}	
-		delete pixel;
         }
 }
 

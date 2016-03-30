@@ -96,7 +96,7 @@ void EUTelProcessorRawHistos::initialiseNoisyPixels( LCCollectionVec* const nois
 
 	//Decoder to get sensor ID
 	CellIDDecoder<TrackerDataImpl> cellDecoder( noisyPixCollectionVec );
-        EUTelBaseSparsePixel* pixel = nullptr;
+        auto pixel = std::unique_ptr<EUTelBaseSparsePixel>(nullptr);
 
 	//Loop over all hot pixels
 	for(int i=0; i<  noisyPixCollectionVec->getNumberOfElements(); i++) {
@@ -114,11 +114,10 @@ void EUTelProcessorRawHistos::initialiseNoisyPixels( LCCollectionVec* const nois
 		}
 		//Store all the noisy pixels in the noise vector, use the provided encoding to map two int's to an unique int
 		for ( unsigned int iPixel = 0; iPixel < noisyPixelData->size(); iPixel++ ) {
-			pixel = noisyPixelData->getSparsePixelAt( iPixel, pixel);
+			noisyPixelData->getSparsePixelAt( iPixel, pixel);
 			noiseSensorVector->push_back( cantorEncode(pixel->getXCoord(), pixel->getYCoord()) );
 		}
 	}
-	delete pixel;
 
 	for(auto& i: _noisyPixelVecMap) {
 		std::sort(i.second.begin(), i.second.end() );
@@ -185,7 +184,7 @@ void EUTelProcessorRawHistos::processEvent (LCEvent* event) {
 			// now prepare the EUTelescope interface to sparsified data.  
 			unique_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel > >  sparseData (new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> ( zsData ));
 			
-			EUTelGenericSparsePixel* genericPixel =  new EUTelGenericSparsePixel();
+			auto genericPixel = std::make_unique<EUTelGenericSparsePixel>();
 
 			// loop over all pixels in the sparseData object, these are the hit pixels!
 			for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ ) {
@@ -211,7 +210,6 @@ void EUTelProcessorRawHistos::processEvent (LCEvent* event) {
 					_timeHistoNoNoise.at(sensorID)->fill(genericPixel->getTime());		
 				}
 			}
-			delete genericPixel;
 		}
 
 		for(auto& i: rawHitsPerPlane) {

@@ -321,10 +321,10 @@ void CMSPixelCalibrateEventProcessor::processEvent (LCEvent * event) {
 
             // Loop over all pixels in the sparseData object.
             EUTelGenericSparsePixel Pixel;
-            std::unique_ptr<EUTelGenericSparsePixel> correctedPixel = std::make_unique<EUTelGenericSparsePixel>();
+            auto  correctedPixel = std::make_unique<EUTelGenericSparsePixel>();
 
             for ( unsigned int iPixel = 0; iPixel < pixelData->size(); iPixel++ ) {
-                pixelData->getSparsePixelAt( iPixel, &Pixel);
+                pixelData->getSparsePixelAt( iPixel, Pixel);
 
                 correctedPixel->setXCoord( Pixel.getXCoord() );
                 correctedPixel->setYCoord( Pixel.getYCoord() );

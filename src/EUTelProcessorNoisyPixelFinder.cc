@@ -187,14 +187,14 @@ void EUTelProcessorNoisyPixelFinder::noisyPixelFinder(EUTelEventImpl* evt) {
 			if(foundexcludedsensor) continue;
 
 			// now prepare the EUTelescope interface to sparsified data.  
-			EUTelBaseSparsePixel* pixel = nullptr;
+			auto pixel = std::unique_ptr<EUTelBaseSparsePixel>(nullptr);
 			int pixelType = cellDecoder(zsData)["sparsePixelType"];
 			auto sparseData = Utility::getSparseData(zsData, pixelType);
 
 			// loop over all pixels in the sparseData object, these are the hit pixels!
 			for ( size_t iPixel = 0; iPixel < sparseData->size(); iPixel++ ) {
 				//get the pixel
-				pixel = sparseData->getSparsePixelAt( iPixel, pixel );
+				sparseData->getSparsePixelAt( iPixel, pixel );
 
 				//compute the address in the array-like-structure, any offset
 				//has to be substracted (array index starts at 0)
@@ -209,7 +209,6 @@ void EUTelProcessorNoisyPixelFinder::noisyPixelFinder(EUTelEventImpl* evt) {
 						<< "This pixel is out of the range defined by the geometry. Either your data is corrupted or your pixel geometry not specified correctly!" << std::endl;
 				}
 			}
-			delete pixel;
 		}    
 	} catch (lcio::DataNotAvailableException& e ) {
 		streamlog_out ( WARNING2 )  << "Input collection not found in the current event. Skipping..." << e.what() << std::endl;

@@ -24,36 +24,36 @@ void EUTelGeometricClusterImpl::getClusterGeomInfo(float& xPos, float& yPos, flo
 	float yMinBoundary = 0;
 	float yMaxBoundary = 0;
 
-	EUTelGeometricPixel* pixel = new EUTelGeometricPixel;
+	auto pixel = EUTelGeometricPixel();
 	//Loop over all the pixels in the cluster
-	for( unsigned int index = 0; index < size() ; index++ ) 
+	for( size_t index = 0; index < size() ; index++ ) 
 	{
 		//Get the pixel
 		getSparsePixelAt( index , pixel);
 
 		//And its position
-		float xCur = pixel->getPosX();
-		float yCur = pixel->getPosY();
+		float xCur = pixel.getPosX();
+		float yCur = pixel.getPosY();
 
 		if( xCur < xMin )
 		{
 			xMin = xCur;
-			xMinBoundary = pixel->getBoundaryX();
+			xMinBoundary = pixel.getBoundaryX();
 		}
 		if ( xCur > xMax ) 
 		{
 			xMax = xCur;
-			xMaxBoundary = pixel->getBoundaryX();
+			xMaxBoundary = pixel.getBoundaryX();
 		}
 		if ( yCur < yMin )
 		{
 			yMin = yCur;
-			yMinBoundary = pixel->getBoundaryY();
+			yMinBoundary = pixel.getBoundaryY();
 		}
 		if ( yCur > yMax ) 
 		{
 			yMax = yCur;
-			yMaxBoundary = pixel->getBoundaryY();
+			yMaxBoundary = pixel.getBoundaryY();
 		}
 	}
 	xSize = xMax + xMaxBoundary - xMin + xMinBoundary;
@@ -61,7 +61,6 @@ void EUTelGeometricClusterImpl::getClusterGeomInfo(float& xPos, float& yPos, flo
 
 	xPos = xMax + xMaxBoundary - 0.5 *xSize;
 	yPos = yMax + yMaxBoundary - 0.5 *ySize;
-delete pixel;
 }
 
 void EUTelGeometricClusterImpl::getGeometricCenterOfGravity(float& xCoG, float& yCoG) const
@@ -71,20 +70,19 @@ void EUTelGeometricClusterImpl::getGeometricCenterOfGravity(float& xCoG, float& 
 	
 	double totalCharge = 0;
 	
-	EUTelGeometricPixel* pixel = new EUTelGeometricPixel;
+	auto pixel = EUTelGeometricPixel();
 	for( unsigned int index = 0; index < size() ; index++ ) 
 	{
 		getSparsePixelAt( index , pixel);
 
-		double curSignal = pixel->getSignal();
-		xCoG += (pixel->getPosX())*curSignal;
-		yCoG += (pixel->getPosY())*curSignal;
+		double curSignal = pixel.getSignal();
+		xCoG += (pixel.getPosX())*curSignal;
+		yCoG += (pixel.getPosY())*curSignal;
 		totalCharge += curSignal;
 	} 
 
 	xCoG /= totalCharge;
 	yCoG /= totalCharge;
-	delete pixel;
 }
 
 

@@ -290,14 +290,14 @@ void EUTelProcessorGeometricClustering::geometricClustering(LCEvent * evt, LCCol
 		
 		int hitPixelsInEvent = sparseData->size();
 		std::vector<EUTelGeometricPixel> hitPixelVec;
-		EUTelGenericSparsePixel* pixel = NULL;
+		auto pixel = std::unique_ptr<EUTelBaseSparsePixel>(nullptr);
 			
 		//This for-loop loads all the hits of the given event and detector plane and stores them as GeometricPixels
 		for(int i = 0; i < hitPixelsInEvent; ++i )
 		  {
 		   
-		    pixel = dynamic_cast<EUTelGenericSparsePixel *>( sparseData->getSparsePixelAt( i, pixel ) );
-		    EUTelGeometricPixel hitPixel( *pixel );
+		    sparseData->getSparsePixelAt( i, pixel );
+		    EUTelGeometricPixel hitPixel( *dynamic_cast<EUTelGenericSparsePixel*>(pixel.get()) );
 		    
 		    //And get the path to the given pixel
 		    std::string pixelPath = geoDescr->getPixName(hitPixel.getXCoord(), hitPixel.getYCoord());
@@ -449,9 +449,6 @@ void EUTelProcessorGeometricClustering::geometricClustering(LCEvent * evt, LCCol
 			//forget about them, the memory should be automatically cleaned by smart ptr's
 		      }
 		  } //loop over all found clusters
-		
-		delete pixel;
-		
 	} // this is the end of the loop over all ZS detectors
 	
 	// if the sparseClusterCollectionVec isn't empty add it to the

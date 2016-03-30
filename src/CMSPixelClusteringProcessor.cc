@@ -241,7 +241,7 @@ void CMSPixelClusteringProcessor::initializeHotPixelMapVec(  )
         for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ ) 
         {
             // loop over all pixels in the sparseData object.      
-            EUTelGenericSparsePixel *sparsePixel =  new EUTelGenericSparsePixel() ;
+            auto sparsePixel =  std::make_unique<EUTelGenericSparsePixel>();
 
             sparseData->getSparsePixelAt( iPixel, sparsePixel );
             int decoded_XY_index = matrixDecoder.getIndexFromXY( sparsePixel->getXCoord(), sparsePixel->getYCoord() ); // unique pixel index !!
@@ -388,7 +388,7 @@ void CMSPixelClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * cl
 
 			 //Push all single Pixels of one plane in the PixelVec
 			for ( unsigned int iPixel = 0; iPixel < pixelData->size(); iPixel++ ) {
-				pixelData->getSparsePixelAt( iPixel, &Pixel);
+				pixelData->getSparsePixelAt( iPixel, Pixel);
 
                 // HotPixel treatment: check if we read a hotpixel db:
 				if(_hitIndexMapVec.size() > sensorID) {
@@ -649,7 +649,7 @@ void CMSPixelClusteringProcessor::fillHistos (LCEvent * evt) {
 				
 				for (int iPixel=0; iPixel < size; iPixel++) {
 					EUTelGenericSparsePixel Pixel;
-					pixelCluster->getSparsePixelAt(iPixel, &Pixel);
+					pixelCluster->getSparsePixelAt(iPixel, Pixel);
 					tempHistoName = _pixelSignalHistoName + "_d" + to_string( sensorID );
 					(dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]))->fill(Pixel.getSignal());
 					

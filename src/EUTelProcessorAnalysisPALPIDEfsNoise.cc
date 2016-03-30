@@ -110,7 +110,7 @@ void EUTelProcessorAnalysisPALPIDEfsNoise::processEvent(LCEvent *evt)
     auto sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(zsData);
     for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
     {
-      EUTelGenericSparsePixel *sparsePixel =  new EUTelGenericSparsePixel() ;
+      auto sparsePixel = std::make_unique<EUTelGenericSparsePixel>();
       sparseData->getSparsePixelAt( iPixel, sparsePixel );
       noiseMap[iDetector]->Fill(sparsePixel->getXCoord(),sparsePixel->getYCoord());
       for (int iSector=0; iSector<4; iSector++)
@@ -120,7 +120,6 @@ void EUTelProcessorAnalysisPALPIDEfsNoise::processEvent(LCEvent *evt)
           _nFiredPixel[iDetector][iSector]++;
 //      }
 //      cerr << evt->getEventNumber() << "\t" << iDetector << "\t" << sparsePixel->getXCoord() << "\t" << sparsePixel->getYCoord() << endl;
-      delete sparsePixel;
     }
   }
 }

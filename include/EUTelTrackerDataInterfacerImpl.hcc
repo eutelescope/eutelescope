@@ -9,6 +9,7 @@
 #ifndef EUTELTRACKERDATAINTERFACERIMPL_HCC
 #define EUTELTRACKERDATAINTERFACERIMPL_HCC
 
+#include <stdexcept>
 namespace eutelescope {
 
 
@@ -30,7 +31,7 @@ namespace eutelescope {
      */
     void addSparsePixel(PixelType const & pixel);
     
-    void addSparsePixel(EUTelBaseSparsePixel* pixel);
+    void addSparsePixel(EUTelBaseSparsePixel const & pixel);
 
     //! Get one of the sparse pixel
     /*! This method is used to get one of the sparse pixel contained
@@ -40,7 +41,7 @@ namespace eutelescope {
      * @param pixel A pointer to the output pixel
      * @return A pointer to the output pixel same as @c pixel
      */
-    PixelType* getSparsePixelAt(unsigned int index, PixelType* pixel) const;
+    void getSparsePixelAt(size_t index, PixelType& pixel) const;
   
     //*! Overloaded getSparsePixelAt method
      /*! Used for polymorphic usage of EUTelTrackerDataInterfacer 
@@ -48,16 +49,23 @@ namespace eutelescope {
       *  a new pixel is created on the heap. Returning this pixel's
       *  address. IMPORTANT: Memory has to be cleaned up by the caller!
       */ 
-    EUTelBaseSparsePixel* getSparsePixelAt(unsigned int index, EUTelBaseSparsePixel* pixel) const
+    void getSparsePixelAt(size_t index, std::unique_ptr<EUTelBaseSparsePixel>& pixel) const
 	{
-		if(!pixel)
-		{
-			pixel = new PixelType();
+		if(!pixel) {
+			pixel = std::make_unique<PixelType>();
 		}
-		EUTelBaseSparsePixel* result =  static_cast<EUTelBaseSparsePixel*>( getSparsePixelAt(index, dynamic_cast<PixelType*>(pixel)) );
-		pixel = result;
-		return result;
+		auto pix = dynamic_cast<PixelType*>(pixel.get());
+		getSparsePixelAt(index, *pix);
 	} 
+
+    void getSparsePixelAt(size_t index, std::unique_ptr<PixelType>& pixel) const
+	{
+		if(!pixel) {
+			pixel = std::make_unique<PixelType>();
+		}
+		getSparsePixelAt( index, *pixel.get() );
+	} 
+
 
     //! Get the number of sparse pixels in the collection
     /*! This utility can be used to know how many pixels are contained
@@ -77,6 +85,9 @@ namespace eutelescope {
      */
     IMPL::TrackerDataImpl* trackerData();
 
+   std::vector<PixelType> const & getPixels() const {
+	return &_pixelVec;
+   } 
   protected:
     //! Internal method to fill the local copy of all the pixels
     /*! Only to be used in this class */
@@ -93,7 +104,7 @@ namespace eutelescope {
     /*! This value is initialized in the constructor and taken from
      * the template class.
      */
-    unsigned int _nElement;
+    size_t _nElement;
 
     //! Sparse pixel type
     /*! This enumerator value is set in the constructor and taken from
@@ -118,62 +129,54 @@ namespace eutelescope {
    */
  
 	template<>
-	inline EUTelSimpleSparsePixel* EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel>::getSparsePixelAt(unsigned int index, EUTelSimpleSparsePixel * pixel ) const 
+	inline void EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel>::getSparsePixelAt(size_t index, EUTelSimpleSparsePixel& pixel ) const 
 	{
-		if ( index * _nElement + 2 > _trackerData->getChargeValues().size() ) return 0x0;
-		pixel->setXCoord( static_cast<short> ( _trackerData->getChargeValues()[index * _nElement] ) );
-		pixel->setYCoord( static_cast<short> ( _trackerData->getChargeValues()[index * _nElement + 1] ) );
-		pixel->setSignal(  _trackerData->getChargeValues()[index * _nElement + 2] ) ;
-
-		return pixel;
+		if ( index * _nElement + 2 > _trackerData->getChargeValues().size() ) throw std::out_of_range("getSparsePixelAt() out of bounds exception");
+		pixel.setXCoord( static_cast<short> ( _trackerData->getChargeValues()[index * _nElement] ) );
+		pixel.setYCoord( static_cast<short> ( _trackerData->getChargeValues()[index * _nElement + 1] ) );
+		pixel.setSignal(  _trackerData->getChargeValues()[index * _nElement + 2] ) ;
 	}
   
 	template<>
-	inline EUTelGenericSparsePixel* EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>::getSparsePixelAt(unsigned int index, EUTelGenericSparsePixel* pixel ) const
+	inline void EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>::getSparsePixelAt(size_t index, EUTelGenericSparsePixel& pixel ) const
 	{
-		if ( index * _nElement + 3 > _trackerData->getChargeValues().size() ) return 0x0;
-		pixel->setXCoord( static_cast<short> ( _trackerData->getChargeValues()[index * _nElement] ) );
-		pixel->setYCoord( static_cast<short> ( _trackerData->getChargeValues()[index * _nElement + 1] ) );
-		pixel->setSignal( _trackerData->getChargeValues()[index * _nElement + 2] );
-		pixel->setTime(   static_cast<short> ( _trackerData->getChargeValues()[index * _nElement + 3] ) );
-		
-		return pixel;
+		if ( index * _nElement + 3 > _trackerData->getChargeValues().size() ) throw std::out_of_range("getSparsePixelAt() out of bounds exception");
+		pixel.setXCoord( static_cast<short> ( _trackerData->getChargeValues()[index * _nElement] ) );
+		pixel.setYCoord( static_cast<short> ( _trackerData->getChargeValues()[index * _nElement + 1] ) );
+		pixel.setSignal( _trackerData->getChargeValues()[index * _nElement + 2] );
+		pixel.setTime(   static_cast<short> ( _trackerData->getChargeValues()[index * _nElement + 3] ) );
 	}
 
 	template<>
-	inline EUTelGeometricPixel* EUTelTrackerDataInterfacerImpl<EUTelGeometricPixel>::getSparsePixelAt(unsigned int index, EUTelGeometricPixel* pixel ) const
+	inline void EUTelTrackerDataInterfacerImpl<EUTelGeometricPixel>::getSparsePixelAt(size_t index, EUTelGeometricPixel& pixel ) const
 	{
-		if ( index * _nElement + 7 > _trackerData->getChargeValues().size() ) return 0x0;
-		pixel->setXCoord( static_cast<short>( _trackerData->getChargeValues()[index * _nElement] ) );
-		pixel->setYCoord( static_cast<short>( _trackerData->getChargeValues()[index * _nElement + 1] ) );
-		pixel->setSignal( _trackerData->getChargeValues()[index * _nElement + 2] );
-		pixel->setTime(   static_cast<short>( _trackerData->getChargeValues()[index * _nElement + 3] ) );
+		if ( index * _nElement + 7 > _trackerData->getChargeValues().size() ) throw std::out_of_range("getSparsePixelAt() out of bounds exception");
+		pixel.setXCoord( static_cast<short>( _trackerData->getChargeValues()[index * _nElement] ) );
+		pixel.setYCoord( static_cast<short>( _trackerData->getChargeValues()[index * _nElement + 1] ) );
+		pixel.setSignal( _trackerData->getChargeValues()[index * _nElement + 2] );
+		pixel.setTime(   static_cast<short>( _trackerData->getChargeValues()[index * _nElement + 3] ) );
 
-		pixel->setPosX( _trackerData->getChargeValues()[index * _nElement + 4] );
-		pixel->setPosY( _trackerData->getChargeValues()[index * _nElement + 5] );
-		pixel->setBoundaryX( _trackerData->getChargeValues()[index * _nElement + 6] );
-		pixel->setBoundaryY( _trackerData->getChargeValues()[index * _nElement + 7] );
-		
-		return pixel;
+		pixel.setPosX( _trackerData->getChargeValues()[index * _nElement + 4] );
+		pixel.setPosY( _trackerData->getChargeValues()[index * _nElement + 5] );
+		pixel.setBoundaryX( _trackerData->getChargeValues()[index * _nElement + 6] );
+		pixel.setBoundaryY( _trackerData->getChargeValues()[index * _nElement + 7] );
 	}
 
 	template<>
-	inline EUTelMuPixel* EUTelTrackerDataInterfacerImpl<EUTelMuPixel>::getSparsePixelAt(unsigned int index, EUTelMuPixel* pixel ) const
+	inline void EUTelTrackerDataInterfacerImpl<EUTelMuPixel>::getSparsePixelAt(size_t index, EUTelMuPixel& pixel ) const
 	{
-		if ( index * _nElement + 6 > _trackerData->getChargeValues().size() ) return 0x0;
-		pixel->setXCoord( static_cast<short>( _trackerData->getChargeValues()[index * _nElement] ) );
-		pixel->setYCoord( static_cast<short>( _trackerData->getChargeValues()[index * _nElement + 1] ) );
-		pixel->setSignal( _trackerData->getChargeValues()[index * _nElement + 2] );
-		pixel->setTime(   static_cast<short>( _trackerData->getChargeValues()[index * _nElement + 3] ) );
+		if ( index * _nElement + 6 > _trackerData->getChargeValues().size() ) throw std::out_of_range("getSparsePixelAt() out of bounds exception");
+		pixel.setXCoord( static_cast<short>( _trackerData->getChargeValues()[index * _nElement] ) );
+		pixel.setYCoord( static_cast<short>( _trackerData->getChargeValues()[index * _nElement + 1] ) );
+		pixel.setSignal( _trackerData->getChargeValues()[index * _nElement + 2] );
+		pixel.setTime(   static_cast<short>( _trackerData->getChargeValues()[index * _nElement + 3] ) );
 
-		pixel->setHitTime(
+		pixel.setHitTime(
 		static_cast<short>(_trackerData->getChargeValues()[index *
 		_nElement + 4] ) );
-		pixel->setFrameTime( static_cast<long long unsigned>(_trackerData->getChargeValues()[index * _nElement +
+		pixel.setFrameTime( static_cast<long long unsigned>(_trackerData->getChargeValues()[index * _nElement +
 		5]) | static_cast<long long unsigned>(_trackerData->getChargeValues()[index * _nElement +
 		6]) << 32  );
-
-		return pixel;
 	}	
 
 	//! Template specialization for the addSparsePixel method
