@@ -129,45 +129,31 @@ class EUTelGenericSparseClusterImpl : public EUTelSimpleVirtualCluster
 		return static_cast<SparsePixelType>(static_cast<lcio::long64>(cellDecoder(_trackerData)["sparsePixelType"]));
 	}
 
-	//! Get one of the sparse pixel
-	/*! This method is used to get one of the sparse pixel contained
-	 *  into the TrackerData. Not mutant version.
-	 *
-	 *  @param index Index of the sparse pixel within the collection
-	 *  @param pixel A pointer to the retrieved pixel.
-	 *  @return A pointer to the retrieved pixel same as @c pixel
-	 */ 
-	void getSparsePixelAt(size_t index, PixelType& pixel) const
-	{
-		_rawDataInterfacer.getSparsePixelAt(index, pixel);
-	}
+    //! Get one of the sparse pixel
+    /*! This method is used to get one of the sparse pixel contained
+     *  into the TrackerData. Not mutant version.
+     */ 
+    template <typename ...Params> 
+    void getSparsePixelAt(Params&&... params) const {
+	_rawDataInterfacer.getSparsePixelAt(std::forward<Params>(params)...);
+    }
 
-	void getSparsePixelAt(size_t index, std::unique_ptr<PixelType>& pixel) const
-	{
-		if(!pixel){
-			pixel = std::make_unique<PixelType>();
-		}
+    //! Add a sparse pixel
+    /*! This method is used to add to the current TrackerDataImpl a
+     *  new sparse pixel with all the pieces of information.
+     */
+    template <typename ...Params>
+    void addSparsePixel(Params&&... params) {
+	_rawDataInterfacer.addSparsePixel(std::forward<Params>(params)...);
+    }
 
-		_rawDataInterfacer.getSparsePixelAt(index, pixel);
-	}
-
-	std::vector<PixelType> const & getPixels() const {
-		return _rawDataInterfacer.getPixels();
-   	} 
-
-
-	//! Add a sparse pixel via a pointer to the pixel
-	/*! This method is used to add to the current TrackerDataImpl a
-	 *  new sparse pixel with all the pieces of information.
-	 */
-	void addSparsePixel(PixelType const & pixel)
-	{
-		_rawDataInterfacer.addSparsePixel(pixel);
-	}
+    std::vector<PixelType> const & getPixels() const {
+	return _rawDataInterfacer.getPixels();
+    } 
 
   protected: 
 	//! The number of elements in the data structure
-	unsigned int _nElement;
+	size_t _nElement;
 
 	//! The sparse pixel type enumerator
 	SparsePixelType _type;
