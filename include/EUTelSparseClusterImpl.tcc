@@ -75,7 +75,7 @@ namespace eutelescope {
   template<class PixelType>
   float EUTelSparseClusterImpl<PixelType>::getTotalCharge() const {
     float charge = 0;
-    auto pixelVec = getPixels();
+    auto& pixelVec = getPixels();
     for( auto& pixel: pixelVec ) {
       charge += pixel.getSignal();
     }
@@ -85,7 +85,7 @@ namespace eutelescope {
   template<class PixelType>
   float EUTelSparseClusterImpl<PixelType>::getSeedCharge() const {
     float          maxSignal = -1 * std::numeric_limits<float>::max();
-    auto pixelVec = getPixels();
+    auto& pixelVec = getPixels();
     for( auto& pixel: pixelVec ) {
       if ( pixel.getSignal() > maxSignal ) {
 	maxSignal = pixel.getSignal();
@@ -111,7 +111,7 @@ namespace eutelescope {
     int xSeed, ySeed;
     getSeedCoord(xSeed, ySeed);
 
-    auto pixelVec = getPixels();
+    auto& pixelVec = getPixels();
     for( auto& pixel: pixelVec ) {
       tempX         += pixel.getSignal() * ( pixel.getXCoord() - xSeed );
       tempY         += pixel.getSignal() * ( pixel.getYCoord() - ySeed );
@@ -232,7 +232,7 @@ namespace eutelescope {
 
 	float xPos(0.0f), yPos(0.0f), totWeight(0.0f);
 
-	auto pixelVec = getPixels();	
+	auto& pixelVec = getPixels();	
 	for( auto& pixel: pixelVec ) { 
     		float curSignal = pixel.getSignal(); 
       		xPos += (pixel.getXCoord())*curSignal;
@@ -249,7 +249,7 @@ namespace eutelescope {
     int xMin = std::numeric_limits<int>::max(), yMin = std::numeric_limits<int>::max();
     int xMax = std::numeric_limits<int>::min(), yMax = std::numeric_limits<int>::min();
 
-	auto pixelVec = getPixels();
+	auto& pixelVec = getPixels();
 	for( auto& pixel: pixelVec ) {
       		short xCur = pixel.getXCoord();
 		short yCur = pixel.getYCoord();
@@ -269,7 +269,7 @@ namespace eutelescope {
 	int xMax = -1;					//pixel index starts at 0, so thats also ok
 	int yMax = -1;
 	
-	auto pixelVec = getPixels();
+	auto& pixelVec = getPixels();
 	for( auto& pixel: pixelVec ) {
 		short xCur = pixel.getXCoord();
 		short yCur = pixel.getYCoord();
@@ -333,7 +333,7 @@ namespace eutelescope {
 
     std::vector<float > allSignals;
    
-    auto pixelVec = getPixels();
+    auto& pixelVec = getPixels();
     for( auto& pixel: pixelVec ) {
       allSignals.push_back( pixel.getSignal() );
     }
@@ -355,7 +355,7 @@ namespace eutelescope {
     std::vector<float > clusterSignal;
     std::vector<float > allSignals;
     
-    auto pixelVec = getPixels();
+    auto& pixelVec = getPixels();
     for( auto& pixel: pixelVec ) {
       allSignals.push_back( pixel.getSignal() );
     }
@@ -386,7 +386,7 @@ namespace eutelescope {
 
     int xPixel, yPixel;
 
-    auto pixelVec = getPixels();
+    auto& pixelVec = getPixels();
     for( auto& pixel: pixelVec ) {
       xPixel = static_cast<int>( pixel.getXCoord());
       yPixel = static_cast<int>( pixel.getYCoord());
@@ -449,7 +449,7 @@ namespace eutelescope {
 
     std::vector<float > signalVec;
 
-    auto pixelVec = getPixels();
+    auto& pixelVec = getPixels();
     for( auto& pixel: pixelVec ) {
       signalVec.push_back( pixel.getSignal() );
     }

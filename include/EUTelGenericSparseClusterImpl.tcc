@@ -45,7 +45,7 @@ float EUTelGenericSparseClusterImpl<PixelType>::getTotalCharge() const
 {
 	float charge = 0;
 	
-        auto pixelVec = getPixels();
+        auto& pixelVec = getPixels();
         for( auto& pixel: pixelVec ) {
 		charge += pixel.getSignal();
    	 }
@@ -60,7 +60,7 @@ void EUTelGenericSparseClusterImpl<PixelType>::getClusterSize(int& xSize, int& y
 	int xMax = -1;					//pixel index starts at 0, so thats also ok
 	int yMax = -1;
 
-	auto pixelVec = getPixels();
+	auto& pixelVec = getPixels();
 	for( auto& pixel: pixelVec ) {
 		short xCur = pixel.getXCoord();
 		short yCur = pixel.getYCoord();
@@ -81,7 +81,7 @@ void EUTelGenericSparseClusterImpl<PixelType>::getClusterInfo(int& xPos, int& yP
 	int xMax = -1;					//pixel index starts at 0, so thats also ok
 	int yMax = -1;
 	
-	auto pixelVec = getPixels();
+	auto& pixelVec = getPixels();
 	for( auto& pixel: pixelVec ) {
 		short xCur = pixel.getXCoord();
 		short yCur = pixel.getYCoord();
@@ -106,7 +106,7 @@ void EUTelGenericSparseClusterImpl<PixelType>::getCenterOfGravity(float& xCoG, f
 	
 	double totalCharge = 0;
 
-        auto pixelVec = getPixels();
+        auto& pixelVec = getPixels();
         for( auto& pixel: pixelVec ) {
 		double curSignal = pixel.getSignal();
 		xCoG += (pixel.getXCoord())*curSignal;
