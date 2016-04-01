@@ -50,8 +50,7 @@ namespace eutelescope {
 
 		//Decoder to get sensor ID
 		CellIDDecoder<TrackerDataImpl> cellDecoder( noisyPixelCollectionVec );
-		EUTelBaseSparsePixel* pixel = nullptr;
-
+		auto pixel = std::unique_ptr<EUTelBaseSparsePixel>(nullptr);
 		std::map<int, std::vector<int>> noisyPixelMap;
 		
 		//Loop over all hot pixels
@@ -67,26 +66,21 @@ namespace eutelescope {
 			std::unique_ptr<EUTelTrackerDataInterfacer> noisyPixelDataInterface;
 
 			if( pixelType == kEUTelGenericSparsePixel ) {
-				noisyPixelDataInterface =  std::unique_ptr<EUTelTrackerDataInterfacer>( new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>(noisyPixelData) );
+				auto noisyPixelDataInterface = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(noisyPixelData);
+				auto& pixelVec = noisyPixelDataInterface->getPixels();
+
+				for( auto& pixel: pixelVec ) {
+					noiseSensorVector->push_back( cantorEncode(pixel.getXCoord(), pixel.getYCoord()) );
+				}
 			} else {
 				streamlog_out( ERROR5 ) << "The noisy pixel collection is corrupted, it does not contain the right pixel type. Something is wrong!" << std::endl;
 			}
-			
-			//Store all the noisy pixels in the noise vector, use the provided encoding to map two int's to an unique int
-			for ( unsigned int iPixel = 0; iPixel < noisyPixelDataInterface->size(); iPixel++ ) {
-				pixel = noisyPixelDataInterface->getSparsePixelAt( iPixel, pixel);
-				noiseSensorVector->push_back( cantorEncode(pixel->getXCoord(), pixel->getYCoord()) );
-
-			}
 		}
-		delete pixel;
-
 		for( std::map<int, std::vector<int> >::iterator it = noisyPixelMap.begin(); it != noisyPixelMap.end(); ++it) {
 			//Sort the noisy pixel maps
 			std::sort( (it->second).begin(), (it->second).end() );
 			streamlog_out( MESSAGE4) << "Read in " << (it->second).size() << " noisy pixels on plane " << (it->first) << std::endl;
 		}
-
 		return noisyPixelMap;
 	}
 
@@ -192,13 +186,11 @@ namespace eutelescope {
                             throw UnknownDataTypeException("Invalid hit found in method hitContainsHotPixels()");
                         }
 
-                        eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelGenericSparsePixel > *cluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelGenericSparsePixel > (clusterFrame);
+                        auto cluster = std::make_unique<EUTelSparseClusterImpl<EUTelGenericSparsePixel>>(clusterFrame);
                         int sensorID = cluster->getDetectorID();
+			auto& pixelVec = cluster->getPixels();
 
-                        for (unsigned int iPixel = 0; iPixel < cluster->size(); iPixel++) {
-                            EUTelGenericSparsePixel m26Pixel;
-                            cluster->getSparsePixelAt(iPixel, &m26Pixel);
-                            {
+			for( auto& m26Pixel: pixelVec ) {
                                 char ix[100];
                                 sprintf(ix, "%d,%d,%d", sensorID, m26Pixel.getXCoord(), m26Pixel.getYCoord());
                                 std::map < std::string, bool >::const_iterator z = hotPixelMap.find(ix);
@@ -211,9 +203,7 @@ namespace eutelescope {
                                 } else {
                                     skipHit = false;
                                 }
-                            }
                         }
-                        delete cluster;
                     } else if (hit->getType() == kEUTelBrickedClusterImpl) {
 
                         // fixed cluster implementation. Remember it
@@ -323,15 +313,12 @@ namespace eutelescope {
                 int sensorID = static_cast<int> (cellDecoder(hotPixelData)["sensorID"]);
 
                 if (type == kEUTelGenericSparsePixel) {
-                    std::unique_ptr<EUTelSparseClusterImpl<EUTelGenericSparsePixel>> m26Data = std::make_unique<EUTelSparseClusterImpl<EUTelGenericSparsePixel>>(hotPixelData);
-                    std::vector<EUTelGenericSparsePixel*> m26PixelVec;
-                    EUTelGenericSparsePixel m26Pixel;
+                    auto m26Data = std::make_unique<EUTelSparseClusterImpl<EUTelGenericSparsePixel>>(hotPixelData);
+                    auto& pixelVec = m26Data->getPixels();
 
-                    //Push all single Pixels of one plane in the m26PixelVec
-                    for (unsigned int iPixel = 0; iPixel < m26Data->size(); iPixel++) {
+		    for( auto& m26Pixel: pixelVec ) {
                         std::vector<int> m26ColVec();
-                        m26Data->getSparsePixelAt(iPixel, &m26Pixel);
-                        streamlog_out(DEBUG0) << iPixel << " of " << m26Data->size() << " HotPixelInfo:  " << m26Pixel.getXCoord() << " " << m26Pixel.getYCoord() << " " << m26Pixel.getSignal() << std::endl;
+                        streamlog_out(DEBUG0) << "Size: " << m26Data->size() << " HotPixelInfo:  " << m26Pixel.getXCoord() << " " << m26Pixel.getYCoord() << " " << m26Pixel.getSignal() << std::endl;
                         try {
                             char ix[100];
                             sprintf(ix, "%d,%d,%d", sensorID, m26Pixel.getXCoord(), m26Pixel.getYCoord());

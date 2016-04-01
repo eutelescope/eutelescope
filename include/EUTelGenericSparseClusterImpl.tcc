@@ -13,7 +13,7 @@
 #include <iostream>
 #include <cmath>
 
-namespace eutelescope {
+namespace eutelescope{ 
 
 template<class PixelType>
 EUTelGenericSparseClusterImpl<PixelType>::EUTelGenericSparseClusterImpl(IMPL::TrackerDataImpl * data) : 
@@ -44,13 +44,11 @@ template<class PixelType>
 float EUTelGenericSparseClusterImpl<PixelType>::getTotalCharge() const 
 {
 	float charge = 0;
-	PixelType* pixel = new PixelType;
-    for( unsigned int index = 0; index < size() ; index++ )
-	{    
-		getSparsePixelAt( index, pixel );
-		charge += pixel->getSignal();
-    }
-    delete pixel;
+	
+        auto& pixelVec = getPixels();
+        for( auto& pixel: pixelVec ) {
+		charge += pixel.getSignal();
+   	 }
     return charge;
   }
 
@@ -61,21 +59,18 @@ void EUTelGenericSparseClusterImpl<PixelType>::getClusterSize(int& xSize, int& y
 	int yMin = xMin;				//every pixel will be lower, so its OK for max
 	int xMax = -1;					//pixel index starts at 0, so thats also ok
 	int yMax = -1;
-	PixelType* pixel = new PixelType;
-	for( unsigned int index = 0; index < size() ; index++ ) 
-	{
-		getSparsePixelAt( index , pixel);
-		short xCur = pixel->getXCoord();
-		short yCur = pixel->getYCoord();
+
+	auto& pixelVec = getPixels();
+	for( auto& pixel: pixelVec ) {
+		short xCur = pixel.getXCoord();
+		short yCur = pixel.getYCoord();
 		if ( xCur < xMin ) xMin = xCur;
 		if ( xCur > xMax ) xMax = xCur;
 		if ( yCur < yMin ) yMin = yCur;
 		if ( yCur > yMax ) yMax = yCur;
 	}
-	
 	xSize = xMax - xMin + 1;
 	ySize = yMax - yMin + 1;
-	delete pixel;
 }
   
 template<class PixelType>
@@ -85,12 +80,11 @@ void EUTelGenericSparseClusterImpl<PixelType>::getClusterInfo(int& xPos, int& yP
 	int yMin = xMin;				//every pixel will be lower, so its OK for max
 	int xMax = -1;					//pixel index starts at 0, so thats also ok
 	int yMax = -1;
-	PixelType* pixel = new PixelType;
-	for ( unsigned int index = 0; index < size() ; index++ ) 
-	{
-		getSparsePixelAt( index , pixel);
-		short xCur = pixel->getXCoord();
-		short yCur = pixel->getYCoord();
+	
+	auto& pixelVec = getPixels();
+	for( auto& pixel: pixelVec ) {
+		short xCur = pixel.getXCoord();
+		short yCur = pixel.getYCoord();
 		if ( xCur < xMin ) xMin = xCur;
 		if ( xCur > xMax ) xMax = xCur;
 		if ( yCur < yMin ) yMin = yCur;
@@ -102,8 +96,6 @@ void EUTelGenericSparseClusterImpl<PixelType>::getClusterInfo(int& xPos, int& yP
 	
 	xPos =  static_cast<int>( std::floor ( static_cast<float>(xMax) - 0.5 * static_cast<float>(xSize) + 0.5 ) );
 	yPos =  static_cast<int>( std::floor ( static_cast<float>(yMax) - 0.5 * static_cast<float>(ySize) + 0.5 ) );
-
-	delete pixel;
 }
 
 template<class PixelType>
@@ -113,21 +105,16 @@ void EUTelGenericSparseClusterImpl<PixelType>::getCenterOfGravity(float& xCoG, f
 	yCoG = 0;
 	
 	double totalCharge = 0;
-	
-	PixelType* pixel = new PixelType;
-	for( unsigned int index = 0; index < size() ; index++ ) 
-	{
-		getSparsePixelAt( index , pixel);
 
-		double curSignal = pixel->getSignal();
-		xCoG += (pixel->getXCoord())*curSignal;
-		yCoG += (pixel->getYCoord())*curSignal;
+        auto& pixelVec = getPixels();
+        for( auto& pixel: pixelVec ) {
+		double curSignal = pixel.getSignal();
+		xCoG += (pixel.getXCoord())*curSignal;
+		yCoG += (pixel.getYCoord())*curSignal;
 		totalCharge += curSignal;
 	} 
-
 	xCoG /= totalCharge;
 	yCoG /= totalCharge;
-	delete pixel;
 }
 
 template<class PixelType> 
@@ -154,7 +141,7 @@ void EUTelGenericSparseClusterImpl<PixelType>::print(std::ostream& os) const {
     PixelType * pixel = new PixelType;
     for ( unsigned int iPixel = 0 ; iPixel < size() ; iPixel++ ) 
 	{
-		getSparsePixelAt( iPixel, pixel );
+		getSparsePixelAt( iPixel, *pixel );
 		os << "Pixel number = " << iPixel << std::endl
 	 	   << ( * pixel ) << std::endl;
     }
@@ -166,5 +153,4 @@ void EUTelGenericSparseClusterImpl<PixelType>::print(std::ostream& os) const {
     delete pixel; 
   }
 }
-
 #endif

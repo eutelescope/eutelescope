@@ -173,22 +173,12 @@ void  EUTelPreAlign::FillHotPixelMap(LCEvent *event)
       if( type  ==  kEUTelGenericSparsePixel )
 	{  
 	  auto m26Data = std::make_unique<EUTelSparseClusterImpl<EUTelGenericSparsePixel>>(hotPixelData);
+	  auto& pixelVec = m26Data->getPixels();
 
-	  std::vector<EUTelGenericSparsePixel*> m26PixelVec;
-	  EUTelGenericSparsePixel m26Pixel;
-	  //Push all single Pixels of one plane in the m26PixelVec
-
-	  for(  unsigned int iPixel = 0; iPixel < m26Data->size(); iPixel++ ) 
-	    {
-              std::vector<int> m26ColVec();
-              m26Data->getSparsePixelAt( iPixel, &m26Pixel);
-
-              try
-		{
+	  for( auto& m26Pixel: pixelVec ) {
+              try {
 		  _hotPixelMap[sensorID].push_back(std::make_pair(m26Pixel.getXCoord(), m26Pixel.getYCoord()));
-		}
-              catch(...)
-		{
+		} catch(...) {
 		  streamlog_out ( ERROR5 ) << " cannot add pixel to hotpixel map! SensorID: "  << sensorID << ", X:" << m26Pixel.getXCoord() << ", Y:" << m26Pixel.getYCoord() << endl; 
 		  abort();
 		}
@@ -311,7 +301,7 @@ bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit)
 {
 
   // if no hot pixel map was loaded, just return here
-  if( _hotPixelMap.size() == 0) return 0;
+  if( _hotPixelMap.size() == 0) return false;
 
   try
     {
@@ -320,21 +310,18 @@ bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit)
       if ( hit->getType() == kEUTelSparseClusterImpl ) 
 	{
 	  TrackerDataImpl * clusterFrame = static_cast<TrackerDataImpl*> ( clusterVector[0] );
-	  eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelGenericSparsePixel >* cluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelGenericSparsePixel >(clusterFrame);
 
+	auto cluster = std::make_unique<EUTelSparseClusterImpl<EUTelGenericSparsePixel>>(clusterFrame);
 	  int sensorID = cluster->getDetectorID();
+	  auto& pixelVec = cluster->getPixels();
 
-	  for ( unsigned int iPixel = 0; iPixel < cluster->size(); iPixel++ ) 
-	    {
-	      EUTelGenericSparsePixel m26Pixel;
-	      cluster->getSparsePixelAt( iPixel, &m26Pixel);
+	  for( auto& m26Pixel: pixelVec ) {
 	      {
 		try{
 		  if( std::find(_hotPixelMap.at(sensorID).begin(), 
 				_hotPixelMap.at(sensorID).end(),
 				std::make_pair(m26Pixel.getXCoord(),m26Pixel.getYCoord()))
 		      != _hotPixelMap.at(sensorID).end()){ 
-		    delete cluster;                        			  
 		    return true; // if TRUE  this hit will be skipped
 		  }
 		}
@@ -345,7 +332,6 @@ bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit)
 	      }
 	    }
 
-	  delete cluster;
 	  return false;
 	} 
       else if ( hit->getType() == kEUTelBrickedClusterImpl ) 

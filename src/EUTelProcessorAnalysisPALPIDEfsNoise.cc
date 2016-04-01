@@ -108,19 +108,17 @@ void EUTelProcessorAnalysisPALPIDEfsNoise::processEvent(LCEvent *evt)
   {
     TrackerDataImpl * zsData = dynamic_cast< TrackerDataImpl * > ( zsInputDataCollectionVec->getElementAt( iDetector ) );
     auto sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(zsData);
-    for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
-    {
-      EUTelGenericSparsePixel *sparsePixel =  new EUTelGenericSparsePixel() ;
-      sparseData->getSparsePixelAt( iPixel, sparsePixel );
-      noiseMap[iDetector]->Fill(sparsePixel->getXCoord(),sparsePixel->getYCoord());
+    auto& pixelVec = sparseData->getPixels();
+
+    for( auto& sparsePixel: pixelVec ) {
+      noiseMap[iDetector]->Fill(sparsePixel.getXCoord(),sparsePixel.getYCoord());
       for (int iSector=0; iSector<4; iSector++)
 //      {
 //        cerr << iSector*_xPixel[iDetector]/4 << "\t" <<(iSector+1)*_xPixel[iDetector]/4 << endl;
-        if (sparsePixel->getXCoord() >= iSector*_xPixel[iDetector]/4 && sparsePixel->getXCoord() < (iSector+1)*_xPixel[iDetector]/4 )
+        if (sparsePixel.getXCoord() >= iSector*_xPixel[iDetector]/4 && sparsePixel.getXCoord() < (iSector+1)*_xPixel[iDetector]/4 )
           _nFiredPixel[iDetector][iSector]++;
 //      }
 //      cerr << evt->getEventNumber() << "\t" << iDetector << "\t" << sparsePixel->getXCoord() << "\t" << sparsePixel->getYCoord() << endl;
-      delete sparsePixel;
     }
   }
 }

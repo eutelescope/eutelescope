@@ -284,20 +284,17 @@ void EUTelProcessorGeometricClustering::geometricClustering(LCEvent * evt, LCCol
 		geoDescr->getPixelIndexRange( minX, maxX, minY, maxY );
 
 		// now prepare the EUTelescope interface to sparsified data.  
-		auto  sparseData = Utility::getSparseData(zsData, type);
-		
+		auto sparseData = Utility::getSparseData(zsData, type);
+		auto basePixelPtrVec = sparseData->getBasePixelPtrVec();
+
 		streamlog_out ( DEBUG2 ) << "Processing sparse data on detector " << sensorID << " with " << sparseData->size() << " pixels " << std::endl;
 		
-		int hitPixelsInEvent = sparseData->size();
 		std::vector<EUTelGeometricPixel> hitPixelVec;
-		EUTelGenericSparsePixel* pixel = NULL;
 			
 		//This for-loop loads all the hits of the given event and detector plane and stores them as GeometricPixels
-		for(int i = 0; i < hitPixelsInEvent; ++i )
-		  {
-		   
-		    pixel = dynamic_cast<EUTelGenericSparsePixel *>( sparseData->getSparsePixelAt( i, pixel ) );
-		    EUTelGeometricPixel hitPixel( *pixel );
+		  
+		for(auto pixel: basePixelPtrVec) {
+		    EUTelGeometricPixel hitPixel( *dynamic_cast<EUTelGenericSparsePixel*>(pixel) );
 		    
 		    //And get the path to the given pixel
 		    std::string pixelPath = geoDescr->getPixName(hitPixel.getXCoord(), hitPixel.getYCoord());
@@ -356,7 +353,7 @@ void EUTelProcessorGeometricClustering::geometricClustering(LCEvent * evt, LCCol
 		    //First we need to take any pixel, so let's take the first one
 		    //Add it to the cluster as well as the newly added pixels
 		    newlyAdded.push_back( hitPixelVec.front() );
-		    sparseCluster->addSparsePixel( &hitPixelVec.front() );
+		    sparseCluster->addSparsePixel( hitPixelVec.front() );
 		    //And remove it from the original collection
 		    hitPixelVec.erase( hitPixelVec.begin() );
 		    
@@ -395,7 +392,7 @@ void EUTelProcessorGeometricClustering::geometricClustering(LCEvent * evt, LCCol
 			      {
 				//add them to the cluster as well as to the newly added ones
 				newlyAdded.push_back( *hitVec );
-				sparseCluster->addSparsePixel( &(*hitVec) );
+				sparseCluster->addSparsePixel( *hitVec );
 				//and remove it from the original collection
 				hitPixelVec.erase( hitVec );
 				//for the pixel we test there might be other neighbours, we still have to check
@@ -449,9 +446,6 @@ void EUTelProcessorGeometricClustering::geometricClustering(LCEvent * evt, LCCol
 			//forget about them, the memory should be automatically cleaned by smart ptr's
 		      }
 		  } //loop over all found clusters
-		
-		delete pixel;
-		
 	} // this is the end of the loop over all ZS detectors
 	
 	// if the sparseClusterCollectionVec isn't empty add it to the

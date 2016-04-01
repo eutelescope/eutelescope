@@ -1021,17 +1021,12 @@ void  EUTelMille::FillHotPixelMap(LCEvent *event)
 	   int sensorID              = static_cast<int > ( cellDecoder( hotPixelData )["sensorID"] );
 
            if( type  ==  kEUTelGenericSparsePixel ) {  
-				std::unique_ptr<EUTelSparseClusterImpl<EUTelGenericSparsePixel>> m26Data = std::make_unique<EUTelSparseClusterImpl<EUTelGenericSparsePixel>>(hotPixelData);
+		
+   		auto m26Data = std::make_unique<EUTelSparseClusterImpl<EUTelGenericSparsePixel>>(hotPixelData);
+		auto& pixelVec = m26Data->getPixels();
 
-              std::vector<EUTelGenericSparsePixel*> m26PixelVec;
-	      EUTelGenericSparsePixel m26Pixel;
-  	      //Push all single Pixels of one plane in the m26PixelVec
-
-             for ( unsigned int iPixel = 0; iPixel < m26Data->size(); iPixel++ ) 
-             {
-              IntVec m26ColVec();
-              m26Data->getSparsePixelAt( iPixel, &m26Pixel);
-              streamlog_out ( DEBUG3 ) << iPixel << " of " << m26Data->size() << " HotPixelInfo:  " << m26Pixel.getXCoord() << " " << m26Pixel.getYCoord() << " " << m26Pixel.getSignal() << endl;
+	for( auto& m26Pixel: pixelVec ) {
+              streamlog_out ( DEBUG3 ) << "Size: " << m26Data->size() << " HotPixelInfo:  " << m26Pixel.getXCoord() << " " << m26Pixel.getYCoord() << " " << m26Pixel.getSignal() << endl;
               try
               {
                  char ix[100];
@@ -2420,17 +2415,14 @@ bool EUTelMille::hitContainsHotPixels( TrackerHitImpl   * hit)
 	      throw UnknownDataTypeException("Invalid hit found in method hitContainsHotPixels()");
 	    }
 		
-	    eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelGenericSparsePixel > *cluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelGenericSparsePixel >(clusterFrame);
+	    auto cluster = std::make_unique<EUTelSparseClusterImpl<EUTelGenericSparsePixel>>(clusterFrame);
+	    auto& pixelVec = cluster->getPixels();
 	    int sensorID = cluster->getDetectorID();
  
-	    for ( unsigned int iPixel = 0; iPixel < cluster->size(); iPixel++ ) 
-              {
-                EUTelGenericSparsePixel m26Pixel;
-                cluster->getSparsePixelAt( iPixel, &m26Pixel);
+	    for( auto& m26Pixel: pixelVec ) {
                 int pixelX, pixelY;
                 pixelX = m26Pixel.getXCoord();
                 pixelY = m26Pixel.getYCoord();
-
 		{                       
 		    char ix[100];
 		    sprintf(ix, "%d,%d,%d", sensorID, pixelX, pixelY ); 

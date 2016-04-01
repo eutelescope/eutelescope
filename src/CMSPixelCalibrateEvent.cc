@@ -317,14 +317,12 @@ void CMSPixelCalibrateEventProcessor::processEvent (LCEvent * event) {
 
             EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>  correctedData( corrected ) ;
 
-            std::unique_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>> pixelData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(sparseData);
+            auto pixelData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(sparseData);
+	    auto& pixelVec = pixelData->getPixels();
 
-            // Loop over all pixels in the sparseData object.
-            EUTelGenericSparsePixel Pixel;
-            std::unique_ptr<EUTelGenericSparsePixel> correctedPixel = std::make_unique<EUTelGenericSparsePixel>();
+            auto  correctedPixel = std::make_unique<EUTelGenericSparsePixel>();
 
-            for ( unsigned int iPixel = 0; iPixel < pixelData->size(); iPixel++ ) {
-                pixelData->getSparsePixelAt( iPixel, &Pixel);
+	    for(auto& Pixel: pixelVec) {
 
                 correctedPixel->setXCoord( Pixel.getXCoord() );
                 correctedPixel->setYCoord( Pixel.getYCoord() );
@@ -355,7 +353,7 @@ void CMSPixelCalibrateEventProcessor::processEvent (LCEvent * event) {
                     // This event contains pixel that cannot be calibrated and has to be skipped.
                     throw SkipEventException(this);  
                 }
-                correctedData.addSparsePixel( correctedPixel.get() );			
+                correctedData.addSparsePixel( *correctedPixel.get() );			
                 
             }
             correctedDataCollection->push_back( corrected );

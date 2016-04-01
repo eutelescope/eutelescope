@@ -3,18 +3,13 @@
 
 using namespace eutelescope;
 
-EUTelGeometricClusterImpl::EUTelGeometricClusterImpl(IMPL::TrackerDataImpl* data): EUTelGenericSparseClusterImpl<EUTelGeometricPixel>(data)
-{
-/*nothing else to do*/
+EUTelGeometricClusterImpl::EUTelGeometricClusterImpl(IMPL::TrackerDataImpl* data): EUTelGenericSparseClusterImpl<EUTelGeometricPixel>(data) {
 } 
 
-EUTelGeometricClusterImpl::~EUTelGeometricClusterImpl()
-{
-
+EUTelGeometricClusterImpl::~EUTelGeometricClusterImpl() {
 }
 
-void EUTelGeometricClusterImpl::getClusterGeomInfo(float& xPos, float& yPos, float& xSize, float& ySize) const 
-{
+void EUTelGeometricClusterImpl::getClusterGeomInfo(float& xPos, float& yPos, float& xSize, float& ySize) const {
 	float xMin = std::numeric_limits<float>::max(); 	//stores the largest possible value every pixel will be lower, 
 	float yMin = xMin;					//so its OK for max 
 	float xMax = -xMin;								
@@ -24,36 +19,27 @@ void EUTelGeometricClusterImpl::getClusterGeomInfo(float& xPos, float& yPos, flo
 	float yMinBoundary = 0;
 	float yMaxBoundary = 0;
 
-	EUTelGeometricPixel* pixel = new EUTelGeometricPixel;
-	//Loop over all the pixels in the cluster
-	for( unsigned int index = 0; index < size() ; index++ ) 
-	{
-		//Get the pixel
-		getSparsePixelAt( index , pixel);
-
+	auto& pixelVec = getPixels();
+	for( auto& pixel: pixelVec ) {
 		//And its position
-		float xCur = pixel->getPosX();
-		float yCur = pixel->getPosY();
+		float xCur = pixel.getPosX();
+		float yCur = pixel.getPosY();
 
-		if( xCur < xMin )
-		{
+		if( xCur < xMin ) {
 			xMin = xCur;
-			xMinBoundary = pixel->getBoundaryX();
+			xMinBoundary = pixel.getBoundaryX();
 		}
-		if ( xCur > xMax ) 
-		{
+		if ( xCur > xMax ) {
 			xMax = xCur;
-			xMaxBoundary = pixel->getBoundaryX();
+			xMaxBoundary = pixel.getBoundaryX();
 		}
-		if ( yCur < yMin )
-		{
+		if ( yCur < yMin ) {
 			yMin = yCur;
-			yMinBoundary = pixel->getBoundaryY();
+			yMinBoundary = pixel.getBoundaryY();
 		}
-		if ( yCur > yMax ) 
-		{
+		if ( yCur > yMax ) {
 			yMax = yCur;
-			yMaxBoundary = pixel->getBoundaryY();
+			yMaxBoundary = pixel.getBoundaryY();
 		}
 	}
 	xSize = xMax + xMaxBoundary - xMin + xMinBoundary;
@@ -61,30 +47,21 @@ void EUTelGeometricClusterImpl::getClusterGeomInfo(float& xPos, float& yPos, flo
 
 	xPos = xMax + xMaxBoundary - 0.5 *xSize;
 	yPos = yMax + yMaxBoundary - 0.5 *ySize;
-delete pixel;
 }
 
-void EUTelGeometricClusterImpl::getGeometricCenterOfGravity(float& xCoG, float& yCoG) const
-{
+void EUTelGeometricClusterImpl::getGeometricCenterOfGravity(float& xCoG, float& yCoG) const {
 	xCoG = 0;
 	yCoG = 0;
 	
 	double totalCharge = 0;
-	
-	EUTelGeometricPixel* pixel = new EUTelGeometricPixel;
-	for( unsigned int index = 0; index < size() ; index++ ) 
-	{
-		getSparsePixelAt( index , pixel);
 
-		double curSignal = pixel->getSignal();
-		xCoG += (pixel->getPosX())*curSignal;
-		yCoG += (pixel->getPosY())*curSignal;
+	auto& pixelVec = getPixels();
+	for( auto& pixel: pixelVec ) {
+		double curSignal = pixel.getSignal();
+		xCoG += (pixel.getPosX())*curSignal;
+		yCoG += (pixel.getPosY())*curSignal;
 		totalCharge += curSignal;
 	} 
-
 	xCoG /= totalCharge;
 	yCoG /= totalCharge;
-	delete pixel;
 }
-
-

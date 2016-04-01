@@ -51,7 +51,7 @@ class EUTelTrackerDataInterfacer{
      * @param pixel A pointer to the output pixel
      * @return A pointer to the output pixel same as @c pixel
      */
-    virtual EUTelBaseSparsePixel* getSparsePixelAt(unsigned int index, EUTelBaseSparsePixel* pixel) const = 0;
+    virtual void getSparsePixelAt(size_t index, std::unique_ptr<EUTelBaseSparsePixel> & pixel) const = 0;
 
     //! Get the number of sparse pixels in the collection
     /*! This utility can be used to know how many pixels are contained
@@ -63,7 +63,9 @@ class EUTelTrackerDataInterfacer{
     virtual size_t size() const = 0;
 
 
-    virtual void addSparsePixel(EUTelBaseSparsePixel* pixel) = 0;
+    virtual void addSparsePixel(EUTelBaseSparsePixel const & pixel) = 0;
+
+    virtual std::vector<EUTelBaseSparsePixel*> getBasePixelPtrVec() const = 0;
 
     //! Expose the TrackerDataImpl to the public
     /*! This method is used to allow a direct and public access to the

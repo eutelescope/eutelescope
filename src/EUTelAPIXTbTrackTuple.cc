@@ -310,17 +310,12 @@ bool EUTelAPIXTbTrackTuple::readZsHits( std::string colName, LCEvent* event)
 		TrackerDataImpl* zsData = dynamic_cast< TrackerDataImpl * > ( zsInputCollectionVec->getElementAt( plane ) );
 		SparsePixelType type = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( zsData )["sparsePixelType"]) );
     		int sensorID = cellDecoder( zsData )["sensorID"];
-		
-		auto sparseData = std::unique_ptr<EUTelTrackerDataInterfacer>();
 
 		if (type == kEUTelGenericSparsePixel  ) 
 		  {
-		   sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(zsData);
-		   EUTelGenericSparsePixel apixPixel;
-		   
-		   for( unsigned int iHit = 0; iHit < sparseData->size(); iHit++ ) 
-		     {
-		       sparseData->getSparsePixelAt( iHit, &apixPixel);
+		   auto sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(zsData);
+		   auto& pixelVec = sparseData->getPixels();
+		    for( auto& apixPixel: pixelVec ) {	   
 		       _nPixHits++;
 		       p_iden->push_back( sensorID );
 		       p_row->push_back( apixPixel.getYCoord() );
@@ -332,12 +327,9 @@ bool EUTelAPIXTbTrackTuple::readZsHits( std::string colName, LCEvent* event)
 		  }
 		else if( type == kEUTelMuPixel )
 		  {
-		    sparseData =  std::unique_ptr<EUTelTrackerDataInterfacer>( new EUTelTrackerDataInterfacerImpl<EUTelMuPixel>(zsData) );
-		    EUTelMuPixel binaryPixel;
-		    
-		    for( unsigned int iHit = 0; iHit < sparseData->size(); iHit++ ) 
-		     {
-		       sparseData->getSparsePixelAt( iHit, &binaryPixel);
+		    auto sparseData =  std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelMuPixel>>(zsData);
+		    auto& pixelVec = sparseData->getPixels();
+		    for( auto& binaryPixel: pixelVec ) {
 		       _nPixHits++;
 		       p_iden->push_back( sensorID );
 		       p_row->push_back( binaryPixel.getYCoord() );
