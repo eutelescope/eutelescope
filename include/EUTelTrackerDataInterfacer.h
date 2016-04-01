@@ -65,6 +65,8 @@ class EUTelTrackerDataInterfacer{
 
     virtual void addSparsePixel(EUTelBaseSparsePixel const & pixel) = 0;
 
+    virtual std::vector<EUTelBaseSparsePixel*> getBasePixelPtrVec() const = 0;
+
     //! Expose the TrackerDataImpl to the public
     /*! This method is used to allow a direct and public access to the
      * TrackerDataImpl used to collect all the sparse data

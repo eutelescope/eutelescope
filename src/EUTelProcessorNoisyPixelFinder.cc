@@ -187,15 +187,12 @@ void EUTelProcessorNoisyPixelFinder::noisyPixelFinder(EUTelEventImpl* evt) {
 			if(foundexcludedsensor) continue;
 
 			// now prepare the EUTelescope interface to sparsified data.  
-			auto pixel = std::unique_ptr<EUTelBaseSparsePixel>(nullptr);
 			int pixelType = cellDecoder(zsData)["sparsePixelType"];
 			auto sparseData = Utility::getSparseData(zsData, pixelType);
+			auto basePixelPtrVec = sparseData->getBasePixelPtrVec();
 
 			// loop over all pixels in the sparseData object, these are the hit pixels!
-			for ( size_t iPixel = 0; iPixel < sparseData->size(); iPixel++ ) {
-				//get the pixel
-				sparseData->getSparsePixelAt( iPixel, pixel );
-
+			for(auto pixel: basePixelPtrVec) {
 				//compute the address in the array-like-structure, any offset
 				//has to be substracted (array index starts at 0)
 				int indexX = pixel->getXCoord() - currentSensor->offX;

@@ -76,6 +76,14 @@ namespace eutelescope {
      */
     size_t size() const ;
 
+    std::vector<EUTelBaseSparsePixel*> getBasePixelPtrVec() const {
+	std::vector<EUTelBaseSparsePixel*> result;
+	for(auto& pixel: _pixelVec) {
+		result.push_back(static_cast<EUTelBaseSparsePixel*>(&pixel));
+	}
+	return std::move(result);
+   }
+    
     //! Expose the TrackerDataImpl to the public
     /*! This method is used to allow a direct and public access to the
      * TrackerDataImpl used to collect all the sparse data

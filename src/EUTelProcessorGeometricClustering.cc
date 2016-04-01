@@ -284,20 +284,17 @@ void EUTelProcessorGeometricClustering::geometricClustering(LCEvent * evt, LCCol
 		geoDescr->getPixelIndexRange( minX, maxX, minY, maxY );
 
 		// now prepare the EUTelescope interface to sparsified data.  
-		auto  sparseData = Utility::getSparseData(zsData, type);
-		
+		auto sparseData = Utility::getSparseData(zsData, type);
+		auto basePixelPtrVec = sparseData->getBasePixelPtrVec();
+
 		streamlog_out ( DEBUG2 ) << "Processing sparse data on detector " << sensorID << " with " << sparseData->size() << " pixels " << std::endl;
 		
-		int hitPixelsInEvent = sparseData->size();
 		std::vector<EUTelGeometricPixel> hitPixelVec;
-		auto pixel = std::unique_ptr<EUTelBaseSparsePixel>(nullptr);
 			
 		//This for-loop loads all the hits of the given event and detector plane and stores them as GeometricPixels
-		for(int i = 0; i < hitPixelsInEvent; ++i )
-		  {
-		   
-		    sparseData->getSparsePixelAt( i, pixel );
-		    EUTelGeometricPixel hitPixel( *dynamic_cast<EUTelGenericSparsePixel*>(pixel.get()) );
+		  
+		for(auto pixel: basePixelPtrVec) {
+		    EUTelGeometricPixel hitPixel( *dynamic_cast<EUTelGenericSparsePixel*>(pixel) );
 		    
 		    //And get the path to the given pixel
 		    std::string pixelPath = geoDescr->getPixName(hitPixel.getXCoord(), hitPixel.getYCoord());

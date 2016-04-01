@@ -126,10 +126,9 @@ void EUTelProcessorNoisyPixelRemover::processEvent(LCEvent* event) {
                 auto sparseDataInterface = Utility::getSparseData(inputData, pixelType);
 		auto sparseOutputData = Utility::getSparseData(trackerData.get(), pixelType);
 
-		auto pixel = std::unique_ptr<EUTelBaseSparsePixel>(nullptr);
+		auto basePixelPtrVec = sparseDataInterface->getBasePixelPtrVec();
 
-		for( size_t iPixel = 0; iPixel < sparseDataInterface->size(); iPixel++ ) {
-		        sparseDataInterface->getSparsePixelAt( iPixel, pixel );
+		for(auto pixel: basePixelPtrVec) {
 			if(!std::binary_search( noiseVector->begin(), noiseVector->end(), Utility::cantorEncode(pixel->getXCoord(), pixel->getYCoord()) )) {
 					sparseOutputData->addSparsePixel(*pixel);
 			}
