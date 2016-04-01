@@ -233,26 +233,24 @@ void CMSPixelClusteringProcessor::initializeHotPixelMapVec(  )
         EUTelMatrixDecoder matrixDecoder( _siPlanesLayerLayout , iDetector );
 
         // now prepare the EUTelescope interface to sparsified data.  
-        std::unique_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>> sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(hotData);
+        auto sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(hotData);
+	auto& pixelVec = sparseData->getPixels();
 
         streamlog_out ( MESSAGE1 ) << "Processing hotpixel data on detector " << sensorID << " with "
                                  << sparseData->size() << " pixels " << endl;
         
-        for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ ) 
-        {
+        for(auto& sparsePixel: pixelVec) {
             // loop over all pixels in the sparseData object.      
-            auto sparsePixel =  std::make_unique<EUTelGenericSparsePixel>();
 
-            sparseData->getSparsePixelAt( iPixel, sparsePixel );
-            int decoded_XY_index = matrixDecoder.getIndexFromXY( sparsePixel->getXCoord(), sparsePixel->getYCoord() ); // unique pixel index !!
+            int decoded_XY_index = matrixDecoder.getIndexFromXY( sparsePixel.getXCoord(), sparsePixel.getYCoord() ); // unique pixel index !!
 
-            streamlog_out ( DEBUG5 )   << " iPixel " << iPixel << " idet " << iDetector << " decoded_XY_index " << decoded_XY_index << endl;
+            streamlog_out ( DEBUG5 )   <<  " idet " << iDetector << " decoded_XY_index " << decoded_XY_index << endl;
             
             if( _hitIndexMapVec[iDetector].find( decoded_XY_index ) == _hitIndexMapVec[iDetector].end() )
             {
                 _hitIndexMapVec[iDetector].insert ( make_pair ( decoded_XY_index, EUTELESCOPE::FIRINGPIXEL ) );               
                 streamlog_out ( DEBUG5 ) 
-                    << "adding hot pixel " << " Det." << iDetector << " [" << sparsePixel->getXCoord() << " "<< sparsePixel->getYCoord() << "]" << " status : " << EUTELESCOPE::FIRINGPIXEL << endl;
+                    << "adding hot pixel " << " Det." << iDetector << " [" << sparsePixel.getXCoord() << " "<< sparsePixel.getYCoord() << "]" << " status : " << EUTELESCOPE::FIRINGPIXEL << endl;
               }
               else
               {
@@ -379,16 +377,17 @@ void CMSPixelClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * cl
         EUTelMatrixDecoder matrixDecoder( _siPlanesLayerLayout , sensorID );
 		
 		if (type == kEUTelGenericSparsePixel  ) {
-		    std::unique_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>> pixelData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(zsData);
-			streamlog_out ( DEBUG5 ) << "Processing data on detector " << sensorID << ", " << pixelData->size() << " pixels " << endl;
+		    	auto pixelData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(zsData);
+			auto& pixelVec = pixelData->getPixels();
 
+			streamlog_out ( DEBUG5 ) << "Processing data on detector " << sensorID << ", " << pixelData->size() << " pixels " << endl;
+			
 			// Loop over all pixels in the sparseData object.
 			std::vector<EUTelGenericSparsePixel*> PixelVec;
 			EUTelGenericSparsePixel Pixel;
 
 			 //Push all single Pixels of one plane in the PixelVec
-			for ( unsigned int iPixel = 0; iPixel < pixelData->size(); iPixel++ ) {
-				pixelData->getSparsePixelAt( iPixel, Pixel);
+			for(auto& Pixel: pixelVec) {	
 
                 // HotPixel treatment: check if we read a hotpixel db:
 				if(_hitIndexMapVec.size() > sensorID) {
@@ -646,10 +645,8 @@ void CMSPixelClusteringProcessor::fillHistos (LCEvent * evt) {
 				tempHistoName = _clusterSizeVsChargeName + "_d" + to_string( sensorID );
 				(dynamic_cast<AIDA::IHistogram2D*> (_aidaHistoMap[tempHistoName]))->fill(size, pixelCluster->getTotalCharge(), 1.);
 				
-				
-				for (int iPixel=0; iPixel < size; iPixel++) {
-					EUTelGenericSparsePixel Pixel;
-					pixelCluster->getSparsePixelAt(iPixel, Pixel);
+				auto& pixelVec = pixelCluster->getPixels();
+				for(auto& Pixel: pixelVec) {	
 					tempHistoName = _pixelSignalHistoName + "_d" + to_string( sensorID );
 					(dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]))->fill(Pixel.getSignal());
 					

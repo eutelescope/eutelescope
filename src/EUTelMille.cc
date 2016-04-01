@@ -1023,7 +1023,7 @@ void  EUTelMille::FillHotPixelMap(LCEvent *event)
            if( type  ==  kEUTelGenericSparsePixel ) {  
 		
    		auto m26Data = std::make_unique<EUTelSparseClusterImpl<EUTelGenericSparsePixel>>(hotPixelData);
-		auto pixelVec = m26Data->getPixels();
+		auto& pixelVec = m26Data->getPixels();
 
 	for( auto& m26Pixel: pixelVec ) {
               streamlog_out ( DEBUG3 ) << "Size: " << m26Data->size() << " HotPixelInfo:  " << m26Pixel.getXCoord() << " " << m26Pixel.getYCoord() << " " << m26Pixel.getSignal() << endl;
@@ -2416,7 +2416,7 @@ bool EUTelMille::hitContainsHotPixels( TrackerHitImpl   * hit)
 	    }
 		
 	    auto cluster = std::make_unique<EUTelSparseClusterImpl<EUTelGenericSparsePixel>>(clusterFrame);
-	    auto pixelVec = cluster->getPixels();
+	    auto& pixelVec = cluster->getPixels();
 	    int sensorID = cluster->getDetectorID();
  
 	    for( auto& m26Pixel: pixelVec ) {

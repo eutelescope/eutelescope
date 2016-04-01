@@ -435,7 +435,7 @@ void EUTelHistogramMaker::processEvent (LCEvent * evt) {
               if ( pixelType == kEUTelGenericSparsePixel ) {
                 
                 auto recasted = dynamic_cast<EUTelSparseClusterImpl<EUTelGenericSparsePixel>*> ( cluster );
-		auto pixelVec = recasted->getPixels();
+		auto& pixelVec = recasted->getPixels();
 
 		for( auto& sparsePixel: pixelVec ) {
                   int index = noiseMatrixDecoder.getIndexFromXY( sparsePixel.getXCoord(), sparsePixel.getYCoord() );

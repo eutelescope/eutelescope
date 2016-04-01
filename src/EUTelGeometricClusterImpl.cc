@@ -19,7 +19,7 @@ void EUTelGeometricClusterImpl::getClusterGeomInfo(float& xPos, float& yPos, flo
 	float yMinBoundary = 0;
 	float yMaxBoundary = 0;
 
-	auto pixelVec = getPixels();
+	auto& pixelVec = getPixels();
 	for( auto& pixel: pixelVec ) {
 		//And its position
 		float xCur = pixel.getPosX();
@@ -55,7 +55,7 @@ void EUTelGeometricClusterImpl::getGeometricCenterOfGravity(float& xCoG, float& 
 	
 	double totalCharge = 0;
 
-	auto pixelVec = getPixels();
+	auto& pixelVec = getPixels();
 	for( auto& pixel: pixelVec ) {
 		double curSignal = pixel.getSignal();
 		xCoG += (pixel.getPosX())*curSignal;

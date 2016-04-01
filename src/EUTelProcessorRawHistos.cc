@@ -108,7 +108,7 @@ void EUTelProcessorRawHistos::initialiseNoisyPixels( LCCollectionVec* const nois
 
 		if( pixelType == kEUTelGenericSparsePixel ) {
 			auto noisyPixelData =  std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(noisyTrackerData);
-			auto pixelVec = noisyPixelData->getPixels();
+			auto& pixelVec = noisyPixelData->getPixels();
 			//Store all the noisy pixels in the noise vector, use the provided encoding to map two int's to an unique int
 			for( auto& pixel: pixelVec ) {	
 				noiseSensorVector->push_back( cantorEncode(pixel.getXCoord(), pixel.getYCoord()) );
@@ -180,7 +180,7 @@ void EUTelProcessorRawHistos::processEvent (LCEvent* event) {
 
 			// now prepare the EUTelescope interface to sparsified data.  
 			auto sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>( zsData );
-			auto pixelVec = sparseData->getPixels();
+			auto& pixelVec = sparseData->getPixels();
 
 			for( auto& genericPixel: pixelVec ) {
 				bool isNoisy = false;

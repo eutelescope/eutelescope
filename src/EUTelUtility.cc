@@ -67,7 +67,7 @@ namespace eutelescope {
 
 			if( pixelType == kEUTelGenericSparsePixel ) {
 				auto noisyPixelDataInterface = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(noisyPixelData);
-				auto pixelVec = noisyPixelDataInterface->getPixels();
+				auto& pixelVec = noisyPixelDataInterface->getPixels();
 
 				for( auto& pixel: pixelVec ) {
 					noiseSensorVector->push_back( cantorEncode(pixel.getXCoord(), pixel.getYCoord()) );
@@ -188,7 +188,7 @@ namespace eutelescope {
 
                         auto cluster = std::make_unique<EUTelSparseClusterImpl<EUTelGenericSparsePixel>>(clusterFrame);
                         int sensorID = cluster->getDetectorID();
-			auto pixelVec = cluster->getPixels();
+			auto& pixelVec = cluster->getPixels();
 
 			for( auto& m26Pixel: pixelVec ) {
                                 char ix[100];
@@ -314,7 +314,7 @@ namespace eutelescope {
 
                 if (type == kEUTelGenericSparsePixel) {
                     auto m26Data = std::make_unique<EUTelSparseClusterImpl<EUTelGenericSparsePixel>>(hotPixelData);
-                    auto pixelVec = m26Data->getPixels();
+                    auto& pixelVec = m26Data->getPixels();
 
 		    for( auto& m26Pixel: pixelVec ) {
                         std::vector<int> m26ColVec();

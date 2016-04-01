@@ -318,13 +318,11 @@ void CMSPixelCalibrateEventProcessor::processEvent (LCEvent * event) {
             EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>  correctedData( corrected ) ;
 
             auto pixelData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(sparseData);
+	    auto& pixelVec = pixelData->getPixels();
 
-            // Loop over all pixels in the sparseData object.
-            EUTelGenericSparsePixel Pixel;
             auto  correctedPixel = std::make_unique<EUTelGenericSparsePixel>();
 
-            for ( unsigned int iPixel = 0; iPixel < pixelData->size(); iPixel++ ) {
-                pixelData->getSparsePixelAt( iPixel, Pixel);
+	    for(auto& Pixel: pixelVec) {
 
                 correctedPixel->setXCoord( Pixel.getXCoord() );
                 correctedPixel->setYCoord( Pixel.getYCoord() );

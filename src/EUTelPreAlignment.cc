@@ -173,7 +173,7 @@ void  EUTelPreAlign::FillHotPixelMap(LCEvent *event)
       if( type  ==  kEUTelGenericSparsePixel )
 	{  
 	  auto m26Data = std::make_unique<EUTelSparseClusterImpl<EUTelGenericSparsePixel>>(hotPixelData);
-	  auto pixelVec = m26Data->getPixels();
+	  auto& pixelVec = m26Data->getPixels();
 
 	  for( auto& m26Pixel: pixelVec ) {
               try {
@@ -313,7 +313,7 @@ bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit)
 
 	auto cluster = std::make_unique<EUTelSparseClusterImpl<EUTelGenericSparsePixel>>(clusterFrame);
 	  int sensorID = cluster->getDetectorID();
-	  auto pixelVec = cluster->getPixels();
+	  auto& pixelVec = cluster->getPixels();
 
 	  for( auto& m26Pixel: pixelVec ) {
 	      {
