@@ -229,12 +229,14 @@ EUTelTestFitter::EUTelTestFitter()
                            _outputHitColName, string ("testfithits"));
 
   // alignment collections (might be important) 
-  EVENT::StringVec	_alignmentCollectionExample;
-  _alignmentCollectionExample.push_back("alignment");
+  //EVENT::StringVec	_alignmentCollectionExample;
+  //_alignmentCollectionExample.push_back("alignment");
+  // default: no input collection
+  EVENT::StringVec      _emptyCollectionVec;
   
   registerProcessorParameter ("alignmentCollectionNames",
                             "List of alignment collections which are neede to get track position on a Sensor surface ",
-                            _alignmentCollectionNames, _alignmentCollectionExample );
+			      _alignmentCollectionNames, _emptyCollectionVec );
 
   // compulsory parameters:
 
