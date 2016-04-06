@@ -44,6 +44,7 @@
 #include "EUTelExceptions.h"
 #include "EUTelSparseClusterImpl.h"
 #include "EUTelPStream.h"
+#include "EUTelGeometryTelescopeGeoDescription.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -152,6 +153,10 @@ void EUTelDafAlign::dafParams(){
 }
 
 void EUTelDafAlign::dafInit() {
+  //The combinatorial KF will not perform well on unaligned data, 
+  //thus switching back to the simple cluster finder
+  _trackFinderType = simpleCluster;
+  
   for(size_t ii = 0; ii < _translate.size(); ii++){
     _translateX.push_back( _translate.at(ii) );
     _translateY.push_back( _translate.at(ii) );
@@ -240,24 +245,27 @@ void EUTelDafAlign::dafEvent (LCEvent* /*event*/) {
     _nCandidates++;
     _system.fitPlanesInfoDaf(_system.tracks.at(ii));
     //Check resids, intime, angles
-    if(not checkTrack( _system.tracks.at(ii))) { continue;};
+    if(not checkTrack( _system.tracks.at(ii))) {continue;};
     //This guy includes DUT planes and adds weights to measurements based on resid cuts
-    if( checkDutResids ( _system.tracks.at(ii)) >= _nDutHits ) {
-      //Fill plots
+	if( checkDutResids ( _system.tracks.at(ii)) >= _nDutHits ) {
+
+      if(_runPede){
+	for(size_t dut = 0; dut < _dutMatches.size(); dut++){
+	  _system.planes.at( _dutMatches.at(dut) ).include();}
+	  _system.weightToIndex(_system.tracks.at(ii));
+	  _system.fitPlanesInfoBiased(_system.tracks.at(ii));
+
+	 //Fill plots
       if(_histogramSwitch){ 
 	fillPlots( _system.tracks.at(ii) ); 
 	fillDetailPlots( _system.tracks.at(ii) ); 
       }
       _nTracks++;
-      if(_runPede){
-	for(size_t dut = 0; dut < _dutMatches.size(); dut++){
-	  _system.planes.at( _dutMatches.at(dut) ).include();
-	  _system.weightToIndex(_system.tracks.at(ii));
-	  _system.fitPlanesInfoBiased(_system.tracks.at(ii));
+
 	  //Add to mille bin file
 	  addToMille( _system.tracks.at(ii));
-	  _system.planes.at( _dutMatches.at(dut) ).exclude();
-	}
+    	for(size_t dut = 0; dut < _dutMatches.size(); dut++){
+	  _system.planes.at( _dutMatches.at(dut) ).exclude();}
       }
     }
   }
@@ -290,6 +298,12 @@ void EUTelDafAlign::addToMille(daffitter::TrackCandidate<float,4>& track){
     derGL[(ii * 5) + 3] = meas.getX(); //Derivatives of residuals w.r.t. scale of x axis
     derLC[0] = 1; //Derivatives of fit pos w.r.t. x
     derLC[2] = pl.getMeasZ(); //Derivatives of fit pos w.r.t. dx/dz
+
+	//std::cout << "Meas (x|y) on plane " << ii << ": " << meas.getX() << "|" << meas.getY() << std::endl;
+	//std::cout << "Estimate (x|y) on plane " << ii << ": " << estim.getX() << "|" << estim.getY() << std::endl;
+	//std::cout << "Residual X:" << estim.getX()- meas.getX()  << std::endl;
+	//std::cout << "Residual Y:" << estim.getY()- meas.getY()  << std::endl;
+
     _mille->mille(nLC, derLC, nGL, derGL, label, estim.getX()- meas.getX(), pl.getSigmaX());
 
     derGL[(ii * 5)]     = 0;
@@ -428,11 +442,13 @@ void EUTelDafAlign::runPede(){
   stringstream linestream;
   string line;
   double value;
+  float xOff, yOff, scaleX, scaleY, gamma;
+  float xOffErr, yOffErr, scaleXErr, scaleYErr, gammaErr;
 
   // get the first line and throw it away since it is a comment!
   getline( millepede, line );
   while ( not millepede.eof() ) {
-    EUTelAlignmentConstant* constant = NULL;
+    //EUTelAlignmentConstant* constant = NULL;
     getline( millepede, line );
    
     values.clear(); linestream.clear(); linestream.str( line );
@@ -447,40 +463,64 @@ void EUTelDafAlign::runPede(){
     int plane = label / 5;
     switch( label % 5){
     case 0:
-      //First line, we need a new alignment constant thingy.
-      constant = new EUTelAlignmentConstant();
-      constant->setXOffset ( values.at(1) / 1000.0);
-      if( not isFixed){  constant->setXOffsetError( values.at(4)/ 1000.0);}
+      xOff = values.at(1)/1000.0;
+      if( not isFixed){ xOffErr = values.at(4); }
       break;
     case 1:
-      constant->setYOffset ( values.at(1) / 1000.0);
-      if( not isFixed){  constant->setYOffsetError( values.at(4)/ 1000.0);}
+      yOff = values.at(1)/1000.0;
+      if( not isFixed){ yOffErr = values.at(4);}
       break;
     case 2:
-      constant->setGamma( values.at(1));
-      if( not isFixed){  constant->setGammaError( values.at(4));}
+      gamma = values.at(1);
+      if( not isFixed){ gammaErr = values.at(4);}
       break;
     case 3:
-      constant->setAlpha( values.at(1));
-      if( not isFixed){  constant->setAlphaError( values.at(4));}
+      scaleX = values.at(1);
+      if( not isFixed){ scaleXErr =  values.at(4);}
       break;
-    case 4:
-      constant->setBeta( values.at(1));
-      if( not isFixed){  constant->setBetaError( values.at(4));}
-      //Last line, add constant to collection
-      constant->setSensorID( _system.planes.at(plane).getSensorID() );
-      constantsCollection->push_back( constant );
-      streamlog_out ( MESSAGE5 ) << (*constant) << endl;
-      break;
+    case 4: {
+      scaleY = values.at(1);
+      if( not isFixed){ scaleYErr = values.at(4);} 
+	  //Last line, add constant to collection
+      int sensorID = _system.planes.at(plane).getSensorID();
+      Eigen::Matrix3d rotOld = geo::gGeometry().rotationMatrixFromAngles(sensorID);
+	  Eigen::Matrix3d rotAlign = geo::gGeometry().rotationMatrixFromAngles(0.0, 0.0,-gamma);
+	  Eigen::Vector3d newCoeff = geo::gGeometry().getRotationAnglesFromMatrix(rotAlign*rotOld);
+
+	  Eigen::Vector3d oldOffset;
+	  oldOffset << 	geo::gGeometry().siPlaneXPosition(sensorID), 
+					geo::gGeometry().siPlaneYPosition(sensorID), 
+					geo::gGeometry().siPlaneZPosition(sensorID);
+
+	  geo::gGeometry().setPlaneXPosition(sensorID, oldOffset[0]-xOff);
+	  geo::gGeometry().setPlaneYPosition(sensorID, oldOffset[1]-yOff);
+	  geo::gGeometry().setPlaneZPosition(sensorID, oldOffset[2]);
+					
+	  geo::gGeometry().setPlaneXRotationRadians(sensorID,  newCoeff[0]);
+	  geo::gGeometry().setPlaneYRotationRadians(sensorID,  newCoeff[1]);
+	  geo::gGeometry().setPlaneZRotationRadians(sensorID,  newCoeff[2]);
+		std::cout << "Alignment on sensor: " << sensorID << std::endl;
+		std::cout << "xOffset determined to be: " << xOff << " was before: " << oldOffset[0] << " is now: " << oldOffset[0]-xOff << std::endl; 
+		std::cout << "yOffset determined to be: " << yOff << " was before: " << oldOffset[1] << " is now: " << oldOffset[1]-yOff << std::endl; 
+		std::cout << "gamma determined to be: " << gamma << std::endl; 
+	  } break;
     default:
       throw runtime_error("Error parsing millepede.res");
     }
   }
-  event->addCollection( constantsCollection, _alignmentConstantCollectionName );
+ // event->addCollection( constantsCollection, _alignmentConstantCollectionName );
   lcWriter->writeEvent( event );
   delete event;
   lcWriter->close();
   millepede.close();
+
+  std::string _GEARFileSuffix = "_dafaligned";
+  marlin::StringParameters* MarlinStringParams = marlin::Global::parameters;
+  std::string outputFilename = (MarlinStringParams->getStringVal("GearXMLFile")).substr(0, (MarlinStringParams->getStringVal("GearXMLFile")).size()-4);
+  std::cout << "GEAR Filename: " << outputFilename+_GEARFileSuffix+".xml" << std::endl;
+  geo::gGeometry().writeGEARFile(outputFilename+_GEARFileSuffix+".xml");
+  streamlog_out( MESSAGE2 ) << std::endl << "Successfully finished" << std::endl;
+
 }
 
 void EUTelDafAlign::dafEnd() {
