@@ -5,6 +5,8 @@
 #include "EUTelExceptions.h"
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelTrackerDataInterfacerImpl.h"
+#include "EUTelExternalTrigger.h"
+#include "EUTelTrackerDataTriggerInterfacer.h"
 
 // eutelescope geometry
 #include "EUTelGeometryTelescopeGeoDescription.h"

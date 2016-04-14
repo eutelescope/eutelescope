@@ -1,0 +1,121 @@
+#ifndef EUTELTRACKERDATATRIGGERINTERFACER_HCC
+#define EUTELTRACKERDATATRIGGERINTERFACER_HCC
+
+
+namespace eutelescope{
+
+   class EUTelTrackerDataTriggerInterfacer {
+         
+   public:
+	
+    //! Default constructor
+    EUTelTrackerDataTriggerInterfacer(IMPL::TrackerDataImpl* data ) :
+    _trackerData(data), _nElement(), _triggerVec()
+    {
+	std::auto_ptr<EUTelExternalTrigger> trigger (new EUTelExternalTrigger);
+	_nElement = trigger->GetNoOfElements();
+	_triggerVec.clear();
+	fillTriggerVec();
+    }   
+    
+   
+   //! Default destructor
+   ~EUTelTrackerDataTriggerInterfacer() {}
+
+    //! Add an external trigger
+    /*! This method is used to add to the current TrackerDataImpl a
+     * new external trigger with timestamp and label
+     */
+    void addExternalTrigger(EUTelExternalTrigger* trigger) {
+    	 //add values to lcio charge vector
+    	 _trackerData->chargeValues().push_back(	static_cast<float>(static_cast<long
+		long unsigned>(trigger->getTimestamp() )  & 0xFFFFFFFF ) );
+	_trackerData->chargeValues().push_back(	static_cast<float>(static_cast<long
+		long unsigned>(trigger->getTimestamp() ) >> 32 ) );
+	_trackerData->chargeValues().push_back( static_cast<float>(trigger->getLabel()) );
+
+	//add trigger to local trigger vector
+		_triggerVec.push_back(EUTelExternalTrigger(
+			static_cast<long long unsigned>(trigger->getTimestamp()),
+			static_cast<short>(trigger->getLabel() )
+		) );
+    }	
+	
+    //! Get one of the external triggers
+    /*! This method is used to get one of the external triggers contained
+     * in the TrackerData.
+     *
+     * @param index Index of the external trigger within the collection
+     * @param trigger A pointer to the output trigger object
+     * @return A pointer to the output trigger same as @c trigger
+     */
+    EUTelExternalTrigger* getExternalTriggerAt(unsigned int index, EUTelExternalTrigger* trigger) const 
+    {
+	if ( index * _nElement + 2 > _trackerData->getChargeValues().size() ) return 0x0;
+	trigger->setTimestamp( static_cast<long long
+    	unsigned>(_trackerData->getChargeValues()[index * _nElement]) |
+    	static_cast<long long unsigned>(_trackerData->getChargeValues()[index *
+    	_nElement + 1]) << 32  );
+    	trigger->setLabel(static_cast<short>(_trackerData->getChargeValues()[index
+    * _nElement + 2] ) );
+
+    	return trigger;
+    }
+
+    
+    //! Get the number of external triggers in the collection
+    /*! This utility can be used to know how many triggers are contained
+     * in the TriggerData.
+     *
+     * @return the size of TriggerData	
+     */
+      unsigned int size() const {
+         return _triggerVec.size();
+      }	
+
+    //! Expose the TrackerDataImpl to the public
+    /*! This method is used to allow a direct and public access to the
+     * TrackerDataImpl used to collect all the sparse data
+     * information.
+     *
+     * @return The TrackerDataImpl with all the sparse data.
+     */
+    IMPL::TrackerDataImpl* trackerData();
+
+     protected:
+    //! Internal method to fill the local copy of all the triggers
+    /*! Only to be used in this class */
+    void fillTriggerVec(){
+
+       for( unsigned int index = 0 ; index < _trackerData->getChargeValues().size() ; index += 3 )
+    	 { 
+	   _triggerVec.push_back(EUTelExternalTrigger(
+	   static_cast<long long unsigned>(_trackerData->getChargeValues()[index ] ) |
+	   static_cast<long long
+    	 unsigned>(_trackerData->getChargeValues()[index + 1]) << 32,
+	   static_cast<short>(_trackerData->getChargeValues()[ index + 2 ]) 
+	   ) );
+ 	}
+     }
+    
+    private:
+    //! This is the TrackerDataImpl
+    /*! This is the object where the sparse data information are
+     * collected all together.
+     */
+    IMPL::TrackerDataImpl* _trackerData;
+
+    //! Number of 32-bit wide elements in the trigger object
+    /*! This value is initialized in the constructor 
+     */
+    unsigned int _nElement; 
+
+    //! Local copy of the triggers
+    mutable std::vector<EUTelExternalTrigger> _triggerVec;
+    
+
+   }; 
+
+}
+
+#endif
