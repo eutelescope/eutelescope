@@ -64,9 +64,12 @@ EUTelAPIXTbTrackTuple::EUTelAPIXTbTrackTuple()
   _hitYPos(NULL),
   _hitZPos(NULL),
   _hitSensorId(NULL),
+  _triggers(NULL),
   _nTriggers(0),
-  _trigTime(NULL),
-  _trigLabel(NULL)
+  _nTLUTriggers(0),
+  _nExtTriggers(0),
+  _TLUTrigTime(NULL),
+  _ExtTrigTime(NULL)
  {
   //processor description
   _description = "Prepare tbtrack style n-tuple with track fit results" ;
@@ -176,6 +179,7 @@ void EUTelAPIXTbTrackTuple::processEvent( LCEvent * event )
 	_zstree->Fill();
 	_eutracks->Fill();
 	_euhits->Fill();
+	_triggers->Fill();
 
 	_isFirstEvent = false;
 }
@@ -404,8 +408,17 @@ bool EUTelAPIXTbTrackTuple::readTriggers( std::string colName, LCEvent* event)
 	  {
 	    sparseData->getExternalTriggerAt( iTrigger, &trigger);
 	    _nTriggers++;
-	    _trigTime->push_back( trigger.getTimestamp() );
-	    _trigLabel->push_back( trigger.getLabel() );
+	    if ( trigger.getLabel() == 0x1 )
+	      {
+	      _TLUTrigTime->push_back( trigger.getTimestamp() );
+	      _nTLUTriggers++;
+	      }
+	    else if ( trigger.getLabel() == 0xBA ) {
+	      _ExtTrigTime->push_back( trigger.getTimestamp() );
+	      _nExtTriggers++;
+	    }
+	    else
+	      throw UnknownDataTypeException("Unknown trigger label");
 	  }
 	
 	return true;
@@ -439,8 +452,10 @@ void EUTelAPIXTbTrackTuple::clear()
 	_hitSensorId->clear();
 	// Clear triggers
 	_nTriggers = 0;
-	_trigTime->clear();
-	_trigLabel->clear();
+	_nTLUTriggers = 0;
+	_nExtTriggers = 0;
+	_TLUTrigTime->clear();
+	_ExtTrigTime->clear();
 }
 
 void EUTelAPIXTbTrackTuple::prepareTree()
@@ -469,8 +484,8 @@ void EUTelAPIXTbTrackTuple::prepareTree()
 	_hitZPos = new std::vector<double>();
 	_hitSensorId  = new std::vector<int>();
 
-	_trigTime = new std::vector<double>();
-	_trigLabel = new std::vector<int>();
+	_TLUTrigTime = new std::vector<double>();
+	_ExtTrigTime = new std::vector<double>();
 
 	_versionNo = new std::vector<double>();
 	_versionTree = new TTree("version","version");
@@ -496,7 +511,7 @@ void EUTelAPIXTbTrackTuple::prepareTree()
 	_zstree->Branch("iden",     &p_iden);
 	_zstree->Branch("hitTime",  &p_hitTime);
 	_zstree->Branch("frameTime",&p_frameTime);
-
+	
 	//Tree for storing all track param info
 	_eutracks = new TTree("tracks", "tracks");
 	_eutracks->SetAutoSave(1000000000);
@@ -515,8 +530,10 @@ void EUTelAPIXTbTrackTuple::prepareTree()
 	_triggers = new TTree("triggers","triggers");
 	_triggers->SetAutoSave(1000000000);
 	_triggers->Branch("nTriggers", &_nTriggers);
-	_triggers->Branch("trigTime", "std::vector<double>", &_trigTime);
-	_triggers->Branch("trigLabel", &_trigLabel);
+	_triggers->Branch("nTLUTriggers", &_nTLUTriggers);
+	_triggers->Branch("nExtTriggers", &_nExtTriggers);
+	_triggers->Branch("TLUTrigTime", "std::vector<double>", &_TLUTrigTime);
+	_triggers->Branch("ExtTrigTime", "std::vector<double>", &_ExtTrigTime);
 
 	_euhits->AddFriend(_zstree);
 	_euhits->AddFriend(_eutracks);

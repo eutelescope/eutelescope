@@ -90,8 +90,10 @@ namespace eutelescope {
 
     TTree* _triggers;
     int _nTriggers;
-    std::vector<double> *_trigTime;
-    std::vector<int> *_trigLabel;
+    int _nTLUTriggers;
+    int _nExtTriggers;
+    std::vector<double> *_TLUTrigTime;
+    std::vector<double> *_ExtTrigTime;
 
     TTree* _versionTree;
     std::vector<double>* _versionNo;
