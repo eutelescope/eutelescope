@@ -647,6 +647,10 @@ namespace eutelescope {
 
     static std::string _hitAmbiguityHistoName;
 
+    // Residual histogram names
+    static std::string _residualHistoName;
+    static std::string _coordinateHistoName;
+
     // -- 02 August 2010, libov@mail.desy.de ------
     // to include correlation band track selection
     bool            _UseSlope;

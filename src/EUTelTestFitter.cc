@@ -90,6 +90,8 @@ std::string EUTelTestFitter::_nAccHitHistoName   = "nAccHit";
 std::string EUTelTestFitter::_nHitHistoName      = "nHit";
 std::string EUTelTestFitter::_nBestHistoName     = "nBest";
 std::string EUTelTestFitter::_hitAmbiguityHistoName  = "nAmbig";
+std::string EUTelTestFitter::_residualHistoName  = "residual";
+std::string EUTelTestFitter::_coordinateHistoName = "coordinate";
 #endif
 
 
@@ -2242,31 +2244,51 @@ void EUTelTestFitter::bookHistos()
     int   limitXN  = 100;
     int   limitYN  = 100;
     int   limitZN  = 100;
-    float limitY   = 10.0;
-    float limitX   = 10.0; 
-    float limitYr  = 0.1;
-    float limitXr  = 0.1; 
+    float limitYMin = -10.0, limitYMax = 10.0;
+    float limitXMin = -10.0, limitXMax = 10.0; 
+    float limitYrMin = -0.1, limitYrMax = 0.1;
+    float limitXrMin = -0.1, limitXrMax = 0.1; 
     //float limitZ   = 50.0; 
     float limitZr  = 50.0; 
-   //Resids 
-    _aidaHistoMap1D[bname + "fitX"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "fitX", limitXN , -limitX, limitX);
-    _aidaHistoMap1D[bname + "fitY"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "fitY", limitYN , -limitY, limitY);
-    _aidaHistoMap1D[bname + "hitX"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "hitX", limitXN , -limitX, limitX); 
-    _aidaHistoMap1D[bname + "hitY"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "hitY", limitYN , -limitY, limitY);
-    _aidaHistoMap1D[bname + "residualX"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "residualX", limitXN , -limitXr, limitXr);
-    _aidaHistoMap1D[bname + "residualY"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "residualY", limitYN , -limitYr, limitYr);
-    //Resids 2D
-    _aidaHistoMap2D[bname + "residualXdX"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualXdX", limitXN, -limitX, limitX, limitXN, -limitXr, limitXr);
-    _aidaHistoMap2D[bname + "residualYdX"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualYdX", limitXN, -limitX, limitX, limitYN, -limitYr, limitYr);
-    _aidaHistoMap2D[bname + "residualXdY"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualXdY", limitYN, -limitY, limitY, limitXN, -limitXr, limitXr);
-    _aidaHistoMap2D[bname + "residualYdY"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualYdY", limitYN, -limitY, limitY, limitYN, -limitYr, limitYr);
 
-    _aidaHistoMap2D[bname + "residualdZvsX"]        =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualdZvsX",limitXN, -limitX, limitX, limitZN ,-limitZr, limitZr);
-    _aidaHistoMap2D[bname + "residualdZvsY"]        =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualdZvsY",limitYN, -limitY, limitY, limitZN ,-limitZr, limitZr);
-    _aidaHistoMap2D[bname + "residualmeasZvsmeasX"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualmeasZvsmeasX",limitXN , -limitX, limitX, limitZN ,-limitZr, limitZr);
-    _aidaHistoMap2D[bname + "residualmeasZvsmeasY"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualmeasZvsmeasY",limitYN , -limitY, limitY, limitZN ,-limitZr, limitZr);
-    _aidaHistoMap2D[bname + "residualfitZvsmeasX"]  =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualfitZvsmeasX",limitXN , -limitX, limitX, limitZN ,-limitZr, limitZr);
-    _aidaHistoMap2D[bname + "residualfitZvsmeasY"]  =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualfitZvsmeasY",limitYN , -limitY, limitY, limitZN ,-limitZr, limitZr);
+    if ( isHistoManagerAvailable )
+    {
+      histoInfo = histoMgr->getHistogramInfo(_residualHistoName);
+      if ( histoInfo )
+        {
+          streamlog_out ( DEBUG5 )  << (* histoInfo ) << endl;
+          limitXN = limitYN = limitZN = histoInfo->_xBin;
+          limitXrMin = limitYrMin = histoInfo->_xMin;
+	  limitXrMax = limitYrMax = histoInfo->_xMax;
+	  
+	}
+      histoInfo = histoMgr->getHistogramInfo(_coordinateHistoName);
+      if ( histoInfo ) 
+	{
+	  limitXMin = limitYMin = histoInfo->_xMin;
+	  limitXMax = limitYMax = histoInfo->_xMax;
+	}
+    }
+
+   //Resids 
+    _aidaHistoMap1D[bname + "fitX"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "fitX", limitXN , limitXMin, limitXMax);
+    _aidaHistoMap1D[bname + "fitY"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "fitY", limitYN , limitYMin, limitYMax);
+    _aidaHistoMap1D[bname + "hitX"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "hitX", limitXN , limitXMin, limitXMax); 
+    _aidaHistoMap1D[bname + "hitY"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "hitY", limitYN , limitYMin, limitYMax);
+    _aidaHistoMap1D[bname + "residualX"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "residualX", limitXN , limitXrMin, limitXrMax);
+    _aidaHistoMap1D[bname + "residualY"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "residualY", limitYN , limitYrMin, limitYrMax);
+    //Resids 2D
+    _aidaHistoMap2D[bname + "residualXdX"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualXdX", limitXN, limitXMin, limitXMax, limitXN, limitXrMin, limitXrMax);
+    _aidaHistoMap2D[bname + "residualYdX"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualYdX", limitXN, limitXMin, limitXMax, limitYN, limitYrMin, limitYrMax);
+    _aidaHistoMap2D[bname + "residualXdY"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualXdY", limitYN, limitYMin, limitYMax, limitXN, limitXrMin, limitXrMax);
+    _aidaHistoMap2D[bname + "residualYdY"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualYdY", limitYN, limitYMin, limitYMax, limitYN, limitYrMin, limitYrMax);
+
+    _aidaHistoMap2D[bname + "residualdZvsX"]        =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualdZvsX",limitXN, limitXMin, limitXMax, limitZN ,-limitZr, limitZr);
+    _aidaHistoMap2D[bname + "residualdZvsY"]        =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualdZvsY",limitYN, limitYMin, limitYMax, limitZN ,-limitZr, limitZr);
+    _aidaHistoMap2D[bname + "residualmeasZvsmeasX"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualmeasZvsmeasX",limitXN , limitXMin, limitXMax, limitZN ,-limitZr, limitZr);
+    _aidaHistoMap2D[bname + "residualmeasZvsmeasY"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualmeasZvsmeasY",limitYN , limitYMin, limitYMax, limitZN ,-limitZr, limitZr);
+    _aidaHistoMap2D[bname + "residualfitZvsmeasX"]  =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualfitZvsmeasX",limitXN , limitXMin, limitXMax, limitZN ,-limitZr, limitZr);
+    _aidaHistoMap2D[bname + "residualfitZvsmeasY"]  =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualfitZvsmeasY",limitYN , limitYMin, limitYMax, limitZN ,-limitZr, limitZr);
   }
 
   // Chi2 histogram for best tracks in an event - use same binning
