@@ -63,7 +63,10 @@ EUTelAPIXTbTrackTuple::EUTelAPIXTbTrackTuple()
   _hitXPos(NULL),
   _hitYPos(NULL),
   _hitZPos(NULL),
-  _hitSensorId(NULL)
+  _hitSensorId(NULL),
+  _nTriggers(0),
+  _trigTime(NULL),
+  _trigLabel(NULL)
  {
   //processor description
   _description = "Prepare tbtrack style n-tuple with track fit results" ;
@@ -75,8 +78,11 @@ EUTelAPIXTbTrackTuple::EUTelAPIXTbTrackTuple()
   registerInputCollection( LCIO::TRACKERHIT, "InputTrackerHitCollectionName", "Name of the plane-wide hit-data hit collection"  ,
 		_inputTrackerHitColName, std::string("fitpoints") );
  
-  registerProcessorParameter ("DutZsColName", "DUT zero surpressed data colection name",
+  registerProcessorParameter ("DutZsColName", "DUT zero supressed data colection name",
  		     _dutZsColName, std::string("zsdata_apix"));
+
+  registerProcessorParameter ("TriggerColName", "External trigger data colection name",
+ 		     _triggerColName, std::string("eudet_triggers"));
  
   registerProcessorParameter ("OutputPath", "Path/File where root-file should be stored",
 			      _path2file, std::string("NTuple.root"));
@@ -159,6 +165,12 @@ void EUTelAPIXTbTrackTuple::processEvent( LCEvent * event )
        	{
 		return;
 	}
+
+	// read in triggers
+	if( !readTriggers(_triggerColName, event) )
+	  {
+	    return;
+	  }
  
         //fill the trees	
 	_zstree->Fill();
@@ -363,7 +375,42 @@ bool EUTelAPIXTbTrackTuple::readZsHits( std::string colName, LCEvent* event)
 		  }
 	}
   	return true;
-}
+} 
+
+
+//Read in external triggers TrackerData(Impl) to later dump
+bool EUTelAPIXTbTrackTuple::readTriggers( std::string colName, LCEvent* event)
+{
+	LCCollectionVec* triggerInputCollectionVec = NULL;
+ 
+	try
+	{
+		triggerInputCollectionVec = dynamic_cast<LCCollectionVec*>( event->getCollection(colName) );
+  	}
+       	catch(DataNotAvailableException& e)
+	{
+		streamlog_out( DEBUG2 ) << "External trigger collection " << colName << " not found in event " << event->getEventNumber()  << "!" << std::endl;
+    		return false;
+  	}
+	
+	UTIL::CellIDDecoder<TrackerDataImpl> cellDecoder( triggerInputCollectionVec );
+		
+	TrackerDataImpl* triggerData = dynamic_cast< TrackerDataImpl * > ( triggerInputCollectionVec->getElementAt( 0 ) );
+	std::auto_ptr<EUTelTrackerDataTriggerInterfacer> sparseData = std::auto_ptr<EUTelTrackerDataTriggerInterfacer>( );
+	sparseData =  std::auto_ptr<EUTelTrackerDataTriggerInterfacer>( new EUTelTrackerDataTriggerInterfacer(triggerData) );
+
+	EUTelExternalTrigger trigger;
+	for( unsigned int iTrigger = 0; iTrigger < sparseData->size(); iTrigger++ ) 
+	  {
+	    sparseData->getExternalTriggerAt( iTrigger, &trigger);
+	    _nTriggers++;
+	    _trigTime->push_back( trigger.getTimestamp() );
+	    _trigLabel->push_back( trigger.getLabel() );
+	  }
+	
+	return true;
+} 
+
 
 void EUTelAPIXTbTrackTuple::clear()
 {
@@ -390,6 +437,10 @@ void EUTelAPIXTbTrackTuple::clear()
 	_hitYPos->clear();
 	_hitZPos->clear();
 	_hitSensorId->clear();
+	// Clear triggers
+	_nTriggers = 0;
+	_trigTime->clear();
+	_trigLabel->clear();
 }
 
 void EUTelAPIXTbTrackTuple::prepareTree()
@@ -417,6 +468,9 @@ void EUTelAPIXTbTrackTuple::prepareTree()
 	_hitYPos = new std::vector<double>();
 	_hitZPos = new std::vector<double>();
 	_hitSensorId  = new std::vector<int>();
+
+	_trigTime = new std::vector<double>();
+	_trigLabel = new std::vector<int>();
 
 	_versionNo = new std::vector<double>();
 	_versionTree = new TTree("version","version");
@@ -456,7 +510,15 @@ void EUTelAPIXTbTrackTuple::prepareTree()
 	_eutracks->Branch("iden", &_trackIden);
 	_eutracks->Branch("chi2", &_chi2);
 	_eutracks->Branch("ndof", &_ndof);
+	
+	//Tree for storing external triggers
+	_triggers = new TTree("triggers","triggers");
+	_triggers->SetAutoSave(1000000000);
+	_triggers->Branch("nTriggers", &_nTriggers);
+	_triggers->Branch("trigTime", "std::vector<double>", &_trigTime);
+	_triggers->Branch("trigLabel", &_trigLabel);
 
 	_euhits->AddFriend(_zstree);
 	_euhits->AddFriend(_eutracks);
+	_euhits->AddFriend(_triggers);
 }
