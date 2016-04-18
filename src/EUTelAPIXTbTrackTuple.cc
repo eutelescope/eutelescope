@@ -169,18 +169,19 @@ void EUTelAPIXTbTrackTuple::processEvent( LCEvent * event )
 		return;
 	}
 
-	// read in triggers
-	if( !readTriggers(_triggerColName, event) )
-	  {
-	    return;
-	  }
  
         //fill the trees	
 	_zstree->Fill();
 	_eutracks->Fill();
 	_euhits->Fill();
-	_triggers->Fill();
 
+	
+	// read in triggers
+	if( readTriggers(_triggerColName, event) )
+	  {
+	    _triggers->Fill();
+	  }
+	
 	_isFirstEvent = false;
 }
 
@@ -361,7 +362,6 @@ bool EUTelAPIXTbTrackTuple::readZsHits( std::string colName, LCEvent* event)
 		  {
 		    sparseData =  std::auto_ptr<EUTelTrackerDataInterfacer>( new EUTelTrackerDataInterfacerImpl<EUTelMuPixel>(zsData) );
 		    EUTelMuPixel binaryPixel;
-		    
 		    for( unsigned int iHit = 0; iHit < sparseData->size(); iHit++ ) 
 		     {
 		       sparseData->getSparsePixelAt( iHit, &binaryPixel);
@@ -370,7 +370,9 @@ bool EUTelAPIXTbTrackTuple::readZsHits( std::string colName, LCEvent* event)
 		       p_row->push_back( binaryPixel.getYCoord() );
 		       p_col->push_back( binaryPixel.getXCoord() );
 		       p_hitTime->push_back( binaryPixel.getHitTime() );
-		       p_frameTime->push_back( binaryPixel.getFrameTime() );
+		       if ( iHit == 0 ) {
+			 p_frameTime->push_back( binaryPixel.getFrameTime() );
+		       }
 		     }
 		  }
 		else
@@ -420,7 +422,7 @@ bool EUTelAPIXTbTrackTuple::readTriggers( std::string colName, LCEvent* event)
 	    else
 	      throw UnknownDataTypeException("Unknown trigger label");
 	  }
-	
+
 	return true;
 } 
 
