@@ -69,7 +69,11 @@ EUTelAPIXTbTrackTuple::EUTelAPIXTbTrackTuple()
   _nTLUTriggers(0),
   _nExtTriggers(0),
   _TLUTrigTime(NULL),
-  _ExtTrigTime(NULL)
+  _ExtTrigTime(NULL),
+  _tots(NULL),
+  _nToTs(0),
+  _ToTTime(NULL),
+  _ToTLength(NULL)
  {
   //processor description
   _description = "Prepare tbtrack style n-tuple with track fit results" ;
@@ -86,6 +90,9 @@ EUTelAPIXTbTrackTuple::EUTelAPIXTbTrackTuple()
 
   registerProcessorParameter ("TriggerColName", "External trigger data colection name",
  		     _triggerColName, std::string("eudet_triggers"));
+
+  registerProcessorParameter ("ToTColName", "Tot data colection name",
+ 		     _totColName, std::string("eudet_tots"));
  
   registerProcessorParameter ("OutputPath", "Path/File where root-file should be stored",
 			      _path2file, std::string("NTuple.root"));
@@ -181,6 +188,13 @@ void EUTelAPIXTbTrackTuple::processEvent( LCEvent * event )
 	  {
 	    _triggers->Fill();
 	  }
+
+	// read in tots
+	if( readToTs(_totColName, event) )
+	  {
+	    _tots->Fill();
+	  }
+
 	
 	_isFirstEvent = false;
 }
@@ -410,17 +424,55 @@ bool EUTelAPIXTbTrackTuple::readTriggers( std::string colName, LCEvent* event)
 	  {
 	    sparseData->getExternalTriggerAt( iTrigger, &trigger);
 	    _nTriggers++;
-	    if ( trigger.getLabel() == 0x1 )
+	    if ( trigger.getLabel() == 0x1 ) // TLU trigger
 	      {
 	      _TLUTrigTime->push_back( trigger.getTimestamp() );
 	      _nTLUTriggers++;
 	      }
-	    else if ( trigger.getLabel() == 0xBA ) {
+	    else if ( trigger.getLabel() == 0xBA ) {  // coincidence trigger
 	      _ExtTrigTime->push_back( trigger.getTimestamp() );
 	      _nExtTriggers++;
 	    }
 	    else
 	      throw UnknownDataTypeException("Unknown trigger label");
+	  }
+
+	return true;
+} 
+
+// Read in ToTs saved as external trigger TrackerData 
+bool EUTelAPIXTbTrackTuple::readToTs( std::string colName, LCEvent* event)
+{
+	LCCollectionVec* triggerInputCollectionVec = NULL;
+ 
+	try
+	{
+		triggerInputCollectionVec = dynamic_cast<LCCollectionVec*>( event->getCollection(colName) );
+  	}
+       	catch(DataNotAvailableException& e)
+	{
+		streamlog_out( DEBUG2 ) << "Tot collection " << colName << " not found in event " << event->getEventNumber()  << "!" << std::endl;
+    		return false;
+  	}
+	
+	UTIL::CellIDDecoder<TrackerDataImpl> cellDecoder( triggerInputCollectionVec );
+		
+	TrackerDataImpl* triggerData = dynamic_cast< TrackerDataImpl * > ( triggerInputCollectionVec->getElementAt( 0 ) );
+	std::auto_ptr<EUTelTrackerDataTriggerInterfacer> sparseData = std::auto_ptr<EUTelTrackerDataTriggerInterfacer>( );
+	sparseData =  std::auto_ptr<EUTelTrackerDataTriggerInterfacer>( new EUTelTrackerDataTriggerInterfacer(triggerData) );
+
+	EUTelExternalTrigger trigger;
+	for( unsigned int iTrigger = 0; iTrigger < sparseData->size(); iTrigger++ ) 
+	  {
+	    sparseData->getExternalTriggerAt( iTrigger, &trigger);
+	    _nToTs++;
+	    if ( trigger.getLabel() == 0x2 ) // ToT information encoded as ExternalTrigger
+	      {
+		_ToTTime->push_back( (trigger.getTimestamp() >> 8) & 0xFFFFFFFFFFFF );
+		_ToTLength->push_back( trigger. getTimestamp() & 0xFF );
+	      }
+	    else
+	      throw UnknownDataTypeException("Unknown trigger / tot label");
 	  }
 
 	return true;
@@ -458,6 +510,9 @@ void EUTelAPIXTbTrackTuple::clear()
 	_nExtTriggers = 0;
 	_TLUTrigTime->clear();
 	_ExtTrigTime->clear();
+	_ToTTime->clear();
+	_ToTLength->clear();
+	_nToTs = 0;
 }
 
 void EUTelAPIXTbTrackTuple::prepareTree()
@@ -488,6 +543,8 @@ void EUTelAPIXTbTrackTuple::prepareTree()
 
 	_TLUTrigTime = new std::vector<double>();
 	_ExtTrigTime = new std::vector<double>();
+	_ToTTime = new std::vector<double>();
+	_ToTLength = new std::vector<int>();
 
 	_versionNo = new std::vector<double>();
 	_versionTree = new TTree("version","version");
@@ -536,8 +593,16 @@ void EUTelAPIXTbTrackTuple::prepareTree()
 	_triggers->Branch("nExtTriggers", &_nExtTriggers);
 	_triggers->Branch("TLUTrigTime", "std::vector<double>", &_TLUTrigTime);
 	_triggers->Branch("ExtTrigTime", "std::vector<double>", &_ExtTrigTime);
+	
+	// Tree for storing ToTs
+	_tots = new TTree("tots","tots");
+	_tots->SetAutoSave(1000000000);
+	_tots->Branch("nToTs", &_nToTs);
+	_tots->Branch("ToTTime","std::vector<double>", &_ToTTime);
+	_tots->Branch("ToTLength","std::vector<int>", &_ToTLength);
 
 	_euhits->AddFriend(_zstree);
 	_euhits->AddFriend(_eutracks);
 	_euhits->AddFriend(_triggers);
+	_euhits->AddFriend(_tots);
 }

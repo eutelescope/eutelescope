@@ -33,6 +33,7 @@ namespace eutelescope {
     bool readTracks(LCEvent* event);
     bool readHits( std::string hitColName, LCEvent* event );
     bool readTriggers( std::string triggerColName, LCEvent* event );
+    bool readToTs( std::string totColName, LCEvent* event );
 
     std::string _inputTrackColName;
     std::string _inputTrackerHitColName;
@@ -41,6 +42,7 @@ namespace eutelescope {
     std::string _telZsColName;
     std::string _dutZsColName;
     std::string _triggerColName;
+    std::string _totColName;
 
     std::string _path2file;
 
@@ -94,6 +96,11 @@ namespace eutelescope {
     int _nExtTriggers;
     std::vector<double> *_TLUTrigTime;
     std::vector<double> *_ExtTrigTime;
+
+    TTree* _tots;
+    int _nToTs;
+    std::vector<double> *_ToTTime;
+    std::vector<int> *_ToTLength;
 
     TTree* _versionTree;
     std::vector<double>* _versionNo;
