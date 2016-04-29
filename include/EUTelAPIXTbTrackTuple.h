@@ -82,6 +82,7 @@ namespace eutelescope {
     std::vector<int> *p_chip;
     std::vector<int> *p_hitTime;
     std::vector<double> *p_frameTime;
+    std::vector<unsigned int> *p_TLU;
 
     TTree* _euhits;
     int _nHits;
@@ -94,8 +95,8 @@ namespace eutelescope {
     int _nTriggers;
     int _nTLUTriggers;
     int _nExtTriggers;
-    std::vector<double> *_TLUTrigTime;
-    std::vector<double> *_ExtTrigTime;
+    std::vector<unsigned int> *_TLUTrigTime;
+    std::vector<unsigned int> *_ExtTrigTime;
 
     TTree* _tots;
     int _nToTs;

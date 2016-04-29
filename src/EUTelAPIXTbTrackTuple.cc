@@ -58,6 +58,7 @@ EUTelAPIXTbTrackTuple::EUTelAPIXTbTrackTuple()
   p_lv1(NULL),
   p_hitTime(NULL),
   p_frameTime(NULL),
+  p_TLU(NULL),
   _euhits(NULL),
   _nHits(0),
   _hitXPos(NULL),
@@ -163,6 +164,12 @@ void EUTelAPIXTbTrackTuple::processEvent( LCEvent * event )
 	{ 
 		return; 
 	}
+
+	// read in triggers
+	if( readTriggers(_triggerColName, event) )
+	  {
+	    _triggers->Fill();
+	  }
   	
 	//read in raw data	
 	if(!readZsHits( _dutZsColName , event )) 
@@ -175,7 +182,6 @@ void EUTelAPIXTbTrackTuple::processEvent( LCEvent * event )
        	{
 		return;
 	}
-
  
         //fill the trees	
 	_zstree->Fill();
@@ -183,11 +189,7 @@ void EUTelAPIXTbTrackTuple::processEvent( LCEvent * event )
 	_euhits->Fill();
 
 	
-	// read in triggers
-	if( readTriggers(_triggerColName, event) )
-	  {
-	    _triggers->Fill();
-	  }
+	
 
 	// read in tots
 	if( readToTs(_totColName, event) )
@@ -384,9 +386,11 @@ bool EUTelAPIXTbTrackTuple::readZsHits( std::string colName, LCEvent* event)
 		       p_row->push_back( binaryPixel.getYCoord() );
 		       p_col->push_back( binaryPixel.getXCoord() );
 		       p_hitTime->push_back( binaryPixel.getHitTime() );
-		       if ( iHit == 0 ) {
-			 p_frameTime->push_back( binaryPixel.getFrameTime() );
-		       }
+		       p_frameTime->push_back( binaryPixel.getFrameTime() );
+		       if ( _TLUTrigTime->size() != 0) 
+			 p_TLU->push_back( _TLUTrigTime->at(0) );
+		       else 
+			 p_TLU->push_back( 0 );
 		     }
 		  }
 		else
@@ -430,7 +434,9 @@ bool EUTelAPIXTbTrackTuple::readTriggers( std::string colName, LCEvent* event)
 	      _nTLUTriggers++;
 	      }
 	    else if ( trigger.getLabel() == 0xBA ) {  // coincidence trigger
-	      _ExtTrigTime->push_back( trigger.getTimestamp() );
+	      if ( trigger.getTimestamp() != (unsigned int)trigger.getTimestamp() )
+		std::cout << std::hex << trigger.getTimestamp() << " " <<   (unsigned int)trigger.getTimestamp() << std::endl;
+	      _ExtTrigTime->push_back( (unsigned int)trigger.getTimestamp() );
 	      _nExtTriggers++;
 	    }
 	    else
@@ -489,6 +495,7 @@ void EUTelAPIXTbTrackTuple::clear()
 	p_lv1->clear();
 	p_hitTime->clear();
 	p_frameTime->clear();
+	p_TLU->clear();
 	_nPixHits = 0;
 	/* Clear hittrack */
 	_xPos->clear();
@@ -535,14 +542,15 @@ void EUTelAPIXTbTrackTuple::prepareTree()
 	p_lv1 = new std::vector<int>();
 	p_hitTime = new std::vector<int>();
 	p_frameTime = new std::vector<double>();
+	p_TLU = new std::vector<unsigned int>();
 
 	_hitXPos = new std::vector<double>();
 	_hitYPos = new std::vector<double>();
 	_hitZPos = new std::vector<double>();
 	_hitSensorId  = new std::vector<int>();
 
-	_TLUTrigTime = new std::vector<double>();
-	_ExtTrigTime = new std::vector<double>();
+	_TLUTrigTime = new std::vector<unsigned int>();
+	_ExtTrigTime = new std::vector<unsigned int>();
 	_ToTTime = new std::vector<double>();
 	_ToTLength = new std::vector<int>();
 
@@ -570,6 +578,7 @@ void EUTelAPIXTbTrackTuple::prepareTree()
 	_zstree->Branch("iden",     &p_iden);
 	_zstree->Branch("hitTime",  &p_hitTime);
 	_zstree->Branch("frameTime",&p_frameTime);
+	_zstree->Branch("TLU",&p_TLU);
 	
 	//Tree for storing all track param info
 	_eutracks = new TTree("tracks", "tracks");
@@ -591,8 +600,8 @@ void EUTelAPIXTbTrackTuple::prepareTree()
 	_triggers->Branch("nTriggers", &_nTriggers);
 	_triggers->Branch("nTLUTriggers", &_nTLUTriggers);
 	_triggers->Branch("nExtTriggers", &_nExtTriggers);
-	_triggers->Branch("TLUTrigTime", "std::vector<double>", &_TLUTrigTime);
-	_triggers->Branch("ExtTrigTime", "std::vector<double>", &_ExtTrigTime);
+	_triggers->Branch("TLUTrigTime", "std::vector<unsigned int>", &_TLUTrigTime);
+	_triggers->Branch("ExtTrigTime", "std::vector<unsigned int>", &_ExtTrigTime);
 	
 	// Tree for storing ToTs
 	_tots = new TTree("tots","tots");
