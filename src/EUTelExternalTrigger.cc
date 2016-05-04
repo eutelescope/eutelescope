@@ -20,7 +20,7 @@ EUTelExternalTrigger::EUTelExternalTrigger() :
   
 }
 
-EUTelExternalTrigger::EUTelExternalTrigger(long timestamp, short label) :
+EUTelExternalTrigger::EUTelExternalTrigger(long long unsigned timestamp, short label) :
   _timestamp(timestamp),
   _label(label),
   _nElement(3)

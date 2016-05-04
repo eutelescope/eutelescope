@@ -14,7 +14,7 @@ namespace eutelescope {
   public:
   
     // Default constructor with all arguments
-    EUTelExternalTrigger(long timestamp, short label);
+    EUTelExternalTrigger(long long unsigned timestamp, short label);
     
     // Default constructor without arguments
     EUTelExternalTrigger();
@@ -26,7 +26,7 @@ namespace eutelescope {
       Get time stamp of trigger
      */
     
-    long getTimestamp() const { return _timestamp; }
+    long long unsigned getTimestamp() const { return _timestamp; }
     
     /*
       Get trigger label
@@ -52,7 +52,7 @@ namespace eutelescope {
   private:
   
   //! time stamp of trigger
-  long _timestamp;
+  long long unsigned _timestamp;
   
   //! trigger label
   short _label;
