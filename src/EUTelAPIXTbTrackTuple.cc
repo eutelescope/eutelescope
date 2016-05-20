@@ -430,13 +430,12 @@ bool EUTelAPIXTbTrackTuple::readTriggers( std::string colName, LCEvent* event)
 	    _nTriggers++;
 	    if ( trigger.getLabel() == 0x1 ) // TLU trigger
 	      {
-	      _TLUTrigTime->push_back( trigger.getTimestamp() );
+		// save in tree as unsigned int because long unsigned int is not registered as ROOT branch
+		_TLUTrigTime->push_back( (unsigned int)(trigger.getTimestamp() & 0xFFFFFFFF));
 	      _nTLUTriggers++;
 	      }
 	    else if ( trigger.getLabel() == 0xBA ) {  // coincidence trigger
-	      if ( trigger.getTimestamp() != (unsigned int)trigger.getTimestamp() )
-		std::cout << std::hex << trigger.getTimestamp() << " " <<   (unsigned int)trigger.getTimestamp() << std::endl;
-	      _ExtTrigTime->push_back( (unsigned int)trigger.getTimestamp() );
+	      _ExtTrigTime->push_back( (unsigned int)(trigger.getTimestamp() & 0xFFFFFFFF ));
 	      _nExtTriggers++;
 	    }
 	    else
@@ -474,8 +473,9 @@ bool EUTelAPIXTbTrackTuple::readToTs( std::string colName, LCEvent* event)
 	    _nToTs++;
 	    if ( trigger.getLabel() == 0x2 ) // ToT information encoded as ExternalTrigger
 	      {
-		_ToTTime->push_back( (trigger.getTimestamp() >> 8) & 0xFFFFFFFFFFFF );
-		_ToTLength->push_back( trigger. getTimestamp() & 0xFF );
+		// save in tree as unsigned int because long unsigned int is not registered as ROOT branch
+		_ToTTime->push_back( (unsigned int)( (trigger.getTimestamp() >> 8) & 0xFFFFFFFF ) );
+		_ToTLength->push_back( (unsigned int) ( trigger. getTimestamp() & 0xFF ) );
 	      }
 	    else
 	      throw UnknownDataTypeException("Unknown trigger / tot label");
@@ -551,8 +551,8 @@ void EUTelAPIXTbTrackTuple::prepareTree()
 
 	_TLUTrigTime = new std::vector<unsigned int>();
 	_ExtTrigTime = new std::vector<unsigned int>();
-	_ToTTime = new std::vector<double>();
-	_ToTLength = new std::vector<int>();
+	_ToTTime = new std::vector<unsigned int>();
+	_ToTLength = new std::vector<unsigned int>();
 
 	_versionNo = new std::vector<double>();
 	_versionTree = new TTree("version","version");
@@ -607,8 +607,8 @@ void EUTelAPIXTbTrackTuple::prepareTree()
 	_tots = new TTree("tots","tots");
 	_tots->SetAutoSave(1000000000);
 	_tots->Branch("nToTs", &_nToTs);
-	_tots->Branch("ToTTime","std::vector<double>", &_ToTTime);
-	_tots->Branch("ToTLength","std::vector<int>", &_ToTLength);
+	_tots->Branch("ToTTime","std::vector<unsigned int>", &_ToTTime);
+	_tots->Branch("ToTLength","std::vector<unsigned int>", &_ToTLength);
 
 	_euhits->AddFriend(_zstree);
 	_euhits->AddFriend(_eutracks);

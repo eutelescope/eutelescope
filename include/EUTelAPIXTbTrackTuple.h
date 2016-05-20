@@ -100,8 +100,8 @@ namespace eutelescope {
 
     TTree* _tots;
     int _nToTs;
-    std::vector<double> *_ToTTime;
-    std::vector<int> *_ToTLength;
+    std::vector<unsigned int> *_ToTTime;
+    std::vector<unsigned int> *_ToTLength;
 
     TTree* _versionTree;
     std::vector<double>* _versionNo;

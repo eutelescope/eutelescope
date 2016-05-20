@@ -28,12 +28,11 @@ namespace eutelescope{
      */
     void addExternalTrigger(EUTelExternalTrigger* trigger) {
     	 //add values to lcio charge vector
-    	 _trackerData->chargeValues().push_back(	static_cast<float>(static_cast<long
-		long unsigned>(trigger->getTimestamp() )  & 0xFFFFFFFF ) );
-	_trackerData->chargeValues().push_back(	static_cast<float>(static_cast<long
-		long unsigned>(trigger->getTimestamp() ) >> 32 ) );
-	_trackerData->chargeValues().push_back( static_cast<float>(trigger->getLabel()) );
-
+	 uint32_t first_32bits = (uint32_t)(trigger->getTimestamp() & 0xFFFFFFFF);
+	 uint32_t last_32bits  = (uint32_t)(trigger->getTimestamp() >> 32);
+    	 _trackerData->chargeValues().push_back( *( (float*)&first_32bits ) );
+	 _trackerData->chargeValues().push_back( *( (float*)&last_32bits ) );
+	 _trackerData->chargeValues().push_back( static_cast<float>(trigger->getLabel()) );
 	//add trigger to local trigger vector
 		_triggerVec.push_back(EUTelExternalTrigger(
 			static_cast<long long unsigned>(trigger->getTimestamp()),
@@ -51,14 +50,13 @@ namespace eutelescope{
      */
     EUTelExternalTrigger* getExternalTriggerAt(unsigned int index, EUTelExternalTrigger* trigger) const 
     {
-	if ( index * _nElement + 2 > _trackerData->getChargeValues().size() ) return 0x0;
-	trigger->setTimestamp( static_cast<long long
-    	unsigned>(_trackerData->getChargeValues()[index * _nElement]) |
-    	static_cast<long long unsigned>(_trackerData->getChargeValues()[index *
-    	_nElement + 1]) << 32  );
-    	trigger->setLabel(static_cast<short>(_trackerData->getChargeValues()[index
-    * _nElement + 2] ) );
-
+	if ( index * _nElement + 2 > _trackerData->getChargeValues().size() )
+    return 0x0;
+        uint32_t first_32bits =  *( (uint32_t*)&(_trackerData->getChargeValues()[index * _nElement]) );
+    	uint32_t last_32bits =   *( (uint32_t*)&(_trackerData->getChargeValues()[index * _nElement + 1]) );
+    	trigger->setTimestamp( (uint64_t)( (uint64_t)last_32bits << 32 | first_32bits  ) );
+    	trigger->setLabel(static_cast<short>(_trackerData->getChargeValues()[index * _nElement + 2] ) );
+           
     	return trigger;
     }
 
@@ -89,10 +87,10 @@ namespace eutelescope{
 
        for( unsigned int index = 0 ; index < _trackerData->getChargeValues().size() ; index += 3 )
     	 { 
+	 uint32_t first_32bits = *( (uint32_t*)&(_trackerData->getChargeValues()[index]) );
+    	 uint32_t last_32bits =  *( (uint32_t*)&(_trackerData->getChargeValues()[index + 1]) );
 	   _triggerVec.push_back(EUTelExternalTrigger(
-	   static_cast<long long unsigned>(_trackerData->getChargeValues()[index ] ) |
-	   static_cast<long long
-    	 unsigned>(_trackerData->getChargeValues()[index + 1]) << 32,
+	   static_cast<long long unsigned>( first_32bits | last_32bits  ) ,
 	   static_cast<short>(_trackerData->getChargeValues()[ index + 2 ]) 
 	   ) );
  	}
