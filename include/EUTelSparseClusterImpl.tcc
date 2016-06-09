@@ -17,7 +17,7 @@ namespace eutelescope {
   template<class PixelType>
   EUTelSparseClusterImpl<PixelType>::EUTelSparseClusterImpl(IMPL::TrackerDataImpl* data) : 
     EUTelVirtualCluster(data),
-    _rawDataInterfacer(data),
+    EUTelClusterDataInterfacer<PixelType>(data),
     _nElement(0),
     _type(kUnknownPixelType),
     _noiseValues(),
@@ -30,15 +30,9 @@ namespace eutelescope {
     _noiseValues.clear();
   }
 
-
-  template<class PixelType>
-  size_t EUTelSparseClusterImpl<PixelType>::size()  const {
-    return _trackerData->getChargeValues().size() / _nElement;
-  }
-
   template<class PixelType>
   void EUTelSparseClusterImpl<PixelType>::setNoiseValues(std::vector<float > noiseValues) {
-    if ( noiseValues.size() != size() ) {
+    if ( noiseValues.size() != this->size() ) {
       _noiseSetSwitch = false;
       throw IncompatibleDataSetException("The noiseValues size is different from the number of pixel in the cluster");
     }
@@ -59,14 +53,14 @@ namespace eutelescope {
     float          maxSignal = -1 * std::numeric_limits<float>::max();
     
     PixelType * pixel = new PixelType;
-    for ( unsigned int index = 0; index < size() ; index++ ) {
-      getSparsePixelAt( index, *pixel );
+    for ( unsigned int index = 0; index < this->size() ; index++ ) {
+      this->getSparsePixelAt( index, *pixel );
       if ( pixel->getSignal() > maxSignal ) {
  	maxSignal = pixel->getSignal();
  	maxIndex  = index;
       }
     }
-    getSparsePixelAt( maxIndex, *pixel ) ;
+    this->getSparsePixelAt( maxIndex, *pixel ) ;
     xSeed = pixel->getXCoord();
     ySeed = pixel->getYCoord();
     delete pixel;
@@ -75,7 +69,7 @@ namespace eutelescope {
   template<class PixelType>
   float EUTelSparseClusterImpl<PixelType>::getTotalCharge() const {
     float charge = 0;
-    auto& pixelVec = getPixels();
+    auto& pixelVec = this->getPixels();
     for( auto& pixel: pixelVec ) {
       charge += pixel.getSignal();
     }
@@ -85,7 +79,7 @@ namespace eutelescope {
   template<class PixelType>
   float EUTelSparseClusterImpl<PixelType>::getSeedCharge() const {
     float          maxSignal = -1 * std::numeric_limits<float>::max();
-    auto& pixelVec = getPixels();
+    auto& pixelVec = this->getPixels();
     for( auto& pixel: pixelVec ) {
       if ( pixel.getSignal() > maxSignal ) {
 	maxSignal = pixel.getSignal();
@@ -98,7 +92,7 @@ namespace eutelescope {
   template<class PixelType>
   void EUTelSparseClusterImpl<PixelType>::getCenterOfGravityShift(float& xCoG, float& yCoG) const {
 
-    if ( size() == 1 ) {
+    if ( this->size() == 1 ) {
       xCoG = 0; 
       yCoG = 0;
       return;
@@ -111,7 +105,7 @@ namespace eutelescope {
     int xSeed, ySeed;
     getSeedCoord(xSeed, ySeed);
 
-    auto& pixelVec = getPixels();
+    auto& pixelVec = this->getPixels();
     for( auto& pixel: pixelVec ) {
       tempX         += pixel.getSignal() * ( pixel.getXCoord() - xSeed );
       tempY         += pixel.getSignal() * ( pixel.getYCoord() - ySeed );
@@ -129,7 +123,7 @@ namespace eutelescope {
   template<class PixelType> 
   void EUTelSparseClusterImpl<PixelType>::getCenterOfGravityShift(float& xCoG, float& yCoG,
 								  int xSize, int ySize) const {
-    if ( size() == 1 ) {
+    if ( this->size() == 1 ) {
       xCoG = 0; 
       yCoG = 0;
       return;
@@ -143,8 +137,8 @@ namespace eutelescope {
     PixelType * pixel = new PixelType;
     int xPixel, yPixel;
 
-    for ( unsigned int iPixel = 0; iPixel < size() ; iPixel++ ) {
-      getSparsePixelAt( iPixel, *pixel );
+    for ( unsigned int iPixel = 0; iPixel < this->size() ; iPixel++ ) {
+      this->getSparsePixelAt( iPixel, *pixel );
       xPixel = static_cast<int>(pixel->getXCoord());
       yPixel = static_cast<int>(pixel->getYCoord());
       if ( ( abs( xSeed - xPixel ) <= ( xSize / 2 ) ) &&
@@ -157,7 +151,7 @@ namespace eutelescope {
 
     std::vector<unsigned int>::iterator iter = goodPixelList.begin();
     while ( iter != goodPixelList.end() ) {
-      getSparsePixelAt( (*iter), *pixel );
+      this->getSparsePixelAt( (*iter), *pixel );
       tempX         += pixel->getSignal() * ( pixel->getXCoord() - xSeed ) ;
       tempY         += pixel->getSignal() * ( pixel->getYCoord() - ySeed ) ;
       normalization += pixel->getSignal();
@@ -176,13 +170,13 @@ namespace eutelescope {
   template<class PixelType> 
   void EUTelSparseClusterImpl<PixelType>::getCenterOfGravityShift(float& xCoG, float& yCoG,  int n) const {
 
-    if ( size() == 1 ) {
+    if ( this->size() == 1 ) {
       xCoG = 0; 
       yCoG = 0;
       return;
     }
 
-    if ( static_cast<unsigned int>(n) >= size() ) {
+    if ( static_cast<unsigned int>(n) >= this->size() ) {
       getCenterOfGravityShift( xCoG, yCoG );
       return;
     }
@@ -191,8 +185,8 @@ namespace eutelescope {
 
     PixelType * sparsePixel = new PixelType;
 
-    for ( unsigned int iPixel = 0; iPixel < size() ; iPixel++ ) {
-      getSparsePixelAt(iPixel, *sparsePixel);
+    for ( unsigned int iPixel = 0; iPixel < this->size() ; iPixel++ ) {
+      this->getSparsePixelAt(iPixel, *sparsePixel);
       pixelMap.insert( std::make_pair( sparsePixel->getSignal(), iPixel ) );
     }
 
@@ -208,7 +202,7 @@ namespace eutelescope {
     std::multimap<float, unsigned int>::iterator mapIter = pixelMap.end();
     while ( counter < n ) {
       --mapIter;
-      getSparsePixelAt( (*mapIter).second, *sparsePixel ) ;
+      this->getSparsePixelAt( (*mapIter).second, *sparsePixel ) ;
       tempX         += sparsePixel->getSignal() * ( sparsePixel->getXCoord() - xSeed ) ;
       tempY         += sparsePixel->getSignal() * ( sparsePixel->getYCoord() - ySeed ) ;
       normalization += sparsePixel->getSignal();
@@ -232,7 +226,7 @@ namespace eutelescope {
 
 	float xPos(0.0f), yPos(0.0f), totWeight(0.0f);
 
-	auto& pixelVec = getPixels();	
+	auto& pixelVec = this->getPixels();	
 	for( auto& pixel: pixelVec ) { 
     		float curSignal = pixel.getSignal(); 
       		xPos += (pixel.getXCoord())*curSignal;
@@ -249,7 +243,7 @@ namespace eutelescope {
     int xMin = std::numeric_limits<int>::max(), yMin = std::numeric_limits<int>::max();
     int xMax = std::numeric_limits<int>::min(), yMax = std::numeric_limits<int>::min();
 
-	auto& pixelVec = getPixels();
+	auto& pixelVec = this->getPixels();
 	for( auto& pixel: pixelVec ) {
       		short xCur = pixel.getXCoord();
 		short yCur = pixel.getYCoord();
@@ -269,7 +263,7 @@ namespace eutelescope {
 	int xMax = -1;					//pixel index starts at 0, so thats also ok
 	int yMax = -1;
 	
-	auto& pixelVec = getPixels();
+	auto& pixelVec = this->getPixels();
 	for( auto& pixel: pixelVec ) {
 		short xCur = pixel.getXCoord();
 		short yCur = pixel.getYCoord();
@@ -327,13 +321,13 @@ namespace eutelescope {
   float EUTelSparseClusterImpl<PixelType>::getClusterCharge(int nPixel) const {
 
 
-    if ( static_cast<unsigned int> (nPixel) >= size() ) {
+    if ( static_cast<unsigned int> (nPixel) >= this->size() ) {
       return getTotalCharge();
     }
 
     std::vector<float > allSignals;
    
-    auto& pixelVec = getPixels();
+    auto& pixelVec = this->getPixels();
     for( auto& pixel: pixelVec ) {
       allSignals.push_back( pixel.getSignal() );
     }
@@ -355,7 +349,7 @@ namespace eutelescope {
     std::vector<float > clusterSignal;
     std::vector<float > allSignals;
     
-    auto& pixelVec = getPixels();
+    auto& pixelVec = this->getPixels();
     for( auto& pixel: pixelVec ) {
       allSignals.push_back( pixel.getSignal() );
     }
@@ -386,7 +380,7 @@ namespace eutelescope {
 
     int xPixel, yPixel;
 
-    auto& pixelVec = getPixels();
+    auto& pixelVec = this->getPixels();
     for( auto& pixel: pixelVec ) {
       xPixel = static_cast<int>( pixel.getXCoord());
       yPixel = static_cast<int>( pixel.getYCoord());
@@ -429,14 +423,14 @@ namespace eutelescope {
     float          maxSignal = -1 * std::numeric_limits<float>::max();
     
     PixelType * pixel = new PixelType;
-    for ( unsigned int index = 0; index < size() ; index++ ) {
-      getSparsePixelAt( index, *pixel );
+    for ( unsigned int index = 0; index < this->size() ; index++ ) {
+      this->getSparsePixelAt( index, *pixel );
       if ( pixel->getSignal() > maxSignal ) {
         maxSignal = pixel->getSignal();
  	maxIndex  = index;
       }
     }
-    getSparsePixelAt( maxIndex, *pixel ) ;
+    this->getSparsePixelAt( maxIndex, *pixel ) ;
     delete pixel;
     return maxSignal / _noiseValues[maxIndex];
   }
@@ -444,12 +438,12 @@ namespace eutelescope {
   template<class PixelType>
   float EUTelSparseClusterImpl<PixelType>::getClusterSNR(int nPixel) const {
     if ( ! _noiseSetSwitch ) throw DataNotAvailableException("No noise values set");
-    if ( static_cast<unsigned>(nPixel) >= size() ) 
+    if ( static_cast<unsigned>(nPixel) >= this->size() ) 
       return getClusterSNR();
 
     std::vector<float > signalVec;
 
-    auto& pixelVec = getPixels();
+    auto& pixelVec = this->getPixels();
     for( auto& pixel: pixelVec ) {
       signalVec.push_back( pixel.getSignal() );
     }
@@ -502,8 +496,8 @@ namespace eutelescope {
     
     PixelType* pixel = new PixelType(); 
 	 
-    for (unsigned int iPixel = 0;  iPixel < size() ; iPixel++ ) {
-      getSparsePixelAt( iPixel, *pixel );
+    for (unsigned int iPixel = 0;  iPixel < this->size() ; iPixel++ ) {
+      this->getSparsePixelAt( iPixel, *pixel );
       xPixel = static_cast<int> (pixel->getXCoord());
       yPixel = static_cast<int> (pixel->getYCoord());
 
@@ -528,8 +522,8 @@ namespace eutelescope {
     PixelType * pixel = new PixelType;
     std::multimap<float, int> clusterSignalMap;
 
-    for ( unsigned int iPixel = 0 ; iPixel < size(); iPixel++ ) {
-      getSparsePixelAt( iPixel, *pixel );
+    for ( unsigned int iPixel = 0 ; iPixel < this->size(); iPixel++ ) {
+      this->getSparsePixelAt( iPixel, *pixel );
       clusterSignalMap.insert( std::make_pair( pixel->getSignal() , iPixel ) );
     }
 
@@ -581,7 +575,7 @@ namespace eutelescope {
     int bigspacer = 23;
   
     os   <<  std::setw(bigspacer) << std::setiosflags(std::ios::left) << "Sparse cluster made of " << type << " pixels" << std::endl
-	 <<  std::setw(bigspacer) << "Number of pixel " << size() << std::endl
+	 <<  std::setw(bigspacer) << "Number of pixel " << this->size() << std::endl
 	 <<  std::setw(bigspacer) << "Cluster size " << "(" << xSize << ", " << ySize << ")" << std::endl
 	 <<  std::setw(bigspacer) << "Cluster quality " << quality << std::endl
 	 <<  std::setw(bigspacer) << "Cluster total charge " << getTotalCharge() << std::endl
@@ -605,8 +599,8 @@ namespace eutelescope {
     os << std::endl;
     
     PixelType * pixel = new PixelType;
-    for ( unsigned int iPixel = 0 ; iPixel < size() ; iPixel++ ) {
-      getSparsePixelAt( iPixel, *pixel );
+    for ( unsigned int iPixel = 0 ; iPixel < this->size() ; iPixel++ ) {
+      this->getSparsePixelAt( iPixel, *pixel );
 
       os << "Pixel number = " << iPixel << std::endl
 	 << ( * pixel ) << std::endl;

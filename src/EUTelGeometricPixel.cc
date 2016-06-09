@@ -42,7 +42,7 @@ EUTelGeometricPixel::EUTelGeometricPixel(short xCoord, short yCoord, float signa
 }
 
 //Constructor taking a EUTelGenericSparsePixel, all geometry related entries are set to zero
-EUTelGeometricPixel::EUTelGeometricPixel(EUTelGenericSparsePixel& genericPixel):
+EUTelGeometricPixel::EUTelGeometricPixel(EUTelGenericSparsePixel const & genericPixel):
 	EUTelGenericSparsePixel(genericPixel),
 	_posX(0),
 	_posY(0),
@@ -54,7 +54,7 @@ EUTelGeometricPixel::EUTelGeometricPixel(EUTelGenericSparsePixel& genericPixel):
 }
 
 //Constructor taking a EUTelGenericSparsePixel and all the four geometry related parameters
-EUTelGeometricPixel::EUTelGeometricPixel(EUTelGenericSparsePixel& genericPixel, float posX, float posY, float boundX, float boundY):
+EUTelGeometricPixel::EUTelGeometricPixel(EUTelGenericSparsePixel const & genericPixel, float posX, float posY, float boundX, float boundY):
 	EUTelGenericSparsePixel(genericPixel),
 	_posX(posX),
 	_posY(posY),

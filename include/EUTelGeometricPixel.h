@@ -47,10 +47,10 @@ public:
     EUTelGeometricPixel(short xCoord, short yCoord, float signal, short time, float posX, float posY, float boundX, float boundY); 
 
     //! Default constructor with all arguments (EUTelGenericSparsePixel, 4 additional geometry related)
-    EUTelGeometricPixel(EUTelGenericSparsePixel& genericPixel, float posX, float posY, float boundX, float boundY); 
+    EUTelGeometricPixel(EUTelGenericSparsePixel const & genericPixel, float posX, float posY, float boundX, float boundY); 
 
     //! Default constructor with only arguments of a EUTelescopeGenericSparsePixel (geometry related values are set to 0)
-    EUTelGeometricPixel(EUTelGenericSparsePixel& genericPixel); 
+    EUTelGeometricPixel(EUTelGenericSparsePixel const & genericPixel); 
 
     //! Default constructor with no args (all values are set to 0)
     EUTelGeometricPixel(); 
