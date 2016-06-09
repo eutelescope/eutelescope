@@ -134,7 +134,7 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout() {
 	_nPlanes = _siPlanesLayerLayout->getNLayers(); 
 
 	//read the geoemtry names from the "Geometry" StringVec section of the gear file
-	lcio::StringVec geometryNameParameters;
+	std::vector<std::string> geometryNameParameters;
 
 	try {
 		geometryNameParameters  =  _siPlanesParameters->getStringVals("Geometry");
