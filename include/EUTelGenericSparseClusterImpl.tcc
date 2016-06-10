@@ -18,26 +18,13 @@ namespace eutelescope{
 template<class PixelType>
 EUTelGenericSparseClusterImpl<PixelType>::EUTelGenericSparseClusterImpl(IMPL::TrackerDataImpl * data) : 
 	EUTelSimpleVirtualCluster(data),
+	EUTelClusterDataInterfacer<PixelType>(data),
 	_nElement(0),
-	_type(kUnknownPixelType),
-	_rawDataInterfacer(data)
+	_type(kUnknownPixelType)
 {
 	auto pixel = std::make_unique<PixelType>();
 	_nElement = pixel->getNoOfElements();
 	_type = pixel->getSparsePixelType();
-}
-
-
-template<class PixelType>
-unsigned int EUTelGenericSparseClusterImpl<PixelType>::size() const 
-{
-	return _trackerData->getChargeValues().size() / _nElement;
-}
-
-template<class PixelType>
-bool EUTelGenericSparseClusterImpl<PixelType>::empty() const
-{
-	return _trackerData->getChargeValues().empty();
 }
 
 template<class PixelType>
@@ -45,7 +32,7 @@ float EUTelGenericSparseClusterImpl<PixelType>::getTotalCharge() const
 {
 	float charge = 0;
 	
-        auto& pixelVec = getPixels();
+        auto& pixelVec = this->getPixels();
         for( auto& pixel: pixelVec ) {
 		charge += pixel.getSignal();
    	 }
@@ -60,7 +47,7 @@ void EUTelGenericSparseClusterImpl<PixelType>::getClusterSize(int& xSize, int& y
 	int xMax = -1;					//pixel index starts at 0, so thats also ok
 	int yMax = -1;
 
-	auto& pixelVec = getPixels();
+	auto& pixelVec = this->getPixels();
 	for( auto& pixel: pixelVec ) {
 		short xCur = pixel.getXCoord();
 		short yCur = pixel.getYCoord();
@@ -81,7 +68,7 @@ void EUTelGenericSparseClusterImpl<PixelType>::getClusterInfo(int& xPos, int& yP
 	int xMax = -1;					//pixel index starts at 0, so thats also ok
 	int yMax = -1;
 	
-	auto& pixelVec = getPixels();
+	auto& pixelVec = this->getPixels();
 	for( auto& pixel: pixelVec ) {
 		short xCur = pixel.getXCoord();
 		short yCur = pixel.getYCoord();
@@ -106,7 +93,7 @@ void EUTelGenericSparseClusterImpl<PixelType>::getCenterOfGravity(float& xCoG, f
 	
 	double totalCharge = 0;
 
-        auto& pixelVec = getPixels();
+        auto& pixelVec = this->getPixels();
         for( auto& pixel: pixelVec ) {
 		double curSignal = pixel.getSignal();
 		xCoG += (pixel.getXCoord())*curSignal;
@@ -128,7 +115,7 @@ void EUTelGenericSparseClusterImpl<PixelType>::print(std::ostream& os) const {
     int bigspacer = 23;
   
     os   <<  std::setw(bigspacer) << std::setiosflags(std::ios::left) << "Sparse cluster made of " << type << " pixels" << std::endl
-	 <<  std::setw(bigspacer) << "Number of pixel " << size() << std::endl
+	 <<  std::setw(bigspacer) << "Number of pixel " << this->size() << std::endl
 	 <<  std::setw(bigspacer) << "Cluster size " << "(" << xSize << ", " << ySize << ")" << std::endl
 	 <<  std::setw(bigspacer) << "Cluster total charge " << getTotalCharge() << std::endl;
 
@@ -139,9 +126,9 @@ void EUTelGenericSparseClusterImpl<PixelType>::print(std::ostream& os) const {
     os << std::endl;
     
     PixelType * pixel = new PixelType;
-    for ( unsigned int iPixel = 0 ; iPixel < size() ; iPixel++ ) 
+    for ( unsigned int iPixel = 0 ; iPixel < this->size() ; iPixel++ ) 
 	{
-		getSparsePixelAt( iPixel, *pixel );
+		this->getSparsePixelAt( iPixel, *pixel );
 		os << "Pixel number = " << iPixel << std::endl
 	 	   << ( * pixel ) << std::endl;
     }

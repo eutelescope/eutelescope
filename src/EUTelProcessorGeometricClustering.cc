@@ -294,7 +294,7 @@ void EUTelProcessorGeometricClustering::geometricClustering(LCEvent * evt, LCCol
 		//This for-loop loads all the hits of the given event and detector plane and stores them as GeometricPixels
 		  
 		for(auto pixel: basePixelPtrVec) {
-		    EUTelGeometricPixel hitPixel( *dynamic_cast<EUTelGenericSparsePixel*>(pixel) );
+		    EUTelGeometricPixel hitPixel( *dynamic_cast<EUTelGenericSparsePixel const *>(pixel) );
 		    
 		    //And get the path to the given pixel
 		    std::string pixelPath = geoDescr->getPixName(hitPixel.getXCoord(), hitPixel.getYCoord());

@@ -314,8 +314,8 @@ bool EUTelAPIXTbTrackTuple::readZsHits( std::string colName, LCEvent* event)
 		if (type == kEUTelGenericSparsePixel  ) 
 		  {
 		   auto sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(zsData);
-		   auto& pixelVec = sparseData->getPixels();
-		    for( auto& apixPixel: pixelVec ) {	   
+
+		    for( auto& apixPixel: *sparseData ) {	   
 		       _nPixHits++;
 		       p_iden->push_back( sensorID );
 		       p_row->push_back( apixPixel.getYCoord() );
@@ -328,8 +328,7 @@ bool EUTelAPIXTbTrackTuple::readZsHits( std::string colName, LCEvent* event)
 		else if( type == kEUTelMuPixel )
 		  {
 		    auto sparseData =  std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelMuPixel>>(zsData);
-		    auto& pixelVec = sparseData->getPixels();
-		    for( auto& binaryPixel: pixelVec ) {
+		    for( auto& binaryPixel: *sparseData ) {
 		       _nPixHits++;
 		       p_iden->push_back( sensorID );
 		       p_row->push_back( binaryPixel.getYCoord() );

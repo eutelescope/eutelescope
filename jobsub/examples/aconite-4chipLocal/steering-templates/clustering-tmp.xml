@@ -66,7 +66,7 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
- <processor name="ClusteringMimosa" type="EUTelProcessorGeometricClustering">
+ <processor name="ClusteringMimosa" type="EUTelProcessorSparseClustering">
  <!--EUTelProcessorGeometricClustering is looking for clusters into a calibrated pixel matrix.-->
   <!--Input of Zero Suppressed data-->
   <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> zsdata_m26 </parameter>

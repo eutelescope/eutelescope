@@ -10,8 +10,8 @@
 #ifndef EUTELGENERICSPARSECLUSTERIMPL_HCC
 #define EUTELGENERICSPARSECLUSTERIMPL_HCC
 
-#include "EUTelTrackerDataInterfacerImpl.h"
 #include "EUTELESCOPE.h"
+#include "EUTelClusterDataInterfacer.h"
 #include <UTIL/CellIDDecoder.h>
 
 namespace eutelescope {
@@ -27,7 +27,7 @@ namespace eutelescope {
  *  method.
  */
 template<class PixelType> 
-class EUTelGenericSparseClusterImpl : public EUTelSimpleVirtualCluster
+class EUTelGenericSparseClusterImpl : public EUTelSimpleVirtualCluster, public EUTelClusterDataInterfacer<PixelType>
 {
   public:
 	//! Default constructor
@@ -96,21 +96,6 @@ class EUTelGenericSparseClusterImpl : public EUTelSimpleVirtualCluster
 	//                                                    //
 	////////////////////////////////////////////////////////
 
-	//! Get the number of sparse pixels in the collection
-	/*! This utility can be used to know how many pixels are contained
-	 *  in the TrackerData.
-	 *
-	 *  @return the size of TrackerData measured in sparse
-	 *  pixels. 
-	 */ 
-	unsigned int size() const ;
-
-	//! Check if there are any sparse pixels in the collection
-	/*! 
-	 *  @return TrackerData.empty()
-	 */ 
-	bool empty() const ;
-
 	//! Get the type of sparsified pixel
 	/*! This method is used to get the type of sparsified pixel
 	 *  contained in the cluster. 
@@ -129,37 +114,12 @@ class EUTelGenericSparseClusterImpl : public EUTelSimpleVirtualCluster
 		return static_cast<SparsePixelType>(static_cast<lcio::long64>(cellDecoder(_trackerData)["sparsePixelType"]));
 	}
 
-    //! Get one of the sparse pixel
-    /*! This method is used to get one of the sparse pixel contained
-     *  into the TrackerData. Not mutant version.
-     */ 
-    template <typename ...Params> 
-    void getSparsePixelAt(Params&&... params) const {
-	_rawDataInterfacer.getSparsePixelAt(std::forward<Params>(params)...);
-    }
-
-    //! Add a sparse pixel
-    /*! This method is used to add to the current TrackerDataImpl a
-     *  new sparse pixel with all the pieces of information.
-     */
-    template <typename ...Params>
-    void addSparsePixel(Params&&... params) {
-	_rawDataInterfacer.addSparsePixel(std::forward<Params>(params)...);
-    }
-
-    std::vector<PixelType> const & getPixels() const {
-	return _rawDataInterfacer.getPixels();
-    } 
-
   protected: 
 	//! The number of elements in the data structure
 	size_t _nElement;
 
 	//! The sparse pixel type enumerator
 	SparsePixelType _type;
-
-	//! The interfacer to the raw data
-	EUTelTrackerDataInterfacerImpl<PixelType> _rawDataInterfacer;
 
 private:
 	DISALLOW_COPY_AND_ASSIGN(EUTelGenericSparseClusterImpl)
