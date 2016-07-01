@@ -38,7 +38,7 @@
   <!-- compression of output file 0: false >0: true (default) -->
   <parameter name="Compress" type="int" value="1"/>
   <!-- filename without extension-->
-  <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-alignmentGBL_it3"/>
+  <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-alignmentGBL_newGBL3"/>
   <!-- type of output file root (default) or xml )-->
   <parameter name="FileType" type="string" value="root"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
@@ -56,9 +56,9 @@
   <!--Initialization of a data file handler-->
   <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
   <!--Initialization of a simple conditions file handler-->
-  <parameter name="SimpleFileHandler" type="StringVec"> prealign @DatabasePath@/run000118-prealignment.slcio alignment </parameter>
-  <parameter name="SimpleFileHandler" type="StringVec"> align @DatabasePath@/run000118-alignmentGBL.slcio alignment </parameter>
-  <parameter name="SimpleFileHandler" type="StringVec"> align2 @DatabasePath@/@FilePrefix@-alignmentGBL_it2.slcio alignment </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> prealign @DatabasePath@/@PreAlignRun@-prealignment.slcio alignment </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> align  @DatabasePath@/@FilePrefix@-alignmentGBL_newGBL.slcio alignment </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> align2 @DatabasePath@/@FilePrefix@-alignmentGBL_newGBL2.slcio alignment </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
@@ -103,17 +103,17 @@
   <!--Events number to have DEBUG1 printed outs (default=10)-->
   <parameter name="PrintEvents" type="int" value="0"/>
   <!--This is the name of the reference it collection (init at 0,0,0)-->
-  <parameter name="ReferenceCollection" type="string" value="refhit"/>
+  <!--parameter name="ReferenceCollection" type="string" value="refhit"/-->
   <!--This is the name of the reference hit collection (init at 0,0,0)-->
-  <parameter name="ReferenceHitFile" type="string" value="@DatabasePath@/@FilePrefix@-referencehit.slcio"/>
+  <!--parameter name="ReferenceHitFile" type="string" value="@DatabasePath@/@FilePrefix@-referencehit.slcio"/-->
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
   <!--List of alignment collections that were applied to the DUT-->
   <parameter name="alignmentCollectionNames" type="StringVec" value="prealign"/>
   <!--List of hit collections. First one is INPUT collection, every subsequent corresponds to applying alignment collection-->
-  <parameter name="hitCollectionNames" type="StringVec" value="hitCollectionNames"/>
+  <!--parameter name="hitCollectionNames" type="StringVec" value="hitCollectionNames"/-->
   <!--List of refhit collections. First one is INPUT collection, every subsequent corresponds to applying alignment collection-->
-  <parameter name="refhitCollectionNames" type="StringVec" value="hitCollectionNames"/>
+  <!--parameter name="refhitCollectionNames" type="StringVec" value="hitCollectionNames"/-->
 </processor>
 
 
@@ -157,17 +157,17 @@
   <!--Events number to have DEBUG1 printed outs (default=10)-->
   <parameter name="PrintEvents" type="int" value="0"/>
   <!--This is the name of the reference it collection (init at 0,0,0)-->
-  <parameter name="ReferenceCollection" type="string" value="refhit"/>
+  <!--parameter name="ReferenceCollection" type="string" value="refhit"/-->
   <!--This is the name of the reference hit collection (init at 0,0,0)-->
-  <parameter name="ReferenceHitFile" type="string" value="@DatabasePath@/@FilePrefix@-referencehit.slcio"/>
+  <!--parameter name="ReferenceHitFile" type="string" value="@DatabasePath@/@FilePrefix@-referencehit.slcio"/-->
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
   <!--List of alignment collections that were applied to the DUT-->
   <parameter name="alignmentCollectionNames" type="StringVec" value="align"/>
   <!--List of hit collections. First one is INPUT collection, every subsequent corresponds to applying alignment collection-->
-  <parameter name="hitCollectionNames" type="StringVec" value="hitCollectionNames"/>
+  <!--parameter name="hitCollectionNames" type="StringVec" value="hitCollectionNames"/-->
   <!--List of refhit collections. First one is INPUT collection, every subsequent corresponds to applying alignment collection-->
-  <parameter name="refhitCollectionNames" type="StringVec" value="hitCollectionNames"/>
+  <!--parameter name="refhitCollectionNames" type="StringVec" value="hitCollectionNames"/-->
 </processor>
 
  <processor name="MyEUTelApplyAlignmentProcessor3" type="EUTelApplyAlignmentProcessor">
@@ -210,44 +210,40 @@
   <!--Events number to have DEBUG1 printed outs (default=10)-->
   <parameter name="PrintEvents" type="int" value="0"/>
   <!--This is the name of the reference it collection (init at 0,0,0)-->
-  <parameter name="ReferenceCollection" type="string" value="refhit"/>
+  <!--parameter name="ReferenceCollection" type="string" value="refhit"/-->
   <!--This is the name of the reference hit collection (init at 0,0,0)-->
-  <parameter name="ReferenceHitFile" type="string" value="@DatabasePath@/@FilePrefix@-referencehit.slcio"/>
+  <!--parameter name="ReferenceHitFile" type="string" value="@DatabasePath@/@FilePrefix@-referencehit.slcio"/-->
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
   <!--List of alignment collections that were applied to the DUT-->
   <parameter name="alignmentCollectionNames" type="StringVec" value="align2"/>
   <!--List of hit collections. First one is INPUT collection, every subsequent corresponds to applying alignment collection-->
-  <parameter name="hitCollectionNames" type="StringVec" value="hitCollectionNames"/>
+  <!--parameter name="hitCollectionNames" type="StringVec" value="hitCollectionNames"/-->
   <!--List of refhit collections. First one is INPUT collection, every subsequent corresponds to applying alignment collection-->
-  <parameter name="refhitCollectionNames" type="StringVec" value="hitCollectionNames"/>
+  <!--parameter name="refhitCollectionNames" type="StringVec" value="hitCollectionNames"/-->
 </processor>
 
  <processor name="MyEUTelMilleGBL" type="EUTelMilleGBL">
  <!--EUTelMilleGBL uses the MILLE program to write data files for MILLEPEDE II.-->
   <!--Hit collections name-->
   <parameter name="HitCollectionName" type="string" lcioInType="TrackerHit"> Aligned2Hit </parameter>
-  <!--Track collection name-->
-  <parameter name="TrackCollectionName" type="string" lcioInType="Track"> fittracks </parameter>
   <!--Number of alignment constants used. Available mode are: 
-1 - shifts in the X and Y directions and a rotation around the Z axis,
 2 - only shifts in the X and Y directions
-3 - (EXPERIMENTAL) shifts in the X,Y and Z directions and rotations around all three axis-->
+3 - shifts in the X and Y directions and a rotation around the Z axis -->
   <parameter name="AlignMode" type="int" value="3"/>
   <!--This is the name of the alignment collection to be saved into the slcio file-->
   <!--parameter name="AlignmentConstantCollectionName" type="string" value="alignment"/-->
   <!--This is the name of the LCIO file name with the output alignmentconstants (add .slcio)-->
-  <parameter name="AlignmentConstantLCIOFile" type="string" value="@DatabasePath@/@FilePrefix@-alignmentGBL_it3.slcio"/> 
+  <parameter name="AlignmentConstantLCIOFile" type="string" value="@DatabasePath@/@FilePrefix@-alignmentGBL_newGBL3.slcio"/> 
   <!--Set how many hits (=planes) can be missing on a track candidate.-->
   <!--parameter name="AllowedMissingHits" type="int" value="0"/-->
-  <!--Do you want the reference hit collection to be corrected by the shifts and tilts from the alignment collection? (default - false )-->
-  <!--parameter name="ApplyToReferenceCollection" type="bool" value="false"/-->
   <!--Name of the Millepede binary file.-->
   <parameter name="BinaryFilename" type="string" value="@LcioPath@/@FilePrefix@-aligngbl-mille.bin"/>
   <!--Maximal allowed distance between hits entering the fit per 10 cm space between the planes.-->
   <parameter name="triCut" type="float" value="@TripletCut@"/>
   <parameter name="driCut" type="float" value="@DripletCut@"/>
   <parameter name="sixCut" type="float" value="@SixCut@"/>
+  <parameter name="slopeCut" type="float" value="@SlopeCut@"/>
   <parameter name="Ebeam" type="double" value="@BeamEnergy@"/>
   <!--Exclude planes from fit according to their sensor ids.-->
   <parameter name="ExcludePlanes" type="IntVec">@ExcludePlanes@ </parameter>
@@ -266,15 +262,15 @@
 3 - Mixture of a track collection from the telescope and hit collections for the DUT (only one DUT layer can be used unfortunately)-->
   <parameter name="InputMode" type="int" value="0"/>
   <!--Maximal number of track candidates.-->
-  <parameter name="MaxTrackCandidates" type="int" value="@AlignTrackCandidates@"/>
+  <!--parameter name="MaxTrackCandidates" type="int" value="@AlignTrackCandidates@"/-->
   <!--Maximal number of track candidates (Total).-->
   <parameter name="MaxTrackCandidatesTotal" type="int" value="@AlignTrackCandidates@"/>
   <!--Remove Mimosa26 clusters with a charge (i.e. number of fired pixels in cluster) below or equal to this value-->
   <!--parameter name="MimosaClusterChargeMin" type="int" value="1"/-->
   <!--Use only events with one hit in every plane.-->
-  <parameter name="OnlySingleHitEvents" type="int" value="0"/>
+  <!--parameter name="OnlySingleHitEvents" type="int" value="0"/-->
   <!--Use only events with one track candidate.-->
-  <parameter name="OnlySingleTrackEvents" type="int" value="0"/>
+  <!--parameter name="OnlySingleTrackEvents" type="int" value="0"/-->
   <!--Name of the steering file for the pede program.-->
   <parameter name="PedeSteerfileName" type="string" value="@LcioPath@/@FilePrefix@-pede-steer.txt"/>
   <!--Start values for the alignment for the angle alpha.-->

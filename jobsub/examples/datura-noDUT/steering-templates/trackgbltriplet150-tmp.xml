@@ -42,8 +42,7 @@
   <parameter name="Compress" type="int" value="1"/>
   <!-- filename without extension-->
   <!--parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-GBLfitter-alignGBL_wAir"/-->
-  <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-GBLfitter-fixedAlign-alignGBL_wAir_thickSensIT3_unb"/>
-  <!--parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-GBLfitter-fixedAlign-alignGBL_wAir-tripletSelect"/-->
+  <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-GBLfitter-CS"/>
   <!-- type of output file root (default) or xml )-->
   <parameter name="FileType" type="string" value="root"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
@@ -74,12 +73,10 @@
   <parameter name="SimpleFileHandler" type="StringVec"> refhit42 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit </parameter>
   <parameter name="SimpleFileHandler" type="StringVec"> refhit51 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit </parameter>
   <parameter name="SimpleFileHandler" type="StringVec"> refhit52 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit </parameter>
-  <!--parameter name="SimpleFileHandler" type="StringVec"> prealign  @DatabasePath@/@FilePrefix@-prealignment.slcio alignment </parameter-->
-  <parameter name="SimpleFileHandler" type="StringVec"> prealign  @DatabasePath@/run000064-prealignment.slcio alignment </parameter>
-  <!--parameter name="SimpleFileHandler" type="StringVec"> align @DatabasePath@/@FilePrefix@-alignmentGBL.slcio alignment </parameter-->
-  <parameter name="SimpleFileHandler" type="StringVec"> align @DatabasePath@/run000064-alignmentGBL.slcio alignment </parameter>
-  <parameter name="SimpleFileHandler" type="StringVec"> align_it2 @DatabasePath@/@FilePrefix@-alignmentGBL_it2.slcio alignment </parameter>
-  <parameter name="SimpleFileHandler" type="StringVec"> align_it3 @DatabasePath@/@FilePrefix@-alignmentGBL_it3.slcio alignment </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> prealign  @DatabasePath@/@PreAlignRun@-prealignment.slcio alignment </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> align @DatabasePath@/@FilePrefix@-alignmentGBL_newGBL.slcio alignment </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> align_it2 @DatabasePath@/@FilePrefix@-alignmentGBL_newGBL2.slcio alignment </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> align_it3 @DatabasePath@/@FilePrefix@-alignmentGBL_newGBL3.slcio alignment </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
@@ -189,7 +186,7 @@
 </processor>
 
 
- <processor name="ApplyAlignment2" type="EUTelApplyAlignmentProcessor">
+<processor name="ApplyAlignment2" type="EUTelApplyAlignmentProcessor">
  <!--Apply to the input hit the alignment corrections-->
   <!--Alignment constant from the condition file-->
   <parameter name="AlignmentConstantName" type="string" lcioInType="LCGenericObject"> align_it2 </parameter>
@@ -240,7 +237,7 @@
   <parameter name="refhitCollectionNames" type="StringVec" value="hitCollectionNames"/>
 </processor>
 
- <processor name="ApplyAlignment3" type="EUTelApplyAlignmentProcessor">
+<processor name="ApplyAlignment3" type="EUTelApplyAlignmentProcessor">
  <!--Apply to the input hit the alignment corrections-->
   <!--Alignment constant from the condition file-->
   <parameter name="AlignmentConstantName" type="string" lcioInType="LCGenericObject"> align_it3 </parameter>

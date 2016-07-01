@@ -42,7 +42,7 @@
   <parameter name="Compress" type="int" value="1"/>
   <!-- filename without extension-->
   <!--parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-GBLfitter-alignGBL_wAir"/-->
-  <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-GBLfitter-fixedAlign-alignGBL_wAir_thickSensIT3_unb"/>
+  <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-GBLfitter-CS-CSdepSigmaInt"/>
   <!-- type of output file root (default) or xml )-->
   <parameter name="FileType" type="string" value="root"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
@@ -73,12 +73,10 @@
   <parameter name="SimpleFileHandler" type="StringVec"> refhit42 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit </parameter>
   <parameter name="SimpleFileHandler" type="StringVec"> refhit51 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit </parameter>
   <parameter name="SimpleFileHandler" type="StringVec"> refhit52 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit </parameter>
-  <!--parameter name="SimpleFileHandler" type="StringVec"> prealign  @DatabasePath@/@FilePrefix@-prealignment.slcio alignment </parameter-->
-  <parameter name="SimpleFileHandler" type="StringVec"> prealign  @DatabasePath@/run000118-prealignment.slcio alignment </parameter>
-  <!--parameter name="SimpleFileHandler" type="StringVec"> align @DatabasePath@/@FilePrefix@-alignmentGBL.slcio alignment </parameter-->
-  <parameter name="SimpleFileHandler" type="StringVec"> align @DatabasePath@/run000118-alignmentGBL.slcio alignment </parameter>
-  <parameter name="SimpleFileHandler" type="StringVec"> align_it2 @DatabasePath@/@FilePrefix@-alignmentGBL_it2.slcio alignment </parameter>
-  <parameter name="SimpleFileHandler" type="StringVec"> align_it3 @DatabasePath@/@FilePrefix@-alignmentGBL_it3.slcio alignment </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> prealign  @DatabasePath@/@PreAlignRun@-prealignment.slcio alignment </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> align     @DatabasePath@/@FilePrefix@-alignmentGBL_newGBL.slcio alignment </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> align_it2 @DatabasePath@/@FilePrefix@-alignmentGBL_newGBL2.slcio alignment </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> align_it3 @DatabasePath@/@FilePrefix@-alignmentGBL_newGBL3.slcio alignment </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
@@ -99,7 +97,7 @@
  1 -> reverse -->
   <parameter name="ApplyAlignmentDirection" type="int" value="0"/>
   <!--Do you want the reference hit collection to be corrected by the shifts and tilts from the alignment collection?-->
-  <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
+  <parameter name="ApplyToReferenceCollection" type="bool" value="0"/>
   <!--Rotation Angle around Y axis-->
   <!--parameter name="Beta" type="double" value="0"/-->
   <!--Available methods are:
@@ -108,7 +106,7 @@
  2 -> shift first -->
   <parameter name="CorrectionMethod" type="int" value="1"/>
   <!--Enable or disable DEBUG mode -->
-  <parameter name="DEBUG" type="bool" value="false"/>
+  <!--parameter name="DEBUG" type="bool" value="false"/-->
   <!--Implement geometry shifts and rotations as described in alignmentCollectionName -->
   <parameter name="DoAlignCollection" type="bool" value="true"/>
   <!--Apply alignment steps in one go. Is supposed to be used for reversealignment in reverse order, like: undoAlignment, undoPreAlignment, undoGear -->
@@ -124,15 +122,15 @@
   <!--Events number to have DEBUG1 printed outs (default=10)-->
   <parameter name="PrintEvents" type="int" value="0"/>
   <!--This is the name of the reference hit collection-->
-  <parameter name="ReferenceCollection" type="string" value="refhit"/>
+  <!--parameter name="ReferenceCollection" type="string" value="refhit"/-->
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
   <!--List of alignment collections that were applied to the DUT-->
   <parameter name="alignmentCollectionNames" type="StringVec" value="prealign"/>
   <!--List of hit collections. First one is INPUT collection, every subsequent corresponds to applying alignment collection-->
-  <parameter name="hitCollectionNames" type="StringVec" value="hitCollectionNames"/>
+  <!--parameter name="hitCollectionNames" type="StringVec" value="hitCollectionNames"/-->
   <!--List of refhit collections. First one is INPUT collection, every subsequent corresponds to applying alignment collection-->
-  <parameter name="refhitCollectionNames" type="StringVec" value="hitCollectionNames"/>
+  <!--parameter name="refhitCollectionNames" type="StringVec" value="hitCollectionNames"/-->
 </processor>
 
 
@@ -151,7 +149,7 @@
  1 -> reverse -->
   <parameter name="ApplyAlignmentDirection" type="int" value="0"/>
   <!--Do you want the reference hit collection to be corrected by the shifts and tilts from the alignment collection?-->
-  <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
+  <parameter name="ApplyToReferenceCollection" type="bool" value="0"/>
   <!--Rotation Angle around Y axis-->
   <!--parameter name="Beta" type="double" value="0"/-->
   <!--Available methods are:
@@ -160,7 +158,7 @@
  2 -> shift first -->
   <parameter name="CorrectionMethod" type="int" value="1"/>
   <!--Enable or disable DEBUG mode -->
-  <parameter name="DEBUG" type="bool" value="false"/>
+  <!--parameter name="DEBUG" type="bool" value="false"/-->
   <!--Implement geometry shifts and rotations as described in alignmentCollectionName -->
   <parameter name="DoAlignCollection" type="bool" value="true"/>
   <!--Apply alignment steps in one go. Is supposed to be used for reversealignment in reverse order, like: undoAlignment, undoPreAlignment, undoGear -->
@@ -176,15 +174,15 @@
   <!--Events number to have DEBUG1 printed outs (default=10)-->
   <parameter name="PrintEvents" type="int" value="0"/>
   <!--This is the name of the reference hit collection-->
-  <parameter name="ReferenceCollection" type="string" value="refhit"/>
+  <!--parameter name="ReferenceCollection" type="string" value="refhit"/-->
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
   <!--List of alignment collections that were applied to the DUT-->
   <parameter name="alignmentCollectionNames" type="StringVec" value="align"/>
   <!--List of hit collections. First one is INPUT collection, every subsequent corresponds to applying alignment collection-->
-  <parameter name="hitCollectionNames" type="StringVec" value="hitCollectionNames"/>
+  <!--parameter name="hitCollectionNames" type="StringVec" value="hitCollectionNames"/-->
   <!--List of refhit collections. First one is INPUT collection, every subsequent corresponds to applying alignment collection-->
-  <parameter name="refhitCollectionNames" type="StringVec" value="hitCollectionNames"/>
+  <!--parameter name="refhitCollectionNames" type="StringVec" value="hitCollectionNames"/-->
 </processor>
 
 <processor name="ApplyAlignment2" type="EUTelApplyAlignmentProcessor">
@@ -202,7 +200,7 @@
  1 -> reverse -->
   <parameter name="ApplyAlignmentDirection" type="int" value="0"/>
   <!--Do you want the reference hit collection to be corrected by the shifts and tilts from the alignment collection?-->
-  <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
+  <parameter name="ApplyToReferenceCollection" type="bool" value="0"/>
   <!--Rotation Angle around Y axis-->
   <!--parameter name="Beta" type="double" value="0"/-->
   <!--Available methods are:
@@ -211,7 +209,7 @@
  2 -> shift first -->
   <parameter name="CorrectionMethod" type="int" value="1"/>
   <!--Enable or disable DEBUG mode -->
-  <parameter name="DEBUG" type="bool" value="false"/>
+  <!--parameter name="DEBUG" type="bool" value="false"/-->
   <!--Implement geometry shifts and rotations as described in alignmentCollectionName -->
   <parameter name="DoAlignCollection" type="bool" value="true"/>
   <!--Apply alignment steps in one go. Is supposed to be used for reversealignment in reverse order, like: undoAlignment, undoPreAlignment, undoGear -->
@@ -227,15 +225,15 @@
   <!--Events number to have DEBUG1 printed outs (default=10)-->
   <parameter name="PrintEvents" type="int" value="0"/>
   <!--This is the name of the reference hit collection-->
-  <parameter name="ReferenceCollection" type="string" value="refhit"/>
+  <!--parameter name="ReferenceCollection" type="string" value="refhit"/-->
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
   <!--List of alignment collections that were applied to the DUT-->
   <parameter name="alignmentCollectionNames" type="StringVec" value="align_it2"/>
   <!--List of hit collections. First one is INPUT collection, every subsequent corresponds to applying alignment collection-->
-  <parameter name="hitCollectionNames" type="StringVec" value="hitCollectionNames"/>
+  <!--parameter name="hitCollectionNames" type="StringVec" value="hitCollectionNames"/-->
   <!--List of refhit collections. First one is INPUT collection, every subsequent corresponds to applying alignment collection-->
-  <parameter name="refhitCollectionNames" type="StringVec" value="hitCollectionNames"/>
+  <!--parameter name="refhitCollectionNames" type="StringVec" value="hitCollectionNames"/-->
 </processor>
 
 <processor name="ApplyAlignment3" type="EUTelApplyAlignmentProcessor">
@@ -253,7 +251,7 @@
  1 -> reverse -->
   <parameter name="ApplyAlignmentDirection" type="int" value="0"/>
   <!--Do you want the reference hit collection to be corrected by the shifts and tilts from the alignment collection?-->
-  <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
+  <parameter name="ApplyToReferenceCollection" type="bool" value="0"/>
   <!--Rotation Angle around Y axis-->
   <!--parameter name="Beta" type="double" value="0"/-->
   <!--Available methods are:
@@ -262,7 +260,7 @@
  2 -> shift first -->
   <parameter name="CorrectionMethod" type="int" value="1"/>
   <!--Enable or disable DEBUG mode -->
-  <parameter name="DEBUG" type="bool" value="false"/>
+  <!--parameter name="DEBUG" type="bool" value="false"/-->
   <!--Implement geometry shifts and rotations as described in alignmentCollectionName -->
   <parameter name="DoAlignCollection" type="bool" value="true"/>
   <!--Apply alignment steps in one go. Is supposed to be used for reversealignment in reverse order, like: undoAlignment, undoPreAlignment, undoGear -->
@@ -278,15 +276,15 @@
   <!--Events number to have DEBUG1 printed outs (default=10)-->
   <parameter name="PrintEvents" type="int" value="0"/>
   <!--This is the name of the reference hit collection-->
-  <parameter name="ReferenceCollection" type="string" value="refhit"/>
+  <!--parameter name="ReferenceCollection" type="string" value="refhit"/-->
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
   <!--List of alignment collections that were applied to the DUT-->
   <parameter name="alignmentCollectionNames" type="StringVec" value="align_it3"/>
   <!--List of hit collections. First one is INPUT collection, every subsequent corresponds to applying alignment collection-->
-  <parameter name="hitCollectionNames" type="StringVec" value="hitCollectionNames"/>
+  <!--parameter name="hitCollectionNames" type="StringVec" value="hitCollectionNames"/-->
   <!--List of refhit collections. First one is INPUT collection, every subsequent corresponds to applying alignment collection-->
-  <parameter name="refhitCollectionNames" type="StringVec" value="hitCollectionNames"/>
+  <!--parameter name="refhitCollectionNames" type="StringVec" value="hitCollectionNames"/-->
 </processor>
 
 
@@ -332,9 +330,11 @@
 
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value="DEBUG4"/-->
+
   <parameter name="dut_plane" type="int"> </parameter>
 
   <parameter name="InputCollectionTelescope" type="StringVec" value="aligned3Hit"/>
+  <parameter name="triCut" type="float" value="@TripletCut@"/>  
   <parameter name="matching_cut_x" type="double"> 0.15 </parameter>
   <parameter name="matching_cut_y" type="double"> 0.15 </parameter>
   <parameter name="slope_cut_x" type="double"> 0.002 </parameter>
