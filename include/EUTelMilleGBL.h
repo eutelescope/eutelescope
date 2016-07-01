@@ -387,6 +387,8 @@ namespace eutelescope {
     double _triCut;
     double _driCut;
     double _sixCut;
+    double _slopeCut;
+    int _IsFirstAlignStep;
 
     int _maxTrackCandidates;
     int _maxTrackCandidatesTotal;
