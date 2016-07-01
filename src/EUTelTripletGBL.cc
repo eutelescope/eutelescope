@@ -100,7 +100,7 @@ using namespace marlin;
 using namespace eutelescope;
 
 
-EUTelTripletGBL::EUTelTripletGBL() : Processor("EUTelTripletGBL"), _siPlanesParameters(), _siPlanesLayerLayout(), _inputCollectionTelescope(""), _isFirstEvent(0), _eBeam(0), _nEvt(0), _nTelPlanes(0), _dut_plane(3), _cutx(0.15), _cuty(0.1), _planeSort(), _planeID(), _planePosition(), _planeThickness(), _planeX0(), _planeResolution() {
+EUTelTripletGBL::EUTelTripletGBL() : Processor("EUTelTripletGBL"), _siPlanesParameters(), _siPlanesLayerLayout(), _inputCollectionTelescope(""), _isFirstEvent(0), _eBeam(0), _nEvt(0), _nTelPlanes(0), _dut_plane(3), _cutx(0.15), _cuty(0.15), _planeSort(), _planeID(), _planePosition(), _planeThickness(), _planeX0(), _planeResolution() {
 
   // modify processor description
   _description = "Analysis for DATURA reference analysis ";
@@ -116,20 +116,21 @@ EUTelTripletGBL::EUTelTripletGBL() : Processor("EUTelTripletGBL"), _siPlanesPara
       "Beam energy [GeV]",
       _eBeam, static_cast < double >( 4.0));
 
+  registerOptionalParameter( "triCut", "Upstream/Downstream triplet residual cut [mm]", _triCut, 0.1 );
 
   registerProcessorParameter( "matching_cut_x",
       "cut for matching in x coordinate in mm",
       _cutx, static_cast < double >(0.15));
   registerProcessorParameter( "matching_cut_y",
       "cut for matching in y coordinate in mm",
-      _cuty, static_cast < double >(0.10));
+      _cuty, static_cast < double >(0.15));
 
   registerProcessorParameter( "slope_cut_x",
       "cut for track slopes in x coordinate in rad",
-      _slope_x, static_cast < double >(0.002));
+      _slope_cut_x, static_cast < double >(0.002));
   registerProcessorParameter( "slope_cut_y",
       "cut for track slopes in y coordinate in rad",
-      _slope_y, static_cast < double >(0.002));
+      _slope_cut_y, static_cast < double >(0.002));
 
   registerProcessorParameter( "dut_plane",
       "plane to be considered the DUT and excluded from the track fit",
@@ -215,6 +216,8 @@ void EUTelTripletGBL::init() {
     throw InvalidParameterException("WARNING, length of resolution and #t'scope planes don't match \n");
   }
 
+  //_triCut = _triCut *6. / _eBeam * (_planePosition[1] - _planePosition[0]) / 20.;
+
   // Book histograms:
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
   bookHistos();
@@ -243,6 +246,15 @@ void EUTelTripletGBL::processRunHeader( LCRunHeader* runHeader) {
 
 //----------------------------------------------------------------------------
 void EUTelTripletGBL::processEvent( LCEvent * event ) {
+
+  if( _nEvt % 1000 == 0 ) {
+    streamlog_out( MESSAGE2 ) << "Processing event "
+      << setw(6) << setiosflags(ios::right)
+      << event->getEventNumber() << " in run "
+      << setw(6) << setiosflags(ios::right)
+      << event->getRunNumber()
+      << endl;
+  }
 
   EUTelEventImpl * euEvent = static_cast<EUTelEventImpl*>( event );
 
@@ -328,7 +340,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
   // Copy hits to local table
   // Assign hits to sensor planes
 
-  streamlog_out( DEBUG4 )  << "Total of " << collection->getNumberOfElements() << " tracker hits in input collection " << std::endl;
+  if(_nEvt < 10) streamlog_out( WARNING2 )  << "Total of " << collection->getNumberOfElements() << " tracker hits in input collection " << std::endl;
   nAllHitHisto->fill(collection->getNumberOfElements());
 
   //----------------------------------------------------------------------------
@@ -348,10 +360,13 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
     TrackerDataImpl* clusterVector = static_cast<TrackerDataImpl*>( meshit->getRawHits()[0]);
     EUTelSimpleVirtualCluster * cluster=0;
 
+    float locx = -1;
+    float locy = -1;
     if ( meshit->getType() == kEUTelSparseClusterImpl ) 
     {
       cluster = new EUTelSparseClusterImpl< EUTelGenericSparsePixel > ( clusterVector );
       charge = cluster->getTotalCharge();
+      cluster->getCenterOfGravity(locx, locy);
       streamlog_out(DEBUG4) << " charge is " << charge << std::endl;
     }
 
@@ -360,6 +375,10 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
     newhit.x = pos[0];
     newhit.y = pos[1];
     newhit.z = pos[2];
+    newhit.locx = locx;
+    newhit.locy = locy;
+
+    if(_nEvt < 10) streamlog_out( WARNING2 ) << "hit x = " << meshit->getPosition()[0] << endl;
 
     // Write clustersize
     newhit.clustersize = charge;
@@ -511,6 +530,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 
 
   }// iterate over upstream triplets
+  ntriHisto->fill( upstream_triplets.size() );
 
 
 
@@ -525,8 +545,8 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 
 
   // Generate new triplet set with planes 0, 1, 2; 2,4,5:
-  std::vector<triplet> eff_triplets_UP;
-  FindTriplets(hits, 0, 1, 2, eff_triplets_UP);
+  std::vector<triplet> eff_triplets_UP = upstream_triplets;
+  //FindTriplets(hits, 0, 1, 2, eff_triplets_UP);
 
   std::vector<triplet> eff_triplets_DOWN;
   FindTriplets(hits, 2, 4, 5, eff_triplets_DOWN);
@@ -540,7 +560,6 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
   //std::cout << " n eff triplets UP   = " << eff_triplets_UP->size() << std::endl;
   //std::cout << " n eff triplets DOWN = " << eff_triplets_DOWN->size() << std::endl;
 
-  double intersect_residual_cut = 0.1* 6. / _eBeam * (_planePosition[1] - _planePosition[0]) / 20.;
   for( std::vector<triplet>::iterator trip = eff_triplets_UP.begin(); trip != eff_triplets_UP.end(); trip++ ) {
 
     // Track impact position at Matching Point from Upstream:
@@ -548,7 +567,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
     double yA = (*trip).gety_at(DUTz);
 
     // check if trip is isolated
-    bool IsolatedTrip = IsTripletIsolated(trip, eff_triplets_UP, DUTz, intersect_residual_cut*2.01);
+    bool IsolatedTrip = IsTripletIsolated(trip, eff_triplets_UP, DUTz, _triCut*2.01);
 
     for( std::vector<triplet>::iterator drip = eff_triplets_DOWN.begin(); drip != eff_triplets_DOWN.end(); drip++ ){
 
@@ -557,15 +576,15 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
       double yB = (*drip).gety_at(DUTz);
 
       // check if drip is isolated
-      bool IsolatedDrip = IsTripletIsolated(drip, eff_triplets_DOWN, DUTz, intersect_residual_cut*2.01);
+      bool IsolatedDrip = IsTripletIsolated(drip, eff_triplets_DOWN, DUTz, _triCut*2.01);
 
       // driplet - triplet
       double dx = xB - xA; 
       double dy = yB - yA;
 
       // match driplet and triplet:
-      if( abs(dx) > intersect_residual_cut) continue;
-      if( abs(dy) > intersect_residual_cut) continue;
+      if( abs(dx) > _triCut) continue;
+      if( abs(dy) > _triCut) continue;
 
       //std::cout << " intersec ";
 
@@ -651,7 +670,6 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
   //delete upstream_triplets;
 
   int ngbl = 0;
-  ntriHisto->fill( upstream_triplets.size() );
   for( std::vector<track>::iterator tr = telescope_tracks.begin(); tr != telescope_tracks.end(); tr++ ){
 
     triplet trip = (*tr).get_upstream();
@@ -728,8 +746,10 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 
     double rx[6];
     double ry[6];
-    double trackx[6];
-    double tracky[6];
+    double trackhitx[6];
+    double trackhity[6];
+    double trackhitxloc[6];
+    double trackhityloc[6];
     //double zprev = _planePosition[0];
     double step = 0.;
     s = -10.;
@@ -741,12 +761,13 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
       if( ipl < 5) {
 	double distplane = _planePosition[ipl+1] - _planePosition[ipl];
 	epsAir =   distplane  / 304200.; 
-        sumeps += epsAir;
+	sumeps += epsAir;
       }
 
     }
 
     int DUT_label;
+    int centre_label;
     for( int ipl = 0; ipl < 6; ++ipl ){
       if(ipl == 0){
 	// one dummy point:
@@ -775,8 +796,10 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
       double xs = srip.base().x + srip.slope().x * dz; // Ax at plane
       double ys = srip.base().y + srip.slope().y * dz; // Ay at plane
 
-      trackx[ipl] = trackhit.x;
-      tracky[ipl] = trackhit.y;
+      trackhitx[ipl] = trackhit.x;
+      trackhity[ipl] = trackhit.y;
+      trackhitxloc[ipl] = trackhit.locx;
+      trackhityloc[ipl] = trackhit.locy;
 
       rx[ipl] = trackhit.x - xs;
       ry[ipl] = trackhit.y - ys;
@@ -811,15 +834,26 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
       //meas[0] = trackhit.x;
       //meas[1] = trackhit.y;
 
-      epsSi = (_thickness[ipl] + 0.017) / 94; // Si + Kapton (Kapton ist 2 * 25  = 50 um thick, but has 1/3 rad length = 17 um)
+      epsSi = _thickness[ipl]/93.66 + 0.050 / 286.6; // Si + Kapton (Kapton ist 2 * 25  = 50 um thick, but has 1/3 rad length = 17 um)
       tetSi = _kappa * 0.0136 * sqrt(epsSi) / p * ( 1 + 0.038*std::log(sumeps) );
 
       wscatSi[0] = 1.0 / ( tetSi * tetSi ); //weight
       wscatSi[1] = 1.0 / ( tetSi * tetSi );
 
       TVectorD measPrec(2); // precision = 1/resolution^2
-      measPrec[0] = 1.0 / _resolution[ipl] / _resolution[ipl];
-      measPrec[1] = 1.0 / _resolution[ipl] / _resolution[ipl];
+      //measPrec[0] = 1.0 / _resolution[ipl] / _resolution[ipl];
+      //measPrec[1] = 1.0 / _resolution[ipl] / _resolution[ipl];
+      double _resolution_tmp = -1.0;
+      if(trackhit.clustersize == 1) _resolution_tmp = 3.0*1e-3;
+      if(trackhit.clustersize == 2) _resolution_tmp = 3.1*1e-3;
+      if(trackhit.clustersize == 3) _resolution_tmp = 2.6*1e-3;
+      if(trackhit.clustersize == 4) _resolution_tmp = 3.3*1e-3;
+      //if(trackhit.clustersize == 5) _resolution_tmp = 2.8*1e-3;
+      if(trackhit.clustersize >  4) _resolution_tmp = 4.3*1e-3;
+      //_resolution_tmp = 3.24*1e-3;
+
+      measPrec[0] = 1.0 / _resolution_tmp / _resolution_tmp;
+      measPrec[1] = 1.0 / _resolution_tmp / _resolution_tmp;
 
       if(ipl != _dut_plane) { point->addMeasurement( proL2m, meas, measPrec ); }
 
@@ -861,6 +895,16 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 	delete point;
 
 	step = 0.58*distplane;
+	if(ipl ==2){ // insert point at centre
+	  step = step / 2.;
+	  gbl::GblPoint * pointcentre = new gbl::GblPoint( JacobianPointToPoint( step ) );
+	  s += step;
+	  traj_points.push_back(*pointcentre);
+	  sPoint.push_back( s );
+          centre_label = sPoint.size();
+	  delete pointcentre;
+	  // now again step/2
+        }
 
 	gbl::GblPoint * point1 = new gbl::GblPoint( JacobianPointToPoint( step ) );
 	point1->addScatterer( scat, wscatAir );
@@ -916,21 +960,22 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 
     // debug:
 
-    if(_nEvt < 3){
-      cout << "traj with " << traj.getNumPoints() << " points:" << endl;
-      for( int ipl = 0; ipl < 6; ++ipl ){
-	cout << "  plane " << ipl << ", lab " << ilab[ipl];
-	cout << "  z " << sPoint[ilab[ipl]-1];
-	cout << " dx " << rx[ipl];
-	cout << " dy " << ry[ipl];
-	cout << endl;
-      }
+    /*
+       if(_nEvt < 3){
+       cout << "traj with " << traj.getNumPoints() << " points:" << endl;
+       for( int ipl = 0; ipl < 6; ++ipl ){
+       cout << "  plane " << ipl << ", lab " << ilab[ipl];
+       cout << "  z " << sPoint[ilab[ipl]-1];
+       cout << " dx " << rx[ipl];
+       cout << " dy " << ry[ipl];
+       cout << endl;
+       }
 
-      std::cout << " Is traj valid? " << traj.isValid() << std::endl;
-      traj.printPoints();
-      //traj.printTrajectory();
-      //traj.printData();
-    }
+       std::cout << " Is traj valid? " << traj.isValid() << std::endl;
+       traj.printPoints();
+    //traj.printTrajectory();
+    //traj.printData();
+    }*/
 
     ngbl++;
 
@@ -1007,17 +1052,16 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 
       double pixel_size = 18.4e-3;
 
+      unsigned int ndata = 2;
       //track = q/p, x', y', x, y
       //        0,   1,  2,  3, 4
       // at plane DUT:
       unsigned int ipos = ilab[0];
       traj.getResults( ipos, aCorrection, aCovariance );
-      traj.getMeasResults( ipos, ndim, aResiduals, aMeasErrors, aResErrors, aDownWeights );
-      traj.getScatResults( ipos, ndim, aKinks, aKinkErrors, kResErrors, kDownWeights );
-      streamlog_out(DEBUG4) << " ilab[0] = " << ilab[0] << std::endl;
-      streamlog_out(DEBUG4) << "rx[0] = " << rx[0] << " aCorrection[3] = " << aCorrection[3] << " -> rx[0] - aCorr = " << rx[0] - aCorrection[3] << std::endl;
-      streamlog_out(DEBUG4) << "aResiduals[0] = " << aResiduals[0] << " aResError[0] = " << aResErrors[0] << std::endl;
-      streamlog_out(DEBUG4) << "biased ResError by hand = " << sqrt(_resolution[0]*_resolution[0] - aCovariance(3,3)) << std::endl;
+      traj.getMeasResults( ipos, ndata, aResiduals, aMeasErrors, aResErrors, aDownWeights );
+      traj.getScatResults( ipos, ndata, aKinks, aKinkErrors, kResErrors, kDownWeights );
+      aResiduals[0] = rx[0] - aCorrection[3];
+      aResiduals[1] = ry[0] - aCorrection[4];
       gblax0Histo->fill( aCorrection[1]*1E3 ); // angle x [mrad]
       gbldx0Histo->fill( aCorrection[3]*1E3 ); // shift x [um]
       gblrx0Histo->fill( ( rx[0] - aCorrection[3] ) * 1E3 ); // residual x [um]
@@ -1026,37 +1070,58 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
       gblpy0Histo->fill( aResiduals[1] / aResErrors[1] ); // pull
       if(_dut_plane == 0) gblpx0_unbHisto->fill( (rx[0] - aCorrection[3]) / sqrt(_resolution[0]*_resolution[0] + aCovariance(3,3)) ); // unbiased pull
       if(_dut_plane == 0) gblpy0_unbHisto->fill( (ry[0] - aCorrection[4]) / sqrt(_resolution[0]*_resolution[0] + aCovariance(4,4)) ); // unbiased pull
-      gblqx0Histo->fill( aKinks[0]*1E3 ); // kink
+      gblqx0Histo->fill( aKinks[0]*1E3 ); // kink RESIDUAL (measured kink - fit kink)
       ax[k] = aCorrection[1]; // angle correction at plane, for kinks
-      // ay[k] = aCorrection[2]; // angle correction at plane, for kinks
-      //
-      //std::cout << " aResiduals[0] = " << aResiduals[0] << " aResErrors[0] = " << aResErrors[0] << " sqrt(aCov(3,3)) = " << sqrt(aCovariance(3,3)) << std::endl;  
       // TProfile for res_x a.f.o. x
-      gblrxvsx0->fill( xAplanes.at(k), fabs(aResiduals[0]));
-      gblryvsy0->fill( yAplanes.at(k), fabs(aResiduals[1]));
-      gblrxvsx01->fill((trackx[0] - aCorrection[3]), fabs(aResiduals[0])); // seed corrected
-      gblryvsy01->fill((tracky[0] - aCorrection[4]), fabs(aResiduals[1]));
-      int nx = (trackx[0] - aCorrection[3]) / pixel_size;
-      int ny = (tracky[0] - aCorrection[4]) / pixel_size;
-      int signx = (trackx[0] - aCorrection[3]) / fabs((trackx[0] - aCorrection[3]));
-      int signy = (tracky[0] - aCorrection[4]) / fabs((tracky[0] - aCorrection[4]));
-      if (signx >= 0) gblrxvsxpix0->fill(                   xAplanes[0]-    (nx +0.5)*pixel_size, sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
-      else            gblrxvsxpix0->fill(                   xAplanes[0]+(abs(nx)+0.5)*pixel_size, sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
-      if (signy >= 0) gblryvsypix0->fill(                   yAplanes[0]-    (ny +0.5)*pixel_size, sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
-      else            gblryvsypix0->fill(                   yAplanes[0]+(abs(ny)+0.5)*pixel_size, sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
-      if (signx >= 0) gblrxvsxpix01->fill( (trackx[0] - aCorrection[3])-    (nx +0.5)*pixel_size, sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
-      else            gblrxvsxpix01->fill( (trackx[0] - aCorrection[3])+(abs(nx)+0.5)*pixel_size, sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
-      if (signy >= 0) gblryvsypix01->fill( (tracky[0] - aCorrection[4])-    (ny +0.5)*pixel_size, sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
-      else            gblryvsypix01->fill( (tracky[0] - aCorrection[4])+(abs(ny)+0.5)*pixel_size, sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
+      gblrxvsx0->fill( xAplanes.at(k), sqrt(TMath::Pi()/2.)*fabs(aResiduals[0]));
+      gblryvsy0->fill( yAplanes.at(k), sqrt(TMath::Pi()/2.)*fabs(aResiduals[1]));
+      gblrxvsx01->fill((trackhitx[0] - aResiduals[0]), sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); // seed corrected
+      gblryvsy01->fill((trackhity[0] - aResiduals[1]), sqrt(TMath::Pi()/2.)*fabs(aResiduals[1]));
+
+      double corrPos[2];
+      corrPos[0] = trackhitx[0] - aResiduals[0] + .5e-3; 
+      corrPos[1] = trackhity[0] - aResiduals[1];       
+      int nx = (corrPos[0]) / pixel_size;
+      int ny = (corrPos[1]) / pixel_size;
+      int invsignx = -(corrPos[0]) / fabs((corrPos[0]));
+      int invsigny = -(corrPos[1]) / fabs((corrPos[1]));
+
+      gblrxvsxpix0->fill(                  xAplanes[0]+invsignx*(abs(nx) +0.5)*pixel_size, sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
+      gblryvsypix0->fill(                  yAplanes[0]+invsigny*(abs(ny) +0.5)*pixel_size, sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
+      gblrxvsxpix01->fill( (trackhitx[0] - aResiduals[0])+invsignx*(abs(nx) +0.5)*pixel_size, sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
+      gblryvsypix01->fill( (trackhity[0] - aResiduals[1])+invsigny*(abs(ny) +0.5)*pixel_size, sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
+      // clustersize-specific plots
+      int CS0 = (*tr).gethit(0).clustersize;
+
+      double modPos[2];
+      modPos[0] = (corrPos[0])+invsignx*(abs(nx) +0.5)*pixel_size*1e3;
+      modPos[1] = (corrPos[1])+invsigny*(abs(ny) +0.5)*pixel_size*1e3;
+      if (CS0 == 1){
+        gblrxvsxpix01_CS1->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
+        gblryvsypix01_CS1->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
+      } 
+      if (CS0 == 2){
+        gblrxvsxpix01_CS2->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
+        gblryvsypix01_CS2->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
+      } 
+      if (CS0 == 3){
+        gblrxvsxpix01_CS3->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
+        gblryvsypix01_CS3->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
+      } 
+      if (CS0 == 4){
+        gblrxvsxpix01_CS4->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
+        gblryvsypix01_CS4->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
+      } 
+
+
       k++;
 
       ipos = ilab[1];
       traj.getResults( ipos, aCorrection, aCovariance );
-      traj.getMeasResults(static_cast<unsigned int>(ipos), ndim, aResiduals, aMeasErrors, aResErrors, aDownWeights );
-      traj.getScatResults(static_cast<unsigned int>(ipos), ndim, aKinks, aKinkErrors, kResErrors, kDownWeights );
-      streamlog_out(DEBUG4) << " ilab[1] = " << ilab[1] << std::endl;
-      streamlog_out(DEBUG4) << "rx[1] = " << rx[1] << " aCorrection[3] = " << aCorrection[3] << " -> rx[1] - aCorr = " << rx[1] - aCorrection[3] << std::endl;
-      streamlog_out(DEBUG4) << "aResiduals[0] = " << aResiduals[0] << " aResError[0] = " << aResErrors[0] << std::endl;
+      traj.getMeasResults(static_cast<unsigned int>(ipos), ndata, aResiduals, aMeasErrors, aResErrors, aDownWeights );
+      traj.getScatResults(static_cast<unsigned int>(ipos), ndata, aKinks, aKinkErrors, kResErrors, kDownWeights );
+      aResiduals[0] = rx[1] - aCorrection[3];
+      aResiduals[1] = ry[1] - aCorrection[4];
       gblax1Histo->fill( aCorrection[1]*1E3 ); // angle x [mrad]
       gbldx1Histo->fill( aCorrection[3]*1E3 ); // shift x [um]
       gblrx1Histo->fill( ( rx[1] - aCorrection[3] ) * 1E3 ); // residual x [um]
@@ -1065,7 +1130,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
       gblpy1Histo->fill( aResiduals[1] / aResErrors[1] ); // pull
       if(_dut_plane == 1) gblpx1_unbHisto->fill( (rx[1] - aCorrection[3]) / sqrt(_resolution[1]*_resolution[1] + aCovariance(3,3)) ); // unbiased pull
       if(_dut_plane == 1) gblpy1_unbHisto->fill( (ry[1] - aCorrection[4]) / sqrt(_resolution[1]*_resolution[1] + aCovariance(4,4)) ); // unbiased pull
-      gblqx1Histo->fill( aKinks[0]*1E3 ); // kink
+      gblqx1Histo->fill( aKinks[0]*1E3 ); // kink-residual (NOT KINK itself!)
       gblsx1Histo->fill( aKinks[0]/aKinkErrors[0] ); // x kink pull
       gbltx1Histo->fill( aKinks[0]/kResErrors[0] ); // x kink pull
       ax[k] = aCorrection[1]; // angle correction at plane, for kinks
@@ -1075,11 +1140,10 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 
       ipos = ilab[2];
       traj.getResults( ipos, aCorrection, aCovariance );
-      traj.getMeasResults(static_cast<unsigned int>(ipos), ndim, aResiduals, aMeasErrors, aResErrors, aDownWeights );
-      traj.getScatResults(static_cast<unsigned int>(ipos), ndim, aKinks, aKinkErrors, kResErrors, kDownWeights );
-      streamlog_out(DEBUG4) << " ilab[2] = " << ilab[2] << std::endl;
-      streamlog_out(DEBUG4) << "rx[2] = " << rx[2] << " aCorrection[3] = " << aCorrection[3] << " -> rx[2] - aCorr = " << rx[2] - aCorrection[3] << std::endl;
-      streamlog_out(DEBUG4) << "aResiduals[0] = " << aResiduals[0] << " aResError[0] = " << aResErrors[0] << std::endl;
+      traj.getMeasResults(static_cast<unsigned int>(ipos), ndata, aResiduals, aMeasErrors, aResErrors, aDownWeights );
+      traj.getScatResults(static_cast<unsigned int>(ipos), ndata, aKinks, aKinkErrors, kResErrors, kDownWeights );
+      aResiduals[0] = rx[2] - aCorrection[3];
+      aResiduals[1] = ry[2] - aCorrection[4];
       gblax2Histo->fill( aCorrection[1]*1E3 ); // angle x [mrad]
       gbldx2Histo->fill( aCorrection[3]*1E3 ); // shift x [um]
       gblrx2Histo->fill( ( rx[2] - aCorrection[3] ) * 1E3 ); // residual x [um]
@@ -1088,8 +1152,8 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
       gblpy2Histo->fill( aResiduals[1] / aResErrors[1] ); // pull
       if(_dut_plane == 2) gblpx2_unbHisto->fill( (rx[2] - aCorrection[3]) / sqrt(_resolution[2]*_resolution[2] + aCovariance(3,3)) ); // unbiased pull
       if(_dut_plane == 2) gblpy2_unbHisto->fill( (ry[2] - aCorrection[4]) / sqrt(_resolution[2]*_resolution[2] + aCovariance(4,4)) ); // unbiased pull
-      gblqx2Histo->fill( aKinks[0]*1E3 ); // kink
-      gblsx2Histo->fill( aKinks[0]/aKinkErrors[0] ); // x kink pull
+      gblqx2Histo->fill( aKinks[0]*1E3 ); // kink-residual
+      gblsx2Histo->fill( aKinks[0]/aKinkErrors[0] ); // x kink res over kinkError
       gbltx2Histo->fill( aKinks[0]/kResErrors[0] ); // x kink pull
       ax[k] = aCorrection[1]; // angle correction at plane, for kinks
       //ay[k] = aCorrection[2]; // angle correction at plane, for kinks
@@ -1097,8 +1161,10 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 
       ipos = ilab[3];
       traj.getResults( ipos, aCorrection, aCovariance );
-      traj.getMeasResults(static_cast<unsigned int>(ipos), ndim, aResiduals, aMeasErrors, aResErrors, aDownWeights );
-      traj.getScatResults(static_cast<unsigned int>(ipos), ndim, aKinks, aKinkErrors, kResErrors, kDownWeights );
+      traj.getMeasResults(static_cast<unsigned int>(ipos), ndata, aResiduals, aMeasErrors, aResErrors, aDownWeights );
+      traj.getScatResults(static_cast<unsigned int>(ipos), ndata, aKinks, aKinkErrors, kResErrors, kDownWeights );
+      aResiduals[0] = rx[3] - aCorrection[3];
+      aResiduals[1] = ry[3] - aCorrection[4];
       gblax3Histo->fill( aCorrection[1]*1E3 ); // angle x [mrad]
       gbldx3Histo->fill( aCorrection[3]*1E3 ); // shift x [um]
       gblrx3Histo->fill( ( rx[3] - aCorrection[3] ) * 1E3 ); // residual x [um]
@@ -1111,52 +1177,129 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
       ax[k] = aCorrection[1]; // angle correction at plane, for kinks
       //ay[k] = aCorrection[2]; // angle correction at plane, for kinks
       //
+      if(_dut_plane == 3) gblpx3_unbHisto->fill( (rx[3] - aCorrection[3]) / sqrt(_resolution[3]*_resolution[3] + aCovariance(3,3)) ); // unbiased pull
+      if(_dut_plane == 3) gblpy3_unbHisto->fill( (ry[3] - aCorrection[4]) / sqrt(_resolution[3]*_resolution[3] + aCovariance(4,4)) ); // unbiased pull
 
-      if(_dut_plane == 3) {
-	gblpx3_unbHisto->fill( (rx[3] - aCorrection[3]) / sqrt(_resolution[3]*_resolution[3] + aCovariance(3,3)) ); // unbiased pull
-	gblpy3_unbHisto->fill( (ry[3] - aCorrection[4]) / sqrt(_resolution[3]*_resolution[3] + aCovariance(4,4)) ); // unbiased pull
+      // clustersize-specific plots
+      int CS3 = (*tr).gethit(3).clustersize;
+      corrPos[0] = trackhitx[3] - aResiduals[0] - 11.15e-3 ; 
+      corrPos[1] = trackhity[3] - aResiduals[1] - .1e-3;       
 
-	/*double eff_radius = _eff_radius * 6. / _eBeam * (_planePosition[1] - _planePosition[0]) / 20.; 
-	double ddAMin = -1000.0;
-	//double xTrip = (*trip).getx_at(DUTz);
-	//double yTrip = (*trip).gety_at(DUTz);
-	double xTrack = srip.getx_at(_planePosition[3])- aCorrection[3];
-	double yTrack = srip.gety_at(_planePosition[3])- aCorrection[4];
+      // correct for rotation
+      double corrPos2[2];
+      double gamma3 = 5.3e-3;
+      corrPos2[0] = cos(gamma3)*corrPos[0] - sin(gamma3)*corrPos[1];
+      corrPos2[1] = sin(gamma3)*corrPos[0] + cos(gamma3)*corrPos[1];
+      
+      corrPos[0] = corrPos2[0];
+      corrPos[1] = corrPos2[1];
 
-	for( std::vector<hit>::iterator lhit = hits.begin(); lhit != hits.end(); lhit++ ){
+      nx = fabs((corrPos[0])) / pixel_size;
+      ny = fabs((corrPos[1])) / pixel_size;
+      invsignx = -(corrPos[0]) / fabs((corrPos[0]));
+      invsigny = -(corrPos[1]) / fabs((corrPos[1]));
 
-	  if( (*lhit).plane <= 2 || (*lhit).plane  > 3) continue; // want 3
+      modPos[0] = (corrPos[0])+invsignx*(abs(nx) +0.5)*pixel_size*1e3;
+      modPos[1] = (corrPos[1])+invsigny*(abs(ny) +0.5)*pixel_size*1e3;
 
-	  // Fill residuals of triplet and hit in the selected plane:
-	  if( (*lhit).plane == 3 ) {
-	    double xHit = (*lhit).x;
-	    double yHit = (*lhit).y;
+      //gblrxvsxpix31->fill( (trackhitx[3] - aResiduals[0])+invsignx*(abs(nx) +0.5)*pixel_size, sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
+      //gblryvsypix31->fill( (trackhity[3] - aResiduals[1])+invsigny*(abs(ny) +0.5)*pixel_size, sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
+      gblrxvsxpix31->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
+      gblryvsypix31->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
 
-	    double ddA = sqrt( fabs(xHit - xTrack)*fabs(xHit - xTrack) 
-		+ fabs(yHit - yTrack)*fabs(yHit - yTrack) );
-	    if(ddAMin < 0 || ddA < ddAMin) ddAMin = ddA;
-	  }
-	} // end loop over hits
+      // overlay of all CSs
+      gblnxy->fill(modPos[0], modPos[1], CS3 );
 
-	// if distance is smaller then limit, accept this as matched Hit
-	if(fabs(ddAMin) < eff_radius) {
-	  //n_matched_trips++;
-	  effix3->fill(-xTrack, 1.);
-	  effiy3->fill(-yTrack, 1.);
-	} else {
-	  effix3->fill(-xTrack, 0.);
-	  effiy3->fill(-yTrack, 0.);
-	}
-	*/
+      if( CS3 == 1 ) {
+	gblrx3_cs1Histo->fill( aResiduals[0]* 1E3 ); 
+	gblry3_cs1Histo->fill( aResiduals[1]* 1E3 ); 
+	gblpx3_cs1Histo->fill( aResiduals[0] / aResErrors[0] ); 
+	gblpy3_cs1Histo->fill( aResiduals[1] / aResErrors[1] ); 
+
+	gblnCS1xy->fill(modPos[0], modPos[1] );
+	gblnCS1xy1->fill((trackhitx[3] - aResiduals[0]),
+	    (trackhity[3] - aResiduals[1]));
+
+	gblrxvsxpix3cs1->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
+	gblryvsypix3cs1->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
       }
+      if( CS3 == 2 ) {
+	gblrx3_cs2Histo->fill( aResiduals[0]* 1E3 ); 
+	gblry3_cs2Histo->fill( aResiduals[1]* 1E3 ); 
+	gblpx3_cs2Histo->fill( aResiduals[0] / aResErrors[0] ); 
+	gblpy3_cs2Histo->fill( aResiduals[1] / aResErrors[1] ); 
+
+	gblnCS2xy->fill(modPos[0], modPos[1] );
+	gblnCS2xy1->fill((trackhitx[3] - aResiduals[0]),
+	    (trackhity[3] - aResiduals[1]));
+
+	gblrxvsxpix3cs2->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
+	gblryvsypix3cs2->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
+      }
+      if( CS3 == 3 ) {
+	gblrx3_cs3Histo->fill( aResiduals[0]* 1E3 ); 
+	gblry3_cs3Histo->fill( aResiduals[1]* 1E3 ); 
+	gblpx3_cs3Histo->fill( aResiduals[0] / aResErrors[0] ); 
+	gblpy3_cs3Histo->fill( aResiduals[1] / aResErrors[1] ); 
+
+	gblnCS3xy->fill(modPos[0], modPos[1] );
+	gblnCS3xy1->fill((trackhitx[3] - aResiduals[0]),
+	    (trackhity[3] - aResiduals[1]));
+
+	gblrxvsxpix3cs3->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
+	gblryvsypix3cs3->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
+      }
+      if( CS3 == 4 ) {
+	gblrx3_cs4Histo->fill( aResiduals[0]* 1E3 ); 
+	gblry3_cs4Histo->fill( aResiduals[1]* 1E3 ); 
+	gblpx3_cs4Histo->fill( aResiduals[0] / aResErrors[0] ); 
+	gblpy3_cs4Histo->fill( aResiduals[1] / aResErrors[1] ); 
+
+	gblnCS4xy->fill(modPos[0], modPos[1] );
+	gblnCS4xy1->fill((trackhitx[3] - aResiduals[0]),
+	    (trackhity[3] - aResiduals[1]));
+
+	gblrxvsxpix3cs4->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
+	gblryvsypix3cs4->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
+      }
+      if( CS3 == 5 ) {
+	gblrx3_cs5Histo->fill( aResiduals[0]* 1E3 ); 
+	gblry3_cs5Histo->fill( aResiduals[1]* 1E3 ); 
+	gblpx3_cs5Histo->fill( aResiduals[0] / aResErrors[0] ); 
+	gblpy3_cs5Histo->fill( aResiduals[1] / aResErrors[1] ); 
+
+	gblnCS5xy->fill(modPos[0], modPos[1] );
+	gblnCS5xy1->fill((trackhitx[3] - aResiduals[0]),
+	    (trackhity[3] - aResiduals[1]));
+
+	gblrxvsxpix3cs5->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
+	gblryvsypix3cs5->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
+      }
+      if( CS3 > 5 ) {
+	gblrx3_cs6Histo->fill( aResiduals[0]* 1E3 ); 
+	gblry3_cs6Histo->fill( aResiduals[1]* 1E3 ); 
+	gblpx3_cs6Histo->fill( aResiduals[0] / aResErrors[0] ); 
+	gblpy3_cs6Histo->fill( aResiduals[1] / aResErrors[1] ); 
+
+	gblnCS6xy->fill(modPos[0], modPos[1] );
+	gblnCS6xy1->fill((trackhitx[3] - aResiduals[0]),
+	    (trackhity[3] - aResiduals[1]));
+
+	gblrxvsxpix3cs6->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
+	gblryvsypix3cs6->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
+      }
+
+      kinkpixvsxy->fill( modPos[0], modPos[1] , sqrt((aCorrection[1]*aCorrection[1] + aCorrection[2]*aCorrection[2]))*1E3 ); //sqrt(<kink^2>) [mrad]
 
 
       k++;
 
       ipos = ilab[4];
       traj.getResults( ipos, aCorrection, aCovariance );
-      traj.getMeasResults(static_cast<unsigned int>(ipos), ndim, aResiduals, aMeasErrors, aResErrors, aDownWeights );
-      traj.getScatResults(static_cast<unsigned int>(ipos), ndim, aKinks, aKinkErrors, kResErrors, kDownWeights );
+      traj.getMeasResults(static_cast<unsigned int>(ipos), ndata, aResiduals, aMeasErrors, aResErrors, aDownWeights );
+      traj.getScatResults(static_cast<unsigned int>(ipos), ndata, aKinks, aKinkErrors, kResErrors, kDownWeights );
+      aResiduals[0] = rx[4] - aCorrection[3];
+      aResiduals[1] = ry[4] - aCorrection[4];
       gblax4Histo->fill( aCorrection[1]*1E3 ); // angle x [mrad]
       gbldx4Histo->fill( aCorrection[3]*1E3 ); // shift x [um]
       gblrx4Histo->fill( ( rx[4] - aCorrection[3] ) * 1E3 ); // residual x [um]
@@ -1174,8 +1317,10 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 
       ipos = ilab[5];
       traj.getResults( ipos, aCorrection, aCovariance );
-      traj.getMeasResults(static_cast<unsigned int>(ipos), ndim, aResiduals, aMeasErrors, aResErrors, aDownWeights );
-      traj.getScatResults(static_cast<unsigned int>(ipos), ndim, aKinks, aKinkErrors, kResErrors, kDownWeights );
+      traj.getMeasResults(static_cast<unsigned int>(ipos), ndata, aResiduals, aMeasErrors, aResErrors, aDownWeights );
+      traj.getScatResults(static_cast<unsigned int>(ipos), ndata, aKinks, aKinkErrors, kResErrors, kDownWeights );
+      aResiduals[0] = rx[5] - aCorrection[3];
+      aResiduals[1] = ry[5] - aCorrection[4];
       gblax5Histo->fill( aCorrection[1]*1E3 ); // angle x [mrad]
       gbldx5Histo->fill( aCorrection[3]*1E3 ); // shift x [um]
       gblrx5Histo->fill( ( rx[5] - aCorrection[3] ) * 1E3 ); // residual x [um]
@@ -1187,15 +1332,58 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
       gblqx5Histo->fill( aKinks[0]*1E3 ); // kink
       ax[k] = aCorrection[1]; // angle correction at plane, for kinks
       //ay[k] = aCorrection[2]; // angle correction at plane, for kinks
+      //
+
+      corrPos[0] = trackhitx[5] - aResiduals[0] + 2.2e-3 ; 
+      corrPos[1] = trackhity[5] - aResiduals[1] + 2.e-3;       
+      
+      nx = (corrPos[0]) / pixel_size;
+      ny = (corrPos[1]) / pixel_size;
+      invsignx = -(corrPos[0]) / fabs((corrPos[0]));
+      invsigny = -(corrPos[1]) / fabs((corrPos[1]));
+
+      modPos[0] = (corrPos[0])+invsignx*(abs(nx) +0.5)*pixel_size*1e3;
+      modPos[1] = (corrPos[1])+invsigny*(abs(ny) +0.5)*pixel_size*1e3;
+
+      // clustersize-specific plots
+      int CS5 = (*tr).gethit(5).clustersize;
+
+      if (CS5 == 1){
+        gblrxvsxpix51_CS1->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
+        gblryvsypix51_CS1->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
+      } 
+      if (CS5 == 2){
+        gblrxvsxpix51_CS2->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
+        gblryvsypix51_CS2->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
+      } 
+      if (CS5 == 3){
+        gblrxvsxpix51_CS3->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
+        gblryvsypix51_CS3->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
+      } 
+      if (CS5 == 4){
+        gblrxvsxpix51_CS4->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
+        gblryvsypix51_CS4->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
+      } 
+
+
+
       k++;
+      // do some more analysis with kinks
 
-      // kinks: 1,2 = tele, 3 = DUT, 4,5 = tele
+      double kinks[2];
+      ipos = centre_label-1;
+      traj.getScatResults( ipos, ndata, aKinks, aKinkErrors, kResErrors, kDownWeights );
+      kinks[0] = aKinks[0];
+      ipos +=2;
+      traj.getScatResults( ipos, ndata, aKinks, aKinkErrors, kResErrors, kDownWeights );
+      kinks[1] = aKinks[0];
 
+      gblkxCentreHisto->fill( (kinks[0] + kinks[1])*1E3 ); // kink at centre (sum of neighbours [mrad]
       gblkx1Histo->fill( (ax[1] - ax[0])*1E3 ); // kink at 1 [mrad]
       gblkx2Histo->fill( (ax[2] - ax[1])*1E3 ); // kink at 2 [mrad]
       gblkx3Histo->fill( (ax[3] - ax[2])*1E3 ); // kink at 3 [mrad]
       gblkx4Histo->fill( (ax[4] - ax[3])*1E3 ); // kink at 4 [mrad]
-      gblkx5Histo->fill( (ax[5] - ax[4])*1E3 ); // kink at 5 [mrad]
+      gblkx5Histo->fill( (ax[5] - ax[4])*1E3 ); // kink at 5 [mrad] // THIS IS NULL as ax[5] is not updated
       //gblkx6Histo->fill( (ax[6] - ax[5])*1E3 ); // kink at 6 [mrad]
 
     } // end if good fit 
@@ -1370,9 +1558,9 @@ void EUTelTripletGBL::FindTriplets(std::vector<hit> &hits, unsigned int plane0, 
   //std::vector<triplet> * triplets = new std::vector<triplet>;
 
   // Cut on the triplet track angle: +- 10 mrad
-  double triplet_angle_cut = 0.010;
+  //double triplet_angle_cut = 0.010;
   // Cut on the triplet residual on the middle plane:
-  double triplet_residual_cut = 0.1; // [mm]
+  //double triplet_residual_cut = 0.1; // [mm]
 
   for( std::vector<hit>::iterator ihit = hits.begin(); ihit != hits.end(); ihit++ ){
     if( (*ihit).plane != plane0 ) continue; // First plane
@@ -1390,13 +1578,16 @@ void EUTelTripletGBL::FindTriplets(std::vector<hit> &hits, unsigned int plane0, 
 	// Create new preliminary triplet from the three hits:
 	triplet new_triplet((*ihit),(*khit),(*jhit));
 
+	if(_nEvt < 10) if( plane0 == 0 && plane1 == 1 && plane2 == 2) streamlog_out( WARNING2 ) << "dx triplet = " << new_triplet.getdx(plane1)*1e3 << endl;
+	if(_nEvt < 10) if( plane0 == 3 && plane1 == 4 && plane2 == 5) streamlog_out( WARNING2 ) << "dx driplet = " << new_triplet.getdx(plane1)*1e3 << endl;
+
 	// Setting cuts on the triplet track angle:
-	if( abs(new_triplet.getdy()) > triplet_angle_cut * new_triplet.getdz()) continue;
-	if( abs(new_triplet.getdx()) > triplet_angle_cut * new_triplet.getdz()) continue;
+	if( abs(new_triplet.getdx()) > _slope_cut_x * new_triplet.getdz()) continue;
+	if( abs(new_triplet.getdy()) > _slope_cut_y * new_triplet.getdz()) continue;
 
 	// Setting cuts on the triplet residual on the middle plane
-	if( abs(new_triplet.getdx(plane1)) > triplet_residual_cut) continue;
-	if( abs(new_triplet.getdy(plane1)) > triplet_residual_cut) continue;
+	if( abs(new_triplet.getdx(plane1)) > _triCut) continue;
+	if( abs(new_triplet.getdy(plane1)) > _triCut) continue;
 
 	/*
 	// For low threshold (high noise) and/or high occupancy, use only the triplet with the smallest sum of residuals on plane1
@@ -1453,7 +1644,7 @@ void EUTelTripletGBL::MatchTriplets(std::vector<triplet> &up, std::vector<triple
 
   //std::vector<track> * tracks = new std::vector<track>;
   // Cut on the matching of two triplets [mm]
-  double intersect_residual_cut = 0.1;
+  //double intersect_residual_cut = 0.1;
 
   for( std::vector<triplet>::iterator trip = up.begin(); trip != up.end(); trip++ ){
 
@@ -1462,7 +1653,7 @@ void EUTelTripletGBL::MatchTriplets(std::vector<triplet> &up, std::vector<triple
     double yA = (*trip).gety_at(z_match);
 
     // check if trip is isolated
-    bool IsolatedTrip = IsTripletIsolated(trip, up, z_match);
+    bool IsolatedTrip = IsTripletIsolated(trip, up, z_match, _triCut*2.01);
 
     for( std::vector<triplet>::iterator drip = down.begin(); drip != down.end(); drip++ ){
 
@@ -1471,7 +1662,7 @@ void EUTelTripletGBL::MatchTriplets(std::vector<triplet> &up, std::vector<triple
       double yB = (*drip).gety_at(z_match);
 
       // check if drip is isolated
-      bool IsolatedDrip = IsTripletIsolated(drip, down, z_match);
+      bool IsolatedDrip = IsTripletIsolated(drip, down, z_match, _triCut*2.01);
 
 
       // Build a track candidate from one upstream and one downstream triplet:
@@ -1495,11 +1686,15 @@ void EUTelTripletGBL::MatchTriplets(std::vector<triplet> &up, std::vector<triple
       if( abs(dx) < 0.4 ) sixdycHisto->fill( dy*1E3 );
 
       // match driplet and triplet:
-      if( abs(dx) > intersect_residual_cut) continue;
-      if( abs(dy) > intersect_residual_cut) continue;
+      if( abs(dx) > _cutx) continue;
+      if( abs(dy) > _cuty) continue;
 
       // check isolation
-      if( !IsolatedTrip || !IsolatedDrip ) continue;
+      if( !IsolatedTrip || !IsolatedDrip ) {
+	hIso->fill(0);
+	//continue;
+      }
+      else hIso->fill(1);
 
       sixkxcHisto->fill( kx*1E3 );
       sixkycHisto->fill( ky*1E3 );

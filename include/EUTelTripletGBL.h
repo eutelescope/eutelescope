@@ -132,6 +132,9 @@ namespace eutelescope {
       unsigned int plane;
       // clustersize of the cluster associated to the hit
       int clustersize;
+      // local coords
+      double locx;
+      double locy;
       // Overloading ostream operator for printing hits:
       friend std::ostream& operator << (std::ostream& out, const hit& point) // output
       {
@@ -308,8 +311,9 @@ namespace eutelescope {
     // Cuts for matching:
     double _cutx;
     double _cuty;
-    double _slope_x;
-    double _slope_y;
+    double _slope_cut_x;
+    double _slope_cut_y;
+    double _triCut;
     double _probchi2_cut;
 
     // Partly outdated GEAR readings:
@@ -411,6 +415,7 @@ namespace eutelescope {
   AIDA::IHistogram2D * sixxyHisto;
   AIDA::IHistogram2D * sixxycHisto;
   AIDA::IProfile2D * kinkvsxy;
+  AIDA::IProfile2D * kinkpixvsxy;
 
   AIDA::IHistogram1D * clustersize0;
   AIDA::IHistogram1D * sixx0Histo;
@@ -509,6 +514,37 @@ namespace eutelescope {
   AIDA::IProfile1D * gblryvsypix0;
   AIDA::IProfile1D * gblrxvsxpix01;
   AIDA::IProfile1D * gblryvsypix01;
+  AIDA::IProfile1D * gblrxvsxpix01_CS1;
+  AIDA::IProfile1D * gblryvsypix01_CS1;
+  AIDA::IProfile1D * gblrxvsxpix01_CS2;
+  AIDA::IProfile1D * gblryvsypix01_CS2;
+  AIDA::IProfile1D * gblrxvsxpix01_CS3;
+  AIDA::IProfile1D * gblryvsypix01_CS3;
+  AIDA::IProfile1D * gblrxvsxpix01_CS4;
+  AIDA::IProfile1D * gblryvsypix01_CS4;
+  AIDA::IProfile1D * gblrxvsxpix51_CS1;
+  AIDA::IProfile1D * gblryvsypix51_CS1;
+  AIDA::IProfile1D * gblrxvsxpix51_CS2;
+  AIDA::IProfile1D * gblryvsypix51_CS2;
+  AIDA::IProfile1D * gblrxvsxpix51_CS3;
+  AIDA::IProfile1D * gblryvsypix51_CS3;
+  AIDA::IProfile1D * gblrxvsxpix51_CS4;
+  AIDA::IProfile1D * gblryvsypix51_CS4;
+  AIDA::IProfile1D * gblrxvsxpix31;
+  AIDA::IProfile1D * gblryvsypix31;
+  AIDA::IProfile1D * gblrxvsxpix3cs1;
+  AIDA::IProfile1D * gblryvsypix3cs1;
+  AIDA::IProfile1D * gblrxvsxpix3cs2;
+  AIDA::IProfile1D * gblryvsypix3cs2;
+  AIDA::IProfile1D * gblrxvsxpix3cs3;
+  AIDA::IProfile1D * gblryvsypix3cs3;
+  AIDA::IProfile1D * gblrxvsxpix3cs4;
+  AIDA::IProfile1D * gblryvsypix3cs4;
+  AIDA::IProfile1D * gblrxvsxpix3cs5;
+  AIDA::IProfile1D * gblryvsypix3cs5;
+  AIDA::IProfile1D * gblrxvsxpix3cs6;
+  AIDA::IProfile1D * gblryvsypix3cs6;
+
 
   AIDA::IHistogram1D * gblax1Histo;
   AIDA::IHistogram1D * gbldx1Histo;
@@ -538,9 +574,33 @@ namespace eutelescope {
   AIDA::IHistogram1D * gbldx3Histo;
   AIDA::IHistogram1D * gblrx3Histo;
   AIDA::IHistogram1D * gblry3Histo;
+  AIDA::IHistogram1D * gblrx3_cs1Histo;
+  AIDA::IHistogram1D * gblry3_cs1Histo;
+  AIDA::IHistogram1D * gblrx3_cs2Histo;
+  AIDA::IHistogram1D * gblry3_cs2Histo;
+  AIDA::IHistogram1D * gblrx3_cs3Histo;
+  AIDA::IHistogram1D * gblry3_cs3Histo;
+  AIDA::IHistogram1D * gblrx3_cs4Histo;
+  AIDA::IHistogram1D * gblry3_cs4Histo;
+  AIDA::IHistogram1D * gblrx3_cs5Histo;
+  AIDA::IHistogram1D * gblry3_cs5Histo;
+  AIDA::IHistogram1D * gblrx3_cs6Histo;
+  AIDA::IHistogram1D * gblry3_cs6Histo;
   AIDA::IHistogram1D * gblpx3Histo;
-  AIDA::IHistogram1D * gblpx3_unbHisto;
   AIDA::IHistogram1D * gblpy3Histo;
+  AIDA::IHistogram1D * gblpx3_cs1Histo;
+  AIDA::IHistogram1D * gblpy3_cs1Histo;
+  AIDA::IHistogram1D * gblpx3_cs2Histo;
+  AIDA::IHistogram1D * gblpy3_cs2Histo;
+  AIDA::IHistogram1D * gblpx3_cs3Histo;
+  AIDA::IHistogram1D * gblpy3_cs3Histo;
+  AIDA::IHistogram1D * gblpx3_cs4Histo;
+  AIDA::IHistogram1D * gblpy3_cs4Histo;
+  AIDA::IHistogram1D * gblpx3_cs5Histo;
+  AIDA::IHistogram1D * gblpy3_cs5Histo;
+  AIDA::IHistogram1D * gblpx3_cs6Histo;
+  AIDA::IHistogram1D * gblpy3_cs6Histo;
+  AIDA::IHistogram1D * gblpx3_unbHisto;
   AIDA::IHistogram1D * gblpy3_unbHisto;
   AIDA::IHistogram1D * gblqx3Histo;
   AIDA::IHistogram1D * gblsx3Histo;
@@ -579,6 +639,7 @@ namespace eutelescope {
   AIDA::IHistogram1D * gblsx6Histo;
   AIDA::IHistogram1D * gbltx6Histo;*/
 
+  AIDA::IHistogram1D * gblkxCentreHisto;
   AIDA::IHistogram1D * gblkx1Histo;
   AIDA::IHistogram1D * gblkx2Histo;
   AIDA::IHistogram1D * gblkx3Histo;
@@ -597,6 +658,23 @@ namespace eutelescope {
   AIDA::IHistogram1D * sixkyzxHisto;
   AIDA::IHistogram1D * sixkxzxHisto;
   AIDA::IHistogram1D * sixkyzyHisto;
+
+  AIDA::IHistogram1D * hIso;
+
+  AIDA::IProfile2D * gblnxy;
+  AIDA::IHistogram2D * gblnCS1xy;
+  AIDA::IHistogram2D * gblnCS2xy;
+  AIDA::IHistogram2D * gblnCS3xy;
+  AIDA::IHistogram2D * gblnCS4xy;
+  AIDA::IHistogram2D * gblnCS5xy;
+  AIDA::IHistogram2D * gblnCS6xy;
+  AIDA::IHistogram2D * gblnCS1xy1;
+  AIDA::IHistogram2D * gblnCS2xy1;
+  AIDA::IHistogram2D * gblnCS3xy1;
+  AIDA::IHistogram2D * gblnCS4xy1;
+  AIDA::IHistogram2D * gblnCS5xy1;
+  AIDA::IHistogram2D * gblnCS6xy1;
+
 #endif
 
   };
