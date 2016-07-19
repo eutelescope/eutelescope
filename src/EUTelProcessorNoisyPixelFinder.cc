@@ -79,6 +79,12 @@ EUTelProcessorNoisyPixelFinder::EUTelProcessorNoisyPixelFinder():
   registerProcessorParameter("NoOfEvents", "The number of events to be considered for each update cycle", _noOfEvents, static_cast<int>(100) );
 
   registerOptionalParameter("SensorIDVec", "The sensorID for the generated collection (one per detector)", _sensorIDVec, std::vector<int>() );
+  registerOptionalParameter("MaskedLinesVec0", "The masked lines vector for the first sensor in z", _maskedLinesVec0, std::vector<int>() );
+  registerOptionalParameter("MaskedLinesVec1", "The masked lines vector for the second sensor in z", _maskedLinesVec1, std::vector<int>() );
+  registerOptionalParameter("MaskedLinesVec2", "The masked lines vector for the third sensor in z", _maskedLinesVec2, std::vector<int>() );
+  registerOptionalParameter("MaskedLinesVec3", "The masked lines vector for the fourth sensor in z", _maskedLinesVec3, std::vector<int>() );
+  registerOptionalParameter("MaskedLinesVec4", "The masked lines vector for the fifth sensor in z", _maskedLinesVec4, std::vector<int>() );
+  registerOptionalParameter("MaskedLinesVec5", "The masked lines vector for the sixth sensor in z", _maskedLinesVec5, std::vector<int>() );
 
   registerProcessorParameter("MaxAllowedFiringFreq", "This float number [0,1] represents the maximum allowed firing frequency\n"
                              "within the selected number of event per cycle", _maxAllowedFiringFreq, static_cast<float>(0.2) );
@@ -150,6 +156,16 @@ void EUTelProcessorNoisyPixelFinder::init() {
 
 	//and use it to prepare the hit maps
 	initializeHitMaps();
+
+	// prepare _maskedLinesMap
+	for(unsigned int i = 0; i < _sensorIDVec.size(); i++) {
+	  if(i == 0) _maskedLinesMap[_sensorIDVec.at(i)] = _maskedLinesVec0;
+	  if(i == 1) _maskedLinesMap[_sensorIDVec.at(i)] = _maskedLinesVec1;
+	  if(i == 2) _maskedLinesMap[_sensorIDVec.at(i)] = _maskedLinesVec2;
+	  if(i == 3) _maskedLinesMap[_sensorIDVec.at(i)] = _maskedLinesVec3;
+	  if(i == 4) _maskedLinesMap[_sensorIDVec.at(i)] = _maskedLinesVec4;
+	  if(i == 5) _maskedLinesMap[_sensorIDVec.at(i)] = _maskedLinesVec5;
+	}
 }
 
 void EUTelProcessorNoisyPixelFinder::processRunHeader(LCRunHeader* /*rdr*/) {
@@ -208,6 +224,15 @@ void EUTelProcessorNoisyPixelFinder::noisyPixelFinder(EUTelEventImpl* evt) {
 					streamlog_out ( ERROR5 )  << "Pixel: " << pixel->getXCoord() << "|" <<  pixel->getYCoord() << " on plane: " << sensorID << " fired." << std::endl 
 						<< "This pixel is out of the range defined by the geometry. Either your data is corrupted or your pixel geometry not specified correctly!" << std::endl;
 				}
+			}
+			// additionally, increment the hit counter for all pixels in a masked line
+			//std::cout << " Sensor ID = " << sensorID << "; size of maskedLinesVec is = " << _maskedLinesMap[sensorID].size() << std::endl;
+			for( unsigned int iLines = 0; iLines < _maskedLinesMap[sensorID].size(); iLines++ ) {
+			  //std::cout << " Hot Line is = " << _maskedLinesMap[sensorID].at(iLines) << std::endl;
+			  for ( int indexX = currentSensor->offX; indexX < currentSensor->offX + currentSensor->sizeX; indexX++) {
+			    //std::cout << " indexX = " << indexX << std::endl;
+			    (hitArray->at(indexX)).at(_maskedLinesMap[sensorID].at(iLines))++;
+			  }
 			}
 			delete pixel;
 		}    
