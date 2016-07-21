@@ -608,7 +608,7 @@ void EUTelProcessorSparseClustering::bookHistos() {
   std::string _hitMapHistoName             = "hitMap";
   std::string _hitMapGeomHistoName         = "geometricHitMap";
   std::string _eventMultiplicityHistoName  = "eventMultiplicity";
-  std::string _hitpixelHistoName  	   = "hitpiselMultiplicity";
+  std::string _hitpixelHistoName  	   = "hitpixelMultiplicity";
 
   std::string tempHistoName;
   std::string basePath;
