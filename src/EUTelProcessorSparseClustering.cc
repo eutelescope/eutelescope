@@ -81,6 +81,7 @@ EUTelProcessorSparseClustering::EUTelProcessorSparseClustering():
   _seedSignalHistos(),
   _hitMapHistos(),
   _eventMultiplicityHistos(),
+  _hitpixelHistos(),  
   _isGeometryReady(false),
   _sensorIDVec(),
   _zsInputDataCollectionVec(NULL),
@@ -499,6 +500,7 @@ void EUTelProcessorSparseClustering::fillHistos (LCEvent * evt)
 		CellIDDecoder<TrackerPulseImpl > cellDecoder(_pulseCollectionVec);
 
 		std::map<int, int> eventCounterMap;
+		std::map<int, int> hitpixelCounterMap;
 
 		for( int iPulse = _initialPulseCollectionSize; iPulse < _pulseCollectionVec->getNumberOfElements(); iPulse++ ) 
 		{
@@ -549,18 +551,25 @@ void EUTelProcessorSparseClustering::fillHistos (LCEvent * evt)
 			(dynamic_cast<AIDA::IHistogram1D*> (_clusterSizeTotalHistos[detectorID]))->fill( static_cast<int>(cluster->size()) );
 			(dynamic_cast<AIDA::IHistogram1D*> (_clusterSignalHistos[detectorID]))->fill(cluster->getTotalCharge());
 
+			// sum total charge for total number of hit pixel
+			hitpixelCounterMap[detectorID] += cluster->getTotalCharge();
+
 			delete cluster;
 		}
 
 		//fill the event multiplicity here
+		// and hitpixelmultiplicity
 		std::string tempHistoName;
 		for ( int iDetector = 0; iDetector < _noOfDetector; iDetector++ ) 
 		{
-			AIDA::IHistogram1D * histo = dynamic_cast<AIDA::IHistogram1D*> ( _eventMultiplicityHistos[_sensorIDVec.at( iDetector)] );
-			if ( histo ) 
-			{
-			    histo->fill( eventCounterMap[_sensorIDVec.at( iDetector)] );
-			}
+		  AIDA::IHistogram1D * histo = dynamic_cast<AIDA::IHistogram1D*> ( _eventMultiplicityHistos[_sensorIDVec.at( iDetector)] );
+		  if ( histo ) {
+		    histo->fill( eventCounterMap[_sensorIDVec.at( iDetector)] );
+		  }
+		  histo = dynamic_cast<AIDA::IHistogram1D *> ( _hitpixelHistos[_sensorIDVec.at( iDetector)] );
+	          if ( histo ) {
+	                histo->fill( hitpixelCounterMap[_sensorIDVec.at( iDetector)] );
+	          }
 		}
 	} 
 	catch (lcio::DataNotAvailableException& e) 
@@ -599,6 +608,7 @@ void EUTelProcessorSparseClustering::bookHistos() {
   std::string _hitMapHistoName             = "hitMap";
   std::string _hitMapGeomHistoName         = "geometricHitMap";
   std::string _eventMultiplicityHistoName  = "eventMultiplicity";
+  std::string _hitpixelHistoName  	   = "hitpiselMultiplicity";
 
   std::string tempHistoName;
   std::string basePath;
@@ -743,6 +753,27 @@ void EUTelProcessorSparseClustering::bookHistos() {
 		                                                            eventMultiNBin, eventMultiMin, eventMultiMax);
 		_eventMultiplicityHistos.insert( std::make_pair(sensorID, eventMultiHisto) );
 		eventMultiHisto->setTitle( eventMultiTitle.c_str() );
+
+		tempHistoName = _hitpixelHistoName + "_d" + to_string( sensorID );
+		int     hitpixelNBin  = 500;
+		double  hitpixelMin   =  0.;
+		double  hitpixelMax   = 500.;
+		std::string  hitpixelTitle = "hit pixel multiplicity";
+		if ( isHistoManagerAvailable ) {
+		    histoInfo = histoMgr->getHistogramInfo(  _hitpixelHistoName );
+		    if ( histoInfo ) {
+			streamlog_out ( DEBUG2 ) << (* histoInfo ) << std::endl;
+			hitpixelNBin  = histoInfo->_xBin;
+			hitpixelMin   = histoInfo->_xMin;
+			hitpixelMax   = histoInfo->_xMax;
+			if ( histoInfo->_title != "" ) hitpixelTitle = histoInfo->_title;
+		    }
+		}
+		AIDA::IHistogram1D * hitpixelHisto =
+		    AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
+									      hitpixelNBin, hitpixelMin, hitpixelMax);
+		_hitpixelHistos.insert( std::make_pair(sensorID, hitpixelHisto) );
+		hitpixelHisto->setTitle( hitpixelTitle.c_str() );
 
   }
   streamlog_out ( DEBUG5 )  << "end of Booking histograms " << std::endl; 
