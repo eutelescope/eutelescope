@@ -79,6 +79,8 @@ void EUTelProcessorCorr::processEvent(LCEvent* event) {
 
 		std::vector<hPnt> firstPlanePoints;
 		std::map<int, std::array<std::vector<hPnt>, perm::last>> otherPoints;
+
+		//
 		
 		//We loop over all hits in the event and store them via the hPnt helper point struct in containers,
 		//only once this is done we process them
@@ -118,7 +120,7 @@ void EUTelProcessorCorr::processEvent(LCEvent* event) {
 						if( tDist < dist) {
 							p1 = &xPlanePnt;
 							p2 = &fstPlanePnt;
-							dist = tDist;
+							dist = tDist;								
 						}
 					}
 					//here min pnt
@@ -129,6 +131,13 @@ void EUTelProcessorCorr::processEvent(LCEvent* event) {
 						_histoMap[sensorID].at(p).xy->fill(p1d.x, p2d.y, 1);
 						_histoMap[sensorID].at(p).yx->fill(p1d.y, p2d.x, 1);
 						_histoMap[sensorID].at(p).yy->fill(p1d.y, p2d.y, 1);
+						//Calculate X and Y Residium from min pnt (only for x_y)
+						if (p != perm::x_y) continue;
+                                                double tResidX = p1d.x-p2d.x;
+                                                double tResidY = p1d.y-p2d.y;
+						//Residual Cut? 
+						_histoMapPreAlign[sensorID].at(0).x->fill(tResidX, 1);
+						_histoMapPreAlign[sensorID].at(1).y->fill(tResidY, 1);
 					}
 				}
 			}	
@@ -142,6 +151,7 @@ void EUTelProcessorCorr::processEvent(LCEvent* event) {
 		calcDistAndFillHisto(perm::my_x);
 		calcDistAndFillHisto(perm::y_mx);
 		calcDistAndFillHisto(perm::my_mx);
+
 }
 
 void EUTelProcessorCorr::end() {
@@ -174,6 +184,12 @@ void EUTelProcessorCorr::bookHistos() {
 	permTitleMap[perm::y_mx] = "plusYminusX";
 	permTitleMap[perm::my_mx] = "minusYminusX";
 
+	//Histograms Correlator
+        std::string basePathCorr = "Correlator";
+        marlin::AIDAProcessor::tree(this)->mkdir(basePathCorr.c_str());
+        basePathCorr.append("/");
+
+
 	for (auto mIt = _sensorIDVec.begin()+1; mIt != _sensorIDVec.end(); ++mIt) {
 		int sensorID = *mIt;
 		geo::EUTelGenericPixGeoDescr* thisSensorGeoDescr = geo::gGeometry().getPixGeoDescr( sensorID );
@@ -189,9 +205,15 @@ void EUTelProcessorCorr::bookHistos() {
 		float thisBoundX = sizeX/2+2;
 		float thisBoundY = sizeY/2+2;
 
-		std::string basePath = "detector_" + to_string( sensorID );
-		marlin::AIDAProcessor::tree(this)->mkdir(basePath.c_str());
-		basePath.append("/");
+		std::string basePath = basePathCorr;
+        	basePath.append("detector_" + to_string( sensorID ));
+        	marlin::AIDAProcessor::tree(this)->mkdir(basePath.c_str());
+        	basePath.append("/");
+
+
+		//std::string basePath = "detector_" + to_string( sensorID );
+		//marlin::AIDAProcessor::tree(this)->mkdir(basePath.c_str());
+		//basePath.append("/");
 
 		//In the 'normal' case the XY axis are not flipped, this is relevant for the histo boundaries
 		auto subCreateHistoNorm = [&](perm p){
@@ -245,5 +267,34 @@ void EUTelProcessorCorr::bookHistos() {
 		subCreateHistoInv(perm::my_x);
 		subCreateHistoInv(perm::y_mx);
 		subCreateHistoInv(perm::my_mx);
+		
+	};
+	
+	//Histograms for PreAlignment
+        std::string basePathPreAl = "PreAlign";
+        marlin::AIDAProcessor::tree(this)->mkdir(basePathPreAl.c_str());
+        basePathPreAl.append("/");
+
+	std::string tempHistoName="";
+
+	for (auto nIt = _sensorIDVec.begin()+1; nIt != _sensorIDVec.end(); ++nIt) {
+                int sensorID = *nIt;
+
+                std::string newBasePathPreAl = basePathPreAl;
+                newBasePathPreAl.append("detector_" + to_string( sensorID ));
+                marlin::AIDAProcessor::tree(this)->mkdir(newBasePathPreAl.c_str());
+                newBasePathPreAl.append("/");
+		
+		_histoMapPreAlign[sensorID].at(0).x = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(
+                                (newBasePathPreAl + "hitXRes_fixed_to_0").c_str(), 100, -10., 10.
+                        );
+
+                _histoMapPreAlign[sensorID].at(1).y = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(
+                                (newBasePathPreAl + "hitYRes_fixed_to_0").c_str(), 100, -10., 10.
+                        );
+
 	}
+
+
+
 }

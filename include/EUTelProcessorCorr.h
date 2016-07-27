@@ -42,6 +42,12 @@ struct corrHistos {
 	AIDA::IHistogram2D* yy;
 };
 
+struct preAlignHistos {
+	AIDA::IHistogram1D* x;
+	AIDA::IHistogram1D* y;
+};
+
+
 //Helper enum to address all the permutations - the last entry is to used to keep track of enum size
 enum perm { x_y, mx_y, x_my, mx_my, y_x, my_x, y_mx, my_mx, last };
 	
@@ -63,6 +69,7 @@ class EUTelProcessorCorr : public marlin::Processor {
   private:
 	std::vector<int> _sensorIDVec;
 	std::map<int, std::array<corrHistos, perm::last>> _histoMap;
+	std::map<int, std::array<preAlignHistos, 2>> _histoMapPreAlign;
 	std::string _hitCollectionNameInput;
 	float _distCut;
 	void bookHistos();
