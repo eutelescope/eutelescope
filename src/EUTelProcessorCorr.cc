@@ -43,6 +43,7 @@ _sensorIDVec()
 		_description ="EUTelProcessorCorr fills correlation histograms. It is possible to fill correlations for all different permutations of axis flips and changes.";
 		registerInputCollection(LCIO::TRACKERHIT, "hitCollectionNameInput", "Input hit collection name", _hitCollectionNameInput, std::string("inputhit"));
 		registerOptionalParameter("distCut", "Set distance cut to discard correlations further away than this", _distCut,  static_cast<float>(0)); //Not used right now
+		registerOptionalParameter("NewGEARSuffix", "Suffix for the new GEAR file, set to empty string (this is not default!) to overwrite old GEAR file", _GEARFileSuffix, std::string("_pre") );
 }
 
 void EUTelProcessorCorr::init() {
@@ -161,8 +162,8 @@ void EUTelProcessorCorr::end() {
         for (auto mIt = _sensorIDVec.begin()+1; mIt != _sensorIDVec.end(); ++mIt) {
                 int sensorID = *mIt;
 		//if there is a variable binnig it has to be changed here, too
-                double updatedXOff = getPeakPosition(_histoMapPreAlign[sensorID].at(0).x, 250, -10., 10.) ;
-                double updatedYOff = getPeakPosition(_histoMapPreAlign[sensorID].at(1).y, 250, -10., 10.) ;
+                double updatedXOff = getPeakPosition(_histoMapPreAlign[sensorID].at(0).x, 200, -10., 10.) ;
+                double updatedYOff = getPeakPosition(_histoMapPreAlign[sensorID].at(1).y, 200, -10., 10.) ;
 
 		double newX = geo::gGeometry().siPlaneXPosition(sensorID) + updatedXOff ;
 		double newY = geo::gGeometry().siPlaneYPosition(sensorID) + updatedYOff ;
@@ -173,7 +174,12 @@ void EUTelProcessorCorr::end() {
                 streamlog_out(MESSAGE4) << "ID: " << sensorID << std::setw(5) << "  x offset: " << updatedXOff << std::setw(2) << "  y offset: " << updatedYOff << std::endl;
         }
 	
-	streamlog_out(MESSAGE4) << "updated plane position" << std::endl;
+	//Write updated GEAR File
+	marlin::StringParameters* MarlinStringParams = marlin::Global::parameters;
+	std::string outputFilename = (MarlinStringParams->getStringVal("GearXMLFile")).substr(0, (MarlinStringParams->getStringVal("GearXMLFile")).size()-4);
+	streamlog_out(MESSAGE5) << "Writing updated GEAR file with filename: " << outputFilename+"_pre.xml" << std::endl;
+	geo::gGeometry().writeGEARFile(outputFilename + _GEARFileSuffix+".xml");
+
 	streamlog_out(MESSAGE4) << "Successfully finished" << std::endl;
 }
 
@@ -306,11 +312,11 @@ void EUTelProcessorCorr::bookHistos() {
 		
 		//perhaps it's better to have a variable binning that user can choose
 		_histoMapPreAlign[sensorID].at(0).x = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(
-                                (newBasePathPreAl + "hitXRes_fixed_to_0").c_str(), 250, -10., 10.
+                                (newBasePathPreAl + "hitXRes_fixed_to_0").c_str(), 200, -10., 10.
                         );
 
                 _histoMapPreAlign[sensorID].at(1).y = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(
-                                (newBasePathPreAl + "hitYRes_fixed_to_0").c_str(), 250, -10., 10.
+                                (newBasePathPreAl + "hitYRes_fixed_to_0").c_str(), 200, -10., 10.
                         );
 
 	}

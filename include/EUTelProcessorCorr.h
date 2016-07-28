@@ -89,6 +89,7 @@ class EUTelProcessorCorr : public marlin::Processor {
 	std::map<int, std::array<preAlignHistos, 2>> _histoMapPreAlign;
 	std::string _hitCollectionNameInput;
 	float _distCut;
+	std::string _GEARFileSuffix;
 	void bookHistos();
 };
 
