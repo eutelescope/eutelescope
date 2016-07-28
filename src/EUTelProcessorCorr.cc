@@ -155,6 +155,25 @@ void EUTelProcessorCorr::processEvent(LCEvent* event) {
 }
 
 void EUTelProcessorCorr::end() {
+
+	streamlog_out(MESSAGE5) << "Hit Offset values: " << std::endl;
+
+        for (auto mIt = _sensorIDVec.begin()+1; mIt != _sensorIDVec.end(); ++mIt) {
+                int sensorID = *mIt;
+		//if there is a variable binnig it has to be changed here, too
+                double updatedXOff = getPeakPosition(_histoMapPreAlign[sensorID].at(0).x, 250, -10., 10.) ;
+                double updatedYOff = getPeakPosition(_histoMapPreAlign[sensorID].at(1).y, 250, -10., 10.) ;
+
+		double newX = geo::gGeometry().siPlaneXPosition(sensorID) + updatedXOff ;
+		double newY = geo::gGeometry().siPlaneYPosition(sensorID) + updatedYOff ;
+
+                geo::gGeometry().setPlaneXPosition(sensorID, newX);
+                geo::gGeometry().setPlaneYPosition(sensorID, newY);
+
+                streamlog_out(MESSAGE4) << "ID: " << sensorID << std::setw(5) << "  x offset: " << updatedXOff << std::setw(2) << "  y offset: " << updatedYOff << std::endl;
+        }
+	
+	streamlog_out(MESSAGE4) << "updated plane position" << std::endl;
 	streamlog_out(MESSAGE4) << "Successfully finished" << std::endl;
 }
 
@@ -285,12 +304,13 @@ void EUTelProcessorCorr::bookHistos() {
                 marlin::AIDAProcessor::tree(this)->mkdir(newBasePathPreAl.c_str());
                 newBasePathPreAl.append("/");
 		
+		//perhaps it's better to have a variable binning that user can choose
 		_histoMapPreAlign[sensorID].at(0).x = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(
-                                (newBasePathPreAl + "hitXRes_fixed_to_0").c_str(), 100, -10., 10.
+                                (newBasePathPreAl + "hitXRes_fixed_to_0").c_str(), 250, -10., 10.
                         );
 
                 _histoMapPreAlign[sensorID].at(1).y = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(
-                                (newBasePathPreAl + "hitYRes_fixed_to_0").c_str(), 100, -10., 10.
+                                (newBasePathPreAl + "hitYRes_fixed_to_0").c_str(), 250, -10., 10.
                         );
 
 	}

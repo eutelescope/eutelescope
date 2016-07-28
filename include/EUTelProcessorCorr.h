@@ -66,6 +66,23 @@ class EUTelProcessorCorr : public marlin::Processor {
 	virtual void processEvent (LCEvent * event);
 	virtual void end();
 
+	double getPeakPosition (AIDA::IHistogram1D* histogram, int nbins, double lowerEdge, double upperEdge){
+                double binWidth=(upperEdge-lowerEdge)/nbins;
+
+                double maxValue=0;
+                double maxBin=0;
+
+                for ( int i=0; i<nbins; i++){
+                        if (histogram->binHeight(i)>maxValue){
+                                maxValue = histogram->binHeight(i);
+                                maxBin = i;
+                        }
+                }
+
+                double peakPos = maxBin*binWidth+lowerEdge;
+                return peakPos;
+	}
+
   private:
 	std::vector<int> _sensorIDVec;
 	std::map<int, std::array<corrHistos, perm::last>> _histoMap;
