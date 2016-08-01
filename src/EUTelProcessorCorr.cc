@@ -23,6 +23,7 @@
 
 //Standard C++ libraries 
 #include <vector>
+#include <map>
 
 // lcio includes <.h>
 #include <UTIL/CellIDEncoder.h>
@@ -35,20 +36,53 @@ struct hPnt {
 	double x, y;
 };
 
+
 EUTelProcessorCorr::EUTelProcessorCorr():
 Processor("EUTelProcessorCorr"),
 _hitCollectionNameInput(),
-_sensorIDVec() 
+_sensorIDVec(),
+_cuts() 
 {
 		_description ="EUTelProcessorCorr fills correlation histograms. It is possible to fill correlations for all different permutations of axis flips and changes.";
+		
 		registerInputCollection(LCIO::TRACKERHIT, "hitCollectionNameInput", "Input hit collection name", _hitCollectionNameInput, std::string("inputhit"));
+		
 		registerOptionalParameter("distCut", "Set distance cut to discard correlations further away than this", _distCut,  static_cast<float>(0)); //Not used right now
+		
+		registerOptionalParameter("ResidualsXMin","Minimal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_residualsXMin, std::vector<float > (11, -10.) );
+		
+		registerOptionalParameter("ResidualsYMin","Minimal values of the hit residuals in the Y direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_residualsYMin, std::vector<float > (11, -10.) );
+		
+		registerOptionalParameter("ResidualsXMax","Maximal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_residualsXMax, std::vector<float > (11,  10.) );
+		
+		registerOptionalParameter("ResidualsYMax","Maximal values of the hit residuals in the Y direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_residualsYMax, std::vector<float > (11,  10.) );
+		
 		registerOptionalParameter("NewGEARSuffix", "Suffix for the new GEAR file, set to empty string (this is not default!) to overwrite old GEAR file", _GEARFileSuffix, std::string("_pre") );
 }
 
 void EUTelProcessorCorr::init() {
 	geo::gGeometry().initializeTGeoDescription(EUTELESCOPE::GEOFILENAME, EUTELESCOPE::DUMPGEOROOT);
 	_sensorIDVec = geo::gGeometry().sensorIDsVec();
+
+	//save residual cuts for each sensor plane in map
+	//std::map<int, std::vector<float>> _cuts;
+
+	//auto minX = _residualsXMin.begin();
+	//auto minY = _residualsYMin.begin();
+	//auto maxX = _residualsXMax.begin();
+	//auto maxY = _residualsYMax.begin();
+
+	//for(auto i = _sensorIDVec.begin(); i != _sensorIDVec.end(); ++i) {
+		//int sensorID = *i;
+		//std::vector<float> element = {*minX , *minY , *maxX, *maxY};
+		//_cuts.insert(std::pair<int, std::vector<float>> (sensorID, element));
+		//streamlog_out(MESSAGE5) << sensorID << " cuts : " << _cuts[sensorID].at(0) << "  " << _cuts[sensorID].at(1) << "  " << _cuts[sensorID].at(2) << "  " << _cuts[sensorID].at(3)  << std::endl;
+		//++minX;
+		//++minY;
+		//++maxX;
+		//++maxY;
+	//}
+
 	bookHistos();	
 }
 
@@ -81,8 +115,6 @@ void EUTelProcessorCorr::processEvent(LCEvent* event) {
 		std::vector<hPnt> firstPlanePoints;
 		std::map<int, std::array<std::vector<hPnt>, perm::last>> otherPoints;
 
-		//
-		
 		//We loop over all hits in the event and store them via the hPnt helper point struct in containers,
 		//only once this is done we process them
 		for(int iHit = 0; iHit < inputCollection->getNumberOfElements(); ++iHit) {  
@@ -104,12 +136,36 @@ void EUTelProcessorCorr::processEvent(LCEvent* event) {
 				otherPoints[sensorID].at(perm::my_mx).emplace_back(-inputPos[1], -inputPos[0]);
 			}
 		}
+		
+		if ( _residualsXMin.size() != _residualsYMin.size() || _residualsXMax.size() != _residualsYMax.size() || 
+		     _residualsXMin.size() != _sensorIDVec.size() || _residualsXMax.size() != _sensorIDVec.size() ) { 
+			streamlog_out(ERROR4) << "Residual cut vector has wrong size (or at least one is off) " << std::endl;
+		}
+
+		//store residual cuts in map
+	   	std::map<int, std::vector<float>> _cuts;
+
+        	auto minX = _residualsXMin.begin();
+        	auto minY = _residualsYMin.begin();
+        	auto maxX = _residualsXMax.begin();
+        	auto maxY = _residualsYMax.begin();
+	
+       		for(auto i = _sensorIDVec.begin(); i != _sensorIDVec.end(); ++i) {
+       	        	int sensorID = *i;
+       	        	std::vector<float> element = {*minX , *minY , *maxX, *maxY};
+       	        	_cuts.insert(std::pair<int, std::vector<float>> (sensorID, element));
+       	        	streamlog_out(MESSAGE5) << sensorID << " cuts : " << _cuts[sensorID].at(0) << "  " << _cuts[sensorID].at(1) << "  " << _cuts[sensorID].at(2) << "  " << _cuts[sensorID].at(3)  << std::endl;
+       	        	++minX;
+       	        	++minY;
+       	        	++maxX;
+       	        	++maxY;
+       		}
 
 		auto calcDistAndFillHisto = [&](perm p){
 			for (auto& val: otherPoints) {
 				auto sensorID = val.first;
 				auto perms = val.second;
-				
+
 				double dist = 9999999999;
 
 				hPnt* p1 = nullptr;
@@ -136,22 +192,26 @@ void EUTelProcessorCorr::processEvent(LCEvent* event) {
 						if (p != perm::x_y) continue;
                                                 double tResidX = p1d.x-p2d.x;
                                                 double tResidY = p1d.y-p2d.y;
-						//Residual Cut? 
-						_histoMapPreAlign[sensorID].at(0).x->fill(tResidX, 1);
-						_histoMapPreAlign[sensorID].at(1).y->fill(tResidY, 1);
+						 //streamlog_out(MESSAGE5) << " cuts : " << _cuts[sensorID].at(0) << std::endl;
+						if( ( _cuts[sensorID].at(0) < tResidX ) && ( tResidX < _cuts[sensorID].at(2) ) && 
+						    ( _cuts[sensorID].at(1) < tResidY ) && ( tResidY < _cuts[sensorID].at(3) )
+						  ){
+							_histoMapPreAlign[sensorID].at(0).x->fill(tResidX, 1);
+							_histoMapPreAlign[sensorID].at(1).y->fill(tResidY, 1);
+						}
 					}
-				}
+				};
 			}	
 		};
 		
 		calcDistAndFillHisto(perm::x_y);
-		calcDistAndFillHisto(perm::mx_y);
-		calcDistAndFillHisto(perm::x_my);
-		calcDistAndFillHisto(perm::mx_my);
-		calcDistAndFillHisto(perm::y_x);
-		calcDistAndFillHisto(perm::my_x);
-		calcDistAndFillHisto(perm::y_mx);
-		calcDistAndFillHisto(perm::my_mx);
+		//calcDistAndFillHisto(perm::mx_y);
+		//calcDistAndFillHisto(perm::x_my);
+		//calcDistAndFillHisto(perm::mx_my);
+		//calcDistAndFillHisto(perm::y_x);
+		//calcDistAndFillHisto(perm::my_x);
+		//calcDistAndFillHisto(perm::y_mx);
+		//calcDistAndFillHisto(perm::my_mx);
 
 }
 
@@ -320,7 +380,5 @@ void EUTelProcessorCorr::bookHistos() {
                         );
 
 	}
-
-
 
 }

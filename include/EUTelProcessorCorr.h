@@ -85,10 +85,15 @@ class EUTelProcessorCorr : public marlin::Processor {
 
   private:
 	std::vector<int> _sensorIDVec;
+	std::map<int, std::vector<float>> _cuts;
 	std::map<int, std::array<corrHistos, perm::last>> _histoMap;
 	std::map<int, std::array<preAlignHistos, 2>> _histoMapPreAlign;
 	std::string _hitCollectionNameInput;
 	float _distCut;
+	std::vector<float> _residualsXMin;
+        std::vector<float> _residualsYMin;
+        std::vector<float> _residualsXMax;
+        std::vector<float> _residualsYMax;	
 	std::string _GEARFileSuffix;
 	void bookHistos();
 };
