@@ -64,29 +64,55 @@ void EUTelProcessorCorr::init() {
 	geo::gGeometry().initializeTGeoDescription(EUTELESCOPE::GEOFILENAME, EUTELESCOPE::DUMPGEOROOT);
 	_sensorIDVec = geo::gGeometry().sensorIDsVec();
 
-	//save residual cuts for each sensor plane in map
-	auto minX = _residualsXMin.begin();
-	auto minY = _residualsYMin.begin();
-	auto maxX = _residualsXMax.begin();
-	auto maxY = _residualsYMax.begin();
-	
-	
-		for(auto i = _sensorIDVec.begin(); i != _sensorIDVec.end(); ++i) {
-			int sensorID = *i;
-			_cuts[sensorID]={*minX, *minY, *maxX, *maxY};
-			streamlog_out(MESSAGE5) << sensorID << " cuts : " << _cuts[sensorID].at(0) << "  " << _cuts[sensorID].at(1) << "  " << _cuts[sensorID].at(2) << "  " << _cuts[sensorID].at(3)  << std::endl;
-			++minX;
-			++minY;
-			++maxX;
-			++maxY;
-		}
-
-        auto ptrmap=_cuts.begin();
-	for (auto& x:_cuts){
-		streamlog_out(MESSAGE5) << ptrmap->first << " Cuts: " << x.second[0] <<" " << x.second[1]<<" " <<x.second[2]<<" " << x.second[3] << std::endl;
-	ptrmap++;
+	//check correct size of residualCutVectors	
+	if ( _residualsXMin.size() < _sensorIDVec.size() || 
+	     _residualsYMin.size() < _sensorIDVec.size() || 
+	     _residualsXMax.size() < _sensorIDVec.size() || 
+	     _residualsYMax.size() < _sensorIDVec.size() 
+	   ){
+		streamlog_out(ERROR5) << "Residual Vector has less elements than there are planes!" << std::endl;		
 	}
-	//streamlog_out(MESSAGE5) << "Find22: " << _cuts.find(22)->first << " Cuts: " << _cuts.find(22)->second[0] <<" " << _cuts.find(22)->second[1]<<" " <<_cuts.find(22)->second[2]<<" " << _cuts.find(22)->second[3] << std::endl;
+	
+	try {
+		if (_residualsXMin.size() > _sensorIDVec.size() ){
+			bool on = false;
+			for (auto i: _residualsXMin) { if (i!=-10) on=true; }
+			if (on) throw "xMin";		
+		}
+		if (_residualsYMin.size() > _sensorIDVec.size() ){
+                        bool on = false;
+                        for (auto i: _residualsYMin) { if (i!=-10) on=true; }
+                        if (on) throw "yMin";         
+                }
+                if (_residualsXMax.size() > _sensorIDVec.size() ){
+                        bool on = false;
+                        for (auto i: _residualsXMax) { if (i!=10) on=true; }
+                        if (on) throw "xMax";
+                }
+                if (_residualsYMax.size() > _sensorIDVec.size() ){
+                        bool on = false;
+                        for (auto i: _residualsYMax) { if (i!=10) on=true; }
+                        if (on) throw "yMax";
+                }
+	} catch (const char* parm) {
+	  streamlog_out (WARNING5) << "Vector " << parm << " has more elements than there are planes! "<< std::endl;
+	}
+ 		
+        //save residual cuts for each sensor plane in map
+        auto minX = _residualsXMin.begin();
+        auto minY = _residualsYMin.begin();
+        auto maxX = _residualsXMax.begin();
+        auto maxY = _residualsYMax.begin();
+
+	for(auto i = _sensorIDVec.begin(); i != _sensorIDVec.end(); ++i) {
+		int sensorID = *i;
+		_cuts[sensorID]={*minX, *minY, *maxX, *maxY};
+		//streamlog_out(MESSAGE5) << sensorID << " cuts : " << _cuts[sensorID].at(0) << "  " << _cuts[sensorID].at(1) << "  " << _cuts[sensorID].at(2) << "  " << _cuts[sensorID].at(3)  << std::endl;
+		++minX;
+		++minY;
+		++maxX;
+		++maxY;
+	}
 
 	bookHistos();	
 }
@@ -173,8 +199,10 @@ void EUTelProcessorCorr::processEvent(LCEvent* event) {
 						if (p != perm::x_y) continue;
                                                 double tResidX = p1d.x-p2d.x;
                                                 double tResidY = p1d.y-p2d.y;
-						if( ( _cuts.find(sensorID)->second[0] < tResidX ) && ( tResidX < _cuts.find(sensorID)->second[2] ) && 
-						    ( _cuts.find(sensorID)->second[1] < tResidY ) && ( tResidY < _cuts.find(sensorID)->second[3] )
+						if( ( _cuts.find(sensorID)->second[0] < tResidX ) && 
+						    ( tResidX < _cuts.find(sensorID)->second[2] ) && 
+						    ( _cuts.find(sensorID)->second[1] < tResidY ) && 
+						    ( tResidY < _cuts.find(sensorID)->second[3] )
 						 ){
 							_histoMapPreAlign[sensorID].at(0).x->fill(tResidX, 1);
 							_histoMapPreAlign[sensorID].at(1).y->fill(tResidY, 1);
@@ -185,13 +213,13 @@ void EUTelProcessorCorr::processEvent(LCEvent* event) {
 		};
 		
 		calcDistAndFillHisto(perm::x_y);
-		//calcDistAndFillHisto(perm::mx_y);
-		//calcDistAndFillHisto(perm::x_my);
-		//calcDistAndFillHisto(perm::mx_my);
-		//calcDistAndFillHisto(perm::y_x);
-		//calcDistAndFillHisto(perm::my_x);
-		//calcDistAndFillHisto(perm::y_mx);
-		//calcDistAndFillHisto(perm::my_mx);
+		calcDistAndFillHisto(perm::mx_y);
+		calcDistAndFillHisto(perm::x_my);
+		calcDistAndFillHisto(perm::mx_my);
+		calcDistAndFillHisto(perm::y_x);
+		calcDistAndFillHisto(perm::my_x);
+		calcDistAndFillHisto(perm::y_mx);
+		calcDistAndFillHisto(perm::my_mx);
 
 }
 
