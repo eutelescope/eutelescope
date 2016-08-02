@@ -65,23 +65,28 @@ void EUTelProcessorCorr::init() {
 	_sensorIDVec = geo::gGeometry().sensorIDsVec();
 
 	//save residual cuts for each sensor plane in map
-	//std::map<int, std::vector<float>> _cuts;
+	auto minX = _residualsXMin.begin();
+	auto minY = _residualsYMin.begin();
+	auto maxX = _residualsXMax.begin();
+	auto maxY = _residualsYMax.begin();
+	
+	
+		for(auto i = _sensorIDVec.begin(); i != _sensorIDVec.end(); ++i) {
+			int sensorID = *i;
+			_cuts[sensorID]={*minX, *minY, *maxX, *maxY};
+			streamlog_out(MESSAGE5) << sensorID << " cuts : " << _cuts[sensorID].at(0) << "  " << _cuts[sensorID].at(1) << "  " << _cuts[sensorID].at(2) << "  " << _cuts[sensorID].at(3)  << std::endl;
+			++minX;
+			++minY;
+			++maxX;
+			++maxY;
+		}
 
-	//auto minX = _residualsXMin.begin();
-	//auto minY = _residualsYMin.begin();
-	//auto maxX = _residualsXMax.begin();
-	//auto maxY = _residualsYMax.begin();
-
-	//for(auto i = _sensorIDVec.begin(); i != _sensorIDVec.end(); ++i) {
-		//int sensorID = *i;
-		//std::vector<float> element = {*minX , *minY , *maxX, *maxY};
-		//_cuts.insert(std::pair<int, std::vector<float>> (sensorID, element));
-		//streamlog_out(MESSAGE5) << sensorID << " cuts : " << _cuts[sensorID].at(0) << "  " << _cuts[sensorID].at(1) << "  " << _cuts[sensorID].at(2) << "  " << _cuts[sensorID].at(3)  << std::endl;
-		//++minX;
-		//++minY;
-		//++maxX;
-		//++maxY;
-	//}
+        auto ptrmap=_cuts.begin();
+	for (auto& x:_cuts){
+		streamlog_out(MESSAGE5) << ptrmap->first << " Cuts: " << x.second[0] <<" " << x.second[1]<<" " <<x.second[2]<<" " << x.second[3] << std::endl;
+	ptrmap++;
+	}
+	//streamlog_out(MESSAGE5) << "Find22: " << _cuts.find(22)->first << " Cuts: " << _cuts.find(22)->second[0] <<" " << _cuts.find(22)->second[1]<<" " <<_cuts.find(22)->second[2]<<" " << _cuts.find(22)->second[3] << std::endl;
 
 	bookHistos();	
 }
@@ -137,30 +142,6 @@ void EUTelProcessorCorr::processEvent(LCEvent* event) {
 			}
 		}
 		
-		if ( _residualsXMin.size() != _residualsYMin.size() || _residualsXMax.size() != _residualsYMax.size() || 
-		     _residualsXMin.size() != _sensorIDVec.size() || _residualsXMax.size() != _sensorIDVec.size() ) { 
-			streamlog_out(ERROR4) << "Residual cut vector has wrong size (or at least one is off) " << std::endl;
-		}
-
-		//store residual cuts in map
-	   	std::map<int, std::vector<float>> _cuts;
-
-        	auto minX = _residualsXMin.begin();
-        	auto minY = _residualsYMin.begin();
-        	auto maxX = _residualsXMax.begin();
-        	auto maxY = _residualsYMax.begin();
-	
-       		for(auto i = _sensorIDVec.begin(); i != _sensorIDVec.end(); ++i) {
-       	        	int sensorID = *i;
-       	        	std::vector<float> element = {*minX , *minY , *maxX, *maxY};
-       	        	_cuts.insert(std::pair<int, std::vector<float>> (sensorID, element));
-       	        	streamlog_out(MESSAGE5) << sensorID << " cuts : " << _cuts[sensorID].at(0) << "  " << _cuts[sensorID].at(1) << "  " << _cuts[sensorID].at(2) << "  " << _cuts[sensorID].at(3)  << std::endl;
-       	        	++minX;
-       	        	++minY;
-       	        	++maxX;
-       	        	++maxY;
-       		}
-
 		auto calcDistAndFillHisto = [&](perm p){
 			for (auto& val: otherPoints) {
 				auto sensorID = val.first;
@@ -192,10 +173,9 @@ void EUTelProcessorCorr::processEvent(LCEvent* event) {
 						if (p != perm::x_y) continue;
                                                 double tResidX = p1d.x-p2d.x;
                                                 double tResidY = p1d.y-p2d.y;
-						 //streamlog_out(MESSAGE5) << " cuts : " << _cuts[sensorID].at(0) << std::endl;
-						if( ( _cuts[sensorID].at(0) < tResidX ) && ( tResidX < _cuts[sensorID].at(2) ) && 
-						    ( _cuts[sensorID].at(1) < tResidY ) && ( tResidY < _cuts[sensorID].at(3) )
-						  ){
+						if( ( _cuts.find(sensorID)->second[0] < tResidX ) && ( tResidX < _cuts.find(sensorID)->second[2] ) && 
+						    ( _cuts.find(sensorID)->second[1] < tResidY ) && ( tResidY < _cuts.find(sensorID)->second[3] )
+						 ){
 							_histoMapPreAlign[sensorID].at(0).x->fill(tResidX, 1);
 							_histoMapPreAlign[sensorID].at(1).y->fill(tResidY, 1);
 						}
