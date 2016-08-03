@@ -94,8 +94,10 @@ class EUTelProcessorCorr : public marlin::Processor {
         std::vector<float> _residualsYMin;
         std::vector<float> _residualsXMax;
         std::vector<float> _residualsYMax;	
+        std::vector<int> _maxHitCut;	
 	std::string _GEARFileSuffix;
 	void bookHistos();
+	std::map<int, int> _sensorIDtoZOrderMap; //sensor ID to position along Z id
 };
 
 //! A global instance of the processor
