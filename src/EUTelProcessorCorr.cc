@@ -171,7 +171,6 @@ void EUTelProcessorCorr::processEvent(LCEvent* event) {
 
 	// lambda function for cutting out events with too many hits 
 	// A maximum number can be defined for the first plane
-	// TODO add all other planes
 	auto maxHitCut = [&] () -> bool {
 		if(_maxHitCut[0] < 0){
 			return false;
