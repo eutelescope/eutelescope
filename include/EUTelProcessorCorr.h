@@ -42,6 +42,12 @@ struct corrHistos {
 	AIDA::IHistogram2D* yy;
 };
 
+struct preAlignHistos {
+	AIDA::IHistogram1D* x;
+	AIDA::IHistogram1D* y;
+};
+
+
 //Helper enum to address all the permutations - the last entry is to used to keep track of enum size
 enum perm { x_y, mx_y, x_my, mx_my, y_x, my_x, y_mx, my_mx, last };
 	
@@ -60,11 +66,35 @@ class EUTelProcessorCorr : public marlin::Processor {
 	virtual void processEvent (LCEvent * event);
 	virtual void end();
 
+	double getPeakPosition (AIDA::IHistogram1D* histogram, int nbins, double lowerEdge, double upperEdge){
+                double binWidth=(upperEdge-lowerEdge)/nbins;
+
+                double maxValue=0;
+                double maxBin=0;
+
+                for ( int i=0; i<nbins; i++){
+                        if (histogram->binHeight(i)>maxValue){
+                                maxValue = histogram->binHeight(i);
+                                maxBin = i;
+                        }
+                }
+
+                double peakPos = maxBin*binWidth+lowerEdge;
+                return peakPos;
+	}
+
   private:
 	std::vector<int> _sensorIDVec;
+	std::map<int, std::vector<float>> _cuts;
 	std::map<int, std::array<corrHistos, perm::last>> _histoMap;
+	std::map<int, std::array<preAlignHistos, 2>> _histoMapPreAlign;
 	std::string _hitCollectionNameInput;
 	float _distCut;
+	std::vector<float> _residualsXMin;
+        std::vector<float> _residualsYMin;
+        std::vector<float> _residualsXMax;
+        std::vector<float> _residualsYMax;	
+	std::string _GEARFileSuffix;
 	void bookHistos();
 };
 

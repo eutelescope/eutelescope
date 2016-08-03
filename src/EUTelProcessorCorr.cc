@@ -23,6 +23,7 @@
 
 //Standard C++ libraries 
 #include <vector>
+#include <map>
 
 // lcio includes <.h>
 #include <UTIL/CellIDEncoder.h>
@@ -35,19 +36,84 @@ struct hPnt {
 	double x, y;
 };
 
+
 EUTelProcessorCorr::EUTelProcessorCorr():
 Processor("EUTelProcessorCorr"),
 _hitCollectionNameInput(),
-_sensorIDVec() 
+_sensorIDVec(),
+_cuts() 
 {
 		_description ="EUTelProcessorCorr fills correlation histograms. It is possible to fill correlations for all different permutations of axis flips and changes.";
+		
 		registerInputCollection(LCIO::TRACKERHIT, "hitCollectionNameInput", "Input hit collection name", _hitCollectionNameInput, std::string("inputhit"));
+		
 		registerOptionalParameter("distCut", "Set distance cut to discard correlations further away than this", _distCut,  static_cast<float>(0)); //Not used right now
+		
+		registerOptionalParameter("ResidualsXMin","Minimal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_residualsXMin, std::vector<float > (11, -10.) );
+		
+		registerOptionalParameter("ResidualsYMin","Minimal values of the hit residuals in the Y direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_residualsYMin, std::vector<float > (11, -10.) );
+		
+		registerOptionalParameter("ResidualsXMax","Maximal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_residualsXMax, std::vector<float > (11,  10.) );
+		
+		registerOptionalParameter("ResidualsYMax","Maximal values of the hit residuals in the Y direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_residualsYMax, std::vector<float > (11,  10.) );
+		
+		registerOptionalParameter("NewGEARSuffix", "Suffix for the new GEAR file, set to empty string (this is not default!) to overwrite old GEAR file", _GEARFileSuffix, std::string("_pre") );
 }
 
 void EUTelProcessorCorr::init() {
 	geo::gGeometry().initializeTGeoDescription(EUTELESCOPE::GEOFILENAME, EUTELESCOPE::DUMPGEOROOT);
 	_sensorIDVec = geo::gGeometry().sensorIDsVec();
+
+	//check correct size of residualCutVectors	
+	if ( _residualsXMin.size() < _sensorIDVec.size() || 
+	     _residualsYMin.size() < _sensorIDVec.size() || 
+	     _residualsXMax.size() < _sensorIDVec.size() || 
+	     _residualsYMax.size() < _sensorIDVec.size() 
+	   ){
+		streamlog_out(ERROR5) << "Residual Vector has less elements than there are planes!" << std::endl;		
+	}
+	
+	try {
+		if (_residualsXMin.size() > _sensorIDVec.size() ){
+			bool on = false;
+			for (auto i: _residualsXMin) { if (i!=-10) on=true; }
+			if (on) throw "xMin";		
+		}
+		if (_residualsYMin.size() > _sensorIDVec.size() ){
+                        bool on = false;
+                        for (auto i: _residualsYMin) { if (i!=-10) on=true; }
+                        if (on) throw "yMin";         
+                }
+                if (_residualsXMax.size() > _sensorIDVec.size() ){
+                        bool on = false;
+                        for (auto i: _residualsXMax) { if (i!=10) on=true; }
+                        if (on) throw "xMax";
+                }
+                if (_residualsYMax.size() > _sensorIDVec.size() ){
+                        bool on = false;
+                        for (auto i: _residualsYMax) { if (i!=10) on=true; }
+                        if (on) throw "yMax";
+                }
+	} catch (const char* parm) {
+	  streamlog_out (WARNING5) << "Vector " << parm << " has more elements than there are planes! "<< std::endl;
+	}
+ 		
+        //save residual cuts for each sensor plane in map
+        auto minX = _residualsXMin.begin();
+        auto minY = _residualsYMin.begin();
+        auto maxX = _residualsXMax.begin();
+        auto maxY = _residualsYMax.begin();
+
+	for(auto i = _sensorIDVec.begin(); i != _sensorIDVec.end(); ++i) {
+		int sensorID = *i;
+		_cuts[sensorID]={*minX, *minY, *maxX, *maxY};
+		//streamlog_out(MESSAGE5) << sensorID << " cuts : " << _cuts[sensorID].at(0) << "  " << _cuts[sensorID].at(1) << "  " << _cuts[sensorID].at(2) << "  " << _cuts[sensorID].at(3)  << std::endl;
+		++minX;
+		++minY;
+		++maxX;
+		++maxY;
+	}
+
 	bookHistos();	
 }
 
@@ -79,7 +145,7 @@ void EUTelProcessorCorr::processEvent(LCEvent* event) {
 
 		std::vector<hPnt> firstPlanePoints;
 		std::map<int, std::array<std::vector<hPnt>, perm::last>> otherPoints;
-		
+
 		//We loop over all hits in the event and store them via the hPnt helper point struct in containers,
 		//only once this is done we process them
 		for(int iHit = 0; iHit < inputCollection->getNumberOfElements(); ++iHit) {  
@@ -101,12 +167,12 @@ void EUTelProcessorCorr::processEvent(LCEvent* event) {
 				otherPoints[sensorID].at(perm::my_mx).emplace_back(-inputPos[1], -inputPos[0]);
 			}
 		}
-
+		
 		auto calcDistAndFillHisto = [&](perm p){
 			for (auto& val: otherPoints) {
 				auto sensorID = val.first;
 				auto perms = val.second;
-				
+
 				double dist = 9999999999;
 
 				hPnt* p1 = nullptr;
@@ -118,7 +184,7 @@ void EUTelProcessorCorr::processEvent(LCEvent* event) {
 						if( tDist < dist) {
 							p1 = &xPlanePnt;
 							p2 = &fstPlanePnt;
-							dist = tDist;
+							dist = tDist;								
 						}
 					}
 					//here min pnt
@@ -129,8 +195,20 @@ void EUTelProcessorCorr::processEvent(LCEvent* event) {
 						_histoMap[sensorID].at(p).xy->fill(p1d.x, p2d.y, 1);
 						_histoMap[sensorID].at(p).yx->fill(p1d.y, p2d.x, 1);
 						_histoMap[sensorID].at(p).yy->fill(p1d.y, p2d.y, 1);
+						//Calculate X and Y Residium from min pnt (only for x_y)
+						if (p != perm::x_y) continue;
+                                                double tResidX = p1d.x-p2d.x;
+                                                double tResidY = p1d.y-p2d.y;
+						if( ( _cuts.find(sensorID)->second[0] < tResidX ) && 
+						    ( tResidX < _cuts.find(sensorID)->second[2] ) && 
+						    ( _cuts.find(sensorID)->second[1] < tResidY ) && 
+						    ( tResidY < _cuts.find(sensorID)->second[3] )
+						 ){
+							_histoMapPreAlign[sensorID].at(0).x->fill(tResidX, 1);
+							_histoMapPreAlign[sensorID].at(1).y->fill(tResidY, 1);
+						}
 					}
-				}
+				};
 			}	
 		};
 		
@@ -142,9 +220,34 @@ void EUTelProcessorCorr::processEvent(LCEvent* event) {
 		calcDistAndFillHisto(perm::my_x);
 		calcDistAndFillHisto(perm::y_mx);
 		calcDistAndFillHisto(perm::my_mx);
+
 }
 
 void EUTelProcessorCorr::end() {
+
+	streamlog_out(MESSAGE5) << "Hit Offset values: " << std::endl;
+
+        for (auto mIt = _sensorIDVec.begin()+1; mIt != _sensorIDVec.end(); ++mIt) {
+                int sensorID = *mIt;
+		//if there is a variable binnig it has to be changed here, too
+                double updatedXOff = getPeakPosition(_histoMapPreAlign[sensorID].at(0).x, 200, -10., 10.) ;
+                double updatedYOff = getPeakPosition(_histoMapPreAlign[sensorID].at(1).y, 200, -10., 10.) ;
+
+		double newX = geo::gGeometry().siPlaneXPosition(sensorID) + updatedXOff ;
+		double newY = geo::gGeometry().siPlaneYPosition(sensorID) + updatedYOff ;
+
+                geo::gGeometry().setPlaneXPosition(sensorID, newX);
+                geo::gGeometry().setPlaneYPosition(sensorID, newY);
+
+                streamlog_out(MESSAGE4) << "ID: " << sensorID << std::setw(5) << "  x offset: " << updatedXOff << std::setw(2) << "  y offset: " << updatedYOff << std::endl;
+        }
+	
+	//Write updated GEAR File
+	marlin::StringParameters* MarlinStringParams = marlin::Global::parameters;
+	std::string outputFilename = (MarlinStringParams->getStringVal("GearXMLFile")).substr(0, (MarlinStringParams->getStringVal("GearXMLFile")).size()-4);
+	streamlog_out(MESSAGE5) << "Writing updated GEAR file with filename: " << outputFilename+"_pre.xml" << std::endl;
+	geo::gGeometry().writeGEARFile(outputFilename + _GEARFileSuffix+".xml");
+
 	streamlog_out(MESSAGE4) << "Successfully finished" << std::endl;
 }
 
@@ -174,6 +277,12 @@ void EUTelProcessorCorr::bookHistos() {
 	permTitleMap[perm::y_mx] = "plusYminusX";
 	permTitleMap[perm::my_mx] = "minusYminusX";
 
+	//Histograms Correlator
+        std::string basePathCorr = "Correlator";
+        marlin::AIDAProcessor::tree(this)->mkdir(basePathCorr.c_str());
+        basePathCorr.append("/");
+
+
 	for (auto mIt = _sensorIDVec.begin()+1; mIt != _sensorIDVec.end(); ++mIt) {
 		int sensorID = *mIt;
 		geo::EUTelGenericPixGeoDescr* thisSensorGeoDescr = geo::gGeometry().getPixGeoDescr( sensorID );
@@ -189,9 +298,15 @@ void EUTelProcessorCorr::bookHistos() {
 		float thisBoundX = sizeX/2+2;
 		float thisBoundY = sizeY/2+2;
 
-		std::string basePath = "detector_" + to_string( sensorID );
-		marlin::AIDAProcessor::tree(this)->mkdir(basePath.c_str());
-		basePath.append("/");
+		std::string basePath = basePathCorr;
+        	basePath.append("detector_" + to_string( sensorID ));
+        	marlin::AIDAProcessor::tree(this)->mkdir(basePath.c_str());
+        	basePath.append("/");
+
+
+		//std::string basePath = "detector_" + to_string( sensorID );
+		//marlin::AIDAProcessor::tree(this)->mkdir(basePath.c_str());
+		//basePath.append("/");
 
 		//In the 'normal' case the XY axis are not flipped, this is relevant for the histo boundaries
 		auto subCreateHistoNorm = [&](perm p){
@@ -245,5 +360,33 @@ void EUTelProcessorCorr::bookHistos() {
 		subCreateHistoInv(perm::my_x);
 		subCreateHistoInv(perm::y_mx);
 		subCreateHistoInv(perm::my_mx);
+		
+	};
+	
+	//Histograms for PreAlignment
+        std::string basePathPreAl = "PreAlign";
+        marlin::AIDAProcessor::tree(this)->mkdir(basePathPreAl.c_str());
+        basePathPreAl.append("/");
+
+	std::string tempHistoName="";
+
+	for (auto nIt = _sensorIDVec.begin()+1; nIt != _sensorIDVec.end(); ++nIt) {
+                int sensorID = *nIt;
+
+                std::string newBasePathPreAl = basePathPreAl;
+                newBasePathPreAl.append("detector_" + to_string( sensorID ));
+                marlin::AIDAProcessor::tree(this)->mkdir(newBasePathPreAl.c_str());
+                newBasePathPreAl.append("/");
+		
+		//perhaps it's better to have a variable binning that user can choose
+		_histoMapPreAlign[sensorID].at(0).x = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(
+                                (newBasePathPreAl + "hitXRes_fixed_to_0").c_str(), 200, -10., 10.
+                        );
+
+                _histoMapPreAlign[sensorID].at(1).y = marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(
+                                (newBasePathPreAl + "hitYRes_fixed_to_0").c_str(), 200, -10., 10.
+                        );
+
 	}
+
 }
