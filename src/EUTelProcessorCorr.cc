@@ -56,7 +56,7 @@ EUTelProcessorCorr::EUTelProcessorCorr():
 	registerOptionalParameter("ResidualsXMax","Maximal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_residualsXMax, std::vector<float > (11,  10.) );
 
 	registerOptionalParameter("ResidualsYMax","Maximal values of the hit residuals in the Y direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_residualsYMax, std::vector<float > (11,  10.) );
-	registerOptionalParameter("MaxHitCut","Define maximum number of hits allowed per plane and event",_maxHitCut, std::vector<int> (11,  9999) ); //TODO check for correct size of vector and change default cut value to proper value 
+	registerOptionalParameter("MaxHitCut","Define maximum number of hits allowed per plane and event",_maxHitCut, std::vector<int> (11,  -1) );  
 
 	registerOptionalParameter("NewGEARSuffix", "Suffix for the new GEAR file, set to empty string (this is not default!) to overwrite old GEAR file", _GEARFileSuffix, std::string("_pre") );
 }
@@ -105,10 +105,10 @@ void EUTelProcessorCorr::init() {
 	auto maxX = _residualsXMax.begin();
 	auto maxY = _residualsYMax.begin();
 
-	for(auto i = _sensorIDVec.begin(); i != _sensorIDVec.end(); ++i) {
-		int sensorID = *i;
+	for(auto it = _sensorIDVec.begin(); it != _sensorIDVec.end(); ++it) {
+		int sensorID = *it;
 		_cuts[sensorID]={*minX, *minY, *maxX, *maxY};
-		//streamlog_out(MESSAGE5) << sensorID << " cuts : " << _cuts[sensorID].at(0) << "  " << _cuts[sensorID].at(1) << "  " << _cuts[sensorID].at(2) << "  " << _cuts[sensorID].at(3)  << std::endl;
+		_sensorIDtoZOrderMap.insert( std::make_pair( *it, static_cast<int>(it - _sensorIDVec.begin())) );
 		++minX;
 		++minY;
 		++maxX;
@@ -173,8 +173,20 @@ void EUTelProcessorCorr::processEvent(LCEvent* event) {
 	// A maximum number can be defined for the first plane
 	// TODO add all other planes
 	auto maxHitCut = [&] () -> bool {
-		if(firstPlanePoints.size() > _maxHitCut[0]) {
+		if(_maxHitCut[0] < 0){
+			return false;
+		} else if(firstPlanePoints.size() > static_cast<unsigned int>(_maxHitCut[0])) {
 			return true;
+		}
+		for(auto& val: otherPoints) {
+			auto sensorID = val.first;
+			auto HitSize = val.second.at(perm::x_y).size(); // Check size only for first permutation since all of perms have the same size
+			int iz = _sensorIDtoZOrderMap.at(sensorID);
+			if(_maxHitCut[iz] < 0 ){
+				return false;
+			} else if(HitSize > static_cast<unsigned int>(_maxHitCut[iz])) {
+				return true;
+			}
 		}
 		return false;
 
