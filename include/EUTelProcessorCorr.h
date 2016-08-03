@@ -94,6 +94,7 @@ class EUTelProcessorCorr : public marlin::Processor {
         std::vector<float> _residualsYMin;
         std::vector<float> _residualsXMax;
         std::vector<float> _residualsYMax;	
+        std::vector<int> _maxHitCut;	
 	std::string _GEARFileSuffix;
 	void bookHistos();
 };
