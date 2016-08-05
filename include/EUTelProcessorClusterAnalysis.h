@@ -42,7 +42,7 @@ protected:
   std::ofstream clusterAnalysisOutput;
   std::string _outputSettingsFolderName;  
   std::ofstream settingsFile;
-  int _nEvent;
+  int _nEvents;
   int _dutID;
   int _layerIndex;
   int _nSectors;
