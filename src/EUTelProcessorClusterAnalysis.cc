@@ -152,17 +152,6 @@ void EUTelProcessorClusterAnalysis::processEvent(LCEvent *evt)
       streamlog_out ( WARNING5 ) << "hotPixelCollectionName: " << _hotPixelCollectionName.c_str() << " not found " << endl;
       _hotpixelAvailable = false;
     }
-    if (_hotpixelAvailable)
-    {
-      hotData = dynamic_cast< TrackerDataImpl * > ( hotPixelCollectionVec->getElementAt( _layerIndex ) );
-      std::unique_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> > sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> >(hotData);
-      /*for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
-      {
-        auto sparsePixel = std::make_unique<EUTelGenericSparsePixel>();
-        sparseData->getSparsePixelAt( iPixel, sparsePixel.get() );
-        hotpixelHisto->Fill(sparsePixel->getXCoord()*xPitch+xPitch/2.,sparsePixel->getYCoord()*yPitch+yPitch/2.);
-      }*/
-    }
     ifstream noiseMaskFile(_noiseMaskFileName.c_str());
     if (noiseMaskFile.is_open())
     {
@@ -174,7 +163,6 @@ void EUTelProcessorClusterAnalysis::processEvent(LCEvent *evt)
         int y = AddressToRow(address);
         noiseMaskX.push_back(x);
         noiseMaskY.push_back(y);
-        //hotpixelHisto->Fill(x*xPitch+xPitch/2.,y*yPitch+yPitch/2.);
       }
     }
     else _noiseMaskAvailable = false;
@@ -189,17 +177,6 @@ void EUTelProcessorClusterAnalysis::processEvent(LCEvent *evt)
       streamlog_out ( WARNING5 ) << "deadPixelCollectionName: " << _deadColumnCollectionName.c_str() << " not found " << endl;
       _deadColumnAvailable = false;
     }
-    if (_deadColumnAvailable)
-    {
-      deadColumn = dynamic_cast< TrackerDataImpl * > ( deadColumnCollectionVec->getElementAt( _layerIndex ) );
-      std::unique_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> > sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> >(deadColumn);
-      /*for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
-      {
-        auto sparsePixel = std::make_unique<EUTelGenericSparsePixel>();
-        sparseData->getSparsePixelAt( iPixel, sparsePixel.get() );
-        deadColumnHisto->Fill(sparsePixel->getXCoord()*xPitch+xPitch/2.,sparsePixel->getYCoord()*yPitch+yPitch/2.);
-      }*/
-    }
     //pALPIDE 3 settings
     settingsFile << evt->getRunNumber() << ";" << _energy << ";" << _chipID[_layerIndex] << ";" << _irradiation[_layerIndex] << ";" << _rate << ";" << evt->getParameters().getFloatVal("BackBiasVoltage") << ";" << evt->getParameters().getIntVal(Form("Ithr_%d",_layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Idb_%d",_layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Vcasn_%d",_layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Vcasn2_%d",_layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Vclip_%d",_layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Vcasp_%d",_layerIndex)) << ";" << evt->getParameters().getIntVal(Form("VresetP_%d",_layerIndex)) << ";" << evt->getParameters().getIntVal(Form("VresetD_%d",_layerIndex)) << ";";
 
@@ -210,8 +187,6 @@ void EUTelProcessorClusterAnalysis::processEvent(LCEvent *evt)
     settingsFile << evt->getParameters().getIntVal(Form("m_readout_delay_%d",_layerIndex)) << ";" << evt->getParameters().getIntVal(Form("m_trigger_delay_%d",_layerIndex)) << ";" << evt->getParameters().getIntVal(Form("m_strobe_length_%d",_layerIndex)) << ";" << evt->getParameters().getIntVal(Form("m_strobeb_length_%d",_layerIndex)) << ";1;";
     _isFirstEvent = false;
   }
-  //timeStampHisto->Fill(evt->getTimeStamp());
- 
   _clusterAvailable = true;
   try {
     zsInputDataCollectionVec = dynamic_cast< LCCollectionVec * > ( evt->getCollection( _zsDataCollectionName ) ) ;
@@ -229,11 +204,7 @@ void EUTelProcessorClusterAnalysis::processEvent(LCEvent *evt)
       if((int)cellDecoder(zsData)["sensorID"] == _dutID) nClusterPerEvent++;
     }
   }
-  //bool hitmapFilled = false;
-  //bool firstTrack = true;        
-
 	
-
 //Write DEBUG OUTPUTS in this way//streamlog_out ( DEBUG )  << nAssociatedhits << " points for one track in DUT in event " << evt->getEventNumber() << "\t" << xposPrev << "\t" << yposPrev << "\t" << xpos << "\t" << ypos << " Fit: " << xposfit << "\t" << yposfit << " Number of planes with more than one hit: " << nPlanesWithMoreHits << endl;
 
 //
@@ -252,8 +223,6 @@ if (_clusterAvailable)
 		    //Check whether the data is the one from the DUT or not
 		    if((int)cellDecoder(zsData)["sensorID"] == _dutID)
                     {
-                      //nClusterAssociatedToTrackPerEvent++;
-                      //clusterAssosiatedToTrack.push_back(zsData->getTime());
                       int clusterSize = zsData->getChargeValues().size()/4;
                       vector<int> X(clusterSize);
                       vector<int> Y(clusterSize);
@@ -295,7 +264,7 @@ if (_clusterAvailable)
 			  //check, whether all pixels are from the same sector. If not, discard the cluster and take note of it.
 			  if(X[iPixel]/_sectorWidth != X[0]/_sectorWidth){
 				_nOverlappingClusters++;
-			        streamlog_out ( DEBUG5 ) << "Another cluster with overlapping clusters." << endl; 	
+			        streamlog_out ( DEBUG5 ) << "Another cluster which overlaps sectors." << endl; 	
 				//Cluster discarded since it overlapps sectors; if there is only one sector, this can be used as a debug output, nextCluster should always be 0 then
 				goto nextCluster;
 			  }
@@ -324,7 +293,6 @@ if (_clusterAvailable)
 			if (_hotpixelAvailable)
 			{
 			  std::unique_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> > sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> >(hotData);
-			  //bool hotpixel = false;
 			  for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
 			  {
 			    auto sparsePixel = std::make_unique<EUTelGenericSparsePixel>();
@@ -333,31 +301,23 @@ if (_clusterAvailable)
 			    {
 			      _nHotpixelClusters++;
 			      goto nextCluster; 
-			      //hotpixel = true; 
-			      //break;
 			    }
 			  }
-			  //if (hotpixel) continue;
 			}
 			if (_noiseMaskAvailable)
 			{
-			  //bool noisePixel = false;
 			  for (unsigned int iNoise=0; iNoise<noiseMaskX.size(); iNoise++)
 			  {
 			    if (abs(clusterCenterOfGravityX-(noiseMaskX[iNoise])) < _limit && abs(clusterCenterOfGravityY-(noiseMaskY[iNoise])) < _limit)
 			    {
 			      _nNoiseMaskClusters++;
 			      goto nextCluster;
-			      //noisePixel = true;
-			      //break;
 			    }
 			  }
-			  //if (noisePixel) continue;
 			}
 			if (_deadColumnAvailable)
 			{
 			  auto sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> >(deadColumn);
-			  //bool dead = false;
 			  for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
 			  {
 			    auto sparsePixel = std::make_unique<EUTelGenericSparsePixel>();
@@ -366,11 +326,8 @@ if (_clusterAvailable)
 			    {
 			      _nDeadColumnClusters++;
 			      goto nextCluster;
-			      //dead = true;
-			      //break;
 			    }
 			  }
-			  //if (dead) continue;
 			}
 
 			//
@@ -396,15 +353,6 @@ if (_clusterAvailable)
                         int yMax = *max_element(Y.begin(), Y.end());
                         int clusterWidthX = xMax - xMin + 1;
                         int clusterWidthY = yMax - yMin + 1;
-
-                        /*if ((clusterWidthX > 3 || clusterWidthY > 3) && !emptyMiddle(pixVector))
-                          for (unsigned int iPixel=0; iPixel<pixVector.size(); iPixel++)
-                            largeClusterHistos->Fill(pixVector[iPixel][0],pixVector[iPixel][1]);
-                        if (emptyMiddle(pixVector))
-                        {
-                          for (unsigned int iPixel=0; iPixel<pixVector.size(); iPixel++)
-                            circularClusterHistos->Fill(pixVector[iPixel][0],pixVector[iPixel][1]);
-                        }*/
 
                         clusterWidthXHisto[index]->Fill(clusterWidthX);
                         clusterWidthYHisto[index]->Fill(clusterWidthY);
@@ -487,38 +435,4 @@ int EUTelProcessorClusterAnalysis::AddressToRow(int AAddress)
   // Ok, this will get ugly
   int Row = AAddress / 2;                // This is OK for the top-right and the bottom-left pixel within a group of 4
   return Row;
-}
-
-bool EUTelProcessorClusterAnalysis::emptyMiddle(vector<vector<int> > pixVector)
-{
-  bool holeX = false;
-  bool holeY = false;
-  for (unsigned int i=0; i<pixVector.size(); i++)
-  {
-    bool touchingX = false;
-    bool lastX = true;
-    for (unsigned int j=0; j<pixVector.size(); j++)
-    {
-      if (i==j) continue;
-      if (pixVector[i][1] != pixVector[j][1]) continue;
-      if (pixVector[i][0]+1 == pixVector[j][0]) {/*cerr << "Touching in x" << endl;*/ touchingX = true; break;}
-      if (pixVector[i][0] <  pixVector[j][0]) {/*cerr << "Smaller in x"  << endl;*/ lastX  = false;}
-    }
-    if (!touchingX && !lastX) {/*cerr << "Hole in X" << endl;*/ holeX = true; break;}
-  }
-  for (unsigned int i=0; i<pixVector.size(); i++)
-  {
-    bool touchingY = false;
-    bool lastY = true;
-    for (unsigned int j=0; j<pixVector.size(); j++)
-    {
-      if (i==j) continue;
-      if (pixVector[i][0] != pixVector[j][0]) continue;
-      if (pixVector[i][1]+1 == pixVector[j][1]) {/*cerr << "Touching in y" << endl;*/ touchingY = true; break;}
-      if (pixVector[i][1] <  pixVector[j][1]) {/*cerr << "Smaller in y"  << endl;*/ lastY  = false;}
-    }
-    if (!touchingY && !lastY) {/*cerr << "Hole in Y" << endl;*/ holeY = true; break;}
-  }
-  if (holeX && holeY) return true;
-  else return false;
 }
