@@ -37,7 +37,7 @@
   <!-- compression of output file 0: false >0: true (default) -->
   <parameter name="Compress" type="int" value="1"/>
   <!-- filename without extension-->
-  <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-clusterAnalysis"/>
+  <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-clusterAnalysis_DUT@dutID@"/>
   <!-- type of output file root (default) or xml )-->
   <parameter name="FileType" type="string" value="root"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
@@ -84,7 +84,7 @@
   <!--This is the name of the histogram information file-->
   <parameter name="HistoInfoFileName" type="string" value="@HistoInfoFile@"/>
   <!-- Name of the file containing the pixels belonging to a cluster-->
-  <parameter name="ClusterAnalysisFileName" type="string" value="@DatabasePath@/@FilePrefix@-clusterAnalysis.txt"/>
+  <parameter name="ClusterAnalysisFileName" type="string" value="@DatabasePath@/@FilePrefix@-clusterAnalysis_DUT@dutID@.txt"/>
   <!--Folder name where all the settings of each run will be saved (settings_DUTid.txt)-->
   <parameter name="OutputSettingsFolderName" type="string" value="@LcioPath@/../"/>
   <!--This is the name of the hotpixel collection-->

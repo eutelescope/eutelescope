@@ -76,9 +76,6 @@ private:
   std::map<int,TH1I*> clusterWidthXHisto;
   std::map<int,TH1I*> clusterWidthYHisto;
   std::map<int,TH1I*> clusterSizeHisto;
-  TH1I* clusterShapeHisto;
-  TH1I* clusterShapeHistoGrouped;
-  std::vector<Cluster> clusterVec;
   TH1I* timeStampHisto;
   TH2I* hotpixelHisto;
   TH2I* deadColumnHisto;

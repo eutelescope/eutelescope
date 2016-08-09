@@ -68,7 +68,7 @@ EUTelProcessorClusterAnalysis::EUTelProcessorClusterAnalysis()
                            _fillHistos, static_cast< bool > ( true ) );
     registerProcessorParameter("HistoInfoFileName", "This is the name of the histogram information file",
                              _histoInfoFileName, string( "histoinfo.xml" ) );
-    registerOptionalParameter("ClusterAnalysisFileName","This is the name of the LCIO file containing the pixels belonging to a dead column",
+    registerOptionalParameter("ClusterAnalysisFileName","This is the name of file to which all the information on the pixels belonging to the clusters is saved to.",
                            _clusterAnalysisFile, static_cast< string > ( "clusterAnalysis.txt") );
     registerOptionalParameter("HotPixelCollectionName","This is the name of the hotpixel collection of the pALPIDE",
                              _hotPixelCollectionName, static_cast< string > ( "" ) );
@@ -343,13 +343,7 @@ void EUTelProcessorClusterAnalysis::processEvent(LCEvent *evt)
 
 				clusterWidthXHisto[index]->Fill(clusterWidthX);
 				clusterWidthYHisto[index]->Fill(clusterWidthY);
-				int clusterShape = cluster.WhichClusterShape(cluster, clusterVec);
-				if (clusterShape>=0)
-				{
-					clusterShapeHisto->Fill(clusterShape);
 				}
-				else clusterShapeHisto->Fill(clusterVec.size());
-			}
 		}
 	nextCluster: ;
 	//End cluster for loop  
@@ -387,10 +381,6 @@ void EUTelProcessorClusterAnalysis::bookHistos()
 	  clusterSizeHisto[iSector]  = new TH1I(Form("clusterSizeHisto_%d",iSector),Form("Cluster size_%d;Cluster size (pixel);a.u.",iSector),20,0.5,20.5);
   }
 
-  AIDAProcessor::tree(this)->mkdir("ClusterShape");
-  AIDAProcessor::tree(this)->cd("ClusterShape");
-  clusterShapeHisto = new TH1I("clusterShapeHisto","Cluster shape (all rotations separately);Cluster shape ID;a.u.",clusterVec.size()+1,-0.5,clusterVec.size()+0.5);
-   
   streamlog_out ( DEBUG5 )  << "end of Booking histograms " << endl;
 }
 
@@ -407,7 +397,12 @@ void EUTelProcessorClusterAnalysis::end()
   clusterAnalysisOutput.close();
 
   settingsFile << _nEvents << ";";
-  settingsFile << "0;" << "0;" << "0;" << endl;
+  settingsFile << "0;";//efficiency
+  for (int iSector=0; iSector<_nSectors; iSector++)		
+  	settingsFile << "0;";//#tracks
+  for (int iSector=0; iSector<_nSectors; iSector++)		
+  	settingsFile << "0;";//#tracks with assoc. hits
+  settingsFile << endl;
 
   streamlog_out ( MESSAGE4 ) << "ClusterAnalysis finished." << endl;
 }
