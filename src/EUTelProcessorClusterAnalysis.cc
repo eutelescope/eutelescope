@@ -42,7 +42,6 @@ EUTelProcessorClusterAnalysis::EUTelProcessorClusterAnalysis()
   _nEvents(0),
   _dutID(),
   _nSectors(),
-  _limit(),
   _nTouchingBorderSectorClusters(0),
   _nTouchingBorderYClusters(0),
   _nOverlappingClusters(0),
@@ -83,8 +82,6 @@ EUTelProcessorClusterAnalysis::EUTelProcessorClusterAnalysis()
                            _dutID, static_cast<int>( 6 ) );
     registerProcessorParameter("nSectors","This is the maximum amount of sectors",
 			   _nSectors, static_cast<int>( 8 ) );
-    registerProcessorParameter("LimitAssoc","This is the distance of an e.g. hotpixel from the center of gravity of a cluster, at which this e.g. hotpixel is associated to the cluster.",
-			   _limit, static_cast<int>( 2 ) );
     registerOptionalParameter("SectorSafetyPixels","Safety distance (in pixel) of clusters being associated to a sector and to the boundaries of the chip.",
 			   _sectorSafetyPixels, static_cast<int>( 2 ) );
     registerOptionalParameter("Energy","Particle energy",
@@ -276,7 +273,7 @@ void EUTelProcessorClusterAnalysis::processEvent(LCEvent *evt)
 						{
 							auto sparsePixel = std::make_unique<EUTelGenericSparsePixel>();
 							sparseData->getSparsePixelAt( iHotPixel, sparsePixel.get() );
-							if (abs(X[iPixel]-(sparsePixel->getXCoord())) < _limit && abs(Y[iPixel]-(sparsePixel->getYCoord())) < _limit)
+							if (abs(X[iPixel]-(sparsePixel->getXCoord())) < _sectorSafetyPixels && abs(Y[iPixel]-(sparsePixel->getYCoord())) < _sectorSafetyPixels)
 							{
 								_nHotpixelClusters++;
 								goto nextCluster; 
@@ -287,7 +284,7 @@ void EUTelProcessorClusterAnalysis::processEvent(LCEvent *evt)
 					{
 						for (unsigned int iNoise=0; iNoise<noiseMaskX.size(); iNoise++)
 						{
-							if (abs(X[iPixel]-(noiseMaskX[iNoise])) < _limit && abs(Y[iPixel]-(noiseMaskY[iNoise])) < _limit)
+							if (abs(X[iPixel]-(noiseMaskX[iNoise])) < _sectorSafetyPixels && abs(Y[iPixel]-(noiseMaskY[iNoise])) < _sectorSafetyPixels)
 							{
 								_nNoiseMaskClusters++;
 								goto nextCluster;
@@ -301,7 +298,7 @@ void EUTelProcessorClusterAnalysis::processEvent(LCEvent *evt)
 						{
 							auto sparsePixel = std::make_unique<EUTelGenericSparsePixel>();
 							sparseData->getSparsePixelAt( iDeadPixel, sparsePixel.get() );
-							if (abs(X[iPixel]-(sparsePixel->getXCoord())) < _limit)
+							if (abs(X[iPixel]-(sparsePixel->getXCoord())) < _sectorSafetyPixels)
 							{
 								_nDeadColumnClusters++;
 								goto nextCluster;

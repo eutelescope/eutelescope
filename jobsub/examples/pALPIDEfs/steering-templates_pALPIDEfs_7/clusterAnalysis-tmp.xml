@@ -97,8 +97,6 @@
   <parameter name="nSectors" type="int" value="8"/>
   <!--The total amount of pixels the pixels of a cluster have to be away from a sectorborder, for the cluster to be ignored. Also, the distance to the boundary of a chip, for a cluster not to be ignored.-->
   <parameter name="SectorSafetyPixels" type="int" value="2"/>
-  <!--The total amount of pixels a hotpixel has to be close to a cluster, for the cluster to be ignored.-->
-  <parameter name="LimitAssoc" type="int" value="2"/>
   <!--Particle energy-->
   <parameter name="Energy" type="double" value="@BeamEnergy@"/>
   <!--Chip IDs-->

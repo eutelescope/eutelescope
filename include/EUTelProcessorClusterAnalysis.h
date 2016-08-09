@@ -46,7 +46,6 @@ protected:
   int _dutID;
   int _layerIndex;
   int _nSectors;
-  int _limit;
   int _nTouchingBorderSectorClusters;
   int _nTouchingBorderYClusters;
   int _nOverlappingClusters;
