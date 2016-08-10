@@ -397,11 +397,12 @@ void EUTelProcessorClusterAnalysis::end()
   clusterAnalysisOutput.close();
 
   settingsFile << _nEvents << ";";
-  settingsFile << "0;";//efficiency
   for (int iSector=0; iSector<_nSectors; iSector++)		
-  	settingsFile << "0;";//#tracks
+  	settingsFile << "0;";//efficiency
   for (int iSector=0; iSector<_nSectors; iSector++)		
-  	settingsFile << "0;";//#tracks with assoc. hits
+  	settingsFile << "0;";//number of tracks
+  for (int iSector=0; iSector<_nSectors; iSector++)		
+  	settingsFile << "0;";//number of tracks with assoc. hits
   settingsFile << endl;
 
   streamlog_out ( MESSAGE4 ) << "ClusterAnalysis finished." << endl;
