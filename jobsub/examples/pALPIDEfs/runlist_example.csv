@@ -1,3 +1,2 @@
 RunNumber,BeamEnergy,GearGeoFile,DUTNumbers,ChipIDs,IrradiationLevel,Rate
 23,6.0,gear_pALPIDEfs3_example_withCarrierMaterial_data.xml,3,W1-18 W2-27 W6-39 W9-16 W6-14 W2-23 W1-17,0 0 0 0 0 0 0,PS
-93,0.0,gear_pALPIDEfs3_example_withCarrierMaterial_noise.xml,3,W5-39 W2-25 W2-31 W4b-21 W9-16 W9-38 W2-23,0 0 0 0 0 0 0,PS
