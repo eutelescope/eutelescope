@@ -1,5 +1,4 @@
-This is the EUTelescope package, a generic pixel telescope data
-analysis framework.
+This is the EUTelescope package, a generic pixel telescope data analysis framework.
 
 You can find all documentation online: http://eutelescope.web.cern.ch
 and the source code at https://github.com/eutelescope/eutelescope
