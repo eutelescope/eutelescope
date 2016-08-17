@@ -15,4 +15,5 @@ For feature requests or bug reports please open a new issue on the issue tracker
 
 If you would like to get involved in the EUTelescope development - all
 contributions are highly welcome! :)
+
 Please see [our tips & guidelines for details](https://github.com/eutelescope/eutelescope/blob/master/CONTRIBUTING.md)
