@@ -13,7 +13,8 @@ branches:
 os: linux
 
 before_install:
- - sudo apt-get install -y svn build-essential gfortran cmake subversion default-jdk libgsl0-dev libxpm-dev libxft-dev libx11-dev libxext-dev python-dev && export ILCSOFT=$PWD\
+ - sudo apt-get -qq update
+ - sudo apt-get install -y subversion build-essential gfortran cmake subversion default-jdk libgsl0-dev libxpm-dev libxft-dev libx11-dev libxext-dev python-dev && export ILCSOFT=$PWD\
  - svn co https://svnsrv.desy.de/public/ilctools/ilcinstall/branches/v01-17-10-eutel-pre/ ilcinstall_v01-17-10-eutel 
  - cd $ILCSOFT/ilcinstall_v01-17-10-eutel 
  - ./ilcsoft-install -i examples/eutelescope/release-standalone.cfg
