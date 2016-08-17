@@ -1,7 +1,6 @@
 This is the EUTelescope package, a generic pixel telescope data analysis framework.
 
-You can find all documentation online: http://eutelescope.web.cern.ch
-and the source code at https://github.com/eutelescope/eutelescope
+You can find all documentation online: http://eutelescope.web.cern.ch and the source code at https://github.com/eutelescope/eutelescope
 
 To install the development version of EUTelescope, please follow the instructions at http://eutelescope.web.cern.ch/content/installation *but* make sure that you have the git client installed on your system and download the ```eutel-git``` branch of ilcsoft-install instead of the version stated on the installation pages:
 ```
