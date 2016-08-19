@@ -295,7 +295,7 @@ void EUTelProcessorNoisyPixelFinder::check(LCEvent* /*event*/ ) {
 	//0 before calling this. Since we increment 0++ before calling this function, this 
 	//criteria is fullfilled
 	if( _iEvt == _noOfEvents) {
-		streamlog_out ( MESSAGE4 ) << "Finished determining hot pixels, writing them out..." << std::endl;
+		streamlog_out ( MESSAGE4 ) << "Finished determining hot pixels, writing them out. Fire freq normalised to #events = " <<  _noOfEvents << std::endl;
 
 		//iterate over all the sensors in our sensorMap
 		for(auto& thisSensor: _sensorMap)
@@ -457,8 +457,8 @@ void EUTelProcessorNoisyPixelFinder::bookAndFillHistos() {
 
 		//actually fill both histos for each detector
 		for ( auto& pixel: _noisyPixelMap[det]) {
-			firing2DHisto->fill(pixel.getXCoord(), pixel.getYCoord(), pixel.getSignal());
-			firing1DHisto->fill(pixel.getSignal());
+			firing2DHisto->fill(pixel.getXCoord(), pixel.getYCoord(), 100.*pixel.getSignal());
+			firing1DHisto->fill(100*pixel.getSignal());
 		}
 	}//loop over dteectors
 }
