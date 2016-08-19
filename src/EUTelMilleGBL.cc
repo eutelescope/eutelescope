@@ -428,9 +428,13 @@ EUTelMilleGBL::EUTelMilleGBL(): Processor("EUTelMilleGBL") {
   registerOptionalParameter("UseSensorRectangular","Do not use all pixels for alignment, only these in the rectangular (A|B) e.g. (0,0) and (C|D) e.g. (100|100) of sensor S. Type in the way S1 A1 B1 C1 D1 S2 A2 B2 C2 D2 ...",
       _useSensorRectangular,initRect);
 
-  //DP  registerOptionalParameter("HotPixelCollectionName", "This is the name of the hot pixel collection to be saved into the output slcio file",
-  //              _hotPixelCollectionName, static_cast< string > ( "hotpixel_apix" ));
+  registerProcessorParameter( "kappa",
+      "global factor to Highland formula",
+      _kappa, static_cast <double>(1.0)); // 1.0 means HL as is, 1.2 means 20% additional scattering
 
+  registerProcessorParameter( "aluthickum",
+      "alu target thickness in um",
+      _aluthickum, static_cast <double>(0.0)); 
 }
 
 
@@ -773,7 +777,6 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
   std::vector<std::vector<EUTelMilleGBL::HitsInPlane> > _hitsArray(_nPlanes - _nExcludePlanes, std::vector<EUTelMilleGBL::HitsInPlane>() );
   std::vector<int> indexconverter (_nPlanes,-1);
 
-  //  printf("887: excludePlanes %2d  \n", _nExcludePlanes );
   //  if( _nExcludePlanes > 0 )
   {
     int icounter = 0;
@@ -793,8 +796,6 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	indexconverter[i] = icounter;
 	icounter++;
       }
-
-      // printf("907: excludePlanes %2d of %2d (%2d) \n", i, _nPlanes, indexconverter[i] );
     }
   }
 
@@ -852,7 +853,7 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	  hitsInPlane.measuredY = 1000 * hit->getPosition()[1]; // microns
 	  hitsInPlane.measuredZ = 1000 * hit->getPosition()[2]; // microns
 
-	  if(_iEvt < 10) streamlog_out( WARNING2 ) << "hit x = " << hit->getPosition()[0] << endl;
+	  //if(_iEvt < 5) streamlog_out( WARNING2 ) << "hit x = " << hit->getPosition()[0] << endl;
 
 
 	  //printf("hit %5d of %5d , at %-8.3f %-8.3f %-8.3f, %5d %5d \n", iHit , collection->getNumberOfElements(), hitsInPlane.measuredX*1E-3, hitsInPlane.measuredY*1E-3, hitsInPlane.measuredZ*1E-3, indexconverter[layerIndex], layerIndex );
@@ -1040,7 +1041,7 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	  double dx = _hitsArray[i1][j1].measuredX - xs; // residual 
 	  double dy = _hitsArray[i1][j1].measuredY - ys;
 
-          if(_iEvt < 10) streamlog_out( WARNING2 ) << "dx triplet = " << dx << endl;
+          //if(_iEvt < 5) streamlog_out( WARNING2 ) << "dx triplet = " << dx << endl;
 
 	  if( abs(dy) < _triCut ) tridxHist->fill( dx );
 	  if( abs(dx) < _triCut ) tridyHist->fill( dy );
@@ -1127,7 +1128,7 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	  double dx = _hitsArray[i4][j4].measuredX - xs;
 	  double dy = _hitsArray[i4][j4].measuredY - ys;
 
-          if(_iEvt < 10) streamlog_out( WARNING2 ) << "dx driplet = " << dx << endl;
+          //if(_iEvt < 5) streamlog_out( WARNING2 ) << "dx driplet = " << dx << endl;
 
 	  if( abs(dy) < _driCut ) dridxHist->fill( dx );
 	  if( abs(dx) < _driCut ) dridyHist->fill( dy );
@@ -1238,7 +1239,7 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	  double resy = -1.; // [um] telescope initial resolution
 
 	  double distplane = _planePosition[1] - _planePosition[0];
-          if(_iEvt < 10) streamlog_out( MESSAGE2 ) << "distplane = " << distplane << endl;
+          if(_iEvt < 5) streamlog_out( MESSAGE2 ) << "distplane = " << distplane << endl;
 
 	  if( distplane > 100. ) {
 	    resx = 100. - p*8;
@@ -1250,7 +1251,7 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	  }
 
 	  if( distplane < 30. ) {
-	    resx = 5; // if only tracks with prob(chi2.ndf) > 0.001 are passed to Mille
+	    resx = 20; // if only tracks with prob(chi2,ndf) > 0.001 are passed to Mille
 	    resy = resx; 
 	  }
 
@@ -1275,7 +1276,7 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	      resy = resx;
 	    }
 	  }
-          if(_iEvt < 10) streamlog_out( MESSAGE2 ) << "resx = " << resx << endl;
+          if(_iEvt < 5) streamlog_out( MESSAGE2 ) << "resx = " << resx << endl;
 
 	  TVectorD measPrec(2); // precision = 1/resolution^2
 	  measPrec[0] = 1.0 / resx / resx;
@@ -1287,6 +1288,7 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 
 	  double epsSi = 55e-3 / 93.66 + 0.050 / 286.6; // Si + Kapton
 	  double epsAir = -1.; // define later when dz is known
+	  double epsAlu = _aluthickum/1000./88.97; // Alu target
 	  double sumeps = 0.0;
 
 
@@ -1300,9 +1302,11 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	    }
 
 	  }
+	  sumeps += epsAlu;
+	  // done with calculating sum eps
 
 
-	  double tetSi = 0.0136 * sqrt(epsSi) / p * ( 1 + 0.038*std::log(sumeps) );
+	  double tetSi = _kappa*0.0136 * sqrt(epsSi) / p * ( 1 + 0.038*std::log(sumeps) );
 	  double tetAir = -1.;
 
 
@@ -1446,10 +1450,13 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 
 	    if( ipl < 5) {
 	      distplane = _planePosition[ipl+1] - _planePosition[ipl];
+	      if(ipl == 2) distplane = _planePosition[ipl+1] - _planePosition[ipl] + _aluthickum/1000.;
+
 	      //std::cout << " --- Add air --- " << std::endl;
 	      step = 0.21*distplane;
 	      epsAir =   0.5*distplane  / 304200.; 
-	      tetAir = 0.0136 * sqrt(epsAir) / p * ( 1 + 0.038*std::log(sumeps) );
+	      if(ipl == 2) epsAir =   0.5*(distplane- _aluthickum/1000.)  / 304200.; 
+	      tetAir = _kappa*0.0136 * sqrt(epsAir) / p * ( 1 + 0.038*std::log(sumeps) );
 
 	      wscatAir[0] = 1.0 / ( tetAir * tetAir ); // weight
 	      wscatAir[1] = 1.0 / ( tetAir * tetAir ); 
@@ -1463,6 +1470,26 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	      delete point;
 
 	      step = 0.58*distplane;
+	      if(ipl ==2){ // insert point at centre
+		step = step / 2.;
+		gbl::GblPoint * pointcentre = new gbl::GblPoint( Jac55( step ) );
+
+	        if(_aluthickum > 1.) { // at least 1 um target
+		  double tetAlu = _kappa*0.0136 * sqrt(epsAlu) / p * ( 1 + 0.038*std::log(sumeps) );
+
+	          TVectorD wscatAlu(2);
+	          wscatAlu[0] = 1.0 / ( tetAlu * tetAlu ); // weight
+	          wscatAlu[1] = 1.0 / ( tetAlu * tetAlu ); 
+
+		  pointcentre->addScatterer( scat, wscatAlu );
+		}
+		s += step;
+		traj_points.push_back(*pointcentre);
+		sPoint.push_back( s );
+		//centre_label = sPoint.size();
+		delete pointcentre;
+		// now again step/2
+	      }
 
 	      gbl::GblPoint * point1 = new gbl::GblPoint( Jac55( step ) );
 	      point1->addScatterer( scat, wscatAir );
