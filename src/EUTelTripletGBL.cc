@@ -110,11 +110,11 @@ EUTelTripletGBL::EUTelTripletGBL() : Processor("EUTelTripletGBL"), _siPlanesPara
       "InputCollectionTelescope" ,
       "Name of the input TrackerHit collection of the telescope",
       _inputCollectionTelescope,
-      std::string("alignedhits") );
+      std::string("") ); // no collection defaulted forcing the user to pass something meaningful
 
   registerProcessorParameter( "Ebeam",
       "Beam energy [GeV]",
-      _eBeam, static_cast < double >( 4.0));
+      _eBeam, static_cast < double >( 0.0));
 
   registerOptionalParameter( "triCut", "Upstream/Downstream triplet residual cut [mm]", _triCut, 0.1 );
 
@@ -144,13 +144,19 @@ EUTelTripletGBL::EUTelTripletGBL() : Processor("EUTelTripletGBL"), _siPlanesPara
       "global factor to Highland formula",
       _kappa, static_cast <double>(1.0)); // 1.0 means HL as is, 1.2 means 20% additional scattering
 
+  registerProcessorParameter( "aluthickum",
+      "thickness of alu target, if present",
+      _aluthickum, static_cast <double>(0.0));
+
   registerProcessorParameter( "probchi2_cut",
       "Cut on Prob(chi2,ndf) rejecting bad tracks with prob < cut",
       _probchi2_cut, static_cast <double>(.01)); 
 
-  registerOptionalParameter("Resolution","resolution parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_resolution,  FloatVec (static_cast <int> (6), 3.5*1e-3));
+  registerOptionalParameter("Resolution",
+      "resolution parameter for each Cluster size, same for all planes. first value is average of all CSes. Up to CS6 plus larger than 6, hence in total 8 numbers. Disable with -1, e.g. (3.5e-3, -1, -1, ...., -1)",
+      _resolution,  FloatVec (static_cast <double> (8), 3.5*1e-3));
 
-  registerOptionalParameter("Thickness","thickness parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_thickness,  FloatVec (static_cast <int> (6), 50*1e-3));
+  registerOptionalParameter("Thickness","thickness parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_thickness,  FloatVec (static_cast <double> (6), 50*1e-3));
 
 
 }
@@ -193,8 +199,8 @@ void EUTelTripletGBL::init() {
     streamlog_out( MESSAGE6 ) << "  Thickness Plane " << i << " = " << _thickness[i] << std::endl;
     _planeX0[i]         =_siPlanesLayerLayout->getLayerRadLength(i);
     //_planeResolution[i] = _siPlanesLayerLayout->getSensitiveResolution(i); // Get it from input
-    _planeResolution[i] = _resolution[i];
-    streamlog_out( MESSAGE6 ) << "  Reso Plane " << i << " = " << _resolution[i] << std::endl;
+    _planeResolution[i] = _resolution[0]; // pass the average here, which is the first entry of the vector
+    streamlog_out( MESSAGE6 ) << "  Avg. reso Plane " << i << " = " << _resolution[0] << std::endl;
   }
 
   streamlog_out( MESSAGE2 ) <<  "Telescope configuration with " << _nTelPlanes << " planes" << std::endl;
@@ -205,16 +211,26 @@ void EUTelTripletGBL::init() {
       << "  at Z [mm] = " << _planePosition[ipl]
       << " dZ [um] = " << _planeThickness[ipl]*1000.;
 
-    ss << "  Res [um] = " << _planeResolution[ipl]*1000.;
+    ss << "  average Res [um] = " << _planeResolution[ipl]*1000.;
 
     streamlog_out( MESSAGE2 ) <<  ss.str() << std::endl;
 
   }
 
-  if( _resolution.size() != (unsigned int)_nTelPlanes )
+
+  if( _resolution.size() != 8 )
   {
-    throw InvalidParameterException("WARNING, length of resolution and #t'scope planes don't match \n");
+    throw InvalidParameterException("WARNING, length of resolution vector is != 8. You need to pass 8 resolutions (-1 if not known). \n");
   }
+  if ( _resolution.at(0) < 0) {
+    streamlog_out( ERROR2 ) << " Found avg resolution < 0, namely = " << _resolution.size() << 
+      "\n   will have to termiante." << std::endl;
+    return;
+  }
+  for (int i = 1; i < 8; i++) if(_resolution[i] < 0) _resolution.at(i) = _resolution.at(0);
+
+  for (int i = 1; i < 8; i++) // not from 0 , 0 is average
+    streamlog_out( MESSAGE6 ) <<  "CS resolutions: CS" << i << " = " << _resolution.at(i) << std::endl;
 
   //_triCut = _triCut *6. / _eBeam * (_planePosition[1] - _planePosition[0]) / 20.;
 
@@ -378,7 +394,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
     newhit.locx = locx;
     newhit.locy = locy;
 
-    if(_nEvt < 10) streamlog_out( WARNING2 ) << "hit x = " << meshit->getPosition()[0] << endl;
+    //if(_nEvt < 10) streamlog_out( WARNING2 ) << "hit x = " << meshit->getPosition()[0] << endl;
 
     // Write clustersize
     newhit.clustersize = charge;
@@ -535,7 +551,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 
 
   //----------------------------------------------------------------------------
-  // calculate efficiency of plane 3 by forming a triplet from planes 0, 2, 4.
+  // calculate efficiency of plane 3 by forming a triplet from planes 0, 1, 2; 2, 4, 5.
   // Then try to find a match on DUT (plane 3)
   //
   //
@@ -583,8 +599,8 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
       double dy = yB - yA;
 
       // match driplet and triplet:
-      if( abs(dx) > _triCut) continue;
-      if( abs(dy) > _triCut) continue;
+      if( abs(dx) > _cutx) continue;
+      if( abs(dy) > _cuty) continue;
 
       //std::cout << " intersec ";
 
@@ -638,18 +654,518 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
     }
 
   }
+  
+  eff_triplets_UP.clear();
+  eff_triplets_DOWN.clear();
+  eff_triplets.clear();
 
-  //delete eff_triplets_UP;
-  //delete eff_triplets_DOWN;
-  //delete eff_triplets;
-  //delete hits;
+  //----------------------------------------------------------------------------
+  // calculate efficiency of plane 2 by forming a triplet from planes 0, 1, 3; 3, 4, 5.
+  // Then try to find a match on DUT (plane 2)
+  //
+  //
+  DUTz = _planePosition[3];
+  // This scales the radius with beam energy spacing (efficiencty shouldnt depend on amount of scattering!). Define radius at 6 GeV, 20 mm
 
-  //float eff_plane3 = n_matched_trips / (float)n_eff_isotrips;
 
-  //TParameter<float> eff_plane3P("eff_plane3", eff_plane3);
-  //eff_plane3P.Write();
-  // now fill this for every event in a TProfile a.f.o. x (-10 .. 10), and a.f.o. y (-5 .. 5)
-  // 
+  // Generate new triplet set with planes 0, 1, 3; 3,4,5:
+  FindTriplets(hits, 0, 1, 3, eff_triplets_UP);
+
+  eff_triplets_DOWN = downstream_triplets;
+
+  //std::vector<triplet> eff_triplets;
+
+  // Iterate over all found eff-triplets to match them to the DUT (plane3):
+  //int n_matched_trips = 0;
+  //int n_unmatched_trips = 0;
+
+  //std::cout << " n eff triplets UP   = " << eff_triplets_UP->size() << std::endl;
+  //std::cout << " n eff triplets DOWN = " << eff_triplets_DOWN->size() << std::endl;
+
+  for( std::vector<triplet>::iterator trip = eff_triplets_UP.begin(); trip != eff_triplets_UP.end(); trip++ ) {
+
+    // Track impact position at Matching Point from Upstream:
+    double xA = (*trip).getx_at(DUTz); // triplet impact point at matching position
+    double yA = (*trip).gety_at(DUTz);
+
+    // check if trip is isolated
+    bool IsolatedTrip = IsTripletIsolated(trip, eff_triplets_UP, DUTz, _triCut*2.01);
+
+    for( std::vector<triplet>::iterator drip = eff_triplets_DOWN.begin(); drip != eff_triplets_DOWN.end(); drip++ ){
+
+      // Track impact position at Matching Point from Downstream:
+      double xB = (*drip).getx_at(DUTz); // triplet impact point at matching position
+      double yB = (*drip).gety_at(DUTz);
+
+      // check if drip is isolated
+      bool IsolatedDrip = IsTripletIsolated(drip, eff_triplets_DOWN, DUTz, _triCut*2.01);
+
+      // driplet - triplet
+      double dx = xB - xA; 
+      double dy = yB - yA;
+
+      // match driplet and triplet:
+      if( abs(dx) > _cutx) continue;
+      if( abs(dy) > _cuty) continue;
+
+      //std::cout << " intersec ";
+
+      // check isolation
+      if( !IsolatedTrip || !IsolatedDrip ) continue;
+      //std::cout << " , isolated ";
+
+      // apply fiducial cut
+      if ( fabs(xA) >  9.0) continue;
+      if (     -yA  < -4.0) continue;
+
+      //std::cout << " , fiducial " << std::endl;
+
+      eff_triplets.push_back(*trip);
+
+
+    } // Downstream
+  } // Upstream
+
+  //std::cout << " n eff triplets = " << eff_triplets.size() << std::endl;
+
+  for( std::vector<triplet>::iterator trip = eff_triplets.begin(); trip != eff_triplets.end(); trip++ ) {
+
+    double ddAMin = -1000.0;
+    double xTrip = (*trip).getx_at(DUTz);
+    double yTrip = (*trip).gety_at(DUTz);
+
+    for( std::vector<hit>::iterator lhit = hits.begin(); lhit != hits.end(); lhit++ ){
+
+      if( (*lhit).plane <= 1 || (*lhit).plane  > 2) continue; // want 2
+
+      // Fill residuals of triplet and hit in the selected plane:
+      if( (*lhit).plane == 2 ) {
+	double xHit = (*lhit).x;
+	double yHit = (*lhit).y;
+
+	double ddA = sqrt( fabs(xHit - xTrip)*fabs(xHit - xTrip) 
+	    + fabs(yHit - yTrip)*fabs(yHit - yTrip) );
+	if(ddAMin < 0 || ddA < ddAMin) ddAMin = ddA;
+      }
+    } // end loop over hits
+
+    // if distance is smaller then limit, accept this as matched Hit
+    if(fabs(ddAMin) < eff_radius) {
+      //n_matched_trips++;
+      effix2->fill(-xTrip, 1.);
+      effiy2->fill(-yTrip, 1.);
+    } else {
+      effix2->fill(-xTrip, 0.);
+      effiy2->fill(-yTrip, 0.);
+    }
+
+  }
+
+  eff_triplets_UP.clear();
+  eff_triplets_DOWN.clear();
+  eff_triplets.clear();
+
+  //----------------------------------------------------------------------------
+  // calculate efficiency of plane 1 by forming a triplet from planes 0, 2, 3; 3, 4, 5.
+  // Then try to find a match on DUT (plane 1)
+  //
+  //
+  DUTz = _planePosition[3];
+  // This scales the radius with beam energy spacing (efficiencty shouldnt depend on amount of scattering!). Define radius at 6 GeV, 20 mm
+
+
+  // Generate new triplet set with planes 0, 2, 3; 3,4,5:
+  FindTriplets(hits, 0, 2, 3, eff_triplets_UP);
+
+  eff_triplets_DOWN = downstream_triplets;
+
+  //std::vector<triplet> eff_triplets;
+
+  // Iterate over all found eff-triplets to match them to the DUT (plane3):
+  //int n_matched_trips = 0;
+  //int n_unmatched_trips = 0;
+
+  //std::cout << " n eff triplets UP   = " << eff_triplets_UP->size() << std::endl;
+  //std::cout << " n eff triplets DOWN = " << eff_triplets_DOWN->size() << std::endl;
+
+  for( std::vector<triplet>::iterator trip = eff_triplets_UP.begin(); trip != eff_triplets_UP.end(); trip++ ) {
+
+    // Track impact position at Matching Point from Upstream:
+    double xA = (*trip).getx_at(DUTz); // triplet impact point at matching position
+    double yA = (*trip).gety_at(DUTz);
+
+    // check if trip is isolated
+    bool IsolatedTrip = IsTripletIsolated(trip, eff_triplets_UP, DUTz, _triCut*2.01);
+
+    for( std::vector<triplet>::iterator drip = eff_triplets_DOWN.begin(); drip != eff_triplets_DOWN.end(); drip++ ){
+
+      // Track impact position at Matching Point from Downstream:
+      double xB = (*drip).getx_at(DUTz); // triplet impact point at matching position
+      double yB = (*drip).gety_at(DUTz);
+
+      // check if drip is isolated
+      bool IsolatedDrip = IsTripletIsolated(drip, eff_triplets_DOWN, DUTz, _triCut*2.01);
+
+      // driplet - triplet
+      double dx = xB - xA; 
+      double dy = yB - yA;
+
+      // match driplet and triplet:
+      if( abs(dx) > _cutx) continue;
+      if( abs(dy) > _cuty) continue;
+
+      //std::cout << " intersec ";
+
+      // check isolation
+      if( !IsolatedTrip || !IsolatedDrip ) continue;
+      //std::cout << " , isolated ";
+
+      // apply fiducial cut
+      if ( fabs(xA) >  9.0) continue;
+      if (     -yA  < -4.0) continue;
+
+      //std::cout << " , fiducial " << std::endl;
+
+      eff_triplets.push_back(*trip);
+
+
+    } // Downstream
+  } // Upstream
+
+  //std::cout << " n eff triplets = " << eff_triplets.size() << std::endl;
+
+  for( std::vector<triplet>::iterator trip = eff_triplets.begin(); trip != eff_triplets.end(); trip++ ) {
+
+    double ddAMin = -1000.0;
+    double xTrip = (*trip).getx_at(DUTz);
+    double yTrip = (*trip).gety_at(DUTz);
+
+    for( std::vector<hit>::iterator lhit = hits.begin(); lhit != hits.end(); lhit++ ){
+
+      if( (*lhit).plane <= 0 || (*lhit).plane  > 1) continue; // want 1
+
+      // Fill residuals of triplet and hit in the selected plane:
+      if( (*lhit).plane == 1 ) {
+	double xHit = (*lhit).x;
+	double yHit = (*lhit).y;
+
+	double ddA = sqrt( fabs(xHit - xTrip)*fabs(xHit - xTrip) 
+	    + fabs(yHit - yTrip)*fabs(yHit - yTrip) );
+	if(ddAMin < 0 || ddA < ddAMin) ddAMin = ddA;
+      }
+    } // end loop over hits
+
+    // if distance is smaller then limit, accept this as matched Hit
+    if(fabs(ddAMin) < eff_radius) {
+      //n_matched_trips++;
+      effix1->fill(-xTrip, 1.);
+      effiy1->fill(-yTrip, 1.);
+    } else {
+      effix1->fill(-xTrip, 0.);
+      effiy1->fill(-yTrip, 0.);
+    }
+
+  }
+
+  eff_triplets_UP.clear();
+  eff_triplets_DOWN.clear();
+  eff_triplets.clear();
+
+  //----------------------------------------------------------------------------
+  // calculate efficiency of plane 0 by forming a triplet from planes 1, 2, 3; 3, 4, 5.
+  // Then try to find a match on DUT (plane 0)
+  //
+  //
+  DUTz = _planePosition[3];
+  // This scales the radius with beam energy spacing (efficiencty shouldnt depend on amount of scattering!). Define radius at 6 GeV, 20 mm
+
+
+  // Generate new triplet set with planes 1, 2, 3; 3,4,5:
+  FindTriplets(hits, 1, 2, 3, eff_triplets_UP);
+
+  eff_triplets_DOWN = downstream_triplets;
+
+  //std::vector<triplet> eff_triplets;
+
+  // Iterate over all found eff-triplets to match them to the DUT (plane3):
+  //int n_matched_trips = 0;
+  //int n_unmatched_trips = 0;
+
+  //std::cout << " n eff triplets UP   = " << eff_triplets_UP->size() << std::endl;
+  //std::cout << " n eff triplets DOWN = " << eff_triplets_DOWN->size() << std::endl;
+
+  for( std::vector<triplet>::iterator trip = eff_triplets_UP.begin(); trip != eff_triplets_UP.end(); trip++ ) {
+
+    // Track impact position at Matching Point from Upstream:
+    double xA = (*trip).getx_at(DUTz); // triplet impact point at matching position
+    double yA = (*trip).gety_at(DUTz);
+
+    // check if trip is isolated
+    bool IsolatedTrip = IsTripletIsolated(trip, eff_triplets_UP, DUTz, _triCut*2.01);
+
+    for( std::vector<triplet>::iterator drip = eff_triplets_DOWN.begin(); drip != eff_triplets_DOWN.end(); drip++ ){
+
+      // Track impact position at Matching Point from Downstream:
+      double xB = (*drip).getx_at(DUTz); // triplet impact point at matching position
+      double yB = (*drip).gety_at(DUTz);
+
+      // check if drip is isolated
+      bool IsolatedDrip = IsTripletIsolated(drip, eff_triplets_DOWN, DUTz, _triCut*2.01);
+
+      // driplet - triplet
+      double dx = xB - xA; 
+      double dy = yB - yA;
+
+      // match driplet and triplet:
+      if( abs(dx) > _cutx) continue;
+      if( abs(dy) > _cuty) continue;
+
+      //std::cout << " intersec ";
+
+      // check isolation
+      if( !IsolatedTrip || !IsolatedDrip ) continue;
+      //std::cout << " , isolated ";
+
+      // apply fiducial cut
+      if ( fabs(xA) >  9.0) continue;
+      if (     -yA  < -4.0) continue;
+
+      //std::cout << " , fiducial " << std::endl;
+
+      eff_triplets.push_back(*trip);
+
+
+    } // Downstream
+  } // Upstream
+
+  //std::cout << " n eff triplets = " << eff_triplets.size() << std::endl;
+
+  for( std::vector<triplet>::iterator trip = eff_triplets.begin(); trip != eff_triplets.end(); trip++ ) {
+
+    double ddAMin = -1000.0;
+    double xTrip = (*trip).getx_at(DUTz);
+    double yTrip = (*trip).gety_at(DUTz);
+
+    for( std::vector<hit>::iterator lhit = hits.begin(); lhit != hits.end(); lhit++ ){
+
+      if( (*lhit).plane  > 0) continue; // want 0
+
+      // Fill residuals of triplet and hit in the selected plane:
+      if( (*lhit).plane == 0 ) {
+	double xHit = (*lhit).x;
+	double yHit = (*lhit).y;
+
+	double ddA = sqrt( fabs(xHit - xTrip)*fabs(xHit - xTrip) 
+	    + fabs(yHit - yTrip)*fabs(yHit - yTrip) );
+	if(ddAMin < 0 || ddA < ddAMin) ddAMin = ddA;
+      }
+    } // end loop over hits
+
+    // if distance is smaller then limit, accept this as matched Hit
+    if(fabs(ddAMin) < eff_radius) {
+      //n_matched_trips++;
+      effix0->fill(-xTrip, 1.);
+      effiy0->fill(-yTrip, 1.);
+    } else {
+      effix0->fill(-xTrip, 0.);
+      effiy0->fill(-yTrip, 0.);
+    }
+
+  }
+
+  eff_triplets_UP.clear();
+  eff_triplets_DOWN.clear();
+  eff_triplets.clear();
+
+  //----------------------------------------------------------------------------
+  // calculate efficiency of plane 4 by forming a triplet from planes 0, 1, 2; 2, 3, 5.
+  // Then try to find a match on DUT (plane 3)
+  //
+  //
+  DUTz = _planePosition[3];
+
+
+  // Generate new triplet set with planes 0, 1, 2; 2,4,5:
+  eff_triplets_UP = upstream_triplets;
+  FindTriplets(hits, 2, 3, 5, eff_triplets_DOWN);
+
+  for( std::vector<triplet>::iterator trip = eff_triplets_UP.begin(); trip != eff_triplets_UP.end(); trip++ ) {
+
+    // Track impact position at Matching Point from Upstream:
+    double xA = (*trip).getx_at(DUTz); // triplet impact point at matching position
+    double yA = (*trip).gety_at(DUTz);
+
+    // check if trip is isolated
+    bool IsolatedTrip = IsTripletIsolated(trip, eff_triplets_UP, DUTz, _triCut*2.01);
+
+    for( std::vector<triplet>::iterator drip = eff_triplets_DOWN.begin(); drip != eff_triplets_DOWN.end(); drip++ ){
+
+      // Track impact position at Matching Point from Downstream:
+      double xB = (*drip).getx_at(DUTz); // triplet impact point at matching position
+      double yB = (*drip).gety_at(DUTz);
+
+      // check if drip is isolated
+      bool IsolatedDrip = IsTripletIsolated(drip, eff_triplets_DOWN, DUTz, _triCut*2.01);
+
+      // driplet - triplet
+      double dx = xB - xA; 
+      double dy = yB - yA;
+
+      // match driplet and triplet:
+      if( abs(dx) > _cutx) continue;
+      if( abs(dy) > _cuty) continue;
+
+      //std::cout << " intersec ";
+
+      // check isolation
+      if( !IsolatedTrip || !IsolatedDrip ) continue;
+      //std::cout << " , isolated ";
+
+      // apply fiducial cut
+      if ( fabs(xA) >  9.0) continue;
+      if (     -yA  < -4.0) continue;
+
+      //std::cout << " , fiducial " << std::endl;
+
+      eff_triplets.push_back(*trip);
+
+
+    } // Downstream
+  } // Upstream
+
+  //std::cout << " n eff triplets = " << eff_triplets.size() << std::endl;
+
+  for( std::vector<triplet>::iterator trip = eff_triplets.begin(); trip != eff_triplets.end(); trip++ ) {
+
+    double ddAMin = -1000.0;
+    double xTrip = (*trip).getx_at(DUTz);
+    double yTrip = (*trip).gety_at(DUTz);
+
+    for( std::vector<hit>::iterator lhit = hits.begin(); lhit != hits.end(); lhit++ ){
+
+      if( (*lhit).plane <= 3 || (*lhit).plane  > 4) continue; // want 4
+
+      // Fill residuals of triplet and hit in the selected plane:
+      if( (*lhit).plane == 4 ) {
+	double xHit = (*lhit).x;
+	double yHit = (*lhit).y;
+
+	double ddA = sqrt( fabs(xHit - xTrip)*fabs(xHit - xTrip) 
+	    + fabs(yHit - yTrip)*fabs(yHit - yTrip) );
+	if(ddAMin < 0 || ddA < ddAMin) ddAMin = ddA;
+      }
+    } // end loop over hits
+
+    // if distance is smaller then limit, accept this as matched Hit
+    if(fabs(ddAMin) < eff_radius) {
+      //n_matched_trips++;
+      effix4->fill(-xTrip, 1.);
+      effiy4->fill(-yTrip, 1.);
+    } else {
+      effix4->fill(-xTrip, 0.);
+      effiy4->fill(-yTrip, 0.);
+    }
+
+  }
+  
+  eff_triplets_UP.clear();
+  eff_triplets_DOWN.clear();
+  eff_triplets.clear();
+
+  //----------------------------------------------------------------------------
+  // calculate efficiency of plane 5 by forming a triplet from planes 0, 1, 2; 2, 3, 4.
+  // Then try to find a match on DUT (plane 3)
+  //
+  //
+  DUTz = _planePosition[3];
+
+
+  // Generate new triplet set with planes 0, 1, 2; 2,3,4:
+  eff_triplets_UP = upstream_triplets;
+  FindTriplets(hits, 2, 3, 4, eff_triplets_DOWN);
+
+  for( std::vector<triplet>::iterator trip = eff_triplets_UP.begin(); trip != eff_triplets_UP.end(); trip++ ) {
+
+    // Track impact position at Matching Point from Upstream:
+    double xA = (*trip).getx_at(DUTz); // triplet impact point at matching position
+    double yA = (*trip).gety_at(DUTz);
+
+    // check if trip is isolated
+    bool IsolatedTrip = IsTripletIsolated(trip, eff_triplets_UP, DUTz, _triCut*2.01);
+
+    for( std::vector<triplet>::iterator drip = eff_triplets_DOWN.begin(); drip != eff_triplets_DOWN.end(); drip++ ){
+
+      // Track impact position at Matching Point from Downstream:
+      double xB = (*drip).getx_at(DUTz); // triplet impact point at matching position
+      double yB = (*drip).gety_at(DUTz);
+
+      // check if drip is isolated
+      bool IsolatedDrip = IsTripletIsolated(drip, eff_triplets_DOWN, DUTz, _triCut*2.01);
+
+      // driplet - triplet
+      double dx = xB - xA; 
+      double dy = yB - yA;
+
+      // match driplet and triplet:
+      if( abs(dx) > _cutx) continue;
+      if( abs(dy) > _cuty) continue;
+
+      //std::cout << " intersec ";
+
+      // check isolation
+      if( !IsolatedTrip || !IsolatedDrip ) continue;
+      //std::cout << " , isolated ";
+
+      // apply fiducial cut
+      if ( fabs(xA) >  9.0) continue;
+      if (     -yA  < -4.0) continue;
+
+      //std::cout << " , fiducial " << std::endl;
+
+      eff_triplets.push_back(*trip);
+
+
+    } // Downstream
+  } // Upstream
+
+  //std::cout << " n eff triplets = " << eff_triplets.size() << std::endl;
+
+  for( std::vector<triplet>::iterator trip = eff_triplets.begin(); trip != eff_triplets.end(); trip++ ) {
+
+    double ddAMin = -1000.0;
+    double xTrip = (*trip).getx_at(DUTz);
+    double yTrip = (*trip).gety_at(DUTz);
+
+    for( std::vector<hit>::iterator lhit = hits.begin(); lhit != hits.end(); lhit++ ){
+
+      if( (*lhit).plane <= 4 || (*lhit).plane  > 5) continue; // want 5
+
+      // Fill residuals of triplet and hit in the selected plane:
+      if( (*lhit).plane == 5 ) {
+	double xHit = (*lhit).x;
+	double yHit = (*lhit).y;
+
+	double ddA = sqrt( fabs(xHit - xTrip)*fabs(xHit - xTrip) 
+	    + fabs(yHit - yTrip)*fabs(yHit - yTrip) );
+	if(ddAMin < 0 || ddA < ddAMin) ddAMin = ddA;
+      }
+    } // end loop over hits
+
+    // if distance is smaller then limit, accept this as matched Hit
+    if(fabs(ddAMin) < eff_radius) {
+      //n_matched_trips++;
+      effix5->fill(-xTrip, 1.);
+      effiy5->fill(-yTrip, 1.);
+    } else {
+      effix5->fill(-xTrip, 0.);
+      effiy5->fill(-yTrip, 0.);
+    }
+
+  }
+  
+  eff_triplets_UP.clear();
+  eff_triplets_DOWN.clear();
+  eff_triplets.clear();
 
 
   //----------------------------------------------------------------------------
@@ -675,7 +1191,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
     triplet trip = (*tr).get_upstream();
     triplet drip = (*tr).get_downstream();
     triplet srip((*tr).gethit(0), (*tr).gethit(2), (*tr).gethit(5)); // seed triplet -> srip
-    //triplet srip = trip;
+    if(_aluthickum > 1.) srip = trip;
 
     std::vector<double> xAplanes(_nTelPlanes);
     std::vector<double> yAplanes(_nTelPlanes);
@@ -726,6 +1242,8 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
     double p = _eBeam; // beam momentum
     double epsSi = -1;
     double epsAir = -1.; // define later when dz is known
+    double epsAlu = _aluthickum/1000./88.97; // Alu target
+
     double sumeps = 0.0;
     double tetSi = -1;
     double tetAir = -1.;
@@ -765,9 +1283,12 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
       }
 
     }
+    sumeps += epsAlu;
+   // done with calculating sum eps
+
 
     int DUT_label;
-    int centre_label;
+    int centre_label = -100;
     for( int ipl = 0; ipl < 6; ++ipl ){
       if(ipl == 0){
 	// one dummy point:
@@ -789,8 +1310,6 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
       if (ipl == 3) clustersize3->fill(trackhit.clustersize);
       if (ipl == 4) clustersize4->fill(trackhit.clustersize);
       if (ipl == 5) clustersize5->fill(trackhit.clustersize);
-
-      gbl::GblPoint * point = new gbl::GblPoint( JacobianPointToPoint( step ) );
 
       double dz = trackhit.z - srip.base().z;
       double xs = srip.base().x + srip.slope().x * dz; // Ax at plane
@@ -829,6 +1348,8 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 	sixy5Histo->fill( -trackhit.y );
       }
 
+      gbl::GblPoint * point = new gbl::GblPoint( JacobianPointToPoint( step ) );
+
       meas[0] = rx[ipl];
       meas[1] = ry[ipl];
       //meas[0] = trackhit.x;
@@ -844,12 +1365,13 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
       //measPrec[0] = 1.0 / _resolution[ipl] / _resolution[ipl];
       //measPrec[1] = 1.0 / _resolution[ipl] / _resolution[ipl];
       double _resolution_tmp = -1.0;
-      if(trackhit.clustersize == 1) _resolution_tmp = 3.0*1e-3;
-      if(trackhit.clustersize == 2) _resolution_tmp = 3.1*1e-3;
-      if(trackhit.clustersize == 3) _resolution_tmp = 2.6*1e-3;
-      if(trackhit.clustersize == 4) _resolution_tmp = 3.3*1e-3;
-      //if(trackhit.clustersize == 5) _resolution_tmp = 2.8*1e-3;
-      if(trackhit.clustersize >  4) _resolution_tmp = 4.3*1e-3;
+      if(trackhit.clustersize == 1) _resolution_tmp = _resolution[1];
+      if(trackhit.clustersize == 2) _resolution_tmp = _resolution[2];
+      if(trackhit.clustersize == 3) _resolution_tmp = _resolution[3];
+      if(trackhit.clustersize == 4) _resolution_tmp = _resolution[4];
+      if(trackhit.clustersize == 5) _resolution_tmp = _resolution[5];
+      if(trackhit.clustersize == 6) _resolution_tmp = _resolution[6];
+      if(trackhit.clustersize >  6) _resolution_tmp = _resolution[7];
       //_resolution_tmp = 3.24*1e-3;
 
       measPrec[0] = 1.0 / _resolution_tmp / _resolution_tmp;
@@ -898,6 +1420,16 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 	if(ipl ==2){ // insert point at centre
 	  step = step / 2.;
 	  gbl::GblPoint * pointcentre = new gbl::GblPoint( JacobianPointToPoint( step ) );
+
+	  if(_aluthickum > 1.) { // at least 1 um target
+	    double tetAlu = _kappa*0.0136 * sqrt(epsAlu) / p * ( 1 + 0.038*std::log(sumeps) );
+
+	    TVectorD wscatAlu(2);
+	    wscatAlu[0] = 1.0 / ( tetAlu * tetAlu ); // weight
+	    wscatAlu[1] = 1.0 / ( tetAlu * tetAlu ); 
+
+	    pointcentre->addScatterer( scat, wscatAlu );
+	  }
 	  s += step;
 	  traj_points.push_back(*pointcentre);
 	  sPoint.push_back( s );
@@ -960,22 +1492,24 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 
     // debug:
 
-    /*
-       if(_nEvt < 3){
-       cout << "traj with " << traj.getNumPoints() << " points:" << endl;
-       for( int ipl = 0; ipl < 6; ++ipl ){
-       cout << "  plane " << ipl << ", lab " << ilab[ipl];
-       cout << "  z " << sPoint[ilab[ipl]-1];
-       cout << " dx " << rx[ipl];
-       cout << " dy " << ry[ipl];
-       cout << endl;
-       }
+    
+    if(_nEvt < 100){
+      cout << "traj with " << traj.getNumPoints() << " points:" << endl;
+      for( int ipl = 0; ipl < 6; ++ipl ){
+        cout << "  plane " << ipl << ", lab " << ilab[ipl];
+        cout << "  z " << sPoint[ilab[ipl]-1];
+        cout << " dx " << rx[ipl];
+        cout << " dy " << ry[ipl];
+        cout << " chi2 " << Chi2;
+        cout << " ndf " << Ndf;
+        cout << endl;
+      }
 
        std::cout << " Is traj valid? " << traj.isValid() << std::endl;
        traj.printPoints();
-    //traj.printTrajectory();
-    //traj.printData();
-    }*/
+      //traj.printTrajectory();
+      //traj.printData();
+    }
 
     ngbl++;
 
@@ -1064,6 +1598,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
       aResiduals[1] = ry[0] - aCorrection[4];
       gblax0Histo->fill( aCorrection[1]*1E3 ); // angle x [mrad]
       gbldx0Histo->fill( aCorrection[3]*1E3 ); // shift x [um]
+      gbldx01Histo->fill( aCorrection[3] ); // shift x [mm]
       gblrx0Histo->fill( ( rx[0] - aCorrection[3] ) * 1E3 ); // residual x [um]
       gblry0Histo->fill( ( ry[0] - aCorrection[4] ) * 1E3 ); // residual y [um]
       gblpx0Histo->fill( aResiduals[0] / aResErrors[0] ); // pull
@@ -1079,23 +1614,29 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
       gblryvsy01->fill((trackhity[0] - aResiduals[1]), sqrt(TMath::Pi()/2.)*fabs(aResiduals[1]));
 
       double corrPos[2];
-      corrPos[0] = trackhitx[0] - aResiduals[0] + .5e-3; 
-      corrPos[1] = trackhity[0] - aResiduals[1];       
+      corrPos[0] = trackhitx[0] - aResiduals[0]; //+ .4e-3;  should be zero ! :/
+      corrPos[1] = trackhity[0] - aResiduals[1]; // + .15e-3; should be zero (no alignment on plane 0, not even pre-align)      
       int nx = (corrPos[0]) / pixel_size;
       int ny = (corrPos[1]) / pixel_size;
       int invsignx = -(corrPos[0]) / fabs((corrPos[0]));
       int invsigny = -(corrPos[1]) / fabs((corrPos[1]));
 
-      gblrxvsxpix0->fill(                  xAplanes[0]+invsignx*(abs(nx) +0.5)*pixel_size, sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
-      gblryvsypix0->fill(                  yAplanes[0]+invsigny*(abs(ny) +0.5)*pixel_size, sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
-      gblrxvsxpix01->fill( (trackhitx[0] - aResiduals[0])+invsignx*(abs(nx) +0.5)*pixel_size, sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
-      gblryvsypix01->fill( (trackhity[0] - aResiduals[1])+invsigny*(abs(ny) +0.5)*pixel_size, sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
+      // do again for extrapolated srip position, userd ONLY for gblrxvsxpix0 and gblryvsypix0
+      int nx1 = (xAplanes[0]) / pixel_size;
+      int ny1 = (yAplanes[0]) / pixel_size;
+      int invsignx1 = -(xAplanes[0]) / fabs((xAplanes[0]));
+      int invsigny1 = -(yAplanes[0]) / fabs((yAplanes[0]));
+
+      gblrxvsxpix0->fill(                    (xAplanes[0] +invsignx1*(abs(nx1) +1.)*pixel_size)*1e3, sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
+      gblryvsypix0->fill(                    (yAplanes[0] +invsigny1*(abs(ny1) +1.)*pixel_size)*1e3, sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
+      gblrxvsxpix01->fill( ((trackhitx[0] - aResiduals[0])+invsignx*(abs(nx) +1.)*pixel_size)*1e3, sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
+      gblryvsypix01->fill( ((trackhity[0] - aResiduals[1])+invsigny*(abs(ny) +1.)*pixel_size)*1e3, sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
       // clustersize-specific plots
       int CS0 = (*tr).gethit(0).clustersize;
 
       double modPos[2];
-      modPos[0] = (corrPos[0])+invsignx*(abs(nx) +0.5)*pixel_size*1e3;
-      modPos[1] = (corrPos[1])+invsigny*(abs(ny) +0.5)*pixel_size*1e3;
+      modPos[0] = ((corrPos[0])+(invsignx*(abs(nx) +.5) + 0.5) *pixel_size)*1e3;
+      modPos[1] = ((corrPos[1])+(invsigny*(abs(ny) +.5) + 0.5) *pixel_size)*1e3;
       if (CS0 == 1){
         gblrxvsxpix01_CS1->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
         gblryvsypix01_CS1->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
@@ -1124,12 +1665,13 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
       aResiduals[1] = ry[1] - aCorrection[4];
       gblax1Histo->fill( aCorrection[1]*1E3 ); // angle x [mrad]
       gbldx1Histo->fill( aCorrection[3]*1E3 ); // shift x [um]
+      gbldx11Histo->fill( aCorrection[3] ); // shift x [mm]
       gblrx1Histo->fill( ( rx[1] - aCorrection[3] ) * 1E3 ); // residual x [um]
       gblry1Histo->fill( ( ry[1] - aCorrection[4] ) * 1E3 ); // residual y [um]
       gblpx1Histo->fill( aResiduals[0] / aResErrors[0] ); // pull
       gblpy1Histo->fill( aResiduals[1] / aResErrors[1] ); // pull
-      if(_dut_plane == 1) gblpx1_unbHisto->fill( (rx[1] - aCorrection[3]) / sqrt(_resolution[1]*_resolution[1] + aCovariance(3,3)) ); // unbiased pull
-      if(_dut_plane == 1) gblpy1_unbHisto->fill( (ry[1] - aCorrection[4]) / sqrt(_resolution[1]*_resolution[1] + aCovariance(4,4)) ); // unbiased pull
+      if(_dut_plane == 1) gblpx1_unbHisto->fill( (rx[1] - aCorrection[3]) / sqrt(_resolution[0]*_resolution[0] + aCovariance(3,3)) ); // unbiased pull
+      if(_dut_plane == 1) gblpy1_unbHisto->fill( (ry[1] - aCorrection[4]) / sqrt(_resolution[0]*_resolution[0] + aCovariance(4,4)) ); // unbiased pull
       gblqx1Histo->fill( aKinks[0]*1E3 ); // kink-residual (NOT KINK itself!)
       gblsx1Histo->fill( aKinks[0]/aKinkErrors[0] ); // x kink pull
       gbltx1Histo->fill( aKinks[0]/kResErrors[0] ); // x kink pull
@@ -1146,12 +1688,13 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
       aResiduals[1] = ry[2] - aCorrection[4];
       gblax2Histo->fill( aCorrection[1]*1E3 ); // angle x [mrad]
       gbldx2Histo->fill( aCorrection[3]*1E3 ); // shift x [um]
+      gbldx21Histo->fill( aCorrection[3] ); // shift x [mm]
       gblrx2Histo->fill( ( rx[2] - aCorrection[3] ) * 1E3 ); // residual x [um]
       gblry2Histo->fill( ( ry[2] - aCorrection[4] ) * 1E3 ); // residual y [um]
       gblpx2Histo->fill( aResiduals[0] / aResErrors[0] ); // pull
       gblpy2Histo->fill( aResiduals[1] / aResErrors[1] ); // pull
-      if(_dut_plane == 2) gblpx2_unbHisto->fill( (rx[2] - aCorrection[3]) / sqrt(_resolution[2]*_resolution[2] + aCovariance(3,3)) ); // unbiased pull
-      if(_dut_plane == 2) gblpy2_unbHisto->fill( (ry[2] - aCorrection[4]) / sqrt(_resolution[2]*_resolution[2] + aCovariance(4,4)) ); // unbiased pull
+      if(_dut_plane == 2) gblpx2_unbHisto->fill( (rx[2] - aCorrection[3]) / sqrt(_resolution[0]*_resolution[0] + aCovariance(3,3)) ); // unbiased pull
+      if(_dut_plane == 2) gblpy2_unbHisto->fill( (ry[2] - aCorrection[4]) / sqrt(_resolution[0]*_resolution[0] + aCovariance(4,4)) ); // unbiased pull
       gblqx2Histo->fill( aKinks[0]*1E3 ); // kink-residual
       gblsx2Histo->fill( aKinks[0]/aKinkErrors[0] ); // x kink res over kinkError
       gbltx2Histo->fill( aKinks[0]/kResErrors[0] ); // x kink pull
@@ -1167,6 +1710,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
       aResiduals[1] = ry[3] - aCorrection[4];
       gblax3Histo->fill( aCorrection[1]*1E3 ); // angle x [mrad]
       gbldx3Histo->fill( aCorrection[3]*1E3 ); // shift x [um]
+      gbldx31Histo->fill( aCorrection[3] ); // shift x [mm]
       gblrx3Histo->fill( ( rx[3] - aCorrection[3] ) * 1E3 ); // residual x [um]
       gblry3Histo->fill( ( ry[3] - aCorrection[4] ) * 1E3 ); // residual y [um]
       gblpx3Histo->fill( aResiduals[0] / aResErrors[0] ); // pull
@@ -1177,17 +1721,20 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
       ax[k] = aCorrection[1]; // angle correction at plane, for kinks
       //ay[k] = aCorrection[2]; // angle correction at plane, for kinks
       //
-      if(_dut_plane == 3) gblpx3_unbHisto->fill( (rx[3] - aCorrection[3]) / sqrt(_resolution[3]*_resolution[3] + aCovariance(3,3)) ); // unbiased pull
-      if(_dut_plane == 3) gblpy3_unbHisto->fill( (ry[3] - aCorrection[4]) / sqrt(_resolution[3]*_resolution[3] + aCovariance(4,4)) ); // unbiased pull
+      if(_dut_plane == 3) gblpx3_unbHisto->fill( (rx[3] - aCorrection[3]) / sqrt(_resolution[0]*_resolution[0] + aCovariance(3,3)) ); // unbiased pull
+      if(_dut_plane == 3) gblpy3_unbHisto->fill( (ry[3] - aCorrection[4]) / sqrt(_resolution[0]*_resolution[0] + aCovariance(4,4)) ); // unbiased pull
 
       // clustersize-specific plots
       int CS3 = (*tr).gethit(3).clustersize;
-      corrPos[0] = trackhitx[3] - aResiduals[0] - 11.15e-3 ; 
-      corrPos[1] = trackhity[3] - aResiduals[1] - .1e-3;       
+      //corrPos[0] = trackhitx[3] - aResiduals[0] +  7.077e-3 + 0.35e-3; // run000117, get automatically 
+      //corrPos[1] = trackhity[3] - aResiduals[1] + 18.128e-3 + 0.1e-3;  // run000117, get automatically      
+      corrPos[0] = trackhitx[3] - aResiduals[0] +  6.645e-3; // run002140
+      corrPos[1] = trackhity[3] - aResiduals[1] + 10.324e-3;  // run002140
 
       // correct for rotation
       double corrPos2[2];
-      double gamma3 = 5.3e-3;
+      //double gamma3 = 5.3e-3; // run000117, get automatically
+      double gamma3 = 1.94969e-03; // run002140
       corrPos2[0] = cos(gamma3)*corrPos[0] - sin(gamma3)*corrPos[1];
       corrPos2[1] = sin(gamma3)*corrPos[0] + cos(gamma3)*corrPos[1];
       
@@ -1199,8 +1746,8 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
       invsignx = -(corrPos[0]) / fabs((corrPos[0]));
       invsigny = -(corrPos[1]) / fabs((corrPos[1]));
 
-      modPos[0] = (corrPos[0])+invsignx*(abs(nx) +0.5)*pixel_size*1e3;
-      modPos[1] = (corrPos[1])+invsigny*(abs(ny) +0.5)*pixel_size*1e3;
+      modPos[0] = ((corrPos[0])+(invsignx*(abs(nx) +.5) + 0.5)*pixel_size)*1e3;
+      modPos[1] = ((corrPos[1])+(invsigny*(abs(ny) +.5) + 0.5)*pixel_size)*1e3;
 
       //gblrxvsxpix31->fill( (trackhitx[3] - aResiduals[0])+invsignx*(abs(nx) +0.5)*pixel_size, sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
       //gblryvsypix31->fill( (trackhity[3] - aResiduals[1])+invsigny*(abs(ny) +0.5)*pixel_size, sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
@@ -1275,7 +1822,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 	gblrxvsxpix3cs5->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
 	gblryvsypix3cs5->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
       }
-      if( CS3 > 5 ) {
+      if( CS3 == 6 ) {
 	gblrx3_cs6Histo->fill( aResiduals[0]* 1E3 ); 
 	gblry3_cs6Histo->fill( aResiduals[1]* 1E3 ); 
 	gblpx3_cs6Histo->fill( aResiduals[0] / aResErrors[0] ); 
@@ -1287,6 +1834,15 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 
 	gblrxvsxpix3cs6->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
 	gblryvsypix3cs6->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
+      }
+      if( CS3 > 6 ) {
+	gblpx3_cs7Histo->fill( aResiduals[0] / aResErrors[0] ); 
+	gblpy3_cs7Histo->fill( aResiduals[1] / aResErrors[1] ); 
+
+	//gblnCS6xy->fill(modPos[0], modPos[1] );
+
+	//gblrxvsxpix3cs6->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
+	//gblryvsypix3cs6->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
       }
 
       kinkpixvsxy->fill( modPos[0], modPos[1] , sqrt((aCorrection[1]*aCorrection[1] + aCorrection[2]*aCorrection[2]))*1E3 ); //sqrt(<kink^2>) [mrad]
@@ -1302,12 +1858,13 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
       aResiduals[1] = ry[4] - aCorrection[4];
       gblax4Histo->fill( aCorrection[1]*1E3 ); // angle x [mrad]
       gbldx4Histo->fill( aCorrection[3]*1E3 ); // shift x [um]
+      gbldx41Histo->fill( aCorrection[3] ); // shift x [mm]
       gblrx4Histo->fill( ( rx[4] - aCorrection[3] ) * 1E3 ); // residual x [um]
       gblry4Histo->fill( ( ry[4] - aCorrection[4] ) * 1E3 ); // residual y [um]
       gblpx4Histo->fill( aResiduals[0] / aResErrors[0] ); // pull
       gblpy4Histo->fill( aResiduals[1] / aResErrors[1] ); // pull
-      if(_dut_plane == 4) gblpx4_unbHisto->fill( (rx[4] - aCorrection[3]) / sqrt(_resolution[4]*_resolution[4] + aCovariance(3,3)) ); // unbiased pull
-      if(_dut_plane == 4) gblpy4_unbHisto->fill( (ry[4] - aCorrection[4]) / sqrt(_resolution[4]*_resolution[4] + aCovariance(4,4)) ); // unbiased pull
+      if(_dut_plane == 4) gblpx4_unbHisto->fill( (rx[4] - aCorrection[3]) / sqrt(_resolution[0]*_resolution[0] + aCovariance(3,3)) ); // unbiased pull
+      if(_dut_plane == 4) gblpy4_unbHisto->fill( (ry[4] - aCorrection[4]) / sqrt(_resolution[0]*_resolution[0] + aCovariance(4,4)) ); // unbiased pull
       gblqx4Histo->fill( aKinks[0]*1E3 ); // kink
       gblsx4Histo->fill( aKinks[0]/aKinkErrors[0] ); // x kink pull
       gbltx4Histo->fill( aKinks[0]/kResErrors[0] ); // x kink pull
@@ -1323,27 +1880,28 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
       aResiduals[1] = ry[5] - aCorrection[4];
       gblax5Histo->fill( aCorrection[1]*1E3 ); // angle x [mrad]
       gbldx5Histo->fill( aCorrection[3]*1E3 ); // shift x [um]
+      gbldx51Histo->fill( aCorrection[3] ); // shift x [mm]
       gblrx5Histo->fill( ( rx[5] - aCorrection[3] ) * 1E3 ); // residual x [um]
       gblry5Histo->fill( ( ry[5] - aCorrection[4] ) * 1E3 ); // residual y [um]
       gblpx5Histo->fill( aResiduals[0] / aResErrors[0] ); // pull
       gblpy5Histo->fill( aResiduals[1] / aResErrors[1] ); // pull
-      if(_dut_plane == 5) gblpx5_unbHisto->fill( (rx[5] - aCorrection[3]) / sqrt(_resolution[5]*_resolution[5] + aCovariance(3,3)) ); // unbiased pull
-      if(_dut_plane == 5) gblpy5_unbHisto->fill( (ry[5] - aCorrection[4]) / sqrt(_resolution[5]*_resolution[5] + aCovariance(4,4)) ); // unbiased pull
+      if(_dut_plane == 5) gblpx5_unbHisto->fill( (rx[5] - aCorrection[3]) / sqrt(_resolution[0]*_resolution[0] + aCovariance(3,3)) ); // unbiased pull
+      if(_dut_plane == 5) gblpy5_unbHisto->fill( (ry[5] - aCorrection[4]) / sqrt(_resolution[0]*_resolution[0] + aCovariance(4,4)) ); // unbiased pull
       gblqx5Histo->fill( aKinks[0]*1E3 ); // kink
       ax[k] = aCorrection[1]; // angle correction at plane, for kinks
       //ay[k] = aCorrection[2]; // angle correction at plane, for kinks
       //
 
-      corrPos[0] = trackhitx[5] - aResiduals[0] + 2.2e-3 ; 
-      corrPos[1] = trackhity[5] - aResiduals[1] + 2.e-3;       
+      corrPos[0] = trackhitx[5] - aResiduals[0] + 2.028e-3 ;  // alignment const (from pre-align only for plane 5) modulo 18.4
+      corrPos[1] = trackhity[5] - aResiduals[1] + 1.930e-3;       
       
       nx = (corrPos[0]) / pixel_size;
       ny = (corrPos[1]) / pixel_size;
       invsignx = -(corrPos[0]) / fabs((corrPos[0]));
       invsigny = -(corrPos[1]) / fabs((corrPos[1]));
 
-      modPos[0] = (corrPos[0])+invsignx*(abs(nx) +0.5)*pixel_size*1e3;
-      modPos[1] = (corrPos[1])+invsigny*(abs(ny) +0.5)*pixel_size*1e3;
+      modPos[0] = ((corrPos[0])+(invsignx*(abs(nx) +.5) + 0.5) *pixel_size)*1e3;
+      modPos[1] = ((corrPos[1])+(invsigny*(abs(ny) +.5) + 0.5) *pixel_size)*1e3;
 
       // clustersize-specific plots
       int CS5 = (*tr).gethit(5).clustersize;
@@ -1368,17 +1926,19 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 
 
       k++;
-      // do some more analysis with kinks
+      // do some more analysis with kinks. 
+      //   Calculate the two angles as corr_n-1 - corr_n-2, corr_n - corr_n-1, corr_n+1 - corr_n -> sum of all =  corr_n+1 - corr_n-2
 
-      double kinks[2];
-      ipos = centre_label-1;
-      traj.getScatResults( ipos, ndata, aKinks, aKinkErrors, kResErrors, kDownWeights );
-      kinks[0] = aKinks[0];
-      ipos +=2;
-      traj.getScatResults( ipos, ndata, aKinks, aKinkErrors, kResErrors, kDownWeights );
-      kinks[1] = aKinks[0];
+      ipos = centre_label-2;
+      traj.getResults( ipos, aCorrection, aCovariance );
+      double kink_upstream = aCorrection[1];
 
-      gblkxCentreHisto->fill( (kinks[0] + kinks[1])*1E3 ); // kink at centre (sum of neighbours [mrad]
+      ipos = centre_label+1; // 1 downstream of centre
+      traj.getResults( ipos, aCorrection, aCovariance );
+      double kink_downstream = aCorrection[1];
+
+      gblkxCentreHisto->fill( (kink_downstream - kink_upstream)*1E3 ); // kink at air/alu (sum of neighbours) [mrad]
+      gblkxCentre1Histo->fill((kink_downstream - kink_upstream) ); // kink at air/alu (sum of neighbours) [rad]
       gblkx1Histo->fill( (ax[1] - ax[0])*1E3 ); // kink at 1 [mrad]
       gblkx2Histo->fill( (ax[2] - ax[1])*1E3 ); // kink at 2 [mrad]
       gblkx3Histo->fill( (ax[3] - ax[2])*1E3 ); // kink at 3 [mrad]
@@ -1578,8 +2138,8 @@ void EUTelTripletGBL::FindTriplets(std::vector<hit> &hits, unsigned int plane0, 
 	// Create new preliminary triplet from the three hits:
 	triplet new_triplet((*ihit),(*khit),(*jhit));
 
-	if(_nEvt < 10) if( plane0 == 0 && plane1 == 1 && plane2 == 2) streamlog_out( WARNING2 ) << "dx triplet = " << new_triplet.getdx(plane1)*1e3 << endl;
-	if(_nEvt < 10) if( plane0 == 3 && plane1 == 4 && plane2 == 5) streamlog_out( WARNING2 ) << "dx driplet = " << new_triplet.getdx(plane1)*1e3 << endl;
+	//if(_nEvt < 10) if( plane0 == 0 && plane1 == 1 && plane2 == 2) streamlog_out( WARNING2 ) << "dx triplet = " << new_triplet.getdx(plane1)*1e3 << endl;
+	//if(_nEvt < 10) if( plane0 == 3 && plane1 == 4 && plane2 == 5) streamlog_out( WARNING2 ) << "dx driplet = " << new_triplet.getdx(plane1)*1e3 << endl;
 
 	// Setting cuts on the triplet track angle:
 	if( abs(new_triplet.getdx()) > _slope_cut_x * new_triplet.getdz()) continue;

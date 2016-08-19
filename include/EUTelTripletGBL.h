@@ -307,6 +307,7 @@ namespace eutelescope {
     int _dut_plane;
     double _eff_radius;
     double _kappa;
+    double _aluthickum;
     
     // Cuts for matching:
     double _cutx;
@@ -395,8 +396,18 @@ namespace eutelescope {
   AIDA::IHistogram1D * bacsxcqHisto;
   AIDA::IHistogram1D * bacdycqHisto;
 
+  AIDA::IProfile1D * effix0;
+  AIDA::IProfile1D * effiy0;
+  AIDA::IProfile1D * effix1;
+  AIDA::IProfile1D * effiy1;
+  AIDA::IProfile1D * effix2;
+  AIDA::IProfile1D * effiy2;
   AIDA::IProfile1D * effix3;
   AIDA::IProfile1D * effiy3;
+  AIDA::IProfile1D * effix4;
+  AIDA::IProfile1D * effiy4;
+  AIDA::IProfile1D * effix5;
+  AIDA::IProfile1D * effiy5;
 
   AIDA::IHistogram1D * ntriHisto;
   AIDA::IHistogram1D * ndriHisto;
@@ -499,6 +510,7 @@ namespace eutelescope {
 
   AIDA::IHistogram1D * gblax0Histo;
   AIDA::IHistogram1D * gbldx0Histo;
+  AIDA::IHistogram1D * gbldx01Histo;
   AIDA::IHistogram1D * gblrx0Histo;
   AIDA::IHistogram1D * gblry0Histo;
   AIDA::IHistogram1D * gblpx0Histo;
@@ -548,6 +560,7 @@ namespace eutelescope {
 
   AIDA::IHistogram1D * gblax1Histo;
   AIDA::IHistogram1D * gbldx1Histo;
+  AIDA::IHistogram1D * gbldx11Histo;
   AIDA::IHistogram1D * gblrx1Histo;
   AIDA::IHistogram1D * gblry1Histo;
   AIDA::IHistogram1D * gblpx1Histo;
@@ -560,6 +573,7 @@ namespace eutelescope {
 
   AIDA::IHistogram1D * gblax2Histo;
   AIDA::IHistogram1D * gbldx2Histo;
+  AIDA::IHistogram1D * gbldx21Histo;
   AIDA::IHistogram1D * gblrx2Histo;
   AIDA::IHistogram1D * gblry2Histo;
   AIDA::IHistogram1D * gblpx2Histo;
@@ -572,6 +586,7 @@ namespace eutelescope {
 
   AIDA::IHistogram1D * gblax3Histo;
   AIDA::IHistogram1D * gbldx3Histo;
+  AIDA::IHistogram1D * gbldx31Histo;
   AIDA::IHistogram1D * gblrx3Histo;
   AIDA::IHistogram1D * gblry3Histo;
   AIDA::IHistogram1D * gblrx3_cs1Histo;
@@ -600,6 +615,8 @@ namespace eutelescope {
   AIDA::IHistogram1D * gblpy3_cs5Histo;
   AIDA::IHistogram1D * gblpx3_cs6Histo;
   AIDA::IHistogram1D * gblpy3_cs6Histo;
+  AIDA::IHistogram1D * gblpx3_cs7Histo;
+  AIDA::IHistogram1D * gblpy3_cs7Histo;
   AIDA::IHistogram1D * gblpx3_unbHisto;
   AIDA::IHistogram1D * gblpy3_unbHisto;
   AIDA::IHistogram1D * gblqx3Histo;
@@ -608,6 +625,7 @@ namespace eutelescope {
 
   AIDA::IHistogram1D * gblax4Histo;
   AIDA::IHistogram1D * gbldx4Histo;
+  AIDA::IHistogram1D * gbldx41Histo;
   AIDA::IHistogram1D * gblrx4Histo;
   AIDA::IHistogram1D * gblry4Histo;
   AIDA::IHistogram1D * gblpx4Histo;
@@ -620,6 +638,7 @@ namespace eutelescope {
 
   AIDA::IHistogram1D * gblax5Histo;
   AIDA::IHistogram1D * gbldx5Histo;
+  AIDA::IHistogram1D * gbldx51Histo;
   AIDA::IHistogram1D * gblrx5Histo;
   AIDA::IHistogram1D * gblry5Histo;
   AIDA::IHistogram1D * gblpx5Histo;
@@ -640,6 +659,7 @@ namespace eutelescope {
   AIDA::IHistogram1D * gbltx6Histo;*/
 
   AIDA::IHistogram1D * gblkxCentreHisto;
+  AIDA::IHistogram1D * gblkxCentre1Histo;
   AIDA::IHistogram1D * gblkx1Histo;
   AIDA::IHistogram1D * gblkx2Histo;
   AIDA::IHistogram1D * gblkx3Histo;
