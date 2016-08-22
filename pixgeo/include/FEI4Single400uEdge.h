@@ -1,5 +1,5 @@
-#ifndef FEI4SINGLE_H
-#define	FEI4SINGLE_H
+#ifndef FEI4Single400uEdge_h 
+#define FEI4Single400uEdge_h	
 
   /** @class FEI4Single
 	* This class is the implementation of  @class EUTelGenericPixGeoDescr
