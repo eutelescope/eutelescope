@@ -1,4 +1,4 @@
-#include "FEI4Single400uEdge400uEdge.h"
+#include "FEI4Single400uEdge.h"
 
 namespace eutelescope {
 namespace geo {
