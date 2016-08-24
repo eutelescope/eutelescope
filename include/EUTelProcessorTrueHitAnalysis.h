@@ -10,7 +10,7 @@
 #include <IMPL/LCCollectionVec.h>
 
 #include <cmath>
-#include <utility>
+//#include <utility>
 #include <string>
 #include <vector>
 #include <array>
@@ -68,6 +68,7 @@ private:
 	LCCollectionVec* _rawDataCollectionVec;
 
 	std::array<std::map<int, AIDA::IBaseHistogram*>, 8> _1DHistos;
+	std::array<std::map<int, AIDA::IBaseHistogram*>, 4> _2DHistos;
 	/*std::map<int, AIDA::IBaseHistogram*> _xDiffClusterSize1Histos;
 	std::map<int, AIDA::IBaseHistogram*> _yDiffClusterSize1Histos;
 	std::map<int, AIDA::IBaseHistogram*> _xDiffClusterSize2Histos;
