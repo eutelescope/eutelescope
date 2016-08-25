@@ -49,14 +49,6 @@ EUTelProcessorTrueHitAnalysis::EUTelProcessorTrueHitAnalysis() :
 	_rawDataCollectionVec(nullptr),
 	_1DHistos(),
 	_2DHistos()
-	/*_xDiffClusterSize1Histos(),
-	_yDiffClusterSize1Histos(),
-	_xDiffClusterSize2Histos(),
-	_yDiffClusterSize2Histos(),
-	_xDiffClusterSize3Histos(),
-	_yDiffClusterSize3Histos(),
-	_xDiffClusterSize4upHistos(),
-	_yDiffClusterSize4upHistos()*/
 {
 
 	_description = "EUTelProcessorTrueHitAnalysis compares the true simulated hits with the reconstructed hits.";
@@ -151,28 +143,6 @@ void EUTelProcessorTrueHitAnalysis::end() {
 	streamlog_out(MESSAGE4) << "Successfully finished\n";
 }
 
-/*std::vector<std::pair<double const*, double const*>> EUTelProcessorTrueHitAnalysis::pairHits(std::vector<double const*>  in_a, std::vector<double const*>  in_b) {
-
-	std::vector<std::pair<double const*, double const*>> out;
-
-	for (size_t i = 0; i < in_a.size(); i++) {
-
-		int min_dist_index = 0;
-		double min_distance = sqrt(pow(in_a[i][0] - in_b[0][0], 2) + pow(in_a[i][1] - in_b[0][1], 2));
-
-		for (size_t j = 1; j < in_b.size(); j++) {
-
-			if (sqrt(pow(in_a[i][0] - in_b[j][0], 2) + pow(in_a[i][1] - in_b[j][1], 2)) < min_distance) min_dist_index = j;
-		}
-
-		out.push_back(std::pair<double const*, double const*>(in_a[i], in_b[min_dist_index]));
-
-		in_b.erase(in_b.begin()+min_dist_index);
-	}
-
-	return std::move(out);
-}*/
-
 int EUTelProcessorTrueHitAnalysis::findPairIndex(double const* a, std::vector<double const*> vec) {
 
 	if (vec.size() == 1) return 0;
@@ -224,7 +194,6 @@ void EUTelProcessorTrueHitAnalysis::fillHistos(LCEvent* event) {
 		CellIDDecoder<TrackerDataImpl> rawDataDecoder(_rawDataCollectionVec);
 
 		std::map<int, std::vector<double const*>> trueHitMap;
-		//std::map<int, std::vector<double const*>> reconstructedHitMap;
 
 		for (int i = 0; i < _trueHitCollectionVec->getNumberOfElements(); i++) {
 
@@ -274,38 +243,6 @@ void EUTelProcessorTrueHitAnalysis::fillHistos(LCEvent* event) {
 			(dynamic_cast<AIDA::IHistogram2D*>(_2DHistos[clusterSize-1].at(detectorID)))->fill(diff_x, diff_y, 1.);
 
 			trueHitMap.at(detectorID).erase(trueHitMap.at(detectorID).begin()+pairIndex);
-
-			//delete hitPos;
-			//delete [] pair;
-
-			//reconstructedHitMap.at(detectorID).push_back(reconstructedHit->getPosition());
-		}
-
-		/*for (auto& detectorID: trueHitMap) {
-
-			for (size_t i = 0; i < (static_cast<std::vector<double const*>>(trueHitMap.at(detectorID.first))).size(); i++) {
-
-				delete [] (static_cast<std::vector<double const*>>(trueHitMap.at(detectorID.first)))[i];
-			}
-		}*/
-
-		/*for (auto& detectorID: trueHitMap) {
-
-			std::vector<std::pair<double const*, double const*>> hitPairs = pairHits(static_cast<std::vector<double const*>>(trueHitMap.at(detectorID.first)), static_cast<std::vector<double const*>>(reconstructedHitMap.at(detectorID.first)));
-
-			for (size_t i = 0; i < hitPairs.size(); i++) {
-
-				double diff_x = hitPairs[i].first[0] - hitPairs[i].second[0];
-				double diff_y = hitPairs[i].first[1] - hitPairs[i].second[1];
-
-				TrackerDataImpl* zsData = dynamic_cast<TrackerDataImpl*>(hitPairs.second
-				int clusterSize 
-				
-
-				(dynamic_cast<AIDA::IHistogram1D*>(_1DHistos[0].at(detectorID.first)))->fill(diff_x);
-				(dynamic_cast<AIDA::IHistogram1D*>(_1DHistos[1].at(detectorID.first)))->fill(diff_y);
-			}
-		}*/
 	}
 	catch (lcio::DataNotAvailableException& e) {
 
@@ -336,18 +273,6 @@ void EUTelProcessorTrueHitAnalysis::bookHistos() {
                                << "Continuing without histogram manager" << std::endl;
 		isHistoManagerAvailable = false;
 	}
-
-	/*std::string _xDiffClusterSize1HistoName = "xPositionDifferenceClusterSize1";
-	std::string _xDiffClusterSize1HistoName = "yPositionDifferenceClusterSize1";
-	std::string _xDiffClusterSize2HistoName = "xPositionDifferenceClusterSize2";
-	std::string _yDiffClusterSize2HistoName = "yPositionDifferenceClusterSize2";
-	std::string _xDiffClusterSize3HistoName = "xPositionDifferenceClusterSize3";
-	std::string _yDiffClusterSize3HistoName = "yPositionDifferenceClusterSize3";
-	std::string _xDiffClusterSize4upHistoName = "xPositionDifferenceClusterSize4up";
-	std::string _yDiffClusterSize4upHistoName = "yPositionDifferenceClusterSize4up";
-
-	std::string tempHistoName;
-	std::string basePath;*/
 
 	for (size_t i = 0; i < _sensorIDVec.size(); i++) {
 
@@ -386,7 +311,6 @@ void EUTelProcessorTrueHitAnalysis::bookHistos() {
 				histoMax *= 13;
 			}
 
-			//std::string tempHistoName = histoName + "_d" + to_string(sensorID);
                 	_1DHistos[i].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histoNBin, histoMin, histoMax)));
                 	_1DHistos[i].at(sensorID)->setTitle(histoTitle.c_str());
 		}
@@ -436,14 +360,6 @@ void EUTelProcessorTrueHitAnalysis::bookHistos() {
 			_2DHistos[i].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram2D((basePath+histoName).c_str(), histoXNBin, histoXMin, histoXMax, histoYNBin, histoYMin, histoYMax)));
 			_2DHistos[i].at(sensorID)->setTitle(histoTitle.c_str());
 		}
-
-		/*tempHistoName = _xDiffHistoName + "_d" + to_string(sensorID);
-		_xDiffHistos.insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+tempHistoName).c_str(), xDiffNBin, xDiffMin, xDiffMax)));
-		_xDiffHistos[sensorID]->setTitle(xDiffTitle.c_str());
-
-		tempHistoName = _yDiffHistoName + "_d" + to_string(sensorID);
-		_yDiffHistos.insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+tempHistoName).c_str(), yDiffNBin, yDiffMin, yDiffMax)));
-		_yDiffHistos[sensorID]->setTitle(yDiffTitle.c_str());*/
 	}
 
 	streamlog_out(DEBUG5) << "end of Booking histograms\n";
