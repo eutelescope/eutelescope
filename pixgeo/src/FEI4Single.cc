@@ -17,7 +17,7 @@ FEI4Single::FEI4Single(): EUTelGenericPixGeoDescr(	20.00, 16.8, 0.025,	//size X,
 	plane = _tGeoManager->MakeBox( "sns_fei4", Si, 10.0, 8.4, 0.0125 );
 
 	auto row = plane->Divide("row", 2, 336, 0, 1, 0, "N"); 
-	row->Divide("col", 1,  78, 0, 1, 0, "N"); 
+	row->Divide("col", 1,  80, 0, 1, 0, "N"); 
 }
 
 FEI4Single::~FEI4Single()
