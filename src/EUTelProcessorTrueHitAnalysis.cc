@@ -243,6 +243,7 @@ void EUTelProcessorTrueHitAnalysis::fillHistos(LCEvent* event) {
 			(dynamic_cast<AIDA::IHistogram2D*>(_2DHistos[clusterSize-1].at(detectorID)))->fill(diff_x, diff_y, 1.);
 
 			trueHitMap.at(detectorID).erase(trueHitMap.at(detectorID).begin()+pairIndex);
+		}
 	}
 	catch (lcio::DataNotAvailableException& e) {
 
