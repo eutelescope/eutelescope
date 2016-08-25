@@ -380,6 +380,12 @@ void EUTelProcessorTrueHitAnalysis::bookHistos() {
 				}
 			}
 
+			if (sensorID >= 10) {//sensor is a DUT, with much large pixel pitch
+
+				histoMin *= 13;
+				histoMax *= 13;
+			}
+
 			//std::string tempHistoName = histoName + "_d" + to_string(sensorID);
                 	_1DHistos[i].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histoNBin, histoMin, histoMax)));
                 	_1DHistos[i].at(sensorID)->setTitle(histoTitle.c_str());
@@ -417,6 +423,14 @@ void EUTelProcessorTrueHitAnalysis::bookHistos() {
 
 					if (histoInfo->_title != "") histoTitle = histoInfo->_title;
 				}
+			}
+
+			if (sensorID >= 10) {
+
+				histoXMin *= 13;
+				histoXMax *= 13;
+				histoYMin *= 13;
+				histoYMax *= 13;
 			}
 
 			_2DHistos[i].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram2D((basePath+histoName).c_str(), histoXNBin, histoXMin, histoXMax, histoYNBin, histoYMin, histoYMax)));
