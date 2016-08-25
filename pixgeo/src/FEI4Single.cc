@@ -39,7 +39,7 @@ std::string FEI4Single::getPixName(int x , int y)
 	char buffer [100];
 	//since pixel 0|0 is located on the upper left corner we have to correct y by 335-y+1 
 	//(one for the offset in TGeo which starts counting at 1)
-	snprintf( buffer, 100, "/sns_fei4/row_%d/col_%d", 336-y, x);
+	snprintf( buffer, 100, "/sns_fei4_1/row_%d/col_%d", 336-y, x);
 	//Return the full path
 	return std::string( buffer ); 
 }
