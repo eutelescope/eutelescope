@@ -17,7 +17,7 @@ FEI4Single::FEI4Single(): EUTelGenericPixGeoDescr(	20.00, 16.8, 0.025,	//size X,
 	plane = _tGeoManager->MakeBox( "sns_fei4", Si, 10.0, 8.4, 0.0125 );
 
 	auto row = plane->Divide("row", 2, 336, 0, 1, 0, "N"); 
-	row->Divide("col", 1,  78, 0, 1, 0, "N"); 
+	row->Divide("col", 1,  80, 0, 1, 0, "N"); 
 }
 
 FEI4Single::~FEI4Single()
@@ -39,7 +39,7 @@ std::string FEI4Single::getPixName(int x , int y)
 	char buffer [100];
 	//since pixel 0|0 is located on the upper left corner we have to correct y by 335-y+1 
 	//(one for the offset in TGeo which starts counting at 1)
-	snprintf( buffer, 100, "/sns_fei4_1/row_%d/col_%d", 336-y, x);
+	snprintf( buffer, 100, "/sns_fei4_1/row_%d/col_%d", 336-y, x+1);
 	//Return the full path
 	return std::string( buffer ); 
 }
