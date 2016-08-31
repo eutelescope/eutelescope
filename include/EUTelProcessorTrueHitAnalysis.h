@@ -65,7 +65,7 @@ private:
 	LCCollectionVec* _rawDataCollectionVec;
 
 	std::array<std::map<int, AIDA::IBaseHistogram*>, 8> _1DHistos;
-	std::array<std::map<int, AIDA::IBaseHistogram*>, 4> _2DHistos;
+	std::array<std::map<int, AIDA::IBaseHistogram*>, 8> _2DHistos;
 
 	void readCollections(LCEvent* event);
 };
