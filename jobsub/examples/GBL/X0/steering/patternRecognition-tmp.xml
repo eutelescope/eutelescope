@@ -20,12 +20,12 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
   <execute>
     <processor name="AIDA"/>
     <processor name="MyEUTelUtilityPrintEventNumber"/>
-    <processor name="TrackAlign"/>
+    <processor name="TrackSearch"/>
     <processor name="Save"/>
   </execute>
 
    <global>
-      <parameter name="LCIOInputFiles"> @LcioPath@/@FilePrefix@-@lcioInputName@.slcio </parameter>
+      <parameter name="LCIOInputFiles"> @LcioPath@/run@RunNumber@-hitlocal.slcio </parameter>
       <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
@@ -45,49 +45,36 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
     <parameter name="Compress" type="int" value="1"/>
 
     <!-- filename without extension-->
-    <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-GBLTrackAlign"/>
+    <parameter name="FileName" type="string" value="@HistogramPath@/run@RunNumber@-patternRecognition"/>
 
     <!-- type of output file xml (default) or root ( only OpenScientist)-->
     <parameter name="FileType" type="string" value="root"/>
   </processor>
 
 
- <processor name="TrackAlign" type="EUTelProcessorGBLAlign">
-	<parameter name = "IncMed" type="int"> @IncMed@ </parameter>
-  <parameter name="BeamCharge" type="double"> -1. </parameter>
-  <parameter name="BeamEnergy" type="double"> @BeamEnergy@ </parameter>
-  <!--Name of histogram info xml file-->
-	<parameter name="MilleBinaryFilename" type="double"> @MilleBinaryFilename@ </parameter>
-	<parameter name="MilleSteeringFilename" type="double"> @MilleSteeringFilename@ </parameter>
-	<parameter name="MilleResultFilename" type="double"> @MilleResultFilename@ </parameter>
-	<parameter name="GearAlignedFile" type="double"> @GearFilePath@/@GearAlignedFile@ </parameter>
-  <parameter name="FixedAlignmentPlanesXrotation" type="IntVec">@FixXrot@ </parameter>
-  <!--Ids of planes for which X shift will be fixed during millepede call-->
-  <parameter name="FixedAlignmentPlanesXshift" type="IntVec">@FixXshifts@ </parameter>
-  <!--Ids of planes for which rotation around Y will be fixed during millepede call-->
-  <parameter name="FixedAlignmentPlanesYrotation" type="IntVec">@FixYrot@ </parameter>
-  <!--Ids of planes for which Y shift will be fixed during millepede call-->
-  <parameter name="FixedAlignmentPlanesYshift" type="IntVec">@FixYshifts@</parameter>
-  <!--Ids of planes for which rotation around Z will be fixed during millepede call-->
-  <parameter name="FixedAlignmentPlanesZrotation" type="IntVec">@FixZrot@ </parameter>
-  <!--Ids of planes for which Z shift will be fixed during millepede call-->
-  <parameter name="FixedAlignmentPlanesZshift" type="IntVec">@FixZshifts@ </parameter>
-  <parameter name="PedeSteeringAdditionalCmds" type="StringVec">
-method inversion 5 0.1 \\
-!method diagonalization 15 0.001 \\ 
-@outlierdownweighting@  \\ 
-@pede@
- </parameter>
-  <parameter name="HistogramInfoFilename" type="string" value="@HistoInfoFile@"/>
-  <!--Input of Zero Suppressed data-->
-  <parameter name="TrackCandidatesInputCollectionName" type="string" lcioInType="TrackerHit"> @inputCollectionName@ </parameter>
-	<parameter name="xResolutionPlane" type="FloatVec" value="@xResolutionPlane@" />
-	<parameter name="yResolutionPlane" type="FloatVec" value="@yResolutionPlane@" />
-	<parameter name = "GBLMEstimatorType" type="int"> @GBLMEstimatorType@ </parameter>
-  <parameter name="TracksOutputCollectionName" type="string" lcioOutType="Track"> Alignment </parameter>
-	<parameter name="CreateBinary" type="bool" value="true"/>
-	<parameter name="ExcludePlanes" type="string" lcioOutType="FloatVec"> @excludeplanes@  </parameter>
-  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+ <processor name="TrackSearch" type="EUTelProcessorPatRecTriplets">
+  <!--EUTelProcessorTrackingHelixTrackSearch preforms track pattern recognition.-->
+  <!--Beam charge [e]-->
+    <parameter name="BeamCharge" type="double">-1. </parameter>
+    <parameter name="DoubletDistCut" type="Float" value="@DoubletDistCut@" />
+    <parameter name="DoubletCenDistCut" type="Float" value="@DoubletCenDistCut@" />
+    <parameter name="TripletSlopeCuts" type="Float" value="@TripletSlopeCuts@" />
+    <parameter name="TripletConnectDistCut" type="Float" value="@TripletConnectDistCut@" />
+    <parameter name="InitialDisplacement" type="Float" value="@InitialDisplacement@" />
+    <!--Beam charge [GeV]-->
+    <parameter name="BeamEnergy" type="double"> @BeamEnergy@ </parameter>
+    <!--Name of histogram info xml file-->
+    <parameter name="HistogramInfoFilename" type="string" value="@HistoInfoFile@"/>
+    <!--Input of Zero Suppressed data-->
+    <parameter name="HitInputCollectionName" type="string" lcioInType="TrackerHit"> @HitInputCollectionName@ </parameter>
+    <!--Maximal number of missing hits on a track candidate-->
+    <!--Maximal number of track candidates to be found in events-->
+    <!--parameter name="MaxNTracksPerEvent" type="int">100 </parameter-->
+    <!--Output track candidates hits collection name-->
+    <parameter name="TrackCandHitOutputCollectionName" type="string" lcioOutType="Track"> @TrackCandHitOutputCollectionName@ </parameter>
+    <parameter name="planeDimensions" type="IntVec" > @planeDimensions@ </parameter>
+    <parameter name="ExcludePlanes" type="string" lcioOutType="FloatVec"> @excludeplanes@ </parameter>
+    <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
  </processor>
 
 
@@ -102,7 +89,7 @@ method inversion 5 0.1 \\
   <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
   <!--parameter name="KeepCollectionNames" type="StringVec" value="MyPreciousSimTrackerHits"/-->
   <!-- name of output file -->
-  <parameter name="LCIOOutputFile" type="string" value="@LcioPath@/@FilePrefix@-GBLAlign.slcio"/>
+  <parameter name="LCIOOutputFile" type="string" value="@LcioPath@/run@RunNumber@-trackcand.slcio"/>
   <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
   <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   <!--Set it to true to remove intermediate EORE in merged runs-->

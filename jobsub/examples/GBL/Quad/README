@@ -1,0 +1,52 @@
+#This is the example for the Quad module. 
+#The gear to start with is gear-beforeAlign-quad-corr-correct.xml. This is badly shifted but has the correlations in the positive direction. Must make sure that we are positively correlated for future examples. This should be done before any prealignment since the transformation from local to global is G=RL+O  R=> Rotations O => offsets G/L => Global/local coordinate system. So if you rotate then the offsets must change!  
+#This gear has + correlation rotation placed in the initial matrix and z rotation. DO NOT FILL XY ROTATIONS, MILLEPEDE WILL FILL THIS WITH CORRECTIONS
+#10k events used for alignment here.
+#Mediums is not included. Will not make much of a difference for this setup. Can easily add this by adding a single line in config and steering file if needed. Look for IncMed in other examples. This will turn on the medium estimation in GBL fitter.
+#All my gears produced are in the geometry directory 
+js => -c config/config.cfg -csv runlist/runlist.csv 
+
+#js clustering 105 <<< I start with this since I do not convert but use   js converter 105 
+
+#js hitlocal 105
+Output gear from prealignment: gear-beforeAlign-quad-corr-correct_pre.xml
+
+#js patternRecognition  105
+
+#TripletConnectDistCut =  1 1
+#TripletSlopeCuts = 0.01 0.01
+#DoubletCenDistCut = 0.5 0.5
+#DoubletDistCut =   0.5 0.5
+#excludeplanes=     
+#DUTWindow= 0.5
+
+#js GBLAlign  105
+
+Resolutions are input in z order. This is different between SLAC and DESY runs. Must change.
+
+Initial alignent with settings:
+
+#FixXshifts=0  5  
+#FixYshifts=0  5     
+#FixZshifts=0  5     
+#FixXrot=   0  5  
+#FixYrot=   0  5 
+#FixZrot=   0 5 
+#r = 0.05
+#dutX= 0.1 0.1
+#dutY=0.1 0.1
+
+Resolution set to 50 microns due to initial misalignment.
+Output gear:alignedGear-iter1-run000105.xml (Use your own name or you will overwrite example gears which you can use as reference)
+
+Change parameters:
+#r = 0.005
+#dutX= 0.1 0.1
+#dutY=0.1 0.1
+and then run again. Output gear:alignedGear-iter2-run000105.xml
+
+Final alignment good but error on weak mode alignment large. Increase stats will fix this. 
+For final analysis tracks run:
+#js GBLTrackFit 105
+
+

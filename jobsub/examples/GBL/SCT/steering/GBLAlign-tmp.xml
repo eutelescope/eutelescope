@@ -53,8 +53,7 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
 
 
  <processor name="TrackAlign" type="EUTelProcessorGBLAlign">
-	<parameter name = "IncMed" type="int"> @IncMed@ </parameter>
-  <parameter name="BeamCharge" type="double"> -1. </parameter>
+  <parameter name="BeamCharge" type="double"> @BeamCharge@ </parameter>
   <parameter name="BeamEnergy" type="double"> @BeamEnergy@ </parameter>
   <!--Name of histogram info xml file-->
 	<parameter name="MilleBinaryFilename" type="double"> @MilleBinaryFilename@ </parameter>
@@ -84,7 +83,7 @@ method inversion 5 0.1 \\
 	<parameter name="xResolutionPlane" type="FloatVec" value="@xResolutionPlane@" />
 	<parameter name="yResolutionPlane" type="FloatVec" value="@yResolutionPlane@" />
 	<parameter name = "GBLMEstimatorType" type="int"> @GBLMEstimatorType@ </parameter>
-  <parameter name="TracksOutputCollectionName" type="string" lcioOutType="Track"> Alignment </parameter>
+  <parameter name="TracksOutputCollectionName" type="string" lcioOutType="Track"> @TracksOutputCollectionName@  </parameter>
 	<parameter name="CreateBinary" type="bool" value="true"/>
 	<parameter name="ExcludePlanes" type="string" lcioOutType="FloatVec"> @excludeplanes@  </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
