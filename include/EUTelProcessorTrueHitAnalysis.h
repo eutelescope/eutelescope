@@ -62,10 +62,11 @@ private:
 
 	LCCollectionVec* _trueHitCollectionVec;
 	LCCollectionVec* _reconstructedHitCollectionVec;
-	LCCollectionVec* _rawDataCollectionVec;
+	//LCCollectionVec* _rawDataCollectionVec;
 
 	std::array<std::map<int, AIDA::IBaseHistogram*>, 8> _1DHistos;
 	std::array<std::map<int, AIDA::IBaseHistogram*>, 8> _2DHistos;
+	std::vector<AIDA::IBaseHistogram*> _xClustSize2Histos;
 
 	void readCollections(LCEvent* event);
 };
