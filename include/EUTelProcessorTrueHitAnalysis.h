@@ -46,7 +46,6 @@ protected:
 
 	std::string _trueHitCollectionName;
 	std::string _reconstructedHitCollectionName;
-	std::string _rawDataCollectionName;
 
 	int _iRun;
 	int _iEvt;
@@ -62,11 +61,11 @@ private:
 
 	LCCollectionVec* _trueHitCollectionVec;
 	LCCollectionVec* _reconstructedHitCollectionVec;
-	//LCCollectionVec* _rawDataCollectionVec;
 
 	std::array<std::map<int, AIDA::IBaseHistogram*>, 8> _1DHistos;
 	std::array<std::map<int, AIDA::IBaseHistogram*>, 8> _2DHistos;
 	std::vector<AIDA::IBaseHistogram*> _xClustSize2Histos;
+	std::vector<AIDA::IBaseHistogram*> _yClustSize3Histos;
 
 	void readCollections(LCEvent* event);
 };
