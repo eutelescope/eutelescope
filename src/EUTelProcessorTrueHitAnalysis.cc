@@ -331,7 +331,7 @@ void EUTelProcessorTrueHitAnalysis::bookHistos() {
 			int histoNBin = 101;
 			double histoMin = -10;
 			double histoMax = 10;
-			std::string histoTitle = "difference in " + coordinate + " position between true simulated hits and reconstructed hits for " + coordinate + " cluster size " + clusterSize + ";delta " + coordinate + " /um;Entries";
+			std::string histoTitle = "difference in " + coordinate + " position between true simulated hits and reconstructed hits for " + coordinate + " cluster size " + clusterSize + ";#Delta" + coordinate + " /#mum;Entries";
 			if (isHistoManagerAvailable) {
 
 				histoInfo = histoMng->getHistogramInfo(histoName);
@@ -370,7 +370,7 @@ void EUTelProcessorTrueHitAnalysis::bookHistos() {
 			std::string coordinate = (i%2 == 0)?"x":"y";
 			std::string clusterSize = to_string(i/2+1) + ((i+3>_2DHistos.size())?"+":"");
 
-			std::string histoName = "2DPositionDifference_" + coordinate + "CluserSize" + clusterSize + "_d" + to_string(sensorID);
+			std::string histoName = "2DPositionDifference_" + coordinate + "ClusterSize" + clusterSize + "_d" + to_string(sensorID);
 
 			int histoXNBin = 101;
 			double histoXMin = -10;
@@ -380,7 +380,7 @@ void EUTelProcessorTrueHitAnalysis::bookHistos() {
 			double histoYMin = -10;
 			double histoYMax = 10;
 
-			std::string histoTitle = "difference in position between true simulated hits and reconstructed hits for " + coordinate + " cluster size " + clusterSize + ";delta x /um;delta y /um;Entries";
+			std::string histoTitle = "difference in position between true simulated hits and reconstructed hits for " + coordinate + " cluster size " + clusterSize + ";#Deltax /#mum;#Deltay /#mum;Entries";
 			if (isHistoManagerAvailable) {
 
 				histoInfo = histoMng->getHistogramInfo(histoName);
@@ -429,7 +429,7 @@ void EUTelProcessorTrueHitAnalysis::bookHistos() {
 				int histoNBin = 101;
 				double histoMin = -140;
 				double histoMax = 140;
-				std::string histoTitle = "difference in x position between true simulated hits and reconstructed hits for x cluster size 2 with TOT difference " + TOTDiff + ";delta x /um;Entries";
+				std::string histoTitle = "difference in x position between true simulated hits and reconstructed hits for x cluster size 2 with TOT difference " + TOTDiff + ";#Deltax /#mum;Entries";
 				if (isHistoManagerAvailable) {
 
 					histoInfo = histoMng->getHistogramInfo(histoName);
@@ -466,7 +466,7 @@ void EUTelProcessorTrueHitAnalysis::bookHistos() {
 				int histoNBin = 101;
 				double histoMin = -20;
 				double histoMax = 20;
-				std::string histoTitle = "difference in y position between true simulated hits and reconstructed hits for y cluster size 3 with x cluster size " + xClustSize + ";delta x /um;Entries";
+				std::string histoTitle = "difference in y position between true simulated hits and reconstructed hits for y cluster size 3 with x cluster size " + xClustSize + ";#Deltay /#mum;Entries";
 				if (isHistoManagerAvailable) {
 
 					histoInfo = histoMng->getHistogramInfo(histoName);
