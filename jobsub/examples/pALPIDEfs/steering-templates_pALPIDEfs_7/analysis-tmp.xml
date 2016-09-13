@@ -135,7 +135,6 @@
   <!--This is the name of the input collection for the fitted hits-->
   <parameter name="InputFittedHitName" type="StringVec"> fithits </parameter>
   <!--This is the name of the input collection of the hits-->
-  <!--<parameter name="InputCollectionName" type="StringVec"> alignedHit1 </parameter>-->
   <parameter name="InputCollectionName" type="StringVec"> hit </parameter>
   <!--This is the name of the input track collection-->
   <parameter name="TrackCollectionName" type="string"> track </parameter>
