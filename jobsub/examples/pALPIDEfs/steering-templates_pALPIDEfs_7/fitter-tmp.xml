@@ -370,7 +370,6 @@ WARNING: - Please be aware that comments made in the original steering file were
   <parameter name="OutputHitsInTrack" type="bool" value="true"/>
   <!--Ids of layers which should be treated as passive in the fit-->
   <parameter name="PassiveLayerIDs" type="IntVec"> @dutID@ </parameter>
-  <!--<parameter name="PassiveLayerIDs" type="IntVec"></parameter>-->
   <!--reference hit collection name -->
   <parameter name="ReferenceCollection" type="string" value="refhit"/>
   <!--X resolution parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
