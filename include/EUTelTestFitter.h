@@ -662,6 +662,8 @@ namespace eutelescope {
 	std::vector<double> _fittedZcorr;
 	
     void getFastTrackImpactPoint(double & x, double & y, double & z, Track * tr, LCEvent * ev);
+    // 02 September 2016, bbrueers@cern.ch, correcting for inclined planes and sloped tracks
+    void getImpactPoint(double & x, double & y, double & z, double & slopeX, double & slopeY, double & slopeZ);
     void getTrackImpactPoint(double & x, double & y, double & z, Track * tr, LCEvent * ev);
 	int	_indexDUTneighbour;
 	double	_zDUTneighbour;
