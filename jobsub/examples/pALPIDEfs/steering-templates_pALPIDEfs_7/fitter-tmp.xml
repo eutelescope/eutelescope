@@ -370,7 +370,6 @@ WARNING: - Please be aware that comments made in the original steering file were
   <parameter name="OutputHitsInTrack" type="bool" value="true"/>
   <!--Ids of layers which should be treated as passive in the fit-->
   <parameter name="PassiveLayerIDs" type="IntVec"> @dutID@ </parameter>
-  <!--<parameter name="PassiveLayerIDs" type="IntVec"></parameter>-->
   <!--reference hit collection name -->
   <parameter name="ReferenceCollection" type="string" value="refhit"/>
   <!--X resolution parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
@@ -617,7 +616,7 @@ WARNING: - Please be aware that comments made in the original steering file were
 <processor name="Save" type="EUTelOutputProcessor">
   <!--Writes the current event to the specified LCIO outputfile. Eventually it adds a EORE at the of the file if it was missing Needs to be the last ActiveProcessor.-->
   <!--drops the named collections from the event-->
-  <parameter name="DropCollectionNames" type="StringVec"> cluster_m26 cluster_pALPIDE cluster_pALPIDEfs hit_eta3x3 alignedHit_eta3x3 corrhits </parameter>
+  <parameter name="DropCollectionNames" type="StringVec"> cluster_m26 cluster_pALPIDE cluster_pALPIDEfs hit_eta3x3 alignedHit_eta3x3 corrhits alignedPre alignedHit1 </parameter>
   <!--drops all collections of the given type from the event-->
   <!--parameter name="DropCollectionTypes" type="StringVec"> SimTrackerHit SimCalorimeterHit </parameter-->
   <!-- write complete objects in subset collections to the file (i.e. ignore subset flag)-->

@@ -135,7 +135,6 @@
   <!--This is the name of the input collection for the fitted hits-->
   <parameter name="InputFittedHitName" type="StringVec"> fithits </parameter>
   <!--This is the name of the input collection of the hits-->
-  <!--<parameter name="InputCollectionName" type="StringVec"> alignedHit1 </parameter>-->
   <parameter name="InputCollectionName" type="StringVec"> hit </parameter>
   <!--This is the name of the input track collection-->
   <parameter name="TrackCollectionName" type="string"> track </parameter>
@@ -152,7 +151,7 @@
   <!--This is the name of the histogram information file-->
   <parameter name="HistoInfoFileName" type="string" value="@HistoInfoFile@"/>
   <!--This is the maximum distance between the fit and the hit to associate the hit with the track-->
-  <parameter name="Limit" type="double" value="0.2"/>
+  <parameter name="Limit" type="double" value="0.1"/>
   <!--This is the ID of the DUT-->
   <parameter name="dutID" type="int" value="@dutID@"/>
   <!--This is the maximum number of pixels in one cluster for the clustershape analysis-->
