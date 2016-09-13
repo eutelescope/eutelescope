@@ -313,6 +313,10 @@ class EUTelGeometryTelescopeGeoDescription
 
 	Eigen::Matrix3d rotationMatrixFromAngles(int sensorID);
 
+    Eigen::Matrix3d getRotMatrixEig( int sensorID ); 
+
+    Eigen::Vector3d siPlaneNormalEig( int planeID );
+
 	Eigen::Vector3d getOffsetVector(int sensorID);
 
 	Eigen::Matrix3d getFlipMatrix(int sensorID);
@@ -339,6 +343,7 @@ class EUTelGeometryTelescopeGeoDescription
 	float findRad(	const std::map<int,int>& sensorIDToZOrderWithoutExcludedPlanes, 
 			const double globalPosStart[], const double globalPosFinish[], 
 			std::map<const int,double> &sensors, std::map<const int,double> &air );
+    double airBetweenPlanesRadLengthGlobalIncidence(int planeIDStart,int planeIDEnd, Eigen::Vector3d incidenceDir, double& thickness); 
 
 	int getSensorID(float const globalPos[] ) const;
 	int getSensorID(double const globalPos[] ) const;
