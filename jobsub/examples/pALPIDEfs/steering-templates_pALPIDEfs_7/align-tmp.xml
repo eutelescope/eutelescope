@@ -100,9 +100,9 @@
   <!--Rotation Angle around Y axis-->
   <!--parameter name="Beta" type="double" value="0"/-->
   <!--Available methods are:
- 0 --> shift only 
- 1 --> rotation first 
- 2 --> shift first -->
+ 0 -.-> shift only 
+ 1 -.-> rotation first 
+ 2 -.-> shift first -->
   <parameter name="CorrectionMethod" type="int" value="1"/>
   <!--Enable or disable DEBUG mode -->
   <parameter name="DEBUG" type="bool" value="false"/>

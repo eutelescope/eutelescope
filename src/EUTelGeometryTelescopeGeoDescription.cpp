@@ -134,7 +134,7 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout() {
 	_nPlanes = _siPlanesLayerLayout->getNLayers(); 
 
 	//read the geoemtry names from the "Geometry" StringVec section of the gear file
-	std::vector<std::string> geometryNameParameters;
+	lcio::StringVec geometryNameParameters;
 
 	try {
 		geometryNameParameters  =  _siPlanesParameters->getStringVals("Geometry");
@@ -384,9 +384,9 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
 	//We have to ensure that we retain a right handed coordinate system, i.e. if we only flip the x or y axis, we have to also flip the z-axis. If we flip both we have to flip twice.	
 	double integerRotationsAndReflections[9]={rotRef1,rotRef2,0,rotRef3,rotRef4,0,0,0, determinant};
 	pMatrixRotRefCombined->SetMatrix(integerRotationsAndReflections);
-	pMatrixRotRefCombined->RotateZ(gamma);//Z Rotation (degrees)//This will again rotate a vector around z axis usign the right hand rule.  
 	pMatrixRotRefCombined->RotateX(alpha);//X Rotations (degrees)//This will rotate a vector usign the right hand rule round the x-axis
-	pMatrixRotRefCombined->RotateY(beta);//Y Rotations (degrees)//Same again for Y axis 
+	pMatrixRotRefCombined->RotateY(beta);//Y Rotations (degrees)//Same again for Y axis
+	pMatrixRotRefCombined->RotateZ(gamma);//Z Rotation (degrees)//This will again rotate a vector around z axis usign the right hand rule.  
 	pMatrixRotRefCombined->RegisterYourself();//We must allow the matrix to be used by the TGeo manager.
 	// Combined translation and orientation
 	TGeoCombiTrans* combi = new TGeoCombiTrans( *pMatrixTrans, *pMatrixRotRefCombined );
@@ -555,19 +555,30 @@ Eigen::Matrix3d EUTelGeometryTelescopeGeoDescription::rotationMatrixFromAngles(l
 	//std::cout << "trig" << cosA << ", " << cosB << ", " << cosG << ", " << sinA << ", " << sinB << ", " << sinG <<  std::endl;
 
 	Eigen::Matrix3d rotMat;
-	rotMat <<	(double)(cosB*cosG+sinA*sinB*sinG),	(double)(sinA*sinB*cosG-cosB*sinG),	(double)(cosA*sinB),
+	rotMat <<	(double)(cosB*cosG),	(double)(sinA*sinB*cosG - sinG*cosA),	(double)(sinA*sinG + sinB*cosA*cosG),
+	      		(double)(sinG*cosB),			(double)(sinA*sinB*sinG + cosA*cosG),			(double)(-sinA*cosG + sinB*sinG*cosA),
+			(double)(-sinB),	(double)(sinA*cosB),	(double)(cosA*cosB);//for rotation order X->Y->Z
+	/*rotMat <<	(double)(cosB*cosG+sinA*sinB*sinG),	(double)(sinA*sinB*cosG-cosB*sinG),	(double)(cosA*sinB),
 	      		(double)(cosA*sinG),			(double)(cosA*cosG),			(double)(-sinA),
-			(double)(sinA*cosB*sinG-sinB*cosG),	(double)(sinA*cosB*cosG+sinB*sinG),	(double)(cosA*cosB);
+			(double)(sinA*cosB*sinG-sinB*cosG),	(double)(sinA*cosB*cosG+sinB*sinG),	(double)(cosA*cosB);*/ //for rotation order Z->X->Y
 	//std::cout << rotMat.format(IO) << std::endl;
 	return rotMat;
 }
 
 Eigen::Vector3d EUTelGeometryTelescopeGeoDescription::getRotationAnglesFromMatrix(Eigen::Matrix3d rotMat) {
-	long double alpha = asin((long double)(-rotMat(1,2)));
+	//for rotation order X->Y->Z
+	long double beta = asin((long double)(-rotMat(2,0)));
+	long double cosB = cos(beta);
+
+	long double alpha = asin((long double)(rotMat(2,1)/cosB));
+	long double gamma = asin((long double)(rotMat(1,0)/cosB));
+	
+	//for rotation order Z->X->Y 
+	/*long double alpha = asin((long double)(-rotMat(1,2)));
 	long double cosA = cos(alpha);
 
 	long double beta = asin((long double)(rotMat(0,2)/cosA));
-	long double gamma = asin((long double)(rotMat(1,0)/cosA));
+	long double gamma = asin((long double)(rotMat(1,0)/cosA));*/
 
 	Eigen::Vector3d vec;
 
