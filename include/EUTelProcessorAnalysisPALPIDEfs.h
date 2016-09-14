@@ -31,6 +31,7 @@ public:
   virtual void init() ;
   virtual void processEvent( LCEvent * evt ) ;
   void _EulerRotationBack(double* _telPos, double* _gRotation);
+  void _LayerRotationBack(double* pos, double& outputX, double& outputY);
   int AddressToColumn(int ARegion, int ADoubleCol, int AAddress);
   int AddressToRow(int AAddress);
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
