@@ -47,9 +47,9 @@ namespace eutelescope {
 		virtual void dafEnd();
 		//! Set fitter specific params
 		virtual void dafParams();
-    //virtual double getZfromRefHit(int plane,int sensorID, double *pos);
+		virtual double getZfromRefHit(int plane,int sensorID, double *pos);
 
-		int findPairIndex(float x, float y, int planeID);
+		int findPairIndex(float x, float y, std::vector<double const*> vec);
 		void fillDiffHistos(daffitter::TrackCandidate<float,4>& track, LCEvent* event);
 		void bookDiffHistos();
  
@@ -61,7 +61,8 @@ namespace eutelescope {
 		//! Output track collection
 		LCCollectionVec* _fittrackvec;
 		LCCollectionVec* _fitpointvec;
-		LCCollectionVec* _trueHitCollectionVec;
+		std::map<int, std::vector<double const*>> _trueHitMap;
+		//LCCollectionVec* _trueHitCollectionVec;
 		void addToLCIO(daffitter::TrackCandidate<float,4>& track, LCCollectionVec *lcvec);
 		//! LCIO switch
 		bool _addToLCIO, _fitDuts;

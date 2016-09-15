@@ -1,7 +1,7 @@
 // based on EUTelDafFitter.cc
 
 // eutelescope includes ".h"
-#include "EUTelDafFitterAnalysis.h"
+#include "EUTelDafFitterAnalysisWithTrueHits.h"
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelEventImpl.h"
 #include "EUTELESCOPE.h"
@@ -31,6 +31,7 @@
 #include <IO/LCWriter.h>
 #include <UTIL/LCTime.h>
 #include <UTIL/CellIDEncoder.h>
+#include <UTIL/CellIDDecoder.h>
 #include <EVENT/LCCollection.h>
 #include <EVENT/LCEvent.h>
 #include <EVENT/TrackerPulse.h>
@@ -59,12 +60,12 @@ using namespace marlin;
 using namespace eutelescope;
 
 
-EUTelDafFitter::EUTelDafFitter () : EUTelDafBase("EUTelDafFitterAnalysis"){
+EUTelDafFitterAnalysis::EUTelDafFitterAnalysis () : EUTelDafBase("EUTelDafFitterAnalysisWithTrueHits"){
     //Child spesific params and description
   dafParams();
 }
 
-void EUTelDafFitter::dafParams(){
+void EUTelDafFitterAnalysis::dafParams(){
   _description = "This processor preforms track reconstruction and also outputs residuals of the track with respect to true hits. The tracks are as final track fit for analysis.";
 
   //Tracker system options
@@ -72,10 +73,10 @@ void EUTelDafFitter::dafParams(){
   registerOptionalParameter("FitDuts","Set this to true if you want DUTs to be included in the track fit", _fitDuts, static_cast<bool>(false)); 
   //Track fitter options
 	registerInputCollection(LCIO::TRACKERHIT, "TrueHitCollectionName", "Input of True Hit data", _trueHitCollectionName, string("true_hits"));
-  registerOutputCollection(LCIO::TRACK,"TrackCollectionName", "Collection name for fitted tracks", _trackCollectionName, string("tracks"));
+  registerOutputCollection(LCIO::TRACK,"TrackCollectionName", "Collection name for fitted tracks", _trackCollectionName, string("track"));
 }
 
-void EUTelDafFitter::dafInit() {
+void EUTelDafFitterAnalysis::dafInit() {
   if(_fitDuts){
     for( size_t ii = 0; ii< _system.planes.size(); ii++){
       if( find(_dutPlanes.begin(), _dutPlanes.end(), _system.planes.at(ii).getSensorID()) != _dutPlanes.end()){ 
@@ -84,20 +85,38 @@ void EUTelDafFitter::dafInit() {
     }
   }
 
+	for (size_t i = 0; i < _system.planes.size(); i++) {
+
+		_trueHitMap.insert(std::make_pair(_system.planes.at(i).getSensorID(), std::vector<double const*>()));
+	}
+
 	bookDiffHistos();
 }
 
-void EUTelDafFitter::dafEvent (LCEvent * event) {
+void EUTelDafFitterAnalysis::dafEvent (LCEvent * event) {
 
 	//read in the true hits
 	try {
 
-		_trueHitCollectionVec = dynamic_cast<LCCollectionVec*>(event->getCollection(_trueHitCollectionName));
-		streamlog_out(DEBUG4) << "_trueHitCollectionVec: " << _trueHitCollectionName.c_str() << " found\n";
+		LCCollectionVec* trueHitCollectionVec = dynamic_cast<LCCollectionVec*>(event->getCollection(_trueHitCollectionName));
+		CellIDDecoder<TrackerHitImpl> trueHitDecoder(trueHitCollectionVec);
+		//fill the map with the true hits
+		for (int i = 0; i < trueHitCollectionVec->getNumberOfElements(); i++) {
+
+			TrackerHitImpl* trueHit = dynamic_cast<TrackerHitImpl*>(trueHitCollectionVec->getElementAt(i));
+
+			if (trueHit->getQuality() == 1) {
+
+				int detectorID = static_cast<int>(trueHitDecoder(trueHit)["sensorID"]);
+				_trueHitMap.at(detectorID).push_back(trueHit->getPosition());
+			}
+		}
+
+		streamlog_out(DEBUG4) << "trueHitCollectionVec: " << _trueHitCollectionName.c_str() << " found\n";
 	}
 	catch (lcio::DataNotAvailableException& e) {
 
-		streamlog_out(DEBUG4) << "_trueHitCollectionVec: " << _trueHitCollectionName.c_str() << " not found in event " << event->getEventNumber() << std::endl;
+		streamlog_out(DEBUG4) << "trueHitCollectionVec: " << _trueHitCollectionName.c_str() << " not found in event " << event->getEventNumber() << std::endl;
 	}
 
   //Prepare track collection
@@ -156,9 +175,14 @@ void EUTelDafFitter::dafEvent (LCEvent * event) {
     }
     event->addCollection(_fitpointvec, sfitpoints );
   }
+
+	for (size_t i = 0; i < _system.planes.size(); i++) {
+
+		_trueHitMap.at(_system.planes.at(i).getSensorID()).clear();
+	}
 }
 
-void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate<float,4>& track, LCCollectionVec *lcvec){
+void EUTelDafFitterAnalysis::addToLCIO(daffitter::TrackCandidate<float,4>& track, LCCollectionVec *lcvec){
   TrackImpl * fittrack = new TrackImpl();
   // Impact parameters are useless and set to 0
   fittrack->setD0(0.);        // impact paramter of the track in (r-phi)
@@ -233,7 +257,7 @@ void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate<float,4>& track, LCColl
   _fittrackvec->addElement(fittrack);
 }
 
-double EUTelDafFitter::getZfromRefHit(int plane, int sensorID, double *pos){
+double EUTelDafFitterAnalysis::getZfromRefHit(int plane, int sensorID, double *pos){
          
   TVector3 lpoint( pos[0], pos[1], pos[2] );
   TVector3 lvector( 0., 0., 1. );
@@ -259,34 +283,22 @@ double EUTelDafFitter::getZfromRefHit(int plane, int sensorID, double *pos){
   return point(2);
 }
 
-int EUTelProcessorTrueHitAnalysis::findPairIndex(float x, float y, int planeID) {
+int EUTelDafFitterAnalysis::findPairIndex(float x, float y, vector<double const*> vec) {
 
-	CellIDDecoder<TrackerHitImpl> trueHitDecoder(_trueHitCollectionVec);
-
-	if (_trueHitCollectionVec.size() == 1) return 0;
+	if (vec.size() == 1) return 0;
 	else {
 
-		int min_dist_index = -1;
-		double min_distance = 0;
-		for (int i = 0; i < _trueHitCollectionVec->getNumberOfElements(); i++) {
+		int min_dist_index = 0;
+		double min_distance = sqrt(pow(x - vec[0][0], 2) + pow(y - vec[0][1], 2));
 
-			if (static_cast<int>(trueHitDecoder(trueHit)["sensorID"]) == planeID) {
+		for (size_t i = 1; i < vec.size(); i++) {
 
-				if (min_dist_index == -1) {
+			double current_distance = sqrt(pow(x - vec[i][0], 2) + pow(y - vec[i][1], 2));
 
-					min_distance = sqrt(pow(x - _trueHitCollectionVec->getElementAt(i)->getPosition()[0], 2) + pow(y - _trueHitCollectionVec->getElementAt(i)->getPosition()[1], 2));
-					min_dist_index = i;
-				}
-				else {
+			if (current_distance < min_distance) {
 
-					double current_distance = sqrt(pow(x - _trueHitCollectionVec->getElementAt(i)->getPosition()[0], 2) + pow(y - _trueHitCollectionVec->getElementAt(i)->getPosition()[1], 2));
-
-					if (current_distance < min_distance) {
-
-						min_dist_index = i;
-						min_distance = current_distance;
-					}
-				}
+				min_dist_index = i;
+				min_distance = current_distance;
 			}
 		}
 
@@ -305,31 +317,30 @@ void EUTelDafFitterAnalysis::fillDiffHistos(daffitter::TrackCandidate<float,4>& 
 	for( size_t i = 0; i < _system.planes.size() ; i++){
 
 		daffitter::FitPlane<float>& plane = _system.planes.at(i);
-		/*char iden[4];
-		sprintf(iden, "%d", plane.getSensorID());*/
-		string bname = static_cast< string >("pl") + to_string(plane.getSensorID()) + "_trueHit_";
-		//Plot resids, angles for all hits with > 50% includion in track.
-		//This should be one measurement per track
-
 		daffitter::TrackEstimate<float,4>& estim = track.estimates.at(i);
-		int pairIndex = findPairIndex(estim.getX(), estim.getY(), i);
 
-		if (pairIndex == -1) {
+		if (_trueHitMap.at(plane.getSensorID()).size() == 0) {
 
-			streamlog_out(WARNING2) << "found an unpaired track hit estimate at event " << event->getEventNumber() << " on plane " << plane.getSensorID() << std::endl;
+			streamlog_out(WARNING2) << "found an unpaired hit at event " << event->getEventNumber() << " and at plane " << plane.getSensorID() << endl;
 			continue;
 		}
 
-		_aidaHistoMap[bname+"residualX"]->fill((estim.getX()-_trueHitCollectionVec->getElementAt(pairIndex)->getPosition()[0])*1e-3);
-		_aidaHistoMap[bname+"residualY"]->fill((estim.getY()-_trueHitCollectionVec->getElementAt(pairIndex)->getPosition()[1])*1e-3);
+		/*char iden[4];
+		sprintf(iden, "%d", plane.getSensorID());*/
+		string bname = static_cast< string >("pl") + to_string(plane.getSensorID()) + "_trueHit_";
 
-		_aidaHistoMapProf1D[bname+"residualdXvsX"]->fill(estim.getX(), estim.getX()-_trueHitCollectionVec->getElementAt(pairIndex)->getPosition()[0]);
-		_aidaHistoMapProf1D[bname+"residualdYvsX"]->fill(estim.getX(), estim.getY()-_trueHitCollectionVec->getElementAt(pairIndex)->getPosition()[1]);
-		_aidaHistoMapProf1D[bname+"residualdXvsY"]->fill(estim.getY(), estim.getX()-_trueHitCollectionVec->getElementAt(pairIndex)->getPosition()[0]);
-		_aidaHistoMapProf1D[bname+"residualdYvsY"]->fill(estim.getY(), estim.getY()-_trueHitCollectionVec->getElementAt(pairIndex)->getPosition()[1]);
+		int pairIndex = findPairIndex(estim.getX()/1000, estim.getY()/1000, static_cast<std::vector<double const*>>(_trueHitMap.at(plane.getSensorID())));
+
+		_aidaHistoMap[bname+"residualX"]->fill((estim.getX()/1000-_trueHitMap.at(plane.getSensorID())[pairIndex][0]));
+		_aidaHistoMap[bname+"residualY"]->fill((estim.getY()/1000-_trueHitMap.at(plane.getSensorID())[pairIndex][1]));
+
+		_aidaHistoMapProf1D[bname+"residualdXvsX"]->fill(estim.getX(), estim.getX()-_trueHitMap.at(plane.getSensorID())[pairIndex][0]*1000);
+		_aidaHistoMapProf1D[bname+"residualdYvsX"]->fill(estim.getX(), estim.getY()-_trueHitMap.at(plane.getSensorID())[pairIndex][1]*1000);
+		_aidaHistoMapProf1D[bname+"residualdXvsY"]->fill(estim.getY(), estim.getX()-_trueHitMap.at(plane.getSensorID())[pairIndex][0]*1000);
+		_aidaHistoMapProf1D[bname+"residualdYvsY"]->fill(estim.getY(), estim.getY()-_trueHitMap.at(plane.getSensorID())[pairIndex][1]*1000);
 
 		//finished with true hit, so remove it
-		_trueHitCollectionVec->removeElementAt(pairIndex);
+		_trueHitMap.at(plane.getSensorID()).erase(_trueHitMap.at(plane.getSensorID()).begin()+pairIndex);
 
 		/*for(size_t w = 0; w < plane.meas.size(); w++){
 
@@ -366,7 +377,7 @@ void EUTelDafFitterAnalysis::fillDiffHistos(daffitter::TrackCandidate<float,4>& 
 			_aidaZvFitX->fill(estim.getX(), (plane.getMeasZ() - plane.getZpos()) - (meas.getZ() - plane.getZpos()));
 			_aidaZvHitY->fill(estim.getY(), meas.getZ() - plane.getZpos());
 			_aidaZvFitY->fill(estim.getY(), (plane.getMeasZ() - plane.getZpos()) - (meas.getZ() - plane.getZpos()));*/
-		}
+		//}
 	}
 }
 
@@ -378,10 +389,12 @@ void EUTelDafFitterAnalysis::bookDiffHistos() {
 	AIDAProcessor::tree(this)->mkdir(basePath.c_str());
 	basePath.append("/");
 
-	double residminX = -0.3;
-	double residmaxX =  0.3;
+	double residminX = -0.05;
+	double residmaxX =  0.05;
 
 	for (size_t i = 0; i < _system.planes.size(); i++) {
+
+		daffitter::FitPlane<float>& plane = _system.planes.at(i);
 
 		string bname = static_cast< string >("pl") + to_string(plane.getSensorID()) + "_trueHit_";
 
@@ -395,5 +408,5 @@ void EUTelDafFitterAnalysis::bookDiffHistos() {
 	}
 }
 
-void EUTelDafFitter::dafEnd() {
+void EUTelDafFitterAnalysis::dafEnd() {
 }
