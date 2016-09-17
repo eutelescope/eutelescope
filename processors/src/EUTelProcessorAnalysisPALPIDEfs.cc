@@ -185,8 +185,9 @@ void EUTelProcessorAnalysisPALPIDEfs::init() {
   int _nTelPlanes = geo::gGeometry().nPlanes();
   const std::vector<int>& _planeID = geo::gGeometry().sensorIDsVec();
   
-  if (_chipVersion != 3) _nSectors = 4;
-  else _nSectors = 8;
+  if (_chipVersion < 3) _nSectors = 4;
+  else if (_chipVersion==3) _nSectors = 8;
+  else _nSectors = 1;
   
   for(int iz=0; iz < _nTelPlanes ; iz++)
     if(_planeID[iz]==_dutID)
@@ -248,7 +249,7 @@ void EUTelProcessorAnalysisPALPIDEfs::init() {
   if (!std::ifstream(_outputSettingsFileName.c_str()))
     newFile = true;
   settingsFile.open (_outputSettingsFileName.c_str(), ios::out | ios::app );
-    if (newFile && _chipVersion == 3) settingsFile << "Run number;Energy;Chip ID;Chip Version;Irradiation level(0-nonIrradiated,1-2.5e12,2-1e13,3-700krad,4-combined:1e13+700krad);Rate;BB;Ithr;Idb;Vcasn;Vcasn2;Vclip;Vcasp;VresetP;VresetD;Threshold and their RMS for all eight sectors;Noise and their RMS for all eight sectors;Readout delay;Trigger delay;Strobe length;StrobeB length;Data (1) or noise (0);Number of events;Efficiency,Number of tracks,Number of tracks with associated hit for all sectors" << endl;
+    if (newFile && _chipVersion >= 3) settingsFile << "Run number;Energy;Chip ID;Chip Version;Irradiation level(0-nonIrradiated,1-2.5e12,2-1e13,3-700krad,4-combined:1e13+700krad);Rate;BB;Ithr;Idb;Vcasn;Vcasn2;Vclip;Vcasp;VresetP;VresetD;Threshold and their RMS for all eight sectors;Noise and their RMS for all eight sectors;Readout delay;Trigger delay;Strobe length;StrobeB length;Data (1) or noise (0);Number of events;Efficiency,Number of tracks,Number of tracks with associated hit for all sectors" << endl;
     else if (newFile && ( _chipVersion == 2 || _chipVersion == 1)) {
       settingsFile << "Run number;Energy;Chip ID;Irradiation level(0-nonIrradiated,1-2.5e12,2-1e13,3-700krad,4-combined:1e13+700krad);Rate;BB;Ithr;Idb;Vcasn;Vaux;Vcasp;Vreset;Threshold and their RMS for all four sectors;Noise and their RMS for all four sectors;Readout delay;Trigger delay;Strobe length;StrobeB length;Data (1) or noise (0);Number of events;Efficiency,Number of tracks,Number of tracks with associated hit for all sectors" << endl; 
     }
@@ -322,7 +323,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
 	deadColumnHisto->Fill(sparsePixel.getXCoord()*xPitch+xPitch/2.,sparsePixel.getYCoord()*yPitch+yPitch/2.);
       }
     }
-    if (_chipVersion == 3) {
+    if (_chipVersion >= 3) {
       settingsFile << evt->getRunNumber() << ";" << _energy << ";" << _chipID[layerIndex] << ";" << _chipVersion << ";" << _irradiation[layerIndex] << ";" << _rate << ";" << evt->getParameters().getFloatVal("BackBiasVoltage") << ";" << evt->getParameters().getIntVal(Form("Ithr_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Idb_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Vcasn_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Vcasn2_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Vclip_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Vcasp_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("VresetP_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("VresetD_%d",layerIndex)) << ";";
     }
     else if (_chipVersion == 2 || _chipVersion == 1) {
@@ -1550,7 +1551,7 @@ int EUTelProcessorAnalysisPALPIDEfs::AddressToColumn(int ARegion, int ADoubleCol
 {
   int Column    = ARegion * 32 + ADoubleCol * 2;    // Double columns before ADoubleCol
   int LeftRight = 0;
-  if (_chipVersion == 3) {
+  if (_chipVersion >= 3) {
     LeftRight = ((((AAddress % 4) == 1) || ((AAddress % 4) == 2))? 1:0);       // Left or right column within the double column
   } else {
     LeftRight = ((AAddress % 4) < 2 ? 1:0);       // Left or right column within the double column
@@ -1563,7 +1564,7 @@ int EUTelProcessorAnalysisPALPIDEfs::AddressToRow(int AAddress)
 {
   // Ok, this will get ugly
   int Row = AAddress / 2;                // This is OK for the top-right and the bottom-left pixel within a group of 4
-  if (_chipVersion !=3) {
+  if (_chipVersion <3) {
     if ((AAddress % 4) == 3) Row -= 1;      // adjust the top-left pixel
     if ((AAddress % 4) == 0) Row += 1;      // adjust the bottom-right pixel
   }
