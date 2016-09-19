@@ -100,6 +100,7 @@ void EUTelDafFitterAnalysis::dafEvent (LCEvent * event) {
 
 		LCCollectionVec* trueHitCollectionVec = dynamic_cast<LCCollectionVec*>(event->getCollection(_trueHitCollectionName));
 		CellIDDecoder<TrackerHitImpl> trueHitDecoder(trueHitCollectionVec);
+
 		//fill the map with the true hits
 		for (int i = 0; i < trueHitCollectionVec->getNumberOfElements(); i++) {
 
