@@ -63,393 +63,347 @@ using namespace eutelescope;
 
 
 EUTelTrueHitDafFitter::EUTelTrueHitDafFitter() : Processor("EUTelTrueHitDafFitter") {
-  //Universal DAF params
 
-  // input collections
+	// Input/output collections
 	registerInputCollection(LCIO::TRACKERHIT, "TrueHitCollectionName", "Input of True Hit data", _trueHitCollectionName, string("true_hits"));
+	registerOutputCollection(LCIO::TRACKERHIT,"FitpointCollectionName", "Collection name for fitpoints of true track", _fitpointCollectionName, string("true_track_fitpoints"));
 	registerOutputCollection(LCIO::TRACK,"TrackCollectionName", "Collection name for fitted true tracks", _trackCollectionName, string("true_track"));
 
-	//other parameters from EUTelDafFitter.cc
-  _description = "This processor preforms track reconstruction with true hits";
-  //Tracker system options
-  registerOptionalParameter("AddToLCIO", "Should plots be made and filled?", _addToLCIO, static_cast<bool>(true));
-  registerOptionalParameter("FitDuts","Set this to true if you want DUTs to be included in the track fit", _fitDuts, static_cast<bool>(false)); 
+	// Other parameters from EUTelDafFitter.cc
+	_description = "This processor preforms track reconstruction with true hits";
+	// Tracker system options
+	registerOptionalParameter("FitDuts","Set this to true if you want DUTs to be included in the track fit", _fitDuts, static_cast<bool>(false)); 
 
-	// other input collections from EUTelDafBase.cc
-  EVENT::StringVec _mcCollectionExample;
-  registerProcessorParameter ("mccollections", "List of hit collections. First one is INPUT collection, every subsequent corresponds to applying alignment collection",
-			      _mcCollectionStr, _mcCollectionExample );
-  registerProcessorParameter ("clusterfinder", "Name of the clusterfinder which should be used, available are: simpleCluster and combinatorialKF",
-				 _clusterFinderName, std::string("simpleCluster"));
-  registerOptionalParameter("AlignmentCollectionNames", "Names of alignment collections, should be in same order as application",
-			    _alignColNames, std::vector<std::string>());
+	// Parameters from EUTelDafBase.cc
+	registerProcessorParameter ("clusterfinder", "Name of the clusterfinder which should be used, available are: simpleCluster and combinatorialKF", _clusterFinderName, std::string("simpleCluster"));
+	// Tracker system options
+	registerProcessorParameter("TelescopePlanes","List of sensor IDs for the telescope planes. These planes are used for the track finder, and track fitter.", _telPlanes ,std::vector<int>());
+	registerOptionalParameter("DutPlanes", "List of sensor IDs for the DUT planes. Used to make the decision on whether ro accept the track or not. These planes are not used in track finder, and not in the track fitter unless option 'useDutsInFit' is set.", _dutPlanes ,std::vector<int>());
+	registerOptionalParameter("Ebeam", "Beam energy [GeV], used to calculate amount of scatter", _eBeam,  static_cast < float > (120.0));
+	registerOptionalParameter("TelResolutionX", "Sigma of telescope resolution in the global X plane,", _telResX,  static_cast < float > (5.3));
+	registerOptionalParameter("TelResolutionY", "Sigma of telescope resolution in the global Y plane,", _telResY,  static_cast < float > (5.3));
+	registerOptionalParameter("DutResolutionX", "Sigma of telescope resolution in the global X plane,", _dutResX,  static_cast < float > (115.4));
+	registerOptionalParameter("DutResolutionY", "Sigma of telescope resolution in the global Y plane,", _dutResY,  static_cast < float > (14.4));
 
-  // Reference collection
-  registerOptionalParameter("ReferenceCollection","reference hit collection name ", _referenceHitCollectionName, static_cast <string> ("referenceHit") );
-  registerOptionalParameter("UseReferenceCollection","Do you want the reference hit collection to be used for coordinate transformations?",
-			    _useReferenceHitCollection, static_cast< bool   > ( true ));
-  
-  //Tracker system options
-  registerOptionalParameter("MakePlots", "Should plots be made and filled?", _histogramSwitch, static_cast<bool>(false));
-  registerProcessorParameter("TelescopePlanes","List of sensor IDs for the telescope planes. These planes are used for the track finder, and track fitter.", _telPlanes ,std::vector<int>());
-  registerOptionalParameter("DutPlanes",
-			    "List of sensor IDs for the DUT planes. Used to make the decision on whether ro accept the track or not. These planes are not used in track finder, and not in the track fitter unless option 'useDutsInFit' is set."
-			    , _dutPlanes ,std::vector<int>());
-  registerOptionalParameter("Ebeam", "Beam energy [GeV], used to calculate amount of scatter", _eBeam,  static_cast < float > (120.0));
-  registerOptionalParameter("TelResolutionX", "Sigma of telescope resolution in the global X plane,", _telResX,  static_cast < float > (5.3));
-  registerOptionalParameter("TelResolutionY", "Sigma of telescope resolution in the global Y plane,", _telResY,  static_cast < float > (5.3));
-  registerOptionalParameter("DutResolutionX", "Sigma of telescope resolution in the global X plane,", _dutResX,  static_cast < float > (115.4));
-  registerOptionalParameter("DutResolutionY", "Sigma of telescope resolution in the global Y plane,", _dutResY,  static_cast < float > (14.4));
+	// Material and resolution
+	registerOptionalParameter("RadiationLengths","Radiation lengths of planes, ordered by z-pos..", _radLength, std::vector<float>());
+	registerOptionalParameter("ResolutionX","Sigma resolution of planes, ordered by z-pos.", _sigmaX, std::vector<float>());
+	registerOptionalParameter("ResolutionY","Sigma resolution of planes, ordered by z-pos.", _sigmaY, std::vector<float>());
 
-  //Material and resolution
-  registerOptionalParameter("RadiationLengths","Radiation lengths of planes, ordered by z-pos..", _radLength, std::vector<float>());
-  registerOptionalParameter("ResolutionX","Sigma resolution of planes, ordered by z-pos.", _sigmaX, std::vector<float>());
-  registerOptionalParameter("ResolutionY","Sigma resolution of planes, ordered by z-pos.", _sigmaY, std::vector<float>());
-
-  //alignment corrections
-  // registerOptionalParameter("XShift","X translation of planes, ordered by z-pos..", _xShift, std::vector<float>());
-  // registerOptionalParameter("YShift","Y translation of planes, ordered by z-pos..", _yShift, std::vector<float>());
-  // registerOptionalParameter("XScale","X scale of planes, ordered by z-pos..", _xScale, std::vector<float>());
-  // registerOptionalParameter("YScale","Y scale of planes, ordered by z-pos..", _yScale, std::vector<float>());
-  // registerOptionalParameter("ZRot","Z rotation of planes, ordered by z-pos..", _zRot, std::vector<float>());
-  // registerOptionalParameter("ZPos","Z position of planes, ordered by gear z-pos..", _zPos, std::vector<float>());
-
-  //Track finder options
-  //registerOptionalParameter("FinderRadius","Track finding: The maximum allowed distance between to hits in the xy plane for inclusion in track candidate", _clusterRadius, static_cast<float>(300.0));
-  registerOptionalParameter("FinderRadius","Track finding: The maximum allowed normalized distance between to hits in the xy plane for inclusion in track candidate.", _normalizedRadius, static_cast<float>(300.0));
-  registerOptionalParameter("Chi2Cutoff","DAF fitter: The cutoff value for a measurement to be included in the fit.", _chi2cutoff, static_cast<float>(300.0f));
-  registerOptionalParameter("RequireNTelPlanes","How many telescope planes do we require to be included in the fit?",_nSkipMax ,static_cast <float> (0.0f));
-  registerOptionalParameter("NominalDxdz", "dx/dz assumed by track finder", _nXdz, static_cast<float>(0.0f));
-  registerOptionalParameter("NominalDydz", "dy/dz assumed by track finder", _nYdz, static_cast<float>(0.0f));
-  registerOptionalParameter("MaxXdxDeviance", "maximum devianve for dx/dz in CKF track finder", _nXdzMaxDeviance, static_cast<float>(0.01f));
-  registerOptionalParameter("MaxYdxDeviance", "maximum devianve for dy/dz in CKF track finder", _nYdzMaxDeviance, static_cast<float>(0.01f));
+	// Track finder options
+	registerOptionalParameter("FinderRadius","Track finding: The maximum allowed normalized distance between to hits in the xy plane for inclusion in track candidate.", _normalizedRadius, static_cast<float>(300.0));
+	registerOptionalParameter("Chi2Cutoff","DAF fitter: The cutoff value for a measurement to be included in the fit.", _chi2cutoff, static_cast<float>(300.0f));
+	registerOptionalParameter("RequireNTelPlanes","How many telescope planes do we require to be included in the fit?",_nSkipMax ,static_cast <float> (0.0f));
+	registerOptionalParameter("NominalDxdz", "dx/dz assumed by track finder", _nXdz, static_cast<float>(0.0f));
+	registerOptionalParameter("NominalDydz", "dy/dz assumed by track finder", _nYdz, static_cast<float>(0.0f));
+	registerOptionalParameter("MaxXdxDeviance", "maximum devianve for dx/dz in CKF track finder", _nXdzMaxDeviance, static_cast<float>(0.01f));
+	registerOptionalParameter("MaxYdxDeviance", "maximum devianve for dy/dz in CKF track finder", _nYdzMaxDeviance, static_cast<float>(0.01f));
 
   
-  //Track quality parameters
-  registerOptionalParameter("MaxChi2OverNdof", "Maximum allowed global chi2/ndof", _maxChi2, static_cast<float> ( 9999.0));
-  registerOptionalParameter("NDutHits", "How many DUT hits do we need in order to accept track?", _nDutHits, static_cast <int>(0));
+	// Track quality parameters
+	registerOptionalParameter("MaxChi2OverNdof", "Maximum allowed global chi2/ndof", _maxChi2, static_cast<float> ( 9999.0));
+	registerOptionalParameter("NDutHits", "How many DUT hits do we need in order to accept track?", _nDutHits, static_cast <int>(0));
 }
 
-bool EUTelTrueHitDafFitter::defineSystemFromData(){
-  //Find three measurements per plane, use these three to define the plane as a point and a normal vector
-  bool gotIt = true;
-  for(size_t plane = 0; plane < _system.planes.size(); plane++){
-    daffitter::FitPlane<float>& pl = _system.planes.at(plane);
-    bool gotPlane = false;
+bool EUTelTrueHitDafFitter::defineSystemFromData() {
 
-    //If plane is not DUT and not Tel, it does not have hits, and can not be initialized
-    if( find(_telPlanes.begin(), _telPlanes.end(), pl.getSensorID()) == _telPlanes.end() and
-	find(_dutPlanes.begin(), _dutPlanes.end(), pl.getSensorID()) == _dutPlanes.end()){
-      continue;
-    }
-    
-    for(size_t meas = 0; meas < pl.meas.size(); meas++){
-      if( _nRef.at(plane) > 2){ gotPlane = true; continue; }
-      if( _nRef.at(plane) == 0 ){
-	pl.setRef0( Eigen::Matrix<float, 3, 1>(pl.meas.at(meas).getX(), pl.meas.at(meas).getY(), pl.meas.at(meas).getZ()));
-	_nRef.at(plane)++;
-	gotPlane = false;
-	continue;
-      }
+	// Find three measurements per plane, use these three to define the plane as a point and a normal vector
+	bool gotIt = true;
+	for (size_t plane = 0; plane < _system.planes.size(); plane++) {
 
-      if( fabs(pl.meas.at(meas).getX() - pl.getRef0()(0) ) < 500) { continue; }
-      if( fabs(pl.meas.at(meas).getY() - pl.getRef0()(1) ) < 500) { continue; }
+		daffitter::FitPlane<float>& pl = _system.planes.at(plane);
+		bool gotPlane = false;
 
-      if( _nRef.at(plane) == 1 ){
-	pl.setRef1( Eigen::Matrix<float, 3, 1>(pl.meas.at(meas).getX(), pl.meas.at(meas).getY(), pl.meas.at(meas).getZ()));
-	_nRef.at(plane)++;
-	gotPlane = false;
-	continue;
-      }
-      if( fabs(pl.meas.at(meas).getX() - pl.getRef1()(0) ) < 500) {  continue; }
-      if( fabs(pl.meas.at(meas).getY() - pl.getRef1()(1) ) < 500) {  continue; }
-      if( _nRef.at(plane) == 2 ){
-	pl.setRef2( Eigen::Matrix<float, 3, 1>(pl.meas.at(meas).getX(), pl.meas.at(meas).getY(), pl.meas.at(meas).getZ()));
-	_nRef.at(plane)++;
+		// If plane is not DUT and not Tel, it does not have hits, and can not be initialized
+		if (find(_telPlanes.begin(), _telPlanes.end(), pl.getSensorID()) == _telPlanes.end() and
+			find(_dutPlanes.begin(), _dutPlanes.end(), pl.getSensorID()) == _dutPlanes.end()) continue;
+
+		for (size_t meas = 0; meas < pl.meas.size(); meas++) {
+
+			if (_nRef.at(plane) > 2) { gotPlane = true; continue;}
+			if (_nRef.at(plane) == 0 ) {
+
+				pl.setRef0( Eigen::Matrix<float, 3, 1>(pl.meas.at(meas).getX(), pl.meas.at(meas).getY(), pl.meas.at(meas).getZ()));
+				_nRef.at(plane)++;
+
+				gotPlane = false;
+				continue;
+			}
+			if (fabs(pl.meas.at(meas).getX() - pl.getRef0()(0)) < 500) continue;
+			if (fabs(pl.meas.at(meas).getY() - pl.getRef0()(1)) < 500) continue;
+
+			if (_nRef.at(plane) == 1) {
+
+				pl.setRef1( Eigen::Matrix<float, 3, 1>(pl.meas.at(meas).getX(), pl.meas.at(meas).getY(), pl.meas.at(meas).getZ()));
+				_nRef.at(plane)++;
+
+				gotPlane = false;
+				continue;
+			}
+			if (fabs(pl.meas.at(meas).getX() - pl.getRef1()(0)) < 500) continue;
+			if (fabs(pl.meas.at(meas).getY() - pl.getRef1()(1)) < 500) continue;
+
+			if (_nRef.at(plane) == 2) {
+
+				pl.setRef2( Eigen::Matrix<float, 3, 1>(pl.meas.at(meas).getX(), pl.meas.at(meas).getY(), pl.meas.at(meas).getZ()));
+				_nRef.at(plane)++;
+				getPlaneNorm(pl);
+				streamlog_out ( MESSAGE5 ) << "Initialized plane " << pl.getSensorID() << endl;
+
+				gotPlane = true;
+				continue;
+			}
+		}
+
+		if (not gotPlane) gotIt = false;
+	}
+
+	return(gotIt);
+}
+
+void EUTelTrueHitDafFitter::gearRotate(size_t index, size_t gearIndex) {
+
+	daffitter::FitPlane<float>& pl = _system.planes.at(index);
+
+	double gRotation[3] = { 0., 0., 0.};
+	gRotation[0] = _siPlanesLayerLayout->getLayerRotationXY(gearIndex); // Euler alpha
+	gRotation[1] = _siPlanesLayerLayout->getLayerRotationZX(gearIndex); // Euler beta
+	gRotation[2] = _siPlanesLayerLayout->getLayerRotationZY(gearIndex); // Euler gamma
+	// transform into radians
+	gRotation[0] =  gRotation[0]*3.1415926/180.; 
+	gRotation[1] =  gRotation[1]*3.1415926/180.; 
+	gRotation[2] =  gRotation[2]*3.1415926/180.; 
+  
+	// Reference points define plane
+	// Transform ref, cloning hitmaker logic
+	TVector3 ref0 = TVector3(0.0, 0.0, 0.0);
+	TVector3 ref1 = TVector3(10.0, 0.0, 0.0);
+	TVector3 ref2 = TVector3(0.0, 10.0, 0.0);
+
+	double nomZ = _siPlanesLayerLayout->getSensitivePositionZ(gearIndex); // mm
+
+	if (TMath::Abs(gRotation[0]) > 1e-6) {
+
+		ref0.RotateZ( gRotation[0] );
+		ref1.RotateZ( gRotation[0] );
+		ref2.RotateZ( gRotation[0] );
+	}
+	if (TMath::Abs(gRotation[1]) > 1e-6) {
+
+		ref0.RotateY( gRotation[1] );
+		ref1.RotateY( gRotation[1] );
+		ref2.RotateY( gRotation[1] );
+	}
+	if (TMath::Abs(gRotation[2]) > 1e-6) {
+
+		ref0.RotateX( gRotation[2] );
+		ref1.RotateX( gRotation[2] );
+		ref2.RotateX( gRotation[2] );
+	}
+
+	pl.setRef0(Eigen::Vector3f(ref0.X()*1000.0f, ref0.Y()*1000.0f, (ref0.Z()+nomZ)*1000.0f));
+	pl.setRef1(Eigen::Vector3f(ref1.X()*1000.0f, ref1.Y()*1000.0f, (ref1.Z()+nomZ)*1000.0f));
+	pl.setRef2(Eigen::Vector3f(ref2.X()*1000.0f, ref2.Y()*1000.0f, (ref2.Z()+nomZ)*1000.0f));
+
+	// Tracks are propagated to glob xy plane => Errors are in glob xy plane. scales like cosine
+	// Errors not corrected for xy rotation
+	pl.scaleErrors( std::fabs(std::cos(gRotation[1])), std::fabs(std::cos(gRotation[0])));
 	getPlaneNorm(pl);
-	streamlog_out ( MESSAGE5 ) << "Initialized plane " << pl.getSensorID() << endl;
-	gotPlane = true;
-	continue;
-      }
-    }
-    if(not gotPlane) { gotIt = false;}
-  }
-  return(gotIt);
-}
-
-void EUTelTrueHitDafFitter::gearRotate(size_t index, size_t gearIndex){
-  daffitter::FitPlane<float>& pl = _system.planes.at(index);
-
-  double gRotation[3] = { 0., 0., 0.};
-  gRotation[0] = _siPlanesLayerLayout->getLayerRotationXY(gearIndex); // Euler alpha
-  gRotation[1] = _siPlanesLayerLayout->getLayerRotationZX(gearIndex); // Euler beta
-  gRotation[2] = _siPlanesLayerLayout->getLayerRotationZY(gearIndex); // Euler gamma
-  // transform into radians
-  gRotation[0] =  gRotation[0]*3.1415926/180.; 
-  gRotation[1] =  gRotation[1]*3.1415926/180.; 
-  gRotation[2] =  gRotation[2]*3.1415926/180.; 
-  
-  //Reference points define plane
-  //Transform ref, cloning hitmaker logic
-  TVector3 ref0 = TVector3(0.0, 0.0, 0.0);
-  TVector3 ref1 = TVector3(10.0, 0.0, 0.0);
-  TVector3 ref2 = TVector3(0.0, 10.0, 0.0);
-
-  double zZero        = _siPlanesLayerLayout->getSensitivePositionZ(gearIndex); // mm
-  //double zThickness   = _siPlanesLayerLayout->getSensitiveThickness(gearIndex); // mm
-
-  double nomZ = zZero;// + 0.5 * zThickness;
-
-  if( TMath::Abs( gRotation[0] ) > 1e-6 ){
-    ref0.RotateZ( gRotation[0] );
-    ref1.RotateZ( gRotation[0] );
-    ref2.RotateZ( gRotation[0] );
-  }
-  if( TMath::Abs( gRotation[1] )> 1e-6 ) {
-    ref0.RotateY( gRotation[1] );
-    ref1.RotateY( gRotation[1] );
-    ref2.RotateY( gRotation[1] );
-  }
-  if( TMath::Abs( gRotation[2] ) > 1e-6 ){
-    ref0.RotateX( gRotation[2] );
-    ref1.RotateX( gRotation[2] );
-    ref2.RotateX( gRotation[2] );
-  }
-
-  pl.setRef0( Eigen::Vector3f( ref0.X() * 1000.0f, ref0.Y() * 1000.0f, (ref0.Z() + nomZ) * 1000.0f ));
-  pl.setRef1( Eigen::Vector3f( ref1.X() * 1000.0f, ref1.Y() * 1000.0f, (ref1.Z() + nomZ) * 1000.0f ));
-  pl.setRef2( Eigen::Vector3f( ref2.X() * 1000.0f, ref2.Y() * 1000.0f, (ref2.Z() + nomZ) * 1000.0f ));
-
-  //Tracks are propagated to glob xy plane => Errors are in glob xy plane. scales like cosine
-  //Errors not corrected for xy rotation
-  pl.scaleErrors( std::fabs(std::cos(gRotation[1])), std::fabs(std::cos(gRotation[0])));
-  getPlaneNorm(pl);
 } 
 
-Eigen::Vector3f EUTelTrueHitDafFitter::applyAlignment(EUTelAlignmentConstant* alignment, Eigen::Vector3f point){
-  Eigen::Vector3f outpoint;
-  double alpha = alignment->getAlpha();
-  double beta  = alignment->getBeta();  
-  double gamma = alignment->getGamma();
-  double z_sensor = point(2);
+void EUTelTrueHitDafFitter::getPlaneNorm(daffitter::FitPlane<float>& pl) {
 
-  // sync with updated sign convention of the rotation angles:
-  //
-  outpoint(0) =                point(0) + (-1)*gamma * point(1) +      beta  * (point(2) - z_sensor) ;
-  outpoint(1) =        gamma * point(0) +              point(1) + (-1)*alpha * (point(2) - z_sensor) ;
-  outpoint(2) = (-1) * beta  * point(0) +      alpha * point(1) +              (point(2) - z_sensor) ;
+	Eigen::Vector3f l1 = pl.getRef1() - pl.getRef0();
+	Eigen::Vector3f l2 = pl.getRef2() - pl.getRef0();
 
-  // second the shift
-  outpoint(0) -= 1000.0f * alignment->getXOffset();
-  outpoint(1) -= 1000.0f * alignment->getYOffset();
-  outpoint(2) -= 1000.0f * alignment->getZOffset();
-           
-  outpoint(2) += z_sensor ;
-
-  return(outpoint);
-}
-
-void EUTelTrueHitDafFitter::alignRotate(std::string collectionName, LCEvent* event) {
-  LCCollectionVec * alignmentCollectionVec;
-  try {
-    alignmentCollectionVec     = dynamic_cast < LCCollectionVec * > (event->getCollection(collectionName));
-  } catch (DataNotAvailableException& e) {
-    throw runtime_error("Unable to open alignment collection " + collectionName);
-  }
-  for( size_t plane = 0; plane < _system.planes.size() ; plane++){
-    daffitter::FitPlane<float>& pl = _system.planes.at(plane);
-    int iden = pl.getSensorID();
-    for ( size_t ii = 0; ii < alignmentCollectionVec->size(); ++ii ) {
-      try{
-	EUTelAlignmentConstant * alignment = static_cast< EUTelAlignmentConstant * >
-	  ( alignmentCollectionVec->getElementAt( ii ) );
-	if( alignment->getSensorID() != iden) { continue; }
-	pl.setRef0( applyAlignment(alignment, pl.getRef0()) );
-	pl.setRef1( applyAlignment(alignment, pl.getRef1()) );
-	pl.setRef2( applyAlignment(alignment, pl.getRef2()) );
-	//Errors not corrected for xy rotation
-	getPlaneNorm(pl);
-	pl.scaleErrors(alignment->getAlpha() + 1.0f, alignment->getBeta() + 1.0f);
-	pl.print();
-      }
-      catch(...){
-        streamlog_out(WARNING) << "Could not find sensor in " <<  collectionName.c_str() << " at " << ii << endl;
-      }
-    }
-  }
-}
-void EUTelTrueHitDafFitter::getPlaneNorm(daffitter::FitPlane<float>& pl){
-  Eigen::Vector3f l1 = pl.getRef1() - pl.getRef0();
-  Eigen::Vector3f l2 = pl.getRef2() - pl.getRef0();
-  //Calculate plane normal vector from ref points
-  pl.setPlaneNorm( l2.cross(l1));
+	// Calculate plane normal vector from ref points
+	pl.setPlaneNorm(l2.cross(l1));
 }
 
 void EUTelTrueHitDafFitter::init() {
-  printParameters ();
 
-  _iRun = 0; _iEvt = 0; _nTracks = 0; _nCandidates =0;
-  n_passedNdof =0; n_passedChi2OverNdof = 0; n_passedIsnan = 0;
-  n_failedNdof =0; n_failedChi2OverNdof = 0; n_failedIsnan = 0;
-  _initializedSystem = false;
+	printParameters ();
 
-  //Set-uo the cluster finder
-  if(_clusterFinderName == "simpleCluster") {
-	_trackFinderType = simpleCluster;
-  } else if(_clusterFinderName == "combinatorialKF") {
-	_trackFinderType = combinatorialKF;
-  } else {
-	throw std::runtime_error("DAF-Fitter: Choosen cluster finder: "+_clusterFinderName+"does not exist");
-  }
+	_iRun = 0; _iEvt = 0; _nTracks = 0; _nCandidates =0;
+	n_passedNdof =0; n_passedChi2OverNdof = 0; n_passedIsnan = 0;
+	n_failedNdof =0; n_failedChi2OverNdof = 0; n_failedIsnan = 0;
+	_initializedSystem = false;
 
-  //Geometry description
-  _siPlanesParameters  = const_cast<gear::SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
-  _siPlanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
+	// Set-up the cluster finder
+	if (_clusterFinderName == "simpleCluster") _trackFinderType = simpleCluster;
+	else if (_clusterFinderName == "combinatorialKF") _trackFinderType = combinatorialKF;
+	else throw std::runtime_error("DAF-Fitter: Choosen cluster finder: "+_clusterFinderName+"does not exist");
 
-  //Use map to sort planes by z
-  _zSort.clear();
-  for(int plane = 0; plane < _siPlanesLayerLayout->getNLayers(); plane++){
-    _zSort[ _siPlanesLayerLayout->getLayerPositionZ(plane) * 1000.0 ] = plane;
-    _indexIDMap[ _siPlanesLayerLayout->getID( plane )] = plane;
-  }
+	// Geometry description
+	_siPlanesParameters  = const_cast<gear::SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
+	_siPlanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
 
-  //Add Planes to tracker system,
-  map<float, int>::iterator zit = _zSort.begin();
-  size_t index(0), nActive(0);
-  for( ; zit != _zSort.end(); index++, zit++){
-    _nRef.push_back(3);
-    int sensorID = _siPlanesLayerLayout->getID( (*zit).second );
-    //Read sensitive as 0, in case the two are different
-    float zPos  = _siPlanesLayerLayout->getSensitivePositionZ( (*zit).second )* 1000.0;
-    //+ 0.5 * 1000.0 *  _siPlanesLayerLayout->getSensitiveThickness( (*zit).second) ; // Do not move plane to center of plane, use front.
-    //Figure out what kind of plane we are dealing with
-    float errX(0.0f), errY(0.0f);
-    bool excluded = true;
+	// Use map to sort planes by z
+	_zSort.clear();
+	for(int plane = 0; plane < _siPlanesLayerLayout->getNLayers(); plane++){
 
-    // Get scatter using x / x0
-    float radLength = _siPlanesLayerLayout->getLayerThickness( (*zit).second ) /  _siPlanesLayerLayout->getLayerRadLength( (*zit).second );
-    radLength += _siPlanesLayerLayout->getSensitiveThickness( (*zit).second ) /  _siPlanesLayerLayout->getSensitiveRadLength( (*zit).second );
+		_zSort[ _siPlanesLayerLayout->getLayerPositionZ(plane) * 1000.0 ] = plane;
+		_indexIDMap[ _siPlanesLayerLayout->getID( plane )] = plane;
+	}
 
-    streamlog_out ( MESSAGE5 ) << " zPos:      " << zPos << " " << radLength ;
-    streamlog_out ( MESSAGE5 ) << " sen thick: " << _siPlanesLayerLayout->getSensitiveThickness( (*zit).second ) ;
-    streamlog_out ( MESSAGE5 ) << " sens rad:  " << _siPlanesLayerLayout->getSensitiveRadLength( (*zit).second ) << endl;
-    if( _radLength.size() > index){
-      radLength = _radLength.at(index);
-    } else {
-      _radLength.push_back(radLength);
-    }
+	// Add Planes to tracker system,
+	map<float, int>::iterator zit = _zSort.begin();
+	size_t index(0), nActive(0);
+	for (; zit != _zSort.end(); index++, zit++) {
 
-    float scatter = getScatterThetaVar( radLength );
+		_nRef.push_back(3);
+		int sensorID = _siPlanesLayerLayout->getID( (*zit).second );
+
+		// Read sensitive as 0, in case the two are different
+		float zPos  = _siPlanesLayerLayout->getSensitivePositionZ( (*zit).second )* 1000.0;
+
+		// Figure out what kind of plane we are dealing with
+		float errX(0.0f), errY(0.0f);
+		bool excluded = true;
+
+		// Get scatter using x / x0
+		float radLength = _siPlanesLayerLayout->getLayerThickness( (*zit).second ) /  _siPlanesLayerLayout->getLayerRadLength( (*zit).second );
+		radLength += _siPlanesLayerLayout->getSensitiveThickness( (*zit).second ) /  _siPlanesLayerLayout->getSensitiveRadLength( (*zit).second );
+
+		streamlog_out ( MESSAGE5 ) << " zPos:      " << zPos << " " << radLength ;
+		streamlog_out ( MESSAGE5 ) << " sen thick: " << _siPlanesLayerLayout->getSensitiveThickness( (*zit).second );
+		streamlog_out ( MESSAGE5 ) << " sens rad:  " << _siPlanesLayerLayout->getSensitiveRadLength( (*zit).second ) << endl;
+
+		if (_radLength.size() > index) radLength = _radLength.at(index);
+		else _radLength.push_back(radLength);
+
+		float scatter = getScatterThetaVar(radLength);
+		streamlog_out ( MESSAGE5 ) << " radlength: "<< radLength << endl;
+		streamlog_out ( MESSAGE5 ) << " scatter: "<< scatter << endl;
     
-    streamlog_out ( MESSAGE5 ) << " radlength: "<< radLength << endl;
-    streamlog_out ( MESSAGE5 ) << " scatter: "<< scatter << endl;
-    
-    //Is current plane a telescope plane?
-    if( find(_telPlanes.begin(), _telPlanes.end(), sensorID) != _telPlanes.end()){
-      _nRef.at(index) = 0;
-      errX = _telResX; errY = _telResY;
-      excluded = false;
-    }
-    //Is current plane a DUT plane?
-    if( find(_dutPlanes.begin(), _dutPlanes.end(), sensorID) != _dutPlanes.end()){
-      _nRef.at(index) = 0;
-      errX = _dutResX; errY = _dutResY;
-      scatter = getScatterThetaVar( radLength );
-    }
-    //If plane is neither Tel nor Dut, all we need is the zpos and scatter amount.
+		// Is current plane a telescope plane?
+		if (find(_telPlanes.begin(), _telPlanes.end(), sensorID) != _telPlanes.end()) {
 
-    //Add plane to tracker system
-    if(not excluded){ nActive++;}
-    _system.addPlane(sensorID, zPos , errX, errY, scatter, excluded);
-    gearRotate(index, (*zit).second);
-  }
+			_nRef.at(index) = 0;
+			errX = _telResX; errY = _telResY;
+
+			excluded = false;
+		}
+
+		// Is current plane a DUT plane?
+		if (find(_dutPlanes.begin(), _dutPlanes.end(), sensorID) != _dutPlanes.end()) {
+
+			_nRef.at(index) = 0;
+			errX = _dutResX; errY = _dutResY;
+			scatter = getScatterThetaVar(radLength);
+		}
+		// If plane is neither Tel nor Dut, all we need is the zpos and scatter amount.
+
+		// Add plane to tracker system
+		if (not excluded) nActive++;
+		_system.addPlane(sensorID, zPos , errX, errY, scatter, excluded);
+		gearRotate(index, (*zit).second);
+	}
  
-  //Prepare track finder
-  switch( _trackFinderType ) {
-	case combinatorialKF: _system.setCKFChi2Cut(_normalizedRadius*_normalizedRadius); break;
-	case simpleCluster: _system.setClusterRadius(_normalizedRadius); break;
-  }
-  _system.setNominalXdz(_nXdz); //What is the tangent angle of the beam? (Probably zero)
-  _system.setNominalYdz(_nYdz);
-  _system.setXdzMaxDeviance(_nXdzMaxDeviance); //How far og the nominal angle can the first two measurements be?
-  _system.setYdzMaxDeviance(_nYdzMaxDeviance);
+	// Prepare track finder
+	switch (_trackFinderType) {
 
-  //Prepare and preallocate memory for track fitter
-  _system.setChi2OverNdofCut(_maxChi2);
-  _system.setDAFChi2Cut(_chi2cutoff);
-  _system.init();
+		case combinatorialKF: _system.setCKFChi2Cut(_normalizedRadius*_normalizedRadius); break;
+		case simpleCluster: _system.setClusterRadius(_normalizedRadius); break;
+	}
 
-  //Fuzzy assignment by DAF might make a plane only partially included, This means ndof is
-  //not a integer. Everything above (ndof - 0.5) is assumed to include at least ndof degrees of
-  //freedom. 
-  _ndofMin = -4 + _nSkipMax * 2 - 0.5;
-  streamlog_out ( MESSAGE5 ) << "NDOF min is " << _ndofMin << endl;
-  if( _ndofMin < 0.5) {
-    streamlog_out ( ERROR5 ) << "Too few active planes(" << nActive << ") when " << _nSkipMax << " planes can be skipped." 
-			     << "Please check your configuration." << endl;
-    exit(1);
-  }
+	_system.setNominalXdz(_nXdz); // What is the tangent angle of the beam? (Probably zero)
+	_system.setNominalYdz(_nYdz);
+	_system.setXdzMaxDeviance(_nXdzMaxDeviance); // How far og the nominal angle can the first two measurements be?
+	_system.setYdzMaxDeviance(_nYdzMaxDeviance);
 
-  //dafInit() from EUTelDafFitter.cc
-  if(_fitDuts){
-    for( size_t ii = 0; ii< _system.planes.size(); ii++){
-      if( find(_dutPlanes.begin(), _dutPlanes.end(), _system.planes.at(ii).getSensorID()) != _dutPlanes.end()){ 
-	_system.planes.at(ii).include(); 
-      }
-    }
-  }
-    
-  if(_histogramSwitch) {
-    bookHistos(); 
-    bookDetailedHistos();
-  }
+	// Prepare and preallocate memory for track fitter
+	_system.setChi2OverNdofCut(_maxChi2);
+	_system.setDAFChi2Cut(_chi2cutoff);
+	_system.init();
 
-  //Define region for edge masking
-  for(size_t ii = 0; ii < _dutPlanes.size(); ii++){
-    int iden = _dutPlanes.at(ii);
-    int xMin = _colMin.size() > ii ? _colMin.at(ii) : -9999999;
-    int xMax = _colMax.size() > ii ? _colMax.at(ii) : 9999999;
-    int yMin = _rowMin.size() > ii ? _rowMin.at(ii) : -9999999;
-    int yMax = _rowMax.size() > ii ? _rowMax.at(ii) : 9999999;
-    _colMinMax[iden] = make_pair(xMin, xMax);
-    _rowMinMax[iden] = make_pair(yMin, yMax);
-  }
+	// Fuzzy assignment by DAF might make a plane only partially included, This means ndof is
+	// not a integer. Everything above (ndof - 0.5) is assumed to include at least ndof degrees of
+	// freedom. 
+	_ndofMin = -4 + _nSkipMax * 2 - 0.5;
+	streamlog_out ( MESSAGE5 ) << "NDOF min is " << _ndofMin << endl;
+	if (_ndofMin < 0.5) {
+
+		streamlog_out ( ERROR5 ) << "Too few active planes(" << nActive << ") when " << _nSkipMax << " planes can be skipped." << "Please check your configuration." << endl;
+
+		exit(1);
+	}
+
+	// dafInit() from EUTelDafFitter.cc
+	if (_fitDuts) {
+
+		for (size_t i = 0; i < _system.planes.size(); i++){
+
+			if (find(_dutPlanes.begin(), _dutPlanes.end(), _system.planes.at(i).getSensorID()) != _dutPlanes.end()) {
+
+				_system.planes.at(i).include(); 
+			}
+		}
+	}
+
+	bookHistos(); 
+	bookDetailedHistos();
+
+	// Define region for edge masking
+	for (size_t i = 0; i < _dutPlanes.size(); i++) {
+
+		int iden = _dutPlanes.at(i);
+		int xMin = _colMin.size() > i ? _colMin.at(i) : -9999999;
+		int xMax = _colMax.size() > i ? _colMax.at(i) : 9999999;
+		int yMin = _rowMin.size() > i ? _rowMin.at(i) : -9999999;
+		int yMax = _rowMax.size() > i ? _rowMax.at(i) : 9999999;
+		_colMinMax[iden] = make_pair(xMin, xMax);
+		_rowMinMax[iden] = make_pair(yMin, yMax);
+	}
 }
 
-void EUTelTrueHitDafFitter::processRunHeader (LCRunHeader * rdr) {
-  std::unique_ptr<EUTelRunHeaderImpl> header = std::make_unique<EUTelRunHeaderImpl>(rdr);
-  header->addProcessor(type());
-  ++_iRun;
+void EUTelTrueHitDafFitter::processRunHeader (LCRunHeader* rdr) {
+
+	std::unique_ptr<EUTelRunHeaderImpl> header = std::make_unique<EUTelRunHeaderImpl>(rdr);
+	header->addProcessor(type());
+
+	++_iRun;
 }
 
 
-float EUTelTrueHitDafFitter::getScatterThetaVar( float radLength ){
-  //From pdg live
-  float scatterTheta = 0.0136f/_eBeam * sqrt( radLength ) *  (1.0f + 0.038f * std::log(radLength) );
-  return(scatterTheta * scatterTheta);
+float EUTelTrueHitDafFitter::getScatterThetaVar(float radLength) {
+
+	// From pdg live
+	float scatterTheta = 0.0136f/_eBeam * sqrt( radLength ) *  (1.0f + 0.038f * std::log(radLength) );
+
+	return(scatterTheta * scatterTheta);
 }
 
-size_t EUTelTrueHitDafFitter::getPlaneIndex(float zPos){
-  //Get plane index from z-position of hit
-  map<float,int>::iterator it = _zSort.begin();
-  size_t index(0);
-  bool foundIt(false);
-  for(;it != _zSort.end(); index++, it++){
-    if( fabs((*it).first - zPos) < 30000.0){ 
-      foundIt = true; break;
-    }
-  }
-  if(not foundIt){ 
-    streamlog_out ( ERROR5 ) << "Found hit at z=" << zPos << " , not able to assign to any plane!" << endl; 
-    return(-1);
-  }
-  return(index);
+size_t EUTelTrueHitDafFitter::getPlaneIndex(float zPos) {
+
+	// Get plane index from z-position of hit
+	map<float,int>::iterator it = _zSort.begin();
+	size_t index(0);
+	bool foundIt(false);
+
+	for (; it != _zSort.end(); index++, it++) {
+
+		if (fabs((*it).first - zPos) < 30000.0) {
+
+			foundIt = true;
+			break;
+		}
+	}
+
+	if (not foundIt) { 
+
+		streamlog_out ( ERROR5 ) << "Found hit at z=" << zPos << " , not able to assign to any plane!" << endl; 
+
+		return(-1);
+	}
+
+	return(index);
 }
 
-void EUTelTrueHitDafFitter::readHitCollection(LCEvent* event){
+void EUTelTrueHitDafFitter::readHitCollection(LCEvent* event) {
 
-	//Dump LCIO true hit collection to tracker system
-	//Extract true hits from collection, add to tracker system
+	// Dump LCIO true hit collection to tracker system
+	// Extract true hits from collection, add to tracker system
 	try {
 
 		_trueHitCollectionVec = dynamic_cast<LCCollectionVec*>(event->getCollection(_trueHitCollectionName));
@@ -460,9 +414,9 @@ void EUTelTrueHitDafFitter::readHitCollection(LCEvent* event){
 		streamlog_out(DEBUG4) << "_trueHitCollectionVec: " << _trueHitCollectionName.c_str() << " not found in event " << event->getEventNumber() << std::endl;
 	}
 
-	//Add all true hits in collection that are part of the main track to corresponding plane
-	//true hits are part of the main track of the event if their trackID is 1
-	//the trackID of the true hits is stored in the quality parameter of the TrackerHit
+	// Add all true hits in collection that are part of the main track to corresponding plane
+	// true hits are part of the main track of the event if their trackID is 1
+	// the trackID of the true hits is stored in the quality parameter of the TrackerHit
 	CellIDDecoder<TrackerHitImpl> trueHitDecoder(_trueHitCollectionVec);
 
 	for (int i = 0; i < _trueHitCollectionVec->getNumberOfElements(); i++) {
@@ -492,437 +446,459 @@ void EUTelTrueHitDafFitter::readHitCollection(LCEvent* event){
     }
 }
 
-int EUTelTrueHitDafFitter::checkInTime(daffitter::TrackCandidate<float, 4>& track){
-  size_t nMatches(0);
-  for( size_t ii = 0; ii < _system.planes.size() ; ii++){
-    daffitter::FitPlane<float>& plane = _system.planes.at(ii);
-    int sensorID = plane.getSensorID();
-    //Check if any DUT plane is "In time" with the 
-    if( find(_dutPlanes.begin(), _dutPlanes.end(), sensorID) == _dutPlanes.end()){
-      continue;
-    }
-    //In timeness can be checked by seeing if the plane has assigned weight
-    for(size_t w = 0; w < plane.meas.size(); w++){
-      if( track.weights.at(ii)(w) < 0.5f ) {  continue; }
-      nMatches++;
-      break;
-    }
-  }
-  return(nMatches);
+int EUTelTrueHitDafFitter::checkInTime(daffitter::TrackCandidate<float, 4>& track) {
+
+	size_t nMatches(0);
+
+	for (size_t i = 0; i < _system.planes.size(); i++) {
+
+		daffitter::FitPlane<float>& plane = _system.planes.at(i);
+		int sensorID = plane.getSensorID();
+
+		// Check if any DUT plane is "In time" with the 
+		if (find(_dutPlanes.begin(), _dutPlanes.end(), sensorID) == _dutPlanes.end()) continue;
+
+		// In timeness can be checked by seeing if the plane has assigned weight
+		for (size_t w = 0; w < plane.meas.size(); w++) {
+
+			if (track.weights.at(i)(w) < 0.5f) continue;
+
+			nMatches++;
+			break;
+		}
+	}
+
+	return(nMatches);
 }
 
-void EUTelTrueHitDafFitter::processEvent(LCEvent * event){
-  //Called once per event, read data, fit, save
-  EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
-  if(event->getEventNumber() % 1000 == 0){
-    streamlog_out ( MESSAGE ) << "Accepted " << _nTracks <<" tracks at event " << event->getEventNumber() << endl;
-    if(not _initializedSystem){
-      streamlog_out ( MESSAGE ) << "System not initialized " << event->getEventNumber() << endl;
-    }
-  }
-  if ( evt->getEventType() == kEORE ) {
-    streamlog_out ( DEBUG2 ) << "EORE found: nothing else to do." << endl;
-    return;
-  }
-  if( isFirstEvent() ){
-    //Resolution needs to be updated w.r.t. alignment and GEAR rotations.
-    for(size_t ii = 0; ii < _alignColNames.size(); ii++){
-      alignRotate(_alignColNames.at(ii), event);
-    }
+void EUTelTrueHitDafFitter::processEvent(LCEvent* event) {
+
+	// Called once per event, read data, fit, save
+	EUTelEventImpl* evt = static_cast<EUTelEventImpl*>(event);
+
+	if (event->getEventNumber() % 1000 == 0) {
+
+		streamlog_out ( MESSAGE ) << "Accepted " << _nTracks <<" tracks at event " << event->getEventNumber() << endl;
+
+		if (not _initializedSystem) streamlog_out ( MESSAGE ) << "System not initialized " << event->getEventNumber() << endl;
+	}
+
+	if (evt->getEventType() == kEORE) {
+
+		streamlog_out ( DEBUG2 ) << "EORE found: nothing else to do." << endl;
+
+		return;
+	}
+
+	if (isFirstEvent()) {
     
-    //Use user defined resolutions if supplied.
-    if(_sigmaX.size() != _sigmaY.size()){
-      streamlog_out ( MESSAGE )<< "Differing lengths of resolution X and Y, only filling shortest vector. Check config." << endl;
-    }
-    size_t nResolutions = _sigmaX.size();
-    if(_sigmaY.size() < nResolutions){ nResolutions = _sigmaY.size(); }
-    
-    if(nResolutions > _system.planes.size()){
-      streamlog_out ( MESSAGE ) << "More resolutions than planes, check config." << endl;
-      nResolutions = _system.planes.size();
-    }
-    for(size_t ii = 0; ii < nResolutions; ii++){
-      _system.planes.at(ii).setSigmas( _sigmaX.at(ii), _sigmaY.at(ii));
-    }
-  }
-  
-  if ( _useReferenceHitCollection ){
-    try {
-      _referenceHitVec = dynamic_cast < LCCollectionVec * > (event->getCollection( _referenceHitCollectionName));
-    } catch (...){
-      streamlog_out ( ERROR5 ) <<  "Reference Hit Collection " << _referenceHitCollectionName.c_str()
-			       << " could not be retrieved for event " << event->getEventNumber()
-			       << "! Please check your steering files! " << endl;
-    }
-  }
+		// Use user defined resolutions if supplied.
+		if (_sigmaX.size() != _sigmaY.size()) streamlog_out ( MESSAGE )<< "Differing lengths of resolution X and Y, only filling shortest vector. Check config." << endl;
 
-  //get MC collections if exists
-  if( _mcCollectionStr.size() > 0 ) {
-    for(unsigned int i=0; i < _mcCollectionStr.size(); i++)  {
-      _mcCollection = dynamic_cast < LCCollectionVec * > (event->getCollection(  _mcCollectionStr[i] ));
-      streamlog_out( DEBUG5 ) << "Collection " << i << " " << _mcCollectionStr[i].c_str() << " at " << _mcCollection << endl;
-    }
-  } else {
-    _mcCollection = NULL;
-  }
+		size_t nResolutions = _sigmaX.size();
+		if(_sigmaY.size() < nResolutions) nResolutions = _sigmaY.size();
 
-  //Prepare tracker system for new data, new tracks
-  _system.clear();
+		if (nResolutions > _system.planes.size()) {
+
+			streamlog_out ( MESSAGE ) << "More resolutions than planes, check config." << endl;
+			nResolutions = _system.planes.size();
+		}
+
+		for (size_t i = 0; i < nResolutions; i++) {
+
+			_system.planes.at(i).setSigmas( _sigmaX.at(i), _sigmaY.at(i));
+		}
+	}
+
+	//Prepare tracker system for new data, new tracks
+	_system.clear();
   
-  //Dump hit collection to collection sorted by plane
-  readHitCollection(event);
-  
-  if( not _initializedSystem ){
-    //If the system is not initialized, try to finish initialization from event data.
-    _initializedSystem = defineSystemFromData();
-    //If initialization is not done, we need data from more events.
-    if(not _initializedSystem) { return; }
-    streamlog_out(MESSAGE1) << "Initialized system at event " << event->getEventNumber() << std::endl;
-    for(size_t ii = 0; ii < _system.planes.size(); ii++){
-      _system.planes.at(ii).print();
-    }
-  }
-  
-  //Run track finder
-  switch( _trackFinderType ) {
-	case combinatorialKF: _system.combinatorialKF(); break;
-	case simpleCluster: _system.clusterTracker(); break;
-  }
+	// Dump hit collection to collection sorted by plane
+	readHitCollection(event);
+
+	if (not _initializedSystem) {
+
+		// If the system is not initialized, try to finish initialization from event data.
+		_initializedSystem = defineSystemFromData();
+
+		// If initialization is not done, we need data from more events.
+		if (not _initializedSystem) return;
+
+		streamlog_out(MESSAGE1) << "Initialized system at event " << event->getEventNumber() << std::endl;
+
+		for(size_t i = 0; i < _system.planes.size(); i++){
+
+			_system.planes.at(i).print();
+		}
+	}
+
+	// Run track finder
+	switch (_trackFinderType) {
+
+		case combinatorialKF: _system.combinatorialKF(); break;
+		case simpleCluster: _system.clusterTracker(); break;
+	}
  
-  //Child specific actions
-  //dafEvent(event) from EUTelDafFitter.cc
-  //Prepare track collection
-  if(_addToLCIO){
-    // Define output track and hit collections
-    _fittrackvec = new LCCollectionVec(LCIO::TRACK);
-    _fitpointvec = new LCCollectionVec(LCIO::TRACKERHIT);
-    // Set flag for storing track hits in track collection
-    LCFlagImpl flag(_fittrackvec->getFlag());
-    flag.setBit( LCIO::TRBIT_HITS );
-    _fittrackvec->setFlag(flag.getFlag());
-  }
+	// Child specific actions
+	// dafEvent(event) from EUTelDafFitter.cc
+	// Prepare track collection
+	// Define output track and hit collections
+	_fittrackvec = new LCCollectionVec(LCIO::TRACK);
+	_fitpointvec = new LCCollectionVec(LCIO::TRACKERHIT);
+	// Set flag for storing track hits in track collection
+	LCFlagImpl flag(_fittrackvec->getFlag());
+	flag.setBit( LCIO::TRBIT_HITS );
+	_fittrackvec->setFlag(flag.getFlag());
   
-  //Check found tracks
-  for(size_t ii = 0; ii < _system.getNtracks(); ii++ ){
-    //run track fitte
-    _nCandidates++;
-    //Prepare track for DAF fit
-    _system.fitPlanesInfoDaf(_system.tracks.at(ii));
-    //Check resids, intime, angles
-    if(not checkTrack( _system.tracks.at(ii))) { continue;};
-    int inTimeHits = checkInTime(_system.tracks.at(ii));
-    if( inTimeHits < _nDutHits) { continue;}
+	// Check found tracks
+	for (size_t i = 0; i < _system.getNtracks(); i++) {
+
+		// run track fitter
+		_nCandidates++;
+		// Prepare track for DAF fit
+		_system.fitPlanesInfoDaf(_system.tracks.at(i));
+		// Check resids, intime, angles
+
+		if (not checkTrack(_system.tracks.at(i))) continue;
+		int inTimeHits = checkInTime(_system.tracks.at(i));
+		if (inTimeHits < _nDutHits) continue;
  
-    //Fill plots
-    if(_histogramSwitch){ 
-      fillPlots( _system.tracks.at(ii) ); 
-      fillDetailPlots( _system.tracks.at(ii) ); 
-    }
-    //Dump to LCIO
-    if( _addToLCIO) { addToLCIO(_system.tracks.at(ii), _fitpointvec); }
-    _nTracks++;
-  }
+		// Fill plots
+		fillPlots(_system.tracks.at(i)); 
+		fillDetailPlots(_system.tracks.at(i));
 
- //Add track collection
-  if(_addToLCIO)
-  { 
-    event->addCollection(_fittrackvec,_trackCollectionName); 
-    /*std::string  sfitpoints = "" ;  
+		// Dump to LCIO
+		addToLCIO(_system.tracks.at(i), _fitpointvec);
 
-    
-    for(int i = 0; i<2000; i++) //TODO (Phillip Hamnett) Why is this hard coded to 1000? Ric changed to 2000.
-    {
-      sfitpoints = "fitpoints" + i;
-      try
-      {
-       dynamic_cast < LCCollectionVec * > ( event->getCollection( sfitpoints ) )  ;
-      }
-      catch(...)
-      {
-        break;
-      } 
-    }
-    event->addCollection(_fitpointvec, sfitpoints );*/
-  }
+		_nTracks++;
+	}
 
-  streamlog_out(MESSAGE1) << " dafEvent is OVER " <<std::endl;
+	// Add track collection
+	event->addCollection(_fittrackvec,_trackCollectionName); 
+    event->addCollection(_fitpointvec, _fitpointCollectionName);
 
-  if(event->getEventNumber() % 1000 == 0){
-    streamlog_out ( MESSAGE5 ) << "Accepted " << _nTracks <<" tracks at event " << event->getEventNumber() << endl;
-  }
+	streamlog_out(MESSAGE1) << " dafEvent is OVER " << std::endl;
+
+	if (event->getEventNumber() % 1000 == 0) {
+
+		streamlog_out ( MESSAGE5 ) << "Accepted " << _nTracks <<" tracks at event " << event->getEventNumber() << endl;
+	}
 }
 
-bool EUTelTrueHitDafFitter::checkTrack(daffitter::TrackCandidate<float,4>& track){
-  //Check the track quality
-  if( track.ndof < _ndofMin) {n_failedNdof++; return(false); }
-  n_passedNdof++;
-  if( (track.chi2 / track.ndof) > _maxChi2 ) {n_failedChi2OverNdof++; return(false); }
-  n_passedChi2OverNdof++;
-  if( isnan(track.ndof)) {n_failedIsnan++; return(false); }
-  n_passedIsnan++;
+bool EUTelTrueHitDafFitter::checkTrack(daffitter::TrackCandidate<float,4>& track) {
 
-  return(true);
+	// Check the track quality
+	if (track.ndof < _ndofMin) { n_failedNdof++; return(false);}
+	n_passedNdof++;
+	if ((track.chi2 / track.ndof) > _maxChi2) { n_failedChi2OverNdof++; return(false);}
+	n_passedChi2OverNdof++;
+	if (isnan(track.ndof)) { n_failedIsnan++; return(false);}
+	n_passedIsnan++;
+
+	return true;
 }
 
-void EUTelTrueHitDafFitter::fillPlots(daffitter::TrackCandidate<float,4>& track){
-  _aidaHistoMap["chi2"]->fill( track.chi2);
-  _aidaHistoMap["logchi2"]->fill( std::log10(track.chi2));
-  _aidaHistoMap["ndof"]->fill( track.ndof);
-  _aidaHistoMap["chi2overndof"]->fill( track.chi2 / track.ndof);
-  //Fill plots per plane
-  for( size_t ii = 0; ii < _system.planes.size() ; ii++){
-    daffitter::FitPlane<float>& plane = _system.planes.at(ii);
-    char iden[4];
-    sprintf(iden, "%d", plane.getSensorID());
-    string bname = static_cast< string >("pl") + iden + "_";
-    //Plot resids, angles for all hits with > 50% includion in track.
-    //This should be one measurement per track
+void EUTelTrueHitDafFitter::fillPlots(daffitter::TrackCandidate<float,4>& track) {
 
-    daffitter::TrackEstimate<float,4>& estim = track.estimates.at(ii);
-    for(size_t w = 0; w < plane.meas.size(); w++){
-      if( track.weights.at(ii)(w) < 0.5f ) {  continue; }
-      daffitter::Measurement<float>& meas = plane.meas.at(w);
-      //Resids 
-      _aidaHistoMap[bname + "residualX"]->fill( (estim.getX() - meas.getX())*1e-3 );
-      _aidaHistoMap[bname + "residualY"]->fill( (estim.getY() - meas.getY())*1e-3 );
+	_aidaHistoMap["chi2"]->fill(track.chi2);
+	_aidaHistoMap["logchi2"]->fill(std::log10(track.chi2));
+	_aidaHistoMap["ndof"]->fill( track.ndof);
+	_aidaHistoMap["chi2overndof"]->fill(track.chi2 / track.ndof);
 
-      //Resids 
-      _aidaHistoMapProf1D[bname + "residualdXvsX"]->fill(estim.getX(), estim.getX() - meas.getX() );
-      _aidaHistoMapProf1D[bname + "residualdYvsX"]->fill(estim.getX(), estim.getY() - meas.getY() );
-      _aidaHistoMapProf1D[bname + "residualdXvsY"]->fill(estim.getY(), estim.getX() - meas.getX() );
-      _aidaHistoMapProf1D[bname + "residualdYvsY"]->fill(estim.getY(), estim.getY() - meas.getY() );
-      _aidaHistoMapProf1D[bname + "residualdZvsX"]->fill(estim.getX(), plane.getMeasZ() - meas.getZ()  );
-      _aidaHistoMapProf1D[bname + "residualdZvsY"]->fill(estim.getY(), plane.getMeasZ() - meas.getZ()  );
-      _aidaHistoMap2D[bname + "residualmeasZvsmeasX"]->fill(  meas.getZ()/1000., meas.getX()  );
-      _aidaHistoMap2D[bname + "residualmeasZvsmeasY"]->fill(  meas.getZ()/1000., meas.getY()  );
-      _aidaHistoMap2D[bname + "residualfitZvsmeasX"]->fill( plane.getMeasZ()/1000., meas.getX() );
-      _aidaHistoMap2D[bname + "residualfitZvsmeasY"]->fill( plane.getMeasZ()/1000., meas.getY() );
+	// Fill plots per plane
+	for (size_t i = 0; i < _system.planes.size(); i++) {
+
+		daffitter::FitPlane<float>& plane = _system.planes.at(i);
+
+		char iden[4];
+		sprintf(iden, "%d", plane.getSensorID());
+		string bname = static_cast< string >("pl") + iden + "_";
+
+		// Plot resids, angles for all hits with > 50% includion in track.
+		// This should be one measurement per track
+
+		daffitter::TrackEstimate<float,4>& estim = track.estimates.at(i);
+
+		for (size_t w = 0; w < plane.meas.size(); w++) {
+
+			if (track.weights.at(i)(w) < 0.5f) continue;
+
+			daffitter::Measurement<float>& meas = plane.meas.at(w);
+
+			// Resids 
+			_aidaHistoMap[bname + "residualX"]->fill((estim.getX() - meas.getX())*1e-3);
+			_aidaHistoMap[bname + "residualY"]->fill((estim.getY() - meas.getY())*1e-3);
+
+			// Resids 
+			_aidaHistoMapProf1D[bname + "residualdXvsX"]->fill(estim.getX(), estim.getX() - meas.getX());
+			_aidaHistoMapProf1D[bname + "residualdYvsX"]->fill(estim.getX(), estim.getY() - meas.getY());
+			_aidaHistoMapProf1D[bname + "residualdXvsY"]->fill(estim.getY(), estim.getX() - meas.getX());
+			_aidaHistoMapProf1D[bname + "residualdYvsY"]->fill(estim.getY(), estim.getY() - meas.getY());
+			_aidaHistoMapProf1D[bname + "residualdZvsX"]->fill(estim.getX(), plane.getMeasZ() - meas.getZ());
+			_aidaHistoMapProf1D[bname + "residualdZvsY"]->fill(estim.getY(), plane.getMeasZ() - meas.getZ());
+			_aidaHistoMap2D[bname + "residualmeasZvsmeasX"]->fill(meas.getZ()/1000., meas.getX());
+			_aidaHistoMap2D[bname + "residualmeasZvsmeasY"]->fill(meas.getZ()/1000., meas.getY());
+			_aidaHistoMap2D[bname + "residualfitZvsmeasX"]->fill(plane.getMeasZ()/1000., meas.getX());
+			_aidaHistoMap2D[bname + "residualfitZvsmeasY"]->fill(plane.getMeasZ()/1000., meas.getY());
  
-      _aidaHistoMap2D[ "AllResidmeasZvsmeasX"]->fill(  meas.getZ()/1000., meas.getX()  );
-      _aidaHistoMap2D[ "AllResidmeasZvsmeasY"]->fill(  meas.getZ()/1000., meas.getY()  );
-      _aidaHistoMap2D[ "AllResidfitZvsmeasX"]->fill( plane.getMeasZ()/1000., meas.getX() );
-      _aidaHistoMap2D[ "AllResidfitZvsmeasY"]->fill( plane.getMeasZ()/1000., meas.getY() );
-      //Angles
-      _aidaHistoMap[bname + "dxdz"]->fill( estim.getXdz() );
-      _aidaHistoMap[bname + "dydz"]->fill( estim.getYdz() );
-      if( ii != 4) { continue; }
-      _aidaZvHitX->fill(estim.getX(), meas.getZ() - plane.getZpos());
-      _aidaZvFitX->fill(estim.getX(), (plane.getMeasZ() - plane.getZpos()) - (meas.getZ() - plane.getZpos()));
-      _aidaZvHitY->fill(estim.getY(), meas.getZ() - plane.getZpos());
-      _aidaZvFitY->fill(estim.getY(), (plane.getMeasZ() - plane.getZpos()) - (meas.getZ() - plane.getZpos()));
-    }
-  }
+			_aidaHistoMap2D[ "AllResidmeasZvsmeasX"]->fill(meas.getZ()/1000., meas.getX());
+			_aidaHistoMap2D[ "AllResidmeasZvsmeasY"]->fill(meas.getZ()/1000., meas.getY());
+			_aidaHistoMap2D[ "AllResidfitZvsmeasX"]->fill(plane.getMeasZ()/1000., meas.getX());
+			_aidaHistoMap2D[ "AllResidfitZvsmeasY"]->fill(plane.getMeasZ()/1000., meas.getY());
+
+			// Angles
+			_aidaHistoMap[bname + "dxdz"]->fill(estim.getXdz());
+			_aidaHistoMap[bname + "dydz"]->fill(estim.getYdz());
+
+			if (i != 4) continue;
+
+			_aidaZvHitX->fill(estim.getX(), meas.getZ() - plane.getZpos());
+			_aidaZvFitX->fill(estim.getX(), (plane.getMeasZ() - plane.getZpos()) - (meas.getZ() - plane.getZpos()));
+			_aidaZvHitY->fill(estim.getY(), meas.getZ() - plane.getZpos());
+			_aidaZvFitY->fill(estim.getY(), (plane.getMeasZ() - plane.getZpos()) - (meas.getZ() - plane.getZpos()));
+		}
+	}
 }
 
-void EUTelTrueHitDafFitter::fillDetailPlots(daffitter::TrackCandidate<float,4>& track){
-  for( size_t ii = 0; ii < _system.planes.size() ; ii++){
-    daffitter::FitPlane<float>& plane = _system.planes.at(ii);
+void EUTelTrueHitDafFitter::fillDetailPlots(daffitter::TrackCandidate<float,4>& track) {
 
-    daffitter::TrackEstimate<float,4>& estim = track.estimates.at(ii);
+	for (size_t i = 0; i < _system.planes.size(); i++) {
 
-    char iden[4];
-    sprintf(iden, "%d", plane.getSensorID());
-    string bname = static_cast< string >("pl") + iden + "_";
+		daffitter::FitPlane<float>& plane = _system.planes.at(i);
+		daffitter::TrackEstimate<float,4>& estim = track.estimates.at(i);
 
-    //Plot resids, angles for all hits with > 50% includion in track.
-    //This should be one measurement per track
-    for(size_t w = 0; w < plane.meas.size(); w++){
-      daffitter::Measurement<float>& meas = plane.meas.at(w);
-      if( track.weights.at(ii)(w) < 0.5f ) {  continue; }
-      //Resids 
-      float resX = ( estim.getX() - meas.getX() );
-      resX *= resX;
-      resX /= plane.getSigmaX() *  plane.getSigmaX() + estim.cov(0,0);
-      float resY = ( estim.getY() - meas.getY() );
-      resY *= resY;
-      resY /= plane.getSigmaY() *  plane.getSigmaY() + estim.cov(1,1);
-      _aidaHistoMap[bname + "hitChi2"]->fill( resX + resY );
+		char iden[4];
+		sprintf(iden, "%d", plane.getSensorID());
+		string bname = static_cast< string >("pl") + iden + "_";
+
+		// Plot resids, angles for all hits with > 50% includion in track.
+		// This should be one measurement per track
+		for (size_t w = 0; w < plane.meas.size(); w++) {
+
+			daffitter::Measurement<float>& meas = plane.meas.at(w);
+			if (track.weights.at(i)(w) < 0.5f) continue;
+
+			// Resids 
+			float resX = ( estim.getX() - meas.getX() );
+			resX *= resX;
+			resX /= plane.getSigmaX() *  plane.getSigmaX() + estim.cov(0,0);
+			float resY = ( estim.getY() - meas.getY() );
+			resY *= resY;
+			resY /= plane.getSigmaY() *  plane.getSigmaY() + estim.cov(1,1);
+			_aidaHistoMap[bname + "hitChi2"]->fill( resX + resY );
       
-      _aidaHistoMap[bname + "sigmaX"]->fill( sqrt(estim.cov(0,0)) );
-      _aidaHistoMap[bname + "sigmaY"]->fill( sqrt(estim.cov(1,1)) );
+			_aidaHistoMap[bname + "sigmaX"]->fill( sqrt(estim.cov(0,0)) );
+			_aidaHistoMap[bname + "sigmaY"]->fill( sqrt(estim.cov(1,1)) );
       
-      float pullX =  ( estim.getX() - meas.getX() ) / sqrt(plane.getSigmaX() * plane.getSigmaX() + estim.cov(0,0));
-      float pullY =  ( estim.getY() - meas.getY() ) / sqrt(plane.getSigmaY() * plane.getSigmaY() + estim.cov(1,1));
-      _aidaHistoMap[bname + "pullX"]->fill( pullX );
-      _aidaHistoMap[bname + "pullY"]->fill( pullY );
-    }
-  }
+			float pullX =  ( estim.getX() - meas.getX() ) / sqrt(plane.getSigmaX() * plane.getSigmaX() + estim.cov(0,0));
+			float pullY =  ( estim.getY() - meas.getY() ) / sqrt(plane.getSigmaY() * plane.getSigmaY() + estim.cov(1,1));
+			_aidaHistoMap[bname + "pullX"]->fill( pullX );
+			_aidaHistoMap[bname + "pullY"]->fill( pullY );
+		}
+	}
 }
 
-void EUTelTrueHitDafFitter::bookHistos(){
+void EUTelTrueHitDafFitter::bookHistos() {
 
-  int maxNdof = -4 + _system.planes.size() * 2 + 1;
-  _aidaHistoMap["chi2"] = AIDAProcessor::histogramFactory(this)->createHistogram1D("chi2", 100, 0, maxNdof * _maxChi2);
-  _aidaHistoMap["logchi2"] = AIDAProcessor::histogramFactory(this)->createHistogram1D("logchi2", 100, 0, std::log10(maxNdof * _maxChi2));
-  if( _aidaHistoMap["chi2"] == NULL){
-    streamlog_out ( ERROR2 ) << "Problem with histo booking. Check paths!" << std::endl;
-    _histogramSwitch = false;
-    return;
-  }
-  _aidaHistoMap["ndof"] = AIDAProcessor::histogramFactory(this)->createHistogram1D("ndof", maxNdof * 10, 0, maxNdof);
-  _aidaHistoMap["chi2overndof"] = AIDAProcessor::histogramFactory(this)->createHistogram1D("Chi2OverNdof", maxNdof * 10, 0, _maxChi2);
+	int maxNdof = -4 + _system.planes.size() * 2 + 1;
 
-  _aidaZvFitX = AIDAProcessor::histogramFactory(this)->createHistogram2D("ZvHitX", 20,  -5000.0,  5000.0, 20,   -100.0,   100.0);
-  _aidaZvHitX = AIDAProcessor::histogramFactory(this)->createHistogram2D("ZvFitX", 20, -10000.0, 10000.0, 20, -10000.0, 10000.0);
-  _aidaZvFitY = AIDAProcessor::histogramFactory(this)->createHistogram2D("ZvHitY", 20, -10000.0, 10000.0, 20,   -100.0,   100.0);
-  _aidaZvHitY = AIDAProcessor::histogramFactory(this)->createHistogram2D("ZvFitY", 20, -10000.0, 10000.0, 20, -10000.0, 10000.0);
+	_aidaHistoMap["chi2"] = AIDAProcessor::histogramFactory(this)->createHistogram1D("chi2", 100, 0, maxNdof * _maxChi2);
+	_aidaHistoMap["logchi2"] = AIDAProcessor::histogramFactory(this)->createHistogram1D("logchi2", 100, 0, std::log10(maxNdof * _maxChi2));
 
-  _aidaHistoMap2D["AllResidmeasZvsmeasX"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( "AllResidmeasZvsmeasX",14 ,-80., 60., 20 ,-10000., 10000.);
-  _aidaHistoMap2D["AllResidmeasZvsmeasY"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( "AllResidmeasZvsmeasY",14 ,-80., 60., 20 ,-10000., 10000.);
-  _aidaHistoMap2D["AllResidfitZvsmeasX"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( "AllResidfitZvsmeasX",14 ,-80., 60., 20 ,-10000., 10000.);
-  _aidaHistoMap2D["AllResidfitZvsmeasY"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( "AllResidfitZvsmeasY",14 ,-80., 60., 20 ,-10000., 10000.);
+	if (_aidaHistoMap["chi2"] == NULL) {
+
+		streamlog_out ( ERROR2 ) << "Problem with histo booking. Check paths!" << std::endl;
+
+		return;
+	}
+
+	_aidaHistoMap["ndof"] = AIDAProcessor::histogramFactory(this)->createHistogram1D("ndof", maxNdof * 10, 0, maxNdof);
+	_aidaHistoMap["chi2overndof"] = AIDAProcessor::histogramFactory(this)->createHistogram1D("Chi2OverNdof", maxNdof * 10, 0, _maxChi2);
+
+	_aidaZvFitX = AIDAProcessor::histogramFactory(this)->createHistogram2D("ZvHitX", 20,  -5000.0,  5000.0, 20,   -100.0,   100.0);
+	_aidaZvHitX = AIDAProcessor::histogramFactory(this)->createHistogram2D("ZvFitX", 20, -10000.0, 10000.0, 20, -10000.0, 10000.0);
+	_aidaZvFitY = AIDAProcessor::histogramFactory(this)->createHistogram2D("ZvHitY", 20, -10000.0, 10000.0, 20,   -100.0,   100.0);
+	_aidaZvHitY = AIDAProcessor::histogramFactory(this)->createHistogram2D("ZvFitY", 20, -10000.0, 10000.0, 20, -10000.0, 10000.0);
+
+	_aidaHistoMap2D["AllResidmeasZvsmeasX"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( "AllResidmeasZvsmeasX",14 ,-80., 60., 20 ,-10000., 10000.);
+	_aidaHistoMap2D["AllResidmeasZvsmeasY"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( "AllResidmeasZvsmeasY",14 ,-80., 60., 20 ,-10000., 10000.);
+	_aidaHistoMap2D["AllResidfitZvsmeasX"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( "AllResidfitZvsmeasX",14 ,-80., 60., 20 ,-10000., 10000.);
+	_aidaHistoMap2D["AllResidfitZvsmeasY"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( "AllResidfitZvsmeasY",14 ,-80., 60., 20 ,-10000., 10000.);
 
 
-  for( size_t ii = 0; ii < _system.planes.size() ; ii++)
-    {
-      daffitter::FitPlane<float>& plane = _system.planes.at(ii);
-      char iden[4];
-      sprintf(iden, "%d", plane.getSensorID());
-      string bname = static_cast< string >("pl") + iden + "_";
-      //Resids
+	for (size_t i = 0; i < _system.planes.size(); i++) {
 
-      double residminX = -0.3;
-      double residmaxX =  0.3;
+		daffitter::FitPlane<float>& plane = _system.planes.at(i);
+
+		char iden[4];
+		sprintf(iden, "%d", plane.getSensorID());
+		string bname = static_cast< string >("pl") + iden + "_";
+
+		// Resids
+		double residminX = -0.3;
+		double residmaxX =  0.3;
  
-      _aidaHistoMap[bname + "mcresidualX"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "mcresidualX", 200,  residminX, residmaxX );
-      _aidaHistoMap[bname + "mcresidualY"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "mcresidualY", 200,  residminX, residmaxX );
+		_aidaHistoMap[bname + "mcresidualX"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "mcresidualX", 200,  residminX, residmaxX );
+		_aidaHistoMap[bname + "mcresidualY"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "mcresidualY", 200,  residminX, residmaxX );
 
-      _aidaHistoMap[bname + "residualX"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "residualX",600, residminX, residmaxX);
-      _aidaHistoMap[bname + "residualY"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "residualY",600, residminX, residmaxX);
-      //Resids 2D // profiles
-      _aidaHistoMapProf1D[bname+"residualdXvsX"]= AIDAProcessor::histogramFactory(this)->createProfile1D(bname+"dXvsX", 200, -10000., 10000.,   residminX, residmaxX );
-      _aidaHistoMapProf1D[bname+"residualdYvsX"]= AIDAProcessor::histogramFactory(this)->createProfile1D(bname+"dXvsY", 200, -10000., 10000.,   residminX, residmaxX );
-      _aidaHistoMapProf1D[bname+"residualdXvsY"]= AIDAProcessor::histogramFactory(this)->createProfile1D(bname+"dYvsX", 200, -10000., 10000.,   residminX, residmaxX );
-      _aidaHistoMapProf1D[bname+"residualdYvsY"]= AIDAProcessor::histogramFactory(this)->createProfile1D(bname+"dYvsY", 200, -10000., 10000.,   residminX, residmaxX );
-      _aidaHistoMapProf1D[bname+"residualdZvsX"]= AIDAProcessor::histogramFactory(this)->createProfile1D(bname+"dZvsX", 200, -10000., 10000.,  -100., 100. );
-      _aidaHistoMapProf1D[bname+"residualdZvsY"]= AIDAProcessor::histogramFactory(this)->createProfile1D(bname+"dZvsY", 200, -10000., 10000.,  -100., 100. );
+		_aidaHistoMap[bname + "residualX"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "residualX",600, residminX, residmaxX);
+		_aidaHistoMap[bname + "residualY"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "residualY",600, residminX, residmaxX);
+
+		// Resids 2D
+		// profiles
+		_aidaHistoMapProf1D[bname+"residualdXvsX"]= AIDAProcessor::histogramFactory(this)->createProfile1D(bname+"dXvsX", 200, -10000., 10000.,   residminX, residmaxX );
+		_aidaHistoMapProf1D[bname+"residualdYvsX"]= AIDAProcessor::histogramFactory(this)->createProfile1D(bname+"dXvsY", 200, -10000., 10000.,   residminX, residmaxX );
+		_aidaHistoMapProf1D[bname+"residualdXvsY"]= AIDAProcessor::histogramFactory(this)->createProfile1D(bname+"dYvsX", 200, -10000., 10000.,   residminX, residmaxX );
+		_aidaHistoMapProf1D[bname+"residualdYvsY"]= AIDAProcessor::histogramFactory(this)->createProfile1D(bname+"dYvsY", 200, -10000., 10000.,   residminX, residmaxX );
+		_aidaHistoMapProf1D[bname+"residualdZvsX"]= AIDAProcessor::histogramFactory(this)->createProfile1D(bname+"dZvsX", 200, -10000., 10000.,  -100., 100. );
+		_aidaHistoMapProf1D[bname+"residualdZvsY"]= AIDAProcessor::histogramFactory(this)->createProfile1D(bname+"dZvsY", 200, -10000., 10000.,  -100., 100. );
     
-      // residuals
-      _aidaHistoMap2D[bname + "residualmeasZvsmeasX"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualmeasZvsmeasX",20 ,-1000., 1000., 20 ,-10000., 10000.);
-      _aidaHistoMap2D[bname + "residualmeasZvsmeasY"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualmeasZvsmeasY",20 ,-1000., 1000., 20 ,-10000., 10000.);
-      _aidaHistoMap2D[bname + "residualfitZvsmeasX"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualfitZvsmeasX",20 ,-1000., 1000., 20 ,-10000., 10000.);
-      _aidaHistoMap2D[bname + "residualfitZvsmeasY"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualfitZvsmeasY",20 ,-1000., 1000., 20 ,-10000., 10000.);
+		// residuals
+		_aidaHistoMap2D[bname + "residualmeasZvsmeasX"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualmeasZvsmeasX",20 ,-1000., 1000., 20 ,-10000., 10000.);
+		_aidaHistoMap2D[bname + "residualmeasZvsmeasY"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualmeasZvsmeasY",20 ,-1000., 1000., 20 ,-10000., 10000.);
+		_aidaHistoMap2D[bname + "residualfitZvsmeasX"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualfitZvsmeasX",20 ,-1000., 1000., 20 ,-10000., 10000.);
+	_aidaHistoMap2D[bname + "residualfitZvsmeasY"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualfitZvsmeasY",20 ,-1000., 1000., 20 ,-10000., 10000.);
     
-      //Angles
-      _aidaHistoMap[bname + "dxdz"] = AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "dxdz", 10, -0.1, 0.1);
-      _aidaHistoMap[bname + "dydz"] = AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "dydz", 10, -0.1, 0.1);
-    }
+		// Angles
+		_aidaHistoMap[bname + "dxdz"] = AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "dxdz", 10, -0.1, 0.1);
+		_aidaHistoMap[bname + "dydz"] = AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "dydz", 10, -0.1, 0.1);
+	}
 }
 
-void EUTelTrueHitDafFitter::bookDetailedHistos(){
-  for( size_t ii = 0; ii < _system.planes.size() ; ii++) {
-    daffitter::FitPlane<float>& plane = _system.planes.at(ii);
-    char iden[4];
-    sprintf(iden, "%d", plane.getSensorID());
-    string bname = static_cast< string >("pl") + iden + "_";
-    _aidaHistoMap[bname + "sigmaX"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "sigmaX", 10, 0.0f, 100);
-    _aidaHistoMap[bname + "sigmaY"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "sigmaY", 10, 0.0f, 100);
-    _aidaHistoMap[bname + "hitChi2"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "hitChi2", 10, 0, 100);
-    _aidaHistoMap[bname + "pullX"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "pullX", 10, -2, 2);
-    _aidaHistoMap[bname + "pullY"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "pullY", 10, -2, 2);
-  }
+void EUTelTrueHitDafFitter::bookDetailedHistos() {
+
+	for (size_t i = 0; i < _system.planes.size(); i++) {
+
+		daffitter::FitPlane<float>& plane = _system.planes.at(i);
+
+		char iden[4];
+		sprintf(iden, "%d", plane.getSensorID());
+		string bname = static_cast< string >("pl") + iden + "_";
+
+		_aidaHistoMap[bname + "sigmaX"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "sigmaX", 10, 0.0f, 100);
+		_aidaHistoMap[bname + "sigmaY"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "sigmaY", 10, 0.0f, 100);
+		_aidaHistoMap[bname + "hitChi2"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "hitChi2", 10, 0, 100);
+		_aidaHistoMap[bname + "pullX"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "pullX", 10, -2, 2);
+		_aidaHistoMap[bname + "pullY"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "pullY", 10, -2, 2);
+	}
 }
 
 void EUTelTrueHitDafFitter::end() {
   
-  streamlog_out ( MESSAGE5 ) << endl;
-  streamlog_out ( MESSAGE5 ) << "Number of found hit candidates: " << _nCandidates << endl;
-  streamlog_out ( MESSAGE5 ) << "Tracks with ok ndof: " << n_passedNdof << endl;
-  streamlog_out ( MESSAGE5 ) << "Tracks with BAD ndof: " << n_failedNdof << endl;
-  streamlog_out ( MESSAGE5 ) << "Tracks with ok chi2/ndof: " << n_passedChi2OverNdof << endl;
-  streamlog_out ( MESSAGE5 ) << "Tracks with BAD chi2/ndof: " << n_failedChi2OverNdof << endl;
-  streamlog_out ( MESSAGE5 ) << "Tracks with no NaNs: " << n_passedIsnan<< endl;
-  streamlog_out ( MESSAGE5 ) << "Tracks with NaNs: " << n_failedIsnan<< endl;
-  streamlog_out ( MESSAGE5 ) << "Number of fitted tracks: " << _nTracks << endl;
-  streamlog_out ( MESSAGE5 ) << "Successfully finished" << endl;
-  for( size_t ii = 0; ii < _system.planes.size() ; ii++){
-    daffitter::FitPlane<float>& plane = _system.planes.at(ii);
-    char iden[4];
-    sprintf(iden, "%d", plane.getSensorID());
-    string bname = static_cast< string >("pl") + iden + "_";
-    if( _aidaHistoMap[bname + "residualX"] != 0 && _aidaHistoMap[bname + "residualY"] != 0 )
-      streamlog_out ( MESSAGE5 ) << "plane:" << ii <<
-	"  x-stat :" <<  _aidaHistoMap[bname + "residualX"]->allEntries() <<
-	"  x-mean:"  <<  _aidaHistoMap[bname + "residualX"]->mean() << 
-	"  x-rms :"  <<  _aidaHistoMap[bname + "residualX"]->rms() << 
-	"  y-stat :" <<  _aidaHistoMap[bname + "residualY"]->allEntries() <<
-	"  y-mean:"  <<  _aidaHistoMap[bname + "residualY"]->mean() << 
-	"  y-rms :"  <<  _aidaHistoMap[bname + "residualY"]->rms() << endl;
-  }
+	streamlog_out ( MESSAGE5 ) << endl;
+	streamlog_out ( MESSAGE5 ) << "Number of found hit candidates: " << _nCandidates << endl;
+	streamlog_out ( MESSAGE5 ) << "Tracks with ok ndof: " << n_passedNdof << endl;
+	streamlog_out ( MESSAGE5 ) << "Tracks with BAD ndof: " << n_failedNdof << endl;
+	streamlog_out ( MESSAGE5 ) << "Tracks with ok chi2/ndof: " << n_passedChi2OverNdof << endl;
+	streamlog_out ( MESSAGE5 ) << "Tracks with BAD chi2/ndof: " << n_failedChi2OverNdof << endl;
+	streamlog_out ( MESSAGE5 ) << "Tracks with no NaNs: " << n_passedIsnan<< endl;
+	streamlog_out ( MESSAGE5 ) << "Tracks with NaNs: " << n_failedIsnan<< endl;
+	streamlog_out ( MESSAGE5 ) << "Number of fitted tracks: " << _nTracks << endl;
+	streamlog_out ( MESSAGE5 ) << "Successfully finished" << endl;
+
+	for (size_t i = 0; i < _system.planes.size(); i++) {
+
+		daffitter::FitPlane<float>& plane = _system.planes.at(i);
+
+		char iden[4];
+		sprintf(iden, "%d", plane.getSensorID());
+		string bname = static_cast< string >("pl") + iden + "_";
+
+		if (_aidaHistoMap[bname + "residualX"] != 0 && _aidaHistoMap[bname + "residualY"] != 0 ) {
+
+			streamlog_out ( MESSAGE5 ) << "plane:" << i <<
+				"  x-stat :" <<  _aidaHistoMap[bname + "residualX"]->allEntries() <<
+				"  x-mean:"  <<  _aidaHistoMap[bname + "residualX"]->mean() << 
+				"  x-rms :"  <<  _aidaHistoMap[bname + "residualX"]->rms() << 
+				"  y-stat :" <<  _aidaHistoMap[bname + "residualY"]->allEntries() <<
+				"  y-mean:"  <<  _aidaHistoMap[bname + "residualY"]->mean() << 
+				"  y-rms :"  <<  _aidaHistoMap[bname + "residualY"]->rms() << endl;
+		}
+	}
 }
 
-//addToLCIO function from EUTelDafFitter.cc
-void EUTelTrueHitDafFitter::addToLCIO(daffitter::TrackCandidate<float,4>& track, LCCollectionVec *lcvec){
-  TrackImpl * fittrack = new TrackImpl();
-  // Impact parameters are useless and set to 0
-  fittrack->setD0(0.);        // impact paramter of the track in (r-phi)
-  fittrack->setZ0(0.);        // impact paramter of the track in (r-z)
-  fittrack->setTanLambda(0.); // dip angle of the track at reference point
+// addToLCIO function from EUTelDafFitter.cc
+void EUTelTrueHitDafFitter::addToLCIO(daffitter::TrackCandidate<float,4>& track, LCCollectionVec *lcvec) {
 
-  daffitter::TrackEstimate<float,4>& est = track.estimates.at(0);
+	TrackImpl * fittrack = new TrackImpl();
 
-  //No good way of storing the track angles, so
-  fittrack->setOmega( est.getXdz()); // Storing dxdz as Omega
-  fittrack->setPhi( est.getYdz() );   // Storing dx/dy as phi
+	// Impact parameters are useless and set to 0
+	fittrack->setD0(0.);        // impact paramter of the track in (r-phi)
+	fittrack->setZ0(0.);        // impact paramter of the track in (r-z)
+	fittrack->setTanLambda(0.); // dip angle of the track at reference point
 
-  fittrack->setChi2(track.chi2);
-  fittrack->setNdf(int( round(track.ndof)) );
-  // prepare an encoder for the hit collection to store properties
-  CellIDEncoder<TrackerHitImpl> idHitEncoder(EUTELESCOPE::HITENCODING, lcvec);
+	daffitter::TrackEstimate<float,4>& est = track.estimates.at(0);
 
-  float refpoint[3];
+	// No good way of storing the track angles, so
+	fittrack->setOmega( est.getXdz()); // Storing dxdz as Omega
+	fittrack->setPhi( est.getYdz() );   // Storing dx/dy as phi
+
+	fittrack->setChi2(track.chi2);
+	fittrack->setNdf(int( round(track.ndof)) );
+	// prepare an encoder for the hit collection to store properties
+	CellIDEncoder<TrackerHitImpl> idHitEncoder(EUTELESCOPE::HITENCODING, lcvec);
+
+	float refpoint[3];
   
-  for(size_t plane = 0; plane < _system.planes.size(); plane++){
-    daffitter::FitPlane<float>& pl = _system.planes.at(plane);
-    daffitter::TrackEstimate<float,4>& estim = track.estimates.at( plane );
-    TrackerHitImpl * fitpoint = new TrackerHitImpl();
-    // encode and store sensorID
-    int sensorID =  _system.planes.at(plane).getSensorID();
-    idHitEncoder["sensorID"] = sensorID;
-    // set the local/global bit flag property AND the FittedHit property for the hit
-    idHitEncoder["properties"] = kHitInGlobalCoord | kFittedHit;
-    double pos[3];
-    pos[0]= estim.getX() / 1000.0;
-    pos[1]= estim.getY() / 1000.0;
-    pos[2]= pl.getMeasZ() / 1000.0;
+	for (size_t plane = 0; plane < _system.planes.size(); plane++) {
 
-    // overload z coordinate calculation -> important for proper sensor Identification by the hit coordinates based onthe refhit collection
-    // if( fabs(pos[2] - getZfromRefHit(plane, sensorID, pos)) > 0.0002 ){
-    //   streamlog_out(WARNING) << "Fitted measurement is not in the plane! SensorID " << idHitEncoder["sensorID"] << std::endl;
-    //   pos[2] = getZfromRefHit(plane, sensorID, pos);    
-    // }
-    
-    /*fitpoint->setPosition(pos);
-    // Covariance matrix of the fitted position
-    // (stored as lower triangle matrix, i.e.  cov(xx),cov(y,x),cov(y,y) ).
-    float cov[TRKHITNCOVMATRIX];
-    cov[0]= estim.cov(0,0);
-    cov[1]= estim.cov(0,1);
-    cov[2]= estim.cov(1,1);
-    //Error of z position of fit is unclear to me, this would be a systematic alignment
-    //error. Set to 0 along with all covariances.
-    cov[3]=cov[4]=cov[5]=0.;
-    fitpoint->setCovMatrix(cov);
-    // store values
-    idHitEncoder.setCellID( fitpoint );
-    _fitpointvec->push_back(fitpoint);
-    fittrack->addHit(fitpoint);
+		daffitter::FitPlane<float>& pl = _system.planes.at(plane);
+		daffitter::TrackEstimate<float,4>& estim = track.estimates.at( plane );
+		TrackerHitImpl * fitpoint = new TrackerHitImpl();
 
-    streamlog_out(DEBUG3) << " hit : sensorID " << idHitEncoder["sensorID"] << " properties: " << idHitEncoder["properties"]  << std::endl;*/
+		// encode and store sensorID
+		int sensorID =  _system.planes.at(plane).getSensorID();
+		idHitEncoder["sensorID"] = sensorID;
 
-    if(plane == 0){
-      refpoint[0] = pos[0];
-      refpoint[1] = pos[1];
-      refpoint[2] = pos[2];
-    }
-    //Also add measurement point
-    for(size_t mm = 0; mm < pl.meas.size(); mm++){
-      if( track.weights.at(plane)(mm) < 0.5f){ continue; }
-      if( pl.isExcluded()) { continue; }
-      TrackerHitImpl* meashit = static_cast<TrackerHitImpl*> ( _trueHitCollectionVec->getElementAt( pl.meas.at(mm).getIden()) );
-      fittrack->addHit(meashit);
-    }
-  }
-  fittrack->setReferencePoint(refpoint);
-  _fittrackvec->addElement(fittrack);
+		// set the local/global bit flag property AND the FittedHit property for the hit
+		idHitEncoder["properties"] = kHitInGlobalCoord | kFittedHit;
+
+		double pos[3];
+		pos[0] = estim.getX() / 1000.0;
+		pos[1] = estim.getY() / 1000.0;
+		pos[2] = pl.getMeasZ() / 1000.0;
+
+		fitpoint->setPosition(pos);
+
+		// Covariance matrix of the fitted position
+		// (stored as lower triangle matrix, i.e.  cov(xx),cov(y,x),cov(y,y) ).
+		float cov[TRKHITNCOVMATRIX];
+		cov[0] = estim.cov(0,0);
+		cov[1] = estim.cov(0,1);
+		cov[2] = estim.cov(1,1);
+
+		// Error of z position of fit is unclear to me, this would be a systematic alignment
+		// error. Set to 0 along with all covariances.
+		cov[3] = cov[4] = cov[5] = 0.;
+
+		fitpoint->setCovMatrix(cov);
+
+		// store values
+		idHitEncoder.setCellID( fitpoint );
+		_fitpointvec->push_back(fitpoint);
+		fittrack->addHit(fitpoint);
+
+		streamlog_out(DEBUG3) << " hit : sensorID " << idHitEncoder["sensorID"] << " properties: " << idHitEncoder["properties"]  << std::endl;
+
+		if (plane == 0) {
+
+			refpoint[0] = pos[0];
+			refpoint[1] = pos[1];
+			refpoint[2] = pos[2];
+		}
+
+		// Also add measurement point
+		for (size_t mm = 0; mm < pl.meas.size(); mm++) {
+
+			if (track.weights.at(plane)(mm) < 0.5f) continue;
+			if (pl.isExcluded()) continue;
+
+			TrackerHitImpl* meashit = static_cast<TrackerHitImpl*> ( _trueHitCollectionVec->getElementAt( pl.meas.at(mm).getIden()) );
+
+			fittrack->addHit(meashit);
+		}
+	}
+
+	fittrack->setReferencePoint(refpoint);
+	_fittrackvec->addElement(fittrack);
 }
