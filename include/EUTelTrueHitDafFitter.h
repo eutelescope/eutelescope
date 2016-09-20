@@ -35,151 +35,138 @@
 
 namespace eutelescope {
 
-  class EUTelTrueHitDafFitter : public marlin::Processor {
-  public:
-    // Marlin processor interface funtions
-    //! Returns a new instance of EUTelTrueHitDafFitter
-    virtual Processor * newProcessor() { return new EUTelTrueHitDafFitter;}
-    //! Default constructor
-    EUTelTrueHitDafFitter ();
+	class EUTelTrueHitDafFitter : public marlin::Processor {
 
-    //! Called at the job beginning.
-    virtual void init ();
-    //! Called for every run.
-    virtual void processRunHeader (LCRunHeader * run);
-    //! Called every event
-    virtual void processEvent (LCEvent * evt);
-    //! Called after data processing.
-    virtual void end();
-    bool defineSystemFromData();
+	public:
+
+		// Marlin processor interface funtions
+		// Returns a new instance of EUTelTrueHitDafFitter
+		virtual Processor * newProcessor() { return new EUTelTrueHitDafFitter;}
+
+		// Default constructor
+		EUTelTrueHitDafFitter ();
+
+		// Called at the job beginning.
+		virtual void init ();
+		// Called for every run.
+		virtual void processRunHeader (LCRunHeader * run);
+		// Called every event
+		virtual void processEvent (LCEvent * evt);
+		// Called after data processing.
+		virtual void end();
+		bool defineSystemFromData();
     
-    virtual inline bool ReferenceHitVecIsSet(){ return _referenceHitVec==0; }    
+		virtual inline bool ReferenceHitVecIsSet(){ return _referenceHitVec==0; }    
 
-    enum DafTrackFinder { simpleCluster, combinatorialKF };
+		enum DafTrackFinder { simpleCluster, combinatorialKF };
 
-  protected:
-    std::ofstream trackstream;
-    //! Input true hit collection name
-    std::string _trueHitCollectionName;
-	//! True hit collection vector
-	LCCollectionVec* _trueHitCollectionVec;
-    std::vector<std::string > _alignColNames;
-    std::vector<int> _nRef;
-    bool _initializedSystem;
-    LCCollection* _hitCollection;
+	protected:
 
-    EVENT::StringVec		_mcCollectionStr;
-    EVENT::StringVec		_mcCollectionExample;
-    LCCollection*               _mcCollection;
+		std::ofstream trackstream;
 
-    std::vector<int> _colMin, _colMax, _rowMin, _rowMax;
-    std::map<int, std::pair<int,int> > _rowMinMax, _colMinMax;
+		// Collection names
+		std::string _trueHitCollectionName;
+		std::string _fitpointCollectionName;
+    	std::string _trackCollectionName;
+		// True hit collection vector
+		LCCollectionVec* _trueHitCollectionVec;
 
-    // List of sensor IDs identifying telescopes and duts
-    std::vector<int > _telPlanes;
-    std::vector<int > _dutPlanes;
+		std::vector<int> _nRef;
+		bool _initializedSystem;
 
-    //! resolution of sensor planes
-    float _telResX, _telResY, _dutResX, _dutResY;
-    //! Nominal beam energy
-    float _eBeam;
+		std::vector<int> _colMin, _colMax, _rowMin, _rowMax;
+		std::map<int, std::pair<int,int> > _rowMinMax, _colMinMax;
 
-	//! Type of track finder used (e.g. cluster or KF)
-    //DafTrackFinder _trackFinderType = combinatorialKF;
-    DafTrackFinder _trackFinderType = simpleCluster;
-    std::string _clusterFinderName;
+		// List of sensor IDs identifying telescopes and duts
+		std::vector<int > _telPlanes;
+		std::vector<int > _dutPlanes;
+
+		// Resolution of sensor planes
+		float _telResX, _telResY, _dutResX, _dutResY;
+		// Nominal beam energy
+		float _eBeam;
+
+		// Type of track finder used (e.g. cluster or KF)
+		DafTrackFinder _trackFinderType = simpleCluster;
+		std::string _clusterFinderName;
    
-	//! Radius for track finder finder
-    /*! 
-     * Track finder works by projecting all hits into plane 0, assuming a beam parallel to
-     * the z-axis, then running a cluster finder on these hits. This radius determines
-     * whether a hit is included or not.
-     */
-    float _normalizedRadius;
+		// Radius for track finder finder
+		/* 
+		*  Track finder works by projecting all hits into plane 0, assuming a beam parallel to
+		*  the z-axis, then running a cluster finder on these hits. This radius determines
+		*  whether a hit is included or not.
+		*/
+		float _normalizedRadius;
 
-    //! Cutoff value for DAF
-    /*!
-     * This determines the maximum distance between a track and a measurement for the
-     * measurement to be included in the fit.
-     */
-    float _chi2cutoff;
-    float _nXdz, _nYdz, _nXdzMaxDeviance, _nYdzMaxDeviance;
-    int _nDutHits;
+		// Cutoff value for DAF
+		/*
+		*  This determines the maximum distance between a track and a measurement for the
+		*  measurement to be included in the fit.
+		*/
+		float _chi2cutoff;
+		float _nXdz, _nYdz, _nXdzMaxDeviance, _nYdzMaxDeviance;
+		int _nDutHits;
    
-    float _nSkipMax;
-    float _ndofMin;
-    //! maximum allowed chi2 /ndof for track to be accepted.
-    float _maxChi2;
-    float _scaleScatter;
+		float _nSkipMax;
+		float _ndofMin;
 
-    virtual void dafInit(){;}
-    virtual void dafEvent(LCEvent * /*evt*/){;}  //evt commented out because it causes a warning, function doesn't seem to do anything here but is probably used in another file through inheritance
-    virtual void dafEnd(){;}
-    virtual void dafParams(){;}
-    
+		// Maximum allowed chi2 /ndof for track to be accepted.
+		float _maxChi2;
+		float _scaleScatter;
 
-    size_t getPlaneIndex(float zPos);
-    float getScatterThetaVar(float radLength);
-    void readHitCollection(LCEvent* event);
-    void bookHistos();
-    void bookDetailedHistos();
-    void fillPlots(daffitter::TrackCandidate<float,4>& track);
-    void fillDetailPlots(daffitter::TrackCandidate<float,4>& track);
-    bool checkTrack(daffitter::TrackCandidate<float,4>& track);
-    int checkInTime(daffitter::TrackCandidate<float,4>& track);
-    void printStats();
-    //alignment stuff
-    void gearRotate(size_t index, size_t gearIndex);
-    Eigen::Vector3f applyAlignment(EUTelAlignmentConstant* alignment, Eigen::Vector3f point);
-    void alignRotate(std::string collectionName, LCEvent* event);
-    void getPlaneNorm(daffitter::FitPlane<float>& pl);
+		size_t getPlaneIndex(float zPos);
+		float getScatterThetaVar(float radLength);
+		void readHitCollection(LCEvent* event);
+		void bookHistos();
+		void bookDetailedHistos();
+		void fillPlots(daffitter::TrackCandidate<float,4>& track);
+		void fillDetailPlots(daffitter::TrackCandidate<float,4>& track);
+		bool checkTrack(daffitter::TrackCandidate<float,4>& track);
+		int checkInTime(daffitter::TrackCandidate<float,4>& track);
+		void printStats();
 
-    daffitter::TrackerSystem<float,4> _system;
-    std::map<float, int> _zSort;
-    std::map<int, int> _indexIDMap;
-    std::vector<float> _radLength;
-    std::vector<float> _sigmaX, _sigmaY;
+		// Alignment stuff
+		void gearRotate(size_t index, size_t gearIndex);
+		void getPlaneNorm(daffitter::FitPlane<float>& pl);
 
-    //! Counters
-    int _iRun, _iEvt, _nTracks, _nCandidates, n_failedNdof, n_failedChi2OverNdof, n_failedIsnan, n_passedNdof, n_passedChi2OverNdof, n_passedIsnan;
+		daffitter::TrackerSystem<float,4> _system;
+		std::map<float, int> _zSort;
+		std::map<int, int> _indexIDMap;
+		std::vector<float> _radLength;
+		std::vector<float> _sigmaX, _sigmaY;
 
-    //! reference HitCollection name 
-    /*!
-     */
-    std::string      _referenceHitCollectionName;
-    std::string      _clusterCollectionName;
-    bool             _useReferenceHitCollection;
-    LCCollectionVec* _referenceHitVec;    
-    LCCollectionVec* _clusterVec;    
- 
-    //! Silicon planes parameters as described in GEAR
-    gear::SiPlanesParameters * _siPlanesParameters;
-    gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
+		// Counters
+		int _iRun, _iEvt, _nTracks, _nCandidates, n_failedNdof, n_failedChi2OverNdof, n_failedIsnan, n_passedNdof, n_passedChi2OverNdof, n_passedIsnan;
 
-    std::map<std::string, AIDA::IHistogram1D * > _aidaHistoMap;
-    std::map<std::string, AIDA::IHistogram2D * > _aidaHistoMap2D;
-    std::map<std::string, AIDA::IProfile1D * >   _aidaHistoMapProf1D;
- 
-    AIDA::IHistogram2D* _aidaZvHitX;
-    AIDA::IHistogram2D* _aidaZvFitX;
-    AIDA::IHistogram2D* _aidaZvHitY;
-    AIDA::IHistogram2D* _aidaZvFitY;
+		// Reference HitCollection name 
+		std::string      _referenceHitCollectionName;
+		std::string      _clusterCollectionName;
+		bool             _useReferenceHitCollection;
+		LCCollectionVec* _referenceHitVec;    
+		LCCollectionVec* _clusterVec;
 
-    //! Fill histogram switch
-    bool _histogramSwitch;
-    //! LCIO switch
-    bool _addToLCIO;
+		// Silicon planes parameters as described in GEAR
+		gear::SiPlanesParameters * _siPlanesParameters;
+		gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
 
-	//variables from EUTelDafFitter.h
-    std::string _trackCollectionName;
-    //! Output track collection
-    LCCollectionVec     * _fittrackvec;
-    LCCollectionVec     * _fitpointvec;
-    void addToLCIO(daffitter::TrackCandidate<float,4>& track, LCCollectionVec *lcvec);
-	bool _fitDuts;
-  };
+		std::map<std::string, AIDA::IHistogram1D * > _aidaHistoMap;
+		std::map<std::string, AIDA::IHistogram2D * > _aidaHistoMap2D;
+		std::map<std::string, AIDA::IProfile1D * >   _aidaHistoMapProf1D;
 
-	//! A global instance of the processor
+		AIDA::IHistogram2D* _aidaZvHitX;
+		AIDA::IHistogram2D* _aidaZvFitX;
+		AIDA::IHistogram2D* _aidaZvHitY;
+		AIDA::IHistogram2D* _aidaZvFitY;
+
+		// Other variables from EUTelDafFitter.h
+		// Output track collection
+		LCCollectionVec     * _fittrackvec;
+		LCCollectionVec     * _fitpointvec;
+		void addToLCIO(daffitter::TrackCandidate<float,4>& track, LCCollectionVec *lcvec);
+		bool _fitDuts;
+	};
+
+	// A global instance of the processor
 	EUTelTrueHitDafFitter gEUTelTrueHitDafFitter;
 }
 #endif
