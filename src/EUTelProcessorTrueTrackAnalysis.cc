@@ -274,13 +274,13 @@ void EUTelProcessorTrueTrackAnalysis::fillHistos(LCEvent* event) {
 		double diff_y = (fitpointPos[1] - pair[1])*1000;
 
 		//fill histograms for all sensors
-		(dynamic_cast<AIDA::IHistogram1D*>(_1DHistos[0].at(sensorID)))->fill(diff_x);
-		(dynamic_cast<AIDA::IHistogram1D*>(_1DHistos[1].at(sensorID)))->fill(diff_y);
-		(dynamic_cast<AIDA::IProfile1D*>(_1DProfileHistos[0].at(sensorID)))->fill(fitpointPos[0], diff_x);
-		(dynamic_cast<AIDA::IProfile1D*>(_1DProfileHistos[1].at(sensorID)))->fill(fitpointPos[0], diff_y);
-		(dynamic_cast<AIDA::IProfile1D*>(_1DProfileHistos[2].at(sensorID)))->fill(fitpointPos[1], diff_x);
-		(dynamic_cast<AIDA::IProfile1D*>(_1DProfileHistos[3].at(sensorID)))->fill(fitpointPos[1], diff_y);
-		(dynamic_cast<AIDA::IHistogram2D*>(_2DHistos[0].at(sensorID)))->fill(diff_x, diff_y, 1.0);
+		_1DHistos[0].at(sensorID)->fill(diff_x);
+		_1DHistos[1].at(sensorID)->fill(diff_y);
+		_1DProfileHistos[0].at(sensorID)->fill(fitpointPos[0], diff_x);
+		_1DProfileHistos[1].at(sensorID)->fill(fitpointPos[0], diff_y);
+		_1DProfileHistos[2].at(sensorID)->fill(fitpointPos[1], diff_x);
+		_1DProfileHistos[3].at(sensorID)->fill(fitpointPos[1], diff_y);
+		_2DHistos[0].at(sensorID)->fill(diff_x, diff_y, 1.0);
 
 		_trueHitMap.at(sensorID).erase(_trueHitMap.at(sensorID).begin()+pairIndex);
 	}
@@ -321,13 +321,13 @@ void EUTelProcessorTrueTrackAnalysis::fillHistos(LCEvent* event) {
 		double diff_y = (fitpointPos[1] - pair[1])*1000;
 
 		//fill histograms for all sensors
-		(dynamic_cast<AIDA::IHistogram1D*>(_1DHistos[2].at(sensorID)))->fill(diff_x);
-		(dynamic_cast<AIDA::IHistogram1D*>(_1DHistos[3].at(sensorID)))->fill(diff_y);
-		(dynamic_cast<AIDA::IProfile1D*>(_1DProfileHistos[4].at(sensorID)))->fill(fitpointPos[0], diff_x);
-		(dynamic_cast<AIDA::IProfile1D*>(_1DProfileHistos[5].at(sensorID)))->fill(fitpointPos[0], diff_y);
-		(dynamic_cast<AIDA::IProfile1D*>(_1DProfileHistos[6].at(sensorID)))->fill(fitpointPos[1], diff_x);
-		(dynamic_cast<AIDA::IProfile1D*>(_1DProfileHistos[7].at(sensorID)))->fill(fitpointPos[1], diff_y);
-		(dynamic_cast<AIDA::IHistogram2D*>(_2DHistos[1].at(sensorID)))->fill(diff_x, diff_y, 1.0);
+		_1DHistos[2].at(sensorID)->fill(diff_x);
+		_1DHistos[3].at(sensorID)->fill(diff_y);
+		_1DProfileHistos[4].at(sensorID)->fill(fitpointPos[0], diff_x);
+		_1DProfileHistos[5].at(sensorID)->fill(fitpointPos[0], diff_y);
+		_1DProfileHistos[6].at(sensorID)->fill(fitpointPos[1], diff_x);
+		_1DProfileHistos[7].at(sensorID)->fill(fitpointPos[1], diff_y);
+		_2DHistos[1].at(sensorID)->fill(diff_x, diff_y, 1.0);
 
 		trueFitpointMap.at(sensorID).erase(trueFitpointMap.at(sensorID).begin()+pairIndex);
 	}

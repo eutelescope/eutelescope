@@ -5,7 +5,6 @@
 
 #include "marlin/Processor.h"
 
-#include <AIDA/IBaseHistogram.h>
 #include <AIDA/IHistogram1D.h>
 #include <AIDA/IHistogram2D.h>
 #include <AIDA/IProfile1D.h>
