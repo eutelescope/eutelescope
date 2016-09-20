@@ -40,9 +40,6 @@ EUTelProcessorTrueHitAnalysis::EUTelProcessorTrueHitAnalysis() :
 	_reconstructedHitCollectionName(""),
 	_iRun(0),
 	_iEvt(0),
-	_isFirstEvent(true),
-	_histoInfoFileName(""),
-	_noOfDetector(0),
 	_sensorIDVec(),
 	_trueHitCollectionVec(nullptr),
 	_reconstructedHitCollectionVec(nullptr),
@@ -57,8 +54,6 @@ EUTelProcessorTrueHitAnalysis::EUTelProcessorTrueHitAnalysis() :
 	registerInputCollection(LCIO::TRACKERHIT, "TrueHitCollectionName", "Input of True Hit data", _trueHitCollectionName, std::string("true_hits"));
 
 	registerInputCollection(LCIO::TRACKERHIT, "ReconstructedHitCollectionName", "Input of Reconstructed Hit data", _reconstructedHitCollectionName, std::string("hit"));
-
-	registerProcessorParameter("HistoInfoFileName", "This is the name of the histogram information file", _histoInfoFileName, std::string("histoinfo.xml"));
 }
 
 void EUTelProcessorTrueHitAnalysis::init() {
@@ -70,6 +65,8 @@ void EUTelProcessorTrueHitAnalysis::init() {
 
 	_iRun = 0;
 	_iEvt = 0;
+
+	bookHistos();
 }
 
 void EUTelProcessorTrueHitAnalysis::processRunHeader(LCRunHeader* rhdr) {
@@ -109,8 +106,6 @@ void EUTelProcessorTrueHitAnalysis::processEvent(LCEvent* event) {
 
 	readCollections(event);
 
-	if (isFirstEvent()) bookHistos();
-
 	EUTelEventImpl* eutelEvent = static_cast<EUTelEventImpl*>(event);
 	if (eutelEvent->getEventType() == kEORE) {
 
@@ -123,8 +118,6 @@ void EUTelProcessorTrueHitAnalysis::processEvent(LCEvent* event) {
 	}
 
 	fillHistos(event);
-
-	_isFirstEvent = false;
 }
 
 void EUTelProcessorTrueHitAnalysis::check (LCEvent*) {
@@ -169,6 +162,7 @@ void EUTelProcessorTrueHitAnalysis::fillHistos(LCEvent* event) {
 		return;
 	}
 	else if (type == kUNKNOWN) {
+		//comment from EUTelProcessorGeometricClustering.cc:
 		// if it is unknown we had already issued a warning to the user at
 		// the beginning of the processEvent. If we get to here, it means
 		// that the assumption that the event was a data event was
@@ -185,13 +179,17 @@ void EUTelProcessorTrueHitAnalysis::fillHistos(LCEvent* event) {
 
 		std::map<int, std::vector<double const*>> trueHitMap;
 
+		for (size_t i = 0; i < _sensorIDVec.size(); i++) {
+
+			trueHitMap.insert(std::make_pair(_sensorIDVec[i], std::vector<const double*>()));
+		}
+
 		//fill the map with the true hits
 		for (int i = 0; i < _trueHitCollectionVec->getNumberOfElements(); i++) {
 
 			TrackerHitImpl* trueHit = dynamic_cast<TrackerHitImpl*>(_trueHitCollectionVec->getElementAt(i));
 			int detectorID = static_cast<int>(trueHitDecoder(trueHit)["sensorID"]);
 
-			trueHitMap.insert(std::make_pair(detectorID, std::vector<double const*>()));
 			trueHitMap.at(detectorID).push_back(trueHit->getPosition());
 		}
 
@@ -227,8 +225,14 @@ void EUTelProcessorTrueHitAnalysis::fillHistos(LCEvent* event) {
 			for (size_t j = pixelEntries; j < chargeValues.size(); j += pixelEntries) {
 
 				//add the hit pixel index to the appropriate vector if it is not yet stored there
-				if (std::find(XHitPixels.begin(), XHitPixels.end(), chargeValues[j]) == XHitPixels.end()) XHitPixels.push_back(chargeValues[j]);
-				if (std::find(YHitPixels.begin(), YHitPixels.end(), chargeValues[j+1]) == YHitPixels.end()) YHitPixels.push_back(chargeValues[j+1]);
+				if (std::find(XHitPixels.begin(), XHitPixels.end(), chargeValues[j]) == XHitPixels.end()) {
+
+					XHitPixels.push_back(chargeValues[j]);
+				}
+				if (std::find(YHitPixels.begin(), YHitPixels.end(), chargeValues[j+1]) == YHitPixels.end()) {
+
+					YHitPixels.push_back(chargeValues[j+1]);
+				}
 			}
 			int clusterSizeX = static_cast<int>(XHitPixels.size());
 			int clusterSizeY = static_cast<int>(YHitPixels.size());
@@ -243,10 +247,10 @@ void EUTelProcessorTrueHitAnalysis::fillHistos(LCEvent* event) {
 			double diff_y = (hitPos[1] - pair[1])*1000;
 
 			//fill histograms for all sensors
-			(dynamic_cast<AIDA::IHistogram1D*>(_1DHistos[2*(clusterSizeX-1)].at(detectorID)))->fill(diff_x);
-			(dynamic_cast<AIDA::IHistogram1D*>(_1DHistos[2*clusterSizeY-1].at(detectorID)))->fill(diff_y);
-			(dynamic_cast<AIDA::IHistogram2D*>(_2DHistos[2*(clusterSizeX-1)].at(detectorID)))->fill(diff_x, diff_y, 1.0);
-			(dynamic_cast<AIDA::IHistogram2D*>(_2DHistos[2*clusterSizeY-1].at(detectorID)))->fill(diff_x, diff_y, 1.0);
+			_1DHistos[2*(clusterSizeX-1)].at(detectorID)->fill(diff_x);
+			_1DHistos[2*clusterSizeY-1].at(detectorID)->fill(diff_y);
+			_2DHistos[2*(clusterSizeX-1)].at(detectorID)->fill(diff_x, diff_y, 1.0);
+			_2DHistos[2*clusterSizeY-1].at(detectorID)->fill(diff_x, diff_y, 1.0);
 
 			//fill histograms for x cluster size 2 for DUT
 			if ((detectorID >= 10) && (clusterSizeX == 2)) {
@@ -256,7 +260,7 @@ void EUTelProcessorTrueHitAnalysis::fillHistos(LCEvent* event) {
 
 					int TOTDiff = abs(chargeValues[2] - chargeValues[2+pixelEntries]);
 					if (TOTDiff > 4) TOTDiff = 4;
-					(dynamic_cast<AIDA::IHistogram1D*>(_xClustSize2Histos[2*TOTDiff]))->fill(diff_x);
+					_xClustSize2Histos[2*TOTDiff]->fill(diff_x);
 				}
 
 				//in for general y cluster sizes, take the TOT difference as the
@@ -271,13 +275,12 @@ void EUTelProcessorTrueHitAnalysis::fillHistos(LCEvent* event) {
 
 				int TOTDiff = abs(leftTOT - rightTOT);
 				if (TOTDiff > 4) TOTDiff = 4;
-				(dynamic_cast<AIDA::IHistogram1D*>(_xClustSize2Histos[2*TOTDiff+1]))->fill(diff_x);
+				_xClustSize2Histos[2*TOTDiff+1]->fill(diff_x);
 			}
 
 			if ((detectorID == 0) && (clusterSizeY == 3)) {
 
-				(dynamic_cast<AIDA::IHistogram1D*>(_yClustSize3Histos[clusterSizeX-1]))->fill(diff_y);
-				//if ((clusterSizeX == 2) && (diff_y < -7)) streamlog_out(WARNING2) << "found a spurious cluster with y size 3, x size 2,diff_x " << diff_x << ", and diff_y " << diff_y << " at event " << event->getEventNumber() << " in detector " << detectorID << std::endl;
+				_yClustSize3Histos[clusterSizeX-1]->fill(diff_y);
 			}
 
 			trueHitMap.at(detectorID).erase(trueHitMap.at(detectorID).begin()+pairIndex);
@@ -295,24 +298,6 @@ void EUTelProcessorTrueHitAnalysis::bookHistos() {
 
 	streamlog_out(DEBUG5) << "Booking histograms\n";
 
-	std::unique_ptr<EUTelHistogramManager> histoMng = std::make_unique<EUTelHistogramManager>(_histoInfoFileName);
-	EUTelHistogramInfo* histoInfo;
-	bool isHistoManagerAvailable;
-
-	try {
-		isHistoManagerAvailable = histoMng->init();
-	}
-	catch ( std::ios::failure& e) {
-		streamlog_out ( WARNING2 ) << "I/O problem with " << _histoInfoFileName << "\n"
-                               << "Continuing without histogram manager"  << std::endl;
-		isHistoManagerAvailable = false;
-	}
-	catch ( ParseException& e ) {
-		streamlog_out ( WARNING2 ) << e.what() << "\n"
-                               << "Continuing without histogram manager" << std::endl;
-		isHistoManagerAvailable = false;
-	}
-
 	for (size_t i = 0; i < _sensorIDVec.size(); i++) {
 
 		int sensorID = _sensorIDVec[i];
@@ -328,24 +313,10 @@ void EUTelProcessorTrueHitAnalysis::bookHistos() {
 
 			std::string histoName = coordinate + "PositionDifference_" + coordinate + "ClusterSize" + clusterSize + "_d" + to_string(sensorID);
 
-			int histoNBin = 101;
+			int histoNBin = 161;
 			double histoMin = -10;
 			double histoMax = 10;
 			std::string histoTitle = "difference in " + coordinate + " position between true simulated hits and reconstructed hits for " + coordinate + " cluster size " + clusterSize + ";#Delta" + coordinate + " /#mum;Entries";
-			if (isHistoManagerAvailable) {
-
-				histoInfo = histoMng->getHistogramInfo(histoName);
-
-				if (histoInfo) {
-
-					streamlog_out(DEBUG2) << (* histoInfo) << std::endl;
-					histoNBin = histoInfo->_xBin;
-					histoMin = histoInfo->_xMin;
-					histoMax = histoInfo->_xMax;
-
-					if (histoInfo->_title != "") histoTitle = histoInfo->_title;
-				}
-			}
 
 			if (sensorID >= 10) {//sensor is a DUT, with much large pixel pitch
 				if (i%2 == 0) {//adjust histogram for x-coordinate
@@ -372,33 +343,15 @@ void EUTelProcessorTrueHitAnalysis::bookHistos() {
 
 			std::string histoName = "2DPositionDifference_" + coordinate + "ClusterSize" + clusterSize + "_d" + to_string(sensorID);
 
-			int histoXNBin = 101;
+			int histoXNBin = 161;
 			double histoXMin = -10;
 			double histoXMax = 10;
 
-			int histoYNBin = 101;
+			int histoYNBin = 161;
 			double histoYMin = -10;
 			double histoYMax = 10;
 
 			std::string histoTitle = "difference in position between true simulated hits and reconstructed hits for " + coordinate + " cluster size " + clusterSize + ";#Deltax /#mum;#Deltay /#mum;Entries";
-			if (isHistoManagerAvailable) {
-
-				histoInfo = histoMng->getHistogramInfo(histoName);
-
-				if (histoInfo) {
-
-					streamlog_out(DEBUG2) << (* histoInfo) << std::endl;
-					histoXNBin = histoInfo->_xBin;
-					histoXMin = histoInfo->_xMin;
-					histoXMax = histoInfo->_xMax;
-
-					histoYNBin = histoInfo->_yBin;
-					histoYMin = histoInfo->_yMin;
-					histoYMax = histoInfo->_yMax;
-
-					if (histoInfo->_title != "") histoTitle = histoInfo->_title;
-				}
-			}
 
 			if (sensorID >= 10) {
 
@@ -426,24 +379,10 @@ void EUTelProcessorTrueHitAnalysis::bookHistos() {
 
 				std::string histoName = "xPositionDifference" + modifier + "_TOTDiff" + TOTDiff + "_d" + to_string(sensorID);
 
-				int histoNBin = 101;
+				int histoNBin = 161;
 				double histoMin = -140;
 				double histoMax = 140;
 				std::string histoTitle = "difference in x position between true simulated hits and reconstructed hits for x cluster size 2 with TOT difference " + TOTDiff + ";#Deltax /#mum;Entries";
-				if (isHistoManagerAvailable) {
-
-					histoInfo = histoMng->getHistogramInfo(histoName);
-
-					if (histoInfo) {
-
-						streamlog_out(DEBUG2) << (* histoInfo) << std::endl;
-						histoNBin = histoInfo->_xBin;
-						histoMin = histoInfo->_xMin;
-						histoMax = histoInfo->_xMax;
-
-						if (histoInfo->_title != "") histoTitle = histoInfo->_title;
-					}
-				}
 
 				_xClustSize2Histos.push_back(AIDAProcessor::histogramFactory(this)->createHistogram1D((tempPath+histoName).c_str(), histoNBin, histoMin, histoMax));
 				_xClustSize2Histos[i]->setTitle(histoTitle.c_str());
@@ -463,24 +402,10 @@ void EUTelProcessorTrueHitAnalysis::bookHistos() {
 
 				std::string histoName = "yPositionDifference_xClusterSize" + xClustSize + "_d" + to_string(sensorID);
 
-				int histoNBin = 101;
+				int histoNBin = 161;
 				double histoMin = -20;
 				double histoMax = 20;
 				std::string histoTitle = "difference in y position between true simulated hits and reconstructed hits for y cluster size 3 with x cluster size " + xClustSize + ";#Deltay /#mum;Entries";
-				if (isHistoManagerAvailable) {
-
-					histoInfo = histoMng->getHistogramInfo(histoName);
-
-					if (histoInfo) {
-
-						streamlog_out(DEBUG2) << (* histoInfo) << std::endl;
-						histoNBin = histoInfo->_xBin;
-						histoMin = histoInfo->_xMin;
-						histoMax = histoInfo->_xMax;
-
-						if (histoInfo->_title != "") histoTitle = histoInfo->_title;
-					}
-				}
 
 				_yClustSize3Histos.push_back(AIDAProcessor::histogramFactory(this)->createHistogram1D((tempPath+histoName).c_str(), histoNBin, histoMin, histoMax));
 				_yClustSize3Histos[i]->setTitle(histoTitle.c_str());

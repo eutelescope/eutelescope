@@ -40,9 +40,6 @@ EUTelProcessorSpuriousClusterFinder::EUTelProcessorSpuriousClusterFinder() :
 	_reconstructedHitCollectionName(""),
 	_iRun(0),
 	_iEvt(0),
-	_isFirstEvent(true),
-	_histoInfoFileName(""),
-	_noOfDetector(0),
 	_sensorIDVec(),
 	_trueHitCollectionVec(nullptr),
 	_reconstructedHitCollectionVec(nullptr),
@@ -55,8 +52,6 @@ EUTelProcessorSpuriousClusterFinder::EUTelProcessorSpuriousClusterFinder() :
 	registerInputCollection(LCIO::TRACKERHIT, "TrueHitCollectionName", "Input of True Hit data", _trueHitCollectionName, std::string("true_hits"));
 
 	registerInputCollection(LCIO::TRACKERHIT, "ReconstructedHitCollectionName", "Input of Reconstructed Hit data", _reconstructedHitCollectionName, std::string("hit"));
-
-	registerProcessorParameter("HistoInfoFileName", "This is the name of the histogram information file", _histoInfoFileName, std::string("histoinfo.xml"));
 }
 
 void EUTelProcessorSpuriousClusterFinder::init() {
@@ -68,6 +63,8 @@ void EUTelProcessorSpuriousClusterFinder::init() {
 
 	_iRun = 0;
 	_iEvt = 0;
+
+	bookHistos();
 }
 
 void EUTelProcessorSpuriousClusterFinder::processRunHeader(LCRunHeader* rhdr) {
@@ -107,8 +104,6 @@ void EUTelProcessorSpuriousClusterFinder::processEvent(LCEvent* event) {
 
 	readCollections(event);
 
-	if (isFirstEvent()) bookHistos();
-
 	EUTelEventImpl* eutelEvent = static_cast<EUTelEventImpl*>(event);
 	if (eutelEvent->getEventType() == kEORE) {
 
@@ -121,8 +116,6 @@ void EUTelProcessorSpuriousClusterFinder::processEvent(LCEvent* event) {
 	}
 
 	fillHistos(event);
-
-	_isFirstEvent = false;
 }
 
 void EUTelProcessorSpuriousClusterFinder::check (LCEvent*) {
@@ -167,6 +160,7 @@ void EUTelProcessorSpuriousClusterFinder::fillHistos(LCEvent* event) {
 		return;
 	}
 	else if (type == kUNKNOWN) {
+		//comment from EUTelProcessorGeometricClustering.cc:
 		// if it is unknown we had already issued a warning to the user at
 		// the beginning of the processEvent. If we get to here, it means
 		// that the assumption that the event was a data event was
@@ -184,16 +178,19 @@ void EUTelProcessorSpuriousClusterFinder::fillHistos(LCEvent* event) {
 		std::map<int, std::vector<double const*>> trueHitMap;
 		std::map<int, std::vector<double>> trueHitEDepMap;
 
+		for (size_t i = 0; i < _sensorIDVec.size(); i++) {
+
+			trueHitMap.insert(std::make_pair(_sensorIDVec[i], std::vector<double const*>()));
+			trueHitEDepMap.insert(std::make_pair(_sensorIDVec[i], std::vector<double>()));
+		}
+
 		//fill the map with the true hits
 		for (int i = 0; i < _trueHitCollectionVec->getNumberOfElements(); i++) {
 
 			TrackerHitImpl* trueHit = dynamic_cast<TrackerHitImpl*>(_trueHitCollectionVec->getElementAt(i));
 			int detectorID = static_cast<int>(trueHitDecoder(trueHit)["sensorID"]);
 
-			trueHitMap.insert(std::make_pair(detectorID, std::vector<double const*>()));
 			trueHitMap.at(detectorID).push_back(trueHit->getPosition());
-
-			trueHitEDepMap.insert(std::make_pair(detectorID, std::vector<double>()));
 			trueHitEDepMap.at(detectorID).push_back(trueHit->getEDepError());
 		}
 
@@ -260,41 +257,50 @@ void EUTelProcessorSpuriousClusterFinder::fillHistos(LCEvent* event) {
 				if (isSpuriousCluster) {
 
 					//fill histograms for spurious clusters
-					(dynamic_cast<AIDA::IHistogram1D*>(_1DHistos[0].at(detectorID)))->fill(diff_x);
-					(dynamic_cast<AIDA::IHistogram1D*>(_1DHistos[1].at(detectorID)))->fill(diff_y);
-					(dynamic_cast<AIDA::IHistogram1D*>(_1DHistos[2].at(detectorID)))->fill(hitPos[0]);
-					(dynamic_cast<AIDA::IHistogram1D*>(_1DHistos[3].at(detectorID)))->fill(hitPos[1]);
-					(dynamic_cast<AIDA::IHistogram1D*>(_1DHistos[4].at(detectorID)))->fill(pair[0]);
-					(dynamic_cast<AIDA::IHistogram1D*>(_1DHistos[5].at(detectorID)))->fill(pair[1]);
-					(dynamic_cast<AIDA::IHistogram1D*>(_1DHistos[6].at(detectorID)))->fill(edepTotal);
-					(dynamic_cast<AIDA::IHistogram1D*>(_1DHistos[13].at(detectorID)))->fill(diff_x);
-					(dynamic_cast<AIDA::IHistogram1D*>(_1DHistos[14].at(detectorID)))->fill(diff_y+9.2);
-					(dynamic_cast<AIDA::IHistogram1D*>(_1DHistos[17].at(detectorID)))->fill(diff_x);
-					(dynamic_cast<AIDA::IHistogram1D*>(_1DHistos[18].at(detectorID)))->fill(diff_y+9.2);
-					(dynamic_cast<AIDA::IHistogram2D*>(_2DHistos[0].at(detectorID)))->fill(diff_x, diff_y, 1.0);
-					(dynamic_cast<AIDA::IHistogram2D*>(_2DHistos[1].at(detectorID)))->fill(hitPos[0], hitPos[1], 1.0);
-					(dynamic_cast<AIDA::IHistogram2D*>(_2DHistos[2].at(detectorID)))->fill(pair[0], pair[1], 1.0);
-					(dynamic_cast<AIDA::IHistogram2D*>(_2DHistos[9].at(detectorID)))->fill(diff_x, diff_y+9.2, 1.0);
-					(dynamic_cast<AIDA::IHistogram2D*>(_2DHistos[12].at(detectorID)))->fill(diff_x, diff_y+9.2, 1.0);
-					for (size_t j = 0; j < shape.size(); j+=2) (dynamic_cast<AIDA::IHistogram2D*>(_2DHistos[3].at(detectorID)))->fill(shape[j], shape[j+1], 1.0);
+					_1DHistos[0].at(detectorID)->fill(diff_x);
+					_1DHistos[1].at(detectorID)->fill(diff_y);
+					_1DHistos[2].at(detectorID)->fill(hitPos[0]);
+					_1DHistos[3].at(detectorID)->fill(hitPos[1]);
+					_1DHistos[4].at(detectorID)->fill(pair[0]);
+					_1DHistos[5].at(detectorID)->fill(pair[1]);
+					_1DHistos[6].at(detectorID)->fill(edepTotal);
+					_1DHistos[13].at(detectorID)->fill(diff_x);
+					_1DHistos[14].at(detectorID)->fill(diff_y+9.2);
+					_1DHistos[17].at(detectorID)->fill(diff_x);
+					_1DHistos[18].at(detectorID)->fill(diff_y+9.2);
+					_2DHistos[0].at(detectorID)->fill(diff_x, diff_y, 1.0);
+					_2DHistos[1].at(detectorID)->fill(hitPos[0], hitPos[1], 1.0);
+					_2DHistos[2].at(detectorID)->fill(pair[0], pair[1], 1.0);
+					_2DHistos[9].at(detectorID)->fill(diff_x, diff_y+9.2, 1.0);
+					_2DHistos[12].at(detectorID)->fill(diff_x, diff_y+9.2, 1.0);
+					for (size_t j = 0; j < shape.size(); j+=2) {
+
+						_2DHistos[3].at(detectorID)->fill(shape[j], shape[j+1], 1.0);
+					}
 				}
 
 				if (isSpuriousCluster == false) {
 
 					//fill histograms for non spurious clusters
-					(dynamic_cast<AIDA::IHistogram1D*>(_1DHistos[7].at(detectorID)))->fill(diff_x);
-					(dynamic_cast<AIDA::IHistogram1D*>(_1DHistos[8].at(detectorID)))->fill(diff_y);
-					(dynamic_cast<AIDA::IHistogram1D*>(_1DHistos[9].at(detectorID)))->fill(hitPos[0]);
-					(dynamic_cast<AIDA::IHistogram1D*>(_1DHistos[10].at(detectorID)))->fill(hitPos[1]);
-					(dynamic_cast<AIDA::IHistogram1D*>(_1DHistos[11].at(detectorID)))->fill(pair[0]);
-					(dynamic_cast<AIDA::IHistogram1D*>(_1DHistos[12].at(detectorID)))->fill(pair[1]);
-					(dynamic_cast<AIDA::IHistogram2D*>(_2DHistos[5].at(detectorID)))->fill(diff_x, diff_y, 1.0);
-					(dynamic_cast<AIDA::IHistogram2D*>(_2DHistos[6].at(detectorID)))->fill(hitPos[0], hitPos[1], 1.0);
-					(dynamic_cast<AIDA::IHistogram2D*>(_2DHistos[7].at(detectorID)))->fill(pair[0], pair[1], 1.0);
-					for (size_t j = 0; j < shape.size(); j+=2) (dynamic_cast<AIDA::IHistogram2D*>(_2DHistos[8].at(detectorID)))->fill(shape[j], shape[j+1], 1.0);
+					_1DHistos[7].at(detectorID)->fill(diff_x);
+					_1DHistos[8].at(detectorID)->fill(diff_y);
+					_1DHistos[9].at(detectorID)->fill(hitPos[0]);
+					_1DHistos[10].at(detectorID)->fill(hitPos[1]);
+					_1DHistos[11].at(detectorID)->fill(pair[0]);
+					_1DHistos[12].at(detectorID)->fill(pair[1]);
+					_2DHistos[5].at(detectorID)->fill(diff_x, diff_y, 1.0);
+					_2DHistos[6].at(detectorID)->fill(hitPos[0], hitPos[1], 1.0);
+					_2DHistos[7].at(detectorID)->fill(pair[0], pair[1], 1.0);
+					for (size_t j = 0; j < shape.size(); j+=2) {
+
+						_2DHistos[8].at(detectorID)->fill(shape[j], shape[j+1], 1.0);
+					}
 				}
 
-				for (size_t j = 0; j < shape.size(); j+=2) (dynamic_cast<AIDA::IHistogram2D*>(_2DHistos[4].at(detectorID)))->fill(shape[j], shape[j+1], 1.0);
+				for (size_t j = 0; j < shape.size(); j+=2) {
+
+					_2DHistos[4].at(detectorID)->fill(shape[j], shape[j+1], 1.0);
+				}
 			}
 
 			if ((clusterSizeX == 2) && (clusterSizeY == 2)) {
@@ -311,20 +317,26 @@ void EUTelProcessorSpuriousClusterFinder::fillHistos(LCEvent* event) {
 
 				if (is2x2Cluster) {
 
-					(dynamic_cast<AIDA::IHistogram1D*>(_1DHistos[15].at(detectorID)))->fill(diff_x);
-					(dynamic_cast<AIDA::IHistogram1D*>(_1DHistos[16].at(detectorID)))->fill(diff_y);
-					(dynamic_cast<AIDA::IHistogram1D*>(_1DHistos[17].at(detectorID)))->fill(diff_x);
-					(dynamic_cast<AIDA::IHistogram1D*>(_1DHistos[18].at(detectorID)))->fill(diff_y);
-					(dynamic_cast<AIDA::IHistogram2D*>(_2DHistos[10].at(detectorID)))->fill(diff_x, diff_y, 1.0);
-					(dynamic_cast<AIDA::IHistogram2D*>(_2DHistos[12].at(detectorID)))->fill(diff_x, diff_y, 1.0);
-					for (size_t j = 0; j < shape.size(); j+=2) (dynamic_cast<AIDA::IHistogram2D*>(_2DHistos[11].at(detectorID)))->fill(shape[j], shape[j+1], 1.0);
+					_1DHistos[15].at(detectorID)->fill(diff_x);
+					_1DHistos[16].at(detectorID)->fill(diff_y);
+					_1DHistos[17].at(detectorID)->fill(diff_x);
+					_1DHistos[18].at(detectorID)->fill(diff_y);
+					_2DHistos[10].at(detectorID)->fill(diff_x, diff_y, 1.0);
+					_2DHistos[12].at(detectorID)->fill(diff_x, diff_y, 1.0);
+					for (size_t j = 0; j < shape.size(); j+=2) {
+
+						_2DHistos[11].at(detectorID)->fill(shape[j], shape[j+1], 1.0);
+					}
 				}
 				else {
 
-					(dynamic_cast<AIDA::IHistogram1D*>(_1DHistos[19].at(detectorID)))->fill(diff_x);
-					(dynamic_cast<AIDA::IHistogram1D*>(_1DHistos[20].at(detectorID)))->fill(diff_y);
-					(dynamic_cast<AIDA::IHistogram2D*>(_2DHistos[13].at(detectorID)))->fill(diff_x, diff_y, 1.0);
-					for (size_t j = 0; j < shape.size(); j+=2) (dynamic_cast<AIDA::IHistogram2D*>(_2DHistos[14].at(detectorID)))->fill(shape[j], shape[j+1], 1.0);
+					_1DHistos[19].at(detectorID)->fill(diff_x);
+					_1DHistos[20].at(detectorID)->fill(diff_y);
+					_2DHistos[13].at(detectorID)->fill(diff_x, diff_y, 1.0);
+					for (size_t j = 0; j < shape.size(); j+=2) {
+
+						_2DHistos[14].at(detectorID)->fill(shape[j], shape[j+1], 1.0);
+					}
 				}
 			}
 
@@ -350,485 +362,293 @@ void EUTelProcessorSpuriousClusterFinder::bookHistos() {
 		AIDAProcessor::tree(this)->mkdir(basePath.c_str());
 		basePath.append("/");
 
+		//sets the number of bins for all 1D histos
+		int histo1DNBin = 161;
+
+		//sets the histogram parameters for all 1D x position difference histos
+		double xPosDiffMin = -12;
+		double xPosDiffMax = 12;
+
+		//sets the histogram parameters for all 1D y position difference histos
+		double yPosDiffMin = -12;
+		double yPosDiffMax = 12;
+
+		//sets the histogram parameters for all 1D hit x position histograms
+		double xHitPosMin = -11;
+		double xHitPosMax = 11;
+
+		//sets the histogram parameters for all 1D hit y position histograms
+		double yHitPosMin = -6;
+		double yHitPosMax = 6;
+
+		//sets the number of bins for all 2D non-shape histograms
+		double histo2DXNBin = 161;
+		double histo2DYNBin = 161;
+
+		//sets the histogram parameters for all 2D position difference histograms
+		double xPosDiff2DMin = -12;
+		double xPosDiff2DMax = 12;
+		double yPosDiff2DMin = -12;
+		double yPosDiff2DMax = 12;
+
+		//sets the histogram parameters for all 2D hit position histograms
+		double xHitPos2DMin = -11;
+		double xHitPos2DMax = 11;
+		double yHitPos2DMin = -11;
+		double yHitPos2DMax = 11;
+
+		//sets the histogram parameters for all 2D shape histograms
+		double shapeXNBin = 6;
+		double shapeXMin = -2;
+		double shapeXMax = 4;
+
+		double shapeYNBin = 6;
+		double shapeYMin = -2;
+		double shapeYMax = 4;
+
+		//DUTs have larger pixel pitch, so histogram limits must be adjusted
+		//to account for larger spread in position difference
+		if (sensorID >= 10) {
+
+			xPosDiffMin = -200;
+			xPosDiffMax = 200;
+
+			yPosDiffMin = -80;
+			yPosDiffMax = 80;
+
+			xPosDiff2DMin = -200;
+			xPosDiff2DMax = 200;
+			yPosDiff2DMin = -200;
+			yPosDiff2DMax = 200;
+		}
+
+		std::string histoName, histoTitle;
+
 		//set up 1D histograms for spurious clusters
 		//set up x position difference histogram
-		std::string histoName = "xPositionDifference_d" + to_string(sensorID);
-
-		int histoNBin = 101;
-		double histoMin = -12;
-		double histoMax = 12;
-		std::string histoTitle = "difference in x position between true simulated hits and reconstructed hits for spurious clusters (x cluster size 2, y cluster size 3);#Deltax /#mum;Entries";
-
-		_1DHistos[0].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histoNBin, histoMin, histoMax)));
+		histoName = "xPositionDifference_d" + to_string(sensorID);
+		histoTitle = "difference in x position between true simulated hits and reconstructed hits for spurious clusters (x cluster size 2, y cluster size 3);#Deltax /#mum;Entries";
+		_1DHistos[0].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histo1DNBin, xPosDiffMin, xPosDiffMax)));
 		_1DHistos[0].at(sensorID)->setTitle(histoTitle.c_str());
 
 		//set up y position difference histogram
 		histoName = "yPositionDifference_d" + to_string(sensorID);
-
-		histoNBin = 101;
-		histoMin = -12;
-		histoMax = 12;
 		histoTitle = "difference in y position between true simulated hits and reconstructed hits for spurious clusters (x cluster size 2, y cluster size 3);#Deltay /#mum;Entries";
-
-		_1DHistos[1].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histoNBin, histoMin, histoMax)));
+		_1DHistos[1].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histo1DNBin, yPosDiffMin, yPosDiffMax)));
 		_1DHistos[1].at(sensorID)->setTitle(histoTitle.c_str());
 
 		//set up x position difference histogram
 		histoName = "xPositionDifference_shifted_d" + to_string(sensorID);
-
-		histoNBin = 101;
-		histoMin = -12;
-		histoMax = 12;
 		histoTitle = "difference in x position between true simulated hits and reconstructed hits for spurious clusters (x cluster size 2, y cluster size 3) with y difference offset by 9.2 #mum;#Deltax /#mum;Entries";
-
-		_1DHistos[13].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histoNBin, histoMin, histoMax)));
+		_1DHistos[13].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histo1DNBin, xPosDiffMin, xPosDiffMax)));
 		_1DHistos[13].at(sensorID)->setTitle(histoTitle.c_str());
 
 		//set up y position difference histogram
 		histoName = "yPositionDifference_shifted_d" + to_string(sensorID);
-
-		histoNBin = 101;
-		histoMin = -12;
-		histoMax = 12;
 		histoTitle = "difference in y position between true simulated hits and reconstructed hits for spurious clusters (x cluster size 2, y cluster size 3) with y difference offset by 9.2 #mum;#Deltay /#mum;Entries";
-
-		_1DHistos[14].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histoNBin, histoMin, histoMax)));
+		_1DHistos[14].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histo1DNBin, yPosDiffMin, yPosDiffMax)));
 		_1DHistos[14].at(sensorID)->setTitle(histoTitle.c_str());
 
 		//set up reconstructed hit x position histogram
 		histoName = "xReconstructedHitPosition_d" + to_string(sensorID);
-
-		histoNBin = 101;
-		histoMin = -11;
-		histoMax = 11;
 		histoTitle = "x position of reconstructed hits for spurious clusters (x cluster size 2, y cluster size 3);#Deltay /#mum;Entries";
-
-		_1DHistos[2].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histoNBin, histoMin, histoMax)));
+		_1DHistos[2].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histo1DNBin, xHitPosMin, xHitPosMax)));
 		_1DHistos[2].at(sensorID)->setTitle(histoTitle.c_str());
 
 		//set up reconstructed hit y position histogram
 		histoName = "yReconstrutedHitPosition_d" + to_string(sensorID);
-
-		histoNBin = 101;
-		histoMin = -6;
-		histoMax = 6;
 		histoTitle = "y position of reconstructed hits for spurious clusters (x cluster size 2, y cluster size 3);#Deltay /#mum;Entries";
-
-		_1DHistos[3].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histoNBin, histoMin, histoMax)));
+		_1DHistos[3].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histo1DNBin, yHitPosMin, yHitPosMax)));
 		_1DHistos[3].at(sensorID)->setTitle(histoTitle.c_str());
 
 		//set up true hit x position histogram
 		histoName = "xTrueHitPosition_d" + to_string(sensorID);
-
-		histoNBin = 101;
-		histoMin = -11;
-		histoMax = 11;
 		histoTitle = "x position of true simulated hits for spurious clusters (x cluster size 2, y cluster size 3);#Deltay /#mum;Entries";
-
-		_1DHistos[4].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histoNBin, histoMin, histoMax)));
+		_1DHistos[4].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histo1DNBin, xHitPosMin, xHitPosMax)));
 		_1DHistos[4].at(sensorID)->setTitle(histoTitle.c_str());
 
 		//set up true hit y position histogram
 		histoName = "yTrueHitPosition_d" + to_string(sensorID);
-
-		histoNBin = 101;
-		histoMin = -6;
-		histoMax = 6;
 		histoTitle = "y position for true simulated hits for spurious clusters (x cluster size 2, y cluster size 3);#Deltay /#mum;Entries";
-
-		_1DHistos[5].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histoNBin, histoMin, histoMax)));
+		_1DHistos[5].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histo1DNBin, yHitPosMin, yHitPosMax)));
 		_1DHistos[5].at(sensorID)->setTitle(histoTitle.c_str());
 
 		//set up true hit total energy deposition histo
 		histoName = "TrueHitEDepTotal_d" + to_string(sensorID);
-
-		histoNBin = 101;
-		histoMin = 0;
-		histoMax = 70;
 		histoTitle = "total deposition energy for true simulated hits for spurious clusters (x cluster size 2, y cluster size 3);Total deposition energy;Entries";
-
-		_1DHistos[6].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histoNBin, histoMin, histoMax)));
+		_1DHistos[6].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), 160, 0, 80)));
 		_1DHistos[6].at(sensorID)->setTitle(histoTitle.c_str());
 
 		//set up 1D histograms for non-spurious clusters
 		//set up x position difference histogram
 		histoName = "xPositionDifference_NonSpurious_d" + to_string(sensorID);
-
-		histoNBin = 101;
-		histoMin = -12;
-		histoMax = 12;
 		histoTitle = "difference in x position between true simulated hits and reconstructed hits for non spurious clusters;#Deltax /#mum;Entries";
-
-		_1DHistos[7].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histoNBin, histoMin, histoMax)));
+		_1DHistos[7].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histo1DNBin, xPosDiffMin, xPosDiffMax)));
 		_1DHistos[7].at(sensorID)->setTitle(histoTitle.c_str());
 
 		//set up y position difference histogram
 		histoName = "yPositionDifference_NonSpurious_d" + to_string(sensorID);
-
-		histoNBin = 101;
-		histoMin = -12;
-		histoMax = 12;
 		histoTitle = "difference in y position between true simulated hits and reconstructed hits for non spurious clusters;#Deltay /#mum;Entries";
-
-		_1DHistos[8].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histoNBin, histoMin, histoMax)));
+		_1DHistos[8].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histo1DNBin, yPosDiffMin, yPosDiffMax)));
 		_1DHistos[8].at(sensorID)->setTitle(histoTitle.c_str());
 
 		//set up reconstructed hit x position histogram
 		histoName = "xReconstructedHitPosition_NonSpurious_d" + to_string(sensorID);
-
-		histoNBin = 101;
-		histoMin = -11;
-		histoMax = 11;
 		histoTitle = "x position of reconstructed hits for non spurious clusters;#Deltay /#mum;Entries";
-
-		_1DHistos[9].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histoNBin, histoMin, histoMax)));
+		_1DHistos[9].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histo1DNBin, xHitPosMin, xHitPosMax)));
 		_1DHistos[9].at(sensorID)->setTitle(histoTitle.c_str());
 
 		//set up reconstructed hit y position histogram
 		histoName = "yReconstrutedHitPosition_NonSpurious_d" + to_string(sensorID);
-
-		histoNBin = 101;
-		histoMin = -6;
-		histoMax = 6;
 		histoTitle = "y position of reconstructed hits for non spurious clusters;#Deltay /#mum;Entries";
-
-		_1DHistos[10].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histoNBin, histoMin, histoMax)));
+		_1DHistos[10].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histo1DNBin, yHitPosMin, yHitPosMax)));
 		_1DHistos[10].at(sensorID)->setTitle(histoTitle.c_str());
 
 		//set up true hit x position histogram
 		histoName = "xTrueHitPosition_NonSpurious_d" + to_string(sensorID);
-
-		histoNBin = 101;
-		histoMin = -11;
-		histoMax = 11;
 		histoTitle = "x position of true simulated hits for non spurious clusters;#Deltay /#mum;Entries";
-
-		_1DHistos[11].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histoNBin, histoMin, histoMax)));
+		_1DHistos[11].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histo1DNBin, xHitPosMin, xHitPosMax)));
 		_1DHistos[11].at(sensorID)->setTitle(histoTitle.c_str());
 
 		//set up true hit y position histogram
 		histoName = "yTrueHitPosition_NonSpurious_d" + to_string(sensorID);
-
-		histoNBin = 101;
-		histoMin = -6;
-		histoMax = 6;
 		histoTitle = "y position for true simulated hits for non spurious clusters;#Deltay /#mum;Entries";
-
-		_1DHistos[12].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histoNBin, histoMin, histoMax)));
+		_1DHistos[12].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histo1DNBin, yHitPosMin, yHitPosMax)));
 		_1DHistos[12].at(sensorID)->setTitle(histoTitle.c_str());
 
 		//set up 1D histograms for x cluster size 2 y cluster size 2 non 2x2 clusters
 		//set up x position difference histogram
 		histoName = "xPositionDifference_Non2x2_d" + to_string(sensorID);
-
-		histoNBin = 101;
-		histoMin = -12;
-		histoMax = 12;
 		histoTitle = "difference in x position between true simulated hits and reconstructed hits for x cluster size 2 y cluster size 2 non 2x2;#Deltax /#mum;Entries";
-
-		_1DHistos[19].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histoNBin, histoMin, histoMax)));
+		_1DHistos[19].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histo1DNBin, xPosDiffMin, xPosDiffMax)));
 		_1DHistos[19].at(sensorID)->setTitle(histoTitle.c_str());
 
 		//set up y position difference histogram
 		histoName = "yPositionDifference_Non2x2_d" + to_string(sensorID);
-
-		histoNBin = 101;
-		histoMin = -12;
-		histoMax = 12;
 		histoTitle = "difference in y position between true simulated hits and reconstructed hits for x cluster size 2 y cluster size 2 non 2x2;#Deltay /#mum;Entries";
-
-		_1DHistos[20].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histoNBin, histoMin, histoMax)));
+		_1DHistos[20].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histo1DNBin, yPosDiffMin, yPosDiffMax)));
 		_1DHistos[20].at(sensorID)->setTitle(histoTitle.c_str());
 
 		//set up 1D histograms for 2x2 clusters
 		//set up x position difference histogram
 		histoName = "xPositionDifference_2x2Cluster_d" + to_string(sensorID);
-
-		histoNBin = 101;
-		histoMin = -12;
-		histoMax = 12;
 		histoTitle = "difference in x position between true simulated hits and reconstructed hits for 2x2 clusters;#Deltax /#mum;Entries";
-
-		_1DHistos[15].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histoNBin, histoMin, histoMax)));
+		_1DHistos[15].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histo1DNBin, xPosDiffMin, xPosDiffMax)));
 		_1DHistos[15].at(sensorID)->setTitle(histoTitle.c_str());
 
 		//set up y position difference histogram
 		histoName = "yPositionDifference_2x2Cluster_d" + to_string(sensorID);
-
-		histoNBin = 101;
-		histoMin = -12;
-		histoMax = 12;
 		histoTitle = "difference in y position between true simulated hits and reconstructed hits for 2x2 clusters;#Deltay /#mum;Entries";
-
-		_1DHistos[16].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histoNBin, histoMin, histoMax)));
+		_1DHistos[16].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histo1DNBin, yPosDiffMin, yPosDiffMax)));
 		_1DHistos[16].at(sensorID)->setTitle(histoTitle.c_str());
 
 		//set up 1D histograms for 2x2 and spurious clusters
 		//set up x position difference histogram
 		histoName = "xPositionDifference_2x2+spurious_d" + to_string(sensorID);
-
-		histoNBin = 101;
-		histoMin = -12;
-		histoMax = 12;
 		histoTitle = "difference in x position between true simulated hits and reconstructed hits for 2x2 and spurious clusters;#Deltax /#mum;Entries";
-
-		_1DHistos[17].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histoNBin, histoMin, histoMax)));
+		_1DHistos[17].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histo1DNBin, xPosDiffMin, xPosDiffMax)));
 		_1DHistos[17].at(sensorID)->setTitle(histoTitle.c_str());
 
 		//set up y position difference histogram
 		histoName = "yPositionDifference_2x2+spurious_d" + to_string(sensorID);
-
-		histoNBin = 101;
-		histoMin = -12;
-		histoMax = 12;
 		histoTitle = "difference in y position between true simulated hits and reconstructed hits for 2x2 and spurious clusters;#Deltay /#mum;Entries";
-
-		_1DHistos[18].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histoNBin, histoMin, histoMax)));
+		_1DHistos[18].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histo1DNBin, yPosDiffMin, yPosDiffMax)));
 		_1DHistos[18].at(sensorID)->setTitle(histoTitle.c_str());
 
 		//set up 2D histograms for spurious clusters
 		//set up position difference histogram
 		histoName = "2DPositionDifference_d" + to_string(sensorID);
-
-		double histoXNBin = 101;
-		double histoXMin = -12;
-		double histoXMax = 12;
-
-		double histoYNBin = 101;
-		double histoYMin = -12;
-		double histoYMax = 12;
-
 		histoTitle = "difference in position between true simulated hits and reconstructed hits for spurious clusters (x cluster size 2, y cluster size 3);#Deltax /#mum;#Deltay /#mum;Entries";
-
-		_2DHistos[0].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram2D((basePath+histoName).c_str(), histoXNBin, histoXMin, histoXMax, histoYNBin, histoYMin, histoYMax)));
+		_2DHistos[0].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram2D((basePath+histoName).c_str(), histo2DXNBin, xPosDiff2DMin, xPosDiff2DMax, histo2DYNBin, yPosDiff2DMin, yPosDiff2DMax)));
 		_2DHistos[0].at(sensorID)->setTitle(histoTitle.c_str());
 
 		//set up position difference shifted histogram
 		histoName = "2DPositionDifference_shifted_d" + to_string(sensorID);
-
-		histoXNBin = 101;
-		histoXMin = -12;
-		histoXMax = 12;
-
-		histoYNBin = 101;
-		histoYMin = -12;
-		histoYMax = 12;
-
 		histoTitle = "difference in position between true simulated hits and reconstructed hits for spurious clusters (x cluster size 2, y cluster size 3) with y difference offset by 9.2 #mum;#Deltax /#mum;#Deltay /#mum;Entries";
-
-		_2DHistos[9].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram2D((basePath+histoName).c_str(), histoXNBin, histoXMin, histoXMax, histoYNBin, histoYMin, histoYMax)));
+		_2DHistos[9].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram2D((basePath+histoName).c_str(), histo2DXNBin, xPosDiff2DMin, xPosDiff2DMax, histo2DYNBin, yPosDiff2DMin, yPosDiff2DMax)));
 		_2DHistos[9].at(sensorID)->setTitle(histoTitle.c_str());
 
 		//set up reconstructed hit position histogram
 		histoName = "2DReconstructedHitPosition_d" + to_string(sensorID);
-
-		histoXNBin = 101;
-		histoXMin = -11;
-		histoXMax = 11;
-
-		histoYNBin = 101;
-		histoYMin = -11;
-		histoYMax = 11;
-
 		histoTitle = "position of reconstructed hits for spurious clusters (x cluster size 2, y cluster size 3);#Deltax /#mum;#Deltay /#mum;Entries";
-
-		_2DHistos[1].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram2D((basePath+histoName).c_str(), histoXNBin, histoXMin, histoXMax, histoYNBin, histoYMin, histoYMax)));
+		_2DHistos[1].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram2D((basePath+histoName).c_str(), histo2DXNBin, xHitPos2DMin, xHitPos2DMax, histo2DYNBin, yHitPos2DMin, yHitPos2DMax)));
 		_2DHistos[1].at(sensorID)->setTitle(histoTitle.c_str());
 
 		//set up true hit position histogram
 		histoName = "2DTrueHitPosition_d" + to_string(sensorID);
-
-		histoXNBin = 101;
-		histoXMin = -11;
-		histoXMax = 11;
-
-		histoYNBin = 101;
-		histoYMin = -11;
-		histoYMax = 11;
-
 		histoTitle = "position of true simulated hits for spurious clusters (x cluster size 2, y cluster size 3);#Deltax /#mum;#Deltay /#mum;Entries";
-
-		_2DHistos[2].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram2D((basePath+histoName).c_str(), histoXNBin, histoXMin, histoXMax, histoYNBin, histoYMin, histoYMax)));
+		_2DHistos[2].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram2D((basePath+histoName).c_str(), histo2DXNBin, xHitPos2DMin, xHitPos2DMax, histo2DYNBin, yHitPos2DMin, yHitPos2DMax)));
 		_2DHistos[2].at(sensorID)->setTitle(histoTitle.c_str());
 
 		//set up shape histogram for spurious clusters
 		histoName = "2DClusterShape_SpuriousClusters_d" + to_string(sensorID);
-
-		histoXNBin = 6;
-		histoXMin = -2;
-		histoXMax = 4;
-
-		histoYNBin = 6;
-		histoYMin = -2;
-		histoYMax = 4;
-
 		histoTitle = "shape of clusters for spurious clusters (x cluster size 2, y cluster size 3);#Deltax /#mum;#Deltay /#mum;Entries";
 
-		_2DHistos[3].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram2D((basePath+histoName).c_str(), histoXNBin, histoXMin, histoXMax, histoYNBin, histoYMin, histoYMax)));
+		_2DHistos[3].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram2D((basePath+histoName).c_str(), shapeXNBin, shapeXMin, shapeXMax, shapeYNBin, shapeYMin, shapeYMax)));
 		_2DHistos[3].at(sensorID)->setTitle(histoTitle.c_str());
 
 		//set up shape histogram for all clusters with x cluster size 2 and y cluster size 3
 		histoName = "2DClusterShape_d" + to_string(sensorID);
-
-		histoXNBin = 6;
-		histoXMin = -2;
-		histoXMax = 4;
-
-		histoYNBin = 6;
-		histoYMin = -2;
-		histoYMax = 4;
-
 		histoTitle = "shape of all clusters of x cluster size 2 and y cluster size 3;#Deltax /#mum;#Deltay /#mum;Entries";
-
-		_2DHistos[4].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram2D((basePath+histoName).c_str(), histoXNBin, histoXMin, histoXMax, histoYNBin, histoYMin, histoYMax)));
+		_2DHistos[4].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram2D((basePath+histoName).c_str(), shapeXNBin, shapeXMin, shapeXMax, shapeYNBin, shapeYMin, shapeYMax)));
 		_2DHistos[4].at(sensorID)->setTitle(histoTitle.c_str());
 
 		//set up 2D histograms for non spurious clusters
 		//set up position difference histogram
 		histoName = "2DPositionDifference_NonSpurious_d" + to_string(sensorID);
-
-		histoXNBin = 101;
-		histoXMin = -12;
-		histoXMax = 12;
-
-		histoYNBin = 101;
-		histoYMin = -12;
-		histoYMax = 12;
-
 		histoTitle = "difference in position between true simulated hits and reconstructed hits for non spurious clusters;#Deltax /#mum;#Deltay /#mum;Entries";
-
-		_2DHistos[5].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram2D((basePath+histoName).c_str(), histoXNBin, histoXMin, histoXMax, histoYNBin, histoYMin, histoYMax)));
+		_2DHistos[5].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram2D((basePath+histoName).c_str(), histo2DXNBin, xPosDiff2DMin, xPosDiff2DMax, histo2DYNBin, yPosDiff2DMin, yPosDiff2DMax)));
 		_2DHistos[5].at(sensorID)->setTitle(histoTitle.c_str());
 
 		//set up reconstructed hit position histogram
 		histoName = "2DReconstructedHitPosition_NonSpurious_d" + to_string(sensorID);
-
-		histoXNBin = 101;
-		histoXMin = -11;
-		histoXMax = 11;
-
-		histoYNBin = 101;
-		histoYMin = -11;
-		histoYMax = 11;
-
 		histoTitle = "position of reconstructed hits for non spurious clusters;#Deltax /#mum;#Deltay /#mum;Entries";
-
-		_2DHistos[6].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram2D((basePath+histoName).c_str(), histoXNBin, histoXMin, histoXMax, histoYNBin, histoYMin, histoYMax)));
+		_2DHistos[6].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram2D((basePath+histoName).c_str(), histo2DXNBin, xHitPos2DMin, xHitPos2DMax, histo2DYNBin, yHitPos2DMin, yHitPos2DMax)));
 		_2DHistos[6].at(sensorID)->setTitle(histoTitle.c_str());
 
 		//set up true hit position histogram
 		histoName = "2DTrueHitPosition_NonSpurious_d" + to_string(sensorID);
-
-		histoXNBin = 101;
-		histoXMin = -11;
-		histoXMax = 11;
-
-		histoYNBin = 101;
-		histoYMin = -11;
-		histoYMax = 11;
-
 		histoTitle = "position of true simulated hits for non spurious clusters;#Deltax /#mum;#Deltay /#mum;Entries";
-
-		_2DHistos[7].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram2D((basePath+histoName).c_str(), histoXNBin, histoXMin, histoXMax, histoYNBin, histoYMin, histoYMax)));
+		_2DHistos[7].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram2D((basePath+histoName).c_str(), histo2DXNBin, xHitPos2DMin, xHitPos2DMax, histo2DYNBin, yHitPos2DMin, yHitPos2DMax)));
 		_2DHistos[7].at(sensorID)->setTitle(histoTitle.c_str());
 
 		//set up shape histogram for non spurious clusters
 		histoName = "2DClusterShape_NonSpurious_d" + to_string(sensorID);
-
-		histoXNBin = 6;
-		histoXMin = -2;
-		histoXMax = 4;
-
-		histoYNBin = 6;
-		histoYMin = -2;
-		histoYMax = 4;
-
 		histoTitle = "shape of clusters for non spurious clusters;#Deltax /#mum;#Deltay /#mum;Entries";
-
-		_2DHistos[8].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram2D((basePath+histoName).c_str(), histoXNBin, histoXMin, histoXMax, histoYNBin, histoYMin, histoYMax)));
+		_2DHistos[8].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram2D((basePath+histoName).c_str(), shapeXNBin, shapeXMin, shapeXMax, shapeYNBin, shapeYMin, shapeYMax)));
 		_2DHistos[8].at(sensorID)->setTitle(histoTitle.c_str());
 
 		//set up 2D histograms for x cluster size 2 y cluster size 2 non 2x2 clusters
 		//set up position difference histogram
 		histoName = "2DPositionDifference_Non2x2_d" + to_string(sensorID);
-
-		histoXNBin = 101;
-		histoXMin = -12;
-		histoXMax = 12;
-
-		histoYNBin = 101;
-		histoYMin = -12;
-		histoYMax = 12;
-
 		histoTitle = "difference in position between true simulated hits and reconstructed hits for x cluster size 2 y cluster size 2 non 2x2;#Deltax /#mum;#Deltay /#mum;Entries";
-
-		_2DHistos[13].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram2D((basePath+histoName).c_str(), histoXNBin, histoXMin, histoXMax, histoYNBin, histoYMin, histoYMax)));
+		_2DHistos[13].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram2D((basePath+histoName).c_str(), histo2DXNBin, xPosDiff2DMin, xPosDiff2DMax, histo2DYNBin, yPosDiff2DMin, yPosDiff2DMax)));
 		_2DHistos[13].at(sensorID)->setTitle(histoTitle.c_str());
 
-		//set up shape histogram for 2x2 clusters
+		//set up shape histogram for non 2x2 clusters
 		histoName = "2DClusterShape_Non2x2_d" + to_string(sensorID);
-
-		histoXNBin = 6;
-		histoXMin = -2;
-		histoXMax = 4;
-
-		histoYNBin = 6;
-		histoYMin = -2;
-		histoYMax = 4;
-
 		histoTitle = "shape of clusters for x cluster size 2 y cluster size 2 non 2x2 clusters;#Deltax /#mum;#Deltay /#mum;Entries";
-
-		_2DHistos[14].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram2D((basePath+histoName).c_str(), histoXNBin, histoXMin, histoXMax, histoYNBin, histoYMin, histoYMax)));
+		_2DHistos[14].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram2D((basePath+histoName).c_str(), shapeXNBin, shapeXMin, shapeXMax, shapeYNBin, shapeYMin, shapeYMax)));
 		_2DHistos[14].at(sensorID)->setTitle(histoTitle.c_str());
 
 		//set up 2D histograms for 2x2 clusters
 		//set up position difference histogram
 		histoName = "2DPositionDifference_2x2Clusters_d" + to_string(sensorID);
-
-		histoXNBin = 101;
-		histoXMin = -12;
-		histoXMax = 12;
-
-		histoYNBin = 101;
-		histoYMin = -12;
-		histoYMax = 12;
-
 		histoTitle = "difference in position between true simulated hits and reconstructed hits for 2x2 clusters;#Deltax /#mum;#Deltay /#mum;Entries";
-
-		_2DHistos[10].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram2D((basePath+histoName).c_str(), histoXNBin, histoXMin, histoXMax, histoYNBin, histoYMin, histoYMax)));
+		_2DHistos[10].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram2D((basePath+histoName).c_str(), histo2DXNBin, xPosDiff2DMin, xPosDiff2DMax, histo2DYNBin, yPosDiff2DMin, yPosDiff2DMax)));
 		_2DHistos[10].at(sensorID)->setTitle(histoTitle.c_str());
 
 		//set up shape histogram for 2x2 clusters
 		histoName = "2DClusterShape_2x2Clusters_d" + to_string(sensorID);
-
-		histoXNBin = 6;
-		histoXMin = -2;
-		histoXMax = 4;
-
-		histoYNBin = 6;
-		histoYMin = -2;
-		histoYMax = 4;
-
 		histoTitle = "shape of clusters for 2x2 clusters;#Deltax /#mum;#Deltay /#mum;Entries";
-
-		_2DHistos[11].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram2D((basePath+histoName).c_str(), histoXNBin, histoXMin, histoXMax, histoYNBin, histoYMin, histoYMax)));
+		_2DHistos[11].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram2D((basePath+histoName).c_str(), shapeXNBin, shapeXMin, shapeXMax, shapeYNBin, shapeYMin, shapeYMax)));
 		_2DHistos[11].at(sensorID)->setTitle(histoTitle.c_str());
 
 		//set up 2D histograms for 2x2 and spurious clusters
 		//set up position difference histogram
 		histoName = "2DPositionDifference_2x2+spurious_d" + to_string(sensorID);
-
-		histoXNBin = 101;
-		histoXMin = -12;
-		histoXMax = 12;
-
-		histoYNBin = 101;
-		histoYMin = -12;
-		histoYMax = 12;
-
 		histoTitle = "difference in position between true simulated hits and reconstructed hits for 2x2 and spurious clusters;#Deltax /#mum;#Deltay /#mum;Entries";
-
-		_2DHistos[12].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram2D((basePath+histoName).c_str(), histoXNBin, histoXMin, histoXMax, histoYNBin, histoYMin, histoYMax)));
+		_2DHistos[12].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram2D((basePath+histoName).c_str(), histo2DXNBin, xPosDiff2DMin, xPosDiff2DMax, histo2DYNBin, yPosDiff2DMin, yPosDiff2DMax)));
 		_2DHistos[12].at(sensorID)->setTitle(histoTitle.c_str());
 	}
 

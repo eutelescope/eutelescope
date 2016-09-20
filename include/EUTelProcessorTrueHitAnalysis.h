@@ -5,7 +5,8 @@
 
 #include "marlin/Processor.h"
 
-#include <AIDA/IBaseHistogram.h>
+#include <AIDA/IHistogram1D.h>
+#include <AIDA/IHistogram2D.h>
 
 #include <IMPL/LCCollectionVec.h>
 
@@ -49,23 +50,18 @@ protected:
 
 	int _iRun;
 	int _iEvt;
-	bool _isFirstEvent;
-
-	std::string _histoInfoFileName;
 
 private:
 
-	int _noOfDetector;
-	bool isGeometryReady;
 	std::vector<int> _sensorIDVec;
 
 	LCCollectionVec* _trueHitCollectionVec;
 	LCCollectionVec* _reconstructedHitCollectionVec;
 
-	std::array<std::map<int, AIDA::IBaseHistogram*>, 8> _1DHistos;
-	std::array<std::map<int, AIDA::IBaseHistogram*>, 8> _2DHistos;
-	std::vector<AIDA::IBaseHistogram*> _xClustSize2Histos;
-	std::vector<AIDA::IBaseHistogram*> _yClustSize3Histos;
+	std::array<std::map<int, AIDA::IHistogram1D*>, 8> _1DHistos;
+	std::array<std::map<int, AIDA::IHistogram2D*>, 8> _2DHistos;
+	std::vector<AIDA::IHistogram1D*> _xClustSize2Histos;
+	std::vector<AIDA::IHistogram1D*> _yClustSize3Histos;
 
 	void readCollections(LCEvent* event);
 };
