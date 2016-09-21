@@ -348,9 +348,9 @@ void EUTelProcessorTrueTrackAnalysis::bookHistos() {
 
 		//set up true hit residual histograms 
 		//set up 1D histograms
-		for (size_t i = 0; i < _1DHistos.size()/2; i++) {
+		for (size_t j = 0; j < _1DHistos.size()/2; j++) {
 
-			std::string coordinate = (i%2 == 0)?"x":"y";
+			std::string coordinate = (j%2 == 0)?"x":"y";
 
 			std::string histoName = coordinate + "TrueHitResidual_d" + to_string(sensorID);
 
@@ -359,12 +359,12 @@ void EUTelProcessorTrueTrackAnalysis::bookHistos() {
 			double histoMax = 50;
 			std::string histoTitle = "difference in " + coordinate + " position between true simulated hits and reconstructed fitpoints from the reconstructed track;#Delta" + coordinate + " /#mum;Entries";
 
-			_1DHistos[i].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histoNBin, histoMin, histoMax)));
-			_1DHistos[i].at(sensorID)->setTitle(histoTitle.c_str());
+			_1DHistos[j].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histoNBin, histoMin, histoMax)));
+			_1DHistos[j].at(sensorID)->setTitle(histoTitle.c_str());
 		}
 		
 		//set up 2D histograms
-		for (size_t i = 0; i < _2DHistos.size()/2; i++) {
+		for (size_t j = 0; j < _2DHistos.size()/2; j++) {
 
 			std::string histoName = "2DTrueHitResidual_d" + to_string(sensorID);
 
@@ -377,15 +377,15 @@ void EUTelProcessorTrueTrackAnalysis::bookHistos() {
 			double histoYMax = 50;
 			std::string histoTitle = "difference in position between true simulated hits and reconstructed fitpoints from reconstructed tracks;#Deltax /#mum;#Deltay /#mum;Entries";
 
-			_2DHistos[i].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram2D((basePath+histoName).c_str(), histoXNBin, histoXMin, histoXMax, histoYNBin, histoYMin, histoYMax)));
-			_2DHistos[i].at(sensorID)->setTitle(histoTitle.c_str());
+			_2DHistos[j].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram2D((basePath+histoName).c_str(), histoXNBin, histoXMin, histoXMax, histoYNBin, histoYMin, histoYMax)));
+			_2DHistos[j].at(sensorID)->setTitle(histoTitle.c_str());
 		}
 
 		//set up 1D profile histograms
-		for (size_t i = 0; i < _1DProfileHistos.size()/2; i++) {
+		for (size_t j = 0; j < _1DProfileHistos.size()/2; j++) {
 
-			std::string coordinate_1 = (i%2 == 0)?"x":"y";
-			std::string coordinate_2 = (i<_1DProfileHistos.size()/4)?"x":"y";
+			std::string coordinate_1 = (j%2 == 0)?"x":"y";
+			std::string coordinate_2 = (j<_1DProfileHistos.size()/4)?"x":"y";
 
 			std::string histoName = "TrueHitProfile_" + coordinate_1 + "Resid_vs_" + coordinate_2 + "Pos_d" + to_string(sensorID);
 
@@ -397,15 +397,15 @@ void EUTelProcessorTrueTrackAnalysis::bookHistos() {
 			double profileYMax = 100;
 			std::string histoTitle = "difference in " + coordinate_1 + " position between true simulated hits and reconstructed fitpoints from reconstructed tracks against " + coordinate_2 + " position of reconstructed fitpoints;" + coordinate_2 + " position /#mum;#Delta" + coordinate_1 + " /#mum";
 
-			_1DProfileHistos[i].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createProfile1D((basePath+histoName).c_str(), profileXNBin, profileXMin, profileXMax, profileYMin, profileYMax)));
-			_1DProfileHistos[i].at(sensorID)->setTitle(histoTitle.c_str());
+			_1DProfileHistos[j].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createProfile1D((basePath+histoName).c_str(), profileXNBin, profileXMin, profileXMax, profileYMin, profileYMax)));
+			_1DProfileHistos[j].at(sensorID)->setTitle(histoTitle.c_str());
 		}
 
 		//set up histograms fitpoints residual histograms
 		//set up 1D histograms
-		for (size_t i = _1DHistos.size()/2; i < _1DHistos.size(); i++) {
+		for (size_t j = _1DHistos.size()/2; j < _1DHistos.size(); j++) {
 
-			std::string coordinate = (i%2 == 0)?"x":"y";
+			std::string coordinate = (j%2 == 0)?"x":"y";
 
 			std::string histoName = coordinate + "FitpointResidual_d" + to_string(sensorID);
 
@@ -414,33 +414,41 @@ void EUTelProcessorTrueTrackAnalysis::bookHistos() {
 			double histoMax = 16;
 			std::string histoTitle = "difference in " + coordinate + " position between true fitpoints from the true track and reconstructed fitpoints from the reconstructed track;#Delta" + coordinate + " /#mum;Entries";
 
-			_1DHistos[i].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histoNBin, histoMin, histoMax)));
-			_1DHistos[i].at(sensorID)->setTitle(histoTitle.c_str());
+			_1DHistos[j].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram1D((basePath+histoName).c_str(), histoNBin, histoMin, histoMax)));
+			_1DHistos[j].at(sensorID)->setTitle(histoTitle.c_str());
 		}
 
 		//set up 2D histograms
-		for (size_t i = _2DHistos.size()/2; i < _2DHistos.size(); i++) {
+		for (size_t j = _2DHistos.size()/2; j < _2DHistos.size(); j++) {
 
 			std::string histoName = "2DFitpointResidual_d" + to_string(sensorID);
 
 			int histoXNBin = 201;
-			double histoXMin = -16;
-			double histoXMax = 16;
+			double histoXMin = -6;
+			double histoXMax = 6;
 
 			int histoYNBin = 201;
-			double histoYMin = -16;
-			double histoYMax = 16;
+			double histoYMin = -6;
+			double histoYMax = 6;
 			std::string histoTitle = "difference in position between true fitpoints from true tracks and reconstructed fitpoints from reconstructed tracks;#Deltax /#mum;#Deltay /#mum;Entries";
 
-			_2DHistos[i].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram2D((basePath+histoName).c_str(), histoXNBin, histoXMin, histoXMax, histoYNBin, histoYMin, histoYMax)));
-			_2DHistos[i].at(sensorID)->setTitle(histoTitle.c_str());
+			if ((i == 0) || (i == _sensorIDVec.size()-1)) {
+
+				histoXMin = -16;
+				histoXMax = 16;
+				histoYMin = -16;
+				histoYMax = 16;
+			}
+
+			_2DHistos[j].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram2D((basePath+histoName).c_str(), histoXNBin, histoXMin, histoXMax, histoYNBin, histoYMin, histoYMax)));
+			_2DHistos[j].at(sensorID)->setTitle(histoTitle.c_str());
 		}
 
 		//set up 1D profile histograms
-		for (size_t i = _1DProfileHistos.size()/2; i < _1DProfileHistos.size(); i++) {
+		for (size_t j = _1DProfileHistos.size()/2; j < _1DProfileHistos.size(); j++) {
 
-			std::string coordinate_1 = (i%2 == 0)?"x":"y";
-			std::string coordinate_2 = (i<3*_1DProfileHistos.size()/4)?"x":"y";
+			std::string coordinate_1 = (j%2 == 0)?"x":"y";
+			std::string coordinate_2 = (j<3*_1DProfileHistos.size()/4)?"x":"y";
 
 			std::string histoName = "FitpointProfile_" + coordinate_1 + "Resid_vs_" + coordinate_2 + "Pos_d" + to_string(sensorID);
 
@@ -452,8 +460,8 @@ void EUTelProcessorTrueTrackAnalysis::bookHistos() {
 			double profileYMax = 100;
 			std::string histoTitle = "difference in " + coordinate_1 + " position between true fitpoints from true tracks and reconstructed fitpoints from reconstructed tracks against " + coordinate_2 + " position of reconstructed fitpoints;" + coordinate_2 + " position /#mum;#Delta" + coordinate_1 + " /#mum";
 
-			_1DProfileHistos[i].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createProfile1D((basePath+histoName).c_str(), profileXNBin, profileXMin, profileXMax, profileYMin, profileYMax)));
-			_1DProfileHistos[i].at(sensorID)->setTitle(histoTitle.c_str());
+			_1DProfileHistos[j].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createProfile1D((basePath+histoName).c_str(), profileXNBin, profileXMin, profileXMax, profileYMin, profileYMax)));
+			_1DProfileHistos[j].at(sensorID)->setTitle(histoTitle.c_str());
 		}
 	}
 
