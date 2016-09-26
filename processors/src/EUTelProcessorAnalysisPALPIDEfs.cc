@@ -185,9 +185,10 @@ void EUTelProcessorAnalysisPALPIDEfs::init() {
   int _nTelPlanes = geo::gGeometry().nPlanes();
   const std::vector<int>& _planeID = geo::gGeometry().sensorIDsVec();
   
-  if (_chipVersion < 3) _nSectors = 4;
+  if (_chipVersion < 3)     _nSectors = 4;
   else if (_chipVersion==3) _nSectors = 8;
-  else _nSectors = 1;
+  else if (_chipVersion==5) _nSectors = 4;
+  else                      _nSectors = 1;
   
   for(int iz=0; iz < _nTelPlanes ; iz++)
     if(_planeID[iz]==_dutID)
