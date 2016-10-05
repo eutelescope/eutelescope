@@ -281,8 +281,7 @@ void AlibavaConverter::readDataSource(int /* numEvents */) {
 		unsigned short temp;  // temperature measured on Daughter board
 
         
-        // Thomas 13.05.2015: Firmware 3 introduces the clock to the header!
-        // for now this is not stored...
+        // Firmware 3 introduces the clock to the header!
         if (version==3)
         {
             infile.read(reinterpret_cast< char *> (&clock), sizeof(unsigned int));

@@ -1,20 +1,19 @@
-#!/bin/sh
+#!/bin/zsh
 
-################################
-#                              #
-# ALiBaVa Analysis - Pedestal  #
-#                              #
-################################
+###########################################################
+#                                                         #
+# ALiBaVa Analysis - Signal Reconstruction and clustering #
+#                                                         #
+###########################################################
 
-# usage: sh reco.sh runnumber
+# usage: source reco.sh runnumber(s)
 
-# To get pedestal subtracted and common mode corrected signal values
-jobsub -c config.cfg -csv runlist.csv alibava-converter $1
-jobsub -c config.cfg -csv runlist.csv alibava-reco $1
-jobsub -c config.cfg -csv runlist.csv alibava-datahisto $1
-jobsub -c config.cfg -csv runlist.csv alibava-commonmodecut $1
-jobsub -c config.cfg -csv runlist.csv alibava-seedclustering $1
-jobsub -c config.cfg -csv runlist.csv alibava-clusterhisto $1
+# To get pedestal subtracted, common mode and cross talk corrected signal values
+# you will need to run these templates
+TEMPLATELIST=('alibava-converter' 'alibava-reco' 'alibava-applyxtalk')
 
+for TEMPLATE in $TEMPLATELIST; do
+	jobsub -c config/config.cfg -csv runlistfiles/runlist.csv $TEMPLATE $@
+done
 
 

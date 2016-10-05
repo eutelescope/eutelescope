@@ -95,9 +95,9 @@ _etaVSClusterSize("hEta_vs_ClusterSize")
 										 "The tag in TopTagInXMLFile. This processor will only consider the histogram definitions inside this tag. This tag should be inside <TopTagInXMLFile> ... <TopTagInXMLFile/>",
 										 _tagToProcess , string("myAlibavaClusterHistogramMaker"));
 	
-	// optional parameters, these parameters are defined in AlibavaBaseHistogramMaker, but they are optional
+	// optional parameters, these parameters are defined in AlibavaBaseHistogramMaker
 	registerOptionalParameter ("NoiseInputFile",
-										"The filename where the pedestal and noise values stored",
+										"The filename where the noise values stored",
 										_pedestalFile , string(ALIBAVA::NOTSET));
 	
 	registerOptionalParameter ("CalibrationInputFile",
@@ -105,11 +105,11 @@ _etaVSClusterSize("hEta_vs_ClusterSize")
 										_calibrationFile , string(ALIBAVA::NOTSET));
 	
 	registerOptionalParameter ("NoiseCollectionName",
-										"Noise collection name, better not to change",
+										"Noise collection name",
 										_noiseCollectionName, string (ALIBAVA::NOTSET));
 	
 	registerOptionalParameter ("ChargeCalibrationCollectionName",
-										"Charge calibration collection name, better not to change",
+										"Charge calibration collection name",
 										_chargeCalCollectionName, string (ALIBAVA::NOTSET));
 	
 	registerOptionalParameter ("PlotNoise",
@@ -273,14 +273,14 @@ void AlibavaClusterHistogramMaker::processEvent (LCEvent * anEvent) { // HERE lo
 	int eventnum = alibavaEvent->getEventNumber();
 
 	bool printClusters = false;
-	if (eventnum == 7830) {
+/*	if (eventnum == 7830) {
 		printClusters = true;
 	}
 	if ( eventnum % 1000 == 0 ){
-		streamlog_out ( DEBUG1 ) << "Looping events "<<eventnum << endl;
+		streamlog_out ( DEBUG0 ) << "Looping events "<<eventnum << endl;
 		printClusters = true;
 	}
-	
+*/	
 	// if _skipMaskedEvents is set
 	if (_skipMaskedEvents && (alibavaEvent->isEventMasked()) ) {
 		_numberOfSkippedEvents++;

@@ -380,7 +380,7 @@ void AlibavaConstantCommonModeProcessor::bookHistos(){
 	// a histogram showing the corrected signals
 	tempHistoName = getCommonCorrectionName();
 	stringstream tempHistoTitle;
-	tempHistoTitle << tempHistoName << ";ADCs;NumberofEntries";
+	tempHistoTitle << tempHistoName << ";ADCs;Number of Entries";
 
 	TH1D * signalHisto =
 	new TH1D (tempHistoName.c_str(),"",1000,-500,500);
@@ -391,7 +391,7 @@ void AlibavaConstantCommonModeProcessor::bookHistos(){
 	
 	// a histogram showing the corrected signals over events
 	stringstream tempHistoTitle2;
-	tempHistoTitle2 << "Common Mode Correction Values over Events" << ";ADCs;NumberofEntries";
+	tempHistoTitle2 << "Common Mode Correction Values over Events" << ";ADCs;Number of Entries";
 
 	TH2D * signalHisto2 = new TH2D ("Common Mode Correction Values over Events","",5000,0,500000,1000,-500,500);
 	_rootObjectMap.insert(make_pair("Common Mode Correction Values over Events", signalHisto2));

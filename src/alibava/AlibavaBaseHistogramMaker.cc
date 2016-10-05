@@ -330,7 +330,7 @@ void AlibavaBaseHistogramMaker::plotPedestalAndNoise(){
 			
 			
 			stringstream sn; //title string for noise histogram
-			sn<< "Noise (chip "<<ichip<<");Channel Number;Pedestal (ADCs)";
+			sn<< "Noise (chip "<<ichip<<");Channel Number;Noise (ADCs)";
 			noiseHisto->SetTitle((sn.str()).c_str());
 			
 			FloatVec noiVec = getNoiseOfChip(ichip);

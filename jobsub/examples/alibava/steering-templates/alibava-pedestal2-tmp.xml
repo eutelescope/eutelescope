@@ -40,7 +40,7 @@ ending order and there should be no space between two $ character-->
  <processor name="AIDA" type="AIDAProcessor">
  <!--Processor that handles AIDA files. Creates on directory per processor.  Processors only need to create and fill the histograms, clouds and tuples. Needs to be the first ActiveProcessor-->
   <!-- compression of output file 0: false >0: true (default) -->
-name="Compress" type="int" value="1"/>
+<parameter name="Compress" type="int" value="1"/>
   <!-- filename without extension-->
   <parameter name="FileName" type="string" value="@HistogramPath@/@AlibavaOutputFormat@-pedestal2"/>
   <!-- type of output file root (default) or xml )-->
@@ -58,7 +58,7 @@ name="Compress" type="int" value="1"/>
   <!--Pedestal collection name, better not to change-->
   <parameter name="PedestalCollectionName" type="string" value="pedestal_cmmd"/>
   <!--The filename to store the pedestal and noise values-->
-  <parameter name="PedestalOutputFile" type="string" value="@DatabasePath@/ped@RunNumber@-commonmode.slcio"/>
+  <parameter name="PedestalOutputFile" type="string" value="@DatabasePath@/ped@RunNumber@.slcio"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>

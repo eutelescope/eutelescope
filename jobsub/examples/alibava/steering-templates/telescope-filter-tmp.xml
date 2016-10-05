@@ -136,7 +136,7 @@ To disable it, just put a negative number as detector ID.-->
   <parameter name="InsideRegion" type="FloatVec"> 2 @ROICut@ </parameter>
   <parameter name="InsideRegion" type="FloatVec"> 3 @ROICut@ </parameter>
   <parameter name="InsideRegion" type="FloatVec"> 4 @ROICut@ </parameter>
-  <parameter name="InsideRegion" type="FloatVec"> 5 @ROICut@ </parameter>
+  <parameter name="InsideRegion" type="FloatVec"> 5 @ROICut5@ </parameter>
   <!--Setting this to true will select only events having the same number 
 of hits for each plane.-->
   <parameter name="SameNumberOfHits" type="bool" value="false"/>
