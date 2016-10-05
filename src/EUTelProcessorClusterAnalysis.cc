@@ -228,13 +228,13 @@ void EUTelProcessorClusterAnalysis::processEvent(LCEvent *evt)
 				//starting actual cluster analysis
 				vector<vector<int> > pixVector;
 				std::unique_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>> sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(zsData);
-				auto pixel = std::make_unique<EUTelGenericSparsePixel>();
 					
 				for(unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
 				{
-					sparseData->getSparsePixelAt( iPixel, pixel.get() );
-					X[iPixel] = pixel->getXCoord();
-					Y[iPixel] = pixel->getYCoord();
+					EUTelGenericSparsePixel pixel;
+					sparseData->getSparsePixelAt( iPixel, pixel );
+					X[iPixel] = pixel.getXCoord();
+					Y[iPixel] = pixel.getYCoord();
 					
 					//Check, whether a cluster is at the boundary of two sectors 
 					for(int safetyPixels=0; safetyPixels <= _sectorSafetyPixels; safetyPixels++){
@@ -271,9 +271,9 @@ void EUTelProcessorClusterAnalysis::processEvent(LCEvent *evt)
 						std::unique_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> > sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> >(hotData);
 						for ( unsigned int iHotPixel = 0; iHotPixel < sparseData->size(); iHotPixel++ )
 						{
-							auto sparsePixel = std::make_unique<EUTelGenericSparsePixel>();
-							sparseData->getSparsePixelAt( iHotPixel, sparsePixel.get() );
-							if (abs(X[iPixel]-(sparsePixel->getXCoord())) < _sectorSafetyPixels && abs(Y[iPixel]-(sparsePixel->getYCoord())) < _sectorSafetyPixels)
+							EUTelGenericSparsePixel sparsePixel;
+							sparseData->getSparsePixelAt( iHotPixel, sparsePixel );
+							if (abs(X[iPixel]-(sparsePixel.getXCoord())) < _sectorSafetyPixels && abs(Y[iPixel]-(sparsePixel.getYCoord())) < _sectorSafetyPixels)
 							{
 								_nHotpixelClusters++;
 								goto nextCluster; 
@@ -296,9 +296,9 @@ void EUTelProcessorClusterAnalysis::processEvent(LCEvent *evt)
 						auto sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> >(deadColumn);
 						for ( unsigned int iDeadPixel = 0; iDeadPixel < sparseData->size(); iDeadPixel++ )
 						{
-							auto sparsePixel = std::make_unique<EUTelGenericSparsePixel>();
-							sparseData->getSparsePixelAt( iDeadPixel, sparsePixel.get() );
-							if (abs(X[iPixel]-(sparsePixel->getXCoord())) < _sectorSafetyPixels)
+							EUTelGenericSparsePixel sparsePixel;
+							sparseData->getSparsePixelAt( iDeadPixel, sparsePixel );
+							if (abs(X[iPixel]-(sparsePixel.getXCoord())) < _sectorSafetyPixels)
 							{
 								_nDeadColumnClusters++;
 								goto nextCluster;
