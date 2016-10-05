@@ -22,7 +22,6 @@
 // EUTELESCOPE
 #include "EUTelExceptions.h"
 #include "EUTelGenericPixGeoMgr.h"
-#include "EUTelNav.h"
 
 // ROOT
 #include "TGeoManager.h"
