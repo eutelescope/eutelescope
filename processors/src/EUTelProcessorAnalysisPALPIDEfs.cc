@@ -906,7 +906,11 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
           tracksPixel2by2Histo[index]->Fill(fmod(xposfit,2*xPitch),fmod(yposfit,2*yPitch));
 #endif
           nTracks[index]++;
-          if(!pAlpideHit) {hitmapNoHitHisto->Fill(xposfit,yposfit); nNoPAlpideHit++;}
+          if(!pAlpideHit) {
+	    hitmapNoHitHisto->Fill(xposfit,yposfit);
+	    nNoPAlpideHit++;
+	    streamlog_out ( MESSAGE1 ) << "Tracks without a hit in the DUT in event " << evt->getEventNumber() << endl;
+	  }
         }
         if(_showFake)
         {
