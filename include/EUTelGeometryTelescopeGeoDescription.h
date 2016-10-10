@@ -335,19 +335,6 @@ class EUTelGeometryTelescopeGeoDescription
 	void initializeTGeoDescription(std::string tgeofilename);
 	void initializeTGeoDescription( std::string const & geomName, bool dumpRoot );
 
-	// Geometry operations
-	float findRad(	const std::map<int,int>& sensorIDToZOrderWithoutExcludedPlanes, 
-			const double globalPosStart[], const double globalPosFinish[], 
-			std::map<const int,double> &sensors, std::map<const int,double> &air );
-
-	int getSensorID(float const globalPos[] ) const;
-	int getSensorID(double const globalPos[] ) const;
-
-	int getSensorID(std::array<double,3> const globalPos) const;
-	int getSensorID(std::array<float,3> const globalPos) const;
-	
-	int getSensorIDFromManager();
-
 	double FindRad(Eigen::Vector3d const & startPt, Eigen::Vector3d const & endPt);
 
 	double planeRadLengthGlobalIncidence(int planeID, Eigen::Vector3d incidenceDir);
@@ -369,18 +356,12 @@ class EUTelGeometryTelescopeGeoDescription
 						TVector3& outputMomentum, float& arcLength, int& newNextPlaneID );
 
 	TVector3 getXYZMomentumfromArcLength(TVector3 momentum, TVector3 globalPositionStart, float charge, float arcLength);
-	bool testOutput(std::map<const int,double>& mapSensor, std::map<const int,double>& mapAir);
 
 	//This outputs the total percentage radiation length for the full detector system. 
 	float calculateTotalRadiationLengthAndWeights(const double startD[3],const double endD[3], std::map<const int,double>&, std::map<const int,double> & );
-	void mapWeightsToSensor(std::map<const int,double> sensor,std::map<const int,double> air,  std::map< const  int, double > & mapSen,std::map< const  int, double > & mapAir  );
 	double addKapton(std::map<const int, double> & mapSensor);
 
 	float getInitialDisplacementToFirstPlane() const { return _initialDisplacement; };
-
-	const TGeoHMatrix* getHMatrix( const double globalPos[] );
-
-	TMatrixD getRotMatrix( int sensorID );
 
 	/** Magnetic field */
 	const gear::BField& getMagneticField() const { return _gearManager->getBField(); };
@@ -399,10 +380,6 @@ class EUTelGeometryTelescopeGeoDescription
 
 	/** Geometry manager global object */
 	std::unique_ptr<TGeoManager> _geoManager = nullptr;
-
-	bool findNextPlaneEntrance(  TVector3 ,  TVector3, int, float*  );
-
-	int findNextPlane(  double* lpoint,  double* ldir,  float* newpoint );
 
 private:
 	/** reading initial info from gear: part of contructor */
