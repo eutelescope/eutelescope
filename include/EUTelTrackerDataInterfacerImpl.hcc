@@ -32,16 +32,8 @@ namespace eutelescope {
      */
     void pushChargeValues(PixelType const & pixel);
     
-    void addSparsePixel(PixelType const & pixel) {
-		this->push_back(pixel);    
-    }
-
     virtual void push_back(EUTelBaseSparsePixel const & pixel) override {
     	this->push_back(dynamic_cast<PixelType const &>(pixel));
-	}
-
-	virtual void addSparsePixel(EUTelBaseSparsePixel const & pixel) override {
-		this->addSparsePixel(dynamic_cast<PixelType const &>(pixel));
 	}
 
     //! Get one of the sparse pixel

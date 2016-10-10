@@ -373,7 +373,7 @@ void EUTelProcessorNoisyPixelFinder::noisyPixelDBWriter() {
 			sparseFrame( new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>(currentFrame.get()) );
 
 		for( auto& pixel: mapEntry.second) {
-			sparseFrame->addSparsePixel( pixel );                
+			sparseFrame->push_back( pixel );                
 		}
 		noisyPixelCollection->push_back( currentFrame.release() );
 

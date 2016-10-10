@@ -58,7 +58,6 @@ class EUTelTrackerDataInterfacer{
      * @return A pointer to the output pixel same as @c pixel
      */
     virtual void getSparsePixelAt(size_t index, std::unique_ptr<EUTelBaseSparsePixel> & pixel) const = 0;
-    virtual void addSparsePixel(EUTelBaseSparsePixel const & pixel) = 0;
 
     virtual void push_back(EUTelBaseSparsePixel const & pixel) = 0;
     

@@ -35,15 +35,6 @@ class EUTelClusterDataInterfacer
 	_rawDataInterfacer.getSparsePixelAt(std::forward<Params>(params)...);
     }
 
-    //! Add a sparse pixel
-    /*! This method is used to add to the current TrackerDataImpl a
-     *  new sparse pixel with all the pieces of information.
-     */
-    template <typename ...Params>
-    void addSparsePixel(Params&&... params) {
-	_rawDataInterfacer.addSparsePixel(std::forward<Params>(params)...);
-    }
-
     template <typename ...Params>
     void push_back(Params&&... params) {
 	_rawDataInterfacer.push_back(std::forward<Params>(params)...);
