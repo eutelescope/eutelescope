@@ -40,7 +40,11 @@ namespace eutelescope {
  *  instantiated somehow)
  */
 class EUTelTrackerDataInterfacer{
-
+  protected:
+	mutable std::vector<std::reference_wrapper<EUTelBaseSparsePixel const>> _refVec;
+	mutable bool _refVecValid = false;
+	
+	virtual void validateRefVec() const = 0;
   public:
     //! Destructor
     virtual ~EUTelTrackerDataInterfacer() {}
@@ -54,13 +58,9 @@ class EUTelTrackerDataInterfacer{
      * @return A pointer to the output pixel same as @c pixel
      */
     virtual void getSparsePixelAt(size_t index, std::unique_ptr<EUTelBaseSparsePixel> & pixel) const = 0;
-
     virtual void addSparsePixel(EUTelBaseSparsePixel const & pixel) = 0;
-    virtual void push_back(EUTelBaseSparsePixel const & pixel) = 0;
-	virtual void validateRefVec() const = 0;
 
-	mutable std::vector<std::reference_wrapper<EUTelBaseSparsePixel const>> _refVec;
-	mutable bool _refVecValid = false;
+    virtual void push_back(EUTelBaseSparsePixel const & pixel) = 0;
     
 	auto begin() const -> decltype(this->_refVec.cbegin()) {
 		if(!_refVecValid) this->validateRefVec();
@@ -99,16 +99,6 @@ class EUTelTrackerDataInterfacer{
 		return _refVec.empty();
     }
 
-
-    //! Expose the TrackerDataImpl to the public
-    /*! This method is used to allow a direct and public access to the
-     * TrackerDataImpl used to collect all the sparse data
-     * information.
-     *
-     * @return The TrackerDataImpl with all the sparse data.
-     */
-    //IMPL::TrackerDataImpl* trackerData() = 0;
-	
   };
 } //namespace
 #endif
