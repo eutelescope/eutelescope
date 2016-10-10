@@ -33,10 +33,14 @@ namespace eutelescope {
     void pushChargeValues(PixelType const & pixel);
     
     void addSparsePixel(PixelType const & pixel) {
-	this->push_back(pixel);    
+		this->push_back(pixel);    
     }
 
-    void addSparsePixel(EUTelBaseSparsePixel const & pixel) {
+    virtual void push_back(EUTelBaseSparsePixel const & pixel) override {
+    	this->push_back(dynamic_cast<PixelType const &>(pixel));
+	}
+
+	virtual void addSparsePixel(EUTelBaseSparsePixel const & pixel) override {
 		this->addSparsePixel(dynamic_cast<PixelType const &>(pixel));
 	}
 
@@ -56,8 +60,7 @@ namespace eutelescope {
       *  a new pixel is created on the heap. Returning this pixel's
       *  address. IMPORTANT: Memory has to be cleaned up by the caller!
       */ 
-    void getSparsePixelAt(size_t index, std::unique_ptr<EUTelBaseSparsePixel>& pixel) const
-	{
+    void getSparsePixelAt(size_t index, std::unique_ptr<EUTelBaseSparsePixel>& pixel) const {
 		if(!pixel) {
 			pixel = std::make_unique<PixelType>();
 		}
@@ -65,23 +68,13 @@ namespace eutelescope {
 		getSparsePixelAt(index, *pix);
 	} 
 
-    void getSparsePixelAt(size_t index, std::unique_ptr<PixelType>& pixel) const
-	{
+    void getSparsePixelAt(size_t index, std::unique_ptr<PixelType>& pixel) const {
 		if(!pixel) {
 			pixel = std::make_unique<PixelType>();
 		}
 		getSparsePixelAt( index, *pixel.get() );
 	} 
 
-
-    std::vector<EUTelBaseSparsePixel const *> getBasePixelPtrVec() const {
-	std::vector<EUTelBaseSparsePixel const *> result;
-	for(auto const & pixel: _pixelVec) {
-		result.push_back(static_cast<EUTelBaseSparsePixel const*>(&pixel));
-	}
-	return std::move(result);
-   }
-    
     //! Expose the TrackerDataImpl to the public
     /*! This method is used to allow a direct and public access to the
      * TrackerDataImpl used to collect all the sparse data
@@ -91,13 +84,22 @@ namespace eutelescope {
      */
     IMPL::TrackerDataImpl const * trackerData();
 
-   std::vector<PixelType> const & getPixels() const {
-	return _pixelVec;
-   } 
+	std::vector<PixelType> const & getPixels() const {
+		return _pixelVec;
+	} 
   protected:
     //! Internal method to fill the local copy of all the pixels
     /*! Only to be used in this class */
     void fillPixelVec();
+
+	void validateRefVec() const override {
+		_refVec.clear();
+		_refVec.reserve(_pixelVec.size());
+		for(auto& pixel: _pixelVec) {
+			_refVec.emplace_back(pixel);
+		}		
+		_refVecValid = true;
+	}
 
   private:
     //! This is the TrackerDataImpl
@@ -124,47 +126,31 @@ namespace eutelescope {
   public:
 
     auto begin() const -> decltype(this->_pixelVec.begin()) {
-	return _pixelVec.begin();
+		return _pixelVec.begin();
     }
 
     auto end() const -> decltype(this->_pixelVec.end()) {
-	return _pixelVec.end();
+		return _pixelVec.end();
     }
 
-    template <typename ...Par>
-    auto at(Par&&... par) const -> decltype(this->_pixelVec.at(std::forward<Par>(par)...)) {
-	return _pixelVec.at(std::forward<Par>(par)...);
+	virtual auto at(size_t i) const -> decltype(_pixelVec.at(i)) final override {
+		return _pixelVec.at(i);
     }
    
-    template <typename ...Par>
-    auto operator[](Par&&... par) const -> decltype(this->_pixelVec.operator[](std::forward<Par>(par)...)) {
-	return _pixelVec.operator[](std::forward<Par>(par)...);
-    }
- 
-    //! Get the number of sparse pixels in the collection
-    /*! This utility can be used to know how many pixels are contained
-     * in the TrackerData.
-     *
-     * @return the size of TrackerData measured in sparse
-     * pixels.
-     */
-    auto size() const -> decltype(this->_pixelVec.size()) {
-		return _pixelVec.size();
-    }
-
-    auto empty() const -> decltype(this->_pixelVec.empty()) {
-		return _pixelVec.empty();
+	virtual auto operator[](size_t i) const -> decltype(this->_pixelVec.operator[](i)) final override {
+		return _pixelVec.operator[](i);
     }
 
     void push_back(PixelType const & pixel) {
-	_pixelVec.push_back(pixel);
-	this->pushChargeValues(pixel);
+		_pixelVec.push_back(pixel);
+		this->pushChargeValues(pixel);
+		_refVecValid = false;
     }   
 
     template <typename ...Par>
     void emplace_back(Par&&... par) { 
-	_pixelVec.emplace_back(std::forward<Par>(par)...);
-	this->pushChargeValues(_pixelVec.back());
+		_pixelVec.emplace_back(std::forward<Par>(par)...);
+		this->pushChargeValues(_pixelVec.back());
     }
   };
  
@@ -329,7 +315,6 @@ namespace eutelescope {
 						static_cast<long long unsigned>(_trackerData->getChargeValues()[index + 5]) |
 						static_cast<long long unsigned>(_trackerData->getChargeValues()[index+ 6]) << 32 
 						);
-						
 		}
 	}
 

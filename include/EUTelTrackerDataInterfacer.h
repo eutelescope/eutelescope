@@ -17,6 +17,8 @@
 #include <LCIOTypes.h>
 #include <IMPL/TrackerDataImpl.h>
 
+#include <functional>
+
 namespace eutelescope {
 
 
@@ -53,6 +55,33 @@ class EUTelTrackerDataInterfacer{
      */
     virtual void getSparsePixelAt(size_t index, std::unique_ptr<EUTelBaseSparsePixel> & pixel) const = 0;
 
+    virtual void addSparsePixel(EUTelBaseSparsePixel const & pixel) = 0;
+    virtual void push_back(EUTelBaseSparsePixel const & pixel) = 0;
+	virtual void validateRefVec() const = 0;
+
+	mutable std::vector<std::reference_wrapper<EUTelBaseSparsePixel const>> _refVec;
+	mutable bool _refVecValid = false;
+    
+	auto begin() const -> decltype(this->_refVec.cbegin()) {
+		if(!_refVecValid) this->validateRefVec();
+		return _refVec.cbegin();
+    }
+
+	auto end() const -> decltype(this->_refVec.cend()) {
+		if(!_refVecValid) this->validateRefVec();
+		return _refVec.cend();
+    }
+
+	virtual auto at(size_t i) const -> decltype(_refVec.at(i).get()) {
+		if(!_refVecValid) this->validateRefVec();
+		return _refVec.at(i).get();
+    }
+   
+	virtual auto operator[](size_t i) const -> decltype(_refVec.operator[](i).get()) {
+		if(!_refVecValid) this->validateRefVec();
+		return _refVec.operator[](i).get();
+    }
+ 
     //! Get the number of sparse pixels in the collection
     /*! This utility can be used to know how many pixels are contained
      * in the TrackerData.
@@ -60,12 +89,16 @@ class EUTelTrackerDataInterfacer{
      * @return the size of TrackerData measured in sparse
      * pixels.
      */
-    virtual size_t size() const = 0;
+    virtual auto size() const -> decltype(_refVec.size()) {
+		if(!_refVecValid) this->validateRefVec();
+		return _refVec.size();
+    }
 
+    virtual auto empty() const -> decltype(_refVec.empty()) {
+		if(!_refVecValid) this->validateRefVec();
+		return _refVec.empty();
+    }
 
-    virtual void addSparsePixel(EUTelBaseSparsePixel const & pixel) = 0;
-
-    virtual std::vector<EUTelBaseSparsePixel const *> getBasePixelPtrVec() const = 0;
 
     //! Expose the TrackerDataImpl to the public
     /*! This method is used to allow a direct and public access to the
@@ -75,6 +108,7 @@ class EUTelTrackerDataInterfacer{
      * @return The TrackerDataImpl with all the sparse data.
      */
     //IMPL::TrackerDataImpl* trackerData() = 0;
+	
   };
 } //namespace
 #endif
