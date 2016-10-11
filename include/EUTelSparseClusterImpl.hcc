@@ -37,10 +37,7 @@ namespace eutelescope {
   public:
     //! Default constructor
     EUTelSparseClusterImpl(IMPL::TrackerDataImpl*  data);
-
-    //! Destructor
-    virtual ~EUTelSparseClusterImpl() { /* NOOP */ ; }
-
+	~EUTelSparseClusterImpl() {};
     //! Set the pixel noise values
     /*! This method is used to set the noise values. The Fixed Frame
      *  cluster implementation does not have in the TrackerData the

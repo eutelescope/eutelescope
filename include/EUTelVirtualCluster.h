@@ -42,7 +42,7 @@ namespace eutelescope {
     EUTelVirtualCluster(IMPL::TrackerDataImpl* data) : EUTelSimpleVirtualCluster(data) { } 
 
     //! Default destructor
-    virtual ~EUTelVirtualCluster() {;}
+    virtual ~EUTelVirtualCluster() = default; 
 
     //! Set the noise value vector
     /*! This method is used to attach to the cluster a vector of
