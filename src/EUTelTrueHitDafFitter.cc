@@ -626,8 +626,11 @@ void EUTelTrueHitDafFitter::fillPlots(daffitter::TrackCandidate<float,4>& track)
 			daffitter::Measurement<float>& meas = plane.meas.at(w);
 
 			// Resids 
-			_aidaHistoMap[bname + "residualX"]->fill((estim.getX() - meas.getX())*1e-3);
-			_aidaHistoMap[bname + "residualY"]->fill((estim.getY() - meas.getY())*1e-3);
+			_aidaHistoMap[bname + "residualX"]->fill((estim.getX() - meas.getX()));
+			_aidaHistoMap[bname + "residualY"]->fill((estim.getY() - meas.getY()));
+
+			//2D Resids
+			_2DResiduals[plane.getSensorID()]->fill((estim.getX()-meas.getX()), (estim.getY()-meas.getY()), 1);
 
 			// Resids 
 			_aidaHistoMapProf1D[bname + "residualdXvsX"]->fill(estim.getX(), estim.getX() - meas.getX());
@@ -735,14 +738,17 @@ void EUTelTrueHitDafFitter::bookHistos() {
 		string bname = static_cast< string >("pl") + iden + "_";
 
 		// Resids
-		double residminX = -0.05;
-		double residmaxX =  0.05;
+		double residminX = -50;
+		double residmaxX =  50;
  
 		_aidaHistoMap[bname + "mcresidualX"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "mcresidualX", 200,  residminX, residmaxX );
 		_aidaHistoMap[bname + "mcresidualY"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "mcresidualY", 200,  residminX, residmaxX );
 
 		_aidaHistoMap[bname + "residualX"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "residualX",600, residminX, residmaxX);
 		_aidaHistoMap[bname + "residualY"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "residualY",600, residminX, residmaxX);
+
+		//make histogram for 2D residuals
+		_2DResiduals[plane.getSensorID()] = AIDAProcessor::histogramFactory(this)->createHistogram2D(bname + "residual2D", 600, residminX, residmaxX, 600, residminX, residmaxX);
 
 		// Resids 2D
 		// profiles
