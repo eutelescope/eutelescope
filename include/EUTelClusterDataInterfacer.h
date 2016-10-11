@@ -26,15 +26,6 @@ class EUTelClusterDataInterfacer
     EUTelTrackerDataInterfacerImpl<PixelType> _rawDataInterfacer;
 
   public:
-    //! Get one of the sparse pixel
-    /*! This method is used to get one of the sparse pixel contained
-     *  into the TrackerData. Not mutant version.
-     */ 
-    template <typename ...Params> 
-    void getSparsePixelAt(Params&&... params) const {
-	_rawDataInterfacer.getSparsePixelAt(std::forward<Params>(params)...);
-    }
-
     template <typename ...Params>
     void push_back(Params&&... params) {
 	_rawDataInterfacer.push_back(std::forward<Params>(params)...);
