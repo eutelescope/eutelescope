@@ -68,24 +68,22 @@ void EUTelProcessorDeadColumnFinder::processEvent(LCEvent *evt)
 //    cerr << "_zsDataCollectionName " << _zsDataCollectionName.c_str() << " not found " << endl;
     return;
   }
-  for ( unsigned int iDetector = 0 ; iDetector < zsInputDataCollectionVec->size(); iDetector++ )
+  for ( size_t iDetector = 0 ; iDetector < zsInputDataCollectionVec->size(); iDetector++ )
   {
     TrackerDataImpl* zsData = dynamic_cast<TrackerDataImpl*>(zsInputDataCollectionVec->getElementAt(iDetector));
-    auto sparseData = std::make_unique< EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(zsData);
-    for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
+    auto sparseData = EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>(zsData);
+    for( size_t iPixel = 0; iPixel < sparseData.size(); iPixel++ )
     {
-      auto sparsePixel =  std::make_unique<EUTelGenericSparsePixel>();
-      sparseData->getSparsePixelAt( iPixel, sparsePixel );
-      hitMap[iDetector]->Fill(sparsePixel->getXCoord(),sparsePixel->getYCoord());
-      if (iPixel != sparseData->size()-1)
+      auto& sparsePixel = sparseData.at(iPixel);
+      hitMap[iDetector]->Fill(sparsePixel.getXCoord(), sparsePixel.getYCoord());
+      if (iPixel != sparseData.size()-1)
       {
-        auto sparsePixel2 = std::make_unique<EUTelGenericSparsePixel>();
-        sparseData->getSparsePixelAt( iPixel+1, sparsePixel2 );
-        if (sparsePixel->getXCoord() == sparsePixel2->getXCoord() && sparsePixel->getYCoord() == sparsePixel2->getYCoord())
+        auto& sparsePixel2 = sparseData.at( iPixel+1 );
+        if (sparsePixel.getXCoord() == sparsePixel2.getXCoord() && sparsePixel.getYCoord() == sparsePixel2.getYCoord())
         {
-          isDead[iDetector][sparsePixel->getXCoord()] = true;
-          if (sparsePixel->getXCoord()%2 == 0) isDead[iDetector][sparsePixel->getXCoord()+1] = true;
-          else isDead[iDetector][sparsePixel->getXCoord()-1] = true;
+          isDead[iDetector][sparsePixel.getXCoord()] = true;
+          if (sparsePixel.getXCoord()%2 == 0) isDead[iDetector][sparsePixel.getXCoord()+1] = true;
+          else isDead[iDetector][sparsePixel.getXCoord()-1] = true;
         }
 //          cerr << "Same pixel (" << sparsePixel->getXCoord() << ", " << sparsePixel->getYCoord() << ") appearing twice in event " << evt->getEventNumber() << endl;
       }
@@ -192,7 +190,7 @@ void EUTelProcessorDeadColumnFinder::end()
           sparsePixel.setXCoord(x);
           sparsePixel.setYCoord(y);
           sparsePixel.setSignal(1);
-          sparseFrame->addSparsePixel(sparsePixel);
+          sparseFrame->push_back(sparsePixel);
          }
          streamlog_out ( MESSAGE5 ) << "Dead double column found in layer " << iLayer << " at X=" << x << endl;
        }

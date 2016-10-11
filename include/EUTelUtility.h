@@ -14,6 +14,7 @@
 #include "EUTELESCOPE.h"
 #include "EUTelVirtualCluster.h"
 #include "EUTelTrackerDataInterfacerImpl.h"
+#include "EUTelClusterDataInterfacer.h"
 
 // lcio includes <.h>
 #include "IMPL/TrackerHitImpl.h"
@@ -189,6 +190,9 @@ namespace eutelescope {
 
 	int cantorEncode(int X, int Y);
 	std::map<int, std::vector<int>> readNoisyPixelList(LCEvent* event, std::string const & noisyPixelCollectionName);
+	
+	std::unique_ptr<EUTelClusterDataInterfacerBase> getClusterData(IMPL::TrackerDataImpl* const data, SparsePixelType type);
+	std::unique_ptr<EUTelClusterDataInterfacerBase> getClusterData(IMPL::TrackerDataImpl* const data, int type);
 	
 	std::unique_ptr<EUTelTrackerDataInterfacer> getSparseData(IMPL::TrackerDataImpl* const data, SparsePixelType type);
 	std::unique_ptr<EUTelTrackerDataInterfacer> getSparseData(IMPL::TrackerDataImpl* const data, int type);

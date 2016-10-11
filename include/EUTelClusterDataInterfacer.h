@@ -10,80 +10,93 @@
 #ifndef EUTelClusterDataInterfacer_H
 #define EUTelClusterDataInterfacer_H
 
+#include "EUTelTrackerDataInterfacer.h"
 #include "EUTelTrackerDataInterfacerImpl.h"
 #include "EUTELESCOPE.h"
 
 namespace eutelescope {
 
-template<class PixelType> 
-class EUTelClusterDataInterfacer
+class EUTelClusterDataInterfacerBase
 {
   public:
-    EUTelClusterDataInterfacer(IMPL::TrackerDataImpl* data): _rawDataInterfacer(data) {
-    } 
+	EUTelClusterDataInterfacerBase() = default;
+	virtual ~EUTelClusterDataInterfacerBase() = default;
+
   protected:
-    //! The interfacer to the raw data
-    EUTelTrackerDataInterfacerImpl<PixelType> _rawDataInterfacer;
+	EUTelTrackerDataInterfacer* _rawDataInterfacerRef;
+	void setEUTelTrackerDataInterfacerPtr(EUTelTrackerDataInterfacer* ptr) {
+		_rawDataInterfacerRef = ptr;
+	}
 
   public:
-    //! Get one of the sparse pixel
-    /*! This method is used to get one of the sparse pixel contained
-     *  into the TrackerData. Not mutant version.
-     */ 
-    template <typename ...Params> 
-    void getSparsePixelAt(Params&&... params) const {
-	_rawDataInterfacer.getSparsePixelAt(std::forward<Params>(params)...);
-    }
+	void push_back(EUTelBaseSparsePixel const & pixel){
+		_rawDataInterfacerRef->push_back(pixel);
+	}
+	virtual auto at(size_t i) const -> decltype(_rawDataInterfacerRef->at(i)) { //throws std::out_of_range
+		return _rawDataInterfacerRef->at(i);
+	}
 
-    //! Add a sparse pixel
-    /*! This method is used to add to the current TrackerDataImpl a
-     *  new sparse pixel with all the pieces of information.
-     */
-    template <typename ...Params>
-    void addSparsePixel(Params&&... params) {
-	_rawDataInterfacer.addSparsePixel(std::forward<Params>(params)...);
-    }
+	virtual auto operator[](size_t i) const -> decltype(_rawDataInterfacerRef->operator[](i)){
+		return _rawDataInterfacerRef->operator[](i);
+	}
+	virtual auto size() const -> decltype(_rawDataInterfacerRef->size()) {
+		return _rawDataInterfacerRef->size();
+	}
 
-    template <typename ...Params>
-    void push_back(Params&&... params) {
-	_rawDataInterfacer.push_back(std::forward<Params>(params)...);
-    }
+	virtual auto empty() const -> decltype(_rawDataInterfacerRef->empty()) {
+		return _rawDataInterfacerRef->empty();
+	}
+};
 
-    template <typename ...Params>
-    void emplace_back(Params&&... params) {
-	_rawDataInterfacer.emplace_back(std::forward<Params>(params)...);
-    }
+template<class PixelType> 
+class EUTelClusterDataInterfacer: public EUTelClusterDataInterfacerBase 
+{
+  public:
+	EUTelClusterDataInterfacer(IMPL::TrackerDataImpl* data): _rawDataInterfacer(data) {
+		setEUTelTrackerDataInterfacerPtr(&_rawDataInterfacer);
+	}
+	virtual ~EUTelClusterDataInterfacer() = default; 
+  protected:
+	//! The interfacer to the raw data
+	EUTelTrackerDataInterfacerImpl<PixelType> _rawDataInterfacer;
 
-    template <typename ...Params>
-    auto at(Params&&... params) const -> decltype(_rawDataInterfacer.at(std::forward<Params>(params)...)){
-	return _rawDataInterfacer.at(std::forward<Params>(params)...);
-    }
+  public:
+	template <typename ...Params>
+	void push_back(Params&&... params) {
+		_rawDataInterfacer.push_back(std::forward<Params>(params)...);
+	}
 
-    template <typename ...Params>
-    auto operator[](Params&&... params) const -> decltype(_rawDataInterfacer.operator[](std::forward<Params>(params)...)){
-	return _rawDataInterfacer.operator[](std::forward<Params>(params)...);
-    }
+	template <typename ...Params>
+	void emplace_back(Params&&... params) {
+		_rawDataInterfacer.emplace_back(std::forward<Params>(params)...);
+	}
 
-    auto begin() const -> decltype(_rawDataInterfacer.begin()) {
-	return _rawDataInterfacer.begin();
-    }
+	auto at(size_t i) const -> decltype(_rawDataInterfacer.at(i)) override {
+		return _rawDataInterfacer.at(i);
+	}
 
-    auto end() const -> decltype(_rawDataInterfacer.end()) {
-	return _rawDataInterfacer.end();
-    }
+	auto operator[](size_t i) const -> decltype(_rawDataInterfacer.operator[](i)) override {
+		return _rawDataInterfacer.operator[](i);
+	}
 
-    std::vector<PixelType> const & getPixels() const {
-	return _rawDataInterfacer.getPixels();
-    }
-    auto size() const -> decltype(_rawDataInterfacer.size()) {
+	auto begin() const -> decltype(_rawDataInterfacer.begin()) {
+		return _rawDataInterfacer.begin();
+	}
+
+	auto end() const -> decltype(_rawDataInterfacer.end()) {
+		return _rawDataInterfacer.end();
+	}
+
+	std::vector<PixelType> const & getPixels() const {
+		return _rawDataInterfacer.getPixels();
+	}
+	auto size() const -> decltype(_rawDataInterfacer.size()) override {
 		return _rawDataInterfacer.size();
-    }
+	}
 
-    auto empty() const -> decltype(_rawDataInterfacer.empty()) {
+	auto empty() const -> decltype(_rawDataInterfacer.empty()) override {
 		return _rawDataInterfacer.empty();
-    }
-
-   };
-
+	}
+};
 }
 #endif

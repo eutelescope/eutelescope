@@ -125,19 +125,15 @@ void EUTelGenericSparseClusterImpl<PixelType>::print(std::ostream& os) const {
     }
     os << std::endl;
     
-    PixelType * pixel = new PixelType;
-    for ( unsigned int iPixel = 0 ; iPixel < this->size() ; iPixel++ ) 
-	{
-		this->getSparsePixelAt( iPixel, *pixel );
-		os << "Pixel number = " << iPixel << std::endl
-	 	   << ( * pixel ) << std::endl;
+    for( auto iPixel = this->begin(); iPixel != this->end() ; iPixel++ ) {
+		os << "Pixel number = " << iPixel-(this->begin()) << std::endl
+	 	   << ( *iPixel ) << std::endl;
     }
     for ( int i = 0; i < spacer - 1; i++ ) 
 	{
       os << "-";
     }
     os << std::resetiosflags(std::ios::left) << std::endl;
-    delete pixel; 
   }
 }
 #endif

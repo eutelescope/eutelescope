@@ -13,7 +13,8 @@
 #include "EUTelBrickedClusterImpl.h"
 #include "EUTelDFFClusterImpl.h"
 #include "EUTelFFClusterImpl.h"
-
+#include "EUTelSparseClusterImpl.h"
+ 
 // lcio includes <.h>
 #include <EVENT/LCEvent.h>
 
@@ -86,6 +87,29 @@ namespace eutelescope {
 
 	std::unique_ptr<EUTelTrackerDataInterfacer> getSparseData(IMPL::TrackerDataImpl* const data, int type) {
 		return getSparseData(data, static_cast<SparsePixelType>(type));
+	}
+
+	std::unique_ptr<EUTelClusterDataInterfacerBase> getClusterData(IMPL::TrackerDataImpl* const data, int type) {
+		return getClusterData(data, static_cast<SparsePixelType>(type));
+	}
+
+	std::unique_ptr<EUTelClusterDataInterfacerBase> getClusterData(IMPL::TrackerDataImpl* const data, SparsePixelType type) {
+		switch( type ) {
+			case kEUTelSimpleSparsePixel:
+				return	std::unique_ptr<EUTelClusterDataInterfacerBase>
+					( new EUTelSparseClusterImpl<EUTelSimpleSparsePixel>(data) );
+			case kEUTelGenericSparsePixel:
+				return	std::unique_ptr<EUTelClusterDataInterfacerBase>
+					( new EUTelSparseClusterImpl<EUTelGenericSparsePixel>(data) );
+			case kEUTelGeometricPixel:
+				return	std::unique_ptr<EUTelClusterDataInterfacerBase>
+					( new EUTelSparseClusterImpl<EUTelGeometricPixel>(data) );
+			case kEUTelMuPixel:
+				return	std::unique_ptr<EUTelClusterDataInterfacerBase>
+					( new EUTelSparseClusterImpl<EUTelMuPixel>(data) );
+			default:
+				throw UnknownDataTypeException("Unknown sparsified pixel");
+		}
 	}
 	
 	std::unique_ptr<EUTelTrackerDataInterfacer> getSparseData(IMPL::TrackerDataImpl* const data, SparsePixelType type) {

@@ -195,7 +195,7 @@ void EUTelProcessorClusterAnalysis::processEvent(LCEvent *evt)
   if (_clusterAvailable)
   {
 	CellIDDecoder<TrackerDataImpl > cellDecoder( zsInputDataCollectionVec );
-	for ( unsigned int iCluster=0; iCluster<zsInputDataCollectionVec->size(); iCluster++)
+	for ( size_t iCluster=0; iCluster<zsInputDataCollectionVec->size(); iCluster++)
 	{
 		TrackerDataImpl * zsData = dynamic_cast< TrackerDataImpl * > ( zsInputDataCollectionVec->getElementAt(iCluster) );
 		if((int)cellDecoder(zsData)["sensorID"] == _dutID) nClusterPerEvent++;
@@ -210,7 +210,7 @@ void EUTelProcessorClusterAnalysis::processEvent(LCEvent *evt)
 
   if (_clusterAvailable)
   {
-	for ( unsigned int idetector=0 ; idetector<zsInputDataCollectionVec->size(); idetector++)
+	for ( size_t idetector=0 ; idetector<zsInputDataCollectionVec->size(); idetector++)
 	{
 		CellIDDecoder<TrackerDataImpl> cellDecoder( zsInputDataCollectionVec );
 		TrackerDataImpl * zsData = dynamic_cast< TrackerDataImpl * > ( zsInputDataCollectionVec->getElementAt(idetector) );
@@ -227,12 +227,11 @@ void EUTelProcessorClusterAnalysis::processEvent(LCEvent *evt)
 			{
 				//starting actual cluster analysis
 				vector<vector<int> > pixVector;
-				std::unique_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>> sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(zsData);
+				auto sparseData = EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>(zsData);
 					
-				for(unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
+				for(size_t iPixel = 0; iPixel < sparseData.size(); iPixel++ )
 				{
-					EUTelGenericSparsePixel pixel;
-					sparseData->getSparsePixelAt( iPixel, pixel );
+					auto& pixel = sparseData.at( iPixel );
 					X[iPixel] = pixel.getXCoord();
 					Y[iPixel] = pixel.getYCoord();
 					
@@ -268,11 +267,10 @@ void EUTelProcessorClusterAnalysis::processEvent(LCEvent *evt)
 					//
 					if (_hotpixelAvailable)
 					{
-						std::unique_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> > sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> >(hotData);
-						for ( unsigned int iHotPixel = 0; iHotPixel < sparseData->size(); iHotPixel++ )
+						auto sparseData = EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>(hotData);
+						for ( size_t iHotPixel = 0; iHotPixel < sparseData.size(); iHotPixel++ )
 						{
-							EUTelGenericSparsePixel sparsePixel;
-							sparseData->getSparsePixelAt( iHotPixel, sparsePixel );
+							auto& sparsePixel = sparseData.at( iHotPixel );
 							if (abs(X[iPixel]-(sparsePixel.getXCoord())) < _sectorSafetyPixels && abs(Y[iPixel]-(sparsePixel.getYCoord())) < _sectorSafetyPixels)
 							{
 								_nHotpixelClusters++;
@@ -282,7 +280,7 @@ void EUTelProcessorClusterAnalysis::processEvent(LCEvent *evt)
 					}
 					if (_noiseMaskAvailable)
 					{
-						for (unsigned int iNoise=0; iNoise<noiseMaskX.size(); iNoise++)
+						for (size_t iNoise=0; iNoise<noiseMaskX.size(); iNoise++)
 						{
 							if (abs(X[iPixel]-(noiseMaskX[iNoise])) < _sectorSafetyPixels && abs(Y[iPixel]-(noiseMaskY[iNoise])) < _sectorSafetyPixels)
 							{
@@ -293,11 +291,10 @@ void EUTelProcessorClusterAnalysis::processEvent(LCEvent *evt)
 					}
 					if (_deadColumnAvailable)
 					{
-						auto sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> >(deadColumn);
-						for ( unsigned int iDeadPixel = 0; iDeadPixel < sparseData->size(); iDeadPixel++ )
+						auto sparseData = EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>(deadColumn);
+						for ( size_t iDeadPixel = 0; iDeadPixel < sparseData.size(); iDeadPixel++ )
 						{
-							EUTelGenericSparsePixel sparsePixel;
-							sparseData->getSparsePixelAt( iDeadPixel, sparsePixel );
+							auto& sparsePixel = sparseData.at( iDeadPixel );
 							if (abs(X[iPixel]-(sparsePixel.getXCoord())) < _sectorSafetyPixels)
 							{
 								_nDeadColumnClusters++;
@@ -322,7 +319,7 @@ void EUTelProcessorClusterAnalysis::processEvent(LCEvent *evt)
 				cluster.set_values(clusterSize,X,Y);
 
 				//fill the file with the pixel information of a cluster, after it has been checked, whether the cluster is ok
-				for(unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
+				for(size_t iPixel = 0; iPixel < sparseData.size(); iPixel++ )
 				{
 					//Output Pixel information to file, Comma (,) is coordinate seperator, Whitespace ( ) is Pixel seperator
 					clusterAnalysisOutput << X[iPixel] << "," << Y[iPixel] << " ";			

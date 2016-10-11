@@ -87,7 +87,7 @@ void EUTelProcessorNoisyClusterMasker::processEvent(LCEvent * event) {
 	}
 
  	// get the collection of interest from the event.
-	LCCollectionVec* pulseInputCollectionVec = NULL;
+	LCCollectionVec* pulseInputCollectionVec = nullptr;
 
 	try {
     		pulseInputCollectionVec  = dynamic_cast <LCCollectionVec*>( event->getCollection(_inputCollectionName) );
@@ -119,14 +119,14 @@ void EUTelProcessorNoisyClusterMasker::processEvent(LCEvent * event) {
 		int pixelType = trackerDecoder(trackerData)["sparsePixelType"];
 
 		//interface to sparsified data
-                auto sparseData = Utility::getSparseData(trackerData, pixelType);
+        auto sparseData = Utility::getSparseData(trackerData, pixelType);
 		bool noisy = false;
-		auto basePixelPtrVec = sparseData->getBasePixelPtrVec();
 		
 		//Loop over all hits!
-		for(auto pixel: basePixelPtrVec) {
-			if(std::binary_search( noiseVector->begin(), noiseVector->end(), Utility::cantorEncode(pixel->getXCoord(), pixel->getYCoord()) )) {
-				noisy=true;
+		for(auto& pixelRef: *sparseData) {
+			auto& pixel = pixelRef.get();
+			if(std::binary_search( noiseVector->begin(), noiseVector->end(), Utility::cantorEncode(pixel.getXCoord(), pixel.getYCoord()) )) {
+				noisy = true;
 				break;
 			}
 		}
@@ -142,7 +142,7 @@ void EUTelProcessorNoisyClusterMasker::processEvent(LCEvent * event) {
 			cellReencoder.setCellID(pulseData);
 			_maskedNoisyClusters[sensorID]++;
 		}	
-        }
+	}
 }
 
 void EUTelProcessorNoisyClusterMasker::end() 

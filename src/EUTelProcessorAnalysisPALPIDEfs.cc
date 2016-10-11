@@ -224,7 +224,7 @@ void EUTelProcessorAnalysisPALPIDEfs::init() {
       gRotation[2] =  gRotation[2]*3.1415926/180.; //
     }
   float chi2MaxTemp[1] = {30};
-  for (unsigned int i=0; i<chi2Max.size(); i++)
+  for (size_t i=0; i<chi2Max.size(); i++)
     chi2Max[i] = chi2MaxTemp[i];
   Cluster cluster;
   cluster.FindReferenceClusters(clusterVec,_maxNumberOfPixels);
@@ -399,7 +399,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
   if (_clusterAvailable)
   {
     CellIDDecoder<TrackerDataImpl > cellDecoder( zsInputDataCollectionVec );
-    for ( unsigned int iCluster=0; iCluster<zsInputDataCollectionVec->size(); iCluster++)
+    for ( size_t iCluster=0; iCluster<zsInputDataCollectionVec->size(); iCluster++)
     {
       TrackerDataImpl * zsData = dynamic_cast< TrackerDataImpl * > ( zsInputDataCollectionVec->getElementAt(iCluster) );
       if((int)cellDecoder(zsData)["sensorID"] == _dutID) nClusterPerEvent++;
@@ -504,7 +504,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
         if (_noiseMaskAvailable)
         {
           bool noisePixel = false;
-          for (unsigned int iNoise=0; iNoise<noiseMaskX.size(); iNoise++)
+          for (size_t iNoise=0; iNoise<noiseMaskX.size(); iNoise++)
           {
             if (abs(xposfit-(noiseMaskX[iNoise]*xPitch+xPitch/2.)) < limit && abs(yposfit-(noiseMaskY[iNoise]*yPitch+yPitch/2.)) < limit)
             {
@@ -677,7 +677,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
                   streamlog_out ( DEBUG )  << nAssociatedhits << " points for one track in DUT in event " << evt->getEventNumber() << "\t" << xposPrev << "\t" << yposPrev << "\t" << xpos << "\t" << ypos << " Fit: " << xposfit << "\t" << yposfit << " Number of planes with more than one hit: " << nPlanesWithMoreHits << endl;
                 if (_clusterAvailable)
                 {
-                  for ( unsigned int idetector=0 ; idetector<zsInputDataCollectionVec->size(); idetector++)
+                  for ( size_t idetector=0 ; idetector<zsInputDataCollectionVec->size(); idetector++)
                   {
                     CellIDDecoder<TrackerDataImpl> cellDecoder( zsInputDataCollectionVec );
                     TrackerDataImpl * zsData = dynamic_cast< TrackerDataImpl * > ( zsInputDataCollectionVec->getElementAt(idetector) );
@@ -693,13 +693,11 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
                       if ( type == kEUTelGenericSparsePixel )
                       {
                         vector<vector<int> > pixVector;
-                        std::unique_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>> sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(zsData);
-                        auto pixel = std::make_unique<EUTelGenericSparsePixel>();
-                        for(unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
-                        {
-                          sparseData->getSparsePixelAt( iPixel, pixel );
-                          X[iPixel] = pixel->getXCoord();
-                          Y[iPixel] = pixel->getYCoord();
+                        auto sparseData = EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>(zsData);
+                        for(size_t iPixel = 0; iPixel < sparseData.size(); iPixel++ ) {
+                          auto& pixel = sparseData.at( iPixel );
+                          X[iPixel] = pixel.getXCoord();
+                          Y[iPixel] = pixel.getYCoord();
                           vector<int> pix;
                           pix.push_back(X[iPixel]);
                           pix.push_back(Y[iPixel]);
@@ -715,11 +713,11 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
                         int clusterWidthY = yMax - yMin + 1;
 
                         if ((clusterWidthX > 3 || clusterWidthY > 3) && !emptyMiddle(pixVector))
-                          for (unsigned int iPixel=0; iPixel<pixVector.size(); iPixel++)
+                          for (size_t iPixel=0; iPixel<pixVector.size(); iPixel++)
                             largeClusterHistos->Fill(pixVector[iPixel][0],pixVector[iPixel][1]);
                         if (emptyMiddle(pixVector))
                         {
-                          for (unsigned int iPixel=0; iPixel<pixVector.size(); iPixel++)
+                          for (size_t iPixel=0; iPixel<pixVector.size(); iPixel++)
                             circularClusterHistos->Fill(pixVector[iPixel][0],pixVector[iPixel][1]);
                         }
 
@@ -744,8 +742,8 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
                           clusterShapeX[clusterShape]->Fill(xMin);
                           clusterShapeY[clusterShape]->Fill(yMin);
                           clusterShape2D2by2[clusterShape]->Fill(fmod(xposfit,2*xPitch),fmod(yposfit,2*yPitch));
-                          for (unsigned int iGroup=0; iGroup<symmetryGroups.size(); iGroup++)
-                            for (unsigned int iMember=0; iMember<symmetryGroups[iGroup].size(); iMember++)
+                          for (size_t iGroup=0; iGroup<symmetryGroups.size(); iGroup++)
+                            for (size_t iMember=0; iMember<symmetryGroups[iGroup].size(); iMember++)
                               if (symmetryGroups[iGroup][iMember] == clusterShape) clusterShape2DGrouped2by2[iGroup]->Fill(fmod(xposfit,2*xPitch),fmod(yposfit,2*yPitch));
                         }
                         else clusterShapeHisto->Fill(clusterVec.size());
@@ -763,7 +761,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
                 chi2Histo->Fill(chi2);
                 scatteringAngleHisto->Fill(xposfit,yposfit,abs(xpos-xposfit));
-                for (unsigned int i=0; i<chi2Max.size(); i++)
+                for (size_t i=0; i<chi2Max.size(); i++)
                 {
                   if (chi2 < chi2Max[i] && yposfit < _holesizeY[1] && yposfit > _holesizeY[0] && xposfit < _holesizeX[1] && xposfit > _holesizeX[0])
                   {
@@ -974,7 +972,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
 
   if (_clusterAvailable)
   {
-    for ( unsigned int i=0 ; i<zsInputDataCollectionVec->size(); i++)
+    for ( size_t i=0 ; i<zsInputDataCollectionVec->size(); i++)
     {
       CellIDDecoder<TrackerDataImpl> cellDecoder( zsInputDataCollectionVec );
       TrackerDataImpl * zsData = dynamic_cast< TrackerDataImpl * > ( zsInputDataCollectionVec->getElementAt(i) );
@@ -982,7 +980,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
       if (sensorID == _dutID)
       { 
         bool isAssosiated = false; 
-        for (unsigned int iAssociatedCluster=0; iAssociatedCluster<clusterAssosiatedToTrack.size(); iAssociatedCluster++)
+        for (size_t iAssociatedCluster=0; iAssociatedCluster<clusterAssosiatedToTrack.size(); iAssociatedCluster++)
           if (zsData->getTime() == clusterAssosiatedToTrack[iAssociatedCluster])
           {
             isAssosiated = true;
@@ -998,13 +996,12 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
             int clusterSize = zsData->getChargeValues().size()/4;
             vector<int> X(clusterSize);
             vector<int> Y(clusterSize);
-            auto sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(zsData);
-            auto pixel = std::make_unique<EUTelGenericSparsePixel>();
-            for(unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
+            auto sparseData = EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>(zsData);
+            for(size_t iPixel = 0; iPixel < sparseData.size(); iPixel++ )
             {
-              sparseData->getSparsePixelAt( iPixel, pixel );
-              X[iPixel] = pixel->getXCoord();
-              Y[iPixel] = pixel->getYCoord();
+              auto& pixel = sparseData.at( iPixel );
+              X[iPixel] = pixel.getXCoord();
+              Y[iPixel] = pixel.getYCoord();
               if (!fitHitAvailable) nFakeWithoutTrackHitmapHisto->Fill(X[iPixel],Y[iPixel]);
               else nFakeWithTrackHitmapHisto->Fill(X[iPixel],Y[iPixel]);
               nFakeHitmapHisto->Fill(X[iPixel],Y[iPixel]);
@@ -1033,7 +1030,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
   }
   if (_clusterAvailable && fitHitAvailable)
   {
-    for ( unsigned int i=0 ; i<zsInputDataCollectionVec->size(); i++)
+    for ( size_t i=0 ; i<zsInputDataCollectionVec->size(); i++)
     {
       CellIDDecoder<TrackerDataImpl> cellDecoder( zsInputDataCollectionVec );
       TrackerDataImpl * zsData = dynamic_cast< TrackerDataImpl * > ( zsInputDataCollectionVec->getElementAt(i) );
@@ -1048,13 +1045,12 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
           vector<int> X(clusterSize);
           vector<int> Y(clusterSize);
           vector<vector<int> > pixVector;
-          auto sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(zsData);
-          auto pixel = std::make_unique<EUTelGenericSparsePixel>();
-          for(unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
+          auto sparseData = EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>(zsData);
+          for(size_t iPixel = 0; iPixel < sparseData.size(); iPixel++ )
           {
-            sparseData->getSparsePixelAt( iPixel, pixel );
-            X[iPixel] = pixel->getXCoord();
-            Y[iPixel] = pixel->getYCoord();
+            auto& pixel = sparseData.at( iPixel );
+            X[iPixel] = pixel.getXCoord();
+            Y[iPixel] = pixel.getYCoord();
           }
           cluster.set_values(clusterSize,X,Y);
           float xCenter, yCenter;
@@ -1081,7 +1077,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
             }
           }
           if (isAssosiated) continue;
-          for (unsigned int iPixel=0; iPixel<X.size(); iPixel++)
+          for (size_t iPixel=0; iPixel<X.size(); iPixel++)
             nFakeWithTrackHitmapCorrectedHisto->Fill(X[iPixel],Y[iPixel]);
           int index = -1;
           for (int iSector=0; iSector<_nSectors; iSector++)
@@ -1281,7 +1277,7 @@ void EUTelProcessorAnalysisPALPIDEfs::bookHistos()
   {
     AIDAProcessor::tree(this)->mkdir(Form("Sector_%d",iSector));
     AIDAProcessor::tree(this)->cd(Form("Sector_%d",iSector));
-    for (unsigned int i=0; i<chi2Max.size();i++)
+    for (size_t i=0; i<chi2Max.size();i++)
     {
       residualXPAlpide[chi2Max[i]][iSector] = new TH1I(Form("residualXPAlpide_%.1f_%d",chi2Max[i],iSector),Form("Residual X (Max chi2 = %.1f), sector %d;X (mm);a.u.",chi2Max[i],iSector),300,-0.2,0.2);
       residualYPAlpide[chi2Max[i]][iSector] = new TH1I(Form("residualYPAlpide_%.1f_%d",chi2Max[i],iSector),Form("Residual Y (Max chi2 = %.1f), sector %d;Y (mm);a.u.",chi2Max[i],iSector),300,-0.2,0.2);
@@ -1352,7 +1348,7 @@ void EUTelProcessorAnalysisPALPIDEfs::bookHistos()
   for (unsigned int i=0; i<symmetryGroups.size(); i++)
   {
     string binName;
-    for (unsigned int j=0; j<symmetryGroups[i].size(); j++)
+    for (size_t j=0; j<symmetryGroups[i].size(); j++)
     {
       if (j<symmetryGroups[i].size()-1) binName += Form("%d,",symmetryGroups[i][j]);
       else binName += Form("%d",symmetryGroups[i][j]);
@@ -1370,13 +1366,13 @@ void EUTelProcessorAnalysisPALPIDEfs::end()
   AIDAProcessor::tree(this)->cd("Analysis");
   nHitsPerEventHistoTime = new TH1I("nHitsPerEventHistoTime","The amount of hits as a function of time",nHitsPerEvent.size(),0,nHitsPerEvent.size());
   nHitsPerEventHisto = new TH1I("nHitsPerEventHisto","The amount of hits as a function of events",200,0,200);
-  for(unsigned int i=0; i < nHitsPerEvent.size(); i++) {
+  for(size_t i=0; i < nHitsPerEvent.size(); i++) {
     nHitsPerEventHistoTime->SetBinContent(i,nHitsPerEvent.at(i));
     nHitsPerEventHisto->Fill(nHitsPerEvent.at(i));
   }
   
-  for(unsigned int event=0; event < posFit.size() ; event++) {
-    for(unsigned int ifit = 0; ifit < posFit.at(event).size(); ifit++) {
+  for(size_t event=0; event < posFit.size() ; event++) {
+    for(size_t ifit = 0; ifit < posFit.at(event).size(); ifit++) {
       int nAssociatedTracks = 0;
       for(int unsigned i=ifit+1; i< posFit.at(event).size() ; i++) {
         if (abs(posFit.at(event).at(ifit).at(0) - posFit.at(event).at(i).at(0)) < limit && abs(posFit.at(event).at(ifit).at(1) - posFit.at(event).at(i).at(1)) < limit) { 
@@ -1406,7 +1402,7 @@ void EUTelProcessorAnalysisPALPIDEfs::end()
     clusterSizeCrossSection[iSector] = csClusterSize->GetCrossSections();
     CrossSection * csEfficiency = new CrossSection(efficiencyPixelHisto[iSector]);
     efficiencyPixelCrossSection[iSector] = csEfficiency->GetCrossSections();
-    for (unsigned int i=0; i<chi2Max.size(); i++)
+    for (size_t i=0; i<chi2Max.size(); i++)
     {
       residualXAveragePixel[chi2Max[i]][iSector]->Divide(nResidualXPixel[chi2Max[i]][iSector]);
       residualYAveragePixel[chi2Max[i]][iSector]->Divide(nResidualYPixel[chi2Max[i]][iSector]);
@@ -1456,10 +1452,10 @@ void EUTelProcessorAnalysisPALPIDEfs::end()
     differenceY->GetXaxis()->SetBinLabel(tmp,Form("%d-%d",it->first,yPairs[it->first]));
     tmp++;
   }
-  for (unsigned int i=0; i<symmetryGroups.size(); i++)
+  for (size_t i=0; i<symmetryGroups.size(); i++)
   {
     string binName;
-    for (unsigned int j=0; j<symmetryGroups[i].size(); j++)
+    for (size_t j=0; j<symmetryGroups[i].size(); j++)
     {
       clusterShapeHistoGrouped->Fill(i,clusterShapeHisto->GetBinContent(symmetryGroups[i][j]+1));
       if (j<symmetryGroups[i].size()-1) binName += Form("%d,",symmetryGroups[i][j]);
@@ -1486,13 +1482,13 @@ void EUTelProcessorAnalysisPALPIDEfs::end()
   }
 /*  TH1I* nX = new TH1I("nX","n",xPixel,0,xPixel);
   TH1I* nY = new TH1I("nY","n",yPixel,0,yPixel);
-  for (unsigned int i=0; i<symmetryGroups.size(); i++)
+  for (size_t i=0; i<symmetryGroups.size(); i++)
   {
     nX->Reset();
     nY->Reset();
     string binName;
     double p = 1.0/symmetryGroups[i].size();
-    for (unsigned int j=0; j<symmetryGroups[i].size(); j++)
+    for (size_t j=0; j<symmetryGroups[i].size(); j++)
     {
       if (j<symmetryGroups[i].size()-1) binName += Form("%d-",symmetryGroups[i][j]);
       else binName += Form("%d",symmetryGroups[i][j]);
@@ -1503,7 +1499,7 @@ void EUTelProcessorAnalysisPALPIDEfs::end()
     }
     chi2X.insert(make_pair(i, new TH1I(Form("chi2X_%s",(char*)binName.c_str()),"",xPixel,0,xPixel)));
     chi2Y.insert(make_pair(i, new TH1I(Form("chi2Y_%s",(char*)binName.c_str()),"",yPixel,0,yPixel)));
-    for (unsigned int j=0; j<symmetryGroups[i].size(); j++)
+    for (size_t j=0; j<symmetryGroups[i].size(); j++)
     {
       for (int k=1; k<=clusterShapeX[j]->GetNbinsX(); k++)
       {
@@ -1605,11 +1601,11 @@ bool EUTelProcessorAnalysisPALPIDEfs::emptyMiddle(vector<vector<int> > pixVector
 {
   bool holeX = false;
   bool holeY = false;
-  for (unsigned int i=0; i<pixVector.size(); i++)
+  for (size_t i=0; i<pixVector.size(); i++)
   {
     bool touchingX = false;
     bool lastX = true;
-    for (unsigned int j=0; j<pixVector.size(); j++)
+    for (size_t j=0; j<pixVector.size(); j++)
     {
       if (i==j) continue;
       if (pixVector[i][1] != pixVector[j][1]) continue;
@@ -1618,11 +1614,11 @@ bool EUTelProcessorAnalysisPALPIDEfs::emptyMiddle(vector<vector<int> > pixVector
     }
     if (!touchingX && !lastX) {/*cerr << "Hole in X" << endl;*/ holeX = true; break;}
   }
-  for (unsigned int i=0; i<pixVector.size(); i++)
+  for (size_t i=0; i<pixVector.size(); i++)
   {
     bool touchingY = false;
     bool lastY = true;
-    for (unsigned int j=0; j<pixVector.size(); j++)
+    for (size_t j=0; j<pixVector.size(); j++)
     {
       if (i==j) continue;
       if (pixVector[i][0] != pixVector[j][0]) continue;
