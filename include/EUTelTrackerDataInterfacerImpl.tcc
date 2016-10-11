@@ -13,16 +13,14 @@ namespace eutelescope {
 
 	//default constructor
 	template<class PixelType>
-	EUTelTrackerDataInterfacerImpl<PixelType>::EUTelTrackerDataInterfacerImpl(IMPL::TrackerDataImpl* data): _trackerData(data), _nElement(), _type(), _pixelVec()
-	{
+	EUTelTrackerDataInterfacerImpl<PixelType>::EUTelTrackerDataInterfacerImpl(IMPL::TrackerDataImpl* data): 
+	_trackerData(data), 
+	_type(), 
+	_pixelVec() {
 		auto pixel = std::make_unique<PixelType>();
-		_nElement = pixel->getNoOfElements();
 		_type = pixel->getSparsePixelType();
 		_pixelVec.clear();
 		fillPixelVec();
 	}
-
-
-	
 } //namespace
 #endif

@@ -62,6 +62,13 @@ class EUTelTrackerDataInterfacer{
 	//! Destructor
 	virtual ~EUTelTrackerDataInterfacer() = default;
 
+	//! Returns a const & to the underlying pixel vector
+	std::vector<std::reference_wrapper<EUTelBaseSparsePixel const>> const & getPixels() const {
+		if(!_refVecValid) this->validateRefVec();
+		return _refVec;
+	}
+
+
 	//! Push back a pixel, very similar to STL containers
 	/*! Note that the function takes a EUTelBaseSparsePixel reference, since EUTelBaseSparsePixel
 	 *	is purely virtual, a reference to the actual pixel type must be used. A 
