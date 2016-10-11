@@ -186,12 +186,6 @@ FOREACH(impl_src ${IMPL_SRCS})
 	INSTALL_SHARED_LIBRARY( ${basename} DESTINATION lib )
 ENDFOREACH()  
 
-# Properly add the CMSPixelDecoder external dependency:
-ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}/external/CMSPixelDecoder)
-# ..and link it to libEUTelescope:
-TARGET_LINK_LIBRARIES( ${libname} CMSPixelDecoder )
-
-
 # used for alignment if Eutelescope was build with ROOT support
 IF( ROOT_FOUND AND ROOT_MINUIT_FOUND )
     TARGET_LINK_LIBRARIES( ${libname} ${ROOT_MINUIT_LIBRARY} )

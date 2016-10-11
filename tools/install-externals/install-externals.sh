@@ -46,14 +46,6 @@ echo "Extracting tar archive..."
 tar --strip-components 1 -C "$extpath/Eigen" -xzf "$tempdir/${eigenversion}.tar.gz" 
 echo "... done with Eigen library"
 
-# cmspixeldecoder -- needed for decoding of CMS pixel tracker data
-cmxpixeldecoderversion="master" # this is HEAD; should point to a (later) release when provided!
-wget --no-check-certificate --output-document="$tempdir/${cmxpixeldecoderversion}.tar.gz" 'https://github.com/simonspa/CMSPixelDecoder/archive/'${cmxpixeldecoderversion}.tar.gz
-if [ ! -d "$extpath/CMSPixelDecoder" ]; then mkdir "$extpath/CMSPixelDecoder"; fi;
-echo "Extracting tar archive..."
-tar --strip-components 1 -C "$extpath/CMSPixelDecoder" -xzf "$tempdir/${cmxpixeldecoderversion}.tar.gz" 
-echo "... done with cmxpixeldecoder library"
-
 # clean up
 rm $tempdir/*
 rmdir $tempdir
