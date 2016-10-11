@@ -98,7 +98,7 @@ protected:
   std::map<int,int> xPairs;
   std::map<int,int> yPairs;
   std::vector< std::vector<int> > symmetryGroups;
-  double zDistance;
+  double zDistance; // TODO: which units?
   int _nEvents;
   int _nEventsFake;
   int _nEventsWithTrack;
@@ -177,6 +177,7 @@ private:
   std::map<int,TH1I*> chi2X;
   std::map<int,TH1I*> chi2Y;
   TH1I* chi2Histo;
+  TH1I* chi2HistoNoHit;
   std::map<int,TH1I*> clusterWidthXHisto;
   std::map<int,TH1I*> clusterWidthYHisto;
   std::map<int,TH1I*> clusterSizeHisto;
@@ -206,6 +207,7 @@ private:
   std::map<int,TH1D*> tracksPAlpideProjection;
   std::map<int,TH1D*> efficiencyProjection;
   TH1I* timeStampHisto;
+  TH1F
   TH1F* differenceX;
   TH1F* differenceY;
   TH1F* nFakeHisto;
@@ -227,10 +229,13 @@ private:
   TH1I* nClusterPerEventHisto;
   TH1I* nAssociatedhitsHisto;
   TH1I* nAssociatedtracksHisto;
+  TH1I* stats;
   std::vector< std::vector< std::vector<double> > > posFake;
   std::vector< std::vector< std::vector<double> > > posFit;
   std::vector< std::vector<double> > posFakeTemp;
   std::vector< int > nHitsPerEvent; 
+
+  enum statsEntry : int { kAll=1, kNoLargeClusters, kGoodTimeStamp, kDataAvailable, kFittedHitsAvailable, kTracksAvailable, kAlignAvailable, kOnlyOneAlignAvailable, kClustersAvailable, kSingularRotationMatrix, kTwoCloseTracks, kTwoCloseTracksRejected, kZposCorrect, kZposUncorrect, kAlignmentRemoved, AlignmentRemovalFailed, kHitOnChip, kHitNotOnChip, kHitInBorderRegion, kUnknownSector, kHotPixel, kMaskedPixel, kDeadColumn, kHitsOnTheSamePlane, kSingleHitsOnly, kRejectedMultipleHits, kHitInDUT, kAssociatedHitInDUT };
 };
 
 #endif

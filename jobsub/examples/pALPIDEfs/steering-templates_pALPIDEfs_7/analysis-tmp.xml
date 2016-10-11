@@ -151,7 +151,7 @@
   <!--This is the name of the histogram information file-->
   <parameter name="HistoInfoFileName" type="string" value="@HistoInfoFile@"/>
   <!--This is the maximum distance between the fit and the hit to associate the hit with the track-->
-  <parameter name="Limit" type="double" value="0.1"/>
+  <parameter name="Limit" type="double" value="0.2"/>
   <!--This is the ID of the DUT-->
   <parameter name="dutID" type="int" value="@dutID@"/>
   <!--This is the maximum number of pixels in one cluster for the clustershape analysis-->
@@ -183,9 +183,9 @@
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value="MESSAGE1"/-->
   <!--Assign the size of the hole, minimum X, maximum X (in mm) -->
-  <parameter name="HoleSizeX" type="FloatVec"> 1.0 29.0 </parameter>
+  <parameter name="HoleSizeX" type="FloatVec"> 2.0 28.0 </parameter>
   <!--Assign the size of the hole, minimum Y, maximum Y (in mm) -->
-  <parameter name="HoleSizeY" type="FloatVec"> 9.0 12.5 </parameter>
+  <parameter name="HoleSizeY" type="FloatVec"> 5.0 12.0 </parameter>
   <!--Show fake efficiency-->
   <parameter name="ShowFake" type="bool" value="false"/>
   <!--Calculate track to hit association without allowing the tracks to share hits-->
