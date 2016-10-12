@@ -424,21 +424,13 @@ void EUTelProcessorTrueTrackAnalysis::bookHistos() {
 			std::string histoName = "2DFitpointResidual_d" + to_string(sensorID);
 
 			int histoXNBin = 201;
-			double histoXMin = -6;
-			double histoXMax = 6;
+			double histoXMin = -16;
+			double histoXMax = 16;
 
 			int histoYNBin = 201;
-			double histoYMin = -6;
-			double histoYMax = 6;
+			double histoYMin = -16;
+			double histoYMax = 16;
 			std::string histoTitle = "difference in position between true fitpoints from true tracks and reconstructed fitpoints from reconstructed tracks;#Deltax /#mum;#Deltay /#mum;Entries";
-
-			if ((i == 0) || (i == _sensorIDVec.size()-1)) {
-
-				histoXMin = -16;
-				histoXMax = 16;
-				histoYMin = -16;
-				histoYMax = 16;
-			}
 
 			_2DHistos[j].insert(std::make_pair(sensorID, AIDAProcessor::histogramFactory(this)->createHistogram2D((basePath+histoName).c_str(), histoXNBin, histoXMin, histoXMax, histoYNBin, histoYMin, histoYMax)));
 			_2DHistos[j].at(sensorID)->setTitle(histoTitle.c_str());

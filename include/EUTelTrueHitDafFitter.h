@@ -158,6 +158,9 @@ namespace eutelescope {
 		AIDA::IHistogram2D* _aidaZvHitY;
 		AIDA::IHistogram2D* _aidaZvFitY;
 
+		//2D residuals histograms
+		std::map<int, AIDA::IHistogram2D*> _2DResiduals;
+
 		// Other variables from EUTelDafFitter.h
 		// Output track collection
 		LCCollectionVec     * _fittrackvec;
