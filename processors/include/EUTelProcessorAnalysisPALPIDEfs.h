@@ -234,7 +234,14 @@ private:
   std::vector< std::vector<double> > posFakeTemp;
   std::vector< int > nHitsPerEvent;
 
-  enum statsEntry : int { kAll=1, kNoLargeClusters, kGoodTimeStamp, kDataAvailable, kFittedHitsAvailable, kTracksAvailable, kAlignAvailable, kOnlyOneAlignAvailable, kClustersAvailable, kSingularRotationMatrix, kTwoCloseTracks, kTwoCloseTracksRejected, kZposCorrect, kZposUncorrect, kAlignmentRemoved, kAlignmentRemovalFailed, kHitOnChip, kHitNotOnChip, kHitInBorderRegion, kUnknownSector, kHotPixel, kMaskedPixel, kDeadColumn, kHitsOnTheSamePlane, kSingleHitsOnly, kRejectedMultipleHits, kHitInDUT, kAssociatedHitInDUT };
+  enum statsEntry : int { kAll=0, kNoLargeClusters, kGoodTimeStamp, kDataAvailable,
+      kFittedHitsAvailable, kTracksAvailable, kAlignAvailable, kOnlyOneAlignAvailable,
+      kClustersAvailable, kSingularRotationMatrix, kFittedHit, kTwoCloseTracks,
+      kTwoCloseTracksRejected, kZposCorrect, kZposWrong, kAlignmentRemoved,
+      kAlignmentRemovalFailed, kFittedHitOnChip, kFittedHitNotOnChip, kFittedHitInBorderRegion,
+      kUnknownSector, kHotPixel, kMaskedPixel, kDeadColumn, kHitsOnTheSamePlane, kSingleHitsOnly,
+      kRejectedMultipleHits, kDenominator, kHitInDUT, kAssociatedHitInDUT
+      };
 };
 
 #endif

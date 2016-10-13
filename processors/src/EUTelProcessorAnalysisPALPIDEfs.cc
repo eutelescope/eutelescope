@@ -258,6 +258,17 @@ void EUTelProcessorAnalysisPALPIDEfs::init() {
 
 void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
 {
+  // HISTOGRAM INIT =============================================================================
+  if (_isFirstEvent)
+  {
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+    if ( _fillHistos)
+    {
+      bookHistos();
+    }
+#endif
+  }
+
   int nTrackPerEvent = 0;
   int nClusterAssociatedToTrackPerEvent = 0;
   int nClusterPerEvent = 0;
@@ -276,12 +287,6 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
   // FIRST EVENT ==================================================================================
   if (_isFirstEvent)
   {
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-    if ( _fillHistos)
-    {
-      bookHistos();
-    }
-#endif
     // Hot pixel collection -----------------------------------------------------------------------
     hotPixelCollectionVec = 0;
     try
@@ -344,17 +349,42 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
 
     // Writing output file ------------------------------------------------------------------------
     if (_chipVersion >= 3) {
-      settingsFile << evt->getRunNumber() << ";" << _energy << ";" << _chipID[layerIndex] << ";" << _chipVersion << ";" << _irradiation[layerIndex] << ";" << _rate << ";" << evt->getParameters().getFloatVal("BackBiasVoltage") << ";" << evt->getParameters().getIntVal(Form("Ithr_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Idb_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Vcasn_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Vcasn2_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Vclip_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Vcasp_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("VresetP_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("VresetD_%d",layerIndex)) << ";";
+      settingsFile << evt->getRunNumber() << ";" << _energy << ";" << _chipID[layerIndex] << ";"
+                   << _chipVersion << ";" << _irradiation[layerIndex] << ";" << _rate << ";"
+                   << evt->getParameters().getFloatVal("BackBiasVoltage") << ";"
+                   << evt->getParameters().getIntVal(Form("Ithr_%d",layerIndex)) << ";"
+                   << evt->getParameters().getIntVal(Form("Idb_%d",layerIndex)) << ";"
+                   << evt->getParameters().getIntVal(Form("Vcasn_%d",layerIndex)) << ";"
+                   << evt->getParameters().getIntVal(Form("Vcasn2_%d",layerIndex)) << ";"
+                   << evt->getParameters().getIntVal(Form("Vclip_%d",layerIndex)) << ";"
+                   << evt->getParameters().getIntVal(Form("Vcasp_%d",layerIndex)) << ";"
+                   << evt->getParameters().getIntVal(Form("VresetP_%d",layerIndex)) << ";"
+                   << evt->getParameters().getIntVal(Form("VresetD_%d",layerIndex)) << ";";
     }
     else if (_chipVersion == 2 || _chipVersion == 1) {
-      settingsFile << evt->getRunNumber() << ";" << _energy << ";" << _chipID[layerIndex] << ";" << _irradiation[layerIndex] << ";" << _rate << ";" << evt->getParameters().getFloatVal("BackBiasVoltage") << ";" << evt->getParameters().getIntVal(Form("Ithr_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Idb_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Vcasn_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Vaux_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("Vcasp_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("VresetP_%d",layerIndex)) << ";";
+      settingsFile << evt->getRunNumber() << ";" << _energy << ";" << _chipID[layerIndex] << ";"
+                   << _irradiation[layerIndex] << ";" << _rate << ";"
+                   << evt->getParameters().getFloatVal("BackBiasVoltage") << ";"
+                   << evt->getParameters().getIntVal(Form("Ithr_%d",layerIndex)) << ";"
+                   << evt->getParameters().getIntVal(Form("Idb_%d",layerIndex)) << ";"
+                   << evt->getParameters().getIntVal(Form("Vcasn_%d",layerIndex)) << ";"
+                   << evt->getParameters().getIntVal(Form("Vaux_%d",layerIndex)) << ";"
+                   << evt->getParameters().getIntVal(Form("Vcasp_%d",layerIndex)) << ";"
+                   << evt->getParameters().getIntVal(Form("VresetP_%d",layerIndex)) << ";";
     }
 
     for (int iSector=0; iSector<_nSectors; iSector++)
-      settingsFile << evt->getParameters().getFloatVal(Form("Thr_%d_%d",layerIndex,iSector)) << ";" << evt->getParameters().getFloatVal(Form("ThrRMS_%d_%d",layerIndex,iSector)) << ";";
+      settingsFile << evt->getParameters().getFloatVal(Form("Thr_%d_%d",layerIndex,iSector)) << ";"
+                   << evt->getParameters().getFloatVal(Form("ThrRMS_%d_%d",layerIndex,iSector)) << ";";
+
     for (int iSector=0; iSector<_nSectors; iSector++)
-      settingsFile << evt->getParameters().getFloatVal(Form("Noise_%d_%d",layerIndex,iSector)) << ";" << evt->getParameters().getFloatVal(Form("NoiseRMS_%d_%d",layerIndex,iSector)) << ";";
-    settingsFile << evt->getParameters().getIntVal(Form("m_readout_delay_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("m_trigger_delay_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("m_strobe_length_%d",layerIndex)) << ";" << evt->getParameters().getIntVal(Form("m_strobeb_length_%d",layerIndex)) << ";1;";
+      settingsFile << evt->getParameters().getFloatVal(Form("Noise_%d_%d",layerIndex,iSector)) << ";"
+                   << evt->getParameters().getFloatVal(Form("NoiseRMS_%d_%d",layerIndex,iSector)) << ";";
+
+    settingsFile << evt->getParameters().getIntVal(Form("m_readout_delay_%d",layerIndex)) << ";"
+                 << evt->getParameters().getIntVal(Form("m_trigger_delay_%d",layerIndex)) << ";"
+                 << evt->getParameters().getIntVal(Form("m_strobe_length_%d",layerIndex)) << ";"
+                 << evt->getParameters().getIntVal(Form("m_strobeb_length_%d",layerIndex)) << ";1;";
 
     // Done ---------------------------------------------------------------------------------------
     _isFirstEvent = false;
@@ -425,7 +455,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
   stats->Fill(kAlignAvailable);
 
   try {
-    alignmentPAlpideCollectionVec        = dynamic_cast < LCCollectionVec * > (evt->getCollection(_alignmentPAlpideCollectionName));
+    alignmentPAlpideCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection(_alignmentPAlpideCollectionName));
   } catch (...) {
     if (evt->getEventNumber() == 0) streamlog_out  ( WARNING2 ) << "Only one alignment collection for pAlpide" << endl;
     _oneAlignmentCollection = true;
@@ -501,7 +531,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
     }
   }
 
-  // TRACK LOOP ===================================================================================
+  // FITTED HIT LOOP ===============================================================================
   bool firstTrack = true;
 
   for(int ifit=0; ifit<nFitHit; ifit++)
@@ -512,6 +542,8 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
     fitpos[0] = fitpos0[0];
     fitpos[1] = fitpos0[1];
     fitpos[2] = fitpos0[2];
+
+    stats->Fill(kFittedHit);
 
     bool twoTracks = false;
     double yposfitPrev = 0.;
@@ -538,6 +570,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
     // at expected z position?
     if (fitpos[2] >= dutZ-zDistance && fitpos[2] <= dutZ+zDistance )
     {
+      stats->Fill(kZposCorrect);
       double xposfit=0;
       double yposfit=0;
 
@@ -551,11 +584,11 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
       // check x and y position
       if (xposfit > 0 && yposfit > 0 && xposfit < xSize && yposfit < ySize)
       {
-        stats->Fill(kHitOnChip);
+        stats->Fill(kFittedHitOnChip);
 
         // reject hits in the border region
         if (xposfit < limit || xposfit > xSize-limit || yposfit < limit || yposfit > ySize-limit) {
-          stats->Fill(kHitInBorderRegion);
+          stats->Fill(kFittedHitInBorderRegion);
           continue;
         }
 
@@ -629,7 +662,6 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
             stats->Fill(kDeadColumn);
             continue;
           }
-
         }
 
         nTrackPerEvent++;
@@ -660,6 +692,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
           if( hit != 0 )
           {
             // Find planes with multiple hits -----------------------------------------------------
+            // ToDo: why is this loop nested?
             for(int j=ihit; j<nHit && firstHit && nPlanesWithMoreHits <= _nPlanesWithMoreHits; j++)
             {
               TrackerHit * hitcheck1 = dynamic_cast<TrackerHit*>( col->getElementAt(j) ) ;
@@ -690,16 +723,12 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
               break;
             }
 
+            stats->Fill(kDenominator);
+
             const double *pos0 = hit->getPosition();
             pos[0] = pos0[0];
             pos[1] = pos0[1];
             pos[2] = pos0[2];
-
-
-            /*streamlog_out( MESSAGE4 ) << "Original position: x=" << pos[0] << ", y=" << pos[1] << ", z=" << pos[2];
-              double xposout, yposout;
-              RemoveAlign(preAlignmentCollectionVec,alignmentCollectionVec,alignmentPAlpideCollectionVec,pos,xposout,yposout);
-              streamlog_out( MESSAGE4 ) << ". Removed align position: x=" << pos[0] << ", y=" << pos[1] << ", z="  << pos[2]  << " for event " << _nEvents+1 << "." << endl;// Debug output, check, by setting aligned hits as input, whether alignment was removed correctly (compare to dump_event of a run, after fitter for example)*/
 
             // Hit in the DUT?
             if (pos[2] >= dutZ-zDistance && pos[2] <= dutZ+zDistance )
@@ -729,6 +758,9 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
                 posHitHit.push_back(ypos);
                 pH.push_back(posHitHit);
               }
+
+              TrackImpl* track = static_cast<TrackImpl*> (colTrack->getElementAt(ifit/7));
+              float chi2 = track->getChi2();
 
               if (abs(xpos-xposfit) < limit && abs(ypos-yposfit) < limit )
               {
@@ -857,9 +889,6 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
                 }
                 nTracksPAlpide[index]++;
 
-                TrackImpl* track = static_cast<TrackImpl*> (colTrack->getElementAt(ifit/7));
-
-                float chi2 = track->getChi2();
                 chi22DHisto->Fill(xposfit,yposfit,chi2);
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
                 chi2Histo->Fill(chi2);
@@ -902,9 +931,11 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
                 yposPrev = ypos;
                 xposPrev = xpos;
               }
-              else if (nAssociatedhits < 1 && nDUThitsEvent == 1)
-              {
+              else if (nAssociatedhits < 1 && nDUThitsEvent == 1) {
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
                 hitmapWrongHitHisto->Fill(xposfit,yposfit);
+                chi2HistoNoHit->Fill(chi2);
+#endif
                 nWrongPAlpideHit++;
                 xposfitPrev = xposfit;
                 yposfitPrev = yposfit;
@@ -1042,7 +1073,10 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
         }
       }
     }
-    else continue;
+    else {
+      stats->Fill(kZposWrong);
+      continue;
+    }
   }
 
   posFit.push_back(pT);
@@ -1354,7 +1388,38 @@ void EUTelProcessorAnalysisPALPIDEfs::bookHistos()
   nClusterPerEventHisto = new TH1I("nClusterPerEventHisto","Number of clusters per event;Number of clusters;a.u.",30,0,30);
   nAssociatedhitsHisto = new TH1I("nAssociatedhitsHisto","Number of hits in search region of track per event;Number of hits in search region of track;a.u.",30,0,30);
   nAssociatedtracksHisto = new TH1I("nAssociatedtracksHisto","Number of tracks in search region of track per event;Number of tracks in search region of track;a.u.",30,0,30);
+
   stats = new TH1I("stats", "statistics of events, cuts and properties", 100, 0., 100.);
+  stats->GetXaxis()->SetBinLabel(1+kAll                    , "All");
+  stats->GetXaxis()->SetBinLabel(1+kNoLargeClusters        , "No large clusters");
+  stats->GetXaxis()->SetBinLabel(1+kGoodTimeStamp          , "Good timestamp");
+  stats->GetXaxis()->SetBinLabel(1+kDataAvailable          , "Data available");
+  stats->GetXaxis()->SetBinLabel(1+kFittedHitsAvailable    , "Fitted hits available");
+  stats->GetXaxis()->SetBinLabel(1+kTracksAvailable        , "Tracks available");
+  stats->GetXaxis()->SetBinLabel(1+kAlignAvailable         , "Aligment available");
+  stats->GetXaxis()->SetBinLabel(1+kOnlyOneAlignAvailable  , "Only one aligment available");
+  stats->GetXaxis()->SetBinLabel(1+kClustersAvailable      , "Clusters available");
+  stats->GetXaxis()->SetBinLabel(1+kSingularRotationMatrix , "Singular rotation matrix");
+  stats->GetXaxis()->SetBinLabel(1+kFittedHit              , "Fitted hit found");
+  stats->GetXaxis()->SetBinLabel(1+kTwoCloseTracks         , "Found two close tracks");
+  stats->GetXaxis()->SetBinLabel(1+kTwoCloseTracksRejected , "Event rejected, two close tracks");
+  stats->GetXaxis()->SetBinLabel(1+kZposCorrect            , "z-position matches DUT");
+  stats->GetXaxis()->SetBinLabel(1+kZposWrong              , "z-position does not match DUT");
+  stats->GetXaxis()->SetBinLabel(1+kAlignmentRemoved       , "Aligment removed");
+  stats->GetXaxis()->SetBinLabel(1+kAlignmentRemovalFailed , "Aligment removal failed");
+  stats->GetXaxis()->SetBinLabel(1+kFittedHitOnChip        , "Fitted hit on chip");
+  stats->GetXaxis()->SetBinLabel(1+kFittedHitNotOnChip     , "Fitted hit not on chip");
+  stats->GetXaxis()->SetBinLabel(1+kFittedHitInBorderRegion, "Fited hit in border region");
+  stats->GetXaxis()->SetBinLabel(1+kUnknownSector          , "Sector determination failed");
+  stats->GetXaxis()->SetBinLabel(1+kHotPixel               , "Hit next to a hot pixel");
+  stats->GetXaxis()->SetBinLabel(1+kMaskedPixel            , "Hit next to a masked pixel");
+  stats->GetXaxis()->SetBinLabel(1+kDeadColumn             , "Hit next to a dead columns");
+  stats->GetXaxis()->SetBinLabel(1+kHitsOnTheSamePlane     , "Found multiple hits on the same plane");
+  stats->GetXaxis()->SetBinLabel(1+kSingleHitsOnly         , "Single hits only");
+  stats->GetXaxis()->SetBinLabel(1+kRejectedMultipleHits   , "Event rejected, multiple hits");
+  stats->GetXaxis()->SetBinLabel(1+kHitInDUT               , "Hit in DUT");
+  stats->GetXaxis()->SetBinLabel(1+kAssociatedHitInDUT     , "Associated hit in DUT");
+
   for (int iSector=0; iSector<_nSectors; iSector++)
   {
     AIDAProcessor::tree(this)->mkdir(Form("Sector_%d",iSector));
