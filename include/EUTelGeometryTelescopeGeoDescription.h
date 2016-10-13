@@ -60,15 +60,17 @@ struct EUTelPlane
 	/**Spatial location*/
 	double xPos, yPos, zPos;
 	/**Spatial location errors/uncertainties*/
-	//double xPosErr, yPosErr, zPosErr;
+	double xPosUnc = 0;
+	double yPosUnc = 0;
+	double zPosUnc = 0;
 	/**Euler rotations*/
 	double alpha, beta, gamma;
 	/**Euler uncertainties*/
-	//double alphaErr, betaErr, gammaErr;
+	double alphaUnc, betaUnc, gammaUnc;
 	/**Pixel geometry name*/
 	std::string pixGeoName;
 	/**2D flip entries*/
-	double r1, r2, r3, r4;
+	double f1, f2, f3, f4;
 	/**Size of plane*/
 	double xSize, ySize, zSize;
 	/**Pixel counts*/
@@ -79,6 +81,8 @@ struct EUTelPlane
 	double radLength;
 	/**Resolution of sensor*/
 	double xRes, yRes;
+	/**Is the plane enabled*/
+	bool enabled = true;
 };
 
 // Iterate over registered GEAR objects and construct their TGeo representation
@@ -223,16 +227,16 @@ class EUTelGeometryTelescopeGeoDescription
 
 	//GETTER
 	/** */ 
-	float siPlaneRotation1(int sensorID){ return _planeSetup.at(sensorID).r1; };
+	float siPlaneRotation1(int sensorID){ return _planeSetup.at(sensorID).f1; };
 
 	/** */ 
-	float siPlaneRotation2(int sensorID){ return _planeSetup.at(sensorID).r2; };
+	float siPlaneRotation2(int sensorID){ return _planeSetup.at(sensorID).f2; };
 
 	/** */ 
-	float siPlaneRotation3(int sensorID){ return _planeSetup.at(sensorID).r3; };
+	float siPlaneRotation3(int sensorID){ return _planeSetup.at(sensorID).f3; };
 
 	/** */ 
-	float siPlaneRotation4(int sensorID){ return _planeSetup.at(sensorID).r4; };
+	float siPlaneRotation4(int sensorID){ return _planeSetup.at(sensorID).f4; };
 
 	/** X coordinate of center of sensor 
 	 * with given ID in global coordinate frame */
