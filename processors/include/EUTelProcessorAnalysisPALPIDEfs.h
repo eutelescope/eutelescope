@@ -37,10 +37,10 @@ public:
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
   //! Book histograms
   /*! This method is used to prepare the needed directory structure
-  *  within the current ITree folder and books all required
-  *  histograms. Histogram pointers are stored into
-  *  vectors for class-wide access
-  */
+   *  within the current ITree folder and books all required
+   *  histograms. Histogram pointers are stored into
+   *  vectors for class-wide access
+   */
   void bookHistos();
 #endif
   virtual void end();
@@ -49,8 +49,8 @@ public:
 protected:
   //! Fill histogram switch
   /*! This boolean is used to switch on and off the filling of
-  *  histograms.
-  */
+   *  histograms.
+   */
   bool _fillHistos;
   std::string _inputFittedHitName;
   std::string _inputColName;
@@ -61,11 +61,11 @@ protected:
   std::string _zsDataCollectionName;
   //! The histogram information file
   /*! This string contain the name of the histogram information
-  *  file. This is selected by the user in the steering file.
-  *
-  *  @see eutelescope::EUTelHistogramManager
-  *  @see eutelescope::EUTelHistogramInfo
-  */
+   *  file. This is selected by the user in the steering file.
+   *
+   *  @see eutelescope::EUTelHistogramManager
+   *  @see eutelescope::EUTelHistogramInfo
+   */
   LCCollectionVec *zsInputDataCollectionVec;
   std::string _histoInfoFileName;
   std::string _hotPixelCollectionName;
@@ -207,7 +207,6 @@ private:
   std::map<int,TH1D*> tracksPAlpideProjection;
   std::map<int,TH1D*> efficiencyProjection;
   TH1I* timeStampHisto;
-  TH1F
   TH1F* differenceX;
   TH1F* differenceY;
   TH1F* nFakeHisto;
@@ -233,9 +232,9 @@ private:
   std::vector< std::vector< std::vector<double> > > posFake;
   std::vector< std::vector< std::vector<double> > > posFit;
   std::vector< std::vector<double> > posFakeTemp;
-  std::vector< int > nHitsPerEvent; 
+  std::vector< int > nHitsPerEvent;
 
-  enum statsEntry : int { kAll=1, kNoLargeClusters, kGoodTimeStamp, kDataAvailable, kFittedHitsAvailable, kTracksAvailable, kAlignAvailable, kOnlyOneAlignAvailable, kClustersAvailable, kSingularRotationMatrix, kTwoCloseTracks, kTwoCloseTracksRejected, kZposCorrect, kZposUncorrect, kAlignmentRemoved, AlignmentRemovalFailed, kHitOnChip, kHitNotOnChip, kHitInBorderRegion, kUnknownSector, kHotPixel, kMaskedPixel, kDeadColumn, kHitsOnTheSamePlane, kSingleHitsOnly, kRejectedMultipleHits, kHitInDUT, kAssociatedHitInDUT };
+  enum statsEntry : int { kAll=1, kNoLargeClusters, kGoodTimeStamp, kDataAvailable, kFittedHitsAvailable, kTracksAvailable, kAlignAvailable, kOnlyOneAlignAvailable, kClustersAvailable, kSingularRotationMatrix, kTwoCloseTracks, kTwoCloseTracksRejected, kZposCorrect, kZposUncorrect, kAlignmentRemoved, kAlignmentRemovalFailed, kHitOnChip, kHitNotOnChip, kHitInBorderRegion, kUnknownSector, kHotPixel, kMaskedPixel, kDeadColumn, kHitsOnTheSamePlane, kSingleHitsOnly, kRejectedMultipleHits, kHitInDUT, kAssociatedHitInDUT };
 };
 
 #endif

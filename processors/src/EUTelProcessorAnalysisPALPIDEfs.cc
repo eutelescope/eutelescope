@@ -35,25 +35,25 @@ using namespace gear;
 EUTelProcessorAnalysisPALPIDEfs aEUTelProcessorAnalysisPALPIDEfs;
 
 EUTelProcessorAnalysisPALPIDEfs::EUTelProcessorAnalysisPALPIDEfs()
-: Processor("EUTelProcessorAnalysisPALPIDEfs"),
-  _fillHistos(false),
-  _inputFittedHitName(""),
-  _inputColName(""),
-  _trackCollectionName(""),
-  _alignmentPAlpideCollectionName("alignmentPAlpide"),
-  _alignmentCollectionName("alignment"),
-  _preAlignmentCollectionName("prealign"),
-  _zsDataCollectionName(""),
-  zsInputDataCollectionVec(NULL),
-  _hotPixelCollectionName(""),
-  limit(0.05),
-  _dutID(6),
-  _maxNumberOfPixels(3),
-  _nPlanesWithMoreHits(4),
-  _moreTracks(false),
-  _energy(6.0),
-  _writeShapes(false),
-  _shapeOutputFileName("./shapeDistribution.txt"),
+  : Processor("EUTelProcessorAnalysisPALPIDEfs"),
+    _fillHistos(false),
+    _inputFittedHitName(""),
+    _inputColName(""),
+    _trackCollectionName(""),
+    _alignmentPAlpideCollectionName("alignmentPAlpide"),
+    _alignmentCollectionName("alignment"),
+    _preAlignmentCollectionName("prealign"),
+    _zsDataCollectionName(""),
+    zsInputDataCollectionVec(NULL),
+    _hotPixelCollectionName(""),
+    limit(0.05),
+    _dutID(6),
+    _maxNumberOfPixels(3),
+    _nPlanesWithMoreHits(4),
+    _moreTracks(false),
+    _energy(6.0),
+    _writeShapes(false),
+    _shapeOutputFileName("./shapeDistribution.txt"),
   _outputSettingsFolderName("./"),
   _chipID(),
   _irradiation(),
@@ -140,44 +140,44 @@ EUTelProcessorAnalysisPALPIDEfs::EUTelProcessorAnalysisPALPIDEfs()
   registerProcessorParameter("MoreTracks","More tracks are allowed in one event",
                              _moreTracks, static_cast< bool > ( false ) );
   registerOptionalParameter("HotPixelCollectionName","This is the name of the hotpixel collection of the pALPIDE",
-                             _hotPixelCollectionName, static_cast< string > ( "" ) );
+                            _hotPixelCollectionName, static_cast< string > ( "" ) );
   registerOptionalParameter("DeadColumnCollectionName","This is the name of the collection containing the pixels belonging to a dead column",
-                             _deadColumnCollectionName, static_cast< string > ( "deadColumn" ) );
+                            _deadColumnCollectionName, static_cast< string > ( "deadColumn" ) );
   registerOptionalParameter("NoiseMaskFileName","This is the name of the file which contains the pixels which were masked during datataking",
-                             _noiseMaskFileName, static_cast< string > ( "" ) );
+                            _noiseMaskFileName, static_cast< string > ( "" ) );
   registerOptionalParameter("Energy","Particle energy",
-                             _energy, static_cast< double > ( 6.0 ) );
+                            _energy, static_cast< double > ( 6.0 ) );
   registerProcessorParameter("WriteShapes","Write cluster shapes to file?",
                              _writeShapes, static_cast< bool > ( false ) );
   registerOptionalParameter("ShapeOutputFileName","This is the name of the file where the IDs of the cluster shapes will be saved",
-                             _shapeOutputFileName, static_cast< string > ( "./shapeDistribution.txt" ) );
+                            _shapeOutputFileName, static_cast< string > ( "./shapeDistribution.txt" ) );
   registerOptionalParameter("OutputSettingsFolderName","Folder name where all the settings of each run will be saved",
-                             _outputSettingsFolderName, static_cast< string > ( "./" ) );
+                            _outputSettingsFolderName, static_cast< string > ( "./" ) );
   EVENT::StringVec _stringVecExample;
   _stringVecExample.push_back(" ");
   registerOptionalParameter("ChipID","Chip IDs",
-                             _chipID, _stringVecExample );
+                            _chipID, _stringVecExample );
   registerOptionalParameter("Irradiation","Irradiation level",
-                             _irradiation, _stringVecExample );
+                            _irradiation, _stringVecExample );
   registerOptionalParameter("Rate","Data taking rate",
-                             _rate, static_cast< string > ( "" ) );
+                            _rate, static_cast< string > ( "" ) );
   registerProcessorParameter("MinTimeStamp", "This is minimum timestamp required to consider an event",
                              _minTimeStamp, static_cast<double>( 0 ) );
   registerOptionalParameter("ChipVersion", "Chip Version",
-                             _chipVersion, static_cast<int>(3) );
+                            _chipVersion, static_cast<int>(3) );
 
 //  float defaultHoleSizeX[2] = {1, 29}; // Need to be changed if eutelescope has -std=c++11 flag
 //  float defaultHoleSizeY[2] = {9, 12.5}; // Need to be changed if eutelescope has -std=c++11 flag
 
   registerOptionalParameter("HoleSizeX", "Size of the hole in X axis (mm)",
-                             _holesizeX, std::vector<float> {1, 29} );
+                            _holesizeX, std::vector<float> {1, 29} );
   registerOptionalParameter("HoleSizeY", "Size of the hole in Y axis (mm)",
-                             _holesizeY, std::vector<float> {9, 12.5} );
+                            _holesizeY, std::vector<float> {9, 12.5} );
   _isFirstEvent = true;
   registerProcessorParameter("ShowFake","Show fake efficiency",
-                              _showFake, static_cast< bool > ( true ) );
+                             _showFake, static_cast< bool > ( true ) );
   registerProcessorParameter("RealAssociation","Calculate track to hit association without allowing the tracks to share hits",
-                              _realAssociation, static_cast< bool > ( false ) );
+                             _realAssociation, static_cast< bool > ( false ) );
 }
 
 void EUTelProcessorAnalysisPALPIDEfs::init() {
@@ -250,10 +250,10 @@ void EUTelProcessorAnalysisPALPIDEfs::init() {
   if (!std::ifstream(_outputSettingsFileName.c_str()))
     newFile = true;
   settingsFile.open (_outputSettingsFileName.c_str(), ios::out | ios::app );
-    if (newFile && _chipVersion >= 3) settingsFile << "Run number;Energy;Chip ID;Chip Version;Irradiation level(0-nonIrradiated,1-2.5e12,2-1e13,3-700krad,4-combined:1e13+700krad);Rate;BB;Ithr;Idb;Vcasn;Vcasn2;Vclip;Vcasp;VresetP;VresetD;Threshold and their RMS for all eight sectors;Noise and their RMS for all eight sectors;Readout delay;Trigger delay;Strobe length;StrobeB length;Data (1) or noise (0);Number of events;Efficiency,Number of tracks,Number of tracks with associated hit for all sectors" << endl;
-    else if (newFile && ( _chipVersion == 2 || _chipVersion == 1)) {
-      settingsFile << "Run number;Energy;Chip ID;Irradiation level(0-nonIrradiated,1-2.5e12,2-1e13,3-700krad,4-combined:1e13+700krad);Rate;BB;Ithr;Idb;Vcasn;Vaux;Vcasp;Vreset;Threshold and their RMS for all four sectors;Noise and their RMS for all four sectors;Readout delay;Trigger delay;Strobe length;StrobeB length;Data (1) or noise (0);Number of events;Efficiency,Number of tracks,Number of tracks with associated hit for all sectors" << endl;
-    }
+  if (newFile && _chipVersion >= 3) settingsFile << "Run number;Energy;Chip ID;Chip Version;Irradiation level(0-nonIrradiated,1-2.5e12,2-1e13,3-700krad,4-combined:1e13+700krad);Rate;BB;Ithr;Idb;Vcasn;Vcasn2;Vclip;Vcasp;VresetP;VresetD;Threshold and their RMS for all eight sectors;Noise and their RMS for all eight sectors;Readout delay;Trigger delay;Strobe length;StrobeB length;Data (1) or noise (0);Number of events;Efficiency,Number of tracks,Number of tracks with associated hit for all sectors" << endl;
+  else if (newFile && ( _chipVersion == 2 || _chipVersion == 1)) {
+    settingsFile << "Run number;Energy;Chip ID;Irradiation level(0-nonIrradiated,1-2.5e12,2-1e13,3-700krad,4-combined:1e13+700krad);Rate;BB;Ithr;Idb;Vcasn;Vaux;Vcasp;Vreset;Threshold and their RMS for all four sectors;Noise and their RMS for all four sectors;Readout delay;Trigger delay;Strobe length;StrobeB length;Data (1) or noise (0);Number of events;Efficiency,Number of tracks,Number of tracks with associated hit for all sectors" << endl;
+  }
 }
 
 void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
@@ -278,7 +278,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
   {
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     if ( _fillHistos)
-   {
+    {
       bookHistos();
     }
 #endif
@@ -338,7 +338,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
       auto sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> >(deadColumn);
       auto& pixelVec = sparseData->getPixels();
       for(auto& sparsePixel: pixelVec) {
-	deadColumnHisto->Fill(sparsePixel.getXCoord()*xPitch+xPitch/2.,sparsePixel.getYCoord()*yPitch+yPitch/2.);
+        deadColumnHisto->Fill(sparsePixel.getXCoord()*xPitch+xPitch/2.,sparsePixel.getYCoord()*yPitch+yPitch/2.);
       }
     }
 
@@ -375,9 +375,9 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
   catch (lcio::DataNotAvailableException& e)
   {
     streamlog_out ( DEBUG5 ) << "Not able to get collection "
-                            << _inputColName
-                            << "\nfrom event " << evt->getEventNumber()
-                            << " in run " << evt->getRunNumber()  << endl;
+                             << _inputColName
+                             << "\nfrom event " << evt->getEventNumber()
+                             << " in run " << evt->getRunNumber()  << endl;
     return;
   }
   stats->Fill(kDataAvailable);
@@ -392,9 +392,9 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
   catch (lcio::DataNotAvailableException& e)
   {
     streamlog_out ( DEBUG5 ) << "Not able to get fit collection "
-                            << _inputFittedHitName
-                            << "\nfrom event " << evt->getEventNumber()
-                            << " in run " << evt->getRunNumber()  << endl;
+                             << _inputFittedHitName
+                             << "\nfrom event " << evt->getEventNumber()
+                             << " in run " << evt->getRunNumber()  << endl;
     fitHitAvailable = false;
   }
   if (fitHitAvailable) stats->Fill(kFittedHitsAvailable);
@@ -524,9 +524,9 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
       TrackerHit * fithitcheck = dynamic_cast<TrackerHit*>( colFit->getElementAt(i) ) ;
       const double *fitposcheck0 = fithitcheck->getPosition();
       if (abs(fitpos[2] - fitposcheck0[2]) < maxDistInPlane) {
-	stats->Fill(kTwoCloseTracks);
-	twoTracks = true;
-	break;
+        stats->Fill(kTwoCloseTracks);
+        twoTracks = true;
+        break;
       }
     }
     if (twoTracks && !_moreTracks) {
@@ -551,37 +551,37 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
       // check x and y position
       if (xposfit > 0 && yposfit > 0 && xposfit < xSize && yposfit < ySize)
       {
-	stats->Fill(kHitOnChip);
+        stats->Fill(kHitOnChip);
 
-	// reject hits in the border region
+        // reject hits in the border region
         if (xposfit < limit || xposfit > xSize-limit || yposfit < limit || yposfit > ySize-limit) {
-	  stats->Fill(kHitInBorderRegion);
-	  continue;
-	}
+          stats->Fill(kHitInBorderRegion);
+          continue;
+        }
 
-	// sector determination
+        // sector determination
         int index = -1;
         for (int iSector=0; iSector<_nSectors; iSector++)
         {
           if (xposfit>xSize/(double)_nSectors*iSector+(iSector==0?0:1)*(2.*xPitch+limit) &&
-	      xposfit<xSize/(double)_nSectors*(iSector+1)-(iSector==_nSectors-1?0:1)*(2.*xPitch+limit))
+              xposfit<xSize/(double)_nSectors*(iSector+1)-(iSector==_nSectors-1?0:1)*(2.*xPitch+limit))
           {
             index = iSector;
             break;
           }
         }
         if (index == -1) {
-	  stats->Fill(kUnknownSector);
-	  continue;
-	}
+          stats->Fill(kUnknownSector);
+          continue;
+        }
 
-	// reject tracks too close to hot pixels
+        // reject tracks too close to hot pixels
         if (_hotpixelAvailable)
         {
-	  auto sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> >(hotData);
+          auto sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> >(hotData);
           bool hotpixel = false;
-	  auto& pixelVec = sparseData->getPixels();
-	  for(auto& sparsePixel: pixelVec) {
+          auto& pixelVec = sparseData->getPixels();
+          for(auto& sparsePixel: pixelVec) {
             if (abs(xposfit-(sparsePixel.getXCoord()*xPitch+xPitch/2.)) < limit && abs(yposfit-(sparsePixel.getYCoord()*yPitch+yPitch/2.)) < limit)
             {
               hotpixel = true;
@@ -589,12 +589,12 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
             }
           }
           if (hotpixel) {
-	    stats->Fill(kHotPixel);
-	    continue;
-	  }
+            stats->Fill(kHotPixel);
+            continue;
+          }
         }
 
-	// reject tracks too close to masked pixels
+        // reject tracks too close to masked pixels
         if (_noiseMaskAvailable)
         {
           bool noisePixel = false;
@@ -607,28 +607,28 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
             }
           }
           if (noisePixel) {
-	    stats->Fill(kMaskedPixel);
-	    continue;
-	  }
+            stats->Fill(kMaskedPixel);
+            continue;
+          }
         }
 
-	// reject tracks too close to dead columns
+        // reject tracks too close to dead columns
         if (_deadColumnAvailable)
         {
           auto sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> >(deadColumn);
           bool dead = false;
-	  auto& pixelVec = sparseData->getPixels();
-	  for(auto& sparsePixel: pixelVec) {
-	  if (abs(xposfit-(sparsePixel.getXCoord()*xPitch+xPitch/2.)) < limit)
+          auto& pixelVec = sparseData->getPixels();
+          for(auto& sparsePixel: pixelVec) {
+            if (abs(xposfit-(sparsePixel.getXCoord()*xPitch+xPitch/2.)) < limit)
             {
               dead = true;
               break;
             }
           }
           if (dead) {
-	    stats->Fill(kDeadColumn);
-	    continue;
-	  }
+            stats->Fill(kDeadColumn);
+            continue;
+          }
 
         }
 
@@ -651,7 +651,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
         pT.push_back(posFitHit);
 
 
-	// HIT LOOP ===============================================================================
+        // HIT LOOP ===============================================================================
         for(int ihit=0; ihit<nHit ; ihit++)
         {
           TrackerHit * hit = dynamic_cast<TrackerHit*>( col->getElementAt(ihit) ) ;
@@ -659,7 +659,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
           double pos[3]={0.,0.,0.};
           if( hit != 0 )
           {
-	    // Find planes with multiple hits -----------------------------------------------------
+            // Find planes with multiple hits -----------------------------------------------------
             for(int j=ihit; j<nHit && firstHit && nPlanesWithMoreHits <= _nPlanesWithMoreHits; j++)
             {
               TrackerHit * hitcheck1 = dynamic_cast<TrackerHit*>( col->getElementAt(j) ) ;
@@ -678,17 +678,17 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
                 else if (k == j+1 && poscheck1[2] != poscheck2[2]) hitOnSamePlane = false;
               }
             }
-	    if (nPlanesWithMoreHits>0) stats->Fill(kHitsOnTheSamePlane);
-	    else                       stats->Fill(kSingleHitsOnly);
+            if (nPlanesWithMoreHits>0) stats->Fill(kHitsOnTheSamePlane);
+            else                       stats->Fill(kSingleHitsOnly);
 
             firstHit = false;
 
-	    // Apply cut on the number of planes with multiple hits
+            // Apply cut on the number of planes with multiple hits
             if (nPlanesWithMoreHits > _nPlanesWithMoreHits) {
-	      unfoundTrack = true;
-	      stats->Fill(kRejectedMultipleHits);
-	      break;
-	    }
+              unfoundTrack = true;
+              stats->Fill(kRejectedMultipleHits);
+              break;
+            }
 
             const double *pos0 = hit->getPosition();
             pos[0] = pos0[0];
@@ -696,26 +696,26 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
             pos[2] = pos0[2];
 
 
-	    /*streamlog_out( MESSAGE4 ) << "Original position: x=" << pos[0] << ", y=" << pos[1] << ", z=" << pos[2];
-	    double xposout, yposout;
-	    RemoveAlign(preAlignmentCollectionVec,alignmentCollectionVec,alignmentPAlpideCollectionVec,pos,xposout,yposout);
-	    streamlog_out( MESSAGE4 ) << ". Removed align position: x=" << pos[0] << ", y=" << pos[1] << ", z="  << pos[2]  << " for event " << _nEvents+1 << "." << endl;// Debug output, check, by setting aligned hits as input, whether alignment was removed correctly (compare to dump_event of a run, after fitter for example)*/
+            /*streamlog_out( MESSAGE4 ) << "Original position: x=" << pos[0] << ", y=" << pos[1] << ", z=" << pos[2];
+              double xposout, yposout;
+              RemoveAlign(preAlignmentCollectionVec,alignmentCollectionVec,alignmentPAlpideCollectionVec,pos,xposout,yposout);
+              streamlog_out( MESSAGE4 ) << ". Removed align position: x=" << pos[0] << ", y=" << pos[1] << ", z="  << pos[2]  << " for event " << _nEvents+1 << "." << endl;// Debug output, check, by setting aligned hits as input, whether alignment was removed correctly (compare to dump_event of a run, after fitter for example)*/
 
-	    // Hit in the DUT?
+            // Hit in the DUT?
             if (pos[2] >= dutZ-zDistance && pos[2] <= dutZ+zDistance )
             {
               pAlpideHit = true;
               nPAlpideHits++;
-	      stats->Fill(kHitInDUT);
+              stats->Fill(kHitInDUT);
 
-	      // Determine position of the hit on the DUT
+              // Determine position of the hit on the DUT
               pos[0]    -= xZero;
               pos[1]    -= yZero;
               _EulerRotationBack( pos, gRotation );
 
-	      double xpos =0.
-          double ypos =0.;
-	      _LayerRotationBack(pos, xpos, ypos);
+              double xpos =0.;
+              double ypos =0.;
+              _LayerRotationBack(pos, xpos, ypos);
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
               if (!hitmapFilled) hitmapHisto->Fill(xpos,ypos);
@@ -733,7 +733,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
               if (abs(xpos-xposfit) < limit && abs(ypos-yposfit) < limit )
               {
                 nAssociatedhits++;
-		stats->Fill(kAssociatedHitInDUT);
+                stats->Fill(kAssociatedHitInDUT);
                 for (int jhit=ihit+1; jhit< nHit ; jhit++)
                 {
                   TrackerHit * hitNext = dynamic_cast<TrackerHit*>( col->getElementAt(jhit) ) ;
@@ -750,8 +750,8 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
 
                     _EulerRotationBack( posNext, gRotation );
 
-		    double xposNext, yposNext;
-		    _LayerRotationBack(posNext, xposNext, yposNext);
+                    double xposNext, yposNext;
+                    _LayerRotationBack(posNext, xposNext, yposNext);
 
                     if (abs(xposNext-xposfit) > limit || abs(yposNext-yposfit) > limit) continue;
                     nAssociatedhits++;
@@ -824,20 +824,20 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
                         clusterWidthXVsXAverageHisto[index]->Fill(fmod(xposfit,xPitch),clusterWidthX);
                         clusterWidthYVsYHisto[index]->Fill(fmod(yposfit,yPitch),clusterWidthY);
                         clusterWidthYVsYAverageHisto[index]->Fill(fmod(yposfit,yPitch),clusterWidthY);
-			//if (yposfit > _holesizeY[0] && yposfit < _holesizeY[1] && xposfit < _holesizeX[1] && xposfit > _holesizeX[0])
-                        	clusterSize2DHisto[index]->Fill(fmod(xposfit,xPitch),fmod(yposfit,yPitch),clusterSize);
- 			//if (yposfit > _holesizeY[0] && yposfit < _holesizeY[1] && xposfit < _holesizeX[1] && xposfit > _holesizeX[0])
-				clusterSize2D2by2Histo[index]->Fill(fmod(xposfit,2*xPitch),fmod(yposfit,2*yPitch),clusterSize);
- 			//if (yposfit > _holesizeY[0] && yposfit < _holesizeY[1] && xposfit < _holesizeX[1] && xposfit > _holesizeX[0])
-				clusterSize2DAverageHisto[index]->Fill(fmod(xposfit,xPitch),fmod(yposfit,yPitch),clusterSize);
-			//if (yposfit > _holesizeY[0] && yposfit < _holesizeY[1] && xposfit < _holesizeX[1] && xposfit > _holesizeX[0])
-                        	clusterSize2DAverage2by2Histo[index]->Fill(fmod(xposfit,2*xPitch),fmod(yposfit,2*yPitch),clusterSize);
+                        //if (yposfit > _holesizeY[0] && yposfit < _holesizeY[1] && xposfit < _holesizeX[1] && xposfit > _holesizeX[0])
+                        clusterSize2DHisto[index]->Fill(fmod(xposfit,xPitch),fmod(yposfit,yPitch),clusterSize);
+                        //if (yposfit > _holesizeY[0] && yposfit < _holesizeY[1] && xposfit < _holesizeX[1] && xposfit > _holesizeX[0])
+                        clusterSize2D2by2Histo[index]->Fill(fmod(xposfit,2*xPitch),fmod(yposfit,2*yPitch),clusterSize);
+                        //if (yposfit > _holesizeY[0] && yposfit < _holesizeY[1] && xposfit < _holesizeX[1] && xposfit > _holesizeX[0])
+                        clusterSize2DAverageHisto[index]->Fill(fmod(xposfit,xPitch),fmod(yposfit,yPitch),clusterSize);
+                        //if (yposfit > _holesizeY[0] && yposfit < _holesizeY[1] && xposfit < _holesizeX[1] && xposfit > _holesizeX[0])
+                        clusterSize2DAverage2by2Histo[index]->Fill(fmod(xposfit,2*xPitch),fmod(yposfit,2*yPitch),clusterSize);
                         nClusterVsXHisto[index]->Fill(fmod(xposfit,xPitch));
                         nClusterVsYHisto[index]->Fill(fmod(yposfit,yPitch));
-			//if (yposfit > _holesizeY[0] && yposfit < _holesizeY[1] && xposfit < _holesizeX[1] && xposfit > _holesizeX[0])
-	                        nClusterSizeHisto[index]->Fill(fmod(xposfit,xPitch),fmod(yposfit,yPitch));
-			//if (yposfit > _holesizeY[0] && yposfit < _holesizeY[1] && xposfit < _holesizeX[1] && xposfit > _holesizeX[0])
-                        	nClusterSize2by2Histo[index]->Fill(fmod(xposfit,2*xPitch),fmod(yposfit,2*yPitch));
+                        //if (yposfit > _holesizeY[0] && yposfit < _holesizeY[1] && xposfit < _holesizeX[1] && xposfit > _holesizeX[0])
+                        nClusterSizeHisto[index]->Fill(fmod(xposfit,xPitch),fmod(yposfit,yPitch));
+                        //if (yposfit > _holesizeY[0] && yposfit < _holesizeY[1] && xposfit < _holesizeX[1] && xposfit > _holesizeX[0])
+                        nClusterSize2by2Histo[index]->Fill(fmod(xposfit,2*xPitch),fmod(yposfit,2*yPitch));
                         int clusterShape = cluster.WhichClusterShape(cluster, clusterVec);
                         if (clusterShape>=0)
                         {
@@ -914,48 +914,48 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
             else continue;
           }
         }
-	// END OF HIT LOOP
+        // END OF HIT LOOP
 
         firstTrack = false;
         nHitsPerEvent.push_back(nPAlpideHits);
 
-	// FAKE EFFICIENCY DETERMINATION ==========================================================
+        // FAKE EFFICIENCY DETERMINATION ==========================================================
         if(_showFake)
         {
           if(posFake.size() >= (unsigned)_nEventsFake)
           {
             int nHitFake = posFakeTemp.size();
-	    int nPlanesWithMoreHitsFake = 0;
-	    bool firstHitFake = true;
+            int nPlanesWithMoreHitsFake = 0;
+            bool firstHitFake = true;
 
             for(int ihit=0; ihit< nHitFake ; ihit++)
             {
               bool hitOnSamePlane = false;
-	      double pos[3]={0.,0.,0.};
-	      for(int j=ihit; j<nHitFake && firstHitFake && nPlanesWithMoreHitsFake <= _nPlanesWithMoreHits; j++)
+              double pos[3]={0.,0.,0.};
+              for(int j=ihit; j<nHitFake && firstHitFake && nPlanesWithMoreHitsFake <= _nPlanesWithMoreHits; j++)
               {
-	        double poscheck1[3]={0.,0.,0.};
-	        poscheck1[0] = posFakeTemp.at(j).at(0);
-	        poscheck1[1] = posFakeTemp.at(j).at(1);
-	        poscheck1[2] = posFakeTemp.at(j).at(2);
-	        if (poscheck1[2]<=dutZ+zDistance && poscheck1[2]>=dutZ-zDistance) continue;
-	        for(int k=j+1; k<nHitFake && nPlanesWithMoreHitsFake <= _nPlanesWithMoreHits; k++)
+                double poscheck1[3]={0.,0.,0.};
+                poscheck1[0] = posFakeTemp.at(j).at(0);
+                poscheck1[1] = posFakeTemp.at(j).at(1);
+                poscheck1[2] = posFakeTemp.at(j).at(2);
+                if (poscheck1[2]<=dutZ+zDistance && poscheck1[2]>=dutZ-zDistance) continue;
+                for(int k=j+1; k<nHitFake && nPlanesWithMoreHitsFake <= _nPlanesWithMoreHits; k++)
                 {
-	          double poscheck2[3]={0.,0.,0.};
-	          poscheck2[0] = posFakeTemp.at(k).at(0);
-	          poscheck2[1] = posFakeTemp.at(k).at(1);
-	          poscheck2[2] = posFakeTemp.at(k).at(2);
-	          if ((abs(poscheck1[2] - poscheck2[2]) < maxDistInPlane) && !hitOnSamePlane)
+                  double poscheck2[3]={0.,0.,0.};
+                  poscheck2[0] = posFakeTemp.at(k).at(0);
+                  poscheck2[1] = posFakeTemp.at(k).at(1);
+                  poscheck2[2] = posFakeTemp.at(k).at(2);
+                  if ((abs(poscheck1[2] - poscheck2[2]) < maxDistInPlane) && !hitOnSamePlane)
                   {
-		    hitOnSamePlane = true;
-		    nPlanesWithMoreHitsFake++;
-		    break;
-		  }
-		  else if (k == j+1 && poscheck1[2] != poscheck2[2]) hitOnSamePlane = false;
-		}
+                    hitOnSamePlane = true;
+                    nPlanesWithMoreHitsFake++;
+                    break;
+                  }
+                  else if (k == j+1 && poscheck1[2] != poscheck2[2]) hitOnSamePlane = false;
+                }
               }
-	      firstHitFake = false;
-	      if (nPlanesWithMoreHitsFake > _nPlanesWithMoreHits) {unfoundTrackFake = true; break;}
+              firstHitFake = false;
+              if (nPlanesWithMoreHitsFake > _nPlanesWithMoreHits) {unfoundTrackFake = true; break;}
 
               double pos0[3] ={0.,0.,0.};
               pos0[0] = posFakeTemp.at(ihit).at(0);
@@ -971,8 +971,8 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
                 pos[1]    -= yZero;
                 _EulerRotationBack( pos, gRotation );
 
-		double xpos, ypos;
-		_LayerRotationBack(pos, xpos, ypos);
+                double xpos, ypos;
+                _LayerRotationBack(pos, xpos, ypos);
 
                 if (abs(xpos-xposfit) < limit && abs(ypos-yposfit) < limit )
                 {
@@ -992,8 +992,8 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
 
                     _EulerRotationBack( posNext, gRotation );
 
-		    double xposNext, yposNext;
-		    _LayerRotationBack(posNext, xposNext, yposNext);
+                    double xposNext, yposNext;
+                    _LayerRotationBack(posNext, xposNext, yposNext);
 
                     if (abs(xposNext-xposfit) > limit || abs(yposNext-yposfit) > limit) continue;
                     if ((xpos-xposfit)*(xpos-xposfit)+(ypos-yposfit)*(ypos-yposfit)<(xposNext-xposfit)*(xposNext-xposfit)+(yposNext-yposfit)*(yposNext-yposfit))
@@ -1029,11 +1029,11 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
 #endif
           nTracks[index]++;
           if(!pAlpideHit) {
-	    hitmapNoHitHisto->Fill(xposfit,yposfit);
-	    nNoPAlpideHit++;
-	    chi2HistoNoHit->Fill(chi2);
-	    streamlog_out ( MESSAGE5 ) << "Tracks without a hit in the DUT in event " << evt->getEventNumber() << endl;
-	  }
+            hitmapNoHitHisto->Fill(xposfit,yposfit);
+            nNoPAlpideHit++;
+            //chi2HistoNoHit->Fill(chi2);
+            streamlog_out ( MESSAGE5 ) << "Tracks without a hit in the DUT in event " << evt->getEventNumber() << endl;
+          }
         }
         if(_showFake)
         {
@@ -1412,7 +1412,7 @@ void EUTelProcessorAnalysisPALPIDEfs::bookHistos()
   {
     clusterShapeX[i] = new TH1I(Form("clusterShapeX_%d",i),Form("Place of cluster shape with ID %d as function of X;X (pixel);a.u.",i),xPixel,0,xPixel);
     clusterShapeY[i] = new TH1I(Form("clusterShapeY_%d",i),Form("Place of cluster shape with ID %d as function of Y;Y (pixel);a.u.",i),yPixel,0,yPixel);
-   clusterShape2D2by2[i] = new TH2I(Form("clusterShape2D2by2_%d",i),Form("Distribuition of clusters with shape ID %d within four pixels;X (mm);Y (mm)",i),(int)(xSize/xPixel*2000),0,2*xSize/xPixel,(int)(ySize/yPixel*2000),0,2*ySize/yPixel);
+    clusterShape2D2by2[i] = new TH2I(Form("clusterShape2D2by2_%d",i),Form("Distribuition of clusters with shape ID %d within four pixels;X (mm);Y (mm)",i),(int)(xSize/xPixel*2000),0,2*xSize/xPixel,(int)(ySize/yPixel*2000),0,2*ySize/yPixel);
   }
   int tmp = 0;
   for(map<int,int>::iterator it = xPairs.begin(); it != xPairs.end(); ++it)
@@ -1563,38 +1563,38 @@ void EUTelProcessorAnalysisPALPIDEfs::end()
     tmp++;
   }
 /*  TH1I* nX = new TH1I("nX","n",xPixel,0,xPixel);
-  TH1I* nY = new TH1I("nY","n",yPixel,0,yPixel);
-  for (size_t i=0; i<symmetryGroups.size(); i++)
-  {
+    TH1I* nY = new TH1I("nY","n",yPixel,0,yPixel);
+    for (size_t i=0; i<symmetryGroups.size(); i++)
+    {
     nX->Reset();
     nY->Reset();
     string binName;
     double p = 1.0/symmetryGroups[i].size();
     for (size_t j=0; j<symmetryGroups[i].size(); j++)
     {
-      if (j<symmetryGroups[i].size()-1) binName += Form("%d-",symmetryGroups[i][j]);
-      else binName += Form("%d",symmetryGroups[i][j]);
-      for (int k=1; k<=clusterShapeX[j]->GetNbinsX(); k++)
-        nX->Fill(k-1,clusterShapeX[symmetryGroups[i][j]]->GetBinContent(k));
-      for (int k=1; k<=clusterShapeY[j]->GetNbinsX(); k++)
-        nY->Fill(k-1,clusterShapeY[symmetryGroups[i][j]]->GetBinContent(k));
+    if (j<symmetryGroups[i].size()-1) binName += Form("%d-",symmetryGroups[i][j]);
+    else binName += Form("%d",symmetryGroups[i][j]);
+    for (int k=1; k<=clusterShapeX[j]->GetNbinsX(); k++)
+    nX->Fill(k-1,clusterShapeX[symmetryGroups[i][j]]->GetBinContent(k));
+    for (int k=1; k<=clusterShapeY[j]->GetNbinsX(); k++)
+    nY->Fill(k-1,clusterShapeY[symmetryGroups[i][j]]->GetBinContent(k));
     }
     chi2X.insert(make_pair(i, new TH1I(Form("chi2X_%s",(char*)binName.c_str()),"",xPixel,0,xPixel)));
     chi2Y.insert(make_pair(i, new TH1I(Form("chi2Y_%s",(char*)binName.c_str()),"",yPixel,0,yPixel)));
     for (size_t j=0; j<symmetryGroups[i].size(); j++)
     {
-      for (int k=1; k<=clusterShapeX[j]->GetNbinsX(); k++)
-      {
-        if (nX->GetBinContent(k) == 0) continue;
-        chi2X[i]->Fill(k-1,(clusterShapeX[symmetryGroups[i][j]]->GetBinContent(k)-nX->GetBinContent(k)*p)*(clusterShapeX[symmetryGroups[i][j]]->GetBinContent(k)-nX->GetBinContent(k)*p)/nX->GetBinContent(k)/p);
-      }
-      for (int k=1; k<=clusterShapeY[j]->GetNbinsX(); k++)
-      {
-        if (nY->GetBinContent(k) == 0) continue;
-        chi2Y[i]->Fill(k-1,(clusterShapeY[symmetryGroups[i][j]]->GetBinContent(k)-nY->GetBinContent(k)*p)*(clusterShapeY[symmetryGroups[i][j]]->GetBinContent(k)-nY->GetBinContent(k)*p)/nY->GetBinContent(k)/p);
-      }
+    for (int k=1; k<=clusterShapeX[j]->GetNbinsX(); k++)
+    {
+    if (nX->GetBinContent(k) == 0) continue;
+    chi2X[i]->Fill(k-1,(clusterShapeX[symmetryGroups[i][j]]->GetBinContent(k)-nX->GetBinContent(k)*p)*(clusterShapeX[symmetryGroups[i][j]]->GetBinContent(k)-nX->GetBinContent(k)*p)/nX->GetBinContent(k)/p);
     }
-  }
+    for (int k=1; k<=clusterShapeY[j]->GetNbinsX(); k++)
+    {
+    if (nY->GetBinContent(k) == 0) continue;
+    chi2Y[i]->Fill(k-1,(clusterShapeY[symmetryGroups[i][j]]->GetBinContent(k)-nY->GetBinContent(k)*p)*(clusterShapeY[symmetryGroups[i][j]]->GetBinContent(k)-nY->GetBinContent(k)*p)/nY->GetBinContent(k)/p);
+    }
+    }
+    }
 */
 
 #endif
@@ -1632,49 +1632,49 @@ void EUTelProcessorAnalysisPALPIDEfs::end()
 
 
 void EUTelProcessorAnalysisPALPIDEfs::_EulerRotationBack(double* _telPos, double* _gRotation) {
-    double z = _telPos[2] - dutZ;
-    TVector3 _RotatedSensorHit( _telPos[0], _telPos[1], z );
-    TVector3 _Xaxis( 1.0, 0.0, 0.0 );
-    TVector3 _Yaxis( 0.0, 1.0, 0.0 );
-    TVector3 _Zaxis( 0.0, 0.0, 1.0 );
-    // rotation order: X,Y,Z; rotation back order: Z,Y,X
-    if( TMath::Abs(_gRotation[0]) > 1e-6 )
-    {
-        _RotatedSensorHit.Rotate( -1.*_gRotation[0], _Zaxis ); // in XY
-    }
-    if( TMath::Abs(_gRotation[1]) > 1e-6 )
-    {
-        _RotatedSensorHit.Rotate( -1.*_gRotation[1], _Yaxis ); // in ZX
-    }
-    if( TMath::Abs(_gRotation[2]) > 1e-6 )
-    {
-        _RotatedSensorHit.Rotate( -1.*_gRotation[2], _Xaxis ); // in ZY
-    }
+  double z = _telPos[2] - dutZ;
+  TVector3 _RotatedSensorHit( _telPos[0], _telPos[1], z );
+  TVector3 _Xaxis( 1.0, 0.0, 0.0 );
+  TVector3 _Yaxis( 0.0, 1.0, 0.0 );
+  TVector3 _Zaxis( 0.0, 0.0, 1.0 );
+  // rotation order: X,Y,Z; rotation back order: Z,Y,X
+  if( TMath::Abs(_gRotation[0]) > 1e-6 )
+  {
+    _RotatedSensorHit.Rotate( -1.*_gRotation[0], _Zaxis ); // in XY
+  }
+  if( TMath::Abs(_gRotation[1]) > 1e-6 )
+  {
+    _RotatedSensorHit.Rotate( -1.*_gRotation[1], _Yaxis ); // in ZX
+  }
+  if( TMath::Abs(_gRotation[2]) > 1e-6 )
+  {
+    _RotatedSensorHit.Rotate( -1.*_gRotation[2], _Xaxis ); // in ZY
+  }
 
-    _telPos[0] = _RotatedSensorHit.X();
-    _telPos[1] = _RotatedSensorHit.Y();
-    _telPos[2] = _RotatedSensorHit.Z() + dutZ;
+  _telPos[0] = _RotatedSensorHit.X();
+  _telPos[1] = _RotatedSensorHit.Y();
+  _telPos[2] = _RotatedSensorHit.Z() + dutZ;
 }
 
 void EUTelProcessorAnalysisPALPIDEfs::_LayerRotationBack(double* pos, double& outputX, double& outputY){
-	double sign = 0;
-	if      ( xPointing[0] < -0.7 )       sign = -1 ;
-	else if ( xPointing[0] > 0.7 )       sign =  1 ;
-	else {
-		if       ( xPointing[1] < -0.7 )    sign = -1 ;
-		else if  ( xPointing[1] > 0.7 )    sign =  1 ;
-	}
-	pos[0]    -=  ( -1 ) * sign * xSize / 2;
-	if      ( yPointing[0] < -0.7 )       sign = -1 ;
-	else if ( yPointing[0] > 0.7 )       sign =  1 ;
-	else {
-		if       ( yPointing[1] < -0.7 )    sign = -1 ;
-		else if  ( yPointing[1] > 0.7 )    sign =  1 ;
-	}
-	pos[1]    -= ( -1 ) * sign * ySize / 2;
+  double sign = 0;
+  if      ( xPointing[0] < -0.7 )       sign = -1 ;
+  else if ( xPointing[0] > 0.7 )       sign =  1 ;
+  else {
+    if       ( xPointing[1] < -0.7 )    sign = -1 ;
+    else if  ( xPointing[1] > 0.7 )    sign =  1 ;
+  }
+  pos[0]    -=  ( -1 ) * sign * xSize / 2;
+  if      ( yPointing[0] < -0.7 )       sign = -1 ;
+  else if ( yPointing[0] > 0.7 )       sign =  1 ;
+  else {
+    if       ( yPointing[1] < -0.7 )    sign = -1 ;
+    else if  ( yPointing[1] > 0.7 )    sign =  1 ;
+  }
+  pos[1]    -= ( -1 ) * sign * ySize / 2;
 
-	outputY = (xPointing[0]*pos[1]-yPointing[0]*pos[0])/(yPointing[1]*xPointing[0]-yPointing[0]*xPointing[1]);
-	outputX = pos[0]/xPointing[0] - xPointing[1]/xPointing[0]*outputY;
+  outputY = (xPointing[0]*pos[1]-yPointing[0]*pos[0])/(yPointing[1]*xPointing[0]-yPointing[0]*xPointing[1]);
+  outputX = pos[0]/xPointing[0] - xPointing[1]/xPointing[0]*outputY;
 }
 
 int EUTelProcessorAnalysisPALPIDEfs::AddressToColumn(int ARegion, int ADoubleCol, int AAddress)
@@ -1737,75 +1737,75 @@ bool EUTelProcessorAnalysisPALPIDEfs::emptyMiddle(vector<vector<int> > pixVector
 
 bool EUTelProcessorAnalysisPALPIDEfs::RemoveAlign(LCCollectionVec * preAlignmentCollectionVec, LCCollectionVec * alignmentCollectionVec, LCCollectionVec * alignmentPAlpideCollectionVec, double* fitpos, double& xposfit, double& yposfit)
 {
-      //Remove the alignment in the same way it was applied by the EUTelProcessorApplyAlignment.cc
-      double xPlaneCenter    = geo::gGeometry().siPlaneXPosition(_dutID);
-      double yPlaneCenter    = geo::gGeometry().siPlaneYPosition(_dutID);
-      double zPlaneThickness = geo::gGeometry().siPlaneZSize(_dutID);
-      double zPlaneCenter    = geo::gGeometry().siPlaneZPosition(_dutID) + zPlaneThickness / 2.;
-      TVector3 inputVec( fitpos[0] - xPlaneCenter, fitpos[1] - yPlaneCenter, fitpos[2] - zPlaneCenter);
-      //cerr << zPlaneThickness << "\t" << zPlaneCenter << endl;
-      EUTelAlignmentConstant * alignment = 0;
-      bool alignExist = false;
-      EUTelAlignmentConstant * preAlignment = 0;
-      bool prealignExist = false;
-      EUTelAlignmentConstant * alignmentPAlpide = 0;
-      bool alignPAlpideExist = false;
-      if (!_oneAlignmentCollection)
+  //Remove the alignment in the same way it was applied by the EUTelProcessorApplyAlignment.cc
+  double xPlaneCenter    = geo::gGeometry().siPlaneXPosition(_dutID);
+  double yPlaneCenter    = geo::gGeometry().siPlaneYPosition(_dutID);
+  double zPlaneThickness = geo::gGeometry().siPlaneZSize(_dutID);
+  double zPlaneCenter    = geo::gGeometry().siPlaneZPosition(_dutID) + zPlaneThickness / 2.;
+  TVector3 inputVec( fitpos[0] - xPlaneCenter, fitpos[1] - yPlaneCenter, fitpos[2] - zPlaneCenter);
+  //cerr << zPlaneThickness << "\t" << zPlaneCenter << endl;
+  EUTelAlignmentConstant * alignment = 0;
+  bool alignExist = false;
+  EUTelAlignmentConstant * preAlignment = 0;
+  bool prealignExist = false;
+  EUTelAlignmentConstant * alignmentPAlpide = 0;
+  bool alignPAlpideExist = false;
+  if (!_oneAlignmentCollection)
+  {
+    for (int iAlign=0; iAlign<alignmentPAlpideCollectionVec->getNumberOfElements(); iAlign++)
+    {
+      alignmentPAlpide = static_cast< EUTelAlignmentConstant* > (alignmentPAlpideCollectionVec->getElementAt(iAlign));
+      if (alignmentPAlpide->getSensorID() == _dutID)
       {
-        for (int iAlign=0; iAlign<alignmentPAlpideCollectionVec->getNumberOfElements(); iAlign++)
-        {
-          alignmentPAlpide = static_cast< EUTelAlignmentConstant* > (alignmentPAlpideCollectionVec->getElementAt(iAlign));
-          if (alignmentPAlpide->getSensorID() == _dutID)
-          {
-            alignPAlpideExist = true;
-            inputVec[0] += alignmentPAlpide->getXOffset();
-            inputVec[1] += alignmentPAlpide->getYOffset();
-            inputVec[2] += alignmentPAlpide->getZOffset();
-            inputVec.RotateZ( alignmentPAlpide->getGamma() );
-            inputVec.RotateY( alignmentPAlpide->getBeta() );
-            inputVec.RotateX( alignmentPAlpide->getAlpha() );
-            break;
-          }
-        }
-        if (!alignPAlpideExist && _isFirstEvent) cerr << "No second alignment correction applied to the pAlpide!" << endl;
+        alignPAlpideExist = true;
+        inputVec[0] += alignmentPAlpide->getXOffset();
+        inputVec[1] += alignmentPAlpide->getYOffset();
+        inputVec[2] += alignmentPAlpide->getZOffset();
+        inputVec.RotateZ( alignmentPAlpide->getGamma() );
+        inputVec.RotateY( alignmentPAlpide->getBeta() );
+        inputVec.RotateX( alignmentPAlpide->getAlpha() );
+        break;
       }
-      for (int iAlign=0; iAlign<alignmentCollectionVec->getNumberOfElements(); iAlign++)
-      {
-        alignment = static_cast< EUTelAlignmentConstant* > (alignmentCollectionVec->getElementAt(iAlign));
-        if (alignment->getSensorID() == _dutID)
-        {
-          alignExist = true;
-          inputVec[0] += alignment->getXOffset();
-          inputVec[1] += alignment->getYOffset();
-          inputVec[2] += alignment->getZOffset();
-          inputVec.RotateZ( alignment->getGamma() );
-          inputVec.RotateY( alignment->getBeta() );
-          inputVec.RotateX( alignment->getAlpha() );
-          break;
-        }
-      }
-      if (!alignExist) return false;//cerr << "No alignment correction applied!" << endl;
-      for (int iAlign=0; iAlign<preAlignmentCollectionVec->getNumberOfElements(); iAlign++)
-      {
-        preAlignment = static_cast< EUTelAlignmentConstant * > (preAlignmentCollectionVec->getElementAt(iAlign));
-        if (preAlignment->getSensorID() == _dutID)
-        {
-          prealignExist = true;
-          inputVec[0] += preAlignment->getXOffset();
-          inputVec[1] += preAlignment->getYOffset();
-          inputVec[2] += preAlignment->getZOffset();
-          break;
-        }
-      }
-      if (!prealignExist) return false;//cerr << "No prealignment correction applied!" << endl;
+    }
+    if (!alignPAlpideExist && _isFirstEvent) cerr << "No second alignment correction applied to the pAlpide!" << endl;
+  }
+  for (int iAlign=0; iAlign<alignmentCollectionVec->getNumberOfElements(); iAlign++)
+  {
+    alignment = static_cast< EUTelAlignmentConstant* > (alignmentCollectionVec->getElementAt(iAlign));
+    if (alignment->getSensorID() == _dutID)
+    {
+      alignExist = true;
+      inputVec[0] += alignment->getXOffset();
+      inputVec[1] += alignment->getYOffset();
+      inputVec[2] += alignment->getZOffset();
+      inputVec.RotateZ( alignment->getGamma() );
+      inputVec.RotateY( alignment->getBeta() );
+      inputVec.RotateX( alignment->getAlpha() );
+      break;
+    }
+  }
+  if (!alignExist) return false;//cerr << "No alignment correction applied!" << endl;
+  for (int iAlign=0; iAlign<preAlignmentCollectionVec->getNumberOfElements(); iAlign++)
+  {
+    preAlignment = static_cast< EUTelAlignmentConstant * > (preAlignmentCollectionVec->getElementAt(iAlign));
+    if (preAlignment->getSensorID() == _dutID)
+    {
+      prealignExist = true;
+      inputVec[0] += preAlignment->getXOffset();
+      inputVec[1] += preAlignment->getYOffset();
+      inputVec[2] += preAlignment->getZOffset();
+      break;
+    }
+  }
+  if (!prealignExist) return false;//cerr << "No prealignment correction applied!" << endl;
 
-      fitpos[0] = inputVec.X();
-      fitpos[1] = inputVec.Y();
-      fitpos[2] = inputVec.Z() + zPlaneCenter; //since _EulerRotationBack removes the zPlaneCenter again (and adds it at the end)
-      //cerr << fitpos[0] << "\t"  << fitpos[1] << "\t" << fitpos[2] << endl;
+  fitpos[0] = inputVec.X();
+  fitpos[1] = inputVec.Y();
+  fitpos[2] = inputVec.Z() + zPlaneCenter; //since _EulerRotationBack removes the zPlaneCenter again (and adds it at the end)
+  //cerr << fitpos[0] << "\t"  << fitpos[1] << "\t" << fitpos[2] << endl;
 
-      _EulerRotationBack( fitpos, gRotation );
-      _LayerRotationBack(fitpos, xposfit, yposfit);
+  _EulerRotationBack( fitpos, gRotation );
+  _LayerRotationBack(fitpos, xposfit, yposfit);
 
-      return 1;
+  return 1;
 }
