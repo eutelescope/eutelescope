@@ -664,6 +664,43 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
           }
         }
 
+        // HIT LOOP ===============================================================================
+        // Find planes with multiple hits ---------------------------------------------------------
+        // ToDo: why was this loop inside the other hit loop below?
+        for(int j=0; j<nHit && firstHit && nPlanesWithMoreHits <= _nPlanesWithMoreHits; j++)
+        {
+            TrackerHit * hitcheck1 = dynamic_cast<TrackerHit*>( col->getElementAt(j) ) ;
+            if (!hitcheck1) continue;
+            const double *poscheck1 = hitcheck1->getPosition();
+            if (poscheck1[2]<=dutZ+zDistance && poscheck1[2]>=dutZ-zDistance) continue;
+            for(int k=j+1; k<nHit && nPlanesWithMoreHits <= _nPlanesWithMoreHits; k++)
+            {
+                TrackerHit * hitcheck2 = dynamic_cast<TrackerHit*>( col->getElementAt(k) ) ;
+                if (!hitcheck2) continue;
+                const double *poscheck2 = hitcheck2->getPosition();
+                if ((abs(poscheck1[2] - poscheck2[2]) < maxDistInPlane) && !hitOnSamePlane)
+                {
+                    hitOnSamePlane = true;
+                    nPlanesWithMoreHits++;
+                    break;
+                }
+                else if (k == j+1 && poscheck1[2] != poscheck2[2]) hitOnSamePlane = false;
+            }
+        }
+        if (nPlanesWithMoreHits>0) stats->Fill(kHitsOnTheSamePlane);
+        else                       stats->Fill(kSingleHitsOnly);
+
+        firstHit = false;
+
+        // Apply cut on the number of planes with multiple hits
+        if (nPlanesWithMoreHits > _nPlanesWithMoreHits) {
+            unfoundTrack = true;
+            stats->Fill(kRejectedMultipleHits);
+            break;
+        }
+
+        stats->Fill(kDenominator);
+
         nTrackPerEvent++;
         int nAssociatedhits = 0;
         int nDUThitsEvent = 0;
@@ -682,49 +719,14 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
         posFitHit.push_back(yposfit);
         pT.push_back(posFitHit);
 
-
         // HIT LOOP ===============================================================================
+        // Find hit in DUT ------------------------------------------------------------------------
         for(int ihit=0; ihit<nHit ; ihit++)
         {
           TrackerHit * hit = dynamic_cast<TrackerHit*>( col->getElementAt(ihit) ) ;
-          bool hitOnSamePlane = false;
           double pos[3]={0.,0.,0.};
           if( hit != 0 )
           {
-            // Find planes with multiple hits -----------------------------------------------------
-            // ToDo: why is this loop nested?
-            for(int j=ihit; j<nHit && firstHit && nPlanesWithMoreHits <= _nPlanesWithMoreHits; j++)
-            {
-              TrackerHit * hitcheck1 = dynamic_cast<TrackerHit*>( col->getElementAt(j) ) ;
-              const double *poscheck1 = hitcheck1->getPosition();
-              if (poscheck1[2]<=dutZ+zDistance && poscheck1[2]>=dutZ-zDistance) continue;
-              for(int k=j+1; k<nHit && nPlanesWithMoreHits <= _nPlanesWithMoreHits; k++)
-              {
-                TrackerHit * hitcheck2 = dynamic_cast<TrackerHit*>( col->getElementAt(k) ) ;
-                const double *poscheck2 = hitcheck2->getPosition();
-                if ((abs(poscheck1[2] - poscheck2[2]) < maxDistInPlane) && !hitOnSamePlane)
-                {
-                  hitOnSamePlane = true;
-                  nPlanesWithMoreHits++;
-                  break;
-                }
-                else if (k == j+1 && poscheck1[2] != poscheck2[2]) hitOnSamePlane = false;
-              }
-            }
-            if (nPlanesWithMoreHits>0) stats->Fill(kHitsOnTheSamePlane);
-            else                       stats->Fill(kSingleHitsOnly);
-
-            firstHit = false;
-
-            // Apply cut on the number of planes with multiple hits
-            if (nPlanesWithMoreHits > _nPlanesWithMoreHits) {
-              unfoundTrack = true;
-              stats->Fill(kRejectedMultipleHits);
-              break;
-            }
-
-            stats->Fill(kDenominator);
-
             const double *pos0 = hit->getPosition();
             pos[0] = pos0[0];
             pos[1] = pos0[1];
