@@ -56,7 +56,7 @@ EUTelProcessorNoisyClusterMasker::EUTelProcessorNoisyClusterMasker():
 {
   _description ="EUTelProcessorNoisyClusterMasker masks pulses which contain hot pixels. For this, the quality field of pulses is used to encode the kNoisyCluster enum provided by EUTelescope.";
 
-  registerInputCollection (LCIO::TRACKERDATA, "InputCollectionName", "Input of zero suppressed data, still containing hot pixels", _inputCollectionName, std::string("cluster") );
+  registerInputCollection (LCIO::TRACKERPULSE, "InputCollectionName", "Input of zero suppressed data, still containing hot pixels", _inputCollectionName, std::string("cluster") );
 
   registerOptionalParameter("HotPixelCollectionName", "Name of the hot pixel collection.",  _noisyPixelCollectionName, std::string("hotpixel"));
 
