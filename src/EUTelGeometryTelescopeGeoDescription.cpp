@@ -18,6 +18,7 @@
 //GEAR
 #include "GEAR.h" 
 #include "gearxml/GearXML.h"
+#include "gearimpl/SimpleMaterialImpl.h"
 
 // EUTELESCOPE
 #include "EUTelExceptions.h"
@@ -158,10 +159,10 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout() {
 
 		thisPlane.pixGeoName = geometryNameParameters[iPlane];
 
-		thisPlane.r1	= _siPlanesLayerLayout->getSensitiveRotation1(iPlane);
-		thisPlane.r2	= _siPlanesLayerLayout->getSensitiveRotation2(iPlane);
-		thisPlane.r3	= _siPlanesLayerLayout->getSensitiveRotation3(iPlane);
-		thisPlane.r4	= _siPlanesLayerLayout->getSensitiveRotation4(iPlane);
+		thisPlane.f1	= _siPlanesLayerLayout->getSensitiveRotation1(iPlane);
+		thisPlane.f2	= _siPlanesLayerLayout->getSensitiveRotation2(iPlane);
+		thisPlane.f3	= _siPlanesLayerLayout->getSensitiveRotation3(iPlane);
+		thisPlane.f4	= _siPlanesLayerLayout->getSensitiveRotation4(iPlane);
 
 		thisPlane.xSize	= _siPlanesLayerLayout->getSensitiveSizeX(iPlane);
 		thisPlane.ySize	= _siPlanesLayerLayout->getSensitiveSizeY(iPlane);
@@ -190,6 +191,12 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout() {
 	std::sort(_sensorIDVec.begin(), _sensorIDVec.end(), doCompare(*this) );	
 }
 
+double getRadLength(int A, int Z) {
+	auto nom = 716.4*A;
+	auto denom = Z*(Z+1)*log(287/sqrt(Z));
+	return nom/denom;
+}
+
 void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout() {
 	// sensor-planes in geometry navigation:
 	_trackerPlanesParameters = const_cast< gear::TrackerPlanesParameters*> (&( _gearManager->getTrackerPlanesParameters()));
@@ -202,17 +209,38 @@ void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout() {
 	//should be filled based on the length of the sensor vector after the loop
 	_nPlanes = 0; 
 
+	auto matNameVec = _gearManager->getMaterialNames();
+	std::cout << "Known materials: " << std::endl;
+	for(auto& matName: matNameVec) {
+		std::cout << "-> " << matName << std::endl;
+
+		//auto& GEARMat = dynamic_cast<gear::SimpleMaterialImpl const&>(_gearManager->getSimpleMaterial(matName));
+		auto const& GEARMat = _gearManager->getSimpleMaterial(matName);
+		auto A = GEARMat.getA();
+		auto Z = GEARMat.getZ();
+		auto density = GEARMat.getDensity();
+		std::cout << "Radiation length computed to be: " << getRadLength(A,Z) << " g*cm^-2" << '\n';
+		std::cout << "Yielding: " << getRadLength(A,Z)/density << " cm" << std::endl;
+	}  
+
 	// create an array with the z positions of each layer
 	int nLayers = _trackerPlanesLayerLayout->getNLayers();
 	for (int iLayer = 0; iLayer < nLayers; iLayer++) {
-		gear::TrackerPlanesLayerImpl* _trackerPlanesLayerImpl = const_cast<gear::TrackerPlanesLayerImpl*>(_trackerPlanesLayerLayout->getLayer( iLayer));
+
+		auto _trackerPlanesLayerImpl = const_cast<gear::TrackerPlanesLayerImpl*>(_trackerPlanesLayerLayout->getLayer( iLayer));
+		auto layerID = _trackerPlanesLayerImpl->getID();
+
+		std::cout << "Got Layer: " << layerID << " .. checking material and sensitive layers ..." << std::endl;
+		std::cout << "It has positions: " << _trackerPlanesLayerImpl->getPositionX() << "|" << _trackerPlanesLayerImpl->getPositionY() << "|" << _trackerPlanesLayerImpl->getPositionZ()  << std::endl; 
 
 		int nsensitive = _trackerPlanesLayerImpl->getNSensitiveLayers();
-		gear::TrackerPlanesSensitiveLayerImplVec& vector = _trackerPlanesLayerImpl->getSensitiveLayerVec();
+		auto sensitiveLayerVector = _trackerPlanesLayerImpl->getSensitiveLayerVec();
+		auto materialLayerVector = _trackerPlanesLayerImpl->getMaterialLayerVec();
 
-		for(int iSensLayer = 0; iSensLayer < nsensitive; iSensLayer++) {
-			gear::TrackerPlanesSensitiveLayerImpl& sensitiveLayer = vector.at(iSensLayer);
+		for(auto& sensitiveLayer: sensitiveLayerVector) {
 			int sensorID =   sensitiveLayer.getID();
+
+			std::cout << "It has sensitive: " << sensorID << std::endl;
 
 			EUTelPlane thisPlane;
 
@@ -220,21 +248,26 @@ void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout() {
 			thisPlane.yPos	= sensitiveLayer.getPositionY();
 			thisPlane.zPos	= sensitiveLayer.getPositionZ();
 
+			thisPlane.xPosUnc	= sensitiveLayer.getPositionXunc();
+			thisPlane.yPosUnc	= sensitiveLayer.getPositionYunc();
+			thisPlane.zPosUnc	= sensitiveLayer.getPositionZunc();
+
 			thisPlane.alpha	= sensitiveLayer.getRotationZY();
 			thisPlane.beta	= sensitiveLayer.getRotationZX();
 			thisPlane.gamma	= sensitiveLayer.getRotationXY();
 
-			thisPlane.pixGeoName = sensitiveLayer.getInfo();
+			thisPlane.alphaUnc	= sensitiveLayer.getRotationZYunc();
+			thisPlane.betaUnc	= sensitiveLayer.getRotationZXunc();
+			thisPlane.gammaUnc	= sensitiveLayer.getRotationXYunc();
 
-			//TODO
-			thisPlane.r1	= 1;//sensitiveLayer.getRotation1();
-			thisPlane.r2	= 0;//sensitiveLayer.getRotation2();
-			thisPlane.r3	= 0;//sensitiveLayer.getRotation3();
-			thisPlane.r4	= 1;//sensitiveLayer.getRotation4();
+			auto pixName = sensitiveLayer.getGeometry();
 
-			thisPlane.xSize	= sensitiveLayer.getSizeX();
-			thisPlane.ySize	= sensitiveLayer.getSizeY();
-			thisPlane.zSize	= sensitiveLayer.getThickness();
+			thisPlane.pixGeoName = pixName.empty() ? "CAST" : pixName;
+
+			thisPlane.f1	= sensitiveLayer.getFlip1();
+			thisPlane.f2	= sensitiveLayer.getFlip2();
+			thisPlane.f3	= sensitiveLayer.getFlip3();
+			thisPlane.f4	= sensitiveLayer.getFlip4();
 
 			thisPlane.xPixelNo	= sensitiveLayer.getNpixelX();
 			thisPlane.yPixelNo	= sensitiveLayer.getNpixelY();
@@ -243,17 +276,37 @@ void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout() {
 			thisPlane.xRes	= sensitiveLayer.getResolutionX();
 			thisPlane.yRes	= sensitiveLayer.getResolutionY();
 
+			thisPlane.xSize	= thisPlane.xPixelNo*thisPlane.xPitch; 
+			thisPlane.ySize	= thisPlane.yPixelNo*thisPlane.yPitch;
+			thisPlane.zSize	= sensitiveLayer.getThickness();
+
+			thisPlane.enabled = sensitiveLayer.getEnabled();
+			
 			//GEAR uses mm wheras TGeo will use cm
-			thisPlane.radLength	= sensitiveLayer.getRadLength()/10;
+			thisPlane.radLength	= 10;//sensitiveLayer.getRadLength()/10;
 
 			_planeSetup[sensorID] = thisPlane;
 
 			_sensorIDVec.push_back(sensorID);
-			streamlog_out(DEBUG1) << " iter: " << _sensorIDVec.at( _sensorIDVec.size()-1 ) << " " << sensorID << " " << sensitiveLayer.getInfo() .c_str() << std::endl; 
+
+			std::cout << "Pos: " << thisPlane.xPos << "|" << thisPlane.yPos << "|" << thisPlane.zPos << '\n';
+			std::cout << "PosUnc: " << thisPlane.xPosUnc << "|" << thisPlane.yPosUnc << "|" << thisPlane.zPosUnc << '\n';
+
+			std::cout << "Rot: " << thisPlane.alpha << "|" << thisPlane.beta << "|" << thisPlane.gamma << '\n';
+			std::cout << "RotUnc: " << thisPlane.alphaUnc << "|" << thisPlane.betaUnc << "|" << thisPlane.gammaUnc << '\n';
+			
+			std::cout << "Flip: " << thisPlane.f1 << "|" << thisPlane.f2 << "|" << thisPlane.f3 << "|" << thisPlane.f4 << '\n';
+
+		}
+		for(auto& materialLayer: materialLayerVector) {
+			auto sensorID = materialLayer.getID();
+			std::cout << "It has material: " << sensorID << std::endl;
 		}
 	}
 	std::sort(_sensorIDVec.begin(), _sensorIDVec.end(), doCompare(*this) );
 	_nPlanes =  _sensorIDVec.size(); 
+
+	writeGEARFile("test.xml");
 }
 
 EUTelGeometryTelescopeGeoDescription::EUTelGeometryTelescopeGeoDescription():
@@ -794,7 +847,7 @@ void EUTelGeometryTelescopeGeoDescription::updateTrackerPlanesLayout() {
 	for (int iLayer = 0; iLayer < nLayers; iLayer++) {
 		gear::TrackerPlanesLayerImpl*  trackerplanesLayerImpl = const_cast< gear::TrackerPlanesLayerImpl*>  ( trackerplanesLayerLayout->getLayer( iLayer) );
 		int nsensitive =  trackerplanesLayerImpl->getNSensitiveLayers() ;
-		gear::TrackerPlanesSensitiveLayerImplVec& vector =  trackerplanesLayerImpl->getSensitiveLayerVec();
+		gear::TrackerPlanesSensitiveLayerImplVec & vector =  const_cast< gear::TrackerPlanesSensitiveLayerImplVec &>(trackerplanesLayerImpl->getSensitiveLayerVec());
 
 		for (int iSensLayer = 0; iSensLayer < nsensitive; iSensLayer++) {       
 			gear::TrackerPlanesSensitiveLayerImpl& sensitiveLayer = vector.at(iSensLayer);
