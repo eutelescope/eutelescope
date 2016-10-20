@@ -189,20 +189,21 @@ void EUTelProcessorNoisyPixelFinder::noisyPixelFinder(EUTelEventImpl* evt) {
 			// now prepare the EUTelescope interface to sparsified data.  
 			int pixelType = cellDecoder(zsData)["sparsePixelType"];
 			auto sparseData = Utility::getSparseData(zsData, pixelType);
-			auto basePixelPtrVec = sparseData->getBasePixelPtrVec();
 
 			// loop over all pixels in the sparseData object, these are the hit pixels!
-			for(auto pixel: basePixelPtrVec) {
+			for(auto& pixelRef: *sparseData) {
+				auto& pixel = pixelRef.get();
+
 				//compute the address in the array-like-structure, any offset
 				//has to be substracted (array index starts at 0)
-				int indexX = pixel->getXCoord() - currentSensor->offX;
-				int indexY = pixel->getYCoord() - currentSensor->offY;
+				int indexX = pixel.getXCoord() - currentSensor->offX;
+				int indexY = pixel.getYCoord() - currentSensor->offY;
 
 				try {
 					//increment the hit counter for this pixel
 					(hitArray->at(indexX)).at(indexY)++;
 				} catch(std::out_of_range& e) {
-					streamlog_out ( ERROR5 )  << "Pixel: " << pixel->getXCoord() << "|" <<  pixel->getYCoord() << " on plane: " << sensorID << " fired." << std::endl 
+					streamlog_out ( ERROR5 )  << "Pixel: " << pixel.getXCoord() << "|" <<  pixel.getYCoord() << " on plane: " << sensorID << " fired." << std::endl 
 						<< "This pixel is out of the range defined by the geometry. Either your data is corrupted or your pixel geometry not specified correctly!" << std::endl;
 				}
 			}
@@ -282,9 +283,9 @@ void EUTelProcessorNoisyPixelFinder::check(LCEvent* /*event*/ ) {
 			sensor* currentSensor = &_sensorMap[sensorID];
 
 			//loop over all pixels
-			for (std::vector<std::vector<int> >::iterator xIt = hitVector->begin(); xIt != hitVector->end(); ++xIt)
+			for(auto  xIt = hitVector->begin(); xIt != hitVector->end(); ++xIt)
 			{
-				for(std::vector<int>::iterator yIt = xIt->begin(); yIt != xIt->end(); ++yIt)
+				for(auto yIt = xIt->begin(); yIt != xIt->end(); ++yIt)
 				{
 					//compute the firing frequency
 					float fireFreq = (float)*yIt/(float)_iEvt;
@@ -372,7 +373,7 @@ void EUTelProcessorNoisyPixelFinder::noisyPixelDBWriter() {
 			sparseFrame( new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>(currentFrame.get()) );
 
 		for( auto& pixel: mapEntry.second) {
-			sparseFrame->addSparsePixel( pixel );                
+			sparseFrame->push_back( pixel );                
 		}
 		noisyPixelCollection->push_back( currentFrame.release() );
 

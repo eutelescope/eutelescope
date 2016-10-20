@@ -322,108 +322,93 @@ void EUTelProcessorSparseClustering::sparseClustering(LCEvent* evt, LCCollection
 		}
 
 
-		if ( type == kEUTelGenericSparsePixel )
-		{
 
-			// now prepare the EUTelescope interface to sparsified data.
-			auto sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(zsData);
+		// now prepare the EUTelescope interface to sparsified data.
+		//auto sparseData = std::make_unique<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>>(zsData);
 
-			std::vector<EUTelGenericSparsePixel> hitPixelVec = sparseData->getPixels();
+		auto sparseData = Utility::getSparseData(zsData, type);
+		auto hitPixelVec = sparseData->getPixels();
+		std::vector<std::reference_wrapper<EUTelBaseSparsePixel const>> newlyAdded;
+		
+		//We now cluster those hits together
+		while( !hitPixelVec.empty() ) {
+            // prepare a TrackerData to store the cluster candidate
+			std::unique_ptr<TrackerDataImpl> zsCluster = std::make_unique<TrackerDataImpl>();
+			// prepare a reimplementation of sparsified cluster
+			auto sparseCluster = Utility::getClusterData(zsCluster.get(), type); //std::make_unique<EUTelSparseClusterImpl<EUTelGenericSparsePixel>>(zsCluster.get());
 
-			std::vector<EUTelGenericSparsePixel> newlyAdded;
-			//We now cluster those hits together
-			while( !hitPixelVec.empty() )
-			{
-                           	// prepare a TrackerData to store the cluster candidate
-				std::unique_ptr<TrackerDataImpl> zsCluster = std::make_unique<TrackerDataImpl>();
-				// prepare a reimplementation of sparsified cluster
-				std::unique_ptr<EUTelSparseClusterImpl<EUTelGenericSparsePixel>> sparseCluster = std::make_unique<EUTelSparseClusterImpl<EUTelGenericSparsePixel>>(zsCluster.get());
+			//First we need to take any pixel, so let's take the first one
+			//Add it to the cluster as well as the newly added pixels
+			newlyAdded.push_back( hitPixelVec.front() );
+			sparseCluster->push_back( hitPixelVec.front().get() );
+			//And remove it from the original collection
+			hitPixelVec.erase( hitPixelVec.begin() );
 
-				//First we need to take any pixel, so let's take the first one
-				//Add it to the cluster as well as the newly added pixels
-				newlyAdded.push_back( hitPixelVec.front() );
-				sparseCluster->addSparsePixel( hitPixelVec.front() );
-				//And remove it from the original collection
-				hitPixelVec.erase( hitPixelVec.begin() );
+			//Now process all newly added pixels, initially this is the just previously added one
+			//but in the process of neighbour finding we continue to add new pixels
+			while( !newlyAdded.empty() ) {
+				bool newlyDone = true;
+				//check against all pixels in the hitPixelVec
+				for( auto hitVec = hitPixelVec.begin(); hitVec != hitPixelVec.end(); ++hitVec ) {
+					//get the relevant infos from the newly added pixel
+					auto x1 = newlyAdded.front().get().getXCoord();
+					auto y1 = newlyAdded.front().get().getYCoord();
 
-				//Now process all newly added pixels, initially this is the just previously added one
-				//but in the process of neighbour finding we continue to add new pixels
-				while( !newlyAdded.empty() )
-				{
-					bool newlyDone = true;
-					int  x1, x2, y1, y2, dX, dY;
+					//and the pixel we test against
+					auto x2 = (hitVec->get()).getXCoord();
+					auto y2 = (hitVec->get()).getYCoord();
 
-					//check against all pixels in the hitPixelVec
-					for( std::vector<EUTelGenericSparsePixel>::iterator hitVec = hitPixelVec.begin(); hitVec != hitPixelVec.end(); ++hitVec )
-					{
-						//get the relevant infos from the newly added pixel
-						x1 = newlyAdded.front().getXCoord();
-						y1 = newlyAdded.front().getYCoord();
-
-						//and the pixel we test against
-						x2 = hitVec->getXCoord();
-						y2 = hitVec->getYCoord();
-
-						dX = x1 - x2;
-						dY = y1 - y2;
-						int distance = dX*dX+dY*dY;
-						//if they pass the spatial and temporal cuts, we add them
-						if( distance <= _sparseMinDistanceSquared )
-						{
-							//add them to the cluster as well as to the newly added ones
-							newlyAdded.push_back( *hitVec );
-							sparseCluster->addSparsePixel( *hitVec );
-							//and remove it from the original collection
-							hitPixelVec.erase( hitVec );
-							//for the pixel we test there might be other neighbours, we still have to check
-							newlyDone = false;
-							break;
-						}
+					auto dX = x1 - x2;
+					auto dY = y1 - y2;
+					int distance = dX*dX+dY*dY;
+					//if they pass the spatial and temporal cuts, we add them
+					if( distance <= _sparseMinDistanceSquared ) {
+						//add them to the cluster as well as to the newly added ones
+						newlyAdded.push_back( *hitVec );
+						sparseCluster->push_back( *hitVec );
+						//and remove it from the original collection
+						hitPixelVec.erase( hitVec );
+						//for the pixel we test there might be other neighbours, we still have to check
+						newlyDone = false;
+						break;
 					}
-
-					//if no neighbours are found, we can delete the pixel from the newly added
-					//we tested against _ALL_ non cluster pixels, there are no other pixels
-					//which could be neighbours
-					if(newlyDone) newlyAdded.erase( newlyAdded.begin() );
 				}
-				
-				//Now we need to process the found cluster
-				if (  sparseCluster->size() > 0 )
-				{
-					// set the ID for this zsCluster
-					idZSClusterEncoder["sensorID"] = sensorID;
-					idZSClusterEncoder["sparsePixelType"] = static_cast<int>( type );
-					idZSClusterEncoder["quality"] = 0;
-					idZSClusterEncoder.setCellID( zsCluster.get() );
 
-					// add it to the cluster collection
-					sparseClusterCollectionVec->push_back( zsCluster.get() );
+				//if no neighbours are found, we can delete the pixel from the newly added
+				//we tested against _ALL_ non cluster pixels, there are no other pixels
+				//which could be neighbours
+				if(newlyDone) newlyAdded.erase( newlyAdded.begin() );
+			}
+			
+			//Now we need to process the found cluster
+			if( sparseCluster->size()>0 ) {
+				// set the ID for this zsCluster
+				idZSClusterEncoder["sensorID"] = sensorID;
+				idZSClusterEncoder["sparsePixelType"] = static_cast<int>( type );
+				idZSClusterEncoder["quality"] = 0;
+				idZSClusterEncoder.setCellID( zsCluster.get() );
 
-					// prepare a pulse for this cluster
-					std::unique_ptr<TrackerPulseImpl> zsPulse = std::make_unique<TrackerPulseImpl>();
-					idZSPulseEncoder["sensorID"] = sensorID;
-					idZSPulseEncoder["type"] = static_cast<int>(kEUTelSparseClusterImpl);
-					idZSPulseEncoder.setCellID( zsPulse.get() );
+				// add it to the cluster collection
+				sparseClusterCollectionVec->push_back( zsCluster.get() );
 
-					//zsPulse->setCharge( sparseCluster->getTotalCharge() );
-					zsPulse->setTrackerData( zsCluster.release() );
-					pulseCollection->push_back( zsPulse.release() );
+				// prepare a pulse for this cluster
+				std::unique_ptr<TrackerPulseImpl> zsPulse = std::make_unique<TrackerPulseImpl>();
+				idZSPulseEncoder["sensorID"] = sensorID;
+				idZSPulseEncoder["type"] = static_cast<int>(kEUTelSparseClusterImpl);
+				idZSPulseEncoder.setCellID( zsPulse.get() );
 
-					// last but not least increment the totClusterMap
-					_totClusterMap[ sensorID ] += 1;
-				} //cluster processing if
+				//zsPulse->setCharge( sparseCluster->getTotalCharge() );
+				zsPulse->setTrackerData( zsCluster.release() );
+				pulseCollection->push_back( zsPulse.release() );
 
-				else
-				{
-					//in the case the cluster candidate is not passing the threshold ...
-					//forget about them, the memory should be automatically cleaned by smart ptr's
-				}
-			} //loop over all found clusters
-		}
-		else
-		{
-		     throw UnknownDataTypeException("Unknown sparsified pixel");
-		}
+				// last but not least increment the totClusterMap
+				_totClusterMap[ sensorID ] += 1;
+			} //cluster processing if
+			else {
+				//in the case the cluster candidate is not passing the threshold ...
+				//forget about them, the memory should be automatically cleaned by smart ptr's
+			}
+		} //loop over all found clusters
 	} // this is the end of the loop over all ZS detectors
 
 	// if the sparseClusterCollectionVec isn't empty add it to the

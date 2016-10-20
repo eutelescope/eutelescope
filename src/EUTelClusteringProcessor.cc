@@ -2002,7 +2002,7 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent* evt, LCCollectionVec* p
                 //First we need to take any pixel, so let's take the first one
                 //Add it to the cluster as well as the newly added pixels
                 newlyAdded.push_back( hitPixelVec.front() );
-                //sparseCluster->addSparsePixel( &(hitPixelVec.front()) );
+                //sparseCluster->push_back( &(hitPixelVec.front()) );
                 cluCandidate.push_back( hitPixelVec.front() );
                 //And remove it from the original collection
                 hitPixelVec.erase( hitPixelVec.begin() );
@@ -2034,7 +2034,7 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent* evt, LCCollectionVec* p
                             //add them to the cluster as well as to the newly added ones
                             newlyAdded.push_back( *hitVec );
                             cluCandidate.push_back( *hitVec );
-                            //	sparseCluster->addSparsePixel( &(*hitVec) );
+                            //	sparseCluster->push_back( &(*hitVec) );
                             //and remove it from the original collection
                             hitPixelVec.erase( hitVec );
                             //for the pixel we test there might be other neighbours, we still have to check
@@ -2069,7 +2069,7 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent* evt, LCCollectionVec* p
                     }
                     else
                     {
-                        sparseCluster->addSparsePixel( pixel );
+                        sparseCluster->push_back( pixel );
                         noiseValueVec.push_back(noise->getChargeValues()[ index ]);
                     }
                 }

@@ -12,249 +12,153 @@
 #include <stdexcept>
 namespace eutelescope {
 
-
-  //! The implementation of EUTelTrackerDataInterfacer. 
-  /*! Contains all the implementations as well as the template specific code */
-  template<class PixelType>
-  class EUTelTrackerDataInterfacerImpl : public EUTelTrackerDataInterfacer {
-  private:
+//! The implementation of EUTelTrackerDataInterfacer. 
+/*! Contains all the implementations as well as the template specific code */
+template<class PixelType>
+class EUTelTrackerDataInterfacerImpl : public EUTelTrackerDataInterfacer {
 
   public:
-    //! Default constructor
-    EUTelTrackerDataInterfacerImpl(IMPL::TrackerDataImpl* data);
-	
-    //! Destructor
-    virtual ~EUTelTrackerDataInterfacerImpl() {}
+	//!	Only available constructor
+	EUTelTrackerDataInterfacerImpl(IMPL::TrackerDataImpl* data);
 
-    //! Add a pixel
-    /*! This method is used to add to the current TrackerDataImpl a
-     * new pixel with all the pieces of information.
-     */
-    void pushChargeValues(PixelType const & pixel);
-    
-    void addSparsePixel(PixelType const & pixel) {
-	this->push_back(pixel);    
-    }
+	//!	Default constructor deleted, since we need the backend data container
+	EUTelTrackerDataInterfacerImpl() = delete;
 
-    void addSparsePixel(EUTelBaseSparsePixel const & pixel) {
-		this->addSparsePixel(dynamic_cast<PixelType const &>(pixel));
-	}
-
-    //! Get one of the sparse pixel
-    /*! This method is used to get one of the sparse pixel contained
-     * into the TrackerData.
-     *
-     * @param index Index of the sparse pixel within the collection
-     * @param pixel A pointer to the output pixel
-     * @return A pointer to the output pixel same as @c pixel
-     */
-    void getSparsePixelAt(size_t index, PixelType& pixel) const;
-  
-    //*! Overloaded getSparsePixelAt method
-     /*! Used for polymorphic usage of EUTelTrackerDataInterfacer 
-      *  If a nullptr is passed as a EUTelBaseSparsePixel ptr, then
-      *  a new pixel is created on the heap. Returning this pixel's
-      *  address. IMPORTANT: Memory has to be cleaned up by the caller!
-      */ 
-    void getSparsePixelAt(size_t index, std::unique_ptr<EUTelBaseSparsePixel>& pixel) const
-	{
-		if(!pixel) {
-			pixel = std::make_unique<PixelType>();
-		}
-		auto pix = dynamic_cast<PixelType*>(pixel.get());
-		getSparsePixelAt(index, *pix);
-	} 
-
-    void getSparsePixelAt(size_t index, std::unique_ptr<PixelType>& pixel) const
-	{
-		if(!pixel) {
-			pixel = std::make_unique<PixelType>();
-		}
-		getSparsePixelAt( index, *pixel.get() );
-	} 
-
-
-    std::vector<EUTelBaseSparsePixel const *> getBasePixelPtrVec() const {
-	std::vector<EUTelBaseSparsePixel const *> result;
-	for(auto const & pixel: _pixelVec) {
-		result.push_back(static_cast<EUTelBaseSparsePixel const*>(&pixel));
-	}
-	return std::move(result);
-   }
-    
-    //! Expose the TrackerDataImpl to the public
-    /*! This method is used to allow a direct and public access to the
-     * TrackerDataImpl used to collect all the sparse data
-     * information.
-     *
-     * @return The TrackerDataImpl with all the sparse data.
-     */
-    IMPL::TrackerDataImpl const * trackerData();
-
-   std::vector<PixelType> const & getPixels() const {
-	return _pixelVec;
-   } 
   protected:
-    //! Internal method to fill the local copy of all the pixels
-    /*! Only to be used in this class */
-    void fillPixelVec();
+	//! Implementation of validateRefVec()
+	void validateRefVec() const override {
+		_refVec.clear();
+		_refVec.reserve(_pixelVec.size());
+		for(auto& pixel: _pixelVec) {
+			_refVec.emplace_back(pixel);
+		}
+		_refVecValid = true;
+	}
 
-  private:
-    //! This is the TrackerDataImpl
-    /*! This is the object where the sparse data information are
-     * collected all together.
-     */
-    IMPL::TrackerDataImpl* _trackerData;
+	//! Internal method to fill the local copy of all the pixels
+	/*! It is used when reading from a TrackerData object to read the information stored 
+     *	in there to fill the _pixelVec. It is only called in the constructor and needs
+     *	to be specialised in the various pixel types.
+	 */
+	void fillPixelVec();
 
-    //! Number of elements in the sparse pixel
-    /*! This value is initialized in the constructor and taken from
-     * the template class.
-     */
-    size_t _nElement;
+	//! Internal method called when adding a pixel via push_back() or emplace_back()
+	/*! Similar to fillPixelVec() this method does the bookkeeping. It does a similar job as
+	 *	fillPixelVec() but will also corretly add the pixel to the LCIO backend object. Again,
+	 *	it has to be specialised for the various pixel types.
+	 */
+	void pushChargeValues(PixelType const & pixel);
 
-    //! Sparse pixel type
-    /*! This enumerator value is set in the constructor and taken from
-     * the template class.
-     */
-    SparsePixelType _type;
+	//! This is the TrackerDataImpl
+	/*! This is the object where the sparse data information are collected all together.
+	 */
+	IMPL::TrackerDataImpl* _trackerData;
 
-    //! Local copy of the pixels
-    std::vector<PixelType > _pixelVec;
+	//! Sparse pixel type
+	/*! This enumerator value is set in the constructor and taken from the template class.
+	 */
+	SparsePixelType _type;
+
+	//! Local copy of the pixels
+	std::vector<PixelType > _pixelVec;
 
   public:
+	//! Returns a const & to the underlying pixel vector
+	std::vector<PixelType> const & getPixels() const {
+		return _pixelVec;
+	} 
 
-    auto begin() const -> decltype(this->_pixelVec.begin()) {
-	return _pixelVec.begin();
-    }
+	//! begin() to provide iterators
+	/*! Note the lack of virtual, this is because EUTelTrackerDataInterfacer
+	 *	and EUTelTrackerDataInterfacerImpl<PixelType> provide different types
+	 *	of iterators!
+	 */ 
+	auto begin() const -> decltype(this->_pixelVec.begin()) {
+		return _pixelVec.begin();
+	}
 
-    auto end() const -> decltype(this->_pixelVec.end()) {
-	return _pixelVec.end();
-    }
+	//! end() for iterators
+	/*! See comments for begin() 
+	 */
+	auto end() const -> decltype(this->_pixelVec.end()) {
+		return _pixelVec.end();
+	}
 
-    template <typename ...Par>
-    auto at(Par&&... par) const -> decltype(this->_pixelVec.at(std::forward<Par>(par)...)) {
-	return _pixelVec.at(std::forward<Par>(par)...);
-    }
-   
-    template <typename ...Par>
-    auto operator[](Par&&... par) const -> decltype(this->_pixelVec.operator[](std::forward<Par>(par)...)) {
-	return _pixelVec.operator[](std::forward<Par>(par)...);
-    }
- 
-    //! Get the number of sparse pixels in the collection
-    /*! This utility can be used to know how many pixels are contained
-     * in the TrackerData.
-     *
-     * @return the size of TrackerData measured in sparse
-     * pixels.
-     */
-    auto size() const -> decltype(this->_pixelVec.size()) {
+	//! at() access operator in STL fashion (range checked)
+	virtual auto at(size_t i) const -> decltype(_pixelVec.at(i)) final override { // throws std::out_of_range
+		return _pixelVec.at(i);
+	}
+
+	//! operator[] access operator in STL fashion (non range checked)
+	virtual auto operator[](size_t i) const -> decltype(this->_pixelVec.operator[](i)) final override {
+		return _pixelVec.operator[](i);
+	}
+
+	//! Get the number of sparse pixels in the collection
+	virtual auto size() const -> decltype(_pixelVec.size()) final override {
 		return _pixelVec.size();
-    }
+	}
 
-    auto empty() const -> decltype(this->_pixelVec.empty()) {
+	//! Check if no pixels are present in the collection
+	virtual auto empty() const -> decltype(_pixelVec.empty()) final override {
 		return _pixelVec.empty();
-    }
-
-    void push_back(PixelType const & pixel) {
-	_pixelVec.push_back(pixel);
-	this->pushChargeValues(pixel);
-    }   
-
-    template <typename ...Par>
-    void emplace_back(Par&&... par) { 
-	_pixelVec.emplace_back(std::forward<Par>(par)...);
-	this->pushChargeValues(_pixelVec.back());
-    }
-  };
- 
-
-  //! Template specialization
-  /*! A template specialization is definitely needed for the
-   * getSparsePixelAt method, because depending on how the sparsified
-   * pixel data are organized in the TrackerData a re-arrangement is
-   * needed.
-   *
-   * @param index The pixel index the user wants to retrieve.
-   * @param pixel A pointer to the output pixel
-   * @return A pointer to the output pixel same as @c pixel.
-   */
- 
-	template<>
-	inline void EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel>::getSparsePixelAt(size_t index, EUTelSimpleSparsePixel& pixel ) const 
-	{
-		if ( index * _nElement + 2 > _trackerData->getChargeValues().size() ) throw std::out_of_range("getSparsePixelAt() out of bounds exception");
-		pixel.setXCoord( static_cast<short> ( _trackerData->getChargeValues()[index * _nElement] ) );
-		pixel.setYCoord( static_cast<short> ( _trackerData->getChargeValues()[index * _nElement + 1] ) );
-		pixel.setSignal(  _trackerData->getChargeValues()[index * _nElement + 2] ) ;
-	}
-  
-	template<>
-	inline void EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>::getSparsePixelAt(size_t index, EUTelGenericSparsePixel& pixel ) const
-	{
-		if ( index * _nElement + 3 > _trackerData->getChargeValues().size() ) throw std::out_of_range("getSparsePixelAt() out of bounds exception");
-		pixel.setXCoord( static_cast<short> ( _trackerData->getChargeValues()[index * _nElement] ) );
-		pixel.setYCoord( static_cast<short> ( _trackerData->getChargeValues()[index * _nElement + 1] ) );
-		pixel.setSignal( _trackerData->getChargeValues()[index * _nElement + 2] );
-		pixel.setTime(   static_cast<short> ( _trackerData->getChargeValues()[index * _nElement + 3] ) );
 	}
 
-	template<>
-	inline void EUTelTrackerDataInterfacerImpl<EUTelGeometricPixel>::getSparsePixelAt(size_t index, EUTelGeometricPixel& pixel ) const
-	{
-		if ( index * _nElement + 7 > _trackerData->getChargeValues().size() ) throw std::out_of_range("getSparsePixelAt() out of bounds exception");
-		pixel.setXCoord( static_cast<short>( _trackerData->getChargeValues()[index * _nElement] ) );
-		pixel.setYCoord( static_cast<short>( _trackerData->getChargeValues()[index * _nElement + 1] ) );
-		pixel.setSignal( _trackerData->getChargeValues()[index * _nElement + 2] );
-		pixel.setTime(   static_cast<short>( _trackerData->getChargeValues()[index * _nElement + 3] ) );
-
-		pixel.setPosX( _trackerData->getChargeValues()[index * _nElement + 4] );
-		pixel.setPosY( _trackerData->getChargeValues()[index * _nElement + 5] );
-		pixel.setBoundaryX( _trackerData->getChargeValues()[index * _nElement + 6] );
-		pixel.setBoundaryY( _trackerData->getChargeValues()[index * _nElement + 7] );
+	//! Add a pixel
+	/*!	This method is used to add to the current TrackerDataImpl a
+	 *	new pixel with all the pieces of information. Overrides the 
+	 *	version which takes a reference to EUTelBaseSparsePixel and 
+	 *	might throw std::bad_cast. Calls the actual push_back in the
+	 *	correct type. 
+	 */
+	virtual void push_back(EUTelBaseSparsePixel const & pixel) override {
+		this->push_back(dynamic_cast<PixelType const &>(pixel));
 	}
 
-	template<>
-	inline void EUTelTrackerDataInterfacerImpl<EUTelMuPixel>::getSparsePixelAt(size_t index, EUTelMuPixel& pixel ) const
-	{
-		if ( index * _nElement + 6 > _trackerData->getChargeValues().size() ) throw std::out_of_range("getSparsePixelAt() out of bounds exception");
-		pixel.setXCoord( static_cast<short>( _trackerData->getChargeValues()[index * _nElement] ) );
-		pixel.setYCoord( static_cast<short>( _trackerData->getChargeValues()[index * _nElement + 1] ) );
-		pixel.setSignal( _trackerData->getChargeValues()[index * _nElement + 2] );
-		pixel.setTime(   static_cast<short>( _trackerData->getChargeValues()[index * _nElement + 3] ) );
+	//! Add a pixel
+	/*!	Takes a PixelType const & and adds it via std::vector::push_back to the 
+	 *	local vector. Since this operation might cause a reallocation of the 
+	 *	_pixelVec the _refVec will get invalidated.
+	 */ 
+	void push_back(PixelType const & pixel) {
+		_pixelVec.push_back(pixel);
+		this->pushChargeValues(pixel);
+		_refVecValid = false;
+	}   
 
-		pixel.setHitTime(
-		static_cast<short>(_trackerData->getChargeValues()[index *
-		_nElement + 4] ) );
-		pixel.setFrameTime( static_cast<long long unsigned>(_trackerData->getChargeValues()[index * _nElement +
-		5]) | static_cast<long long unsigned>(_trackerData->getChargeValues()[index * _nElement +
-		6]) << 32  );
-	}	
+	//! Add a pixel
+	/*!	Takes  PixelType constructor arguments adds a PixelType object via 
+	 *	std::vector::emplace_back to the local vector. Since this operation might 
+	 *	cause a reallocation of the _pixelVec the _refVec will get invalidated.
+	 *	Prefer this version over push_back if you can construct the pixel right 
+	 *	before insertion.
+	 */ 
+	template <typename ...Par>
+	void emplace_back(Par&&... par) { 
+		_pixelVec.emplace_back(std::forward<Par>(par)...);
+		this->pushChargeValues(_pixelVec.back());
+		_refVecValid = false;
+	}   
+};
 
 	//! Template specialization for the pushChargeValues method
 	template<>
-	inline void EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel>::pushChargeValues(EUTelSimpleSparsePixel const & pixel)
-	{
-
+	inline void EUTelTrackerDataInterfacerImpl<EUTelSimpleSparsePixel>::pushChargeValues(EUTelSimpleSparsePixel const & pixel){
 		_trackerData->chargeValues().push_back( static_cast<float> (pixel.getXCoord()) );
 		_trackerData->chargeValues().push_back( static_cast<float> (pixel.getYCoord()) );
 		_trackerData->chargeValues().push_back( static_cast<float> (pixel.getSignal()) );
 	}
-  
+
 	template<>
-	inline void EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>::pushChargeValues(EUTelGenericSparsePixel const & pixel)
-	{
-		//add values to lcio charge vector
+	inline void EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>::pushChargeValues(EUTelGenericSparsePixel const & pixel){
 		_trackerData->chargeValues().push_back( static_cast<float>(pixel.getXCoord()) );
 		_trackerData->chargeValues().push_back( static_cast<float>(pixel.getYCoord()) );
 		_trackerData->chargeValues().push_back( static_cast<float>(pixel.getSignal()) );
 		_trackerData->chargeValues().push_back( static_cast<float>(pixel.getTime()) );
 	}
-	
+
 	template<>
-	inline void EUTelTrackerDataInterfacerImpl<EUTelGeometricPixel>::pushChargeValues(EUTelGeometricPixel const & pixel)
-	{
-		//add values to lcio charge vector
+	inline void EUTelTrackerDataInterfacerImpl<EUTelGeometricPixel>::pushChargeValues(EUTelGeometricPixel const & pixel){
 		_trackerData->chargeValues().push_back( static_cast<float>(pixel.getXCoord()) );
 		_trackerData->chargeValues().push_back( static_cast<float>(pixel.getYCoord()) );
 		_trackerData->chargeValues().push_back( static_cast<float>(pixel.getSignal()) );
@@ -267,9 +171,7 @@ namespace eutelescope {
 	}
 
 	template<>
-	inline void EUTelTrackerDataInterfacerImpl<EUTelMuPixel>::pushChargeValues(EUTelMuPixel const & pixel)
-	{
-		//add values to lcio charge vector
+	inline void EUTelTrackerDataInterfacerImpl<EUTelMuPixel>::pushChargeValues(EUTelMuPixel const & pixel){
 		_trackerData->chargeValues().push_back( static_cast<float>(pixel.getXCoord()) );
 		_trackerData->chargeValues().push_back( static_cast<float>(pixel.getYCoord()) );
 		_trackerData->chargeValues().push_back( static_cast<float>(pixel.getSignal()) );
@@ -291,7 +193,7 @@ namespace eutelescope {
 						);
 		}
 	}
-  
+
 	template<>
 	inline void EUTelTrackerDataInterfacerImpl< EUTelGenericSparsePixel>::fillPixelVec() {
 		for( size_t index = 0 ; index < _trackerData->getChargeValues().size() ; index += 4 ) {
@@ -302,7 +204,7 @@ namespace eutelescope {
 						);
 		}
 	}
-	
+
 	template<>
 	inline void EUTelTrackerDataInterfacerImpl< EUTelGeometricPixel>::fillPixelVec() {
 		for( size_t index = 0 ; index < _trackerData->getChargeValues().size() ; index += 8 ) {
@@ -329,9 +231,7 @@ namespace eutelescope {
 						static_cast<long long unsigned>(_trackerData->getChargeValues()[index + 5]) |
 						static_cast<long long unsigned>(_trackerData->getChargeValues()[index+ 6]) << 32 
 						);
-						
 		}
 	}
-
 } //namespace
 #endif
