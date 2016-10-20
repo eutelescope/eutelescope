@@ -18,6 +18,7 @@
 //GEAR
 #include "GEAR.h" 
 #include "gearxml/GearXML.h"
+#include "gearimpl/SimpleMaterialImpl.h"
 
 // EUTELESCOPE
 #include "EUTelExceptions.h"
@@ -190,6 +191,12 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout() {
 	std::sort(_sensorIDVec.begin(), _sensorIDVec.end(), doCompare(*this) );	
 }
 
+double getRadLength(int A, int Z) {
+	auto nom = 716.4*A;
+	auto denom = Z*(Z+1)*log(287/sqrt(Z));
+	return nom/denom;
+}
+
 void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout() {
 	// sensor-planes in geometry navigation:
 	_trackerPlanesParameters = const_cast< gear::TrackerPlanesParameters*> (&( _gearManager->getTrackerPlanesParameters()));
@@ -202,7 +209,19 @@ void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout() {
 	//should be filled based on the length of the sensor vector after the loop
 	_nPlanes = 0; 
 
+	auto matNameVec = _gearManager->getMaterialNames();
+	std::cout << "Known materials: " << std::endl;
+	for(auto& matName: matNameVec) {
+		std::cout << "-> " << matName << std::endl;
 
+		//auto& GEARMat = dynamic_cast<gear::SimpleMaterialImpl const&>(_gearManager->getSimpleMaterial(matName));
+		auto const& GEARMat = _gearManager->getSimpleMaterial(matName);
+		auto A = GEARMat.getA();
+		auto Z = GEARMat.getZ();
+		auto density = GEARMat.getDensity();
+		std::cout << "Radiation length computed to be: " << getRadLength(A,Z) << " g*cm^-2" << '\n';
+		std::cout << "Yielding: " << getRadLength(A,Z)/density << " cm" << std::endl;
+	}  
 
 	// create an array with the z positions of each layer
 	int nLayers = _trackerPlanesLayerLayout->getNLayers();
@@ -212,6 +231,7 @@ void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout() {
 		auto layerID = _trackerPlanesLayerImpl->getID();
 
 		std::cout << "Got Layer: " << layerID << " .. checking material and sensitive layers ..." << std::endl;
+		std::cout << "It has positions: " << _trackerPlanesLayerImpl->getPositionX() << "|" << _trackerPlanesLayerImpl->getPositionY() << "|" << _trackerPlanesLayerImpl->getPositionZ()  << std::endl; 
 
 		int nsensitive = _trackerPlanesLayerImpl->getNSensitiveLayers();
 		auto sensitiveLayerVector = _trackerPlanesLayerImpl->getSensitiveLayerVec();
@@ -263,7 +283,7 @@ void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout() {
 			thisPlane.enabled = sensitiveLayer.getEnabled();
 			
 			//GEAR uses mm wheras TGeo will use cm
-			thisPlane.radLength	= sensitiveLayer.getRadLength()/10;
+			thisPlane.radLength	= 10;//sensitiveLayer.getRadLength()/10;
 
 			_planeSetup[sensorID] = thisPlane;
 
@@ -285,6 +305,8 @@ void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout() {
 	}
 	std::sort(_sensorIDVec.begin(), _sensorIDVec.end(), doCompare(*this) );
 	_nPlanes =  _sensorIDVec.size(); 
+
+	writeGEARFile("test.xml");
 }
 
 EUTelGeometryTelescopeGeoDescription::EUTelGeometryTelescopeGeoDescription():
@@ -825,7 +847,7 @@ void EUTelGeometryTelescopeGeoDescription::updateTrackerPlanesLayout() {
 	for (int iLayer = 0; iLayer < nLayers; iLayer++) {
 		gear::TrackerPlanesLayerImpl*  trackerplanesLayerImpl = const_cast< gear::TrackerPlanesLayerImpl*>  ( trackerplanesLayerLayout->getLayer( iLayer) );
 		int nsensitive =  trackerplanesLayerImpl->getNSensitiveLayers() ;
-		gear::TrackerPlanesSensitiveLayerImplVec& vector =  trackerplanesLayerImpl->getSensitiveLayerVec();
+		gear::TrackerPlanesSensitiveLayerImplVec & vector =  const_cast< gear::TrackerPlanesSensitiveLayerImplVec &>(trackerplanesLayerImpl->getSensitiveLayerVec());
 
 		for (int iSensLayer = 0; iSensLayer < nsensitive; iSensLayer++) {       
 			gear::TrackerPlanesSensitiveLayerImpl& sensitiveLayer = vector.at(iSensLayer);
