@@ -208,6 +208,7 @@ ADD_EUTELESCOPE_TOOL( pedestalmerge )
 
 # !RELEASE: REMOVE FOR RELEASE VERSIONS
 # electric fence
+OPTION( USE_EFENCE "Use the Electric Fence linrary" OFF)
  FIND_LIBRARY(EFENCE_LIBRARY
      NAMES efence
      DOC "The electric fence library"
@@ -217,10 +218,12 @@ ADD_EUTELESCOPE_TOOL( pedestalmerge )
          /usr/efence/lib
          /usr/share/efence/lib
      )
- IF(EFENCE_LIBRARY)
+ IF(EFENCE_LIBRARY AND USE_EFENCE)
    MESSAGE("Electric Fence library was found and will be linked against ${PROJECT_NAME}")
    target_link_libraries(${libname} ${EFENCE_LIBRARY})
- ENDIF()
+ELSE()
+   MESSAGE(STATUS "Not linking Electric Fence library.")
+ENDIF()
 
 # display some variables and write them to cache
 DISPLAY_STD_VARIABLES()
