@@ -158,6 +158,7 @@ INCLUDE_DIRECTORIES( ./eutelescope/libraries/include )
 INCLUDE_DIRECTORIES( ./eutelescope/interfaces/include )
 INCLUDE_DIRECTORIES( ./processors/include )
 INCLUDE_DIRECTORIES( ./datasources/include )
+INCLUDE_DIRECTORIES( ./datatypes/include )
 INCLUDE_DIRECTORIES( ./processors/include/alibava )
 INCLUDE_DIRECTORIES( ./geometries/include/ )
 
@@ -173,12 +174,11 @@ SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g -fdiagnostics-show-option -Weffc++ -W
 
 ############ Add libraries ########################################
 
-# Main EUTelescope Library
-SET( libname ${PROJECT_NAME} )
-AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/eutelescope/libraries/src library_sources )
-AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/eutelescope/interfaces/src library_sources )
-ADD_SHARED_LIBRARY( ${libname} ${library_sources} )
-INSTALL_SHARED_LIBRARY( ${libname} DESTINATION lib )
+# Data Types Library
+SET( datatypes EutelDatatypes )
+AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/datatypes/src dtypes_sources )
+ADD_SHARED_LIBRARY( ${datatypes} ${dtypes_sources} )
+INSTALL_SHARED_LIBRARY( ${datatypes} DESTINATION lib )
 
 # Datasource Processor Library
 SET( readers EutelReaders )
@@ -192,6 +192,14 @@ AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/processors/src processor_sourc
 AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/processors/src/alibava processor_sources )
 ADD_SHARED_LIBRARY( ${processors} ${processor_sources} )
 INSTALL_SHARED_LIBRARY( ${processors} DESTINATION lib )
+
+# Main EUTelescope Library
+SET( libname ${PROJECT_NAME} )
+AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/eutelescope/libraries/src library_sources )
+AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/eutelescope/interfaces/src library_sources )
+ADD_SHARED_LIBRARY( ${libname} ${library_sources} )
+INSTALL_SHARED_LIBRARY( ${libname} DESTINATION lib )
+TARGET_LINK_LIBRARIES( ${libname} ${datatypes} )
 
 # Pixel Geometry Shared Libraries
 FILE(GLOB IMPL_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/geometries/src/*.cc)
