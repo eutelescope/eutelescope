@@ -154,8 +154,8 @@ ADD_DEFINITIONS("-DDO_TESTING")
 
 # include directories
 include_directories(SYSTEM ./external)
-INCLUDE_DIRECTORIES( ./include )
-INCLUDE_DIRECTORIES( ./include/alibava )
+INCLUDE_DIRECTORIES( ./processors/include )
+INCLUDE_DIRECTORIES( ./processors/include/alibava )
 INCLUDE_DIRECTORIES( ./geometries/include/ )
 
  
@@ -170,8 +170,8 @@ SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g -fdiagnostics-show-option -Weffc++ -W
 
 # add library
 SET( libname ${PROJECT_NAME} )
-AUX_SOURCE_DIRECTORY( ./src library_sources )
-AUX_SOURCE_DIRECTORY( ./src/alibava library_sources )
+AUX_SOURCE_DIRECTORY( ./processors/src library_sources )
+AUX_SOURCE_DIRECTORY( ./processors/src/alibava library_sources )
 ADD_SHARED_LIBRARY( ${libname} ${library_sources} )
 INSTALL_SHARED_LIBRARY( ${libname} DESTINATION lib )
 #INSTALL_SHARED_LIBRARY( GBL DESTINATION lib )
@@ -196,7 +196,7 @@ IF( ROOT_FOUND AND ROOT_GEOM_FOUND )
 ENDIF()
 
 MACRO( ADD_EUTELESCOPE_TOOL _name )
-    ADD_EXECUTABLE( ${_name} src/exec/${_name}.cxx )
+    ADD_EXECUTABLE( ${_name} processors/src/exec/${_name}.cxx )
     TARGET_LINK_LIBRARIES( ${_name} ${libname} )
     INSTALL( TARGETS ${_name} DESTINATION bin )
 ENDMACRO()
