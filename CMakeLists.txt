@@ -155,6 +155,7 @@ ADD_DEFINITIONS("-DDO_TESTING")
 # include directories
 include_directories(SYSTEM ./external)
 INCLUDE_DIRECTORIES( ./eutelescope/libraries/include )
+INCLUDE_DIRECTORIES( ./eutelescope/interfaces/include )
 INCLUDE_DIRECTORIES( ./processors/include )
 INCLUDE_DIRECTORIES( ./datasources/include )
 INCLUDE_DIRECTORIES( ./processors/include/alibava )
