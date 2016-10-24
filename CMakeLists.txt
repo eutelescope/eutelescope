@@ -156,7 +156,7 @@ ADD_DEFINITIONS("-DDO_TESTING")
 include_directories(SYSTEM ./external)
 INCLUDE_DIRECTORIES( ./include )
 INCLUDE_DIRECTORIES( ./include/alibava )
-INCLUDE_DIRECTORIES( ./pixgeo/include/ )
+INCLUDE_DIRECTORIES( ./geometries/include/ )
 
  
 # definitions to pass to the compiler
@@ -177,7 +177,7 @@ INSTALL_SHARED_LIBRARY( ${libname} DESTINATION lib )
 #INSTALL_SHARED_LIBRARY( GBL DESTINATION lib )
 
 #Pixel Geometry Shared Libraries
-FILE(GLOB IMPL_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/pixgeo/src/*.cc)
+FILE(GLOB IMPL_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/geometries/src/*.cc)
 
 FOREACH(impl_src ${IMPL_SRCS})
     # Extract FileName from FileName.cc
