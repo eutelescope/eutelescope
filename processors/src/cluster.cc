@@ -226,6 +226,10 @@ void Cluster::FindReferenceClusters(vector<Cluster> &clusterVec, int sizeMax)
         Y[iPixel] -= minY;
     cluster.set_values(X.size(),X,Y);
     clusterVec[iCluster] = cluster;
+    cout << "Shapes: ID " << iCluster << " X size " << X.size() << " Y size " << Y.size() << endl; 
+    cout << "(X,Y) :" ;
+    for (unsigned int iPixel=0; iPixel<X.size(); iPixel++) cout << "(" << X[iPixel] << "," << Y[iPixel] << ") " ;
+    cout << endl;
   }
   cout << "All shapes found!" << endl;
 }

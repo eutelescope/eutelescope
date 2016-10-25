@@ -15,6 +15,7 @@
 
 #include "TH1.h"
 #include "TH2.h"
+#include "TH3.h"
 #include "TProfile2D.h"
 #include "cluster.h"
 #include "CrossSection.hpp"
@@ -44,6 +45,7 @@ protected:
   std::ofstream settingsFile;
   int _nEvents;
   int _dutID;
+  int _maxNumberOfPixels;
   int _layerIndex;
   int _nSectors;
   int _nTouchingBorderSectorClusters;
@@ -66,6 +68,10 @@ protected:
   std::string _deadColumnCollectionName;
   std::string _noiseMaskFileName;
   int _sectorSafetyPixels;
+  std::vector<Cluster> clusterVec;
+  std::map<int,int> xPairs;
+  std::map<int,int> yPairs;
+  std::vector< std::vector<int> > symmetryGroups;
 private:
   bool _isFirstEvent;
   std::vector<int> noiseMaskX;
@@ -81,6 +87,9 @@ private:
   TH2I* deadColumnHisto;
   TH2I* circularClusterHistos;
   TH2I* largeClusterHistos;
+  TH3I* clusterShapeMap;
+  std::map<int,TH1I*> clusterShapeHistoSector;
+  std::map<int,TH1I*> clusterShapeHistoGroupedSector;
   LCCollectionVec * hotPixelCollectionVec;
   LCCollectionVec * deadColumnCollectionVec;
   TrackerDataImpl * hotData;

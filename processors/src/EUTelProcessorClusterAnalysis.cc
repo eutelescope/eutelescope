@@ -41,6 +41,7 @@ EUTelProcessorClusterAnalysis::EUTelProcessorClusterAnalysis()
   _outputSettingsFolderName("./"),
   _nEvents(0),
   _dutID(),
+  _maxNumberOfPixels(3),
   _nSectors(),
   _nTouchingBorderSectorClusters(0),
   _nTouchingBorderYClusters(0),
@@ -80,6 +81,8 @@ EUTelProcessorClusterAnalysis::EUTelProcessorClusterAnalysis()
                              _outputSettingsFolderName, static_cast< string > ( "./" ) );
     registerProcessorParameter("dutID", "This is the ID of the DUT",
                            _dutID, static_cast<int>( 6 ) );
+    registerProcessorParameter("MaxNumberOfPixels", "This is the maximum number of pixels in one cluster for the clustershape analysis",
+                             _maxNumberOfPixels, static_cast<int>( 3 ) );
     registerProcessorParameter("nSectors","This is the maximum amount of sectors",
 			   _nSectors, static_cast<int>( 8 ) );
     registerOptionalParameter("SectorSafetyPixels","Safety distance (in pixel) of clusters being associated to a sector and to the boundaries of the chip.",
@@ -109,7 +112,13 @@ void EUTelProcessorClusterAnalysis::init() {
   _xPixel = geo::gGeometry().siPlaneXNpixels(iLayer);
   _yPixel = geo::gGeometry().siPlaneYNpixels(iLayer);
   _sectorWidth = _xPixel / _nSectors;
-
+  //
+  Cluster cluster; 
+  cluster.FindReferenceClusters(clusterVec,_maxNumberOfPixels);
+  xPairs = cluster.SymmetryPairs(clusterVec,"x");
+  yPairs = cluster.SymmetryPairs(clusterVec,"y");
+  symmetryGroups = cluster.sameShape(clusterVec);
+  //
   //Open Files
   //Analysis Folder
   clusterAnalysisOutput.open(_clusterAnalysisFile);
@@ -340,7 +349,14 @@ void EUTelProcessorClusterAnalysis::processEvent(LCEvent *evt)
 
 				clusterWidthXHisto[index]->Fill(clusterWidthX);
 				clusterWidthYHisto[index]->Fill(clusterWidthY);
-				}
+				
+				int clusterShape = cluster.WhichClusterShape(cluster, clusterVec);
+				if (clusterShape>=0)
+				  {
+				    clusterShapeHistoSector[index]->Fill(clusterShape);
+				  }
+				else clusterShapeHistoSector[index]->Fill(clusterVec.size());				
+			}
 		}
 	nextCluster: ;
 	//End cluster for loop  
@@ -359,30 +375,56 @@ void EUTelProcessorClusterAnalysis::bookHistos()
   auto histoMgr = std::make_unique<EUTelHistogramManager>(_histoInfoFileName);
 
   try {
-	  histoMgr->init();
+    histoMgr->init();
   } catch ( ios::failure& e) {
-	  streamlog_out ( WARNING2 ) << "I/O problem with " << _histoInfoFileName << "\n"
-				     << "Continuing without histogram manager"  << endl;
+    streamlog_out ( WARNING2 ) << "I/O problem with " << _histoInfoFileName << "\n"
+			       << "Continuing without histogram manager"  << endl;
   } catch ( marlin::ParseException& e ) {
-	  streamlog_out ( WARNING2 ) << e.what() << "\n"
-				     << "Continuing without histogram manager" << endl;
+    streamlog_out ( WARNING2 ) << e.what() << "\n"
+			       << "Continuing without histogram manager" << endl;
   }
   AIDAProcessor::tree(this)->cd("Analysis");
+  clusterShapeMap = new TH3I("ClusterShapeMap", "ClusterShapeMap;Pixel X;Pixel Y;Cluster Shape ID",_maxNumberOfPixels+1,-0.5,_maxNumberOfPixels+0.5,_maxNumberOfPixels+1,-0.5,_maxNumberOfPixels+0.5,clusterVec.size()+1,-0.5,clusterVec.size()+0.5);
   for (int iSector=0; iSector<_nSectors; iSector++)
-  {
-	  AIDAProcessor::tree(this)->mkdir(Form("Sector_%d",iSector));
-	  AIDAProcessor::tree(this)->cd(Form("Sector_%d",iSector));
+    {
+      AIDAProcessor::tree(this)->mkdir(Form("Sector_%d",iSector));
+      AIDAProcessor::tree(this)->cd(Form("Sector_%d",iSector));
 
-	  clusterWidthXHisto[iSector]  = new TH1I(Form("clusterWidthXHisto_%d",iSector),Form("Cluster width in X in sector %d;Cluster width X (pixel);a.u.",iSector),15,0.5,15.5);
-	  clusterWidthYHisto[iSector]  = new TH1I(Form("clusterWidthYHisto_%d",iSector),Form("Cluster width in Y in sector %d;Cluster width Y (pixel);a.u.",iSector),15,0.5,15.5);
-	  clusterSizeHisto[iSector]  = new TH1I(Form("clusterSizeHisto_%d",iSector),Form("Cluster size_%d;Cluster size (pixel);a.u.",iSector),20,0.5,20.5);
-  }
-
+      clusterWidthXHisto[iSector]  = new TH1I(Form("clusterWidthXHisto_%d",iSector),Form("Cluster width in X in sector %d;Cluster width X (pixel);a.u.",iSector),15,0.5,15.5);
+      clusterWidthYHisto[iSector]  = new TH1I(Form("clusterWidthYHisto_%d",iSector),Form("Cluster width in Y in sector %d;Cluster width Y (pixel);a.u.",iSector),15,0.5,15.5);
+      clusterSizeHisto[iSector]  = new TH1I(Form("clusterSizeHisto_%d",iSector),Form("Cluster size_%d;Cluster size (pixel);a.u.",iSector),20,0.5,20.5);
+      clusterShapeHistoSector[iSector] = new TH1I(Form("clusterShapeHisto_%d",iSector),Form("Cluster shape (all rotations separately) Sector %d;Cluster shape ID;a.u.",iSector),clusterVec.size()+1,-0.5,clusterVec.size()+0.5);
+      clusterShapeHistoGroupedSector[iSector] = new TH1I(Form("clusterShapeHistoGrouped_%d",iSector),Form("Cluster shape (all rotations treated together) Sector %d;Cluster shape ID;a.u.",iSector),symmetryGroups.size(),-0.5,symmetryGroups.size()-0.5);
+    }
   streamlog_out ( DEBUG5 )  << "end of Booking histograms " << endl;
 }
 
 void EUTelProcessorClusterAnalysis::end()
 {
+  for (int iSector=0; iSector<_nSectors; iSector++)
+    {		
+      for (unsigned int i=0; i<symmetryGroups.size(); i++)
+	{
+	  string binName;
+	  for (unsigned int j=0; j<symmetryGroups[i].size(); j++)
+	    {
+	      clusterShapeHistoGroupedSector[iSector]->Fill(i,clusterShapeHistoSector[iSector]->GetBinContent(symmetryGroups[i][j]+1));
+	      if (j<symmetryGroups[i].size()-1) binName += Form("%d,",symmetryGroups[i][j]);
+	      else binName += Form("%d",symmetryGroups[i][j]);
+	    }
+	  clusterShapeHistoGroupedSector[iSector]->GetXaxis()->SetBinLabel(i+1,(char*)binName.c_str());
+	}
+    }
+  //
+  for (unsigned int iCluster = 0; iCluster<clusterVec.size();iCluster++) {
+    Cluster clustermap = clusterVec[iCluster];
+    vector<int> Xmap = clustermap.getX();
+    vector<int> Ymap = clustermap.getY();
+    for (unsigned int ix=0; ix<Xmap.size(); ix++) {
+      if (Xmap.size() == Ymap.size()) clusterShapeMap->SetBinContent(Xmap[ix]+1,Ymap[ix]+1,iCluster+1,1);
+    }
+  }
+  //
   streamlog_out ( MESSAGE4 ) << "The amount of processed events was " << _nEvents << endl;
   streamlog_out ( MESSAGE4 ) << "The amount of ignored clusters, because they were at an x-border of a sector were: " << _nTouchingBorderSectorClusters << endl;
   streamlog_out ( MESSAGE4 ) << "The amount of ignored clusters, because they were at a y-border of the chip were: " << _nTouchingBorderYClusters << endl;

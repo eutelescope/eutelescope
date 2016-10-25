@@ -878,6 +878,7 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
                         if (clusterShape>=0)
                         {
                           clusterShapeHisto->Fill(clusterShape);
+                          clusterShapeHistoSector[index]->Fill(clusterShape);
                           clusterShapeX[clusterShape]->Fill(xMin);
                           clusterShapeY[clusterShape]->Fill(yMin);
                           clusterShape2D2by2[clusterShape]->Fill(fmod(xposfit,2*xPitch),fmod(yposfit,2*yPitch));
@@ -885,7 +886,11 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
                             for (size_t iMember=0; iMember<symmetryGroups[iGroup].size(); iMember++)
                               if (symmetryGroups[iGroup][iMember] == clusterShape) clusterShape2DGrouped2by2[iGroup]->Fill(fmod(xposfit,2*xPitch),fmod(yposfit,2*yPitch));
                         }
-                        else clusterShapeHisto->Fill(clusterVec.size());
+                        else 
+			  {
+			    clusterShapeHisto->Fill(clusterVec.size());
+			    clusterShapeHistoSector[index]->Fill(clusterShape);
+			  }
                       }
                       break;
                     }
@@ -1491,6 +1496,8 @@ void EUTelProcessorAnalysisPALPIDEfs::bookHistos()
     clusterWidthYVsYAverageHisto[iSector] = new TH1F(Form("clusterWidthYVsYAverageHisto_%d",iSector),Form("Average cluster width in Y vs the track position in Y of sector %d;Y (mm);a.u",iSector),(int)(ySize/yPixel*1000),0,ySize/yPixel);
     nClusterVsXHisto[iSector] = new TH1F(Form("nClusterVsXHisto_%d",iSector),"Number of tracks used for the cluster width analysis in X;X (mm);a.u.",(int)(xSize/xPixel*1000),0,xSize/xPixel);
     nClusterVsYHisto[iSector] = new TH1F(Form("nClusterVsYHisto_%d",iSector),"Number of tracks used for the cluster width analysis in Y;Y (mm);a.u.",(int)(xSize/xPixel*1000),0,ySize/yPixel);
+    clusterShapeHistoSector[iSector] = new TH1I(Form("clusterShapeHisto_%d",iSector),Form("Cluster shape (all rotations separately) Sector %d;Cluster shape ID;a.u.",iSector),clusterVec.size()+1,-0.5,clusterVec.size()+0.5);
+    clusterShapeHistoGroupedSector[iSector] = new TH1I(Form("clusterShapeHistoGrouped_%d",iSector),Form("Cluster shape (all rotations treated together) Sector %d;Cluster shape ID;a.u.",iSector),symmetryGroups.size(),-0.5,symmetryGroups.size()-0.5);
   }
   AIDAProcessor::tree(this)->mkdir("ClusterShape");
   AIDAProcessor::tree(this)->cd("ClusterShape");
@@ -1635,6 +1642,20 @@ void EUTelProcessorAnalysisPALPIDEfs::end()
     }
     clusterShapeHistoGrouped->GetXaxis()->SetBinLabel(i+1,(char*)binName.c_str());
   }
+  for (int iSector=0; iSector<_nSectors; iSector++)
+    {		
+      for (unsigned int i=0; i<symmetryGroups.size(); i++)
+	{
+	  string binName;
+	  for (unsigned int j=0; j<symmetryGroups[i].size(); j++)
+	    {
+	      clusterShapeHistoGroupedSector[iSector]->Fill(i,clusterShapeHistoSector[iSector]->GetBinContent(symmetryGroups[i][j]+1));
+	      if (j<symmetryGroups[i].size()-1) binName += Form("%d,",symmetryGroups[i][j]);
+	      else binName += Form("%d",symmetryGroups[i][j]);
+	    }
+	  clusterShapeHistoGroupedSector[iSector]->GetXaxis()->SetBinLabel(i+1,(char*)binName.c_str());
+	}
+    }
   tmp = 0;
   for(map<int,int>::iterator it = xPairs.begin(); it != xPairs.end(); ++it)
   {

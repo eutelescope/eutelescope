@@ -183,6 +183,8 @@ private:
   std::map<int,TH1I*> clusterSizeHisto;
   TH1I* clusterShapeHisto;
   TH1I* clusterShapeHistoGrouped;
+  std::map<int,TH1I*> clusterShapeHistoSector;
+  std::map<int,TH1I*> clusterShapeHistoGroupedSector;
   std::map<int,TH1F*> clusterWidthXVsXHisto;
   std::map<int,TH1F*> clusterWidthYVsYHisto;
   std::map<int,TH1F*> clusterWidthXVsXAverageHisto;
