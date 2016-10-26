@@ -180,18 +180,22 @@ AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/eutelescope/interfaces/src lib
 ADD_SHARED_LIBRARY( ${libname} ${library_sources} )
 INSTALL_SHARED_LIBRARY( ${libname} DESTINATION lib )
 
-# Datasource Processor Library
-SET( readers EutelReaders )
-AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/datasources/src reader_sources )
-ADD_SHARED_LIBRARY( ${readers} ${reader_sources} )
-INSTALL_SHARED_LIBRARY( ${readers} DESTINATION lib )
+OPTION(BUILD_PROCESSORS "Build the EUTelescope Marlin Processors" ON)
 
-# Processor Library
-SET( processors EutelProcessors )
-AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/processors/src processor_sources )
-AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/processors/src/alibava processor_sources )
-ADD_SHARED_LIBRARY( ${processors} ${processor_sources} )
-INSTALL_SHARED_LIBRARY( ${processors} DESTINATION lib )
+IF(BUILD_PROCESSORS)
+  # Datasource Processor Library
+  SET( readers EutelReaders )
+  AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/datasources/src reader_sources )
+  ADD_SHARED_LIBRARY( ${readers} ${reader_sources} )
+  INSTALL_SHARED_LIBRARY( ${readers} DESTINATION lib )
+
+  # Processor Library
+  SET( processors EutelProcessors )
+  AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/processors/src processor_sources )
+  AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/processors/src/alibava processor_sources )
+  ADD_SHARED_LIBRARY( ${processors} ${processor_sources} )
+  INSTALL_SHARED_LIBRARY( ${processors} DESTINATION lib )
+ENDIF(BUILD_PROCESSORS)
 
 # Pixel Geometry Shared Libraries
 FILE(GLOB IMPL_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/geometries/src/*.cc)
