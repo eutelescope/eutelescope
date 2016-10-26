@@ -136,7 +136,7 @@ void FakeChi2::operator() (size_t offset, size_t stride){
   TrackCandidate<FITTERTYPE,4> candidate = system.tracks.at(0);
   
   {
-#if DOTHREAD
+#ifdef DOTHREAD
     boost::mutex::scoped_lock lock(resultGurad);
 #endif
     if(firstRun){ calibrate(system); }
@@ -171,7 +171,7 @@ void FakeChi2::operator() (size_t offset, size_t stride){
   }
 
   {
-#if DOTHREAD
+#ifdef DOTHREAD
     boost::mutex::scoped_lock lock(resultGurad);
 #endif
     result += chi2;
@@ -187,7 +187,7 @@ void FakeAbsDev::operator() (size_t offset, size_t stride){
   TrackCandidate<FITTERTYPE,4> candidate = system.tracks.at(0);
   
   {
-#if DOTHREAD
+#ifdef DOTHREAD
     boost::mutex::scoped_lock lock(resultGurad);
 #endif
     if(firstRun){ calibrate(system); }
@@ -222,7 +222,7 @@ void FakeAbsDev::operator() (size_t offset, size_t stride){
   }
 
   {
-#if DOTHREAD
+#ifdef DOTHREAD
     boost::mutex::scoped_lock lock(resultGurad);
 #endif
     result += chi2;
@@ -247,7 +247,7 @@ void Chi2::operator() (size_t offset, size_t stride){
   }
   
   {
-#if DOTHREAD
+#ifdef DOTHREAD
     boost::mutex::scoped_lock lock(resultGurad);
 #endif
     result += varchi2;
@@ -365,7 +365,7 @@ void SDR::operator() (size_t offset, size_t stride){
     }
   }
   {
-#if DOTHREAD
+#ifdef DOTHREAD
     boost::mutex::scoped_lock lock(resultGurad);
 #endif
     result += varvar;
@@ -456,7 +456,7 @@ void FwBw::operator() (size_t offset, size_t stride){
     return2 += resvar * resvar;
   }
   {
-#if DOTHREAD
+#ifdef DOTHREAD
     boost::mutex::scoped_lock lock(resultGurad);
 #endif
     result += -1.0 * logL;
@@ -594,15 +594,15 @@ void EstMat::setPlane(int index, double sigmaX, double sigmaY, double radLength)
 
 void EstMat::printAllFreeParams(){
   bool resXYp = resXYIndex.size() or resXYMulti.size();
-  printParams( (char*) "params[\"RadiationLengths\"]", radLengths, radLengthsIndex.size() or radLengthsMulti.size(), "%4.6f " );
-  printParams( (char*) "params[\"ResolutionX\"]", resX, resXIndex.size() or resXMulti.size() or resXYp, "%4.6f ");
-  printParams( (char*) "params[\"ResolutionY\"]", resY, resYIndex.size() or resYMulti.size() or resXYp, "%4.6f ");
-  printParams( (char*) "params[\"XShift\"]", xShift, xShiftIndex.size(), "%4.2f ");
-  printParams( (char*) "params[\"YShift\"]", yShift, yShiftIndex.size(), "%4.2f ");
-  printParams( (char*) "params[\"XScale\"]", xScale, xScaleIndex.size(), "%4.3f ");
-  printParams( (char*) "params[\"YScale\"]", yScale, yScaleIndex.size(), "%4.3f ");
-  printParams( (char*) "params[\"ZRot\"]", zRot, zRotIndex.size(), "%4.3f ");
-  printParams( (char*) "params[\"ZPosition\"]", zPos, zPosIndex.size(), "%4.2f ");
+  printParams("params[\"RadiationLengths\"]", radLengths, radLengthsIndex.size() or radLengthsMulti.size(), "%4.6f " );
+  printParams("params[\"ResolutionX\"]", resX, resXIndex.size() or resXMulti.size() or resXYp, "%4.6f ");
+  printParams("params[\"ResolutionY\"]", resY, resYIndex.size() or resYMulti.size() or resXYp, "%4.6f ");
+  printParams("params[\"XShift\"]", xShift, xShiftIndex.size(), "%4.2f ");
+  printParams("params[\"YShift\"]", yShift, yShiftIndex.size(), "%4.2f ");
+  printParams("params[\"XScale\"]", xScale, xScaleIndex.size(), "%4.3f ");
+  printParams("params[\"YScale\"]", yScale, yScaleIndex.size(), "%4.3f ");
+  printParams("params[\"ZRot\"]", zRot, zRotIndex.size(), "%4.3f ");
+  printParams("params[\"ZPosition\"]", zPos, zPosIndex.size(), "%4.2f ");
 }
 
 void printHisto(TH1D* histo){
@@ -616,7 +616,7 @@ void printHisto(TH1D* histo){
   cout << endl << "))" << endl;
 }
 
-void EstMat::printParams(char* name, std::vector<FITTERTYPE>& params, bool plot, const char* valString){
+void EstMat::printParams(std::string name, std::vector<FITTERTYPE>& params, bool plot, const char* valString){
   //Print estimation parameters to screen
   if(not plot){ return;}
   std::cout << name << " = \" ";

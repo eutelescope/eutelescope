@@ -17,7 +17,7 @@
 #include <Eigen/LU>
 #include <Eigen/Cholesky>
 
-#if DOTHREAD
+#ifdef DOTHREAD
 #include <boost/thread.hpp>
 #include <boost/thread/detail/thread_group.hpp>
 #include <boost/bind.hpp>
@@ -97,7 +97,7 @@ public:
   void readTracksToDoubleArray(float** measX, int nTracks, int nPlanes);
   void clear(){ tracks.clear(); }
   void getExplicitEstimate(TrackEstimate<FITTERTYPE, 4>& estim);
-  void printParams( char* name, std::vector<FITTERTYPE>& params, bool plot, const char* valString);
+  void printParams( std::string name, std::vector<FITTERTYPE>& params, bool plot, const char* valString);
   void printAllFreeParams();
 };
 
@@ -108,7 +108,7 @@ public:
   FITTERTYPE retVal2;
   size_t nThreads;
   FITTERTYPE result;
-#if DOTHREAD
+#ifdef DOTHREAD
   boost::mutex resultGurad;
 #endif
   vector<TrackerSystem<FITTERTYPE, 4> > systems;
