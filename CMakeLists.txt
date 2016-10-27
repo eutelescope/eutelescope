@@ -154,9 +154,12 @@ ADD_DEFINITIONS("-DDO_TESTING")
 
 # include directories
 include_directories(SYSTEM ./external)
-INCLUDE_DIRECTORIES( ./include )
-INCLUDE_DIRECTORIES( ./include/alibava )
-INCLUDE_DIRECTORIES( ./pixgeo/include/ )
+INCLUDE_DIRECTORIES( ./eutelescope/libraries/include )
+INCLUDE_DIRECTORIES( ./eutelescope/interfaces/include )
+INCLUDE_DIRECTORIES( ./processors/include )
+INCLUDE_DIRECTORIES( ./datasources/include )
+INCLUDE_DIRECTORIES( ./processors/include/alibava )
+INCLUDE_DIRECTORIES( ./geometries/include/ )
 
  
 # definitions to pass to the compiler
@@ -168,16 +171,34 @@ SET(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -fno-inline -fdiagnostics-show-option -Weffc++
 SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g -fdiagnostics-show-option -Weffc++ -Wcast-align -Wcast-qual -Wdisabled-optimization -Winit-self -Wmissing-include-dirs -Wredundant-decls -Wsign-promo -Wstrict-null-sentinel -Wswitch-default -Wundef"  CACHE STRING "Debug options." FORCE )
 # also useful: -Wshadow (however, GCC 4.1 uses this even for system libraries, causing many warnings from Marlin & co)
 
-# add library
+############ Add libraries ########################################
+
+# Main EUTelescope Library
 SET( libname ${PROJECT_NAME} )
-AUX_SOURCE_DIRECTORY( ./src library_sources )
-AUX_SOURCE_DIRECTORY( ./src/alibava library_sources )
+AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/eutelescope/libraries/src library_sources )
+AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/eutelescope/interfaces/src library_sources )
 ADD_SHARED_LIBRARY( ${libname} ${library_sources} )
 INSTALL_SHARED_LIBRARY( ${libname} DESTINATION lib )
-#INSTALL_SHARED_LIBRARY( GBL DESTINATION lib )
 
-#Pixel Geometry Shared Libraries
-FILE(GLOB IMPL_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/pixgeo/src/*.cc)
+OPTION(BUILD_PROCESSORS "Build the EUTelescope Marlin Processors" ON)
+
+IF(BUILD_PROCESSORS)
+  # Datasource Processor Library
+  SET( readers EutelReaders )
+  AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/datasources/src reader_sources )
+  ADD_SHARED_LIBRARY( ${readers} ${reader_sources} )
+  INSTALL_SHARED_LIBRARY( ${readers} DESTINATION lib )
+
+  # Processor Library
+  SET( processors EutelProcessors )
+  AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/processors/src processor_sources )
+  AUX_SOURCE_DIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/processors/src/alibava processor_sources )
+  ADD_SHARED_LIBRARY( ${processors} ${processor_sources} )
+  INSTALL_SHARED_LIBRARY( ${processors} DESTINATION lib )
+ENDIF(BUILD_PROCESSORS)
+
+# Pixel Geometry Shared Libraries
+FILE(GLOB IMPL_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/geometries/src/*.cc)
 
 FOREACH(impl_src ${IMPL_SRCS})
     # Extract FileName from FileName.cc
@@ -196,7 +217,7 @@ IF( ROOT_FOUND AND ROOT_GEOM_FOUND )
 ENDIF()
 
 MACRO( ADD_EUTELESCOPE_TOOL _name )
-    ADD_EXECUTABLE( ${_name} src/exec/${_name}.cxx )
+    ADD_EXECUTABLE( ${_name} eutelescope/tools/${_name}.cxx )
     TARGET_LINK_LIBRARIES( ${_name} ${libname} )
     INSTALL( TARGETS ${_name} DESTINATION bin )
 ENDMACRO()

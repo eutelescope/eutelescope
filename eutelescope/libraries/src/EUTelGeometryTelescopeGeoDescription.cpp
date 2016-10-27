@@ -244,21 +244,21 @@ void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout() {
 
 			EUTelPlane thisPlane;
 
-			thisPlane.xPos	= sensitiveLayer.getPositionX();
-			thisPlane.yPos	= sensitiveLayer.getPositionY();
-			thisPlane.zPos	= sensitiveLayer.getPositionZ();
+			thisPlane.xPos	= sensitiveLayer.getOffsetX();
+			thisPlane.yPos	= sensitiveLayer.getOffsetY();
+			thisPlane.zPos	= sensitiveLayer.getOffsetZ();
 
-			thisPlane.xPosUnc	= sensitiveLayer.getPositionXunc();
-			thisPlane.yPosUnc	= sensitiveLayer.getPositionYunc();
-			thisPlane.zPosUnc	= sensitiveLayer.getPositionZunc();
+			thisPlane.xPosUnc	= sensitiveLayer.getOffsetXunc();
+			thisPlane.yPosUnc	= sensitiveLayer.getOffsetYunc();
+			thisPlane.zPosUnc	= sensitiveLayer.getOffsetZunc();
 
-			thisPlane.alpha	= sensitiveLayer.getRotationZY();
-			thisPlane.beta	= sensitiveLayer.getRotationZX();
-			thisPlane.gamma	= sensitiveLayer.getRotationXY();
+			thisPlane.alpha	= sensitiveLayer.getDeltaRotationZY();
+			thisPlane.beta	= sensitiveLayer.getDeltaRotationZX();
+			thisPlane.gamma	= sensitiveLayer.getDeltaRotationXY();
 
-			thisPlane.alphaUnc	= sensitiveLayer.getRotationZYunc();
-			thisPlane.betaUnc	= sensitiveLayer.getRotationZXunc();
-			thisPlane.gammaUnc	= sensitiveLayer.getRotationXYunc();
+			thisPlane.alphaUnc	= sensitiveLayer.getDeltaRotationZYunc();
+			thisPlane.betaUnc	= sensitiveLayer.getDeltaRotationZXunc();
+			thisPlane.gammaUnc	= sensitiveLayer.getDeltaRotationXYunc();
 
 			auto pixName = sensitiveLayer.getGeometry();
 
@@ -854,13 +854,13 @@ void EUTelGeometryTelescopeGeoDescription::updateTrackerPlanesLayout() {
 			for( size_t iplane = 0; iplane < _sensorIDVec.size(); iplane++ ) {
 				int sensorID =  _sensorIDVec.at(iplane);
 				if( sensitiveLayer.getID() !=  _sensorIDVec.at( iplane) ) continue;  
-				sensitiveLayer.setPositionX( siPlaneXPosition(sensorID) );
-				sensitiveLayer.setPositionY( siPlaneYPosition(sensorID) );
-				sensitiveLayer.setPositionZ( siPlaneZPosition(sensorID) );
+				sensitiveLayer.setOffsetX( siPlaneXPosition(sensorID) );
+				sensitiveLayer.setOffsetY( siPlaneYPosition(sensorID) );
+				sensitiveLayer.setOffsetZ( siPlaneZPosition(sensorID) );
 
-				sensitiveLayer.setRotationZY( siPlaneXRotation(sensorID) );
-				sensitiveLayer.setRotationZX( siPlaneYRotation(sensorID) );
-				sensitiveLayer.setRotationXY( siPlaneZRotation(sensorID) );
+				sensitiveLayer.setDeltaRotationZY( siPlaneXRotation(sensorID) );
+				sensitiveLayer.setDeltaRotationZX( siPlaneYRotation(sensorID) );
+				sensitiveLayer.setDeltaRotationXY( siPlaneZRotation(sensorID) );
 			}
 		}
 	}
