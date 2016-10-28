@@ -163,7 +163,7 @@ INCLUDE_DIRECTORIES( ./geometries/include/ )
 
  
 # definitions to pass to the compiler
-ADD_DEFINITIONS( "-Wall -std=c++11 -pedantic -Wextra" )
+ADD_DEFINITIONS( "-Wno-effc++ -Wall -std=c++11 -pedantic -Wextra" )
 ADD_DEFINITIONS( "-Wno-long-long" )
 
 # debuging warnings and switches - only active if  CMAKE_BUILD_TYPE  is set to debug
