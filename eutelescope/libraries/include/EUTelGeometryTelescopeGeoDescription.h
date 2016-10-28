@@ -25,7 +25,7 @@
 // EUTELESCOPE
 #include "EUTelUtility.h"
 #include "EUTelGenericPixGeoMgr.h"
-
+#include "EUTelGeoSupportClasses.h"
 
 // ROOT
 #if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
@@ -406,10 +406,15 @@ private:
 	void translateSiPlane2TGeo(TGeoVolume*,int );
 
 	void clearMemoizedValues() { _planeNormalMap.clear(); _planeXMap.clear(); _planeYMap.clear(); _planeRadMap.clear(); }
+
 	std::map<int, TVector3> _planeNormalMap;
 	std::map<int, TVector3> _planeXMap;
 	std::map<int, TVector3> _planeYMap;
 	std::map<int, double> _planeRadMap;
+
+	std::vector<EUTelLayer> _telescopeLayers;
+	std::map<std::string, EUTelMaterial> _materialMap;
+
 };
         
 inline EUTelGeometryTelescopeGeoDescription& gGeometry( gear::GearMgr* _g = marlin::Global::GEAR )
