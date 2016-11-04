@@ -1,0 +1,65 @@
+#########################################################################################
+#########################################################################################
+#	The Runlist
+#
+#	Lines with # are skipped by EUTelescope Processors
+#
+#	RunNumber ist the last 4-6 digits of a lcio run file, leading 0s will be added
+#	FileExtension for Alibava runs is either ped or dat
+#	PedRunNumberFormatted is the 6 digit (!) pedestal run number that will be used
+#		for reconstruction
+#	Bonds are the good channels of a sensor, coded:
+#		'$Chip:lowergoodchan-highergoodchan$ $etc.$'
+#	TelescopeRun is the corresponding telescope run, if more than one, only the first
+#		one
+#	GearGeoFile is the gear file to be used for this run
+#	Pol is the polarity of the sensor. -1 for p- and y-type, 1 for n-type
+#	Clulimit is the event limit up to which clusters will be read from the telescope
+#		file in the clustering step. If this feature is on (cf. steering file),
+#		this needs to be set < telescope event count to prevent segfaults
+#	Refalign is the higher (p,y-type) or lower (n-type) voltage run with a good
+#		alignment, which can be used as an alternative
+#	Filter2 gives the option to skip filtering in the 2nd clustering step
+#	
+#	An empty/not needed field can be skipped, but beware that the commas are needed!
+#
+#	Lines with #! will be read by the ROOT analysis and the information used for
+#	shiny plots! Fields are:
+#
+#	#! ThicknessType Fluence, Rotation°, VoltageV, Temperature°C, CurrentmA,
+#	minX maxX (in mm), mintdc maxtdc (in ns), alignx, aligny, alignz, aligna, alignb,
+#	alignc (in mm / °), uselevel, comments
+#
+#########################################################################################
+#########################################################################################
+#
+#	Assumptions: 	25°, 51° draw same current as 0° run, if it exists
+#
+#########################################################################################
+#########################################################################################
+#	this line for EUTelescope:
+
+
+RunNumber,FileExtension,PedRunNumberFormatted,Bonds,TelescopeRun,GearGeoFile,Pol,Clulimit,Refalign,Filter2,SetupRef
+
+
+#########################################################################################
+#########################################################################################
+
+#! 100P unirr, 0°, -300V, +20°C, -0.000017mA, -2.31053 8.21044, 31 41, 0.331026, -0.179842, 0.000457401, 0.00262143, -6.09461e-05, -1.33468, 0, good
+0019,ped,000019,'$0:31-48$ $0:54-58$ $0:68-71$ $0:74-87$',012260,gear_alibava_a0_b0_c0_d100.xml,,,,,
+0022,dat,000019,'$0:31-48$ $0:54-58$ $0:68-71$ $0:74-87$',012260,gear_alibava_a0_b0_c0_d100.xml,-1,430000,000024,,
+012260,c,,,,gear_alibava_a0_b0_c0_d100.xml,,,,,
+012261,d,,,,gear_alibava_a0_b0_c0_d100.xml,,,,,
+012262,d,,,,gear_alibava_a0_b0_c0_d100.xml,,,,,
+012263,d,,,,gear_alibava_a0_b0_c0_d100.xml,,,,,
+
+
+#! 100P 1.5e15, 38°, -1000V, -20°C, -0.0270mA, -3.82327 6.44351, 33 43, 0.158116, -1.26628, -6.16944, -38.0933, -0.205868, -0.171862, 0, good; other chip
+0696,ped,000696,'$0:33-84$ $0:88-94$',000490,gear_alibava_a38_b0_c0_d100.xml,,,,,
+0701,dat,000696,'$0:33-84$ $0:88-94$',000490,gear_alibava_a38_b0_c0_d100.xml,-1,500000,000701,true,
+000490,,,,,gear_alibava_a38_b0_c0_d100.xml,,,,,
+
+
+000938,ped,000938,'$0:1-126$',000938,gear_alibava_a0_b0_c0_d100.xml,,,,,
+000998,dat,000938,'$0:1-126$',000998,gear_alibava_a25_b0_c0_d100.xml,1,10000,,,
