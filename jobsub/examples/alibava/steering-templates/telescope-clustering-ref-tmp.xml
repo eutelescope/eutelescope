@@ -19,6 +19,7 @@
       <processor name="AIDA"/>
       <processor name="LoadHotPixelDB"/>
       <processor name="ClusteringMimosa"/>
+      <processor name="ClusteringCMS"/>
       <processor name="NoisyClusterMasker"/>
       <processor name="NoisyClusterRemover"/>
       <processor name="Save"/>
@@ -27,7 +28,7 @@
 
    <global>
       <parameter name="LCIOInputFiles"> @LcioPath@/run@RunNumber@-converter.slcio </parameter>
-      <parameter name="GearXMLFile" value="@GearFilePath@/@GearFileTelescopeOnly@"/>
+      <parameter name="GearXMLFile" value="@GearFilePath@/@GearFile@"/>
       <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
       <parameter name="SupressCheck" value="false"/>
@@ -66,6 +67,26 @@
  <!--EUTelProcessorSparseClustering is looking for clusters into a calibrated pixel matrix.-->
   <!--Input of Zero Suppressed data-->
   <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> zsdata_m26 </parameter>
+  <!--Cluster (output) collection name-->
+  <parameter name="PulseCollectionName" type="string" lcioOutType="TrackerPulse"> cluster_m26 </parameter>
+  <!--The list of sensor ids that have to be excluded from the clustering.-->
+  <!--parameter name="ExcludedPlanes" type="IntVec"> </parameter-->
+  <!--This is the name of the histogram information file-->
+  <parameter name="HistoInfoFileName" type="string" value="@HistoInfoFile@"/>
+  <!--Switch on or off the histogram filling-->
+  <parameter name="HistogramFilling" type="bool" value="true"/>
+  <!--Minimum distance squared between sparsified pixel ( touching == 2) -->
+  <parameter name="SparseMinDistanceSquared" type="int" value="2"/>
+  <!--Time cut in time units of your sensor-->
+  <parameter name="TCut" type="float" value="3.40282e+38"/>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string" value=""/-->
+</processor>
+
+ <processor name="ClusteringCMS" type="EUTelProcessorSparseClustering">
+ <!--EUTelProcessorSparseClustering is looking for clusters into a calibrated pixel matrix.-->
+  <!--Input of Zero Suppressed data-->
+  <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> CMSPixelREF </parameter>
   <!--Cluster (output) collection name-->
   <parameter name="PulseCollectionName" type="string" lcioOutType="TrackerPulse"> cluster_m26 </parameter>
   <!--The list of sensor ids that have to be excluded from the clustering.-->
