@@ -6,13 +6,15 @@
 #                              #
 # GBL alignment                #
 #                              #
+# for simulated runs           #
+#                              #
 ################################
 
-# usage: sh x_gbl.sh runnumber
+# usage: sh x_sim_dut.sh runnumber
 
 ################################
 # Run the analysis chain.
-# x_pedestal.sh and x_telescope-<multi/single>.sh should be called before...
+# x_sim_pedestal.sh and x_sim_tel.sh should be called before...
 ################################
 
 jobsub.py -c config.cfg -csv runlist.csv simconverter $1

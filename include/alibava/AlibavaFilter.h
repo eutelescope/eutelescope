@@ -1,8 +1,8 @@
 /*
- * Created by Eda Yildirim
+ * Created by Thomas Eichhorn
  *  (2014 DESY)
  *
- *  email:eda.yildirim@cern.ch
+ *  email:thomas.eichhorn@cern.ch
  */
 
 #ifndef AlibavaFilter_H

@@ -4,7 +4,7 @@ jobcount=0
 T="$(date "+%d/%m/%y %T")"
 touch logoutput_data_gbl_n.txt
 echo "Starting script at $T !" > logoutput_data_gbl_n.txt
-: '
+
 OLDIFS=$IFS
 IFS=,
 [ ! -f $INPUT ] && { echo "$INPUT file not found"; exit 99; }
@@ -228,7 +228,7 @@ wait
 
 T="$(date "+%d/%m/%y %T")"
 echo "Done all coordinator runs at $T! Proceeding with alignment-gbl-1!" >> logoutput_data_gbl_n.txt
-'
+
 OLDIFS=$IFS
 IFS=,
 [ ! -f $INPUT ] && { echo "$INPUT file not found"; exit 99; }

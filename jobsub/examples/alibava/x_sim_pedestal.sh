@@ -4,9 +4,11 @@
 #                              #
 # ALiBaVa Analysis - Pedestal  #
 #                              #
+# for simulated runs           #
+#                              #
 ################################
 
-# usage: sh x_pedestal.sh runnumber
+# usage: sh x_sim_pedestal.sh runnumber
 
 jobsub.py -c config.cfg -csv runlist.csv simconverter $1
 jobsub.py -c config.cfg -csv runlist.csv pedestal $1
