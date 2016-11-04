@@ -92,7 +92,6 @@ _hMaskedEventsNumberName("EventNumberOfMaskedEvents")
 										 "If MaskIfAnyChipsCommonModeIsNotInRange variable is set to \"true\", the whole event will be masked even if only one chip has common mode noise that is not in the range. In case it is set to \"false\" then the event will be masked if all chips selected has common mode noise not in the range.",
 										  _maskIfAnyChipsCommonModeIsNotInRange , bool(true));
 
-
 }
 
 

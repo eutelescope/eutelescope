@@ -395,7 +395,7 @@ bool AlibavaBaseProcessor::isMasked(int ichip, int ichan){
 	else if (isChipValid(ichip) && isChannelValid(ichan))
 		return _isMasked[ichip][ichan];
 	else{
-		streamlog_out( ERROR5 ) <<"Trying to access mask value of non existing chip/channel. Returning zero."<< endl;
+		streamlog_out( ERROR5 ) <<"Trying to access mask value of non existing chip: " << ichip << " channel: " << ichan << " . Returning zero."<< endl;
 		return 0;
 	}
 }
@@ -474,7 +474,7 @@ bool AlibavaBaseProcessor::isMaskingValid(int onchip, int fromchannel, int tocha
 	// channels should be in ascending order!
 	
 	if(!isChipValid(onchip)){
-		streamlog_out( ERROR5 ) <<" Chip selection on channel masking is not valid!"<< endl;
+		streamlog_out( ERROR5 ) <<" Chip selection on channel masking is not valid on chip: "<< onchip << endl;
 		isValid = false;
 	}
 	if (!isChannelValid(fromchannel) || !isChannelValid(tochannel)){

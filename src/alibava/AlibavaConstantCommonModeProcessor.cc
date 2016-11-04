@@ -96,6 +96,9 @@ _commonmodeerror()
 										"The limit to the deviation of noise. The data exceeds this deviation will be considered as signal and not be included in common mode error calculation",
 										_NoiseDeviation, float(2.5) );
 
+	registerOptionalParameter ("Method", "The method with which to calculate the common mode. Options are: constant or slope", _commonmodeMethod, string ("slope"));
+
+
 }
 
 
@@ -238,18 +241,22 @@ void AlibavaConstantCommonModeProcessor::calculateConstantCommonMode(TrackerData
 	int chipnum = getChipNum(trkdata);
 	
 	streamlog_out( DEBUG0 ) << "Chip " << chipnum << " of " << getNumberOfChips() << ", now iterating..." << endl;
-	
-	
+
 	double sig=0, tmpdouble=0;
 	double mean_signal=0;
 	double sigma_mean_signal=0;
-	
-	
+	double delta = 0;
+	double a = 0;
+	double b = 0;
+
 	for (int i=0; i<_Niteration; i++) {
 		int nchan=0;
 		double total_signal=0;
 		double total_signal_square=0;
-		
+		double channelcount = 0;
+		double channelcount_square = 0;
+		double chan_sig = 0;
+
 		// find mean value of signals
 		for ( int ichan =0; ichan < int (datavec.size()); ichan++ ){
 			if ( isMasked(chipnum, ichan) )
@@ -262,6 +269,9 @@ void AlibavaConstantCommonModeProcessor::calculateConstantCommonMode(TrackerData
 				total_signal += sig;
 				total_signal_square += sig*sig;
 				nchan++;
+				channelcount += ichan;
+				channelcount_square += ichan * ichan;
+				chan_sig += ichan * sig;
 			}
 			else{ // exclude outliers
 				tmpdouble = fabs((sig - mean_signal)/sigma_mean_signal);
@@ -269,9 +279,20 @@ void AlibavaConstantCommonModeProcessor::calculateConstantCommonMode(TrackerData
 					total_signal += sig;
 					total_signal_square += sig*sig;
 					nchan++;
+					channelcount += ichan;
+					channelcount_square += ichan * ichan;
+					chan_sig += ichan * sig;
 				}
 			}
 		} // end of loop over channels
+
+		// slope corrections: commonmode = a + b * channr.
+		delta = nchan * channelcount_square - channelcount * channelcount;
+		a = (channelcount_square * total_signal - channelcount * chan_sig) / delta;
+		b = (nchan * chan_sig - channelcount * total_signal) / delta;
+
+		streamlog_out ( DEBUG0 ) << "Slop calculation: delta = " << delta << " , a = " << a << " , b = " << b << " !" << endl;
+
 		// here find the deviation from mean value
 		// standard deviation = SQRT( E[x^2] - E[x]^2 )
 		// where E denotes average value
@@ -287,13 +308,22 @@ void AlibavaConstantCommonModeProcessor::calculateConstantCommonMode(TrackerData
 
 	streamlog_out( DEBUG0 ) << "===============================================================================" << endl;
 	
-	// Now reloop over all channels and create the output vector. This will be the same for all channels
+	// Now reloop over all channels and create the output vector. This will be the same for all channels if constant is used, otherwise the slope values are calculated.
 	for ( int ichan = 0; ichan < ALIBAVA::NOOFCHANNELS ; ichan++ )
 	{
-		commonmodeVec.push_back(mean_signal);
-		commonmodeerrorVec.push_back(sigma_mean_signal);
+		if (_commonmodeMethod == "constant" )
+		{
+			commonmodeVec.push_back(mean_signal);
+			commonmodeerrorVec.push_back(sigma_mean_signal);
+		}
+		
+		if (_commonmodeMethod == "slope" )
+		{
+			commonmodeVec.push_back(a + b * ichan);
+			commonmodeerrorVec.push_back(sigma_mean_signal);
+		}
 	}
-	
+
 	setCommonModeVec(commonmodeVec);
 	setCommonModeErrorVec(commonmodeerrorVec);
 	
