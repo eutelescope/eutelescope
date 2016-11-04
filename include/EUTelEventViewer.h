@@ -221,7 +221,28 @@ namespace eutelescope {
      *  to be set to zero to go at full speed.
      */
     double _autoForwardDelay;
-      
+
+    // the size of the hits to be drawn
+    int _hitsize;
+
+    // the size of the track lines to be drawn
+    int _linesize;
+
+    // additional z sensor thickness that is added for visibility
+    double _sensorthickness;
+
+    // scale all x dimensions by this number
+    double _xscale;
+
+    // scale all y dimensions by this number
+    double _yscale;
+
+    // scale all z dimensions by this number
+    double _zscale;
+
+    // highlight measured hits from the DUT with this id, -1 to disable
+    int _duthighlight;
+
     //! The detector model
     int _detModel;
 

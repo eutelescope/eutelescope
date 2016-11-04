@@ -681,12 +681,19 @@ void EUTelApplyAlignmentProcessor::ApplyGear6D( LCEvent *event)
       }
 
       // copy the input to the output, at least for the common part
+      CellIDEncoder<TrackerHitImpl> outputCellIDEncoder(EUTELESCOPE::HITENCODING, _outputCollectionVec);
       TrackerHitImpl   * outputHit  = new TrackerHitImpl;
       outputHit->setType( inputHit->getType() );
       outputHit->rawHits() = inputHit->getRawHits();
+      FloatVec cov = inputHit->getCovMatrix();
+      outputHit->setCovMatrix( cov );
       outputHit->setCellID0( inputHit->getCellID0() );
       outputHit->setCellID1( inputHit->getCellID1() );
       outputHit->setTime( inputHit->getTime() );
+      outputHit->setEDep( inputHit->getEDep() );
+      outputHit->setEDepError( inputHit->getEDepError() );
+      outputHit->setQuality( inputHit->getQuality() );
+
 
       double * inputPosition      = const_cast< double * > ( inputHit->getPosition() ) ;
       double   outputPosition[3]  = { 0., 0., 0. };
@@ -916,12 +923,18 @@ void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event)
       }
 
       // copy the input to the output, at least for the common part
+      CellIDEncoder<TrackerHitImpl> outputCellIDEncoder(EUTELESCOPE::HITENCODING, _outputCollectionVec);
       TrackerHitImpl   * outputHit  = new TrackerHitImpl;
       outputHit->setType( inputHit->getType() );
       outputHit->rawHits() = inputHit->getRawHits();
+      FloatVec cov = inputHit->getCovMatrix();
+      outputHit->setCovMatrix( cov );
       outputHit->setCellID0( inputHit->getCellID0() );
       outputHit->setCellID1( inputHit->getCellID1() );
       outputHit->setTime( inputHit->getTime() );
+      outputHit->setEDep( inputHit->getEDep() );
+      outputHit->setEDepError( inputHit->getEDepError() );
+      outputHit->setQuality( inputHit->getQuality() );
 
       const double * inputPosition      = const_cast< const double * > ( inputHit->getPosition() ) ;
       double   outputPosition[3]  = { 0., 0., 0. };
@@ -1218,13 +1231,18 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
       streamlog_out( DEBUG5 ) << "DIRECT:-----:-----: refhit found for sensorID " << sensorID << endl;
 
       // copy the input to the output, at least for the common part
+      CellIDEncoder<TrackerHitImpl> outputCellIDEncoder(EUTELESCOPE::HITENCODING, _outputCollectionVec);
       TrackerHitImpl   * outputHit  = new TrackerHitImpl;
       outputHit->setType( inputHit->getType() );
       outputHit->rawHits() = inputHit->getRawHits();
-      outputHit->setCovMatrix( inputHit->getCovMatrix() );
+      FloatVec cov = inputHit->getCovMatrix();
+      outputHit->setCovMatrix( cov );
       outputHit->setCellID0( inputHit->getCellID0() );
       outputHit->setCellID1( inputHit->getCellID1() );
       outputHit->setTime( inputHit->getTime() );
+      outputHit->setEDep( inputHit->getEDep() );
+      outputHit->setEDepError( inputHit->getEDepError() );
+      outputHit->setQuality( inputHit->getQuality() );
 
       // hit coordinates in the center-of-the sensor frame (axis coincide with the global frame)
       const double *inputS = static_cast<const double*> ( inputHit->getPosition() ) ;
@@ -1556,12 +1574,18 @@ void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
       }
  
       // copy the input to the output, at least for the common part
+      CellIDEncoder<TrackerHitImpl> outputCellIDEncoder(EUTELESCOPE::HITENCODING, _outputCollectionVec);
       TrackerHitImpl   * outputHit  = new TrackerHitImpl;
       outputHit->setType( inputHit->getType() );
       outputHit->rawHits() = inputHit->getRawHits();
+      FloatVec cov = inputHit->getCovMatrix();
+      outputHit->setCovMatrix( cov );
       outputHit->setCellID0( inputHit->getCellID0() );
       outputHit->setCellID1( inputHit->getCellID1() );
       outputHit->setTime( inputHit->getTime() );
+      outputHit->setEDep( inputHit->getEDep() );
+      outputHit->setEDepError( inputHit->getEDepError() );
+      outputHit->setQuality( inputHit->getQuality() );
 
       // now that we know at which sensor the hit belongs to, we can
       // get the corresponding alignment constants

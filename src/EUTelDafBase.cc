@@ -182,8 +182,10 @@ bool EUTelDafBase::defineSystemFromData(){
 	continue;
       }
 
-      if( fabs(pl.meas.at(meas).getX() - pl.getRef0()(0) ) < 500) { continue; }
-      if( fabs(pl.meas.at(meas).getY() - pl.getRef0()(1) ) < 500) { continue; }
+// Thomas Eichhorn: setting this distance to 50 instead of existing 500...
+
+      if( fabs(pl.meas.at(meas).getX() - pl.getRef0()(0) ) < 50) { continue; }
+      if( fabs(pl.meas.at(meas).getY() - pl.getRef0()(1) ) < 50) { continue; }
 
       if( _nRef.at(plane) == 1 ){
 	pl.setRef1( Eigen::Matrix<float, 3, 1>(pl.meas.at(meas).getX(), pl.meas.at(meas).getY(), pl.meas.at(meas).getZ()));
@@ -191,8 +193,11 @@ bool EUTelDafBase::defineSystemFromData(){
 	gotPlane = false;
 	continue;
       }
-      if( fabs(pl.meas.at(meas).getX() - pl.getRef1()(0) ) < 500) {  continue; }
-      if( fabs(pl.meas.at(meas).getY() - pl.getRef1()(1) ) < 500) {  continue; }
+
+// Thomas Eichhorn: setting this distance to 50 instead of existing 500...
+
+      if( fabs(pl.meas.at(meas).getX() - pl.getRef1()(0) ) < 50) {  continue; }
+      if( fabs(pl.meas.at(meas).getY() - pl.getRef1()(1) ) < 50) {  continue; }
       if( _nRef.at(plane) == 2 ){
 	pl.setRef2( Eigen::Matrix<float, 3, 1>(pl.meas.at(meas).getX(), pl.meas.at(meas).getY(), pl.meas.at(meas).getZ()));
 	_nRef.at(plane)++;
