@@ -1,0 +1,73 @@
+=============================================================================
+
+examples/alibava
+
+Thomas Eichhorn 2016
+thomas.eichhorn@desy.de
+
+=============================================================================
+
+This is the example full analysis and reconstruction of a strip sensor DUT with
+an ALiBaVa readout.
+
+=============================================================================
+
+Folder contents:
+
+/gearfiles:
+
+  Contains gear files for various setup scenarios. gear_alibava_aA_bB_cC_dD.xml 
+is a setup with the strip sensor DUT of thickness D at a rotation angle alpha 
+of A, rotation angle beta of B and rotation angle gamma of C. All included 
+files have the same telescope setup, but this can be changed to your needs. 
+gear_alibava_eda.xml is for a scenario where the sensitive DUT coordinate is 
+rotated by 90 degrees (here: along the x-axis). gear_alibava_ref.xml and 
+gear_alibava_ref_38.xml are for scenarios where a reference plane is used. 
+gear_telescope.xml is for the DUT-free case.
+
+/histoinfo:
+
+  Contains XML files for histogram ranges and boundaries. This is mostly for 
+legacy processors.
+
+/output:
+
+  The output created by the EUTelescope processors will be written to the 
+subfolders herein.
+
+/steering-templates:
+
+  This folder contains the steering templates used to control the processors. 
+They are explained further on.
+
+/config.cfg:
+
+  The configuration file. Data paths should be changed, other settings should 
+work for most scenarios.
+
+/runlist.csv:
+
+  A file containing the information of the runs to be processed. Run-specific 
+parameters are read from this file. It can also be parsed by the scripts for 
+running multiple runs.
+
+/README:
+
+  This file.
+
+/x_<name>.sh:
+
+  Scripts for performing a specific task on one run. They should be called with 
+sh scriptname.sh <runnumber> . Further information is in the scripts.
+
+/z_<name>.sh:
+
+  Similar scripts that parse the runlist.csv and thus loop over all (or a 
+certain subset of runs) therein. Again, further information is in each script.
+
+=============================================================================
+
+Processors and analysis chain:
+
+...
+
