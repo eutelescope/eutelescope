@@ -240,7 +240,8 @@ private:
       kTwoCloseTracksRejected, kZposCorrect, kZposWrong, kAlignmentRemoved,
       kAlignmentRemovalFailed, kFittedHitOnChip, kFittedHitNotOnChip, kFittedHitInBorderRegion,
       kUnknownSector, kHotPixel, kMaskedPixel, kDeadColumn, kHitsOnTheSamePlane, kSingleHitsOnly,
-      kRejectedMultipleHits, kDenominator, kHitInDUT, kAssociatedHitInDUT
+      kRejectedMultipleHits, kDenominator, kHitInDUT, kAssociatedHitInDUT, kNoHitInDUT,
+      kHitNotInDUT, kHitInDUTNotAssociated, kHitNULL
       };
 };
 

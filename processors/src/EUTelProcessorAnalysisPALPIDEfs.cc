@@ -664,9 +664,24 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
           }
         }
 
+
+        nTrackPerEvent++;
+        int nAssociatedhits = 0;
+        int nDUThitsEvent = 0;
+        int nHit = col->getNumberOfElements();
+        double yposPrev = 0.;
+        double xposPrev = 0.;
+        int nPlanesWithMoreHits = 0;
+        bool unfoundTrack = false;
+        bool unfoundTrackFake = false;
+        bool pAlpideHit = false;
+        bool firstHit = true;
+        int nPAlpideHits = 0;
+
         // HIT LOOP ===============================================================================
         // Find planes with multiple hits ---------------------------------------------------------
         // ToDo: why was this loop inside the other hit loop below?
+        bool hitOnSamePlane = false;
         for(int j=0; j<nHit && firstHit && nPlanesWithMoreHits <= _nPlanesWithMoreHits; j++)
         {
             TrackerHit * hitcheck1 = dynamic_cast<TrackerHit*>( col->getElementAt(j) ) ;
@@ -700,19 +715,6 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
         }
 
         stats->Fill(kDenominator);
-
-        nTrackPerEvent++;
-        int nAssociatedhits = 0;
-        int nDUThitsEvent = 0;
-        int nHit = col->getNumberOfElements();
-        double yposPrev = 0.;
-        double xposPrev = 0.;
-        int nPlanesWithMoreHits = 0;
-        bool unfoundTrack = false;
-        bool unfoundTrackFake = false;
-        bool pAlpideHit = false;
-        bool firstHit = true;
-        int nPAlpideHits = 0;
 
         std::vector<double> posFitHit;
         posFitHit.push_back(xposfit);
@@ -932,11 +934,18 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
 #endif
                 yposPrev = ypos;
                 xposPrev = xpos;
+
+                // Move here (XYZ)
               }
-              else if (nAssociatedhits < 1 && nDUThitsEvent == 1) {
+              else {
+                stats->Fill(kHitNotInDUT);
+                continue;
+              }
+              if (nAssociatedhits < 1 && nDUThitsEvent == 1) { // Move above to XYZ
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
                 hitmapWrongHitHisto->Fill(xposfit,yposfit);
                 chi2HistoNoHit->Fill(chi2);
+                stats->Fill(kHitInDUTNotAssociated);
 #endif
                 nWrongPAlpideHit++;
                 xposfitPrev = xposfit;
@@ -946,8 +955,17 @@ void EUTelProcessorAnalysisPALPIDEfs::processEvent(LCEvent *evt)
             }
             else continue;
           }
+          else {
+            stats->Fill(kHitNULL);
+          }
         }
         // END OF HIT LOOP
+
+        if (nAssociatedhits<1) {
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+          stats->Fill(kNoHitInDUT);
+#endif
+        }
 
         firstTrack = false;
         nHitsPerEvent.push_back(nPAlpideHits);
@@ -1419,8 +1437,13 @@ void EUTelProcessorAnalysisPALPIDEfs::bookHistos()
   stats->GetXaxis()->SetBinLabel(1+kHitsOnTheSamePlane     , "Found multiple hits on the same plane");
   stats->GetXaxis()->SetBinLabel(1+kSingleHitsOnly         , "Single hits only");
   stats->GetXaxis()->SetBinLabel(1+kRejectedMultipleHits   , "Event rejected, multiple hits");
+  stats->GetXaxis()->SetBinLabel(1+kDenominator            , "Denominator");
   stats->GetXaxis()->SetBinLabel(1+kHitInDUT               , "Hit in DUT");
   stats->GetXaxis()->SetBinLabel(1+kAssociatedHitInDUT     , "Associated hit in DUT");
+  stats->GetXaxis()->SetBinLabel(1+kNoHitInDUT             , "No Hit in DUT");
+  stats->GetXaxis()->SetBinLabel(1+kHitNotInDUT            , "Hit not in DUT");
+  stats->GetXaxis()->SetBinLabel(1+kHitInDUTNotAssociated  , "Hit in DUT not Associated");
+  stats->GetXaxis()->SetBinLabel(1+kHitNULL                , "Hit object NULL");
 
   for (int iSector=0; iSector<_nSectors; iSector++)
   {
