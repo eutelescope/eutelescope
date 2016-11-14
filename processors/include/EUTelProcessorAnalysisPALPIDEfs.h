@@ -31,15 +31,16 @@ public:
   virtual void init() ;
   virtual void processEvent( LCEvent * evt ) ;
   void _EulerRotationBack(double* _telPos, double* _gRotation);
+  void _LayerRotationBack(double* pos, double& outputX, double& outputY);
   int AddressToColumn(int ARegion, int ADoubleCol, int AAddress);
   int AddressToRow(int AAddress);
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
   //! Book histograms
   /*! This method is used to prepare the needed directory structure
-  *  within the current ITree folder and books all required
-  *  histograms. Histogram pointers are stored into
-  *  vectors for class-wide access
-  */
+   *  within the current ITree folder and books all required
+   *  histograms. Histogram pointers are stored into
+   *  vectors for class-wide access
+   */
   void bookHistos();
 #endif
   virtual void end();
@@ -48,8 +49,8 @@ public:
 protected:
   //! Fill histogram switch
   /*! This boolean is used to switch on and off the filling of
-  *  histograms.
-  */
+   *  histograms.
+   */
   bool _fillHistos;
   std::string _inputFittedHitName;
   std::string _inputColName;
@@ -60,11 +61,11 @@ protected:
   std::string _zsDataCollectionName;
   //! The histogram information file
   /*! This string contain the name of the histogram information
-  *  file. This is selected by the user in the steering file.
-  *
-  *  @see eutelescope::EUTelHistogramManager
-  *  @see eutelescope::EUTelHistogramInfo
-  */
+   *  file. This is selected by the user in the steering file.
+   *
+   *  @see eutelescope::EUTelHistogramManager
+   *  @see eutelescope::EUTelHistogramInfo
+   */
   LCCollectionVec *zsInputDataCollectionVec;
   std::string _histoInfoFileName;
   std::string _hotPixelCollectionName;
@@ -97,7 +98,7 @@ protected:
   std::map<int,int> xPairs;
   std::map<int,int> yPairs;
   std::vector< std::vector<int> > symmetryGroups;
-  double zDistance;
+  double zDistance; // TODO: which units?
   int _nEvents;
   int _nEventsFake;
   int _nEventsWithTrack;
@@ -176,11 +177,14 @@ private:
   std::map<int,TH1I*> chi2X;
   std::map<int,TH1I*> chi2Y;
   TH1I* chi2Histo;
+  TH1I* chi2HistoNoHit;
   std::map<int,TH1I*> clusterWidthXHisto;
   std::map<int,TH1I*> clusterWidthYHisto;
   std::map<int,TH1I*> clusterSizeHisto;
   TH1I* clusterShapeHisto;
   TH1I* clusterShapeHistoGrouped;
+  std::map<int,TH1I*> clusterShapeHistoSector;
+  std::map<int,TH1I*> clusterShapeHistoGroupedSector;
   std::map<int,TH1F*> clusterWidthXVsXHisto;
   std::map<int,TH1F*> clusterWidthYVsYHisto;
   std::map<int,TH1F*> clusterWidthXVsXAverageHisto;
@@ -226,10 +230,21 @@ private:
   TH1I* nClusterPerEventHisto;
   TH1I* nAssociatedhitsHisto;
   TH1I* nAssociatedtracksHisto;
+  TH1I* stats;
   std::vector< std::vector< std::vector<double> > > posFake;
   std::vector< std::vector< std::vector<double> > > posFit;
   std::vector< std::vector<double> > posFakeTemp;
-  std::vector< int > nHitsPerEvent; 
+  std::vector< int > nHitsPerEvent;
+
+  enum statsEntry : int { kAll=0, kNoLargeClusters, kGoodTimeStamp, kDataAvailable,
+      kFittedHitsAvailable, kTracksAvailable, kAlignAvailable, kOnlyOneAlignAvailable,
+      kClustersAvailable, kSingularRotationMatrix, kFittedHit, kTwoCloseTracks,
+      kTwoCloseTracksRejected, kZposCorrect, kZposWrong, kAlignmentRemoved,
+      kAlignmentRemovalFailed, kFittedHitOnChip, kFittedHitNotOnChip, kFittedHitInBorderRegion,
+      kUnknownSector, kHotPixel, kMaskedPixel, kDeadColumn, kHitsOnTheSamePlane, kSingleHitsOnly,
+      kRejectedMultipleHits, kDenominator, kHitInDUT, kAssociatedHitInDUT, kNoHitInDUT,
+      kHitNotInDUT, kHitInDUTNotAssociated, kHitNULL
+      };
 };
 
 #endif
