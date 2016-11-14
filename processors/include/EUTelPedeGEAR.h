@@ -17,10 +17,6 @@
 // marlin includes ".h"
 #include "marlin/Processor.h"
 
-// gear includes <.h>
-#include <gear/SiPlanesParameters.h>
-#include <gear/SiPlanesLayerLayout.h>
-
 // lcio includes <.h>
 #include <EVENT/LCRunHeader.h>
 #include <EVENT/LCEvent.h>
@@ -130,28 +126,6 @@ namespace eutelescope {
 
  	std::string _GEARFileSuffix;
     
-	//! Silicon planes parameters as described in GEAR
-    /*! This structure actually contains the following:
-     *  @li A reference to the telescope geoemtry and layout
-     *  @li An integer number saying if the telescope is w/ or w/o DUT
-     *  @li An integer number saying the number of planes in the
-     *  telescope.
-     *
-     *  This object is provided by GEAR during the init() phase and
-     *  stored here for local use.
-     */
-    gear::SiPlanesParameters * _siPlanesParameters;
-
-    //! Silicon plane layer layout
-    /*! This is the real geoemetry description. For each layer
-     *  composing the telescope the relevant information are
-     *  available.
-     *
-     *  This object is taken from the _siPlanesParameters during the
-     *  init() phase and stored for local use
-     */
-    gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
-
     size_t _nPlanes;
   };
 

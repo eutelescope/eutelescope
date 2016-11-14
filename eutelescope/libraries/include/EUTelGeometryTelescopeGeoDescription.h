@@ -169,6 +169,17 @@ class EUTelGeometryTelescopeGeoDescription
 	/** */
 	static unsigned _counter;
 
+	std::map<int, TVector3> _planeNormalMap;
+	std::map<int, TVector3> _planeXMap;
+	std::map<int, TVector3> _planeYMap;
+	std::map<int, double> _planeRadMap;
+
+	std::vector<std::unique_ptr<EUTelLayer>> _telescopeLayers;
+	std::map<int, EUTelLayer*> _telescopeLayerMap;
+	std::map<std::string, EUTelMaterial> _materialMap;
+	std::map<int, EUTelActive*> _activeMap;
+
+
   public:
 	/** Retrieves the instanstance of geometry.
 	 * Performs lazy intialization if necessary.
@@ -182,6 +193,10 @@ class EUTelGeometryTelescopeGeoDescription
 	/** */
 	unsigned counter() { return _counter++; }
 
+	auto getActivePlaneMap() const -> decltype(_activeMap) {
+		return _activeMap;
+	}
+
 	void setInitialDisplacementToFirstPlane(float initialDisplacement){_initialDisplacement = initialDisplacement; };
 
 	/** needed only for pede2lcio*/ 
@@ -194,19 +209,47 @@ class EUTelGeometryTelescopeGeoDescription
 	void setSiPlanesLayoutID(size_t value) { _siPlanesLayoutID = value; } ;          
 
 	/** Number of planes in the setup */
-	size_t nPlanes() const { return _nPlanes; };
+	size_t nPlanes() const { return _activeMap.size(); };
 
   /** set methods */
 	/** set X position  */
+/*
+	inline void setPlaneOffset(int sensorID, Eigen::Vector3d pos){ return; this->clearMemoizedValues(); };
 
-	inline void setPlaneXPosition(int sensorID, double value){ _planeSetup[sensorID].xPos = value; this->clearMemoizedValues(); };
+	inline void setPlaneAbsolutePosition(int sensorID, Eigen::Vector3d pos){ return; this->clearMemoizedValues(); };
+	inline void setPlaneAbsolutePosition(int sensorID, double x, double y, double z){ return; this->clearMemoizedValues(); };
+*/
+	inline void alignGlobalPos(int sensorID, Eigen::Vector3d const & pos){
+		std::cout << "Aligning sensor: " << sensorID << " to position: " << pos << std::endl; 
+		_activeMap.at(sensorID)->alignPos(pos);
+		this->clearMemoizedValues();
+		return;
+	};
 
-	/** set Y position  */
-	inline void setPlaneYPosition(int sensorID, double value){ _planeSetup[sensorID].yPos = value; this->clearMemoizedValues(); };
+	inline void alignGlobalPos(int sensorID, double x, double y, double z){ 
+		Eigen::Vector3d pos = Eigen::Vector3d(x, y, z);
+		std::cout << "Aligning sensor: " << sensorID << " to position: " << pos << std::endl; 
+		_activeMap.at(sensorID)->alignPos(pos);
+		this->clearMemoizedValues();
+		return;
+	};
 
-	/** set Z position  */
-	inline void setPlaneZPosition(int sensorID, double value){ _planeSetup[sensorID].zPos = value; this->clearMemoizedValues(); };
+	inline void alignGlobalRot(int sensorID, Eigen::Matrix3d const & rot){
+		std::cout << "Aligning sensor: " << sensorID << " to rotation: " << rot << std::endl; 
+		_activeMap.at(sensorID)->alignRot(rot);
+		this->clearMemoizedValues();
+		return;
+	};
 
+/*
+	inline void setPlaneOffset(int sensorID, double x, double y, double z){ return; this->clearMemoizedValues(); };
+
+	inline void setParentLayerPosition(int sensorID, double x, double y, double z){ 
+		_activeMap.at(sensorID)->setParentPosition(x, y, z);
+		this->clearMemoizedValues();
+		return;
+	};
+*/
 	/** set X rotation  */
 	inline void setPlaneXRotation(int sensorID, double value){ _planeSetup[sensorID].alpha = value; this->clearMemoizedValues(); };
 
@@ -225,81 +268,91 @@ class EUTelGeometryTelescopeGeoDescription
 	/** set Z rotation in radians */
 	inline void setPlaneZRotationRadians(int sensorID, double value){ _planeSetup[sensorID].gamma = value*DEG; this->clearMemoizedValues(); };
 
+	inline void setPlanePitch(int sensorID, double xPitch, double yPitch) {
+		_activeMap.at(sensorID)->setPitch(xPitch, yPitch);	
+	}
+	inline void setPlaneNoPixels(int sensorID, int xNo, int yNo) {
+		_activeMap.at(sensorID)->setNoPixels(xNo, yNo);	
+	}
 	//GETTER
 	/** */ 
-	float siPlaneRotation1(int sensorID){ return _planeSetup.at(sensorID).f1; };
+	float siPlaneRotation1(int sensorID){ return _activeMap.at(sensorID)->getFlipMatrix().coeff(0,0); };
 
 	/** */ 
-	float siPlaneRotation2(int sensorID){ return _planeSetup.at(sensorID).f2; };
+	float siPlaneRotation2(int sensorID){ return _activeMap.at(sensorID)->getFlipMatrix().coeff(1,0); };
 
 	/** */ 
-	float siPlaneRotation3(int sensorID){ return _planeSetup.at(sensorID).f3; };
+	float siPlaneRotation3(int sensorID){ return _activeMap.at(sensorID)->getFlipMatrix().coeff(0,1); };
 
 	/** */ 
-	float siPlaneRotation4(int sensorID){ return _planeSetup.at(sensorID).f4; };
+	float siPlaneRotation4(int sensorID){ return _activeMap.at(sensorID)->getFlipMatrix().coeff(1,1); };
+
+	auto getPlanePosition(int sensorID) const -> decltype( _activeMap.at(sensorID)->getPosition()) {
+		return _activeMap.at(sensorID)->getPosition();
+	}
 
 	/** X coordinate of center of sensor 
 	 * with given ID in global coordinate frame */
-	double siPlaneXPosition(int sensorID){ return _planeSetup.at(sensorID).xPos; };
+	double siPlaneXPosition(int sensorID){ return _activeMap.at(sensorID)->getPosition().coeff(0); };
 
 	/** Y coordinate of center of sensor 
 	 * with given ID in global coordinate frame */
-	double siPlaneYPosition(int sensorID){ return _planeSetup.at(sensorID).yPos; };
+	double siPlaneYPosition(int sensorID){ return _activeMap.at(sensorID)->getPosition().coeff(1); };
 
 	/** Z coordinate of center of sensor 
 	 * with given ID in global coordinate frame */
-	double siPlaneZPosition(int sensorID){ return _planeSetup.at(sensorID).zPos; };
+	double siPlaneZPosition(int sensorID){ return _activeMap.at(sensorID)->getPosition().coeff(2); };
 
 	/** Rotation around X axis of the global coordinate frame */
-	double siPlaneXRotation(int sensorID){ return _planeSetup.at(sensorID).alpha; };
+	double siPlaneXRotation(int sensorID){ return _activeMap.at(sensorID)->getGlobalRotationAngles().coeff(0); };
 
 	/** Rotation around Y axis of global coordinate frame */
-	double siPlaneYRotation(int sensorID){ return _planeSetup.at(sensorID).beta; };
+	double siPlaneYRotation(int sensorID){ return _activeMap.at(sensorID)->getGlobalRotationAngles().coeff(1); };
 
 	/** Rotation around Z axis of global coordinate frame */
-	double siPlaneZRotation(int sensorID){ return _planeSetup.at(sensorID).gamma; };
+	double siPlaneZRotation(int sensorID){ return _activeMap.at(sensorID)->getGlobalRotationAngles().coeff(2); };
 
 	/** Rotation around X axis of the global coordinate frame */
-	double siPlaneXRotationRadians(int sensorID){ return _planeSetup.at(sensorID).alpha*RADIAN; };
+	double siPlaneXRotationRadians(int sensorID){ return _activeMap.at(sensorID)->getGlobalRotationAngles().coeff(0)*RADIAN; };
 
 	/** Rotation around Y axis of global coordinate frame */
-	double siPlaneYRotationRadians(int sensorID){ return _planeSetup.at(sensorID).beta*RADIAN; };
+	double siPlaneYRotationRadians(int sensorID){ return _activeMap.at(sensorID)->getGlobalRotationAngles().coeff(1)*RADIAN; };
 
 	/** Rotation around Z axis of global coordinate frame */
-	double siPlaneZRotationRadians(int sensorID){ return _planeSetup.at(sensorID).gamma*RADIAN; };
+	double siPlaneZRotationRadians(int sensorID){ return _activeMap.at(sensorID)->getGlobalRotationAngles().coeff(2)*RADIAN; };
 
 	/** Sensor X side size */
-	double siPlaneXSize(int sensorID){ return _planeSetup.at(sensorID).xSize; };
+	double siPlaneXSize(int sensorID){ return _activeMap.at(sensorID)->getSize().coeff(0); };
 
 	/** Sensor Y side size */
-	double siPlaneYSize(int sensorID){ return _planeSetup.at(sensorID).ySize; };
+	double siPlaneYSize(int sensorID){ return _activeMap.at(sensorID)->getSize().coeff(1); };
 
 	/** Sensor Z side size */
-	double siPlaneZSize(int sensorID){ return _planeSetup.at(sensorID).zSize; };
+	double siPlaneZSize(int sensorID){ return _activeMap.at(sensorID)->getSize().coeff(2); };
 
 	/** Sensor X side pixel pitch [mm] */
-	double siPlaneXPitch(int sensorID){ return _planeSetup.at(sensorID).xPitch; };
+	double siPlaneXPitch(int sensorID){ return _activeMap.at(sensorID)->getPitch().first; };
 
 	/** Sensor Y side pixel pitch [mm] */
-	double siPlaneYPitch(int sensorID){ return _planeSetup.at(sensorID).yPitch; };
+	double siPlaneYPitch(int sensorID){ return _activeMap.at(sensorID)->getPitch().second; };
 
 	/** Sensor X side size in pixels */
-	int siPlaneXNpixels(int sensorID){ return _planeSetup.at(sensorID).xPixelNo; };
+	int siPlaneXNpixels(int sensorID){ return _activeMap.at(sensorID)->getNoPixels().first; };
 
 	/** Sensor Y side size in pixels */
-	int siPlaneYNpixels(int sensorID){ return _planeSetup.at(sensorID).yPixelNo; };
+	int siPlaneYNpixels(int sensorID){ return _activeMap.at(sensorID)->getNoPixels().second; };
 
 	/** Sensor X side size in pixels */
-	double siPlaneXResolution(int sensorID){ return _planeSetup.at(sensorID).xRes; };
+	double siPlaneXResolution(int sensorID){ return _activeMap.at(sensorID)->getResolution().first; };
 
 	/** Sensor Y side size in pixels */
-	double siPlaneYResolution(int sensorID){ return _planeSetup.at(sensorID).yRes; };
+	double siPlaneYResolution(int sensorID){ return _activeMap.at(sensorID)->getResolution().second; };
 
 	/** Sensor medium radiation length */
-	double siPlaneRadLength(int sensorID){ return _planeSetup.at(sensorID).radLength; };
+	double siPlaneRadLength(int sensorID){ return _activeMap.at(sensorID)->getRadLength(); };
 
 	/** Name of pixel geometry library */
-	std::string geoLibName(int sensorID){ return _planeSetup.at(sensorID).pixGeoName; };
+	std::string geoLibName(int sensorID){ return _activeMap.at(sensorID)->getGeometry(); };
 
 	/** Plane normal vector (nx,ny,nz) */
 	TVector3 siPlaneNormal( int );
@@ -310,10 +363,6 @@ class EUTelGeometryTelescopeGeoDescription
 
 	/** Vector of all sensor IDs */
 	const std::vector<int>& sensorIDsVec() const { return _sensorIDVec; };
-
-	Eigen::Vector3d getRotationAnglesFromMatrix( Eigen::Matrix3d rotMat );
-
-	Eigen::Matrix3d rotationMatrixFromAngles(long double alpha, long double beta, long double gamma);
 
 	Eigen::Matrix3d rotationMatrixFromAngles(int sensorID);
 
@@ -386,6 +435,9 @@ class EUTelGeometryTelescopeGeoDescription
 	std::unique_ptr<TGeoManager> _geoManager = nullptr;
 
 private:
+
+	void updatePlaneInfo(int sensorID);
+
 	/** reading initial info from gear: part of contructor */
 	void readSiPlanesLayout();
 
@@ -406,14 +458,6 @@ private:
 	void translateSiPlane2TGeo(TGeoVolume*,int );
 
 	void clearMemoizedValues() { _planeNormalMap.clear(); _planeXMap.clear(); _planeYMap.clear(); _planeRadMap.clear(); }
-
-	std::map<int, TVector3> _planeNormalMap;
-	std::map<int, TVector3> _planeXMap;
-	std::map<int, TVector3> _planeYMap;
-	std::map<int, double> _planeRadMap;
-
-	std::vector<EUTelLayer> _telescopeLayers;
-	std::map<std::string, EUTelMaterial> _materialMap;
 
 };
         

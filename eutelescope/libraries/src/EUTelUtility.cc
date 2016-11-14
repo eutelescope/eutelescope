@@ -24,14 +24,66 @@ using namespace std;
 
 namespace eutelescope {
 
-    namespace Utility {
+namespace Utility {
 
 
-	int cantorEncode(int X, int Y) {
-		//Cantor pairing function
-		return static_cast<int>( 0.5*(X+Y)*(X+Y+1)+Y );
-	} 
+//Cantor pairing function
+int cantorEncode(int X, int Y) {
+	return static_cast<int>( (X+Y)*(X+Y+1)/2+Y );
+} 
 
+
+/** Returns the rotation matrix for given angles
+ *  Rotation order is as following: Z->X->Y, i.e. R = Y(beta)*X(alpha)*Z(gamma) */
+Eigen::Matrix3d rotationMatrixFromAngles(long double alpha, long double beta, long double gamma) {
+	//Eigen::IOFormat IO(6, 0, ", ", ";\n", "[", "]", "[", "]");
+	//std::cout << "alpha, beta, gamma: " << alpha << ", " << beta << ", " << gamma << std::endl;
+	long double cosA = cos(alpha);
+	long double sinA = sin(alpha);
+	long double cosB = cos(beta);
+	long double sinB = sin(beta);
+	long double cosG = cos(gamma);
+	long double sinG = sin(gamma);
+
+	//std::cout << "trig" << cosA << ", " << cosB << ", " << cosG << ", " << sinA << ", " << sinB << ", " << sinG <<  std::endl;
+
+	Eigen::Matrix3d rotMat;
+	rotMat <<	(double)(cosB*cosG+sinA*sinB*sinG),	(double)(sinA*sinB*cosG-cosB*sinG),	(double)(cosA*sinB),
+	      		(double)(cosA*sinG),				(double)(cosA*cosG),				(double)(-sinA),
+				(double)(sinA*cosB*sinG-sinB*cosG),	(double)(sinA*cosB*cosG+sinB*sinG),	(double)(cosA*cosB);
+	//std::cout << rotMat.format(IO) << std::endl;
+	return rotMat;
+}
+
+Eigen::Vector3d getRotationAnglesFromMatrix(Eigen::Matrix3d rotMat) {
+
+	long double aX = 0;
+	long double aY = 0;
+	long double aZ = 0;
+	
+	//This is a correct decomposition for the given rotation order: YXZ, i.e. initial Z-rotation,
+	//followed by X and ultimately Y rotation. In the case of a gimbal lock, the angle around the
+	//Z axis is (arbitrarily) set to 0.
+	if( rotMat(1,2) < 1) {
+			if(rotMat(1,2) > -1) {
+				aX = std::asin(-rotMat(1,2));
+				aY = std::atan2(rotMat(0,2), rotMat(2,2));
+				aZ = std::atan2(rotMat(1,0), rotMat(1,1));
+			} else /* r12 = -1 */ {
+				aX = PI/2;
+				aY = -std::atan2(-rotMat(0,1), rotMat(0,0));
+				aZ = 0;
+			}
+	} else /* r12 = 1 */ {
+		aX = -PI/2;
+		aY = std::atan2 (-rotMat(0,1), rotMat(0,0));
+		aZ = 0;
+	}
+
+	Eigen::Vector3d vec;
+	vec << (double)aX, (double)aY, (double)aZ;
+	return vec;
+}
 
 	std::map<int, std::vector<int>> readNoisyPixelList(LCEvent* event, std::string const & noisyPixelCollectionName) {
 	

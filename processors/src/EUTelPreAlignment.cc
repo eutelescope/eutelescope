@@ -436,9 +436,9 @@ void EUTelPreAlign::end()
 				//Also update the EUTelGeometry descr.
 				double updatedXOff = geo::gGeometry().siPlaneXPosition(sensorID) + _preAligners.at(ii).getPeakX();
 				double updatedYOff = geo::gGeometry().siPlaneYPosition(sensorID) + _preAligners.at(ii).getPeakY();
+				double oldZPos = geo::gGeometry().siPlaneZPosition(sensorID);
 
-				geo::gGeometry().setPlaneXPosition(sensorID, updatedXOff);
-				geo::gGeometry().setPlaneYPosition(sensorID, updatedYOff);
+				geo::gGeometry().alignGlobalPos(sensorID, updatedXOff, updatedYOff, oldZPos);
 
 				streamlog_out ( MESSAGE5 ) << (*constant) << endl;
 		}
