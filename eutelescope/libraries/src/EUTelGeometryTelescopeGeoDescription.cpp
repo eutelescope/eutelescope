@@ -133,7 +133,7 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout() {
 	_nPlanes = _siPlanesLayerLayout->getNLayers(); 
 
 	//read the geoemtry names from the "Geometry" StringVec section of the gear file
-	std::vector<std::string> geometryNameParameters;
+	lcio::StringVec geometryNameParameters;
 
 	try {
 		geometryNameParameters  =  _siPlanesParameters->getStringVals("Geometry");
@@ -495,7 +495,7 @@ void EUTelGeometryTelescopeGeoDescription::translateSiPlane2TGeo(TGeoVolume* pvo
 	pMatrixRotRefCombined->SetMatrix(integerRotationsAndReflections);
 	pMatrixRotRefCombined->RotateZ(gamma);//Z Rotation (degrees)//This will again rotate a vector around z axis usign the right hand rule.  
 	pMatrixRotRefCombined->RotateX(alpha);//X Rotations (degrees)//This will rotate a vector usign the right hand rule round the x-axis
-	pMatrixRotRefCombined->RotateY(beta);//Y Rotations (degrees)//Same again for Y axis 
+	pMatrixRotRefCombined->RotateY(beta);//Y Rotations (degrees)//Same again for Y axis
 	pMatrixRotRefCombined->RegisterYourself();//We must allow the matrix to be used by the TGeo manager.
 	// Combined translation and orientation
 	TGeoCombiTrans* combi = new TGeoCombiTrans( *pMatrixTrans, *pMatrixRotRefCombined );
@@ -668,8 +668,6 @@ Eigen::Vector3d EUTelGeometryTelescopeGeoDescription::globalYAxis(int sensorID) 
 	Eigen::Vector3d yAxis(0,1,0);
 	return rotationMatrixFromAngles(sensorID)*yAxis;
 }
-
-
 
 Eigen::Vector3d EUTelGeometryTelescopeGeoDescription::getOffsetVector(int sensorID) {
 	Eigen::Vector3d offsetVec;

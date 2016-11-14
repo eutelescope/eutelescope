@@ -955,9 +955,9 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
                           gRotation[2] =  gRotation[2]*3.1415926/180.; //
 
                           TRotation	r;
-                          r.RotateZ( gRotation[0] );                          
-                          r.RotateY( gRotation[1] );                            
                           r.RotateX( gRotation[2] );                          
+                          r.RotateY( gRotation[1] );                            
+                          r.RotateZ( gRotation[0] );                          
 
                           _normalTVec.Transform( r );
                                   
@@ -996,10 +996,11 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
 		     if(c->getSensorID() == sensorID)
 		     {
-                       _planeCenter[ 0 ] += c->getXOffset() ;
-                       _planeCenter[ 1 ] += c->getYOffset() ;
-                       _planeCenter[ 2 ] += c->getZOffset() ;
-                
+		       //this is consistent with the EUTelProcessorApplyAlignment
+                       _planeCenter[ 0 ] -= c->getXOffset() ;
+                       _planeCenter[ 1 ] -= c->getYOffset() ;
+                       _planeCenter[ 2 ] -= c->getZOffset() ;
+               	       _planePosition[sensorID] -= c->getZOffset();// this subtraction makes things inconsistent with the previous planePosition, but consistent with the hits, which are aligned
 
                        double gRotation[3] = { 0., 0., 0.}; // not rotated
 
@@ -1009,11 +1010,12 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
                            gRotation[1] = c->getBeta();
                            gRotation[2] = c->getAlpha();
 
+			   //this is consistent with the EUTelProcessorApplyAlignment
                            TRotation	r;
-                           r.RotateZ( gRotation[0] );                          
-                           r.RotateY( gRotation[1] );                          
-                           r.RotateX( gRotation[2] );                          
- 
+                           r.RotateX( -gRotation[2] );                          
+                           r.RotateY( -gRotation[1] );                          
+                           r.RotateZ( -gRotation[0] );                          
+                           
                            _normalTVec.Transform( r );
                                    
                         }
@@ -1119,7 +1121,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
     // We have to find Plane ID of the hit
     // by looking at the Z position
     //
-    double distMin =  1.;
+    double distMin =  10.; //was 1., changed to 10., to take rotated planes into account
     hitPlane[ihit] = -1 ;
 
     for(int ipl=0;ipl<_nTelPlanes;ipl++)  
@@ -1678,6 +1680,10 @@ if(jhit>=0){
       _aidaHistoMap2D[bname + "residualYdX"]->fill( _fitX[ipl]  , _fitY[ipl]    - hitY[jhit]  );
       _aidaHistoMap2D[bname + "residualXdY"]->fill( _fitY[ipl]  , _fitX[ipl]    - hitX[jhit]  );
       _aidaHistoMap2D[bname + "residualYdY"]->fill( _fitY[ipl]  , _fitY[ipl]    - hitY[jhit]  );
+      //Hit Maps 
+      _aidaHistoMap2D[bname + "hitMapHITS"]->fill( hitX[jhit]  , hitY[jhit]  );
+      _aidaHistoMap2D[bname + "hitMapTRACKS"]->fill( _fitX[ipl]  , _fitY[ipl] );
+
  }
  
 #endif
@@ -1890,7 +1896,19 @@ if(jhit>=0){
         pos[1]=fittedY[_nTelPlanes*ifit+ipl];
         pos[2]=_planePosition[ipl];
 
-        getFastTrackImpactPoint(pos[0], pos[1], pos[2], fittrack, event);
+	//no slope of beam, only extrapolation in z-direction
+	double slopevec[3]={0,0,1};
+
+	/*if(!_isActive[ipl]){
+		cerr << "Slope for DUT applied." << endl;
+		slopevec[0] = fittedX[_nTelPlanes*ifit+(ipl+1)]-fittedX[_nTelPlanes*ifit+(ipl-1)];
+		slopevec[1] = fittedY[_nTelPlanes*ifit+(ipl+1)]-fittedY[_nTelPlanes*ifit+(ipl-1)];
+		slopevec[2] = _siPlaneCenter[ipl+1][2]-_siPlaneCenter[ipl-1][2];
+	}//this gives the possibility of inserting a proper slope*/
+
+        getImpactPoint(pos[0], pos[1], pos[2], slopevec[0], slopevec[1], slopevec[2]);
+        //getFastTrackImpactPoint(pos[0], pos[1], pos[2], 0, 0); // old function, does the same as new one, new one is numerically more stable
+
         fitpoint->setPosition(pos);
 
         // Covariance matrix of the position
@@ -2261,6 +2279,8 @@ void EUTelTestFitter::bookHistos()
     _aidaHistoMap2D[bname + "residualmeasZvsmeasY"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualmeasZvsmeasY",limitYN , -limitY, limitY, limitZN ,-limitZr, limitZr);
     _aidaHistoMap2D[bname + "residualfitZvsmeasX"]  =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualfitZvsmeasX",limitXN , -limitX, limitX, limitZN ,-limitZr, limitZr);
     _aidaHistoMap2D[bname + "residualfitZvsmeasY"]  =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualfitZvsmeasY",limitYN , -limitY, limitY, limitZN ,-limitZr, limitZr);
+    _aidaHistoMap2D[bname + "hitMapHITS"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "hitMapHITS",100,-17.,17.,100,-10.,10.);
+    _aidaHistoMap2D[bname + "hitMapTRACKS"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "hitMapTRACKS",100,-17.,17.,100,-10.,10.);
   }
 
   // Chi2 histogram for best tracks in an event - use same binning
@@ -2774,6 +2794,54 @@ int EUTelTestFitter::GaussjSolve(double *alfa,double *beta,int n)
   delete [] indxc;
 
   return 0;
+}
+
+void EUTelTestFitter::getImpactPoint(double & x, double & y, double & z, double & slopeX, double & slopeY, double & slopeZ) {
+    // given maps:
+    //            _siPlaneCenter.insert( make_pair( sensorID,  _planeCenter ));
+    //            _siPlaneNormal.insert( make_pair( sensorID,  _planeNormal ));
+
+
+    // this is a different version of getFastTrackImpactPoint
+    // it is faster, since it does not require matrix inversion
+    //
+    // working principle: 1.) take the impact point extrapolated to the perpendicular plane
+    // 			  2.) build a line, starting from the extrapolated impact point going in the direction of the slope (in the simplest case, there is no slope, i.e. slope=z-direction
+    // 			  3.) calculate the intersection point of the line and the rotated plane, by using the normal form of the plane and by using scalar products
+    //
+    // mathematically: plane: x.n=d, where n - normal vector, x - vector in the plane, d - closest distance of plane to origin i.e. d=r0.n with r0 the vector to the center of the plane (here: .=dot product)
+    // 		       line: l(alpha)=x0+alpha*l0, where x0 - starting point of line, alpha - a real number parametrizing the line, l0 - direction or slope of the line (here: *=scalar multiplication)
+    // 		       input line into plane (substitute x by l(alpha)) and slove for alpha: 
+    // 		       		x0.n+alpha*l0.n=r0.n => (r0-x0).n/(l0.n)=alpha (.=dot product, *=scalar multiplication)
+    // 		       put alpha back into line, to get the real impact point
+    // 		       		p=x0+(r0-x0).n/(l0.n)*l0 (.=dot product, *=scalar multiplication)
+    //
+
+    double pos[3]={x,y,z};
+    int sensorID = guessSensorID( pos );
+
+    //cerr << "Plane number" << sensorID  << ". The old coordinates are: x=" << x << ", y=" << y << ", z=" << z << ". "; // debug output
+
+    // this is a normal vector to the plane
+    TVector3 NormalVector(_siPlaneNormal[sensorID][0],_siPlaneNormal[sensorID][1],_siPlaneNormal[sensorID][2]);
+    // this is a vector to the center of the plane
+    TVector3 r0Vector(_siPlaneCenter[sensorID][0],_siPlaneCenter[sensorID][1],_siPlaneCenter[sensorID][2]);
+    // this is the original perpendicular impact point
+    TVector3 x0Vector(x,y,z);
+    // this is the slope vector
+    TVector3 slopeVec(slopeX,slopeY,slopeZ);
+
+    // this is what we calculate
+    TVector3 trackImpact;
+
+    // this solves the equation for the actual impact point, using the normal vector to parametrise the plane and parametrises the track by a line
+    trackImpact=x0Vector+NormalVector.Dot(r0Vector-x0Vector)/NormalVector.Dot(slopeVec)*slopeVec;
+
+    x = trackImpact(0);
+    y = trackImpact(1);
+    z = trackImpact(2);
+
+    //cerr << "The new coordinates are: x=" << x << ", y=" << y << ", z=" << z <<endl; // debug output
 }
 
 void EUTelTestFitter::getFastTrackImpactPoint(double & x, double & y, double & z, Track * /* tr */, LCEvent * /* ev */) {
