@@ -55,36 +55,6 @@
 namespace eutelescope {
 namespace geo{
 
-struct EUTelPlane
-{
-	/**Spatial location*/
-	double xPos, yPos, zPos;
-	/**Spatial location errors/uncertainties*/
-	double xPosUnc = 0;
-	double yPosUnc = 0;
-	double zPosUnc = 0;
-	/**Euler rotations*/
-	double alpha, beta, gamma;
-	/**Euler uncertainties*/
-	double alphaUnc, betaUnc, gammaUnc;
-	/**Pixel geometry name*/
-	std::string pixGeoName;
-	/**2D flip entries*/
-	double f1, f2, f3, f4;
-	/**Size of plane*/
-	double xSize, ySize, zSize;
-	/**Pixel counts*/
-	int xPixelNo, yPixelNo;
-	/**Pixel pitch*/
-	double xPitch, yPitch;
-	/**Radiation length TODO: UNIT*/
-	double radLength;
-	/**Resolution of sensor*/
-	double xRes, yRes;
-	/**Is the plane enabled*/
-	bool enabled = true;
-};
-
 // Iterate over registered GEAR objects and construct their TGeo representation
 const Double_t PI     = 3.141592653589793;
 const Double_t DEG    = 180./PI; 
@@ -158,8 +128,6 @@ class EUTelGeometryTelescopeGeoDescription
 	/** Pointer to the pixel geometry manager */
 	EUTelGenericPixGeoMgr* _pixGeoMgr;
 
-	std::map<int, EUTelPlane> _planeSetup;
-	
 	/** Flag if geoemtry is already initialized */
 	bool _isGeoInitialized;
 
@@ -251,22 +219,22 @@ class EUTelGeometryTelescopeGeoDescription
 	};
 */
 	/** set X rotation  */
-	inline void setPlaneXRotation(int sensorID, double value){ _planeSetup[sensorID].alpha = value; this->clearMemoizedValues(); };
+//	inline void setPlaneXRotation(int sensorID, double value){ _planeSetup[sensorID].alpha = value; this->clearMemoizedValues(); };
 
 	/** set Y rotation  */
-	inline void setPlaneYRotation(int sensorID, double value){ _planeSetup[sensorID].beta = value; this->clearMemoizedValues(); };
+//	inline void setPlaneYRotation(int sensorID, double value){ _planeSetup[sensorID].beta = value; this->clearMemoizedValues(); };
 
 	/** set Z rotation  */
-	inline void setPlaneZRotation(int sensorID, double value){ _planeSetup[sensorID].gamma = value; this->clearMemoizedValues(); };
+//	inline void setPlaneZRotation(int sensorID, double value){ _planeSetup[sensorID].gamma = value; this->clearMemoizedValues(); };
 
 	/** set X rotation in radians */
-	inline void setPlaneXRotationRadians(int sensorID, double value){ _planeSetup[sensorID].alpha = value*DEG; this->clearMemoizedValues(); };
+//	inline void setPlaneXRotationRadians(int sensorID, double value){ _planeSetup[sensorID].alpha = value*DEG; this->clearMemoizedValues(); };
 
 	/** set Y rotation in radians */
-	inline void setPlaneYRotationRadians(int sensorID, double value){ _planeSetup[sensorID].beta = value*DEG; this->clearMemoizedValues(); };
+//	inline void setPlaneYRotationRadians(int sensorID, double value){ _planeSetup[sensorID].beta = value*DEG; this->clearMemoizedValues(); };
 
 	/** set Z rotation in radians */
-	inline void setPlaneZRotationRadians(int sensorID, double value){ _planeSetup[sensorID].gamma = value*DEG; this->clearMemoizedValues(); };
+//	inline void setPlaneZRotationRadians(int sensorID, double value){ _planeSetup[sensorID].gamma = value*DEG; this->clearMemoizedValues(); };
 
 	inline void setPlanePitch(int sensorID, double xPitch, double yPitch) {
 		_activeMap.at(sensorID)->setPitch(xPitch, yPitch);	

@@ -234,6 +234,7 @@ class EUTelPassive {
 	void alignPos(Eigen::Vector3d const & globalPos) {
 		_parentLayer->reseatPosition(globalPos);
 		_offVector = Eigen::Vector3d(0, 0, 0);
+		_totalPosVector = _parentLayer->getPosVec();
 	}
 
 	void alignRot(Eigen::Matrix3d const & globalRotMat) {

@@ -142,9 +142,7 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
 // XYZ shifts and XY rotation seems to be correct
 //
             geo::gGeometry().alignGlobalPos(sensorID,  xplane  + delta_r0[0], yplane  + delta_r0[1], zplane  + delta_r0[2]  ) ;
-            geo::gGeometry().setPlaneXRotation(sensorID, (xrot  + delta_angle[0]*(180/M_PI) )  ) ;//Gear expressed in degrees so must convert from radians to degrees.
-            geo::gGeometry().setPlaneYRotation(sensorID, (yrot  + delta_angle[1]*(180/M_PI) )  ) ;
-            geo::gGeometry().setPlaneZRotation(sensorID, (zrot  + delta_angle[2]*(180/M_PI))  ) ;
+
 //#endif
 //#endif       
 					 streamlog_out(MESSAGE9) << "Input and output alignment shift (translations) for sensor: "<<sensorID << std::endl;
