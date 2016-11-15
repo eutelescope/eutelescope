@@ -32,12 +32,17 @@
 #include <map>
 #include <memory>
 
+//Eigen
+#include <Eigen/Core>
+
 namespace eutelescope {
 
     namespace Utility {
 
-        TMatrixD setPrecision( TMatrixD mat, double mod);
 
+	const long double PI = 3.141592653589793238L;
+    
+    TMatrixD setPrecision( TMatrixD mat, double mod);
 
         class Hit;
 
@@ -191,6 +196,13 @@ namespace eutelescope {
 	int cantorEncode(int X, int Y);
 	std::map<int, std::vector<int>> readNoisyPixelList(LCEvent* event, std::string const & noisyPixelCollectionName);
 	
+
+Eigen::Matrix3d rotationMatrixFromAngles(long double alpha, long double beta, long double gamma);
+Eigen::Vector3d getRotationAnglesFromMatrix(Eigen::Matrix3d rotMat);
+
+	
+
+
 	std::unique_ptr<EUTelClusterDataInterfacerBase> getClusterData(IMPL::TrackerDataImpl* const data, SparsePixelType type);
 	std::unique_ptr<EUTelClusterDataInterfacerBase> getClusterData(IMPL::TrackerDataImpl* const data, int type);
 	

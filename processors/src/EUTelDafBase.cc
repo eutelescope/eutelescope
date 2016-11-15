@@ -46,6 +46,8 @@
 #include "EUTelSparseClusterImpl.h"
 #include "EUTelReferenceHit.h"
 
+#include "EUTelGeometryTelescopeGeoDescription.h"
+
 // marlin includes ".h"
 #include "marlin/Processor.h"
 #include "marlin/Global.h"
@@ -207,17 +209,17 @@ bool EUTelDafBase::defineSystemFromData(){
   return(gotIt);
 }
 
-void EUTelDafBase::gearRotate(size_t index, size_t gearIndex){
+void EUTelDafBase::gearRotate(size_t index, int sensorID){
   daffitter::FitPlane<float>& pl = _system.planes.at(index);
 
   double gRotation[3] = { 0., 0., 0.};
-  gRotation[0] = _siPlanesLayerLayout->getLayerRotationXY(gearIndex); // Euler alpha
-  gRotation[1] = _siPlanesLayerLayout->getLayerRotationZX(gearIndex); // Euler beta
-  gRotation[2] = _siPlanesLayerLayout->getLayerRotationZY(gearIndex); // Euler gamma
+  gRotation[0] = geo::gGeometry().siPlaneZRotationRadians( sensorID ); //_siPlanesLayerLayout->getLayerRotationXY(gearIndex); // Euler alpha
+  gRotation[1] = geo::gGeometry().siPlaneYRotationRadians( sensorID ); //_siPlanesLayerLayout->getLayerRotationZX(gearIndex); // Euler beta
+  gRotation[2] = geo::gGeometry().siPlaneXRotationRadians( sensorID ); //_siPlanesLayerLayout->getLayerRotationZY(gearIndex); // Euler gamma
   // transform into radians
-  gRotation[0] =  gRotation[0]*3.1415926/180.; 
-  gRotation[1] =  gRotation[1]*3.1415926/180.; 
-  gRotation[2] =  gRotation[2]*3.1415926/180.; 
+ // gRotation[0] =  gRotation[0]*3.1415926/180.; 
+ // gRotation[1] =  gRotation[1]*3.1415926/180.; 
+ // gRotation[2] =  gRotation[2]*3.1415926/180.; 
   
   //Reference points define plane
   //Transform ref, cloning hitmaker logic
@@ -225,7 +227,7 @@ void EUTelDafBase::gearRotate(size_t index, size_t gearIndex){
   TVector3 ref1 = TVector3(10.0, 0.0, 0.0);
   TVector3 ref2 = TVector3(0.0, 10.0, 0.0);
 
-  double zZero        = _siPlanesLayerLayout->getSensitivePositionZ(gearIndex); // mm
+  double zZero        = geo::gGeometry().siPlaneZPosition( sensorID ); //_siPlanesLayerLayout->getSensitivePositionZ(gearIndex); // mm
   //double zThickness   = _siPlanesLayerLayout->getSensitiveThickness(gearIndex); // mm
 
   double nomZ = zZero;// + 0.5 * zThickness;
@@ -317,6 +319,8 @@ void EUTelDafBase::getPlaneNorm(daffitter::FitPlane<float>& pl){
 
 void EUTelDafBase::init() {
   printParameters ();
+	
+	geo::gGeometry().initializeTGeoDescription(EUTELESCOPE::GEOFILENAME, EUTELESCOPE::DUMPGEOROOT);
 
   _iRun = 0; _iEvt = 0; _nTracks = 0; _nCandidates =0;
   n_passedNdof =0; n_passedChi2OverNdof = 0; n_passedIsnan = 0;
@@ -333,36 +337,46 @@ void EUTelDafBase::init() {
   }
 
   //Geometry description
-  _siPlanesParameters  = const_cast<gear::SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
-  _siPlanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
+  //_siPlanesParameters  = const_cast<gear::SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
+  //_siPlanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
 
   //Use map to sort planes by z
   _zSort.clear();
-  for(int plane = 0; plane < _siPlanesLayerLayout->getNLayers(); plane++){
-    _zSort[ _siPlanesLayerLayout->getLayerPositionZ(plane) * 1000.0 ] = plane;
-    _indexIDMap[ _siPlanesLayerLayout->getID( plane )] = plane;
+	int plane = 0;
+  for(int sensorID: geo::gGeometry().sensorIDsVec()){
+    _zSort[ geo::gGeometry().siPlaneZPosition( sensorID ) * 1000.0 ] = plane;
+    _indexIDMap[ sensorID ] = plane;
+	plane++;
   }
 
   //Add Planes to tracker system,
-  map<float, int>::iterator zit = _zSort.begin();
-  size_t index(0), nActive(0);
-  for( ; zit != _zSort.end(); index++, zit++){
+//  map<float, int>::iterator zit = _zSort.begin();
+//  size_t index(0), nActive(0);
+//  for( ; zit != _zSort.end(); index++, zit++){
+
+	size_t index = 0;
+	size_t nActive = 0;
+  for(int sensorID: geo::gGeometry().sensorIDsVec() ) { 
     _nRef.push_back(3);
-    int sensorID = _siPlanesLayerLayout->getID( (*zit).second );
+ //   int sensorID = _siPlanesLayerLayout->getID( (*zit).second );
     //Read sensitive as 0, in case the two are different
-    float zPos  = _siPlanesLayerLayout->getSensitivePositionZ( (*zit).second )* 1000.0;
-    //+ 0.5 * 1000.0 *  _siPlanesLayerLayout->getSensitiveThickness( (*zit).second) ; // Do not move plane to center of plane, use front.
+    float zPos  = geo::gGeometry().siPlaneZPosition( sensorID )*1000.0;
     //Figure out what kind of plane we are dealing with
     float errX(0.0f), errY(0.0f);
     bool excluded = true;
 
     // Get scatter using x / x0
-    float radLength = _siPlanesLayerLayout->getLayerThickness( (*zit).second ) /  _siPlanesLayerLayout->getLayerRadLength( (*zit).second );
+    float radLength = geo::gGeometry().siPlaneZSize( sensorID ) / (geo::gGeometry().siPlaneRadLength( sensorID )*10); 
+/*
+	_siPlanesLayerLayout->getLayerThickness( (*zit).second ) /  _siPlanesLayerLayout->getLayerRadLength( (*zit).second );
     radLength += _siPlanesLayerLayout->getSensitiveThickness( (*zit).second ) /  _siPlanesLayerLayout->getSensitiveRadLength( (*zit).second );
+*/
 
     streamlog_out ( MESSAGE5 ) << " zPos:      " << zPos << " " << radLength ;
-    streamlog_out ( MESSAGE5 ) << " sen thick: " << _siPlanesLayerLayout->getSensitiveThickness( (*zit).second ) ;
-    streamlog_out ( MESSAGE5 ) << " sens rad:  " << _siPlanesLayerLayout->getSensitiveRadLength( (*zit).second ) << endl;
+    //streamlog_out ( MESSAGE5 ) << " sen thick: " << _siPlanesLayerLayout->getSensitiveThickness( (*zit).second ) ;
+    streamlog_out ( MESSAGE5 ) << " sen thick: " <<  geo::gGeometry().siPlaneZSize( sensorID ) ;
+    //streamlog_out ( MESSAGE5 ) << " sens rad:  " << _siPlanesLayerLayout->getSensitiveRadLength( (*zit).second ) << endl;
+    streamlog_out ( MESSAGE5 ) << " sens rad:  " << geo::gGeometry().siPlaneRadLength( sensorID )*10  << endl;
     if( _radLength.size() > index){
       radLength = _radLength.at(index);
     } else {
@@ -391,8 +405,9 @@ void EUTelDafBase::init() {
     //Add plane to tracker system
     if(not excluded){ nActive++;}
     _system.addPlane(sensorID, zPos , errX, errY, scatter, excluded);
-    gearRotate(index, (*zit).second);
-  }
+    gearRotate(index, sensorID);
+	index++;  
+}
  
   //Prepare track finder
   switch( _trackFinderType ) {

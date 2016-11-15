@@ -15,6 +15,7 @@
 #include "EUTelPStream.h"
 //#include "EUTelCDashMeasurement.h"
 #include "EUTelGeometryTelescopeGeoDescription.h"
+#include "EUTelUtility.h"
 
 // marlin includes ".h"
 #include "marlin/Global.h"
@@ -392,10 +393,10 @@ void EUTelPedeGEAR::end() {
 					//The old rotation matrix is well defined by GEAR file
 					Eigen::Matrix3d rotOld = geo::gGeometry().rotationMatrixFromAngles( sensorID);
 					//The new rotation matrix is obtained via the alpha, beta, gamma from MillepedeII
-					Eigen::Matrix3d rotAlign = geo::gGeometry().rotationMatrixFromAngles( -alpha, -beta, -gamma);
+					Eigen::Matrix3d rotAlign = Utility::rotationMatrixFromAngles( -alpha, -beta, -gamma);
 					//The corrected rotation is given by: rotAlign*rotOld, from this rotation we can extract the
 					//updated alpha', beta' and gamma'
-					Eigen::Vector3d newCoeff = geo::gGeometry().getRotationAnglesFromMatrix(rotAlign*rotOld);
+					Eigen::Vector3d newCoeff = Utility::getRotationAnglesFromMatrix(rotAlign*rotOld);
 
 					//std::cout << "Old rotation matrix: " << rotOld << std::endl; 
 					//std::cout << "Align rotation matrix: " << rotAlign << std::endl; 
@@ -406,14 +407,9 @@ void EUTelPedeGEAR::end() {
 					oldOffset << geo::gGeometry().siPlaneXPosition(sensorID), geo::gGeometry().siPlaneYPosition(sensorID), geo::gGeometry().siPlaneZPosition(sensorID);
 					//Eigen::Vector3d newOffset = rotAlign*oldOffset;
 
-					geo::gGeometry().setPlaneXPosition(sensorID, oldOffset[0]-xOff);
-					geo::gGeometry().setPlaneYPosition(sensorID, oldOffset[1]-yOff);
-					geo::gGeometry().setPlaneZPosition(sensorID, oldOffset[2]-zOff);
-					
-					geo::gGeometry().setPlaneXRotationRadians(sensorID,  newCoeff[0]);
-					geo::gGeometry().setPlaneYRotationRadians(sensorID,  newCoeff[1]);
-					geo::gGeometry().setPlaneZRotationRadians(sensorID,  newCoeff[2]);
-
+					geo::gGeometry().alignGlobalPos(sensorID, oldOffset[0]-xOff, oldOffset[1]-yOff, oldOffset[2]-zOff);
+					geo::gGeometry().alignGlobalRot(sensorID, rotAlign*rotOld);
+			
 					counter++;
 				}
 			}

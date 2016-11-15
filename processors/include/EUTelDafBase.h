@@ -138,7 +138,7 @@ namespace eutelescope {
     int checkInTime(daffitter::TrackCandidate<float,4>& track);
     void printStats();
     //alignment stuff
-    void gearRotate(size_t index, size_t gearIndex);
+    void gearRotate(size_t index, int gearIndex);
     Eigen::Vector3f applyAlignment(EUTelAlignmentConstant* alignment, Eigen::Vector3f point);
     void alignRotate(std::string collectionName, LCEvent* event);
     void getPlaneNorm(daffitter::FitPlane<float>& pl);
