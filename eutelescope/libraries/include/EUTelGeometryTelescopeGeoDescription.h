@@ -62,14 +62,6 @@ const Double_t RADIAN = PI/180.;
 
 class EUTelGeometryTelescopeGeoDescription
 {
-	struct doCompare
-	{
-		doCompare(EUTelGeometryTelescopeGeoDescription& eutelgeo ): m_eutelgeo(eutelgeo) {}
-		EUTelGeometryTelescopeGeoDescription& m_eutelgeo;
-		bool operator()(int i,int j) {
-			return(m_eutelgeo.siPlaneZPosition(i) < m_eutelgeo.siPlaneZPosition(j));
-		}
-	};
 
   private:
 	/** */
@@ -122,8 +114,6 @@ class EUTelGeometryTelescopeGeoDescription
 
 	/** Vector of Sensor IDs */
 	std::vector<int> _sensorIDVec;
-
-	size_t _nPlanes;
 
 	/** Pointer to the pixel geometry manager */
 	EUTelGenericPixGeoMgr* _pixGeoMgr;
