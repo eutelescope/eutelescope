@@ -130,7 +130,7 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout() {
 	// sensor-planes in geometry navigation:
 	_siPlanesParameters = const_cast< gear::SiPlanesParameters*> (&( _gearManager->getSiPlanesParameters()));
 	_siPlanesLayerLayout = const_cast< gear::SiPlanesLayerLayout*> (&(_siPlanesParameters->getSiPlanesLayerLayout()));
-	_nPlanes = _siPlanesLayerLayout->getNLayers(); 
+	auto nPlanes = _siPlanesLayerLayout->getNLayers(); 
 
 	//read the geoemtry names from the "Geometry" StringVec section of the gear file
 	lcio::StringVec geometryNameParameters;
@@ -139,7 +139,7 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout() {
 		geometryNameParameters  =  _siPlanesParameters->getStringVals("Geometry");
 	} catch(gear::UnknownParameterException e) {
 		streamlog_out(MESSAGE6) << "No Geometry field found in GEAR file, assuming CAST for all planes" << std::endl;
-		for(size_t i = 0; i < _nPlanes; i++) {
+		for(size_t i = 0; i < nPlanes; i++) {
 			geometryNameParameters.push_back("CAST");
 		}
 	}
@@ -148,7 +148,7 @@ void EUTelGeometryTelescopeGeoDescription::readSiPlanesLayout() {
 
 
 	// create an array with the z positions of each layer
-	for (size_t iPlane = 0; iPlane < _nPlanes; iPlane++) {
+	for (size_t iPlane = 0; iPlane < nPlanes; iPlane++) {
 
 		auto ID = _siPlanesLayerLayout->getID(iPlane);
 
@@ -238,9 +238,6 @@ void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout() {
 
 	_sensorIDVec.clear();
 	
-	//should be filled based on the length of the sensor vector after the loop
-	_nPlanes = 0; 
-
 	auto matNameVec = _gearManager->getMaterialNames();
 	std::cout << "Known materials: " << std::endl;
 	for(auto& matName: matNameVec) {
@@ -386,10 +383,7 @@ void EUTelGeometryTelescopeGeoDescription::readTrackerPlanesLayout() {
 		std::cout << ID << '\n';
 	}
 	std::cout << std::endl;
-
-//	std::sort(_sensorIDVec.begin(), _sensorIDVec.end(), doCompare(*this) );
-//	_nPlanes =  _sensorIDVec.size(); 
-
+	
 	writeGEARFile("test.xml");
 }
 
@@ -402,7 +396,6 @@ _siPlanesLayerLayout(nullptr),
 _trackerPlanesParameters(nullptr),
 _trackerPlanesLayerLayout(nullptr),
 _sensorIDVec(),
-_nPlanes(0),
 _isGeoInitialized(false),
 _geoManager(nullptr)
 {
@@ -609,8 +602,10 @@ void EUTelGeometryTelescopeGeoDescription::updatePlaneInfo(int sensorID) {
 	pixGeoDescr->getSensitiveSize(sizeX, sizeY);
 	pixGeoDescr->getPixelIndexRange(minX, maxX, minY, maxY);
 	
-	int noX = maxX - minX;
-	int noY = maxY - minY;
+	int noX = maxX - minX + 1;
+	int noY = maxY - minY + 1;
+
+	std::cout << "Sensor " << sensorID << " has pitch: " << sizeX/noX << "|" << sizeY/noY << std::endl;
 
 	setPlanePitch(sensorID, sizeX/noX, sizeY/noY);
 	setPlaneNoPixels(sensorID, noX, noY);
@@ -884,10 +879,10 @@ void EUTelGeometryTelescopeGeoDescription::updateSiPlanesLayout() {
 	gear::SiPlanesLayerLayout* siplanesLayerLayout = const_cast< gear::SiPlanesLayerLayout*> (&(_siPlanesParameters->getSiPlanesLayerLayout()));
 
 	// data member::
-	_nPlanes = siplanesLayerLayout->getNLayers(); 
+	auto nPlanes = siplanesLayerLayout->getNLayers(); 
 
 	// create an array with the z positions of each layer
-	for(size_t iPlane = 0; iPlane < _nPlanes; iPlane++) {
+	for(size_t iPlane = 0; iPlane < nPlanes; iPlane++) {
 		int sensorID =  _sensorIDVec.at(iPlane);
 
 		siplanesLayerLayout->setLayerPositionX( iPlane, siPlaneXPosition(sensorID) );
@@ -919,9 +914,9 @@ void EUTelGeometryTelescopeGeoDescription::updateTrackerPlanesLayout() {
 		GEARLayerPtr->setPositionY(layerPos.coeff(1));
 		GEARLayerPtr->setPositionZ(layerPos.coeff(2));
 
-		GEARLayerPtr->setRotationZY(layerAngle.coeff(0));
-		GEARLayerPtr->setRotationZX(layerAngle.coeff(1));
-		GEARLayerPtr->setRotationXY(layerAngle.coeff(2));
+		GEARLayerPtr->setRotationZY(layerAngle.coeff(0)*DEG);
+		GEARLayerPtr->setRotationZX(layerAngle.coeff(1)*DEG);
+		GEARLayerPtr->setRotationXY(layerAngle.coeff(2)*DEG);
 
 		GEARLayerPtr->setPositionXunc(layerPosUnc.coeff(0));
 		GEARLayerPtr->setPositionYunc(layerPosUnc.coeff(1));
