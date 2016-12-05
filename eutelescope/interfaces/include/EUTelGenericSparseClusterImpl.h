@@ -12,12 +12,12 @@
 
 // personal includes ".h"
 #include "EUTELESCOPE.h"
-#include "EUTelSimpleVirtualCluster.h"
 #include "EUTelBaseSparsePixel.h"
+#include "EUTelExceptions.h"
 #include "EUTelGenericSparsePixel.h"
 #include "EUTelGeometricPixel.h"
+#include "EUTelSimpleVirtualCluster.h"
 #include "EUTelTrackerDataInterfacerImpl.h"
-#include "EUTelExceptions.h"
 
 #ifdef USE_MARLIN
 // marling includes ".h"
@@ -25,22 +25,21 @@
 #endif
 
 // lcio includes <.h>
-#include <LCIOTypes.h>
 #include <IMPL/TrackerDataImpl.h>
+#include <LCIOTypes.h>
 
 // system includes <>
+#include <algorithm>
+#include <cmath>
+#include <iomanip>
 #include <iostream>
 #include <limits>
+#include <map>
 #include <memory>
 #include <vector>
-#include <cmath>
-#include <algorithm>
-#include <map>
-#include <iomanip>
 
 // template implementation
 #include "EUTelGenericSparseClusterImpl.hcc"
 #include "EUTelGenericSparseClusterImpl.tcc"
 
 #endif
-

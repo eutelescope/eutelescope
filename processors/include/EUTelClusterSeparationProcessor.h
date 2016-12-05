@@ -9,18 +9,18 @@
 #ifndef EUTELCLUSTERSEPARATIONPROCESSOR_H
 #define EUTELCLUSTERSEPARATIONPROCESSOR_H 1
 
-// eutelescope includes ".h" 
+// eutelescope includes ".h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
 
-// lcio includes <.h> 
+// lcio includes <.h>
 #include <IMPL/LCCollectionVec.h>
 
 // system includes <>
+#include <set>
 #include <string>
 #include <vector>
-#include <set>
 
 namespace eutelescope {
 
@@ -60,19 +60,19 @@ namespace eutelescope {
    *
    *  <h4>Input collection</h4> <br><b>ClusterCollection</b>. This is
    *  the collection of cluster (TrackerPulse) to be used.
-   *  
+   *
    *  <h4>Output collection</h4>
-   *  
+   *
    *  <br><b>ClusterOutputCollection</b>. It outputs another
    *  collection of TrackerPulse containing all clusters found in the
    *  input collections with split clusters.
    *
    *  @param ClusterCollectionName The name of the input cluster collection
    *  @param ClusterOutputCollectionName Name of the output cluster
-   *  collection 
-   * 
+   *  collection
+   *
    *  @param MinimumDistance Float number being the minimum
-   *  distance allowed between clusters. 
+   *  distance allowed between clusters.
    *
    *  @param SeparationAlgorithm Name the algorithm to be used for
    *  cluster separation.
@@ -86,36 +86,34 @@ namespace eutelescope {
   class EUTelClusterSeparationProcessor : public marlin::Processor {
 
   public:
-
-     
     //! Returns a new instance of EUTeleClusterSeparationProcessor
     /*! This method returns an new instance of the this processor.  It
      *  is called by Marlin execution framework and it shouldn't be
      *  called/used by the final user.
-     *  
+     *
      *  @return a new EUTeleClusterSeparationProcessor.
      */
-    virtual Processor * newProcessor() {
+    virtual Processor *newProcessor() {
       return new EUTelClusterSeparationProcessor;
     }
 
-    //! Default constructor 
-    EUTelClusterSeparationProcessor ();
+    //! Default constructor
+    EUTelClusterSeparationProcessor();
 
     //! Called at the job beginning.
     /*! This is executed only once in the whole execution. It prints
      *  out the processor parameters and reset all needed data
-     *  members. 
+     *  members.
      */
-    virtual void init ();
+    virtual void init();
 
     //! Called for every run.
     /*! It is called for every run, and consequently the run counter
-     *  is incremented. 
-     * 
+     *  is incremented.
+     *
      *  @param run the LCRunHeader of the this current run
      */
-    virtual void processRunHeader (LCRunHeader * run);
+    virtual void processRunHeader(LCRunHeader *run);
 
     //! Called every event
     /*! This is called for each event in the file. As a first thing,
@@ -132,18 +130,17 @@ namespace eutelescope {
      *  @throw UnknownDataTypeException if the cluster type stored in
      *  the TrackerPulse is unknown.
      */
-    virtual void processEvent (LCEvent * evt);
-
+    virtual void processEvent(LCEvent *evt);
 
     //! Check event method
     /*! This method is called by the Marlin execution framework as
      *  soon as the processEvent is over. It can be used to fill check
      *  plots. For the time being there is nothing to check and do in
      *  this slot.
-     * 
+     *
      *  @param evt The LCEvent event as passed by the ProcessMgr
      */
-    virtual void check (LCEvent * evt);
+    virtual void check(LCEvent *evt);
 
     //! Called after data processing.
     /*! This method is called when the loop on events is finished. It
@@ -153,7 +150,7 @@ namespace eutelescope {
 
     //! This is the real method
     /*! This is the method where the real separation algorithm is
-     *  written/called. 
+     *  written/called.
      *
      *  @param setVector A STL vector of STL set containing the
      *  cluster of clusters to be separated.
@@ -162,10 +159,10 @@ namespace eutelescope {
      *  @param outputCollectionVec A pointer to the output cluster collection
      *
      *  @return true if the algorithm was successfully applied.
-     */ 
-    bool applySeparationAlgorithm(std::vector< std::set< int > > setVector, 
-				  LCCollectionVec * inputCollectionVec,
-				  LCCollectionVec * outputCollectionVec) const ;
+     */
+    bool applySeparationAlgorithm(std::vector<std::set<int>> setVector,
+                                  LCCollectionVec *inputCollectionVec,
+                                  LCCollectionVec *outputCollectionVec) const;
 
     //! Groups together pairs of merging clusters.
     /*! The identification of merging clusters can very easily done on
@@ -176,7 +173,7 @@ namespace eutelescope {
      *  clusters. This groupingMergingPairs method is exactly doing
      *  this, looking if there are pairs of merging clusters that can
      *  be grouped into a cluster of clusters.
-     *  
+     *
      *  Of course this method is called if, and only if, at least a
      *  pair merging clusters have been found
      *
@@ -188,11 +185,11 @@ namespace eutelescope {
      *  set has to be considered as the cluster of clusters defined
      *  above and the int value_type of the set represents the cluster
      *  index in the clusterCollection
-     */ 
-    void groupingMergingPairs(std::vector< std::pair<int , int> > pairVector, std::vector< std::set< int > > * setVector) const;
+     */
+    void groupingMergingPairs(std::vector<std::pair<int, int>> pairVector,
+                              std::vector<std::set<int>> *setVector) const;
 
   protected:
-
     //! Input cluster collection name.
     /*! This is the name of the input cluster collection.
      */
@@ -228,11 +225,9 @@ namespace eutelescope {
      * events are counted from 0 and on a run base
      */
     int _iEvt;
-
   };
 
   //! A global instance of the processor
-  EUTelClusterSeparationProcessor gEUTelClusterSeparationProcessor;      
-
+  EUTelClusterSeparationProcessor gEUTelClusterSeparationProcessor;
 }
 #endif

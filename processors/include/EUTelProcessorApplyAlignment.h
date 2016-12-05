@@ -20,19 +20,18 @@
 #include <IMPL/TrackerHitImpl.h>
 
 // gear includes <.h>
-#include <gear/SiPlanesParameters.h>
 #include <gear/SiPlanesLayerLayout.h>
+#include <gear/SiPlanesParameters.h>
 
 // AIDA includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <AIDA/IBaseHistogram.h>
 #endif
 
-
 // system includes <>
 #include <iostream>
-#include <string>
 #include <map>
+#include <string>
 
 namespace eutelescope {
 
@@ -70,18 +69,17 @@ namespace eutelescope {
    *  then rotated.
    *
    * This is a port of EUTelAPIXApplyAlignment processor
-   * 
+   *
    *  @author Contact: antonio.bulgheroni@gmail.com
-   *  @version $Id: EUTelProcessorApplyAlignment.h 2305 2013-01-22 15:08:52Z hamnett $
+   *  @version $Id: EUTelProcessorApplyAlignment.h 2305 2013-01-22 15:08:52Z
+   * hamnett $
    *
    *
    */
 
-  class EUTelProcessorApplyAlign:public marlin::Processor {
+  class EUTelProcessorApplyAlign : public marlin::Processor {
 
   public:
-
-
     //! Returns a new instance of EUTelProcessorApplyAlign
     /*! This method returns an new instance of the this processor.  It
      *  is called by Marlin execution framework and it shouldn't be
@@ -89,19 +87,17 @@ namespace eutelescope {
      *
      *  @return a new EUTelProcessorApplyAlign.
      */
-    virtual Processor * newProcessor() {
-      return new EUTelProcessorApplyAlign;
-    }
+    virtual Processor *newProcessor() { return new EUTelProcessorApplyAlign; }
 
     //! Default constructor
-    EUTelProcessorApplyAlign ();
+    EUTelProcessorApplyAlign();
 
     //! Called at the job beginning.
     /*! This is executed only once in the whole execution. It prints
      *  out the processor parameters and reset all needed data
      *  members.
      */
-    virtual void init ();
+    virtual void init();
 
     //! Called for every run.
     /*! It is called for every run, and consequently the run counter
@@ -109,7 +105,7 @@ namespace eutelescope {
      *
      *  @param run the LCRunHeader of the this current run
      */
-    virtual void processRunHeader (LCRunHeader * run);
+    virtual void processRunHeader(LCRunHeader *run);
 
     //! Called every event
     /*! This is called for each event in the file. A few consistency
@@ -119,7 +115,7 @@ namespace eutelescope {
      *  @param evt the current LCEvent event as passed by the
      *  ProcessMgr
      */
-    virtual void processEvent (LCEvent * evt);
+    virtual void processEvent(LCEvent *evt);
 
     //! Called after data processing.
     /*! This method is called when the loop on events is finished. It
@@ -128,7 +124,6 @@ namespace eutelescope {
     virtual void end();
 
   protected:
-
     //! Input collection name.
     /*! This is the name of the input hit collection.
      */
@@ -171,12 +166,11 @@ namespace eutelescope {
     int _iEvt;
 
     //! Look Up Table for the sensor ID
-    std::map< int, int > _lookUpTable;
+    std::map<int, int> _lookUpTable;
   };
 
   //! A global instance of the processor
   EUTelProcessorApplyAlign gEUTelProcessorApplyAlign;
-
 }
 #endif
 #endif // GEAR

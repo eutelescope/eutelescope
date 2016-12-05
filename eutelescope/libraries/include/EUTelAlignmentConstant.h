@@ -10,10 +10,9 @@
 #ifndef EUTELALIGNMENTCONSTANT_H
 #define EUTELALIGNMENTCONSTANT_H
 
-
 // lcio includes <.h>
-#include <lcio.h>
 #include <IMPL/LCGenericObjectImpl.h>
+#include <lcio.h>
 
 // system includes <>
 #include <string>
@@ -23,23 +22,23 @@ namespace eutelescope {
   //! Alignment constant for the EUTelescope package
   /*! The aim of this class is to store into a LCGenericObject the
    *  alignment contants obtained by the execution of EUTelMille +
-   *  pede. 
+   *  pede.
    *
    *  @author Contact: antonio.bulgheroni@gmail.com
    *  @version $Id$
-   */ 
+   */
   class EUTelAlignmentConstant : public IMPL::LCGenericObjectImpl {
 
   public:
     //! Default constructor
     /*! This is the default constructor of the alignment constants
-     *  
+     *
      */
-    EUTelAlignmentConstant(); 
+    EUTelAlignmentConstant();
 
     //! Constructor with all the needed parameters
     /*! This constructor is the recommended one because it sets all the
-     *  needed parameters in one go. 
+     *  needed parameters in one go.
      *
      *  @param sensorID The sensor number as from the GEAR file
      *  @param xOff Offset of the sensor along the x direction
@@ -55,58 +54,59 @@ namespace eutelescope {
      *  @param yOffErr Error on the offset of the sensor along the y direction
      *  @param zOffErr Error on the offset of the sensor along the z direction
      *
-     */ 
-    EUTelAlignmentConstant( int sensorID, 
-       double xOff,   double yOff,   double zOff,
-       double alpha, double beta, double gamma,
-       double xOffErr,   double yOffErr,   double zOffErr,
-       double alphaErr, double betaErr, double gammaErr );
-      
+     */
+    EUTelAlignmentConstant(int sensorID, double xOff, double yOff, double zOff,
+                           double alpha, double beta, double gamma,
+                           double xOffErr, double yOffErr, double zOffErr,
+                           double alphaErr, double betaErr, double gammaErr);
+
     //! Default destructor
-    virtual ~EUTelAlignmentConstant() { /* NO-OP */ ; }
+    virtual ~EUTelAlignmentConstant() { /* NO-OP */
+      ;
+    }
 
     //! Set the sensor id
-    void setSensorID( int id ) ;
+    void setSensorID(int id);
 
-    //! Set the x offset in mm 
-    void setXOffset( double off ) ;
+    //! Set the x offset in mm
+    void setXOffset(double off);
 
-    //! Set the y offset in mm 
-    void setYOffset( double off ) ;
+    //! Set the y offset in mm
+    void setYOffset(double off);
 
-    //! Set the z offset in mm 
-    void setZOffset( double off ) ;
+    //! Set the z offset in mm
+    void setZOffset(double off);
 
     //! Set the angle around x
-    void setAlpha( double theta );
+    void setAlpha(double theta);
 
     //! Set the angle around y
-    void setBeta( double theta );
+    void setBeta(double theta);
 
     //! Set the angle around z
-    void setGamma( double theta );
+    void setGamma(double theta);
 
     //! Set the error of the offset along x
-    void setXOffsetError( double err ) ;
+    void setXOffsetError(double err);
 
     //! Set the error of the offset along y
-    void setYOffsetError( double err ) ;
+    void setYOffsetError(double err);
 
     //! Set the error of the offset along z
-    void setZOffsetError( double err ) ;
+    void setZOffsetError(double err);
 
     //! Set the error of the angle around x
-    void setAlphaError( double err ) ;
+    void setAlphaError(double err);
 
     //! Set the error of the angle around y
-    void setBetaError( double err ) ;
+    void setBetaError(double err);
 
     //! Set the error of the angle around z
-    void setGammaError( double err ) ;
+    void setGammaError(double err);
 
     //! Get the sensor ID
-    int getSensorID() const ;
-    
+    int getSensorID() const;
+
     //! Get the offset along x
     double getXOffset() const;
 
@@ -144,11 +144,11 @@ namespace eutelescope {
     double getGammaError() const;
 
     //! Print the output
-    /*! This method is used to print out the constant 
+    /*! This method is used to print out the constant
      *
      *  @param os The input output stream
      */
-    virtual void print(std::ostream& os) const ;
+    virtual void print(std::ostream &os) const;
 
     //! Overload of operator<<
     /*! This friend function is the overload of the operator << for
@@ -159,8 +159,12 @@ namespace eutelescope {
      *  @param c The alignment constant
      *  @return The output stream
      *
-     */ 
-    friend std::ostream& operator<< (std::ostream& os, const EUTelAlignmentConstant & c) { c.print(os); return os; }
+     */
+    friend std::ostream &operator<<(std::ostream &os,
+                                    const EUTelAlignmentConstant &c) {
+      c.print(os);
+      return os;
+    }
   };
 }
 

@@ -13,32 +13,26 @@
 
 // personal includes ".h"
 #include "EUTELESCOPE.h"
-#include "EUTelVirtualCluster.h"
 #include "EUTelFFClusterImpl.h"
+#include "EUTelVirtualCluster.h"
 
 // marlin includes ".h"
 
 // lcio includes <.h>
-#include <lcio.h>
 #include <IMPL/LCCollectionVec.h>
 #include <UTIL/CellIDDecoder.h>
 #include <UTIL/CellIDEncoder.h>
+#include <lcio.h>
 
 // system includes <>
-#include <vector>
 #include <iostream>
-
+#include <vector>
 
 namespace eutelescope {
 
   class EUTelDFFClusterImpl : public EUTelFFClusterImpl {
   public:
-    EUTelDFFClusterImpl(TrackerDataImpl * data) : EUTelFFClusterImpl(data)
-    {
-      
-    }
-
- };
- 
+    EUTelDFFClusterImpl(TrackerDataImpl *data) : EUTelFFClusterImpl(data) {}
+  };
 }
 #endif

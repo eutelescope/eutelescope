@@ -1,45 +1,43 @@
 #ifndef FEI4Single_h
 #define FEI4Single_h
 
-  /** @class FEI4Single
-	* This class is the implementation of  @class EUTelGenericPixGeoDescr
-	* for a default FEI4 layout 
-    */
+/** @class FEI4Single
+      * This class is the implementation of  @class EUTelGenericPixGeoDescr
+      * for a default FEI4 layout
+  */
 
-//EUTELESCOPE
+// EUTELESCOPE
 #include "EUTelGenericPixGeoDescr.h"
 
-//ROOT
+// ROOT
 #include "TGeoMaterial.h"
 #include "TGeoMedium.h"
 #include "TGeoVolume.h"
 
 namespace eutelescope {
-namespace geo {
+  namespace geo {
 
-class FEI4Single : public EUTelGenericPixGeoDescr {
-	
-	public:
-		FEI4Single();
-		~FEI4Single();
+    class FEI4Single : public EUTelGenericPixGeoDescr {
 
-		void createRootDescr(char const *);
-		std::string getPixName(int, int);
-		std::pair<int, int> getPixIndex(char const *);
+    public:
+      FEI4Single();
+      ~FEI4Single();
 
-	protected:
-		TGeoMaterial* matSi;
-		TGeoMedium* Si;
-		TGeoVolume* plane;
+      void createRootDescr(char const *);
+      std::string getPixName(int, int);
+      std::pair<int, int> getPixIndex(char const *);
 
-};
+    protected:
+      TGeoMaterial *matSi;
+      TGeoMedium *Si;
+      TGeoVolume *plane;
+    };
 
-extern "C"
-{
-	EUTelGenericPixGeoDescr* maker();
-}
+    extern "C" {
+    EUTelGenericPixGeoDescr *maker();
+    }
 
-} //namespace geo
-} //namespace eutelescope
+  } // namespace geo
+} // namespace eutelescope
 
-#endif	//FEI4SINGLE_H
+#endif // FEI4SINGLE_H

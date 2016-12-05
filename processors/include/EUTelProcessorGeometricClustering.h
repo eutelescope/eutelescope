@@ -11,17 +11,17 @@
 #define EUTelProcessorGeometricClustering_H 1
 
 // eutelescope includes ".h"
-#include "EUTelExceptions.h"
 #include "EUTELESCOPE.h"
+#include "EUTelExceptions.h"
 
 // marlin includes ".h"
 #include "marlin/EventModifier.h"
-#include "marlin/Processor.h"
 #include "marlin/Exceptions.h"
+#include "marlin/Processor.h"
 
 // gear includes <.h>
-#include <gear/SiPlanesParameters.h>
 #include <gear/SiPlanesLayerLayout.h>
+#include <gear/SiPlanesParameters.h>
 
 // aida includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -29,25 +29,25 @@
 #endif
 
 // lcio includes <.h>
-#include <IMPL/TrackerRawDataImpl.h>
 #include <IMPL/LCCollectionVec.h>
+#include <IMPL/TrackerRawDataImpl.h>
 
 // system includes <>
-#include <string>
-#include <map>
 #include <cmath>
+#include <map>
+#include <string>
 #include <vector>
 
 namespace eutelescope {
 
   //! Geoemtric clustering processor for EUTelescope
-  /*! This procssor used the Extended Geometry Framework (EGF) for a 
+  /*! This procssor used the Extended Geometry Framework (EGF) for a
    *  correct spatial clustering. This means that via the EGF the
    *  geoemtrical positions as well as dimensions of the pixels are
-   *  read in and used. 
+   *  read in and used.
    *
    *  The dimensions of the pixel are given by the surrounding rectangle.
-   *  For simple rectengular pixels this is a correct description, 
+   *  For simple rectengular pixels this is a correct description,
    *  deviations of that pixel shape have to either adapt this processor
    *  or use it as an approximation.
    *
@@ -61,7 +61,7 @@ namespace eutelescope {
    *  require hits to be temporally in promximity. If not set not cut will
    *  be applied.
    *
-   *  This clustering processor uses the @class EUTelGenericSparseClusterImpl 
+   *  This clustering processor uses the @class EUTelGenericSparseClusterImpl
    *  which derives from the new @class EUTelSimpleVirtualCluster base
    *  class.
    *
@@ -91,10 +91,10 @@ namespace eutelescope {
    *
    */
 
-class EUTelProcessorGeometricClustering :public marlin::Processor , public marlin::EventModifier {
+  class EUTelProcessorGeometricClustering : public marlin::Processor,
+                                            public marlin::EventModifier {
 
-public:
-
+  public:
     //! Returns a new instance of EUTelProcessorGeometricClustering
     /*! This method returns an new instance of the this processor.  It
      *  is called by Marlin execution framework and it shouldn't be
@@ -102,14 +102,14 @@ public:
      *
      *  @return a new EUTelProcessorGeometricClustering.
      */
-    virtual Processor* newProcessor() {
-		return new EUTelProcessorGeometricClustering;
+    virtual Processor *newProcessor() {
+      return new EUTelProcessorGeometricClustering;
     }
 
-    virtual const std::string & name() const { return Processor::name(); }
+    virtual const std::string &name() const { return Processor::name(); }
 
     //! Default constructor
-    EUTelProcessorGeometricClustering ();
+    EUTelProcessorGeometricClustering();
 
     //! Called at the job beginning.
     /*! This is executed only once in the whole execution. It prints
@@ -118,7 +118,7 @@ public:
      *  she/he warned that the procedure is going to slow down
      *  considerably
      */
-    virtual void init ();
+    virtual void init();
 
     //! Called for every run.
     /*! It is called for every run, and consequently the run counter
@@ -127,7 +127,7 @@ public:
      *
      *  @param run the LCRunHeader of the this current run
      */
-    virtual void processRunHeader (LCRunHeader * run);
+    virtual void processRunHeader(LCRunHeader *run);
 
     //! Called every event
     /*! It looks for clusters in the current event using the selected
@@ -138,14 +138,14 @@ public:
      *  @param evt the current LCEvent event as passed by the
      *  ProcessMgr
      */
-    virtual void processEvent (LCEvent * evt);
+    virtual void processEvent(LCEvent *evt);
 
     //! Modify event method
     /*! Actually don't used
      *
      *  @param evt the current LCEvent event as passed by the ProcessMgr
      */
-    virtual void modifyEvent( LCEvent * evt ) ;
+    virtual void modifyEvent(LCEvent *evt);
 
     //! Check event method
     /*! This method is called by the Marlin execution framework as
@@ -155,7 +155,7 @@ public:
      *
      *  @param evt The LCEvent event as passed by the ProcessMgr
      */
-    virtual void check (LCEvent * evt);
+    virtual void check(LCEvent *evt);
 
     //! Called after data processing.
     /*! This method is called when the loop on events is finished. It
@@ -163,8 +163,7 @@ public:
      */
     virtual void end();
 
-
-	//TODO: Tobias
+    // TODO: Tobias
     //! Reset the status map
     /*! This method is called at the beginning of the clustering
      *  procedure because it is possibly containing the position of
@@ -183,7 +182,7 @@ public:
      *  will try to write a piece of code to deconvolve merging
      *  clusters.
      */
-    void resetStatus(IMPL::TrackerRawDataImpl * status);
+    void resetStatus(IMPL::TrackerRawDataImpl *status);
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     //! Book histograms
@@ -200,7 +199,7 @@ public:
      *
      *  @param evt The current event object
      */
-    void fillHistos(LCEvent * evt);
+    void fillHistos(LCEvent *evt);
 #endif
 
     //! Initialize the geometry information
@@ -215,11 +214,9 @@ public:
      *  information, a SkipEventException is thrown and the geometry
      *  will be initialize with the following event.
      */
-    void initializeGeometry( LCEvent * evt ) throw ( marlin::SkipEventException );
+    void initializeGeometry(LCEvent *evt) throw(marlin::SkipEventException);
 
- 
-protected:
-   
+  protected:
     //! Method for geometric clsutering
     /*! Algorithm which actually reads in teh collection of hit pixels
      *  and groups them together.
@@ -228,7 +225,7 @@ protected:
      *  @param pulse The collection of pulses to append the found
      *  clusters.
      */
-    void geometricClustering(LCEvent* evt, LCCollectionVec* pulse);
+    void geometricClustering(LCEvent *evt, LCCollectionVec *pulse);
 
     //! Input collection name for ZS data
     /*! The input collection is the calibrated data one coming from
@@ -272,11 +269,11 @@ protected:
      */
     std::string _histoInfoFileName;
 
-	//! The time cut value as provided by the user.
-	float _cutT;
+    //! The time cut value as provided by the user.
+    float _cutT;
 
-private:
-	DISALLOW_COPY_AND_ASSIGN(EUTelProcessorGeometricClustering)
+  private:
+    DISALLOW_COPY_AND_ASSIGN(EUTelProcessorGeometricClustering)
 
     //! read secondary collections
     void readCollections(LCEvent *evt);
@@ -286,47 +283,47 @@ private:
      *  total number of clusters found on that sensor.
      *  The content of this map is show during end().
      */
-    std::map< int, int > _totClusterMap;
+    std::map<int, int> _totClusterMap;
 
     //! The number of detectors
     /*! The number of sensors in the telescope. This is retrieve from
      *  the run header
      */
     int _noOfDetector;
-    
+
     //! List of excluded planes.
     /*! This vector contains a list of sensor ids for planes that have
      *   to be excluded from the clustering.
      */
-    std::vector<int > _ExcludedPlanes;
+    std::vector<int> _ExcludedPlanes;
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     //! Map for pointer to cluster signal histograms.
-    std::map<int,AIDA::IBaseHistogram*> _clusterSignalHistos;
+    std::map<int, AIDA::IBaseHistogram *> _clusterSignalHistos;
 
     //! Map for pointer to Cluster signal histogram (size along X).
-    std::map<int,AIDA::IBaseHistogram*> _clusterSizeXHistos;
+    std::map<int, AIDA::IBaseHistogram *> _clusterSizeXHistos;
 
     //! Map for pointer to Cluster signal histogram (size along Y).
-    std::map<int,AIDA::IBaseHistogram*> _clusterSizeYHistos;
+    std::map<int, AIDA::IBaseHistogram *> _clusterSizeYHistos;
 
-     //! Map for pointer to Seed pixel signal histo 
-    std::map<int,AIDA::IBaseHistogram*> _seedSignalHistos;
+    //! Map for pointer to Seed pixel signal histo
+    std::map<int, AIDA::IBaseHistogram *> _seedSignalHistos;
 
-    //! Map for pointer to Hit map histogram 
-     std::map<int,AIDA::IBaseHistogram*> _hitMapHistos;
+    //! Map for pointer to Hit map histogram
+    std::map<int, AIDA::IBaseHistogram *> _hitMapHistos;
 
-    //! Map for pointer to Hit map histogram 
-     std::map<int,AIDA::IBaseHistogram*> _hitMapGeomHistos;
+    //! Map for pointer to Hit map histogram
+    std::map<int, AIDA::IBaseHistogram *> _hitMapGeomHistos;
 
-    //! Map for pointer to Cluster noise histogram 
-    std::map<int,AIDA::IBaseHistogram*> _clusterNoiseHistos;
+    //! Map for pointer to Cluster noise histogram
+    std::map<int, AIDA::IBaseHistogram *> _clusterNoiseHistos;
 
-    //! Map for pointer to Event multiplicity histogram 
-    std::map<int,AIDA::IBaseHistogram*> _eventMultiplicityHistos;
+    //! Map for pointer to Event multiplicity histogram
+    std::map<int, AIDA::IBaseHistogram *> _eventMultiplicityHistos;
 
-    //! Map for pointer to total cluster size histogram 
-    std::map<int,AIDA::IBaseHistogram*>_clusterSizeTotalHistos;
+    //! Map for pointer to total cluster size histogram
+    std::map<int, AIDA::IBaseHistogram *> _clusterSizeTotalHistos;
 #endif
 
     //! Geometry ready switch
@@ -338,17 +335,16 @@ private:
     //! SensorID vector
     /*! This is a vector of sensorID
      */
-    std::vector< int > _sensorIDVec;
+    std::vector<int> _sensorIDVec;
 
     //! Zero Suppressed Data Collection
     LCCollectionVec *_zsInputDataCollectionVec;
-    
-    //! pulse Collection 
-    LCCollectionVec* _pulseCollectionVec;
-  
-};
 
-//! A global instance of the processor
-EUTelProcessorGeometricClustering gEUTelProcessorGeometricClustering;
+    //! pulse Collection
+    LCCollectionVec *_pulseCollectionVec;
+  };
+
+  //! A global instance of the processor
+  EUTelProcessorGeometricClustering gEUTelProcessorGeometricClustering;
 }
 #endif

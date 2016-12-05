@@ -18,10 +18,10 @@
 #include "marlin/Processor.h"
 
 // lcio includes <.h>
-#include <EVENT/LCRunHeader.h>
 #include <EVENT/LCEvent.h>
+#include <EVENT/LCRunHeader.h>
 
-//Eigen
+// Eigen
 #include <Eigen/Core>
 
 // system includes <>
@@ -40,12 +40,10 @@ namespace eutelescope {
      *
      *  @return a new EUTelPedeGEAR.
      */
-    virtual Processor * newProcessor() {
-      return new EUTelPedeGEAR;
-    }
+    virtual Processor *newProcessor() { return new EUTelPedeGEAR; }
 
     //! Default constructor
-    EUTelPedeGEAR ();
+    EUTelPedeGEAR();
 
     //! Called at the job beginning.
     /*! This is executed only once in the whole execution. It prints
@@ -63,7 +61,7 @@ namespace eutelescope {
      *
      *  @param run the LCRunHeader of the this current run
      */
-    virtual void processRunHeader (LCRunHeader * run);
+    virtual void processRunHeader(LCRunHeader *run);
 
     //! Called every event
     /*! This is called for each event in the file. Each element of the
@@ -81,7 +79,7 @@ namespace eutelescope {
      *  @param evt the current LCEvent event as passed by the
      *  ProcessMgr
      */
-    virtual void processEvent (LCEvent * evt);
+    virtual void processEvent(LCEvent *evt);
 
     //! Called after data processing.
     /*! This method is called when the loop on events is
@@ -103,18 +101,18 @@ namespace eutelescope {
     //! Sensor ID vector
     int _alignMode;
     DoubleVec _siPlaneZPosition;
-    
-    // parameters
-    std::vector<unsigned int > _excludePlanes; //only for internal usage
-    IntVec _excludePlanes_sensorIDs; //this is going to be
-                                                //set by the user.
-    IntVec _FixedPlanes; //only for internal usage
-    IntVec _FixedPlanes_sensorIDs; //this is going to be
-    //set by the user.
-    
-    std::string _pedeSteerfileName;
-  private:
 
+    // parameters
+    std::vector<unsigned int> _excludePlanes; // only for internal usage
+    IntVec _excludePlanes_sensorIDs;          // this is going to be
+    // set by the user.
+    IntVec _FixedPlanes;           // only for internal usage
+    IntVec _FixedPlanes_sensorIDs; // this is going to be
+    // set by the user.
+
+    std::string _pedeSteerfileName;
+
+  private:
     //! Run number
     int _iRun;
 
@@ -124,15 +122,13 @@ namespace eutelescope {
     // Excluded planes
     int _nExcludePlanes;
 
- 	std::string _GEARFileSuffix;
-    
+    std::string _GEARFileSuffix;
+
     size_t _nPlanes;
   };
 
   //! A global instance of the processor
   EUTelPedeGEAR gEUTelPedeGEAR;
-
 }
 #endif
 #endif
-

@@ -14,8 +14,8 @@
 #include "marlin/Processor.h"
 
 // gear includes <.h>
-#include <gear/SiPlanesParameters.h>
 #include <gear/SiPlanesLayerLayout.h>
+#include <gear/SiPlanesParameters.h>
 
 // lcio includes <.h>
 #include "lcio.h"
@@ -27,12 +27,11 @@
 #endif
 
 // system includes <>
+#include <map>
 #include <string>
 #include <vector>
-#include <map>
 
 namespace eutelescope {
-
 
   //! Processor for building n-tuple with track fit results
   /*! This processor prepared for easier analysis of track fitting results.
@@ -79,13 +78,9 @@ namespace eutelescope {
    *
    */
 
-
   class EUTelFitTuple : public marlin::Processor {
 
   public:
-
-
-
     //! Returns a new instance of EUTelFitTuple
     /*! This method returns an new instance of the this processor.  It
      *  is called by Marlin execution framework and it shouldn't be
@@ -93,29 +88,29 @@ namespace eutelescope {
      *
      *  @return a new EUTelFitTuple
      */
-    virtual Processor*  newProcessor() { return new EUTelFitTuple ; }
+    virtual Processor *newProcessor() { return new EUTelFitTuple; }
 
     //! Default constructor
-    EUTelFitTuple() ;
+    EUTelFitTuple();
 
     //! Called at the job beginning.
     /*! This is executed only once in the whole execution.
      *
      */
-    virtual void init() ;
+    virtual void init();
 
     //! Called for every run.
     /*!
      * @param run the LCRunHeader of the current run
      */
-    virtual void processRunHeader( LCRunHeader* run ) ;
+    virtual void processRunHeader(LCRunHeader *run);
 
     //! Called every event
     /*! This is called for each event in the file.
      *
      *  @param evt the current LCEvent event
      */
-    virtual void processEvent( LCEvent * evt ) ;
+    virtual void processEvent(LCEvent *evt);
 
     //! Check event method
     /*! This method is called by the Marlin execution framework as
@@ -125,8 +120,7 @@ namespace eutelescope {
      *
      *  @param evt The LCEvent event as passed by the ProcessMgr
      */
-    virtual void check( LCEvent * evt ) ;
-
+    virtual void check(LCEvent *evt);
 
     //! Book histograms
     /*! This method is used to books all required
@@ -136,14 +130,12 @@ namespace eutelescope {
      */
     void bookHistos();
 
-
     //! Called after data processing for clean up.
     /*! Used to release memory allocated in init() step
      */
-    virtual void end() ;
+    virtual void end();
 
   protected:
-
     //! Silicon planes parameters as described in GEAR
     /*! This structure actually contains the following:
      *  @li A reference to the telescope geoemtry and layout
@@ -154,7 +146,7 @@ namespace eutelescope {
      *  This object is provided by GEAR during the init() phase and
      *  stored here for local use.
      */
-    gear::SiPlanesParameters * _siPlanesParameters;
+    gear::SiPlanesParameters *_siPlanesParameters;
 
     //! Silicon plane layer layout
     /*! This is the real geoemetry description. For each layer
@@ -164,14 +156,13 @@ namespace eutelescope {
      *  This object is taken from the _siPlanesParameters during the
      *  init() phase and stored for local use
      */
-    gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
-
+    gear::SiPlanesLayerLayout *_siPlanesLayerLayout;
 
     //! Input \c Track collection name
-    std::string _inputColName ;
+    std::string _inputColName;
 
     //! Input \c TrackerHit collection name
-    std::string _inputDUTColName ;
+    std::string _inputDUTColName;
 
     //! Flag for manual DUT selection
 
@@ -188,55 +179,46 @@ namespace eutelescope {
 
     int _nTelPlanes;
 
-    int * _planeSort;
-    int * _planeID;
-    double * _planePosition;
-    bool   * _isActive;
+    int *_planeSort;
+    int *_planeID;
+    double *_planePosition;
+    bool *_isActive;
 
-    bool   * _isMeasured;
-    double * _measuredX;
-    double * _measuredY;
-    double * _measuredZ;
-    double * _measuredQ;
+    bool *_isMeasured;
+    double *_measuredX;
+    double *_measuredY;
+    double *_measuredZ;
+    double *_measuredQ;
 
-    bool   * _isFitted;
-    double * _fittedX;
-    double * _fittedY;
+    bool *_isFitted;
+    double *_fittedX;
+    double *_fittedY;
 
     int _iDUT;
     double _zDUT;
     double _distMax;
-    std::vector<float > _DUTalign;
+    std::vector<float> _DUTalign;
 
     // Internal processor variables
     // ----------------------------
 
-    int _nRun ;
-    int _nEvt ;
+    int _nRun;
+    int _nEvt;
     int _runNr;
     int _evtNr;
-    long int  _tluTimeStamp;
-
+    long int _tluTimeStamp;
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
-
     static std::string _FitTupleName;
 
-    AIDA::ITuple * _FitTuple;
+    AIDA::ITuple *_FitTuple;
 
 #endif
-
-  } ;
-
+  };
 
   //! A global instance of the processor.
-  EUTelFitTuple aEUTelFitTuple ;
-
-
+  EUTelFitTuple aEUTelFitTuple;
 }
 
 #endif
-
-
-

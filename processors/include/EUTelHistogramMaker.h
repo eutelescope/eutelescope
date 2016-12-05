@@ -17,8 +17,8 @@
 
 // lcio includes <.h>
 #include <IMPL/LCCollectionVec.h>
-#include <IMPL/TrackerPulseImpl.h>
 #include <IMPL/TrackerDataImpl.h>
+#include <IMPL/TrackerPulseImpl.h>
 
 // AIDA includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -26,10 +26,9 @@
 #endif
 
 // system includes <>
-#include <vector>
 #include <map>
 #include <string>
-
+#include <vector>
 
 namespace eutelescope {
 
@@ -90,8 +89,6 @@ namespace eutelescope {
   class EUTelHistogramMaker : public marlin::Processor {
 
   public:
-
-
     //! Returns a new instance of EUTelHistogramMaker
     /*! This method returns an new instance of the this processor.  It
      *  is called by Marlin execution framework and it shouldn't be
@@ -99,12 +96,10 @@ namespace eutelescope {
      *
      *  @return a new EUTelPedestalNoiseProcess.
      */
-    virtual Processor * newProcessor () {
-      return new EUTelHistogramMaker;
-    }
+    virtual Processor *newProcessor() { return new EUTelHistogramMaker; }
 
     //! Default constructor
-    EUTelHistogramMaker ();
+    EUTelHistogramMaker();
 
     //! Called at the job beginning.
     /*! This is executed only once in the whole execution. It prints
@@ -113,7 +108,7 @@ namespace eutelescope {
      *  book histograms, but since those are also grouped according to
      *  the detector numbers we need to have this parameter available.
      */
-    virtual void init ();
+    virtual void init();
 
     //! Called for every run.
     /*! At the beginning of every run the run header is read and
@@ -125,7 +120,7 @@ namespace eutelescope {
      *
      *  @param run the LCRunHeader of the this current run
      */
-    virtual void processRunHeader (LCRunHeader * run);
+    virtual void processRunHeader(LCRunHeader *run);
 
     //! Called every event
     /*  All histograms are filled with the current event information.
@@ -133,8 +128,7 @@ namespace eutelescope {
      *  @param evt the current LCEvent event as passed by the
      *  ProcessMgr
      */
-    virtual void processEvent (LCEvent * evt);
-
+    virtual void processEvent(LCEvent *evt);
 
     //! Check event method
     /*! Nothing to check
@@ -142,7 +136,7 @@ namespace eutelescope {
      *  @param evt The LCEvent event as passed by the ProcessMgr
      *
      */
-    virtual void check (LCEvent * evt);
+    virtual void check(LCEvent *evt);
 
     //! Book histograms
     /*! This method is used to prepare the needed directory structure
@@ -162,7 +156,7 @@ namespace eutelescope {
      *
      *  @param event An LCIO event.
      */
-    void initializeGeometry( LCEvent * event );
+    void initializeGeometry(LCEvent *event);
 
     //! Called after data processing.
     /*! This method is called when the loop on events is finished. It
@@ -171,7 +165,6 @@ namespace eutelescope {
     virtual void end();
 
   protected:
-
     //! Input collection name.
     /*! This is the name of the TrackerPulse input collection.
      */
@@ -204,19 +197,18 @@ namespace eutelescope {
     std::string _histoInfoFileName;
 
   private:
-
     //! List of cluster spectra N
     /*! This vector contains a list of cluster spectra we want to fill
      *  in.
      */
-    std::vector<int > _clusterSpectraNVector;
+    std::vector<int> _clusterSpectraNVector;
 
     //! List of cluster spectra NxN
     /*! This vector contains a list of cluster spectra N x N we want
      *   to fill. For example, if it contains "3", then the cluster 3x3
      *   spectrum will be filled.
      */
-    std::vector<int > _clusterSpectraNxNVector;
+    std::vector<int> _clusterSpectraNxNVector;
 
     //! The number of detectors
     /*! The number of sensors in the telescope. This is retrieve from
@@ -228,12 +220,12 @@ namespace eutelescope {
     /*! This is a map relating the sensorID and the position of such a
      *  sensorID in the noise / status collection.
      */
-    std::map< int, int > _ancillaryMap;
+    std::map<int, int> _ancillaryMap;
 
     //! SensorID vector
     /*! This is a vector of sensorID
      */
-    std::vector< int > _sensorIDVec;
+    std::vector<int> _sensorIDVec;
 
     //! Geometry ready flag
     bool _isGeometryReady;
@@ -241,22 +233,22 @@ namespace eutelescope {
     //! The first pixel on the x side
     /*! One value for each detector.
      */
-    std::map< int, int > _minX;
+    std::map<int, int> _minX;
 
     //! The first pixel on the y side
     /*! One value for each detector.
      */
-    std::map< int, int > _minY;
+    std::map<int, int> _minY;
 
     //! The last pixel on the x side
     /*! One value for each detector.
      */
-    std::map< int, int > _maxX;
+    std::map<int, int> _maxX;
 
     //! The last pixel on the y side
     /*! One value for each detector.
      */
-    std::map< int, int > _maxY;
+    std::map<int, int> _maxY;
 
     //! Switch to turn on and off the noise histo filling
     /*! To fill noise and SNR related histograms, the presence of the
@@ -277,7 +269,7 @@ namespace eutelescope {
      *  want to use <code>dynamic_cast</code> to convert them back to
      *  their original cast.
      */
-    std::map<std::string , AIDA::IBaseHistogram * > _aidaHistoMap;
+    std::map<std::string, AIDA::IBaseHistogram *> _aidaHistoMap;
 
     //! Cluster signal histogram base name.
     /*! This is the name of the cluster signal histogram. To this
@@ -320,7 +312,6 @@ namespace eutelescope {
      */
     static std::string _clusterNoiseHistoName;
 
-
     //! Number of hit pixel
     /*! This is a histogram showing the number of hit pixel inside
      *  a digital fixed frame cluster
@@ -332,11 +323,9 @@ namespace eutelescope {
     /*! This is used to count the processed run header
      */
     int _iRun;
-
   };
 
   //! A global instance of the processor
   EUTelHistogramMaker gEUTelHistogramMaker;
-
 }
 #endif

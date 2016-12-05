@@ -7,7 +7,6 @@
  *
  */
 
-
 #ifndef EUTELOUTPUTPROCESSOR_H
 #define EUTELOUTPUTPROCESSOR_H 1
 
@@ -18,9 +17,8 @@
 #include "marlin/LCIOOutputProcessor.h"
 
 // lcio includes <.h>
-#include <lcio.h>
 #include <IO/LCWriter.h>
-
+#include <lcio.h>
 
 namespace eutelescope {
 
@@ -35,12 +33,12 @@ namespace eutelescope {
    *  mainly because they need to rewind the data stream to the
    *  beginning. Since SIO is a serial I/O format, an easy workaround
    *  is to append at the end of every run an empty event tagged as
-   *  the last one. 
+   *  the last one.
    *
    *  The use of this processor is very helpful when for example an
    *  input LCIO file has been produced without the EORE and this
    *  should be appended in order to compatible with the full analysis
-   *  chain. 
+   *  chain.
    *
    *  Another occasion in which the use of this processor is crucial
    *  is when the analysis of the input file is limited to a certain
@@ -73,33 +71,30 @@ namespace eutelescope {
    *
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id$ 
+   *  @version $Id$
    */
 
   class EUTelOutputProcessor : public marlin::LCIOOutputProcessor {
-  
-  public:  
 
+  public:
     //*! Returns a new instance of EUTelOutputProcessor
     /*!  This method returns a new instance of this processor. It is
      *   called by Marlin execution framework and it should not be
      *   called/used by the final user.
      *
      *   @return a new EUTelOutputProcessor.
-     */ 
-    virtual Processor*  newProcessor() { 
-      return new EUTelOutputProcessor ;
-    }
-    
-    //! Default constructor
-    EUTelOutputProcessor() ;
+     */
+    virtual Processor *newProcessor() { return new EUTelOutputProcessor; }
 
-    //! Opening the LCIO output file 
+    //! Default constructor
+    EUTelOutputProcessor();
+
+    //! Opening the LCIO output file
     /*! This is executed only once in the whole execution. It opens
      *  the output file with the mode flag specified in the steering
      *  files and prints out the processor parameters.
      */
-    virtual void init() ;
+    virtual void init();
 
     //! Process the run header
     /*! This method processes each run header copying them in the output
@@ -107,7 +102,7 @@ namespace eutelescope {
      *
      *  @param run The LCRunHeader being processed.
      */
-    virtual void processRunHeader( LCRunHeader* run) ;
+    virtual void processRunHeader(LCRunHeader *run);
 
     //! Process the event
     /*! This method processes the current event, removing the dropped
@@ -116,17 +111,15 @@ namespace eutelescope {
      *
      *  @param evt The LCEvent being processed.
      */
-    virtual void processEvent( LCEvent * evt ) ; 
+    virtual void processEvent(LCEvent *evt);
 
     //! Close the output file
     /*! This is the method where the output file is closed. In the
-     *  case the last processed event was 
+     *  case the last processed event was
      */
-    virtual void end() ;
-
+    virtual void end();
 
   protected:
-    
     //! The current event type
     /*! This is actually the only reason for reimplementing the
      *  LCIOOutputProcessor. During the processEvent(LCEvent * evt) we
@@ -134,7 +127,7 @@ namespace eutelescope {
      *  variable. When the end() method is called, then accessing to
      *  _eventType we know if the previously processed event was an
      *  EORE or not. If not a new EORE is added.
-     */ 
+     */
     EventType _eventType;
 
     //! The switch to remove intermediate EORE events
@@ -148,19 +141,13 @@ namespace eutelescope {
      *  If _skipIntermediateEORESwitch is false, all EOREs will appear also
      *  in the output file and, only if missing, an EORE will be
      *  appended at the end.
-     * 
-     */ 
+     *
+     */
     bool _skipIntermediateEORESwitch;
-      
-
-  } ;
+  };
 
   //! A global instance of EUTelOutputProcessor
-  EUTelOutputProcessor  gEUTelOutputProcessor ;
-
+  EUTelOutputProcessor gEUTelOutputProcessor;
 
 } // end namespace eutelescope
 #endif
-
-
-

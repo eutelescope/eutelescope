@@ -14,62 +14,57 @@
 // C++
 #include <string>
 
-
 namespace eutelescope {
 
   class EUTelProcessorFilteringHitFilter : public marlin::Processor {
-    public:
+  public:
+    virtual Processor *newProcessor() {
+      return new EUTelProcessorFilteringHitFilter;
+    }
 
-        virtual Processor* newProcessor() {
-            return new EUTelProcessorFilteringHitFilter;
-        }
+    EUTelProcessorFilteringHitFilter();
 
-        EUTelProcessorFilteringHitFilter();
+    /** Called at the begin of the job before anything is read.
+     * Use to initialize the processor, e.g. book histograms.
+     */
+    virtual void init();
 
-        /** Called at the begin of the job before anything is read.
-         * Use to initialize the processor, e.g. book histograms.
-         */
-        virtual void init();
+    /** Called for every run.
+     */
+    virtual void processRunHeader(lcio::LCRunHeader *run);
 
-        /** Called for every run.
-         */
-        virtual void processRunHeader(lcio::LCRunHeader* run);
+    /** Called for every event - the working horse.
+     */
+    virtual void processEvent(lcio::LCEvent *evt);
 
-        /** Called for every event - the working horse.
-         */
-        virtual void processEvent(lcio::LCEvent * evt);
+    virtual void check(lcio::LCEvent *evt);
 
-        virtual void check(lcio::LCEvent * evt);
+    /** Called after data processing for clean up.
+     */
+    virtual void end();
 
-        /** Called after data processing for clean up.
-         */
-        virtual void end();
+  protected:
+    //! Input TrackerHit collection name
+    std::string _hitInputCollectionName;
 
+    //! Output TrackerHit collection name
+    std::string _hitOutputCollectionName;
 
-    protected:
+    //! Input HotPixel collection name
+    std::string _hotpixelCollectionName;
 
-        //! Input TrackerHit collection name
-        std::string _hitInputCollectionName;
-        
-        //! Output TrackerHit collection name
-        std::string _hitOutputCollectionName;
+    IntVec _wantPlaneID;
 
-        //! Input HotPixel collection name
-        std::string _hotpixelCollectionName;
+    int _nProcessedRuns;
+    int _nProcessedEvents;
 
-        IntVec _wantPlaneID;
-        
-        int _nProcessedRuns;
-        int _nProcessedEvents;
+    // treat hits with hotpixels
+    std::map<std::string, bool> _hotPixelMap;
+  };
 
-        // treat hits with hotpixels
-        std::map<std::string, bool > _hotPixelMap;
- 
-    };
+  //! A global instance of the processor
+  EUTelProcessorFilteringHitFilter gEUTelProcessorFilteringHitFilter;
 
-    //! A global instance of the processor
-    EUTelProcessorFilteringHitFilter gEUTelProcessorFilteringHitFilter;
-    
 } // eutelescope
 
 #endif // EUTelProcessorFilteringHitFilter_h

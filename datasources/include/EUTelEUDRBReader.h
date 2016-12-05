@@ -7,7 +7,7 @@
  *
  */
 #ifdef EXPERIMENTAL
-#ifndef EUTELEUDRBREADER_H 
+#ifndef EUTELEUDRBREADER_H
 #define EUTELEUDRBREADER_H 1
 
 // personal includes ".h"
@@ -19,18 +19,17 @@
 
 // system includes <>
 
-
 namespace eutelescope {
 
-  //! This is the file header. 
+  //! This is the file header.
   /*! There is a structure like this at the beginning of the file and
    *  contains many information about the current setup.
-   *  
+   *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
    *  @version $Id$
    */
   struct EUDRBFileHeader {
-    
+
     //! The total number of events stored in the file
     /*! This number represents how many events are saved into the
      *  file. This number is not terribly important from the point of
@@ -46,33 +45,33 @@ namespace eutelescope {
      *  <code>
      *  sizeof(EUDRBFileHeader) = 32
      *  </code>
-     */ 
-    int  numberOfEvent;  //  4 bytes
-    
-    //! The number of separate detector 
+     */
+    int numberOfEvent; //  4 bytes
+
+    //! The number of separate detector
     /*! For the time being this number is going to be equal to one; in
      *  fact only one detector is read with one EUDRB board. As soon
      *  as multiple detectors will be read, this number can be
      *  different by 1, but for that time I hope we will have already
      *  the final data format (LCIO based) not using anymore this
      *  basic debug format
-     */ 
-    int  numberOfDetector; // 4 bytes
+     */
+    int numberOfDetector; // 4 bytes
 
-    //! The number of pixel along x 
+    //! The number of pixel along x
     /*! This is the number of pixel along the x direction for each
      *  single channel. So for example this is 66 for a MimoTel
      *  detector
-     */ 
+     */
     int nXPixel; // 4 bytes
 
     //! The number of pixel along y
     /*! This is the number of pixel along the y direction for each
      *  single channel. So for example this is 256 for a MimoTel
      *  detector
-     */ 
+     */
     int nYPixel; // 4 bytes
-    
+
     //! The total event size
     /*! This is the number of bytes contained in one event
      *  structure. This is actually equivalent to: <code>
@@ -83,9 +82,9 @@ namespace eutelescope {
      *  \li @c sizeof(EUDRBEventHeader) 8 bytes
      *  \li @c dataSize
      *  \li @c sizeof(EUDRBTrailer) 4 bytes
-     */ 
+     */
     int eventSize;
-    
+
     //! The total data size
     /*! This is the size in bytes of the data block. It is equal to
      *  the following: <code> 4 channel * nXPixel * nYPixel * 3 frame
@@ -100,7 +99,7 @@ namespace eutelescope {
      *  the ADC value.
      *
      *  For the time being this bit mask is 0x0FFF0000;
-     */ 
+     */
     int chACBitMask; // 4 bytes
 
     //! Right shift for the channel A/C data
@@ -120,7 +119,7 @@ namespace eutelescope {
      *  the ADC value.
      *
      *  For the time being this bit mask is 0x00000FFF;
-     */ 
+     */
     int chBDBitMask; // 4 bytes
 
     //! Right shift for the channel B/D data
@@ -132,40 +131,35 @@ namespace eutelescope {
      *  For the time being this number is 0
      */
     int chBDRightShift; // 4 bytes
-
   };
 
   //! This is the event file header.
   /*! There is a structure like this at the beginning of each
    *  event. The total size is 8 bytes.
-   * 
+   *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
    *  @version $Id$
-   */ 
+   */
   struct EUDRBEventHeader {
-    
-    //! The current event number (starting from 0)
-    int eventNumber;     //  4 bytes
-    
-    //! The current trigger number if available 
-    int triggerNumber;   //  4 bytes
-    
-  };
 
+    //! The current event number (starting from 0)
+    int eventNumber; //  4 bytes
+
+    //! The current trigger number if available
+    int triggerNumber; //  4 bytes
+  };
 
   //! This is the EUDRB trailer
   /*! This is the trailer appended at the end of each event.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id$   
+   *  @version $Id$
    */
   struct EUDRBTrailer {
     //! The trailer
-    unsigned int trailer;  // 4 bytes
+    unsigned int trailer; // 4 bytes
   };
-  
-  
-  
+
   //!  Reads test data set written with the EUDRB board
   /*!  During the debug phase of the EUDRB in non zero suppressed
    *   mode, data are saved on disk as they are coming from the VME
@@ -178,10 +172,12 @@ namespace eutelescope {
    *   saved into a 32 bit integer number with the following structure:
    *
    *   <code>
-   *   31 . . 28 27 . . 24 23 . . 20 19 . . 16 15 . . 12 11 . . 8 7 . . 4 3 . . 0<br>
-   *   <-  c1 -> <-----    pixel A / C   ----> <-  c2 -> <----   pixel B / D --->
+   *   31 . . 28 27 . . 24 23 . . 20 19 . . 16 15 . . 12 11 . . 8 7 . . 4 3 . .
+   * 0<br>
+   *   <-  c1 -> <-----    pixel A / C   ----> <-  c2 -> <----   pixel B / D
+   * --->
    *   </code>
-   * 
+   *
    *   Odd records contain pixels from channels A and B, while even
    *   records contain pixels from channels C and D. @c c1 and @c c2
    *   are two control fields not yet considered in the data
@@ -208,12 +204,12 @@ namespace eutelescope {
    *   TrackerRawData contains the difference from frame 2 and frame
    *   1. \li <b>LFn</b> with n=1, 2, 3. The TrackerRawData contains
    *   the frame specified by the integer number.
-   *   
+   *
    *   <h4>Input - Prerequisites</h4> None
    *
    *   <h4>Output</h4>
    *   The event with the TrackerRawData collection
-   *   
+   *
    *   @param FileName The input file name in the EUDRB format
    *
    *   @param CalculationAlgorithm The algorithm to be used to fill
@@ -223,21 +219,20 @@ namespace eutelescope {
    *   @version $Id$
    *
    */
-  
-  class EUTelEUDRBReader: public marlin::DataSourceProcessor {
-    
+
+  class EUTelEUDRBReader : public marlin::DataSourceProcessor {
+
   public:
-    
     //! Default constructor
-    EUTelEUDRBReader ();
-    
+    EUTelEUDRBReader();
+
     //! New processor
     /*! Return a new instance of a EUTelEUDRBReader. It is
      *  called by the Marlin execution framework and shouldn't be used
      *  by the final user.
      */
-    virtual EUTelEUDRBReader *newProcessor ();
-    
+    virtual EUTelEUDRBReader *newProcessor();
+
     //! Creates events from the debug data stream
     /*! At the beginning of the development of a new hardware device,
      *  it is crucial to test the quality of the transmitted data
@@ -252,42 +247,38 @@ namespace eutelescope {
      *  be processed. This value it is actually passed to the
      *  DataSourceProcessor by the ProcessorMgr
      */
-    virtual void readDataSource (int numEvents);
-    
+    virtual void readDataSource(int numEvents);
+
     //! Init method
     /*! It is called at the beginning of the cycle and it prints out
      *  the parameters.
      */
-    virtual void init ();
-    
+    virtual void init();
+
     //! End method
     /*! It deletes the EUTelEUDRBReader::_buffer array
      */
-    virtual void end ();
-    
+    virtual void end();
+
   protected:
-    
-    //! Input file name 
+    //! Input file name
     std::string _fileName;
-    
+
     //! Calculation algorithm
     std::string _algo;
-    
+
   private:
-    
     //! A EUDRBFileHeader instance
     /*! This object is used to read the file header from the input
      *  file and the content is used to keep all the useful
      *  information for the data processing
-     */ 
-    EUDRBFileHeader * _fileHeader;
-    
+     */
+    EUDRBFileHeader *_fileHeader;
+
     //! The buffer container
-    int * _buffer;
-        
+    int *_buffer;
   };
 
-  
-}                               // end namespace eutelescope
+} // end namespace eutelescope
 #endif
 #endif

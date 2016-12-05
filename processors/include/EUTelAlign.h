@@ -19,35 +19,34 @@
 #include "marlin/Processor.h"
 
 // gear includes <.h>
-#include <gear/SiPlanesParameters.h>
 #include <gear/SiPlanesLayerLayout.h>
+#include <gear/SiPlanesParameters.h>
 
 // lcio includes <.h>
-#include <EVENT/LCRunHeader.h>
 #include <EVENT/LCEvent.h>
+#include <EVENT/LCRunHeader.h>
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <AIDA/IBaseHistogram.h>
 #endif
 
 // system includes <>
+#include <map>
 #include <string>
 #include <vector>
-#include <map>
 
 #if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
 #include "TMinuit.h"
 class TMinuit;
 #endif
 
-
 namespace eutelescope {
 
   class EUTelAlign : public marlin::Processor {
 
   public:
-
-    static void Chi2Function(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t iflag);
+    static void Chi2Function(Int_t &npar, Double_t *gin, Double_t &f,
+                             Double_t *par, Int_t iflag);
 
     //! Variables for hit parameters
     class HitsForFit {
@@ -72,7 +71,9 @@ namespace eutelescope {
       double measuredZ;
     };
 
-    virtual void FitTrack(int nPlanesFit, double xPosFit[], double yPosFit[], double zPosFit[], double xResFit[], double yResFit[], double chi2Fit[2], double&, double&, double);
+    virtual void FitTrack(int nPlanesFit, double xPosFit[], double yPosFit[],
+                          double zPosFit[], double xResFit[], double yResFit[],
+                          double chi2Fit[2], double &, double &, double);
 
     //! Returns a new instance of EUTelAlign
     /*! This method returns a new instance of this processor.  It is
@@ -81,19 +82,17 @@ namespace eutelescope {
      *
      *  @return a new EUTelAlign.
      */
-    virtual Processor * newProcessor() {
-      return new EUTelAlign;
-    }
+    virtual Processor *newProcessor() { return new EUTelAlign; }
 
     //! Default constructor
-    EUTelAlign ();
+    EUTelAlign();
 
     //! Called at the job beginning.
     /*! This is executed only once in the whole execution. It prints
      *  out the processor parameters and check that the GEAR
      *  environment is properly set up and accessible from Marlin.
      */
-    virtual void init ();
+    virtual void init();
 
     //! Called for every run.
     /*! It is called for every run, and consequently the run counter
@@ -104,7 +103,7 @@ namespace eutelescope {
      *
      *  @param run the LCRunHeader of the this current run
      */
-    virtual void processRunHeader (LCRunHeader * run);
+    virtual void processRunHeader(LCRunHeader *run);
 
     //! Called every event
     /*! This is called for each event in the file. Each element of the
@@ -117,7 +116,7 @@ namespace eutelescope {
      *  @param evt the current LCEvent event as passed by the
      *  ProcessMgr
      */
-    virtual void processEvent (LCEvent * evt);
+    virtual void processEvent(LCEvent *evt);
 
     //! Called after data processing.
     /*! This method is called when the loop on events is
@@ -135,7 +134,6 @@ namespace eutelescope {
     void bookHistos();
 
   protected:
-
     static std::vector<HitsForFit> _hitsForFit;
 
     //! TrackerHit collection name
@@ -143,8 +141,8 @@ namespace eutelescope {
      */
     std::string _measHitCollectionName;
 
-    std::vector<float > _alignmentConstantsSecondLayer;
-    std::vector<float > _alignmentConstantsThirdLayer;
+    std::vector<float> _alignmentConstantsSecondLayer;
+    std::vector<float> _alignmentConstantsThirdLayer;
 
     // Parameters
 
@@ -158,10 +156,9 @@ namespace eutelescope {
     double _distanceMax;
     int _nHitsMax;
 
-    std::vector<float > _startValuesForAlignment;
+    std::vector<float> _startValuesForAlignment;
 
   private:
-
     //! Run number
     int _iRun;
 
@@ -176,7 +173,7 @@ namespace eutelescope {
      *  we need a conversion table to go from the detectorID to the
      *  layerindex.
      */
-    std::map< int, int > _conversionIdMap;
+    std::map<int, int> _conversionIdMap;
 
     //! Silicon planes parameters as described in GEAR
     /*! This structure actually contains the following:
@@ -188,7 +185,7 @@ namespace eutelescope {
      *  This object is provided by GEAR during the init() phase and
      *  stored here for local use.
      */
-    gear::SiPlanesParameters * _siPlanesParameters;
+    gear::SiPlanesParameters *_siPlanesParameters;
 
     //! Silicon plane layer layout
     /*! This is the real geoemetry description. For each layer
@@ -198,7 +195,7 @@ namespace eutelescope {
      *  This object is taken from the _siPlanesParameters during the
      *  init() phase and stored for local use
      */
-    gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
+    gear::SiPlanesLayerLayout *_siPlanesLayerLayout;
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     //! AIDA histogram map
@@ -209,7 +206,7 @@ namespace eutelescope {
      *  The histogram filling can proceed recalling an object through
      *  its name
      */
-    std::map<std::string, AIDA::IBaseHistogram * > _aidaHistoMap;
+    std::map<std::string, AIDA::IBaseHistogram *> _aidaHistoMap;
 
     static std::string _distanceLocalname;
 
@@ -221,27 +218,26 @@ namespace eutelescope {
 #endif
 
     int _nPlanes;
-    double * _xMeasPos;
-    double * _yMeasPos;
-    double * _zMeasPos;
-    double * _intrResol;
+    double *_xMeasPos;
+    double *_yMeasPos;
+    double *_zMeasPos;
+    double *_intrResol;
     double _xMeas, _yMeas;
     double _xPred, _yPred;
 
-    double ** _xPos;
-    double ** _yPos;
-    double ** _zPos;
+    double **_xPos;
+    double **_yPos;
+    double **_zPos;
 
-    double * _xPosHere;
-    double * _yPosHere;
-    double * _zPosHere;
-    double * _waferResidX;
-    double * _waferResidY;
-    double * _intrResolX;
-    double * _intrResolY;
-    double * _xFitPos;
-    double * _yFitPos;
-
+    double *_xPosHere;
+    double *_yPosHere;
+    double *_zPosHere;
+    double *_waferResidX;
+    double *_waferResidY;
+    double *_intrResolX;
+    double *_intrResolY;
+    double *_xFitPos;
+    double *_yFitPos;
   };
 
   //! A global instance of the processor

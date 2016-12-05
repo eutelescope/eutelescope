@@ -22,18 +22,17 @@
 using namespace std;
 using namespace eutelescope;
 
-
-EUTelEventImpl::EUTelEventImpl() : IMPL::LCEventImpl() { /* NO - OP */ ; }
+EUTelEventImpl::EUTelEventImpl() : IMPL::LCEventImpl() { /* NO - OP */
+  ;
+}
 
 void EUTelEventImpl::setEventType(EventType type) {
 
   int iType = static_cast<EventType>(type);
   setEventType(iType);
-
 }
 
 void EUTelEventImpl::setEventType(int type) {
 
   _params.setValue(EUTELESCOPE::EVENTTYPE, type);
-
 }

@@ -11,9 +11,8 @@
 #define EUTELPSEUDO1DHISTOGRAM_H 1
 
 // system includes <>
-#include <iostream>
 #include <cmath>
-
+#include <iostream>
 
 namespace eutelescope {
 
@@ -35,35 +34,34 @@ namespace eutelescope {
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
    *  @version $Id$
-   */ 
-  
+   */
+
   class EUTelPseudo1DHistogram {
-    
+
   public:
-    
     //! Constructor with number of bins and lower and upper boundaries
-    /*! This is the default constructor. 
+    /*! This is the default constructor.
      *
      *  @param noOfBins : number of bins in the histogram. Over- and
-     *  underflow bin are created additionally.  
-     *  
-     *  @param min : smallest value in the histogram 
+     *  underflow bin are created additionally.
+     *
+     *  @param min : smallest value in the histogram
      *
      *  @param max : largest value in the histogram
      */
     EUTelPseudo1DHistogram(int noOfBins, double min, double max);
-    
+
     //! Destructor
     ~EUTelPseudo1DHistogram();
-  
+
     //! Clear content
     /*! This method is used to reset the pseudo histogram content
      *  leaving unchanged the binning.
-     */ 
+     */
     void clearContent();
 
     //! Fill the pseudo-histogram with a value x and a statistical weight w.
-    /*! This is the typical filling method. 
+    /*! This is the typical filling method.
      * @param x : value to fill in the histogram
      * @param w : weight of the value x
      */
@@ -73,33 +71,34 @@ namespace eutelescope {
      * Find the bin containing x
      *
      * @param x : value on the x axis
-     * 
+     *
      * @return the bin containing @c x
      */
     int findBin(double x);
-    
+
     /**
      * Returns content of bin
      *
      * @param bin : number of the bin
      */
     double getBinContent(int bin);
-    
+
     /**
      * Returns number of entries in bin
      *
      * @param bin : number of the bin
      */
     int getNumberOfEntries(int bin);
-    
+
     /**
-     * Checks if bin is in range of the pseudo-histogram (over- and underflow bins are
+     * Checks if bin is in range of the pseudo-histogram (over- and underflow
+     * bins are
      * taken into account)
      *
      * @param bin : number of the bin
      */
     bool isInRange(int bin);
-    
+
     /**
      * Returns the weighted sum of the pseudo-histogram within startbin and
      * endbin
@@ -108,19 +107,19 @@ namespace eutelescope {
      * @param endbin   : number of the end bin for the integral
      */
     double integral(int startbin, int endbin);
-    
+
     /**
-     *    Prints content of the pseudo-histogram on the standard output 
+     *    Prints content of the pseudo-histogram on the standard output
      */
     void printContent();
-    
+
     /**
      *  Get the number of bin
      *
-     *  @return the number of bins 
-     */ 
+     *  @return the number of bins
+     */
     int getNumberOfBins();
-    
+
     /**
      *  Get the bin center
      *
@@ -129,36 +128,34 @@ namespace eutelescope {
      *  @return the bin center
      */
     double getBinCenter(int index);
-    
+
   private:
     //! Number of bins plus the over- and undeflow bin
-    int _FullNumberOfBins; 
-    
+    int _FullNumberOfBins;
+
     //! Number of bins without the over- and undeflow bin
-    int _NumberOfBins; 
+    int _NumberOfBins;
 
     //! Lower bound
     double _MinValue;
-    
+
     //! Upper bound
     double _MaxValue;
 
-    //! Bin width 
+    //! Bin width
     /*! Only constant binning is allowed
-     */ 
+     */
     double _BinWidth;
 
     //! Number of entries per bin
-    int* _NOfEntries;
+    int *_NOfEntries;
 
     //! Content array
-    double* _Content;
+    double *_Content;
 
     //! Bin upper limit array
-    double* _UpperIntervalLimit;
-    
+    double *_UpperIntervalLimit;
   };
-  
 }
 
 #endif

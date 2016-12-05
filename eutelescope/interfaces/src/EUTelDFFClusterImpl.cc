@@ -13,27 +13,24 @@
 
 // personal includes ".h"
 #include "EUTelDFFClusterImpl.h"
-#include "EUTelVirtualCluster.h"
 #include "EUTelExceptions.h"
+#include "EUTelVirtualCluster.h"
 
 // lcio includes <.h>
-#include <LCIOTypes.h>
-#include <IMPL/TrackerDataImpl.h>
 #include <Exceptions.h>
+#include <IMPL/TrackerDataImpl.h>
+#include <LCIOTypes.h>
 
 // system includes
-#include <map>
-#include <cmath>
 #include <algorithm>
-#include <vector>
-#include <iostream>
-#include <iomanip>
-#include <limits>
 #include <cassert>
+#include <cmath>
+#include <iomanip>
+#include <iostream>
+#include <limits>
+#include <map>
+#include <vector>
 
 using namespace eutelescope;
 using namespace IMPL;
 using namespace std;
-
-
-

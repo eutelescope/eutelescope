@@ -14,14 +14,14 @@
 #ifdef USE_GEAR
 
 // eutelescope includes ".h"
-#include "EUTelExceptions.h"
 #include "EUTELESCOPE.h"
+#include "EUTelExceptions.h"
 #include "EUTelGeometryTelescopeGeoDescription.h"
 
 // marlin includes ".h"
 #include "marlin/EventModifier.h"
-#include "marlin/Processor.h"
 #include "marlin/Exceptions.h"
+#include "marlin/Processor.h"
 
 // aida includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -29,15 +29,15 @@
 #endif
 
 // lcio includes <.h>
-#include <IMPL/TrackerRawDataImpl.h>
 #include <IMPL/LCCollectionVec.h>
+#include <IMPL/TrackerRawDataImpl.h>
 
 // system includes <>
-#include <string>
-#include <map>
 #include <cmath>
-#include <vector>
 #include <list>
+#include <map>
+#include <string>
+#include <vector>
 
 namespace eutelescope {
 
@@ -144,101 +144,76 @@ namespace eutelescope {
    *
    */
 
-  class EUTelClusteringProcessor :public marlin::Processor , public marlin::EventModifier {
+  class EUTelClusteringProcessor : public marlin::Processor,
+                                   public marlin::EventModifier {
 
   public:
-
-    //a helper class for faster digital cluster finding on the sensors
+    // a helper class for faster digital cluster finding on the sensors
     //(basically a two dimensional array)
-    template <class T>
-    class dim2array
-    {
+    template <class T> class dim2array {
     public:
-      dim2array() : array(NULL), size_x(0), size_y(0)
-      {
+      dim2array() : array(NULL), size_x(0), size_y(0) { createarray(); }
+      dim2array(int x, int y) : array(NULL), size_x(x), size_y(y) {
         createarray();
       }
-      dim2array(int x, int y) : array(NULL), size_x(x), size_y(y)
-      {
+      dim2array(const unsigned int x, const unsigned int y, T value)
+          : array(NULL), size_x(x), size_y(y) {
         createarray();
-      }
-      dim2array(const unsigned int x, const unsigned int y, T value) : array(NULL), size_x(x), size_y(y)
-      {
-        createarray();
-        for(unsigned int i =0; i < (size_x * size_y); ++i)
+        for (unsigned int i = 0; i < (size_x * size_y); ++i)
           array[i] = value;
       }
-      dim2array(const dim2array &a) : array(NULL), size_x(a.size_x), size_y(a.size_y)
-      {
-        //size_x = a.size_x;
-        //size_y = a.size_y;
+      dim2array(const dim2array &a)
+          : array(NULL), size_x(a.size_x), size_y(a.size_y) {
+        // size_x = a.size_x;
+        // size_y = a.size_y;
         createarray();
-        for(unsigned int i =0; i < size_x*size_y; ++i)
+        for (unsigned int i = 0; i < size_x * size_y; ++i)
           array[i] = a.array[i];
       }
-      dim2array& operator = (const dim2array &a)
-      {
+      dim2array &operator=(const dim2array &a) {
         size_x = a.size_x;
         size_y = a.size_y;
-        delete [] array;
+        delete[] array;
         createarray();
-        for(unsigned int i =0; i < size_x*size_y; ++i)
+        for (unsigned int i = 0; i < size_x * size_y; ++i)
           array[i] = a.array[i];
         return *this;
       }
-      T at(const int i, const int j) const
-      {
+      T at(const int i, const int j) const {
         int index = j * size_x + i;
-       //  if (index < 0 || index >= (size_x * size_y)) {
-//           std::cout << "debug i x " << i << " " << j << std::endl;
-//           abort();
-//         }
+        //  if (index < 0 || index >= (size_x * size_y)) {
+        //           std::cout << "debug i x " << i << " " << j << std::endl;
+        //           abort();
+        //         }
         return array[index];
       }
-      void pad(T v)
-      {
-        for(unsigned int i =0; i < size_x*size_y; ++i)
+      void pad(T v) {
+        for (unsigned int i = 0; i < size_x * size_y; ++i)
           array[i] = v;
       }
-      unsigned int sizeX() const
-      {
-        return (size_x);
-      }
-      unsigned int sizeY() const
-      {
-        return (size_y);
-      }
-      void set(const unsigned int i, const unsigned int j, T value)
-      {
+      unsigned int sizeX() const { return (size_x); }
+      unsigned int sizeY() const { return (size_y); }
+      void set(const unsigned int i, const unsigned int j, T value) {
         int index = j * size_x + i;
         array[index] = value;
       }
 
-      ~dim2array()
-      {
-        delete [] array;
-      }
+      ~dim2array() { delete[] array; }
 
     private:
-      void createarray()
-      {
-        array = new T[size_x * size_y];
-      }
+      void createarray() { array = new T[size_x * size_y]; }
 
       T *array;
 
       unsigned int size_x;
       unsigned int size_y;
     };
-    //std::vector< dim2array<bool> > sensormatrix;
+    // std::vector< dim2array<bool> > sensormatrix;
 
-
-    class pixel
-    {
+    class pixel {
     public:
       pixel() : x(0), y(0) {}
-      pixel(unsigned int tmp_x, unsigned int tmp_y) : x(tmp_x), y(tmp_y)
-      {
+      pixel(unsigned int tmp_x, unsigned int tmp_y) : x(tmp_x), y(tmp_y) {
         x = tmp_x;
         y = tmp_y;
       }
@@ -246,43 +221,37 @@ namespace eutelescope {
       unsigned int y;
     };
 
-    //class of seed candidates
-    class seed
-    {
+    // class of seed candidates
+    class seed {
     public:
-      seed(unsigned int tmp_x, unsigned int tmp_y, unsigned int tmp_nb, unsigned int cp) : x(tmp_x), y(tmp_y), neighbours(tmp_nb), p(cp)
-      {
+      seed(unsigned int tmp_x, unsigned int tmp_y, unsigned int tmp_nb,
+           unsigned int cp)
+          : x(tmp_x), y(tmp_y), neighbours(tmp_nb), p(cp) {
         x = tmp_x;
         y = tmp_y;
         neighbours = tmp_nb;
         p = cp;
       }
-      //this operator is needed for the sort algorithm. the first
-      //criteria is the number of neighbouring pixels and then the
-      //second criteria is the number of fired pixel in a cluster
-      //around the seed
-      bool operator<(const seed& b) const
-      {
-        //return (measuredZ < b.measuredZ);
+      // this operator is needed for the sort algorithm. the first
+      // criteria is the number of neighbouring pixels and then the
+      // second criteria is the number of fired pixel in a cluster
+      // around the seed
+      bool operator<(const seed &b) const {
+        // return (measuredZ < b.measuredZ);
         bool r = true;
-        if(neighbours == b.neighbours)
-          {
-            if(p < b.p)
-              r = false;
-          }
-        else
-          if(neighbours < b.neighbours)
+        if (neighbours == b.neighbours) {
+          if (p < b.p)
             r = false;
+        } else if (neighbours < b.neighbours)
+          r = false;
         return r;
       }
-      unsigned int x; //x coordinate
-      unsigned int y;//y coordinate
-      unsigned int neighbours; //number of neighbours
-      unsigned int p; //total number of fired pixel in the cluster formed by
-      //this seed pixel candidate
+      unsigned int x;          // x coordinate
+      unsigned int y;          // y coordinate
+      unsigned int neighbours; // number of neighbours
+      unsigned int p; // total number of fired pixel in the cluster formed by
+      // this seed pixel candidate
     };
-
-
 
     //! Returns a new instance of EUTelClusteringProcessor
     /*! This method returns an new instance of the this processor.  It
@@ -291,14 +260,12 @@ namespace eutelescope {
      *
      *  @return a new EUTelClusteringProcessor.
      */
-    virtual Processor * newProcessor() {
-      return new EUTelClusteringProcessor;
-    }
+    virtual Processor *newProcessor() { return new EUTelClusteringProcessor; }
 
-    virtual const std::string & name() const { return Processor::name() ; }
+    virtual const std::string &name() const { return Processor::name(); }
 
     //! Default constructor
-    EUTelClusteringProcessor ();
+    EUTelClusteringProcessor();
 
     //! Called at the job beginning.
     /*! This is executed only once in the whole execution. It prints
@@ -307,7 +274,7 @@ namespace eutelescope {
      *  she/he warned that the procedure is going to slow down
      *  considerably
      */
-    virtual void init ();
+    virtual void init();
 
     //! Called for every run.
     /*! It is called for every run, and consequently the run counter
@@ -316,7 +283,7 @@ namespace eutelescope {
      *
      *  @param run the LCRunHeader of the this current run
      */
-    virtual void processRunHeader (LCRunHeader * run);
+    virtual void processRunHeader(LCRunHeader *run);
 
     //! Called every event
     /*! It looks for clusters in the current event using the selected
@@ -327,14 +294,14 @@ namespace eutelescope {
      *  @param evt the current LCEvent event as passed by the
      *  ProcessMgr
      */
-    virtual void processEvent (LCEvent * evt);
+    virtual void processEvent(LCEvent *evt);
 
     //! Modify event method
     /*! Actually don't used
      *
      *  @param evt the current LCEvent event as passed by the ProcessMgr
      */
-    virtual void modifyEvent( LCEvent * evt ) ;
+    virtual void modifyEvent(LCEvent *evt);
 
     //! Check event method
     /*! This method is called by the Marlin execution framework as
@@ -344,7 +311,7 @@ namespace eutelescope {
      *
      *  @param evt The LCEvent event as passed by the ProcessMgr
      */
-    virtual void check (LCEvent * evt);
+    virtual void check(LCEvent *evt);
 
     //! Called after data processing.
     /*! This method is called when the loop on events is finished. It
@@ -370,7 +337,7 @@ namespace eutelescope {
      *  will try to write a piece of code to deconvolve merging
      *  clusters.
      */
-    void resetStatus(IMPL::TrackerRawDataImpl * status);
+    void resetStatus(IMPL::TrackerRawDataImpl *status);
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     //! Book histograms
@@ -387,9 +354,8 @@ namespace eutelescope {
      *
      *  @param evt The current event object
      */
-    void fillHistos(LCEvent * evt);
+    void fillHistos(LCEvent *evt);
 #endif
-
 
     //! Initialize the geometry information
     /*! This method is called to initialize the geometry information,
@@ -406,7 +372,7 @@ namespace eutelescope {
      *  information, a SkipEventException is thrown and the geometry
      *  will be initialize with the following event.
      */
-    void initializeGeometry( LCEvent * evt ) throw ( marlin::SkipEventException );
+    void initializeGeometry(LCEvent *evt) throw(marlin::SkipEventException);
 
     //! initialize statusCollection
     /*! values from hotpixel DB file are read into the statusCollection
@@ -421,7 +387,6 @@ namespace eutelescope {
     void initializeHotPixelMapVec();
 
   protected:
-
     //! Method for fixed frame clustering
     /*! This method is called by the processEvent method in the case
      *  the user selected the EUTELESCOPE::FIXEDFRAME algorithm for
@@ -441,10 +406,12 @@ namespace eutelescope {
      *  template element is the (float) pixel charge and the second is
      *  the pixel index.
      *
-     *  \li This is the sorted using the std::algorithm library by the first element of the pair
+     *  \li This is the sorted using the std::algorithm library by the first
+     * element of the pair
      *  i.e. the pixel signal. In this way, at the end of
      *  the matrix crossing, the last element of the map is the pixel
-     *  seed candidate with the highest signal. The seed candidate map has to be compulsory sorted,
+     *  seed candidate with the highest signal. The seed candidate map has to be
+     * compulsory sorted,
      *  because the cluster building procedure has to start from a
      *  seed pixel.
      *
@@ -482,20 +449,19 @@ namespace eutelescope {
      *  @param pulse The collection of pulses to append the found
      *  clusters.
      */
-    void fixedFrameClustering(LCEvent * evt, LCCollectionVec * pulse);
+    void fixedFrameClustering(LCEvent *evt, LCCollectionVec *pulse);
 
     //! Method for zs Fixed Frame Clustering
     /*! This method is called by the processEvent method in the case
      */
-    void zsFixedFrameClustering(LCEvent * evt, LCCollectionVec * pulse);
+    void zsFixedFrameClustering(LCEvent *evt, LCCollectionVec *pulse);
 
     //! Method for digital Fixed Frame Clustering
     /*! This method is called by the processEvent method in the case
      */
-    void digitalFixedFrameClustering(LCEvent * evt, LCCollectionVec * pulse);
+    void digitalFixedFrameClustering(LCEvent *evt, LCCollectionVec *pulse);
 
-
-    //!HACK TAKI
+    //! HACK TAKI
     //! Methods for bricked pixel clustering
     //! zs Bricked Clustering
     /*! This method is called by the processEvent method in the case
@@ -515,16 +481,15 @@ namespace eutelescope {
      *  @param pulse The collection of pulses to append the found
      *  clusters.
      */
-    void zsBrickedClustering(LCEvent * evt, LCCollectionVec * pulse);
+    void zsBrickedClustering(LCEvent *evt, LCCollectionVec *pulse);
 
-    //!HACK TAKI
+    //! HACK TAKI
     //! Methods for bricked pixel clustering
     //! nzs Bricked Clustering
-    void nzsBrickedClustering(LCEvent * evt, LCCollectionVec * pulse);
+    void nzsBrickedClustering(LCEvent *evt, LCCollectionVec *pulse);
 
     //! TODO: Documentation
-    void sparseClustering(LCEvent * evt, LCCollectionVec * pulse);
-
+    void sparseClustering(LCEvent *evt, LCCollectionVec *pulse);
 
     //! Input collection name for NZS data
     /*! The input collection is the calibrated data one coming from
@@ -562,7 +527,6 @@ namespace eutelescope {
      */
     std::string _hotPixelCollectionName;
 
-
     //! Pulse collection size
     size_t _initialPulseCollectionSize;
 
@@ -573,7 +537,6 @@ namespace eutelescope {
      *  clustering algorithm.
      */
     std::string _dummyCollectionName;
-
 
     //! Current run number.
     /*! This number is used to store the current run number
@@ -647,7 +610,6 @@ namespace eutelescope {
      *
      */
     std::string _dataFormatType;
-
 
     //! Cluster size along x in pixel
     /*! This parameter is used in the case the _clusteringAlgo is set
@@ -733,9 +695,9 @@ namespace eutelescope {
     std::string _histoInfoFileName;
 
   private:
-	DISALLOW_COPY_AND_ASSIGN(EUTelClusteringProcessor)
+    DISALLOW_COPY_AND_ASSIGN(EUTelClusteringProcessor)
 
-    void getMaxPixels(int sensorID, int& maxX, int& maxY);
+    void getMaxPixels(int sensorID, int &maxX, int &maxY);
 
     //! read secondary collections
     /*!
@@ -743,16 +705,17 @@ namespace eutelescope {
     void readCollections(LCEvent *evt);
 
     //! The seed candidate pixel map.
-    /*! This is a vector which stores the seed index and the size of the signal. The signal is the floating point and the unsigned integer is the
+    /*! This is a vector which stores the seed index and the size of the signal.
+     * The signal is the floating point and the unsigned integer is the
      */
-    std::vector< std::pair<float,unsigned int> > _seedCandidateMap;
+    std::vector<std::pair<float, unsigned int>> _seedCandidateMap;
 
     //! Total cluster found
     /*! This is a map correlating the sensorID number and the
      *  total number of clusters found on that sensor.
      *  The content of this map is show during end().
      */
-    std::map< int, int > _totClusterMap;
+    std::map<int, int> _totClusterMap;
 
     //! The number of detectors
     /*! The number of sensors in the telescope. This is retrieve from
@@ -764,62 +727,65 @@ namespace eutelescope {
     /*! This vector contains a list of sensor ids for planes that have
      *   to be excluded from the clustering.
      */
-    std::vector<int > _ExcludedPlanes;
+    std::vector<int> _ExcludedPlanes;
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     //! List of cluster spectra N
     /*! This vector contains a list of cluster spectra we want to fill
      *  in.
      */
-    std::vector<int > _clusterSpectraNVector;
+    std::vector<int> _clusterSpectraNVector;
 
     //! List of cluster spectra NxN
     /*! This vector contains a list of cluster spectra N x N we want
      *   to fill. For example, if it contains "3", then the cluster 3x3
      *   spectrum will be filled.
      */
-    std::vector<int > _clusterSpectraNxNVector;
+    std::vector<int> _clusterSpectraNxNVector;
 
     //! Map for pointer to cluster signal histograms.
-    std::map<int,AIDA::IBaseHistogram*> _clusterSignalHistos;
+    std::map<int, AIDA::IBaseHistogram *> _clusterSignalHistos;
 
     //! Map for pointer to Cluster signal histogram (size along X).
-    std::map<int,AIDA::IBaseHistogram*> _clusterSizeXHistos;
+    std::map<int, AIDA::IBaseHistogram *> _clusterSizeXHistos;
 
     //! Map for pointer to Cluster signal histogram (size along Y).
-    std::map<int,AIDA::IBaseHistogram*> _clusterSizeYHistos;
+    std::map<int, AIDA::IBaseHistogram *> _clusterSizeYHistos;
 
-     //! Map for pointer to Seed pixel signal histo
-    std::map<int,AIDA::IBaseHistogram*> _seedSignalHistos;
+    //! Map for pointer to Seed pixel signal histo
+    std::map<int, AIDA::IBaseHistogram *> _seedSignalHistos;
 
     //! Map for pointer to Hit map histogram
-     std::map<int,AIDA::IBaseHistogram*> _hitMapHistos;
+    std::map<int, AIDA::IBaseHistogram *> _hitMapHistos;
 
     //! Map for pointer to Seed pixel SNR
-    std::map<int,AIDA::IBaseHistogram*> _seedSNRHistos;
+    std::map<int, AIDA::IBaseHistogram *> _seedSNRHistos;
 
     //! Map for pointer to Cluster noise histogram
-    std::map<int,AIDA::IBaseHistogram*> _clusterNoiseHistos;
+    std::map<int, AIDA::IBaseHistogram *> _clusterNoiseHistos;
 
     //! Map for pointer to Cluster SNR histogram
-    std::map<int,AIDA::IBaseHistogram*> _clusterSNRHistos;
+    std::map<int, AIDA::IBaseHistogram *> _clusterSNRHistos;
 
     //! Map for pointer to Cluster vs Seed SNR histogram
-    std::map<int,AIDA::IBaseHistogram*> _cluster_vs_seedSNRHistos;
+    std::map<int, AIDA::IBaseHistogram *> _cluster_vs_seedSNRHistos;
 
     //! Map for pointer to Event multiplicity histogram
-    std::map<int,AIDA::IBaseHistogram*> _eventMultiplicityHistos;
+    std::map<int, AIDA::IBaseHistogram *> _eventMultiplicityHistos;
 
     // Histogram for the timestamp of the events
-    AIDA::IBaseHistogram* _timeStampHisto;
-    //! Map (of maps) for pointers to histograms with cluster spectra with the X most significant pixels
-    std::map<int, std::map<int,AIDA::IBaseHistogram*> > _clusterSignal_NHistos;
+    AIDA::IBaseHistogram *_timeStampHisto;
+    //! Map (of maps) for pointers to histograms with cluster spectra with the X
+    //! most significant pixels
+    std::map<int, std::map<int, AIDA::IBaseHistogram *>> _clusterSignal_NHistos;
 
-    //! Map (of maps) for pointers to histograms with cluster SRN spectra with the X most significant pixels
-    std::map<int, std::map<int,AIDA::IBaseHistogram*> > _clusterSNR_NHistos;
+    //! Map (of maps) for pointers to histograms with cluster SRN spectra with
+    //! the X most significant pixels
+    std::map<int, std::map<int, AIDA::IBaseHistogram *>> _clusterSNR_NHistos;
 
-    std::map<int, std::map<int,AIDA::IBaseHistogram*> > _clusterSignal_NxNHistos;
-    std::map<int, std::map<int,AIDA::IBaseHistogram*> > _clusterSNR_NxNHistos;
+    std::map<int, std::map<int, AIDA::IBaseHistogram *>>
+        _clusterSignal_NxNHistos;
+    std::map<int, std::map<int, AIDA::IBaseHistogram *>> _clusterSNR_NxNHistos;
 #endif
 
     //! Geometry ready switch
@@ -832,25 +798,25 @@ namespace eutelescope {
     /*! The first element is the sensor ID, while the second is the
      *  position of such a sensorID in the GEAR description.
      */
-    std::map< int , int > _layerIndexMap;
+    std::map<int, int> _layerIndexMap;
 
     //! Map relating ancillary collection position and sensorID
     /*! The first element is the sensor ID, while the second is the
      *  position of such a sensorID in all the ancillary collections
      *  (noise, pedestal and status).
      */
-    std::map< int, int > _ancillaryIndexMap;
+    std::map<int, int> _ancillaryIndexMap;
 
     //! Inverse vector relation
     /*! This is the inverse relation with respect to the
      *  _ancillaryIndexMap. It contains the ordered list of sensorID
      */
-    std::vector< int > _orderedSensorIDVec;
+    std::vector<int> _orderedSensorIDVec;
 
     //! SensorID vector
     /*! This is a vector of sensorID
      */
-    std::vector< int > _sensorIDVec;
+    std::vector<int> _sensorIDVec;
 
     //
     //! Zero Suppressed Data Collection
@@ -872,8 +838,6 @@ namespace eutelescope {
     //! status Collection
     LCCollectionVec *statusCollectionVec;
 
-
-
     //! Hot Pixel Collection
     LCCollectionVec *hotPixelCollectionVec;
 
@@ -890,14 +854,13 @@ namespace eutelescope {
      *  Value <int> - always status value = firing pixel
      */
 
-    std::vector< std::map< int, int > > _hitIndexMapVec;
+    std::vector<std::map<int, int>> _hitIndexMapVec;
 
     int ID;
   };
 
   //! A global instance of the processor
   EUTelClusteringProcessor gEUTelClusteringProcessor;
-
 }
 #endif // USE_GEAR
 #endif

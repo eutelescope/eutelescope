@@ -11,9 +11,9 @@
 
 // eutelescope includes ".h"
 #include "EUTelOutputProcessor.h"
+#include "EUTELESCOPE.h"
 #include "EUTelEventImpl.h"
 #include "EUTelRunHeaderImpl.h"
-#include "EUTELESCOPE.h"
 
 // marlin includes ".h"
 #include "marlin/LCIOOutputProcessor.h"
@@ -29,120 +29,107 @@ using namespace std;
 using namespace marlin;
 using namespace eutelescope;
 
- 
-EUTelOutputProcessor::EUTelOutputProcessor() : LCIOOutputProcessor("EUTelOutputProcessor")  {
-    
-  _description = "Writes the current event to the specified LCIO outputfile."
-    " Eventually it adds a EORE at the of the file if it was missing"
-    " Needs to be the last ActiveProcessor." ;
-    
+EUTelOutputProcessor::EUTelOutputProcessor()
+    : LCIOOutputProcessor("EUTelOutputProcessor") {
+
+  _description =
+      "Writes the current event to the specified LCIO outputfile."
+      " Eventually it adds a EORE at the of the file if it was missing"
+      " Needs to be the last ActiveProcessor.";
+
 #ifndef MARLIN_VERSION_GE
 
-  registerProcessorParameter( "LCIOOutputFile" , 
-			      " name of output file "  ,
-			      _lcioOutputFile ,
-			      std::string("outputfile.slcio") ) ;
-    
-  registerProcessorParameter( "LCIOWriteMode" , 
-			      "write mode for output file:  WRITE_APPEND or WRITE_NEW"  ,
-			      _lcioWriteMode ,
-			      std::string("None") ) ;
+  registerProcessorParameter("LCIOOutputFile", " name of output file ",
+                             _lcioOutputFile, std::string("outputfile.slcio"));
 
+  registerProcessorParameter(
+      "LCIOWriteMode", "write mode for output file:  WRITE_APPEND or WRITE_NEW",
+      _lcioWriteMode, std::string("None"));
 
-  StringVec dropNamesExamples ;
+  StringVec dropNamesExamples;
   dropNamesExamples.push_back("rawdata");
   dropNamesExamples.push_back("data");
   dropNamesExamples.push_back("pedestal");
   dropNamesExamples.push_back("noise");
   dropNamesExamples.push_back("status");
 
-  registerOptionalParameter( "DropCollectionNames" , 
-			     "drops the named collections from the event"  ,
-			     _dropCollectionNames ,
-			     dropNamesExamples ) ;
-    
-    
-  StringVec dropTypesExample ;
+  registerOptionalParameter("DropCollectionNames",
+                            "drops the named collections from the event",
+                            _dropCollectionNames, dropNamesExamples);
+
+  StringVec dropTypesExample;
   dropTypesExample.push_back("TrackerRawData");
   dropTypesExample.push_back("TrackerData");
-    
-  registerOptionalParameter( "DropCollectionTypes" , 
-			     "drops all collections of the given type from the event"  ,
-			     _dropCollectionTypes ,
-			     dropTypesExample ) ;
-    
 
-  registerOptionalParameter( "SplitFileSizekB" , 
-			     "will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW"  ,
-			     _splitFileSizekB, 
-			     1992294 ) ;  // 1.9 GB in kB
-#endif    
+  registerOptionalParameter(
+      "DropCollectionTypes",
+      "drops all collections of the given type from the event",
+      _dropCollectionTypes, dropTypesExample);
 
-  registerProcessorParameter("SkipIntermediateEORE",
-			     "Set it to true to remove intermediate EORE in merged runs",
-			     _skipIntermediateEORESwitch, static_cast< bool > ( true ) );
+  registerOptionalParameter("SplitFileSizekB",
+                            "will split output file if size in kB exceeds "
+                            "given value - doesn't work with APPEND and NEW",
+                            _splitFileSizekB,
+                            1992294); // 1.9 GB in kB
+#endif
 
-
+  registerProcessorParameter(
+      "SkipIntermediateEORE",
+      "Set it to true to remove intermediate EORE in merged runs",
+      _skipIntermediateEORESwitch, static_cast<bool>(true));
 }
 
-void EUTelOutputProcessor::init() { 
-  
+void EUTelOutputProcessor::init() {
+
   // needs to be reimplemented since it is virtual in
   // LCIOOutputProcessor
   LCIOOutputProcessor::init();
-
 }
 
-
-
-void EUTelOutputProcessor::processRunHeader( LCRunHeader* run) { 
-  std::unique_ptr<EUTelRunHeaderImpl> runHeader = std::make_unique<EUTelRunHeaderImpl>(run);
+void EUTelOutputProcessor::processRunHeader(LCRunHeader *run) {
+  std::unique_ptr<EUTelRunHeaderImpl> runHeader =
+      std::make_unique<EUTelRunHeaderImpl>(run);
   runHeader->addProcessor(type());
   LCIOOutputProcessor::processRunHeader(run);
-} 
+}
 
-void EUTelOutputProcessor::processEvent( LCEvent * evt ) { 
+void EUTelOutputProcessor::processEvent(LCEvent *evt) {
 
-  EUTelEventImpl * eutelEvt =  static_cast<EUTelEventImpl * > ( evt );
+  EUTelEventImpl *eutelEvt = static_cast<EUTelEventImpl *>(evt);
 
-  if ( _skipIntermediateEORESwitch && ( eutelEvt->getEventType() == kEORE ) ) {
+  if (_skipIntermediateEORESwitch && (eutelEvt->getEventType() == kEORE)) {
     // ok the user wants me to skip this because it may be an
     // intermediate EORE. But how to know this is not the last of the
     // intermediate EORE? Easy, don't care, set the _eventType to kDE
     // and in case this the last one, end() will be called soon after
     // and a kEORE will be appended!
     _eventType = kDE;
-    return ;
+    return;
   }
 
   LCIOOutputProcessor::processEvent(evt);
   _eventType = eutelEvt->getEventType();
-
 }
 
-void EUTelOutputProcessor::end(){ 
+void EUTelOutputProcessor::end() {
 
-  if ( _eventType != kEORE ) {
+  if (_eventType != kEORE) {
 
-    message<WARNING> ( "Adding a EORE because was missing" );
+    message<WARNING>("Adding a EORE because was missing");
 
-    EUTelEventImpl * event = new EUTelEventImpl;
+    EUTelEventImpl *event = new EUTelEventImpl;
     event->setDetectorName("kEORE fix by EUTelOutputProcessor");
     event->setEventType(kEORE);
-    event->setEventNumber( _nEvt + 1 );
-    
-    LCTime * now = new LCTime;
+    event->setEventNumber(_nEvt + 1);
+
+    LCTime *now = new LCTime;
     event->setTimeStamp(now->timeStamp());
     delete now;
 
-    _lcWrt->writeEvent( static_cast<LCEventImpl*> (event) );
+    _lcWrt->writeEvent(static_cast<LCEventImpl *>(event));
     delete event;
-
   }
 
-  message<MESSAGE5> ( log() << "Writing the output file " << _lcioOutputFile );
-  _lcWrt->close() ;
-
+  message<MESSAGE5>(log() << "Writing the output file " << _lcioOutputFile);
+  _lcWrt->close();
 }
-
-

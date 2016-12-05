@@ -20,7 +20,6 @@
 // system includes <>
 #include <vector>
 
-
 namespace eutelescope {
 
   //! Zero suppression processor
@@ -121,11 +120,9 @@ namespace eutelescope {
    *  @version $Id$
    */
 
-  class EUTelRawDataSparsifier:public marlin::Processor {
+  class EUTelRawDataSparsifier : public marlin::Processor {
 
   public:
-
-
     //! Returns a new instance of EUTelRawDataSparsifier
     /*! This method returns an new instance of the this processor.  It
      *  is called by Marlin execution framework and it shouldn't be
@@ -133,19 +130,17 @@ namespace eutelescope {
      *
      *  @return a new EUTelRawDataSparsifier.
      */
-    virtual Processor * newProcessor() {
-      return new EUTelRawDataSparsifier;
-    }
+    virtual Processor *newProcessor() { return new EUTelRawDataSparsifier; }
 
     //! Default constructor
-    EUTelRawDataSparsifier ();
+    EUTelRawDataSparsifier();
 
     //! Called at the job beginning.
     /*! This is executed only once in the whole execution. It prints
      *  out the processor parameters and reset all needed data
      *  members.
      */
-    virtual void init ();
+    virtual void init();
 
     //! Called for every run.
     /*! It is called for every run, and consequently the run counter
@@ -157,7 +152,7 @@ namespace eutelescope {
      *
      *  @param run the LCRunHeader of the this current run
      */
-    virtual void processRunHeader (LCRunHeader * run);
+    virtual void processRunHeader(LCRunHeader *run);
 
     //! Called every event
     /*! This is called for each event in the file. In the case this is
@@ -174,8 +169,7 @@ namespace eutelescope {
      *  @param evt the current LCEvent event as passed by the
      *  ProcessMgr
      */
-    virtual void processEvent (LCEvent * evt);
-
+    virtual void processEvent(LCEvent *evt);
 
     //! Check event method
     /*! This method is called by the Marlin execution framework as
@@ -185,7 +179,7 @@ namespace eutelescope {
      *
      *  @param evt The LCEvent event as passed by the ProcessMgr
      */
-    virtual void check (LCEvent * evt);
+    virtual void check(LCEvent *evt);
 
     //! Called after data processing.
     /*! This method is called when the loop on events is finished. It
@@ -193,9 +187,7 @@ namespace eutelescope {
      */
     virtual void end();
 
-
   protected:
-
     //! Input collection name.
     /*! For the time being we have just one collection that can be used as input
      */
@@ -215,12 +207,14 @@ namespace eutelescope {
     std::string _pedestalCollectionName;
 
     //! Noise collection name.
-    /*! See EUTelRawDataSparsifier::_pedestalCollectionName for the detailed description
+    /*! See EUTelRawDataSparsifier::_pedestalCollectionName for the detailed
+     * description
      */
     std::string _noiseCollectionName;
 
     //! Status collection name.
-    /*! See EUTelRawDataSparsifier::_pedestalCollectionName for the detailed description
+    /*! See EUTelRawDataSparsifier::_pedestalCollectionName for the detailed
+     * description
      */
     std::string _statusCollectionName;
 
@@ -242,7 +236,7 @@ namespace eutelescope {
     /*! One component for plane, it is used for the threshold
      *  calculation.
      */
-    std::vector<float > _sigmaCutVec;
+    std::vector<float> _sigmaCutVec;
 
     //! Current run number.
     /*! This number is used to store the current run number
@@ -256,7 +250,6 @@ namespace eutelescope {
     int _iEvt;
 
   private:
-
     //! Number of detector planes in the run
     /*! This is the total number of detector saved into this input
      *  file
@@ -266,6 +259,5 @@ namespace eutelescope {
 
   //! A global instance of the processor
   EUTelRawDataSparsifier gEUTelRawDataSparsifier;
-
 }
 #endif

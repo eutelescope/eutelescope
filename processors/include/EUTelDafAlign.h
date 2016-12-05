@@ -17,12 +17,12 @@
 #include "mille/Mille.h"
 
 // gear includes <.h>
-#include <gear/SiPlanesParameters.h>
 #include <gear/SiPlanesLayerLayout.h>
+#include <gear/SiPlanesParameters.h>
 
 // lcio includes <.h>
-#include <EVENT/LCRunHeader.h>
 #include <EVENT/LCEvent.h>
+#include <EVENT/LCRunHeader.h>
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/TrackerHitImpl.h>
 
@@ -32,50 +32,51 @@
 #endif
 
 // system includes <>
+#include <fstream>
+#include <iostream>
+#include <map>
 #include <string>
 #include <vector>
-#include <map>
-#include <iostream>
-#include <fstream>
 
 #include "EUTelDafBase.h"
 
 namespace eutelescope {
-  class EUTelDafAlign : EUTelDafBase{
+  class EUTelDafAlign : EUTelDafBase {
   public:
     // Marlin processor interface funtions
     //! Returns a new instance of EUTelDafAlign
-    virtual Processor * newProcessor() {
-      return new EUTelDafAlign;
-    }
+    virtual Processor *newProcessor() { return new EUTelDafAlign; }
     //! Default constructor
-    EUTelDafAlign ();
+    EUTelDafAlign();
     //! Called at the job beginning.
-    virtual void dafInit ();
+    virtual void dafInit();
     //! Called every event
-    virtual void dafEvent (LCEvent* event);
+    virtual void dafEvent(LCEvent *event);
     //! Called after data processing.
     virtual void dafEnd();
     //! Set fitter specific params
     virtual void dafParams();
 
   protected:
-    //params
+    // params
     bool _runPede;
-    std::string _pedeSteerfileName, _binaryFilename, _alignmentConstantLCIOFile, _alignmentConstantCollectionName;
-    std::vector<int> _translate, _translateX, _translateY, _zRot, _scale, _scaleX, _scaleY;
-    std::vector<float>_resXMin, _resXMax, _resYMin, _resYMax;
-    //Variables
-    Mille * _mille;
-    std::map<int, std::pair<float, float> > _resX, _resY;
+    std::string _pedeSteerfileName, _binaryFilename, _alignmentConstantLCIOFile,
+        _alignmentConstantCollectionName;
+    std::vector<int> _translate, _translateX, _translateY, _zRot, _scale,
+        _scaleX, _scaleY;
+    std::vector<float> _resXMin, _resXMax, _resYMin, _resYMax;
+    // Variables
+    Mille *_mille;
+    std::map<int, std::pair<float, float>> _resX, _resY;
     std::vector<int> _dutMatches;
-    //function
-    //bool checkClusterRegion(lcio::TrackerHitImpl* hit);
-    int checkDutResids(daffitter::TrackCandidate<float,4>& cnd);
-    void addToMille(daffitter::TrackCandidate<float,4>& track);
+    // function
+    // bool checkClusterRegion(lcio::TrackerHitImpl* hit);
+    int checkDutResids(daffitter::TrackCandidate<float, 4> &cnd);
+    void addToMille(daffitter::TrackCandidate<float, 4> &track);
     void runPede();
     void generatePedeSteeringFile();
-    void steerLine(std::ofstream &steerFile, int label, int iden, std::vector<int> idens);
+    void steerLine(std::ofstream &steerFile, int label, int iden,
+                   std::vector<int> idens);
   };
   //! A global instance of the processor
   EUTelDafAlign gEUTelDafAlign;

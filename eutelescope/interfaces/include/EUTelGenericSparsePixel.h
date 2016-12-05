@@ -11,8 +11,8 @@
 #define EUTELGENERICSPARSEPIXEL_H
 
 // personal includes ".h"
-#include "EUTelBaseSparsePixel.h"
 #include "EUTELESCOPE.h"
+#include "EUTelBaseSparsePixel.h"
 
 namespace eutelescope {
 
@@ -21,28 +21,29 @@ namespace eutelescope {
    *  time as integer numbers.
    *
    *  Based on the EUTelSimpeSparsePixel class by Antonio Bulgheroni
-   */ 
+   */
 
-class EUTelGenericSparsePixel : public EUTelBaseSparsePixel  {
+  class EUTelGenericSparsePixel : public EUTelBaseSparsePixel {
 
-public:
+  public:
     //! Default constructor with all arguments
-    EUTelGenericSparsePixel(short xCoord, short yCoord, float signal, short time); 
+    EUTelGenericSparsePixel(short xCoord, short yCoord, float signal,
+                            short time);
 
     //! Default constructor with time argument omitted
     /*! Time will be set to zero */
-    EUTelGenericSparsePixel(short xCoord, short yCoord, float signal); 
+    EUTelGenericSparsePixel(short xCoord, short yCoord, float signal);
 
     //! Default constructor with no args
     /*! Every value will be set to zero */
-    EUTelGenericSparsePixel(); 
+    EUTelGenericSparsePixel();
 
     //! Destructor
-    virtual ~EUTelGenericSparsePixel() { ; } 
+    virtual ~EUTelGenericSparsePixel() { ; }
 
     //! Get the number of elements in the data structure
     /*! This method returns the number of elements the sparse pixel
-     *  contains. 
+     *  contains.
      *
      *  @return The number of elements in the data structure
      */
@@ -62,37 +63,36 @@ public:
      *
      *  @param os The input output stream
      */
-    virtual void print(std::ostream& os) const ;
+    virtual void print(std::ostream &os) const;
 
     //! Setter for x coordinate
-    void setXCoord(short xCoord) { _xCoord = xCoord ; }
+    void setXCoord(short xCoord) { _xCoord = xCoord; }
 
     //! Setter for y coordinate
-    void setYCoord(short yCoord) { _yCoord = yCoord ; }
+    void setYCoord(short yCoord) { _yCoord = yCoord; }
 
     //! Setter for the signal
-    void setSignal(float signal) { _signal = signal ; }
+    void setSignal(float signal) { _signal = signal; }
 
     //! Setter for the time
-    void setTime(short time) { _time = time ; }
+    void setTime(short time) { _time = time; }
 
     //! Getter for the x coordinate
-    inline short getXCoord() const { return _xCoord ; } 
+    inline short getXCoord() const { return _xCoord; }
 
     //! Getter for the y coordinate
-    inline short getYCoord() const { return _yCoord ; } 
+    inline short getYCoord() const { return _yCoord; }
 
     //! Getter for the signal
-    inline float getSignal() const { return static_cast<float> (_signal); } 
+    inline float getSignal() const { return static_cast<float>(_signal); }
 
     //! Getter for the time
-    inline float getTime() const { return static_cast<float> (_time); } 
+    inline float getTime() const { return static_cast<float>(_time); }
 
-protected:
-     
+  protected:
     //! The x coordinate
     short _xCoord;
-    
+
     //! The y coordinate
     short _yCoord;
 
@@ -101,8 +101,7 @@ protected:
 
     //! The time
     short _time;
+  };
 
-};
-
-} //namespace eutelescope
+} // namespace eutelescope
 #endif
