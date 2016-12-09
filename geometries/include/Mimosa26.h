@@ -1,51 +1,50 @@
 #ifndef MIMOSA26_H
-#define	MIMOSA26_H
+#define MIMOSA26_H
 
-  /** @class Mimosa26
-	* This class is the implementation of  @class EUTelGenericPixGeoDescr
-	* for the Mimosa26 which is the standard telescope reference plane of
-	* the DESY pixel telescope.
-	* The geoemtry is as following: the 21.2 x 10.6 mm**2 are is divided
-	* into a 1151 x 575 pixel matrix. All pixels are of the same dimension. 
-    */
+/** @class Mimosa26
+      * This class is the implementation of  @class EUTelGenericPixGeoDescr
+      * for the Mimosa26 which is the standard telescope reference plane of
+      * the DESY pixel telescope.
+      * The geoemtry is as following: the 21.2 x 10.6 mm**2 are is divided
+      * into a 1151 x 575 pixel matrix. All pixels are of the same dimension.
+  */
 
-//STL
-#include <string> //std::string
+// STL
+#include <string>  //std::string
 #include <utility> //std::pair
 
-//EUTELESCOPE
+// EUTELESCOPE
 #include "EUTelGenericPixGeoDescr.h"
 
-//ROOT
+// ROOT
 #include "TGeoMaterial.h"
 #include "TGeoMedium.h"
 #include "TGeoVolume.h"
 
 namespace eutelescope {
-namespace geo {
+  namespace geo {
 
-class Mimosa26 : public EUTelGenericPixGeoDescr {
-	
-	public:
-		Mimosa26();
-		~Mimosa26();
+    class Mimosa26 : public EUTelGenericPixGeoDescr {
 
-		void createRootDescr(char const *);
-		std::string getPixName(int, int);
-		std::pair<int, int> getPixIndex(char const *);
+    public:
+      Mimosa26();
+      ~Mimosa26();
 
-	protected:
-		TGeoMaterial* matSi;
-		TGeoMedium* Si;
-		TGeoVolume* plane;
-};
+      void createRootDescr(char const *);
+      std::string getPixName(int, int);
+      std::pair<int, int> getPixIndex(char const *);
 
-extern "C"
-{
-	EUTelGenericPixGeoDescr* maker();
-}
+    protected:
+      TGeoMaterial *matSi;
+      TGeoMedium *Si;
+      TGeoVolume *plane;
+    };
 
-} //namespace geo
-} //namespace eutelescope
+    extern "C" {
+    EUTelGenericPixGeoDescr *maker();
+    }
 
-#endif	//MIMOSA26_H
+  } // namespace geo
+} // namespace eutelescope
+
+#endif // MIMOSA26_H

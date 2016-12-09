@@ -12,24 +12,21 @@
 
 // eutelescope includes ".h"
 
-//ROOT includes
+// ROOT includes
 #include "TVector3.h"
-
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
 
 // gear includes <.h>
-#include <gear/SiPlanesParameters.h>
 #include <gear/SiPlanesLayerLayout.h>
+#include <gear/SiPlanesParameters.h>
 
 // lcio includes <.h>
-#include <EVENT/LCRunHeader.h>
 #include <EVENT/LCEvent.h>
+#include <EVENT/LCRunHeader.h>
 //#include <TrackerHitImpl2.h>
 #include <IMPL/TrackerHitImpl.h>
-
-
 
 // AIDA includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -38,11 +35,10 @@
 #include <AIDA/IHistogram2D.h>
 #endif
 
-
 // system includes <>
+#include <map>
 #include <string>
 #include <vector>
-#include <map>
 
 namespace eutelescope {
 
@@ -80,8 +76,6 @@ namespace eutelescope {
   class EUTelCorrelator : public marlin::Processor {
 
   public:
-
-
     //! Returns a new instance of EUTelCorrelator
     /*! This method returns a new instance of this processor.  It is
      *  called by Marlin execution framework and it shouldn't be
@@ -89,18 +83,16 @@ namespace eutelescope {
      *
      *  @return a new EUTelCorrelator.
      */
-    virtual Processor * newProcessor() {
-      return new EUTelCorrelator;
-    }
+    virtual Processor *newProcessor() { return new EUTelCorrelator; }
 
     //! Default constructor
-    EUTelCorrelator ();
+    EUTelCorrelator();
 
     //! Called at the job beginning.
     /*! This is executed only once in the whole execution. It prints
      *  out the processor parameters
      */
-    virtual void init ();
+    virtual void init();
 
     //! Called for every run.
     /*! It is called for every run, and consequently the run counter
@@ -108,7 +100,7 @@ namespace eutelescope {
      *
      *  @param run the LCRunHeader of the this current run
      */
-    virtual void processRunHeader (LCRunHeader * run);
+    virtual void processRunHeader(LCRunHeader *run);
 
     //! Called every event
     /*! For each event, we loop over the input cluster collection and
@@ -121,8 +113,7 @@ namespace eutelescope {
      *  @param evt the current LCEvent event as passed by the
      *  ProcessMgr
      */
-    virtual void processEvent (LCEvent * evt);
-
+    virtual void processEvent(LCEvent *evt);
 
     //! Called after data processing.
     /*! This method is called when the loop on events is
@@ -130,31 +121,30 @@ namespace eutelescope {
      */
     virtual void end();
 
-
     //! Histogram booking
     /*! This method is used to book all the correlation histograms. It
      *  is called by processEvent when processing the first event.
      */
     void bookHistos();
 
-    //! internal functtion: return the ID of a plane selected as a reference plane for correlation plots
+    //! internal functtion: return the ID of a plane selected as a reference
+    //! plane for correlation plots
 
-    virtual int getFixedPlaneID(){return _fixedPlaneID;} 
-
+    virtual int getFixedPlaneID() { return _fixedPlaneID; }
 
   protected:
-
-    //! set the plane you would like to use as a reference/strating point for correlation plots
+    //! set the plane you would like to use as a reference/strating point for
+    //! correlation plots
     int _fixedPlaneID;
 
     //! vector of correlation band cuts in X (upper limit)
-    std::vector< float  > _residualsXMax;
-    //! vector of correlation band cuts in X (lower limit) 
-    std::vector< float  > _residualsXMin;
-    //! vector of correlation band cuts in Y (upper limit)       
-    std::vector< float  > _residualsYMax;         
-    //! vector of correlation band cuts in Y (lower limit) 
-    std::vector< float  > _residualsYMin;
+    std::vector<float> _residualsXMax;
+    //! vector of correlation band cuts in X (lower limit)
+    std::vector<float> _residualsXMin;
+    //! vector of correlation band cuts in Y (upper limit)
+    std::vector<float> _residualsYMax;
+    //! vector of correlation band cuts in Y (lower limit)
+    std::vector<float> _residualsYMin;
 
     int _minNumberOfCorrelatedHits;
 
@@ -168,31 +158,32 @@ namespace eutelescope {
      */
     std::string _outputHitCollectionName;
 
-    //! output collection for correlated 
-    /*! 
-     */ 
-    LCCollectionVec* _outputCorrelatedHitCollectionVec;
- 
+    //! output collection for correlated
+    /*!
+     */
+    LCCollectionVec *_outputCorrelatedHitCollectionVec;
+
     //! Input cluster charge cut
     /*!
      */
     int _clusterChargeMin;
 
-    //! How many events are needed to get reasonable correlation plots 
-    /*! (and Offset DB values) 
+    //! How many events are needed to get reasonable correlation plots
+    /*! (and Offset DB values)
      *
      */
     int _events;
 
-    //! Cluster collection list (EVENT::StringVec) 
+    //! Cluster collection list (EVENT::StringVec)
     /*!
      */
-    EVENT::StringVec  _clusterCollectionVec;
+    EVENT::StringVec _clusterCollectionVec;
 
-    std::vector<double> guessSensorOffset(int internalSensorID, int externalSensorID, std::vector<double> cluCenter );
+    std::vector<double> guessSensorOffset(int internalSensorID,
+                                          int externalSensorID,
+                                          std::vector<double> cluCenter);
 
   private:
-
     //! Initialization flag
     bool _isInitialize;
 
@@ -206,58 +197,58 @@ namespace eutelescope {
     int _noOfDetectors;
 
     //! First pixel along X
-    /*! This is an associative map relating the sensorID to the first 
+    /*! This is an associative map relating the sensorID to the first
      *  pixel along X
      */
-    std::map< int, int> _minX;
+    std::map<int, int> _minX;
 
     //! Last pixel along X
-    /*! This is an associative map relating the sensorID to the last 
+    /*! This is an associative map relating the sensorID to the last
      *  pixel along X
      */
 
-    std::map< int, int> _maxX;
+    std::map<int, int> _maxX;
 
     //! First pixel along Y
-    /*! This is an associative map relating the sensorID to the first 
+    /*! This is an associative map relating the sensorID to the first
      *  pixel along Y
      */
 
-    std::map< int, int> _minY;
+    std::map<int, int> _minY;
 
     //! Last pixel along Y
-    /*! This is an associative map relating the sensorID to the last 
+    /*! This is an associative map relating the sensorID to the last
      *  pixel along Y
      */
 
-    std::map< int, int> _maxY;
+    std::map<int, int> _maxY;
 
-   //! First pixel along X
-    /*! This is an associative map relating the sensorID to the first 
+    //! First pixel along X
+    /*! This is an associative map relating the sensorID to the first
      *  pixel along X
      */
-    std::map< float, float> _hitMinX;
+    std::map<float, float> _hitMinX;
 
     //! Last pixel along X
-    /*! This is an associative map relating the sensorID to the last 
+    /*! This is an associative map relating the sensorID to the last
      *  pixel along X
      */
 
-    std::map< float, float> _hitMaxX;
+    std::map<float, float> _hitMaxX;
 
     //! First pixel along Y
-    /*! This is an associative map relating the sensorID to the first 
+    /*! This is an associative map relating the sensorID to the first
      *  pixel along Y
      */
 
-    std::map< float, float> _hitMinY;
+    std::map<float, float> _hitMinY;
 
     //! Last pixel along Y
-    /*! This is an associative map relating the sensorID to the last 
+    /*! This is an associative map relating the sensorID to the last
      *  pixel along Y
      */
 
-    std::map< float, float> _hitMaxY;
+    std::map<float, float> _hitMaxY;
 
     //! Silicon planes parameters as described in GEAR
     /*! This structure actually contains the following:
@@ -269,7 +260,7 @@ namespace eutelescope {
      *  This object is provided by GEAR during the init() phase and
      *  stored here for local use.
      */
-    gear::SiPlanesParameters * _siPlanesParameters;
+    gear::SiPlanesParameters *_siPlanesParameters;
 
     //! Silicon plane layer layout
     /*! This is the real geoemetry description. For each layer
@@ -279,64 +270,61 @@ namespace eutelescope {
      *  This object is taken from the _siPlanesParameters during the
      *  init() phase and stored for local use
      */
-    gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
+    gear::SiPlanesLayerLayout *_siPlanesLayerLayout;
 
     //! vector of Rotation Matrix elements
-    std::vector< std::map<int,double> > _siPlanesRotations;
+    std::vector<std::map<int, double>> _siPlanesRotations;
 
     //! vector of Sensor Pitch X
-    std::vector< double > _siPlanesPitchX;
+    std::vector<double> _siPlanesPitchX;
 
     //! vector of Sensor Pitch Y
-    std::vector< double > _siPlanesPitchY;
+    std::vector<double> _siPlanesPitchY;
 
     //! vector of Sensor Offset X
-    std::vector< double > _siPlanesOffsetX;
+    std::vector<double> _siPlanesOffsetX;
 
     //! vector of Sensor Offset Y
-    std::vector< double > _siPlanesOffsetY;
-
+    std::vector<double> _siPlanesOffsetY;
 
     //! An array with the Z position of planes
-    double * _siPlaneZPosition;
+    double *_siPlaneZPosition;
 
-    //! Sensor ID map (inverse sensorIDVec) 
-    std::map< int, int > _sensorIDVecMap;
+    //! Sensor ID map (inverse sensorIDVec)
+    std::map<int, int> _sensorIDVecMap;
 
-
-    //! Sensor ID vector, 
+    //! Sensor ID vector,
     /*! it's position along Z axis
-     */ 
-    std::vector< int > _sensorIDVecZOrder;
+     */
+    std::vector<int> _sensorIDVecZOrder;
 
     //! sensor ID to position along Z id
     /*!
-     * 
+     *
      */
     std::map<int, int> _sensorIDtoZOrderMap;
 
     //! Hot pixel collection name.
-    /*! 
+    /*!
      * this collection is saved in a db file to be used at the clustering level
      */
     std::string _hotPixelCollectionName;
 
-    //! Vector of map arrays, keeps record of hit pixels 
+    //! Vector of map arrays, keeps record of hit pixels
     /*! The vector elements are sorted by Detector ID
-     *  For each Detector unique ID element a map of pixels is created. 
-     *  first level key   sensor unique 
+     *  For each Detector unique ID element a map of pixels is created.
+     *  first level key   sensor unique
      *              value sensor map
      *  sensor map key    unique row number
      *             value  vector of column numbers.
      */
-    
-    std::map<std::string, bool > _hotPixelMap;
+
+    std::map<std::string, bool> _hotPixelMap;
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
     /** Histogram info file name */
     std::string _histoInfoFileName;
-
 
     //! AIDA histogram map
     /*! Instead of putting several pointers to AIDA histograms as
@@ -346,26 +334,33 @@ namespace eutelescope {
      *  The histogram filling can proceed recalling an object through
      *  its name
      */
-    std::map<std::string, AIDA::IBaseHistogram * > _aidaHistoMap;
+    std::map<std::string, AIDA::IBaseHistogram *> _aidaHistoMap;
 
     //! Correlation histogram matrix
     /*! This is used to store the pointers of each histogram
      */
-    std::map< unsigned int , std::map< unsigned int , AIDA::IHistogram2D* > > _clusterXCorrelationMatrix;
-    std::map< unsigned int , std::map< unsigned int , AIDA::IHistogram2D* > > _clusterYCorrelationMatrix;
+    std::map<unsigned int, std::map<unsigned int, AIDA::IHistogram2D *>>
+        _clusterXCorrelationMatrix;
+    std::map<unsigned int, std::map<unsigned int, AIDA::IHistogram2D *>>
+        _clusterYCorrelationMatrix;
 
-    std::map< unsigned int , std::map< unsigned int , AIDA::IHistogram2D* > > _clusterXCorrShiftMatrix;
-    std::map< unsigned int , std::map< unsigned int , AIDA::IHistogram2D* > > _clusterYCorrShiftMatrix;
-    std::map< unsigned int , AIDA::IHistogram1D*  > _clusterXCorrShiftProjection;
-    std::map< unsigned int , AIDA::IHistogram1D*  > _clusterYCorrShiftProjection;
+    std::map<unsigned int, std::map<unsigned int, AIDA::IHistogram2D *>>
+        _clusterXCorrShiftMatrix;
+    std::map<unsigned int, std::map<unsigned int, AIDA::IHistogram2D *>>
+        _clusterYCorrShiftMatrix;
+    std::map<unsigned int, AIDA::IHistogram1D *> _clusterXCorrShiftProjection;
+    std::map<unsigned int, AIDA::IHistogram1D *> _clusterYCorrShiftProjection;
 
-    std::map< unsigned int , std::map< unsigned int , AIDA::IHistogram2D* > > _hitXCorrelationMatrix;
-    std::map< unsigned int , std::map< unsigned int , AIDA::IHistogram2D* > > _hitYCorrelationMatrix;
-    std::map< unsigned int , std::map< unsigned int , AIDA::IHistogram2D* > > _hitXCorrShiftMatrix;
-    std::map< unsigned int , std::map< unsigned int , AIDA::IHistogram2D* > > _hitYCorrShiftMatrix;
-    std::map< unsigned int , AIDA::IHistogram1D*  > _hitXCorrShiftProjection;
-    std::map< unsigned int , AIDA::IHistogram1D*  > _hitYCorrShiftProjection;
-
+    std::map<unsigned int, std::map<unsigned int, AIDA::IHistogram2D *>>
+        _hitXCorrelationMatrix;
+    std::map<unsigned int, std::map<unsigned int, AIDA::IHistogram2D *>>
+        _hitYCorrelationMatrix;
+    std::map<unsigned int, std::map<unsigned int, AIDA::IHistogram2D *>>
+        _hitXCorrShiftMatrix;
+    std::map<unsigned int, std::map<unsigned int, AIDA::IHistogram2D *>>
+        _hitYCorrShiftMatrix;
+    std::map<unsigned int, AIDA::IHistogram1D *> _hitXCorrShiftProjection;
+    std::map<unsigned int, AIDA::IHistogram1D *> _hitYCorrShiftProjection;
 
     //! Base name of the correlation histogram
     static std::string _clusterXCorrelationHistoName;
@@ -374,7 +369,7 @@ namespace eutelescope {
     static std::string _clusterYCorrShiftHistoName;
     static std::string _clusterXCorrShiftProjectionHistoName;
     static std::string _clusterYCorrShiftProjectionHistoName;
-    
+
     static std::string _hitXCorrelationHistoName;
     static std::string _hitYCorrelationHistoName;
     static std::string _hitXCorrShiftHistoName;
@@ -393,8 +388,6 @@ namespace eutelescope {
 
   //! A global instance of the processor
   EUTelCorrelator gEUTelCorrelator;
-
-
 }
 
 #endif // USE_GEAR

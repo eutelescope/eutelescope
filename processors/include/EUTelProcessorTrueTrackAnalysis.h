@@ -11,66 +11,65 @@
 
 #include <IMPL/LCCollectionVec.h>
 
+#include <array>
 #include <cmath>
+#include <map>
 #include <string>
 #include <vector>
-#include <array>
-#include <map>
 
 namespace eutelescope {
 
-class EUTelProcessorTrueTrackAnalysis : public marlin::Processor {
+  class EUTelProcessorTrueTrackAnalysis : public marlin::Processor {
 
-public:
+  public:
+    virtual Processor *newProcessor() {
+      return new EUTelProcessorTrueTrackAnalysis;
+    }
 
-	virtual Processor* newProcessor() { return new EUTelProcessorTrueTrackAnalysis;}
+    virtual const std::string &name() const { return Processor::name(); }
 
-	virtual const std::string & name() const { return Processor::name();}
+    EUTelProcessorTrueTrackAnalysis();
 
-	EUTelProcessorTrueTrackAnalysis();
+    virtual void init();
 
-	virtual void init();
+    virtual void processRunHeader(LCRunHeader *rhdr);
 
-	virtual void processRunHeader(LCRunHeader* rhdr);
+    virtual void processEvent(LCEvent *evt);
 
-	virtual void processEvent(LCEvent* evt);
+    virtual void check(LCEvent *evt);
 
-	virtual void check(LCEvent* evt);
+    virtual void end();
 
-	virtual void end();
+    int findPairIndex(const double *a, std::vector<const double *> vec);
 
-	int findPairIndex(const double* a, std::vector<const double*> vec);
+    void bookHistos();
+    void fillHistos(LCEvent *event);
 
-	void bookHistos();
-	void fillHistos(LCEvent* event);
+  protected:
+    std::string _trueHitCollectionName;
+    std::string _trueFitpointCollectionName;
+    std::string _recoFitpointCollectionName;
 
-protected:
+    int _iRun;
+    int _iEvt;
 
-	std::string _trueHitCollectionName;
-	std::string _trueFitpointCollectionName;
-	std::string _recoFitpointCollectionName;
+  private:
+    std::vector<int> _sensorIDVec;
 
-	int _iRun;
-	int _iEvt;
+    bool _collectionsAreInitiated;
 
-private:
+    std::map<int, std::vector<const double *>> _trueHitMap;
+    LCCollectionVec *_trueFitpointCollectionVec;
+    LCCollectionVec *_recoFitpointCollectionVec;
 
-	std::vector<int> _sensorIDVec;
+    std::array<std::map<int, AIDA::IHistogram1D *>, 4> _1DHistos;
+    std::array<std::map<int, AIDA::IHistogram2D *>, 2> _2DHistos;
+    std::array<std::map<int, AIDA::IProfile1D *>, 8> _1DProfileHistos;
 
-	bool _collectionsAreInitiated;
+    void readCollections(LCEvent *event);
+  };
 
-	std::map<int, std::vector<const double*>> _trueHitMap;
-	LCCollectionVec* _trueFitpointCollectionVec;
-	LCCollectionVec* _recoFitpointCollectionVec;
-
-	std::array<std::map<int, AIDA::IHistogram1D*>, 4> _1DHistos;
-	std::array<std::map<int, AIDA::IHistogram2D*>, 2> _2DHistos;
-	std::array<std::map<int, AIDA::IProfile1D*>, 8> _1DProfileHistos;
-
-	void readCollections(LCEvent* event);
-};
-
-EUTelProcessorTrueTrackAnalysis gEUTelProcessorTrueTrackAnalysis;
+  EUTelProcessorTrueTrackAnalysis gEUTelProcessorTrueTrackAnalysis;
 }
 
 #endif

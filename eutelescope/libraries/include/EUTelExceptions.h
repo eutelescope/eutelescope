@@ -15,12 +15,11 @@
 #endif
 
 // lcio includes
-#include <lcio.h>
 #include <Exceptions.h>
+#include <lcio.h>
 
 // system includes
 #include <string>
-
 
 namespace eutelescope {
 
@@ -35,23 +34,27 @@ namespace eutelescope {
    *  @version $Id$
    */
 
-  class InvalidParameterException  : public lcio::Exception {
+  class InvalidParameterException : public lcio::Exception {
 
   protected:
     //! Default constructor
-    InvalidParameterException() { /* NO-OP */ ;}
+    InvalidParameterException() { /* NO-OP */
+      ;
+    }
+
   public:
     //! Default destructor
-    virtual ~InvalidParameterException() throw() { /* NO-OP */ ;}
+    virtual ~InvalidParameterException() throw() { /* NO-OP */
+      ;
+    }
 
     //! Default constructor with string argument
     /*! @param text Message shown by what().
      */
-    InvalidParameterException( const std::string&  text ) {
+    InvalidParameterException(const std::string &text) {
       message = "eutelescope::InvalidParameterException: " + text;
     }
   };
-
 
   //! Incompatible data set
   /*! This exception is thrown all the times two data set are compared
@@ -67,16 +70,20 @@ namespace eutelescope {
 
   protected:
     //! Default constructor
-    IncompatibleDataSetException() { /* NO-OP */ ; }
+    IncompatibleDataSetException() { /* NO-OP */
+      ;
+    }
 
   public:
     //! Default destructor
-    virtual ~IncompatibleDataSetException() throw() { /* NO - OP */ ; }
+    virtual ~IncompatibleDataSetException() throw() { /* NO - OP */
+      ;
+    }
 
     //! Default constructor with string argument
     /*! @param text Message shown by what().
      */
-    IncompatibleDataSetException(const std::string& text) {
+    IncompatibleDataSetException(const std::string &text) {
       message = "eutelescope::IncompatibleDataSetException: " + text;
     }
   };
@@ -110,18 +117,22 @@ namespace eutelescope {
 
   protected:
     //! Default constructor
-    UnknownDataTypeException() { /* NO - OP */ ; }
+    UnknownDataTypeException() { /* NO - OP */
+      ;
+    }
 
   public:
     //! Default destructor
-    virtual ~UnknownDataTypeException() throw() { /* NO - OP */ ; }
+    virtual ~UnknownDataTypeException() throw() { /* NO - OP */
+      ;
+    }
 
     //! Default constructor with string argument
     /*! This is the standard way to create this exception.
      *
      *  @param text Message to be shown by what()
      */
-    UnknownDataTypeException(const std::string& text) {
+    UnknownDataTypeException(const std::string &text) {
       message = "eutelescope::UnknownDataTypeException: " + text;
     }
   };
@@ -134,15 +145,19 @@ namespace eutelescope {
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
    *  @version $Id$
    */
-  class MissingLibraryException: public lcio::Exception {
+  class MissingLibraryException : public lcio::Exception {
 
   protected:
     //! Default constructor
-    MissingLibraryException() { /* NO - OP */ ; }
+    MissingLibraryException() { /* NO - OP */
+      ;
+    }
 
   public:
     //! Default destructor
-    virtual ~MissingLibraryException() throw() { /* NO - OP */ ; }
+    virtual ~MissingLibraryException() throw() { /* NO - OP */
+      ;
+    }
 
     //! Default constructor with a processor and a string argument
     /*! This is the standard way to create this exception.
@@ -150,8 +165,9 @@ namespace eutelescope {
      *  @param proc This is the processor throwing the exception
      *  @param missingLib This is the name of missing library
      */
-    MissingLibraryException( marlin::Processor * proc, std::string missingLib ) {
-      message = "To execute this functionality " + proc->name() + " requires " + missingLib;
+    MissingLibraryException(marlin::Processor *proc, std::string missingLib) {
+      message = "To execute this functionality " + proc->name() + " requires " +
+                missingLib;
     }
   };
 #endif
@@ -164,21 +180,19 @@ namespace eutelescope {
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
    *  @version $Id$
    */
-  class InvalidGeometryException: public lcio::Exception {
+  class InvalidGeometryException : public lcio::Exception {
 
   public:
     //! Default constructor
     /*! @param text The error message
      */
-    InvalidGeometryException(std::string text)  {
-      message = text ;
-    }
+    InvalidGeometryException(std::string text) { message = text; }
 
     //! Default destructor
-    ~InvalidGeometryException() throw()  { /* NO - OP */ ; }
+    ~InvalidGeometryException() throw() { /* NO - OP */
+      ;
+    }
   };
-
-
 }
 
 #endif

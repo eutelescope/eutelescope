@@ -16,11 +16,10 @@
 // marlin includes ".h"
 
 // lcio includes <.h>
-#include <lcio.h>
 #include <IMPL/LCEventImpl.h>
+#include <lcio.h>
 
 // system includes <>
-
 
 namespace eutelescope {
 
@@ -50,22 +49,23 @@ namespace eutelescope {
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
    *  @version $Id$
-   * 
+   *
    */
 
-  class EUTelEventImpl : public IMPL::LCEventImpl   {
+  class EUTelEventImpl : public IMPL::LCEventImpl {
 
   public:
-
     //! Default constructor
-    EUTelEventImpl ();
+    EUTelEventImpl();
 
     //! Destructor
-    virtual ~ EUTelEventImpl() { /* NO-OP */ ; }
+    virtual ~EUTelEventImpl() { /* NO-OP */
+      ;
+    }
 
     //! Set the event type
     /*! This method is used to set the type of this
-     *  EUTelEventImpl. For this purpose the EventType enumeration. 
+     *  EUTelEventImpl. For this purpose the EventType enumeration.
      *
      *  @param type The event type in the form of a EventType enum
      *  object
@@ -83,16 +83,17 @@ namespace eutelescope {
 
     //! Return the event type
     /*! This method returns the event type as EventType enumeration
-     *  object. 
+     *  object.
      *
      *  @return The event type according to the EventType enum
      */
     inline EventType getEventType() const {
-      EventType type = static_cast<EventType>(_params.getIntVal(EUTELESCOPE::EVENTTYPE));
+      EventType type =
+          static_cast<EventType>(_params.getIntVal(EUTELESCOPE::EVENTTYPE));
       return type;
     }
 
-  };                           // end of EUTelEventImpl
-}                              // eutelescope namespace
+  }; // end of EUTelEventImpl
+} // eutelescope namespace
 
 #endif // EUTELEVENTIMPL

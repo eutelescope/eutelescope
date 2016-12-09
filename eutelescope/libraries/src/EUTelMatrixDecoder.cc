@@ -10,8 +10,8 @@
  */
 
 // eutelescope includes ".h"
-#include "EUTELESCOPE.h"
 #include "EUTelMatrixDecoder.h"
+#include "EUTELESCOPE.h"
 #include "EUTelExceptions.h"
 
 #ifdef USE_GEAR
@@ -22,9 +22,9 @@
 #include <UTIL/CellIDDecoder.h>
 
 // system includes <>
-#include <string>
 #include <iomanip>
 #include <iostream>
+#include <string>
 
 using namespace std;
 using namespace lcio;
@@ -34,86 +34,80 @@ using namespace eutelescope;
 using namespace gear;
 #endif
 
-EUTelMatrixDecoder::EUTelMatrixDecoder(int xNoOfPixel, int yNoOfPixel) throw(InvalidParameterException)
-: _xNoOfPixel(xNoOfPixel),
-  _yNoOfPixel(yNoOfPixel),
-  _xMin(0),
-  _yMin(0){
+EUTelMatrixDecoder::EUTelMatrixDecoder(int xNoOfPixel, int yNoOfPixel) throw(
+    InvalidParameterException)
+    : _xNoOfPixel(xNoOfPixel), _yNoOfPixel(yNoOfPixel), _xMin(0), _yMin(0) {
 
-  if ( xNoOfPixel <= 0 ) throw InvalidParameterException("xNoOfPixel has to be positive");
-  if ( yNoOfPixel <= 0 ) throw InvalidParameterException("yNoOfPixel has to be positive");
+  if (xNoOfPixel <= 0)
+    throw InvalidParameterException("xNoOfPixel has to be positive");
+  if (yNoOfPixel <= 0)
+    throw InvalidParameterException("yNoOfPixel has to be positive");
   _xNoOfPixel = xNoOfPixel;
   _yNoOfPixel = yNoOfPixel;
   _xMin = 0;
   _yMin = 0;
-
 }
 
-EUTelMatrixDecoder::EUTelMatrixDecoder(int xNoOfPixel, int yNoOfPixel, int xMin, int yMin)
-: _xNoOfPixel(xNoOfPixel),
-  _yNoOfPixel(yNoOfPixel),
-  _xMin(xMin),
-  _yMin(yMin){
-  if ( xNoOfPixel <= 0 ) throw InvalidParameterException("xNoOfPixel has to be positive");
-  if ( yNoOfPixel <= 0 ) throw InvalidParameterException("yNoOfPixel has to be positive");
+EUTelMatrixDecoder::EUTelMatrixDecoder(int xNoOfPixel, int yNoOfPixel, int xMin,
+                                       int yMin)
+    : _xNoOfPixel(xNoOfPixel), _yNoOfPixel(yNoOfPixel), _xMin(xMin),
+      _yMin(yMin) {
+  if (xNoOfPixel <= 0)
+    throw InvalidParameterException("xNoOfPixel has to be positive");
+  if (yNoOfPixel <= 0)
+    throw InvalidParameterException("yNoOfPixel has to be positive");
   _xNoOfPixel = xNoOfPixel;
   _yNoOfPixel = yNoOfPixel;
   _xMin = xMin;
   _yMin = yMin;
 }
 
-
 #ifdef USE_GEAR
-EUTelMatrixDecoder::EUTelMatrixDecoder(gear::SiPlanesLayerLayout * siPlanes, int layerIndex)
-: _xNoOfPixel(0),
-  _yNoOfPixel(0),
-  _xMin(0),
-  _yMin(0)
-{
+EUTelMatrixDecoder::EUTelMatrixDecoder(gear::SiPlanesLayerLayout *siPlanes,
+                                       int layerIndex)
+    : _xNoOfPixel(0), _yNoOfPixel(0), _xMin(0), _yMin(0) {
   _xNoOfPixel = siPlanes->getSensitiveNpixelX(layerIndex);
   _yNoOfPixel = siPlanes->getSensitiveNpixelY(layerIndex);
   _xMin = 0;
   _yMin = 0;
-
 }
 #endif
 
 int EUTelMatrixDecoder::getIndexFromXY(int x, int y) const {
-  
+
   int xCor = x - _xMin;
   int yCor = y - _yMin;
   return xCor + yCor * _xNoOfPixel;
-
 }
 
-void EUTelMatrixDecoder::getXYFromIndex(int index, int& x, int& y) const {
-  
+void EUTelMatrixDecoder::getXYFromIndex(int index, int &x, int &y) const {
+
   y = getYFromIndex(index);
   x = getXFromIndex(index);
-
 }
 
 int EUTelMatrixDecoder::getXFromIndex(int index) const {
-  
-  return ( index % _xNoOfPixel ) + _xMin;
 
+  return (index % _xNoOfPixel) + _xMin;
 }
 
 int EUTelMatrixDecoder::getYFromIndex(int index) const {
-  
-  return ( index / _xNoOfPixel ) + _yMin;
 
+  return (index / _xNoOfPixel) + _yMin;
 }
 
-std::ostream& eutelescope::operator<< (std::ostream& os, const EUTelMatrixDecoder& decoder){
-        
+std::ostream &eutelescope::operator<<(std::ostream &os,
+                                      const EUTelMatrixDecoder &decoder) {
+
   int spacer = 30;
-  
-  os << setiosflags(ios::left) 
-     << std::setw(spacer) << "Number of pixel along X " << decoder._xNoOfPixel << "\n"
-     << std::setw(spacer) << "Number of pixel along Y " << decoder._yNoOfPixel << "\n"
-     << std::setw(spacer) << "Origin  " << "(" << decoder._xMin << ", " << decoder._yMin  << ")"
+
+  os << setiosflags(ios::left) << std::setw(spacer)
+     << "Number of pixel along X " << decoder._xNoOfPixel << "\n"
+     << std::setw(spacer) << "Number of pixel along Y " << decoder._yNoOfPixel
+     << "\n"
+     << std::setw(spacer) << "Origin  "
+     << "(" << decoder._xMin << ", " << decoder._yMin << ")"
      << resetiosflags(ios::left);
-  
+
   return os;
 }

@@ -14,19 +14,17 @@
 // eutelescope includes ".h"
 #include "EUTelAlignmentConstant.h"
 #include "EUTelEventImpl.h"
-#include "EUTelReferenceHit.h"
 #include "EUTelExceptions.h"
-
+#include "EUTelReferenceHit.h"
 
 // marlin includes ".h"
-#include "marlin/Processor.h"
 #include "marlin/Exceptions.h"
+#include "marlin/Processor.h"
 //#include "marlin/EventModifier.h"
 
-
 // gear includes <.h>
-#include <gear/SiPlanesParameters.h>
 #include <gear/SiPlanesLayerLayout.h>
+#include <gear/SiPlanesParameters.h>
 
 // lcio includes <.h>
 #include "lcio.h"
@@ -40,25 +38,24 @@
 #include "TString.h"
 
 // lcio includes
-#include <UTIL/CellIDEncoder.h>
-#include <UTIL/CellIDDecoder.h>
 #include <EVENT/LCCollection.h>
 #include <EVENT/LCEvent.h>
 #include <IMPL/LCCollectionVec.h>
+#include <UTIL/CellIDDecoder.h>
+#include <UTIL/CellIDEncoder.h>
 //#include <TrackerHitImpl2.h>
-#include <IMPL/TrackerHitImpl.h>
+#include <Exceptions.h>
+#include <IMPL/LCFlagImpl.h>
+#include <IMPL/TrackImpl.h>
 #include <IMPL/TrackImpl.h>
 #include <IMPL/TrackerDataImpl.h>
-#include <IMPL/LCFlagImpl.h>
-#include <Exceptions.h>
-#include <IMPL/TrackImpl.h>
+#include <IMPL/TrackerHitImpl.h>
 
 // system includes <>
 #include <iostream>
-#include <string>
 #include <map>
+#include <string>
 #include <vector>
-
 
 namespace eutelescope {
 
@@ -101,12 +98,12 @@ namespace eutelescope {
    *
    */
 
-  class EUTelApplyAlignmentProcessor:public marlin::Processor {
+  class EUTelApplyAlignmentProcessor : public marlin::Processor {
 
   public:
-
-//    virtual void modifyEvent( LCEvent * evt ) ;
-//    virtual const std::string & name() const { return Processor::name() ; }
+    //    virtual void modifyEvent( LCEvent * evt ) ;
+    //    virtual const std::string & name() const { return Processor::name() ;
+    //    }
 
     //! Returns a new instance of EUTelApplyAlignmentProcessor
     /*! This method returns an new instance of the this processor.  It
@@ -115,19 +112,19 @@ namespace eutelescope {
      *
      *  @return a new EUTelApplyAlignmentProcessor.
      */
-    virtual Processor * newProcessor() {
+    virtual Processor *newProcessor() {
       return new EUTelApplyAlignmentProcessor;
     }
 
     //! Default constructor
-    EUTelApplyAlignmentProcessor ();
+    EUTelApplyAlignmentProcessor();
 
     //! Called at the job beginning.
     /*! This is executed only once in the whole execution. It prints
      *  out the processor parameters and reset all needed data
      *  members.
      */
-    virtual void init ();
+    virtual void init();
 
     //! Called for every run.
     /*! It is called for every run, and consequently the run counter
@@ -135,7 +132,7 @@ namespace eutelescope {
      *
      *  @param run the LCRunHeader of the this current run
      */
-    void processRunHeader (LCRunHeader * run);
+    void processRunHeader(LCRunHeader *run);
 
     //! Called every event
     /*! This is called for each event in the file. A few consistency
@@ -145,52 +142,54 @@ namespace eutelescope {
      *  @param evt the current LCEvent event as passed by the
      *  ProcessMgr
      */
-    virtual void processEvent (LCEvent * evt);
-
+    virtual void processEvent(LCEvent *evt);
 
     //! Apply Alignment
     /*!
      *
      */
     virtual void Direct(LCEvent *event);
-    
+
     //! Apply Alignment in reverse direction
     /*!
      *
      */
     virtual void Reverse(LCEvent *event);
- 
+
     //! Apply GEAR shits and rotations
     /*!
      *
      */
     virtual void ApplyGear6D(LCEvent *event);
- 
+
     //! Revert GEAR shits and rotations
     /*!
      *
      */
     virtual void RevertGear6D(LCEvent *event);
- 
+
     //! Apply alignment to a reference hit collection
     /*!
      *
      */
-    virtual void AlignReferenceHit(EUTelEventImpl *evt,  EUTelAlignmentConstant * alignment );
-   
+    virtual void AlignReferenceHit(EUTelEventImpl *evt,
+                                   EUTelAlignmentConstant *alignment);
+
     //!
     /*
      */
-    virtual inline int GetApplyAlignmentDirection(){return _applyAlignmentDirection;}
-     
-    void TransformToLocalFrame(TrackerHitImpl* outputHit);
-    void revertAlignment(double & x, double & y, double & z) ;
- 
+    virtual inline int GetApplyAlignmentDirection() {
+      return _applyAlignmentDirection;
+    }
+
+    void TransformToLocalFrame(TrackerHitImpl *outputHit);
+    void revertAlignment(double &x, double &y, double &z);
+
     //! Perform Euler rotations
-    void _EulerRotation(double* _telPos, double* _gRotation);
+    void _EulerRotation(double *_telPos, double *_gRotation);
 
     //! Perform Euler rotations backwards
-    void _EulerRotationInverse(double* _telPos, double* _gRotation);
+    void _EulerRotationInverse(double *_telPos, double *_gRotation);
 
     //! Check event method
     /*! This method is called by the Marlin execution framework as
@@ -199,7 +198,7 @@ namespace eutelescope {
      *
      *  @param evt The LCEvent event as passed by the ProcessMgr
      */
-    virtual void check (LCEvent * evt);
+    virtual void check(LCEvent *evt);
 
     //! Called after data processing.
     /*! This method is called when the loop on events is finished. It
@@ -216,9 +215,9 @@ namespace eutelescope {
      */
     void bookHistos();
 
-    virtual    LCCollectionVec* CreateDummyReferenceHitCollection();
+    virtual LCCollectionVec *CreateDummyReferenceHitCollection();
 
-    virtual void CheckIOCollections(LCEvent* event);
+    virtual void CheckIOCollections(LCEvent *event);
 
   private:
     //! Conversion ID map.
@@ -229,57 +228,56 @@ namespace eutelescope {
      *  we need a conversion table to go from the sensorID to the
      *  layerindex.
      */
-    std::map< int, int > _conversionIdMap;
+    std::map<int, int> _conversionIdMap;
 
-  	DISALLOW_COPY_AND_ASSIGN(EUTelApplyAlignmentProcessor)
+    DISALLOW_COPY_AND_ASSIGN(EUTelApplyAlignmentProcessor)
 
   protected:
-
     // Internal processor variables
-    int _nRun ;
-    int _nEvt ;
+    int _nRun;
+    int _nEvt;
 
     int _iDUT;
-	int	_indexDUT;
-	double	_xPitch, _yPitch, _rot00, _rot01, _rot10, _rot11;
-  
-    // class internal strings and pointers
-    std::string      internal_inputHitCollectionName;
-    LCCollectionVec* internal_inputCollectionVec      ;
+    int _indexDUT;
+    double _xPitch, _yPitch, _rot00, _rot01, _rot10, _rot11;
 
-    std::string      internal_referenceHitCollectionName;
-    LCCollectionVec* internal_referenceHitVec;    
+    // class internal strings and pointers
+    std::string internal_inputHitCollectionName;
+    LCCollectionVec *internal_inputCollectionVec;
+
+    std::string internal_referenceHitCollectionName;
+    LCCollectionVec *internal_referenceHitVec;
 
     //! Input collection name.
     /*! This is the name of the input hit collection.
      */
-    std::string      _inputHitCollectionName;
-    LCCollectionVec* _inputCollectionVec      ;
+    std::string _inputHitCollectionName;
+    LCCollectionVec *_inputCollectionVec;
 
     //! Alignment constant collection name
     /*! This is the name of the collection containing the alignment
      *  constants. This should be the results of the execution of a
      *  EUTelMille and pede.
      */
-    std::string      _alignmentCollectionName;
-    LCCollectionVec* _alignmentCollectionVec  ;
+    std::string _alignmentCollectionName;
+    LCCollectionVec *_alignmentCollectionVec;
 
     //! Output collection name.
     /*! This is the name of the output hit collection.
      */
-    std::string      _outputHitCollectionName;
-    LCCollectionVec* _outputCollectionVec     ;
+    std::string _outputHitCollectionName;
+    LCCollectionVec *_outputCollectionVec;
 
-    //! reference HitCollection name 
+    //! reference HitCollection name
     /*!
      */
-    bool        _applyToReferenceHitCollection;
- 
+    bool _applyToReferenceHitCollection;
+
     std::string _referenceHitCollectionName;
-    LCCollectionVec* _referenceHitVec;    
+    LCCollectionVec *_referenceHitVec;
 
     std::string _outputReferenceHitCollectionName;
-    LCCollectionVec* _outputReferenceHitVec;    
+    LCCollectionVec *_outputReferenceHitVec;
 
     //! Correction method
     /*! There are actually several different
@@ -298,50 +296,49 @@ namespace eutelescope {
     /*! There are basically two methods.
      *  Here below a list of available methods:
      *     0. <b>Direct </b> Normal alignment.
-     *     1. <b>Reverse </b> Unalign everything back to how it was. 
+     *     1. <b>Reverse </b> Unalign everything back to how it was.
      */
     int _applyAlignmentDirection;
 
     // 18 January 2011
-    EVENT::StringVec		_alignmentCollectionNames;
-    EVENT::StringVec		_alignmentCollectionSuffixes;
+    EVENT::StringVec _alignmentCollectionNames;
+    EVENT::StringVec _alignmentCollectionSuffixes;
 
     // 10.09.2012
-    EVENT::StringVec		_hitCollectionNames;
-    EVENT::StringVec		_hitCollectionSuffixes;
+    EVENT::StringVec _hitCollectionNames;
+    EVENT::StringVec _hitCollectionSuffixes;
 
-    EVENT::StringVec		_refhitCollectionNames;
-    EVENT::StringVec		_refhitCollectionSuffixes;
+    EVENT::StringVec _refhitCollectionNames;
+    EVENT::StringVec _refhitCollectionSuffixes;
 
     //! DoGear
-    bool            _doGear; 
+    bool _doGear;
 
     //! DoAlignCollection
-    bool            _doAlignCollection; 
+    bool _doAlignCollection;
 
     //! Ignore _doGear and _doAlignCollection flags
     /*! set _doAlignmentInOneGo
      *  If you want to do all (anti)alignment steps in one go
-     */ 
-    bool            _doAlignmentInOneGo; 
-
+     */
+    bool _doAlignmentInOneGo;
 
     //! DEBUG
-    bool            _debugSwitch; 
+    bool _debugSwitch;
     //! rotation in ZY
     //
-    double			_alpha;
+    double _alpha;
     //! rotation in ZX
     //
-    double			_beta;
+    double _beta;
     //! rotation in XY
     //
-    double			_gamma;
+    double _gamma;
 
     //! common DEBUG1 information
     /* set the number of events to have additional DEBUG1 information
      */
-    int 			_printEvents;
+    int _printEvents;
 
     //! Current run number.
     /*! This number is used to store the current run number
@@ -356,7 +353,7 @@ namespace eutelescope {
 
     //! Look Up Table for the sensor ID
     //    std::map< int, int > _lookUpTable;
-    std::map< std::string, std::map< int, int > > _lookUpTable;
+    std::map<std::string, std::map<int, int>> _lookUpTable;
 
     //! boolean to mark the first processed event
     bool _fevent;
@@ -370,11 +367,10 @@ namespace eutelescope {
      *  The histogram filling can proceed recalling an object through
      *  its name
      */
-    std::map<std::string, AIDA::IBaseHistogram * > _aidaHistoMap;
-
+    std::map<std::string, AIDA::IBaseHistogram *> _aidaHistoMap;
 
     static std::string _densityPlotBeforeAlignName;
-    static std::string _densityPlotAfterAlignName ;
+    static std::string _densityPlotAfterAlignName;
     static std::string _hitHistoBeforeAlignName;
     static std::string _hitHistoAfterAlignName;
 
@@ -390,7 +386,7 @@ namespace eutelescope {
      *  This object is provided by GEAR during the init() phase and
      *  stored here for local use.
      */
-    gear::SiPlanesParameters * _siPlanesParameters;
+    gear::SiPlanesParameters *_siPlanesParameters;
 
     //! Silicon plane layer layout
     /*! This is the real geoemetry description. For each layer
@@ -400,17 +396,17 @@ namespace eutelescope {
      *  This object is taken from the _siPlanesParameters during the
      *  init() phase and stored for local use
      */
-    gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
+    gear::SiPlanesLayerLayout *_siPlanesLayerLayout;
 
     //! An array with the Z position of planes
-    double * _siPlaneZPosition;
+    double *_siPlaneZPosition;
 
     //! The ordered sensor ID vector
     /*! This vector contains the sensorID of all the detectors in the
      *  input collection in the same order as they appear. This vector
      *  has to be used to number the histogram booking and filling.
      */
-    std::vector< int > _orderedSensorIDVec;
+    std::vector<int> _orderedSensorIDVec;
 
     //! Fill histogram switch
     /*! This boolean switch was initially introduced for debug reason
@@ -419,12 +415,10 @@ namespace eutelescope {
      *
      */
     bool _histogramSwitch;
-
   };
 
   //! A global instance of the processor
   EUTelApplyAlignmentProcessor gEUTelApplyAlignmentProcessor;
-
 }
 #endif
 //#endif // GEAR

@@ -19,8 +19,8 @@
 #include <lcio.h>
 
 // system includes <>
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace eutelescope {
   //! Event viewer
@@ -47,7 +47,7 @@ namespace eutelescope {
    *  collection type multiple selections are possible.
    *
    *  Starting from EUTelescope version 0.0.7 also tracks can be
-   *  displayed as a spline connecting the fit hit. 
+   *  displayed as a spline connecting the fit hit.
    *
    *  This processor is built only if GEAR and CED are available
    *  (-DUSE_GEAR and -DUSE_CED).
@@ -67,7 +67,7 @@ namespace eutelescope {
    *  containing the results of the alignment procedure. This is just
    *  an optional collection and it is required only if the user
    *  wants to plot the real telescope geometry. See also the DetModel
-   *  parameter. 
+   *  parameter.
    *
    *  @param TrackerHitCollectionNameVec. This is a vector of string
    *  containing the names of all the TrackerHitCollection one would
@@ -103,27 +103,26 @@ namespace eutelescope {
   class EUTelEventViewer : public marlin::Processor {
 
   public:
-
     //! Create a new processor instance
     /*! @return a new processor instance
      */
-    virtual Processor*  newProcessor() { return new EUTelEventViewer ; }
+    virtual Processor *newProcessor() { return new EUTelEventViewer; }
 
     //! Default constructor;
-    EUTelEventViewer() ;
+    EUTelEventViewer();
 
     //! Init method;
     /*! It prints the parameters and initialize the MarlinCED
      *  interface.
      */
-    virtual void init() ;
+    virtual void init();
 
     //! Process the run header
     /*! Nothing to do.
      *
      *  @param run The current run header
      */
-    virtual void processRunHeader( LCRunHeader* run ) ;
+    virtual void processRunHeader(LCRunHeader *run);
 
     //! Process the current event
     /*! This is the real part of the class. The current event is taken
@@ -138,19 +137,19 @@ namespace eutelescope {
      *
      *  @param evt The current event
      */
-    virtual void processEvent( LCEvent * evt ) ;
+    virtual void processEvent(LCEvent *evt);
 
     //! Check event
     /*! Nothing to do here
      *
      *  @param evt The current event
      */
-    virtual void check( LCEvent * evt ) ;
+    virtual void check(LCEvent *evt);
 
     //! Finish processing
     /*! Nothing to do here
      */
-    virtual void end() ;
+    virtual void end();
 
     //! Find a color
     /*! This method can be used to get the proper color for the
@@ -162,7 +161,6 @@ namespace eutelescope {
     int returnColor(int counter);
 
   protected:
-
     //! Tracker Hit collection names
     /*! This is the vector of tracker hit collection names. The user
      *  via the steering file can add as many collection she/he wish
@@ -216,22 +214,17 @@ namespace eutelescope {
 
     //! Auto forward delay
     /*! This is the time in second between two automatic event
-     *  display. 
+     *  display.
      *  This value is used only if _waitForKeyboard is false and has
      *  to be set to zero to go at full speed.
      */
     double _autoForwardDelay;
-      
+
     //! The detector model
     int _detModel;
-
-  } ;
+  };
 
   //! A global instance of the processor.
-  EUTelEventViewer gEUTelEventViewer ;
-
+  EUTelEventViewer gEUTelEventViewer;
 }
 #endif
-
-
-

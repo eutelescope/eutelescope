@@ -16,8 +16,8 @@
 #include "marlin/Processor.h"
 
 // lcio includes <.h>
-#include <LCIOTypes.h>
 #include <IMPL/LCCollectionVec.h>
+#include <LCIOTypes.h>
 
 // AIDA includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -26,19 +26,17 @@
 
 // system includes
 
-
 namespace eutelescope {
 
   //! Processor to remove noisy clusters from a TrackerPulse collection
   /*! This processor clones the input TrackerPulse collection, but checks
    *  for any clusters if their quality flag: kNoisyCluster is set.
-   *  If so, they are removed from the output collection. 
+   *  If so, they are removed from the output collection.
    */
 
-class EUTelProcessorNoisyClusterRemover : public marlin::Processor {
+  class EUTelProcessorNoisyClusterRemover : public marlin::Processor {
 
   public:
-
     //! Returns a new instance of EUTelProcessorNoisyClusterRemover
     /*! This method returns an new instance of the this processor.  It
      *  is called by Marlin execution framework and it shouldn't be
@@ -46,7 +44,7 @@ class EUTelProcessorNoisyClusterRemover : public marlin::Processor {
      *
      *  @return a new EUTelProcessorNoisyClusterRemover.
      */
-    virtual Processor* newProcessor() {
+    virtual Processor *newProcessor() {
       return new EUTelProcessorNoisyClusterRemover;
     }
 
@@ -68,7 +66,7 @@ class EUTelProcessorNoisyClusterRemover : public marlin::Processor {
      *
      *  @throw InvalidParameterException if a paramter is wrongly set
      */
-    virtual void processRunHeader(LCRunHeader * run);
+    virtual void processRunHeader(LCRunHeader *run);
 
     //! Called every event
     /*! This is called for each event in the file. If the current @c
@@ -81,7 +79,7 @@ class EUTelProcessorNoisyClusterRemover : public marlin::Processor {
      *  @throw InvalidParameterException if information in the cellID
      *  are inconsistence
      */
-    virtual void processEvent(LCEvent * evt);
+    virtual void processEvent(LCEvent *evt);
 
     //! Called after data processing.
     /*! This method is called when the loop on events is
@@ -89,41 +87,41 @@ class EUTelProcessorNoisyClusterRemover : public marlin::Processor {
      */
     virtual void end();
 
-
   protected:
-	//! Input collection name of the TrackerPulse collection	
-	std::string _inputCollectionName;
+    //! Input collection name of the TrackerPulse collection
+    std::string _inputCollectionName;
 
-	//! Output collection name for noise free pulses
-	std::string _outputCollectionName; 
-	
-	//! Integer to track the collection size
-	/*! Used to monitor if anything changed and the collection needs
-	 *! to be updated 
-         */
-	unsigned int _initialOutputCollectionSize;
+    //! Output collection name for noise free pulses
+    std::string _outputCollectionName;
 
-	//! Current run number.
-	/*! This number is used to store the current run number */
-	int _iRun;
+    //! Integer to track the collection size
+    /*! Used to monitor if anything changed and the collection needs
+     *! to be updated
+     */
+    unsigned int _initialOutputCollectionSize;
 
-	//! Current event number.
-	/*! This number is used to store the current event number NOTE that
-	 * events are counted from 0 and on a run base
-         */
-	int _iEvt;
+    //! Current run number.
+    /*! This number is used to store the current run number */
+    int _iRun;
 
-	//! Map storing the amount of removed pulses
-	/*! Key is the sensorID, value the removed pulses from that plane*/
-	std::map<int,int> _removedNoisyPulses;
+    //! Current event number.
+    /*! This number is used to store the current event number NOTE that
+     * events are counted from 0 and on a run base
+     */
+    int _iEvt;
 
-	//! Static bool flag to mark if any instance of this processor has printed out generla info
-	static bool _staticPrintedSummary;
-};
+    //! Map storing the amount of removed pulses
+    /*! Key is the sensorID, value the removed pulses from that plane*/
+    std::map<int, int> _removedNoisyPulses;
 
-//! A global instance of the processor
-EUTelProcessorNoisyClusterRemover gEUTelProcessorNoisyClusterRemover;
+    //! Static bool flag to mark if any instance of this processor has printed
+    //! out generla info
+    static bool _staticPrintedSummary;
+  };
 
-}//namespace eutelescope
+  //! A global instance of the processor
+  EUTelProcessorNoisyClusterRemover gEUTelProcessorNoisyClusterRemover;
 
-#endif //EUTelProcessorNoisyClusterRemover_H
+} // namespace eutelescope
+
+#endif // EUTelProcessorNoisyClusterRemover_H

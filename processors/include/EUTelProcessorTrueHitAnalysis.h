@@ -10,63 +10,62 @@
 
 #include <IMPL/LCCollectionVec.h>
 
+#include <array>
 #include <cmath>
+#include <map>
 #include <string>
 #include <vector>
-#include <array>
-#include <map>
 
 namespace eutelescope {
 
-class EUTelProcessorTrueHitAnalysis : public marlin::Processor {
+  class EUTelProcessorTrueHitAnalysis : public marlin::Processor {
 
-public:
+  public:
+    virtual Processor *newProcessor() {
+      return new EUTelProcessorTrueHitAnalysis;
+    }
 
-	virtual Processor* newProcessor() { return new EUTelProcessorTrueHitAnalysis;}
+    virtual const std::string &name() const { return Processor::name(); }
 
-	virtual const std::string & name() const { return Processor::name();}
+    EUTelProcessorTrueHitAnalysis();
 
-	EUTelProcessorTrueHitAnalysis();
+    virtual void init();
 
-	virtual void init();
+    virtual void processRunHeader(LCRunHeader *rhdr);
 
-	virtual void processRunHeader(LCRunHeader* rhdr);
+    virtual void processEvent(LCEvent *evt);
 
-	virtual void processEvent(LCEvent* evt);
+    virtual void check(LCEvent *evt);
 
-	virtual void check(LCEvent* evt);
+    virtual void end();
 
-	virtual void end();
+    int findPairIndex(double const *a, std::vector<double const *> vec);
 
-	int findPairIndex(double const* a, std::vector<double const*> vec);
+    void bookHistos();
+    void fillHistos(LCEvent *event);
 
-	void bookHistos();
-	void fillHistos(LCEvent* event);
+  protected:
+    std::string _trueHitCollectionName;
+    std::string _reconstructedHitCollectionName;
 
-protected:
+    int _iRun;
+    int _iEvt;
 
-	std::string _trueHitCollectionName;
-	std::string _reconstructedHitCollectionName;
+  private:
+    std::vector<int> _sensorIDVec;
 
-	int _iRun;
-	int _iEvt;
+    LCCollectionVec *_trueHitCollectionVec;
+    LCCollectionVec *_reconstructedHitCollectionVec;
 
-private:
+    std::array<std::map<int, AIDA::IHistogram1D *>, 8> _1DHistos;
+    std::array<std::map<int, AIDA::IHistogram2D *>, 8> _2DHistos;
+    std::vector<AIDA::IHistogram1D *> _xClustSize2Histos;
+    std::vector<AIDA::IHistogram1D *> _yClustSize3Histos;
 
-	std::vector<int> _sensorIDVec;
+    void readCollections(LCEvent *event);
+  };
 
-	LCCollectionVec* _trueHitCollectionVec;
-	LCCollectionVec* _reconstructedHitCollectionVec;
-
-	std::array<std::map<int, AIDA::IHistogram1D*>, 8> _1DHistos;
-	std::array<std::map<int, AIDA::IHistogram2D*>, 8> _2DHistos;
-	std::vector<AIDA::IHistogram1D*> _xClustSize2Histos;
-	std::vector<AIDA::IHistogram1D*> _yClustSize3Histos;
-
-	void readCollections(LCEvent* event);
-};
-
-EUTelProcessorTrueHitAnalysis gEUTelProcessorTrueHitAnalysis;
+  EUTelProcessorTrueHitAnalysis gEUTelProcessorTrueHitAnalysis;
 }
 
 #endif

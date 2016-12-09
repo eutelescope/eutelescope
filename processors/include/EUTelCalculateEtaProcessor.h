@@ -23,10 +23,9 @@
 // lcio includes <.h>
 
 // system includes <>
-#include <string>
 #include <map>
 #include <set>
-
+#include <string>
 
 #undef MARLIN_USE_HISTOGRAM
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -35,7 +34,6 @@
 #if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
 #define MARLIN_USE_HISTOGRAM
 #endif
-
 
 namespace eutelescope {
 
@@ -132,11 +130,9 @@ namespace eutelescope {
    *
    */
 
-  class EUTelCalculateEtaProcessor:public marlin::Processor {
+  class EUTelCalculateEtaProcessor : public marlin::Processor {
 
   public:
-
-
     //! Returns a new instance of EUTelCalculateEtaProcessor
     /*! This method returns an new instance of the this processor.  It
      *  is called by Marlin execution framework and it shouldn't be
@@ -144,19 +140,17 @@ namespace eutelescope {
      *
      *  @return a new EUTelCalculateEtaProcessor.
      */
-    virtual Processor * newProcessor() {
-      return new EUTelCalculateEtaProcessor;
-    }
+    virtual Processor *newProcessor() { return new EUTelCalculateEtaProcessor; }
 
     //! Default constructor
-    EUTelCalculateEtaProcessor ();
+    EUTelCalculateEtaProcessor();
 
     //! Called at the job beginning.
     /*! This is executed only once in the whole execution. It prints
      *  out the processor parameters, resets event / run counters and
      *  clears the std vectors
      */
-    virtual void init ();
+    virtual void init();
 
     //! Called for every run.
     /*! It is called for every run, and consequently the run counter
@@ -165,7 +159,7 @@ namespace eutelescope {
      *
      *  @param run the LCRunHeader of the this current run
      */
-    virtual void processRunHeader (LCRunHeader * run);
+    virtual void processRunHeader(LCRunHeader *run);
 
     //! Called every event
     /*! This is called for each event in the file. Pseudohistograms
@@ -177,7 +171,7 @@ namespace eutelescope {
      *  @throw UnknownDataTypeException if the cluster type stored in
      *  the TrackerPulse is unknown.
      */
-    virtual void processEvent (LCEvent * evt);
+    virtual void processEvent(LCEvent *evt);
 
     //! Finish the eta calculation
     /*! To calculate the eta function, a certain number of events has
@@ -193,7 +187,6 @@ namespace eutelescope {
      */
     virtual void finalizeProcessor();
 
-
     //! Check event method
     /*! This method is called by the Marlin execution framework as
      *  soon as the processEvent is over. It can be used to fill check
@@ -202,7 +195,7 @@ namespace eutelescope {
      *
      *  @param evt The LCEvent event as passed by the ProcessMgr
      */
-    virtual void check (LCEvent * evt);
+    virtual void check(LCEvent *evt);
 
     //! Called after data processing.
     /*! For the time being this is just printing a good bye message.
@@ -213,10 +206,9 @@ namespace eutelescope {
     /*! This method can be profitably used to identify which is the
      *  last event to be used for the eta calculation.
      */
-    inline bool isLastEvent() const { return ( _nEvent == _iEvt ) ; }
+    inline bool isLastEvent() const { return (_nEvent == _iEvt); }
 
   protected:
-
     //! Input collection name.
     /*! For the time being we have just one collection that can be
      *  used as input
@@ -259,7 +251,7 @@ namespace eutelescope {
      *  In the case of not squared pixels, the binning along the two
      *  directions can be different.
      */
-    std::vector<int >  _noOfBin;
+    std::vector<int> _noOfBin;
 
     //! Cluster quality selection
     /*! This parameter (int) is set by the user via the steering file. For
@@ -291,7 +283,7 @@ namespace eutelescope {
      *  integer is used to store the maximum size along x and y of the
      *  sub-cluster.
      */
-    std::vector<int > _xyCluSize;
+    std::vector<int> _xyCluSize;
 
     //! Number of pixel in the cluster
     /*! In the case the user selected the NPixel cluster type
@@ -318,7 +310,6 @@ namespace eutelescope {
     std::string _outputEtaFileName;
 
   private:
-
     //! Boolean return value
     /*! This boolean is used as return value for conditional steering
      *  file. Eta function calculation requires to loop over a certain
@@ -333,14 +324,13 @@ namespace eutelescope {
     /*! This is an associative collection of pseudo histogram
      *  pointer. The key value is the sensor ID.
      */
-    std::map< int, EUTelPseudo1DHistogram * > _cogHistogramX;
-
+    std::map<int, EUTelPseudo1DHistogram *> _cogHistogramX;
 
     //! Pseudo histograms for CoG along y
     /*! This is an associative collection of pseudo histogram
      *  pointer. The key value is the sensor ID.
      */
-    std::map< int, EUTelPseudo1DHistogram * > _cogHistogramY;
+    std::map<int, EUTelPseudo1DHistogram *> _cogHistogramY;
 
     //! Pseudo histograms with the CoG integral along x
     /*! This is an associative collection of pseudo histogram
@@ -349,7 +339,7 @@ namespace eutelescope {
      *  will be filled during the end() with the integral function of
      *  _cogHistogramX
      */
-    std::map< int,EUTelPseudo1DHistogram* > _integralHistoX;
+    std::map<int, EUTelPseudo1DHistogram *> _integralHistoX;
 
     //! Pseudo histograms with the CoG integral along y
     /*! This is an associative collection of pseudo histogram
@@ -358,7 +348,7 @@ namespace eutelescope {
      *  will be filled during the end() with the integral function of
      *  _cogHistogramY
      */
-    std::map<int, EUTelPseudo1DHistogram* > _integralHistoY;
+    std::map<int, EUTelPseudo1DHistogram *> _integralHistoY;
 
     //! Number of detector planes in the run
     /*! This is the total number of detector saved into this input
@@ -389,7 +379,6 @@ namespace eutelescope {
     //! The right end of the pseudo histogram
     static const double _max;
 
-
 #ifdef MARLIN_USE_HISTOGRAM
     //! Base name for CoG histogram along x
     static std::string _cogHistogramXName;
@@ -408,7 +397,6 @@ namespace eutelescope {
 
     //! Base name for the Eta histogram along x
     static std::string _etaHistoYName;
-
 
     //! Reject singple pixel cluster from the eta calculation
     int _rejectsingplepixelcluster;
@@ -436,18 +424,15 @@ namespace eutelescope {
      *  want to use <code>dynamic_cast</code> to convert them back to
      *  their original cast.
      */
-    std::map<std::string , AIDA::IBaseHistogram * > _aidaHistoMap;
-
+    std::map<std::string, AIDA::IBaseHistogram *> _aidaHistoMap;
 
 #endif
 
     //! Already booked SensorID
-    std::set< int > _alreadyBookedSensorID;
-
+    std::set<int> _alreadyBookedSensorID;
   };
 
   //! A global instance of the processor
   EUTelCalculateEtaProcessor gEUTelCalculateEtaProcessor;
-
 }
 #endif

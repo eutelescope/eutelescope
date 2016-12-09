@@ -19,23 +19,22 @@
 #include "marlin/Processor.h"
 
 // gear includes <.h>
-#include <gear/SiPlanesParameters.h>
 #include <gear/SiPlanesLayerLayout.h>
+#include <gear/SiPlanesParameters.h>
 
 // lcio includes <.h>
 #include "lcio.h"
-#include <UTIL/CellIDEncoder.h>
-#include <UTIL/CellIDDecoder.h>
 #include <EVENT/LCCollection.h>
 #include <EVENT/LCEvent.h>
+#include <Exceptions.h>
 #include <IMPL/LCCollectionVec.h>
-#include <IMPL/TrackerHitImpl.h>
+#include <IMPL/LCFlagImpl.h>
+#include <IMPL/TrackImpl.h>
 #include <IMPL/TrackImpl.h>
 #include <IMPL/TrackerDataImpl.h>
-#include <IMPL/LCFlagImpl.h>
-#include <Exceptions.h>
-#include <IMPL/TrackImpl.h>
-
+#include <IMPL/TrackerHitImpl.h>
+#include <UTIL/CellIDDecoder.h>
+#include <UTIL/CellIDEncoder.h>
 
 // AIDA includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -45,15 +44,14 @@
 #endif
 
 // system includes <>
+#include <map>
 #include <string>
 #include <vector>
-#include <map>
 
 namespace eutelescope {
 
   //! Type used for numbering of fit possibilities (can be large)
   typedef long long int type_fitcount;
-
 
   //! Analytical track fitting processor for EUDET Telescope
   /*! This processor was designed for fitting tracks to hits
@@ -246,14 +244,14 @@ namespace eutelescope {
    *        based on the measured positions (and not the fitted ones)
    *        this should only be used as preselection (cuts should not
    *        be too tight) - final selection should be done based on
-   *        \f$ \chi^{2} \f$ 
+   *        \f$ \chi^{2} \f$
    * \param SlopeXLimit  Limit on track slope change when passing
-   *        sensor layer (in X direction) 
+   *        sensor layer (in X direction)
    * \param SlopeYLimit  Limit on track slope change when passing
-   *        sensor layer (in Y direction) 
+   *        sensor layer (in Y direction)
    * \param SlopeDistanceMax Maximum hit distance from the expected
    *        position, used for hit preselection (see above).
-   * 
+   *
    * \par Performance issues
    * As described above, if multiple hits are found in telescope
    * layers or hit rejection is allowed, the algorithm checks all hits
@@ -287,7 +285,7 @@ namespace eutelescope {
    *  \li Use track preselection based on slope (set \e UseSlope to \e true ).
    *      This helps a lot especially when the beam is well collimated
    *      and the energy is high (scattering in telescope planes
-   *      small, so preselection parameters \e  SlopeDistanceMax 
+   *      small, so preselection parameters \e  SlopeDistanceMax
    *      \e SlopeXLimit and  \e SlopeYLimit  can be set to small values)
    *
    * \li Do not allow for missing hits (set \e AllowMissingHits to 0).
@@ -305,9 +303,6 @@ namespace eutelescope {
   class EUTelTestFitter : public marlin::Processor {
 
   public:
-
-
-
     //! Returns a new instance of EUTelTestFitter
     /*! This method returns an new instance of the this processor.  It
      *  is called by Marlin execution framework and it shouldn't be
@@ -315,29 +310,29 @@ namespace eutelescope {
      *
      *  @return a new EUTelTestFitter
      */
-    virtual Processor*  newProcessor() { return new EUTelTestFitter ; }
+    virtual Processor *newProcessor() { return new EUTelTestFitter; }
 
     //! Default constructor
-    EUTelTestFitter() ;
+    EUTelTestFitter();
 
     //! Called at the job beginning.
     /*! This is executed only once in the whole execution.
      *
      */
-    virtual void init() ;
+    virtual void init();
 
     //! Called for every run.
     /*!
      * @param run the LCRunHeader of the current run
      */
-    virtual void processRunHeader( LCRunHeader* run ) ;
+    virtual void processRunHeader(LCRunHeader *run);
 
     //! Called every event
     /*! This is called for each event in the file.
      *
      *  @param evt the current LCEvent event
      */
-    virtual void processEvent( LCEvent * evt ) ;
+    virtual void processEvent(LCEvent *evt);
 
     //! Check event method
     /*! This method is called by the Marlin execution framework as
@@ -347,8 +342,7 @@ namespace eutelescope {
      *
      *  @param evt The LCEvent event as passed by the ProcessMgr
      */
-    virtual void check( LCEvent * evt ) ;
-
+    virtual void check(LCEvent *evt);
 
     //! Book histograms
     /*! This method is used to books all required
@@ -358,39 +352,38 @@ namespace eutelescope {
      */
     void bookHistos();
 
-
     //! Called after data processing for clean up.
     /*! Used to release memory allocated in init() step
      */
-    virtual void end() ;
+    virtual void end();
 
   private:
-	DISALLOW_COPY_AND_ASSIGN(EUTelTestFitter)//See #define just above
+    DISALLOW_COPY_AND_ASSIGN(EUTelTestFitter) // See #define just above
 
-    //! 
+    //!
     /*!
-     * 
+     *
      */
-    int guessSensorID( Track * track );
- 
-    //! 
-    /*!
-     * 
-     */
-    int guessSensorID( double & x, double & y, double & z);
+    int guessSensorID(Track *track);
 
-    //! 
+    //!
     /*!
-     * 
+     *
      */
-    virtual int guessSensorID( double* hit);
- 
-    //! 
+    int guessSensorID(double &x, double &y, double &z);
+
+    //!
     /*!
-     * 
+     *
      */
-    bool _isFirstEvent;   
-        
+    virtual int guessSensorID(double *hit);
+
+    //!
+    /*!
+     *
+     */
+    bool _isFirstEvent;
+
   protected:
     // Fitting functions
 
@@ -407,7 +400,6 @@ namespace eutelescope {
      */
     double SingleFit();
 
-
     //! Find track in all planes assuming nominal errors
     /*! Fit track in two planes: XZ and YZ. When nominal position errors
      * are assumed and hits are found in all sensor planes, same inverse
@@ -417,18 +409,18 @@ namespace eutelescope {
 
     //! Fit particle track in one plane (XZ or YZ), taking into
     //! account beam slope
-    int DoAnalFit(double * pos, double *err, double slope=0.);
+    int DoAnalFit(double *pos, double *err, double slope = 0.);
 
     //! Calculate \f$ \chi^{2} \f$ of the fit
-    /*! Calculate \f$ \chi^{2} \f$ of the fit taking into account measured particle
+    /*! Calculate \f$ \chi^{2} \f$ of the fit taking into account measured
+     * particle
      *  positions in X and Y and fitted scattering angles in XZ and YZ
      *  planes
      */
     double GetFitChi2();
 
     //! Solve matrix equation
-    int GaussjSolve(double * alfa, double * beta, int n);
-
+    int GaussjSolve(double *alfa, double *beta, int n);
 
     //! Silicon planes parameters as described in GEAR
     /*! This structure actually contains the following:
@@ -440,7 +432,7 @@ namespace eutelescope {
      *  This object is provided by GEAR during the init() phase and
      *  stored here for local use.
      */
-    gear::SiPlanesParameters * _siPlanesParameters;
+    gear::SiPlanesParameters *_siPlanesParameters;
 
     //! Silicon plane layer layout
     /*! This is the real geoemetry description. For each layer
@@ -450,7 +442,7 @@ namespace eutelescope {
      *  This object is taken from the _siPlanesParameters during the
      *  init() phase and stored for local use
      */
-    gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
+    gear::SiPlanesLayerLayout *_siPlanesLayerLayout;
 
     //! The histogram information file
     /*! This string contain the name of the histogram information
@@ -461,56 +453,53 @@ namespace eutelescope {
      */
     std::string _histoInfoFileName;
 
-
     // Global processor parameters
     // Parameter documentation is already included above
 
-    std::string _inputColName ;
+    std::string _inputColName;
 
-    std::string _outputTrackColName ;
+    std::string _outputTrackColName;
 
-    std::string _correctedHitColName ;
+    std::string _correctedHitColName;
 
-    std::string _outputHitColName ;
+    std::string _outputHitColName;
 
-    EVENT::StringVec	_alignmentCollectionNames;
+    EVENT::StringVec _alignmentCollectionNames;
 
     bool _InputHitsInTrack;
 
     bool _OutputHitsInTrack;
 
-    std::vector<int >   _SkipLayerIDs;
-    std::vector<int >   _PassiveLayerIDs;
+    std::vector<int> _SkipLayerIDs;
+    std::vector<int> _PassiveLayerIDs;
 
-    std::vector<int >   _AlignLayerIDs;
-    std::vector<float > _AlignLayerShiftX;
-    std::vector<float > _AlignLayerShiftY;
-    std::vector<float > _AlignLayerRotZ;
+    std::vector<int> _AlignLayerIDs;
+    std::vector<float> _AlignLayerShiftX;
+    std::vector<float> _AlignLayerShiftY;
+    std::vector<float> _AlignLayerRotZ;
 
-    std::vector<int >   _WindowLayerIDs;
-    std::vector<float > _WindowMinX;
-    std::vector<float > _WindowMaxX;
-    std::vector<float > _WindowMinY;
-    std::vector<float > _WindowMaxY;
+    std::vector<int> _WindowLayerIDs;
+    std::vector<float> _WindowMinX;
+    std::vector<float> _WindowMaxX;
+    std::vector<float> _WindowMinY;
+    std::vector<float> _WindowMaxY;
 
-    std::vector<int >   _MaskLayerIDs;
-    std::vector<float > _MaskMinX;
-    std::vector<float > _MaskMaxX;
-    std::vector<float > _MaskMinY;
-    std::vector<float > _MaskMaxY;
+    std::vector<int> _MaskLayerIDs;
+    std::vector<float> _MaskMinX;
+    std::vector<float> _MaskMaxX;
+    std::vector<float> _MaskMinY;
+    std::vector<float> _MaskMaxY;
 
     std::vector<float> _resolutionX;
     std::vector<float> _resolutionY;
     std::vector<float> _resolutionZ;
 
-
-    //! reference HitCollection name 
+    //! reference HitCollection name
     /*!
      */
-    std::string      _referenceHitCollectionName;
-    bool             _useReferenceHitCollection;
-    LCCollectionVec* _referenceHitVec;    
- 
+    std::string _referenceHitCollectionName;
+    bool _useReferenceHitCollection;
+    LCCollectionVec *_referenceHitVec;
 
     // Parameters of hit selection algorithm
 
@@ -521,27 +510,27 @@ namespace eutelescope {
     bool _searchMultipleTracks;
 
     bool _allowAmbiguousHits;
-    int  _maximumAmbiguousHits;
+    int _maximumAmbiguousHits;
 
     // Parameters of fitting algorithm
 
     double _missingHitPenalty;
     double _skipHitPenalty;
-    double _chi2Max ;
-    double _chi2Min ;
+    double _chi2Max;
+    double _chi2Min;
 
-    bool   _useNominalResolution ;
+    bool _useNominalResolution;
 
-    bool   _useDUT ;
+    bool _useDUT;
 
-    bool   _useBeamConstraint ;
+    bool _useBeamConstraint;
 
     double _beamSpread;
 
     double _beamSlopeX;
     double _beamSlopeY;
 
-    double _eBeam ;
+    double _eBeam;
 
     // Setup description
 
@@ -549,54 +538,54 @@ namespace eutelescope {
     int _nActivePlanes;
     int _iDUT;
 
-    int * _planeSort;
-    int * _planeID;
-    double * _planeShiftX;
-    double * _planeShiftY;
-    double * _planeRotZ;
-    double * _planePosition;
-    double * _planeThickness;
-    double * _planeX0;
-    double * _planeResolution;
-    bool   * _isActive;
+    int *_planeSort;
+    int *_planeID;
+    double *_planeShiftX;
+    double *_planeShiftY;
+    double *_planeRotZ;
+    double *_planePosition;
+    double *_planeThickness;
+    double *_planeX0;
+    double *_planeResolution;
+    bool *_isActive;
 
-    std::vector<int> * _planeWindowIDs;
-    std::vector<int> * _planeMaskIDs;
+    std::vector<int> *_planeWindowIDs;
+    std::vector<int> *_planeMaskIDs;
 
     // Internal processor variables
     // ----------------------------
 
-    int _nRun ;
-    int _nEvt ;
+    int _nRun;
+    int _nEvt;
 
     // Arrays for selecting different hit combinations
 
-    int * _planeHits;
-    int * _planeChoice;
-    type_fitcount * _planeMod;
+    int *_planeHits;
+    int *_planeChoice;
+    type_fitcount *_planeMod;
 
     // Fitting algorithm arrays
 
-    double * _planeX  ;
-    double * _planeEx ;
-    double * _planeY  ;
-    double * _planeEy ;
+    double *_planeX;
+    double *_planeEx;
+    double *_planeY;
+    double *_planeEy;
 
-    double * _planeScatAngle  ;
- 
-    double * _planeDist ;
-    double * _planeScat ;
+    double *_planeScatAngle;
 
-    double * _fitX  ;
-    double * _fitEx ;
-    double * _fitY  ;
-    double * _fitEy ;
+    double *_planeDist;
+    double *_planeScat;
 
-    double * _fitArray ;
-    double * _nominalFitArrayX ;
-    double * _nominalErrorX ;
-    double * _nominalFitArrayY ;
-    double * _nominalErrorY ;
+    double *_fitX;
+    double *_fitEx;
+    double *_fitY;
+    double *_fitEy;
+
+    double *_fitArray;
+    double *_nominalFitArrayX;
+    double *_nominalErrorX;
+    double *_nominalFitArrayY;
+    double *_nominalErrorY;
 
     // few counter to show the final summary
 
@@ -624,9 +613,9 @@ namespace eutelescope {
      *  a histogram pointer using histogram name.
      */
 
-    std::map<std::string , AIDA::IBaseHistogram * > _aidaHistoMap;
-    std::map<std::string, AIDA::IHistogram1D * > _aidaHistoMap1D;
-    std::map<std::string, AIDA::IHistogram2D * > _aidaHistoMap2D;
+    std::map<std::string, AIDA::IBaseHistogram *> _aidaHistoMap;
+    std::map<std::string, AIDA::IHistogram1D *> _aidaHistoMap1D;
+    std::map<std::string, AIDA::IHistogram2D *> _aidaHistoMap2D;
 
     // Chi2 histogram names
     static std::string _linChi2HistoName;
@@ -649,41 +638,37 @@ namespace eutelescope {
 
     // -- 02 August 2010, libov@mail.desy.de ------
     // to include correlation band track selection
-    bool            _UseSlope;
-    float           _SlopeXLimit;
-    float           _SlopeYLimit;
-    float           _SlopeDistanceMax; 
+    bool _UseSlope;
+    float _SlopeXLimit;
+    float _SlopeYLimit;
+    float _SlopeDistanceMax;
     // --------------------------------------------
 
-    // 21 january 2011, libov@mail.desy.de ------ 
-	// corrected for non-normal sensors
-	std::vector<double> _fittedXcorr;
-	std::vector<double> _fittedYcorr;
-	std::vector<double> _fittedZcorr;
-	
-    void getFastTrackImpactPoint(double & x, double & y, double & z, Track * tr, LCEvent * ev);
-    // 02 September 2016, bbrueers@cern.ch, correcting for inclined planes and sloped tracks
-    void getImpactPoint(double & x, double & y, double & z, double & slopeX, double & slopeY, double & slopeZ);
-    void getTrackImpactPoint(double & x, double & y, double & z, Track * tr, LCEvent * ev);
-	int	_indexDUTneighbour;
-	double	_zDUTneighbour;
-    
-    
-    std::map< unsigned int , std::map< unsigned int , double > > _siPlaneCenter;
-    std::map< unsigned int , std::map< unsigned int , double > > _siPlaneNormal;
-   
+    // 21 january 2011, libov@mail.desy.de ------
+    // corrected for non-normal sensors
+    std::vector<double> _fittedXcorr;
+    std::vector<double> _fittedYcorr;
+    std::vector<double> _fittedZcorr;
+
+    void getFastTrackImpactPoint(double &x, double &y, double &z, Track *tr,
+                                 LCEvent *ev);
+    // 02 September 2016, bbrueers@cern.ch, correcting for inclined planes and
+    // sloped tracks
+    void getImpactPoint(double &x, double &y, double &z, double &slopeX,
+                        double &slopeY, double &slopeZ);
+    void getTrackImpactPoint(double &x, double &y, double &z, Track *tr,
+                             LCEvent *ev);
+    int _indexDUTneighbour;
+    double _zDUTneighbour;
+
+    std::map<unsigned int, std::map<unsigned int, double>> _siPlaneCenter;
+    std::map<unsigned int, std::map<unsigned int, double>> _siPlaneNormal;
+
 #endif
-
-  } ;
-
+  };
 
   //! A global instance of the processor.
-  EUTelTestFitter aEUTelTestFitter ;
-
-
+  EUTelTestFitter aEUTelTestFitter;
 }
 
 #endif
-
-
-

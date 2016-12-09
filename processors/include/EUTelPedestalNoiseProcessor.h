@@ -24,12 +24,10 @@
 #include <AIDA/IBaseHistogram.h>
 #endif
 
-
 // system includes <>
-#include <string>
 #include <cmath>
 #include <list>
-
+#include <string>
 
 namespace eutelescope {
 
@@ -189,11 +187,9 @@ namespace eutelescope {
    *
    */
 
-  class EUTelPedestalNoiseProcessor:public marlin::Processor   {
+  class EUTelPedestalNoiseProcessor : public marlin::Processor {
 
   public:
-
-
     //! Returns a new instance of EUTelPedestalNoiseProcessor
     /*! This method returns an new instance of the this processor.  It
      *  is called by Marlin execution framework and it shouldn't be
@@ -201,12 +197,12 @@ namespace eutelescope {
      *
      *  @return a new EUTelPedestalNoiseProcess.
      */
-    virtual Processor * newProcessor () {
+    virtual Processor *newProcessor() {
       return new EUTelPedestalNoiseProcessor;
     }
 
     //! Default constructor
-    EUTelPedestalNoiseProcessor ();
+    EUTelPedestalNoiseProcessor();
 
     //! Called at the job beginning.
     /*! This is executed only once in the whole execution. It prints
@@ -215,7 +211,7 @@ namespace eutelescope {
      *  book histograms, but since those are also grouped according to
      *  the detector numbers we need to have this parameter available.
      */
-    virtual void init ();
+    virtual void init();
 
     //! Called for every run.
     /*! At the beginning of every run the run header is read and
@@ -227,7 +223,7 @@ namespace eutelescope {
      *
      *  @param run the LCRunHeader of the this current run
      */
-    virtual void processRunHeader (LCRunHeader * run);
+    virtual void processRunHeader(LCRunHeader *run);
 
     //! Called every event
     /*! Since the behavior of the PedestalNoise processor is different
@@ -239,8 +235,7 @@ namespace eutelescope {
      *  @param evt the current LCEvent event as passed by the
      *  ProcessMgr
      */
-    virtual void processEvent (LCEvent * evt);
-
+    virtual void processEvent(LCEvent *evt);
 
     //! Check event method
     /*! This method is called by the Marlin execution framework as
@@ -251,7 +246,7 @@ namespace eutelescope {
      *  @param evt The LCEvent event as passed by the ProcessMgr
      *
      */
-    virtual void check (LCEvent * evt);
+    virtual void check(LCEvent *evt);
 
     //! Mask bad pixels
     /*! This method is called at the end of every loop and is used to
@@ -339,7 +334,7 @@ namespace eutelescope {
      *  @param evt This is the current event passed by
      *  EUTelPedestalNoieProcessor::processEvent(LCEvent*)
      */
-    void firstLoop(LCEvent * evt);
+    void firstLoop(LCEvent *evt);
 
     //! Calculation done in all loops other than the first
     /*! This method is called by the
@@ -361,7 +356,7 @@ namespace eutelescope {
      *  @see EUTelPedestalNoiseProcessor::firstLoop(LCEvent*) for the
      *  description of available algorithms.
      */
-    void otherLoop(LCEvent * evt);
+    void otherLoop(LCEvent *evt);
 
     //! Additional loop for bad pixel masking
     /*! This method is called within the processEvent(LCEvent * evt)
@@ -375,7 +370,7 @@ namespace eutelescope {
      *
      *  @param evt The LCEvent containing all the input collections.
      */
-    void additionalMaskingLoop(LCEvent * evt);
+    void additionalMaskingLoop(LCEvent *evt);
 
     //! Book histograms
     /*! This method is used to prepare the needed directory structure
@@ -421,7 +416,6 @@ namespace eutelescope {
      *
      */
     void fillHistos();
-
 
     //! Called after data processing.
     /*! This method is called when the loop on events is finished. It
@@ -483,7 +477,7 @@ namespace eutelescope {
     virtual void finalizeProcessor(bool fromMaskingLoop = false);
 
     //! Performs a pre loop
-    virtual void preLoop( LCEvent * event );
+    virtual void preLoop(LCEvent *event);
 
     //! Simple rewind
     virtual void simpleRewind();
@@ -493,16 +487,14 @@ namespace eutelescope {
      *
      *  @param event The current LCEvent.
      */
-    virtual void initializeGeometry( LCEvent * event );
-
+    virtual void initializeGeometry(LCEvent *event);
 
   protected:
-
     //! Input collection names.
     /*! A vector containing all the collection names to be used in the
      *  calculation.
      */
-    std::vector< std::string > _rawDataCollectionNameVec;
+    std::vector<std::string> _rawDataCollectionNameVec;
 
     //! Pedestal collection name.
     /*! We have three different output collections that are going to be
@@ -572,7 +564,7 @@ namespace eutelescope {
      *  The selected algorithm for bad pixel masking. @see
      *  EUTelPedestalNoiseProcessor::maskBadPixel()
      */
-    std::vector<std::string > _badPixelAlgoVec;
+    std::vector<std::string> _badPixelAlgoVec;
 
     //! Common mode calculation algorithm
     /*! This is a label identifying which algorithm is going to be
@@ -714,18 +706,17 @@ namespace eutelescope {
     */
     int _maxNoOfSkippedRow;
 
-
     //! List of skipped events
     /*! This list contains the event number corresponding to events
      *  skipped because of common mode reasons. Those events are not
      *  used in the additional masking loop.
      */
-    std::list< int > _skippedEventList;
+    std::list<int> _skippedEventList;
 
     //! Iterator to the skipped event list
     /*! This iterator points to the next event to be skipped.
      */
-    std::list< int >::iterator _nextEventToSkip;
+    std::list<int>::iterator _nextEventToSkip;
 
     //! Current run number.
     /*! This number is used to store the current run number
@@ -778,7 +769,6 @@ namespace eutelescope {
      */
     bool _asciiOutputSwitch;
 
-
     //! Boolean to activate the pre-loop for hit rejection
     /*! In order to increase the efficiency of the hit rejection
      *  algorithm a fast loop over all events is performed. The
@@ -788,7 +778,6 @@ namespace eutelescope {
     bool _preLoopSwitch;
 
   private:
-
     //! Detector name
     /*! This string is used to copy the detector name from the run
      *  header to the event "header"
@@ -806,8 +795,7 @@ namespace eutelescope {
     //! Vector of detector numbers
     /*! One entry for each input collection
      */
-    std::vector< size_t > _noOfDetectorVec;
-
+    std::vector<size_t> _noOfDetectorVec;
 
     //! First pixel along X
     /*! This array of int is used to store the number of the first
@@ -841,7 +829,7 @@ namespace eutelescope {
      * plane in the run is discovered.  The inner layer is done in the
      * firstEvent of each detector module.
      */
-    std::vector < FloatVec > _tempPede;
+    std::vector<FloatVec> _tempPede;
 
     //! Temporary array to store the running sigma
     /*! This a vector of vectors of doubles. The outern layer represents
@@ -851,7 +839,7 @@ namespace eutelescope {
      * plane in the run is discovered.  The inner layer is done in the
      * firstEvent of each detector module.
      */
-    std::vector < FloatVec > _tempNoise;
+    std::vector<FloatVec> _tempNoise;
 
     //! Temporary array to store the number of entries
     /*! In order to have both the running average and sigma working,
@@ -861,7 +849,7 @@ namespace eutelescope {
      * mode suppression algorithm. The underlying philosophy is the same
      * used for _tempPede and _tempNoise
      */
-    std::vector < IntVec > _tempEntries;
+    std::vector<IntVec> _tempEntries;
 
     //! Array to store the intermediate/final pedestal value
     /*! At the end of the first loop on events, a first approximation
@@ -869,33 +857,33 @@ namespace eutelescope {
      *  stored into this array to allow further improvements in the
      *  following event loops
      */
-    std::vector < FloatVec > _pedestal;
+    std::vector<FloatVec> _pedestal;
 
     //! Array to store intermediate/final noise value
     /*! As for EUTelPedestalNoiseProcessor::_pedestal but now for the
      *  noise
      */
-    std::vector < FloatVec > _noise;
+    std::vector<FloatVec> _noise;
 
     //! Array to store the status
     /*! This is the place where the status of pixel is saved
      */
-    std::vector < ShortVec > _status;
+    std::vector<ShortVec> _status;
 
     //! Additional bad pixel masking vector
-    std::vector < ShortVec > _hitCounter;
+    std::vector<ShortVec> _hitCounter;
 
     //! Preloop maximum value position
-    std::vector < ShortVec > _maxValuePos;
+    std::vector<ShortVec> _maxValuePos;
 
     //! Preloop maximum value
-    std::vector < ShortVec > _maxValue;
+    std::vector<ShortVec> _maxValue;
 
     //! Preloop minimum value position
-    std::vector < ShortVec > _minValuePos;
+    std::vector<ShortVec> _minValuePos;
 
     //! Preloop minimum value
-    std::vector < ShortVec > _minValue;
+    std::vector<ShortVec> _minValue;
 
     //! Event loop counter
     /*! This is a counter for the number of loops. The processor will
@@ -922,7 +910,7 @@ namespace eutelescope {
      *  want to use <code>dynamic_cast</code> to convert them back to
      *  their original cast.
      */
-    std::map<std::string , AIDA::IBaseHistogram * > _aidaHistoMap;
+    std::map<std::string, AIDA::IBaseHistogram *> _aidaHistoMap;
 
     //! Name of the temporary AIDA 2D profile
     /*! The histogram pointed by this name is used in the case
@@ -989,7 +977,7 @@ namespace eutelescope {
      *  input collection in the same order as they appear. This vector
      *  has to be used to number the histogram booking and filling.
      */
-    std::vector< int > _orderedSensorIDVec;
+    std::vector<int> _orderedSensorIDVec;
 
 #endif
 
@@ -1005,15 +993,12 @@ namespace eutelescope {
     //! Histogram information file
     std::string _histoInfoFileName;
 
-
     //! Additional bad masking loop
     bool _additionalMaskingLoop;
-
   };
 
   //! A global instance of the processor
   EUTelPedestalNoiseProcessor gEUTelPedestalNoiseProcessor;
-
 }
 
 #endif

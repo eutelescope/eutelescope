@@ -18,27 +18,27 @@
 // marlin includes ".h"
 
 // lcio includes <.h>
-#include <lcio.h>
 #include <IMPL/LCCollectionVec.h>
 #include <UTIL/CellIDDecoder.h>
 #include <UTIL/CellIDEncoder.h>
+#include <lcio.h>
 
 // system includes <>
-#include <vector>
 #include <iostream>
-
+#include <vector>
 
 namespace eutelescope {
 
+  class EUTelBrickedClusterImpl : public EUTelVirtualCluster {
 
-    class EUTelBrickedClusterImpl : public EUTelVirtualCluster {
-
-    public:
+  public:
     //! Default constructor
-    EUTelBrickedClusterImpl(TrackerDataImpl * data);
+    EUTelBrickedClusterImpl(TrackerDataImpl *data);
 
     //! Destructor
-    virtual ~EUTelBrickedClusterImpl() { /* NOOP */ ; }
+    virtual ~EUTelBrickedClusterImpl() { /* NOOP */
+      ;
+    }
 
     //! Set the pixel noise values
     /*! This method is used to set the noise values. The Fixed Frame
@@ -59,7 +59,7 @@ namespace eutelescope {
     *
     *  @param noiseValues The vector containing the pixel noise.
     */
-    void setNoiseValues(std::vector<float > noiseValues) ;
+    void setNoiseValues(std::vector<float> noiseValues);
 
     //! Get the detector ID
     /*! This method is used to get from the CellID the detector
@@ -67,10 +67,11 @@ namespace eutelescope {
     *
     *  @return the detector ID
     */
-   inline int getDetectorID()  const {
-        UTIL::CellIDDecoder<TrackerDataImpl>cellDecoder( EUTELESCOPE::CLUSTERDEFAULTENCODING );
-        return cellDecoder(_trackerData)["sensorID"];
-        }
+    inline int getDetectorID() const {
+      UTIL::CellIDDecoder<TrackerDataImpl> cellDecoder(
+          EUTELESCOPE::CLUSTERDEFAULTENCODING);
+      return cellDecoder(_trackerData)["sensorID"];
+    }
 
     //! Get the cluster central pixel
     /*! Due to the definition of EUTelBrickedClusterImpl the central pixel
@@ -81,8 +82,8 @@ namespace eutelescope {
     *  @param yCenter reference to the y coordinate of the central
     *  pixel
     */
-    inline void getCenterCoord(int& xCenter, int& yCenter) const {
-        getSeedCoord(xCenter, yCenter);
+    inline void getCenterCoord(int &xCenter, int &yCenter) const {
+      getSeedCoord(xCenter, yCenter);
     }
 
     //! Get the seed pixel coordinates
@@ -92,10 +93,11 @@ namespace eutelescope {
     *  @param xSeed reference to the x coordinate of the seed pixel
     *  @param ySeed reference to the y coordinate of the seed pixel
     */
-    inline void getSeedCoord(int& xSeed, int& ySeed) const {
-        UTIL::CellIDDecoder<TrackerDataImpl>cellDecoder( EUTELESCOPE::CLUSTERDEFAULTENCODING );
-	xSeed = cellDecoder(_trackerData)["xSeed"];
-	ySeed = cellDecoder(_trackerData)["ySeed"];
+    inline void getSeedCoord(int &xSeed, int &ySeed) const {
+      UTIL::CellIDDecoder<TrackerDataImpl> cellDecoder(
+          EUTELESCOPE::CLUSTERDEFAULTENCODING);
+      xSeed = cellDecoder(_trackerData)["xSeed"];
+      ySeed = cellDecoder(_trackerData)["ySeed"];
     }
 
     //! Get the cluster size along the two directions
@@ -105,10 +107,11 @@ namespace eutelescope {
     *  @param xSize reference to the cluster size along x
     *  @param ySize reference to the cluster size along y
     */
-    inline void getClusterSize(int& xSize, int& ySize) const {
-     UTIL::CellIDDecoder<TrackerDataImpl>cellDecoder( EUTELESCOPE::CLUSTERDEFAULTENCODING );
-	xSize = cellDecoder(_trackerData)["xCluSize"];
-	ySize = cellDecoder(_trackerData)["yCluSize"];
+    inline void getClusterSize(int &xSize, int &ySize) const {
+      UTIL::CellIDDecoder<TrackerDataImpl> cellDecoder(
+          EUTELESCOPE::CLUSTERDEFAULTENCODING);
+      xSize = cellDecoder(_trackerData)["xCluSize"];
+      ySize = cellDecoder(_trackerData)["yCluSize"];
     }
 
     //! Get cluster quality
@@ -119,9 +122,11 @@ namespace eutelescope {
     *  @return the current cluster quality
     */
     inline ClusterQuality getClusterQuality() const {
-        UTIL::CellIDDecoder<TrackerDataImpl>cellDecoder( EUTELESCOPE::CLUSTERDEFAULTENCODING );
-        return static_cast<ClusterQuality>(static_cast<lcio::long64>(cellDecoder(_trackerData)["quality"]));
-        }
+      UTIL::CellIDDecoder<TrackerDataImpl> cellDecoder(
+          EUTELESCOPE::CLUSTERDEFAULTENCODING);
+      return static_cast<ClusterQuality>(
+          static_cast<lcio::long64>(cellDecoder(_trackerData)["quality"]));
+    }
 
     //! Get distance from another cluster
     /*! This method is used to calculate the distance between to
@@ -137,7 +142,7 @@ namespace eutelescope {
     *  @param otherCluster The other cluster for distance calculation
     *  @return The distance in pixel unit from @a this to @a otherCluster
     */
-    float getDistance(EUTelVirtualCluster * otherCluster) const;
+    float getDistance(EUTelVirtualCluster *otherCluster) const;
 
     //! Get the cluster external radius
     /*! This method is used to calculate the fixed frame cluster
@@ -185,7 +190,7 @@ namespace eutelescope {
     *  @param nPixels The list of number of pixels
     *  @return The charges for each number of pixels
     */
-    std::vector<float> getClusterCharge(std::vector<int > nPixels) const;
+    std::vector<float> getClusterCharge(std::vector<int> nPixels) const;
 
     //! Get the cluster charge within a subframe
     /*! This method is used to obtain the cluster charge considering
@@ -206,7 +211,7 @@ namespace eutelescope {
     *  @param xCoG reference to the CoG shift along x
     *  @param yCoG reference to the CoG shift along y
     */
-    void getCenterOfGravityShift(float& xCoG, float& yCoG) const;
+    void getCenterOfGravityShift(float &xCoG, float &yCoG) const;
 
     //! Get the center of gravity shift using only a n x m cluster.
     /*! This method is used to calculate the CoG shift, but only
@@ -220,7 +225,8 @@ namespace eutelescope {
     *  @param xSize maximum number of pixels along x
     *  @param ySize maximum number of pixels along y
     */
-    void getCenterOfGravityShift(float& xCoG, float& yCoG, int xSize, int ySize) const ;
+    void getCenterOfGravityShift(float &xCoG, float &yCoG, int xSize,
+                                 int ySize) const;
 
     //! Get the center of gravity shift using only @a n pixels
     /*! This is another method to get the CoG shift from the current
@@ -233,8 +239,7 @@ namespace eutelescope {
     *  @param yCoG reference to the CoG shift along y
     *  @param n number of pixels with the highest signal
     */
-    void getCenterOfGravityShift(float& xCoG, float& yCoG, int n) const ;
-
+    void getCenterOfGravityShift(float &xCoG, float &yCoG, int n) const;
 
     //! Get the center of gravity shift FOR ETA:
     /*! For eta we need the cog offset from the original pixel.
@@ -247,12 +252,14 @@ namespace eutelescope {
     *   So this does:
     *    Let the normal COG Shift (with(!) seed coordinate correction)
     *    be computed and adjust the result:
-    *    If the seed pixel row is even, then add the 0.5 that was substracted before!
+    *    If the seed pixel row is even, then add the 0.5 that was substracted
+    * before!
     *
     *  @param xCoG reference to the CoG shift along x
     *  @param yCoG reference to the CoG shift along y
     */
-    void getCenterOfGravityShiftWithOutGlobalSeedCoordinateCorrection(float& xCoG, float& yCoG) const ;
+    void getCenterOfGravityShiftWithOutGlobalSeedCoordinateCorrection(
+        float &xCoG, float &yCoG) const;
 
     //! Get the center of gravity shift FOR ETA (n most significant pixels):
     /*! Same as above, but only for the n most significant pixels.
@@ -261,7 +268,8 @@ namespace eutelescope {
     *  @param yCoG reference to the CoG shift along y
     *  @param n number of pixels with the highest signal
     */
-    void getCenterOfGravityShiftWithOutGlobalSeedCoordinateCorrection(float& xCoG, float& yCoG, int n) const ;
+    void getCenterOfGravityShiftWithOutGlobalSeedCoordinateCorrection(
+        float &xCoG, float &yCoG, int n) const;
 
     //! Get the cluster charge CoG
     /*! This method is used to calculate the current cluster charge
@@ -272,7 +280,7 @@ namespace eutelescope {
     *  @param xCoG reference to the charge center of gravity along x
     *  @param yCoG reference to the charge center of gravity along y
     */
-    void getCenterOfGravity(float& xCoG, float& yCoG) const;
+    void getCenterOfGravity(float &xCoG, float &yCoG) const;
 
     //! Get the pixel noise values
     /*! This method returns the pixel noise value vector if it was
@@ -280,8 +288,7 @@ namespace eutelescope {
     *
     *  @return a vector of float with the pixel noise values.
     */
-    std::vector<float > getNoiseValues() const;
-
+    std::vector<float> getNoiseValues() const;
 
     //! Get the cluster noise
     /*! This method returns the full cluster noise. This is evaluated
@@ -299,7 +306,7 @@ namespace eutelescope {
     *
     *  @return The cluster SNR for the current cluster
     */
-    float getClusterSNR() const ;
+    float getClusterSNR() const;
 
     //! Get seed pixel SNR
     /*! This method is used to calculate the seed pixel signal to
@@ -308,7 +315,7 @@ namespace eutelescope {
     *
     *  @return The seed pixel SNR
     */
-    float getSeedSNR() const ;
+    float getSeedSNR() const;
 
     //! Get the cluster N SNR
     /*! This method returns the SNR of the cluster considering only
@@ -318,7 +325,7 @@ namespace eutelescope {
     *  @param nPixel The number of pixel to consider in the cluster
     *  @return The cluster N SNR.
     */
-    float getClusterSNR(int nPixel) const ;
+    float getClusterSNR(int nPixel) const;
 
     //! Calculate the cluster SNR with different number of pixels
     /*! This method is a better and faster replacement of the
@@ -328,7 +335,7 @@ namespace eutelescope {
     *  @param nPixels The list of number of pixels
     *  @return The SNRs for each number of pixels
     */
-    std::vector<float > getClusterSNR(std::vector<int > nPixels) const ;
+    std::vector<float> getClusterSNR(std::vector<int> nPixels) const;
 
     //! Get the cluster N x M SNR
     /*! This method returns the SNR when considering only a
@@ -339,7 +346,7 @@ namespace eutelescope {
     *  @param ySize Odd number to define the y size of the subframe
     *  @return The SNR of the cluster subframe
     */
-    float getClusterSNR(int xSize, int ySize) const ;
+    float getClusterSNR(int xSize, int ySize) const;
 
     //! Return a pointer to the TrackerDataImpl
     /*! This method is used to expose to the public the
@@ -347,21 +354,20 @@ namespace eutelescope {
     *
     *  @return The pointer of _trackerData
     */
-    IMPL::TrackerDataImpl * trackerData() { return _trackerData; }
+    IMPL::TrackerDataImpl *trackerData() { return _trackerData; }
 
     //! Print method
     /*! This method is used to print out the content of the clusters
     *
     *  @param os The input output stream
     */
-    void print(std::ostream& os)  const;
+    void print(std::ostream &os) const;
 
     void debugOutput() const;
 
-    private:
-
+  private:
     //! Noise values vector
-    std::vector<float > _noiseValues;
+    std::vector<float> _noiseValues;
 
     //! Noise set switch
     /*! By default this switch is set to false and it is disabling all
@@ -389,18 +395,19 @@ namespace eutelescope {
     *  obtain the results of a Cluster that is missing a few entries
     *  because of the special bricked pixel structure assumed.
     */
-    void setOutsiderValuesInVectorInterpretedAsBrickedMatrix(std::vector<float>& v, float val) const;
+    void
+    setOutsiderValuesInVectorInterpretedAsBrickedMatrix(std::vector<float> &v,
+                                                        float val) const;
 
-    void outputBricked3x3MatrixFromVector(const std::vector<float>& v) const;
-
-    };
-/*
-    void getCenterOfGravityShiftBrickedPixelStructure(float& x, float& y)
-    {
-        //!DUMMY
-        printf("fu");
-        return;
-    }
-*/
+    void outputBricked3x3MatrixFromVector(const std::vector<float> &v) const;
+  };
+  /*
+      void getCenterOfGravityShiftBrickedPixelStructure(float& x, float& y)
+      {
+          //!DUMMY
+          printf("fu");
+          return;
+      }
+  */
 }
 #endif

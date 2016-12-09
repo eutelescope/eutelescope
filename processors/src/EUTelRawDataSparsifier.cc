@@ -10,110 +10,117 @@
  */
 
 // eutelescope includes ".h"
-#include "EUTELESCOPE.h"
-#include "EUTelMatrixDecoder.h"
-#include "EUTelTrackerDataInterfacerImpl.h"
-#include "EUTelBaseSparsePixel.h"
-#include "EUTelGenericSparsePixel.h"
-#include "EUTelExceptions.h"
 #include "EUTelRawDataSparsifier.h"
-#include "EUTelRunHeaderImpl.h"
+#include "EUTELESCOPE.h"
+#include "EUTelBaseSparsePixel.h"
 #include "EUTelEventImpl.h"
+#include "EUTelExceptions.h"
+#include "EUTelGenericSparsePixel.h"
+#include "EUTelMatrixDecoder.h"
+#include "EUTelRunHeaderImpl.h"
+#include "EUTelTrackerDataInterfacerImpl.h"
 
 // marlin includes ".h"
-#include "marlin/Processor.h"
 #include "marlin/Exceptions.h"
+#include "marlin/Processor.h"
 
 // lcio includes <.h>
-#include <IMPL/TrackerRawDataImpl.h>
-#include <IMPL/TrackerDataImpl.h>
 #include <IMPL/LCCollectionVec.h>
+#include <IMPL/TrackerDataImpl.h>
+#include <IMPL/TrackerRawDataImpl.h>
 #include <UTIL/CellIDDecoder.h>
 #include <UTIL/CellIDEncoder.h>
 
 // system includes <>
-#include <vector>
 #include <memory>
+#include <vector>
 
 using namespace std;
 using namespace lcio;
 using namespace marlin;
 using namespace eutelescope;
 
-EUTelRawDataSparsifier::EUTelRawDataSparsifier () :Processor("EUTelRawDataSparsifier") {
+EUTelRawDataSparsifier::EUTelRawDataSparsifier()
+    : Processor("EUTelRawDataSparsifier") {
 
   // modify processor description
-  _description =
-    "EUTelRawDataSparsifier transform full frame raw data in ZS calibrated data mimicking the EUDRB behavior. ";
+  _description = "EUTelRawDataSparsifier transform full frame raw data in ZS "
+                 "calibrated data mimicking the EUDRB behavior. ";
 
   // first of all we need to register the input collection
-  registerInputCollection (LCIO::TRACKERRAWDATA, "RawDataCollectionName",
-                           "Input raw data collection",
-                           _rawDataCollectionName, string ("rawdata"));
+  registerInputCollection(LCIO::TRACKERRAWDATA, "RawDataCollectionName",
+                          "Input raw data collection", _rawDataCollectionName,
+                          string("rawdata"));
 
-  registerInputCollection (LCIO::TRACKERDATA, "PedestalCollectionName",
-                           "Pedestal from the condition file",
-                           _pedestalCollectionName, string ("pedestal"));
+  registerInputCollection(LCIO::TRACKERDATA, "PedestalCollectionName",
+                          "Pedestal from the condition file",
+                          _pedestalCollectionName, string("pedestal"));
 
-  registerInputCollection (LCIO::TRACKERDATA, "NoiseCollectionName",
-                           "Noise from the condition file",
-                           _noiseCollectionName, string("noise"));
+  registerInputCollection(LCIO::TRACKERDATA, "NoiseCollectionName",
+                          "Noise from the condition file", _noiseCollectionName,
+                          string("noise"));
 
-  registerInputCollection (LCIO::TRACKERRAWDATA, "StatusCollectionName",
-                           "Pixel status from the condition file",
-                           _statusCollectionName, string("status"));
+  registerInputCollection(LCIO::TRACKERRAWDATA, "StatusCollectionName",
+                          "Pixel status from the condition file",
+                          _statusCollectionName, string("status"));
 
-  registerOutputCollection (LCIO::TRACKERDATA, "SparsifiedDataCollectionName",
-                            "Name of the output sparsified data collection",
-                            _sparsifiedDataCollectionName, string("data"));
+  registerOutputCollection(LCIO::TRACKERDATA, "SparsifiedDataCollectionName",
+                           "Name of the output sparsified data collection",
+                           _sparsifiedDataCollectionName, string("data"));
 
-  registerProcessorParameter("SparsePixelType", "Type of sparsified pixel data structure (use SparsePixelType enum)",
-                             _pixelType , static_cast<int> ( 1 ) );
+  registerProcessorParameter(
+      "SparsePixelType",
+      "Type of sparsified pixel data structure (use SparsePixelType enum)",
+      _pixelType, static_cast<int>(1));
 
-  vector<float > sigmaCutVecExample;
+  vector<float> sigmaCutVecExample;
   sigmaCutVecExample.push_back(2.5);
   sigmaCutVecExample.push_back(2.5);
   sigmaCutVecExample.push_back(2.5);
   sigmaCutVecExample.push_back(2.5);
   sigmaCutVecExample.push_back(2.5);
 
-  registerProcessorParameter("SigmaCut","A vector of float containing for each plane the multiplication factor for the noise",
+  registerProcessorParameter("SigmaCut", "A vector of float containing for "
+                                         "each plane the multiplication factor "
+                                         "for the noise",
                              _sigmaCutVec, sigmaCutVecExample);
 }
 
-
-void EUTelRawDataSparsifier::init () {
+void EUTelRawDataSparsifier::init() {
   // this method is called only once even when the rewind is active
   // usually a good idea to
-  printParameters ();
+  printParameters();
 
   // set to zero the run and event counters
   _iRun = 0;
 }
 
-void EUTelRawDataSparsifier::processRunHeader (LCRunHeader * rdr) {
+void EUTelRawDataSparsifier::processRunHeader(LCRunHeader *rdr) {
   auto runHeader = std::make_unique<EUTelRunHeaderImpl>(rdr);
   runHeader->addProcessor(type());
   ++_iRun;
 }
 
-void EUTelRawDataSparsifier::processEvent (LCEvent * event) {
+void EUTelRawDataSparsifier::processEvent(LCEvent *event) {
 
-  EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
+  EUTelEventImpl *evt = static_cast<EUTelEventImpl *>(event);
 
-  if ( evt->getEventType() == kEORE ) {
-    streamlog_out( DEBUG4 ) << "EORE found: nothing else to do." << endl;
+  if (evt->getEventType() == kEORE) {
+    streamlog_out(DEBUG4) << "EORE found: nothing else to do." << endl;
     return;
   }
 
   try {
 
-    LCCollectionVec * inputCollectionVec    = dynamic_cast < LCCollectionVec * > (evt->getCollection(_rawDataCollectionName));
-    LCCollectionVec * pedestalCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection(_pedestalCollectionName));
-    LCCollectionVec * noiseCollectionVec    = dynamic_cast < LCCollectionVec * > (evt->getCollection(_noiseCollectionName));
-    LCCollectionVec * statusCollectionVec   = dynamic_cast < LCCollectionVec * > (evt->getCollection(_statusCollectionName));
+    LCCollectionVec *inputCollectionVec = dynamic_cast<LCCollectionVec *>(
+        evt->getCollection(_rawDataCollectionName));
+    LCCollectionVec *pedestalCollectionVec = dynamic_cast<LCCollectionVec *>(
+        evt->getCollection(_pedestalCollectionName));
+    LCCollectionVec *noiseCollectionVec = dynamic_cast<LCCollectionVec *>(
+        evt->getCollection(_noiseCollectionName));
+    LCCollectionVec *statusCollectionVec = dynamic_cast<LCCollectionVec *>(
+        evt->getCollection(_statusCollectionName));
     CellIDDecoder<TrackerRawDataImpl> cellDecoder(inputCollectionVec);
-
 
     if (isFirstEvent()) {
 
@@ -121,35 +128,45 @@ void EUTelRawDataSparsifier::processEvent (LCEvent * event) {
       // the input data are at least compatible. I mean the same number
       // of detectors and the same number of pixels in each place.
 
-
       // let's check if the number of sigma cut components is the same of
       // the detector number.
-      if ( (inputCollectionVec->getNumberOfElements() != pedestalCollectionVec->getNumberOfElements()) ) {
+      if ((inputCollectionVec->getNumberOfElements() !=
+           pedestalCollectionVec->getNumberOfElements())) {
         _noOfDetector = inputCollectionVec->getNumberOfElements();
 
         stringstream ss;
         ss << "Input data and pedestal are incompatible" << endl
-           << "Input collection has    " << inputCollectionVec->getNumberOfElements()    << " detectors," << endl
-           << "Pedestal collection has " << pedestalCollectionVec->getNumberOfElements() << " detectors." << endl;
+           << "Input collection has    "
+           << inputCollectionVec->getNumberOfElements() << " detectors," << endl
+           << "Pedestal collection has "
+           << pedestalCollectionVec->getNumberOfElements() << " detectors."
+           << endl;
         throw IncompatibleDataSetException(ss.str());
       }
 
-      if ( static_cast< unsigned >(_noOfDetector) != _sigmaCutVec.size() ) {
-        streamlog_out( WARNING2 ) << "The number of values in the sigma cut does not match the number of detectors\n"
-                                  << "Changing SigmaCutVec consequently." << endl;
+      if (static_cast<unsigned>(_noOfDetector) != _sigmaCutVec.size()) {
+        streamlog_out(WARNING2) << "The number of values in the sigma cut does "
+                                   "not match the number of detectors\n"
+                                << "Changing SigmaCutVec consequently." << endl;
         _sigmaCutVec.resize(_noOfDetector, _sigmaCutVec.back());
       }
 
-      for ( size_t iDetector = 0; iDetector < _noOfDetector; iDetector++) {
+      for (size_t iDetector = 0; iDetector < _noOfDetector; iDetector++) {
 
-        TrackerRawDataImpl * rawData  = dynamic_cast < TrackerRawDataImpl * >(inputCollectionVec->getElementAt(iDetector));
-        TrackerDataImpl    * pedestal = dynamic_cast < TrackerDataImpl * >   (pedestalCollectionVec->getElementAt(iDetector));
+        TrackerRawDataImpl *rawData = dynamic_cast<TrackerRawDataImpl *>(
+            inputCollectionVec->getElementAt(iDetector));
+        TrackerDataImpl *pedestal = dynamic_cast<TrackerDataImpl *>(
+            pedestalCollectionVec->getElementAt(iDetector));
 
-        if (rawData->getADCValues().size() != pedestal->getChargeValues().size()){
+        if (rawData->getADCValues().size() !=
+            pedestal->getChargeValues().size()) {
           stringstream ss;
           ss << "Input data and pedestal are incompatible" << endl
-             << "Detector " << iDetector << " has " <<  rawData->getADCValues().size() << " pixels in the input data " << endl
-             << "while " << pedestal->getChargeValues().size() << " in the pedestal data " << endl;
+             << "Detector " << iDetector << " has "
+             << rawData->getADCValues().size() << " pixels in the input data "
+             << endl
+             << "while " << pedestal->getChargeValues().size()
+             << " in the pedestal data " << endl;
           throw IncompatibleDataSetException(ss.str());
         }
 
@@ -164,32 +181,38 @@ void EUTelRawDataSparsifier::processEvent (LCEvent * event) {
       _isFirstEvent = false;
     }
 
-    LCCollectionVec * sparsifiedDataCollection = new LCCollectionVec(LCIO::TRACKERDATA);
+    LCCollectionVec *sparsifiedDataCollection =
+        new LCCollectionVec(LCIO::TRACKERDATA);
 
-    for ( size_t iDetector = 0; iDetector < _noOfDetector; iDetector++) {
+    for (size_t iDetector = 0; iDetector < _noOfDetector; iDetector++) {
 
       // we are assuming that the input rawData, pedestal, noise and
       // status collections are aligned according to the sensorID. In
       // other words, we are assuming the element i-th in the all the
       // collections corresponds to the same sensorID.
-      TrackerRawDataImpl  * rawData   = dynamic_cast < TrackerRawDataImpl * >(inputCollectionVec->getElementAt(iDetector));
-      TrackerDataImpl     * pedestal  = dynamic_cast < TrackerDataImpl * >   (pedestalCollectionVec->getElementAt(iDetector));
-      TrackerDataImpl     * noise     = dynamic_cast < TrackerDataImpl * >   (noiseCollectionVec->getElementAt(iDetector));
-      TrackerRawDataImpl  * status    = dynamic_cast < TrackerRawDataImpl * >(statusCollectionVec->getElementAt(iDetector));
+      TrackerRawDataImpl *rawData = dynamic_cast<TrackerRawDataImpl *>(
+          inputCollectionVec->getElementAt(iDetector));
+      TrackerDataImpl *pedestal = dynamic_cast<TrackerDataImpl *>(
+          pedestalCollectionVec->getElementAt(iDetector));
+      TrackerDataImpl *noise = dynamic_cast<TrackerDataImpl *>(
+          noiseCollectionVec->getElementAt(iDetector));
+      TrackerRawDataImpl *status = dynamic_cast<TrackerRawDataImpl *>(
+          statusCollectionVec->getElementAt(iDetector));
 
-      TrackerDataImpl     * sparsified = new TrackerDataImpl;
-      CellIDEncoder<TrackerDataImpl> sparseDataEncoder(EUTELESCOPE::ZSDATADEFAULTENCODING, sparsifiedDataCollection);
-      int sensorID = static_cast<int> ( cellDecoder(rawData)["sensorID"] );
-      sparseDataEncoder["sensorID"]        = sensorID;
-      sparseDataEncoder["sparsePixelType"] = static_cast<int> ( _pixelType );
+      TrackerDataImpl *sparsified = new TrackerDataImpl;
+      CellIDEncoder<TrackerDataImpl> sparseDataEncoder(
+          EUTELESCOPE::ZSDATADEFAULTENCODING, sparsifiedDataCollection);
+      int sensorID = static_cast<int>(cellDecoder(rawData)["sensorID"]);
+      sparseDataEncoder["sensorID"] = sensorID;
+      sparseDataEncoder["sparsePixelType"] = static_cast<int>(_pixelType);
       sparseDataEncoder.setCellID(sparsified);
 
       EUTelMatrixDecoder matrixDecoder(cellDecoder, rawData);
 
-      ShortVec::const_iterator rawIter     = rawData->getADCValues().begin();
-      FloatVec::const_iterator pedIter     = pedestal->getChargeValues().begin();
-      FloatVec::const_iterator noiseIter   = noise->getChargeValues().begin();
-      ShortVec::const_iterator statusIter  = status->getADCValues().begin();
+      ShortVec::const_iterator rawIter = rawData->getADCValues().begin();
+      FloatVec::const_iterator pedIter = pedestal->getChargeValues().begin();
+      FloatVec::const_iterator noiseIter = noise->getChargeValues().begin();
+      ShortVec::const_iterator statusIter = status->getADCValues().begin();
       int iPixel = 0;
 
       // there was a bug here in a previous version because we were
@@ -198,22 +221,23 @@ void EUTelRawDataSparsifier::processEvent (LCEvent * event) {
       // float sigmaCut = _sigmaCutVec[sensorID];
       //
       // instead of
-      float sigmaCut = _sigmaCutVec[ iDetector ];
+      float sigmaCut = _sigmaCutVec[iDetector];
 
-      if ( _pixelType == kEUTelGenericSparsePixel ) {
+      if (_pixelType == kEUTelGenericSparsePixel) {
 
-        EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>  sparseData( sparsified ) ;
-        while ( rawIter != rawData->getADCValues().end() ) {
-          if (  (*statusIter) == EUTELESCOPE::GOODPIXEL ) {
-            float data      = (*rawIter) - (*pedIter);
+        EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> sparseData(
+            sparsified);
+        while (rawIter != rawData->getADCValues().end()) {
+          if ((*statusIter) == EUTELESCOPE::GOODPIXEL) {
+            float data = (*rawIter) - (*pedIter);
             float threshold = sigmaCut * (*noiseIter);
-            if ( data > threshold  ) {
+            if (data > threshold) {
               auto sparsePixel = std::make_unique<EUTelGenericSparsePixel>();
-              sparsePixel->setXCoord( matrixDecoder.getXFromIndex(iPixel) );
-              sparsePixel->setYCoord( matrixDecoder.getYFromIndex(iPixel) );
-              sparsePixel->setSignal( static_cast<short> ( data ) );
-              streamlog_out ( DEBUG0 ) << (*sparsePixel.get()) << endl;
-              sparseData.push_back( *sparsePixel.get() );
+              sparsePixel->setXCoord(matrixDecoder.getXFromIndex(iPixel));
+              sparsePixel->setYCoord(matrixDecoder.getYFromIndex(iPixel));
+              sparsePixel->setSignal(static_cast<short>(data));
+              streamlog_out(DEBUG0) << (*sparsePixel.get()) << endl;
+              sparseData.push_back(*sparsePixel.get());
             }
           }
           ++rawIter;
@@ -223,30 +247,27 @@ void EUTelRawDataSparsifier::processEvent (LCEvent * event) {
           ++iPixel;
         }
 
-      } else if ( _pixelType == kUnknownPixelType ) {
-        throw UnknownDataTypeException("Unknown or not valid sparse pixel type");
+      } else if (_pixelType == kUnknownPixelType) {
+        throw UnknownDataTypeException(
+            "Unknown or not valid sparse pixel type");
       }
 
-      sparsifiedDataCollection->push_back( sparsified );
+      sparsifiedDataCollection->push_back(sparsified);
     }
     evt->addCollection(sparsifiedDataCollection, _sparsifiedDataCollectionName);
 
-  } catch (DataNotAvailableException& e) {
-    streamlog_out ( ERROR2 ) <<  e.what() << "\n" << "Skipping this event " << endl;
+  } catch (DataNotAvailableException &e) {
+    streamlog_out(ERROR2) << e.what() << "\n"
+                          << "Skipping this event " << endl;
     throw SkipEventException(this);
   }
-
 }
 
-
-
-void EUTelRawDataSparsifier::check (LCEvent * /* evt */ ) {
-  // nothing to check here - could be used to fill check plots in reconstruction processor
+void EUTelRawDataSparsifier::check(LCEvent * /* evt */) {
+  // nothing to check here - could be used to fill check plots in reconstruction
+  // processor
 }
-
 
 void EUTelRawDataSparsifier::end() {
-  streamlog_out ( MESSAGE2 ) <<  "Successfully finished" << endl;
-
+  streamlog_out(MESSAGE2) << "Successfully finished" << endl;
 }
-

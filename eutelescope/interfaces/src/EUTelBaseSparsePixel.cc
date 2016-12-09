@@ -13,14 +13,14 @@
 // personal includes ".h"
 #include "EUTelBaseSparsePixel.h"
 
-// system 
+// system
 #include <cmath>
 
 using namespace eutelescope;
 
-float eutelescope::distance(EUTelBaseSparsePixel * first, EUTelBaseSparsePixel * second) {
-  
-  return std::sqrt( pow( first->getXCoord() - second->getXCoord() , 2) +
-		    pow( first->getYCoord() - second->getYCoord() , 2) );
+float eutelescope::distance(EUTelBaseSparsePixel *first,
+                            EUTelBaseSparsePixel *second) {
 
+  return std::sqrt(pow(first->getXCoord() - second->getXCoord(), 2) +
+                   pow(first->getYCoord() - second->getYCoord(), 2));
 }

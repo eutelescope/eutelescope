@@ -14,12 +14,12 @@
 #include "marlin/Processor.h"
 
 // gear includes <.h>
-#include <gear/SiPlanesParameters.h>
 #include <gear/SiPlanesLayerLayout.h>
+#include <gear/SiPlanesParameters.h>
 
 // lcio includes <.h>
-#include <EVENT/LCRunHeader.h>
 #include <EVENT/LCEvent.h>
+#include <EVENT/LCRunHeader.h>
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/TrackerHitImpl.h>
 
@@ -29,39 +29,38 @@
 #endif
 
 // system includes <>
+#include <map>
 #include <string>
 #include <vector>
-#include <map>
 
 #include "EUTelDafBase.h"
 #include "estmat.h"
 namespace eutelescope {
-  class EUTelDafMaterial : EUTelDafBase{
+  class EUTelDafMaterial : EUTelDafBase {
   private:
     double _angleX, _angleY;
     EstMat _matest;
 
-    std::vector<float>_resXMin, _resXMax, _resYMin, _resYMax;
-    std::map<int, std::pair<float, float> > _resX, _resY;
-    int checkDutResids(daffitter::TrackCandidate<float, 4>& cnd);
+    std::vector<float> _resXMin, _resXMax, _resYMin, _resYMax;
+    std::map<int, std::pair<float, float>> _resX, _resY;
+    int checkDutResids(daffitter::TrackCandidate<float, 4> &cnd);
 
-    //Mat res
-    std::vector<int> _radLengthIndex, _resXIndex, _resYIndex;    
-    //Alignment
-    std::vector<int> _shiftXIndex, _shiftYIndex, _scaleXIndex, _scaleYIndex, _zRotIndex, _zPosIndex; 
-    
+    // Mat res
+    std::vector<int> _radLengthIndex, _resXIndex, _resYIndex;
+    // Alignment
+    std::vector<int> _shiftXIndex, _shiftYIndex, _scaleXIndex, _scaleYIndex,
+        _zRotIndex, _zPosIndex;
+
   public:
     // Marlin processor interface funtions
     //! Returns a new instance of EUTelDafMaterial
-    virtual Processor * newProcessor() {
-      return new EUTelDafMaterial;
-    }
+    virtual Processor *newProcessor() { return new EUTelDafMaterial; }
     //! Default constructor
-    EUTelDafMaterial ();
+    EUTelDafMaterial();
     //! Called at the job beginning.
-    virtual void dafInit ();
+    virtual void dafInit();
     //! Called every event
-    virtual void dafEvent (LCEvent* event);
+    virtual void dafEvent(LCEvent *event);
     //! Called after data processing.
     virtual void dafEnd();
     //! Set fitter specific params

@@ -9,77 +9,78 @@
  *
  */
 
-// eutelescope includes ".h" 
+// eutelescope includes ".h"
 #include "EUTelROI.h"
 #include "EUTelExceptions.h"
 
 // system <>
 #include <limits>
 
-
 using namespace std;
 using namespace eutelescope;
 
-EUTelROI::EUTelROI(float xBottomLeft, float yBottomLeft, float xTopRight, float yTopRight) throw(InvalidParameterException) :  
-  _xBottomLeft(xBottomLeft),  _yBottomLeft(yBottomLeft), 
-  _xTopRight(xTopRight),      _yTopRight(yTopRight) ,
-  _detectorID ( std::numeric_limits<int>::min() )   { 
-  
-  consistencyCheck(); 
+EUTelROI::EUTelROI(float xBottomLeft, float yBottomLeft, float xTopRight,
+                   float yTopRight) throw(InvalidParameterException)
+    : _xBottomLeft(xBottomLeft), _yBottomLeft(yBottomLeft),
+      _xTopRight(xTopRight), _yTopRight(yTopRight),
+      _detectorID(std::numeric_limits<int>::min()) {
+
+  consistencyCheck();
 }
 
-EUTelROI::EUTelROI( int detectorID, float xBottomLeft, float yBottomLeft, float xTopRight, float yTopRight) throw(InvalidParameterException) :
-  _xBottomLeft(xBottomLeft),  _yBottomLeft(yBottomLeft), 
-  _xTopRight(xTopRight),      _yTopRight(yTopRight),
-  _detectorID(detectorID)  {
-  
-  consistencyCheck();
-  
-  }
+EUTelROI::EUTelROI(int detectorID, float xBottomLeft, float yBottomLeft,
+                   float xTopRight,
+                   float yTopRight) throw(InvalidParameterException)
+    : _xBottomLeft(xBottomLeft), _yBottomLeft(yBottomLeft),
+      _xTopRight(xTopRight), _yTopRight(yTopRight), _detectorID(detectorID) {
 
-void EUTelROI::getCorners(float * xBottomLeft, float * yBottomLeft, float * xTopRight, float * yTopRight) const {
+  consistencyCheck();
+}
+
+void EUTelROI::getCorners(float *xBottomLeft, float *yBottomLeft,
+                          float *xTopRight, float *yTopRight) const {
   *xBottomLeft = _xBottomLeft;
   *yBottomLeft = _yBottomLeft;
-  *xTopRight   = _xTopRight;
-  *yTopRight   = _yTopRight;
+  *xTopRight = _xTopRight;
+  *yTopRight = _yTopRight;
 }
 
-int EUTelROI::getDetectorID() const {
-  return _detectorID;
-}
+int EUTelROI::getDetectorID() const { return _detectorID; }
 
 bool EUTelROI::isInside(int detectorID, float x, float y) const {
-  
-  if ( detectorID != _detectorID ) return false;
-  return isInside(x, y);
 
+  if (detectorID != _detectorID)
+    return false;
+  return isInside(x, y);
 }
 
 bool EUTelROI::isInside(float x, float y) const {
 
-  if (  ( x >= _xBottomLeft ) && ( x <= _xTopRight ) &&
-	( y >= _yBottomLeft ) && ( y <= _yTopRight ) ) {
+  if ((x >= _xBottomLeft) && (x <= _xTopRight) && (y >= _yBottomLeft) &&
+      (y <= _yTopRight)) {
     return true;
   }
-  
+
   return false;
 }
 
-void EUTelROI::consistencyCheck() const throw (InvalidParameterException)  {
-  
-  if ( _xBottomLeft > _xTopRight ) throw InvalidParameterException("EUTelROI::consistencyCheck xBottomLeft > xTopRight");
-  if ( _yBottomLeft > _yTopRight ) throw InvalidParameterException("EUTelROI::consistencyCheck yBottomLeft > yTopRight");
+void EUTelROI::consistencyCheck() const throw(InvalidParameterException) {
 
+  if (_xBottomLeft > _xTopRight)
+    throw InvalidParameterException(
+        "EUTelROI::consistencyCheck xBottomLeft > xTopRight");
+  if (_yBottomLeft > _yTopRight)
+    throw InvalidParameterException(
+        "EUTelROI::consistencyCheck yBottomLeft > yTopRight");
 }
 
-
-std::ostream& eutelescope::operator<< (std::ostream& os, EUTelROI roi ) {
-  if ( roi._detectorID != std::numeric_limits<int>::min() ) 
+std::ostream &eutelescope::operator<<(std::ostream &os, EUTelROI roi) {
+  if (roi._detectorID != std::numeric_limits<int>::min())
     os << " Detector ID = " << roi._detectorID << endl;
-  
-  os << " Bottom left corner (" << roi._xBottomLeft << ", " << roi._yBottomLeft << ")" << endl
-     << " Top right corner   (" << roi._xTopRight   << ", " << roi._yTopRight << ")" ;
+
+  os << " Bottom left corner (" << roi._xBottomLeft << ", " << roi._yBottomLeft
+     << ")" << endl
+     << " Top right corner   (" << roi._xTopRight << ", " << roi._yTopRight
+     << ")";
   return os;
 }
-
-

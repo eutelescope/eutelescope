@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   EUTelTrackFitter.h
  * Contact: denys.lontkovskyi@desy.de
  *
@@ -6,81 +6,83 @@
  */
 
 #ifndef EUTELTRACKFITTER_H
-#define	EUTELTRACKFITTER_H
+#define EUTELTRACKFITTER_H
 
 // eutelescope includes ".h"
 
 // EVENT includes
-#include <IMPL/TrackerHitImpl.h>
 #include <EVENT/LCCollection.h>
+#include <IMPL/TrackerHitImpl.h>
 
 // LCIO includes
-#include <IMPL/LCCollectionVec.h>
-#include <IMPL/TrackerHitImpl.h>
-#include <IMPL/TrackImpl.h>
-#include <IMPL/LCFlagImpl.h>
 #include "lcio.h"
+#include <IMPL/LCCollectionVec.h>
+#include <IMPL/LCFlagImpl.h>
+#include <IMPL/TrackImpl.h>
+#include <IMPL/TrackerHitImpl.h>
 
 // system includes <>
-#include <string>
 #include <map>
+#include <string>
 
 // EUTELESCOPE
 #include "EUTelUtility.h"
 
 namespace eutelescope {
 
-    class EUTelTrackFitter {
-  
-    protected:
-        std::string _name;
-   
-    private:
-        DISALLOW_COPY_AND_ASSIGN(EUTelTrackFitter)        // prevent users from making (default) copies of processors
-      
-        // contains the fitted tracks, accessible through class methods
-        IMPL::LCCollectionVec * _LCIO_fittrackvec;
+  class EUTelTrackFitter {
 
-        // contains the fitted hits, accessible through class methods
-        IMPL::LCCollectionVec * _LCIO_fithitvec;
+  protected:
+    std::string _name;
 
-    public:
-        EUTelTrackFitter();
- 
-        explicit EUTelTrackFitter( std::string name );
+  private:
+    DISALLOW_COPY_AND_ASSIGN(EUTelTrackFitter) // prevent users from making
+                                               // (default) copies of processors
 
-        virtual ~EUTelTrackFitter();
-        
-        inline void SetName( std::string name) { this->_name = name; }
-        inline std::string GetName() const { return _name; }
+    // contains the fitted tracks, accessible through class methods
+    IMPL::LCCollectionVec *_LCIO_fittrackvec;
 
-        virtual void SetTrackCandidates( const EVENT::TrackVec& );
+    // contains the fitted hits, accessible through class methods
+    IMPL::LCCollectionVec *_LCIO_fithitvec;
 
-        virtual void SetTrackCandidates( std::vector<const IMPL::TrackImpl*> & );
+  public:
+    EUTelTrackFitter();
 
-      // do some clean up of internal data structures
-        virtual void Clear();
+    explicit EUTelTrackFitter(std::string name);
 
+    virtual ~EUTelTrackFitter();
 
-        virtual void SearchTrackCandidates(){};
-        /** Prune track candidates
-         *  supposed to be removing track candidates which have n% hits in common      */  
-        virtual void PruneTrackCandidates(){};
+    inline void SetName(std::string name) { this->_name = name; }
+    inline std::string GetName() const { return _name; }
 
-        virtual void FitTracks();
-        virtual void TrackCandidatesToGBLTrajectories();
-        virtual void PerformFitGBLTrajectories();
-        virtual bool PerformMille();
+    virtual void SetTrackCandidates(const EVENT::TrackVec &);
 
-        virtual void FitSingleTrackCandidate();
+    virtual void SetTrackCandidates(std::vector<const IMPL::TrackImpl *> &);
 
-        /** */ 
-        virtual IMPL::LCCollectionVec* getFitHitVec()   const {   return _LCIO_fithitvec;       }
+    // do some clean up of internal data structures
+    virtual void Clear();
 
-        /** */
-        virtual IMPL::LCCollectionVec* getFitTrackVec() const {   return _LCIO_fittrackvec;     }
-     };
+    virtual void SearchTrackCandidates(){};
+    /** Prune track candidates
+     *  supposed to be removing track candidates which have n% hits in common */
+    virtual void PruneTrackCandidates(){};
 
+    virtual void FitTracks();
+    virtual void TrackCandidatesToGBLTrajectories();
+    virtual void PerformFitGBLTrajectories();
+    virtual bool PerformMille();
+
+    virtual void FitSingleTrackCandidate();
+
+    /** */
+    virtual IMPL::LCCollectionVec *getFitHitVec() const {
+      return _LCIO_fithitvec;
+    }
+
+    /** */
+    virtual IMPL::LCCollectionVec *getFitTrackVec() const {
+      return _LCIO_fittrackvec;
+    }
+  };
 }
-#endif	/* EUTELTRACKFITTER_H */
-
+#endif /* EUTELTRACKFITTER_H */
