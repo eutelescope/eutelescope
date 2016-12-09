@@ -13,8 +13,8 @@
 #define ETA_VERSION 2
 
 // lcio includes <.h>
-#include <lcio.h>
 #include <IMPL/LCGenericObjectImpl.h>
+#include <lcio.h>
 
 // system includes <>
 #include <string>
@@ -41,50 +41,55 @@ namespace eutelescope {
   public:
     //! Default constructor
     /*! This is the default constructor of the Eta function LCIO
-     *  implementation. 
-     *  
+     *  implementation.
+     *
      *  @param nBin This is the number of bins used in the calculation
      *  of the Eta function.
      */
-    EUTelEtaFunctionImpl(int nBin); 
+    EUTelEtaFunctionImpl(int nBin);
 
     //! Constructor with all the needed parameters
     /*! This convenience constructor can be used to create the object
      *  and immediately set both the bin center and the value vectors
      *
-     *  @param nBin This is the number of bins used in the calculation of the Eta function
+     *  @param nBin This is the number of bins used in the calculation of the
+     * Eta function
      *  @param centerVec This is a STL vector of double with the bin centers.
      *  @param valueVec This is a STL vector of double with the eta values
-     */ 
-    EUTelEtaFunctionImpl(int nBin, std::vector<double > centerVec, std::vector<double > valueVec);
-
+     */
+    EUTelEtaFunctionImpl(int nBin, std::vector<double> centerVec,
+                         std::vector<double> valueVec);
 
     //! Constructor with all the needed parameters
     /*! This convenience constructor can be used to create the object
      *  and immediately set both the bin center and the value vectors
      *
      *  @param sensorID The is the sensorID of this sensor.
-     *  @param nBin This is the number of bins used in the calculation of the Eta function
+     *  @param nBin This is the number of bins used in the calculation of the
+     * Eta function
      *  @param centerVec This is a STL vector of double with the bin centers.
      *  @param valueVec This is a STL vector of double with the eta values
-     */ 
-    EUTelEtaFunctionImpl(int sensorID, int nBin, std::vector<double > centerVec, std::vector<double > valueVec);
+     */
+    EUTelEtaFunctionImpl(int sensorID, int nBin, std::vector<double> centerVec,
+                         std::vector<double> valueVec);
 
     //! Default destructor
-    virtual ~EUTelEtaFunctionImpl() { /* NO-OP */ ; }
+    virtual ~EUTelEtaFunctionImpl() { /* NO-OP */
+      ;
+    }
 
     //! Set the bin center vector
     /*! This method can be used to set all bin centers in one call
      *  @param center A STL vector of double with all the bin centers
-     */ 
-    void setBinCenterVector(std::vector<double > center);
+     */
+    void setBinCenterVector(std::vector<double> center);
 
     //! Set the eta value vector
     /*! This method can be used to set all eta values in one call
-     * 
+     *
      *  @param value A STL vector of double with all the eta values
-     */ 
-    void setEtaValueVector(std::vector<double > value);
+     */
+    void setEtaValueVector(std::vector<double> value);
 
     //! Get the number of bin
     /*! This is used to get the number of bin in the function.
@@ -93,24 +98,23 @@ namespace eutelescope {
 
     //! Get the bin center vector
     /*! @return A STL vector of double with the bin centers
-     */ 
-    const std::vector<double > getBinCenterVector() const;
+     */
+    const std::vector<double> getBinCenterVector() const;
 
     //! Get the eta value vector
     /*! @return A STL vector of double with the eta values
-     */ 
-    const std::vector<double > getEtaValueVector() const;
+     */
+    const std::vector<double> getEtaValueVector() const;
 
     //! Set the sensor ID
     /*! @param sensorID The sensor ID
      */
-    void setSensorID( int sensorID ) ;
+    void setSensorID(int sensorID);
 
-    //! Get the sensor ID 
+    //! Get the sensor ID
     /*! @return the sensor ID
      */
-    int getSensorID( ) const; 
-
+    int getSensorID() const;
 
     //! Get Eta for a given CoG value
     /*! When applying the Eta correction to the charge center of
@@ -134,53 +138,48 @@ namespace eutelescope {
      *  @param x is the current CoG value
      *  @return the corresponding Eta value
      *
-     */ 
-    double getEtaFromCoG(double x) const ;
+     */
+    double getEtaFromCoG(double x) const;
 
   protected:
-    
     //! Get the begin iterator for the CoG vector
     /*! This method is used to get an iterator corresponding to the
      *  beginning of the charge center of gravity vector.
      *
      *  @return a iterator to the beginning of the CoG vector
-     */ 
-    std::vector<double >::const_iterator getCoGBeginConstIterator() const;
+     */
+    std::vector<double>::const_iterator getCoGBeginConstIterator() const;
 
     //! Get the end iterator for the CoG vector
     /*! This method is used to get an iterator corresponding to the
      *  end of the charge center of gravity vector.
      *
      *  @return a iterator to the end of the CoG vector
-     */ 
-    std::vector<double >::const_iterator getCoGEndConstIterator() const;
-
+     */
+    std::vector<double>::const_iterator getCoGEndConstIterator() const;
 
     //! Get the begin iterator for the Eta value vector
     /*! This method is used to get an iterator corresponding to the
      *  beginning of the charge center of gravity vector.
      *
      *  @return a iterator to the beginning of the Eta value vector
-     */ 
-    std::vector<double >::const_iterator getEtaBeginConstIterator() const;
+     */
+    std::vector<double>::const_iterator getEtaBeginConstIterator() const;
 
     //! Get the end iterator for the Eta value vector
     /*! This method is used to get an iterator corresponding to the
      *  end of the charge center of gravity vector.
      *
      *  @return a iterator to the end of the Eta value vector
-     */ 
-    std::vector<double >::const_iterator getEtaEndConstIterator() const;
+     */
+    std::vector<double>::const_iterator getEtaEndConstIterator() const;
 
   private:
-
-    void getNFloat() {;}
-    void getFloatVal() {;}
-    void setFloatVal(unsigned int, float) {;}
-    void isFixedSize() {;}
-
+    void getNFloat() { ; }
+    void getFloatVal() { ; }
+    void setFloatVal(unsigned int, float) { ; }
+    void isFixedSize() { ; }
   };
-
 }
 
 #endif

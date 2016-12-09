@@ -21,13 +21,13 @@
 #include "marlin/Processor.h"
 
 // gear includes <.h>
-#include <gear/SiPlanesParameters.h>
 #include <gear/SiPlanesLayerLayout.h>
+#include <gear/SiPlanesParameters.h>
 
 // lcio includes <.h>
 #include "lcio.h"
-#include <EVENT/LCRunHeader.h>
 #include <EVENT/LCEvent.h>
+#include <EVENT/LCRunHeader.h>
 
 // AIDA includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -40,12 +40,11 @@
 #endif
 
 // system includes <>
+#include <map>
 #include <string>
 #include <vector>
-#include <map>
 
 namespace eutelescope {
-
 
   //! DUT analysis processor for EUDET Telescope
   /*! This processor was designed for analysis of DUT performancs
@@ -87,14 +86,11 @@ namespace eutelescope {
    *
    */
 
-
   class EUTelDUTHistograms : public marlin::Processor {
 
   public:
-
-    virtual int  read_track(LCEvent *event); 
-    virtual int  read_track_from_collections(LCEvent *event); 
-
+    virtual int read_track(LCEvent *event);
+    virtual int read_track_from_collections(LCEvent *event);
 
     //! Returns a new instance of EUTelDUTHistograms
     /*! This method returns an new instance of the this processor.  It
@@ -103,29 +99,29 @@ namespace eutelescope {
      *
      *  @return a new EUTelDUTHistograms
      */
-    virtual Processor*  newProcessor() { return new EUTelDUTHistograms ; }
+    virtual Processor *newProcessor() { return new EUTelDUTHistograms; }
 
     //! Default constructor
-    EUTelDUTHistograms() ;
- 
+    EUTelDUTHistograms();
+
     //! Called at the job beginning.
     /*! This is executed only once in the whole execution.
      *
      */
-    virtual void init() ;
+    virtual void init();
 
     //! Called for every run.
     /*!
      * @param run the LCRunHeader of the current run
      */
-    virtual void processRunHeader( LCRunHeader* run ) ;
+    virtual void processRunHeader(LCRunHeader *run);
 
     //! Called every event
     /*! This is called for each event in the file.
      *
      *  @param evt the current LCEvent event
      */
-    virtual void processEvent( LCEvent * evt ) ;
+    virtual void processEvent(LCEvent *evt);
 
     //! Check event method
     /*! This method is called by the Marlin execution framework as
@@ -135,8 +131,7 @@ namespace eutelescope {
      *
      *  @param evt The LCEvent event as passed by the ProcessMgr
      */
-    virtual void check( LCEvent * evt ) ;
-
+    virtual void check(LCEvent *evt);
 
     //! Book histograms
     /*! This method is used to books all required
@@ -146,24 +141,25 @@ namespace eutelescope {
      */
     void bookHistos();
 
-    virtual int getClusterSize(int sensorID, TrackerHit * hit, int& sizeX, int& sizeY, int& subMatrix );
+    virtual int getClusterSize(int sensorID, TrackerHit *hit, int &sizeX,
+                               int &sizeY, int &subMatrix);
     virtual int getSubMatrix(int sensorID, float xlocal);
 
     //! Called after data processing for clean up.
     /*! Used to release memory allocated in init() step
      */
-    virtual void end() ;
+    virtual void end();
 
-private:
-  DISALLOW_COPY_AND_ASSIGN(EUTelDUTHistograms)
-  
-protected:
-    //! reference HitCollection name 
+  private:
+    DISALLOW_COPY_AND_ASSIGN(EUTelDUTHistograms)
+
+  protected:
+    //! reference HitCollection name
     /*!
      */
-    std::string      _referenceHitCollectionName;
-    bool             _useReferenceHitCollection;
-    LCCollectionVec* _referenceHitVec;    
+    std::string _referenceHitCollectionName;
+    bool _useReferenceHitCollection;
+    LCCollectionVec *_referenceHitVec;
 
     //! Silicon planes parameters as described in GEAR
     /*! This structure actually contains the following:
@@ -175,7 +171,7 @@ protected:
      *  This object is provided by GEAR during the init() phase and
      *  stored here for local use.
      */
-    gear::SiPlanesParameters * _siPlanesParameters;
+    gear::SiPlanesParameters *_siPlanesParameters;
 
     //! Silicon plane layer layout
     /*! This is the real geoemetry description. For each layer
@@ -185,7 +181,7 @@ protected:
      *  This object is taken from the _siPlanesParameters during the
      *  init() phase and stored for local use
      */
-    gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
+    gear::SiPlanesLayerLayout *_siPlanesLayerLayout;
 
     //! The histogram information file
     /*! This string contain the name of the histogram information
@@ -196,14 +192,13 @@ protected:
      */
     std::string _histoInfoFileName;
 
-
     //! Input \c Track collection name
-    std::string _inputTrackColName ;
+    std::string _inputTrackColName;
 
     //! Input \c TrackerHit collection name
-    std::string _inputHitColName ;
-    std::string _inputRecHitColName ;
-    std::string _inputFitHitColName ;
+    std::string _inputHitColName;
+    std::string _inputRecHitColName;
+    std::string _inputFitHitColName;
 
     //! Id of telescope layer which should be used as DUT
     int _iDUT;
@@ -211,8 +206,7 @@ protected:
     // Internal processor variables
     // ----------------------------
 
-
-    int _nRun ;
+    int _nRun;
 
     double _zDUT;
     double _distMax;
@@ -220,22 +214,20 @@ protected:
     double _pitchX;
     double _pitchY;
 
-
     std::vector<int> _clusterSizeX;
     std::vector<int> _clusterSizeY;
     std::vector<int> _subMatrix;
 
-    int  _maptrackid; 
-    std::map< int, std::vector<double> >  _trackhitposX;   
-    std::map< int, std::vector<double> >  _trackhitposY;
-    std::map< int, std::vector<int> >     _trackhitsizeX;
-    std::map< int, std::vector<int> >     _trackhitsizeY;
-    std::map< int, std::vector<int> >     _trackhitsubM;
-    std::map< int, std::vector<int> >     _trackhitsensorID;
- 
- 
-    int _cluSizeXCut ;
-    int _cluSizeYCut ;
+    int _maptrackid;
+    std::map<int, std::vector<double>> _trackhitposX;
+    std::map<int, std::vector<double>> _trackhitposY;
+    std::map<int, std::vector<int>> _trackhitsizeX;
+    std::map<int, std::vector<int>> _trackhitsizeY;
+    std::map<int, std::vector<int>> _trackhitsubM;
+    std::map<int, std::vector<int>> _trackhitsensorID;
+
+    int _cluSizeXCut;
+    int _cluSizeYCut;
 
     int _trackNCluXCut;
     int _trackNCluYCut;
@@ -246,78 +238,81 @@ protected:
     std::vector<double> _bgmeasuredX;
     std::vector<double> _bgmeasuredY;
 
-    std::map< int, std::vector<double> >  _localX;   
-    std::map< int, std::vector<double> >  _localY;   
+    std::map<int, std::vector<double>> _localX;
+    std::map<int, std::vector<double>> _localY;
 
-    std::map< int, std::vector<double> >  _fittedX;   
-    std::map< int, std::vector<double> >  _fittedY;   
- 
-    std::map< int, std::vector<double> >  _bgfittedX;   
-    std::map< int, std::vector<double> >  _bgfittedY;   
- 
-    std::vector<float > _DUTalign;
+    std::map<int, std::vector<double>> _fittedX;
+    std::map<int, std::vector<double>> _fittedY;
 
+    std::map<int, std::vector<double>> _bgfittedX;
+    std::map<int, std::vector<double>> _bgfittedY;
+
+    std::vector<float> _DUTalign;
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     //! AIDA histogram maps
     /*! Used to manage to histograms pointers in a flexible and
-      ! efficient way.  
+      ! efficient way.
      */
 
-    // ! Histograms for full detector and for sub matrices are handled by enums to make the distiction clear in the code.
-    enum detMatrix {SubMatrixA, SubMatrixB, SubMatrixC, SubMatrixD, FullDetector};
+    // ! Histograms for full detector and for sub matrices are handled by enums
+    // to make the distiction clear in the code.
+    enum detMatrix {
+      SubMatrixA,
+      SubMatrixB,
+      SubMatrixC,
+      SubMatrixD,
+      FullDetector
+    };
 
-    // ! Some histograms are filled for a particular cluster size; this determines the max. cluster size considered
+    // ! Some histograms are filled for a particular cluster size; this
+    // determines the max. cluster size considered
     static const int HistoMaxClusterSize = 7;
 
-    enum projAxis {projX, projY, projXY};
+    enum projAxis { projX, projY, projXY };
 
-    std::map< projAxis, std::map< detMatrix, AIDA::IBaseHistogram*> > _ClusterSizeHistos;
-    std::map< projAxis, std::map< detMatrix, std::map< int, AIDA::IBaseHistogram*> > > _ShiftHistos; // w/ cluster size studies
+    std::map<projAxis, std::map<detMatrix, AIDA::IBaseHistogram *>>
+        _ClusterSizeHistos;
+    std::map<projAxis,
+             std::map<detMatrix, std::map<int, AIDA::IBaseHistogram *>>>
+        _ShiftHistos; // w/ cluster size studies
 
-    std::map< projAxis, AIDA::IBaseHistogram*> _MeasuredHistos;
-    std::map< projAxis, AIDA::IBaseHistogram*> _MatchedHistos;
-    std::map< projAxis, AIDA::IBaseHistogram*> _UnMatchedHistos;
-    std::map< projAxis, AIDA::IBaseHistogram*> _FittedHistos;
-    std::map< projAxis, AIDA::IBaseHistogram*> _EfficiencyHistos;
-    std::map< projAxis, AIDA::IBaseHistogram*> _BgEfficiencyHistos;
-    std::map< projAxis, AIDA::IBaseHistogram*> _NoiseHistos;
-    std::map< projAxis, AIDA::IBaseHistogram*> _BgShiftHistos;
+    std::map<projAxis, AIDA::IBaseHistogram *> _MeasuredHistos;
+    std::map<projAxis, AIDA::IBaseHistogram *> _MatchedHistos;
+    std::map<projAxis, AIDA::IBaseHistogram *> _UnMatchedHistos;
+    std::map<projAxis, AIDA::IBaseHistogram *> _FittedHistos;
+    std::map<projAxis, AIDA::IBaseHistogram *> _EfficiencyHistos;
+    std::map<projAxis, AIDA::IBaseHistogram *> _BgEfficiencyHistos;
+    std::map<projAxis, AIDA::IBaseHistogram *> _NoiseHistos;
+    std::map<projAxis, AIDA::IBaseHistogram *> _BgShiftHistos;
 
-    AIDA::IProfile1D* _ShiftXvsYHisto;
-    AIDA::IProfile1D* _ShiftYvsXHisto;
-    AIDA::IProfile1D* _ShiftXvsXHisto;
-    AIDA::IProfile1D* _ShiftYvsYHisto;
+    AIDA::IProfile1D *_ShiftXvsYHisto;
+    AIDA::IProfile1D *_ShiftYvsXHisto;
+    AIDA::IProfile1D *_ShiftXvsXHisto;
+    AIDA::IProfile1D *_ShiftYvsYHisto;
 
-    AIDA::IHistogram2D* _ShiftXvsY2DHisto;
-    AIDA::IHistogram2D* _ShiftYvsX2DHisto;
-    AIDA::IHistogram2D* _ShiftXvsX2DHisto;
-    AIDA::IHistogram2D* _ShiftYvsY2DHisto;
+    AIDA::IHistogram2D *_ShiftXvsY2DHisto;
+    AIDA::IHistogram2D *_ShiftYvsX2DHisto;
+    AIDA::IHistogram2D *_ShiftXvsX2DHisto;
+    AIDA::IHistogram2D *_ShiftYvsY2DHisto;
 
-    AIDA::IProfile1D* _EtaXHisto;
-    AIDA::IProfile1D* _EtaYHisto;
-    AIDA::IHistogram2D* _EtaX2DHisto;
-    AIDA::IHistogram2D* _EtaY2DHisto;
-    AIDA::IProfile2D* _EtaX3DHisto;
-    AIDA::IProfile2D* _EtaY3DHisto;
+    AIDA::IProfile1D *_EtaXHisto;
+    AIDA::IProfile1D *_EtaYHisto;
+    AIDA::IHistogram2D *_EtaX2DHisto;
+    AIDA::IHistogram2D *_EtaY2DHisto;
+    AIDA::IProfile2D *_EtaX3DHisto;
+    AIDA::IProfile2D *_EtaY3DHisto;
 
-    AIDA::IProfile2D* _PixelEfficiencyHisto    ;
-    AIDA::IProfile2D* _PixelResolutionXHisto   ;
-    AIDA::IProfile2D* _PixelResolutionYHisto   ;
-    AIDA::IProfile2D* _PixelChargeSharingHisto ;
+    AIDA::IProfile2D *_PixelEfficiencyHisto;
+    AIDA::IProfile2D *_PixelResolutionXHisto;
+    AIDA::IProfile2D *_PixelResolutionYHisto;
+    AIDA::IProfile2D *_PixelChargeSharingHisto;
 
 #endif
-
-  } ;
-
+  };
 
   //! A global instance of the processor.
-  EUTelDUTHistograms aEUTelDUTHistograms ;
-
-
+  EUTelDUTHistograms aEUTelDUTHistograms;
 }
 
 #endif
-
-
-

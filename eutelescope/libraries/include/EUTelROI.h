@@ -13,9 +13,7 @@
 #include "EUTELESCOPE.h"
 #include "EUTelExceptions.h"
 
-
 namespace eutelescope {
-
 
   //! EUTelescope Region of interest
   /*! A region of interest (ROI) is a part of the detector surface the user
@@ -44,8 +42,8 @@ namespace eutelescope {
      *
      *  @throw InvalidParameterException if it fails
      */
-    EUTelROI(float xBottomLeft, float yBottomLeft, float xTopRight, float yTopRight)
-      throw(InvalidParameterException)       ;
+    EUTelROI(float xBottomLeft, float yBottomLeft, float xTopRight,
+             float yTopRight) throw(InvalidParameterException);
 
     //! Default constructor with the two corners and the detector ID
     /*! A part of assign all the value to the corresponding data
@@ -53,8 +51,8 @@ namespace eutelescope {
      *
      *  @throw InvalidParameterException if it fails
      */
-    EUTelROI(int detectorID, float xBottomLeft, float yBottomLeft, float xTopRight, float yTopRight)
-      throw(InvalidParameterException) ;
+    EUTelROI(int detectorID, float xBottomLeft, float yBottomLeft,
+             float xTopRight, float yTopRight) throw(InvalidParameterException);
 
     //! Get the two corners
     /*! This method allow to access to the boundaries of the ROI.
@@ -64,7 +62,8 @@ namespace eutelescope {
      *  @param xTopRight   A pointer to the top right x
      *  @param yTopRight   A pointer to the top right y
      */
-    void getCorners(float * xBottomLeft, float * yBottomLeft, float * xTopRight, float * yTopRight) const ;
+    void getCorners(float *xBottomLeft, float *yBottomLeft, float *xTopRight,
+                    float *yTopRight) const;
 
     //! Get the detector identification number
     /*! In the case the ROI belongs to a specific detector, this
@@ -74,7 +73,7 @@ namespace eutelescope {
      *  @return The detector identification number or
      *  numeric_limits<int>::min if not set.
      */
-    int  getDetectorID() const;
+    int getDetectorID() const;
 
     //! Check if the point is inside
     /*! This utility method checks if the point defined by @c x and @c
@@ -84,7 +83,7 @@ namespace eutelescope {
      *  @param y Coordinate y of the point under test
      *  @return True if the point under test is inside the ROI
      */
-    bool isInside(float x, float y) const ;
+    bool isInside(float x, float y) const;
 
     //! Check if the point is inside and on the same sensor
     /*! This utility method checks if the point under test is inside
@@ -97,7 +96,7 @@ namespace eutelescope {
      *  @return True if the point under test is inside the ROI and on
      *  the same detector
      */
-    bool isInside(int detectorID, float x, float y) const ;
+    bool isInside(int detectorID, float x, float y) const;
 
     //! Streamer
     /*! Streamer method to output the content of a EUTelROI.
@@ -106,10 +105,9 @@ namespace eutelescope {
      *  @param roi The EUTelROI to be streamed
      *  @return The output stream
      */
-    friend std::ostream& operator<< (std::ostream& os, EUTelROI roi ) ;
+    friend std::ostream &operator<<(std::ostream &os, EUTelROI roi);
 
   private:
-
     //! Consistency check
     /*! This private method is used to check the consistency of the
      *  data provided by the user. If the bottom corner is above the
@@ -117,8 +115,7 @@ namespace eutelescope {
      *
      *  throw InvalidParameterException is the consistency check fails
      */
-    void consistencyCheck() const
-      throw(InvalidParameterException);
+    void consistencyCheck() const throw(InvalidParameterException);
 
     //! Bottom left x
     /*! This is the bottom left x coordinate of the ROI
@@ -145,9 +142,6 @@ namespace eutelescope {
      *  optional parameter.
      */
     int _detectorID;
-
-
   };
-
 }
 #endif

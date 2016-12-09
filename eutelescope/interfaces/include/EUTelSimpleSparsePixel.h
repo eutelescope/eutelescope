@@ -11,8 +11,8 @@
 #define EUTELSIMPLESPARSEPIXEL_H
 
 // personal includes ".h"
-#include "EUTelBaseSparsePixel.h"
 #include "EUTELESCOPE.h"
+#include "EUTelBaseSparsePixel.h"
 
 // marlin includes ".h"
 
@@ -28,30 +28,29 @@ namespace eutelescope {
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
    *  @version $Id$
-   */ 
+   */
 
-  class EUTelSimpleSparsePixel  :  public EUTelBaseSparsePixel  {
+  class EUTelSimpleSparsePixel : public EUTelBaseSparsePixel {
 
   public:
-    
     //! Default constructor with all arguments
-    EUTelSimpleSparsePixel(short xCoord, short yCoord, float signal); 
+    EUTelSimpleSparsePixel(short xCoord, short yCoord, float signal);
 
     //! Default constructor with no args
-    EUTelSimpleSparsePixel(); 
-    
-    //! Default destructor
-    virtual ~EUTelSimpleSparsePixel() { ; } 
+    EUTelSimpleSparsePixel();
 
-        //! Get the number of elements in the data structure
+    //! Default destructor
+    virtual ~EUTelSimpleSparsePixel() { ; }
+
+    //! Get the number of elements in the data structure
     /*! This method returns the number of elements the sparse pixel
-     *  contains. 
+     *  contains.
      *
      *  @return The number of elements in the data structure
      */
     virtual unsigned int getNoOfElements() const;
 
-  //! Get the sparse pixel type using the enumerator
+    //! Get the sparse pixel type using the enumerator
     /*! This methods returns the sparse pixel type using the
      *  enumerator defined in EUTELESCOPE.h
      *
@@ -65,38 +64,35 @@ namespace eutelescope {
      *
      *  @param os The input output stream
      */
-    virtual void print(std::ostream& os) const ;
+    virtual void print(std::ostream &os) const;
 
     //! Setter for x coordinate
-    void setXCoord(short xCoord) { _xCoord = xCoord ; }
+    void setXCoord(short xCoord) { _xCoord = xCoord; }
 
     //! Setter for y coordinate
-    void setYCoord(short yCoord) { _yCoord = yCoord ; }
+    void setYCoord(short yCoord) { _yCoord = yCoord; }
 
     //! Setter for the signal
-    void setSignal(float signal) { _signal = signal ; }
+    void setSignal(float signal) { _signal = signal; }
 
     //! Getter for the x coordinate
-    inline short getXCoord() const { return _xCoord ; } 
+    inline short getXCoord() const { return _xCoord; }
 
     //! Getter for the y coordinate
-    inline short getYCoord() const { return _yCoord ; } 
+    inline short getYCoord() const { return _yCoord; }
 
     //! Getter for the signal
-    inline float getSignal() const { return _signal ; } 
-
+    inline float getSignal() const { return _signal; }
 
   private:
-  
     //! The x coordinate
     short _xCoord;
-    
+
     //! The y coordinate
     short _yCoord;
 
     //! The signal
     float _signal;
-
   };
 }
 

@@ -7,12 +7,14 @@
  *
  */
 
-//Following #define stops the accidental creation of a copy or assignment operator by causing a link error. 
-//Copy and Assignment operators not allowed because they are unnecessary and the cause of many bugs
-#ifndef DISALLOW_COPY_AND_ASSIGN 
-	#define DISALLOW_COPY_AND_ASSIGN(type) \
-	type(const type&); \
-	void operator=(const type&);
+// Following #define stops the accidental creation of a copy or assignment
+// operator by causing a link error.
+// Copy and Assignment operators not allowed because they are unnecessary and
+// the cause of many bugs
+#ifndef DISALLOW_COPY_AND_ASSIGN
+#define DISALLOW_COPY_AND_ASSIGN(type)                                         \
+  type(const type &);                                                          \
+  void operator=(const type &);
 #endif
 
 #ifndef EUTELESCOPE_NAMESPACE_H
@@ -32,11 +34,11 @@ namespace eutelescope {}
 #ifndef EUTELESCOPE_H
 #define EUTELESCOPE_H
 
-# include <iomanip>
-# include <sstream>
-# include <exception>
-# include <stdexcept>
 #include <cstddef>
+#include <exception>
+#include <iomanip>
+#include <sstream>
+#include <stdexcept>
 
 #ifdef USE_MARLIN
 // streamlog include
@@ -50,8 +52,7 @@ namespace eutelescope {}
 
 #include "make_unique.h"
 
-namespace eutelescope
-{
+namespace eutelescope {
 
   //! Global constants used in the Eutelescope package
   /*!
@@ -63,28 +64,26 @@ namespace eutelescope
    *
    */
 
-  class EUTELESCOPE
-  {
+  class EUTELESCOPE {
 
   public:
     //! Default destructor.
     /*! This is the default destructor, but it is actually a NO-OP
      *  since there is nothing to be destroyed.
      */
-    virtual ~ EUTELESCOPE ()  {;  }
+    virtual ~EUTELESCOPE() { ; }
 
   public:
-
     // PARAMETER NAMES USED IN THE HEADER IMPLEMENTATION
 
-	//! Parameter to store the telescope ROOT geometry file
-	static const std::string GEOFILENAME;
+    //! Parameter to store the telescope ROOT geometry file
+    static const std::string GEOFILENAME;
 
-	//! Parameter to specify if dumping of the geo ROOT file is desired
-	static const bool DUMPGEOROOT;
-    
-	//! Parameter key to store/recall the header version number
-    static const char * HEADERVERSION;
+    //! Parameter to specify if dumping of the geo ROOT file is desired
+    static const bool DUMPGEOROOT;
+
+    //! Parameter key to store/recall the header version number
+    static const char *HEADERVERSION;
 
     //! Parameter key to store/recall the data type
     /*! The value of DATATYPE can be set using one of the static const
@@ -94,13 +93,14 @@ namespace eutelescope
      *
      *  @see EUTELESCOPE::DAQDATA, EUTELESCOPE::SIMULDATA, EUTELESCOPE::CONVDATA
      */
-    static const char * DATATYPE;
+    static const char *DATATYPE;
 
     //! Parameter key to store/recall the number of events in the file
-    static const char * NOOFEVENT;
+    static const char *NOOFEVENT;
 
-    //! Parameter key to store/recall the date time string in human readable format
-    static const char * DATETIME;
+    //! Parameter key to store/recall the date time string in human readable
+    //! format
+    static const char *DATETIME;
 
     //! Parameter key to store/recall the DAQ hardware name
     /*! The value of the DAQHWNNAME stored in the header of LCIO file
@@ -108,10 +108,10 @@ namespace eutelescope
      *  EUTELESCOPE::EUDRB, EUTELESCOPE::IPHCIMAGER,
      *  EUTELESCOPE::SUCIMAIMAGER
      */
-    static const char * DAQHWNAME;
+    static const char *DAQHWNAME;
 
     //! Parameter key to store/recall the DAQ hardware version
-    static const char * DAQHWVERSION;
+    static const char *DAQHWVERSION;
 
     //! Parameter key to store/recall the DAQ software name
     /*! This parameter can be set using one of the const string
@@ -119,87 +119,87 @@ namespace eutelescope
      *
      *  @see EUTELESCOPE::EUDAQ
      */
-    static const char * DAQSWNAME;
+    static const char *DAQSWNAME;
 
     //! Parameter key to store/recall the DAQ software version
-    static const char * DAQSWVERSION;
+    static const char *DAQSWVERSION;
 
     //! Parameter key to store/recall the simulation software name
-    static const char * SIMULSWNAME;
+    static const char *SIMULSWNAME;
 
     //! Parameter key to store/recall the simulation software version
-    static const char * SIMULSWVERSION;
+    static const char *SIMULSWVERSION;
 
     //! Parameter key to store/recall the geometry identification number
-    static const char * GEOID;
+    static const char *GEOID;
 
     //! Parameter key to store/recall the beam location
-    static const char * BEAMLOCATION;
+    static const char *BEAMLOCATION;
 
     //! Parameter key to store/recall the beam type
-    static const char * BEAMTYPE;
+    static const char *BEAMTYPE;
 
     //! Parameter key to store/recall the beam energy
-    static const char * BEAMENERGY;
+    static const char *BEAMENERGY;
 
     //! Parameter key to store/recall the number of detector in the file
-    static const char * NOOFDETECTOR;
+    static const char *NOOFDETECTOR;
 
     //! Parameter key to store/recall the minimum X pixel
-    static const char * MINX;
+    static const char *MINX;
 
     //! Parameter key to store/recall the maximum X pixel
-    static const char * MAXX;
+    static const char *MAXX;
 
     //! Parameter key to store/recall the minimum Y pixel
-    static const char * MINY;
+    static const char *MINY;
 
     //! Parameter key to store/recall the maximum Y pixel
-    static const char * MAXY;
+    static const char *MAXY;
 
     //! Parameter key to store/recall the list of applied processors
-    static const char * APPLIEDPROCESSOR;
+    static const char *APPLIEDPROCESSOR;
 
     //! Parameter key to store/recall the intermediate file names
-    static const char * INTERMEDIATEFILE;
+    static const char *INTERMEDIATEFILE;
 
     //! Parameter key to store/recall the user defined run header comment
-    static const char * USERCOMMENT;
+    static const char *USERCOMMENT;
 
     // standard name to be saved into the header
 
     //! Constant used to identify really acquired data
-    static const char * DAQDATA;
+    static const char *DAQDATA;
 
     //! Constant used to identify simulated data
-    static const char * SIMULDATA;
+    static const char *SIMULDATA;
 
     //! Constant used to identify data converted from another data format
-    static const char * CONVDATA;
+    static const char *CONVDATA;
 
     //! Constant used to identify the DAQ board designed by INFN
-    static const char * EUDRB;
+    static const char *EUDRB;
 
     //! Constant used to identify the DAQ board developed in IPHC/LEPSI
-    static const char * IPHCIMAGER;
+    static const char *IPHCIMAGER;
 
-    //! Constant used to identify the DAQ board developed by the SUCIMA collaboration
-    static const char * SUCIMAIMAGER;
+    //! Constant used to identify the DAQ board developed by the SUCIMA
+    //! collaboration
+    static const char *SUCIMAIMAGER;
 
     //! Constant used to identify the DAQ software developed by Geneva team
-    static const char * EUDAQ;
+    static const char *EUDAQ;
 
     //! Constant used to identify the EUDRB operation mode
-    static const char * EUDRBMODE;
+    static const char *EUDRBMODE;
 
     //! Constant used to identify the detectors making the telescope
-    static const char * EUDRBDET;
+    static const char *EUDRBDET;
 
     // PARAMETER NAMES USED IN THE EVENT IMPLEMENTATION
 
     //! Constant used to get/set the event type
-    static const char * EVENTTYPE;
-
+    static const char *EVENTTYPE;
 
     // pixel flags
 
@@ -224,31 +224,31 @@ namespace eutelescope
     /*! @see EUTelPedestalNoiseProcessor::maskBadPixel() for a
      *  detailed description of the algorithm
      */
-    static const char * NOISEDISTRIBUTION;
+    static const char *NOISEDISTRIBUTION;
 
     //! Bad pixel masking algorithm identifier
     /*! @see EUTelPedestalNoiseProcessor::maskBadPixel() for a
      * detailed description of the algorithm.
      */
-    static const char * ABSOLUTENOISEVALUE;
+    static const char *ABSOLUTENOISEVALUE;
 
     //! Bad pixel masking algorithm identifier
     /*! @see EUTelPedestalNoiseProcessor::maskBadPixel() for a
      * detailed description of the algorithm.
      */
-    static const char * DEADPIXEL;
+    static const char *DEADPIXEL;
 
     //! Bad pixel masking algorithm identifier
     /*! @see EUTelPedestalNoiseProcessor::maskBadPixel() for a
      * detailed description of the algorithm.
      */
-    static const char * ABSOLUTEPEDEVALUE;
+    static const char *ABSOLUTEPEDEVALUE;
 
     //! Common mode algorithm identifier
-    static const char * FULLFRAME;
+    static const char *FULLFRAME;
 
     //! Common mode algorithm identifier
-    static const char * ROWWISE;
+    static const char *ROWWISE;
 
     //! Pedestal calculation algorithm identifier
     /*! This string is used to identify a pedestal calculation
@@ -257,7 +257,7 @@ namespace eutelescope
      *  while the noise is given by the distribution RMS. The
      *  algorithm is based on the use of std::vector's
      */
-    static const char * MEANRMS;
+    static const char *MEANRMS;
 
     //! Pedestal calculation algorithm identifier
     /*! This string is used to identify a pedestal calculation
@@ -272,72 +272,71 @@ namespace eutelescope
      *  algorithm will fall back to something, may be to so elegant,
      *  but definitely more standard (EUTELESCOPE::MEANRMS).
      */
-    static const char * AIDAPROFILE;
+    static const char *AIDAPROFILE;
 
     //! Fixed frame clustering algorithm
     /*! For a detailed description @see
      *  EUTelClusteringProcessor::_clusteringAlgo
      */
-    static const char * FIXEDFRAME;
-
+    static const char *FIXEDFRAME;
 
     //! Digital fixed frame clustering algorithm
     /*! For a detailed description @see
      *  EUTelClusteringProcessor::_clusteringAlgo
      */
-    static const char * DFIXEDFRAME;
+    static const char *DFIXEDFRAME;
 
     //! Clustering algorithm for ZS data
     /*! This is the basic algorithm for clustering together zero
      *  suppress data. It is based on three numbers, the minimum
      *  distance between pixels, the seed SNR and the cluster SNR.
      */
-    static const char * SPARSECLUSTER;
+    static const char *SPARSECLUSTER;
 
     //! clustering algorithm for ZS data with better performance
     /*! This is an advanced clustering algorithm for sparsified pixel.
      *  It is based on two numbers: the seed SNR and the cluster SNR.
      */
-    static const char * SPARSECLUSTER2;
-    static const char * SPARSECLUSTER3;
+    static const char *SPARSECLUSTER2;
+    static const char *SPARSECLUSTER3;
 
     //! Bricked cluster fixed frame algorithm
     /*! For a detailed description @see
      *  EUTelClusteringProcessor::_clusteringAlgo
      *  HACK TAKI
      */
-    static const char * BRICKEDCLUSTER;
+    static const char *BRICKEDCLUSTER;
 
     //! Analog type of the data readout
     /*! For a detailed description @see
      *  EUTelClusteringProcessor::_dataFormatType
      */
-    static const char *   ANALOG;
- 
+    static const char *ANALOG;
+
     //! Digital type of the data readout
     /*! For a detailed description @see
      *  EUTelClusteringProcessor::_dataFormatType
      */
-    static const char *   DIGITAL;
- 
+    static const char *DIGITAL;
+
     //! Binary type of the data readout
     /*! For a detailed description @see
      *  EUTelClusteringProcessor::_dataFormatType
      */
-    static const char *   BINARY;
+    static const char *BINARY;
 
     //! Fixed weight algorithm for the pedestal / noise update
     /*! The name for the pedestal and noise update algorithm. @see
      *  EUTelUpdatePedestalNoiseProcessor
      */
-    static const char * FIXEDWEIGHT;
+    static const char *FIXEDWEIGHT;
 
     //! Cluster separation algorithm with only flagging capability
     /*! The name for the cluster separation algorithm that is not
      *  really dividing merging clusters, but only flagging their
      *  quality. @see EUTelClusterSeparationProcessor
      */
-    static const char * FLAGONLY;
+    static const char *FLAGONLY;
 
     // Encoding strings
 
@@ -346,7 +345,7 @@ namespace eutelescope
      *  default encoding used for describe cells into a
      *  Tracker(Raw)Data object
      */
-    static const char * MATRIXDEFAULTENCODING;
+    static const char *MATRIXDEFAULTENCODING;
 
     //! Default encoding for zero suppress data
     /*! This constant string is used with CellIDEncoder to define the
@@ -361,7 +360,7 @@ namespace eutelescope
      *  @see SparsePixelType
      *
      */
-    static const char * ZSDATADEFAULTENCODING;
+    static const char *ZSDATADEFAULTENCODING;
 
     //! Default TrackerData encoding for cluster
     /*! This constant string is used with CellIDEncoder to define the
@@ -373,8 +372,7 @@ namespace eutelescope
      *
      *  @see ClusterQuality
      */
-    static const char * CLUSTERDEFAULTENCODING;
-
+    static const char *CLUSTERDEFAULTENCODING;
 
     //! Default TrackerPulse encoding for cluster
     /*! This constant string is used with CellIDEncoder to define the
@@ -385,7 +383,7 @@ namespace eutelescope
      *
      *  @see ClusterType
      */
-    static const char * PULSEDEFAULTENCODING;
+    static const char *PULSEDEFAULTENCODING;
 
     //! Zero suppress cluster default encoding
     /*! This encoding string is used for the TrackerData containing
@@ -394,18 +392,15 @@ namespace eutelescope
      *  @see SparsePixelType
      *  @see ClusterQuality
      */
-    static const char * ZSCLUSTERDEFAULTENCODING;
-
+    static const char *ZSCLUSTERDEFAULTENCODING;
 
     //! SensorID and properties encoding for hits
     /*! This encoding string is used for the TrackerHit* classes
      *
      *  @see HitProperties
      */
-    static const char * HITENCODING;
-
+    static const char *HITENCODING;
   };
-
 
   //! Detector type enum
   /*! This enumeration type is used to identify a specific detector
@@ -413,29 +408,23 @@ namespace eutelescope
    *
    */
   enum EUTelDetectorType {
-    kTLU               =   0,
-    kMimoTel           = 100,
-    kMimosa18          = 101,
-    kMimosa26          = 102,
-    kDEPFET            = 103,
-    kTaki              = 104,
-    kAPIX              = 105,
-    kFortis            = 106,
-    kTimepix           = 107,
-    kCMSPixel          = 108
-  } ;
+    kTLU = 0,
+    kMimoTel = 100,
+    kMimosa18 = 101,
+    kMimosa26 = 102,
+    kDEPFET = 103,
+    kTaki = 104,
+    kAPIX = 105,
+    kFortis = 106,
+    kTimepix = 107,
+    kCMSPixel = 108
+  };
 
   //! Readout mode
   /*! This enumeration type is used to identify a readout mode
    *
    */
-  enum EUTelReadoutMode {
-    kRAW2             =   0,
-    kRAW3             =   1,
-    kZS               = 100,
-    kZS2              = 101
-  };
-
+  enum EUTelReadoutMode { kRAW2 = 0, kRAW3 = 1, kZS = 100, kZS2 = 101 };
 
   //! Event type enum
   /*! This enumeration type has been introduced in order to
@@ -463,13 +452,7 @@ namespace eutelescope
    *  existing parameter will return 0.
    *
    */
-  enum EventType {
-    kUNKNOWN  = 0,
-    kBORE     = 1,
-    kDE       = 2,
-    kEORE     = 3
-  };
-
+  enum EventType { kUNKNOWN = 0, kBORE = 1, kDE = 2, kEORE = 3 };
 
   //! hit properties enum
   /*! This enum can be attached to a LCIO class describing a hit or it
@@ -490,11 +473,10 @@ namespace eutelescope
    *  future to mark other different kind of hit flags.
    */
   enum HitProperties {
-    kHitInGlobalCoord  = 1L << 0,
-    kFittedHit         = 1L << 1,
-    kSimulatedHit      = 1L << 2
+    kHitInGlobalCoord = 1L << 0,
+    kFittedHit = 1L << 1,
+    kSimulatedHit = 1L << 2
   };
-
 
   //! Cluster quality enum
   /*! This enum can be attached to a LCIO class describing a cluster
@@ -535,11 +517,11 @@ namespace eutelescope
    */
 
   enum ClusterQuality {
-    kGoodCluster       = 0,
+    kGoodCluster = 0,
     kIncompleteCluster = 1L << 0,
-    kBorderCluster     = 1L << 1,
-    kMergedCluster     = 1L << 2,
-    kNoisyCluster      = 1L << 3
+    kBorderCluster = 1L << 1,
+    kMergedCluster = 1L << 2,
+    kNoisyCluster = 1L << 3
   };
 
   //! Cluster quality bit-wise AND operator
@@ -554,7 +536,6 @@ namespace eutelescope
    */
   ClusterQuality operator&(ClusterQuality a, ClusterQuality b);
 
-
   //! Cluster quality bit-wise OR operator
   /*! This is a crucial operator for ClusterQuality since, during the
    *  cluster search processor, a cluster maybe flagged with one or
@@ -567,7 +548,6 @@ namespace eutelescope
    *  @return the bit wise or among @a a and @a b
    */
   ClusterQuality operator|(ClusterQuality a, ClusterQuality b);
-
 
   //! Cluster quality self bit-wise OR operator
   /*! @see operator|(ClusterQuality a, ClusterQuality b)
@@ -583,7 +563,7 @@ namespace eutelescope
    *  @param quality The variable to the be stream out
    *  @return The input output stream
    */
-  std::ostream& operator<<(std::ostream& os, const ClusterQuality & quality);
+  std::ostream &operator<<(std::ostream &os, const ClusterQuality &quality);
 
   //! Cluster type enum
   /*! This enum is used in the encoding of a TrackerPulse to describe
@@ -592,14 +572,14 @@ namespace eutelescope
    *
    */
   enum ClusterType {
-    kEUTelFFClusterImpl       = 0,
-    kEUTelSparseClusterImpl   = 1,
-    kEUTelDFFClusterImpl      = 2,
-    kEUTelBrickedClusterImpl  = 3,
+    kEUTelFFClusterImpl = 0,
+    kEUTelSparseClusterImpl = 1,
+    kEUTelDFFClusterImpl = 2,
+    kEUTelBrickedClusterImpl = 3,
     kEUTelGenericSparseClusterImpl = 4,
     // add here all the other cluster type numbering them in between 0
     // and 31 unknown
-    kUnknown                  = 31
+    kUnknown = 31
   };
 
   //! Sparse pixel type enum
@@ -607,13 +587,13 @@ namespace eutelescope
    *
    */
   enum SparsePixelType {
-    kEUTelBaseSparsePixel   = 0,
+    kEUTelBaseSparsePixel = 0,
     kEUTelSimpleSparsePixel = 1,
     kEUTelGenericSparsePixel = 2,
     kEUTelGeometricPixel = 3,
     // add here your implementation
     kEUTelMuPixel = 4,
-    kUnknownPixelType       = 31
+    kUnknownPixelType = 31
   };
 
   //! SparsePixelType operator <<
@@ -625,9 +605,7 @@ namespace eutelescope
    *  @param type The variable to the be stream out
    *  @return The input output stream
    */
-  std::ostream& operator<<(std::ostream& os, const SparsePixelType& type) ;
-
-
+  std::ostream &operator<<(std::ostream &os, const SparsePixelType &type);
 
   // From here down a list of interesing utilities. Those are mainly
   // copied from the eudaq library
@@ -640,7 +618,7 @@ namespace eutelescope
    *  letters.
    *  @return A fully capitalized string
    */
-  std::string ucase(const std::string & inputString) ;
+  std::string ucase(const std::string &inputString);
 
   //! Convert to lower case
   /*! This function takes a string as an input and return the same
@@ -649,7 +627,7 @@ namespace eutelescope
    *  @param inputString The string to be transformed
    *  @return A string with only small letters
    */
-  std::string lcase(const std::string & inputString);
+  std::string lcase(const std::string &inputString);
 
   //! Trim a string
   /*! This function removes the leading and trailing white spaces from
@@ -658,7 +636,7 @@ namespace eutelescope
    *  @param inputString The string to be trimmed
    *  @return The trimmed string
    */
-  std::string trim(const std::string & inputString);
+  std::string trim(const std::string &inputString);
 
   //! Escape a string
   /*! This function replaces all the characters that need to be
@@ -667,7 +645,7 @@ namespace eutelescope
    *  @param inputString The string to be escaped
    *  @return The escaped string
    */
-  std::string escape(const std::string & inputString);
+  std::string escape(const std::string &inputString);
 
   //! Get the first line of a text
   /*! This function returns the first line of a string. If the input
@@ -677,7 +655,7 @@ namespace eutelescope
    *  @param inputString The input text
    *  @return The first line of the input text
    */
-  std::string firstline(const std::string & inputString);
+  std::string firstline(const std::string &inputString);
 
   //! Tokenize a string according to a delimiter
   /*! This function takes an input string and returns a vector of
@@ -688,8 +666,8 @@ namespace eutelescope
    *  @param delim The token delimiter
    *  @return A vector of string
    */
-  std::vector<std::string > split(const std::string & inputString, const std::string & delim);
-
+  std::vector<std::string> split(const std::string &inputString,
+                                 const std::string &delim);
 
   //! Convert to string
   /*! This very useful function converts any type to a string. There
@@ -700,14 +678,12 @@ namespace eutelescope
    *  @param digits The number of digits the output string has to have
    *  @return A string containing the input value
    */
-  template <typename T>
-  std::string to_string( const T & x, int digits = 0 ) {
+  template <typename T> std::string to_string(const T &x, int digits = 0) {
 
     std::ostringstream s;
-    s << std::setfill('0') << std::setw( digits ) << x;
+    s << std::setfill('0') << std::setw(digits) << x;
     return s.str();
   }
-
 
   //! Converts any type to a string in hexadecimal
   /*! The input type needs to have a valid ostream streamer.
@@ -718,32 +694,28 @@ namespace eutelescope
    *
    *  @return A string representing the input value in hex
    */
-  template< typename T>
-  inline std::string to_hex( const T & x, int digits = 0 ) {
+  template <typename T> inline std::string to_hex(const T &x, int digits = 0) {
     std::ostringstream s;
-    s << std::hex << std::setfill('0') << std::setw( digits ) << x;
+    s << std::hex << std::setfill('0') << std::setw(digits) << x;
     return s.str();
   }
 
   //! Template specialization for T = const unsigned char
-  template <>
-  inline std::string to_hex( const unsigned char & x, int digits ) {
+  template <> inline std::string to_hex(const unsigned char &x, int digits) {
 
-    return to_hex( static_cast< int >(x), digits );
+    return to_hex(static_cast<int>(x), digits);
   }
 
   //! Template specialization for T = const signed char
-  template <>
-  inline std::string to_hex( const signed char & x, int digits ) {
+  template <> inline std::string to_hex(const signed char &x, int digits) {
 
-    return to_hex( static_cast< int >(x), digits );
+    return to_hex(static_cast<int>(x), digits);
   }
 
   //! Template specialization for T = const char
-  template <>
-  inline std::string to_hex( const char & x, int digits ) {
+  template <> inline std::string to_hex(const char &x, int digits) {
 
-    return to_hex( static_cast< unsigned char >(x), digits );
+    return to_hex(static_cast<unsigned char>(x), digits);
   }
 
   //! Converts a string to any type
@@ -759,25 +731,26 @@ namespace eutelescope
    *  it that is not valid then the value of def.
    */
   template <typename T>
-  inline T from_string( const std::string & x, const T & def = 0 ) {
+  inline T from_string(const std::string &x, const T &def = 0) {
 
-    if (x == "") return def;
+    if (x == "")
+      return def;
     T ret = def;
     std::istringstream s(x);
     s >> ret;
     char remain = '\0';
     s >> remain;
-    if (remain) throw std::invalid_argument("Invalid argument: " + x);
+    if (remain)
+      throw std::invalid_argument("Invalid argument: " + x);
     return ret;
   }
 
   //! Template specialization if T is a string
   template <>
-  inline std::string from_string( const std::string & x, const std::string & def ) {
+  inline std::string from_string(const std::string &x, const std::string &def) {
 
     return x == "" ? def : x;
   }
-
 }
 
 #if USE_MARLIN
@@ -785,11 +758,12 @@ namespace eutelescope
 namespace streamlog {
 
   //! Verbosity level for the EUTelTestFitter processor
-  DEFINE_STREAMLOG_LEVEL( TESTFITTERMESSAGE,  "TESTFITTERMESSAGE", message_base_level - 50 + 3 , STREAMLOG_MESSAGE_ACTIVE )
+  DEFINE_STREAMLOG_LEVEL(TESTFITTERMESSAGE, "TESTFITTERMESSAGE",
+                         message_base_level - 50 + 3, STREAMLOG_MESSAGE_ACTIVE)
 
   //! Verbosity level for the EUTelMille processor
-  DEFINE_STREAMLOG_LEVEL( MILLEMESSAGE,  "MILLEMESSAGE", message_base_level - 50 + 1 , STREAMLOG_MESSAGE_ACTIVE )
-
+  DEFINE_STREAMLOG_LEVEL(MILLEMESSAGE, "MILLEMESSAGE",
+                         message_base_level - 50 + 1, STREAMLOG_MESSAGE_ACTIVE)
 }
 #endif
 

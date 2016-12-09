@@ -13,117 +13,118 @@
 #include "EUTelEtaFunctionImpl.h"
 
 // lcio includes <.h>
-#include <lcio.h>
 #include <IMPL/LCGenericObjectImpl.h>
+#include <lcio.h>
 
 // system includes <>
-#include <vector>
 #include <algorithm>
 #include <cassert>
+#include <vector>
 
 using namespace lcio;
 using namespace eutelescope;
 using namespace std;
 
-EUTelEtaFunctionImpl::EUTelEtaFunctionImpl(int nBin) : IMPL::LCGenericObjectImpl(1,0,2 * nBin) {
-  _typeName        = "Eta function";
-  _dataDescription = "The first integer value is the sensor ID. The first nBin double values are the bin centers, the second nBin doubles values"
-    " the corresponding eta function value";
-  _isFixedSize     = true;
+EUTelEtaFunctionImpl::EUTelEtaFunctionImpl(int nBin)
+    : IMPL::LCGenericObjectImpl(1, 0, 2 * nBin) {
+  _typeName = "Eta function";
+  _dataDescription = "The first integer value is the sensor ID. The first nBin "
+                     "double values are the bin centers, the second nBin "
+                     "doubles values"
+                     " the corresponding eta function value";
+  _isFixedSize = true;
 }
 
-EUTelEtaFunctionImpl::EUTelEtaFunctionImpl(int nBin, std::vector<double > centerVec, std::vector<double > valueVec) :
-  IMPL::LCGenericObjectImpl(1,0,2 * nBin) {
-  _typeName        = "Eta function";
-  _dataDescription = "The first integer value is the sensor ID. The first nBin double values are the bin centers, the second nBin doubles values"
-    " the corresponding eta function value";
-  _isFixedSize     = true;
-
+EUTelEtaFunctionImpl::EUTelEtaFunctionImpl(int nBin,
+                                           std::vector<double> centerVec,
+                                           std::vector<double> valueVec)
+    : IMPL::LCGenericObjectImpl(1, 0, 2 * nBin) {
+  _typeName = "Eta function";
+  _dataDescription = "The first integer value is the sensor ID. The first nBin "
+                     "double values are the bin centers, the second nBin "
+                     "doubles values"
+                     " the corresponding eta function value";
+  _isFixedSize = true;
 
   unsigned int indexCenter;
-  unsigned int indexValue ;
+  unsigned int indexValue;
 
   for (indexCenter = 0, indexValue = indexCenter + getNDouble() / 2;
-       indexCenter < centerVec.size(); indexCenter++, indexValue++ ) {
+       indexCenter < centerVec.size(); indexCenter++, indexValue++) {
     setDoubleVal(indexCenter, centerVec[indexCenter]);
-    setDoubleVal(indexValue,  valueVec[indexCenter]);
+    setDoubleVal(indexValue, valueVec[indexCenter]);
   }
-
 }
 
-EUTelEtaFunctionImpl::EUTelEtaFunctionImpl(int sensorID, int nBin, std::vector<double > centerVec, std::vector<double > valueVec) :
-  IMPL::LCGenericObjectImpl(1,0,2 * nBin) {
-  _typeName        = "Eta function";
-  _dataDescription = "The first integer value is the sensor ID. The first nBin double values are the bin centers, the second nBin doubles values"
-    " the corresponding eta function value";
-  _isFixedSize     = true;
+EUTelEtaFunctionImpl::EUTelEtaFunctionImpl(int sensorID, int nBin,
+                                           std::vector<double> centerVec,
+                                           std::vector<double> valueVec)
+    : IMPL::LCGenericObjectImpl(1, 0, 2 * nBin) {
+  _typeName = "Eta function";
+  _dataDescription = "The first integer value is the sensor ID. The first nBin "
+                     "double values are the bin centers, the second nBin "
+                     "doubles values"
+                     " the corresponding eta function value";
+  _isFixedSize = true;
 
-  setIntVal( 0, sensorID );
+  setIntVal(0, sensorID);
 
   unsigned int indexCenter;
-  unsigned int indexValue ;
+  unsigned int indexValue;
 
   for (indexCenter = 0, indexValue = indexCenter + getNDouble() / 2;
-       indexCenter < centerVec.size(); indexCenter++, indexValue++ ) {
+       indexCenter < centerVec.size(); indexCenter++, indexValue++) {
     setDoubleVal(indexCenter, centerVec[indexCenter]);
-    setDoubleVal(indexValue,  valueVec[indexCenter]);
+    setDoubleVal(indexValue, valueVec[indexCenter]);
   }
-
 }
 
-void EUTelEtaFunctionImpl::setSensorID( int sensorID ) {
-  setIntVal( 0, sensorID );
-}
+void EUTelEtaFunctionImpl::setSensorID(int sensorID) { setIntVal(0, sensorID); }
 
-int EUTelEtaFunctionImpl::getSensorID( ) const {
-  return getIntVal( 0 ) ;
-}
+int EUTelEtaFunctionImpl::getSensorID() const { return getIntVal(0); }
 
-void EUTelEtaFunctionImpl::setBinCenterVector(std::vector<double > center) {
+void EUTelEtaFunctionImpl::setBinCenterVector(std::vector<double> center) {
 
   unsigned int indexCenter;
-  for ( indexCenter = 0; indexCenter < center.size(); indexCenter++ ) {
-    setDoubleVal( indexCenter, center[indexCenter] );
+  for (indexCenter = 0; indexCenter < center.size(); indexCenter++) {
+    setDoubleVal(indexCenter, center[indexCenter]);
   }
 }
 
-void EUTelEtaFunctionImpl::setEtaValueVector(std::vector<double > value) {
+void EUTelEtaFunctionImpl::setEtaValueVector(std::vector<double> value) {
 
   unsigned int index;
   int shift = getNDouble() / 2;
-  for ( index = 0; index < value.size(); index++ ) {
-    setDoubleVal( index + shift, value[index] );
+  for (index = 0; index < value.size(); index++) {
+    setDoubleVal(index + shift, value[index]);
   }
 }
 
+const vector<double> EUTelEtaFunctionImpl::getBinCenterVector() const {
 
-const vector<double > EUTelEtaFunctionImpl::getBinCenterVector() const {
-
-  vector<double > center(_doubleVec.begin(), _doubleVec.begin() + (getNDouble() / 2) );
+  vector<double> center(_doubleVec.begin(),
+                        _doubleVec.begin() + (getNDouble() / 2));
 
   return center;
-
 }
 
-const vector<double > EUTelEtaFunctionImpl::getEtaValueVector() const {
+const vector<double> EUTelEtaFunctionImpl::getEtaValueVector() const {
 
-  vector<double > value( _doubleVec.begin() + (getNDouble() / 2), _doubleVec.end());
+  vector<double> value(_doubleVec.begin() + (getNDouble() / 2),
+                       _doubleVec.end());
   return value;
-
 }
 
-int EUTelEtaFunctionImpl::getNoOfBin() const {
-  return getNDouble() / 2;
-}
+int EUTelEtaFunctionImpl::getNoOfBin() const { return getNDouble() / 2; }
 
 double EUTelEtaFunctionImpl::getEtaFromCoG(double x) const {
 
-  typedef vector<double >::const_iterator DoubleIter;
+  typedef vector<double>::const_iterator DoubleIter;
 
   DoubleIter cogBegin = getCoGBeginConstIterator();
-  DoubleIter cogEnd   = getCoGEndConstIterator();
+  DoubleIter cogEnd = getCoGEndConstIterator();
   DoubleIter etaBegin = getEtaBeginConstIterator();
-  DoubleIter etaEnd   = getEtaEndConstIterator();
+  DoubleIter etaEnd = getEtaEndConstIterator();
 
   // before doing the binary search, try to see if x isn't at the
   // beginning or at the end of the CoG vector; in such cases the
@@ -131,35 +132,40 @@ double EUTelEtaFunctionImpl::getEtaFromCoG(double x) const {
   // immediately. Remember that the end() iterator is one element
   // after the last element
 
-  if ( x <= (*cogBegin) )     return (*etaBegin);
-  if ( x >= (*(cogEnd - 1)) ) return (*(etaEnd - 1));
+  if (x <= (*cogBegin))
+    return (*etaBegin);
+  if (x >= (*(cogEnd - 1)))
+    return (*(etaEnd - 1));
 
   // lower_bound returns an iterator to the position where it is
   // sorting safe to insert the value x under test. If you want to
   // have the element just at left you need to decrement by one unit
   // the iterator
 
-  DoubleIter xRight    = lower_bound(cogBegin, cogEnd, x);
-  DoubleIter xLeft     = xRight - 1;
-  DoubleIter etaLeft   = etaBegin +  ( xLeft - cogBegin);
-  DoubleIter etaRight  = etaLeft + 1;
+  DoubleIter xRight = lower_bound(cogBegin, cogEnd, x);
+  DoubleIter xLeft = xRight - 1;
+  DoubleIter etaLeft = etaBegin + (xLeft - cogBegin);
+  DoubleIter etaRight = etaLeft + 1;
 
-  return *etaLeft + ( *etaLeft - *etaRight ) / ( *xLeft - *xRight ) * ( x - *xLeft) ;
-
+  return *etaLeft + (*etaLeft - *etaRight) / (*xLeft - *xRight) * (x - *xLeft);
 }
 
-vector<double >::const_iterator EUTelEtaFunctionImpl::getCoGBeginConstIterator() const {
+vector<double>::const_iterator
+EUTelEtaFunctionImpl::getCoGBeginConstIterator() const {
   return _doubleVec.begin();
 }
 
-vector<double >::const_iterator EUTelEtaFunctionImpl::getCoGEndConstIterator() const {
-  return _doubleVec.begin() + (getNDouble() / 2 );
-}
-
-vector<double >::const_iterator EUTelEtaFunctionImpl::getEtaBeginConstIterator() const {
+vector<double>::const_iterator
+EUTelEtaFunctionImpl::getCoGEndConstIterator() const {
   return _doubleVec.begin() + (getNDouble() / 2);
 }
 
-vector<double >::const_iterator EUTelEtaFunctionImpl::getEtaEndConstIterator() const {
+vector<double>::const_iterator
+EUTelEtaFunctionImpl::getEtaBeginConstIterator() const {
+  return _doubleVec.begin() + (getNDouble() / 2);
+}
+
+vector<double>::const_iterator
+EUTelEtaFunctionImpl::getEtaEndConstIterator() const {
   return _doubleVec.end();
 }

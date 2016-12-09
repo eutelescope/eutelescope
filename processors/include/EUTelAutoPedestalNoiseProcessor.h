@@ -19,8 +19,6 @@
 
 // system includes <>
 
-
-
 namespace eutelescope {
 
   //! Automatic pedestal and noise processor
@@ -60,7 +58,8 @@ namespace eutelescope {
    *  of the output status collection.
    *
    *  <h4>Output</h4>
-   *  <b>PedestalCollection</b><br><b>NoiseCollection</b><br><b>StatusCollection</b>
+   *
+   <b>PedestalCollection</b><br><b>NoiseCollection</b><br><b>StatusCollection</b>
    *
    *  @param InitPedestal The initial pedestal value. This is a vector
    *  of float, one value for each detector in the telescope.
@@ -75,28 +74,37 @@ namespace eutelescope {
    *  Here below is the piece of XML file automatically generated and
    *  concerning this processor.
    *  @verbatim
-     <processor name="MyEUTelAutoPedestalNoiseProcessor" type="EUTelAutoPedestalNoiseProcessor">
-      <!--EUTelAutoPedestalNoiseProcessor produces initial pedestal / noise / status with user provided values-->
+     <processor name="MyEUTelAutoPedestalNoiseProcessor"
+   type="EUTelAutoPedestalNoiseProcessor">
+      <!--EUTelAutoPedestalNoiseProcessor produces initial pedestal / noise /
+   status with user provided values-->
       <!--The initial value of noise (one value for detector)-->
-      <!--parameter name="InitNoiseValue" type="FloatVec">1 1 1 1 1 1  </parameter-->
+      <!--parameter name="InitNoiseValue" type="FloatVec">1 1 1 1 1 1
+   </parameter-->
       <!--The initial value of pedestal (one value for detector)-->
-      <!--parameter name="InitPedestalValue" type="FloatVec">0 0 0 0 0 0  </parameter-->
+      <!--parameter name="InitPedestalValue" type="FloatVec">0 0 0 0 0 0
+   </parameter-->
       <!--The maximum pixel along x (default 255, one value per detector)-->
-      <!--parameter name="MaxXVector" type="IntVec">255 255 255 255 255 255  </parameter-->
+      <!--parameter name="MaxXVector" type="IntVec">255 255 255 255 255 255
+   </parameter-->
       <!--The maximum pixel along y (default 255, one value per detector)-->
-      <!--parameter name="MaxYVector" type="IntVec">255 255 255 255 255 255  </parameter-->
+      <!--parameter name="MaxYVector" type="IntVec">255 255 255 255 255 255
+   </parameter-->
       <!--The minimum pixel along x (default 0, one value per detector)-->
       <!--parameter name="MinXVector" type="IntVec">0 0 0 0 0 0  </parameter-->
       <!--The minimum pixel along y (default 0, one value per detector)-->
       <!--parameter name="MinYVector" type="IntVec">0 0 0 0 0 0  </parameter-->
       <!--Noise local collection-->
-      <parameter name="NoiseCollectionName" type="string" lcioOutType="TrackerData">noise </parameter>
+      <parameter name="NoiseCollectionName" type="string"
+   lcioOutType="TrackerData">noise </parameter>
       <!--Pedestal local collection-->
-      <parameter name="PedestalCollectionName" type="string" lcioOutType="TrackerData">pedestal </parameter>
+      <parameter name="PedestalCollectionName" type="string"
+   lcioOutType="TrackerData">pedestal </parameter>
       <!--The sensorID for the generated collection (one per detector)-->
       <!--parameter name="SensorIDVec" type="IntVec">0 1 2 3 4 5  </parameter-->
       <!--Pixel status collection-->
-      <parameter name="StatusCollectionName" type="string" lcioOutType="TrackerRawData">status </parameter>
+      <parameter name="StatusCollectionName" type="string"
+   lcioOutType="TrackerRawData">status </parameter>
      </processor>
      @endverbatim
    *
@@ -109,8 +117,6 @@ namespace eutelescope {
   class EUTelAutoPedestalNoiseProcessor : public marlin::Processor {
 
   public:
-
-
     //! Returns a new instance of EUTelAutoPedestalNoiseProcessor
     /*! This method returns a new instance of this processor.  It is
      *  called by Marlin execution framework and it shouldn't be
@@ -118,22 +124,22 @@ namespace eutelescope {
      *
      *  @return a new EUTelAutoPedestalNoiseProcessor.
      */
-    virtual Processor * newProcessor() {
+    virtual Processor *newProcessor() {
       return new EUTelAutoPedestalNoiseProcessor;
     }
 
     //! Default constructor
-    EUTelAutoPedestalNoiseProcessor ();
+    EUTelAutoPedestalNoiseProcessor();
 
     //! Called at the job beginning.
     /*! This is executed only once in the whole execution. It prints
      *  out the processor parameters.
      */
-    virtual void init ();
+    virtual void init();
 
     //! Called for every run.
     /*! It is called for every run, and consequently the run counter
-     *  is incremented. 
+     *  is incremented.
      *
      *  @since Version v00-00-09 the detector number is no more taken from
      *  the run header. We assume that the number of initial values for
@@ -146,9 +152,9 @@ namespace eutelescope {
      *  default the values for a mimotel sensor are used. In this new
      *  version, the user can assign to each element of the output
      *  collections a sensorID different from the position of the
-     *  element in the collection. 
+     *  element in the collection.
      */
-    virtual void processRunHeader (LCRunHeader * run);
+    virtual void processRunHeader(LCRunHeader *run);
 
     //! Called every event
     /*! This is called for each event in the file. During the first
@@ -160,8 +166,7 @@ namespace eutelescope {
      *  @param evt the current LCEvent event as passed by the
      *  ProcessMgr
      */
-    virtual void processEvent (LCEvent * evt);
-
+    virtual void processEvent(LCEvent *evt);
 
     //! Called after data processing.
     /*! This method is called when the loop on events is
@@ -171,9 +176,7 @@ namespace eutelescope {
      */
     virtual void end();
 
-
   protected:
-
     //! Pedestal collection name
     /*! Input pedestal collection name. Default value is pedestal.
      */
@@ -217,15 +220,14 @@ namespace eutelescope {
     int _iEvt;
 
   private:
-
     //! Pedestal collection
-    IMPL::LCCollectionVec * _pedestalCollectionVec;
+    IMPL::LCCollectionVec *_pedestalCollectionVec;
 
     //! Noise collection
-    IMPL::LCCollectionVec * _noiseCollectionVec;
+    IMPL::LCCollectionVec *_noiseCollectionVec;
 
     //! Status collection
-    IMPL::LCCollectionVec * _statusCollectionVec;
+    IMPL::LCCollectionVec *_statusCollectionVec;
 
     //! First pixel along X
     /*! This array of int is used to store the number of the first
@@ -266,11 +268,9 @@ namespace eutelescope {
      *  be chosen.
      */
     IntVec _sensorIDVec;
-
   };
 
   //! A global instance of the processor
   EUTelAutoPedestalNoiseProcessor gEUTelAutoPedestalNoiseProcessor;
-
 }
 #endif

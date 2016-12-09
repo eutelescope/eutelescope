@@ -18,23 +18,22 @@
 #include "marlin/Processor.h"
 
 // gear includes <.h>
-#include <gear/SiPlanesParameters.h>
 #include <gear/SiPlanesLayerLayout.h>
+#include <gear/SiPlanesParameters.h>
 
 // lcio includes <.h>
-#include <EVENT/LCRunHeader.h>
 #include <EVENT/LCEvent.h>
+#include <EVENT/LCRunHeader.h>
 
 // AIDA includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <AIDA/IBaseHistogram.h>
 #endif
 
-
 // system includes <>
+#include <map>
 #include <string>
 #include <vector>
-#include <map>
 
 namespace eutelescope {
 
@@ -46,8 +45,6 @@ namespace eutelescope {
   class EUTelLineFit : public marlin::Processor {
 
   public:
-
-
     //! Returns a new instance of EUTelLineFit
     /*! This method returns a new instance of this processor.  It is
      *  called by Marlin execution framework and it shouldn't be
@@ -55,19 +52,17 @@ namespace eutelescope {
      *
      *  @return a new EUTelLineFit.
      */
-    virtual Processor * newProcessor() {
-      return new EUTelLineFit;
-    }
+    virtual Processor *newProcessor() { return new EUTelLineFit; }
 
     //! Default constructor
-    EUTelLineFit ();
+    EUTelLineFit();
 
     //! Called at the job beginning.
     /*! This is executed only once in the whole execution. It prints
      *  out the processor parameters and check that the GEAR
      *  environment is properly set up and accessible from Marlin.
      */
-    virtual void init ();
+    virtual void init();
 
     //! Called for every run.
     /*! It is called for every run, and consequently the run counter
@@ -78,7 +73,7 @@ namespace eutelescope {
      *
      *  @param run the LCRunHeader of the this current run
      */
-    virtual void processRunHeader (LCRunHeader * run);
+    virtual void processRunHeader(LCRunHeader *run);
 
     //! Called every event
     /*! This is called for each event in the file. Each element of the
@@ -96,15 +91,13 @@ namespace eutelescope {
      *  @param evt the current LCEvent event as passed by the
      *  ProcessMgr
      */
-    virtual void processEvent (LCEvent * evt);
-
+    virtual void processEvent(LCEvent *evt);
 
     //! Called after data processing.
     /*! This method is called when the loop on events is
      *  finished.
      */
     virtual void end();
-
 
     //! Histogram booking
     /*! Some control histograms are filled during this procedure in
@@ -115,9 +108,7 @@ namespace eutelescope {
      */
     void bookHistos();
 
-
   protected:
-
     //! TrackerHit collection name
     /*! Input collection with hits.
      */
@@ -133,14 +124,13 @@ namespace eutelescope {
      */
     std::string _outputHitColName;
 
-    std::vector<float > _alignmentConstantsSecondLayer;
-    std::vector<float > _alignmentConstantsThirdLayer;
-    std::vector<float > _alignmentConstantsFourthLayer;
-    std::vector<float > _alignmentConstantsFifthLayer;
-    std::vector<float > _alignmentConstantsSixthLayer;
+    std::vector<float> _alignmentConstantsSecondLayer;
+    std::vector<float> _alignmentConstantsThirdLayer;
+    std::vector<float> _alignmentConstantsFourthLayer;
+    std::vector<float> _alignmentConstantsFifthLayer;
+    std::vector<float> _alignmentConstantsSixthLayer;
 
   private:
-
     //! Run number
     int _iRun;
 
@@ -155,7 +145,7 @@ namespace eutelescope {
      *  we need a conversion table to go from the detectorID to the
      *  layerindex.
      */
-    std::map< int, int > _conversionIdMap;
+    std::map<int, int> _conversionIdMap;
 
     //! Silicon planes parameters as described in GEAR
     /*! This structure actually contains the following:
@@ -167,7 +157,7 @@ namespace eutelescope {
      *  This object is provided by GEAR during the init() phase and
      *  stored here for local use.
      */
-    gear::SiPlanesParameters * _siPlanesParameters;
+    gear::SiPlanesParameters *_siPlanesParameters;
 
     //! Silicon plane layer layout
     /*! This is the real geoemetry description. For each layer
@@ -177,7 +167,7 @@ namespace eutelescope {
      *  This object is taken from the _siPlanesParameters during the
      *  init() phase and stored for local use
      */
-    gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
+    gear::SiPlanesLayerLayout *_siPlanesLayerLayout;
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     //! AIDA histogram map
@@ -188,7 +178,7 @@ namespace eutelescope {
      *  The histogram filling can proceed recalling an object through
      *  its name
      */
-    std::map<std::string, AIDA::IBaseHistogram * > _aidaHistoMap;
+    std::map<std::string, AIDA::IBaseHistogram *> _aidaHistoMap;
 
     static std::string _chi2XLocalname;
     static std::string _chi2YLocalname;
@@ -201,29 +191,24 @@ namespace eutelescope {
 #endif
 
     int _nPlanes;
-    double * _xPos;
-    double * _yPos;
-    double * _zPos;
-    double * _waferResidX;
-    double * _waferResidY;
-    double * _intrResolX;
-    double * _intrResolY;
-    double * _xFitPos;
-    double * _yFitPos;
+    double *_xPos;
+    double *_yPos;
+    double *_zPos;
+    double *_waferResidX;
+    double *_waferResidY;
+    double *_intrResolX;
+    double *_intrResolY;
+    double *_xFitPos;
+    double *_yFitPos;
 
     //! Fill histogram switch
     /*! Only for debug reason
      */
     bool _histogramSwitch;
-
-
-
-
   };
 
   //! A global instance of the processor
   EUTelLineFit gEUTelLineFit;
-
 }
 #endif
 #endif

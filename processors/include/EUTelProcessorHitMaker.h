@@ -18,13 +18,13 @@
 #include "marlin/Processor.h"
 
 // gear includes <.h>
-#include <gear/SiPlanesParameters.h>
 #include <gear/SiPlanesLayerLayout.h>
+#include <gear/SiPlanesParameters.h>
 
 // lcio includes <.h>
-#include <EVENT/LCRunHeader.h>
-#include <EVENT/LCEvent.h>
 #include <EVENT/LCCollection.h>
+#include <EVENT/LCEvent.h>
+#include <EVENT/LCRunHeader.h>
 
 // AIDA includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -33,12 +33,11 @@
 
 #include <IMPL/LCCollectionVec.h>
 
-
 // system includes <>
-#include <string>
-#include <vector>
 #include <map>
 #include <set>
+#include <string>
+#include <vector>
 
 namespace eutelescope {
 
@@ -78,7 +77,8 @@ namespace eutelescope {
    *  the y axis going from the bottom to the top side and the x axis
    *  from the right to the left hand side.
    *
-   *  \image html frameOfReference.png "Frame of references: the detector on the left and the telescope one on the right."
+   *  \image html frameOfReference.png "Frame of references: the detector on the
+   * left and the telescope one on the right."
    *
    *  Moreover, the detector FoR can be rotated with respect to the
    *  telescope one. This rotation in the x-y plane is expressed by
@@ -222,7 +222,7 @@ namespace eutelescope {
    *  disable the filling of the density plot mentioned above. The
    *  reason for this is that such an histogram may require a huge
    *  amount of memory and consequently slowing down the full
-   *  processing. 
+   *  processing.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
    *  @version $Id$
@@ -232,11 +232,9 @@ namespace eutelescope {
   class EUTelProcessorHitMaker : public marlin::Processor {
 
   private:
-      DISALLOW_COPY_AND_ASSIGN(EUTelProcessorHitMaker)
-      
+    DISALLOW_COPY_AND_ASSIGN(EUTelProcessorHitMaker)
+
   public:
-
-
     //! Returns a new instance of EUTelProcessorHitMaker
     /*! This method returns a new instance of this processor.  It is
      *  called by Marlin execution framework and it shouldn't be
@@ -244,19 +242,17 @@ namespace eutelescope {
      *
      *  @return a new EUTelProcessorHitMaker.
      */
-    virtual Processor * newProcessor() {
-      return new EUTelProcessorHitMaker;
-    }
+    virtual Processor *newProcessor() { return new EUTelProcessorHitMaker; }
 
     //! Default constructor
-    EUTelProcessorHitMaker ();
+    EUTelProcessorHitMaker();
 
     //! Called at the job beginning.
     /*! This is executed only once in the whole execution. It prints
      *  out the processor parameters and check that the GEAR
      *  environment is properly set up and accessible from Marlin.
      */
-    virtual void init ();
+    virtual void init();
 
     //! Called for every run.
     /*! It is called for every run, and consequently the run counter
@@ -267,7 +263,7 @@ namespace eutelescope {
      *
      *  @param run the LCRunHeader of the this current run
      */
-    virtual void processRunHeader (LCRunHeader * run);
+    virtual void processRunHeader(LCRunHeader *run);
 
     //! Called every event
     /*! This is called for each event in the file. Each element of the
@@ -285,15 +281,13 @@ namespace eutelescope {
      *  @param evt the current LCEvent event as passed by the
      *  ProcessMgr
      */
-    virtual void processEvent (LCEvent * evt);
-
+    virtual void processEvent(LCEvent *evt);
 
     //! Called after data processing.
     /*! This method is called when the loop on events is
      *  finished.
      */
     virtual void end();
-
 
     //! Histogram booking
     /*! Some control histograms are filled during this procedure in
@@ -303,13 +297,12 @@ namespace eutelescope {
      *  effectively doing something only in the case MARLIN_USE_AIDA.
      *
      *  @since v00-00-09 the histogram booking is done on-the-fly,
-     *  in the meaning the each time a new sensorID is encoutered 
+     *  in the meaning the each time a new sensorID is encoutered
      *  all the corresponding histograms are booked.
      */
-    void bookHistos( int sensorID );
+    void bookHistos(int sensorID);
 
   protected:
-
     //! TrackerPulse collection name
     /*! This is the name of the collection holding the pulse
      *  information. The other collection containing the original
@@ -324,28 +317,23 @@ namespace eutelescope {
      */
     std::string _hitCollectionName;
 
-
-    //! reference HitCollection name 
+    //! reference HitCollection name
     /*!
      */
     std::string _referenceHitCollectionName;
-    
-    //! reference HitCollection  
+
+    //! reference HitCollection
     /*!
      */
-    LCCollectionVec *_referenceHitCollectionVec;  
-    
+    LCCollectionVec *_referenceHitCollectionVec;
 
     //! Coordinates reference frame switch
     bool _wantLocalCoordinates;
 
-
-    //! Reference Hit file 
+    //! Reference Hit file
     std::string _referenceHitLCIOFile;
 
-
   private:
-
     //! Run number
     int _iRun;
 
@@ -360,15 +348,14 @@ namespace eutelescope {
      *  we need a conversion table to go from the detectorID to the
      *  layerindex.
      */
-    std::map< int, int > _conversionIdMap;
-
+    std::map<int, int> _conversionIdMap;
 
     //! Set of booked histogram
-    /*  This helper set is used 
-     *  by the on-the-fly histogram booking 
+    /*  This helper set is used
+     *  by the on-the-fly histogram booking
      *  procedure.
      */
-    std::set< int > _alreadyBookedSensorID;
+    std::set<int> _alreadyBookedSensorID;
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     //! AIDA histogram map
@@ -379,7 +366,7 @@ namespace eutelescope {
      *  The histogram filling can proceed recalling an object through
      *  its name
      */
-    std::map<std::string, AIDA::IBaseHistogram * > _aidaHistoMap;
+    std::map<std::string, AIDA::IBaseHistogram *> _aidaHistoMap;
 
     //! Name of the local hit map histo
     /*! The histogram pointed by this name is a 2D histo. The x and y
@@ -422,7 +409,6 @@ namespace eutelescope {
      */
     static std::string _clusterCenterYHistoName;
 
-
 #endif
 
     //! Fill histogram switch
@@ -438,16 +424,13 @@ namespace eutelescope {
      *  input collection in the same order as they appear. This vector
      *  has to be used to number the histogram booking and filling.
      */
-    std::vector< int > _orderedSensorIDVec;
+    std::vector<int> _orderedSensorIDVec;
 
-   
     void DumpReferenceHitDB();
- 
   };
 
   //! A global instance of the processor
   EUTelProcessorHitMaker gEUTelProcessorHitMaker;
-
 }
 #endif
 #endif

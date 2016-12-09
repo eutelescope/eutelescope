@@ -12,8 +12,8 @@
 // eutelescope includes ".h"
 
 // marlin includes ".h"
-#include "marlin/Processor.h"
 #include "marlin/Exceptions.h"
+#include "marlin/Processor.h"
 
 // AIDA includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -23,8 +23,8 @@
 // lcio includes <.h>
 
 // system includes <>
-#include <string>
 #include <map>
+#include <string>
 
 namespace eutelescope {
 
@@ -125,11 +125,9 @@ namespace eutelescope {
    *
    */
 
-  class EUTelCalibrateEventProcessor:public marlin::Processor {
+  class EUTelCalibrateEventProcessor : public marlin::Processor {
 
   public:
-
-
     //! Returns a new instance of EUTelCalibrateEventProcessor
     /*! This method returns an new instance of the this processor.  It
      *  is called by Marlin execution framework and it shouldn't be
@@ -137,12 +135,12 @@ namespace eutelescope {
      *
      *  @return a new EUTelCalibrateEventProcessor.
      */
-    virtual Processor * newProcessor() {
+    virtual Processor *newProcessor() {
       return new EUTelCalibrateEventProcessor;
     }
 
     //! Default constructor
-    EUTelCalibrateEventProcessor ();
+    EUTelCalibrateEventProcessor();
 
     //! Called at the job beginning.
     /*! This is executed only once in the whole execution. It prints
@@ -151,7 +149,7 @@ namespace eutelescope {
      *  she/he warned that the procedure is going to slow down
      *  considerably
      */
-    virtual void init ();
+    virtual void init();
 
     //! Called for every run.
     /*! It is called for every run, and consequently the run counter
@@ -160,7 +158,7 @@ namespace eutelescope {
      *
      *  @param run the LCRunHeader of the this current run
      */
-    virtual void processRunHeader (LCRunHeader * run);
+    virtual void processRunHeader(LCRunHeader *run);
 
     //! Called every event
     /*! This is called for each event in the file. In the case this is
@@ -177,8 +175,7 @@ namespace eutelescope {
      *  @param evt the current LCEvent event as passed by the
      *  ProcessMgr
      */
-    virtual void processEvent (LCEvent * evt);
-
+    virtual void processEvent(LCEvent *evt);
 
     //! Check event method
     /*! This method is called by the Marlin execution framework as
@@ -188,7 +185,7 @@ namespace eutelescope {
      *
      *  @param evt The LCEvent event as passed by the ProcessMgr
      */
-    virtual void check (LCEvent * evt);
+    virtual void check(LCEvent *evt);
 
     //! Called after data processing.
     /*! This method is called when the loop on events is finished. It
@@ -209,10 +206,9 @@ namespace eutelescope {
      *  information, a SkipEventException is thrown and the geometry
      *  will be initialize with the following event.
      */
-    void initializeGeometry( LCEvent * event ) throw ( marlin::SkipEventException );
+    void initializeGeometry(LCEvent *event) throw(marlin::SkipEventException);
 
   protected:
-
     //! Input collection name.
     /*! For the time being we have just one collection that can be used as input
      */
@@ -232,12 +228,14 @@ namespace eutelescope {
     std::string _pedestalCollectionName;
 
     //! Noise collection name.
-    /*! See EUTelCalibrateEventProcessor::_pedestalCollectionName for the detailed description
+    /*! See EUTelCalibrateEventProcessor::_pedestalCollectionName for the
+     * detailed description
      */
     std::string _noiseCollectionName;
 
     //! Status collection name.
-    /*! See EUTelCalibrateEventProcessor::_pedestalCollectionName for the detailed description
+    /*! See EUTelCalibrateEventProcessor::_pedestalCollectionName for the
+     * detailed description
      */
     std::string _statusCollectionName;
 
@@ -264,7 +262,6 @@ namespace eutelescope {
      *  interface is also needed.
      */
     bool _fillDebugHisto;
-
 
     //! Perform common mode suppression
     /*! The user can perform a common mode suppression step by
@@ -323,7 +320,6 @@ namespace eutelescope {
     std::string _histoInfoFileName;
 
   private:
-
     //! First pixel along X
     /*! This array of int is used to store the number of the first
      *  pixel along the X direction
@@ -367,13 +363,12 @@ namespace eutelescope {
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
-      //! Name of the raw data histogram
-      /*! This histogram contains the raw data value as they come in
-      *  without any processing. It is useful only in the debug phase
-      *  of the DAQ and for low level detector characterization.
-      */
+    //! Name of the raw data histogram
+    /*! This histogram contains the raw data value as they come in
+    *  without any processing. It is useful only in the debug phase
+    *  of the DAQ and for low level detector characterization.
+    */
     static std::string _rawDataDistHistoName;
-
 
     //! Name of the pedestal corrected signal distribution
     /*! Very similar to the
@@ -408,7 +403,7 @@ namespace eutelescope {
      *  want to use <code>dynamic_cast</code> to convert them back to
      *  their original cast.
      */
-    std::map<std::string , AIDA::IBaseHistogram * > _aidaHistoMap;
+    std::map<std::string, AIDA::IBaseHistogram *> _aidaHistoMap;
 #endif
 
     //! Map relating ancillary collection position and sensorID
@@ -416,27 +411,25 @@ namespace eutelescope {
      *  position of such a sensorID in all the ancillary collections
      *  (noise, pedestal and status).
      */
-    std::map< int, int > _ancillaryIndexMap;
+    std::map<int, int> _ancillaryIndexMap;
 
     //! Map relating the sensorID and pixels
-    std::map< int, unsigned int > _noOfPixelMap;
+    std::map<int, unsigned int> _noOfPixelMap;
 
     //! Map relating the sensorID and pixels per row
-    std::map< int, unsigned int > _noOfPixelPerRowMap;
+    std::map<int, unsigned int> _noOfPixelPerRowMap;
 
     //! Map relating the sensorID and the rows
-    std::map< int, unsigned int > _noOfRowMap;
+    std::map<int, unsigned int> _noOfRowMap;
 
     //! Geometry ready switch
     /*! This boolean reveals if the geometry has been properly
      *  initialized or not.
      */
     bool _isGeometryReady;
-
   };
 
   //! A global instance of the processor
   EUTelCalibrateEventProcessor gEUTelCalibrateEventProcessor;
-
 }
 #endif

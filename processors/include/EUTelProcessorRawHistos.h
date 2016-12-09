@@ -17,8 +17,8 @@
 #include "marlin/Processor.h"
 
 // lcio includes <.h>
-#include <LCIOTypes.h>
 #include <IMPL/LCCollectionVec.h>
+#include <LCIOTypes.h>
 
 // AIDA includes <.h>
 #include <AIDA/IBaseHistogram.h>
@@ -29,44 +29,48 @@
 
 namespace eutelescope {
 
-//! Simple helper struct for a sensor pixel layout
-/*  Contains the pixel count as well as the offset values
- *  this is necessay if fore example pixel indices range from
- *  50-99 instead of 0-50. The offset allows mapping to a
- *  range from 0 to (pixel count - 1) which is required to
- *  access the array in which hits are counted.
- */
-struct sensor {
-	int offX, offY;
-	int sizeX, sizeY;
-};
+  //! Simple helper struct for a sensor pixel layout
+  /*  Contains the pixel count as well as the offset values
+   *  this is necessay if fore example pixel indices range from
+   *  50-99 instead of 0-50. The offset allows mapping to a
+   *  range from 0 to (pixel count - 1) which is required to
+   *  access the array in which hits are counted.
+   */
+  struct sensor {
+    int offX, offY;
+    int sizeX, sizeY;
+  };
 
-//! Processor to write out hot pixels 
-/*! This processor is used to keep hot matrix out from the analysis
- *  procedure. It checks if pixels fired above a certain frequency
- *  and writes them into a TrackerData collection in an external 
- *  file if they did.
- *  You have to specify which plane IDs shall be processed (SensorIDVec)
- *  as well as which ones shall be excluded (ExcludedPlanes). This is
- *  necessary for histogramming and fast data processing.
- *
- *  @param NoOfEvents The amount of events to determine the firing frequency
- *
- *  @param SensorIDVec An integer vector containing the sensor IDs of the
- *  planes which are processed
- *
- *  @param MaxAllowedFiringFreq The firing frequency cut which shall be applied
- *
- *  @param HotPixelDBFile Name of the output file, currently appending to a file 
- *  does not work, use differnt files if multiple hot pixel collections are created
- *
- *  @param ExcludedPlanes Planes to be excluded from processing
- *
- *  @param HotPixelCollectionName The name of the collection in the output file
- */
-class EUTelProcessorRawHistos : public marlin::Processor {
+  //! Processor to write out hot pixels
+  /*! This processor is used to keep hot matrix out from the analysis
+   *  procedure. It checks if pixels fired above a certain frequency
+   *  and writes them into a TrackerData collection in an external
+   *  file if they did.
+   *  You have to specify which plane IDs shall be processed (SensorIDVec)
+   *  as well as which ones shall be excluded (ExcludedPlanes). This is
+   *  necessary for histogramming and fast data processing.
+   *
+   *  @param NoOfEvents The amount of events to determine the firing frequency
+   *
+   *  @param SensorIDVec An integer vector containing the sensor IDs of the
+   *  planes which are processed
+   *
+   *  @param MaxAllowedFiringFreq The firing frequency cut which shall be
+   * applied
+   *
+   *  @param HotPixelDBFile Name of the output file, currently appending to a
+   * file
+   *  does not work, use differnt files if multiple hot pixel collections are
+   * created
+   *
+   *  @param ExcludedPlanes Planes to be excluded from processing
+   *
+   *  @param HotPixelCollectionName The name of the collection in the output
+   * file
+   */
+  class EUTelProcessorRawHistos : public marlin::Processor {
 
-public:
+  public:
     //! Returns a new instance of EUTelProcessorRawHistos
     /*! This method returns an new instance of the this processor.  It
      *  is called by Marlin execution framework and it shouldn't be
@@ -74,9 +78,7 @@ public:
      *
      *  @return a new EUTelProcessorRawHistos.
      */
-    virtual Processor* newProcessor() {
-      return new EUTelProcessorRawHistos;
-    }
+    virtual Processor *newProcessor() { return new EUTelProcessorRawHistos; }
 
     //! Default constructor
     EUTelProcessorRawHistos();
@@ -89,7 +91,7 @@ public:
      *  out the processor parameters and performs some asserts about
      *  the value of the provided parameters
      */
-    virtual void init ();
+    virtual void init();
 
     //! Called for every run.
     /*! It is called for every run, and consequently the run counter
@@ -99,7 +101,7 @@ public:
      *
      *  @throw InvalidParameterException if a paramter is wrongly set
      */
-    virtual void processRunHeader (LCRunHeader * run);
+    virtual void processRunHeader(LCRunHeader *run);
 
     //! Called every event
     /*! This is called for each event in the file. If the current @c
@@ -112,7 +114,7 @@ public:
      *  @throw InvalidParameterException if information in the cellID
      *  are inconsistence
      */
-    virtual void processEvent(LCEvent * evt);
+    virtual void processEvent(LCEvent *evt);
 
     //! Check call back
     /*! This method is called every event just after the processEvent
@@ -122,7 +124,7 @@ public:
      *  @param evt the current LCEvent event as passed by the
      *  ProcessMgr
      */
-    //virtual void check( LCEvent* event );
+    // virtual void check( LCEvent* event );
 
     //! Called after data processing.
     /*! This method is called when the loop on events is
@@ -130,35 +132,32 @@ public:
      */
     virtual void end();
 
-
-protected:
+  protected:
     //! book histogram method
     void bookHistos();
 
-	std::map<int,AIDA::IHistogram1D*> _countHisto;
-	std::map<int,AIDA::IHistogram1D*> _chargeHisto;
-	std::map<int,AIDA::IHistogram1D*> _timeHisto;
+    std::map<int, AIDA::IHistogram1D *> _countHisto;
+    std::map<int, AIDA::IHistogram1D *> _chargeHisto;
+    std::map<int, AIDA::IHistogram1D *> _timeHisto;
 
-    
-
-	std::map<int,AIDA::IHistogram1D*> _countHistoNoNoise;
-	std::map<int,AIDA::IHistogram1D*> _chargeHistoNoNoise;
-	std::map<int,AIDA::IHistogram1D*> _timeHistoNoNoise;
-	//! Input collection name for ZS data
+    std::map<int, AIDA::IHistogram1D *> _countHistoNoNoise;
+    std::map<int, AIDA::IHistogram1D *> _chargeHistoNoNoise;
+    std::map<int, AIDA::IHistogram1D *> _timeHistoNoNoise;
+    //! Input collection name for ZS data
     /*! The input collection is the calibrated data one coming from
      *  the input data file. It is, usually, called
      *  "zsdata" and it is a collection of TrackerData
      */
     std::string _zsDataCollectionName;
-	std::string _noisyPixCollectionName;
+    std::string _noisyPixCollectionName;
     //! Number of events for update cycle
     int _noOfEvents;
-   	
-   bool _treatNoise;
 
-    //! Vector of map arrays, keeps record of hit pixels 
+    bool _treatNoise;
+
+    //! Vector of map arrays, keeps record of hit pixels
     /*! The vector elements are sorted by Detector ID
-     *  For each Detector unique ID element a map of pixels is created. 
+     *  For each Detector unique ID element a map of pixels is created.
      *  Key is a (sensor) unique pixel Id (to be addressed via
      *  _inverse_hitIndexMapVec)
      */
@@ -181,15 +180,14 @@ protected:
      */
     std::vector<int> _sensorIDVec;
 
-	int cantorEncode(int x, int y);
+    int cantorEncode(int x, int y);
 
-	void initialiseNoisyPixels( LCCollectionVec* const);
+    void initialiseNoisyPixels(LCCollectionVec *const);
 
-	std::map<int, std::vector<int>> _noisyPixelVecMap;
-};
+    std::map<int, std::vector<int>> _noisyPixelVecMap;
+  };
 
-//! A global instance of the processor
-EUTelProcessorRawHistos gEUTelProcessorRawHistos;
-
+  //! A global instance of the processor
+  EUTelProcessorRawHistos gEUTelProcessorRawHistos;
 }
 #endif

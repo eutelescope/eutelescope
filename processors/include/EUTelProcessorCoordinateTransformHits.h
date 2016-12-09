@@ -1,4 +1,4 @@
-//Writen by Alexander Morton <alexander.morton@desy.de>
+// Writen by Alexander Morton <alexander.morton@desy.de>
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -14,20 +14,20 @@
 #ifdef USE_GEAR
 
 // eutelescope includes ".h"
-#include "EUTelUtility.h"
 #include "EUTelEventImpl.h"
+#include "EUTelUtility.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
 
 // gear includes <.h>
-#include <gear/SiPlanesParameters.h>
 #include <gear/SiPlanesLayerLayout.h>
+#include <gear/SiPlanesParameters.h>
 
 // lcio includes <.h>
-#include <EVENT/LCRunHeader.h>
-#include <EVENT/LCEvent.h>
 #include <EVENT/LCCollection.h>
+#include <EVENT/LCEvent.h>
+#include <EVENT/LCRunHeader.h>
 
 // AIDA includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -37,59 +37,62 @@
 #include <IMPL/LCCollectionVec.h>
 
 // system includes <>
-#include <string>
-#include <vector>
 #include <map>
 #include <set>
+#include <string>
+#include <vector>
 
 // lcio includes <.h>
-#include <UTIL/CellIDEncoder.h>
 #include <UTIL/CellIDDecoder.h>
-
+#include <UTIL/CellIDEncoder.h>
 
 namespace eutelescope {
 
   class EUTelProcessorCoordinateTransformHits : public marlin::Processor {
 
-  	private:
-    DISALLOW_COPY_AND_ASSIGN(EUTelProcessorCoordinateTransformHits) //This makes ensures that no other with this name can be created
+  private:
+    DISALLOW_COPY_AND_ASSIGN(EUTelProcessorCoordinateTransformHits) // This
+                                                                    // makes
+                                                                    // ensures
+                                                                    // that no
+                                                                    // other
+                                                                    // with this
+                                                                    // name can
+                                                                    // be
+                                                                    // created
 
-  	public:
-
+  public:
     // Returns a new instance of EUTelProcessorCoordinateTransformHits
-    virtual Processor * newProcessor() {
+    virtual Processor *newProcessor() {
       return new EUTelProcessorCoordinateTransformHits;
     }
 
-		EUTelProcessorCoordinateTransformHits(); //Default constructor 
-		//Called only at the begining of a job
-  	virtual void init ();
+    EUTelProcessorCoordinateTransformHits(); // Default constructor
+    // Called only at the begining of a job
+    virtual void init();
 
-		//Called every run 
-  	virtual void processRunHeader (LCRunHeader * run);
-	
-		//Called every event.
-  	virtual void processEvent (LCEvent * event);
+    // Called every run
+    virtual void processRunHeader(LCRunHeader *run);
 
-		//Called at the end of the job
-  	virtual void end();
+    // Called every event.
+    virtual void processEvent(LCEvent *event);
 
-		private:
-    
-		//Only names wit _(name) come from the steering file.
-		//Collection names
-		std::string _hitCollectionNameInput;
-		std::string _hitCollectionNameOutput;
-		bool _undoAlignment;
+    // Called at the end of the job
+    virtual void end();
 
-	};//close class declaration
+  private:
+    // Only names wit _(name) come from the steering file.
+    // Collection names
+    std::string _hitCollectionNameInput;
+    std::string _hitCollectionNameOutput;
+    bool _undoAlignment;
+
+  }; // close class declaration
 
   //! A global instance of the processor
- 	EUTelProcessorCoordinateTransformHits gEUTelLocaltoGlobalHitMaker;
+  EUTelProcessorCoordinateTransformHits gEUTelLocaltoGlobalHitMaker;
 
+} // close eutelescope namespace scope
 
-}//close eutelescope namespace scope
-
-
-#endif //Gear check ifndef
-#endif //EUTelLocaltoGlobalHitMaker ifndef
+#endif // Gear check ifndef
+#endif // EUTelLocaltoGlobalHitMaker ifndef

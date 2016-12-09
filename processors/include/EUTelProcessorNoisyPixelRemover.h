@@ -16,27 +16,25 @@
 #include "marlin/Processor.h"
 
 // lcio includes <.h>
-#include <LCIOTypes.h>
 #include <IMPL/LCCollectionVec.h>
+#include <LCIOTypes.h>
 
 // AIDA includes <.h>
 //#include <AIDA/IBaseHistogram.h>
 
 // system includes
 
-
 namespace eutelescope {
 
   //! Processor to remove noisy clusters from a TrackerPulse collection
   /*! This processor clones the input TrackerPulse collection, but checks
    *  for any clusters if their quality flag: kNoisyCluster is set.
-   *  If so, they are removed from the output collection. 
+   *  If so, they are removed from the output collection.
    */
 
-class EUTelProcessorNoisyPixelRemover : public marlin::Processor {
+  class EUTelProcessorNoisyPixelRemover : public marlin::Processor {
 
   public:
-
     //! Returns a new instance of EUTelProcessorNoisyPixelRemover
     /*! This method returns an new instance of the this processor.  It
      *  is called by Marlin execution framework and it shouldn't be
@@ -44,7 +42,7 @@ class EUTelProcessorNoisyPixelRemover : public marlin::Processor {
      *
      *  @return a new EUTelProcessorNoisyPixelRemover.
      */
-    virtual Processor* newProcessor() {
+    virtual Processor *newProcessor() {
       return new EUTelProcessorNoisyPixelRemover;
     }
 
@@ -66,7 +64,7 @@ class EUTelProcessorNoisyPixelRemover : public marlin::Processor {
      *
      *  @throw InvalidParameterException if a paramter is wrongly set
      */
-    virtual void processRunHeader(LCRunHeader * run);
+    virtual void processRunHeader(LCRunHeader *run);
 
     //! Called every event
     /*! This is called for each event in the file. If the current @c
@@ -79,7 +77,7 @@ class EUTelProcessorNoisyPixelRemover : public marlin::Processor {
      *  @throw InvalidParameterException if information in the cellID
      *  are inconsistence
      */
-    virtual void processEvent(LCEvent * evt);
+    virtual void processEvent(LCEvent *evt);
 
     //! Called after data processing.
     /*! This method is called when the loop on events is
@@ -87,24 +85,23 @@ class EUTelProcessorNoisyPixelRemover : public marlin::Processor {
      */
     virtual void end();
 
-
   protected:
-	//! Input collection name of the TrackerPulse collection	
-	std::string _inputCollectionName;
+    //! Input collection name of the TrackerPulse collection
+    std::string _inputCollectionName;
 
-	//! Output collection name for noise free pulses
-	std::string _outputCollectionName; 
-	
-	//! Collection name for noisy pixel collection
-	std::string _noisyPixelCollectionName; 
-	
-	std::map<int, std::vector<int>> _noisyPixelMap;
-	bool _firstEvent = true;
-};
+    //! Output collection name for noise free pulses
+    std::string _outputCollectionName;
 
-//! A global instance of the processor
-EUTelProcessorNoisyPixelRemover gEUTelProcessorNoisyPixelRemover;
+    //! Collection name for noisy pixel collection
+    std::string _noisyPixelCollectionName;
 
-}//namespace eutelescope
+    std::map<int, std::vector<int>> _noisyPixelMap;
+    bool _firstEvent = true;
+  };
 
-#endif //EUTelProcessorNoisyPixelRemover_H
+  //! A global instance of the processor
+  EUTelProcessorNoisyPixelRemover gEUTelProcessorNoisyPixelRemover;
+
+} // namespace eutelescope
+
+#endif // EUTelProcessorNoisyPixelRemover_H

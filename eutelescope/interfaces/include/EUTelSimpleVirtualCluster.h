@@ -1,4 +1,4 @@
-//TODO: DOCUMENTATION
+// TODO: DOCUMENTATION
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -22,31 +22,32 @@
 
 namespace eutelescope {
 
-//! Virtual class to describe cluster from ZS data in EUTelescope
-/* Currently only implemented in @class EUTelGenericSparseClusterImpl 
- * it should be used as a base class for any cluster classes.
- */
-class EUTelSimpleVirtualCluster {
+  //! Virtual class to describe cluster from ZS data in EUTelescope
+  /* Currently only implemented in @class EUTelGenericSparseClusterImpl
+   * it should be used as a base class for any cluster classes.
+   */
+  class EUTelSimpleVirtualCluster {
 
-public:
+  public:
     //! Default constructor
-    EUTelSimpleVirtualCluster(IMPL::TrackerDataImpl* data) : _trackerData(data) { } 
+    EUTelSimpleVirtualCluster(IMPL::TrackerDataImpl *data)
+        : _trackerData(data) {}
 
     //! Default destructor
-    virtual ~EUTelSimpleVirtualCluster() {;}
+    virtual ~EUTelSimpleVirtualCluster() { ; }
 
     //! Get the cluster dimensions
     /*! For each cluster type is always possible to define the
-     *  external sizes. 
+     *  external sizes.
      *
      *  @param xSize The size along x
      *  @param ySize The size along y
-     */ 
-    virtual void getClusterSize(int& xSize, int& ySize) const = 0;
+     */
+    virtual void getClusterSize(int &xSize, int &ySize) const = 0;
 
-    virtual void getCenterOfGravity(float& xCoG, float& yCoG) const = 0;
+    virtual void getCenterOfGravity(float &xCoG, float &yCoG) const = 0;
 
-    //virtual unsigned int size() const = 0;
+    // virtual unsigned int size() const = 0;
 
     //! Return the total charge
     /*!
@@ -60,15 +61,15 @@ public:
      *
      *  @return The pointer of _trackerData
      */
-    virtual IMPL::TrackerDataImpl* trackerData() = 0;
+    virtual IMPL::TrackerDataImpl *trackerData() = 0;
 
     //! Print
     /*! This method is used to print out the content of the clusters
-     * 
+     *
      *  @param os The input output stream
      */
-    virtual void print(std::ostream& os) const = 0;
-      
+    virtual void print(std::ostream &os) const = 0;
+
     //! Overload of operator<<
     /*! This friend function is the overload of the operator << for
      *  the virtual cluster class. It uses the print method that is
@@ -78,20 +79,24 @@ public:
      *  method
      *  @param clu The cluster to be stream out
      *  @return The output stream
-     */ 
-    friend  std::ostream& operator<< (std::ostream& os , const EUTelSimpleVirtualCluster & clu )  { clu.print(os); return os; }
+     */
+    friend std::ostream &operator<<(std::ostream &os,
+                                    const EUTelSimpleVirtualCluster &clu) {
+      clu.print(os);
+      return os;
+    }
 
-private:
-	DISALLOW_COPY_AND_ASSIGN(EUTelSimpleVirtualCluster)
+  private:
+    DISALLOW_COPY_AND_ASSIGN(EUTelSimpleVirtualCluster)
 
-protected:
+  protected:
     //! The tracker data member
     /*! This is the core of the decorator pattern design. Whenever an
      *  object deriving from this virtual class is created from an
      *  already existing TrackerData object, this is assigned to
-     *  _trackerData by the constructor. 
-     */ 
-    IMPL::TrackerDataImpl* _trackerData;
+     *  _trackerData by the constructor.
+     */
+    IMPL::TrackerDataImpl *_trackerData;
   };
 }
 #endif

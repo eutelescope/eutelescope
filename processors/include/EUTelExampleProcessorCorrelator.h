@@ -18,12 +18,12 @@
 #include "marlin/Processor.h"
 
 // gear includes <.h>
-#include <gear/SiPlanesParameters.h>
 #include <gear/SiPlanesLayerLayout.h>
+#include <gear/SiPlanesParameters.h>
 
 // lcio includes <.h>
-#include <EVENT/LCRunHeader.h>
 #include <EVENT/LCEvent.h>
+#include <EVENT/LCRunHeader.h>
 #include <IMPL/TrackerHitImpl.h>
 
 // AIDA includes <.h>
@@ -32,11 +32,10 @@
 #include <AIDA/IHistogram2D.h>
 #endif
 
-
 // system includes <>
+#include <map>
 #include <string>
 #include <vector>
-#include <map>
 
 namespace eutelescope {
 
@@ -70,8 +69,6 @@ namespace eutelescope {
   class EUTelExampleProcessorCorrelator : public marlin::Processor {
 
   public:
-
-
     //! Returns a new instance of EUTelExampleProcessorCorrelator
     /*! This method returns a new instance of this processor.  It is
      *  called by Marlin execution framework and it shouldn't be
@@ -79,18 +76,18 @@ namespace eutelescope {
      *
      *  @return a new EUTelExampleProcessorCorrelator.
      */
-    virtual Processor * newProcessor() {
+    virtual Processor *newProcessor() {
       return new EUTelExampleProcessorCorrelator;
     }
 
     //! Default constructor
-    EUTelExampleProcessorCorrelator ();
+    EUTelExampleProcessorCorrelator();
 
     //! Called at the job beginning.
     /*! This is executed only once in the whole execution. It prints
      *  out the processor parameters
      */
-    virtual void init ();
+    virtual void init();
 
     //! Called for every run.
     /*! It is called for every run, and consequently the run counter
@@ -98,7 +95,7 @@ namespace eutelescope {
      *
      *  @param run the LCRunHeader of the this current run
      */
-    virtual void processRunHeader (LCRunHeader * run);
+    virtual void processRunHeader(LCRunHeader *run);
 
     //! Called every event
     /*! For each event, we loop over both the telescope and DUT input
@@ -110,8 +107,7 @@ namespace eutelescope {
      *  @param evt the current LCEvent event as passed by the
      *  ProcessMgr
      */
-    virtual void processEvent (LCEvent * evt);
-
+    virtual void processEvent(LCEvent *evt);
 
     //! Called after data processing.
     /*! This method is called when the loop on events is
@@ -119,16 +115,13 @@ namespace eutelescope {
      */
     virtual void end();
 
-
     //! Histogram booking
     /*! This method is used to book all the correlation histograms. It
      *  is called by processEvent when processing the first event.
      */
     void bookHistos();
 
-
   protected:
-
     //! Telescope input hit collection name
     std::string _inputTelescopeCollectionName;
 
@@ -139,10 +132,9 @@ namespace eutelescope {
     /*! It is checking against the distance of each plane assuming
      *  that this hit is belonging to the plane at the closest distant.
      */
-    int guessSensorID( TrackerHitImpl * hit ) ;
+    int guessSensorID(TrackerHitImpl *hit);
 
   private:
-
     //! Run number
     int _iRun;
 
@@ -159,7 +151,7 @@ namespace eutelescope {
      *  This object is provided by GEAR during the init() phase and
      *  stored here for local use.
      */
-    gear::SiPlanesParameters * _siPlanesParameters;
+    gear::SiPlanesParameters *_siPlanesParameters;
 
     //! Silicon plane layer layout
     /*! This is the real geometry description. For each layer
@@ -169,10 +161,10 @@ namespace eutelescope {
      *  This object is taken from the _siPlanesParameters during the
      *  init() phase and stored for local use
      */
-    gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
+    gear::SiPlanesLayerLayout *_siPlanesLayerLayout;
 
     //! An array with the Z position of planes
-    double * _siPlaneZPosition;
+    double *_siPlaneZPosition;
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
@@ -185,25 +177,22 @@ namespace eutelescope {
      *  The histogram filling can proceed recalling an object through
      *  its name
      */
-    std::map<std::string, AIDA::IBaseHistogram * > _aidaHistoMap;
+    std::map<std::string, AIDA::IBaseHistogram *> _aidaHistoMap;
 
     //! Correlation histogram matrix
     /*! This is used to store the pointers of each histogram
      */
-    std::map< unsigned int , AIDA::IHistogram2D* >  _hitXCorrelationMatrix;
-    std::map< unsigned int , AIDA::IHistogram2D* >  _hitYCorrelationMatrix;
+    std::map<unsigned int, AIDA::IHistogram2D *> _hitXCorrelationMatrix;
+    std::map<unsigned int, AIDA::IHistogram2D *> _hitYCorrelationMatrix;
 
     //! Base name of the correlation histogram
     static std::string _hitXCorrelationHistoName;
     static std::string _hitYCorrelationHistoName;
 #endif
-
   };
 
   //! A global instance of the processor
   EUTelExampleProcessorCorrelator gEUTelExampleProcessorCorrelator;
-
-
 }
 
 #endif

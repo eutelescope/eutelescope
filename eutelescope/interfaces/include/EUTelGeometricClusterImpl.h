@@ -15,23 +15,23 @@
 
 namespace eutelescope {
 
-//! Implementation of a cluster made of sparsified pixels
-class EUTelGeometricClusterImpl : public EUTelGenericSparseClusterImpl<EUTelGeometricPixel>
-{
+  //! Implementation of a cluster made of sparsified pixels
+  class EUTelGeometricClusterImpl
+      : public EUTelGenericSparseClusterImpl<EUTelGeometricPixel> {
   public:
-	//! Default constructor
-	EUTelGeometricClusterImpl(IMPL::TrackerDataImpl* data);
+    //! Default constructor
+    EUTelGeometricClusterImpl(IMPL::TrackerDataImpl *data);
 
-	//! Destructor
-	virtual ~EUTelGeometricClusterImpl();
+    //! Destructor
+    virtual ~EUTelGeometricClusterImpl();
 
-	void getClusterGeomInfo(float& xPos, float& yPos, float& xSize, float& ySize) const;
+    void getClusterGeomInfo(float &xPos, float &yPos, float &xSize,
+                            float &ySize) const;
 
-	void getGeometricCenterOfGravity(float& xCoG, float& yCoG) const;
+    void getGeometricCenterOfGravity(float &xCoG, float &yCoG) const;
 
   private:
-	DISALLOW_COPY_AND_ASSIGN(EUTelGeometricClusterImpl)
-};
-
+    DISALLOW_COPY_AND_ASSIGN(EUTelGeometricClusterImpl)
+  };
 }
 #endif

@@ -19,9 +19,9 @@
 
 // system includes <>
 #include <map>
+#include <sstream>
 #include <string>
 #include <vector>
-#include <sstream>
 
 namespace eutelescope {
 
@@ -52,7 +52,8 @@ namespace eutelescope {
    *  she/he has to provide the following in the steering file:
    *
    *  @code
-   *  <parameter name="ClusterMinTotalCharge" type="FloatVec"> 100 100 100 100 </parameter>
+   *  <parameter name="ClusterMinTotalCharge" type="FloatVec"> 100 100 100 100
+   </parameter>
    *  @endcode
    *
    *  If instead she/he wants to cuts on the charge of a cluster but
@@ -60,7 +61,8 @@ namespace eutelescope {
    *  steering file should something like this:
    *
    *  @code
-   *  <parameter name="ClusterNMinCharge" type="FloatVec"> 9 75 43 55 87 </parameter>
+   *  <parameter name="ClusterNMinCharge" type="FloatVec"> 9 75 43 55 87
+   </parameter>
    *  @endcode
    *
    *  This last parameter will set a cut on the cluster charge
@@ -73,7 +75,8 @@ namespace eutelescope {
    *  example, by 3 x 3 pixels only.
    *
    *  @code
-   *  <parameter name="ClusterNxNMinCharge" type"FloatVec"> 3 90 95 120 </parameter>
+   *  <parameter name="ClusterNxNMinCharge" type"FloatVec"> 3 90 95 120
+   </parameter>
    *  @endcode
    *
    *  As above the first number if the subcluster size.
@@ -127,8 +130,10 @@ namespace eutelescope {
    *  following parametrization:
    *
    *  @code
-   *  <parameter name="InsideRegion" type="FloatVec"> detID xBotLeft  yBotLeft xTopRight yTopRight  </parameter>
-   *  <parameter name="OutsideRegion" type="FloatVec"> detID xBotLeft  yBotLeft xTopRight yTopRight  </parameter>
+   *  <parameter name="InsideRegion" type="FloatVec"> detID xBotLeft  yBotLeft
+   xTopRight yTopRight  </parameter>
+   *  <parameter name="OutsideRegion" type="FloatVec"> detID xBotLeft  yBotLeft
+   xTopRight yTopRight  </parameter>
    *  @endcode
    *
    *  <h4> Input collection </h4>
@@ -247,8 +252,6 @@ namespace eutelescope {
   class EUTelClusterFilter : public marlin::Processor {
 
   public:
-
-
     //! Returns a new instance of EUTeleClusterSeparationProcessor
     /*! This method returns an new instance of the this processor.  It
      *  is called by Marlin execution framework and it shouldn't be
@@ -256,16 +259,14 @@ namespace eutelescope {
      *
      *  @return a new EUTeleClusterSeparationProcessor.
      */
-    virtual Processor * newProcessor() {
-      return new EUTelClusterFilter;
-    }
+    virtual Processor *newProcessor() { return new EUTelClusterFilter; }
 
     //! Default constructor
     /*! This is the place where all the processor parameters are
      *  assigned to their local variable in the class. Those variables
      *  will be crosscheck for consistency in the init() method.
      */
-    EUTelClusterFilter ();
+    EUTelClusterFilter();
 
     //! Called at the job beginning.
     /*! This is printing out all the parameters and also making a
@@ -275,7 +276,7 @@ namespace eutelescope {
      *  are set and cuts are checked for consistency.
      *
      */
-    virtual void init ();
+    virtual void init();
 
     //! Called for every run.
     /*! It is called for every run, and consequently the run counter
@@ -283,7 +284,7 @@ namespace eutelescope {
      *
      *  @param run the LCRunHeader of the this current run
      */
-    virtual void processRunHeader (LCRunHeader * run);
+    virtual void processRunHeader(LCRunHeader *run);
 
     //! Called every event
     /*! This is the method. For each event, the input tracker pulse
@@ -315,8 +316,7 @@ namespace eutelescope {
      *  @throw UnknownDataTypeException if the cluster type stored in
      *  the TrackerPulse is unknown.
      */
-    virtual void processEvent (LCEvent * evt);
-
+    virtual void processEvent(LCEvent *evt);
 
     //! Check event method
     /*! This method is called by the Marlin execution framework as
@@ -326,7 +326,7 @@ namespace eutelescope {
      *
      *  @param evt The LCEvent event as passed by the ProcessMgr
      */
-    virtual void check (LCEvent * evt);
+    virtual void check(LCEvent *evt);
 
     //! Called after data processing.
     /*! This method is called when the loop on events is finished. A
@@ -346,8 +346,7 @@ namespace eutelescope {
      *  @return True if the @c cluster has a charge below its own threshold.
      *
      */
-    bool isAboveMinTotalCharge(EUTelVirtualCluster * cluster) const ;
-
+    bool isAboveMinTotalCharge(EUTelVirtualCluster *cluster) const;
 
     //! Check if the total cluster SNR is above a certain value
     /*! This is used to select clusters having a total SNR above a
@@ -358,7 +357,7 @@ namespace eutelescope {
      *  @return True if the @c cluster has a SNR below its own
      *  threshold.
      */
-    bool isAboveMinTotalSNR(EUTelVirtualCluster * cluster) const;
+    bool isAboveMinTotalSNR(EUTelVirtualCluster *cluster) const;
 
     //! Check if the total cluster charge is below a certain value
     /*! This is used to select clusters having a total integrated
@@ -369,8 +368,9 @@ namespace eutelescope {
      *  @return True if the @c cluster has a charge below its own threshold.
      *
      */
-    bool isBelowMaxTotalCharge(EUTelVirtualCluster * /* cluster */ ) const { return true; }
-
+    bool isBelowMaxTotalCharge(EUTelVirtualCluster * /* cluster */) const {
+      return true;
+    }
 
     //! Check if the total cluster charge is above a certain value
     /*! This is used to select clusters having a total integrated
@@ -381,8 +381,7 @@ namespace eutelescope {
      *  @param cluster The cluster under test.
      *
      */
-    bool isAboveNumberOfHitPixel(EUTelVirtualCluster * cluster) const;
-
+    bool isAboveNumberOfHitPixel(EUTelVirtualCluster *cluster) const;
 
     //! Check against the charge collected by N pixels
     /*! This is working in a similar way to the isAboveMinTotalCharge
@@ -396,7 +395,7 @@ namespace eutelescope {
      *  @return True if the charge is above threshold
      *  @param cluster The cluster under test.
      */
-    bool isAboveNMinCharge(EUTelVirtualCluster * cluster) const;
+    bool isAboveNMinCharge(EUTelVirtualCluster *cluster) const;
 
     //! Check against the SNR of the N most significant pixels
     /*! The SNR of the cluster made by the first N significant pixels
@@ -409,7 +408,7 @@ namespace eutelescope {
      *  @return True if the SNR is above threshold
      *  @param cluster The cluster under test.
      */
-    bool isAboveNMinSNR(EUTelVirtualCluster * cluster) const;
+    bool isAboveNMinSNR(EUTelVirtualCluster *cluster) const;
 
     //! Check against the charge collected by N x N pixels
     /*! This cut is working on the charge collected by a subframe N x
@@ -418,7 +417,7 @@ namespace eutelescope {
      *  @param cluster The cluster under test.
      *  @return True if the charge is above threshold.
      */
-    bool isAboveNxNMinCharge(EUTelVirtualCluster * cluster) const;
+    bool isAboveNxNMinCharge(EUTelVirtualCluster *cluster) const;
 
     //! Check against the SNR collected by N x N pixels
     /*! This cut is working on the SNR collected by a subframe N x
@@ -427,7 +426,7 @@ namespace eutelescope {
      *  @param cluster The cluster under test.
      *  @return True if the SNR is above threshold.
      */
-    bool isAboveNxNMinSNR(EUTelVirtualCluster * cluster) const;
+    bool isAboveNxNMinSNR(EUTelVirtualCluster *cluster) const;
 
     //! Seed pixel cut
     /*! This is used to select clusters having a seed pixel charge
@@ -436,7 +435,7 @@ namespace eutelescope {
      *  @return True if the seed pixel charge is above threshold
      *  @param cluster The cluster under test.
      */
-    bool isAboveMinSeedCharge(EUTelVirtualCluster * cluster) const;
+    bool isAboveMinSeedCharge(EUTelVirtualCluster *cluster) const;
 
     //! Seed SNR cut
     /*! This is used to select clusters having a seed pixel SNR above
@@ -445,7 +444,7 @@ namespace eutelescope {
      *  @return True if the seed SNR is above threshold
      *  @param cluster The cluster under test.
      */
-    bool isAboveMinSeedSNR(EUTelVirtualCluster * cluster) const;
+    bool isAboveMinSeedSNR(EUTelVirtualCluster *cluster) const;
 
     //! Quality cut
     /*! This is a selection cut based on the cluster quality. Only
@@ -458,7 +457,7 @@ namespace eutelescope {
      *  @return True if the quality is correct
      *  @param cluster The cluster under test.
      */
-    bool hasQuality(EUTelVirtualCluster * cluster) const;
+    bool hasQuality(EUTelVirtualCluster *cluster) const;
 
     //! Same number of hits
     /*! This selection criterion can be used to select events in which
@@ -469,7 +468,7 @@ namespace eutelescope {
      *  sensor planes
      *  @param clusterVec A vector with the number of clusters per plane
      */
-    bool hasSameNumberOfHit(std::vector<int > clusterVec) const;
+    bool hasSameNumberOfHit(std::vector<int> clusterVec) const;
 
     //! Minimum cluster number
     /*! This selection criterion can be used to require a minimum
@@ -480,7 +479,7 @@ namespace eutelescope {
      *  @return True if there are more than the required cluster per plane
      *  @param clusterVec A vector with the number of clusters per plane
      */
-    bool areClusterEnough(std::vector<int > clusterVec) const;
+    bool areClusterEnough(std::vector<int> clusterVec) const;
 
     //! Maximum cluster number
     /*! This selection criterion can be used to limit the maximum
@@ -493,7 +492,7 @@ namespace eutelescope {
      *  @return True if there are TOO MANY clusters
      *  @param clusterVec A vector with the number of clusters per plane
      */
-    bool areClusterTooMany(std::vector<int > clusterVec) const;
+    bool areClusterTooMany(std::vector<int> clusterVec) const;
 
     //! Inside the ROI
     /*! This selection criterion can be used to get only clusters
@@ -503,7 +502,7 @@ namespace eutelescope {
      *  @param cluster The cluster under test.
      *
      */
-    bool isInsideROI(EUTelVirtualCluster * cluster) const;
+    bool isInsideROI(EUTelVirtualCluster *cluster) const;
 
     //! Outside the ROI
     /*! This selection criterion can be used to get only clusters
@@ -513,7 +512,7 @@ namespace eutelescope {
      *  @param cluster The cluster under test.
      *
      */
-    bool isOutsideROI(EUTelVirtualCluster * cluster) const;
+    bool isOutsideROI(EUTelVirtualCluster *cluster) const;
 
     //! Below the maximum cluster noise
     /*! This selection criterion is based on the full cluster noise.
@@ -522,7 +521,7 @@ namespace eutelescope {
      *  allowed.
      *  @param cluster The cluster under test
      */
-    bool isBelowMaxClusterNoise(EUTelVirtualCluster * cluster) const;
+    bool isBelowMaxClusterNoise(EUTelVirtualCluster *cluster) const;
 
     //! Print the rejection summary
     /*! To better understand which cut is more important, a rejection
@@ -539,17 +538,17 @@ namespace eutelescope {
      *
      *  The main input collection (inputPulseCollectionName) is a
      *  collection of pulses, so the number of elements in the
-     *  collection is no more related to the number of sensors. 
+     *  collection is no more related to the number of sensors.
      *
      *  @since Since v00-00-09 for this purpose the noise and status
      *  collections become compulsory. In case the user does not have
      *  any reliable noise collection to be used, (s)he can use the
      *  EUTelAutoPedestalNoiseProcessor to generate a fake noise
-     *  collection. 
+     *  collection.
      *
      *  @param event The LCEvent
      */
-    void initializeGeometry(LCEvent * event);
+    void initializeGeometry(LCEvent *event);
 
     //! Check criteria
     /*! This function is called to check if the user selected criteria
@@ -557,10 +556,9 @@ namespace eutelescope {
      *  parameters provided for each criteria is compatible with the
      *  number of detectors.
      */
-    void checkCriteria() ;
+    void checkCriteria();
 
   protected:
-
     //! Input pulse collection name.
     /*! This is the name of the input pulse collection name
      */
@@ -596,7 +594,7 @@ namespace eutelescope {
      *  lesser equal to zero.
      *
      */
-    std::vector<float > _minTotalChargeVec;
+    std::vector<float> _minTotalChargeVec;
 
     //! Threshold for the minimum total cluster SNR
     /*! This is a vector of the same size as the number of detectors
@@ -606,7 +604,7 @@ namespace eutelescope {
      *  This selection is switched off for a sensor when this value is
      *  lesser equal to zero.
      */
-    std::vector<float > _minTotalSNRVec;
+    std::vector<float> _minTotalSNRVec;
 
     //! Thresholds for the N pixel cluster charge
     /*! This vector contains the thresholds for the minimum allowed
@@ -621,7 +619,7 @@ namespace eutelescope {
      *  To switch it off, just put N = 0.
      *
      */
-    std::vector<float > _minNChargeVec;
+    std::vector<float> _minNChargeVec;
 
     //! Thresholds for the N pixel cluster SNR
     /*! This vector contains the thresholds for the minimum allowed
@@ -635,7 +633,7 @@ namespace eutelescope {
      *
      *  To switch it off, just put N = 0.
      */
-    std::vector<float > _minNSNRVec;
+    std::vector<float> _minNSNRVec;
 
     //! Thresholds for the N x N pixel cluster charge.
     /*! This vector contains the thresholds for the minimum allowed
@@ -649,7 +647,7 @@ namespace eutelescope {
      *
      *  To switch it off, just put N = 0.
      */
-    std::vector<float > _minNxNChargeVec;
+    std::vector<float> _minNxNChargeVec;
 
     //! Thresholds for the N x N pixel cluster SNR.
     /*! This vector contains the thresholds for the minimum allowed
@@ -663,7 +661,7 @@ namespace eutelescope {
      *
      *  To switch it off, just put N = 0.
      */
-    std::vector<float > _minNxNSNRVec;
+    std::vector<float> _minNxNSNRVec;
 
     //! Thresholds for the seed pixel charge
     /*! This vector contains the thresholds for the minimum allowed
@@ -675,7 +673,7 @@ namespace eutelescope {
      *  To switch it off set the components to 0
      *
      */
-    std::vector<float > _minSeedChargeVec;
+    std::vector<float> _minSeedChargeVec;
 
     //! Thresholds for the seed pixel SNR
     /*! This vector contains the thresholds for the minimum allowed
@@ -686,7 +684,7 @@ namespace eutelescope {
      *
      *   To switch it off set the components to 0
      */
-    std::vector<float > _minSeedSNRVec;
+    std::vector<float> _minSeedSNRVec;
 
     //! Qualities for the clusters
     /*! This vector contains the quality information for the
@@ -694,7 +692,7 @@ namespace eutelescope {
      *  Those numbers corresponds to the eutelescope::ClusterQuality
      *  enum type.
      */
-    std::vector<int > _clusterQualityVec;
+    std::vector<int> _clusterQualityVec;
 
     //! Minimum number of cluster per plane
     /*! This vector of contains the minimum number of allowed clusters
@@ -702,28 +700,28 @@ namespace eutelescope {
      *  numbers.
      *
      */
-    std::vector<int > _minClusterNoVec;
+    std::vector<int> _minClusterNoVec;
 
     //! Maximum number of cluster per plane
     /*! This vector of contains the maximum number of allowed clusters
      *  per plane. To switch it off set a negative number.
      *
      */
-    std::vector<int > _maxClusterNoVec;
+    std::vector<int> _maxClusterNoVec;
 
     //! A vector of region of interest
     /*! This is a vector of region of interests and it is built using
      *  the information provided by the user in the steering file. All
      *  clusters should be centered inside those ROI's
      */
-    std::vector<EUTelROI > _insideROIVec;
+    std::vector<EUTelROI> _insideROIVec;
 
     //! A vector of region of interest
     /*! This is a vector of region of interests and it is built using
      *  the information provided by the user in the steering file. All
      *  clusters should be centered outside those ROI's.
      */
-    std::vector<EUTelROI > _outsideROIVec;
+    std::vector<EUTelROI> _outsideROIVec;
 
     //! A vector with the maximum allowed cluster noises.
     /*! This is a vector of float with one components for each plane,
@@ -731,7 +729,7 @@ namespace eutelescope {
      *  noise calculation may depends on the effective cluster
      *  implementation.
      */
-    std::vector<float > _maxClusterNoiseVec;
+    std::vector<float> _maxClusterNoiseVec;
 
     //! A switch to skip empty event
     /*! This boolean steering parameter is used by the user to trigger
@@ -748,14 +746,13 @@ namespace eutelescope {
     bool _skipEmptyEvent;
 
   private:
-
     //! A temporary vector for the inside ROI
     /*! The reason for this temporary array is that from the steering
      *  file the user can specify only values and not directly a
      *  EUTelROI. So the user specified values are stored in the
      *  _tempInsideROI and then moved to the _insideROIVec soon after.
      */
-    std::vector<float > _tempInsideROI;
+    std::vector<float> _tempInsideROI;
 
     //! A temporary vector for the outside ROI
     /*! The reason for this temporary array is that from the steering
@@ -763,7 +760,7 @@ namespace eutelescope {
      *  EUTelROI. So the user specified values are stored in the
      *  _tempOutsideROI and then moved to the _outsideROIVec soon after.
      */
-    std::vector<float > _tempOutsideROI;
+    std::vector<float> _tempOutsideROI;
 
     //! Total cluster counter
     /*! Vector of unsigned integer to count the total number of
@@ -848,7 +845,7 @@ namespace eutelescope {
     bool _dffnhitsswitch;
 
     //! Ancillary index map
-    mutable std::map< int, int > _ancillaryIndexMap;
+    mutable std::map<int, int> _ancillaryIndexMap;
 
     //! Current run number.
     /*! This number is used to store the current run number
@@ -862,12 +859,12 @@ namespace eutelescope {
     int _iEvt;
 
     //! Rejection summary map
-    mutable std::map<std::string, std::vector<unsigned int > > _rejectionMap;
+    mutable std::map<std::string, std::vector<unsigned int>> _rejectionMap;
 
-    //digital fixed frame cuts
+    // digital fixed frame cuts
     std::vector<int> _DFFNHitsCuts;
-  public:
 
+  public:
     //! Helper predicate class
     /*! The main use of this class is to find a ROI having the same
      *  detector ID as the current cluster. It is used as a predicate
@@ -882,7 +879,7 @@ namespace eutelescope {
       /*!
        *  @param id is the detector ID we want to check against
        */
-      HasSameID(int id) : _id(id) {;}
+      HasSameID(int id) : _id(id) { ; }
 
       //! Overload operator()
       /*! This is the operator used by the predicate function in the
@@ -896,19 +893,17 @@ namespace eutelescope {
        *  @return True if the ROI is located on the same sensor
        *  identified by @c _id
        */
-      bool operator()(EUTelROI roi) const { return (roi.getDetectorID() == _id) ; }
+      bool operator()(EUTelROI roi) const {
+        return (roi.getDetectorID() == _id);
+      }
 
     private:
       //! The detector ID
       int _id;
     };
-
-
   };
 
   //! A global instance of the processor
   EUTelClusterFilter gEUTelClusterFilter;
-
 }
 #endif
-

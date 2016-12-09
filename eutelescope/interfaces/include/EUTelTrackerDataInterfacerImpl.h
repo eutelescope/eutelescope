@@ -11,10 +11,10 @@
 
 // personal includes ".h"
 #include "EUTELESCOPE.h"
-#include "EUTelSimpleSparsePixel.h"
 #include "EUTelGenericSparsePixel.h"
 #include "EUTelGeometricPixel.h"
 #include "EUTelMuPixel.h"
+#include "EUTelSimpleSparsePixel.h"
 #include "EUTelTrackerDataInterfacer.h"
 
 #ifdef USE_MARLIN
@@ -23,10 +23,10 @@
 #endif
 
 // lcio includes <.h>
-#include <LCIOTypes.h>
 #include <IMPL/TrackerDataImpl.h>
+#include <LCIOTypes.h>
 
-//system includes
+// system includes
 #include <memory>
 
 // template implementation
@@ -34,4 +34,3 @@
 #include "EUTelTrackerDataInterfacerImpl.tcc"
 
 #endif
-

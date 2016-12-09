@@ -15,12 +15,10 @@
 #include "marlin/Processor.h"
 
 // lcio includes <.h>
-#include <LCIOTypes.h>
 #include <IMPL/LCCollectionVec.h>
+#include <LCIOTypes.h>
 
 // system includes <>
-
-
 
 namespace eutelescope {
 
@@ -93,8 +91,6 @@ namespace eutelescope {
   class EUTelUpdatePedestalNoiseProcessor : public marlin::Processor {
 
   public:
-
-
     //! Returns a new instance of EUTelUpdatePedestalNoiseProcessor
     /*! This method returns an new instance of the this processor.  It
      *  is called by Marlin execution framework and it shouldn't be
@@ -102,19 +98,19 @@ namespace eutelescope {
      *
      *  @return a new EUTelUpdatePedestalNoiseProcessor.
      */
-    virtual Processor * newProcessor() {
+    virtual Processor *newProcessor() {
       return new EUTelUpdatePedestalNoiseProcessor;
     }
 
     //! Default constructor
-    EUTelUpdatePedestalNoiseProcessor ();
+    EUTelUpdatePedestalNoiseProcessor();
 
     //! Called at the job beginning.
     /*! This is executed only once in the whole execution. It prints
      *  out the processor parameters and performs some asserts about
      *  the value of the provided parameters
      */
-    virtual void init ();
+    virtual void init();
 
     //! Called for every run.
     /*! It is called for every run, and consequently the run counter
@@ -124,7 +120,7 @@ namespace eutelescope {
      *
      *  @throw InvalidParameterException if a paramter is wrongly set
      */
-    virtual void processRunHeader (LCRunHeader * run);
+    virtual void processRunHeader(LCRunHeader *run);
 
     //! Called every event
     /*! This is called for each event in the file. If the current @c
@@ -137,7 +133,7 @@ namespace eutelescope {
      *  @throw InvalidParameterException if information in the cellID
      *  are inconsistence
      */
-    virtual void processEvent (LCEvent * evt);
+    virtual void processEvent(LCEvent *evt);
 
     //! Check call back
     /*! This method is called every event just after the processEvent
@@ -147,7 +143,7 @@ namespace eutelescope {
      *  @param evt the current LCEvent event as passed by the
      *  ProcessMgr
      */
-    virtual void check(LCEvent * evt);
+    virtual void check(LCEvent *evt);
 
     //! Called after data processing.
     /*! This method is called when the loop on events is
@@ -155,9 +151,7 @@ namespace eutelescope {
      */
     virtual void end();
 
-
   protected:
-
     //! Fixed weight update algorithm
     /*! This method is called by the processEvent if the _updateAlgo
      *  has been set to EUTELESCOPE::FIXEDWEIGHT. It has been set as
@@ -180,7 +174,7 @@ namespace eutelescope {
      *  @param evt The current LCEvent event as passed by the
      *  processEvent
      */
-    void fixedWeightUpdate(LCEvent * evt);
+    void fixedWeightUpdate(LCEvent *evt);
 
     //! Pixel monitoring
     /*! This method is used to collect some information about the
@@ -203,7 +197,7 @@ namespace eutelescope {
      *  @throw InvalidParameterException if something bad happens with
      *  pixel index calculation.
      */
-    void pixelMonitoring(LCEvent * evt);
+    void pixelMonitoring(LCEvent *evt);
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     //! Fill in AIDA DataPointSet for pixel monitoring
@@ -269,7 +263,7 @@ namespace eutelescope {
      *  to the number of times the update pedestal algorithm has been
      *  called + 1.
      */
-    std::vector<FloatVec > _monitoredPixelPedestal;
+    std::vector<FloatVec> _monitoredPixelPedestal;
 
     //! Noise monitor
     /*! This is a vector of float vectors. There is a FloatVec for
@@ -277,7 +271,7 @@ namespace eutelescope {
      *  to the number of times the update pedestal algorithm has been
      *  called + 1.
      */
-    std::vector<FloatVec > _monitoredPixelNoise;
+    std::vector<FloatVec> _monitoredPixelNoise;
 
     //! Update frequency
     /*! This is an integer number representing how often this
@@ -287,7 +281,6 @@ namespace eutelescope {
      *  to 1, i.e. updated every single event.
      */
     int _updateFrequency;
-
 
     //! Fixed weight value
     /*! This integer number is used in the FixedWeight algorithm to
@@ -326,12 +319,9 @@ namespace eutelescope {
     unsigned short _noOfConsecutiveMissing;
 
   private:
-
-
   };
 
   //! A global instance of the processor
   EUTelUpdatePedestalNoiseProcessor gEUTelUpdatePedestalNoiseProcessor;
-
 }
 #endif
