@@ -11,4 +11,8 @@ before_install:
  - docker pull merualhemio/eutel 
 
 script:
- - docker run -e BUILD_COMMIT=$TRAVIS_COMMIT merualhemio/eutel 
+ - echo "TRAVIS_PULL_REQUEST:" $TRAVIS_PULL_REQUEST
+ - echo "TRAVIS_PULL_REQUEST_BRANCH: " $TRAVIS_PULL_REQUEST_BRANCH
+ - echo "TRAVIS_REPO_SLUG: " $TRAVIS_REPO_SLUG
+ - echo "TRAVIS_COMMIT: " $TRAVIS_COMMIT
+ - docker run -e RUN_NO=$TRAVIS_PULL_REQUEST merualhemio/eutel 
