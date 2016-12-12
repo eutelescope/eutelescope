@@ -66,7 +66,7 @@ TVector3 EUTelGeometryTelescopeGeoDescription::siPlaneNormal( int planeID )
 		std::vector<int>::iterator it = std::find(_sensorIDVec.begin(), _sensorIDVec.end(), planeID);
 		if( it != _sensorIDVec.end() ) {
 			std::array<double,3> const zAxisLocal {{0,0,1}};
-			std::array<double,3> zAxisGlobal; 
+			std::arrray<double,3> zAxisGlobal; 
 			local2MasterVec(planeID, zAxisLocal, zAxisGlobal); 
 			TVector3 normVec(zAxisGlobal.data());
 			_planeNormalMap[planeID] = normVec;
