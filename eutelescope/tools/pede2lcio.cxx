@@ -76,7 +76,7 @@ void prepareGEAR( const string& oldGearfileName, const string& newGearfileName, 
 
    double xplane = 0.;
     double yplane = 0.;
-    double zplane = 0.;
+    doubble zplane = 0.;
     double xrot   = 0.;
     double yrot   = 0.;
     double zrot   = 0.;
