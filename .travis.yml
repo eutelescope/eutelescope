@@ -11,4 +11,4 @@ before_install:
  - docker pull merualhemio/eutel 
 
 script:
- - docker run merualhemio/eutel 
+ - docker run -e BUILD_COMMIT=$TRAVIS_COMMIT merualhemio/eutel 
