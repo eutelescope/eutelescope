@@ -741,57 +741,101 @@ void EUTelTripletGBL::bookHistos()
     createHistogram2D( "GBL/gblprby", 120, -6, 6, 1000, 0, 1 );
   gblprbyHisto->setTitle( "GBL fit probability vs. y at DUT;y at DUT [mm]; GBL fit probability;tracks" );
 
-  gblnxy = AIDAProcessor::histogramFactory(this)->
-    createProfile2D( "GBL/gblnxy", 35, 0., 18.4, 35, 0., 18.4,0,5 );
-  gblnxy->setTitle( "GBL intra-pixel occurrence of CS1-4;GBL track x at plane3 [#mum];GBL track y at plane3 [mm];events" );
+  gblnxy_plane0 = AIDAProcessor::histogramFactory(this)->
+    createProfile2D( "GBL/gblnxy_plane0", 35, 0., 18.4, 35, 0., 18.4,0,5 );
+  gblnxy_plane0->setTitle( "GBL intra-pixel weighted occurrence of all CSs;GBL track x at plane0 [#mum];GBL track y at plane0 [mm];events" );
 
-  gblnCS1xy = AIDAProcessor::histogramFactory(this)->
-    createHistogram2D( "GBL/gblnCS1xy", 35, 0., 18.4, 35, 0., 18.4 );
-  gblnCS1xy->setTitle( "GBL in-pixel occurrence of CS1;GBL track x at plane3 [#mum];GBL track y at plane3 [mm];events" );
+  gblnxy1_plane0 = AIDAProcessor::histogramFactory(this)->
+    createHistogram2D( "GBL/gblnxy1_plane0", 35, 0., 18.4, 35, 0., 18.4);
+  gblnxy1_plane0->setTitle( "GBL intra-pixel occurrence of all CSs;GBL track x at plane0 [#mum];GBL track y at plane0 [mm];events" );
 
-  gblnCS2xy = AIDAProcessor::histogramFactory(this)->
-    createHistogram2D( "GBL/gblnCS2xy", 35, 0., 18.4, 35, 0., 18.4 );
-  gblnCS2xy->setTitle( "GBL in-pixel occurrence of CS2;GBL track x at plane3 [#mum];GBL track y at plane3 [mm];events" );
+  gblnxy_plane3 = AIDAProcessor::histogramFactory(this)->
+    createProfile2D( "GBL/gblnxy_plane3", 35, 0., 18.4, 35, 0., 18.4,0,5 );
+  gblnxy_plane3->setTitle( "GBL intra-pixel weighted occurrence of all CSs;GBL track x at plane3 [#mum];GBL track y at plane3 [mm];events" );
 
-  gblnCS3xy = AIDAProcessor::histogramFactory(this)->
-    createHistogram2D( "GBL/gblnCS3xy", 35, 0., 18.4, 35, 0., 18.4 );
-  gblnCS3xy->setTitle( "GBL in-pixel occurrence of CS3;GBL track x at plane3 [#mum];GBL track y at plane3 [mm];events" );
+  gblnxy1_plane3 = AIDAProcessor::histogramFactory(this)->
+    createHistogram2D( "GBL/gblnxy1_plane3", 35, 0., 18.4, 35, 0., 18.4);
+  gblnxy1_plane3->setTitle( "GBL intra-pixel occurrence of all CSs;GBL track x at plane3 [#mum];GBL track y at plane3 [mm];events" );
 
-  gblnCS4xy = AIDAProcessor::histogramFactory(this)->
-    createHistogram2D( "GBL/gblnCS4xy", 35, 0., 18.4, 35, 0., 18.4 );
-  gblnCS4xy->setTitle( "GBL in-pixel occurrence of CS4;GBL track x at plane3 [#mum];GBL track y at plane3 [mm];events" );
+  gblnCS1xy_plane0 = AIDAProcessor::histogramFactory(this)->
+    createHistogram2D( "GBL/gblnCS1xy_plane0", 35, 0., 18.4, 35, 0., 18.4 );
+  gblnCS1xy_plane0->setTitle( "GBL in-pixel occurrence of CS1;GBL track x at plane0 [#mum];GBL track y at plane0 [mm];events" );
 
-  gblnCS5xy = AIDAProcessor::histogramFactory(this)->
-    createHistogram2D( "GBL/gblnCS5xy", 35, 0., 18.4, 35, 0., 18.4 );
-  gblnCS5xy->setTitle( "GBL in-pixel occurrence of CS5;GBL track x at plane3 [#mum];GBL track y at plane3 [mm];events" );
+  gblnCS2xy_plane0 = AIDAProcessor::histogramFactory(this)->
+    createHistogram2D( "GBL/gblnCS2xy_plane0", 35, 0., 18.4, 35, 0., 18.4 );
+  gblnCS2xy_plane0->setTitle( "GBL in-pixel occurrence of CS2;GBL track x at plane0 [#mum];GBL track y at plane0 [mm];events" );
 
-  gblnCS6xy = AIDAProcessor::histogramFactory(this)->
-    createHistogram2D( "GBL/gblnCS6xy", 35, 0., 18.4, 35, 0., 18.4 );
-  gblnCS6xy->setTitle( "GBL in-pixel occurrence of CS>5;GBL track x at plane3 [#mum];GBL track y at plane3 [mm];events" );
+  gblnCS3xy_plane0 = AIDAProcessor::histogramFactory(this)->
+    createHistogram2D( "GBL/gblnCS3xy_plane0", 35, 0., 18.4, 35, 0., 18.4 );
+  gblnCS3xy_plane0->setTitle( "GBL in-pixel occurrence of CS3;GBL track x at plane0 [#mum];GBL track y at plane0 [mm];events" );
 
-  gblnCS1xy1 = AIDAProcessor::histogramFactory(this)->
-    createHistogram2D( "GBL/gblnCS1xy1", 110, -11, 11, 60, -6, 6 );
-  gblnCS1xy1->setTitle( "GBL occurrence of CS1;GBL track x at plane3 [mm];GBL track y at plane3 [mm];events" );
+  gblnCS4xy_plane0 = AIDAProcessor::histogramFactory(this)->
+    createHistogram2D( "GBL/gblnCS4xy_plane0", 35, 0., 18.4, 35, 0., 18.4 );
+  gblnCS4xy_plane0->setTitle( "GBL in-pixel occurrence of CS4;GBL track x at plane0 [#mum];GBL track y at plane0 [mm];events" );
 
-  gblnCS2xy1 = AIDAProcessor::histogramFactory(this)->
-    createHistogram2D( "GBL/gblnCS2xy1", 110, -11, 11, 60, -6, 6 );
-  gblnCS2xy1->setTitle( "GBL occurrence of CS2;GBL track x at plane3 [mm];GBL track y at plane3 [mm];events" );
+  gblnCS5xy_plane0 = AIDAProcessor::histogramFactory(this)->
+    createHistogram2D( "GBL/gblnCS5xy_plane0", 35, 0., 18.4, 35, 0., 18.4 );
+  gblnCS5xy_plane0->setTitle( "GBL in-pixel occurrence of CS5;GBL track x at plane0 [#mum];GBL track y at plane0 [mm];events" );
 
-  gblnCS3xy1 = AIDAProcessor::histogramFactory(this)->
-    createHistogram2D( "GBL/gblnCS3xy1", 110, -11, 11, 60, -6, 6 );
-  gblnCS3xy1->setTitle( "GBL occurrence of CS3;GBL track x at plane3 [mm];GBL track y at plane3 [mm];events" );
+  gblnCS6xy_plane0 = AIDAProcessor::histogramFactory(this)->
+    createHistogram2D( "GBL/gblnCS6xy_plane0", 35, 0., 18.4, 35, 0., 18.4 );
+  gblnCS6xy_plane0->setTitle( "GBL in-pixel occurrence of CS6;GBL track x at plane0 [#mum];GBL track y at plane0 [mm];events" );
 
-  gblnCS4xy1 = AIDAProcessor::histogramFactory(this)->
-    createHistogram2D( "GBL/gblnCS4xy1", 110, -11, 11, 60, -6, 6 );
-  gblnCS4xy1->setTitle( "GBL occurrence of CS4;GBL track x at plane3 [mm];GBL track y at plane3 [mm];events" );
+  gblnCS7xy_plane0 = AIDAProcessor::histogramFactory(this)->
+    createHistogram2D( "GBL/gblnCS7xy_plane0", 35, 0., 18.4, 35, 0., 18.4 );
+  gblnCS7xy_plane0->setTitle( "GBL in-pixel occurrence of CS>6;GBL track x at plane0 [#mum];GBL track y at plane0 [mm];events" );
 
-  gblnCS5xy1 = AIDAProcessor::histogramFactory(this)->
-    createHistogram2D( "GBL/gblnCS5xy1", 110, -11, 11, 60, -6, 6 );
-  gblnCS5xy1->setTitle( "GBL occurrence of CS5;GBL track x at plane3 [mm];GBL track y at plane3 [mm];events" );
+  gblnCS1xy_plane3 = AIDAProcessor::histogramFactory(this)->
+    createHistogram2D( "GBL/gblnCS1xy_plane3", 35, 0., 18.4, 35, 0., 18.4 );
+  gblnCS1xy_plane3->setTitle( "GBL in-pixel occurrence of CS1;GBL track x at plane3 [#mum];GBL track y at plane3 [mm];events" );
 
-  gblnCS6xy1 = AIDAProcessor::histogramFactory(this)->
-    createHistogram2D( "GBL/gblnCS6xy1", 110, -11, 11, 60, -6, 6 );
-  gblnCS6xy1->setTitle( "GBL occurrence of CS>5;GBL track x at plane3 [mm];GBL track y at plane3 [mm];events" );
+  gblnCS2xy_plane3 = AIDAProcessor::histogramFactory(this)->
+    createHistogram2D( "GBL/gblnCS2xy_plane3", 35, 0., 18.4, 35, 0., 18.4 );
+  gblnCS2xy_plane3->setTitle( "GBL in-pixel occurrence of CS2;GBL track x at plane3 [#mum];GBL track y at plane3 [mm];events" );
+
+  gblnCS3xy_plane3 = AIDAProcessor::histogramFactory(this)->
+    createHistogram2D( "GBL/gblnCS3xy_plane3", 35, 0., 18.4, 35, 0., 18.4 );
+  gblnCS3xy_plane3->setTitle( "GBL in-pixel occurrence of CS3;GBL track x at plane3 [#mum];GBL track y at plane3 [mm];events" );
+
+  gblnCS4xy_plane3 = AIDAProcessor::histogramFactory(this)->
+    createHistogram2D( "GBL/gblnCS4xy_plane3", 35, 0., 18.4, 35, 0., 18.4 );
+  gblnCS4xy_plane3->setTitle( "GBL in-pixel occurrence of CS4;GBL track x at plane3 [#mum];GBL track y at plane3 [mm];events" );
+
+  gblnCS5xy_plane3 = AIDAProcessor::histogramFactory(this)->
+    createHistogram2D( "GBL/gblnCS5xy_plane3", 35, 0., 18.4, 35, 0., 18.4 );
+  gblnCS5xy_plane3->setTitle( "GBL in-pixel occurrence of CS5;GBL track x at plane3 [#mum];GBL track y at plane3 [mm];events" );
+
+  gblnCS6xy_plane3 = AIDAProcessor::histogramFactory(this)->
+    createHistogram2D( "GBL/gblnCS6xy_plane3", 35, 0., 18.4, 35, 0., 18.4 );
+  gblnCS6xy_plane3->setTitle( "GBL in-pixel occurrence of CS6;GBL track x at plane3 [#mum];GBL track y at plane3 [mm];events" );
+
+  gblnCS7xy_plane3 = AIDAProcessor::histogramFactory(this)->
+    createHistogram2D( "GBL/gblnCS7xy_plane3", 35, 0., 18.4, 35, 0., 18.4 );
+  gblnCS7xy_plane3->setTitle( "GBL in-pixel occurrence of CS>6;GBL track x at plane3 [#mum];GBL track y at plane3 [mm];events" );
+
+ gblnCS1xy1_plane3 = AIDAProcessor::histogramFactory(this)->
+    createHistogram2D( "GBL/gblnCS1xy1_plane3", 110, -11, 11, 60, -6, 6 );
+  gblnCS1xy1_plane3->setTitle( "GBL occurrence of CS1;GBL track x at plane3 [mm];GBL track y at plane3 [mm];events" );
+
+  gblnCS2xy1_plane3 = AIDAProcessor::histogramFactory(this)->
+    createHistogram2D( "GBL/gblnCS2xy1_plane3", 110, -11, 11, 60, -6, 6 );
+  gblnCS2xy1_plane3->setTitle( "GBL occurrence of CS2;GBL track x at plane3 [mm];GBL track y at plane3 [mm];events" );
+
+  gblnCS3xy1_plane3 = AIDAProcessor::histogramFactory(this)->
+    createHistogram2D( "GBL/gblnCS3xy1_plane3", 110, -11, 11, 60, -6, 6 );
+  gblnCS3xy1_plane3->setTitle( "GBL occurrence of CS3;GBL track x at plane3 [mm];GBL track y at plane3 [mm];events" );
+
+  gblnCS4xy1_plane3 = AIDAProcessor::histogramFactory(this)->
+    createHistogram2D( "GBL/gblnCS4xy1_plane3", 110, -11, 11, 60, -6, 6 );
+  gblnCS4xy1_plane3->setTitle( "GBL occurrence of CS4;GBL track x at plane3 [mm];GBL track y at plane3 [mm];events" );
+
+  gblnCS5xy1_plane3 = AIDAProcessor::histogramFactory(this)->
+    createHistogram2D( "GBL/gblnCS5xy1_plane3", 110, -11, 11, 60, -6, 6 );
+  gblnCS5xy1_plane3->setTitle( "GBL occurrence of CS5;GBL track x at plane3 [mm];GBL track y at plane3 [mm];events" );
+
+  gblnCS6xy1_plane3 = AIDAProcessor::histogramFactory(this)->
+    createHistogram2D( "GBL/gblnCS6xy1_plane3", 110, -11, 11, 60, -6, 6 );
+  gblnCS6xy1_plane3->setTitle( "GBL occurrence of CS>5;GBL track x at plane3 [mm];GBL track y at plane3 [mm];events" );
 
 
   // bad fits:

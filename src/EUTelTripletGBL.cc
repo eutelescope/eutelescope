@@ -232,7 +232,7 @@ void EUTelTripletGBL::init() {
   for (int i = 1; i < 8; i++) // not from 0 , 0 is average
     streamlog_out( MESSAGE6 ) <<  "CS resolutions: CS" << i << " = " << _resolution.at(i) << std::endl;
 
-  //_triCut = _triCut *6. / _eBeam * (_planePosition[1] - _planePosition[0]) / 20.;
+  _triCut = _triCut *6. / _eBeam * (_planePosition[1] - _planePosition[0]) / 20.;
 
   // Book histograms:
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -1493,20 +1493,20 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
     // debug:
 
     
-    if(_nEvt < 100){
-      cout << "traj with " << traj.getNumPoints() << " points:" << endl;
+    if(_nEvt < 5){
+      streamlog_out(MESSAGE4) << "traj with " << traj.getNumPoints() << " points:" << endl;
       for( int ipl = 0; ipl < 6; ++ipl ){
-        cout << "  plane " << ipl << ", lab " << ilab[ipl];
-        cout << "  z " << sPoint[ilab[ipl]-1];
-        cout << " dx " << rx[ipl];
-        cout << " dy " << ry[ipl];
-        cout << " chi2 " << Chi2;
-        cout << " ndf " << Ndf;
-        cout << endl;
+        streamlog_out(DEBUG2) << "  plane " << ipl << ", lab " << ilab[ipl];
+        streamlog_out(DEBUG2) << "  z " << sPoint[ilab[ipl]-1];
+        streamlog_out(DEBUG2) << " dx " << rx[ipl];
+        streamlog_out(DEBUG2) << " dy " << ry[ipl];
+        streamlog_out(DEBUG2) << " chi2 " << Chi2;
+        streamlog_out(DEBUG2) << " ndf " << Ndf;
+        streamlog_out(DEBUG2) << endl;
       }
 
-       std::cout << " Is traj valid? " << traj.isValid() << std::endl;
-       traj.printPoints();
+       streamlog_out(DEBUG2)  << " Is traj valid? " << traj.isValid() << std::endl;
+      //traj.printPoints();
       //traj.printTrajectory();
       //traj.printData();
     }
@@ -1637,23 +1637,50 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
       double modPos[2];
       modPos[0] = ((corrPos[0])+(invsignx*(abs(nx) +.5) + 0.5) *pixel_size)*1e3;
       modPos[1] = ((corrPos[1])+(invsigny*(abs(ny) +.5) + 0.5) *pixel_size)*1e3;
+      
+      // overlay of all CSs
+      gblnxy_plane0->fill(modPos[0], modPos[1], CS0 );
+      gblnxy1_plane0->fill(modPos[0], modPos[1], 1 );
+
       if (CS0 == 1){
-        gblrxvsxpix01_CS1->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
-        gblryvsypix01_CS1->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
+	gblnCS1xy_plane0->fill(modPos[0], modPos[1] );
+	//gblnCS1xy1_plane0->fill((trackhitx[3] - aResiduals[0]), (trackhity[3] - aResiduals[1]));
+
+        gblrxvsxpix01_CS1->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])*1e3); 
+        gblryvsypix01_CS1->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])*1e3); 
       } 
       if (CS0 == 2){
-        gblrxvsxpix01_CS2->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
-        gblryvsypix01_CS2->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
+	gblnCS2xy_plane0->fill(modPos[0], modPos[1] );
+	// gblnCS2xy1_plane0->fill((trackhitx[3] - aResiduals[0]),   (trackhity[3] - aResiduals[1]));
+	
+        gblrxvsxpix01_CS2->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])*1e3); 
+        gblryvsypix01_CS2->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])*1e3); 
       } 
       if (CS0 == 3){
-        gblrxvsxpix01_CS3->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
-        gblryvsypix01_CS3->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
+	gblnCS3xy_plane0->fill(modPos[0], modPos[1] );
+	//gblnCS3xy1_plane0->fill((trackhitx[3] - aResiduals[0]),(trackhity[3] - aResiduals[1]));
+
+        gblrxvsxpix01_CS3->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])*1e3); 
+        gblryvsypix01_CS3->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])*1e3); 
       } 
       if (CS0 == 4){
-        gblrxvsxpix01_CS4->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
-        gblryvsypix01_CS4->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
-      } 
+	gblnCS4xy_plane0->fill(modPos[0], modPos[1] );
+	//gblnCS4xy1_plane0->fill((trackhitx[3] - aResiduals[0]),   (trackhity[3] - aResiduals[1]));
 
+        gblrxvsxpix01_CS4->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])*1e3); 
+        gblryvsypix01_CS4->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])*1e3); 
+      } 
+      if( CS0 == 5 ) {
+	gblnCS5xy_plane0->fill(modPos[0], modPos[1] );
+	//gblnCS5xy1_plane0->fill((trackhitx[3] - aResiduals[0]), (trackhity[3] - aResiduals[1]));
+      }
+      if( CS0 == 6 ) {
+	gblnCS6xy_plane0->fill(modPos[0], modPos[1] );
+	//gblnCS6xy1_plane0->fill((trackhitx[3] - aResiduals[0]),  (trackhity[3] - aResiduals[1]));
+      }
+      if( CS0 > 6 ) {
+	gblnCS7xy_plane0->fill(modPos[0], modPos[1] );
+      }
 
       k++;
 
@@ -1726,15 +1753,15 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 
       // clustersize-specific plots
       int CS3 = (*tr).gethit(3).clustersize;
-      //corrPos[0] = trackhitx[3] - aResiduals[0] +  7.077e-3 + 0.35e-3; // run000117, get automatically 
-      //corrPos[1] = trackhity[3] - aResiduals[1] + 18.128e-3 + 0.1e-3;  // run000117, get automatically      
-      corrPos[0] = trackhitx[3] - aResiduals[0] +  6.645e-3; // run002140
-      corrPos[1] = trackhity[3] - aResiduals[1] + 10.324e-3;  // run002140
+      corrPos[0] = trackhitx[3] - aResiduals[0] +  7.077e-3 + 0.35e-3; // run000117, get automatically 
+      corrPos[1] = trackhity[3] - aResiduals[1] + 18.128e-3 + 0.1e-3;  // run000117, get automatically      
+      //corrPos[0] = trackhitx[3] - aResiduals[0] -  6.645e-3; // run002140
+      //corrPos[1] = trackhity[3] - aResiduals[1] - 10.324e-3;  // run002140
 
       // correct for rotation
       double corrPos2[2];
-      //double gamma3 = 5.3e-3; // run000117, get automatically
-      double gamma3 = 1.94969e-03; // run002140
+      double gamma3 = 5.3e-3; // run000117, get automatically
+      //double gamma3 = 1.94969e-03; // run002140
       corrPos2[0] = cos(gamma3)*corrPos[0] - sin(gamma3)*corrPos[1];
       corrPos2[1] = sin(gamma3)*corrPos[0] + cos(gamma3)*corrPos[1];
       
@@ -1751,11 +1778,12 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 
       //gblrxvsxpix31->fill( (trackhitx[3] - aResiduals[0])+invsignx*(abs(nx) +0.5)*pixel_size, sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
       //gblryvsypix31->fill( (trackhity[3] - aResiduals[1])+invsigny*(abs(ny) +0.5)*pixel_size, sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
-      gblrxvsxpix31->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
-      gblryvsypix31->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
+      gblrxvsxpix31->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])*1e3); 
+      gblryvsypix31->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])*1e3); 
 
       // overlay of all CSs
-      gblnxy->fill(modPos[0], modPos[1], CS3 );
+      gblnxy_plane3->fill(modPos[0], modPos[1], CS3 );
+      gblnxy1_plane3->fill(modPos[0], modPos[1], 1 );
 
       if( CS3 == 1 ) {
 	gblrx3_cs1Histo->fill( aResiduals[0]* 1E3 ); 
@@ -1763,12 +1791,12 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 	gblpx3_cs1Histo->fill( aResiduals[0] / aResErrors[0] ); 
 	gblpy3_cs1Histo->fill( aResiduals[1] / aResErrors[1] ); 
 
-	gblnCS1xy->fill(modPos[0], modPos[1] );
-	gblnCS1xy1->fill((trackhitx[3] - aResiduals[0]),
+	gblnCS1xy_plane3->fill(modPos[0], modPos[1] );
+	gblnCS1xy1_plane3->fill((trackhitx[3] - aResiduals[0]),
 	    (trackhity[3] - aResiduals[1]));
 
-	gblrxvsxpix3cs1->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
-	gblryvsypix3cs1->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
+	gblrxvsxpix3cs1->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])*1e3); 
+	gblryvsypix3cs1->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])*1e3); 
       }
       if( CS3 == 2 ) {
 	gblrx3_cs2Histo->fill( aResiduals[0]* 1E3 ); 
@@ -1776,12 +1804,12 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 	gblpx3_cs2Histo->fill( aResiduals[0] / aResErrors[0] ); 
 	gblpy3_cs2Histo->fill( aResiduals[1] / aResErrors[1] ); 
 
-	gblnCS2xy->fill(modPos[0], modPos[1] );
-	gblnCS2xy1->fill((trackhitx[3] - aResiduals[0]),
+	gblnCS2xy_plane3->fill(modPos[0], modPos[1] );
+	gblnCS2xy1_plane3->fill((trackhitx[3] - aResiduals[0]),
 	    (trackhity[3] - aResiduals[1]));
 
-	gblrxvsxpix3cs2->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
-	gblryvsypix3cs2->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
+	gblrxvsxpix3cs2->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])*1e3); 
+	gblryvsypix3cs2->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])*1e3); 
       }
       if( CS3 == 3 ) {
 	gblrx3_cs3Histo->fill( aResiduals[0]* 1E3 ); 
@@ -1789,12 +1817,12 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 	gblpx3_cs3Histo->fill( aResiduals[0] / aResErrors[0] ); 
 	gblpy3_cs3Histo->fill( aResiduals[1] / aResErrors[1] ); 
 
-	gblnCS3xy->fill(modPos[0], modPos[1] );
-	gblnCS3xy1->fill((trackhitx[3] - aResiduals[0]),
+	gblnCS3xy_plane3->fill(modPos[0], modPos[1] );
+	gblnCS3xy1_plane3->fill((trackhitx[3] - aResiduals[0]),
 	    (trackhity[3] - aResiduals[1]));
 
-	gblrxvsxpix3cs3->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
-	gblryvsypix3cs3->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
+	gblrxvsxpix3cs3->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])*1e3); 
+	gblryvsypix3cs3->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])*1e3); 
       }
       if( CS3 == 4 ) {
 	gblrx3_cs4Histo->fill( aResiduals[0]* 1E3 ); 
@@ -1802,12 +1830,12 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 	gblpx3_cs4Histo->fill( aResiduals[0] / aResErrors[0] ); 
 	gblpy3_cs4Histo->fill( aResiduals[1] / aResErrors[1] ); 
 
-	gblnCS4xy->fill(modPos[0], modPos[1] );
-	gblnCS4xy1->fill((trackhitx[3] - aResiduals[0]),
+	gblnCS4xy_plane3->fill(modPos[0], modPos[1] );
+	gblnCS4xy1_plane3->fill((trackhitx[3] - aResiduals[0]),
 	    (trackhity[3] - aResiduals[1]));
 
-	gblrxvsxpix3cs4->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
-	gblryvsypix3cs4->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
+	gblrxvsxpix3cs4->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])*1e3); 
+	gblryvsypix3cs4->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])*1e3); 
       }
       if( CS3 == 5 ) {
 	gblrx3_cs5Histo->fill( aResiduals[0]* 1E3 ); 
@@ -1815,12 +1843,12 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 	gblpx3_cs5Histo->fill( aResiduals[0] / aResErrors[0] ); 
 	gblpy3_cs5Histo->fill( aResiduals[1] / aResErrors[1] ); 
 
-	gblnCS5xy->fill(modPos[0], modPos[1] );
-	gblnCS5xy1->fill((trackhitx[3] - aResiduals[0]),
+	gblnCS5xy_plane3->fill(modPos[0], modPos[1] );
+	gblnCS5xy1_plane3->fill((trackhitx[3] - aResiduals[0]),
 	    (trackhity[3] - aResiduals[1]));
 
-	gblrxvsxpix3cs5->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
-	gblryvsypix3cs5->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
+	gblrxvsxpix3cs5->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])*1e3); 
+	gblryvsypix3cs5->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])*1e3); 
       }
       if( CS3 == 6 ) {
 	gblrx3_cs6Histo->fill( aResiduals[0]* 1E3 ); 
@@ -1828,18 +1856,18 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 	gblpx3_cs6Histo->fill( aResiduals[0] / aResErrors[0] ); 
 	gblpy3_cs6Histo->fill( aResiduals[1] / aResErrors[1] ); 
 
-	gblnCS6xy->fill(modPos[0], modPos[1] );
-	gblnCS6xy1->fill((trackhitx[3] - aResiduals[0]),
+	gblnCS6xy_plane3->fill(modPos[0], modPos[1] );
+	gblnCS6xy1_plane3->fill((trackhitx[3] - aResiduals[0]),
 	    (trackhity[3] - aResiduals[1]));
 
-	gblrxvsxpix3cs6->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
-	gblryvsypix3cs6->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
+	gblrxvsxpix3cs6->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])*1e3); 
+	gblryvsypix3cs6->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])*1e3); 
       }
       if( CS3 > 6 ) {
 	gblpx3_cs7Histo->fill( aResiduals[0] / aResErrors[0] ); 
 	gblpy3_cs7Histo->fill( aResiduals[1] / aResErrors[1] ); 
 
-	//gblnCS6xy->fill(modPos[0], modPos[1] );
+	gblnCS7xy_plane3->fill(modPos[0], modPos[1] );
 
 	//gblrxvsxpix3cs6->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
 	//gblryvsypix3cs6->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
@@ -1907,20 +1935,20 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
       int CS5 = (*tr).gethit(5).clustersize;
 
       if (CS5 == 1){
-        gblrxvsxpix51_CS1->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
-        gblryvsypix51_CS1->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
+        gblrxvsxpix51_CS1->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])*1e3); 
+        gblryvsypix51_CS1->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])*1e3); 
       } 
       if (CS5 == 2){
-        gblrxvsxpix51_CS2->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
-        gblryvsypix51_CS2->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
+        gblrxvsxpix51_CS2->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])*1e3); 
+        gblryvsypix51_CS2->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])*1e3); 
       } 
       if (CS5 == 3){
-        gblrxvsxpix51_CS3->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
-        gblryvsypix51_CS3->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
+        gblrxvsxpix51_CS3->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])*1e3); 
+        gblryvsypix51_CS3->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])*1e3); 
       } 
       if (CS5 == 4){
-        gblrxvsxpix51_CS4->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
-        gblryvsypix51_CS4->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
+        gblrxvsxpix51_CS4->fill( modPos[0], sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])*1e3); 
+        gblryvsypix51_CS4->fill( modPos[1], sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])*1e3); 
       } 
 
 

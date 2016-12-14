@@ -681,19 +681,34 @@ namespace eutelescope {
 
   AIDA::IHistogram1D * hIso;
 
-  AIDA::IProfile2D * gblnxy;
-  AIDA::IHistogram2D * gblnCS1xy;
-  AIDA::IHistogram2D * gblnCS2xy;
-  AIDA::IHistogram2D * gblnCS3xy;
-  AIDA::IHistogram2D * gblnCS4xy;
-  AIDA::IHistogram2D * gblnCS5xy;
-  AIDA::IHistogram2D * gblnCS6xy;
-  AIDA::IHistogram2D * gblnCS1xy1;
-  AIDA::IHistogram2D * gblnCS2xy1;
-  AIDA::IHistogram2D * gblnCS3xy1;
-  AIDA::IHistogram2D * gblnCS4xy1;
-  AIDA::IHistogram2D * gblnCS5xy1;
-  AIDA::IHistogram2D * gblnCS6xy1;
+  AIDA::IProfile2D * gblnxy_plane0;
+  AIDA::IHistogram2D * gblnxy1_plane0;
+  AIDA::IProfile2D * gblnxy_plane3;
+  AIDA::IHistogram2D * gblnxy1_plane3;
+
+  AIDA::IHistogram2D * gblnCS1xy_plane0;
+  AIDA::IHistogram2D * gblnCS2xy_plane0;
+  AIDA::IHistogram2D * gblnCS3xy_plane0;
+  AIDA::IHistogram2D * gblnCS4xy_plane0;
+  AIDA::IHistogram2D * gblnCS5xy_plane0;
+  AIDA::IHistogram2D * gblnCS6xy_plane0;
+  AIDA::IHistogram2D * gblnCS7xy_plane0;
+
+  AIDA::IHistogram2D * gblnCS1xy_plane3;
+  AIDA::IHistogram2D * gblnCS2xy_plane3;
+  AIDA::IHistogram2D * gblnCS3xy_plane3;
+  AIDA::IHistogram2D * gblnCS4xy_plane3;
+  AIDA::IHistogram2D * gblnCS5xy_plane3;
+  AIDA::IHistogram2D * gblnCS6xy_plane3;
+  AIDA::IHistogram2D * gblnCS7xy_plane3;
+
+  AIDA::IHistogram2D * gblnCS1xy1_plane3;
+  AIDA::IHistogram2D * gblnCS2xy1_plane3;
+  AIDA::IHistogram2D * gblnCS3xy1_plane3;
+  AIDA::IHistogram2D * gblnCS4xy1_plane3;
+  AIDA::IHistogram2D * gblnCS5xy1_plane3;
+  AIDA::IHistogram2D * gblnCS6xy1_plane3;
+  AIDA::IHistogram2D * gblnCS7xy1_plane3;
 
 #endif
 
