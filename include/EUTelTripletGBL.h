@@ -12,6 +12,8 @@
 #ifndef EUTelTripletGBL_h
 #define EUTelTripletGBL_h 1
 
+#include "EUTelTripletGBLUtility.h"
+
 #include <memory>
 #include "marlin/Processor.h"
 
@@ -119,141 +121,13 @@ namespace eutelescope {
      */
     virtual void end();
 
-    class hit {
-    public:
-      // Coordinates and their position uncertainty
-      double x;
-      double ex;
-      double y;
-      double ey;
-      double z;
-      double ez;
-      // Plane to which the hit belongs
-      unsigned int plane;
-      // clustersize of the cluster associated to the hit
-      int clustersize;
-      // local coords
-      double locx;
-      double locy;
-      // Overloading ostream operator for printing hits:
-      friend std::ostream& operator << (std::ostream& out, const hit& point) // output
-      {
-	out << "(" << point.plane << ", " 
-	    << point.x << " +/- " << point.ex << " | " 
-	    << point.y << " +/- " << point.ey << " | " 
-	    << point.z << " +/- " << point.ez << ")";
-	return out;
-      }
-    };
-
-    class triplet {
-    public:
-      triplet();
-      triplet(hit hit0, hit hit1, hit hit2);
-
-      // Keep track of linking status to DUT and REF:
-      bool linked_dut;
-      //bool linked_ref;
-
-      hit getpoint_at(double z);
-
-
-      // Returns x coordinate of the triplet at given z:
-      double getx_at(double z);
-
-      // Return dx = (x_end - x_start) for the full triplet:
-      double getdx();
-
-      // Returns dx = (x_measure - x_triplet) in the given plane ipl:
-      double getdx(int ipl);
-
-      // Returns dx for a given point:
-      double getdx(hit point);
-
-
-      // Returns y coordinate of the triplet at given z:
-      double gety_at(double z);
-
-      // Return dy = (y_end - y_start) for the full triplet:
-      double getdy();
-
-      // Returns dy = (y_measure - y_triplet) in the given plane ipl:
-      double getdy(int ipl);
-
-      // Returns dy for a given point:
-      double getdy(hit point);
-
-
-      // Return dz = (z_end - z_start) for the full triplet:
-      double getdz();
-
-      // Returning the hit for the given plane ID
-      hit gethit(int plane);
-
-      //! Returning the center point of the triplet:
-      hit base();
-
-      //! Returning the slope of the triplet (x,y):
-      hit slope();
-
-      friend std::ostream& operator << (std::ostream& out, triplet trip)
-      {
-	out << "Triplet: " << std::endl;
-	for( std::map<unsigned int,hit>::iterator itr = trip.hits.begin(); itr != trip.hits.end(); itr++) {
-	  out << "    " << itr->second << std::endl;
-	}
-	return out;
-      };
-
-    private:
-      void filltriplet(hit hit0, hit hit1, hit hit2) {
-	hits.insert( std::pair<unsigned int,hit>(hit0.plane,hit0));
-	hits.insert( std::pair<unsigned int,hit>(hit1.plane,hit1));
-	hits.insert( std::pair<unsigned int,hit>(hit2.plane,hit2));
-      };
-      //! The hits belonging to the triplet:
-      /* Use map since it's already ordered according to plane IDs.
-       * We rely on begin() and rbegin() to deliver pointers to the first and last plane of the triplet.
-       */
-      std::map<unsigned int,hit> hits;   
-    };
-
-    class track {
-    public:
-      //! Default Track constructor. To be called with two triplets.
-      track(triplet up, triplet down);
-
-      //! Return the track kink angle in x
-      double kink_x();
-
-      //! Return the track kink angle in y
-      double kink_y();
-
-      //! Return the intersection point of the triplets
-      hit intersect();
-
-      //! Return the track upstream triplet
-      triplet get_upstream();
-
-      //! Return the track downstream triplet
-      triplet get_downstream();
-
-      //! Return the track hit in a given plane
-      hit gethit(int plane);
-
-    private:
-      //! Members to store the up- and downstream triplets
-      triplet upstream;
-      triplet downstream;
-    };
-
   private:
 
     // Calculate Point-To-Point Jacobian Transport Matrix for distance "ds"
     TMatrixD JacobianPointToPoint( double ds );
 
     //! Fill the telescope plane correlation plots:
-    void TelescopeCorrelationPlots(std::vector<hit> &telescopehits);
+    void TelescopeCorrelationPlots(std::vector<EUTelTripletGBLUtility::hit> &telescopehits);
 
     //! Find hit triplets from three telescope planes
     /*! This runs over all hits in the planes of the telescope and
@@ -264,13 +138,13 @@ namespace eutelescope {
      *
      * @return a vector of found triplets among the given set of hits.
      */
-    void FindTriplets(std::vector<hit> &hits, unsigned int plane0, unsigned int plane1, unsigned int plane2, std::vector<triplet> &trip);
+    void FindTriplets(std::vector<EUTelTripletGBLUtility::hit> &hits, unsigned int plane0, unsigned int plane1, unsigned int plane2, std::vector<EUTelTripletGBLUtility::triplet> &trip);
 
     //! Match the upstream and downstream triplets to tracks
-    void MatchTriplets(std::vector<triplet> &up, std::vector<triplet> &down, double z_match, std::vector<track> &track);
+    void MatchTriplets(std::vector<EUTelTripletGBLUtility::triplet> &up, std::vector<EUTelTripletGBLUtility::triplet> &down, double z_match, std::vector<EUTelTripletGBLUtility::track> &track);
 
     //! Check isolation of triplet within vector of triplets
-    bool IsTripletIsolated(std::vector<triplet>::iterator it, std::vector<triplet> &trip, double z_match, double isolation = 0.3);
+    bool IsTripletIsolated(std::vector<EUTelTripletGBLUtility::triplet>::iterator it, std::vector<EUTelTripletGBLUtility::triplet> &trip, double z_match, double isolation = 0.3);
 
   
   protected:
@@ -328,6 +202,8 @@ namespace eutelescope {
     //
     FloatVec _resolution;
     FloatVec _thickness;
+
+    EUTelTripletGBLUtility gblutil;
 
 
       // definition of static members mainly used to name histograms

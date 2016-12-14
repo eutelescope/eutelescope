@@ -14,6 +14,7 @@
 // EUTelescope includes:
 #include "EUTelTripletGBL.h"
 #include "EUTelTripletGBLInstance.h"
+#include "EUTelTripletGBLUtility.h"
 
 #include "EUTELESCOPE.h"
 //#include "EUTelSparseDataImpl.h"
@@ -361,13 +362,13 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 
   //----------------------------------------------------------------------------
 
-  std::vector<hit> hits;
+  std::vector<EUTelTripletGBLUtility::hit> hits;
 
   // Extract all hits from the LCIO collection and calculate the
   // position uncertainty if necessary:
   for( int ihit = 0; ihit < collection->getNumberOfElements(); ihit++ ) {
 
-    hit newhit;
+    EUTelTripletGBLUtility::hit newhit;
     TrackerHit * meshit = dynamic_cast<TrackerHit*>( collection->getElementAt(ihit) );
     const double * pos = meshit->getPosition();
     const EVENT::FloatVec cov = meshit->getCovMatrix();
@@ -452,11 +453,11 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
   // Downstream Telescope Triplets ("driplets")
 
   // Generate new triplet set for the Telescope Downstream Arm:
-  std::vector<triplet> downstream_triplets;
+  std::vector<EUTelTripletGBLUtility::triplet> downstream_triplets;
   FindTriplets(hits, 3, 4, 5, downstream_triplets);
 
   // Iterate over all found downstream triplets to fill histograms and match them to the REF and DUT:
-  for( std::vector<triplet>::iterator drip = downstream_triplets.begin(); drip != downstream_triplets.end(); drip++ ){
+  for( std::vector<EUTelTripletGBLUtility::triplet>::iterator drip = downstream_triplets.begin(); drip != downstream_triplets.end(); drip++ ){
 
     // Fill some histograms for downstream triplets:
     dridxHisto->fill( (*drip).getdx(4)*1E3 ); 
@@ -491,11 +492,11 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
   // collected and fed into GBL for a track fit.
 
   // Generate new triplet set for the Telescope Upstream Arm:
-  std::vector<triplet> upstream_triplets;
+  std::vector<EUTelTripletGBLUtility::triplet> upstream_triplets;
   FindTriplets(hits, 0, 1, 2, upstream_triplets);
 
   // Iterate over all found upstream triplets to fill histograms and match them to the REF and DUT:
-  for( std::vector<triplet>::iterator trip = upstream_triplets.begin(); trip != upstream_triplets.end(); trip++ ) {
+  for( std::vector<EUTelTripletGBLUtility::triplet>::iterator trip = upstream_triplets.begin(); trip != upstream_triplets.end(); trip++ ) {
 
     // Fill some histograms for the upstream triplets:
     tridxHisto->fill( (*trip).getdx(1)*1E3 );
@@ -518,7 +519,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 
 
     // Extrapolate Upstream triplet to Downstream planes 3,4,5: Resolution studies
-    for( std::vector<hit>::iterator lhit = hits.begin(); lhit != hits.end(); lhit++ ){
+    for( std::vector<EUTelTripletGBLUtility::hit>::iterator lhit = hits.begin(); lhit != hits.end(); lhit++ ){
 
       if( (*lhit).plane <= 2 ) continue; // want 3,4, or 5
 
@@ -561,13 +562,13 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 
 
   // Generate new triplet set with planes 0, 1, 2; 2,4,5:
-  std::vector<triplet> eff_triplets_UP = upstream_triplets;
+  std::vector<EUTelTripletGBLUtility::triplet> eff_triplets_UP = upstream_triplets;
   //FindTriplets(hits, 0, 1, 2, eff_triplets_UP);
 
-  std::vector<triplet> eff_triplets_DOWN;
+  std::vector<EUTelTripletGBLUtility::triplet> eff_triplets_DOWN;
   FindTriplets(hits, 2, 4, 5, eff_triplets_DOWN);
 
-  std::vector<triplet> eff_triplets;
+  std::vector<EUTelTripletGBLUtility::triplet> eff_triplets;
 
   // Iterate over all found eff-triplets to match them to the DUT (plane3):
   //int n_matched_trips = 0;
@@ -576,7 +577,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
   //std::cout << " n eff triplets UP   = " << eff_triplets_UP->size() << std::endl;
   //std::cout << " n eff triplets DOWN = " << eff_triplets_DOWN->size() << std::endl;
 
-  for( std::vector<triplet>::iterator trip = eff_triplets_UP.begin(); trip != eff_triplets_UP.end(); trip++ ) {
+  for( std::vector<EUTelTripletGBLUtility::triplet>::iterator trip = eff_triplets_UP.begin(); trip != eff_triplets_UP.end(); trip++ ) {
 
     // Track impact position at Matching Point from Upstream:
     double xA = (*trip).getx_at(DUTz); // triplet impact point at matching position
@@ -585,7 +586,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
     // check if trip is isolated
     bool IsolatedTrip = IsTripletIsolated(trip, eff_triplets_UP, DUTz, _triCut*2.01);
 
-    for( std::vector<triplet>::iterator drip = eff_triplets_DOWN.begin(); drip != eff_triplets_DOWN.end(); drip++ ){
+    for( std::vector<EUTelTripletGBLUtility::triplet>::iterator drip = eff_triplets_DOWN.begin(); drip != eff_triplets_DOWN.end(); drip++ ){
 
       // Track impact position at Matching Point from Downstream:
       double xB = (*drip).getx_at(DUTz); // triplet impact point at matching position
@@ -622,13 +623,13 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 
   //std::cout << " n eff triplets = " << eff_triplets.size() << std::endl;
 
-  for( std::vector<triplet>::iterator trip = eff_triplets.begin(); trip != eff_triplets.end(); trip++ ) {
+  for( std::vector<EUTelTripletGBLUtility::triplet>::iterator trip = eff_triplets.begin(); trip != eff_triplets.end(); trip++ ) {
 
     double ddAMin = -1000.0;
     double xTrip = (*trip).getx_at(DUTz);
     double yTrip = (*trip).gety_at(DUTz);
 
-    for( std::vector<hit>::iterator lhit = hits.begin(); lhit != hits.end(); lhit++ ){
+    for( std::vector<EUTelTripletGBLUtility::hit>::iterator lhit = hits.begin(); lhit != hits.end(); lhit++ ){
 
       if( (*lhit).plane <= 2 || (*lhit).plane  > 3) continue; // want 3
 
@@ -682,7 +683,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
   //std::cout << " n eff triplets UP   = " << eff_triplets_UP->size() << std::endl;
   //std::cout << " n eff triplets DOWN = " << eff_triplets_DOWN->size() << std::endl;
 
-  for( std::vector<triplet>::iterator trip = eff_triplets_UP.begin(); trip != eff_triplets_UP.end(); trip++ ) {
+  for( std::vector<EUTelTripletGBLUtility::triplet>::iterator trip = eff_triplets_UP.begin(); trip != eff_triplets_UP.end(); trip++ ) {
 
     // Track impact position at Matching Point from Upstream:
     double xA = (*trip).getx_at(DUTz); // triplet impact point at matching position
@@ -691,7 +692,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
     // check if trip is isolated
     bool IsolatedTrip = IsTripletIsolated(trip, eff_triplets_UP, DUTz, _triCut*2.01);
 
-    for( std::vector<triplet>::iterator drip = eff_triplets_DOWN.begin(); drip != eff_triplets_DOWN.end(); drip++ ){
+    for( std::vector<EUTelTripletGBLUtility::triplet>::iterator drip = eff_triplets_DOWN.begin(); drip != eff_triplets_DOWN.end(); drip++ ){
 
       // Track impact position at Matching Point from Downstream:
       double xB = (*drip).getx_at(DUTz); // triplet impact point at matching position
@@ -728,13 +729,13 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 
   //std::cout << " n eff triplets = " << eff_triplets.size() << std::endl;
 
-  for( std::vector<triplet>::iterator trip = eff_triplets.begin(); trip != eff_triplets.end(); trip++ ) {
+  for( std::vector<EUTelTripletGBLUtility::triplet>::iterator trip = eff_triplets.begin(); trip != eff_triplets.end(); trip++ ) {
 
     double ddAMin = -1000.0;
     double xTrip = (*trip).getx_at(DUTz);
     double yTrip = (*trip).gety_at(DUTz);
 
-    for( std::vector<hit>::iterator lhit = hits.begin(); lhit != hits.end(); lhit++ ){
+    for( std::vector<EUTelTripletGBLUtility::hit>::iterator lhit = hits.begin(); lhit != hits.end(); lhit++ ){
 
       if( (*lhit).plane <= 1 || (*lhit).plane  > 2) continue; // want 2
 
@@ -788,7 +789,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
   //std::cout << " n eff triplets UP   = " << eff_triplets_UP->size() << std::endl;
   //std::cout << " n eff triplets DOWN = " << eff_triplets_DOWN->size() << std::endl;
 
-  for( std::vector<triplet>::iterator trip = eff_triplets_UP.begin(); trip != eff_triplets_UP.end(); trip++ ) {
+  for( std::vector<EUTelTripletGBLUtility::triplet>::iterator trip = eff_triplets_UP.begin(); trip != eff_triplets_UP.end(); trip++ ) {
 
     // Track impact position at Matching Point from Upstream:
     double xA = (*trip).getx_at(DUTz); // triplet impact point at matching position
@@ -797,7 +798,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
     // check if trip is isolated
     bool IsolatedTrip = IsTripletIsolated(trip, eff_triplets_UP, DUTz, _triCut*2.01);
 
-    for( std::vector<triplet>::iterator drip = eff_triplets_DOWN.begin(); drip != eff_triplets_DOWN.end(); drip++ ){
+    for( std::vector<EUTelTripletGBLUtility::triplet>::iterator drip = eff_triplets_DOWN.begin(); drip != eff_triplets_DOWN.end(); drip++ ){
 
       // Track impact position at Matching Point from Downstream:
       double xB = (*drip).getx_at(DUTz); // triplet impact point at matching position
@@ -834,13 +835,13 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 
   //std::cout << " n eff triplets = " << eff_triplets.size() << std::endl;
 
-  for( std::vector<triplet>::iterator trip = eff_triplets.begin(); trip != eff_triplets.end(); trip++ ) {
+  for( std::vector<EUTelTripletGBLUtility::triplet>::iterator trip = eff_triplets.begin(); trip != eff_triplets.end(); trip++ ) {
 
     double ddAMin = -1000.0;
     double xTrip = (*trip).getx_at(DUTz);
     double yTrip = (*trip).gety_at(DUTz);
 
-    for( std::vector<hit>::iterator lhit = hits.begin(); lhit != hits.end(); lhit++ ){
+    for( std::vector<EUTelTripletGBLUtility::hit>::iterator lhit = hits.begin(); lhit != hits.end(); lhit++ ){
 
       if( (*lhit).plane <= 0 || (*lhit).plane  > 1) continue; // want 1
 
@@ -894,7 +895,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
   //std::cout << " n eff triplets UP   = " << eff_triplets_UP->size() << std::endl;
   //std::cout << " n eff triplets DOWN = " << eff_triplets_DOWN->size() << std::endl;
 
-  for( std::vector<triplet>::iterator trip = eff_triplets_UP.begin(); trip != eff_triplets_UP.end(); trip++ ) {
+  for( std::vector<EUTelTripletGBLUtility::triplet>::iterator trip = eff_triplets_UP.begin(); trip != eff_triplets_UP.end(); trip++ ) {
 
     // Track impact position at Matching Point from Upstream:
     double xA = (*trip).getx_at(DUTz); // triplet impact point at matching position
@@ -903,7 +904,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
     // check if trip is isolated
     bool IsolatedTrip = IsTripletIsolated(trip, eff_triplets_UP, DUTz, _triCut*2.01);
 
-    for( std::vector<triplet>::iterator drip = eff_triplets_DOWN.begin(); drip != eff_triplets_DOWN.end(); drip++ ){
+    for( std::vector<EUTelTripletGBLUtility::triplet>::iterator drip = eff_triplets_DOWN.begin(); drip != eff_triplets_DOWN.end(); drip++ ){
 
       // Track impact position at Matching Point from Downstream:
       double xB = (*drip).getx_at(DUTz); // triplet impact point at matching position
@@ -940,13 +941,13 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 
   //std::cout << " n eff triplets = " << eff_triplets.size() << std::endl;
 
-  for( std::vector<triplet>::iterator trip = eff_triplets.begin(); trip != eff_triplets.end(); trip++ ) {
+  for( std::vector<EUTelTripletGBLUtility::triplet>::iterator trip = eff_triplets.begin(); trip != eff_triplets.end(); trip++ ) {
 
     double ddAMin = -1000.0;
     double xTrip = (*trip).getx_at(DUTz);
     double yTrip = (*trip).gety_at(DUTz);
 
-    for( std::vector<hit>::iterator lhit = hits.begin(); lhit != hits.end(); lhit++ ){
+    for( std::vector<EUTelTripletGBLUtility::hit>::iterator lhit = hits.begin(); lhit != hits.end(); lhit++ ){
 
       if( (*lhit).plane  > 0) continue; // want 0
 
@@ -989,7 +990,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
   eff_triplets_UP = upstream_triplets;
   FindTriplets(hits, 2, 3, 5, eff_triplets_DOWN);
 
-  for( std::vector<triplet>::iterator trip = eff_triplets_UP.begin(); trip != eff_triplets_UP.end(); trip++ ) {
+  for( std::vector<EUTelTripletGBLUtility::triplet>::iterator trip = eff_triplets_UP.begin(); trip != eff_triplets_UP.end(); trip++ ) {
 
     // Track impact position at Matching Point from Upstream:
     double xA = (*trip).getx_at(DUTz); // triplet impact point at matching position
@@ -998,7 +999,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
     // check if trip is isolated
     bool IsolatedTrip = IsTripletIsolated(trip, eff_triplets_UP, DUTz, _triCut*2.01);
 
-    for( std::vector<triplet>::iterator drip = eff_triplets_DOWN.begin(); drip != eff_triplets_DOWN.end(); drip++ ){
+    for( std::vector<EUTelTripletGBLUtility::triplet>::iterator drip = eff_triplets_DOWN.begin(); drip != eff_triplets_DOWN.end(); drip++ ){
 
       // Track impact position at Matching Point from Downstream:
       double xB = (*drip).getx_at(DUTz); // triplet impact point at matching position
@@ -1035,13 +1036,13 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 
   //std::cout << " n eff triplets = " << eff_triplets.size() << std::endl;
 
-  for( std::vector<triplet>::iterator trip = eff_triplets.begin(); trip != eff_triplets.end(); trip++ ) {
+  for( std::vector<EUTelTripletGBLUtility::triplet>::iterator trip = eff_triplets.begin(); trip != eff_triplets.end(); trip++ ) {
 
     double ddAMin = -1000.0;
     double xTrip = (*trip).getx_at(DUTz);
     double yTrip = (*trip).gety_at(DUTz);
 
-    for( std::vector<hit>::iterator lhit = hits.begin(); lhit != hits.end(); lhit++ ){
+    for( std::vector<EUTelTripletGBLUtility::hit>::iterator lhit = hits.begin(); lhit != hits.end(); lhit++ ){
 
       if( (*lhit).plane <= 3 || (*lhit).plane  > 4) continue; // want 4
 
@@ -1084,7 +1085,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
   eff_triplets_UP = upstream_triplets;
   FindTriplets(hits, 2, 3, 4, eff_triplets_DOWN);
 
-  for( std::vector<triplet>::iterator trip = eff_triplets_UP.begin(); trip != eff_triplets_UP.end(); trip++ ) {
+  for( std::vector<EUTelTripletGBLUtility::triplet>::iterator trip = eff_triplets_UP.begin(); trip != eff_triplets_UP.end(); trip++ ) {
 
     // Track impact position at Matching Point from Upstream:
     double xA = (*trip).getx_at(DUTz); // triplet impact point at matching position
@@ -1093,7 +1094,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
     // check if trip is isolated
     bool IsolatedTrip = IsTripletIsolated(trip, eff_triplets_UP, DUTz, _triCut*2.01);
 
-    for( std::vector<triplet>::iterator drip = eff_triplets_DOWN.begin(); drip != eff_triplets_DOWN.end(); drip++ ){
+    for( std::vector<EUTelTripletGBLUtility::triplet>::iterator drip = eff_triplets_DOWN.begin(); drip != eff_triplets_DOWN.end(); drip++ ){
 
       // Track impact position at Matching Point from Downstream:
       double xB = (*drip).getx_at(DUTz); // triplet impact point at matching position
@@ -1130,13 +1131,13 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 
   //std::cout << " n eff triplets = " << eff_triplets.size() << std::endl;
 
-  for( std::vector<triplet>::iterator trip = eff_triplets.begin(); trip != eff_triplets.end(); trip++ ) {
+  for( std::vector<EUTelTripletGBLUtility::triplet>::iterator trip = eff_triplets.begin(); trip != eff_triplets.end(); trip++ ) {
 
     double ddAMin = -1000.0;
     double xTrip = (*trip).getx_at(DUTz);
     double yTrip = (*trip).gety_at(DUTz);
 
-    for( std::vector<hit>::iterator lhit = hits.begin(); lhit != hits.end(); lhit++ ){
+    for( std::vector<EUTelTripletGBLUtility::hit>::iterator lhit = hits.begin(); lhit != hits.end(); lhit++ ){
 
       if( (*lhit).plane <= 4 || (*lhit).plane  > 5) continue; // want 5
 
@@ -1179,18 +1180,18 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
   DUTz = _planePosition[2] + (_planePosition[3] - _planePosition[2])/2;
 
   // Match the Telescope Upstream and Downstream Arm triplets to get tracks:
-  std::vector<track> telescope_tracks;
+  std::vector<EUTelTripletGBLUtility::track> telescope_tracks;
   MatchTriplets(upstream_triplets,downstream_triplets,DUTz, telescope_tracks);
 
   //delete downstream_triplets;
   //delete upstream_triplets;
 
   int ngbl = 0;
-  for( std::vector<track>::iterator tr = telescope_tracks.begin(); tr != telescope_tracks.end(); tr++ ){
+  for( std::vector<EUTelTripletGBLUtility::track>::iterator tr = telescope_tracks.begin(); tr != telescope_tracks.end(); tr++ ){
 
-    triplet trip = (*tr).get_upstream();
-    triplet drip = (*tr).get_downstream();
-    triplet srip((*tr).gethit(0), (*tr).gethit(2), (*tr).gethit(5)); // seed triplet -> srip
+    EUTelTripletGBLUtility::triplet trip = (*tr).get_upstream();
+    EUTelTripletGBLUtility::triplet drip = (*tr).get_downstream();
+    EUTelTripletGBLUtility::triplet srip((*tr).gethit(0), (*tr).gethit(2), (*tr).gethit(5)); // seed triplet -> srip
     if(_aluthickum > 1.) srip = trip;
 
     std::vector<double> xAplanes(_nTelPlanes);
@@ -1293,7 +1294,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
       if(ipl == 0){
 	// one dummy point:
 
-	gbl::GblPoint * point = new gbl::GblPoint( JacobianPointToPoint( step ) );
+	gbl::GblPoint * point = new gbl::GblPoint( gblutil.JacobianPointToPoint( step ) );
 	traj_points.push_back(*point);
 	s += step;
 	sPoint.push_back(s);
@@ -1302,7 +1303,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
       }
 
       // Get the corresponding hit from the track:
-      hit trackhit = (*tr).gethit(ipl);
+      EUTelTripletGBLUtility::hit trackhit = (*tr).gethit(ipl);
 
       if (ipl == 0) clustersize0->fill(trackhit.clustersize);
       if (ipl == 1) clustersize1->fill(trackhit.clustersize);
@@ -1348,7 +1349,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 	sixy5Histo->fill( -trackhit.y );
       }
 
-      gbl::GblPoint * point = new gbl::GblPoint( JacobianPointToPoint( step ) );
+      gbl::GblPoint * point = new gbl::GblPoint( gblutil.JacobianPointToPoint( step ) );
 
       meas[0] = rx[ipl];
       meas[1] = ry[ipl];
@@ -1408,7 +1409,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 	wscatAir[0] = 1.0 / ( tetAir * tetAir ); // weight
 	wscatAir[1] = 1.0 / ( tetAir * tetAir ); 
 
-	gbl::GblPoint * point = new gbl::GblPoint( JacobianPointToPoint( step ) );
+	gbl::GblPoint * point = new gbl::GblPoint( gblutil.JacobianPointToPoint( step ) );
 	point->addScatterer( scat, wscatAir );
 
 	s += step;
@@ -1419,7 +1420,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 	step = 0.58*distplane;
 	if(ipl ==2){ // insert point at centre
 	  step = step / 2.;
-	  gbl::GblPoint * pointcentre = new gbl::GblPoint( JacobianPointToPoint( step ) );
+	  gbl::GblPoint * pointcentre = new gbl::GblPoint( gblutil.JacobianPointToPoint( step ) );
 
 	  if(_aluthickum > 1.) { // at least 1 um target
 	    double tetAlu = _kappa*0.0136 * sqrt(epsAlu) / p * ( 1 + 0.038*std::log(sumeps) );
@@ -1438,7 +1439,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 	  // now again step/2
         }
 
-	gbl::GblPoint * point1 = new gbl::GblPoint( JacobianPointToPoint( step ) );
+	gbl::GblPoint * point1 = new gbl::GblPoint( gblutil.JacobianPointToPoint( step ) );
 	point1->addScatterer( scat, wscatAir );
 
 	s += step;
@@ -1453,7 +1454,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 	// one more dummy point:
 
 	step = 10; // [mm]
-	gbl::GblPoint * point = new gbl::GblPoint( JacobianPointToPoint( step ) );
+	gbl::GblPoint * point = new gbl::GblPoint( gblutil.JacobianPointToPoint( step ) );
 	traj_points.push_back(*point);
 	s += step;
 	sPoint.push_back(s);
@@ -1979,7 +1980,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 
     //------------------------------------------------------------------------
     // intersect point in z:
-    hit intersect = (*tr).intersect();
+    EUTelTripletGBLUtility::hit intersect = (*tr).intersect();
     double zx = intersect.x;
     double zy = intersect.y;
 
@@ -2059,26 +2060,12 @@ void EUTelTripletGBL::end(){
 } // end end
 
 
-TMatrixD EUTelTripletGBL::JacobianPointToPoint( double ds ) {
-  /* for GBL:
-     Jacobian for straight line track
-     track = q/p, x', y', x, y
-     0,   1,  2,  3, 4
-     */
-  TMatrixD jac( 5, 5 );
-  jac.UnitMatrix();
-  jac[3][1] = ds; // x = x0 + xp * ds
-  jac[4][2] = ds; // y = y0 + yp * ds
-  return jac;
-}
-
-
-void EUTelTripletGBL::TelescopeCorrelationPlots(std::vector<hit> &telescopehits) {
-  for( std::vector<hit>::iterator ihit = telescopehits.begin(); ihit != telescopehits.end(); ihit++ ){
+void EUTelTripletGBL::TelescopeCorrelationPlots(std::vector<EUTelTripletGBLUtility::hit> &telescopehits) {
+  for( std::vector<EUTelTripletGBLUtility::hit>::iterator ihit = telescopehits.begin(); ihit != telescopehits.end(); ihit++ ){
 
     int ipl = (*ihit).plane;
 
-    for( std::vector<hit>::iterator jhit = telescopehits.begin(); jhit != telescopehits.end(); jhit++ ){
+    for( std::vector<EUTelTripletGBLUtility::hit>::iterator jhit = telescopehits.begin(); jhit != telescopehits.end(); jhit++ ){
 
       int jpl = (*jhit).plane;
       double dx = (*jhit).x - (*ihit).x;
@@ -2141,30 +2128,28 @@ void EUTelTripletGBL::TelescopeCorrelationPlots(std::vector<hit> &telescopehits)
 }
 
 
-void EUTelTripletGBL::FindTriplets(std::vector<hit> &hits, unsigned int plane0, unsigned int plane1, unsigned int plane2, std::vector<EUTelTripletGBL::triplet> &triplets) {
-
-  //std::vector<triplet> * triplets = new std::vector<triplet>;
+void EUTelTripletGBL::FindTriplets(std::vector<EUTelTripletGBLUtility::hit> &hits, unsigned int plane0, unsigned int plane1, unsigned int plane2, std::vector<EUTelTripletGBLUtility::triplet> &triplets) {
 
   // Cut on the triplet track angle: +- 10 mrad
   //double triplet_angle_cut = 0.010;
   // Cut on the triplet residual on the middle plane:
   //double triplet_residual_cut = 0.1; // [mm]
 
-  for( std::vector<hit>::iterator ihit = hits.begin(); ihit != hits.end(); ihit++ ){
+  for( std::vector<EUTelTripletGBLUtility::hit>::iterator ihit = hits.begin(); ihit != hits.end(); ihit++ ){
     if( (*ihit).plane != plane0 ) continue; // First plane
 
-    for( std::vector<hit>::iterator jhit = hits.begin(); jhit != hits.end(); jhit++ ){
+    for( std::vector<EUTelTripletGBLUtility::hit>::iterator jhit = hits.begin(); jhit != hits.end(); jhit++ ){
       if( (*jhit).plane != plane2 ) continue; // Last plane
 
       //float sum_res = 999.;
       //float sum_res_old = 999.;
       //bool IsFirst = true;
 
-      for( std::vector<hit>::iterator khit = hits.begin(); khit != hits.end(); khit++ ){
+      for( std::vector<EUTelTripletGBLUtility::hit>::iterator khit = hits.begin(); khit != hits.end(); khit++ ){
 	if( (*khit).plane != plane1 ) continue; // Middle plane
 
 	// Create new preliminary triplet from the three hits:
-	triplet new_triplet((*ihit),(*khit),(*jhit));
+	EUTelTripletGBLUtility::triplet new_triplet((*ihit),(*khit),(*jhit));
 
 	//if(_nEvt < 10) if( plane0 == 0 && plane1 == 1 && plane2 == 2) streamlog_out( WARNING2 ) << "dx triplet = " << new_triplet.getdx(plane1)*1e3 << endl;
 	//if(_nEvt < 10) if( plane0 == 3 && plane1 == 4 && plane2 == 5) streamlog_out( WARNING2 ) << "dx driplet = " << new_triplet.getdx(plane1)*1e3 << endl;
@@ -2203,7 +2188,7 @@ void EUTelTripletGBL::FindTriplets(std::vector<hit> &hits, unsigned int plane0, 
   //return triplets;
 }
 
-bool EUTelTripletGBL::IsTripletIsolated(std::vector<triplet>::iterator it, std::vector<triplet> &trip, double z_match, double isolation) { // isolation is defaulted to 0.3 mm
+bool EUTelTripletGBL::IsTripletIsolated(std::vector<EUTelTripletGBLUtility::triplet>::iterator it, std::vector<EUTelTripletGBLUtility::triplet> &trip, double z_match, double isolation) { // isolation is defaulted to 0.3 mm
   bool IsolatedTrip = true;
 
   // check first if trip is isolated
@@ -2212,7 +2197,7 @@ bool EUTelTripletGBL::IsTripletIsolated(std::vector<triplet>::iterator it, std::
 
 
   double ddAMin = -1.0;
-  for( std::vector<triplet>::iterator tripIsoCheck = trip.begin(); tripIsoCheck != trip.end(); tripIsoCheck++ ) {
+  for( std::vector<EUTelTripletGBLUtility::triplet>::iterator tripIsoCheck = trip.begin(); tripIsoCheck != trip.end(); tripIsoCheck++ ) {
     if(it != tripIsoCheck){
       double xAIsoCheck = (*tripIsoCheck).getx_at(z_match);
       double yAIsoCheck = (*tripIsoCheck).gety_at(z_match);
@@ -2228,13 +2213,12 @@ bool EUTelTripletGBL::IsTripletIsolated(std::vector<triplet>::iterator it, std::
   return IsolatedTrip;
 }
 
-void EUTelTripletGBL::MatchTriplets(std::vector<triplet> &up, std::vector<triplet> &down, double z_match, std::vector<EUTelTripletGBL::track> &tracks) {
+void EUTelTripletGBL::MatchTriplets(std::vector<EUTelTripletGBLUtility::triplet> &up, std::vector<EUTelTripletGBLUtility::triplet> &down, double z_match, std::vector<EUTelTripletGBLUtility::track> &tracks) {
 
-  //std::vector<track> * tracks = new std::vector<track>;
   // Cut on the matching of two triplets [mm]
   //double intersect_residual_cut = 0.1;
 
-  for( std::vector<triplet>::iterator trip = up.begin(); trip != up.end(); trip++ ){
+  for( std::vector<EUTelTripletGBLUtility::triplet>::iterator trip = up.begin(); trip != up.end(); trip++ ){
 
     // Track impact position at Matching Point from Upstream:
     double xA = (*trip).getx_at(z_match); // triplet impact point at matching position
@@ -2243,7 +2227,7 @@ void EUTelTripletGBL::MatchTriplets(std::vector<triplet> &up, std::vector<triple
     // check if trip is isolated
     bool IsolatedTrip = IsTripletIsolated(trip, up, z_match, _triCut*2.01);
 
-    for( std::vector<triplet>::iterator drip = down.begin(); drip != down.end(); drip++ ){
+    for( std::vector<EUTelTripletGBLUtility::triplet>::iterator drip = down.begin(); drip != down.end(); drip++ ){
 
       // Track impact position at Matching Point from Downstream:
       double xB = (*drip).getx_at(z_match); // triplet impact point at matching position
@@ -2254,7 +2238,7 @@ void EUTelTripletGBL::MatchTriplets(std::vector<triplet> &up, std::vector<triple
 
 
       // Build a track candidate from one upstream and one downstream triplet:
-      track newtrack((*trip),(*drip));
+      EUTelTripletGBLUtility::track newtrack((*trip),(*drip));
 
       // Track kinks as difference in triplet slopes:
       double kx = newtrack.kink_x();
@@ -2311,111 +2295,7 @@ void EUTelTripletGBL::MatchTriplets(std::vector<triplet> &up, std::vector<triple
 
 
 
-EUTelTripletGBL::track::track(triplet up, triplet down) : upstream(up), downstream(down) {}
+//EUTelTripletGBL::track::track(triplet up, triplet down) : upstream(up), downstream(down) {}
 
-double EUTelTripletGBL::track::kink_x() {
-  return (downstream.slope().x - upstream.slope().x);
-}
-
-double EUTelTripletGBL::track::kink_y() {
-  return (downstream.slope().y - upstream.slope().y);
-}
-
-EUTelTripletGBL::hit EUTelTripletGBL::track::intersect() {
-  hit inter;
-  // Re-check what this actually is...
-  // and simplifie using triplet class members...
-  inter.x = ( upstream.base().x - upstream.slope().x * upstream.base().z - downstream.base().x + downstream.slope().x * downstream.base().z ) / kink_x();
-  inter.y = ( upstream.base().y - upstream.slope().y * upstream.base().z - downstream.base().y + downstream.slope().y * downstream.base().z ) / kink_y();
-  return inter;
-}
-
-EUTelTripletGBL::triplet EUTelTripletGBL::track::get_upstream() {
-  return upstream;
-}
-
-EUTelTripletGBL::triplet EUTelTripletGBL::track::get_downstream() {
-  return downstream;
-}
-
-EUTelTripletGBL::hit EUTelTripletGBL::track::gethit(int plane) {
-  if(plane < 3) return upstream.gethit(plane);
-  else return downstream.gethit(plane);
-}
-
-
-
-EUTelTripletGBL::triplet::triplet() : linked_dut(false), hits() {
-  // Empty default constructor
-}
-
-EUTelTripletGBL::triplet::triplet(hit hit0, hit hit1, hit hit2) : linked_dut(false), hits() {
-  triplet();
-  filltriplet(hit0, hit1, hit2);
-}
-
-EUTelTripletGBL::hit EUTelTripletGBL::triplet::getpoint_at(double z) {
-  hit impact;
-  impact.z = z - base().z;
-  impact.x = base().x + slope().x * impact.z;
-  impact.y = base().y + slope().y * impact.z;
-  return impact;
-}
-
-double EUTelTripletGBL::triplet::getx_at(double z) {
-  return this->base().x + this->slope().x * (z - this->base().z);
-}
-
-double EUTelTripletGBL::triplet::getdx() {
-  return this->hits.rbegin()->second.x - this->hits.begin()->second.x;
-}
-
-double EUTelTripletGBL::triplet::getdx(int ipl) {
-  return this->hits[ipl].x - this->base().x - this->slope().x * (this->hits[ipl].z - this->base().z);
-}
-
-double EUTelTripletGBL::triplet::getdx(hit point) {
-  return point.x - this->base().x - this->slope().x * (point.z - this->base().z);
-}
-
-double EUTelTripletGBL::triplet::gety_at(double z) {
-  return this->base().y + this->slope().y * (z - this->base().z);
-}
-
-double EUTelTripletGBL::triplet::getdy() {
-  return this->hits.rbegin()->second.y - this->hits.begin()->second.y;
-}
-
-double EUTelTripletGBL::triplet::getdy(int ipl) {
-  return this->hits[ipl].y - this->base().y - this->slope().y * (this->hits[ipl].z - this->base().z);
-}
-
-double EUTelTripletGBL::triplet::getdy(hit point) {
-  return point.y - this->base().y - this->slope().y * (point.z - this->base().z);
-}
-
-double EUTelTripletGBL::triplet::getdz() {
-  return this->hits.rbegin()->second.z - this->hits.begin()->second.z;
-}
-
-EUTelTripletGBL::hit EUTelTripletGBL::triplet::gethit(int plane) {
-  return this->hits[plane];
-}
-
-EUTelTripletGBL::hit EUTelTripletGBL::triplet::base() {
-  hit center;
-  center.x = 0.5*( this->hits.begin()->second.x + this->hits.rbegin()->second.x );
-  center.y = 0.5*( this->hits.begin()->second.y + this->hits.rbegin()->second.y );
-  center.z = 0.5*( this->hits.begin()->second.z + this->hits.rbegin()->second.z );
-  return center;
-}
-
-EUTelTripletGBL::hit EUTelTripletGBL::triplet::slope() {
-  hit sl;
-  double dz = (this->hits.rbegin()->second.z - this->hits.begin()->second.z);
-  sl.x = (this->hits.rbegin()->second.x - this->hits.begin()->second.x) / dz;
-  sl.y = (this->hits.rbegin()->second.y - this->hits.begin()->second.y) / dz;
-  return sl;
-}
 
 #endif
