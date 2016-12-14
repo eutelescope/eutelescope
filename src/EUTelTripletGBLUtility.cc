@@ -16,87 +16,8 @@
 //#include "EUTelTripletGBLDUTscatInstance.h"
 
 #include "EUTELESCOPE.h"
-//#include "EUTelSparseDataImpl.h"
-//#include "EUTelBaseSparsePixel.h"
-//#include "EUTelGenericSparsePixel.h"
-//#include "EUTelTrackerDataInterfacerImpl.h"
-//#include "EUTelExceptions.h"
-//#include "EUTelRunHeaderImpl.h"
-//#include "EUTelEventImpl.h"
-//#include "EUTelPStream.h" // process streams redi::ipstream
-
-// for clustersize
-//#include "EUTelSimpleVirtualCluster.h"
-//#include "EUTelFFClusterImpl.h"
-//#include "EUTelDFFClusterImpl.h"
-//#include "EUTelBrickedClusterImpl.h"
-//#include "EUTelSparseClusterImpl.h"
-//#include "EUTelGenericSparseClusterImpl.h"
-//#include "EUTelGeometricClusterImpl.h"
-//#include "EUTelGeometryTelescopeGeoDescription.h"
-
-// AIDA histogram package (on top of ROOT):
-
-//#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-//#include <marlin/AIDAProcessor.h>
-//#include <AIDA/IHistogramFactory.h>
-//#include <AIDA/IAxis.h>
-//#include <AIDA/IHistogram1D.h>
-//#include <AIDA/IHistogram2D.h>
-//#include <AIDA/IProfile1D.h>
-//#include <AIDA/IProfile2D.h>
-//#include <AIDA/ITree.h>
-//#endif
-
-// GBL:
-#include "include/GblTrajectory.h"
-#include "include/MilleBinary.h"
-
-
-// marlin includes ".h"
-//#include "marlin/Processor.h"
-//#include "marlin/Exceptions.h"
-//#include "marlin/ProcessorMgr.h"
-//#include "marlin/Global.h"
-
-// gear includes <.h>
-#include <gear/GearMgr.h>
-#include <gear/SiPlanesParameters.h>
-
-// LCIO includes <.h>
-#include <EVENT/LCCollection.h>
-#include <EVENT/LCEvent.h>
-#include <IMPL/LCCollectionVec.h>
-#include <IMPL/TrackerHitImpl.h>
-#include <IMPL/TrackImpl.h>
-#include <IMPL/LCFlagImpl.h>
-#include <Exceptions.h>
-
-// system includes <>
-#include <iostream>
-#include <fstream>
-#include <vector>
-#include <algorithm>
-#include <cmath>
-#include <sstream>
-#include <memory>
-#include <string.h>
-#include <map>
-#include <cstdlib>
-#include <limits>
-
-// ROOT includes ".h"
-#include <TMath.h>
-#include <TVectorD.h>
-#include <TF1.h>
-#include <TMatrixD.h>
-#include <TVector3.h>
-#include <TRotation.h>
-#include "TH1D.h"
 
 using namespace std;
-using namespace lcio;
-using namespace marlin;
 using namespace eutelescope;
 
 
@@ -128,7 +49,7 @@ double EUTelTripletGBLUtility::track::kink_y() {
 EUTelTripletGBLUtility::hit EUTelTripletGBLUtility::track::intersect() {
   hit inter;
   // Re-check what this actually is...
-  // and simplifie using triplet class members...
+  // and simplify using triplet class members...
   inter.x = ( upstream.base().x - upstream.slope().x * upstream.base().z - downstream.base().x + downstream.slope().x * downstream.base().z ) / kink_x();
   inter.y = ( upstream.base().y - upstream.slope().y * upstream.base().z - downstream.base().y + downstream.slope().y * downstream.base().z ) / kink_y();
   return inter;

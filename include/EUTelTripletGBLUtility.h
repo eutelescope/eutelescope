@@ -67,6 +67,9 @@ namespace eutelescope {
     //! Default constructor
     EUTelTripletGBLUtility();
 
+    // Calculate Point-To-Point Jacobian Transport Matrix for distance "ds"
+    TMatrixD JacobianPointToPoint( double ds );
+
     class hit {
     public:
       // Coordinates and their position uncertainty
@@ -197,11 +200,8 @@ namespace eutelescope {
 
   private:
 
-    // Calculate Point-To-Point Jacobian Transport Matrix for distance "ds"
-    TMatrixD JacobianPointToPoint( double ds );
-
     //! Fill the telescope plane correlation plots:
-    void TelescopeCorrelationPlots(std::vector<hit> &telescopehits);
+    //void TelescopeCorrelationPlots(std::vector<hit> &telescopehits);
 
     //! Find hit triplets from three telescope planes
     /*! This runs over all hits in the planes of the telescope and
@@ -212,13 +212,13 @@ namespace eutelescope {
      *
      * @return a vector of found triplets among the given set of hits.
      */
-    void FindTriplets(std::vector<hit> &hits, unsigned int plane0, unsigned int plane1, unsigned int plane2, std::vector<triplet> &trip);
+    //void FindTriplets(std::vector<hit> &hits, unsigned int plane0, unsigned int plane1, unsigned int plane2, std::vector<triplet> &trip);
 
     //! Match the upstream and downstream triplets to tracks
-    void MatchTriplets(std::vector<triplet> &up, std::vector<triplet> &down, double z_match, std::vector<track> &track);
+    //void MatchTriplets(std::vector<triplet> &up, std::vector<triplet> &down, double z_match, std::vector<track> &track);
 
     //! Check isolation of triplet within vector of triplets
-    bool IsTripletIsolated(std::vector<triplet>::iterator it, std::vector<triplet> &trip, double z_match, double isolation = 0.3);
+    //bool IsTripletIsolated(std::vector<triplet>::iterator it, std::vector<triplet> &trip, double z_match, double isolation = 0.3);
 
   
   protected:
