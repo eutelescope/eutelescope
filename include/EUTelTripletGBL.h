@@ -124,7 +124,7 @@ namespace eutelescope {
   private:
 
     // Calculate Point-To-Point Jacobian Transport Matrix for distance "ds"
-    TMatrixD JacobianPointToPoint( double ds );
+    //TMatrixD JacobianPointToPoint( double ds );
 
     //! Fill the telescope plane correlation plots:
     void TelescopeCorrelationPlots(std::vector<EUTelTripletGBLUtility::hit> &telescopehits);
@@ -138,13 +138,13 @@ namespace eutelescope {
      *
      * @return a vector of found triplets among the given set of hits.
      */
-    void FindTriplets(std::vector<EUTelTripletGBLUtility::hit> &hits, unsigned int plane0, unsigned int plane1, unsigned int plane2, std::vector<EUTelTripletGBLUtility::triplet> &trip);
+    //void FindTriplets(std::vector<EUTelTripletGBLUtility::hit> &hits, unsigned int plane0, unsigned int plane1, unsigned int plane2, std::vector<EUTelTripletGBLUtility::triplet> &trip);
 
     //! Match the upstream and downstream triplets to tracks
-    void MatchTriplets(std::vector<EUTelTripletGBLUtility::triplet> &up, std::vector<EUTelTripletGBLUtility::triplet> &down, double z_match, std::vector<EUTelTripletGBLUtility::track> &track);
+    //void MatchTriplets(std::vector<EUTelTripletGBLUtility::triplet> &up, std::vector<EUTelTripletGBLUtility::triplet> &down, double z_match, std::vector<EUTelTripletGBLUtility::track> &track);
 
     //! Check isolation of triplet within vector of triplets
-    bool IsTripletIsolated(std::vector<EUTelTripletGBLUtility::triplet>::iterator it, std::vector<EUTelTripletGBLUtility::triplet> &trip, double z_match, double isolation = 0.3);
+    //bool IsTripletIsolated(std::vector<EUTelTripletGBLUtility::triplet>::iterator it, std::vector<EUTelTripletGBLUtility::triplet> &trip, double z_match, double isolation = 0.3);
 
   
   protected:
@@ -184,11 +184,9 @@ namespace eutelescope {
     double _aluthickum;
     
     // Cuts for matching:
-    double _cutx;
-    double _cuty;
-    double _slope_cut_x;
-    double _slope_cut_y;
-    double _triCut;
+    double _track_match_cut;
+    double _slope_cut;
+    double _triplet_res_cut;
     double _probchi2_cut;
 
     // Partly outdated GEAR readings:
