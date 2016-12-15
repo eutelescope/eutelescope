@@ -34,17 +34,17 @@
 #include <IMPL/TrackImpl.h>
 
 // AIDA includes <.h>
-//#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 //#include <AIDA/IBaseHistogram.h>
 //#include <marlin/AIDAProcessor.h>
 //#include <AIDA/IHistogramFactory.h>
 //#include <AIDA/IAxis.h>
 //#include <AIDA/IHistogram1D.h>
 //#include <AIDA/IHistogram2D.h>
-//#include <AIDA/IProfile1D.h>
-//#include <AIDA/IProfile2D.h>
+#include <AIDA/IProfile1D.h>
+#include <AIDA/IProfile2D.h>
 //#include <AIDA/ITree.h>
-//#endif
+#endif
 
 // ROOT includes
 #include <TMatrixD.h>
@@ -208,11 +208,27 @@ namespace eutelescope {
      * @return a vector of found triplets among the given set of hits.
      */
     void FindTriplets(std::vector<EUTelTripletGBLUtility::hit> &hits, unsigned int plane0, unsigned int plane1, unsigned int plane2, double trip_res_cut, double trip_slope_cut, std::vector<EUTelTripletGBLUtility::triplet> &trip);
+
     //! Match the upstream and downstream triplets to tracks
     void MatchTriplets(std::vector<EUTelTripletGBLUtility::triplet> &up, std::vector<EUTelTripletGBLUtility::triplet> &down, double z_match, double trip_matching_cut, std::vector<EUTelTripletGBLUtility::track> &track);
 
     //! Check isolation of triplet within vector of triplets
     bool IsTripletIsolated(std::vector<EUTelTripletGBLUtility::triplet>::iterator it, std::vector<EUTelTripletGBLUtility::triplet> &trip, double z_match, double isolation = 0.3);
+
+    //! Calculate efficiency of plane
+    /*! This creates non-standard triplets and driplets (use only 5 planes to contruct them) and looks for matching hit on plane under test
+     * Inputs:
+     * - triplet
+     * - driplet
+     * - plane under test (PUT)
+     * - z match position
+     * - isolation cut
+     * - track match cut
+     * - Profile that should be filled
+     *
+     * returns double average efficiency
+     */
+    double PlaneEfficiency(std::vector<EUTelTripletGBLUtility::triplet> &up, std::vector<EUTelTripletGBLUtility::triplet> &down, std::vector<EUTelTripletGBLUtility::hit> &hits, unsigned int PUT, double track_match_z, double DUT_z, double match_cut, double eff_radius, std::vector<AIDA::IProfile1D*> &profile);
 
   private:
 

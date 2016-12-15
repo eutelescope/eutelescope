@@ -197,6 +197,107 @@ void EUTelTripletGBLUtility::FindTriplets(std::vector<EUTelTripletGBLUtility::hi
   //return triplets;
 }
 
+double EUTelTripletGBLUtility::PlaneEfficiency(std::vector<EUTelTripletGBLUtility::triplet> &eff_triplets_UP, std::vector<EUTelTripletGBLUtility::triplet> &eff_triplets_DOWN, std::vector<EUTelTripletGBLUtility::hit> &hits, unsigned int PUT, double track_match_z, double DUTz, double track_match_cut, double eff_radius, std::vector<AIDA::IProfile1D*> &profile) {
+
+  std::vector<EUTelTripletGBLUtility::triplet> eff_triplets;
+
+  // Iterate over all found eff-triplets to match them to the DUT (plane3):
+  //int n_matched_trips = 0;
+  //int n_unmatched_trips = 0;
+
+  //std::cout << " n eff triplets UP   = " << eff_triplets_UP->size() << std::endl;
+  //std::cout << " n eff triplets DOWN = " << eff_triplets_DOWN->size() << std::endl;
+
+  for( std::vector<EUTelTripletGBLUtility::triplet>::iterator trip = eff_triplets_UP.begin(); trip != eff_triplets_UP.end(); trip++ ) {
+
+    // Track impact position at Matching Point from Upstream:
+    double xA = (*trip).getx_at(track_match_z); // triplet impact point at matching position
+    double yA = (*trip).gety_at(track_match_z);
+
+    // check if trip is isolated
+    bool IsolatedTrip = IsTripletIsolated(trip, eff_triplets_UP, track_match_z, track_match_cut*2.0001);
+
+    for( std::vector<EUTelTripletGBLUtility::triplet>::iterator drip = eff_triplets_DOWN.begin(); drip != eff_triplets_DOWN.end(); drip++ ){
+
+      // Track impact position at Matching Point from Downstream:
+      double xB = (*drip).getx_at(track_match_z); // triplet impact point at matching position
+      double yB = (*drip).gety_at(track_match_z);
+
+      // check if drip is isolated
+      bool IsolatedDrip = IsTripletIsolated(drip, eff_triplets_DOWN, track_match_z, track_match_cut*2.0001);
+
+      // driplet - triplet
+      double dx = xB - xA; 
+      double dy = yB - yA;
+
+      // match driplet and triplet:
+      if( fabs(dx) > track_match_cut) continue;
+      if( fabs(dy) > track_match_cut) continue;
+
+      //std::cout << " intersec ";
+
+      // check isolation
+      if( !IsolatedTrip || !IsolatedDrip ) continue;
+      //std::cout << " , isolated ";
+
+      // apply fiducial cut
+      if ( fabs(xA) >  9.0) continue;
+      if (     -yA  < -4.0) continue;
+
+      //std::cout << " , fiducial " << std::endl;
+
+      eff_triplets.push_back(*trip);
+
+
+    } // Downstream
+  } // Upstream
+
+  //std::cout << " n eff triplets = " << eff_triplets.size() << std::endl;
+
+  int n_sum = 0;
+  int n_matched = 0;
+  for( std::vector<EUTelTripletGBLUtility::triplet>::iterator trip = eff_triplets.begin(); trip != eff_triplets.end(); trip++ ) {
+
+    double ddAMin = -1.0;
+    // extrapolate triplet to plane  under test
+    double xTrip = (*trip).getx_at(DUTz);
+    double yTrip = (*trip).gety_at(DUTz);
+
+    for( std::vector<EUTelTripletGBLUtility::hit>::iterator lhit = hits.begin(); lhit != hits.end(); lhit++ ){
+
+      // Fill residuals of triplet and hit in the selected plane:
+      if( (*lhit).plane == PUT ) {
+	double xHit = (*lhit).x;
+	double yHit = (*lhit).y;
+
+	double ddA = sqrt( fabs(xHit - xTrip)*fabs(xHit - xTrip) 
+	    + fabs(yHit - yTrip)*fabs(yHit - yTrip) );
+	if(ddAMin < 0 || ddA < ddAMin) ddAMin = ddA;
+      }
+    } // end loop over hits
+
+    // if distance is smaller then limit, accept this as matched Hit
+    if(fabs(ddAMin) < eff_radius) {
+      //n_matched_trips++;
+      profile.at(0)->fill(-xTrip, 1.);
+      profile.at(1)->fill(-yTrip, 1.);
+      n_matched++;
+      n_sum++;
+    } else {
+      profile.at(0)->fill(-xTrip, 0.);
+      profile.at(1)->fill(-yTrip, 0.);
+      n_sum++;
+    }
+
+  }
+  
+  eff_triplets_UP.clear();
+  eff_triplets_DOWN.clear();
+
+  double eff = (double)n_matched/(double)n_sum;
+  return eff;
+
+}
 
 EUTelTripletGBLUtility::track::track(triplet up, triplet down) : upstream(up), downstream(down) {}
 
