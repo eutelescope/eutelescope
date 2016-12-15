@@ -198,6 +198,22 @@ namespace eutelescope {
       triplet downstream;
     };
 
+    //! Find hit triplets from three telescope planes
+    /*! This runs over all hits in the planes of the telescope and
+     * tries to match triplets by comparing with the middle planes.
+     * Two cut criteria can be set:
+     * @param triplet_res_cut Cut on the hit residual in the middle plane with respect to the triplet defined by first and last plane
+     * @param triplet_slope_cut Cut on the triplet track angle
+     *
+     * @return a vector of found triplets among the given set of hits.
+     */
+    void FindTriplets(std::vector<EUTelTripletGBLUtility::hit> &hits, unsigned int plane0, unsigned int plane1, unsigned int plane2, double trip_res_cut, double trip_slope_cut, std::vector<EUTelTripletGBLUtility::triplet> &trip);
+    //! Match the upstream and downstream triplets to tracks
+    void MatchTriplets(std::vector<EUTelTripletGBLUtility::triplet> &up, std::vector<EUTelTripletGBLUtility::triplet> &down, double z_match, double trip_matching_cut, std::vector<EUTelTripletGBLUtility::track> &track);
+
+    //! Check isolation of triplet within vector of triplets
+    bool IsTripletIsolated(std::vector<EUTelTripletGBLUtility::triplet>::iterator it, std::vector<EUTelTripletGBLUtility::triplet> &trip, double z_match, double isolation = 0.3);
+
   private:
 
     //! Fill the telescope plane correlation plots:
