@@ -550,10 +550,11 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
   // Then try to find a match on DUT (plane 3)
   //
   //
-  double DUTz = _planePosition[3];
   // This scales the radius with beam energy spacing (efficiencty shouldnt depend on amount of scattering!). Define radius at 6 GeV, 20 mm
   double eff_radius = _eff_radius * 6. / _eBeam * (_planePosition[1] - _planePosition[0]) / 20.; 
 
+  double track_match_z = _planePosition[3];
+  double DUTz = _planePosition[3];
 
   // Generate new triplet set with planes 0, 1, 2; 2,4,5:
   std::vector<EUTelTripletGBLUtility::triplet> eff_triplets_UP = upstream_triplets;
@@ -562,607 +563,114 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
   std::vector<EUTelTripletGBLUtility::triplet> eff_triplets_DOWN;
   gblutil.FindTriplets(hits, 2, 4, 5, _triplet_res_cut, _slope_cut, eff_triplets_DOWN);
 
-  std::vector<EUTelTripletGBLUtility::triplet> eff_triplets;
+  std::vector<AIDA::IProfile1D*> profiles;
+  profiles.push_back(effix3);
+  profiles.push_back(effiy3);
+  gblutil.PlaneEfficiency(eff_triplets_UP, eff_triplets_DOWN, hits, 3, track_match_z, DUTz, _track_match_cut, eff_radius, profiles);
 
-  // Iterate over all found eff-triplets to match them to the DUT (plane3):
-  //int n_matched_trips = 0;
-  //int n_unmatched_trips = 0;
-
-  //std::cout << " n eff triplets UP   = " << eff_triplets_UP->size() << std::endl;
-  //std::cout << " n eff triplets DOWN = " << eff_triplets_DOWN->size() << std::endl;
-
-  for( std::vector<EUTelTripletGBLUtility::triplet>::iterator trip = eff_triplets_UP.begin(); trip != eff_triplets_UP.end(); trip++ ) {
-
-    // Track impact position at Matching Point from Upstream:
-    double xA = (*trip).getx_at(DUTz); // triplet impact point at matching position
-    double yA = (*trip).gety_at(DUTz);
-
-    // check if trip is isolated
-    bool IsolatedTrip = gblutil.IsTripletIsolated(trip, eff_triplets_UP, DUTz, _track_match_cut*2.01);
-
-    for( std::vector<EUTelTripletGBLUtility::triplet>::iterator drip = eff_triplets_DOWN.begin(); drip != eff_triplets_DOWN.end(); drip++ ){
-
-      // Track impact position at Matching Point from Downstream:
-      double xB = (*drip).getx_at(DUTz); // triplet impact point at matching position
-      double yB = (*drip).gety_at(DUTz);
-
-      // check if drip is isolated
-      bool IsolatedDrip = gblutil.IsTripletIsolated(drip, eff_triplets_DOWN, DUTz, _track_match_cut*2.01);
-
-      // driplet - triplet
-      double dx = xB - xA; 
-      double dy = yB - yA;
-
-      // match driplet and triplet:
-      if( abs(dx) > _track_match_cut) continue;
-      if( abs(dy) > _track_match_cut) continue;
-
-      //std::cout << " intersec ";
-
-      // check isolation
-      if( !IsolatedTrip || !IsolatedDrip ) continue;
-      //std::cout << " , isolated ";
-
-      // apply fiducial cut
-      if ( fabs(xA) >  9.0) continue;
-      if (     -yA  < -4.0) continue;
-
-      //std::cout << " , fiducial " << std::endl;
-
-      eff_triplets.push_back(*trip);
-
-
-    } // Downstream
-  } // Upstream
-
-  //std::cout << " n eff triplets = " << eff_triplets.size() << std::endl;
-
-  for( std::vector<EUTelTripletGBLUtility::triplet>::iterator trip = eff_triplets.begin(); trip != eff_triplets.end(); trip++ ) {
-
-    double ddAMin = -1000.0;
-    double xTrip = (*trip).getx_at(DUTz);
-    double yTrip = (*trip).gety_at(DUTz);
-
-    for( std::vector<EUTelTripletGBLUtility::hit>::iterator lhit = hits.begin(); lhit != hits.end(); lhit++ ){
-
-      if( (*lhit).plane <= 2 || (*lhit).plane  > 3) continue; // want 3
-
-      // Fill residuals of triplet and hit in the selected plane:
-      if( (*lhit).plane == 3 ) {
-	double xHit = (*lhit).x;
-	double yHit = (*lhit).y;
-
-	double ddA = sqrt( fabs(xHit - xTrip)*fabs(xHit - xTrip) 
-	    + fabs(yHit - yTrip)*fabs(yHit - yTrip) );
-	if(ddAMin < 0 || ddA < ddAMin) ddAMin = ddA;
-      }
-    } // end loop over hits
-
-    // if distance is smaller then limit, accept this as matched Hit
-    if(fabs(ddAMin) < eff_radius) {
-      //n_matched_trips++;
-      effix3->fill(-xTrip, 1.);
-      effiy3->fill(-yTrip, 1.);
-    } else {
-      effix3->fill(-xTrip, 0.);
-      effiy3->fill(-yTrip, 0.);
-    }
-
-  }
   
-  eff_triplets_UP.clear();
-  eff_triplets_DOWN.clear();
-  eff_triplets.clear();
-
   //----------------------------------------------------------------------------
   // calculate efficiency of plane 2 by forming a triplet from planes 0, 1, 3; 3, 4, 5.
   // Then try to find a match on DUT (plane 2)
   //
   //
-  DUTz = _planePosition[3];
+  track_match_z = _planePosition[3];
+  DUTz = _planePosition[2];
   // This scales the radius with beam energy spacing (efficiencty shouldnt depend on amount of scattering!). Define radius at 6 GeV, 20 mm
 
 
   // Generate new triplet set with planes 0, 1, 3; 3,4,5:
   gblutil.FindTriplets(hits, 0, 1, 3, _triplet_res_cut, _slope_cut, eff_triplets_UP);
-
+  // use existing one for down stream
   eff_triplets_DOWN = downstream_triplets;
 
-  //std::vector<triplet> eff_triplets;
-
-  // Iterate over all found eff-triplets to match them to the DUT (plane3):
-  //int n_matched_trips = 0;
-  //int n_unmatched_trips = 0;
-
-  //std::cout << " n eff triplets UP   = " << eff_triplets_UP->size() << std::endl;
-  //std::cout << " n eff triplets DOWN = " << eff_triplets_DOWN->size() << std::endl;
-
-  for( std::vector<EUTelTripletGBLUtility::triplet>::iterator trip = eff_triplets_UP.begin(); trip != eff_triplets_UP.end(); trip++ ) {
-
-    // Track impact position at Matching Point from Upstream:
-    double xA = (*trip).getx_at(DUTz); // triplet impact point at matching position
-    double yA = (*trip).gety_at(DUTz);
-
-    // check if trip is isolated
-    bool IsolatedTrip = gblutil.IsTripletIsolated(trip, eff_triplets_UP, DUTz, _track_match_cut*2.01);
-
-    for( std::vector<EUTelTripletGBLUtility::triplet>::iterator drip = eff_triplets_DOWN.begin(); drip != eff_triplets_DOWN.end(); drip++ ){
-
-      // Track impact position at Matching Point from Downstream:
-      double xB = (*drip).getx_at(DUTz); // triplet impact point at matching position
-      double yB = (*drip).gety_at(DUTz);
-
-      // check if drip is isolated
-      bool IsolatedDrip = gblutil.IsTripletIsolated(drip, eff_triplets_DOWN, DUTz, _track_match_cut*2.01);
-
-      // driplet - triplet
-      double dx = xB - xA; 
-      double dy = yB - yA;
-
-      // match driplet and triplet:
-      if( abs(dx) > _track_match_cut) continue;
-      if( abs(dy) > _track_match_cut) continue;
-
-      //std::cout << " intersec ";
-
-      // check isolation
-      if( !IsolatedTrip || !IsolatedDrip ) continue;
-      //std::cout << " , isolated ";
-
-      // apply fiducial cut
-      if ( fabs(xA) >  9.0) continue;
-      if (     -yA  < -4.0) continue;
-
-      //std::cout << " , fiducial " << std::endl;
-
-      eff_triplets.push_back(*trip);
+  profiles.clear();
+  profiles.push_back(effix2);
+  profiles.push_back(effiy2);
+  gblutil.PlaneEfficiency(eff_triplets_UP, eff_triplets_DOWN, hits, 2, track_match_z, DUTz, _track_match_cut, eff_radius, profiles);
 
 
-    } // Downstream
-  } // Upstream
-
-  //std::cout << " n eff triplets = " << eff_triplets.size() << std::endl;
-
-  for( std::vector<EUTelTripletGBLUtility::triplet>::iterator trip = eff_triplets.begin(); trip != eff_triplets.end(); trip++ ) {
-
-    double ddAMin = -1000.0;
-    double xTrip = (*trip).getx_at(DUTz);
-    double yTrip = (*trip).gety_at(DUTz);
-
-    for( std::vector<EUTelTripletGBLUtility::hit>::iterator lhit = hits.begin(); lhit != hits.end(); lhit++ ){
-
-      if( (*lhit).plane <= 1 || (*lhit).plane  > 2) continue; // want 2
-
-      // Fill residuals of triplet and hit in the selected plane:
-      if( (*lhit).plane == 2 ) {
-	double xHit = (*lhit).x;
-	double yHit = (*lhit).y;
-
-	double ddA = sqrt( fabs(xHit - xTrip)*fabs(xHit - xTrip) 
-	    + fabs(yHit - yTrip)*fabs(yHit - yTrip) );
-	if(ddAMin < 0 || ddA < ddAMin) ddAMin = ddA;
-      }
-    } // end loop over hits
-
-    // if distance is smaller then limit, accept this as matched Hit
-    if(fabs(ddAMin) < eff_radius) {
-      //n_matched_trips++;
-      effix2->fill(-xTrip, 1.);
-      effiy2->fill(-yTrip, 1.);
-    } else {
-      effix2->fill(-xTrip, 0.);
-      effiy2->fill(-yTrip, 0.);
-    }
-
-  }
-
-  eff_triplets_UP.clear();
-  eff_triplets_DOWN.clear();
-  eff_triplets.clear();
-
+  
   //----------------------------------------------------------------------------
   // calculate efficiency of plane 1 by forming a triplet from planes 0, 2, 3; 3, 4, 5.
   // Then try to find a match on DUT (plane 1)
   //
   //
-  DUTz = _planePosition[3];
+  track_match_z = _planePosition[3];
+  DUTz = _planePosition[1];
   // This scales the radius with beam energy spacing (efficiencty shouldnt depend on amount of scattering!). Define radius at 6 GeV, 20 mm
 
 
   // Generate new triplet set with planes 0, 2, 3; 3,4,5:
   gblutil.FindTriplets(hits, 0, 2, 3, _triplet_res_cut, _slope_cut, eff_triplets_UP);
-
+  // use existing one for down stream
   eff_triplets_DOWN = downstream_triplets;
 
-  //std::vector<triplet> eff_triplets;
-
-  // Iterate over all found eff-triplets to match them to the DUT (plane3):
-  //int n_matched_trips = 0;
-  //int n_unmatched_trips = 0;
-
-  //std::cout << " n eff triplets UP   = " << eff_triplets_UP->size() << std::endl;
-  //std::cout << " n eff triplets DOWN = " << eff_triplets_DOWN->size() << std::endl;
-
-  for( std::vector<EUTelTripletGBLUtility::triplet>::iterator trip = eff_triplets_UP.begin(); trip != eff_triplets_UP.end(); trip++ ) {
-
-    // Track impact position at Matching Point from Upstream:
-    double xA = (*trip).getx_at(DUTz); // triplet impact point at matching position
-    double yA = (*trip).gety_at(DUTz);
-
-    // check if trip is isolated
-    bool IsolatedTrip = gblutil.IsTripletIsolated(trip, eff_triplets_UP, DUTz, _track_match_cut*2.01);
-
-    for( std::vector<EUTelTripletGBLUtility::triplet>::iterator drip = eff_triplets_DOWN.begin(); drip != eff_triplets_DOWN.end(); drip++ ){
-
-      // Track impact position at Matching Point from Downstream:
-      double xB = (*drip).getx_at(DUTz); // triplet impact point at matching position
-      double yB = (*drip).gety_at(DUTz);
-
-      // check if drip is isolated
-      bool IsolatedDrip = gblutil.IsTripletIsolated(drip, eff_triplets_DOWN, DUTz, _track_match_cut*2.01);
-
-      // driplet - triplet
-      double dx = xB - xA; 
-      double dy = yB - yA;
-
-      // match driplet and triplet:
-      if( abs(dx) > _track_match_cut) continue;
-      if( abs(dy) > _track_match_cut) continue;
-
-      //std::cout << " intersec ";
-
-      // check isolation
-      if( !IsolatedTrip || !IsolatedDrip ) continue;
-      //std::cout << " , isolated ";
-
-      // apply fiducial cut
-      if ( fabs(xA) >  9.0) continue;
-      if (     -yA  < -4.0) continue;
-
-      //std::cout << " , fiducial " << std::endl;
-
-      eff_triplets.push_back(*trip);
+  profiles.clear();
+  profiles.push_back(effix1);
+  profiles.push_back(effiy1);
+  gblutil.PlaneEfficiency(eff_triplets_UP, eff_triplets_DOWN, hits, 1, track_match_z, DUTz, _track_match_cut, eff_radius, profiles);
 
 
-    } // Downstream
-  } // Upstream
-
-  //std::cout << " n eff triplets = " << eff_triplets.size() << std::endl;
-
-  for( std::vector<EUTelTripletGBLUtility::triplet>::iterator trip = eff_triplets.begin(); trip != eff_triplets.end(); trip++ ) {
-
-    double ddAMin = -1000.0;
-    double xTrip = (*trip).getx_at(DUTz);
-    double yTrip = (*trip).gety_at(DUTz);
-
-    for( std::vector<EUTelTripletGBLUtility::hit>::iterator lhit = hits.begin(); lhit != hits.end(); lhit++ ){
-
-      if( (*lhit).plane <= 0 || (*lhit).plane  > 1) continue; // want 1
-
-      // Fill residuals of triplet and hit in the selected plane:
-      if( (*lhit).plane == 1 ) {
-	double xHit = (*lhit).x;
-	double yHit = (*lhit).y;
-
-	double ddA = sqrt( fabs(xHit - xTrip)*fabs(xHit - xTrip) 
-	    + fabs(yHit - yTrip)*fabs(yHit - yTrip) );
-	if(ddAMin < 0 || ddA < ddAMin) ddAMin = ddA;
-      }
-    } // end loop over hits
-
-    // if distance is smaller then limit, accept this as matched Hit
-    if(fabs(ddAMin) < eff_radius) {
-      //n_matched_trips++;
-      effix1->fill(-xTrip, 1.);
-      effiy1->fill(-yTrip, 1.);
-    } else {
-      effix1->fill(-xTrip, 0.);
-      effiy1->fill(-yTrip, 0.);
-    }
-
-  }
-
-  eff_triplets_UP.clear();
-  eff_triplets_DOWN.clear();
-  eff_triplets.clear();
-
-  //----------------------------------------------------------------------------
+    //----------------------------------------------------------------------------
   // calculate efficiency of plane 0 by forming a triplet from planes 1, 2, 3; 3, 4, 5.
   // Then try to find a match on DUT (plane 0)
   //
   //
-  DUTz = _planePosition[3];
+  track_match_z = _planePosition[3];
+  DUTz = _planePosition[0];
   // This scales the radius with beam energy spacing (efficiencty shouldnt depend on amount of scattering!). Define radius at 6 GeV, 20 mm
 
 
   // Generate new triplet set with planes 1, 2, 3; 3,4,5:
   gblutil.FindTriplets(hits, 1, 2, 3, _triplet_res_cut, _slope_cut, eff_triplets_UP);
-
   eff_triplets_DOWN = downstream_triplets;
 
-  //std::vector<triplet> eff_triplets;
-
-  // Iterate over all found eff-triplets to match them to the DUT (plane3):
-  //int n_matched_trips = 0;
-  //int n_unmatched_trips = 0;
-
-  //std::cout << " n eff triplets UP   = " << eff_triplets_UP->size() << std::endl;
-  //std::cout << " n eff triplets DOWN = " << eff_triplets_DOWN->size() << std::endl;
-
-  for( std::vector<EUTelTripletGBLUtility::triplet>::iterator trip = eff_triplets_UP.begin(); trip != eff_triplets_UP.end(); trip++ ) {
-
-    // Track impact position at Matching Point from Upstream:
-    double xA = (*trip).getx_at(DUTz); // triplet impact point at matching position
-    double yA = (*trip).gety_at(DUTz);
-
-    // check if trip is isolated
-    bool IsolatedTrip = gblutil.IsTripletIsolated(trip, eff_triplets_UP, DUTz, _track_match_cut*2.01);
-
-    for( std::vector<EUTelTripletGBLUtility::triplet>::iterator drip = eff_triplets_DOWN.begin(); drip != eff_triplets_DOWN.end(); drip++ ){
-
-      // Track impact position at Matching Point from Downstream:
-      double xB = (*drip).getx_at(DUTz); // triplet impact point at matching position
-      double yB = (*drip).gety_at(DUTz);
-
-      // check if drip is isolated
-      bool IsolatedDrip = gblutil.IsTripletIsolated(drip, eff_triplets_DOWN, DUTz, _track_match_cut*2.01);
-
-      // driplet - triplet
-      double dx = xB - xA; 
-      double dy = yB - yA;
-
-      // match driplet and triplet:
-      if( abs(dx) > _track_match_cut) continue;
-      if( abs(dy) > _track_match_cut) continue;
-
-      //std::cout << " intersec ";
-
-      // check isolation
-      if( !IsolatedTrip || !IsolatedDrip ) continue;
-      //std::cout << " , isolated ";
-
-      // apply fiducial cut
-      if ( fabs(xA) >  9.0) continue;
-      if (     -yA  < -4.0) continue;
-
-      //std::cout << " , fiducial " << std::endl;
-
-      eff_triplets.push_back(*trip);
+  profiles.clear();
+  profiles.push_back(effix0);
+  profiles.push_back(effiy0);
+  gblutil.PlaneEfficiency(eff_triplets_UP, eff_triplets_DOWN, hits, 0, track_match_z, DUTz, _track_match_cut, eff_radius, profiles);
 
 
-    } // Downstream
-  } // Upstream
-
-  //std::cout << " n eff triplets = " << eff_triplets.size() << std::endl;
-
-  for( std::vector<EUTelTripletGBLUtility::triplet>::iterator trip = eff_triplets.begin(); trip != eff_triplets.end(); trip++ ) {
-
-    double ddAMin = -1000.0;
-    double xTrip = (*trip).getx_at(DUTz);
-    double yTrip = (*trip).gety_at(DUTz);
-
-    for( std::vector<EUTelTripletGBLUtility::hit>::iterator lhit = hits.begin(); lhit != hits.end(); lhit++ ){
-
-      if( (*lhit).plane  > 0) continue; // want 0
-
-      // Fill residuals of triplet and hit in the selected plane:
-      if( (*lhit).plane == 0 ) {
-	double xHit = (*lhit).x;
-	double yHit = (*lhit).y;
-
-	double ddA = sqrt( fabs(xHit - xTrip)*fabs(xHit - xTrip) 
-	    + fabs(yHit - yTrip)*fabs(yHit - yTrip) );
-	if(ddAMin < 0 || ddA < ddAMin) ddAMin = ddA;
-      }
-    } // end loop over hits
-
-    // if distance is smaller then limit, accept this as matched Hit
-    if(fabs(ddAMin) < eff_radius) {
-      //n_matched_trips++;
-      effix0->fill(-xTrip, 1.);
-      effiy0->fill(-yTrip, 1.);
-    } else {
-      effix0->fill(-xTrip, 0.);
-      effiy0->fill(-yTrip, 0.);
-    }
-
-  }
-
-  eff_triplets_UP.clear();
-  eff_triplets_DOWN.clear();
-  eff_triplets.clear();
-
-  //----------------------------------------------------------------------------
+    //----------------------------------------------------------------------------
   // calculate efficiency of plane 4 by forming a triplet from planes 0, 1, 2; 2, 3, 5.
   // Then try to find a match on DUT (plane 3)
   //
   //
-  DUTz = _planePosition[3];
+  track_match_z = _planePosition[3];
+  DUTz = _planePosition[4];
 
 
   // Generate new triplet set with planes 0, 1, 2; 2,4,5:
   eff_triplets_UP = upstream_triplets;
   gblutil.FindTriplets(hits, 2, 3, 5, _triplet_res_cut, _slope_cut, eff_triplets_DOWN);
 
-  for( std::vector<EUTelTripletGBLUtility::triplet>::iterator trip = eff_triplets_UP.begin(); trip != eff_triplets_UP.end(); trip++ ) {
+  profiles.clear();
+  profiles.push_back(effix4);
+  profiles.push_back(effiy4);
+  gblutil.PlaneEfficiency(eff_triplets_UP, eff_triplets_DOWN, hits, 4, track_match_z, DUTz, _track_match_cut, eff_radius, profiles);
 
-    // Track impact position at Matching Point from Upstream:
-    double xA = (*trip).getx_at(DUTz); // triplet impact point at matching position
-    double yA = (*trip).gety_at(DUTz);
-
-    // check if trip is isolated
-    bool IsolatedTrip = gblutil.IsTripletIsolated(trip, eff_triplets_UP, DUTz, _track_match_cut*2.01);
-
-    for( std::vector<EUTelTripletGBLUtility::triplet>::iterator drip = eff_triplets_DOWN.begin(); drip != eff_triplets_DOWN.end(); drip++ ){
-
-      // Track impact position at Matching Point from Downstream:
-      double xB = (*drip).getx_at(DUTz); // triplet impact point at matching position
-      double yB = (*drip).gety_at(DUTz);
-
-      // check if drip is isolated
-      bool IsolatedDrip = gblutil.IsTripletIsolated(drip, eff_triplets_DOWN, DUTz, _track_match_cut*2.01);
-
-      // driplet - triplet
-      double dx = xB - xA; 
-      double dy = yB - yA;
-
-      // match driplet and triplet:
-      if( abs(dx) > _track_match_cut) continue;
-      if( abs(dy) > _track_match_cut) continue;
-
-      //std::cout << " intersec ";
-
-      // check isolation
-      if( !IsolatedTrip || !IsolatedDrip ) continue;
-      //std::cout << " , isolated ";
-
-      // apply fiducial cut
-      if ( fabs(xA) >  9.0) continue;
-      if (     -yA  < -4.0) continue;
-
-      //std::cout << " , fiducial " << std::endl;
-
-      eff_triplets.push_back(*trip);
-
-
-    } // Downstream
-  } // Upstream
-
-  //std::cout << " n eff triplets = " << eff_triplets.size() << std::endl;
-
-  for( std::vector<EUTelTripletGBLUtility::triplet>::iterator trip = eff_triplets.begin(); trip != eff_triplets.end(); trip++ ) {
-
-    double ddAMin = -1000.0;
-    double xTrip = (*trip).getx_at(DUTz);
-    double yTrip = (*trip).gety_at(DUTz);
-
-    for( std::vector<EUTelTripletGBLUtility::hit>::iterator lhit = hits.begin(); lhit != hits.end(); lhit++ ){
-
-      if( (*lhit).plane <= 3 || (*lhit).plane  > 4) continue; // want 4
-
-      // Fill residuals of triplet and hit in the selected plane:
-      if( (*lhit).plane == 4 ) {
-	double xHit = (*lhit).x;
-	double yHit = (*lhit).y;
-
-	double ddA = sqrt( fabs(xHit - xTrip)*fabs(xHit - xTrip) 
-	    + fabs(yHit - yTrip)*fabs(yHit - yTrip) );
-	if(ddAMin < 0 || ddA < ddAMin) ddAMin = ddA;
-      }
-    } // end loop over hits
-
-    // if distance is smaller then limit, accept this as matched Hit
-    if(fabs(ddAMin) < eff_radius) {
-      //n_matched_trips++;
-      effix4->fill(-xTrip, 1.);
-      effiy4->fill(-yTrip, 1.);
-    } else {
-      effix4->fill(-xTrip, 0.);
-      effiy4->fill(-yTrip, 0.);
-    }
-
-  }
-  
-  eff_triplets_UP.clear();
-  eff_triplets_DOWN.clear();
-  eff_triplets.clear();
 
   //----------------------------------------------------------------------------
   // calculate efficiency of plane 5 by forming a triplet from planes 0, 1, 2; 2, 3, 4.
   // Then try to find a match on DUT (plane 3)
   //
   //
-  DUTz = _planePosition[3];
+  track_match_z = _planePosition[3];
+  DUTz = _planePosition[5];
 
 
   // Generate new triplet set with planes 0, 1, 2; 2,3,4:
   eff_triplets_UP = upstream_triplets;
   gblutil.FindTriplets(hits, 2, 3, 4, _triplet_res_cut, _slope_cut, eff_triplets_DOWN);
 
-  for( std::vector<EUTelTripletGBLUtility::triplet>::iterator trip = eff_triplets_UP.begin(); trip != eff_triplets_UP.end(); trip++ ) {
-
-    // Track impact position at Matching Point from Upstream:
-    double xA = (*trip).getx_at(DUTz); // triplet impact point at matching position
-    double yA = (*trip).gety_at(DUTz);
-
-    // check if trip is isolated
-    bool IsolatedTrip = gblutil.IsTripletIsolated(trip, eff_triplets_UP, DUTz, _track_match_cut*2.01);
-
-    for( std::vector<EUTelTripletGBLUtility::triplet>::iterator drip = eff_triplets_DOWN.begin(); drip != eff_triplets_DOWN.end(); drip++ ){
-
-      // Track impact position at Matching Point from Downstream:
-      double xB = (*drip).getx_at(DUTz); // triplet impact point at matching position
-      double yB = (*drip).gety_at(DUTz);
-
-      // check if drip is isolated
-      bool IsolatedDrip = gblutil.IsTripletIsolated(drip, eff_triplets_DOWN, DUTz, _track_match_cut*2.01);
-
-      // driplet - triplet
-      double dx = xB - xA; 
-      double dy = yB - yA;
-
-      // match driplet and triplet:
-      if( abs(dx) > _track_match_cut) continue;
-      if( abs(dy) > _track_match_cut) continue;
-
-      //std::cout << " intersec ";
-
-      // check isolation
-      if( !IsolatedTrip || !IsolatedDrip ) continue;
-      //std::cout << " , isolated ";
-
-      // apply fiducial cut
-      if ( fabs(xA) >  9.0) continue;
-      if (     -yA  < -4.0) continue;
-
-      //std::cout << " , fiducial " << std::endl;
-
-      eff_triplets.push_back(*trip);
+  profiles.clear();
+  profiles.push_back(effix5);
+  profiles.push_back(effiy5);
+  gblutil.PlaneEfficiency(eff_triplets_UP, eff_triplets_DOWN, hits, 5, track_match_z, DUTz, _track_match_cut, eff_radius, profiles);
 
 
-    } // Downstream
-  } // Upstream
-
-  //std::cout << " n eff triplets = " << eff_triplets.size() << std::endl;
-
-  for( std::vector<EUTelTripletGBLUtility::triplet>::iterator trip = eff_triplets.begin(); trip != eff_triplets.end(); trip++ ) {
-
-    double ddAMin = -1000.0;
-    double xTrip = (*trip).getx_at(DUTz);
-    double yTrip = (*trip).gety_at(DUTz);
-
-    for( std::vector<EUTelTripletGBLUtility::hit>::iterator lhit = hits.begin(); lhit != hits.end(); lhit++ ){
-
-      if( (*lhit).plane <= 4 || (*lhit).plane  > 5) continue; // want 5
-
-      // Fill residuals of triplet and hit in the selected plane:
-      if( (*lhit).plane == 5 ) {
-	double xHit = (*lhit).x;
-	double yHit = (*lhit).y;
-
-	double ddA = sqrt( fabs(xHit - xTrip)*fabs(xHit - xTrip) 
-	    + fabs(yHit - yTrip)*fabs(yHit - yTrip) );
-	if(ddAMin < 0 || ddA < ddAMin) ddAMin = ddA;
-      }
-    } // end loop over hits
-
-    // if distance is smaller then limit, accept this as matched Hit
-    if(fabs(ddAMin) < eff_radius) {
-      //n_matched_trips++;
-      effix5->fill(-xTrip, 1.);
-      effiy5->fill(-yTrip, 1.);
-    } else {
-      effix5->fill(-xTrip, 0.);
-      effiy5->fill(-yTrip, 0.);
-    }
-
-  }
   
-  eff_triplets_UP.clear();
-  eff_triplets_DOWN.clear();
-  eff_triplets.clear();
-
-
   //----------------------------------------------------------------------------
   // six: triplets A and driplets B
   // matching and GBL fit
