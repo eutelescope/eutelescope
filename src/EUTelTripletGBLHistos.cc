@@ -334,12 +334,6 @@ void EUTelTripletGBL::bookHistos()
   ntriHisto->setTitle( "telescope triplets;0-1-2 triplets;events" );
 
 
-  // for both triplet and driplet
-  triddaMindutHisto = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "triddaMindut", 1400, -2, 5 );
-  triddaMindutHisto->setTitle( "minimal triplet distance at DUT;triplet distance at DUT [mm];telescope triplets" );
-
-
   // driplets:
   AIDAProcessor::tree(this)->mkdir("Downstream");
 

@@ -559,53 +559,6 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
   }// iterate over upstream triplets
   ntriHisto->fill( upstream_triplets.size() );
 
-  // check triplets found
-  /*for( std::vector<EUTelTripletGBLUtility::triplet>::iterator it = upstream_triplets.begin(); it != upstream_triplets.end(); it++ ){
-    std::cout << " ------------ THIS IS THE TRIPLET: " << std::endl;
-    std::cout << *it << std::endl;
-    std::cout << " hit 0: " << std::endl;
-    std::cout << (*it).gethit(0) << std::endl;
-    std::cout << " hit 1: " << std::endl;
-    std::cout << (*it).gethit(1) << std::endl;
-    std::cout << " hit 2: " << std::endl;
-    std::cout << (*it).gethit(2) << std::endl;
-
-  }*/
-
-  int count_uptrip = 0;
-  int count_it = 0;
-  //std::cout << " size of vector of trips = " << upstream_triplets.size() << std::endl;
-  for( std::vector<EUTelTripletGBLUtility::triplet>::iterator it = upstream_triplets.begin(); it != upstream_triplets.end(); it++ ){
-    //std::cout << " n uptrip = " << count_uptrip << std::endl;
-
-    bool IsolatedTrip = true;
-    double z_match = _planePosition[3];
-
-    // check first if trip is isolated
-    double xAa = (*it).getx_at(z_match); // triplet impact point at matching position
-    double yAa = (*it).gety_at(z_match);
-
-
-    double ddAMin = -1.0;
-    count_it = 0;
-    for( std::vector<EUTelTripletGBLUtility::triplet>::iterator tripIsoCheck = upstream_triplets.begin(); tripIsoCheck != upstream_triplets.end(); tripIsoCheck++ ) {
-      //std::cout << " n it = " << count_it << std::endl;
-      if(it != tripIsoCheck){
-        double xAIsoCheck = (*tripIsoCheck).getx_at(z_match);
-        double yAIsoCheck = (*tripIsoCheck).gety_at(z_match);
-        double ddA = sqrt( fabs(xAIsoCheck - xAa)*fabs(xAIsoCheck - xAa) 
-	  + fabs(yAIsoCheck - yAa)*fabs(yAIsoCheck - yAa) );
-        if(ddAMin < 0 || ddA < ddAMin) ddAMin = ddA;
-      }
-      count_it++;
-    }
-
-    //std::cout << " ddAmin = " << ddAMin << std::endl;
-    triddaMindutHisto->fill(ddAMin);
-    count_uptrip++;
-  }
-
-
   //----------------------------------------------------------------------------
   // calculate efficiency of plane 3 by forming a triplet from planes 0, 1, 2; 2, 4, 5.
   // Then try to find a match on DUT (plane 3)

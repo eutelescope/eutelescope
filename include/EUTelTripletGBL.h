@@ -239,8 +239,6 @@ namespace eutelescope {
   AIDA::IHistogram1D * triydutHisto;
   AIDA::IHistogram2D * trixydutHisto;
 
-  AIDA::IHistogram1D * triddaMindutHisto;
-
   // driplets 3-4-5:
 
   AIDA::IHistogram1D * dx35Histo;
