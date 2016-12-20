@@ -85,6 +85,38 @@ void EUTelTripletGBLUtility::bookHistos(){
     createHistogram1D( "GBLUtility/sixdyc", 100, -250, 250 );
   sixdycHisto->setTitle( "six match y;track #Deltay[#mum];triplet-driplet pairs" );
 
+  sixkxcHisto = AIDAProcessor::histogramFactory(parent)->
+    createHistogram1D( "GBLUtility/sixkxc", 100, -10, 10 );
+  sixkxcHisto->setTitle( "kink x, x-y matched;kink x [mrad];triplet-driplet pairs" );
+
+  sixkycHisto = AIDAProcessor::histogramFactory(parent)->
+    createHistogram1D( "GBLUtility/sixkyc", 100, -10, 10 );
+  sixkycHisto->setTitle( "kink y, x-y matched;kink y [mrad];triplet-driplet pairs" );
+
+  sixxHisto = AIDAProcessor::histogramFactory(parent)->
+    createHistogram1D( "GBLUtility/sixx", 240, -12, 12 );
+  sixxHisto->setTitle( "six x at DUT;six x_{out} at DUT [mm];six-plane tracks" );
+
+  sixyHisto = AIDAProcessor::histogramFactory(parent)->
+    createHistogram1D( "GBLUtility/sixy", 120, -6, 6 );
+  sixyHisto->setTitle( "six y at DUT;six y_{up} at DUT [mm];six-plane tracks" );
+
+  sixxyHisto = AIDAProcessor::histogramFactory(parent)->
+    createHistogram2D( "GBLUtility/sixxy", 240, -12, 12, 120, -6, 6 );
+  sixxyHisto->setTitle( "six at DUT;six x_{out} at DUT [mm];six y_{up} at DUT [mm];six-plane tracks" );
+
+  sixxycHisto = AIDAProcessor::histogramFactory(parent)->
+    createHistogram2D( "GBLUtility/sixxyc", 240, -12, 12, 120, -6, 6 );
+  sixxycHisto->setTitle( "six large kink;six x_{out} at DUT [mm];six y_{up} at DUT [mm];large kink tracks" );
+
+  /*sixxylkHisto = AIDAProcessor::histogramFactory(parent)->
+    createHistogram2D( "GBLUtilityTracks/sixxylk", 240, -12, 12, 120, -6, 6 );
+  sixxylkHisto->setTitle( "six with REF link at DUT;six x_{out} at DUT [mm];six y_{up} at DUT [mm];six-plane tracks with REF link" );
+  */
+
+  kinkvsxy = AIDAProcessor::histogramFactory(parent)->
+    createProfile2D( "GBLUtility/kinkvsxy", 120, -12, 12, 60, -6, 6, 0, 100 );
+  kinkvsxy->setTitle( "kink;six x_{out} at DUT [mm];six y_{up} at DUT [mm];sqrt(<kink^{2}>) [mrad]" );
 }
 
 void EUTelTripletGBLUtility::MatchTriplets(std::vector<triplet> &up, std::vector<EUTelTripletGBLUtility::triplet> &down, double z_match, double trip_matching_cut, std::vector<EUTelTripletGBLUtility::track> &tracks) {
@@ -144,18 +176,14 @@ void EUTelTripletGBLUtility::MatchTriplets(std::vector<triplet> &up, std::vector
       //else hIso->fill(1);
       
 
-      /*sixkxcHisto->fill( kx*1E3 );
+      sixkxcHisto->fill( kx*1E3 );
       sixkycHisto->fill( ky*1E3 );
       sixxHisto->fill( -xA ); // -xA = x_DP = out
       sixyHisto->fill( -yA ); // -yA = y_DP = up
       sixxyHisto->fill( -xA, -yA ); // DP: x_out, y_up
-      */
-
       // Fill kink map histogram:
-      /*if( abs( kx ) > 0.002 || abs( ky ) > 0.002 ) sixxycHisto->fill( -xA, -yA );
-       */
-
-      //kinkvsxy->fill( -xA, -yA, (kx*kx + ky*ky)*1E6 ); //<kink^2> [mrad^2]
+      if( abs( kx ) > 0.002 || abs( ky ) > 0.002 ) sixxycHisto->fill( -xA, -yA );      
+      kinkvsxy->fill( -xA, -yA, sqrt((kx*kx + ky*ky))*1E3 ); //sqrt(<kink^2>) [mrad]
 
       // apply fiducial cut
       if ( fabs(xA) >  9.0) continue;
