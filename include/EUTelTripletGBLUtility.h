@@ -315,6 +315,9 @@ namespace eutelescope {
 
       AIDA::IProfile2D * kinkvsxy;
 
+      AIDA::IHistogram1D * triddaMindutHisto;
+
+
   };
 
 }

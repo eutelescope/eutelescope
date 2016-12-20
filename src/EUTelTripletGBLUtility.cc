@@ -117,6 +117,12 @@ void EUTelTripletGBLUtility::bookHistos(){
   kinkvsxy = AIDAProcessor::histogramFactory(parent)->
     createProfile2D( "GBLUtility/kinkvsxy", 120, -12, 12, 60, -6, 6, 0, 100 );
   kinkvsxy->setTitle( "kink;six x_{out} at DUT [mm];six y_{up} at DUT [mm];sqrt(<kink^{2}>) [mrad]" );
+
+  // for both triplet and driplet
+  triddaMindutHisto = AIDAProcessor::histogramFactory(parent)->
+    createHistogram1D( "triddaMindut", 1400, -2, 5 );
+  triddaMindutHisto->setTitle( "minimal triplet distance at DUT;triplet distance at DUT [mm];telescope triplets" );
+
 }
 
 void EUTelTripletGBLUtility::MatchTriplets(std::vector<triplet> &up, std::vector<EUTelTripletGBLUtility::triplet> &down, double z_match, double trip_matching_cut, std::vector<EUTelTripletGBLUtility::track> &tracks) {
@@ -218,7 +224,7 @@ bool EUTelTripletGBLUtility::IsTripletIsolated(std::vector<EUTelTripletGBLUtilit
     }
   }
 
-  //triddaMindutHisto->fill(ddAMin);
+  triddaMindutHisto->fill(ddAMin);
   if(ddAMin < isolation_cut) IsolatedTrip = false;
 
   return IsolatedTrip;
