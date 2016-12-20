@@ -498,63 +498,6 @@ void EUTelTripletGBL::bookHistos()
     createHistogram1D( "Tracks/nsix", 21, -0.5, 20.5 );
   nsixHisto->setTitle( "telescope six-plane-tracks;six-plane-tracks;events" );
 
-  /*
-  sixkxHisto = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "Tracks/sixkx", 100, -10, 10 );
-  sixkxHisto->setTitle( "kink x;kink x [mrad];triplet-driplet pairs" );
-
-  sixkyHisto = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "Tracks/sixky", 100, -10, 10 );
-  sixkyHisto->setTitle( "kink y;kink y [mrad];triplet-driplet pairs" );
-
-  sixdxHisto = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "Tracks/sixdx", 100, -1, 1 );
-  sixdxHisto->setTitle( "six match x;match x [mm];triplet-driplet pairs" );
-
-  sixdyHisto = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "Tracks/sixdy", 100, -1, 1 );
-  sixdyHisto->setTitle( "six match y;match y [mm];triplet-driplet pairs" );
-
-  sixdxcHisto = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "Tracks/sixdxc", 100, -250, 250 );
-  sixdxcHisto->setTitle( "six match x;track #Deltax[#mum];triplet-driplet pairs" );
-
-  sixdycHisto = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "Tracks/sixdyc", 100, -250, 250 );
-  sixdycHisto->setTitle( "six match y;track #Deltay[#mum];triplet-driplet pairs" );
-  */
-
-  sixkxcHisto = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "Tracks/sixkxc", 100, -10, 10 );
-  sixkxcHisto->setTitle( "kink x, x-y matched;kink x [mrad];triplet-driplet pairs" );
-
-  sixkycHisto = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "Tracks/sixkyc", 100, -10, 10 );
-  sixkycHisto->setTitle( "kink y, x-y matched;kink y [mrad];triplet-driplet pairs" );
-
-  sixxHisto = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "Tracks/sixx", 240, -12, 12 );
-  sixxHisto->setTitle( "six x at DUT;six x_{out} at DUT [mm];six-plane tracks" );
-
-  sixyHisto = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "Tracks/sixy", 120, -6, 6 );
-  sixyHisto->setTitle( "six y at DUT;six y_{up} at DUT [mm];six-plane tracks" );
-
-  sixxyHisto = AIDAProcessor::histogramFactory(this)->
-    createHistogram2D( "Tracks/sixxy", 240, -12, 12, 120, -6, 6 );
-  sixxyHisto->setTitle( "six at DUT;six x_{out} at DUT [mm];six y_{up} at DUT [mm];six-plane tracks" );
-
-  sixxycHisto = AIDAProcessor::histogramFactory(this)->
-    createHistogram2D( "Tracks/sixxyc", 240, -12, 12, 120, -6, 6 );
-  sixxycHisto->setTitle( "six large kink;six x_{out} at DUT [mm];six y_{up} at DUT [mm];large kink tracks" );
-
-  sixxylkHisto = AIDAProcessor::histogramFactory(this)->
-    createHistogram2D( "Tracks/sixxylk", 240, -12, 12, 120, -6, 6 );
-  sixxylkHisto->setTitle( "six with REF link at DUT;six x_{out} at DUT [mm];six y_{up} at DUT [mm];six-plane tracks with REF link" );
-
-  kinkvsxy = AIDAProcessor::histogramFactory(this)->
-    createProfile2D( "Tracks/kinkvsxy", 120, -12, 12, 60, -6, 6, 0, 100 );
-  kinkvsxy->setTitle( "kink;six x_{out} at DUT [mm];six y_{up} at DUT [mm];<kink^{2}> [mrad^{2}]" );
 
   clustersize0 = AIDAProcessor::histogramFactory(this)->
     createHistogram1D( "Tracks/clustersize0", 100, 0, 100 );
