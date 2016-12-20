@@ -336,7 +336,7 @@ void EUTelTripletGBL::bookHistos()
 
   // for both triplet and driplet
   triddaMindutHisto = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "triddaMindut", 120, 0, 10 );
+    createHistogram1D( "triddaMindut", 1400, -2, 5 );
   triddaMindutHisto->setTitle( "minimal triplet distance at DUT;triplet distance at DUT [mm];telescope triplets" );
 
 
@@ -498,6 +498,7 @@ void EUTelTripletGBL::bookHistos()
     createHistogram1D( "Tracks/nsix", 21, -0.5, 20.5 );
   nsixHisto->setTitle( "telescope six-plane-tracks;six-plane-tracks;events" );
 
+  /*
   sixkxHisto = AIDAProcessor::histogramFactory(this)->
     createHistogram1D( "Tracks/sixkx", 100, -10, 10 );
   sixkxHisto->setTitle( "kink x;kink x [mrad];triplet-driplet pairs" );
@@ -521,6 +522,7 @@ void EUTelTripletGBL::bookHistos()
   sixdycHisto = AIDAProcessor::histogramFactory(this)->
     createHistogram1D( "Tracks/sixdyc", 100, -250, 250 );
   sixdycHisto->setTitle( "six match y;track #Deltay[#mum];triplet-driplet pairs" );
+  */
 
   sixkxcHisto = AIDAProcessor::histogramFactory(this)->
     createHistogram1D( "Tracks/sixkxc", 100, -10, 10 );

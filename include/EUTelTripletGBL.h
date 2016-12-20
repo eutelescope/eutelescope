@@ -286,12 +286,12 @@ namespace eutelescope {
   AIDA::IHistogram1D * ntriHisto;
   AIDA::IHistogram1D * ndriHisto;
   AIDA::IHistogram1D * nsixHisto;
-  AIDA::IHistogram1D * sixkxHisto; //driplet-triplet
+  /*AIDA::IHistogram1D * sixkxHisto; //driplet-triplet
   AIDA::IHistogram1D * sixkyHisto;
   AIDA::IHistogram1D * sixdxHisto;
   AIDA::IHistogram1D * sixdyHisto;
   AIDA::IHistogram1D * sixdxcHisto;
-  AIDA::IHistogram1D * sixdycHisto;
+  AIDA::IHistogram1D * sixdycHisto;*/
 
   AIDA::IHistogram1D * sixkxcHisto;
   AIDA::IHistogram1D * sixkycHisto;
