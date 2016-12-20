@@ -18,8 +18,28 @@
 #include "EUTELESCOPE.h"
 #include <cmath>
 
+// AIDA includes <.h>
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+#include <AIDA/IBaseHistogram.h>
+#include <marlin/AIDAProcessor.h>
+#include <AIDA/IHistogramFactory.h>
+#include <AIDA/IAxis.h>
+#include <AIDA/IHistogram1D.h>
+#include <AIDA/IHistogram2D.h>
+#include <AIDA/IProfile1D.h>
+#include <AIDA/IProfile2D.h>
+#include <AIDA/ITree.h>
+#endif
+
+// marlin includes ".h"
+#include "marlin/Processor.h"
+#include "marlin/Exceptions.h"
+#include "marlin/ProcessorMgr.h"
+#include "marlin/Global.h"
+
 using namespace std;
 using namespace eutelescope;
+using namespace marlin;
 
 
 EUTelTripletGBLUtility::EUTelTripletGBLUtility(){}
@@ -35,6 +55,36 @@ TMatrixD EUTelTripletGBLUtility::JacobianPointToPoint( double ds ) {
   jac[3][1] = ds; // x = x0 + xp * ds
   jac[4][2] = ds; // y = y0 + yp * ds
   return jac;
+}
+
+void EUTelTripletGBLUtility::bookHistos(){
+    
+  marlin::AIDAProcessor::tree(parent)->mkdir("GBLUtility");
+
+  sixkxHisto = AIDAProcessor::histogramFactory(parent)->
+    createHistogram1D( "GBLUtility/sixkx", 100, -10, 10 );
+  sixkxHisto->setTitle( "kink x;kink x [mrad];triplet-driplet pairs" );
+
+  sixkyHisto = AIDAProcessor::histogramFactory(parent)->
+    createHistogram1D( "GBLUtility/sixky", 100, -10, 10 );
+  sixkyHisto->setTitle( "kink y;kink y [mrad];triplet-driplet pairs" );
+
+  sixdxHisto = AIDAProcessor::histogramFactory(parent)->
+    createHistogram1D( "GBLUtility/sixdx", 100, -1, 1 );
+  sixdxHisto->setTitle( "six match x;match x [mm];triplet-driplet pairs" );
+
+  sixdyHisto = AIDAProcessor::histogramFactory(parent)->
+    createHistogram1D( "GBLUtility/sixdy", 100, -1, 1 );
+  sixdyHisto->setTitle( "six match y;match y [mm];triplet-driplet pairs" );
+
+  sixdxcHisto = AIDAProcessor::histogramFactory(parent)->
+    createHistogram1D( "GBLUtility/sixdxc", 100, -250, 250 );
+  sixdxcHisto->setTitle( "six match x;track #Deltax[#mum];triplet-driplet pairs" );
+
+  sixdycHisto = AIDAProcessor::histogramFactory(parent)->
+    createHistogram1D( "GBLUtility/sixdyc", 100, -250, 250 );
+  sixdycHisto->setTitle( "six match y;track #Deltay[#mum];triplet-driplet pairs" );
+
 }
 
 void EUTelTripletGBLUtility::MatchTriplets(std::vector<triplet> &up, std::vector<EUTelTripletGBLUtility::triplet> &down, double z_match, double trip_matching_cut, std::vector<EUTelTripletGBLUtility::track> &tracks) {
@@ -65,32 +115,32 @@ void EUTelTripletGBLUtility::MatchTriplets(std::vector<triplet> &up, std::vector
       EUTelTripletGBLUtility::track newtrack((*trip),(*drip));
 
       // Track kinks as difference in triplet slopes:
-      //double kx = newtrack.kink_x();
-      //double ky = newtrack.kink_y();
+      double kx = newtrack.kink_x();
+      double ky = newtrack.kink_y();
 
       // driplet - triplet
       double dx = xB - xA; 
       double dy = yB - yA;
 
-      /*sixkxHisto->fill( kx*1E3 );
+      sixkxHisto->fill( kx*1E3 );
       sixkyHisto->fill( ky*1E3 );
       sixdxHisto->fill( dx );
       sixdyHisto->fill( dy );
 
-
-      if( abs(dy) < 0.4 ) sixdxcHisto->fill( dx*1E3 ); // sig = 17 um at 5 GeV
-      if( abs(dx) < 0.4 ) sixdycHisto->fill( dy*1E3 );
-      */
+      if( abs(dy) < 0.5 ) sixdxcHisto->fill( dx*1E3 );
+      if( abs(dx) < 0.5 ) sixdycHisto->fill( dy*1E3 );
+      
 
       // match driplet and triplet:
       if( fabs(dx) > trip_matching_cut) continue;
       if( fabs(dy) > trip_matching_cut) continue;
 
       // check isolation
-      //if( !IsolatedTrip || !IsolatedDrip ) {
+      if( !IsolatedTrip || !IsolatedDrip ) {
 	//hIso->fill(0);
-	//continue;
-      //}
+	//std::cout << " me so non-isolated" << std::endl;
+	continue;
+      }
       //else hIso->fill(1);
       
 
@@ -156,6 +206,7 @@ void EUTelTripletGBLUtility::FindTriplets(std::vector<EUTelTripletGBLUtility::hi
     for( std::vector<EUTelTripletGBLUtility::hit>::iterator jhit = hits.begin(); jhit != hits.end(); jhit++ ){
       if( (*jhit).plane != plane2 ) continue; // Last plane
 
+      double sum_res_old = -1.;
       // get all hit is plane = plane1
       for( std::vector<EUTelTripletGBLUtility::hit>::iterator khit = hits.begin(); khit != hits.end(); khit++ ){
 	if( (*khit).plane != plane1 ) continue; // Middle plane
@@ -171,24 +222,30 @@ void EUTelTripletGBLUtility::FindTriplets(std::vector<EUTelTripletGBLUtility::hi
 	if( fabs(new_triplet.getdx(plane1)) > trip_res_cut) continue;
 	if( fabs(new_triplet.getdy(plane1)) > trip_res_cut) continue;
 
-	/*
+        
 	// For low threshold (high noise) and/or high occupancy, use only the triplet with the smallest sum of residuals on plane1
-	sum_res = abs(new_triplet.getdx(plane1)) + abs(new_triplet.getdy(plane1));
-	if(sum_res < sum_res_old || IsFirst){
+	double sum_res = sqrt(new_triplet.getdx(plane1)*new_triplet.getdx(plane1) + new_triplet.getdy(plane1)*new_triplet.getdy(plane1));
+	if(sum_res < sum_res_old){
 
-	// Remove the last one since it fits worse, not if its the first
-	if(!IsFirst) triplets->pop_back();
-	// The triplet is accepted, push it back:
-	triplets->push_back(new_triplet);
-	IsFirst = false;
-	streamlog_out(DEBUG2) << new_triplet;
-	sum_res_old = sum_res;
+	  // Remove the last one since it fits worse, not if its the first
+	  triplets.pop_back();
+	  // The triplet is accepted, push it back:
+	  triplets.push_back(new_triplet);
+	  streamlog_out(DEBUG2) << new_triplet;
+	  sum_res_old = sum_res;
 	}
-	*/
 
-	// The triplet is accepted, push it back:
-	triplets.push_back(new_triplet);
-	streamlog_out(DEBUG2) << new_triplet;
+	// update sum_res_old on first iteration
+	if(sum_res_old < 0.) {
+	  // The triplet is accepted, push it back:
+	  triplets.push_back(new_triplet);
+	  streamlog_out(DEBUG2) << new_triplet;
+	  sum_res_old = sum_res;
+	}
+	
+	//triplets.push_back(new_triplet);
+
+	
 
       }//loop over hits
     }//loop over hits
