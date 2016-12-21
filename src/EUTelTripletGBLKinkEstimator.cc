@@ -151,7 +151,7 @@ EUTelTripletGBLKinkEstimator::EUTelTripletGBLKinkEstimator() : Processor("EUTelT
       "resolution parameter for each Cluster size, same for all planes. first value is average of all CSes. Up to CS6 plus larger than 6, hence in total 8 numbers. Disable with -1, e.g. (3.5e-3, -1, -1, ...., -1)",
       _resolution,  FloatVec (static_cast <double> (8), 3.5*1e-3));
 
-  registerOptionalParameter("Thickness","thickness parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_thickness,  FloatVec (static_cast <double> (6), 50*1e-3));
+  registerOptionalParameter("Thickness","thickness parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_thickness,  FloatVec (static_cast <double> (7), 50*1e-3));
 
 
 }
@@ -184,6 +184,14 @@ void EUTelTripletGBLKinkEstimator::init() {
   _planeThickness  = new double[_nTelPlanes];
   _planeX0         = new double[_nTelPlanes];
   _planeResolution = new double[_nTelPlanes];
+  _planePosActive  = new int[_nTelPlanes];
+  _planePosActive[0] = 0;
+  _planePosActive[1] = 1;
+  _planePosActive[2] = 2;
+  _planePosActive[3] = -1;
+  _planePosActive[4] = 3;
+  _planePosActive[5] = 4;
+  _planePosActive[6] = 5;
 
   for(int i = 0; i < _nTelPlanes; i++) {
 
@@ -405,16 +413,18 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
     // Find Plane ID to which the hit belongs by minimizing its
     // distance in Z
     //FIXME to be fixed with more general geometry description!
-    double distMin = 99; // [mm]
+    double distMin = 2; // [mm]
 
     bool foundplane = false;
     for( int ipl = 0; ipl < _nTelPlanes; ipl++ ) {
       if( abs(newhit.z - _planePosition[ipl]) < distMin ) {
-	newhit.plane = ipl;
+	newhit.plane = _planePosActive[ipl];
+        newhit.id = _planeID[ipl];
 	foundplane = true;
 	distMin = abs(newhit.z - _planePosition[ipl]);
       }
     }
+    streamlog_out(DEBUG3)  << " Hit is at plane " << newhit.plane << " with ID " << newhit.id << std::endl;
 
     if(!foundplane) {
       streamlog_out(ERROR5) << "Could not associate hit with a telescope plane. Skipping event." << std::endl;
@@ -622,6 +632,8 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
     TMatrixD proL2m(2,2);
     proL2m.UnitMatrix();
 
+    TMatrixD addDer(2,2);
+
     TVectorD meas(2);
 
     //double res = 3.42E-3; // [mm] Anemone telescope intrinsic resolution
@@ -665,10 +677,10 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
     s = -10.;
 
     // loop over all scatterers first to calculate sumeps
-    for( int ipl = 0; ipl < 6; ++ipl ){
+    for( int ipl = 0; ipl < 7; ++ipl ){ // FIXME include estimate for unknown scatterer into log corr ?! for now, set thick = 0 in gear
       epsSi = _thickness[ipl]/ 93.66 + 0.050 / 285.6; // Si + Kapton (Kapton ist 2 * 25  = 50 um thick, but has 1/3 rad length = 17 um)
       sumeps += epsSi;
-      if( ipl < 5) {
+      if( ipl < 6) {
 	double distplane = _planePosition[ipl+1] - _planePosition[ipl];
 	epsAir =   distplane  / 304200.; 
 	sumeps += epsAir;
@@ -676,12 +688,14 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
 
     }
     sumeps += epsAlu;
-   // done with calculating sum eps
+    // done with calculating sum eps
 
-
-    int DUT_label;
-    int centre_label = -100;
-    for( int ipl = 0; ipl < 6; ++ipl ){
+    
+    int DUT_label = -1;
+    int siplane_label = -1;
+    double sDUT = -1;
+    int ipl =0;
+    for( int iplprime = 0; iplprime < _nTelPlanes; ++iplprime ){
       if(ipl == 0){
 	// one dummy point:
 
@@ -693,105 +707,134 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
 	delete point;
       }
 
-      // Get the corresponding hit from the track:
-      EUTelTripletGBLUtility::hit trackhit = (*tr).gethit(ipl);
+      // passive DUTs are listed with IDs starting 100, 101, ..., at least in my convention
+      if(_planeID[iplprime] <100 ){ 
+        //std::cout << "plane ID = " << _planeID[iplprime] << std::endl;
+	
+	// Get the corresponding hit from the track:
+	EUTelTripletGBLUtility::hit trackhit = (*tr).gethit(ipl);
 
-      if (ipl == 0) clustersize0->fill(trackhit.clustersize);
-      if (ipl == 1) clustersize1->fill(trackhit.clustersize);
-      if (ipl == 2) clustersize2->fill(trackhit.clustersize);
-      if (ipl == 3) clustersize3->fill(trackhit.clustersize);
-      if (ipl == 4) clustersize4->fill(trackhit.clustersize);
-      if (ipl == 5) clustersize5->fill(trackhit.clustersize);
+	if (ipl == 0) clustersize0->fill(trackhit.clustersize);
+	if (ipl == 1) clustersize1->fill(trackhit.clustersize);
+	if (ipl == 2) clustersize2->fill(trackhit.clustersize);
+	if (ipl == 3) clustersize3->fill(trackhit.clustersize);
+	if (ipl == 4) clustersize4->fill(trackhit.clustersize);
+	if (ipl == 5) clustersize5->fill(trackhit.clustersize);
 
-      double dz = trackhit.z - srip.base().z;
-      double xs = srip.base().x + srip.slope().x * dz; // Ax at plane
-      double ys = srip.base().y + srip.slope().y * dz; // Ay at plane
+	double dz = trackhit.z - srip.base().z;
+	double xs = srip.base().x + srip.slope().x * dz; // Ax at plane
+	double ys = srip.base().y + srip.slope().y * dz; // Ay at plane
 
-      trackhitx[ipl] = trackhit.x;
-      trackhity[ipl] = trackhit.y;
-      trackhitxloc[ipl] = trackhit.locx;
-      trackhityloc[ipl] = trackhit.locy;
+	trackhitx[ipl] = trackhit.x;
+	trackhity[ipl] = trackhit.y;
+	trackhitxloc[ipl] = trackhit.locx;
+	trackhityloc[ipl] = trackhit.locy;
 
-      rx[ipl] = trackhit.x - xs;
-      ry[ipl] = trackhit.y - ys;
+	rx[ipl] = trackhit.x - xs;
+	ry[ipl] = trackhit.y - ys;
 
-      if( ipl == 0 ) {
-	sixx0Histo->fill( -trackhit.x );
-	sixy0Histo->fill( -trackhit.y );
+	if( ipl == 0 ) {
+	  sixx0Histo->fill( -trackhit.x );
+	  sixy0Histo->fill( -trackhit.y );
+	}
+	if( ipl == 1 ) {
+	  sixx1Histo->fill( -trackhit.x );
+	  sixy1Histo->fill( -trackhit.y );
+	}
+	if( ipl == 2 ) {
+	  sixx2Histo->fill( -trackhit.x );
+	  sixy2Histo->fill( -trackhit.y );
+	}
+	if( ipl == 3 ) {
+	  sixx3Histo->fill( -trackhit.x );
+	  sixy3Histo->fill( -trackhit.y );
+	}
+	if( ipl == 4 ) {
+	  sixx4Histo->fill( -trackhit.x );
+	  sixy4Histo->fill( -trackhit.y );
+	}
+	if( ipl == 5 ) {
+	  sixx5Histo->fill( -trackhit.x );
+	  sixy5Histo->fill( -trackhit.y );
+	}
+
+	gbl::GblPoint * point = new gbl::GblPoint( gblutil.JacobianPointToPoint( step ) );
+
+	meas[0] = rx[ipl];
+	meas[1] = ry[ipl];
+	//meas[0] = trackhit.x;
+	//meas[1] = trackhit.y;
+
+	epsSi = _thickness[iplprime]/93.66 + 0.050 / 286.6; // Si + Kapton (Kapton ist 2 * 25  = 50 um thick, but has 1/3 rad length = 17 um)
+	tetSi = _kappa * 0.0136 * sqrt(epsSi) / p * ( 1 + 0.038*std::log(sumeps) );
+
+	wscatSi[0] = 1.0 / ( tetSi * tetSi ); //weight
+	wscatSi[1] = 1.0 / ( tetSi * tetSi );
+
+	TVectorD measPrec(2); // precision = 1/resolution^2
+	//measPrec[0] = 1.0 / _resolution[ipl] / _resolution[ipl];
+	//measPrec[1] = 1.0 / _resolution[ipl] / _resolution[ipl];
+	double _resolution_tmp = -1.0;
+	if(trackhit.clustersize == 1) _resolution_tmp = _resolution[1];
+	if(trackhit.clustersize == 2) _resolution_tmp = _resolution[2];
+	if(trackhit.clustersize == 3) _resolution_tmp = _resolution[3];
+	if(trackhit.clustersize == 4) _resolution_tmp = _resolution[4];
+	if(trackhit.clustersize == 5) _resolution_tmp = _resolution[5];
+	if(trackhit.clustersize == 6) _resolution_tmp = _resolution[6];
+	if(trackhit.clustersize >  6) _resolution_tmp = _resolution[7];
+	//_resolution_tmp = 3.24*1e-3;
+
+	measPrec[0] = 1.0 / _resolution_tmp / _resolution_tmp;
+	measPrec[1] = 1.0 / _resolution_tmp / _resolution_tmp;
+
+	if(ipl != _dut_plane) { point->addMeasurement( proL2m, meas, measPrec ); }
+
+	point->addScatterer( scat, wscatSi );
+
+	std::vector<int> globalLabels(3);
+	globalLabels[0] = 10 + ipl; // dx
+	globalLabels[1] = 20 + ipl; // dy
+	globalLabels[2] = 40 + ipl; // rot
+	alDer[0][2] = -ys; // dx/rot
+	alDer[1][2] =  xs; // dy/rot
+
+        // add local derrivative if after DUT
+	if(sDUT > 0){
+	  addDer = (s - sDUT)*proL2m; 
+	  point->addLocals(addDer);
+	}
+
+	traj_points.push_back(*point);
+	s += step;
+	sPoint.push_back( s );
+	siplane_label = sPoint.size();
+	ilab.push_back(siplane_label);
+	delete point;
+
+        ipl++;
+      } else {
+
+        //std::cout << "plane ID = " << _planeID[iplprime] << std::endl;
+        // now the plane should be the passive one
+	gbl::GblPoint * point = new gbl::GblPoint( gblutil.JacobianPointToPoint( step ) );
+
+	traj_points.push_back(*point);
+	s += step;
+	sPoint.push_back( s );
+	DUT_label = sPoint.size();
+	//std::cout << " DUT label = " << DUT_label << std::endl;
+	ilab.push_back(DUT_label);
+
+	sDUT = s;
       }
-      if( ipl == 1 ) {
-	sixx1Histo->fill( -trackhit.x );
-	sixy1Histo->fill( -trackhit.y );
-      }
-      if( ipl == 2 ) {
-	sixx2Histo->fill( -trackhit.x );
-	sixy2Histo->fill( -trackhit.y );
-      }
-      if( ipl == 3 ) {
-	sixx3Histo->fill( -trackhit.x );
-	sixy3Histo->fill( -trackhit.y );
-      }
-      if( ipl == 4 ) {
-	sixx4Histo->fill( -trackhit.x );
-	sixy4Histo->fill( -trackhit.y );
-      }
-      if( ipl == 5 ) {
-	sixx5Histo->fill( -trackhit.x );
-	sixy5Histo->fill( -trackhit.y );
-      }
-
-      gbl::GblPoint * point = new gbl::GblPoint( gblutil.JacobianPointToPoint( step ) );
-
-      meas[0] = rx[ipl];
-      meas[1] = ry[ipl];
-      //meas[0] = trackhit.x;
-      //meas[1] = trackhit.y;
-
-      epsSi = _thickness[ipl]/93.66 + 0.050 / 286.6; // Si + Kapton (Kapton ist 2 * 25  = 50 um thick, but has 1/3 rad length = 17 um)
-      tetSi = _kappa * 0.0136 * sqrt(epsSi) / p * ( 1 + 0.038*std::log(sumeps) );
-
-      wscatSi[0] = 1.0 / ( tetSi * tetSi ); //weight
-      wscatSi[1] = 1.0 / ( tetSi * tetSi );
-
-      TVectorD measPrec(2); // precision = 1/resolution^2
-      //measPrec[0] = 1.0 / _resolution[ipl] / _resolution[ipl];
-      //measPrec[1] = 1.0 / _resolution[ipl] / _resolution[ipl];
-      double _resolution_tmp = -1.0;
-      if(trackhit.clustersize == 1) _resolution_tmp = _resolution[1];
-      if(trackhit.clustersize == 2) _resolution_tmp = _resolution[2];
-      if(trackhit.clustersize == 3) _resolution_tmp = _resolution[3];
-      if(trackhit.clustersize == 4) _resolution_tmp = _resolution[4];
-      if(trackhit.clustersize == 5) _resolution_tmp = _resolution[5];
-      if(trackhit.clustersize == 6) _resolution_tmp = _resolution[6];
-      if(trackhit.clustersize >  6) _resolution_tmp = _resolution[7];
-      //_resolution_tmp = 3.24*1e-3;
-
-      measPrec[0] = 1.0 / _resolution_tmp / _resolution_tmp;
-      measPrec[1] = 1.0 / _resolution_tmp / _resolution_tmp;
-
-      if(ipl != _dut_plane) { point->addMeasurement( proL2m, meas, measPrec ); }
-
-      point->addScatterer( scat, wscatSi );
-
-      std::vector<int> globalLabels(3);
-      globalLabels[0] = 10 + ipl; // dx
-      globalLabels[1] = 20 + ipl; // dy
-      globalLabels[2] = 40 + ipl; // rot
-      alDer[0][2] = -ys; // dx/rot
-      alDer[1][2] =  xs; // dy/rot
-
-      traj_points.push_back(*point);
-      s += step;
-      sPoint.push_back( s );
-      DUT_label = sPoint.size();
-      ilab.push_back(DUT_label);
-      delete point;
 
 
 
 
-      if( ipl < 5) {
-	double distplane = _planePosition[ipl+1] - _planePosition[ipl];
+
+
+      if( iplprime < 6) {
+	double distplane = _planePosition[iplprime+1] - _planePosition[iplprime];
 
 	step = 0.21*distplane;
 	epsAir =   0.5*distplane  / 304200.; 
@@ -809,27 +852,6 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
 	delete point;
 
 	step = 0.58*distplane;
-	if(ipl ==2){ // insert point at centre
-	  step = step / 2.;
-	  gbl::GblPoint * pointcentre = new gbl::GblPoint( gblutil.JacobianPointToPoint( step ) );
-
-	  if(_aluthickum > 1.) { // at least 1 um target
-	    double tetAlu = _kappa*0.0136 * sqrt(epsAlu) / p * ( 1 + 0.038*std::log(sumeps) );
-
-	    TVectorD wscatAlu(2);
-	    wscatAlu[0] = 1.0 / ( tetAlu * tetAlu ); // weight
-	    wscatAlu[1] = 1.0 / ( tetAlu * tetAlu ); 
-
-	    pointcentre->addScatterer( scat, wscatAlu );
-	  }
-	  s += step;
-	  traj_points.push_back(*pointcentre);
-	  sPoint.push_back( s );
-          centre_label = sPoint.size();
-	  delete pointcentre;
-	  // now again step/2
-        }
-
 	gbl::GblPoint * point1 = new gbl::GblPoint( gblutil.JacobianPointToPoint( step ) );
 	point1->addScatterer( scat, wscatAir );
 
@@ -853,7 +875,6 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
       }
 
     } // loop over planes
-
     // monitor what we put into GBL:
     selxHisto->fill( -xA ); // triplet at DUT
     selyHisto->fill( -yA );
@@ -887,18 +908,18 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
     
     if(_nEvt < 5){
       streamlog_out(MESSAGE4) << "traj with " << traj.getNumPoints() << " points:" << endl;
-      for( int ipl = 0; ipl < 6; ++ipl ){
-        streamlog_out(DEBUG2) << "  plane " << ipl << ", lab " << ilab[ipl];
-        streamlog_out(DEBUG2) << "  z " << sPoint[ilab[ipl]-1];
-        streamlog_out(DEBUG2) << " dx " << rx[ipl];
-        streamlog_out(DEBUG2) << " dy " << ry[ipl];
-        streamlog_out(DEBUG2) << " chi2 " << Chi2;
-        streamlog_out(DEBUG2) << " ndf " << Ndf;
-        streamlog_out(DEBUG2) << endl;
-      }
+      //for( int iplb = 0; iplb < 6; ++iplb ){
+      //  streamlog_out(DEBUG2) << "  plane " << iplb << ", lab " << ilab[iplb];
+      //  streamlog_out(DEBUG2) << "  z " << sPoint[ilab[iplb]-1];
+      //  streamlog_out(DEBUG2) << " dx " << rx[iplb];
+      //  streamlog_out(DEBUG2) << " dy " << ry[iplb];
+      //  streamlog_out(DEBUG2) << " chi2 " << Chi2;
+      //  streamlog_out(DEBUG2) << " ndf " << Ndf;
+      //  streamlog_out(DEBUG2) << endl;
+      //}
 
-       streamlog_out(DEBUG2)  << " Is traj valid? " << traj.isValid() << std::endl;
-      //traj.printPoints();
+      streamlog_out(DEBUG2)  << " Is traj valid? " << traj.isValid() << std::endl;
+      traj.printPoints();
       //traj.printTrajectory();
       //traj.printData();
     }
@@ -956,9 +977,11 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
 
     if( probchi > _probchi2_cut){
 
-      TVectorD aCorrection(5);
-      TMatrixDSym aCovariance(5);
-
+      TVectorD aCorrection(7);
+      TMatrixDSym aCovariance(7);
+      //TVectorD bCorrection(7);
+      //TMatrixDSym bCovariance(7);
+      
       double ax[8];
       // double ay[8];
       unsigned int k = 0;
@@ -982,6 +1005,9 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
       //track = q/p, x', y', x, y
       //        0,   1,  2,  3, 4
       // at plane DUT:
+      //
+      //std::cout << " size of ilab = " << ilab.size() << std::endl;
+
       unsigned int ipos = ilab[0];
       traj.getResults( ipos, aCorrection, aCovariance );
       traj.getMeasResults( ipos, ndata, aResiduals, aMeasErrors, aResErrors, aDownWeights );
@@ -1024,8 +1050,6 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
       gblrxvsxpix01->fill( ((trackhitx[0] - aResiduals[0])+invsignx*(abs(nx) +1.)*pixel_size)*1e3, sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); 
       gblryvsypix01->fill( ((trackhity[0] - aResiduals[1])+invsigny*(abs(ny) +1.)*pixel_size)*1e3, sqrt(TMath::Pi()/2.)*fabs(aResiduals[1])); 
       // clustersize-specific plots
-  
-
       k++;
 
       ipos = ilab[1];
@@ -1051,6 +1075,7 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
       //std::cout << " aResiduals[0] = " << aResiduals[0] << " aResErrors[0] = " << aResErrors[0] << std::endl;  
       k++;
 
+
       ipos = ilab[2];
       traj.getResults( ipos, aCorrection, aCovariance );
       traj.getMeasResults(static_cast<unsigned int>(ipos), ndata, aResiduals, aMeasErrors, aResErrors, aDownWeights );
@@ -1075,6 +1100,15 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
 
       ipos = ilab[3];
       traj.getResults( ipos, aCorrection, aCovariance );
+      // get the cov 6 and 7 here for width for variance of this parameter
+      gblax6Histo->fill( aCorrection[1]*1E3 ); // angle x [mrad]
+      gblDUTkinkuncertHisto->fill(  sqrt(aCovariance(5,5) + aCovariance(6,6))*1e3 ); // angle x [mrad]
+      //std::cout << " sigma kink_DUT = " << sqrt(aCovariance(5,5) + aCovariance(6,6)) << std::endl;
+      ax[k] = aCorrection[1]; // angle correction at plane, for kinks
+      k++;
+
+      ipos = ilab[4];
+      traj.getResults( ipos, aCorrection, aCovariance );
       traj.getMeasResults(static_cast<unsigned int>(ipos), ndata, aResiduals, aMeasErrors, aResErrors, aDownWeights );
       traj.getScatResults(static_cast<unsigned int>(ipos), ndata, aKinks, aKinkErrors, kResErrors, kDownWeights );
       aResiduals[0] = rx[3] - aCorrection[3];
@@ -1090,15 +1124,12 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
       gblsx3Histo->fill( aKinks[0]/aKinkErrors[0] ); // x kink pull
       gbltx3Histo->fill( aKinks[0]/kResErrors[0] ); // x kink pull
       ax[k] = aCorrection[1]; // angle correction at plane, for kinks
-      //ay[k] = aCorrection[2]; // angle correction at plane, for kinks
       //
       if(_dut_plane == 3) gblpx3_unbHisto->fill( (rx[3] - aCorrection[3]) / sqrt(_resolution[0]*_resolution[0] + aCovariance(3,3)) ); // unbiased pull
       if(_dut_plane == 3) gblpy3_unbHisto->fill( (ry[3] - aCorrection[4]) / sqrt(_resolution[0]*_resolution[0] + aCovariance(4,4)) ); // unbiased pull
-
- 
       k++;
 
-      ipos = ilab[4];
+      ipos = ilab[5];
       traj.getResults( ipos, aCorrection, aCovariance );
       traj.getMeasResults(static_cast<unsigned int>(ipos), ndata, aResiduals, aMeasErrors, aResErrors, aDownWeights );
       traj.getScatResults(static_cast<unsigned int>(ipos), ndata, aKinks, aKinkErrors, kResErrors, kDownWeights );
@@ -1117,10 +1148,9 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
       gblsx4Histo->fill( aKinks[0]/aKinkErrors[0] ); // x kink pull
       gbltx4Histo->fill( aKinks[0]/kResErrors[0] ); // x kink pull
       ax[k] = aCorrection[1]; // angle correction at plane, for kinks
-      //ay[k] = aCorrection[2]; // angle correction at plane, for kinks
       k++;
 
-      ipos = ilab[5];
+      ipos = ilab[6];
       traj.getResults( ipos, aCorrection, aCovariance );
       traj.getMeasResults(static_cast<unsigned int>(ipos), ndata, aResiduals, aMeasErrors, aResErrors, aDownWeights );
       traj.getScatResults(static_cast<unsigned int>(ipos), ndata, aKinks, aKinkErrors, kResErrors, kDownWeights );
@@ -1137,19 +1167,17 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
       if(_dut_plane == 5) gblpy5_unbHisto->fill( (ry[5] - aCorrection[4]) / sqrt(_resolution[0]*_resolution[0] + aCovariance(4,4)) ); // unbiased pull
       gblqx5Histo->fill( aKinks[0]*1E3 ); // kink
       ax[k] = aCorrection[1]; // angle correction at plane, for kinks
-      //ay[k] = aCorrection[2]; // angle correction at plane, for kinks
       //
-
-
       k++;
+
       // do some more analysis with kinks. 
       //   Calculate the two angles as corr_n-1 - corr_n-2, corr_n - corr_n-1, corr_n+1 - corr_n -> sum of all =  corr_n+1 - corr_n-2
 
-      ipos = centre_label-2;
+      ipos = DUT_label-2;
       traj.getResults( ipos, aCorrection, aCovariance );
       double kink_upstream = aCorrection[1];
 
-      ipos = centre_label+1; // 1 downstream of centre
+      ipos = DUT_label+1; // 1 downstream of centre
       traj.getResults( ipos, aCorrection, aCovariance );
       double kink_downstream = aCorrection[1];
 
@@ -1159,11 +1187,13 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
       gblkx2Histo->fill( (ax[2] - ax[1])*1E3 ); // kink at 2 [mrad]
       gblkx3Histo->fill( (ax[3] - ax[2])*1E3 ); // kink at 3 [mrad]
       gblkx4Histo->fill( (ax[4] - ax[3])*1E3 ); // kink at 4 [mrad]
-      gblkx5Histo->fill( (ax[5] - ax[4])*1E3 ); // kink at 5 [mrad] // THIS IS NULL as ax[5] is not updated
-      //gblkx6Histo->fill( (ax[6] - ax[5])*1E3 ); // kink at 6 [mrad]
-
+      gblkx5Histo->fill( (ax[5] - ax[4])*1E3 ); // kink at 5 [mrad] 
+      gblkx6Histo->fill( (ax[6] - ax[5])*1E3 ); // kink at 6 [mrad]
+      
+      
     } // end if good fit 
 
+    
 
     //------------------------------------------------------------------------
     // intersect point in z:
@@ -1216,7 +1246,7 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
     }//match
 
     //------------------------------------------------------------------------
-
+    
   } // Loop over found tracks
 
   nsixHisto->fill( telescope_tracks.size() );

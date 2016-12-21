@@ -1067,10 +1067,15 @@ void EUTelTripletGBLKinkEstimator::bookHistos()
   gblqx5Histo->setTitle( "GBL x kink at plane 5;x kink at plane 5 [mrad];tracks" );
 
 
-  /*gblax6Histo = AIDAProcessor::histogramFactory(this)->
+  gblax6Histo = AIDAProcessor::histogramFactory(this)->
     createHistogram1D( "GBL/gblax6", 100, -1, 1 );
-    gblax6Histo->setTitle( "GBL x angle at DUT;x angle at DUT [mrad];tracks" );
+  gblax6Histo->setTitle( "GBL x angle at DUT;x angle at DUT [mrad];tracks" );
 
+  gblDUTkinkuncertHisto = AIDAProcessor::histogramFactory(this)->
+    createHistogram1D( "GBL/gblDUTkinkuncert", 100, 0, 1 );
+  gblDUTkinkuncertHisto->setTitle( "GBL x angle at DUT;x angle at DUT [mrad];tracks" );
+
+  /*
     gbldx6Histo = AIDAProcessor::histogramFactory(this)->
     createHistogram1D( "GBL/gbldx6", 100, -1000, 1000 );
     gbldx6Histo->setTitle( "GBL x shift at DUT;x shift at DUT [#mum];tracks" );
@@ -1136,9 +1141,9 @@ void EUTelTripletGBLKinkEstimator::bookHistos()
     createHistogram1D( "GBL/gblkx5", 200, -0.2, 0.2 );
   gblkx5Histo->setTitle( "GBL kink angle at plane 5;plane 5 kink [mrad];tracks" );
 
-  /*gblkx6Histo = AIDAProcessor::histogramFactory(this)->
+  gblkx6Histo = AIDAProcessor::histogramFactory(this)->
     createHistogram1D( "GBL/gblkx6", 100, -1, 1 );
-    gblkx6Histo->setTitle( "GBL kink angle at plane 6;plane 6 kink [mrad];tracks" );*/
+  gblkx6Histo->setTitle( "GBL kink angle at plane 6;plane 6 kink [mrad];tracks" );
 
 
   // z intersect:

@@ -179,6 +179,7 @@ namespace eutelescope {
     double * _planeThickness;
     double * _planeX0;
     double * _planeResolution;
+    int * _planePosActive;
 
     //
     FloatVec _resolution;
@@ -424,8 +425,9 @@ namespace eutelescope {
   AIDA::IHistogram1D * gblpy5_unbHisto;
   AIDA::IHistogram1D * gblqx5Histo;
 
-  /*AIDA::IHistogram1D * gblax6Histo;
-  AIDA::IHistogram1D * gbldx6Histo;
+  AIDA::IHistogram1D * gblax6Histo;
+  AIDA::IHistogram1D * gblDUTkinkuncertHisto;
+  /*AIDA::IHistogram1D * gbldx6Histo;
   AIDA::IHistogram1D * gbldy6Histo;
   AIDA::IHistogram1D * gblrx6Histo;
   AIDA::IHistogram1D * gblry6Histo;
@@ -442,7 +444,7 @@ namespace eutelescope {
   AIDA::IHistogram1D * gblkx3Histo;
   AIDA::IHistogram1D * gblkx4Histo;
   AIDA::IHistogram1D * gblkx5Histo;
-  //AIDA::IHistogram1D * gblkx6Histo;
+  AIDA::IHistogram1D * gblkx6Histo;
 
   AIDA::IHistogram1D * sixzx3Histo;
   AIDA::IHistogram1D * sixzy3Histo;
