@@ -101,6 +101,7 @@ namespace eutelescope {
 	  // local coords
 	  double locx;
 	  double locy;
+	  int id;
 	  // Overloading ostream operator for printing hits:
 	  friend std::ostream& operator << (std::ostream& out, const hit& point) // output
 	  {
