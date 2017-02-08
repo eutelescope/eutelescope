@@ -54,11 +54,11 @@
   <!--Output data collection name-->
   <parameter name="OutputCollectionName" type="string" lcioOutType="TrackerData"> recodata_notcmmd </parameter>
   <!--Noise collection name, better not to change-->
-  <parameter name="NoiseCollectionName" type="string" value="noise_cmmd"/>
+  <parameter name="NoiseCollectionName" type="string" value="noise_notcmmd"/>
   <!--Pedestal collection name, better not to change-->
-  <parameter name="PedestalCollectionName" type="string" value="pedestal_cmmd"/>
+  <parameter name="PedestalCollectionName" type="string" value="pedestal_notcmmd"/>
   <!--The filename where the pedestal and noise values stored-->
-  <parameter name="PedestalInputFile" type="string" value="@AlibavaLcioRawFolder@/ped@PedRunNumberFormatted@-cmmd.slcio"/>
+  <parameter name="PedestalInputFile" type="string" value="@AlibavaLcioRawFolder@/ped@PedRunNumberFormatted@.slcio"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
@@ -96,7 +96,7 @@
  <processor name="Save" type="LCIOOutputProcessor">
  <!--Writes the current event to the specified LCIO outputfile. Needs to be the last ActiveProcessor.-->
   <!--drops the named collections from the event-->
-  <parameter name="DropCollectionNames" type="StringVec"> commonmode commonmodeerror rawdata recodata_notcmmd chipheader</parameter>
+  <!--parameter name="DropCollectionNames" type="StringVec"> commonmode commonmodeerror rawdata recodata_notcmmd chipheader</parameter-->
   <!--drops all collections of the given type from the event-->
   <!--parameter name="DropCollectionTypes" type="StringVec"> SimTrackerHit SimCalorimeterHit </parameter-->
   <!-- write complete objects in subset collections to the file (i.e. ignore subset flag)-->

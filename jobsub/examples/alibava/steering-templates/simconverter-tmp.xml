@@ -51,7 +51,7 @@
   <!--Mean of the commonmode noise to be added to each strip if CommonmodeSigma > 0-->
   <parameter name="CommonmodeMean" type="double" value="0"/>
   <!--Sigma of the commonmode noise to be added to each strip if > 0-->
-  <parameter name="CommonmodeSigma" type="double" value="20"/>
+  <parameter name="CommonmodeSigma" type="double" value="15"/>
   <!--Mean of the Gaussian noise to be added to each strip if NoiseSigma > 0-->
   <parameter name="NoiseMean" type="double" value="0"/>
   <!--Sigma of the Gaussian noise to be added to each strip if > 0-->
@@ -61,13 +61,13 @@
   <!--Mean of the pedestal noise to be added to each strip if PedestalSigma > 0-->
   <parameter name="PedestalMean" type="double" value="500"/>
   <!--Sigma of the pedestal noise to be added to each strip if > 0-->
-  <parameter name="PedestalSigma" type="double" value="1"/>
+  <parameter name="PedestalSigma" type="double" value="1.5"/>
   <!--Scale all signals by this factor.-->
   <parameter name="Ratio" type="double" value="1.0"/>
   <!--Mean of the event TDC to be set-->
-  <parameter name="TDCMean" type="double" value="20"/>
+  <parameter name="TDCMean" type="double" value="25"/>
   <!--Sigma of the event TDC to be set-->
-  <parameter name="TDCSigma" type="double" value="5"/>
+  <parameter name="TDCSigma" type="double" value="2.5"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <parameter name="Verbosity" type="string" value="DEBUG5"/>
 </processor>

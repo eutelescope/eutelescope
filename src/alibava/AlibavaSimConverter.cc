@@ -127,7 +127,7 @@ void AlibavaSimConverter::processRunHeader (LCRunHeader * rdr)
 	streamlog_out ( MESSAGE4 ) << "Running processRunHeader" << endl;
 
 	// Add processor name to the runheader
-	auto arunHeader = std::make_unique<AlibavaRunHeaderImpl>(rdr);
+	auto_ptr<AlibavaRunHeaderImpl> arunHeader ( new AlibavaRunHeaderImpl(rdr)) ;
 	arunHeader->addProcessor(type());
 
 	// set number of skipped events to zero (defined in AlibavaBaseProcessor)
@@ -213,7 +213,8 @@ void AlibavaSimConverter::processEvent (LCEvent * anEvent)
 
 				double background = 0.0;
 				// add pedestal
-				background += _pedestaldb[j+(k*128)];
+				double pedestal = gRandom->Gaus(_pedestaldb[j+(k*128)], _pedestalsigma);
+				background += pedestal;
 
 				// add the noise
 				if (_noisesigma > 0.0)

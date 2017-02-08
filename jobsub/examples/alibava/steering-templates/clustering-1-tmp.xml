@@ -86,7 +86,7 @@
   <!--Take the missing coordinate from a mean of all telescope seeds (false)? Or search for the nearest one based on the relative position (true).-->
   <parameter name="SearchNearest" type="bool" value="true"/>
   <!--The seed SNR cut-->
-  <parameter name="SeedCut" type="float" value="5"/>
+  <parameter name="SeedCut" type="float" value="5.0"/>
   <!--The sparse cluster collection name, this needs to be original_zsdata for hitmaker-->
   <parameter name="SparseClusterCollectionName" type="string" value="alibava_nzsdata"/>
   <!--Telescope cluster collection name we want to get the unsensitive axis positions from-->

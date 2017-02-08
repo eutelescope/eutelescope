@@ -19,8 +19,8 @@ mode=gbl
 #mode=daf
 
 #select type
-type=n
-#type=p
+#type=n
+type=p
 
 if (($mode == gbl)) ; then
 
@@ -64,11 +64,14 @@ if (($mode == gbl)) ; then
     jobsub -c config.cfg -csv runlist.csv coordinator $1
     echo "Running tracking"
 
-    if (($type == n)) ; then
-	jobsub -c config.cfg -csv runlist.csv tracking-gbl-rgh $1
-    elif (($type == p)) ; then
-	jobsub -c config.cfg -csv runlist.csv tracking-gbl $1
-    fi
+
+    jobsub -c config.cfg -csv runlist.csv tracking-gbl $1
+
+    #if (($type == n)) ; then
+	#jobsub -c config.cfg -csv runlist.csv tracking-gbl-rgh $1
+    #elif (($type == p)) ; then
+	#jobsub -c config.cfg -csv runlist.csv tracking-gbl $1
+    #fi
 
 elif (($mode == daf)) ; then
 

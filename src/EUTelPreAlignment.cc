@@ -10,6 +10,7 @@
 #include "EUTelDFFClusterImpl.h"
 #include "EUTelBrickedClusterImpl.h"
 #include "EUTelSparseClusterImpl.h"
+#include "EUTelGeometryTelescopeGeoDescription.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -41,6 +42,7 @@
 #include "marlin/Global.h"
 #include <gear/GearMgr.h>
 #include <gear/SiPlanesParameters.h>
+#include "gear/BField.h"
 
 // system includes <>
 #include <iostream>
@@ -613,13 +615,22 @@ void EUTelPreAlign::end() {
 
 
   for(size_t ii = 0 ; ii < _preAligners.size(); ii++){
+
+
+							const gear::BField& Bfield = geo::gGeometry().getMagneticField();
+							gear::Vector3D vectorGlobal(0.1,0.1,0.1);
+							const double Bx = (Bfield.at( vectorGlobal ).x());
+							const double By = (Bfield.at( vectorGlobal ).y());
+							const double Bz = (Bfield.at( vectorGlobal ).z());
+
+
    EUTelAlignmentConstant* constant = new EUTelAlignmentConstant();
-   if( abs( _preAligners.at(ii).getPeakX() ) <1000. )
+   if( abs( _preAligners.at(ii).getPeakX() ) <1000. && fabs(Bx) < 1e-6 && fabs(By) < 1e-6 && fabs(Bz) < 1e-6)
       constant->setXOffset( -1.0 * _preAligners.at(ii).getPeakX());
    else
       constant->setXOffset( -1.0 * 0.0                           );
  
-   if( abs( _preAligners.at(ii).getPeakY() ) <1000. )
+   if( abs( _preAligners.at(ii).getPeakY() ) <1000. && fabs(Bx) < 1e-6 && fabs(By) < 1e-6 && fabs(Bz) < 1e-6)
       constant->setYOffset( -1.0 * _preAligners.at(ii).getPeakY());
    else
       constant->setYOffset( -1.0 * 0.0                           );

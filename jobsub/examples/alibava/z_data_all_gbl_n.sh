@@ -1,5 +1,6 @@
 #!/bin/bash
 INPUT=runlists/n.csv
+MAXJOBS=15
 jobcount=0
 T="$(date "+%d/%m/%y %T")"
 touch logoutput_data_gbl_n.txt
@@ -10,7 +11,7 @@ IFS=,
 [ ! -f $INPUT ] && { echo "$INPUT file not found"; exit 99; }
 while read runnumber type fail
 do
-  if (( $jobcount == 10 )) ; then
+  if (( $jobcount == $MAXJOBS )) ; then
     T="$(date "+%d/%m/%y %T")"
     echo "Waiting! Job limit reached at $T!" >> logoutput_data_gbl_n.txt
     wait
@@ -38,7 +39,7 @@ IFS=,
 [ ! -f $INPUT ] && { echo "$INPUT file not found"; exit 99; }
 while read runnumber type fail
 do
-  if (( $jobcount == 10 )) ; then
+  if (( $jobcount == $MAXJOBS )) ; then
     T="$(date "+%d/%m/%y %T")"
     echo "Waiting! Job limit reached at $T!" >> logoutput_data_gbl_n.txt
     wait
@@ -66,7 +67,7 @@ IFS=,
 [ ! -f $INPUT ] && { echo "$INPUT file not found"; exit 99; }
 while read runnumber type fail
 do
-  if (( $jobcount == 10 )) ; then
+  if (( $jobcount == $MAXJOBS )) ; then
     T="$(date "+%d/%m/%y %T")"
     echo "Waiting! Job limit reached at $T!" >> logoutput_data_gbl_n.txt
     wait
@@ -94,7 +95,7 @@ IFS=,
 [ ! -f $INPUT ] && { echo "$INPUT file not found"; exit 99; }
 while read runnumber type fail
 do
-  if (( $jobcount == 10 )) ; then
+  if (( $jobcount == $MAXJOBS )) ; then
     T="$(date "+%d/%m/%y %T")"
     echo "Waiting! Job limit reached at $T!" >> logoutput_data_gbl_n.txt
     wait
@@ -122,7 +123,7 @@ IFS=,
 [ ! -f $INPUT ] && { echo "$INPUT file not found"; exit 99; }
 while read runnumber type fail
 do
-  if (( $jobcount == 10 )) ; then
+  if (( $jobcount == $MAXJOBS )) ; then
     T="$(date "+%d/%m/%y %T")"
     echo "Waiting! Job limit reached at $T!" >> logoutput_data_gbl_n.txt
     wait
@@ -150,7 +151,7 @@ IFS=,
 [ ! -f $INPUT ] && { echo "$INPUT file not found"; exit 99; }
 while read runnumber type fail
 do
-  if (( $jobcount == 10 )) ; then
+  if (( $jobcount == $MAXJOBS )) ; then
     T="$(date "+%d/%m/%y %T")"
     echo "Waiting! Job limit reached at $T!" >> logoutput_data_gbl_n.txt
     wait
@@ -178,7 +179,7 @@ IFS=,
 [ ! -f $INPUT ] && { echo "$INPUT file not found"; exit 99; }
 while read runnumber type fail
 do
-  if (( $jobcount == 10 )) ; then
+  if (( $jobcount == $MAXJOBS )) ; then
     T="$(date "+%d/%m/%y %T")"
     echo "Waiting! Job limit reached at $T!" >> logoutput_data_gbl_n.txt
     wait
@@ -199,14 +200,14 @@ IFS=$OLDIFS
 wait
 
 T="$(date "+%d/%m/%y %T")"
-echo "Done all merge runs at $T! Proceeding with coordinator!" >> logoutput_data_gbl_n.txt
+echo "Done all hitmaker runs at $T! Proceeding with coordinator!" >> logoutput_data_gbl_n.txt
 
 OLDIFS=$IFS
 IFS=,
 [ ! -f $INPUT ] && { echo "$INPUT file not found"; exit 99; }
 while read runnumber type fail
 do
-  if (( $jobcount == 10 )) ; then
+  if (( $jobcount == $MAXJOBS )) ; then
     T="$(date "+%d/%m/%y %T")"
     echo "Waiting! Job limit reached at $T!" >> logoutput_data_gbl_n.txt
     wait
@@ -234,7 +235,7 @@ IFS=,
 [ ! -f $INPUT ] && { echo "$INPUT file not found"; exit 99; }
 while read runnumber type fail
 do
-  if (( $jobcount == 10 )) ; then
+  if (( $jobcount == $MAXJOBS )) ; then
     T="$(date "+%d/%m/%y %T")"
     echo "Waiting! Job limit reached at $T!" >> logoutput_data_gbl_n.txt
     wait
@@ -262,7 +263,7 @@ IFS=,
 [ ! -f $INPUT ] && { echo "$INPUT file not found"; exit 99; }
 while read runnumber type fail
 do
-  if (( $jobcount == 10 )) ; then
+  if (( $jobcount == $MAXJOBS )) ; then
     T="$(date "+%d/%m/%y %T")"
     echo "Waiting! Job limit reached at $T!" >> logoutput_data_gbl_n.txt
     wait
@@ -290,7 +291,7 @@ IFS=,
 [ ! -f $INPUT ] && { echo "$INPUT file not found"; exit 99; }
 while read runnumber type fail
 do
-  if (( $jobcount == 10 )) ; then
+  if (( $jobcount == $MAXJOBS )) ; then
     T="$(date "+%d/%m/%y %T")"
     echo "Waiting! Job limit reached at $T!" >> logoutput_data_gbl_n.txt
     wait
@@ -318,7 +319,7 @@ IFS=,
 [ ! -f $INPUT ] && { echo "$INPUT file not found"; exit 99; }
 while read runnumber type fail
 do
-  if (( $jobcount == 10 )) ; then
+  if (( $jobcount == $MAXJOBS )) ; then
     T="$(date "+%d/%m/%y %T")"
     echo "Waiting! Job limit reached at $T!" >> logoutput_data_gbl_n.txt
     wait
@@ -346,7 +347,7 @@ IFS=,
 [ ! -f $INPUT ] && { echo "$INPUT file not found"; exit 99; }
 while read runnumber type fail
 do
-  if (( $jobcount == 10 )) ; then
+  if (( $jobcount == $MAXJOBS )) ; then
     T="$(date "+%d/%m/%y %T")"
     echo "Waiting! Job limit reached at $T!" >> logoutput_data_gbl_n.txt
     wait
@@ -374,7 +375,7 @@ IFS=,
 [ ! -f $INPUT ] && { echo "$INPUT file not found"; exit 99; }
 while read runnumber type fail
 do
-  if (( $jobcount == 10 )) ; then
+  if (( $jobcount == $MAXJOBS )) ; then
     T="$(date "+%d/%m/%y %T")"
     echo "Waiting! Job limit reached at $T!" >> logoutput_data_gbl_n.txt
     wait
@@ -402,7 +403,7 @@ IFS=,
 [ ! -f $INPUT ] && { echo "$INPUT file not found"; exit 99; }
 while read runnumber type fail
 do
-  if (( $jobcount == 10 )) ; then
+  if (( $jobcount == $MAXJOBS )) ; then
     T="$(date "+%d/%m/%y %T")"
     echo "Waiting! Job limit reached at $T!" >> logoutput_data_gbl_n.txt
     wait
@@ -430,7 +431,7 @@ IFS=,
 [ ! -f $INPUT ] && { echo "$INPUT file not found"; exit 99; }
 while read runnumber type fail
 do
-  if (( $jobcount == 10 )) ; then
+  if (( $jobcount == $MAXJOBS )) ; then
     T="$(date "+%d/%m/%y %T")"
     echo "Waiting! Job limit reached at $T!" >> logoutput_data_gbl_n.txt
     wait
@@ -458,7 +459,7 @@ IFS=,
 [ ! -f $INPUT ] && { echo "$INPUT file not found"; exit 99; }
 while read runnumber type fail
 do
-  if (( $jobcount == 10 )) ; then
+  if (( $jobcount == $MAXJOBS )) ; then
     T="$(date "+%d/%m/%y %T")"
     echo "Waiting! Job limit reached at $T!" >> logoutput_data_gbl_n.txt
     wait
@@ -486,7 +487,7 @@ IFS=,
 [ ! -f $INPUT ] && { echo "$INPUT file not found"; exit 99; }
 while read runnumber type fail
 do
-  if (( $jobcount == 10 )) ; then
+  if (( $jobcount == $MAXJOBS )) ; then
     T="$(date "+%d/%m/%y %T")"
     echo "Waiting! Job limit reached at $T!" >> logoutput_data_gbl_n.txt
     wait
@@ -514,7 +515,7 @@ IFS=,
 [ ! -f $INPUT ] && { echo "$INPUT file not found"; exit 99; }
 while read runnumber type fail
 do
-  if (( $jobcount == 10 )) ; then
+  if (( $jobcount == $MAXJOBS )) ; then
     T="$(date "+%d/%m/%y %T")"
     echo "Waiting! Job limit reached at $T!" >> logoutput_data_gbl_n.txt
     wait
@@ -542,7 +543,7 @@ IFS=,
 [ ! -f $INPUT ] && { echo "$INPUT file not found"; exit 99; }
 while read runnumber type fail
 do
-  if (( $jobcount == 10 )) ; then
+  if (( $jobcount == $MAXJOBS )) ; then
     T="$(date "+%d/%m/%y %T")"
     echo "Waiting! Job limit reached at $T!" >> logoutput_data_gbl_n.txt
     wait
@@ -570,7 +571,7 @@ IFS=,
 [ ! -f $INPUT ] && { echo "$INPUT file not found"; exit 99; }
 while read runnumber type fail
 do
-  if (( $jobcount == 10 )) ; then
+  if (( $jobcount == $MAXJOBS )) ; then
     T="$(date "+%d/%m/%y %T")"
     echo "Waiting! Job limit reached at $T!" >> logoutput_data_gbl_n.txt
     wait
@@ -598,7 +599,7 @@ IFS=,
 [ ! -f $INPUT ] && { echo "$INPUT file not found"; exit 99; }
 while read runnumber type fail
 do
-  if (( $jobcount == 10 )) ; then
+  if (( $jobcount == $MAXJOBS )) ; then
     T="$(date "+%d/%m/%y %T")"
     echo "Waiting! Job limit reached at $T!" >> logoutput_data_gbl_n.txt
     wait
@@ -626,7 +627,7 @@ IFS=,
 [ ! -f $INPUT ] && { echo "$INPUT file not found"; exit 99; }
 while read runnumber type fail
 do
-  if (( $jobcount == 10 )) ; then
+  if (( $jobcount == $MAXJOBS )) ; then
     T="$(date "+%d/%m/%y %T")"
     echo "Waiting! Job limit reached at $T!" >> logoutput_data_gbl_n.txt
     wait

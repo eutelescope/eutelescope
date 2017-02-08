@@ -62,6 +62,7 @@
 // gear includes <.h>
 #include <gear/GearMgr.h>
 #include <gear/SiPlanesParameters.h>
+#include "gear/BField.h"
 
 #include <EVENT/LCCollection.h>
 #include <EVENT/LCEvent.h>
@@ -203,6 +204,22 @@ EUTelFitTupleAlibava::EUTelFitTupleAlibava() : Processor("EUTelFitTupleAlibava")
 
 void EUTelFitTupleAlibava::init()
 {
+
+	const gear::BField& Bfield = Global::GEAR->getBField();
+	gear::Vector3D vectorGlobal(0.1,0.1,0.1);
+	const double Bx = (Bfield.at( vectorGlobal ).x());
+	const double By = (Bfield.at( vectorGlobal ).y());
+	const double Bz = (Bfield.at( vectorGlobal ).z());
+	TVector3 B(Bx, By, Bz);
+	if (fabs(Bx) > 1e-6 || fabs(By) > 1e-6 || fabs(By) > 1e-6 )
+	{
+		streamlog_out(MESSAGE4) << "Running WITH magnetic field! " << Bx << " Bx, " << By << " By, " << Bz << " Bz!" <<  endl;
+		streamlog_out(MESSAGE4) << "The residual cuts will be multiplied by 10!" << endl;
+		_distMax_X = _distMax_X * 10.0;
+		_distMax_Y = _distMax_Y * 10.0;
+	} else {
+		streamlog_out(MESSAGE4) << "Running WITHOUT magnetic field!" << endl;
+	}
 
 	// usually a good idea to
 	printParameters() ;
@@ -606,7 +623,7 @@ void EUTelFitTupleAlibava::getPreAlignment (LCEvent * event)
 
 void EUTelFitTupleAlibava::processRunHeader( LCRunHeader* runHeader)
 {
-	auto eutelHeader = std::make_unique<EUTelRunHeaderImpl>(runHeader);
+	auto_ptr<EUTelRunHeaderImpl> eutelHeader( new EUTelRunHeaderImpl ( runHeader ) );
 	eutelHeader->addProcessor( type() );
 	_nRun++ ;
 

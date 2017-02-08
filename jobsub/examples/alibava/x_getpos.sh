@@ -6,7 +6,7 @@
 #                                      #
 ########################################
 
-# usage: sh x_getpos.sh runnumber
+# usage: sh x_getpos.sh runnumber (4-digit)
 
 jobsub.py -c config.cfg -csv runlist.csv createdummy $1
 jobsub.py -c config.cfg -csv runlist.csv getdutposition $1

@@ -1,12 +1,10 @@
 #!/bin/sh
 
-################################
-#                              #
-# ALiBaVa Analysis - Pedestal  #
-#                              #
-# for simulated runs           #
-#                              #
-################################
+###################################
+#                                 #
+# ALiBaVa Analysis - Sim Pedestal #
+#                                 #
+###################################
 
 # usage: sh x_sim_pedestal.sh runnumber
 

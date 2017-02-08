@@ -54,7 +54,7 @@ INCLUDE_DIRECTORIES( SYSTEM ${EIGEN2_INCLUDE_DIR} )
 # $ILCSOFT/geant4/build-9.5.p02/geant4make.sh
 # now the allpix lib can be loaded as well 
 # allpix lib if checkout and compiled here:
-# export ALLPIX="/home/ilcsoft/v01-16-02/Eutelescope/HEAD/external/allpix"
+#export (ALLPIX="/data/ilcsoft/v01-17-10/Eutelescope/v1.0/external/allpix/allpix")
 # the library is placed by default to
 # GBL if checkout and compiled as shared lib:
 # export GBL="/home/ilcsoft/v01-16-02/Eutelescope/HEAD/external/gbl/cpp"

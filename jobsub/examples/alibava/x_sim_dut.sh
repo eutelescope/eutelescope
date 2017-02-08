@@ -2,11 +2,9 @@
 
 ################################
 #                              #
-# ALiBaVa Analysis - Data      #
+# ALiBaVa Analysis - Sim Data  #
 #                              #
 # GBL alignment                #
-#                              #
-# for simulated runs           #
 #                              #
 ################################
 

@@ -1,12 +1,10 @@
 #!/bin/sh
 
-################################
-#                              #
-# ALiBaVa Analysis - Telescope #
-#                              #
-# for simulated telescope runs #
-#                              #
-################################
+####################################
+#                                  #
+# ALiBaVa Analysis - Telescope Sim #
+#                                  #
+####################################
 
 # usage: sh x_sim_tel.sh runnumber
 

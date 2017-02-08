@@ -135,6 +135,8 @@ namespace eutelescope
 
 		void bookHistos();
 
+		bool _BField;
+
 		protected:
 
 		//! Ordered sensor ID

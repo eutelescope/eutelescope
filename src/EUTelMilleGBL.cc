@@ -32,6 +32,7 @@
 #include "EUTelExceptions.h"
 #include "EUTelPStream.h" // process streams redi::ipstream
 #include "EUTelAlignmentConstant.h"
+#include "EUTelGeometryTelescopeGeoDescription.h"
 
 // GBL includes ".h"
 #include "include/GblTrajectory.h"
@@ -49,6 +50,7 @@
 // gear includes <.h>
 #include <gear/GearMgr.h>
 #include <gear/SiPlanesParameters.h>
+#include "gear/BField.h"
 
 // aida includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -630,12 +632,12 @@ EUTelMilleGBL::EUTelMilleGBL(): Processor("EUTelMilleGBL")
 
 	registerOptionalParameter( "triCutDUTy", "Upstream triplet DUT residual cut y [um]", _triCutDUTy, 3000.0 );
 
-
 }
 
 
 void EUTelMilleGBL::init()
 {
+
 	// check if Marlin was built with GEAR support or not
 	#ifndef USE_GEAR
 
@@ -655,6 +657,34 @@ void EUTelMilleGBL::init()
 
 	_siPlanesParameters  = const_cast<gear::SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
 	_siPlanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
+
+	const gear::BField& Bfield = Global::GEAR->getBField();
+	gear::Vector3D vectorGlobal(0.1,0.1,0.1);
+	const double Bx = (Bfield.at( vectorGlobal ).x());
+	const double By = (Bfield.at( vectorGlobal ).y());
+	const double Bz = (Bfield.at( vectorGlobal ).z());
+	TVector3 B(Bx, By, Bz);
+	if (fabs(Bx) > 1e-6 || fabs(By) > 1e-6 || fabs(By) > 1e-6 )
+	{
+		_BField = true;
+		streamlog_out(MESSAGE4) << "Running WITH magnetic field! " << Bx << " Bx, " << By << " By, " << Bz << " Bz!" <<  endl;
+		streamlog_out(MESSAGE4) << "The residual cuts will be multiplied by 10!" << endl;
+		_driCut = _driCut * 10.0;
+		_driCutREFx = _driCutREFx * 10.0;
+		_driCutREFy = _driCutREFy * 10.0;
+		_sixCut = _sixCut * 10.0;
+		_triCut = _triCut * 10.0;
+		_triCutDUTx = _triCutDUTx* 10.0;
+		_triCutDUTy = _triCutDUTy * 10.0;
+		streamlog_out(MESSAGE4) << "The chi2, slope and prob cuts will be multiplied by 5!" << endl;
+		_chi2ndfCut = _chi2ndfCut * 5.0;
+		_probCut = _probCut * 0.2;
+		_slopecutDUTx = _slopecutDUTx * 5.0;
+		_slopecutDUTy = _slopecutDUTy * 5.0;
+	} else {
+		_BField = false;
+		streamlog_out(MESSAGE4) << "Running WITHOUT magnetic field!" << endl;
+	}
 
 	streamlog_out(MESSAGE4) << "Assumed beam energy " << _eBeam << " GeV" <<  endl;
 
@@ -1095,7 +1125,7 @@ void EUTelMilleGBL::getCoordinatorAlignment (LCEvent * event)
 void EUTelMilleGBL::processRunHeader( LCRunHeader * rdr )
 {
 
-	auto header = std::make_unique<EUTelRunHeaderImpl>(rdr);
+	auto_ptr<EUTelRunHeaderImpl> header ( new EUTelRunHeaderImpl (rdr) );
 	header->addProcessor( type() ) ;
 
 	// this is the right place also to check the geometry ID. This is a
@@ -1134,19 +1164,104 @@ void EUTelMilleGBL::processRunHeader( LCRunHeader * rdr )
 	++_iRun;
 }
 
-TMatrixD Jac55( double ds )
+TMatrixD Jac55( double ds, TVector3 direction, bool bfield)
 {
-
-	/* for GBL:
-		Jacobian for straight line track
-		track = q/p, x', y', x, y
-						0,   1,  2,  3, 4
-	*/
-
 	TMatrixD jac(5, 5);
-	jac.UnitMatrix();
-	jac[3][1] = ds; // x = x0 + xp * ds
-	jac[4][2] = ds; // y = y0 + yp * ds
+	if (bfield == true)
+	{
+		if (direction[2] < 1e-6)
+		{
+			direction[2] = 1e-6;
+		}
+		streamlog_out ( DEBUG5 ) << "Path length: " << endl;
+		streamlog_out ( DEBUG5 ) << " " << ds << " um" <<endl;
+		// expects mm
+		ds = ds / 1000.0;
+		jac.UnitMatrix();
+		direction.Unit();
+		std::vector<double> slope;
+		slope.push_back(direction[0]/direction[2]);
+		slope.push_back(direction[1]/direction[2]);
+		double norm = std::sqrt(pow(slope.at(0),2) + pow(slope.at(1),2) + 1);
+		TVector3 direction_n;
+		direction_n[0] = (slope.at(0)/norm);
+		direction_n[1] = (slope.at(1)/norm);
+		direction_n[2] = (1.0/norm);
+		streamlog_out ( DEBUG5 ) << "Direction:" << endl;
+		streamlog_out ( DEBUG5 ) << " X " << direction[0] << " Y " << direction[1]<< " Z " << direction[2] << endl;
+		streamlog_out ( DEBUG5 ) << "Normalised Direction:" << endl;
+		streamlog_out ( DEBUG5 ) << " X " << direction_n[0] << " Y " << direction_n[1]<< " Z " << direction_n[2] << endl;
+		double sinLambda = direction_n[2];
+		const gear::BField& Bfield = geo::gGeometry().getMagneticField();
+		gear::Vector3D vectorGlobal(1.0,1.0,1.0);
+
+		// expects kG -> input times 10
+		const double Bx = (Bfield.at( vectorGlobal ).x()*10);
+		const double By = (Bfield.at( vectorGlobal ).y()*10);
+		const double Bz = (Bfield.at( vectorGlobal ).z()*10);
+
+		TVector3 b(Bx, By, Bz);
+		TVector3 BxT = b.Cross(direction_n);
+		streamlog_out ( DEBUG5 ) << "BxT:" << endl;
+		streamlog_out ( DEBUG5 ) << " X " << BxT[0] << " Y " << BxT[1] << " Z " << BxT[2] << endl;
+		TMatrixD xyDir(2, 3);
+		xyDir[0][0] = 1.0;
+		xyDir[0][1] = 0.0;
+		xyDir[0][2] = -slope.at(0);
+		xyDir[1][0] = 0;
+		xyDir[1][1] = 1.0;
+		xyDir[1][2] = -slope.at(1);
+
+		streamlog_out( DEBUG5 ) << "Propagator (Dx,Dy):" << endl;
+		streamlog_out( DEBUG5 ) << " " << xyDir[0][0] << " " << xyDir[0][1] << " " << xyDir[0][2] << endl;
+		streamlog_out( DEBUG5 ) << " " << xyDir[1][0] << " " << xyDir[1][1] << " " << xyDir[1][2] << endl;
+
+		TMatrixD bFac(2,1);
+		TMatrixD BxTMatrix(3,1);
+		BxTMatrix.Zero();
+		BxTMatrix[0][0] = BxT[0];
+		BxTMatrix[1][0] = BxT[1];
+		BxTMatrix[2][0] = BxT[2]; 
+
+		double kappa = -0.00002998;
+		bFac = kappa * (xyDir*BxTMatrix); 
+		streamlog_out ( DEBUG5 ) << "bFac" << endl;
+		streamlog_out ( DEBUG5 ) << " " << bFac[0][0] << " " <<  bFac[1][0] << endl;
+
+		jac[1][0] = bFac[0][0]*ds/sinLambda;
+		streamlog_out ( DEBUG5 ) << "Jacobian entries:"<< endl;
+		streamlog_out ( DEBUG5 ) << "1,0 " << jac[1][0] << endl;
+		jac[2][0] = bFac[1][0]*ds/sinLambda;
+		streamlog_out ( DEBUG5 ) << "2,0 " << jac[2][0] << endl;
+		jac[3][0] = 0.5*bFac[0][0]*ds*ds;
+		streamlog_out ( DEBUG5 ) << "3,0 " << jac[3][0] << endl;
+		jac[4][0] = 0.5*bFac[1][0]*ds*ds;
+		streamlog_out ( DEBUG5 ) << "4,0 " << jac[4][0] << endl;
+		jac[3][1] = ds*sinLambda;
+		streamlog_out ( DEBUG5 ) << "3,1 " << jac[3][1] << endl;
+		jac[4][2] = ds*sinLambda;
+		streamlog_out ( DEBUG5 ) << "4,2 " << jac[4][2] << endl;
+
+	}
+	if (bfield == false)
+	{
+		/* for GBL:
+			Jacobian for straight line track
+			track:	q/p	x'	y'	x	y
+				0	1	2	3	4
+				
+			matrix:
+				1	0	0	0	0
+				0	1	0	0	0
+				0	0	1	0	0
+				0	ds	0	1	0
+				0	0	ds	0	1
+		*/
+		jac.UnitMatrix();
+		jac[3][1] = ds; // x = x0 + xp * ds
+		jac[4][2] = ds; // y = y0 + yp * ds
+		
+	}
 	return jac;
 
 }
@@ -2604,6 +2719,8 @@ void EUTelMilleGBL::processEvent( LCEvent * event )
 					double rz[8];
 
 					int jhit = hts[0][kA];
+					double xprev = _hitsArray[indexconverter[0]][jhit].measuredX; // first plane, including any pre-alignment
+					double yprev = _hitsArray[indexconverter[0]][jhit].measuredY; // first plane, including any pre-alignment
 					double zprev = _hitsArray[indexconverter[0]][jhit].measuredZ; // first plane, including any pre-alignment
 
 					// plane loop
@@ -2621,13 +2738,22 @@ void EUTelMilleGBL::processEvent( LCEvent * event )
 
 							// give correct z from fit!
 							//double zz = _siPlaneZPosition[ipl]*1000.0; //_hitsArray[indexconverter[ipl]][jhit].measuredZ; // [um]
+							double xx = dutfitposX;
+							double yy = dutfitposY;
 							double zz = dutfitposZ;
 
+							double stepx = xx - xprev;
+							double stepy = yy - yprev;
 							double step = zz - zprev;
 
-							jacPointToPoint = Jac55( step );
+							TVector3 direction(stepx,stepy,step);
+
+							jacPointToPoint = Jac55( step , direction , _BField );
 							gbl::GblPoint *point = new gbl::GblPoint( jacPointToPoint );
 							point->addScatterer( scat, wscatSiDUT );
+
+							xprev = xx;
+							yprev = yy;
 							zprev = zz;
 							traj_points.push_back(*point);
 							sPoint.push_back( s );
@@ -2639,7 +2765,8 @@ void EUTelMilleGBL::processEvent( LCEvent * event )
 							// positions in um
 							zz = _siPlaneZPosition[ipl]*1000.0 + (_siPlaneZPosition[ipl+1]*1000.0 - _siPlaneZPosition[ipl]*1000.0)*0.21;
 							step = zz - zprev;
-							jacPointToPoint = Jac55( step );
+							direction[2]=step;
+							jacPointToPoint = Jac55( step , direction , _BField );
 							gbl::GblPoint *point1 = new gbl::GblPoint( jacPointToPoint );
 							s += step;
 							zprev = zz;
@@ -2657,7 +2784,8 @@ void EUTelMilleGBL::processEvent( LCEvent * event )
 
 							zz = zprev + (_siPlaneZPosition[ipl+1]*1000.0 - _siPlaneZPosition[ipl]*1000.0)*0.58;
 							step = zz - zprev;
-							jacPointToPoint = Jac55( step );
+							direction[2]=step;
+							jacPointToPoint = Jac55( step , direction , _BField );
 							gbl::GblPoint *point2 = new gbl::GblPoint( jacPointToPoint );
 							s += step;
 							zprev = zz;
@@ -2679,13 +2807,21 @@ void EUTelMilleGBL::processEvent( LCEvent * event )
 							jhit = hts[indexconverter[ipl]][kB];
 						}
 
+						double xx = _hitsArray[indexconverter[ipl]][jhit].measuredX; // [um]
+						double yy = _hitsArray[indexconverter[ipl]][jhit].measuredY; // [um]
 						double zz = _hitsArray[indexconverter[ipl]][jhit].measuredZ; // [um]
 
+						double stepx = xx - xprev;
+						double stepy = yy - yprev;
 						double step = zz - zprev;
 
-						jacPointToPoint = Jac55( step );
+						TVector3 direction(stepx,stepy,step);
+
+						jacPointToPoint = Jac55( step , direction , _BField );
 						gbl::GblPoint *point = new gbl::GblPoint( jacPointToPoint );
 						s += step;
+						xprev = xx;
+						yprev = yy;
 						zprev = zz;
 
 						// extrapolate t/driplet vector A/B to each plane:
@@ -2886,7 +3022,8 @@ void EUTelMilleGBL::processEvent( LCEvent * event )
 							// positions in um
 							zz = _siPlaneZPosition[ipl]*1000.0 + (_siPlaneZPosition[ipl+1]*1000.0 - _siPlaneZPosition[ipl]*1000.0)*0.21;
 							step = zz - zprev;
-							jacPointToPoint = Jac55( step );
+							direction[2]=step;
+							jacPointToPoint = Jac55( step , direction , _BField );
 							gbl::GblPoint *point1 = new gbl::GblPoint( jacPointToPoint );
 							s += step;
 							zprev = zz;
@@ -2904,7 +3041,8 @@ void EUTelMilleGBL::processEvent( LCEvent * event )
 
 							zz = zprev + (_siPlaneZPosition[ipl+1]*1000.0 - _siPlaneZPosition[ipl]*1000.0)*0.58;
 							step = zz - zprev;
-							jacPointToPoint = Jac55( step );
+							direction[2]=step;
+							jacPointToPoint = Jac55( step , direction , _BField );
 							gbl::GblPoint *point2 = new gbl::GblPoint( jacPointToPoint );
 							s += step;
 							zprev = zz;
@@ -2959,7 +3097,7 @@ void EUTelMilleGBL::processEvent( LCEvent * event )
 					int Ndf;
 					double lostWeight;
 
-					gbl::GblTrajectory traj(traj_points, false); // curvature = false
+					gbl::GblTrajectory traj(traj_points, _BField);
 					traj.fit( Chi2, Ndf, lostWeight );
 					traj.getLabels(ilab);
 
@@ -4195,7 +4333,9 @@ void EUTelMilleGBL::end()
 							if ( ( tokens.size() == 3 ) || ( tokens.size() == 6 ) || (tokens.size() == 5) )
 							{
 								goodLine = true;
-							} else goodLine = false;
+							} else {
+								goodLine = false;
+							}
 
 							bool isFixed = ( tokens.size() == 3 );
 
@@ -4324,6 +4464,22 @@ void EUTelMilleGBL::end()
 
 					} //millepede eof
 
+					// catch the case that there is a reference plane that is not used, write out an empty set of alignment constants
+					if (counter < _nPlanes)
+					{
+						EUTelAlignmentConstant * constant = new EUTelAlignmentConstant;
+						streamlog_out (MESSAGE2) << "Writing empty constants for reference plane!" << endl;
+						constant->setSensorID(8); //HACK
+						constant->setXOffset(0.0);
+						constant->setYOffset(0.0);
+						constant->setZOffset(0.0);
+						constant->setAlpha(0.0);
+						constant->setBeta(0.0);
+						constant->setGamma(0.0);
+						constantsCollection->push_back( constant );
+
+					}
+
 				} //millepede OK
 
 				event->addCollection( constantsCollection, _alignmentConstantCollectionName );
@@ -4429,8 +4585,8 @@ void EUTelMilleGBL::end()
 			x_min += (range/5.0);
 			x_max -= (range/5.0);
 			profilefitalpha->SetRange(x_min,x_max);
-			streamlog_out ( DEBUG9 ) << "Lower bin: " << lowbin << " , upper bin: " << hibin << " !" << endl;
-			streamlog_out ( DEBUG9 ) << "Lower pos: " << x_min << " , upper pos: " << x_max << " !" << endl;
+			streamlog_out ( DEBUG5 ) << "Lower bin: " << lowbin << " , upper bin: " << hibin << " !" << endl;
+			streamlog_out ( DEBUG5 ) << "Lower pos: " << x_min << " , upper pos: " << x_max << " !" << endl;
 			dutryyProf->Fit(profilefitalpha,"QR");
 
 			// get an additional XY rotation for alignment, /1000 for um->mm:

@@ -1075,7 +1075,7 @@
   <!--Name of the Millepede binary output file.-->
   <parameter name="BinaryFilename" type="string" value="@DatabasePath@/@FilePrefix@-align-mille-x-gbl.bin"/>
   <!--Cut in Chi2/Ndf, tracks below are accepted-->
-  <parameter name="Chi2NdfCut" type="double" value="10"/>
+  <parameter name="Chi2NdfCut" type="double" value="100"/>
   <!--The Coordinator PreAlignment to be loaded-->
   <parameter name="CoordinatorPreAlignmentCollectionName" type="string" value="coordinatorprealignment"/>
   <!--Methods with which to get the DUT fit position: 0: centre of the DUT (bad if DUT is rotated), 1: extrapolate from triplet and get intersect with plane, 2: extrapolate from driplet, 3: get average from methods 1 and 2.-->
@@ -1113,7 +1113,7 @@
   <!--All prealignment collection names which have been applied must be entered here. The order should correspond to their application, i.e.: prealignment1 prealignment2 etc.-->
   <!--parameter name="PreAlignmentCollectionName" type="StringVec" value="prealign"/-->
   <!--Probability Cut, tracks above are accepted-->
-  <parameter name="ProbCut" type="double" value="0.1"/>
+  <parameter name="ProbCut" type="double" value="0.0"/>
   <!--REF resolution in x [um]-->
   <!--parameter name="REFResX" type="double" value="10"/-->
   <!--REF resolution in y [um]-->
