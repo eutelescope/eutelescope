@@ -623,7 +623,7 @@ void EUTelFitTupleAlibava::getPreAlignment (LCEvent * event)
 
 void EUTelFitTupleAlibava::processRunHeader( LCRunHeader* runHeader)
 {
-	auto_ptr<EUTelRunHeaderImpl> eutelHeader( new EUTelRunHeaderImpl ( runHeader ) );
+	auto eutelHeader = std::make_unique<EUTelRunHeaderImpl>(runHeader);
 	eutelHeader->addProcessor( type() );
 	_nRun++ ;
 
