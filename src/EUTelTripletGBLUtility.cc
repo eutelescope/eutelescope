@@ -138,6 +138,7 @@ void EUTelTripletGBLUtility::MatchTriplets(std::vector<triplet> &up, std::vector
 
     // check if trip is isolated. use at least double the trip_machting_cut for isolation in order to avoid double matching
     bool IsolatedTrip = IsTripletIsolated(trip, up, z_match, trip_matching_cut*2.0001);
+    streamlog_out(DEBUG4) << "  Is triplet isolated? " << IsolatedTrip << std::endl;
 
     for( std::vector<EUTelTripletGBLUtility::triplet>::iterator drip = down.begin(); drip != down.end(); drip++ ){
 
@@ -147,6 +148,7 @@ void EUTelTripletGBLUtility::MatchTriplets(std::vector<triplet> &up, std::vector
 
       // check if drip is isolated
       bool IsolatedDrip = IsTripletIsolated(drip, down, z_match, trip_matching_cut*2.0001);
+      streamlog_out(DEBUG4) << "  Is driplet isolated? " << IsolatedDrip << std::endl;
 
 
       // Build a track candidate from one upstream and one downstream triplet:
@@ -170,8 +172,11 @@ void EUTelTripletGBLUtility::MatchTriplets(std::vector<triplet> &up, std::vector
       
 
       // match driplet and triplet:
+      streamlog_out(DEBUG4) << "  Distance for matching x: " << fabs(dx)<< std::endl;
+      streamlog_out(DEBUG4) << "  Distance for matching y: " << fabs(dy)<< std::endl;
       if( fabs(dx) > trip_matching_cut) continue;
       if( fabs(dy) > trip_matching_cut) continue;
+      streamlog_out(DEBUG4) << "  Survived matching " << std::endl;
 
       // check isolation
       if( !IsolatedTrip || !IsolatedDrip ) {
@@ -179,6 +184,7 @@ void EUTelTripletGBLUtility::MatchTriplets(std::vector<triplet> &up, std::vector
 	//std::cout << " me so non-isolated" << std::endl;
 	continue;
       }
+      streamlog_out(DEBUG4) << "  Trip and Drip isolated " << std::endl;
       //else hIso->fill(1);
       
 
@@ -225,7 +231,7 @@ bool EUTelTripletGBLUtility::IsTripletIsolated(std::vector<EUTelTripletGBLUtilit
   }
 
   triddaMindutHisto->fill(ddAMin);
-  if(ddAMin < isolation_cut) IsolatedTrip = false;
+  if(ddAMin < isolation_cut && ddAMin > -0.5) IsolatedTrip = false; // if there is only one triplet, ddAmin is still -1.
 
   return IsolatedTrip;
 }
