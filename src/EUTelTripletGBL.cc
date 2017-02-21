@@ -139,10 +139,6 @@ EUTelTripletGBL::EUTelTripletGBL() : Processor("EUTelTripletGBL"), _siPlanesPara
       "global factor to Highland formula",
       _kappa, static_cast <double>(1.0)); // 1.0 means HL as is, 1.2 means 20% additional scattering
 
-  registerProcessorParameter( "aluthickum",
-      "thickness of alu target, if present",
-      _aluthickum, static_cast <double>(0.0));
-
   registerProcessorParameter( "probchi2Cut",
       "Cut on Prob(chi2,ndf) rejecting bad tracks with prob < cut",
       _probchi2_cut, static_cast <double>(.01)); 
@@ -163,6 +159,7 @@ void EUTelTripletGBL::init() {
   printParameters();
 
   _nEvt = 0;
+  _printEventCounter= 0;
 
   _isFirstEvent = true;
 
@@ -385,7 +382,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
       cluster = new EUTelSparseClusterImpl< EUTelGenericSparsePixel > ( clusterVector );
       charge = cluster->getTotalCharge();
       cluster->getCenterOfGravity(locx, locy);
-      streamlog_out(DEBUG4) << " charge is " << charge << std::endl;
+      streamlog_out(DEBUG2) << " charge is " << charge << std::endl;
     }
 
 
@@ -442,8 +439,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 
   } // loop over hits
 
-  streamlog_out(DEBUG4) << "Event " << event->getEventNumber()
-    << " contains " << hits.size() << " hits" << std::endl;
+  streamlog_out(DEBUG4) << "Event " << event->getEventNumber() << " contains " << hits.size() << " hits" << std::endl;
 
 
   // Fill the telescope plane correlation plots:
@@ -465,6 +461,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
   // Generate new triplet set for the Telescope Downstream Arm:
   std::vector<EUTelTripletGBLUtility::triplet> downstream_triplets;
   gblutil.FindTriplets(hits, 3, 4, 5, _triplet_res_cut, _slope_cut, downstream_triplets);
+  streamlog_out(DEBUG4) << "Found " << downstream_triplets.size() << " driplets." << endl;
 
   // Iterate over all found downstream triplets to fill histograms and match them to the REF and DUT:
   for( std::vector<EUTelTripletGBLUtility::triplet>::iterator drip = downstream_triplets.begin(); drip != downstream_triplets.end(); drip++ ){
@@ -504,6 +501,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
   // Generate new triplet set for the Telescope Upstream Arm:
   std::vector<EUTelTripletGBLUtility::triplet> upstream_triplets;
   gblutil.FindTriplets(hits, 0, 1, 2, _triplet_res_cut, _slope_cut, upstream_triplets);
+  streamlog_out(DEBUG4) << "Found " << upstream_triplets.size() << " triplets." << endl;
 
   // Iterate over all found upstream triplets to fill histograms and match them to the REF and DUT:
   for( std::vector<EUTelTripletGBLUtility::triplet>::iterator trip = upstream_triplets.begin(); trip != upstream_triplets.end(); trip++ ) {
@@ -702,13 +700,16 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
   //delete downstream_triplets;
   //delete upstream_triplets;
 
+  streamlog_out(DEBUG4) << "Found " << telescope_tracks.size() << " tracks from matching t/driplets." << endl;
+  
   int ngbl = 0;
   for( std::vector<EUTelTripletGBLUtility::track>::iterator tr = telescope_tracks.begin(); tr != telescope_tracks.end(); tr++ ){
 
     EUTelTripletGBLUtility::triplet trip = (*tr).get_upstream();
     EUTelTripletGBLUtility::triplet drip = (*tr).get_downstream();
-    EUTelTripletGBLUtility::triplet srip((*tr).gethit(0), (*tr).gethit(2), (*tr).gethit(5)); // seed triplet -> srip
-    if(_aluthickum > 1.) srip = trip;
+    EUTelTripletGBLUtility::triplet srip((*tr).gethit(0), (*tr).gethit(2), (*tr).gethit(5)); // seed triplet is called srip
+    //if(_aluthickum > 1.) srip = trip;
+    //srip = trip;
 
     std::vector<double> xAplanes(_nTelPlanes);
     std::vector<double> yAplanes(_nTelPlanes);
@@ -759,7 +760,6 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
     double p = _eBeam; // beam momentum
     double epsSi = -1;
     double epsAir = -1.; // define later when dz is known
-    double epsAlu = _aluthickum/1000./88.97; // Alu target
 
     double sumeps = 0.0;
     double tetSi = -1;
@@ -787,7 +787,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
     double trackhityloc[6];
     //double zprev = _planePosition[0];
     double step = 0.;
-    s = -10.;
+    s = 0.;
 
     // loop over all scatterers first to calculate sumeps
     for( int ipl = 0; ipl < 6; ++ipl ){
@@ -800,23 +800,12 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
       }
 
     }
-    sumeps += epsAlu;
    // done with calculating sum eps
 
 
     int DUT_label;
-    int centre_label = -100;
+    //int centre_label = -100;
     for( int ipl = 0; ipl < 6; ++ipl ){
-      if(ipl == 0){
-	// one dummy point:
-
-	gbl::GblPoint * point = new gbl::GblPoint( gblutil.JacobianPointToPoint( step ) );
-	traj_points.push_back(*point);
-	s += step;
-	sPoint.push_back(s);
-	step = 10; // [mm]
-	delete point;
-      }
 
       // Get the corresponding hit from the track:
       EUTelTripletGBLUtility::hit trackhit = (*tr).gethit(ipl);
@@ -920,7 +909,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 
 	step = 0.21*distplane;
 	epsAir =   0.5*distplane  / 304200.; 
-	tetAir = _kappa * 0.0136 * sqrt(epsAir) / p * ( 1 + 0.038*std::log(sumeps) ); // add 10% for trial
+	tetAir = _kappa * 0.0136 * sqrt(epsAir) / p * ( 1 + 0.038*std::log(sumeps) );
 
 	wscatAir[0] = 1.0 / ( tetAir * tetAir ); // weight
 	wscatAir[1] = 1.0 / ( tetAir * tetAir ); 
@@ -934,26 +923,6 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 	delete point;
 
 	step = 0.58*distplane;
-	if(ipl ==2){ // insert point at centre
-	  step = step / 2.;
-	  gbl::GblPoint * pointcentre = new gbl::GblPoint( gblutil.JacobianPointToPoint( step ) );
-
-	  if(_aluthickum > 1.) { // at least 1 um target
-	    double tetAlu = _kappa*0.0136 * sqrt(epsAlu) / p * ( 1 + 0.038*std::log(sumeps) );
-
-	    TVectorD wscatAlu(2);
-	    wscatAlu[0] = 1.0 / ( tetAlu * tetAlu ); // weight
-	    wscatAlu[1] = 1.0 / ( tetAlu * tetAlu ); 
-
-	    pointcentre->addScatterer( scat, wscatAlu );
-	  }
-	  s += step;
-	  traj_points.push_back(*pointcentre);
-	  sPoint.push_back( s );
-          centre_label = sPoint.size();
-	  delete pointcentre;
-	  // now again step/2
-        }
 
 	gbl::GblPoint * point1 = new gbl::GblPoint( gblutil.JacobianPointToPoint( step ) );
 	point1->addScatterer( scat, wscatAir );
@@ -965,17 +934,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 
 	step = 0.21*distplane; // remaing distance to next plane
       }
-      else{
 
-	// one more dummy point:
-
-	step = 10; // [mm]
-	gbl::GblPoint * point = new gbl::GblPoint( gblutil.JacobianPointToPoint( step ) );
-	traj_points.push_back(*point);
-	s += step;
-	sPoint.push_back(s);
-	delete point;
-      }
 
     } // loop over planes
 
@@ -1010,22 +969,28 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
     // debug:
 
     
-    if(_nEvt < 5){
+    if(_printEventCounter < 10){
       streamlog_out(MESSAGE4) << "traj with " << traj.getNumPoints() << " points:" << endl;
+      for( int ipl = 0; ipl < sPoint.size(); ++ipl ){
+        streamlog_out(DEBUG4) << "  GBL point " << ipl;
+        streamlog_out(DEBUG4) << "  z " << sPoint[ipl]; 
+        streamlog_out(DEBUG4) << endl;
+      }
       for( int ipl = 0; ipl < 6; ++ipl ){
-        streamlog_out(DEBUG2) << "  plane " << ipl << ", lab " << ilab[ipl];
-        streamlog_out(DEBUG2) << "  z " << sPoint[ilab[ipl]-1];
-        streamlog_out(DEBUG2) << " dx " << rx[ipl];
-        streamlog_out(DEBUG2) << " dy " << ry[ipl];
-        streamlog_out(DEBUG2) << " chi2 " << Chi2;
-        streamlog_out(DEBUG2) << " ndf " << Ndf;
-        streamlog_out(DEBUG2) << endl;
+        streamlog_out(DEBUG4) << " plane " << ipl << ", lab " << ilab[ipl];
+        streamlog_out(DEBUG4) << " z " << sPoint[ilab[ipl]-1];
+        streamlog_out(DEBUG4) << "  dx " << rx[ipl];
+        streamlog_out(DEBUG4) << "  dy " << ry[ipl];
+        streamlog_out(DEBUG4) << "  chi2 " << Chi2;
+        streamlog_out(DEBUG4) << "  ndf " << Ndf;
+        streamlog_out(DEBUG4) << endl;
       }
 
-       streamlog_out(DEBUG2)  << " Is traj valid? " << traj.isValid() << std::endl;
-      //traj.printPoints();
+       streamlog_out(DEBUG4)  << " Is traj valid? " << traj.isValid() << std::endl;
+      traj.printPoints();
       //traj.printTrajectory();
       //traj.printData();
+      _printEventCounter++;
     }
 
     ngbl++;
@@ -1469,16 +1434,15 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
       } 
 
 
-
       k++;
       // do some more analysis with kinks. 
       //   Calculate the two angles as corr_n-1 - corr_n-2, corr_n - corr_n-1, corr_n+1 - corr_n -> sum of all =  corr_n+1 - corr_n-2
 
-      ipos = centre_label-2;
+      ipos = ilab[2]+1; // 1 point upstream of centre = 1 downstream of plane 2
       traj.getResults( ipos, aCorrection, aCovariance );
       double kink_upstream = aCorrection[1];
 
-      ipos = centre_label+1; // 1 downstream of centre
+      ipos = ilab[3]-1; // 1 point downstream of centre = 1 upstream of plane 3
       traj.getResults( ipos, aCorrection, aCovariance );
       double kink_downstream = aCorrection[1];
 

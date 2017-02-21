@@ -174,6 +174,7 @@ namespace eutelescope {
 
     //Analysis parameters
     bool _isFirstEvent;
+    int _printEventCounter;
     double _eBeam;
     int _nRun;
     int _nEvt;
