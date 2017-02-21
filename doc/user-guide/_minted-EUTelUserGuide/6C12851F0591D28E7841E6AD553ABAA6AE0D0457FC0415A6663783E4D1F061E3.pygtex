@@ -1,0 +1,5 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+git remote add alexRep https://github.com/AlexanderMorton/eutelescope.git
+git pull alexRep
+git checkout alexRep/X0 \PYGZhy{}b alexRep\PYGZus{}X0\PYGZus{}local
+\end{Verbatim}

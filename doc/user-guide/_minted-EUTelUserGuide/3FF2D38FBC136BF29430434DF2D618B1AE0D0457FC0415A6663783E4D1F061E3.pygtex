@@ -1,0 +1,4 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+jobsub \PYGZhy{}c config.cfg \PYGZhy{}csv runlist.csv \PYGZhy{}\PYGZhy{}dry\PYGZhy{}run clustering 1085
+Marlin clustering\PYGZhy{}001085.xml
+\end{Verbatim}

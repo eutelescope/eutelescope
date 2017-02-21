@@ -1,0 +1,4 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{n+nb}{cd} path/to/your/ilcsoft/vxx\PYGZus{}yy/EUTelescope/trunk/
+\PYG{n+nb}{source} build\PYGZus{}env.sh
+\end{Verbatim}

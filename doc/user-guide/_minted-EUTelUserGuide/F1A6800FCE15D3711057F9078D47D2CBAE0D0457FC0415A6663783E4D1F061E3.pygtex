@@ -1,0 +1,4 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{n+nb}{cd} \PYGZti{}
+ln \PYGZhy{}s \PYGZlt{}folder/you/want/to/link/to\PYGZgt{} \PYGZlt{}name of symlink folder\PYGZgt{}
+\end{Verbatim}

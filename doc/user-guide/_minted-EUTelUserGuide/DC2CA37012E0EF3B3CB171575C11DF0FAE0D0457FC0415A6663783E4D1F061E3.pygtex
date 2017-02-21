@@ -1,0 +1,3 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+dumpevent my\PYGZus{}file.slcio \PYGZlt{}event\PYGZus{}number\PYGZgt{}
+\end{Verbatim}

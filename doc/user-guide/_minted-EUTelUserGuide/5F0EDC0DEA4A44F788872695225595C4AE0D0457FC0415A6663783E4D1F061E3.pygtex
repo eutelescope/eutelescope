@@ -1,0 +1,8 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+jobsub \PYGZhy{}c config.cfg \PYGZhy{}csv runlist.csv converter 97
+jobsub \PYGZhy{}c config.cfg \PYGZhy{}csv runlist.csv clustering 97
+jobsub \PYGZhy{}c config.cfg \PYGZhy{}csv runlist.csv filter 97
+jobsub \PYGZhy{}c config.cfg \PYGZhy{}csv runlist.csv hitmaker 97
+jobsub \PYGZhy{}c config.cfg \PYGZhy{}csv runlist.csv align 97
+jobsub \PYGZhy{}c config.cfg \PYGZhy{}csv runlist.csv fitter 97
+\end{Verbatim}

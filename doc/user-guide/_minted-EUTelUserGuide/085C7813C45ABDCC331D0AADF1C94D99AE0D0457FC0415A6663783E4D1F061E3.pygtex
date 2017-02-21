@@ -1,0 +1,4 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+su \PYGZhy{}c \PYG{l+s+s2}{\PYGZdq{}yum install gcc\PYGZhy{}c++ gcc\PYGZhy{}gfortran subversion java\PYGZhy{}1.7.0\PYGZhy{}openjdk\PYGZhy{}devel gsl\PYGZhy{}devel libX11\PYGZhy{}devel \PYGZbs{}}
+\PYG{l+s+s2}{      libXpm\PYGZhy{}devel libXft\PYGZhy{}devel libXext\PYGZhy{}devel gcc44\PYGZhy{}gfortran python\PYGZhy{}devel\PYGZdq{}}
+\end{Verbatim}

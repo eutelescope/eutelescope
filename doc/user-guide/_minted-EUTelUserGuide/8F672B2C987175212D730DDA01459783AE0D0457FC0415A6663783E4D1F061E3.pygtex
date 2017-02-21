@@ -1,0 +1,3 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{n+nb}{export} \PYG{n+nv}{ILCSOFT}\PYG{o}{=}/path/where/you/want/to/install
+\end{Verbatim}
