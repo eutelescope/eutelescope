@@ -1068,7 +1068,7 @@ void EUTelTripletGBLKinkEstimator::bookHistos()
 
 
   gblax6Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblax6", 100, -1, 1 );
+    createHistogram1D( "GBL/gblax6", 500, -5, 5 );
   gblax6Histo->setTitle( "GBL x angle at DUT;x angle at DUT [mrad];tracks" );
 
   gblDUTkinkuncertHisto = AIDAProcessor::histogramFactory(this)->
