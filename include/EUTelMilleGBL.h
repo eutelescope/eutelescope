@@ -452,6 +452,9 @@ namespace eutelescope {
 
     //! Event number
     int _iEvt;
+    
+    //! counter for printed events (for debugging)
+    int _printEventCounter;
 
     // n Tscope planes
     int _nTelPlanes;

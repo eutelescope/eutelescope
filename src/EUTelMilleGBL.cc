@@ -621,6 +621,7 @@ void EUTelMilleGBL::init() {
   // set to zero the run and event counters
   _iRun = 0;
   _iEvt = 0;
+  _printEventCounter = 0;
 
   // Initialize number of excluded planes
   _nExcludePlanes = _excludePlanes.size();
@@ -821,7 +822,8 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 
 	// loop over all hits in collection:
 
-        if(_iEvt < 10) streamlog_out( WARNING2 ) << "nHits = " << collection->getNumberOfElements() << endl;
+        if(_printEventCounter < 100) streamlog_out(DEBUG4) << "Event " << event->getEventNumber() << " contains " 
+	  << collection->getNumberOfElements() << " hits" << endl;
         nAllHitHisto->fill(collection->getNumberOfElements());
 
 	for( int iHit = 0; iHit < collection->getNumberOfElements(); iHit++ ) {
@@ -996,6 +998,7 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
   int i4 = indexconverter[4]; // plane 4
   int i5 = indexconverter[5]; // plane 5
 
+
   if( i0*i1*i2*i3*i4*i5 >= 0 ) { // not excluded
 
 
@@ -1034,7 +1037,7 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	  double xs = avx + tx * zs; // doublet extrapolation at 1
 	  double ys = avy + ty * zs;
 
-	  double zDUT = _hitsArray[i0][j0].measuredZ + 2.5 * avz;
+	  double zDUT = _hitsArray[i0][j0].measuredZ + 2.5 * avz; // this assumes DUT position half way b/w plane 2 and 3
 	  double xA = _hitsArray[i0][j0].measuredX + tx * zDUT; // doublet extrapolation at zDUT
 	  double yA = _hitsArray[i0][j0].measuredY + ty * zDUT; // doublet extrapolation at zDUT
 
@@ -1177,6 +1180,7 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 
     int nm = 0;
 
+
     for( int kA = 0; kA < ntri && kA < 99; ++kA ) { // i = A
 
       int j2 = hts[2][kA];
@@ -1278,6 +1282,8 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	  }
           if(_iEvt < 5) streamlog_out( MESSAGE2 ) << "resx = " << resx << endl;
 
+          resx = resx/1000.; // convert to mm
+          resy = resy/1000.;
 	  TVectorD measPrec(2); // precision = 1/resolution^2
 	  measPrec[0] = 1.0 / resx / resx;
 	  measPrec[1] = 1.0 / resy / resy;
@@ -1355,8 +1361,7 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	    else
 	      jhit = hts[ipl][kB];
 
-	    //double zz = _hitsArray[ipl][jhit].measuredZ; // [um]
-	    //double zz = _planePosition[ipl]; // [um]
+	    double zz = _hitsArray[ipl][jhit].measuredZ; // [um]
 
 	    //double step = zz - zprev;
 	    //
@@ -1366,15 +1371,15 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	    //zprev = zz;
 
 	    // extrapolate triplet vector A to each plane:
-	    double dz = _planePosition[ipl] - zmA[kA];
+	    double dz = zz - zmA[kA];
 	    double xs = xmA[kA] + sxA[kA] * dz; // Ax at plane
 	    double ys = ymA[kA] + syA[kA] * dz; // Ay at plane
 
-	    rx[ipl] = _hitsArray[ipl][jhit].measuredX - xs; // resid hit-track
-	    ry[ipl] = _hitsArray[ipl][jhit].measuredY - ys; // resid
+	    rx[ipl] = (_hitsArray[ipl][jhit].measuredX - xs)*1e-3; // resid hit-triplet, converted to mm
+	    ry[ipl] = (_hitsArray[ipl][jhit].measuredY - ys)*1e-3; // resid
 
-	    meas[0] = _hitsArray[ipl][jhit].measuredX - xs; // resid hit-track
-	    meas[1] = _hitsArray[ipl][jhit].measuredY - ys;
+	    meas[0] = rx[ipl]; // fill meas vector for GBL
+	    meas[1] = ry[ipl];
 
 	    point->addMeasurement( proL2m, meas, measPrec );
 
@@ -1450,12 +1455,11 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 
 	    if( ipl < 5) {
 	      distplane = _planePosition[ipl+1] - _planePosition[ipl];
-	      if(ipl == 2) distplane = _planePosition[ipl+1] - _planePosition[ipl] + _aluthickum/1000.;
+	      if(ipl == 2) distplane = _planePosition[ipl+1] - _planePosition[ipl];
 
 	      //std::cout << " --- Add air --- " << std::endl;
 	      step = 0.21*distplane;
 	      epsAir =   0.5*distplane  / 304200.; 
-	      if(ipl == 2) epsAir =   0.5*(distplane- _aluthickum/1000.)  / 304200.; 
 	      tetAir = _kappa*0.0136 * sqrt(epsAir) / p * ( 1 + 0.038*std::log(sumeps) );
 
 	      wscatAir[0] = 1.0 / ( tetAir * tetAir ); // weight
@@ -1501,18 +1505,7 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 
 	      step = 0.21*distplane; // remaing distance to next plane
 	    }
-	    else{
 
-	      //std::cout << " --- Add dummy --- " << std::endl;
-	      // one more dummy point:
-
-	      step = 10; // [mm]
-	      gbl::GblPoint * point = new gbl::GblPoint( Jac55( step ) );
-	      traj_points.push_back(*point);
-	      s += step;
-	      sPoint.push_back(s);
-	      delete point;
-	    }
 
 
 	  } // loop over planes
@@ -1550,21 +1543,29 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 
 	  // debug:
 
-	  /*if(_iEvt < 3 && kA == 0){
-	    cout << "traj with " << traj.getNumPoints() << " points:" << endl;
+	  if(_printEventCounter < 10){
+	    streamlog_out(DEBUG4) << "traj with " << traj.getNumPoints() << " points:" << endl;
+	    for( int ipl = 0; ipl < sPoint.size(); ++ipl ){
+	      streamlog_out(DEBUG4) << "  GBL point " << ipl;
+	      streamlog_out(DEBUG4) << "  z " << sPoint[ipl]; 
+	      streamlog_out(DEBUG4) << endl;
+	    }
 	    for( int ipl = 0; ipl < 6; ++ipl ){
-	      cout << "  plane " << ipl << ", lab " << ilab[ipl];
-	      cout << "  z " << sPoint[ilab[ipl]-1]*1E-3;
-	      cout << " dx " << rx[ipl];
-	      cout << " dy " << ry[ipl];
-	      cout << endl;
+	      streamlog_out(DEBUG4) << " plane " << ipl << ", lab " << ilab[ipl];
+	      streamlog_out(DEBUG4) << " z " << sPoint[ilab[ipl]-1];
+	      streamlog_out(DEBUG4) << "  dx " << rx[ipl];
+	      streamlog_out(DEBUG4) << "  dy " << ry[ipl];
+	      streamlog_out(DEBUG4) << "  chi2 " << Chi2;
+	      streamlog_out(DEBUG4) << "  ndf " << Ndf;
+	      streamlog_out(DEBUG4) << endl;
 	    }
 
-	    std::cout << " Is traj valid? " << traj.isValid() << std::endl;
+	     streamlog_out(DEBUG2)  << " Is traj valid? " << traj.isValid() << std::endl;
 	    traj.printPoints();
-	    traj.printTrajectory();
+	    //traj.printTrajectory();
 	    //traj.printData();
-	  }*/
+	    _printEventCounter++;
+	  }
 
 	  //cout << " chi2 " << Chi2 << ", ndf " << Ndf << endl;
 
@@ -1622,9 +1623,9 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	  //        0,   1,  2,  3, 4
 
 	  gblax0Hist->fill( aCorrection[1]*1E3 ); // angle x [mrad]
-	  gbldx0Hist->fill( aCorrection[3] ); // shift x [um]
-	  gblrx0Hist->fill( rx[0] - aCorrection[3] ); // residual x [um]
-	  gblry0Hist->fill( ry[0] - aCorrection[4] ); // residual y [um]
+	  gbldx0Hist->fill( aCorrection[3]*1e3 ); // shift x [um]
+	  gblrx0Hist->fill( (rx[0] - aCorrection[3])*1e3 ); // residual x [um]
+	  gblry0Hist->fill( (ry[0] - aCorrection[4])*1e3 ); // residual y [um]
 	  ax[k] = aCorrection[1]; // angle correction at plane, for kinks
 	  ay[k] = aCorrection[2]; // angle correction at plane, for kinks
 	  k++;
@@ -1632,9 +1633,9 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	  ipos = ilab[1];
 	  traj.getResults( ipos, aCorrection, aCovariance );
 	  gblax1Hist->fill( aCorrection[1]*1E3 ); // angle x [mrad]
-	  gbldx1Hist->fill( aCorrection[3] ); // shift x [um]
-	  gblrx1Hist->fill( rx[1] - aCorrection[3] ); // residual x [um]
-	  gblry1Hist->fill( ry[1] - aCorrection[4] ); // residual y [um]
+	  gbldx1Hist->fill( aCorrection[3]*1e3 ); // shift x [um]
+	  gblrx1Hist->fill( (rx[1] - aCorrection[3])*1e3 ); // residual x [um]
+	  gblry1Hist->fill( (ry[1] - aCorrection[4])*1e3 ); // residual y [um]
 	  ax[k] = aCorrection[1]; // angle correction at plane, for kinks
 	  ay[k] = aCorrection[2]; // angle correction at plane, for kinks
 	  k++;
@@ -1642,9 +1643,9 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	  ipos = ilab[2];
 	  traj.getResults( ipos, aCorrection, aCovariance );
 	  gblax2Hist->fill( aCorrection[1]*1E3 ); // angle x [mrad]
-	  gbldx2Hist->fill( aCorrection[3] ); // shift x [um]
-	  gblrx2Hist->fill( rx[2] - aCorrection[3] ); // residual x [um]
-	  gblry2Hist->fill( ry[2] - aCorrection[4] ); // residual y [um]
+	  gbldx2Hist->fill( aCorrection[3]*1e3 ); // shift x [um]
+	  gblrx2Hist->fill( (rx[2] - aCorrection[3])*1e3 ); // residual x [um]
+	  gblry2Hist->fill( (ry[2] - aCorrection[4])*1e3 ); // residual y [um]
 	  ax[k] = aCorrection[1]; // angle correction at plane, for kinks
 	  ay[k] = aCorrection[2]; // angle correction at plane, for kinks
 	  k++;
@@ -1653,8 +1654,8 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	    ipos = ilab[6]; // 6 = DUT
 	    traj.getResults( ipos, aCorrection, aCovariance );
 	    gblax6Hist->fill( aCorrection[1]*1E3 ); // angle x [mrad]
-	    gbldx6Hist->fill( aCorrection[3] ); // shift x [um]
-	    gbldy6Hist->fill( aCorrection[4] ); // shift x [um]
+	    gbldx6Hist->fill( aCorrection[3]*1e3 ); // shift x [um]
+	    gbldy6Hist->fill( aCorrection[4]*1e3 ); // shift x [um]
 	    ax[k] = aCorrection[1]; // angle correction at plane, for kinks
 	    ay[k] = aCorrection[2]; // angle correction at plane, for kinks
 	    k++;
@@ -1663,9 +1664,9 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	  ipos = ilab[3];
 	  traj.getResults( ipos, aCorrection, aCovariance );
 	  gblax3Hist->fill( aCorrection[1]*1E3 ); // angle x [mrad]
-	  gbldx3Hist->fill( aCorrection[3] ); // shift x [um]
-	  gblrx3Hist->fill( rx[3] - aCorrection[3] ); // residual x [um]
-	  gblry3Hist->fill( ry[3] - aCorrection[4] ); // residual y [um]
+	  gbldx3Hist->fill( aCorrection[3]*1e3 ); // shift x [um]
+	  gblrx3Hist->fill( (rx[3] - aCorrection[3])*1e3 ); // residual x [um]
+	  gblry3Hist->fill( (ry[3] - aCorrection[4])*1e3 ); // residual y [um]
 	  ax[k] = aCorrection[1]; // angle correction at plane, for kinks
 	  ay[k] = aCorrection[2]; // angle correction at plane, for kinks
 	  k++;
@@ -1673,9 +1674,9 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	  ipos = ilab[4];
 	  traj.getResults( ipos, aCorrection, aCovariance );
 	  gblax4Hist->fill( aCorrection[1]*1E3 ); // angle x [mrad]
-	  gbldx4Hist->fill( aCorrection[3] ); // shift x [um]
-	  gblrx4Hist->fill( rx[4] - aCorrection[3] ); // residual x [um]
-	  gblry4Hist->fill( ry[4] - aCorrection[4] ); // residual y [um]
+	  gbldx4Hist->fill( aCorrection[3]*1e3 ); // shift x [um]
+	  gblrx4Hist->fill( (rx[4] - aCorrection[3])*1e3 ); // residual x [um]
+	  gblry4Hist->fill( (ry[4] - aCorrection[4])*1e3 ); // residual y [um]
 	  ax[k] = aCorrection[1]; // angle correction at plane, for kinks
 	  ay[k] = aCorrection[2]; // angle correction at plane, for kinks
 	  k++;
@@ -1683,9 +1684,9 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	  ipos = ilab[5];
 	  traj.getResults( ipos, aCorrection, aCovariance );
 	  gblax5Hist->fill( aCorrection[1]*1E3 ); // angle x [mrad]
-	  gbldx5Hist->fill( aCorrection[3] ); // shift x [um]
-	  gblrx5Hist->fill( rx[5] - aCorrection[3] ); // residual x [um]
-	  gblry5Hist->fill( ry[5] - aCorrection[4] ); // residual y [um]
+	  gbldx5Hist->fill( aCorrection[3]*1e3 ); // shift x [um]
+	  gblrx5Hist->fill( (rx[5] - aCorrection[3])*1e3 ); // residual x [um]
+	  gblry5Hist->fill( (ry[5] - aCorrection[4])*1e3 ); // residual y [um]
 	  ax[k] = aCorrection[1]; // angle correction at plane, for kinks
 	  ay[k] = aCorrection[2]; // angle correction at plane, for kinks
 	  k++;
@@ -2473,11 +2474,11 @@ void EUTelMilleGBL::bookHistos() {
     // look at fit:
 
     gblax0Hist = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "gblax0", 100, -25, 25 );
+      createHistogram1D( "gblax0", 100, -5, 5 );
     gblax0Hist->setTitle( "GBL angle at plane 0;x angle at plane 0 [mrad];tracks" );
 
     gbldx0Hist = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "gbldx0", 500, -2500, 2500 );
+      createHistogram1D( "gbldx0", 500, -250, 250 );
     gbldx0Hist->setTitle( "GBL shift at plane 0;x shift at plane 0 [#mum];tracks" );
 
     gblrx0Hist = AIDAProcessor::histogramFactory(this)->
@@ -2490,11 +2491,11 @@ void EUTelMilleGBL::bookHistos() {
 
 
     gblax1Hist = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "gblax1", 100, -25, 25 );
+      createHistogram1D( "gblax1", 100, -5, 5 );
     gblax1Hist->setTitle( "GBL angle at plane 1;x angle at plane 1 [mrad];tracks" );
 
     gbldx1Hist = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "gbldx1", 500, -2500, 2500 );
+      createHistogram1D( "gbldx1", 500, -250, 250 );
     gbldx1Hist->setTitle( "GBL shift at plane 1;x shift at plane 1 [#mum];tracks" );
 
     gblrx1Hist = AIDAProcessor::histogramFactory(this)->
@@ -2507,11 +2508,11 @@ void EUTelMilleGBL::bookHistos() {
 
 
     gblax2Hist = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "gblax2", 100, -25, 25 );
+      createHistogram1D( "gblax2", 100, -5, 5 );
     gblax2Hist->setTitle( "GBL angle at plane 2;x angle at plane 2 [mrad];tracks" );
 
     gbldx2Hist = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "gbldx2", 500, -2500, 2500 );
+      createHistogram1D( "gbldx2", 500, -250, 250 );
     gbldx2Hist->setTitle( "GBL shift at plane 2;x shift at plane 2 [#mum];tracks" );
 
     gblrx2Hist = AIDAProcessor::histogramFactory(this)->
@@ -2524,11 +2525,11 @@ void EUTelMilleGBL::bookHistos() {
 
 
     gblax3Hist = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "gblax3", 100, -25, 25 );
+      createHistogram1D( "gblax3", 100, -5, 5 );
     gblax3Hist->setTitle( "GBL angle at plane 3;x angle at plane 3 [mrad];tracks" );
 
     gbldx3Hist = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "gbldx3", 500, -2500, 2500 );
+      createHistogram1D( "gbldx3", 500, -250, 250 );
     gbldx3Hist->setTitle( "GBL shift at plane 3;x shift at plane 3 [#mum];tracks" );
 
     gblrx3Hist = AIDAProcessor::histogramFactory(this)->
@@ -2541,11 +2542,11 @@ void EUTelMilleGBL::bookHistos() {
 
 
     gblax4Hist = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "gblax4", 100, -25, 25 );
+      createHistogram1D( "gblax4", 100, -5, 5 );
     gblax4Hist->setTitle( "GBL angle at plane 4;x angle at plane 4 [mrad];tracks" );
 
     gbldx4Hist = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "gbldx4", 500, -2500, 2500 );
+      createHistogram1D( "gbldx4", 500, -250, 250 );
     gbldx4Hist->setTitle( "GBL shift at plane 4;x shift at plane 4 [#mum];tracks" );
 
     gblrx4Hist = AIDAProcessor::histogramFactory(this)->
@@ -2558,11 +2559,11 @@ void EUTelMilleGBL::bookHistos() {
 
 
     gblax5Hist = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "gblax5", 100, -25, 25 );
+      createHistogram1D( "gblax5", 100, -5, 5 );
     gblax5Hist->setTitle( "GBL angle at plane 5;x angle at plane 5 [mrad];tracks" );
 
     gbldx5Hist = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "gbldx5", 500, -2500, 2500 );
+      createHistogram1D( "gbldx5", 500, -250, 250 );
     gbldx5Hist->setTitle( "GBL shift at plane 5;x shift at plane 5 [#mum];tracks" );
 
     gblrx5Hist = AIDAProcessor::histogramFactory(this)->
@@ -2575,11 +2576,11 @@ void EUTelMilleGBL::bookHistos() {
 
 
     gblax6Hist = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "gblax6", 100, -25, 25 );
+      createHistogram1D( "gblax6", 100, -5, 5 );
     gblax6Hist->setTitle( "GBL angle at DUT;x angle at DUT [mrad];tracks" );
 
     gbldx6Hist = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "gbldx6", 100, -2500, 2500 );
+      createHistogram1D( "gbldx6", 100, -250, 250 );
     gbldx6Hist->setTitle( "GBL shift at DUT;x shift at DUT [#mum];tracks" );
 
     gbldy6Hist = AIDAProcessor::histogramFactory(this)->
