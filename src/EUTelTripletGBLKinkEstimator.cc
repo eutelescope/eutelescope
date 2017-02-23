@@ -592,14 +592,14 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
 
     EUTelTripletGBLUtility::triplet trip = (*tr).get_upstream();
     EUTelTripletGBLUtility::triplet drip = (*tr).get_downstream();
-    EUTelTripletGBLUtility::triplet srip((*tr).gethit(0), (*tr).gethit(2), (*tr).gethit(5)); // seed triplet -> srip
+    EUTelTripletGBLUtility::triplet srip((*tr).gethit(0), (*tr).gethit(2), (*tr).gethit(5)); // seed triplet is called 'srip'
     //if(_aluthickum > 1.) srip = trip;
 
     std::vector<double> xAplanes(_nTelPlanes);
     std::vector<double> yAplanes(_nTelPlanes);
     for (int i = 0; i < _nTelPlanes; i++){
-      xAplanes[i] = srip.getx_at(_planePosition[i]);
-      yAplanes[i] = srip.gety_at(_planePosition[i]);
+      xAplanes[i] = trip.getx_at(_planePosition[i]);
+      yAplanes[i] = trip.gety_at(_planePosition[i]);
     }
 
     // Track kinks as difference in triplet slopes:
@@ -613,8 +613,8 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
     double yB = drip.gety_at(DUTz);
 
     // Track impact position at DUT from Upstream:
-    double xA = srip.getx_at(DUTz);
-    double yA = srip.gety_at(DUTz);
+    double xA = trip.getx_at(DUTz);
+    double yA = trip.gety_at(DUTz);
 
     double dx = xB - xA; // driplet - triplet
     double dy = yB - yA;
@@ -707,7 +707,7 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
 	if (ipl == 4) clustersize4->fill(trackhit.clustersize);
 	if (ipl == 5) clustersize5->fill(trackhit.clustersize);
 
-	double dz = trackhit.z - srip.base().z;
+	double dz = trackhit.z - srip.base().z; // here we use the srip rather then the trip (but srip can be = trip)
 	double xs = srip.base().x + srip.slope().x * dz; // Ax at plane
 	double ys = srip.base().y + srip.slope().y * dz; // Ay at plane
 
@@ -716,7 +716,7 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
 	trackhitxloc[ipl] = trackhit.locx;
 	trackhityloc[ipl] = trackhit.locy;
 
-	rx[ipl] = trackhit.x - xs;
+	rx[ipl] = trackhit.x - xs; // distance to SEED triplet srip (which can either be equal to trip, or constructed from e.g. planes (0,2,5)
 	ry[ipl] = trackhit.y - ys;
 
 	if( ipl == 0 ) {
@@ -857,8 +857,8 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
     // monitor what we put into GBL:
     selxHisto->fill( -xA ); // triplet at DUT
     selyHisto->fill( -yA );
-    selaxHisto->fill( srip.slope().x*1E3 );
-    selayHisto->fill( srip.slope().y*1E3 );
+    selaxHisto->fill( trip.slope().x*1E3 );
+    selayHisto->fill( trip.slope().y*1E3 );
     seldxHisto->fill( dx*1E3 ); // triplet-driplet match
     seldyHisto->fill( dy*1E3 );
     selkxHisto->fill( kx*1E3 ); // triplet-driplet kink
@@ -926,8 +926,8 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
 
       badxHisto->fill( -xA ); // triplet at DUT
       badyHisto->fill( -yA );
-      badaxHisto->fill( srip.slope().x*1E3 );
-      badayHisto->fill( srip.slope().y*1E3 );
+      badaxHisto->fill( trip.slope().x*1E3 );
+      badayHisto->fill( trip.slope().y*1E3 );
       baddxHisto->fill( dx*1E3 ); // triplet-driplet match
       baddyHisto->fill( dy*1E3 );
       badkxHisto->fill( kx*1E3 ); // triplet-driplet kink
