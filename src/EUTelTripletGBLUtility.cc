@@ -114,9 +114,29 @@ void EUTelTripletGBLUtility::bookHistos(){
   sixxylkHisto->setTitle( "six with REF link at DUT;six x_{out} at DUT [mm];six y_{up} at DUT [mm];six-plane tracks with REF link" );
   */
 
-  kinkvsxy = AIDAProcessor::histogramFactory(parent)->
-    createProfile2D( "GBLUtility/kinkvsxy", 120, -12, 12, 60, -6, 6, 0, 100 );
-  kinkvsxy->setTitle( "kink;six x_{out} at DUT [mm];six y_{up} at DUT [mm];sqrt(<kink^{2}>) [mrad]" );
+  kinkxvsxy = AIDAProcessor::histogramFactory(parent)->
+    createProfile2D( "GBLUtility/kinkxvsxy", 120, -12, 12, 60, -6, 6, 0, 100 );
+  kinkxvsxy->setTitle( "kink x;six x_{out} at DUT [mm];six y_{up} at DUT [mm];sqrt(<kink^{2}>) [mrad]" );
+
+  kinkyvsxy = AIDAProcessor::histogramFactory(parent)->
+    createProfile2D( "GBLUtility/kinkyvsxy", 120, -12, 12, 60, -6, 6, 0, 100 );
+  kinkyvsxy->setTitle( "kink y;six x_{out} at DUT [mm];six y_{up} at DUT [mm];sqrt(<kink^{2}>) [mrad]" );
+
+  kinkxyvsxy = AIDAProcessor::histogramFactory(parent)->
+    createProfile2D( "GBLUtility/kinkxyvsxy", 120, -12, 12, 60, -6, 6, 0, 100 );
+  kinkxyvsxy->setTitle( "kink <|x|+|y|>;six x_{out} at DUT [mm];six y_{up} at DUT [mm]; (|x| + |y|)/2 [mrad]" );
+
+  kinkx = AIDAProcessor::histogramFactory(parent)->
+    createHistogram1D( "GBLUtility/kinkx", 500, -5, 5 );
+  kinkx->setTitle( "triplet kink x angle at DUT;x angle at DUT [mrad];tracks" );
+
+  kinky = AIDAProcessor::histogramFactory(parent)->
+    createHistogram1D( "GBLUtility/kinky", 500, -5, 5 );
+  kinky->setTitle( "triplet kink y angle at DUT;y angle at DUT [mrad];tracks" );
+
+  kinkxy = AIDAProcessor::histogramFactory(parent)->
+    createHistogram1D( "GBLUtility/kinkxy", 500, -5, 5 );
+  kinkxy->setTitle( "triplet kink xy angle at DUT;xy angle at DUT [mrad];tracks" );
 
   // for both triplet and driplet
   triddaMindutHisto = AIDAProcessor::histogramFactory(parent)->
@@ -195,11 +215,16 @@ void EUTelTripletGBLUtility::MatchTriplets(std::vector<triplet> &up, std::vector
       sixxyHisto->fill( -xA, -yA ); // DP: x_out, y_up
       // Fill kink map histogram:
       if( abs( kx ) > 0.002 || abs( ky ) > 0.002 ) sixxycHisto->fill( -xA, -yA );      
-      kinkvsxy->fill( -xA, -yA, sqrt((kx*kx + ky*ky))*1E3 ); //sqrt(<kink^2>) [mrad]
 
       // apply fiducial cut
       if ( fabs(xA) >  9.0) continue;
       if (     -yA  < -4.0) continue;
+      kinkx->fill( kx*1E3 ); //sqrt(<kink^2>) [mrad]
+      kinky->fill( ky*1E3 ); //sqrt(<kink^2>) [mrad]
+      kinkxy->fill( (fabs(kx)+fabs(ky))/2*1E3 ); // [mrad]
+      kinkxvsxy->fill( -xA, -yA, fabs(kx)*1E3 ); //sqrt(<kink^2>) [mrad]
+      kinkyvsxy->fill( -xA, -yA, fabs(ky)*1E3 ); //sqrt(<kink^2>) [mrad]
+      kinkxyvsxy->fill( -xA, -yA, (fabs(kx) + fabs(ky))/2*1E3 ); // [mrad]
 
       // Add the track to the vector if trip/drip are isolated, the triplets are matched, and all other cuts are passed
       tracks.push_back(newtrack);
