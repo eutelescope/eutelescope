@@ -1071,6 +1071,26 @@ void EUTelTripletGBLKinkEstimator::bookHistos()
     createHistogram1D( "GBL/gblax6", 500, -5, 5 );
   gblax6Histo->setTitle( "GBL x angle at DUT;x angle at DUT [mrad];tracks" );
 
+  gblay6Histo = AIDAProcessor::histogramFactory(this)->
+    createHistogram1D( "GBL/gblay6", 500, -5, 5 );
+  gblay6Histo->setTitle( "GBL y angle at DUT;y angle at DUT [mrad];tracks" );
+
+  gblaxy6Histo = AIDAProcessor::histogramFactory(this)->
+    createHistogram1D( "GBL/gblaxy6", 500, -5, 5 );
+  gblaxy6Histo->setTitle( "GBL xy angle at DUT;xy angle at DUT [mrad];tracks" );
+
+  kinkxGBLvsxy = AIDAProcessor::histogramFactory(this)->
+    createProfile2D( "GBL/kinkxGBLvsxy", 120, -12, 12, 60, -6, 6, 0, 100 );
+  kinkxGBLvsxy->setTitle( "kink x;six x_{out} at DUT [mm];six y_{up} at DUT [mm];sqrt(<kink^{2}>) [mrad]" );
+
+  kinkyGBLvsxy = AIDAProcessor::histogramFactory(this)->
+    createProfile2D( "GBL/kinkyGBLvsxy", 120, -12, 12, 60, -6, 6, 0, 100 );
+  kinkyGBLvsxy->setTitle( "kink y;six x_{out} at DUT [mm];six y_{up} at DUT [mm];sqrt(<kink^{2}>) [mrad]" );
+
+  kinkxyGBLvsxy = AIDAProcessor::histogramFactory(this)->
+    createProfile2D( "GBL/kinkxyGBLvsxy", 120, -12, 12, 60, -6, 6, 0, 100 );
+  kinkxyGBLvsxy->setTitle( "kink xy;six x_{out} at DUT [mm];six y_{up} at DUT [mm]; (fabs(x)+fabs(y))/2 [mrad]" );
+
   gblDUTkinkuncertHisto = AIDAProcessor::histogramFactory(this)->
     createHistogram1D( "GBL/gblDUTkinkuncert", 100, 0, 1 );
   gblDUTkinkuncertHisto->setTitle( "GBL x angle at DUT;x angle at DUT [mrad];tracks" );
