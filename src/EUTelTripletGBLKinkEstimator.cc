@@ -815,6 +815,7 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
 	ilab.push_back(DUT_label);
 
 	sDUT = s;
+	delete point;
       }
 
 
