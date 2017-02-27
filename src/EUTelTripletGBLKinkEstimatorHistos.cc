@@ -1079,6 +1079,10 @@ void EUTelTripletGBLKinkEstimator::bookHistos()
     createHistogram1D( "GBL/gblaxy6", 500, -5, 5 );
   gblaxy6Histo->setTitle( "GBL xy angle at DUT;xy angle at DUT [mrad];tracks" );
 
+  gblkxky = AIDAProcessor::histogramFactory(this)->
+    createHistogram2D( "GBL/gblkxky", 500, -5, 5, 500, -5, 5 );
+  trixyHisto->setTitle( "kink x - kink y correlation;kx [mrad];ky [mrad];tracks" );
+
   kinkxGBLvsxy = AIDAProcessor::histogramFactory(this)->
     createProfile2D( "GBL/kinkxGBLvsxy", 120, -12, 12, 60, -6, 6, 0, 100 );
   kinkxGBLvsxy->setTitle( "kink x;six x_{out} at DUT [mm];six y_{up} at DUT [mm];sqrt(<kink^{2}>) [mrad]" );

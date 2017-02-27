@@ -1066,13 +1066,14 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
       traj.getResults( ipos, aCorrection, aCovariance );
       gblax6Histo->fill( aCorrection[5]*1E3 ); // angle x [mrad]
       gblay6Histo->fill( aCorrection[6]*1E3 ); // angle x [mrad]
-      gblaxy6Histo->fill( (fabs(aCorrection[5]) + fabs(aCorrection[6]))*1E3 ); // angle x [mrad]
+      gblkxky->fill(aCorrection[5]*1e3,aCorrection[6]*1e3);
+      gblaxy6Histo->fill( (fabs(aCorrection[5]) + fabs(aCorrection[6]))/2.*1E3 ); // angle x [mrad]
       // get the cov 5 (and 6) here for variance of additional local derivative
       gblDUTkinkuncertHisto->fill(  sqrt(aCovariance(5,5))*1e3 ); // angle x [mrad]
       //std::cout << " sigma kink_DUT = " << sqrt(aCovariance(5,5) + aCovariance(6,6)) << std::endl;
       kinkxGBLvsxy->fill( -xA, -yA, fabs(aCorrection[5])*1E3 ); //sqrt(<kink^2>) [mrad]
       kinkyGBLvsxy->fill( -xA, -yA, fabs(aCorrection[6])*1E3 ); //sqrt(<kink^2>) [mrad]
-      kinkxyGBLvsxy->fill( -xA, -yA, ( fabs(aCorrection[5]) + fabs(aCorrection[6]) )*1E3 ); // [mrad]
+      kinkxyGBLvsxy->fill( -xA, -yA, ( fabs(aCorrection[5]) + fabs(aCorrection[6]) )/2.*1E3 ); // [mrad]
       ax[k] = aCorrection[1]; // angle correction at plane, for kinks
 
       //std::cout << "Plane DUT: \n aCorr: [0] = " << aCorrection[0]<< "  aCoor: [1] = " << aCorrection[1]<< "  aCoor: [2] = " << aCorrection[2]<< "  aCoor: [3] = " << aCorrection[3]<< "  aCoor: [4] = " << aCorrection[4]<< "  aCoor: [5] = " << aCorrection[5]<< "  aCoor: [6] = " << aCorrection[6] << std::endl;
