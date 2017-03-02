@@ -1037,7 +1037,7 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	  double xs = avx + tx * zs; // doublet extrapolation at 1
 	  double ys = avy + ty * zs;
 
-	  double zDUT = _hitsArray[i0][j0].measuredZ + 2.5 * avz; // this assumes DUT position half way b/w plane 2 and 3
+	  double zDUT = _hitsArray[i0][j0].measuredZ + 2.0 * avz + 0.5*(_planePosition[3] - _planePosition[2])*1e3; // halfway b/wp2 and p3
 	  double xA = _hitsArray[i0][j0].measuredX + tx * zDUT; // doublet extrapolation at zDUT
 	  double yA = _hitsArray[i0][j0].measuredY + ty * zDUT; // doublet extrapolation at zDUT
 
@@ -1124,7 +1124,7 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	  double xs = avx + tx * zs; // track at 4
 	  double ys = avy + ty * zs;
 
-	  double zDUT = _hitsArray[i5][j5].measuredZ - 2.5 * avz;
+	  double zDUT = _hitsArray[i5][j5].measuredZ - 2.0 * avz - 0.5*(_planePosition[3] - _planePosition[2])*1e3;
 	  double xA = _hitsArray[i5][j5].measuredX - tx * zDUT; // doublet extrapolation at zDUT
 	  double yA = _hitsArray[i5][j5].measuredY - ty * zDUT; // doublet extrapolation at zDUT
 
@@ -1135,8 +1135,9 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 
 	  if( abs(dy) < _driCut ) dridxHist->fill( dx );
 	  if( abs(dx) < _driCut ) dridyHist->fill( dy );
-
-	  if( abs(dx) < _driCut  && abs(dy) < _driCut && abs(dx35) < _slopeCut*dz35 && abs(dy35) < _slopeCut*dz35 ) {
+	  
+	  // for larger targets, slopeCut on driplet is not reasonable, so relax cut. here by 5 times angular width of 10m Alu at 1 GeV
+	  if( abs(dx) < _driCut  && abs(dy) < _driCut && abs(dx35) < (_slopeCut+0.006)*dz35 && abs(dy35) < (_slopeCut+0.006)*dz35 ) {
 
 	    dridxcHist->fill( dx );
 	    dridycHist->fill( dy );
@@ -1215,6 +1216,9 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	  // GBL with triplet A as seed:
 
 	  // GBL point vector for the trajectory
+	  // FIXME Unfortunately, hit coordinates are in micrometer.
+	  // Hence, the GBL coordinates need to be in um too, as those are passed to Mille, and alignment constants are calculated in those units!
+	  // arg***
 	  std::vector<gbl::GblPoint> traj_points;
 
 	  //	  gbl::GblTrajectory traj( false ); // curvature = false
@@ -1225,11 +1229,6 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	  vector<double> sPoint;
 
 	  double s = 0;
-
-	  bool lDUT = 0; // DUT as scatterer
-
-	  // force empty t'scope
-	  lDUT = 0; //
 
 
 	  TMatrixD jacPointToPoint( 5, 5 );
@@ -1282,8 +1281,8 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	  }
           if(_iEvt < 5) streamlog_out( MESSAGE2 ) << "resx = " << resx << endl;
 
-          resx = resx/1000.; // convert to mm
-          resy = resy/1000.;
+          resx = resx; // in [um]
+          resy = resy;
 	  TVectorD measPrec(2); // precision = 1/resolution^2
 	  measPrec[0] = 1.0 / resx / resx;
 	  measPrec[1] = 1.0 / resy / resy;
@@ -1375,8 +1374,8 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	    double xs = xmA[kA] + sxA[kA] * dz; // Ax at plane
 	    double ys = ymA[kA] + syA[kA] * dz; // Ay at plane
 
-	    rx[ipl] = (_hitsArray[ipl][jhit].measuredX - xs)*1e-3; // resid hit-triplet, converted to mm
-	    ry[ipl] = (_hitsArray[ipl][jhit].measuredY - ys)*1e-3; // resid
+	    rx[ipl] = (_hitsArray[ipl][jhit].measuredX - xs); // resid hit-triplet, in micrometer ...
+	    ry[ipl] = (_hitsArray[ipl][jhit].measuredY - ys); // resid
 
 	    meas[0] = rx[ipl]; // fill meas vector for GBL
 	    meas[1] = ry[ipl];
@@ -1424,42 +1423,14 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 
 	    delete point;
 
-	    /*
-	       if( lDUT && ipl == 2 ) { // insert DUT
-
-	       zz = 1000.0 * DUTz; // convert to um
-	       step = zz - zprev;
-
-	       jacPointToPoint = Jac55( step );
-	       point = new gbl::GblPoint( jacPointToPoint );
-	       s += step;
-	       zprev = zz;
-
-	       double tetDUT = 0.0136 * sqrt(DUTX0) / p * ( 1 + 0.038*std::log(DUTX0) );
-
-	       TVectorD wscatDUT(2);
-	       wscatDUT[0] = 1.0 / ( tetDUT * tetDUT ); //weight
-	       wscatDUT[1] = 1.0 / ( tetDUT * tetDUT );
-
-	       point->addScatterer( scat, wscatDUT );
-
-	    //iLabel = traj.addPoint(*point);
-	    traj_points.push_back(*point);
-
-	    // ilab[6] = iLabel;
-
-	    delete point;
-
-	    }//DUT present
-	    */
 
 	    if( ipl < 5) {
 	      distplane = _planePosition[ipl+1] - _planePosition[ipl];
 	      if(ipl == 2) distplane = _planePosition[ipl+1] - _planePosition[ipl];
 
 	      //std::cout << " --- Add air --- " << std::endl;
-	      step = 0.21*distplane;
-	      epsAir =   0.5*distplane  / 304200.; 
+	      step = 0.21*distplane*1000; // in [um]
+	      epsAir =   0.5*distplane  / 304200.;  // in [mm]
 	      tetAir = _kappa*0.0136 * sqrt(epsAir) / p * ( 1 + 0.038*std::log(sumeps) );
 
 	      wscatAir[0] = 1.0 / ( tetAir * tetAir ); // weight
@@ -1473,7 +1444,7 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	      sPoint.push_back( s );
 	      delete point;
 
-	      step = 0.58*distplane;
+	      step = 0.58*distplane*1000; // in [um]
 	      if(ipl ==2){ // insert point at centre
 		step = step / 2.;
 		gbl::GblPoint * pointcentre = new gbl::GblPoint( Jac55( step ) );
@@ -1503,7 +1474,7 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	      sPoint.push_back( s );
 	      delete point1;
 
-	      step = 0.21*distplane; // remaing distance to next plane
+	      step = 0.21*distplane*1000; // remaing distance to next plane, in [um]
 	    }
 
 
@@ -1623,9 +1594,9 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	  //        0,   1,  2,  3, 4
 
 	  gblax0Hist->fill( aCorrection[1]*1E3 ); // angle x [mrad]
-	  gbldx0Hist->fill( aCorrection[3]*1e3 ); // shift x [um]
-	  gblrx0Hist->fill( (rx[0] - aCorrection[3])*1e3 ); // residual x [um]
-	  gblry0Hist->fill( (ry[0] - aCorrection[4])*1e3 ); // residual y [um]
+	  gbldx0Hist->fill( aCorrection[3] ); // shift x [um]
+	  gblrx0Hist->fill( (rx[0] - aCorrection[3]) ); // residual x [um]
+	  gblry0Hist->fill( (ry[0] - aCorrection[4]) ); // residual y [um]
 	  ax[k] = aCorrection[1]; // angle correction at plane, for kinks
 	  ay[k] = aCorrection[2]; // angle correction at plane, for kinks
 	  k++;
@@ -1633,9 +1604,9 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	  ipos = ilab[1];
 	  traj.getResults( ipos, aCorrection, aCovariance );
 	  gblax1Hist->fill( aCorrection[1]*1E3 ); // angle x [mrad]
-	  gbldx1Hist->fill( aCorrection[3]*1e3 ); // shift x [um]
-	  gblrx1Hist->fill( (rx[1] - aCorrection[3])*1e3 ); // residual x [um]
-	  gblry1Hist->fill( (ry[1] - aCorrection[4])*1e3 ); // residual y [um]
+	  gbldx1Hist->fill( aCorrection[3] ); // shift x [um]
+	  gblrx1Hist->fill( (rx[1] - aCorrection[3]) ); // residual x [um]
+	  gblry1Hist->fill( (ry[1] - aCorrection[4]) ); // residual y [um]
 	  ax[k] = aCorrection[1]; // angle correction at plane, for kinks
 	  ay[k] = aCorrection[2]; // angle correction at plane, for kinks
 	  k++;
@@ -1643,30 +1614,19 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	  ipos = ilab[2];
 	  traj.getResults( ipos, aCorrection, aCovariance );
 	  gblax2Hist->fill( aCorrection[1]*1E3 ); // angle x [mrad]
-	  gbldx2Hist->fill( aCorrection[3]*1e3 ); // shift x [um]
-	  gblrx2Hist->fill( (rx[2] - aCorrection[3])*1e3 ); // residual x [um]
-	  gblry2Hist->fill( (ry[2] - aCorrection[4])*1e3 ); // residual y [um]
+	  gbldx2Hist->fill( aCorrection[3] ); // shift x [um]
+	  gblrx2Hist->fill( (rx[2] - aCorrection[3]) ); // residual x [um]
+	  gblry2Hist->fill( (ry[2] - aCorrection[4]) ); // residual y [um]
 	  ax[k] = aCorrection[1]; // angle correction at plane, for kinks
 	  ay[k] = aCorrection[2]; // angle correction at plane, for kinks
 	  k++;
 
-	  if( lDUT ) {
-	    ipos = ilab[6]; // 6 = DUT
-	    traj.getResults( ipos, aCorrection, aCovariance );
-	    gblax6Hist->fill( aCorrection[1]*1E3 ); // angle x [mrad]
-	    gbldx6Hist->fill( aCorrection[3]*1e3 ); // shift x [um]
-	    gbldy6Hist->fill( aCorrection[4]*1e3 ); // shift x [um]
-	    ax[k] = aCorrection[1]; // angle correction at plane, for kinks
-	    ay[k] = aCorrection[2]; // angle correction at plane, for kinks
-	    k++;
-	  }
-
 	  ipos = ilab[3];
 	  traj.getResults( ipos, aCorrection, aCovariance );
 	  gblax3Hist->fill( aCorrection[1]*1E3 ); // angle x [mrad]
-	  gbldx3Hist->fill( aCorrection[3]*1e3 ); // shift x [um]
-	  gblrx3Hist->fill( (rx[3] - aCorrection[3])*1e3 ); // residual x [um]
-	  gblry3Hist->fill( (ry[3] - aCorrection[4])*1e3 ); // residual y [um]
+	  gbldx3Hist->fill( aCorrection[3] ); // shift x [um]
+	  gblrx3Hist->fill( (rx[3] - aCorrection[3]) ); // residual x [um]
+	  gblry3Hist->fill( (ry[3] - aCorrection[4]) ); // residual y [um]
 	  ax[k] = aCorrection[1]; // angle correction at plane, for kinks
 	  ay[k] = aCorrection[2]; // angle correction at plane, for kinks
 	  k++;
@@ -1674,9 +1634,9 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	  ipos = ilab[4];
 	  traj.getResults( ipos, aCorrection, aCovariance );
 	  gblax4Hist->fill( aCorrection[1]*1E3 ); // angle x [mrad]
-	  gbldx4Hist->fill( aCorrection[3]*1e3 ); // shift x [um]
-	  gblrx4Hist->fill( (rx[4] - aCorrection[3])*1e3 ); // residual x [um]
-	  gblry4Hist->fill( (ry[4] - aCorrection[4])*1e3 ); // residual y [um]
+	  gbldx4Hist->fill( aCorrection[3] ); // shift x [um]
+	  gblrx4Hist->fill( (rx[4] - aCorrection[3]) ); // residual x [um]
+	  gblry4Hist->fill( (ry[4] - aCorrection[4]) ); // residual y [um]
 	  ax[k] = aCorrection[1]; // angle correction at plane, for kinks
 	  ay[k] = aCorrection[2]; // angle correction at plane, for kinks
 	  k++;
@@ -1684,9 +1644,9 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	  ipos = ilab[5];
 	  traj.getResults( ipos, aCorrection, aCovariance );
 	  gblax5Hist->fill( aCorrection[1]*1E3 ); // angle x [mrad]
-	  gbldx5Hist->fill( aCorrection[3]*1e3 ); // shift x [um]
-	  gblrx5Hist->fill( (rx[5] - aCorrection[3])*1e3 ); // residual x [um]
-	  gblry5Hist->fill( (ry[5] - aCorrection[4])*1e3 ); // residual y [um]
+	  gbldx5Hist->fill( aCorrection[3] ); // shift x [um]
+	  gblrx5Hist->fill( (rx[5] - aCorrection[3]) ); // residual x [um]
+	  gblry5Hist->fill( (ry[5] - aCorrection[4]) ); // residual y [um]
 	  ax[k] = aCorrection[1]; // angle correction at plane, for kinks
 	  ay[k] = aCorrection[2]; // angle correction at plane, for kinks
 	  k++;
@@ -1698,7 +1658,6 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	  gblkx3Hist->fill( (ax[3] - ax[2])*1E3 ); // kink at 3 [mrad]
 	  gblkx4Hist->fill( (ax[4] - ax[3])*1E3 ); // kink at 4 [mrad]
 	  gblkx5Hist->fill( (ax[5] - ax[4])*1E3 ); // kink at 5 [mrad]
-	  if( lDUT ) gblkx6Hist->fill( (ax[6] - ax[5])*1E3 ); // kink at 6 [mrad]
 
 	  // do not pass very bad tracks to mille
 	  if(probchi > 0.001) {
