@@ -161,6 +161,7 @@ namespace eutelescope {
     int _nRun;
     int _nEvt;
     int _nTelPlanes;
+    int _ngbl;
     int _dut_plane;
     double _eff_radius;
     double _kappa;
@@ -350,13 +351,6 @@ namespace eutelescope {
   AIDA::IProfile1D * gblryvsy0;
   AIDA::IProfile1D * gblrxvsx01;
   AIDA::IProfile1D * gblryvsy01;
-  AIDA::IProfile1D * gblrxvsxpix0;
-  AIDA::IProfile1D * gblryvsypix0;
-  AIDA::IProfile1D * gblrxvsxpix01;
-  AIDA::IProfile1D * gblryvsypix01;
-
-  AIDA::IProfile1D * gblrxvsxpix31;
-  AIDA::IProfile1D * gblryvsypix31;
 
 
 
@@ -427,12 +421,17 @@ namespace eutelescope {
 
   AIDA::IHistogram1D * gblax6Histo;
   AIDA::IHistogram1D * gblay6Histo;
+  AIDA::IHistogram1D * gblaxprime6Histo;
+  AIDA::IHistogram1D * gblayprime6Histo;
   AIDA::IHistogram1D * gblaxy6Histo;
-  AIDA::IHistogram2D * gblkxky;
+  AIDA::IHistogram2D * gblaxay;
   AIDA::IHistogram1D * gblDUTkinkuncertHisto;
-  AIDA::IProfile2D * kinkxGBLvsxy;
-  AIDA::IProfile2D * kinkyGBLvsxy;
-  AIDA::IProfile2D * kinkxyGBLvsxy;
+  AIDA::IProfile2D * gblaxvsxy;
+  AIDA::IProfile2D * gblayvsxy;
+  AIDA::IProfile2D * gblaxyvsxy;
+
+  // This ia a 3D histo, i.e. it preserves binned data for the third input
+  AIDA::IHistogram3D * gblax3D;
   /*AIDA::IHistogram1D * gbldx6Histo;
   AIDA::IHistogram1D * gbldy6Histo;
   AIDA::IHistogram1D * gblrx6Histo;

@@ -42,6 +42,7 @@
 #include <AIDA/IAxis.h>
 #include <AIDA/IHistogram1D.h>
 #include <AIDA/IHistogram2D.h>
+#include <AIDA/IHistogram3D.h>
 #include <AIDA/IProfile1D.h>
 #include <AIDA/IProfile2D.h>
 #include <AIDA/ITree.h>
@@ -746,11 +747,11 @@ void EUTelTripletGBLKinkEstimator::bookHistos()
   // look at fit:
 
   gblax0Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblax0", 100, -1, 1 );
+    createHistogram1D( "GBL/gblax0", 500, -5, 5 );
   gblax0Histo->setTitle( "GBL x angle at plane 0;x angle at plane 0 [mrad];tracks" );
 
   gbldx0Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gbldx0", 100, -10, 10 );
+    createHistogram1D( "GBL/gbldx0", 200, -20, 20 );
   gbldx0Histo->setTitle( "GBL x shift at plane 0;x shift at plane 0 [#mum];tracks" );
 
   gbldx01Histo = AIDAProcessor::histogramFactory(this)->
@@ -801,39 +802,13 @@ void EUTelTripletGBLKinkEstimator::bookHistos()
     createProfile1D( "GBL/gblryvsy01", 110, -11, 11, -100, 100 );
   gblryvsy01->setTitle( "gbl y resid vs y;y [mm];<#sigma_{y}> [#mum]" );
 
-  gblrxvsxpix0 = AIDAProcessor::histogramFactory(this)->
-    createProfile1D( "GBL/gblrxvsxpix0", 200, 0., 18.4, -100, 100 );
-  gblrxvsxpix0->setTitle( "gbl x resid vs x;x [mm];<#sigma_{x}> [#mum]" );
-
-  gblryvsypix0 = AIDAProcessor::histogramFactory(this)->
-    createProfile1D( "GBL/gblryvsypix0", 200, 0., 18.4, -100, 100 );
-  gblryvsypix0->setTitle( "gbl y resid vs y;y [mm];<#sigma_{y}> [#mum]" );
-
-  gblrxvsxpix01 = AIDAProcessor::histogramFactory(this)->
-    createProfile1D( "GBL/gblrxvsxpix01", 200, 0., 18.4, -100, 100 );
-  gblrxvsxpix01->setTitle( "gbl x resid vs x at plane 0;x [#mum];<#sigma_{x}> [#mum]" );
-
-  gblryvsypix01 = AIDAProcessor::histogramFactory(this)->
-    createProfile1D( "GBL/gblryvsypix01", 200, 0., 18.4, -100, 100 );
-  gblryvsypix01->setTitle( "gbl y resid vs y at plane 0;y [#mum];<#sigma_{y}> [#mum]" );
-
- 
-
-  gblrxvsxpix31 = AIDAProcessor::histogramFactory(this)->
-    createProfile1D( "GBL/gblrxvsxpix31", 200, 0.,18.4 , -100, 100 );
-  gblrxvsxpix31->setTitle( "gbl x resid vs x at plane 3;x [#mum];<#sigma_{x}> [#mum]" );
-
-  gblryvsypix31 = AIDAProcessor::histogramFactory(this)->
-    createProfile1D( "GBL/gblryvsypix31", 200, 0.,18.4 , -100, 100 );
-  gblryvsypix31->setTitle( "gbl y resid vs y at plane 3;y [#mum];<#sigma_{y}> [#mum]" );
-
  
   gblax1Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblax1", 100, -1, 1 );
+    createHistogram1D( "GBL/gblax1", 500, -5, 5 );
   gblax1Histo->setTitle( "GBL x angle at plane 1;x angle at plane 1 [mrad];tracks" );
 
   gbldx1Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gbldx1", 10, -10, 10 );
+    createHistogram1D( "GBL/gbldx1", 200, -20, 20 );
   gbldx1Histo->setTitle( "GBL x shift at plane 1;x shift at plane 1 [#mum];tracks" );
 
   gbldx11Histo = AIDAProcessor::histogramFactory(this)->
@@ -878,11 +853,11 @@ void EUTelTripletGBLKinkEstimator::bookHistos()
 
 
   gblax2Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblax2", 100, -1, 1 );
+    createHistogram1D( "GBL/gblax2", 500, -5, 5 );
   gblax2Histo->setTitle( "GBL x angle at plane 2;x angle at plane 2 [mrad];tracks" );
 
   gbldx2Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gbldx2", 100, -10, 10 );
+    createHistogram1D( "GBL/gbldx2", 200, -20, 20 );
   gbldx2Histo->setTitle( "GBL x shift at plane 2;x shift at plane 2 [#mum];tracks" );
 
   gbldx21Histo = AIDAProcessor::histogramFactory(this)->
@@ -927,11 +902,11 @@ void EUTelTripletGBLKinkEstimator::bookHistos()
 
 
   gblax3Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblax3", 100, -1, 1 );
+    createHistogram1D( "GBL/gblax3", 500, -5, 5 );
   gblax3Histo->setTitle( "GBL x angle at plane 3;x angle at plane 3 [mrad];tracks" );
 
   gbldx3Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gbldx3", 100, -10, 10 );
+    createHistogram1D( "GBL/gbldx3", 200, -20, 20 );
   gbldx3Histo->setTitle( "GBL x shift at plane 3;x shift at plane 3 [#mum];tracks" );
 
   gbldx31Histo = AIDAProcessor::histogramFactory(this)->
@@ -978,16 +953,16 @@ void EUTelTripletGBLKinkEstimator::bookHistos()
 
 
   gblax4Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblax4", 100, -1, 1 );
+    createHistogram1D( "GBL/gblax4", 500, -5, 5 );
   gblax4Histo->setTitle( "GBL x angle at plane 4;x angle at plane 4 [mrad];tracks" );
 
   gbldx4Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gbldx4", 100, -10, 10 );
+    createHistogram1D( "GBL/gbldx4", 200, -20, 20 );
   gbldx4Histo->setTitle( "GBL x shift at plane 4;x shift at plane 4 [#mum];tracks" );
 
   gbldx41Histo = AIDAProcessor::histogramFactory(this)->
     createHistogram1D( "GBL/gbldx41", 100, -10, 10 );
-  gbldx41Histo->setTitle( "GBL x shift at plane 4;x shift at plane 4 [nm];tracks" );
+  gbldx41Histo->setTitle( "GBL x shift at plane 4;x shift at plane 4 [mm];tracks" );
 
   gblrx4Histo = AIDAProcessor::histogramFactory(this)->
     createHistogram1D( "GBL/gblrx4", 250, -25, 25 );
@@ -1027,11 +1002,11 @@ void EUTelTripletGBLKinkEstimator::bookHistos()
 
 
   gblax5Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gblax5", 100, -1, 1 );
+    createHistogram1D( "GBL/gblax5", 500, -5, 5 );
   gblax5Histo->setTitle( "GBL x angle at plane 5;x angle at plane 5 [mrad];tracks" );
 
   gbldx5Histo = AIDAProcessor::histogramFactory(this)->
-    createHistogram1D( "GBL/gbldx5", 100, -10, 10 );
+    createHistogram1D( "GBL/gbldx5", 200, -20, 20 );
   gbldx5Histo->setTitle( "GBL x shift at plane 5;x shift at plane 5 [#mum];tracks" );
 
   gbldx51Histo = AIDAProcessor::histogramFactory(this)->
@@ -1075,29 +1050,41 @@ void EUTelTripletGBLKinkEstimator::bookHistos()
     createHistogram1D( "GBL/gblay6", 500, -5, 5 );
   gblay6Histo->setTitle( "GBL y angle at DUT;y angle at DUT [mrad];tracks" );
 
+  gblaxprime6Histo = AIDAProcessor::histogramFactory(this)->
+    createHistogram1D( "GBL/gblaxprime6", 500, -5, 5 );
+  gblaxprime6Histo->setTitle( "GBL xprime (loc deriv) angle at DUT;x angle at DUT [mrad];tracks" );
+
+  gblayprime6Histo = AIDAProcessor::histogramFactory(this)->
+    createHistogram1D( "GBL/gblayprime6", 500, -5, 5 );
+  gblayprime6Histo->setTitle( "GBL yprime (loc deriv) angle at DUT;y angle at DUT [mrad];tracks" );
+
   gblaxy6Histo = AIDAProcessor::histogramFactory(this)->
     createHistogram1D( "GBL/gblaxy6", 500, -5, 5 );
   gblaxy6Histo->setTitle( "GBL xy angle at DUT;xy angle at DUT [mrad];tracks" );
 
-  gblkxky = AIDAProcessor::histogramFactory(this)->
-    createHistogram2D( "GBL/gblkxky", 500, -5, 5, 500, -5, 5 );
-  trixyHisto->setTitle( "kink x - kink y correlation;kx [mrad];ky [mrad];tracks" );
+  gblaxay = AIDAProcessor::histogramFactory(this)->
+    createHistogram2D( "GBL/gblaxay", 500, -5, 5, 500, -5, 5 );
+  gblaxay->setTitle( "ax - ay correlation;ax [mrad];ay [mrad];tracks" );
 
-  kinkxGBLvsxy = AIDAProcessor::histogramFactory(this)->
-    createProfile2D( "GBL/kinkxGBLvsxy", 120, -12, 12, 60, -6, 6, 0, 100 );
-  kinkxGBLvsxy->setTitle( "kink x;six x_{out} at DUT [mm];six y_{up} at DUT [mm];sqrt(<kink^{2}>) [mrad]" );
+  gblaxvsxy = AIDAProcessor::histogramFactory(this)->
+    createProfile2D( "GBL/gblaxvsxy", 120, -12, 12, 60, -6, 6, 0, 100 );
+  gblaxvsxy->setTitle( "ax;six x_{out} at DUT [mm];six y_{up} at DUT [mm];sqrt(<kink^{2}>) [mrad]" );
 
-  kinkyGBLvsxy = AIDAProcessor::histogramFactory(this)->
-    createProfile2D( "GBL/kinkyGBLvsxy", 120, -12, 12, 60, -6, 6, 0, 100 );
-  kinkyGBLvsxy->setTitle( "kink y;six x_{out} at DUT [mm];six y_{up} at DUT [mm];sqrt(<kink^{2}>) [mrad]" );
+  gblayvsxy = AIDAProcessor::histogramFactory(this)->
+    createProfile2D( "GBL/gblayvsxy", 120, -12, 12, 60, -6, 6, 0, 100 );
+  gblayvsxy->setTitle( "ay;six x_{out} at DUT [mm];six y_{up} at DUT [mm];sqrt(<kink^{2}>) [mrad]" );
 
-  kinkxyGBLvsxy = AIDAProcessor::histogramFactory(this)->
-    createProfile2D( "GBL/kinkxyGBLvsxy", 120, -12, 12, 60, -6, 6, 0, 100 );
-  kinkxyGBLvsxy->setTitle( "kink xy;six x_{out} at DUT [mm];six y_{up} at DUT [mm]; (fabs(x)+fabs(y))/2 [mrad]" );
+  gblaxyvsxy = AIDAProcessor::histogramFactory(this)->
+    createProfile2D( "GBL/gblaxyvsxy", 120, -12, 12, 60, -6, 6, 0, 100 );
+  gblaxyvsxy->setTitle( "axy;six x_{out} at DUT [mm];six y_{up} at DUT [mm]; (fabs(x)+fabs(y))/2 [mrad]" );
 
   gblDUTkinkuncertHisto = AIDAProcessor::histogramFactory(this)->
     createHistogram1D( "GBL/gblDUTkinkuncert", 100, 0, 1 );
   gblDUTkinkuncertHisto->setTitle( "GBL x angle at DUT;x angle at DUT [mrad];tracks" );
+
+  gblax3D = AIDAProcessor::histogramFactory(this)->
+    createHistogram3D( "GBL/gblax3D", 120, -12, 12, 60, -6, 6, 2000, -10,10 );
+  gblax3D->setTitle( "ax(x,y) in 3D;x [mm]; y [mm];ax [mrad];tracks" );
 
   /*
     gbldx6Histo = AIDAProcessor::histogramFactory(this)->
