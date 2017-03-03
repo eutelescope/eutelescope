@@ -101,11 +101,6 @@ using namespace lcio;
 using namespace marlin;
 using namespace eutelescope;
 
-#if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
-//global:
-//EUTelMilleGBL::hit *hitsarray_gbl;
-#endif
-
 // definition of static members mainly used to name histograms
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
@@ -192,6 +187,8 @@ AIDA::IHistogram1D * gblax0Hist;
 AIDA::IHistogram1D * gbldx0Hist;
 AIDA::IHistogram1D * gblrx0Hist;
 AIDA::IHistogram1D * gblry0Hist;
+AIDA::IHistogram1D * gblpx0Hist;
+AIDA::IHistogram1D * gblpy0Hist;
 
 AIDA::IHistogram1D * gblax1Hist;
 AIDA::IHistogram1D * gbldx1Hist;
@@ -338,7 +335,7 @@ EUTelMilleGBL::EUTelMilleGBL(): Processor("EUTelMilleGBL") {
 
   registerOptionalParameter("BinaryFilename","Name of the Millepede binary file.",_binaryFilename, string ("mille.bin"));
 
-  registerOptionalParameter("TelescopeResolution","Resolution of the telescope for Millepede (sigma_x=sigma_y.",_telescopeResolution, static_cast <float> (3.0));
+  registerOptionalParameter("TelescopeResolution","Resolution of the telescope for Millepede (sigma_x=sigma_y.",_telescopeResolution, static_cast <float> (0.010));
 
   //registerOptionalParameter("OnlySingleHitEvents","Use only events with one hit in every plane.",_onlySingleHitEvents, static_cast <int> (0));
 
@@ -360,9 +357,9 @@ EUTelMilleGBL::EUTelMilleGBL(): Processor("EUTelMilleGBL") {
   registerOptionalParameter("AlignmentConstantCollectionName", "This is the name of the alignment collection to be saved into the slcio file",
       _alignmentConstantCollectionName, static_cast< string > ( "alignment" ));
 
-  registerOptionalParameter( "triCut", "Upstream triplet residual cut [um]", _triCut, 300.0 );
-  registerOptionalParameter( "driCut", "Downstream triplet residual cut [um]", _driCut, 400.0 );
-  registerOptionalParameter( "sixCut", "Upstream-Downstream Track matching cut [um]", _sixCut, 600.0 );
+  registerOptionalParameter( "triCut", "Upstream triplet residual cut [um]", _triCut, 0.30 );
+  registerOptionalParameter( "driCut", "Downstream triplet residual cut [um]", _driCut, 0.40 );
+  registerOptionalParameter( "sixCut", "Upstream-Downstream Track matching cut [um]", _sixCut, 0.60 );
   registerOptionalParameter( "slopeCut", "t(d)riplet slope cut [radian]", _slopeCut, 0.01 );
 
   //registerOptionalParameter("ResidualsXMin","Minimal values of the hit residuals in the X direction for a track. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_residualsXMin,MinimalResidualsX);
@@ -401,7 +398,7 @@ EUTelMilleGBL::EUTelMilleGBL(): Processor("EUTelMilleGBL") {
 
   //registerOptionalParameter("PedeUserStartValuesGamma","Start values for the alignment for the angle gamma.",_pedeUserStartValuesGamma,PedeUserStartValuesGamma);
 
-  registerOptionalParameter("TestModeSensorResolution","Resolution assumed for the sensors in test mode.",_testModeSensorResolution, static_cast <float> (3.0));
+  registerOptionalParameter("TestModeSensorResolution","Resolution assumed for the sensors in test mode.",_testModeSensorResolution, static_cast <float> (0.003));
 
   registerOptionalParameter("TestModeXTrackSlope","Width of the track slope distribution in the x direction",_testModeXTrackSlope, static_cast <float> (0.0005));
 
@@ -656,13 +653,6 @@ void EUTelMilleGBL::init() {
   streamlog_out( MESSAGE2 ) << "The filename for the binary file is: " << _binaryFilename.c_str() << endl;
 
 
-  // is this used anywhere ?!
-  for(int i = 0; i < _maxTrackCandidates; i++) {
-    _xPos.push_back(std::vector<double>(_nPlanes,0.0));
-    _yPos.push_back(std::vector<double>(_nPlanes,0.0));
-    _zPos.push_back(std::vector<double>(_nPlanes,0.0));
-  }
-
   /*if( _distanceMaxVec.size() > 0 ) {
     if(_distanceMaxVec.size() !=  static_cast<unsigned int>(_nPlanes )-1 ) {
     streamlog_out( WARNING2 ) << "Consistency check of the DistanceMaxVec array failed. Its size is different compared to the number of planes! Will now use _distanceMax for each pair of planes." << endl;
@@ -822,7 +812,7 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 
 	// loop over all hits in collection:
 
-        if(_printEventCounter < 100) streamlog_out(DEBUG4) << "Event " << event->getEventNumber() << " contains " 
+        if(_printEventCounter < 100) streamlog_out(DEBUG2) << "Event " << event->getEventNumber() << " contains " 
 	  << collection->getNumberOfElements() << " hits" << endl;
         nAllHitHisto->fill(collection->getNumberOfElements());
 
@@ -851,11 +841,13 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 
 	  // Getting positions of the hits.
 	  // ------------------------------
-	  hitsInPlane.measuredX = 1000 * hit->getPosition()[0]; // microns
-	  hitsInPlane.measuredY = 1000 * hit->getPosition()[1]; // microns
-	  hitsInPlane.measuredZ = 1000 * hit->getPosition()[2]; // microns
+	  hitsInPlane.measuredX = hit->getPosition()[0]; // mm !! (ARGH, PLEASE DO NOT USE [um])
+	  hitsInPlane.measuredY = hit->getPosition()[1]; // 
+	  hitsInPlane.measuredZ = hit->getPosition()[2]; // 
 
-	  //if(_iEvt < 5) streamlog_out( WARNING2 ) << "hit x = " << hit->getPosition()[0] << endl;
+	  if(_iEvt < 5) streamlog_out( DEBUG3 ) << "hit x = " << hit->getPosition()[0] << endl;
+	  if(_iEvt < 5) streamlog_out( DEBUG3 ) << "hit y = " << hit->getPosition()[1] << endl;
+	  if(_iEvt < 5) streamlog_out( DEBUG3 ) << "hit z = " << hit->getPosition()[2] << endl;
 
 
 	  //printf("hit %5d of %5d , at %-8.3f %-8.3f %-8.3f, %5d %5d \n", iHit , collection->getNumberOfElements(), hitsInPlane.measuredX*1E-3, hitsInPlane.measuredY*1E-3, hitsInPlane.measuredZ*1E-3, indexconverter[layerIndex], layerIndex );
@@ -874,8 +866,8 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	const float resolX = _testModeSensorResolution;
 	const float resolY = _testModeSensorResolution;
 
-	const float xhitpos = gRandom->Uniform(-3500.0,3500.0);
-	const float yhitpos = gRandom->Uniform(-3500.0,3500.0);
+	const float xhitpos = gRandom->Uniform(-3.500,3.500);
+	const float yhitpos = gRandom->Uniform(-3.500,3.500);
 
 	const float xslope = gRandom->Gaus(0.0,_testModeXTrackSlope);
 	const float yslope = gRandom->Gaus(0.0,_testModeYTrackSlope);
@@ -917,12 +909,6 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
      */
   // mode 1 or 3: tracks are read in
 
-  std::vector<int> fitplane(_nPlanes, 0);
-
-  for( int help = 0; help < _nPlanes; help++ ) {
-    fitplane[help] = 1;
-  }
-
   // DP: correlate telescope hits from different planes
 
   int iA = indexconverter[0]; // plane 0
@@ -935,8 +921,8 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	for( size_t jB = 0; jB < _hitsArray[iB].size(); jB++ ) {
 	  double dx = _hitsArray[iB][jB].measuredX - _hitsArray[iA][jA].measuredX;
 	  double dy = _hitsArray[iB][jB].measuredY - _hitsArray[iA][jA].measuredY;
-	  dx01Hist->fill( dx );
-	  dy01Hist->fill( dy );
+	  dx01Hist->fill( dx*1e3 );
+	  dy01Hist->fill( dy*1e3 );
 	}//loop hits jB
       }//iB valid
 
@@ -945,8 +931,8 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	for( size_t jB = 0; jB < _hitsArray[iB].size(); jB++ ) {
 	  double dx = _hitsArray[iB][jB].measuredX - _hitsArray[iA][jA].measuredX;
 	  double dy = _hitsArray[iB][jB].measuredY - _hitsArray[iA][jA].measuredY;
-	  dx02Hist->fill( dx );
-	  dy02Hist->fill( dy );
+	  dx02Hist->fill( dx*1e3 );
+	  dy02Hist->fill( dy*1e3 );
 	}//loop hits jB
       }//iB valid
 
@@ -955,8 +941,8 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	for( size_t jB = 0; jB < _hitsArray[iB].size(); jB++ ) {
 	  double dx = _hitsArray[iB][jB].measuredX - _hitsArray[iA][jA].measuredX;
 	  double dy = _hitsArray[iB][jB].measuredY - _hitsArray[iA][jA].measuredY;
-	  dx03Hist->fill( dx );
-	  dy03Hist->fill( dy );
+	  dx03Hist->fill( dx*1e3 );
+	  dy03Hist->fill( dy*1e3 );
 	}//loop hits jB
       }//iB valid
 
@@ -965,8 +951,8 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	for( size_t jB = 0; jB < _hitsArray[iB].size(); jB++ ) {
 	  double dx = _hitsArray[iB][jB].measuredX - _hitsArray[iA][jA].measuredX;
 	  double dy = _hitsArray[iB][jB].measuredY - _hitsArray[iA][jA].measuredY;
-	  dx04Hist->fill( dx );
-	  dy04Hist->fill( dy );
+	  dx04Hist->fill( dx*1e3 );
+	  dy04Hist->fill( dy*1e3 );
 	}//loop hits jB
       }//iB valid
 
@@ -975,8 +961,8 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	for( size_t jB = 0; jB < _hitsArray[iB].size(); jB++ ) {
 	  double dx = _hitsArray[iB][jB].measuredX - _hitsArray[iA][jA].measuredX;
 	  double dy = _hitsArray[iB][jB].measuredY - _hitsArray[iA][jA].measuredY;
-	  dx05Hist->fill( dx );
-	  dy05Hist->fill( dy );
+	  dx05Hist->fill( dx*1e3 );
+	  dy05Hist->fill( dy*1e3 );
 	}//loop hits jB
       }//iB valid
 
@@ -1037,7 +1023,7 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	  double xs = avx + tx * zs; // doublet extrapolation at 1
 	  double ys = avy + ty * zs;
 
-	  double zDUT = _hitsArray[i0][j0].measuredZ + 2.0 * avz + 0.5*(_planePosition[3] - _planePosition[2])*1e3; // halfway b/wp2 and p3
+	  double zDUT = _hitsArray[i0][j0].measuredZ + 2.0 * avz + 0.5*(_planePosition[3] - _planePosition[2]); // halfway b/wp2 and p3
 	  double xA = _hitsArray[i0][j0].measuredX + tx * zDUT; // doublet extrapolation at zDUT
 	  double yA = _hitsArray[i0][j0].measuredY + ty * zDUT; // doublet extrapolation at zDUT
 
@@ -1046,25 +1032,25 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 
           //if(_iEvt < 5) streamlog_out( WARNING2 ) << "dx triplet = " << dx << endl;
 
-	  if( abs(dy) < _triCut ) tridxHist->fill( dx );
-	  if( abs(dx) < _triCut ) tridyHist->fill( dy );
+	  if( abs(dy) < _triCut ) tridxHist->fill( dx*1e3 );
+	  if( abs(dx) < _triCut ) tridyHist->fill( dy*1e3 );
 
 	  if( abs(dx) < _triCut  && abs(dy) < _triCut && abs(dx02) < _slopeCut*dz02 && abs(dy02) < _slopeCut*dz02 ) {
 
-	    tridxcHist->fill( dx );
-	    tridycHist->fill( dy );
+	    tridxcHist->fill( dx*1e3 );
+	    tridycHist->fill( dy*1e3 );
 
             // poor man's isolation
             bool cont = false;
 	    for( size_t j1a = j1+1; j1a < _hitsArray[i1].size(); j1a++ ) {
-	      if( fabs(_hitsArray[i1][j1].measuredX - _hitsArray[i1][j1a].measuredX) < 100) cont = true;
-	      if( fabs(_hitsArray[i1][j1].measuredY - _hitsArray[i1][j1a].measuredY) < 100) cont = true;
+	      if( fabs(_hitsArray[i1][j1].measuredX - _hitsArray[i1][j1a].measuredX) < 0.1) cont = true;
+	      if( fabs(_hitsArray[i1][j1].measuredY - _hitsArray[i1][j1a].measuredY) < 0.1) cont = true;
 	    }
 	    if(cont) continue;
 
 	    // apply fiducial cut
-            if ( fabs(xA) >  9000.) continue;
-            if (     -yA  < -4000.) continue;
+            if ( fabs(xA) >  9.) continue;
+            if (     -yA  < -4.) continue;
 
 	    if( ntri < 99 ) {
 	      xmA[ntri] = avx;
@@ -1124,7 +1110,7 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	  double xs = avx + tx * zs; // track at 4
 	  double ys = avy + ty * zs;
 
-	  double zDUT = _hitsArray[i5][j5].measuredZ - 2.0 * avz - 0.5*(_planePosition[3] - _planePosition[2])*1e3;
+	  double zDUT = _hitsArray[i5][j5].measuredZ - 2.0 * avz - 0.5*(_planePosition[3] - _planePosition[2]);
 	  double xA = _hitsArray[i5][j5].measuredX - tx * zDUT; // doublet extrapolation at zDUT
 	  double yA = _hitsArray[i5][j5].measuredY - ty * zDUT; // doublet extrapolation at zDUT
 
@@ -1133,25 +1119,26 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 
           //if(_iEvt < 5) streamlog_out( WARNING2 ) << "dx driplet = " << dx << endl;
 
-	  if( abs(dy) < _driCut ) dridxHist->fill( dx );
-	  if( abs(dx) < _driCut ) dridyHist->fill( dy );
+	  if( abs(dy) < _driCut ) dridxHist->fill( dx*1e3 );
+	  if( abs(dx) < _driCut ) dridyHist->fill( dy*1e3 );
 	  
 	  // for larger targets, slopeCut on driplet is not reasonable, so relax cut. here by 5 times angular width of 10m Alu at 1 GeV
 	  if( abs(dx) < _driCut  && abs(dy) < _driCut && abs(dx35) < (_slopeCut+0.006)*dz35 && abs(dy35) < (_slopeCut+0.006)*dz35 ) {
 
-	    dridxcHist->fill( dx );
-	    dridycHist->fill( dy );
+	    dridxcHist->fill( dx*1e3 );
+	    dridycHist->fill( dy*1e3 );
 
+	    // I guess that this is poor man's isolation
             bool cont = false;
 	    for( size_t j4a = j4+1; j4a < _hitsArray[i4].size(); j4a++ ) {
-	      if( fabs(_hitsArray[i4][j4].measuredX - _hitsArray[i4][j4a].measuredX) < 100) cont = true;
-	      if( fabs(_hitsArray[i4][j4].measuredY - _hitsArray[i4][j4a].measuredY) < 100) cont = true;
+	      if( fabs(_hitsArray[i4][j4].measuredX - _hitsArray[i4][j4a].measuredX) < 0.1) cont = true;
+	      if( fabs(_hitsArray[i4][j4].measuredY - _hitsArray[i4][j4a].measuredY) < 0.1) cont = true;
 	    }
 	    if(cont) continue;
 
 	    // apply fiducial cut
-            if ( fabs(xA) >  9000.0) continue;
-            if (     -yA  < -4000.0) continue;
+            if ( fabs(xA) >  9.0) continue;
+            if (     -yA  < -4.0) continue;
 
 	    if( ndri < 99 ) {
 	      xmB[ndri] = avx;
@@ -1201,8 +1188,8 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	double dx = xB - xA; // matching residual
 	double dy = yB - yA;
 
-	if( abs(dy) < _sixCut ) sixdxHist->fill( dx );
-	if( abs(dx) < _sixCut ) sixdyHist->fill( dy );
+	if( abs(dy) < _sixCut ) sixdxHist->fill( dx*1e3 );
+	if( abs(dx) < _sixCut ) sixdyHist->fill( dy*1e3 );
 
 	if( abs(dx) < _sixCut  && abs(dy) < _sixCut ) { // triplet-driplet match
 
@@ -1213,24 +1200,18 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	  sixkxHist->fill( kx*1E3 );
 	  sixkyHist->fill( ky*1E3 );
 
-	  // GBL with triplet A as seed:
-
-	  // GBL point vector for the trajectory
-	  // FIXME Unfortunately, hit coordinates are in micrometer.
-	  // Hence, the GBL coordinates need to be in um too, as those are passed to Mille, and alignment constants are calculated in those units!
-	  // arg***
+	  // GBL point vector for the trajectory, all in [mm] !!
+	  // GBL with triplet A as seed
 	  std::vector<gbl::GblPoint> traj_points;
 
-	  //	  gbl::GblTrajectory traj( false ); // curvature = false
-
 	  // build up trajectory:
-
 	  std::vector<unsigned int> ilab; // 0-5 = telescope, 6 = DUT, 7 = REF
 	  vector<double> sPoint;
 
+	  // the arc length at the first measurement plane is 0.
 	  double s = 0;
 
-
+	  // transport matrix in (q/p, x', y', x, y) space
 	  TMatrixD jacPointToPoint( 5, 5 );
 
 	  TMatrixD proL2m(2,2);
@@ -1238,8 +1219,9 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 
 	  TVectorD meas(2);
 	  // this depends on threshold, energy, dz, and number of iterations done ...
-	  double resx = -1.; // [um] telescope initial resolution for ONLY PREALIGNED t'scope! this is not 3.24 !
-	  double resy = -1.; // [um] telescope initial resolution
+	  // We make an accurate, heuristic  guess
+	  double resx = -1.; // [mm] telescope initial resolution for ONLY PREALIGNED t'scope! this is not 3.24 !
+	  double resy = -1.; // [mm] telescope initial resolution
 
 	  double distplane = _planePosition[1] - _planePosition[0];
           if(_iEvt < 5) streamlog_out( MESSAGE2 ) << "distplane = " << distplane << endl;
@@ -1254,7 +1236,7 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	  }
 
 	  if( distplane < 30. ) {
-	    resx = 20; // if only tracks with prob(chi2,ndf) > 0.001 are passed to Mille
+	    resx = 20. - p*1.5; // if only tracks with prob(chi2,ndf) > 0.001 are passed to Mille
 	    resy = resx; 
 	  }
 
@@ -1279,10 +1261,11 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	      resy = resx;
 	    }
 	  }
-          if(_iEvt < 5) streamlog_out( MESSAGE2 ) << "resx = " << resx << endl;
 
-          resx = resx; // in [um]
-          resy = resy;
+          resx = resx/1000.; // finally convert to [mm]
+          resy = resy/1000.;
+	  if(_printEventCounter < 10) streamlog_out( MESSAGE2 ) << "res x = " << resx << endl;
+
 	  TVectorD measPrec(2); // precision = 1/resolution^2
 	  measPrec[0] = 1.0 / resx / resx;
 	  measPrec[1] = 1.0 / resy / resy;
@@ -1297,7 +1280,7 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	  double sumeps = 0.0;
 
 
-	  // loop over all scatterers first to calculate sumeps
+	  // loop over all scatterers first to calculate sumeps, needed for log correctionin Highland
 	  for( int ipl = 0; ipl < 6; ++ipl ){
 	    sumeps += epsSi;
 	    if( ipl < 5) {
@@ -1310,7 +1293,7 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	  sumeps += epsAlu;
 	  // done with calculating sum eps
 
-
+	  // Paper showed HL predicts too high angle, at least for biased measurement. 
 	  double tetSi = _kappa*0.0136 * sqrt(epsSi) / p * ( 1 + 0.038*std::log(sumeps) );
 	  double tetAir = -1.;
 
@@ -1360,7 +1343,7 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	    else
 	      jhit = hts[ipl][kB];
 
-	    double zz = _hitsArray[ipl][jhit].measuredZ; // [um]
+	    double zz = _hitsArray[ipl][jhit].measuredZ; // [mm]
 
 	    //double step = zz - zprev;
 	    //
@@ -1371,8 +1354,9 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 
 	    // extrapolate triplet vector A to each plane:
 	    double dz = zz - zmA[kA];
-	    double xs = xmA[kA] + sxA[kA] * dz; // Ax at plane
-	    double ys = ymA[kA] + syA[kA] * dz; // Ay at plane
+	    double xs = (xmA[kA] + sxA[kA] * dz); // Ax at plane
+	    double ys = (ymA[kA] + syA[kA] * dz); // Ay at plane
+	    if(_printEventCounter < 10) std::cout << "dz = " << dz << "   xs = " << xs << "   ys = " << ys << std::endl;
 
 	    rx[ipl] = (_hitsArray[ipl][jhit].measuredX - xs); // resid hit-triplet, in micrometer ...
 	    ry[ipl] = (_hitsArray[ipl][jhit].measuredY - ys); // resid
@@ -1426,10 +1410,9 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 
 	    if( ipl < 5) {
 	      distplane = _planePosition[ipl+1] - _planePosition[ipl];
-	      if(ipl == 2) distplane = _planePosition[ipl+1] - _planePosition[ipl];
 
 	      //std::cout << " --- Add air --- " << std::endl;
-	      step = 0.21*distplane*1000; // in [um]
+	      step = 0.21*distplane; // in [mm]
 	      epsAir =   0.5*distplane  / 304200.;  // in [mm]
 	      tetAir = _kappa*0.0136 * sqrt(epsAir) / p * ( 1 + 0.038*std::log(sumeps) );
 
@@ -1444,7 +1427,7 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	      sPoint.push_back( s );
 	      delete point;
 
-	      step = 0.58*distplane*1000; // in [um]
+	      step = 0.58*distplane; // in [mm]
 	      if(ipl ==2){ // insert point at centre
 		step = step / 2.;
 		gbl::GblPoint * pointcentre = new gbl::GblPoint( Jac55( step ) );
@@ -1474,7 +1457,7 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	      sPoint.push_back( s );
 	      delete point1;
 
-	      step = 0.21*distplane*1000; // remaing distance to next plane, in [um]
+	      step = 0.21*distplane; // remaing distance to next plane, in [mm]
 	    }
 
 
@@ -1485,23 +1468,23 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 
 	  // monitor what we put into GBL:
 
-	  selxHist->fill( xA*1E-3 ); // triplet at mid
-	  selyHist->fill( yA*1E-3 );
+	  selxHist->fill( xA ); // triplet at mid
+	  selyHist->fill( yA );
 	  selaxHist->fill( sxA[iA]*1E3 );//track slope
 	  selayHist->fill( syA[iA]*1E3 );
-	  seldxHist->fill( dx ); // triplet-driplet match
-	  seldyHist->fill( dy );
+	  seldxHist->fill( dx*1E3 ); // triplet-driplet match
+	  seldyHist->fill( dy*1E3 );
 	  selkxHist->fill( kx*1E3 ); // triplet-driplet kink
 	  selkyHist->fill( ky*1E3 );
 
-	  seldx1Hist->fill( rx[1] ); // triplet interpol
-	  seldy1Hist->fill( ry[1] );
-	  seldx3Hist->fill( rx[3] ); // triplet extrapol
-	  seldy3Hist->fill( ry[3] );
-	  seldx4Hist->fill( rx[4] );
-	  seldy4Hist->fill( ry[4] );
-	  seldx5Hist->fill( rx[5] );
-	  seldy5Hist->fill( ry[5] );
+	  seldx1Hist->fill( rx[1]*1E3 ); // triplet interpol
+	  seldy1Hist->fill( ry[1]*1E3 );
+	  seldx3Hist->fill( rx[3]*1E3 ); // triplet extrapol
+	  seldy3Hist->fill( ry[3]*1E3 );
+	  seldx4Hist->fill( rx[4]*1E3 );
+	  seldy4Hist->fill( ry[4]*1E3 );
+	  seldx5Hist->fill( rx[5]*1E3 );
+	  seldy5Hist->fill( ry[5]*1E3 );
 
 
 	  double Chi2;
@@ -1549,30 +1532,30 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 
 	  if( probchi < 0.01 ) {
 
-	    badxHist->fill( xA*1E-3 ); // triplet at DUT
-	    badyHist->fill( yA*1E-3 );
+	    badxHist->fill( xA ); // triplet at DUT
+	    badyHist->fill( yA );
 	    badaxHist->fill( sxA[iA]*1E3 );
 	    badayHist->fill( syA[iA]*1E3 );
-	    baddxHist->fill( dx ); // triplet-driplet match
-	    baddyHist->fill( dy );
+	    baddxHist->fill( dx*1E3 ); // triplet-driplet match
+	    baddyHist->fill( dy*1E3 );
 	    badkxHist->fill( kx*1E3 ); // triplet-driplet kink
 	    badkyHist->fill( ky*1E3 );
 
-	    baddx1Hist->fill( rx[1] ); // triplet interpol
-	    baddy1Hist->fill( ry[1] );
-	    baddx3Hist->fill( rx[3] ); // triplet extrapol
-	    baddy3Hist->fill( ry[3] );
-	    baddx4Hist->fill( rx[4] );
-	    baddy4Hist->fill( ry[4] );
-	    baddx5Hist->fill( rx[5] );
-	    baddy5Hist->fill( ry[5] );
+	    baddx1Hist->fill( rx[1]*1E3 ); // triplet interpol
+	    baddy1Hist->fill( ry[1]*1E3 );
+	    baddx3Hist->fill( rx[3]*1E3 ); // triplet extrapol
+	    baddy3Hist->fill( ry[3]*1E3 );
+	    baddx4Hist->fill( rx[4]*1E3 );
+	    baddy4Hist->fill( ry[4]*1E3 );
+	    baddx5Hist->fill( rx[5]*1E3 );
+	    baddy5Hist->fill( ry[5]*1E3 );
 
 	  }// bad fit
 
 	  else {
 
-	    goodx1Hist->fill( rx[1] ); // triplet interpol
-	    goody1Hist->fill( ry[1] );
+	    goodx1Hist->fill( rx[1]*1E3 ); // triplet interpol
+	    goody1Hist->fill( ry[1]*1E3 );
 
 	  } // OK fit
 
@@ -1586,17 +1569,26 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	  unsigned int k = 0;
 
 	  // at plane 0:
+          unsigned int ndata = 2;
+	  unsigned int ndim = 2;
+	  TVectorD aResiduals(ndim);
+	  TVectorD aMeasErrors(ndim);
+	  TVectorD aResErrors(ndim);
+	  TVectorD aDownWeights(ndim);
 
 	  int ipos = ilab[0];
 	  traj.getResults( ipos, aCorrection, aCovariance );
+          traj.getMeasResults( ipos, ndata, aResiduals, aMeasErrors, aResErrors, aDownWeights );
 
 	  //track = q/p, x', y', x, y
 	  //        0,   1,  2,  3, 4
 
 	  gblax0Hist->fill( aCorrection[1]*1E3 ); // angle x [mrad]
-	  gbldx0Hist->fill( aCorrection[3] ); // shift x [um]
-	  gblrx0Hist->fill( (rx[0] - aCorrection[3]) ); // residual x [um]
-	  gblry0Hist->fill( (ry[0] - aCorrection[4]) ); // residual y [um]
+	  gbldx0Hist->fill( aCorrection[3]*1e3 ); // shift x [um]
+	  gblrx0Hist->fill( (aResiduals[0])*1e3 ); // residual x [um]
+	  gblry0Hist->fill( (aResiduals[1])*1e3 ); // residual y [um]
+	  gblpx0Hist->fill( (aResiduals[0] / aResErrors[0]) );
+	  gblpy0Hist->fill( (aResiduals[1] / aResErrors[1]) ); 
 	  ax[k] = aCorrection[1]; // angle correction at plane, for kinks
 	  ay[k] = aCorrection[2]; // angle correction at plane, for kinks
 	  k++;
@@ -1604,9 +1596,9 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	  ipos = ilab[1];
 	  traj.getResults( ipos, aCorrection, aCovariance );
 	  gblax1Hist->fill( aCorrection[1]*1E3 ); // angle x [mrad]
-	  gbldx1Hist->fill( aCorrection[3] ); // shift x [um]
-	  gblrx1Hist->fill( (rx[1] - aCorrection[3]) ); // residual x [um]
-	  gblry1Hist->fill( (ry[1] - aCorrection[4]) ); // residual y [um]
+	  gbldx1Hist->fill( aCorrection[3]*1e3 ); // shift x [um]
+	  gblrx1Hist->fill( (rx[1] - aCorrection[3])*1e3 ); // residual x [um]
+	  gblry1Hist->fill( (ry[1] - aCorrection[4])*1e3 ); // residual y [um]
 	  ax[k] = aCorrection[1]; // angle correction at plane, for kinks
 	  ay[k] = aCorrection[2]; // angle correction at plane, for kinks
 	  k++;
@@ -1614,9 +1606,9 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	  ipos = ilab[2];
 	  traj.getResults( ipos, aCorrection, aCovariance );
 	  gblax2Hist->fill( aCorrection[1]*1E3 ); // angle x [mrad]
-	  gbldx2Hist->fill( aCorrection[3] ); // shift x [um]
-	  gblrx2Hist->fill( (rx[2] - aCorrection[3]) ); // residual x [um]
-	  gblry2Hist->fill( (ry[2] - aCorrection[4]) ); // residual y [um]
+	  gbldx2Hist->fill( aCorrection[3]*1e3 ); // shift x [um]
+	  gblrx2Hist->fill( (rx[2] - aCorrection[3])*1e3 ); // residual x [um]
+	  gblry2Hist->fill( (ry[2] - aCorrection[4])*1e3 ); // residual y [um]
 	  ax[k] = aCorrection[1]; // angle correction at plane, for kinks
 	  ay[k] = aCorrection[2]; // angle correction at plane, for kinks
 	  k++;
@@ -1624,9 +1616,9 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	  ipos = ilab[3];
 	  traj.getResults( ipos, aCorrection, aCovariance );
 	  gblax3Hist->fill( aCorrection[1]*1E3 ); // angle x [mrad]
-	  gbldx3Hist->fill( aCorrection[3] ); // shift x [um]
-	  gblrx3Hist->fill( (rx[3] - aCorrection[3]) ); // residual x [um]
-	  gblry3Hist->fill( (ry[3] - aCorrection[4]) ); // residual y [um]
+	  gbldx3Hist->fill( aCorrection[3]*1e3 ); // shift x [um]
+	  gblrx3Hist->fill( (rx[3] - aCorrection[3]*1e3) ); // residual x [um]
+	  gblry3Hist->fill( (ry[3] - aCorrection[4])*1e3 ); // residual y [um]
 	  ax[k] = aCorrection[1]; // angle correction at plane, for kinks
 	  ay[k] = aCorrection[2]; // angle correction at plane, for kinks
 	  k++;
@@ -1634,9 +1626,9 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	  ipos = ilab[4];
 	  traj.getResults( ipos, aCorrection, aCovariance );
 	  gblax4Hist->fill( aCorrection[1]*1E3 ); // angle x [mrad]
-	  gbldx4Hist->fill( aCorrection[3] ); // shift x [um]
-	  gblrx4Hist->fill( (rx[4] - aCorrection[3]) ); // residual x [um]
-	  gblry4Hist->fill( (ry[4] - aCorrection[4]) ); // residual y [um]
+	  gbldx4Hist->fill( aCorrection[3]*1e3 ); // shift x [um]
+	  gblrx4Hist->fill( (rx[4] - aCorrection[3])*1e3 ); // residual x [um]
+	  gblry4Hist->fill( (ry[4] - aCorrection[4])*1e3 ); // residual y [um]
 	  ax[k] = aCorrection[1]; // angle correction at plane, for kinks
 	  ay[k] = aCorrection[2]; // angle correction at plane, for kinks
 	  k++;
@@ -1644,9 +1636,9 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	  ipos = ilab[5];
 	  traj.getResults( ipos, aCorrection, aCovariance );
 	  gblax5Hist->fill( aCorrection[1]*1E3 ); // angle x [mrad]
-	  gbldx5Hist->fill( aCorrection[3] ); // shift x [um]
-	  gblrx5Hist->fill( (rx[5] - aCorrection[3]) ); // residual x [um]
-	  gblry5Hist->fill( (ry[5] - aCorrection[4]) ); // residual y [um]
+	  gbldx5Hist->fill( aCorrection[3]*1e3 ); // shift x [um]
+	  gblrx5Hist->fill( (rx[5] - aCorrection[3])*1e3 ); // residual x [um]
+	  gblry5Hist->fill( (ry[5] - aCorrection[4])*1e3 ); // residual y [um]
 	  ax[k] = aCorrection[1]; // angle correction at plane, for kinks
 	  ay[k] = aCorrection[2]; // angle correction at plane, for kinks
 	  k++;
@@ -2076,31 +2068,31 @@ void EUTelMilleGBL::end() {
 	      if( isFixed ) {
 		streamlog_out( DEBUG0 )
 		  << "Parameter " << tokens[0]
-		  << " is at " << ( tokens[1] / 1000 )
+		  << " is at " << ( tokens[1] )
 		  << " (fixed)"  << endl;
 	      }
 	      else {
 		streamlog_out( DEBUG0 )
 		  << "Parameter " << tokens[0]
-		  << " is at " << (tokens[1] / 1000 )
-		  << " +/- " << ( tokens[4] / 1000 )  << endl;
+		  << " is at " << (tokens[1] )
+		  << " +/- " << ( tokens[4] )  << endl;
 	      }
 
 	      if( iParam == 0 ) {
-		constant->setXOffset( tokens[1] / 1000 );
-		if( ! isFixed ) constant->setXOffsetError( tokens[4] / 1000 );
+		constant->setXOffset( tokens[1] );
+		if( ! isFixed ) constant->setXOffsetError( tokens[4] );
 	      }
 	      if( iParam == 1 ) {
-		constant->setYOffset( tokens[1] / 1000 );
-		if( ! isFixed ) constant->setYOffsetError( tokens[4] / 1000 );
+		constant->setYOffset( tokens[1] );
+		if( ! isFixed ) constant->setYOffsetError( tokens[4] );
 	      }
 	      if( iParam == 2 ) {
 		constant->setGamma( tokens[1]  );
 		if( ! isFixed ) constant->setGammaError( tokens[4] );
 	      }
 	      if( iParam == 3 ) {
-		constant->setZOffset( tokens[1] / 1000 );
-		if( ! isFixed ) constant->setZOffsetError( tokens[4] / 1000 );
+		constant->setZOffset( tokens[1] );
+		if( ! isFixed ) constant->setZOffsetError( tokens[4] );
 	      }
 
 	    }//loop param
@@ -2237,11 +2229,11 @@ void EUTelMilleGBL::bookHistos() {
     ndriHist->setTitle( "ndri;driplets;events" );
 
     sixdxHist = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "sixdx", 250, -2500, 2500 );
+      createHistogram1D( "sixdx", 250, -1000, 1000 );
     sixdxHist->setTitle( "sixdx;x_{A}-x_{B} [um];triplet pairs" );
 
     sixdyHist = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "sixdy", 250, -2500, 2500 );
+      createHistogram1D( "sixdy", 250, -1000, 1000 );
     sixdyHist->setTitle( "sixdy;y_{A}-y_{B} [um];triplet pairs" );
 
     sixkxHist = AIDAProcessor::histogramFactory(this)->
@@ -2287,27 +2279,27 @@ void EUTelMilleGBL::bookHistos() {
     selkyHist->setTitle( "kink y, sel GBL;kink y [mrad];tracks" );
 
     seldx1Hist = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "seldx1", 100, -2500, 2500 );
+      createHistogram1D( "seldx1", 100, -1000, 1000 );
     seldx1Hist->setTitle( "triplet resid x at 1, sel GBL;#Deltax [#mum];tracks" );
 
     seldy1Hist = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "seldy1", 100, -2500, 2500 );
+      createHistogram1D( "seldy1", 100, -1000, 1000 );
     seldy1Hist->setTitle( "triplet resid y at 1, sel GBL;#Deltay [#mum];tracks" );
 
     seldx3Hist = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "seldx3", 100, -2500, 2500 );
+      createHistogram1D( "seldx3", 100, -1000, 1000 );
     seldx3Hist->setTitle( "triplet resid x at 3, sel GBL;#Deltax [#mum];tracks" );
 
     seldy3Hist = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "seldy3", 100, -2500, 2500 );
+      createHistogram1D( "seldy3", 100, -1000, 1000 );
     seldy3Hist->setTitle( "triplet resid y at 3, sel GBL;#Deltay [#mum];tracks" );
 
     seldx4Hist = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "seldx4", 100, -2500, 2500 );
+      createHistogram1D( "seldx4", 100, -1000, 1000 );
     seldx4Hist->setTitle( "triplet resid x at 4, sel GBL;#Deltax [#mum];tracks" );
 
     seldy4Hist = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "seldy4", 100, -2500, 2500 );
+      createHistogram1D( "seldy4", 100, -1000, 1000 );
     seldy4Hist->setTitle( "triplet resid y at 4, sel GBL;#Deltay [#mum];tracks" );
 
     seldx5Hist = AIDAProcessor::histogramFactory(this)->
@@ -2373,19 +2365,19 @@ void EUTelMilleGBL::bookHistos() {
     badkyHist->setTitle( "kink y, bad GBL;kink y [mrad];tracks" );
 
     baddx1Hist = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "baddx1", 100, -2500, 2500 );
+      createHistogram1D( "baddx1", 100, -1000, 1000 );
     baddx1Hist->setTitle( "triplet resid x at 1, bad GBL;#Deltax [#mum];tracks" );
 
     baddy1Hist = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "baddy1", 100, -2500, 2500 );
+      createHistogram1D( "baddy1", 100, -1000, 1000 );
     baddy1Hist->setTitle( "triplet resid y at 1, bad GBL;#Deltay [#mum];tracks" );
 
     baddx3Hist = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "baddx3", 100, -2500, 2500 );
+      createHistogram1D( "baddx3", 100, -1000, 1000 );
     baddx3Hist->setTitle( "triplet resid x at 3, bad GBL;#Deltax [#mum];tracks" );
 
     baddy3Hist = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "baddy3", 100, -2500, 2500 );
+      createHistogram1D( "baddy3", 100, -1000, 1000 );
     baddy3Hist->setTitle( "triplet resid y at 3, bad GBL;#Deltay [#mum];tracks" );
 
     baddx4Hist = AIDAProcessor::histogramFactory(this)->
@@ -2415,11 +2407,11 @@ void EUTelMilleGBL::bookHistos() {
     // good fits:
 
     goodx1Hist = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "goodx1", 100, -2500, 2500 );
+      createHistogram1D( "goodx1", 100, -1000, 1000 );
     goodx1Hist->setTitle( "triplet resid x at 1, good GBL;#Deltax [#mum];tracks" );
 
     goody1Hist = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "goody1", 100, -2500, 2500 );
+      createHistogram1D( "goody1", 100, -1000, 1000 );
     goody1Hist->setTitle( "triplet resid y at 1, good GBL;#Deltay [#mum];tracks" );
 
     goodx6Hist = AIDAProcessor::histogramFactory(this)->
@@ -2447,6 +2439,14 @@ void EUTelMilleGBL::bookHistos() {
     gblry0Hist = AIDAProcessor::histogramFactory(this)->
       createHistogram1D( "gblry0", 500, -250, 250 );
     gblry0Hist->setTitle( "GBL resid at plane 0;y resid at plane 0 [#mum];tracks" );
+
+    gblpx0Hist = AIDAProcessor::histogramFactory(this)->
+      createHistogram1D( "gblpx0", 100, -5, 5 );
+    gblpx0Hist->setTitle( "GBL pull at plane 0;x pull at plane 0;tracks" );
+
+    gblpy0Hist = AIDAProcessor::histogramFactory(this)->
+      createHistogram1D( "gblpy0", 100, -5, 5 );
+    gblpy0Hist->setTitle( "GBL pull at plane 0;y pull at plane 0;tracks" );
 
 
     gblax1Hist = AIDAProcessor::histogramFactory(this)->
@@ -2543,7 +2543,7 @@ void EUTelMilleGBL::bookHistos() {
     gbldx6Hist->setTitle( "GBL shift at DUT;x shift at DUT [#mum];tracks" );
 
     gbldy6Hist = AIDAProcessor::histogramFactory(this)->
-      createHistogram1D( "gbldy6", 100, -2500, 2500 );
+      createHistogram1D( "gbldy6", 100, -1000, 1000 );
     gbldy6Hist->setTitle( "GBL shift at DUT;y shift at DUT [#mum];tracks" );
 
     gblrx6Hist = AIDAProcessor::histogramFactory(this)->
