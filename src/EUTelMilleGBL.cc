@@ -1356,7 +1356,6 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	    double dz = zz - zmA[kA];
 	    double xs = (xmA[kA] + sxA[kA] * dz); // Ax at plane
 	    double ys = (ymA[kA] + syA[kA] * dz); // Ay at plane
-	    if(_printEventCounter < 10) std::cout << "dz = " << dz << "   xs = " << xs << "   ys = " << ys << std::endl;
 
 	    rx[ipl] = (_hitsArray[ipl][jhit].measuredX - xs); // resid hit-triplet, in micrometer ...
 	    ry[ipl] = (_hitsArray[ipl][jhit].measuredY - ys); // resid
