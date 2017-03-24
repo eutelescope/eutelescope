@@ -391,7 +391,7 @@ namespace eutelescope {
     int _IsFirstAlignStep;
 
     double _kappa;
-    double _aluthickum;
+    double _targetthick;
 
     int _maxTrackCandidates;
     int _maxTrackCandidatesTotal;

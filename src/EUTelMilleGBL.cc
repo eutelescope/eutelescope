@@ -429,9 +429,9 @@ EUTelMilleGBL::EUTelMilleGBL(): Processor("EUTelMilleGBL") {
       "global factor to Highland formula",
       _kappa, static_cast <double>(1.0)); // 1.0 means HL as is, 1.2 means 20% additional scattering
 
-  registerProcessorParameter( "aluthickum",
-      "alu target thickness in um",
-      _aluthickum, static_cast <double>(0.0)); 
+  registerProcessorParameter( "targetthick",
+      "target thickness in um",
+      _targetthick, static_cast <double>(0.0)); 
 }
 
 
@@ -1276,7 +1276,7 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 
 	  double epsSi = 55e-3 / 93.66 + 0.050 / 286.6; // Si + Kapton
 	  double epsAir = -1.; // define later when dz is known
-	  double epsAlu = _aluthickum/1000./88.97; // Alu target
+	  double epsAlu = _targetthick/88.97; // Alu target
 	  double sumeps = 0.0;
 
 
@@ -1356,6 +1356,7 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 	    double dz = zz - zmA[kA];
 	    double xs = (xmA[kA] + sxA[kA] * dz); // Ax at plane
 	    double ys = (ymA[kA] + syA[kA] * dz); // Ay at plane
+	    if(_printEventCounter < 10) std::cout << "dz = " << dz << "   xs = " << xs << "   ys = " << ys << std::endl;
 
 	    rx[ipl] = (_hitsArray[ipl][jhit].measuredX - xs); // resid hit-triplet, in micrometer ...
 	    ry[ipl] = (_hitsArray[ipl][jhit].measuredY - ys); // resid
@@ -1431,7 +1432,7 @@ void EUTelMilleGBL::processEvent( LCEvent * event ) {
 		step = step / 2.;
 		gbl::GblPoint * pointcentre = new gbl::GblPoint( Jac55( step ) );
 
-	        if(_aluthickum > 1.) { // at least 1 um target
+	        if(_targetthick > 0.001) { // at least 1 um target
 		  double tetAlu = _kappa*0.0136 * sqrt(epsAlu) / p * ( 1 + 0.038*std::log(sumeps) );
 
 	          TVectorD wscatAlu(2);
