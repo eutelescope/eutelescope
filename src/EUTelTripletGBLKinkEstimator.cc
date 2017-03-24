@@ -61,6 +61,9 @@
 #include "marlin/ProcessorMgr.h"
 #include "marlin/Global.h"
 
+// marlin util includes
+#include "mille/Mille.h"
+
 // gear includes <.h>
 #include <gear/GearMgr.h>
 #include <gear/SiPlanesParameters.h>
@@ -101,6 +104,9 @@ using namespace lcio;
 using namespace marlin;
 using namespace eutelescope;
 
+// MillePede-II binary file
+gbl::MilleBinary * milleGBL2; 
+//gbl::MilleBinary * milleGBLgood; 
 
 EUTelTripletGBLKinkEstimator::EUTelTripletGBLKinkEstimator() : Processor("EUTelTripletGBLKinkEstimator"), _siPlanesParameters(), _siPlanesLayerLayout(), _inputCollectionTelescope(""), _isFirstEvent(0), _eBeam(0), _nEvt(0), _nTelPlanes(0), _dut_plane(-1), _track_match_cut(0.15),  _planeSort(), _planeID(), _planePosition(), _planeThickness(), _planeX0(), _planeResolution() {
 
@@ -140,9 +146,9 @@ EUTelTripletGBLKinkEstimator::EUTelTripletGBLKinkEstimator() : Processor("EUTelT
       "global factor to Highland formula",
       _kappa, static_cast <double>(1.0)); // 1.0 means HL as is, 1.2 means 20% additional scattering
 
-  registerProcessorParameter( "aluthickum",
+  registerProcessorParameter( "targetthick",
       "thickness of alu target, if present",
-      _aluthickum, static_cast <double>(0.0));
+      _targetthick, static_cast <double>(0.0));
 
   registerProcessorParameter( "probchi2Cut",
       "Cut on Prob(chi2,ndf) rejecting bad tracks with prob < cut",
@@ -243,6 +249,13 @@ void EUTelTripletGBLKinkEstimator::init() {
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
   bookHistos();
 #endif
+  
+  // for mille binary
+  std::string _binaryFilename = "milleKINK.bin";
+  std::string _binaryFilenamegood = "milleKINKgood.bin";
+  unsigned int reserveSize = 8000;
+  milleGBL2 = new gbl::MilleBinary( _binaryFilename, reserveSize );
+  //milleGBLgood = new gbl::MilleBinary( _binaryFilenamegood, reserveSize );
 }//init
 
 //------------------------------------------------------------------------------
@@ -480,6 +493,8 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
   // Generate new triplet set for the Telescope Downstream Arm:
   std::vector<EUTelTripletGBLUtility::triplet> downstream_triplets;
   gblutil.FindTriplets(hits, 3, 4, 5, _triplet_res_cut, 5*_slope_cut, downstream_triplets);
+  streamlog_out(DEBUG4) << "number of found driplets = " << downstream_triplets.size() << std::endl;
+
 
   // Iterate over all found downstream triplets to fill histograms and match them to the REF and DUT:
   for( std::vector<EUTelTripletGBLUtility::triplet>::iterator drip = downstream_triplets.begin(); drip != downstream_triplets.end(); drip++ ){
@@ -519,6 +534,7 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
   // Generate new triplet set for the Telescope Upstream Arm:
   std::vector<EUTelTripletGBLUtility::triplet> upstream_triplets;
   gblutil.FindTriplets(hits, 0, 1, 2, _triplet_res_cut, _slope_cut, upstream_triplets);
+  streamlog_out(DEBUG4) << "number of found triplets = " << upstream_triplets.size() << std::endl;
 
   // Iterate over all found upstream triplets to fill histograms and match them to the REF and DUT:
   for( std::vector<EUTelTripletGBLUtility::triplet>::iterator trip = upstream_triplets.begin(); trip != upstream_triplets.end(); trip++ ) {
@@ -584,6 +600,7 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
   // now hardcoded to target
   streamlog_out(DEBUG4) << " alu plane (_dut_plane) is number " << _dut_plane << endl;
   double DUTz = _planePosition[_dut_plane];
+  streamlog_out(DEBUG4) << " DUTz position is " << DUTz << endl;
 
   // Match the Telescope Upstream and Downstream Arm triplets to get tracks:
   std::vector<EUTelTripletGBLUtility::track> telescope_tracks;
@@ -597,7 +614,6 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
     EUTelTripletGBLUtility::triplet trip = (*tr).get_upstream();
     EUTelTripletGBLUtility::triplet drip = (*tr).get_downstream();
     EUTelTripletGBLUtility::triplet srip((*tr).gethit(0), (*tr).gethit(2), (*tr).gethit(5)); // seed triplet is called 'srip'
-    //if(_aluthickum > 1.) srip = trip;
 
     std::vector<double> xAplanes(_nTelPlanes);
     std::vector<double> yAplanes(_nTelPlanes);
@@ -633,10 +649,11 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
     // plane 0:
     double s = 0.0;
 
-    TMatrixD proL2m(2,2);
+    TMatrixD proL2m(4,4);
     proL2m.UnitMatrix();
 
-    TMatrixD addDer(2,2);
+    TMatrixD addDer(2,4);
+    addDer.Zero();
 
     TVectorD meas(2);
 
@@ -650,7 +667,8 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
     double p = _eBeam; // beam momentum
     double epsSi = -1;
     double epsAir = -1.; // define later when dz is known
-    double epsAlu = ((double)_aluthickum)/1000./88.97; // Alu target
+    double epsAlu = ((double)_targetthick)/88.97; // Alu target // FIXME this is used only in the log-correction, but needs assumption of X0 :/
+    // another way would be so solve this iteratively: start wihout target correcttion in the log-correction, in second iteration use result from first, ...
 
     double sumeps = 0.0;
     double tetSi = -1;
@@ -781,17 +799,27 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
 
 	point->addScatterer( scat, wscatSi );
 
+	s += step;
+	streamlog_out(DEBUG3) << " s = " << s  << std::endl;
+	sPoint.push_back( s );
+	siplane_label = sPoint.size();
+	ilab.push_back(siplane_label);
         // add local derrivative if after DUT
+	// Matrix
+	//     dkink_11     dkink_21    dkink12    dkink_22
+	//  x    s-s1           0         s-s2       0
+	//  y     0            s-s1        0        s-s2
 	if(sDUT > 0){
-	  addDer = (s - sDUT)*proL2m; 
+	  addDer[0][0] = (s - (sDUT + _targetthick/sqrt(12))); // First scatterer in target
+	  addDer[1][1] = (s - (sDUT + _targetthick/sqrt(12))); //
+	  addDer[0][2] = (s - (sDUT - _targetthick/sqrt(12))); // second scatterer in target
+	  addDer[1][3] = (s - (sDUT - _targetthick/sqrt(12))); //
+	  streamlog_out(DEBUG3) << " lever arm left DUT-point = " << (s - (sDUT + _targetthick/sqrt(12))) << " and right DUT-point = " << (s - (sDUT - _targetthick/sqrt(12))) << std::endl;
+
 	  point->addLocals(addDer);
 	}
 
 	traj_points.push_back(*point);
-	s += step;
-	sPoint.push_back( s );
-	siplane_label = sPoint.size();
-	ilab.push_back(siplane_label);
 	delete point;
 
         ipl++;
@@ -802,7 +830,7 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
 
         // we dont add a scatterer here, as we want it to be unbiased (addition of local derivative)
 	/*double tetAlu = _kappa*0.0136 * sqrt(epsAlu) / p * ( 1 + 0.038*std::log(sumeps) );
-	if(_aluthickum < 1.) tetAlu = 1.e-10;
+	if(_targetthick < 1.) tetAlu = 1.e-10;
         std::cout << " tetAlu = " << tetAlu << std::endl;
 
 	TVectorD wscatAlu(2);
@@ -819,6 +847,7 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
 	ilab.push_back(DUT_label);
 
 	sDUT = s;
+	streamlog_out(DEBUG3)  << " s_DUT = " << sDUT  << std::endl;
 	delete point;
       }
 
@@ -830,6 +859,7 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
       if( iplprime < 6) {
 	double distplane = _planePosition[iplprime+1] - _planePosition[iplprime];
 
+	streamlog_out(DEBUG3) << " dist plane = " << distplane  << std::endl;
 	step = 0.21*distplane;
 	epsAir =   0.5*distplane  / 304200.; 
 	tetAir = _kappa * 0.0136 * sqrt(epsAir) / p * ( 1 + 0.038*std::log(sumeps) ); 
@@ -890,7 +920,7 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
     // debug:
 
     
-    if(_nEvt < 5){
+    if(_nEvt < 10){
       streamlog_out(MESSAGE4) << "traj with " << traj.getNumPoints() << " points:" << endl;
       for( int iplb = 0; iplb < 7; iplb++ ){
         if(_planeID[iplb] < 100){
@@ -904,7 +934,7 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
 	}
       }
 
-      streamlog_out(DEBUG2)  << " Is traj valid? " << traj.isValid() << std::endl;
+      streamlog_out(DEBUG4)  << " Is traj valid? " << traj.isValid() << std::endl;
       traj.printPoints();
       //traj.printTrajectory();
       //traj.printData();
@@ -912,10 +942,7 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
 
 
     gblndfHisto->fill( Ndf );
-    if( Ndf == 8 ) 
-      gblchi2aHisto->fill( Chi2 );
-    else
-      gblchi2bHisto->fill( Chi2 );
+    gblchi2Histo->fill( Chi2 );
 
     double probchi = 0;
     probchi = TMath::Prob( Chi2, Ndf );
@@ -960,12 +987,13 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
     //
     //double chi2_cut = 0.1;
 
+    traj.milleOut( *milleGBL2 );
     if( probchi > _probchi2_cut){
 
       _ngbl++;
 
-      TVectorD aCorrection(7);
-      TMatrixDSym aCovariance(7);
+      TVectorD aCorrection(9);
+      TMatrixDSym aCovariance(9);
       //TVectorD aCorrection(5);
       //TMatrixDSym aCovariance(5);
       
@@ -985,8 +1013,6 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
       TVectorD aKinkErrors(ndim);
       TVectorD kResErrors(ndim);
       TVectorD kDownWeights(ndim);
-
-      double pixel_size = 18.4e-3;
 
       unsigned int ndata = 2;
       //track = q/p, x', y', x, y
@@ -1009,9 +1035,9 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
       gblqx0Histo->fill( aKinks[0]*1E3 ); // kink RESIDUAL (measured kink - fit kink)
       ax[k] = aCorrection[1]; // angle correction at plane, for kinks
       // TProfile for res_x a.f.o. x
-      gblrxvsx0->fill( xAplanes.at(k), sqrt(TMath::Pi()/2.)*fabs(aResiduals[0]));
+      gblrxvsx0->fill( xAplanes.at(k), sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); // triplet extrapolation
       gblryvsy0->fill( yAplanes.at(k), sqrt(TMath::Pi()/2.)*fabs(aResiduals[1]));
-      gblrxvsx01->fill((trackhitx[0] - aResiduals[0]), sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); // seed corrected
+      gblrxvsx01->fill((trackhitx[0] - aResiduals[0]), sqrt(TMath::Pi()/2.)*fabs(aResiduals[0])); // track fit
       gblryvsy01->fill((trackhity[0] - aResiduals[1]), sqrt(TMath::Pi()/2.)*fabs(aResiduals[1]));
 
       //std::cout << "Plane 0: \n aCorr: [0] = " << aCorrection[0]<< "  aCoor: [1] = " << aCorrection[1]<< "  aCoor: [2] = " << aCorrection[2]<< "  aCoor: [3] = " << aCorrection[3]<< "  aCoor: [4] = " << aCorrection[4]<< "  aCoor: [5] = " << aCorrection[5]<< "  aCoor: [6] = " << aCorrection[6] << std::endl;
@@ -1059,17 +1085,26 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
       traj.getResults( ipos, aCorrection, aCovariance );
       gblax6Histo->fill( aCorrection[1]*1E3 ); // angle x [mrad]
       gblay6Histo->fill( aCorrection[2]*1E3 ); // angle y [mrad]
-      gblaxprime6Histo->fill( aCorrection[5]*1E3 ); // angle x [mrad]
-      gblayprime6Histo->fill( aCorrection[6]*1E3 ); // angle y [mrad]
-      gblaxay->fill(aCorrection[5]*1e3,aCorrection[6]*1e3);
+      gblax6primeHisto->fill( aCorrection[5]*1E3 ); // angle x [mrad]
+      gblay6primeHisto->fill( aCorrection[6]*1E3 ); // angle y [mrad]
+      gblax6prime2Histo->fill( aCorrection[7]*1E3 ); // angle x [mrad]
+      gblay6prime2Histo->fill( aCorrection[8]*1E3 ); // angle y [mrad]
+      gblax6primeDiffHisto->fill( (aCorrection[7] + aCorrection[5])*1E3 ); // angle x [mrad]
+      gblaxprimeayprime->fill(aCorrection[5]*1e3, aCorrection[6]*1e3);
       gblaxy6Histo->fill( (fabs(aCorrection[5]) + fabs(aCorrection[6]))/2.*1E3 ); // angle x [mrad]
       // get the cov 5 (and 6) here for variance of additional local derivative
       gblDUTkinkuncertHisto->fill(  sqrt(aCovariance(5,5))*1e3 ); // angle x [mrad]
+      gblDUTkinkprimeuncertHisto->fill(  sqrt(aCovariance(7,7))*1e3 ); // angle x [mrad]
+      gblDUTdecorrkinkuncertHisto->fill(  sqrt( aCovariance(5,5) + aCovariance(7,7) +2*aCovariance(5,7) )*1e3 ); // angle x [mrad] // CovMatrix is symmetric
+
+      //std::cout << " sqrt aCov5 *1e3 = " << sqrt(aCovariance(5,5))*1e3 << std::endl;
       //std::cout << " sigma kink_DUT = " << sqrt(aCovariance(5,5) + aCovariance(6,6)) << std::endl;
       gblaxvsxy->fill( -xA, -yA, fabs(aCorrection[5])*1E3 ); //sqrt(<kink^2>) [mrad]
       gblayvsxy->fill( -xA, -yA, fabs(aCorrection[6])*1E3 ); //sqrt(<kink^2>) [mrad]
       gblaxyvsxy->fill( -xA, -yA, ( fabs(aCorrection[5]) + fabs(aCorrection[6]) )/2.*1E3 ); // [mrad]
-      gblax3D->fill(-xA, -yA, aCorrection[5]*1e3,1.);
+      gblaxprime3D->fill(-xA, -yA, (aCorrection[7] + aCorrection[5])*1e3,1.);
+      gblayprime3D->fill(-xA, -yA, (aCorrection[8] + aCorrection[6])*1e3,1.);
+      gblaxprime6vsx->fill( -xA, sqrt(TMath::Pi()/2.)*fabs((aCorrection[7] + aCorrection[5])*1e3)); // trip extrapolation, kink angle
       ax[k] = aCorrection[1]; // angle correction at plane, for kinks
 
       //std::cout << "Plane DUT: \n aCorr: [0] = " << aCorrection[0]<< "  aCoor: [1] = " << aCorrection[1]<< "  aCoor: [2] = " << aCorrection[2]<< "  aCoor: [3] = " << aCorrection[3]<< "  aCoor: [4] = " << aCorrection[4]<< "  aCoor: [5] = " << aCorrection[5]<< "  aCoor: [6] = " << aCorrection[6] << std::endl;
@@ -1151,6 +1186,7 @@ void EUTelTripletGBLKinkEstimator::processEvent( LCEvent * event ) {
       gblkx6Histo->fill( (ax[6] - ax[5])*1E3 ); // kink at 6 [mrad]
       
       
+      //traj.milleOut( *milleGBLgood );
     } // end if good fit 
 
     
@@ -1234,6 +1270,8 @@ void EUTelTripletGBLKinkEstimator::end(){
     << std::setw(10) << std::setiosflags(std::ios::right)
     << _nEvt << std::resetiosflags(std::ios::right) << std::endl;
 
+  // close the output file:
+  delete milleGBL2;
 } // end end
 
 
