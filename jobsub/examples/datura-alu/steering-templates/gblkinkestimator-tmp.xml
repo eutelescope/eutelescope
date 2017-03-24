@@ -41,7 +41,7 @@
   <!-- compression of output file 0: false >0: true (default) -->
   <parameter name="Compress" type="int" value="1"/>
   <!-- filename without extension-->
-  <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-GBLKinkEstimator_kappa100_test"/>
+  <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-GBLKinkEstimator_kappa100_testtwoPointScat_decorr"/>
   <!--parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-GBLKinkEstimator_kappa100_ApplyToRefHitColOn"/-->
   <!-- type of output file root (default) or xml )-->
   <parameter name="FileType" type="string" value="root"/>
@@ -302,7 +302,7 @@
   <parameter name="dut_plane" type="int">  3 </parameter>
 
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
-  <parameter name="Verbosity" type="string" value="DEBUG4"/>
+  <parameter name="Verbosity" type="string" value="MESSAGE4"/>
 
   <parameter name="InputCollectionTelescope" type="StringVec" value="aligned3Hit"/>
   <parameter name="triResCut" type="float"    value="@TripletResCut@"/>  
@@ -310,7 +310,7 @@
   <parameter name="slopeCut" type="double" value="@SlopeCut@"/>
 
   <parameter name="kappa" type="double" value="@Kappa@"/>
-  <parameter name="aluthickum" type="double" value="@Aluthickum@"/>
+  <parameter name="targetthick" type="double" value="@Targetthick@"/>
 
   <parameter name="probchi2Cut" type="double" value="@Probchi2_cut@"/>
 

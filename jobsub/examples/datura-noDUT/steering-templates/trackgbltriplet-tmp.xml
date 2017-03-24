@@ -41,8 +41,7 @@
   <!-- compression of output file 0: false >0: true (default) -->
   <parameter name="Compress" type="int" value="1"/>
   <!-- filename without extension-->
-  <!--parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-GBLfitter-alignGBL_wAir"/-->
-  <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-GBLfitter-CS-CSdepSigmaInt"/>
+  <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-GBLfitter-CS-CSdepSigmaInt_CSisDim"/>
   <!-- type of output file root (default) or xml )-->
   <parameter name="FileType" type="string" value="root"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
@@ -342,6 +341,7 @@
 
   <parameter name="kappa" type="double" value="@Kappa@"/>
 
+  <parameter name="ClusterSizeSwitch" type="bool" value="@CSswitch@"/>
   <parameter name="probchi2_cut" type="double" value="@Probchi2_cut@"/>
 
   <processor name="Fitter00" type="EUTelTripletGBL">
@@ -399,7 +399,7 @@
   <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
   <!--parameter name="KeepCollectionNames" type="StringVec" value="MyPreciousSimTrackerHits"/-->
   <!-- name of output file -->
-  <parameter name="LCIOOutputFile" type="string" value="@LcioPath@/@FilePrefix@-track.slcio"/>
+  <parameter name="LCIOOutputFile" type="string" value="@LcioPath@/@FilePrefix@-track_test.slcio"/>
   <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
   <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   <!--Set it to true to remove intermediate EORE in merged runs-->
