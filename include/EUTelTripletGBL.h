@@ -179,10 +179,12 @@ namespace eutelescope {
     int _nRun;
     int _nEvt;
     int _nTelPlanes;
+    int _ngbl;
     int _dut_plane;
     double _eff_radius;
     double _kappa;
     double _aluthickum;
+    bool _CSswitch;
     
     // Cuts for matching:
     double _track_match_cut;

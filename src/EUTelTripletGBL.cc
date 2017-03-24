@@ -149,6 +149,9 @@ EUTelTripletGBL::EUTelTripletGBL() : Processor("EUTelTripletGBL"), _siPlanesPara
 
   registerOptionalParameter("Thickness","thickness parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_thickness,  FloatVec (static_cast <double> (6), 50*1e-3));
 
+  registerProcessorParameter( "ClusterSizeSwitch",
+      "boolian to switch b/w cluster charge (0, false) and cluster dimension (1, true) used as cluster size",
+      _CSswitch, static_cast <bool>(true));
 
 }
 
@@ -160,6 +163,7 @@ void EUTelTripletGBL::init() {
 
   _nEvt = 0;
   _printEventCounter= 0;
+  _ngbl = 0;
 
   _isFirstEvent = true;
 
@@ -268,6 +272,8 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
       << event->getEventNumber() << " in run "
       << setw(6) << setiosflags(ios::right)
       << event->getRunNumber()
+      << ", currently having "
+      << _ngbl << " good tracks "
       << endl;
   }
 
@@ -371,6 +377,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
     const double * pos = meshit->getPosition();
     const EVENT::FloatVec cov = meshit->getCovMatrix();
     float charge = 0.;
+    int clusterdim[2] = {0,0};
 
     TrackerDataImpl* clusterVector = static_cast<TrackerDataImpl*>( meshit->getRawHits()[0]);
     EUTelSimpleVirtualCluster * cluster=0;
@@ -381,6 +388,7 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
     {
       cluster = new EUTelSparseClusterImpl< EUTelGenericSparsePixel > ( clusterVector );
       charge = cluster->getTotalCharge();
+      cluster->getClusterSize(clusterdim[0], clusterdim[1]); // x = [0], y = [1]
       cluster->getCenterOfGravity(locx, locy);
       streamlog_out(DEBUG2) << " charge is " << charge << std::endl;
     }
@@ -396,13 +404,16 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
     //if(_nEvt < 10) streamlog_out( WARNING2 ) << "hit x = " << meshit->getPosition()[0] << endl;
 
     // Write clustersize
-    newhit.clustersize = charge;
+    // FIXME add swich to use cluster charge as "size" or "dimension along one direction"
+    if(_CSswitch) newhit.clustersize = clusterdim[0];
+    else          newhit.clustersize = charge;
+    
     delete cluster;
 
     // Find Plane ID to which the hit belongs by minimizing its
     // distance in Z
     //FIXME to be fixed with more general geometry description!
-    double distMin = 99; // [mm]
+    double distMin = 2; // [mm]
 
     bool foundplane = false;
     for( int ipl = 0; ipl < _nTelPlanes; ipl++ ) {
@@ -427,15 +438,8 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 
     streamlog_out(DEBUG3) << "Hit " << ihit << ": " << newhit << std::endl;
 
-    // Use only hits with clustersize < 5 (>4 means there was a noise hit in the cluster or something else was fishy)
-    //if(newhit.clustersize > 4) continue;
-
     // Add it to the vector of telescope hits:
     hits.push_back(newhit);
-
-    //delete clusterVector;
-    //delete meshit;
-    //delete pos;
 
   } // loop over hits
 
@@ -448,11 +452,11 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
   // -----------------------------------------------------------------
   //
   // a word on gblutil:
-  // for future use, the (contructor of?) gblutil could know about the AIDAProcessor, so hitso dont need to be passed, but live in the Util class.
+  // for future use, the (contructor of?) gblutil could know about the AIDAProcessor, so histos dont need to be passed, but live in the Util class.
   // This opens the possiblity to create histograms within methods of the Util class, rather then uglily hacking them in the TripletGBL class.
+  // DONE
   // Cut values could be passed and stored as private member and used in the methods, rather than passed during fct call.
-  // tbs...
-
+  // tbd ...
 
 
   // -----------------------------------------------------------------
@@ -702,7 +706,6 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
 
   streamlog_out(DEBUG4) << "Found " << telescope_tracks.size() << " tracks from matching t/driplets." << endl;
   
-  int ngbl = 0;
   for( std::vector<EUTelTripletGBLUtility::track>::iterator tr = telescope_tracks.begin(); tr != telescope_tracks.end(); tr++ ){
 
     EUTelTripletGBLUtility::triplet trip = (*tr).get_upstream();
@@ -971,12 +974,12 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
     
     if(_printEventCounter < 10){
       streamlog_out(MESSAGE4) << "traj with " << traj.getNumPoints() << " points:" << endl;
-      for( int ipl = 0; ipl < sPoint.size(); ++ipl ){
+      for( unsigned int ipl = 0; ipl < sPoint.size(); ++ipl ){
         streamlog_out(DEBUG4) << "  GBL point " << ipl;
         streamlog_out(DEBUG4) << "  z " << sPoint[ipl]; 
         streamlog_out(DEBUG4) << endl;
       }
-      for( int ipl = 0; ipl < 6; ++ipl ){
+      for( unsigned int ipl = 0; ipl < 6; ++ipl ){
         streamlog_out(DEBUG4) << " plane " << ipl << ", lab " << ilab[ipl];
         streamlog_out(DEBUG4) << " z " << sPoint[ilab[ipl]-1];
         streamlog_out(DEBUG4) << "  dx " << rx[ipl];
@@ -986,14 +989,13 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
         streamlog_out(DEBUG4) << endl;
       }
 
-       streamlog_out(DEBUG4)  << " Is traj valid? " << traj.isValid() << std::endl;
-      traj.printPoints();
+      streamlog_out(DEBUG4)  << " Is traj valid? " << traj.isValid() << std::endl;
+      //traj.printPoints();
       //traj.printTrajectory();
       //traj.printData();
       _printEventCounter++;
     }
 
-    ngbl++;
 
     gblndfHisto->fill( Ndf );
     if( Ndf == 8 ) 
@@ -1045,6 +1047,8 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
     //double chi2_cut = 0.1;
 
     if( probchi > _probchi2_cut){
+      
+      _ngbl++;
 
       TVectorD aCorrection(5);
       TMatrixDSym aCovariance(5);
@@ -1234,9 +1238,11 @@ void EUTelTripletGBL::processEvent( LCEvent * event ) {
       if(_dut_plane == 3) gblpy3_unbHisto->fill( (ry[3] - aCorrection[4]) / sqrt(_resolution[0]*_resolution[0] + aCovariance(4,4)) ); // unbiased pull
 
       // clustersize-specific plots
+      //
+      // FIXME get alignment constants from GEAR file (rather then opening all 4 alignment files ....)
       int CS3 = (*tr).gethit(3).clustersize;
-      corrPos[0] = trackhitx[3] - aResiduals[0] +  7.077e-3 + 0.35e-3; // run000117, get automatically 
-      corrPos[1] = trackhity[3] - aResiduals[1] + 18.128e-3 + 0.1e-3;  // run000117, get automatically      
+      corrPos[0] = trackhitx[3] - aResiduals[0] +  7.077e-3 + 0.35e-3; // run000117, better get automatically, with new GEAR file
+      corrPos[1] = trackhity[3] - aResiduals[1] + 18.128e-3 + 0.1e-3;  // run000117
       //corrPos[0] = trackhitx[3] - aResiduals[0] -  6.645e-3; // run002140
       //corrPos[1] = trackhity[3] - aResiduals[1] - 10.324e-3;  // run002140
 
