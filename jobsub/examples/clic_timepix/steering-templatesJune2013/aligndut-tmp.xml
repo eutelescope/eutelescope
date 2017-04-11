@@ -1,0 +1,467 @@
+<?xml version="1.0" encoding="us-ascii"?>
+<!-- ?xml-stylesheet type="text/xsl" href="http://ilcsoft.desy.de/marlin/marlin.xsl"? -->
+<!-- ?xml-stylesheet type="text/xsl" href="marlin.xsl"? -->
+
+<!-- 
+
+==========================================================================================
+                     Steering file template for the pysub framework
+
+                               ==> align-tmp.xml <===
+
+Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
+==========================================================================================
+
+--> 
+<marlin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ilcsoft.desy.de/marlin/marlin.xsd">
+
+
+  <execute>
+    <processor name="AIDA"/>
+    
+    <processor name="LoadPreAlignment"/>
+    <processor name="ApplyPreAlignment"/>
+    <processor name="LoadAlignment"/>
+    <processor name="ApplyAlignment"/>
+    <--processor name="Fitter"/>
+    <--processor name="KalmanFitterAlign"/> 
+    <processor name="LoadRefHitDB"/>
+    <processor name="DafFitter"/>  
+    <processor name="Align"/>
+    <--processor name="Correlator"/> 
+  </execute>
+
+
+  <global>
+    <!--parameter name="LCIOInputFiles"> /afs/cern.ch/eng/clic/data/DESY_TB_DATA_11-15-02-2013_results/results/run006432-hit.slcio /afs/cern.ch/eng/clic/data/DESY_TB_DATA_11-15-02-2013_results/results/run006435-hit.slcio /afs/cern.ch/eng/clic/data/DESY_TB_DATA_11-15-02-2013_results/results/run006436-hit.slcio /afs/cern.ch/eng/clic/data/DESY_TB_DATA_11-15-02-2013_results/results/run006437-hit.slcio /afs/cern.ch/eng/clic/data/DESY_TB_DATA_11-15-02-2013_results/results/run006438-hit.slcio </parameter-->
+    <parameter name="LCIOInputFiles"> @InputFile@ </parameter>
+    <parameter name="GearXMLFile" value="@GearPath@/@GearFile@"/>
+    <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
+    <parameter name="SkipNEvents" value="@SkipNEvents@"/>
+    <parameter name="SupressCheck" value="false"/>
+    <parameter name="Verbosity" value="@Verbosity@"/>
+  </global>
+
+
+  <processor name="AIDA" type="AIDAProcessor">
+    <!--Processor that handles AIDA files.
+		  Creates one directory per processor.
+		  Processors only need to create and fill the histograms, clouds and tuples.
+		  Needs to be the first ActiveProcessor-->
+
+    <!-- compression of output file 0: false >0: true (default) -->
+    <parameter name="Compress" type="int" value="1"/>
+
+    <!-- filename without extension-->
+    <parameter name="FileName" type="string" value="@HistoPath@/@Output@-align-histo"/>
+
+    <!-- type of output file xml (default) or root ( only OpenScientist)-->
+    <parameter name="FileType" type="string" value="root"/>
+  </processor>
+
+
+  
+  
+  <processor name="LoadPreAlignment" type="ConditionsProcessor">
+    <parameter name="DBInit" type="string" value="localhost:lccd_test:align:tel"/>
+    <parameter name="SimpleFileHandler" type="StringVec"> prealign @PreAlignmentFile@ alignment </parameter>
+  </processor>
+
+
+  <processor name="ApplyPreAlignment" type="EUTelApplyAlignmentProcessor">
+    <parameter name="AlignmentConstantName" type="string" lcioInType="LCGenericObject"> prealign </parameter>
+    <parameter name="alignmentCollectionNames"> prealign </parameter>
+    <parameter name="InputHitCollectionName"  type="string" lcioInType="TrackerHit"> hit </parameter>
+    <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> PreAlignedHit </parameter>
+    <parameter name="CorrectionMethod" type="int" value="1"/>
+    <parameter name="DoAlignCollection" type="bool" value="true"/>
+    <parameter name="HistogramSwitch" type="bool" value="false"/>
+    <parameter name="DEBUG" type="bool" value="false"/>
+    <parameter name="PrintEvents" type="int" value="0"/>
+  </processor>
+  
+  
+  
+  <processor name="LoadAlignment" type="ConditionsProcessor">
+ <!--ConditionsProcessor provides access to conditions data  transparently from LCIO files or a databases, using LCCD-->
+  <!--Initialization of a conditions database handler-->
+  <!--parameter name="DBCondHandler" type="StringVec"> conditionsName /lccd/myfolder HEAD </parameter-->
+  <!--Initialization of a conditions db file handler-->
+  <!--parameter name="DBFileHandler" type="StringVec"> conditionsName conditions.slcio collectionName </parameter-->
+  <!--Initialization string for conditions database-->
+  <parameter name="DBInit" type="string" value="localhost:lccd_test:calvin:hobbes"/>
+  <!--Initialization of a data file handler-->
+  <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
+  <!--Initialization of a simple conditions file handler-->
+  <parameter name="SimpleFileHandler" type="StringVec"> alignment @AlignmentFile@ alignment </parameter>
+ </processor>
+
+ <processor name="ApplyAlignment" type="EUTelApplyAlignmentProcessor">
+  <!--Apply to the input hit the alignment corrections-->
+  <!--Alignment constant from the condition file-->
+  <parameter name="AlignmentConstantName" type="string" lcioInType="LCGenericObject"> alignment </parameter>
+  <!--The name of the input hit collection-->
+  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> PreAlignedHit </parameter>
+  <!--The name of the output hit collection-->
+  <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> alignedHit</parameter>
+  <!--Available methods are:
+    0 -> shift only 
+    1 -> rotation first 
+    2 -> shift first -->
+  <parameter name="CorrectionMethod" type="int" value="1"/>
+  <!-- List of alignment collections that were applied to the DUT -->
+  <parameter name="alignmentCollectionNames"> alignment </parameter>
+  <!-- Implement geometry shifts and rotations as described in alignmentCollectionName -->
+  <parameter name="DoAlignCollection" type="bool" value="true"/>
+  <!--Enable or disable histograms-->
+  <parameter name="HistogramSwitch" type="bool" value="false"/>
+  <parameter name="DEBUG" type="bool" value="false"/>
+  <parameter name="PrintEvents" type="int" value="0"/>
+ </processor>
+  
+    <processor name="LoadRefHitDB"     type="ConditionsProcessor">
+    <parameter name="DBInit" type="string" value="localhost:lccd_test:align:tel"/>
+    <parameter name="SimpleFileHandler" type="StringVec"> refhit  @DBPath@/@Output@-refhit-db.slcio referenceHit  </parameter>
+  </processor>
+
+  <processor name="DafFitter" type="EUTelDafFitter">
+    <parameter name="TelescopePlanes" type="IntVec"> 0 1 2 3 4 5 6 </parameter>
+    <parameter name="DutPlanes" type="IntVec">  </parameter>
+    <parameter name="FitDuts" type="bool" value="false"/>
+    <parameter name="MakePlots" type="bool" value="true"/>
+    <parameter name="RequireNTelPlanes" type="float" value="7"/>
+    <parameter name="HitCollectionName" type="string" lcioInType="TrackerHit"> alignedHit </parameter>
+    <parameter name="TrackCollectionName" type="string" lcioInType="Track"> fittracks </parameter>
+    <parameter name="AlignmentCollectionNames">  prealign alignment </parameter>
+    <parameter name="ReferenceCollection" type="string" > refhit </parameter>
+    <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
+    <parameter name="Ebeam" type="float" value="4.8"/>
+    <parameter name="TelResolutionX" type="float" value="180"/>
+    <parameter name="TelResolutionY" type="float" value="180"/>
+    <parameter name="DutResolutionX" type="float" value="500" />
+    <parameter name="DutResolutionY" type="float" value="500"/>
+    <parameter name="NominalDxdz" type="float" value="0.0"/>
+    <parameter name="NominalDydz" type="float" value="0.0"/>
+    <parameter name="FinderRadius" type="float" value="15000" />
+    <parameter name="Chi2Cutoff" type="float" value="10"/>
+    <parameter name="MaxChi2OverNdof" type="float" value="100"/>
+    <parameter name="NDutHits" type="int" value="0"/>
+  </processor>
+
+ <processor name="KalmanFitterAlign" type="EUTelAPIXKalman">
+    
+    <parameter name="HitCollectionName" type="string" lcioInType="TrackerHit"> alignedHit </parameter>
+    
+    <parameter name="DistanceMax" type="float" value="@DistanceMax@"/>
+    
+        <!--Exclude planes from fit.-->
+    <parameter name="ExcludePlanes" type="IntVec">@ExcludePlanes@ </parameter>
+
+    <parameter name="IncludeScatter" type="bool" value="true"/>
+   
+    <parameter name="UseHitResolution" type="bool" value="false"/>
+    
+    <parameter name="TelescopeResolution" type="FloatVec"> @TelescopeResolution@ </parameter>
+
+    <parameter name="Ebeam" type="float" value="@BeamEnergy@"/>
+    
+    <parameter name="FixedPlanes" type="int" value="@FixedPlanes@"/>
+    <parameter name="FixedTranslations" type="int" value=""/>
+    <parameter name="FixedZRotations" type="int" value=""/>
+    <parameter name="FixScales" type="int" value=""/>
+
+
+   <!--This is the name of the LCIO file name with the output alignmentconstants (add .slcio)-->
+    <parameter name="AlignmentConstantLCIOFile" type="string" value="@DBPath@/@Output@-aligndut-db.slcio"/>
+
+    <!--Name of the Millepede binary file.-->
+    <parameter name="BinaryFilename" type="string" value="@ResultsPath@/@Output@-align-mille.bin"/>
+
+    <!--Name of the steering file for the pede program.-->
+    <parameter name="PedeSteerfileName" type="string" value="@ResultsPath@/@Output@-pede-steer.txt"/>
+
+    <!--Execute the pede program using the generated steering file.-->
+    <parameter name="RunPede" type="int" value="true"/>
+
+   <!--Residual cuts along both size in microns-->
+    <parameter name="UseResidualCuts" type="int" value="@UseResidualCuts@"/>
+
+    <parameter name="ResidualsXMax" type="FloatVec"> @ResidualXMax@ </parameter>
+    <parameter name="ResidualsXMin" type="FloatVec"> @ResidualXMin@ </parameter>
+    <parameter name="ResidualsYMax" type="FloatVec"> @ResidualYMax@ </parameter>
+    <parameter name="ResidualsYMin" type="FloatVec"> @ResidualYMin@ </parameter>
+
+
+   <!--Residual cuts along both size in microns-->
+    <parameter name="MinDxDz" type="float"> @MinDxDz@</parameter>
+    <parameter name="MaxDxDz" type="float"> @MaxDxDz@ </parameter>
+    <parameter name="MinDyDz" type="float"> @MinDyDz@ </parameter>
+    <parameter name="MaxDyDz" type="float"> @MaxDyDz@ </parameter>
+    <parameter name="MaxChi2" type="float"> @MaxChi2@ </parameter>
+
+
+
+    <parameter name="TrackCollectionName" type="string" lcioInType="Track"> fittracks </parameter>
+    
+
+  </processor>
+
+
+
+<processor name="Fitter" type="EUTelTestFitter">
+  <!--Analytical track fitting processor for EUDET telescope--> 
+ 
+  <parameter name="alignmentCollectionNames" type="vec" >   prealign alignment </parameter>
+  <!--Name of the input TrackerHit collection-->
+ 
+  <parameter name="InputCollectionName" type="string" lcioInType="TrackerHit"> alignedHit </parameter>
+  <!--Collection name for corrected particle positions-->
+  
+  <parameter name="CorrectedHitCollectionName" type="string" lcioOutType="TrackerHit"> corrhits </parameter>
+  <!--Collection name for fitted particle hits (positions)-->
+ 
+  <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> fithits </parameter>
+  <!--Collection name for fitted tracks-->
+  
+  <parameter name="OutputTrackCollectionName" type="string" lcioOutType="Track"> fittracks </parameter>
+ <!--Ids of layers for which alignment corrections are given-->
+  <!--parameter name="AlignLayerIDs" type="IntVec"> </parameter-->
+  <!--Rotation around Z for layer alignment-->
+  <!--parameter name="AlignLayerRotZ" type="FloatVec"> </parameter-->
+  <!--Alignment corrections in X for these layers-->
+  <!--parameter name="AlignLayerShiftX" type="FloatVec"> </parameter-->
+  <!--Alignment corrections in Y for these layers-->
+  <!--parameter name="AlignLayerShiftY" type="FloatVec"> </parameter-->
+  <!--Allow same hit to be used in more than one track-->
+  
+  <parameter name="AllowAmbiguousHits" type="bool" value="false"/>
+  <!--Allowed number of missing hits in the track-->
+  
+  <parameter name="AllowMissingHits" type="int" value="@AllowedMissingHits@"/>
+  <!--Allowed number of hits removed from the track-->
+  
+  <parameter name="AllowSkipHits" type="int" value="@AllowedSkipHits@ "/>
+  <!--Decide now weather you want to rely on the track candidate slope permanence in X and Y, default=true -->
+  
+  <parameter name="UseSlope"   type="bool"  value="false"/>
+  <!--Set the allowed maximum difference of the slope in X (from plane to plane), default = 0.01 -->
+  
+  <parameter name="SlopeXLimit"   type="float" value="3.0"/>
+  <!--Set the allowed maximum difference of the slope in Y (from plane to plane), default = 0.01 -->
+  
+  <parameter name="SlopeYLimit"   type="float" value="3.0"/>
+  <!--Maximal allowed (initial) distance between hits in the XY plane between the planes,default = 2. mm -->
+  
+  <parameter name="SlopeDistanceMax" type="float" value="@DistanceMax@"/>
+  <!--Assumed angular spread of the beam [rad]-->
+  <!--parameter name="BeamSpread" type="double" value="0.1"/-->
+  <!--Maximum Chi2 for accepted track fit-->
+  
+  <parameter name="Chi2Max" type="double" value="@Chi2Max@"/>
+  <!--Print out every DebugEnevtCount event-->
+  
+  <parameter name="DebugEventCount" type="int" value="1000"/>
+  <!--Beam energy [GeV]-->
+  
+  <parameter name="Ebeam" type="double" value="@BeamEnergy@"/>
+  <!--Name of the histogram information file-->
+  
+  <parameter name="HistoInfoFileName" type="string" value="@HistoInfoPath@/@HistoInfo@"/>
+  <!--Flag for storing input (measured) hits in track-->
+  
+  <parameter name="InputHitsInTrack" type="bool" value="true"/>
+  <!--Ids of layers for which position masks are applied-->
+  <!--parameter name="MaskLayerIDs" type="IntVec"> </parameter-->
+  <!--Upper mask edge in X-->
+  <!--parameter name="MaskMaxX" type="FloatVec"> </parameter-->
+  <!--Upper mask edge in Y-->
+  <!--parameter name="MaskMaxY" type="FloatVec"> </parameter-->
+  <!--Lower mask edge in X-->
+  <!--parameter name="MaskMinX" type="FloatVec"> </parameter-->
+  <!--Lower mask edge in Y-->
+  <!--parameter name="MaskMinY" type="FloatVec"> </parameter-->
+  <!--Maximum number of considered hits per plane-->
+  
+  <parameter name="MaxPlaneHits" type="int" value="100"/>
+  <!--Chi2 penalty for missing hit in the track-->
+  
+  <parameter name="MissingHitPenalty" type="double" value="@MissingHitPenalty@"/>
+  <!--Flag for storing output (fitted) hits in track-->
+  
+  <parameter name="OutputHitsInTrack" type="bool" value="true"/>
+  <!--Ids of layers which should be treated as passive in the fit-->
+ 
+  <parameter name="PassiveLayerIDs" type="IntVec"> @PassiveLayerIDs@ </parameter>
+  <!--Flag for searching multiple tracks in events with multiple hits-->
+
+  <parameter name="SearchMultipleTracks" type="bool" value="true"/>
+  <!--Chi2 penalty for removing hit from the track-->
+
+  <parameter name="SkipHitPenalty" type="double" value="@SkipHitPenalty@"/>
+  <!--Ids of layers which should NOT be included in the fit-->
+  <!--parameter name="SkipLayerIDs" type="IntVec"> </parameter-->
+  <!--Flag for using beam direction constraint in the fit-->
+
+  <parameter name="UseBeamConstraint" type="bool" value="false"/> <!-- DP -->
+  <!--Flag for including DUT measurement in the fit-->
+ 
+  <parameter name="UseDUT" type="bool" value="false"/>
+  <!--Flag for using nominal resolution instead of position errors-->
+ 
+  <parameter name="UseNominalResolution" type="bool" value="false"/>
+  <!--Ids of layers for which position window cut are applied-->
+  <!--parameter name="WindowLayerIDs" type="IntVec"> </parameter-->
+  <!--Upper window edge in X-->
+  <!--parameter name="WindowMaxX" type="FloatVec"> </parameter-->
+  <!--Upper window edge in Y-->
+  <!--parameter name="WindowMaxY" type="FloatVec"> </parameter-->
+  <!--Lower window edge in X-->
+  <!--parameter name="WindowMinX" type="FloatVec"> </parameter-->
+  <!--Lower window edge in Y-->
+  <!--parameter name="WindowMinY" type="FloatVec"> </parameter-->
+</processor>
+
+
+
+  <processor name="Align" type="EUTelMille">
+    <!--EUTelMille uses the MILLE program to write data files for MILLEPEDE II.-->
+
+    <!--This is the name of the LCIO file name with the output alignmentconstants (add .slcio)-->
+    <parameter name="AlignmentConstantLCIOFile" type="string" value="@DBPath@/@Output@-aligndut-db.slcio"/>
+
+    <!--Name of the Millepede binary file.-->
+    <parameter name="BinaryFilename" type="string" value="@ResultsPath@/@Output@-align-mille.bin"/>
+
+    <!--Name of the steering file for the pede program.-->
+    <parameter name="PedeSteerfileName" type="string" value="@ResultsPath@/@Output@-pede-steer.txt"/>
+
+    <!--Execute the pede program using the generated steering file.-->
+    <parameter name="RunPede" type="int" value="@RunPede@"/>
+
+    <!--Use cuts on the residuals to reduce the combinatorial background. 0 for off (default), 1 for on-->
+    <parameter name="UseResidualCuts" type="int" value="@UseResidualCuts@"/>
+    
+    <!--parameter name="AllowMissingHits" type="int" value="3"/>
+  <!--Allowed number of hits removed from the track-->
+
+    <!--Residual cuts along both size in microns-->
+    <parameter name="ResidualsXMax" type="FloatVec"> @ResidualXMax@ </parameter>
+    <parameter name="ResidualsXMin" type="FloatVec"> @ResidualXMin@ </parameter>
+    <parameter name="ResidualsYMax" type="FloatVec"> @ResidualYMax@ </parameter>
+    <parameter name="ResidualsYMin" type="FloatVec"> @ResidualYMin@ </parameter>
+
+    <!--Hit collection name-->
+    <parameter name="HitCollectionName" type="string" lcioInType="TrackerHit"> alignedHit </parameter>
+
+    <!--Track collection name-->
+    <parameter name="TrackCollectionName" type="string" lcioInType="Track"> fittracks </parameter>
+
+
+    <!--Number of alignment constants used.
+	       Available mode are:
+	       1 - shifts in the X and Y directions and a rotation around the Z axis
+	       2 - only shifts in the X and Y directions
+               3 - (EXPERIMENTAL) shifts in the X,Y and Z directions and rotations around all three axis
+    -->
+    <parameter name="AlignMode" type="int" value="3"/>
+
+    <!--Maximal allowed distance between hits entering the fit per 10 cm space between the planes.-->
+    <parameter name="DistanceMax" type="float" value="@DistanceMax@"/>
+
+    <!--Exclude planes from fit.-->
+    <parameter name="ExcludePlanes" type="IntVec">@ExcludePlanes@ </parameter>
+
+    <!--Fix sensor planes in the fit according to their sensor ids.-->
+    <parameter name="FixedPlanes" type="IntVec">@FixedPlanes@ </parameter>
+
+    <!--Generate a steering file for the pede program.-->
+    <parameter name="GeneratePedeSteerfile" type="int" value="1"/>
+
+    <!--Selects the source of input hits.
+		0 - hits read from hitfile with simple trackfinding.
+		1 - hits read from output of tracking processor.
+		2 - Test mode. Simple internal simulation and simple trackfinding.-->
+    <parameter name="InputMode" type="int" value="1"/>
+
+    <!--Maximal number of track candidates.-->
+    <parameter name="MaxTrackCandidates" type="int" value="200000"/>
+    <parameter name="MaxTrackCandidatesTotal" type="int" value="200000"/>
+
+    <!--Use only events with one hit in every plane.-->
+    <parameter name="OnlySingleHitEvents" type="int" value="0"/>
+
+    <!--Use only events with one track candidate.-->
+    <parameter name="OnlySingleTrackEvents" type="int" value="0"/>
+
+  <!-- FixParameter: takes bit coded values as alignment parameters for each plane
+     2** 0 = 1  -> x
+     2** 1 = 2  -> y
+     2** 2 = 4  -> z
+     2** 3 = 8  -> ZX
+     2** 4 = 16 -> ZY
+     2** 5 = 32 -> XY plane
+   -->
+  <parameter name="FixParameter" type="int" value="0 0 0 0 0 0 0"  />
+
+    <!--parameter name="FixParameter" type="int" value="63 63 63    63  63 63"/-->
+
+    <!--Start values for the alignment for the angle gamma.-->
+    <!--parameter name="PedeUserStartValuesGamma" type="FloatVec"> 0 0 0 0 0 0 </parameter-->
+
+    <!--Start values for the alignment for shifts in the X direction.-->
+    <!--parameter name="PedeUserStartValuesX" type="FloatVec"> 0 0 0 0 0 0 </parameter-->
+
+    <!--Start values for the alignment for shifts in the Y direction.-->
+    <!--parameter name="PedeUserStartValuesY" type="FloatVec"> 0 0 0 0 0 0 </parameter-->
+
+    <!--Resolution of the telescope for Millepede.-->
+   <parameter name="TelescopeResolution" type="float" value="18"/>
+    <parameter name="ResolutionX" type="float" value="   7.34     7.34      7.34       15.895   7.34     7.34     7.34 "/>
+    <parameter name="ResolutionY" type="float" value="   7.34      7.34      7.34      15.895    7.34      7.34      7.34  "/>
+    <parameter name="ResolutionZ" type="float" value="    100      100      100      100      100     100      100 "/>
+
+    <!--Rotation around the x axis of the sensors in test mode (to be determined by the alignment).-->
+    <!--parameter name="TestModeSensorAlpha" type="FloatVec"> 0 0 0 0 0 0 </parameter-->
+
+    <!--Rotation around the y axis of the sensors in test mode (to be determined by the alignment).-->
+    <!--parameter name="TestModeSensorBeta" type="FloatVec"> 0 0 0 0 0 0 </parameter-->
+
+    <!--Rotation around the z axis of the sensors in test mode (to be determined by the alignment).-->
+    <!--parameter name="TestModeSensorGamma" type="FloatVec"> 0 0 0 0 0 0 </parameter-->
+
+    <!--Resolution assumed for the sensors in test mode.-->
+    <!--parameter name="TestModeSensorResolution" type="float" value="3"/-->
+
+    <!--X shifts of the sensors in test mode (to be determined by the alignment).-->
+    <!--parameter name="TestModeSensorXShifts" type="FloatVec"> 0 0 0 0 0 0 </parameter-->
+
+    <!--Y shifts of the sensors in test mode (to be determined by the alignment).-->
+    <!--parameter name="TestModeSensorYShifts" type="FloatVec"> 0 0 0 0 0 0 </parameter-->
+
+    <!--Z positions of the sensors in test mode.-->
+    <!--parameter name="TestModeSensorZPositions" type="FloatVec"> 20000 40000 60000 80000 100000 120000 </parameter-->
+
+    <!--Width of the track slope distribution in the x direction-->
+    <!--parameter name="TestModeXTrackSlope" type="float" value="0.0005"/-->
+
+    <!--Width of the track slope distribution in the y direction-->
+    <!--parameter name="TestModeYTrackSlope" type="float" value="0.0005"/-->
+
+    <!--Give start values for pede by hand (0 - automatic calculation of start values, 1 - start values defined by user).-->
+    <!--parameter name="UsePedeUserStartValues" type="int" value="0"/-->
+
+  </processor>
+  
+  <processor name="Correlator" type="EUTelCorrelator">
+ <!--EUTelCorrelator fills histograms with correlation plots-->
+  <!--Hit collection name-->
+  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> PreAlignedHit </parameter>
+  <!-- -->
+  <parameter name="DumpOffset" type="bool" > false </parameter>
+</processor>
+
+
+
+
+</marlin>

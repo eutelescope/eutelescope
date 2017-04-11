@@ -1,0 +1,355 @@
+<?xml version="1.0" encoding="us-ascii"?>
+<!-- ?xml-stylesheet type="text/xsl" href="http://ilcsoft.desy.de/marlin/marlin.xsl"? -->
+<!-- ?xml-stylesheet type="text/xsl" href="marlin.xsl"? -->
+
+
+<!--
+
+==========================================================================================
+Steering file template for the pysub framework
+
+==> clusearch-tmp.xml <===
+
+Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
+==========================================================================================
+
+-->
+
+<marlin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ilcsoft.desy.de/marlin/marlin.xsd">
+
+  <execute>
+    <processor name="AIDA"/>
+      <processor name="TPLoadHotPixelDB"/> 
+      <processor name="LoadHotPixelDB"/>
+      <processor name="Mimosa26EUTelAutoPedestalNoiseProcessor"/>
+      <processor name="TimepixEUTelAutoPedestalNoiseProcessor"/>       
+      <processor name="Clustering"/>
+      <processor name="TPClustering"/>
+      <--processor name="Correlator"/>
+    <processor name="Save"/>
+  </execute>
+
+  <global>
+    <parameter name="LCIOInputFiles"> @LcioRawFolder@/run@RunNumber@.slcio </parameter>
+    <parameter name="GearXMLFile" value="@GearPath@/@GearFile@"/>
+    <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
+    <parameter name="SkipNEvents" value="0"/>
+    <parameter name="SupressCheck" value="false"/>
+    <parameter name="Verbosity" value="@Verbosity@"/>
+  </global>
+
+  <processor name="AIDA" type="AIDAProcessor">
+    <!--Processor that handles AIDA files. Creates on directory per processor.  Processors only need to create and fill the histograms, clouds and tuples. Needs to be the first ActiveProcessor-->
+    <!-- compression of output file 0: false >0: true (default) -->
+    <parameter name="Compress" type="int" value="1"/>
+    <!-- filename without extension-->
+    <parameter name="FileName" type="string" value=
+    "@HistoPath@/run@RunNumber@-clu-histo"/>
+    <!-- type of output file xml (default) or root ( only OpenScientist)-->
+    <parameter name="FileType" type="string" value="root"/>
+  </processor>
+
+
+ <processor name="Mimosa26EUTelAutoPedestalNoiseProcessor" type="EUTelAutoPedestalNoiseProcessor">
+ <!--EUTelAutoPedestalNoiseProcessor produces initial pedestal / noise / status with user provided values-->
+  <!--Noise local collection-->
+  <parameter name="NoiseCollectionName" type="string" lcioOutType="TrackerData"> m26_noise </parameter>
+  <!--Pedestal local collection-->
+  <parameter name="PedestalCollectionName" type="string" lcioOutType="TrackerData"> m26_pedestal </parameter>
+  <!--Pixel status collection-->
+  <parameter name="StatusCollectionName" type="string" lcioOutType="TrackerRawData"> m26_status </parameter>
+  <!--The initial value of noise (one value for detector)-->
+  <parameter name="InitNoiseValue" type="FloatVec"> 1 1 1 1 1 1 </parameter>
+  <!--The initial value of pedestal (one value for detector)-->
+  <parameter name="InitPedestalValue" type="FloatVec"> 0 0 0 0 0 0 </parameter>
+  <!--The maximum pixel along x (default 255, one value per detector)-->
+  <parameter name="MaxXVector" type="IntVec"> 1151 1151 1151 1151 1151 1151</parameter>
+  <!--The maximum pixel along y (default 255, one value per detector)-->
+  <parameter name="MaxYVector" type="IntVec"> 575 575 575 255 575 575 575  </parameter>
+  <!--The minimum pixel along x (default 0, one value per detector)-->
+  <parameter name="MinXVector" type="IntVec"> 0 0 0 0 0 0 0  </parameter>
+  <!--The minimum pixel along y (default 0, one value per detector)-->
+  <parameter name="MinYVector" type="IntVec"> 0 0 0 0 0 0</parameter>
+  <!--The sensorID for the generated collection (one per detector)-->
+  <parameter name="SensorIDVec" type="IntVec"> 0 1 2 3 4 5 </parameter>
+</processor>
+
+
+  <processor name="TimepixEUTelAutoPedestalNoiseProcessor" type="EUTelAutoPedestalNoiseProcessor">
+ <!--EUTelAutoPedestalNoiseProcessor produces initial pedestal / noise / status with user provided values-->
+  <!--Noise local collection-->
+  <parameter name="NoiseCollectionName" type="string" lcioOutType="TrackerData"> tp_noise </parameter>
+  <!--Pedestal local collection-->
+  <parameter name="PedestalCollectionName" type="string" lcioOutType="TrackerData"> tp_pedestal </parameter>
+  <!--Pixel status collection-->
+  <parameter name="StatusCollectionName" type="string" lcioOutType="TrackerRawData"> tp_status </parameter>
+  <!--The initial value of noise (one value for detector)-->
+  <parameter name="InitNoiseValue" type="FloatVec"> 1  </parameter>
+  <!--The initial value of pedestal (one value for detector)-->
+  <parameter name="InitPedestalValue" type="FloatVec"> 0 </parameter>
+  <!--The maximum pixel along x (default 255, one value per detector)-->
+  <parameter name="MaxXVector" type="IntVec"> 255 </parameter>
+  <!--The maximum pixel along y (default 255, one value per detector)-->
+  <parameter name="MaxYVector" type="IntVec"> 255</parameter>
+  <!--The minimum pixel along x (default 0, one value per detector)-->
+  <parameter name="MinXVector" type="IntVec"> 0   </parameter>
+  <!--The minimum pixel along y (default 0, one value per detector)-->
+  <parameter name="MinYVector" type="IntVec"> 0 </parameter>
+  <!--The sensorID for the generated collection (one per detector)-->
+  <parameter name="SensorIDVec" type="IntVec"> 6  </parameter>
+ </processor>
+
+
+
+
+
+  <processor name="LoadHotPixelDB" type="ConditionsProcessor">
+    <!--ConditionsProcessor provides access to conditions data  transparently from LCIO files or a databases, using LCCD-->
+    <!--Initialization of a conditions database handler-->
+    <!--parameter name="DBCondHandler" type="StringVec"> conditionsName /lccd/myfolder HEAD </parameter-->
+    <!--Initialization of a conditions db file handler-->
+    <!--parameter name="DBFileHandler" type="StringVec"> conditionsName conditions.slcio collectionName </parameter-->
+    <!--Initialization string for conditions database-->
+    <parameter name="DBInit" type="string" value="localhost:lccd_test:calvin:hobbes"/>
+    <!--Initialization of a data file handler-->
+    <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
+    <!--Initialization of a simple conditions file handler-->
+    <!-- suppress only the Mimosa26 pixels --> 
+    <parameter name="SimpleFileHandler" type="StringVec"> hotpixel_m26  @DBPath@/run@HotPixelRunNumber@-hotpixel-db.slcio hotpixel_m26 </parameter>
+  </processor>
+
+
+  <processor name="TPLoadHotPixelDB" type="ConditionsProcessor">
+    <!--ConditionsProcessor provides access to conditions data  transparently from LCIO files or a databases, using LCCD-->
+    <!--Initialization of a conditions database handler-->
+    <!--parameter name="DBCondHandler" type="StringVec"> conditionsName /lccd/myfolder HEAD </parameter-->
+    <!--Initialization of a conditions db file handler-->
+    <!--parameter name="DBFileHandler" type="StringVec"> conditionsName conditions.slcio collectionName </parameter-->
+    <!--Initialization string for conditions database-->
+    <parameter name="DBInit" type="string" value="localhost:lccd_test:calvin:hobbes"/>
+    <!--Initialization of a data file handler-->
+    <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
+    <!--Initialization of a simple conditions file handler-->
+    <!-- suppress only the Mimosa26 pixels --> 
+    <parameter name="SimpleFileHandler" type="StringVec"> hotpixel_tp  @DBPath@/run@HotPixelRunNumber@-hotpixel-tp-db.slcio hotpixel_tp </parameter>
+  </processor>
+
+
+
+
+  <processor name="Clustering" type="EUTelClusteringProcessor">
+    <!--EUTelClusteringProcessor is looking for clusters into a calibrated pixel matrix.-->
+   
+    <parameter name="HotPixelCollectionName" type="string" value="hotpixel_m26" />
+  
+    <!--
+        INPUT / OUTPUT
+    -->
+    <!--Input calibrated data not zero suppressed collection name-->
+    <parameter name="NZSDataCollectionName" type="string" lcioInType="TrackerData"> data </parameter>
+    <!--Noise (input) collection name-->
+    <parameter name="NoiseCollectionName" type="string" lcioInType="TrackerData"> m26_noise </parameter>
+    <!--Pixel status (input) collection name-->
+    <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData"> m26_status </parameter>
+    <!--Input of Zero Suppressed data-->
+    <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> zsdata_m26 </parameter>
+    <!--Cluster (output) collection name-->
+    <parameter name="PulseCollectionName" type="string" lcioOutType="TrackerPulse"> cluster_m26 </parameter>
+
+    <!--
+        Clustering algorithm
+    -->
+    <!--Select here which algorithm should be used for NZS clustering.
+        Available algorithms are:
+        -> FixedFrame: for custer with a given size-->
+    <parameter name="ClusteringAlgo" type="string" value="FixedFrame"/>
+
+    <!--Select here which algorithm should be used for ZS clustering.
+        Available algorithms are:
+        -> SparseCluster: for cluster in ZS frame
+        -> SparseCluster2: for cluster in ZS frame with better performance
+        -> FixedFrame: for cluster with a given size
+        -> DFixedFrame: for cluster with a given size-->
+    <parameter name="ZSClusteringAlgo" type="string" value="SparseCluster2"/>
+
+
+    <!--
+        FIXED FRAME ( for both NZS and ZS )
+        for DFixedFrame:
+        use 5x5 for threshold ~< 9
+        use 3x3 for threshold ~> 9        
+    -->
+    <!--Threshold in SNR for seed pixel identification-->
+    <parameter name="FFSeedCut" type="float" value="0.0"/>
+    <!--Threshold in SNR for cluster identification-->
+    <parameter name="FFClusterCut" type="float" value="0.0"/>
+    <!--Maximum allowed cluster size along x (only odd numbers)-->
+    <parameter name="FFClusterSizeX" type="int" value="5"/>
+    <!--Maximum allowed cluster size along y (only odd numbers)-->
+    <parameter name="FFClusterSizeY" type="int" value="5"/>
+
+    <!--
+        SPARSECLUSTER and SPARSECLUSTER2 (use with care!)
+        
+        for SparseCluster:
+            SparseMinDistance = 2 (in the code minDistance => distance between  neighb.pixels .le. SparseMinDistance)
+            ==>  findNeighborPixels(double minDistance)
+        
+        for SparseCluster2:
+            SparseMinDistance = 0 ( in the code minSignal => ADC in the neigbh.pixel .ge. SparseMinDistance )
+            ==>  EUTelSparseData2Impl<PixelType>::findNeighborPixels(double  minSignal)
+            in principle can be used as default clustering algo.        
+    -->
+    <!--Threshold in SNR for clusters contained in ZS data-->
+    <parameter name="SparseClusterCut" type="float" value="0.0"/>
+    <!--Threshold in SNR for seed pixel contained in ZS data-->
+    <parameter name="SparseSeedCut" type="float" value="0.0"/>
+    <!--Minimum distance between sparsified pixel ( touching == sqrt(2)) -->
+    <!-- carefull with this one! see comments above. -->
+    <parameter name="SparseMinDistance" type="float" value="0"/>
+
+    <!--
+        HISTOGRAMMING
+    -->
+    <!--Switch on or off the histogram filling-->
+    <parameter name="HistogramFilling" type="bool" value="false"/>
+    <!--This is the name of the histogram information file-->
+    <parameter name="HistoInfoFileName" type="string" value="@HistoInfoPath@/@HistoInfo@"/>
+    <!--The list of cluster N to be filled.For example 7 means filling the cluster spectra with the 7 most significant pixels-->
+    <parameter name="ClusterN" type="IntVec" value="4 6 8 9"/>
+    <!--The list of cluster NxN to be filled.For example 3 means filling the 3x3 histogram spectrum-->
+    <parameter name="ClusterNxN" type="IntVec" value="3"/>
+
+  </processor>
+
+<processor name="TPClustering" type="EUTelClusteringProcessor">
+    <!--EUTelClusteringProcessor is looking for clusters into a calibrated pixel matrix.-->
+   
+    <parameter name="HotPixelCollectionName" type="string" value="hotpixel_tp" />
+  
+    <!--
+        INPUT / OUTPUT
+    -->
+    <!--Input calibrated data not zero suppressed collection name-->
+    <parameter name="NZSDataCollectionName" type="string" lcioInType="TrackerData"> data </parameter>
+    <!--Noise (input) collection name-->
+    <parameter name="NoiseCollectionName" type="string" lcioInType="TrackerData"> tp_noise </parameter>
+    <!--Pixel status (input) collection name-->
+    <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData"> tp_status </parameter>
+    <!--Input of Zero Suppressed data-->
+    <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> zsdata_timepix </parameter>
+    <!--Cluster (output) collection name-->
+    <parameter name="PulseCollectionName" type="string" lcioOutType="TrackerPulse"> cluster_timepix </parameter>
+
+    <!--
+        Clustering algorithm
+    -->
+    <!--Select here which algorithm should be used for NZS clustering.
+        Available algorithms are:
+        -> FixedFrame: for custer with a given size-->
+    <parameter name="ClusteringAlgo" type="string" value="FixedFrame"/>
+
+    <!--Select here which algorithm should be used for ZS clustering.
+        Available algorithms are:
+        -> SparseCluster: for cluster in ZS frame
+        -> SparseCluster2: for cluster in ZS frame with better performance
+        -> FixedFrame: for cluster with a given size
+        -> DFixedFrame: for cluster with a given size-->
+    <parameter name="ZSClusteringAlgo" type="string" value="SparseCluster2"/>
+
+
+    <!--
+        FIXED FRAME ( for both NZS and ZS )
+        for DFixedFrame:
+        use 5x5 for threshold ~< 9
+        use 3x3 for threshold ~> 9        
+    -->
+    <!--Threshold in SNR for seed pixel identification-->
+    <parameter name="FFSeedCut" type="float" value="0.0"/>
+    <!--Threshold in SNR for cluster identification-->
+    <parameter name="FFClusterCut" type="float" value="0.0"/>
+    <!--Maximum allowed cluster size along x (only odd numbers)-->
+    <parameter name="FFClusterSizeX" type="int" value="5"/>
+    <!--Maximum allowed cluster size along y (only odd numbers)-->
+    <parameter name="FFClusterSizeY" type="int" value="5"/>
+
+
+
+    <!--Maximum Charge per cluster-->
+    <parameter name="EmaxCut" type="float" value="5000"/>
+
+    <!--
+        SPARSECLUSTER and SPARSECLUSTER2 (use with care!)
+        
+        for SparseCluster:
+            SparseMinDistance = 2 (in the code minDistance => distance between  neighb.pixels .le. SparseMinDistance)
+            ==>  findNeighborPixels(double minDistance)
+        DC in the neigbh.pixel .ge. SparseMinDistance )
+            ==>  EUTelSparseData2Impl<PixelType>::findNeighborPixels(double  minSignal)
+            in principle can be used as default clustering algo.        
+    -->
+    <!--Threshold in SNR for clusters contained in ZS data-->
+    <parameter name="SparseClusterCut" type="float" value="0.0"/>
+    <!--Threshold in SNR for seed pixel contained in ZS data-->
+    <parameter name="SparseSeedCut" type="float" value="0.0"/>
+    <!--Minimum distance between sparsified pixel ( touching == sqrt(2)) -->
+    <!-- carefull with this one! see comments above. -->
+    <parameter name="SparseMinDistance" type="float" value="0"/>
+
+    <!--
+        HISTOGRAMMING
+    -->
+    <!--Switch on or off the histogram filling-->
+    <parameter name="HistogramFilling" type="bool" value="true"/>
+    <!--This is the name of the histogram information file-->
+    <parameter name="HistoInfoFileName" type="string" value="@HistoInfoPath@/@HistoInfo@"/>
+    <!--The list of cluster N to be filled.For example 7 means filling the cluster spectra with the 7 most significant pixels-->
+    <parameter name="ClusterN" type="IntVec" value="1 2 3 4 5 6 8 9"/>
+    <!--The list of cluster NxN to be filled.For example 3 means filling the 3x3 histogram spectrum-->
+    <parameter name="ClusterNxN" type="IntVec" value="1 2 3 4 5 6"/>
+
+  </processor>
+  
+  
+
+  <processor name="Correlator" type="EUTelCorrelator">
+    <!--EUTelCorrelator fills histograms with correlation plots-->
+    <!--Cluster (pulse) collection name-->
+    <parameter name="InputClusterCollections" type="StringVec" > cluster_m26 cluster_timepix </parameter>
+    <!--Hit collection name-->
+    <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
+    <!-- -->
+    <parameter name="HotPixelCollectionName" type="string" lcioInType="TrackerHit"> hotpixel_m26 </parameter>
+    <!-- -->
+    <parameter name="ClusterChargeMinimum" type="int" value="2"/>
+    <!-- -->
+    <parameter name="Events" type="int" value="1000000"/>
+    <!-- -->
+    <parameter name="OffsetDBFile" type="string"> @DBPath@/run@RunNumber@-offset-db.slcio </parameter>
+ </processor>
+
+
+  <processor name="Save" type="EUTelOutputProcessor">
+    <!--Writes the current event to the specified LCIO outputfile. Eventually it adds a EORE at the of the file if it was missing Needs to be the last ActiveProcessor.-->
+    <!--drops the named collections from the event-->
+    <parameter name="DropCollectionNames" type="StringVec"> 
+           rawdata status noise pedestal data zsdata            
+    </parameter>
+    <!--drops all collections of the given type from the event-->
+    <!--parameter name="DropCollectionTypes" type="StringVec"> SimTrackerHit SimCalorimeterHit </parameter-->
+    <!-- write complete objects in subset collections to the file (i.e. ignore subset flag)-->
+    <!--parameter name="FullSubsetCollections" type="StringVec" value="MCParticlesSkimmed"/-->
+    <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
+    <!--parameter name="KeepCollectionNames" type="StringVec" value="MyPreciousSimTrackerHits"/-->
+    <!-- name of output file -->
+    <parameter name="LCIOOutputFile" type="string" value="@ResultsPath@/run@RunNumber@-clu.slcio"/>
+    <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
+    <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
+    <!--Set it to true to remove intermediate EORE in merged runs-->
+    <parameter name="SkipIntermediateEORE" type="bool" value="true"/>
+    <!--will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW-->
+    <!--parameter name="SplitFileSizekB" type="int" value="500000"/-->
+  </processor>
+
+</marlin>
